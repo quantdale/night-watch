@@ -22,6 +22,14 @@
 // ---------------------------------------------------------------------------
 
 import { failProduction } from './errors';
+import {
+  assertProductionVocabularyAuthority,
+  isMintedCapability,
+  mintProvenance,
+  type MintedProvenance,
+  type ValidatedSourceEvidence,
+  type VocabularyAuthorityMarker,
+} from './vocabularyAuthority';
 
 export const PROVEN_KEY_VOCABULARY_VERSION = 'nightwatch.proven-key-vocabulary.v1' as const;
 
@@ -71,6 +79,8 @@ export interface ProvenKeyVocabulary {
   readonly provenanceClass: KeyProvenanceClass;
   readonly provenanceDigest: string;
   readonly keys: ReadonlySet<string>;
+  /** Derived provenance identity. Computed by trusted code, never supplied. */
+  readonly provenance: MintedProvenance;
 }
 
 /**
@@ -84,29 +94,29 @@ export type NoProvenVocabulary = typeof NO_PROVEN_VOCABULARY;
 export type KeyVocabularySource = ProvenKeyVocabulary | NoProvenVocabulary;
 
 /**
- * Construct a frozen, validated vocabulary. Fail-closed on an unknown
- * provenance class, a malformed provenance digest, an empty or oversized key
- * set, a non-string key, an oversized key, or a prototype-hostile key.
+ * Derive a key vocabulary from VALIDATED SOURCE EVIDENCE.
+ *
+ * This replaces C-10's `createProvenKeyVocabulary`, which let a caller assert
+ * `SOURCE_PROVEN_FIXED_CONTRACT` over arbitrary keys with a fabricated
+ * digest. There is deliberately NO digest parameter — the provenance identity
+ * is computed from the evidence — and the result is registered under the
+ * runtime brand, so a shape-matching object is not a substitute for it.
+ *
+ * A repository-owned fixed contract still obtains authority through this
+ * path, tied to the committed contract's own source identity (A5).
  */
-export function createProvenKeyVocabulary(input: {
-  readonly provenanceClass: KeyProvenanceClass;
-  readonly provenanceDigest: string;
-  readonly keys: readonly string[];
-}): ProvenKeyVocabulary {
-  if (!PROVENANCE_CLASS_SET.has(input.provenanceClass)) {
-    failProduction('PRODUCTION_PRIVACY_VOCABULARY_INVALID', 'PROVENANCE_AMBIGUOUS');
+export function deriveProvenKeyVocabulary(
+  evidence: ValidatedSourceEvidence,
+  marker: VocabularyAuthorityMarker,
+): ProvenKeyVocabulary {
+  if (evidence.vocabularyKind !== 'KEY') {
+    failProduction('PRODUCTION_PRIVACY_VOCABULARY_INVALID', 'EVIDENCE_CLASS_MISMATCH');
   }
-  if (typeof input.provenanceDigest !== 'string' || !PROVENANCE_DIGEST_RE.test(input.provenanceDigest)) {
-    failProduction('PRODUCTION_PRIVACY_VOCABULARY_INVALID', 'VOCABULARY_PROVENANCE_DIGEST');
-  }
-  if (!Array.isArray(input.keys) || input.keys.length === 0) {
-    failProduction('PRODUCTION_PRIVACY_VOCABULARY_INVALID', 'VOCABULARY_EMPTY');
-  }
-  if (input.keys.length > MAX_PROVEN_VOCABULARY_KEYS) {
+  if (evidence.members.length > MAX_PROVEN_VOCABULARY_KEYS) {
     failProduction('PRODUCTION_PRIVACY_VOCABULARY_INVALID', 'VOCABULARY_SIZE');
   }
   const keys = new Set<string>();
-  for (const key of input.keys) {
+  for (const key of evidence.members) {
     if (typeof key !== 'string' || key.length === 0 || key.length > MAX_PROVEN_KEY_LENGTH) {
       failProduction('PRODUCTION_PRIVACY_VOCABULARY_INVALID', 'KEY_LENGTH');
     }
@@ -115,12 +125,25 @@ export function createProvenKeyVocabulary(input: {
     }
     keys.add(key);
   }
-  return Object.freeze({
+  const carrier: {
+    version: typeof PROVEN_KEY_VOCABULARY_VERSION;
+    provenanceClass: KeyProvenanceClass;
+    provenanceDigest: string;
+    keys: ReadonlySet<string>;
+    provenance?: MintedProvenance;
+  } = {
     version: PROVEN_KEY_VOCABULARY_VERSION,
-    provenanceClass: input.provenanceClass,
-    provenanceDigest: input.provenanceDigest,
+    provenanceClass: evidence.evidenceClass as KeyProvenanceClass,
+    provenanceDigest: '',
     keys: keys as ReadonlySet<string>,
-  });
+  };
+  const provenance = mintProvenance(evidence, carrier, marker);
+  carrier.provenanceDigest = provenance.provenanceDigest;
+  carrier.provenance = provenance;
+  if (!PROVENANCE_CLASS_SET.has(carrier.provenanceClass)) {
+    failProduction('PRODUCTION_PRIVACY_VOCABULARY_INVALID', 'PROVENANCE_AMBIGUOUS');
+  }
+  return Object.freeze(carrier) as ProvenKeyVocabulary;
 }
 
 /**
@@ -132,7 +155,19 @@ export function createProvenKeyVocabulary(input: {
 export function isSourceProvenKey(source: KeyVocabularySource, key: string): boolean {
   if (source === NO_PROVEN_VOCABULARY) return false;
   if (FORBIDDEN_PRODUCTION_KEY_NAMES.has(key)) return false;
+  // The runtime brand, not the shape, is what makes this object a capability
+  // (A6). A duck-typed or JSON-revived vocabulary is refused here.
+  if (!isMintedCapability(source)) return false;
   return source.keys.has(key);
+}
+
+/**
+ * The production authority guard for a key vocabulary. Refuses an unminted
+ * object and refuses a TEST-ONLY seam capability.
+ */
+export function assertProductionKeyVocabularyAuthority(source: KeyVocabularySource): void {
+  if (source === NO_PROVEN_VOCABULARY) return;
+  assertProductionVocabularyAuthority(source);
 }
 
 /** Provenance identity for a receipt, carrying no key literals. */

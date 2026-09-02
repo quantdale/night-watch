@@ -29,6 +29,14 @@
 
 import { failProduction } from './errors';
 import { ROUTE_TEMPLATE_RE } from './types';
+import {
+  assertProductionVocabularyAuthority,
+  isMintedCapability,
+  mintProvenance,
+  type MintedProvenance,
+  type ValidatedSourceEvidence,
+  type VocabularyAuthorityMarker,
+} from './vocabularyAuthority';
 
 export const PROVEN_ROUTE_VOCABULARY_VERSION = 'nightwatch.proven-route-vocabulary.v1' as const;
 
@@ -58,6 +66,8 @@ export interface ProvenRouteVocabulary {
   readonly provenanceClass: RouteProvenanceClass;
   readonly provenanceDigest: string;
   readonly templates: ReadonlySet<string>;
+  /** Derived provenance identity. Computed by trusted code, never supplied. */
+  readonly provenance: MintedProvenance;
 }
 
 /**
@@ -72,46 +82,61 @@ export type NoProvenRouteVocabulary = typeof NO_PROVEN_ROUTE_VOCABULARY;
 export type RouteVocabularySource = ProvenRouteVocabulary | NoProvenRouteVocabulary;
 
 /**
- * Construct a frozen, validated route vocabulary. Fail-closed on an unknown
- * provenance class, a malformed provenance digest, an empty or oversized set,
- * or a template that is not even shape-valid.
+ * Derive a route vocabulary from VALIDATED SOURCE EVIDENCE.
  *
- * The shape check here is a PRECONDITION on vocabulary contents, not the
- * persistence authority: a caller cannot admit `GET /v1/accounts/481516234299`
- * as a "template" and have it treated as proven merely because it parses —
- * admission is the source's job, and the provenance digest binds this set to
- * that source.
+ * This replaces C-10's `createProvenRouteVocabulary`, which accepted a
+ * caller-chosen provenance class, any shape-valid digest and arbitrary
+ * templates. There is deliberately NO digest parameter: the provenance
+ * identity is computed from the evidence, so a caller cannot choose it. The
+ * returned object is registered under the runtime brand, so a shape-matching
+ * object — including one revived from JSON — is not a substitute for it.
+ *
+ * The template shape check remains a PRECONDITION on what may enter a
+ * vocabulary, never the authority for what may be persisted; admission is the
+ * source's job and the computed digest binds this set to that source.
+ *
+ * Not exported from the cone's public surface: `index.ts` re-exports the
+ * consumption API only, and `hardening:check` bounds which modules may import
+ * this one, so arbitrary application code cannot reach the mint.
  */
-export function createProvenRouteVocabulary(input: {
-  readonly provenanceClass: RouteProvenanceClass;
-  readonly provenanceDigest: string;
-  readonly templates: readonly string[];
-}): ProvenRouteVocabulary {
-  if (!ROUTE_PROVENANCE_CLASS_SET.has(input.provenanceClass)) {
-    failProduction('PRODUCTION_PRIVACY_VOCABULARY_INVALID', 'PROVENANCE_AMBIGUOUS');
+export function deriveProvenRouteVocabulary(
+  evidence: ValidatedSourceEvidence,
+  marker: VocabularyAuthorityMarker,
+): ProvenRouteVocabulary {
+  if (evidence.vocabularyKind !== 'ROUTE') {
+    failProduction('PRODUCTION_PRIVACY_VOCABULARY_INVALID', 'EVIDENCE_CLASS_MISMATCH');
   }
-  if (typeof input.provenanceDigest !== 'string' || !PROVENANCE_DIGEST_RE.test(input.provenanceDigest)) {
-    failProduction('PRODUCTION_PRIVACY_VOCABULARY_INVALID', 'VOCABULARY_PROVENANCE_DIGEST');
-  }
-  if (!Array.isArray(input.templates) || input.templates.length === 0) {
-    failProduction('PRODUCTION_PRIVACY_VOCABULARY_INVALID', 'VOCABULARY_EMPTY');
-  }
-  if (input.templates.length > MAX_PROVEN_ROUTE_TEMPLATES) {
+  if (evidence.members.length > MAX_PROVEN_ROUTE_TEMPLATES) {
     failProduction('PRODUCTION_PRIVACY_VOCABULARY_INVALID', 'VOCABULARY_SIZE');
   }
   const templates = new Set<string>();
-  for (const template of input.templates) {
+  for (const template of evidence.members) {
     if (typeof template !== 'string' || !ROUTE_TEMPLATE_RE.test(template)) {
       failProduction('PRODUCTION_PRIVACY_VOCABULARY_INVALID', 'ROUTE_TEMPLATE_INVALID');
     }
     templates.add(template);
   }
-  return Object.freeze({
+  const carrier: {
+    version: typeof PROVEN_ROUTE_VOCABULARY_VERSION;
+    provenanceClass: RouteProvenanceClass;
+    provenanceDigest: string;
+    templates: ReadonlySet<string>;
+    provenance?: MintedProvenance;
+  } = {
     version: PROVEN_ROUTE_VOCABULARY_VERSION,
-    provenanceClass: input.provenanceClass,
-    provenanceDigest: input.provenanceDigest,
+    provenanceClass: evidence.evidenceClass as RouteProvenanceClass,
+    provenanceDigest: '',
     templates: templates as ReadonlySet<string>,
-  });
+  };
+  // Mint against the carrier so the brand attaches to the object the caller
+  // will actually hold, then seal it with its derived identity.
+  const provenance = mintProvenance(evidence, carrier, marker);
+  carrier.provenanceDigest = provenance.provenanceDigest;
+  carrier.provenance = provenance;
+  if (!ROUTE_PROVENANCE_CLASS_SET.has(carrier.provenanceClass)) {
+    failProduction('PRODUCTION_PRIVACY_VOCABULARY_INVALID', 'PROVENANCE_AMBIGUOUS');
+  }
+  return Object.freeze(carrier) as ProvenRouteVocabulary;
 }
 
 /**
@@ -123,6 +148,9 @@ export function createProvenRouteVocabulary(input: {
 export function isSourceProvenRoute(source: RouteVocabularySource, routeTemplate: string): boolean {
   if (source === NO_PROVEN_ROUTE_VOCABULARY) return false;
   if (typeof routeTemplate !== 'string') return false;
+  // The runtime brand, not the shape, is what makes this object a capability.
+  // A duck-typed or JSON-revived vocabulary is refused here (A6).
+  if (!isMintedCapability(source)) return false;
   return source.templates.has(routeTemplate);
 }
 
@@ -153,6 +181,11 @@ export function assertSourceProvenRoute(
 ): void {
   if (typeof routeTemplate !== 'string' || !ROUTE_TEMPLATE_RE.test(routeTemplate)) {
     failProduction('PRODUCTION_PRIVACY_ROUTE_PROVENANCE_UNRESOLVED', 'ROUTE_TEMPLATE_INVALID');
+  }
+  if (source !== NO_PROVEN_ROUTE_VOCABULARY) {
+    // Production authority requires a genuinely minted, PRODUCTION-marked
+    // capability. This is where a TEST_ONLY seam capability is refused.
+    assertProductionVocabularyAuthority(source);
   }
   if (!isSourceProvenRoute(source, routeTemplate)) {
     failProduction('PRODUCTION_PRIVACY_ROUTE_PROVENANCE_UNRESOLVED', 'ROUTE_NOT_SOURCE_PROVEN');

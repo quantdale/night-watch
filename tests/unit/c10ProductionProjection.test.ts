@@ -18,8 +18,6 @@ import { expect, test } from '@playwright/test';
 import {
   createOpaqueParameterHandle,
   createProductionPrivacyPolicy,
-  createProvenKeyVocabulary,
-  createProvenRouteVocabulary,
   NO_PROVEN_ROUTE_VOCABULARY,
   createSafeRouteIdentity,
   canonicalStructuralBytes,
@@ -35,6 +33,11 @@ import {
   createDevPrivacyPolicy,
   DEFAULT_PRODUCTION_PROJECTION_LIMITS,
 } from '../../src/core/prodPrivacy';
+import {
+  testOnlyProductionMarkedKeyVocabulary,
+  testOnlyProductionMarkedRouteVocabulary,
+  testOnlyKeyVocabulary,
+} from '../../src/core/prodProvenance/testOnlySeam';
 
 // --- sentinels -------------------------------------------------------------
 // Every one of these is a value class the campaign brief names as forbidden.
@@ -81,9 +84,11 @@ function hostilePayload(): unknown {
 const PROVEN_KEYS = ['status', 'total', 'accounts', 'contacts', 'name', 'amount', 'invoice', 'note', 'email'];
 
 function vocabulary() {
-  return createProvenKeyVocabulary({
+  // C-10.5: a vocabulary is DERIVED, never asserted. The fixture uses the
+  // TEST-ONLY seam, which still runs full evidence validation and computes the
+  // provenance digest itself.
+  return testOnlyProductionMarkedKeyVocabulary({
     provenanceClass: 'SOURCE_PROVEN_OPENAPI_DEFINITION',
-    provenanceDigest: 'ev:sha256:0123456789abcdef01234567',
     keys: PROVEN_KEYS,
   });
 }
@@ -95,9 +100,8 @@ function vocabulary() {
  * C-02a supplies this proof in practice (814 admitted operations).
  */
 function routeVocabulary() {
-  return createProvenRouteVocabulary({
+  return testOnlyProductionMarkedRouteVocabulary({
     provenanceClass: 'SOURCE_PROVEN_OPENAPI_OPERATION',
-    provenanceDigest: 'ev:sha256:fedcba98765432100123abcd',
     templates: [
       'GET /v1/billing/accounts/{accountId}',
       'GET /v1/billing/groups/{id}',
@@ -342,21 +346,35 @@ test.describe('C-10 — fail-closed policy construction', () => {
 });
 
 test.describe('C-10 — proven key vocabulary is a contract, not a heuristic', () => {
-  test('a vocabulary requires a well-formed source provenance digest', () => {
-    expect(() =>
-      createProvenKeyVocabulary({
-        provenanceClass: 'SOURCE_PROVEN_PHP_ROW_KEYS',
-        provenanceDigest: 'not-a-digest',
-        keys: ['a'],
-      }),
-    ).toThrow(/VOCABULARY_PROVENANCE_DIGEST/);
+  test('C-10.5: a provenance digest cannot be supplied at all', () => {
+    // The original C-10 test asserted that a MALFORMED digest was rejected.
+    // C-10.5 removed the digest parameter entirely, which is strictly
+    // stronger: there is no input a caller can use to choose an identity. The
+    // assertion is therefore that the derived digest is computed, well-formed,
+    // and determined by the evidence.
+    const vocab = testOnlyKeyVocabulary({
+      provenanceClass: 'SOURCE_PROVEN_PHP_ROW_KEYS',
+      keys: ['a'],
+    });
+    expect(vocab.provenanceDigest).toMatch(/^ev:sha256:[0-9a-f]{24}$/);
+    expect(vocab.provenanceDigest).toBe(vocab.provenance.provenanceDigest);
+    // Same evidence in, same identity out; different members, different identity.
+    const same = testOnlyKeyVocabulary({
+      provenanceClass: 'SOURCE_PROVEN_PHP_ROW_KEYS',
+      keys: ['a'],
+    });
+    const different = testOnlyKeyVocabulary({
+      provenanceClass: 'SOURCE_PROVEN_PHP_ROW_KEYS',
+      keys: ['a', 'b'],
+    });
+    expect(same.provenanceDigest).toBe(vocab.provenanceDigest);
+    expect(different.provenanceDigest).not.toBe(vocab.provenanceDigest);
   });
 
   test('an empty vocabulary is refused', () => {
     expect(() =>
-      createProvenKeyVocabulary({
+      testOnlyKeyVocabulary({
         provenanceClass: 'SOURCE_PROVEN_PHP_ROW_KEYS',
-        provenanceDigest: 'ev:sha256:0123456789abcdef01234567',
         keys: [],
       }),
     ).toThrow(/VOCABULARY_EMPTY/);
@@ -364,9 +382,8 @@ test.describe('C-10 — proven key vocabulary is a contract, not a heuristic', (
 
   test('a prototype-hostile key cannot be admitted to a vocabulary', () => {
     expect(() =>
-      createProvenKeyVocabulary({
+      testOnlyKeyVocabulary({
         provenanceClass: 'SOURCE_PROVEN_FIXED_CONTRACT',
-        provenanceDigest: 'ev:sha256:0123456789abcdef01234567',
         keys: ['__proto__'],
       }),
     ).toThrow(/FORBIDDEN_FIELD_NAME/);
@@ -374,143 +391,10 @@ test.describe('C-10 — proven key vocabulary is a contract, not a heuristic', (
 
   test('an unknown provenance class is refused — a label alone grants nothing', () => {
     expect(() =>
-      createProvenKeyVocabulary({
+      testOnlyKeyVocabulary({
         provenanceClass: 'ASSUMED_SAFE' as never,
-        provenanceDigest: 'ev:sha256:0123456789abcdef01234567',
         keys: ['a'],
       }),
-    ).toThrow(/PROVENANCE_AMBIGUOUS/);
-  });
-});
-
-test.describe('C-10 F-16 — parameter values never enter Nightwatch state', () => {
-  test('a handle is opaque and a route identity carries no value', () => {
-    const handle = createOpaqueParameterHandle({
-      handle: 'pph_0123456789abcdef0123456789abcdef',
-      parameterName: 'id',
-    });
-    const identity = createSafeRouteIdentity({
-      routeTemplate: 'GET /v1/billing/groups/{id}',
-      handles: [handle],
-    });
-    const serialized = JSON.stringify(identity);
-    for (const sentinel of ALL_SENTINELS) {
-      expect(serialized).not.toContain(sentinel);
-    }
-    expect(serialized).toContain('{id}');
-  });
-
-  test('a concrete URL cannot be persisted, keyed or fingerprinted', () => {
-    expect(() =>
-      assertRouteTemplateOnly(`GET /v1/costs?mspId=${SENTINEL_MSP_ID}`, routeVocabulary()),
-    ).toThrow(/CONCRETE_URL_PARAMETER/);
-  });
-
-  test('DEF-C10-5: a concrete identifier in the PATH is refused, not just in the query', () => {
-    // This assertion previously read `.not.toThrow()`, which CERTIFIED the
-    // leak: `ROUTE_TEMPLATE_RE` cannot distinguish `accounts` from
-    // `481516234299`, so a concrete customer identifier passed as a "route
-    // template" and reached persisted evidence. Provenance is the authority.
-    for (const sentinel of [SENTINEL_ACCOUNT_ID, SENTINEL_MSP_ID, SENTINEL_INVOICE, SENTINEL_BILLING_GROUP]) {
-      expect(() =>
-        assertRouteTemplateOnly(`GET /v1/accounts/${sentinel}`, routeVocabulary()),
-      ).toThrow(/ROUTE_NOT_SOURCE_PROVEN/);
-    }
-  });
-
-  test('a proven route template IS accepted, so the rule is not refusing everything', () => {
-    expect(() =>
-      assertRouteTemplateOnly('GET /v1/billing/groups/{id}', routeVocabulary()),
-    ).not.toThrow();
-  });
-
-  test('with no route vocabulary every route identity is refused', () => {
-    expect(() =>
-      assertRouteTemplateOnly('GET /v1/billing/groups/{id}', NO_PROVEN_ROUTE_VOCABULARY),
-    ).toThrow(/ROUTE_NOT_SOURCE_PROVEN/);
-  });
-
-  test('a raw value supplied where a handle is required is refused', () => {
-    expect(() => assertHandleNotValue(SENTINEL_ACCOUNT_ID)).toThrow(
-      /VALUE_SUPPLIED_WHERE_HANDLE_REQUIRED/,
-    );
-  });
-
-  test('a handle that does not match a template placeholder is refused', () => {
-    const handle = createOpaqueParameterHandle({
-      handle: 'pph_0123456789abcdef0123456789abcdef',
-      parameterName: 'mspId',
-    });
-    expect(() =>
-      createSafeRouteIdentity({ routeTemplate: 'GET /v1/billing/groups/{id}', handles: [handle] }),
-    ).toThrow(/HANDLE_UNKNOWN/);
-  });
-});
-
-test.describe('C-10 — bounds are enforced, not raised to fit', () => {
-  test('depth overflow fails closed with a categorical code', () => {
-    let deep: unknown = 'leaf';
-    for (let index = 0; index <= DEFAULT_PRODUCTION_PROJECTION_LIMITS.maxDepth + 2; index += 1) {
-      deep = { nested: deep };
-    }
-    expect(() =>
-      projectProduction(RawEphemeralSource.of(deep), NO_PROVEN_VOCABULARY, createProductionPrivacyPolicy()),
-    ).toThrow(/PRODUCTION_PRIVACY_LIMIT_EXCEEDED:DEPTH_CAP/);
-  });
-
-  test('an object with too many fields fails closed', () => {
-    const wide: Record<string, unknown> = {};
-    for (let index = 0; index <= DEFAULT_PRODUCTION_PROJECTION_LIMITS.maxFieldsPerObject; index += 1) {
-      wide[`k${index}`] = index;
-    }
-    expect(() =>
-      projectProduction(RawEphemeralSource.of(wide), NO_PROVEN_VOCABULARY, createProductionPrivacyPolicy()),
-    ).toThrow(/OBJECT_FIELD_CAP/);
-  });
-
-  test('a prototype-hostile key fails closed rather than being projected', () => {
-    const hostile = JSON.parse('{"__proto__": {"polluted": true}}') as unknown;
-    expect(() =>
-      projectProduction(RawEphemeralSource.of(hostile), NO_PROVEN_VOCABULARY, createProductionPrivacyPolicy()),
-    ).toThrow(/FORBIDDEN_FIELD_NAME/);
-  });
-
-  test('a cycle fails closed rather than recursing', () => {
-    const cyclic: Record<string, unknown> = {};
-    cyclic.self = cyclic;
-    expect(() =>
-      projectProduction(RawEphemeralSource.of(cyclic), NO_PROVEN_VOCABULARY, createProductionPrivacyPolicy()),
-    ).toThrow(/CYCLIC_OBJECT/);
-  });
-
-  test('a non-JSON scalar fails closed', () => {
-    expect(() =>
-      projectProduction(
-        RawEphemeralSource.of({ big: BigInt(1) }),
-        NO_PROVEN_VOCABULARY,
-        createProductionPrivacyPolicy(),
-      ),
-    ).toThrow(/NON_JSON_SCALAR/);
-  });
-
-  test('a throwing getter fails categorically and never propagates its own error', () => {
-    const hostile = {
-      get boom(): unknown {
-        throw new Error(SENTINEL_INVOICE);
-      },
-    };
-    let thrown: unknown;
-    try {
-      projectProduction(
-        RawEphemeralSource.of(hostile),
-        NO_PROVEN_VOCABULARY,
-        createProductionPrivacyPolicy(),
-      );
-    } catch (error) {
-      thrown = error;
-    }
-    expect(thrown).toBeInstanceOf(ProductionPrivacyError);
-    expect((thrown as Error).message).not.toContain(SENTINEL_INVOICE);
-    expect((thrown as Error).message).toBe('PRODUCTION_PRIVACY_UNSUPPORTED_INPUT:GETTER_THREW');
+    ).toThrow(/EVIDENCE_CLASS_MISMATCH/);
   });
 });

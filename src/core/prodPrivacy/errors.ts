@@ -78,6 +78,17 @@ export const PRODUCTION_PRIVACY_DETAIL_CODES = [
   'TRACE_PROHIBITED',
   'CONSOLE_TEXT_PROHIBITED',
   'STORE_IDENTITY',
+  // C-10.5 provenance authority (A3-A7). A vocabulary's SOURCE_PROVEN_* claim
+  // must be established by trusted derivation, never asserted by a caller.
+  'CAPABILITY_NOT_MINTED',
+  'CAPABILITY_TEST_ONLY',
+  'EVIDENCE_CLASS_MISMATCH',
+  'EVIDENCE_INVENTORY_INCOMPLETE',
+  'EVIDENCE_CURRENCY_UNPROVEN',
+  'EVIDENCE_SOURCE_IDENTITY',
+  'EVIDENCE_REPOSITORY_UNAPPROVED',
+  'EVIDENCE_OPERATION_IDENTITY',
+  'EVIDENCE_MEMBER_INVALID',
 ] as const;
 export type ProductionPrivacyDetailCode = (typeof PRODUCTION_PRIVACY_DETAIL_CODES)[number];
 

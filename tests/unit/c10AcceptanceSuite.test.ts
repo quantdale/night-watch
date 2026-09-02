@@ -31,8 +31,6 @@ import {
   canonicalStructuralBytes,
   createDevPrivacyPolicy,
   createProductionPrivacyPolicy,
-  createProvenKeyVocabulary,
-  createProvenRouteVocabulary,
   NO_PROVEN_ROUTE_VOCABULARY,
   DEV_PROJECTION_DIGEST_PREFIX,
   NO_PROVEN_VOCABULARY,
@@ -46,6 +44,11 @@ import {
   toProductionEvidence,
   type SafeProductionEvidence,
 } from '../../src/core/prodPrivacy';
+import {
+  testOnlyProductionMarkedKeyVocabulary,
+  testOnlyProductionMarkedRouteVocabulary,
+  testOnlyKeyVocabulary,
+} from '../../src/core/prodProvenance/testOnlySeam';
 import {
   assertPersistableProductionEvidence,
   assertProductionCaptureAllowed,
@@ -139,9 +142,9 @@ const PROVEN_KEYS = [
 ];
 
 function vocabulary() {
-  return createProvenKeyVocabulary({
+  // C-10.5: derived through the TEST-ONLY seam; the digest is computed.
+  return testOnlyProductionMarkedKeyVocabulary({
     provenanceClass: 'SOURCE_PROVEN_OPENAPI_DEFINITION',
-    provenanceDigest: 'ev:sha256:0123456789abcdef01234567',
     keys: PROVEN_KEYS,
   });
 }
@@ -153,9 +156,8 @@ function vocabulary() {
  * C-02a supplies this proof in practice (814 admitted operations).
  */
 function routeVocabulary() {
-  return createProvenRouteVocabulary({
+  return testOnlyProductionMarkedRouteVocabulary({
     provenanceClass: 'SOURCE_PROVEN_OPENAPI_OPERATION',
-    provenanceDigest: 'ev:sha256:fedcba98765432100123abcd',
     templates: [
       'GET /v1/billing/accounts/{accountId}',
       'GET /v1/billing/groups/{id}',
@@ -577,22 +579,31 @@ test.describe('C-10 acceptance D — error-path leakage', () => {
       },
       () => JSON.stringify(RawEphemeralSource.of({ leak: S.customerId })),
       // vocabulary branches
+      // C-10.5: the provenance-digest parameter no longer exists, so the
+      // sentinel is planted in the caller-supplied positions that remain —
+      // the source checkpoint and the member set.
       () =>
-        createProvenKeyVocabulary({
+        testOnlyKeyVocabulary({
           provenanceClass: 'SOURCE_PROVEN_FIXED_CONTRACT',
-          provenanceDigest: S.customerId,
           keys: ['a'],
+          sourceSha: S.customerId,
         }),
       () =>
-        createProvenKeyVocabulary({
+        testOnlyKeyVocabulary({
           provenanceClass: 'SOURCE_PROVEN_FIXED_CONTRACT',
-          provenanceDigest: 'ev:sha256:0123456789abcdef01234567',
+          keys: ['a'],
+          // Free text in the source-identity position fails closed: the
+          // source root is a path, so spaces are not admissible.
+          sourceRoot: S.freeText,
+        }),
+      () =>
+        testOnlyKeyVocabulary({
+          provenanceClass: 'SOURCE_PROVEN_FIXED_CONTRACT',
           keys: [],
         }),
       () =>
-        createProvenKeyVocabulary({
+        testOnlyKeyVocabulary({
           provenanceClass: 'SOURCE_PROVEN_FIXED_CONTRACT',
-          provenanceDigest: 'ev:sha256:0123456789abcdef01234567',
           keys: ['constructor'],
         }),
       // policy branches
@@ -687,14 +698,12 @@ test.describe('C-10 acceptance E — digest privacy', () => {
   });
 
   test('a source-proven key literal DOES affect the digest, so provenance is meaningful', () => {
-    const vocabA = createProvenKeyVocabulary({
+    const vocabA = testOnlyProductionMarkedKeyVocabulary({
       provenanceClass: 'SOURCE_PROVEN_FIXED_CONTRACT',
-      provenanceDigest: 'ev:sha256:0123456789abcdef01234567',
       keys: ['alpha'],
     });
-    const vocabB = createProvenKeyVocabulary({
+    const vocabB = testOnlyProductionMarkedKeyVocabulary({
       provenanceClass: 'SOURCE_PROVEN_FIXED_CONTRACT',
-      provenanceDigest: 'ev:sha256:0123456789abcdef01234567',
       keys: ['beta'],
     });
     expect(digestOf({ alpha: 1 }, vocabA)).not.toBe(digestOf({ beta: 1 }, vocabB));
