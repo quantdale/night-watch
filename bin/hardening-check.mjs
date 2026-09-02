@@ -2139,7 +2139,7 @@ function checkR11ProxyGateReliability() {
   // Allocator safety properties R-11 must not have weakened.
   for (const [pattern, message] of [
     [/fs\.openSync\(file,\s*'wx',\s*0o600\)/, 'exclusive lease creation with owner-only mode'],
-    [/processAlive\(existing\.pid\)/, 'live-owner detection before reclaiming a lease'],
+    [/if \(processAlive\(existing\.pid\)\) continue;/, 'live-owner detection at the reclaim decision itself — the bare call name also occurs in the inherited-lease branch, so it must be anchored to this call site'],
     [/PROXY_PORT_LEASE_EXHAUSTED/, 'bounded search exhaustion'],
     [/const CANDIDATE_COUNT = \d+;/, 'a fixed bounded candidate count'],
     [/fs\.lstatSync\(file\)/, 'lstat-based lease inspection so a symlink is never followed'],
@@ -2210,7 +2210,9 @@ function checkR11ProxyGateReliability() {
   if ((runner.match(/console\.log\(/g) ?? []).length !== 1) {
     fail('R-11 the quality gate must write nothing but the receipt to stdout');
   }
-  if (!/GATE_RECEIPT_PATH_ENV,/.test(runner)) {
+  // Anchored to the list, not the bare name: the identifier also appears in the
+  // import statement, so an unanchored match stays true with the entry deleted.
+  if (!/FORBIDDEN_ENVIRONMENT_KEYS = Object\.freeze\(\[[\s\S]{0,800}?GATE_RECEIPT_PATH_ENV,[\s\S]{0,200}?\]\);/.test(runner) || !/for \(const key of FORBIDDEN_ENVIRONMENT_KEYS\) delete environment\[key\];/.test(runner)) {
     fail('R-11 the quality gate must strip the receipt-path variable from child environments so a child cannot overwrite the run receipt');
   }
   if (!/RECEIPT_PERSISTENCE_FAILED/.test(runner)) {
