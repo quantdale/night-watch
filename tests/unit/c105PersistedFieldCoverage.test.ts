@@ -202,13 +202,48 @@ test.describe('C-10.5 A13 — a sentinel planted in each exact position cannot p
 
   test('a sentinel forced into a persisted field position is refused by the firewall', () => {
     const evidence = goodEvidence();
-    for (const field of ['routeTemplate', 'structuralDigest', 'routeProvenanceDigest', 'vocabularyProvenanceDigest', 'boundaryClass', 'schemaVersion', 'statusClass'] as const) {
+    // Every string-capable EVIDENCE_ROOT position, including the three
+    // CLOSED_VOCABULARY positions that the first version of this suite
+    // declared but never occupied — which is exactly the DEF-C10-5 shape.
+    for (const field of [
+      'routeTemplate',
+      'structuralDigest',
+      'routeProvenanceDigest',
+      'vocabularyProvenanceDigest',
+      'boundaryClass',
+      'schemaVersion',
+      'statusClass',
+      'keyProvenance',
+      'vocabularyProvenanceClass',
+      'routeProvenanceClass',
+    ] as const) {
       const tampered = { ...evidence, [field]: SENTINEL };
       expect(
         () => assertPersistableProductionEvidence(tampered as never),
         `firewall must refuse a sentinel in ${field}`,
       ).toThrow();
     }
+  });
+
+  test('the tamper set covers every string-capable evidence-root position', () => {
+    // Guards this suite against the DEF-C10-5 failure mode recurring INSIDE
+    // the coverage suite itself: a declared position with no sentinel in it.
+    const planted = new Set([
+      'routeTemplate',
+      'structuralDigest',
+      'routeProvenanceDigest',
+      'vocabularyProvenanceDigest',
+      'boundaryClass',
+      'schemaVersion',
+      'statusClass',
+      'keyProvenance',
+      'vocabularyProvenanceClass',
+      'routeProvenanceClass',
+    ]);
+    const stringCapableRoots = PERSISTED_FIELD_INVENTORY.filter(
+      (record: PersistedFieldRecord) => record.owner === 'EVIDENCE_ROOT' && record.stringCapable,
+    ).map((record: PersistedFieldRecord) => record.field);
+    expect([...stringCapableRoots].sort()).toEqual([...planted].sort());
   });
 
   test('an UNKNOWN persisted field carrying a sentinel is refused', () => {

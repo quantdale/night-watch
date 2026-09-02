@@ -2028,6 +2028,20 @@ function checkC105ProvenanceAuthorityBoundary() {
   if (!/assertProductionVocabularyAuthority\(source\)/.test(routeVocabulary)) {
     fail('C-10.5 production route authority must refuse an unminted or TEST_ONLY capability');
   }
+  // The KEY side must be guarded SYMMETRICALLY at the persistence boundary.
+  // The guard existed but had no call site, so a TEST_ONLY key vocabulary —
+  // genuinely minted, hence a member for `isSourceProvenKey` — carried an
+  // arbitrary key literal into persisted evidence through provenFields[].name.
+  if (!/assertProductionKeyVocabularyAuthority\(source: KeyVocabularySource\)/.test(keyVocabulary)) {
+    fail('C-10.5 the key vocabulary must expose a production authority guard');
+  }
+  const evidenceAuthority = read('src/core/prodPrivacy/evidence.ts');
+  if (!/assertProductionKeyVocabularyAuthority\(vocabulary\)/.test(evidenceAuthority)) {
+    fail('C-10.5 evidence construction must require PRODUCTION key vocabulary authority (dead-guard regression)');
+  }
+  if (!/assertSourceProvenRoute\(\s*request\.routeVocabulary/.test(evidenceAuthority)) {
+    fail('C-10.5 evidence construction must require route provenance');
+  }
 
   // The cone's public surface must NOT re-export the mint. A wildcard
   // re-export of the vocabulary modules would put a `'PRODUCTION'` marker

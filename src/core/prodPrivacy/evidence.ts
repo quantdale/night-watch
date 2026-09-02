@@ -14,7 +14,11 @@
 // ---------------------------------------------------------------------------
 
 import { failProduction } from './errors';
-import { vocabularyIdentity, type KeyVocabularySource } from './keyVocabulary';
+import {
+  assertProductionKeyVocabularyAuthority,
+  vocabularyIdentity,
+  type KeyVocabularySource,
+} from './keyVocabulary';
 import {
   assertSourceProvenRoute,
   routeVocabularyIdentity,
@@ -119,6 +123,15 @@ export function toProductionEvidence(request: ProductionEvidenceRequest): SafePr
   if (projection.schemaVersion !== 'nightwatch.production-projection.v1') {
     failProduction('PRODUCTION_PRIVACY_EVIDENCE_INVALID', 'UNKNOWN_SCHEMA_VERSION');
   }
+
+  // C-10.5: the KEY vocabulary must carry PRODUCTION authority, symmetrically
+  // with the route vocabulary below. Without this a TEST_ONLY seam capability
+  // was genuinely minted, so it satisfied `isSourceProvenKey` membership, and
+  // an arbitrary key literal reached persisted evidence through
+  // `provenFields[].name` — the F-14 position. Projection itself deliberately
+  // still accepts a TEST_ONLY vocabulary, because that is what the fixtures
+  // need; PERSISTENCE authority is the boundary that must refuse it.
+  assertProductionKeyVocabularyAuthority(vocabulary);
 
   // Re-derive the classification from the tree rather than trusting the
   // recorded summary: a defect upstream must not be able to relabel an

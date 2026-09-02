@@ -58,6 +58,17 @@ export interface PersistedFieldRecord {
  * The inventory. `stringCapable: false` positions are recorded too, so the
  * cross-check can prove the inventory is TOTAL over the DTO rather than
  * merely covering the fields someone happened to list.
+ *
+ * SCOPE. This table covers PERSISTED positions only. Two string-capable node
+ * fields are deliberately absent because they exist only in the PROJECTION
+ * cone and never in persisted evidence: `encounterToken` and
+ * `numericEncounterRef`, the ephemeral in-memory correlation labels. They
+ * appear in `PRODUCTION_NODE_SAFE_FIELDS` but NOT in
+ * `PRODUCTION_EVIDENCE_NODE_SAFE_FIELDS`, are stripped when evidence is
+ * built, and are independently rejected by the persistence firewall as
+ * `ENCOUNTER_TOKEN_PRESENT` / `NUMERIC_REF_PRESENT`. Their absence here is a
+ * consequence of the totality cross-check being driven by the EVIDENCE field
+ * vocabularies, not an omission.
  */
 export const PERSISTED_FIELD_INVENTORY: readonly PersistedFieldRecord[] = Object.freeze([
   // ---- SafeProductionEvidence root -------------------------------------

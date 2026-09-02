@@ -25,6 +25,10 @@ import {
   isSourceProvenKey,
   isSourceProvenRoute,
   NO_PROVEN_ROUTE_VOCABULARY,
+  createProductionPrivacyPolicy,
+  projectProduction,
+  toProductionEvidence,
+  RawEphemeralSource,
   type ValidatedSourceEvidence,
 } from '../../src/core/prodPrivacy';
 import {
@@ -441,6 +445,64 @@ test.describe('C-10.5 A5/A6 — test seams cannot produce production authority',
     }
     expect(seam.provenanceClass).toBe('SOURCE_PROVEN_OPENAPI_OPERATION');
     expect(capabilityAuthorityMarker(seam)).toBe('TEST_ONLY');
+  });
+
+  test('DEF-C105-1: a TEST_ONLY KEY vocabulary cannot reach persisted evidence', () => {
+    // Regression for a defect found in this campaign's own implementation. The
+    // key-side guard existed but had NO CALL SITE, so a TEST_ONLY vocabulary —
+    // genuinely minted, therefore a member for `isSourceProvenKey` — carried an
+    // arbitrary key literal into persisted evidence through the F-14 position
+    // `provenFields[].name`. The route side was guarded; the key side was not.
+    const seamKeys = testOnlyKeyVocabulary({
+      provenanceClass: 'SOURCE_PROVEN_FIXED_CONTRACT',
+      keys: [SENTINEL_KEY],
+    });
+    const policy = createProductionPrivacyPolicy({});
+
+    // Projection still accepts a TEST_ONLY vocabulary — that is what fixtures
+    // need, and projection holds no persistence authority.
+    const projection = projectProduction(
+      RawEphemeralSource.of({ [SENTINEL_KEY]: 1 }),
+      seamKeys,
+      policy,
+    );
+    expect(isSourceProvenKey(seamKeys, SENTINEL_KEY)).toBe(true);
+
+    // PERSISTENCE authority is the boundary that must refuse it.
+    expect(() =>
+      toProductionEvidence({
+        projection,
+        routeTemplate: 'GET /v1/synthetic/a6',
+        statusClass: '2XX',
+        routeVocabulary: testOnlyProductionMarkedRouteVocabulary({
+          provenanceClass: 'SOURCE_PROVEN_OPENAPI_OPERATION',
+          templates: ['GET /v1/synthetic/a6'],
+        }),
+        vocabulary: seamKeys,
+        policy,
+      }),
+    ).toThrow(/CAPABILITY_TEST_ONLY/);
+  });
+
+  test('a PRODUCTION-marked key vocabulary still builds evidence, so the guard is not deny-all', () => {
+    const policy = createProductionPrivacyPolicy({});
+    const productionKeys = testOnlyProductionMarkedKeyVocabulary({
+      provenanceClass: 'SOURCE_PROVEN_FIXED_CONTRACT',
+      keys: ['alpha'],
+    });
+    const evidence = toProductionEvidence({
+      projection: projectProduction(RawEphemeralSource.of({ alpha: 1 }), productionKeys, policy),
+      routeTemplate: 'GET /v1/synthetic/a6',
+      statusClass: '2XX',
+      routeVocabulary: testOnlyProductionMarkedRouteVocabulary({
+        provenanceClass: 'SOURCE_PROVEN_OPENAPI_OPERATION',
+        templates: ['GET /v1/synthetic/a6'],
+      }),
+      vocabulary: productionKeys,
+      policy,
+    });
+    expect(evidence.boundaryClass).toBe('SAFE_PRODUCTION_EVIDENCE');
+    expect(JSON.stringify(evidence)).not.toContain(SENTINEL_KEY);
   });
 
   test('the NO_PROVEN sentinel still denies without a vocabulary', () => {
