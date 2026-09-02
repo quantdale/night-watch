@@ -30,27 +30,35 @@ the C-02a generated OpenAPI artifact that cannot be satisfied by counting.
 
 ## Current Milestone
 
-Milestone ID: M1 — task record, OpenSpec change, measured baseline
+Milestone ID: M4 — admission and route-discovery participation
 Milestone status: IN_PROGRESS
-What is being attempted: SPEC/PLAN/STATE/REPORT and the OpenSpec change are
-written; the remaining M1 work is the `agent:check` / `handoff:check` pair and
-the first checkpoint commit.
+What is being attempted: add `PROTOBUF` to the scan languages and `.proto` to
+the approved extensions, dispatch `parseProtoRoutes` from `surfaces.ts`, and
+prove the C-01 no-eviction regression over the enlarged population.
 
 ## Completed Milestones
 
-- None yet. M1 is the first.
+- M1 — task record, OpenSpec change and measured baseline. Committed at
+  `725fbad`. `agent:check` PASS (2 standing warnings), `handoff:check` PASS,
+  `project:check` PASS, `workspace:check` PASS.
+- M2 — adversarial corpus asserted BEFORE the parser existed.
+  `tests/unit/c02bProtoLexer.test.ts` was written first and failed to even
+  import, which is the reproduction: the modules did not exist.
+- M3 — `src/core/source/protoLexer.ts` and
+  `src/core/source/protoDeclarations.ts` implemented. 50/50 corpus assertions
+  pass, and the parser independently reproduces the M1 line-regex baseline
+  exactly.
 
 ## Work In Progress
 
-M1. SPEC.md, PLAN.md, REPORT.md skeleton, the five OpenSpec files,
-`.agent/ACTIVE_TASK.md` and `.agent/EXECUTION_PROMPT.md` are written and
-unvalidated. No source module and no test exists yet, by design: the
-adversarial corpus of M2 is asserted before the parser of M3.
+M4. Nothing partial: M1-M3 are closed and committed.
 
 ## Exact Next Action
 
-Run `npm run agent:check` and `npm run handoff:check` from the session
-worktree, repair any schema error, and commit the M1 checkpoint.
+Add `PROTOBUF` to `SOURCE_SCAN_LANGUAGES` and `.proto` to `SOURCE_SCAN_EXTENSIONS`
+and `APPROVED_EXTENSIONS`, implement `parseProtoRoutes` in `surfaces.ts`, and
+assert that every operation identity discovered before the change is still
+discovered after it.
 
 ## Files Changed
 
@@ -67,7 +75,10 @@ worktree, repair any schema error, and commit the M1 checkpoint.
 | `openspec/changes/nightwatch-protobuf-source-intelligence-c02b-v1/design.md` | layering, bounding, corroboration rule | WRITTEN |
 | `openspec/changes/nightwatch-protobuf-source-intelligence-c02b-v1/tasks.md` | T1..T12 | WRITTEN |
 | `openspec/changes/nightwatch-protobuf-source-intelligence-c02b-v1/specs/protobuf-source-intelligence/spec.md` | ADDED requirements | WRITTEN |
-| `docs/CURRENT_STATE.md` | live-state v2 block re-pointed from C-11 to this campaign | WRITTEN |
+| `docs/CURRENT_STATE.md` | live-state v2 block re-pointed from C-11 to this campaign | COMMITTED 725fbad |
+| `tests/unit/c02bProtoLexer.test.ts` | adversarial corpus, HTTP matrix, streaming matrix | 50/50 PASS |
+| `src/core/source/protoLexer.ts` | bounded tokenizer; the only module that knows comment/string syntax | IMPLEMENTED |
+| `src/core/source/protoDeclarations.ts` | bounded recursive-descent reader and fact model | IMPLEMENTED |
 
 ## Validation Ledger
 
@@ -112,6 +123,29 @@ When: 2026-09-03, session worktree
 Relevant failure/output summary: session worktree classed OWNED_SESSION,
 base CURRENT, drift false, canonicalSafe true, attention 0.
 
+Command: `npx playwright test tests/unit/c02bProtoLexer.test.ts`
+Result: PASS 50/50
+When: 2026-09-03, session worktree
+Relevant failure/output summary: the first run could not import the suite at
+all, which is the pre-implementation reproduction. After M3 one assertion
+failed: a non-`google.api.http` option on an RPC was asserted `ABSENT` but the
+reader returns `UNSUPPORTED_OPTION`. The reader is right and the assertion was
+imprecise — an option WAS present — so the test now asserts
+`UNSUPPORTED_OPTION` plus an empty binding set, which still carries the
+load-bearing claim that no route escapes a string literal.
+
+Command: parser measurement of `alphauslabs/blueapi@691422e5`
+`billing/v1/billing.proto`
+Result: PASS — matches the M1 baseline exactly
+When: 2026-09-03, session worktree
+Relevant failure/output summary: 1 service `blueapi.billing.v1.Billing`, 147
+RPCs, 238 messages, 147 bindings all `PROVEN`, GET 39 / POST 64 / PUT 25 /
+PATCH 2 / DELETE 17, 91 WILDCARD bodies and 56 ABSENT, 114 unary / 0
+client-streaming / 33 server-streaming / 0 bidirectional, 9,686 tokens, 1,121
+comments discarded, completeness COMPLETE with zero malformed declarations and
+zero ceiling drops. `mobingilabs/ouchan` `types.proto`: 0 services, 5 messages,
+COMPLETE.
+
 ## Decisions Made During This Task
 
 Decision: corroborate the generated artifact per operation identity, never by
@@ -130,7 +164,21 @@ Reason: streaming and service identity are not route properties, and C-03
 consumes them directly rather than through route discovery.
 Evidence/constraint: `ParsedRoute` (`surfaces.ts:115`) has no field for either.
 
+Decision: the reader reports `UNSUPPORTED_OPTION` distinctly from `ABSENT`.
+Reason: "no annotation" and "an annotation this reader does not understand" are
+different facts about the surface, and collapsing them would hide the second.
+Evidence/constraint: `openapiv2_operation` options appear on real RPCs.
+
 ## Discoveries
+
+- The parser reproduces the independent line-regex baseline exactly on all ten
+  measured dimensions. Two methods measuring the same number by different means
+  is the strongest evidence available here that neither is fabricating.
+- Acceptance A1 is met at exactly 147, not above it: every RPC in the file
+  carries exactly one `google.api.http` binding and there are no
+  `additional_bindings` anywhere in the approved universe. The ambiguity
+  machinery is therefore exercised only by synthetic fixtures, which is worth
+  stating plainly rather than implying real coverage.
 
 - The approved universe contains exactly two `.proto` files. The whole C-02b
   yield comes from `alphauslabs/blueapi` `billing/v1/billing.proto`;
