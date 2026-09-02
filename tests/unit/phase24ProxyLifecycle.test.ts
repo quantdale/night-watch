@@ -42,17 +42,43 @@ function closeServer(server: net.Server): Promise<void> {
   return new Promise((resolve) => server.close(() => resolve()));
 }
 
-async function waitForLeaseFile(file: string): Promise<void> {
-  for (let attempt = 0; attempt < 100; attempt += 1) {
-    if (fs.existsSync(file)) return;
-    await new Promise<void>((resolve) => setTimeout(resolve, 10));
-  }
-  throw new Error('PHASE24_LEASE_CHILD_START_TIMEOUT');
+// LIVENESS guards, not correctness thresholds. Nothing asserted in this suite
+// depends on how quickly a child starts or exits, so these bounds exist only so
+// a hung child fails its own test instead of hanging the suite. The previous
+// 1s/2s deadlines were load-sensitive: they encoded an assumption about machine
+// speed into a result that is supposed to be about repository content.
+const CHILD_LIVENESS_BUDGET_MS = 60_000;
+
+/**
+ * Wait for the child to SAY it is ready, rather than polling the filesystem
+ * against a deadline. The readiness marker is emitted after the lease file
+ * exists, so the observable event carries the same guarantee without the timing
+ * assumption.
+ */
+function waitForChildReady(child: ChildProcess): Promise<void> {
+  return new Promise((resolve, reject) => {
+    let seen = '';
+    const timer = setTimeout(() => finish(new Error('PHASE24_LEASE_CHILD_READY_TIMEOUT')), CHILD_LIVENESS_BUDGET_MS);
+    const onData = (chunk: unknown) => {
+      seen += String(chunk);
+      if (seen.includes('PHASE24_CHILD_READY')) finish();
+    };
+    const onExit = (code: number | null) => finish(new Error(`PHASE24_LEASE_CHILD_EXITED_BEFORE_READY_${String(code)}`));
+    function finish(error?: Error) {
+      clearTimeout(timer);
+      child.stdout?.off('data', onData);
+      child.off('exit', onExit);
+      if (error) reject(error); else resolve();
+    }
+    child.stdout?.on('data', onData);
+    child.on('exit', onExit);
+  });
 }
 
 function waitForExit(child: ChildProcess): Promise<void> {
   return new Promise((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error('PHASE24_LEASE_CHILD_EXIT_TIMEOUT')), 2_000);
+    if (child.exitCode !== null || child.signalCode !== null) { resolve(); return; }
+    const timer = setTimeout(() => reject(new Error('PHASE24_LEASE_CHILD_EXIT_TIMEOUT')), CHILD_LIVENESS_BUDGET_MS);
     child.once('exit', () => {
       clearTimeout(timer);
       resolve();
@@ -143,6 +169,7 @@ test.describe('Phase 24 adversarial proxy lease lifecycle', () => {
       "const port=Number(process.argv[2]);",
       "fs.mkdirSync(path.dirname(file),{recursive:true,mode:0o700});",
       "fs.writeFileSync(file,JSON.stringify({schemaVersion:'nightwatch.proxy-port-lease.v1',pid:process.pid,port,token:'c'.repeat(24)}),{mode:0o600});",
+      "process.stdout.write('PHASE24_CHILD_READY\\n');",
       "process.on('SIGTERM',()=>process.exit(0));",
       "process.on('SIGINT',()=>process.exit(0));",
       "setInterval(()=>{},1000);",
@@ -154,9 +181,9 @@ test.describe('Phase 24 adversarial proxy lease lifecycle', () => {
       const preferred = 21800 + index * 64;
       const file = proxyLeaseFileForTest(preferred);
       try { fs.unlinkSync(file); } catch { /* stale scratch cleanup is bounded */ }
-      const child = spawn(process.execPath, ['-e', childScript, file, String(preferred)], { stdio: 'ignore' });
+      const child = spawn(process.execPath, ['-e', childScript, file, String(preferred)], { stdio: ['ignore', 'pipe', 'ignore'] });
       try {
-        await waitForLeaseFile(file);
+        await waitForChildReady(child);
         const orphanRecord = JSON.parse(fs.readFileSync(file, 'utf8'));
         expect(orphanRecord.schemaVersion).toBe(PROXY_PORT_LEASE_SCHEMA);
         expect(orphanRecord.pid).toBe(child.pid);

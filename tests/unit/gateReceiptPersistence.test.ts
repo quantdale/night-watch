@@ -33,6 +33,44 @@ function scratch(prefix: string): string {
   return fs.mkdtempSync(path.join(os.tmpdir(), `nightwatch-r11-${prefix}-`));
 }
 
+/**
+ * A MINIMAL, explicit environment for a spawned gate.
+ *
+ * Spawning with `{ ...process.env }` inherits whatever the ~2,000 preceding
+ * tests in this worker left behind — and several of them legitimately mutate
+ * `process.env` (`ensureProxyPortLease` sets the proxy lease variables and does
+ * not unset them). That made these cases pass in isolation and fail inside the
+ * full compatibility run, with a second unexpected line on the child's stderr.
+ *
+ * A test that spawns a process must control that process's inputs. This is the
+ * same lesson as the port lottery R-11 removed: uncontrolled ambient input
+ * makes a result say nothing about the code.
+ */
+function minimalGateEnvironment(receiptPath: string): NodeJS.ProcessEnv {
+  const environment: NodeJS.ProcessEnv = {
+    PATH: process.env.PATH,
+    HOME: process.env.HOME,
+    TZ: 'UTC',
+    LC_ALL: 'C',
+    LANG: 'C',
+    NO_COLOR: '1',
+    [GATE_RECEIPT_PATH_ENV]: receiptPath,
+  };
+  // Honour the host's temporary root so confinement resolves the same way the
+  // gate would resolve it for any other caller.
+  for (const key of ['TMPDIR', 'TMP', 'TEMP'] as const) {
+    if (process.env[key] !== undefined) environment[key] = process.env[key];
+  }
+  return environment;
+}
+
+/** Exactly one stderr line, reported verbatim when it is not. */
+function soleStderrLine(stderr: string | null | undefined): string {
+  const lines = (stderr ?? '').split(/\r?\n/).filter((line) => line.trim() !== '');
+  expect(lines, `expected exactly one stderr line, got ${JSON.stringify(stderr)}`).toHaveLength(1);
+  return lines[0] as string;
+}
+
 function syntheticReceipt(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     schemaVersion: RECEIPT_SCHEMA,
@@ -61,12 +99,55 @@ function syntheticReceipt(overrides: Record<string, unknown> = {}): Record<strin
 }
 
 test.describe('R-11 receipt destination confinement', () => {
-  test('a permitted temporary root always exists and the repository is never one', () => {
+  test('a permitted temporary root always exists and is absolute', () => {
     const roots = gateReceiptPermittedRoots({});
     expect(roots.length).toBeGreaterThan(0);
     for (const root of roots) {
       expect(path.isAbsolute(root)).toBe(true);
-      expect(fs.realpathSync(ROOT).startsWith(root === path.sep ? root : `${root}${path.sep}`)).toBe(false);
+      expect(fs.statSync(root).isDirectory()).toBe(true);
+    }
+  });
+
+  test('the inside-repository refusal is decided BEFORE confinement, because a clean checkout lives inside a permitted root', () => {
+    // The clean-checkout gate clones into os.tmpdir(), so in that topology the
+    // repository IS inside a permitted root and confinement alone would admit
+    // a destination in the tracked tree. The inside-repository refusal is
+    // therefore the only thing standing between a receipt and a tracked file
+    // there, and it must be evaluated first. (An earlier version of this suite
+    // asserted the opposite — that the repository is never inside a permitted
+    // root — and the clean Node 20 gate correctly falsified it.)
+    const roots = gateReceiptPermittedRoots({});
+    const clone = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-r11-as-if-clean-checkout-'));
+    try {
+      const insidePermittedRoot = roots.some((root) => fs.realpathSync(clone).startsWith(`${root}${path.sep}`));
+      expect(insidePermittedRoot).toBe(true);
+      const target = resolveGateReceiptTarget({
+        environment: { [GATE_RECEIPT_PATH_ENV]: path.join(clone, 'gate-receipt.json') },
+        repositoryRoot: clone,
+        mode: 'clean',
+        gitHead: 'a'.repeat(40),
+      });
+      // Confined, and still refused.
+      expect(target.error).toBe('GATE_RECEIPT_PATH_INSIDE_REPOSITORY');
+      expect(target.file).toBeUndefined();
+      // A sibling directory outside the repository but inside the same
+      // permitted root is accepted, so the refusal is about the repository and
+      // not about the root.
+      const sibling = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-r11-outside-checkout-'));
+      try {
+        const accepted = resolveGateReceiptTarget({
+          environment: { [GATE_RECEIPT_PATH_ENV]: path.join(sibling, 'gate-receipt.json') },
+          repositoryRoot: clone,
+          mode: 'clean',
+          gitHead: 'a'.repeat(40),
+        });
+        expect(accepted.error).toBeUndefined();
+        expect(accepted.origin).toBe('EXPLICIT');
+      } finally {
+        fs.rmSync(sibling, { recursive: true, force: true });
+      }
+    } finally {
+      fs.rmSync(clone, { recursive: true, force: true });
     }
   });
 
@@ -317,22 +398,42 @@ test.describe('R-11 atomic persistence and fail-closed reads', () => {
 });
 
 test.describe('R-11 the gate itself persists its receipt', () => {
-  // These spawn the REAL authoritative gate. The Node-major mismatch path is
-  // used deliberately: it is a genuine gate refusal that produces a genuine
-  // receipt without spending several minutes of test time, and an environment
-  // rejection is exactly the sort of result worth persisting.
-  const mismatchMode = Number(process.versions.node.split('.')[0]) === 20 ? null : 'ci';
+  /**
+   * A minimal root holding the REAL gate and its REAL definition, but no
+   * `package-lock.json`. The gate then reaches `ENVIRONMENT_MISMATCH` on ANY
+   * Node major, which is a genuine refusal producing a genuine receipt without
+   * spending several minutes of test time — and an environment rejection is
+   * exactly the sort of result worth persisting.
+   *
+   * This deliberately does NOT depend on the host's Node version. An earlier
+   * version keyed off `process.versions.node !== 20` and skipped under Node 20,
+   * which introduced a new skipped test in the clean and CI topologies — the
+   * one thing R-11 must not do.
+   */
+  function minimalGateRoot(): string {
+    const directory = scratch('gate-root');
+    fs.mkdirSync(path.join(directory, 'bin', 'lib'), { recursive: true });
+    fs.mkdirSync(path.join(directory, 'config'), { recursive: true });
+    for (const file of ['quality-gate.mjs', 'quality-gate-spec.mjs', 'child-environment.mjs']) {
+      fs.copyFileSync(path.join(ROOT, 'bin', file), path.join(directory, 'bin', file));
+    }
+    for (const file of fs.readdirSync(path.join(ROOT, 'bin', 'lib'))) {
+      fs.copyFileSync(path.join(ROOT, 'bin', 'lib', file), path.join(directory, 'bin', 'lib', file));
+    }
+    fs.copyFileSync(path.join(ROOT, 'config', 'quality-gate.v1.json'), path.join(directory, 'config', 'quality-gate.v1.json'));
+    return directory;
+  }
 
   test('an unsafe receipt destination is refused BEFORE any group runs', () => {
     const started = Date.now();
     const result = spawnSync(process.execPath, [GATE, 'local'], {
       cwd: ROOT,
       encoding: 'utf8',
-      env: { ...process.env, [GATE_RECEIPT_PATH_ENV]: path.join(ROOT, 'gate-receipt.json') },
+      env: minimalGateEnvironment(path.join(ROOT, 'gate-receipt.json')),
       timeout: 120_000,
     });
     expect(result.status).toBe(2);
-    expect(JSON.parse((result.stderr ?? '').trim())).toEqual({ status: 'CONFIG_INVALID', code: 'GATE_RECEIPT_PATH_INSIDE_REPOSITORY' });
+    expect(JSON.parse(soleStderrLine(result.stderr))).toEqual({ status: 'CONFIG_INVALID', code: 'GATE_RECEIPT_PATH_INSIDE_REPOSITORY' });
     expect(result.stdout ?? '').toBe('');
     // Refused before running anything: the STATIC group alone takes far longer
     // than this. The bound is loose on purpose — the claim is "no groups ran",
@@ -342,14 +443,14 @@ test.describe('R-11 the gate itself persists its receipt', () => {
   });
 
   test('the persisted receipt is byte-identical to stdout, and stdout scraping can no longer be trusted over it', () => {
-    test.skip(mismatchMode === null, 'requires a Node major other than the gate-required 20 to reach the fast refusal path');
     const directory = scratch('gate-run');
+    const gateRoot = minimalGateRoot();
     try {
       const file = path.join(directory, 'gate.json');
-      const result = spawnSync(process.execPath, [GATE, mismatchMode as string], {
-        cwd: ROOT,
+      const result = spawnSync(process.execPath, [path.join(gateRoot, 'bin', 'quality-gate.mjs'), 'local'], {
+        cwd: gateRoot,
         encoding: 'utf8',
-        env: { ...process.env, [GATE_RECEIPT_PATH_ENV]: file },
+        env: minimalGateEnvironment(file),
         timeout: 120_000,
       });
       // A refused environment is still a receipt, and still persisted.
@@ -377,6 +478,7 @@ test.describe('R-11 the gate itself persists its receipt', () => {
       expect(fs.readFileSync(file, 'utf8')).toBe(stdout);
     } finally {
       fs.rmSync(directory, { recursive: true, force: true });
+      fs.rmSync(gateRoot, { recursive: true, force: true });
     }
   });
 

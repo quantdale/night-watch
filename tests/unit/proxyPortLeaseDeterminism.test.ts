@@ -89,22 +89,47 @@ const LEASE_CHILD_SCRIPT = [
   'const port=Number(process.argv[2]);',
   'fs.mkdirSync(path.dirname(file),{recursive:true,mode:0o700});',
   "fs.writeFileSync(file,JSON.stringify({schemaVersion:'nightwatch.proxy-port-lease.v1',pid:process.pid,port,token:'c'.repeat(24)}),{mode:0o600});",
+  // Signal readiness EXPLICITLY, after the lease exists. The parent then waits
+  // for an observable event instead of polling the filesystem against a
+  // deadline, so no assertion depends on how quickly a child starts.
+  "process.stdout.write('R11_CHILD_READY\\n');",
   "process.on('SIGTERM',()=>process.exit(0));",
   "process.on('SIGINT',()=>process.exit(0));",
   'setInterval(()=>{},1000);',
 ].join('');
 
-async function waitForFile(file: string): Promise<void> {
-  for (let attempt = 0; attempt < 200; attempt += 1) {
-    if (fs.existsSync(file)) return;
-    await new Promise<void>((resolve) => setTimeout(resolve, 10));
-  }
-  throw new Error('R11_LEASE_CHILD_START_TIMEOUT');
+// The bounds below are LIVENESS guards, not correctness thresholds: they exist
+// so a hung child fails its own test instead of hanging the suite. Nothing
+// asserted here depends on the elapsed time, which is why they are generous.
+// A short deadline in this position was load-sensitive — it failed once under
+// the clean gate's load and passed otherwise, which is precisely the kind of
+// result that carries no information about the code.
+const CHILD_LIVENESS_BUDGET_MS = 60_000;
+
+function waitForChildReady(child: ReturnType<typeof spawn>): Promise<void> {
+  return new Promise((resolve, reject) => {
+    let seen = '';
+    const timer = setTimeout(() => finish(new Error('R11_LEASE_CHILD_READY_TIMEOUT')), CHILD_LIVENESS_BUDGET_MS);
+    const onData = (chunk: unknown) => {
+      seen += String(chunk);
+      if (seen.includes('R11_CHILD_READY')) finish();
+    };
+    const onExit = (code: number | null) => finish(new Error(`R11_LEASE_CHILD_EXITED_BEFORE_READY_${String(code)}`));
+    function finish(error?: Error) {
+      clearTimeout(timer);
+      child.stdout?.off('data', onData);
+      child.off('exit', onExit);
+      if (error) reject(error); else resolve();
+    }
+    child.stdout?.on('data', onData);
+    child.on('exit', onExit);
+  });
 }
 
 function waitForExit(child: ReturnType<typeof spawn>): Promise<void> {
   return new Promise((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error('R11_LEASE_CHILD_EXIT_TIMEOUT')), 5_000);
+    if (child.exitCode !== null || child.signalCode !== null) { resolve(); return; }
+    const timer = setTimeout(() => reject(new Error('R11_LEASE_CHILD_EXIT_TIMEOUT')), CHILD_LIVENESS_BUDGET_MS);
     child.once('exit', () => { clearTimeout(timer); resolve(); });
   });
 }
@@ -407,7 +432,7 @@ test.describe('R-11 ownership, release and concurrency', () => {
       }
       const ports = await Promise.all(children.map((child) => new Promise<number>((resolve, reject) => {
         let out = '';
-        const timer = setTimeout(() => reject(new Error('R11_PARALLEL_CHILD_TIMEOUT')), 60_000);
+        const timer = setTimeout(() => reject(new Error('R11_PARALLEL_CHILD_TIMEOUT')), CHILD_LIVENESS_BUDGET_MS);
         child.stdout?.on('data', (chunk) => {
           out += String(chunk);
           const match = /R11_LEASE_PORT=(\d+)/.exec(out);
@@ -432,9 +457,10 @@ test.describe('R-11 child lifecycle and signal reclamation', () => {
     const preferred = BAND.childDeath;
     clearBand(preferred);
     const file = proxyLeaseFileForTest(preferred);
-    const child = spawn(process.execPath, ['-e', LEASE_CHILD_SCRIPT, file, String(preferred)], { stdio: 'ignore' });
+    const child = spawn(process.execPath, ['-e', LEASE_CHILD_SCRIPT, file, String(preferred)], { stdio: ['ignore', 'pipe', 'ignore'] });
     try {
-      await waitForFile(file);
+      await waitForChildReady(child);
+      expect(fs.existsSync(file)).toBe(true);
       child.kill('SIGKILL');
       await waitForExit(child);
       const lease = reserveProxyPortLeaseWithAvailabilityForTest({ preferredPort: preferred, available: ALWAYS_AVAILABLE });
@@ -456,9 +482,10 @@ test.describe('R-11 child lifecycle and signal reclamation', () => {
       const preferred = BAND.signals + index * 20;
       clearBand(preferred);
       const file = proxyLeaseFileForTest(preferred);
-      const child = spawn(process.execPath, ['-e', LEASE_CHILD_SCRIPT, file, String(preferred)], { stdio: 'ignore' });
+      const child = spawn(process.execPath, ['-e', LEASE_CHILD_SCRIPT, file, String(preferred)], { stdio: ['ignore', 'pipe', 'ignore'] });
       try {
-        await waitForFile(file);
+        await waitForChildReady(child);
+        expect(fs.existsSync(file)).toBe(true);
         child.kill(signal);
         await waitForExit(child);
         expect(isProcessAliveForTest(child.pid as number)).toBe(false);
@@ -476,8 +503,8 @@ test.describe('R-11 child lifecycle and signal reclamation', () => {
         // And with the SAME orphan state but the endpoint occupied, advancing is
         // the CORRECT outcome — the exact case the previous assertion called a
         // failure (OBS-C105-1).
-        const child2 = spawn(process.execPath, ['-e', LEASE_CHILD_SCRIPT, file, String(preferred)], { stdio: 'ignore' });
-        await waitForFile(file);
+        const child2 = spawn(process.execPath, ['-e', LEASE_CHILD_SCRIPT, file, String(preferred)], { stdio: ['ignore', 'pipe', 'ignore'] });
+        await waitForChildReady(child2);
         child2.kill(signal);
         await waitForExit(child2);
         const advanced = reserveProxyPortLeaseWithAvailabilityForTest({
