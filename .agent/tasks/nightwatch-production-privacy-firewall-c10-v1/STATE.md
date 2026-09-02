@@ -4,18 +4,18 @@
 
 Task ID: nightwatch-production-privacy-firewall-c10-v1
 Phase: PRODUCTION_PRIVACY_FIREWALL_C10_V1
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: a152889a71eec6c67d82b05e5984df6423fe88d4
 Branch: session/nightwatch-production-privacy-fi-5af2d530
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: a152889a71eec6c67d82b05e5984df6423fe88d4
-LAST_VALIDATED_IMPLEMENTATION_SHA: 69de7752ca92dc9c01f971e1c2e7d7efcb4569eb
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 69de7752ca92dc9c01f971e1c2e7d7efcb4569eb
-LAST_DOCUMENTATION_CHECKPOINT_SHA: da551f0b875fe46acd8a6a9d64f9b16b07ce0734
+LAST_VALIDATED_IMPLEMENTATION_SHA: 23523cc743c77b2250738caa980c218dab8671bb
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 23523cc743c77b2250738caa980c218dab8671bb
+LAST_DOCUMENTATION_CHECKPOINT_SHA: 1234dafd269079de842d138bef86438609a445db
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PROJECT_VERDICT_EFFECT: PRESERVE
-PHASE_PRODUCTION_PRIVACY_FIREWALL_C10_V1_STATUS: IN_PROGRESS
+PHASE_PRODUCTION_PRIVACY_FIREWALL_C10_V1_STATUS: COMPLETE
 
 ## Objective
 
@@ -28,10 +28,9 @@ F-15 digest confusion and the F-18 Control Center exposure.
 
 ## Current Milestone
 
-M12 — DEF-C10-5 repair. C-10 was REOPENED after closure: a review pass found
-that `routeTemplate`, the one free-form string the evidence DTO persists, was
-validated by `ROUTE_TEMPLATE_RE` alone, which cannot distinguish a literal path
-segment from a concrete customer identifier. M0 through M11 remain closed.
+COMPLETE / STOP — M0 through M12 are closed. C-10 was reopened once after an
+apparently clean closure, because a review pass found DEF-C10-5; the repair is
+validated locally, on the clean Node 20 gate, and by a fresh exact-head CI run.
 
 ## Completed Milestones
 
@@ -93,9 +92,8 @@ segment from a concrete customer identifier. M0 through M11 remain closed.
 
 ## Work In Progress
 
-M12 — the DEF-C10-5 route-provenance repair is implemented and the C-10 suites
-are green at 93 tests. Remaining: full revalidation, integration and a fresh
-exact-head GitHub Actions result.
+None. The DEF-C10-5 repair is implemented, fully revalidated, integrated and
+CI-green.
 
 ## Files Changed
 
@@ -131,6 +129,7 @@ exact-head GitHub Actions result.
 | M12 | complete canonical Playwright regression | 2,932 total / 2,919 passed / 13 skipped / 0 failed (2,920 -> 2,932; delta is exactly the 12 new cases) |
 | M12 | `npm run gate:local` @ `23523cc743c77b2250738caa980c218dab8671bb` | PASS, all eleven groups, `receipt:sha256:e9b6be885532544ed7233a02` |
 | M12 | `npm run gate:clean` @ `23523cc743c77b2250738caa980c218dab8671bb` | PASS, Node 20, all eleven groups, `clean-receipt:sha256:6a1d1bc5870510c0b4dfedfe`, `siblingWrites: 0` |
+| M12 | exact-head GitHub Actions run `33600603779` / job `100153229914` @ `1234dafd269079de842d138bef86438609a445db` | PASS — Node 20, `environmentClass: CI`, all eleven required groups PASS, `receipt:sha256:aecae84fb070b89734a6efc0`, `SYNTHETIC_CAMPAIGN` 221/221 |
 | M11 | exact-head GitHub Actions run `33597262624` / job `100143115528` @ `da551f0b875fe46acd8a6a9d64f9b16b07ce0734` | PASS — Node 20, `environmentClass: CI`, all eleven required groups PASS, `receipt:sha256:2adf16776476b94f87e8c87c` |
 
 ## Decisions Made During This Task
@@ -151,10 +150,11 @@ Full reasoning and evidence are in `PLAN.md` `## Decision Log`.
 
 ## Exact Next Action
 
-Re-run the full §21 validation battery for the DEF-C10-5 repair, integrate
-through the C-00 session mechanism, and obtain a fresh exact-head GitHub
-Actions result. F-16 must NOT be recorded as resolved, and C-10 must NOT be
-recorded as COMPLETE, until that closes.
+STOP — C-10 is complete. Release the session worktree and fast-forward the
+canonical checkout. Do NOT begin another campaign in this task. C-10 completing
+does NOT authorize production observation; the next critical-path campaign is
+C-11, the `PROD_OBSERVE` safety kernel, which requires its own explicit owner
+authorization and its own task directory.
 
 ## Blockers
 
@@ -280,23 +280,26 @@ authorization and its own task directory.
 ## Completion Snapshot
 
 - **Starting SHA:** `a152889a71eec6c67d82b05e5984df6423fe88d4`
-- **Substantive implementation SHA (local + clean gates):** `69de7752ca92dc9c01f971e1c2e7d7efcb4569eb`
-- **Integrated substantive checkpoint (exact-head CI validated):** `da551f0b875fe46acd8a6a9d64f9b16b07ce0734`
-- **Exact-head CI:** run `33597262624` / job `100143115528` at `da551f0b`,
-  Node 20, `environmentClass: CI`, PASS, all eleven required groups PASS,
-  `receipt:sha256:2adf16776476b94f87e8c87c`
-- **Local gate:** PASS @ `69de7752`, `receipt:sha256:531bf12aa22c7da419bedf92`
-- **Clean Node 20 gate:** PASS @ `69de7752`,
-  `clean-receipt:sha256:ebe45a42352d5621b20c1036`, `siblingWrites: 0`
-- **Canonical regression:** 2,920 total / 2,907 passed / 13 skipped / 0 failed
-  (baseline 2,839 / 2,826 / 13 / 0; delta is exactly the 81 new C-10 cases)
-- **Synthetic campaign:** 14 files, 209/209, `deepContainmentLane: PROVEN`
-- **C-10 suites:** 81 tests in 2 files, 81 passed
+- **Substantive implementation SHA (local + clean gates):** `23523cc743c77b2250738caa980c218dab8671bb`
+- **Documentation checkpoint (exact-head CI validated):** `1234dafd269079de842d138bef86438609a445db`
+- **Exact-head CI (final):** run `33600603779` / job `100153229914` at
+  `1234dafd`, Node 20, `environmentClass: CI`, PASS, all eleven required groups
+  PASS, `receipt:sha256:aecae84fb070b89734a6efc0`
+- **Exact-head CI (pre-repair, historical):** run `33597262624` / job
+  `100143115528` at `da551f0b`, PASS — green, but the campaign was NOT actually
+  complete at that point; DEF-C10-5 was still open and certified by a test
+- **Local gate:** PASS @ `23523cc`, `receipt:sha256:e9b6be885532544ed7233a02`
+- **Clean Node 20 gate:** PASS @ `23523cc`,
+  `clean-receipt:sha256:6a1d1bc5870510c0b4dfedfe`, `siblingWrites: 0`
+- **Canonical regression:** 2,932 total / 2,919 passed / 13 skipped / 0 failed
+  (baseline 2,839 / 2,826 / 13 / 0; delta is exactly the 93 new C-10 cases)
+- **Synthetic campaign:** 14 files, 221/221, `deepContainmentLane: PROVEN`
+- **C-10 suites:** 93 tests in 2 files, 93 passed
 - **Sentinel corpus:** zero sentinel bytes under any permitted root; non-vacuous
   per channel; sweep proven capable of failing
 - **Persistence audit:** CLEAN, zero violations, bounded counts
 - **Import isolation:** PASS, and the hardening rule proven non-vacuous
-- **Defects:** DEF-C10-1 through DEF-C10-4, all FIXED
+- **Defects:** DEF-C10-1 through DEF-C10-6, all FIXED. DEF-C10-5 was found by review AFTER an apparently clean CI-green closure and is the most serious of them; DEF-C10-6 was a vacuous hardening rule guarding that very fix
 - **Safety:** no test or safety authority weakened; C-06 untouched; zero
   DEV/NEXT/production contact; zero credential inspection; zero
   sibling-repository writes; C-11 not started

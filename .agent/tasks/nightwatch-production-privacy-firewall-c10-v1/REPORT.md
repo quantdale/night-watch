@@ -4,11 +4,11 @@ Task: nightwatch-production-privacy-firewall-c10-v1
 
 Campaign: C-10 — Production Privacy Firewall
 
-Status: IN_PROGRESS — reopened for the DEF-C10-5 route-provenance repair
+Status: COMPLETE
 
 Starting SHA: `a152889a71eec6c67d82b05e5984df6423fe88d4`
-Validated implementation SHA: `69de7752ca92dc9c01f971e1c2e7d7efcb4569eb`
-Documentation checkpoint SHA: `da551f0b875fe46acd8a6a9d64f9b16b07ce0734`
+Validated implementation SHA: `23523cc743c77b2250738caa980c218dab8671bb`
+Documentation checkpoint SHA: `1234dafd269079de842d138bef86438609a445db`
 
 C-10 completing does NOT authorize production observation. It creates the
 privacy prerequisite required by the later production kernel. The production
@@ -20,18 +20,20 @@ critical path remains C-11 -> C-12 -> C-13 -> C-14, and C-11 was not started.
 |---|---|
 | Starting SHA (`origin/main` at campaign start) | `a152889a71eec6c67d82b05e5984df6423fe88d4` |
 | Predecessor | `nightwatch-exact-head-ci-baseline-repair-v1`, COMPLETE at `b99ce4e61166e52b554dd6ac07b7678b433959da` |
-| Substantive implementation SHA (locally and clean-gate validated) | `69de7752ca92dc9c01f971e1c2e7d7efcb4569eb` |
-| Integrated `origin/main` | `da551f0b875fe46acd8a6a9d64f9b16b07ce0734` |
+| Substantive implementation SHA (locally and clean-gate validated) | `23523cc743c77b2250738caa980c218dab8671bb` |
+| Integrated `origin/main` | `1234dafd269079de842d138bef86438609a445db` |
+| Pre-repair implementation (historical) | `69de7752ca92dc9c01f971e1c2e7d7efcb4569eb`, CI-green at `da551f0b` — but the campaign was NOT complete there: DEF-C10-5 was open and test-certified |
 | Session branch | `session/nightwatch-production-privacy-fi-5af2d530` |
-| Exact-head GitHub Actions | run `33597262624` / job `100143115528` at `da551f0b875fe46acd8a6a9d64f9b16b07ce0734` — **PASS**, Node 20, `environmentClass: CI`, all eleven required groups PASS, `receipt:sha256:2adf16776476b94f87e8c87c` |
+| Exact-head GitHub Actions (final) | run `33600603779` / job `100153229914` at `1234dafd269079de842d138bef86438609a445db` — **PASS**, Node 20, `environmentClass: CI`, all eleven required groups PASS, `receipt:sha256:aecae84fb070b89734a6efc0` |
+| Exact-head GitHub Actions (pre-repair, historical) | run `33597262624` / job `100143115528` at `da551f0b` — PASS, `receipt:sha256:2adf16776476b94f87e8c87c`. Green CI did not mean complete. |
 
 ## 2. Local and clean receipts
 
 | Gate | Head | Result |
 |---|---|---|
-| `gate:local` (Node 22) | `69de7752` | PASS, all eleven groups, `receipt:sha256:531bf12aa22c7da419bedf92` |
-| `gate:clean` (Node 20, fresh clone, `npm ci`) | `69de7752` | PASS, all eleven groups, `clean-receipt:sha256:ebe45a42352d5621b20c1036`, gate `receipt:sha256:8b79ac2ebd9718766e95a379`, `siblingWrites: 0` |
-| `gate:ci` exact-head GitHub Actions | `da551f0b` | PASS, all eleven groups, `receipt:sha256:2adf16776476b94f87e8c87c` |
+| `gate:local` (Node 22) | `23523cc` | PASS, all eleven groups, `receipt:sha256:e9b6be885532544ed7233a02` |
+| `gate:clean` (Node 20, fresh clone, `npm ci`) | `23523cc` | PASS, all eleven groups, `clean-receipt:sha256:6a1d1bc5870510c0b4dfedfe`, `siblingWrites: 0` |
+| `gate:ci` exact-head GitHub Actions | `1234dafd` | PASS, all eleven groups, `receipt:sha256:aecae84fb070b89734a6efc0` |
 
 `GATE_DEFINITION`, `STATIC`, `HARDENING`, `HANDOFF_TRUTH`, `PROJECT_TRUTH`,
 `AGENT_CONTINUITY`, `SEMANTIC_COMPATIBILITY`, `OWNER_PROVENANCE`,
@@ -42,12 +44,12 @@ both gates.
 
 | Metric | Baseline (predecessor) | C-10 |
 |---|---|---|
-| Canonical Playwright regression | 2,839 total / 2,826 passed / 13 skipped / 0 failed | **2,920 total / 2,907 passed / 13 skipped / 0 failed** |
-| Synthetic campaign | 12 files / 128 cases | **14 files / 209 cases**, `deepContainmentLane: PROVEN` |
+| Canonical Playwright regression | 2,839 total / 2,826 passed / 13 skipped / 0 failed | **2,932 total / 2,919 passed / 13 skipped / 0 failed** |
+| Synthetic campaign | 12 files / 128 cases | **14 files / 221 cases**, `deepContainmentLane: PROVEN` |
 | Semantic compatibility | — | 1,967 total / 1,954 passed / 13 skipped / 0 failed |
-| C-10 suites | — | **81 tests in 2 files, 81 passed** |
+| C-10 suites | — | **93 tests in 2 files, 93 passed** |
 
-The regression delta is exactly the 81 new C-10 cases. The pre-existing skip
+The regression delta is exactly the 93 new C-10 cases. The pre-existing skip
 count is unchanged at 13; no skip was added, and no test was removed.
 
 ## 4. Defects discovered and disposition
@@ -57,6 +59,8 @@ count is unchanged at 13; no skip was added, and no test was removed.
 | DEF-C10-1 | A projected node could carry a field belonging to a DIFFERENT node type. The canonical writer switched on `node.type` and wrote only that type's fields, so an ARRAY-only field grafted onto an OBJECT node was silently ignored — the recomputed structural digest still MATCHED and the persistence firewall accepted the tampered structure. Found by the digest-privacy tamper case, not by review. | **FIXED** — exact per-type field sets (`PRODUCTION_NODE_FIELDS_BY_TYPE` and its evidence-form counterpart) validated on both boundaries, pinned by a named regression case. |
 | DEF-C10-2 | The first non-vacuity assertion over-claimed: it required the raw JSON body to contain the console and thrown-exception sentinels, which are planted in different channels. | **FIXED** — the corpus is split into `BODY_SENTINELS` and `CHANNEL_SENTINELS` and each is proven to enter its OWN channel. No absence assertion was weakened; all sentinels are still swept for everywhere. |
 | DEF-C10-3 | The new hardening capability pattern matched `regex.exec(`, which is not a process capability. | **FIXED** — negative lookbehind so only a bare global matches; the call site was also rewritten to `matchAll`. Rule then verified non-vacuous against a real `node:fs` import. |
+| DEF-C10-5 | **The most serious defect of the campaign, and it was found by review AFTER an apparently clean, CI-green closure.** `routeTemplate` is the one free-form string the evidence DTO persists, and it was validated by `ROUTE_TEMPLATE_RE` alone. A literal path segment matches `[A-Za-z0-9._~-]+`, so the regex cannot distinguish `accounts` from `481516234299`. Verified empirically: `GET /v1/accounts/481516234299`, `GET /v1/invoices/INV-2026-000731-SENTINEL` and `GET /v1/billing/groups/bg-SENTINEL-8812` were all ACCEPTED — two of them members of the campaign's own sentinel set. A concrete customer identifier could therefore reach persisted production evidence. A C-10 test CERTIFIED this with `.not.toThrow()`, the same defect shape the campaign had re-scoped out of `phase10Privacy.test.ts`. Three checks missed it: the sentinel corpus planted query and path parameters as BODY values rather than in the route-identity position; the audit's route rule matched only `?` and `&`; and `assertNoConcreteParameterValue` screened only `?`, `#` and `&`. | **FIXED** — route identity is now exact-set membership in a source-proven route vocabulary (`routeVocabulary.ts`), injected call-scoped with a `NO_PROVEN_ROUTE_VOCABULARY` sentinel so omission is a type error; the regex is demoted to a documented vocabulary precondition. A route has no safe structural reduction, so unproven provenance denies persistence outright. Enforced at construction, the durable write (the store holds the vocabulary; the firewall holds none) and the audit. The certifying assertion is flipped, with a case per sentinel class in the path position plus a non-vacuity case proving those strings are shape-valid. |
+| DEF-C10-6 | The first hardening rule guarding DEF-C10-5 was itself vacuous: it matched the bare identifier `assertSourceProvenRoute`, which also matches the IMPORT line, so deleting the actual call still PASSED. | **FIXED** — the rule now requires the call bound to its injected vocabulary, and TWO removal probes (evidence call, store call) each fail closed. Caught by running the probe instead of trusting the rule. |
 | DEF-C10-4 | Five C-10 acceptance cases were Node-version dependent: a dynamic `await import()` of a TypeScript path resolves differently across Node majors, so the clean Node 20 gate failed cases that pass under Node 22. Production code was correct; the TESTS carried a loader assumption. | **FIXED** — converted to static imports, the idiom every other suite uses, holding in both topologies. Assertions byte-identical. Caught before integration rather than in CI. |
 
 ## 5. Before / after projection contract
@@ -183,6 +187,32 @@ refuses any directory this module did not name. Stale profile residue is a
 first-class violation class in the persistence audit. No real production
 browser was launched.
 
+## 11a. Route identity (F-16, DEF-C10-5)
+
+A retained route identity is a PROVEN MEMBER of a source-proven finite route
+vocabulary, never a shape-matched string. This is the same rule as F-14 applied
+to the one place the original implementation left syntactic, and the reason it
+matters is concrete: `ROUTE_TEMPLATE_RE` accepted
+`GET /v1/accounts/481516234299`.
+
+`ProvenRouteVocabulary` carries a bounded finite template set, a provenance
+class (`SOURCE_PROVEN_OPENAPI_OPERATION` — C-02a's 814 admitted operations are
+the practical source — `SOURCE_PROVEN_PHP_ROUTE`, or
+`SOURCE_PROVEN_FIXED_CONTRACT`) and an `ev:sha256` provenance digest.
+Membership is exact-set, so no syntactic judgement about a route is made or
+accepted anywhere; the regex survives only as a precondition on what may enter
+a vocabulary, and its docstring says so explicitly.
+
+Unlike a dynamic object key, a route has no safe structural reduction — there
+is no "cardinality" of a route that preserves identity — so unproven
+provenance DENIES persistence rather than degrading. Enforcement is layered:
+`toProductionEvidence` asserts membership and records
+`routeProvenanceClass`/`routeProvenanceDigest`; the firewall independently
+requires that provenance be recorded and well-formed; the store re-checks
+MEMBERSHIP at the durable write, because the firewall holds no vocabulary and a
+store built without one refuses every write; and the persistence audit flags
+any persisted `routeTemplate` outside the proven set.
+
 ## 12. Parameter-provenance privacy model (F-16)
 
 Privacy model, validators and synthetic proof only — NO production request
@@ -209,6 +239,17 @@ handle is required.
 | E. Digest privacy | PASS — structural stability across runs, value insensitivity, dynamic-key-literal exclusion, source-proven-key significance, ephemeral tokens present in projection and absent from evidence, no persisted salt or low-entropy value hash, families not interchangeable, and tamper detection. |
 | Persistence audit | CLEAN — zero violations across every permitted root, with bounded counts; proven capable of detecting sentinels, screenshots, traces, storage state, console payloads, unsafe permissions and browser-profile residue. |
 
+## 13a. What green CI did not prove
+
+Worth recording plainly, because it is the campaign's main process lesson: the
+pre-repair head `da551f0b` passed exact-head CI with all eleven required groups
+and a clean persistence audit while DEF-C10-5 was open and test-certified. The
+gates were not defective — they measured exactly what they claim to measure.
+The corpus was: it planted path and query sentinels as BODY VALUES, a position
+where class B's generic stripping already guaranteed a pass, and never in the
+route-identity position, which is the only persisted field capable of holding
+them. A sentinel corpus proves only that the positions it plants are safe.
+
 ## 14. Confirmations
 
 - **No test or safety authority was weakened.** No `test.skip` was added; no
@@ -233,6 +274,11 @@ handle is required.
 
 ## 15. Remaining deferred work
 
+- **Sentinel-position coverage as a standing rule.** DEF-C10-5 argues that a
+  privacy corpus should enumerate every PERSISTED FIELD that can hold a
+  free-form string and plant a sentinel in each, rather than enumerating value
+  CLASSES and planting them wherever convenient. C-10's corpus now covers the
+  route field; a general position-coverage check is deferred.
 - **C-11 `PROD_OBSERVE` safety kernel** — must independently implement and
   prove the separate safety kernel and its ordered request gates against
   mock/synthetic production. C-10 creates the privacy prerequisite only and

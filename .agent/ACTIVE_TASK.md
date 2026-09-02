@@ -3,23 +3,23 @@
 Task ID: nightwatch-production-privacy-firewall-c10-v1
 Phase: PRODUCTION_PRIVACY_FIREWALL_C10_V1
 Title: C-10 Production Privacy Firewall
-Status: IN_PROGRESS
+Status: COMPLETE
 Task directory: .agent/tasks/nightwatch-production-privacy-firewall-c10-v1
 Starting SHA: a152889a71eec6c67d82b05e5984df6423fe88d4
-Last validated implementation SHA: 69de7752ca92dc9c01f971e1c2e7d7efcb4569eb
-Last checkpoint: C-10 was REOPENED after closure — DEF-C10-5 found that routeTemplate was validated by shape alone, so a concrete customer identifier could be persisted as a route template; the repair makes route identity a source-proven vocabulary membership and is green at 93 C-10 tests pending full revalidation
-Current milestone: M12 — DEF-C10-5 route-provenance repair (M0 through M11 remain closed)
-Next action: re-run the full validation battery for the DEF-C10-5 repair, integrate through the C-00 session mechanism, and obtain a fresh exact-head GitHub Actions result; F-16 must not be recorded as resolved and C-10 must not be recorded as COMPLETE until that closes
+Last validated implementation SHA: 23523cc743c77b2250738caa980c218dab8671bb
+Last checkpoint: exact-head GitHub run 33600603779 / job 100153229914 at 1234dafd passed all eleven required groups with receipt receipt:sha256:aecae84fb070b89734a6efc0 on Node 20 after the DEF-C10-5 route-provenance repair; local and clean Node 20 gates green at 23523cc and a 2,932-test canonical regression green with 0 failures
+Current milestone: COMPLETE / STOP — M0 through M12 are closed
+Next action: STOP — this campaign is complete; do not begin another campaign in this task, and do not run any implementation session in the canonical checkout. C-10 completing does NOT authorize production observation; the next critical-path campaign is C-11 PROD_OBSERVE, which requires its own explicit owner authorization
 Authorization class: NIGHTWATCH_PRODUCTION_PRIVACY_FIREWALL_C10_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: a152889a71eec6c67d82b05e5984df6423fe88d4
-LAST_VALIDATED_IMPLEMENTATION_SHA: 69de7752ca92dc9c01f971e1c2e7d7efcb4569eb
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 69de7752ca92dc9c01f971e1c2e7d7efcb4569eb
-LAST_DOCUMENTATION_CHECKPOINT_SHA: da551f0b875fe46acd8a6a9d64f9b16b07ce0734
+LAST_VALIDATED_IMPLEMENTATION_SHA: 23523cc743c77b2250738caa980c218dab8671bb
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 23523cc743c77b2250738caa980c218dab8671bb
+LAST_DOCUMENTATION_CHECKPOINT_SHA: 1234dafd269079de842d138bef86438609a445db
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
-PHASE_PRODUCTION_PRIVACY_FIREWALL_C10_V1_STATUS: IN_PROGRESS
+PHASE_PRODUCTION_PRIVACY_FIREWALL_C10_V1_STATUS: COMPLETE
 
 ## Routing and safety
 
