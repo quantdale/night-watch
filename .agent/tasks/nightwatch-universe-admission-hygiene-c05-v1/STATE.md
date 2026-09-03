@@ -30,26 +30,40 @@ exactly the two owner-named repositories.
 
 ## Current Milestone
 
-M2 — one admission authority, with discovery separated from admission.
+M7/M8 — full population report, then validation, integration, exact-head CI
+and closure. M2 through M6 are complete.
 
 ## Completed Milestones
 
 - M1 — task record, OpenSpec change, session claim, measured baseline.
+- M2 — `src/core/source/universe.ts` is the single admission authority;
+  `approvedScan.ts` projects from it and carries no allowlist of its own;
+  `reconcileUniverseWithDependencyMap` throws on either direction of
+  disagreement instead of silently intersecting.
+- M3 — `RepoDefinition` no longer persists `branch`, `trackingSha`, `ahead`,
+  `behind` or `dirty`; the pinned anchors `checkedOutSha` and `sourceMapSha`
+  remain, because removing them would make every staleness check vacuously
+  pass. `change:shadow` now observes live from local refs and additionally
+  reports `pinnedSourceSha` and `movedOffPin`.
+- M4 — the sibling-source boundary keeps a per-repository read ledger and
+  enforces the owner-approved set itself; the intelligence CLI and the Control
+  Center source authority both pass it, so the gate is live in the real paths.
+- M5 — `alphauslabs/blueinternal` admitted for `openapiv2`: **51 operations**,
+  through the existing `parseOpenApiRoutes`, no new parser.
+- M6 — `mobingilabs/wave-api` admitted for `src`: **55 operations**, through
+  the existing YAML route parser, no parser change.
 
 ## Work In Progress
 
-M2 — collapsing the two-list admission intersection into one canonical
-owner-approved authority, and adding discovery as an admission-free operation.
+M7 — assembling the full population report, then the validation battery.
 
 ## Exact Next Action
 
-Introduce the canonical admission authority so that
-`PHASE25_APPROVED_REPOSITORY_IDS` becomes a projection of ONE owner-approved
-statement rather than `RIPPLE_REPOSITORIES(scope IN_SCOPE)` intersected with
-the keys of `APPROVED_ROOTS`. A repository named in one and absent from the
-other must become a declared error instead of a silent non-admission. Then add
-the admission-free discovery operation and assert that 149 discovered with 6
-admitted grants nothing.
+Run the full validation battery — `typecheck`, `hardening:check`,
+`handoff:check`, `project:check`, `agent:check`, `workspace:check`,
+`gate:inventory`, the C-01/C-02a/C-02b/C-03/C-04/C-06 suites, the canonical
+regression, `gate:local`, then `gate:clean` with no repository write while it
+executes — then integrate by verified fast-forward and observe exact-head CI.
 
 ## Files Changed
 
@@ -68,6 +82,14 @@ admitted grants nothing.
 | persisted vs live Git state, remote-tracking fields | **10 of 18 diverged** — ouchan `behind: 25` vs live 310; ripple-ui 21 vs 74; blueapi 2 vs 15; ripple-api 0 vs 12; blue-sdk-go 1 vs 6 |
 | `blueinternal/openapiv2/apidocs.swagger.json` | Swagger 2.0, 46 paths, **51 operations**, all with `operationId`, 84 definitions (historical estimate ~57 refuted) |
 | `mobingilabs/wave-api` | PHP, 59 files, layout identical to ripple-api, **55 route keys** in the parser's existing form |
+| **population after admission** | **1,851 operations** — blueapi 1,181 / blueinternal **51** / ouchan 341 / ripple-api 223 / wave-api **55**; exactly +106, `droppedOperations: 0` |
+| **no eviction** | blueapi 1,181, ouchan 341, ripple-api 223 all unchanged; C-01's `sourceOperationCompleteness` no-eviction assertion passes |
+| **completeness unchanged in kind** | enumeration still TRUNCATED, `remainingUnknown: true` — admitting source did not launder completeness into a clean number |
+| static prediction vs parser output | predicted 51 and 55 from static measurement; parser produced exactly 51 and 55 |
+| `change:shadow` after M3 | reports live `ouchan behind=310`, `ripple-ui 74`, `blueapi 15` (was 25 / 21 / 2); all eight `movedOffPin: false` |
+| `tests/unit/c05UniverseAdmission.test.ts` | **28 passed / 0 failed** |
+| C-01 + C-02a + C-06 + Control Center suites | 51 passed / 0 failed |
+| negative probes Q1-Q11 | **11/11 DETECTED**, all restored, tree clean after each |
 
 ## Decisions Made During This Task
 
@@ -78,6 +100,49 @@ admitted grants nothing.
 - Frame the persisted-Git-state defect as a divergence-detection failure, not a
   stale-value incident: the checkout-local fields are currently accurate, so
   "the data is stale" would be a false claim.
+
+## Defects found
+
+**DEF-C05-1 — `npm run change:shadow` was broken at HEAD, in both topologies.
+PRE_EXISTING.** The script compiles the pure core with `tsc` and imported
+`<out>/index.js`, but `baseline.ts`, `git.ts` and `selection.ts` had gained
+imports from `../campaign`, `../process` and `../identity`, which moved tsc's
+INFERRED root to `src/core` and the emitted entry to
+`<out>/changeIntelligence/index.js`. Nothing detected it because no gate group
+runs `change:shadow`. Repair: `--rootDir src` is pinned, so the emitted layout
+is a function of the source path alone and an import from outside `src` fails
+loudly instead of relocating the entry point.
+
+**DEF-C05-2 — the repositories root was derived from the checkout location.
+PRE_EXISTING, and forbidden by `AGENTS.md`.**
+`resolve(nightwatchRoot, '../..')` resolves to `$HOME/.nightwatch` from a
+session worktree, so every git call failed with `ENOENT` and the script could
+not run there at all. A hardening rule already guarded exactly this class for
+two other surfaces; `bin/change-intelligence.mjs` was never added to its list.
+Repair: resolution goes through `DEFAULT_SIBLING_ROOT` with the standard
+`NIGHTWATCH_REPOS_ROOT` override, and the rule now covers this surface.
+
+**DEF-C05-3 — the shadow report published a provenance label it did not have.
+PRE_EXISTING.** It emitted the persisted `trackingSha`/`ahead`/`behind` under
+`freshness: LOCAL_TRACKING_REF_ONLY`, having read a literal rather than a ref.
+The consequence was measurable, not latent: it reported `ouchan` as 25 behind
+when it was 310 behind. Repair: those values are observed from local refs at
+report time, so the label is now true.
+
+## Process errors, recorded rather than buried
+
+**Probing before committing destroyed uncommitted work, twice.** The C-05
+negative probes use `git checkout --` to restore after each mutation. Run
+against files whose C-05 changes were not yet committed, that "restore"
+discarded the changes instead of reverting the probe. The first occurrence lost
+the `types.ts`, `approvedScan.ts` and `bin/change-intelligence.mjs` edits; the
+second lost a freshly added hardening rule, which then made a probe report NOT
+DETECTED for the honest reason that the rule no longer existed. Both were
+detected by verifying the restore rather than trusting it, and all lost work
+was reconstructed and re-verified. The rule adopted, and followed for the rest
+of the campaign: COMMIT, then probe. This is exactly the destructive-restore
+hazard the repository's Git-safety rules name, and it is recorded because the
+probe results would otherwise look like clean 11/11 evidence with no history.
 
 ## Discoveries
 
