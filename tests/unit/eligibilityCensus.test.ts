@@ -212,11 +212,20 @@ test.describe('deterministic source eligibility census', () => {
     const outputs = Array.from({ length: 3 }, () => spawnSync(process.execPath, [path.join(process.cwd(), 'bin/nightwatch-intelligence.mjs'), 'eligibility-census', '--json'], {
       cwd: process.cwd(),
       encoding: 'utf8',
-      timeout: 60_000,
-      // The C-02a population (814 operations) renders ~2.4 MB of census JSON.
-      // Node's default 1 MB spawnSync buffer would truncate it and surface as
-      // a null exit status, which is a harness limit, not a product fact.
-      maxBuffer: 64 * 1024 * 1024,
+      // Both bounds here are HARNESS limits, not product facts, and both have
+      // had to grow as the admitted population grew.
+      //
+      // The C-02a population (814 operations) rendered ~2.4 MB of census JSON
+      // and Node's default 1 MB spawnSync buffer truncated it, surfacing as a
+      // null exit status. After C-02b, C-03 and C-04 the population is 1,745
+      // operations, the render is ~5.3 MB, and a full census now takes about
+      // 1m55s — so the original 60s timeout began failing the same way, with
+      // the same misleading null status.
+      //
+      // 300s is roughly 2.5x the measured cost, which leaves headroom for a
+      // slower CI machine without making the bound meaningless.
+      timeout: 300_000,
+      maxBuffer: 128 * 1024 * 1024,
     }));
     for (const output of outputs) {
       expect(output.status).toBe(0);
