@@ -897,12 +897,22 @@ function checkAgentContinuityIntegrity() {
   }
   // Phase 8 closure — docs/design checkpoint allowlist: exactly the narrow
   // single-level Markdown pattern; never docs/design/** or non-Markdown.
-  const agentState = read('bin/agent-state.mjs');
-  if (!/docs\\\/design\\\/\[\^\/\]\+\\\.md\$/.test(agentState)) {
-    fail('bin/agent-state.mjs must approve single-level docs/design/*.md checkpoint paths narrowly');
+  //
+  // R-12 note: this rule had never executed — `checkAgentContinuityIntegrity`
+  // was defined and never called, so nothing noticed when the allowlist moved
+  // from `bin/agent-state.mjs` into the pure protocol module. The assertion is
+  // repointed at where the pattern actually lives, and it now matches the
+  // literal by containment rather than by a re-escaped regex-of-a-regex, which
+  // is what made the original silently unmaintainable.
+  // Comments are stripped first: the module's own prose explains that it is
+  // deliberately NOT `docs/design/**`, and a raw-text check reads that
+  // explanation as the very violation it describes.
+  const protocolCode = withoutComments(protocolModule);
+  if (!protocolCode.includes('/^docs\\/design\\/[^/]+\\.md$/')) {
+    fail('bin/agent-continuity-protocol.mjs must approve single-level docs/design/*.md checkpoint paths narrowly');
   }
-  if (/\^docs\\\/design\\\/\.\*/.test(agentState)) {
-    fail('bin/agent-state.mjs must not approve docs/design/** as a documentation checkpoint pattern');
+  if (protocolCode.includes('docs\\/design\\/.*') || protocolCode.includes('docs/design/**')) {
+    fail('bin/agent-continuity-protocol.mjs must not approve docs/design/** as a documentation checkpoint pattern');
   }
 }
 
@@ -2824,6 +2834,7 @@ checkC15bSystemMapBoundary();
 checkCampaignCertificationRegistry();
 checkPlannerHandoffIntegrity();
 checkDocumentationTruth();
+checkAgentContinuityIntegrity();
 checkProjectStateIntegrity();
 checkPhase9SemanticCorePurity();
 checkPhase9IntegrationSeams();

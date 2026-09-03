@@ -29,30 +29,45 @@ the project-truth documents to the completion the repository reached.
 
 ## Current Milestone
 
-M2 — register the six unregistered certification suites in their correct
-authoritative lane.
+M7 — validation: canonical regression, `gate:local`, `gate:clean`.
 
 ## Completed Milestones
 
 - M1 — task record, OpenSpec change, session claim, measured baseline.
+- M2 — all six suites registered in `SYNTHETIC_CAMPAIGN`, the lane every
+  existing campaign certification suite already used. The lane went from 27
+  files / 619 cases to 34 files / **738 cases, 738 passed, 0 failed** — 119
+  cases the gate now certifies and previously never ran.
+- M3 — `config/campaign-certification.v1.json` is the single registration
+  authority: 12 campaigns, 28 declared suites. The judgement is pure and lives
+  in `bin/lib/campaign-certification.mjs`; `checkCampaignCertificationRegistry`
+  in `bin/hardening-check.mjs` does I/O only. Lanes are validated against the
+  gate definition's REQUIRED `commandKey`s, so the registry cannot authorise
+  its own lanes.
+- M4 — SIX hand-written registration loops retired, not four as the baseline
+  estimated: R-11 and C-11 each had one as well as C-02b, C-03, C-04 and
+  C-15b. Every suite they guarded is preserved verbatim in the registry and
+  asserted so by `r12CampaignCertification.test.ts`.
+- M5 — master task ledger normative status reconciled for C-02b, C-03, C-04
+  and C-11, and the C-15b half of the C-15 row; `CURRENT_STATE` checkpoint
+  prose reconciled to the machine block, malformed row repaired, historical
+  drift preserved as history.
+- M6 — negative probes: 13 real-repository mutations DETECTED and restored,
+  plus 16 permanent synthetic failure-path tests. M6 also uncovered
+  DEF-R12-1 and DEF-R12-2, both PRE_EXISTING and both repaired here.
 
 ## Work In Progress
 
-M2 — adding the six unregistered certification suites to
-`config/synthetic-campaign.v1.json`, the lane every existing campaign
-certification suite already uses.
+M7 — the canonical regression is running. `gate:local` and `gate:clean`
+follow, then integration and exact-head CI.
 
 ## Exact Next Action
 
-Add these six paths to `files` in `config/synthetic-campaign.v1.json`:
-`tests/unit/sourceOperationCompleteness.test.ts`,
-`tests/unit/sourceInventoryCompleteness.test.ts`,
-`tests/unit/cacheCurrentness.test.ts`,
-`tests/unit/callScopedSourceRead.test.ts`,
-`tests/unit/c02aOpenApiAdmission.test.ts`,
-`tests/unit/c06PhpReadOnlyProof.test.ts`. Then run
-`npm run campaign:synthetic` and record the receipt's file count, totals and
-skip count in the Validation Ledger.
+Read the canonical regression result. If zero failures, run `npm run
+gate:local`, then `npm run gate:clean` with no repository write while it
+executes, recording both receipts in the Validation Ledger. Then integrate by
+verified fast-forward, observe exact-head CI, reconcile project truth, close
+the REPORT ledger and release the session.
 
 ## Files Changed
 
@@ -60,6 +75,13 @@ skip count in the Validation Ledger.
 - `.agent/EXECUTION_PROMPT.md` — R-12 handoff header
 - `.agent/tasks/nightwatch-certification-truth-r12-v1/{SPEC,PLAN,STATE,REPORT}.md` — new
 - `openspec/changes/nightwatch-certification-truth-r12-v1/**` — new change
+- `config/campaign-certification.v1.json` — NEW single registration authority
+- `config/synthetic-campaign.v1.json` — +7 suites (the six, plus R-12's own)
+- `bin/lib/campaign-certification.mjs` + `.d.mts` — NEW pure validator
+- `bin/hardening-check.mjs` — six loops retired; one generic rule added
+- `tests/unit/r12CampaignCertification.test.ts` — NEW, 32 cases
+- `docs/CURRENT_STATE.md` — checkpoint prose reconciliation
+- `openspec/changes/nightwatch-production-observability-system-map-master-plan-v1/tasks.md` — ledger status
 
 ## Validation Ledger
 
@@ -69,6 +91,71 @@ skip count in the Validation Ledger.
 | C-02a + C-06 suites at cdfe9d7 (canonical, siblings present) | 56 passed / 0 skipped / 0 failed |
 | Registration census at cdfe9d7 | 238 on disk, 173 registered, 65 unregistered, 6 of them campaign certification suites |
 | Campaign ledger census | 11 campaign task directories, all COMPLETE |
+| `npm run campaign:synthetic` after registration | 34 files, **738 total / 738 passed / 0 failed**, `deepContainmentLane: PROVEN`, result PASS (baseline was 27 files / 619) |
+| `tests/unit/r12CampaignCertification.test.ts` | 32 passed / 0 failed |
+| `npm run typecheck` | PASS |
+| `npm run hardening:check` | PASS, offline structural invariants hold |
+| `npm run agent:check` | PASS (2 warnings: CHECKPOINT_ADVANCE, legacy v1 tasks) |
+| `npm run handoff:check` | PASS |
+| `npm run project:check` | PASS, `activeTaskContinuity: PASS` |
+| `npm run workspace:check` | exit 0; owned=true drift=false base=CURRENT mayIntegrate=true:FAST_FORWARD_AVAILABLE canonicalSafe=true attention=0 |
+| `npm run gate:inventory` | exit 0 |
+| Negative probes P1-P10 (real repository) | 10/10 DETECTED, 10/10 restored, tree clean after each |
+| Negative failure-path tests (synthetic input) | 16 permanent cases in `r12CampaignCertification.test.ts` |
+
+### Negative probe matrix
+
+| # | Mutation | Verdict | Detected by |
+|---|---|---|---|
+| P1 | deregister C-02a from its lane | DETECTED | `hardening:check` registration conjunct |
+| P2 | deregister C-06 | DETECTED | registration conjunct |
+| P3 | deregister C-15b | DETECTED | registration conjunct |
+| P4 | deregister a C-11 suite | DETECTED | registration conjunct |
+| P5 | delete a declared suite from disk | DETECTED | existence conjunct |
+| P6 | drop C-01's campaign entry from the registry | DETECTED | totality conjunct |
+| P7 | claim `Status: COMPLETE` on a mid-flight task | DETECTED | `agent:check` `COMPLETE_HAS_WORK_IN_PROGRESS` |
+| P8 | point the substantive anchor at an older commit | DETECTED | `agent:check` `STALE` implementation baseline |
+| P9 | project `LIVE_COMPLETION_CLAIM: COMPLETE` while IN_PROGRESS | DETECTED | `project:check` `PROJECT_STATE_LIVE_COMPLETION_CLAIM_MISMATCH` |
+| P10 | repoint a lane away from an authoritative manifest | DETECTED | lane-authority conjunct |
+| P11 | broaden the checkpoint allowlist to `docs/design/**` | DETECTED | revived `checkAgentContinuityIntegrity` |
+| P12 | add a filesystem mutation to the continuity protocol module | DETECTED | revived rule, read-only conjunct |
+| P13 | remove the v2 protocol version constant | DETECTED | revived rule |
+
+## Defects found
+
+**DEF-R12-1 — a hardening rule that had never executed. PRE_EXISTING.**
+`checkAgentContinuityIntegrity` was defined in `bin/hardening-check.mjs` and
+never called: 50 `check*` functions were defined, 49 were invoked. It guards
+that the continuity checker and the pure protocol module stay read-only, spawn
+no child process, reach no network, define the v2 protocol constant, keep
+`agent:audit` wired, and keep the documentation-checkpoint allowlist narrow —
+none of which had been enforced. Found by auditing definition/call parity while
+retiring the six registration loops, i.e. by looking for exactly the defect
+class R-12 exists to close: a guard that looks like coverage and is not.
+Repair: the call is added. Regression: probes P11-P13.
+
+**DEF-R12-2 — the revived rule's allowlist assertion pointed at the wrong
+module. PRE_EXISTING, and masked by DEF-R12-1.** It read
+`bin/agent-state.mjs` and asserted a re-escaped regex-of-a-regex against it,
+but the allowlist pattern `/^docs\/design\/[^/]+\.md$/` had been refactored
+into `bin/agent-continuity-protocol.mjs`. Because the rule never ran, the stale
+reference was invisible. Had it been enabled naively it would have failed on
+correct code, which is the likeliest reason to disable rather than repair it.
+Repair: the assertion is repointed at the module where the pattern lives and
+matches the literal by containment instead of by re-escaping. Its negative
+half additionally required comment stripping — the module's own prose says it
+is "deliberately NOT `docs/design/**`", which a raw-text check reads as the
+very violation it describes; `withoutComments` is now applied, as elsewhere in
+this file.
+
+## Method note
+
+The first canonical regression run was started before the M6 mutation probes
+and was still executing while they ran, so the working tree changed underneath
+it. That run was STOPPED and DISCARDED rather than reported: a green result
+would have been unearned and a red one unattributable. The canonical regression
+is re-run against the final, stable tree with no concurrent writes. Recorded
+because a discarded run is evidence about method, not an absence of evidence.
 
 ## Decisions Made During This Task
 
