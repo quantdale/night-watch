@@ -4,19 +4,20 @@
 
 Task ID: nightwatch-certification-truth-r12-v1
 Phase: CERTIFICATION_TRUTH_R12_V1
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: cdfe9d7865dbf95f1cadfde1cf8e318bcd7a11a0
-Last validated implementation SHA: cdfe9d7865dbf95f1cadfde1cf8e318bcd7a11a0
-Last substantive checkpoint SHA: cdfe9d7865dbf95f1cadfde1cf8e318bcd7a11a0
+Last validated implementation SHA: 506d64fd878d2d02a7e93b28d8b515ab4fd97691
+Last substantive checkpoint SHA: 506d64fd878d2d02a7e93b28d8b515ab4fd97691
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-certification-truth-r-cd8904c5
-Last checkpoint: baseline measured in the canonical checkout at cdfe9d7 — 238 suites on disk, 173 registered across the two authoritative manifests, 65 unregistered, of which 6 are campaign certification suites (C-01 x4, C-02a, C-06); the 56 C-02a + C-06 cases pass locally with siblings present
+Last checkpoint: exact-head GitHub run 33784345028 / job 100745379741 at 5cc7835 passed all eleven required groups on Node 20 with receipt receipt:sha256:855c3279c6ecb3d30a69ad24; gate:local PASS receipt:sha256:ec63fe57a093eb63e168ded5 and gate:clean PASS with inner receipt receipt:sha256:0efe20276b93f05ebe50ea53 and siblingWrites 0; canonical regression 3,428/3,415/13/0; 13/13 real-repository negative probes detected and restored plus 16 permanent synthetic failure-path cases; DEF-R12-1 and DEF-R12-2 both PRE_EXISTING, both found and repaired
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: cdfe9d7865dbf95f1cadfde1cf8e318bcd7a11a0
-LAST_VALIDATED_IMPLEMENTATION_SHA: cdfe9d7865dbf95f1cadfde1cf8e318bcd7a11a0
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: cdfe9d7865dbf95f1cadfde1cf8e318bcd7a11a0
+LAST_VALIDATED_IMPLEMENTATION_SHA: 506d64fd878d2d02a7e93b28d8b515ab4fd97691
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 506d64fd878d2d02a7e93b28d8b515ab4fd97691
+LAST_DOCUMENTATION_CHECKPOINT_SHA: 5cc783572bf7f943e3168a7ae98c2106ee963cff
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PROJECT_VERDICT_EFFECT: PRESERVE
@@ -29,9 +30,9 @@ the project-truth documents to the completion the repository reached.
 
 ## Current Milestone
 
-M8 — integration, exact-head CI, closure and release. All three local gates are
-PASS: regression 3,428/3,415/13/0, `gate:local` at `506d64f`, `gate:clean` at
-`f02562d` with `siblingWrites: 0`.
+COMPLETE / STOP — M1 through M8 are closed. All eight acceptance rows PASS.
+Certified by exact-head CI run 33784345028 / job 100745379741 at `5cc7835`,
+eleven required groups on Node 20.
 
 ## Completed Milestones
 
@@ -60,22 +61,18 @@ PASS: regression 3,428/3,415/13/0, `gate:local` at `506d64f`, `gate:clean` at
 - M7 — validation complete: canonical regression 3,428 / 3,415 / 13 / 0 at
   `506d64f`; `gate:local` PASS eleven groups; `gate:clean` PASS eleven groups
   on Node 20 with `siblingWrites: 0`.
+- M8 — integrated by verified fast-forward; exact-head CI run 33784345028 PASS
+  at `5cc7835`; acceptance row 4 closed by CI receipt differencing (+116
+  executed, exactly +3 skipped); project truth reconciled; session released.
 
 ## Work In Progress
 
-M8 — integration and exact-head CI observation. Local validation is complete.
+NONE — the campaign is COMPLETE.
 
 ## Exact Next Action
 
-Integrate by verified fast-forward (`node bin/nightwatch-session.mjs
-integrate`), then observe the exact-head GitHub Actions run at the integrated
-head. Check the CI synthetic receipt's `skipped` count is at least 3: that is
-the ONLY decisive evidence for acceptance row 4, because
-`DEFAULT_SIBLING_ROOT` is a hardcoded absolute path, so the read-only sibling
-checkouts stay visible even to `gate:clean` on this machine and C-02a's
-real-source block RUNS locally rather than skipping. Then record the CI result
-truthfully, reconcile project truth, close the REPORT ledger, set the task
-COMPLETE, release the session and remove the worktree and branch.
+STOP — R-12 is COMPLETE and certified. The next authorized campaign in this
+overnight portfolio is C-05 universe discovery and admission hygiene.
 
 ## Files Changed
 
@@ -221,10 +218,27 @@ ownership resolution the master ledger still lists as unowned.
 
 ## Resume Recipe
 
-Read this STATE, then `SPEC.md` acceptance rows 1-8. Resume at the Current
-Milestone. All implementation happens in the owned session worktree
-`session/nightwatch-certification-truth-r-cd8904c5`.
+Task complete. Do not resume; any follow-up starts as a new authorized task.
 
 ## Completion Snapshot
 
-Pending — the campaign is IN_PROGRESS.
+R-12 is COMPLETE and certified.
+
+Substantive implementation anchor: 506d64fd878d2d02a7e93b28d8b515ab4fd97691
+Certified exact-head checkpoint: 5cc783572bf7f943e3168a7ae98c2106ee963cff
+Live HEAD: DISCOVER_FROM_GIT
+Tests: canonical regression 3,428 / 3,415 / 13 skipped / 0 failed; semantic
+compatibility 2,033 / 2,020 / 13 / 0; synthetic campaign 738/738 locally and
+738 / 704 / 34 skipped / 0 failed in CI; owner provenance 91; the new
+`r12CampaignCertification` suite 32/32.
+Artifacts: `config/campaign-certification.v1.json`;
+`bin/lib/campaign-certification.mjs` + `.d.mts`;
+`checkCampaignCertificationRegistry` replacing six hand-written loops; a
+revived `checkAgentContinuityIntegrity`; `tests/unit/r12CampaignCertification.test.ts`.
+Known issues: none introduced. The 31 pre-existing CI host-capability skips and
+the CI `deepContainmentLane: NOT_EXERCISED_BWRAP_UNAVAILABLE` are unchanged and
+documented. 59 non-campaign infrastructure suites remain outside the two
+authoritative manifests; they were explicitly recorded as out of R-12's frozen
+scope rather than silently excluded, and are the obvious next registration
+question for a future reliability campaign.
+Recommended next task: C-05 universe discovery and admission hygiene.

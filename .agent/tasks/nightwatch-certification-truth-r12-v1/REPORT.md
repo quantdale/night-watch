@@ -2,6 +2,8 @@
 
 - Starting SHA: `cdfe9d7865dbf95f1cadfde1cf8e318bcd7a11a0`
 - Resulting SHA: Live HEAD: DISCOVER_FROM_GIT
+- Substantive implementation anchor: `506d64fd878d2d02a7e93b28d8b515ab4fd97691`
+- Certified exact-head checkpoint: `5cc783572bf7f943e3168a7ae98c2106ee963cff`, run `33784345028`
 - Task objective: make the authoritative gate run every campaign certification
   suite, enforce that as a totality rather than a per-campaign courtesy, and
   reconcile the project-truth documents to the completion the repository
@@ -228,7 +230,7 @@ an empty suite set with a declared reason (admissible) versus without one
 | **canonical regression** at `506d64f` | **3,428 total / 3,415 passed / 13 skipped / 0 failed** (baseline 3,396/3,383/13/0 — delta is exactly the 32 new cases; skips unchanged) |
 | **`gate:local`** at `506d64f` | **PASS, eleven groups**, LOCAL, Node 22, receipt `receipt:sha256:ec63fe57a093eb63e168ded5` |
 | **`gate:clean`** at `f02562d` | **PASS, eleven groups**, Node 20, `siblingWrites: 0`, `cleanBefore/cleanAfter: true`, `nodeModulesReused: false`, inner receipt `receipt:sha256:0efe20276b93f05ebe50ea53`, outer `clean-receipt:sha256:466ca84e35b4d5881a7d76ae` |
-| exact-head CI | pending observation at the integrated head |
+| **exact-head CI** at `5cc7835` | **PASS**, run `33784345028` / job `100745379741`, `environmentClass: CI`, Node 20, all eleven required groups, receipt `receipt:sha256:855c3279c6ecb3d30a69ad24` |
 
 ## Requirement ledger
 
@@ -237,10 +239,29 @@ an empty suite set with a declared reason (admissible) versus without one
 | 1 | Six unregistered certification suites execute in an authoritative gate group | PASS | `SYNTHETIC_CAMPAIGN` 738/738 in `gate:local` AND `gate:clean`; the lane grew 619 → 738 |
 | 2 | One registration authority; the loops retired | PASS | `config/campaign-certification.v1.json`; six loops deleted; removal audit shows only registration logic removed |
 | 3 | Registry totality holds | PASS | three conjuncts in `checkCampaignCertificationRegistry`; probes P5, P6, P10; 16 synthetic failure-path cases |
-| 4 | No false CI topology claim | PENDING | local evidence cannot close this: `DEFAULT_SIBLING_ROOT` is a hardcoded absolute path, so siblings stay visible even to `gate:clean` and C-02a's real-source block RUNS locally. The truthful skip is observable only in GitHub CI, where the synthetic receipt's `skipped` count is the evidence |
+| 4 | No false CI topology claim | PASS | measured by differencing the CI receipts across the change: `SYNTHETIC_CAMPAIGN` went 619/588/**31 skipped**/0 at `cdfe9d7` to 738/704/**34 skipped**/0 at `5cc7835`. The six suites added +119 total, +116 passed and **exactly +3 skipped** — C-02a's real-source block, which contains exactly 3 `test(` cases. So 116 of 119 newly registered cases genuinely EXECUTE in CI, the 3 that cannot are recorded as skipped rather than passed, and the 31 pre-existing host-capability skips are unchanged |
 | 5 | Master ledger status correct; history preserved | PASS | C-02b, C-03, C-04, C-11 rows and the C-15b half of C-15; C-04's 382 shortfall and C-02b's refuted streaming figure both stated |
 | 6 | `CURRENT_STATE` prose agrees with the machine block; malformed row repaired | PASS | prose reconciled cell by cell; six-cell row repaired; roles column relabelled historical; drift notes retained |
 | 7 | Nine negative probes DETECTED and restored | PASS (exceeded) | 13 real-repository probes, all DETECTED and restored, plus 16 permanent cases |
-| 8 | Regression 0 failures; local, clean and exact-head CI PASS; siblingWrites 0; worktree released | IN_PROGRESS | regression 0 failed; `gate:local` PASS; `gate:clean` PASS with siblingWrites 0; CI and release pending |
+| 8 | Regression 0 failures; local, clean and exact-head CI PASS; siblingWrites 0; worktree released | PASS | regression 3,428/3,415/13/**0 failed**; `gate:local` PASS; `gate:clean` PASS with `siblingWrites: 0`; exact-head CI PASS at `5cc7835`; session released and worktree removed |
 
-Status: IN_PROGRESS
+## CI skip accounting
+
+The CI skip count is reported as a DIFFERENCE, not as an absolute, because an
+absolute number cannot distinguish a newly registered suite that quietly
+declines to run from one that genuinely cannot:
+
+| | total | passed | skipped | failed |
+|---|---|---|---|---|
+| `cdfe9d7` (pre-R-12) | 619 | 588 | 31 | 0 |
+| `5cc7835` (post-R-12) | 738 | 704 | 34 | 0 |
+| delta | +119 | **+116** | **+3** | 0 |
+
+The +3 is exactly C-02a's real-source block. The four C-01 suites and C-06
+execute fully in CI, which is what registering them was for. The 31
+pre-existing skips are host-capability skips and are unchanged; the CI
+`deepContainmentLane` is `NOT_EXERCISED_BWRAP_UNAVAILABLE`, which is the
+documented and pre-existing runner limitation — the gate requires that lane
+`PROVEN` in the `local`, `clean` and `predev` modes, where it is.
+
+Status: COMPLETE

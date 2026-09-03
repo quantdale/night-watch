@@ -3,22 +3,23 @@
 Task ID: nightwatch-certification-truth-r12-v1
 Phase: CERTIFICATION_TRUTH_R12_V1
 Title: R-12 Certification Manifest + Project Truth Closure
-Status: IN_PROGRESS
+Status: COMPLETE
 Task directory: .agent/tasks/nightwatch-certification-truth-r12-v1
 Starting SHA: cdfe9d7865dbf95f1cadfde1cf8e318bcd7a11a0
-Last validated implementation SHA: cdfe9d7865dbf95f1cadfde1cf8e318bcd7a11a0
-Last checkpoint: baseline measured at cdfe9d7 — 238 suites on disk, 173 registered across the two authoritative manifests, 65 unregistered, 6 of them campaign certification suites (C-01 x4, C-02a, C-06); no required gate group runs the full canonical regression
-Current milestone: M2 — register the six unregistered certification suites in their correct authoritative lane
-Next action: add the six suites to config/synthetic-campaign.v1.json, then introduce config/campaign-certification.v1.json and the generic totality rule that replaces the four hand-written per-campaign registration loops
+Last validated implementation SHA: 506d64fd878d2d02a7e93b28d8b515ab4fd97691
+Last checkpoint: exact-head GitHub run 33784345028 / job 100745379741 at 5cc7835 passed all eleven required groups on Node 20 with receipt receipt:sha256:855c3279c6ecb3d30a69ad24; gate:local and gate:clean PASS with siblingWrites 0; canonical regression 3,428/3,415/13/0; the synthetic gate lane went from 619 to 738 cases, of which 116 newly execute in CI and exactly 3 skip truthfully; DEF-R12-1 and DEF-R12-2 both PRE_EXISTING and both repaired
+Current milestone: COMPLETE / STOP — M1 through M8 are closed and all eight acceptance rows PASS
+Next action: STOP — R-12 is COMPLETE and certified. The next authorized campaign in this overnight portfolio is C-05 universe discovery and admission hygiene; C-12 remains NOT AUTHORIZED and requires new explicit owner authorization
 Authorization class: NIGHTWATCH_CERTIFICATION_TRUTH_R12_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: cdfe9d7865dbf95f1cadfde1cf8e318bcd7a11a0
-LAST_VALIDATED_IMPLEMENTATION_SHA: cdfe9d7865dbf95f1cadfde1cf8e318bcd7a11a0
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: cdfe9d7865dbf95f1cadfde1cf8e318bcd7a11a0
+LAST_VALIDATED_IMPLEMENTATION_SHA: 506d64fd878d2d02a7e93b28d8b515ab4fd97691
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 506d64fd878d2d02a7e93b28d8b515ab4fd97691
+LAST_DOCUMENTATION_CHECKPOINT_SHA: 5cc783572bf7f943e3168a7ae98c2106ee963cff
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
-PHASE_CERTIFICATION_TRUTH_R12_V1_STATUS: IN_PROGRESS
+PHASE_CERTIFICATION_TRUTH_R12_V1_STATUS: COMPLETE
 
 ## Routing and safety
 

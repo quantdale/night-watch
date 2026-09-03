@@ -63,14 +63,15 @@ ledger — real campaign metadata — rather than from test filenames.
 ## Milestones
 
 - M1 Task record, OpenSpec change, session claim — COMPLETE
-- M2 Register the six suites in their correct lanes — NOT_STARTED
-- M3 `config/campaign-certification.v1.json` + totality rule; retire the four
-  loops — NOT_STARTED
-- M4 Master task ledger normative status (C-02b, C-03, C-04, C-11, C-15b) — NOT_STARTED
-- M5 CURRENT_STATE checkpoint prose reconciliation — NOT_STARTED
-- M6 Negative probe matrix, all restored — NOT_STARTED
-- M7 Validation: regression, gate:local, gate:clean — NOT_STARTED
-- M8 Integrate, exact-head CI, project truth, close, release — NOT_STARTED
+- M2 Register the six suites in their correct lanes — COMPLETE
+- M3 `config/campaign-certification.v1.json` + totality rule — COMPLETE
+- M4 Retire the hand-written registration loops — COMPLETE (SIX, not four:
+  R-11 and C-11 each had one as well as C-02b, C-03, C-04 and C-15b)
+- M5 Master ledger status and CURRENT_STATE prose reconciliation — COMPLETE
+- M6 Negative probe matrix, all restored — COMPLETE (13 real-repository probes
+  plus 16 permanent synthetic failure-path cases; found DEF-R12-1/DEF-R12-2)
+- M7 Validation: regression, gate:local, gate:clean — COMPLETE
+- M8 Integrate, exact-head CI, project truth, close, release — COMPLETE
 
 ## Validation Strategy
 
@@ -109,6 +110,11 @@ GitHub Actions.
 
 C-15c owns the System Map V2 transport. C-16 owns the G-16 / EIG ownership
 resolution that the master ledger still lists as unowned.
+
+59 non-campaign infrastructure suites remain outside the two authoritative
+manifests. They were recorded explicitly in the OpenSpec audit as out of
+R-12's frozen scope rather than silently excluded, and are the obvious next
+registration question for a future reliability campaign.
 
 ## Completion Criteria
 

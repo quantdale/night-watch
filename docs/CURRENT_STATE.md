@@ -220,6 +220,93 @@ The Go/gRPC effect witness (C-03), the protobuf declaration witness (C-02b)
 and the spec-derived witness (C-09) remain unimplemented and report
 `UNSUPPORTED`; their absence is never treated as a pass.
 
+## R-12 certification manifest and project truth (current)
+
+R-12 closed the gap between "the tests pass" and "the gate ran them".
+
+**The finding.** The authoritative gate has eleven required groups. Exactly
+three execute tests, and each runs only the suites its versioned manifest
+names: `SEMANTIC_COMPATIBILITY`, `OWNER_PROVENANCE` and `SYNTHETIC_CAMPAIGN`.
+**No required group runs the full canonical regression** — `npm test` is a
+separate human-run observation. So a suite in neither manifest never executed
+in `gate:local`, `gate:clean` or CI, however green it was locally.
+
+238 suites were on disk, 173 registered, 65 not. Six of the 65 were campaign
+certification suites the gate had never run: C-01's four completeness suites
+(`sourceOperationCompleteness`, `sourceInventoryCompleteness`,
+`cacheCurrentness`, `callScopedSourceRead`), C-02a's `c02aOpenApiAdmission`
+and C-06's `c06PhpReadOnlyProof`. C-15b's report named two of them; the other
+four were debt R-12 discovered, so the recorded debt had understated itself.
+
+**The cause was structural.** Registration was enforced by six hand-written
+per-campaign loops in `bin/hardening-check.mjs` (R-11, C-11, C-02b, C-03,
+C-04, C-15b). Three campaigns never wrote one and nothing noticed. A rule each
+campaign must remember to add is not a rule.
+
+**The repair.** `config/campaign-certification.v1.json` is now the single
+registration authority — 12 campaigns, 28 suites — enforced by one rule with
+three conjuncts: every campaign in the task ledger is DECLARED, every declared
+suite EXISTS on disk, and every declared suite is REGISTERED in a lane whose
+gate group the gate definition marks `required`. The lane list is checked
+against the gate definition's `commandKey`s, so the registry cannot authorise
+its own lanes. Completeness is anchored to the campaign task directories rather
+than to test filenames: a `tests/unit/c*.test.ts` heuristic would have missed
+all four C-01 suites, none of which is named `c01*`. The six loops are deleted,
+not supplemented, because two authorities for one rule is what produced the
+debt. The judgement is pure (`bin/lib/campaign-certification.mjs`), so its
+sixteen failure paths are permanent tests rather than one-off hand probes.
+
+**Registration never overstated execution.** The claim is measured by
+differencing the CI receipts, because an absolute skip count cannot distinguish
+a suite that quietly declines to run from one that genuinely cannot:
+
+| `SYNTHETIC_CAMPAIGN` | total | passed | skipped | failed |
+| --- | --- | --- | --- | --- |
+| `cdfe9d7` (pre-R-12) | 619 | 588 | 31 | 0 |
+| `5cc7835` (post-R-12) | 738 | 704 | 34 | 0 |
+| delta | +119 | **+116** | **+3** | 0 |
+
+The +3 is exactly C-02a's real-source block, which contains exactly three test
+cases and already self-skipped without the read-only sibling checkouts. C-06
+and all four C-01 suites execute fully in CI. No deterministic stand-in was
+fabricated to claim real-source execution CI did not perform, and no rule was
+weakened so that a suite could register. The 31 pre-existing host-capability
+skips are unchanged, as is the CI `deepContainmentLane:
+NOT_EXERCISED_BWRAP_UNAVAILABLE`.
+
+**Two pre-existing defects, both repaired.** DEF-R12-1:
+`checkAgentContinuityIntegrity` was defined and never called — 50 `check*`
+functions defined, 49 invoked — so a rule guarding that the continuity checker
+stays read-only, spawns no child process, reaches no network and keeps the
+documentation-checkpoint allowlist narrow had never been enforced. DEF-R12-2,
+masked by the first: its allowlist assertion still read `bin/agent-state.mjs`
+after the pattern had been refactored into `bin/agent-continuity-protocol.mjs`,
+so enabling it naively fails on correct code. Both are reported rather than
+hidden because they were fixed.
+
+**Project truth reconciled.** The master ledger's normative status is corrected
+for C-02b, C-03, C-04 and C-11, and for the C-15b half of the C-15 row, each
+with its exact certification evidence and each preserving what it superseded —
+C-04's ≥ 400-edge criterion is recorded as FAILING at 382 with its measured
+cause and reassigned to C-05, and C-02b's measured streaming split is recorded
+as refuting the row's historical "90 streaming RPCs" figure. The checkpoint
+prose in this document was reconciled cell by cell to the machine block it had
+drifted from, and a malformed row carrying six cells in a five-column table was
+repaired.
+
+**Scope stated rather than implied.** 59 non-campaign infrastructure suites
+remain outside the two authoritative manifests. They are recorded explicitly in
+R-12's OpenSpec audit as out of its frozen scope rather than silently excluded,
+and they are the obvious next registration question.
+
+Certified at exact-head CI run `33784345028` / job `100745379741` at
+`5cc783572bf7f943e3168a7ae98c2106ee963cff`, all eleven required groups PASS on
+Node 20 with receipt `receipt:sha256:855c3279c6ecb3d30a69ad24`. Canonical
+regression 3,428 / 3,415 / 13 skipped / 0 failed. `gate:local` and `gate:clean`
+PASS with `siblingWrites: 0`. 13 real-repository negative probes detected and
+restored. R-12 changed no source-analysis behaviour, admitted no repository,
+and made no production, NEXT or DEV contact.
+
 ### Project-state v2 (machine-checked truth block)
 
 Each anchor claims a DIFFERENT kind of evidence. They may coincide, but they
@@ -228,11 +315,11 @@ when its OWN evidence exists.
 
 | Field | Claims | Current value | Why |
 | --- | --- | --- | --- |
-| `LAST_SUBSTANTIVE_IMPLEMENTATION_SHA` | the last commit that changed implementation AND was validated | `29a1bbd` | where C-15b's system-map model, bounded L1-L4 projections, deterministic layout and rebuilt renderer landed, including the DEF-C15B-1 and DEF-C15B-2 repairs; the commits after it changed documentation only |
-| `LAST_LOCALLY_VALIDATED_SHA` | the last commit where the local quality gate passed | `c770721` | `gate:local` PASS, all eleven required groups |
-| `LAST_CLEAN_VALIDATED_SHA` | the last commit where the clean Node 20 gate passed | `c770721` | `gate:clean` PASS, Node 20, eleven groups, `siblingWrites: 0`, inner receipt `receipt:sha256:ba8c0db14231f77bc32dbbd7` |
-| `CI_OBSERVED_SHA` | the commit whose CI result was observed | `c770721` | run `33750522362` / job `100632776636` |
-| `CI_EXECUTED_SHA` | the commit CI actually executed the gate at | `c770721` | same run; both `EXECUTED_PASS` and `EXECUTED_FAIL` require observed == executed, and this one is `EXECUTED_PASS` with receipt `receipt:sha256:2f18e3765638cb523b58aeea` |
+| `LAST_SUBSTANTIVE_IMPLEMENTATION_SHA` | the last commit that changed implementation AND was validated | `506d64f` | where R-12's registration registry, its generic totality rule and the revived `checkAgentContinuityIntegrity` landed; the commits after it changed documentation only |
+| `LAST_LOCALLY_VALIDATED_SHA` | the last commit where the local quality gate passed | `506d64f` | `gate:local` PASS, all eleven required groups, receipt `receipt:sha256:ec63fe57a093eb63e168ded5` |
+| `LAST_CLEAN_VALIDATED_SHA` | the last commit where the clean Node 20 gate passed | `f02562d` | `gate:clean` PASS, Node 20, eleven groups, `siblingWrites: 0`, inner receipt `receipt:sha256:0efe20276b93f05ebe50ea53`, outer `clean-receipt:sha256:466ca84e35b4d5881a7d76ae`. It names a DIFFERENT commit from the local anchor because the clean gate ran one documentation descendant later — each anchor advances on its own evidence, never as a side effect |
+| `CI_OBSERVED_SHA` | the commit whose CI result was observed | `5cc7835` | run `33784345028` / job `100745379741` |
+| `CI_EXECUTED_SHA` | the commit CI actually executed the gate at | `5cc7835` | same run; both `EXECUTED_PASS` and `EXECUTED_FAIL` require observed == executed, and this one is `EXECUTED_PASS` with receipt `receipt:sha256:855c3279c6ecb3d30a69ad24` |
 
 Two further roles are deliberately NOT in that table, because neither is a
 persisted anchor:
@@ -290,11 +377,11 @@ RELEASE_CERTIFICATION_PROTOCOL_VERSION: nightwatch.release-certification.v1
 PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
 RELEASE_CHECKPOINT_SHA: 2576c5751d33bb40046246e8fcf57c7cc5c30a57
 LIVE_HEAD_SHA: DISCOVER_FROM_GIT
-LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: 29a1bbd2daeea4b56c186b9bb56bffb3990d17bc
-LAST_LOCALLY_VALIDATED_SHA: c7707218a3afb4b5fc8430ebd4fb4e7a20c8fa61
-LAST_CLEAN_VALIDATED_SHA: c7707218a3afb4b5fc8430ebd4fb4e7a20c8fa61
-CI_OBSERVED_SHA: c7707218a3afb4b5fc8430ebd4fb4e7a20c8fa61
-CI_EXECUTED_SHA: c7707218a3afb4b5fc8430ebd4fb4e7a20c8fa61
+LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: 506d64fd878d2d02a7e93b28d8b515ab4fd97691
+LAST_LOCALLY_VALIDATED_SHA: 506d64fd878d2d02a7e93b28d8b515ab4fd97691
+LAST_CLEAN_VALIDATED_SHA: f02562dbd1376c62a27d65b7a1deba0799a24cdf
+CI_OBSERVED_SHA: 5cc783572bf7f943e3168a7ae98c2106ee963cff
+CI_EXECUTED_SHA: 5cc783572bf7f943e3168a7ae98c2106ee963cff
 CI_STATUS: EXECUTED_PASS
 FINAL_DOCUMENTATION_SHA: DISCOVER_FROM_GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
@@ -322,11 +409,11 @@ informational and are not interpreted as current authority.
 LIVE_STATE_PROTOCOL_VERSION: nightwatch.live-state.v1
 LIVE_TASK_ID: nightwatch-certification-truth-r12-v1
 LIVE_PHASE: CERTIFICATION_TRUTH_R12_V1
-LIVE_TASK_STATUS: IN_PROGRESS
+LIVE_TASK_STATUS: COMPLETE
 LIVE_PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
 LIVE_PROJECT_VERDICT_EFFECT: PRESERVE
-LIVE_NEXT_ACTION_STATE: CONTINUE
-LIVE_COMPLETION_CLAIM: NONE
+LIVE_NEXT_ACTION_STATE: STOP
+LIVE_COMPLETION_CLAIM: COMPLETE
 ```
 
 ### Exact-head CI is green (current live CI state)
