@@ -4,19 +4,20 @@
 
 Task ID: nightwatch-spec-derived-expectations-c09-v1
 Phase: SPEC_DERIVED_EXPECTATIONS_C09_V1
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: da369dad6c96472820790ffa4b69a773d2d26033
-Last validated implementation SHA: da369dad6c96472820790ffa4b69a773d2d26033
-Last substantive checkpoint SHA: da369dad6c96472820790ffa4b69a773d2d26033
+Last validated implementation SHA: 481cb356705ec7f8c894d5a2257218eafb70e32d
+Last substantive checkpoint SHA: 481cb356705ec7f8c894d5a2257218eafb70e32d
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-spec-derived-expectat-4dff694d
-Last checkpoint: inventory measured read-only at da369da — 332 OpenSpec scenarios which specify NIGHTWATCH rather than the product and are therefore OUTSIDE_SCOPE; the product specification is the generated OpenAPI with 642 operations, 1,891 typed properties, 30 enum definitions, 534 nested refs, 490 arrays and 0 required-key entries
+Last checkpoint: exact-head GitHub run 33806627149 at 68f479b passed all eleven required groups on Node 20 with receipt receipt:sha256:c6ad159fb04e405a0dc44db6; gate:local receipt:sha256:9a71f7b871e9ef6aee6e02de and gate:clean PASS with inner receipt receipt:sha256:28acbc2b3493387e2f221db9 and siblingWrites 0; canonical regression 3,519/3,506/13/0; 2,114 expectations admitted across 630 operations and all 332 scenarios classified OUTSIDE_SCOPE; 6/6 negative probes detected; DEF-C09-1 repaired
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: da369dad6c96472820790ffa4b69a773d2d26033
-LAST_VALIDATED_IMPLEMENTATION_SHA: da369dad6c96472820790ffa4b69a773d2d26033
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: da369dad6c96472820790ffa4b69a773d2d26033
+LAST_VALIDATED_IMPLEMENTATION_SHA: 481cb356705ec7f8c894d5a2257218eafb70e32d
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 481cb356705ec7f8c894d5a2257218eafb70e32d
+LAST_DOCUMENTATION_CHECKPOINT_SHA: 68f479b0035b94793446fbcadd8c8d262c78140e
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PROJECT_VERDICT_EFFECT: PRESERVE
@@ -30,8 +31,8 @@ a read-only proof.
 
 ## Current Milestone
 
-M7 — integration and exact-head CI. M1 through M6 are complete and all three
-local gates are PASS at `481cb35` with `siblingWrites: 0`.
+COMPLETE / STOP — M1 through M7 are closed and all nine acceptance rows PASS.
+Certified by exact-head CI run 33806627149 at `68f479b`.
 
 ## Completed Milestones
 
@@ -46,17 +47,18 @@ local gates are PASS at `481cb35` with `siblingWrites: 0`.
 - M5 — W-SPEC reports HELD where expectations exist; the §46 boundary
   demonstrated rather than re-guarded.
 - M6 — hardening rule and 6 negative probes; found and repaired DEF-C09-1.
+- M7 — integrated by verified fast-forward; exact-head CI PASS at `68f479b`
+  with the predicted +2 CI skips confirmed; project truth reconciled; session
+  released.
 
 ## Work In Progress
 
-M7 — integration and exact-head CI observation.
+NONE — the campaign is COMPLETE.
 
 ## Exact Next Action
 
-Integrate by verified fast-forward, then observe the exact-head GitHub Actions
-run. The C-09 suite has two sibling-gated cases (the real blueapi and
-blueinternal artifacts), so the CI synthetic skip count should rise by exactly
-two.
+STOP — C-09 is COMPLETE and certified. The next authorized work is the C-06G
+gate assessment, then C-16 EIG prioritisation.
 
 ## Files Changed
 
@@ -140,10 +142,24 @@ DEV work and beyond. C-09 admits and does not evaluate.
 
 ## Resume Recipe
 
-Read this STATE, then `SPEC.md` acceptance rows 1-9. Resume at the Current
-Milestone. All implementation happens in the owned session worktree
-`session/nightwatch-spec-derived-expectat-4dff694d`.
+Task complete. Do not resume; any follow-up starts as a new authorized task.
 
 ## Completion Snapshot
 
-Pending — the campaign is IN_PROGRESS.
+C-09 is COMPLETE and certified.
+
+Substantive implementation anchor: 481cb356705ec7f8c894d5a2257218eafb70e32d
+Certified exact-head checkpoint: 68f479b0035b94793446fbcadd8c8d262c78140e
+Live HEAD: DISCOVER_FROM_GIT
+Tests: canonical regression 3,519 / 3,506 / 13 skipped / 0 failed; synthetic
+campaign 829/829 locally and 829 / 790 / 39 skipped / 0 failed in CI; the new
+`c09SpecExpectations` suite 30/30; C-06 still 38/38.
+Artifacts: `src/core/source/specExpectations.ts` (four representable classes,
+exact joins, prose refused); `src/core/source/specScenarioInventory.ts`
+(classification totality); W-SPEC wired in `readOnlyProof.ts` with the boundary
+demonstrated; `checkC09SpecExpectationBoundary`.
+Known issues: none introduced. ENUM yields only 7 because enum definitions are
+mostly referenced below the top level of a response definition, and the
+extractor deliberately does not recurse; a future campaign could extend depth.
+The 2,114 figure is verified locally, because CI has no sibling checkouts.
+Recommended next task: assess the C-06G gate, then C-16.

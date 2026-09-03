@@ -3,22 +3,23 @@
 Task ID: nightwatch-spec-derived-expectations-c09-v1
 Phase: SPEC_DERIVED_EXPECTATIONS_C09_V1
 Title: C-09 Spec-Derived Expectations
-Status: IN_PROGRESS
+Status: COMPLETE
 Task directory: .agent/tasks/nightwatch-spec-derived-expectations-c09-v1
 Starting SHA: da369dad6c96472820790ffa4b69a773d2d26033
-Last validated implementation SHA: da369dad6c96472820790ffa4b69a773d2d26033
-Last checkpoint: inventory measured read-only at da369da — 332 OpenSpec scenarios, refuting the historical ~823 estimate, and all of them specify NIGHTWATCH rather than the product so none can bind to a product operation; the product specification is the generated OpenAPI with 642 operations, 1,891 typed properties, 30 enum definitions, 534 nested refs, 490 arrays and 0 required-key entries
-Current milestone: M2 — scenario classification with totality
-Next action: write src/core/source/specScenarioInventory.ts so every discovered scenario receives exactly one classification and a count assertion proves none was dropped, with the OUTSIDE_SCOPE verdict PROVEN from the corpus itself rather than asserted in a comment
+Last validated implementation SHA: 481cb356705ec7f8c894d5a2257218eafb70e32d
+Last checkpoint: exact-head GitHub run 33806627149 at 68f479b passed all eleven required groups on Node 20 with receipt receipt:sha256:c6ad159fb04e405a0dc44db6; both gates PASS with siblingWrites 0; canonical regression 3,519/3,506/13/0; 2,114 expectations admitted across 630 of 642 operations with exact joins, and all 332 scenarios classified OUTSIDE_SCOPE because they specify Nightwatch; W-SPEC HELD yet granting nothing; 6/6 negative probes detected; DEF-C09-1 repaired
+Current milestone: COMPLETE / STOP — M1 through M7 are closed and all nine acceptance rows PASS
+Next action: STOP — C-09 is COMPLETE and certified. The next authorized work is the C-06G gate assessment, then C-16 EIG prioritisation; C-08b is blocked and C-12 remains NOT AUTHORIZED
 Authorization class: NIGHTWATCH_SPEC_DERIVED_EXPECTATIONS_C09_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: da369dad6c96472820790ffa4b69a773d2d26033
-LAST_VALIDATED_IMPLEMENTATION_SHA: da369dad6c96472820790ffa4b69a773d2d26033
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: da369dad6c96472820790ffa4b69a773d2d26033
+LAST_VALIDATED_IMPLEMENTATION_SHA: 481cb356705ec7f8c894d5a2257218eafb70e32d
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 481cb356705ec7f8c894d5a2257218eafb70e32d
+LAST_DOCUMENTATION_CHECKPOINT_SHA: 68f479b0035b94793446fbcadd8c8d262c78140e
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
-PHASE_SPEC_DERIVED_EXPECTATIONS_C09_V1_STATUS: IN_PROGRESS
+PHASE_SPEC_DERIVED_EXPECTATIONS_C09_V1_STATUS: COMPLETE
 
 ## Routing and safety
 

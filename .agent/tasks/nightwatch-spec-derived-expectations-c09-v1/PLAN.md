@@ -78,12 +78,12 @@ get wrong.
 ## Milestones
 
 - M1 Task record, OpenSpec change, measured inventory — COMPLETE
-- M2 Scenario classification with totality — NOT_STARTED
-- M3 Expectation extractor, four classes, bounded — NOT_STARTED
-- M4 Provenance, currentness and STALE — NOT_STARTED
-- M5 W-SPEC becomes HELD; boundary demonstrated — NOT_STARTED
-- M6 Hardening rule and negative probes — NOT_STARTED
-- M7 Validation, integration, exact-head CI, closure — NOT_STARTED
+- M2 Scenario classification with totality — COMPLETE
+- M3 Expectation extractor, four classes, bounded — COMPLETE
+- M4 Provenance, currentness and STALE — COMPLETE
+- M5 W-SPEC becomes HELD; boundary demonstrated — COMPLETE
+- M6 Hardening rule and negative probes — COMPLETE
+- M7 Validation, integration, exact-head CI, closure — COMPLETE
 
 ## Validation Strategy
 

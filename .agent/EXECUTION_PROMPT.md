@@ -1,7 +1,7 @@
 # EXECUTION PROMPT — C-09 Spec-Derived Expectations
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
-Status: IN_PROGRESS
+Status: COMPLETE
 Campaign ID: nightwatch-spec-derived-expectations-c09-v1
 OpenSpec: openspec/changes/nightwatch-spec-derived-expectations-c09-v1/
 Planned-From: da369dad6c96472820790ffa4b69a773d2d26033

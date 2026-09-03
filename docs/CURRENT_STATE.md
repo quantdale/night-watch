@@ -466,6 +466,74 @@ consults the binding, both modules are data-only, and zero runtime contact
 occurred — no cluster, no kubectl, no cloud API, and `kubeconf-dev.yaml` was
 never read.
 
+## C-09 spec-derived expectations (current)
+
+A spec sentence is not a machine expectation. Turning one into the other needs
+an assertion an oracle can evaluate and an EXACT operation the assertion is
+about, and C-09 supplies neither by interpretation.
+
+**The corpus is about us.** `openspec/` holds only `changes/`: **332
+`#### Scenario:` headings** across 37 spec files, refuting the historical ~823
+estimate. Every one specifies NIGHTWATCH — "Evidence invalidates acceptance",
+"Auth expires during execution", "discovery is admission-free". They are this
+tool's campaign record and make no claim about an Alphaus product operation, so
+none can bind to one. **All 332 are `OUTSIDE_SCOPE`**, decided from the corpus
+LOCATION rather than by reading a sentence, because reading the sentence would
+be the natural-language interpretation this campaign forbids.
+
+`OUTSIDE_SCOPE` is kept strictly distinct from `NO_OPERATION_BINDING`, and the
+distinction carries the campaign: not being a product claim differs from being
+a product claim we could not bind, and the second is a far more flattering
+statement about coverage.
+
+**Where product specification actually is:** the generated OpenAPI admitted by
+C-02a and C-05.
+
+| Measure | Value |
+|---|---|
+| operations examined / with a resolved response schema | 642 / **642** |
+| **admitted expectations** | **2,114** |
+| `RESPONSE_PROPERTY_TYPE` / `CARDINALITY` / `SHAPE` / `ENUM` | 1,475 / 416 / 216 / 7 |
+| operations carrying at least one | **630** |
+| truncated | false |
+| `required` key material | **0** |
+
+The ≥ 40 target is exceeded fiftyfold, and soundly, because **the operation
+join is exact by construction rather than by matching**: each expectation comes
+from the response `$ref` of one `(path, method)` entry, so the operation is
+whichever one the document itself attached the schema to. There is no
+similarity step available to get wrong — which matters, because the standing
+temptation is to match by name and reach a number.
+
+Kept honest both ways: a response with no reference yields nothing rather than
+a guess, an unresolvable reference is reported rather than skipped, and two
+operations sharing a definition each get their own expectation because the
+subject of the claim is the operation.
+
+**No `REQUIRED_KEY` class.** Measured zero across both artifacts, because
+protobuf3 removed required semantics and these are gRPC-gateway generated
+documents. One of the named checkable classes is reported unavailable with its
+cause rather than approximated from `properties` membership — a property being
+present in a SCHEMA is not a claim that it is present in a RESPONSE.
+
+**W-SPEC now reports `HELD`, and grants nothing.** The §46 boundary is
+DEMONSTRATED rather than re-guarded: `READ_ONLY_PROVEN` requires one
+`DECLARATION` and one `EFFECT` witness, and W-SPEC is `DOCUMENTARY`, which is
+neither. Turning it on adds information without adding authority, and the tests
+prove the chain — W-SPEC HELD yields neither `READ_ONLY_PROVEN` nor production
+admission, and a count of 1,000,000 changes nothing a count of 0 does not. A
+malformed count (negative, fractional, NaN, Infinity) leaves the witness
+`UNSUPPORTED`. Adding a second guard would have recreated the
+duplicate-authority problem C-05 removed.
+
+Certified at exact-head CI run `33806627149` at
+`68f479b0035b94793446fbcadd8c8d262c78140e`, eleven required groups PASS on
+Node 20 with receipt `receipt:sha256:c6ad159fb04e405a0dc44db6`. Canonical
+regression 3,519 / 3,506 / 13 skipped / 0 failed. Both gates PASS at
+`481cb35` with `siblingWrites: 0`. 6 negative probes detected. CI skips went
+37 → 39, exactly the two sibling-gated cases, predicted before the run. C-09
+admits expectations and evaluates none; zero runtime contact.
+
 ### Project-state v2 (machine-checked truth block)
 
 Each anchor claims a DIFFERENT kind of evidence. They may coincide, but they
@@ -474,7 +542,7 @@ when its OWN evidence exists.
 
 | Field | Claims | Current value | Why |
 | --- | --- | --- | --- |
-| `LAST_SUBSTANTIVE_IMPLEMENTATION_SHA` | the last commit that changed implementation AND was validated | `777ddb1` | C-05's closing implementation commit, which added the sibling guard that repaired DEF-C05-5; the admission authority, read ledger and de-persistence landed across the commits leading to it |
+| `LAST_SUBSTANTIVE_IMPLEMENTATION_SHA` | the last commit that changed implementation AND was validated | `481cb35` | C-05's closing implementation commit, which added the sibling guard that repaired DEF-C05-5; the admission authority, read ledger and de-persistence landed across the commits leading to it |
 | `LAST_LOCALLY_VALIDATED_SHA` | the last commit where the local quality gate passed | `85dd8a6` | `gate:local` PASS, all eleven required groups, receipt `receipt:sha256:0cc29da4b4503cd981855940` |
 | `LAST_CLEAN_VALIDATED_SHA` | the last commit where the clean Node 20 gate passed | `85dd8a6` | `gate:clean` PASS, Node 20, eleven groups, `siblingWrites: 0`, inner receipt `receipt:sha256:841e75dcd27b04660842fa24`, outer `clean-receipt:sha256:3832909fbab478cff4828f50` |
 | `CI_OBSERVED_SHA` | the commit whose CI result was observed | `4e0bfc1` | run `33796281169`. It names a LATER commit than the two validation anchors because the local and clean gates ran at `85dd8a6`, CI then failed at `8cb055c` on DEF-C05-5, and the repair produced `4e0bfc1` — each anchor advances on its own evidence, and the intervening failure is recorded below rather than erased |
@@ -536,11 +604,11 @@ RELEASE_CERTIFICATION_PROTOCOL_VERSION: nightwatch.release-certification.v1
 PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
 RELEASE_CHECKPOINT_SHA: 2576c5751d33bb40046246e8fcf57c7cc5c30a57
 LIVE_HEAD_SHA: DISCOVER_FROM_GIT
-LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: 777ddb14fd367f2d9ae8f8ac68c89092bd784713
-LAST_LOCALLY_VALIDATED_SHA: 777ddb14fd367f2d9ae8f8ac68c89092bd784713
-LAST_CLEAN_VALIDATED_SHA: 777ddb14fd367f2d9ae8f8ac68c89092bd784713
-CI_OBSERVED_SHA: 70b822517d164154c9d0bfb2bd53cec72d1b0fbd
-CI_EXECUTED_SHA: 70b822517d164154c9d0bfb2bd53cec72d1b0fbd
+LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: 481cb356705ec7f8c894d5a2257218eafb70e32d
+LAST_LOCALLY_VALIDATED_SHA: 481cb356705ec7f8c894d5a2257218eafb70e32d
+LAST_CLEAN_VALIDATED_SHA: 481cb356705ec7f8c894d5a2257218eafb70e32d
+CI_OBSERVED_SHA: 68f479b0035b94793446fbcadd8c8d262c78140e
+CI_EXECUTED_SHA: 68f479b0035b94793446fbcadd8c8d262c78140e
 CI_STATUS: EXECUTED_PASS
 FINAL_DOCUMENTATION_SHA: DISCOVER_FROM_GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
@@ -568,11 +636,11 @@ informational and are not interpreted as current authority.
 LIVE_STATE_PROTOCOL_VERSION: nightwatch.live-state.v1
 LIVE_TASK_ID: nightwatch-spec-derived-expectations-c09-v1
 LIVE_PHASE: SPEC_DERIVED_EXPECTATIONS_C09_V1
-LIVE_TASK_STATUS: IN_PROGRESS
+LIVE_TASK_STATUS: COMPLETE
 LIVE_PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
 LIVE_PROJECT_VERDICT_EFFECT: PRESERVE
-LIVE_NEXT_ACTION_STATE: CONTINUE
-LIVE_COMPLETION_CLAIM: NONE
+LIVE_NEXT_ACTION_STATE: STOP
+LIVE_COMPLETION_CLAIM: COMPLETE
 ```
 
 ### Exact-head CI is green (current live CI state)
