@@ -1,60 +1,63 @@
-# EXECUTION PROMPT — C-04 Frontend Consumer Intelligence
+# EXECUTION PROMPT — C-15b System Map V2
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
-Status: COMPLETE
-Campaign ID: nightwatch-frontend-consumer-intelligence-c04-v1
-OpenSpec: openspec/changes/nightwatch-frontend-consumer-intelligence-c04-v1/
-Planned-From: 7c0d5f5326be1983cf081888680f3c01f3f128f6
+Status: IN_PROGRESS
+Campaign ID: nightwatch-system-map-v2-c15b-v1
+OpenSpec: openspec/changes/nightwatch-system-map-v2-c15b-v1/
+Planned-From: 9ac83bebbeb9ed747ff4a55e84701c4b95a1c692
 Target Branch: main
-Predecessor Task ID: nightwatch-go-grpc-topology-binding-c03-v1
+Predecessor Task ID: nightwatch-frontend-consumer-intelligence-c04-v1
 Predecessor Status: COMPLETE
 
 ## Mission
 
-Derive frontend to backend route edges mechanically from the approved Vue and
-JavaScript source, classify every path so that no non-literal path becomes a
-SOURCE_FACT, and report the yield truthfully against a criterion the approved
-universe cannot satisfy.
+Rebuild the source-graph projection model and the graph view so Nightwatch can
+expose whole-system topology and evidence status at the scale its contracts
+already permit, with every node and edge carrying exactly one fact category and
+every projection reporting exactly what it dropped.
 
 ## Authority
 
-Repository-local, offline, read-only source intelligence. `.vue` is admitted as
-a LANGUAGE, not a root or a repository. No rendering, execution, bundling,
-browser or sibling `node_modules`. No production, DEV or NEXT contact, no
-credentials, no customer data. C-12 is NOT authorized and is NOT begun.
+Repository-local, offline, observational. The Control Center gains no execution
+or mutation authority of any kind, and the existing GET/HEAD-only, 405,
+`executionAuthority: NONE` and production-store-exclusion invariants are
+re-proven rather than inherited. No repository admission. No EIG prioritisation.
+No production observation; C-12 is NOT authorized and is NOT begun.
 
 C-00 governs: all implementation happens in the owned session worktree
-`session/nightwatch-frontend-consumer-int-82a0494b`.
+`session/nightwatch-system-map-v2-c15b-v1-19d4f1bd`.
 
 ## Ordered workstreams
 
-1. Task record, OpenSpec change, measured ceiling.
-2. Adversarial corpus, asserted before the parser.
-3. Bounded Vue SFC script extraction and the consumer parser.
-4. `.vue` / `VUE` admission and the real measurement.
-5. Categorical backend join that never upgrades evidence.
-6. Hardening rules with recorded negative probes; gate registration.
-7. Full validation, integration, exact-head CI, closure.
+1. Task record, OpenSpec change, measured baseline.
+2. Contract v2: fact category, evidence status, exact projection bounds.
+3. System map model over the C-02b / C-03 / C-04 facts.
+4. Progressive disclosure L1-L4.
+5. Deterministic layout and content-addressed layout identity.
+6. The eight operator queries, each individually tested.
+7. Renderer, and Control Center authority probes.
+8. Hardening, gate registration, validation, integration, closure.
 
 ## Constraints
 
-Bounded loops and explicit ceilings; categorical classes rather than defaults;
-structural routes only, query and hash stripped; fail closed to UNKNOWN;
-explicit synthetic roots in every fixture; no repository write during
-`gate:clean`.
+Bounded projections with exact drop counts; categorical states rather than
+defaults; no evidence upgrade; `UNKNOWN` and `UNMEASURED` never zeroed; layout
+identity excludes timing; no new dependency unless provably required; no
+repository write while `gate:clean` evidence is running.
 
 ## Validation
 
 typecheck, hardening, handoff, project, agent, agent audit, workspace, gate
-inventory, semantic compatibility, synthetic campaign, the new C-04 suites, the
-C-02b and C-03 suites, source completeness suites, full canonical regression,
-`gate:clean`, exact-head GitHub Actions.
+inventory, semantic compatibility, synthetic campaign, the new C-15b suites,
+the C-02b / C-03 / C-04 suites, Control Center contract, adapter, authority and
+server suites, the browser suite where practical, C-10 production-store
+exclusion, full canonical regression, `gate:clean`, exact-head GitHub Actions.
 
 ## Acceptance and completion gates
 
-The nine acceptance rows of
-`.agent/tasks/nightwatch-frontend-consumer-intelligence-c04-v1/SPEC.md`, each
-carried in the REPORT requirement ledger with exact evidence.
+The twelve acceptance rows of
+`.agent/tasks/nightwatch-system-map-v2-c15b-v1/SPEC.md`, each carried in the
+REPORT requirement ledger with exact evidence.
 
 ## Git and reporting
 
