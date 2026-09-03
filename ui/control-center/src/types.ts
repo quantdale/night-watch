@@ -6,6 +6,7 @@ export const VIEW_DEFINITIONS = [
   { id: 'campaigns', label: 'Campaign Intelligence', eyebrow: 'CAMPAIGNS', description: 'Coverage, gaps, and source currentness.' },
   { id: 'source-intelligence', label: 'Source Intelligence', eyebrow: 'PROVENANCE', description: 'Proof and bounded source neighborhoods.' },
   { id: 'findings', label: 'Findings', eyebrow: 'TRIAGE', description: 'Sanitized owner-local finding metadata.' },
+  { id: 'system-map', label: 'System Map', eyebrow: 'TOPOLOGY V2', description: 'Progressive company-to-operation disclosure.' },
 ] as const;
 
 export type ViewId = (typeof VIEW_DEFINITIONS)[number]['id'];
@@ -326,6 +327,71 @@ export interface SourceGraphSnapshot {
   readonly edgeLimit: number;
   readonly truncated: boolean;
 }
+
+/** C-15c — the System Map V2 wire shape the UI consumes. */
+export interface SystemMapBound {
+  readonly limit: number;
+  /** Null when the true total is unknowable. Never rendered as zero. */
+  readonly total: number | null;
+  readonly projected: number;
+  /** Null when the total is unknown, because a drop count needs a total. */
+  readonly dropped: number | null;
+  readonly truncated: boolean;
+  readonly remainingUnknown: boolean;
+}
+
+export interface SystemMapNodeView {
+  readonly nodeId: string;
+  readonly kind: string;
+  readonly label: string;
+  readonly factCategory: string;
+  readonly evidenceStatus: string;
+  readonly coverageState: string;
+  readonly x: number;
+  readonly y: number;
+  readonly layer: number;
+}
+
+export interface SystemMapEdgeView {
+  readonly edgeId: string;
+  readonly fromNodeId: string;
+  readonly toNodeId: string;
+  readonly kind: string;
+  readonly factCategory: string;
+  readonly evidenceStatus: string;
+}
+
+export interface SystemMapSnapshot {
+  readonly schemaVersion: string;
+  readonly level: string;
+  readonly focusId: string | null;
+  readonly nodes: readonly SystemMapNodeView[];
+  readonly edges: readonly SystemMapEdgeView[];
+  readonly nodeBound: SystemMapBound;
+  readonly edgeBound: SystemMapBound;
+  readonly layout: {
+    readonly engineId: string;
+    readonly engineVersion: string;
+    readonly graphDigest: string;
+    readonly layoutDigest: string;
+    readonly projectionVersion: string;
+  };
+  readonly executionAuthority: string;
+  readonly mutationAuthority: string;
+  readonly query?: string;
+  /** MEASURED vs UNMEASURED. An empty UNMEASURED result is not a clean bill. */
+  readonly measurement?: string;
+  readonly blockingChain?: readonly { readonly stage: string; readonly reason: string | null }[];
+}
+
+export type SystemMapLevelSegment = 'l1' | 'l2' | 'l3' | 'l4';
+
+export const SYSTEM_MAP_QUERY_SEGMENTS = [
+  'why-unproven', 'ui-control-to-handler', 'surfaces-touching-service',
+  'observed-production-paths', 'mutation-capable-routes',
+  'untested-read-only-routes', 'coverage-gaps', 'findings-attached-to-topology',
+] as const;
+export type SystemMapQuerySegment = (typeof SYSTEM_MAP_QUERY_SEGMENTS)[number];
 
 export type DataLoadState<T> =
   | { readonly kind: 'idle' }

@@ -1,0 +1,170 @@
+# Task State
+
+## Identity
+
+Task ID: nightwatch-system-map-v2-transport-c15c-v1
+Phase: SYSTEM_MAP_V2_TRANSPORT_C15C_V1
+Status: IN_PROGRESS
+Starting SHA: 0b62247c512b960715348b637ac99bf68a9f3b49
+Last validated implementation SHA: 0b62247c512b960715348b637ac99bf68a9f3b49
+Last substantive checkpoint SHA: 0b62247c512b960715348b637ac99bf68a9f3b49
+Live HEAD authority: GIT
+Current local/remote HEAD: DISCOVER_FROM_GIT
+Branch: session/nightwatch-system-map-v2-transpo-6bb0f1cf
+Last checkpoint: predecessor C-07 certified at exact-head GitHub run 33817429249; C-15c scaffolding written before any gate battery
+CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
+
+STARTING_SHA: 0b62247c512b960715348b637ac99bf68a9f3b49
+LAST_VALIDATED_IMPLEMENTATION_SHA: 0b62247c512b960715348b637ac99bf68a9f3b49
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 0b62247c512b960715348b637ac99bf68a9f3b49
+LAST_DOCUMENTATION_CHECKPOINT_SHA: 0b62247c512b960715348b637ac99bf68a9f3b49
+LIVE_HEAD_AUTHORITY: GIT
+FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
+PROJECT_VERDICT_EFFECT: PRESERVE
+
+## Objective
+
+Carry the C-15b System Map V2 model over HTTP and give the operator a UI that
+can navigate it, granting the map no authority it does not have and without
+rendering away the boundaries of a bounded projection.
+
+## Current Milestone
+
+M1 closing. The task record exists and the measured baseline is captured. M2,
+M3 and M4 are implemented and verified in the working tree; M5, M6 and M7
+remain.
+
+## Completed Milestones
+
+- M1 — SPEC, PLAN, STATE, REPORT, the OpenSpec change, ACTIVE_TASK and
+  EXECUTION_PROMPT routing, and the live-state block, written BEFORE any gate
+  battery ran.
+- M2 — `src/controlCenter/contracts/systemMap.ts` and
+  `src/controlCenter/adapters/systemMapAdapter.ts`. Verified against real data:
+  1,851 operations, `operationPopulationTotal: null`, L1 at 1 node and 0 edges
+  inside a 64/128 bound, layout digest stable across repeated calls, both
+  authority fields `NONE`, L1-with-focus null and L2-without-focus null.
+- M3 — router segments, collector methods and server dispatch. Verified route
+  table: `l1`..`l4` route to `systemMapLevel`; `l5` and `/query/made-up` parse
+  to `unknown`; `../etc` is rejected; `/api/v1/source/graph` still routes to
+  `sourceGraph`.
+- M4 — `loadSystemMapLevel` and `loadSystemMapQuery` in the API client, and the
+  System Map operator view with L1→L4 drill, breadcrumb return, the eight
+  queries, search, evidence filter, pan, zoom, keyboard drive, a node detail
+  panel, the blocking chain and the provenance footer.
+
+## Work In Progress
+
+M5 — the C-15c suite, its registration in both manifests, and the hardening
+rule. Nothing is committed in this session yet.
+
+## Exact Next Action
+
+Commit the scaffolding together with the M2–M4 implementation, then write the
+C-15c suite and register it in `config/campaign-certification.v1.json` and
+`config/synthetic-campaign.v1.json`.
+
+## Files Changed
+
+- `src/controlCenter/contracts/systemMap.ts` — new, the V2 wire DTOs
+- `src/controlCenter/adapters/systemMapAdapter.ts` — new, level/query adapters
+- `src/controlCenter/server/router.ts` — V2 segments parsed before the v1 check
+- `src/controlCenter/server/collector.ts` — two new collector methods
+- `src/controlCenter/server/defaultCollector.ts` — wired to the authority snapshot
+- `src/controlCenter/server/server.ts` — dispatch, `focus` allowlist, GET/HEAD
+- `tests/unit/controlCenterServer.test.ts` — collector stub extended
+- `ui/control-center/src/types.ts` — V2 view types and the new nav entry
+- `ui/control-center/src/api.ts` — the two loader functions
+- `ui/control-center/src/App.tsx` — the System Map view
+- `ui/control-center/src/styles.css` — the view's styles
+- `ui/control-center/src/App.test.tsx` — roster guards extended by exactly one view
+- `docs/CURRENT_STATE.md` — live-state block advanced to C-15c
+
+## Validation Ledger
+
+| Check | Result |
+|---|---|
+| `npm run typecheck` | PASS |
+| UI `vite build` + build verifier | PASS — 3 files, no external references |
+| UI unit suite | PASS 12/12 |
+| Router truth table | PASS — v1 unaffected, unknown segments rejected |
+| Adapter against real data | PASS — bounds, authorities and layout determinism |
+| ProjectionBound end-to-end | PASS — nulls preserved, `remainingUnknown` true |
+| Full gate battery | NOT RUN YET — M7 |
+
+## Decisions Made During This Task
+
+`ProjectionBound.total` and `.dropped` are both nullable on the wire. When the
+upstream population is unknown the number of dropped items is unknowable, and a
+non-nullable number would force the transport to invent one.
+
+L1-with-a-focus and L2/L3/L4-without-a-focus return null rather than an empty
+map, so the server answers `CONTROL_CENTER_NOT_FOUND`. An empty success is a
+claim about the world; these are malformed requests.
+
+The client fetches exactly the level it displays. A client that fetched
+everything and filtered locally would have the privacy and scale profile of an
+unbounded API however little it drew.
+
+## Discoveries
+
+`MUTATION_CAPABLE_ROUTES` truncates with `total: null` and `dropped: null` and
+`remainingUnknown: true`. The natural UI — "1000 of 1000", or "0 dropped" —
+would tell the operator they had seen everything, which is the exact inverse of
+what the projection says. Both nulls render as "unknown".
+
+`OBSERVED_PRODUCTION_PATHS` returns zero nodes with `measurement: UNMEASURED`,
+because zero production observation exists and none is authorized. An empty
+list reads as "nothing is wrong". The truth is that nothing was measured, and
+the UI says so in words.
+
+## Blockers
+
+None.
+
+## Safety Events
+
+NONE. Production contacts 0, NEXT contacts 0, DEV requests 0, credentials
+acquired 0, sibling repository writes 0, force pushes 0. C-12 remains NOT
+AUTHORIZED and is not begun.
+
+## Deferred / Follow-Up
+
+The browser scenario matrix and the scale measurement are M6, after the suite
+and the hardening rule exist to be exercised.
+
+## Resume Recipe
+
+1. `cd /home/dalepalaca/.nightwatch/worktrees/nightwatch-system-map-v2-transpo-6bb0f1cf`
+2. `git status --short` — expect a clean tree at the last checkpoint
+3. `npm run typecheck` and `npm run agent:check`
+4. Continue at M5: the C-15c suite and its registration in both manifests
+
+## Completion Snapshot
+
+Not complete. Written at closure, from measurement.
+
+## Method notes
+
+I wrote this task record BEFORE running any gate battery. In C-16 and again in
+C-07 I ran the battery first and it failed at HANDOFF_TRUTH both times with
+eight groups NOT_RUN. Two consecutive repeats of one mistake is a process
+defect rather than bad luck, so the ordering is now written into PLAN M1.
+
+My first draft of this file used my own headings instead of the protocol's, and
+`agent:check` rejected it with 33 errors. Running the continuity check while
+writing the scaffolding — rather than discovering it at the gate — is the
+practical form of the same correction.
+
+The UI dependency tree was absent from this worktree. I first satisfied it with
+a symlink to the canonical checkout's `node_modules`, and `git status` then
+showed `ui/control-center/node_modules` as UNTRACKED: `.gitignore` says
+`node_modules/` with a trailing slash, which matches a directory and not a
+symlink. I replaced the symlink with a real directory so the ignore rule
+applies and no stray entry can reach a commit. I did not edit `.gitignore` to
+paper over it.
+
+Adding the System Map view broke two existing UI tests: a nav-count assertion
+pinned at 7 and a closed href allowlist. Both are honest roster guards doing
+their job. I extended each to admit exactly `system-map` and kept the allowlist
+closed rather than loosening the pattern to something permissive.

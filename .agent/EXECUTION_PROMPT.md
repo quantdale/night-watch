@@ -1,65 +1,63 @@
-# EXECUTION PROMPT — C-07 Derived Endpoint Semantics + Generated DEV Targets
+# EXECUTION PROMPT — C-15c System Map V2 HTTP Transport + Complete Operator UI
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
-Status: COMPLETE
-Campaign ID: nightwatch-derived-semantics-dev-targets-c07-v1
-OpenSpec: openspec/changes/nightwatch-derived-semantics-dev-targets-c07-v1/
-Planned-From: a34064711d2682f090c4d35079a27f08a7767ea5
+Status: ACTIVE
+Campaign ID: nightwatch-system-map-v2-transport-c15c-v1
+OpenSpec: openspec/changes/nightwatch-system-map-v2-transport-c15c-v1/
+Planned-From: 0b62247c512b960715348b637ac99bf68a9f3b49
 Target Branch: main
-Predecessor Task ID: nightwatch-eig-prioritization-c16-v1
+Predecessor Task ID: nightwatch-derived-semantics-dev-targets-c07-v1
 Predecessor Status: COMPLETE
 
 ## Mission
 
-Derive the endpoint semantic registry from mechanically established evidence,
-generate DEV targets that pass the UNCHANGED admission chain, and report the
-funnel honestly — including if it ends at zero.
+Carry the System Map V2 model over HTTP and give the operator a UI that can
+navigate it, without granting the map any authority it does not have and
+without rendering away the boundaries of a bounded projection.
 
 ## Authority
 
-Repository-local and offline for the derivation. Bounded DEV execution is
-authorized ONLY if every one of the sixteen stated conditions holds; the sixth
-— existing Nightwatch DEV admission accepts the target — currently fails, so no
-DEV traffic is authorized. No credential acquisition, no auth-configuration
-change, no reuse of production state. No production or NEXT contact; C-12 is
-NOT authorized and is NOT begun.
+Repository-local and offline. No production contact, no NEXT contact, no DEV
+request, no credential acquisition. C-12 is NOT authorized and is NOT begun.
 
 C-00 governs: all implementation happens in the owned session worktree
-`session/nightwatch-derived-semantics-dev-16e96515`.
+`session/nightwatch-system-map-v2-transpo-6bb0f1cf`.
 
 ## Ordered workstreams
 
-1. Task record, OpenSpec change, measured baseline.
-2. Derived semantic registry with per-entry evidence.
-3. DEV target funnel with per-reason counts.
-4. EIG ordering restricted to admissible targets.
-5. Pre-DEV qualification; record the verdict.
-6. Hardening rule and negative probes.
-7. Validation, integration, exact-head CI, closure.
+1. Task record, OpenSpec change, routing, measured baseline — BEFORE any gate.
+2. V2 contract DTOs and the level/query adapter.
+3. Router segments, collector methods, server dispatch.
+4. API client and the System Map operator view.
+5. C-15c suite, registration in both manifests, hardening rule.
+6. Browser scenario matrix and scale measurement.
+7. Validation, integration, exact-head CI, closure, release.
 
 ## Constraints
 
-No hand-authored semantic rule. No weakened admission threshold,
-classification or gate, including to reach the historical ≥ 30 figure. No
-fabricated product finding. `UNKNOWN` and `AMBIGUOUS` grant nothing.
-Generation is not execution. EIG orders and never widens. The DEV storage
-state's contents are not read.
+GET/HEAD only. Both authority fields `NONE` on every answer. V1 is never
+reinterpreted. Unknown segments are rejected, never guessed. A null total and a
+null dropped count render as "unknown", never as `0`. An `UNMEASURED` empty
+result is labelled unmeasured, not clean. The client fetches one level at a
+time and never a whole-company payload. Existing roster guards are extended to
+admit exactly the new view, not loosened.
 
 ## Validation
 
 typecheck, hardening, handoff, project, agent, agent audit, workspace, gate
-inventory, semantic compatibility, synthetic campaign, `gate:predev`,
-`dev-manifest`, `dev-preflight`, the C-06 suite, the new C-07 suite, the
+inventory, semantic compatibility, synthetic campaign, `gate:predev`, the UI
+unit suite, the UI build verifier, the new C-15c suite, the browser matrix, the
 canonical regression, `gate:local`, `gate:clean`, exact-head GitHub Actions.
 
 ## Acceptance and completion gates
 
-The ten acceptance rows of
-`.agent/tasks/nightwatch-derived-semantics-dev-targets-c07-v1/SPEC.md`, each
-carried in the REPORT requirement ledger with exact evidence.
+The thirteen acceptance rows of
+`.agent/tasks/nightwatch-system-map-v2-transport-c15c-v1/SPEC.md`, each carried
+in the REPORT requirement ledger with exact evidence.
 
 ## Git and reporting
 
 Coherent checkpoints in the session worktree; integrate by verified
-fast-forward; observe exact-head CI; reconcile project truth; complete
-`REPORT.md`; release the session and remove the worktree and branch.
+fast-forward; observe exact-head CI with a PREDICTED skip delta; reconcile
+project truth; complete `REPORT.md`; release the session and remove the
+worktree and branch.

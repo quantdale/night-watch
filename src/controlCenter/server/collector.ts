@@ -8,6 +8,8 @@ import type { ControlCenterExecutionGraphDto } from '../contracts/executionGraph
 import type { ControlCenterCampaignCoverageDto, ControlCenterCampaignSummaryDto } from '../contracts/campaign';
 import type { ControlCenterSourceGraphDto, ControlCenterSourceSummaryDto, ControlCenterSourceSurfacesDto } from '../contracts/sourceGraph';
 import type { ControlCenterFindingsDto } from '../contracts/findings';
+import type { ControlCenterSystemMapDto, ControlCenterSystemMapQueryDto } from '../contracts/systemMap';
+import type { SystemMapLevelSegment, SystemMapQuerySegment } from './router';
 
 export type MaybePromise<T> = T | Promise<T>;
 
@@ -35,4 +37,8 @@ export interface ControlCenterCollector {
   sourceSurfaces(query: ControlCenterSourceSurfaceQuery): MaybePromise<ControlCenterSourceSurfacesDto>;
   sourceGraph(surfaceId: SafeControlCenterId | null, depth: number): MaybePromise<ControlCenterSourceGraphDto | null>;
   findings(query: ControlCenterListQuery): MaybePromise<ControlCenterFindingsDto>;
+  /** C-15c. Null means the focus is missing, unknown, or supplied where the
+   *  level does not accept one — never a silently empty map. */
+  systemMapLevel(level: SystemMapLevelSegment, focusId: string | null): MaybePromise<ControlCenterSystemMapDto | null>;
+  systemMapQuery(query: SystemMapQuerySegment, focusId: string | null): MaybePromise<ControlCenterSystemMapQueryDto | null>;
 }

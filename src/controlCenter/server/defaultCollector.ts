@@ -9,6 +9,7 @@ import { classifyRunStatus, projectRunDetail, projectRunList, projectTimeline } 
 import { projectCampaignCoverage, projectCampaignSummary } from '../adapters/campaignAdapter';
 import { projectSourceGraph, projectSourceSummary, projectSourceSurfaces, type SourceSummaryAuthorityInput } from '../adapters/sourceAdapter';
 import { projectFindings } from '../adapters/findingsAdapter';
+import { LEVEL_FOR_SEGMENT, QUERY_FOR_SEGMENT, systemMapInputFromDiscovery, systemMapLevel, systemMapQuery } from '../adapters/systemMapAdapter';
 import { createRunEvidenceReader, type RunEvidenceReader, type RunEvidenceSnapshot } from '../authorities/runEvidenceReader';
 import { createSourceAuthority, type SourceAuthority, type SourceAuthoritySnapshot } from '../authorities/sourceAuthority';
 import { createCampaignAuthority, type CampaignAuthority, type CampaignAuthoritySnapshot } from '../authorities/campaignAuthority';
@@ -354,6 +355,20 @@ export function createDefaultControlCenterCollector(options: DefaultControlCente
     sourceGraph: async (surfaceId, depth): Promise<ControlCenterSourceGraphDto | null> => {
       const { source } = await readAuthoritySnapshot();
       return projectSourceGraph(source.discovery?.surfaces ?? [], surfaceId, depth);
+    },
+    // C-15c. Each level is projected and laid out on the SERVER, and only the
+    // requested level crosses the wire.
+    systemMapLevel: async (segment, focusId) => {
+      const { source } = await readAuthoritySnapshot();
+      const level = LEVEL_FOR_SEGMENT[segment];
+      if (level === undefined) return null;
+      return systemMapLevel(systemMapInputFromDiscovery(source.discovery as never), level, focusId);
+    },
+    systemMapQuery: async (segment, focusId) => {
+      const { source } = await readAuthoritySnapshot();
+      const query = QUERY_FOR_SEGMENT[segment];
+      if (query === undefined) return null;
+      return systemMapQuery(systemMapInputFromDiscovery(source.discovery as never), query, focusId);
     },
     findings: async (query) => {
       const { findings } = await readAuthoritySnapshot();

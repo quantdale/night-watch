@@ -14,6 +14,9 @@ import type {
   SourceSummarySnapshot,
   SourceGraphSnapshot,
   SourceSurfacesSnapshot,
+  SystemMapLevelSegment,
+  SystemMapQuerySegment,
+  SystemMapSnapshot,
   TimelineSnapshot,
 } from './types';
 
@@ -28,6 +31,8 @@ export const CONTROL_CENTER_API_PATHS = Object.freeze({
   sourceSurfaces: '/api/v1/source/surfaces',
   sourceGraph: '/api/v1/source/graph',
   findings: '/api/v1/findings',
+  /** C-15c. Explicitly v2: v1 is never reinterpreted. */
+  systemMap: '/api/v2/system-map',
 });
 
 export class ControlCenterApiError extends Error {
@@ -148,6 +153,22 @@ export function loadFindings(limit = 50): Promise<FindingsSnapshot> {
 const CONTROL_CENTER_NOTIFICATION_TYPES = ['readiness.changed', 'safety.changed', 'run.updated', 'run.completed', 'campaign.snapshot.changed', 'source.snapshot.changed', 'findings.snapshot.changed'] as const;
 
 /** Notifications are advisory. Consumers use them only to trigger GET refreshes. */
+/**
+ * Load ONE disclosure level. The browser asks for the level it is showing and
+ * nothing more — there is no whole-company payload cached client-side, which
+ * is the entire point of progressive disclosure.
+ */
+export function loadSystemMapLevel(level: SystemMapLevelSegment, focusId: string | null): Promise<SystemMapSnapshot> {
+  const search = focusId === null ? '' : `?focus=${encodeURIComponent(focusId)}`;
+  return fetchSnapshot<SystemMapSnapshot>(`${CONTROL_CENTER_API_PATHS.systemMap}/${level}${search}`);
+}
+
+/** Run one of the eight operator queries. */
+export function loadSystemMapQuery(query: SystemMapQuerySegment, focusId: string | null): Promise<SystemMapSnapshot> {
+  const search = focusId === null ? '' : `?focus=${encodeURIComponent(focusId)}`;
+  return fetchSnapshot<SystemMapSnapshot>(`${CONTROL_CENTER_API_PATHS.systemMap}/query/${query}${search}`);
+}
+
 export function subscribeToControlCenterEvents(onInvalidate: () => void): () => void {
   if (typeof window === 'undefined' || typeof window.EventSource !== 'function') return () => undefined;
   let source: EventSource;

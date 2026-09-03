@@ -87,6 +87,8 @@ function emptyCollector(): ControlCenterCollector {
     sourceSurfaces: () => sourceSurfaces,
     sourceGraph: () => sourceGraph,
     findings: () => findings,
+  systemMapLevel: () => null,
+  systemMapQuery: () => null,
   };
 }
 

@@ -155,7 +155,7 @@ describe('Control Center UI shell', () => {
     await user.click(runsLink);
     expect(await screen.findByRole('heading', { name: 'Inspect what happened, in order.' })).toBeVisible();
     expect(screen.getByText('No local runs recorded')).toBeInTheDocument();
-    expect(primaryNav.getAllByRole('link')).toHaveLength(7);
+    expect(primaryNav.getAllByRole('link')).toHaveLength(8);
     await user.click(primaryNav.getByRole('link', { name: 'Safety Center' }));
     expect(await screen.findByRole('heading', { name: 'Safety is a posture, not a green badge.' })).toBeVisible();
     expect(screen.getByText('Source inventory unavailable')).toBeInTheDocument();
@@ -175,7 +175,7 @@ describe('Control Center UI shell', () => {
     await screen.findByRole('heading', { name: 'Know the posture before the next run.' });
     expect(screen.getByRole('link', { name: 'Skip to content' })).toHaveAttribute('href', '#main-content');
     for (const link of within(screen.getByRole('navigation', { name: 'Primary' })).getAllByRole('link')) {
-      expect(link.getAttribute('href')).toMatch(/^#(?:|safety|runs|execution-graph|campaigns|source-intelligence|findings)$/);
+      expect(link.getAttribute('href')).toMatch(/^#(?:|safety|runs|execution-graph|campaigns|source-intelligence|findings|system-map)$/);
     }
     for (const button of screen.getAllByRole('button')) expect(button).toHaveAttribute('type', 'button');
     expect(document.querySelectorAll('img, iframe, object, embed')).toHaveLength(0);

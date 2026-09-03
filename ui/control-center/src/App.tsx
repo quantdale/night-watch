@@ -1,7 +1,7 @@
-import { Component, useCallback, useEffect, useState, type ErrorInfo, type ReactNode } from 'react';
-import { apiErrorLabel, loadCampaignCoverage, loadCampaignSummary, loadExecutionGraph, loadFindings, loadOverview, loadRunDetail, loadRuns, loadSourceGraph, loadSourceSurfaces, loadTimeline, subscribeToControlCenterEvents } from './api';
-import type { CampaignCoverageSnapshot, CampaignSummarySnapshot, DataLoadState, ExecutionGraphSnapshot, FindingsSnapshot, OverviewLoadState, OverviewSnapshot, RunDetailSnapshot, RunListSnapshot, SourceGraphSnapshot, SourceSurfaceSnapshot, SourceSurfacesSnapshot, TimelineSnapshot, ViewId } from './types';
-import { VIEW_DEFINITIONS } from './types';
+import { Component, useCallback, useEffect, useState, type ErrorInfo, type KeyboardEvent, type ReactNode } from 'react';
+import { apiErrorLabel, loadCampaignCoverage, loadCampaignSummary, loadExecutionGraph, loadFindings, loadOverview, loadRunDetail, loadRuns, loadSourceGraph, loadSourceSurfaces, loadSystemMapLevel, loadSystemMapQuery, loadTimeline, subscribeToControlCenterEvents } from './api';
+import type { CampaignCoverageSnapshot, CampaignSummarySnapshot, DataLoadState, ExecutionGraphSnapshot, FindingsSnapshot, OverviewLoadState, OverviewSnapshot, RunDetailSnapshot, RunListSnapshot, SourceGraphSnapshot, SourceSurfaceSnapshot, SourceSurfacesSnapshot, SystemMapBound, SystemMapLevelSegment, SystemMapNodeView, SystemMapQuerySegment, SystemMapSnapshot, TimelineSnapshot, ViewId } from './types';
+import { SYSTEM_MAP_QUERY_SEGMENTS, VIEW_DEFINITIONS } from './types';
 
 interface ErrorBoundaryProps {
   readonly children: ReactNode;
@@ -74,6 +74,7 @@ function Icon({ name }: { readonly name: ViewId | 'refresh' | 'arrow' }): ReactN
     campaigns: 'M4 5h16v4H4V5Zm0 7h10v4H4v-4Zm14 0h2v4h-2v-4Z',
     'source-intelligence': 'M5 4h14v16H5V4Zm3 4h8M8 12h8M8 16h5',
     findings: 'M5 4h14v16H5V4Zm3 4h8M8 12h8M8 16h5',
+    'system-map': 'M12 3a3 3 0 1 1 0 6 3 3 0 0 1 0-6ZM5 15a3 3 0 1 1 0 6 3 3 0 0 1 0-6Zm14 0a3 3 0 1 1 0 6 3 3 0 0 1 0-6ZM12 9v3m0 0-6 3m6-3 6 3',
     refresh: 'M20 11a8 8 0 0 0-14.9-4L3 9m0 0V4m0 5h5M4 13a8 8 0 0 0 14.9 4L21 15m0 0v5m0-5h-5',
     arrow: 'M5 12h13m-5-5 5 5-5 5',
   };
@@ -453,6 +454,222 @@ function Guardrail({ label, value }: { readonly label: string; readonly value: s
   return <div className="guardrail-row"><span className="guardrail-check" aria-hidden="true">✓</span><span>{label}</span><strong className={`text-${tone}`}>{formatCategory(value)}</strong></div>;
 }
 
+const LEVEL_ORDER = ['l1', 'l2', 'l3', 'l4'] as const;
+const LEVEL_LABEL: Record<SystemMapLevelSegment, string> = { l1: 'Company', l2: 'Product', l3: 'Service', l4: 'Operation' };
+const QUERY_LABEL: Record<SystemMapQuerySegment, string> = {
+  'why-unproven': 'Why unproven?',
+  'ui-control-to-handler': 'UI control → handler',
+  'surfaces-touching-service': 'Surfaces touching service',
+  'observed-production-paths': 'Observed production paths',
+  'mutation-capable-routes': 'Mutation-capable routes',
+  'untested-read-only-routes': 'Untested read-only routes',
+  'coverage-gaps': 'Coverage gaps',
+  'findings-attached-to-topology': 'Findings attached to topology',
+};
+
+/**
+ * Render a ProjectionBound without inventing certainty. A null total is shown as
+ * "unknown", never as a number, and a truncation whose remainder is unknown says
+ * so instead of implying the operator has seen everything worth seeing.
+ */
+function BoundNote({ label, bound }: { readonly label: string; readonly bound: SystemMapBound }): ReactNode {
+  const total = bound.total === null ? 'unknown' : String(bound.total);
+  const dropped = bound.dropped === null ? 'unknown' : String(bound.dropped);
+  return (
+    <span className="bound-note" data-testid={`bound-${label.toLowerCase()}`}>
+      <strong>{label}</strong> {bound.projected} shown / {total} total · limit {bound.limit}
+      {bound.truncated ? <em className="bound-truncated"> · truncated, {dropped} not shown{bound.remainingUnknown ? ' (remainder unknown)' : ''}</em> : null}
+    </span>
+  );
+}
+
+function SystemMapView({ refreshKey }: { readonly refreshKey: number }): ReactNode {
+  const [trail, setTrail] = useState<readonly { readonly level: SystemMapLevelSegment; readonly focusId: string | null; readonly label: string }[]>([{ level: 'l1', focusId: null, label: 'Company' }]);
+  const [query, setQuery] = useState<SystemMapQuerySegment | null>(null);
+  const [state, setState] = useState<DataLoadState<SystemMapSnapshot>>({ kind: 'idle' });
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
+  const [evidenceFilter, setEvidenceFilter] = useState('ALL');
+  const [view, setView] = useState({ scale: 1, tx: 0, ty: 0 });
+  const [drag, setDrag] = useState<{ readonly x: number; readonly y: number } | null>(null);
+
+  const current = trail[trail.length - 1];
+
+  useEffect(() => {
+    let cancelled = false;
+    setState({ kind: 'loading' });
+    const request = query === null ? loadSystemMapLevel(current.level, current.focusId) : loadSystemMapQuery(query, current.focusId);
+    request.then((data) => { if (!cancelled) setState({ kind: 'ready', data }); }).catch((error: unknown) => {
+      if (!cancelled) { void apiErrorLabel(error); setState({ kind: 'error' }); }
+    });
+    return () => { cancelled = true; };
+  }, [current.level, current.focusId, query, refreshKey]);
+
+  const goBack = useCallback((): void => {
+    setSelectedNodeId(null);
+    if (query !== null) { setQuery(null); return; }
+    setTrail((entries) => (entries.length > 1 ? entries.slice(0, -1) : entries));
+  }, [query]);
+
+  const drillInto = useCallback((node: SystemMapNodeView): void => {
+    setSelectedNodeId(node.nodeId);
+    if (query !== null) return;
+    const index = LEVEL_ORDER.indexOf(current.level);
+    if (index < 0 || index >= LEVEL_ORDER.length - 1) return;
+    const next = LEVEL_ORDER[index + 1];
+    setTrail((entries) => [...entries, { level: next, focusId: node.nodeId, label: node.label }]);
+    setView({ scale: 1, tx: 0, ty: 0 });
+  }, [current.level, query]);
+
+  const nodes = state.kind === 'ready' ? state.data.nodes : [];
+  const term = search.trim().toLowerCase();
+  const visible = nodes.filter((node) => {
+    if (evidenceFilter !== 'ALL' && node.evidenceStatus !== evidenceFilter) return false;
+    if (term === '') return true;
+    return node.label.toLowerCase().includes(term) || node.nodeId.toLowerCase().includes(term);
+  });
+  const visibleIds = new Set(visible.map((node) => node.nodeId));
+  const edges = state.kind === 'ready' ? state.data.edges.filter((edge) => visibleIds.has(edge.fromNodeId) && visibleIds.has(edge.toNodeId)) : [];
+  const evidenceOptions = ['ALL', ...Array.from(new Set(nodes.map((node) => node.evidenceStatus))).sort()];
+
+  const onKeyDown = useCallback((event: KeyboardEvent<HTMLDivElement>): void => {
+    if (event.key === 'Escape' || event.key === 'Backspace') { event.preventDefault(); goBack(); return; }
+    if (event.key === '+' || event.key === '=') { event.preventDefault(); setView((v) => ({ ...v, scale: Math.min(4, v.scale * 1.2) })); return; }
+    if (event.key === '-') { event.preventDefault(); setView((v) => ({ ...v, scale: Math.max(0.25, v.scale / 1.2) })); return; }
+    if (event.key === '0') { event.preventDefault(); setView({ scale: 1, tx: 0, ty: 0 }); return; }
+    if (event.key === 'ArrowRight' || event.key === 'ArrowDown' || event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+      if (visible.length === 0) return;
+      event.preventDefault();
+      const step = event.key === 'ArrowRight' || event.key === 'ArrowDown' ? 1 : -1;
+      const at = visible.findIndex((node) => node.nodeId === selectedNodeId);
+      const next = at < 0 ? (step === 1 ? 0 : visible.length - 1) : (at + step + visible.length) % visible.length;
+      setSelectedNodeId(visible[next].nodeId);
+      return;
+    }
+    if (event.key === 'Enter') {
+      const node = visible.find((entry) => entry.nodeId === selectedNodeId);
+      if (node !== undefined) { event.preventDefault(); drillInto(node); }
+    }
+  }, [drillInto, goBack, selectedNodeId, visible]);
+
+  if (state.kind === 'loading' || state.kind === 'idle') return <LoadingState />;
+  if (state.kind === 'error') return <ErrorState onRetry={() => setState({ kind: 'idle' })} />;
+
+  const map = state.data;
+  const selected = visible.find((node) => node.nodeId === selectedNodeId) ?? null;
+  const xs = visible.map((node) => node.x);
+  const ys = visible.map((node) => node.y);
+  const minX = xs.length > 0 ? Math.min(...xs) - 60 : 0;
+  const minY = ys.length > 0 ? Math.min(...ys) - 40 : 0;
+  const width = xs.length > 0 ? Math.max(...xs) - minX + 60 : 100;
+  const height = ys.length > 0 ? Math.max(...ys) - minY + 40 : 100;
+
+  return (
+    <section className="panel system-map-panel" aria-label="System map">
+      <nav className="system-map-breadcrumb" aria-label="Disclosure level">
+        {trail.map((entry, index) => (
+          <span key={`${entry.level}:${entry.focusId ?? 'root'}`}>
+            {index > 0 ? <span aria-hidden="true"> / </span> : null}
+            <button type="button" className="crumb" disabled={index === trail.length - 1 && query === null}
+              onClick={() => { setQuery(null); setSelectedNodeId(null); setTrail((entries) => entries.slice(0, index + 1)); }}>
+              {LEVEL_LABEL[entry.level]}{entry.focusId === null ? '' : `: ${entry.label}`}
+            </button>
+          </span>
+        ))}
+        {query !== null ? <span> / <strong>{QUERY_LABEL[query]}</strong></span> : null}
+      </nav>
+
+      <div className="system-map-queries" role="group" aria-label="Operator queries">
+        {SYSTEM_MAP_QUERY_SEGMENTS.map((segment) => (
+          <button key={segment} type="button" className={`chip ${query === segment ? 'chip-active' : ''}`}
+            aria-pressed={query === segment}
+            onClick={() => { setSelectedNodeId(null); setQuery((active) => (active === segment ? null : segment)); }}>
+            {QUERY_LABEL[segment]}
+          </button>
+        ))}
+      </div>
+
+      <div className="system-map-controls">
+        <label className="field"><span>Search</span>
+          <input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="node label or id" aria-label="Search nodes" />
+        </label>
+        <label className="field"><span>Evidence</span>
+          <select value={evidenceFilter} onChange={(event) => setEvidenceFilter(event.target.value)} aria-label="Filter by evidence status">
+            {evidenceOptions.map((option) => <option key={option} value={option}>{option}</option>)}
+          </select>
+        </label>
+        <button type="button" className="chip" onClick={goBack} disabled={trail.length === 1 && query === null}>Back</button>
+        <span className="hint">Drag to pan · wheel to zoom · +/-/0 · arrows select · Enter drills · Esc back</span>
+      </div>
+
+      {map.measurement === 'UNMEASURED' ? (
+        <p className="banner banner-warn" data-testid="measurement-banner">
+          UNMEASURED — this result was never measured. An empty list here is an absence of measurement, not a clean result.
+        </p>
+      ) : null}
+
+      <p className="system-map-bounds">
+        <BoundNote label="Nodes" bound={map.nodeBound} />
+        <BoundNote label="Edges" bound={map.edgeBound} />
+        <span className="bound-note">showing {visible.length} after filter</span>
+      </p>
+
+      <div className="system-map-canvas" tabIndex={0} role="application" aria-label={`${LEVEL_LABEL[current.level]} level graph`} onKeyDown={onKeyDown}
+        onPointerDown={(event) => setDrag({ x: event.clientX - view.tx, y: event.clientY - view.ty })}
+        onPointerMove={(event) => { if (drag !== null) setView((v) => ({ ...v, tx: event.clientX - drag.x, ty: event.clientY - drag.y })); }}
+        onPointerUp={() => setDrag(null)} onPointerLeave={() => setDrag(null)}
+        onWheel={(event) => setView((v) => ({ ...v, scale: Math.min(4, Math.max(0.25, v.scale * (event.deltaY < 0 ? 1.1 : 1 / 1.1))) }))}>
+        {visible.length === 0 ? <p className="empty-state">No nodes at this level match the current filter.</p> : (
+          <svg viewBox={`${minX} ${minY} ${width} ${height}`} role="img" aria-label="System map graph" style={{ transform: `translate(${view.tx}px, ${view.ty}px) scale(${view.scale})` }}>
+            {edges.map((edge) => {
+              const from = visible.find((node) => node.nodeId === edge.fromNodeId);
+              const to = visible.find((node) => node.nodeId === edge.toNodeId);
+              if (from === undefined || to === undefined) return null;
+              return <line key={edge.edgeId} x1={from.x} y1={from.y} x2={to.x} y2={to.y} className={`map-edge edge-${edge.evidenceStatus.toLowerCase()}`} />;
+            })}
+            {visible.map((node) => (
+              <g key={node.nodeId} className={`map-node node-${node.evidenceStatus.toLowerCase()} ${selectedNodeId === node.nodeId ? 'node-selected' : ''}`}
+                transform={`translate(${node.x}, ${node.y})`} role="button" tabIndex={-1}
+                aria-label={`${node.label}, ${node.evidenceStatus}, ${node.factCategory}`}
+                onClick={() => setSelectedNodeId(node.nodeId)} onDoubleClick={() => drillInto(node)}>
+                <circle r={7} />
+                <text x={11} y={4}>{node.label}</text>
+              </g>
+            ))}
+          </svg>
+        )}
+      </div>
+
+      {selected !== null ? (
+        <div className="system-map-detail" aria-live="polite">
+          <h3>{selected.label}</h3>
+          <dl>
+            <div><dt>Node</dt><dd>{selected.nodeId}</dd></div>
+            <div><dt>Kind</dt><dd>{selected.kind}</dd></div>
+            <div><dt>Fact category</dt><dd>{selected.factCategory}</dd></div>
+            <div><dt>Evidence</dt><dd>{selected.evidenceStatus}</dd></div>
+            <div><dt>Coverage</dt><dd>{selected.coverageState}</dd></div>
+          </dl>
+          {current.level !== 'l4' && query === null ? <button type="button" className="chip" onClick={() => drillInto(selected)}>Drill into {LEVEL_LABEL[LEVEL_ORDER[LEVEL_ORDER.indexOf(current.level) + 1]]}</button> : null}
+        </div>
+      ) : null}
+
+      {map.blockingChain !== undefined && map.blockingChain.length > 0 ? (
+        <ol className="blocking-chain" aria-label="Blocking chain">
+          {map.blockingChain.map((stage) => <li key={stage.stage}><strong>{stage.stage}</strong>{stage.reason === null ? '' : ` — ${stage.reason}`}</li>)}
+        </ol>
+      ) : null}
+
+      <footer className="system-map-provenance">
+        <span>layout {map.layout.engineId} {map.layout.engineVersion}</span>
+        <span>graph {map.layout.graphDigest}</span>
+        <span>layout digest {map.layout.layoutDigest}</span>
+        <span data-testid="map-authority">execution {map.executionAuthority} · mutation {map.mutationAuthority}</span>
+      </footer>
+    </section>
+  );
+}
+
 function PlaceholderView({ view }: { readonly view: (typeof VIEW_DEFINITIONS)[number] }): ReactNode {
   return (
     <div className="empty-view">
@@ -635,6 +852,7 @@ function DashboardApp(): ReactNode {
     if (activeView === 'execution-graph') return <ExecutionGraphView selectedRunId={selectedRunId} state={graphState} onRetry={retryRunData} />;
     if (activeView === 'campaigns') return <CampaignView summaryState={campaignSummaryState} coverageState={campaignCoverageState} onRetry={retryRunData} />;
     if (activeView === 'findings') return <FindingsView state={findingsState} onRetry={retryRunData} />;
+    if (activeView === 'system-map') return <SystemMapView refreshKey={refreshKey} />;
     if (activeView === 'source-intelligence') {
       if (loadState.kind === 'loading') return <LoadingState />;
       if (loadState.kind === 'error') return <ErrorState onRetry={refresh} />;

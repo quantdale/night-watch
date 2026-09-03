@@ -161,6 +161,10 @@ function routeQuery(url: URL, route: ControlCenterRoute): Record<string, string 
   if (route.kind === 'timeline') return queryValues(url, ['afterSeq', 'limit']);
   if (route.kind === 'sourceSurfaces') return queryValues(url, ['repo', 'limit', 'cursor']);
   if (route.kind === 'sourceGraph') return queryValues(url, ['surface', 'depth']);
+  // C-15c: `focus` is the ONLY parameter these routes accept. Anything else is
+  // rejected rather than ignored, so a client cannot believe it narrowed a
+  // request that was in fact answered whole.
+  if (route.kind === 'systemMapLevel' || route.kind === 'systemMapQuery') return queryValues(url, ['focus']);
   return queryValues(url, []);
 }
 
@@ -294,6 +298,20 @@ async function dispatch(
           if (typeof list === 'string') return sendError(response, list, headOnly);
           return sendJson(response, 200, await options.collector.findings(list), headOnly);
         }
+      case 'systemMapLevel': {
+        const focus = query.focus === null ? null : asSafeControlCenterId(query.focus);
+        if (query.focus !== null && focus === null) return sendError(response, 'CONTROL_CENTER_PATH_REJECTED', headOnly);
+        const value = await options.collector.systemMapLevel(route.level, focus);
+        // Null means the focus was missing, unknown, or given where the level
+        // takes none — a 404, never a silently empty map.
+        return value === null ? sendError(response, 'CONTROL_CENTER_NOT_FOUND', headOnly) : sendJson(response, 200, value, headOnly);
+      }
+      case 'systemMapQuery': {
+        const focus = query.focus === null ? null : asSafeControlCenterId(query.focus);
+        if (query.focus !== null && focus === null) return sendError(response, 'CONTROL_CENTER_PATH_REJECTED', headOnly);
+        const value = await options.collector.systemMapQuery(route.query, focus);
+        return value === null ? sendError(response, 'CONTROL_CENTER_NOT_FOUND', headOnly) : sendJson(response, 200, value, headOnly);
+      }
     }
   } catch {
     return sendError(response, 'CONTROL_CENTER_INTERNAL_FAILURE', headOnly);
