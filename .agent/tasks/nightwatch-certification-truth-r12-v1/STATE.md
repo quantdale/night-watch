@@ -29,7 +29,8 @@ the project-truth documents to the completion the repository reached.
 
 ## Current Milestone
 
-M7 — validation: canonical regression, `gate:local`, `gate:clean`.
+M7 — validation. Canonical regression and `gate:local` are PASS at `506d64f`;
+`gate:clean` is the remaining gate before integration.
 
 ## Completed Milestones
 
@@ -58,16 +59,18 @@ M7 — validation: canonical regression, `gate:local`, `gate:clean`.
 
 ## Work In Progress
 
-M7 — the canonical regression is running. `gate:local` and `gate:clean`
-follow, then integration and exact-head CI.
+M7 — `gate:clean` is the remaining local gate. The regression and `gate:local`
+are recorded PASS above.
 
 ## Exact Next Action
 
-Read the canonical regression result. If zero failures, run `npm run
-gate:local`, then `npm run gate:clean` with no repository write while it
-executes, recording both receipts in the Validation Ledger. Then integrate by
-verified fast-forward, observe exact-head CI, reconcile project truth, close
-the REPORT ledger and release the session.
+Run `npm run gate:clean` with NO repository write while it executes, and record
+its inner receipt and `siblingWrites` in the Validation Ledger. Then integrate
+by verified fast-forward, observe exact-head CI, and check the CI synthetic
+receipt's `skipped` count is at least 3 — that is the ONLY decisive evidence
+for acceptance row 4, because `DEFAULT_SIBLING_ROOT` is a hardcoded absolute
+path and the siblings therefore stay visible even to `gate:clean` on this
+machine. Then reconcile project truth, close the REPORT ledger and release.
 
 ## Files Changed
 
@@ -102,6 +105,8 @@ the REPORT ledger and release the session.
 | `npm run gate:inventory` | exit 0 |
 | Negative probes P1-P10 (real repository) | 10/10 DETECTED, 10/10 restored, tree clean after each |
 | Negative failure-path tests (synthetic input) | 16 permanent cases in `r12CampaignCertification.test.ts` |
+| **canonical regression** at `506d64f` | **3,428 total / 3,415 passed / 13 skipped / 0 failed**, exit 0 (baseline 3,396/3,383/13/0; delta is exactly the 32 new cases, and skips are unchanged) |
+| **`npm run gate:local`** at `506d64f` | **PASS, all eleven required groups**, `environmentClass: LOCAL`, Node 22, receipt `receipt:sha256:ec63fe57a093eb63e168ded5`; SEMANTIC_COMPATIBILITY 2,033/2,020/13/0; OWNER_PROVENANCE 91 passed; SYNTHETIC_CAMPAIGN 738/738/0 with `deepContainmentLane: PROVEN` |
 
 ### Negative probe matrix
 
