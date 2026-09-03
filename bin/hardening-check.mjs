@@ -3039,7 +3039,9 @@ function checkC09SpecExpectationBoundary() {
     const uses = new RegExp(`(?<!PROSE_FIELDS[^;]{0,200})\\b(?:property|operation|definition)\\.${prose}\\b`).test(code);
     if (uses) fail(`C-09 must not derive an assertion from the prose field ${prose}`);
   }
-  if (!/PROSE_FIELDS/.test(expectations)) {
+  // Anchored on the EXPORT, not the bare name: `XPROSE_FIELDS` contains
+  // `PROSE_FIELDS`, so an unanchored test passes on a renamed symbol.
+  if (!/export const PROSE_FIELDS\s*=/.test(expectations)) {
     fail('C-09 must name the prose fields it refuses, as data rather than as a comment');
   }
 
