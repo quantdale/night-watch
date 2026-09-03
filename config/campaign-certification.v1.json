@@ -73,6 +73,13 @@
       ]
     },
     {
+      "id": "C-08",
+      "task": "nightwatch-deployment-fact-binding-c08-v1",
+      "suites": [
+        "tests/unit/c08DeploymentBinding.test.ts"
+      ]
+    },
+    {
       "id": "C-10",
       "task": "nightwatch-production-privacy-firewall-c10-v1",
       "suites": [

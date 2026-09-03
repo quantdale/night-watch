@@ -2914,6 +2914,81 @@ function checkC05UniverseAdmissionBoundary() {
   }
 }
 
+/**
+ * C-08 deployment-fact boundary.
+ *
+ * The rule that matters is the one a well-meaning implementation gets wrong:
+ * `ripple-ui/src/config/common.js` is committed, current, and names real hosts
+ * per environment, so it reads as authoritative — while stating only what the
+ * FRONTEND CALLS. What the infrastructure SERVES is a different proposition,
+ * and the gap between them is where a stale or rerouted deployment hides. So
+ * the host matrix must stay SOURCE_FACT, and only genuine deployment
+ * configuration may produce a DEPLOYMENT_FACT.
+ */
+function checkC08DeploymentBindingBoundary() {
+  const binding = read('src/core/source/deploymentBinding.ts');
+  const evidence = read('src/core/source/deploymentEvidence.ts');
+
+  // --- the forbidden bases are declared, including the one that arises here ---
+  for (const basis of ['SERVICE_NAME_SIMILARITY', 'ROUTE_PREFIX_SIMILARITY', 'GUESSED_HOSTNAME',
+    'HISTORICAL_FAMILIARITY', 'DOCUMENT_DESCRIBING_EXPECTED_ARCHITECTURE', 'CLIENT_CONFIGURATION']) {
+    if (!binding.includes(basis)) fail(`C-08 must declare ${basis} as a forbidden DEPLOYMENT_FACT basis`);
+  }
+
+  // --- the host matrix is SOURCE_FACT, and the build config DEPLOYMENT_FACT ---
+  const hostMatrixFn = /export function extractHostMatrix[\s\S]*?\n\}/.exec(evidence);
+  if (hostMatrixFn === null) {
+    fail('C-08 could not read extractHostMatrix; the host-matrix classification cannot be verified');
+  } else if (!/factCategory: 'SOURCE_FACT' as const/.test(hostMatrixFn[0])) {
+    fail('C-08 the host matrix is CLIENT configuration and must be classified SOURCE_FACT, never DEPLOYMENT_FACT');
+  }
+  const exclusionFn = /export function extractBuildExclusions[\s\S]*?\n\}/.exec(evidence);
+  if (exclusionFn === null) {
+    fail('C-08 could not read extractBuildExclusions');
+  } else if (!/factCategory: 'DEPLOYMENT_FACT' as const/.test(exclusionFn[0])) {
+    fail('C-08 build exclusions are deployment configuration and must be classified DEPLOYMENT_FACT');
+  }
+
+  // --- U-1 and U-2 stay unresolved while the manifests are unavailable ---
+  if (!/u1: Object\.freeze\(\{ resolved: false as const/.test(binding)
+    || !/u2: Object\.freeze\(\{ resolved: false as const/.test(binding)) {
+    fail('C-08 U-1 and U-2 must be typed unresolved; resolving them requires the mochi manifests, not a boolean');
+  }
+  if (!binding.includes('C08B_BLOCKED_BY_ORGANIZATIONAL_ACCESS')) {
+    fail('C-08 must record C08B_BLOCKED_BY_ORGANIZATIONAL_ACCESS as the reason U-1 and U-2 are unknown');
+  }
+
+  // --- totality is structural ---
+  if (!/totalityHolds: operations\.length === bindings\.length/.test(binding)) {
+    fail('C-08 must assert binding totality against the operation population');
+  }
+
+  // --- AMBIGUOUS and UNKNOWN stay distinct ---
+  for (const state of ['AMBIGUOUS', 'UNKNOWN', 'PARTIAL', 'STALE', 'UNSUPPORTED', 'EXACT']) {
+    if (!binding.includes(`'${state}'`)) fail(`C-08 binding state ${state} is missing from the vocabulary`);
+  }
+
+  // --- the binding modules stay data-only, and grant no authority ---
+  for (const file of ['src/core/source/deploymentBinding.ts', 'src/core/source/deploymentEvidence.ts']) {
+    const source = read(file);
+    for (const forbidden of ['node:fs', 'node:child_process', 'node:net', 'node:https', 'node:http']) {
+      if (source.includes(`from '${forbidden}'`)) fail(`${file} must stay data-only policy (imports ${forbidden})`);
+    }
+  }
+  // Knowing where something runs is not permission to call it.
+  for (const file of ['src/core/safety/realRunGate.ts', 'src/core/policy/ownerScope.ts']) {
+    if (/deploymentBinding|deploymentEvidence/.test(read(file))) {
+      fail(`${file} must not consult the deployment binding; a deployment fact grants no request authority`);
+    }
+  }
+  // The cluster config is never read.
+  for (const file of ['src/core/source/deploymentBinding.ts', 'src/core/source/deploymentEvidence.ts', 'bin/nightwatch-intelligence.mjs']) {
+    if (/kubeconf|kubectl/i.test(withoutComments(read(file)))) {
+      fail(`${file} must not reference cluster configuration; C-08 reads no cluster`);
+    }
+  }
+}
+
 checkChildProcessBoundaries();
 checkL6ProcessNetworkBoundary();
 checkTargetPolicy();
@@ -2935,6 +3010,7 @@ checkC03GrpcTopologyBoundary();
 checkC04FrontendConsumerBoundary();
 checkC15bSystemMapBoundary();
 checkC05UniverseAdmissionBoundary();
+checkC08DeploymentBindingBoundary();
 checkCampaignCertificationRegistry();
 checkPlannerHandoffIntegrity();
 checkDocumentationTruth();
