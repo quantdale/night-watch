@@ -30,24 +30,33 @@ a read-only proof.
 
 ## Current Milestone
 
-M2 — scenario classification with totality.
+M7 — integration and exact-head CI. M1 through M6 are complete and all three
+local gates are PASS at `481cb35` with `siblingWrites: 0`.
 
 ## Completed Milestones
 
 - M1 — task record, OpenSpec change, session claim, measured inventory.
+- M2 — scenario classification over all 332, totality structural; all
+  `OUTSIDE_SCOPE`, decided from the corpus LOCATION rather than by reading a
+  sentence.
+- M3 — expectation extractor in four representable classes; **2,114 admitted**
+  across 630 operations, with the operation join exact by construction.
+- M4 — provenance on every admitted expectation and STALE on digest, SHA or
+  extractor-version change.
+- M5 — W-SPEC reports HELD where expectations exist; the §46 boundary
+  demonstrated rather than re-guarded.
+- M6 — hardening rule and 6 negative probes; found and repaired DEF-C09-1.
 
 ## Work In Progress
 
-M2 — `src/core/source/specScenarioInventory.ts`: classify all 332 scenarios
-with the §42 vocabulary, totality enforced by construction.
+M7 — integration and exact-head CI observation.
 
 ## Exact Next Action
 
-Write the scenario classifier so every discovered scenario receives exactly one
-classification and a count assertion proves none was dropped. The `OUTSIDE_SCOPE`
-verdict for the OpenSpec corpus must be PROVEN from the corpus itself — the
-change directories are Nightwatch campaign records, so their scenarios specify
-the tool — rather than asserted in a comment.
+Integrate by verified fast-forward, then observe the exact-head GitHub Actions
+run. The C-09 suite has two sibling-gated cases (the real blueapi and
+blueinternal artifacts), so the CI synthetic skip count should rise by exactly
+two.
 
 ## Files Changed
 
@@ -72,6 +81,18 @@ the tool — rather than asserted in a comment.
 | `required` key entries | **0** in both — protobuf3 has no required, so none will be claimed |
 | existing W-SPEC state | `UNSUPPORTED` / `SPEC_EXPECTATION_ANALYZER_ABSENT` |
 | existing witness lattice | `READ_ONLY_PROVEN` needs one DECLARATION and one EFFECT witness; W-SPEC is `DOCUMENTARY`, so the §46 boundary is already structural |
+| **admitted expectations** | **2,114** — TYPE 1,475 / CARDINALITY 416 / SHAPE 216 / ENUM 7 |
+| operations examined / with resolved schema | 642 / **642** |
+| operations carrying at least one expectation | **630** (581 blueapi + 49 blueinternal) |
+| truncated | **false** |
+| rejections, all accounted for | 12 `DEFINITION_HAS_NO_PROPERTIES` (empty response messages), 23 `PROPERTY_CARRIES_NO_REPRESENTABLE_ASSERTION` |
+| scenario classification | 332 discovered, 332 classified, `totalityHolds: true`, **all OUTSIDE_SCOPE** via `NIGHTWATCH_OWN_SPECIFICATION`, CHECKABLE 0 |
+| `tests/unit/c09SpecExpectations.test.ts` | **30 passed / 0 failed** |
+| C-06 suite after the W-SPEC change | 38 passed / 0 failed — the witness change added information without touching authority |
+| negative probes S1-S6 | **6/6 DETECTED**, all restored, tree clean after each |
+| **canonical regression** at `481cb35` | **3,519 total / 3,506 passed / 13 skipped / 0 failed**, 0 failure blocks |
+| **`gate:local`** at `481cb35` | **PASS, eleven groups**, receipt `receipt:sha256:9a71f7b871e9ef6aee6e02de`; synthetic lane 829/829 |
+| **`gate:clean`** at `481cb35` | **PASS, eleven groups**, Node 20, **`siblingWrites: 0`**; inner `receipt:sha256:28acbc2b3493387e2f221db9`, outer `clean-receipt:sha256:1184014bc6feaacd4a8c307d` |
 
 ## Decisions Made During This Task
 
@@ -82,6 +103,20 @@ the tool — rather than asserted in a comment.
   principled cause.
 - The §46 W-SPEC boundary is DEMONSTRATED rather than re-guarded, because it is
   already structural and a second guard would duplicate authority.
+
+## Defects found
+
+**DEF-C09-1 — my own C-09 rule tested an unanchored symbol name.
+CAMPAIGN_INTRODUCED, caught by its own probe.** The rule asserted
+`/PROSE_FIELDS/` against the whole file, and `XPROSE_FIELDS` CONTAINS
+`PROSE_FIELDS`, so renaming the symbol left the check passing. Repair:
+anchored on `export const PROSE_FIELDS =`.
+
+This is the third time this night that a check matched text it did not mean —
+after C-08's comment-matching rule and, in this campaign, a TEST that failed
+on the word "similarity" inside the comment explaining why similarity matching
+is forbidden. The pattern is consistent enough to be worth stating as a rule:
+a structural check must read a DECLARATION, anchored, with comments stripped.
 
 ## Discoveries
 
