@@ -258,9 +258,9 @@ LIVE_HEAD_SHA: DISCOVER_FROM_GIT
 LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: 11cefb27ac366217f7092dcd7f66b3cfccac2fee
 LAST_LOCALLY_VALIDATED_SHA: 0d86b6d258fdc6aa3f36ff689950abefc4da15f1
 LAST_CLEAN_VALIDATED_SHA: 0d86b6d258fdc6aa3f36ff689950abefc4da15f1
-CI_OBSERVED_SHA: 0d86b6d258fdc6aa3f36ff689950abefc4da15f1
-CI_EXECUTED_SHA: 0d86b6d258fdc6aa3f36ff689950abefc4da15f1
-CI_STATUS: EXECUTED_PASS
+CI_OBSERVED_SHA: fca9dd193ba0b6152aff71805099d91d700ab706
+CI_EXECUTED_SHA: fca9dd193ba0b6152aff71805099d91d700ab706
+CI_STATUS: EXECUTED_FAIL
 FINAL_DOCUMENTATION_SHA: DISCOVER_FROM_GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 LIVE_HEAD_AUTHORITY: GIT
@@ -294,26 +294,22 @@ LIVE_NEXT_ACTION_STATE: CONTINUE
 LIVE_COMPLETION_CLAIM: NONE
 ```
 
-### Exact-head CI is green (current live CI state)
+### Exact-head CI (current live CI state)
 
-Run `33689899601` / job `100445996051` at
-`0d86b6d258fdc6aa3f36ff689950abefc4da15f1` passed on Node 20 with receipt
-`receipt:sha256:b8765cd35533224fa4f8090e`. All eleven required groups PASS:
-`SEMANTIC_COMPATIBILITY` 2,033 total / 2,020 passed / 13 skipped / 0 failed,
-`OWNER_PROVENANCE` 91 passed, and `SYNTHETIC_CAMPAIGN` 511 total / 486 passed /
-25 skipped / 0 failed, the skips being the deep containment lane where
-Bubblewrap is unavailable. This is C-03's certification.
+The live head `fca9dd193ba0b6152aff71805099d91d700ab706` — C-04's substantive
+implementation plus its anchor advance — was observed by run `33744658077` /
+job `100614259482` on Node 20 with receipt
+`receipt:sha256:188784f2dc3355363e709692`, and FAILED on `PROJECT_TRUTH` alone:
+the project block still named C-03's CI evidence while the task had validated a
+newer implementation. The seven groups after it are `NOT_RUN` because
+`AGENT_CONTINUITY` depends on it.
 
-`gate:clean` PASS at the same head on Node 20 with inner receipt
-`receipt:sha256:7d05be06a2eaa16eb8cf6163`, clean receipt
-`clean-receipt:sha256:8594f0440841e7ccfbd6f4ed`, `cleanBefore` and `cleanAfter`
-both true, `siblingWrites` 0, and 511/511 locally where the containment lane is
-PROVEN. The clean gate executes the same eleven groups on a pristine Node 20
-checkout, so the head is certified by two independent full-gate runs.
+Recording that run is what clears it. The project block above now names
+`fca9dd19` as the observed and executed CI SHA with status `EXECUTED_FAIL`.
 
-The preceding head `07b90fbb` was observed by run `33689763052` / job
-`100445559315` and FAILED on `PROJECT_TRUTH` alone — the cross-authority
-ordering working as designed, recorded rather than retried.
+C-03's certification run `33689899601` / job `100445996051` at `0d86b6d` is
+preserved as historical: all eleven required groups PASS on Node 20 with
+receipt `receipt:sha256:b8765cd35533224fa4f8090e`.
 
 C-02b's certification run `33680339948` / job `100415095920` at `321f11b` is
 preserved as historical: all eleven required groups PASS on Node 20 with
