@@ -2889,6 +2889,22 @@ function checkC05UniverseAdmissionBoundary() {
       fail(`src/core/changeIntelligence/map.ts must not persist ${field}; it is current mutable Git state`);
     }
   }
+  // --- the unapproved-read guarantee is measured at the CALL ---
+  const boundary = read('src/core/source/siblingSource.ts');
+  for (const member of ['readLedger', 'admissionRefusals', 'contentReads', 'admissionRefused']) {
+    if (!boundary.includes(member)) {
+      fail(`src/core/source/siblingSource.ts must keep the C-05 read ledger (${member}); an output-only guarantee cannot distinguish reading nothing from deriving nothing`);
+    }
+  }
+  // Every real analysis path must hand the boundary the approved set. Admission
+  // was previously enforced only by which repositories the scan CONFIG listed,
+  // so a caller that built its own config was ungated.
+  for (const file of ['bin/nightwatch-intelligence.mjs', 'src/controlCenter/authorities/sourceAuthority.ts']) {
+    if (!/admittedRepositoryIds/.test(read(file))) {
+      fail(`${file} must pass admittedRepositoryIds to the sibling-source boundary so an unadmitted repository cannot be opened`);
+    }
+  }
+
   // The one consumer must OBSERVE rather than republish the persisted values.
   const shadow = read('bin/change-intelligence.mjs');
   for (const republished of ['behind: repo.behind', 'ahead: repo.ahead', 'trackingSha: repo.trackingSha', 'branch: repo.branch']) {
