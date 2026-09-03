@@ -4,19 +4,20 @@
 
 Task ID: nightwatch-frontend-consumer-intelligence-c04-v1
 Phase: FRONTEND_CONSUMER_INTELLIGENCE_C04_V1
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: 7c0d5f5326be1983cf081888680f3c01f3f128f6
 Last validated implementation SHA: 11cefb27ac366217f7092dcd7f66b3cfccac2fee
 Last substantive checkpoint SHA: 11cefb27ac366217f7092dcd7f66b3cfccac2fee
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-frontend-consumer-int-82a0494b
-Last checkpoint: M1 opened at the C-03 closure head 7c0d5f5 with the 211-call-site frontend ceiling measured before any code
+Last checkpoint: exact-head GitHub job 100614907944 at 0323d5f passed all eleven required groups on Node 20 with receipt receipt:sha256:6cba46d8990802d39f4b4e26; gate:clean PASS with inner receipt receipt:sha256:9ad8e572fe6eed991f7a7dea and siblingWrites 0; canonical regression 3,338 total / 3,325 passed / 13 skipped / 0 failed; 382 consumer edges with ZERO non-literal SOURCE_FACTs and 164 proven backend joins; 16/16 negative probes detected; DEF-C04-1 and DEF-C04-2 introduced by this campaign, both found, repaired and reported
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 7c0d5f5326be1983cf081888680f3c01f3f128f6
 LAST_VALIDATED_IMPLEMENTATION_SHA: 11cefb27ac366217f7092dcd7f66b3cfccac2fee
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: 11cefb27ac366217f7092dcd7f66b3cfccac2fee
+LAST_DOCUMENTATION_CHECKPOINT_SHA: 0323d5fb1b5960f9f17e2b1fa519cc85918dbfaf
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PROJECT_VERDICT_EFFECT: PRESERVE
@@ -30,11 +31,12 @@ approved universe cannot satisfy.
 
 ## Current Milestone
 
-Milestone ID: M7 — validation, integration, exact-head CI, closure
-Milestone status: IN_PROGRESS
-What is being attempted: the full validation matrix with writes frozen for
-`gate:clean`, then integration, exact-head CI, project-truth reconciliation and
-release.
+COMPLETE / STOP — M1 through M7 are closed. 382 frontend consumer edges are
+derived with zero non-literal SOURCE_FACTs and 164 proven backend joins,
+certified by exact-head CI job 100614907944 at `0323d5f` with all eleven
+required groups PASS. The historical `>= 400` criterion FAILS at 382, short by
+18, and the shortfall is attributed to the single-repository frontend
+boundary. C-15b is the next authorized campaign.
 
 ## Completed Milestones
 
@@ -53,13 +55,14 @@ release.
 
 ## Work In Progress
 
-M7. Nothing partial: M1-M6 are closed.
+NONE.
 
 ## Exact Next Action
 
-Run the full validation matrix, freeze campaign writes for `gate:clean`,
-integrate per C-00, observe exact-head CI, reconcile project truth, complete the
-REPORT and release the session.
+STOP — C-04 is COMPLETE and certified. C-15b
+`nightwatch-system-map-v2-c15b-v1` is the next authorized campaign; both of its
+hard dependencies (C-03 service topology, C-04 consumer edges) are now
+satisfied.
 
 ## Files Changed
 
@@ -169,12 +172,23 @@ NONE
 
 ## Resume Recipe
 
-1. Read SPEC.
-2. Read PLAN.
-3. Inspect git status and current SHA in the session worktree.
-4. Run the smallest relevant validation.
-5. Continue Exact Next Action.
+Task complete. Do not resume; any follow-up starts as a new authorized task.
 
 ## Completion Snapshot
 
-Populate only when complete.
+C-04 is COMPLETE and certified.
+
+Final substantive checkpoint: recorded in the project-state block
+Final documentation checkpoint: 0323d5fb1b5960f9f17e2b1fa519cc85918dbfaf
+Live HEAD: DISCOVER_FROM_GIT
+Tests: canonical regression 3,338 / 3,325 / 13 skipped / 0 failed; semantic
+compatibility 2,033 / 2,020 / 13 / 0; synthetic campaign 561/561.
+Artifacts: `src/core/source/vueSfc.ts`,
+`src/core/source/frontendConsumer.ts`, `src/core/source/frontendJoin.ts`; the
+`.vue` / `VUE` admission and ripple-ui budget correction; an opt-in
+template-preserving mode on the shared tokenizer;
+`checkC04FrontendConsumerBoundary()`; two registered suites.
+Known issues: the `>= 400` criterion FAILS at 382; 5 `streamPromise` sites are
+unsupported; the C-02a and C-06 suites remain unregistered in both gate
+manifests (PRE_EXISTING).
+Recommended next task: `nightwatch-system-map-v2-c15b-v1` (C-15b).

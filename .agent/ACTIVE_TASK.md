@@ -3,13 +3,13 @@
 Task ID: nightwatch-frontend-consumer-intelligence-c04-v1
 Phase: FRONTEND_CONSUMER_INTELLIGENCE_C04_V1
 Title: C-04 Frontend Consumer Intelligence
-Status: IN_PROGRESS
+Status: COMPLETE
 Task directory: .agent/tasks/nightwatch-frontend-consumer-intelligence-c04-v1
 Starting SHA: 7c0d5f5326be1983cf081888680f3c01f3f128f6
 Last validated implementation SHA: 11cefb27ac366217f7092dcd7f66b3cfccac2fee
-Last checkpoint: M1 opened at the C-03 closure head 7c0d5f5 with the 211-call-site frontend ceiling measured before any code
-Current milestone: M1 — task record, OpenSpec change, measured ceiling
-Next action: Write the OpenSpec change, run `npm run agent:check` and `npm run handoff:check`, commit the M1 checkpoint, then begin M2 by asserting the adversarial frontend corpus before the parser exists
+Last checkpoint: exact-head GitHub job 100614907944 at 0323d5f passed all eleven required groups on Node 20 with receipt receipt:sha256:6cba46d8990802d39f4b4e26; gate:clean PASS with siblingWrites 0; canonical regression 3,338/3,325/13/0; 382 consumer edges, zero non-literal SOURCE_FACTs, 164 proven backend joins; 16/16 negative probes detected
+Current milestone: COMPLETE / STOP — M1 through M7 are closed
+Next action: STOP — C-04 is COMPLETE and certified. The >= 400 criterion FAILS at 382, short by 18, attributed to the single-repository frontend boundary. C-15b `nightwatch-system-map-v2-c15b-v1` is the next authorized campaign and both of its hard dependencies are now satisfied
 Authorization class: NIGHTWATCH_FRONTEND_CONSUMER_INTELLIGENCE_C04_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
@@ -18,7 +18,7 @@ LAST_VALIDATED_IMPLEMENTATION_SHA: 11cefb27ac366217f7092dcd7f66b3cfccac2fee
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: 11cefb27ac366217f7092dcd7f66b3cfccac2fee
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
-PHASE_FRONTEND_CONSUMER_INTELLIGENCE_C04_V1_STATUS: IN_PROGRESS
+PHASE_FRONTEND_CONSUMER_INTELLIGENCE_C04_V1_STATUS: COMPLETE
 
 ## Routing and safety
 

@@ -65,11 +65,11 @@ running.
 
 ## Milestones
 
-### M1 — Task record, OpenSpec change, measured ceiling — IN_PROGRESS
+### M1 — Task record, OpenSpec change, measured ceiling — COMPLETE
 - Acceptance: `agent:check` / `handoff:check` pass; the 211-site ceiling and
   its cause are recorded before any code.
 
-### M2 — Adversarial corpus, asserted before the parser — NOT_STARTED
+### M2 — Adversarial corpus, asserted before the parser — COMPLETE
 - Direct literal; template literal; runtime template segment; concatenation;
   path assembled across functions; unknown base URL; aliased instance;
   dynamically selected client; wrapper around axios; comment containing a fake
@@ -80,11 +80,11 @@ running.
 - Acceptance: every case named and asserted; every non-literal path asserted
   non-`SOURCE_FACT`.
 
-### M3 — Vue SFC extraction and the consumer parser — NOT_STARTED
-### M4 — `.vue` / `VUE` admission and the real measurement — NOT_STARTED
-### M5 — Backend join, categorical — NOT_STARTED
-### M6 — Hardening, negative probes, gate registration — NOT_STARTED
-### M7 — Validation, integration, exact-head CI, closure — NOT_STARTED
+### M3 — Vue SFC extraction and the consumer parser — COMPLETE
+### M4 — `.vue` / `VUE` admission and the real measurement — COMPLETE
+### M5 — Backend join, categorical — COMPLETE
+### M6 — Hardening, negative probes, gate registration — COMPLETE
+### M7 — Validation, integration, exact-head CI, closure — COMPLETE
 
 ## Validation Strategy
 
