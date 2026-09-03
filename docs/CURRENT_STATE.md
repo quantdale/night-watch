@@ -414,8 +414,8 @@ blocked".
 
 | Measure | Value |
 |---|---|
-| operations / bindings | 1,851 / **1,851**, `totalityHolds: true` |
-| **positive route → endpoint `DEPLOYMENT_FACT`s** | **0** |
+| operations / bindings | 1,851 / **1,851**, `totalityHolds: true` <!--census:SOURCE_OPERATIONS=1851--><!--census:DEPLOYMENT_BINDINGS=1851--> |
+| **positive route → endpoint `DEPLOYMENT_FACT`s** | **0** <!--census:POSITIVE_DEPLOYMENT_FACTS=0--> |
 | operations with a proven build unit | 341 (all ouchan, from their own source path) |
 | hop 1 `NO_PROVEN_CLIENT_FAMILY_BINDING` | 1,851 |
 | hops 2-3 `C08B_BLOCKED_BY_ORGANIZATIONAL_ACCESS` | 2,192 |
@@ -492,7 +492,7 @@ C-02a and C-05.
 | Measure | Value |
 |---|---|
 | operations examined / with a resolved response schema | 642 / **642** |
-| **admitted expectations** | **2,114** |
+| **admitted expectations** | **2,114** <!--census:SPEC_EXPECTATIONS=2114--> |
 | `RESPONSE_PROPERTY_TYPE` / `CARDINALITY` / `SHAPE` / `ENUM` | 1,475 / 416 / 216 / 7 |
 | operations carrying at least one | **630** |
 | truncated | false |

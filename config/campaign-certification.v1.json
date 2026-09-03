@@ -113,6 +113,13 @@
       ]
     },
     {
+      "id": "C-16",
+      "task": "nightwatch-eig-prioritization-c16-v1",
+      "suites": [
+        "tests/unit/c16ExpectedInformationGain.test.ts"
+      ]
+    },
+    {
       "id": "R-11",
       "task": "nightwatch-proxy-gate-reliability-r11-v1",
       "suites": [

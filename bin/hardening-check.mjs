@@ -3085,6 +3085,84 @@ function checkC09SpecExpectationBoundary() {
   }
 }
 
+/**
+ * C-16 EIG and G-16 boundary.
+ *
+ * The rule that matters most: a ranking is an ORDER, never a permission. The
+ * second: under a multiplicative score, an UNKNOWN factor that reaches zero
+ * silently deletes a target and one that reaches the maximum silently promotes
+ * it, so "we do not know" must sit strictly between.
+ */
+function checkC16EigBoundary() {
+  const eig = read('src/core/source/expectedInformationGain.ts');
+  const ledger = read('src/core/source/censusFigureLedger.ts');
+  const code = withoutComments(eig);
+
+  // --- a ranking grants nothing ---
+  if (!/grantsAuthority: false as const/.test(eig)) {
+    fail('C-16 the EIG projection must state grantsAuthority false as data, not only in prose');
+  }
+  for (const file of ['src/core/safety/realRunGate.ts', 'src/core/policy/ownerScope.ts', 'src/core/source/universe.ts']) {
+    if (/expectedInformationGain/.test(read(file))) {
+      fail(`${file} must not consult the EIG ranking; a high score is not execution authority`);
+    }
+  }
+  for (const forbidden of ['process.env', 'node:fs', 'node:child_process', 'credential', 'storageState']) {
+    if (code.includes(forbidden)) fail(`src/core/source/expectedInformationGain.ts must take no environment or credential input (${forbidden})`);
+  }
+
+  // --- no clock in the score ---
+  for (const clock of ['Date.now', 'new Date', 'performance.now', 'hrtime']) {
+    if (code.includes(clock)) fail(`C-16 the EIG score must not consume wall-clock time (${clock}); recency comes from proven source-change evidence`);
+  }
+
+  // --- UNKNOWN is strictly mid-scale on every factor ---
+  for (const factor of ['NOVELTY_LEVELS', 'CONTRACT_DEPTH_LEVELS', 'CHANGE_RECENCY_LEVELS', 'BLAST_RADIUS_LEVELS', 'COST_LEVELS', 'DUPLICATE_RISK_LEVELS']) {
+    const block = new RegExp(`export const ${factor}[^=]*=\\s*Object\\.freeze\\(\\{([\\s\\S]*?)\\}\\);`).exec(eig);
+    if (block === null) { fail(`C-16 could not read the ${factor} declaration`); continue; }
+    const entries = [...withoutComments(block[1]).matchAll(/([A-Z_]+)\s*:\s*(-?\d+)/g)].map((m) => [m[1], Number(m[2])]);
+    if (entries.length === 0) { fail(`C-16 ${factor} declares no levels`); continue; }
+    const unknown = entries.find(([name]) => name === 'UNKNOWN');
+    if (unknown === undefined) { fail(`C-16 ${factor} must declare an explicit UNKNOWN level`); continue; }
+    const values = entries.map(([, value]) => Number(value));
+    if (Number(unknown[1]) <= Math.min(...values) || Number(unknown[1]) >= Math.max(...values)) {
+      fail(`C-16 ${factor} UNKNOWN must sit strictly between its minimum and maximum; a zero deletes a target and a maximum promotes one`);
+    }
+  }
+  // Numerator factors must never be zero, or an UNKNOWN could erase a target.
+  for (const factor of ['NOVELTY_LEVELS', 'CONTRACT_DEPTH_LEVELS', 'CHANGE_RECENCY_LEVELS', 'BLAST_RADIUS_LEVELS']) {
+    const block = new RegExp(`export const ${factor}[^=]*=\\s*Object\\.freeze\\(\\{([\\s\\S]*?)\\}\\);`).exec(eig);
+    if (block === null) continue;
+    for (const match of withoutComments(block[1]).matchAll(/[A-Z_]+\s*:\s*(-?\d+)/g)) {
+      if (Number(match[1]) <= 0) fail(`C-16 ${factor} levels must all be positive; a zero in the numerator deletes the target`);
+    }
+  }
+
+  // --- ordering is exact integer arithmetic, and ties are total ---
+  if (!/left\.numerator \* right\.denominator - right\.numerator \* left\.denominator/.test(eig)) {
+    fail('C-16 score ordering must cross-multiply integers rather than divide; a float order depends on rounding');
+  }
+  if (!/left\.target\.targetId < right\.target\.targetId/.test(eig)) {
+    fail('C-16 the ranking must break ties on a stable key so the order is total and reproducible');
+  }
+
+  // --- G-16: one derived figure source ---
+  if (!/export const CENSUS_FIGURES/.test(ledger)) {
+    fail('G-16 requires one derived figure source; CENSUS_FIGURES must declare the census measures');
+  }
+  if (!/export const HISTORICAL_MARKER\s*=/.test(ledger)) {
+    fail('G-16 must provide an explicit historical marker so a superseded narrative is retired rather than deleted');
+  }
+  // The exemption must be a single explicit marker, not a word list. A first
+  // draft matched any line containing `was `, which exempts most prose.
+  if (/HISTORICAL_MARKERS\s*=/.test(ledger)) {
+    fail('G-16 the historical exemption must be one explicit marker, not a list of words that can fire by accident');
+  }
+  if (!/POLICED_DOCUMENTS/.test(ledger)) {
+    fail('G-16 must name the durable documents it polices');
+  }
+}
+
 checkChildProcessBoundaries();
 checkL6ProcessNetworkBoundary();
 checkTargetPolicy();
@@ -3108,6 +3186,7 @@ checkC15bSystemMapBoundary();
 checkC05UniverseAdmissionBoundary();
 checkC08DeploymentBindingBoundary();
 checkC09SpecExpectationBoundary();
+checkC16EigBoundary();
 checkCampaignCertificationRegistry();
 checkPlannerHandoffIntegrity();
 checkDocumentationTruth();
