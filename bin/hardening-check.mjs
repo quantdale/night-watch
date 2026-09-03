@@ -1827,7 +1827,12 @@ function checkC00WorkspaceIntegrity() {
   // tree, so the REPOSITORIES root must never be derived from this checkout's
   // own location. These two surfaces previously did exactly that and broke in
   // an isolated worktree.
-  for (const file of ['tests/unit/changeIntelligenceBacktest.test.ts', 'scenarios/ripple/local.smoke.ts']) {
+  // C-05 adds `bin/change-intelligence.mjs`. It had the same defect and was
+  // never covered: `resolve(nightwatchRoot, '../..')` resolved to
+  // `$HOME/.nightwatch` from a session worktree, so every git call failed with
+  // ENOENT and `npm run change:shadow` could not run there at all. No gate
+  // group executes that script, so nothing reported it.
+  for (const file of ['tests/unit/changeIntelligenceBacktest.test.ts', 'scenarios/ripple/local.smoke.ts', 'bin/change-intelligence.mjs']) {
     const source = read(file);
     if (!/DEFAULT_SIBLING_ROOT/.test(source)) fail(`${file} must resolve the repositories root through DEFAULT_SIBLING_ROOT`);
     if (/__dirname,\s*'\.\.\/\.\.\/\.\.'|__dirname,\s*'\.\.',\s*'\.\.',\s*'\.\.'/.test(source)) {
@@ -2478,24 +2483,23 @@ function checkC02bProtobufBoundary() {
   if (duplicateKeys.length === 0) fail('C-02b could not locate the route-ambiguity key construction in surfaces.ts');
 
   // --- no root or repository was admitted ---
-  const approved = read('src/core/source/approvedScan.ts');
   // C-02b's property is that protobuf was admitted as a LANGUAGE and widened
   // no REPOSITORY. The rule originally pinned blueapi's root list literally,
   // which described the state of the day rather than the property: C-03 later
   // admitted the remaining blueapi proto roots under an explicit owner
   // decision, and a rule that fires on an authorized per-root change is
-  // guarding the wrong thing. The repository boundary is asserted below.
+  // guarding the wrong thing.
+  //
+  // C-05 moved the root declaration into `universe.ts`, which is now the single
+  // admission authority, and the "must not admit blueinternal or wave-api"
+  // prohibition this rule used to carry is SPENT: C-05 admitted both under
+  // explicit owner authorization. Three campaigns each carried their own copy
+  // of that prohibition; all three are replaced by one totality rule over the
+  // authority in `checkC05UniverseAdmissionBoundary`, which forbids a NINTH
+  // repository from any campaign rather than two repositories from three.
+  const approved = read('src/core/source/universe.ts');
   if (!/'billing'/.test(approved) || !/'openapiv2'/.test(approved)) {
     fail('C-02b requires the blueapi billing and openapiv2 roots to stay admitted');
-  }
-  // Read the DECLARATION, not the file. `approvedScan.ts` carries a comment
-  // explaining that blueinternal is deliberately absent, and a rule that
-  // matched the comment would fire on the very text documenting compliance.
-  const rootsBlock = /const APPROVED_ROOTS[^=]*=\s*Object\.freeze\(\{([\s\S]*?)\}\);/.exec(approved);
-  if (rootsBlock === null) {
-    fail('C-02b could not read the APPROVED_ROOTS declaration; the root-admission guard cannot be verified');
-  } else if (/blueinternal|wave-api/.test(rootsBlock[1])) {
-    fail('C-02b must not admit blueinternal or wave-api; repository admission belongs to C-05');
   }
 
 }
@@ -2571,14 +2575,10 @@ function checkC03GrpcTopologyBoundary() {
     fail('C-03 must not implement W-EFFECT_RPC: sound effect proof requires COMPLETE enumeration, which ouchan cannot provide');
   }
 
-  // --- the universe and the contract ceilings are unchanged ---
+  // --- the contract ceilings are unchanged ---
+  // The repository-admission half of this rule moved to
+  // `checkC05UniverseAdmissionBoundary`; see the note in the C-02b rule.
   const approved = read('src/core/source/approvedScan.ts');
-  const rootsBlock = /const APPROVED_ROOTS[^=]*=\s*Object\.freeze\(\{([\s\S]*?)\}\);/.exec(approved);
-  if (rootsBlock === null) {
-    fail('C-03 could not read the APPROVED_ROOTS declaration');
-  } else if (/blueinternal|wave-api/.test(rootsBlock[1])) {
-    fail('C-03 must not admit blueinternal or wave-api; repository admission belongs to C-05');
-  }
   const sibling = read('src/core/source/siblingSource.ts');
   if (!/MAX_SIBLING_SOURCE_SCAN_FILES = 4096/.test(sibling) || !/MAX_SIBLING_SOURCE_SCAN_BYTES = 64_000_000/.test(sibling)) {
     fail('C-03 must not change the sibling scan contract ceilings; raising them is a separate authorized change');
@@ -2654,11 +2654,6 @@ function checkC04FrontendConsumerBoundary() {
     fail('C-04 an HTTP client must be recognised from axios.create; otherwise Cookies.get becomes an HTTP GET');
   }
 
-  // --- the universe is unchanged ---
-  const approved = read('src/core/source/approvedScan.ts');
-  const rootsBlock = /const APPROVED_ROOTS[^=]*=\s*Object\.freeze\(\{([\s\S]*?)\}\);/.exec(approved);
-  if (rootsBlock === null) fail('C-04 could not read the APPROVED_ROOTS declaration');
-  else if (/blueinternal|wave-api/.test(rootsBlock[1])) fail('C-04 must not admit blueinternal or wave-api');
 
   // --- the shared tokenizer default is unchanged ---
   const lexical = read('src/core/source/lexical.ts');
@@ -2811,6 +2806,98 @@ function checkCampaignCertificationRegistry() {
   })) fail(message);
 }
 
+/**
+ * C-05 universe admission boundary.
+ *
+ * This replaces three separate per-campaign prohibitions ("C-02b/C-03/C-04
+ * must not admit blueinternal or wave-api"). Each named two repositories and
+ * one campaign, so each went obsolete the moment C-05 was authorized to admit
+ * exactly those two — and none of them would have stopped a NINTH repository
+ * being admitted by a fourth campaign. One rule over the authority does.
+ *
+ * The invariant is the separation itself: discovery may see any number of
+ * repositories, and the admitted set is a literal that a reviewer can read.
+ */
+function checkC05UniverseAdmissionBoundary() {
+  const universe = read('src/core/source/universe.ts');
+  const scan = read('src/core/source/approvedScan.ts');
+
+  // --- the admitted set is EXACTLY these eight ---
+  const expected = [
+    'mobingilabs/ripple-ui', 'mobingilabs/ripple-api', 'mobingilabs/ouchan',
+    'alphauslabs/grpc-chunk-parser', 'alphauslabs/blueapi', 'alphauslabs/blue-sdk-go',
+    'alphauslabs/blueinternal', 'mobingilabs/wave-api',
+  ];
+  const block = /export const OWNER_APPROVED_UNIVERSE[^=]*=\s*Object\.freeze\(\{([\s\S]*?)\n\}\);/.exec(universe);
+  if (block === null) {
+    fail('C-05 could not read the OWNER_APPROVED_UNIVERSE declaration; the admission boundary cannot be verified');
+  } else {
+    const declared = [...block[1].matchAll(/'([a-z0-9._-]+\/[a-z0-9._-]+)'\s*:/gi)].map((match) => match[1]);
+    for (const repoId of expected) {
+      if (!declared.includes(repoId)) fail(`C-05 owner-approved universe is missing ${repoId}`);
+    }
+    for (const repoId of declared) {
+      if (!expected.includes(repoId)) fail(`C-05 owner-approved universe admits an unauthorized repository: ${repoId}`);
+    }
+  }
+
+  // --- admission has exactly ONE authority ---
+  // `approvedScan.ts` owned an APPROVED_ROOTS literal, so the real membership
+  // rule was an intersection nobody had written down.
+  if (/const APPROVED_ROOTS\b/.test(withoutComments(scan))) {
+    fail('src/core/source/approvedScan.ts must not declare its own repository allowlist; universe.ts is the single admission authority');
+  }
+  if (!/from '\.\/universe'/.test(scan)) {
+    fail('src/core/source/approvedScan.ts must project the admitted set from universe.ts');
+  }
+  // --- and a disagreement is DECLARED, in both directions ---
+  for (const code of ['REAL_SOURCE_SCAN_UNIVERSE_NOT_IN_DEPENDENCY_MAP', 'REAL_SOURCE_SCAN_DEPENDENCY_MAP_NOT_IN_UNIVERSE']) {
+    if (!scan.includes(code)) fail(`src/core/source/approvedScan.ts must fail closed on universe/dependency-map disagreement (${code})`);
+  }
+
+  // --- discovery cannot promote ---
+  for (const property of ['CONTAINS_OPENAPI_DOCUMENT', 'FILESYSTEM_ADJACENT_TO_ADMITTED_REPOSITORY', 'ORGANIZATION_DIRECTORY_MATCHES']) {
+    if (!universe.includes(property)) fail(`C-05 must state ${property} as a non-admission property`);
+  }
+  // The authority is data-only: the boundary performs every read.
+  for (const forbidden of ['node:fs', 'node:child_process', 'node:net', 'node:https']) {
+    if (universe.includes(forbidden)) fail(`src/core/source/universe.ts must stay data-only policy (imports ${forbidden})`);
+  }
+
+  // --- no current mutable Git state is persisted ---
+  const types = read('src/core/changeIntelligence/types.ts');
+  const definition = /export interface RepoDefinition \{([\s\S]*?)\n\}/.exec(types);
+  if (definition === null) {
+    fail('C-05 could not read the RepoDefinition declaration');
+  } else {
+    for (const field of ['branch', 'trackingSha', 'ahead', 'behind', 'dirty']) {
+      if (new RegExp(`(^|\\n)\\s*${field}\\s*:`).test(definition[1])) {
+        fail(`RepoDefinition must not persist current mutable Git state (${field}); query it live`);
+      }
+    }
+    // The pins must SURVIVE. Removing them would make every staleness check
+    // vacuously pass, which is worse than a stale value: a silent rebind.
+    for (const pin of ['checkedOutSha', 'sourceMapSha']) {
+      if (!new RegExp(`(^|\\n)\\s*${pin}\\s*:`).test(definition[1])) {
+        fail(`RepoDefinition must keep the pinned provenance anchor ${pin}`);
+      }
+    }
+  }
+  const map = read('src/core/changeIntelligence/map.ts');
+  for (const field of ['branch', 'trackingSha', 'ahead', 'behind', 'dirty']) {
+    if (new RegExp(`(^|\\n)\\s{4}${field}:`).test(map)) {
+      fail(`src/core/changeIntelligence/map.ts must not persist ${field}; it is current mutable Git state`);
+    }
+  }
+  // The one consumer must OBSERVE rather than republish the persisted values.
+  const shadow = read('bin/change-intelligence.mjs');
+  for (const republished of ['behind: repo.behind', 'ahead: repo.ahead', 'trackingSha: repo.trackingSha', 'branch: repo.branch']) {
+    if (shadow.includes(republished)) {
+      fail(`bin/change-intelligence.mjs must observe Git state live, not republish the persisted field (${republished})`);
+    }
+  }
+}
+
 checkChildProcessBoundaries();
 checkL6ProcessNetworkBoundary();
 checkTargetPolicy();
@@ -2831,6 +2918,7 @@ checkC02bProtobufBoundary();
 checkC03GrpcTopologyBoundary();
 checkC04FrontendConsumerBoundary();
 checkC15bSystemMapBoundary();
+checkC05UniverseAdmissionBoundary();
 checkCampaignCertificationRegistry();
 checkPlannerHandoffIntegrity();
 checkDocumentationTruth();

@@ -568,12 +568,12 @@ const FP_GATE_B = 'fp:sha256:bb05bb05bb05bb05bb05bb05';
 function snapshots(): CampaignInput['sourceSnapshots'] {
   return RIPPLE_REPOSITORIES.map((repo) => ({
     repoId: repo.repoId,
-    branch: repo.branch,
+    branch: (repo.trackingRef ?? 'origin/main').replace(/^origin\//, ''),
     headSha: repo.checkedOutSha,
     trackingRef: repo.trackingRef,
-    trackingSha: repo.trackingSha,
-    ahead: repo.ahead,
-    behind: repo.behind,
+    trackingSha: repo.checkedOutSha,
+    ahead: 0,
+    behind: 0,
     dirty: false,
     dirtyFileCount: 0,
     sourceMapSha: repo.sourceMapSha,

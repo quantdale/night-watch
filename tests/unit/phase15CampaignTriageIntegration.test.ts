@@ -224,12 +224,12 @@ const EXPLORE_WORK_ITEM = 'explore:E3-J3-account-inventory:0x0000000000000301';
 function snapshots(): readonly CampaignSourceSnapshot[] {
   return RIPPLE_REPOSITORIES.map((repo) => ({
     repoId: repo.repoId,
-    branch: repo.branch,
+    branch: (repo.trackingRef ?? 'origin/main').replace(/^origin\//, ''),
     headSha: repo.checkedOutSha,
     trackingRef: repo.trackingRef,
-    trackingSha: repo.trackingSha,
-    ahead: repo.ahead,
-    behind: repo.behind,
+    trackingSha: repo.checkedOutSha,
+    ahead: 0,
+    behind: 0,
     dirty: false,
     dirtyFileCount: 0,
     sourceMapSha: repo.sourceMapSha,

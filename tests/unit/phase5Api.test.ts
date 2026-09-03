@@ -282,7 +282,7 @@ test('Phase 3 lineage marks relevant browser/client changes stale without readin
   expect(evaluateApiLineage(operation).staleness).toBe('FRESH');
   expect(apiOperationAffectedByChange(operation, [{ repoId: 'mobingilabs/ripple-ui', path: 'src/vuex/api/exchangeRatePayer_v2.js', status: 'modify' }])).toBe(true);
   expect(apiOperationAffectedByChange(operation, [{ repoId: 'mobingilabs/ripple-ui', path: 'src/pages/Unrelated.vue', status: 'modify' }])).toBe(false);
-  expect(evaluateApiLineage(operation, [{ repoId: 'mobingilabs/ripple-api', productRole: 'test', scope: 'IN_SCOPE', branch: 'master', checkedOutSha: '0000000000000000000000000000000000000000', trackingRef: null, trackingSha: null, ahead: 0, behind: 0, dirty: false, sourceMapSha: '0000000000000000000000000000000000000000', readOnlyOnly: true }]).staleness).toBe('SOURCE_STALE');
+  expect(evaluateApiLineage(operation, [{ repoId: 'mobingilabs/ripple-api', productRole: 'test', scope: 'IN_SCOPE', checkedOutSha: '0000000000000000000000000000000000000000', trackingRef: null, sourceMapSha: '0000000000000000000000000000000000000000', readOnlyOnly: true }]).staleness).toBe('SOURCE_STALE');
 });
 
 test('restricted OOPS subprocess runs the local relay path without receiving fixture bodies or parent secrets', async () => {

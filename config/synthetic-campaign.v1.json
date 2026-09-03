@@ -45,6 +45,7 @@
     "tests/unit/c06PhpReadOnlyProof.test.ts",
     "tests/unit/c15bSystemMap.test.ts",
     "tests/unit/c15bControlCenterAuthority.test.ts",
-    "tests/unit/r12CampaignCertification.test.ts"
+    "tests/unit/r12CampaignCertification.test.ts",
+    "tests/unit/c05UniverseAdmission.test.ts"
   ]
 }

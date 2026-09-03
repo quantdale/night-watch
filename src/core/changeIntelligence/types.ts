@@ -21,17 +21,43 @@ type ChangeStatus = 'add' | 'modify' | 'delete' | 'rename';
 // Phase 15P A15 convergence: de-exported (module-private, zero external callers).
 type RangeSemantics = 'BASE_SHA_TO_HEAD_SHA' | 'EXPLICIT_COMMIT_RANGE';
 
+/**
+ * A repository this project MODELS. Stable identity and pinned provenance only.
+ *
+ * C-05 removed `branch`, `trackingSha`, `ahead`, `behind` and `dirty` from this
+ * record. They were current mutable Git state persisted as normative
+ * configuration, and they decayed exactly where you would expect: measured
+ * against live Git, the checkout-local fields were still accurate because the
+ * working copies had not moved, while 10 of 18 remote-tracking fields had
+ * diverged because the REMOTES had — `mobingilabs/ouchan` recorded
+ * `behind: 25` while actually 310 behind. Nothing detected the divergence, and
+ * the one consumer that read them, the `change:shadow` report, published them
+ * under `freshness: LOCAL_TRACKING_REF_ONLY` — a provenance label it did not
+ * have, because it had read a literal rather than a ref. Those values are now
+ * derived live from local refs at the point of use.
+ *
+ * The two SHAs that remain are PINS, not observations, which is why they are
+ * allowed to persist:
+ *
+ *  - `checkedOutSha` is the EXPECTED source revision. It is what makes a
+ *    staleness check possible at all: derivations were bound to this revision,
+ *    and if the checkout has moved, dependent evidence must fail closed rather
+ *    than silently rebind. Replacing it with a live read would make every
+ *    staleness check vacuously pass.
+ *  - `sourceMapSha` is the revision this dependency map was authored against.
+ *
+ * Both are historical snapshots by design. Neither may be refreshed as a side
+ * effect; a changed checkout requires fresh derivation and re-admission.
+ */
 export interface RepoDefinition {
   repoId: string;
   productRole: string;
   scope: RepoScope;
-  branch: string;
+  /** PINNED expected source revision — a staleness anchor, never a live read. */
   checkedOutSha: string;
+  /** Stable configuration, not an observation: which ref upstream means. */
   trackingRef: string | null;
-  trackingSha: string | null;
-  ahead: number | null;
-  behind: number | null;
-  dirty: boolean;
+  /** PINNED revision this dependency map was authored against. */
   sourceMapSha: string;
   readOnlyOnly: true;
 }

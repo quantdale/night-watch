@@ -1,39 +1,25 @@
-// Phase 25 — fixed owner-approved source scan universe.
+// Phase 25 — the owner-approved source scan configuration.
 //
 // This is data-only policy. It deliberately has no filesystem, process, or
 // network authority; the sibling-source boundary performs all reads.
+//
+// C-05: the admitted SET is no longer decided here. It lives in
+// `./universe.ts`, which is the single admission authority, and this module
+// PROJECTS from it — adding only the per-repository scan budgets, which are
+// operational limits rather than admission decisions.
+//
+// What changed behaviourally: admission used to be
+// `RIPPLE_REPOSITORIES.filter(scope === 'IN_SCOPE')` INTERSECTED with a local
+// roots literal, so a repository named in one record and absent from the other
+// was silently not admitted. That is now `reconcileUniverseWithDependencyMap`,
+// which THROWS on either direction of disagreement, because "the owner
+// approved it and the map is stale" and "the map is right and the roots
+// literal is stale" are not interchangeable and neither may be guessed.
 
 import { RIPPLE_REPOSITORIES } from '../changeIntelligence/map';
 import { createRealSourceScanConfig } from './scan';
+import { approvedRootsFor, ownerApprovedRepositoryIds } from './universe';
 import type { RealSourceScanConfig } from './scanTypes';
-
-// Owner-approved roots. C-02a adds `openapiv2` to the already-admitted
-// `alphauslabs/blueapi` repository: a per-root change inside an existing
-// member of the universe, not a new repository admission. `blueinternal` is
-// deliberately absent — it is not a member of RIPPLE_REPOSITORIES at all and
-// its admission is a REPOSITORY admission blocked behind C-05.
-//
-// C-03 admits the remaining `alphauslabs/blueapi` proto roots and the matching
-// `alphauslabs/blue-sdk-go` roots. Both are per-root changes inside
-// repositories that are already members of the universe, which is the same
-// class of change C-02a made when it admitted `openapiv2` — not a repository
-// admission. The owner authorized the blueapi roots directly; the SDK roots
-// are mechanically required by the join, because ouchan registers through the
-// generated SDK and the SDK's `ServiceName` constant is what proves the
-// binding.
-const SERVICE_ROOTS = Object.freeze([
-  'admin', 'billing', 'cost', 'cover', 'flags', 'flow', 'gc', 'iam', 'luster',
-  'operations', 'org', 'preferences', 'pricing', 'prism', 'vortex',
-]);
-
-const APPROVED_ROOTS: Readonly<Record<string, readonly string[]>> = Object.freeze({
-  'mobingilabs/ripple-ui': ['src'],
-  'mobingilabs/ripple-api': ['src'],
-  'mobingilabs/ouchan': ['services', 'pkg'],
-  'alphauslabs/blueapi': [...SERVICE_ROOTS, 'openapiv2'],
-  'alphauslabs/blue-sdk-go': [...SERVICE_ROOTS],
-  'alphauslabs/grpc-chunk-parser': ['src'],
-});
 
 /** Per-repository file ceilings. `mobingilabs/ouchan` needs more than the
  * shared default: the enumeration walk counts every considered directory
@@ -69,9 +55,39 @@ const DEFAULT_MAX_TOTAL_BYTES = 16_000_000;
 // `mobingilabs/ouchan` `pkg`, both approved since Phase 25.
 const APPROVED_EXTENSIONS = ['.php', '.ts', '.tsx', '.js', '.jsx', '.go', '.json', '.yaml', '.yml', '.proto', '.vue'] as const;
 
-export const PHASE25_APPROVED_REPOSITORY_IDS = Object.freeze(
-  RIPPLE_REPOSITORIES.filter((repository) => repository.scope === 'IN_SCOPE' && APPROVED_ROOTS[repository.repoId] !== undefined).map((repository) => repository.repoId).sort(),
-);
+/**
+ * Reconcile the admission authority against the change-intelligence map.
+ *
+ * Both records name repositories, for different reasons: the authority says
+ * what may be READ, the map says what Nightwatch MODELS. They must agree, and
+ * before C-05 a disagreement silently reduced the admitted set. Now each
+ * direction is its own error, because the two mean opposite things:
+ *
+ *  - approved but not IN_SCOPE in the map: the owner approved a repository the
+ *    model does not know about, so the map is stale;
+ *  - IN_SCOPE in the map with no approved roots: the model claims a repository
+ *    nothing may read, so one of the two records is wrong.
+ *
+ * Neither is guessable, so neither is guessed.
+ */
+function reconcileUniverseWithDependencyMap(): readonly string[] {
+  const approved = ownerApprovedRepositoryIds();
+  const inScope = RIPPLE_REPOSITORIES.filter((repository) => repository.scope === 'IN_SCOPE').map((repository) => repository.repoId);
+  const inScopeSet = new Set(inScope);
+  const missingFromMap = approved.filter((repoId) => !inScopeSet.has(repoId));
+  if (missingFromMap.length > 0) {
+    throw new Error(`REAL_SOURCE_SCAN_UNIVERSE_NOT_IN_DEPENDENCY_MAP:${missingFromMap.join(',')}`);
+  }
+  const approvedSet = new Set(approved);
+  const missingFromUniverse = inScope.filter((repoId) => !approvedSet.has(repoId));
+  if (missingFromUniverse.length > 0) {
+    throw new Error(`REAL_SOURCE_SCAN_DEPENDENCY_MAP_NOT_IN_UNIVERSE:${missingFromUniverse.join(',')}`);
+  }
+  return approved;
+}
+
+/** The admitted set, projected from the single authority in `./universe.ts`. */
+export const PHASE25_APPROVED_REPOSITORY_IDS = Object.freeze(reconcileUniverseWithDependencyMap());
 
 /** Build the fixed initial Phase25 universe; arbitrary repositories are rejected. */
 export function createApprovedRealSourceScanConfig(input: { readonly repositoryIds?: readonly string[] } = {}): RealSourceScanConfig {
@@ -79,8 +95,8 @@ export function createApprovedRealSourceScanConfig(input: { readonly repositoryI
   if (requested.length === 0 || requested.some((repoId) => !PHASE25_APPROVED_REPOSITORY_IDS.includes(repoId))) throw new Error('REAL_SOURCE_SCAN_APPROVED_UNIVERSE');
   const repositories = requested.map((repoId) => {
     const repository = RIPPLE_REPOSITORIES.find((candidate) => candidate.repoId === repoId);
-    const roots = APPROVED_ROOTS[repoId];
-    if (repository === undefined || roots === undefined) throw new Error('REAL_SOURCE_SCAN_APPROVED_REPOSITORY');
+    const roots = approvedRootsFor(repoId);
+    if (repository === undefined || roots === null) throw new Error('REAL_SOURCE_SCAN_APPROVED_REPOSITORY');
     return {
       repoId,
       expectedSourceSha: repository.checkedOutSha,

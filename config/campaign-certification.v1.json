@@ -59,6 +59,13 @@
       ]
     },
     {
+      "id": "C-05",
+      "task": "nightwatch-universe-admission-hygiene-c05-v1",
+      "suites": [
+        "tests/unit/c05UniverseAdmission.test.ts"
+      ]
+    },
+    {
       "id": "C-06",
       "task": "nightwatch-php-readonly-proof-c06-v1",
       "suites": [
