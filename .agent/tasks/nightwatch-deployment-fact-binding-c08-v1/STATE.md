@@ -4,19 +4,20 @@
 
 Task ID: nightwatch-deployment-fact-binding-c08-v1
 Phase: DEPLOYMENT_FACT_BINDING_C08_V1
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: 43cff07af2fe2c943ca62154ad01f185602a41d9
-Last validated implementation SHA: 43cff07af2fe2c943ca62154ad01f185602a41d9
-Last substantive checkpoint SHA: 43cff07af2fe2c943ca62154ad01f185602a41d9
+Last validated implementation SHA: 777ddb14fd367f2d9ae8f8ac68c89092bd784713
+Last substantive checkpoint SHA: 777ddb14fd367f2d9ae8f8ac68c89092bd784713
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-deployment-fact-bindi-9d9f8b7b
-Last checkpoint: evidence survey completed read-only at 43cff07 — the mochi manifests are absent (verified four independent ways), so U-1 and U-2 stay UNKNOWN and C-08b is blocked; ouchan/build/config.yaml supports a negative deployment fact while the ripple-ui host matrix is client configuration and therefore SOURCE_FACT
+Last checkpoint: exact-head GitHub run 33801673312 at 70b8225 passed all eleven required groups on Node 20 with receipt receipt:sha256:745edcfc991cc6b37da54233; gate:local receipt:sha256:c31e7af0e0975c9676fa57b4 and gate:clean PASS with inner receipt receipt:sha256:9fca6a784b64e4bc81d6204f and siblingWrites 0; canonical regression 3,489/3,476/13/0; 1,851 operations bound to 1,851 bindings with 0 positive route-to-endpoint DEPLOYMENT_FACTs, which is the honest answer while the mochi manifests are unavailable; 11/11 negative probes detected; DEF-C08-1 and DEF-C08-2 both repaired
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 43cff07af2fe2c943ca62154ad01f185602a41d9
-LAST_VALIDATED_IMPLEMENTATION_SHA: 43cff07af2fe2c943ca62154ad01f185602a41d9
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 43cff07af2fe2c943ca62154ad01f185602a41d9
+LAST_VALIDATED_IMPLEMENTATION_SHA: 777ddb14fd367f2d9ae8f8ac68c89092bd784713
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 777ddb14fd367f2d9ae8f8ac68c89092bd784713
+LAST_DOCUMENTATION_CHECKPOINT_SHA: 70b822517d164154c9d0bfb2bd53cec72d1b0fbd
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PROJECT_VERDICT_EFFECT: PRESERVE
@@ -29,8 +30,8 @@ hop rather than an absent field.
 
 ## Current Milestone
 
-M8 — integration and exact-head CI. M1 through M7 are complete and all three
-local gates are PASS at `777ddb1` with `siblingWrites: 0`.
+COMPLETE / STOP — M1 through M8 are closed and all nine acceptance rows PASS.
+Certified by exact-head CI run 33801673312 at `70b8225`.
 
 ## Completed Milestones
 
@@ -47,17 +48,19 @@ local gates are PASS at `777ddb1` with `siblingWrites: 0`.
   version change.
 - M7 — hardening rule, 11 negative probes, and the no-authority proof; found
   and repaired DEF-C08-1 and DEF-C08-2.
+- M8 — integrated by verified fast-forward; exact-head CI PASS at `70b8225`
+  with the predicted +2 CI skips confirmed; project truth reconciled; session
+  released.
 
 ## Work In Progress
 
-M8 — integration and exact-head CI observation.
+NONE — the campaign is COMPLETE.
 
 ## Exact Next Action
 
-Integrate by verified fast-forward, then observe the exact-head GitHub Actions
-run. The C-08 suite has two sibling-gated cases (the real host matrix and the
-real build config), so the CI synthetic skip count should rise by exactly two;
-any larger rise means a deterministic case is silently not running there.
+STOP — C-08 is COMPLETE and certified. The next authorized campaign in this
+overnight portfolio is C-09 spec-derived expectations. C-08b is
+`C08B_BLOCKED_BY_ORGANIZATIONAL_ACCESS` and cannot be started.
 
 ## Files Changed
 
@@ -166,10 +169,25 @@ which C-08 records rather than circumvents.
 
 ## Resume Recipe
 
-Read this STATE, then `SPEC.md` acceptance rows 1-9. Resume at the Current
-Milestone. All implementation happens in the owned session worktree
-`session/nightwatch-deployment-fact-bindi-9d9f8b7b`.
+Task complete. Do not resume; any follow-up starts as a new authorized task.
 
 ## Completion Snapshot
 
-Pending — the campaign is IN_PROGRESS.
+C-08 is COMPLETE and certified.
+
+Substantive implementation anchor: 777ddb14fd367f2d9ae8f8ac68c89092bd784713
+Certified exact-head checkpoint: 70b822517d164154c9d0bfb2bd53cec72d1b0fbd
+Live HEAD: DISCOVER_FROM_GIT
+Tests: canonical regression 3,489 / 3,476 / 13 skipped / 0 failed; semantic
+compatibility 2,033 / 2,020 / 13 / 0; synthetic campaign 799/799 locally and
+799 / 762 / 37 skipped / 0 failed in CI; the new `c08DeploymentBinding` suite
+32/32.
+Artifacts: `src/core/source/deploymentBinding.ts` (three-hop chain, six-state
+vocabulary, totality); `src/core/source/deploymentEvidence.ts` (two bounded
+extractors with their classifications asserted at the source);
+`checkC08DeploymentBindingBoundary`.
+Known issues: none introduced. U-1 and U-2 remain UNKNOWN, which is correct
+and blocked on organizational access; C-13's precondition is therefore unmet
+and that is recorded rather than worked around. Hop 1 needs an axios
+client-family extraction that C-08 deliberately did not guess.
+Recommended next task: C-09 spec-derived expectations.

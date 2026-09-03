@@ -3,22 +3,23 @@
 Task ID: nightwatch-deployment-fact-binding-c08-v1
 Phase: DEPLOYMENT_FACT_BINDING_C08_V1
 Title: C-08 Deployment-Fact Binding
-Status: IN_PROGRESS
+Status: COMPLETE
 Task directory: .agent/tasks/nightwatch-deployment-fact-binding-c08-v1
 Starting SHA: 43cff07af2fe2c943ca62154ad01f185602a41d9
-Last validated implementation SHA: 43cff07af2fe2c943ca62154ad01f185602a41d9
-Last checkpoint: evidence survey completed read-only at 43cff07 — the mochi deployment manifests are absent (verified four independent ways), so U-1 and U-2 stay UNKNOWN and C-08b is C08B_BLOCKED_BY_ORGANIZATIONAL_ACCESS; ouchan/build/config.yaml supports a NEGATIVE deployment fact through per-branch build exclusions, while the ripple-ui host matrix is committed CLIENT configuration and is therefore SOURCE_FACT, not DEPLOYMENT_FACT
-Current milestone: M2 — the binding model, its three-hop chain and its state vocabulary
-Next action: write src/core/source/deploymentBinding.ts with an explicit ROUTE_TO_HOST to HOST_TO_SERVICE to SERVICE_TO_DEPLOYMENT chain and the EXACT / PARTIAL / UNKNOWN / UNSUPPORTED / STALE / AMBIGUOUS vocabulary, reusing C-15b's FACT_CATEGORIES and strength ordering rather than inventing a parallel one
+Last validated implementation SHA: 777ddb14fd367f2d9ae8f8ac68c89092bd784713
+Last checkpoint: exact-head GitHub run 33801673312 at 70b8225 passed all eleven required groups on Node 20 with receipt receipt:sha256:745edcfc991cc6b37da54233; gate:local and gate:clean PASS with siblingWrites 0; canonical regression 3,489/3,476/13/0; 1,851 operations bound to 1,851 bindings, 0 positive route-to-endpoint DEPLOYMENT_FACTs, U-1 and U-2 explicit UNKNOWNs; 11/11 negative probes detected; DEF-C08-1 and DEF-C08-2 repaired
+Current milestone: COMPLETE / STOP — M1 through M8 are closed and all nine acceptance rows PASS
+Next action: STOP — C-08 is COMPLETE and certified. The next authorized campaign in this overnight portfolio is C-09 spec-derived expectations; C-08b is C08B_BLOCKED_BY_ORGANIZATIONAL_ACCESS and cannot be started; C-12 remains NOT AUTHORIZED
 Authorization class: NIGHTWATCH_DEPLOYMENT_FACT_BINDING_C08_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 43cff07af2fe2c943ca62154ad01f185602a41d9
-LAST_VALIDATED_IMPLEMENTATION_SHA: 43cff07af2fe2c943ca62154ad01f185602a41d9
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 43cff07af2fe2c943ca62154ad01f185602a41d9
+LAST_VALIDATED_IMPLEMENTATION_SHA: 777ddb14fd367f2d9ae8f8ac68c89092bd784713
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 777ddb14fd367f2d9ae8f8ac68c89092bd784713
+LAST_DOCUMENTATION_CHECKPOINT_SHA: 70b822517d164154c9d0bfb2bd53cec72d1b0fbd
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
-PHASE_DEPLOYMENT_FACT_BINDING_C08_V1_STATUS: IN_PROGRESS
+PHASE_DEPLOYMENT_FACT_BINDING_C08_V1_STATUS: COMPLETE
 
 ## Routing and safety
 

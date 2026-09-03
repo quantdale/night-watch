@@ -1,7 +1,7 @@
 # EXECUTION PROMPT — C-08 Deployment-Fact Binding
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
-Status: IN_PROGRESS
+Status: COMPLETE
 Campaign ID: nightwatch-deployment-fact-binding-c08-v1
 OpenSpec: openspec/changes/nightwatch-deployment-fact-binding-c08-v1/
 Planned-From: 43cff07af2fe2c943ca62154ad01f185602a41d9

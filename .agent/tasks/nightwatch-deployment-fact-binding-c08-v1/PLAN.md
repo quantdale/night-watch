@@ -84,13 +84,13 @@ binding for every member, plus a check that the two counts are equal.
 ## Milestones
 
 - M1 Task record, OpenSpec change, measured evidence survey — COMPLETE
-- M2 Binding model, chain and state vocabulary — NOT_STARTED
-- M3 Build-exclusion extractor (the one real deployment-evidence source) — NOT_STARTED
-- M4 Host-matrix extractor, classified SOURCE_FACT — NOT_STARTED
-- M5 Totality over the 1,851 operations; U-1 and U-2 explicit — NOT_STARTED
-- M6 Currentness and STALE behaviour — NOT_STARTED
-- M7 Hardening rule, negative probes, no-authority proof — NOT_STARTED
-- M8 Validation, integration, exact-head CI, closure — NOT_STARTED
+- M2 Binding model, chain and state vocabulary — COMPLETE
+- M3 Build-exclusion extractor (the one real deployment-evidence source) — COMPLETE
+- M4 Host-matrix extractor, classified SOURCE_FACT — COMPLETE
+- M5 Totality over the 1,851 operations; U-1 and U-2 explicit — COMPLETE
+- M6 Currentness and STALE behaviour — COMPLETE
+- M7 Hardening rule, negative probes, no-authority proof — COMPLETE
+- M8 Validation, integration, exact-head CI, closure — COMPLETE
 
 ## Validation Strategy
 

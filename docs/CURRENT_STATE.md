@@ -389,6 +389,83 @@ restored. **CI skip accounting:** the synthetic lane went 738/704/34 to
 are verified locally only, because CI has no sibling checkouts; that is the same
 scope C-02a's 591 has always had, and it is stated rather than implied.
 
+## C-08 deployment-fact binding (current)
+
+**The finding.** Every operation carried `deploymentStatusUnresolved: true`,
+typed as the literal `true`, so it could never say anything else. It looked
+like an answer and conveyed nothing: an operation investigated and found
+unknowable was indistinguishable from one nobody had looked at. An unrecorded
+unknown is the shape a guess hides in.
+
+**The mochi manifests are not locally available**, verified four independent
+ways: no repository named `mochi` at depth ≤ 2, no `ingress.yaml` under the
+sibling root, no `appproxy`/`serviceproxy` directory, and no
+`remote.origin.url` mentioning mochi across ~160 repositories. The two
+`mochi*` paths are protobuf subdirectories for a SERVICE named mochi. So
+**U-1 and U-2 remain UNKNOWN** carrying
+`C08B_BLOCKED_BY_ORGANIZATIONAL_ACCESS`, **C-08b cannot start**, and C-13's
+precondition is unmet — recorded rather than worked around.
+
+**The binding is a three-hop CHAIN**, not a verdict:
+`route → host → kubernetes service → deployed?`, because the only information
+available is which hop is missing, and a flat UNKNOWN cannot distinguish
+"nobody looked" from "hop one is established and hops two and three are
+blocked".
+
+| Measure | Value |
+|---|---|
+| operations / bindings | 1,851 / **1,851**, `totalityHolds: true` |
+| **positive route → endpoint `DEPLOYMENT_FACT`s** | **0** |
+| operations with a proven build unit | 341 (all ouchan, from their own source path) |
+| hop 1 `NO_PROVEN_CLIENT_FAMILY_BINDING` | 1,851 |
+| hops 2-3 `C08B_BLOCKED_BY_ORGANIZATIONAL_ACCESS` | 2,192 |
+| hop 3 `NO_PROVEN_SERVICE_IDENTITY` | 1,510 |
+
+**Zero is the honest answer.** The acceptance criteria were written so that
+reporting it PASSES and manufacturing a non-zero count from client
+configuration FAILS. That discipline is the campaign's centre:
+`ripple-ui/src/config/common.js` is committed, current and names real hosts per
+environment, so it reads as authoritative — while stating only what the
+FRONTEND CALLS. What the infrastructure SERVES is a different proposition, and
+the gap between them is where a stale or rerouted deployment hides. It is
+`SOURCE_FACT`, and `CLIENT_CONFIGURATION` is a named forbidden basis.
+
+Only `ouchan/build/config.yaml` qualifies as deployment evidence, and only
+NEGATIVELY: a per-branch exclusion proves a service is not built or deployed to
+that environment, while `build_all: false` makes non-exclusion mere
+eligibility. Measured, no product service producing operations is excluded from
+the production build, so this yields 0 today; the mechanism is proven
+non-vacuous by unit test against a service that IS excluded.
+
+Hop 1 is unknown for a nameable reason: the matrix is keyed
+`apiUrl.<brand>.<family>.<env>`, and C-04 proved which call site reaches which
+operation but not which axios client it uses, so nothing ties an operation to a
+family. Matching `baseApi` to `basic` by name would be
+`SERVICE_NAME_SIMILARITY`. Same-file `const` literals ARE resolved, because
+`const APP_PATH = 'ripple'` makes `/m/${APP_PATH}` provably `/m/ripple`.
+
+**Two defects.** DEF-C08-1 (pre-existing): a source-cone purity rule matched
+`/exec(?:File)?\s*\(/` with no lookbehind, so `pattern.exec(...)` read as
+process execution, while the sibling rule 18 lines above already spelled it
+`(?<!\.)exec`; latent because the loop skips the only file in the cone that
+used `.exec()`. It also showed that a pre-commit hardening run can pass
+VACUOUSLY, since that rule iterates git-tracked files and new modules are
+untracked. DEF-C08-2 (campaign-introduced): my own rule asserted forbidden
+bases with a whole-file `includes()`, so emptying the array left it passing on
+the comment documenting compliance — a trap the C-02b rule already records.
+
+Certified at exact-head CI run `33801673312` at
+`70b822517d164154c9d0bfb2bd53cec72d1b0fbd`, eleven required groups PASS on
+Node 20 with receipt `receipt:sha256:745edcfc991cc6b37da54233`. Canonical
+regression 3,489 / 3,476 / 13 skipped / 0 failed. Both gates PASS at
+`777ddb1` with `siblingWrites: 0`. 11 negative probes detected. CI skips went
+35 → 37, exactly the two sibling-gated cases, predicted before the run.
+
+C-08 grants NO request authority: a probe asserts no request-authority surface
+consults the binding, both modules are data-only, and zero runtime contact
+occurred — no cluster, no kubectl, no cloud API, and `kubeconf-dev.yaml` was
+never read.
+
 ### Project-state v2 (machine-checked truth block)
 
 Each anchor claims a DIFFERENT kind of evidence. They may coincide, but they
@@ -397,7 +474,7 @@ when its OWN evidence exists.
 
 | Field | Claims | Current value | Why |
 | --- | --- | --- | --- |
-| `LAST_SUBSTANTIVE_IMPLEMENTATION_SHA` | the last commit that changed implementation AND was validated | `4e0bfc1` | C-05's closing implementation commit, which added the sibling guard that repaired DEF-C05-5; the admission authority, read ledger and de-persistence landed across the commits leading to it |
+| `LAST_SUBSTANTIVE_IMPLEMENTATION_SHA` | the last commit that changed implementation AND was validated | `777ddb1` | C-05's closing implementation commit, which added the sibling guard that repaired DEF-C05-5; the admission authority, read ledger and de-persistence landed across the commits leading to it |
 | `LAST_LOCALLY_VALIDATED_SHA` | the last commit where the local quality gate passed | `85dd8a6` | `gate:local` PASS, all eleven required groups, receipt `receipt:sha256:0cc29da4b4503cd981855940` |
 | `LAST_CLEAN_VALIDATED_SHA` | the last commit where the clean Node 20 gate passed | `85dd8a6` | `gate:clean` PASS, Node 20, eleven groups, `siblingWrites: 0`, inner receipt `receipt:sha256:841e75dcd27b04660842fa24`, outer `clean-receipt:sha256:3832909fbab478cff4828f50` |
 | `CI_OBSERVED_SHA` | the commit whose CI result was observed | `4e0bfc1` | run `33796281169`. It names a LATER commit than the two validation anchors because the local and clean gates ran at `85dd8a6`, CI then failed at `8cb055c` on DEF-C05-5, and the repair produced `4e0bfc1` — each anchor advances on its own evidence, and the intervening failure is recorded below rather than erased |
@@ -459,11 +536,11 @@ RELEASE_CERTIFICATION_PROTOCOL_VERSION: nightwatch.release-certification.v1
 PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
 RELEASE_CHECKPOINT_SHA: 2576c5751d33bb40046246e8fcf57c7cc5c30a57
 LIVE_HEAD_SHA: DISCOVER_FROM_GIT
-LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: 4e0bfc19ea6794344c786b55034568e64fd7dfac
-LAST_LOCALLY_VALIDATED_SHA: 85dd8a6f39118a33eb2fcef3e334b31e6abe9d35
-LAST_CLEAN_VALIDATED_SHA: 85dd8a6f39118a33eb2fcef3e334b31e6abe9d35
-CI_OBSERVED_SHA: 4e0bfc19ea6794344c786b55034568e64fd7dfac
-CI_EXECUTED_SHA: 4e0bfc19ea6794344c786b55034568e64fd7dfac
+LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: 777ddb14fd367f2d9ae8f8ac68c89092bd784713
+LAST_LOCALLY_VALIDATED_SHA: 777ddb14fd367f2d9ae8f8ac68c89092bd784713
+LAST_CLEAN_VALIDATED_SHA: 777ddb14fd367f2d9ae8f8ac68c89092bd784713
+CI_OBSERVED_SHA: 70b822517d164154c9d0bfb2bd53cec72d1b0fbd
+CI_EXECUTED_SHA: 70b822517d164154c9d0bfb2bd53cec72d1b0fbd
 CI_STATUS: EXECUTED_PASS
 FINAL_DOCUMENTATION_SHA: DISCOVER_FROM_GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
@@ -491,11 +568,11 @@ informational and are not interpreted as current authority.
 LIVE_STATE_PROTOCOL_VERSION: nightwatch.live-state.v1
 LIVE_TASK_ID: nightwatch-deployment-fact-binding-c08-v1
 LIVE_PHASE: DEPLOYMENT_FACT_BINDING_C08_V1
-LIVE_TASK_STATUS: IN_PROGRESS
+LIVE_TASK_STATUS: COMPLETE
 LIVE_PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
 LIVE_PROJECT_VERDICT_EFFECT: PRESERVE
-LIVE_NEXT_ACTION_STATE: CONTINUE
-LIVE_COMPLETION_CLAIM: NONE
+LIVE_NEXT_ACTION_STATE: STOP
+LIVE_COMPLETION_CLAIM: COMPLETE
 ```
 
 ### Exact-head CI is green (current live CI state)
