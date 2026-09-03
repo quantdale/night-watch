@@ -29,26 +29,35 @@ hop rather than an absent field.
 
 ## Current Milestone
 
-M2 — the binding model, its three-hop chain and its state vocabulary.
+M8 — integration and exact-head CI. M1 through M7 are complete and all three
+local gates are PASS at `777ddb1` with `siblingWrites: 0`.
 
 ## Completed Milestones
 
 - M1 — task record, OpenSpec change, session claim, measured evidence survey.
+- M2 — the binding model: an explicit three-hop chain, the six-state
+  vocabulary, and C-15b's `FACT_CATEGORIES` reused rather than duplicated.
+- M3 — build-exclusion extractor, the one real deployment-evidence source,
+  admitted only in the NEGATIVE direction.
+- M4 — host-matrix extractor, classified SOURCE_FACT, with same-file `const`
+  literals resolved so `${APP_PATH}` becomes the `ripple` the file proves.
+- M5 — totality over all 1,851 operations; U-1 and U-2 explicit with their
+  blocker.
+- M6 — evidence identity and STALE behaviour on digest, SHA or extractor
+  version change.
+- M7 — hardening rule, 11 negative probes, and the no-authority proof; found
+  and repaired DEF-C08-1 and DEF-C08-2.
 
 ## Work In Progress
 
-M2 — `src/core/source/deploymentBinding.ts`: one binding per operation,
-carrying an explicit `ROUTE_TO_HOST → HOST_TO_SERVICE → SERVICE_TO_DEPLOYMENT`
-chain rather than one flat state.
+M8 — integration and exact-head CI observation.
 
 ## Exact Next Action
 
-Write the binding model with the chain and the `EXACT` / `PARTIAL` / `UNKNOWN`
-/ `UNSUPPORTED` / `STALE` / `AMBIGUOUS` vocabulary, reusing C-15b's
-`FACT_CATEGORIES` and its strength ordering rather than inventing a parallel
-one. A chain whose earlier hop is established and later hop is not must be
-`PARTIAL`, because that is the expected steady state here and is strictly more
-informative than `UNKNOWN`.
+Integrate by verified fast-forward, then observe the exact-head GitHub Actions
+run. The C-08 suite has two sibling-gated cases (the real host matrix and the
+real build config), so the CI synthetic skip count should rise by exactly two;
+any larger rise means a deterministic case is silently not running there.
 
 ## Files Changed
 
@@ -72,6 +81,17 @@ informative than `UNKNOWN`.
 | `ripple-ui/src/config/common.js` | present, 8,989 bytes; route-prefix × environment → host matrix |
 | U-2 services in `ouchan/services/` | `rbac` PRESENT, `user` PRESENT, `openid-connect-server` PRESENT, `gateway` ABSENT, `safe-box` ABSENT |
 | `ouchan/kubeconf-dev.yaml` | exists; top-level key shape observed only, NO value read, and deliberately not used |
+| **binding totality** | 1,851 operations to **1,851 bindings**, `totalityHolds: true` |
+| **byState** | UNKNOWN 1,851; EXACT / PARTIAL / UNSUPPORTED / STALE / AMBIGUOUS all 0 |
+| **positive route to endpoint DEPLOYMENT_FACTs** | **0** — the honest answer with the manifests unavailable |
+| operations with a proven build unit | **341 of 1,851** (all ouchan, derived from their own source path) |
+| unknown-reason distribution | `NO_PROVEN_CLIENT_FAMILY_BINDING` 1,851 (hop 1); `C08B_BLOCKED_BY_ORGANIZATIONAL_ACCESS` 2,192 (hop 2 for all, hop 3 for the 341); `NO_PROVEN_SERVICE_IDENTITY` 1,510 |
+| ouchan operations excluded from the production build | **0** — no product service producing operations is excluded; the mechanism is proven non-vacuous by unit test against a service that IS excluded |
+| `tests/unit/c08DeploymentBinding.test.ts` | **32 passed / 0 failed** |
+| negative probes D1-D11 | **11/11 DETECTED**, all restored, tree clean after each |
+| **canonical regression** at `777ddb1` | **3,489 total / 3,476 passed / 13 skipped / 0 failed**, 0 failure blocks |
+| **`gate:local`** at `777ddb1` | **PASS, eleven groups**, receipt `receipt:sha256:c31e7af0e0975c9676fa57b4`; synthetic lane 799/799 |
+| **`gate:clean`** at `777ddb1` | **PASS, eleven groups**, Node 20, `siblingWrites: 0`, `cleanBefore/cleanAfter: true`; inner `receipt:sha256:9fca6a784b64e4bc81d6204f`, outer `clean-receipt:sha256:dbc28a42418230b5e5b4d68a` |
 
 ## Decisions Made During This Task
 
@@ -84,6 +104,43 @@ informative than `UNKNOWN`.
 - Only the NEGATIVE direction is admitted from build exclusions: exclusion on
   a branch proves not-deployed-there, while non-exclusion proves eligibility
   and not deployment.
+
+## Defects found
+
+**DEF-C08-1 — a hardening rule could not tell `RegExp.exec` from process
+`exec`. PRE_EXISTING and latent.** The source-cone purity rule matched
+`/exec(?:File)?\s*\(/` with no lookbehind, so `pattern.exec(...)` read as
+process execution — while the sibling rule eighteen lines above already spells
+it `(?<!\.)exec`. It stayed hidden because the loop skips `siblingSource.ts`,
+the only file in `src/core/source/` that used `.exec()`, and no other module in
+the cone did. C-08 added the first two that do and the rule fired on correct
+code. Repair: the lookbehind is added and `child_process` joins the
+alternation so tightening `exec` cannot weaken the rule; both directions
+re-proven with a bare `spawn(` and a `writeFile(`.
+
+This also explains why the pre-commit hardening run passed: the loop iterates
+GIT-TRACKED files, and both modules were still untracked, so the check was
+vacuous for them. Committing is what exposed it — a second instance of the
+"verify, do not assume" lesson from C-05.
+
+**DEF-C08-2 — my own C-08 rule matched a comment instead of the declaration.
+CAMPAIGN_INTRODUCED, caught by its own probe.** The rule asserted each
+forbidden basis with a whole-file `includes()`, and `CLIENT_CONFIGURATION` is
+also named in the prose explaining why it is forbidden — so emptying the array
+left the check passing on the very comment documenting compliance. The C-02b
+rule already records this exact trap ("Read the DECLARATION, not the file"), so
+the repository knew the answer and I did not apply it. Repair: the rule
+extracts the `Object.freeze` array and strips comments before testing
+membership.
+
+Two flaws in the binding module itself, both caught before shipping:
+`repository.split('/').pop()` as the service name — `SERVICE_NAME_SIMILARITY`
+wearing a deployment fact's label, which would have produced a spurious
+`NOT_DEPLOYED` for `mobingilabs/reportd`; and
+`serviceDirectoryFromSourcePath` accepting `..`, since a dot matches the
+directory character class, so `services/../etc/passwd` yielded `..` as a build
+unit that could be matched against an exclusion pattern to fabricate a
+deployment fact. The second was caught by this campaign's own test.
 
 ## Discoveries
 
