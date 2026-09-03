@@ -1,73 +1,60 @@
-# EXECUTION PROMPT — C-03 Go/gRPC Topology Binding
+# EXECUTION PROMPT — C-04 Frontend Consumer Intelligence
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
-Status: COMPLETE
-Campaign ID: nightwatch-go-grpc-topology-binding-c03-v1
-OpenSpec: openspec/changes/nightwatch-go-grpc-topology-binding-c03-v1/
-Planned-From: 03bab54e0758bb9aa4e9a44dacd7eb863e254e16
+Status: IN_PROGRESS
+Campaign ID: nightwatch-frontend-consumer-intelligence-c04-v1
+OpenSpec: openspec/changes/nightwatch-frontend-consumer-intelligence-c04-v1/
+Planned-From: 7c0d5f5326be1983cf081888680f3c01f3f128f6
 Target Branch: main
-Predecessor Task ID: nightwatch-protobuf-source-intelligence-c02b-v1
+Predecessor Task ID: nightwatch-go-grpc-topology-binding-c03-v1
 Predecessor Status: COMPLETE
 
 ## Mission
 
-Bind protobuf services to the Go gRPC registration topology that serves them,
-at SERVICE level, as mechanically proven `SOURCE_FACT`s — and keep positive
-facts strictly apart from a repository completeness that ouchan's enumeration
-cannot support.
+Derive frontend to backend route edges mechanically from the approved Vue and
+JavaScript source, classify every path so that no non-literal path becomes a
+SOURCE_FACT, and report the yield truthfully against a criterion the approved
+universe cannot satisfy.
 
 ## Authority
 
-Repository-local, offline, read-only source intelligence. Sibling Alphaus
-repositories are read through the existing path-confined boundary and never
-written. No Go toolchain, no type checking, no call graph, no networking.
+Repository-local, offline, read-only source intelligence. `.vue` is admitted as
+a LANGUAGE, not a root or a repository. No rendering, execution, bundling,
+browser or sibling `node_modules`. No production, DEV or NEXT contact, no
+credentials, no customer data. C-12 is NOT authorized and is NOT begun.
 
-Two authorized scope items, both recorded in the OpenSpec audit: the fourteen
-further blueapi proto roots (owner-decided, on the C-02a precedent that a root
-inside an admitted repository is not a repository admission), and raising
-ouchan's `maxFiles` to the existing 4,096 contract ceiling. No repository is
-admitted; `MAX_SIBLING_SOURCE_SCAN_FILES` is unchanged.
-
-No real production, DEV or NEXT contact, authenticated browsing, credential or
-auth-state inspection, customer-data or datastore access, cloud/IAM/Kubernetes
-discovery, sibling-repository write, or external publication is authorized or
-performed. C-12 is NOT authorized and is NOT begun.
-
-C-00's `ONE_WRITING_AGENT == ONE_WORKTREE == ONE_SESSION_IDENTITY` invariant
-governs the work: all implementation happens in the owned session worktree
-`session/nightwatch-go-grpc-topology-bind-25187565`.
+C-00 governs: all implementation happens in the owned session worktree
+`session/nightwatch-frontend-consumer-int-82a0494b`.
 
 ## Ordered workstreams
 
-1. Task record, OpenSpec change, recorded baseline.
-2. Adversarial Go corpus, asserted before the parser.
-3. Bounded Go registration lexer with import-alias resolution.
-4. Root admission and ouchan budget correction; C-01 no-eviction.
-5. Proto service index and the categorical join.
-6. Completeness discipline and the W-EFFECT_RPC determination.
-7. Hardening rules with recorded negative probes; gate registration.
-8. Full validation matrix, integration, exact-head CI, closure.
+1. Task record, OpenSpec change, measured ceiling.
+2. Adversarial corpus, asserted before the parser.
+3. Bounded Vue SFC script extraction and the consumer parser.
+4. `.vue` / `VUE` admission and the real measurement.
+5. Categorical backend join that never upgrades evidence.
+6. Hardening rules with recorded negative probes; gate registration.
+7. Full validation, integration, exact-head CI, closure.
 
 ## Constraints
 
-Bounded loops and explicit ceilings; categorical states rather than defaults;
-structural facts and digests only in durable evidence; fail closed to
-AMBIGUOUS/UNSUPPORTED; explicit synthetic roots in every fixture; no repository
-write while `gate:clean` evidence is running.
+Bounded loops and explicit ceilings; categorical classes rather than defaults;
+structural routes only, query and hash stripped; fail closed to UNKNOWN;
+explicit synthetic roots in every fixture; no repository write during
+`gate:clean`.
 
 ## Validation
 
-`npm run typecheck`, `hardening:check`, `handoff:check`, `project:check`,
-`agent:check`, `agent:audit`, `workspace:check`, `gate:inventory`,
-`test:semantic-compat`, `campaign:synthetic`, the new C-03 suites, the C-02b
-suites, source inventory and completeness suites, the full canonical
-regression, `gate:local`, `gate:clean`, and exact-head GitHub Actions.
+typecheck, hardening, handoff, project, agent, agent audit, workspace, gate
+inventory, semantic compatibility, synthetic campaign, the new C-04 suites, the
+C-02b and C-03 suites, source completeness suites, full canonical regression,
+`gate:clean`, exact-head GitHub Actions.
 
 ## Acceptance and completion gates
 
-The ten acceptance rows of
-`.agent/tasks/nightwatch-go-grpc-topology-binding-c03-v1/SPEC.md`, each carried
-in the REPORT requirement ledger with exact evidence.
+The nine acceptance rows of
+`.agent/tasks/nightwatch-frontend-consumer-intelligence-c04-v1/SPEC.md`, each
+carried in the REPORT requirement ledger with exact evidence.
 
 ## Git and reporting
 
