@@ -29,8 +29,8 @@ funnel honestly — including if it ends at zero.
 
 ## Current Milestone
 
-M5 — pre-DEV qualification through the existing tooling, then hardening probes
-and validation.
+M7 — integration and exact-head CI. M1 through M6 are complete and all four
+local gates PASS, including `gate:predev`.
 
 ## Completed Milestones
 
@@ -41,17 +41,20 @@ and validation.
   rejected count.
 - M4 — EIG ordering restricted to the eligible set, so an inadmissible target
   has no path to a rank.
+- M5 — pre-DEV qualification run: `gate:predev` PASS on all eleven groups. The
+  gates HOLD; the reason no DEV traffic follows is that zero targets are
+  admitted, not that a gate failed. That distinction is the campaign's point.
+- M6 — hardening rule and 7 negative probes, all DETECTED and restored.
 
 ## Work In Progress
 
-M5 — running the pre-DEV qualification and recording its verdict.
+M7 — integration and exact-head CI observation.
 
 ## Exact Next Action
 
-Re-run `gate:predev` now that the scaffolding exists, then `dev-manifest` and
-`dev-preflight` (both local and read-only) to record the qualification verdict.
-DEV execution is expected to be refused because zero targets are eligible; the
-verdict must be recorded from the tooling rather than asserted from the funnel.
+Integrate by verified fast-forward and observe the exact-head GitHub Actions
+run. The C-07 suite has one sibling-gated case (the real-population
+measurement), so the CI synthetic skip count should rise by exactly one.
 
 ## Files Changed
 
@@ -77,6 +80,15 @@ verdict must be recorded from the tooling rather than asserted from the funnel.
 | runtime binding | 1,843 `SOURCE_ONLY`, 8 `RUNTIME_BOUND_EXACT`; only those 8 carry a `targetId` |
 | `tests/unit/c07DerivedSemantics.test.ts` | **23 passed / 0 failed** |
 | `gate:predev`, first attempt | **FAILED at `HANDOFF_TRUTH`** — my omission again: I ran a gate before writing C-07's STATE, REPORT, OpenSpec change and routing, exactly as in C-16. Not a code defect |
+| **`gate:predev`** after the repair | **PASS, all eleven groups**, `environmentClass: PREDEV`, receipt `receipt:sha256:418bb319a24ab9e68d052f45` |
+| negative probes P1-P7 | **7/7 DETECTED**, all restored, tree clean after each |
+| **canonical regression** at `f03dd21` | **3,579 total / 3,566 passed / 13 skipped / 0 failed**, 0 failure blocks |
+| **`gate:local`** at `f03dd21` | **PASS, eleven groups**, receipt `receipt:sha256:f897121fcc6d3e9518b77818` |
+| **`gate:clean`** at `f03dd21` | **PASS, eleven groups**, Node 20, **`siblingWrites: 0`**; inner `receipt:sha256:0950a7bc929b73cab79d84ac`, outer `clean-receipt:sha256:5bb2b45bc0b0c81b989e439e` |
+| **DEV requests issued** | **0** |
+| **production contacts** | **0** |
+| **NEXT contacts** | **0** |
+| credentials acquired / auth config changed | **0** / **none**; the DEV storage state's contents were never read |
 
 ## Decisions Made During This Task
 
