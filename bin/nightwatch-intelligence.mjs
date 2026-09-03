@@ -95,9 +95,10 @@ function status() {
 }
 
 function sourceDiscoveryPreview() {
-  const [sourceBoundary, approvedScan, surfacesModule, reviewModule, readonlyModule, populationModule] = loadTypeScriptModules([
+  const [sourceBoundary, approvedScan, universe, surfacesModule, reviewModule, readonlyModule, populationModule] = loadTypeScriptModules([
     "src/core/source/siblingSource.ts",
     "src/core/source/approvedScan.ts",
+    "src/core/source/universe.ts",
     "src/core/source/surfaces.ts",
     "src/core/source/review.ts",
     "src/core/source/readonlyCandidateCensus.ts",
@@ -106,7 +107,11 @@ function sourceDiscoveryPreview() {
   const requestedRepo = args.find((arg) => arg.startsWith("--repo="))?.slice("--repo=".length);
   const repositoryIds = requestedRepo === undefined ? undefined : [requestedRepo];
   const config = approvedScan.createApprovedRealSourceScanConfig({ repositoryIds });
-  const access = sourceBoundary.createSiblingSourceAccess(sourceBoundary.DEFAULT_SIBLING_ROOT);
+  // C-05: the boundary itself enforces the owner-approved set, so a caller
+  // that built its own scan config still cannot open an unadmitted repository.
+  const access = sourceBoundary.createSiblingSourceAccess(sourceBoundary.DEFAULT_SIBLING_ROOT, {
+    admittedRepositoryIds: universe.ownerApprovedRepositoryIds(),
+  });
   const discovery = surfacesModule.discoverSourceSurfaces({ access, config });
   const inventory = discovery.inventory;
   const safeInventory = { schemaVersion: inventory.schemaVersion, configDigest: inventory.configDigest, extractorVersion: inventory.extractorVersion, files: inventory.files, repositories: inventory.repositories, counters: inventory.counters, completeness: inventory.completeness, snapshotDigest: inventory.snapshotDigest };

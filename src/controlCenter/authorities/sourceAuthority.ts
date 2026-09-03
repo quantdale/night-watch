@@ -12,6 +12,7 @@ import { prefixedDigest24 } from '../../core/identity/canonicalDigest';
 import { createApprovedRealSourceScanConfig } from '../../core/source/approvedScan';
 import { createRealSourceSurfaceCache, type RealSourceSurfaceCache } from '../../core/source/cache';
 import { createSiblingSourceAccess, DEFAULT_SIBLING_ROOT, type SiblingSourceAccess } from '../../core/source/siblingSource';
+import { ownerApprovedRepositoryIds } from '../../core/source/universe';
 import { analyzeSourceSurfacesIntoPhase24, discoverSourceSurfaces, type SourcePhase24Integration, type SourceSurfaceDiscovery } from '../../core/source/surfaces';
 import type { RealSourceScanConfig, SourceScanRepositoryStatus } from '../../core/source/scanTypes';
 
@@ -163,7 +164,10 @@ function buildSnapshot(input: SourceAuthorityBuildInput): SourceAuthoritySnapsho
 
 /** Create the normal fixed-root source authority. */
 export function createSourceAuthority(): SourceAuthority {
-  const access = createSiblingSourceAccess(DEFAULT_SIBLING_ROOT);
+  // C-05: the boundary enforces the owner-approved set here too, so the
+  // Control Center cannot reach an unadmitted repository even if a future
+  // change hands it a wider scan config.
+  const access = createSiblingSourceAccess(DEFAULT_SIBLING_ROOT, { admittedRepositoryIds: ownerApprovedRepositoryIds() });
   const config = createApprovedRealSourceScanConfig();
   const cache = createRealSourceSurfaceCache({ maxEntries: 8 });
   return { snapshot: () => buildSnapshot({ access, config, cache }) };

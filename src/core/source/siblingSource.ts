@@ -51,11 +51,45 @@ export interface SiblingSourceEnumerationLimits {
   readonly excludedDirectories: readonly SourceScanExcludedDirectory[];
 }
 
+/**
+ * C-05 read ledger.
+ *
+ * The guarantee "an unapproved repository is never read" used to be expressed
+ * as `operations === 0` for that repository, which is a property of OUTPUT: an
+ * analyzer that opened every file and derived nothing would satisfy it just as
+ * well as one that opened nothing. The ledger moves the claim to the call, so
+ * the assertion becomes `contentReads(repo) === 0` — a statement about what was
+ * ATTEMPTED, which is what the invariant actually says.
+ */
+export interface SiblingSourceReadLedger {
+  /** Content reads attempted for a repository, refused or not. */
+  readonly attempts: (repoId: string) => number;
+  /** Reads that returned content. */
+  readonly contentReads: (repoId: string) => number;
+  /** Reads refused because the repository is not owner-approved. */
+  readonly admissionRefusals: (repoId: string) => number;
+  /** Every repository this access was asked about, in sorted order. */
+  readonly repositoriesTouched: () => readonly string[];
+  /** Total admission refusals across all repositories. */
+  readonly totalAdmissionRefusals: () => number;
+}
+
+export interface SiblingSourceAccessOptions {
+  /**
+   * When present, the boundary itself refuses any repository outside this set.
+   * Admission was previously enforced only by which repositories the scan
+   * CONFIG happened to list, so nothing stopped a caller that built its own
+   * config. Passing the owner-approved set makes the boundary fail closed.
+   */
+  readonly admittedRepositoryIds?: readonly string[];
+}
+
 export interface SiblingSourceAccess {
   readonly reader: RealSourceReader;
   readonly currentness: RealSourceCurrentness;
   readonly root: string;
   readonly enumerateFiles: (repoId: string, allowlistedRoots: readonly string[], limits: SiblingSourceEnumerationLimits) => SiblingSourceEnumeration;
+  readonly readLedger: SiblingSourceReadLedger;
 }
 
 function isPathInside(candidate: string, parent: string): boolean {
@@ -214,9 +248,24 @@ export function resolveGitHead(repoRoot: string, approvedMetadataRoot?: string):
   }
 }
 
-export function createSiblingSourceAccess(root: string): SiblingSourceAccess {
+export function createSiblingSourceAccess(root: string, options: SiblingSourceAccessOptions = {}): SiblingSourceAccess {
   const resolvedRoot = path.resolve(root);
   const rootUsable = regularDirectory(resolvedRoot);
+  // `undefined` means "this access enforces no admission set of its own", which
+  // is the pre-C-05 behaviour and is preserved for existing callers. An empty
+  // ARRAY is different and is honoured literally: it admits nothing.
+  const admitted = options.admittedRepositoryIds === undefined ? null : new Set(options.admittedRepositoryIds);
+  const attempts = new Map<string, number>();
+  const contentReads = new Map<string, number>();
+  const admissionRefusals = new Map<string, number>();
+  const bump = (counter: Map<string, number>, repoId: string) => {
+    counter.set(repoId, (counter.get(repoId) ?? 0) + 1);
+  };
+
+  /** True when this access may not touch the repository at all. */
+  function admissionRefused(repoId: string): boolean {
+    return admitted !== null && !admitted.has(repoId);
+  }
 
   function repoRootFor(repoId: string): string | null {
     if (!rootUsable || !safeRepoId(repoId)) return null;
@@ -232,6 +281,20 @@ export function createSiblingSourceAccess(root: string): SiblingSourceAccess {
     allowlistedRoots: readonly string[],
     limits: SiblingSourceEnumerationLimits,
   ): SiblingSourceEnumeration {
+    if (admissionRefused(repoId)) {
+      bump(attempts, repoId);
+      bump(admissionRefusals, repoId);
+      // Refused, and SAID so. Returning an empty enumeration without a reason
+      // would be indistinguishable from an empty repository, which is exactly
+      // the ambiguity the ledger exists to remove.
+      return {
+        entries: [],
+        rejectedPaths: [{ relativePath: '', reason: 'SOURCE_REPOSITORY_UNAVAILABLE' }],
+        directoriesVisited: 0,
+        truncated: false,
+        truncationReason: null,
+      };
+    }
     const repoRoot = repoRootFor(repoId);
     if (repoRoot === null) {
       return {
@@ -360,17 +423,38 @@ export function createSiblingSourceAccess(root: string): SiblingSourceAccess {
 
   const reader: RealSourceReader = {
     readFile(repoId: string, relativePath: string): string | null {
+      bump(attempts, repoId);
+      if (admissionRefused(repoId)) {
+        bump(admissionRefusals, repoId);
+        return null;
+      }
       const repoRoot = repoRootFor(repoId);
       const parts = safeRelativeParts(relativePath);
       if (repoRoot === null || parts === null) return null;
       const file = path.resolve(repoRoot, ...parts);
       if (!isPathInside(file, repoRoot) || !hasNoSymlinkPath(file)) return null;
-      return readRegularTextNoFollow(file, MAX_SIBLING_SOURCE_FILE_BYTES);
+      const text = readRegularTextNoFollow(file, MAX_SIBLING_SOURCE_FILE_BYTES);
+      // Counted only when content actually crossed the boundary.
+      if (text !== null) bump(contentReads, repoId);
+      return text;
     },
+  };
+
+  const readLedger: SiblingSourceReadLedger = {
+    attempts: (repoId: string) => attempts.get(repoId) ?? 0,
+    contentReads: (repoId: string) => contentReads.get(repoId) ?? 0,
+    admissionRefusals: (repoId: string) => admissionRefusals.get(repoId) ?? 0,
+    repositoriesTouched: () => Object.freeze([...attempts.keys()].sort()),
+    totalAdmissionRefusals: () => [...admissionRefusals.values()].reduce((left, right) => left + right, 0),
   };
 
   const currentness: RealSourceCurrentness = {
     currentSnapshot(repoId: string): { repoId: string; sha: string } | null {
+      if (admissionRefused(repoId)) {
+        bump(attempts, repoId);
+        bump(admissionRefusals, repoId);
+        return null;
+      }
       const repoRoot = repoRootFor(repoId);
       if (repoRoot === null) return null;
       const sha = resolveGitHead(repoRoot, resolvedRoot);
@@ -378,5 +462,5 @@ export function createSiblingSourceAccess(root: string): SiblingSourceAccess {
     },
   };
 
-  return { reader, currentness, root: resolvedRoot, enumerateFiles };
+  return { reader, currentness, root: resolvedRoot, enumerateFiles, readLedger };
 }

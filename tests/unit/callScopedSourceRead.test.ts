@@ -201,6 +201,15 @@ test.describe('call-scoped source read reuse', () => {
     let throwOnce = true;
     const access: SiblingSourceAccess = {
       root: '/synthetic',
+      // C-05 read ledger: this synthetic access counts nothing, which is
+      // correct for a stub whose subject is read-failure handling.
+      readLedger: {
+        attempts: () => 0,
+        contentReads: () => 0,
+        admissionRefusals: () => 0,
+        repositoriesTouched: () => [],
+        totalAdmissionRefusals: () => 0,
+      },
       currentness: { currentSnapshot: () => ({ repoId: REPOSITORY, sha: SOURCE_SHA }) },
       enumerateFiles: () => ({ entries: [], rejectedPaths: [], directoriesVisited: 0, truncated: false, truncationReason: null }),
       reader: { readFile: (_repoId, relativePath) => {

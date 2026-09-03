@@ -31,6 +31,7 @@ import {
   ownerApprovedRepositoryIds,
 } from '../../src/core/source/universe';
 import { PHASE25_APPROVED_REPOSITORY_IDS } from '../../src/core/source/approvedScan';
+import { DEFAULT_SIBLING_ROOT, createSiblingSourceAccess } from '../../src/core/source/siblingSource';
 import { RIPPLE_REPOSITORIES } from '../../src/core/changeIntelligence/map';
 
 const root = path.resolve(__dirname, '..', '..');
@@ -230,5 +231,89 @@ test.describe('C-05 — no current mutable Git state is persisted', () => {
     const shadow = fs.readFileSync(path.join(root, 'bin/change-intelligence.mjs'), 'utf8');
     expect(shadow).toMatch(/DEFAULT_SIBLING_ROOT/);
     expect(shadow).not.toMatch(/const workspaceRoot = path\.resolve\(nightwatchRoot, '\.\.\/\.\.'\)/);
+  });
+});
+
+test.describe('C-05 — an unapproved repository is never READ, proven at the boundary', () => {
+  // The old guarantee was `operations === 0`, a property of OUTPUT. An analyzer
+  // that opened every file and derived nothing satisfies that just as well as
+  // one that opened nothing, so it could never distinguish the two. These
+  // assertions are about what was ATTEMPTED.
+
+  const unapproved = 'alphauslabs/blueexternal-not-approved';
+
+  test('the boundary refuses a content read and COUNTS the refusal', () => {
+    const access = createSiblingSourceAccess(DEFAULT_SIBLING_ROOT, {
+      admittedRepositoryIds: ownerApprovedRepositoryIds(),
+    });
+    expect(access.reader.readFile(unapproved, 'README.md')).toBeNull();
+    expect(access.readLedger.contentReads(unapproved)).toBe(0);
+    expect(access.readLedger.admissionRefusals(unapproved)).toBe(1);
+    expect(access.readLedger.attempts(unapproved)).toBe(1);
+  });
+
+  test('enumeration is refused with a reason, not returned as an empty repository', () => {
+    const access = createSiblingSourceAccess(DEFAULT_SIBLING_ROOT, {
+      admittedRepositoryIds: ownerApprovedRepositoryIds(),
+    });
+    const enumeration = access.enumerateFiles(unapproved, ['src'], {
+      maxFiles: 16, maxTotalBytes: 1_000, maxFileBytes: 1_000, allowedExtensions: ['.ts'], excludedDirectories: [],
+    } as never);
+    expect(enumeration.entries).toEqual([]);
+    // A refusal that looks like an empty repository is the ambiguity the
+    // ledger exists to remove.
+    expect(enumeration.rejectedPaths.length).toBeGreaterThan(0);
+    expect(access.readLedger.admissionRefusals(unapproved)).toBe(1);
+  });
+
+  test('git metadata is refused too, so currentness cannot leak admission', () => {
+    const access = createSiblingSourceAccess(DEFAULT_SIBLING_ROOT, {
+      admittedRepositoryIds: ownerApprovedRepositoryIds(),
+    });
+    expect(access.currentness.currentSnapshot(unapproved)).toBeNull();
+    expect(access.readLedger.admissionRefusals(unapproved)).toBe(1);
+  });
+
+  test('a REAL discovered-but-unapproved repository yields zero content reads', () => {
+    // `alphauslabs/blue` and its siblings exist on disk. Discovery may see
+    // them; the boundary must still open nothing.
+    const access = createSiblingSourceAccess(DEFAULT_SIBLING_ROOT, {
+      admittedRepositoryIds: ownerApprovedRepositoryIds(),
+    });
+    for (const repoId of ['alphauslabs/blue', 'mobingilabs/ripple-web', 'alphauslabs/bluectl']) {
+      access.reader.readFile(repoId, 'README.md');
+      access.reader.readFile(repoId, 'go.mod');
+      expect(access.readLedger.contentReads(repoId)).toBe(0);
+    }
+    expect(access.readLedger.totalAdmissionRefusals()).toBe(6);
+  });
+
+  test('an APPROVED repository is still readable, so the gate is not vacuous', () => {
+    const access = createSiblingSourceAccess(DEFAULT_SIBLING_ROOT, {
+      admittedRepositoryIds: ownerApprovedRepositoryIds(),
+    });
+    const text = access.reader.readFile('alphauslabs/blueinternal', 'openapiv2/apidocs.swagger.json');
+    expect(text).not.toBeNull();
+    expect(access.readLedger.contentReads('alphauslabs/blueinternal')).toBe(1);
+    expect(access.readLedger.admissionRefusals('alphauslabs/blueinternal')).toBe(0);
+  });
+
+  test('an empty admitted set admits nothing, while omitting the option enforces nothing', () => {
+    // These two must not be conflated: `[]` is a decision, `undefined` is the
+    // pre-C-05 behaviour retained for existing callers.
+    const closed = createSiblingSourceAccess(DEFAULT_SIBLING_ROOT, { admittedRepositoryIds: [] });
+    expect(closed.reader.readFile('alphauslabs/blueinternal', 'openapiv2/apidocs.swagger.json')).toBeNull();
+    expect(closed.readLedger.admissionRefusals('alphauslabs/blueinternal')).toBe(1);
+    const unset = createSiblingSourceAccess(DEFAULT_SIBLING_ROOT);
+    expect(unset.readLedger.totalAdmissionRefusals()).toBe(0);
+  });
+
+  test('the ledger reports every repository it was asked about', () => {
+    const access = createSiblingSourceAccess(DEFAULT_SIBLING_ROOT, {
+      admittedRepositoryIds: ownerApprovedRepositoryIds(),
+    });
+    access.reader.readFile('z/unapproved', 'a');
+    access.reader.readFile('a/unapproved', 'b');
+    expect([...access.readLedger.repositoriesTouched()]).toEqual(['a/unapproved', 'z/unapproved']);
   });
 });
