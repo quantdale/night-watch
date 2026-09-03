@@ -29,8 +29,9 @@ the project-truth documents to the completion the repository reached.
 
 ## Current Milestone
 
-M7 — validation. Canonical regression and `gate:local` are PASS at `506d64f`;
-`gate:clean` is the remaining gate before integration.
+M8 — integration, exact-head CI, closure and release. All three local gates are
+PASS: regression 3,428/3,415/13/0, `gate:local` at `506d64f`, `gate:clean` at
+`f02562d` with `siblingWrites: 0`.
 
 ## Completed Milestones
 
@@ -56,21 +57,25 @@ M7 — validation. Canonical regression and `gate:local` are PASS at `506d64f`;
 - M6 — negative probes: 13 real-repository mutations DETECTED and restored,
   plus 16 permanent synthetic failure-path tests. M6 also uncovered
   DEF-R12-1 and DEF-R12-2, both PRE_EXISTING and both repaired here.
+- M7 — validation complete: canonical regression 3,428 / 3,415 / 13 / 0 at
+  `506d64f`; `gate:local` PASS eleven groups; `gate:clean` PASS eleven groups
+  on Node 20 with `siblingWrites: 0`.
 
 ## Work In Progress
 
-M7 — `gate:clean` is the remaining local gate. The regression and `gate:local`
-are recorded PASS above.
+M8 — integration and exact-head CI observation. Local validation is complete.
 
 ## Exact Next Action
 
-Run `npm run gate:clean` with NO repository write while it executes, and record
-its inner receipt and `siblingWrites` in the Validation Ledger. Then integrate
-by verified fast-forward, observe exact-head CI, and check the CI synthetic
-receipt's `skipped` count is at least 3 — that is the ONLY decisive evidence
-for acceptance row 4, because `DEFAULT_SIBLING_ROOT` is a hardcoded absolute
-path and the siblings therefore stay visible even to `gate:clean` on this
-machine. Then reconcile project truth, close the REPORT ledger and release.
+Integrate by verified fast-forward (`node bin/nightwatch-session.mjs
+integrate`), then observe the exact-head GitHub Actions run at the integrated
+head. Check the CI synthetic receipt's `skipped` count is at least 3: that is
+the ONLY decisive evidence for acceptance row 4, because
+`DEFAULT_SIBLING_ROOT` is a hardcoded absolute path, so the read-only sibling
+checkouts stay visible even to `gate:clean` on this machine and C-02a's
+real-source block RUNS locally rather than skipping. Then record the CI result
+truthfully, reconcile project truth, close the REPORT ledger, set the task
+COMPLETE, release the session and remove the worktree and branch.
 
 ## Files Changed
 
@@ -107,6 +112,7 @@ machine. Then reconcile project truth, close the REPORT ledger and release.
 | Negative failure-path tests (synthetic input) | 16 permanent cases in `r12CampaignCertification.test.ts` |
 | **canonical regression** at `506d64f` | **3,428 total / 3,415 passed / 13 skipped / 0 failed**, exit 0 (baseline 3,396/3,383/13/0; delta is exactly the 32 new cases, and skips are unchanged) |
 | **`npm run gate:local`** at `506d64f` | **PASS, all eleven required groups**, `environmentClass: LOCAL`, Node 22, receipt `receipt:sha256:ec63fe57a093eb63e168ded5`; SEMANTIC_COMPATIBILITY 2,033/2,020/13/0; OWNER_PROVENANCE 91 passed; SYNTHETIC_CAMPAIGN 738/738/0 with `deepContainmentLane: PROVEN` |
+| **`npm run gate:clean`** at `f02562d` | **PASS, all eleven required groups**, Node 20, `installResult: PASS`, `siblingWrites: 0`, `cleanBefore: true`, `cleanAfter: true`, `nodeModulesReused: false`; inner receipt `receipt:sha256:0efe20276b93f05ebe50ea53`, outer `clean-receipt:sha256:466ca84e35b4d5881a7d76ae` |
 
 ### Negative probe matrix
 
