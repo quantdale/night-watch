@@ -106,12 +106,29 @@ test.describe('C-02a — the generated root is admitted and the universe is not 
     expect(() => createApprovedRealSourceScanConfig({ repositoryIds: [] })).toThrow(/REAL_SOURCE_SCAN_APPROVED_UNIVERSE/);
   });
 
-  test('blueinternal remains entirely unapproved — its admission is C-05, not C-02a', () => {
-    expect(PHASE25_APPROVED_REPOSITORY_IDS).not.toContain(BLUEINTERNAL);
-    expect(() => createApprovedRealSourceScanConfig({ repositoryIds: [BLUEINTERNAL] })).toThrow(/REAL_SOURCE_SCAN_APPROVED_UNIVERSE/);
-    // And it is not a generated root either: nothing about C-02a leaks to it.
-    expect(isGeneratedArtifactRoot(BLUEINTERNAL, 'openapiv2')).toBe(false);
-    expect(classifySourceEvidenceQualifier(BLUEINTERNAL, ARTIFACT_PATH)).toBe('DIRECT_SOURCE');
+  test('C-02a admitted no repository — an unapproved repository is still refused', () => {
+    // This assertion used to name `blueinternal` as the unapproved example.
+    // C-05 then admitted it under explicit owner authorization, which made the
+    // test fail for a reason that had nothing to do with C-02a's property. The
+    // property is "C-02a widened no REPOSITORY", so it is now stated against a
+    // repository that is genuinely unapproved — one of the 141 that discovery
+    // can see and nothing may read.
+    const unapproved = 'alphauslabs/blue';
+    expect(PHASE25_APPROVED_REPOSITORY_IDS).not.toContain(unapproved);
+    expect(() => createApprovedRealSourceScanConfig({ repositoryIds: [unapproved] })).toThrow(/REAL_SOURCE_SCAN_APPROVED_UNIVERSE/);
+    // And C-02a's generated-root classification does not leak to it.
+    expect(isGeneratedArtifactRoot(unapproved, 'openapiv2')).toBe(false);
+    expect(classifySourceEvidenceQualifier(unapproved, ARTIFACT_PATH)).toBe('DIRECT_SOURCE');
+  });
+
+  test('blueinternal is a C-05 admission, and its artifact is GENERATED, not direct source', () => {
+    // The complement of the test above, kept adjacent so the boundary between
+    // the two campaigns stays legible: C-02a did not admit blueinternal, C-05
+    // did, and once admitted its committed Swagger file must carry the
+    // generated qualifier rather than passing as hand-written source.
+    expect(PHASE25_APPROVED_REPOSITORY_IDS).toContain(BLUEINTERNAL);
+    expect(isGeneratedArtifactRoot(BLUEINTERNAL, 'openapiv2')).toBe(true);
+    expect(classifySourceEvidenceQualifier(BLUEINTERNAL, ARTIFACT_PATH)).toBe('GENERATED_ARTIFACT');
   });
 });
 
@@ -345,7 +362,16 @@ test.describe('C-02a — the real committed blueapi artifact', () => {
     expect(discovery.counters.openApiResponseDefinitionsBound).toBe(allBound);
     expect(allBound).toBeGreaterThanOrEqual(bound);
     expect(blueapi.filter((surface) => surface.contract.responseProof === 'PROVEN').length).toBeGreaterThanOrEqual(MINIMUM_BOUND_RESPONSE_CONTRACTS);
-    expect(discovery.counters.generatedArtifactOperations).toBe(blueapi.length);
+    // `generatedArtifactOperations` is a GLOBAL counter, and this compared it
+    // to blueapi's own count — sound only while blueapi was the only admitted
+    // generated root. C-05 admitted `blueinternal/openapiv2`, another committed
+    // Swagger artifact, and the counter became 642. The property C-02a defends
+    // is that every blueapi artifact surface IS counted as generated, so it is
+    // now stated as a per-repository contribution plus a global lower bound.
+    const generatedElsewhere = discovery.operations.filter((operation) => operation.repository !== BLUEAPI
+      && classifySourceEvidenceQualifier(operation.repository, operation.sourcePath) === 'GENERATED_ARTIFACT').length;
+    expect(discovery.counters.generatedArtifactOperations).toBe(blueapi.length + generatedElsewhere);
+    expect(discovery.counters.generatedArtifactOperations).toBeGreaterThanOrEqual(blueapi.length);
   });
 
   test('every blueapi surface is GENERATED_ARTIFACT with UNKNOWN currency and a denied production admission', () => {
@@ -398,7 +424,13 @@ test.describe('C-02a — the real committed blueapi artifact', () => {
     // repository total here would silently absorb C-02b's protobuf operations
     // into C-02a's claim; asserting the artifact's own contribution keeps the
     // two campaigns' evidence separable.
-    expect(after.operations.filter((operation) => operation.sourcePath === ARTIFACT_PATH).length).toBe(EXPECTED_BLUEAPI_OPERATIONS);
+    //
+    // The filter was on sourcePath ALONE, which assumed only one repository in
+    // the universe could hold a file at that path. C-05 admitted
+    // `blueinternal`, whose generated artifact sits at exactly the same
+    // relative path, so the repository is now part of the identity.
+    expect(after.operations.filter((operation) => operation.repository === BLUEAPI
+      && operation.sourcePath === ARTIFACT_PATH).length).toBe(EXPECTED_BLUEAPI_OPERATIONS);
     expect(after.operations.length).toBeGreaterThanOrEqual(before.operations.length + EXPECTED_BLUEAPI_OPERATIONS);
 
     // Completeness stays truthful rather than optimistic: the upstream file

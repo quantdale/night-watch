@@ -53,17 +53,23 @@ test.describe('C-02b — protobuf is a LANGUAGE admission, not a root admission'
     expect(SOURCE_SCAN_EXTENSIONS).toContain('.proto');
   });
 
-  test('the approved repository set is unchanged by this campaign', () => {
-    // If C-02b had admitted a repository, this list would be longer. It is the
-    // cheapest possible check that the boundary held.
-    expect([...PHASE25_APPROVED_REPOSITORY_IDS]).toEqual([
+  test('the six repositories C-02b inherited are all still admitted', () => {
+    // This was an EQUALITY against the universe of the day, which defends
+    // "C-02b admitted nothing" by asserting that nobody ever admits anything —
+    // so it broke when C-05 admitted two repositories under explicit owner
+    // authorization. CONTAINMENT states the actual property and survives a
+    // later authorized admission; the exact size of the universe is asserted
+    // once, in C-05's own suite, where it belongs.
+    for (const repoId of [
       'alphauslabs/blue-sdk-go',
       'alphauslabs/blueapi',
       'alphauslabs/grpc-chunk-parser',
       'mobingilabs/ouchan',
       'mobingilabs/ripple-api',
       'mobingilabs/ripple-ui',
-    ]);
+    ]) {
+      expect(PHASE25_APPROVED_REPOSITORY_IDS).toContain(repoId);
+    }
   });
 
   test('blueapi keeps its billing and openapiv2 roots and admits no repository', () => {
@@ -79,7 +85,9 @@ test.describe('C-02b — protobuf is a LANGUAGE admission, not a root admission'
   });
 
   test('an unapproved repository is still rejected', () => {
-    expect(() => createApprovedRealSourceScanConfig({ repositoryIds: ['alphauslabs/blueinternal'] }))
+    // `blueinternal` was the example until C-05 admitted it. The property needs
+    // a repository that is genuinely unapproved, not one that merely was.
+    expect(() => createApprovedRealSourceScanConfig({ repositoryIds: ['alphauslabs/blue'] }))
       .toThrow(/REAL_SOURCE_SCAN_APPROVED_UNIVERSE/);
   });
 });

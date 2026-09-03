@@ -41,6 +41,9 @@
 
 import crypto from 'node:crypto';
 import { failProduction } from './errors';
+// A leaf module: zero imports, frozen data only. See the note on
+// AUTHORITATIVE_SOURCE_REPOSITORIES for why this does not breach A8.
+import { ownerApprovedRepositoryIds } from '../source/universe';
 
 export const PROVENANCE_AUTHORITY_VERSION = 'nightwatch.production-vocabulary-authority.v1' as const;
 
@@ -77,21 +80,23 @@ export const SOURCE_EVIDENCE_QUALIFIERS = ['DIRECT_SOURCE', 'GENERATED_ARTIFACT'
 export type SourceEvidenceQualifier = (typeof SOURCE_EVIDENCE_QUALIFIERS)[number];
 
 /**
- * The owner-approved source universe, as DATA. This deliberately duplicates
- * `PHASE25_APPROVED_REPOSITORY_IDS` rather than importing it: that module
- * pulls in the change-intelligence map and the scan config, which would give
- * this cone a transitive path toward source loading and break A8. The
- * duplication is not left to vigilance — a test asserts this set equals the
- * approved universe exactly, so drift fails the suite.
+ * The owner-approved source universe.
+ *
+ * This USED to be a hand-maintained copy of `PHASE25_APPROVED_REPOSITORY_IDS`,
+ * because importing that module pulls in the change-intelligence map and the
+ * scan config and would have given this cone a transitive path toward source
+ * loading, breaking A8. The copy was kept honest by a test asserting the two
+ * sets are equal — and when C-05 admitted two repositories, that test is
+ * exactly what fired.
+ *
+ * C-05 removed the duplication instead of updating the copy.
+ * `src/core/source/universe.ts` is the single admission authority and is a LEAF:
+ * it imports nothing at all and holds only frozen data, so depending on it
+ * grants this cone no capability and no transitive path to source loading. A8
+ * is preserved by the dependency being data-only, which is a stronger
+ * guarantee than two literals that a test has to keep aligned.
  */
-export const AUTHORITATIVE_SOURCE_REPOSITORIES: readonly string[] = Object.freeze([
-  'alphauslabs/blue-sdk-go',
-  'alphauslabs/blueapi',
-  'alphauslabs/grpc-chunk-parser',
-  'mobingilabs/ouchan',
-  'mobingilabs/ripple-api',
-  'mobingilabs/ripple-ui',
-]);
+export const AUTHORITATIVE_SOURCE_REPOSITORIES: readonly string[] = Object.freeze([...ownerApprovedRepositoryIds()]);
 
 const APPROVED_REPOSITORY_SET: ReadonlySet<string> = new Set(AUTHORITATIVE_SOURCE_REPOSITORIES);
 

@@ -365,8 +365,13 @@ test.describe('C-10.5 A6 — incomplete and stale evidence fail closed', () => {
   });
 
   test('the cone repository allowlist matches the approved source universe exactly', () => {
-    // Guards the deliberate data duplication in vocabularyAuthority.ts, which
-    // exists so the cone need not import the scan config (A8).
+    // This used to guard a deliberate data duplication in
+    // vocabularyAuthority.ts. C-05 removed the duplication -- the cone now
+    // derives from the single admission authority, which is a zero-import
+    // leaf, so A8 holds by the dependency being data-only rather than by two
+    // literals staying aligned. The assertion is KEPT: it now guards that the
+    // derivation stays wired, and it would fire again if anyone reintroduced a
+    // local copy.
     expect([...AUTHORITATIVE_SOURCE_REPOSITORIES].sort()).toEqual(
       [...PHASE25_APPROVED_REPOSITORY_IDS].sort(),
     );

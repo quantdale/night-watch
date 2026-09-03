@@ -305,19 +305,26 @@ test.describe('C-03 — the real measured topology', () => {
 });
 
 test.describe('C-03 — the universe is unchanged', () => {
-  test('the approved repository set still holds exactly six repositories', () => {
-    expect([...PHASE25_APPROVED_REPOSITORY_IDS]).toEqual([
+  test('the six repositories C-03 inherited are all still admitted', () => {
+    // Equality against the universe of the day defends "C-03 admitted nothing"
+    // by asserting nobody ever admits anything, so it broke when C-05 admitted
+    // two under explicit owner authorization. Containment is the real property.
+    for (const repoId of [
       'alphauslabs/blue-sdk-go',
       'alphauslabs/blueapi',
       'alphauslabs/grpc-chunk-parser',
       'mobingilabs/ouchan',
       'mobingilabs/ripple-api',
       'mobingilabs/ripple-ui',
-    ]);
+    ]) {
+      expect(PHASE25_APPROVED_REPOSITORY_IDS).toContain(repoId);
+    }
   });
 
-  test('blueinternal is still rejected', () => {
-    expect(() => createApprovedRealSourceScanConfig({ repositoryIds: ['alphauslabs/blueinternal'] }))
+  test('an unapproved repository is still rejected', () => {
+    // Was `blueinternal`, which C-05 admitted; the property needs a repository
+    // that is genuinely unapproved.
+    expect(() => createApprovedRealSourceScanConfig({ repositoryIds: ['alphauslabs/blue'] }))
       .toThrow(/REAL_SOURCE_SCAN_APPROVED_UNIVERSE/);
   });
 
@@ -367,9 +374,19 @@ test.describe('C-03 — C-01 no-eviction across the admission (F-27)', () => {
     expect(discovery.operations.filter((operation) => operation.repository === 'mobingilabs/ripple-api')).toHaveLength(223);
   });
 
-  test('the artifact still contributes exactly its own 591 operations', () => {
+  test('the blueapi artifact still contributes exactly its own 591 operations', () => {
     const discovery = discoverSourceSurfaces({ access: createSiblingSourceAccess(DEFAULT_SIBLING_ROOT), config: createApprovedRealSourceScanConfig() });
-    expect(discovery.operations.filter((operation) => operation.sourcePath === 'openapiv2/apidocs.swagger.json')).toHaveLength(591);
+    // This filtered on sourcePath ALONE, which was never a unique identity: it
+    // silently assumed only one repository in the universe could hold a file at
+    // `openapiv2/apidocs.swagger.json`. C-05 admitted `blueinternal`, which
+    // holds a file at exactly that path, and the count became 642. The
+    // assertion was under-specified rather than wrong, so the repository is now
+    // part of the identity.
+    expect(discovery.operations.filter((operation) => operation.repository === BLUEAPI
+      && operation.sourcePath === 'openapiv2/apidocs.swagger.json')).toHaveLength(591);
+    // And the newly admitted artifact contributes its own, separately.
+    expect(discovery.operations.filter((operation) => operation.repository === 'alphauslabs/blueinternal'
+      && operation.sourcePath === 'openapiv2/apidocs.swagger.json')).toHaveLength(51);
   });
 });
 

@@ -54,6 +54,15 @@ export type ProductionAdmissionDenialCode = (typeof PRODUCTION_ADMISSION_DENIAL_
  */
 const GENERATED_ARTIFACT_ROOTS: Readonly<Record<string, readonly string[]>> = Object.freeze({
   'alphauslabs/blueapi': Object.freeze(['openapiv2']),
+  // C-05. `blueinternal/openapiv2/apidocs.swagger.json` is a committed
+  // GENERATED Swagger artifact, exactly the kind `blueapi/openapiv2` holds.
+  // Registering it is not bookkeeping: without it the 51 operations derived
+  // from it would be classified DIRECT_SOURCE, which would (a) overstate the
+  // evidence by presenting generated output as hand-written source, and (b)
+  // bypass the deny-only production-admission gate that exists precisely
+  // because a generated artifact can never be the sole basis of a production
+  // read. C-05's own regression caught the omission.
+  'alphauslabs/blueinternal': Object.freeze(['openapiv2']),
 });
 
 /**
