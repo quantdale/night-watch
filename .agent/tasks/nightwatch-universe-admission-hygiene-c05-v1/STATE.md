@@ -131,6 +131,23 @@ two other surfaces; `bin/change-intelligence.mjs` was never added to its list.
 Repair: resolution goes through `DEFAULT_SIBLING_ROOT` with the standard
 `NIGHTWATCH_REPOS_ROOT` override, and the rule now covers this surface.
 
+**DEF-C05-5 — a C-05 test required real sibling content without a skip guard,
+so exact-head CI failed. CAMPAIGN_INTRODUCED.** Exact-head run `33795270499`
+at `8cb055c` reported `SYNTHETIC_CAMPAIGN` `TEST_FAILURE` with exactly one
+failing location, `tests/unit/c05UniverseAdmission.test.ts:291` — the case that
+reads `blueinternal/openapiv2/apidocs.swagger.json` to prove the admission gate
+is not vacuously satisfied by refusing everything. CI has no sibling checkouts,
+so the read returned null. It passed locally and failed in CI, which is exactly
+the local-versus-gate divergence R-12 spent a campaign making visible, and I
+reproduced it one campaign later.
+
+Every OTHER case in that block asserts a REFUSAL, which the boundary decides
+before touching the filesystem, so those hold in either topology; this was the
+single case needing real content. Repair: the same self-skip C-02a's real-source
+block uses. Verified by flipping the predicate to a nonexistent repository and
+confirming the suite reports 27 passed / 1 SKIPPED rather than a failure — the
+skip was proven, not assumed.
+
 **DEF-C05-4 — blueinternal's generated artifact was classified DIRECT_SOURCE.
 CAMPAIGN_INTRODUCED, caught by this campaign's own regression.** Admitting
 `blueinternal/openapiv2` without registering it in `GENERATED_ARTIFACT_ROOTS`

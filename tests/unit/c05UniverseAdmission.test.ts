@@ -36,6 +36,11 @@ import { RIPPLE_REPOSITORIES } from '../../src/core/changeIntelligence/map';
 
 const root = path.resolve(__dirname, '..', '..');
 
+/** Whether a read-only sibling checkout is present, as C-02a asks it. */
+function siblingRepoAvailable(repoId: string): boolean {
+  return fs.existsSync(path.join(DEFAULT_SIBLING_ROOT, ...repoId.split('/'), '.git'));
+}
+
 test.describe('C-05 — the admission authority is single', () => {
   test('the scan universe is exactly the owner-approved universe', () => {
     expect([...PHASE25_APPROVED_REPOSITORY_IDS]).toEqual([...ownerApprovedRepositoryIds()]);
@@ -289,6 +294,17 @@ test.describe('C-05 — an unapproved repository is never READ, proven at the bo
   });
 
   test('an APPROVED repository is still readable, so the gate is not vacuous', () => {
+    // This is the ONLY case in this suite that needs real content on disk: it
+    // is the converse that stops the gate being trivially satisfied by refusing
+    // everything. Every other case asserts a REFUSAL, which the boundary
+    // decides before touching the filesystem and which therefore holds whether
+    // or not the checkout exists.
+    //
+    // It self-skips without the sibling checkouts, exactly as C-02a's
+    // real-source block does. Written without this guard it failed in CI --
+    // where the checkouts are absent -- while passing locally, which is the
+    // precise failure mode R-12 spent a campaign making visible.
+    test.skip(!siblingRepoAvailable('alphauslabs/blueinternal'), 'requires the read-only sibling Alphaus checkouts');
     const access = createSiblingSourceAccess(DEFAULT_SIBLING_ROOT, {
       admittedRepositoryIds: ownerApprovedRepositoryIds(),
     });
