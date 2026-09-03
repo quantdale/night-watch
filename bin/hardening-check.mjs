@@ -2937,10 +2937,21 @@ function checkC08DeploymentBindingBoundary() {
   const binding = read('src/core/source/deploymentBinding.ts');
   const evidence = read('src/core/source/deploymentEvidence.ts');
 
-  // --- the forbidden bases are declared, including the one that arises here ---
-  for (const basis of ['SERVICE_NAME_SIMILARITY', 'ROUTE_PREFIX_SIMILARITY', 'GUESSED_HOSTNAME',
-    'HISTORICAL_FAMILIARITY', 'DOCUMENT_DESCRIBING_EXPECTED_ARCHITECTURE', 'CLIENT_CONFIGURATION']) {
-    if (!binding.includes(basis)) fail(`C-08 must declare ${basis} as a forbidden DEPLOYMENT_FACT basis`);
+  // --- the forbidden bases are DECLARED, including the one that arises here ---
+  // Read the DECLARATION, not the file. `CLIENT_CONFIGURATION` is also named in
+  // the prose explaining why it is forbidden, so a whole-file `includes` passes
+  // on the very comment that documents compliance while the array is empty --
+  // the same trap the C-02b rule records, and this campaign's own probe caught
+  // it here.
+  const basesBlock = /export const FORBIDDEN_DEPLOYMENT_FACT_BASES[^=]*=\s*Object\.freeze\(\[([\s\S]*?)\]\);/.exec(binding);
+  if (basesBlock === null) {
+    fail('C-08 could not read the FORBIDDEN_DEPLOYMENT_FACT_BASES declaration');
+  } else {
+    const declared = withoutComments(basesBlock[1]);
+    for (const basis of ['SERVICE_NAME_SIMILARITY', 'ROUTE_PREFIX_SIMILARITY', 'GUESSED_HOSTNAME',
+      'HISTORICAL_FAMILIARITY', 'DOCUMENT_DESCRIBING_EXPECTED_ARCHITECTURE', 'CLIENT_CONFIGURATION']) {
+      if (!declared.includes(`'${basis}'`)) fail(`C-08 must declare ${basis} as a forbidden DEPLOYMENT_FACT basis`);
+    }
   }
 
   // --- the host matrix is SOURCE_FACT, and the build config DEPLOYMENT_FACT ---
