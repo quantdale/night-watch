@@ -258,9 +258,9 @@ LIVE_HEAD_SHA: DISCOVER_FROM_GIT
 LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: 29a1bbd2daeea4b56c186b9bb56bffb3990d17bc
 LAST_LOCALLY_VALIDATED_SHA: 0323d5fb1b5960f9f17e2b1fa519cc85918dbfaf
 LAST_CLEAN_VALIDATED_SHA: 0323d5fb1b5960f9f17e2b1fa519cc85918dbfaf
-CI_OBSERVED_SHA: 0323d5fb1b5960f9f17e2b1fa519cc85918dbfaf
-CI_EXECUTED_SHA: 0323d5fb1b5960f9f17e2b1fa519cc85918dbfaf
-CI_STATUS: EXECUTED_PASS
+CI_OBSERVED_SHA: aa3124155653b54d89a0fe3ae8572ca09de4fcda
+CI_EXECUTED_SHA: aa3124155653b54d89a0fe3ae8572ca09de4fcda
+CI_STATUS: EXECUTED_FAIL
 FINAL_DOCUMENTATION_SHA: DISCOVER_FROM_GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 LIVE_HEAD_AUTHORITY: GIT
@@ -294,21 +294,17 @@ LIVE_NEXT_ACTION_STATE: CONTINUE
 LIVE_COMPLETION_CLAIM: NONE
 ```
 
-### Exact-head CI is green (current live CI state)
+### Exact-head CI (current live CI state)
 
-Job `100614907944` at `0323d5fb1b5960f9f17e2b1fa519cc85918dbfaf` passed on
-Node 20 with receipt `receipt:sha256:6cba46d8990802d39f4b4e26`. All eleven
-required groups PASS: `SEMANTIC_COMPATIBILITY` 2,033 / 2,020 / 13 skipped / 0
-failed, `OWNER_PROVENANCE` 91 passed, `SYNTHETIC_CAMPAIGN` 561 / 530 / 31
-skipped / 0 failed. This is C-04's certification.
+The live head `aa3124155653b54d89a0fe3ae8572ca09de4fcda` was observed by run
+`33750321049` / job `100632147533` on Node 20 with receipt
+`receipt:sha256:1c725d1d043404d5b57ce786`, and FAILED on `PROJECT_TRUTH` alone
+— the project block still named C-04's CI evidence while the task had validated
+a newer implementation. Recording that run is what clears it.
 
-`gate:clean` PASS at the same head with inner receipt
-`receipt:sha256:9ad8e572fe6eed991f7a7dea`, clean receipt
-`clean-receipt:sha256:9774da785bc2325d42d690fa`, `cleanBefore` and `cleanAfter`
-both true and `siblingWrites` 0.
-
-The preceding head `fca9dd19` FAILED on `PROJECT_TRUTH` alone — the
-cross-authority ordering working as designed, recorded rather than retried.
+C-04's certification job `100614907944` at `0323d5f` is preserved as
+historical: all eleven required groups PASS on Node 20 with receipt
+`receipt:sha256:6cba46d8990802d39f4b4e26`.
 
 C-03's certification run `33689899601` / job `100445996051` at `0d86b6d` is
 preserved as historical: all eleven required groups PASS on Node 20 with
