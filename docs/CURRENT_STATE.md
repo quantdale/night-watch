@@ -256,11 +256,11 @@ PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
 RELEASE_CHECKPOINT_SHA: 2576c5751d33bb40046246e8fcf57c7cc5c30a57
 LIVE_HEAD_SHA: DISCOVER_FROM_GIT
 LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: 53e963de059518dbc865ab9153319d0af10e2863
-LAST_LOCALLY_VALIDATED_SHA: 321f11b4de40a370e702032beafb9db838aa9e22
-LAST_CLEAN_VALIDATED_SHA: 321f11b4de40a370e702032beafb9db838aa9e22
-CI_OBSERVED_SHA: 07b90fbb8b0c5e5b10f36c4c69826fc0846b1c3f
-CI_EXECUTED_SHA: 07b90fbb8b0c5e5b10f36c4c69826fc0846b1c3f
-CI_STATUS: EXECUTED_FAIL
+LAST_LOCALLY_VALIDATED_SHA: 0d86b6d258fdc6aa3f36ff689950abefc4da15f1
+LAST_CLEAN_VALIDATED_SHA: 0d86b6d258fdc6aa3f36ff689950abefc4da15f1
+CI_OBSERVED_SHA: 0d86b6d258fdc6aa3f36ff689950abefc4da15f1
+CI_EXECUTED_SHA: 0d86b6d258fdc6aa3f36ff689950abefc4da15f1
+CI_STATUS: EXECUTED_PASS
 FINAL_DOCUMENTATION_SHA: DISCOVER_FROM_GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 LIVE_HEAD_AUTHORITY: GIT
@@ -287,27 +287,33 @@ informational and are not interpreted as current authority.
 LIVE_STATE_PROTOCOL_VERSION: nightwatch.live-state.v1
 LIVE_TASK_ID: nightwatch-go-grpc-topology-binding-c03-v1
 LIVE_PHASE: GO_GRPC_TOPOLOGY_BINDING_C03_V1
-LIVE_TASK_STATUS: IN_PROGRESS
+LIVE_TASK_STATUS: COMPLETE
 LIVE_PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
 LIVE_PROJECT_VERDICT_EFFECT: PRESERVE
-LIVE_NEXT_ACTION_STATE: CONTINUE
-LIVE_COMPLETION_CLAIM: NONE
+LIVE_NEXT_ACTION_STATE: STOP
+LIVE_COMPLETION_CLAIM: COMPLETE
 ```
 
-### Exact-head CI (current live CI state)
+### Exact-head CI is green (current live CI state)
 
-The live head `07b90fbb8b0c5e5b10f36c4c69826fc0846b1c3f` — C-03's substantive
-implementation plus its anchor advance — was observed by run `33689763052` /
-job `100445559315` on Node 20 with receipt
-`receipt:sha256:465abad0896dedcdb57c53fd`, and FAILED. The failure is the
-expected cross-authority ordering and nothing else: `GATE_DEFINITION`,
-`STATIC`, `HARDENING` and `HANDOFF_TRUTH` PASS, `PROJECT_TRUTH` is a
-`TEST_FAILURE` because the project block still named C-02b's CI evidence while
-the task had validated a newer implementation, and the remaining seven groups
-are `NOT_RUN` because `AGENT_CONTINUITY` depends on `PROJECT_TRUTH`.
+Run `33689899601` / job `100445996051` at
+`0d86b6d258fdc6aa3f36ff689950abefc4da15f1` passed on Node 20 with receipt
+`receipt:sha256:b8765cd35533224fa4f8090e`. All eleven required groups PASS:
+`SEMANTIC_COMPATIBILITY` 2,033 total / 2,020 passed / 13 skipped / 0 failed,
+`OWNER_PROVENANCE` 91 passed, and `SYNTHETIC_CAMPAIGN` 511 total / 486 passed /
+25 skipped / 0 failed, the skips being the deep containment lane where
+Bubblewrap is unavailable. This is C-03's certification.
 
-Recording that run is what clears it. The project block above now names
-`07b90fbb` as the observed and executed CI SHA with status `EXECUTED_FAIL`.
+`gate:clean` PASS at the same head on Node 20 with inner receipt
+`receipt:sha256:7d05be06a2eaa16eb8cf6163`, clean receipt
+`clean-receipt:sha256:8594f0440841e7ccfbd6f4ed`, `cleanBefore` and `cleanAfter`
+both true, `siblingWrites` 0, and 511/511 locally where the containment lane is
+PROVEN. The clean gate executes the same eleven groups on a pristine Node 20
+checkout, so the head is certified by two independent full-gate runs.
+
+The preceding head `07b90fbb` was observed by run `33689763052` / job
+`100445559315` and FAILED on `PROJECT_TRUTH` alone — the cross-authority
+ordering working as designed, recorded rather than retried.
 
 C-02b's certification run `33680339948` / job `100415095920` at `321f11b` is
 preserved as historical: all eleven required groups PASS on Node 20 with

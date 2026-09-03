@@ -4,19 +4,20 @@
 
 Task ID: nightwatch-go-grpc-topology-binding-c03-v1
 Phase: GO_GRPC_TOPOLOGY_BINDING_C03_V1
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: 03bab54e0758bb9aa4e9a44dacd7eb863e254e16
 Last validated implementation SHA: 53e963de059518dbc865ab9153319d0af10e2863
 Last substantive checkpoint SHA: 53e963de059518dbc865ab9153319d0af10e2863
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-go-grpc-topology-bind-25187565
-Last checkpoint: M1 opened at the C-02b closure head 03bab54 with the ouchan enumeration limit and the Go registration inventory measured before any code
+Last checkpoint: exact-head GitHub run 33689899601 / job 100445996051 at 0d86b6d passed all eleven required groups on Node 20 with receipt receipt:sha256:b8765cd35533224fa4f8090e; gate:clean PASS with inner receipt receipt:sha256:7d05be06a2eaa16eb8cf6163 and siblingWrites 0; canonical regression 3,288 total / 3,275 passed / 13 skipped / 0 failed; 12 proto services bound as SOURCE_FACT; 19/19 negative probes detected; DEF-C03-1 through DEF-C03-3 introduced by this campaign, all found, repaired and reported
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 03bab54e0758bb9aa4e9a44dacd7eb863e254e16
 LAST_VALIDATED_IMPLEMENTATION_SHA: 53e963de059518dbc865ab9153319d0af10e2863
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: 53e963de059518dbc865ab9153319d0af10e2863
+LAST_DOCUMENTATION_CHECKPOINT_SHA: 0d86b6d258fdc6aa3f36ff689950abefc4da15f1
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PROJECT_VERDICT_EFFECT: PRESERVE
@@ -29,11 +30,13 @@ whole-repository completeness that ouchan's enumeration cannot support.
 
 ## Current Milestone
 
-Milestone ID: M8 — validation, integration, exact-head CI, closure
-Milestone status: IN_PROGRESS
-What is being attempted: the full validation matrix with writes frozen for
-`gate:clean`, then integration, exact-head CI, project-truth reconciliation and
-release.
+COMPLETE / STOP — M1 through M8 are closed. Twelve proto services are bound to
+ouchan registrations as mechanically proven SOURCE_FACTs, certified by
+exact-head CI run 33689899601 / job 100445996051 at `0d86b6d` with all eleven
+required groups PASS. `W-EFFECT_RPC` remains UNSUPPORTED with its exact
+blocker, which §29 makes a successful outcome. C-04
+`nightwatch-frontend-consumer-intelligence-c04-v1` is the next authorized
+campaign and does not depend on this one.
 
 ## Completed Milestones
 
@@ -49,13 +52,14 @@ release.
 
 ## Work In Progress
 
-M8. Nothing partial: M1-M7 are closed.
+NONE.
 
 ## Exact Next Action
 
-Run the full validation matrix, freeze campaign writes for `gate:clean`,
-integrate per C-00, observe exact-head CI, reconcile project truth, complete
-the REPORT and release the session.
+STOP — C-03 is COMPLETE and certified by exact-head CI run 33689899601 / job
+100445996051 at `0d86b6d`. C-04 `nightwatch-frontend-consumer-intelligence-c04-v1`
+is the next authorized campaign; it depends on C-01 rather than on C-03 and is
+not blocked.
 
 ## Files Changed
 
@@ -277,12 +281,29 @@ NONE
 
 ## Resume Recipe
 
-1. Read SPEC.
-2. Read PLAN.
-3. Inspect git status and current SHA in the session worktree.
-4. Run the smallest relevant validation.
-5. Continue Exact Next Action.
+Task complete. Do not resume; any follow-up starts as a new authorized task.
 
 ## Completion Snapshot
 
-Populate only when complete.
+C-03 is COMPLETE and certified.
+
+Final substantive checkpoint: 53e963d
+Final documentation checkpoint: 0d86b6d258fdc6aa3f36ff689950abefc4da15f1
+Live HEAD: DISCOVER_FROM_GIT
+Tests: canonical regression 3,288 total / 3,275 passed / 13 skipped / 0 failed;
+semantic compatibility 2,033 / 2,020 / 13 / 0; synthetic campaign 511/511 with
+the deep containment lane PROVEN. `gate:local` was NOT re-run at the final head
+and is not claimed; `gate:clean` and exact-head CI each executed all eleven
+groups at that exact SHA.
+Artifacts: `src/core/source/goRegistration.ts`,
+`src/core/source/protoServiceIndex.ts`, `src/core/source/grpcTopology.ts`; the
+blueapi and blue-sdk-go root admission and ouchan budget correction in
+`approvedScan.ts`; `checkC03GrpcTopologyBoundary()` in
+`bin/hardening-check.mjs`; two registered suites; SPEC/PLAN/STATE/REPORT and
+the OpenSpec change.
+Known issues: ouchan enumeration is permanently TRUNCATED under the contract
+ceiling, so four daemons stay unobserved and `W-EFFECT_RPC` stays UNSUPPORTED.
+`tests/unit/c02aOpenApiAdmission.test.ts` and
+`tests/unit/c06PhpReadOnlyProof.test.ts` remain unregistered in both gate
+manifests; PRE_EXISTING.
+Recommended next task: `nightwatch-frontend-consumer-intelligence-c04-v1` (C-04).

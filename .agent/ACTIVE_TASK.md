@@ -3,13 +3,13 @@
 Task ID: nightwatch-go-grpc-topology-binding-c03-v1
 Phase: GO_GRPC_TOPOLOGY_BINDING_C03_V1
 Title: C-03 Go/gRPC Topology Binding
-Status: IN_PROGRESS
+Status: COMPLETE
 Task directory: .agent/tasks/nightwatch-go-grpc-topology-binding-c03-v1
 Starting SHA: 03bab54e0758bb9aa4e9a44dacd7eb863e254e16
 Last validated implementation SHA: 53e963de059518dbc865ab9153319d0af10e2863
-Last checkpoint: M1 opened at the C-02b closure head 03bab54 with the ouchan enumeration limit and the Go registration inventory measured before any code
-Current milestone: M1 — task record, OpenSpec change, recorded baseline
-Next action: Write the OpenSpec change, run `npm run agent:check` and `npm run handoff:check`, commit the M1 checkpoint, then begin M2 by asserting the adversarial Go registration corpus before the parser exists
+Last checkpoint: exact-head GitHub run 33689899601 / job 100445996051 at 0d86b6d passed all eleven required groups on Node 20 with receipt receipt:sha256:b8765cd35533224fa4f8090e, SEMANTIC_COMPATIBILITY 2,033/2,020/13/0 and SYNTHETIC_CAMPAIGN 511/486/25 skipped; gate:clean PASS with inner receipt receipt:sha256:7d05be06a2eaa16eb8cf6163 and siblingWrites 0; canonical regression 3,288 total / 3,275 passed / 13 skipped / 0 failed; 12 proto services bound as SOURCE_FACT across 7 daemon directories; 19/19 negative probes detected; DEF-C03-1 through DEF-C03-3 introduced by this campaign, all found, repaired and reported
+Current milestone: COMPLETE / STOP — M1 through M8 are closed
+Next action: STOP — C-03 is COMPLETE and certified by exact-head CI run 33689899601 / job 100445996051 at 0d86b6d. W-EFFECT_RPC remains UNSUPPORTED with its exact blocker, which is a successful outcome. C-04 `nightwatch-frontend-consumer-intelligence-c04-v1` is the next authorized campaign and depends on C-01 rather than on C-03
 Authorization class: NIGHTWATCH_GO_GRPC_TOPOLOGY_BINDING_C03_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
@@ -18,7 +18,7 @@ LAST_VALIDATED_IMPLEMENTATION_SHA: 53e963de059518dbc865ab9153319d0af10e2863
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: 53e963de059518dbc865ab9153319d0af10e2863
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
-PHASE_GO_GRPC_TOPOLOGY_BINDING_C03_V1_STATUS: IN_PROGRESS
+PHASE_GO_GRPC_TOPOLOGY_BINDING_C03_V1_STATUS: COMPLETE
 
 ## Routing and safety
 

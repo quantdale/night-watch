@@ -68,11 +68,11 @@ Three modules, each independently testable:
 
 ## Milestones
 
-### M1 — Task record, OpenSpec change, recorded baseline — IN_PROGRESS
+### M1 — Task record, OpenSpec change, recorded baseline — COMPLETE
 - Acceptance: `agent:check` and `handoff:check` pass; the enumeration table and
   registration inventory are recorded before any code.
 
-### M2 — Adversarial Go corpus, asserted before the parser — NOT_STARTED
+### M2 — Adversarial Go corpus, asserted before the parser — COMPLETE
 - Aliased import, same service name in two packages, multiple registrations per
   file, registration in `_test.go`, commented registration, a string containing
   registration text, conditional registration, variable reassignment, two
@@ -80,29 +80,29 @@ Three modules, each independently testable:
 - Acceptance: every case has a named assertion and every ambiguous case is
   asserted non-`SOURCE_FACT`.
 
-### M3 — Bounded Go registration lexer — NOT_STARTED
+### M3 — Bounded Go registration lexer — COMPLETE
 - Acceptance: the corpus passes; comments and strings yield nothing; import
   aliases are resolved from the file's own import block.
 
-### M4 — Root admission and budget correction — NOT_STARTED
+### M4 — Root admission and budget correction — COMPLETE
 - Admit the fourteen blueapi proto roots; raise ouchan `maxFiles` to 4,096.
 - Acceptance: C-01 no-eviction holds over the enlarged population; ouchan
   enumeration is reported TRUNCATED with `remainingUnknown: true`; the four
   unobserved daemons are `TRUNCATED_ENUMERATION`, never `MISSING`.
 
-### M5 — Proto service index and the join — NOT_STARTED
+### M5 — Proto service index and the join — COMPLETE
 - Acceptance: ≥12 proto services bound as `SOURCE_FACT` or a truthful
   shortfall; every non-proven case carries a categorical state.
 
-### M6 — Method-level investigation and W-EFFECT_RPC determination — NOT_STARTED
+### M6 — Method-level investigation and W-EFFECT_RPC determination — COMPLETE
 - Acceptance: a recorded, evidence-backed determination. `UNSUPPORTED` is the
   expected and acceptable outcome; the exact blocker is named.
 
-### M7 — Hardening, negative probes, gate registration — NOT_STARTED
+### M7 — Hardening, negative probes, gate registration — COMPLETE
 - Acceptance: every load-bearing rule probed, mutation FAIL and restore PASS
   recorded; suites registered with a membership assertion.
 
-### M8 — Validation, integration, exact-head CI, closure — NOT_STARTED
+### M8 — Validation, integration, exact-head CI, closure — COMPLETE
 - Acceptance: regression zero failures; local/clean/exact-head green;
   siblingWrites 0; session released.
 
