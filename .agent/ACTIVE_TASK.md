@@ -6,7 +6,7 @@ Title: C-04 Frontend Consumer Intelligence
 Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-frontend-consumer-intelligence-c04-v1
 Starting SHA: 7c0d5f5326be1983cf081888680f3c01f3f128f6
-Last validated implementation SHA: 7c0d5f5326be1983cf081888680f3c01f3f128f6
+Last validated implementation SHA: 11cefb27ac366217f7092dcd7f66b3cfccac2fee
 Last checkpoint: M1 opened at the C-03 closure head 7c0d5f5 with the 211-call-site frontend ceiling measured before any code
 Current milestone: M1 — task record, OpenSpec change, measured ceiling
 Next action: Write the OpenSpec change, run `npm run agent:check` and `npm run handoff:check`, commit the M1 checkpoint, then begin M2 by asserting the adversarial frontend corpus before the parser exists
@@ -14,8 +14,8 @@ Authorization class: NIGHTWATCH_FRONTEND_CONSUMER_INTELLIGENCE_C04_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 7c0d5f5326be1983cf081888680f3c01f3f128f6
-LAST_VALIDATED_IMPLEMENTATION_SHA: 7c0d5f5326be1983cf081888680f3c01f3f128f6
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 7c0d5f5326be1983cf081888680f3c01f3f128f6
+LAST_VALIDATED_IMPLEMENTATION_SHA: 11cefb27ac366217f7092dcd7f66b3cfccac2fee
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 11cefb27ac366217f7092dcd7f66b3cfccac2fee
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PHASE_FRONTEND_CONSUMER_INTELLIGENCE_C04_V1_STATUS: IN_PROGRESS

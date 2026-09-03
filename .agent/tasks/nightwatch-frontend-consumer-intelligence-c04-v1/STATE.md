@@ -6,8 +6,8 @@ Task ID: nightwatch-frontend-consumer-intelligence-c04-v1
 Phase: FRONTEND_CONSUMER_INTELLIGENCE_C04_V1
 Status: IN_PROGRESS
 Starting SHA: 7c0d5f5326be1983cf081888680f3c01f3f128f6
-Last validated implementation SHA: 7c0d5f5326be1983cf081888680f3c01f3f128f6
-Last substantive checkpoint SHA: 7c0d5f5326be1983cf081888680f3c01f3f128f6
+Last validated implementation SHA: 11cefb27ac366217f7092dcd7f66b3cfccac2fee
+Last substantive checkpoint SHA: 11cefb27ac366217f7092dcd7f66b3cfccac2fee
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-frontend-consumer-int-82a0494b
@@ -15,8 +15,8 @@ Last checkpoint: M1 opened at the C-03 closure head 7c0d5f5 with the 211-call-si
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 7c0d5f5326be1983cf081888680f3c01f3f128f6
-LAST_VALIDATED_IMPLEMENTATION_SHA: 7c0d5f5326be1983cf081888680f3c01f3f128f6
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 7c0d5f5326be1983cf081888680f3c01f3f128f6
+LAST_VALIDATED_IMPLEMENTATION_SHA: 11cefb27ac366217f7092dcd7f66b3cfccac2fee
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 11cefb27ac366217f7092dcd7f66b3cfccac2fee
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PROJECT_VERDICT_EFFECT: PRESERVE
