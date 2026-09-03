@@ -30,8 +30,8 @@ exactly the two owner-named repositories.
 
 ## Current Milestone
 
-M7/M8 — full population report, then validation, integration, exact-head CI
-and closure. M2 through M6 are complete.
+M8 — integration and exact-head CI. M1 through M7 are complete and all three
+local gates are PASS at `85dd8a6` with `siblingWrites: 0`.
 
 ## Completed Milestones
 
@@ -52,18 +52,23 @@ and closure. M2 through M6 are complete.
   through the existing `parseOpenApiRoutes`, no new parser.
 - M6 — `mobingilabs/wave-api` admitted for `src`: **55 operations**, through
   the existing YAML route parser, no parser change.
+- M7 — full population reported; the regression's 8 failures triaged and
+  repaired: DEF-C05-4 (blueinternal's artifact was classified DIRECT_SOURCE
+  rather than GENERATED_ARTIFACT) plus 7 brittle assertions in two classes.
+  All three local gates PASS.
 
 ## Work In Progress
 
-M7 — assembling the full population report, then the validation battery.
+M8 — integration and exact-head CI observation.
 
 ## Exact Next Action
 
-Run the full validation battery — `typecheck`, `hardening:check`,
-`handoff:check`, `project:check`, `agent:check`, `workspace:check`,
-`gate:inventory`, the C-01/C-02a/C-02b/C-03/C-04/C-06 suites, the canonical
-regression, `gate:local`, then `gate:clean` with no repository write while it
-executes — then integrate by verified fast-forward and observe exact-head CI.
+Integrate by verified fast-forward, then observe the exact-head GitHub Actions
+run. Check that the CI synthetic receipt's skip count rises by no more than
+C-02a's three real-source cases: the newly admitted blueinternal and wave-api
+suites are deterministic against real checkouts, so any FURTHER skip in CI
+would mean a newly admitted repository is silently unmeasured there. Then
+reconcile project truth, close the REPORT ledger and release.
 
 ## Files Changed
 
@@ -90,6 +95,10 @@ executes — then integrate by verified fast-forward and observe exact-head CI.
 | `tests/unit/c05UniverseAdmission.test.ts` | **28 passed / 0 failed** |
 | C-01 + C-02a + C-06 + Control Center suites | 51 passed / 0 failed |
 | negative probes Q1-Q11 | **11/11 DETECTED**, all restored, tree clean after each |
+| canonical regression, first attempt at 18713e7 | **8 FAILED** — 1 genuine gap in this campaign's work, 7 brittle assertions; all repaired at 85dd8a6 |
+| **canonical regression** at `85dd8a6` | **3,457 total / 3,444 passed / 13 skipped / 0 failed**, 0 failure blocks (baseline 3,428/3,415/13/0; delta +29 = 28 new C-05 cases + 1 added C-02a case; skips unchanged) |
+| **`gate:local`** at `85dd8a6` | **PASS, all eleven required groups**, LOCAL, receipt `receipt:sha256:0cc29da4b4503cd981855940`; SEMANTIC_COMPATIBILITY 2,033/2,020/13/0; OWNER_PROVENANCE 91; SYNTHETIC_CAMPAIGN **767/767/0** with `deepContainmentLane: PROVEN` |
+| **`gate:clean`** at `85dd8a6` | **PASS, all eleven required groups**, Node 20, `installResult: PASS`, **`siblingWrites: 0`**, `cleanBefore/cleanAfter: true`, `nodeModulesReused: false`; inner receipt `receipt:sha256:841e75dcd27b04660842fa24`, outer `clean-receipt:sha256:3832909fbab478cff4828f50` |
 
 ## Decisions Made During This Task
 
@@ -121,6 +130,18 @@ not run there at all. A hardening rule already guarded exactly this class for
 two other surfaces; `bin/change-intelligence.mjs` was never added to its list.
 Repair: resolution goes through `DEFAULT_SIBLING_ROOT` with the standard
 `NIGHTWATCH_REPOS_ROOT` override, and the rule now covers this surface.
+
+**DEF-C05-4 — blueinternal's generated artifact was classified DIRECT_SOURCE.
+CAMPAIGN_INTRODUCED, caught by this campaign's own regression.** Admitting
+`blueinternal/openapiv2` without registering it in `GENERATED_ARTIFACT_ROOTS`
+left its 51 operations qualified `DIRECT_SOURCE`, which would have presented
+generated output as hand-written source AND bypassed the deny-only
+production-admission gate that exists because a generated artifact can never
+be the sole basis of a production read. Repair: registered, so the qualifier is
+`GENERATED_ARTIFACT` and generation currency is explicitly `UNKNOWN` with
+reason `GENERATION_CORROBORATOR_UNAVAILABLE` — no proto corroborator exists for
+blueinternal, so currency is never silently CURRENT. This is the campaign's own
+defect and is reported rather than quietly fixed.
 
 **DEF-C05-3 — the shadow report published a provenance label it did not have.
 PRE_EXISTING.** It emitted the persisted `trackingSha`/`ahead`/`behind` under
