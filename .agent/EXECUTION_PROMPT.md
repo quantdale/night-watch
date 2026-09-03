@@ -1,63 +1,69 @@
-# EXECUTION PROMPT — R-12 Certification Manifest + Project Truth Closure
+# EXECUTION PROMPT — C-05 Universe Discovery + Admission Hygiene
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
-Status: COMPLETE
-Campaign ID: nightwatch-certification-truth-r12-v1
-OpenSpec: openspec/changes/nightwatch-certification-truth-r12-v1/
-Planned-From: cdfe9d7865dbf95f1cadfde1cf8e318bcd7a11a0
+Status: IN_PROGRESS
+Campaign ID: nightwatch-universe-admission-hygiene-c05-v1
+OpenSpec: openspec/changes/nightwatch-universe-admission-hygiene-c05-v1/
+Planned-From: 210cd0c8732a7ea5ba5aa5b7eef146d4f001d277
 Target Branch: main
-Predecessor Task ID: nightwatch-system-map-v2-c15b-v1
+Predecessor Task ID: nightwatch-certification-truth-r12-v1
 Predecessor Status: COMPLETE
 
 ## Mission
 
-Make the authoritative gate run every campaign certification suite, enforce
-that as a totality rather than a per-campaign courtesy, and reconcile the
-project-truth documents to the completion the repository actually reached.
+Separate discovery from admission, make the owner-approved universe a single
+authority, stop persisting mutable Git state as normative configuration, prove
+at the read boundary that an unapproved repository is never read, and admit
+exactly the two owner-named repositories.
 
 ## Authority
 
-Repository-local, offline, observational. No repository admission, no
-source-analysis change, no new campaign, no rule weakened so that a suite can
-register. No production or NEXT contact; C-12 is NOT authorized and is NOT
-begun.
+Repository-local, offline, observational. Sibling repositories are READ-ONLY.
+C-05 MAY expand Nightwatch's own owner-approved analysis-universe configuration
+for `alphauslabs/blueinternal` and `wave-api` ONLY; that is a Nightwatch change
+and is not permission to modify those repositories. No third previously
+unapproved repository may be admitted. No production or NEXT contact; C-12 is
+NOT authorized and is NOT begun.
 
 C-00 governs: all implementation happens in the owned session worktree
-`session/nightwatch-certification-truth-r-cd8904c5`.
+`session/nightwatch-universe-admission-hy-418aba0f`.
 
 ## Ordered workstreams
 
 1. Task record, OpenSpec change, measured baseline.
-2. Register the six unregistered certification suites in their correct lane.
-3. `config/campaign-certification.v1.json` as the single registration
-   authority.
-4. One generic totality rule; retire the four hand-written loops.
-5. Master task ledger normative status: C-02b, C-03, C-04, C-11, C-15b.
-6. `CURRENT_STATE` checkpoint prose reconciliation, including the malformed
-   row.
-7. Negative probe matrix, every probe restored.
-8. Validation, integration, exact-head CI, closure, release.
+2. One canonical owner-approved admission authority.
+3. Discovery as an admission-free operation.
+4. De-persist mutable Git state; live query path.
+5. Instrument the sibling-source read boundary.
+6. Prove `unapproved repository → analyzer source reads = 0`.
+7. Admit `alphauslabs/blueinternal` root `openapiv2`; measure yield.
+8. Admit `mobingilabs/wave-api` root `src`; measure yield.
+9. C-01 no-eviction regression; full population report.
+10. Hardening probes, validation, integration, exact-head CI, closure.
 
 ## Constraints
 
-A registration claim is never stronger than the execution that backs it.
-Historical evidence stays historical. No tracked document predicts the SHA or
-CI run of the commit containing it. No bulk-set checkpoint values. Every
-load-bearing rule added here has at least one negative probe that bites, and
-every probe is restored.
+Discovery never implies admission — existence, naming, language, organization,
+presence of OpenAPI, having routes and filesystem adjacency are each explicitly
+insufficient. No new parser where an existing one applies. No unsound source
+fact to raise a yield, and yield never outranks soundness. Completeness stays
+truthful: `TRUNCATED` and `remainingUnknown` are not converted into clean
+numbers by admitting more source. Every pre-C-05 operation identity survives.
+`siblingWrites` stays 0.
 
 ## Validation
 
 typecheck, hardening, handoff, project, agent, agent audit, workspace, gate
-inventory, semantic compatibility, synthetic campaign, the six newly
-registered suites, the full canonical regression, `gate:local`, `gate:clean`,
+inventory, semantic compatibility, synthetic campaign, the C-01 / C-02a /
+C-02b / C-03 / C-04 / C-06 suites, the new C-05 suites, `source-gaps` before
+and after, the full canonical regression, `gate:local`, `gate:clean`,
 exact-head GitHub Actions.
 
 ## Acceptance and completion gates
 
-The eight acceptance rows of
-`.agent/tasks/nightwatch-certification-truth-r12-v1/SPEC.md`, each carried in
-the REPORT requirement ledger with exact evidence.
+The ten acceptance rows of
+`.agent/tasks/nightwatch-universe-admission-hygiene-c05-v1/SPEC.md`, each
+carried in the REPORT requirement ledger with exact evidence.
 
 ## Git and reporting
 
