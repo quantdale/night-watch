@@ -1,7 +1,7 @@
 # EXECUTION PROMPT — C-05 Universe Discovery + Admission Hygiene
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
-Status: IN_PROGRESS
+Status: COMPLETE
 Campaign ID: nightwatch-universe-admission-hygiene-c05-v1
 OpenSpec: openspec/changes/nightwatch-universe-admission-hygiene-c05-v1/
 Planned-From: 210cd0c8732a7ea5ba5aa5b7eef146d4f001d277

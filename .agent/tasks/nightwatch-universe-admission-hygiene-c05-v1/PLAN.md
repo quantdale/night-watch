@@ -86,13 +86,13 @@ pipeline; nothing new is written for it.
 ## Milestones
 
 - M1 Task record, OpenSpec change, measured baseline — COMPLETE
-- M2 Single admission authority; discovery separated from admission — NOT_STARTED
-- M3 Mutable Git state de-persisted; live query path — NOT_STARTED
-- M4 Read-boundary instrumentation and the zero-read proof — NOT_STARTED
-- M5 Admit `alphauslabs/blueinternal` (`openapiv2`), measure yield — NOT_STARTED
-- M6 Admit `mobingilabs/wave-api` (`src`), measure yield — NOT_STARTED
-- M7 No-eviction regression and full population report — NOT_STARTED
-- M8 Hardening probes, validation, integration, exact-head CI, closure — NOT_STARTED
+- M2 Single admission authority; discovery separated from admission — COMPLETE
+- M3 Mutable Git state de-persisted; live query path — COMPLETE
+- M4 Read-boundary instrumentation and the zero-read proof — COMPLETE
+- M5 Admit `alphauslabs/blueinternal` (`openapiv2`), measure yield — COMPLETE (51)
+- M6 Admit `mobingilabs/wave-api` (`src`), measure yield — COMPLETE (55)
+- M7 No-eviction regression and full population report — COMPLETE (1,851)
+- M8 Hardening probes, validation, integration, exact-head CI, closure — COMPLETE
 
 ## Validation Strategy
 

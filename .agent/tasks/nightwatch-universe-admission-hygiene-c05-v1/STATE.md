@@ -4,19 +4,19 @@
 
 Task ID: nightwatch-universe-admission-hygiene-c05-v1
 Phase: UNIVERSE_ADMISSION_HYGIENE_C05_V1
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: 210cd0c8732a7ea5ba5aa5b7eef146d4f001d277
-Last validated implementation SHA: 210cd0c8732a7ea5ba5aa5b7eef146d4f001d277
-Last substantive checkpoint SHA: 210cd0c8732a7ea5ba5aa5b7eef146d4f001d277
+Last validated implementation SHA: 4e0bfc19ea6794344c786b55034568e64fd7dfac
+Last substantive checkpoint SHA: 4e0bfc19ea6794344c786b55034568e64fd7dfac
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-universe-admission-hy-418aba0f
-Last checkpoint: baseline measured read-only at 210cd0c — 149 repositories discovered, 6 admitted, 143 unapproved; 1,745 operations (blueapi 1,181 / ouchan 341 / ripple-api 223); 10 of 18 persisted remote-tracking Git fields diverged from live; blueinternal openapiv2 measured at 51 operations and wave-api at 55 route keys
+Last checkpoint: exact-head GitHub run 33796281169 at 4e0bfc1 passed all eleven required groups on Node 20 with receipt receipt:sha256:f313d77bf52b8b06dbde2e5c; gate:local receipt:sha256:0cc29da4b4503cd981855940 and gate:clean PASS with inner receipt receipt:sha256:841e75dcd27b04660842fa24 and siblingWrites 0; canonical regression 3,457/3,444/13/0; population 1,745 to 1,851 with blueinternal 51 and wave-api 55 and no eviction; 11/11 negative probes detected and restored; DEF-C05-1 through DEF-C05-5 all found and repaired, three pre-existing and two campaign-introduced
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 210cd0c8732a7ea5ba5aa5b7eef146d4f001d277
-LAST_VALIDATED_IMPLEMENTATION_SHA: 210cd0c8732a7ea5ba5aa5b7eef146d4f001d277
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 210cd0c8732a7ea5ba5aa5b7eef146d4f001d277
+LAST_VALIDATED_IMPLEMENTATION_SHA: 4e0bfc19ea6794344c786b55034568e64fd7dfac
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 4e0bfc19ea6794344c786b55034568e64fd7dfac
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PROJECT_VERDICT_EFFECT: PRESERVE
@@ -30,8 +30,8 @@ exactly the two owner-named repositories.
 
 ## Current Milestone
 
-M8 — integration and exact-head CI. M1 through M7 are complete and all three
-local gates are PASS at `85dd8a6` with `siblingWrites: 0`.
+COMPLETE / STOP — M1 through M8 are closed and all ten acceptance rows PASS.
+Certified by exact-head CI run 33796281169 at `4e0bfc1`.
 
 ## Completed Milestones
 
@@ -56,19 +56,18 @@ local gates are PASS at `85dd8a6` with `siblingWrites: 0`.
   repaired: DEF-C05-4 (blueinternal's artifact was classified DIRECT_SOURCE
   rather than GENERATED_ARTIFACT) plus 7 brittle assertions in two classes.
   All three local gates PASS.
+- M8 — integrated by verified fast-forward; exact-head CI FAILED once at
+  `8cb055c` on DEF-C05-5, was root-caused rather than retried, and PASSED at
+  `4e0bfc1`; project truth reconciled; session released.
 
 ## Work In Progress
 
-M8 — integration and exact-head CI observation.
+NONE — the campaign is COMPLETE.
 
 ## Exact Next Action
 
-Integrate by verified fast-forward, then observe the exact-head GitHub Actions
-run. Check that the CI synthetic receipt's skip count rises by no more than
-C-02a's three real-source cases: the newly admitted blueinternal and wave-api
-suites are deterministic against real checkouts, so any FURTHER skip in CI
-would mean a newly admitted repository is silently unmeasured there. Then
-reconcile project truth, close the REPORT ledger and release.
+STOP — C-05 is COMPLETE and certified. The next authorized campaign in this
+overnight portfolio is C-08 deployment-fact binding.
 
 ## Files Changed
 
@@ -209,10 +208,26 @@ manifests.
 
 ## Resume Recipe
 
-Read this STATE, then `SPEC.md` acceptance rows 1-10. Resume at the Current
-Milestone. All implementation happens in the owned session worktree
-`session/nightwatch-universe-admission-hy-418aba0f`.
+Task complete. Do not resume; any follow-up starts as a new authorized task.
 
 ## Completion Snapshot
 
-Pending — the campaign is IN_PROGRESS.
+C-05 is COMPLETE and certified.
+
+Substantive implementation anchor: 4e0bfc19ea6794344c786b55034568e64fd7dfac
+Certified exact-head checkpoint: 4e0bfc19ea6794344c786b55034568e64fd7dfac
+Live HEAD: DISCOVER_FROM_GIT
+Tests: canonical regression 3,457 / 3,444 / 13 skipped / 0 failed; semantic
+compatibility 2,033 / 2,020 / 13 / 0; synthetic campaign 767/767 locally and
+767 / 732 / 35 skipped / 0 failed in CI; the new `c05UniverseAdmission` suite
+28/28.
+Artifacts: `src/core/source/universe.ts` as the single admission authority; a
+per-repository read ledger and boundary admission gate in `siblingSource.ts`;
+`checkC05UniverseAdmissionBoundary` replacing three per-campaign prohibitions;
+five mutable Git fields removed from `RepoDefinition`; `change:shadow` repaired
+and observing live.
+Known issues: none introduced. The real-source yield figures (51, 55, 1,851)
+are verified locally only, because CI has no sibling checkouts — the same scope
+C-02a's 591 has always had. Enumeration remains TRUNCATED with
+`remainingUnknown: true`, which is correct and unchanged.
+Recommended next task: C-08 deployment-fact binding.

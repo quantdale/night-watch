@@ -307,6 +307,88 @@ PASS with `siblingWrites: 0`. 13 real-repository negative probes detected and
 restored. R-12 changed no source-analysis behaviour, admitted no repository,
 and made no production, NEXT or DEV contact.
 
+## C-05 universe discovery and admission hygiene (current)
+
+C-05 made one sentence mechanical: **a repository DISCOVERED is not a
+repository ADMITTED.**
+
+**The finding.** 149 git repositories sit under the sibling root and six were
+admitted, but nothing stated that as a rule. Admission was
+`RIPPLE_REPOSITORIES.filter(scope === 'IN_SCOPE')` INTERSECTED with the keys of
+a local `APPROVED_ROOTS` literal, across two files — so neither list was the
+owner-approved universe, the real membership rule was an intersection nobody
+had written down, and a repository present in one record and absent from the
+other was SILENTLY not admitted. Discovery did not exist as a concept, so there
+was nowhere to say "we can see 149 and may read 8".
+
+**One authority.** `src/core/source/universe.ts` is now the single
+owner-approved statement of what may be read, and `approvedScan.ts` projects
+from it. A disagreement between the authority and the dependency map is a
+DECLARED error in both directions, because "the owner approved a repository the
+model does not know" and "the model claims a repository nothing may read" are
+not interchangeable and neither is guessable. `checkC05UniverseAdmissionBoundary`
+asserts the admitted set is exactly eight named repositories, replacing three
+per-campaign prohibitions that each named two repositories and one campaign and
+would not have stopped a ninth.
+
+**Two admissions, measured not estimated.** `alphauslabs/blueinternal`
+`openapiv2` yields **51** operations through the EXISTING `parseOpenApiRoutes`
+(the historical ~57 estimate is refuted and kept as history), and
+`mobingilabs/wave-api` `src` yields **55** through the EXISTING YAML route
+parser with no parser change. wave-api's identity came from workspace truth
+rather than the authorization's literal name — there is no top-level
+`wave-api`. The population went 1,745 → **1,851**, exactly +106, with
+`droppedOperations: 0`, the three pre-existing repositories unchanged, and
+enumeration still TRUNCATED with `remainingUnknown: true`: admitting source
+did not launder completeness into a clean number. The historical `≥ 900`
+programme goal was already exceeded before this campaign admitted anything.
+
+**Live Git state.** `RepoDefinition` no longer persists `branch`,
+`trackingSha`, `ahead`, `behind` or `dirty`. Measured against live Git, the
+checkout-local fields were 18/18 accurate while the remote-relative ones were
+**10/18 diverged** — `ouchan` recorded `behind: 25` and was **310** behind —
+and the `change:shadow` report published those values under
+`freshness: LOCAL_TRACKING_REF_ONLY`, a provenance label it did not have. They
+are now observed from local refs at report time. `checkedOutSha` and
+`sourceMapSha` REMAIN: they are pins, and removing them would make every
+staleness check vacuously pass, which is a silent rebind and worse than a stale
+value.
+
+**The unapproved-read guarantee moved from output to call.** `operations === 0`
+is a property of OUTPUT — an analyzer that opened every file and derived nothing
+satisfies it too. The sibling-source boundary now keeps a per-repository ledger
+of attempts, content reads and admission refusals and enforces the approved set
+itself; the intelligence CLI and the Control Center source authority both pass
+it. Proven against repositories that really exist on disk: six attempted reads
+across `alphauslabs/blue`, `mobingilabs/ripple-web` and `alphauslabs/bluectl`
+yield zero content reads and six counted refusals, and the gate is shown
+non-vacuous by the converse.
+
+**Five defects, all repaired and all reported.** Three pre-existing and
+invisible to every gate group because none runs `change:shadow`: its tsc entry
+point had moved when three modules gained cross-directory imports; its
+repositories root was derived from the checkout location and so failed with
+`ENOENT` in any session worktree; and it published persisted tracking state
+under a freshness label it had not earned. Two campaign-introduced: admitting
+`blueinternal` without registering its generated-artifact root left 51
+operations qualified `DIRECT_SOURCE`, which would have presented generated
+output as hand-written source and bypassed the deny-only production-admission
+gate; and one C-05 case required real sibling content without a skip guard, so
+it passed locally and FAILED exact-head CI — the same local-versus-gate
+divergence R-12 existed to make visible, reproduced one campaign later and
+recorded rather than smoothed over.
+
+Certified at exact-head CI run `33796281169` at
+`4e0bfc19ea6794344c786b55034568e64fd7dfac`, all eleven required groups PASS on
+Node 20 with receipt `receipt:sha256:f313d77bf52b8b06dbde2e5c`. Canonical
+regression 3,457 / 3,444 / 13 skipped / 0 failed. `gate:local` and `gate:clean`
+PASS at `85dd8a6` with `siblingWrites: 0`. 11 negative probes detected and
+restored. **CI skip accounting:** the synthetic lane went 738/704/34 to
+767/732/35, so of C-05's 29 new cases **28 execute in CI and exactly one skips**
+— the single case needing real sibling content. The real-source yield figures
+are verified locally only, because CI has no sibling checkouts; that is the same
+scope C-02a's 591 has always had, and it is stated rather than implied.
+
 ### Project-state v2 (machine-checked truth block)
 
 Each anchor claims a DIFFERENT kind of evidence. They may coincide, but they
@@ -315,11 +397,11 @@ when its OWN evidence exists.
 
 | Field | Claims | Current value | Why |
 | --- | --- | --- | --- |
-| `LAST_SUBSTANTIVE_IMPLEMENTATION_SHA` | the last commit that changed implementation AND was validated | `506d64f` | where R-12's registration registry, its generic totality rule and the revived `checkAgentContinuityIntegrity` landed; the commits after it changed documentation only |
-| `LAST_LOCALLY_VALIDATED_SHA` | the last commit where the local quality gate passed | `506d64f` | `gate:local` PASS, all eleven required groups, receipt `receipt:sha256:ec63fe57a093eb63e168ded5` |
-| `LAST_CLEAN_VALIDATED_SHA` | the last commit where the clean Node 20 gate passed | `f02562d` | `gate:clean` PASS, Node 20, eleven groups, `siblingWrites: 0`, inner receipt `receipt:sha256:0efe20276b93f05ebe50ea53`, outer `clean-receipt:sha256:466ca84e35b4d5881a7d76ae`. It names a DIFFERENT commit from the local anchor because the clean gate ran one documentation descendant later — each anchor advances on its own evidence, never as a side effect |
-| `CI_OBSERVED_SHA` | the commit whose CI result was observed | `5cc7835` | run `33784345028` / job `100745379741` |
-| `CI_EXECUTED_SHA` | the commit CI actually executed the gate at | `5cc7835` | same run; both `EXECUTED_PASS` and `EXECUTED_FAIL` require observed == executed, and this one is `EXECUTED_PASS` with receipt `receipt:sha256:855c3279c6ecb3d30a69ad24` |
+| `LAST_SUBSTANTIVE_IMPLEMENTATION_SHA` | the last commit that changed implementation AND was validated | `4e0bfc1` | C-05's closing implementation commit, which added the sibling guard that repaired DEF-C05-5; the admission authority, read ledger and de-persistence landed across the commits leading to it |
+| `LAST_LOCALLY_VALIDATED_SHA` | the last commit where the local quality gate passed | `85dd8a6` | `gate:local` PASS, all eleven required groups, receipt `receipt:sha256:0cc29da4b4503cd981855940` |
+| `LAST_CLEAN_VALIDATED_SHA` | the last commit where the clean Node 20 gate passed | `85dd8a6` | `gate:clean` PASS, Node 20, eleven groups, `siblingWrites: 0`, inner receipt `receipt:sha256:841e75dcd27b04660842fa24`, outer `clean-receipt:sha256:3832909fbab478cff4828f50` |
+| `CI_OBSERVED_SHA` | the commit whose CI result was observed | `4e0bfc1` | run `33796281169`. It names a LATER commit than the two validation anchors because the local and clean gates ran at `85dd8a6`, CI then failed at `8cb055c` on DEF-C05-5, and the repair produced `4e0bfc1` — each anchor advances on its own evidence, and the intervening failure is recorded below rather than erased |
+| `CI_EXECUTED_SHA` | the commit CI actually executed the gate at | `4e0bfc1` | same run; both `EXECUTED_PASS` and `EXECUTED_FAIL` require observed == executed, and this one is `EXECUTED_PASS` with receipt `receipt:sha256:f313d77bf52b8b06dbde2e5c` |
 
 Two further roles are deliberately NOT in that table, because neither is a
 persisted anchor:
@@ -377,11 +459,11 @@ RELEASE_CERTIFICATION_PROTOCOL_VERSION: nightwatch.release-certification.v1
 PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
 RELEASE_CHECKPOINT_SHA: 2576c5751d33bb40046246e8fcf57c7cc5c30a57
 LIVE_HEAD_SHA: DISCOVER_FROM_GIT
-LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: 506d64fd878d2d02a7e93b28d8b515ab4fd97691
-LAST_LOCALLY_VALIDATED_SHA: 506d64fd878d2d02a7e93b28d8b515ab4fd97691
-LAST_CLEAN_VALIDATED_SHA: f02562dbd1376c62a27d65b7a1deba0799a24cdf
-CI_OBSERVED_SHA: 5cc783572bf7f943e3168a7ae98c2106ee963cff
-CI_EXECUTED_SHA: 5cc783572bf7f943e3168a7ae98c2106ee963cff
+LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: 4e0bfc19ea6794344c786b55034568e64fd7dfac
+LAST_LOCALLY_VALIDATED_SHA: 85dd8a6f39118a33eb2fcef3e334b31e6abe9d35
+LAST_CLEAN_VALIDATED_SHA: 85dd8a6f39118a33eb2fcef3e334b31e6abe9d35
+CI_OBSERVED_SHA: 4e0bfc19ea6794344c786b55034568e64fd7dfac
+CI_EXECUTED_SHA: 4e0bfc19ea6794344c786b55034568e64fd7dfac
 CI_STATUS: EXECUTED_PASS
 FINAL_DOCUMENTATION_SHA: DISCOVER_FROM_GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
@@ -409,11 +491,11 @@ informational and are not interpreted as current authority.
 LIVE_STATE_PROTOCOL_VERSION: nightwatch.live-state.v1
 LIVE_TASK_ID: nightwatch-universe-admission-hygiene-c05-v1
 LIVE_PHASE: UNIVERSE_ADMISSION_HYGIENE_C05_V1
-LIVE_TASK_STATUS: IN_PROGRESS
+LIVE_TASK_STATUS: COMPLETE
 LIVE_PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
 LIVE_PROJECT_VERDICT_EFFECT: PRESERVE
-LIVE_NEXT_ACTION_STATE: CONTINUE
-LIVE_COMPLETION_CLAIM: NONE
+LIVE_NEXT_ACTION_STATE: STOP
+LIVE_COMPLETION_CLAIM: COMPLETE
 ```
 
 ### Exact-head CI is green (current live CI state)
