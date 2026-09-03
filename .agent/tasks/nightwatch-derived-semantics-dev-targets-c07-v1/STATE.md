@@ -4,19 +4,20 @@
 
 Task ID: nightwatch-derived-semantics-dev-targets-c07-v1
 Phase: DERIVED_SEMANTICS_DEV_TARGETS_C07_V1
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: a34064711d2682f090c4d35079a27f08a7767ea5
-Last validated implementation SHA: a34064711d2682f090c4d35079a27f08a7767ea5
-Last substantive checkpoint SHA: a34064711d2682f090c4d35079a27f08a7767ea5
+Last validated implementation SHA: f03dd21fbd7d433c27b005764ed64a3660cf7a21
+Last substantive checkpoint SHA: f03dd21fbd7d433c27b005764ed64a3660cf7a21
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-derived-semantics-dev-16e96515
-Last checkpoint: the derived registry over all 1,851 real operations yields ZERO KNOWN_READ entries because zero operations carry an effect proof, and the DEV target funnel therefore admits ZERO targets; 23/23 suite
+Last checkpoint: exact-head GitHub run 33817429249 at 5973049 passed all eleven required groups on Node 20 with receipt receipt:sha256:953453916fc16514dae5c316; gate:predev, gate:local and gate:clean all PASS with siblingWrites 0; canonical regression 3,579/3,566/13/0; the derived registry yields ZERO KNOWN_READ over 1,851 operations and the DEV funnel admits ZERO targets; DEV requests 0, production 0, NEXT 0; 7/7 negative probes detected
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: a34064711d2682f090c4d35079a27f08a7767ea5
-LAST_VALIDATED_IMPLEMENTATION_SHA: a34064711d2682f090c4d35079a27f08a7767ea5
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: a34064711d2682f090c4d35079a27f08a7767ea5
+LAST_VALIDATED_IMPLEMENTATION_SHA: f03dd21fbd7d433c27b005764ed64a3660cf7a21
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: f03dd21fbd7d433c27b005764ed64a3660cf7a21
+LAST_DOCUMENTATION_CHECKPOINT_SHA: 59730491605a09208006f8df14710656a11d7bc1
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PROJECT_VERDICT_EFFECT: PRESERVE
@@ -29,8 +30,8 @@ funnel honestly — including if it ends at zero.
 
 ## Current Milestone
 
-M7 — integration and exact-head CI. M1 through M6 are complete and all four
-local gates PASS, including `gate:predev`.
+COMPLETE / STOP — M1 through M7 are closed and all ten acceptance rows PASS.
+Certified by exact-head CI run 33817429249 at `5973049`.
 
 ## Completed Milestones
 
@@ -45,16 +46,18 @@ local gates PASS, including `gate:predev`.
   gates HOLD; the reason no DEV traffic follows is that zero targets are
   admitted, not that a gate failed. That distinction is the campaign's point.
 - M6 — hardening rule and 7 negative probes, all DETECTED and restored.
+- M7 — integrated by verified fast-forward; exact-head CI PASS at `5973049`
+  with the predicted +1 CI skip confirmed; project truth reconciled; session
+  released.
 
 ## Work In Progress
 
-M7 — integration and exact-head CI observation.
+NONE — the campaign is COMPLETE.
 
 ## Exact Next Action
 
-Integrate by verified fast-forward and observe the exact-head GitHub Actions
-run. The C-07 suite has one sibling-gated case (the real-population
-measurement), so the CI synthetic skip count should rise by exactly one.
+STOP — C-07 is COMPLETE and certified. The next authorized campaign is C-15c
+System Map V2 HTTP transport, then R-13 overnight endurance certification.
 
 ## Files Changed
 
@@ -133,10 +136,24 @@ its current emptiness visible and explained.
 
 ## Resume Recipe
 
-Read this STATE, then `SPEC.md` acceptance rows 1-10. Resume at the Current
-Milestone. All implementation happens in the owned session worktree
-`session/nightwatch-derived-semantics-dev-16e96515`.
+Task complete. Do not resume; any follow-up starts as a new authorized task.
 
 ## Completion Snapshot
 
-Pending — the campaign is IN_PROGRESS.
+C-07 is COMPLETE and certified.
+
+Substantive implementation anchor: f03dd21fbd7d433c27b005764ed64a3660cf7a21
+Certified exact-head checkpoint: 59730491605a09208006f8df14710656a11d7bc1
+Live HEAD: DISCOVER_FROM_GIT
+Tests: canonical regression 3,579 / 3,566 / 13 skipped / 0 failed; synthetic
+campaign 889/889 locally and 889 / 849 / 40 skipped / 0 failed in CI; the new
+`c07DerivedSemantics` suite 23/23.
+Artifacts: `src/core/source/derivedEndpointSemantics.ts` (derivation table,
+funnel, `orderableTargets`); `checkC07DerivedSemanticsBoundary`.
+Safety: DEV requests 0, production contacts 0, NEXT contacts 0, credentials
+acquired 0, auth configuration unchanged, DEV storage state contents never read.
+Known issues: none introduced. DEV execution is blocked on an INTERNAL evidence
+blocker -- zero of 1,851 operations are admitted -- and remains available to a
+future campaign if an effect proof ever admits one. The historical >= 30 target
+figure is not met at 0, with the blocker named rather than engineered around.
+Recommended next task: C-15c System Map V2 HTTP transport.

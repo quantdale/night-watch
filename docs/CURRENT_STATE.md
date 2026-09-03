@@ -604,6 +604,67 @@ The first gate attempt FAILED at `HANDOFF_TRUTH` because C-16's task
 scaffolding had not been written before the battery was run; that is recorded
 rather than smoothed over.
 
+## C-07 derived endpoint semantics (current)
+
+`RIPPLE_ENDPOINT_SEMANTIC_REGISTRY` was intentionally `[]`, under a rule its own
+header states: "HTTP method is not a read/write contract." C-07 DERIVES it, and
+makes the path from "an operation exists" to "a request is authorized" a
+counted funnel.
+
+| Derived classification | Count | Evidence basis |
+|---|---|---|
+| **`KNOWN_READ`** | **0** | `EFFECT_CLOSURE_PROOF` 0 |
+| `MUTATION_CAPABLE` | 1,187 | refutation 1,107 + conditional 80 |
+| `UNKNOWN` | 485 | `METHOD_ONLY_NO_EFFECT_PROOF` |
+| `AMBIGUOUS` | 179 | `ROUTE_IDENTITY_UNPROVEN` |
+
+Zero `KNOWN_READ`, because zero operations carry an effect proof — a C-06
+result made visible rather than a C-07 one: `READ_ONLY_PROVEN` fell 5 → 0 when
+the eleven-row catalog stopped classifying, and 6,114 unclassified callee
+identities block promotion.
+
+**The 485 `UNKNOWN` are the temptation.** They are `READ_ONLY_METHOD_ONLY` —
+the GET verb and nothing else — and promoting them would produce a registry
+that looks productive while asserting a read contract from an HTTP verb,
+placing 485 operations on a DEV work queue on the strength of one word. A
+hardening rule parses that derivation branch and fails if it ever returns
+anything but `UNKNOWN`.
+
+**The funnel:** considered 1,851 · generated 1,851 · **eligible 0** · rejected
+1,851, with reasons `MUTATION_CAPABLE` 1,187 + `SEMANTICS_UNKNOWN` 485 +
+`SEMANTICS_AMBIGUOUS` 179 summing exactly to the rejected count. The
+independent portfolio census agrees at eligible 0 across nine reason codes.
+
+The historical **≥ 30 generated DEV targets figure is NOT met, at 0**, and the
+blocker is named rather than engineered around. No threshold, classification or
+gate was weakened: a relaxed threshold would produce targets, and every one
+would be a request Nightwatch could not justify.
+
+**Why zero is the right answer, not a failure.** `gate:predev` PASSES on all
+eleven groups — the gates hold. The reason no DEV traffic follows is that zero
+operations are admitted, not that a gate failed or a credential was missing.
+Non-vacuity is proven the other way: a proven-read, runtime-bound,
+chain-admitted operation IS eligible, so the zero is a measurement rather than
+a broken code path.
+
+**DEV EXECUTION: BLOCKED**, on an INTERNAL evidence blocker. §7's sixth
+condition — "existing Nightwatch DEV admission accepts the target" — fails. A
+DEV storage state exists and its contents were never read, so this is not a
+credential-availability problem. **DEV requests 0 · production contacts 0 ·
+NEXT contacts 0 · credentials acquired 0 · auth configuration unchanged.**
+Product findings: **0**, reported as zero.
+
+EIG receives only the eligible set, so an inadmissible target has no path to a
+rank; a test gives a mutation-capable operation a maximal score and asserts the
+ranking stays empty.
+
+Certified at exact-head CI run `33817429249` at
+`59730491605a09208006f8df14710656a11d7bc1`, eleven required groups PASS on
+Node 20 with receipt `receipt:sha256:953453916fc16514dae5c316`. Canonical
+regression 3,579 / 3,566 / 13 skipped / 0 failed. `gate:local`, `gate:clean`
+(siblingWrites 0) and `gate:predev` all PASS at `f03dd21`. 7 negative probes
+detected. CI skips 39 → 40, exactly the one sibling-gated case.
+
 ### Project-state v2 (machine-checked truth block)
 
 Each anchor claims a DIFFERENT kind of evidence. They may coincide, but they
@@ -612,7 +673,7 @@ when its OWN evidence exists.
 
 | Field | Claims | Current value | Why |
 | --- | --- | --- | --- |
-| `LAST_SUBSTANTIVE_IMPLEMENTATION_SHA` | the last commit that changed implementation AND was validated | `7fff815` | C-05's closing implementation commit, which added the sibling guard that repaired DEF-C05-5; the admission authority, read ledger and de-persistence landed across the commits leading to it |
+| `LAST_SUBSTANTIVE_IMPLEMENTATION_SHA` | the last commit that changed implementation AND was validated | `f03dd21` | C-05's closing implementation commit, which added the sibling guard that repaired DEF-C05-5; the admission authority, read ledger and de-persistence landed across the commits leading to it |
 | `LAST_LOCALLY_VALIDATED_SHA` | the last commit where the local quality gate passed | `85dd8a6` | `gate:local` PASS, all eleven required groups, receipt `receipt:sha256:0cc29da4b4503cd981855940` |
 | `LAST_CLEAN_VALIDATED_SHA` | the last commit where the clean Node 20 gate passed | `85dd8a6` | `gate:clean` PASS, Node 20, eleven groups, `siblingWrites: 0`, inner receipt `receipt:sha256:841e75dcd27b04660842fa24`, outer `clean-receipt:sha256:3832909fbab478cff4828f50` |
 | `CI_OBSERVED_SHA` | the commit whose CI result was observed | `4e0bfc1` | run `33796281169`. It names a LATER commit than the two validation anchors because the local and clean gates ran at `85dd8a6`, CI then failed at `8cb055c` on DEF-C05-5, and the repair produced `4e0bfc1` — each anchor advances on its own evidence, and the intervening failure is recorded below rather than erased |
@@ -674,11 +735,11 @@ RELEASE_CERTIFICATION_PROTOCOL_VERSION: nightwatch.release-certification.v1
 PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
 RELEASE_CHECKPOINT_SHA: 2576c5751d33bb40046246e8fcf57c7cc5c30a57
 LIVE_HEAD_SHA: DISCOVER_FROM_GIT
-LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: 7fff8159fd044ca19933caa2a2bef6052fad143c
-LAST_LOCALLY_VALIDATED_SHA: 70ef1d6ecbdaa8fc3df8b16362b78a05f08063b4
-LAST_CLEAN_VALIDATED_SHA: 70ef1d6ecbdaa8fc3df8b16362b78a05f08063b4
-CI_OBSERVED_SHA: d863a7fe4c55e9172a473d925f9c131560a23be7
-CI_EXECUTED_SHA: d863a7fe4c55e9172a473d925f9c131560a23be7
+LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: f03dd21fbd7d433c27b005764ed64a3660cf7a21
+LAST_LOCALLY_VALIDATED_SHA: f03dd21fbd7d433c27b005764ed64a3660cf7a21
+LAST_CLEAN_VALIDATED_SHA: f03dd21fbd7d433c27b005764ed64a3660cf7a21
+CI_OBSERVED_SHA: 59730491605a09208006f8df14710656a11d7bc1
+CI_EXECUTED_SHA: 59730491605a09208006f8df14710656a11d7bc1
 CI_STATUS: EXECUTED_PASS
 FINAL_DOCUMENTATION_SHA: DISCOVER_FROM_GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
@@ -706,11 +767,11 @@ informational and are not interpreted as current authority.
 LIVE_STATE_PROTOCOL_VERSION: nightwatch.live-state.v1
 LIVE_TASK_ID: nightwatch-derived-semantics-dev-targets-c07-v1
 LIVE_PHASE: DERIVED_SEMANTICS_DEV_TARGETS_C07_V1
-LIVE_TASK_STATUS: IN_PROGRESS
+LIVE_TASK_STATUS: COMPLETE
 LIVE_PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
 LIVE_PROJECT_VERDICT_EFFECT: PRESERVE
-LIVE_NEXT_ACTION_STATE: CONTINUE
-LIVE_COMPLETION_CLAIM: NONE
+LIVE_NEXT_ACTION_STATE: STOP
+LIVE_COMPLETION_CLAIM: COMPLETE
 ```
 
 ### Exact-head CI is green (current live CI state)

@@ -3,22 +3,23 @@
 Task ID: nightwatch-derived-semantics-dev-targets-c07-v1
 Phase: DERIVED_SEMANTICS_DEV_TARGETS_C07_V1
 Title: C-07 Derived Endpoint Semantics + Generated DEV Targets
-Status: IN_PROGRESS
+Status: COMPLETE
 Task directory: .agent/tasks/nightwatch-derived-semantics-dev-targets-c07-v1
 Starting SHA: a34064711d2682f090c4d35079a27f08a7767ea5
-Last validated implementation SHA: a34064711d2682f090c4d35079a27f08a7767ea5
-Last checkpoint: the derived registry over all 1,851 real operations yields ZERO KNOWN_READ entries because zero operations carry an effect proof, and the DEV target funnel therefore admits ZERO targets with reasons summing exactly to 1,851; 23/23 suite
-Current milestone: M5 — pre-DEV qualification through the existing tooling, then hardening probes and validation
-Next action: re-run gate:predev now that the scaffolding exists, then dev-manifest and dev-preflight (both local and read-only) to record the qualification verdict from the tooling rather than asserting it from the funnel
+Last validated implementation SHA: f03dd21fbd7d433c27b005764ed64a3660cf7a21
+Last checkpoint: exact-head GitHub run 33817429249 at 5973049 passed all eleven required groups on Node 20 with receipt receipt:sha256:953453916fc16514dae5c316; gate:predev, gate:local and gate:clean all PASS with siblingWrites 0; canonical regression 3,579/3,566/13/0; ZERO KNOWN_READ over 1,851 operations and ZERO eligible DEV targets; DEV requests 0, production 0, NEXT 0, credentials 0
+Current milestone: COMPLETE / STOP — M1 through M7 are closed and all ten acceptance rows PASS
+Next action: STOP — C-07 is COMPLETE and certified. The next authorized campaign is C-15c System Map V2 HTTP transport, then R-13; C-06G and C-08b are blocked and C-12 remains NOT AUTHORIZED
 Authorization class: NIGHTWATCH_DERIVED_SEMANTICS_DEV_TARGETS_C07_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: a34064711d2682f090c4d35079a27f08a7767ea5
-LAST_VALIDATED_IMPLEMENTATION_SHA: a34064711d2682f090c4d35079a27f08a7767ea5
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: a34064711d2682f090c4d35079a27f08a7767ea5
+LAST_VALIDATED_IMPLEMENTATION_SHA: f03dd21fbd7d433c27b005764ed64a3660cf7a21
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: f03dd21fbd7d433c27b005764ed64a3660cf7a21
+LAST_DOCUMENTATION_CHECKPOINT_SHA: 59730491605a09208006f8df14710656a11d7bc1
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
-PHASE_DERIVED_SEMANTICS_DEV_TARGETS_C07_V1_STATUS: IN_PROGRESS
+PHASE_DERIVED_SEMANTICS_DEV_TARGETS_C07_V1_STATUS: COMPLETE
 
 ## Routing and safety
 

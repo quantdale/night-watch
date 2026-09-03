@@ -82,12 +82,12 @@ has no path to a rank however high it would have scored.
 ## Milestones
 
 - M1 Task record, OpenSpec change, measured baseline — COMPLETE
-- M2 Derived semantic registry with per-entry evidence — NOT_STARTED
-- M3 Target-generation funnel with per-reason counts — NOT_STARTED
-- M4 EIG ordering restricted to admissible targets — NOT_STARTED
-- M5 Pre-DEV qualification through existing tooling; record the verdict — NOT_STARTED
-- M6 Hardening rule and negative probes — NOT_STARTED
-- M7 Validation, integration, exact-head CI, closure — NOT_STARTED
+- M2 Derived semantic registry with per-entry evidence — COMPLETE
+- M3 Target-generation funnel with per-reason counts — COMPLETE
+- M4 EIG ordering restricted to admissible targets — COMPLETE
+- M5 Pre-DEV qualification through existing tooling; record the verdict — COMPLETE
+- M6 Hardening rule and negative probes — COMPLETE
+- M7 Validation, integration, exact-head CI, closure — COMPLETE
 
 ## Validation Strategy
 
