@@ -1253,7 +1253,15 @@ function checkPhase9A1SourceReaderBoundary() {
   for (const file of gitFiles().filter((item) => item.startsWith('src/core/source/') && item.endsWith('.ts') && item !== 'src/core/source/siblingSource.ts')) {
     const source = read(file);
     if (/from\s+['"]node:fs['"]|from\s+['"]node:child_process['"]|from\s+['"]node:(?:net|http|https|dns)['"]/.test(source)) fail(`${file} bypasses the confined sibling source authority`);
-    if (/\b(?:writeFile|appendFile|renameSync|unlinkSync|rmSync|mkdirSync|chmodSync|spawn|exec(?:File)?|fetch)\s*\(/.test(source)) fail(`${file} exposes source write/process/network authority`);
+    // `(?<!\.)` before `exec` is load-bearing, and its absence was a latent
+    // false positive: `RegExp.prototype.exec` is not process execution, and
+    // this pattern could not tell `cp.exec(` from `pattern.exec(`. The sibling
+    // rule eighteen lines above already spells it this way. It stayed hidden
+    // because the only file in this cone that used `.exec()` was
+    // `siblingSource.ts`, which the loop excludes; C-08 was the first admitted
+    // module to use it and the rule fired on correct code. `child_process` is
+    // added to the alternation so tightening `exec` cannot weaken the rule.
+    if (/\b(?:writeFile|appendFile|renameSync|unlinkSync|rmSync|mkdirSync|chmodSync|child_process|spawn|(?<!\.)exec(?:File)?|fetch)\s*\(/.test(source)) fail(`${file} exposes source write/process/network authority`);
   }
   const scan = read('src/core/source/scan.ts');
   const scanTypes = read('src/core/source/scanTypes.ts');
