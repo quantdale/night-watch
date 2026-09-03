@@ -1,63 +1,63 @@
-# EXECUTION PROMPT — C-15b System Map V2
+# EXECUTION PROMPT — R-12 Certification Manifest + Project Truth Closure
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
-Status: COMPLETE
-Campaign ID: nightwatch-system-map-v2-c15b-v1
-OpenSpec: openspec/changes/nightwatch-system-map-v2-c15b-v1/
-Planned-From: 9ac83bebbeb9ed747ff4a55e84701c4b95a1c692
+Status: IN_PROGRESS
+Campaign ID: nightwatch-certification-truth-r12-v1
+OpenSpec: openspec/changes/nightwatch-certification-truth-r12-v1/
+Planned-From: cdfe9d7865dbf95f1cadfde1cf8e318bcd7a11a0
 Target Branch: main
-Predecessor Task ID: nightwatch-frontend-consumer-intelligence-c04-v1
+Predecessor Task ID: nightwatch-system-map-v2-c15b-v1
 Predecessor Status: COMPLETE
 
 ## Mission
 
-Rebuild the source-graph projection model and the graph view so Nightwatch can
-expose whole-system topology and evidence status at the scale its contracts
-already permit, with every node and edge carrying exactly one fact category and
-every projection reporting exactly what it dropped.
+Make the authoritative gate run every campaign certification suite, enforce
+that as a totality rather than a per-campaign courtesy, and reconcile the
+project-truth documents to the completion the repository actually reached.
 
 ## Authority
 
-Repository-local, offline, observational. The Control Center gains no execution
-or mutation authority of any kind, and the existing GET/HEAD-only, 405,
-`executionAuthority: NONE` and production-store-exclusion invariants are
-re-proven rather than inherited. No repository admission. No EIG prioritisation.
-No production observation; C-12 is NOT authorized and is NOT begun.
+Repository-local, offline, observational. No repository admission, no
+source-analysis change, no new campaign, no rule weakened so that a suite can
+register. No production or NEXT contact; C-12 is NOT authorized and is NOT
+begun.
 
 C-00 governs: all implementation happens in the owned session worktree
-`session/nightwatch-system-map-v2-c15b-v1-19d4f1bd`.
+`session/nightwatch-certification-truth-r-cd8904c5`.
 
 ## Ordered workstreams
 
 1. Task record, OpenSpec change, measured baseline.
-2. Contract v2: fact category, evidence status, exact projection bounds.
-3. System map model over the C-02b / C-03 / C-04 facts.
-4. Progressive disclosure L1-L4.
-5. Deterministic layout and content-addressed layout identity.
-6. The eight operator queries, each individually tested.
-7. Renderer, and Control Center authority probes.
-8. Hardening, gate registration, validation, integration, closure.
+2. Register the six unregistered certification suites in their correct lane.
+3. `config/campaign-certification.v1.json` as the single registration
+   authority.
+4. One generic totality rule; retire the four hand-written loops.
+5. Master task ledger normative status: C-02b, C-03, C-04, C-11, C-15b.
+6. `CURRENT_STATE` checkpoint prose reconciliation, including the malformed
+   row.
+7. Negative probe matrix, every probe restored.
+8. Validation, integration, exact-head CI, closure, release.
 
 ## Constraints
 
-Bounded projections with exact drop counts; categorical states rather than
-defaults; no evidence upgrade; `UNKNOWN` and `UNMEASURED` never zeroed; layout
-identity excludes timing; no new dependency unless provably required; no
-repository write while `gate:clean` evidence is running.
+A registration claim is never stronger than the execution that backs it.
+Historical evidence stays historical. No tracked document predicts the SHA or
+CI run of the commit containing it. No bulk-set checkpoint values. Every
+load-bearing rule added here has at least one negative probe that bites, and
+every probe is restored.
 
 ## Validation
 
 typecheck, hardening, handoff, project, agent, agent audit, workspace, gate
-inventory, semantic compatibility, synthetic campaign, the new C-15b suites,
-the C-02b / C-03 / C-04 suites, Control Center contract, adapter, authority and
-server suites, the browser suite where practical, C-10 production-store
-exclusion, full canonical regression, `gate:clean`, exact-head GitHub Actions.
+inventory, semantic compatibility, synthetic campaign, the six newly
+registered suites, the full canonical regression, `gate:local`, `gate:clean`,
+exact-head GitHub Actions.
 
 ## Acceptance and completion gates
 
-The twelve acceptance rows of
-`.agent/tasks/nightwatch-system-map-v2-c15b-v1/SPEC.md`, each carried in the
-REPORT requirement ledger with exact evidence.
+The eight acceptance rows of
+`.agent/tasks/nightwatch-certification-truth-r12-v1/SPEC.md`, each carried in
+the REPORT requirement ledger with exact evidence.
 
 ## Git and reporting
 
