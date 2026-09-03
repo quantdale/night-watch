@@ -1,0 +1,113 @@
+{
+  "schemaVersion": "nightwatch.campaign-certification.v1",
+  "purpose": "The single authority for which suites certify which campaign. A campaign task directory that is not declared here fails hardening:check; a declared suite that is missing from disk, or absent from every authoritative gate lane, fails it too. A passing test file is not certification until an authoritative gate group runs it.",
+  "campaignTaskRoot": ".agent/tasks",
+  "campaignTaskPattern": "-(c|r)[0-9]+[a-z]*-v[0-9]+$",
+  "lanes": [
+    "config/synthetic-campaign.v1.json",
+    "config/semantic-compatibility.v1.json"
+  ],
+  "campaigns": [
+    {
+      "id": "C-00",
+      "task": "nightwatch-concurrency-workspace-hardening-c00-v1",
+      "suites": [
+        "tests/unit/workspaceIsolation.test.ts"
+      ]
+    },
+    {
+      "id": "C-01",
+      "task": "nightwatch-truncation-truth-discovery-paging-c01-v1",
+      "suites": [
+        "tests/unit/sourceOperationCompleteness.test.ts",
+        "tests/unit/sourceInventoryCompleteness.test.ts",
+        "tests/unit/cacheCurrentness.test.ts",
+        "tests/unit/callScopedSourceRead.test.ts"
+      ]
+    },
+    {
+      "id": "C-02a",
+      "task": "nightwatch-openapi-admission-c02a-v1",
+      "suites": [
+        "tests/unit/c02aOpenApiAdmission.test.ts"
+      ],
+      "partialHostDependency": "The 'real committed blueapi artifact' block requires the read-only sibling checkouts and self-skips without them. The authoritative receipt records that skip; it is never counted as a pass."
+    },
+    {
+      "id": "C-02b",
+      "task": "nightwatch-protobuf-source-intelligence-c02b-v1",
+      "suites": [
+        "tests/unit/c02bProtoLexer.test.ts",
+        "tests/unit/c02bProtoSurface.test.ts",
+        "tests/unit/c02bProtoCorroboration.test.ts"
+      ]
+    },
+    {
+      "id": "C-03",
+      "task": "nightwatch-go-grpc-topology-binding-c03-v1",
+      "suites": [
+        "tests/unit/c03GoRegistration.test.ts",
+        "tests/unit/c03GrpcTopology.test.ts"
+      ]
+    },
+    {
+      "id": "C-04",
+      "task": "nightwatch-frontend-consumer-intelligence-c04-v1",
+      "suites": [
+        "tests/unit/c04FrontendConsumer.test.ts",
+        "tests/unit/c04FrontendGraph.test.ts"
+      ]
+    },
+    {
+      "id": "C-06",
+      "task": "nightwatch-php-readonly-proof-c06-v1",
+      "suites": [
+        "tests/unit/c06PhpReadOnlyProof.test.ts"
+      ]
+    },
+    {
+      "id": "C-10",
+      "task": "nightwatch-production-privacy-firewall-c10-v1",
+      "suites": [
+        "tests/unit/c10ProductionProjection.test.ts",
+        "tests/unit/c10AcceptanceSuite.test.ts",
+        "tests/unit/c105ProvenanceAuthority.test.ts",
+        "tests/unit/c105PersistedFieldCoverage.test.ts"
+      ]
+    },
+    {
+      "id": "C-11",
+      "task": "nightwatch-prod-observe-safety-kernel-c11-v1",
+      "suites": [
+        "tests/unit/c11ProdObserveKernel.test.ts",
+        "tests/unit/c11ProdObserveEvidence.test.ts"
+      ]
+    },
+    {
+      "id": "C-15b",
+      "task": "nightwatch-system-map-v2-c15b-v1",
+      "suites": [
+        "tests/unit/c15bSystemMap.test.ts",
+        "tests/unit/c15bControlCenterAuthority.test.ts"
+      ]
+    },
+    {
+      "id": "R-11",
+      "task": "nightwatch-proxy-gate-reliability-r11-v1",
+      "suites": [
+        "tests/unit/phase23PortLease.test.ts",
+        "tests/unit/phase24ProxyLifecycle.test.ts",
+        "tests/unit/proxyPortLeaseDeterminism.test.ts",
+        "tests/unit/proxyPortLeaseStress.test.ts",
+        "tests/unit/gateReceiptPersistence.test.ts"
+      ]
+    },
+    {
+      "id": "R-12",
+      "task": "nightwatch-certification-truth-r12-v1",
+      "suites": [
+        "tests/unit/r12CampaignCertification.test.ts"
+      ]
+    }
+  ]
+}

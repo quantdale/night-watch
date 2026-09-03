@@ -30,6 +30,11 @@
     "tests/unit/c105PersistedFieldCoverage.test.ts",
     "tests/unit/c11ProdObserveKernel.test.ts",
     "tests/unit/c11ProdObserveEvidence.test.ts",
+    "tests/unit/sourceOperationCompleteness.test.ts",
+    "tests/unit/sourceInventoryCompleteness.test.ts",
+    "tests/unit/cacheCurrentness.test.ts",
+    "tests/unit/callScopedSourceRead.test.ts",
+    "tests/unit/c02aOpenApiAdmission.test.ts",
     "tests/unit/c02bProtoLexer.test.ts",
     "tests/unit/c02bProtoSurface.test.ts",
     "tests/unit/c02bProtoCorroboration.test.ts",
@@ -37,7 +42,9 @@
     "tests/unit/c03GrpcTopology.test.ts",
     "tests/unit/c04FrontendConsumer.test.ts",
     "tests/unit/c04FrontendGraph.test.ts",
+    "tests/unit/c06PhpReadOnlyProof.test.ts",
     "tests/unit/c15bSystemMap.test.ts",
-    "tests/unit/c15bControlCenterAuthority.test.ts"
+    "tests/unit/c15bControlCenterAuthority.test.ts",
+    "tests/unit/r12CampaignCertification.test.ts"
   ]
 }

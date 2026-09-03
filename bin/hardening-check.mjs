@@ -12,6 +12,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { buildChildEnvironment } from './child-environment.mjs';
+import { validateCampaignCertification } from './lib/campaign-certification.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const errors = [];
@@ -2230,27 +2231,6 @@ function checkR11ProxyGateReliability() {
   if (!/mkdtempSync\(path\.join\(os\.tmpdir\(\), 'nightwatch-clean-gate-receipt-'\)\)/.test(clean)) {
     fail('R-11 the clean-checkout gate must place its inner receipt outside the disposable clone');
   }
-
-  // Every R-11 certification suite must be executed by an authoritative gate
-  // group. A safety suite no gate runs is equivalent to no test at all.
-  let compatibility;
-  try {
-    compatibility = JSON.parse(read('config/semantic-compatibility.v1.json'));
-  } catch {
-    fail('R-11 the semantic compatibility manifest must be valid JSON');
-    return;
-  }
-  const registered = new Set([
-    ...(compatibility.phaseSuites ?? []).flatMap((suite) => suite.files ?? []),
-    ...(compatibility.supportFiles ?? []),
-  ]);
-  for (const suite of [
-    'tests/unit/phase23PortLease.test.ts',
-    'tests/unit/phase24ProxyLifecycle.test.ts',
-    'tests/unit/proxyPortLeaseDeterminism.test.ts',
-    'tests/unit/proxyPortLeaseStress.test.ts',
-    'tests/unit/gateReceiptPersistence.test.ts',
-  ]) if (!registered.has(suite)) fail(`R-11 certification suite ${suite} is not registered in any authoritative quality-gate group`);
 }
 
 /**
@@ -2397,27 +2377,6 @@ function checkC11ProdObserveBoundary() {
     fail('D-4: the decision text must remain intact');
   }
 
-  // --- every C-11 certification suite must be gate-registered ---
-  // A suite is gate-registered if a REQUIRED group runs it. Two manifests
-  // qualify: SEMANTIC_COMPATIBILITY and SYNTHETIC_CAMPAIGN. The C-10 and C-10.5
-  // safety suites live in the latter, so C-11's belong there too.
-  let compatibility;
-  let synthetic;
-  try {
-    compatibility = JSON.parse(read('config/semantic-compatibility.v1.json'));
-    synthetic = JSON.parse(read('config/synthetic-campaign.v1.json'));
-  } catch {
-    fail('C-11 the quality-gate manifests must be valid JSON');
-    return;
-  }
-  const registered = new Set([
-    ...(compatibility.phaseSuites ?? []).flatMap((suite) => suite.files ?? []),
-    ...(compatibility.supportFiles ?? []),
-    ...(Array.isArray(synthetic.files) ? synthetic.files : []),
-  ]);
-  for (const suite of ['tests/unit/c11ProdObserveKernel.test.ts', 'tests/unit/c11ProdObserveEvidence.test.ts']) {
-    if (!registered.has(suite)) fail(`C-11 certification suite ${suite} is not registered in any authoritative quality-gate group`);
-  }
 }
 
 /**
@@ -2529,24 +2488,6 @@ function checkC02bProtobufBoundary() {
     fail('C-02b must not admit blueinternal or wave-api; repository admission belongs to C-05');
   }
 
-  // --- every C-02b certification suite must be gate-registered ---
-  let compatibility;
-  let synthetic;
-  try {
-    compatibility = JSON.parse(read('config/semantic-compatibility.v1.json'));
-    synthetic = JSON.parse(read('config/synthetic-campaign.v1.json'));
-  } catch {
-    fail('C-02b the quality-gate manifests must be valid JSON');
-    return;
-  }
-  const registered = new Set([
-    ...(compatibility.phaseSuites ?? []).flatMap((suite) => suite.files ?? []),
-    ...(compatibility.supportFiles ?? []),
-    ...(Array.isArray(synthetic.files) ? synthetic.files : []),
-  ]);
-  for (const suite of ['tests/unit/c02bProtoLexer.test.ts', 'tests/unit/c02bProtoSurface.test.ts', 'tests/unit/c02bProtoCorroboration.test.ts']) {
-    if (!registered.has(suite)) fail(`C-02b certification suite ${suite} is not registered in any authoritative quality-gate group`);
-  }
 }
 
 /**
@@ -2636,24 +2577,6 @@ function checkC03GrpcTopologyBoundary() {
     fail('C-03 ouchan must keep the raised file budget; at 1,024 not one registration daemon is enumerated');
   }
 
-  // --- every C-03 certification suite must be gate-registered ---
-  let compatibility;
-  let synthetic;
-  try {
-    compatibility = JSON.parse(read('config/semantic-compatibility.v1.json'));
-    synthetic = JSON.parse(read('config/synthetic-campaign.v1.json'));
-  } catch {
-    fail('C-03 the quality-gate manifests must be valid JSON');
-    return;
-  }
-  const registered = new Set([
-    ...(compatibility.phaseSuites ?? []).flatMap((suite) => suite.files ?? []),
-    ...(compatibility.supportFiles ?? []),
-    ...(Array.isArray(synthetic.files) ? synthetic.files : []),
-  ]);
-  for (const suite of ['tests/unit/c03GoRegistration.test.ts', 'tests/unit/c03GrpcTopology.test.ts']) {
-    if (!registered.has(suite)) fail(`C-03 certification suite ${suite} is not registered in any authoritative quality-gate group`);
-  }
 }
 
 /**
@@ -2733,24 +2656,6 @@ function checkC04FrontendConsumerBoundary() {
     fail('C-04 template preservation must stay opt-in; every existing caller must lex byte-identically');
   }
 
-  // --- every C-04 certification suite must be gate-registered ---
-  let compatibility;
-  let synthetic;
-  try {
-    compatibility = JSON.parse(read('config/semantic-compatibility.v1.json'));
-    synthetic = JSON.parse(read('config/synthetic-campaign.v1.json'));
-  } catch {
-    fail('C-04 the quality-gate manifests must be valid JSON');
-    return;
-  }
-  const registered = new Set([
-    ...(compatibility.phaseSuites ?? []).flatMap((suite) => suite.files ?? []),
-    ...(compatibility.supportFiles ?? []),
-    ...(Array.isArray(synthetic.files) ? synthetic.files : []),
-  ]);
-  for (const suite of ['tests/unit/c04FrontendConsumer.test.ts', 'tests/unit/c04FrontendGraph.test.ts']) {
-    if (!registered.has(suite)) fail(`C-04 certification suite ${suite} is not registered in any authoritative quality-gate group`);
-  }
 }
 
 /**
@@ -2835,24 +2740,65 @@ function checkC15bSystemMapBoundary() {
     if (/prod-findings/.test(read(file))) fail(`${file} names the production findings store; C-10's exclusion is absolute`);
   }
 
-  // --- every C-15b certification suite must be gate-registered ---
-  let compatibility;
-  let synthetic;
-  try {
-    compatibility = JSON.parse(read('config/semantic-compatibility.v1.json'));
-    synthetic = JSON.parse(read('config/synthetic-campaign.v1.json'));
-  } catch {
-    fail('C-15b the quality-gate manifests must be valid JSON');
+}
+
+/**
+ * Campaign certification registry totality.
+ *
+ * Three conjuncts, enforced in one place over one declarative registry:
+ * every campaign in the task ledger is DECLARED; every declared suite EXISTS
+ * on disk; every declared suite is REGISTERED in a lane a REQUIRED gate group
+ * runs. The judgement itself is pure and lives in
+ * `bin/lib/campaign-certification.mjs`, so every failure path is
+ * negative-probed by `tests/unit/r12CampaignCertification.test.ts` rather than
+ * only by hand. This function does the I/O and nothing else.
+ *
+ * Completeness is anchored to the campaign task directories, not to test
+ * filenames: a filename rule would have missed all four C-01 suites, none of
+ * which is named `c01*`, and would misfire on unrelated suites starting with
+ * `c`. The task ledger is real metadata the task protocol already requires.
+ */
+function checkCampaignCertificationRegistry() {
+  const parse = (file) => {
+    try {
+      return JSON.parse(read(file));
+    } catch {
+      return undefined;
+    }
+  };
+  const registry = parse('config/campaign-certification.v1.json');
+  if (registry === undefined) {
+    fail('config/campaign-certification.v1.json must be valid JSON');
     return;
   }
-  const registered = new Set([
-    ...(compatibility.phaseSuites ?? []).flatMap((suite) => suite.files ?? []),
-    ...(compatibility.supportFiles ?? []),
-    ...(Array.isArray(synthetic.files) ? synthetic.files : []),
-  ]);
-  for (const suite of ['tests/unit/c15bSystemMap.test.ts', 'tests/unit/c15bControlCenterAuthority.test.ts']) {
-    if (!registered.has(suite)) fail(`C-15b certification suite ${suite} is not registered in any authoritative quality-gate group`);
+  const gate = parse('config/quality-gate.v1.json');
+  if (gate === undefined) {
+    fail('config/quality-gate.v1.json must be valid JSON');
+    return;
   }
+  const lanes = new Map();
+  for (const lane of Array.isArray(registry.lanes) ? registry.lanes : []) {
+    if (typeof lane !== 'string') continue;
+    const manifest = parse(lane);
+    if (manifest !== undefined) lanes.set(lane, manifest);
+  }
+  const taskRoot = typeof registry.campaignTaskRoot === 'string' ? registry.campaignTaskRoot : '.agent/tasks';
+  let campaignTasks;
+  try {
+    campaignTasks = fs.readdirSync(path.join(root, taskRoot), { withFileTypes: true })
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => entry.name);
+  } catch {
+    fail(`the campaign task ledger ${taskRoot} must be a readable directory`);
+    return;
+  }
+  for (const message of validateCampaignCertification({
+    registry,
+    gate,
+    lanes,
+    campaignTasks,
+    suiteExists: (suite) => fs.existsSync(path.join(root, suite)),
+  })) fail(message);
 }
 
 checkChildProcessBoundaries();
@@ -2875,6 +2821,7 @@ checkC02bProtobufBoundary();
 checkC03GrpcTopologyBoundary();
 checkC04FrontendConsumerBoundary();
 checkC15bSystemMapBoundary();
+checkCampaignCertificationRegistry();
 checkPlannerHandoffIntegrity();
 checkDocumentationTruth();
 checkProjectStateIntegrity();

@@ -222,31 +222,66 @@ and the spec-derived witness (C-09) remain unimplemented and report
 
 ### Project-state v2 (machine-checked truth block)
 
-Each live anchor names a DIFFERENT checkpoint, so the five are not synonyms
-and must never be bulk-set to HEAD:
+Each anchor claims a DIFFERENT kind of evidence. They may coincide, but they
+are never synonyms and must never be bulk-set to HEAD — each advances only
+when its OWN evidence exists.
 
 | Field | Claims | Current value | Why |
 | --- | --- | --- | --- |
-| `LAST_SUBSTANTIVE_IMPLEMENTATION_SHA` | the last commit that changed implementation AND was validated | `7879660` | where the C-11 `PROD_OBSERVE` kernel closed, including the DEF-C11-6 fixture repair | where R-11's proxy-lease contract, durable gate receipts and repaired hardening rules landed; the commits after it changed documentation only |
-| `LAST_LOCALLY_VALIDATED_SHA` | the last commit where the local quality gate passed | `7879660` | `gate:local` PASS, all eleven groups, receipt `receipt:sha256:2ff143e71ea8974847053723` |
-| `LAST_CLEAN_VALIDATED_SHA` | the last commit where the clean Node 20 gate passed | `7879660` | `gate:clean` PASS, Node 20, eleven groups, `siblingWrites: 0`, inner receipt `receipt:sha256:997ebf6461843448173e889d` |
-| `CI_OBSERVED_SHA` | the commit whose CI result was observed | `2a64369` | run `33653818653`, which FAILED `PROJECT_TRUTH` — recorded as `EXECUTED_FAIL` rather than left naming an ancestor |
-| `CI_EXECUTED_SHA` | the commit CI actually executed the gate at | `3c4756c` | same run; both `EXECUTED_PASS` and `EXECUTED_FAIL` require observed == executed |
+| `LAST_SUBSTANTIVE_IMPLEMENTATION_SHA` | the last commit that changed implementation AND was validated | `29a1bbd` | where C-15b's system-map model, bounded L1-L4 projections, deterministic layout and rebuilt renderer landed, including the DEF-C15B-1 and DEF-C15B-2 repairs; the commits after it changed documentation only |
+| `LAST_LOCALLY_VALIDATED_SHA` | the last commit where the local quality gate passed | `c770721` | `gate:local` PASS, all eleven required groups |
+| `LAST_CLEAN_VALIDATED_SHA` | the last commit where the clean Node 20 gate passed | `c770721` | `gate:clean` PASS, Node 20, eleven groups, `siblingWrites: 0`, inner receipt `receipt:sha256:ba8c0db14231f77bc32dbbd7` |
+| `CI_OBSERVED_SHA` | the commit whose CI result was observed | `c770721` | run `33750522362` / job `100632776636` |
+| `CI_EXECUTED_SHA` | the commit CI actually executed the gate at | `c770721` | same run; both `EXECUTED_PASS` and `EXECUTED_FAIL` require observed == executed, and this one is `EXECUTED_PASS` with receipt `receipt:sha256:2f18e3765638cb523b58aeea` |
 
-The anchors deliberately name DIFFERENT commits, and the ordering constraint is
-real rather than bureaucratic: `npm run project:check` refuses a baseline whose
-CI anchor certifies a commit older than the validated implementation it claims
-to cover (C-10.5 A10), classifying the intervening range rather than trusting
-the fields to agree with each other. So a campaign that changes implementation
-CANNOT have a self-consistent baseline until CI has executed at that
-implementation. That is why the substantive anchor advances here while the
-validation and CI anchors do not: they are advanced when their own evidence
-exists, never as a side effect.
+Two further roles are deliberately NOT in that table, because neither is a
+persisted anchor:
 
-R-11 note: these three prose "Current value" cells previously read `23523cc`
-while the machine-checked block below already said `c763c05`. The validator
-does not read this table, so the drift was invisible to it — the prose is
-reconciled here to the values the block actually carries.
+- **live HEAD** is discovered from Git, never stored. `LIVE_HEAD_SHA` and
+  `FINAL_DOCUMENTATION_SHA` carry the marker `DISCOVER_FROM_GIT` for exactly
+  this reason, and `Current SHA` / `CURRENT_LOCAL_HEAD` / `CURRENT_REMOTE_HEAD`
+  / `LAST_PUSHED_SHA` are legacy historical compatibility fields that must
+  never be read as live authority.
+- **documentation descendants** are checkpoint ADVANCES, not implementation
+  commits. A documentation-only commit after the substantive anchor leaves that
+  anchor where it is; the validator classifies the range as
+  `CHECKPOINT_ADVANCE` when every change is on the continuity/documentation
+  allowlist, and as `STALE_IMPLEMENTATION_BASELINE` the moment any
+  implementation, source, test or config path moves. `LAST_DOCUMENTATION_
+  CHECKPOINT_SHA` may name such a descendant, and it can never masquerade as
+  the implementation role.
+
+**Certification** is a stronger claim than validation. Local and clean gates
+are self-observed; certification requires exact-head GitHub Actions to have
+executed the gate at the very commit being certified, with observed ==
+executed. That is why `FINAL_CI_AUTHORITY` is
+`GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT` and not the local receipt.
+
+The ordering constraint between these is real rather than bureaucratic:
+`npm run project:check` refuses a baseline whose CI anchor certifies a commit
+older than the validated implementation it claims to cover (C-10.5 A10),
+classifying the intervening range rather than trusting the fields to agree
+with each other. So a campaign that changes implementation CANNOT have a
+self-consistent baseline until CI has executed at that implementation. When a
+campaign's substantive anchor advances first and its validation and CI anchors
+lag, that is the protocol working, not drift.
+
+Drift notes, preserved as history rather than rewritten:
+
+- R-11: three prose "Current value" cells once read `23523cc` while the
+  machine-checked block already said `c763c05`.
+- R-12: this table then drifted again, and further. Its cells named `7879660`,
+  `2a64369` and `3c4756c` with a C-11/R-11 narrative — including a CI anchor
+  describing run `33653818653` as an `EXECUTED_FAIL` on `PROJECT_TRUTH` — while
+  the machine block below had already advanced to C-15b at `29a1bbd` /
+  `c770721` with `EXECUTED_PASS`. The `LAST_SUBSTANTIVE_IMPLEMENTATION_SHA` row
+  was additionally MALFORMED: six cells in a five-column table, concatenating a
+  C-11 "Why" with a leftover R-11 "Why". The validator does not read this
+  table, so both drifts were invisible to it; that is precisely why the prose is
+  reconciled by hand here, cell by cell, rather than bulk-set. The failed run
+  `33653818653` remains a true historical record of how the C-11 sequence
+  terminated and is retained under "Why two CI anchors recorded a FAILURE on the
+  way here" below — it is simply no longer the CURRENT CI anchor.
 
 
 ```
@@ -361,7 +396,15 @@ documentation commit to certify it, forever. A documentation-only descendant
 changes no input the gate consumes for behaviour, so it does not invalidate the
 certification of its substantive ancestor.
 
-| Role | Means | Current value |
+The ROLE DEFINITIONS below are permanent. The values beside them are the ones
+this section was written to document — the C-11 closure — and they are pinned
+there deliberately, by the same argument the section itself makes: a value
+defined as "the newest one" cannot be written truthfully. For the CURRENT
+anchors, read the machine-checked block under "Project-state v2" above; it is
+the only place those advance. R-12 relabelled this column after it had been
+left reading `Current value` while the machine block had moved on to C-15b.
+
+| Role | Means | Value at the C-11 closure this section documents (historical) |
 | --- | --- | --- |
 | Substantive implementation checkpoint | last commit that changed implementation AND was validated | `7879660` (C-11) |
 | Local-validation checkpoint | last commit where `gate:local` was recorded green | `7879660` |
