@@ -1,7 +1,7 @@
 # EXECUTION PROMPT — C-16 Expected Information Gain + Orphaned Ownership Closure
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
-Status: IN_PROGRESS
+Status: COMPLETE
 Campaign ID: nightwatch-eig-prioritization-c16-v1
 OpenSpec: openspec/changes/nightwatch-eig-prioritization-c16-v1/
 Planned-From: 529b02a8d54a951eda1636e144a05a7442238c5b

@@ -74,13 +74,13 @@ a census number the ledger actually carries.
 ## Milestones
 
 - M1 Task record, OpenSpec change, orphan definitions established — COMPLETE
-- M2 Ownership assignment and master ledger closure — NOT_STARTED
-- M3 EIG factor model: bounded levels, UNKNOWN handling — NOT_STARTED
-- M4 Exact integer ranking with total tie-breaking — NOT_STARTED
-- M5 Explainability: factor breakdown and reason codes — NOT_STARTED
-- M6 G-16 doc/ledger figure check — NOT_STARTED
-- M7 Authority-independence proof and hardening probes — NOT_STARTED
-- M8 Validation, integration, exact-head CI, closure — NOT_STARTED
+- M2 Ownership assignment and master ledger closure — COMPLETE
+- M3 EIG factor model: bounded levels, UNKNOWN handling — COMPLETE
+- M4 Exact integer ranking with total tie-breaking — COMPLETE
+- M5 Explainability: factor breakdown and reason codes — COMPLETE
+- M6 G-16 doc/ledger figure check — COMPLETE
+- M7 Authority-independence proof and hardening probes — COMPLETE
+- M8 Validation, integration, exact-head CI, closure — COMPLETE
 
 ## Validation Strategy
 

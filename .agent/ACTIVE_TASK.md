@@ -3,22 +3,23 @@
 Task ID: nightwatch-eig-prioritization-c16-v1
 Phase: EXPECTED_INFORMATION_GAIN_C16_V1
 Title: C-16 Expected Information Gain + Orphaned Ownership Closure
-Status: IN_PROGRESS
+Status: COMPLETE
 Task directory: .agent/tasks/nightwatch-eig-prioritization-c16-v1
 Starting SHA: 529b02a8d54a951eda1636e144a05a7442238c5b
-Last validated implementation SHA: 529b02a8d54a951eda1636e144a05a7442238c5b
-Last checkpoint: both orphans assigned to C-16 and implemented — G-16 as a one-derived-figure-source ledger with four live figures tagged in docs/CURRENT_STATE.md, and EIG as six bounded integer factor levels with an exact rational score and total tie-breaking; 37/37 suite, 8/8 negative probes, canonical regression 3,556/3,543/13/0
-Current milestone: M8 — validation, integration, exact-head CI and closure
-Next action: re-run gate:local and then gate:clean now that the task scaffolding is complete, then integrate by verified fast-forward and observe exact-head CI
+Last validated implementation SHA: 7fff8159fd044ca19933caa2a2bef6052fad143c
+Last checkpoint: exact-head GitHub run 33811693944 at d863a7f passed all eleven required groups on Node 20 with receipt receipt:sha256:24fb235d1acf6131cae7c7fd; both gates PASS with siblingWrites 0; canonical regression 3,556/3,543/13/0; both orphans assigned to C-16 and implemented, with G-16 policing four live census figures; 8/8 negative probes detected; CI skips unchanged at 39
+Current milestone: COMPLETE / STOP — M1 through M8 are closed and all eleven acceptance rows PASS
+Next action: STOP — C-16 is COMPLETE and certified. The next authorized campaign is C-07 derived semantics and generated DEV targets; C-06G and C-08b are both blocked and C-12 remains NOT AUTHORIZED
 Authorization class: NIGHTWATCH_EXPECTED_INFORMATION_GAIN_C16_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 529b02a8d54a951eda1636e144a05a7442238c5b
-LAST_VALIDATED_IMPLEMENTATION_SHA: 529b02a8d54a951eda1636e144a05a7442238c5b
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 529b02a8d54a951eda1636e144a05a7442238c5b
+LAST_VALIDATED_IMPLEMENTATION_SHA: 7fff8159fd044ca19933caa2a2bef6052fad143c
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 7fff8159fd044ca19933caa2a2bef6052fad143c
+LAST_DOCUMENTATION_CHECKPOINT_SHA: d863a7fe4c55e9172a473d925f9c131560a23be7
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
-PHASE_EXPECTED_INFORMATION_GAIN_C16_V1_STATUS: IN_PROGRESS
+PHASE_EXPECTED_INFORMATION_GAIN_C16_V1_STATUS: COMPLETE
 
 ## Routing and safety
 

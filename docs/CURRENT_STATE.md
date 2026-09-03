@@ -534,6 +534,76 @@ regression 3,519 / 3,506 / 13 skipped / 0 failed. Both gates PASS at
 37 → 39, exactly the two sibling-gated cases, predicted before the run. C-09
 admits expectations and evaluates none; zero runtime contact.
 
+## C-16 expected information gain, and G-16 (current)
+
+Two requirements belonged to no campaign. The independent review's F-28 maps
+`G-01`…`G-15` onto campaigns and finds `G-16` unowned, and separately that EIG
+prioritisation (`design.md §9.2`) appears in no campaign's scope. Both are now
+**owned by C-16 and implemented**, and the master ledger's orphan row is closed
+with them recorded SEPARATELY.
+
+**They are unrelated.** The ledger row reads "G-16 and EIG owners", which
+invites treating them as one prioritisation concern — and doing so would have
+produced an EIG module while leaving the documentation-truth requirement
+unimplemented.
+
+**G-16 — one derived figure source.** Its definition is "stale duplicate
+figures in durable docs", and its row records that manual correction was
+considered and **REJECTED because it recurs**, so a mechanical check was the
+required shape of the fix. `src/core/source/censusFigureLedger.ts` declares
+each census measure, its current value and the campaign that established it,
+and refuses any tagged figure the ledger does not support. The risk was live:
+this overnight campaign wrote measured figures into this very document all
+night, and four are now tagged and gate-checked. A superseded narrative is
+RETIRED by one explicit `<!--census:historical-->` marker rather than deleted.
+
+The figure vocabulary is an explicit tag, not free-text number scanning —
+guessing which numbers in a document are census figures yields false positives
+(receipt digests, run ids, SHAs) and false negatives, and neither is acceptable
+in a truth check. A first draft exempted any line containing `was `, which
+would have exempted a large fraction of English prose; an exemption that fires
+by accident is worse than none, because the check then passes while proving
+nothing.
+
+**EIG — the formula's shape, not its arithmetic.** Encoding §9.2 literally
+fails two requirements at once: a float score makes the ORDERING depend on
+rounding, and a multiplicative form turns a single zero factor into a deletion.
+So every factor is a bounded integer level, the score is an exact rational held
+as numerator and denominator and never divided, and ordering compares `a/b`
+against `c/d` as `a·d` against `c·b` in integers.
+
+Each factor carries an explicit `UNKNOWN` level sitting **strictly** between
+its minimum and maximum, because a zero DELETES a target and a maximum PROMOTES
+one — and "we do not know" is neither. Ties break on target id, giving a total
+order, so two runs cannot disagree. `change_recency` consumes proven
+source-change evidence and no level names a duration, which finally gives the
+orphaned change-intelligence layer the consumer §9.2 intended. `contract_depth`
+maps exactly onto C-09's expectation classes. §9.2's explicit non-goal is
+asserted directly: a broad shallow sweep scores worse than a deep pass over new
+contracts, because `cost` sits in the denominator.
+
+**A high score grants nothing** — not admission, not DEV execution, not
+production, not replay, not credentials, not environment access. The projection
+carries `grantsAuthority: false` as data, no authority surface imports the
+module, it takes no admission or credential input, and a ranked entry has no
+`eligible`, `admitted` or `authorized` field at all. EIG produces an ORDER and
+is not yet wired to a consumer; using it to order a live DEV cohort is C-07's
+work, and the separation is deliberate.
+
+Certified at exact-head CI run `33811693944` at
+`d863a7fe4c55e9172a473d925f9c131560a23be7`, eleven required groups PASS on
+Node 20 with receipt `receipt:sha256:24fb235d1acf6131cae7c7fd`. Canonical
+regression 3,556 / 3,543 / 13 skipped / 0 failed. Both gates PASS at `70ef1d6`
+with `siblingWrites: 0`. 8 negative probes detected. **CI skips did not move
+(39 → 39), so all 37 new cases execute in CI** — including every G-16 case, so
+the documentation-truth check is gate-enforced rather than locally verified.
+
+The three anchors deliberately name different commits: implementation
+`7fff815`, both gates `70ef1d6` (a documentation descendant), CI `d863a7f`.
+The first gate attempt FAILED at `HANDOFF_TRUTH` because C-16's task
+scaffolding had not been written before the battery was run; that is recorded
+rather than smoothed over.
+
 ### Project-state v2 (machine-checked truth block)
 
 Each anchor claims a DIFFERENT kind of evidence. They may coincide, but they
@@ -542,7 +612,7 @@ when its OWN evidence exists.
 
 | Field | Claims | Current value | Why |
 | --- | --- | --- | --- |
-| `LAST_SUBSTANTIVE_IMPLEMENTATION_SHA` | the last commit that changed implementation AND was validated | `481cb35` | C-05's closing implementation commit, which added the sibling guard that repaired DEF-C05-5; the admission authority, read ledger and de-persistence landed across the commits leading to it |
+| `LAST_SUBSTANTIVE_IMPLEMENTATION_SHA` | the last commit that changed implementation AND was validated | `7fff815` | C-05's closing implementation commit, which added the sibling guard that repaired DEF-C05-5; the admission authority, read ledger and de-persistence landed across the commits leading to it |
 | `LAST_LOCALLY_VALIDATED_SHA` | the last commit where the local quality gate passed | `85dd8a6` | `gate:local` PASS, all eleven required groups, receipt `receipt:sha256:0cc29da4b4503cd981855940` |
 | `LAST_CLEAN_VALIDATED_SHA` | the last commit where the clean Node 20 gate passed | `85dd8a6` | `gate:clean` PASS, Node 20, eleven groups, `siblingWrites: 0`, inner receipt `receipt:sha256:841e75dcd27b04660842fa24`, outer `clean-receipt:sha256:3832909fbab478cff4828f50` |
 | `CI_OBSERVED_SHA` | the commit whose CI result was observed | `4e0bfc1` | run `33796281169`. It names a LATER commit than the two validation anchors because the local and clean gates ran at `85dd8a6`, CI then failed at `8cb055c` on DEF-C05-5, and the repair produced `4e0bfc1` — each anchor advances on its own evidence, and the intervening failure is recorded below rather than erased |
@@ -604,11 +674,11 @@ RELEASE_CERTIFICATION_PROTOCOL_VERSION: nightwatch.release-certification.v1
 PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
 RELEASE_CHECKPOINT_SHA: 2576c5751d33bb40046246e8fcf57c7cc5c30a57
 LIVE_HEAD_SHA: DISCOVER_FROM_GIT
-LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: 481cb356705ec7f8c894d5a2257218eafb70e32d
-LAST_LOCALLY_VALIDATED_SHA: 481cb356705ec7f8c894d5a2257218eafb70e32d
-LAST_CLEAN_VALIDATED_SHA: 481cb356705ec7f8c894d5a2257218eafb70e32d
-CI_OBSERVED_SHA: 68f479b0035b94793446fbcadd8c8d262c78140e
-CI_EXECUTED_SHA: 68f479b0035b94793446fbcadd8c8d262c78140e
+LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: 7fff8159fd044ca19933caa2a2bef6052fad143c
+LAST_LOCALLY_VALIDATED_SHA: 70ef1d6ecbdaa8fc3df8b16362b78a05f08063b4
+LAST_CLEAN_VALIDATED_SHA: 70ef1d6ecbdaa8fc3df8b16362b78a05f08063b4
+CI_OBSERVED_SHA: d863a7fe4c55e9172a473d925f9c131560a23be7
+CI_EXECUTED_SHA: d863a7fe4c55e9172a473d925f9c131560a23be7
 CI_STATUS: EXECUTED_PASS
 FINAL_DOCUMENTATION_SHA: DISCOVER_FROM_GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
@@ -636,11 +706,11 @@ informational and are not interpreted as current authority.
 LIVE_STATE_PROTOCOL_VERSION: nightwatch.live-state.v1
 LIVE_TASK_ID: nightwatch-eig-prioritization-c16-v1
 LIVE_PHASE: EXPECTED_INFORMATION_GAIN_C16_V1
-LIVE_TASK_STATUS: IN_PROGRESS
+LIVE_TASK_STATUS: COMPLETE
 LIVE_PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
 LIVE_PROJECT_VERDICT_EFFECT: PRESERVE
-LIVE_NEXT_ACTION_STATE: CONTINUE
-LIVE_COMPLETION_CLAIM: NONE
+LIVE_NEXT_ACTION_STATE: STOP
+LIVE_COMPLETION_CLAIM: COMPLETE
 ```
 
 ### Exact-head CI is green (current live CI state)
