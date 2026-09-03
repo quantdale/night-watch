@@ -44,6 +44,11 @@ const APPROVED_ROOTS: Readonly<Record<string, readonly string[]>> = Object.freez
  * and no whole-repository completeness is ever claimed for it. */
 const REPOSITORY_MAX_FILES: Readonly<Record<string, number>> = Object.freeze({
   'mobingilabs/ouchan': 4096,
+  // C-04. `ripple-ui` `src` holds 1,329 files and the walk charges every
+  // considered directory entry, so at 1,024 it stopped after 773 — before
+  // `src/vuex/api/`, which is where almost every HTTP call site lives. The
+  // measured yield at the old budget was ONE edge.
+  'mobingilabs/ripple-ui': 4096,
 });
 
 /** The enumeration walk charges bytes as well as entries, so a file ceiling
@@ -62,7 +67,7 @@ const DEFAULT_MAX_TOTAL_BYTES = 16_000_000;
 // C-02b adds `.proto`. No root and no repository is added: the protobuf
 // source it admits already lived inside `alphauslabs/blueapi` `billing` and
 // `mobingilabs/ouchan` `pkg`, both approved since Phase 25.
-const APPROVED_EXTENSIONS = ['.php', '.ts', '.tsx', '.js', '.jsx', '.go', '.json', '.yaml', '.yml', '.proto'] as const;
+const APPROVED_EXTENSIONS = ['.php', '.ts', '.tsx', '.js', '.jsx', '.go', '.json', '.yaml', '.yml', '.proto', '.vue'] as const;
 
 export const PHASE25_APPROVED_REPOSITORY_IDS = Object.freeze(
   RIPPLE_REPOSITORIES.filter((repository) => repository.scope === 'IN_SCOPE' && APPROVED_ROOTS[repository.repoId] !== undefined).map((repository) => repository.repoId).sort(),

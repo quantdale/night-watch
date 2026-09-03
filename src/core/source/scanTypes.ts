@@ -14,10 +14,10 @@ export const REAL_SOURCE_SNAPSHOT_INVENTORY_VERSION = 'nightwatch.real-source-sn
 export const REAL_SOURCE_SCAN_EXTRACTOR_VERSION = 'nightwatch.real-source-scan-extractor.v1' as const;
 export const REAL_SOURCE_INVENTORY_COMPLETENESS_VERSION = 'nightwatch.source-inventory-completeness.v1' as const;
 
-export const SOURCE_SCAN_LANGUAGES = ['PHP', 'TYPESCRIPT', 'JAVASCRIPT', 'GO', 'OPENAPI', 'YAML', 'PROTOBUF'] as const;
+export const SOURCE_SCAN_LANGUAGES = ['PHP', 'TYPESCRIPT', 'JAVASCRIPT', 'GO', 'OPENAPI', 'YAML', 'PROTOBUF', 'VUE'] as const;
 export type SourceScanLanguage = (typeof SOURCE_SCAN_LANGUAGES)[number];
 
-export const SOURCE_SCAN_EXTENSIONS = ['.php', '.ts', '.tsx', '.js', '.jsx', '.go', '.json', '.yaml', '.yml', '.proto'] as const;
+export const SOURCE_SCAN_EXTENSIONS = ['.php', '.ts', '.tsx', '.js', '.jsx', '.go', '.json', '.yaml', '.yml', '.proto', '.vue'] as const;
 export type SourceScanExtension = (typeof SOURCE_SCAN_EXTENSIONS)[number];
 
 export const SOURCE_SCAN_ANALYZERS = [

@@ -66,6 +66,10 @@ const EXTENSION_LANGUAGE: Readonly<Record<SourceScanExtension, SourceScanLanguag
   // file it reaches was already inside an owner-approved root and was being
   // rejected SOURCE_LANGUAGE_UNSUPPORTED on its extension alone.
   '.proto': 'PROTOBUF',
+  // C-04. A LANGUAGE admission like `.proto` before it: 859 `.vue` files were
+  // already inside the approved `ripple-ui` `src` root and were rejected
+  // SOURCE_LANGUAGE_UNSUPPORTED on their extension alone.
+  '.vue': 'VUE',
 };
 
 function invalid(reason: string): never {

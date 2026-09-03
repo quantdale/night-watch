@@ -15,39 +15,52 @@ JavaScript source, so the System Map can show which UI code calls which backend
 operation — and classify every path so that no edge built from a non-literal
 path is ever a `SOURCE_FACT`.
 
-## Measured ceiling, recorded before implementation
+## Measured ceiling — first estimate CORRECTED
 
 The approved frontend universe is one repository. `mobingilabs/ripple-ui@d80b161b`
 `src` holds 1,329 files (859 `.vue`, 387 `.js`). `mobingilabs/ripple-api` `src`
 is 95 PHP files and zero frontend call sites.
 
-Candidate HTTP call sites in that universe, by receiver:
+**The pre-implementation estimate recorded here was wrong and is corrected.**
+It said 211 candidate call sites and concluded that `>= 400` failed "by roughly
+a factor of two". That estimate was taken with a line-oriented grep, and
+ripple-ui writes most of its calls across two lines:
 
-| Receiver | Calls |
+```js
+return baseApi
+  .get(url)
+```
+
+A line-oriented count cannot see those. Counted whitespace-insensitively the
+figure is **388**, not 211 — the estimate missed 45% of the corpus, and its
+"factor of two" conclusion was an artefact of the measuring instrument rather
+than a property of the source.
+
+The authoritative measurement is the parser's, over a COMPLETE enumeration of
+all 1,329 files:
+
+| Measure | Value |
 |---|---|
-| `baseApi` | 123 |
-| `blueApi` | 67 |
-| `emailAuthApi` | 5 |
-| `mfaApi` | 4 |
-| `usersApi` | 3 |
-| `loginApi` | 3 |
-| `statusApi` | 1 |
-| `streamPromise` (gRPC-chunk) | 5 |
-| **total** | **211** |
+| consumer edges | **382** |
+| `SOURCE_FACT` | 348 (`LITERAL` 138, `STRUCTURAL` 210) |
+| `INFERENCE` | 4 (`PARTIAL_SEGMENT`) |
+| `UNKNOWN` | 30 (`DYNAMIC` 24, `UNRESOLVED` 6) |
+| from `.js` | 360 |
+| from `.vue` | 22 |
+| enumeration | COMPLETE, 1,329 of 1,329, 0 dropped |
 
-All eight axios instances are created in one file, `src/axios.config.js`, via
-`axios.create`. `fetch(` appears 189 times but is overwhelmingly the no-argument
-Vuex action `fetch()`, not an HTTP call.
+382 rather than 388 because the parser correctly excludes 7 commented-out
+calls that a text count includes. The parser is the more accurate instrument in
+both directions.
 
-**The `≥ 400` acceptance is therefore unreachable in the approved universe**, by
-a factor of roughly two, and no amount of parser quality changes that. Reaching
-it would require admitting a further frontend REPOSITORY, which §0 of the
-authorization forbids and which belongs to C-05. This is recorded now, before
-implementation, so that the shortfall is a measured property of the boundary
-rather than a discovery presented at the end.
+A further 5 `streamPromise(...)` gRPC-stream call sites exist and are NOT
+supported by this campaign; they are recorded as a known unsupported pattern so
+the yield statement is complete rather than quietly narrowed.
 
-The campaign therefore optimises for correct classification of the 211 real
-call sites, and reports the yield truthfully against the criterion.
+So the `>= 400` criterion **FAILS at 382**, short by 18 — about 4.5%, not a
+factor of two. The shortfall is attributable to the repository boundary: the
+approved frontend universe is a single repository, and reaching 400 requires
+admitting another, which the authorization forbids and C-05 owns.
 
 ## Scope
 
@@ -90,9 +103,9 @@ a hypothetical one (§37).
 
 1. Frontend → route edges derived from the approved universe, with the measured
    total reported per repository and per class. The historical `≥ 400`
-   criterion is evaluated truthfully and is expected to FAIL at roughly 211;
-   the shortfall must be attributed to the repository boundary, not to parser
-   quality.
+   criterion is evaluated truthfully and FAILS at 382; the shortfall is
+   attributed to the repository boundary, not to parser quality, and the
+   corrected measurement replaces the erroneous 211 estimate.
 2. **Zero** `SOURCE_FACT` edges from a non-literal path. This is absolute.
 3. No query values, account identifiers or user identifiers in durable
    evidence.

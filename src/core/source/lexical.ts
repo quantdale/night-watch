@@ -113,7 +113,19 @@ function skipTemplateOrRawString(sourceText: string, start: number, language: St
 }
 
 /** Tokenize only the lexical material needed by static route discovery. */
-export function tokenizeStaticSource(sourceText: string, language: StaticLexicalLanguage): readonly StaticLexicalToken[] | null {
+export interface StaticLexicalOptions {
+  /** C-04 — keep the raw text of a template literal.
+   *
+   * Route discovery has never needed it: a template is not a literal route, so
+   * dropping the body was the safe default and remains the default. C-04 needs
+   * the body to decide whether an interpolation fills a whole path segment
+   * (`/v1/accounts/{}`) or splits one (`/v1/acc${x}`), which is the difference
+   * between a structural fact and an inference. Off unless asked for, so every
+   * existing caller lexes byte-identically. */
+  readonly preserveTemplates?: boolean;
+}
+
+export function tokenizeStaticSource(sourceText: string, language: StaticLexicalLanguage, options: StaticLexicalOptions = {}): readonly StaticLexicalToken[] | null {
   if (sourceText.length > MAX_STATIC_SOURCE_CHARS) return null;
   const tokens: StaticLexicalToken[] = [];
   let index = 0;
@@ -138,7 +150,8 @@ export function tokenizeStaticSource(sourceText: string, language: StaticLexical
     if (character === '`') {
       const next = skipTemplateOrRawString(sourceText, index, language);
       if (next === null) return null;
-      tokens.push({ kind: 'STRING', value: '', quote: '`' });
+      const raw = options.preserveTemplates === true ? sourceText.slice(index + 1, Math.max(index + 1, next - 1)) : '';
+      tokens.push({ kind: 'STRING', value: raw.length > MAX_STATIC_STRING_CHARS ? '' : raw, quote: '`' });
       index = next;
       continue;
     }

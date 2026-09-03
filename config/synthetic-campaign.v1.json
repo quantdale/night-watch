@@ -34,6 +34,8 @@
     "tests/unit/c02bProtoSurface.test.ts",
     "tests/unit/c02bProtoCorroboration.test.ts",
     "tests/unit/c03GoRegistration.test.ts",
-    "tests/unit/c03GrpcTopology.test.ts"
+    "tests/unit/c03GrpcTopology.test.ts",
+    "tests/unit/c04FrontendConsumer.test.ts",
+    "tests/unit/c04FrontendGraph.test.ts"
   ]
 }

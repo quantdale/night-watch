@@ -917,12 +917,12 @@ function observationsFor(input: { readonly access: SiblingSourceAccess; readonly
   // proto route carries no handler path at all, so this guard is belt and
   // braces — but it keeps the cast below honest rather than widening
   // `SourceLanguage` to a language no analyzer can read.
-  if (match === undefined || match.language === null || match.language === 'YAML' || match.language === 'PROTOBUF') return { observations: [], responseFlow: null, responseFlowElapsedMs: 0 };
+  if (match === undefined || match.language === null || match.language === 'YAML' || match.language === 'PROTOBUF' || match.language === 'VUE') return { observations: [], responseFlow: null, responseFlowElapsedMs: 0 };
   const sourceText = input.access.reader.readFile(input.operation.repository, match.relativePath);
   if (sourceText === null) return { observations: [], responseFlow: null, responseFlowElapsedMs: 0 };
   const artifact: SourceAnalyzerArtifact = {
     artifactId: `surface-artifact-${input.operation.sourceSha.slice(0, 12)}`,
-    language: match.language as Exclude<SourceScanLanguage, 'YAML' | 'PROTOBUF'>,
+    language: match.language as Exclude<SourceScanLanguage, 'YAML' | 'PROTOBUF' | 'VUE'>,
     repoId: input.operation.repository,
     sha: input.operation.sourceSha,
     relativePath: match.relativePath,

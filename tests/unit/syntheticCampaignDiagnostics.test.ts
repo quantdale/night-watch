@@ -74,6 +74,8 @@ test.describe('synthetic campaign manifest', () => {
       'tests/unit/c02bProtoCorroboration.test.ts',
       'tests/unit/c03GoRegistration.test.ts',
       'tests/unit/c03GrpcTopology.test.ts',
+      'tests/unit/c04FrontendConsumer.test.ts',
+      'tests/unit/c04FrontendGraph.test.ts',
     ]) expect(manifest.files).toContain(suite);
   });
 });

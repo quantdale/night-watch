@@ -2656,6 +2656,103 @@ function checkC03GrpcTopologyBoundary() {
   }
 }
 
+/**
+ * C-04 frontend consumer invariants.
+ *
+ * One rule here matters more than the rest: an edge built from a non-literal
+ * path must never be a SOURCE_FACT. The others keep the modules data-only and
+ * keep customer values out of durable evidence.
+ */
+function checkC04FrontendConsumerBoundary() {
+  const modules = ['src/core/source/vueSfc.ts', 'src/core/source/frontendConsumer.ts', 'src/core/source/frontendJoin.ts'];
+  for (const file of modules) {
+    let source;
+    try {
+      source = read(file);
+    } catch {
+      fail(`C-04 the frontend module ${file} is missing`);
+      return;
+    }
+    for (const [pattern, description] of [
+      [/from\s+['"]node:fs['"]|require\(['"](?:node:)?fs['"]\)/, 'filesystem authority'],
+      [/from\s+['"]node:child_process['"]/, 'process authority'],
+      [/from\s+['"]node:(?:net|http|https|dgram|tls)['"]/, 'network authority'],
+      [/\beval\s*\(|new\s+Function\s*\(/, 'dynamic evaluation'],
+      [/from\s+['"]@vue\/compiler-sfc['"]|from\s+['"]typescript['"]|jsdom|puppeteer/, 'a frontend toolchain dependency'],
+    ]) {
+      if (pattern.test(source)) fail(`${file} contains ${description}; the C-04 frontend path is data-in / data-out only`);
+    }
+  }
+
+  const consumer = read('src/core/source/frontendConsumer.ts');
+  const join = read('src/core/source/frontendJoin.ts');
+
+  // --- no SOURCE_FACT from a non-literal path ---
+  if (!/if \(pathClass === 'LITERAL' \|\| pathClass === 'STRUCTURAL'\) return 'SOURCE_FACT';/.test(consumer)) {
+    fail("C-04 only LITERAL and STRUCTURAL paths may yield SOURCE_FACT; the classifier must state that exactly");
+  }
+  if ((consumer.match(/return 'SOURCE_FACT';/g) ?? []).length !== 1) {
+    fail('C-04 exactly one construction may return SOURCE_FACT from the path classifier');
+  }
+  if (!/pathClass: 'PARTIAL_SEGMENT'/.test(consumer) || !/pathClass: 'DYNAMIC'/.test(consumer)) {
+    fail('C-04 the non-literal path classes must remain distinguishable');
+  }
+
+  // --- query and hash never persisted ---
+  if (!/const hashIndex = raw\.indexOf\('#'\);/.test(consumer) || !/const queryIndex = withoutHash\.indexOf\('\?'\);/.test(consumer)) {
+    fail('C-04 query and hash must be stripped before classification, so a runtime value can never be persisted');
+  }
+
+  // --- the join never upgrades ---
+  if (!/EVIDENCE_RANK\[left\] <= EVIDENCE_RANK\[right\] \? left : right/.test(join)) {
+    fail('C-04 the join must take the WEAKER evidence class of its two inputs');
+  }
+  if (/joinedEvidenceClass: 'SOURCE_FACT'/.test(join)) {
+    fail('C-04 the join must never assign SOURCE_FACT directly; it is derived from the weaker input');
+  }
+
+  // --- method never defaulted ---
+  if (/method: 'GET'/.test(consumer) || /method \?\? 'GET'/.test(consumer)) {
+    fail("C-04 the HTTP method must never be defaulted to GET");
+  }
+
+  // --- only declared clients are clients ---
+  if (!/tokens\[index \+ 2\]\?\.value !== 'axios'/.test(consumer) || !/tokens\[index \+ 4\]\?\.value !== 'create'/.test(consumer)) {
+    fail('C-04 an HTTP client must be recognised from axios.create; otherwise Cookies.get becomes an HTTP GET');
+  }
+
+  // --- the universe is unchanged ---
+  const approved = read('src/core/source/approvedScan.ts');
+  const rootsBlock = /const APPROVED_ROOTS[^=]*=\s*Object\.freeze\(\{([\s\S]*?)\}\);/.exec(approved);
+  if (rootsBlock === null) fail('C-04 could not read the APPROVED_ROOTS declaration');
+  else if (/blueinternal|wave-api/.test(rootsBlock[1])) fail('C-04 must not admit blueinternal or wave-api');
+
+  // --- the shared tokenizer default is unchanged ---
+  const lexical = read('src/core/source/lexical.ts');
+  if (!/options\.preserveTemplates === true \? sourceText\.slice/.test(lexical)) {
+    fail('C-04 template preservation must stay opt-in; every existing caller must lex byte-identically');
+  }
+
+  // --- every C-04 certification suite must be gate-registered ---
+  let compatibility;
+  let synthetic;
+  try {
+    compatibility = JSON.parse(read('config/semantic-compatibility.v1.json'));
+    synthetic = JSON.parse(read('config/synthetic-campaign.v1.json'));
+  } catch {
+    fail('C-04 the quality-gate manifests must be valid JSON');
+    return;
+  }
+  const registered = new Set([
+    ...(compatibility.phaseSuites ?? []).flatMap((suite) => suite.files ?? []),
+    ...(compatibility.supportFiles ?? []),
+    ...(Array.isArray(synthetic.files) ? synthetic.files : []),
+  ]);
+  for (const suite of ['tests/unit/c04FrontendConsumer.test.ts', 'tests/unit/c04FrontendGraph.test.ts']) {
+    if (!registered.has(suite)) fail(`C-04 certification suite ${suite} is not registered in any authoritative quality-gate group`);
+  }
+}
+
 checkChildProcessBoundaries();
 checkL6ProcessNetworkBoundary();
 checkTargetPolicy();
@@ -2674,6 +2771,7 @@ checkPhase8B10PortfolioIntegrity();
 checkPhase8B1CanonicalPromotionBoundary();
 checkC02bProtobufBoundary();
 checkC03GrpcTopologyBoundary();
+checkC04FrontendConsumerBoundary();
 checkPlannerHandoffIntegrity();
 checkDocumentationTruth();
 checkProjectStateIntegrity();

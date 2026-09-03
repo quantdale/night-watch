@@ -31,22 +31,34 @@ Vuex action convention — and one is a real HTTP call. Treating `fetch(` as an
 HTTP indicator would have manufactured ~188 non-edges and inflated the headline
 number toward the acceptance criterion while measuring nothing.
 
-## A-3 — The acceptance criterion is unreachable, by the boundary rather than
-by the work
+## A-3 — The first ceiling estimate was wrong, and the instrument was the cause
 
-Candidate call sites in the entire approved frontend universe: baseApi 123,
-blueApi 67, emailAuthApi 5, mfaApi 4, usersApi 3, loginApi 3, statusApi 1,
-`streamPromise` 5 — **211**. `mobingilabs/ripple-api` `src` is 95 PHP files
-with zero frontend call sites.
+This audit originally recorded 211 candidate call sites and concluded that the
+`>= 400` criterion failed "by roughly a factor of two". That was measured with
+a line-oriented grep, and ripple-ui writes most calls across two lines:
 
-`≥ 400` therefore fails by roughly a factor of two. The only route to 400 is
-another frontend repository, which §0 of the authorization forbids and which
-C-05 owns.
+```js
+return baseApi
+  .get(url)
+```
 
-Recorded here, before implementation, because a shortfall discovered at the end
-of a campaign reads as an excuse, and the same shortfall measured at the start
-is a property of the boundary. The campaign is scoped accordingly: optimise for
-correct classification of 211 real sites, not for the number.
+Counted whitespace-insensitively the figure is 388. The estimate missed 45% of
+the corpus, and the conclusion drawn from it described the measuring
+instrument rather than the source.
+
+The authoritative number is the parser's, over a COMPLETE enumeration of all
+1,329 files: **382 edges** — 348 `SOURCE_FACT` (138 `LITERAL`, 210
+`STRUCTURAL`), 4 `INFERENCE`, 30 `UNKNOWN`. It is 382 rather than 388 because
+the parser correctly excludes 7 commented-out calls a text count includes.
+
+So `>= 400` fails by 18, roughly 4.5%, and the shortfall is a property of the
+single-repository universe rather than of parser quality. A further 5
+`streamPromise(...)` gRPC-stream sites exist and are deliberately unsupported,
+recorded so the yield statement is complete.
+
+The correction is left visible rather than quietly overwritten: a campaign that
+records a pre-implementation baseline has to be willing to say when the
+baseline was wrong.
 
 ## A-4 — `.vue` is blocked the same way `.proto` was
 
