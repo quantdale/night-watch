@@ -139,8 +139,12 @@ export function layoutSystemMap(input: {
   const placed: LaidOutNode[] = [];
   let maxAcross = 0;
   for (const [layerIndex, members] of [...byLayer.entries()].sort((left, right) => left[0] - right[0])) {
-    const ordered = [...members].sort();
-    ordered.forEach((nodeId, order) => {
+    // `members` is already in nodeId order: `nodes` is sorted on entry, which
+    // is what makes BOTH the truncation choice and the within-layer order
+    // deterministic. A second sort here looked like defence in depth and was
+    // in fact dead code — a negative probe removed it and nothing failed, so
+    // it is gone rather than left standing as a guarantee nothing tests.
+    members.forEach((nodeId, order) => {
       const along = layerIndex * (options.layerGap + (options.direction === 'LEFT_TO_RIGHT' ? options.nodeWidth : options.nodeHeight));
       const across = order * ((options.direction === 'LEFT_TO_RIGHT' ? options.nodeHeight : options.nodeWidth) + options.siblingGap);
       placed.push({

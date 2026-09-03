@@ -2753,6 +2753,108 @@ function checkC04FrontendConsumerBoundary() {
   }
 }
 
+/**
+ * C-15b system map invariants.
+ *
+ * The map is the surface an operator trusts, so the rules that matter are the
+ * ones that would let it lie quietly: an upgraded fact category, a bound that
+ * hides its drop count, a layout whose identity omits a load-bearing input, or
+ * a Control Center that grows a verb.
+ */
+function checkC15bSystemMapBoundary() {
+  const modules = ['src/core/systemMap/model.ts', 'src/core/systemMap/projections.ts', 'src/core/systemMap/layout.ts'];
+  for (const file of modules) {
+    let source;
+    try {
+      source = read(file);
+    } catch {
+      fail(`C-15b the system map module ${file} is missing`);
+      return;
+    }
+    for (const [pattern, description] of [
+      [/from\s+['"]node:fs['"]|require\(['"](?:node:)?fs['"]\)/, 'filesystem authority'],
+      [/from\s+['"]node:child_process['"]/, 'process authority'],
+      [/from\s+['"]node:(?:net|http|https|dgram|tls)['"]/, 'network authority'],
+      [/\beval\s*\(|new\s+Function\s*\(/, 'dynamic evaluation'],
+      [/Date\.now\(\)|new Date\(|Math\.random\(/, 'nondeterminism'],
+    ]) {
+      if (pattern.test(source)) fail(`${file} contains ${description}; the C-15b system map must be deterministic and data-only`);
+    }
+  }
+
+  const model = read('src/core/systemMap/model.ts');
+  const projections = read('src/core/systemMap/projections.ts');
+  const layout = read('src/core/systemMap/layout.ts');
+
+  // --- evidence is never upgraded ---
+  if (!/CATEGORY_RANK\[left\] <= CATEGORY_RANK\[right\] \? left : right/.test(model)) {
+    fail('C-15b weakerFactCategory must return the WEAKER category; a join may never strengthen its inputs');
+  }
+  if (/export function strongerFactCategory/.test(model)) {
+    fail('C-15b must not expose a stronger-category helper; its absence is what guarantees no join can upgrade');
+  }
+
+  // --- bounds report exact drops, not a flag ---
+  for (const field of ['limit', 'total', 'projected', 'dropped', 'truncated', 'remainingUnknown']) {
+    if (!new RegExp(`readonly ${field}:`).test(model)) fail(`C-15b ProjectionBound must carry ${field}; a bare truncated flag cannot say how much was dropped`);
+  }
+  if (!/const dropped = Math\.max\(0, input\.total - input\.projected\);/.test(model)) {
+    fail('C-15b the drop count must be derived from the measured total, never asserted');
+  }
+  if (!/Math\.max\(0, Math\.trunc\(input\.nodeLimit\)\)/.test(projections)) {
+    fail('C-15b projection limits must be clamped before slicing; a negative limit would WIDEN the projection');
+  }
+
+  // --- layout identity binds every load-bearing input ---
+  for (const bound of ['graphDigest', 'engineId', 'engineVersion', 'projectionVersion', 'options']) {
+    if (!new RegExp(`${bound}[,:]`).test(layout)) fail(`C-15b the layout identity must bind ${bound}`);
+  }
+  if (!/layoutDigest: prefixedDigest24\('systemmaplayout', \{[\s\S]{0,400}?engineVersion: LAYOUT_ENGINE_VERSION/.test(layout)) {
+    fail('C-15b the layout digest must include the engine version; a different engine must never collide with this identity');
+  }
+
+  // --- empty is not unmeasured ---
+  if (!/measurement: 'UNMEASURED'/.test(projections)) {
+    fail('C-15b the observed-production-paths query must report UNMEASURED; C-12 has not run and empty must never imply it did');
+  }
+  if (!/MEASUREMENT_STATES = \['MEASURED', 'UNMEASURED'\]/.test(projections)) {
+    fail('C-15b a measured zero and an unmeasured zero must remain distinguishable');
+  }
+
+  // --- the seven-state coverage vocabulary is preserved ---
+  for (const state of ['PROVEN', 'UNPROVEN', 'UNSUPPORTED', 'TRUNCATED', 'STALE', 'UNKNOWN', 'UNMEASURED']) {
+    if (!new RegExp(`'${state}'`).test(model)) fail(`C-15b the coverage vocabulary lost ${state}`);
+  }
+
+  // --- the Control Center gains no authority ---
+  const meta = read('src/controlCenter/adapters/metaAdapter.ts');
+  if (!/executionAuthority: 'NONE'/.test(meta) || !/mutationAuthority: 'NONE'/.test(meta)) {
+    fail('C-15b the Control Center must keep executionAuthority and mutationAuthority NONE');
+  }
+  for (const file of modules) {
+    if (/prod-findings/.test(read(file))) fail(`${file} names the production findings store; C-10's exclusion is absolute`);
+  }
+
+  // --- every C-15b certification suite must be gate-registered ---
+  let compatibility;
+  let synthetic;
+  try {
+    compatibility = JSON.parse(read('config/semantic-compatibility.v1.json'));
+    synthetic = JSON.parse(read('config/synthetic-campaign.v1.json'));
+  } catch {
+    fail('C-15b the quality-gate manifests must be valid JSON');
+    return;
+  }
+  const registered = new Set([
+    ...(compatibility.phaseSuites ?? []).flatMap((suite) => suite.files ?? []),
+    ...(compatibility.supportFiles ?? []),
+    ...(Array.isArray(synthetic.files) ? synthetic.files : []),
+  ]);
+  for (const suite of ['tests/unit/c15bSystemMap.test.ts', 'tests/unit/c15bControlCenterAuthority.test.ts']) {
+    if (!registered.has(suite)) fail(`C-15b certification suite ${suite} is not registered in any authoritative quality-gate group`);
+  }
+}
+
 checkChildProcessBoundaries();
 checkL6ProcessNetworkBoundary();
 checkTargetPolicy();
@@ -2772,6 +2874,7 @@ checkPhase8B1CanonicalPromotionBoundary();
 checkC02bProtobufBoundary();
 checkC03GrpcTopologyBoundary();
 checkC04FrontendConsumerBoundary();
+checkC15bSystemMapBoundary();
 checkPlannerHandoffIntegrity();
 checkDocumentationTruth();
 checkProjectStateIntegrity();

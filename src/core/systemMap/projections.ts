@@ -141,14 +141,20 @@ function finish(input: {
   readonly edgeTotal: number | null;
   readonly measurement?: MeasurementState;
 }): SystemMapProjection {
-  const nodes = [...input.nodes].sort((left, right) => left.nodeId.localeCompare(right.nodeId)).slice(0, input.nodeLimit);
+  // Clamp before slicing. `Array.slice(0, -5)` drops the LAST five elements
+  // and returns the rest, so a negative limit would have widened the
+  // projection instead of emptying it - the exact inversion a hostile or
+  // buggy caller could exploit to see more, not less.
+  const nodeLimit = Math.max(0, Math.trunc(input.nodeLimit));
+  const edgeLimit = Math.max(0, Math.trunc(input.edgeLimit));
+  const nodes = [...input.nodes].sort((left, right) => left.nodeId.localeCompare(right.nodeId)).slice(0, nodeLimit);
   const keep = new Set(nodes.map((node) => node.nodeId));
   // An edge whose endpoint was dropped is dropped too: a dangling edge would
   // draw a relationship to something the operator cannot see.
   const edges = [...input.edges]
     .filter((edge) => keep.has(edge.fromNodeId) && keep.has(edge.toNodeId))
     .sort((left, right) => left.edgeId.localeCompare(right.edgeId))
-    .slice(0, input.edgeLimit);
+    .slice(0, edgeLimit);
 
   return {
     projectionVersion: SYSTEM_MAP_PROJECTION_VERSION,
@@ -157,8 +163,8 @@ function finish(input: {
     focusId: input.focusId,
     nodes,
     edges,
-    nodeBound: projectionBound({ limit: input.nodeLimit, total: input.nodeTotal, projected: nodes.length }),
-    edgeBound: projectionBound({ limit: input.edgeLimit, total: input.edgeTotal, projected: edges.length }),
+    nodeBound: projectionBound({ limit: nodeLimit, total: input.nodeTotal, projected: nodes.length }),
+    edgeBound: projectionBound({ limit: edgeLimit, total: input.edgeTotal, projected: edges.length }),
     measurement: input.measurement ?? 'MEASURED',
     graphDigest: graphDigest(nodes, edges),
   };

@@ -36,6 +36,8 @@
     "tests/unit/c03GoRegistration.test.ts",
     "tests/unit/c03GrpcTopology.test.ts",
     "tests/unit/c04FrontendConsumer.test.ts",
-    "tests/unit/c04FrontendGraph.test.ts"
+    "tests/unit/c04FrontendGraph.test.ts",
+    "tests/unit/c15bSystemMap.test.ts",
+    "tests/unit/c15bControlCenterAuthority.test.ts"
   ]
 }

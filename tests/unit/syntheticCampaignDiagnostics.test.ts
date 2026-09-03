@@ -76,6 +76,8 @@ test.describe('synthetic campaign manifest', () => {
       'tests/unit/c03GrpcTopology.test.ts',
       'tests/unit/c04FrontendConsumer.test.ts',
       'tests/unit/c04FrontendGraph.test.ts',
+      'tests/unit/c15bSystemMap.test.ts',
+      'tests/unit/c15bControlCenterAuthority.test.ts',
     ]) expect(manifest.files).toContain(suite);
   });
 });

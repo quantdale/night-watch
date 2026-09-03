@@ -221,11 +221,144 @@ function ExecutionGraphView({ selectedRunId, state, onRetry }: { readonly select
   return <div className="view-stack"><section className="page-intro"><div><p className="eyebrow">TOPOLOGY / EXECUTION GRAPH</p><h1>Trace the bounded run shape.</h1><p>Graph edges are projections of ordered evidence. They do not add execution authority or infer missing events.</p></div><StatusPill value="READY" label={`Run ${selectedRunId}`} /></section><GraphCanvas graph={state.data} /><article className="panel"><div className="panel-heading"><div><p className="eyebrow">GRAPH TABLE FALLBACK</p><h2>Node inventory</h2></div><span className="table-limit">Bounded list</span></div><div className="table-scroll"><table><thead><tr><th scope="col">Node</th><th scope="col">Kind</th><th scope="col">State</th><th scope="col">Event sequence</th></tr></thead><tbody>{state.data.nodes.map((node) => <tr key={node.nodeId}><td>{node.label ?? node.nodeId}</td><td>{formatCategory(node.kind)}</td><td><StatusPill value={node.state} /></td><td>{node.eventSeq === null ? 'Not linked' : String(node.eventSeq)}</td></tr>)}</tbody></table></div></article></div>;
 }
 
+/**
+ * C-15b - the source graph view.
+ *
+ * Replaces a fixed three-column grid that drew `nodes.slice(0, 24)` and
+ * `edges.slice(0, 48)` while the contract permitted 1,000 and 2,000. The
+ * ceiling was never a rendering limit; it was two slice calls.
+ *
+ * What this draws instead: every node the server sent, on a deterministic
+ * layered layout, with pan, zoom, search, an evidence filter, selection, and a
+ * truncation banner that states what is missing rather than implying nothing
+ * is. Layer and within-layer order come from the node identifier, so the same
+ * snapshot always draws the same picture.
+ */
+function layerAssignment(graph: SourceGraphSnapshot): Map<string, number> {
+  const known = new Set(graph.nodes.map((node) => node.nodeId));
+  const indegree = new Map<string, number>();
+  const outgoing = new Map<string, string[]>();
+  for (const node of graph.nodes) indegree.set(node.nodeId, 0);
+  for (const edge of graph.edges) {
+    if (!known.has(edge.fromNodeId) || !known.has(edge.toNodeId)) continue;
+    outgoing.set(edge.fromNodeId, [...(outgoing.get(edge.fromNodeId) ?? []), edge.toNodeId]);
+    indegree.set(edge.toNodeId, (indegree.get(edge.toNodeId) ?? 0) + 1);
+  }
+  const layer = new Map<string, number>();
+  for (const node of graph.nodes) layer.set(node.nodeId, 0);
+  const ready = graph.nodes.filter((node) => (indegree.get(node.nodeId) ?? 0) === 0).map((node) => node.nodeId).sort();
+  const remaining = new Map(indegree);
+  let guard = 0;
+  while (ready.length > 0 && guard <= graph.nodes.length) {
+    ready.sort();
+    const current = ready.shift() as string;
+    guard += 1;
+    for (const target of [...(outgoing.get(current) ?? [])].sort()) {
+      const candidate = Math.min((layer.get(current) ?? 0) + 1, 63);
+      if (candidate > (layer.get(target) ?? 0)) layer.set(target, candidate);
+      const left = (remaining.get(target) ?? 0) - 1;
+      remaining.set(target, left);
+      if (left === 0) ready.push(target);
+    }
+  }
+  return layer;
+}
+
 function SourceGraphCanvas({ graph }: { readonly graph: SourceGraphSnapshot }): ReactNode {
-  const nodes = graph.nodes.slice(0, 24);
-  const nodePositions = new Map(nodes.map((node, index) => [node.nodeId, { x: 120 + (index % 3) * 230, y: 58 + Math.floor(index / 3) * 84 }]));
-  const height = Math.max(190, Math.ceil(nodes.length / 3) * 84 + 24);
-  return <div className="graph-frame"><svg className="execution-graph" viewBox={`0 0 820 ${height}`} role="img" aria-label="Bounded source intelligence graph"><defs><marker id="source-graph-arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0 0 6 3 0 6Z" fill="currentColor" /></marker></defs>{graph.edges.slice(0, 48).map((edge) => { const from = nodePositions.get(edge.fromNodeId); const to = nodePositions.get(edge.toNodeId); if (from === undefined || to === undefined) return null; return <line key={edge.edgeId} x1={from.x + 72} y1={from.y + 18} x2={to.x - 72} y2={to.y + 18} className="graph-edge" markerEnd="url(#source-graph-arrow)" />; })}{nodes.map((node) => <g key={node.nodeId} transform={`translate(${nodePositions.get(node.nodeId)?.x ?? 0} ${nodePositions.get(node.nodeId)?.y ?? 0})`}><rect className={`graph-node graph-node-${statusTone(node.currentness)}`} width="144" height="38" rx="7" /><text x="12" y="16" className="graph-node-kind">{formatCategory(node.kind)}</text><text x="12" y="30" className="graph-node-state">{formatCategory(node.currentness)}</text></g>)}</svg><div className="graph-footer"><span>{nodes.length} of {graph.nodes.length} nodes shown</span><span>{graph.edges.length} edges · depth {graph.depth}</span>{graph.truncated ? <StatusPill value="WARNING" label="Truncated" /> : <StatusPill value="READY" label="Bounded" />}</div></div>;
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [search, setSearch] = useState('');
+  const [proofFilter, setProofFilter] = useState<string>('ALL');
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+
+  // Search is local UI data: bounded, lower-cased, and used only for substring
+  // matching. No regular expression is built from operator input.
+  const needle = search.slice(0, 120).toLowerCase();
+  const matches = (node: SourceGraphSnapshot['nodes'][number]): boolean => {
+    if (proofFilter !== 'ALL' && node.proof !== proofFilter) return false;
+    if (needle.length === 0) return true;
+    return `${node.label ?? ''} ${node.nodeId} ${node.kind}`.toLowerCase().includes(needle);
+  };
+
+  const layers = layerAssignment(graph);
+  const ordered = [...graph.nodes].sort((left, right) => left.nodeId.localeCompare(right.nodeId));
+  const byLayer = new Map<number, string[]>();
+  for (const node of ordered) {
+    const index = layers.get(node.nodeId) ?? 0;
+    byLayer.set(index, [...(byLayer.get(index) ?? []), node.nodeId]);
+  }
+  const position = new Map<string, { x: number; y: number }>();
+  let widest = 0;
+  for (const [layerIndex, members] of [...byLayer.entries()].sort((left, right) => left[0] - right[0])) {
+    members.forEach((nodeId, order) => {
+      position.set(nodeId, { x: layerIndex * 264, y: order * 64 });
+      widest = Math.max(widest, order * 64);
+    });
+  }
+  const contentWidth = Math.max(820, ([...byLayer.keys()].length) * 264 + 168);
+  const contentHeight = Math.max(190, widest + 64);
+  const visible = graph.nodes.filter(matches);
+  const visibleIds = new Set(visible.map((node) => node.nodeId));
+  const selected = graph.nodes.find((node) => node.nodeId === selectedNodeId) ?? null;
+
+  const viewBox = `${-pan.x} ${-pan.y} ${Math.round(contentWidth / zoom)} ${Math.round(contentHeight / zoom)}`;
+  const step = 80;
+
+  return <div className="graph-frame">
+    <div className="graph-controls">
+      <label className="graph-search">
+        <span className="sr-only">Search graph nodes</span>
+        <input type="search" value={search} maxLength={120} placeholder="Search nodes" onChange={(event) => setSearch(event.target.value)} />
+      </label>
+      <label className="graph-filter">
+        <span className="sr-only">Filter by proof</span>
+        <select value={proofFilter} onChange={(event) => setProofFilter(event.target.value)}>
+          <option value="ALL">All proof states</option>
+          <option value="PROVEN">PROVEN</option>
+          <option value="AMBIGUOUS">AMBIGUOUS</option>
+          <option value="UNSUPPORTED">UNSUPPORTED</option>
+        </select>
+      </label>
+      <div className="graph-zoom" role="group" aria-label="Zoom and pan">
+        <button type="button" onClick={() => setZoom((value) => Math.min(4, Number((value * 1.25).toFixed(3))))} aria-label="Zoom in">+</button>
+        <button type="button" onClick={() => setZoom((value) => Math.max(0.25, Number((value / 1.25).toFixed(3))))} aria-label="Zoom out">-</button>
+        <button type="button" onClick={() => setPan((value) => ({ ...value, x: value.x + step }))} aria-label="Pan left">&larr;</button>
+        <button type="button" onClick={() => setPan((value) => ({ ...value, x: value.x - step }))} aria-label="Pan right">&rarr;</button>
+        <button type="button" onClick={() => setPan((value) => ({ ...value, y: value.y + step }))} aria-label="Pan up">&uarr;</button>
+        <button type="button" onClick={() => setPan((value) => ({ ...value, y: value.y - step }))} aria-label="Pan down">&darr;</button>
+        <button type="button" onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }); }}>Reset</button>
+      </div>
+    </div>
+    <svg className="execution-graph" viewBox={viewBox} role="img" aria-label="Bounded source intelligence graph">
+      <defs><marker id="source-graph-arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0 0 6 3 0 6Z" fill="currentColor" /></marker></defs>
+      {graph.edges.map((edge) => {
+        const from = position.get(edge.fromNodeId);
+        const to = position.get(edge.toNodeId);
+        if (from === undefined || to === undefined) return null;
+        const dimmed = !visibleIds.has(edge.fromNodeId) || !visibleIds.has(edge.toNodeId);
+        return <line key={edge.edgeId} x1={from.x + 144} y1={from.y + 18} x2={to.x} y2={to.y + 18} className={dimmed ? 'graph-edge graph-edge-dimmed' : 'graph-edge'} markerEnd="url(#source-graph-arrow)" />;
+      })}
+      {ordered.map((node) => {
+        const at = position.get(node.nodeId) ?? { x: 0, y: 0 };
+        const dimmed = !visibleIds.has(node.nodeId);
+        return <g key={node.nodeId} transform={`translate(${at.x} ${at.y})`} onClick={() => setSelectedNodeId(node.nodeId)} role="button" tabIndex={0}
+          onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') setSelectedNodeId(node.nodeId); }}>
+          <rect className={`graph-node graph-node-${statusTone(node.currentness)}${dimmed ? ' graph-node-dimmed' : ''}${selectedNodeId === node.nodeId ? ' graph-node-selected' : ''}`} width="144" height="38" rx="7" />
+          <text x="12" y="16" className="graph-node-kind">{formatCategory(node.kind)}</text>
+          <text x="12" y="30" className="graph-node-state">{formatCategory(node.proof)}</text>
+        </g>;
+      })}
+    </svg>
+    <div className="graph-footer">
+      <span>{graph.nodes.length} nodes drawn · {visible.length} match</span>
+      <span>{graph.edges.length} edges · depth {graph.depth} · zoom {zoom.toFixed(2)}x</span>
+      {graph.truncated
+        ? <StatusPill value="WARNING" label={`Truncated at ${graph.nodeLimit} nodes / ${graph.edgeLimit} edges`} />
+        : <StatusPill value="READY" label="Complete within bounds" />}
+    </div>
+    {graph.truncated ? <div className="callout callout-warning"><strong>This graph is truncated</strong><span>The projection reached its {graph.nodeLimit}-node / {graph.edgeLimit}-edge bound. What is not drawn is not absent from the system; it is absent from this projection.</span></div> : null}
+    {selected === null ? null : <div className="callout"><strong>Selected: {selected.label ?? selected.nodeId}</strong><span>{formatCategory(selected.kind)} · proof {formatCategory(selected.proof)} · currentness {formatCategory(selected.currentness)} · capability {formatCategory(selected.capability)}</span></div>}
+  </div>;
 }
 
 function SourceView({ summary, surfaceState, graphState, selectedSurfaceId, onSelectSurface, onRetry }: { readonly summary: OverviewSnapshot['source']; readonly surfaceState: DataLoadState<SourceSurfacesSnapshot>; readonly graphState: DataLoadState<SourceGraphSnapshot>; readonly selectedSurfaceId: string | null; readonly onSelectSurface: (surfaceId: string) => void; readonly onRetry: () => void }): ReactNode {

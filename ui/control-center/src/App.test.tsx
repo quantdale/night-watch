@@ -355,7 +355,12 @@ describe('Control Center UI shell', () => {
     await user.click(screen.getByRole('button', { name: 'Graph' }));
     expect(await screen.findByRole('img', { name: 'Bounded source intelligence graph' })).toBeInTheDocument();
     expect(screen.getByText('Request')).toBeInTheDocument();
-    expect(screen.getByText('Bounded')).toBeInTheDocument();
+    // C-15b renamed the pill from "Bounded" to state what bounded MEANS.
+    expect(screen.getByText('Complete within bounds')).toBeInTheDocument();
+    // And the view is now interactive rather than a fixed grid.
+    expect(screen.getByRole('searchbox', { name: 'Search graph nodes' })).toBeInTheDocument();
+    expect(screen.getByRole('group', { name: 'Zoom and pan' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Zoom in' })).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledWith('/api/v1/source/graph?depth=2&surface=surface-01', expect.objectContaining({ method: 'GET' }));
   });
 
