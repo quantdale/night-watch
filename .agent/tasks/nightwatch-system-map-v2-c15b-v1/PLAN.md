@@ -66,14 +66,14 @@ contract:
 
 ## Milestones
 
-### M1 — Task record, OpenSpec change, measured baseline — IN_PROGRESS
-### M2 — Contract v2: fact category and exact projection bounds — NOT_STARTED
-### M3 — System map model over C-02b/C-03/C-04 facts — NOT_STARTED
-### M4 — Progressive disclosure L1–L4 — NOT_STARTED
-### M5 — Deterministic layout and layout identity — NOT_STARTED
-### M6 — The eight operator queries — NOT_STARTED
-### M7 — Renderer, and Control Center authority probes — NOT_STARTED
-### M8 — Hardening, gate registration, validation, integration, closure — NOT_STARTED
+### M1 — Task record, OpenSpec change, measured baseline — COMPLETE
+### M2 — Contract v2: fact category and exact projection bounds — COMPLETE
+### M3 — System map model over C-02b/C-03/C-04 facts — COMPLETE
+### M4 — Progressive disclosure L1–L4 — COMPLETE
+### M5 — Deterministic layout and layout identity — COMPLETE
+### M6 — The eight operator queries — COMPLETE
+### M7 — Renderer, and Control Center authority probes — COMPLETE
+### M8 — Hardening, gate registration, validation, integration, closure — COMPLETE
 
 ## Validation Strategy
 

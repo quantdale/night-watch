@@ -3,13 +3,13 @@
 Task ID: nightwatch-system-map-v2-c15b-v1
 Phase: SYSTEM_MAP_V2_C15B_V1
 Title: C-15b System Map V2
-Status: IN_PROGRESS
+Status: COMPLETE
 Task directory: .agent/tasks/nightwatch-system-map-v2-c15b-v1
 Starting SHA: 9ac83bebbeb9ed747ff4a55e84701c4b95a1c692
 Last validated implementation SHA: 29a1bbd2daeea4b56c186b9bb56bffb3990d17bc
-Last checkpoint: M1 opened at the C-04 closure head 9ac83be with the 24-node UI ceiling and the 1,000-node contract maximum measured before any change
-Current milestone: M1 — task record, OpenSpec change, measured baseline
-Next action: Write the OpenSpec change, run `npm run agent:check` and `npm run handoff:check`, commit the M1 checkpoint, then begin M2 by versioning the source graph contract with a fact category and exact projection bounds
+Last checkpoint: exact-head GitHub run 33750522362 / job 100632776636 at c770721 passed all eleven required groups on Node 20 with receipt receipt:sha256:2f18e3765638cb523b58aeea; gate:clean PASS with siblingWrites 0; canonical regression 3,396/3,383/13/0; 20/20 negative probes detected; DEF-C15B-1 and DEF-C15B-2 introduced, both repaired and reported
+Current milestone: COMPLETE / STOP — M1 through M8 are closed
+Next action: STOP — C-15b is COMPLETE and certified. All four authorized campaigns are closed. No further campaign may begin: C-05, C-07, C-08, C-08b, C-09 and C-12 each require new explicit owner authorization. The L1-L4 projections and server-side layout are proven in core but not yet exposed over HTTP, which is the named remaining work
 Authorization class: NIGHTWATCH_SYSTEM_MAP_V2_C15B_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
@@ -18,7 +18,7 @@ LAST_VALIDATED_IMPLEMENTATION_SHA: 29a1bbd2daeea4b56c186b9bb56bffb3990d17bc
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: 29a1bbd2daeea4b56c186b9bb56bffb3990d17bc
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
-PHASE_SYSTEM_MAP_V2_C15B_V1_STATUS: IN_PROGRESS
+PHASE_SYSTEM_MAP_V2_C15B_V1_STATUS: COMPLETE
 
 ## Routing and safety
 

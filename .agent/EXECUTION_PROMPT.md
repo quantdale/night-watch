@@ -1,7 +1,7 @@
 # EXECUTION PROMPT — C-15b System Map V2
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
-Status: IN_PROGRESS
+Status: COMPLETE
 Campaign ID: nightwatch-system-map-v2-c15b-v1
 OpenSpec: openspec/changes/nightwatch-system-map-v2-c15b-v1/
 Planned-From: 9ac83bebbeb9ed747ff4a55e84701c4b95a1c692

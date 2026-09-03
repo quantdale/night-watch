@@ -256,11 +256,11 @@ PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
 RELEASE_CHECKPOINT_SHA: 2576c5751d33bb40046246e8fcf57c7cc5c30a57
 LIVE_HEAD_SHA: DISCOVER_FROM_GIT
 LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: 29a1bbd2daeea4b56c186b9bb56bffb3990d17bc
-LAST_LOCALLY_VALIDATED_SHA: 0323d5fb1b5960f9f17e2b1fa519cc85918dbfaf
-LAST_CLEAN_VALIDATED_SHA: 0323d5fb1b5960f9f17e2b1fa519cc85918dbfaf
-CI_OBSERVED_SHA: aa3124155653b54d89a0fe3ae8572ca09de4fcda
-CI_EXECUTED_SHA: aa3124155653b54d89a0fe3ae8572ca09de4fcda
-CI_STATUS: EXECUTED_FAIL
+LAST_LOCALLY_VALIDATED_SHA: c7707218a3afb4b5fc8430ebd4fb4e7a20c8fa61
+LAST_CLEAN_VALIDATED_SHA: c7707218a3afb4b5fc8430ebd4fb4e7a20c8fa61
+CI_OBSERVED_SHA: c7707218a3afb4b5fc8430ebd4fb4e7a20c8fa61
+CI_EXECUTED_SHA: c7707218a3afb4b5fc8430ebd4fb4e7a20c8fa61
+CI_STATUS: EXECUTED_PASS
 FINAL_DOCUMENTATION_SHA: DISCOVER_FROM_GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 LIVE_HEAD_AUTHORITY: GIT
@@ -287,20 +287,26 @@ informational and are not interpreted as current authority.
 LIVE_STATE_PROTOCOL_VERSION: nightwatch.live-state.v1
 LIVE_TASK_ID: nightwatch-system-map-v2-c15b-v1
 LIVE_PHASE: SYSTEM_MAP_V2_C15B_V1
-LIVE_TASK_STATUS: IN_PROGRESS
+LIVE_TASK_STATUS: COMPLETE
 LIVE_PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
 LIVE_PROJECT_VERDICT_EFFECT: PRESERVE
-LIVE_NEXT_ACTION_STATE: CONTINUE
-LIVE_COMPLETION_CLAIM: NONE
+LIVE_NEXT_ACTION_STATE: STOP
+LIVE_COMPLETION_CLAIM: COMPLETE
 ```
 
-### Exact-head CI (current live CI state)
+### Exact-head CI is green (current live CI state)
 
-The live head `aa3124155653b54d89a0fe3ae8572ca09de4fcda` was observed by run
-`33750321049` / job `100632147533` on Node 20 with receipt
-`receipt:sha256:1c725d1d043404d5b57ce786`, and FAILED on `PROJECT_TRUTH` alone
-— the project block still named C-04's CI evidence while the task had validated
-a newer implementation. Recording that run is what clears it.
+Run `33750522362` / job `100632776636` at
+`c7707218a3afb4b5fc8430ebd4fb4e7a20c8fa61` passed on Node 20 with receipt
+`receipt:sha256:2f18e3765638cb523b58aeea`. All eleven required groups PASS:
+`SEMANTIC_COMPATIBILITY` 2,033 / 2,020 / 13 skipped / 0 failed,
+`OWNER_PROVENANCE` 91 passed, `SYNTHETIC_CAMPAIGN` 619 / 588 / 31 skipped / 0
+failed. This is C-15b's certification.
+
+`gate:clean` PASS at the same head with inner receipt
+`receipt:sha256:ba8c0db14231f77bc32dbbd7`, clean receipt
+`clean-receipt:sha256:939affcd3033dec45d9bf3c2`, `cleanBefore` and `cleanAfter`
+both true and `siblingWrites` 0.
 
 C-04's certification job `100614907944` at `0323d5f` is preserved as
 historical: all eleven required groups PASS on Node 20 with receipt

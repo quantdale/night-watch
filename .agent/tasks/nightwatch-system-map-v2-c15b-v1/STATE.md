@@ -4,19 +4,20 @@
 
 Task ID: nightwatch-system-map-v2-c15b-v1
 Phase: SYSTEM_MAP_V2_C15B_V1
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: 9ac83bebbeb9ed747ff4a55e84701c4b95a1c692
 Last validated implementation SHA: 29a1bbd2daeea4b56c186b9bb56bffb3990d17bc
 Last substantive checkpoint SHA: 29a1bbd2daeea4b56c186b9bb56bffb3990d17bc
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-system-map-v2-c15b-v1-19d4f1bd
-Last checkpoint: M1 opened at the C-04 closure head 9ac83be with the 24-node UI ceiling and the 1,000-node contract maximum measured before any change
+Last checkpoint: exact-head GitHub run 33750522362 / job 100632776636 at c770721 passed all eleven required groups on Node 20 with receipt receipt:sha256:2f18e3765638cb523b58aeea; gate:clean PASS with inner receipt receipt:sha256:ba8c0db14231f77bc32dbbd7 and siblingWrites 0; canonical regression 3,396 total / 3,383 passed / 13 skipped / 0 failed; 20/20 negative probes detected; DEF-C15B-1 and DEF-C15B-2 introduced by this campaign, both found, repaired and reported
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 9ac83bebbeb9ed747ff4a55e84701c4b95a1c692
 LAST_VALIDATED_IMPLEMENTATION_SHA: 29a1bbd2daeea4b56c186b9bb56bffb3990d17bc
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: 29a1bbd2daeea4b56c186b9bb56bffb3990d17bc
+LAST_DOCUMENTATION_CHECKPOINT_SHA: c7707218a3afb4b5fc8430ebd4fb4e7a20c8fa61
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PROJECT_VERDICT_EFFECT: PRESERVE
@@ -30,11 +31,17 @@ projection reporting exactly what it dropped.
 
 ## Current Milestone
 
-Milestone ID: M7 — renderer and Control Center authority probes
-Milestone status: IN_PROGRESS
-What is being attempted: replace the fixed 24-node grid with a pan/zoom/search/
-filter view driven by the server-side projection, and re-prove the Control
-Center authority and production-store exclusion invariants.
+COMPLETE / STOP — M1 through M8 are closed. The 24-node grid is replaced by a
+navigable, truncation-honest view; the fact model, bounded L1-L4 projections,
+deterministic content-addressed layout and the eight operator queries are
+implemented and tested; Control Center authority and the C-10 production-store
+exclusion are re-proven. Certified by exact-head CI run 33750522362 / job
+100632776636 at `c770721`.
+
+One scope item is explicitly NOT delivered and is named in the REPORT: the
+L1-L4 projections and the server-side layout are proven in core but not yet
+exposed over HTTP, so the view consumes the v1 graph contract. That is the
+largest remaining item and it is stated rather than implied finished.
 
 ## Completed Milestones
 
@@ -58,14 +65,14 @@ projection at the contract maxima.
 
 ## Work In Progress
 
-M7. Nothing partial: M1-M6 are closed.
+NONE.
 
 ## Exact Next Action
 
-Wire the projections into the Control Center source adapter behind contract v2,
-replace `SourceGraphCanvas`'s fixed 24-node grid with a pan/zoom/search/filter
-view, and add the Control Center authority and production-store exclusion
-probes. Then hardening rules, gate registration and the full validation matrix.
+STOP — C-15b is COMPLETE and certified. All four authorized campaigns (C-02b,
+C-03, C-04, C-15b) are closed. Per the authorization boundary, no further
+campaign may begin: C-05, C-07, C-08, C-08b, C-09 and C-12 all require new
+explicit owner authorization.
 
 ## Files Changed
 
@@ -157,12 +164,23 @@ NONE
 
 ## Resume Recipe
 
-1. Read SPEC.
-2. Read PLAN.
-3. Inspect git status and current SHA in the session worktree.
-4. Run the smallest relevant validation.
-5. Continue Exact Next Action.
+Task complete. Do not resume; any follow-up starts as a new authorized task.
 
 ## Completion Snapshot
 
-Populate only when complete.
+C-15b is COMPLETE and certified.
+
+Final documentation checkpoint: c7707218a3afb4b5fc8430ebd4fb4e7a20c8fa61
+Live HEAD: DISCOVER_FROM_GIT
+Tests: canonical regression 3,396 / 3,383 / 13 skipped / 0 failed; semantic
+compatibility 2,033 / 2,020 / 13 / 0; synthetic campaign 619/619; Control
+Center UI 12/12.
+Artifacts: `src/core/systemMap/{model,projections,layout}.ts`; the rebuilt
+`SourceGraphCanvas`; `checkC15bSystemMapBoundary()`; two registered suites.
+Known issues: the L1-L4 projections and the deterministic server-side layout
+are implemented and tested but not yet exposed over HTTP, so the view still
+consumes the v1 graph contract. `tests/unit/c02aOpenApiAdmission.test.ts` and
+`tests/unit/c06PhpReadOnlyProof.test.ts` remain unregistered (PRE_EXISTING).
+Recommended next task: none may begin under this authorization. The highest
+value next campaign is C-05 universe and admission hygiene; C-12 requires new
+explicit owner authorization.
