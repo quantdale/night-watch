@@ -50,13 +50,14 @@ complete.
 
 ## Work In Progress
 
-M8 — the validation battery. The first attempt failed both gates at
-`HANDOFF_TRUTH`, which was my own omission rather than a code defect.
+M8 — integration and exact-head CI observation. All three local gates PASS.
 
 ## Exact Next Action
 
-Re-run `gate:local` and then `gate:clean` now that the task scaffolding is
-complete, then integrate by verified fast-forward and observe exact-head CI.
+Integrate by verified fast-forward and observe the exact-head GitHub Actions
+run. The C-16 suite is fully deterministic — it reads only its own fixtures and
+`docs/CURRENT_STATE.md`, both of which exist in a clean checkout — so the CI
+synthetic skip count should NOT change at all.
 
 ## Files Changed
 
@@ -84,6 +85,8 @@ complete, then integrate by verified fast-forward and observe exact-head CI.
 | negative probes E1-E8 | **8/8 DETECTED**, all restored, tree clean after each |
 | **canonical regression** at `7fff815` | **3,556 total / 3,543 passed / 13 skipped / 0 failed**, 0 failure blocks |
 | `gate:local` / `gate:clean`, first attempt at `7fff815` | **FAILED at `HANDOFF_TRUTH`** — my omission: C-16's STATE, REPORT, OpenSpec change and routing were absent, so the handoff check could not bind the active campaign. Not a code defect; every group after the first required failure is `NOT_RUN` by design |
+| **`gate:local`** at `70ef1d6` | **PASS, eleven groups**, receipt `receipt:sha256:d71dcd65be882aecb9dcc821`; synthetic lane 866/866 |
+| **`gate:clean`** at `70ef1d6` | **PASS, eleven groups**, Node 20, **`siblingWrites: 0`**; inner `receipt:sha256:fb5ae82c29c765d56bb82a7a`, outer `clean-receipt:sha256:d85c83fb41a6a8e4ded7f1c5` |
 
 ## Decisions Made During This Task
 
