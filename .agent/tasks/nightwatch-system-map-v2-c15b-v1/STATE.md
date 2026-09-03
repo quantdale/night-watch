@@ -6,8 +6,8 @@ Task ID: nightwatch-system-map-v2-c15b-v1
 Phase: SYSTEM_MAP_V2_C15B_V1
 Status: IN_PROGRESS
 Starting SHA: 9ac83bebbeb9ed747ff4a55e84701c4b95a1c692
-Last validated implementation SHA: 9ac83bebbeb9ed747ff4a55e84701c4b95a1c692
-Last substantive checkpoint SHA: 9ac83bebbeb9ed747ff4a55e84701c4b95a1c692
+Last validated implementation SHA: 29a1bbd2daeea4b56c186b9bb56bffb3990d17bc
+Last substantive checkpoint SHA: 29a1bbd2daeea4b56c186b9bb56bffb3990d17bc
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-system-map-v2-c15b-v1-19d4f1bd
@@ -15,8 +15,8 @@ Last checkpoint: M1 opened at the C-04 closure head 9ac83be with the 24-node UI 
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 9ac83bebbeb9ed747ff4a55e84701c4b95a1c692
-LAST_VALIDATED_IMPLEMENTATION_SHA: 9ac83bebbeb9ed747ff4a55e84701c4b95a1c692
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 9ac83bebbeb9ed747ff4a55e84701c4b95a1c692
+LAST_VALIDATED_IMPLEMENTATION_SHA: 29a1bbd2daeea4b56c186b9bb56bffb3990d17bc
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 29a1bbd2daeea4b56c186b9bb56bffb3990d17bc
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PROJECT_VERDICT_EFFECT: PRESERVE

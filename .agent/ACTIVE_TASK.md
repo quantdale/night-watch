@@ -6,7 +6,7 @@ Title: C-15b System Map V2
 Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-system-map-v2-c15b-v1
 Starting SHA: 9ac83bebbeb9ed747ff4a55e84701c4b95a1c692
-Last validated implementation SHA: 9ac83bebbeb9ed747ff4a55e84701c4b95a1c692
+Last validated implementation SHA: 29a1bbd2daeea4b56c186b9bb56bffb3990d17bc
 Last checkpoint: M1 opened at the C-04 closure head 9ac83be with the 24-node UI ceiling and the 1,000-node contract maximum measured before any change
 Current milestone: M1 — task record, OpenSpec change, measured baseline
 Next action: Write the OpenSpec change, run `npm run agent:check` and `npm run handoff:check`, commit the M1 checkpoint, then begin M2 by versioning the source graph contract with a fact category and exact projection bounds
@@ -14,8 +14,8 @@ Authorization class: NIGHTWATCH_SYSTEM_MAP_V2_C15B_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 9ac83bebbeb9ed747ff4a55e84701c4b95a1c692
-LAST_VALIDATED_IMPLEMENTATION_SHA: 9ac83bebbeb9ed747ff4a55e84701c4b95a1c692
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 9ac83bebbeb9ed747ff4a55e84701c4b95a1c692
+LAST_VALIDATED_IMPLEMENTATION_SHA: 29a1bbd2daeea4b56c186b9bb56bffb3990d17bc
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 29a1bbd2daeea4b56c186b9bb56bffb3990d17bc
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PHASE_SYSTEM_MAP_V2_C15B_V1_STATUS: IN_PROGRESS
