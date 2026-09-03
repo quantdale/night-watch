@@ -107,6 +107,20 @@ export interface ReadOnlyProofInput {
   readonly pipeline: PhpResolvedRoutePipeline | null;
   /** Bounded effect closure. `null` when no effect analyzer supports this operation. */
   readonly closure: PhpEffectClosureProof | null;
+  /**
+   * C-09: how many admitted spec-derived expectations this operation carries.
+   *
+   * A positive count makes `W-SPEC` HELD instead of UNSUPPORTED. It changes
+   * NOTHING about the proof state, and that is deliberate: `W-SPEC` is class
+   * `DOCUMENTARY`, while `READ_ONLY_PROVEN` requires one `DECLARATION` and one
+   * `EFFECT` witness. So a documentary witness can never satisfy either
+   * requirement, and the §46 boundary holds by the CLASS MODEL rather than by
+   * a second guard bolted on beside it.
+   *
+   * Absent or zero leaves the witness UNSUPPORTED, which is an absence and
+   * never a pass.
+   */
+  readonly specExpectationCount?: number;
 }
 
 /**
@@ -150,9 +164,15 @@ export function buildReadOnlyProof(input: ReadOnlyProofInput): ReadOnlyProof {
   witnesses.push(witness('W-EFFECT_RPC', 'UNSUPPORTED', 'RPC_EFFECT_ANALYZER_ABSENT', null));
 
   // --- documentary witness ----------------------------------------------
-  // Spec-derived expectations belong to C-09, and are barred from production
-  // admission even once they exist.
-  witnesses.push(witness('W-SPEC', 'UNSUPPORTED', 'SPEC_EXPECTATION_ANALYZER_ABSENT', null));
+  // C-09 supplies spec-derived expectations. A documentary witness is still
+  // barred from production admission, and cannot contribute to
+  // READ_ONLY_PROVEN, because that needs a DECLARATION and an EFFECT witness
+  // and DOCUMENTARY is neither. Turning this on therefore adds information
+  // without adding authority — which is the whole point of the class model.
+  const specExpectations = input.specExpectationCount ?? 0;
+  witnesses.push(Number.isSafeInteger(specExpectations) && specExpectations > 0
+    ? witness('W-SPEC', 'HELD', null, null)
+    : witness('W-SPEC', 'UNSUPPORTED', 'SPEC_EXPECTATION_ABSENT', null));
 
   // --- preconditions -----------------------------------------------------
   const joinPrecondition: ReadOnlyPrecondition = input.joinState === 'PROVEN'

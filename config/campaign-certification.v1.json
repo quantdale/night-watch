@@ -80,6 +80,13 @@
       ]
     },
     {
+      "id": "C-09",
+      "task": "nightwatch-spec-derived-expectations-c09-v1",
+      "suites": [
+        "tests/unit/c09SpecExpectations.test.ts"
+      ]
+    },
+    {
       "id": "C-10",
       "task": "nightwatch-production-privacy-firewall-c10-v1",
       "suites": [

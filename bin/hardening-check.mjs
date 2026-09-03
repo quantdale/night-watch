@@ -3008,6 +3008,81 @@ function checkC08DeploymentBindingBoundary() {
   }
 }
 
+/**
+ * C-09 spec-derived expectation boundary.
+ *
+ * Two rules matter. A spec witness must stay DOCUMENTARY, because that class
+ * is what makes it unable to reach READ_ONLY_PROVEN -- the boundary is the
+ * class model, not a separate guard. And no assertion may come from prose,
+ * because the moment a `description` becomes an expectation the whole
+ * provenance chain is decoration.
+ */
+function checkC09SpecExpectationBoundary() {
+  const expectations = read('src/core/source/specExpectations.ts');
+  const inventory = read('src/core/source/specScenarioInventory.ts');
+  const proof = read('src/core/source/readOnlyProof.ts');
+
+  // --- W-SPEC stays DOCUMENTARY ---
+  if (!/'W-SPEC':\s*'DOCUMENTARY'/.test(proof)) {
+    fail("C-09 W-SPEC must remain witness class DOCUMENTARY; that class is why a spec witness cannot reach READ_ONLY_PROVEN");
+  }
+  // --- and the proof still requires a declaration AND an effect witness ---
+  if (!/declarationHeld/.test(proof) || !/effectHeld/.test(proof)) {
+    fail('C-09 the read-only proof must keep requiring both a DECLARATION and an EFFECT witness');
+  }
+
+  // --- no prose becomes an assertion ---
+  const code = withoutComments(expectations);
+  for (const prose of ['summary', 'description', 'title', 'example']) {
+    // Reading the field name in a REFUSAL list is fine; reading its VALUE into
+    // an assertion is not. The refusal list is data, so it is excluded.
+    const uses = new RegExp(`(?<!PROSE_FIELDS[^;]{0,200})\\b(?:property|operation|definition)\\.${prose}\\b`).test(code);
+    if (uses) fail(`C-09 must not derive an assertion from the prose field ${prose}`);
+  }
+  if (!/PROSE_FIELDS/.test(expectations)) {
+    fail('C-09 must name the prose fields it refuses, as data rather than as a comment');
+  }
+
+  // --- no REQUIRED_KEY class, because the artifacts contain no material ---
+  const classesBlock = /export const SPEC_EXPECTATION_CLASSES\s*=\s*\[([\s\S]*?)\]\s*as const;/.exec(expectations);
+  if (classesBlock === null) {
+    fail('C-09 could not read the SPEC_EXPECTATION_CLASSES declaration');
+  } else if (/REQUIRED_KEY/.test(withoutComments(classesBlock[1]))) {
+    fail('C-09 must not declare a REQUIRED_KEY expectation class; protobuf3 emits no required arrays and the artifacts contain none');
+  }
+
+  // --- no similarity matching anywhere in the derivation ---
+  for (const forbidden of ['levenshtein', 'similarity', 'fuzzyMatch']) {
+    if (code.toLowerCase().includes(forbidden.toLowerCase())) {
+      fail(`C-09 must not match expectations to operations by ${forbidden}; the join is exact by construction`);
+    }
+  }
+
+  // --- the classification vocabulary keeps OUTSIDE_SCOPE distinct ---
+  const vocabularyBlock = /export const SCENARIO_CLASSIFICATIONS\s*=\s*\[([\s\S]*?)\]\s*as const;/.exec(expectations);
+  if (vocabularyBlock === null) {
+    fail('C-09 could not read the SCENARIO_CLASSIFICATIONS declaration');
+  } else {
+    const declared = withoutComments(vocabularyBlock[1]);
+    for (const member of ['CHECKABLE', 'NON_CHECKABLE', 'AMBIGUOUS', 'UNSUPPORTED',
+      'NO_OPERATION_BINDING', 'MULTIPLE_BINDINGS', 'STALE', 'OUTSIDE_SCOPE']) {
+      if (!declared.includes(`'${member}'`)) fail(`C-09 scenario classification ${member} is missing from the vocabulary`);
+    }
+  }
+  // Totality is structural.
+  if (!/totalityHolds: discovered\.length === scenarios\.length/.test(inventory)) {
+    fail('C-09 must assert scenario classification totality against the discovered set');
+  }
+
+  // --- both modules stay data-only ---
+  for (const file of ['src/core/source/specExpectations.ts', 'src/core/source/specScenarioInventory.ts']) {
+    const source = read(file);
+    for (const forbidden of ['node:fs', 'node:child_process', 'node:net', 'node:https', 'node:http']) {
+      if (source.includes(`from '${forbidden}'`)) fail(`${file} must stay data-only policy (imports ${forbidden})`);
+    }
+  }
+}
+
 checkChildProcessBoundaries();
 checkL6ProcessNetworkBoundary();
 checkTargetPolicy();
@@ -3030,6 +3105,7 @@ checkC04FrontendConsumerBoundary();
 checkC15bSystemMapBoundary();
 checkC05UniverseAdmissionBoundary();
 checkC08DeploymentBindingBoundary();
+checkC09SpecExpectationBoundary();
 checkCampaignCertificationRegistry();
 checkPlannerHandoffIntegrity();
 checkDocumentationTruth();

@@ -47,6 +47,7 @@
     "tests/unit/c15bControlCenterAuthority.test.ts",
     "tests/unit/r12CampaignCertification.test.ts",
     "tests/unit/c05UniverseAdmission.test.ts",
-    "tests/unit/c08DeploymentBinding.test.ts"
+    "tests/unit/c08DeploymentBinding.test.ts",
+    "tests/unit/c09SpecExpectations.test.ts"
   ]
 }
