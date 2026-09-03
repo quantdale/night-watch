@@ -1,59 +1,62 @@
-# EXECUTION PROMPT — C-16 Expected Information Gain + Orphaned Ownership Closure
+# EXECUTION PROMPT — C-07 Derived Endpoint Semantics + Generated DEV Targets
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
-Status: COMPLETE
-Campaign ID: nightwatch-eig-prioritization-c16-v1
-OpenSpec: openspec/changes/nightwatch-eig-prioritization-c16-v1/
-Planned-From: 529b02a8d54a951eda1636e144a05a7442238c5b
+Status: IN_PROGRESS
+Campaign ID: nightwatch-derived-semantics-dev-targets-c07-v1
+OpenSpec: openspec/changes/nightwatch-derived-semantics-dev-targets-c07-v1/
+Planned-From: a34064711d2682f090c4d35079a27f08a7767ea5
 Target Branch: main
-Predecessor Task ID: nightwatch-spec-derived-expectations-c09-v1
+Predecessor Task ID: nightwatch-eig-prioritization-c16-v1
 Predecessor Status: COMPLETE
 
 ## Mission
 
-Resolve two orphaned requirements that belong to no campaign, then implement a
-bounded, deterministic, explainable LOCAL prioritisation that ranks targets and
-grants nothing.
+Derive the endpoint semantic registry from mechanically established evidence,
+generate DEV targets that pass the UNCHANGED admission chain, and report the
+funnel honestly — including if it ends at zero.
 
 ## Authority
 
-Repository-local, offline, observational. EIG ORDERS what safety has already
-admitted and may never widen it; it grants no admission, execution, replay,
-credential or environment authority. No production, NEXT or DEV contact; C-12
-is NOT authorized and is NOT begun.
+Repository-local and offline for the derivation. Bounded DEV execution is
+authorized ONLY if every one of the sixteen stated conditions holds; the sixth
+— existing Nightwatch DEV admission accepts the target — currently fails, so no
+DEV traffic is authorized. No credential acquisition, no auth-configuration
+change, no reuse of production state. No production or NEXT contact; C-12 is
+NOT authorized and is NOT begun.
 
 C-00 governs: all implementation happens in the owned session worktree
-`session/nightwatch-eig-prioritization-c1-20849857`.
+`session/nightwatch-derived-semantics-dev-16e96515`.
 
 ## Ordered workstreams
 
-1. Task record, OpenSpec change, orphan definitions established.
-2. Ownership assignment and master ledger closure.
-3. EIG factor model with bounded levels and safe UNKNOWN.
-4. Exact integer ranking with total tie-breaking.
-5. Explainability: factor breakdown and reason codes.
-6. G-16 doc/ledger figure check.
-7. Authority-independence proof and hardening probes.
-8. Validation, integration, exact-head CI, closure.
+1. Task record, OpenSpec change, measured baseline.
+2. Derived semantic registry with per-entry evidence.
+3. DEV target funnel with per-reason counts.
+4. EIG ordering restricted to admissible targets.
+5. Pre-DEV qualification; record the verdict.
+6. Hardening rule and negative probes.
+7. Validation, integration, exact-head CI, closure.
 
 ## Constraints
 
-No floating-point score. No wall-clock recency. `UNKNOWN` neither maximises nor
-zeroes on any factor. Identical inputs yield identical rankings including tie
-order. Every ranked entry carries its factor breakdown. The result is bounded
-and reports its truncation. A high score grants nothing.
+No hand-authored semantic rule. No weakened admission threshold,
+classification or gate, including to reach the historical ≥ 30 figure. No
+fabricated product finding. `UNKNOWN` and `AMBIGUOUS` grant nothing.
+Generation is not execution. EIG orders and never widens. The DEV storage
+state's contents are not read.
 
 ## Validation
 
 typecheck, hardening, handoff, project, agent, agent audit, workspace, gate
-inventory, semantic compatibility, synthetic campaign, the new C-16 suite, the
+inventory, semantic compatibility, synthetic campaign, `gate:predev`,
+`dev-manifest`, `dev-preflight`, the C-06 suite, the new C-07 suite, the
 canonical regression, `gate:local`, `gate:clean`, exact-head GitHub Actions.
 
 ## Acceptance and completion gates
 
-The eleven acceptance rows of
-`.agent/tasks/nightwatch-eig-prioritization-c16-v1/SPEC.md`, each carried in
-the REPORT requirement ledger with exact evidence.
+The ten acceptance rows of
+`.agent/tasks/nightwatch-derived-semantics-dev-targets-c07-v1/SPEC.md`, each
+carried in the REPORT requirement ledger with exact evidence.
 
 ## Git and reporting
 

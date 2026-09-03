@@ -49,6 +49,7 @@
     "tests/unit/c05UniverseAdmission.test.ts",
     "tests/unit/c08DeploymentBinding.test.ts",
     "tests/unit/c09SpecExpectations.test.ts",
-    "tests/unit/c16ExpectedInformationGain.test.ts"
+    "tests/unit/c16ExpectedInformationGain.test.ts",
+    "tests/unit/c07DerivedSemantics.test.ts"
   ]
 }

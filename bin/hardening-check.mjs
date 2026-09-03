@@ -3163,6 +3163,64 @@ function checkC16EigBoundary() {
   }
 }
 
+/**
+ * C-07 derived-semantics boundary.
+ *
+ * One rule carries this campaign: `READ_ONLY_METHOD_ONLY` must derive
+ * `UNKNOWN`, never `KNOWN_READ`. 485 real operations sit in that class, and
+ * promoting them would assert a read contract from an HTTP verb — which the
+ * endpoint-semantics module forbids in its own header and which C-06 spent a
+ * campaign disproving.
+ */
+function checkC07DerivedSemanticsBoundary() {
+  const derived = read('src/core/source/derivedEndpointSemantics.ts');
+  const legacy = read('src/core/safety/endpointSemantics.ts');
+  const code = withoutComments(derived);
+
+  // --- method-only never becomes a read contract ---
+  const methodOnly = /case 'READ_ONLY_METHOD_ONLY':[\s\S]{0,600}?return Object\.freeze\(\{[^}]*?classification: '([A-Z_]+)'/.exec(code);
+  if (methodOnly === null) {
+    fail('C-07 could not read the READ_ONLY_METHOD_ONLY derivation; the load-bearing rule cannot be verified');
+  } else if (methodOnly[1] !== 'UNKNOWN') {
+    fail(`C-07 READ_ONLY_METHOD_ONLY must derive UNKNOWN, not ${methodOnly[1]}; HTTP method is not a read/write contract`);
+  }
+  // --- a conditional mutation is still a mutation ---
+  const conditional = /case 'CONDITIONAL_MUTATION':[\s\S]{0,600}?return Object\.freeze\(\{[^}]*?classification: '([A-Z_]+)'/.exec(code);
+  if (conditional !== null && conditional[1] !== 'MUTATION_CAPABLE') {
+    fail(`C-07 CONDITIONAL_MUTATION must derive MUTATION_CAPABLE, not ${conditional[1]}; a gated write is not an absent one`);
+  }
+  // --- route identity is checked, and taints ---
+  if (!/routeProof !== 'PROVEN'/.test(code)) {
+    fail('C-07 must taint the classification when route identity is unproven; unknown subject means unusable evidence');
+  }
+  // --- an unrecognised classification fails closed ---
+  if (!/default:/.test(code) || !/CONFLICTING_EVIDENCE/.test(derived)) {
+    fail('C-07 must fail closed on an unrecognised source classification rather than falling through to a usable value');
+  }
+
+  // --- the legacy hand-authored registry stays empty ---
+  if (!/RIPPLE_ENDPOINT_SEMANTIC_REGISTRY: readonly EndpointSemanticRule\[\] = \[\]/.test(legacy)) {
+    fail('C-07 the hand-authored endpoint semantic registry must stay empty; semantics are derived, and the retired catalog is never safety authority');
+  }
+
+  // --- generation is not execution ---
+  for (const marker of ['grantsRequestAuthority: false as const']) {
+    if (!derived.includes(marker)) fail(`C-07 must state ${marker} as data; a classification is information, not permission`);
+  }
+  // The existing admission chain has the final word, consulted last.
+  if (!/input\.admittedOperationIds\.has/.test(code)) {
+    fail('C-07 eligibility must come from the existing admission chain, never from a local decision');
+  }
+  // EIG may order only the eligible set.
+  if (!/return funnel\.eligible;/.test(code)) {
+    fail('C-07 orderableTargets must return only the eligible set, so an inadmissible target has no path to a rank');
+  }
+  // --- data-only ---
+  for (const forbidden of ['node:fs', 'node:child_process', 'node:net', 'node:https', 'node:http']) {
+    if (derived.includes(`from '${forbidden}'`)) fail(`src/core/source/derivedEndpointSemantics.ts must stay data-only policy (imports ${forbidden})`);
+  }
+}
+
 checkChildProcessBoundaries();
 checkL6ProcessNetworkBoundary();
 checkTargetPolicy();
@@ -3187,6 +3245,7 @@ checkC05UniverseAdmissionBoundary();
 checkC08DeploymentBindingBoundary();
 checkC09SpecExpectationBoundary();
 checkC16EigBoundary();
+checkC07DerivedSemanticsBoundary();
 checkCampaignCertificationRegistry();
 checkPlannerHandoffIntegrity();
 checkDocumentationTruth();

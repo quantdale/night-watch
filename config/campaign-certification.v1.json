@@ -73,6 +73,13 @@
       ]
     },
     {
+      "id": "C-07",
+      "task": "nightwatch-derived-semantics-dev-targets-c07-v1",
+      "suites": [
+        "tests/unit/c07DerivedSemantics.test.ts"
+      ]
+    },
+    {
       "id": "C-08",
       "task": "nightwatch-deployment-fact-binding-c08-v1",
       "suites": [
