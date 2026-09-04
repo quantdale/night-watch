@@ -4,10 +4,10 @@
 
 Task ID: nightwatch-system-map-v2-transport-c15c-v1
 Phase: SYSTEM_MAP_V2_TRANSPORT_C15C_V1
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: 0b62247c512b960715348b637ac99bf68a9f3b49
-Last validated implementation SHA: 0b62247c512b960715348b637ac99bf68a9f3b49
-Last substantive checkpoint SHA: 0b62247c512b960715348b637ac99bf68a9f3b49
+Last validated implementation SHA: 82e3a49da77e5e0d8b451697bad58f9af5aaa4e5
+Last substantive checkpoint SHA: 82e3a49da77e5e0d8b451697bad58f9af5aaa4e5
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-system-map-v2-transpo-6bb0f1cf
@@ -15,12 +15,13 @@ Last checkpoint: predecessor C-07 certified at exact-head GitHub run 33817429249
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 0b62247c512b960715348b637ac99bf68a9f3b49
-LAST_VALIDATED_IMPLEMENTATION_SHA: 0b62247c512b960715348b637ac99bf68a9f3b49
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 0b62247c512b960715348b637ac99bf68a9f3b49
-LAST_DOCUMENTATION_CHECKPOINT_SHA: 0b62247c512b960715348b637ac99bf68a9f3b49
+LAST_VALIDATED_IMPLEMENTATION_SHA: 82e3a49da77e5e0d8b451697bad58f9af5aaa4e5
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 82e3a49da77e5e0d8b451697bad58f9af5aaa4e5
+LAST_DOCUMENTATION_CHECKPOINT_SHA: 82e3a49da77e5e0d8b451697bad58f9af5aaa4e5
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PROJECT_VERDICT_EFFECT: PRESERVE
+PHASE_SYSTEM_MAP_V2_TRANSPORT_C15C_V1_STATUS: COMPLETE
 
 ## Objective
 
@@ -30,7 +31,7 @@ rendering away the boundaries of a bounded projection.
 
 ## Current Milestone
 
-M7 — full validation battery, fast-forward integration, exact-head CI, closure.
+COMPLETE / STOP — M1 through M7 are closed and all fifteen acceptance rows PASS.
 
 ## Completed Milestones
 
@@ -55,14 +56,15 @@ M7 — full validation battery, fast-forward integration, exact-head CI, closure
   pure projection boundaries.
 - M6 — browser scenario matrix (`tests/browser/systemMapV2.browser.ts`), scale
   test at 1,000 nodes / 2,000 edges, UI build verifier and browser test pass (2/2).
+- M7 — Full validation battery (`gate:local` PASS with receipt `receipt:sha256:4e6b059312e2281785e38400`, `gate:clean` PASS with receipt `clean-receipt:sha256:6c14424bbbeb876dbd3c6d95`), all 11 gate groups PASS, 0 failed, siblingWrites 0.
 
 ## Work In Progress
 
-M7 — full validation battery, integration and exact-head CI.
+NONE — task is complete and validated.
 
 ## Exact Next Action
 
-Commit M6 implementation, run full quality gate battery, integrate and verify main.
+STOP — C-15c is COMPLETE and certified. The next authorized campaign is R-13 Overnight Endurance Certification.
 
 ## Files Changed
 
@@ -135,14 +137,19 @@ and the hardening rule exist to be exercised.
 
 ## Resume Recipe
 
-1. `cd /home/dalepalaca/.nightwatch/worktrees/nightwatch-system-map-v2-transpo-6bb0f1cf`
-2. `git status --short` — expect a clean tree at the last checkpoint
-3. `npm run typecheck` and `npm run agent:check`
-4. Continue at M5: the C-15c suite and its registration in both manifests
+STOP — task complete, do not resume.
 
 ## Completion Snapshot
 
-Not complete. Written at closure, from measurement.
+- Task status: COMPLETE
+- Implementation SHA: `82e3a49da77e5e0d8b451697bad58f9af5aaa4e5`
+- `gate:local`: PASS (`receipt:sha256:4e6b059312e2281785e38400`), 11 groups
+- `gate:clean`: PASS (`clean-receipt:sha256:6c14424bbbeb876dbd3c6d95`), 11 groups
+- `campaign:synthetic`: 40 files, 916 passed, 0 failed
+- `test:semantic-compat`: 146 files, 2,033 tests, 2,020 passed, 13 skipped, 0 failed
+- Browser matrix: 2 passed (Control Center authority composition + System Map V2 navigation)
+- Sibling repository writes: 0
+- Production contacts: 0, NEXT contacts: 0, DEV requests: 0, credentials acquired: 0
 
 ## Method notes
 

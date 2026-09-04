@@ -1,7 +1,7 @@
 # EXECUTION PROMPT — C-15c System Map V2 HTTP Transport + Complete Operator UI
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
-Status: IN_PROGRESS
+Status: COMPLETE
 Campaign ID: nightwatch-system-map-v2-transport-c15c-v1
 OpenSpec: openspec/changes/nightwatch-system-map-v2-transport-c15c-v1/
 Planned-From: 0b62247c512b960715348b637ac99bf68a9f3b49
