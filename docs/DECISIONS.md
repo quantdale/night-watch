@@ -4348,3 +4348,45 @@ persistence outright.
 C-10 completing does NOT authorize production observation. It creates the
 privacy prerequisite for the later production kernel; the critical path remains
 C-11 → C-12 → C-13 → C-14.
+
+## D-115 — P1 observes an already-existing subject under its own scope chain, and L6 is replaced by a stated passive-cone invariant
+
+Independent review F-13: C-11's request-issuance gates never execute for a P1
+session that issues no request, "P1 issues no requests" (UA-8) is false for an
+authenticated SPA, and an operator's already-loaded page cannot be placed in a
+fresh rootless network namespace (T-13/RG-18). Canonical requirement E-16.
+
+Decision: P1 authority is established by `nightwatch.p1-observation-scope.v1`,
+a fifteen-gate NAMED ordered chain that admits observing an already-existing
+subject without granting authority to create that subject or generate traffic.
+The authorization class is `P1_OBSERVE` (distinct from C-11's `PROD_OBSERVE`),
+the stage is pinned to `P1`, grants are one-shot and bound to the campaign,
+the implementation SHA, and the PQ receipt digest, and the scope configuration
+is external-only with an exact admitted host, a bounded window, and a private
+evidence destination. The cone is `src/core/prodObserveP1/`, a sibling of the
+C-11 cone; both directions of F-12 hold, so small pattern duplication replaces
+imports between them.
+
+Decision: the acceptance criterion is ZERO REQUESTS ATTRIBUTABLE TO NIGHTWATCH
+with every observed request counted, not "Nightwatch's request builder was
+unused". Attribution is four-class (`OPERATOR_PREEXISTING`,
+`APPLICATION_AUTONOMOUS`, `NIGHTWATCH_ATTRIBUTABLE`, `UNKNOWN`) from
+mechanical evidence; `NIGHTWATCH_ATTRIBUTABLE > 0` yields
+`NIGHTWATCH_TRAFFIC_DETECTED`, `UNKNOWN > 0` yields `ATTRIBUTION_UNKNOWN`, and
+zero samples remain blocked, never passing.
+
+Decision (L6 option B): the network-namespace containment cannot apply to a
+subject Nightwatch did not create, and declaring it "not applicable" silently
+would be a waiver. The replacement invariant, recorded here deliberately with
+its threat-model coverage, is: the cone cannot initiate traffic (no network
+imports, import-graph proven) + cannot mutate the page (no actuation imports,
+proven) + every observed request is counted and attributed + unknown fails
+closed + scope/window/host are bounded + projection is mandatory. There is no
+Nightwatch-originated egress to contain; what is contained instead is
+authority (admission), causality (attribution), and evidence (projection). If
+a future review shows this insufficient, the requirement returns to BLOCKED.
+
+MA-8 completing does NOT authorize production observation. It creates the
+architectural prerequisite the blocked C-12 attempt exposed; the critical path
+remains C-11 → MA-8/F-13 → external/operator prerequisites → C-12 → C-13 →
+C-14, with C-08b organizationally blocked throughout.
