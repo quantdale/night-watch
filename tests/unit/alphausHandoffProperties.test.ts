@@ -76,7 +76,7 @@ function syntheticDossier(rand: () => number): AlphausHandoffInput['dossier'] {
     reproduction: { result: reproduced ? 'REPRODUCED' : 'NOT_REPRODUCED', count: reproduced ? 2 : 0, minimalityGuarantee: '1-MINIMAL' },
     browserApiDifferential: { status: 'MATCH' },
     sourceChangeCandidates: [],
-    likelyFaultBoundary: { primaryBoundary: 'APPLICATION', candidateBoundaries: [], confidence: 'MEDIUM', reasons: [], rootCauseClaim: 'NONE' },
+    likelyFaultBoundary: { primaryBoundary: pick(rand, ['AUTH', 'ROUTER', 'UI_COMPONENT', 'CLIENT_STATE', 'API_CLIENT', 'API_TRANSPORT', 'BACKEND_HANDLER', 'PROTOCOL', 'RESOURCE_LOADING', 'UNKNOWN'] as const), candidateBoundaries: [], confidence: 'MEDIUM', reasons: [], rootCauseClaim: 'NONE' },
     confidence: { level: 'MEDIUM', reasons: [] },
     technicalSeverity: 'MEDIUM',
     triagePriority: 'P2',
