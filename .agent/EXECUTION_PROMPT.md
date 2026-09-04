@@ -1,7 +1,7 @@
 # EXECUTION PROMPT — C-15c Browser Spec Stale-UI Race Hardening
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
-Status: IN_PROGRESS
+Status: COMPLETE
 Campaign ID: nightwatch-systemmap-browser-stability-v1
 OpenSpec: openspec/changes/nightwatch-systemmap-browser-stability-v1/
 Planned-From: 89740646c08a5661d358cc05f20a5d94e135334d

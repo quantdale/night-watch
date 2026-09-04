@@ -97,7 +97,7 @@ gates, prove stability with serial repeats, integrate.
 - Validation commands: `npm run session:status`, `npm run handoff:check`
 - Status: DONE
 
-### M2 — Commit-specific gates — IN_PROGRESS
+### M2 — Commit-specific gates — DONE
 
 - Objective: insert the 6d L2-member gate, the 6e L4-op-0 gates
   (breadcrumb crumb + consumer member), and the 6e-query-answer gate
@@ -106,9 +106,9 @@ gates, prove stability with serial repeats, integrate.
 - Implementation actions: three additive assertion edits; no other change.
 - Acceptance criteria: diff shows only added assertions + comments.
 - Validation commands: `git diff --stat`, `npx tsc --noEmit`
-- Status: IN_PROGRESS
+- Status: DONE
 
-### M3 — Stability validation — PENDING
+### M3 — Stability validation — DONE
 
 - Objective: prove the flake is closed and nothing else regressed.
 - Files/areas: browser lane, adjacent unit suites, truth checkers.
@@ -117,9 +117,9 @@ gates, prove stability with serial repeats, integrate.
   agent/project/handoff checks.
 - Acceptance criteria: 10/10 browser repeats green; all checkers PASS.
 - Validation commands: `npx playwright test --config=playwright.control-center.config.ts --repeat-each=10`, `npm run typecheck`, `npm run hardening:check`, `npm run agent:check`, `npm run project:check`, `npm run handoff:check`
-- Status: PENDING
+- Status: DONE
 
-### M4 — Integration and close — PENDING
+### M4 — Integration and close — DONE
 
 - Objective: integrate to main, release, remove worktree, close task.
 - Files/areas: session branch → origin/main; REPORT.md; ACTIVE_TASK.md.
@@ -127,4 +127,4 @@ gates, prove stability with serial repeats, integrate.
   HEAD == origin/main; release; remove worktree; COMPLETE records.
 - Acceptance criteria: push verified; tree clean; REPORT final.
 - Validation commands: `git status`, `git rev-parse HEAD`, `git ls-remote origin main`
-- Status: PENDING
+- Status: DONE

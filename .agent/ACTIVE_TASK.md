@@ -3,23 +3,22 @@
 Task ID: nightwatch-systemmap-browser-stability-v1
 Phase: SYSTEMMAP_BROWSER_STABILITY_V1
 Title: C-15c Browser Spec Stale-UI Race Hardening
-Status: IN_PROGRESS
+Status: COMPLETE
 Task directory: .agent/tasks/nightwatch-systemmap-browser-stability-v1
 Starting SHA: 89740646c08a5661d358cc05f20a5d94e135334d
-Last validated implementation SHA: 89740646c08a5661d358cc05f20a5d94e135334d
-Last checkpoint: M1 done — session claimed at 8974064; SPEC/PLAN/STATE + OpenSpec written; M2 fix next
-Current milestone: M2 — Member-readiness gates (IN_PROGRESS)
-Next action: Apply the 6d L2-member gate and the 6e L4-op-0 gates in the worktree, then run typecheck and the browser lane
+Last validated implementation SHA: a8ce94a6beca0a4d870ef7d7bee1e9ac884458c2
+Last checkpoint: close-out — M1–M4 complete; implementation a8ce94a certified (typecheck, 76 units, hardening, 20/20 lane + repeats, truth checkers); STOP
+Current milestone: COMPLETE / STOP — all milestones closed, REPORT final, no defects introduced
+Next action: STOP — integrate to main, release the session, remove the worktree; residual is owner-direction only
 Authorization class: SYSTEMMAP_BROWSER_STABILITY_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 89740646c08a5661d358cc05f20a5d94e135334d
-LAST_VALIDATED_IMPLEMENTATION_SHA: 89740646c08a5661d358cc05f20a5d94e135334d
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 89740646c08a5661d358cc05f20a5d94e135334d
+LAST_VALIDATED_IMPLEMENTATION_SHA: NONE
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: NONE
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
-PHASE_SYSTEMMAP_BROWSER_STABILITY_V1_STATUS: IN_PROGRESS
-
+PHASE_SYSTEMMAP_BROWSER_STABILITY_V1_STATUS: COMPLETE
 ## Routing and safety
 
 ```
