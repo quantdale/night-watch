@@ -528,3 +528,17 @@ must no longer absorb middleware-level effects. T-35 is a side effect that
 the handler. `R-1` now covers only effects genuinely invisible in source:
 database triggers, a downstream service's own writes, and infrastructure-level
 analytics.
+
+### MA-8 / D-115 P1 reconciliation (historical analysis above stands)
+
+T-13's "mandatory L6 namespace for every production run" is refined for P1:
+an operator-provided already-loaded page cannot be placed in a fresh
+namespace Nightwatch creates (F-13). For P1's attach-only observer the
+replacement is the stated passive-cone invariant — no traffic-initiation
+capability, no page-mutation capability, every observed request counted and
+attributed with UNKNOWN failing closed, bounded scope/window/host, mandatory
+projection (D-115). R-4's mitigation therefore reads "L6 mandatory, except P1
+under the D-115 invariant" rather than changing R-4's UNRESOLVED status: DNS
+prefetch invisibility is still not eliminated, and a P1 session observing
+during prefetch-heavy application behavior accounts that traffic as
+UNKNOWN — which denies PASS rather than waving it through.
