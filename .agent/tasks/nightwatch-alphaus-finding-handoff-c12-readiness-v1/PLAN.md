@@ -85,7 +85,7 @@ restore.
 - Objective: seeded properties; 16-probe mutation campaign with zero survivors.
 - Files/areas: tests/unit/alphausHandoffProperties.test.ts, /tmp/ah1_mutation.py (driver, untracked).
 - Implementation actions: property suites; reversible mutations with digest-verified restore.
-- Acceptance criteria: 16 introduced, 16 detected, 0 survivors; tree pristine after.
+- Acceptance criteria: 22 introduced, 22 detected, 0 survivors; tree pristine after.
 - Validation commands: `python3 /tmp/ah1_mutation.py`
 - Status: DONE
 
@@ -105,7 +105,7 @@ restore.
 - Implementation actions: live-state block update; header/CI/critical-path prose; stale search; narrow check.
 - Acceptance criteria: `npm run project:check` PASS; `npm run agent:check` PASS with zero strict errors.
 - Validation commands: `npm run project:check`, `npm run agent:check`
-- Status: IN_PROGRESS
+- Status: DONE
 
 ### M6 — Full validation + closure
 
@@ -114,7 +114,7 @@ restore.
 - Implementation actions: run all gates; repair; REPORT.md; push; verify HEAD == origin/main; release session.
 - Acceptance criteria: every gate green at the integrated head; REPORT complete; tree clean.
 - Validation commands: `npm run gate:local`, `npm run gate:clean`, `npm test`
-- Status: NOT_STARTED
+- Status: DONE
 
 ## Validation Strategy
 

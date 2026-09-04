@@ -4,7 +4,7 @@
 
 Task ID: nightwatch-alphaus-finding-handoff-c12-readiness-v1
 Phase: ALPHAUS_FINDING_HANDOFF_C12_READINESS_V1
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: 4ca990f9bead33ae5626c4ae4f21dc833f41aec2
 Last validated implementation SHA: 4c263e1c690110de07cea826166e06b70df1ca7e
 Last substantive checkpoint SHA: 4c263e1c690110de07cea826166e06b70df1ca7e
@@ -16,7 +16,7 @@ STARTING_SHA: 4ca990f9bead33ae5626c4ae4f21dc833f41aec2
 LAST_VALIDATED_IMPLEMENTATION_SHA: 4c263e1c690110de07cea826166e06b70df1ca7e
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: 4c263e1c690110de07cea826166e06b70df1ca7e
 LIVE_HEAD_AUTHORITY: GIT
-PHASE_ALPHAUS_FINDING_HANDOFF_C12_READINESS_V1_STATUS: IN_PROGRESS
+PHASE_ALPHAUS_FINDING_HANDOFF_C12_READINESS_V1_STATUS: COMPLETE
 
 ## Objective
 
@@ -26,24 +26,20 @@ truth — with zero production contact and zero external writes.
 
 ## Current Milestone
 
-M5 — Documentation reconciliation.
+COMPLETE / STOP — all milestones closed.
 
 ## Completed Milestones
 
-- M1 Recon (session claimed, SPEC frozen, recon complete, gate baseline green).
-- M2 Handoff + preflight implementation (commits `bfc4bfd`, CLI/runbook commit).
-- M3 Adversarial verification (16/16 mutations, 0 survivors; property suites green).
-- M4 Operator surface + context docs (CLI operability tests, runbook, context doc, OpenSpec).
+- M1 Recon. M2 Handoff + preflight implementation. M3 Adversarial verification. M4 Operator surface + context docs. M5 Documentation reconciliation. M6 Full validation + closure.
 
 ## Work In Progress
 
-M5 docs reconciliation: CURRENT_STATE live-state updated; header/CI prose,
-DECISIONS entries, stale sweep, and freshness hardening remain.
+NONE.
 
 ## Exact Next Action
 
-Finish M5 (header/prose/DECISIONS/stale-sweep/freshness check), then run M6
-full validation and write REPORT.md.
+STOP — integrate to main, release the session, remove the worktree.
+
 
 ## Files Changed
 
@@ -102,10 +98,12 @@ NONE — zero production/DEV/NEXT contact; zero external writes; zero credential
 
 ## Resume Recipe
 
-Read `.agent/ACTIVE_TASK.md`, this STATE.md, then PLAN.md M5–M6. Run
-`npm run agent:check` and `npm run project:check`; repair any new mismatch;
-continue at the Exact Next Action above.
-
+Task complete — do not resume. Historical record only; any future task requires new authorization.
 ## Completion Snapshot
 
-Not complete (IN_PROGRESS task; M5–M6 remain).
+COMPLETE 2026-09-04: implementation `4c263e1` certified — typecheck clean,
+hardening 59/59, 40 + 31 + 7 suites green, 22/22 mutations detected with 0
+survivors, gate:local 11/11 receipt
+`receipt:sha256:025570f11a841beba9d79eac` at `ca1fb0c`, regression 3807/0/13,
+clean gate PASS Node 20, eight defects closed, REPORT final, zero production
+contact, C-12 not executed.

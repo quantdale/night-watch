@@ -2,14 +2,14 @@
 
 Task ID: nightwatch-alphaus-finding-handoff-c12-readiness-v1
 Phase: ALPHAUS_FINDING_HANDOFF_C12_READINESS_V1
-Title: Alphaus Finding Handoff + C-12 Operator Readiness + Durable Documentation Reconciliation
-Status: IN_PROGRESS
+Title: AH-1 Alphaus Finding Handoff + C-12 Operator Readiness + Durable Documentation Reconciliation
+Status: COMPLETE
 Task directory: .agent/tasks/nightwatch-alphaus-finding-handoff-c12-readiness-v1
 Starting SHA: 4ca990f9bead33ae5626c4ae4f21dc833f41aec2
 Last validated implementation SHA: 4c263e1c690110de07cea826166e06b70df1ca7e
-Last checkpoint: M2-M4 complete and committed (handoff, preflight+CLI, matrices, properties, 16/16 mutations, runbook, context doc, OpenSpec); M5 docs reconciliation in progress
-Current milestone: M5 Docs reconciliation
-Next action: Complete M5 docs reconciliation and M6 full validation, then REPORT, integrate, release
+Last checkpoint: close-out — M1–M6 complete; implementation 4c263e1 certified (typecheck, 78 AH-1 tests + properties, hardening 59/59, gate:local 11/11 receipt 025570f11a841beba9d79eac, regression 3807/0/13, clean gate PASS, 22/22 mutations); CI inspection recorded; STOP
+Current milestone: COMPLETE / STOP — all milestones closed, REPORT final, eight defects closed
+Next action: STOP — integrate to main, release the session, remove the worktree; follow-up campaign requires new owner authorization
 Authorization class: ALPHAUS_FINDING_HANDOFF_C12_READINESS_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
@@ -18,7 +18,7 @@ LAST_VALIDATED_IMPLEMENTATION_SHA: NONE
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: NONE
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
-PHASE_ALPHAUS_FINDING_HANDOFF_C12_READINESS_V1_STATUS: IN_PROGRESS
+PHASE_ALPHAUS_FINDING_HANDOFF_C12_READINESS_V1_STATUS: COMPLETE
 
 ## Routing and safety
 

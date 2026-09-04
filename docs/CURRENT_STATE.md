@@ -1,8 +1,8 @@
 # Nightwatch — CURRENT STATE
 
 > Durable memory for the next agent/session. Last updated: **2026-09-04**
-> during AH-1 (Alphaus finding handoff + C-12 operator readiness,
-> IN_PROGRESS). MA-8/F-13 is COMPLETE (implementation anchor `4642c16`,
+> at AH-1 close-out (Alphaus finding handoff + C-12 operator readiness,
+> COMPLETE). MA-8/F-13 is COMPLETE (implementation anchor `4642c16`,
 > integrated at `4ca990f`). The machine-checked project verdict remains
 > `OPERATIONALLY_ACCEPTED`.
 > GitHub Actions currently yields zero-step external blocks
@@ -81,7 +81,7 @@ canonical `origin` remote. It reads the Alphaus repos under
 | `PHASE_DURABLE_ARTIFACT_AND_CONTROL_CENTER_TRUTH_HARDENING_V1_STATUS` | `COMPLETE_LOCAL_NOT_CI_VERIFIED` — source implementation anchor `01f2ac0608931b83aed0b5c948ed3a4471de7e01`, validated implementation/test checkpoint `c3d69039d4f2a9969118d877b432c6b4a2f5d09c`, and final documentation checkpoint `d2c606c26f598626f24dd94a11cb7fad18887607`; strict v1/v2 dossier runtime validation rejects all reproduced malformed nested mutations, the facade audit covers `14/14` registered kinds with `55/55` bounded mutations rejected, and one conservative findings currentness reducer governs raw, authority, projected, and collector paths; current-head local gate passed all `9` groups with semantic `1,903/1,890/13/0`, owner provenance `91`, synthetic campaign `66`, local receipt `receipt:sha256:b26864ec34f00438044c1076`, clean gate receipt `receipt:sha256:186a15aed5e9dbbd9c95ab1d`, and clean receipt `clean-receipt:sha256:d9c6c98dd7a83b0bab0a40d6`; final canonical serial Playwright passed `2,548/2,564` with `16` skips and `0` failures; external CI was not observed and is not claimed green; prohibited safety vectors remain zero |
 | `CAMPAIGN_C00_CONCURRENCY_WORKSPACE_HARDENING_STATUS` | see the C-00 section below; the durable invariant is `ONE_WRITING_AGENT == ONE_WORKTREE == ONE_SESSION_IDENTITY`, enforced by `bin/workspace-integrity.mjs`, `bin/nightwatch-session.mjs`, `agent:check`, and the required `WORKSPACE_INTEGRITY` quality-gate group (`docs/DECISIONS.md` D-101…D-104) |
 | `MA_8_F_13_STATUS` | `COMPLETE` — fifteen-gate `nightwatch.p1-observation-scope.v1` chain, one-shot `P1_OBSERVE` grants, external-only scope config, four-class attribution (UNKNOWN fails closed), bounded session, kill switch; implementation anchor `4642c16`, integrated at `4ca990f`; 128 focused P1 tests, 14/14 mutations detected, DEF-P1-1..3 closed; REPORT in `.agent/tasks/nightwatch-p1-observation-scope-ma8-v1/` |
-| `AH_1_STATUS` | `IN_PROGRESS` — `nightwatch.alphaus-finding-handoff.v1` projection + `nightwatch.c12-readiness.v1` preflight + CLI + runbook + Alphaus context doc + OpenSpec; 37/37 + 28/28 + 7/7 suites, 16/16 mutations detected / 0 survivors; implementation anchor `2a299cf`; full gate + integration pending (M6) |
+| `AH_1_STATUS` | `COMPLETE` — `nightwatch.alphaus-finding-handoff.v1` projection + `nightwatch.c12-readiness.v1` preflight + CLI + runbook + Alphaus context doc + OpenSpec; implementation `4c263e1`; 40/40 + 31/31 + 7/7 suites, 22/22 mutations detected / 0 survivors; gate:local 11/11 receipt `receipt:sha256:025570f11a841beba9d79eac`; regression 3807/0/13; clean gate PASS Node 20; REPORT in `.agent/tasks/nightwatch-alphaus-finding-handoff-c12-readiness-v1/` |
 | `C_12_STATUS` | `PENDING_EXTERNAL_OWNER_PREREQUISITES` — NOT authorized, NOT begun; previous passive-only attempt ended BLOCKED with 0 qualifying sessions and 0 production contact (preserved as evidence); operator runbook at `docs/C12-OPERATOR-RUNBOOK.md`; preflight via `npm run c12:preflight` |
 | `PRE_C01_BASELINE` | `docs/design/PRE-C01-BASELINE.md` — pinned, clean, local/source-only census: `srcsnapshot:sha256:04ff583971865f335902f5ad`, `source-eligibility-census:sha256:2f97b732e0472df347f695a1` |
 
@@ -760,11 +760,11 @@ informational and are not interpreted as current authority.
 LIVE_STATE_PROTOCOL_VERSION: nightwatch.live-state.v1
 LIVE_TASK_ID: nightwatch-alphaus-finding-handoff-c12-readiness-v1
 LIVE_PHASE: ALPHAUS_FINDING_HANDOFF_C12_READINESS_V1
-LIVE_TASK_STATUS: IN_PROGRESS
+LIVE_TASK_STATUS: COMPLETE
 LIVE_PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
 LIVE_PROJECT_VERDICT_EFFECT: PRESERVE
-LIVE_NEXT_ACTION_STATE: CONTINUE
-LIVE_COMPLETION_CLAIM: NONE
+LIVE_NEXT_ACTION_STATE: STOP
+LIVE_COMPLETION_CLAIM: COMPLETE
 ```
 
 ### Exact-head CI state (current live CI state)
