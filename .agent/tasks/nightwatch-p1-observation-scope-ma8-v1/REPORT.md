@@ -103,13 +103,10 @@ C-12 row (criterion rewording) .............. PASS — code implements "zero
 Focused P1 suites: 128/128 (38 admission + 24 config + 20 attribution + 6
 privacy + 8 capability + 27 state-machine + 5 mock-subject, incl. the
 out-of-vocabulary identity fault). Convergence: 13/13. Full canonical
-regression: 3728 passed / 1 failed (convergence DEF-P1-3, repaired, 13/13
-re-green) / 13 skipped (pre-existing environment guards; zero P1 skips).
-Synthetic lane: 1050/1050 PASS, `deepContainmentLane: PROVEN` (pre-DEF-P1-3
-tree; final-lane rerun pending at close). Semantic lane: 2020 passed / 13
-skipped / 0 failed. Owner provenance: 91/91.
-
-(Final-tree reruns fill at close.)
+regression on the final tree: 3729 passed / 0 failed / 13 skipped
+(pre-existing environment guards; zero P1 skips). Synthetic lane on the
+final tree: 47 files, 1051/1051 PASS, `deepContainmentLane: PROVEN`.
+Semantic lane: 2020 passed / 13 skipped / 0 failed. Owner provenance: 91/91.
 
 ## Mutation/adversarial results
 
@@ -126,7 +123,9 @@ Full probe table in STATE.md.
 
 ## Full regression
 
-(pending final-tree rerun at close)
+3729 passed / 0 failed / 13 skipped, exit 0, 10.4 minutes on the final tree
+(DEF-P1-3 repaired; the single earlier failure was the convergence
+single-ownership rule, 13/13 re-green).
 
 ## Clean certification
 
