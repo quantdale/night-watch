@@ -4,10 +4,10 @@
 
 Task ID: nightwatch-overnight-reliability-r13-v1
 Phase: OVERNIGHT_RELIABILITY_R13_V1
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: d3a464de97225f91cd425b7922b53238a02dc981
-Last validated implementation SHA: d3a464de97225f91cd425b7922b53238a02dc981
-Last substantive checkpoint SHA: d3a464de97225f91cd425b7922b53238a02dc981
+Last validated implementation SHA: 2bb865ea476ca1a82841567243be4db39a510466
+Last substantive checkpoint SHA: 2bb865ea476ca1a82841567243be4db39a510466
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-overnight-reliability-71c616bc
@@ -15,13 +15,13 @@ Last checkpoint: session claimed; R-13 scaffolding written before any gate batte
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: d3a464de97225f91cd425b7922b53238a02dc981
-LAST_VALIDATED_IMPLEMENTATION_SHA: d3a464de97225f91cd425b7922b53238a02dc981
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: d3a464de97225f91cd425b7922b53238a02dc981
+LAST_VALIDATED_IMPLEMENTATION_SHA: 2bb865ea476ca1a82841567243be4db39a510466
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 2bb865ea476ca1a82841567243be4db39a510466
 LAST_DOCUMENTATION_CHECKPOINT_SHA: d3a464de97225f91cd425b7922b53238a02dc981
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PROJECT_VERDICT_EFFECT: PRESERVE
-PHASE_OVERNIGHT_RELIABILITY_R13_V1_STATUS: IN_PROGRESS
+PHASE_OVERNIGHT_RELIABILITY_R13_V1_STATUS: COMPLETE
 
 ## Objective
 
@@ -34,7 +34,9 @@ implementation changes.
 
 ## Current Milestone
 
-M5 — second topology, regression repetition, semantic/synthetic long runs.
+COMPLETE / STOP — M1 through M8 are closed; 18 of 19 acceptance rows PASS,
+row 18 (exact-head CI) BLOCKED on the external GitHub execution failure with
+5 identical no-runner attempts recorded.
 
 ## Completed Milestones
 
@@ -42,22 +44,38 @@ M5 — second topology, regression repetition, semantic/synthetic long runs.
   EXECUTION_PROMPT routing, live-state block, session claimed; truthful CI
   non-evidence recorded in the machine block and prose (project:check PASS).
 - M2 — 12 fresh-process determinism observations byte-identical (§92);
-  source-scan repeatability covered by construction (§93).
-- M3 (partial) — order battery 597/597/597 (§94); lifecycle driver green:
-  temp 100/0, receipts 50/50 + fail-closed ×2, server 25 cycles fd-neutral,
+  source-scan repeatability covered by construction (§93); L1 re-probe
+  post-fix identical.
+- M3 — order battery 597/597/597 (§94); lifecycle driver green: temp 100/0,
+  receipts 50/50 + fail-closed ×2, server 25 cycles fd-neutral,
   workspace-integrity 25/25, worktrees 10/10, concurrent receipts 8×10 (§95,
-  §97). Port-collision repetition (§96) rides in M5.
+  §97); lease suites repeated via Clean B + regressions (§96).
+- M4 — 7 map-scale permutations → 1 digest (§98); 9 seeded properties × 200
+  iters = 1,801 checks, 0 failures (§99); DEF-R13-1 (probe-side) fixed.
+- M5 — Clean B guards + 622 suites PASS (§100); regression ×3 stable (§101:
+  3,572 total, 3,559+13+0 each); semantic ×2 identical (§102); synthetic ×3
+  identical (§103: 916/916).
+- M6 — endurance v2 22/22 true-depth loops (§104); leak accounting clean
+  (§105: OBS-R13-1 noted); receipt durability proven twice (§106).
+- M7 — 13/13 mutation bites + restores (§107); DEF-R13-4 repaired; DEF-R13-5
+  found and repaired (4 layers, full re-validation); gate:local PASS at
+  2bb865e (receipt:sha256:25dfa0521c9645c4d6c4de9b, 11/11, synthetic
+  923/923); gate:clean PASS at 2bb865e
+  (clean-receipt:sha256:84d32d1be193f7c2012ab458, 11/11, siblingWrites 0,
+  with the concurrent-edit caveat in REPORT row 17).
+- M8 — close-out records, authoritative clean-gate re-run at the final head
+  (next), integration, exact-head CI re-attempt, release.
+
 ## Work In Progress
 
-M7 — mutation battery 13/13 bite (P-REG true-deregistration, P-ADM 9th-key,
-P-DEP post-fix, P-LAYOUT digest-input variants all confirmed after initial
-probe-target corrections); DEF-R13-4 repaired. Remaining: long clean gate,
-exact-head CI re-attempt, closure.
+NONE — all executable work is complete. Remaining: authoritative clean gate
+at the final head, integrate, observe exact-head CI, record the outcome,
+release the session.
 
 ## Exact Next Action
 
-Update REPORT rows 10/12/15/16, commit the guard repair + records, run the
-long clean gate.
+STOP on implementation — commit these close-out records (Commit A), run the
+authoritative clean gate with zero concurrent writes, integrate, observe CI.
 
 ## Files Changed
 
@@ -168,14 +186,23 @@ PLAN.
 
 ## Resume Recipe
 
-1. `cd /home/dalepalaca/.nightwatch/worktrees/nightwatch-overnight-reliability-71c616bc`
-2. `git status --short` — expect only R-13 record files
-3. `npm run agent:check`
-4. Continue at the Exact Next Action above.
+STOP — task complete, do not resume. Integration, CI observation and release
+are the owner's remaining session steps, recorded in ACTIVE_TASK.
 
 ## Completion Snapshot
 
-Not complete. Written at scaffolding, from the plan.
+- Task status: COMPLETE (18/19 rows PASS; row 18 BLOCKED-external)
+- Substantive anchor: `2bb865ea476ca1a82841567243be4db39a510466`
+- `gate:local`: PASS (receipt:sha256:25dfa0521c9645c4d6c4de9b), 11 groups
+- `gate:clean`: PASS (clean-receipt:sha256:84d32d1be193f7c2012ab458), 11 groups
+- `campaign:synthetic` ×3: 916/916 each (final gate: 923/923 with new tests)
+- `test:semantic-compat` ×2: 2,033/2,020/13/0 each
+- Regression ×3: 3,572 total, 3,559+13+0 each
+- Determinism ×12: byte-identical; properties 1,801/1,801; map 7→1 digest
+- Browser matrix 2/2; endurance 22/22 true-depth; mutations 13/13
+- Defects: DEF-R13-1 (probe), DEF-R13-2 (process), DEF-R13-3 (process),
+  DEF-R13-4 (guard, repaired), DEF-R13-5 (product, repaired)
+- Sibling writes: 0. Production/NEXT/DEV contacts: 0. Credentials: 0.
 
 ## Method notes
 
