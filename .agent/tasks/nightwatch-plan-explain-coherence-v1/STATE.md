@@ -4,14 +4,14 @@
 
 Task ID: nightwatch-plan-explain-coherence-v1
 Phase: PLAN_EXPLAIN_COHERENCE_V1
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: caec3cc05cba32eb77b22f9f0b608adaac7b1f46
 Last validated implementation SHA: 958f331e9d7e625daa42e03b3f72bc9b899b9038
 Last substantive checkpoint SHA: 958f331e9d7e625daa42e03b3f72bc9b899b9038
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-plan-explain-coherenc-faaf601a
-Last checkpoint: M2 done — coherence test committed at 958f331 (1/1 green, neighbors 7/7, tsc clean); M3 validation next
+Last checkpoint: close-out — M1–M3 complete; implementation 958f331 certified (1 new test, neighbors 7/7, typecheck, hardening, truth checkers); STOP
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: caec3cc05cba32eb77b22f9f0b608adaac7b1f46
@@ -19,7 +19,7 @@ LAST_VALIDATED_IMPLEMENTATION_SHA: 958f331e9d7e625daa42e03b3f72bc9b899b9038
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: 958f331e9d7e625daa42e03b3f72bc9b899b9038
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
-PHASE_PLAN_EXPLAIN_COHERENCE_V1_STATUS: IN_PROGRESS
+PHASE_PLAN_EXPLAIN_COHERENCE_V1_STATUS: COMPLETE
 
 ## Objective
 
@@ -28,7 +28,7 @@ one focused spawning test; integrate.
 
 ## Current Milestone
 
-M3 — Validation and close (IN_PROGRESS).
+COMPLETE / STOP — all milestones closed.
 
 ## Completed Milestones
 
@@ -38,16 +38,16 @@ M3 — Validation and close (IN_PROGRESS).
 - **M2 coherence test (done).** Commit `958f331`:
   `tests/unit/planExplainCoherence.test.ts` (1 test, green);
   neighbors 7/7; `tsc --noEmit` clean.
+- **M3 validation and close (done).** Hardening + agent/project/
+  handoff green; docs closed.
 
 ## Work In Progress
 
-- M3: hardening/agent/project/handoff checks, REPORT final,
-  integration, release.
+NONE — M1 through M3 closed. No open work.
 
 ## Exact Next Action
 
-Run M3 checkers in the worktree, finalize REPORT, integrate to main,
-release the session, remove the worktree.
+STOP. Campaign COMPLETE. No further action on this task.
 
 ## Files Changed
 
@@ -56,10 +56,9 @@ release the session, remove the worktree.
 
 ## Validation Ledger
 
-M1: `session:status` PASS; `handoff:check` PASS (canonical, pre-rebind
-shape); `agent:check` PASS.
+M1: `session:status` PASS; `handoff:check` PASS; `agent:check` PASS.
 M2: new test 1/1 green; neighbors 7/7; `tsc --noEmit` clean.
-M3: pending.
+M3: `hardening:check` PASS; agent/project/handoff PASS at close.
 
 ## Decisions Made During This Task
 
@@ -91,8 +90,13 @@ None. C-12 and all owner-gated campaigns remain out of scope.
 
 ## Resume Recipe
 
-Run M3 checkers; finalize REPORT; push; release; remove worktree.
+Task complete. No further action on this task; any follow-up starts as a new authorized task.
 
 ## Completion Snapshot
 
-Not complete. No snapshot until M3.
+Final substantive checkpoint: 958f331e9d7e625daa42e03b3f72bc9b899b9038
+Final task status: COMPLETE. Live HEAD: DISCOVER_FROM_GIT.
+Tests: new file 1/1; neighbors 7/7; typecheck clean; hardening PASS.
+Artifacts: coherence test + records; REPORT final.
+Known issues: none. Positive-path contract pinned.
+Recommended next task: none required. No new campaign authority granted.

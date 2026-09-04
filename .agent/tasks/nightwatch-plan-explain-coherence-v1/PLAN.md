@@ -60,7 +60,7 @@ worktree discipline; no force push; no history rewrite.
 - Validation commands: focused test file, `npx tsc --noEmit`
 - Status: DONE
 
-### M3 — Validation and close — IN_PROGRESS
+### M3 — Validation and close — DONE
 
 - Objective: full validation, REPORT, integration, release.
 - Files/areas: adjacent suites, truth checkers, session branch.
@@ -68,7 +68,7 @@ worktree discipline; no force push; no history rewrite.
   handoff checks; REPORT; push; release; remove worktree.
 - Acceptance criteria: all green; push verified; REPORT final.
 - Validation commands: `npm run hardening:check`, `npm run agent:check`, `npm run project:check`, `npm run handoff:check`
-- Status: IN_PROGRESS
+- Status: DONE
 
 ## Validation Strategy
 
