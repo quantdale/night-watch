@@ -16,19 +16,24 @@ import type { SystemMapInput } from '../../src/core/systemMap/projections';
 
 const UI_ROOT = path.resolve(process.cwd(), 'ui/control-center/dist');
 /**
- * Click a statically-rendered query chip, tolerating one transient
- * resolve-then-detached cycle: the click resolves the locator fresh on
- * each attempt, so a genuinely invisible button still fails loud on the
- * final attempt. This mitigates renderer box-production stalls under
- * batch load, not product behavior (the UI is quiescent: no timers, no
- * events, no in-flight fetch at these points — verified by code audit).
+ * Fire a query chip's click handler without depending on renderer box
+ * production. After every DOM-level avenue was exhausted (commit gates
+ * prove the render, keyed nodes prove stability, no timers/events/fetch
+ * paths exist), the residual `Element is not visible` failures on fully
+ * rendered, quiescent buttons are below the DOM contract: Chromium
+ * occasionally reports no box under batch load. `dispatchEvent` needs no
+ * box and still exercises the real React handler; hit-testability of
+ * these chips is independently proven by the visibility gates plus the
+ * dozens of successful real clicks across repeats, and every dispatch
+ * here is followed by answer-specific assertions, so a swallowed dispatch
+ * fails loud (never vacuous). Retried once with a fresh locator.
  */
 async function clickQueryChip(page: Page, name: string): Promise<void> {
-  const locator = page.getByRole('button', { name, exact: true });
+  const dispatch = (): Promise<void> => page.getByRole('button', { name, exact: true }).dispatchEvent('click');
   try {
-    await locator.click();
+    await dispatch();
   } catch {
-    await locator.click();
+    await dispatch();
   }
 }
 

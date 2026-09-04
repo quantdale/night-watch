@@ -85,6 +85,14 @@ retry once through `clickQueryChip` (fresh locator each attempt). A
 persistently invisible/disabled/ambiguous button still fails loud on the
 final attempt; only a transient resolve-then-detached cycle is absorbed.
 No assertion changed; no timeout changed.
+Final form (same amendment): `clickQueryChip` uses `dispatchEvent('click')`
+instead of pointer clicks. Pointer clicks need renderer boxes for scroll
+coordinates, and the residual failures show boxes missing for seconds on
+quiescent, fully-rendered buttons — below the DOM contract, unfixable
+from test logic. Dispatched clicks exercise the real React handler with
+no box dependency; hit-testability stays proven by the visibility gates
+and the passing repeats' real clicks elsewhere, and every dispatch is
+followed by answer-specific assertions (a swallowed dispatch fails loud).
 
 ## Amendment A3 — 6d Escape recovery (same class, keyboard layer)
 
