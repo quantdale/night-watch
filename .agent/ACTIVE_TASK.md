@@ -1,30 +1,30 @@
 # Active Task
 
-Task ID: nightwatch-alphaus-finding-handoff-c12-readiness-v1
-Phase: ALPHAUS_FINDING_HANDOFF_C12_READINESS_V1
-Title: AH-1 Alphaus Finding Handoff + C-12 Operator Readiness + Durable Documentation Reconciliation
-Status: COMPLETE
-Task directory: .agent/tasks/nightwatch-alphaus-finding-handoff-c12-readiness-v1
-Starting SHA: 4ca990f9bead33ae5626c4ae4f21dc833f41aec2
-Last validated implementation SHA: 46e241aede8bbcee7b555c719279068bb51a0f3b
-Last checkpoint: close-out — M1–M6 complete; implementation 4c263e1 certified (typecheck, 78 AH-1 tests + properties, hardening 59/59, gate:local 11/11 receipt 025570f11a841beba9d79eac, regression 3807/0/13, clean gate PASS, 22/22 mutations); CI inspection recorded; STOP
-Current milestone: COMPLETE / STOP — all milestones closed, REPORT final, eight defects closed
-Next action: STOP — integrate to main, release the session, remove the worktree; follow-up campaign requires new owner authorization
-Authorization class: ALPHAUS_FINDING_HANDOFF_C12_READINESS_V1
+Task ID: nightwatch-systemmap-browser-stability-v1
+Phase: SYSTEMMAP_BROWSER_STABILITY_V1
+Title: C-15c Browser Spec Stale-UI Race Hardening
+Status: IN_PROGRESS
+Task directory: .agent/tasks/nightwatch-systemmap-browser-stability-v1
+Starting SHA: 89740646c08a5661d358cc05f20a5d94e135334d
+Last validated implementation SHA: 89740646c08a5661d358cc05f20a5d94e135334d
+Last checkpoint: M1 done — session claimed at 8974064; SPEC/PLAN/STATE + OpenSpec written; M2 fix next
+Current milestone: M2 — Member-readiness gates (IN_PROGRESS)
+Next action: Apply the 6d L2-member gate and the 6e L4-op-0 gates in the worktree, then run typecheck and the browser lane
+Authorization class: SYSTEMMAP_BROWSER_STABILITY_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
-STARTING_SHA: 4ca990f9bead33ae5626c4ae4f21dc833f41aec2
-LAST_VALIDATED_IMPLEMENTATION_SHA: NONE
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: NONE
+STARTING_SHA: 89740646c08a5661d358cc05f20a5d94e135334d
+LAST_VALIDATED_IMPLEMENTATION_SHA: 89740646c08a5661d358cc05f20a5d94e135334d
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 89740646c08a5661d358cc05f20a5d94e135334d
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
-PHASE_ALPHAUS_FINDING_HANDOFF_C12_READINESS_V1_STATUS: COMPLETE
+PHASE_SYSTEMMAP_BROWSER_STABILITY_V1_STATUS: IN_PROGRESS
 
 ## Routing and safety
 
 ```
 IMPLEMENTATION AUTHORIZED:
-  Alphaus finding handoff + C-12 readiness + docs reconciliation only
+  tests/browser/systemMapV2.browser.ts member-readiness gates only
 
 REAL PRODUCTION CONTACT:
   NOT AUTHORIZED
@@ -39,9 +39,9 @@ C-07 DEV:
   NOT AUTHORIZED
 ```
 
-Predecessor MA-8/F-13 (`nightwatch-p1-observation-scope-ma8-v1`) is COMPLETE
-at implementation anchor `4642c16`, integrated at `4ca990f` (see
-`.agent/tasks/nightwatch-p1-observation-scope-ma8-v1/REPORT.md`).
+No product-code change in this campaign. No production contact, no DEV
+request, no credential acquisition.
 
 C-00 governs: all implementation happens in the owned session worktree
-`session/nightwatch-alphaus-finding-hando-c009d87c`.
+`session/nightwatch-systemmap-browser-sta-9be47eca`. The canonical checkout is
+never used for implementation.

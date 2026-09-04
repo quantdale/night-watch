@@ -206,6 +206,8 @@ test('C-15c the operator can navigate the map, and the map never overstates what
     await page.getByRole('application').press('Escape');
     await page.getByRole('application').press('Escape');
     await expect(page.getByRole('button', { name: 'Product: ripple' })).toBeVisible();
+    // The second Escape refetches L2 — arrows need its members, not crumbs.
+    await expect(page.getByRole('button', { name: /^services\/ripple,/ })).toBeVisible();
     await page.getByRole('application').press('ArrowDown');
     await page.getByRole('application').press('ArrowDown');
     await page.getByRole('application').press('ArrowDown');
@@ -238,10 +240,19 @@ test('C-15c the operator can navigate the map, and the map never overstates what
     await page.getByRole('searchbox', { name: 'Search nodes' }).fill('');
     await page.getByRole('button', { name: /^Drill into Operation/ }).click({ force: true });
     await expect(page.getByTestId('map-authority')).toBeVisible();
+    // The authority footer is level-identical: gate navigation on the
+    // L4-op-0 breadcrumb (proves the drill committed) and the consumer
+    // member (proves the exact right data committed) before pressing.
+    await expect(page.getByRole('button', { name: 'Operation: GET /v1/op-0' })).toBeVisible();
+    await expect(page.getByRole('button', { name: /^src\/ui\/Button\.tsx,/ })).toBeVisible();
     await page.getByRole('application').press('ArrowRight');
     await expect(page.getByRole('heading', { name: 'src/ui/Button.tsx' })).toBeVisible();
     await page.getByRole('button', { name: 'UI control → handler', exact: true }).click({ force: true });
     await expect(page.getByTestId('map-authority')).toBeVisible();
+    // The query answer commits asynchronously: gate the next click on the
+    // answer-specific node bound (query ceiling 1000 replaces the level
+    // ceiling 256), not the authority footer the level view also renders.
+    await expect(page.getByTestId('bound-nodes')).toContainText('limit 1000');
 
     // 7. THE load-bearing assertion. Mutation-capable routes truncates against
     //    an unknown population, so the operator must be told the remainder is

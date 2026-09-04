@@ -1,30 +1,26 @@
-# EXECUTION PROMPT — AH-1 Alphaus Finding Handoff + C-12 Operator Readiness
+# EXECUTION PROMPT — C-15c Browser Spec Stale-UI Race Hardening
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
-Status: COMPLETE
-Campaign ID: nightwatch-alphaus-finding-handoff-c12-readiness-v1
-OpenSpec: openspec/changes/nightwatch-alphaus-finding-handoff-c12-readiness-v1/
-Planned-From: 4ca990f9bead33ae5626c4ae4f21dc833f41aec2
+Status: IN_PROGRESS
+Campaign ID: nightwatch-systemmap-browser-stability-v1
+OpenSpec: openspec/changes/nightwatch-systemmap-browser-stability-v1/
+Planned-From: 89740646c08a5661d358cc05f20a5d94e135334d
 Target Branch: main
-Predecessor Task ID: nightwatch-p1-observation-scope-ma8-v1
+Predecessor Task ID: nightwatch-alphaus-finding-handoff-c12-readiness-v1
 Predecessor Status: COMPLETE
 
 ## Mission
 
-Implement, adversarially verify, document, and certify the Alphaus-compatible
-human-review finding handoff (projection-only, privacy-safe, no filing, no
-scoring) and the C-12 operator-readiness package (runbook, configuration
-contract, local-only preflight CLI, evidence checklist, prerequisite truth),
-and reconcile durable documentation (CURRENT_STATE, DECISIONS, master plan,
-threat model, OpenSpec) against implementation truth plus the owner-supplied
-Slack-derived Alphaus workflow evidence (pilot-sensitive, non-canonical).
-Local/synthetic certification only.
+Close the stale-UI race in `tests/browser/systemMapV2.browser.ts` with two
+additive member-readiness gates (6d L2 members, 6e L4-op-0 breadcrumb +
+consumer member), prove 10/10 serial browser-lane repeats green, and
+integrate. Test-only; zero product-code change. Local/synthetic only.
 
 ## Authority
 
 ```
 IMPLEMENTATION AUTHORIZED:
-  Alphaus finding handoff + C-12 readiness + docs reconciliation only
+  tests/browser/systemMapV2.browser.ts member-readiness gates only
 
 REAL PRODUCTION CONTACT:
   NOT AUTHORIZED
@@ -40,46 +36,23 @@ C-07 DEV:
 ```
 
 Repository-local and offline. No production contact, no NEXT contact, no DEV
-request, no credential acquisition. No Slack/Leslie/Pondr writes. C-12 is NOT
-authorized and is NOT begun.
+request, no credential acquisition.
 
 C-00 governs: all implementation happens in the owned session worktree
-`session/nightwatch-alphaus-finding-hando-c009d87c`.
+`session/nightwatch-systemmap-browser-sta-9be47eca`.
 
 ## Ordered workstreams
 
-1. Task record, OpenSpec change, routing, design reconciliation — BEFORE code.
-2. Handoff cone: types, projector, authority literals, privacy scan.
-3. Readiness cone: types, evaluator, CLI, runbook, context doc.
-4. Local test matrices + seeded properties; manifest + certification
-   registration; AH-1 hardening check.
-5. Bounded mutation campaign with zero survivors.
-6. Full validation, repeatability, clean clone, second-pass review, docs
-   reconciliation, REPORT, integration, release.
+1. Task record, OpenSpec change, routing — BEFORE code (M1, done).
+2. Member-readiness gates: 6d L2-member gate, 6e L4-op-0 breadcrumb +
+   consumer-member gates (M2).
+3. Stability validation: 10x serial repeats, sibling browser spec,
+   adjacent unit suites, typecheck, hardening, truth checkers (M3).
+4. REPORT, integration, release, worktree removal (M4).
 
 ## Constraints
 
-Recommendations carry basis + provenance or are UNKNOWN. `customer_escaped`
-never becomes `self_found`. Production never implies outage. Team is UNKNOWN;
-code owner has no representation. No bounty-scoring surface. Authority
-literals are type-enforced. The triage/P1/C-11/C-10 cones are consumed, never
-modified. No test deletion/skip/retry/timeout-inflation as a correctness fix.
-No hardening, privacy, or provenance rule weakened.
-
-## Validation
-
-typecheck, hardening, handoff, project, agent, agent audit, workspace, gate
-inventory, semantic compatibility, synthetic campaign, the AH-1 suites,
-canonical regression, `gate:local`, `gate:clean`, single exact-head CI
-inspection (no rerun loop).
-
-## Acceptance and completion gates
-
-The SPEC.md acceptance criteria, each carried in the REPORT requirement ledger
-with exact evidence, plus `C-12 WAS NOT EXECUTED BY THIS CAMPAIGN`.
-
-## Git and reporting
-
-Coherent checkpoints in the session worktree; integrate by verified
-fast-forward; reconcile project truth; complete `REPORT.md`; release the
-session and remove the worktree and branch.
+Test file only. ADD assertions, never remove or relax any; no skips; no
+timeout inflation as a fix; no product change; no manifest/registry change;
+no force push; no history rewrite. Diagnosis (fiber probe + L4 traffic) is
+recorded in SPEC.md and must not be rediscovered.
