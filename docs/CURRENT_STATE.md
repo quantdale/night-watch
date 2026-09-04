@@ -738,9 +738,9 @@ LIVE_HEAD_SHA: DISCOVER_FROM_GIT
 LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: 82e3a49da77e5e0d8b451697bad58f9af5aaa4e5
 LAST_LOCALLY_VALIDATED_SHA: 82e3a49da77e5e0d8b451697bad58f9af5aaa4e5
 LAST_CLEAN_VALIDATED_SHA: 82e3a49da77e5e0d8b451697bad58f9af5aaa4e5
-CI_OBSERVED_SHA: 59730491605a09208006f8df14710656a11d7bc1
-CI_EXECUTED_SHA: 59730491605a09208006f8df14710656a11d7bc1
-CI_STATUS: EXECUTED_PASS
+CI_OBSERVED_SHA: d3a464de97225f91cd425b7922b53238a02dc981
+CI_EXECUTED_SHA: NONE
+CI_STATUS: NO_STEPS_EXTERNAL_NON_EVIDENCE
 FINAL_DOCUMENTATION_SHA: DISCOVER_FROM_GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 LIVE_HEAD_AUTHORITY: GIT
@@ -765,16 +765,34 @@ informational and are not interpreted as current authority.
 
 ```
 LIVE_STATE_PROTOCOL_VERSION: nightwatch.live-state.v1
-LIVE_TASK_ID: nightwatch-system-map-v2-transport-c15c-v1
-LIVE_PHASE: SYSTEM_MAP_V2_TRANSPORT_C15C_V1
-LIVE_TASK_STATUS: COMPLETE
+LIVE_TASK_ID: nightwatch-overnight-reliability-r13-v1
+LIVE_PHASE: OVERNIGHT_RELIABILITY_R13_V1
+LIVE_TASK_STATUS: IN_PROGRESS
 LIVE_PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
 LIVE_PROJECT_VERDICT_EFFECT: PRESERVE
-LIVE_NEXT_ACTION_STATE: STOP
-LIVE_COMPLETION_CLAIM: COMPLETE
+LIVE_NEXT_ACTION_STATE: CONTINUE
+LIVE_COMPLETION_CLAIM: NONE
 ```
 
-### Exact-head CI is green (current live CI state)
+### Exact-head CI state (current live CI state)
+
+C-15c's head `d3a464d` has NO CI evidence. Run `33833574821` (attempts 1–4,
+2026-09-04) failed identically every time BEFORE any step executed: no runner
+was ever assigned, zero steps ran, no annotations were produced, each attempt
+failed in 1–4s. The workflow file at `d3a464d` is byte-identical to the one
+that went green 4h earlier, so the change did not cause this. Classification:
+EXTERNAL_BLOCKER. The machine block therefore carries
+`NO_STEPS_EXTERNAL_NON_EVIDENCE` at `d3a464d` — a truthful non-evidence
+record, not a pass. Re-attempts happen on a changed hypothesis only.
+
+C-15c's LOCAL validation at `82e3a49` is PASS and unaffected: `gate:local`
+receipt `receipt:sha256:4e6b059312e2281785e38400`, `gate:clean`
+`clean-receipt:sha256:6c14424bbbeb876dbd3c6d95`, all eleven required groups
+PASS, browser matrix 2/2, synthetic campaign 916/916, semantic compatibility
+2,033/2,020/13/0, siblingWrites 0.
+
+The most recent EXECUTED_PASS remains C-15b's certification, preserved as
+historical below (it certifies an ancestor baseline, not the current one):
 
 Run `33750522362` / job `100632776636` at
 `c7707218a3afb4b5fc8430ebd4fb4e7a20c8fa61` passed on Node 20 with receipt

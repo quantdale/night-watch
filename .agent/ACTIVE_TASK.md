@@ -1,50 +1,42 @@
 # Active Task
 
-Task ID: nightwatch-system-map-v2-transport-c15c-v1
-Phase: SYSTEM_MAP_V2_TRANSPORT_C15C_V1
-Title: C-15c System Map V2 HTTP Transport + Complete Operator UI
-Status: COMPLETE
-Task directory: .agent/tasks/nightwatch-system-map-v2-transport-c15c-v1
-Starting SHA: 0b62247c512b960715348b637ac99bf68a9f3b49
-Last validated implementation SHA: 82e3a49da77e5e0d8b451697bad58f9af5aaa4e5
-Last checkpoint: gate:clean and gate:local PASS at 82e3a49da77e5e0d8b451697bad58f9af5aaa4e5 with clean-receipt clean-receipt:sha256:6c14424bbbeb876dbd3c6d95 and gate receipt receipt:sha256:4e6b059312e2281785e38400; siblingWrites 0; browser matrix 2/2 pass; all 15 acceptance rows PASS
-Current milestone: COMPLETE / STOP — M1 through M7 are closed and all fifteen acceptance rows PASS
-Next action: STOP — C-15c is COMPLETE and certified. The next authorized campaign is R-13 Overnight Endurance Certification.
-Authorization class: NIGHTWATCH_SYSTEM_MAP_V2_TRANSPORT_C15C_V1
+Task ID: nightwatch-overnight-reliability-r13-v1
+Phase: OVERNIGHT_RELIABILITY_R13_V1
+Title: R-13 Overnight Reliability, Stress, Determinism + Clean-Clone Certification
+Status: IN_PROGRESS
+Task directory: .agent/tasks/nightwatch-overnight-reliability-r13-v1
+Starting SHA: d3a464de97225f91cd425b7922b53238a02dc981
+Last validated implementation SHA: d3a464de97225f91cd425b7922b53238a02dc981
+Last checkpoint: session sess-b9eb2566a6dd claimed; R-13 scaffolding (SPEC/PLAN/STATE/REPORT + OpenSpec) written before any battery
+Current milestone: M1 closing — scaffolding written; M2 determinism harness next
+Next action: finish M1 routing, run agent:check/project:check, then build the /tmp/r13 determinism harness and execute M2
+Authorization class: NIGHTWATCH_OVERNIGHT_RELIABILITY_R13_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
-STARTING_SHA: 0b62247c512b960715348b637ac99bf68a9f3b49
-LAST_VALIDATED_IMPLEMENTATION_SHA: 82e3a49da77e5e0d8b451697bad58f9af5aaa4e5
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 82e3a49da77e5e0d8b451697bad58f9af5aaa4e5
-LAST_DOCUMENTATION_CHECKPOINT_SHA: 17d1c0a7fe908d249bf7334ebdd9f0837e438890
+STARTING_SHA: d3a464de97225f91cd425b7922b53238a02dc981
+LAST_VALIDATED_IMPLEMENTATION_SHA: d3a464de97225f91cd425b7922b53238a02dc981
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: d3a464de97225f91cd425b7922b53238a02dc981
+LAST_DOCUMENTATION_CHECKPOINT_SHA: d3a464de97225f91cd425b7922b53238a02dc981
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
-PHASE_SYSTEM_MAP_V2_TRANSPORT_C15C_V1_STATUS: COMPLETE
+PHASE_OVERNIGHT_RELIABILITY_R13_V1_STATUS: IN_PROGRESS
 
 ## Routing and safety
 
-C-15c carries the C-15b System Map V2 model over HTTP and gives the operator a
-UI that can navigate it. It grants the map NO authority it did not already
-have: every level and query answer carries `executionAuthority: NONE` and
-`mutationAuthority: NONE`, and the transport is GET/HEAD only.
+C-15c implementation is COMPLETE at `82e3a49` (gate:local and gate:clean
+PASS, browser matrix 2/2, siblingWrites 0); its exact-head CI (run
+`33833574821`, attempts 1-4) is EXTERNAL_BLOCKER — GitHub assigns no runner,
+zero steps, no annotations, workflow file byte-identical to the last green
+run. R-13 proceeds offline; CI re-attempts happen on changed hypothesis only.
 
-V2 segments parse before the v1 prefix check so no v1 path is reinterpreted.
-Unknown level and query segments parse to `unknown` rather than to a nearest
-match. The query allowlist is exactly `focus`.
-
-The change is really about two rendering rules. `MUTATION_CAPABLE_ROUTES`
-truncates with `total: null` and `dropped: null`, because the upstream
-population total is unknown and a drop count needs a total; both render as
-"unknown", never as `0`, because a `0` would tell the operator they had seen
-everything. `OBSERVED_PRODUCTION_PATHS` returns zero nodes with
-`measurement: UNMEASURED`; the UI names that as an absence of measurement
-rather than presenting an empty list that reads as a clean result.
-
-Zero production observation exists because none is authorized. C-10's
-production-store exclusion is visible in the output as an absence the UI must
-name. Production contacts 0, NEXT contacts 0, DEV requests 0, credentials 0,
-sibling writes 0. C-12 remains NOT AUTHORIZED and is not begun.
+R-13 changes NO implementation. All probes live in /tmp/r13, never in the
+repo tree; every adversarial mutation is restored; the tree is clean before
+every gate observation. Production contacts 0, NEXT contacts 0, DEV requests
+0, credentials 0, sibling writes 0. C-12 remains NOT AUTHORIZED and is not
+begun. C-06G is `C06G_BLOCKED_BY_METHOD_BINDING_OR_INVENTORY_COMPLETENESS`
+(C-03: ouchan enumeration TRUNCATED, repositoryCompleteProof false); C-08b is
+`C08B_BLOCKED_BY_ORGANIZATIONAL_ACCESS`; C-07 DEV stays internally blocked.
 
 All work happens in the owned session worktree
-`session/nightwatch-system-map-v2-transpo-6bb0f1cf`; the canonical checkout is
+`session/nightwatch-overnight-reliability-71c616bc`; the canonical checkout is
 never used for implementation.

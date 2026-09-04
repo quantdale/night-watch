@@ -1,19 +1,21 @@
-# EXECUTION PROMPT — C-15c System Map V2 HTTP Transport + Complete Operator UI
+# EXECUTION PROMPT — R-13 Overnight Reliability, Stress, Determinism + Clean-Clone Certification
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
-Status: COMPLETE
-Campaign ID: nightwatch-system-map-v2-transport-c15c-v1
-OpenSpec: openspec/changes/nightwatch-system-map-v2-transport-c15c-v1/
-Planned-From: 0b62247c512b960715348b637ac99bf68a9f3b49
+Status: IN_PROGRESS
+Campaign ID: nightwatch-overnight-reliability-r13-v1
+OpenSpec: openspec/changes/nightwatch-overnight-reliability-r13-v1/
+Planned-From: d3a464de97225f91cd425b7922b53238a02dc981
 Target Branch: main
-Predecessor Task ID: nightwatch-derived-semantics-dev-targets-c07-v1
-Predecessor Status: COMPLETE
+Predecessor Task ID: nightwatch-system-map-v2-transport-c15c-v1
+Predecessor Status: COMPLETE_IMPLEMENTATION_CI_EXTERNAL_BLOCKER
 
 ## Mission
 
-Carry the System Map V2 model over HTTP and give the operator a UI that can
-navigate it, without granting the map any authority it does not have and
-without rendering away the boundaries of a bounded projection.
+Measure the repeatability of everything R-12 through C-15c built: fresh-process
+determinism, order independence, lifecycle/collision/concurrency robustness,
+scale invariance, seeded properties, second-topology clean behavior, regression
+stability, UI endurance, leak freedom, receipt durability, and mutation-probe
+bite. No implementation changes; probes live in /tmp/r13, never in the repo.
 
 ## Authority
 
