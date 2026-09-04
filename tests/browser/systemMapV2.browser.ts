@@ -207,7 +207,10 @@ test('C-15c the operator can navigate the map, and the map never overstates what
       'Observed production paths', 'Mutation-capable routes',
       'Untested read-only routes', 'Coverage gaps', 'Findings attached to topology',
     ]) {
-      await page.getByRole('button', { name: label, exact: true }).click({ force: true });
+      // Painted-button gate + box-independent dispatch (same box-stall
+      // class as the tail chips): loop toggles carry no data dependency.
+      await expect(page.getByRole('button', { name: label, exact: true })).toBeVisible();
+      await clickQueryChip(page, label);
       await expect(page.getByTestId('map-authority')).toBeVisible();
       await expect(page.getByTestId('map-authority')).toHaveText(/execution NONE · mutation NONE/);
     }
