@@ -738,9 +738,9 @@ LIVE_HEAD_SHA: DISCOVER_FROM_GIT
 LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: 2bb865ea476ca1a82841567243be4db39a510466
 LAST_LOCALLY_VALIDATED_SHA: 2bb865ea476ca1a82841567243be4db39a510466
 LAST_CLEAN_VALIDATED_SHA: 2bb865ea476ca1a82841567243be4db39a510466
-CI_OBSERVED_SHA: NONE
+CI_OBSERVED_SHA: be7e954160eaabaaf5a442520cd173c5b339515f
 CI_EXECUTED_SHA: NONE
-CI_STATUS: NOT_OBSERVED
+CI_STATUS: NO_STEPS_EXTERNAL_NON_EVIDENCE
 FINAL_DOCUMENTATION_SHA: DISCOVER_FROM_GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 LIVE_HEAD_AUTHORITY: GIT
@@ -776,13 +776,12 @@ LIVE_COMPLETION_CLAIM: COMPLETE
 
 ### Exact-head CI state (current live CI state)
 
-No CI run has observed the current baseline (`2bb865e`): the machine block
-truthfully carries `NOT_OBSERVED`. The previous head `d3a464d` was observed
-four-plus-one times with zero steps executed every time (run `33833574821`,
-attempts 1–5, no runner assigned, no annotations, workflow file
-byte-identical to the last green run) — recorded as
-`NO_STEPS_EXTERNAL_NON_EVIDENCE` while it was the baseline, preserved here
-as history now that the baseline has advanced past it.
+No CI step has executed at the current baseline. Run `33841274580` at
+`be7e954` failed exactly like its five predecessors (no runner, zero steps,
+no annotations), so the machine block carries `NO_STEPS_EXTERNAL_NON_EVIDENCE`
+at `be7e954`: six identical external observations across two heads. The
+previous head `d3a464d` (run `33833574821`, attempts 1–5) is preserved below
+as history.
 
 C-15c's head `d3a464d` has NO CI evidence. Run `33833574821` (attempts 1–5,
 2026-09-04, latest 04:27Z) failed identically every time BEFORE any step

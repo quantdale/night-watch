@@ -21,18 +21,22 @@ Starting SHA: `d3a464de97225f91cd425b7922b53238a02dc981`
 | 11 | Semantic-compat long run (§102) | PASS | 2nd observation identical: 146 files, 2,033/2,020/13/0, zero drift |
 | 12 | Synthetic campaign long run (§103) | PASS | 3 observations identical: 40 files, 916/916, deepContainmentLane PROVEN, 0 failed |
 | 13 | UI endurance 20+ loops (§104) | PASS | /tmp/r13/uiEndurance.mjs v2: 22/22 TRUE-depth loops (L1→L2→L3→L4→query→back, per-loop level proof), 0 page/console errors, 0 external requests, DOM steady 130±4 (loop-0 settle aside), loop times ~300ms with one 3.3s transient; v1's shallow loops withdrawn after the non-vacuity probe exposed them |
+| 14 | Resource-leak accounting (§105) | PASS | 0 chromium processes, 0 stray listeners/leases/worktrees; 2 crashed-run scratch dirs found and removed; phase23 0-byte suite-owned jsonl identified (OBS-R13-1, no functional impact, removed); sibling repos verified untouched (all dirt pre-dates the session) |
+| 15 | Failure-receipt durability (§106) | PASS | Throwaway-clone gate with committed synthetic failure: SEMANTIC_COMPATIBILITY TEST_FAILURE, counts 2034/2020/13/1, location `nightwatchHygiene.test.ts:169`, 4 groups NOT_RUN, LOCAL, digest valid, persisted copy matches; dirty-tree variant fail-closed (PROJECT_TRUTH TEST_FAILURE, 6 NOT_RUN); clone removed |
 | 16 | Hardening mutation campaign (§107) | PASS | 13 probes, 13 bites, 13 byte-identical restores (registry, R-12 totality, admission 9th-key, ProjectionBound, UI coercion, authority, POST dispatch, UNMEASURED, W-SPEC, EIG, deployment vocab post-fix, prod-store, layout digest-input). DEF-R13-4 (substring-weak vocabulary check) repaired + re-probed. DEF-R13-5 (V2 focus resolution, 4 layers) repaired: c15c 34/34, server 44/44, UI 12/12, browser 2/2, endurance 22/22, L1 digests identical. Final hardening PASS |
-| 17 | Long clean gate (§108) | PASS | gate:clean PASS at 2bb865e (clean-receipt:sha256:84d32d1be193f7c2012ab458, 11/11, inner 4a8be0a3, siblingWrites 0). CAVEAT: R-13 record .md edits landed in the worktree mid-run — the observation is clone-isolated (pristine 2bb865e snapshot, HEAD immobile, cleanBefore/After both true) and stands as supplementary; the authoritative run repeats at the final head with zero concurrent writes |
-| 19 | Optional second clean (§110) | PASS | Satisfied by construction: three independent clean-gate certifications (82e3a49, 9a1e85a, 2bb865e — each a fresh temp clone) plus Clean B in a different parent directory |
+| 17 | Long clean gate (§108) | PASS | Authoritative: gate:clean PASS at be7e954 (clean-receipt:sha256:231ff417d1b30856dbf9052a, 11/11, inner 4497080e, siblingWrites 0) with zero concurrent writes. Supplementary: 2bb865e PASS with a documented concurrent-edit caveat (clone-isolated, HEAD-immobile) |
+| 18 | Exact-head CI (§109) | BLOCKED | EXTERNAL_BLOCKER — runs 33833574821 (d3a464d, attempts 1–5) and 33841274580 (be7e954, attempt 6): no runner assigned, zero steps, no annotations every time; workflow file byte-identical to the last green run; new-head re-attempt changed nothing — the block is head-independent |
+| 19 | Optional second clean (§110) | PASS | Four independent clean-gate certifications (82e3a49, 9a1e85a, 2bb865e-supplementary, be7e954-authoritative clean-receipt:sha256:231ff417d1b30856dbf9052a) plus Clean B in a different parent directory |
 
 ## Outcome
 
 R-13 executed the full overnight endurance battery with zero implementation
 features and two demonstrated-defect repairs (DEF-R13-4 guard hardening,
-DEF-R13-5 V2 focus resolution). 17 of 19 rows PASS with exact evidence; row 18
-(exact-head CI) is BLOCKED on an external GitHub execution failure (5 attempts,
-identical no-runner signature); row 19 (optional second clean) is satisfied by
-construction — three independent clean-gate certifications plus Clean B.
+DEF-R13-5 V2 focus resolution). 18 of 19 rows PASS with exact evidence; row 18
+(exact-head CI) is BLOCKED on an external GitHub execution failure (6 attempts
+across 2 heads, identical no-runner signature); row 19 (optional second clean)
+is satisfied by construction — four independent clean-gate certifications
+plus Clean B.
 Repeatability is measured: 12 identical fresh-process observations, 3 identical
 regression passes, 3 identical synthetic campaigns, 2 identical semantic runs,
 7 order-invariant map digests, 1,801/1,801 properties, 22/22 true-depth UI
