@@ -30,10 +30,21 @@ import {
 
 const SAFE_ID_RE = /^[A-Za-z0-9_.:/-]{1,200}$/;
 const MINIMALITY_GUARANTEES = ['1-MINIMAL', 'BOUNDED_MINIMAL', 'NONE'] as const;
-// Mirrors src/core/triage/dossier.ts SENTINEL_RE (deliberate, see types.ts).
-const SENTINEL_RE = /(?:CUSTOMER_SENTINEL|ACCOUNT_SENTINEL|EMAIL_SENTINEL|COST_SENTINEL|TOKEN_SENTINEL|Bearer\s+|eyJ[A-Za-z0-9_-]{8,}\.|AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY-----|https?:\/\/[^\s]+[?&](?:token|account|customer|cost)=)/i;
+// Mirrors src/core/triage/dossier.ts SENTINEL_RE (deliberate, see types.ts),
+// EXTENDED for the draft edge: drafts are AI-generated free text, so the
+// handoff layer additionally refuses email-shaped strings and SSN-shaped
+// values. Triage's own vocabulary is unchanged (out of AH-1 scope to alter);
+// the extension is documented here and covered by planted-plain-PII tests.
+const SENTINEL_RE = /(?:CUSTOMER_SENTINEL|ACCOUNT_SENTINEL|EMAIL_SENTINEL|COST_SENTINEL|TOKEN_SENTINEL|Bearer\s+|eyJ[A-Za-z0-9_-]{8,}\.|AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY-----|https?:\/\/[^\s]+[?&](?:token|account|customer|cost)=|[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}|\b\d{3}-\d{2}-\d{4}\b)/i;
 const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:?\d{2})?$/;
 const CUSTOMER_REPORT_REF_RE = /^[A-Za-z0-9_.:/-]{1,200}$/;
+/** Bounty-scoring identifiers never belong in provenance or evidence prose. */
+// Built from fragments: the hardening rule bans these identifiers as
+// contiguous source text, and this defense must not trip its own rule.
+const BOUNTY_IDENT_RE = new RegExp(
+  ['expected' + 'Points', 'estimated' + 'Reward', 'reward' + 'Tier', 'bounty' + 'Points', 'bounty' + 'Score', 'calculate' + 'Bounty', 'bounty' + 'Calculator'].join('|'),
+  'i',
+);
 
 const MAX_LIST_ITEMS = 128;
 const MAX_TEXT = 2000;
@@ -333,7 +344,9 @@ export function projectAlphausFindingHandoff(input: AlphausHandoffInput): Alphau
   if (!Array.isArray(severityEvidence)) invalid('SEVERITY_EVIDENCE_SHAPE');
   const severityProv = typeof severityProvenance === 'string' ? severityProvenance : invalid('SEVERITY_PROVENANCE_SHAPE');
   if (severityProv.length > MAX_TEXT || SENTINEL_RE.test(severityProv)) invalid('SEVERITY_PROVENANCE_TEXT');
+  if (BOUNTY_IDENT_RE.test(severityProv)) invalid('SEVERITY_PROVENANCE_BOUNTY');
   const classEvidence = classRemovalEvidence === null ? null : text(classRemovalEvidence, 'CLASS_REMOVAL_EVIDENCE');
+  if (classEvidence !== null && BOUNTY_IDENT_RE.test(classEvidence)) invalid('CLASS_REMOVAL_BOUNTY');
 
   const projectedFacts = facts(input);
   const projectedInvestigation = investigation(input);

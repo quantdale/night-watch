@@ -95,6 +95,8 @@ function main() {
   }
   let descriptor;
   try {
+    const stat = fs.statSync(inputPath);
+    if (!stat.isFile() || stat.size > 65536) throw new Error('descriptor must be a regular file of at most 64 KiB');
     descriptor = JSON.parse(fs.readFileSync(inputPath, 'utf8'));
   } catch (error) {
     fail(`cannot read descriptor: ${error instanceof Error ? error.message : String(error)}`);

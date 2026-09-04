@@ -87,8 +87,8 @@ export function evaluateC12Readiness(input: C12ReadinessInput): C12ReadinessRepo
   if (scope === null || scope === undefined) {
     blockers.push(blocker('BLOCKED_SCOPE_CONFIG', 'no external P1 scope configuration presented'));
   } else {
-    if (typeof scope.host !== 'string' || scope.host.includes('*') || scope.host.includes('://') || !HOST_RE.test(scope.host)) {
-      blockers.push(blocker('BLOCKED_SCOPE_CONFIG', 'scope host is not an exact admission hostname (wildcard, URL, or malformed)'));
+    if (typeof scope.host !== 'string' || scope.host.includes('*') || scope.host.includes('://') || !scope.host.includes('.') || !HOST_RE.test(scope.host)) {
+      blockers.push(blocker('BLOCKED_SCOPE_CONFIG', 'scope host is not an exact admission hostname (wildcard, URL, single-label, or malformed)'));
     }
     const start = Date.parse(isoDate(scope.windowStartIso, 'WINDOW_START'));
     const end = Date.parse(isoDate(scope.windowEndIso, 'WINDOW_END'));
@@ -96,6 +96,7 @@ export function evaluateC12Readiness(input: C12ReadinessInput): C12ReadinessRepo
       blockers.push(blocker('BLOCKED_SCOPE_CONFIG', 'observation window is empty or inverted'));
     } else {
       if (end <= now) blockers.push(blocker('BLOCKED_WINDOW', 'observation window has expired'));
+      if (start > now) blockers.push(blocker('BLOCKED_WINDOW', 'observation window has not started'));
       if (end - start > C12_MAX_OBSERVATION_WINDOW_MS) {
         blockers.push(blocker('BLOCKED_WINDOW', `observation window exceeds the ${C12_MAX_OBSERVATION_WINDOW_MS} ms P1 cap`));
       }

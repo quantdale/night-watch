@@ -111,6 +111,17 @@ test.describe('AH-1 C-12 preflight contract', () => {
     const scope = { ...readyInput().scopeConfig!, windowStartIso: '2026-09-04T10:00:00.000Z', windowEndIso: '2026-09-04T10:05:00.000Z' };
     expect(codesOf(readyInput({ scopeConfig: scope }))).toContain('BLOCKED_WINDOW');
   });
+  test('future window is not READY (D-AH1-004)', () => {
+    const scope = { ...readyInput().scopeConfig!, windowStartIso: '2026-09-05T12:00:00.000Z', windowEndIso: '2026-09-05T12:10:00.000Z' };
+    const codes = codesOf(readyInput({ scopeConfig: scope }));
+    expect(codes).toContain('BLOCKED_WINDOW');
+    expect(evaluateC12Readiness(readyInput({ scopeConfig: scope })).status).toBe('BLOCKED');
+  });
+
+  test('single-label host never admits (D-AH1-008)', () => {
+    const scope = { ...readyInput().scopeConfig!, host: 'prodbox' };
+    expect(codesOf(readyInput({ scopeConfig: scope }))).toContain('BLOCKED_SCOPE_CONFIG');
+  });
 
   test('oversized window blocks at the P1 cap', () => {
     const scope = { ...readyInput().scopeConfig!, windowEndIso: '2026-09-04T13:00:00.000Z' };
@@ -253,6 +264,22 @@ test.describe('AH-1 C-12 preflight CLI', () => {
     );
     expect(result.status).toBe(1);
     expect(String(result.stdout)).not.toContain('schemaVersion');
+  });
+  test('oversized descriptor exits 1 without a report (DEF-AH1-8)', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-c12-cli-'));
+    try {
+      const descriptorPath = path.join(dir, 'huge.json');
+      fs.writeFileSync(descriptorPath, `{"padding": "${'x'.repeat(70000)}"}`);
+      const result = spawnSync(process.execPath, [path.join(ROOT, 'bin', 'c12-preflight.mjs'), '--input', descriptorPath], {
+        encoding: 'utf8',
+        timeout: 120000,
+        maxBuffer: 1024 * 1024,
+      });
+      expect(result.status).toBe(1);
+      expect(String(result.stdout)).not.toContain('schemaVersion');
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
   });
 
   test('--help exits 0 with usage', () => {

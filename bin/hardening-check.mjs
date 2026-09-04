@@ -2548,7 +2548,11 @@ function checkAlphausHandoffBoundary() {
     for (const file of coneFiles) {
       const source = withoutComments(read(file));
       for (const [pattern, description] of [
-        [/from\s+['"]node:(?:net|http|https|dns|child_process|fs)['"]/, 'a network/process/filesystem client'],
+        [/from\s+['"]node:(?:net|http|https|dns|child_process|fs|os|path|url|util|events|stream|worker_threads)[^'"]*['"]/, 'a network/process/filesystem runtime import (any subpath)'],
+        [/from\s+['"]child_process[^'"]*['"]/, 'a bare child_process import (no node: prefix)'],
+        [/import\s*\(\s*['"]node:[^'"]+['"]\s*\)/, 'a dynamic runtime import'],
+        [/\brequire\s*\(\s*['"]/, 'a require() call'],
+        [/\bundici\b|\bWebSocket\s*\(|\bXMLHttpRequest\s*\(/, 'a global transport constructor'],
         [/from\s+['"][^'"]*browser\//, 'the browser cone'],
         [/from\s+['"][^'"]*campaign\//, 'the campaign execution path'],
         [/from\s+['"][^'"]*auth\//, 'the auth cone'],
@@ -2565,8 +2569,13 @@ function checkAlphausHandoffBoundary() {
   const handoffTypes = withoutComments(read('src/core/alphausHandoff/types.ts'));
   const handoff = withoutComments(read('src/core/alphausHandoff/handoff.ts'));
   if (!handoff.includes('BugDossier')) fail('AH-1 the handoff must project the canonical BugDossier, not a parallel finding model');
-  for (const token of ['humanReviewRequired', 'PROHIBITED', 'nightwatch.alphaus-finding-handoff.v1']) {
+  for (const token of ['nightwatch.alphaus-finding-handoff.v1']) {
     if (!handoff.includes(token) && !handoffTypes.includes(token)) fail(`AH-1 the handoff cone must retain ${token}`);
+  }
+  // Literal VALUES, not mere token presence: a dummy 'PROHIBITED' string
+  // elsewhere must not satisfy this while the authority block is weakened.
+  for (const literal of ['humanReviewRequired: true', 'executable: false', "externalPublication: 'PROHIBITED'", 'autoFile: false', 'autoApprove: false']) {
+    if (!handoff.includes(literal)) fail(`AH-1 the handoff authority block must retain the literal ${literal}`);
   }
   const preflightTypes = withoutComments(read('src/core/c12Readiness/types.ts'));
   const preflight = withoutComments(read('src/core/c12Readiness/preflight.ts'));

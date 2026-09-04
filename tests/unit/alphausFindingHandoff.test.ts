@@ -359,6 +359,27 @@ test.describe('AH-1 privacy boundary', () => {
     const draft = draftFixture({ uncertainties: ['CUSTOMER_SENTINEL-alpha'] });
     expect(() => projectAlphausFindingHandoff({ ...base, bugDraft: draft })).toThrow(/ALPHAUS_HANDOFF_INVALID/);
   });
+  test('planted plain email in observed behavior refuses (D-AH1-001)', async () => {
+    const base = await handoffInput();
+    const draft = draftFixture({ observedBehaviorDraft: 'alice@alphaus.cloud customer data visible' });
+    expect(() => projectAlphausFindingHandoff({ ...base, bugDraft: draft })).toThrow(/ALPHAUS_HANDOFF_INVALID/);
+  });
+
+  test('planted SSN-shaped value in impact refuses (D-AH1-001)', async () => {
+    const base = await handoffInput();
+    const draft = draftFixture({ impactDraft: 'customer ID 123-45-6789 leaked in output' });
+    expect(() => projectAlphausFindingHandoff({ ...base, bugDraft: draft })).toThrow(/ALPHAUS_HANDOFF_INVALID/);
+  });
+
+  test('bounty identifiers in provenance refuse (D-AH1-010)', async () => {
+    const base = await handoffInput();
+    expect(() =>
+      projectAlphausFindingHandoff({ ...base, severityEvidence: ['DATA_LOSS_CONFIRMED'], severityProvenance: 'bountyPoints 100 expected' }),
+    ).toThrow('ALPHAUS_HANDOFF_INVALID:SEVERITY_PROVENANCE_BOUNTY');
+    expect(() => projectAlphausFindingHandoff({ ...base, classRemovalEvidence: 'rule with estimatedReward' })).toThrow(
+      'ALPHAUS_HANDOFF_INVALID:CLASS_REMOVAL_BOUNTY',
+    );
+  });
 
   test('planted private key block in a draft refuses', async () => {
     const base = await handoffInput();

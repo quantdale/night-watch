@@ -38,11 +38,30 @@ provenance string, and optional class-removal evidence.
 `evaluateC12Readiness` is pure over explicitly presented facts with an
 injected clock. Ten BLOCKED_* codes cover implementation binding, PQ
 binding, operator subject (present + OPERATOR_CREATED), scope config shape
-(exact hostname, no wildcard/URL; sane/bounded/unexpired window), private
+(exact hostname, no wildcard/URL/single-label; sane/bounded/started/unexpired window), private
 destination shape + approval, C-08b PROVEN-only deployment fact (INFERRED
 explains itself as never-sufficient), attributing-proxy capability,
 fresh unconsumed P1_OBSERVE authorization (inspected, never consumed), and
 kill-switch armed + not engaged. All blockers report in one pass.
+
+## Trust boundaries (explicit non-goals of mechanical enforcement)
+
+- **Caller honesty for asserted evidence.** The projector cannot verify that
+  an asserted `DATA_LOSS_CONFIRMED` class or a `customerReported: false`
+  flag matches external truth — no pure function can. Confinement is
+  architectural: the reverse import rule admits only the AH-1 cones and
+  tests as constructors of handoff inputs, so only Nightwatch-internal code
+  can assert, and every recommendation carries its basis for the mandatory
+  human review, which is the actual check against inflation or gaming.
+- **Preflight presented-fact coherence.** `READY` means the presented
+  descriptors are mutually coherent and complete — not that the operator
+  told the truth. Prerequisite-1 truth (implementation SHA equals the
+  published MA-8 anchor) is established by the operator against the runbook
+  ledger and REPORT, never by the evaluator, which deliberately cannot
+  import P1 machinery.
+- **`pr_review` unreachable at v1.** The vocabulary admits it but no
+  projector branch emits it: Nightwatch owns no reviewed-PR provenance
+  source. Emitting it without one would be guessing.
 
 The cone duplicates two P1 literals (window cap, provenance classes) with
 justification; a unit test pins them to the P1 source of truth (tests may
