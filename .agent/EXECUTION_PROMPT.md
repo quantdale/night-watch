@@ -1,7 +1,7 @@
 # EXECUTION PROMPT — Sibling Browser Spec Click Robustness
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
-Status: IN_PROGRESS
+Status: COMPLETE
 Campaign ID: nightwatch-control-center-click-robustness-v1
 OpenSpec: openspec/changes/nightwatch-control-center-click-robustness-v1/
 Planned-From: 9cf37a4d425fe46d453e46a9ceb820b2fd44a420

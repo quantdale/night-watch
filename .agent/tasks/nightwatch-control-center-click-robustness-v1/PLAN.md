@@ -46,24 +46,24 @@ handler). Every dispatch is followed by answer-specific assertions.
 
 ## Milestones
 
-### M1 — Task record and session — IN_PROGRESS
+### M1 — Task record and session — DONE
 
 - Objective: session worktree claimed; SPEC/PLAN/STATE frozen; OpenSpec
   change; ACTIVE_TASK + EXECUTION_PROMPT routed.
 - Acceptance criteria: `session:status` PASS; `handoff:check` PASS.
 - Validation commands: `npm run session:status`, `npm run handoff:check`
-- Status: IN_PROGRESS
+- Status: DONE
 
-### M2 — Click hardening — PENDING
+### M2 — Click hardening — DONE
 
 - Objective: helper + gates + two conversions with comments.
 - Files/areas: `tests/browser/controlCenterBrowser.browser.ts` only.
 - Implementation actions: one helper, two gate+conversion edits.
 - Acceptance criteria: diff shows only added/converted lines + comments.
 - Validation commands: `git diff --stat`, `npx tsc --noEmit`
-- Status: PENDING
+- Status: DONE
 
-### M3 — Stability validation — PENDING
+### M3 — Stability validation — DONE
 
 - Objective: prove the lane green with repeats; no regressions.
 - Files/areas: browser lane, truth checkers.
@@ -71,9 +71,9 @@ handler). Every dispatch is followed by answer-specific assertions.
   hardening, agent/project/handoff checks.
 - Acceptance criteria: 10/10 lane repeats green; all checkers PASS.
 - Validation commands: `npx playwright test --config=playwright.control-center.config.ts --repeat-each=10`, `npm run typecheck`, `npm run hardening:check`, `npm run agent:check`, `npm run project:check`, `npm run handoff:check`
-- Status: PENDING
+- Status: DONE
 
-### M4 — Integration and close — PENDING
+### M4 — Integration and close — DONE
 
 - Objective: integrate to main, release, remove worktree, close task.
 - Files/areas: session branch → origin/main; REPORT.md; ACTIVE_TASK.md.
@@ -81,7 +81,7 @@ handler). Every dispatch is followed by answer-specific assertions.
   HEAD == origin/main; release; remove worktree; COMPLETE records.
 - Acceptance criteria: push verified; tree clean; REPORT final.
 - Validation commands: `git status`, `git rev-parse HEAD`, `git ls-remote origin main`
-- Status: PENDING
+- Status: DONE
 
 ## Validation Strategy
 

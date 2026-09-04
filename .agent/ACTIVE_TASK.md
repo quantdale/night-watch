@@ -3,23 +3,22 @@
 Task ID: nightwatch-control-center-click-robustness-v1
 Phase: CONTROL_CENTER_CLICK_ROBUSTNESS_V1
 Title: Sibling Browser Spec Click Robustness
-Status: IN_PROGRESS
+Status: COMPLETE
 Task directory: .agent/tasks/nightwatch-control-center-click-robustness-v1
 Starting SHA: 9cf37a4d425fe46d453e46a9ceb820b2fd44a420
-Last validated implementation SHA: 9cf37a4d425fe46d453e46a9ceb820b2fd44a420
-Last checkpoint: M1 done — session claimed at 9cf37a4; SPEC/PLAN/STATE + OpenSpec written; M2 fix next
-Current milestone: M2 — Click hardening (IN_PROGRESS)
-Next action: Apply the helper + visibility gates + two Inspect conversions in the worktree, then run typecheck and the browser lane
+Last validated implementation SHA: b7a1272ff7cd054562dc630da1266cb5ab514276
+Last checkpoint: close-out — M1–M4 complete; implementation b7a1272 certified (typecheck, lane 20/20 + 20/20, hardening, truth checkers); STOP
+Current milestone: COMPLETE / STOP — all milestones closed, REPORT final, no defects introduced
+Next action: STOP — integrate to main, release the session, remove the worktree; residual is owner-direction only
 Authorization class: CONTROL_CENTER_CLICK_ROBUSTNESS_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 9cf37a4d425fe46d453e46a9ceb820b2fd44a420
-LAST_VALIDATED_IMPLEMENTATION_SHA: 9cf37a4d425fe46d453e46a9ceb820b2fd44a420
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 9cf37a4d425fe46d453e46a9ceb820b2fd44a420
+LAST_VALIDATED_IMPLEMENTATION_SHA: NONE
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: NONE
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
-PHASE_CONTROL_CENTER_CLICK_ROBUSTNESS_V1_STATUS: IN_PROGRESS
-
+PHASE_CONTROL_CENTER_CLICK_ROBUSTNESS_V1_STATUS: COMPLETE
 ## Routing and safety
 
 ```
