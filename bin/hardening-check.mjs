@@ -2983,8 +2983,16 @@ function checkC08DeploymentBindingBoundary() {
   }
 
   // --- AMBIGUOUS and UNKNOWN stay distinct ---
-  for (const state of ['AMBIGUOUS', 'UNKNOWN', 'PARTIAL', 'STALE', 'UNSUPPORTED', 'EXACT']) {
-    if (!binding.includes(`'${state}'`)) fail(`C-08 binding state ${state} is missing from the vocabulary`);
+  // R-13 DEF-R13-4: a file-substring check cannot see a state dropped from
+  // the array while its token lingers elsewhere in the file (line 152 still
+  // returns 'STALE'). Parse the vocabulary declaration itself.
+  const vocabulary = /export const DEPLOYMENT_BINDING_STATES\s*=\s*\[([\s\S]*?)\]/.exec(binding);
+  if (vocabulary === null) {
+    fail('C-08 could not read the DEPLOYMENT_BINDING_STATES declaration; the vocabulary cannot be verified');
+  } else {
+    for (const state of ['AMBIGUOUS', 'UNKNOWN', 'PARTIAL', 'STALE', 'UNSUPPORTED', 'EXACT']) {
+      if (!new RegExp(`'${state}'`).test(vocabulary[1])) fail(`C-08 binding state ${state} is missing from the vocabulary`);
+    }
   }
 
   // --- the binding modules stay data-only, and grant no authority ---

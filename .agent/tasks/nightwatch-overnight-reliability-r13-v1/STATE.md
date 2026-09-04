@@ -47,19 +47,17 @@ M5 — second topology, regression repetition, semantic/synthetic long runs.
   temp 100/0, receipts 50/50 + fail-closed ×2, server 25 cycles fd-neutral,
   workspace-integrity 25/25, worktrees 10/10, concurrent receipts 8×10 (§95,
   §97). Port-collision repetition (§96) rides in M5.
-- M4 — 7 map-scale permutations → 1 digest (§98); 9 seeded properties × 200
-  iters = 1,801 checks, 0 failures (§99); DEF-R13-1 (probe-side) found and
-  fixed, implementation untouched.
-
 ## Work In Progress
 
-M5 — Clean B clone, canonical regression ×3, semantic-compat + synthetic
-long runs, R-11 lease suite repetition.
+M7 — mutation battery 13/13 bite (P-REG true-deregistration, P-ADM 9th-key,
+P-DEP post-fix, P-LAYOUT digest-input variants all confirmed after initial
+probe-target corrections); DEF-R13-4 repaired. Remaining: long clean gate,
+exact-head CI re-attempt, closure.
 
 ## Exact Next Action
 
-Create Clean B worktree in a different parent dir and run the endorsed
-subset; launch regression pass 1.
+Update REPORT rows 10/12/15/16, commit the guard repair + records, run the
+long clean gate.
 
 ## Files Changed
 
@@ -108,6 +106,16 @@ Probes live in /tmp/r13, never in the repo tree (SPEC rationale recorded).
   it: missing openspec audit/design, invalid predecessor-status vocabulary,
   dropped STATE ledger sections, undeclared R-13 registry entry. Credit to the
   second topology for doing its job. Fixed in b4e0832; all guards green there.
+- DEF-R13-4 (pre-existing guard weakness, REPAIRED): the C-08 vocabulary
+  check tested file-substring presence, so dropping 'STALE' from
+  `DEPLOYMENT_BINDING_STATES` while its token lingered at line 152 produced
+  NO hardening failure (P-DEP NO_BITE, verified). Defense in depth held —
+  the registered C-08 suite pins the exact array (test.ts:103) — but the
+  hardening rule did not prove what it claimed. Repair: parse the
+  `DEPLOYMENT_BINDING_STATES` array literal instead (bin/hardening-check.mjs,
+  message text unchanged). After-probe P-DEP BITES with the identical
+  message; typecheck + C-08 suite 32/32 + hardening PASS. No test pins the
+  old message; nothing else consumes it.
 
 ## Blockers
 
