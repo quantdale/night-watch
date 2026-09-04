@@ -81,6 +81,17 @@ sentinels; implementation only in the owned session worktree
 - M7 — Full validation, repeatability, clean clone, review, docs, REPORT,
   integration, release: PENDING.
 
+## Completion Criteria
+
+- P1 chain implemented with every gate falsifiable; P1 cone structurally
+  passive; attribution fails closed; vacuous PASS impossible; window bounded;
+  privacy mandatory; kill switch applies to P1; config external-only.
+- 127+ tests green, mutation probes zero survivors, full gates green,
+  clean-clone green, zero real production contact, C-12 unexecuted, no
+  sibling writes, no history rewrite.
+- `BLOCKED` (not weakened `COMPLETE`) if a safety contradiction proves
+  unresolvable.
+
 ## Validation Strategy
 
 - Focused: typecheck, per-suite Playwright runs, `hardening:check`.

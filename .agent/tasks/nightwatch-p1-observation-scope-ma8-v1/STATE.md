@@ -6,8 +6,8 @@ Task ID: nightwatch-p1-observation-scope-ma8-v1
 Phase: P1_OBSERVATION_SCOPE_MA8_V1
 Status: IN_PROGRESS
 Starting SHA: 0195a39e60e82b80439ec10ad5a36453804fe030
-Last validated implementation SHA: NONE
-Last substantive checkpoint SHA: NONE
+Last validated implementation SHA: ce166001e8b9721ae169ccabbd5239ef1342a28a
+Last substantive checkpoint SHA: ce166001e8b9721ae169ccabbd5239ef1342a28a
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-p1-observation-scope--3bd1d83d
@@ -15,8 +15,8 @@ Last checkpoint: NONE — campaign scaffolded; M1 reconciliation recorded below
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 0195a39e60e82b80439ec10ad5a36453804fe030
-LAST_VALIDATED_IMPLEMENTATION_SHA: NONE
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: NONE
+LAST_VALIDATED_IMPLEMENTATION_SHA: ce166001e8b9721ae169ccabbd5239ef1342a28a
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: ce166001e8b9721ae169ccabbd5239ef1342a28a
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
 PHASE_P1_OBSERVATION_SCOPE_MA8_V1_STATUS: IN_PROGRESS
@@ -29,7 +29,7 @@ executed by this campaign.
 
 ## Current Milestone
 
-M1 — Reconciliation and campaign scaffolding. IN PROGRESS.
+M6 — Hardening and mutation campaign. IN PROGRESS.
 
 ## Completed Milestones
 
@@ -69,27 +69,31 @@ M1 — Reconciliation and campaign scaffolding. IN PROGRESS.
 
 ## Work In Progress
 
-- M1 scaffolding: STATE.md (this file), OpenSpec change, ACTIVE_TASK rebinding.
-  Next: M2 design reconciliation note in the OpenSpec `design.md`.
+- M6 hardening rule written and passing; bounded mutation campaign pending.
+- M7 full validation, repeatability, clean clone, review, docs, REPORT,
+  integration, release.
 
 ## Exact Next Action
 
-Write `openspec/changes/nightwatch-p1-observation-scope-ma8-v1/` (proposal,
-design with the §4 reconciliation note, tasks, audit, one specs/*/spec.md),
-then rebind `.agent/ACTIVE_TASK.md` to this campaign and continue with M3
-implementation in the session worktree.
+Run the bounded adversarial mutation campaign (§12 probes): introduce each
+mutation, prove the intended verification fails, restore byte-identical,
+re-pass. Then M7 full validation.
 
 ## Files Changed
 
-| Path | Reason | Status |
-|---|---|---|
-| `.agent/tasks/nightwatch-p1-observation-scope-ma8-v1/SPEC.md` | frozen task intent | ADDED |
-| `.agent/tasks/nightwatch-p1-observation-scope-ma8-v1/PLAN.md` | living plan | ADDED |
-| `.agent/tasks/nightwatch-p1-observation-scope-ma8-v1/STATE.md` | execution memory | ADDED |
+Checkpoint `ce16600`: the full campaign-owned set (cone, 7 suites + fixture
+support, OpenSpec change, task record, handoff prompt, both manifests,
+hardening dispatch). See `git show --stat ce16600`. No sibling writes; no
+certified-cone modifications.
 
 ## Validation Ledger
 
-(none yet — no implementation exists to validate)
+Checkpoint `ce16600` (session branch, pre-integration):
+`tsc --noEmit` clean; 127/127 P1 focused tests green
+(37 admission + 24 config + 20 attribution + 6 privacy + 8 capability +
+27 state-machine + 5 mock-subject); `hardening:check` PASS (incl. the new
+`checkP1ObservationScopeBoundary`). Full gate, clean clone, and mutation
+campaign still pending (M6–M7).
 
 ## Decisions Made During This Task
 
