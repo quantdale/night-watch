@@ -4,10 +4,10 @@
 
 Task ID: nightwatch-unused-dep-removal-v1
 Phase: UNUSED_DEP_REMOVAL_V1
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: ae959663d22e6c9191f3ef7a9ebed7f081fc4fe9
-Last validated implementation SHA: ae959663d22e6c9191f3ef7a9ebed7f081fc4fe9
-Last substantive checkpoint SHA: ae959663d22e6c9191f3ef7a9ebed7f081fc4fe9
+Last validated implementation SHA: a212e88bd6c37e4f6a60ed5d49c4a0a0bf78602c
+Last substantive checkpoint SHA: a212e88bd6c37e4f6a60ed5d49c4a0a0bf78602c
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-unused-dep-removal-v1-ca39c497
@@ -15,11 +15,11 @@ Last checkpoint: M1 done — session claimed at ae95966; SPEC/PLAN/STATE + OpenS
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: ae959663d22e6c9191f3ef7a9ebed7f081fc4fe9
-LAST_VALIDATED_IMPLEMENTATION_SHA: ae959663d22e6c9191f3ef7a9ebed7f081fc4fe9
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: ae959663d22e6c9191f3ef7a9ebed7f081fc4fe9
+LAST_VALIDATED_IMPLEMENTATION_SHA: a212e88bd6c37e4f6a60ed5d49c4a0a0bf78602c
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: a212e88bd6c37e4f6a60ed5d49c4a0a0bf78602c
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
-PHASE_UNUSED_DEP_REMOVAL_V1_STATUS: IN_PROGRESS
+PHASE_UNUSED_DEP_REMOVAL_V1_STATUS: COMPLETE
 
 ## Objective
 
@@ -28,27 +28,37 @@ install/typecheck/scenario green; integrate.
 
 ## Current Milestone
 
-M1 — Task record and session (IN_PROGRESS, routing files landing).
+COMPLETE / STOP — all milestones closed.
 
 ## Completed Milestones
 
-None yet (M1 in progress).
+- **M1 task record and session (done).** Session claimed at `ae95966`;
+  SPEC/PLAN/STATE/REPORT + OpenSpec written; routing verified.
+- **M2 removal and validation (done).** Commit `a212e88`: manifest +
+  lockfile vue entries removed (plus npm's own indent normalization on
+  five untouched script lines, semantically null). `npm audit` zero
+  vulns; scratch `npm ci` green; `tsc --noEmit` clean; offline scenario
+  green; hardening + truth checkers green.
 
 ## Work In Progress
 
-M1 routing: ACTIVE_TASK + EXECUTION_PROMPT + OpenSpec + conformance.
+NONE — M1 through M3 closed. No open work.
 
 ## Exact Next Action
 
-Finish routing files, run handoff/agent checks, then remove the dep.
+STOP. Campaign COMPLETE. Do not resume.
 
 ## Files Changed
 
-None yet (task record only, this checkpoint).
+- `package.json`, `package-lock.json` — vue entries removed.
+- Task record + OpenSpec change + CURRENT_STATE live-block rebind.
+
 
 ## Validation Ledger
 
-No validation results yet (M1).
+M1: `session:status` PASS; `handoff:check` PASS; `agent:check` PASS.
+M2: `npm audit` 0 vulns; `npm ci` green; typecheck clean; scenario
+green; `hardening:check` PASS; agent/project/handoff PASS.
 
 ## Decisions Made During This Task
 
@@ -78,8 +88,14 @@ None. C-12 and all owner-gated campaigns remain out of scope.
 
 ## Resume Recipe
 
-Continue at M1: finish routing, verify checks, implement M2.
+Task complete. Do not resume; any follow-up starts as a new authorized task.
 
 ## Completion Snapshot
 
-Not complete. No snapshot until M3.
+Final substantive checkpoint: a212e88bd6c37e4f6a60ed5d49c4a0a0bf78602c
+Final task status: COMPLETE. Live HEAD: DISCOVER_FROM_GIT.
+Tests: `npm audit` 0 vulns; `npm ci` green; typecheck clean; scenario
+green; hardening + truth checkers green.
+Artifacts: manifest without vue; REPORT final.
+Known issues: none. Advisory eliminated.
+Recommended next task: none required. No new campaign authority granted.
