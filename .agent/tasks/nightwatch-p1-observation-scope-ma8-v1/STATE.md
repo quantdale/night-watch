@@ -95,6 +95,23 @@ Checkpoint `ce16600` (session branch, pre-integration):
 `checkP1ObservationScopeBoundary`). Full gate, clean clone, and mutation
 campaign still pending (M6–M7).
 
+## Check conformance notes (mid-campaign, expected)
+
+- `agent:check` PASS (warnings: legitimate CHECKPOINT_ADVANCE for docs-only
+  movement after the implementation checkpoint; 24 legacy v1 tasks
+  historical). `handoff:check` PASS. `workspace:check` owned/drift-free.
+- `project:check` reports exactly `PROJECT_STATE_SUBSTANTIVE_BASELINE_STALE`
+  and nothing else. That is the protocol working, not drift: a campaign that
+  changes implementation cannot have a self-consistent baseline until its
+  validation anchors advance (CURRENT_STATE design prose). Resolves at M7
+  close after `gate:local` + integration.
+- C-00 dependency topology: the worktree first shared the canonical install
+  via a `node_modules` symlink; the C-00 rule requires a session worktree to
+  install its own dependencies, and the symlink also dirtied
+  `git status --porcelain`. Replaced with a real `npm ci`; tree clean.
+- CURRENT_STATE live block rebound to this campaign
+  (IN_PROGRESS/CONTINUE/NONE); EXECUTION_PROMPT rewritten for MA-8.
+
 ## Decisions Made During This Task
 
 Decision: New sibling cone `src/core/prodObserveP1/`, never inside
