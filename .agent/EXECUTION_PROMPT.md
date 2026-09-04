@@ -1,65 +1,83 @@
-# EXECUTION PROMPT — R-13 Overnight Reliability, Stress, Determinism + Clean-Clone Certification
+# EXECUTION PROMPT — MA-8 / F-13 P1 Observation-Scope Prerequisite
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
-Status: COMPLETE
-Campaign ID: nightwatch-overnight-reliability-r13-v1
-OpenSpec: openspec/changes/nightwatch-overnight-reliability-r13-v1/
-Planned-From: d3a464de97225f91cd425b7922b53238a02dc981
+Status: IN_PROGRESS
+Campaign ID: nightwatch-p1-observation-scope-ma8-v1
+OpenSpec: openspec/changes/nightwatch-p1-observation-scope-ma8-v1/
+Planned-From: 0195a39e60e82b80439ec10ad5a36453804fe030
 Target Branch: main
-Predecessor Task ID: nightwatch-system-map-v2-transport-c15c-v1
+Predecessor Task ID: nightwatch-overnight-reliability-r13-v1
 Predecessor Status: COMPLETE
 
 ## Mission
 
-Measure the repeatability of everything R-12 through C-15c built: fresh-process
-determinism, order independence, lifecycle/collision/concurrency robustness,
-scale invariance, seeded properties, second-topology clean behavior, regression
-stability, UI endurance, leak freedom, receipt durability, and mutation-probe
-bite. No implementation changes; probes live in /tmp/r13, never in the repo.
+Implement, integrate, adversarially verify, document, and certify the missing
+P1-specific observation-scope admission architecture (MA-8 / F-13, canonical
+E-16): a versioned named P1 chain admitting only an operator-provided
+already-existing subject inside a bounded window, a mechanical four-class
+attribution model with UNKNOWN failing closed, a machine-enforced passive
+capability cone, and terminal classification that makes vacuous PASS
+impossible. Local/mock certification only.
 
 ## Authority
+
+```
+IMPLEMENTATION AUTHORIZED:
+  MA-8 / F-13 P1 observation-scope prerequisite only
+
+REAL PRODUCTION CONTACT:
+  NOT AUTHORIZED
+
+C-12 EXECUTION:
+  NOT AUTHORIZED IN THIS CAMPAIGN
+
+C-08b:
+  NOT AUTHORIZED
+
+C-07 DEV:
+  NOT AUTHORIZED
+```
 
 Repository-local and offline. No production contact, no NEXT contact, no DEV
 request, no credential acquisition. C-12 is NOT authorized and is NOT begun.
 
 C-00 governs: all implementation happens in the owned session worktree
-`session/nightwatch-system-map-v2-transpo-6bb0f1cf`.
+`session/nightwatch-p1-observation-scope--3bd1d83d`.
 
 ## Ordered workstreams
 
-1. Task record, OpenSpec change, routing, measured baseline — BEFORE any gate.
-2. V2 contract DTOs and the level/query adapter.
-3. Router segments, collector methods, server dispatch.
-4. API client and the System Map operator view.
-5. C-15c suite, registration in both manifests, hardening rule.
-6. Browser scenario matrix and scale measurement.
-7. Validation, integration, exact-head CI, closure, release.
+1. Task record, OpenSpec change, routing, design reconciliation — BEFORE code.
+2. P1 cone: types, authorization, scope config, kill switch, admission
+   evaluator, attribution, session.
+3. Local test matrix: admission, config, attribution/lifecycle, privacy,
+   passive capability, seeded properties, mock-subject integration.
+4. Manifest + certification registration; P1 hardening check.
+5. Bounded mutation campaign with zero survivors.
+6. Full validation, repeatability, clean clone, second-pass review, docs,
+   REPORT, integration, release.
 
 ## Constraints
 
-GET/HEAD only. Both authority fields `NONE` on every answer. V1 is never
-reinterpreted. Unknown segments are rejected, never guessed. A null total and a
-null dropped count render as "unknown", never as `0`. An `UNMEASURED` empty
-result is labelled unmeasured, not clean. The client fetches one level at a
-time and never a whole-company payload. Existing roster guards are extended to
-admit exactly the new view, not loosened.
+P1 admits exactly one stage and one class (`P1` / `P1_OBSERVE`); no P1→P2
+path exists in the cone. The C-11/C-10/C-10.5 cones are consumed, never
+modified. Unknown attribution fails closed. Zero samples never pass. Every
+gate individually falsifiable. No test deletion/skip/retry/timeout-inflation
+as a correctness fix. No hardening, privacy, or provenance rule weakened.
 
 ## Validation
 
 typecheck, hardening, handoff, project, agent, agent audit, workspace, gate
-inventory, semantic compatibility, synthetic campaign, `gate:predev`, the UI
-unit suite, the UI build verifier, the new C-15c suite, the browser matrix, the
-canonical regression, `gate:local`, `gate:clean`, exact-head GitHub Actions.
+inventory, semantic compatibility, synthetic campaign, the seven P1 suites,
+canonical regression, `gate:local`, `gate:clean`, single exact-head CI
+inspection (no rerun loop).
 
 ## Acceptance and completion gates
 
-The thirteen acceptance rows of
-`.agent/tasks/nightwatch-system-map-v2-transport-c15c-v1/SPEC.md`, each carried
-in the REPORT requirement ledger with exact evidence.
+The SPEC.md acceptance criteria, each carried in the REPORT requirement ledger
+with exact evidence, plus `C-12 WAS NOT EXECUTED BY THIS CAMPAIGN`.
 
 ## Git and reporting
 
 Coherent checkpoints in the session worktree; integrate by verified
-fast-forward; observe exact-head CI with a PREDICTED skip delta; reconcile
-project truth; complete `REPORT.md`; release the session and remove the
-worktree and branch.
+fast-forward; reconcile project truth; complete `REPORT.md`; release the
+session and remove the worktree and branch.

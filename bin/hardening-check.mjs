@@ -2403,6 +2403,134 @@ function checkC11ProdObserveBoundary() {
 }
 
 /**
+ * MA-8 / F-13 P1 observation-scope invariants.
+ *
+ * The P1 cone (`src/core/prodObserveP1/`) is a sibling of the C-11 cone, never
+ * a member: C-11's boundary asserts its cone's contents and reverse-isolation,
+ * so P1 lives beside it and this check guards both the P1 properties and the
+ * absence of coupling in either direction.
+ */
+function checkP1ObservationScopeBoundary() {
+  const coneDirectory = 'src/core/prodObserveP1';
+  const coneFiles = gitFiles().filter((file) => file.startsWith(`${coneDirectory}/`) && file.endsWith('.ts'));
+  if (coneFiles.length === 0) {
+    fail('MA-8 the P1 observation-scope cone is missing');
+    return;
+  }
+
+  // --- F-12: the P1 cone may not import the request, DEV/NEXT, browser, or campaign cones ---
+  // Patterns must match a RELATIVE import too (the DEF-C11-3 vacuity class).
+  const forbiddenInP1Cone = [
+    [/from\s+['"][^'"]*prodObserve[^P][^'"]*['"]/, 'the C-11 request chain (F-12 both directions)'],
+    [/from\s+['"][^'"]*\.\.\/prodObserve(\/[^'"]*)?['"]/, 'the C-11 request chain by relative import'],
+    [/from\s+['"][^'"]*safety\/realRunGate['"]/, 'the generic real-run decision path'],
+    [/from\s+['"][^'"]*phase22\//, 'the DEV campaign orchestrator'],
+    [/from\s+['"][^'"]*phase23\//, 'the DEV acceptance manifest'],
+    [/from\s+['"][^'"]*\/environment(?:\/|['"])/, 'the DEV environment loader'],
+    [/from\s+['"][^'"]*browser\//, 'the browser cone'],
+    [/from\s+['"][^'"]*campaign\//, 'the campaign execution path'],
+  ];
+  for (const file of coneFiles) {
+    const source = withoutComments(read(file));
+    for (const [pattern, description] of forbiddenInP1Cone) {
+      if (pattern.test(source)) fail(`${file} imports ${description}; the P1 cone must stay import-isolated from it`);
+    }
+    // No dispatcher, navigator, actuator, or credential path anywhere in the
+    // cone: the observer DECIDES and OBSERVES and cannot contact or mutate
+    // anything even if every gate were bypassed.
+    for (const [pattern, description] of [
+      [/from\s+['"]node:https?['"]/, 'an HTTP client'],
+      [/from\s+['"]node:net['"]/, 'a socket client'],
+      [/from\s+['"]node:dns['"]/, 'a DNS resolver'],
+      [/\bfetch\s*\(/, 'fetch()'],
+      [/\.goto\(/, 'a navigation primitive'],
+      [/\.click\(/, 'a click primitive'],
+      [/storageState/, 'a storage-state path'],
+      [/replayExecutor/i, 'a replay executor'],
+    ]) if (pattern.test(source)) fail(`${file} contains ${description}; the P1 cone must contain no traffic, actuation, replay, or credential path`);
+  }
+
+  // --- F-12, the other direction: only the P1 cone and tests may reach P1 machinery ---
+  for (const file of gitFiles()) {
+    if (!file.endsWith('.ts') || file.startsWith('tests/') || file.startsWith(`${coneDirectory}/`)) continue;
+    const source = withoutComments(read(file));
+    if (/from\s+['"][^'"]*core\/prodObserveP1/.test(source)) {
+      fail(`${file} imports the P1 observation-scope machinery; only the P1 cone and tests/** may reach it`);
+    }
+  }
+
+  // --- the C-11 cone must not reach back into P1: no coupling either way ---
+  for (const file of gitFiles()) {
+    if (!file.endsWith('.ts') || !file.startsWith('src/core/prodObserve/')) continue;
+    const source = withoutComments(read(file));
+    if (/from\s+['"][^'"]*prodObserveP1/.test(source)) {
+      fail(`${file} imports the P1 cone; C-11 stays decoupled from P1`);
+    }
+  }
+
+  // --- the chain is a named identity, not a count ---
+  const types = read(`${coneDirectory}/types.ts`);
+  if (!/P1_OBSERVATION_SCOPE_CHAIN_VERSION = 'nightwatch\.p1-observation-scope\.v1'/.test(types)) {
+    fail('MA-8 the P1 observation-scope chain must be versioned');
+  }
+  const gateBlock = /P1_OBSERVATION_SCOPE_GATES = \[([\s\S]*?)\] as const;/.exec(types);
+  if (gateBlock === null) {
+    fail('MA-8 the P1 ordered gate list must be a literal const array');
+  } else {
+    for (const gate of [
+      'P1_KILL_SWITCH_ENTRY', 'P1_OWNER_AUTHORIZATION', 'P1_AUTHORIZATION_CLASS', 'P1_CONFIGURATION_INTEGRITY',
+      'P1_IMPLEMENTATION_IDENTITY', 'P1_PQ_BINDING', 'P1_SUBJECT_PRESENCE', 'P1_SUBJECT_PROVENANCE',
+      'P1_HOST_ADMISSION', 'P1_OBSERVATION_WINDOW', 'P1_OBSERVER_IDENTITY', 'P1_PRIVACY_CAPABILITY',
+      'P1_EVIDENCE_DESTINATION', 'P1_ATTRIBUTION_CAPABILITY', 'P1_KILL_SWITCH_PREATTACH',
+    ]) if (!gateBlock[1].includes(`'${gate}'`)) fail(`MA-8 the P1 observation-scope chain is missing the required gate ${gate}`);
+    // Configuration integrity supplies the window AND the implementation
+    // binding, so it must precede both or those gates become unfalsifiable
+    // (the DEF-C11-1 / DEF-P1-1 class).
+    if (gateBlock[1].indexOf("'P1_CONFIGURATION_INTEGRITY'") > gateBlock[1].indexOf("'P1_IMPLEMENTATION_IDENTITY'")) {
+      fail('MA-8 P1_CONFIGURATION_INTEGRITY must precede P1_IMPLEMENTATION_IDENTITY: the binding is read from the config');
+    }
+    if (gateBlock[1].indexOf("'P1_CONFIGURATION_INTEGRITY'") > gateBlock[1].indexOf("'P1_OBSERVATION_WINDOW'")) {
+      fail('MA-8 P1_CONFIGURATION_INTEGRITY must precede P1_OBSERVATION_WINDOW: the window is read from the config');
+    }
+  }
+  // Per-gate denial codes stay confined: the map must cover every gate.
+  if (!/export const P1_GATE_DENIAL_CODES: Readonly<\s*Record<P1ObservationScopeGate, readonly P1ObservationDenialCode\[\]>\s*>/.test(types)) {
+    fail('MA-8 the P1 per-gate denial-code map must stay a total Record over the gate union');
+  }
+
+  // --- the kill switch is evaluated at entry, before attach, AND while attached ---
+  const observer = withoutComments(read(`${coneDirectory}/observer.ts`));
+  if ((observer.match(/evaluateP1KillSwitch\(/g) ?? []).length < 2) {
+    fail('MA-8 the kill switch must be evaluated at P1 admission entry AND immediately before attach');
+  }
+  const session = withoutComments(read(`${coneDirectory}/session.ts`));
+  if ((session.match(/evaluateP1KillSwitch\(/g) ?? []).length < 2) {
+    fail('MA-8 the kill switch must be evaluated at attach AND on every observation poll');
+  }
+
+  // --- sessions are triply bounded, or a stalled observer runs forever ---
+  if (!/P1_SESSION_BOUNDS_INVALID/.test(session) || !/maxEvents/.test(session) || !/maxPolls/.test(session)) {
+    fail('MA-8 the P1 session must enforce event, poll, and deadline bounds with a categorical refusal');
+  }
+
+  // --- attribution fails closed: UNKNOWN and Nightwatch-attributable traffic never pass ---
+  const attribution = withoutComments(read(`${coneDirectory}/attribution.ts`));
+  for (const token of ['NIGHTWATCH_ATTRIBUTABLE', 'ATTRIBUTION_UNKNOWN', 'NIGHTWATCH_TRAFFIC_DETECTED', 'PASSIVE_OBSERVATION_COMPLETE', 'isP1SessionPass']) {
+    if (!attribution.includes(token)) fail(`MA-8 the attribution model must retain ${token}`);
+  }
+
+  // --- F-09 for P1: the scope config is external-only and never in-repo ---
+  const scopeConfig = withoutComments(read(`${coneDirectory}/scopeConfig.ts`));
+  for (const code of ['P1_CONFIG_PATH_NOT_ABSOLUTE', 'P1_CONFIG_INSIDE_REPOSITORY', 'P1_CONFIG_INSIDE_WORKSPACE', 'P1_CONFIG_SYMLINK', 'P1_CONFIG_MODE_NOT_OWNER_ONLY', 'P1_CONFIG_HOST_INVALID', 'P1_CONFIG_DESTINATION_INVALID']) {
+    if (!scopeConfig.includes(code)) fail(`MA-8 the external P1 scope config loader must retain the fail-closed code ${code}`);
+  }
+  for (const file of gitFiles()) {
+    if (/^config\/p1scope\//.test(file)) fail(`${file} is an in-repo P1 scope config; F-09 requires external-only`);
+  }
+
+}
+
+/**
  * C-02b protobuf source-intelligence invariants.
  *
  * Four things in this campaign are load-bearing, and each is the kind of thing
@@ -3367,6 +3495,7 @@ checkC10ProductionPrivacyBoundary();
 checkC105ProvenanceAuthorityBoundary();
 checkR11ProxyGateReliability();
 checkC11ProdObserveBoundary();
+checkP1ObservationScopeBoundary();
 checkSyntax();
 
 if (errors.length > 0) {

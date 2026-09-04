@@ -156,6 +156,19 @@
       "task": "nightwatch-overnight-reliability-r13-v1",
       "suites": [],
       "reason": "Verification-only endurance campaign: R-13 declares no suite of its own and certifies exclusively through repetition, permutation, stress and adversarial probing of already-registered suites. All probe drivers live outside the repo (/tmp/r13) so none can become certification surface."
+    },
+    {
+      "id": "MA-8",
+      "task": "nightwatch-p1-observation-scope-ma8-v1",
+      "suites": [
+        "tests/unit/p1ObservationScope.test.ts",
+        "tests/unit/p1ScopeConfig.test.ts",
+        "tests/unit/p1Attribution.test.ts",
+        "tests/unit/p1Privacy.test.ts",
+        "tests/unit/p1PassiveCapability.test.ts",
+        "tests/unit/p1StateMachine.test.ts",
+        "tests/unit/p1MockSubject.test.ts"
+      ]
     }
   ]
 }

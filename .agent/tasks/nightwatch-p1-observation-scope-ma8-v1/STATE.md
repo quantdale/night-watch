@@ -1,0 +1,153 @@
+# Task State
+
+## Identity
+
+Task ID: nightwatch-p1-observation-scope-ma8-v1
+Phase: P1_OBSERVATION_SCOPE_MA8_V1
+Status: IN_PROGRESS
+Starting SHA: 0195a39e60e82b80439ec10ad5a36453804fe030
+Last validated implementation SHA: NONE
+Last substantive checkpoint SHA: NONE
+Live HEAD authority: GIT
+Current local/remote HEAD: DISCOVER_FROM_GIT
+Branch: session/nightwatch-p1-observation-scope--3bd1d83d
+Last checkpoint: NONE — campaign scaffolded; M1 reconciliation recorded below
+CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
+
+STARTING_SHA: 0195a39e60e82b80439ec10ad5a36453804fe030
+LAST_VALIDATED_IMPLEMENTATION_SHA: NONE
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: NONE
+LIVE_HEAD_AUTHORITY: GIT
+PROJECT_VERDICT_EFFECT: PRESERVE
+PHASE_P1_OBSERVATION_SCOPE_MA8_V1_STATUS: IN_PROGRESS
+
+## Objective
+
+Implement and certify the MA-8 / F-13 P1 observation-scope admission
+architecture (canonical E-16) with zero real production contact. C-12 is NOT
+executed by this campaign.
+
+## Current Milestone
+
+M1 — Reconciliation and campaign scaffolding. IN PROGRESS.
+
+## Completed Milestones
+
+- **M1 reconciliation (read-only).** `git fetch`; branch `main`; HEAD ==
+  origin/main == `0195a39e60e82b80439ec10ad5a36453804fe030` (matches the
+  campaign's expected SHA; no reset performed). `git status` clean. One
+  registered worktree (canonical). `session:status` PASS
+  (`WORKSPACE_INTEGRITY_SATISFIED`, canonical maintenance, no live owned
+  session before start). Recent commits end at `0195a39` (R-13/C-15c docs
+  close-out). OpenSpec lifecycle: no open change; prior campaigns COMPLETE.
+  ACTIVE_TASK was `nightwatch-overnight-reliability-r13-v1` COMPLETE.
+  EXECUTION_PROMPT and PLANNER_HANDOFF are the R-13 COMPLETE records.
+  Exact-head CI inspected once: run `33841467907` → conclusion `failure`,
+  `runner_id = 0`, empty runner name, zero steps — recorded as
+  `EXTERNAL BLOCKER — NO RUNNER / ZERO STEPS`, not a product failure.
+  No concurrent active owner conflicts.
+- **Repository-native definitions read.** MA-8
+  (`PRODUCTION-OBSERVABILITY-INDEPENDENT-REVIEW.md:63`), UA-8 (`:86`), F-13
+  (`:776-803`), E-16 (`:1345`, canonical — the predecessor label stands),
+  C-12 (`:107` — criterion must become "zero requests attributable to
+  Nightwatch, every proxy-traversing request counted and attributed"),
+  C-11 deferral (`nightwatch-prod-observe-safety-kernel-c11-v1/SPEC.md:31`),
+  master-plan `design.md §5.5` (`P1: observe the operator's own already-loaded
+  production page; issue no request`) and `§5.6` observer identity.
+- **C-11 kernel read in full.** `src/core/prodObserve/` (types,
+  productionRunGate, authorization, observationConfig, killSwitch, budget,
+  breakers, receipt, index); eighteen-gate request-issuance chain confirmed
+  inapplicable to P1 by construction. Scout-mapped consumers: prodPrivacy
+  policy/projector, prodEvidence firewall/persistenceAudit, hardening
+  `checkC11ProdObserveBoundary`, both manifests, and the R-12 certification
+  judgement (`bin/lib/campaign-certification.mjs` — totality rule covers only
+  `-(c|r)[0-9]+[a-z]*-v[0-9]+$` ledger tasks; this task id is exempt; adding
+  an `MA-8` declaration entry is safe, no exact-set pin exists).
+- **Session claimed.** Worktree
+  `session/nightwatch-p1-observation-scope--3bd1d83d` at the base SHA;
+  SPEC.md (frozen) + PLAN.md written.
+
+## Work In Progress
+
+- M1 scaffolding: STATE.md (this file), OpenSpec change, ACTIVE_TASK rebinding.
+  Next: M2 design reconciliation note in the OpenSpec `design.md`.
+
+## Exact Next Action
+
+Write `openspec/changes/nightwatch-p1-observation-scope-ma8-v1/` (proposal,
+design with the §4 reconciliation note, tasks, audit, one specs/*/spec.md),
+then rebind `.agent/ACTIVE_TASK.md` to this campaign and continue with M3
+implementation in the session worktree.
+
+## Files Changed
+
+| Path | Reason | Status |
+|---|---|---|
+| `.agent/tasks/nightwatch-p1-observation-scope-ma8-v1/SPEC.md` | frozen task intent | ADDED |
+| `.agent/tasks/nightwatch-p1-observation-scope-ma8-v1/PLAN.md` | living plan | ADDED |
+| `.agent/tasks/nightwatch-p1-observation-scope-ma8-v1/STATE.md` | execution memory | ADDED |
+
+## Validation Ledger
+
+(none yet — no implementation exists to validate)
+
+## Decisions Made During This Task
+
+Decision: New sibling cone `src/core/prodObserveP1/`, never inside
+`src/core/prodObserve/`.
+Reason: C-11's hardening asserts its cone's contents and reverse-isolation;
+placing P1 inside would force edits to C-11's boundary. Consumption only.
+Evidence/constraint: `checkC11ProdObserveBoundary` reads `src/core/prodObserve/`
+exclusively; C-11 STATE §Discoveries (comment-stripping scanner).
+
+Decision: P1 duplicates the grant-registry / config-loader / kill-switch
+patterns (~tens of lines each) instead of importing them from `prodObserve`.
+Reason: the C-11 reverse-isolation rule fails any non-test file outside the
+cone importing `core/prodObserve`; extending its allowlist would weaken a
+certified rule. F-12 demands separation in both directions.
+Evidence/constraint: scout-extracted reverse rule in `bin/hardening-check.mjs`.
+
+Decision: Declare campaign `MA-8` in `config/campaign-certification.v1.json`
+even though this task id is ledger-exempt.
+Reason: the declared→registered→exists conjuncts then machine-check P1 suite
+registration; the R-12 tests pin no exact campaign set.
+Evidence/constraint: `validateCampaignCertification` lines 129-163;
+`r12CampaignCertification.test.ts` uses `toContain`/subset assertions.
+
+## Defects found and disposition
+
+None yet.
+
+## Discoveries
+
+- E-16 is canonical repository truth, not a predecessor invention — the
+  campaign implements against it directly.
+- The master-plan `P1 → P2` gate (`design.md §5.5:275`) still says "zero
+  requests issued by Nightwatch"; F-13/C-12-row requires the attributable
+  rewording. This campaign implements the corrected criterion in code; the
+  historical design text stays historical (reconciled in docs, not rewritten).
+
+## Blockers
+
+None. External prerequisites (operator subject, admitted P1 config, C-08b
+facts, runner provisioning) are out-of-scope inputs to a future C-12, not to
+this implementation campaign.
+
+## Safety Events
+
+NONE
+
+## Deferred / Follow-Up
+
+- C-12 P1 passive production observation (requires new explicit owner
+  authorization after review of this campaign's evidence).
+- C-08b, C-07 DEV, C-13/C-14 — all out of scope.
+
+## Resume Recipe
+
+Read SPEC.md, PLAN.md, then this file. Worktree:
+`session/nightwatch-p1-observation-scope--3bd1d83d`. Exact next action above.
+
+## Completion Snapshot
+
+Not complete. No implementation, no validation, no integration yet.
