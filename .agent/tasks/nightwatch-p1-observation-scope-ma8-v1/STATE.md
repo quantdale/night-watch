@@ -112,6 +112,31 @@ campaign still pending (M6–M7).
 - CURRENT_STATE live block rebound to this campaign
   (IN_PROGRESS/CONTINUE/NONE); EXECUTION_PROMPT rewritten for MA-8.
 
+## Mutation ledger (M6, `/tmp/p1mutate.py` — probes outside the repo)
+
+14 probes, 14 detected, 0 survivors. Each probe: sha256-recorded, exact-string
+mutation applied, biting verification run (MUST fail), bytes restored from
+backup and hash-compared, verification re-run (MUST pass). Worktree verified
+clean (`git status` empty, `git diff HEAD` empty) after the campaign.
+
+| Probe | Mutation | Biting verification |
+|---|---|---|
+| P1-MUT-01 | remove `P1_HOST_ADMISSION` from the gate list | matrix host case + hardening gate list |
+| P1-MUT-02 | host decision allow-all | matrix host case + config suite |
+| P1-MUT-03 | UNKNOWN attribution as autonomous | attribution + state-machine suites |
+| P1-MUT-04 | planted navigation primitive in session | capability suite + hardening |
+| P1-MUT-05 | privacy-capability gate disabled | matrix privacy cases |
+| P1-MUT-06 | window expiry disabled | matrix + state-machine window cases |
+| P1-MUT-07 | kill switch never engages | admission + lifecycle kill cases |
+| P1-MUT-08 | stale authorization accepted | matrix expiry case |
+| P1-MUT-09 | consumed grant reusable | double-admit + property cases |
+| P1-MUT-10 | wrong implementation SHA permitted | matrix identity case |
+| P1-MUT-11 | C-11 executor import into P1 cone | capability suite + hardening reverse rule |
+| P1-MUT-12 | denial code duplicated across gates | chain-identity uniqueness |
+| P1-MUT-13 | Nightwatch-caused misclassified as preexisting | lifecycle + mock-subject cases |
+| P1-MUT-14 | session bounds unenforced | bounds-invalid + hardening bounds rule |
+
+
 ## Decisions Made During This Task
 
 Decision: New sibling cone `src/core/prodObserveP1/`, never inside
