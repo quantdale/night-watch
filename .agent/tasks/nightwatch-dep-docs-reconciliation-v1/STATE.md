@@ -4,7 +4,7 @@
 
 Task ID: nightwatch-dep-docs-reconciliation-v1
 Phase: DEP_DOCS_RECONCILIATION_V1
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: 262c84b7ee93d22617e8b901655805d72123a84a
 Last validated implementation SHA: 262c84b7ee93d22617e8b901655805d72123a84a
 Last substantive checkpoint SHA: 262c84b7ee93d22617e8b901655805d72123a84a
@@ -19,7 +19,7 @@ LAST_VALIDATED_IMPLEMENTATION_SHA: 262c84b7ee93d22617e8b901655805d72123a84a
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: 262c84b7ee93d22617e8b901655805d72123a84a
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
-PHASE_DEP_DOCS_RECONCILIATION_V1_STATUS: IN_PROGRESS
+PHASE_DEP_DOCS_RECONCILIATION_V1_STATUS: COMPLETE
 
 ## Objective
 
@@ -28,27 +28,32 @@ prove checkers green; integrate.
 
 ## Current Milestone
 
-M1 — Task record and session (IN_PROGRESS, routing files landing).
+COMPLETE / STOP — all milestones closed.
 
 ## Completed Milestones
 
-None yet (M1 in progress).
+- **M1 task record and session (done).** Session claimed at `262c84b`;
+  SPEC/PLAN/STATE/REPORT + OpenSpec written; routing verified.
+- **M2 sentence correction and validation (done).** Commit `717b5de`:
+  D-87 append-style supersession; hardening + truth checkers green.
 
 ## Work In Progress
 
-M1 routing: ACTIVE_TASK + EXECUTION_PROMPT + OpenSpec + conformance.
+NONE — M1 through M3 closed. No open work.
 
 ## Exact Next Action
 
-Finish routing files, run handoff/agent checks, then apply the M2 correction.
+STOP. Campaign COMPLETE. No further action on this task.
 
 ## Files Changed
 
-None yet (task record only, this checkpoint).
+- `docs/DECISIONS.md` — one append-style supersession sentence.
+- Task record + OpenSpec change + CURRENT_STATE live-block rebind.
 
 ## Validation Ledger
 
-No validation results yet (M1).
+M1: `session:status` PASS; `handoff:check` PASS; `agent:check` PASS.
+M2: `hardening:check` PASS; agent/project/handoff PASS (at close).
 
 ## Decisions Made During This Task
 
@@ -78,8 +83,12 @@ None. C-12 and all owner-gated campaigns remain out of scope.
 
 ## Resume Recipe
 
-Continue at M1: finish routing, verify checks, implement M2.
+Task complete. No further action on this task; any follow-up starts as a new authorized task.
 
 ## Completion Snapshot
 
-Not complete. No snapshot until M3.
+Final anchors: carried-forward base 262c84b (docs-only change; no new
+implementation claim). Final task status: COMPLETE.
+Docs correction 717b5de committed; hardening + truth checkers green.
+Known issues: none. Advisory already eliminated by predecessor.
+Recommended next task: none required. No new campaign authority granted.

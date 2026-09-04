@@ -37,24 +37,24 @@ fact (removed as unused; audit zero), per the drift-notes pattern.
 
 ## Milestones
 
-### M1 — Task record and session — IN_PROGRESS
+### M1 — Task record and session — DONE
 
 - Objective: session worktree claimed; SPEC/PLAN/STATE frozen; OpenSpec
   change; ACTIVE_TASK + EXECUTION_PROMPT routed.
 - Acceptance criteria: `session:status` PASS; `handoff:check` PASS.
 - Validation commands: `npm run session:status`, `npm run handoff:check`
-- Status: IN_PROGRESS
+- Status: DONE
 
-### M2 — Sentence correction and validation — PENDING
+### M2 — Sentence correction and validation — DONE
 
 - Objective: correct the standing claim; run checkers.
 - Files/areas: `docs/DECISIONS.md` (one sentence).
 - Implementation actions: append-style edit; hardening + truth checks.
 - Acceptance criteria: sentence truthful; all checkers green.
 - Validation commands: `npm run hardening:check`, `npm run agent:check`, `npm run project:check`, `npm run handoff:check`
-- Status: PENDING
+- Status: DONE
 
-### M3 — Integration and close — PENDING
+### M3 — Integration and close — DONE
 
 - Objective: integrate to main, release, remove worktree, close task.
 - Files/areas: session branch → origin/main; REPORT.md; ACTIVE_TASK.md.
@@ -62,7 +62,7 @@ fact (removed as unused; audit zero), per the drift-notes pattern.
   HEAD == origin/main; release; remove worktree; COMPLETE records.
 - Acceptance criteria: push verified; tree clean; REPORT final.
 - Validation commands: `git status`, `git rev-parse HEAD`, `git ls-remote origin main`
-- Status: PENDING
+- Status: DONE
 
 ## Validation Strategy
 

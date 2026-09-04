@@ -1,7 +1,7 @@
 # EXECUTION PROMPT — Dep-Removal Docs Reconciliation
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
-Status: IN_PROGRESS
+Status: COMPLETE
 Campaign ID: nightwatch-dep-docs-reconciliation-v1
 OpenSpec: openspec/changes/nightwatch-dep-docs-reconciliation-v1/
 Planned-From: 262c84b7ee93d22617e8b901655805d72123a84a
