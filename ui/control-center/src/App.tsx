@@ -462,10 +462,24 @@ const LEVEL_LABEL: Record<SystemMapLevelSegment, string> = { l1: 'Company', l2: 
  * service". Without a subject they have no answer, so the UI must not offer
  * them unselected — firing them anyway would put a 404 in front of the
  * operator where the honest response is "pick a node first".
+ *
+ * R-13 DEF-R13-5: presence is not enough — the KIND must fit, or the same
+ * 404 trap opens one step later (an operation subject for a service
+ * question). The trail focus counts as a subject only when its kind fits:
+ * an L3 trail is a service context, an L2 trail is not a subject of
+ * anything the queries can answer.
  */
-const FOCUS_REQUIRED_QUERIES: ReadonlySet<string> = new Set([
-  'why-unproven', 'ui-control-to-handler', 'surfaces-touching-service',
-]);
+const SUBJECT_KIND_BY_QUERY: Record<string, string> = {
+  'why-unproven': 'HTTP_OPERATION',
+  'ui-control-to-handler': 'FRONTEND_CONSUMER',
+  'surfaces-touching-service': 'SERVICE',
+};
+
+const SUBJECT_NOUN_BY_QUERY: Record<string, string> = {
+  'why-unproven': 'an operation',
+  'ui-control-to-handler': 'a UI control',
+  'surfaces-touching-service': 'a service',
+};
 
 const QUERY_LABEL: Record<SystemMapQuerySegment, string> = {
   'why-unproven': 'Why unproven?',
@@ -525,15 +539,22 @@ function SystemMapView({ refreshKey }: { readonly refreshKey: number }): ReactNo
     setTrail((entries) => (entries.length > 1 ? entries.slice(0, -1) : entries));
   }, [query]);
 
+  // R-13 DEF-R13-5: only one node kind per level resolves to the next
+  // disclosure (PRODUCT at L1, SERVICE at L2, HTTP_OPERATION at L3 — the
+  // operation node's kind string, not OPERATION). Drilling any other kind
+  // would request a focus the transport refuses, stranding the operator on
+  // an error view with no breadcrumb. The same predicate gates the
+  // detail-panel button below, so the two stay in lockstep.
+  const drillTargetKind = current.level === 'l1' ? 'PRODUCT' : current.level === 'l2' ? 'SERVICE' : current.level === 'l3' ? 'HTTP_OPERATION' : null;
   const drillInto = useCallback((node: SystemMapNodeView): void => {
     setSelectedNodeId(node.nodeId);
-    if (query !== null) return;
+    if (query !== null || drillTargetKind === null || node.kind !== drillTargetKind) return;
     const index = LEVEL_ORDER.indexOf(current.level);
     if (index < 0 || index >= LEVEL_ORDER.length - 1) return;
     const next = LEVEL_ORDER[index + 1];
     setTrail((entries) => [...entries, { level: next, focusId: node.nodeId, label: node.label }]);
     setView({ scale: 1, tx: 0, ty: 0 });
-  }, [current.level, query]);
+  }, [current.level, drillTargetKind, query]);
 
   const nodes = state.kind === 'ready' ? state.data.nodes : [];
   const term = search.trim().toLowerCase();
@@ -595,14 +616,19 @@ function SystemMapView({ refreshKey }: { readonly refreshKey: number }): ReactNo
 
       <div className="system-map-queries" role="group" aria-label="Operator queries">
         {SYSTEM_MAP_QUERY_SEGMENTS.map((segment) => {
+          const requiredKind = SUBJECT_KIND_BY_QUERY[segment] ?? null;
+          const selectedKind = selectedNodeId === null ? null : nodes.find((node) => node.nodeId === selectedNodeId)?.kind ?? null;
+          const trailKind = current.level === 'l2' ? 'PRODUCT' : current.level === 'l3' ? 'SERVICE' : current.level === 'l4' ? 'HTTP_OPERATION' : null;
+          const subjectKind = selectedKind ?? trailKind;
           const subject = selectedNodeId ?? current.focusId;
-          const blocked = FOCUS_REQUIRED_QUERIES.has(segment) && subject === null;
+          const blocked = requiredKind !== null && subjectKind !== requiredKind;
+          const noun = SUBJECT_NOUN_BY_QUERY[segment];
           return (
             <button key={segment} type="button" className={`chip ${query === segment ? 'chip-active' : ''}`}
               aria-pressed={query === segment} disabled={blocked}
-              title={blocked ? 'Select a node first — this query needs a subject.' : undefined}
+              title={requiredKind === null ? undefined : subjectKind === null ? 'Select a node first — this query needs a subject.' : blocked && noun !== undefined ? `Select ${noun} first — this query answers about ${noun}s.` : undefined}
               onClick={() => {
-                setQueryFocusId(FOCUS_REQUIRED_QUERIES.has(segment) ? subject : null);
+                setQueryFocusId(requiredKind !== null ? subject : null);
                 setSelectedNodeId(null);
                 setQuery((active) => (active === segment ? null : segment));
               }}>
@@ -677,7 +703,7 @@ function SystemMapView({ refreshKey }: { readonly refreshKey: number }): ReactNo
             <div><dt>Evidence</dt><dd>{selected.evidenceStatus}</dd></div>
             <div><dt>Coverage</dt><dd>{selected.coverageState}</dd></div>
           </dl>
-          {current.level !== 'l4' && query === null ? <button type="button" className="chip" onClick={() => drillInto(selected)}>Drill into {LEVEL_LABEL[LEVEL_ORDER[LEVEL_ORDER.indexOf(current.level) + 1]]}</button> : null}
+          {drillTargetKind !== null && selected.kind === drillTargetKind && query === null ? <button type="button" className="chip" onClick={() => drillInto(selected)}>Drill into {LEVEL_LABEL[LEVEL_ORDER[LEVEL_ORDER.indexOf(current.level) + 1]]}</button> : null}
         </div>
       ) : null}
 

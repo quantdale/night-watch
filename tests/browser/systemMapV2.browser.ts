@@ -48,7 +48,16 @@ function truncatingInput(): SystemMapInput {
       factCategory: 'SOURCE_FACT',
       proven: true,
     }],
-    consumerEdges: [],
+    consumerEdges: [{
+      edgeId: 'e1',
+      repoId: 'mobingilabs/ripple-api',
+      sourceSha: SOURCE_SHA,
+      relativePath: 'src/ui/Button.tsx',
+      method: 'GET',
+      routeTemplate: '/v1/op-0',
+      factCategory: 'SOURCE_FACT',
+      backendOperationId: 'op-0',
+    }],
     findings: [],
     operationPopulationTotal: null,
     productOfRepository: { 'mobingilabs/ripple-api': 'ripple' },
@@ -103,12 +112,43 @@ test('C-15c the operator can navigate the map, and the map never overstates what
     await expect(page.getByRole('heading', { name: 'ripple' })).toBeVisible();
     await page.getByRole('button', { name: /^Drill into Product/ }).click({ force: true });
     await expect(page.getByRole('button', { name: 'Product: ripple' })).toBeVisible();
+    // R-13 DEF-R13-5: the breadcrumb alone once certified a degenerate view.
+    // The L2 answer must contain the product's real members.
+    await expect(page.getByRole('button', { name: /^services\/ripple,/ })).toBeVisible();
     const drillRequests = requestedPaths.slice(beforeDrill).filter((p) => p.startsWith('/api/v2/system-map'));
     expect(drillRequests.every((p) => p.includes('/l2'))).toBe(true);
 
-    // 5. Escape returns to the previous level.
+    // 4b. L2 → L3 through the SERVICE node renders the service's operations.
+    //     Keyboard selection: the L2 order is deterministic
+    //     (product, repository, service) and the product node arrives
+    //     pre-selected from the L1 drill, so two downs reach the service.
+    //     (Role-button center clicks miss wide-label nodes; the dot is the
+    //     real target. The heading assertion below fails if selection never
+    //     moves, so this is not a vacuous pass.)
+    await page.getByRole('application').press('ArrowDown');
+    await page.getByRole('application').press('ArrowDown');
+    await expect(page.getByRole('heading', { name: 'services/ripple' })).toBeVisible();
+    await page.getByRole('button', { name: /^Drill into Service/ }).click({ force: true });
+    await expect(page.getByRole('button', { name: 'Service: services/ripple' })).toBeVisible();
+    await expect(page.getByRole('button', { name: /^GET \/v1\/op-/ }).first()).toBeVisible();
+
+    // 4c. L3 → L4 through an OPERATION node renders that operation's view.
+    //     L3 order is deterministic (service header, proto service, then
+    //     operations) and the service node arrives pre-selected from the L2
+    //     drill, so two rights reach the first operation. No viewport
+    //     dependence: offscreen discs are unclickable by construction.
+    await page.getByRole('application').press('ArrowRight');
+    await page.getByRole('application').press('ArrowRight');
+    await expect(page.getByRole('heading', { name: /^GET \/v1\/op-/ })).toBeVisible();
+    await page.getByRole('button', { name: /^Drill into Operation/ }).click({ force: true });
+    await expect(page.getByTestId('map-authority')).toBeVisible();
+
+    // 5. Escape walks back up the whole trail to the company.
+    await page.getByRole('application').press('Escape');
+    await page.getByRole('application').press('Escape');
     await page.getByRole('application').press('Escape');
     await expect(page.getByRole('button', { name: 'Company' })).toBeVisible();
+    await expect(page.getByRole('button', { name: /^ripple,/ })).toBeVisible();
 
     // 6a. The three subject-taking queries are NOT offered without a subject.
     //     Offering them would put a 404 where "pick a node first" belongs.
@@ -126,19 +166,81 @@ test('C-15c the operator can navigate the map, and the map never overstates what
       await expect(page.getByTestId('map-authority')).toHaveText(/execution NONE · mutation NONE/);
     }
 
-    // Return to Company level for the node-selection test.
+    // Return to the Company level with no query active: 6b leaves the last
+    // population query answering, and drills do not run under a query.
     await page.getByRole('button', { name: 'Company' }).click({ force: true });
     await expect(page.getByRole('button', { name: /^ripple,/ })).toBeVisible();
-// 6c. With a node selected, the subject-taking queries become available and answer.
-    // Select a NAMED node at L1, where the graph is small and the target is
-    // unambiguous, rather than a node picked positionally out of a thousand.
+// 6c. WHY_UNPROVEN answers for an OPERATION subject, with its blocking chain.
+    //     L1 ripple → L2 (product pre-selected from the drill, so no search);
+    //     L2 service via two downs (4b-proven); L3 first operation via two
+    //     rights (service pre-selected at index 0 of [service, proto, ops]).
     await page.getByRole('button', { name: /^ripple,/ }).click({ force: true });
     await expect(page.getByRole('heading', { name: 'ripple' })).toBeVisible();
-    for (const label of ['Why unproven?', 'UI control → handler', 'Surfaces touching service']) {
-      const chip = page.getByRole('button', { name: label, exact: true });
-      await expect(chip).toBeEnabled();
-    }
+    await page.getByRole('button', { name: /^Drill into Product/ }).click({ force: true });
+    // L2 members rendered (not just the breadcrumb, which updates before
+    // the fetch returns) — arrows below need nodes to move through.
+    await expect(page.getByRole('button', { name: /^services\/ripple,/ })).toBeVisible();
+    await page.getByRole('application').press('ArrowDown');
+    await page.getByRole('application').press('ArrowDown');
+    await expect(page.getByRole('heading', { name: 'services/ripple' })).toBeVisible();
+    await page.getByRole('button', { name: /^Drill into Service/ }).click({ force: true });
+    await expect(page.getByRole('button', { name: /^GET \/v1\/op-/ }).first()).toBeVisible();
+    await page.getByRole('application').press('ArrowRight');
+    await page.getByRole('application').press('ArrowRight');
+    await expect(page.getByRole('heading', { name: /^GET \/v1\/op-/ })).toBeVisible();
+    // R-13 DEF-R13-5: KIND must fit, not just presence — with an operation
+    // selected, only the operation question is offered. The other two stay
+    // disabled rather than firing a 404.
+    await expect(page.getByRole('button', { name: 'Why unproven?', exact: true })).toBeEnabled();
+    await expect(page.getByRole('button', { name: 'UI control → handler', exact: true })).toBeDisabled();
+    await expect(page.getByRole('button', { name: 'Surfaces touching service', exact: true })).toBeDisabled();
     await page.getByRole('button', { name: 'Why unproven?', exact: true }).click({ force: true });
+    await expect(page.getByTestId('map-authority')).toBeVisible();
+    await expect(page.getByRole('list', { name: 'Blocking chain' })).toContainText('EFFECT_PROOF');
+
+    // 6d. SURFACES_TOUCHING_SERVICE answers for a SERVICE subject.
+    //     Two Escapes: the first clears the Why query, the second returns to
+    //     L2. Selection does not survive the level change visibly (the op
+    //     node is absent at L2), so three downs from unselected reach the
+    //     service in the deterministic [product, repository, service] order.
+    await page.getByRole('application').press('Escape');
+    await page.getByRole('application').press('Escape');
+    await expect(page.getByRole('button', { name: 'Product: ripple' })).toBeVisible();
+    await page.getByRole('application').press('ArrowDown');
+    await page.getByRole('application').press('ArrowDown');
+    await page.getByRole('application').press('ArrowDown');
+    await expect(page.getByRole('heading', { name: 'services/ripple' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Surfaces touching service', exact: true })).toBeEnabled();
+    await expect(page.getByRole('button', { name: 'Why unproven?', exact: true })).toBeDisabled();
+    await expect(page.getByRole('button', { name: 'UI control → handler', exact: true })).toBeDisabled();
+    await page.getByRole('button', { name: 'Surfaces touching service', exact: true }).click({ force: true });
+    await expect(page.getByTestId('map-authority')).toBeVisible();
+
+    // 6e. UI_CONTROL_TO_HANDLER answers for a CONSUMER subject at L4.
+    //     Escape clears the query at L2. Firing a query deselects, so the
+    //     service is re-selected with three downs before drilling to L3.
+    await page.getByRole('application').press('Escape');
+    await expect(page.getByRole('button', { name: 'Product: ripple' })).toBeVisible();
+    // Clearing the query refetches L2 — arrows need its members, not crumbs.
+    await expect(page.getByRole('button', { name: /^services\/ripple,/ })).toBeVisible();
+    await page.getByRole('application').press('ArrowDown');
+    await page.getByRole('application').press('ArrowDown');
+    await page.getByRole('application').press('ArrowDown');
+    await expect(page.getByRole('heading', { name: 'services/ripple' })).toBeVisible();
+    await page.getByRole('button', { name: /^Drill into Service/ }).click({ force: true });
+    await expect(page.getByRole('button', { name: 'Service: services/ripple' })).toBeVisible();
+    // L3 sorts nodes by id, so positional rights cannot target op-0 (the
+    // operation the fixture's consumer edge attaches to). Narrow by search,
+    // select the single match by keyboard, then clear the search again.
+    await page.getByRole('searchbox', { name: 'Search nodes' }).fill('op-0');
+    await page.getByRole('application').press('ArrowRight');
+    await expect(page.getByRole('heading', { name: 'GET /v1/op-0', exact: true })).toBeVisible();
+    await page.getByRole('searchbox', { name: 'Search nodes' }).fill('');
+    await page.getByRole('button', { name: /^Drill into Operation/ }).click({ force: true });
+    await expect(page.getByTestId('map-authority')).toBeVisible();
+    await page.getByRole('application').press('ArrowRight');
+    await expect(page.getByRole('heading', { name: 'src/ui/Button.tsx' })).toBeVisible();
+    await page.getByRole('button', { name: 'UI control → handler', exact: true }).click({ force: true });
     await expect(page.getByTestId('map-authority')).toBeVisible();
 
     // 7. THE load-bearing assertion. Mutation-capable routes truncates against

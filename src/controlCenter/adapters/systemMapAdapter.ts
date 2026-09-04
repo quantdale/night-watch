@@ -124,10 +124,71 @@ function toDto(projection: SystemMapProjection, level: DisclosureLevel): Control
 }
 
 /**
+ * R-13 DEF-R13-5: node identities are namespaced (`product:ripple`,
+ * `service:services/ripple`, `op:op-0`) while the projections take bare
+ * domain ids (`ripple`, `services/ripple`, `op-0`). Passing a node id
+ * straight through produced degenerate single-node views that rendered as
+ * successful navigation (`product:product:ripple`). Resolve exactly one
+ * known namespace AND prove membership; anything else is a malformed
+ * request and yields null (the server answers NOT_FOUND). Membership — not
+ * shape alone — decides, so a well-formed id for something absent is still
+ * refused rather than rendered as an empty success.
+ */
+function stripNamespace(focusId: string, namespace: string): string | null {
+  const prefix = `${namespace}:`;
+  if (!focusId.startsWith(prefix)) return null;
+  const bare = focusId.slice(prefix.length);
+  if (bare.length === 0) return null;
+  return bare;
+}
+
+
+function resolveProductFocus(input: SystemMapInput, focusId: string | null): string | null {
+  if (focusId === null) return null;
+  const bare = stripNamespace(focusId, 'product');
+  if (bare === null) return null;
+  for (const product of Object.values(input.productOfRepository)) {
+    if (product === bare) return bare;
+  }
+  return null;
+}
+
+function resolveServiceFocus(input: SystemMapInput, focusId: string | null): string | null {
+  if (focusId === null) return null;
+  const bare = stripNamespace(focusId, 'service');
+  if (bare === null) return null;
+  for (const binding of input.serviceBindings) {
+    if (binding.serviceDirectory === bare) return bare;
+  }
+  return null;
+}
+
+function resolveOperationFocus(input: SystemMapInput, focusId: string | null): string | null {
+  if (focusId === null) return null;
+  const bare = stripNamespace(focusId, 'op');
+  if (bare === null) return null;
+  for (const operation of input.operations) {
+    if (operation.operationId === bare) return bare;
+  }
+  return null;
+}
+
+function resolveConsumerFocus(input: SystemMapInput, focusId: string | null): string | null {
+  if (focusId === null) return null;
+  const bare = stripNamespace(focusId, 'consumer');
+  if (bare === null) return null;
+  for (const edge of input.consumerEdges) {
+    if (edge.edgeId === bare) return bare;
+  }
+  return null;
+}
+/**
  * Project one disclosure level. `focusId` is required for L2-L4 and refused at
  * L1, which has no parent — a focus at L1 would silently be ignored, and a
  * silently ignored parameter is how a client comes to believe it asked for
- * something narrower than it received.
+ * something narrower than it received. A focus that does not resolve to a
+ * member of the level's domain is malformed and yields null (NOT_FOUND),
+ * never a degenerate view of the wrong subject.
  */
 export function systemMapLevel(input: SystemMapInput, level: DisclosureLevel, focusId: string | null): ControlCenterSystemMapDto | null {
   const limits = SYSTEM_MAP_LEVEL_LIMITS[level];
@@ -135,10 +196,19 @@ export function systemMapLevel(input: SystemMapInput, level: DisclosureLevel, fo
     if (focusId !== null) return null;
     return toDto(projectCompany(input, limits), level);
   }
-  if (focusId === null) return null;
-  if (level === 'L2_PRODUCT') return toDto(projectProduct(input, focusId, limits), level);
-  if (level === 'L3_SERVICE') return toDto(projectService(input, focusId, limits), level);
-  return toDto(projectOperation(input, focusId, limits), level);
+  if (level === 'L2_PRODUCT') {
+    const product = resolveProductFocus(input, focusId);
+    if (product === null) return null;
+    return toDto(projectProduct(input, product, limits), level);
+  }
+  if (level === 'L3_SERVICE') {
+    const service = resolveServiceFocus(input, focusId);
+    if (service === null) return null;
+    return toDto(projectService(input, service, limits), level);
+  }
+  const operation = resolveOperationFocus(input, focusId);
+  if (operation === null) return null;
+  return toDto(projectOperation(input, operation, limits), level);
 }
 
 /**
@@ -153,35 +223,45 @@ export function systemMapQuery(input: SystemMapInput, query: OperatorQuery, focu
 
   switch (query) {
     case 'WHY_UNPROVEN': {
-      if (focusId === null) return null;
-      const result = queryWhyUnproven(input, focusId, limits);
+      const operation = resolveOperationFocus(input, focusId);
+      if (operation === null) return null;
+      const result = queryWhyUnproven(input, operation, limits);
       projection = result;
       blockingChain = result.blockingChain;
       break;
     }
-    case 'UI_CONTROL_TO_HANDLER':
-      if (focusId === null) return null;
-      projection = queryUiControlToHandler(input, focusId, limits);
+    case 'UI_CONTROL_TO_HANDLER': {
+      const consumer = resolveConsumerFocus(input, focusId);
+      if (consumer === null) return null;
+      projection = queryUiControlToHandler(input, consumer, limits);
       break;
-    case 'SURFACES_TOUCHING_SERVICE':
-      if (focusId === null) return null;
-      projection = querySurfacesTouchingService(input, focusId, limits);
+    }
+    case 'SURFACES_TOUCHING_SERVICE': {
+      const service = resolveServiceFocus(input, focusId);
+      if (service === null) return null;
+      projection = querySurfacesTouchingService(input, service, limits);
       break;
+    }
     case 'OBSERVED_PRODUCTION_PATHS':
       // Permanently empty and UNMEASURED until C-12 runs. The measurement
       // state is what stops that emptiness reading as a clean bill of health.
+      if (focusId !== null) return null;
       projection = queryObservedProductionPaths(input, limits);
       break;
     case 'MUTATION_CAPABLE_ROUTES':
+      if (focusId !== null) return null;
       projection = queryMutationCapableRoutes(input, limits);
       break;
     case 'UNTESTED_READ_ONLY_ROUTES':
+      if (focusId !== null) return null;
       projection = queryUntestedReadOnlyRoutes(input, limits);
       break;
     case 'COVERAGE_GAPS':
+      if (focusId !== null) return null;
       projection = queryCoverageGaps(input, limits);
       break;
     case 'FINDINGS_ATTACHED_TO_TOPOLOGY':
+      if (focusId !== null) return null;
       projection = queryFindingsAttachedToTopology(input, limits);
       break;
     default:

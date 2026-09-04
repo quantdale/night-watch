@@ -53,3 +53,13 @@ regression, disposition. A failure gets one of PRE_EXISTING,
 CAMPAIGN_INTRODUCED, FLAKE_PROVEN, ENVIRONMENT, TOPOLOGY,
 EXPECTED_FAIL_CLOSED, PROJECT_TRUTH_ORDERING, EXTERNAL_BLOCKER, UNKNOWN —
 never "flaky" merely because a later run passed.
+
+## Defect repair within R-13
+
+R-13 builds no features and refactors nothing. When an R-13 probe DEMONSTRATES
+a defect (a failing battery item with a root cause, not a suspicion), the
+defect policy above applies: repair at the root, re-probe both directions,
+and record ID/symptom/reproduction/root-cause/fix/regression/disposition.
+Leaving a demonstrated defect in place to protect a "no changes" slogan
+would be the fake-work §112 forbids in reverse. Repairs ride the normal
+validation battery and exact-head CI like any other change.

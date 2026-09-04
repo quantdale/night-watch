@@ -18,7 +18,7 @@ import {
   systemMapLevel,
   systemMapQuery,
 } from '../../src/controlCenter/adapters/systemMapAdapter';
-import { CONTROL_CENTER_SYSTEM_MAP_SCHEMA_VERSION } from '../../src/controlCenter/contracts/systemMap';
+import { asSafeSystemMapFocus, CONTROL_CENTER_SYSTEM_MAP_SCHEMA_VERSION } from '../../src/controlCenter/contracts/systemMap';
 import type { SystemMapInput } from '../../src/core/systemMap/projections';
 
 function operation(id: string, over: Partial<SystemMapInput['operations'][number]> = {}): SystemMapInput['operations'][number] {
@@ -135,14 +135,36 @@ test('11. every level answer declares NONE for both authorities', () => {
 });
 
 test('12. every one of the eight queries declares NONE for both authorities', () => {
+  const subjects: Record<string, string | null> = {
+    'why-unproven': 'op:alpha',
+    'ui-control-to-handler': null,
+    'surfaces-touching-service': 'service:services/ripple',
+    'observed-production-paths': null,
+    'mutation-capable-routes': null,
+    'untested-read-only-routes': null,
+    'coverage-gaps': null,
+    'findings-attached-to-topology': null,
+  };
+  const withConsumer = input({
+    consumerEdges: [{
+      edgeId: 'e1', repoId: 'mobingilabs/ripple-api', sourceSha: 'a'.repeat(40),
+      relativePath: 'src/ui/Button.tsx', method: 'GET', routeTemplate: '/v1/alpha',
+      factCategory: 'SOURCE_FACT', backendOperationId: 'alpha',
+    }],
+  });
   for (const segment of SYSTEM_MAP_QUERY_SEGMENTS) {
     const query = QUERY_FOR_SEGMENT[segment];
     // Totality of the segment map is test 24's job; here it must simply hold.
     expect(query, segment).toBeDefined();
-    const answer = systemMapQuery(input(), query!, 'ripple.v1.Ripple');
-    if (answer === null) continue;
-    expect(answer.executionAuthority, segment).toBe('NONE');
-    expect(answer.mutationAuthority, segment).toBe('NONE');
+    const focus = segment === 'ui-control-to-handler' ? 'consumer:e1' : subjects[segment] ?? null;
+    const answer = systemMapQuery(segment === 'ui-control-to-handler' ? withConsumer : input(), query!, focus);
+    // R-13 DEF-R13-5: a null here is a skipped assertion, and skipped
+    // assertions are how the focus-namespace defect survived. The three
+    // subject queries answer for the focuses above; the five population
+    // queries answer with no focus at all.
+    expect(answer, segment).not.toBeNull();
+    expect(answer!.executionAuthority, segment).toBe('NONE');
+    expect(answer!.mutationAuthority, segment).toBe('NONE');
   }
 });
 
@@ -291,4 +313,86 @@ test('27. full transport pipeline at the 1,000-node limit executes and serialize
   expect(serialized.length).toBeGreaterThan(0);
   expect(projectedElapsed).toBeLessThan(5000);
   expect(serializeElapsed).toBeLessThan(1000);
+});
+
+// --- 10. focus resolution (R-13 DEF-R13-5) -----------------------------------
+//
+// Node identities are namespaced (`product:ripple`) while the projections
+// take bare domain ids (`ripple`). The adapter resolves exactly one known
+// namespace AND proves membership; anything else is null, never a
+// degenerate view of the wrong subject.
+
+test('28. L2 resolves a namespaced product focus to the real product view', () => {
+  const map = systemMapLevel(input(), 'L2_PRODUCT', 'product:ripple');
+  expect(map).not.toBeNull();
+  expect(map!.nodes.map((node) => node.nodeId).sort()).toEqual(
+    ['product:ripple', 'repo:mobingilabs/ripple-api', 'service:services/ripple'],
+  );
+  expect(systemMapLevel(input(), 'L2_PRODUCT', 'ripple')).toBeNull();
+  expect(systemMapLevel(input(), 'L2_PRODUCT', 'product:absent')).toBeNull();
+  expect(systemMapLevel(input(), 'L2_PRODUCT', 'product:product:ripple')).toBeNull();
+  expect(systemMapLevel(input(), 'L2_PRODUCT', 'service:services/ripple')).toBeNull();
+});
+
+test('29. L3 resolves a namespaced service focus to the real service view', () => {
+  const map = systemMapLevel(input(), 'L3_SERVICE', 'service:services/ripple');
+  expect(map).not.toBeNull();
+  expect(map!.nodes.some((node) => node.nodeId === 'op:alpha')).toBe(true);
+  expect(systemMapLevel(input(), 'L3_SERVICE', 'services/ripple')).toBeNull();
+  expect(systemMapLevel(input(), 'L3_SERVICE', 'service:services/absent')).toBeNull();
+  expect(systemMapLevel(input(), 'L3_SERVICE', 'product:ripple')).toBeNull();
+});
+
+test('30. L4 resolves a namespaced operation focus to the real operation view', () => {
+  const map = systemMapLevel(input(), 'L4_OPERATION', 'op:alpha');
+  expect(map).not.toBeNull();
+  expect(map!.nodes.map((node) => node.nodeId)).toEqual(['op:alpha']);
+  expect(systemMapLevel(input(), 'L4_OPERATION', 'alpha')).toBeNull();
+  expect(systemMapLevel(input(), 'L4_OPERATION', 'op:missing')).toBeNull();
+  expect(systemMapLevel(input(), 'L4_OPERATION', 'service:services/ripple')).toBeNull();
+});
+
+test('31. subject queries resolve namespaced focuses and refuse the rest', () => {
+  const why = systemMapQuery(input(), 'WHY_UNPROVEN', 'op:alpha');
+  expect(why).not.toBeNull();
+  expect(why!.nodes.map((node) => node.nodeId)).toEqual(['op:alpha']);
+  expect(systemMapQuery(input(), 'WHY_UNPROVEN', 'alpha')).toBeNull();
+  expect(systemMapQuery(input(), 'WHY_UNPROVEN', 'op:missing')).toBeNull();
+  const surfaces = systemMapQuery(input(), 'SURFACES_TOUCHING_SERVICE', 'service:services/ripple');
+  expect(surfaces).not.toBeNull();
+  expect(systemMapQuery(input(), 'SURFACES_TOUCHING_SERVICE', 'services/ripple')).toBeNull();
+});
+
+test('32. population queries refuse any focus rather than ignoring it', () => {
+  for (const query of ['OBSERVED_PRODUCTION_PATHS', 'MUTATION_CAPABLE_ROUTES', 'UNTESTED_READ_ONLY_ROUTES', 'COVERAGE_GAPS', 'FINDINGS_ATTACHED_TO_TOPOLOGY'] as const) {
+    expect(systemMapQuery(input(), query, 'product:ripple'), query).toBeNull();
+    expect(systemMapQuery(input(), query, null), query).not.toBeNull();
+  }
+});
+
+test('33. drill round-trip: every node the levels emit resolves back to its view', () => {
+  const l1 = systemMapLevel(input(), 'L1_COMPANY', null)!;
+  const l2 = systemMapLevel(input(), 'L2_PRODUCT', 'product:ripple')!;
+  expect(l2.nodes.length).toBe(3);
+  const l3 = systemMapLevel(input(), 'L3_SERVICE', 'service:services/ripple')!;
+  for (const node of l3.nodes.filter((entry) => entry.nodeId.startsWith('op:'))) {
+    const l4 = systemMapLevel(input(), 'L4_OPERATION', node.nodeId);
+    expect(l4, node.nodeId).not.toBeNull();
+  }
+  expect(l1.nodes.length).toBe(2);
+});
+
+test('34. the v2 focus vocabulary admits namespaced paths and refuses traversal shapes', () => {
+  expect(asSafeSystemMapFocus('product:ripple')).toBe('product:ripple');
+  expect(asSafeSystemMapFocus('service:services/ripple')).toBe('service:services/ripple');
+  expect(asSafeSystemMapFocus('op:op-0')).toBe('op:op-0');
+  expect(asSafeSystemMapFocus('consumer:e1')).toBe('consumer:e1');
+  expect(asSafeSystemMapFocus('../secret')).toBeNull();
+  expect(asSafeSystemMapFocus('a/../b')).toBeNull();
+  expect(asSafeSystemMapFocus('/leading')).toBeNull();
+  expect(asSafeSystemMapFocus('a//b')).toBeNull();
+  expect(asSafeSystemMapFocus('')).toBeNull();
+  expect(asSafeSystemMapFocus(null)).toBeNull();
+  expect(asSafeSystemMapFocus(42)).toBeNull();
+  expect(asSafeSystemMapFocus('a'.repeat(129))).toBeNull();
 });

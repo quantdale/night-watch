@@ -61,25 +61,39 @@ long clean gate.
 
 ## Files Changed
 
-- `.agent/tasks/nightwatch-overnight-reliability-r13-v1/{SPEC,PLAN,STATE,REPORT}.md` — new
-- `openspec/changes/nightwatch-overnight-reliability-r13-v1/` — new (proposal, design, audit, tasks, specs)
-- `.agent/ACTIVE_TASK.md`, `.agent/EXECUTION_PROMPT.md` — routed to R-13
-- `docs/CURRENT_STATE.md` — live-state block to R-13; CI non-evidence truth
+- `.agent/tasks/nightwatch-overnight-reliability-r13-v1/{SPEC,PLAN,STATE,REPORT}.md` — R-13 records
+- `openspec/changes/nightwatch-overnight-reliability-r13-v1/` — proposal, design, audit, tasks, specs
 - `config/campaign-certification.v1.json` — R-13 declared with `"suites": []` + reason
+- `bin/hardening-check.mjs` — DEF-R13-4: parse the C-08 vocabulary array
+- `src/controlCenter/adapters/systemMapAdapter.ts` — DEF-R13-5: namespace+membership focus resolution
+- `src/controlCenter/contracts/systemMap.ts` — DEF-R13-5: V2 focus wire vocabulary
+- `src/controlCenter/server/server.ts` — DEF-R13-5: focus validator on V2 branches; separator screening scoped to path
+- `ui/control-center/src/App.tsx` — DEF-R13-5: drill + subject-kind gating
+- `tests/unit/c15cSystemMapTransport.test.ts` — tests 28–34 (focus resolution + vocabulary)
+- `tests/unit/controlCenterServer.test.ts` — V2 focus charset over HTTP
+- `tests/browser/systemMapV2.browser.ts` — L1→L2→L3→L4 content, kind gating, blocking chain
+- `.agent/ACTIVE_TASK.md`, `.agent/EXECUTION_PROMPT.md`, `docs/CURRENT_STATE.md` — R-13 routing + CI non-evidence truth
 
 ## Validation Ledger
 
 | Check | Result |
 |---|---|
-| determinism ×12 (§92) | PASS — byte-identical |
-| source-scan repeatability (§93) | PASS — by construction |
+| determinism ×12 + L1 re-probe post-fix (§92) | PASS — byte-identical, fix perturbs nothing |
 | order battery ×3 (§94) | PASS — 597/597/597 |
 | lifecycle driver (§95, §97) | PASS — temp 100/0, receipts 50/50, server fd-neutral, integrity 25/25, worktrees 10/10, concurrent 8×10 |
 | map scale ×7 (§98) | PASS — 1 digest |
 | properties 9×200 (§99) | PASS — 1,801 checks, 0 failures |
-| agent:check / project:check | PASS (M1); re-run at M7 |
-| Full gate battery | NOT RUN YET — M7 |
-
+| Clean B (§100) | PASS — guards + 622 suites (pre-fix baseline; fix covered by clean gate below) |
+| regression ×3 (§101) | PASS — 3,572 total, 3,559+13+0 each |
+| semantic-compat ×2 (§102) | PASS — identical |
+| synthetic ×3 (§103) | PASS — 916/916 each |
+| UI endurance v2 (§104) | PASS — 22/22 true-depth loops |
+| receipt durability ×2 (§106) | PASS — fail-closed receipts with NOT_RUN groups |
+| mutation battery (§107) | PASS — 13/13 bites + restores |
+| c15c suite / server suite / UI suite | 34/34, 44/44, 12/12 PASS |
+| browser matrix | 2/2 PASS |
+| typecheck / hardening / handoff / agent / project | PASS (re-run at commit) |
+| Full gate battery | NOT RUN YET at fix head — M7 close-out |
 ## Decisions Made During This Task
 
 Probes live in /tmp/r13, never in the repo tree (SPEC rationale recorded).
@@ -116,6 +130,25 @@ Probes live in /tmp/r13, never in the repo tree (SPEC rationale recorded).
   message text unchanged). After-probe P-DEP BITES with the identical
   message; typecheck + C-08 suite 32/32 + hardening PASS. No test pins the
   old message; nothing else consumes it.
+
+- DEF-R13-5 (campaign-introduced by C-15c, REPAIRED): V2 drill focuses never
+  resolved. (1) Adapter passed node ids (`product:ripple`) straight to
+  projections wanting bare ids (`ripple`), rendering degenerate single-node
+  views (`product:product:ripple`) as successful navigation — every L2/L3/L4
+  drill and every focus query with a selected subject. (2) The transport
+  charset forbade `/`, 400ing every legitimate L3 drill. (3) Encoded
+  separators were screened across the whole raw URL, 400ing encoded query
+  focuses. (4) The UI offered subject queries for kind-mismatched subjects
+  and drills for non-resolving kinds, stranding operators on trap views.
+  Survived because the C-15c suite tested rejection paths but never a valid
+  focus's CONTENT, and the browser matrix asserted breadcrumbs, not members.
+  Fix: adapter namespace+membership resolution (unresolvable → null/404);
+  V2 focus wire vocabulary admitting `/` with explicit `..`/`//` refusal;
+  separator screening scoped to the path; UI drill + per-query subject-kind
+  gating. Regression: c15c suite 34/34 (tests 28–34 new), server 44/44,
+  UI 12/12, browser 2/2 with L1→L2→L3→L4 content + kind-gating + blocking
+  chain, endurance 22/22 true-depth loops, L1 digests byte-identical,
+  typecheck + hardening PASS.
 
 ## Blockers
 

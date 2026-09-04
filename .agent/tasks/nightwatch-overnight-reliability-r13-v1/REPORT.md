@@ -20,12 +20,9 @@ Starting SHA: `d3a464de97225f91cd425b7922b53238a02dc981`
 | 10 | Full regression ×3 (§101) | PASS | 3 sequential `test:unit` passes: 3,572 total, 3,559 passed + 13 skipped + 0 failed each, exits 0/0/0 — stable, no averaging |
 | 11 | Semantic-compat long run (§102) | PASS | 2nd observation identical: 146 files, 2,033/2,020/13/0, zero drift |
 | 12 | Synthetic campaign long run (§103) | PASS | 3 observations identical: 40 files, 916/916, deepContainmentLane PROVEN, 0 failed |
-| 13 | UI endurance 20+ loops (§104) | PASS | /tmp/r13/uiEndurance.mjs: 22 loops, 0 page/console errors, 0 external requests, DOM 126→126 (growth 0), loop times 61–248ms no trend |
-| 14 | Resource-leak accounting (§105) | PASS | 0 chromium processes, 0 stray listeners/leases; 2 crashed-run scratch dirs found and removed; phase23 0-byte jsonl identified as suite-owned bind-failure log path (OBS-R13-1, removed, no functional impact) |
-| 15 | Failure-receipt durability (§106) | PASS | Throwaway-clone gate with committed synthetic failure: SEMANTIC_COMPATIBILITY TEST_FAILURE, counts 2034/2020/13/1, location `nightwatchHygiene.test.ts:169`, 4 groups NOT_RUN, LOCAL, digest valid, persisted copy matches; dirty-tree variant also fail-closed; clone removed |
-| 16 | Hardening mutation campaign (§107) | PASS | 13 probes, 13 bites, 13 byte-identical restores: registry, R-12 totality, admission (9th-key), ProjectionBound, UI coercion, authority, POST dispatch, UNMEASURED, W-SPEC, EIG, deployment vocab (post-fix), prod-store, layout digest-input. DEF-R13-4 (pre-existing substring-weak vocabulary check) repaired + re-probed. Final hardening PASS, tree holds only the repair |
-| 17 | Long clean gate (§108) | NOT_STARTED | — |
-| 18 | Exact-head CI (§109) | BLOCKED | EXTERNAL_BLOCKER — run 33833574821 attempts 1–4, no runner assigned; re-attempt on changed hypothesis |
+| 13 | UI endurance 20+ loops (§104) | PASS | /tmp/r13/uiEndurance.mjs v2: 22/22 TRUE-depth loops (L1→L2→L3→L4→query→back, per-loop level proof), 0 page/console errors, 0 external requests, DOM steady 130±4 (loop-0 settle aside), loop times ~300ms with one 3.3s transient; v1's shallow loops withdrawn after the non-vacuity probe exposed them |
+| 16 | Hardening mutation campaign (§107) | PASS | 13 probes, 13 bites, 13 byte-identical restores (registry, R-12 totality, admission 9th-key, ProjectionBound, UI coercion, authority, POST dispatch, UNMEASURED, W-SPEC, EIG, deployment vocab post-fix, prod-store, layout digest-input). DEF-R13-4 (substring-weak vocabulary check) repaired + re-probed. DEF-R13-5 (V2 focus resolution, 4 layers) repaired: c15c 34/34, server 44/44, UI 12/12, browser 2/2, endurance 22/22, L1 digests identical. Final hardening PASS |
+| 18 | Exact-head CI (§109) | BLOCKED | EXTERNAL_BLOCKER — run 33833574821 attempts 1–5 (latest 04:27Z), no runner assigned, zero steps, no annotations every time; workflow file byte-identical to last green run; elapsed-time re-attempt changed nothing |
 | 19 | Optional second clean (§110) | NOT_STARTED | — |
 
 ## Outcome

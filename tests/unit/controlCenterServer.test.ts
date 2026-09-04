@@ -155,6 +155,27 @@ test.describe('Control Center loopback server', () => {
     }
   });
 
+  test('v2 focuses admit namespaced source paths but still refuse traversal', async () => {
+    // R-13 DEF-R13-5: the shared control-center id pattern forbids `/`, so
+    // every L3 drill 400d before reaching the adapter. The V2 focus
+    // vocabulary admits `/` and nothing else new. The stub collector answers
+    // null to everything, so a 404 here proves the focus PASSED charset
+    // screening (a 400 would prove it did not).
+    const { handle, port } = await startServer();
+    try {
+      const service = await request(port, '/api/v2/system-map/l3?focus=service%3Aservices%2Fripple');
+      expect(service.status).toBe(404);
+      const operation = await request(port, '/api/v2/system-map/query/why-unproven?focus=op%3Aalpha');
+      expect(operation.status).toBe(404);
+      expect((await request(port, '/api/v2/system-map/l3?focus=..%2F..%2Fsecret')).status).toBe(400);
+      expect((await request(port, '/api/v2/system-map/l3?focus=%2Fleading')).status).toBe(400);
+      expect((await request(port, '/api/v2/system-map/l3?focus=a%2F%2Fb')).status).toBe(400);
+      expect((await request(port, '/api/v2/system-map/l3?focus=')).status).toBe(400);
+    } finally {
+      await handle.close();
+    }
+  });
+
   test('enforces exact Host and Origin and never emits wildcard CORS', async () => {
     const { handle, port } = await startServer();
     try {

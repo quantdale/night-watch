@@ -12,6 +12,7 @@ import {
   controlCenterError,
   type ControlCenterErrorCode,
 } from '../contracts/common';
+import { asSafeSystemMapFocus } from '../contracts/systemMap';
 import { CONTROL_CENTER_HEALTH_SCHEMA_VERSION } from '../contracts/health';
 import type { ControlCenterHealthDto } from '../contracts/health';
 import type { ControlCenterEventDto } from '../contracts/events';
@@ -217,7 +218,14 @@ async function dispatch(
   }
   const url = requestUrl(request);
   if (url === null) return sendError(response, 'CONTROL_CENTER_PATH_REJECTED', headOnly);
-  if (typeof request.url === 'string' && /%(?:2e|2f|5c|00)/i.test(request.url)) {
+  // R-13 DEF-R13-5: encoded separators are a traversal threat in the PATH,
+  // but legitimate V2 focuses carry them in the QUERY (`service%3Aservices
+  // %2Fripple`, encoded by the client). Screening the whole raw URL 400d
+  // every L3 drill. Scope this to the path portion: query values are already
+  // allowlisted per route (`queryValues`) and charset-validated per value,
+  // so nothing reaches the filesystem on the strength of an encoded slash.
+  const rawPath = typeof request.url === 'string' ? request.url.split('?')[0] ?? '' : '';
+  if (/%(?:2e|2f|5c|00)/i.test(rawPath)) {
     return sendError(response, 'CONTROL_CENTER_PATH_REJECTED', headOnly);
   }
   const pathResult: ControlCenterPathResult = parseControlCenterPath(url.pathname);
@@ -299,7 +307,7 @@ async function dispatch(
           return sendJson(response, 200, await options.collector.findings(list), headOnly);
         }
       case 'systemMapLevel': {
-        const focus = query.focus === null ? null : asSafeControlCenterId(query.focus);
+        const focus = query.focus === null ? null : asSafeSystemMapFocus(query.focus);
         if (query.focus !== null && focus === null) return sendError(response, 'CONTROL_CENTER_PATH_REJECTED', headOnly);
         const value = await options.collector.systemMapLevel(route.level, focus);
         // Null means the focus was missing, unknown, or given where the level
@@ -307,7 +315,7 @@ async function dispatch(
         return value === null ? sendError(response, 'CONTROL_CENTER_NOT_FOUND', headOnly) : sendJson(response, 200, value, headOnly);
       }
       case 'systemMapQuery': {
-        const focus = query.focus === null ? null : asSafeControlCenterId(query.focus);
+        const focus = query.focus === null ? null : asSafeSystemMapFocus(query.focus);
         if (query.focus !== null && focus === null) return sendError(response, 'CONTROL_CENTER_PATH_REJECTED', headOnly);
         const value = await options.collector.systemMapQuery(route.query, focus);
         return value === null ? sendError(response, 'CONTROL_CENTER_NOT_FOUND', headOnly) : sendJson(response, 200, value, headOnly);

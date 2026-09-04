@@ -22,6 +22,24 @@ import { CONTROL_CENTER_CONTRACT_NAMESPACE } from './common';
 
 export const CONTROL_CENTER_SYSTEM_MAP_SCHEMA_VERSION = `${CONTROL_CENTER_CONTRACT_NAMESPACE}.system-map.v2` as const;
 
+/**
+ * R-13 DEF-R13-5: the wire vocabulary for a V2 focus. Node identities carry
+ * namespaces AND source paths (`service:services/ripple`), so the shared
+ * control-center id pattern — which forbids `/` — 400s legitimate focuses
+ * (every L3 drill). This pattern admits `/` and nothing else new: the focus
+ * is an opaque query value matched by exact equality against membership sets
+ * in the adapter, never a path, so traversal is meaningless here — and still
+ * refused explicitly, because a second defense must not depend on the first.
+ */
+const SYSTEM_MAP_FOCUS_PATTERN = /^[A-Za-z0-9](?:[A-Za-z0-9._:/-]{0,127})$/;
+
+export function asSafeSystemMapFocus(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  if (!SYSTEM_MAP_FOCUS_PATTERN.test(value)) return null;
+  if (value.includes('..') || value.includes('//')) return null;
+  return value;
+}
+
 /** Bounds, transported whole. A boolean alone cannot say how much was lost. */
 export interface ControlCenterProjectionBoundDto {
   readonly limit: number;
