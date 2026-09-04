@@ -257,6 +257,10 @@ test('C-15c the operator can navigate the map, and the map never overstates what
     // 7. THE load-bearing assertion. Mutation-capable routes truncates against
     //    an unknown population, so the operator must be told the remainder is
     //    unknown — not shown a zero that implies they have seen everything.
+    // The operator can only click a painted button: assert visibility
+    // explicitly so a transient layout stall becomes a wait, while a
+    // genuinely invisible button still fails loud.
+    await expect(page.getByRole('button', { name: 'Mutation-capable routes', exact: true })).toBeVisible();
     await page.getByRole('button', { name: 'Mutation-capable routes', exact: true }).click({ force: true });
     const nodeBound = page.getByTestId('bound-nodes');
     await expect(nodeBound).toContainText('1000 shown / unknown total');
@@ -269,6 +273,9 @@ test('C-15c the operator can navigate the map, and the map never overstates what
     await expect(page.getByTestId('measurement-banner')).toContainText('absence of measurement');
 
     // 9. Search narrows the rendered set without asking the server again.
+    // Same painted-button gate as step 7: the Observed answer commits
+    // asynchronously before this click.
+    await expect(page.getByRole('button', { name: 'Mutation-capable routes', exact: true })).toBeVisible();
     await page.getByRole('button', { name: 'Mutation-capable routes', exact: true }).click({ force: true });
     const beforeSearch = requestedPaths.length;
     await page.getByRole('searchbox', { name: 'Search nodes' }).fill('op-1');

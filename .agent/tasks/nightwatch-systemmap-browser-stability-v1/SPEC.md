@@ -61,3 +61,15 @@ on the answer-specific node bound (`limit 1000` query ceiling replaces
 the `limit 256` level ceiling), which flips atomically with the answer
 commit. Steps 8/9 already carry answer-specific gates (bound text,
 UNMEASURED banner) and need no change.
+
+## Amendment A2 — painted-button gates at steps 7/9 (same class, click layer)
+
+With the 6e gates holding (10-run batch: 6e green every run), one run
+failed at the step-7 `Mutation-capable routes` force-click with
+`Element is not visible` while the UI_CONTROL answer was committing:
+force-clicks still need a laid-out box for coordinates, and the
+commit swaps the node the click resolved. Fix: explicit `toBeVisible`
+before the step-7 and step-9 Mutation-capable clicks. This encodes the
+operator invariant (only a painted button is clickable) with the
+unchanged default expect timeout — not a timeout inflation, not a
+relaxation: a genuinely invisible button still fails loud.
