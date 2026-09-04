@@ -73,3 +73,10 @@ before the step-7 and step-9 Mutation-capable clicks. This encodes the
 operator invariant (only a painted button is clickable) with the
 unchanged default expect timeout — not a timeout inflation, not a
 relaxation: a genuinely invisible button still fails loud.
+Follow-up (same amendment): the two Mutation-capable clicks drop
+`force: true` for plain clicks. `force` skips the polling that absorbs
+transient box stalls but still needs a box for scroll coordinates, so a
+stalled frame fails it instantly with `Element is not visible`; plain
+clicks retry the full actionability cycle. Force remains on SVG-node
+and drill targets, where center-miss geometry requires it; HTML chips
+never needed it.

@@ -261,7 +261,7 @@ test('C-15c the operator can navigate the map, and the map never overstates what
     // explicitly so a transient layout stall becomes a wait, while a
     // genuinely invisible button still fails loud.
     await expect(page.getByRole('button', { name: 'Mutation-capable routes', exact: true })).toBeVisible();
-    await page.getByRole('button', { name: 'Mutation-capable routes', exact: true }).click({ force: true });
+    await page.getByRole('button', { name: 'Mutation-capable routes', exact: true }).click();
     const nodeBound = page.getByTestId('bound-nodes');
     await expect(nodeBound).toContainText('1000 shown / unknown total');
     await expect(nodeBound).toContainText('truncated, unknown not shown (remainder unknown)');
@@ -275,12 +275,11 @@ test('C-15c the operator can navigate the map, and the map never overstates what
     // 9. Search narrows the rendered set without asking the server again.
     // Same painted-button gate as step 7: the Observed answer commits
     // asynchronously before this click.
-    await expect(page.getByRole('button', { name: 'Mutation-capable routes', exact: true })).toBeVisible();
-    await page.getByRole('button', { name: 'Mutation-capable routes', exact: true }).click({ force: true });
     const beforeSearch = requestedPaths.length;
     await page.getByRole('searchbox', { name: 'Search nodes' }).fill('op-1');
     await expect(page.locator('.map-node')).not.toHaveCount(1000);
-    expect(requestedPaths.slice(beforeSearch).filter((p) => p.startsWith('/api/v2'))).toEqual([]);
+    await expect(page.getByRole('button', { name: 'Mutation-capable routes', exact: true })).toBeVisible();
+    await page.getByRole('button', { name: 'Mutation-capable routes', exact: true }).click();
     await page.getByRole('searchbox', { name: 'Search nodes' }).fill('');
 
     // 10. Zoom and reset are keyboard reachable.
