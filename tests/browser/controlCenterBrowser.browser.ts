@@ -284,7 +284,11 @@ test('qualifies all seven built Control Center views over one synthetic authorit
     await expect(page.getByText('/synthetic/read')).toBeVisible();
     await page.getByRole('button', { name: 'Graph' }).click({ force: true });
     await expect(page.getByRole('img', { name: 'Bounded source intelligence graph' })).toBeVisible();
-    await expect(page.getByText('Bounded', { exact: true })).toBeVisible();
+    // C-15b renamed this label to 'Complete within bounds'. The old assertion
+    // kept passing only because the browser suite ran against a prebuilt dist
+    // that predated the rename, so run it via control-center:ui:browser, which
+    // builds first.
+    await expect(page.getByText('Complete within bounds', { exact: true })).toBeVisible();
 
     await page.getByRole('link', { name: 'Findings' }).click({ force: true });
     await expect(page.getByRole('heading', { name: 'Keep the signal, lose the raw evidence.' })).toBeVisible();

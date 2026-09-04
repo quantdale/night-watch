@@ -268,3 +268,27 @@ test('26. no transported node claims a stronger fact category than its source', 
     expect(['SOURCE_FACT', 'DEPLOYMENT_FACT', 'RUNTIME_FACT', 'OBSERVATION', 'INFERENCE']).toContain(node.factCategory);
   }
 });
+
+// --- 9. scale and performance at contract maxima ----------------------------
+
+test('27. full transport pipeline at the 1,000-node limit executes and serializes within contract bounds', () => {
+  const operations = Array.from({ length: 1200 }, (_, index) => operation(`op-${index}`, {
+    readOnlyClassification: 'PROVEN_MUTATION_CAPABLE',
+  }));
+  const fullInput = input({ operations, operationPopulationTotal: 1200 });
+  const start = performance.now();
+  const dto = systemMapQuery(fullInput, 'MUTATION_CAPABLE_ROUTES', null);
+  const projectedElapsed = performance.now() - start;
+  expect(dto).not.toBeNull();
+  expect(dto!.nodes).toHaveLength(1000);
+  expect(dto!.nodeBound.projected).toBe(1000);
+  expect(dto!.nodeBound.dropped).toBe(200);
+  expect(dto!.nodeBound.truncated).toBe(true);
+
+  const serializeStart = performance.now();
+  const serialized = JSON.stringify(dto);
+  const serializeElapsed = performance.now() - serializeStart;
+  expect(serialized.length).toBeGreaterThan(0);
+  expect(projectedElapsed).toBeLessThan(5000);
+  expect(serializeElapsed).toBeLessThan(1000);
+});

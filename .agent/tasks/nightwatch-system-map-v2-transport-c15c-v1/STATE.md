@@ -30,9 +30,7 @@ rendering away the boundaries of a bounded projection.
 
 ## Current Milestone
 
-M1 closing. The task record exists and the measured baseline is captured. M2,
-M3 and M4 are implemented and verified in the working tree; M5, M6 and M7
-remain.
+M7 — full validation battery, fast-forward integration, exact-head CI, closure.
 
 ## Completed Milestones
 
@@ -52,17 +50,19 @@ remain.
   System Map operator view with L1→L4 drill, breadcrumb return, the eight
   queries, search, evidence filter, pan, zoom, keyboard drive, a node detail
   panel, the blocking chain and the provenance footer.
+- M5 — the C-15c suite (27 tests), registered in both manifests, and the hardening
+  rule structurally guarding V2 routes, ProjectionBoundDto nullability, and
+  pure projection boundaries.
+- M6 — browser scenario matrix (`tests/browser/systemMapV2.browser.ts`), scale
+  test at 1,000 nodes / 2,000 edges, UI build verifier and browser test pass (2/2).
 
 ## Work In Progress
 
-M5 — the C-15c suite, its registration in both manifests, and the hardening
-rule. Nothing is committed in this session yet.
+M7 — full validation battery, integration and exact-head CI.
 
 ## Exact Next Action
 
-Commit the scaffolding together with the M2–M4 implementation, then write the
-C-15c suite and register it in `config/campaign-certification.v1.json` and
-`config/synthetic-campaign.v1.json`.
+Commit M6 implementation, run full quality gate battery, integrate and verify main.
 
 ## Files Changed
 

@@ -456,6 +456,17 @@ function Guardrail({ label, value }: { readonly label: string; readonly value: s
 
 const LEVEL_ORDER = ['l1', 'l2', 'l3', 'l4'] as const;
 const LEVEL_LABEL: Record<SystemMapLevelSegment, string> = { l1: 'Company', l2: 'Product', l3: 'Service', l4: 'Operation' };
+/**
+ * Three of the eight queries are questions ABOUT something: "why is this
+ * unproven", "which handler does this control reach", "what touches this
+ * service". Without a subject they have no answer, so the UI must not offer
+ * them unselected — firing them anyway would put a 404 in front of the
+ * operator where the honest response is "pick a node first".
+ */
+const FOCUS_REQUIRED_QUERIES: ReadonlySet<string> = new Set([
+  'why-unproven', 'ui-control-to-handler', 'surfaces-touching-service',
+]);
+
 const QUERY_LABEL: Record<SystemMapQuerySegment, string> = {
   'why-unproven': 'Why unproven?',
   'ui-control-to-handler': 'UI control → handler',
@@ -486,6 +497,7 @@ function BoundNote({ label, bound }: { readonly label: string; readonly bound: S
 function SystemMapView({ refreshKey }: { readonly refreshKey: number }): ReactNode {
   const [trail, setTrail] = useState<readonly { readonly level: SystemMapLevelSegment; readonly focusId: string | null; readonly label: string }[]>([{ level: 'l1', focusId: null, label: 'Company' }]);
   const [query, setQuery] = useState<SystemMapQuerySegment | null>(null);
+  const [queryFocusId, setQueryFocusId] = useState<string | null>(null);
   const [state, setState] = useState<DataLoadState<SystemMapSnapshot>>({ kind: 'idle' });
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
@@ -498,12 +510,14 @@ function SystemMapView({ refreshKey }: { readonly refreshKey: number }): ReactNo
   useEffect(() => {
     let cancelled = false;
     setState({ kind: 'loading' });
-    const request = query === null ? loadSystemMapLevel(current.level, current.focusId) : loadSystemMapQuery(query, current.focusId);
+    const request = query === null
+      ? loadSystemMapLevel(current.level, current.focusId)
+      : loadSystemMapQuery(query, queryFocusId);
     request.then((data) => { if (!cancelled) setState({ kind: 'ready', data }); }).catch((error: unknown) => {
       if (!cancelled) { void apiErrorLabel(error); setState({ kind: 'error' }); }
     });
     return () => { cancelled = true; };
-  }, [current.level, current.focusId, query, refreshKey]);
+  }, [current.level, current.focusId, query, queryFocusId, refreshKey]);
 
   const goBack = useCallback((): void => {
     setSelectedNodeId(null);
@@ -580,13 +594,22 @@ function SystemMapView({ refreshKey }: { readonly refreshKey: number }): ReactNo
       </nav>
 
       <div className="system-map-queries" role="group" aria-label="Operator queries">
-        {SYSTEM_MAP_QUERY_SEGMENTS.map((segment) => (
-          <button key={segment} type="button" className={`chip ${query === segment ? 'chip-active' : ''}`}
-            aria-pressed={query === segment}
-            onClick={() => { setSelectedNodeId(null); setQuery((active) => (active === segment ? null : segment)); }}>
-            {QUERY_LABEL[segment]}
-          </button>
-        ))}
+        {SYSTEM_MAP_QUERY_SEGMENTS.map((segment) => {
+          const subject = selectedNodeId ?? current.focusId;
+          const blocked = FOCUS_REQUIRED_QUERIES.has(segment) && subject === null;
+          return (
+            <button key={segment} type="button" className={`chip ${query === segment ? 'chip-active' : ''}`}
+              aria-pressed={query === segment} disabled={blocked}
+              title={blocked ? 'Select a node first — this query needs a subject.' : undefined}
+              onClick={() => {
+                setQueryFocusId(FOCUS_REQUIRED_QUERIES.has(segment) ? subject : null);
+                setSelectedNodeId(null);
+                setQuery((active) => (active === segment ? null : segment));
+              }}>
+              {QUERY_LABEL[segment]}
+            </button>
+          );
+        })}
       </div>
 
       <div className="system-map-controls">
@@ -632,6 +655,10 @@ function SystemMapView({ refreshKey }: { readonly refreshKey: number }): ReactNo
                 transform={`translate(${node.x}, ${node.y})`} role="button" tabIndex={-1}
                 aria-label={`${node.label}, ${node.evidenceStatus}, ${node.factCategory}`}
                 onClick={() => setSelectedNodeId(node.nodeId)} onDoubleClick={() => drillInto(node)}>
+                {/* A 7px dot is too small to hit, and the group's centre can
+                    land on the label, which takes no pointer events. This
+                    transparent disc is the actual target. */}
+                <circle className="map-node-hit" r={16} />
                 <circle r={7} />
                 <text x={11} y={4}>{node.label}</text>
               </g>
