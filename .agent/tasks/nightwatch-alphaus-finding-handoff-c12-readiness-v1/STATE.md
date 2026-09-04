@@ -6,15 +6,15 @@ Task ID: nightwatch-alphaus-finding-handoff-c12-readiness-v1
 Phase: ALPHAUS_FINDING_HANDOFF_C12_READINESS_V1
 Status: COMPLETE
 Starting SHA: 4ca990f9bead33ae5626c4ae4f21dc833f41aec2
-Last validated implementation SHA: 4c263e1c690110de07cea826166e06b70df1ca7e
-Last substantive checkpoint SHA: 4c263e1c690110de07cea826166e06b70df1ca7e
+Last validated implementation SHA: 46e241aede8bbcee7b555c719279068bb51a0f3b
+Last substantive checkpoint SHA: 46e241aede8bbcee7b555c719279068bb51a0f3b
 Branch: session/nightwatch-alphaus-finding-hando-c009d87c
 Last checkpoint: 2026-09-04 — M2–M4 committed (handoff, preflight+CLI, matrices, properties, 16/16 mutations, runbook, context doc, OpenSpec); M5 docs reconciliation in progress
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 PROJECT_VERDICT_EFFECT: PRESERVE
 STARTING_SHA: 4ca990f9bead33ae5626c4ae4f21dc833f41aec2
-LAST_VALIDATED_IMPLEMENTATION_SHA: 4c263e1c690110de07cea826166e06b70df1ca7e
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 4c263e1c690110de07cea826166e06b70df1ca7e
+LAST_VALIDATED_IMPLEMENTATION_SHA: 46e241aede8bbcee7b555c719279068bb51a0f3b
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 46e241aede8bbcee7b555c719279068bb51a0f3b
 LIVE_HEAD_AUTHORITY: GIT
 PHASE_ALPHAUS_FINDING_HANDOFF_C12_READINESS_V1_STATUS: COMPLETE
 

@@ -5,8 +5,7 @@ Phase: ALPHAUS_FINDING_HANDOFF_C12_READINESS_V1
 Title: AH-1 Alphaus Finding Handoff + C-12 Operator Readiness + Durable Documentation Reconciliation
 Status: COMPLETE
 Task directory: .agent/tasks/nightwatch-alphaus-finding-handoff-c12-readiness-v1
-Starting SHA: 4ca990f9bead33ae5626c4ae4f21dc833f41aec2
-Last validated implementation SHA: 4c263e1c690110de07cea826166e06b70df1ca7e
+Last validated implementation SHA: 46e241aede8bbcee7b555c719279068bb51a0f3b
 Last checkpoint: close-out — M1–M6 complete; implementation 4c263e1 certified (typecheck, 78 AH-1 tests + properties, hardening 59/59, gate:local 11/11 receipt 025570f11a841beba9d79eac, regression 3807/0/13, clean gate PASS, 22/22 mutations); CI inspection recorded; STOP
 Current milestone: COMPLETE / STOP — all milestones closed, REPORT final, eight defects closed
 Next action: STOP — integrate to main, release the session, remove the worktree; follow-up campaign requires new owner authorization
