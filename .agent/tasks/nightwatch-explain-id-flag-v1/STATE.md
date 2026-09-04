@@ -4,10 +4,10 @@
 
 Task ID: nightwatch-explain-id-flag-v1
 Phase: EXPLAIN_ID_FLAG_V1
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: cb054f1f72810a4e005d5b6af078b5034ecf52f8
-Last validated implementation SHA: cb054f1f72810a4e005d5b6af078b5034ecf52f8
-Last substantive checkpoint SHA: cb054f1f72810a4e005d5b6af078b5034ecf52f8
+Last validated implementation SHA: 44f571323cc421a5243df659d3bfc539e9b7198a
+Last substantive checkpoint SHA: 44f571323cc421a5243df659d3bfc539e9b7198a
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-explain-id-flag-v1-79e155d9
@@ -15,11 +15,11 @@ Last checkpoint: M1 done — session claimed at cb054f1; SPEC/PLAN/STATE + OpenS
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: cb054f1f72810a4e005d5b6af078b5034ecf52f8
-LAST_VALIDATED_IMPLEMENTATION_SHA: cb054f1f72810a4e005d5b6af078b5034ecf52f8
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: cb054f1f72810a4e005d5b6af078b5034ecf52f8
+LAST_VALIDATED_IMPLEMENTATION_SHA: 44f571323cc421a5243df659d3bfc539e9b7198a
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 44f571323cc421a5243df659d3bfc539e9b7198a
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
-PHASE_EXPLAIN_ID_FLAG_V1_STATUS: IN_PROGRESS
+PHASE_EXPLAIN_ID_FLAG_V1_STATUS: COMPLETE
 
 ## Objective
 
@@ -28,27 +28,37 @@ forms; integrate.
 
 ## Current Milestone
 
-M1 — Task record and session (IN_PROGRESS, routing files landing).
+COMPLETE / STOP — all milestones closed.
 
 ## Completed Milestones
 
-None yet (M1 in progress).
+- **M1 task record and session (done).** Session claimed at `cb054f1`;
+  SPEC/PLAN/STATE/REPORT + OpenSpec written; routing verified.
+- **M2 extraction fix and tests (done).** Commit `44f5713`:
+  first-non-flag id resolution + `explainIdFlagTolerance.test.ts`
+  (3 tests). `tsc --noEmit` clean.
+- **M3 validation and close (done).** New tests 3/3; hardening +
+  agent/project/handoff green; docs closed.
 
 ## Work In Progress
 
-M1 routing: ACTIVE_TASK + EXECUTION_PROMPT + OpenSpec + conformance.
+NONE — M1 through M3 closed. No open work.
 
 ## Exact Next Action
 
-Finish routing files, run handoff/agent checks, then apply the M2 fix.
+STOP. Campaign COMPLETE. No further action on this task.
 
 ## Files Changed
 
-None yet (task record only, this checkpoint).
+- `bin/nightwatch-intelligence.mjs` — first-non-flag id resolution.
+- `tests/unit/explainIdFlagTolerance.test.ts` — new (3 tests).
+- Task record + OpenSpec change + CURRENT_STATE live-block rebind.
 
 ## Validation Ledger
 
-No validation results yet (M1).
+M1: `session:status` PASS; `handoff:check` PASS; `agent:check` PASS.
+M2: new tests 3/3 green; `tsc --noEmit` clean.
+M3: `hardening:check` PASS; agent/project/handoff PASS at close.
 
 ## Decisions Made During This Task
 
@@ -79,8 +89,13 @@ None. C-12 and all owner-gated campaigns remain out of scope.
 
 ## Resume Recipe
 
-Continue at M1: finish routing, verify checks, implement M2.
+Task complete. No further action on this task; any follow-up starts as a new authorized task.
 
 ## Completion Snapshot
 
-Not complete. No snapshot until M3.
+Final substantive checkpoint: 44f571323cc421a5243df659d3bfc539e9b7198a
+Final task status: COMPLETE. Live HEAD: DISCOVER_FROM_GIT.
+Tests: new file 3/3; typecheck clean; hardening PASS.
+Artifacts: extraction fix + tests; REPORT final.
+Known issues: none. Refusal behavior preserved (shape + lookup).
+Recommended next task: none required. No new campaign authority granted.

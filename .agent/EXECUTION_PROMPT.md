@@ -1,7 +1,7 @@
 # EXECUTION PROMPT — Explain Positional-Id Flag Tolerance
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
-Status: IN_PROGRESS
+Status: COMPLETE
 Campaign ID: nightwatch-explain-id-flag-v1
 OpenSpec: openspec/changes/nightwatch-explain-id-flag-v1/
 Planned-From: cb054f1f72810a4e005d5b6af078b5034ecf52f8

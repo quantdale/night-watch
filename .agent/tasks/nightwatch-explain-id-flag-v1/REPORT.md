@@ -1,6 +1,6 @@
 # Report — nightwatch-explain-id-flag-v1
 
-Status: IN_PROGRESS (M1 pending)
+Status: COMPLETE
 
 ## Campaign
 
@@ -8,39 +8,51 @@ Status: IN_PROGRESS (M1 pending)
 Campaign: explain positional-id flag tolerance (CLI robustness)
 Task ID: nightwatch-explain-id-flag-v1
 Starting SHA: cb054f1f72810a4e005d5b6af078b5034ecf52f8
-Implementation anchor: NONE (no implementation change yet)
-Final SHA: not yet integrated
+Implementation anchor: 44f571323cc421a5243df659d3bfc539e9b7198a
+Final SHA: Live HEAD: DISCOVER_FROM_GIT (see Git section at release)
 ```
 
 ## Objective
 
-Make `explain`'s positional id flag-tolerant; regression-test;
-integrate.
+Make `explain`'s positional id flag-tolerant; regression-test all
+forms; integrate.
 
-## Diagnosis (evidence, not conclusion)
+## Diagnosis (evidence)
 
-`explain --json` fails `EXPLAIN_ID_UNSAFE` because the command reads
-`args[1]` raw and `--json` occupies that slot. Same order-fragility
-class as the explain-surface defect fixed previously.
+`explain --json` failed `EXPLAIN_ID_UNSAFE` because the command read
+`args[1]` raw while `--json` detection is order-independent. Same
+order-fragility class as the explain-surface defect.
 
 ## Change
 
-Pending (M2): first-non-flag extraction + focused tests.
+`bin/nightwatch-intelligence.mjs`: first-non-flag positional id; the
+shape regex and plan-membership lookup unchanged. New
+`tests/unit/explainIdFlagTolerance.test.ts` (3 tests: bare, both
+orders identical, malformed refused).
 
 ## Validation
 
-Pending (M2–M3). No validation results to report yet.
+- New tests 3/3 green; `tsc --noEmit` clean.
+- `hardening:check`, `agent:check`, `project:check`, `handoff:check`
+  PASS (verified at close).
+- `gate:local` not re-run: no gate-covered surface changed.
 
 ## Known issues
 
-The incoherence under repair (see Diagnosis).
-
-## Recommendation
-
-Complete M2–M3; no follow-up campaign required.
-```
+None. Refusal behavior preserved (shape + lookup enforced on all
+forms).
 
 ## Requirement ledger
 
-SPEC.md acceptance criteria map 1:1 to M2–M3 milestones in PLAN.md; all
-pending.
+SPEC.md acceptance: forms green ✓; malformed refused ✓; checkers
+green ✓; integration ✓.
+
+## Recommendation
+
+Integrate. No follow-up required.
+
+## Git
+
+Session branch `session/nightwatch-explain-id-flag-v1-79e155d9`
+fast-forward pushed to `origin/main`; HEAD == origin/main verified;
+session released; worktree removed. See push verification in STATE.
