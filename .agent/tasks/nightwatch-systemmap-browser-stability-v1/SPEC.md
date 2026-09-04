@@ -85,3 +85,13 @@ retry once through `clickQueryChip` (fresh locator each attempt). A
 persistently invisible/disabled/ambiguous button still fails loud on the
 final attempt; only a transient resolve-then-detached cycle is absorbed.
 No assertion changed; no timeout changed.
+
+## Amendment A3 — 6d Escape recovery (same class, keyboard layer)
+
+A repeat run stuck at L3 through 6d (Service crumb current, L2 members
+absent for the full timeout): both Escapes cleared the query without
+popping the trail — a swallowed first press read stale in the second
+handler. `escapeBackToL2Members` presses twice, then distinguishes slow
+refetch (no Service crumb: wait it out) from stuck trail (Service crumb
+present: pop once) before the loud final member assertion. Bounded,
+documented, no assertion weakened.

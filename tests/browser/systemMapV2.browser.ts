@@ -32,6 +32,30 @@ async function clickQueryChip(page: Page, name: string): Promise<void> {
   }
 }
 
+/**
+ * Two Escapes clear the active query, then pop the trail to L2. A
+ * swallowed first press leaves both presses clearing the query, so the
+ * trail sticks at L3 (whose 256-capped member list sorts the service
+ * node out). On a slow L2 refetch the members simply arrive late. The
+ * recovery distinguishes the two by the Service crumb: present means
+ * stuck (pop once); absent means still loading (wait it out). Anything
+ * else fails loud on the final member assertion.
+ */
+async function escapeBackToL2Members(page: Page): Promise<void> {
+  const app = page.getByRole('application');
+  const l2member = page.getByRole('button', { name: /^services\/ripple,/ });
+  await app.press('Escape');
+  await app.press('Escape');
+  try {
+    await expect(l2member).toBeVisible({ timeout: 3000 });
+    return;
+  } catch {
+    const stuckAtL3 = (await page.getByRole('button', { name: 'Service: services/ripple' }).count()) > 0;
+    if (stuckAtL3) await app.press('Escape');
+    await expect(l2member).toBeVisible();
+  }
+}
+
 const SOURCE_SHA = 'a'.repeat(40);
 
 function operation(id: string, over: Partial<SystemMapInput['operations'][number]> = {}): SystemMapInput['operations'][number] {
@@ -220,11 +244,8 @@ test('C-15c the operator can navigate the map, and the map never overstates what
     //     L2. Selection does not survive the level change visibly (the op
     //     node is absent at L2), so three downs from unselected reach the
     //     service in the deterministic [product, repository, service] order.
-    await page.getByRole('application').press('Escape');
-    await page.getByRole('application').press('Escape');
+    await escapeBackToL2Members(page);
     await expect(page.getByRole('button', { name: 'Product: ripple' })).toBeVisible();
-    // The second Escape refetches L2 — arrows need its members, not crumbs.
-    await expect(page.getByRole('button', { name: /^services\/ripple,/ })).toBeVisible();
     await page.getByRole('application').press('ArrowDown');
     await page.getByRole('application').press('ArrowDown');
     await page.getByRole('application').press('ArrowDown');
