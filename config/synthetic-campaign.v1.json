@@ -60,6 +60,7 @@
     "tests/unit/c16ExpectedInformationGain.test.ts",
     "tests/unit/c07DerivedSemantics.test.ts",
     "tests/unit/alphausFindingHandoff.test.ts",
-    "tests/unit/c12ReadinessPreflight.test.ts"
+    "tests/unit/c12ReadinessPreflight.test.ts",
+    "tests/unit/alphausHandoffProperties.test.ts"
   ]
 }

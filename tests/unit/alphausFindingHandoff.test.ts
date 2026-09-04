@@ -311,6 +311,14 @@ test.describe('AH-1 team and report type', () => {
     expect(artifact.teamRecommendation.value).toBe('UNKNOWN');
     expect(artifact.teamRecommendation.basis).toContain('never guessed');
   });
+  test('no code-owner or accountability assignment exists', async () => {
+    const artifact = projectAlphausFindingHandoff(await handoffInput());
+    const serialized = JSON.stringify(artifact).toLowerCase();
+    expect(serialized).not.toContain('codeowner');
+    expect(serialized).not.toContain('code_owner');
+    expect(artifact).not.toHaveProperty('codeOwner');
+    expect(artifact).not.toHaveProperty('assignee');
+  });
 
   test('reproduced findings suggest BUG_REPORT', async () => {
     const artifact = projectAlphausFindingHandoff(await handoffInput());
