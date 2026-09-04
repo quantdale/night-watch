@@ -120,6 +120,13 @@
       ]
     },
     {
+      "id": "C-15c",
+      "task": "nightwatch-system-map-v2-transport-c15c-v1",
+      "suites": [
+        "tests/unit/c15cSystemMapTransport.test.ts"
+      ]
+    },
+    {
       "id": "C-16",
       "task": "nightwatch-eig-prioritization-c16-v1",
       "suites": [

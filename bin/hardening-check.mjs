@@ -3245,7 +3245,91 @@ checkC05UniverseAdmissionBoundary();
 checkC08DeploymentBindingBoundary();
 checkC09SpecExpectationBoundary();
 checkC16EigBoundary();
+function checkC15cSystemMapTransportBoundary() {
+  const contract = read('src/controlCenter/contracts/systemMap.ts');
+  const adapter = read('src/controlCenter/adapters/systemMapAdapter.ts');
+  const router = read('src/controlCenter/server/router.ts');
+  const server = read('src/controlCenter/server/server.ts');
+  const ui = read('ui/control-center/src/App.tsx');
+  const apiClient = read('ui/control-center/src/api.ts');
+  const adapterCode = withoutComments(adapter);
+  const uiCode = withoutComments(ui);
+
+  // --- the map describes; it never acts ---
+  for (const marker of ["executionAuthority: 'NONE'", "mutationAuthority: 'NONE'"]) {
+    if (!adapterCode.includes(marker)) {
+      fail(`C-15c the system map adapter must state ${marker} on the wire; a map is not a control panel`);
+    }
+  }
+  if (/executionAuthority: '(?!NONE)/.test(adapterCode) || /mutationAuthority: '(?!NONE)/.test(adapterCode)) {
+    fail('C-15c no system map answer may carry an authority other than NONE');
+  }
+
+  // --- a bound must be able to say "unknown" ---
+  const boundDecl = /export interface ControlCenterProjectionBoundDto \{[\s\S]*?\n\}/.exec(contract);
+  if (boundDecl === null) {
+    fail('C-15c could not read ControlCenterProjectionBoundDto; the bound contract cannot be verified');
+  } else {
+    const bound = withoutComments(boundDecl[0]);
+    for (const field of ['total', 'dropped']) {
+      if (!new RegExp(`readonly ${field}: number \\| null;`).test(bound)) {
+        fail(`C-15c ProjectionBoundDto.${field} must be nullable; when the population is unknown a drop count is unknowable, and a non-nullable number forces the transport to invent one`);
+      }
+    }
+    if (!/readonly remainingUnknown: boolean;/.test(bound)) {
+      fail('C-15c ProjectionBoundDto must carry remainingUnknown, distinguishing a counted drop from an unknown remainder');
+    }
+  }
+
+  // --- the UI may not render an unknown as a number ---
+  for (const coercion of ['total ?? 0', 'dropped ?? 0', 'total || 0', 'dropped || 0', 'Number(bound.total)', 'Number(bound.dropped)']) {
+    if (uiCode.includes(coercion)) {
+      fail(`C-15c the UI must not coerce an unknown bound to a number (found ${coercion}); a zero tells the operator they have seen everything`);
+    }
+  }
+  if (!/bound\.total === null \? 'unknown'/.test(uiCode) || !/bound\.dropped === null \? 'unknown'/.test(uiCode)) {
+    fail("C-15c the UI must render a null total and a null dropped count as 'unknown'");
+  }
+
+  // --- an absence of measurement is not a clean result ---
+  if (!/measurement === 'UNMEASURED'/.test(uiCode)) {
+    fail('C-15c the UI must distinguish UNMEASURED from measured-and-empty; an unmeasured emptiness is not a clean result');
+  }
+
+  // --- unknown addresses are rejected, never guessed ---
+  if (!/SYSTEM_MAP_LEVEL_SEGMENTS/.test(router) || !/SYSTEM_MAP_QUERY_SEGMENTS/.test(router)) {
+    fail('C-15c the router must resolve system map segments against a closed enum, never by pattern');
+  }
+  if (/startsWith\('\/api\/v2\/system-map/.test(withoutComments(router))) {
+    fail('C-15c system map routes must match exact segments, not a prefix; a prefix match answers a question the operator did not ask');
+  }
+
+  // --- transport stays read-only, and v1 is never reinterpreted ---
+  const serverCode = withoutComments(server);
+  if (!/'GET'|'HEAD'/.test(serverCode)) {
+    fail('C-15c the control center server must constrain verbs; the system map transport is GET/HEAD only');
+  }
+  for (const verb of ['POST', 'PUT', 'PATCH', 'DELETE']) {
+    if (new RegExp(`case '${verb}'`).test(serverCode)) {
+      fail(`C-15c the control center server must not dispatch ${verb}`);
+    }
+  }
+
+  // --- progressive disclosure is a transport property ---
+  if (/\/api\/v2\/system-map\/all|fetchWholeMap|loadEntireSystemMap/.test(withoutComments(apiClient))) {
+    fail('C-15c the client must request one disclosure level at a time; a whole-company payload filtered in the browser defeats bounded projection');
+  }
+
+  // --- the adapter projects; it never reaches out ---
+  for (const forbidden of ['node:fs', 'node:child_process', 'node:net', 'node:https', 'node:http']) {
+    if (adapter.includes(`from '${forbidden}'`)) {
+      fail(`src/controlCenter/adapters/systemMapAdapter.ts must stay a pure projection (imports ${forbidden})`);
+    }
+  }
+}
+
 checkC07DerivedSemanticsBoundary();
+checkC15cSystemMapTransportBoundary();
 checkCampaignCertificationRegistry();
 checkPlannerHandoffIntegrity();
 checkDocumentationTruth();
