@@ -6,7 +6,7 @@ Title: MA-8 / F-13 P1 Observation-Scope Prerequisite Implementation & Certificat
 Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-p1-observation-scope-ma8-v1
 Starting SHA: 0195a39e60e82b80439ec10ad5a36453804fe030
-Last validated implementation SHA: ce166001e8b9721ae169ccabbd5239ef1342a28a
+Last validated implementation SHA: 4642c1647f53c02dbc939f2475e04202249522a9
 Last checkpoint: ce16600 — M1–M5 complete; typecheck clean, 127/127 P1 suites, hardening PASS; M6 mutation campaign next
 Current milestone: M6 — bounded adversarial mutation campaign with zero survivors
 Next action: Run §12 mutation probes, then M7 full validation; no production contact
@@ -14,8 +14,8 @@ Authorization class: P1_OBSERVATION_SCOPE_MA8_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 0195a39e60e82b80439ec10ad5a36453804fe030
-LAST_VALIDATED_IMPLEMENTATION_SHA: ce166001e8b9721ae169ccabbd5239ef1342a28a
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: ce166001e8b9721ae169ccabbd5239ef1342a28a
+LAST_VALIDATED_IMPLEMENTATION_SHA: 4642c1647f53c02dbc939f2475e04202249522a9
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 4642c1647f53c02dbc939f2475e04202249522a9
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PHASE_P1_OBSERVATION_SCOPE_MA8_V1_STATUS: IN_PROGRESS

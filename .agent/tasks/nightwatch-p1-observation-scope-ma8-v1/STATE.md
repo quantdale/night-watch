@@ -6,8 +6,8 @@ Task ID: nightwatch-p1-observation-scope-ma8-v1
 Phase: P1_OBSERVATION_SCOPE_MA8_V1
 Status: IN_PROGRESS
 Starting SHA: 0195a39e60e82b80439ec10ad5a36453804fe030
-Last validated implementation SHA: ce166001e8b9721ae169ccabbd5239ef1342a28a
-Last substantive checkpoint SHA: ce166001e8b9721ae169ccabbd5239ef1342a28a
+Last validated implementation SHA: 4642c1647f53c02dbc939f2475e04202249522a9
+Last substantive checkpoint SHA: 4642c1647f53c02dbc939f2475e04202249522a9
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-p1-observation-scope--3bd1d83d
@@ -15,8 +15,8 @@ Last checkpoint: NONE — campaign scaffolded; M1 reconciliation recorded below
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 0195a39e60e82b80439ec10ad5a36453804fe030
-LAST_VALIDATED_IMPLEMENTATION_SHA: ce166001e8b9721ae169ccabbd5239ef1342a28a
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: ce166001e8b9721ae169ccabbd5239ef1342a28a
+LAST_VALIDATED_IMPLEMENTATION_SHA: 4642c1647f53c02dbc939f2475e04202249522a9
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 4642c1647f53c02dbc939f2475e04202249522a9
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
 PHASE_P1_OBSERVATION_SCOPE_MA8_V1_STATUS: IN_PROGRESS
@@ -95,6 +95,15 @@ Checkpoint `ce16600` (session branch, pre-integration):
 `checkP1ObservationScopeBoundary`). Full gate, clean clone, and mutation
 campaign still pending (M6–M7).
 
+Checkpoint `4642c16` (session branch, pre-integration): DEF-P1-2 + DEF-P1-3
+repairs. `tsc --noEmit` clean; 141/141 focused green (128 P1 + 13
+convergence); `hardening:check` PASS; full canonical regression 3728 passed
+/ 1 failed (convergence, repaired) / 13 skipped (pre-existing environment
+guards, zero from P1 suites); synthetic lane 1050/1050 PASS with
+`deepContainmentLane: PROVEN` (pre-DEF-P1-3 tree; lane re-runs at close).
+`gate:local`: 4/4 pre-PROJECT_TRUTH groups PASS; PROJECT_TRUTH fails closed
+on the expected mid-campaign baseline staleness (resolves at M7 close).
+
 ## Check conformance notes (mid-campaign, expected)
 
 - `agent:check` PASS (warnings: legitimate CHECKPOINT_ADVANCE for docs-only
@@ -166,6 +175,7 @@ Evidence/constraint: `validateCampaignCertification` lines 129-163;
 | --- | --- | --- |
 | **DEF-P1-1** (introduced) | `P1_IMPLEMENTATION_IDENTITY` read the config before `P1_CONFIGURATION_INTEGRITY`, making the integrity gate unfalsifiable for null config — the DEF-C11-1 class recurring | CLOSED — integrity precedes identity and window; order hardening-enforced; regression: one-fault matrix |
 | **DEF-P1-2** (introduced) | `p1ObserverIdentitySatisfies` accepted any non-`UNKNOWN` runtime value, so an untyped caller passing an out-of-vocabulary identity class would satisfy the minimum by accident | CLOSED (second-pass review) — membership checked first, unknown fails closed; regression: out-of-vocabulary matrix fault |
+| **DEF-P1-3** (introduced) | `P1_OBSERVATION_SCOPE_VERSION` duplicated the `nightwatch.p1-observation-scope.v1` value in a second module, tripping the Phase 15P A15 single-ownership rule (full regression 3728 passed / 1 failed / 13 skipped) | CLOSED (full regression) — constant removed; `P1_OBSERVATION_SCOPE_CHAIN_VERSION` in `types.ts` is the sole owner; regression: convergence suite 13/13 |
 
 ## Discoveries
 
