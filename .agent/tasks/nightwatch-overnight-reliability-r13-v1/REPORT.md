@@ -17,13 +17,13 @@ Starting SHA: `d3a464de97225f91cd425b7922b53238a02dc981`
 | 6 | Concurrency stress (§97) | PASS | lifecycle.mjs §6: 8 workers × 10 same-file receipt writes, 0 failures, final always parseable (rename-atomicity); cross-process allocator coverage via registered stress suite repetition in M5 |
 | 7 | Map scale permutations (§98) | PASS | /tmp/r13/mapScale.mjs: 7 input orders (identity/reverse/5 seeds) at 1,000 nodes / 200 dropped → 1 unique graph+layout digest; L1–L4 + all 8 queries laid out; 5× layout repeat deterministic |
 | 8 | Seeded property tests (§99) | PASS | /tmp/r13/properties.mjs seed 20260904: 9 properties × 200 iters (bounds/drops/fact-lattice/semantics/unmeasured/admission/deployment/eig-containment) = 1,801 checks, 0 failures; 1 probe defect (DEF-R13-1, probe-side, fixed) |
-| 9 | Clean-clone B topology (§100) | NOT_STARTED | — |
-| 10 | Full regression ×3 (§101) | NOT_STARTED | — |
-| 11 | Semantic-compat long run (§102) | NOT_STARTED | — |
-| 12 | Synthetic campaign long run (§103) | NOT_STARTED | — |
-| 13 | UI endurance 20+ loops (§104) | NOT_STARTED | — |
-| 14 | Resource-leak accounting (§105) | NOT_STARTED | — |
-| 15 | Failure-receipt durability (§106) | NOT_STARTED | — |
+| 9 | Clean-clone B topology (§100) | PASS | /tmp/r13/cleanB at b4e0832 (different parent): install/typecheck/hardening/handoff/project/agent all PASS; 21 suites 622/622 passed. First attempt caught 3 R-13 scaffolding defects (DEF-R13-3) — the topology doing its job |
+| 10 | Full regression ×3 (§101) | IN_PROGRESS | 3 sequential `test:unit` passes running (bg_1) |
+| 11 | Semantic-compat long run (§102) | PASS | 2nd observation identical: 146 files, 2,033/2,020/13/0, zero drift |
+| 12 | Synthetic campaign long run (§103) | IN_PROGRESS | 2 more observations running (bg_20); 1st was 40 files 916/916 |
+| 13 | UI endurance 20+ loops (§104) | PASS | /tmp/r13/uiEndurance.mjs: 22 loops, 0 page/console errors, 0 external requests, DOM 126→126 (growth 0), loop times 61–248ms no trend |
+| 14 | Resource-leak accounting (§105) | PASS | 0 chromium processes, 0 stray listeners/leases; 2 crashed-run scratch dirs found and removed; /tmp/nightwatch-phase23-bind-failure.jsonl belongs to in-flight regression run (recheck at close) |
+| 15 | Failure-receipt durability (§106) | IN_PROGRESS | Throwaway-clone gate with committed synthetic failure running (bg_16); dirty-tree run already proved fail-closed receipt (PROJECT_TRUTH TEST_FAILURE, 6 groups NOT_RUN, digest + persisted copy match) |
 | 16 | Hardening mutation campaign (§107) | NOT_STARTED | — |
 | 17 | Long clean gate (§108) | NOT_STARTED | — |
 | 18 | Exact-head CI (§109) | BLOCKED | EXTERNAL_BLOCKER — run 33833574821 attempts 1–4, no runner assigned; re-attempt on changed hypothesis |

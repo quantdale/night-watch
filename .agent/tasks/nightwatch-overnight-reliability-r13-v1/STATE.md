@@ -102,6 +102,12 @@ Probes live in /tmp/r13, never in the repo tree (SPEC rationale recorded).
 - C-06G gate assessed from the C-03 REPORT (service topology PROVEN but
   ouchan enumeration TRUNCATED, `repositoryCompleteProof: false`):
   `C06G_BLOCKED_BY_METHOD_BINDING_OR_INVENTORY_COMPLETENESS`.
+- DEF-R13-3 (process, repaired): M1 ran agent:check + project:check but NOT
+  hardening:check + handoff:check after scaffolding — the same
+  scaffolding-before-battery rule I cite, incompletely applied. Clean B caught
+  it: missing openspec audit/design, invalid predecessor-status vocabulary,
+  dropped STATE ledger sections, undeclared R-13 registry entry. Credit to the
+  second topology for doing its job. Fixed in b4e0832; all guards green there.
 
 ## Blockers
 
