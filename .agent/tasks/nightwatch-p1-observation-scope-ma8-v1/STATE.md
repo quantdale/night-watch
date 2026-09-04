@@ -4,14 +4,14 @@
 
 Task ID: nightwatch-p1-observation-scope-ma8-v1
 Phase: P1_OBSERVATION_SCOPE_MA8_V1
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: 0195a39e60e82b80439ec10ad5a36453804fe030
 Last validated implementation SHA: 4642c1647f53c02dbc939f2475e04202249522a9
 Last substantive checkpoint SHA: 4642c1647f53c02dbc939f2475e04202249522a9
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-p1-observation-scope--3bd1d83d
-Last checkpoint: NONE — campaign scaffolded; M1 reconciliation recorded below
+Last checkpoint: close-out — M1–M7 complete; implementation 4642c16 certified; exact-head CI 33864698218 external-blocker recorded; STOP
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 0195a39e60e82b80439ec10ad5a36453804fe030
@@ -19,7 +19,7 @@ LAST_VALIDATED_IMPLEMENTATION_SHA: 4642c1647f53c02dbc939f2475e04202249522a9
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: 4642c1647f53c02dbc939f2475e04202249522a9
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
-PHASE_P1_OBSERVATION_SCOPE_MA8_V1_STATUS: IN_PROGRESS
+PHASE_P1_OBSERVATION_SCOPE_MA8_V1_STATUS: COMPLETE
 
 ## Objective
 
@@ -29,7 +29,7 @@ executed by this campaign.
 
 ## Current Milestone
 
-M6 — Hardening and mutation campaign. IN PROGRESS.
+COMPLETE / STOP — M1 through M7 closed; REPORT final; three defects closed.
 
 ## Completed Milestones
 
@@ -69,15 +69,13 @@ M6 — Hardening and mutation campaign. IN PROGRESS.
 
 ## Work In Progress
 
-- M6 hardening rule written and passing; bounded mutation campaign pending.
-- M7 full validation, repeatability, clean clone, review, docs, REPORT,
-  integration, release.
+NONE — M1 through M7 closed. No open work.
 
 ## Exact Next Action
 
-Run the bounded adversarial mutation campaign (§12 probes): introduce each
-mutation, prove the intended verification fails, restore byte-identical,
-re-pass. Then M7 full validation.
+STOP. Campaign COMPLETE and certified. Do not retry C-12, contact production,
+or start another campaign on this task. Any follow-up starts as a new
+authorized task.
 
 ## Files Changed
 
@@ -204,9 +202,21 @@ NONE
 
 ## Resume Recipe
 
-Read SPEC.md, PLAN.md, then this file. Worktree:
-`session/nightwatch-p1-observation-scope--3bd1d83d`. Exact next action above.
+Task complete. Do not resume; any follow-up starts as a new authorized task.
 
 ## Completion Snapshot
 
-Not complete. No implementation, no validation, no integration yet.
+Final substantive checkpoint: 4642c1647f53c02dbc939f2475e04202249522a9
+Final task status: COMPLETE. Live HEAD: DISCOVER_FROM_GIT.
+Tests: 128/128 focused P1 green; convergence 13/13; synthetic lane 1051/1051
+PASS (`deepContainmentLane: PROVEN`); semantic lane 2020/13/0; owner
+provenance 91/91; canonical regression 3729/0/13; mutations 14/14 detected,
+0 survivors; typecheck clean; hardening PASS.
+Artifacts: close-out commit carries the MA-8 requirement ledger (REPORT.md),
+D-115, the threat-model reconciliation, and the exact-head CI observation
+(run 33864698218, external-blocker signature).
+Known issues: none outstanding. DEF-P1-1 through DEF-P1-3 were introduced by
+this campaign and are all closed with permanent regressions.
+Recommended next task: C-12 P1 PASSIVE PRODUCTION OBSERVATION, which requires
+a new explicit owner authorization after review of this evidence. MA-8 grants
+no authority over real production.

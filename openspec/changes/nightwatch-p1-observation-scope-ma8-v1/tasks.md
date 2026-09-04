@@ -13,7 +13,7 @@
   certification registration.
 - [x] M6 — `checkP1ObservationScopeBoundary`; bounded mutation campaign with
   zero survivors (14/14 detected, byte-identical restore, re-pass).
-- [ ] M7 — full validation, repeatability, clean clone, second-pass review,
+- [x] M7 — full validation, repeatability, clean clone, second-pass review,
   docs reconciliation, REPORT, integration, release.
 
 Each box closes only with its defined validation green and STATE.md updated.

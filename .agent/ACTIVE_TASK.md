@@ -3,13 +3,13 @@
 Task ID: nightwatch-p1-observation-scope-ma8-v1
 Phase: P1_OBSERVATION_SCOPE_MA8_V1
 Title: MA-8 / F-13 P1 Observation-Scope Prerequisite Implementation & Certification
-Status: IN_PROGRESS
+Status: COMPLETE
 Task directory: .agent/tasks/nightwatch-p1-observation-scope-ma8-v1
 Starting SHA: 0195a39e60e82b80439ec10ad5a36453804fe030
 Last validated implementation SHA: 4642c1647f53c02dbc939f2475e04202249522a9
-Last checkpoint: ce16600 — M1–M5 complete; typecheck clean, 127/127 P1 suites, hardening PASS; M6 mutation campaign next
-Current milestone: M6 — bounded adversarial mutation campaign with zero survivors
-Next action: Run §12 mutation probes, then M7 full validation; no production contact
+Last checkpoint: close-out — M1–M7 complete; implementation 4642c16 certified (typecheck, 128 P1 tests, hardening, 1051 lane, 3729 regression, 14/14 mutations); exact-head CI 33864698218 external-blocker recorded; STOP
+Current milestone: COMPLETE / STOP — all milestones closed, REPORT final, three defects closed
+Next action: STOP — integrate to main, release the session, remove the worktree; C-12 requires new owner authorization
 Authorization class: P1_OBSERVATION_SCOPE_MA8_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
@@ -18,7 +18,7 @@ LAST_VALIDATED_IMPLEMENTATION_SHA: 4642c1647f53c02dbc939f2475e04202249522a9
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: 4642c1647f53c02dbc939f2475e04202249522a9
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
-PHASE_P1_OBSERVATION_SCOPE_MA8_V1_STATUS: IN_PROGRESS
+PHASE_P1_OBSERVATION_SCOPE_MA8_V1_STATUS: COMPLETE
 
 ## Routing and safety
 

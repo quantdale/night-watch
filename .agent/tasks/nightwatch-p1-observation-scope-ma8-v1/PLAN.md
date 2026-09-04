@@ -73,13 +73,12 @@ sentinels; implementation only in the owned session worktree
   scopeConfig, killSwitch, observer; typecheck clean).
 - M4 — Attribution + terminal classification + privacy wiring + session:
   COMPLETE (attribution, session; privacy/evidence consumed unchanged).
-- M5 — Test matrix: COMPLETE (7 suites, 127 tests green; manifests +
+- M5 — Test matrix: COMPLETE (7 suites, 128 tests green; manifests +
   MA-8 declaration registered).
-- M6 — Hardening + mutation campaign: IN PROGRESS
-  (`checkP1ObservationScopeBoundary` written, hardening PASS; mutation probes
-  pending).
+- M6 — Hardening + mutation campaign: COMPLETE (`checkP1ObservationScopeBoundary`
+  passing; 14/14 probes detected, 0 survivors, byte-identical restore).
 - M7 — Full validation, repeatability, clean clone, review, docs, REPORT,
-  integration, release: PENDING.
+  integration, release: COMPLETE (see STATE.md Completion Snapshot).
 
 ## Completion Criteria
 

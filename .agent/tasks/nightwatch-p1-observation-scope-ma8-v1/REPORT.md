@@ -1,6 +1,6 @@
-# Report — MA-8 / F-13 P1 Observation-Scope Prerequisite
+Status: COMPLETE
 
-> DRAFT — campaign IN PROGRESS (M7). Sections fill as validation closes.
+# Report — MA-8 / F-13 P1 Observation-Scope Prerequisite
 
 ## Campaign
 
@@ -9,11 +9,10 @@ Campaign: MA-8 / F-13 P1 observation-scope prerequisite
 Task ID: nightwatch-p1-observation-scope-ma8-v1
 Starting SHA: 0195a39e60e82b80439ec10ad5a36453804fe030
 Implementation anchor: 4642c1647f53c02dbc939f2475e04202249522a9
-Final SHA: (filled at close)
-Status: IN_PROGRESS (M1–M6 complete; M7 in progress)
+Final SHA: close-out head (verified HEAD == origin/main at release; live HEAD authority: GIT)
+Status: COMPLETE (M1–M7 closed; STOP)
 ```
-
-## Authorization accounting (running)
+## Authorization accounting (final)
 
 ```text
 real production contacts: 0
@@ -190,4 +189,4 @@ C-12 WAS NOT EXECUTED BY THIS CAMPAIGN.
 
 ## Next recommended action
 
-(Determined at close; currently: finish M7 validation, then integrate.)
+STOP. C-12 requires a new explicit owner authorization after review of this evidence.
