@@ -1,29 +1,30 @@
 # Active Task
 
-Task ID: nightwatch-dep-docs-reconciliation-v1
-Phase: DEP_DOCS_RECONCILIATION_V1
-Title: Dep-Removal Docs Reconciliation
-Status: COMPLETE
-Task directory: .agent/tasks/nightwatch-dep-docs-reconciliation-v1
-Starting SHA: 262c84b7ee93d22617e8b901655805d72123a84a
-Last validated implementation SHA: 262c84b7ee93d22617e8b901655805d72123a84a
-Last checkpoint: close-out — M1–M3 complete; docs correction 717b5de committed (hardening + truth checkers green); STOP
-Current milestone: COMPLETE / STOP — all milestones closed, REPORT final, no defects introduced
-Next action: STOP — integrate to main, release the session, remove the worktree
-Authorization class: DEP_DOCS_RECONCILIATION_V1
+Task ID: nightwatch-explain-surface-flag-v1
+Phase: EXPLAIN_SURFACE_FLAG_V1
+Title: Explain-Surface Documented Flag Form
+Status: IN_PROGRESS
+Task directory: .agent/tasks/nightwatch-explain-surface-flag-v1
+Starting SHA: a39f49c4222ef2f8d4c2f46419485845f6970a78
+Last validated implementation SHA: a39f49c4222ef2f8d4c2f46419485845f6970a78
+Last checkpoint: M1 done — session claimed at a39f49c; SPEC/PLAN/STATE + OpenSpec written; M2 fix next
+Current milestone: M2 — Flag disjunct and tests (IN_PROGRESS)
+Next action: Apply the extraction disjunct + regression tests in the worktree, then run typecheck and focused suites
+Authorization class: EXPLAIN_SURFACE_FLAG_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
-STARTING_SHA: 262c84b7ee93d22617e8b901655805d72123a84a
-LAST_VALIDATED_IMPLEMENTATION_SHA: NONE
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: NONE
+STARTING_SHA: a39f49c4222ef2f8d4c2f46419485845f6970a78
+LAST_VALIDATED_IMPLEMENTATION_SHA: a39f49c4222ef2f8d4c2f46419485845f6970a78
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: a39f49c4222ef2f8d4c2f46419485845f6970a78
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
-PHASE_DEP_DOCS_RECONCILIATION_V1_STATUS: COMPLETE
+PHASE_EXPLAIN_SURFACE_FLAG_V1_STATUS: IN_PROGRESS
+
 ## Routing and safety
 
 ```
 IMPLEMENTATION AUTHORIZED:
-  docs/DECISIONS.md one-sentence correction only
+  explain-surface argument extraction + one focused test file only
 
 REAL PRODUCTION CONTACT:
   NOT AUTHORIZED
@@ -38,9 +39,9 @@ C-07 DEV:
   NOT AUTHORIZED
 ```
 
-Docs-only change. No production contact, no DEV request, no credential
-acquisition.
+CLI parsing only; no product-core change. No production contact, no DEV
+request, no credential acquisition.
 
 C-00 governs: all implementation happens in the owned session worktree
-`session/nightwatch-dep-docs-reconciliati-8ec628a0`. The canonical checkout is
+`session/nightwatch-explain-surface-flag--4fe14ac8`. The canonical checkout is
 never used for implementation.

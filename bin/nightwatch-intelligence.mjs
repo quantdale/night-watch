@@ -128,7 +128,14 @@ function sourceDiscoveryPreview() {
   if (command === "eligibility-census") return { command, scope: "LOCAL_SOURCE_ONLY", safety: "NO_NETWORK_NO_AUTH_NO_PRODUCT_CONTACT", completeness, operationCompleteness: discovery.operationCompleteness, inventory: safeInventorySummary, census: integration.eligibilityCensus, performance: integration.discovery.performance };
   if (command === "surfaces") return { command, scope: "LOCAL_SOURCE_ONLY", safety: "NO_NETWORK_NO_AUTH_NO_PRODUCT_CONTACT", completeness, operationCompleteness: discovery.operationCompleteness, inventory: safeInventory, counters: integration.discovery.counters, operations: integration.discovery.operations, surfaces: integration.discovery.surfaces, gapTaxonomy: integration.discovery.gapTaxonomy, performance: integration.discovery.performance, eligibilityCensus: integration.eligibilityCensus, portfolio: { considered: integration.portfolio.consideredCount, eligible: integration.portfolio.eligibleCount, excluded: integration.portfolio.excludedCount, reasonCodeCoverage: integration.portfolio.reasonCodeCoverage, deterministicDigest: integration.portfolio.deterministicDigest }, deterministicDigest: integration.discovery.deterministicDigest };
   if (command === "review-queue") return { command, scope: "LOCAL_SOURCE_ONLY", safety: "NO_NETWORK_NO_AUTH_NO_PRODUCT_CONTACT", completeness, operationCompleteness: discovery.operationCompleteness, inventory: safeInventory, queue: review };
-  const requestedSurface = args[1];
+  // The README documents `--surface=<id>`; the positional form stays for
+  // compatibility. The explicit flag wins on conflict; otherwise the first
+  // non-flag token after the command is the positional id (flags may
+  // precede it in any order). The shape gate below applies unchanged to
+  // whichever form supplies the id.
+  const explicitSurface = args.find((arg) => arg.startsWith("--surface="))?.slice("--surface=".length) || undefined;
+  const positionalSurface = args.slice(1).find((arg) => !arg.startsWith("--"));
+  const requestedSurface = explicitSurface || positionalSurface;
   if (requestedSurface === undefined || !/^[A-Za-z0-9][A-Za-z0-9_.:/-]{0,199}$/.test(requestedSurface)) throw new Error("EXPLAIN_SURFACE_ID_UNSAFE");
   return { command, scope: "LOCAL_SOURCE_ONLY", safety: "NO_NETWORK_NO_AUTH_NO_PRODUCT_CONTACT", completeness, requestedSurface, surface: reviewModule.explainSourceSurface({ discovery: integration.discovery, portfolio: integration.portfolio, selection: integration.selection, surfaceId: requestedSurface }), queueDigest: review.deterministicDigest };
 }

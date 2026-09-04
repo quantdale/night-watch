@@ -1,25 +1,26 @@
-# EXECUTION PROMPT — Dep-Removal Docs Reconciliation
+# EXECUTION PROMPT — Explain-Surface Documented Flag Form
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
-Status: COMPLETE
-Campaign ID: nightwatch-dep-docs-reconciliation-v1
-OpenSpec: openspec/changes/nightwatch-dep-docs-reconciliation-v1/
-Planned-From: 262c84b7ee93d22617e8b901655805d72123a84a
+Status: IN_PROGRESS
+Campaign ID: nightwatch-explain-surface-flag-v1
+OpenSpec: openspec/changes/nightwatch-explain-surface-flag-v1/
+Planned-From: a39f49c4222ef2f8d4c2f46419485845f6970a78
 Target Branch: main
-Predecessor Task ID: nightwatch-unused-dep-removal-v1
+Predecessor Task ID: nightwatch-dep-docs-reconciliation-v1
 Predecessor Status: COMPLETE
 
 ## Mission
 
-Correct the stale standing Vue 2 sentence in DECISIONS.md
-(append-style, history preserved), prove checkers green, and
-integrate. Docs-only. Local/synthetic only.
+Accept the README-documented `--surface=<id>` form for
+`explain-surface` (additive disjunct, validation unchanged), add
+focused regression tests covering both forms plus refusal, and
+integrate. CLI parsing only. Local/synthetic only.
 
 ## Authority
 
 ```
 IMPLEMENTATION AUTHORIZED:
-  docs/DECISIONS.md one-sentence correction only
+  explain-surface argument extraction + one focused test file only
 
 REAL PRODUCTION CONTACT:
   NOT AUTHORIZED
@@ -38,15 +39,15 @@ Repository-local and offline. No production contact, no NEXT contact, no
 DEV request, no credential acquisition.
 
 C-00 governs: all implementation happens in the owned session worktree
-`session/nightwatch-dep-docs-reconciliati-8ec628a0`.
+`session/nightwatch-explain-surface-flag--4fe14ac8`.
 
 ## Ordered workstreams
 
 1. Task record, OpenSpec change, routing — BEFORE code (M1).
-2. Sentence correction + hardening + truth checkers (M2).
-3. REPORT, integration, release, worktree removal (M3).
+2. Extraction disjunct + regression tests (M2).
+3. Focused suites, truth checkers, REPORT, integration, release (M3).
 
 ## Constraints
 
-Docs-only; preserve surrounding historical text; no force push; no
-history rewrite.
+CLI parsing only; additive disjunct; shape gate unchanged; no force
+push; no history rewrite.
