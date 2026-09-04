@@ -278,7 +278,10 @@ try {
   } else if (command === "findings") {
     output = { command, scope: "OWNER_ONLY_LOCAL", actionableFindings: 0, note: "Runtime findings are not loaded or published by the default operator preview." };
   } else {
-    const requested = args[1];
+    // Flags (e.g. `--json`) may precede the id in any order; the id is the
+    // first non-flag token after the command. The shape gate below applies
+    // unchanged to whichever token that is.
+    const requested = args.slice(1).find((arg) => !arg.startsWith("--"));
     if (requested !== undefined && !/^[A-Za-z0-9][A-Za-z0-9_.:/-]{0,199}$/.test(requested)) throw new Error("EXPLAIN_ID_UNSAFE");
     const result = preview();
     const item = result.plan.items.find((candidate) => candidate.candidateId === requested || candidate.memberId === requested) ?? null;
