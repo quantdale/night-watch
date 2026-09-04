@@ -1,7 +1,7 @@
 # EXECUTION PROMPT — Explain-Surface Documented Flag Form
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
-Status: IN_PROGRESS
+Status: COMPLETE
 Campaign ID: nightwatch-explain-surface-flag-v1
 OpenSpec: openspec/changes/nightwatch-explain-surface-flag-v1/
 Planned-From: a39f49c4222ef2f8d4c2f46419485845f6970a78

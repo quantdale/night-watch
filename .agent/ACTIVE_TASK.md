@@ -3,23 +3,22 @@
 Task ID: nightwatch-explain-surface-flag-v1
 Phase: EXPLAIN_SURFACE_FLAG_V1
 Title: Explain-Surface Documented Flag Form
-Status: IN_PROGRESS
+Status: COMPLETE
 Task directory: .agent/tasks/nightwatch-explain-surface-flag-v1
 Starting SHA: a39f49c4222ef2f8d4c2f46419485845f6970a78
-Last validated implementation SHA: a39f49c4222ef2f8d4c2f46419485845f6970a78
-Last checkpoint: M1 done — session claimed at a39f49c; SPEC/PLAN/STATE + OpenSpec written; M2 fix next
-Current milestone: M2 — Flag disjunct and tests (IN_PROGRESS)
-Next action: Apply the extraction disjunct + regression tests in the worktree, then run typecheck and focused suites
+Last validated implementation SHA: 2fbce767029fa5c830c9c473419542b222a9eaf0
+Last checkpoint: close-out — M1–M3 complete; implementation 2fbce76 certified (3 new tests, typecheck, hardening, truth checkers); STOP
+Current milestone: COMPLETE / STOP — all milestones closed, REPORT final, no defects introduced
+Next action: STOP — integrate to main, release the session, remove the worktree
 Authorization class: EXPLAIN_SURFACE_FLAG_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: a39f49c4222ef2f8d4c2f46419485845f6970a78
-LAST_VALIDATED_IMPLEMENTATION_SHA: a39f49c4222ef2f8d4c2f46419485845f6970a78
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: a39f49c4222ef2f8d4c2f46419485845f6970a78
+LAST_VALIDATED_IMPLEMENTATION_SHA: NONE
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: NONE
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
-PHASE_EXPLAIN_SURFACE_FLAG_V1_STATUS: IN_PROGRESS
-
+PHASE_EXPLAIN_SURFACE_FLAG_V1_STATUS: COMPLETE
 ## Routing and safety
 
 ```

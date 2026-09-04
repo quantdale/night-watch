@@ -43,24 +43,24 @@ still refused. Surface ids for the positive cases come from a live
 
 ## Milestones
 
-### M1 — Task record and session — IN_PROGRESS
+### M1 — Task record and session — DONE
 
 - Objective: session worktree claimed; SPEC/PLAN/STATE frozen; OpenSpec
   change; ACTIVE_TASK + EXECUTION_PROMPT routed.
 - Acceptance criteria: `session:status` PASS; `handoff:check` PASS.
 - Validation commands: `npm run session:status`, `npm run handoff:check`
-- Status: IN_PROGRESS
+- Status: DONE
 
-### M2 — Flag disjunct and tests — PENDING
+### M2 — Flag disjunct and tests — DONE
 
 - Objective: accept `--surface=`; add regression tests.
 - Files/areas: `bin/nightwatch-intelligence.mjs`, new test file.
 - Implementation actions: extraction edit; focused CLI tests.
 - Acceptance criteria: both forms green; malformed refused; typecheck.
 - Validation commands: `npx tsc --noEmit`, focused test file
-- Status: PENDING
+- Status: DONE
 
-### M3 — Validation and close — PENDING
+### M3 — Validation and close — DONE
 
 - Objective: full validation, REPORT, integration, release.
 - Files/areas: adjacent suites, truth checkers, session branch.
@@ -68,7 +68,7 @@ still refused. Surface ids for the positive cases come from a live
   project/handoff checks; REPORT; push; release; remove worktree.
 - Acceptance criteria: all green; push verified; REPORT final.
 - Validation commands: `npm run hardening:check`, `npm run agent:check`, `npm run project:check`, `npm run handoff:check`
-- Status: PENDING
+- Status: DONE
 
 ## Validation Strategy
 
