@@ -1,7 +1,7 @@
 import { provenReadOnlyProof } from '../helpers/readOnlyProofFixtures';
 import fs from 'node:fs';
 import path from 'node:path';
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { createCampaignAuthority } from '../../src/controlCenter/authorities/campaignAuthority';
 import { createSourceAuthorityForTests, type SourceAuthoritySnapshot } from '../../src/controlCenter/authorities/sourceAuthority';
 import type { FindingsAuthoritySnapshot } from '../../src/controlCenter/authorities/findingsAuthority';
@@ -17,6 +17,27 @@ import type { RunAuthorityInput } from '../../src/controlCenter/adapters/runAdap
 import type { FindingsDossierMetadata } from '../../src/controlCenter/authorities/findingsAuthority';
 
 const UI_ROOT = path.resolve(process.cwd(), 'ui/control-center/dist');
+
+/**
+ * Click a view button with an explicit painted-button gate plus
+ * box-independent dispatch (mirrors the systemMapV2 tail-chip shape):
+ * the visibility assertion encodes the operator invariant and absorbs
+ * transient layout stalls as waits, while `dispatchEvent` exercises the
+ * real React handler without needing renderer boxes for scroll
+ * coordinates. Every use here is followed by answer-specific
+ * assertions, so a swallowed dispatch fails loud, never vacuous.
+ * Retried once with a fresh locator.
+ */
+async function clickViewButton(page: Page, name: string): Promise<void> {
+  const target = page.getByRole('button', { name, exact: true });
+  await expect(target).toBeVisible();
+  try {
+    await target.dispatchEvent('click');
+  } catch {
+    await page.getByRole('button', { name, exact: true }).dispatchEvent('click');
+  }
+}
+
 const TIMESTAMP = '2026-08-26T10:20:30.000Z';
 const END_TIMESTAMP = '2026-08-26T10:20:31.000Z';
 const SOURCE_SHA = 'a'.repeat(40);
@@ -265,7 +286,7 @@ test('qualifies all seven built Control Center views over one synthetic authorit
     await page.getByRole('link', { name: 'Runs' }).click({ force: true });
     await expect(page.getByRole('heading', { name: 'Inspect what happened, in order.' })).toBeVisible();
     await expect(page.getByText('control-center-browser')).toBeVisible();
-    await page.getByRole('button', { name: 'Inspect' }).click({ force: true });
+    await clickViewButton(page, 'Inspect');
     await expect(page.getByRole('heading', { name: 'control-center-browser' })).toBeVisible();
     await expect(page.getByText('Event Journey', { exact: true })).toBeVisible();
 
@@ -299,7 +320,7 @@ test('qualifies all seven built Control Center views over one synthetic authorit
 
     await page.getByRole('link', { name: 'Runs' }).click({ force: true });
     await expect(page.getByRole('heading', { name: 'Inspect what happened, in order.' })).toBeVisible();
-    await page.getByRole('button', { name: 'Inspect' }).click({ force: true });
+    await clickViewButton(page, 'Inspect');
     await expect(page.getByRole('heading', { name: 'control-center-browser' })).toBeVisible();
     await expect.poll(() => handle.events.clientCount).toBe(1);
     handle.publish({
