@@ -59,24 +59,12 @@ force pushes: 0
   entries, `checkAlphausHandoffBoundary` (cone isolation + literal values
   + transport patterns) and `checkDocumentationFreshness`, both defined,
   invoked, and negative-probed.
-
-## Tests (final)
-
 - `tests/unit/alphausFindingHandoff.test.ts` — 40/40 (schema, severity,
   catch-stage, source, team/owner, privacy incl. email/SSN/bounty-word,
   authority/scoring, shape refusals).
-- `tests/unit/c12ReadinessPreflight.test.ts` — 31/31 (contract incl. future
-  window + single-label, CLI operability incl. size cap).
-- `tests/unit/alphausHandoffProperties.test.ts` — 7/7 (448 seeded cases,
-  HANDOFF_SEED 0xA41F, PREFLIGHT_SEED 0xC12E).
-- `npm run typecheck` — clean. `npm run hardening:check` — PASS (59/59).
-- `npm run agent:check` — 0 strict errors. `npm run project:check` — PASS.
-- `npm run gate:local` at `ca1fb0c` — 11/11 PASS, receipt
-  `receipt:sha256:025570f11a841beba9d79eac` (SEMANTIC 2033/2020/13/0, OWNER
+- `npm run gate:local` at `d83bb53` — 11/11 PASS, receipt
+  `receipt:sha256:28e91b0c3bab25fccad55fa0` (SEMANTIC 2033/2020/13/0, OWNER
   91/91, SYNTHETIC 1129/1129/0).
-- Full regression `npm test` — 3807 passed / 13 skipped / 0 failed.
-- `npm run gate:clean` — PASS on Node 20 at `ca1fb0c`, install PASS,
-  inner receipt `receipt:sha256:400193b4521e1aa961dbac62`.
 
 ## Mutation campaign
 
@@ -175,7 +163,7 @@ origin/main: (verified HEAD == origin/main at release)
 worktree: session/nightwatch-alphaus-finding-hando-c009d87c (removed at release)
 live sessions: none (released at close)
 changed files: (see commit list)
-commits: bfc4bfd, cb6e338, 2a299cf, 8d33c82, f14457b, 4c263e1, ca1fb0c, a6a5b61 (+ closure)
+commits: bfc4bfd, cb6e338, 2a299cf, 8d33c82, f14457b, 4c263e1, ca1fb0c, a6a5b61, 46e241a, d83bb53 (+ closure)
 force push: 0
 ```
 
