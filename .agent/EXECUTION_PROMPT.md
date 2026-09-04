@@ -1,26 +1,25 @@
-# EXECUTION PROMPT — Sibling Browser Spec Click Robustness
+# EXECUTION PROMPT — Unused Vue DevDependency Removal
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
-Status: COMPLETE
-Campaign ID: nightwatch-control-center-click-robustness-v1
-OpenSpec: openspec/changes/nightwatch-control-center-click-robustness-v1/
-Planned-From: 9cf37a4d425fe46d453e46a9ceb820b2fd44a420
+Status: IN_PROGRESS
+Campaign ID: nightwatch-unused-dep-removal-v1
+OpenSpec: openspec/changes/nightwatch-unused-dep-removal-v1/
+Planned-From: ae959663d22e6c9191f3ef7a9ebed7f081fc4fe9
 Target Branch: main
-Predecessor Task ID: nightwatch-systemmap-browser-stability-v1
+Predecessor Task ID: nightwatch-control-center-click-robustness-v1
 Predecessor Status: COMPLETE
 
 ## Mission
 
-Harden the sibling spec's two `Inspect` clicks with visibility gates
-and box-independent dispatch (mirroring the proven systemMapV2 shape),
-prove 10/10 serial lane repeats green, and integrate. Test-only; zero
-product-code change. Local/synthetic only.
+Remove the unused `vue` devDependency (sole audit finding), prove
+install/typecheck/scenario green with truth checkers, and integrate.
+Manifest/lockfile only. Local/synthetic only.
 
 ## Authority
 
 ```
 IMPLEMENTATION AUTHORIZED:
-  tests/browser/controlCenterBrowser.browser.ts click robustness only
+  package.json + package-lock.json vue removal only
 
 REAL PRODUCTION CONTACT:
   NOT AUTHORIZED
@@ -39,18 +38,15 @@ Repository-local and offline. No production contact, no NEXT contact, no
 DEV request, no credential acquisition.
 
 C-00 governs: all implementation happens in the owned session worktree
-`session/nightwatch-control-center-click--12588f37`.
+`session/nightwatch-unused-dep-removal-v1-ca39c497`.
 
 ## Ordered workstreams
 
 1. Task record, OpenSpec change, routing — BEFORE code (M1).
-2. Helper + gates + two conversions (M2).
-3. Stability validation: 10x serial repeats, typecheck, hardening,
-   truth checkers (M3).
-4. REPORT, integration, release, worktree removal (M4).
+2. Removal + install/typecheck/scenario/checkers (M2).
+3. REPORT, integration, release, worktree removal (M3).
 
 ## Constraints
 
-Test file only. ADD assertions, never remove or relax any; no skips; no
-timeout changes; no product change; no manifest/registry change; no
-force push; no history rewrite.
+Manifest/lockfile only; verify install from scratch; no force push; no
+history rewrite.

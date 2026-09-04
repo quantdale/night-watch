@@ -44,11 +44,11 @@
     "nightwatch:status": "node bin/nightwatch-intelligence.mjs status",
     "campaign:plan": "node bin/nightwatch-intelligence.mjs plan",
     "campaign:coverage": "node bin/nightwatch-intelligence.mjs coverage",
-  "campaign:contracts": "node bin/nightwatch-intelligence.mjs contracts",
-  "campaign:gaps": "node bin/nightwatch-intelligence.mjs gaps",
-  "campaign:source-gaps": "node bin/nightwatch-intelligence.mjs source-gaps",
-  "campaign:eligibility-census": "node bin/nightwatch-intelligence.mjs eligibility-census --json",
-  "campaign:readonly-census": "node bin/nightwatch-intelligence.mjs readonly-census --json",
+    "campaign:contracts": "node bin/nightwatch-intelligence.mjs contracts",
+    "campaign:gaps": "node bin/nightwatch-intelligence.mjs gaps",
+    "campaign:source-gaps": "node bin/nightwatch-intelligence.mjs source-gaps",
+    "campaign:eligibility-census": "node bin/nightwatch-intelligence.mjs eligibility-census --json",
+    "campaign:readonly-census": "node bin/nightwatch-intelligence.mjs readonly-census --json",
     "campaign:operator": "node bin/nightwatch-intelligence.mjs campaign",
     "campaign:findings": "node bin/nightwatch-intelligence.mjs findings",
     "control-center:start": "node bin/nightwatch-control-center.mjs",
@@ -90,7 +90,6 @@
   "devDependencies": {
     "@playwright/test": "1.62.1",
     "@types/node": "^22.10.0",
-    "typescript": "^5.7.0",
-    "vue": "2.6.12"
+    "typescript": "^5.7.0"
   }
 }
