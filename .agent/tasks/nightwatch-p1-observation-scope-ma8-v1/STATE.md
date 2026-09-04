@@ -162,7 +162,10 @@ Evidence/constraint: `validateCampaignCertification` lines 129-163;
 
 ## Defects found and disposition
 
-None yet.
+| ID | Defect | Disposition |
+| --- | --- | --- |
+| **DEF-P1-1** (introduced) | `P1_IMPLEMENTATION_IDENTITY` read the config before `P1_CONFIGURATION_INTEGRITY`, making the integrity gate unfalsifiable for null config — the DEF-C11-1 class recurring | CLOSED — integrity precedes identity and window; order hardening-enforced; regression: one-fault matrix |
+| **DEF-P1-2** (introduced) | `p1ObserverIdentitySatisfies` accepted any non-`UNKNOWN` runtime value, so an untyped caller passing an out-of-vocabulary identity class would satisfy the minimum by accident | CLOSED (second-pass review) — membership checked first, unknown fails closed; regression: out-of-vocabulary matrix fault |
 
 ## Discoveries
 

@@ -319,6 +319,15 @@ const FAULTS: FaultCase[] = [
     breakInput: (_world, input) => ({ ...input, grant: mintP1Grant({ expiresAtMs: P1_T0 + P1_WINDOW_MS + 60_000 }), nowMs: P1_T0 + P1_WINDOW_MS }),
   },
   {
+    name: 'observer identity outside the vocabulary (untyped caller)',
+    gate: 'P1_OBSERVER_IDENTITY',
+    code: 'P1_OBSERVER_IDENTITY_UNKNOWN',
+    breakInput: (_world, input) => ({
+      ...input,
+      observerIdentityClass: 'ADMIN' as unknown as typeof input.observerIdentityClass,
+    }),
+  },
+  {
     name: 'observer identity unknown',
     gate: 'P1_OBSERVER_IDENTITY',
     code: 'P1_OBSERVER_IDENTITY_UNKNOWN',

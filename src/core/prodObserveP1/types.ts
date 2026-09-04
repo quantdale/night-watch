@@ -173,17 +173,13 @@ export const P1_OBSERVER_IDENTITY_CLASSES = [
   'UNKNOWN',
 ] as const;
 export type P1ObserverIdentityClass = (typeof P1_OBSERVER_IDENTITY_CLASSES)[number];
-/**
- * P1 minimum is `ORDINARY_USER` (the C-12 addition recorded in the C-11
- * design §5.6). Both named classes satisfy it; `UNKNOWN` never does. There
- * is deliberately no below-minimum code: with exactly three identity values
- * and two passing, a below-minimum code would be a gate that cannot deny
- * (the DEF-C11-2 lesson).
- */
 export function p1ObserverIdentitySatisfies(actual: P1ObserverIdentityClass): {
   readonly ok: boolean;
   readonly code: Extract<P1ObservationDenialCode, 'P1_OBSERVER_IDENTITY_UNKNOWN'> | null;
 } {
+  // Membership first: an untyped caller passing a value outside the vocabulary
+  // must not satisfy the minimum by accident. Unknown fails closed.
+  if (!P1_OBSERVER_IDENTITY_CLASSES.includes(actual)) return { ok: false, code: 'P1_OBSERVER_IDENTITY_UNKNOWN' };
   if (actual === 'UNKNOWN') return { ok: false, code: 'P1_OBSERVER_IDENTITY_UNKNOWN' };
   return { ok: true, code: null };
 }
