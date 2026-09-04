@@ -58,6 +58,7 @@
     "control-center:ui:browser": "npm run control-center:ui:build && playwright test --config=playwright.control-center.config.ts",
     "control-center:ui:dev": "npm --prefix ui/control-center run dev",
     "observe:preflight": "node bin/observe-preflight.mjs",
+    "c12:preflight": "node bin/c12-preflight.mjs",
     "observe:gate": "node bin/observe-gate.mjs",
     "observe:canary": "node bin/observe-canary.mjs",
     "observe:authenticated": "node bin/observe-authenticated.mjs",

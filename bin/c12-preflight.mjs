@@ -1,0 +1,124 @@
+#!/usr/bin/env node
+
+// ---------------------------------------------------------------------------
+// Nightwatch AH-1 — C-12 operator-readiness preflight CLI (local-only).
+//
+// Reads an operator-owned JSON descriptor, evaluates it with the pure
+// `evaluateC12Readiness` library, and prints ONLY the readiness report.
+// The descriptor itself is never echoed: it may reference external material
+// that must not enter logs.
+//
+// Local-only guarantees: no browser, no DNS, no HTTP, no credential access,
+// no authorization consumption. The TypeScript cone is compiled fresh to a
+// disposable directory on every run (deterministic, no cache to invalidate).
+//
+// Usage: node bin/c12-preflight.mjs --input <EXTERNAL_DESCRIPTOR_PATH>
+// Exit: 0 READY · 2 BLOCKED · 1 invalid usage or unreadable descriptor.
+// ---------------------------------------------------------------------------
+
+import fs from 'node:fs';
+import os from 'node:os';
+import { createRequire } from 'node:module';
+import path from 'node:path';
+import { spawnSync } from 'node:child_process';
+import { pathToFileURL, fileURLToPath } from 'node:url';
+
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+
+function usage() {
+  console.log('Usage: node bin/c12-preflight.mjs --input <EXTERNAL_DESCRIPTOR_PATH>');
+  console.log('Evaluates C-12 readiness locally. No browser, DNS, HTTP, or credential is used.');
+}
+
+function fail(message) {
+  console.error(`[c12-preflight] FAIL: ${message}`);
+  process.exitCode = 1;
+}
+
+function parseArgs(argv) {
+  let input;
+  for (let index = 0; index < argv.length; index += 1) {
+    const arg = argv[index];
+    if (arg === '--help' || arg === '-h') {
+      usage();
+      process.exit(0);
+    }
+    if (arg.startsWith('--input=')) {
+      if (input !== undefined) throw new Error('--input may be supplied only once');
+      input = arg.slice('--input='.length);
+      continue;
+    }
+    if (arg === '--input') {
+      if (input !== undefined) throw new Error('--input may be supplied only once');
+      const next = argv[index + 1];
+      if (next === undefined) throw new Error('--input requires a path');
+      input = next;
+      index += 1;
+      continue;
+    }
+    throw new Error(`unknown option ${arg}`);
+  }
+  if (input === undefined) throw new Error('--input <EXTERNAL_DESCRIPTOR_PATH> is required');
+  return input;
+}
+
+function compileCone() {
+  const outDir = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-c12-preflight-'));
+  const tsc = path.join(root, 'node_modules', '.bin', 'tsc');
+  const compiled = spawnSync(
+    tsc,
+    [
+      'src/core/c12Readiness/index.ts',
+      'src/core/identity/canonicalDigest.ts',
+      '--outDir', outDir,
+      '--module', 'commonjs',
+      '--target', 'es2022',
+      '--moduleResolution', 'node',
+      '--strict', '--skipLibCheck',
+    ],
+    { cwd: root, encoding: 'utf8', maxBuffer: 4 * 1024 * 1024, timeout: 120000 },
+  );
+  if (compiled.status !== 0) {
+    fs.rmSync(outDir, { recursive: true, force: true });
+    throw new Error(`readiness cone compilation failed: ${(compiled.stderr || compiled.stdout || '').slice(0, 500)}`);
+  }
+  return outDir;
+}
+
+function main() {
+  let inputPath;
+  try {
+    inputPath = parseArgs(process.argv.slice(2));
+  } catch (error) {
+    fail(error instanceof Error ? error.message : String(error));
+    return;
+  }
+  let descriptor;
+  try {
+    descriptor = JSON.parse(fs.readFileSync(inputPath, 'utf8'));
+  } catch (error) {
+    fail(`cannot read descriptor: ${error instanceof Error ? error.message : String(error)}`);
+    return;
+  }
+  let outDir;
+  try {
+    outDir = compileCone();
+    const requireCone = createRequire(path.join(outDir, 'entry.cjs'));
+    const candidates = [
+      path.join(outDir, 'c12Readiness', 'index.js'),
+      path.join(outDir, 'src', 'core', 'c12Readiness', 'index.js'),
+    ];
+    const entry = candidates.find((candidate) => fs.existsSync(candidate));
+    if (entry === undefined) throw new Error('compiled readiness entry not found');
+    const cone = requireCone(entry);
+    const report = cone.evaluateC12Readiness(descriptor);
+    process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
+    process.exitCode = report.status === 'READY' ? 0 : 2;
+  } catch (error) {
+    fail(error instanceof Error ? error.message : String(error));
+  } finally {
+    if (outDir !== undefined) fs.rmSync(outDir, { recursive: true, force: true });
+  }
+}
+
+main();

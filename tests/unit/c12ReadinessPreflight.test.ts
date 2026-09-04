@@ -7,6 +7,10 @@
 // ---------------------------------------------------------------------------
 
 import { test, expect } from '@playwright/test';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { spawnSync } from 'node:child_process';
 
 import type { C12ReadinessInput } from '../../src/core/c12Readiness/types';
 import {
@@ -19,6 +23,7 @@ import { P1_MAX_OBSERVATION_WINDOW_MS } from '../../src/core/prodObserveP1/scope
 const SHA_A = 'a'.repeat(40);
 const SHA_B = 'b'.repeat(40);
 const RECEIPT = 'receipt:sha256:f55ec47acdc38825941c2061';
+const ROOT = path.resolve(__dirname, '..', '..');
 const NOW = '2026-09-04T12:00:00.000Z';
 const WINDOW_START = '2026-09-04T12:00:00.000Z';
 const WINDOW_END = '2026-09-04T12:10:00.000Z';
@@ -192,5 +197,71 @@ test.describe('AH-1 C-12 preflight contract', () => {
     );
     expect(report.status).toBe('BLOCKED');
     expect(report.blockers.length).toBeGreaterThanOrEqual(4);
+  });
+});
+
+test.describe('AH-1 C-12 preflight CLI', () => {
+  test('READY descriptor exits 0 with a parseable report and no input echo', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-c12-cli-'));
+    try {
+      const descriptorPath = path.join(dir, 'ready.json');
+      fs.writeFileSync(descriptorPath, JSON.stringify(readyInput()));
+      const result = spawnSync(process.execPath, [path.join(ROOT, 'bin', 'c12-preflight.mjs'), '--input', descriptorPath], {
+        encoding: 'utf8',
+        timeout: 120000,
+        maxBuffer: 4 * 1024 * 1024,
+      });
+      expect(result.status).toBe(0);
+      const report = JSON.parse(String(result.stdout)) as { status: string; blockers: unknown[]; deterministicDigest: string };
+      expect(report.status).toBe('READY');
+      expect(report.blockers).toEqual([]);
+      expect(report.deterministicDigest).toMatch(/^[0-9a-f]{24}$/);
+      expect(String(result.stdout)).not.toContain('synthetic-prod-fixture');
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test('blocked descriptor exits 2 with blocker codes', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-c12-cli-'));
+    try {
+      const descriptorPath = path.join(dir, 'blocked.json');
+      fs.writeFileSync(
+        descriptorPath,
+        JSON.stringify(readyInput({ deploymentFact: { state: 'UNKNOWN' }, authorization: null })),
+      );
+      const result = spawnSync(process.execPath, [path.join(ROOT, 'bin', 'c12-preflight.mjs'), `--input=${descriptorPath}`], {
+        encoding: 'utf8',
+        timeout: 120000,
+        maxBuffer: 4 * 1024 * 1024,
+      });
+      expect(result.status).toBe(2);
+      const report = JSON.parse(String(result.stdout)) as { status: string; blockers: { code: string }[] };
+      expect(report.status).toBe('BLOCKED');
+      expect(report.blockers.map((blocker) => blocker.code)).toContain('BLOCKED_DEPLOYMENT_FACT');
+      expect(report.blockers.map((blocker) => blocker.code)).toContain('BLOCKED_AUTHORIZATION');
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test('missing descriptor exits 1 without a report', () => {
+    const result = spawnSync(
+      process.execPath,
+      [path.join(ROOT, 'bin', 'c12-preflight.mjs'), '--input', path.join(os.tmpdir(), 'nightwatch-c12-missing.json')],
+      { encoding: 'utf8', timeout: 120000, maxBuffer: 4 * 1024 * 1024 },
+    );
+    expect(result.status).toBe(1);
+    expect(String(result.stdout)).not.toContain('schemaVersion');
+  });
+
+  test('--help exits 0 with usage', () => {
+    const result = spawnSync(process.execPath, [path.join(ROOT, 'bin', 'c12-preflight.mjs'), '--help'], {
+      encoding: 'utf8',
+      timeout: 60000,
+      maxBuffer: 1024 * 1024,
+    });
+    expect(result.status).toBe(0);
+    expect(String(result.stdout)).toContain('--input');
   });
 });
