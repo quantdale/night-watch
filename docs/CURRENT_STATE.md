@@ -675,7 +675,7 @@ when its OWN evidence exists.
 | --- | --- | --- | --- |
 | `LAST_SUBSTANTIVE_IMPLEMENTATION_SHA` | the last commit that changed implementation AND was validated | `4642c16` | MA-8/F-13 P1 cone checkpoint: fifteen-gate scope chain, one-shot P1 grants, external scope config, attribution, bounded session; validated by typecheck, 141 focused tests, hardening, synthetic lane 1051/1051, full regression 3729/0/13, 14/14 mutations detected (DEF-P1-1..3 closed) |
 | `LAST_LOCALLY_VALIDATED_SHA` | the last commit where the local quality gate passed | `05bd7ad` | `gate:local` FULL PASS, all eleven required groups, receipt `receipt:sha256:3a6cefdd1ea57fc65e74b6d7` (SEMANTIC 2033/2020/13/0, OWNER 91/91, SYNTHETIC 1051/1051/0) |
-| `LAST_CLEAN_VALIDATED_SHA` | the last commit where the clean Node 20 gate passed | `85dd8a6` | `gate:clean` PASS, Node 20, eleven groups, `siblingWrites: 0`, inner receipt `receipt:sha256:841e75dcd27b04660842fa24`, outer `clean-receipt:sha256:3832909fbab478cff4828f50` |
+| `LAST_CLEAN_VALIDATED_SHA` | the last commit where the clean Node 20 gate passed | `b31f0bf` | `gate:clean` PASS, Node 20, `installResult` PASS, inner receipt `receipt:sha256:9851e74bd438a21073093c83` |
 | `CI_OBSERVED_SHA` | the commit whose CI result was observed | `27bfe44` | run `33864698218` (2026-09-04): zero steps under the external runner block (`runner_id = 0`), recorded as `NO_STEPS_EXTERNAL_NON_EVIDENCE`; a docs-descendant head covering the `4642c16` implementation |
 | `CI_EXECUTED_SHA` | the commit CI actually executed the gate at | `4e0bfc1` | same run; both `EXECUTED_PASS` and `EXECUTED_FAIL` require observed == executed, and this one is `EXECUTED_PASS` with receipt `receipt:sha256:f313d77bf52b8b06dbde2e5c` |
 
@@ -737,7 +737,7 @@ RELEASE_CHECKPOINT_SHA: 2576c5751d33bb40046246e8fcf57c7cc5c30a57
 LIVE_HEAD_SHA: DISCOVER_FROM_GIT
 LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: 4642c1647f53c02dbc939f2475e04202249522a9
 LAST_LOCALLY_VALIDATED_SHA: 05bd7ad9310d435797ea013bdf36d034735f5d01
-LAST_CLEAN_VALIDATED_SHA: 2bb865ea476ca1a82841567243be4db39a510466
+LAST_CLEAN_VALIDATED_SHA: b31f0bf81dba6f24dd4f1559b83c853c73841e3f
 CI_OBSERVED_SHA: 27bfe4492c4e4cca9e481277f4d90bbdd43e8349
 CI_EXECUTED_SHA: NONE
 CI_STATUS: NO_STEPS_EXTERNAL_NON_EVIDENCE

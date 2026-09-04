@@ -128,19 +128,25 @@ single-ownership rule, 13/13 re-green).
 
 ## Clean certification
 
-(pending `gate:clean` at close)
+`gate:clean` PASS at `b31f0bf` under Node 20: disposable pristine clone
+(`--local --no-hardlinks`, no reused `node_modules`), `installResult` PASS,
+inner gate receipt `receipt:sha256:9851e74bd438a21073093c83`. The clone
+carries byte-identical tracked content to the worktree head; the only
+earlier clean failure was the expected mid-campaign project-truth staleness,
+resolved by the close-out anchors.
 
 ## CI
 
-Exact-head run `33841467907` inspected once at campaign start:
-`runner_id = 0`, empty runner name, zero steps —
-`EXTERNAL BLOCKER — NO RUNNER / ZERO STEPS`. No rerun loop.
-(Post-integration observation fills at close.)
+Exact-head run `33864698218` at the integrated head `27bfe44` (2026-09-04,
+10:45Z): `runner_id = 0`, empty runner name, zero steps —
+`EXTERNAL BLOCKER — NO RUNNER / ZERO STEPS`, not a product failure. The
+campaign-start run `33841467907` showed the identical signature. No rerun
+loop; re-attempts happen on a changed hypothesis only.
 
 ## Defects discovered
 
 ```text
-DEF-P1-1 — integrity/identity gate ordering unread behind the window gate.
+DEF-P1-1 — integrity gate ordered behind the identity gate that reads the config.
   Found by: one-fault matrix (config-absent denied at the wrong gate).
   Repair: integrity precedes identity and window; order hardening-enforced.
   Regression: one-fault matrix (29 faults).
