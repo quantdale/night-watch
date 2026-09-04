@@ -3597,7 +3597,10 @@ replaced by a proven local capability on hosts where the complete qualification
 passes; unsupported hosts remain categorical and fail closed. L5 remains a
 separate browser/proxy authority. Vite/Vitest are pinned to patched versions;
 the root Vue 2 dependency remains a documented dev-only legacy compatibility
-fixture with one low advisory and no compatible non-major fix. Final release
+fixture with one low advisory and no compatible non-major fix. (Superseded:
+the dependency was removed as unused with zero references, and `npm audit`
+reports zero vulnerabilities — see campaign
+`nightwatch-unused-dep-removal-v1`.) Final release
 status and exact validation/CI SHAs remain pending until the successor's full
 local, clean, isolated and external-evidence checks complete.
 
