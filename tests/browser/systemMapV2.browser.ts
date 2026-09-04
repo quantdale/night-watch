@@ -6,7 +6,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { createControlCenterServer } from '../../src/controlCenter/server/server';
 import { createDefaultControlCenterCollector } from '../../src/controlCenter/server/defaultCollector';
 import { systemMapLevel, systemMapQuery, LEVEL_FOR_SEGMENT, QUERY_FOR_SEGMENT } from '../../src/controlCenter/adapters/systemMapAdapter';
@@ -15,6 +15,23 @@ import type { SystemMapLevelSegment, SystemMapQuerySegment } from '../../src/con
 import type { SystemMapInput } from '../../src/core/systemMap/projections';
 
 const UI_ROOT = path.resolve(process.cwd(), 'ui/control-center/dist');
+/**
+ * Click a statically-rendered query chip, tolerating one transient
+ * resolve-then-detached cycle: the click resolves the locator fresh on
+ * each attempt, so a genuinely invisible button still fails loud on the
+ * final attempt. This mitigates renderer box-production stalls under
+ * batch load, not product behavior (the UI is quiescent: no timers, no
+ * events, no in-flight fetch at these points — verified by code audit).
+ */
+async function clickQueryChip(page: Page, name: string): Promise<void> {
+  const locator = page.getByRole('button', { name, exact: true });
+  try {
+    await locator.click();
+  } catch {
+    await locator.click();
+  }
+}
+
 const SOURCE_SHA = 'a'.repeat(40);
 
 function operation(id: string, over: Partial<SystemMapInput['operations'][number]> = {}): SystemMapInput['operations'][number] {
@@ -261,7 +278,7 @@ test('C-15c the operator can navigate the map, and the map never overstates what
     // explicitly so a transient layout stall becomes a wait, while a
     // genuinely invisible button still fails loud.
     await expect(page.getByRole('button', { name: 'Mutation-capable routes', exact: true })).toBeVisible();
-    await page.getByRole('button', { name: 'Mutation-capable routes', exact: true }).click();
+    await clickQueryChip(page, 'Mutation-capable routes');
     const nodeBound = page.getByTestId('bound-nodes');
     await expect(nodeBound).toContainText('1000 shown / unknown total');
     await expect(nodeBound).toContainText('truncated, unknown not shown (remainder unknown)');
@@ -279,7 +296,7 @@ test('C-15c the operator can navigate the map, and the map never overstates what
     await page.getByRole('searchbox', { name: 'Search nodes' }).fill('op-1');
     await expect(page.locator('.map-node')).not.toHaveCount(1000);
     await expect(page.getByRole('button', { name: 'Mutation-capable routes', exact: true })).toBeVisible();
-    await page.getByRole('button', { name: 'Mutation-capable routes', exact: true }).click();
+    await clickQueryChip(page, 'Mutation-capable routes');
     await page.getByRole('searchbox', { name: 'Search nodes' }).fill('');
 
     // 10. Zoom and reset are keyboard reachable.

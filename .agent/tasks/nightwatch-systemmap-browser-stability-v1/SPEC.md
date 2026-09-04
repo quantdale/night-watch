@@ -80,3 +80,8 @@ stalled frame fails it instantly with `Element is not visible`; plain
 clicks retry the full actionability cycle. Force remains on SVG-node
 and drill targets, where center-miss geometry requires it; HTML chips
 never needed it.
+Same amendment, click layer: the two Mutation-capable clicks additionally
+retry once through `clickQueryChip` (fresh locator each attempt). A
+persistently invisible/disabled/ambiguous button still fails loud on the
+final attempt; only a transient resolve-then-detached cycle is absorbed.
+No assertion changed; no timeout changed.
