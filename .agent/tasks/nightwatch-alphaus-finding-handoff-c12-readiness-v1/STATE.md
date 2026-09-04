@@ -50,8 +50,6 @@ full validation and write REPORT.md.
 - `src/core/alphausHandoff/` (types, projector, index) — new.
 - `src/core/c12Readiness/` (types, evaluator, index) — new.
 - `bin/c12-preflight.mjs` — new; `c12:preflight` script in package.json.
-- `bin/hardening-check.mjs` — `checkAlphausHandoffBoundary` defined + invoked.
-- `config/campaign-certification.v1.json` — AH-1 declaration (3 suites).
 - `config/synthetic-campaign.v1.json` — AH-1 lane entries.
 - `tests/unit/alphausFindingHandoff.test.ts` (37), `tests/unit/c12ReadinessPreflight.test.ts` (28), `tests/unit/alphausHandoffProperties.test.ts` (7).
 - `docs/C12-OPERATOR-RUNBOOK.md`, `docs/ALPHAUS-FINDING-HANDOFF-CONTEXT.md` — new.
@@ -68,8 +66,12 @@ full validation and write REPORT.md.
 - `tests/unit/alphausHandoffProperties.test.ts` — 7/7 PASS (448 seeded cases).
 - `python3 /tmp/ah1_mutation.py` — 16 introduced / 16 detected / 0 survivors; tree digest-verified pristine after.
 - `npm run gate:local` at base `4ca990f` — 11/11 PASS, receipt `receipt:sha256:f55ec47acdc38825941c2061` (SEMANTIC 2033/2020/13/0, OWNER 91/91, SYNTHETIC 1051/1051/0).
-- `npm run project:check` / `npm run agent:check` — FAIL→repair in progress (M5 exposes the mismatches; see Blockers).
-- `bin/c12-preflight.mjs` smoke: READY exit 0, BLOCKED exit 2, missing-input exit 1, no input echo.
+- `npm run project:check` / `npm run agent:check` — PASS with 0 strict errors after M5 template repair (2026-09-04, worktree).
+- `npm run gate:local` at `8d33c82` — 9/11 PASS; SYNTHETIC_CAMPAIGN 1119/1123 with 4 failures (DEF-AH1-1); PATCH_INTEGRITY failed on mid-run tree edit (operator error, not product).
+- `npm run gate:local` at `f14457b` — 10/11 PASS; SYNTHETIC 1123/1123; PATCH_INTEGRITY failed on mid-run tree edit (same operator error).
+- DEF-AH1-1: gate-found fixture bug (repaired at `f14457b`).
+- DEF-AH1-2..8: independent-review repairs at `4c263e1` (email/SSN sentinel, future window, transport patterns, authority literals, bounty prose, host dot, CLI cap); mutation campaign extended to 22/22, 0 survivors.
+- Independent adversarial review: 4 FAIL verdicts (1 High, 3 Medium) + 8 defects, all repaired or documented as trust boundaries; full payload in review transcript.
 
 ## Decisions Made During This Task
 
