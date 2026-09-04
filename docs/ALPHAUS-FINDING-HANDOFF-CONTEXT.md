@@ -1,0 +1,136 @@
+# Alphaus Bug Finding Handoff — Operational Context
+
+## Source provenance
+
+```text
+Origin: owner-supplied Slack-derived operational research
+Compiled: 2026-09-04
+Pilot-sensitive: yes (September 2026 described as a pilot month)
+Canonical internal rulebook consulted: no
+Pondr internals available: no
+Notion internals available: no
+Relevant GitHub implementation/specs available: no
+Canonical-policy authority: no
+```
+
+Evidence classes used below:
+
+```text
+EXPLICIT = explicitly stated in Slack
+OBSERVED = derived from Leslie's observed system behavior
+INFERRED = consistent observed behavior, not directly stated
+OPEN    = unresolved / requires another source
+```
+
+Nothing in this document is canonical Alphaus policy. Where Nightwatch
+implements a rule from this context, the rule cites its evidence class and
+fails closed outside it.
+
+## Bug-management model (three overlapping layers)
+
+### Layer 1 — SDLC Bug Management Framework (EXPLICIT)
+
+Severities `S1 Blocker / S2 Critical / S3 Major / S4 Minor` with Pondr-backed
+fix prioritization. Observed SLA values (EXPLICIT):
+
+```text
+S1 Blocker  -> 4 hours
+S2 Critical -> 24 hours
+S3 Major    -> 1 week
+S4 Minor    -> next monthly release
+```
+
+Tied to spec-driven development, Pondr, Next validation, `oops`, and the
+production release workflow.
+
+### Layer 2 — Leslie Bug Bounty (EXPLICIT pilot, OBSERVED mechanics)
+
+September 2026 is a pilot month. Leslie handles bug reports, PR review
+contributions, test contributions, bug-class removals, feature releases,
+adopted review-comment credit, human/admin sign-off, points, badges, streaks,
+rewards, and leaderboards. The bounty layer does not replace bug intake:
+potential/unfiled bug cards still require a human action such as
+`@Leslie file this` (EXPLICIT). Nightwatch preserves that human boundary.
+
+### Layer 3 — Legacy/parallel intake (OBSERVED)
+
+Other intake paths still exist, including a LOW/MEDIUM/HIGH scale. There is
+no Slack-supported canonical mapping from LOW/MEDIUM/HIGH to S1–S4 (OPEN).
+Nightwatch never invents one.
+
+## S1–S4 working definitions (EXPLICIT examples, INFERRED boundaries)
+
+- **S1 Blocker**: completely prevents use/testing (e.g. crash on launch,
+  login impossible on any device).
+- **S2 Critical**: severely affects significant functionality; can involve
+  data loss, security breach, broken invoicing, data correctness.
+- **S3 Major**: disrupts important functionality while the broader system
+  remains usable (e.g. intermittent invoicing/finalization failure,
+  long-running operations timing out).
+- **S4 Minor**: no interference with core functionality (e.g. alignment,
+  tooltip, translation, minor UX).
+
+Nightwatch produces a severity *recommendation* only. Final severity is an
+organizational decision Nightwatch never claims.
+
+## Leslie filing fields (OBSERVED)
+
+Core fields: `severity` (blocker/critical/major/minor), `catch_stage`
+(pr_review/next/production/production_outage), `source`
+(self_found/customer_escaped), `team`. Investigation-quality fields
+(reproduction steps, expected/actual result, logs/evidence) contribute to
+bounty scoring (OBSERVED) — Nightwatch does not score, but the same fields
+are exactly what a high-quality engineering finding needs, so the handoff
+projects them.
+
+## Workflow rules encoded in the handoff (with evidence class)
+
+- **Customer-escaped** (OBSERVED): a customer-escaped bug may be genuine but
+  earns zero bounty points. Nightwatch never relabels `customer_escaped` as
+  `self_found`; it performs no bounty arithmetic at all.
+- **Human sign-off** (OBSERVED): reports stay pending until human/admin
+  sign-off with verdicts genuine/invalid/duplicate. Nightwatch issues none of
+  these; its local review states are deliberately named to avoid implying
+  organizational authority.
+- **Duplicates** (OBSERVED): duplicate decisions resolve to the original
+  report via human/system action. Nightwatch suggests duplicate *candidates*
+  with similarity evidence, never final verdicts.
+- **Code owner** (OPEN): attribution is optional in Leslie. Nightwatch never
+  infers or accuses a code owner from repository ownership.
+- **Team attribution** (EXPLICIT sensitivity): affects organizational
+  accounting. Nightwatch never guesses it; v1 always reports UNKNOWN.
+- **OOPS** (INFERRED): proactively OOPS-caught bugs may affect
+  reward/streak interpretation differently from production escapes.
+  Nightwatch captures factual provenance where known and calculates nothing.
+
+## Deliberately NOT encoded (OPEN or pilot-unstable)
+
+```text
+severity -> base-point table
+prevention bonus exact calculation
++4 versus catch-stage-derived +2/+5 behavior
+accountability arithmetic
+unexplained leaderboard balances (e.g. 40-point)
+adopted-comment team attribution behavior
+reward-catalog behavior
+LOW/MEDIUM/HIGH <-> S1-S4 mapping
+```
+
+No Nightwatch contract carries `expectedPoints`, `bountyPoints`,
+`recommendedPoints`, `estimatedReward`, or `rewardTier`. A hardening rule
+fails the build if a bounty-scoring surface enters the handoff cone.
+
+## Architectural consequences (binding)
+
+```text
+Nightwatch is not a bounty calculator.
+Nightwatch is not a Leslie client.
+Nightwatch does not autonomously file bugs.
+Nightwatch produces privacy-safe, evidence-backed,
+human-review-ready finding artifacts.
+```
+
+The handoff artifact (`nightwatch.alphaus-finding-handoff.v1`) separates
+mechanically established facts, evidence-backed recommendations (or UNKNOWN),
+and literal non-weakable authority metadata (`humanReviewRequired = true`,
+`executable = false`, `externalPublication = PROHIBITED`, no auto-filing).

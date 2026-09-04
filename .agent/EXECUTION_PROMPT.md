@@ -1,29 +1,30 @@
-# EXECUTION PROMPT — MA-8 / F-13 P1 Observation-Scope Prerequisite
+# EXECUTION PROMPT — AH-1 Alphaus Finding Handoff + C-12 Operator Readiness
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
-Status: COMPLETE
-Campaign ID: nightwatch-p1-observation-scope-ma8-v1
-OpenSpec: openspec/changes/nightwatch-p1-observation-scope-ma8-v1/
-Planned-From: 0195a39e60e82b80439ec10ad5a36453804fe030
+Status: IN_PROGRESS
+Campaign ID: nightwatch-alphaus-finding-handoff-c12-readiness-v1
+OpenSpec: openspec/changes/nightwatch-alphaus-finding-handoff-c12-readiness-v1/
+Planned-From: 4ca990f9bead33ae5626c4ae4f21dc833f41aec2
 Target Branch: main
-Predecessor Task ID: nightwatch-overnight-reliability-r13-v1
+Predecessor Task ID: nightwatch-p1-observation-scope-ma8-v1
 Predecessor Status: COMPLETE
 
 ## Mission
 
-Implement, integrate, adversarially verify, document, and certify the missing
-P1-specific observation-scope admission architecture (MA-8 / F-13, canonical
-E-16): a versioned named P1 chain admitting only an operator-provided
-already-existing subject inside a bounded window, a mechanical four-class
-attribution model with UNKNOWN failing closed, a machine-enforced passive
-capability cone, and terminal classification that makes vacuous PASS
-impossible. Local/mock certification only.
+Implement, adversarially verify, document, and certify the Alphaus-compatible
+human-review finding handoff (projection-only, privacy-safe, no filing, no
+scoring) and the C-12 operator-readiness package (runbook, configuration
+contract, local-only preflight CLI, evidence checklist, prerequisite truth),
+and reconcile durable documentation (CURRENT_STATE, DECISIONS, master plan,
+threat model, OpenSpec) against implementation truth plus the owner-supplied
+Slack-derived Alphaus workflow evidence (pilot-sensitive, non-canonical).
+Local/synthetic certification only.
 
 ## Authority
 
 ```
 IMPLEMENTATION AUTHORIZED:
-  MA-8 / F-13 P1 observation-scope prerequisite only
+  Alphaus finding handoff + C-12 readiness + docs reconciliation only
 
 REAL PRODUCTION CONTACT:
   NOT AUTHORIZED
@@ -39,35 +40,36 @@ C-07 DEV:
 ```
 
 Repository-local and offline. No production contact, no NEXT contact, no DEV
-request, no credential acquisition. C-12 is NOT authorized and is NOT begun.
+request, no credential acquisition. No Slack/Leslie/Pondr writes. C-12 is NOT
+authorized and is NOT begun.
 
 C-00 governs: all implementation happens in the owned session worktree
-`session/nightwatch-p1-observation-scope--3bd1d83d`.
+`session/nightwatch-alphaus-finding-hando-c009d87c`.
 
 ## Ordered workstreams
 
 1. Task record, OpenSpec change, routing, design reconciliation — BEFORE code.
-2. P1 cone: types, authorization, scope config, kill switch, admission
-   evaluator, attribution, session.
-3. Local test matrix: admission, config, attribution/lifecycle, privacy,
-   passive capability, seeded properties, mock-subject integration.
-4. Manifest + certification registration; P1 hardening check.
+2. Handoff cone: types, projector, authority literals, privacy scan.
+3. Readiness cone: types, evaluator, CLI, runbook, context doc.
+4. Local test matrices + seeded properties; manifest + certification
+   registration; AH-1 hardening check.
 5. Bounded mutation campaign with zero survivors.
-6. Full validation, repeatability, clean clone, second-pass review, docs,
-   REPORT, integration, release.
+6. Full validation, repeatability, clean clone, second-pass review, docs
+   reconciliation, REPORT, integration, release.
 
 ## Constraints
 
-P1 admits exactly one stage and one class (`P1` / `P1_OBSERVE`); no P1→P2
-path exists in the cone. The C-11/C-10/C-10.5 cones are consumed, never
-modified. Unknown attribution fails closed. Zero samples never pass. Every
-gate individually falsifiable. No test deletion/skip/retry/timeout-inflation
-as a correctness fix. No hardening, privacy, or provenance rule weakened.
+Recommendations carry basis + provenance or are UNKNOWN. `customer_escaped`
+never becomes `self_found`. Production never implies outage. Team is UNKNOWN;
+code owner has no representation. No bounty-scoring surface. Authority
+literals are type-enforced. The triage/P1/C-11/C-10 cones are consumed, never
+modified. No test deletion/skip/retry/timeout-inflation as a correctness fix.
+No hardening, privacy, or provenance rule weakened.
 
 ## Validation
 
 typecheck, hardening, handoff, project, agent, agent audit, workspace, gate
-inventory, semantic compatibility, synthetic campaign, the seven P1 suites,
+inventory, semantic compatibility, synthetic campaign, the AH-1 suites,
 canonical regression, `gate:local`, `gate:clean`, single exact-head CI
 inspection (no rerun loop).
 

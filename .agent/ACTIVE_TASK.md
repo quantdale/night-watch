@@ -6,10 +6,10 @@ Title: Alphaus Finding Handoff + C-12 Operator Readiness + Durable Documentation
 Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-alphaus-finding-handoff-c12-readiness-v1
 Starting SHA: 4ca990f9bead33ae5626c4ae4f21dc833f41aec2
-Last validated implementation SHA: NONE
-Last checkpoint: start — session sess-a6bf7d982d47 claimed, SPEC frozen, recon fanned out
-Current milestone: M1 Recon
-Next action: Collect scout results + gate:local baseline, then design handoff contract
+Last validated implementation SHA: 2a299cf2b7c476587d990f8bd654749ce6ff7a1e
+Last checkpoint: M2-M4 complete and committed (handoff, preflight+CLI, matrices, properties, 16/16 mutations, runbook, context doc, OpenSpec); M5 docs reconciliation in progress
+Current milestone: M5 Docs reconciliation
+Next action: Complete M5 docs reconciliation and M6 full validation, then REPORT, integrate, release
 Authorization class: ALPHAUS_FINDING_HANDOFF_C12_READINESS_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
