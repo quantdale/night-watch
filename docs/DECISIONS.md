@@ -4390,3 +4390,65 @@ MA-8 completing does NOT authorize production observation. It creates the
 architectural prerequisite the blocked C-12 attempt exposed; the critical path
 remains C-11 → MA-8/F-13 → external/operator prerequisites → C-12 → C-13 →
 C-14, with C-08b organizationally blocked throughout.
+
+## D-116 — the finding handoff is a projection of the canonical dossier, and organizational classifications are recommendations or UNKNOWN
+
+**Decision.** The Alphaus-compatible human-review artifact
+(`nightwatch.alphaus-finding-handoff.v1`) is produced by pure projection
+from the canonical `BugDossier`, never by a parallel finding model. Facts
+are dossier-derived through closed vocabularies; severity, catch stage,
+source, team, and report-type outputs are `{value, basis, provenance}`
+recommendations or `UNKNOWN`. Team is type-level UNKNOWN at v1 and code
+owner has no representation, because Nightwatch owns no evidence source for
+either. Authority metadata is literal-typed so weakening breaks compilation.
+No bounty-scoring field exists anywhere in the cone, enforced by test and by
+`checkAlphausHandoffBoundary`.
+
+**Rationale.** The dossier already carries sanitized facts, reproduction,
+confidence, and privacy vectors; a second model would drift from it and
+double the privacy surface. Organizational authority (final severity,
+duplicate/genuine verdicts, team accounting, bounty arithmetic) belongs to
+Leslie/human sign-off; Nightwatch's contribution is evidence with explicit
+provenance, including the Slack-derived (pilot-sensitive, non-canonical)
+Alphaus context recorded in
+`docs/ALPHAUS-FINDING-HANDOFF-CONTEXT.md`, which must never harden into
+claimed canonical policy.
+
+**Consequences.** `src/core/alphausHandoff/` stays import-isolated (no
+network/process/filesystem, browser, campaign, auth, P1, or C-11 edges; no
+submission-connector or scoring capability patterns). Draft text is
+sentinel-scanned in full, including fields the projection drops. The
+16-probe mutation campaign (AH1-M01..M16, 0 survivors) and seeded property
+suites are permanent.
+
+**Phase applicability.** AH-1 and all later finding-handoff consumers.
+
+## D-117 — C-12 readiness is evaluated locally from presented facts, and synthetic READY never implies live readiness
+
+**Decision.** `nightwatch.c12-readiness.v1` evaluates ten BLOCKED_* codes
+purely from caller-supplied descriptors with an injected clock: no browser,
+no DNS/HTTP, no credential access, no authorization consumption. All
+blockers report in one pass. INFERRED deployment facts block with an
+explicit never-sufficient basis. The `bin/c12-preflight.mjs` CLI compiles
+the cone fresh per run and prints only the report (exit 0 READY / 2
+BLOCKED / 1 error). A synthetic READY proves the evaluator, never the
+machine; the states `IMPLEMENTATION_REHEARSAL_PASS`,
+`LIVE_PREREQUISITES_SATISFIED`, and `C12_AUTHORIZED` are distinct and must
+never collapse.
+
+**Rationale.** The four external prerequisites MA-8 named (operator subject,
+admitted config, C-08b facts, runner provisioning) plus PQ binding,
+authorization freshness, attribution, destination approval, and kill-switch
+state must be checkable without touching production — otherwise the next
+agent needs another exploratory campaign to begin safely, or worse, probes
+production to answer "are we ready". The preflight cone duplicates two P1
+literals rather than importing P1 machinery (MA-8 reverse-isolation),
+pinned by unit test.
+
+**Consequences.** `src/core/c12Readiness/` carries the same isolation rule
+as D-116. The operator runbook (`docs/C12-OPERATOR-RUNBOOK.md`) owns the
+prerequisite ledger and the placeholder-only checklist; real values are
+never committed. C-12 remains NOT authorized and NOT begun.
+
+**Phase applicability.** AH-1; any future C-12 authorization consumes this
+contract but does not inherit AH-1 authority.

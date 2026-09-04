@@ -2821,6 +2821,13 @@ and prove the separate `PROD_OBSERVE` safety kernel and its ordered request
 gates against mock/synthetic production. C-11 remains `NOT_AUTHORIZED` until it
 receives its own explicit one-shot owner authorization.
 
+> Resolution (2026-09-04, preserved history above): C-11 has since completed,
+> MA-8/F-13 inserted the P1 observation-scope prerequisite, and the current
+> critical path is C-11 → MA-8/F-13 (COMPLETE) → external/operator
+> prerequisites → C-12 (PENDING, NOT authorized) → C-13 → C-14, with C-08b
+> organizationally blocked. See `docs/CURRENT_STATE.md` (`MA_8_F_13_STATUS`,
+> `AH_1_STATUS`, `C_12_STATUS`) for live authority.
+
 This plan is orthogonal to `docs/KIRO-CREW-INTEGRATION-MASTER-PLAN.md`, which
 covers optional external agent orchestration. This one covers product
 observability and system mapping; the two share no scope and neither depends

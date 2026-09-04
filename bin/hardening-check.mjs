@@ -2584,6 +2584,49 @@ function checkAlphausHandoffBoundary() {
     }
   }
 }
+/**
+ * AH-1 documentation-freshness invariants (narrow, against demonstrated
+ * failure modes — the 2026-09-01 header that survived MA-8 completion and
+ * the historical GREEN claimed as current CI truth).
+ */
+function checkDocumentationFreshness() {
+  const doc = 'docs/CURRENT_STATE.md';
+  const text = read(doc);
+  const lines = text.split('\n');
+  // --- the header date must cover the document's own last change ---
+  const headerDate = /Last updated: \*\*(\d{4}-\d{2}-\d{2})\*\*/.exec(lines.slice(0, 10).join('\n'));
+  if (headerDate === null) {
+    fail(`${doc} header must carry Last updated: **YYYY-MM-DD**`);
+  } else {
+    const touched = spawnSync('git', ['log', '-1', '--format=%ad', '--date=short', '--', doc], { cwd: root, encoding: 'utf8', env: childEnvironment, timeout: 10_000, maxBuffer: 512 * 1024 });
+    const touchDate = (touched.stdout ?? '').trim();
+    if (touched.status === 0 && /^\d{4}-\d{2}-\d{2}$/.test(touchDate) && headerDate[1] < touchDate) {
+      fail(`${doc} header date ${headerDate[1]} predates its own last change ${touchDate}; bump the header when the document changes`);
+    }
+  }
+  // --- MA-8 COMPLETE and MA-8 pending cannot both hold as current truth ---
+  if (/MA_8_F_13_STATUS[^|\n]*COMPLETE/.test(text)) {
+    lines.forEach((line, index) => {
+      if (/MA-8[^_a-zA-Z0-9].{0,50}\b(missing|pending|unimplemented|not started)\b/i.test(line)
+        && !/histor/i.test(line)
+        && !/Resolution \(/.test(lines.slice(Math.max(0, index - 2), index + 1).join('\n'))) {
+        fail(`${doc}:${index + 1} claims MA-8 pending while MA_8_F_13_STATUS is COMPLETE`);
+      }
+    });
+  }
+  // --- GREEN in the header must be framed as history, never as live CI ---
+  lines.slice(0, 30).forEach((line, index) => {
+    if (/\bGREEN\b/.test(line) && !/histor/i.test(lines.slice(Math.max(0, index - 1), index + 2).join('\n'))) {
+      fail(`${doc}:${index + 1} claims GREEN without historical framing in the live header`);
+    }
+  });
+  // --- C-12 is never documented READY ---
+  lines.forEach((line, index) => {
+    if (/C-12[^_a-zA-Z0-9].{0,40}\bREADY\b/i.test(line) && !/PENDING|BLOCKED|NOT authorized|never/i.test(line)) {
+      fail(`${doc}:${index + 1} documents C-12 READY; synthetic rehearsal READY must never read as live readiness`);
+    }
+  });
+}
 
 /**
  * C-02b protobuf source-intelligence invariants.
@@ -3552,6 +3595,7 @@ checkR11ProxyGateReliability();
 checkC11ProdObserveBoundary();
 checkP1ObservationScopeBoundary();
 checkAlphausHandoffBoundary();
+checkDocumentationFreshness();
 checkSyntax();
 
 if (errors.length > 0) {

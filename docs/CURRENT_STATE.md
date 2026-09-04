@@ -1,27 +1,17 @@
 # Nightwatch — CURRENT STATE
 
-> Durable memory for the next agent/session. Last updated: **2026-09-01** after
-> the owner-led DEV auth capture, one fresh replay-budget campaign, and final
-> local/clean closure validation.
-> The machine-checked project verdict remains `OPERATIONALLY_ACCEPTED`. The
-> predecessor repaired DVR-001 through DVR-012 across observation
-> settlement/capture, attribution, campaign checkpoint identity, executable
-> source identity, finding admission, and truthful terminal classification.
-> The successor then ran ten independent Phase 2C launchers, five Phase 4
-> explorations, five Phase 5 API cycles, and five fresh Phase 7 pairs.
-> M1 reached 56/60 observations with zero `BODY_UNAVAILABLE`; M2 reached the
-> account anchor 5/5 and verified 60/60 API attempts; M3 completed 21/25
-> work items and emitted eight fresh candidates in four campaigns.
-> The replay-budget successor completed one fresh guarded campaign with five
-> read-only work items, two protocol-only candidates rejected before candidate
-> replay, zero candidate attack replay, zero minimizations, and zero dossiers.
-> Final local and clean Node20 quality gates passed. GitHub Actions is no
-> longer a zero-step platform block and is GREEN. C-11's certification run is
-> `33665872548` / job `100367351818` at `150dfcc`, which passed all eleven
-> required groups on Node 20 with receipt `receipt:sha256:1d991b9a10d4cad618c0f533`,
-> `SEMANTIC_COMPATIBILITY` 2,032/2,019/13/0 and `SYNTHETIC_CAMPAIGN` 366/366.
-> R-11's run `33656654543` at `e11cf64` and C-10.5's `33635296271` at `29b9212`
-> are preserved as historical.
+> Durable memory for the next agent/session. Last updated: **2026-09-04**
+> during AH-1 (Alphaus finding handoff + C-12 operator readiness,
+> IN_PROGRESS). MA-8/F-13 is COMPLETE (implementation anchor `4642c16`,
+> integrated at `4ca990f`). The machine-checked project verdict remains
+> `OPERATIONALLY_ACCEPTED`.
+> GitHub Actions currently yields zero-step external blocks
+> (`NO_STEPS_EXTERNAL_NON_EVIDENCE` — `runner_id = 0`, empty runner name,
+> zero steps); the historical GREEN below (C-11 run `33665872548`) is
+> preserved as history, not current authority — see "Exact-head CI state".
+> The September-2026 history below (DEV auth capture, replay-budget
+> campaigns, DVR-001…DVR-012 repairs, 2C/Phase-4/Phase-5/Phase-7 runs) is
+> retained verbatim as historical record.
 ---
 
 ## What exists now
@@ -90,6 +80,9 @@ canonical `origin` remote. It reads the Alphaus repos under
 | `PHASE_12_YIELD_BACKTEST` | `VERIFIED_LOCAL_NOT_CI_VERIFIED` — fixed `corpus/phase12` 27 fixtures; phase12Minimized(16) > baselineMinimized(0); all floors 0; 3× determinism 0 mismatches |
 | `PHASE_DURABLE_ARTIFACT_AND_CONTROL_CENTER_TRUTH_HARDENING_V1_STATUS` | `COMPLETE_LOCAL_NOT_CI_VERIFIED` — source implementation anchor `01f2ac0608931b83aed0b5c948ed3a4471de7e01`, validated implementation/test checkpoint `c3d69039d4f2a9969118d877b432c6b4a2f5d09c`, and final documentation checkpoint `d2c606c26f598626f24dd94a11cb7fad18887607`; strict v1/v2 dossier runtime validation rejects all reproduced malformed nested mutations, the facade audit covers `14/14` registered kinds with `55/55` bounded mutations rejected, and one conservative findings currentness reducer governs raw, authority, projected, and collector paths; current-head local gate passed all `9` groups with semantic `1,903/1,890/13/0`, owner provenance `91`, synthetic campaign `66`, local receipt `receipt:sha256:b26864ec34f00438044c1076`, clean gate receipt `receipt:sha256:186a15aed5e9dbbd9c95ab1d`, and clean receipt `clean-receipt:sha256:d9c6c98dd7a83b0bab0a40d6`; final canonical serial Playwright passed `2,548/2,564` with `16` skips and `0` failures; external CI was not observed and is not claimed green; prohibited safety vectors remain zero |
 | `CAMPAIGN_C00_CONCURRENCY_WORKSPACE_HARDENING_STATUS` | see the C-00 section below; the durable invariant is `ONE_WRITING_AGENT == ONE_WORKTREE == ONE_SESSION_IDENTITY`, enforced by `bin/workspace-integrity.mjs`, `bin/nightwatch-session.mjs`, `agent:check`, and the required `WORKSPACE_INTEGRITY` quality-gate group (`docs/DECISIONS.md` D-101…D-104) |
+| `MA_8_F_13_STATUS` | `COMPLETE` — fifteen-gate `nightwatch.p1-observation-scope.v1` chain, one-shot `P1_OBSERVE` grants, external-only scope config, four-class attribution (UNKNOWN fails closed), bounded session, kill switch; implementation anchor `4642c16`, integrated at `4ca990f`; 128 focused P1 tests, 14/14 mutations detected, DEF-P1-1..3 closed; REPORT in `.agent/tasks/nightwatch-p1-observation-scope-ma8-v1/` |
+| `AH_1_STATUS` | `IN_PROGRESS` — `nightwatch.alphaus-finding-handoff.v1` projection + `nightwatch.c12-readiness.v1` preflight + CLI + runbook + Alphaus context doc + OpenSpec; 37/37 + 28/28 + 7/7 suites, 16/16 mutations detected / 0 survivors; implementation anchor `2a299cf`; full gate + integration pending (M6) |
+| `C_12_STATUS` | `PENDING_EXTERNAL_OWNER_PREREQUISITES` — NOT authorized, NOT begun; previous passive-only attempt ended BLOCKED with 0 qualifying sessions and 0 production contact (preserved as evidence); operator runbook at `docs/C12-OPERATOR-RUNBOOK.md`; preflight via `npm run c12:preflight` |
 | `PRE_C01_BASELINE` | `docs/design/PRE-C01-BASELINE.md` — pinned, clean, local/source-only census: `srcsnapshot:sha256:04ff583971865f335902f5ad`, `source-eligibility-census:sha256:2f97b732e0472df347f695a1` |
 
 > **Historical note (C-01 truncation truth).** Every `128 operations` row above that reports `62`, `83`, or `43` `responseContracts` (`responseContracts` = surfaces with `surface.contract.responseProof === 'PROVEN'` at `src/core/source/eligibilityCensus.ts:728` and `src/core/source/surfaces.ts`) was measured over the pre-C-01 silently capped 128-operation projection (`MAX_DISCOVERED_OPERATIONS = 128`). `83` is that metric at analyzer v3 (pre-hardening, before commit `15fe2c1`); `43` is the same metric at analyzer v4 (post-hardening, commit `15fe2c1`, snapshot `srcsnapshot:sha256:04ff583971865f335902f5ad`, discovery `source-surface-discovery:sha256:906830010ed198639d3c7b91`); 43+9+76=128 is the cap, not the real population. The first honest whole-population measurement under C-01 (`MAX_PROJECTED_OPERATIONS = 4096`, per-repository fair projection) is `58` of `223` (`routeOperationsFound: 223`, `routeOperationsTruncated: 0`, `responseContracts: 58`, `requestContracts: 222`, `routeProofs: 222`, `semanticContracts: 90`, `joinsAttempted: 223`, `joinsProven: 207`, `source-surface-discovery:sha256:21de18a23a387d7b816db3c0`); see `docs/DECISIONS.md` D-105 for the single durable resolution.
