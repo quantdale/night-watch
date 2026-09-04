@@ -34,35 +34,53 @@ implementation changes.
 
 ## Current Milestone
 
-M1 closing. Scaffolding written before any battery. M2–M8 remain.
+M5 — second topology, regression repetition, semantic/synthetic long runs.
 
 ## Completed Milestones
 
-- M1 (partial) — SPEC, PLAN, STATE, REPORT, OpenSpec change, ACTIVE_TASK and
-  EXECUTION_PROMPT routing, live-state block, session claimed at d3a464d.
+- M1 — SPEC, PLAN, STATE, REPORT, OpenSpec change, ACTIVE_TASK and
+  EXECUTION_PROMPT routing, live-state block, session claimed; truthful CI
+  non-evidence recorded in the machine block and prose (project:check PASS).
+- M2 — 12 fresh-process determinism observations byte-identical (§92);
+  source-scan repeatability covered by construction (§93).
+- M3 (partial) — order battery 597/597/597 (§94); lifecycle driver green:
+  temp 100/0, receipts 50/50 + fail-closed ×2, server 25 cycles fd-neutral,
+  workspace-integrity 25/25, worktrees 10/10, concurrent receipts 8×10 (§95,
+  §97). Port-collision repetition (§96) rides in M5.
+- M4 — 7 map-scale permutations → 1 digest (§98); 9 seeded properties × 200
+  iters = 1,801 checks, 0 failures (§99); DEF-R13-1 (probe-side) found and
+  fixed, implementation untouched.
 
 ## Work In Progress
 
-M1 — finishing the routing updates, then M2 determinism harness in /tmp/r13.
+M5 — Clean B clone, canonical regression ×3, semantic-compat + synthetic
+long runs, R-11 lease suite repetition.
 
 ## Exact Next Action
 
-Finish M1 routing (ACTIVE_TASK, EXECUTION_PROMPT, CURRENT_STATE live block),
-run agent:check/project:check, then build the /tmp/r13 determinism harness
-and execute M2.
+Create Clean B worktree in a different parent dir and run the endorsed
+subset; launch regression pass 1.
 
 ## Files Changed
 
 - `.agent/tasks/nightwatch-overnight-reliability-r13-v1/{SPEC,PLAN,STATE,REPORT}.md` — new
-- `openspec/changes/nightwatch-overnight-reliability-r13-v1/` — new
+- `openspec/changes/nightwatch-overnight-reliability-r13-v1/` — new (proposal, design, audit, tasks, specs)
+- `.agent/ACTIVE_TASK.md`, `.agent/EXECUTION_PROMPT.md` — routed to R-13
+- `docs/CURRENT_STATE.md` — live-state block to R-13; CI non-evidence truth
+- `config/campaign-certification.v1.json` — R-13 declared with `"suites": []` + reason
 
 ## Validation Ledger
 
 | Check | Result |
 |---|---|
-| `npm run session:status` | PASS (canonical, before start) |
-| Session claim | PASS — sess-b9eb2566a6dd, base d3a464d |
-| Full gate battery | NOT RUN YET — M7/M8 |
+| determinism ×12 (§92) | PASS — byte-identical |
+| source-scan repeatability (§93) | PASS — by construction |
+| order battery ×3 (§94) | PASS — 597/597/597 |
+| lifecycle driver (§95, §97) | PASS — temp 100/0, receipts 50/50, server fd-neutral, integrity 25/25, worktrees 10/10, concurrent 8×10 |
+| map scale ×7 (§98) | PASS — 1 digest |
+| properties 9×200 (§99) | PASS — 1,801 checks, 0 failures |
+| agent:check / project:check | PASS (M1); re-run at M7 |
+| Full gate battery | NOT RUN YET — M7 |
 
 ## Decisions Made During This Task
 
@@ -73,6 +91,14 @@ Probes live in /tmp/r13, never in the repo tree (SPEC rationale recorded).
 - C-15c exact-head CI (run 33833574821, attempts 1–4): EXTERNAL_BLOCKER with
   an identical no-runner/zero-step/no-annotation signature; workflow file
   byte-identical to the last green run. Recorded in SPEC predecessor truth.
+- DEF-R13-2 (process, repaired): a relative-path edit to
+  `config/campaign-certification.v1.json` resolved against the session cwd
+  and landed in the CANONICAL checkout instead of this worktree — a C-00
+  write-authority violation caught by `git status` before anything else.
+  Repair: single-file `git checkout --` of my own edit in canonical
+  (verified clean after), re-applied via absolute path here. Prevention:
+  absolute worktree paths on every edit; verify `git status` in ALL trees
+  after each edit batch.
 - C-06G gate assessed from the C-03 REPORT (service topology PROVEN but
   ouchan enumeration TRUNCATED, `repositoryCompleteProof: false`):
   `C06G_BLOCKED_BY_METHOD_BINDING_OR_INVENTORY_COMPLETENESS`.

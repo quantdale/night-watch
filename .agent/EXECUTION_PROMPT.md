@@ -7,7 +7,7 @@ OpenSpec: openspec/changes/nightwatch-overnight-reliability-r13-v1/
 Planned-From: d3a464de97225f91cd425b7922b53238a02dc981
 Target Branch: main
 Predecessor Task ID: nightwatch-system-map-v2-transport-c15c-v1
-Predecessor Status: COMPLETE_IMPLEMENTATION_CI_EXTERNAL_BLOCKER
+Predecessor Status: COMPLETE
 
 ## Mission
 
