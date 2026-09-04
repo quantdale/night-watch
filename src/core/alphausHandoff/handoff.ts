@@ -21,6 +21,7 @@ import type {
 } from './types';
 import {
   ALPHAUS_FINDING_HANDOFF_VERSION,
+  ALPHAUS_SEVERITY_EVIDENCE_CLASSES,
   ALPHAUS_SEVERITY_VALUES,
   ALPHAUS_CATCH_STAGE_VALUES,
   ALPHAUS_SOURCE_VALUES,
@@ -41,19 +42,24 @@ const MAX_DRAFT_TEXT = 4000;
 const REPRODUCTION_RESULTS = ['REPRODUCED', 'NOT_REPRODUCED', 'BOUNDED', 'INCOMPLETE'] as const;
 const EVIDENCE_LEVELS = ['L0', 'L1', 'L2', 'L3', 'L4', 'L5'] as const;
 /** AI-review-admissible evidence levels: excludes L0/L1/L4/L5 (triage fact rule). */
-const RECOMMENDATION_EVIDENCE_LEVELS: ReadonlySet<string> = new Set(['L2', 'L3']);
-const OBSERVATION_STAGES: ReadonlySet<string> = new Set(['LOCAL', 'DEV', 'NEXT', 'PRODUCTION', 'SOURCE_ANALYSIS']);
-const SEVERITY_EVIDENCE: ReadonlySet<string> = new Set([
-  'TOTAL_INABILITY_TO_USE_OR_TEST',
-  'AUTHENTICATION_IMPOSSIBLE_CONFIRMED',
-  'DATA_LOSS_CONFIRMED',
-  'SECURITY_IMPACT_CONFIRMED',
-  'DATA_CORRECTNESS_IMPACT_CONFIRMED',
-  'INVOICING_FAILURE_CONFIRMED',
-  'INTERMITTENT_KEY_FEATURE_FAILURE',
-  'KEY_FUNCTION_TIMEOUT_CONFIRMED',
-  'COSMETIC_ONLY_CONFIRMED',
-]);
+const RECOMMENDATION_EVIDENCE_LEVELS: Record<string, true> = { L2: true, L3: true };
+const OBSERVATION_STAGES: Record<string, true> = { LOCAL: true, DEV: true, NEXT: true, PRODUCTION: true, SOURCE_ANALYSIS: true };
+const SEVERITY_EVIDENCE: Record<string, true> = Object.fromEntries(
+  ALPHAUS_SEVERITY_EVIDENCE_CLASSES.map((item) => [item, true]),
+);
+const FAULT_BOUNDARIES: Record<string, true> = {
+  AUTH: true,
+  ROUTER: true,
+  UI_COMPONENT: true,
+  CLIENT_STATE: true,
+  API_CLIENT: true,
+  API_TRANSPORT: true,
+  BACKEND_HANDLER: true,
+  PROTOCOL: true,
+  RESOURCE_LOADING: true,
+  UNKNOWN: true,
+};
+const CONFIDENCE_LEVELS: Record<string, true> = { HIGH: true, MEDIUM: true, LOW: true, UNRESOLVED: true };
 
 function invalid(reason: string): never {
   throw new Error(`ALPHAUS_HANDOFF_INVALID:${reason}`);
@@ -122,6 +128,8 @@ function severityRank(evidence: AlphausSeverityEvidenceClass): AlphausSeverityVa
       return 'major';
     case 'COSMETIC_ONLY_CONFIRMED':
       return 'minor';
+    default:
+      invalid('SEVERITY_RANK_UNREACHABLE');
   }
 }
 
@@ -138,7 +146,7 @@ function severityRecommendation(
   provenance: string,
 ): AlphausRecommendation<AlphausSeverityValue> {
   for (const item of evidence) {
-    if (!SEVERITY_EVIDENCE.has(item)) invalid('SEVERITY_EVIDENCE_CLASS');
+    if (SEVERITY_EVIDENCE[item] !== true) invalid('SEVERITY_EVIDENCE_CLASS');
   }
   if (evidence.length === 0) {
     return { value: 'UNKNOWN', basis: 'no observed consequence class asserted', provenance: 'none' };
@@ -146,7 +154,7 @@ function severityRecommendation(
   if (dossier.status !== 'READY') {
     return { value: 'UNKNOWN', basis: 'dossier is not READY; consequence evidence without an admitted finding proves nothing', provenance: 'none' };
   }
-  if (!RECOMMENDATION_EVIDENCE_LEVELS.has(dossier.evidenceLevel)) {
+  if (RECOMMENDATION_EVIDENCE_LEVELS[dossier.evidenceLevel] !== true) {
     return {
       value: 'UNKNOWN',
       basis: `evidence level ${dossier.evidenceLevel} cannot carry a severity recommendation (requires L2/L3)`,
@@ -172,7 +180,7 @@ function catchStageRecommendation(
   stage: AlphausObservationStage,
   outageEvidence: boolean,
 ): AlphausRecommendation<AlphausCatchStageValue> {
-  if (!OBSERVATION_STAGES.has(stage)) invalid('OBSERVATION_STAGE');
+  if (OBSERVATION_STAGES[stage] !== true) invalid('OBSERVATION_STAGE');
   switch (stage) {
     case 'PRODUCTION':
       return outageEvidence
@@ -236,7 +244,12 @@ function facts(input: AlphausHandoffInput): AlphausFindingFacts {
   assertNoSentinels(dossier, 'dossier');
   if (!REPRODUCTION_RESULTS.includes(dossier.reproduction?.result)) invalid('REPRODUCTION_RESULT');
   if (!MINIMALITY_GUARANTEES.includes(dossier.reproduction?.minimalityGuarantee)) invalid('MINIMALITY_GUARANTEE');
+  if (!Number.isInteger(dossier.reproduction?.count) || dossier.reproduction.count < 0 || dossier.reproduction.count > 1000000) {
+    invalid('REPRODUCTION_COUNT');
+  }
   if (!EVIDENCE_LEVELS.includes(dossier.evidenceLevel)) invalid('EVIDENCE_LEVEL');
+  if (FAULT_BOUNDARIES[dossier.likelyFaultBoundary?.primaryBoundary] !== true) invalid('FAULT_BOUNDARY');
+  if (CONFIDENCE_LEVELS[dossier.confidence?.level] !== true) invalid('CONFIDENCE_LEVEL');
   const evidenceRefs = bugDraft ? textList(bugDraft.evidenceRefs, 'EVIDENCE_REF', 200) : [];
   const sourceRefs = bugDraft ? textList(bugDraft.sourceRefs, 'SOURCE_REF', 200) : [];
   return {
@@ -307,7 +320,7 @@ export function projectAlphausFindingHandoff(input: AlphausHandoffInput): Alphau
   if (input === null || typeof input !== 'object') invalid('INPUT_SHAPE');
   const { dossier, observationProvenance, severityEvidence, severityProvenance, classRemovalEvidence } = input;
   if (observationProvenance === null || typeof observationProvenance !== 'object') invalid('OBSERVATION_PROVENANCE_SHAPE');
-  if (!OBSERVATION_STAGES.has(observationProvenance.stage)) invalid('OBSERVATION_STAGE');
+  if (OBSERVATION_STAGES[observationProvenance.stage] !== true) invalid('OBSERVATION_STAGE');
   if (typeof observationProvenance.outageEvidence !== 'boolean') invalid('OUTAGE_EVIDENCE_SHAPE');
   if (typeof observationProvenance.customerReported !== 'boolean') invalid('CUSTOMER_REPORTED_SHAPE');
   const customerReportRef =

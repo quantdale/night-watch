@@ -406,5 +406,20 @@ test.describe('AH-1 authority and scoring exclusion', () => {
     );
     const badLevel = { ...(await dossierFixture()), evidenceLevel: 'L9' } as unknown as BugDossier;
     expect(() => projectAlphausFindingHandoff({ ...base, dossier: badLevel })).toThrow('ALPHAUS_HANDOFF_INVALID:EVIDENCE_LEVEL');
+    const badCount = {
+      ...(await dossierFixture()),
+      reproduction: { result: 'REPRODUCED', count: -1, minimalityGuarantee: '1-MINIMAL' },
+    } as unknown as BugDossier;
+    expect(() => projectAlphausFindingHandoff({ ...base, dossier: badCount })).toThrow(
+      'ALPHAUS_HANDOFF_INVALID:REPRODUCTION_COUNT',
+    );
+    const badBoundary = { ...(await dossierFixture()), likelyFaultBoundary: { primaryBoundary: 'MADE_UP' } } as unknown as BugDossier;
+    expect(() => projectAlphausFindingHandoff({ ...base, dossier: badBoundary })).toThrow(
+      'ALPHAUS_HANDOFF_INVALID:FAULT_BOUNDARY',
+    );
+    const badConfidence = { ...(await dossierFixture()), confidence: { level: 'CERTAIN' } } as unknown as BugDossier;
+    expect(() => projectAlphausFindingHandoff({ ...base, dossier: badConfidence })).toThrow(
+      'ALPHAUS_HANDOFF_INVALID:CONFIDENCE_LEVEL',
+    );
   });
 });
