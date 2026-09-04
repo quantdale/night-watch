@@ -41,8 +41,6 @@ import { isAdmittedP1Host, type P1ScopeConfig } from './scopeConfig';
 import { evaluateP1KillSwitch, type P1KillSwitchProbe } from './killSwitch';
 import { assertProductionCone, type PrivacyPolicy } from '../prodPrivacy/policy';
 
-export const P1_OBSERVATION_SCOPE_VERSION = 'nightwatch.p1-observation-scope.v1' as const;
-
 const PQ_RECEIPT_DIGEST_RE = /^receipt:sha256:[0-9a-f]{64}$/;
 
 export interface P1AdmissionInput {

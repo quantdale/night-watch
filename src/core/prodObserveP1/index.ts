@@ -78,7 +78,6 @@ export {
   type P1KillSwitchState,
 } from './killSwitch';
 export {
-  P1_OBSERVATION_SCOPE_VERSION,
   evaluateP1ObservationScope,
   p1ScopeChainDefinitionDigest,
   type P1AdmissionInput,
