@@ -2529,6 +2529,61 @@ function checkP1ObservationScopeBoundary() {
   }
 
 }
+/**
+ * AH-1 finding-handoff and C-12 readiness invariants.
+ *
+ * Two new pure cones: `src/core/alphausHandoff/` (BugDossier projection to a
+ * human-review artifact) and `src/core/c12Readiness/` (local-only advisory
+ * preflight). Both must stay import-isolated, transport-free, and free of
+ * any external-submission or bounty-scoring surface.
+ */
+function checkAlphausHandoffBoundary() {
+  const cones = ['src/core/alphausHandoff', 'src/core/c12Readiness'];
+  for (const coneDirectory of cones) {
+    const coneFiles = gitFiles().filter((file) => file.startsWith(`${coneDirectory}/`) && file.endsWith('.ts'));
+    if (coneFiles.length === 0) {
+      fail(`AH-1 the ${coneDirectory} cone is missing`);
+      return;
+    }
+    for (const file of coneFiles) {
+      const source = withoutComments(read(file));
+      for (const [pattern, description] of [
+        [/from\s+['"]node:(?:net|http|https|dns|child_process|fs)['"]/, 'a network/process/filesystem client'],
+        [/from\s+['"][^'"]*browser\//, 'the browser cone'],
+        [/from\s+['"][^'"]*campaign\//, 'the campaign execution path'],
+        [/from\s+['"][^'"]*auth\//, 'the auth cone'],
+        [/from\s+['"][^'"]*prodObserveP1/, 'the P1 machinery (preflight/handoff stay decoupled; tests may still import P1)'],
+        [/from\s+['"][^'"]*core\/prodObserve[^P]/, 'the C-11 request chain'],
+        [/\bfetch\s*\(/, 'fetch()'],
+        [/storageState/, 'a storage-state path'],
+        [/from\s+['"][^'"]*(slack|leslie|pondr)[^'"]*['"]/i, 'an external submission import'],
+        [/(Slack|Leslie|Pondr)(Client|Webhook|Api|API|Message|Ticket|Issue)|postTo(Slack|Leslie|Pondr)|file(Leslie|Pondr|Slack)Report|create(GitHub|Slack|Pondr)(Issue|Message|Task)/, 'an external submission connector'],
+        [/expectedPoints|estimatedReward|rewardTier|bountyPoints|bountyScore|calculateBounty|bountyCalculator/i, 'a bounty-scoring surface'],
+      ]) if (pattern.test(source)) fail(`${file} contains ${description}; the AH-1 cones must stay isolated from it`);
+    }
+  }
+  const handoffTypes = withoutComments(read('src/core/alphausHandoff/types.ts'));
+  const handoff = withoutComments(read('src/core/alphausHandoff/handoff.ts'));
+  if (!handoff.includes('BugDossier')) fail('AH-1 the handoff must project the canonical BugDossier, not a parallel finding model');
+  for (const token of ['humanReviewRequired', 'PROHIBITED', 'nightwatch.alphaus-finding-handoff.v1']) {
+    if (!handoff.includes(token) && !handoffTypes.includes(token)) fail(`AH-1 the handoff cone must retain ${token}`);
+  }
+  const preflightTypes = withoutComments(read('src/core/c12Readiness/types.ts'));
+  const preflight = withoutComments(read('src/core/c12Readiness/preflight.ts'));
+  for (const token of ['BLOCKED_DEPLOYMENT_FACT', 'BLOCKED_OPERATOR_SUBJECT', 'nightwatch.c12-readiness.v1']) {
+    if (!preflight.includes(token) && !preflightTypes.includes(token)) fail(`AH-1 the preflight cone must retain ${token}`);
+  }
+  if (/consumeP1ObserveGrant|issueP1ObserveGrant|loadP1ScopeConfig/.test(preflight)) {
+    fail('AH-1 the preflight must inspect descriptors only; it never consumes grants or loads live scope configs');
+  }
+  for (const file of gitFiles()) {
+    if (!file.endsWith('.ts') || file.startsWith('tests/') || file.startsWith('src/core/alphausHandoff/') || file.startsWith('src/core/c12Readiness/')) continue;
+    const source = withoutComments(read(file));
+    if (/from\s+['"][^'"]*core\/(alphausHandoff|c12Readiness)/.test(source)) {
+      fail(`${file} imports AH-1 machinery; only the AH-1 cones and tests/** may reach it`);
+    }
+  }
+}
 
 /**
  * C-02b protobuf source-intelligence invariants.
@@ -3496,6 +3551,7 @@ checkC105ProvenanceAuthorityBoundary();
 checkR11ProxyGateReliability();
 checkC11ProdObserveBoundary();
 checkP1ObservationScopeBoundary();
+checkAlphausHandoffBoundary();
 checkSyntax();
 
 if (errors.length > 0) {

@@ -169,6 +169,14 @@
         "tests/unit/p1StateMachine.test.ts",
         "tests/unit/p1MockSubject.test.ts"
       ]
+    },
+    {
+      "id": "AH-1",
+      "task": "nightwatch-alphaus-finding-handoff-c12-readiness-v1",
+      "suites": [
+        "tests/unit/alphausFindingHandoff.test.ts",
+        "tests/unit/c12ReadinessPreflight.test.ts"
+      ]
     }
   ]
 }
