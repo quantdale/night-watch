@@ -102,6 +102,11 @@ guards, zero from P1 suites); synthetic lane 1050/1050 PASS with
 `gate:local`: 4/4 pre-PROJECT_TRUTH groups PASS; PROJECT_TRUTH fails closed
 on the expected mid-campaign baseline staleness (resolves at M7 close).
 
+Close-out head `05bd7ad` (session branch; integration follows): `gate:local`
+FULL PASS — all eleven required groups green with receipt
+`receipt:sha256:3a6cefdd1ea57fc65e74b6d7` (SEMANTIC 2033/2020/13/0, OWNER
+91/91, SYNTHETIC 1051/1051/0, PROJECT_TRUTH/HANDOFF/AGENT/WORKSPACE PASS).
+
 ## Check conformance notes (mid-campaign, expected)
 
 - `agent:check` PASS (warnings: legitimate CHECKPOINT_ADVANCE for docs-only
