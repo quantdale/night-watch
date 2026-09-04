@@ -1,7 +1,7 @@
 # EXECUTION PROMPT — MA-8 / F-13 P1 Observation-Scope Prerequisite
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
-Status: IN_PROGRESS
+Status: COMPLETE
 Campaign ID: nightwatch-p1-observation-scope-ma8-v1
 OpenSpec: openspec/changes/nightwatch-p1-observation-scope-ma8-v1/
 Planned-From: 0195a39e60e82b80439ec10ad5a36453804fe030
