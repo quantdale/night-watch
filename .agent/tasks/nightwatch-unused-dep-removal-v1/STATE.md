@@ -46,7 +46,7 @@ NONE — M1 through M3 closed. No open work.
 
 ## Exact Next Action
 
-STOP. Campaign COMPLETE. Do not resume.
+STOP. Campaign COMPLETE. No further action on this task.
 
 ## Files Changed
 
