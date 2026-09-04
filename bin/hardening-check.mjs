@@ -2593,10 +2593,12 @@ function checkAlphausHandoffBoundary() {
     }
   }
 }
+
 /**
  * AH-1 documentation-freshness invariants (narrow, against demonstrated
  * failure modes — the 2026-09-01 header that survived MA-8 completion and
- * the historical GREEN claimed as current CI truth).
+ * the historical GREEN claimed as current CI truth). Header dates are UTC
+ * calendar days to stay independent of committer timezone.
  */
 function checkDocumentationFreshness() {
   const doc = 'docs/CURRENT_STATE.md';
@@ -2607,8 +2609,9 @@ function checkDocumentationFreshness() {
   if (headerDate === null) {
     fail(`${doc} header must carry Last updated: **YYYY-MM-DD**`);
   } else {
-    const touched = spawnSync('git', ['log', '-1', '--format=%ad', '--date=short', '--', doc], { cwd: root, encoding: 'utf8', env: childEnvironment, timeout: 10_000, maxBuffer: 512 * 1024 });
-    const touchDate = (touched.stdout ?? '').trim();
+    const touched = spawnSync('git', ['log', '-1', '--format=%ad', '--date=unix', '--', doc], { cwd: root, encoding: 'utf8', env: childEnvironment, timeout: 10_000, maxBuffer: 512 * 1024 });
+    const touchSeconds = Number((touched.stdout ?? '').trim());
+    const touchDate = Number.isFinite(touchSeconds) && touchSeconds > 0 ? new Date(touchSeconds * 1000).toISOString().slice(0, 10) : '';
     if (touched.status === 0 && /^\d{4}-\d{2}-\d{2}$/.test(touchDate) && headerDate[1] < touchDate) {
       fail(`${doc} header date ${headerDate[1]} predates its own last change ${touchDate}; bump the header when the document changes`);
     }
