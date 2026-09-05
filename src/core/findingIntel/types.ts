@@ -106,14 +106,36 @@ export interface RelationshipResult {
   readonly finalVerdictAuthority: 'HUMAN_ORGANIZATIONAL';
 }
 
-/** One mechanical history entry for recurrence analysis. */
+/**
+ * One mechanical history entry for recurrence analysis.
+ *
+ * Every identity here belongs to the OBSERVATION this entry represents, and
+ * none of it is optional in the type. An identity that was never established
+ * is written `null` at the call site, deliberately: a producer that has to
+ * type `null` has stated that it does not know, whereas a producer that omits
+ * an optional field has stated nothing, and the two are indistinguishable
+ * downstream. `sourceSha` in particular was fabricated as forty zeroes by the
+ * one producer in the repository until it was made to say what it meant.
+ */
 export interface IntelHistoryEntry {
   readonly findingId: string;
   readonly fingerprint: string | null;
   readonly campaignId: string;
   /** Unix milliseconds; chronology binds on this, never on prose. */
   readonly observedAtMs: number;
+  /**
+   * Source identity of THIS observation. A real commit SHA, or the
+   * `synthetic.<name>` form that names an absence. Never the repository's
+   * current HEAD, which is a fact about now and not about the observation.
+   */
   readonly sourceSha: string;
+  /**
+   * The mechanically established expectation identity of this observation, or
+   * null. Carried from upstream evidence; never derived from prose.
+   */
+  readonly expectationId: string | null;
+  /** The semantic contract / invariant identity, on the same terms. */
+  readonly semanticContractId: string | null;
   /** Terminal outcome of the earlier finding where known. */
   readonly priorOutcome: 'OPEN' | 'RESOLVED_FIXED' | 'RESOLVED_OTHER' | 'REJECTED' | 'UNKNOWN';
 }

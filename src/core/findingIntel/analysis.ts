@@ -41,18 +41,84 @@ function assertHistoryEntry(value: unknown, index: number): asserts value is Int
   if (typeof record.campaignId !== 'string' || !ID_RE.test(record.campaignId)) fail(`FINDING_INTEL_INVALID_HISTORY:${index}.campaignId`);
   if (!Number.isInteger(record.observedAtMs) || (record.observedAtMs as number) < 0) fail(`FINDING_INTEL_INVALID_HISTORY:${index}.observedAtMs`);
   if (typeof record.sourceSha !== 'string' || !SHA_RE.test(record.sourceSha)) fail(`FINDING_INTEL_INVALID_HISTORY:${index}.sourceSha`);
+  // Required in the type and validated here, so "unknown" is a value a
+  // producer had to write rather than a field it could forget.
+  assertOptionalIdentity(record.expectationId, `${index}.expectationId`);
+  assertOptionalIdentity(record.semanticContractId, `${index}.semanticContractId`);
   if (!['OPEN', 'RESOLVED_FIXED', 'RESOLVED_OTHER', 'REJECTED', 'UNKNOWN'].includes(record.priorOutcome as string)) {
     fail(`FINDING_INTEL_INVALID_HISTORY:${index}.priorOutcome`);
   }
 }
 
+/** A carried identity or an explicit absence. Never undefined, never derived. */
+function assertOptionalIdentity(value: unknown, field: string): void {
+  if (value === null) return;
+  if (typeof value !== 'string' || !ID_RE.test(value) || isIntelValueForbidden(value)) {
+    fail(`FINDING_INTEL_INVALID_HISTORY:${field}`);
+  }
+}
+
 /**
- * Classify recurrence of `finding` against mechanical history. Never infers
- * from prose: matches require identical sanitized fingerprints, and
- * chronology requires ordered observedAtMs timestamps.
+ * Whether two observations' semantic identities CONTRADICT each other.
+ *
+ * Contradiction requires evidence on both sides: two established identities
+ * that differ. A missing identity contradicts nothing — it is the absence of
+ * evidence, and treating it as counterevidence would let an unenriched v1
+ * dossier silently suppress a real recurrence.
+ *
+ * Contract identity is checked before expectation identity because the
+ * contract is the stronger claim; where both exist and either disagrees, the
+ * observations are about different invariants.
+ */
+function semanticIdentitiesContradict(
+  left: { readonly expectationId: string | null; readonly semanticContractId: string | null },
+  right: { readonly expectationId: string | null; readonly semanticContractId: string | null }
+): boolean {
+  if (left.semanticContractId !== null && right.semanticContractId !== null && left.semanticContractId !== right.semanticContractId) return true;
+  if (left.expectationId !== null && right.expectationId !== null && left.expectationId !== right.expectationId) return true;
+  return false;
+}
+
+/** The observation being classified, with the identities it can prove. */
+export interface RecurrenceCandidate {
+  readonly findingId: string;
+  readonly fingerprint: string | null;
+  readonly campaignId: string;
+  readonly observedAtMs: number;
+  /**
+   * Source identity of THIS observation, or null when none is established.
+   *
+   * Optional in the type only for the callers that genuinely have none. Its
+   * absence is not neutral: without it, source movement cannot be proven, and
+   * REGRESSION_CANDIDATE requires proven movement. An absent source SHA
+   * therefore yields the WEAKER answer, never the stronger one.
+   */
+  readonly sourceSha?: string | null;
+  readonly expectationId?: string | null;
+  readonly semanticContractId?: string | null;
+}
+
+/**
+ * Classify recurrence of `finding` against mechanical history.
+ *
+ * Never infers from prose. Fingerprint identity is the ONLY match key, and it
+ * stays that way: semantic identity enters as counterevidence and as
+ * corroboration, never as a second way to declare two findings the same.
+ * Admitting it as a match key is how a defect-class boundary gets collapsed.
+ *
+ * Two rules are stricter than they were, and neither is looser:
+ *
+ * - A history entry whose semantic identity CONTRADICTS the candidate's is
+ *   not a match. Same fingerprint, different proven invariant, is a
+ *   fingerprint collision and not a recurrence.
+ * - REGRESSION_CANDIDATE requires what its own definition claims: a proven
+ *   prior fix AND a source lineage that actually moved. It used to test
+ *   `latest.sourceSha !== undefined`, which `assertHistoryEntry` had already
+ *   guaranteed — a conjunct that could not fail, standing in for the one
+ *   check that mattered (DEF-RO-2).
  */
 export function classifyRecurrence(
-  finding: Pick<IntelFindingDescriptor, 'findingId' | 'fingerprint'> & { readonly campaignId: string; readonly observedAtMs: number },
+  finding: RecurrenceCandidate,
   history: readonly IntelHistoryEntry[] | null,
 ): RecurrenceResult {
   if (typeof finding.findingId !== 'string' || !ID_RE.test(finding.findingId) || isIntelValueForbidden(finding.findingId)) {
@@ -63,37 +129,75 @@ export function classifyRecurrence(
     fail('FINDING_INTEL_INVALID_FINDING');
   }
   if (!Number.isInteger(finding.observedAtMs) || finding.observedAtMs < 0) fail('FINDING_INTEL_INVALID_FINDING');
+  const candidateSourceSha = finding.sourceSha ?? null;
+  if (candidateSourceSha !== null && (typeof candidateSourceSha !== 'string' || !SHA_RE.test(candidateSourceSha))) {
+    fail('FINDING_INTEL_INVALID_FINDING');
+  }
+  const candidateIdentity = {
+    expectationId: finding.expectationId ?? null,
+    semanticContractId: finding.semanticContractId ?? null,
+  };
+  if (candidateIdentity.expectationId !== null && (!ID_RE.test(candidateIdentity.expectationId) || isIntelValueForbidden(candidateIdentity.expectationId))) {
+    fail('FINDING_INTEL_INVALID_FINDING');
+  }
+  if (candidateIdentity.semanticContractId !== null && (!ID_RE.test(candidateIdentity.semanticContractId) || isIntelValueForbidden(candidateIdentity.semanticContractId))) {
+    fail('FINDING_INTEL_INVALID_FINDING');
+  }
   if (history === null) {
     return { schemaVersion: FINDING_INTEL_VERSION, recurrence: 'UNKNOWN_HISTORY', evidence: ['no history available'], priorFindingId: null };
   }
   if (!Array.isArray(history)) fail('FINDING_INTEL_INVALID_HISTORY');
   history.forEach(assertHistoryEntry);
   const ordered = [...history].sort((a, b) => a.observedAtMs - b.observedAtMs || (a.findingId < b.findingId ? -1 : 1));
-  const matches = ordered.filter((entry) => finding.fingerprint !== null && entry.fingerprint === finding.fingerprint);
+  const fingerprinted = ordered.filter((entry) => finding.fingerprint !== null && entry.fingerprint === finding.fingerprint);
+  const contradicted = fingerprinted.filter((entry) => semanticIdentitiesContradict(candidateIdentity, entry));
+  const matches = fingerprinted.filter((entry) => !semanticIdentitiesContradict(candidateIdentity, entry));
   if (matches.length === 0) {
     return {
       schemaVersion: FINDING_INTEL_VERSION,
       recurrence: 'FIRST_SEEN',
-      evidence: [`no earlier entry shares fingerprint in ${ordered.length} history entries`],
+      evidence:
+        contradicted.length === 0
+          ? [`no earlier entry shares fingerprint in ${ordered.length} history entries`]
+          : [
+              `no earlier entry shares fingerprint and invariant in ${ordered.length} history entries`,
+              `${contradicted.length} fingerprint match(es) rejected on a contradicting invariant identity`,
+            ],
       priorFindingId: null,
     };
   }
   const latest = matches[matches.length - 1] as IntelHistoryEntry;
+  const corroboration =
+    (candidateIdentity.semanticContractId !== null && candidateIdentity.semanticContractId === latest.semanticContractId) ||
+    (candidateIdentity.expectationId !== null && candidateIdentity.expectationId === latest.expectationId)
+      ? ['prior entry shares the same proven invariant identity']
+      : [];
   if (latest.campaignId === finding.campaignId) {
     return {
       schemaVersion: FINDING_INTEL_VERSION,
       recurrence: 'KNOWN_EXISTING',
-      evidence: [`fingerprint already admitted in campaign ${latest.campaignId} as ${latest.findingId}`],
+      evidence: [`fingerprint already admitted in campaign ${latest.campaignId} as ${latest.findingId}`, ...corroboration],
       priorFindingId: latest.findingId,
     };
   }
-  if (latest.priorOutcome === 'RESOLVED_FIXED' && latest.sourceSha !== undefined) {
+  // DEF-RO-2. A regression candidate is a claim that something FIXED came
+  // back, which requires two facts and not one: the prior finding was proven
+  // fixed, and the source it was fixed at is not the source observed now.
+  // Where the candidate carries no source identity, movement is unproven and
+  // the weaker answer is the honest one.
+  //
+  // A stored local review decision is not, and can never be, one of these
+  // facts. `priorOutcome` is the only evidence of remediation this cone
+  // accepts, and nothing in the review store writes it.
+  const sourceMoved = candidateSourceSha !== null && latest.sourceSha !== candidateSourceSha;
+  if (latest.priorOutcome === 'RESOLVED_FIXED' && sourceMoved) {
     return {
       schemaVersion: FINDING_INTEL_VERSION,
       recurrence: 'REGRESSION_CANDIDATE',
       evidence: [
         `fingerprint reappears after ${latest.findingId} resolved fixed`,
-        `prior source ${latest.sourceSha}`,
+        `source lineage moved from ${latest.sourceSha} to ${candidateSourceSha}`,
+        ...corroboration,
       ],
       priorFindingId: latest.findingId,
     };
@@ -101,7 +205,17 @@ export function classifyRecurrence(
   return {
     schemaVersion: FINDING_INTEL_VERSION,
     recurrence: 'RECURRENT',
-    evidence: [`fingerprint seen in ${matches.length} earlier entries; latest ${latest.findingId} in campaign ${latest.campaignId}`],
+    evidence: [
+      `fingerprint seen in ${matches.length} earlier entries; latest ${latest.findingId} in campaign ${latest.campaignId}`,
+      ...(latest.priorOutcome === 'RESOLVED_FIXED' && !sourceMoved
+        ? [
+            candidateSourceSha === null
+              ? 'not a regression candidate: the observation carries no source identity, so movement is unproven'
+              : `not a regression candidate: source lineage did not move from ${latest.sourceSha}`,
+          ]
+        : []),
+      ...corroboration,
+    ],
     priorFindingId: latest.findingId,
   };
 }

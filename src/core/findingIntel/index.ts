@@ -29,4 +29,5 @@ export {
   provenanceCapsConfidence,
   strongestProvenance,
   type DefectClassInput,
+  type RecurrenceCandidate,
 } from './analysis';

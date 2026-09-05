@@ -34,6 +34,7 @@ import {
   type RelationshipResult,
 } from '../../core/findingIntel';
 import type { FindingsDossierMetadata } from './findingsAuthority';
+import { CONTROL_CENTER_REVIEW_NO_SOURCE } from './reviewBinding';
 import type { ReviewerFindingInput, ReviewerLocalReviewInput, ReviewerProjectionInput } from '../adapters/reviewerAdapter';
 import { safePublicId } from '../adapters/common';
 
@@ -66,12 +67,24 @@ const CONFIDENCE_MAP: Readonly<Record<string, string>> = Object.freeze({
 });
 
 const FINGERPRINT_RE = /^fp:sha256:[a-f0-9]{12,64}$/i;
+const SOURCE_SHA_RE = /^[0-9a-f]{40}$/;
 const ID_RE = /^[A-Za-z0-9_.:/-]{1,160}$/;
 
 export interface ReviewerAuthorityInput {
   readonly dossiers: readonly FindingsDossierMetadata[];
   /** Campaign identity for recurrence chronology; UNKNOWN_HISTORY without it. */
   readonly campaignId: string | null;
+  /**
+   * Source identity of the observations in this snapshot.
+   *
+   * The SAME value the review binding records, imported from the same module
+   * rather than re-derived, so a finding's history entry and its review
+   * binding can never disagree about what was observed. When no source
+   * evidence exists the named absence `synthetic.no-source-evidence` is
+   * carried through — not a forty-zero SHA, which reads as a real commit and
+   * is what this authority used to fabricate.
+   */
+  readonly sourceSha?: string | null;
   /**
    * Corpus size above which pairwise comparison is not attempted and every
    * relationship is reported UNKNOWN with a stated reason, rather than the
@@ -175,6 +188,44 @@ function relationshipsFor(
 }
 
 /**
+ * One finding-history entry for one observed finding.
+ *
+ * EXPORTED for direct test, and there is a specific reason. Nothing this
+ * authority returns exposes a history entry: `priorOutcome` is always
+ * `UNKNOWN` here, so `classifyRecurrence` can never take the branch that
+ * quotes a source SHA, and the fabricated forty-zero value this authority
+ * used to push therefore appeared in no output at all. A defect that reaches
+ * no output is not a defect that does not matter — it is one that a
+ * behavioural test structurally cannot see, which is exactly how it survived
+ * a campaign that certified this cone. So the builder is a named, directly
+ * testable function, its single source resolution is shared with the
+ * recurrence candidate, and hardening pins both.
+ *
+ * `priorOutcome` is `UNKNOWN` and must stay so. Nightwatch observes; it never
+ * learns that a defect was remediated. A stored local review decision is not
+ * remediation evidence, and no path may turn one into `RESOLVED_FIXED`.
+ */
+export function findingHistoryEntry(
+  descriptor: IntelFindingDescriptor,
+  campaignId: string,
+  sourceSha: string,
+  observedAtMs: number
+): IntelHistoryEntry {
+  return {
+    findingId: descriptor.findingId,
+    fingerprint: descriptor.fingerprint,
+    campaignId,
+    observedAtMs,
+    sourceSha,
+    // Carried from the dossier's semantic triage evidence, or null. Nothing is
+    // derived here, and null stays null.
+    expectationId: descriptor.expectationId,
+    semanticContractId: descriptor.semanticContractId,
+    priorOutcome: 'UNKNOWN',
+  };
+}
+
+/**
  * Project the requested page of findings, with intelligence computed for that
  * page only.
  *
@@ -197,6 +248,12 @@ export function reviewerInputsFromFindings(input: ReviewerAuthorityInput): Revie
   const campaignId = typeof input.campaignId === 'string' && ID_RE.test(input.campaignId) ? input.campaignId : null;
   const lookupLocalReview = typeof input.localReviewLookup === 'function' ? input.localReviewLookup : null;
   const lookupReviewIdentity = typeof input.reviewIdentityFor === 'function' ? input.reviewIdentityFor : null;
+  // ONE resolution, shared by the candidate and by every history entry. Two
+  // resolutions is how a finding ends up compared against a source identity
+  // it never had.
+  const sourceSha = typeof input.sourceSha === 'string' && SOURCE_SHA_RE.test(input.sourceSha)
+    ? input.sourceSha
+    : CONTROL_CENTER_REVIEW_NO_SOURCE;
 
   const entries = dossiers
     .map((dossier) => ({ dossier, descriptor: descriptorFor(dossier), at: observedAtMs(dossier.firstObserved) }))
@@ -234,16 +291,7 @@ export function reviewerInputsFromFindings(input: ReviewerAuthorityInput): Revie
     // not: recurrence is a claim about the whole corpus, not about the page.
     const at0 = entry.at;
     if (!selected.has(index)) {
-      if (campaignId !== null && at0 !== null) {
-        history.push({
-          findingId: entry.descriptor.findingId,
-          fingerprint: entry.descriptor.fingerprint,
-          campaignId,
-          observedAtMs: at0,
-          sourceSha: '0'.repeat(40),
-          priorOutcome: 'UNKNOWN',
-        });
-      }
+      if (campaignId !== null && at0 !== null) history.push(findingHistoryEntry(entry.descriptor, campaignId, sourceSha, at0));
       return [];
     }
     return [projectEntry(entry, index)];
@@ -263,19 +311,21 @@ export function reviewerInputsFromFindings(input: ReviewerAuthorityInput): Revie
       campaignId === null || at === null
         ? null
         : classifyRecurrence(
-            { findingId: entry.descriptor.findingId, fingerprint: entry.descriptor.fingerprint, campaignId, observedAtMs: at },
+            {
+              findingId: entry.descriptor.findingId,
+              fingerprint: entry.descriptor.fingerprint,
+              campaignId,
+              observedAtMs: at,
+              // The candidate carries the same identities its history entry
+              // will, so a source that did not move cannot read as one that
+              // did, and a contradicting invariant is visible on both sides.
+              sourceSha,
+              expectationId: entry.descriptor.expectationId,
+              semanticContractId: entry.descriptor.semanticContractId,
+            },
             [...history]
           );
-    if (campaignId !== null && at !== null) {
-      history.push({
-        findingId: entry.descriptor.findingId,
-        fingerprint: entry.descriptor.fingerprint,
-        campaignId,
-        observedAtMs: at,
-        sourceSha: '0'.repeat(40),
-        priorOutcome: 'UNKNOWN',
-      });
-    }
+    if (campaignId !== null && at !== null) history.push(findingHistoryEntry(entry.descriptor, campaignId, sourceSha, at));
 
     const severity = SEVERITY_RECOMMENDATION[entry.dossier.technicalSeverity] ?? null;
     const unknowns: string[] = [];

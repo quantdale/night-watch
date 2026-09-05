@@ -150,25 +150,141 @@ test.describe('recurrence', () => {
   test('same fingerprint in the same campaign is known existing', () => {
     const finding = { findingId: 'finding/9', fingerprint: FP_A, campaignId: 'campaign/c1', observedAtMs: 3000 };
     const history = [
-      { findingId: 'finding/1', fingerprint: FP_A, campaignId: 'campaign/c1', observedAtMs: 1000, sourceSha: SHA_A, priorOutcome: 'OPEN' as const },
+      { findingId: 'finding/1', fingerprint: FP_A, campaignId: 'campaign/c1', observedAtMs: 1000, sourceSha: SHA_A, expectationId: null, semanticContractId: null, priorOutcome: 'OPEN' as const },
     ];
     const result = classifyRecurrence(finding, history);
     expect(result.recurrence).toBe('KNOWN_EXISTING');
     expect(result.priorFindingId).toBe('finding/1');
   });
 
-  test('reappearance after a fix is a regression candidate', () => {
+  const SHA_B = 'b'.repeat(40);
+  const priorFix = (sourceSha: string, identity: { expectationId?: string | null; semanticContractId?: string | null } = {}) => [
+    {
+      findingId: 'finding/1',
+      fingerprint: FP_A,
+      campaignId: 'campaign/c1',
+      observedAtMs: 1000,
+      sourceSha,
+      expectationId: identity.expectationId ?? null,
+      semanticContractId: identity.semanticContractId ?? null,
+      priorOutcome: 'RESOLVED_FIXED' as const,
+    },
+  ];
+
+  test('reappearance after a fix AT A MOVED SOURCE is a regression candidate', () => {
+    const finding = { findingId: 'finding/9', fingerprint: FP_A, campaignId: 'campaign/c2', observedAtMs: 3000, sourceSha: SHA_B };
+    const result = classifyRecurrence(finding, priorFix(SHA_A));
+    expect(result.recurrence).toBe('REGRESSION_CANDIDATE');
+    expect(result.evidence.join(' ')).toContain(`source lineage moved from ${SHA_A} to ${SHA_B}`);
+  });
+
+  test('DEF-RO-2: a prior fix at the SAME source is not a regression candidate', () => {
+    // The old guard read `latest.sourceSha !== undefined`, which
+    // assertHistoryEntry has already proven true. It could not fail, so the
+    // rule's own stated requirement -- a moved source lineage -- was never
+    // checked, and "we fixed it here and it is still here" read as "it came
+    // back".
+    const finding = { findingId: 'finding/9', fingerprint: FP_A, campaignId: 'campaign/c2', observedAtMs: 3000, sourceSha: SHA_A };
+    const result = classifyRecurrence(finding, priorFix(SHA_A));
+    expect(result.recurrence).toBe('RECURRENT');
+    expect(result.evidence.join(' ')).toContain('source lineage did not move');
+  });
+
+  test('DEF-RO-2: without a candidate source identity, movement is unproven and the weaker answer wins', () => {
     const finding = { findingId: 'finding/9', fingerprint: FP_A, campaignId: 'campaign/c2', observedAtMs: 3000 };
+    const result = classifyRecurrence(finding, priorFix(SHA_A));
+    expect(result.recurrence).toBe('RECURRENT');
+    expect(result.evidence.join(' ')).toContain('carries no source identity');
+  });
+
+  test('a local review decision is never evidence of a prior fix', () => {
+    // priorOutcome is the ONLY remediation evidence this cone accepts, and no
+    // review-store value can produce it. A finding reviewed five times whose
+    // prior entry is OPEN is recurrent, not a regression.
+    const finding = { findingId: 'finding/9', fingerprint: FP_A, campaignId: 'campaign/c2', observedAtMs: 3000, sourceSha: SHA_B };
     const history = [
-      { findingId: 'finding/1', fingerprint: FP_A, campaignId: 'campaign/c1', observedAtMs: 1000, sourceSha: SHA_A, priorOutcome: 'RESOLVED_FIXED' as const },
+      { findingId: 'finding/1', fingerprint: FP_A, campaignId: 'campaign/c1', observedAtMs: 1000, sourceSha: SHA_A, expectationId: null, semanticContractId: null, priorOutcome: 'OPEN' as const },
     ];
-    expect(classifyRecurrence(finding, history).recurrence).toBe('REGRESSION_CANDIDATE');
+    expect(classifyRecurrence(finding, history).recurrence).toBe('RECURRENT');
+  });
+
+  test('a contradicting invariant identity rejects a fingerprint match', () => {
+    // Same fingerprint, different proven contract: a collision, not a
+    // recurrence. Merging them is exactly the defect-class over-collapse the
+    // classifier must not perform.
+    const finding = {
+      findingId: 'finding/9',
+      fingerprint: FP_A,
+      campaignId: 'campaign/c2',
+      observedAtMs: 3000,
+      sourceSha: SHA_B,
+      semanticContractId: 'contract/currency-rounding',
+    };
+    const result = classifyRecurrence(finding, priorFix(SHA_A, { semanticContractId: 'contract/tax-allocation' }));
+    expect(result.recurrence).toBe('FIRST_SEEN');
+    expect(result.evidence.join(' ')).toContain('rejected on a contradicting invariant identity');
+  });
+
+  test('a matching invariant identity corroborates rather than reclassifies', () => {
+    const finding = {
+      findingId: 'finding/9',
+      fingerprint: FP_A,
+      campaignId: 'campaign/c2',
+      observedAtMs: 3000,
+      sourceSha: SHA_B,
+      semanticContractId: 'contract/currency-rounding',
+    };
+    const result = classifyRecurrence(finding, priorFix(SHA_A, { semanticContractId: 'contract/currency-rounding' }));
+    expect(result.recurrence).toBe('REGRESSION_CANDIDATE');
+    expect(result.evidence.join(' ')).toContain('shares the same proven invariant identity');
+  });
+
+  test('a missing identity on either side contradicts nothing', () => {
+    // Absence of evidence is not counterevidence: an unenriched v1 dossier
+    // must not silently suppress a real recurrence.
+    const finding = { findingId: 'finding/9', fingerprint: FP_A, campaignId: 'campaign/c2', observedAtMs: 3000, sourceSha: SHA_B, semanticContractId: 'contract/x' };
+    expect(classifyRecurrence(finding, priorFix(SHA_A)).recurrence).toBe('REGRESSION_CANDIDATE');
+    const bare = { findingId: 'finding/9', fingerprint: FP_A, campaignId: 'campaign/c2', observedAtMs: 3000, sourceSha: SHA_B };
+    expect(classifyRecurrence(bare, priorFix(SHA_A, { semanticContractId: 'contract/x' })).recurrence).toBe('REGRESSION_CANDIDATE');
+  });
+
+  test('a differing proven expectation is a contradiction even when contracts agree', () => {
+    const finding = {
+      findingId: 'finding/9',
+      fingerprint: FP_A,
+      campaignId: 'campaign/c2',
+      observedAtMs: 3000,
+      sourceSha: SHA_B,
+      semanticContractId: 'contract/same',
+      expectationId: 'expectation/differs',
+    };
+    const result = classifyRecurrence(
+      finding,
+      priorFix(SHA_A, { semanticContractId: 'contract/same', expectationId: 'expectation/other' })
+    );
+    expect(result.recurrence).toBe('FIRST_SEEN');
+  });
+
+  test('an unsafe identity on the candidate fails closed', () => {
+    const finding = { findingId: 'finding/9', fingerprint: FP_A, campaignId: 'campaign/c2', observedAtMs: 3000, semanticContractId: 'CUSTOMER_SENTINEL' };
+    expect(() => classifyRecurrence(finding, [])).toThrow(/FINDING_INTEL_INVALID_FINDING/);
+    const badSource = { findingId: 'finding/9', fingerprint: FP_A, campaignId: 'campaign/c2', observedAtMs: 3000, sourceSha: 'not-a-sha' };
+    expect(() => classifyRecurrence(badSource, [])).toThrow(/FINDING_INTEL_INVALID_FINDING/);
+  });
+
+  test('an unsafe identity on a history entry fails closed', () => {
+    const finding = { findingId: 'finding/9', fingerprint: FP_A, campaignId: 'campaign/c2', observedAtMs: 3000 };
+    expect(() =>
+      classifyRecurrence(finding, [
+        { findingId: 'finding/1', fingerprint: FP_A, campaignId: 'campaign/c1', observedAtMs: 1000, sourceSha: SHA_A, expectationId: 'bob@example.com', semanticContractId: null, priorOutcome: 'OPEN' },
+      ] as never)
+    ).toThrow(/FINDING_INTEL_INVALID_HISTORY/);
   });
 
   test('reappearance across campaigns without a fix is recurrent', () => {
     const finding = { findingId: 'finding/9', fingerprint: FP_A, campaignId: 'campaign/c2', observedAtMs: 3000 };
     const history = [
-      { findingId: 'finding/1', fingerprint: FP_A, campaignId: 'campaign/c1', observedAtMs: 1000, sourceSha: SHA_A, priorOutcome: 'OPEN' as const },
+      { findingId: 'finding/1', fingerprint: FP_A, campaignId: 'campaign/c1', observedAtMs: 1000, sourceSha: SHA_A, expectationId: null, semanticContractId: null, priorOutcome: 'OPEN' as const },
     ];
     const result = classifyRecurrence(finding, history);
     expect(result.recurrence).toBe('RECURRENT');

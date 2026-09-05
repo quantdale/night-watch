@@ -177,6 +177,8 @@ stages.push(
         campaignId: 'scale-campaign',
         observedAtMs: index * 60_000,
         sourceSha: '0'.repeat(40),
+        expectationId: null,
+        semanticContractId: null,
         priorOutcome: 'UNKNOWN',
       });
       done += 1;
