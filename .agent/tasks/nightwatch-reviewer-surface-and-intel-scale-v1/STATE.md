@@ -36,8 +36,9 @@ contact.
 
 ## Current Milestone
 
-M5 (W4) — measurement-justified optimization complete and re-measured; M6
-(large-corpus Control Center testing and endurance) is next.
+M6 (W5) — large-corpus Control Center testing and endurance complete; M7
+(privacy red team, mutation probes, clean gate, regression, determinism)
+is next.
 
 ## Completed Milestones
 
@@ -147,6 +148,29 @@ What the numbers actually say:
 - Defect-class grouping is linear and costs 7 ms at 10k. It is explicitly NOT
   optimized: nothing in the measurement justifies touching it.
 
+## Large-corpus and endurance evidence (M6)
+
+`tests/unit/reviewerLargeCorpus.test.ts` drives the whole served path —
+authority, projection, loopback server, HTTP, JSON — against 1,000 / 5,000 /
+10,000 findings, with identifiers reversed so the first page is the NEWEST
+findings.
+
+| Check | Result |
+|---|---|
+| Bounded page over 1,000 / 5,000 / 10,000 | 200, 50 rows, `truncated: true`, cursor present |
+| End-to-end HTTP latency at 10,000 | 512 ms for the whole test including server start |
+| Epistemic class present on every element, at every size | holds |
+| Sentinel screen at volume | no sentinel in any payload |
+| Above the pairwise limit | every relationship UNKNOWN with `RELATIONSHIP_NOT_ANALYSED_ABOVE_PAIRWISE_LIMIT` |
+| Byte-identical across three repeated requests at 5,000 | holds |
+| Endurance: 200 consecutive requests over 5,000 findings | 200/200 identical bodies; latency drift and retained heap growth both inside bound |
+| Control Center browser lane, 30 consecutive iterations | 30 pass / 0 fail |
+
+The latency bound in that suite is deliberately loose against the measured
+359 ms worst case and tight enough that the pre-M5 30 s behaviour could not
+pass. A tight bound would be a flake generator, and a flake that gets retried
+away is worse than no bound. No retry was added anywhere.
+
 ## Measured scale envelope (M5, after optimization)
 
 Same harness, same corpus, same three sizes, fresh process each.
@@ -199,10 +223,9 @@ truthfully labelled, not a faster answer to the same question.
 
 ## Exact Next Action
 
-Begin M6 (W5): large-corpus Control Center testing and endurance — drive
-the reviewer surface end to end against the largest measured corpus, and
-repeat the browser lane to a statistically useful bound. A stall is
-captured and classified, never retried away.
+Begin M7 (W6): privacy red team against the reviewer surface, a reversible
+mutation campaign requiring zero survivors, a fresh `npm ci` clean gate,
+full regression, and deterministic fresh-process certification.
 
 ## Files Changed
 
@@ -232,6 +255,7 @@ captured and classified, never retried away.
 | `package.json` | `intel:scale` script | Modified |
 | `src/controlCenter/authorities/reviewerAuthority.ts` | page-scoped intelligence; measured `pairwiseLimit` | Modified |
 | `src/controlCenter/adapters/reviewerAdapter.ts` | `total`, truthful truncation | Modified |
+| `tests/unit/reviewerLargeCorpus.test.ts` | large-corpus + endurance | Added |
 | `.agent/EXECUTION_PROMPT.md` | campaign handoff | Modified |
 | `.agent/tasks/nightwatch-reviewer-surface-and-intel-scale-v1/**` | campaign records | Added |
 | `openspec/changes/nightwatch-reviewer-surface-and-intel-scale-v1/**` | OpenSpec change | Added |
@@ -265,6 +289,8 @@ captured and classified, never retried away.
 | `npm run intel:scale 1000,5000,10000 --budget-ms 240000` (M5, after) | served path 30,264 ms → 26.0 ms at 10k; worst-case page 359.5 ms |
 | `npm run intel:scale 1000,2500` (at the pairwise limit) | worst-case page 384.5 ms wall / 441.3 ms CPU |
 | `npx playwright test tests/unit/reviewerProjection.test.ts` (M5) | 27 passed, including paged-vs-exhaustive byte equality at 5 page sizes |
+| `npx playwright test tests/unit/reviewerLargeCorpus.test.ts` | 6 passed (35.8 s), endurance 200/200 |
+| Control Center browser lane x30 | 30 pass / 0 fail |
 | RS-1 scale-probe purity probe | fires on `Math.random` in the probe |
 | `npm run typecheck` | clean |
 | `npm run hardening:check` | PASS |

@@ -98,9 +98,9 @@ state, and `epistemicClass` on every element.
 
 ### M5 (W4) — measurement-justified optimization — COMPLETE
 
-### M6 (W5) — large-corpus Control Center testing and endurance — IN_PROGRESS
+### M6 (W5) — large-corpus Control Center testing and endurance — COMPLETE
 
-### M7 (W6) — privacy red team, mutation probes, fresh `npm ci` clean gate, full regression, deterministic fresh-process certification — NOT_STARTED
+### M7 (W6) — privacy red team, mutation probes, fresh `npm ci` clean gate, full regression, deterministic fresh-process certification — IN_PROGRESS
 
 ### M8 (W7) — documentation reconciliation — NOT_STARTED
 
