@@ -73,47 +73,47 @@ Full design in
 
 ## Milestones
 
-### M0 — predecessor safety-event truth — PENDING
-- [ ] Allocate a defect id under repository convention.
-- [ ] Correct the predecessor REPORT safety accounting.
-- [ ] Narrow structural `agent:check` rule plus its regression.
+### M0 — predecessor safety-event truth — COMPLETE
+- [x] Allocate a defect id under repository convention.
+- [x] Correct the predecessor REPORT safety accounting.
+- [x] Narrow structural `agent:check` rule plus its regression.
 
-### M1 — review store core — PENDING
-- [ ] `subtree` option and truthful derived-root class in `privateArtifacts`.
-- [ ] `src/core/reviewStore/` types, identity, store.
-- [ ] Focused suite for immutability, no-replace, four read states,
+### M1 — review store core — COMPLETE
+- [x] `subtree` option and truthful derived-root class in `privateArtifacts`.
+- [x] `src/core/reviewStore/` types, identity, store.
+- [x] Focused suite for immutability, no-replace, four read states,
       corruption vocabulary, temporary recovery.
 
-### M2 — dossier identity propagation — PENDING
-- [ ] `FindingsDossierMetadata` and `descriptorFor` carry the identities.
-- [ ] Permanent synthetic corpus and before/after measurement.
-- [ ] False-positive defence.
+### M2 — dossier identity propagation — COMPLETE
+- [x] `FindingsDossierMetadata` and `descriptorFor` carry the identities.
+- [x] Permanent synthetic corpus and before/after measurement.
+- [x] False-positive defence.
 
-### M3 — Control Center integration — PENDING
-- [ ] Narrow review-decision write authority and route.
-- [ ] Page-bounded persisted review read path.
-- [ ] Reviewer UI decision controls, receipt, authority labelling.
+### M3 — Control Center integration — COMPLETE
+- [x] Narrow review-decision write authority and route.
+- [x] Page-bounded persisted review read path.
+- [x] Reviewer UI decision controls, receipt, authority labelling.
 
-### M4 — hardening — PENDING
-- [ ] Occurrence-complete store-boundary rules.
-- [ ] Each rule proven to bite by mutating the guarded artifact.
+### M4 — hardening — COMPLETE
+- [x] Occurrence-complete store-boundary rules.
+- [x] Each rule proven to bite by mutating the guarded artifact.
 
-### M5 — property, crash, concurrency, mutation — PENDING
-- [ ] Seeded property suite.
-- [ ] >= 20 crash-injection scenarios.
-- [ ] Concurrency matrix.
-- [ ] >= 25 mutations, zero unexplained survivors.
+### M5 — property, crash, concurrency, mutation — COMPLETE
+- [x] Seeded property suite.
+- [x] >= 20 crash-injection scenarios.
+- [x] Concurrency matrix.
+- [x] >= 25 mutations, zero unexplained survivors.
 
-### M6 — scale — PENDING
-- [ ] 1k/5k/10k across 0%/10%/50%/100% reviewed.
+### M6 — scale — COMPLETE
+- [x] 1k/5k/10k across 0%/10%/50%/100% reviewed.
 
-### M7 — browser and restart — PENDING
-- [ ] >= 30 reviewer persistence browser passes.
-- [ ] Server A/B/C restart and stale proof.
+### M7 — browser and restart — COMPLETE
+- [x] >= 30 reviewer persistence browser passes.
+- [x] Server A/B/C restart and stale proof.
 
-### M8 — documentation and certification — PENDING
-- [ ] Durable docs and OpenSpec reconciled.
-- [ ] Full regression, `gate:local`, `gate:clean` fresh install.
+### M8 — documentation and certification — COMPLETE
+- [x] Durable docs and OpenSpec reconciled.
+- [x] Full regression, `gate:local`, `gate:clean` fresh install.
 
 ## Validation Strategy
 

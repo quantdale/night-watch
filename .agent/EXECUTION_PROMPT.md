@@ -1,7 +1,7 @@
 # EXECUTION PROMPT — Owner-Local Review Persistence & Dossier Identity Enrichment
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
-Status: IN_PROGRESS
+Status: COMPLETE
 Campaign ID: nightwatch-owner-local-review-persistence-v1
 OpenSpec: openspec/changes/nightwatch-owner-local-review-persistence-v1/
 Planned-From: 47c00883461fe689393d35e275b51eac0b78ed15

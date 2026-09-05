@@ -3,23 +3,22 @@
 Task ID: nightwatch-owner-local-review-persistence-v1
 Phase: OWNER_LOCAL_REVIEW_PERSISTENCE_V1
 Title: Owner-Local Review Persistence & Dossier Identity Enrichment
-Status: IN_PROGRESS
+Status: COMPLETE
 Task directory: .agent/tasks/nightwatch-owner-local-review-persistence-v1
 Starting SHA: 47c00883461fe689393d35e275b51eac0b78ed15
-Last validated implementation SHA: aa1f73d272924ed568d3a5d1089f19efd0f6dd3e
-Last checkpoint: campaign opened — repository truth verified, session worktree claimed, OpenSpec written
-Current milestone: M0 — predecessor safety-event truth
-Next action: allocate the defect id, correct the predecessor REPORT safety accounting, add the narrow structural agent:check rule and its regression
+Last validated implementation SHA: 1ec3ae02c7942e95fc124664409adb65a8eec334
+Last checkpoint: close-out — M0-M8 complete; regression 4076/0/13 twice, gate:local PASS 11/11, 54 mutations / 0 unexplained survivors; STOP
+Current milestone: COMPLETE / STOP — all milestones closed, REPORT final
+Next action: STOP — integrate to main, release the session, remove the worktree
 Authorization class: OWNER_LOCAL_REVIEW_PERSISTENCE_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 47c00883461fe689393d35e275b51eac0b78ed15
-LAST_VALIDATED_IMPLEMENTATION_SHA: aa1f73d272924ed568d3a5d1089f19efd0f6dd3e
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: aa1f73d272924ed568d3a5d1089f19efd0f6dd3e
-LAST_DOCUMENTATION_CHECKPOINT_SHA: 47c00883461fe689393d35e275b51eac0b78ed15
+LAST_VALIDATED_IMPLEMENTATION_SHA: 1ec3ae02c7942e95fc124664409adb65a8eec334
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 1ec3ae02c7942e95fc124664409adb65a8eec334
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
-PHASE_OWNER_LOCAL_REVIEW_PERSISTENCE_V1_STATUS: IN_PROGRESS
+PHASE_OWNER_LOCAL_REVIEW_PERSISTENCE_V1_STATUS: COMPLETE
 
 ## Routing and safety
 

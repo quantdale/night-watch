@@ -679,7 +679,7 @@ when its OWN evidence exists.
 
 | Field | Claims | Current value | Why |
 | --- | --- | --- | --- |
-| `LAST_SUBSTANTIVE_IMPLEMENTATION_SHA` | the last commit that changed implementation AND was validated | `8265ace` | FC-1 frontier checkpoint: finding review lifecycle with immutable artifact binding, deterministic advisory finding intelligence, and the C-12 offline rehearsal on the real P1 core; validated by typecheck, hardening (61/61 rules live), full regression 3885/0/13, 41 mutations / 39 detected / 0 survivors, determinism 20 runs / 1 digest, environmental lane 100/100 (DEF-FC-01..03 closed). Historical MA-8/F-13 anchor `4642c16`: fifteen-gate scope chain, one-shot P1 grants, external scope config, attribution, bounded session; validated by typecheck, 141 focused tests, hardening, synthetic lane 1051/1051, full regression 3729/0/13, 14/14 mutations detected (DEF-P1-1..3 closed) |
+| `LAST_SUBSTANTIVE_IMPLEMENTATION_SHA` | the last commit that changed implementation AND was validated | `1ec3ae0` | RP-1 owner-local review persistence: a binding-keyed, atomic, no-replace review store over the existing private-artifact primitive; a narrow opt-in Control Center write authority and a page-bounded read path; expectation and semantic-contract identity propagation; validated by typecheck, hardening, full regression 4076/0/13 twice, `gate:local` 11/11, 54 mutations across two campaigns with 0 unexplained survivors, 72 injected crash scenarios, concurrency to 16 competing writers, and 30 browser workflow passes (DEF-RP-1 closed). Prior anchor `8265ace` | FC-1 frontier checkpoint: finding review lifecycle with immutable artifact binding, deterministic advisory finding intelligence, and the C-12 offline rehearsal on the real P1 core; validated by typecheck, hardening (61/61 rules live), full regression 3885/0/13, 41 mutations / 39 detected / 0 survivors, determinism 20 runs / 1 digest, environmental lane 100/100 (DEF-FC-01..03 closed). Historical MA-8/F-13 anchor `4642c16`: fifteen-gate scope chain, one-shot P1 grants, external scope config, attribution, bounded session; validated by typecheck, 141 focused tests, hardening, synthetic lane 1051/1051, full regression 3729/0/13, 14/14 mutations detected (DEF-P1-1..3 closed) |
 | `LAST_LOCALLY_VALIDATED_SHA` | the last commit where the local quality gate passed | `05bd7ad` | `gate:local` FULL PASS, all eleven required groups, receipt `receipt:sha256:3a6cefdd1ea57fc65e74b6d7` (SEMANTIC 2033/2020/13/0, OWNER 91/91, SYNTHETIC 1051/1051/0) |
 | `LAST_CLEAN_VALIDATED_SHA` | the last commit where the clean Node 20 gate passed | `b31f0bf` | `gate:clean` PASS, Node 20, `installResult` PASS, inner receipt `receipt:sha256:9851e74bd438a21073093c83` |
 | `CI_OBSERVED_SHA` | the commit whose CI result was observed | `27bfe44` | run `33864698218` (2026-09-04): zero steps under the external runner block (`runner_id = 0`), recorded as `NO_STEPS_EXTERNAL_NON_EVIDENCE`; a docs-descendant head covering the `4642c16` implementation |
@@ -741,7 +741,7 @@ RELEASE_CERTIFICATION_PROTOCOL_VERSION: nightwatch.release-certification.v1
 PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
 RELEASE_CHECKPOINT_SHA: 2576c5751d33bb40046246e8fcf57c7cc5c30a57
 LIVE_HEAD_SHA: DISCOVER_FROM_GIT
-LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: aa1f73d272924ed568d3a5d1089f19efd0f6dd3e
+LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: 1ec3ae02c7942e95fc124664409adb65a8eec334
 LAST_LOCALLY_VALIDATED_SHA: aa1f73d272924ed568d3a5d1089f19efd0f6dd3e
 LAST_CLEAN_VALIDATED_SHA: 85e8f654fba29ca91286f0bab9eecf9cc3c68fa1
 CI_OBSERVED_SHA: NONE
@@ -801,11 +801,11 @@ informational and are not interpreted as current authority.
 LIVE_STATE_PROTOCOL_VERSION: nightwatch.live-state.v1
 LIVE_TASK_ID: nightwatch-owner-local-review-persistence-v1
 LIVE_PHASE: OWNER_LOCAL_REVIEW_PERSISTENCE_V1
-LIVE_TASK_STATUS: IN_PROGRESS
+LIVE_TASK_STATUS: COMPLETE
 LIVE_PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
 LIVE_PROJECT_VERDICT_EFFECT: PRESERVE
-LIVE_NEXT_ACTION_STATE: CONTINUE
-LIVE_COMPLETION_CLAIM: NONE
+LIVE_NEXT_ACTION_STATE: STOP
+LIVE_COMPLETION_CLAIM: COMPLETE
 ```
 
 ### Exact-head CI state (current live CI state)

@@ -4,24 +4,22 @@
 
 Task ID: nightwatch-owner-local-review-persistence-v1
 Phase: OWNER_LOCAL_REVIEW_PERSISTENCE_V1
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: 47c00883461fe689393d35e275b51eac0b78ed15
-Last validated implementation SHA: aa1f73d272924ed568d3a5d1089f19efd0f6dd3e
-Last substantive checkpoint SHA: aa1f73d272924ed568d3a5d1089f19efd0f6dd3e
-Last documentation checkpoint SHA: 47c00883461fe689393d35e275b51eac0b78ed15
+Last validated implementation SHA: 1ec3ae02c7942e95fc124664409adb65a8eec334
+Last substantive checkpoint SHA: 1ec3ae02c7942e95fc124664409adb65a8eec334
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-owner-local-review-pe-bef49826
-Last checkpoint: campaign opened — repository truth verified, session worktree claimed, OpenSpec written
+Last checkpoint: close-out — M0-M8 complete; regression 4076/0/13 twice, gate:local PASS 11/11, 54 mutations / 0 unexplained survivors; STOP
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 47c00883461fe689393d35e275b51eac0b78ed15
-LAST_VALIDATED_IMPLEMENTATION_SHA: aa1f73d272924ed568d3a5d1089f19efd0f6dd3e
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: aa1f73d272924ed568d3a5d1089f19efd0f6dd3e
-LAST_DOCUMENTATION_CHECKPOINT_SHA: 47c00883461fe689393d35e275b51eac0b78ed15
+LAST_VALIDATED_IMPLEMENTATION_SHA: 1ec3ae02c7942e95fc124664409adb65a8eec334
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 1ec3ae02c7942e95fc124664409adb65a8eec334
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
-PHASE_OWNER_LOCAL_REVIEW_PERSISTENCE_V1_STATUS: IN_PROGRESS
+PHASE_OWNER_LOCAL_REVIEW_PERSISTENCE_V1_STATUS: COMPLETE
 
 ## Objective
 
@@ -37,7 +35,7 @@ C-12 contact.
 
 ## Current Milestone
 
-M8 — documentation and certification.
+COMPLETE / STOP — all milestones closed, REPORT final.
 
 ## Completed Milestones
 
@@ -144,6 +142,8 @@ M8 — documentation and certification.
 
 ## Work In Progress
 
+None. All milestones are terminal.
+
 Repository truth established at campaign open:
 
 - `HEAD == origin/main == 47c0088`, canonical checkout clean, one worktree,
@@ -175,10 +175,7 @@ None.
 
 ## Exact Next Action
 
-Execute M8: reconcile durable documentation and OpenSpec, write the
-campaign REPORT, then run the certification set — full regression twice on
-the committed tree, `gate:local`, and `gate:clean` with a proven fresh
-install.
+STOP — integrate to main, release the session, remove the worktree.
 
 ## Files Changed
 
@@ -226,6 +223,25 @@ install.
 - M7: `typecheck` PASS; `control-center:ui:browser` 4/4 PASS (the two new
   persistence workflows plus the two pre-existing browser suites), with
   30/30 endurance passes.
+- M8 certification, on the committed tree:
+  - `gate:local` PASS 11/11 at `a920fa8`
+    (receipt `receipt:sha256:1e878c3f87bf6ef9c78c9a83`; SEMANTIC_COMPATIBILITY
+    2066/2079 with 13 skipped, SYNTHETIC_CAMPAIGN 1131/1131,
+    deep containment lane PROVEN).
+  - Full regression, TWICE identically: **4076 passed / 0 failed /
+    13 skipped** each. The 13 skips are all sibling-checkout dependent
+    (`c02aOpenApiAdmission`, `c02bProtoSurface`, `c02bProtoCorroboration`,
+    `c03GrpcTopology`, `c04FrontendGraph`, `c05UniverseAdmission`,
+    `c08DeploymentBinding`) and self-skip with an explicit reason; a skip
+    is never counted as a pass.
+  - Before that repair, two earlier full runs each reported `1 failed`.
+    Both were ATTRIBUTED, not retried away: `reviewerLargeCorpus.test.ts`
+    endurance, "retained heap grew 200.8 MiB over 200 requests". The RS-1
+    test called `global.gc()` only if available and `--expose-gc` was
+    never passed anywhere, so the assertion compared two arbitrary
+    allocator snapshots rather than retained heap. `npm test` and
+    `npm run test:unit` now pass `--expose-gc`; the suite then passed 3/3
+    in isolation and both certification runs are clean.
   ONE unattributed one-off: an earlier full-suite run in this milestone
   reported `1 failed` without the failing test being captured. It did not
   reproduce in the two subsequent identical full runs, and the five new
@@ -422,9 +438,32 @@ proving the same page costs 8 reads without the listing.
 
 ## Resume Recipe
 
-Read `AGENTS.md`, this `STATE.md`, then `PLAN.md`; run
-`npm run session:status`; continue from `## Exact Next Action`.
+Task complete. Do not resume. The campaign is closed and certified; a
+successor needs a fresh task, not this one. `REPORT.md` carries the
+outcome and the next recommendation.
 
 ## Completion Snapshot
 
-Pending.
+- All milestones M0-M8 closed; `PLAN.md` carries no open milestone.
+- Owner-local review persistence is durable, atomic, no-replace,
+  binding-keyed, stale-safe, fail-closed on corruption, and proven across a
+  server restart.
+- Local review carries `organizationalAuthority: NONE_LOCAL_REVIEW_ONLY`
+  end to end, and there is no path from the store to Slack, Leslie, Pondr
+  or Notion.
+- Expectation and semantic-contract identities propagate where they exist
+  and stay UNKNOWN where they do not; no dossier schema changed and no
+  classifier rule was loosened.
+- Certification: full regression 4076 passed / 0 failed / 13 skipped,
+  TWICE identically on the committed tree; `gate:local` PASS 11/11;
+  `control-center:ui:browser` 4/4 with 30 endurance passes; 54 mutations
+  across two campaigns with 0 unexplained survivors; 72 injected crash
+  scenarios; concurrency to 16 competing writers.
+- Documentation reconciled: ARCHITECTURE, SAFETY_MODEL, DECISIONS
+  (D-119..D-125), ROADMAP, CURRENT_STATE and
+  ALPHAUS-FINDING-HANDOFF-CONTEXT.
+- Zero production, NEXT or DEV contact. Zero external filing. Zero
+  credential access, deployments, sibling writes, force pushes or history
+  rewrites. Zero workspace-integrity events in this campaign; the shared
+  exclude held at zero effective patterns throughout and the canonical
+  checkout carried no untracked file at close.
