@@ -674,7 +674,7 @@ when its OWN evidence exists.
 
 | Field | Claims | Current value | Why |
 | --- | --- | --- | --- |
-| `LAST_SUBSTANTIVE_IMPLEMENTATION_SHA` | the last commit that changed implementation AND was validated | `4642c16` | MA-8/F-13 P1 cone checkpoint: fifteen-gate scope chain, one-shot P1 grants, external scope config, attribution, bounded session; validated by typecheck, 141 focused tests, hardening, synthetic lane 1051/1051, full regression 3729/0/13, 14/14 mutations detected (DEF-P1-1..3 closed) |
+| `LAST_SUBSTANTIVE_IMPLEMENTATION_SHA` | the last commit that changed implementation AND was validated | `919dba0` | FC-1 frontier checkpoint: finding review lifecycle with immutable artifact binding, deterministic advisory finding intelligence, and the C-12 offline rehearsal on the real P1 core; validated by typecheck, hardening (61/61 rules live), full regression 3885/0/13, 41 mutations / 39 detected / 0 survivors, determinism 20 runs / 1 digest, environmental lane 100/100 (DEF-FC-01..03 closed). Historical MA-8/F-13 anchor `4642c16`: fifteen-gate scope chain, one-shot P1 grants, external scope config, attribution, bounded session; validated by typecheck, 141 focused tests, hardening, synthetic lane 1051/1051, full regression 3729/0/13, 14/14 mutations detected (DEF-P1-1..3 closed) |
 | `LAST_LOCALLY_VALIDATED_SHA` | the last commit where the local quality gate passed | `05bd7ad` | `gate:local` FULL PASS, all eleven required groups, receipt `receipt:sha256:3a6cefdd1ea57fc65e74b6d7` (SEMANTIC 2033/2020/13/0, OWNER 91/91, SYNTHETIC 1051/1051/0) |
 | `LAST_CLEAN_VALIDATED_SHA` | the last commit where the clean Node 20 gate passed | `b31f0bf` | `gate:clean` PASS, Node 20, `installResult` PASS, inner receipt `receipt:sha256:9851e74bd438a21073093c83` |
 | `CI_OBSERVED_SHA` | the commit whose CI result was observed | `27bfe44` | run `33864698218` (2026-09-04): zero steps under the external runner block (`runner_id = 0`), recorded as `NO_STEPS_EXTERNAL_NON_EVIDENCE`; a docs-descendant head covering the `4642c16` implementation |
@@ -736,12 +736,12 @@ RELEASE_CERTIFICATION_PROTOCOL_VERSION: nightwatch.release-certification.v1
 PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
 RELEASE_CHECKPOINT_SHA: 2576c5751d33bb40046246e8fcf57c7cc5c30a57
 LIVE_HEAD_SHA: DISCOVER_FROM_GIT
-LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: 4642c1647f53c02dbc939f2475e04202249522a9
-LAST_LOCALLY_VALIDATED_SHA: 05bd7ad9310d435797ea013bdf36d034735f5d01
+LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: 919dba0a890df88c1dda9a9f846b77dedf29751b
+LAST_LOCALLY_VALIDATED_SHA: 919dba0a890df88c1dda9a9f846b77dedf29751b
 LAST_CLEAN_VALIDATED_SHA: b31f0bf81dba6f24dd4f1559b83c853c73841e3f
-CI_OBSERVED_SHA: 27bfe4492c4e4cca9e481277f4d90bbdd43e8349
+CI_OBSERVED_SHA: NONE
 CI_EXECUTED_SHA: NONE
-CI_STATUS: NO_STEPS_EXTERNAL_NON_EVIDENCE
+CI_STATUS: NOT_OBSERVED
 FINAL_DOCUMENTATION_SHA: DISCOVER_FROM_GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 LIVE_HEAD_AUTHORITY: GIT
@@ -777,7 +777,14 @@ LIVE_COMPLETION_CLAIM: NONE
 
 ### Exact-head CI state (current live CI state)
 
-MA-8/F-13 head `27bfe44` has NO CI evidence. Run `33864698218`
+At the FC-1 substantive baseline `919dba0` CI is `NOT_OBSERVED`: no
+GitHub Actions run has been inspected at this SHA. This is an absence of
+evidence, not a failure, and it must not be read as either. The FC-1
+campaign deliberately did not provoke a runner (§68: no retry loops, no
+meaningless commits to trigger CI).
+
+Historical observation preserved below, no longer current authority:
+MA-8/F-13 head `27bfe44` had NO CI evidence. Run `33864698218`
 (2026-09-04, 10:45Z) failed BEFORE any step executed: `runner_id = 0`, empty
 runner name, zero steps, near-immediate failure — the identical external
 signature as every predecessor since `33833574821`. Classification:
