@@ -854,6 +854,14 @@ export const APPROVED_CHECKPOINT_PATHS = [
   /^openspec\/changes\/[^/]+\/specs\/[^/]+\/spec\.md$/,
   /^corpus\/phase6\/(?:README\.md|runtime-binding-audit\.json)$/,
   /^docs\/(?:ARCHITECTURE|CURRENT_STATE|SAFETY_MODEL|DECISIONS|ROADMAP|CI_HARDENING)\.md$/,
+  // AH-1 added two durable operator/context documents but never registered
+  // them here, so their terminal close-out updates relabelled the preceding
+  // implementation checkpoint as stale. Both are pure prose: no checker reads
+  // either as authority (verified by search), and the runbook states in its
+  // own text that it authorizes nothing. Enumerated exactly, like every
+  // neighbour above, so no other docs/ file becomes documentation-only.
+  /^docs\/ALPHAUS-FINDING-HANDOFF-CONTEXT\.md$/,
+  /^docs\/C12-OPERATOR-RUNBOOK\.md$/,
   // The Kiro Crew integration plan is a repository-native planning document;
   // it adds no runtime, safety, authorization, or evidence authority.
   /^docs\/KIRO-CREW-INTEGRATION-MASTER-PLAN\.md$/,
