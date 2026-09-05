@@ -1,24 +1,24 @@
 # Active Task
 
-Task ID: nightwatch-plan-explain-coherence-v1
-Phase: PLAN_EXPLAIN_COHERENCE_V1
-Title: Plan-Explain Cross-Command Coherence Test
-Status: COMPLETE
-Task directory: .agent/tasks/nightwatch-plan-explain-coherence-v1
-Starting SHA: caec3cc05cba32eb77b22f9f0b608adaac7b1f46
-Last validated implementation SHA: 958f331e9d7e625daa42e03b3f72bc9b899b9038
-Last checkpoint: close-out — M1–M3 complete; implementation 958f331 certified (1 new test, neighbors 7/7, typecheck, hardening, truth checkers); STOP
-Current milestone: COMPLETE / STOP — all milestones closed, REPORT final, no defects introduced
-Next action: STOP — integrate to main, release the session, remove the worktree
-Authorization class: PLAN_EXPLAIN_COHERENCE_V1
+Task ID: nightwatch-frontier-completion-reliability-v1
+Phase: FRONTIER_COMPLETION_RELIABILITY_V1
+Title: Nightwatch Frontier Completion & Deep Reliability
+Status: IN_PROGRESS
+Task directory: .agent/tasks/nightwatch-frontier-completion-reliability-v1
+Starting SHA: f99df10cdcbae5a6f291c781a650501f386de83c
+Last validated implementation SHA: 919dba0a890df88c1dda9a9f846b77dedf29751b
+Last checkpoint: M2-M8 complete — findingReview/findingIntel/c12Rehearsal cones landed; DEF-FC-01..03 repaired; 41 mutations / 0 survivors; determinism 20/1; environmental lane 100/100; docs reconciled
+Current milestone: M9 — W11 certification
+Next action: full regression x3 on the committed tree, clean clone, REPORT, integrate
+Authorization class: FRONTIER_COMPLETION_RELIABILITY_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
-STARTING_SHA: caec3cc05cba32eb77b22f9f0b608adaac7b1f46
-LAST_VALIDATED_IMPLEMENTATION_SHA: NONE
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: NONE
+STARTING_SHA: f99df10cdcbae5a6f291c781a650501f386de83c
+LAST_VALIDATED_IMPLEMENTATION_SHA: 919dba0a890df88c1dda9a9f846b77dedf29751b
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 919dba0a890df88c1dda9a9f846b77dedf29751b
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
-PHASE_PLAN_EXPLAIN_COHERENCE_V1_STATUS: COMPLETE
+PHASE_FRONTIER_COMPLETION_RELIABILITY_V1_STATUS: IN_PROGRESS
 ## Routing and safety
 
 ```

@@ -1,8 +1,11 @@
 # Nightwatch — CURRENT STATE
 
-> Durable memory for the next agent/session. Last updated: **2026-09-04**
-> at AH-1 close-out (Alphaus finding handoff + C-12 operator readiness,
-> COMPLETE). MA-8/F-13 is COMPLETE (implementation anchor `4642c16`,
+> Durable memory for the next agent/session. Last updated: **2026-09-05**
+> at FC-1 close-out (Frontier Completion & Deep Reliability, COMPLETE:
+> finding review lifecycle, finding intelligence, human filing report,
+> C-12 offline rehearsal, environmental-lane forensics, dependency-truth
+> repair). AH-1 (Alphaus finding handoff + C-12 operator readiness) is
+> COMPLETE. MA-8/F-13 is COMPLETE (implementation anchor `4642c16`,
 > integrated at `4ca990f`). The machine-checked project verdict remains
 > `OPERATIONALLY_ACCEPTED`.
 > GitHub Actions currently yields zero-step external blocks
@@ -83,6 +86,11 @@ canonical `origin` remote. It reads the Alphaus repos under
 | `MA_8_F_13_STATUS` | `COMPLETE` — fifteen-gate `nightwatch.p1-observation-scope.v1` chain, one-shot `P1_OBSERVE` grants, external-only scope config, four-class attribution (UNKNOWN fails closed), bounded session, kill switch; implementation anchor `4642c16`, integrated at `4ca990f`; 128 focused P1 tests, 14/14 mutations detected, DEF-P1-1..3 closed; REPORT in `.agent/tasks/nightwatch-p1-observation-scope-ma8-v1/` |
 | `AH_1_STATUS` | `COMPLETE` — `nightwatch.alphaus-finding-handoff.v1` projection + `nightwatch.c12-readiness.v1` preflight + CLI + runbook + Alphaus context doc + OpenSpec; implementation `4c263e1`; 40/40 + 31/31 + 7/7 suites, 22/22 mutations detected / 0 survivors; gate:local 11/11 receipt `receipt:sha256:025570f11a841beba9d79eac`; regression 3807/0/13; clean gate PASS Node 20; REPORT in `.agent/tasks/nightwatch-alphaus-finding-handoff-c12-readiness-v1/` |
 | `C_12_STATUS` | `PENDING_EXTERNAL_OWNER_PREREQUISITES` — NOT authorized, NOT begun; previous passive-only attempt ended BLOCKED with 0 qualifying sessions and 0 production contact (preserved as evidence); operator runbook at `docs/C12-OPERATOR-RUNBOOK.md`; preflight via `npm run c12:preflight` |
+| `FC_1_STATUS` | `COMPLETE` — Frontier Completion & Deep Reliability: `src/core/findingReview/` (post-dossier lifecycle + immutable artifact-digest review binding + human filing report), `src/core/findingIntel/` (deterministic relationships, recurrence, defect classes, expectation provenance), `src/core/c12Rehearsal/` (offline P1 rehearsal on the production-intended safety core). Three new hardening rules (`checkC12RehearsalBoundary`, `checkFindingFrontierBoundary`, `checkDeclaredDependencyResolvability`) plus rule definition/call parity coverage. 41 reversible mutations / 39 detected / 2 controls / **0 survivors** / 0 restore drift; fresh-process determinism 20 runs / 1 semantic digest; environmental lane 100/100. Defects DEF-FC-01..03 repaired. REPORT in `.agent/tasks/nightwatch-frontier-completion-reliability-v1/` |
+| `FC_1_REVIEW_AUTHORITY` | `LOCAL_ONLY` — every review receipt carries `organizationalAuthority: NONE_LOCAL_REVIEW_ONLY` and `notEquivalentTo: [LESLIE_GENUINE, LESLIE_INVALID, PONDR_APPROVED]`. Nightwatch local review is NEVER Alphaus organizational sign-off. Relationship/duplicate output is advisory with `finalVerdictAuthority: HUMAN_ORGANIZATIONAL`; no bounty scoring exists anywhere in the cones (hardening-enforced) |
+| `C_12_REHEARSAL_STATUS` | `LOCAL_REHEARSAL_PASS` — offline only. The rehearsal drives the REAL P1 core (`evaluateP1ObservationScope`, `attachP1ObservationSession`, `issueP1ObserveGrant`) against mock edges pinned to the `.invalid` namespace. Every receipt on every scenario carries `liveAuthorization: NOT_CONFERRED_SYNTHETIC_ONLY`. **A passing rehearsal confers NO live authorization** — see the state matrix in `docs/C12-OPERATOR-RUNBOOK.md` |
+| `ENVIRONMENTAL_LANE_STATUS` | `NO_RESIDUAL_FLAKE_REPRODUCED` — the predecessor's reported ~5% renderer-stall rate did NOT reproduce: **100 consecutive control-center browser-lane iterations, 0 failures** (two independent batches of 50) on the post-`b7a1272`/`a4d35d0` click-robustness fixes. At a true 5% rate, 0/100 has probability ≈0.6%; the earlier rate is most consistent with a defect those commits already removed. No retry policy was invented and none is needed on current evidence. If a stall recurs, capture the failing iteration before adding any retry |
+| `DEPENDENCY_TRUTH` | `vue@2.6.12 REQUIRED (dev)` — reached by `tests/unit/rippleReadiness.test.ts` via `require.resolve`, which the 2026-09-05 "unused dependency" audit did not scan. `npm audit` reports **1 low** advisory (GHSA-5j4c-8p2g-v4jx, Vue 2 `parseHTML` ReDoS), accepted: dev-only, offline, parses a fixed local render function. Any claim of "0 vulnerabilities" is stale — see D-118 |
 | `PRE_C01_BASELINE` | `docs/design/PRE-C01-BASELINE.md` — pinned, clean, local/source-only census: `srcsnapshot:sha256:04ff583971865f335902f5ad`, `source-eligibility-census:sha256:2f97b732e0472df347f695a1` |
 
 > **Historical note (C-01 truncation truth).** Every `128 operations` row above that reports `62`, `83`, or `43` `responseContracts` (`responseContracts` = surfaces with `surface.contract.responseProof === 'PROVEN'` at `src/core/source/eligibilityCensus.ts:728` and `src/core/source/surfaces.ts`) was measured over the pre-C-01 silently capped 128-operation projection (`MAX_DISCOVERED_OPERATIONS = 128`). `83` is that metric at analyzer v3 (pre-hardening, before commit `15fe2c1`); `43` is the same metric at analyzer v4 (post-hardening, commit `15fe2c1`, snapshot `srcsnapshot:sha256:04ff583971865f335902f5ad`, discovery `source-surface-discovery:sha256:906830010ed198639d3c7b91`); 43+9+76=128 is the cap, not the real population. The first honest whole-population measurement under C-01 (`MAX_PROJECTED_OPERATIONS = 4096`, per-repository fair projection) is `58` of `223` (`routeOperationsFound: 223`, `routeOperationsTruncated: 0`, `responseContracts: 58`, `requestContracts: 222`, `routeProofs: 222`, `semanticContracts: 90`, `joinsAttempted: 223`, `joinsProven: 207`, `source-surface-discovery:sha256:21de18a23a387d7b816db3c0`); see `docs/DECISIONS.md` D-105 for the single durable resolution.
@@ -758,13 +766,13 @@ informational and are not interpreted as current authority.
 
 ```
 LIVE_STATE_PROTOCOL_VERSION: nightwatch.live-state.v1
-LIVE_TASK_ID: nightwatch-plan-explain-coherence-v1
-LIVE_PHASE: PLAN_EXPLAIN_COHERENCE_V1
-LIVE_TASK_STATUS: COMPLETE
+LIVE_TASK_ID: nightwatch-frontier-completion-reliability-v1
+LIVE_PHASE: FRONTIER_COMPLETION_RELIABILITY_V1
+LIVE_TASK_STATUS: IN_PROGRESS
 LIVE_PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
 LIVE_PROJECT_VERDICT_EFFECT: PRESERVE
-LIVE_NEXT_ACTION_STATE: STOP
-LIVE_COMPLETION_CLAIM: COMPLETE
+LIVE_NEXT_ACTION_STATE: CONTINUE
+LIVE_COMPLETION_CLAIM: NONE
 ```
 
 ### Exact-head CI state (current live CI state)

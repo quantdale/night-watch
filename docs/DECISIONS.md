@@ -3597,10 +3597,9 @@ replaced by a proven local capability on hosts where the complete qualification
 passes; unsupported hosts remain categorical and fail closed. L5 remains a
 separate browser/proxy authority. Vite/Vitest are pinned to patched versions;
 the root Vue 2 dependency remains a documented dev-only legacy compatibility
-fixture with one low advisory and no compatible non-major fix. (Superseded:
-the dependency was removed as unused with zero references, and `npm audit`
-reports zero vulnerabilities — see campaign
-`nightwatch-unused-dep-removal-v1`.) Final release
+fixture with one low advisory and no compatible non-major fix. (The
+2026-09-05 removal recorded here as superseding this consequence was itself
+reversed the same day: the dependency was not unused. See D-118.) Final release
 status and exact validation/CI SHAs remain pending until the successor's full
 local, clean, isolated and external-evidence checks complete.
 
@@ -4455,3 +4454,39 @@ never committed. C-12 remains NOT authorized and NOT begun.
 
 **Phase applicability.** AH-1; any future C-12 authorization consumes this
 contract but does not inherit AH-1 authority.
+
+## D-118 — a dependency a test resolves is used, and stale node_modules is not evidence
+
+**Context.** Campaign `nightwatch-unused-dep-removal-v1` removed the `vue`
+devDependency as the sole dependency-audit finding, reporting "zero
+references" and `npm audit` clean. The reference scan looked only for
+import/`from` specifiers. `tests/unit/rippleReadiness.test.ts` reaches Vue
+through `require.resolve('vue/dist/vue.js')`, which that scan did not see.
+The break stayed invisible because the canonical checkout's `node_modules`
+still held the removed package; the reported green regression and "clean
+gate PASS" both ran against that residue. A fresh `npm ci` fails with
+`Cannot find module 'vue/dist/vue.js'` (DEF-FC-03).
+
+**Decision.** Restore `vue@2.6.12` as a devDependency at its exact prior
+version. The test it serves is not incidental: it proves against real Vue
+2.6.12 that mounting replaces the `#app` bootstrap target with the rendered
+`.q-layout-container.layout` shell — the source-backed structural premise
+of the entire Ripple readiness contract. Substituting a hand-written stub
+would make that test assert only its own fixture.
+
+**Rationale.** "Unused" is a claim about the whole reachable graph, not
+about one syntactic form. A dependency that tracked source resolves at run
+time is used by definition. Reaching zero advisories by deleting a package
+the suite needs trades a real capability for a reporting number.
+
+**Consequences.** The low-severity Vue 2 `parseHTML` ReDoS advisory
+(GHSA-5j4c-8p2g-v4jx) returns and is accepted: the package is dev-only,
+loaded in an offline Playwright page, and parses only a fixed local render
+function — no untrusted HTML reaches it, and the only non-major fix is Vue
+3, a breaking change to the fixture's whole point. `npm audit` therefore
+reports 1 low advisory, not 0; any report claiming 0 is stale.
+`checkDeclaredDependencyResolvability()` in `bin/hardening-check.mjs` now
+fails closed when tracked source resolves an undeclared package, covering
+`require.resolve`, dynamic `import()`, and `from` alike.
+
+**Phase applicability.** FC-1 and every later dependency audit.

@@ -134,3 +134,80 @@ The handoff artifact (`nightwatch.alphaus-finding-handoff.v1`) separates
 mechanically established facts, evidence-backed recommendations (or UNKNOWN),
 and literal non-weakable authority metadata (`humanReviewRequired = true`,
 `executable = false`, `externalPublication = PROHIBITED`, no auto-filing).
+
+## FC-1 additions — review lifecycle and finding intelligence
+
+Evidence class of everything in this section: **NIGHTWATCH ARCHITECTURE**.
+None of it is organizational fact, none of it is Slack-derived pilot
+evidence, and none of it changes any unresolved organizational rule
+recorded above.
+
+### Local review lifecycle (NIGHTWATCH ARCHITECTURE)
+
+`src/core/findingReview/` adds a post-dossier lifecycle: `REVIEW_PENDING`
+plus the terminal states reached by `ACCEPT_EVIDENCE`, `REQUEST_FOLLOWUP`,
+`MARK_INSUFFICIENT`, `MARK_DUPLICATE_CANDIDATE`, and `SUPERSEDE`.
+
+A review receipt binds to the exact reviewed artifact: finding digest,
+dossier digest, handoff digest (or explicit null), source SHA, campaign ID,
+handoff version, and privacy-projection version. Any drift — a mutated or
+regenerated dossier, a rebased source, a re-versioned projection — fails
+closed as `FINDING_REVIEW_STALE`. Stale review decisions never carry over
+silently.
+
+**UNRESOLVED ORGANIZATIONAL RULE — unchanged.** A Nightwatch local review
+state is not an Alphaus verdict. Every receipt carries
+`organizationalAuthority: 'NONE_LOCAL_REVIEW_ONLY'` and an explicit
+`notEquivalentTo: ['LESLIE_GENUINE', 'LESLIE_INVALID', 'PONDR_APPROVED']`.
+`ACCEPT_EVIDENCE` means "a local reviewer found the evidence sufficient to
+hand to a human", never "Leslie genuine" and never "Pondr approved". Final
+genuine/invalid and duplicate authority remains external and human.
+
+### Finding intelligence (NIGHTWATCH RECOMMENDATION — advisory only)
+
+`src/core/findingIntel/` classifies relationships from mechanical fields
+only — executable fingerprint, expectation identity, semantic contract,
+sanitized failure signature, route, source lineage, replay outcome. Prose
+similarity is never an input. Missing comparison inputs yield `UNKNOWN`
+with no advisory pointer, never a guessed verdict.
+
+Every result carries `advisoryOnly: true` and
+`finalVerdictAuthority: 'HUMAN_ORGANIZATIONAL'`, and exposes its
+counterevidence alongside its evidence. A `PROBABLE_DUPLICATE` suggestion
+is a lead for a human, never an organizational duplicate verdict.
+
+Recurrence binds chronology mechanically. `REGRESSION_CANDIDATE` requires
+both a proven prior fix and a moved source lineage; neither precondition
+is inferable from the other, and prose resemblance qualifies for nothing.
+
+Defect classes group by shared semantic invariant with explicit
+counterexamples and confidence capped by the weakest supporting evidence.
+Nightwatch may report that five findings violate one invariant. It must
+never conclude anything about bug-class bounty — no such surface exists,
+and a hardening rule rejects one entering these cones.
+
+### Expectation provenance and confidence (NIGHTWATCH ARCHITECTURE)
+
+Every finding answers "why is this considered incorrect?" mechanically.
+Provenance is ranked, with machine contracts strongest; weak provenance
+(`SYNTHETIC_ORACLE`, `HEURISTIC`, `UNKNOWN`) caps the confidence a finding
+may claim, so weak expectation evidence can never masquerade as a confirmed
+defect. `PROVEN` requires a mechanical proof artifact and is refused
+otherwise. Confidence is categorical throughout; no invented probabilities.
+
+### Human filing report (NIGHTWATCH ARCHITECTURE — PRIVATE/LOCAL)
+
+`renderHumanFilingReport` produces a copyable Markdown report for **manual**
+human filing. It labels every section textually — FACT, RECOMMENDATION,
+MECHANICAL DERIVATION, ADVISORY, UNKNOWN, HUMAN DECISION REQUIRED — never
+by colour alone, so a severity recommendation can never read as fact.
+
+Classification safety is preserved end to end: ambiguous impact renders
+`UNKNOWN`; `production` never implies `production_outage`;
+`customer_escaped` is never rewritten to `self_found`; a team without
+evidence renders `UNKNOWN` and a named team without evidence is refused
+outright. Every scalar and list field is sentinel-scanned before it reaches
+the document.
+
+This report is private and local. Nothing in this campaign submits, files,
+or publishes anything.

@@ -24,6 +24,46 @@ MA-8 authorization does not transfer.
 | 9 | Approved private evidence destination | EXTERNAL_REQUIRED | Operator-approved private path-like descriptor. Never a URL; never committed |
 | 10 | Kill switch / teardown procedure | SATISFIED (mechanism) + EXTERNAL (arming) | Fail-closed kill switch ships in MA-8 (`killSwitch.ts`); the operator arms it per-run and owns the teardown procedure below |
 
+## Local rehearsal vs live readiness (FC-1)
+
+`src/core/c12Rehearsal/` runs a complete P1 session offline against mock
+edges. It exercises the **production-intended core** — `evaluateP1ObservationScope`,
+`attachP1ObservationSession`, `issueP1ObserveGrant`, the real attribution
+tally, kill switch, and teardown — with only the external edges mocked, and
+is pinned to the unresolvable `.invalid` fixture namespace.
+
+It proves the implementation. It proves nothing about production.
+
+| Layer | State |
+| --- | --- |
+| MA-8/F-13 implementation | certified (repository-side) |
+| C-12 local preflight evaluator | certified |
+| C-12 synthetic offline rehearsal | `LOCAL_REHEARSAL_PASS` |
+| Operator production subject | EXTERNAL — not held |
+| Admitted production config | EXTERNAL — not held |
+| Deployment truth (C-08b) | EXTERNAL — blocked |
+| Live C-12 authorization | NOT INHERITED — never conferred by rehearsal |
+| Live C-12 execution | NOT PERFORMED |
+
+Every rehearsal receipt, on every scenario including the passing one, carries
+`liveAuthorization: 'NOT_CONFERRED_SYNTHETIC_ONLY'`. The states
+`LOCAL_REHEARSAL_PASS`, `LIVE_PREREQUISITES_SATISFIED`, and `C12_AUTHORIZED`
+are distinct and must never collapse into one another. A hardening rule
+rejects any rehearsal-cone assignment of a different live-authorization
+value, and a unit test asserts the disclaimer on every receipt-producing
+path — a safe literal surviving on one return path must not license an
+unsafe one on another.
+
+Only the clean passive scenario reaches `LOCAL_REHEARSAL_PASS`. Nightwatch
+traffic, UNKNOWN attribution, zero qualifying events, and an engaged kill
+switch each fall short of PASS rather than passing with a caveat.
+
+Run it through the unit lane:
+
+```bash
+npx playwright test tests/unit/c12LocalRehearsal.test.ts --project=nightwatch
+```
+
 ## Preflight (local-only, zero production contact)
 
 
