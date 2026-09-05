@@ -11,7 +11,7 @@ Last substantive checkpoint SHA: 8265acec74d79cebeb861192f9d6ee499f579439
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-reviewer-surface-and--30ec5809
-Last checkpoint: M1 implementation complete — routing-block campaign binding live in agent:check, 7/7 regression green, typecheck/hardening/agent/project clean
+Last checkpoint: M1 COMPLETE and gate-certified — gate:local PASS 11/11 (receipt:sha256:2a2896e1ce24ebc6106d3a02); next M2 reviewer projection
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 868761d2128d5155db454623bc2fa01622a57d33
@@ -133,6 +133,7 @@ every projected element.
 | `npx playwright test tests/unit/projectState.test.ts` | 64 passed |
 | `npx playwright test tests/unit/plannerHandoff.test.ts` | 12 passed |
 | `npm run test:semantic-compat` | 2037 / 2024 passed / 13 skipped / 0 failed — PASS (FC-1 baseline 2033/2020/13/0) |
+| `npm run gate:local` (committed tree) | PASS 11/11, receipt:sha256:2a2896e1ce24ebc6106d3a02 |
 | `npm run typecheck` | clean |
 | `npm run hardening:check` | PASS |
 | `npm run agent:check` (repaired document) | PASS + 2 known warnings |
