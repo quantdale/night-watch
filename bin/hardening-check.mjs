@@ -2823,6 +2823,17 @@ function checkReviewerSurfaceBoundary() {
     fail('RS-1 an UNKNOWN relationship must carry no advisory pointer');
   }
 
+  // --- the scale probe measures; it never writes ---
+  // A benchmark that can touch the finding store is a benchmark that can
+  // corrupt the thing it measures. Synthetic corpora stay in memory.
+  const probe = withoutComments(read('tests/unit/findingIntelScaleProbe.ts'));
+  for (const [pattern, description] of [
+    [/from\s+['"]node:(?:fs|net|http|https|dns|child_process)[^'"]*['"]/, 'a filesystem/network/process import'],
+    [/writeFile|appendFile|mkdirSync|createWriteStream|PrivateArtifactStore|ProductionFindingsStore/, 'a persistence capability'],
+    [/\bfetch\s*\(/, 'fetch()'],
+    [/Math\.random/, 'Math.random (the corpus must be identical in every process)'],
+  ]) if (pattern.test(probe)) fail(`RS-1 the finding-intel scale probe contains ${description}`);
+
   // --- the pinned literal duplicate cannot drift from AH-1 ---
   const ah1 = read('src/core/alphausHandoff/types.ts');
   for (const [ah1Name, localName] of [

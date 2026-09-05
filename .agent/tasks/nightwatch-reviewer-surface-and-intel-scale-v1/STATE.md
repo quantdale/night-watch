@@ -36,8 +36,8 @@ contact.
 
 ## Current Milestone
 
-M3 (W2) — Control Center reviewer UI, complete; M4 (finding-intelligence
-scale measurement at 1k/5k/10k) is next.
+M4 (W3) — scale measured at 1k/5k/10k in fresh processes; M5
+(measurement-justified optimization) is next.
 
 ## Completed Milestones
 
@@ -65,6 +65,11 @@ scale measurement at 1k/5k/10k) is next.
   the server's `epistemicClass` as TEXT, not colour alone, and the UI computes
   no class of its own. `control-center:ui:test` → 14 passed;
   `control-center:ui:browser` → 2 passed against the freshly built bundle.
+- M4 (W3): finding-intelligence scale measured. `bin/finding-intel-scale.mjs`
+  (`npm run intel:scale`) compiles `tests/unit/findingIntelScaleProbe.ts` and
+  runs it in ONE FRESH PROCESS PER SIZE, so no size's warm JIT flatters the
+  next. Measured on Node 22, budget 240 s. Numbers in `## Measured scale
+  envelope` below.
 
 ## Work In Progress
 
@@ -106,17 +111,54 @@ DEF-FC-04 proven mechanically, not asserted:
   what an agent consults to decide what it may write, so this is an
   authority defect, not a cosmetic one.
 
+## Measured scale envelope (M4, before optimization)
+
+Node 22, fresh process per size, deterministic synthetic corpus (~1 in 20
+findings shares an earlier fingerprint, 1 in 10 has none, contract identities
+repeat over a bounded set).
+
+| Stage | 1,000 | 5,000 | 10,000 | 1k→5k | 5k→10k | Class |
+|---|---|---|---|---|---|---|
+| `PAIRWISE_RELATIONSHIPS` | 1,815 ms | 44,562 ms | 177,910 ms | x24.55 | x3.99 | QUADRATIC |
+| `RECURRENCE_AGAINST_HISTORY` | 318 ms | 7,580 ms | 30,167 ms | x23.87 | x3.98 | QUADRATIC |
+| `DEFECT_CLASS_GROUPING` | 1.8 ms | 5.0 ms | 7.1 ms | x2.84 | x1.42 | LINEAR |
+| `REVIEWER_AUTHORITY_AND_PROJECTION` | 1,739 ms | 7,689 ms | 30,264 ms | x4.42 | x3.94 | mixed |
+
+CPU tracks wall closely throughout (194 s CPU against 178 s wall at the 10k
+pairwise stage): this is compute, not waiting. Peak RSS stays modest — 58 MiB
+at 1k rising to 119 MiB at 10k on the reviewer path — so memory is not the
+constraint at these sizes. Latency is.
+
+What the numbers actually say:
+
+- Exhaustive pairwise classification is quadratic, confirmed rather than
+  assumed: 49,995,000 pairs at 10k, ~3.6 µs each. The threshold for a
+  one-second interactive budget is about 280,000 pairs, i.e. ~750 findings.
+  The reviewer authority's default `pairwiseLimit` of 2000 was set before any
+  measurement and is wrong: 2,000 findings is ~2M pairs ≈ 7.2 s.
+- Recurrence is also quadratic, and not because of the classification: the
+  cone re-validates and re-sorts the entire history on every call, so a corpus
+  of n costs O(n²) validation.
+- `REVIEWER_AUTHORITY_AND_PROJECTION` looks LINEAR from 1k→5k only because the
+  2000-finding pairwise limit switches pairwise OFF above it. Its 5k→10k
+  quadratic is recurrence alone. A limit that changes the shape of a
+  measurement is a good reason to read the stages separately rather than trust
+  a single end-to-end number.
+- Defect-class grouping is linear and costs 7 ms at 10k. It is explicitly NOT
+  optimized: nothing in the measurement justifies touching it.
+
 ## Blockers
 
 (none)
 
 ## Exact Next Action
 
-Begin M4 (W3): a fresh-process harness that generates deterministic
-synthetic corpora at 1,000 / 5,000 / 10,000 findings, runs the real
-`findingIntel` entry points, and records CPU time, peak RSS and wall
-latency per stage, so the actual quadratic threshold is located rather
-than assumed.
+Begin M5 (W4): optimize only the two hotspots the measurement justifies —
+the served reviewer path must not compute whole-corpus intelligence to
+render a bounded page, and per-finding relationship scanning should use a
+shared-key index — then re-run `npm run intel:scale` at the same three
+sizes and record the before/after delta. Leave defect-class grouping
+alone.
 
 ## Files Changed
 
@@ -141,6 +183,9 @@ than assumed.
 | `ui/control-center/src/{types,api,App}.tsx?` | reviewer view | Modified |
 | `ui/control-center/src/App.test.tsx` | reviewer view tests; nav count | Modified |
 | `tests/browser/controlCenterBrowser.browser.ts` | reviewer coverage + view totality | Modified |
+| `bin/finding-intel-scale.mjs` | fresh-process scale harness | Added |
+| `tests/unit/findingIntelScaleProbe.ts` | deterministic scale probe | Added |
+| `package.json` | `intel:scale` script | Modified |
 | `.agent/EXECUTION_PROMPT.md` | campaign handoff | Modified |
 | `.agent/tasks/nightwatch-reviewer-surface-and-intel-scale-v1/**` | campaign records | Added |
 | `openspec/changes/nightwatch-reviewer-surface-and-intel-scale-v1/**` | OpenSpec change | Added |
@@ -170,6 +215,8 @@ than assumed.
 | `npm run control-center:ui:typecheck` | clean |
 | `npm run control-center:ui:test` | 14 passed |
 | `npm run control-center:ui:browser` | 2 passed (fresh build, 287,658 bytes, no external references) |
+| `npm run intel:scale 1000,5000,10000 --budget-ms 240000` | completed at all three sizes; envelope recorded below |
+| RS-1 scale-probe purity probe | fires on `Math.random` in the probe |
 | `npm run typecheck` | clean |
 | `npm run hardening:check` | PASS |
 | `npm run agent:check` (repaired document) | PASS + 2 known warnings |

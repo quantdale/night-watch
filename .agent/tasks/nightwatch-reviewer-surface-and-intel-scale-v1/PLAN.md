@@ -94,9 +94,9 @@ state, and `epistemicClass` on every element.
 
 ### M3 (W2) — Control Center reviewer UI — COMPLETE
 
-### M4 (W3) — scale measurement at 1k / 5k / 10k — IN_PROGRESS
+### M4 (W3) — scale measurement at 1k / 5k / 10k — COMPLETE
 
-### M5 (W4) — measurement-justified optimization — NOT_STARTED
+### M5 (W4) — measurement-justified optimization — IN_PROGRESS
 
 ### M6 (W5) — large-corpus Control Center testing and endurance — NOT_STARTED
 
