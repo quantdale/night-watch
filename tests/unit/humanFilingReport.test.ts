@@ -30,6 +30,7 @@ function input(overrides: Partial<HumanFilingReportInput> = {}): HumanFilingRepo
     recurrence: 'FIRST_SEEN in 0 history entries',
     defectClass: null,
     review: {
+      state: 'CURRENT' as const,
       decision: 'ACCEPT_EVIDENCE',
       resultingState: 'REVIEWED',
       reviewedAt: '2026-09-05T00:00:00Z',
@@ -53,13 +54,13 @@ test.describe('human filing report', () => {
       '## Related findings (ADVISORY)',
       '## Recurrence (MECHANICAL DERIVATION)',
       '## Defect class (ADVISORY)',
-      '## Local review (FACT: local decision, not organizational sign-off)',
+      '## Local review (FACT: current local decision, not organizational sign-off)',
       '## Unknowns (UNKNOWN — human judgment required)',
       '## Privacy (FACT)',
     ]) {
       expect(report).toContain(heading);
     }
-    expect(report).toContain('NOT a Leslie genuine/invalid verdict');
+    expect(report).toContain('This is a Nightwatch LOCAL review only. It is NOT:');
     expect(report).toContain('No automatic external submission');
     expect(report).toContain('Team: UNKNOWN (no team evidence; left UNKNOWN)');
   });
