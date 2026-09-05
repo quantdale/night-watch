@@ -348,7 +348,10 @@ test.describe('review store — corruption is categorical and fail-closed', () =
     }));
     const read = store.read('finding:1', currentFor(value));
     expect(read.state).toBe('CORRUPT');
-    expect(['REVIEW_STORE_STATE_INVALID', 'REVIEW_STORE_RECORD_RECEIPT_MISMATCH']).toContain(read.corruption[0]?.code);
+    // The EXACT guard, not "one of two". Accepting either code let a mutation
+    // deleting the terminal-state check survive, because the record/receipt
+    // mismatch check happened to cover the same input.
+    expect(read.corruption[0]?.code).toBe('REVIEW_STORE_STATE_INVALID');
   });
 
   test('a renamed file cannot make bytes authoritative', () => {

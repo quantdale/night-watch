@@ -326,6 +326,20 @@ test.describe('the write path is narrow and fails closed', () => {
     });
   });
 
+  test('the decision enum is validated before any finding lookup', async () => {
+    // Precedence, not just outcome. Without an explicit decision check the
+    // lifecycle would still refuse an unknown decision eventually — so the
+    // result code alone cannot tell the two implementations apart. What DOES
+    // distinguish them is the order: a request that is malformed in two ways
+    // must be reported as malformed input, not as a missing finding.
+    await withServer({}, async ({ port }) => {
+      const result = JSON.parse(
+        (await postDecision(port, { findingId: 'no-such-finding', reviewIdentity: '0'.repeat(24), decision: 'NOT_A_DECISION' })).body
+      );
+      expect(result.result).toBe('INVALID_DECISION');
+    });
+  });
+
   test('an unknown finding is refused', async () => {
     await withServer({}, async ({ port }) => {
       const result = JSON.parse(

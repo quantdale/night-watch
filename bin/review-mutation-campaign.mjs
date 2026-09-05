@@ -203,7 +203,7 @@ const MUTATIONS = [
     file: 'src/controlCenter/authorities/reviewerAuthority.ts',
     from: '  const limit = typeof input.limit === \'number\' && Number.isSafeInteger(input.limit) && input.limit > 0 ? input.limit : Number.MAX_SAFE_INTEGER;',
     to: '  const limit = Number.MAX_SAFE_INTEGER;',
-    suites: ['tests/unit/reviewerProjection.test.ts'],
+    suites: [...IDENTITY_SUITES, 'tests/unit/reviewerProjection.test.ts'],
   },
   {
     id: 'B-21',

@@ -215,8 +215,14 @@ function validatedDossier(value: unknown): FindingsDossier | null {
  * Both screens are applied deliberately. The id pattern alone would pass
  * `CUSTOMER_SENTINEL`, which is a valid identifier shape and an invalid thing
  * to project; the sentinel screen alone would pass a path-shaped value.
+ *
+ * EXPORTED for direct test. Upstream validation refuses a dossier carrying a
+ * sentinel identity, so this screen is unreachable through the authority
+ * path — which is exactly what makes it defence in depth, and exactly why a
+ * mutation that deleted it survived a campaign that only tested through that
+ * path. A guard nothing can reach is a guard nothing can prove.
  */
-function projectedIdentity(value: unknown): string | null {
+export function projectedIdentity(value: unknown): string | null {
   const safe = asSafeControlCenterId(value);
   if (safe === null) return null;
   return containsPrivatePayloadShape(safe) ? null : (safe as string);

@@ -18,7 +18,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { test, expect } from '@playwright/test';
-import { createFindingsAuthorityForTests } from '../../src/controlCenter/authorities/findingsAuthority';
+import { createFindingsAuthorityForTests, projectedIdentity } from '../../src/controlCenter/authorities/findingsAuthority';
 import { reviewerInputsFromFindings } from '../../src/controlCenter/authorities/reviewerAuthority';
 import { projectReviewer } from '../../src/controlCenter/adapters/reviewerAdapter';
 import { classifyRelationship } from '../../src/core/findingIntel';
@@ -310,6 +310,60 @@ function measure(corpus: readonly CorpusFinding[]): Measurement {
   return { relationships, defectClassMembers, duplicateSuggestions };
 }
 
+test.describe('A2 — the projection screen itself', () => {
+  // Tested DIRECTLY, not through the authority.
+  //
+  // Upstream validation refuses a dossier carrying a sentinel identity, so
+  // this screen is unreachable through the authority path. That is what makes
+  // it defence in depth — and it is also why a mutation that deleted it
+  // survived a campaign that only tested through that path. A guard nothing
+  // can reach is a guard nothing can prove, so it is exercised at its own
+  // boundary.
+
+  test('a valid identifier is carried through unchanged', () => {
+    for (const value of [
+      'fixture-10.common-exchange.read.real-source-deep',
+      'inv:sha256:aaaaaaaaaaaaaaaaaaaaaaaa',
+      'exp:phase15p.adversarial.v1',
+      'expectation.currency-rounding',
+    ]) {
+      expect(projectedIdentity(value), value).toBe(value);
+    }
+  });
+
+  test('a sentinel-shaped identifier is dropped, though its SHAPE is valid', () => {
+    // Each of these passes the safe-id pattern. Only the sentinel screen
+    // rejects them, so this is the case that proves the second screen earns
+    // its place: with the id pattern alone, every one would be projected.
+    for (const value of ['CUSTOMER_SENTINEL', 'ACCOUNT_SENTINEL', 'EMAIL_SENTINEL', 'COST_SENTINEL', 'TOKEN_SENTINEL']) {
+      expect(projectedIdentity(value), value).toBeNull();
+    }
+  });
+
+  test('a path-shaped or malformed identifier is dropped by the shape screen', () => {
+    // The complement: these carry no sentinel, so only the id pattern
+    // rejects them. Both screens are load-bearing, in opposite directions.
+    for (const value of ['expectation/invoice-total', '../escape', 'has space', '', '-leading', 'e'.repeat(180)]) {
+      expect(projectedIdentity(value), JSON.stringify(value)).toBeNull();
+    }
+  });
+
+  test('a non-string is dropped', () => {
+    for (const value of [42, null, undefined, {}, [], true]) {
+      expect(projectedIdentity(value), JSON.stringify(value)).toBeNull();
+    }
+  });
+
+  test('the screen can only drop, never invent or repair', () => {
+    // It returns its input or null. There is no third outcome, and in
+    // particular no fallback value that could become a manufactured identity.
+    for (const value of ['valid.identifier', 'CUSTOMER_SENTINEL', 'a/b', 42, null]) {
+      const projected = projectedIdentity(value);
+      expect(projected === null || projected === value, JSON.stringify(value)).toBe(true);
+    }
+  });
+});
+
 test.describe('B — measured effect on a permanent synthetic corpus', () => {
   test('propagation adds mechanically justified classification, and the corpus is real', () => {
     const corpus = reviewerCorpus(CORPUS_SIZE);
@@ -391,6 +445,52 @@ function firstTwoOf(family: CorpusFamily): readonly [CorpusFinding, CorpusFindin
   const members = reviewerCorpus(CORPUS_SIZE).filter((finding) => finding.family === family);
   return [members[1] as CorpusFinding, members[2] as CorpusFinding];
 }
+
+test.describe('B2 — the authority computes the PAGE, not the corpus', () => {
+  // M5 of the predecessor campaign made the served path page-scoped: at
+  // 10,000 findings the whole-corpus approach spent 178 s of pairwise work to
+  // render fifty rows. Nothing asserted the authority actually honours the
+  // limit, so a mutation forcing `limit` back to MAX_SAFE_INTEGER survived —
+  // the projection trimmed the rows afterwards and every existing assertion
+  // still held, while the cost came straight back.
+
+  test('the authority returns exactly the requested page', () => {
+    const corpus = reviewerCorpus(240);
+    for (const limit of [1, 10, 50]) {
+      const inputs = reviewerInputsFromFindings({ dossiers: corpus, campaignId: 'campaign.local.1', limit });
+      expect(inputs.findings.length, `limit ${limit}`).toBe(limit);
+      // …and still reports the true corpus size, so truncation stays honest.
+      expect(inputs.total, `limit ${limit}`).toBe(240);
+    }
+  });
+
+  test('an absent limit means the whole corpus, and that is the only way to get it', () => {
+    const corpus = reviewerCorpus(120);
+    expect(reviewerInputsFromFindings({ dossiers: corpus, campaignId: 'campaign.local.1' }).findings.length).toBe(120);
+    expect(reviewerInputsFromFindings({ dossiers: corpus, campaignId: 'campaign.local.1', limit: 20 }).findings.length).toBe(20);
+  });
+
+  test('the per-row lookup is invoked once per RENDERED row, never per finding held', () => {
+    // The cost claim, asserted as a count rather than as a timing. A timing
+    // bound on a shared machine is a flake; a call count is the actual
+    // invariant.
+    const corpus = reviewerCorpus(300);
+    const seen: string[] = [];
+    const inputs = reviewerInputsFromFindings({
+      dossiers: corpus,
+      campaignId: 'campaign.local.1',
+      limit: 25,
+      localReviewLookup: (dossier) => {
+        seen.push(dossier.candidateId);
+        return null;
+      },
+    });
+    expect(inputs.findings).toHaveLength(25);
+    expect(seen).toHaveLength(25);
+    expect(new Set(seen).size).toBe(25);
+    expect(seen.sort()).toEqual(inputs.findings.map((finding) => finding.findingId).sort());
+  });
+});
 
 test.describe('C — propagation must not over-collapse distinct findings', () => {
   test('same expectation, different failure: related, never the same finding', () => {
