@@ -9,6 +9,8 @@ import { classifyRunStatus, projectRunDetail, projectRunList, projectTimeline } 
 import { projectCampaignCoverage, projectCampaignSummary } from '../adapters/campaignAdapter';
 import { projectSourceGraph, projectSourceSummary, projectSourceSurfaces, type SourceSummaryAuthorityInput } from '../adapters/sourceAdapter';
 import { projectFindings } from '../adapters/findingsAdapter';
+import { projectReviewer } from '../adapters/reviewerAdapter';
+import { reviewerInputsFromFindings } from '../authorities/reviewerAuthority';
 import { LEVEL_FOR_SEGMENT, QUERY_FOR_SEGMENT, systemMapInputFromDiscovery, systemMapLevel, systemMapQuery } from '../adapters/systemMapAdapter';
 import { createRunEvidenceReader, type RunEvidenceReader, type RunEvidenceSnapshot } from '../authorities/runEvidenceReader';
 import { createSourceAuthority, type SourceAuthority, type SourceAuthoritySnapshot } from '../authorities/sourceAuthority';
@@ -377,6 +379,19 @@ export function createDefaultControlCenterCollector(options: DefaultControlCente
         state: findings.state,
         available: findings.state !== 'UNAVAILABLE',
       }, query.limit);
+    },
+    reviewer: async (query) => {
+      const { findings, campaign } = await readAuthoritySnapshot();
+      if (findings.state === 'UNAVAILABLE') return projectReviewer({ findings: [], available: false }, query.limit);
+      return projectReviewer(
+        {
+          findings: reviewerInputsFromFindings({
+            dossiers: findings.dossiers,
+            campaignId: campaign.generation,
+          }),
+        },
+        query.limit
+      );
     },
   };
 }

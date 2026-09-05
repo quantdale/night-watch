@@ -7,3 +7,4 @@ export * from './executionGraphAdapter';
 export * from './campaignAdapter';
 export * from './sourceAdapter';
 export * from './findingsAdapter';
+export * from './reviewerAdapter';

@@ -16,6 +16,7 @@ export type ControlCenterRoute =
   | { readonly kind: 'sourceSurfaces' }
   | { readonly kind: 'sourceGraph' }
   | { readonly kind: 'findings' }
+  | { readonly kind: 'reviewer' }
   | { readonly kind: 'events' }
   /** C-15c: System Map V2. Versioned EXPLICITLY under /api/v2/, never by
    *  reinterpreting v1, so a client can always tell which shape it received. */
@@ -91,6 +92,7 @@ export function parseControlCenterPath(pathname: string): ControlCenterPathResul
   if (parts.length === 5 && parts[3] === 'source' && parts[4] === 'surfaces') return { kind: 'route', route: { kind: 'sourceSurfaces' } };
   if (parts.length === 5 && parts[3] === 'source' && parts[4] === 'graph') return { kind: 'route', route: { kind: 'sourceGraph' } };
   if (parts.length === 4 && parts[3] === 'findings') return { kind: 'route', route: { kind: 'findings' } };
+  if (parts.length === 4 && parts[3] === 'reviewer') return { kind: 'route', route: { kind: 'reviewer' } };
   if (parts.length === 4 && parts[3] === 'events') return { kind: 'route', route: { kind: 'events' } };
   return { kind: 'unknown' };
 }

@@ -158,7 +158,7 @@ function listQuery(url: URL, allowedExtra: readonly string[] = []): ControlCente
 }
 
 function routeQuery(url: URL, route: ControlCenterRoute): Record<string, string | null> | ControlCenterErrorCode {
-  if (route.kind === 'runs' || route.kind === 'campaignCoverage' || route.kind === 'findings') return queryValues(url, ['limit', 'cursor']);
+  if (route.kind === 'runs' || route.kind === 'campaignCoverage' || route.kind === 'findings' || route.kind === 'reviewer') return queryValues(url, ['limit', 'cursor']);
   if (route.kind === 'timeline') return queryValues(url, ['afterSeq', 'limit']);
   if (route.kind === 'sourceSurfaces') return queryValues(url, ['repo', 'limit', 'cursor']);
   if (route.kind === 'sourceGraph') return queryValues(url, ['surface', 'depth']);
@@ -305,6 +305,12 @@ async function dispatch(
           const list = listQuery(url);
           if (typeof list === 'string') return sendError(response, list, headOnly);
           return sendJson(response, 200, await options.collector.findings(list), headOnly);
+        }
+      case 'reviewer':
+        {
+          const list = listQuery(url);
+          if (typeof list === 'string') return sendError(response, list, headOnly);
+          return sendJson(response, 200, await options.collector.reviewer(list), headOnly);
         }
       case 'systemMapLevel': {
         const focus = query.focus === null ? null : asSafeSystemMapFocus(query.focus);

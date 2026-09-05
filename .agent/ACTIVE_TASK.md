@@ -6,16 +6,17 @@ Title: Reviewer Surface & Finding-Intelligence Scale
 Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-reviewer-surface-and-intel-scale-v1
 Starting SHA: 868761d2128d5155db454623bc2fa01622a57d33
-Last validated implementation SHA: 8265acec74d79cebeb861192f9d6ee499f579439
-Last checkpoint: M1 in progress — campaign opened from 868761d; DEF-FC-04 proven (routing block entered at 48c0a60 for the coherence campaign and survived verbatim into FC-1 at 0c5cb42 and 868761d while identity fields were rewritten)
-Current milestone: M1 (W0) — repository truth, DEF-FC-04 repair, continuity metadata hardened against cross-campaign drift
-Next action: add the ACTIVE_TASK routing-block campaign-binding rule to the continuity checker so a predecessor block fails closed, with a regression that fails on the unrepaired document
+Last validated implementation SHA: 882138c40e650b95ff8923b790b4b90c7edefdfa
+Last checkpoint: M1 COMPLETE, integrated at 96b100a (implementation 882138c, gate:local PASS 11/11); M2 reviewer projection in progress
+Current milestone: M2 (W1) — reviewer projection over the finding-intelligence and review cones
+Next action: M3 — the Control Center reviewer UI over the projection
 Authorization class: REVIEWER_SURFACE_AND_INTEL_SCALE_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 868761d2128d5155db454623bc2fa01622a57d33
-LAST_VALIDATED_IMPLEMENTATION_SHA: 8265acec74d79cebeb861192f9d6ee499f579439
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 8265acec74d79cebeb861192f9d6ee499f579439
+LAST_VALIDATED_IMPLEMENTATION_SHA: 882138c40e650b95ff8923b790b4b90c7edefdfa
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 882138c40e650b95ff8923b790b4b90c7edefdfa
+LAST_DOCUMENTATION_CHECKPOINT_SHA: 96b100af42e7335ce39e2652265c458e2210522a
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PHASE_REVIEWER_SURFACE_AND_INTEL_SCALE_V1_STATUS: IN_PROGRESS

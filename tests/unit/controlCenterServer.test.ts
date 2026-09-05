@@ -6,6 +6,7 @@ import path from 'node:path';
 import { createControlCenterServer, createDefaultHealth } from '../../src/controlCenter/server';
 import { projectMeta } from '../../src/controlCenter/adapters/metaAdapter';
 import { projectSafety } from '../../src/controlCenter/adapters/safetyAdapter';
+import { projectReviewer } from '../../src/controlCenter/adapters/reviewerAdapter';
 import type { ControlCenterCollector } from '../../src/controlCenter/server/collector';
 import type { ControlCenterEventDto } from '../../src/controlCenter/contracts/events';
 import type { ControlCenterReadinessDto } from '../../src/controlCenter/contracts/readiness';
@@ -72,6 +73,7 @@ function emptyCollector(): ControlCenterCollector {
   const sourceSurfaces = { schemaVersion: CONTROL_CENTER_SOURCE_SURFACES_SCHEMA_VERSION, items: [], page: { limit: 50, nextCursor: null, truncated: false }, repositoryFilter: null } as unknown as ControlCenterSourceSurfacesDto;
   const sourceGraph = { schemaVersion: CONTROL_CENTER_SOURCE_GRAPH_SCHEMA_VERSION, surfaceId: null, depth: 0, nodes: [], edges: [], nodeLimit: 250, edgeLimit: 500, truncated: false } as unknown as ControlCenterSourceGraphDto;
   const findings = { schemaVersion: CONTROL_CENTER_FINDINGS_SCHEMA_VERSION, state: 'EMPTY', items: [], page: { limit: 50, nextCursor: null, truncated: false } } as ControlCenterFindingsDto;
+  const reviewer = projectReviewer({ findings: [] });
   return {
     health: () => createDefaultHealth(),
     meta: () => projectMeta(),
@@ -87,6 +89,7 @@ function emptyCollector(): ControlCenterCollector {
     sourceSurfaces: () => sourceSurfaces,
     sourceGraph: () => sourceGraph,
     findings: () => findings,
+    reviewer: () => reviewer,
   systemMapLevel: () => null,
   systemMapQuery: () => null,
   };

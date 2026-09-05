@@ -268,7 +268,9 @@
     "tests/unit/selfDevSandboxConfinement.test.ts",
     "tests/unit/selfDevSchema.test.ts",
     "tests/unit/contextUrlHardening.test.ts",
-    "tests/unit/nightwatchHygiene.test.ts"
+    "tests/unit/nightwatchHygiene.test.ts",
+    "tests/unit/activeTaskRoutingBinding.test.ts",
+    "tests/unit/reviewerProjection.test.ts"
   ],
   "intentionalDuplicateFileReasons": []
 }

@@ -6,8 +6,9 @@ Task ID: nightwatch-reviewer-surface-and-intel-scale-v1
 Phase: REVIEWER_SURFACE_AND_INTEL_SCALE_V1
 Status: IN_PROGRESS
 Starting SHA: 868761d2128d5155db454623bc2fa01622a57d33
-Last validated implementation SHA: 8265acec74d79cebeb861192f9d6ee499f579439
-Last substantive checkpoint SHA: 8265acec74d79cebeb861192f9d6ee499f579439
+Last validated implementation SHA: 882138c40e650b95ff8923b790b4b90c7edefdfa
+Last substantive checkpoint SHA: 882138c40e650b95ff8923b790b4b90c7edefdfa
+Last documentation checkpoint SHA: 96b100af42e7335ce39e2652265c458e2210522a
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-reviewer-surface-and--30ec5809
@@ -15,8 +16,9 @@ Last checkpoint: M1 COMPLETE and gate-certified — gate:local PASS 11/11 (recei
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 868761d2128d5155db454623bc2fa01622a57d33
-LAST_VALIDATED_IMPLEMENTATION_SHA: 8265acec74d79cebeb861192f9d6ee499f579439
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 8265acec74d79cebeb861192f9d6ee499f579439
+LAST_VALIDATED_IMPLEMENTATION_SHA: 882138c40e650b95ff8923b790b4b90c7edefdfa
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 882138c40e650b95ff8923b790b4b90c7edefdfa
+LAST_DOCUMENTATION_CHECKPOINT_SHA: 96b100af42e7335ce39e2652265c458e2210522a
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
 PHASE_REVIEWER_SURFACE_AND_INTEL_SCALE_V1_STATUS: IN_PROGRESS
@@ -34,8 +36,8 @@ contact.
 
 ## Current Milestone
 
-M1 (W0) — repository truth, DEF-FC-04 repair, continuity metadata
-hardened against cross-campaign drift.
+M2 (W1) — reviewer projection over the finding-intelligence and review
+cones, complete; M3 (the Control Center reviewer UI) is next.
 
 ## Completed Milestones
 
@@ -51,8 +53,18 @@ hardened against cross-campaign drift.
   probes that the rule is INVOKED, not merely defined. That file is in the
   `semantic-compatibility` lane, so those probes run inside the required
   `SEMANTIC_COMPATIBILITY` gate group.
+- M2 (W1): reviewer projection. `src/controlCenter/contracts/reviewer.ts`
+  (epistemic-class contract), `src/controlCenter/adapters/reviewerAdapter.ts`
+  (the projection), `src/controlCenter/authorities/reviewerAuthority.ts`
+  (findings snapshot → real cone calls), route `/api/v1/reviewer` through the
+  router, collector, server and default collector, and RS-1 hardening.
+  `npx playwright test tests/unit/reviewerProjection.test.ts` → 22 passed.
 
 ## Work In Progress
+
+M3. The Control Center reviewer UI over `/api/v1/reviewer`.
+
+Closed in M1:
 
 M1. Repository truth established:
 
@@ -94,10 +106,9 @@ DEF-FC-04 proven mechanically, not asserted:
 
 ## Exact Next Action
 
-Begin M2 (W1): the reviewer projection over `src/core/findingIntel/` and
-`src/core/findingReview/`, exposed through a new `src/controlCenter/`
-adapter, with `epistemicClass` (`FACT` / `RECOMMENDATION` / `UNKNOWN`) on
-every projected element.
+Begin M3 (W2): the Control Center reviewer UI over `/api/v1/reviewer`,
+rendering each element by its declared `epistemicClass` and never by a
+styling decision of its own.
 
 ## Files Changed
 
@@ -111,7 +122,14 @@ every projected element.
 | `tests/unit/agent-state.test.ts` | fixture routing block + 4 end-to-end invocation probes | Modified |
 | `tests/unit/projectState.test.ts` | fixture routing block | Modified |
 | `tests/unit/plannerHandoff.test.ts` | fixture routing block | Modified |
-| `docs/CURRENT_STATE.md` | live-state rebind to this campaign | Modified |
+| `docs/CURRENT_STATE.md` | live-state rebind and checkpoint anchors | Modified |
+| `src/controlCenter/contracts/reviewer.ts` | reviewer contract with epistemic classes | Added |
+| `src/controlCenter/adapters/reviewerAdapter.ts` | the projection | Added |
+| `src/controlCenter/authorities/reviewerAuthority.ts` | findings snapshot → real cone calls | Added |
+| `src/controlCenter/server/{router,collector,server,defaultCollector}.ts` | `/api/v1/reviewer` | Modified |
+| `bin/hardening-check.mjs` | RS-1 reviewer-surface rule | Modified |
+| `config/semantic-compatibility.v1.json` | both new suites registered in a required lane | Modified |
+| `tests/unit/reviewerProjection.test.ts` | M2 regression | Added |
 | `.agent/EXECUTION_PROMPT.md` | campaign handoff | Modified |
 | `.agent/tasks/nightwatch-reviewer-surface-and-intel-scale-v1/**` | campaign records | Added |
 | `openspec/changes/nightwatch-reviewer-surface-and-intel-scale-v1/**` | OpenSpec change | Added |
@@ -133,7 +151,11 @@ every projected element.
 | `npx playwright test tests/unit/projectState.test.ts` | 64 passed |
 | `npx playwright test tests/unit/plannerHandoff.test.ts` | 12 passed |
 | `npm run test:semantic-compat` | 2037 / 2024 passed / 13 skipped / 0 failed — PASS (FC-1 baseline 2033/2020/13/0) |
-| `npm run gate:local` (committed tree) | PASS 11/11, receipt:sha256:2a2896e1ce24ebc6106d3a02 |
+| `npm run gate:local` (committed tree, M1) | PASS 11/11, receipt:sha256:2a2896e1ce24ebc6106d3a02 |
+| M1 integrated | origin/main 96b100a; implementation anchor 882138c |
+| `npx playwright test tests/unit/reviewerProjection.test.ts` | 22 passed |
+| RS-1 hardening branch probes | 6/6 fire (severity drift, authority literal, advisory-guard totality, sentinel screen, UNKNOWN pointer, final verdict authority) |
+| `npm run test:semantic-compat` (M2) | 2066 / 2053 passed / 13 skipped / 0 failed — PASS, 148 files |
 | `npm run typecheck` | clean |
 | `npm run hardening:check` | PASS |
 | `npm run agent:check` (repaired document) | PASS + 2 known warnings |
@@ -151,11 +173,23 @@ every projected element.
 
 ## Discoveries
 
+- The intelligence cones emit PROSE evidence (`RECURRENT` evidence strings,
+  `mechanicalEvidence`, `counterexamples`) written for the human filing
+  report. Unbounded free text must not cross onto the public surface, so the
+  reviewer projection derives categorical basis codes from the same results
+  instead of forwarding the prose. Discovered by five test failures, not by
+  reading.
 - `bin/project-state-check.mjs` and `bin/planner-handoff-check.mjs` both run
   `bin/agent-state.mjs` as a subprocess, so one new continuity rule reaches
   three suites, not one: `agent-state.test.ts` (65 failures), then
   `projectState.test.ts` and `plannerHandoff.test.ts` (26). The blast radius of
   an `agent:check` addition is wider than the file it lives in.
+- The first RS-1 advisory-guard rule was DEAD: two projection functions carry
+  the guard, so `includes(literal)` stayed satisfied when one was deleted.
+  Replaced by a totality relation — emitted `advisoryOnly: true` values must
+  equal guarded inputs. Every one of the six RS-1 branches is now probed by
+  deliberate mutation, because a hardening rule that cannot fail proves
+  nothing.
 - `project:check` requires `.agent/EXECUTION_PROMPT.md` `Status` and
   `Campaign ID` to match the active task, so the `READY_FOR_EXECUTION`
   planning-only checkpoint described in `.agent/PLANNER_HANDOFF.md` would

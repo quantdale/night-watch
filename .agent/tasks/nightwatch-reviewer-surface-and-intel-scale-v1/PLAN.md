@@ -86,13 +86,13 @@ measurement and is re-measured at the same sizes afterwards.
       and missing block both fail closed.
 - [x] Regression that fails on the unrepaired historical document.
 
-### M2 (W1) — reviewer projection — IN_PROGRESS
+### M2 (W1) — reviewer projection — COMPLETE
 
 Relationships, probable duplicates, recurrence, defect classes,
 expectation provenance, confidence, Alphaus recommendations, local review
 state, and `epistemicClass` on every element.
 
-### M3 (W2) — Control Center reviewer UI — NOT_STARTED
+### M3 (W2) — Control Center reviewer UI — IN_PROGRESS
 
 ### M4 (W3) — scale measurement at 1k / 5k / 10k — NOT_STARTED
 

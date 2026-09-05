@@ -2754,6 +2754,92 @@ function checkFindingFrontierBoundary() {
   }
 }
 /**
+ * RS-1 reviewer-surface invariants.
+ *
+ * The Control Center reviewer surface projects the FC-1 finding cones. It
+ * must not become a second opinion: the cones' advisory markings decide the
+ * epistemic class, the local-review non-equivalence guard is re-checked at
+ * the surface, and the Alphaus vocabulary it displays must stay identical to
+ * the AH-1 vocabulary it is forbidden to import.
+ */
+function checkReviewerSurfaceBoundary() {
+  const adapter = withoutComments(read('src/controlCenter/adapters/reviewerAdapter.ts'));
+  const contract = withoutComments(read('src/controlCenter/contracts/reviewer.ts'));
+  const authority = withoutComments(read('src/controlCenter/authorities/reviewerAuthority.ts'));
+
+  // --- the projection stays pure ---
+  for (const [file, source] of [
+    ['src/controlCenter/adapters/reviewerAdapter.ts', adapter],
+    ['src/controlCenter/contracts/reviewer.ts', contract],
+    ['src/controlCenter/authorities/reviewerAuthority.ts', authority],
+  ]) {
+    for (const [pattern, description] of [
+      [/from\s+['"]node:(?:net|http|https|dns|child_process|fs|os|worker_threads)[^'"]*['"]/, 'a network/process/filesystem import'],
+      [/\brequire\s*\(\s*['"]/, 'a require() call'],
+      [/\bfetch\s*\(/, 'fetch()'],
+      [/process\.env/, 'an environment read'],
+      [/from\s+['"][^'"]*(slack|leslie|pondr)[^'"]*['"]/i, 'an external submission import'],
+      [/expectedPoints|estimatedReward|rewardTier|bountyPoints|bountyScore|calculateBounty/i, 'a bounty-scoring surface'],
+    ]) if (pattern.test(source)) fail(`${file} contains ${description}; the reviewer surface must stay a pure local projection`);
+  }
+
+  // --- authority literals, occurrence-complete ---
+  // A rule satisfied by one safe occurrence is the DEF-FC-04 / M12 trap: every
+  // assignment and comparison must carry the local-only value, not just one.
+  for (const [file, source] of [
+    ['src/controlCenter/adapters/reviewerAdapter.ts', adapter],
+    ['src/controlCenter/contracts/reviewer.ts', contract],
+  ]) {
+    for (const assignment of source.match(/organizationalAuthority\s*(?::|!==|===)\s*'[^']*'/g) ?? []) {
+      if (!assignment.endsWith("'NONE_LOCAL_REVIEW_ONLY'")) {
+        fail(`${file} carries ${assignment}; the reviewer surface must always be NONE_LOCAL_REVIEW_ONLY`);
+      }
+    }
+    for (const assignment of source.match(/finalVerdictAuthority\s*(?::|!==|===)\s*'[^']*'/g) ?? []) {
+      if (!assignment.endsWith("'HUMAN_ORGANIZATIONAL'")) {
+        fail(`${file} carries ${assignment}; the final verdict authority is always HUMAN_ORGANIZATIONAL`);
+      }
+    }
+  }
+
+  // --- the cones decide the epistemic class, not the adapter ---
+  for (const literal of [
+    "receipt.organizationalAuthority !== 'NONE_LOCAL_REVIEW_ONLY'",
+    'CUSTOMER_SENTINEL',
+  ]) {
+    if (!adapter.includes(literal)) fail(`RS-1 the reviewer adapter must retain ${literal}`);
+  }
+  // Totality, not presence. Two advisory projections exist, so an
+  // includes(literal) rule stays satisfied when one guard is deleted — the
+  // DEF-FC-02 / M12 shape. Every emitted `advisoryOnly: true` must be paid for
+  // by a guard that rejected a non-advisory input.
+  const emitted = (adapter.match(/advisoryOnly:\s*true/g) ?? []).length;
+  const guarded = (adapter.match(/advisoryOnly\s*!==\s*true\)\s*fail/g) ?? []).length;
+  if (emitted === 0 || guarded !== emitted) {
+    fail(`RS-1 the reviewer adapter emits ${emitted} advisoryOnly values but guards ${guarded}; every advisory projection must check its input`);
+  }
+  // UNKNOWN must stay value-free: no advisory pointer may accompany it.
+  if (!/possibleOriginalId !== null\) fail/.test(adapter)) {
+    fail('RS-1 an UNKNOWN relationship must carry no advisory pointer');
+  }
+
+  // --- the pinned literal duplicate cannot drift from AH-1 ---
+  const ah1 = read('src/core/alphausHandoff/types.ts');
+  for (const [ah1Name, localName] of [
+    ['ALPHAUS_SEVERITY_VALUES', 'ALPHAUS_SEVERITY_LITERALS'],
+    ['ALPHAUS_CATCH_STAGE_VALUES', 'ALPHAUS_CATCH_STAGE_LITERALS'],
+    ['ALPHAUS_SOURCE_VALUES', 'ALPHAUS_SOURCE_LITERALS'],
+  ]) {
+    const source = new RegExp(`${ah1Name}\\s*=\\s*(\\[[^\\]]*\\])`).exec(ah1);
+    const local = new RegExp(`${localName}\\s*=\\s*(\\[[^\\]]*\\])`).exec(authority);
+    if (source === null) fail(`RS-1 could not read ${ah1Name} from the AH-1 vocabulary`);
+    else if (local === null) fail(`RS-1 could not read ${localName} from the reviewer authority`);
+    else if (source[1].replace(/\s+/g, '') !== local[1].replace(/\s+/g, '')) {
+      fail(`RS-1 ${localName} has drifted from ${ah1Name}; the duplicate is deliberate and must stay exact`);
+    }
+  }
+}
+/**
  * AH-1 documentation-freshness invariants (narrow, against demonstrated
  * failure modes — the 2026-09-01 header that survived MA-8 completion and
  * the historical GREEN claimed as current CI truth). Header dates are UTC
@@ -3763,6 +3849,7 @@ checkC00WorkspaceIntegrity();
 checkC10ProductionPrivacyBoundary();
 checkC12RehearsalBoundary();
 checkFindingFrontierBoundary();
+checkReviewerSurfaceBoundary();
 checkDeclaredDependencyResolvability();
 checkC105ProvenanceAuthorityBoundary();
 checkR11ProxyGateReliability();
