@@ -97,6 +97,35 @@ test.describe('epistemic classification', () => {
     expect(item.relationship.value).toBeNull();
   });
 
+  test('an UNKNOWN relationship that arrives WITH a pointer is rejected', () => {
+    // Mutation M02: asserting only that the projected value is null passes
+    // whether the contradiction is rejected or silently swallowed, because
+    // UNKNOWN has no value either way. An UNKNOWN carrying a pointer is a
+    // contradiction in the input, and dropping it quietly would hide an
+    // upstream defect rather than surface it.
+    const contradiction = {
+      ...classifyRelationship(descriptor('b', null), descriptor('a', null)),
+      possibleOriginalId: 'a',
+    } as RelationshipResult;
+    expect(contradiction.relationship).toBe('UNKNOWN');
+    expect(() => only(baseFinding({ relationship: contradiction }))).toThrow(/relationship\.possibleOriginalId/);
+  });
+
+  test('the redundant input guards still name the field they reject', () => {
+    // Mutations M06 and M09 are EQUIVALENT MUTANTS, recorded rather than
+    // pretended killed: deleting either guard leaves the same rejection with
+    // the same field name, because safeCode/safeId reject null on that field
+    // anyway. The guards are kept because they state the rule at the point it
+    // applies and would become load-bearing if those helpers ever loosened.
+    // What is testable is the CONTRACT, so that is what is asserted.
+    const base = baseFinding();
+    expect(() =>
+      only({ ...base, alphausRecommendation: { ...base.alphausRecommendation, team: 'Billing', teamEvidence: null } })
+    ).toThrow(/alphausRecommendation\.teamEvidence/);
+    const orphan = { ...classifyRelationship(descriptor('b', FP_A), descriptor('a', FP_A)), possibleOriginalId: null } as RelationshipResult;
+    expect(() => only(baseFinding({ probableDuplicates: [orphan] }))).toThrow(/probableDuplicates\[0\]\.possibleOriginalId/);
+  });
+
   test('INSUFFICIENT confidence renders as UNKNOWN, not as low confidence', () => {
     const item = only(baseFinding({ confidence: 'INSUFFICIENT' }));
     expect(item.confidence.epistemicClass).toBe('UNKNOWN');
