@@ -37,7 +37,7 @@ C-12 contact.
 
 ## Current Milestone
 
-M6 — scale measurement.
+M7 — browser and restart proof.
 
 ## Completed Milestones
 
@@ -124,6 +124,10 @@ M6 — scale measurement.
   behavioural campaign: 31 introduced, 29 detected, 2 survived — both
   declared, one CONTROL (comment-only) and one EQUIVALENT (`12 * 2` for
   `24`), restore drift NONE.
+- M6: scale. `npm run review:scale` measures the served reviewer page at
+  1k/5k/10k against 0/10/50/100% reviewed stores, one fresh OS process per
+  cell. The FIRST run found a real defect and the fix is the milestone's
+  main product — see `## Measured persistence scale envelope (M6)`.
 
 ## Work In Progress
 
@@ -158,9 +162,8 @@ None.
 
 ## Exact Next Action
 
-Execute M6: measure the served reviewer path at 1k/5k/10k against
-0%/10%/50%/100% reviewed review-store populations, and compare with the
-predecessor's envelope.
+Execute M7: run the reviewer persistence browser workflow to >= 30 passes,
+and prove server A/B/C restart and stale behaviour end to end.
 
 ## Files Changed
 
@@ -201,6 +204,10 @@ predecessor's envelope.
   `npm run mutation:review` PASS (31/29/2, restore drift NONE);
   full unit regression 4072 passed / 0 failed / 13 skipped, TWICE
   consecutively.
+- M6: `typecheck` PASS; `npm run review:scale` 12/12 cells measured, twice
+  (before and after the fix); `npm run mutation:review` PASS after adding
+  the two guards the fix introduced — 33 introduced, 31 detected, 2
+  survived (both declared), restore drift NONE.
   ONE unattributed one-off: an earlier full-suite run in this milestone
   reported `1 failed` without the failing test being captured. It did not
   reproduce in the two subsequent identical full runs, and the five new
@@ -303,6 +310,67 @@ classifier could previously only record `MISSING_COMPARISON_INPUT` — "I
 do not know". With the identities it records `DIFFERENT_EXPECTATION` and
 `DIFFERENT_SEMANTIC_CONTRACT` — "these genuinely differ". Propagation
 made the surface more careful, not less.
+
+## Measured persistence scale envelope (M6)
+
+Served reviewer page (authority + projection, page limit 50), one fresh OS
+process per cell. Baseline is the same page WITHOUT the store wired.
+
+FIRST RUN — the defect:
+
+```
+ corpus  reviewed  store files   page baseline -> served   page lookup
+  1000       100%        1000        231.7 ms -> 254.4 ms      30.44 ms
+  5000       100%        5000        193.5 ms -> 392.0 ms     146.96 ms
+ 10000        50%        5000        400.0 ms -> 534.4 ms     144.50 ms
+ 10000       100%       10000        391.0 ms -> 702.6 ms     325.46 ms
+```
+
+The lookup cost grew with the STORE, not with the page: `fileNamesFor`
+listed the whole store directory once PER FINDING, so a 50-row page over
+a 10,000-review store scanned half a million directory entries. This is
+exactly the shape the predecessor's page-scoping removed from the
+intelligence path, reintroduced through persistence — and the design note
+in `design.md` claimed "one directory listing serves a whole page", which
+the implementation did not do. The measurement is what caught it; no
+test would have, because every functional assertion still passed.
+
+The fix is `ReviewStore.snapshotListing()`: one request-scoped directory
+read, grouped by discovery key, taken once in `localReviewLookup`.
+
+SECOND RUN — after the fix:
+
+```
+ corpus  reviewed  store files  store bytes   page baseline -> served   lookup   RSS
+  1000        0%           0        0.0 KiB        251.4 ms -> 246.5 ms  0.10 ms  76.0 MiB
+  1000       10%         100      160.8 KiB        239.4 ms -> 221.2 ms  0.68 ms  76.6 MiB
+  1000       50%         500      804.2 KiB        253.5 ms -> 228.8 ms  1.62 ms  77.7 MiB
+  1000      100%        1000     1608.4 KiB        226.6 ms -> 229.4 ms  3.72 ms  78.9 MiB
+  5000        0%           0        0.0 KiB        210.4 ms -> 195.7 ms  0.10 ms  83.9 MiB
+  5000       10%         500      804.2 KiB        212.3 ms -> 216.9 ms  2.74 ms  88.3 MiB
+  5000       50%        2500     4021.0 KiB        203.5 ms -> 186.8 ms  2.12 ms  91.6 MiB
+  5000      100%        5000     8042.0 KiB        187.8 ms -> 213.5 ms  3.20 ms  94.0 MiB
+ 10000        0%           0        0.0 KiB        424.4 ms -> 406.3 ms  0.09 ms 107.0 MiB
+ 10000       10%        1000     1608.4 KiB        400.2 ms -> 387.9 ms  0.76 ms 111.1 MiB
+ 10000       50%        5000     8042.0 KiB        428.5 ms -> 396.2 ms  3.17 ms 110.5 MiB
+ 10000      100%       10000    16084.0 KiB        393.6 ms -> 402.0 ms  3.45 ms 116.6 MiB
+```
+
+At the worst cell — 10,000 findings, 10,000 stored reviews, every row on
+the page reviewed — the page lookup fell from 325.46 ms to 3.45 ms, and
+the served page from 702.6 ms to 402.0 ms against a 393.6 ms baseline:
+about 2% overhead for persistence, where it had been 80%.
+
+Two cautions on reading these numbers. The baseline page here (~390-430 ms
+at 10k) is NOT comparable to the predecessor's 359.5 ms worst-case: this
+is a different corpus, built from six identity families that deliberately
+produce more defect-class work, on a differently loaded machine. What IS
+comparable within this table is baseline against served, measured in the
+same process on the same corpus. And the durable regression guard is not a
+latency bound — a latency bound on a shared machine is a flake generator.
+It is a deterministic call count: `tests/unit/reviewStoreDurability.test.ts`
+asserts a 40-row page costs exactly ONE directory read, with a control
+proving the same page costs 8 reads without the listing.
 
 ## Deferred / Follow-Up
 
