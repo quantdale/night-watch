@@ -1,6 +1,6 @@
 # Report — nightwatch-frontier-completion-reliability-v1
 
-Status: IN_PROGRESS
+Status: COMPLETE
 
 ## Campaign
 
@@ -8,8 +8,10 @@ Status: IN_PROGRESS
 Campaign: Nightwatch Frontier Completion & Deep Reliability
 Task ID: nightwatch-frontier-completion-reliability-v1
 Starting SHA: f99df10cdcbae5a6f291c781a650501f386de83c
-Implementation anchor: 919dba0a890df88c1dda9a9f846b77dedf29751b
+Implementation anchor: 8265acec74d79cebeb861192f9d6ee499f579439
+Documentation checkpoints: 0c5cb42, 3f179b1
 Live HEAD: DISCOVER_FROM_GIT
+Status: COMPLETE
 ```
 
 ## Starting truth
@@ -256,7 +258,10 @@ digests (including key-order stability), and the C-12 rehearsal receipt.
 ```text
 #1 (pre-commit, dirty tree):  3883 passed / 2 failed / 13 skipped
 #2 (committed tree 919dba0):  3885 passed / 0 failed / 13 skipped
+#3 (committed tree 3f179b1):  3885 passed / 0 failed / 13 skipped
 ```
+
+Runs #2 and #3 match exactly on pass, fail, and skip counts. No drift.
 
 The two failures in #1 were `selfDevAdoptionCli` expecting
 `SELFDEV_ARTIFACT_NOT_FOUND` and receiving
@@ -309,3 +314,158 @@ environmental lane: no residual flake reproduced (0/100)
 ```
 
 No owner-gated or frozen scope was unlocked.
+
+## Skip inventory
+
+13 skipped, unchanged from the predecessor baseline across all three runs.
+The count and identity did not move as the suite grew by 71 tests, so no
+skip was introduced by this campaign and no legitimate environment guard was
+removed to reach a lower number.
+
+## Gate matrix
+
+```text
+typecheck:              PASS
+hardening:              PASS (61 rules defined, 61 invoked)
+agent:check:            PASS
+project:check:          PASS
+handoff:check:          PASS
+gate:local:             PASS — 11/11 groups
+                        receipt:sha256:98442852124556a1fbff5783
+gate:clean:             PASS — Node 20, fresh install,
+                        nodeModulesReused=false, siblingWrites=0
+                        clean-receipt:sha256:ba4e78c793775f85556efb1e
+semantic compatibility: 2033 total / 2020 passed / 13 skipped / 0 failed
+owner provenance:       91 passed
+synthetic campaign:     1131/1131, deep containment lane PROVEN
+determinism:            20 fresh processes / 1 semantic digest
+mutation probes:        41 introduced / 39 detected / 0 survivors
+environmental lane:     100 iterations / 0 failures
+full regression:        3885 / 0 / 13 (x2 identical)
+CI:                     NOT_OBSERVED at this baseline — no runner was
+                        provoked; absence recorded as absence
+```
+
+## Clean clone
+
+PASS. A disposable Node 20 clone with a fresh `npm ci`
+(`nodeModulesReused: false`, `authStateProvided: false`,
+`ownerFindingStateProvided: false`, `siblingWrites: 0`,
+`cleanBefore`/`cleanAfter` both true) ran the full 11-group gate green.
+
+This is the certification that matters most for this campaign: the same
+procedure, run honestly, is what would have caught DEF-FC-03 before it
+landed. The predecessor's identical claim was made against a checkout whose
+`node_modules` still held the removed package.
+
+## Requirement ledger
+
+```text
+starting-state audit:            PASS
+predecessor verification:        PASS (3 discrepancies found, all repaired)
+
+finding lifecycle:               PASS
+finding intelligence:            PASS
+review workflow:                 PASS
+Alphaus handoff:                 PASS (DEF-FC-01 repaired)
+privacy:                         PASS
+AI authority:                    PASS — drafts supply prose only, bound to
+                                 the candidate; no model output reaches
+                                 admission, severity, duplicate status, or
+                                 review decision
+C-12 readiness:                  PASS
+C-12 rehearsal:                  PASS (LOCAL_REHEARSAL_PASS)
+attribution:                     PASS
+kill switch:                     PASS
+
+environmental flake campaign:    PASS (100 runs, 0 failures)
+
+property tests:                  PASS
+fuzz tests:                      PASS
+mutation probes:                 PASS (0 survivors)
+determinism:                     PASS
+order independence:              PASS (key-order stability asserted)
+concurrency:                     NOT_APPLICABLE — the three new cones are
+                                 pure functions with no shared mutable
+                                 state, no filesystem, and no I/O; there is
+                                 no write path to race. Existing durable
+                                 stores were not modified.
+crash consistency:               NOT_APPLICABLE — same reason: these cones
+                                 settle nothing to disk.
+scale:                           BLOCKED (not performed) — relationship
+                                 analysis is pairwise and quadratic by
+                                 construction; correct at present corpus
+                                 sizes but unmeasured at 1k/5k/10k.
+                                 Recorded as deferred, not as passing.
+
+CLI:                             PASS (7/7 within the full regression)
+UI:                              PASS (browser lane 2/2)
+UI endurance:                    PASS (100 loops, exceeds the 25 target)
+
+typecheck / hardening:           PASS
+agent / project / handoff check: PASS
+OpenSpec:                        PASS
+
+synthetic campaign:              PASS (1131/1131)
+semantic compatibility:          PASS (2033/2020/13/0)
+owner provenance:                PASS (91)
+
+full regression #1/#2/#3:        recorded above, all three
+clean gate / clean clone:        PASS
+
+CI:                              BLOCKED_EXTERNAL — NOT_OBSERVED at this
+                                 baseline. No runner provoked (§68).
+```
+
+Three items are honestly not PASS: scale benchmarking was not performed,
+CI was not observed, and reviewer-UI surfacing of the new fields is
+deferred. None is marked PASS.
+
+## Independent final review
+
+Adversarial questions asked, and how each is answered mechanically:
+
+- *Can bounty incentives corrupt truth?* No scoring surface exists; a
+  hardening rule rejects one entering any of the three cones (mutation M35).
+- *Can `customer_escaped` become `self_found`?* The branch is taken directly
+  from provenance input with no scoring or convenience path (M21, M22).
+- *Can an AI suggestion become mechanical fact?* Drafts supply prose only
+  and are now bound to the candidate they describe (DEF-FC-01, M28).
+- *Can a private handoff reach an external writer?* Hardening rejects Slack,
+  Leslie, Pondr imports, external connectors, and `fetch` in the cones
+  (M36, M37).
+- *Can privacy leak through errors?* Error codes carry field names, never
+  values; asserted by `frontierContractFuzz` and by exhaustive field
+  scanning (M31, M32, M33).
+- *Can a stale review survive an artifact change?* Every bound digest is
+  recomputed on verification (M07–M10).
+- *Can a duplicate suggestion become final authority?* Every result carries
+  `advisoryOnly` and `finalVerdictAuthority: HUMAN_ORGANIZATIONAL` (M06).
+- *Can the C-12 rehearsal create live readiness?* Every receipt on every
+  path and scenario disclaims it; hardening enforces occurrence-completeness
+  (M13, M15, M38, M39).
+- *Can a zero-sample or UNKNOWN-attribution run pass?* Neither reaches
+  `LOCAL_REHEARSAL_PASS`.
+- *Can direct canonical writes bypass C-00?* `checkC00WorkspaceIntegrity()`
+  is live again (DEF-FC-02); workspace integrity verdict PASS with the
+  canonical checkout non-live and untouched.
+- *Can environmental flakes be hidden by retries?* No retry was added.
+- *Can documentation claim more than the implementation?* The three
+  documentation mutations are detected, and the stale
+  "0 vulnerabilities" / "removed as unused" claims were corrected rather
+  than carried forward.
+
+## Next recommendation
+
+Surface the new relationship, recurrence, and defect-class fields in the
+Control Center reviewer UI. The intelligence exists and is certified, but a
+reviewer can currently reach it only through the filing report; the browser
+surface is where it would actually change review outcomes. This needs no
+fresh authorization.
+
+Second: measure relationship analysis at 1k/5k/10k findings before any
+corpus reaches that size, so an index decision is made on data.
+
+C-12 live execution, C-08b, and C-07 DEV remain external and unauthorized.
+Nothing in this campaign advances them, and a passing local rehearsal
+explicitly does not.

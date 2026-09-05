@@ -126,7 +126,7 @@ mocks only external edges, so it cannot drift into a second implementation.
 - Implementation actions: regression on the committed tree; `gate:local`; clean-clone verification; defect ledger and requirement ledger.
 - Acceptance criteria: green gates or precisely documented blockers.
 - Validation commands: `npx playwright test --reporter=line`, `npm run gate:local`
-- Status: IN_PROGRESS.
+- Status: DONE — gate:local PASS 11/11, gate:clean PASS Node 20, regression 3885/0/13 x2.
 
 ## Validation Strategy
 

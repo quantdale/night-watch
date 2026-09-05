@@ -4,22 +4,22 @@
 
 Task ID: nightwatch-frontier-completion-reliability-v1
 Phase: FRONTIER_COMPLETION_RELIABILITY_V1
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: f99df10cdcbae5a6f291c781a650501f386de83c
-Last validated implementation SHA: 919dba0a890df88c1dda9a9f846b77dedf29751b
-Last substantive checkpoint SHA: 919dba0a890df88c1dda9a9f846b77dedf29751b
+Last validated implementation SHA: 8265acec74d79cebeb861192f9d6ee499f579439
+Last substantive checkpoint SHA: 8265acec74d79cebeb861192f9d6ee499f579439
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-frontier-completion-r-9e1b3a60
-Last checkpoint: 2026-09-05 — M2–M8 complete; cones landed, DEF-FC-01..03 repaired, 41 mutations / 0 survivors, determinism 20/1, environmental lane 100/100, docs reconciled; certification in progress
+Last checkpoint: close-out — M1–M9 complete; implementation 8265ace certified (gate:local PASS 11/11, gate:clean PASS Node 20 fresh install, regression 3885/0/13 x2 identical, 41 mutations / 0 survivors, determinism 20/1, environmental lane 100/100); STOP
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: f99df10cdcbae5a6f291c781a650501f386de83c
-LAST_VALIDATED_IMPLEMENTATION_SHA: 919dba0a890df88c1dda9a9f846b77dedf29751b
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 919dba0a890df88c1dda9a9f846b77dedf29751b
+LAST_VALIDATED_IMPLEMENTATION_SHA: 8265acec74d79cebeb861192f9d6ee499f579439
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 8265acec74d79cebeb861192f9d6ee499f579439
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
-PHASE_FRONTIER_COMPLETION_RELIABILITY_V1_STATUS: IN_PROGRESS
+PHASE_FRONTIER_COMPLETION_RELIABILITY_V1_STATUS: COMPLETE
 
 ## Objective
 
@@ -30,10 +30,7 @@ documentation to final truth. No production, NEXT, or DEV contact.
 
 ## Current Milestone
 
-Milestone ID: M9 — W11 certification
-Milestone status: IN_PROGRESS
-What is being attempted: full regression on the committed tree, clean-clone
-certification, gate matrix, and the final REPORT.
+COMPLETE / STOP — all milestones closed, REPORT final.
 
 ## Completed Milestones
 
@@ -64,6 +61,11 @@ certification, gate matrix, and the final REPORT.
   `node bin/frontier-determinism.mjs 20` → 1 unique semantic digest / 20 fresh
   processes. Mutation campaign 41 introduced / 39 detected / 2 controls /
   0 survivors / 0 restore drift.
+- M9 (W11): certification — gate:local PASS 11/11
+  (`receipt:sha256:98442852124556a1fbff5783`); gate:clean PASS on Node 20
+  with a fresh install (`clean-receipt:sha256:ba4e78c793775f85556efb1e`,
+  nodeModulesReused=false, siblingWrites=0); full regression 3885/0/13 twice
+  with identical counts; skip inventory unchanged at 13.
 - M8 (W9/W10): documentation reconciled — `docs/CURRENT_STATE.md` (FC-1 rows,
   review authority, C-12 rehearsal status, environmental lane, dependency
   truth), `docs/C12-OPERATOR-RUNBOOK.md` (rehearsal-vs-live state matrix),
@@ -72,13 +74,11 @@ certification, gate matrix, and the final REPORT.
 
 ## Work In Progress
 
-Certification only: full regression on the committed tree, clean-clone
-verification, gate matrix, and REPORT. No implementation work is partial.
+NONE.
 
 ## Exact Next Action
 
-Run `npx playwright test --reporter=line` on the committed tree, then
-`npm run gate:local`, then clean-clone verification, then write REPORT.md.
+STOP — integrate to main, release the session, remove the worktree.
 
 ## Files Changed
 
@@ -200,12 +200,23 @@ history rewrites 0.
 
 ## Resume Recipe
 
-1. Read SPEC.
-2. Read PLAN.
-3. Inspect git status and current SHA.
-4. Run the smallest relevant validation.
-5. Continue Exact Next Action.
+Task complete. Do not resume; any follow-up starts as a new authorized task.
 
 ## Completion Snapshot
 
-(not complete — certification in progress)
+Final substantive checkpoint: 8265acec74d79cebeb861192f9d6ee499f579439
+Final documentation checkpoint: 3f179b1e312d801cc11d5ec6abe58ee9be26a514
+Live HEAD: DISCOVER_FROM_GIT
+Tests: full regression 3885 passed / 0 failed / 13 skipped (twice, identical);
+gate:local PASS 11/11; gate:clean PASS Node 20 fresh install; semantic
+compatibility 2033/2020/13/0; owner provenance 91; synthetic campaign
+1131/1131; 41 mutations / 39 detected / 0 survivors; determinism 20 fresh
+processes / 1 digest; environmental lane 100/100.
+Artifacts: src/core/findingReview/, src/core/findingIntel/,
+src/core/c12Rehearsal/, bin/frontier-determinism.mjs, seven new test files,
+three new hardening rules, reconciled docs and OpenSpec.
+Known issues: scale benchmarking at 1k/5k/10k findings not performed;
+CI NOT_OBSERVED at this baseline (no runner provoked); Control Center does
+not yet surface the new relationship/recurrence/defect-class fields.
+Recommended next task: surface finding intelligence in the Control Center
+reviewer UI.
