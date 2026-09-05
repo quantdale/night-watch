@@ -7,9 +7,9 @@ Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-review-operations-history-filing-v1
 Starting SHA: d1ebde90c1454b31d6b93d9df503a4c5f196d7c8
 Last validated implementation SHA: d1ebde90c1454b31d6b93d9df503a4c5f196d7c8
-Last checkpoint: M1 — DEF-RO-1 and DEF-RO-3 closed; terminal-anchor rule live, 11/11
-Current milestone: M2 — read-only enumeration primitive and the review store inventory core
-Next action: Add PrivateArtifactStore.listEntries() and src/core/reviewStore/inventory.ts
+Last checkpoint: M11 — 34 review-ops mutations, 31 detected, 3 declared, 0 unexplained; DEF-RO-4 closed
+Current milestone: M12 — browser qualification of the review-operations view
+Next action: Extend the Control Center browser lane to cover the review-operations view, history drill-down, filing report, refresh and server restart
 Authorization class: REVIEW_OPERATIONS_HISTORY_FILING_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2

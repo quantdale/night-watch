@@ -11,7 +11,7 @@ Last substantive checkpoint SHA: d1ebde90c1454b31d6b93d9df503a4c5f196d7c8
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-review-operations-his-7431812c
-Last checkpoint: M1 — DEF-RO-1 and DEF-RO-3 closed; terminal-anchor rule live, 11/11
+Last checkpoint: M11 — 34 review-ops mutations, 31 detected, 3 declared, 0 unexplained; DEF-RO-4 closed
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: d1ebde90c1454b31d6b93d9df503a4c5f196d7c8
@@ -33,13 +33,50 @@ retention policy; no destructive review-store operation.
 
 ## Current Milestone
 
-Milestone ID: M2
+Milestone ID: M12
 Milestone status: IN_PROGRESS
-What is being attempted: the read-only enumeration primitive and the review
-store inventory core.
+What is being attempted: browser qualification of the review-operations view,
+history drill-down and filing report.
 
 ## Completed Milestones
 
+- M11: mutation campaign. `bin/review-operations-mutation-campaign.mjs`:
+  34 introduced, 31 detected, 3 survived (2 CONTROL + 1 EQUIVALENT, each
+  declared), 0 unexplained survivors, restore drift NONE. Brief items 17 and
+  18 have no mutation and the receipt says why: no derived index was built,
+  because measurement showed directory scans linear and adequate at 50k.
+  RO-B-32 was predicted EQUIVALENT and DETECTED; it is reclassified
+  BEHAVIOURAL with the misprediction recorded rather than relabelled away.
+  With the 28 structural mutations in
+  `tests/unit/reviewOperationsHardening.test.ts`, 62 mutations total.
+  DEF-RO-4 closed — see `## Safety Events`.
+- M10: scale. `bin/review-operations-scale.mjs`, one fresh OS process per
+  size. At 10k/25k/50k reviews: disk 15.8/39.5/79.0 MiB at a flat 1657 B per
+  review; discovery 26/80/142 ms; shallow inventory 26/79/163 ms; deep
+  inventory 443/1112/2185 ms; one finding's history 12/23/45 ms; the 50-row
+  reviewer page WITH the store wired 224/372/609 ms; wire payload flat at
+  ~26 KB; peak RSS 110/154/179 MiB. Every curve linear in store size, so no
+  derived index was built. Found and fixed a quadratic filing-report path
+  (613 ms at 500 findings, ~15 s at the 2500 pairwise limit) by scoping
+  intelligence to the one finding the report is about; guarded by call shape,
+  not by a latency bound.
+- M9: determinism across fresh processes, four TZ/locale combinations and
+  three enumeration permutations; concurrency including a 2/4/8/16-way
+  same-binding race and an inventory interleaved with 60 publishes; 15
+  corruption classes each planted in all three traversal positions; a ten-
+  class privacy red team across four surfaces.
+- M8: `checkReviewOperationsBoundary()` with 28 mutations proving it bites.
+  Two survived the first run: one exposed a safe-occurrence gap in the rule
+  itself, the other was a badly aimed mutation. The new declaration-parity
+  conjunct found three real omissions in
+  `bin/agent-continuity-protocol.d.mts` on its first run.
+- M7: Control Center review-operations view, three read routes, and the
+  navigation test rewritten to derive the view set from `VIEW_DEFINITIONS`
+  instead of counting to nine.
+- M6: `bin/nightwatch-review.mjs` with `bin/lib/review-cli.mjs`.
+- M5: review-state-aware filing report and `buildFilingReport`.
+- M4: historical identity propagation and DEF-RO-2.
+- M2/M3: `listEntries()`, the inventory core and the history core.
 - M1: DEF-RO-1 closed, and DEF-RO-3 with it. `inspectTerminalImplementationAnchor`
   in `bin/agent-continuity-protocol.mjs` refuses a live-authority marker, a
   closure placeholder, or a SHA contradicting `LAST_VALIDATED_IMPLEMENTATION_SHA`
@@ -68,11 +105,35 @@ store inventory core.
 
 ## Work In Progress
 
-M2.
+M12.
 
 ## Safety Events
 
-None recorded so far in this campaign.
+ONE workspace-integrity event. Recorded here in full because the campaign
+report must not default this field to NONE.
+
+- `WORKSPACE_MUTATION_HARNESS_RESIDUE` (2026-09-05). While syntax-checking
+  `bin/review-operations-mutation-campaign.mjs`, the module was imported in a
+  background shell and killed after two seconds. Importing runs `main()`, so
+  the harness applied its first mutation — a one-line guard in
+  `src/core/reviewStore/inventory.ts` that skips corruption once a valid
+  artifact has been counted — and the kill pre-empted the `finally` that
+  restores. The next `git add -A` swept that line into commit `6eb2a0b`.
+  Detected by the campaign's own `ANCHOR_NOT_UNIQUE` report on the next run
+  (`occurrences=0`, because the mutation was already applied), confirmed with
+  `git log -S`, and reverted in `c9edef9`.
+  - Blast radius: one line, one file, inside the session worktree. Nothing
+    was pushed. `git diff 2a05a0d 6eb2a0b` confirms the only source change.
+  - No authorization boundary was crossed: no production, NEXT or DEV
+    contact, no external publication, no credential access, no sibling
+    write, no force push, no history rewrite, and no review artifact was
+    deleted or modified.
+  - It exposed a real defect (DEF-RO-4) rather than only a process slip: the
+    mutation SURVIVED thirty-three passing tests, because every corruption
+    test corrupted the first file in sorted traversal order and the guard
+    therefore never fired.
+  - Rules adopted: never execute a mutation harness to check its syntax
+    (`node -c` only), and never `git add -A` after a killed harness run.
 
 ## Blockers
 
@@ -80,7 +141,9 @@ None.
 
 ## Exact Next Action
 
-Add `PrivateArtifactStore.listEntries()` and `src/core/reviewStore/inventory.ts`.
+Extend the Control Center browser lane to cover the review-operations view,
+the history drill-down, a stale generation, a current generation, the filing
+report, refresh and a server restart, for at least 30 loops.
 
 ## Files Changed
 
