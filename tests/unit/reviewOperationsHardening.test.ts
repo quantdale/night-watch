@@ -174,6 +174,13 @@ const MUTATIONS: readonly Mutation[] = [
     expect: /finding-history entry builder is not shared by both accumulation sites/,
   },
   {
+    name: 'RO-28 compute whole-corpus intelligence for one filing report',
+    file: 'src/controlCenter/authorities/reviewStoreAuthority.ts',
+    from: '      onlyFindingIds: [findingId],\n      limit: 1,',
+    to: '      limit: context.dossiers.length,',
+    expect: /does not scope its intelligence to the one finding|computes whole-corpus intelligence to produce one document/,
+  },
+  {
     name: 'RO-17 restore the vacuous regression-candidate lineage guard',
     file: 'src/core/findingIntel/analysis.ts',
     from: "  const sourceMoved = candidateSourceSha !== null && latest.sourceSha !== candidateSourceSha;",

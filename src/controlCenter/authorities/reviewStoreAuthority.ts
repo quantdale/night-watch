@@ -165,11 +165,18 @@ export class ControlCenterReviewStoreAuthority {
   ): FilingReportArtifact | { readonly absent: ReviewHistoryAbsenceReason } {
     const dossier = context.dossiers.find((candidate) => candidate.candidateId === findingId);
     if (dossier === undefined) return { absent: 'FINDING_NOT_IN_CURRENT_SNAPSHOT' };
+    // Scoped to the ONE finding this report is about. Asking for the whole
+    // corpus and discarding all but one row cost `corpus x corpus`, because
+    // every projected row is classified against every earlier finding: 613 ms
+    // at 500 findings to produce one document. The values are unchanged —
+    // history still accumulates over the whole corpus — so this removes work,
+    // not evidence.
     const projected = reviewerInputsFromFindings({
       dossiers: context.dossiers,
       campaignId: context.campaignId,
       sourceSha: context.sourceSha ?? null,
-      limit: context.dossiers.length,
+      onlyFindingIds: [findingId],
+      limit: 1,
     });
     const intel = projected.findings.find((finding) => finding.findingId === findingId);
     if (intel === undefined) return { absent: 'FINDING_NOT_IN_CURRENT_SNAPSHOT' };

@@ -91,7 +91,8 @@
     "mutation:review": "node bin/review-mutation-campaign.mjs",
     "review:scale": "node bin/review-persistence-scale.mjs",
     "review": "node bin/nightwatch-review.mjs",
-    "review:inventory": "node bin/nightwatch-review.mjs inventory"
+    "review:inventory": "node bin/nightwatch-review.mjs inventory",
+    "review:ops-scale": "node bin/review-operations-scale.mjs"
   },
   "devDependencies": {
     "@playwright/test": "1.62.1",

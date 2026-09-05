@@ -18,6 +18,7 @@ import path from 'node:path';
 import { test, expect } from '@playwright/test';
 import { ControlCenterReviewStoreAuthority } from '../../src/controlCenter/authorities/reviewStoreAuthority';
 import { reviewBindingFor } from '../../src/controlCenter/authorities/reviewBinding';
+import { reviewerInputsFromFindings } from '../../src/controlCenter/authorities/reviewerAuthority';
 import { ReviewStore } from '../../src/core/reviewStore';
 import { reviewerCorpus, type CorpusFinding } from '../helpers/reviewerCorpus';
 
@@ -193,6 +194,37 @@ test.describe('history and filing for one finding', () => {
     if ('absent' in unreviewed) throw new Error('expected a filing artifact');
     expect(unreviewed.reviewState).toBe('NO_REVIEW');
     expect(unreviewed.markdown).toContain('## Local review (HUMAN DECISION REQUIRED)');
+  });
+
+  test('a filing report costs one finding of intelligence, and says the same thing', () => {
+    // The guard is a CALL SHAPE, not a latency bound. A latency bound on a
+    // shared machine is a flake, and it would not have caught the defect
+    // anyway: the whole-corpus call was fast at the sizes the tests used and
+    // quadratic at the sizes an operator has.
+    const corpus = reviewerCorpus(40);
+    const dossier = corpus[7] as CorpusFinding;
+    const scoped = reviewerInputsFromFindings({
+      dossiers: corpus,
+      campaignId: CAMPAIGN,
+      onlyFindingIds: [dossier.candidateId],
+      limit: 1,
+    });
+    const whole = reviewerInputsFromFindings({ dossiers: corpus, campaignId: CAMPAIGN, limit: corpus.length });
+    expect(scoped.findings).toHaveLength(1);
+    // `total` still describes the CORPUS: truncation is a claim about how
+    // many findings exist, not about how many were asked for.
+    expect(scoped.total).toBe(corpus.length);
+    // And the answer is byte-identical. Scoping removed work, not evidence:
+    // history still accumulates over every earlier finding.
+    const fromWhole = whole.findings.find((finding) => finding.findingId === dossier.candidateId);
+    expect(JSON.stringify(scoped.findings[0])).toBe(JSON.stringify(fromWhole));
+  });
+
+  test('scoping to a finding that is not in the corpus yields nothing, not everything', () => {
+    const corpus = reviewerCorpus(10);
+    const scoped = reviewerInputsFromFindings({ dossiers: corpus, campaignId: CAMPAIGN, onlyFindingIds: ['finding/absent'], limit: 1 });
+    expect(scoped.findings).toEqual([]);
+    expect(scoped.total).toBe(corpus.length);
   });
 
   test('an absent store answers rather than failing', () => {

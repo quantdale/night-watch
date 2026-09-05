@@ -4030,6 +4030,21 @@ function checkReviewOperationsBoundary() {
   const builders = reviewerAuthority.split('findingHistoryEntry(').length - 1;
   if (builders < 3) fail('the finding-history entry builder is not shared by both accumulation sites');
 
+  // --- one finding's report costs one finding's intelligence ---
+  // A call-shape guard, not a latency bound: a latency bound on a shared
+  // machine is a flake, and it would not have caught this defect anyway
+  // because the whole-corpus call was fast at the sizes the tests used. The
+  // filing path asked for `limit: context.dossiers.length` and discarded all
+  // but one row, and since each projected row is classified against every
+  // earlier finding, that was `corpus x corpus` for one document: 613 ms at
+  // 500 findings, and roughly fifteen seconds at the 2,500 pairwise limit.
+  if (!/onlyFindingIds: \[findingId\]/.test(storeAuthority)) {
+    fail('the filing report does not scope its intelligence to the one finding it is about');
+  }
+  if (/limit: context\.dossiers\.length/.test(storeAuthority)) {
+    fail('the filing report computes whole-corpus intelligence to produce one document');
+  }
+
   // --- a regression candidate must prove a moved lineage ---
   const analysis = withoutComments(read('src/core/findingIntel/analysis.ts'));
   if (/latest\.sourceSha !== undefined/.test(analysis)) {
