@@ -260,12 +260,22 @@ test.describe('concurrency', () => {
 test.describe('corruption corpus', () => {
   test.setTimeout(300_000);
 
-  /** Plant one corruption class into a store that already holds a valid sibling. */
-  function planted(mutate: (root: string, name: string) => void): ReturnType<typeof inventoryReviewStore> {
+  /**
+   * Plant one corruption class into a store that already holds valid siblings.
+   *
+   * `position` selects WHICH of the three canonical files is corrupted, in
+   * sorted traversal order. Every class is planted in all three positions,
+   * because a mutation that skipped corruption whenever a valid artifact had
+   * already been counted survived a version of this suite that only ever
+   * corrupted the FIRST file — the traversal reached the broken one before it
+   * had seen a good one, so the guard never fired and the tests stayed green.
+   * A corruption count that depends on sort order is not a corruption count.
+   */
+  function planted(mutate: (root: string, name: string) => void, position: 0 | 1 | 2): ReturnType<typeof inventoryReviewStore> {
     const corpus = reviewerCorpus(3);
     const root = seeded(corpus);
     const names = fs.readdirSync(root).filter((name) => name.startsWith('review.')).sort();
-    mutate(root, names[0] as string);
+    mutate(root, names[position] as string);
     return inventoryReviewStore(readOnly(root));
   }
 
@@ -297,18 +307,37 @@ test.describe('corruption corpus', () => {
   ];
 
   for (const corruption of CLASSES) {
-    test(`${corruption.name} is counted, and the valid siblings survive`, () => {
-      const inventory = planted(corruption.mutate);
-      expect(inventory.counts.corruptArtifacts, corruption.name).toBe(1);
-      // The valid siblings are NOT hidden by the broken one, and the broken
-      // one is not hidden by them.
-      expect(inventory.counts.validArtifacts, corruption.name).toBe(2);
-      expect(inventory.counts.canonicalArtifacts).toBe(3);
-      expect(inventory.health.classification).toBe('CORRUPTION_PRESENT');
-      expect(inventory.corruption).toHaveLength(1);
-      expect(inventory.corruption[0]?.code).toMatch(/^REVIEW_STORE_/);
+    test(`${corruption.name} is counted in every traversal position`, () => {
+      for (const position of [0, 1, 2] as const) {
+        const label = `${corruption.name} @ ${position}`;
+        const inventory = planted(corruption.mutate, position);
+        expect(inventory.counts.corruptArtifacts, label).toBe(1);
+        // The valid siblings are NOT hidden by the broken one, and — the case
+        // that ordering used to hide — the broken one is not hidden by them.
+        expect(inventory.counts.validArtifacts, label).toBe(2);
+        expect(inventory.counts.canonicalArtifacts, label).toBe(3);
+        expect(inventory.health.classification, label).toBe('CORRUPTION_PRESENT');
+        expect(inventory.corruption, label).toHaveLength(1);
+        expect(inventory.corruption[0]?.code, label).toMatch(/^REVIEW_STORE_/);
+      }
     });
   }
+
+  test('one corrupt artifact among many valid ones is still counted, at any position', () => {
+    // The direct regression for the mutation that survived: a guard skipping
+    // corruption once a valid artifact has been seen is invisible unless the
+    // corrupt file is reached AFTER a good one.
+    const corpus = reviewerCorpus(20);
+    for (const position of [0, 1, 9, 18, 19]) {
+      const root = seeded(corpus);
+      const names = fs.readdirSync(root).filter((name) => name.startsWith('review.')).sort();
+      fs.writeFileSync(path.join(root, names[position] as string), '{"truncated":', { mode: 0o600 });
+      const inventory = inventoryReviewStore(readOnly(root));
+      expect(inventory.counts.corruptArtifacts, `position ${position}`).toBe(1);
+      expect(inventory.counts.validArtifacts, `position ${position}`).toBe(19);
+      expect(inventory.health.classification, `position ${position}`).toBe('CORRUPTION_PRESENT');
+    }
+  });
 
   test('a renamed canonical file is corrupt, not authoritative', () => {
     // Identity is recomputed on read and compared to the NAME, so a file

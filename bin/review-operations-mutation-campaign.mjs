@@ -332,16 +332,18 @@ const MUTATIONS = [
   },
   {
     id: 'RO-B-32',
-    title: 'give a finding outside the snapshot an empty history instead of an absence',
+    title: 'widen the absence return value with an empty generations list',
     file: 'src/controlCenter/authorities/reviewStoreAuthority.ts',
     from: "    if (dossier === undefined) return { absent: 'FINDING_NOT_IN_CURRENT_SNAPSHOT' };\n    const current = currentReviewArtifacts(dossier",
     to: "    if (dossier === undefined) return { absent: 'FINDING_NOT_IN_CURRENT_SNAPSHOT' as never, generations: [] } as never;\n    const current = currentReviewArtifacts(dossier",
-    kind: 'EQUIVALENT',
     why:
-      'The returned object still carries the `absent` discriminant, and every ' +
-      'caller branches on that key rather than on the object shape, so the ' +
-      'behaviour is identical. Included to record that the absence contract ' +
-      'is keyed on the discriminant and not on the absence of other fields.',
+      'Predicted EQUIVALENT on the reasoning that callers branch on the ' +
+      '`absent` discriminant rather than on object shape, and DETECTED. The ' +
+      'prediction was wrong: the widened return value stops satisfying the ' +
+      "declared type, so the cone fails to build. Reclassified BEHAVIOURAL " +
+      'rather than relabelled away — a mispredicted equivalence is evidence ' +
+      'about the contract, and hiding it would make the campaign useless as a ' +
+      'record of what was actually learned.',
     suites: OPS_SUITES,
   },
   {
