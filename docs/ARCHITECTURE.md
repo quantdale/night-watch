@@ -1975,3 +1975,93 @@ with `13` exact-parity skips; the local and Node 20 clean gates pass all ten
 groups. GitHub Actions run `33190456115` observed this exact checkpoint but
 its sole job `98914301082` failed before runner provisioning
 (`steps=[]`, `runner_id=0`), so CI is external non-evidence rather than green.
+
+## Reviewer surface and finding-intelligence scale (RS-1)
+
+FC-1 built and certified the finding intelligence — relationships, probable
+duplicates, recurrence, defect classes, expectation provenance, categorical
+confidence — and left it reachable only through the human filing report. RS-1
+puts it on the Control Center and establishes what it costs at scale.
+
+### The projection, and why the epistemic class is data
+
+`src/controlCenter/contracts/reviewer.ts` and
+`src/controlCenter/adapters/reviewerAdapter.ts` project cone output; they
+never re-author it. Every element carries `epistemicClass`:
+
+- `FACT` — mechanically derived from evidence the cone holds.
+- `RECOMMENDATION` — advisory; a human decides. Anything the cone marks
+  `advisoryOnly` lands here and can never be projected as `FACT`. A result
+  that has LOST its advisory marking is rejected, not promoted.
+- `UNKNOWN` — no conclusion. First-class: it carries no value, no advisory
+  pointer, and never renders as a weak affirmative.
+
+The class is computed at the adapter from the provenance the cone already
+carries, so no rendering decision can change what a value claims. The UI
+(`ui/control-center/src/App.tsx`, `ReviewerView`) renders it as TEXT rather
+than colour alone, so the distinction survives monochrome and screen readers.
+
+`src/controlCenter/authorities/reviewerAuthority.ts` maps the read-only
+findings snapshot onto the REAL cone entry points — `classifyRelationship`,
+`classifyRecurrence`, `groupDefectClasses` — so the browser and the filing
+report answer to the same certified logic. What the snapshot cannot supply
+stays UNKNOWN and says why: dossier metadata carries no expectation identity,
+and no local review store exists yet.
+
+Two boundaries are structural rather than conventional. The cones emit prose
+evidence written for the filing report, and unbounded free text never crosses
+onto the public surface: the projection derives categorical basis codes from
+the same results instead. And the Alphaus severity / catch-stage / source
+vocabulary is a deliberate literal duplicate under the F-12 discipline,
+because hardening forbids any file outside the AH-1 cones from importing
+them; a hardening rule pins the copy to the original so it cannot drift.
+
+### Measured scale envelope
+
+`npm run intel:scale` compiles `tests/unit/findingIntelScaleProbe.ts` and runs
+it in ONE FRESH OS PROCESS PER SIZE, so no size's warm JIT flatters the next.
+Node 22, deterministic synthetic corpus:
+
+| Stage | 1,000 | 5,000 | 10,000 | Growth |
+|---|---|---|---|---|
+| `PAIRWISE_RELATIONSHIPS` (raw cone) | 1,948 ms | 45,583 ms | 179,539 ms | QUADRATIC |
+| `RECURRENCE_AGAINST_HISTORY` (raw cone) | 316 ms | 7,495 ms | 30,466 ms | QUADRATIC |
+| `DEFECT_CLASS_GROUPING` (raw cone) | 1.7 ms | 3.8 ms | 7.2 ms | LINEAR |
+| `REVIEWER_AUTHORITY_AND_PROJECTION` (served) | 13.3 ms | 16.7 ms | 26.0 ms | LINEAR |
+| `REVIEWER_WORST_CASE_PAGE` (newest 50) | 149.1 ms | 171.0 ms | 359.5 ms | LINEAR |
+
+Peak RSS on the served path is 61.2 → 98.8 MiB across those sizes, and CPU
+tracks wall closely throughout: this is compute, not waiting. Memory is not
+the constraint at these sizes; latency is.
+
+The quadratic is confirmed, not inferred: 49,995,000 pairs at 10,000
+findings at ~3.6 µs each. The architectural conclusion is that the cost was
+never the classifier's complexity but asking it about findings nobody
+requested. The reviewer authority now computes intelligence for the page it
+will return, selecting that page by the same identity the projection sorts
+on. Each finding is still classified against the ENTIRE earlier corpus, so
+the rendered rows are byte-identical to the exhaustive path — held by tests
+that compare paged and exhaustive output at five page sizes, and that check
+recurrence still accounts for earlier findings absent from the page.
+Truncation stays truthful because the authority returns the corpus `total`
+alongside the page.
+
+`pairwiseLimit` is 2500 from measurement, not intuition: at exactly 2,500
+findings with pairwise on, the worst-case page is 384.5 ms wall / 441.3 ms
+CPU. Above the limit, relationships report UNKNOWN with
+`RELATIONSHIP_NOT_ANALYSED_ABOVE_PAIRWISE_LIMIT` rather than a guess.
+
+Deliberately NOT optimized: defect-class grouping, which is linear at 7.2 ms
+for 10,000 findings; and a shared-key index over relationship candidates,
+rejected on the classifier's own rules because `SAME_REPLAY_OUTCOME` is
+evidence over a three-value domain, so nearly every pair shares a key.
+
+### Continuity: the routing block is bound (DEF-FC-04)
+
+The `## Routing and safety` block of `.agent/ACTIVE_TASK.md` is what an agent
+reads to decide what it may write, and it was the one part of the document no
+rule read. It now declares `CAMPAIGN` and `SESSION WORKTREE`, both bound by
+`agent:check` to the active task's own identity and its `STATE.md` branch, and
+every `session/...` reference in the document must be the declared worktree —
+occurrence-complete, because a rule satisfied by one correct mention would
+pass while another line still named a retired worktree.

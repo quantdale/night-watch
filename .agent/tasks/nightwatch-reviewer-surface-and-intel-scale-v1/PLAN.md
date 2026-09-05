@@ -100,9 +100,9 @@ state, and `epistemicClass` on every element.
 
 ### M6 (W5) — large-corpus Control Center testing and endurance — COMPLETE
 
-### M7 (W6) — privacy red team, mutation probes, fresh `npm ci` clean gate, full regression, deterministic fresh-process certification — IN_PROGRESS
+### M7 (W6) — privacy red team, mutation probes, fresh `npm ci` clean gate, full regression, deterministic fresh-process certification — IN_PROGRESS (clean gate and authoritative regression run in M9)
 
-### M8 (W7) — documentation reconciliation — NOT_STARTED
+### M8 (W7) — documentation reconciliation — COMPLETE
 
 ### M9 (W8) — certification, REPORT, STOP — NOT_STARTED
 

@@ -36,9 +36,8 @@ contact.
 
 ## Current Milestone
 
-M6 (W5) — large-corpus Control Center testing and endurance complete; M7
-(privacy red team, mutation probes, clean gate, regression, determinism)
-is next.
+M8 (W7) — durable documentation reconciled. M7's certification evidence is
+recorded below; M9 (final certification and REPORT) is next.
 
 ## Completed Milestones
 
@@ -148,6 +147,47 @@ What the numbers actually say:
 - Defect-class grouping is linear and costs 7 ms at 10k. It is explicitly NOT
   optimized: nothing in the measurement justifies touching it.
 
+## Certification evidence (M7)
+
+Privacy red team. Sentinel categories planted and rejected across every free
+field of the reviewer projection — `findingId`, the Alphaus team name and
+every basis field — for `CUSTOMER_SENTINEL`, `ACCOUNT_SENTINEL`,
+`EMAIL_SENTINEL`, `COST_SENTINEL`, `TOKEN_SENTINEL`, `Bearer` tokens,
+JWT-shaped values, AWS-shaped keys and email addresses. The error path is
+treated as a privacy surface in its own right: every rejection is asserted to
+name the field and never to echo the value. At volume, the 1,000 / 5,000 /
+10,000 payloads are scanned for the same categories.
+
+Mutation campaign, reversible, one at a time, restore verified byte-identical:
+
+```text
+introduced: 20
+detected:   18
+equivalent:  2  (M06, M09 — with evidence, see below)
+survived:    0
+restore drift: 0
+```
+
+Categories: epistemic classification, review authority, privacy, truncation
+truth, page-scoping equivalence, recurrence history, the pairwise limit, the
+AH-1 vocabulary duplicate, the continuity routing rule, and the UI's textual
+labelling.
+
+M02 was a genuine gap and is now closed. The existing test asserted only that
+an UNKNOWN relationship projects a null value, which holds whether the
+contradiction is rejected or silently swallowed — UNKNOWN has no value either
+way. An UNKNOWN arriving WITH an advisory pointer is a contradiction in the
+input, and dropping it quietly would hide an upstream defect.
+
+M06 and M09 are recorded as EQUIVALENT MUTANTS with evidence rather than
+pretended killed: deleting either guard leaves the same rejection with the
+same field name, because `safeCode`/`safeId` reject null on that field anyway.
+The guards are kept because they state the rule where it applies and would
+become load-bearing if those helpers loosened.
+
+Determinism: `node bin/frontier-determinism.mjs 20` → 1 unique semantic digest
+across 20 fresh processes (`eea1586a11254ac5f9fb231a...`).
+
 ## Large-corpus and endurance evidence (M6)
 
 `tests/unit/reviewerLargeCorpus.test.ts` drives the whole served path —
@@ -223,9 +263,10 @@ truthfully labelled, not a faster answer to the same question.
 
 ## Exact Next Action
 
-Begin M7 (W6): privacy red team against the reviewer surface, a reversible
-mutation campaign requiring zero survivors, a fresh `npm ci` clean gate,
-full regression, and deterministic fresh-process certification.
+M9 (W8): run the authoritative full regression and `gate:local` on the
+committed tree, run `gate:clean` on a fresh `npm ci`, fill the completion
+snapshot and `REPORT.md`, then STOP before any live C-12 / DEV / NEXT /
+production work.
 
 ## Files Changed
 
@@ -256,6 +297,7 @@ full regression, and deterministic fresh-process certification.
 | `src/controlCenter/authorities/reviewerAuthority.ts` | page-scoped intelligence; measured `pairwiseLimit` | Modified |
 | `src/controlCenter/adapters/reviewerAdapter.ts` | `total`, truthful truncation | Modified |
 | `tests/unit/reviewerLargeCorpus.test.ts` | large-corpus + endurance | Added |
+| `docs/ARCHITECTURE.md`, `docs/ROADMAP.md` | RS-1 records and the measured envelope | Modified |
 | `.agent/EXECUTION_PROMPT.md` | campaign handoff | Modified |
 | `.agent/tasks/nightwatch-reviewer-surface-and-intel-scale-v1/**` | campaign records | Added |
 | `openspec/changes/nightwatch-reviewer-surface-and-intel-scale-v1/**` | OpenSpec change | Added |
@@ -291,6 +333,8 @@ full regression, and deterministic fresh-process certification.
 | `npx playwright test tests/unit/reviewerProjection.test.ts` (M5) | 27 passed, including paged-vs-exhaustive byte equality at 5 page sizes |
 | `npx playwright test tests/unit/reviewerLargeCorpus.test.ts` | 6 passed (35.8 s), endurance 200/200 |
 | Control Center browser lane x30 | 30 pass / 0 fail |
+| Mutation campaign (20 reversible) | 18 detected, 2 equivalent with evidence, 0 survivors, 0 restore drift |
+| `node bin/frontier-determinism.mjs 20` | PASS, 1 unique digest across 20 fresh processes |
 | RS-1 scale-probe purity probe | fires on `Math.random` in the probe |
 | `npm run typecheck` | clean |
 | `npm run hardening:check` | PASS |

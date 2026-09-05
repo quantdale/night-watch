@@ -2832,3 +2832,36 @@ This plan is orthogonal to `docs/KIRO-CREW-INTEGRATION-MASTER-PLAN.md`, which
 covers optional external agent orchestration. This one covers product
 observability and system mapping; the two share no scope and neither depends
 on the other.
+
+## Reviewer surface and finding-intelligence scale (RS-1) — COMPLETE — 2026-09-05
+
+Successor to the frontier-completion campaign, taking its two recorded next
+recommendations and the metadata defect its close-out left behind.
+
+Delivered:
+
+- **DEF-FC-04 repaired.** `.agent/ACTIVE_TASK.md` carried a routing and safety
+  block authored for a predecessor campaign — it authorized "one focused
+  coherence test file only" and named a retired worktree — through an entire
+  campaign that did far more, while `agent:check` returned PASS. The block is
+  now structured and bound to the active campaign, with the session-worktree
+  scan occurrence-complete.
+- **The deferred reviewer experience.** Relationships, probable duplicates,
+  recurrence, defect classes, expectation provenance, confidence, Alphaus
+  recommendations and local review state on the Control Center, each labelled
+  FACT, RECOMMENDATION or UNKNOWN by the service that produced it.
+- **A measured scale envelope.** 1,000 / 5,000 / 10,000 findings, fresh
+  process per size, CPU / peak RSS / wall latency per stage, with the actual
+  quadratic thresholds located rather than assumed. See `docs/ARCHITECTURE.md`.
+- **One optimization, justified and re-measured.** The served reviewer path
+  went from 30,264 ms to 26.0 ms at 10,000 findings and from QUADRATIC to
+  LINEAR, with paged output proven byte-identical to exhaustive output.
+  Defect-class grouping was left alone because it is linear, and a shared-key
+  index was rejected on the classifier's own rules.
+- **Large-corpus and endurance coverage**, plus a re-certification pass:
+  privacy red team, a twenty-mutation reversible campaign, fresh `npm ci`
+  clean gate, full regression, and deterministic fresh-process certification.
+
+Scope boundary, unchanged and re-stated: this campaign is repository-local and
+offline. C-12 live execution, C-13, C-14, C-08b, C-07 DEV, NEXT and production
+work remain outside it and unauthorized. Nothing here advances them.

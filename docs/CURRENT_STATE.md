@@ -1,10 +1,15 @@
 # Nightwatch — CURRENT STATE
 
 > Durable memory for the next agent/session. Last updated: **2026-09-05**
-> at FC-1 close-out (Frontier Completion & Deep Reliability, COMPLETE:
+> at RS-1 close-out (Reviewer Surface & Finding-Intelligence Scale,
+> COMPLETE: DEF-FC-04 continuity repair, the Control Center reviewer
+> experience with explicit FACT / RECOMMENDATION / UNKNOWN labelling, a
+> measured 1k/5k/10k scale envelope, one measurement-justified
+> optimization, and large-corpus plus endurance coverage). Its predecessor
+> FC-1 (Frontier Completion & Deep Reliability) is COMPLETE:
 > finding review lifecycle, finding intelligence, human filing report,
 > C-12 offline rehearsal, environmental-lane forensics, dependency-truth
-> repair). AH-1 (Alphaus finding handoff + C-12 operator readiness) is
+> repair. AH-1 (Alphaus finding handoff + C-12 operator readiness) is
 > COMPLETE. MA-8/F-13 is COMPLETE (implementation anchor `4642c16`,
 > integrated at `4ca990f`). The machine-checked project verdict remains
 > `OPERATIONALLY_ACCEPTED`.
@@ -757,6 +762,34 @@ NEXT_PORTFOLIO_MEMBER: EXHAUSTED
 PROMOTION_AUTHORIZATION_LIFECYCLE: SPENT
 EFFECTIVE_NEXT_PROMOTION_AUTHORITY: NONE
 ```
+
+### Reviewer surface and measured scale envelope (RS-1)
+
+The Control Center reviewer surface (`/api/v1/reviewer`, `#reviewer`) projects
+the FC-1 finding intelligence with an explicit `epistemicClass` on every
+element: `FACT`, `RECOMMENDATION`, or `UNKNOWN`. The class is data produced by
+the adapter from cone provenance, not a rendering decision, and UNKNOWN is
+first-class — no value, no advisory pointer, never a weak affirmative. Local
+review remains `NONE_LOCAL_REVIEW_ONLY` and final verdict authority remains
+`HUMAN_ORGANIZATIONAL` on every payload.
+
+Measured with `npm run intel:scale`, Node 22, one fresh process per size:
+
+| Stage | 1,000 | 5,000 | 10,000 | Growth |
+|---|---|---|---|---|
+| `PAIRWISE_RELATIONSHIPS` (raw cone) | 1,948 ms | 45,583 ms | 179,539 ms | QUADRATIC |
+| `RECURRENCE_AGAINST_HISTORY` (raw cone) | 316 ms | 7,495 ms | 30,466 ms | QUADRATIC |
+| `DEFECT_CLASS_GROUPING` (raw cone) | 1.7 ms | 3.8 ms | 7.2 ms | LINEAR |
+| `REVIEWER_AUTHORITY_AND_PROJECTION` (served) | 13.3 ms | 16.7 ms | 26.0 ms | LINEAR |
+| `REVIEWER_WORST_CASE_PAGE` (newest 50) | 149.1 ms | 171.0 ms | 359.5 ms | LINEAR |
+
+Peak RSS on the served path: 61.2 → 98.8 MiB. The served path was 30,264 ms
+before RS-1's page-scoping change. `pairwiseLimit` is 2500, set from the
+measurement; above it relationships report UNKNOWN with
+`RELATIONSHIP_NOT_ANALYSED_ABOVE_PAIRWISE_LIMIT` rather than a guess.
+
+Scale corpora are synthetic, deterministic and in-memory. They never enter the
+owner-only finding store.
 
 ### Live-state v2 (machine-checked cross-check)
 
