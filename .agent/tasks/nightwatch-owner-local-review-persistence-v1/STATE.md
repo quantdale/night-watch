@@ -224,10 +224,22 @@ STOP — integrate to main, release the session, remove the worktree.
   persistence workflows plus the two pre-existing browser suites), with
   30/30 endurance passes.
 - M8 certification, on the committed tree:
-  - `gate:local` PASS 11/11 at `a920fa8`
-    (receipt `receipt:sha256:1e878c3f87bf6ef9c78c9a83`; SEMANTIC_COMPATIBILITY
-    2066/2079 with 13 skipped, SYNTHETIC_CAMPAIGN 1131/1131,
-    deep containment lane PROVEN).
+  - `gate:local` PASS 11/11 twice: at `a920fa8`
+    (receipt `receipt:sha256:1e878c3f87bf6ef9c78c9a83`) and again at the
+    close-out commit `dea0115`
+    (receipt `receipt:sha256:46ba34c2671f62ef84b63f8e`).
+    SEMANTIC_COMPATIBILITY 2066/2079 with 13 skipped, SYNTHETIC_CAMPAIGN
+    1131/1131, deep containment lane PROVEN.
+  - `gate:clean` PASS at `dea0115`
+    (receipt `clean-receipt:sha256:3970e2ce861402ce49e7922c`):
+    `nodeMajor: 20`, `installResult: PASS`, **`nodeModulesReused: false`**,
+    `cleanBefore: true`, `cleanAfter: true`, `siblingWrites: 0`,
+    all 11 groups PASS. Dependencies were FRESHLY INSTALLED into a
+    disposable local clone; no result was inherited from an existing
+    `node_modules`. The first attempt returned `ENVIRONMENT_MISMATCH`
+    because the working tree was dirty — the report draft was not yet
+    committed — and it was re-run on the clean tree rather than
+    interpreted.
   - Full regression, TWICE identically: **4076 passed / 0 failed /
     13 skipped** each. The 13 skips are all sibling-checkout dependent
     (`c02aOpenApiAdmission`, `c02bProtoSurface`, `c02bProtoCorroboration`,

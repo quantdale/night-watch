@@ -270,12 +270,42 @@ remains present.
 
 ## Full regression
 
-See `## Validation Ledger` in `STATE.md` for the run-by-run record, including
-the two failures that were attributed rather than retried away.
+Authoritative full suite on the COMMITTED tree, run twice identically:
+
+```
+passed:   4076
+failed:      0
+skipped:    13
+```
+
+The 13 skips are all sibling-checkout dependent — `c02aOpenApiAdmission`,
+`c02bProtoSurface`, `c02bProtoCorroboration`, `c03GrpcTopology`,
+`c04FrontendGraph`, `c05UniverseAdmission`, `c08DeploymentBinding` — and each
+self-skips with an explicit reason. A skip is never counted as a pass.
+
+`gate:local` PASS 11/11 twice: at `a920fa8`
+(`receipt:sha256:1e878c3f87bf6ef9c78c9a83`) and again at the close-out commit
+`dea0115` (`receipt:sha256:46ba34c2671f62ef84b63f8e`).
+
+Two earlier full runs each reported `1 failed`. Both were attributed rather
+than retried away: the RS-1 endurance heap bound, which had never measured
+retained heap because `--expose-gc` was never passed. See `## Defects`.
 
 ## Clean gate
 
-See `## Validation Ledger` in `STATE.md`.
+`gate:clean` PASS at `dea0115`
+(`clean-receipt:sha256:3970e2ce861402ce49e7922c`).
+
+**Dependencies were freshly installed.** The receipt records
+`nodeMajor: 20`, `installResult: PASS`, `nodeModulesReused: false`,
+`cleanBefore: true`, `cleanAfter: true`, `siblingWrites: 0`, and all 11 gate
+groups PASS. Nothing was inherited from an existing `node_modules`; the gate
+clones locally into a disposable directory and runs `npm ci --ignore-scripts`
+under a resolved Node 20 toolchain.
+
+The first attempt returned `ENVIRONMENT_MISMATCH` because the working tree was
+dirty — the report draft was not yet committed. It was re-run on the clean
+tree rather than interpreted as an environment problem.
 
 ## CI
 
