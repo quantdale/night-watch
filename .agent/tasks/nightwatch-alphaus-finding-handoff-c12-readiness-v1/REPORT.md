@@ -8,7 +8,10 @@ Status: COMPLETE
 Campaign: AH-1 Alphaus-compatible human-review finding handoff + C-12 operator readiness + durable documentation reconciliation
 Task ID: nightwatch-alphaus-finding-handoff-c12-readiness-v1
 Starting SHA: 4ca990f9bead33ae5626c4ae4f21dc833f41aec2
-Implementation anchor: 4c263e1c690110de07cea826166e06b70df1ca7e
+Implementation anchor: 46e241aede8bbcee7b555c719279068bb51a0f3b
+Implementation anchor history: advanced to 4c263e1 at ca1fb0c, then to
+  46e241a when DEF-AH1-9 landed; this header lagged that second advance
+  while STATE and ACTIVE_TASK carried it (repaired under DEF-RO-3)
 Final SHA: Live HEAD: DISCOVER_FROM_GIT (see Git section at release)
 Status: COMPLETE
 ```

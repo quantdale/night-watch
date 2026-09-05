@@ -7,9 +7,9 @@ Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-review-operations-history-filing-v1
 Starting SHA: d1ebde90c1454b31d6b93d9df503a4c5f196d7c8
 Last validated implementation SHA: d1ebde90c1454b31d6b93d9df503a4c5f196d7c8
-Last checkpoint: M0 — campaign opened; OpenSpec, task records and routing written
-Current milestone: M1 — DEF-RO-1 terminal-anchor repair and its mechanical rule
-Next action: Repair the predecessor REPORT implementation anchor, then add the continuity rule and its regression test
+Last checkpoint: M1 — DEF-RO-1 and DEF-RO-3 closed; terminal-anchor rule live, 11/11
+Current milestone: M2 — read-only enumeration primitive and the review store inventory core
+Next action: Add PrivateArtifactStore.listEntries() and src/core/reviewStore/inventory.ts
 Authorization class: REVIEW_OPERATIONS_HISTORY_FILING_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2

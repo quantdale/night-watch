@@ -337,6 +337,23 @@ Under v2 the checker enforces a cross-file task-status state machine:
   close)` are rejected in COMPLETE live/final fields. `DISCOVER_FROM_GIT`,
   `LIVE_HEAD_AUTHORITY: GIT` and `FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT`
   are intentional authority markers, not placeholders.
+- A live-authority marker is valid for a LIVE value and only for a live value.
+  `DISCOVER_FROM_GIT` means "ask Git, and Git can answer": true of live HEAD,
+  live `origin/main`, and the final documentation head, which is why
+  `LIVE_HEAD_SHA` is REQUIRED to carry it. It is false of a stable historical
+  anchor — nothing in Git records which commit an author considered their
+  campaign's implementation anchor — so the marker there does not delegate the
+  question, it drops it, and a reader cannot tell a dropped field from a
+  deliberate one. A terminal COMPLETE `REPORT.md` therefore records its
+  implementation anchor as a concrete SHA already known before the document
+  was committed, or as an explicit statement that the campaign added no
+  implementation; `TERMINAL_ANCHOR_LIVE_MARKER_MISUSED`,
+  `TERMINAL_ANCHOR_PLACEHOLDER` and `TERMINAL_ANCHOR_DISAGREES_WITH_STATE`
+  enforce it (DEF-RO-1). The check reads only the REPORT's own identity
+  region — everything before its second level-2 heading, fenced content
+  included — so a report may still quote another campaign's anchor under a
+  later heading, and so the nine REPORTs that write the field inside a
+  ```text identity fence are actually inspected.
 - Tracked documents record only SHAs and CI run IDs already known before the
   document commit; live HEAD is discovered from Git; a document never predicts
   the SHA or CI run of the commit that contains itself.

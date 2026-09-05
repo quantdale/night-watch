@@ -11,7 +11,7 @@ Last substantive checkpoint SHA: d1ebde90c1454b31d6b93d9df503a4c5f196d7c8
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-review-operations-his-7431812c
-Last checkpoint: M0 — campaign opened; OpenSpec, task records and routing written
+Last checkpoint: M1 — DEF-RO-1 and DEF-RO-3 closed; terminal-anchor rule live, 11/11
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: d1ebde90c1454b31d6b93d9df503a4c5f196d7c8
@@ -33,14 +33,32 @@ retention policy; no destructive review-store operation.
 
 ## Current Milestone
 
-Milestone ID: M1
+Milestone ID: M2
 Milestone status: IN_PROGRESS
-What is being attempted: DEF-RO-1 — repair the predecessor REPORT's
-implementation anchor and add the mechanical rule separating live-authority
-markers from stable historical anchors.
+What is being attempted: the read-only enumeration primitive and the review
+store inventory core.
 
 ## Completed Milestones
 
+- M1: DEF-RO-1 closed, and DEF-RO-3 with it. `inspectTerminalImplementationAnchor`
+  in `bin/agent-continuity-protocol.mjs` refuses a live-authority marker, a
+  closure placeholder, or a SHA contradicting `LAST_VALIDATED_IMPLEMENTATION_SHA`
+  in a terminal COMPLETE REPORT, scanning only the report's own identity
+  region. Two iterations were needed and both were found by running the rule
+  over the 128 recorded task directories rather than by reasoning about it:
+  scanning the whole document read Phase 16H's quotation of its PREDECESSOR's
+  anchor as a self-claim, and copying the safety-events scanner's
+  skip-fenced-content behaviour would have inspected two of the twelve
+  REPORTs carrying the field and passed the other ten silently. Bounding the
+  scan to "before the second level-2 heading, fences included" separates all
+  eleven self-claims from the one predecessor reference with no carve-outs.
+  Repairs: RP-1's REPORT anchor `DISCOVER_FROM_GIT` → `1ec3ae0` (DEF-RO-1);
+  AH-1's REPORT anchor `4c263e1` → `46e241a` (DEF-RO-3 — the header lagged
+  the DEF-AH1-9 advance that STATE and ACTIVE_TASK both carried; the history
+  of the advance is preserved in the header rather than erased).
+  `tests/unit/terminalAnchorTruth.test.ts` 11/11, including a corpus sweep
+  that asserts it inspected at least ten real documents. `agent:audit`
+  strict_errors 0 across 128 tasks.
 - M0: campaign opened. OpenSpec change
   `nightwatch-review-operations-history-filing-v1` with audit, proposal,
   design, tasks and one delta spec; `.agent` task SPEC/PLAN/STATE;
@@ -50,7 +68,7 @@ markers from stable historical anchors.
 
 ## Work In Progress
 
-M1.
+M2.
 
 ## Safety Events
 
@@ -62,9 +80,7 @@ None.
 
 ## Exact Next Action
 
-Repair `.agent/tasks/nightwatch-owner-local-review-persistence-v1/REPORT.md`
-line 7 to the concrete implementation anchor, then add the continuity rule and
-its regression test.
+Add `PrivateArtifactStore.listEntries()` and `src/core/reviewStore/inventory.ts`.
 
 ## Files Changed
 
@@ -74,8 +90,11 @@ its regression test.
 
 ## Validation Ledger
 
-- M0: `npm run agent:check`, `npm run handoff:check` — recorded below as they
-  are run.
+- M0: `agent:check` PASS (2 warnings), `handoff:check` PASS,
+  `hardening:check` PASS, `project:check` PASS.
+- M1: `agent:audit` strict_errors 0 / 128 tasks (2 real hits before repair),
+  `tests/unit/terminalAnchorTruth.test.ts` 11 passed,
+  `hardening:check` PASS, `agent:check` PASS.
 
 ## Decisions Made During This Task
 

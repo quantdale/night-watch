@@ -4,7 +4,7 @@ Status: COMPLETE
 
 - Task ID: nightwatch-owner-local-review-persistence-v1
 - Starting SHA: `47c00883461fe689393d35e275b51eac0b78ed15`
-- Implementation anchor: DISCOVER_FROM_GIT
+- Implementation anchor: `1ec3ae02c7942e95fc124664409adb65a8eec334`
 - Live HEAD: DISCOVER_FROM_GIT
 - origin/main: DISCOVER_FROM_GIT
 

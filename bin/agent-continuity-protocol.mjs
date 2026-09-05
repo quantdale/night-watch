@@ -480,6 +480,128 @@ export function findReportSafetyEventsClaim(text) {
   return null;
 }
 
+// ---------------------------------------------------------------------------
+// Terminal implementation-anchor truth (DEF-RO-1).
+//
+// `DISCOVER_FROM_GIT` is a LIVE-authority marker: it says "do not trust this
+// document, ask Git, and Git can answer". That is true of live HEAD and live
+// origin/main, and it is the documented convention for them.
+//
+// It is not true of an implementation anchor. Nothing in Git records which
+// commit an author considered the anchor of their campaign, so the marker
+// there does not delegate the question — it abandons it, and a reader cannot
+// tell an abandoned field from a deliberate one. The predecessor campaign
+// closed COMPLETE with exactly that: `Implementation anchor:
+// DISCOVER_FROM_GIT`, while its own STATE.md and ACTIVE_TASK.md both already
+// carried `LAST_VALIDATED_IMPLEMENTATION_SHA: 1ec3ae0...`, three commits
+// before the commit that introduced the line.
+//
+// Deliberately narrow, per brief section 46. It refuses two closed
+// vocabularies — the live-authority markers and the closure placeholders —
+// and one disagreement it can prove: an anchor SHA that contradicts the
+// STATE anchor it claims to name. A prose anchor such as "carried-forward
+// base (docs-only; no new claim)" is an explicit statement, not a deferred
+// value, and is left alone. No prose heuristic decides anything here.
+// ---------------------------------------------------------------------------
+
+/** Markers that delegate a field to LIVE authority. Valid for live values only. */
+export const LIVE_AUTHORITY_MARKERS = new Set(['DISCOVER_FROM_GIT', 'GIT', 'LIVE_HEAD', 'SEE_GIT']);
+
+/**
+ * The REPORT's OWN implementation-anchor claim, or null when it makes none.
+ *
+ * Two things this must get right, both found by running it over the recorded
+ * history rather than by reasoning about it:
+ *
+ * 1. The claim is usually INSIDE a fenced identity block. Nine of the eleven
+ *    recorded REPORTs write it inside a ```text `## Campaign` fence. A scanner
+ *    that skips fences — as the safety-events scanner correctly does, because
+ *    that claim is never fenced — would have inspected two documents out of
+ *    twelve and reported PASS for the rest.
+ *
+ * 2. A REPORT may legitimately quote ANOTHER campaign's anchor. Phase 16H
+ *    records `Implementation anchor: 1737e30...` under
+ *    `## 2. Phase 16A predecessor truth and exact SHAs`, which is a true
+ *    statement about its predecessor and not a claim about itself. Scanning
+ *    the whole document reads that as a self-claim and fires falsely.
+ *
+ * So the scan is bounded to the identity region: everything before the SECOND
+ * level-2 heading, fenced content included. Across the twelve recorded
+ * REPORTs that boundary separates all eleven self-claims from the one
+ * predecessor reference, with no exceptions to carve out.
+ */
+export function findReportImplementationAnchorClaim(text) {
+  const lines = String(text ?? '').split(/\r?\n/);
+  let headings = 0;
+  let inFence = false;
+  for (let index = 0; index < lines.length; index += 1) {
+    const trimmed = lines[index].trim();
+    if (trimmed.startsWith('```')) {
+      inFence = !inFence;
+      continue;
+    }
+    // Headings delimit the region; a "## " inside a fence is content.
+    if (!inFence && /^##\s/.test(trimmed)) {
+      headings += 1;
+      if (headings >= 2) return null;
+      continue;
+    }
+    const match = /^(?:[-*+]\s+|\d+\.\s+)?\*{0,2}implementation\s+anchor\*{0,2}\s*:\s*(.*)$/i.exec(trimmed);
+    if (match) return { value: match[1].trim(), line: index + 1 };
+  }
+  return null;
+}
+
+/** True when the value is a bare live-authority marker rather than an anchor. */
+export function isLiveAuthorityMarker(value) {
+  const cleaned = String(value ?? '').trim().replace(/[`"']/g, '').trim().toUpperCase();
+  return LIVE_AUTHORITY_MARKERS.has(cleaned);
+}
+
+/**
+ * Check one terminal REPORT's implementation anchor against the STATE anchor.
+ *
+ * Returns a list of { code, line, detail }. Callers decide the path. Split out
+ * so the rule is directly testable against a synthetic document rather than
+ * only through a whole task directory.
+ */
+export function inspectTerminalImplementationAnchor(reportText, stateValidatedSha) {
+  const claim = findReportImplementationAnchorClaim(reportText);
+  if (claim === null) return [];
+  if (isLiveAuthorityMarker(claim.value)) {
+    return [
+      {
+        code: 'TERMINAL_ANCHOR_LIVE_MARKER_MISUSED',
+        line: claim.line,
+        detail:
+          `REPORT records "Implementation anchor: ${claim.value.slice(0, 60)}"; a live-authority marker cannot name a stable historical anchor, because Git does not record which commit is one`,
+      },
+    ];
+  }
+  if (hasClosurePlaceholder(claim.value)) {
+    return [
+      {
+        code: 'TERMINAL_ANCHOR_PLACEHOLDER',
+        line: claim.line,
+        detail: `REPORT implementation anchor is an unresolved placeholder: ${claim.value.slice(0, 60)}`,
+      },
+    ];
+  }
+  const claimed = /\b[0-9a-f]{40}\b/i.exec(claim.value.replace(/`/g, ''));
+  if (claimed === null) return [];
+  if (typeof stateValidatedSha !== 'string' || !/^[0-9a-f]{40}$/i.test(stateValidatedSha)) return [];
+  if (claimed[0].toLowerCase() !== stateValidatedSha.toLowerCase()) {
+    return [
+      {
+        code: 'TERMINAL_ANCHOR_DISAGREES_WITH_STATE',
+        line: claim.line,
+        detail: `REPORT implementation anchor ${claimed[0]} does not equal STATE LAST_VALIDATED_IMPLEMENTATION_SHA ${stateValidatedSha}`,
+      },
+    ];
+  }
+  return [];
+}
+
 function makeError(code, path, line, detail) {
   return { code, path, line, detail };
 }
@@ -794,6 +916,16 @@ export function validateTaskV2(task, opts = {}) {
           )
         );
       }
+    }
+  }
+
+  // Terminal implementation-anchor truth (DEF-RO-1). Gated on COMPLETE: an
+  // IN_PROGRESS report is allowed to be provisional, and a terminal one is
+  // not. The STATE anchor is passed through `cleanShaValue` so a backticked
+  // or trailing-punctuated record compares as the SHA it is.
+  if (status === 'COMPLETE' && task.reportText) {
+    for (const hit of inspectTerminalImplementationAnchor(task.reportText, cleanShaValue(stateAnchors.validated))) {
+      errors.push(makeError(hit.code, task.reportPath, hit.line, hit.detail));
     }
   }
 

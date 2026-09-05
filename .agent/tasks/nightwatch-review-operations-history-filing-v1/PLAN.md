@@ -71,8 +71,8 @@ The load-bearing decisions:
 
 ## Milestones
 
-- [ ] M0 — Campaign open: OpenSpec, task records, execution prompt, routing.
-- [ ] M1 — DEF-RO-1 terminal-anchor repair and its mechanical rule.
+- [x] M0 — Campaign open: OpenSpec, task records, execution prompt, routing. — DONE
+- [x] M1 — DEF-RO-1 terminal-anchor repair and its mechanical rule. — DONE
 - [ ] M2 — `listEntries()` and the inventory core.
 - [ ] M3 — The history core.
 - [ ] M4 — Historical identity propagation and DEF-RO-2.
