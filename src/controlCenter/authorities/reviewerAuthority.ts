@@ -33,7 +33,8 @@ import {
   type RelationshipResult,
 } from '../../core/findingIntel';
 import type { FindingsDossierMetadata } from './findingsAuthority';
-import type { ReviewerFindingInput } from '../adapters/reviewerAdapter';
+import type { ReviewerFindingInput, ReviewerProjectionInput } from '../adapters/reviewerAdapter';
+import { safePublicId } from '../adapters/common';
 
 /** Pinned duplicates of ALPHAUS_SEVERITY_VALUES / _CATCH_STAGE_ / _SOURCE_. */
 const ALPHAUS_SEVERITY_LITERALS = ['blocker', 'critical', 'major', 'minor'] as const;
@@ -71,13 +72,22 @@ export interface ReviewerAuthorityInput {
   /** Campaign identity for recurrence chronology; UNKNOWN_HISTORY without it. */
   readonly campaignId: string | null;
   /**
-   * Pairwise relationship analysis is quadratic. This bound is the number of
-   * findings above which pairwise comparison is not attempted and every
+   * Corpus size above which pairwise comparison is not attempted and every
    * relationship is reported UNKNOWN with a stated reason, rather than the
-   * surface stalling. M4 measures where the real threshold lies; this is the
-   * mechanism that lets a measured number be applied.
+   * surface stalling.
+   *
+   * M4 measured a pair at ~3.6 µs. Since M5 the served path compares only the
+   * findings on the requested page against the corpus, so the cost is
+   * `page x corpus`, not `corpus squared`: at the maximum page of 100 rows a
+   * 2,500-finding corpus is ~250,000 comparisons ≈ 0.9 s. The default is set
+   * from that number rather than from intuition.
    */
   readonly pairwiseLimit?: number;
+  /**
+   * How many findings the caller will actually render. Intelligence is
+   * computed for those and no others — see `reviewerInputsFromFindings`.
+   */
+  readonly limit?: number;
 }
 
 function descriptorFor(dossier: FindingsDossierMetadata): IntelFindingDescriptor | null {
@@ -137,9 +147,26 @@ function relationshipsFor(
   return { best, duplicates };
 }
 
-export function reviewerInputsFromFindings(input: ReviewerAuthorityInput): readonly ReviewerFindingInput[] {
+/**
+ * Project the requested page of findings, with intelligence computed for that
+ * page only.
+ *
+ * M4 measured the whole-corpus approach at 178 s of pairwise and 30 s of
+ * recurrence for 10,000 findings — to render fifty rows. The values for a
+ * given finding are unchanged: each is still classified against the entire
+ * earlier corpus, so the rendered page is byte-identical to what the
+ * exhaustive path produced. What is removed is the work for findings nobody
+ * asked to see, which is the actual defect the measurement exposed.
+ *
+ * `total` is returned alongside so the projection can still report truthful
+ * truncation. A page that no longer knows the corpus size would report
+ * `truncated: false` for a 10,000-finding corpus, which would be a worse bug
+ * than the one being fixed.
+ */
+export function reviewerInputsFromFindings(input: ReviewerAuthorityInput): ReviewerProjectionInput & { readonly findings: readonly ReviewerFindingInput[] } {
   const dossiers = Array.isArray(input.dossiers) ? input.dossiers : [];
-  const pairwiseLimit = typeof input.pairwiseLimit === 'number' && input.pairwiseLimit >= 0 ? input.pairwiseLimit : 2000;
+  const pairwiseLimit = typeof input.pairwiseLimit === 'number' && input.pairwiseLimit >= 0 ? input.pairwiseLimit : 2500;
+  const limit = typeof input.limit === 'number' && Number.isSafeInteger(input.limit) && input.limit > 0 ? input.limit : Number.MAX_SAFE_INTEGER;
   const campaignId = typeof input.campaignId === 'string' && ID_RE.test(input.campaignId) ? input.campaignId : null;
 
   const entries = dossiers
@@ -165,8 +192,36 @@ export function reviewerInputsFromFindings(input: ReviewerAuthorityInput): reado
     for (const member of defectClass.memberFindingIds) classByMember.set(member, defectClass);
   }
 
+  // The page, chosen by the SAME identity the projection sorts on, so the
+  // rows selected here are exactly the rows the projection would have kept.
+  const ordering = entries
+    .map((entry, index) => ({ index, id: safePublicId(entry.descriptor.findingId, 'cc-reviewer') as string }))
+    .sort((left, right) => left.id.localeCompare(right.id));
+  const selected = new Set(ordering.slice(0, limit).map((row) => row.index));
+
   const history: IntelHistoryEntry[] = [];
-  return entries.map((entry, index) => {
+  const findings = entries.flatMap((entry, index) => {
+    // History must still accumulate over every earlier finding, selected or
+    // not: recurrence is a claim about the whole corpus, not about the page.
+    const at0 = entry.at;
+    if (!selected.has(index)) {
+      if (campaignId !== null && at0 !== null) {
+        history.push({
+          findingId: entry.descriptor.findingId,
+          fingerprint: entry.descriptor.fingerprint,
+          campaignId,
+          observedAtMs: at0,
+          sourceSha: '0'.repeat(40),
+          priorOutcome: 'UNKNOWN',
+        });
+      }
+      return [];
+    }
+    return [projectEntry(entry, index)];
+  });
+  return { findings, total: entries.length };
+
+  function projectEntry(entry: { dossier: FindingsDossierMetadata; descriptor: IntelFindingDescriptor; at: number | null }, index: number): ReviewerFindingInput {
     const { best, duplicates } = pairwise
       ? relationshipsFor(
           entry.descriptor,
@@ -227,5 +282,5 @@ export function reviewerInputsFromFindings(input: ReviewerAuthorityInput): reado
       localReview: null,
       unknowns,
     };
-  });
+  }
 }

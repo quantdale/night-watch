@@ -35,6 +35,7 @@ import {
 } from '../../core/findingReview';
 import {
   asSafeControlCenterCode,
+  asSafeControlCenterCursor,
   asSafeControlCenterId,
   asSafeControlCenterLabel,
   asSafeControlCenterTimestamp,
@@ -183,6 +184,13 @@ export interface ReviewerFindingInput {
 export interface ReviewerProjectionInput {
   readonly findings: readonly ReviewerFindingInput[];
   readonly available?: boolean;
+  /**
+   * Size of the corpus `findings` was drawn from, when the caller already
+   * paged. Without it a page-scoped caller would report `truncated: false`
+   * for a 10,000-finding corpus — a worse untruth than the latency the
+   * page-scoping removes.
+   */
+  readonly total?: number;
 }
 
 function projectRelationship(
@@ -439,13 +447,26 @@ export function projectReviewer(input: ReviewerProjectionInput, requestedLimit?:
     };
   }
   if (!Array.isArray(input.findings)) fail('findings');
+  if (input.total !== undefined && (!Number.isSafeInteger(input.total) || input.total < input.findings.length)) fail('total');
   const rows = input.findings
     .map((finding, index) => projectFinding(finding, index))
     .sort((left, right) => left.findingId.localeCompare(right.findingId));
+  const collection = boundedCollection(rows, requestedLimit);
+  const total = input.total ?? rows.length;
+  // Truncation is a claim about the corpus, not about the array that arrived.
+  const truncated = collection.page.truncated || total > collection.items.length;
+  const nextCursor = truncated
+    ? (collection.page.nextCursor ?? asSafeControlCenterCursor(String(collection.items.length)))
+    : null;
   return {
     schemaVersion: CONTROL_CENTER_REVIEWER_SCHEMA_VERSION,
     state: rows.length === 0 ? 'EMPTY' : 'AVAILABLE',
-    ...boundedCollection(rows, requestedLimit),
+    items: collection.items,
+    page: {
+      ...collection.page,
+      truncated,
+      nextCursor,
+    },
     finalVerdictAuthority: 'HUMAN_ORGANIZATIONAL',
     organizationalAuthority: 'NONE_LOCAL_REVIEW_ONLY',
   };

@@ -36,8 +36,8 @@ contact.
 
 ## Current Milestone
 
-M4 (W3) — scale measured at 1k/5k/10k in fresh processes; M5
-(measurement-justified optimization) is next.
+M5 (W4) — measurement-justified optimization complete and re-measured; M6
+(large-corpus Control Center testing and endurance) is next.
 
 ## Completed Milestones
 
@@ -147,18 +147,62 @@ What the numbers actually say:
 - Defect-class grouping is linear and costs 7 ms at 10k. It is explicitly NOT
   optimized: nothing in the measurement justifies touching it.
 
+## Measured scale envelope (M5, after optimization)
+
+Same harness, same corpus, same three sizes, fresh process each.
+
+| Stage | 1,000 | 5,000 | 10,000 | Class |
+|---|---|---|---|---|
+| `PAIRWISE_RELATIONSHIPS` (raw cone) | 1,948 ms | 45,583 ms | 179,539 ms | QUADRATIC |
+| `RECURRENCE_AGAINST_HISTORY` (raw cone) | 316 ms | 7,495 ms | 30,466 ms | QUADRATIC |
+| `DEFECT_CLASS_GROUPING` (raw cone) | 1.7 ms | 3.8 ms | 7.2 ms | LINEAR |
+| `REVIEWER_AUTHORITY_AND_PROJECTION` (served page) | 13.3 ms | 16.7 ms | 26.0 ms | LINEAR |
+| `REVIEWER_WORST_CASE_PAGE` (newest 50) | 149.1 ms | 171.0 ms | 359.5 ms | LINEAR |
+
+The three raw-cone stages are unchanged, and that is the control: the cones
+themselves were not modified, so the improvement is entirely in what the
+served path asks of them. The served path went from 30,264 ms to 26.0 ms at
+10,000 findings — 1,164x — and from QUADRATIC to LINEAR. Peak RSS on that
+path fell from 118.6 MiB to 98.8 MiB.
+
+`REVIEWER_WORST_CASE_PAGE` exists because the first re-measurement was
+flattering itself: identifier order matched chronological order, so the first
+page selected the OLDEST findings, which have almost nothing to compare
+against. With identifiers reversed the page is the newest fifty — the page a
+reviewer actually opens — and costs 359.5 ms at 10,000 findings. Honest
+worst-case improvement against the pre-optimization number: 84x.
+
+The `pairwiseLimit` default moved 2000 → 2500 on measurement, not intuition:
+at exactly 2,500 findings, with pairwise ON, the worst-case page measures
+384.5 ms wall / 441.3 ms CPU — inside a one-second interactive budget with
+margin. Above the limit, relationships report UNKNOWN with
+`RELATIONSHIP_NOT_ANALYSED_ABOVE_PAIRWISE_LIMIT`, which is why the 10,000
+worst case (359.5 ms) is cheaper than the 2,500 one (384.5 ms): different work,
+truthfully labelled, not a faster answer to the same question.
+
+### What was deliberately NOT optimized
+
+- `groupDefectClasses`: linear, 7.2 ms at 10,000 findings. Nothing justifies
+  touching it.
+- A shared-key index over relationship candidates, which was the obvious first
+  idea. `evidenceFor` counts `SAME_REPLAY_OUTCOME` as evidence, and
+  `replayOutcome` has three values, so nearly every pair shares a key and the
+  index would exclude almost nothing. Rejected on the classifier's own rules
+  rather than after building it.
+- The cones' own quadratic complexity. The served path no longer reaches it,
+  and changing certified cone internals for a path that no longer stresses
+  them would be a change without a measurement behind it.
+
 ## Blockers
 
 (none)
 
 ## Exact Next Action
 
-Begin M5 (W4): optimize only the two hotspots the measurement justifies —
-the served reviewer path must not compute whole-corpus intelligence to
-render a bounded page, and per-finding relationship scanning should use a
-shared-key index — then re-run `npm run intel:scale` at the same three
-sizes and record the before/after delta. Leave defect-class grouping
-alone.
+Begin M6 (W5): large-corpus Control Center testing and endurance — drive
+the reviewer surface end to end against the largest measured corpus, and
+repeat the browser lane to a statistically useful bound. A stall is
+captured and classified, never retried away.
 
 ## Files Changed
 
@@ -186,6 +230,8 @@ alone.
 | `bin/finding-intel-scale.mjs` | fresh-process scale harness | Added |
 | `tests/unit/findingIntelScaleProbe.ts` | deterministic scale probe | Added |
 | `package.json` | `intel:scale` script | Modified |
+| `src/controlCenter/authorities/reviewerAuthority.ts` | page-scoped intelligence; measured `pairwiseLimit` | Modified |
+| `src/controlCenter/adapters/reviewerAdapter.ts` | `total`, truthful truncation | Modified |
 | `.agent/EXECUTION_PROMPT.md` | campaign handoff | Modified |
 | `.agent/tasks/nightwatch-reviewer-surface-and-intel-scale-v1/**` | campaign records | Added |
 | `openspec/changes/nightwatch-reviewer-surface-and-intel-scale-v1/**` | OpenSpec change | Added |
@@ -215,7 +261,10 @@ alone.
 | `npm run control-center:ui:typecheck` | clean |
 | `npm run control-center:ui:test` | 14 passed |
 | `npm run control-center:ui:browser` | 2 passed (fresh build, 287,658 bytes, no external references) |
-| `npm run intel:scale 1000,5000,10000 --budget-ms 240000` | completed at all three sizes; envelope recorded below |
+| `npm run intel:scale 1000,5000,10000 --budget-ms 240000` (M4, before) | completed at all three sizes |
+| `npm run intel:scale 1000,5000,10000 --budget-ms 240000` (M5, after) | served path 30,264 ms → 26.0 ms at 10k; worst-case page 359.5 ms |
+| `npm run intel:scale 1000,2500` (at the pairwise limit) | worst-case page 384.5 ms wall / 441.3 ms CPU |
+| `npx playwright test tests/unit/reviewerProjection.test.ts` (M5) | 27 passed, including paged-vs-exhaustive byte equality at 5 page sizes |
 | RS-1 scale-probe purity probe | fires on `Math.random` in the probe |
 | `npm run typecheck` | clean |
 | `npm run hardening:check` | PASS |

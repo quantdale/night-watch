@@ -70,11 +70,19 @@ function corpus(size: number): readonly IntelFindingDescriptor[] {
   return out;
 }
 
-function dossiers(size: number): readonly FindingsDossierMetadata[] {
+/**
+ * `reverseIds` makes the identifier order the OPPOSITE of the chronological
+ * order, so the first page selects the newest findings — the ones with the
+ * most history behind them. Without it the page happens to be the earliest
+ * findings, which have almost nothing to compare against, and the benchmark
+ * measures the easy case. A benchmark that only measures the easy page is a
+ * benchmark that reports a number nobody experiences.
+ */
+function dossiers(size: number, reverseIds = false): readonly FindingsDossierMetadata[] {
   return corpus(size).map((descriptor, index) => ({
     schemaVersion: 'nightwatch.control-center-findings-dossier.v1',
     status: 'READY',
-    candidateId: descriptor.findingId,
+    candidateId: reverseIds ? `scale-finding-${String(size - 1 - index).padStart(6, '0')}` : descriptor.findingId,
     title: null,
     firstObserved: new Date(Date.UTC(2026, 0, 1) + index * 60_000).toISOString(),
     lastObserved: new Date(Date.UTC(2026, 0, 1) + index * 60_000).toISOString(),
@@ -200,8 +208,21 @@ stages.push(
 const snapshot = dossiers(SIZE);
 stages.push(
   measure('REVIEWER_AUTHORITY_AND_PROJECTION', 'finding', SIZE, () => {
-    const inputs = reviewerInputsFromFindings({ dossiers: snapshot, campaignId: 'scale-campaign' });
-    projectReviewer({ findings: inputs }, 50);
+    // Exactly the call the Control Center collector makes for one page.
+    const inputs = reviewerInputsFromFindings({ dossiers: snapshot, campaignId: 'scale-campaign', limit: 50 });
+    projectReviewer(inputs, 50);
+    return SIZE;
+  })
+);
+
+// Stage 5: the same served path, but with the page landing on the NEWEST
+// findings rather than the oldest. This is the page a reviewer opening the
+// surface actually sees, and it is the expensive one.
+const worstCase = dossiers(SIZE, true);
+stages.push(
+  measure('REVIEWER_WORST_CASE_PAGE', 'finding', SIZE, () => {
+    const inputs = reviewerInputsFromFindings({ dossiers: worstCase, campaignId: 'scale-campaign', limit: 50 });
+    projectReviewer(inputs, 50);
     return SIZE;
   })
 );

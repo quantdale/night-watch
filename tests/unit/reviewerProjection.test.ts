@@ -294,7 +294,7 @@ test.describe('authority over a real findings snapshot', () => {
       dossiers: [dossier('f-1', FP_A, '2026-09-01T00:00:00.000Z'), dossier('f-2', FP_A, '2026-09-02T00:00:00.000Z')],
       campaignId: 'campaign-1',
     });
-    const dto = projectReviewer({ findings: inputs });
+    const dto = projectReviewer(inputs);
     const later = dto.items.find((item) => item.findingId === 'f-2');
     expect(later?.relationship.epistemicClass).toBe('RECOMMENDATION');
     expect(later?.relationship.value?.relationship).toBe('PROBABLE_DUPLICATE');
@@ -309,7 +309,7 @@ test.describe('authority over a real findings snapshot', () => {
       dossiers: [dossier('f-1', FP_A, '2026-09-01T00:00:00.000Z'), dossier('f-2', FP_B, '2026-09-02T00:00:00.000Z')],
       campaignId: 'campaign-1',
     });
-    const dto = projectReviewer({ findings: inputs });
+    const dto = projectReviewer(inputs);
     for (const item of dto.items) expect(item.probableDuplicates).toEqual([]);
   });
 
@@ -320,7 +320,7 @@ test.describe('authority over a real findings snapshot', () => {
       campaignId: 'campaign-1',
       pairwiseLimit: 1,
     });
-    const dto = projectReviewer({ findings: inputs });
+    const dto = projectReviewer(inputs);
     for (const item of dto.items) {
       expect(item.relationship.epistemicClass).toBe('UNKNOWN');
       expect(item.unknowns).toContain('RELATIONSHIP_NOT_ANALYSED_ABOVE_PAIRWISE_LIMIT');
@@ -332,7 +332,7 @@ test.describe('authority over a real findings snapshot', () => {
       dossiers: [dossier('f-1', FP_A, '2026-09-01T00:00:00.000Z')],
       campaignId: 'campaign-1',
     });
-    const dto = projectReviewer({ findings: inputs });
+    const dto = projectReviewer(inputs);
     expect(dto.items[0]?.localReview.epistemicClass).toBe('UNKNOWN');
     expect(dto.items[0]?.unknowns).toContain('NO_LOCAL_REVIEW_STORE');
   });
@@ -340,13 +340,87 @@ test.describe('authority over a real findings snapshot', () => {
   test('the projection is deterministic and order-independent', () => {
     const a = dossier('f-1', FP_A, '2026-09-01T00:00:00.000Z');
     const b = dossier('f-2', FP_B, '2026-09-02T00:00:00.000Z');
-    const forward = JSON.stringify(projectReviewer({ findings: reviewerInputsFromFindings({ dossiers: [a, b], campaignId: 'c' }) }));
-    const reverse = JSON.stringify(projectReviewer({ findings: reviewerInputsFromFindings({ dossiers: [b, a], campaignId: 'c' }) }));
+    const forward = JSON.stringify(projectReviewer(reviewerInputsFromFindings({ dossiers: [a, b], campaignId: 'c' })));
+    const reverse = JSON.stringify(projectReviewer(reviewerInputsFromFindings({ dossiers: [b, a], campaignId: 'c' })));
     expect(reverse).toBe(forward);
   });
 
   test('an empty snapshot is EMPTY and an unavailable one is UNAVAILABLE', () => {
     expect(projectReviewer({ findings: [] }).state).toBe('EMPTY');
     expect(projectReviewer({ findings: [], available: false }).state).toBe('UNAVAILABLE');
+  });
+});
+
+test.describe('page-scoped intelligence (M5)', () => {
+  function scaleDossier(index: number, fingerprint: string): FindingsDossierMetadata {
+    return {
+      schemaVersion: 'nightwatch.control-center-findings-dossier.v1',
+      status: 'READY',
+      candidateId: `page-finding-${String(index).padStart(4, '0')}`,
+      title: null,
+      firstObserved: new Date(Date.UTC(2026, 0, 1) + index * 60_000).toISOString(),
+      lastObserved: new Date(Date.UTC(2026, 0, 1) + index * 60_000).toISOString(),
+      routeClass: `route/${index % 4}`,
+      oracleFingerprint: fingerprint,
+      evidenceLevel: 'L2',
+      reproduction: { result: 'REPRODUCED', count: 1, minimalityGuarantee: 'BOUNDED_MINIMAL' },
+      technicalSeverity: 'HIGH',
+      triagePriority: 'P2',
+      confidence: { level: 'HIGH' },
+      sourceCurrentness: 'CURRENT',
+      semanticFinding: index % 3 === 0,
+    } as unknown as FindingsDossierMetadata;
+  }
+
+  // A corpus with real structure: some findings repeat an earlier fingerprint,
+  // so the duplicate and recurrence paths are genuinely taken.
+  const corpus = Array.from({ length: 60 }, (_, index) =>
+    scaleDossier(index, `fp:sha256:${String(index % 17).padStart(2, '0').repeat(6)}`)
+  );
+
+  test('a paged projection is byte-identical to the exhaustive one for the rows it shows', () => {
+    // The whole justification for M5 is that it removes work, not answers.
+    // If this ever diverges, the optimization is wrong and must be reverted
+    // rather than have the expectation adjusted.
+    const exhaustive = projectReviewer(reviewerInputsFromFindings({ dossiers: corpus, campaignId: 'campaign-1' }), 10);
+    const paged = projectReviewer(reviewerInputsFromFindings({ dossiers: corpus, campaignId: 'campaign-1', limit: 10 }), 10);
+    expect(paged.items).toHaveLength(10);
+    expect(JSON.stringify(paged.items)).toBe(JSON.stringify(exhaustive.items));
+  });
+
+  test('the same holds at a different page size', () => {
+    for (const limit of [1, 5, 25, 60]) {
+      const exhaustive = projectReviewer(reviewerInputsFromFindings({ dossiers: corpus, campaignId: 'campaign-1' }), limit);
+      const paged = projectReviewer(reviewerInputsFromFindings({ dossiers: corpus, campaignId: 'campaign-1', limit }), limit);
+      expect(JSON.stringify(paged.items), `limit ${limit}`).toBe(JSON.stringify(exhaustive.items));
+    }
+  });
+
+  test('recurrence still accounts for findings that are not on the page', () => {
+    // The failure this guards: scoping the page also scopes the history, so a
+    // finding that recurs from an earlier unshown one silently reads
+    // FIRST_SEEN. Recurrence is a claim about the corpus, not about the page.
+    const paged = projectReviewer(reviewerInputsFromFindings({ dossiers: corpus, campaignId: 'campaign-1', limit: 60 }), 60);
+    const recurring = paged.items.filter((item) => item.recurrence.value?.recurrence === 'KNOWN_EXISTING');
+    expect(recurring.length).toBeGreaterThan(0);
+    // 60 findings over 17 fingerprints: everything after the first cycle
+    // repeats, and each must point at a prior finding.
+    for (const item of recurring) expect(item.recurrence.value?.priorFindingId).not.toBeNull();
+  });
+
+  test('a paged projection reports truncation truthfully', () => {
+    // A page that forgot the corpus size would claim truncated:false here,
+    // which is a worse untruth than the latency the paging removes.
+    const paged = projectReviewer(reviewerInputsFromFindings({ dossiers: corpus, campaignId: 'campaign-1', limit: 10 }), 10);
+    expect(paged.page.truncated).toBe(true);
+    expect(paged.page.nextCursor).not.toBeNull();
+
+    const whole = projectReviewer(reviewerInputsFromFindings({ dossiers: corpus, campaignId: 'campaign-1', limit: 60 }), 60);
+    expect(whole.page.truncated).toBe(false);
+    expect(whole.page.nextCursor).toBeNull();
+  });
+
+  test('a total smaller than the page that arrived is rejected', () => {
+    expect(() => projectReviewer({ findings: [baseFinding()], total: 0 })).toThrow(/total/);
   });
 });

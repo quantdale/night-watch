@@ -383,13 +383,15 @@ export function createDefaultControlCenterCollector(options: DefaultControlCente
     reviewer: async (query) => {
       const { findings, campaign } = await readAuthoritySnapshot();
       if (findings.state === 'UNAVAILABLE') return projectReviewer({ findings: [], available: false }, query.limit);
+      // The limit is passed to the AUTHORITY, not only to the projection:
+      // that is what keeps a 10,000-finding corpus from computing whole-corpus
+      // intelligence to render one bounded page (M4/M5).
       return projectReviewer(
-        {
-          findings: reviewerInputsFromFindings({
-            dossiers: findings.dossiers,
-            campaignId: campaign.generation,
-          }),
-        },
+        reviewerInputsFromFindings({
+          dossiers: findings.dossiers,
+          campaignId: campaign.generation,
+          limit: query.limit,
+        }),
         query.limit
       );
     },

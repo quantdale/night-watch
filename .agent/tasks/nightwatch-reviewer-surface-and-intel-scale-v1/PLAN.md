@@ -96,9 +96,9 @@ state, and `epistemicClass` on every element.
 
 ### M4 (W3) — scale measurement at 1k / 5k / 10k — COMPLETE
 
-### M5 (W4) — measurement-justified optimization — IN_PROGRESS
+### M5 (W4) — measurement-justified optimization — COMPLETE
 
-### M6 (W5) — large-corpus Control Center testing and endurance — NOT_STARTED
+### M6 (W5) — large-corpus Control Center testing and endurance — IN_PROGRESS
 
 ### M7 (W6) — privacy red team, mutation probes, fresh `npm ci` clean gate, full regression, deterministic fresh-process certification — NOT_STARTED
 
