@@ -89,7 +89,9 @@
     "auth:configure": "node bin/auth-configure.mjs",
     "scenario": "node bin/nightwatch.mjs",
     "mutation:review": "node bin/review-mutation-campaign.mjs",
-    "review:scale": "node bin/review-persistence-scale.mjs"
+    "review:scale": "node bin/review-persistence-scale.mjs",
+    "review": "node bin/nightwatch-review.mjs",
+    "review:inventory": "node bin/nightwatch-review.mjs inventory"
   },
   "devDependencies": {
     "@playwright/test": "1.62.1",
