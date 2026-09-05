@@ -331,6 +331,20 @@ test('qualifies every built Control Center view over one synthetic authority com
     await expect(page.getByText('Final verdict: human organizational').first()).toBeVisible();
     await expect(page.getByText(/never equivalent to a Leslie genuine\/invalid verdict or a Pondr approval/)).toBeVisible();
 
+    // The review-store operations view. This composition wires no review
+    // store authority root of its own, so the surface must report the store
+    // honestly rather than as an empty healthy one, and must offer no control
+    // that could change it.
+    await page.getByRole('link', { name: 'Review Store' }).click({ force: true });
+    await expect(page.getByRole('heading', { name: 'See what the store holds, and change none of it.' })).toBeVisible();
+    await expect(page.getByText('This view is read-only, and no retention policy exists to invoke.')).toBeVisible();
+    await expect(page.getByTestId('review-store-conditions')).toBeVisible();
+    await expect(page.getByText(/Nothing in this view deletes, repairs, archives or rewrites a review/)).toBeVisible();
+    await expect(page.getByText('Open a finding from the index above to see every stored review generation for it, newest first.')).toBeVisible();
+    for (const label of ['Delete', 'Remove', 'Prune', 'Repair', 'Archive', 'Clean']) {
+      await expect(page.getByRole('button', { name: new RegExp(label, 'i') }), label).toHaveCount(0);
+    }
+
     await page.getByRole('link', { name: 'Runs' }).click({ force: true });
     await expect(page.getByRole('heading', { name: 'Inspect what happened, in order.' })).toBeVisible();
     await clickViewButton(page, 'Inspect');
@@ -354,7 +368,7 @@ test('qualifies every built Control Center view over one synthetic authority com
     for (const link of await page.getByRole('navigation', { name: 'Primary' }).getByRole('link').all()) {
       navigated.add((await link.getAttribute('href')) ?? '');
     }
-    const visited = new Set(['#', '#safety', '#runs', '#execution-graph', '#campaigns', '#source-intelligence', '#findings', '#reviewer', '#system-map']);
+    const visited = new Set(['#', '#safety', '#runs', '#execution-graph', '#campaigns', '#source-intelligence', '#findings', '#reviewer', '#review-store', '#system-map']);
     const unqualified = [...navigated].filter((href) => !visited.has(href));
     expect(unqualified, `navigable views with no browser qualification: ${unqualified.join(', ')}`).toEqual([]);
     expect(navigated.size).toBe(visited.size);
