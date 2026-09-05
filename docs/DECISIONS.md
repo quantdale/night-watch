@@ -4490,3 +4490,138 @@ fails closed when tracked source resolves an undeclared package, covering
 `require.resolve`, dynamic `import()`, and `from` alike.
 
 **Phase applicability.** FC-1 and every later dependency audit.
+
+## D-119 — the review store is a schema over the existing no-replace primitive, not new storage
+
+The campaign brief described a preferred atomicity: prepare bytes, validate,
+write a temporary, fsync, atomic no-replace rename, verify. The repository
+already had something stronger.
+`PrivateArtifactStore.writeImmutableJson` publishes by `link(2)`, which is
+atomic and fails `EEXIST` WITHOUT replacing, and it maps a filesystem that
+cannot do that to `PRIVATE_ARTIFACT_NO_REPLACE_UNSUPPORTED` rather than
+quietly falling back to a replacing rename.
+
+So `src/core/reviewStore/` adds a schema, an identity and a read policy, and
+opens no file itself. A second storage pattern would have been a second thing
+to audit, a second set of crash semantics, and a second place for the
+no-replace guarantee to be lost.
+
+The same primitive is the concurrency arbiter, which is why there is no
+read-then-write existence check anywhere in the store. Such a check is exactly
+what a competing writer races.
+
+## D-120 — a review is keyed by its binding, so a regenerated artifact never overwrites history
+
+The review identity is the digest of the COMPLETE binding, not of the finding
+id. A regenerated dossier changes `dossierDigest`, therefore the identity,
+therefore the file. The earlier generation is never overwritten and remains
+readable as STALE.
+
+Keying on the finding id would have been simpler and wrong: a finding
+reviewed, regenerated and reviewed again would have silently lost its first
+receipt — the exact evidence a later reviewer would want.
+
+Nothing is deleted automatically. A stale review is historical evidence, not
+garbage, and the read path preferring current state is not a licence to remove
+what it did not prefer.
+
+## D-121 — discovery is a derived, recomputed key, and there is no index
+
+A file name encodes a digest of the finding id purely so one directory listing
+can serve a whole reviewer page. It is recomputed on every read and the
+envelope is validated independently, so a renamed or forged name cannot make
+bytes authoritative, and a read additionally refuses an envelope that belongs
+to a different finding.
+
+The consequence is that there is no index: nothing to corrupt, nothing to
+rebuild, no staleness to detect. `§18`'s question — index or filesystem —
+answered by measuring rather than by preference.
+
+A second consequence is that path traversal is structurally impossible rather
+than defended against. Every name the store produces is hex, so a path-shaped
+finding id — which the lifecycle's id vocabulary legitimately permits — never
+reaches the filesystem as a path. Narrowing that vocabulary would have been a
+change to review semantics this cone does not own.
+
+## D-122 — dossier identity is carried, and no dossier schema changes
+
+The expectation and semantic-contract identities the reviewer surface reported
+as absent already existed: `SemanticTriageEvidence.expectationId` and
+`.invariantDefinitionId`, mechanically established through the Phase 9A.1
+admission bridge and privacy-validated at construction. The Control Center
+projection simply dropped them.
+
+So this is propagation, and no versioned dossier contract is touched. v2
+carries the identity; v1 does not and keeps `null`; `null` still means
+UNKNOWN. Nothing is derived from prose, and nothing is inferred from severity,
+route, title or fingerprint.
+
+The projection applies BOTH the safe-id pattern and the canonical sentinel
+screen, because either alone is insufficient: the id pattern accepts
+`CUSTOMER_SENTINEL`, which is a valid identifier shape and an invalid thing to
+project, and the sentinel screen accepts a path-shaped value. The projection
+can only drop an identity, never invent or repair one.
+
+No classifier rule was loosened to benefit from this. Measured on a permanent
+synthetic corpus, duplicate suggestions — the strongest claim the surface
+makes — were unchanged at 146, while 74 `RELATED_FINDING` refined to
+`SHARED_DEFECT_CLASS` and 37 `PROBABLE_DUPLICATE` to `EXACT_SAME_FINDING`.
+The most valuable effect is in the counterevidence direction: a pair sharing a
+fingerprint but carrying different expectations moved from "I do not know" to
+"these genuinely differ".
+
+## D-123 — the read and write paths derive the review binding from ONE seam
+
+`createControlCenterServices` builds the reviewer collector and the review
+write handler together, over a single authority-snapshot read.
+
+This is not a style preference. The first implementation built them
+separately, and the write handler read the campaign snapshot raw while the
+read path took it through validation with a fallback to an unavailable
+snapshot. Both halves were individually correct. Together they could derive a
+different campaign id for the same state — and since the campaign id is part
+of the binding, EVERY write would then be refused as `BINDING_MISMATCH`, with
+the reviewer given no way to tell that the refusal came from the server
+disagreeing with itself.
+
+No unit test found it, because each half was right. The browser workflow found
+it on its first run. Deriving the binding context twice is now structurally
+impossible rather than merely discouraged, and hardening refuses a collector
+that reaches a binding digest primitive of its own.
+
+## D-124 — a hardening rule is not evidence; the rule failing on a real mutation is
+
+Three consecutive campaigns produced the same defect shape: a check exists and
+does not prove what it claims. DEF-FC-04 read structured fields while the
+prose beside them drifted. R-12 enforced registration through six hand-written
+loops, three of which were never written. The `includes(literal)` trap passed
+because one safe occurrence existed while another line went unsafe.
+
+So every rule added for the review-store boundary is paired with a mutation of
+the REAL guarded file, running the REAL check, asserting the SPECIFIC failure,
+and restoring the exact bytes. The harness found two defects in its own
+campaign before it was finished: one rule reported the WRONG violation because
+its body-extraction anchor was fragile, and one mutation SURVIVED correctly
+because it only added an unused import — which caused the rule to be widened
+and the mutation split in two.
+
+The behavioural mutation campaign is kept separate from the structural one on
+the same reasoning: a guard only a regex notices disappears the moment
+someone rewrites the code in a shape the regex does not recognize.
+
+## D-125 — a persistence regression guard is a call count, not a latency bound
+
+Measuring the served reviewer page at 1k/5k/10k against 0/10/50/100% reviewed
+stores found a real regression: the page lookup grew with the STORE rather
+than with the page, because the store directory was listed once per finding.
+At 10,000 reviews a fifty-row page spent 325 ms scanning half a million
+directory entries — the exact shape the predecessor's page-scoping removed
+from the intelligence path, reintroduced through persistence. One
+request-scoped listing brought it to 3.45 ms.
+
+The durable guard against its return is deliberately NOT a latency bound. A
+latency bound on a shared machine is a flake generator, and a flake that gets
+retried away is worse than no bound at all. It is a deterministic assertion
+that a forty-row page costs exactly ONE directory read, with a control proving
+the same page costs eight without the listing so the assertion cannot pass
+vacuously.

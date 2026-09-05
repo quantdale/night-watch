@@ -2865,3 +2865,64 @@ Delivered:
 Scope boundary, unchanged and re-stated: this campaign is repository-local and
 offline. C-12 live execution, C-13, C-14, C-08b, C-07 DEV, NEXT and production
 work remain outside it and unauthorized. Nothing here advances them.
+
+## Owner-local review persistence and dossier identity (RP-1) — COMPLETE — 2026-09-05
+
+The reviewer surface could display a local review decision but not keep one,
+and it reported the expectation and semantic-contract identity of a finding as
+absent. Both are closed, and neither needed new machinery.
+
+**Persistence.** `src/core/reviewStore/` is a schema, an identity and a read
+policy over the existing `PrivateArtifactStore.writeImmutableJson`. Reviews
+live in `$HOME/.nightwatch/reviews` (or `$NIGHTWATCH_REVIEW_STORE_DIR`),
+outside the repository, owner-only, never committed. A review is keyed by its
+complete binding, so a regenerated artifact yields a new review and never
+overwrites the old one; nothing is deleted automatically. Reads answer
+`NO_REVIEW`, `CURRENT`, `STALE` or `CORRUPT`, and fail closed.
+
+**Reviewer integration.** One opt-in local route records a decision; without a
+review authority the Control Center stays strictly `GET, HEAD`. The client
+submits the identity it was shown and the server rebuilds the binding, so a
+client that went stale between render and click is refused rather than binding
+to something it never saw. The UI offers the five canonical decisions, removes
+them once a decision is terminal, and shows a stale decision as stale.
+
+**Identity.** `SemanticTriageEvidence.expectationId` and
+`.invariantDefinitionId` now reach the dossier projection and the finding
+intelligence. No dossier schema changed; v1 keeps `null` and `null` still
+means UNKNOWN. No classifier rule was loosened.
+
+**Defects repaired.**
+
+- **DEF-RP-1** — contradictory terminal safety accounting. The predecessor
+  campaign's `STATE.md` recorded a workspace-integrity event while its
+  `REPORT.md` said `Safety events: NONE`, and `agent:check` returned PASS on
+  both. The REPORT now records the event, classified as a workspace/harness
+  event caught by the repository's own guard and repaired before closure, with
+  no authorization boundary crossed. A structural rule compares the opening
+  token of the two claims and fires only in the asymmetric direction that can
+  be false; run against all 127 task directories it produced exactly one hit.
+- **The split binding seam.** The review write handler read the campaign
+  snapshot raw while the reviewer read path validated it, so the two could
+  derive different binding contexts for the same state and refuse every write
+  as `BINDING_MISMATCH`. Found by the browser workflow, not by any unit test,
+  because both halves were individually correct.
+- **The per-row directory listing.** Persisted-review lookup listed the store
+  once per finding, so a fifty-row page over a 10,000-review store scanned
+  half a million directory entries (325 ms). One request-scoped listing
+  brought it to 3.45 ms. Found by measurement; every functional assertion
+  passed throughout.
+- **The listing as an authority.** A read did not check that the envelope it
+  found belonged to the finding asked for, so a wrong or forged listing could
+  surface another finding's valid review under this finding's name.
+
+**Certification.** 21 structural mutations of the real guarded files, all
+caught; 33 behavioural mutations with 31 detected and 2 declared
+control/equivalent; 72 injected crash scenarios; a concurrency matrix to 16
+competing writers; seeded property tests; 30 browser workflow passes plus a
+server-restart and stale cycle; scale measured at 1k/5k/10k against
+0/10/50/100% reviewed stores.
+
+**Next.** See the campaign REPORT's next recommendation. No externally gated
+step is executed: C-12 live, C-13, C-14, C-08b, C-07 DEV, and any
+Slack/Leslie/Pondr contact all remain unauthorized.

@@ -211,3 +211,26 @@ the document.
 
 This report is private and local. Nothing in this campaign submits, files,
 or publishes anything.
+
+## Local review persistence is not an Alphaus verdict
+
+Nightwatch now keeps local review decisions durably, in an owner-only store
+outside the repository. This changes nothing about who decides.
+
+A persisted receipt carries `organizationalAuthority: NONE_LOCAL_REVIEW_ONLY`
+and the literal list of what it is not equivalent to: `LESLIE_GENUINE`,
+`LESLIE_INVALID`, `PONDR_APPROVED`. A stored receipt claiming anything else
+fails closed on read.
+
+So when a human filing report or a reviewer screen shows
+`ACCEPT_EVIDENCE`, it means: a Nightwatch operator, working locally and
+privately, judged the evidence sufficient to be worth a human's time. It does
+not mean the finding is genuine, it does not mean it was approved, and it does
+not mean a bounty was accepted. Those verdicts belong to people and systems
+Nightwatch does not talk to.
+
+Persistence is also not the beginning of automated filing. There is no path
+from the review store to Slack, Leslie, Pondr or Notion, and hardening
+enforces that structurally rather than by convention: the cone holds no
+network authority, its import graph is confined, and the underlying private
+artifact store answers `publish()` by throwing.

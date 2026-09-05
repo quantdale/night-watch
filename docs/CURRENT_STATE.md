@@ -3613,3 +3613,36 @@ with typecheck, hardening, agent, project, handoff, history-audit, and Git
 hygiene passes. No new operational verdict or implementation authority is
 claimed; the project-state block remains the existing `OPERATIONALLY_ACCEPTED`
 authority.
+
+## Owner-local review persistence and dossier identity — terminal COMPLETE — 2026-09-05
+
+Local review decisions are durable. A decision made in the Control Center
+reviewer is written to an owner-local, private store outside the repository,
+survives a server restart, cannot be overwritten or silently edited, and
+becomes visibly STALE — never silently valid, never deleted — when the
+artifacts it bound to change.
+
+What the reviewer surface now reports, and what each answer means:
+
+- `NO_LOCAL_REVIEW_STORE` — no review authority is configured. The Control
+  Center is read-only and no decision can be recorded.
+- `NO_LOCAL_REVIEW` — there is a store, and this finding has no decision.
+- a decision with `bindingCurrentness: CURRENT` — a real, live local decision.
+- a decision with `bindingCurrentness: STALE` — a real decision that no longer
+  binds to current artifacts. It is displayed, and displayed as UNKNOWN.
+
+`ACCEPT_EVIDENCE` and its siblings are owner-local and advisory. They are not
+Leslie genuine, not Pondr approved, and not a bounty acceptance. The receipt
+carries that non-equivalence literally, the surface restates it, and the
+client refuses a response claiming otherwise.
+
+The expectation and semantic-contract identity of a finding now reach the
+reviewer where the dossier carries them. They are carried, never derived: a v1
+dossier, or a v2 dossier without semantic triage evidence, keeps `null`, and
+`null` still means UNKNOWN.
+
+Certification for this campaign is recorded in
+`.agent/tasks/nightwatch-owner-local-review-persistence-v1/REPORT.md`.
+
+No production, NEXT or DEV contact. No external filing. C-12 live, C-13,
+C-14, C-08b and C-07 DEV remain unauthorized and unexecuted.

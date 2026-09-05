@@ -2065,3 +2065,134 @@ rule read. It now declares `CAMPAIGN` and `SESSION WORKTREE`, both bound by
 every `session/...` reference in the document must be the declared worktree —
 occurrence-complete, because a rule satisfied by one correct mention would
 pass while another line still named a retired worktree.
+
+## Owner-local review persistence and dossier identity (RP-1)
+
+The reviewer surface could show a local review decision but not keep one, and
+it reported the expectation and semantic-contract identity of a finding as
+absent. Both gaps are closed here, and neither needed new machinery: the
+repository already owned the pieces.
+
+### The review store is a schema over an existing primitive
+
+`src/core/reviewStore/` adds a schema, an identity and a read policy over
+`PrivateArtifactStore.writeImmutableJson`. It opens no file itself. The
+underlying primitive was already stronger than rename-based atomicity: an
+`O_EXCL` temporary, `fsync`, publication by `link(2)` — atomic, and `EEXIST`
+WITHOUT replacing — verification of the published bytes, a directory `fsync`,
+and an explicit `PRIVATE_ARTIFACT_NO_REPLACE_UNSUPPORTED` rather than silent
+degradation on a filesystem that cannot do it.
+
+That primitive is also the concurrency arbiter. There is no read-then-write
+existence check anywhere in the store, because such a check is exactly what a
+competing writer would race. Two writers both prepare bytes, one `link(2)`
+wins, and the loser receives the deterministic `REVIEW_STORE_ALREADY_DECIDED`.
+
+The review lifecycle in `src/core/findingReview/` is unchanged in substance.
+`verifyReceiptIntegrity` was extracted from `verifyReviewCurrent` so the store
+can check receipt identity through the canonical formula instead of a second
+copy of it — and so a receipt that is both tampered and stale is reported as
+tampered rather than masked as stale.
+
+### Location
+
+`$NIGHTWATCH_REVIEW_STORE_DIR`, defaulting to `$HOME/.nightwatch/reviews` — a
+sibling of the findings root, on the same convention. `PrivateArtifactStore`
+takes a CLOSED `subtree` union (`'findings' | 'reviews'`), so a caller names a
+subtree and never a path: the root is chosen from a table and then held to the
+same absolute, symlink-free, owner-only `0700`, outside-the-repository
+contract, and reports `rootClass: OUTSIDE_REPOSITORY` truthfully. An
+explicitly injected root remains `INJECTED_TEST_ROOT`.
+
+### Identity is the binding, never the finding id
+
+```
+reviewIdentity(binding) = sha256(stableJsonSorted(binding))[0..24]
+file name              = review.<findingIdDigest12>.<reviewIdentity24>.json
+```
+
+Keying by binding is what makes multiple artifact generations safe: a
+regenerated dossier changes `dossierDigest`, so it changes the identity, so it
+lands in a different file. The first generation is never overwritten and stays
+auditable. Nothing is ever deleted automatically.
+
+The finding-id component is a DERIVED discovery key, recomputed on every read
+and never authoritative — a renamed or forged file name cannot make bytes
+authoritative. This is why there is no index file: nothing to corrupt, nothing
+to rebuild. Because every name the store produces is hex, a path-shaped
+finding id (which the lifecycle's id vocabulary legitimately permits) can never
+reach the filesystem as a path.
+
+### Reads answer with exactly four states, and fail closed
+
+`NO_REVIEW` | `CURRENT` | `STALE` | `CORRUPT`.
+
+Reads are keyed by FINDING, not by binding: a changed artifact changes the
+binding and therefore the file name, so a binding-keyed read would report
+NO_REVIEW for exactly the case that must report STALE.
+
+Every read revalidates the envelope schema and key set, the record binding,
+the receipt through `verifyReceiptIntegrity`, the recomputed identity against
+both the envelope and the file name, that the envelope belongs to the finding
+that was ASKED for, the terminal state, and the organizational authority.
+Corrupt or unknown-schema bytes can never yield `CURRENT`, and a corrupt
+generation is reported rather than hidden by a valid sibling.
+
+Discovery for a page uses one request-scoped directory listing
+(`snapshotListing`). The listing decides which files are opened; it decides
+nothing about whether what is found is valid.
+
+### The write authority is narrow, and opt-in
+
+One Control Center route, `POST /api/v1/reviewer/decision`, which exists ONLY
+when the server is constructed with a review authority. Without one the server
+is exactly as read-only as it was: `405 Allow: GET, HEAD` for every path.
+
+The client never chooses the binding it writes against. It submits the review
+identity the surface showed it; the server REBUILDS the binding from current
+state through the same `reviewBindingFor` the read path uses and refuses
+anything that does not match. `createControlCenterServices` builds the read
+collector and the write handler over one snapshot seam, so the two cannot
+derive a different binding context for the same state.
+
+Guards, in order: loopback host, Origin, POST only, a custom header no
+cross-origin form can set without a preflight Origin already governs, no query
+string, `application/json` only, and a body bounded on bytes ACTUALLY received
+rather than on a declared `Content-Length`. Timestamps are taken server-side; a
+caller-supplied `reviewedAt` would be a tamper vector into a digest-bound
+receipt.
+
+### The Control Center review binding
+
+A Control Center review is dossier-scoped, and the binding says so rather than
+implying a handoff was reviewed. `findingDigest` is the projected row the
+reviewer saw; `dossierDigest` is the digest of the WHOLE parsed dossier, so an
+edit to a field the row does not project still makes the review stale;
+`handoffDigest` is null; `handoffVersion` is the declared literal
+`NONE_DOSSIER_ONLY_REVIEW`; absent campaign and source evidence are the
+declared literals `local.no-campaign` and `synthetic.no-source-evidence`.
+Each substitute names an absence rather than guessing.
+
+### Dossier identity is carried, never derived
+
+`SemanticTriageEvidence` has carried `expectationId` and
+`invariantDefinitionId` since Phase 12A, mechanically established through the
+Phase 9A.1 admission bridge and privacy-validated at construction. The gap was
+purely that the Control Center projection dropped them.
+`FindingsDossierMetadata` and `descriptorFor` now carry them forward.
+
+No dossier schema changed: v2 has the identity, v1 does not and keeps `null`,
+and `null` still drives the cone to UNKNOWN. `projectedIdentity` applies BOTH
+the safe-id pattern and the canonical `containsPrivatePayloadShape` screen,
+because either alone is insufficient — the id pattern accepts
+`CUSTOMER_SENTINEL`, and the sentinel screen accepts a path-shaped value. It
+can only drop an identity, never invent or repair one.
+
+No classifier rule changed. Matching identities were already corroborating
+evidence and differing non-null identities were already counterevidence, so
+propagation sharpens the classifier in both directions. Its most valuable
+effect is in the counterevidence direction: for a pair sharing a fingerprint
+but carrying different expectations, the classifier could previously only
+record `MISSING_COMPARISON_INPUT` — "I do not know". It now records
+`DIFFERENT_EXPECTATION` and `DIFFERENT_SEMANTIC_CONTRACT` — "these genuinely
+differ".

@@ -1509,3 +1509,63 @@ no new authority); Phase 24 local autonomous triage depth and DEV-readiness
 acceleration (COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI: source/synthetic only,
 zero-contact rehearsal, zero DEV observations, exact-head CI still required);
 changes require a DECISIONS entry and a test update.*
+
+## Owner-local review persistence safety boundary (RP-1)
+
+A stored review is owner-local, private, non-organizational, non-executable
+and non-publishing. Each of those words is enforced, not merely asserted.
+
+**Owner-local and private.** The store root is `$NIGHTWATCH_REVIEW_STORE_DIR`,
+defaulting to `$HOME/.nightwatch/reviews`. It is absolute, symlink-free at
+every component, owner-only `0700`, and refused outright if it resolves inside
+the repository or the sibling workspace. Callers name a subtree from a closed
+two-member union; they never supply a path. No review artifact is tracked in
+Git, and hardening scans the tracked file list to keep it that way.
+
+**Non-organizational.** Every persisted receipt carries
+`organizationalAuthority: NONE_LOCAL_REVIEW_ONLY` and the literal
+non-equivalence list `['LESLIE_GENUINE', 'LESLIE_INVALID', 'PONDR_APPROVED']`.
+A stored receipt claiming anything else fails closed on read and is never
+projected. The reviewer surface re-checks the guard at the projection
+boundary, and the browser client refuses a decision response that comes back
+claiming organizational authority — a local decision labelled `LESLIE_GENUINE`
+is a breach, not a success, and it is rejected at both ends.
+
+`ACCEPT_EVIDENCE` means a Nightwatch operator, locally and privately, judged
+the evidence sufficient to be worth a human's time. It does not mean Leslie
+genuine, it does not mean Pondr approved, and it does not mean a bounty was
+accepted. Nothing downstream may map it to any of those.
+
+**Non-publishing.** There is no path from the review store to Slack, Leslie,
+Pondr, Notion, or any external destination, and none may be added. Hardening
+enforces it structurally: the review cone holds no `node:http`, `node:net`,
+`node:child_process` or `node:fs` authority of its own; its import graph is
+confined to its own cone; no file in it may name an external destination or
+reach a publication method; and the underlying private-artifact primitive
+answers `publish()` by throwing `OWNER_POLICY_BLOCKED`. The store object's
+method surface is asserted POSITIVELY in test, so a publication method could
+not be added without that assertion being updated deliberately.
+
+**Non-executable.** A review decision routes local follow-up work. It triggers
+nothing, runs nothing, and files nothing.
+
+**The write authority is narrow and opt-in.** It may write review-store
+artifacts and nothing else. It cannot edit a finding, a dossier, source or
+config. The Control Center exposes the route ONLY when constructed with a
+review authority; without one it remains strictly `GET, HEAD`, which is the
+posture every deployment had before this campaign and still has by default.
+
+**Rationale safety is unchanged and unweakened.** The lifecycle's bound and
+sentinel scan remain the only authority on what a rationale may contain, and
+the persistence layer never re-implements or relaxes them. A rationale
+carrying an address, bearer token, JWT, AWS key, private-key marker, or a
+customer, account or cost sentinel is refused before any byte is written, and
+the store root is left empty.
+
+**Identity propagation creates no new privacy surface.** The propagated
+expectation and semantic-contract identities are already privacy-validated
+where they are constructed, and are re-screened at the projection boundary
+against both the safe-id pattern and the canonical sentinel set. The
+projection can only drop an identity. No raw dossier, finding or handoff
+content is stored: the binding carries digests, and duplicating the artifacts
+would add a privacy surface for no gain.
