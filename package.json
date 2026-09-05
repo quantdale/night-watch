@@ -8,8 +8,8 @@
     "node": ">=20"
   },
   "scripts": {
-    "test": "playwright test",
-    "test:unit": "playwright test tests/unit",
+    "test": "NODE_OPTIONS=--expose-gc playwright test",
+    "test:unit": "NODE_OPTIONS=--expose-gc playwright test tests/unit",
     "test:smoke": "playwright test tests/smoke",
     "typecheck": "tsc --noEmit",
     "hardening:check": "node bin/hardening-check.mjs",

@@ -179,7 +179,15 @@ test.describe('reviewer surface at corpus scale', () => {
     const ITERATIONS = 200;
     await withServer(corpus(5000), async (port) => {
       const baseline = (await get(port, '/api/v1/reviewer?limit=50')).body;
-      if (typeof global.gc === 'function') global.gc();
+      // A retained-heap claim requires a forced collection. Without
+      // `--expose-gc` this measures whatever V8 happened to be holding at two
+      // arbitrary moments, which is not retained heap and not a leak signal —
+      // it drifted past the 64 MiB bound twice during RP-1 with no leak
+      // present, and passed the rest of the time, which is the signature of a
+      // measurement rather than a defect. `npm test` and `npm run test:unit`
+      // now pass `--expose-gc` so the primary lane evaluates it for real.
+      const forceGc = typeof global.gc === 'function' ? (global.gc as () => void) : null;
+      forceGc?.();
       const heapBefore = process.memoryUsage().heapUsed;
       const latencies: number[] = [];
       for (let iteration = 0; iteration < ITERATIONS; iteration += 1) {
@@ -189,7 +197,7 @@ test.describe('reviewer surface at corpus scale', () => {
         expect(response.status, `iteration ${iteration}`).toBe(200);
         expect(response.body, `iteration ${iteration} drifted`).toBe(baseline);
       }
-      if (typeof global.gc === 'function') global.gc();
+      forceGc?.();
       const heapAfter = process.memoryUsage().heapUsed;
 
       // Drift in latency, not absolute latency: the last fifty requests must
@@ -200,9 +208,21 @@ test.describe('reviewer surface at corpus scale', () => {
       const last = mean(latencies.slice(-50));
       expect(last, `first 50 mean ${first.toFixed(1)} ms, last 50 mean ${last.toFixed(1)} ms`).toBeLessThan(Math.max(first * 4, 2_000));
 
-      // A hard ceiling on retained heap growth across 200 identical requests.
+      // A hard ceiling on retained heap growth across 200 identical requests,
+      // evaluated ONLY when a forced collection was available. When it was
+      // not, the bound is not silently dropped: the run is annotated so a
+      // reader can tell the difference between "the heap guard held" and "the
+      // heap guard was not evaluated". A guard that cannot tell those apart
+      // is worse than one that is honestly absent.
       const growthMib = (heapAfter - heapBefore) / (1024 * 1024);
-      expect(growthMib, `retained heap grew ${growthMib.toFixed(1)} MiB over ${ITERATIONS} requests`).toBeLessThan(64);
+      if (forceGc === null) {
+        test.info().annotations.push({
+          type: 'heap-guard',
+          description: `NOT EVALUATED: --expose-gc unavailable; unforced growth was ${growthMib.toFixed(1)} MiB`,
+        });
+      } else {
+        expect(growthMib, `retained heap grew ${growthMib.toFixed(1)} MiB over ${ITERATIONS} requests`).toBeLessThan(64);
+      }
     });
   });
 });
