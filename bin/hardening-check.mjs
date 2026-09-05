@@ -3723,7 +3723,159 @@ function checkC07DerivedSemanticsBoundary() {
   }
 }
 
+function checkReviewStoreBoundary() {
+  const types = read('src/core/reviewStore/types.ts');
+  const identity = read('src/core/reviewStore/identity.ts');
+  const store = read('src/core/reviewStore/store.ts');
+  const writeAuthority = read('src/controlCenter/authorities/reviewWriteAuthority.ts');
+  const binding = read('src/controlCenter/authorities/reviewBinding.ts');
+  const reviewerAuthority = read('src/controlCenter/authorities/reviewerAuthority.ts');
+  const policy = read('src/core/policy/privateArtifacts.ts');
+  const storeCode = withoutComments(store);
+  const identityCode = withoutComments(identity);
+
+  // --- the store owns no I/O of its own ---
+  // Every byte goes through PrivateArtifactStore. A store that could also
+  // open a file would have a second, unaudited publication path.
+  for (const file of ['src/core/reviewStore/types.ts', 'src/core/reviewStore/identity.ts', 'src/core/reviewStore/store.ts', 'src/core/reviewStore/index.ts']) {
+    const source = withoutComments(read(file));
+    for (const forbidden of ['node:fs', 'node:child_process', 'node:net', 'node:http', 'node:https', 'node:dgram', 'node:worker_threads']) {
+      if (source.includes(`'${forbidden}'`)) fail(`${file} must not hold ${forbidden} authority`);
+    }
+    if (/\bfs\./.test(source) || /\bfetch\s*\(/.test(source) || /require\s*\(/.test(source)) fail(`${file} reaches a filesystem or network primitive directly`);
+  }
+
+  // --- publication is occurrence-complete, not sampled ---
+  // Every call on the underlying private store is enumerated and checked
+  // against an allowlist. A single positive `includes` would pass while one
+  // unsafe call sat beside it.
+  const allowed = new Set(['writeImmutableJson', 'readJson', 'listJson', 'listTemporaries', 'removeTemporary']);
+  const calls = [...storeCode.matchAll(/this\.artifacts\.([A-Za-z0-9_]+)\s*\(/g)].map((match) => match[1]);
+  if (calls.length === 0) fail('review store makes no call on the private artifact store at all');
+  for (const call of calls) {
+    if (!allowed.has(call)) fail(`review store calls a non-allowlisted private-store method: ${call}`);
+  }
+  // The replacement-capable writers must not appear anywhere in the cone.
+  if (/writeJson\s*\(|writeIncomplete\s*\(/.test(storeCode)) fail('review store uses a replacement-capable write');
+  if (!storeCode.includes('this.artifacts.writeImmutableJson(')) fail('review store does not publish through the atomic no-replace primitive');
+
+  // --- the canonical validators are INVOKED, not merely imported ---
+  // A rule that only checked the import would pass over a cone that imported
+  // the validator and never called it.
+  for (const invoked of ['verifyReceiptIntegrity(', 'verifyReviewCurrent(', 'validateReviewBinding(', 'isTerminalReviewState(', 'decideReview(', 'initialReviewRecord(']) {
+    // The import list carries the bare name; a call carries the name plus an
+    // open paren. Counting `name(` occurrences therefore counts CALLS, and a
+    // cone that imported the validator and never used it scores zero.
+    const uses = storeCode.split(invoked).length - 1;
+    if (uses < 1) fail(`review store imports ${invoked.slice(0, -1)} without invoking it`);
+  }
+
+  // --- no second, weaker copy of review semantics ---
+  // The store must never recompute a receipt digest or re-derive staleness.
+  if (/sha256Hex\s*\(/.test(storeCode)) fail('review store recomputes a digest instead of using the canonical validator');
+  if (/review:\$\{/.test(storeCode)) fail('review store rebuilds a receipt identity string');
+  if (/FINDING_REVIEW_STALE:/.test(storeCode.replace(/startsWith\('FINDING_REVIEW_STALE'\)/g, ''))) fail('review store re-derives a staleness reason');
+
+  // --- validate before publish, and no read-then-write race ---
+  const putStart = storeCode.indexOf('putDecision(input: PutReviewDecisionInput)');
+  const putEnd = storeCode.indexOf('fileNamesFor(', putStart);
+  const putBody = putStart >= 0 && putEnd > putStart ? storeCode.slice(putStart, putEnd) : '';
+  if (!putBody) fail('review store putDecision body could not be located');
+  const validateAt = putBody.indexOf('validateStoredReviewEnvelope(');
+  const publishAt = putBody.indexOf('writeImmutableJson(');
+  if (validateAt < 0 || publishAt < 0 || validateAt > publishAt) fail('review store publishes before validating the bytes it will write');
+  if (/existsSync|fileNamesFor\(|this\.read\(/.test(putBody)) fail('review store putDecision performs a raceable read-then-write existence check');
+  if (!/REVIEW_STORE_ALREADY_DECIDED/.test(putBody)) fail('review store does not map a publication conflict to a deterministic already-decided result');
+
+  // --- identity is the WHOLE binding ---
+  if (!/sha256Hex\(stableJsonSorted\(validateReviewBinding\(binding\)\)\)/.test(identityCode)) {
+    fail('review identity is not the digest of the complete validated binding');
+  }
+  const fileNamePattern = identityCode.match(/REVIEW_FILE_NAME_RE = \/(.*?)\/;/)?.[1] ?? '';
+  // Hex only, both components anchored: nothing a caller supplies can reach
+  // a file name, so a path-shaped finding id cannot become a path.
+  if (!fileNamePattern.startsWith('^review\\.') || !fileNamePattern.endsWith('\\.json$') || !fileNamePattern.includes('[0-9a-f]{12}') || !fileNamePattern.includes('[0-9a-f]{24}')) {
+    fail(`review file name shape is not the pinned hex-only pattern: ${fileNamePattern}`);
+  }
+
+  // --- the error vocabulary is total in BOTH directions ---
+  const declared = [...types.matchAll(/'(REVIEW_STORE_[A-Z_]+)'/g)].map((match) => match[1]);
+  const declaredSet = new Set(declared);
+  if (declaredSet.size < 8) fail('review store error vocabulary is suspiciously small');
+  const raised = new Set([...storeCode.matchAll(/'(REVIEW_STORE_[A-Z_]+)'/g)].map((match) => match[1]));
+  for (const code of raised) {
+    if (!declaredSet.has(code)) fail(`review store raises an undeclared error code: ${code}`);
+  }
+  for (const code of declaredSet) {
+    if (!raised.has(code)) fail(`review store declares an error code it can never raise: ${code}`);
+  }
+
+  // --- the owner-local root is outside the repository, and derived ---
+  if (!/assertOutsideCanonicalWorkspace\(root\)/.test(policy)) fail('private artifact root no longer asserts it is outside the repository');
+  if (!/if \(injectedRoot === undefined\) assertOutsideCanonicalWorkspace\(root\)/.test(policy)) {
+    fail('a derived private artifact root is not held to the outside-the-repository contract');
+  }
+  if (!/PRIVATE_ARTIFACT_SUBTREES = \['findings', 'reviews'\]/.test(policy)) fail('the private subtree vocabulary is no longer a closed two-member union');
+  if (!/assertKnownSubtree\(subtree\)/.test(policy)) fail('the subtree vocabulary is not enforced at runtime');
+
+  // --- recovery can never touch an unknown file ---
+  if (!/TEMPORARY_FILE_RE\.test\(name\)/.test(policy)) fail('temporary removal does not require the pinned temporary name shape');
+  if (!/PRIVATE_ARTIFACT_NOT_A_TEMPORARY/.test(policy)) fail('temporary removal lacks a refusal for a non-temporary name');
+
+  // --- no review artifact is ever tracked by Git ---
+  for (const file of gitFiles()) {
+    if (/(?:^|\/)review\.[0-9a-f]{12}\.[0-9a-f]{24}\.json$/.test(file)) fail(`a review store artifact is tracked in Git: ${file}`);
+  }
+
+  // --- the write authority is narrow ---
+  const writeCode = withoutComments(writeAuthority);
+  for (const forbidden of ['node:fs', 'node:child_process', 'node:net', 'node:http', 'node:https']) {
+    if (writeCode.includes(`'${forbidden}'`)) fail(`review write authority must not hold ${forbidden} authority`);
+  }
+  if (/\bfs\./.test(writeCode) || /\bfetch\s*\(/.test(writeCode)) fail('review write authority reaches a filesystem or network primitive directly');
+  // Its ONLY persistence is the review store.
+  // Built from parts rather than written as a literal: a literal would put a
+  // module-specifier shape into this file and the dependency-resolvability
+  // check would read it as an import of its own.
+  const importSpecifierPattern = new RegExp(['from', String.raw`\s+'([^']+)'`].join(''), 'g');
+  const imports = [...writeCode.matchAll(importSpecifierPattern)].map((match) => match[1]);
+  for (const specifier of imports) {
+    if (!/^\.\.?\//.test(specifier)) fail(`review write authority imports a non-relative module: ${specifier}`);
+    if (/prodEvidence|prodObserve|selfDev|alphausHandoff|aiReview|campaign\/|oops|source\/siblingSource/.test(specifier)) {
+      fail(`review write authority reaches outside its cone: ${specifier}`);
+    }
+  }
+  if (!/new ReviewStore\(/.test(writeCode)) fail('review write authority does not own a review store');
+  if (/PrivateArtifactStore/.test(writeCode)) fail('review write authority bypasses the review store to reach the raw private store');
+
+  // --- nothing in the cone can publish externally ---
+  for (const [label, code] of [['review store', storeCode], ['review write authority', writeCode], ['review binding', withoutComments(binding)]]) {
+    if (/slack|leslie|pondr|notion|webhook|https?:\/\//i.test(code)) fail(`${label} references an external publication destination`);
+    if (/\.publish\s*\(/.test(code)) fail(`${label} reaches a publication method`);
+  }
+
+  // --- the read path stays pure and page-bounded ---
+  const reviewerCode = withoutComments(reviewerAuthority);
+  for (const forbidden of ['node:fs', 'node:child_process', 'node:net', 'node:http']) {
+    if (reviewerCode.includes(`'${forbidden}'`)) fail(`reviewer authority must not hold ${forbidden} authority`);
+  }
+  if (/\bfs\./.test(reviewerCode) || /ReviewStore/.test(reviewerCode)) fail('reviewer authority holds persistence authority instead of receiving a lookup');
+  if (!/localReviewLookup/.test(reviewerCode)) fail('reviewer authority has no persisted-review lookup seam');
+  // The lookup must be invoked inside the per-row projection, not over the
+  // whole corpus: a corpus-wide call would reintroduce the cost M5 removed.
+  const projectStart = reviewerCode.indexOf('function projectEntry(');
+  if (projectStart < 0) fail('reviewer authority per-row projection could not be located');
+  const projectBody = reviewerCode.slice(projectStart);
+  if (!/lookupLocalReview\(entry\.dossier\)/.test(projectBody)) fail('persisted review lookup is not performed per rendered row');
+
+  // --- the binding builder is shared, not duplicated ---
+  if (!/reviewBindingFor/.test(writeCode)) fail('review write authority does not use the shared binding builder');
+  const collector = withoutComments(read('src/controlCenter/server/defaultCollector.ts'));
+  if (/findingArtifactDigest\s*\(/.test(collector)) fail('the collector derives a review binding of its own');
+}
+
 checkChildProcessBoundaries();
+checkReviewStoreBoundary();
 checkL6ProcessNetworkBoundary();
 checkTargetPolicy();
 checkTypecheckCoverage();
