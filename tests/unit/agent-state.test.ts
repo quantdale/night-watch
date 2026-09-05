@@ -64,6 +64,7 @@ interface ProtocolOptions {
   readonly reportBody?: string;
   readonly stateExtra?: string;
   readonly activeExtra?: string;
+  readonly activeRouting?: string;
 }
 
 function protocolStrings(taskId: string, options: ProtocolOptions): { active: string; spec: string; plan: string; state: string; report: string } {
@@ -104,7 +105,14 @@ ${legacyCurrentSha === undefined ? '' : `Current SHA: ${legacyCurrentSha}
 `}Current milestone: ${activeMilestone}
 Last checkpoint: synthetic
 Next action: ${activeNextAction}
-${verdictEffectLine}${protocolLine}${options.activeExtra ?? ''}`;
+${verdictEffectLine}${protocolLine}${options.activeExtra ?? ''}
+${options.activeRouting ?? `## Routing and safety
+
+\`\`\`
+CAMPAIGN: ${taskId}
+SESSION WORKTREE: main
+\`\`\`
+`}`;
   const spec = '# Synthetic task\n';
   const plan = `# Synthetic plan
 
@@ -1482,4 +1490,61 @@ test('placeholder sentinels are narrow', () => {
   expect(hasClosurePlaceholder('GITHUB_ACTIONS_FOR_LIVE_HEAD')).toBe(false);
   expect(hasClosurePlaceholder('the placeholder rule forbids sentinels')).toBe(false);
   expect(hasClosurePlaceholder('the run was pending until CI completed')).toBe(false);
+});
+
+// DEF-FC-04. The pure judgement is probed exhaustively in
+// tests/unit/activeTaskRoutingBinding.test.ts. These probe the INVOCATION: a
+// rule that is defined but never called reads exactly like a live one, which
+// is how DEF-FC-02 survived review. Each of these must fail the real checker
+// process end to end.
+
+test('routing block naming a predecessor campaign fails agent:check', () => {
+  const { root, sha } = fixture();
+  writeProtocol(root, {
+    baselineSha: sha,
+    substantiveSha: sha,
+    startingSha: sha,
+    activeRouting: '## Routing and safety\n\n```\nCAMPAIGN: some-other-campaign\nSESSION WORKTREE: main\n```\n',
+  });
+  const result = run(root);
+  expect(result.status).toBe(1);
+  expect(result.stderr).toContain('ACTIVE_TASK_ROUTING_CAMPAIGN_DRIFT');
+});
+
+test('routing block naming a foreign session worktree fails agent:check', () => {
+  const { root, sha } = fixture();
+  writeProtocol(root, {
+    baselineSha: sha,
+    substantiveSha: sha,
+    startingSha: sha,
+    activeRouting: '## Routing and safety\n\n```\nCAMPAIGN: phase-test\nSESSION WORKTREE: session/retired-0000\n```\n',
+  });
+  const result = run(root);
+  expect(result.status).toBe(1);
+  expect(result.stderr).toContain('ACTIVE_TASK_ROUTING_SESSION_WORKTREE_DRIFT');
+});
+
+test('a stray worktree reference beside a correct declaration fails agent:check', () => {
+  // The occurrence-complete half: the declaration itself is right, and one
+  // other line still names a retired worktree. A rule satisfied by a single
+  // correct mention would pass here — which is exactly what happened.
+  const { root, sha } = fixture();
+  writeProtocol(root, {
+    baselineSha: sha,
+    substantiveSha: sha,
+    startingSha: sha,
+    activeRouting:
+      '## Routing and safety\n\n```\nCAMPAIGN: phase-test\nSESSION WORKTREE: main\n```\n\nC-00 governs: implementation happens in `session/nightwatch-retired-faaf601a`.\n',
+  });
+  const result = run(root);
+  expect(result.status).toBe(1);
+  expect(result.stderr).toContain('ACTIVE_TASK_ROUTING_FOREIGN_WORKTREE_REFERENCE');
+});
+
+test('a missing routing block fails agent:check', () => {
+  const { root, sha } = fixture();
+  writeProtocol(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha, activeRouting: '' });
+  const result = run(root);
+  expect(result.status).toBe(1);
+  expect(result.stderr).toContain('ACTIVE_TASK_ROUTING_BLOCK_MISSING');
 });

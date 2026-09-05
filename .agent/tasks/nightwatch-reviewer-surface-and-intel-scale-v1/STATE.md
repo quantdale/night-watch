@@ -46,7 +46,11 @@ hardened against cross-campaign drift.
   and scans every `session/...` occurrence in the document. The rule runs
   inside `npm run agent:check`, which the required `AGENT_CONTINUITY` gate
   group executes, so it is gate-enforced rather than advisory.
-  `npx playwright test tests/unit/activeTaskRoutingBinding.test.ts` → 7 passed.
+  `npx playwright test tests/unit/activeTaskRoutingBinding.test.ts` → 7 passed;
+  `tests/unit/agent-state.test.ts` → 118 passed, including four end-to-end
+  probes that the rule is INVOKED, not merely defined. That file is in the
+  `semantic-compatibility` lane, so those probes run inside the required
+  `SEMANTIC_COMPATIBILITY` gate group.
 
 ## Work In Progress
 
@@ -104,6 +108,7 @@ every projected element.
 | `bin/agent-state.mjs` | `inspectActiveTaskRouting()` + live invocation | Modified |
 | `bin/agent-state.d.mts` | declaration for the new export | Modified |
 | `tests/unit/activeTaskRoutingBinding.test.ts` | DEF-FC-04 regression, bound to real history | Added |
+| `tests/unit/agent-state.test.ts` | fixture routing block + 4 end-to-end invocation probes | Modified |
 | `docs/CURRENT_STATE.md` | live-state rebind to this campaign | Modified |
 | `.agent/EXECUTION_PROMPT.md` | campaign handoff | Modified |
 | `.agent/tasks/nightwatch-reviewer-surface-and-intel-scale-v1/**` | campaign records | Added |
@@ -122,6 +127,7 @@ every projected element.
 | `inspectActiveTaskRouting` vs `868761d` + FC-1 `STATE.md` | FOREIGN_WORKTREE_REFERENCE raised on the real drifted document |
 | `inspectActiveTaskRouting` vs `48c0a60`, `0c5cb42`, `868761d` | all fail closed (CAMPAIGN_MISSING + SESSION_WORKTREE_MISSING) |
 | `npx playwright test tests/unit/activeTaskRoutingBinding.test.ts` | 7 passed |
+| `npx playwright test tests/unit/agent-state.test.ts` | 118 passed (114 pre-existing + 4 new invocation probes) |
 | `npm run typecheck` | clean |
 | `npm run hardening:check` | PASS |
 | `npm run agent:check` (repaired document) | PASS + 2 known warnings |
