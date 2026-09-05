@@ -3737,7 +3737,7 @@ function checkReviewStoreBoundary() {
   // --- the store owns no I/O of its own ---
   // Every byte goes through PrivateArtifactStore. A store that could also
   // open a file would have a second, unaudited publication path.
-  for (const file of ['src/core/reviewStore/types.ts', 'src/core/reviewStore/identity.ts', 'src/core/reviewStore/store.ts', 'src/core/reviewStore/index.ts']) {
+  for (const file of ['src/core/reviewStore/types.ts', 'src/core/reviewStore/identity.ts', 'src/core/reviewStore/store.ts', 'src/core/reviewStore/index.ts', 'src/core/reviewStore/inventory.ts', 'src/core/reviewStore/history.ts']) {
     const source = withoutComments(read(file));
     for (const forbidden of ['node:fs', 'node:child_process', 'node:net', 'node:http', 'node:https', 'node:dgram', 'node:worker_threads']) {
       if (source.includes(`'${forbidden}'`)) fail(`${file} must not hold ${forbidden} authority`);
@@ -3749,11 +3749,19 @@ function checkReviewStoreBoundary() {
   // Every call on the underlying private store is enumerated and checked
   // against an allowlist. A single positive `includes` would pass while one
   // unsafe call sat beside it.
-  const allowed = new Set(['writeImmutableJson', 'readJson', 'listJson', 'listTemporaries', 'removeTemporary']);
+  const allowed = new Set(['writeImmutableJson', 'readJson', 'listJson', 'listTemporaries', 'removeTemporary', 'listEntries']);
   const calls = [...storeCode.matchAll(/this\.artifacts\.([A-Za-z0-9_]+)\s*\(/g)].map((match) => match[1]);
   if (calls.length === 0) fail('review store makes no call on the private artifact store at all');
   for (const call of calls) {
     if (!allowed.has(call)) fail(`review store calls a non-allowlisted private-store method: ${call}`);
+  }
+  // Property READS are enumerated against their own allowlist too. A getter
+  // is a call the call-shaped regex does not see, and `exists` is already a
+  // getter that reaches the filesystem; a future mutating one would otherwise
+  // enter the cone unremarked.
+  const allowedReads = new Set([...allowed, 'root', 'policy', 'readOnly', 'exists']);
+  for (const [, member] of storeCode.matchAll(/this\.artifacts\.([A-Za-z0-9_]+)/g)) {
+    if (!allowedReads.has(member)) fail(`review store reaches a non-allowlisted private-store member: ${member}`);
   }
   // The replacement-capable writers must not appear anywhere in the cone.
   if (/writeJson\s*\(|writeIncomplete\s*\(/.test(storeCode)) fail('review store uses a replacement-capable write');

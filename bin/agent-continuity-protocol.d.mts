@@ -70,6 +70,23 @@ export function findReportSafetyEventsClaim(
   text: string | null | undefined
 ): { value: string; line: number } | null;
 
+/** Markers that delegate a field to LIVE authority (DEF-RO-1). */
+export const LIVE_AUTHORITY_MARKERS: ReadonlySet<string>;
+
+/** The REPORT's OWN implementation-anchor claim, or null when it makes none (DEF-RO-1). */
+export function findReportImplementationAnchorClaim(
+  text: string | null | undefined
+): { value: string; line: number } | null;
+
+/** True when the value is a bare live-authority marker rather than an anchor (DEF-RO-1). */
+export function isLiveAuthorityMarker(value: string | null | undefined): boolean;
+
+/** Terminal implementation-anchor violations, or an empty list (DEF-RO-1). */
+export function inspectTerminalImplementationAnchor(
+  reportText: string | null | undefined,
+  stateValidatedSha: string | null | undefined
+): readonly { code: string; line: number; detail: string }[];
+
 export function validateTaskV2(
   task: {
     dir: string;

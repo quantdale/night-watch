@@ -258,7 +258,7 @@ test.describe('properties (deterministic seeds)', () => {
     // one. A new method cannot be added without this test being updated,
     // which is the point — a publication method would have to be declared.
     expect([...surface].filter((name) => name !== 'constructor').sort()).toEqual(
-      ['artifacts', 'fileNamesFor', 'policy', 'putDecision', 'read', 'recoverTemporaries', 'root', 'snapshotListing'].sort()
+      ['artifacts', 'entries', 'exists', 'fileNamesFor', 'inspect', 'policy', 'putDecision', 'read', 'readOnly', 'recoverTemporaries', 'root', 'snapshotListing'].sort()
     );
   });
 });

@@ -28,6 +28,7 @@
 
 import {
   PrivateArtifactStore,
+  type PrivateArtifactEntry,
   type PrivateArtifactPolicyRecord,
 } from '../policy/privateArtifacts';
 import {
@@ -209,6 +210,53 @@ export class ReviewStore {
     return this.artifacts.policy;
   }
 
+  /** Whether the store root exists. Never creates it. */
+  get exists(): boolean {
+    return this.artifacts.exists;
+  }
+
+  /**
+   * Whether this handle's write methods refuse.
+   *
+   * Surfaced so the inventory can REQUIRE a read-only handle rather than
+   * merely be written not to write with a writable one.
+   */
+  get readOnly(): boolean {
+    return this.artifacts.readOnly;
+  }
+
+  /** Categorical, read-only enumeration of every entry in the store root. */
+  entries(): readonly PrivateArtifactEntry[] {
+    return this.artifacts.listEntries();
+  }
+
+  /**
+   * Read and fully validate ONE stored artifact.
+   *
+   * The single validation path. `read()` calls it too, so a corruption the
+   * inventory reports and a corruption the reviewer surface refuses are the
+   * same judgement rather than two implementations that agree today.
+   *
+   * `null` means the file is no longer there — a manual deletion, or a race
+   * with the owner. That is neither valid nor corrupt, and calling it either
+   * would be a guess.
+   */
+  inspect(fileName: string): { readonly envelope: StoredReviewEnvelope } | { readonly corruption: ReviewStoreCorruption } | null {
+    let raw: unknown;
+    try {
+      raw = this.artifacts.readJson(fileName);
+    } catch (error) {
+      return { corruption: { fileName, code: 'REVIEW_STORE_CORRUPT', detail: (error as Error).message } };
+    }
+    if (raw === null) return null;
+    try {
+      return { envelope: validateStoredReviewEnvelope(raw, fileName) };
+    } catch (error) {
+      const code = error instanceof ReviewStoreError ? error.code : 'REVIEW_STORE_CORRUPT';
+      return { corruption: { fileName, code, detail: (error as Error).message } };
+    }
+  }
+
   /**
    * Record one terminal decision for one binding.
    *
@@ -310,22 +358,13 @@ export class ReviewStore {
     let staleReason: string | null = null;
 
     for (const fileName of this.fileNamesFor(findingId, listing)) {
-      let raw: unknown;
-      try {
-        raw = this.artifacts.readJson(fileName);
-      } catch (error) {
-        corruption.push({ fileName, code: 'REVIEW_STORE_CORRUPT', detail: (error as Error).message });
+      const inspected = this.inspect(fileName);
+      if (inspected === null) continue;
+      if ('corruption' in inspected) {
+        corruption.push(inspected.corruption);
         continue;
       }
-      if (raw === null) continue;
-      let envelope: StoredReviewEnvelope;
-      try {
-        envelope = validateStoredReviewEnvelope(raw, fileName);
-      } catch (error) {
-        const code = error instanceof ReviewStoreError ? error.code : 'REVIEW_STORE_CORRUPT';
-        corruption.push({ fileName, code, detail: (error as Error).message });
-        continue;
-      }
+      const envelope = inspected.envelope;
       // The envelope must belong to the finding that was ASKED for. The
       // listing decides which files are opened, and a listing is a discovery
       // aid rather than an authority — a wrong or forged one must not be able

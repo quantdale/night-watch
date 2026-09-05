@@ -40,6 +40,25 @@ const SUBTREE_RELATIVE_ROOT: Readonly<Record<PrivateArtifactSubtree, string>> = 
 
 export type PrivateArtifactStatus = 'INCOMPLETE' | 'READY';
 
+/**
+ * How one directory entry is classified by NAME SHAPE alone.
+ *
+ * `UNKNOWN` is deliberately a first-class outcome rather than an omission.
+ * A store root may legitimately contain a file this repository did not write,
+ * and the only safe things to do with it are to count it and to leave it
+ * alone. It is never opened, and its name is never propagated by any caller
+ * that projects an entry outward.
+ */
+export const PRIVATE_ARTIFACT_ENTRY_KINDS = ['JSON', 'TEMPORARY', 'UNKNOWN', 'NON_FILE'] as const;
+export type PrivateArtifactEntryKind = (typeof PRIVATE_ARTIFACT_ENTRY_KINDS)[number];
+
+export interface PrivateArtifactEntry {
+  readonly name: string;
+  readonly kind: PrivateArtifactEntryKind;
+  readonly bytes: number;
+  readonly mtimeMs: number;
+}
+
 export interface PrivateRetentionPolicy {
   readonly maxOccurrenceRecords: number;
   readonly unresolvedFindingsOwnerControlled: true;
@@ -369,6 +388,49 @@ export class PrivateArtifactStore {
       names.push(entry.name);
     }
     return names.sort((left, right) => left.localeCompare(right));
+  }
+
+  /** Whether the store root exists. Never creates it, even on a writable handle. */
+  get exists(): boolean {
+    return fs.existsSync(this.root);
+  }
+
+  /**
+   * Categorical, READ-ONLY enumeration of every entry in the store root.
+   *
+   * `listJson` answers "what may I open" and therefore hides everything else,
+   * which is right for a reader and wrong for an inventory: an operator needs
+   * to know that a stranger is sitting in the store precisely BECAUSE nothing
+   * will open it. This reports all four kinds with sizes, classifying by name
+   * shape and `lstat` only.
+   *
+   * It opens nothing, follows no symlink (a symlinked entry is `NON_FILE`,
+   * never the file it points at), creates nothing, and changes no mode or
+   * timestamp. An entry that vanishes mid-scan is dropped rather than
+   * reported at a guessed size.
+   */
+  listEntries(): readonly PrivateArtifactEntry[] {
+    if (!fs.existsSync(this.root)) return [];
+    assertNoSymlinkComponents(this.root, 'PRIVATE_ARTIFACT_ROOT_SYMLINK');
+    const entries: PrivateArtifactEntry[] = [];
+    for (const entry of fs.readdirSync(this.root, { withFileTypes: true })) {
+      let stat: fs.Stats;
+      try {
+        stat = fs.lstatSync(path.join(this.root, entry.name));
+      } catch {
+        // Raced away between readdir and lstat. It is not in the store now.
+        continue;
+      }
+      const kind: PrivateArtifactEntryKind = stat.isSymbolicLink() || !stat.isFile()
+        ? 'NON_FILE'
+        : TEMPORARY_FILE_RE.test(entry.name)
+          ? 'TEMPORARY'
+          : FILE_NAME_RE.test(entry.name) && !entry.name.includes('..')
+            ? 'JSON'
+            : 'UNKNOWN';
+      entries.push({ name: entry.name, kind, bytes: stat.size, mtimeMs: stat.mtimeMs });
+    }
+    return entries.sort((left, right) => left.name.localeCompare(right.name));
   }
 
   /**
