@@ -248,55 +248,29 @@ function sourceSummaryAuthority(snapshot: SourceAuthoritySnapshot): SourceSummar
   };
 }
 
-/**
- * The handler for the local review write route.
- *
- * It reads the findings and campaign authorities FRESH on every call rather
- * than reusing a cached snapshot. That is deliberate: the binding must be the
- * one that holds NOW, so a dossier regenerated between render and click makes
- * the submitted identity stop matching and the write is refused. A cached
- * snapshot would let a decision bind to a state that no longer exists.
- *
- * The request is untrusted input from the browser. Nothing is read from it
- * except the four declared fields, and every one of them is validated by the
- * authority before anything is written.
- */
-export function createReviewDecisionHandler(options: {
-  readonly reviewAuthority: ControlCenterReviewAuthority;
-  readonly findingsAuthority?: FindingsAuthority;
-  readonly campaignAuthority?: CampaignAuthority;
-  readonly sourceAuthority?: SourceAuthority;
-}): (request: unknown) => ControlCenterReviewDecisionResponse {
-  const sourceAuthority = options.sourceAuthority ?? createSourceAuthority();
-  const campaignAuthority = options.campaignAuthority ?? createCampaignAuthority({ sourceAuthority });
-  const findingsAuthority = options.findingsAuthority ?? createFindingsAuthority();
-
-  return (request: unknown): ControlCenterReviewDecisionResponse => {
-    const body = request !== null && typeof request === 'object' && !Array.isArray(request)
-      ? (request as Record<string, unknown>)
-      : {};
-    const findings = findingsAuthority.snapshot();
-    const campaign = campaignAuthority.snapshot();
-    const outcome = options.reviewAuthority.decide(
-      {
-        findingId: typeof body.findingId === 'string' ? body.findingId : '',
-        reviewIdentity: typeof body.reviewIdentity === 'string' ? body.reviewIdentity : '',
-        decision: typeof body.decision === 'string' ? body.decision : '',
-        ...(typeof body.rationale === 'string' ? { rationale: body.rationale } : {}),
-        ...(typeof body.reasonCode === 'string' ? { reasonCode: body.reasonCode } : {}),
-      },
-      { dossiers: findings.dossiers, campaignId: campaign.generation }
-    );
-    return {
-      schemaVersion: 'nightwatch.control-center.review-decision.v1',
-      result: outcome.result,
-      reviewIdentity: outcome.reviewIdentity,
-      organizationalAuthority: 'NONE_LOCAL_REVIEW_ONLY',
-    };
-  };
+/** The read surface and, when a review authority is configured, the write one. */
+export interface ControlCenterServices {
+  readonly collector: ControlCenterCollector;
+  /** null when no review authority was supplied; the route then does not exist. */
+  readonly reviewDecision: ((request: unknown) => Promise<ControlCenterReviewDecisionResponse>) | null;
 }
 
-export function createDefaultControlCenterCollector(options: DefaultControlCenterCollectorOptions = {}): ControlCenterCollector {
+/**
+ * The collector and the review write handler, built together.
+ *
+ * Together on purpose. Both need the campaign identity that a review binding
+ * is derived from, and they must obtain it the SAME way. Reading it
+ * separately is not a style question: the reviewer path takes the campaign
+ * snapshot through validation with a fallback to an unavailable snapshot,
+ * so a raw read in the write path can produce a different campaign id for
+ * the very same state — and every write would then be refused as
+ * BINDING_MISMATCH, with the surface offering no way to tell that the
+ * refusal came from the server disagreeing with itself.
+ *
+ * That defect was real, and it was found by the browser workflow rather than
+ * by any unit test, because both halves were individually correct.
+ */
+export function createControlCenterServices(options: DefaultControlCenterCollectorOptions = {}): ControlCenterServices {
   const runReader = options.runReader ?? createRunEvidenceReader();
   const sourceAuthority = options.sourceAuthority ?? createSourceAuthority();
   const campaignAuthority = options.campaignAuthority ?? createCampaignAuthority({ sourceAuthority });
@@ -366,7 +340,7 @@ export function createDefaultControlCenterCollector(options: DefaultControlCente
     return result.value;
   };
 
-  return {
+  const collector: ControlCenterCollector = {
     health,
     meta: () => projectMeta(),
     readiness: () => projectReadiness(summarizeLocalReadiness(collectLocalReadinessInputFromRepo())),
@@ -465,4 +439,43 @@ export function createDefaultControlCenterCollector(options: DefaultControlCente
       );
     },
   };
+
+  /**
+   * The review write handler, over the SAME snapshot seam as the reviewer
+   * read above. The snapshot is read fresh for each decision, so a dossier
+   * regenerated between render and click makes the submitted identity stop
+   * matching and the write is refused — which is the intended refusal,
+   * unlike the one the shared seam removes.
+   */
+  const reviewDecision = reviewAuthority === null
+    ? null
+    : async (request: unknown): Promise<ControlCenterReviewDecisionResponse> => {
+        const body = request !== null && typeof request === 'object' && !Array.isArray(request)
+          ? (request as Record<string, unknown>)
+          : {};
+        const { findings, campaign } = await readAuthoritySnapshot();
+        const outcome = reviewAuthority.decide(
+          {
+            findingId: typeof body.findingId === 'string' ? body.findingId : '',
+            reviewIdentity: typeof body.reviewIdentity === 'string' ? body.reviewIdentity : '',
+            decision: typeof body.decision === 'string' ? body.decision : '',
+            ...(typeof body.rationale === 'string' ? { rationale: body.rationale } : {}),
+            ...(typeof body.reasonCode === 'string' ? { reasonCode: body.reasonCode } : {}),
+          },
+          { dossiers: findings.dossiers, campaignId: campaign.generation }
+        );
+        return {
+          schemaVersion: 'nightwatch.control-center.review-decision.v1',
+          result: outcome.result,
+          reviewIdentity: outcome.reviewIdentity,
+          organizationalAuthority: 'NONE_LOCAL_REVIEW_ONLY',
+        };
+      };
+
+  return { collector, reviewDecision };
+}
+
+/** Backwards-compatible accessor for callers that need only the read surface. */
+export function createDefaultControlCenterCollector(options: DefaultControlCenterCollectorOptions = {}): ControlCenterCollector {
+  return createControlCenterServices(options).collector;
 }

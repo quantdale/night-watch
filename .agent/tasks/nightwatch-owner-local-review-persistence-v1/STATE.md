@@ -37,7 +37,7 @@ C-12 contact.
 
 ## Current Milestone
 
-M7 — browser and restart proof.
+M8 — documentation and certification.
 
 ## Completed Milestones
 
@@ -128,6 +128,19 @@ M7 — browser and restart proof.
   1k/5k/10k against 0/10/50/100% reviewed stores, one fresh OS process per
   cell. The FIRST run found a real defect and the fix is the milestone's
   main product — see `## Measured persistence scale envelope (M6)`.
+- M7: browser and restart. `tests/browser/reviewPersistence.browser.ts`
+  drives the built UI over the real loopback server: open reviewer, see
+  an honest absence, submit a decision, confirm it reached the owner-local
+  store, reload, navigate away and back, RESTART the server over the same
+  store, then regenerate the artifact and watch the decision go visibly
+  STALE without being deleted — followed by a second generation that
+  leaves the first intact. Plus 30 consecutive decisions over 30 distinct
+  findings, each re-read from the server after a reload, with the store
+  asserted to grow by exactly one per pass. Every request is asserted to
+  stay on 127.0.0.1 and the page is asserted never to render
+  LESLIE_GENUINE or PONDR_APPROVED.
+  This milestone found the campaign's most serious defect — see
+  `## Discoveries`.
 
 ## Work In Progress
 
@@ -162,8 +175,10 @@ None.
 
 ## Exact Next Action
 
-Execute M7: run the reviewer persistence browser workflow to >= 30 passes,
-and prove server A/B/C restart and stale behaviour end to end.
+Execute M8: reconcile durable documentation and OpenSpec, write the
+campaign REPORT, then run the certification set — full regression twice on
+the committed tree, `gate:local`, and `gate:clean` with a proven fresh
+install.
 
 ## Files Changed
 
@@ -208,6 +223,9 @@ and prove server A/B/C restart and stale behaviour end to end.
   (before and after the fix); `npm run mutation:review` PASS after adding
   the two guards the fix introduced — 33 introduced, 31 detected, 2
   survived (both declared), restore drift NONE.
+- M7: `typecheck` PASS; `control-center:ui:browser` 4/4 PASS (the two new
+  persistence workflows plus the two pre-existing browser suites), with
+  30/30 endurance passes.
   ONE unattributed one-off: an earlier full-suite run in this milestone
   reported `1 failed` without the failing test being captured. It did not
   reproduce in the two subsequent identical full runs, and the five new
@@ -238,6 +256,29 @@ and prove server A/B/C restart and stale behaviour end to end.
 ## Discoveries
 
 Recorded above and in the OpenSpec audit.
+
+From M7, the defect the whole campaign most needed to find, and which no
+unit test could have found:
+
+- `createReviewDecisionHandler` read the campaign snapshot RAW, while the
+  reviewer read path takes it through validation with a fallback to an
+  unavailable snapshot. Both halves were individually correct. Together
+  they could derive a DIFFERENT campaign id for the very same state — and
+  since the campaign id is part of the review binding, every write would
+  then be refused as `BINDING_MISMATCH`, with the surface offering the
+  reviewer no way to tell that the refusal came from the server
+  disagreeing with itself. The browser workflow hit it on its first run.
+  The fix is `createControlCenterServices`, which builds the collector and
+  the write handler over ONE snapshot seam; deriving the binding context
+  twice is now structurally impossible rather than merely discouraged.
+
+From M6, a second one of the same family:
+
+- A listing decides which files a read opens, and nothing checked that
+  what was found BELONGED to the finding asked for. A wrong or forged
+  listing could surface another finding's perfectly valid review under
+  this finding's name. `read()` now refuses that. The listing was one line
+  away from being an authority.
 
 From M4, the mutation harness earned its place twice before it was even
 finished:
