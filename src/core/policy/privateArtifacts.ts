@@ -16,7 +16,27 @@ import { containsPrivatePayloadShape } from './privateScreening';
 
 export const PRIVATE_ARTIFACT_POLICY_VERSION = 'nightwatch.private-artifact-policy.v1' as const;
 export const PRIVATE_ARTIFACT_ROOT_ENV = 'NIGHTWATCH_PRIVATE_STATE_DIR' as const;
+export const REVIEW_STORE_ROOT_ENV = 'NIGHTWATCH_REVIEW_STORE_DIR' as const;
 export const PRIVATE_ARTIFACT_DEFAULT_RELATIVE_ROOT = path.join('.nightwatch', 'findings');
+
+/**
+ * The CLOSED set of owner-local private subtrees. A caller names a subtree,
+ * never a path, so no caller can derive an arbitrary location: the root is
+ * chosen from this table and then held to the same absolute / symlink-free /
+ * owner-only / outside-the-repository contract as the findings root.
+ */
+export const PRIVATE_ARTIFACT_SUBTREES = ['findings', 'reviews'] as const;
+export type PrivateArtifactSubtree = (typeof PRIVATE_ARTIFACT_SUBTREES)[number];
+
+const SUBTREE_ROOT_ENV: Readonly<Record<PrivateArtifactSubtree, string>> = Object.freeze({
+  findings: PRIVATE_ARTIFACT_ROOT_ENV,
+  reviews: REVIEW_STORE_ROOT_ENV,
+});
+
+const SUBTREE_RELATIVE_ROOT: Readonly<Record<PrivateArtifactSubtree, string>> = Object.freeze({
+  findings: PRIVATE_ARTIFACT_DEFAULT_RELATIVE_ROOT,
+  reviews: path.join('.nightwatch', 'reviews'),
+});
 
 export type PrivateArtifactStatus = 'INCOMPLETE' | 'READY';
 
@@ -45,13 +65,31 @@ export interface PrivateArtifactPolicyRecord {
 
 const FILE_NAME_RE = /^[A-Za-z0-9][A-Za-z0-9._-]{0,160}\.json$/;
 
+/**
+ * The publish temporary's name shape, pinned once. `temporaryPayload` builds
+ * names to match it and the recovery scan recognizes only names that match
+ * it, so an interrupted publish leaves an identifiable artifact and recovery
+ * can never touch a file it did not create.
+ */
+export const PRIVATE_ARTIFACT_TEMPORARY_PREFIX = '.nightwatch-' as const;
+const TEMPORARY_FILE_RE = /^\.nightwatch-\d{1,10}-[0-9a-f]{32}\.tmp$/;
+
 const REPOSITORY_ROOT = path.resolve(__dirname, '..', '..', '..');
 const WORKSPACE_ROOT = path.resolve(REPOSITORY_ROOT, '..');
 
-function defaultRoot(): string {
-  const configured = process.env[PRIVATE_ARTIFACT_ROOT_ENV];
+function assertKnownSubtree(subtree: PrivateArtifactSubtree): PrivateArtifactSubtree {
+  // Runtime guard as well as a type: the union is the whole path-safety
+  // argument, so an untyped caller must not be able to slip past it.
+  if (!(PRIVATE_ARTIFACT_SUBTREES as readonly string[]).includes(subtree)) {
+    throw new Error('PRIVATE_ARTIFACT_SUBTREE_UNKNOWN');
+  }
+  return subtree;
+}
+
+function defaultRoot(subtree: PrivateArtifactSubtree = 'findings'): string {
+  const configured = process.env[SUBTREE_ROOT_ENV[assertKnownSubtree(subtree)]];
   return configured === undefined || configured.trim() === ''
-    ? path.join(os.homedir(), PRIVATE_ARTIFACT_DEFAULT_RELATIVE_ROOT)
+    ? path.join(os.homedir(), SUBTREE_RELATIVE_ROOT[subtree])
     : configured;
 }
 
@@ -117,8 +155,11 @@ function assertPrivatePayload(value: unknown): void {
   }
 }
 
-export function privateArtifactRoot(injectedRoot?: string): string {
-  const root = ensureAbsolute(injectedRoot ?? defaultRoot());
+export function privateArtifactRoot(injectedRoot?: string, subtree: PrivateArtifactSubtree = 'findings'): string {
+  assertKnownSubtree(subtree);
+  const root = ensureAbsolute(injectedRoot ?? defaultRoot(subtree));
+  // A DERIVED root is still held to the outside-the-repository contract; only
+  // an explicitly injected test root is exempt, and it is labelled as such.
   if (injectedRoot === undefined) assertOutsideCanonicalWorkspace(root);
   return root;
 }
@@ -139,8 +180,8 @@ export class PrivateArtifactStore {
   readonly policy: PrivateArtifactPolicyRecord;
   readonly readOnly: boolean;
 
-  constructor(options: { root?: string; remotePrivacy?: PrivateArtifactPolicyRecord['remotePrivacy']; createIfMissing?: boolean } = {}) {
-    this.root = privateArtifactRoot(options.root);
+  constructor(options: { root?: string; subtree?: PrivateArtifactSubtree; remotePrivacy?: PrivateArtifactPolicyRecord['remotePrivacy']; createIfMissing?: boolean } = {}) {
+    this.root = privateArtifactRoot(options.root, options.subtree ?? 'findings');
     this.readOnly = options.createIfMissing === false;
     if (!this.readOnly) ensureOwnerDirectory(this.root);
     this.policy = privateArtifactPolicyRecord(options.remotePrivacy ?? 'NO_REMOTE', options.root);
@@ -151,7 +192,7 @@ export class PrivateArtifactStore {
     // process randomness.  `wx` remains the actual collision primitive; the
     // random component prevents separate store instances in one process from
     // colliding merely because their local counters start at zero.
-    const temporary = path.join(this.root, `.nightwatch-${process.pid}-${randomBytes(16).toString('hex')}.tmp`);
+    const temporary = path.join(this.root, `${PRIVATE_ARTIFACT_TEMPORARY_PREFIX}${process.pid}-${randomBytes(16).toString('hex')}.tmp`);
     let descriptor: number | undefined;
     try {
       descriptor = fs.openSync(temporary, 'wx', 0o600);
@@ -309,6 +350,55 @@ export class PrivateArtifactStore {
       throw error;
     }
     return destination;
+  }
+
+  /**
+   * Owner-only listing of this store's published JSON artifacts, optionally
+   * narrowed to a name prefix. It returns only names this store would also
+   * agree to read, so a listing can never widen what a caller can open.
+   */
+  listJson(namePrefix?: string): readonly string[] {
+    if (!fs.existsSync(this.root)) return [];
+    assertNoSymlinkComponents(this.root, 'PRIVATE_ARTIFACT_ROOT_SYMLINK');
+    const prefix = namePrefix ?? '';
+    const names: string[] = [];
+    for (const entry of fs.readdirSync(this.root, { withFileTypes: true })) {
+      if (!entry.isFile()) continue;
+      if (!FILE_NAME_RE.test(entry.name) || entry.name.includes('..')) continue;
+      if (!entry.name.startsWith(prefix)) continue;
+      names.push(entry.name);
+    }
+    return names.sort((left, right) => left.localeCompare(right));
+  }
+
+  /**
+   * Temporaries left behind by an interrupted publish. Recognized ONLY by the
+   * pinned name shape: an unknown file in the root is never reported and can
+   * therefore never be removed by recovery.
+   */
+  listTemporaries(): readonly string[] {
+    if (!fs.existsSync(this.root)) return [];
+    assertNoSymlinkComponents(this.root, 'PRIVATE_ARTIFACT_ROOT_SYMLINK');
+    const names: string[] = [];
+    for (const entry of fs.readdirSync(this.root, { withFileTypes: true })) {
+      if (entry.isFile() && TEMPORARY_FILE_RE.test(entry.name)) names.push(entry.name);
+    }
+    return names.sort((left, right) => left.localeCompare(right));
+  }
+
+  /**
+   * Remove ONE interrupted-publish temporary. Any name that is not a store
+   * temporary is refused, so this can never become a general delete.
+   */
+  removeTemporary(name: string): void {
+    if (this.readOnly) throw new Error('PRIVATE_ARTIFACT_READ_ONLY');
+    if (!TEMPORARY_FILE_RE.test(name)) throw new Error('PRIVATE_ARTIFACT_NOT_A_TEMPORARY');
+    const target = path.join(this.root, name);
+    assertNoSymlinkComponents(target, 'PRIVATE_ARTIFACT_PATH_SYMLINK');
+    const stat = fs.lstatSync(target);
+    if (stat.isSymbolicLink() || !stat.isFile()) throw new Error('PRIVATE_ARTIFACT_DESTINATION_UNSAFE');
+    assertOwnerOnly(stat, 'PRIVATE_ARTIFACT_DESTINATION');
+    fs.unlinkSync(target);
   }
 
   /** Always throws; external publication is not a Nightwatch capability. */

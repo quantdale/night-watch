@@ -171,25 +171,36 @@ export interface CurrentReviewArtifacts {
  * regenerated dossier/handoff/finding, rebased source, moved campaign,
  * re-versioned projection) fails closed with FINDING_REVIEW_STALE.
  */
-export function verifyReviewCurrent(receipt: FindingReviewReceipt, current: CurrentReviewArtifacts): void {
+/**
+ * Receipt self-consistency ONLY: shape, authority, decision/state agreement,
+ * a valid binding, and the recomputed receipt identity. It makes no
+ * currentness claim, so a durable store can check receipt integrity without a
+ * second copy of the identity formula and without needing the current
+ * artifacts in hand.
+ *
+ * `verifyReviewCurrent` calls this first, so integrity failures are reported
+ * as tampering rather than being masked as staleness when both are true.
+ */
+export function verifyReceiptIntegrity(receipt: FindingReviewReceipt): FindingReviewBinding {
   if (receipt.schemaVersion !== FINDING_REVIEW_RECEIPT_VERSION) fail('FINDING_REVIEW_VERSION_MISMATCH');
   if (!DECISION_SET.has(receipt.decision)) fail('FINDING_REVIEW_INVALID_DECISION');
   if (!STATE_SET.has(receipt.resultingState)) fail('FINDING_REVIEW_INVALID_STATE');
   if (DECISION_TARGET[receipt.decision] !== receipt.resultingState) fail('FINDING_REVIEW_DECISION_STATE_MISMATCH');
   if (receipt.organizationalAuthority !== 'NONE_LOCAL_REVIEW_ONLY') fail('FINDING_REVIEW_AUTHORITY_INVALID');
-  const binding = validateReviewBinding(receipt.binding);
-  if (findingArtifactDigest(current.finding) !== binding.findingDigest) fail('FINDING_REVIEW_STALE:findingDigest');
-  if (findingArtifactDigest(current.dossier) !== binding.dossierDigest) fail('FINDING_REVIEW_STALE:dossierDigest');
-  if (binding.handoffDigest === null) {
-    if (current.handoff !== null && current.handoff !== undefined) fail('FINDING_REVIEW_STALE:handoffUnexpected');
-  } else {
-    if (current.handoff === null || current.handoff === undefined) fail('FINDING_REVIEW_STALE:handoffMissing');
-    if (findingArtifactDigest(current.handoff) !== binding.handoffDigest) fail('FINDING_REVIEW_STALE:handoffDigest');
+  if (
+    !Array.isArray(receipt.notEquivalentTo) ||
+    receipt.notEquivalentTo.length !== 3 ||
+    receipt.notEquivalentTo[0] !== 'LESLIE_GENUINE' ||
+    receipt.notEquivalentTo[1] !== 'LESLIE_INVALID' ||
+    receipt.notEquivalentTo[2] !== 'PONDR_APPROVED'
+  ) {
+    fail('FINDING_REVIEW_AUTHORITY_INVALID');
   }
-  if (current.sourceSha !== binding.sourceSha) fail('FINDING_REVIEW_STALE:sourceSha');
-  if (current.campaignId !== binding.campaignId) fail('FINDING_REVIEW_STALE:campaignId');
-  if (current.handoffVersion !== binding.handoffVersion) fail('FINDING_REVIEW_STALE:handoffVersion');
-  if (current.privacyProjectionVersion !== binding.privacyProjectionVersion) fail('FINDING_REVIEW_STALE:privacyProjectionVersion');
+  const binding = validateReviewBinding(receipt.binding);
+  if (typeof receipt.reviewedAt !== 'string' || !INSTANT_RE.test(receipt.reviewedAt)) fail('FINDING_REVIEW_INVALID_INSTANT');
+  if (typeof receipt.rationale !== 'string' || receipt.rationale.length > RATIONALE_MAX || SENTINEL_RE.test(receipt.rationale)) {
+    fail('FINDING_REVIEW_INVALID_RATIONALE');
+  }
   const recomputed = `review:${sha256Hex(
     stableJsonSorted({
       schemaVersion: receipt.schemaVersion,
@@ -203,4 +214,22 @@ export function verifyReviewCurrent(receipt: FindingReviewReceipt, current: Curr
     }),
   ).slice(0, 24)}`;
   if (recomputed !== receipt.reviewId) fail('FINDING_REVIEW_RECEIPT_TAMPERED');
+  return binding;
+}
+
+export function verifyReviewCurrent(receipt: FindingReviewReceipt, current: CurrentReviewArtifacts): void {
+  const binding = verifyReceiptIntegrity(receipt);
+  if (findingArtifactDigest(current.finding) !== binding.findingDigest) fail('FINDING_REVIEW_STALE:findingDigest');
+  if (findingArtifactDigest(current.dossier) !== binding.dossierDigest) fail('FINDING_REVIEW_STALE:dossierDigest');
+  if (binding.handoffDigest === null) {
+    if (current.handoff !== null && current.handoff !== undefined) fail('FINDING_REVIEW_STALE:handoffUnexpected');
+  } else {
+    if (current.handoff === null || current.handoff === undefined) fail('FINDING_REVIEW_STALE:handoffMissing');
+    if (findingArtifactDigest(current.handoff) !== binding.handoffDigest) fail('FINDING_REVIEW_STALE:handoffDigest');
+  }
+  if (current.sourceSha !== binding.sourceSha) fail('FINDING_REVIEW_STALE:sourceSha');
+  if (current.campaignId !== binding.campaignId) fail('FINDING_REVIEW_STALE:campaignId');
+  if (current.handoffVersion !== binding.handoffVersion) fail('FINDING_REVIEW_STALE:handoffVersion');
+  if (current.privacyProjectionVersion !== binding.privacyProjectionVersion) fail('FINDING_REVIEW_STALE:privacyProjectionVersion');
+  // Receipt identity was already recomputed by verifyReceiptIntegrity above.
 }

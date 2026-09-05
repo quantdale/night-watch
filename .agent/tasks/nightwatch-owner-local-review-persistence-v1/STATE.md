@@ -37,7 +37,7 @@ C-12 contact.
 
 ## Current Milestone
 
-M1 — review store core.
+M2 — dossier identity propagation.
 
 ## Completed Milestones
 
@@ -53,6 +53,19 @@ M1 — review store core.
   `bin/agent-continuity-protocol.mjs` add the structural rule; it fires
   only in the asymmetric direction that can be false and, run against all
   127 task directories, produced exactly one hit: the real defect.
+- M1: review store core. `privateArtifacts` gained the CLOSED `subtree`
+  union (`findings` | `reviews`) so a derived root is chosen from a table
+  rather than from a caller-supplied path, is held to the same
+  absolute / symlink-free / owner-only / outside-the-repository contract,
+  and reports `rootClass: OUTSIDE_REPOSITORY` truthfully; plus
+  `listJson` / `listTemporaries` / `removeTemporary`, where recovery
+  recognizes only the publisher's pinned temporary name shape so an
+  unknown file is structurally unreportable and unremovable.
+  `verifyReceiptIntegrity` was extracted from `verifyReviewCurrent` so the
+  store validates receipt identity through the canonical formula rather
+  than a second copy, and so tampering is reported as tampering even when
+  the receipt is also stale. `src/core/reviewStore/` adds only schema,
+  identity and read policy over `writeImmutableJson`.
 
 ## Work In Progress
 
@@ -87,9 +100,10 @@ None.
 
 ## Exact Next Action
 
-Execute M1: add the closed `subtree` option and truthful derived-root class
-to `privateArtifacts`, then build `src/core/reviewStore/` (types, identity,
-store) over `writeImmutableJson`, with its focused suite.
+Execute M2: carry `expectationId` and `semanticContractId` from
+`SemanticTriageEvidence` through `FindingsDossierMetadata` and
+`descriptorFor`, then measure the classification effect on a permanent
+synthetic corpus and add the false-positive defence.
 
 ## Files Changed
 
@@ -105,6 +119,11 @@ store) over `writeImmutableJson`, with its focused suite.
   the repair the same rule reported
   `SAFETY_EVENT_ACCOUNTING_CONTRADICTION` at
   `.agent/tasks/nightwatch-reviewer-surface-and-intel-scale-v1/REPORT.md:23`.
+- M1: `typecheck` PASS; `hardening:check` PASS;
+  `tests/unit/reviewStore.test.ts` 54/54 PASS;
+  `privateArtifactAtomic` + `findingReviewLifecycle` + `privateTriage` +
+  `reviewerProjection` 67/67 PASS (no regression from the
+  `verifyReceiptIntegrity` extraction).
 
 ## Decisions Made During This Task
 
@@ -128,7 +147,21 @@ store) over `writeImmutableJson`, with its focused suite.
 
 ## Discoveries
 
-Recorded above and in the OpenSpec audit.
+Recorded above and in the OpenSpec audit. Two from M1 worth carrying:
+
+- The pre-publish validation earned its place immediately: the store
+  validates the exact bytes it is about to write, in the shape the reader
+  will see, and that caught a wrong key ordering in the envelope-key
+  constant before any file was created. A store that can write what it
+  cannot read back has no corruption semantics.
+- `../../escape` is a VALID finding id — the lifecycle's id vocabulary
+  permits dots and slashes — and it still cannot traverse, because the id
+  never reaches the filesystem as a path: the discovery key is a digest, so
+  every file name the store produces is hex. Narrowing the id vocabulary
+  here would have been a change to review semantics this cone does not own.
+  The test now asserts that stronger property, and a companion test proves
+  the underlying publisher would refuse a hand-built traversal name anyway,
+  so the safety does not rest on the digest alone.
 
 ## Safety Events
 

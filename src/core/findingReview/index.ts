@@ -19,6 +19,7 @@ export {
   initialReviewRecord,
   isTerminalReviewState,
   validateReviewBinding,
+  verifyReceiptIntegrity,
   verifyReviewCurrent,
   type CurrentReviewArtifacts,
 } from './lifecycle';
