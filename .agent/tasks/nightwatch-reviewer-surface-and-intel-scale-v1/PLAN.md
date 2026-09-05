@@ -128,6 +128,8 @@ regression, and `gate:clean` on a fresh `npm ci`.
 - The routing block drifted because campaign-open commits rewrite the
   identity fields and leave the prose. This is invisible to review by
   inspection, exactly like DEF-FC-02's dead hardening rules.
+- `project-state-check` and `planner-handoff-check` both spawn
+  `bin/agent-state.mjs`, so a continuity rule lands in three suites at once.
 - The `campaignTaskPattern` in `config/campaign-certification.v1.json` is
   `-(c|r)[0-9]+[a-z]*-v[0-9]+$`, so named campaigns like FC-1 and this one are
   exempt from suite-registration totality. Their regressions therefore run in

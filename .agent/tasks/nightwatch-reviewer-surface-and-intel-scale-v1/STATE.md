@@ -109,6 +109,8 @@ every projected element.
 | `bin/agent-state.d.mts` | declaration for the new export | Modified |
 | `tests/unit/activeTaskRoutingBinding.test.ts` | DEF-FC-04 regression, bound to real history | Added |
 | `tests/unit/agent-state.test.ts` | fixture routing block + 4 end-to-end invocation probes | Modified |
+| `tests/unit/projectState.test.ts` | fixture routing block | Modified |
+| `tests/unit/plannerHandoff.test.ts` | fixture routing block | Modified |
 | `docs/CURRENT_STATE.md` | live-state rebind to this campaign | Modified |
 | `.agent/EXECUTION_PROMPT.md` | campaign handoff | Modified |
 | `.agent/tasks/nightwatch-reviewer-surface-and-intel-scale-v1/**` | campaign records | Added |
@@ -128,6 +130,9 @@ every projected element.
 | `inspectActiveTaskRouting` vs `48c0a60`, `0c5cb42`, `868761d` | all fail closed (CAMPAIGN_MISSING + SESSION_WORKTREE_MISSING) |
 | `npx playwright test tests/unit/activeTaskRoutingBinding.test.ts` | 7 passed |
 | `npx playwright test tests/unit/agent-state.test.ts` | 118 passed (114 pre-existing + 4 new invocation probes) |
+| `npx playwright test tests/unit/projectState.test.ts` | 64 passed |
+| `npx playwright test tests/unit/plannerHandoff.test.ts` | 12 passed |
+| `npm run test:semantic-compat` | 2037 / 2024 passed / 13 skipped / 0 failed — PASS (FC-1 baseline 2033/2020/13/0) |
 | `npm run typecheck` | clean |
 | `npm run hardening:check` | PASS |
 | `npm run agent:check` (repaired document) | PASS + 2 known warnings |
@@ -145,6 +150,11 @@ every projected element.
 
 ## Discoveries
 
+- `bin/project-state-check.mjs` and `bin/planner-handoff-check.mjs` both run
+  `bin/agent-state.mjs` as a subprocess, so one new continuity rule reaches
+  three suites, not one: `agent-state.test.ts` (65 failures), then
+  `projectState.test.ts` and `plannerHandoff.test.ts` (26). The blast radius of
+  an `agent:check` addition is wider than the file it lives in.
 - `project:check` requires `.agent/EXECUTION_PROMPT.md` `Status` and
   `Campaign ID` to match the active task, so the `READY_FOR_EXECUTION`
   planning-only checkpoint described in `.agent/PLANNER_HANDOFF.md` would

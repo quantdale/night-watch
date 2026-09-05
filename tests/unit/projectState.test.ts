@@ -119,6 +119,13 @@ Next action: STOP
 PROJECT_VERDICT_EFFECT: PRESERVE
 ${phaseKey}: COMPLETE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
+
+## Routing and safety
+
+\`\`\`
+CAMPAIGN: ${taskId}
+SESSION WORKTREE: main
+\`\`\`
 `;
   const plan = `# Synthetic plan
 

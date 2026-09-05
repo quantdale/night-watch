@@ -135,6 +135,13 @@ Next action: ${activeNextAction}
 Authorization class: SYNTHETIC_HANDOFF_TEST
 ${phaseStatus}
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
+
+## Routing and safety
+
+\`\`\`
+CAMPAIGN: ${taskId}
+SESSION WORKTREE: main
+\`\`\`
 `;
   const plan = `# Synthetic plan
 
