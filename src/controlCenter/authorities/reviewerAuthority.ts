@@ -34,7 +34,7 @@ import {
   type RelationshipResult,
 } from '../../core/findingIntel';
 import type { FindingsDossierMetadata } from './findingsAuthority';
-import type { ReviewerFindingInput, ReviewerProjectionInput } from '../adapters/reviewerAdapter';
+import type { ReviewerFindingInput, ReviewerLocalReviewInput, ReviewerProjectionInput } from '../adapters/reviewerAdapter';
 import { safePublicId } from '../adapters/common';
 
 /** Pinned duplicates of ALPHAUS_SEVERITY_VALUES / _CATCH_STAGE_ / _SOURCE_. */
@@ -89,6 +89,19 @@ export interface ReviewerAuthorityInput {
    * computed for those and no others — see `reviewerInputsFromFindings`.
    */
   readonly limit?: number;
+  /**
+   * Persisted local review state for ONE finding, or null when the caller has
+   * no review store.
+   *
+   * A function rather than a map, and invoked ONLY for the findings actually
+   * on the page: that is what keeps the read path page-bounded. Passing a
+   * prebuilt map would force the caller to look up the whole corpus to
+   * render fifty rows — the exact cost the page-scoping optimization removed.
+   *
+   * It is also what keeps this module pure. The store has filesystem
+   * authority; this authority calls a function it was handed and has none.
+   */
+  readonly localReviewLookup?: (dossier: FindingsDossierMetadata) => ReviewerLocalReviewInput | null;
 }
 
 function descriptorFor(dossier: FindingsDossierMetadata): IntelFindingDescriptor | null {
@@ -177,6 +190,7 @@ export function reviewerInputsFromFindings(input: ReviewerAuthorityInput): Revie
   const pairwiseLimit = typeof input.pairwiseLimit === 'number' && input.pairwiseLimit >= 0 ? input.pairwiseLimit : 2500;
   const limit = typeof input.limit === 'number' && Number.isSafeInteger(input.limit) && input.limit > 0 ? input.limit : Number.MAX_SAFE_INTEGER;
   const campaignId = typeof input.campaignId === 'string' && ID_RE.test(input.campaignId) ? input.campaignId : null;
+  const lookupLocalReview = typeof input.localReviewLookup === 'function' ? input.localReviewLookup : null;
 
   const entries = dossiers
     .map((dossier) => ({ dossier, descriptor: descriptorFor(dossier), at: observedAtMs(dossier.firstObserved) }))
@@ -262,7 +276,11 @@ export function reviewerInputsFromFindings(input: ReviewerAuthorityInput): Revie
     if (best === null && !pairwise) unknowns.push('RELATIONSHIP_NOT_ANALYSED_ABOVE_PAIRWISE_LIMIT');
     if (entry.descriptor.fingerprint === null) unknowns.push('NO_EXECUTABLE_FINGERPRINT');
     if (classByMember.get(entry.descriptor.findingId) === undefined) unknowns.push('NO_DEFECT_CLASS_IDENTIFIED');
-    unknowns.push('NO_LOCAL_REVIEW_STORE');
+    // Looked up for THIS row only — see `localReviewLookup`.
+    const localReview = lookupLocalReview === null ? null : lookupLocalReview(entry.dossier);
+    if (lookupLocalReview === null) unknowns.push('NO_LOCAL_REVIEW_STORE');
+    else if (localReview === null) unknowns.push('NO_LOCAL_REVIEW');
+    else if (localReview.bindingCurrentness === 'STALE') unknowns.push('LOCAL_REVIEW_STALE');
 
     return {
       findingId: entry.descriptor.findingId,
@@ -288,7 +306,7 @@ export function reviewerInputsFromFindings(input: ReviewerAuthorityInput): Revie
         team: 'UNKNOWN',
         teamEvidence: null,
       },
-      localReview: null,
+      localReview,
       unknowns,
     };
   }

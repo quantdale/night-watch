@@ -131,6 +131,10 @@ export function reviewerCorpus(size: number, options: { readonly newestFirstIds?
       semanticFinding: family !== 'NO_IDENTITY',
       expectationId,
       semanticContractId,
+      // Stands in for the digest of the whole dossier file. It varies with
+      // the row, so a corpus finding behaves like a real one for binding and
+      // staleness purposes.
+      contentDigest: `cc-dossier-content:sha256:${(noise >>> 0).toString(16).padStart(6, '0').repeat(4)}`,
       family,
     } as unknown as CorpusFinding;
   });

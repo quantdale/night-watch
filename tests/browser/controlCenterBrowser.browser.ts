@@ -224,6 +224,7 @@ function findingsSnapshot(): FindingsAuthoritySnapshot {
     semanticFinding: true,
     expectationId: 'fixture.synthetic-read.real-source-deep',
     semanticContractId: 'inv:sha256:aaaaaaaaaaaaaaaaaaaaaaaa',
+    contentDigest: `cc-dossier-content:sha256:${'7'.repeat(24)}`,
   };
   const staleDossier: FindingsDossierMetadata = {
     ...dossier,

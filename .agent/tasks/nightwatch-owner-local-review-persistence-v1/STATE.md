@@ -139,6 +139,10 @@ reviewer projection, and connect the reviewer UI.
   `tests/unit/dossierIdentityPropagation.test.ts` 24/24 PASS;
   `controlCenterFindingsAuthority` + `reviewerProjection` + `findingIntel`
   + `reviewStore` 105/105 PASS.
+- M3 (backend): `typecheck` PASS; `hardening:check` PASS;
+  `tests/unit/reviewerPersistence.test.ts` 30/30 PASS;
+  FULL unit regression 4017 passed / 0 failed / 13 skipped
+  (the same 13 skips the predecessor recorded).
 
 ## Decisions Made During This Task
 

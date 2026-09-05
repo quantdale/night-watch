@@ -41,7 +41,35 @@ export interface ControlCenterServerOptions {
   readonly port?: number;
   readonly uiRoot?: string;
   readonly maxSseClients?: number;
+  /**
+   * The owner-local review write handler.
+   *
+   * OPT-IN. Omitted — which is the default and every existing caller — the
+   * server stays exactly as read-only as it was: POST is refused for every
+   * path, and /api/v1/reviewer/decision is not found. A write surface that
+   * appeared merely because the code shipped would be a change to the
+   * safety posture of every deployment.
+   */
+  readonly reviewDecision?: (request: unknown) => ControlCenterReviewDecisionResponse | Promise<ControlCenterReviewDecisionResponse>;
 }
+
+/** The response body of the local review write route. */
+export interface ControlCenterReviewDecisionResponse {
+  readonly schemaVersion: 'nightwatch.control-center.review-decision.v1';
+  readonly result: string;
+  readonly reviewIdentity: string | null;
+  readonly organizationalAuthority: 'NONE_LOCAL_REVIEW_ONLY';
+}
+
+/** Bounded well below anything that could pressure memory. */
+const REVIEW_DECISION_MAX_BODY_BYTES = 8_192;
+
+/**
+ * A header no cross-origin form or navigation can set without a preflight
+ * the Origin check already governs. It is defence in depth behind the
+ * loopback host and Origin checks, not a replacement for either.
+ */
+const LOCAL_WRITE_HEADER = 'x-nightwatch-local-review';
 
 export class ControlCenterServerConfigurationError extends Error {
   readonly code = 'CONTROL_CENTER_BAD_REQUEST' as const;
@@ -194,6 +222,55 @@ function staticResponse(response: ServerResponse, result: ReturnType<ControlCent
   return sendError(response, 'CONTROL_CENTER_NOT_FOUND', headOnly);
 }
 
+/** True only for the exact write path, before any routing work is done. */
+function isReviewDecisionPath(rawUrl: string | undefined): boolean {
+  if (typeof rawUrl !== 'string') return false;
+  const pathname = rawUrl.split('?')[0] ?? '';
+  return pathname === '/api/v1/reviewer/decision';
+}
+
+/**
+ * Read a bounded JSON body.
+ *
+ * The limit is enforced on the bytes ACTUALLY received, not on the declared
+ * Content-Length, so a lying header buys nothing: the read is aborted the
+ * moment the cap is passed.
+ */
+async function readBoundedJsonBody(request: IncomingMessage): Promise<{ readonly value: unknown } | { readonly error: ControlCenterErrorCode }> {
+  const contentType = singleHeader(request.headers['content-type']);
+  if (contentType === null || !/^application\/json(?:\s*;.*)?$/i.test(contentType.trim())) {
+    request.resume();
+    return { error: 'CONTROL_CENTER_BAD_REQUEST' };
+  }
+  const declared = singleHeader(request.headers['content-length']);
+  if (declared !== null && (!/^\d+$/.test(declared) || Number(declared) > REVIEW_DECISION_MAX_BODY_BYTES)) {
+    request.resume();
+    return { error: 'CONTROL_CENTER_PAYLOAD_TOO_LARGE' };
+  }
+  const chunks: Buffer[] = [];
+  let total = 0;
+  try {
+    for await (const chunk of request) {
+      const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(String(chunk), 'utf8');
+      total += buffer.byteLength;
+      if (total > REVIEW_DECISION_MAX_BODY_BYTES) {
+        request.destroy();
+        return { error: 'CONTROL_CENTER_PAYLOAD_TOO_LARGE' };
+      }
+      chunks.push(buffer);
+    }
+  } catch {
+    return { error: 'CONTROL_CENTER_BAD_REQUEST' };
+  }
+  try {
+    const parsed: unknown = JSON.parse(Buffer.concat(chunks).toString('utf8'));
+    if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) return { error: 'CONTROL_CENTER_BAD_REQUEST' };
+    return { value: parsed };
+  } catch {
+    return { error: 'CONTROL_CENTER_BAD_REQUEST' };
+  }
+}
+
 async function dispatch(
   request: IncomingMessage,
   response: ServerResponse,
@@ -207,14 +284,23 @@ async function dispatch(
   const port = typeof address === 'object' && address !== null ? address.port : options.port ?? CONTROL_CENTER_DEFAULT_PORT;
   if (!validHost(request, port)) return sendError(response, 'CONTROL_CENTER_HOST_REJECTED', headOnly);
   if (!validOrigin(request, port)) return sendError(response, 'CONTROL_CENTER_ORIGIN_REJECTED', headOnly);
-  if (request.method !== 'GET' && request.method !== 'HEAD') {
+  // The write route is the ONLY reason a non-GET/HEAD request is read at all,
+  // and only when the server was constructed with a handler for it. Every
+  // other path keeps the original refusal, byte for byte.
+  const writeCandidate =
+    request.method === 'POST' &&
+    options.reviewDecision !== undefined &&
+    isReviewDecisionPath(request.url);
+  if (request.method !== 'GET' && request.method !== 'HEAD' && !writeCandidate) {
     response.setHeader('Allow', ALLOW_GET_HEAD);
     return sendError(response, 'CONTROL_CENTER_METHOD_NOT_ALLOWED', false);
   }
-  const bodyError = hasRequestBody(request);
-  if (bodyError !== null) {
-    request.resume();
-    return sendError(response, bodyError, headOnly);
+  if (!writeCandidate) {
+    const bodyError = hasRequestBody(request);
+    if (bodyError !== null) {
+      request.resume();
+      return sendError(response, bodyError, headOnly);
+    }
   }
   const url = requestUrl(request);
   if (url === null) return sendError(response, 'CONTROL_CENTER_PATH_REJECTED', headOnly);
@@ -235,6 +321,32 @@ async function dispatch(
     return staticResponse(response, assets.resolve(url.pathname), headOnly);
   }
   const route = pathResult.route;
+
+  // The local write route. Handled before the read switch, and it accepts
+  // POST and nothing else, so a GET to it is a 405 rather than an empty read.
+  if (route.kind === 'reviewerDecision') {
+    if (options.reviewDecision === undefined) return sendError(response, 'CONTROL_CENTER_NOT_FOUND', headOnly);
+    if (request.method !== 'POST') {
+      response.setHeader('Allow', 'POST');
+      return sendError(response, 'CONTROL_CENTER_METHOD_NOT_ALLOWED', false);
+    }
+    if (singleHeader(request.headers[LOCAL_WRITE_HEADER]) !== '1') {
+      request.resume();
+      return sendError(response, 'CONTROL_CENTER_BAD_REQUEST', false);
+    }
+    if (url.searchParams.size > 0) {
+      request.resume();
+      return sendError(response, 'CONTROL_CENTER_BAD_REQUEST', false);
+    }
+    const body = await readBoundedJsonBody(request);
+    if ('error' in body) return sendError(response, body.error, false);
+    try {
+      return sendJson(response, 200, await options.reviewDecision(body.value), false);
+    } catch {
+      return sendError(response, 'CONTROL_CENTER_INTERNAL_FAILURE', false);
+    }
+  }
+
   const query = routeQuery(url, route);
   if (typeof query === 'string') return sendError(response, query, headOnly);
   if (route.kind === 'events') {

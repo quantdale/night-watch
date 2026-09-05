@@ -84,6 +84,15 @@ export interface FindingsDossierMetadata {
   readonly expectationId: string | null;
   /** The semantic contract / invariant identity, carried on the same terms. */
   readonly semanticContractId: string | null;
+  /**
+   * Digest of the ENTIRE parsed dossier this row was derived from.
+   *
+   * A review binds to it, so a change anywhere in the dossier makes a stored
+   * review stale — including a change to a field this row does not project.
+   * Binding to the row alone would let an unprojected edit slip past a
+   * decision that was made before it.
+   */
+  readonly contentDigest: string;
 }
 
 export interface FindingsAuthoritySnapshot {
@@ -249,6 +258,7 @@ function toMetadata(dossier: FindingsDossier): FindingsDossierMetadata | null {
     // Carried, never derived. See projectedIdentity.
     expectationId: projectedIdentity(semanticTriageEvidenceOf(dossier)?.expectationId),
     semanticContractId: projectedIdentity(semanticTriageEvidenceOf(dossier)?.invariantDefinitionId),
+    contentDigest: prefixedDigest24('cc-dossier-content', dossier),
   };
 }
 

@@ -11,6 +11,8 @@ import { projectSourceGraph, projectSourceSummary, projectSourceSurfaces, type S
 import { projectFindings } from '../adapters/findingsAdapter';
 import { projectReviewer } from '../adapters/reviewerAdapter';
 import { reviewerInputsFromFindings } from '../authorities/reviewerAuthority';
+import type { ControlCenterReviewAuthority } from '../authorities/reviewWriteAuthority';
+import type { ControlCenterReviewDecisionResponse } from './server';
 import { LEVEL_FOR_SEGMENT, QUERY_FOR_SEGMENT, systemMapInputFromDiscovery, systemMapLevel, systemMapQuery } from '../adapters/systemMapAdapter';
 import { createRunEvidenceReader, type RunEvidenceReader, type RunEvidenceSnapshot } from '../authorities/runEvidenceReader';
 import { createSourceAuthority, type SourceAuthority, type SourceAuthoritySnapshot } from '../authorities/sourceAuthority';
@@ -77,6 +79,12 @@ export interface DefaultControlCenterCollectorOptions {
   readonly sourceAuthority?: SourceAuthority;
   readonly campaignAuthority?: CampaignAuthority;
   readonly findingsAuthority?: FindingsAuthority;
+  /**
+   * The owner-local review authority. OPT-IN: without it the reviewer surface
+   * reports NO_LOCAL_REVIEW_STORE for every finding, which is what it did
+   * before persistence existed and remains the truthful answer.
+   */
+  readonly reviewAuthority?: ControlCenterReviewAuthority;
   readonly runSnapshotTtlMs?: number;
   readonly sourceSnapshotTtlMs?: number;
   readonly now?: () => number;
@@ -240,11 +248,63 @@ function sourceSummaryAuthority(snapshot: SourceAuthoritySnapshot): SourceSummar
   };
 }
 
+/**
+ * The handler for the local review write route.
+ *
+ * It reads the findings and campaign authorities FRESH on every call rather
+ * than reusing a cached snapshot. That is deliberate: the binding must be the
+ * one that holds NOW, so a dossier regenerated between render and click makes
+ * the submitted identity stop matching and the write is refused. A cached
+ * snapshot would let a decision bind to a state that no longer exists.
+ *
+ * The request is untrusted input from the browser. Nothing is read from it
+ * except the four declared fields, and every one of them is validated by the
+ * authority before anything is written.
+ */
+export function createReviewDecisionHandler(options: {
+  readonly reviewAuthority: ControlCenterReviewAuthority;
+  readonly findingsAuthority?: FindingsAuthority;
+  readonly campaignAuthority?: CampaignAuthority;
+  readonly sourceAuthority?: SourceAuthority;
+}): (request: unknown) => ControlCenterReviewDecisionResponse {
+  const sourceAuthority = options.sourceAuthority ?? createSourceAuthority();
+  const campaignAuthority = options.campaignAuthority ?? createCampaignAuthority({ sourceAuthority });
+  const findingsAuthority = options.findingsAuthority ?? createFindingsAuthority();
+
+  return (request: unknown): ControlCenterReviewDecisionResponse => {
+    const body = request !== null && typeof request === 'object' && !Array.isArray(request)
+      ? (request as Record<string, unknown>)
+      : {};
+    const findings = findingsAuthority.snapshot();
+    const campaign = campaignAuthority.snapshot();
+    const outcome = options.reviewAuthority.decide(
+      {
+        findingId: typeof body.findingId === 'string' ? body.findingId : '',
+        reviewIdentity: typeof body.reviewIdentity === 'string' ? body.reviewIdentity : '',
+        decision: typeof body.decision === 'string' ? body.decision : '',
+        ...(typeof body.rationale === 'string' ? { rationale: body.rationale } : {}),
+        ...(typeof body.reasonCode === 'string' ? { reasonCode: body.reasonCode } : {}),
+      },
+      { dossiers: findings.dossiers, campaignId: campaign.generation }
+    );
+    return {
+      schemaVersion: 'nightwatch.control-center.review-decision.v1',
+      result: outcome.result,
+      reviewIdentity: outcome.reviewIdentity,
+      organizationalAuthority: 'NONE_LOCAL_REVIEW_ONLY',
+    };
+  };
+}
+
 export function createDefaultControlCenterCollector(options: DefaultControlCenterCollectorOptions = {}): ControlCenterCollector {
   const runReader = options.runReader ?? createRunEvidenceReader();
   const sourceAuthority = options.sourceAuthority ?? createSourceAuthority();
   const campaignAuthority = options.campaignAuthority ?? createCampaignAuthority({ sourceAuthority });
   const findingsAuthority = options.findingsAuthority ?? createFindingsAuthority();
+  // OPT-IN. Without a review authority the reviewer surface reports
+  // NO_LOCAL_REVIEW_STORE for every finding, exactly as it did before
+  // persistence existed.
+  const reviewAuthority = options.reviewAuthority ?? null;
   const now = options.now ?? (() => Date.now());
   const ttlMs = options.runSnapshotTtlMs === undefined
     ? 250
@@ -391,6 +451,12 @@ export function createDefaultControlCenterCollector(options: DefaultControlCente
           dossiers: findings.dossiers,
           campaignId: campaign.generation,
           limit: query.limit,
+          // Page-bounded by construction: the authority invokes this only for
+          // the rows it selected, so a 10,000-finding corpus costs one store
+          // listing per finding rendered, not one per finding held.
+          ...(reviewAuthority === null
+            ? {}
+            : { localReviewLookup: reviewAuthority.localReviewLookup({ campaignId: campaign.generation }) }),
         }),
         query.limit
       );
