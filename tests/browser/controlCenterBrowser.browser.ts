@@ -246,7 +246,7 @@ function findingsSnapshot(): FindingsAuthoritySnapshot {
   };
 }
 
-test('qualifies all seven built Control Center views over one synthetic authority composition', async ({ page }) => {
+test('qualifies every built Control Center view over one synthetic authority composition', async ({ page }) => {
   test.setTimeout(120_000);
   expect(fs.existsSync(path.join(UI_ROOT, 'index.html'))).toBe(true);
 
@@ -318,6 +318,16 @@ test('qualifies all seven built Control Center views over one synthetic authorit
     await expect(page.getByText('Source Unavailable', { exact: true })).toBeVisible();
     await expect(page.getByText('Provenance recorded').first()).toBeVisible();
 
+    // RS-1 reviewer surface, over the same synthetic findings composition the
+    // Findings view just used: the reviewer intelligence is derived from those
+    // dossiers by the real cones, so this is a real end-to-end projection.
+    await page.getByRole('link', { name: 'Reviewer' }).click({ force: true });
+    await expect(page.getByRole('heading', { name: 'Separate what was proved from what is suggested.' })).toBeVisible();
+    // The epistemic class is text on screen, not colour alone.
+    await expect(page.getByText('UNKNOWN', { exact: true }).first()).toBeVisible();
+    await expect(page.getByText('Final verdict: human organizational').first()).toBeVisible();
+    await expect(page.getByText(/never equivalent to a Leslie genuine\/invalid verdict or a Pondr approval/)).toBeVisible();
+
     await page.getByRole('link', { name: 'Runs' }).click({ force: true });
     await expect(page.getByRole('heading', { name: 'Inspect what happened, in order.' })).toBeVisible();
     await clickViewButton(page, 'Inspect');
@@ -332,6 +342,19 @@ test('qualifies all seven built Control Center views over one synthetic authorit
     } as unknown as ControlCenterEventDto);
     await expect(page.getByRole('heading', { name: 'control-center-browser' })).toBeVisible();
     await expect(page.locator('tr.row-selected')).toContainText('control-center-browser');
+
+    // Totality, not a fixed count. The suite previously said "seven views" and
+    // kept passing when an eighth and ninth were added: an unqualified view
+    // must fail this test, not slip past it. Every navigable view must have
+    // been visited above.
+    const navigated = new Set<string>();
+    for (const link of await page.getByRole('navigation', { name: 'Primary' }).getByRole('link').all()) {
+      navigated.add((await link.getAttribute('href')) ?? '');
+    }
+    const visited = new Set(['#', '#safety', '#runs', '#execution-graph', '#campaigns', '#source-intelligence', '#findings', '#reviewer', '#system-map']);
+    const unqualified = [...navigated].filter((href) => !visited.has(href));
+    expect(unqualified, `navigable views with no browser qualification: ${unqualified.join(', ')}`).toEqual([]);
+    expect(navigated.size).toBe(visited.size);
 
     expect(externalRequests).toEqual([]);
     expect(pageErrors).toEqual([]);

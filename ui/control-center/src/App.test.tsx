@@ -155,7 +155,7 @@ describe('Control Center UI shell', () => {
     await user.click(runsLink);
     expect(await screen.findByRole('heading', { name: 'Inspect what happened, in order.' })).toBeVisible();
     expect(screen.getByText('No local runs recorded')).toBeInTheDocument();
-    expect(primaryNav.getAllByRole('link')).toHaveLength(8);
+    expect(primaryNav.getAllByRole('link')).toHaveLength(9);
     await user.click(primaryNav.getByRole('link', { name: 'Safety Center' }));
     expect(await screen.findByRole('heading', { name: 'Safety is a posture, not a green badge.' })).toBeVisible();
     expect(screen.getByText('Source inventory unavailable')).toBeInTheDocument();
@@ -175,7 +175,7 @@ describe('Control Center UI shell', () => {
     await screen.findByRole('heading', { name: 'Know the posture before the next run.' });
     expect(screen.getByRole('link', { name: 'Skip to content' })).toHaveAttribute('href', '#main-content');
     for (const link of within(screen.getByRole('navigation', { name: 'Primary' })).getAllByRole('link')) {
-      expect(link.getAttribute('href')).toMatch(/^#(?:|safety|runs|execution-graph|campaigns|source-intelligence|findings|system-map)$/);
+      expect(link.getAttribute('href')).toMatch(/^#(?:|safety|runs|execution-graph|campaigns|source-intelligence|findings|reviewer|system-map)$/);
     }
     for (const button of screen.getAllByRole('button')) expect(button).toHaveAttribute('type', 'button');
     expect(document.querySelectorAll('img, iframe, object, embed')).toHaveLength(0);
@@ -457,5 +457,95 @@ describe('Control Center UI shell', () => {
     expect(document.body).not.toHaveTextContent('SENTINEL_RAW_EVIDENCE');
     expect(document.body).not.toHaveTextContent('SENTINEL_SOURCE_PATH');
     expect(document.body).not.toHaveTextContent('SENTINEL_REQUEST_BODY');
+  });
+
+  // RS-1 reviewer view. The three failures worth testing for are: an advisory
+  // suggestion presented as a verdict, an UNKNOWN presented as a weak yes, and
+  // a value crossing the privacy boundary onto the screen.
+  it('labels every reviewer element and never renders UNKNOWN as a weak yes', async () => {
+    const user = userEvent.setup();
+    const element = (epistemicClass: string, value: unknown, basis: readonly string[] = []) => ({ epistemicClass, value, basis });
+    const item = {
+      findingId: 'cc-reviewer-01',
+      relationship: element('RECOMMENDATION', {
+        relationship: 'PROBABLE_DUPLICATE', confidence: 'SUPPORTED', possibleOriginalId: 'cc-reviewer-00',
+        counterevidence: ['MISSING_COMPARISON_INPUT'], advisoryOnly: true, finalVerdictAuthority: 'HUMAN_ORGANIZATIONAL',
+      }, ['SAME_FINGERPRINT']),
+      probableDuplicates: [{ findingId: 'cc-reviewer-00', relationship: 'PROBABLE_DUPLICATE', confidence: 'SUPPORTED', basis: ['SAME_FINGERPRINT'], advisoryOnly: true, finalVerdictAuthority: 'HUMAN_ORGANIZATIONAL' }],
+      recurrence: element('FACT', { recurrence: 'RECURRENT', priorFindingId: 'cc-reviewer-00' }, ['RECURRENT']),
+      defectClass: element('UNKNOWN', null, ['NO_DEFECT_CLASS_IDENTIFIED']),
+      expectationProvenance: element('FACT', 'MACHINE_CONTRACT', ['MACHINE_CONTRACT']),
+      confidence: element('UNKNOWN', null, ['INSUFFICIENT']),
+      alphausRecommendation: {
+        severity: element('RECOMMENDATION', 'CRITICAL', ['DOSSIER_TECHNICAL_SEVERITY']),
+        catchStage: element('RECOMMENDATION', 'PR_REVIEW', ['LOCAL_PRE_REVIEW_OBSERVATION']),
+        source: element('RECOMMENDATION', 'SELF_FOUND', ['NIGHTWATCH_LOCAL_DISCOVERY']),
+        team: element('UNKNOWN', null, []),
+      },
+      localReview: element('UNKNOWN', null, ['REVIEW_PENDING']),
+      unknowns: ['NO_LOCAL_REVIEW_STORE'],
+      rawRationale: 'SENTINEL_REVIEW_PROSE',
+    };
+    const responses: Record<string, unknown> = {
+      [CONTROL_CENTER_API_PATHS.health]: overview.health,
+      [CONTROL_CENTER_API_PATHS.meta]: overview.meta,
+      [CONTROL_CENTER_API_PATHS.readiness]: overview.readiness,
+      [CONTROL_CENTER_API_PATHS.safety]: overview.safety,
+      [CONTROL_CENTER_API_PATHS.sourceSummary]: overview.source,
+      '/api/v1/reviewer?limit=50': {
+        schemaVersion: 'nightwatch.control-center.reviewer.v1', state: 'AVAILABLE', items: [item],
+        page: { limit: 50, nextCursor: null, truncated: false },
+        finalVerdictAuthority: 'HUMAN_ORGANIZATIONAL', organizationalAuthority: 'NONE_LOCAL_REVIEW_ONLY',
+      },
+    };
+    vi.stubGlobal('fetch', vi.fn((input: RequestInfo | URL) => Promise.resolve(responseFor(responses[String(input)]))));
+    render(<App />);
+    await screen.findByRole('heading', { name: 'Know the posture before the next run.' });
+    await user.click(within(screen.getByRole('navigation', { name: 'Primary' })).getByRole('link', { name: 'Reviewer' }));
+    expect(await screen.findByRole('heading', { name: 'Separate what was proved from what is suggested.' })).toBeVisible();
+
+    // The epistemic class is TEXT, not colour alone: monochrome and screen
+    // readers must carry the same distinction.
+    expect(screen.getAllByText('FACT').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('RECOMMENDATION').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('UNKNOWN').length).toBeGreaterThan(0);
+
+    // A duplicate suggestion is shown as advisory, never as a verdict.
+    expect(screen.getByText('Advisory. Not a duplicate verdict.')).toBeInTheDocument();
+    expect(screen.getAllByText('Final verdict: human organizational').length).toBeGreaterThan(0);
+
+    // UNKNOWN elements state that they were not determined; there is no
+    // rendering path that turns them into a low-confidence affirmative.
+    expect(screen.getAllByText(/Not determined/).length).toBeGreaterThan(0);
+    expect(document.body).not.toHaveTextContent('Insufficient confidence');
+
+    // Local review is never organizational sign-off, on the surface itself.
+    expect(screen.getByText(/never equivalent to a Leslie genuine\/invalid verdict or a Pondr approval/)).toBeInTheDocument();
+
+    // Nothing outside the contract reaches the screen.
+    expect(document.body).not.toHaveTextContent('SENTINEL_REVIEW_PROSE');
+  });
+
+  it('states plainly when reviewer intelligence is unavailable', async () => {
+    const user = userEvent.setup();
+    const responses: Record<string, unknown> = {
+      [CONTROL_CENTER_API_PATHS.health]: overview.health,
+      [CONTROL_CENTER_API_PATHS.meta]: overview.meta,
+      [CONTROL_CENTER_API_PATHS.readiness]: overview.readiness,
+      [CONTROL_CENTER_API_PATHS.safety]: overview.safety,
+      [CONTROL_CENTER_API_PATHS.sourceSummary]: overview.source,
+      '/api/v1/reviewer?limit=50': {
+        schemaVersion: 'nightwatch.control-center.reviewer.v1', state: 'UNAVAILABLE', items: [],
+        page: { limit: 0, nextCursor: null, truncated: false },
+        finalVerdictAuthority: 'HUMAN_ORGANIZATIONAL', organizationalAuthority: 'NONE_LOCAL_REVIEW_ONLY',
+      },
+    };
+    vi.stubGlobal('fetch', vi.fn((input: RequestInfo | URL) => Promise.resolve(responseFor(responses[String(input)]))));
+    render(<App />);
+    await screen.findByRole('heading', { name: 'Know the posture before the next run.' });
+    await user.click(within(screen.getByRole('navigation', { name: 'Primary' })).getByRole('link', { name: 'Reviewer' }));
+    expect(await screen.findByRole('heading', { name: 'Separate what was proved from what is suggested.' })).toBeVisible();
+    // Absence of findings is never presented as absence of defects.
+    expect(screen.getByText(/This is not a claim that no defects exist/)).toBeInTheDocument();
   });
 });

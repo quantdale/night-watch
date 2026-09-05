@@ -1,6 +1,6 @@
 import { Component, useCallback, useEffect, useState, type ErrorInfo, type KeyboardEvent, type ReactNode } from 'react';
-import { apiErrorLabel, loadCampaignCoverage, loadCampaignSummary, loadExecutionGraph, loadFindings, loadOverview, loadRunDetail, loadRuns, loadSourceGraph, loadSourceSurfaces, loadSystemMapLevel, loadSystemMapQuery, loadTimeline, subscribeToControlCenterEvents } from './api';
-import type { CampaignCoverageSnapshot, CampaignSummarySnapshot, DataLoadState, ExecutionGraphSnapshot, FindingsSnapshot, OverviewLoadState, OverviewSnapshot, RunDetailSnapshot, RunListSnapshot, SourceGraphSnapshot, SourceSurfaceSnapshot, SourceSurfacesSnapshot, SystemMapBound, SystemMapLevelSegment, SystemMapNodeView, SystemMapQuerySegment, SystemMapSnapshot, TimelineSnapshot, ViewId } from './types';
+import { apiErrorLabel, loadCampaignCoverage, loadCampaignSummary, loadExecutionGraph, loadFindings, loadOverview, loadReviewer, loadRunDetail, loadRuns, loadSourceGraph, loadSourceSurfaces, loadSystemMapLevel, loadSystemMapQuery, loadTimeline, subscribeToControlCenterEvents } from './api';
+import type { CampaignCoverageSnapshot, CampaignSummarySnapshot, DataLoadState, EpistemicClass, ExecutionGraphSnapshot, FindingsSnapshot, OverviewLoadState, OverviewSnapshot, ReviewerElement, ReviewerSnapshot, RunDetailSnapshot, RunListSnapshot, SourceGraphSnapshot, SourceSurfaceSnapshot, SourceSurfacesSnapshot, SystemMapBound, SystemMapLevelSegment, SystemMapNodeView, SystemMapQuerySegment, SystemMapSnapshot, TimelineSnapshot, ViewId } from './types';
 import { SYSTEM_MAP_QUERY_SEGMENTS, VIEW_DEFINITIONS } from './types';
 
 interface ErrorBoundaryProps {
@@ -390,6 +390,151 @@ function FindingsView({ state, onRetry }: { readonly state: DataLoadState<Findin
   return <div className="view-stack"><section className="page-intro"><div><p className="eyebrow">TRIAGE / FINDINGS</p><h1>Keep the signal, lose the raw evidence.</h1><p>Findings are owner-local metadata projections. This view never opens a dossier, shows evidence bodies, or exposes source paths, credentials, traces, or customer values.</p></div><StatusPill value={state.data.state} /></section><section className="metric-grid"><MetricCard label="Findings" value={String(findings.length)} detail={state.data.state === 'AVAILABLE' ? 'Sanitized rows loaded' : 'No finding claim'} tone={findings.length > 0 ? 'warning' : 'neutral'} /><MetricCard label="Dossier readiness" value={String(readyCount)} detail={`${findings.length - readyCount} not ready`} tone={readyCount > 0 ? 'ready' : 'warning'} /><MetricCard label="Source freshness" value={String(staleCount)} detail="Stale or unavailable" tone={staleCount > 0 ? 'warning' : 'ready'} /><MetricCard label="Boundary" value="Metadata only" detail="Owner-local storage" tone="ready" /></section><article className="panel"><div className="panel-heading"><div><p className="eyebrow">SANITIZED FINDINGS</p><h2>Finding index</h2></div><span className="table-limit">Limit {state.data.page.limit}</span></div>{findings.length === 0 ? <div className="mini-state mini-state-warning">{state.data.state === 'UNAVAILABLE' ? 'Owner-local findings are unavailable. No finding or pass claim is made.' : state.data.state === 'UNKNOWN' ? 'Finding state is unknown. No finding or pass claim is made.' : 'No sanitized findings recorded. Empty findings is not proof of no defects.'}</div> : <div className="table-scroll"><table><thead><tr><th scope="col">Signal</th><th scope="col">Severity / confidence</th><th scope="col">Evidence posture</th><th scope="col">Source</th><th scope="col">Dossier</th><th scope="col">Observed</th></tr></thead><tbody>{findings.map((finding) => <tr key={finding.findingId}><td><strong>{finding.title ?? 'Untitled finding'}</strong><small>{finding.findingId}</small><small>{finding.product ?? 'Product withheld'} · {finding.surface ?? 'Surface withheld'}</small></td><td><StatusPill value={finding.severity} /><small>{formatCategory(finding.confidence)} confidence</small></td><td><strong>{formatCategory(finding.evidenceLevel)}</strong><small>{formatCategory(finding.reproduction)} · {finding.reproductionCount} observation(s)</small><small>{finding.minimized ? 'Minimized' : 'Not minimized'}</small></td><td><StatusPill value={finding.sourceCurrentness} /><small>{finding.fingerprint === null ? 'Fingerprint unavailable' : 'Fingerprint recorded'}</small></td><td><StatusPill value={finding.dossierStatus} /><small>{finding.provenanceDigest === null ? 'Provenance unavailable' : 'Provenance recorded'}</small></td><td><small>First {formatTimestamp(finding.firstObservedAt)}</small><small>Last {formatTimestamp(finding.lastObservedAt)}</small></td></tr>)}</tbody></table></div>}</article><div className="callout callout-warning"><strong>Privacy boundary</strong><span>Only sanitized metadata is displayed. Raw evidence, source text, paths, bodies, credentials, authenticated traces, and customer values remain unavailable to this UI.</span></div></div>;
 }
 
+// ---------------------------------------------------------------------------
+// RS-1 reviewer view.
+//
+// The server sends `epistemicClass` on every element and this view renders it
+// verbatim, as TEXT and not as colour alone: a reviewer reading in monochrome,
+// or with a screen reader, must be able to tell a proven fact from a
+// suggestion. The UI computes no class of its own — there is deliberately no
+// code path here that turns UNKNOWN into a soft yes, and a value-free UNKNOWN
+// shows the reason it is unknown rather than an inviting blank.
+// ---------------------------------------------------------------------------
+
+const EPISTEMIC_COPY: Record<EpistemicClass, { readonly label: string; readonly tone: StatusTone; readonly meaning: string }> = {
+  FACT: { label: 'FACT', tone: 'ready', meaning: 'Mechanically derived from recorded evidence.' },
+  RECOMMENDATION: { label: 'RECOMMENDATION', tone: 'warning', meaning: 'Advisory. A human makes the call.' },
+  UNKNOWN: { label: 'UNKNOWN', tone: 'neutral', meaning: 'Not determined. This is not a weak yes.' },
+};
+
+function EpistemicBadge({ epistemicClass }: { readonly epistemicClass: EpistemicClass }): ReactNode {
+  const copy = EPISTEMIC_COPY[epistemicClass];
+  return <span className={`status-pill status-${copy.tone}`} title={copy.meaning}><span className="status-dot" aria-hidden="true" />{copy.label}</span>;
+}
+
+function ReviewerElementCell<T>({ element, render }: {
+  readonly element: ReviewerElement<T>;
+  readonly render: (value: T) => ReactNode;
+}): ReactNode {
+  return (
+    <td>
+      <EpistemicBadge epistemicClass={element.epistemicClass} />
+      {element.value === null
+        ? <small>Not determined{element.basis.length === 0 ? '' : ` · ${element.basis.map(formatCategory).join(', ')}`}</small>
+        : <>{render(element.value)}{element.basis.length === 0 ? null : <small>Basis: {element.basis.map(formatCategory).join(', ')}</small>}</>}
+    </td>
+  );
+}
+
+function ReviewerView({ state, onRetry }: { readonly state: DataLoadState<ReviewerSnapshot>; readonly onRetry: () => void }): ReactNode {
+  if (state.kind === 'loading' || state.kind === 'idle') return <LoadingState />;
+  if (state.kind === 'error') return <DataErrorState title="Reviewer intelligence unavailable" onRetry={onRetry} />;
+  const items = state.data.items;
+  const factCount = items.filter((item) => item.confidence.epistemicClass === 'FACT').length;
+  const duplicateCount = items.filter((item) => item.probableDuplicates.length > 0).length;
+  const unknownCount = items.filter((item) => item.relationship.epistemicClass === 'UNKNOWN').length;
+  return (
+    <div className="view-stack">
+      <section className="page-intro">
+        <div>
+          <p className="eyebrow">REVIEW / INTELLIGENCE</p>
+          <h1>Separate what was proved from what is suggested.</h1>
+          <p>Every value below is labelled FACT, RECOMMENDATION, or UNKNOWN by the service that produced it. A duplicate suggestion is never a verdict, and a local review decision is never Alphaus organizational sign-off.</p>
+        </div>
+        <StatusPill value={state.data.state} />
+      </section>
+      <section className="metric-grid">
+        <MetricCard label="Findings reviewed" value={String(items.length)} detail={state.data.state === 'AVAILABLE' ? 'Projected from the finding cones' : 'No reviewer claim'} />
+        <MetricCard label="Confidence established" value={String(factCount)} detail={`${items.length - factCount} not determined`} tone={factCount > 0 ? 'ready' : 'warning'} />
+        <MetricCard label="Duplicate suggestions" value={String(duplicateCount)} detail="Advisory only" tone={duplicateCount > 0 ? 'warning' : 'neutral'} />
+        <MetricCard label="Relationship unknown" value={String(unknownCount)} detail="Missing comparison inputs" tone={unknownCount > 0 ? 'warning' : 'ready'} />
+      </section>
+      <article className="panel">
+        <div className="panel-heading">
+          <div><p className="eyebrow">REVIEWER INDEX</p><h2>Finding intelligence</h2></div>
+          <span className="table-limit">Limit {state.data.page.limit}</span>
+        </div>
+        {items.length === 0
+          ? <div className="mini-state mini-state-warning">{state.data.state === 'UNAVAILABLE' ? 'Owner-local findings are unavailable, so no reviewer intelligence is projected. This is not a claim that no defects exist.' : 'No findings to review. Empty is not proof of no defects.'}</div>
+          : <div className="table-scroll"><table>
+              <thead><tr>
+                <th scope="col">Finding</th>
+                <th scope="col">Relationship</th>
+                <th scope="col">Probable duplicates</th>
+                <th scope="col">Recurrence</th>
+                <th scope="col">Defect class</th>
+                <th scope="col">Expectation provenance</th>
+                <th scope="col">Confidence</th>
+                <th scope="col">Local review</th>
+              </tr></thead>
+              <tbody>{items.map((item) => (
+                <tr key={item.findingId}>
+                  <td>
+                    <strong>{item.findingId}</strong>
+                    {item.unknowns.length === 0 ? null : <small>Unknown: {item.unknowns.map(formatCategory).join(', ')}</small>}
+                  </td>
+                  <ReviewerElementCell element={item.relationship} render={(value) => <>
+                    <strong>{formatCategory(value.relationship)}</strong>
+                    <small>{formatCategory(value.confidence)}</small>
+                    <small>{value.possibleOriginalId === null ? 'No earlier finding pointed to' : `Possibly original: ${value.possibleOriginalId}`}</small>
+                    <small>Final verdict: human organizational</small>
+                  </>} />
+                  <td>
+                    {item.probableDuplicates.length === 0
+                      ? <small>None suggested</small>
+                      : <>
+                          <EpistemicBadge epistemicClass="RECOMMENDATION" />
+                          {item.probableDuplicates.map((duplicate) => (
+                            <small key={duplicate.findingId}>{duplicate.findingId} · {formatCategory(duplicate.relationship)} · {formatCategory(duplicate.confidence)}</small>
+                          ))}
+                          <small>Advisory. Not a duplicate verdict.</small>
+                        </>}
+                  </td>
+                  <ReviewerElementCell element={item.recurrence} render={(value) => <>
+                    <strong>{formatCategory(value.recurrence)}</strong>
+                    <small>{value.priorFindingId === null ? 'No prior finding matched' : `Prior: ${value.priorFindingId}`}</small>
+                  </>} />
+                  <ReviewerElementCell element={item.defectClass} render={(value) => <>
+                    <strong>{value.classId}</strong>
+                    <small>{value.memberFindingIds.length} member(s) · {formatCategory(value.confidence)}</small>
+                    <small>{value.counterexampleCount} counterexample(s) · {value.unknownCount} unknown(s)</small>
+                  </>} />
+                  <ReviewerElementCell element={item.expectationProvenance} render={(value) => <strong>{formatCategory(value)}</strong>} />
+                  <ReviewerElementCell element={item.confidence} render={(value) => <strong>{formatCategory(value)}</strong>} />
+                  <ReviewerElementCell element={item.localReview} render={(value) => <>
+                    <strong>{formatCategory(value.state)}</strong>
+                    <small>{value.decision === null ? 'No decision recorded' : formatCategory(value.decision)}</small>
+                    <small>Binding {formatCategory(value.bindingCurrentness)}</small>
+                    <small>Local review only. Not Leslie or Pondr sign-off.</small>
+                  </>} />
+                </tr>
+              ))}</tbody>
+            </table></div>}
+      </article>
+      <article className="panel">
+        <div className="panel-heading"><div><p className="eyebrow">SUGGESTED ALPHAUS CLASSIFICATION</p><h2>Recommendations, not decisions</h2></div><StatusPill value="WARNING" label="Human decides" /></div>
+        <p className="panel-intro">Nightwatch proposes a classification and states the basis for each part. It files nothing, and a team is left UNKNOWN unless attribution carries evidence.</p>
+        {items.length === 0 ? <div className="mini-state">No recommendations to show.</div> : <div className="table-scroll"><table>
+          <thead><tr><th scope="col">Finding</th><th scope="col">Severity</th><th scope="col">Catch stage</th><th scope="col">Source</th><th scope="col">Team</th></tr></thead>
+          <tbody>{items.map((item) => (
+            <tr key={item.findingId}>
+              <td><strong>{item.findingId}</strong></td>
+              <ReviewerElementCell element={item.alphausRecommendation.severity} render={(value) => <strong>{formatCategory(value)}</strong>} />
+              <ReviewerElementCell element={item.alphausRecommendation.catchStage} render={(value) => <strong>{formatCategory(value)}</strong>} />
+              <ReviewerElementCell element={item.alphausRecommendation.source} render={(value) => <strong>{formatCategory(value)}</strong>} />
+              <ReviewerElementCell element={item.alphausRecommendation.team} render={(value) => <strong>{value}</strong>} />
+            </tr>
+          ))}</tbody>
+        </table></div>}
+      </article>
+      <div className="callout callout-warning">
+        <strong>Authority boundary</strong>
+        <span>Final verdict authority is {formatCategory(state.data.finalVerdictAuthority)}. Local review carries {formatCategory(state.data.organizationalAuthority)} and is never equivalent to a Leslie genuine/invalid verdict or a Pondr approval. This view files nothing and decides nothing.</span>
+      </div>
+    </div>
+  );
+}
+
 function CampaignView({ summaryState, coverageState, onRetry }: { readonly summaryState: DataLoadState<CampaignSummarySnapshot>; readonly coverageState: DataLoadState<CampaignCoverageSnapshot>; readonly onRetry: () => void }): ReactNode {
   if (summaryState.kind === 'loading' || coverageState.kind === 'loading') return <LoadingState />;
   if (summaryState.kind === 'error' || coverageState.kind === 'error') return <DataErrorState title="Campaign intelligence unavailable" onRetry={onRetry} />;
@@ -750,6 +895,7 @@ function DashboardApp(): ReactNode {
   const [sourceSurfaceState, setSourceSurfaceState] = useState<DataLoadState<SourceSurfacesSnapshot>>({ kind: 'idle' });
   const [sourceGraphState, setSourceGraphState] = useState<DataLoadState<SourceGraphSnapshot>>({ kind: 'idle' });
   const [findingsState, setFindingsState] = useState<DataLoadState<FindingsSnapshot>>({ kind: 'idle' });
+  const [reviewerState, setReviewerState] = useState<DataLoadState<ReviewerSnapshot>>({ kind: 'idle' });
   const refresh = useCallback((): void => setRefreshKey((value) => value + 1), []);
 
   useEffect(() => {
@@ -877,6 +1023,21 @@ function DashboardApp(): ReactNode {
   }, [activeView, refreshKey]);
 
   useEffect(() => {
+    if (activeView !== 'reviewer') return;
+    let cancelled = false;
+    setReviewerState({ kind: 'loading' });
+    loadReviewer().then((data) => {
+      if (!cancelled) setReviewerState({ kind: 'ready', data });
+    }).catch((error: unknown) => {
+      if (!cancelled) {
+        void apiErrorLabel(error);
+        setReviewerState({ kind: 'error' });
+      }
+    });
+    return () => { cancelled = true; };
+  }, [activeView, refreshKey]);
+
+  useEffect(() => {
     if (activeView !== 'execution-graph' || selectedRunId === null) return;
     let cancelled = false;
     setGraphState({ kind: 'loading' });
@@ -905,6 +1066,7 @@ function DashboardApp(): ReactNode {
     if (activeView === 'execution-graph') return <ExecutionGraphView selectedRunId={selectedRunId} state={graphState} onRetry={retryRunData} />;
     if (activeView === 'campaigns') return <CampaignView summaryState={campaignSummaryState} coverageState={campaignCoverageState} onRetry={retryRunData} />;
     if (activeView === 'findings') return <FindingsView state={findingsState} onRetry={retryRunData} />;
+    if (activeView === 'reviewer') return <ReviewerView state={reviewerState} onRetry={retryRunData} />;
     if (activeView === 'system-map') return <SystemMapView refreshKey={refreshKey} />;
     if (activeView === 'source-intelligence') {
       if (loadState.kind === 'loading') return <LoadingState />;

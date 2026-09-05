@@ -6,6 +6,7 @@ export const VIEW_DEFINITIONS = [
   { id: 'campaigns', label: 'Campaign Intelligence', eyebrow: 'CAMPAIGNS', description: 'Coverage, gaps, and source currentness.' },
   { id: 'source-intelligence', label: 'Source Intelligence', eyebrow: 'PROVENANCE', description: 'Proof and bounded source neighborhoods.' },
   { id: 'findings', label: 'Findings', eyebrow: 'TRIAGE', description: 'Sanitized owner-local finding metadata.' },
+  { id: 'reviewer', label: 'Reviewer', eyebrow: 'REVIEW', description: 'Relationships, recurrence, and what remains unknown.' },
   { id: 'system-map', label: 'System Map', eyebrow: 'TOPOLOGY V2', description: 'Progressive company-to-operation disclosure.' },
 ] as const;
 
@@ -413,3 +414,90 @@ export type OverviewLoadState =
   | { readonly kind: 'error' };
 
 export type ApiErrorKind = 'NETWORK' | 'HTTP' | 'INVALID_RESPONSE';
+
+// ---------------------------------------------------------------------------
+// RS-1 reviewer surface.
+//
+// `epistemicClass` arrives from the server and is the ONLY thing that decides
+// how an element is presented. The UI never computes it, never overrides it,
+// and never renders UNKNOWN as a low-confidence yes.
+// ---------------------------------------------------------------------------
+
+export type EpistemicClass = 'FACT' | 'RECOMMENDATION' | 'UNKNOWN';
+
+export interface ReviewerElement<TValue> {
+  readonly epistemicClass: EpistemicClass;
+  readonly value: TValue | null;
+  readonly basis: readonly string[];
+}
+
+export interface ReviewerRelationshipValue {
+  readonly relationship: string;
+  readonly confidence: string;
+  readonly possibleOriginalId: string | null;
+  readonly counterevidence: readonly string[];
+  readonly advisoryOnly: true;
+  readonly finalVerdictAuthority: 'HUMAN_ORGANIZATIONAL';
+}
+
+export interface ReviewerDuplicateSuggestion {
+  readonly findingId: string;
+  readonly relationship: string;
+  readonly confidence: string;
+  readonly basis: readonly string[];
+  readonly advisoryOnly: true;
+  readonly finalVerdictAuthority: 'HUMAN_ORGANIZATIONAL';
+}
+
+export interface ReviewerRecurrenceValue {
+  readonly recurrence: string;
+  readonly priorFindingId: string | null;
+}
+
+export interface ReviewerDefectClassValue {
+  readonly classId: string;
+  readonly sharedInvariant: string;
+  readonly memberFindingIds: readonly string[];
+  readonly confidence: string;
+  readonly counterexampleCount: number;
+  readonly unknownCount: number;
+}
+
+export interface ReviewerAlphausRecommendation {
+  readonly severity: ReviewerElement<string>;
+  readonly catchStage: ReviewerElement<string>;
+  readonly source: ReviewerElement<string>;
+  readonly team: ReviewerElement<string>;
+}
+
+export interface ReviewerLocalReviewValue {
+  readonly state: string;
+  readonly decision: string | null;
+  readonly reviewedAt: string | null;
+  readonly transitionCount: number;
+  readonly bindingCurrentness: 'CURRENT' | 'STALE' | 'UNKNOWN';
+  readonly organizationalAuthority: 'NONE_LOCAL_REVIEW_ONLY';
+  readonly notEquivalentTo: readonly string[];
+}
+
+export interface ReviewerFindingSnapshot {
+  readonly findingId: string;
+  readonly relationship: ReviewerElement<ReviewerRelationshipValue>;
+  readonly probableDuplicates: readonly ReviewerDuplicateSuggestion[];
+  readonly recurrence: ReviewerElement<ReviewerRecurrenceValue>;
+  readonly defectClass: ReviewerElement<ReviewerDefectClassValue>;
+  readonly expectationProvenance: ReviewerElement<string>;
+  readonly confidence: ReviewerElement<string>;
+  readonly alphausRecommendation: ReviewerAlphausRecommendation;
+  readonly localReview: ReviewerElement<ReviewerLocalReviewValue>;
+  readonly unknowns: readonly string[];
+}
+
+export interface ReviewerSnapshot {
+  readonly schemaVersion: string;
+  readonly state: 'AVAILABLE' | 'EMPTY' | 'UNAVAILABLE';
+  readonly items: readonly ReviewerFindingSnapshot[];
+  readonly page: { readonly limit: number; readonly nextCursor: string | null; readonly truncated: boolean };
+  readonly finalVerdictAuthority: 'HUMAN_ORGANIZATIONAL';
+  readonly organizationalAuthority: 'NONE_LOCAL_REVIEW_ONLY';
+}

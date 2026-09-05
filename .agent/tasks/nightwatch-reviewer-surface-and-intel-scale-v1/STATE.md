@@ -36,8 +36,8 @@ contact.
 
 ## Current Milestone
 
-M2 (W1) — reviewer projection over the finding-intelligence and review
-cones, complete; M3 (the Control Center reviewer UI) is next.
+M3 (W2) — Control Center reviewer UI, complete; M4 (finding-intelligence
+scale measurement at 1k/5k/10k) is next.
 
 ## Completed Milestones
 
@@ -59,10 +59,16 @@ cones, complete; M3 (the Control Center reviewer UI) is next.
   (findings snapshot → real cone calls), route `/api/v1/reviewer` through the
   router, collector, server and default collector, and RS-1 hardening.
   `npx playwright test tests/unit/reviewerProjection.test.ts` → 22 passed.
+- M3 (W2): the Control Center reviewer view. `ui/control-center/src/types.ts`
+  (view definition + reviewer types), `api.ts` (`loadReviewer`), `App.tsx`
+  (`ReviewerView`, `EpistemicBadge`, `ReviewerElementCell`). The badge renders
+  the server's `epistemicClass` as TEXT, not colour alone, and the UI computes
+  no class of its own. `control-center:ui:test` → 14 passed;
+  `control-center:ui:browser` → 2 passed against the freshly built bundle.
 
 ## Work In Progress
 
-M3. The Control Center reviewer UI over `/api/v1/reviewer`.
+M4. Finding-intelligence scale measurement at 1k / 5k / 10k.
 
 Closed in M1:
 
@@ -106,9 +112,11 @@ DEF-FC-04 proven mechanically, not asserted:
 
 ## Exact Next Action
 
-Begin M3 (W2): the Control Center reviewer UI over `/api/v1/reviewer`,
-rendering each element by its declared `epistemicClass` and never by a
-styling decision of its own.
+Begin M4 (W3): a fresh-process harness that generates deterministic
+synthetic corpora at 1,000 / 5,000 / 10,000 findings, runs the real
+`findingIntel` entry points, and records CPU time, peak RSS and wall
+latency per stage, so the actual quadratic threshold is located rather
+than assumed.
 
 ## Files Changed
 
@@ -130,6 +138,9 @@ styling decision of its own.
 | `bin/hardening-check.mjs` | RS-1 reviewer-surface rule | Modified |
 | `config/semantic-compatibility.v1.json` | both new suites registered in a required lane | Modified |
 | `tests/unit/reviewerProjection.test.ts` | M2 regression | Added |
+| `ui/control-center/src/{types,api,App}.tsx?` | reviewer view | Modified |
+| `ui/control-center/src/App.test.tsx` | reviewer view tests; nav count | Modified |
+| `tests/browser/controlCenterBrowser.browser.ts` | reviewer coverage + view totality | Modified |
 | `.agent/EXECUTION_PROMPT.md` | campaign handoff | Modified |
 | `.agent/tasks/nightwatch-reviewer-surface-and-intel-scale-v1/**` | campaign records | Added |
 | `openspec/changes/nightwatch-reviewer-surface-and-intel-scale-v1/**` | OpenSpec change | Added |
@@ -156,6 +167,9 @@ styling decision of its own.
 | `npx playwright test tests/unit/reviewerProjection.test.ts` | 22 passed |
 | RS-1 hardening branch probes | 6/6 fire (severity drift, authority literal, advisory-guard totality, sentinel screen, UNKNOWN pointer, final verdict authority) |
 | `npm run test:semantic-compat` (M2) | 2066 / 2053 passed / 13 skipped / 0 failed — PASS, 148 files |
+| `npm run control-center:ui:typecheck` | clean |
+| `npm run control-center:ui:test` | 14 passed |
+| `npm run control-center:ui:browser` | 2 passed (fresh build, 287,658 bytes, no external references) |
 | `npm run typecheck` | clean |
 | `npm run hardening:check` | PASS |
 | `npm run agent:check` (repaired document) | PASS + 2 known warnings |
@@ -173,6 +187,11 @@ styling decision of its own.
 
 ## Discoveries
 
+- The browser lane said "all seven built Control Center views" while nine
+  existed: it had kept passing through two view additions because the count
+  was in the test NAME, not in an assertion. It is now a totality check over
+  the live navigation, and it proved itself immediately by failing on the
+  overview `#` href.
 - The intelligence cones emit PROSE evidence (`RECURRENT` evidence strings,
   `mechanicalEvidence`, `counterexamples`) written for the human filing
   report. Unbounded free text must not cross onto the public surface, so the

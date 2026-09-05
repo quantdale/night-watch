@@ -8,6 +8,7 @@ import type {
   CampaignCoverageSnapshot,
   CampaignSummarySnapshot,
   FindingsSnapshot,
+  ReviewerSnapshot,
   RunDetailSnapshot,
   RunListSnapshot,
   SafetySnapshot,
@@ -31,6 +32,7 @@ export const CONTROL_CENTER_API_PATHS = Object.freeze({
   sourceSurfaces: '/api/v1/source/surfaces',
   sourceGraph: '/api/v1/source/graph',
   findings: '/api/v1/findings',
+  reviewer: '/api/v1/reviewer',
   /** C-15c. Explicitly v2: v1 is never reinterpreted. */
   systemMap: '/api/v2/system-map',
 });
@@ -143,6 +145,11 @@ export function loadSourceGraph(surfaceId: string | null, depth = 2): Promise<So
     params.set('surface', safeId);
   }
   return fetchSnapshot<SourceGraphSnapshot>(`${CONTROL_CENTER_API_PATHS.sourceGraph}?${params.toString()}`);
+}
+
+export function loadReviewer(limit = 50): Promise<ReviewerSnapshot> {
+  const boundedLimit = Number.isInteger(limit) && limit > 0 && limit <= 50 ? limit : 50;
+  return fetchSnapshot<ReviewerSnapshot>(`${CONTROL_CENTER_API_PATHS.reviewer}?limit=${boundedLimit}`);
 }
 
 export function loadFindings(limit = 50): Promise<FindingsSnapshot> {

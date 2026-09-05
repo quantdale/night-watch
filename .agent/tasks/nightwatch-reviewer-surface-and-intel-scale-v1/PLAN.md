@@ -92,9 +92,9 @@ Relationships, probable duplicates, recurrence, defect classes,
 expectation provenance, confidence, Alphaus recommendations, local review
 state, and `epistemicClass` on every element.
 
-### M3 (W2) — Control Center reviewer UI — IN_PROGRESS
+### M3 (W2) — Control Center reviewer UI — COMPLETE
 
-### M4 (W3) — scale measurement at 1k / 5k / 10k — NOT_STARTED
+### M4 (W3) — scale measurement at 1k / 5k / 10k — IN_PROGRESS
 
 ### M5 (W4) — measurement-justified optimization — NOT_STARTED
 
