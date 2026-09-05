@@ -106,3 +106,12 @@ export function inspectLegacyTask(
   task: { reportText: string | null; stateNextAction: string; statePath?: string },
   status: string | undefined
 ): Array<{ code: string; path: string | null; line: number | null; detail: string }>;
+
+/** Normalized identifier value from a report/state field. */
+export function cleanIdValue(value: string | null | undefined): string;
+
+/** Paths a documentation-only checkpoint advance may touch. */
+export const APPROVED_CHECKPOINT_PATHS: readonly string[];
+
+/** Whether a changed path is on the documentation-checkpoint allowlist. */
+export function isApprovedCheckpointPath(file: string): boolean;

@@ -3897,8 +3897,238 @@ function checkReviewStoreBoundary() {
   if (/reviewBindingFor\s*\(|currentReviewArtifacts\s*\(/.test(collector)) fail('the collector derives a review binding of its own');
 }
 
+/**
+ * RO-1 review-operations boundary.
+ *
+ * The review store is designed to grow forever and never delete evidence, so
+ * the operations surface built over it is defined as much by what it cannot
+ * do as by what it shows. Each conjunct below pins one of those "cannot"s to
+ * a structural fact rather than to an author's intention.
+ *
+ * Every occurrence check here is occurrence-COMPLETE. The reviewer authority
+ * carried its fabricated source SHA in TWO places, and a rule that found one
+ * of them would have reported the defect repaired.
+ */
+function checkReviewOperationsBoundary() {
+  const inventory = withoutComments(read('src/core/reviewStore/inventory.ts'));
+  const history = withoutComments(read('src/core/reviewStore/history.ts'));
+  const storeAuthority = withoutComments(read('src/controlCenter/authorities/reviewStoreAuthority.ts'));
+  const filingAuthority = withoutComments(read('src/controlCenter/authorities/filingReportAuthority.ts'));
+  const adapter = withoutComments(read('src/controlCenter/adapters/reviewStoreAdapter.ts'));
+  const contract = withoutComments(read('src/controlCenter/contracts/reviewStore.ts'));
+  const router = withoutComments(read('src/controlCenter/server/router.ts'));
+  const cliGrammar = withoutComments(read('bin/lib/review-cli.mjs'));
+  const cliEntry = withoutComments(read('bin/nightwatch-review.mjs'));
+  const reviewerAuthority = withoutComments(read('src/controlCenter/authorities/reviewerAuthority.ts'));
+  const report = withoutComments(read('src/core/findingReview/report.ts'));
+
+  const readCone = [
+    ['src/core/reviewStore/inventory.ts', inventory],
+    ['src/core/reviewStore/history.ts', history],
+    ['src/controlCenter/authorities/reviewStoreAuthority.ts', storeAuthority],
+    ['src/controlCenter/authorities/filingReportAuthority.ts', filingAuthority],
+    ['src/controlCenter/adapters/reviewStoreAdapter.ts', adapter],
+    ['src/controlCenter/contracts/reviewStore.ts', contract],
+  ];
+
+  // --- the read cone holds no filesystem, process or network authority ---
+  for (const [file, source] of readCone) {
+    for (const [pattern, description] of [
+      [/from\s+['"]node:(?:net|http|https|dns|child_process|fs|os|worker_threads|dgram)[^'"]*['"]/, 'a network/process/filesystem import'],
+      [/\brequire\s*\(\s*['"]/, 'a require() call'],
+      [/\bfetch\s*\(/, 'fetch()'],
+      [/process\.env/, 'an environment read'],
+      [/from\s+['"][^'"]*(slack|leslie|pondr|notion)[^'"]*['"]/i, 'an external submission import'],
+    ]) if (pattern.test(source)) fail(`${file} contains ${description}; the review-operations cone must stay a local read projection`);
+  }
+
+  // --- nothing in the read cone can destroy a review ---
+  // Named verbs rather than "no fs": the authority holds a ReviewStore, and
+  // the store's own recovery method IS a deletion. The read cone must not
+  // reach it even though it legitimately exists one layer down.
+  for (const [file, source] of readCone) {
+    for (const verb of ['unlinkSync', 'rmSync', 'rmdirSync', 'renameSync', 'chmodSync', 'utimesSync', 'truncateSync', 'removeTemporary', 'recoverTemporaries', 'putDecision', 'writeImmutableJson', 'writeJson']) {
+      if (source.includes(`${verb}(`)) fail(`${file} reaches ${verb}(); the review-operations cone is read-only and no retention policy exists to invoke`);
+    }
+  }
+
+  // --- read-only is a PRECONDITION, not a comment ---
+  if (!/export function assertReadOnlyScanner/.test(inventory)) fail('the inventory has no read-only precondition');
+  if (!/REVIEW_INVENTORY_REQUIRES_READ_ONLY_STORE/.test(inventory)) fail('the inventory read-only precondition raises no categorical failure');
+  // Defined AND invoked. A precondition that is never called is a comment
+  // with a function signature.
+  const inventoryBody = inventory.slice(inventory.indexOf('export function inventoryReviewStore('));
+  if (!/assertReadOnlyScanner\(scanner\)/.test(inventoryBody)) fail('the inventory does not invoke its own read-only precondition');
+  if (!/createIfMissing: false/.test(storeAuthority)) fail('the review-operations authority does not hold a read-only store handle');
+
+  // --- health precedence exists and stale history is the least severe ---
+  const conditions = inventory.match(/REVIEW_STORE_HEALTH_CONDITIONS = \[([\s\S]*?)\]/)?.[1] ?? '';
+  const order = [...conditions.matchAll(/'([A-Z_]+)'/g)].map((match) => match[1]);
+  if (order.length < 6) fail('the store health vocabulary is suspiciously small');
+  if (order[0] !== 'STORE_UNAVAILABLE') fail('an unreadable store is not the most severe health condition');
+  if (order[order.length - 1] !== 'HEALTHY') fail('HEALTHY is not the least severe health condition');
+  if (order.indexOf('STALE_HISTORY_PRESENT') < order.indexOf('CORRUPTION_PRESENT')) {
+    fail('stale history outranks corruption in the health precedence; preserved evidence is not a fault');
+  }
+
+  // --- an unknown entry's NAME has nowhere to go ---
+  // The contract carries no field for it, so this is not a redaction that can
+  // be forgotten; there is no channel.
+  const unknownRow = contract.match(/interface ControlCenterReviewUnknownRowDto \{([\s\S]*?)\}/)?.[1] ?? '';
+  if (!unknownRow.includes('nameDigest')) fail('the unknown-entry contract carries no digest');
+  if (/\bname\s*:/.test(unknownRow)) fail('the unknown-entry contract carries a raw name; an unrecognized filename is not a string Nightwatch chose');
+  const inventoryUnknownRow = inventory.match(/interface ReviewInventoryUnknownRow \{([\s\S]*?)\}/)?.[1] ?? '';
+  if (/\bname\s*:/.test(inventoryUnknownRow)) fail('the inventory unknown-entry row carries a raw name');
+  if (!/unknownEntryNameDigest\(entry\.name\)/.test(inventory)) fail('the inventory does not digest an unrecognized entry name');
+  // Occurrence-complete: BOTH stranger classes go through the digest.
+  if ((inventory.split('unknownEntryNameDigest(entry.name)').length - 1) < 2) {
+    fail('only one unrecognized-entry class is digested; the other reaches output by name');
+  }
+
+  // --- a corruption row carries a code, never a validator detail ---
+  const corruptionRow = contract.match(/interface ControlCenterReviewCorruptionRowDto \{([\s\S]*?)\}/)?.[1] ?? '';
+  if (/\bdetail\s*:/.test(corruptionRow)) fail('the corruption contract carries a validator detail; a detail quotes bytes from an untrusted file');
+  for (const [file, source] of [['src/core/reviewStore/inventory.ts', inventory], ['src/core/reviewStore/history.ts', history]]) {
+    if (/detail:\s*(?:entry|row|error)/.test(source)) fail(`${file} projects a corruption detail outward`);
+  }
+
+  // --- the routing surface has exactly three review-store routes ---
+  const reviewStoreRoutes = [...router.matchAll(/parts\[3\] === 'review-store'/g)].length;
+  if (reviewStoreRoutes !== 3) fail(`the router declares ${reviewStoreRoutes} review-store routes; exactly three READ routes may exist`);
+  for (const verb of ['delete', 'prune', 'repair', 'archive', 'purge', 'retain']) {
+    if (new RegExp(`'review-store'[\\s\\S]{0,200}'${verb}'`).test(router)) fail(`the router exposes a review-store '${verb}' path`);
+  }
+
+  // --- the CLI grammar has no destructive verb or flag ---
+  const commands = cliGrammar.match(/REVIEW_CLI_COMMANDS = Object\.freeze\(\[([\s\S]*?)\]\)/)?.[1] ?? '';
+  if (!commands.includes("'inventory'")) fail('the review CLI declares no inventory command');
+  for (const verb of ['prune', 'delete', 'clean', 'repair', 'archive', 'retain', 'compact', 'gc']) {
+    if (commands.includes(`'${verb}'`)) fail(`the review CLI declares a destructive command: ${verb}`);
+  }
+  for (const [file, source] of [['bin/lib/review-cli.mjs', cliGrammar], ['bin/nightwatch-review.mjs', cliEntry]]) {
+    for (const flag of ['--prune', '--delete', '--repair', '--clean', '--force', '--archive']) {
+      if (source.includes(flag)) fail(`${file} accepts a destructive flag: ${flag}`);
+    }
+  }
+  // Stale history is not a failure exit. An exit code that called preserved
+  // evidence a failure would train an operator to ignore the corruption one.
+  if (!/if \(classification === 'CORRUPTION_PRESENT'\) return REVIEW_CLI_EXIT\.CORRUPTION_PRESENT;/.test(cliGrammar)) {
+    fail('the review CLI does not map corruption to its own exit code');
+  }
+  const staleExit = cliGrammar.match(/inventoryExitCode\(classification\) \{([\s\S]*?)\n\}/)?.[1] ?? cliGrammar;
+  if (/STALE_HISTORY_PRESENT/.test(staleExit)) fail('the review CLI gives stale history a non-OK exit code');
+
+  // --- no fabricated source identity anywhere in the finding-history cone ---
+  // TWO occurrences existed. Both the literal and the expanded form are
+  // refused, so a "repair" that only rewrote one is caught.
+  for (const [file, source] of [['src/controlCenter/authorities/reviewerAuthority.ts', reviewerAuthority]]) {
+    if (source.includes("'0'.repeat(40)")) fail(`${file} fabricates a source SHA`);
+    if (/["']0{40}["']/.test(source)) fail(`${file} carries a forty-zero source SHA literal`);
+    if (!source.includes('CONTROL_CENTER_REVIEW_NO_SOURCE')) fail(`${file} does not use the shared named-absence source identity`);
+  }
+  // One resolution, shared by the candidate and by every history entry.
+  const builders = reviewerAuthority.split('findingHistoryEntry(').length - 1;
+  if (builders < 3) fail('the finding-history entry builder is not shared by both accumulation sites');
+
+  // --- a regression candidate must prove a moved lineage ---
+  const analysis = withoutComments(read('src/core/findingIntel/analysis.ts'));
+  if (/latest\.sourceSha !== undefined/.test(analysis)) {
+    fail('the regression-candidate guard tests a condition its own validator already proved (DEF-RO-2)');
+  }
+  if (!/const sourceMoved = candidateSourceSha !== null && latest\.sourceSha !== candidateSourceSha;/.test(analysis)) {
+    fail('the regression-candidate rule does not require a moved source lineage');
+  }
+  if (!/latest\.priorOutcome === 'RESOLVED_FIXED' && sourceMoved/.test(analysis)) {
+    fail('the regression-candidate rule does not require BOTH a proven prior fix and a moved lineage');
+  }
+
+  // --- the four filing-report review states are distinct and total ---
+  const states = report.match(/FILING_REPORT_REVIEW_STATES = \[([\s\S]*?)\]/)?.[1] ?? '';
+  for (const state of ['NO_REVIEW', 'CURRENT', 'STALE', 'CORRUPT']) {
+    if (!states.includes(`'${state}'`)) fail(`the filing report cannot express the ${state} review state`);
+  }
+  // Occurrence-complete, and scoped to the function that does the work. The
+  // pairing has TWO directions — a decision-bearing state missing its fields,
+  // and a decision-free state carrying them — and a rule that merely found
+  // the error code somewhere in the file was satisfied by the first while a
+  // mutation removed the second. That mutation survived, which is how this
+  // conjunct came to be written this way.
+  const pairing = report.match(/function assertReviewFieldsMatchState\(review: FilingReportReview\): void \{([\s\S]*?)\n\}/)?.[1] ?? '';
+  if (pairing === '') fail('the filing report has no state/field pairing function');
+  const pairingFailures = (pairing.match(/fail\(`FILING_REPORT_REVIEW_INVALID_FOR_STATE/g) ?? []).length;
+  if (pairingFailures < 2) {
+    fail(`the filing report enforces only ${pairingFailures} direction(s) of the state/field pairing; a state naming no decision must be refused a decision, and a state naming one must be refused its absence`);
+  }
+  // A corrupt review must reach the fail-closed branch and never a decision.
+  const corruptBranch = report.match(/if \(review\.state === 'CORRUPT'\) \{([\s\S]*?)\n  \}/)?.[1] ?? '';
+  if (!corruptBranch.includes('UNAVAILABLE')) fail('a corrupt filing review does not fail closed');
+  if (/review\.decision/.test(corruptBranch)) fail('a corrupt filing review names a decision');
+  // The stale branch must not reuse the current heading.
+  const staleBranch = report.match(/if \(review\.state === 'STALE'\) \{([\s\S]*?)\n  \}/)?.[1] ?? '';
+  if (!/DOES NOT BIND/.test(staleBranch)) fail('a stale filing review is not labelled as non-binding');
+  if (/current local decision/.test(staleBranch)) fail('a stale filing review reuses the current-review heading');
+
+  // --- the filing cone cannot publish ---
+  // An IMPORT or a URL, never the word. The report NAMES Leslie and Pondr on
+  // purpose — the four-line non-equivalence block is the whole point of it —
+  // so a rule that matched the vocabulary would fire on the guarantee rather
+  // than on a breach of it.
+  for (const [file, source] of [['src/controlCenter/authorities/filingReportAuthority.ts', filingAuthority], ['src/core/findingReview/report.ts', report]]) {
+    if (/from\s+['"][^'"]*(slack|leslie|pondr|notion|webhook)[^'"]*['"]/i.test(source)) fail(`${file} imports an external submission client`);
+    if (/https?:\/\//i.test(source)) fail(`${file} carries an external URL`);
+    if (/\.publish\s*\(/.test(source)) fail(`${file} reaches a publication method`);
+  }
+
+  // --- the sentinel screens are literally identical across surfaces ---
+  // Three copies exist because three boundaries exist. Copies drift; this
+  // makes drift a failure rather than a discovery.
+  const sentinelOf = (source) => source.match(/const SENTINEL_RE\s*=\s*([\s\S]*?);\n/)?.[1]?.replace(/\s+/g, '') ?? null;
+  const screens = [
+    ['src/core/findingReview/report.ts', sentinelOf(report)],
+    ['src/core/findingReview/lifecycle.ts', sentinelOf(withoutComments(read('src/core/findingReview/lifecycle.ts')))],
+    ['src/controlCenter/adapters/reviewerAdapter.ts', sentinelOf(withoutComments(read('src/controlCenter/adapters/reviewerAdapter.ts')))],
+    ['src/controlCenter/adapters/reviewStoreAdapter.ts', sentinelOf(adapter)],
+  ];
+  const missing = screens.filter(([, value]) => value === null).map(([file]) => file);
+  if (missing.length > 0) fail(`a screened surface declares no sentinel pattern: ${missing.join(', ')}`);
+  const distinct = new Set(screens.map(([, value]) => value));
+  if (distinct.size !== 1) fail(`the sentinel screens have drifted apart across ${distinct.size} variants`);
+
+  // --- the UI derives its navigation set instead of counting it ---
+  const uiTest = read('ui/control-center/src/App.test.tsx');
+  if (/toHaveLength\(\s*\d+\s*\)/.test(uiTest.match(/primaryNav\.getAllByRole\('link'\)[\s\S]{0,80}/)?.[0] ?? '')) {
+    fail('the navigation test hard-codes a view count; a literal stops covering a view the moment one is added');
+  }
+  if (!/VIEW_DEFINITIONS\.length/.test(uiTest)) fail('the navigation test does not derive the view set from VIEW_DEFINITIONS');
+  // The href set is derived too. A literal alternation is the same defect in
+  // a different shape: it silently stops covering a view the moment one is
+  // added, while the assertion keeps passing.
+  if (!/permittedHrefs/.test(uiTest)) fail('the navigation test does not derive its permitted hrefs from the declared view set');
+  if (/toMatch\(\/\^#\(\?:/.test(uiTest)) fail('the navigation test matches hrefs against a literal alternation instead of the declared view set');
+
+  // --- declaration/implementation export parity for importable bin modules ---
+  // A `.d.mts` that omits an export is invisible at runtime and silently
+  // narrows what a test can even reference. Both directions are checked.
+  for (const stem of ['bin/lib/review-cli', 'bin/agent-continuity-protocol']) {
+    const implementation = read(`${stem}.mjs`);
+    const declaration = read(`${stem}.d.mts`);
+    const exported = new Set([...implementation.matchAll(/^export (?:async )?(?:function|const|class) ([A-Za-z0-9_]+)/gm)].map((match) => match[1]));
+    const declared = new Set([...declaration.matchAll(/^export (?:declare )?(?:function|const|class|interface|type) ([A-Za-z0-9_]+)/gm)].map((match) => match[1]));
+    if (exported.size === 0) fail(`${stem}.mjs exports nothing; the parity check would prove nothing`);
+    for (const name of exported) {
+      if (!declared.has(name)) fail(`${stem}.d.mts omits the exported ${name}; a missing declaration hides it from every importer`);
+    }
+    for (const name of declared) {
+      // Types and interfaces exist only in the declaration, by construction.
+      if (new RegExp(`^export (?:declare )?(?:interface|type) ${name}\\b`, 'm').test(declaration)) continue;
+      if (!exported.has(name)) fail(`${stem}.d.mts declares ${name}, which the implementation does not export`);
+    }
+  }
+}
+
 checkChildProcessBoundaries();
 checkReviewStoreBoundary();
+checkReviewOperationsBoundary();
 checkL6ProcessNetworkBoundary();
 checkTargetPolicy();
 checkTypecheckCoverage();
