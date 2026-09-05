@@ -23,7 +23,11 @@ import { test, expect } from '@playwright/test';
 
 const REPO_ROOT = path.resolve(__dirname, '..', '..');
 
-test.describe.configure({ mode: 'serial' });
+// NOT `mode: 'serial'`: playwright's serial mode SKIPS the remaining tests
+// after a failure, so one surviving mutation would hide every mutation after
+// it — which is exactly the reporting failure this campaign is guarding
+// against. Ordering is already guaranteed by `workers: 1`.
+
 
 /** Run the real hardening check. Returns its combined output and verdict. */
 function runHardening(): { readonly passed: boolean; readonly output: string } {
@@ -199,16 +203,38 @@ const MUTATIONS: readonly Mutation[] = [
     expect: /persisted review lookup is not performed per rendered row/,
   },
   {
-    name: 'M-20 let the collector derive a review binding of its own',
+    // The first attempt at this mutation only ADDED AN IMPORT, and it
+    // survived — correctly, because an unused import derives nothing. The
+    // rule was widened to refuse the import as well, and the mutation split
+    // in two so both the precursor and the act are proven caught.
+    name: 'M-20a let the collector reach a binding digest primitive',
     file: 'src/controlCenter/server/defaultCollector.ts',
     from: "import type { ControlCenterReviewAuthority } from '../authorities/reviewWriteAuthority';",
     to: "import type { ControlCenterReviewAuthority } from '../authorities/reviewWriteAuthority';\nimport { findingArtifactDigest } from '../../core/findingReview';",
+    expect: /collector reaches a review-binding digest primitive of its own/,
+  },
+  {
+    name: 'M-20b let the collector actually derive a second binding',
+    file: 'src/controlCenter/server/defaultCollector.ts',
+    from: "import type { ControlCenterReviewAuthority } from '../authorities/reviewWriteAuthority';",
+    to: "import type { ControlCenterReviewAuthority } from '../authorities/reviewWriteAuthority';\nimport { reviewBindingFor } from '../authorities/reviewBinding';\nconst secondBinding = (dossier: never) => reviewBindingFor(dossier, { campaignId: null });",
     expect: /collector derives a review binding of its own/,
   },
 ];
 
+/** Bytes of every mutated file, captured before the first mutation runs. */
+const baseline = new Map<string, string>();
+
 test.describe('review-store boundary hardening bites', () => {
   test.setTimeout(600_000);
+
+  test.beforeAll(() => {
+    for (const mutation of MUTATIONS) {
+      if (!baseline.has(mutation.file)) {
+        baseline.set(mutation.file, fs.readFileSync(path.join(REPO_ROOT, mutation.file), 'utf8'));
+      }
+    }
+  });
 
   test('the unmutated repository passes', () => {
     const result = runHardening();
@@ -223,11 +249,19 @@ test.describe('review-store boundary hardening bites', () => {
     });
   }
 
-  test('the tree is restored after every mutation', () => {
+  test('every mutated file is byte-identical to how the suite found it', () => {
     // A mutation harness that left the tree dirty would poison every later
     // suite and, worse, could be committed.
-    const status = execFileSync('git', ['status', '--porcelain', '--', 'src', 'bin'], { cwd: REPO_ROOT, encoding: 'utf8' });
-    expect(status.trim()).toBe('');
+    //
+    // Scoped to the files this suite actually touches, and compared against
+    // the bytes captured before the first mutation — NOT against a clean
+    // working tree. Requiring a clean tree would make this fail for unrelated
+    // uncommitted work, and the obvious way to "fix" that would be to commit
+    // during a mutation window, which is the failure mode itself.
+    for (const [file, original] of baseline) {
+      expect(fs.readFileSync(path.join(REPO_ROOT, file), 'utf8'), file).toBe(original);
+    }
+    expect(baseline.size).toBeGreaterThan(4);
     expect(runHardening().passed).toBe(true);
   });
 });

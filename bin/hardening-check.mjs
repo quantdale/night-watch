@@ -3778,7 +3778,11 @@ function checkReviewStoreBoundary() {
 
   // --- validate before publish, and no read-then-write race ---
   const putStart = storeCode.indexOf('putDecision(input: PutReviewDecisionInput)');
-  const putEnd = storeCode.indexOf('fileNamesFor(', putStart);
+  // Anchored on the NEXT METHOD SIGNATURE, not on a bare call name: a
+  // mutation that introduces `this.fileNamesFor(...)` inside putDecision would
+  // otherwise truncate the body being inspected and the rule would report the
+  // wrong violation.
+  const putEnd = storeCode.indexOf('  fileNamesFor(findingId: string)', putStart);
   const putBody = putStart >= 0 && putEnd > putStart ? storeCode.slice(putStart, putEnd) : '';
   if (!putBody) fail('review store putDecision body could not be located');
   const validateAt = putBody.indexOf('validateStoredReviewEnvelope(');
@@ -3871,7 +3875,12 @@ function checkReviewStoreBoundary() {
   // --- the binding builder is shared, not duplicated ---
   if (!/reviewBindingFor/.test(writeCode)) fail('review write authority does not use the shared binding builder');
   const collector = withoutComments(read('src/controlCenter/server/defaultCollector.ts'));
-  if (/findingArtifactDigest\s*\(/.test(collector)) fail('the collector derives a review binding of its own');
+  // Both the CALL and the IMPORT are refused. An unused import derives
+  // nothing on its own, but it is the visible precursor to a second
+  // derivation, and forbidding only the call leaves the boundary one line
+  // away from being crossed silently.
+  if (/findingArtifactDigest/.test(collector)) fail('the collector reaches a review-binding digest primitive of its own');
+  if (/reviewBindingFor\s*\(|currentReviewArtifacts\s*\(/.test(collector)) fail('the collector derives a review binding of its own');
 }
 
 checkChildProcessBoundaries();

@@ -37,7 +37,7 @@ C-12 contact.
 
 ## Current Milestone
 
-M4 — store-boundary hardening.
+M5 — property, crash, concurrency and mutation.
 
 ## Completed Milestones
 
@@ -94,6 +94,21 @@ M4 — store-boundary hardening.
   the five canonical decisions and nothing else, removes them once a
   decision is terminal, and refuses a response claiming organizational
   authority even if the server sent one.
+- M4: store-boundary hardening. `checkReviewStoreBoundary()` in
+  `bin/hardening-check.mjs` enforces: the review cone holds no fs, network
+  or child-process authority; publication is OCCURRENCE-COMPLETE (every
+  `this.artifacts.<method>` call is enumerated against an allowlist rather
+  than one positive `includes`); the canonical validators are INVOKED and
+  not merely imported; no second copy of the receipt-digest or staleness
+  logic exists; validation precedes publication and no raceable
+  read-then-write check exists; identity is the whole binding and file
+  names are hex-only; the error vocabulary is total in BOTH directions;
+  the derived root is held outside the repository and the subtree union
+  stays closed; recovery cannot touch an unknown file; no review artifact
+  is Git-tracked; the write authority's import graph is confined; nothing
+  in the cone references an external destination; the read path stays pure
+  and per-row; and the binding builder is shared, not duplicated.
+  21 mutations of the REAL guarded files, all caught.
 
 ## Work In Progress
 
@@ -128,8 +143,8 @@ None.
 
 ## Exact Next Action
 
-Execute M4: add occurrence-complete store-boundary hardening rules, and
-prove each one bites by mutating the artifact it guards.
+Execute M5: seeded property suite, >= 20 crash-injection scenarios, the
+concurrency matrix, and the >= 25 mutation campaign.
 
 ## Files Changed
 
@@ -161,6 +176,10 @@ prove each one bites by mutating the artifact it guards.
 - M3 (UI): `control-center:ui:typecheck` PASS; `control-center:ui:test`
   20/20 PASS (6 new review-persistence cases);
   `control-center:ui:build` PASS — 3 built files, no external references.
+- M4: `hardening:check` PASS; `typecheck` PASS;
+  `tests/unit/reviewStoreHardening.test.ts` 23/23 PASS — 21 mutations
+  introduced, 21 caught, 0 survivors, every mutated file byte-identical
+  afterwards; `hardeningRuleParity` PASS (no dead rule).
 
 ## Decisions Made During This Task
 
@@ -184,7 +203,24 @@ prove each one bites by mutating the artifact it guards.
 
 ## Discoveries
 
-Recorded above and in the OpenSpec audit. Two from M1 worth carrying:
+Recorded above and in the OpenSpec audit.
+
+From M4, the mutation harness earned its place twice before it was even
+finished:
+
+- M-05 (reintroduce a raceable read-then-write check) fired the WRONG
+  rule. The `putDecision` body was extracted by slicing to the next
+  occurrence of `fileNamesFor(`, so a mutation that inserted
+  `this.fileNamesFor(...)` inside `putDecision` truncated the body under
+  inspection and the check reported "publishes before validating" instead.
+  The extraction is now anchored on the next method SIGNATURE. A rule that
+  reports the wrong violation is a rule that will mislead the next reader.
+- M-20 SURVIVED, correctly: it only added an unused import, which derives
+  nothing. The rule was widened to refuse the import as well — the visible
+  precursor is one line from the act — and the mutation was split so both
+  are proven caught.
+
+Two from M1 worth carrying:
 
 - The pre-publish validation earned its place immediately: the store
   validates the exact bytes it is about to write, in the shape the reader
