@@ -37,7 +37,7 @@ C-12 contact.
 
 ## Current Milestone
 
-M5 — property, crash, concurrency and mutation.
+M6 — scale measurement.
 
 ## Completed Milestones
 
@@ -109,6 +109,21 @@ M5 — property, crash, concurrency and mutation.
   in the cone references an external destination; the read path stays pure
   and per-row; and the binding builder is shared, not duplicated.
   21 mutations of the REAL guarded files, all caught.
+- M5: durability. `tests/unit/reviewStoreDurability.test.ts` — seeded
+  property suite (40 seeds; receipt determinism, per-field staleness over
+  every one of the eight bound fields, terminal-receipt immutability,
+  authority immutability, a ~90-case corruption corpus, unknown-schema
+  refusal, source-artifact immutability, and a positive-totality check on
+  the store's own method surface); 72 injected crash scenarios (24 fs
+  injection points x EIO/ENOSPC/EACCES) proving the canonical file is
+  always absent-or-complete, never partial and never zero-byte, with all
+  residue an identifiable temporary; and a concurrency matrix (2/4/8/16
+  competing writers for one binding, 12 readers interleaved into the
+  publish path, 25 non-contending bindings, readers during recovery).
+  `bin/review-mutation-campaign.mjs` (`npm run mutation:review`) is the
+  behavioural campaign: 31 introduced, 29 detected, 2 survived — both
+  declared, one CONTROL (comment-only) and one EQUIVALENT (`12 * 2` for
+  `24`), restore drift NONE.
 
 ## Work In Progress
 
@@ -143,8 +158,9 @@ None.
 
 ## Exact Next Action
 
-Execute M5: seeded property suite, >= 20 crash-injection scenarios, the
-concurrency matrix, and the >= 25 mutation campaign.
+Execute M6: measure the served reviewer path at 1k/5k/10k against
+0%/10%/50%/100% reviewed review-store populations, and compare with the
+predecessor's envelope.
 
 ## Files Changed
 
@@ -180,6 +196,17 @@ concurrency matrix, and the >= 25 mutation campaign.
   `tests/unit/reviewStoreHardening.test.ts` 23/23 PASS — 21 mutations
   introduced, 21 caught, 0 survivors, every mutated file byte-identical
   afterwards; `hardeningRuleParity` PASS (no dead rule).
+- M5: `typecheck` PASS; `hardening:check` PASS; `agent:check` PASS;
+  `tests/unit/reviewStoreDurability.test.ts` 23/23 PASS;
+  `npm run mutation:review` PASS (31/29/2, restore drift NONE);
+  full unit regression 4072 passed / 0 failed / 13 skipped, TWICE
+  consecutively.
+  ONE unattributed one-off: an earlier full-suite run in this milestone
+  reported `1 failed` without the failing test being captured. It did not
+  reproduce in the two subsequent identical full runs, and the five new
+  suites were then run 5x (152/152 each) and the mutation bite harness 3x
+  (23/23 each) with no failure. It is recorded rather than dismissed, and
+  the certification runs in M8 are the decisive evidence.
 
 ## Decisions Made During This Task
 
@@ -279,7 +306,10 @@ made the surface more careful, not less.
 
 ## Deferred / Follow-Up
 
-None yet.
+- One unattributed full-suite failure observed during M5 (see the
+  validation ledger). Unreproduced across two identical full runs and
+  targeted repetition. If it recurs at M8 certification it must be
+  captured and attributed before COMPLETE is claimed.
 
 ## Resume Recipe
 
