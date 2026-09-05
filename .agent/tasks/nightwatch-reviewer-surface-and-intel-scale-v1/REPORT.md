@@ -20,9 +20,27 @@
   D-REV-3 (cone prose is never projected onto the public surface; the
   reviewer basis is categorical), D-REV-4 (page-scoped intelligence, with
   paged output proven byte-identical to exhaustive).
-- Safety events: NONE. No production, NEXT, DEV, or live C-12 contact. No
-  credential access. No sibling-repository write. No force push. No
-  history rewrite. No external filing.
+- Safety events: ONE workspace-integrity event, class WORKSPACE_HARNESS,
+  detected by this repository's own guard and repaired before closure. At
+  M9 an agent-harness `ScheduleWakeup` call wrote ten `**/.claude/...`
+  patterns into the SHARED `$GIT_COMMON_DIR/info/exclude` and left a
+  `.claude/scheduled_tasks.lock` in the canonical checkout. C-00 requires
+  that shared file to hold zero effective patterns, so
+  `npm run agent:check` failed closed with ten `WORKSPACE_EXCLUDE_DRIFT`
+  errors. The stock comment-only git template was restored and the stale
+  lock removed; the patterns were deliberately NOT migrated into the
+  tracked `.gitignore`, because encoding a tooling side effect as
+  repository policy would be the wrong resolution. `agent:check` returned
+  to PASS and `WORKSPACE_EXCLUDE_POLICY` to green. Full record in
+  `STATE.md` `## Safety Events`.
+  This is a workspace/harness event only. No unauthorized repository or
+  product action followed from it, and no authorization boundary was
+  crossed: no production, NEXT, DEV, or live C-12 contact. No credential
+  access. No sibling-repository write. No force push. No history rewrite.
+  No external filing.
+  (Corrected under DEF-RP-1: this line previously read
+  `Safety events: NONE`, contradicting the event recorded in this same
+  campaign's `STATE.md`. See the owner-local review persistence campaign.)
 - Deferred items: see `## Deferred / Follow-Up` in `STATE.md`.
 - Remaining blockers: none.
 - Recommended next phase/task: see `## Next recommendation` below.

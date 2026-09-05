@@ -62,6 +62,14 @@ export function findNonterminalPlanMilestones(milestoneLines: Array<{ lineNumber
 export function reportAnchorRole(key: string): 'validated' | 'substantive' | 'documentation' | 'starting' | null;
 export function cleanShaValue(value: string): string;
 
+/** True when a safety-events claim opens with a NONE token (DEF-RP-1). */
+export function assertsNoSafetyEvents(value: string | null | undefined): boolean;
+
+/** The REPORT's `Safety events:` claim, or null when it makes none (DEF-RP-1). */
+export function findReportSafetyEventsClaim(
+  text: string | null | undefined
+): { value: string; line: number } | null;
+
 export function validateTaskV2(
   task: {
     dir: string;

@@ -37,11 +37,22 @@ C-12 contact.
 
 ## Current Milestone
 
-M0 — predecessor safety-event truth.
+M1 — review store core.
 
 ## Completed Milestones
 
-None yet.
+- M0: predecessor safety-event truth repaired. DEF-RP-1 allocated for the
+  contradictory terminal accounting. The predecessor `REPORT.md` line now
+  records the ONE workspace-integrity event its own `STATE.md` documents,
+  classified `WORKSPACE_HARNESS` — harness `ScheduleWakeup` wrote patterns
+  into the shared `$GIT_COMMON_DIR/info/exclude`, `agent:check` caught it,
+  the stock template was restored — and states explicitly that no
+  authorization boundary was crossed. The history is preserved, not
+  rewritten, and the event is not inflated into production contact.
+  `assertsNoSafetyEvents` / `findReportSafetyEventsClaim` in
+  `bin/agent-continuity-protocol.mjs` add the structural rule; it fires
+  only in the asymmetric direction that can be false and, run against all
+  127 task directories, produced exactly one hit: the real defect.
 
 ## Work In Progress
 
@@ -76,9 +87,9 @@ None.
 
 ## Exact Next Action
 
-Execute M0: allocate the defect id, correct the predecessor REPORT safety
-accounting, and add the narrow structural `agent:check` rule with its
-regression.
+Execute M1: add the closed `subtree` option and truthful derived-root class
+to `privateArtifacts`, then build `src/core/reviewStore/` (types, identity,
+store) over `writeImmutableJson`, with its focused suite.
 
 ## Files Changed
 
@@ -89,6 +100,11 @@ regression.
 ## Validation Ledger
 
 - Campaign open: `session:status` PASS (`WORKSPACE_INTEGRITY_SATISFIED`).
+- M0: `typecheck` PASS; `hardening:check` PASS; `agent:check` PASS (2 known
+  warnings); `tests/unit/safetyEventAccounting.test.ts` 12/12 PASS. Before
+  the repair the same rule reported
+  `SAFETY_EVENT_ACCOUNTING_CONTRADICTION` at
+  `.agent/tasks/nightwatch-reviewer-surface-and-intel-scale-v1/REPORT.md:23`.
 
 ## Decisions Made During This Task
 
@@ -102,6 +118,11 @@ regression.
 - D-RP-3: discovery uses a derived, recomputed file-name key rather than an
   index file. There is no index to corrupt, and one directory listing serves
   a whole page.
+- D-RP-5: the safety-accounting rule compares the opening token of two
+  declared claims and fires only when a REPORT asserts NONE over a STATE
+  section that does not. It is deliberately asymmetric: absence of a claim
+  is not a claim of absence, and only 17 of 127 REPORTs carry the field, so
+  requiring one would be inventing history rather than checking it.
 - D-RP-4: no dossier schema version changes. The identities exist in v2
   already; v1 keeps `null` and stays UNKNOWN.
 

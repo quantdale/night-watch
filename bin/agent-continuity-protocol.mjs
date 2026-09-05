@@ -413,6 +413,73 @@ export function cleanIdValue(value) {
 // Per-task v2 semantic validation (ACTIVE-bound and history forms).
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// Safety-event accounting (DEF-RP-1).
+//
+// One campaign may not hold two committed answers to "did a safety event
+// occur". The reviewer-surface campaign's STATE.md recorded a
+// workspace-integrity event under `## Safety Events` while its REPORT.md
+// asserted `Safety events: NONE`, and nothing caught it.
+//
+// This is a field comparison, not prose analysis. Both documents already
+// follow one convention across the recorded history: the claim opens with a
+// NONE token, or it records events. The rule reads the opening token of each
+// and fires only in the asymmetric direction that can be false — a REPORT
+// asserting NONE over a STATE section that does not open with NONE. It
+// cannot fire on any of the recorded NONE spellings, and a REPORT that
+// asserts NONE with no supporting STATE section is unsupported rather than
+// silently accepted.
+// ---------------------------------------------------------------------------
+
+/** Leading NONE token, tolerating list markers, emphasis, quoting and a `SAFETY_EVENTS:` prefix. */
+const SAFETY_NONE_OPENING_RE = /^none\b/i;
+
+function stripSafetyClaimDecoration(line) {
+  return String(line ?? '')
+    .trim()
+    .replace(/^[-*+]\s+/, '')
+    .replace(/^\d+\.\s+/, '')
+    .replace(/^\*\*(.*?)\*\*/, '$1')
+    .replace(/^safety[_ ]events?\s*:\s*/i, '')
+    .replace(/^[`"'\u2018\u2019\u201c\u201d]+/, '')
+    .trim();
+}
+
+/**
+ * True when a safety-events claim opens with a NONE token. Empty text is NOT
+ * a NONE assertion: absence of a claim is not a claim of absence.
+ */
+export function assertsNoSafetyEvents(value) {
+  const firstLine = String(value ?? '')
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .find((line) => line !== '');
+  if (firstLine === undefined) return false;
+  return SAFETY_NONE_OPENING_RE.test(stripSafetyClaimDecoration(firstLine));
+}
+
+/**
+ * The REPORT's `Safety events:` claim, or null when the report makes none.
+ * Scanned directly rather than through parseReportFields: the recorded
+ * convention writes the claim as a list item (`- Safety events: ...`), which
+ * the canonical-key field parser deliberately does not treat as a field.
+ */
+export function findReportSafetyEventsClaim(text) {
+  const lines = String(text ?? '').split(/\r?\n/);
+  let inFence = false;
+  for (let index = 0; index < lines.length; index += 1) {
+    const trimmed = lines[index].trim();
+    if (trimmed.startsWith('```')) {
+      inFence = !inFence;
+      continue;
+    }
+    if (inFence) continue;
+    const match = /^(?:[-*+]\s+|\d+\.\s+)?\*{0,2}safety[_ ]events?\*{0,2}\s*:\s*(.*)$/i.exec(trimmed);
+    if (match) return { value: match[1].trim(), line: index + 1 };
+  }
+  return null;
+}
+
 function makeError(code, path, line, detail) {
   return { code, path, line, detail };
 }
@@ -700,6 +767,35 @@ export function validateTaskV2(task, opts = {}) {
 
   const reportStatus = reportFields ? reportFields.find((field) => field.key === 'Status')?.value : undefined;
   const reportStatusNormalized = reportStatus === undefined ? undefined : normalizeTaskStatus(reportStatus);
+
+  // Safety-event accounting (DEF-RP-1). Checked for every status, not only
+  // COMPLETE: a REPORT is terminal accounting whenever it makes the claim.
+  if (task.reportText) {
+    const reportSafetyClaim = findReportSafetyEventsClaim(task.reportText);
+    if (reportSafetyClaim !== null && assertsNoSafetyEvents(reportSafetyClaim.value)) {
+      const stateSafetySection = stateSections.get('Safety Events');
+      const stateSafetyText = stateSafetySection === undefined ? '' : sectionBodyText(stateSafetySection).trim();
+      if (stateSafetyText === '') {
+        errors.push(
+          makeError(
+            'SAFETY_EVENT_ACCOUNTING_UNSUPPORTED',
+            task.reportPath,
+            reportSafetyClaim.line,
+            'REPORT asserts no safety events while STATE has no ## Safety Events section to support the claim'
+          )
+        );
+      } else if (!assertsNoSafetyEvents(stateSafetyText)) {
+        errors.push(
+          makeError(
+            'SAFETY_EVENT_ACCOUNTING_CONTRADICTION',
+            task.reportPath,
+            reportSafetyClaim.line,
+            `REPORT asserts "Safety events: ${reportSafetyClaim.value.slice(0, 60)}" while STATE ## Safety Events records "${stateSafetyText.split(/\r?\n/)[0].slice(0, 80)}"`
+          )
+        );
+      }
+    }
+  }
 
   if (status === 'COMPLETE') {
     // 1. ACTIVE milestone terminal (when bound).
