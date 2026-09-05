@@ -73,6 +73,17 @@ export interface FindingsDossierMetadata {
   };
   readonly sourceCurrentness: 'CURRENT' | 'SOURCE_STALE' | 'SOURCE_UNAVAILABLE';
   readonly semanticFinding: boolean;
+  /**
+   * The mechanically established expectation identity — "why is this
+   * considered wrong?" — carried forward from the dossier's semantic triage
+   * evidence. Null when the dossier carries none: a v1 dossier, a v2 dossier
+   * without semantic triage evidence, or an identity that fails the
+   * projection screen. NOTHING is derived, inferred or hashed from prose to
+   * fill this in, so null here means the reviewer surface reports UNKNOWN.
+   */
+  readonly expectationId: string | null;
+  /** The semantic contract / invariant identity, carried on the same terms. */
+  readonly semanticContractId: string | null;
 }
 
 export interface FindingsAuthoritySnapshot {
@@ -183,6 +194,34 @@ function validatedDossier(value: unknown): FindingsDossier | null {
   return value as unknown as BugDossier;
 }
 
+/**
+ * Project one upstream identity across the Control Center boundary.
+ *
+ * The identity is ALREADY privacy-validated where it is constructed
+ * (`validateSemanticTriageEvidence` applies the safe-id pattern, the sentinel
+ * set and a whole-object sentinel sweep). Re-screening here is defence in
+ * depth, not derivation: this function can only drop an identity, never
+ * invent or repair one.
+ *
+ * Both screens are applied deliberately. The id pattern alone would pass
+ * `CUSTOMER_SENTINEL`, which is a valid identifier shape and an invalid thing
+ * to project; the sentinel screen alone would pass a path-shaped value.
+ */
+function projectedIdentity(value: unknown): string | null {
+  const safe = asSafeControlCenterId(value);
+  if (safe === null) return null;
+  return containsPrivatePayloadShape(safe) ? null : (safe as string);
+}
+
+/**
+ * The dossier's semantic triage evidence, or null. v1 dossiers have no such
+ * field; a v2 dossier may legitimately carry `null`.
+ */
+function semanticTriageEvidenceOf(dossier: FindingsDossier): Record<string, unknown> | null {
+  const candidate = (dossier as unknown as Record<string, unknown>).semanticTriageEvidence;
+  return record(candidate) ? candidate : null;
+}
+
 function toMetadata(dossier: FindingsDossier): FindingsDossierMetadata | null {
   const candidateId = asSafeControlCenterId(dossier.candidateId);
   const oracleFingerprint = asSafeControlCenterDigest(dossier.oracleFingerprint);
@@ -207,6 +246,9 @@ function toMetadata(dossier: FindingsDossier): FindingsDossierMetadata | null {
     confidence: { level: dossier.confidence.level },
     sourceCurrentness: reduceFindingsSourceCurrentness(dossier.sourceChangeCandidates.map((candidate) => candidate.sourceFreshness)),
     semanticFinding: dossier.semanticEvidence !== null && dossier.semanticEvidence !== undefined,
+    // Carried, never derived. See projectedIdentity.
+    expectationId: projectedIdentity(semanticTriageEvidenceOf(dossier)?.expectationId),
+    semanticContractId: projectedIdentity(semanticTriageEvidenceOf(dossier)?.invariantDefinitionId),
   };
 }
 

@@ -7,12 +7,13 @@
 // reimplementing them, so the browser surface and the human filing report
 // answer to the same certified logic.
 //
-// What the snapshot cannot supply stays UNKNOWN. Dossier metadata carries no
-// expectation identity, no semantic contract identity and no review record,
-// so relationships rest on fingerprint evidence, defect classes are usually
-// absent, and local review is UNKNOWN until a review store exists. That is
-// the honest answer; supplying a default here would be the exact failure the
-// contract forbids.
+// What the snapshot cannot supply stays UNKNOWN. Where the dossier DOES carry
+// an expectation or semantic-contract identity — a v2 dossier with semantic
+// triage evidence — it is carried forward unchanged, so relationships and
+// defect classes can rest on that identity as well as on fingerprint
+// evidence. Where it does not, both stay null and the cone reports UNKNOWN.
+// That is the honest answer; supplying a default here would be the exact
+// failure the contract forbids.
 //
 // The Alphaus vocabulary below is a DELIBERATE LITERAL DUPLICATE of
 // src/core/alphausHandoff/types.ts under the F-12 reverse-isolation
@@ -100,10 +101,18 @@ function descriptorFor(dossier: FindingsDossierMetadata): IntelFindingDescriptor
   return {
     findingId: dossier.candidateId,
     fingerprint,
-    // Dossier metadata carries no expectation or contract identity. Null is
-    // the truthful value and drives the cone to UNKNOWN where it should.
-    expectationId: null,
-    semanticContractId: null,
+    // Carried forward from the dossier's semantic triage evidence, where
+    // these identities are mechanically established and privacy validated.
+    // Null when the dossier carries none — a v1 dossier, or a v2 dossier
+    // without semantic triage evidence — and null still drives the cone to
+    // UNKNOWN, which remains the truthful answer for those. Nothing is
+    // derived here: this cone reads an identity or reports its absence.
+    // `?? null` normalizes at the boundary rather than trusting the shape:
+    // a snapshot can arrive across a JSON boundary where a missing field is
+    // `undefined`, and the descriptor contract is `string | null`. The
+    // classifier is left exactly as certified.
+    expectationId: dossier.expectationId ?? null,
+    semanticContractId: dossier.semanticContractId ?? null,
     failureSignature: null,
     route,
     sourceLineage: null,

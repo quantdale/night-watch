@@ -222,6 +222,8 @@ function findingsSnapshot(): FindingsAuthoritySnapshot {
     confidence: { level: 'HIGH' },
     sourceCurrentness: 'CURRENT',
     semanticFinding: true,
+    expectationId: 'fixture.synthetic-read.real-source-deep',
+    semanticContractId: 'inv:sha256:aaaaaaaaaaaaaaaaaaaaaaaa',
   };
   const staleDossier: FindingsDossierMetadata = {
     ...dossier,

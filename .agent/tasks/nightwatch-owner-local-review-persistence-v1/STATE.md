@@ -37,7 +37,7 @@ C-12 contact.
 
 ## Current Milestone
 
-M2 — dossier identity propagation.
+M3 — Control Center write and read integration.
 
 ## Completed Milestones
 
@@ -66,6 +66,18 @@ M2 — dossier identity propagation.
   than a second copy, and so tampering is reported as tampering even when
   the receipt is also stale. `src/core/reviewStore/` adds only schema,
   identity and read policy over `writeImmutableJson`.
+- M2: dossier identity propagation. `FindingsDossierMetadata` gained
+  `expectationId` / `semanticContractId`, read from
+  `semanticTriageEvidence.expectationId` / `.invariantDefinitionId`, and
+  `descriptorFor` now passes them through instead of hardcoding `null`.
+  No dossier schema changed: the identities already existed in v2.
+  `projectedIdentity` applies BOTH the safe-id pattern and the canonical
+  `containsPrivatePayloadShape` screen, because either alone is
+  insufficient — the id pattern accepts `CUSTOMER_SENTINEL`, and the
+  sentinel screen accepts a path-shaped value.
+  `tests/helpers/reviewerCorpus.ts` is the permanent synthetic corpus,
+  built from six named families so over-collapse is measurable rather
+  than assumed.
 
 ## Work In Progress
 
@@ -100,10 +112,9 @@ None.
 
 ## Exact Next Action
 
-Execute M2: carry `expectationId` and `semanticContractId` from
-`SemanticTriageEvidence` through `FindingsDossierMetadata` and
-`descriptorFor`, then measure the classification effect on a permanent
-synthetic corpus and add the false-positive defence.
+Execute M3: add the narrow Control Center review-decision write authority
+and route, wire the page-bounded persisted review read path into the
+reviewer projection, and connect the reviewer UI.
 
 ## Files Changed
 
@@ -124,6 +135,10 @@ synthetic corpus and add the false-positive defence.
   `privateArtifactAtomic` + `findingReviewLifecycle` + `privateTriage` +
   `reviewerProjection` 67/67 PASS (no regression from the
   `verifyReceiptIntegrity` extraction).
+- M2: `typecheck` PASS; `hardening:check` PASS;
+  `tests/unit/dossierIdentityPropagation.test.ts` 24/24 PASS;
+  `controlCenterFindingsAuthority` + `reviewerProjection` + `findingIntel`
+  + `reviewStore` 105/105 PASS.
 
 ## Decisions Made During This Task
 
@@ -166,6 +181,43 @@ Recorded above and in the OpenSpec audit. Two from M1 worth carrying:
 ## Safety Events
 
 None yet in this campaign.
+
+## Measured identity-propagation effect (M2)
+
+Permanent synthetic corpus, 300 findings, six families, deterministic
+seed. Identical corpus with and without the identities, so any difference
+is attributable to the carry and to nothing else.
+
+```
+                        before   after
+defect-class members         0     150
+duplicate suggestions      146     146
+UNKNOWN relationships        1       1
+RELATED_FINDING            225     151
+SHARED_DEFECT_CLASS          0      74
+PROBABLE_DUPLICATE          74      37
+EXACT_SAME_FINDING           0      37
+```
+
+Read carefully, this is refinement rather than inflation. Duplicate
+suggestions — the strongest and most consequential claim the surface
+makes — are UNCHANGED at 146. UNKNOWN is unchanged, because a finding
+with no identity gains nothing from other findings having one. The two
+movements are both reclassifications of pairs the classifier already
+related: 74 `RELATED_FINDING` became the more specific
+`SHARED_DEFECT_CLASS`, and 37 `PROBABLE_DUPLICATE` became
+`EXACT_SAME_FINDING` where the expectation AND the fingerprint agree.
+Defect classes went from impossible to 150 members, because a class
+requires a shared semantic invariant and there was no identity to share.
+
+No classifier rule was changed to produce any of this.
+
+The most valuable single result is in the counterevidence direction. For
+a pair sharing a fingerprint but carrying different expectations, the
+classifier could previously only record `MISSING_COMPARISON_INPUT` — "I
+do not know". With the identities it records `DIFFERENT_EXPECTATION` and
+`DIFFERENT_SEMANTIC_CONTRACT` — "these genuinely differ". Propagation
+made the surface more careful, not less.
 
 ## Deferred / Follow-Up
 
