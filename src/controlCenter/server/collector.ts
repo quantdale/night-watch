@@ -9,6 +9,7 @@ import type { ControlCenterCampaignCoverageDto, ControlCenterCampaignSummaryDto 
 import type { ControlCenterSourceGraphDto, ControlCenterSourceSummaryDto, ControlCenterSourceSurfacesDto } from '../contracts/sourceGraph';
 import type { ControlCenterFindingsDto } from '../contracts/findings';
 import type { ControlCenterReviewerDto } from '../contracts/reviewer';
+import type { ControlCenterReviewFilingDto, ControlCenterReviewHistoryDto, ControlCenterReviewStoreDto } from '../contracts/reviewStore';
 import type { ControlCenterSystemMapDto, ControlCenterSystemMapQueryDto } from '../contracts/systemMap';
 import type { SystemMapLevelSegment, SystemMapQuerySegment } from './router';
 
@@ -17,6 +18,11 @@ export type MaybePromise<T> = T | Promise<T>;
 export interface ControlCenterListQuery {
   readonly limit: number;
   readonly cursor: SafeControlCenterCursor | null;
+}
+
+export interface ControlCenterReviewStoreQuery {
+  readonly limit: number;
+  readonly offset: number;
 }
 
 export interface ControlCenterSourceSurfaceQuery extends ControlCenterListQuery {
@@ -40,6 +46,15 @@ export interface ControlCenterCollector {
   findings(query: ControlCenterListQuery): MaybePromise<ControlCenterFindingsDto>;
   /** The reviewer surface over the finding-intelligence and review cones. */
   reviewer(query: ControlCenterListQuery): MaybePromise<ControlCenterReviewerDto>;
+  /**
+   * Read-only review-store operations. The store is intentionally never
+   * pruned, so these exist to make growth observable; none of them can
+   * change it.
+   */
+  reviewStoreInventory(query: ControlCenterReviewStoreQuery): MaybePromise<ControlCenterReviewStoreDto>;
+  /** Null means the finding is not in the current snapshot — never an empty history. */
+  reviewStoreHistory(findingId: SafeControlCenterId, query: ControlCenterReviewStoreQuery): MaybePromise<ControlCenterReviewHistoryDto | null>;
+  reviewStoreFiling(findingId: SafeControlCenterId): MaybePromise<ControlCenterReviewFilingDto | null>;
   /** C-15c. Null means the focus is missing, unknown, or supplied where the
    *  level does not accept one — never a silently empty map. */
   systemMapLevel(level: SystemMapLevelSegment, focusId: string | null): MaybePromise<ControlCenterSystemMapDto | null>;

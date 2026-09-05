@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { App, ControlCenterErrorBoundary } from './App';
 import { CONTROL_CENTER_API_PATHS } from './api';
+import { VIEW_DEFINITIONS } from './types';
 import type { OverviewSnapshot } from './types';
 
 const overview: OverviewSnapshot = {
@@ -98,6 +99,92 @@ const overview: OverviewSnapshot = {
   },
 };
 
+
+// ---------------------------------------------------------------------------
+// Review-store operations fixtures.
+//
+// The store deliberately contains one of everything an operator might have to
+// look at: a current review, a historical one, a corrupt generation, an
+// interrupted publish, and a file Nightwatch did not write whose NAME carries
+// a sentinel. The last one is the point of the digest projection.
+// ---------------------------------------------------------------------------
+
+const reviewStoreSnapshot = {
+  schemaVersion: 'nightwatch.control-center.review-store.v1',
+  state: 'AVAILABLE',
+  exists: true,
+  depth: 'DEEP',
+  currentnessResolved: true,
+  counts: {
+    entries: 5, canonicalArtifacts: 3, validArtifacts: 2, corruptArtifacts: 1, unreadableArtifacts: 0,
+    temporaryArtifacts: 1, unknownEntries: 1, nonFileEntries: 0, uniqueFindings: 1, generations: 2,
+    findingsWithMultipleGenerations: 1, current: 1, stale: 1, unknownCurrentness: 0,
+  },
+  bytes: { total: 4096, canonical: 3072, temporary: 512, unknown: 512, nonFile: 0 },
+  health: { conditions: ['CORRUPTION_PRESENT', 'UNKNOWN_FILES_PRESENT', 'TEMPORARY_RESIDUE_PRESENT', 'STALE_HISTORY_PRESENT'], classification: 'CORRUPTION_PRESENT' },
+  byDecision: [{ code: 'ACCEPT_EVIDENCE', count: 1 }, { code: 'MARK_INSUFFICIENT', count: 1 }],
+  byResultingState: [{ code: 'INSUFFICIENT_EVIDENCE', count: 1 }, { code: 'REVIEWED', count: 1 }],
+  oldestStoredAt: '2026-09-01T10:00:00Z',
+  newestStoredAt: '2026-09-05T10:00:00Z',
+  corruption: [{ fileName: 'review.aaaaaaaaaaaa.bbbbbbbbbbbbbbbbbbbbbbbb.json', code: 'REVIEW_STORE_CORRUPT' }],
+  corruptionPage: { offset: 0, limit: 50, total: 1, truncated: false },
+  unknownEntries: [{ nameDigest: 'review-unknown-entry:aaaaaaaaaaaaaaaaaaaaaaaa', bytes: 512, kind: 'UNKNOWN' }],
+  unknownEntriesPage: { offset: 0, limit: 50, total: 1, truncated: false },
+  temporaries: [{ name: '.nightwatch-123-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.tmp', bytes: 512 }],
+  temporariesPage: { offset: 0, limit: 50, total: 1, truncated: false },
+  findings: [{ findingId: 'candidate-review-1', generations: 2, currentGenerations: 1, staleGenerations: 1, unknownGenerations: 0 }],
+  findingsPage: { offset: 0, limit: 50, total: 1, truncated: false },
+  inventoryDigest: 'review-inventory:cccccccccccccccccccccccc',
+  readOnly: true,
+  retentionPolicy: 'NONE_OWNER_DECISION_PENDING',
+  organizationalAuthority: 'NONE_LOCAL_REVIEW_ONLY',
+};
+
+const generation = (identity: string, currentness: 'CURRENT' | 'STALE', decision: string, resultingState: string, storedAt: string) => ({
+  reviewIdentity: identity,
+  sourceSha: 'synthetic.no-source-evidence',
+  campaignId: 'campaign.local.1',
+  dossierDigest: 'dossier:aaaaaaaaaaaaaaaaaaaaaaaa',
+  findingDigest: 'finding:bbbbbbbbbbbbbbbbbbbbbbbb',
+  reviewedAt: storedAt,
+  storedAt,
+  decision,
+  resultingState,
+  currentness,
+  staleReason: currentness === 'STALE' ? 'FINDING_REVIEW_STALE_DOSSIERDIGEST' : null,
+  expectationId: null,
+  semanticContractId: null,
+  identityAbsenceReason: 'REVIEW_BINDING_CARRIES_NO_SEMANTIC_IDENTITY',
+  organizationalAuthority: 'NONE_LOCAL_REVIEW_ONLY',
+});
+
+const reviewHistorySnapshot = {
+  schemaVersion: 'nightwatch.control-center.review-history.v1',
+  findingId: 'candidate-review-1',
+  state: 'CURRENT',
+  generations: [
+    generation('cccccccccccccccccccccccc', 'CURRENT', 'MARK_INSUFFICIENT', 'INSUFFICIENT_EVIDENCE', '2026-09-05T10:00:00Z'),
+    generation('dddddddddddddddddddddddd', 'STALE', 'ACCEPT_EVIDENCE', 'REVIEWED', '2026-09-01T10:00:00Z'),
+  ],
+  page: { offset: 0, limit: 50, total: 2, truncated: false },
+  currentGeneration: 'cccccccccccccccccccccccc',
+  staleGenerationCount: 1,
+  corruption: [],
+  decisionChangedAcrossGenerations: true,
+  currentExpectationId: 'expectation.invoice-total',
+  currentSemanticContractId: null,
+  organizationalAuthority: 'NONE_LOCAL_REVIEW_ONLY',
+};
+
+const reviewFilingSnapshot = {
+  schemaVersion: 'nightwatch.control-center.review-filing.v1',
+  findingId: 'candidate-review-1',
+  reviewState: 'CURRENT',
+  markdown: '# Synthetic finding\n\n## Local review (FACT: current local decision, not organizational sign-off)\n\n- Decision: MARK_INSUFFICIENT -> INSUFFICIENT_EVIDENCE\n',
+  distribution: 'PRIVATE_LOCAL_MANUAL_COPY_ONLY',
+  organizationalAuthority: 'NONE_LOCAL_REVIEW_ONLY',
+};
+
 function responseFor(value: unknown): Response {
   return { ok: true, status: 200, json: async () => value } as Response;
 }
@@ -114,6 +201,9 @@ function installFetch(value: OverviewSnapshot = overview): ReturnType<typeof vi.
     '/api/v1/runs?limit=20': { schemaVersion: 'nightwatch.control-center.run-list.v1', items: [], page: { limit: 20, nextCursor: null, truncated: false } },
     [CONTROL_CENTER_API_PATHS.campaignSummary]: { schemaVersion: 'nightwatch.control-center.campaign.v1', planState: 'UNAVAILABLE', sourceCurrentness: 'UNAVAILABLE', ownerScopeStatus: 'FROZEN_BY_OWNER', ownerScopeReason: 'INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE', planDigest: null, coverageDigest: null, counts: { candidates: 0, selected: 0, excluded: 0, coveredContracts: 0, executionOnly: 0, oracleOnly: 0, replayGaps: 0, minimizationGaps: 0, staleSourceGaps: 0, semanticAuthorityGaps: 0, findings: 0 }, blockerCodes: ['CAMPAIGN_SOURCE_UNAVAILABLE'], reasonCodes: ['SOURCE_UNAVAILABLE'] },
     '/api/v1/campaign/coverage?limit=50': { schemaVersion: 'nightwatch.control-center.campaign-coverage.v1', items: [], page: { limit: 50, nextCursor: null, truncated: false }, fullyCoveredContractCount: 0 },
+    '/api/v1/review-store/inventory?limit=50&offset=0': reviewStoreSnapshot,
+    '/api/v1/review-store/history/candidate-review-1?limit=50&offset=0': reviewHistorySnapshot,
+    '/api/v1/review-store/filing/candidate-review-1': reviewFilingSnapshot,
   };
   const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
     expect(init?.method).toBe('GET');
@@ -155,7 +245,14 @@ describe('Control Center UI shell', () => {
     await user.click(runsLink);
     expect(await screen.findByRole('heading', { name: 'Inspect what happened, in order.' })).toBeVisible();
     expect(screen.getByText('No local runs recorded')).toBeInTheDocument();
-    expect(primaryNav.getAllByRole('link')).toHaveLength(9);
+    // Derived from VIEW_DEFINITIONS, never a literal. A hard-coded count is
+    // how a new panel ships without navigation qualification noticing: the
+    // number stays green because nobody changed it, and the assertion's name
+    // ("all approved navigation views") keeps claiming totality it no longer
+    // has. Every declared view must be reachable, and nothing else may be.
+    const navLinks = primaryNav.getAllByRole('link');
+    expect(navLinks).toHaveLength(VIEW_DEFINITIONS.length);
+    expect(navLinks.map((link) => link.textContent).sort()).toEqual(VIEW_DEFINITIONS.map((view) => view.label).sort());
     await user.click(primaryNav.getByRole('link', { name: 'Safety Center' }));
     expect(await screen.findByRole('heading', { name: 'Safety is a posture, not a green badge.' })).toBeVisible();
     expect(screen.getByText('Source inventory unavailable')).toBeInTheDocument();
@@ -174,11 +271,86 @@ describe('Control Center UI shell', () => {
     render(<App />);
     await screen.findByRole('heading', { name: 'Know the posture before the next run.' });
     expect(screen.getByRole('link', { name: 'Skip to content' })).toHaveAttribute('href', '#main-content');
+    // The permitted hrefs are DERIVED from the declared view set for the same
+    // reason as the count above: a literal alternation silently stops
+    // covering a view the moment one is added.
+    const permittedHrefs = new Set(VIEW_DEFINITIONS.map((view) => (view.id === 'overview' ? '#' : `#${view.id}`)));
     for (const link of within(screen.getByRole('navigation', { name: 'Primary' })).getAllByRole('link')) {
-      expect(link.getAttribute('href')).toMatch(/^#(?:|safety|runs|execution-graph|campaigns|source-intelligence|findings|reviewer|system-map)$/);
+      expect(permittedHrefs.has(link.getAttribute('href') ?? '')).toBe(true);
     }
     for (const button of screen.getAllByRole('button')) expect(button).toHaveAttribute('type', 'button');
     expect(document.querySelectorAll('img, iframe, object, embed')).toHaveLength(0);
+  });
+
+
+  it('separates the current review from historical ones by text, not by colour', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await screen.findByRole('heading', { name: 'Know the posture before the next run.' });
+    await user.click(within(screen.getByRole('navigation', { name: 'Primary' })).getByRole('link', { name: 'Review Store' }));
+    expect(await screen.findByRole('heading', { name: 'See what the store holds, and change none of it.' })).toBeVisible();
+
+    await user.click(screen.getByRole('button', { name: /History/ }));
+    expect(await screen.findByRole('heading', { name: 'candidate-review-1' })).toBeVisible();
+
+    // The distinction is TEXT. A reader in monochrome, or through a screen
+    // reader, must be able to tell which decision is in force.
+    expect(screen.getByText('CURRENT REVIEW')).toBeInTheDocument();
+    expect(screen.getByText('HISTORICAL REVIEW')).toBeInTheDocument();
+    expect(screen.getByText('binds to the current artifact')).toBeInTheDocument();
+    expect(screen.getByText('does not bind to the current artifact')).toBeInTheDocument();
+    // Both decisions are visible on their own rows: a stale review is
+    // evidence, not noise. Scoped to the row, because the same decision
+    // vocabulary also appears in the store-wide tally above.
+    const currentRow = screen.getByText('CURRENT REVIEW').closest('tr');
+    const historicalRow = screen.getByText('HISTORICAL REVIEW').closest('tr');
+    expect(within(currentRow as HTMLElement).getByText('Mark Insufficient')).toBeInTheDocument();
+    expect(within(historicalRow as HTMLElement).getByText('Accept Evidence')).toBeInTheDocument();
+    // The stale row says WHY it no longer binds.
+    expect(within(historicalRow as HTMLElement).getByText('Finding Review Stale Dossierdigest')).toBeInTheDocument();
+  });
+
+  it('reports every health condition rather than one collapsed word', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await screen.findByRole('heading', { name: 'Know the posture before the next run.' });
+    await user.click(within(screen.getByRole('navigation', { name: 'Primary' })).getByRole('link', { name: 'Review Store' }));
+    await screen.findByRole('heading', { name: 'See what the store holds, and change none of it.' });
+    const conditions = within(screen.getByTestId('review-store-conditions'));
+    for (const label of ['Corruption Present', 'Unknown Files Present', 'Temporary Residue Present', 'Stale History Present']) {
+      expect(conditions.getByText(label), label).toBeInTheDocument();
+    }
+    // Stale history is explained as the store working, not as a fault.
+    expect(screen.getByText('Historical evidence is present. This is the store working as designed, not a fault.')).toBeInTheDocument();
+  });
+
+  it('never names an unrecognized store entry, and offers no way to remove one', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await screen.findByRole('heading', { name: 'Know the posture before the next run.' });
+    await user.click(within(screen.getByRole('navigation', { name: 'Primary' })).getByRole('link', { name: 'Review Store' }));
+    await screen.findByRole('heading', { name: 'See what the store holds, and change none of it.' });
+    expect(screen.getByText('review-unknown-entry:aaaaaaaaaaaaaaaaaaaaaaaa')).toBeInTheDocument();
+    expect(screen.getByText('A name Nightwatch did not choose is never echoed. These files are not opened, not interpreted, and not removed.')).toBeInTheDocument();
+    // No destructive control exists anywhere on the surface.
+    for (const button of screen.getAllByRole('button')) {
+      expect(button.textContent ?? '').not.toMatch(/delete|remove|prune|repair|archive|clean/i);
+    }
+    expect(screen.getByText(/Nothing in this view deletes, repairs, archives or rewrites a review/)).toBeInTheDocument();
+  });
+
+  it('renders the private filing report on request and marks it local', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await screen.findByRole('heading', { name: 'Know the posture before the next run.' });
+    await user.click(within(screen.getByRole('navigation', { name: 'Primary' })).getByRole('link', { name: 'Review Store' }));
+    await screen.findByRole('heading', { name: 'See what the store holds, and change none of it.' });
+    await user.click(screen.getByRole('button', { name: /History/ }));
+    await screen.findByRole('heading', { name: 'candidate-review-1' });
+    await user.click(screen.getByRole('button', { name: /Filing report/ }));
+    const report = await screen.findByTestId('filing-report');
+    expect(report.textContent).toContain('## Local review (FACT: current local decision, not organizational sign-off)');
+    expect(screen.getByText(/Nothing here submits it anywhere/)).toBeInTheDocument();
   });
 
   it('contains unavailable service errors without echoing raw error text', async () => {

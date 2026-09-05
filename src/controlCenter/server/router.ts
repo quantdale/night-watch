@@ -23,6 +23,14 @@ export type ControlCenterRoute =
    * handler and a GET can never be answered by the write handler.
    */
   | { readonly kind: 'reviewerDecision' }
+  /**
+   * The review-store operations surface. Three READ routes; there is
+   * deliberately no fourth. A destructive operation is not a route this
+   * router declines to serve — it is a route that does not exist.
+   */
+  | { readonly kind: 'reviewStoreInventory' }
+  | { readonly kind: 'reviewStoreHistory'; readonly findingId: SafeControlCenterId }
+  | { readonly kind: 'reviewStoreFiling'; readonly findingId: SafeControlCenterId }
   | { readonly kind: 'events' }
   /** C-15c: System Map V2. Versioned EXPLICITLY under /api/v2/, never by
    *  reinterpreting v1, so a client can always tell which shape it received. */
@@ -100,6 +108,17 @@ export function parseControlCenterPath(pathname: string): ControlCenterPathResul
   if (parts.length === 4 && parts[3] === 'findings') return { kind: 'route', route: { kind: 'findings' } };
   if (parts.length === 4 && parts[3] === 'reviewer') return { kind: 'route', route: { kind: 'reviewer' } };
   if (parts.length === 5 && parts[3] === 'reviewer' && parts[4] === 'decision') return { kind: 'route', route: { kind: 'reviewerDecision' } };
+  if (parts.length === 5 && parts[3] === 'review-store' && parts[4] === 'inventory') return { kind: 'route', route: { kind: 'reviewStoreInventory' } };
+  if (parts.length === 6 && parts[3] === 'review-store' && parts[4] === 'history') {
+    const findingId = safeDynamicId(parts[5]!);
+    if (findingId === null) return { kind: 'rejected' };
+    return { kind: 'route', route: { kind: 'reviewStoreHistory', findingId } };
+  }
+  if (parts.length === 6 && parts[3] === 'review-store' && parts[4] === 'filing') {
+    const findingId = safeDynamicId(parts[5]!);
+    if (findingId === null) return { kind: 'rejected' };
+    return { kind: 'route', route: { kind: 'reviewStoreFiling', findingId } };
+  }
   if (parts.length === 4 && parts[3] === 'events') return { kind: 'route', route: { kind: 'events' } };
   return { kind: 'unknown' };
 }

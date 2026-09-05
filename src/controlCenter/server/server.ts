@@ -6,6 +6,7 @@ import {
   asSafeControlCenterCursor,
   asSafeControlCenterId,
   boundedGraphDepth,
+  boundedInteger,
   boundedPageLimit,
   boundedSequence,
   boundedTimelineLimit,
@@ -185,8 +186,28 @@ function listQuery(url: URL, allowedExtra: readonly string[] = []): ControlCente
   return { limit, cursor };
 }
 
+/**
+ * Bounds for a review-store listing.
+ *
+ * Separate from `listQuery` because this surface pages by OFFSET, not by
+ * cursor: an inventory row set is a deterministic sorted list over store
+ * content, so an offset is meaningful and reproducible, whereas a cursor
+ * would imply a stable server-side iteration this surface does not keep.
+ * Both bounds are validated, so a caller cannot ask for an unbounded page.
+ */
+function reviewStoreQuery(url: URL): { readonly limit: number; readonly offset: number } | ControlCenterErrorCode {
+  const values = queryValues(url, ['limit', 'offset']);
+  if (typeof values === 'string') return values;
+  const limit = values.limit === null ? 50 : boundedInteger(values.limit, 1, 200);
+  if (limit === null) return 'CONTROL_CENTER_BAD_REQUEST';
+  const offset = values.offset === null ? 0 : boundedInteger(values.offset, 0, 1_000_000);
+  if (offset === null) return 'CONTROL_CENTER_BAD_REQUEST';
+  return { limit, offset };
+}
+
 function routeQuery(url: URL, route: ControlCenterRoute): Record<string, string | null> | ControlCenterErrorCode {
   if (route.kind === 'runs' || route.kind === 'campaignCoverage' || route.kind === 'findings' || route.kind === 'reviewer') return queryValues(url, ['limit', 'cursor']);
+  if (route.kind === 'reviewStoreInventory' || route.kind === 'reviewStoreHistory') return queryValues(url, ['limit', 'offset']);
   if (route.kind === 'timeline') return queryValues(url, ['afterSeq', 'limit']);
   if (route.kind === 'sourceSurfaces') return queryValues(url, ['repo', 'limit', 'cursor']);
   if (route.kind === 'sourceGraph') return queryValues(url, ['surface', 'depth']);
@@ -424,6 +445,23 @@ async function dispatch(
           if (typeof list === 'string') return sendError(response, list, headOnly);
           return sendJson(response, 200, await options.collector.reviewer(list), headOnly);
         }
+      case 'reviewStoreInventory': {
+        const bounds = reviewStoreQuery(url);
+        if (typeof bounds === 'string') return sendError(response, bounds, headOnly);
+        return sendJson(response, 200, await options.collector.reviewStoreInventory(bounds), headOnly);
+      }
+      case 'reviewStoreHistory': {
+        const bounds = reviewStoreQuery(url);
+        if (typeof bounds === 'string') return sendError(response, bounds, headOnly);
+        const value = await options.collector.reviewStoreHistory(route.findingId, bounds);
+        // Null means the finding is not in the current snapshot. A 404, never
+        // a document claiming the finding has no review history.
+        return value === null ? sendError(response, 'CONTROL_CENTER_NOT_FOUND', headOnly) : sendJson(response, 200, value, headOnly);
+      }
+      case 'reviewStoreFiling': {
+        const value = await options.collector.reviewStoreFiling(route.findingId);
+        return value === null ? sendError(response, 'CONTROL_CENTER_NOT_FOUND', headOnly) : sendJson(response, 200, value, headOnly);
+      }
       case 'systemMapLevel': {
         const focus = query.focus === null ? null : asSafeSystemMapFocus(query.focus);
         if (query.focus !== null && focus === null) return sendError(response, 'CONTROL_CENTER_PATH_REJECTED', headOnly);

@@ -7,6 +7,7 @@ export const VIEW_DEFINITIONS = [
   { id: 'source-intelligence', label: 'Source Intelligence', eyebrow: 'PROVENANCE', description: 'Proof and bounded source neighborhoods.' },
   { id: 'findings', label: 'Findings', eyebrow: 'TRIAGE', description: 'Sanitized owner-local finding metadata.' },
   { id: 'reviewer', label: 'Reviewer', eyebrow: 'REVIEW', description: 'Relationships, recurrence, and what remains unknown.' },
+  { id: 'review-store', label: 'Review Store', eyebrow: 'OPERATIONS', description: 'Owner-local review inventory, health, and generation history.' },
   { id: 'system-map', label: 'System Map', eyebrow: 'TOPOLOGY V2', description: 'Progressive company-to-operation disclosure.' },
 ] as const;
 
@@ -501,5 +502,119 @@ export interface ReviewerSnapshot {
   readonly items: readonly ReviewerFindingSnapshot[];
   readonly page: { readonly limit: number; readonly nextCursor: string | null; readonly truncated: boolean };
   readonly finalVerdictAuthority: 'HUMAN_ORGANIZATIONAL';
+  readonly organizationalAuthority: 'NONE_LOCAL_REVIEW_ONLY';
+}
+
+// ---------------------------------------------------------------------------
+// Review-store operations (read-only).
+//
+// `currentness` is DATA on every generation. The view renders it as text and
+// as a distinct row treatment; a surface that separated current from
+// historical by colour alone would collapse the distinction for a reader in
+// monochrome or through a screen reader, and that distinction is the entire
+// reason stale reviews are kept.
+// ---------------------------------------------------------------------------
+
+export interface ReviewStorePage {
+  readonly offset: number;
+  readonly limit: number;
+  readonly total: number;
+  readonly truncated: boolean;
+}
+
+export interface ReviewStoreTally {
+  readonly code: string;
+  readonly count: number;
+}
+
+export interface ReviewStoreFindingRow {
+  readonly findingId: string;
+  readonly generations: number;
+  readonly currentGenerations: number;
+  readonly staleGenerations: number;
+  readonly unknownGenerations: number;
+}
+
+export interface ReviewStoreSnapshot {
+  readonly schemaVersion: string;
+  readonly state: 'AVAILABLE' | 'UNAVAILABLE';
+  readonly exists: boolean;
+  readonly depth: string;
+  readonly currentnessResolved: boolean;
+  readonly counts: {
+    readonly entries: number;
+    readonly canonicalArtifacts: number;
+    readonly validArtifacts: number;
+    readonly corruptArtifacts: number;
+    readonly unreadableArtifacts: number;
+    readonly temporaryArtifacts: number;
+    readonly unknownEntries: number;
+    readonly nonFileEntries: number;
+    readonly uniqueFindings: number;
+    readonly generations: number;
+    readonly findingsWithMultipleGenerations: number;
+    readonly current: number;
+    readonly stale: number;
+    readonly unknownCurrentness: number;
+  };
+  readonly bytes: { readonly total: number; readonly canonical: number; readonly temporary: number; readonly unknown: number; readonly nonFile: number };
+  readonly health: { readonly conditions: readonly string[]; readonly classification: string };
+  readonly byDecision: readonly ReviewStoreTally[];
+  readonly byResultingState: readonly ReviewStoreTally[];
+  readonly oldestStoredAt: string | null;
+  readonly newestStoredAt: string | null;
+  readonly corruption: readonly { readonly fileName: string; readonly code: string }[];
+  readonly corruptionPage: ReviewStorePage;
+  readonly unknownEntries: readonly { readonly nameDigest: string; readonly bytes: number; readonly kind: string }[];
+  readonly unknownEntriesPage: ReviewStorePage;
+  readonly temporaries: readonly { readonly name: string; readonly bytes: number }[];
+  readonly temporariesPage: ReviewStorePage;
+  readonly findings: readonly ReviewStoreFindingRow[];
+  readonly findingsPage: ReviewStorePage;
+  readonly inventoryDigest: string;
+  readonly readOnly: true;
+  readonly retentionPolicy: 'NONE_OWNER_DECISION_PENDING';
+  readonly organizationalAuthority: 'NONE_LOCAL_REVIEW_ONLY';
+}
+
+export interface ReviewGenerationSnapshot {
+  readonly reviewIdentity: string;
+  readonly sourceSha: string;
+  readonly campaignId: string;
+  readonly dossierDigest: string;
+  readonly findingDigest: string;
+  readonly reviewedAt: string;
+  readonly storedAt: string;
+  readonly decision: string;
+  readonly resultingState: string;
+  readonly currentness: 'CURRENT' | 'STALE';
+  readonly staleReason: string | null;
+  readonly expectationId: null;
+  readonly semanticContractId: null;
+  readonly identityAbsenceReason: string;
+  readonly organizationalAuthority: 'NONE_LOCAL_REVIEW_ONLY';
+}
+
+export interface ReviewHistorySnapshot {
+  readonly schemaVersion: string;
+  readonly findingId: string;
+  readonly state: string;
+  readonly generations: readonly ReviewGenerationSnapshot[];
+  readonly page: ReviewStorePage;
+  readonly currentGeneration: string | null;
+  readonly staleGenerationCount: number;
+  readonly corruption: readonly { readonly fileName: string; readonly code: string }[];
+  readonly decisionChangedAcrossGenerations: boolean;
+  readonly currentExpectationId: string | null;
+  readonly currentSemanticContractId: string | null;
+  readonly organizationalAuthority: 'NONE_LOCAL_REVIEW_ONLY';
+}
+
+export interface ReviewFilingSnapshot {
+  readonly schemaVersion: string;
+  readonly findingId: string;
+  readonly reviewState: string;
+  readonly markdown: string;
+  readonly distribution: 'PRIVATE_LOCAL_MANUAL_COPY_ONLY';
   readonly organizationalAuthority: 'NONE_LOCAL_REVIEW_ONLY';
 }

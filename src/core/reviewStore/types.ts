@@ -98,8 +98,18 @@ export interface ReviewStoreCorruption {
 export interface ReviewStoreReadResult {
   readonly state: ReviewStoreReadState;
   readonly envelope: StoredReviewEnvelope | null;
-  /** Why a stored review is STALE, from verifyReviewCurrent. Null otherwise. */
+  /** Why the REPORTED review is STALE, from verifyReviewCurrent. Null otherwise. */
   readonly staleReason: string | null;
+  /**
+   * Why each non-binding generation does not bind, keyed by review identity.
+   *
+   * `read()` already evaluates every generation; it used to keep only the
+   * first reason and discard the rest, which left a history view able to say
+   * "this one is historical" but not "because the dossier changed". Recording
+   * all of them adds no second judgement — it stops throwing away the one
+   * already made.
+   */
+  readonly staleReasons: readonly { readonly reviewIdentity: string; readonly reason: string }[];
   readonly corruption: readonly ReviewStoreCorruption[];
   /** Every envelope that validated, newest generation first by identity order. */
   readonly generations: readonly StoredReviewEnvelope[];

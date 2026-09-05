@@ -1,6 +1,6 @@
 import { Component, useCallback, useEffect, useState, type ErrorInfo, type KeyboardEvent, type ReactNode } from 'react';
-import { apiErrorLabel, loadCampaignCoverage, loadCampaignSummary, loadExecutionGraph, loadFindings, loadOverview, loadReviewer, loadRunDetail, loadRuns, loadSourceGraph, loadSourceSurfaces, loadSystemMapLevel, loadSystemMapQuery, loadTimeline, subscribeToControlCenterEvents, submitReviewDecision, REVIEW_DECISIONS, type ReviewDecision } from './api';
-import type { CampaignCoverageSnapshot, CampaignSummarySnapshot, DataLoadState, EpistemicClass, ExecutionGraphSnapshot, FindingsSnapshot, OverviewLoadState, OverviewSnapshot, ReviewerElement, ReviewerFindingSnapshot, ReviewerSnapshot, RunDetailSnapshot, RunListSnapshot, SourceGraphSnapshot, SourceSurfaceSnapshot, SourceSurfacesSnapshot, SystemMapBound, SystemMapLevelSegment, SystemMapNodeView, SystemMapQuerySegment, SystemMapSnapshot, TimelineSnapshot, ViewId } from './types';
+import { apiErrorLabel, loadCampaignCoverage, loadCampaignSummary, loadExecutionGraph, loadFindings, loadOverview, loadReviewer, loadReviewFiling, loadReviewHistory, loadReviewStore, loadRunDetail, loadRuns, loadSourceGraph, loadSourceSurfaces, loadSystemMapLevel, loadSystemMapQuery, loadTimeline, subscribeToControlCenterEvents, submitReviewDecision, REVIEW_DECISIONS, type ReviewDecision } from './api';
+import type { CampaignCoverageSnapshot, CampaignSummarySnapshot, DataLoadState, EpistemicClass, ExecutionGraphSnapshot, FindingsSnapshot, OverviewLoadState, OverviewSnapshot, ReviewerElement, ReviewerFindingSnapshot, ReviewerSnapshot, ReviewFilingSnapshot, ReviewGenerationSnapshot, ReviewHistorySnapshot, ReviewStoreSnapshot, RunDetailSnapshot, RunListSnapshot, SourceGraphSnapshot, SourceSurfaceSnapshot, SourceSurfacesSnapshot, SystemMapBound, SystemMapLevelSegment, SystemMapNodeView, SystemMapQuerySegment, SystemMapSnapshot, TimelineSnapshot, ViewId } from './types';
 import { SYSTEM_MAP_QUERY_SEGMENTS, VIEW_DEFINITIONS } from './types';
 
 interface ErrorBoundaryProps {
@@ -75,6 +75,7 @@ function Icon({ name }: { readonly name: ViewId | 'refresh' | 'arrow' }): ReactN
     'source-intelligence': 'M5 4h14v16H5V4Zm3 4h8M8 12h8M8 16h5',
     findings: 'M5 4h14v16H5V4Zm3 4h8M8 12h8M8 16h5',
     'system-map': 'M12 3a3 3 0 1 1 0 6 3 3 0 0 1 0-6ZM5 15a3 3 0 1 1 0 6 3 3 0 0 1 0-6Zm14 0a3 3 0 1 1 0 6 3 3 0 0 1 0-6ZM12 9v3m0 0-6 3m6-3 6 3',
+    'review-store': 'M4 6c0-1.1 3.6-2 8-2s8 .9 8 2-3.6 2-8 2-8-.9-8-2Zm0 0v12c0 1.1 3.6 2 8 2s8-.9 8-2V6M4 12c0 1.1 3.6 2 8 2s8-.9 8-2',
     refresh: 'M20 11a8 8 0 0 0-14.9-4L3 9m0 0V4m0 5h5M4 13a8 8 0 0 0 14.9 4L21 15m0 0v5m0-5h-5',
     arrow: 'M5 12h13m-5-5 5 5-5 5',
   };
@@ -531,6 +532,350 @@ function ReviewDecisionCell({
       )}
       <small>Owner-local only. Never organizational sign-off.</small>
     </td>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// RO-1 review-store operations view.
+//
+// A read-only operator view over a store that is designed to grow forever and
+// never delete evidence. It offers no action that changes anything, because
+// the surface behind it offers none.
+//
+// CURRENT and HISTORICAL are separated by TEXT and by row treatment, never by
+// colour alone. A reviewer reading in monochrome, through a screen reader, or
+// in a copied-out payload must be able to tell which decision is in force —
+// that distinction is the entire reason stale generations are kept.
+// ---------------------------------------------------------------------------
+
+function reviewHealthTone(classification: string): StatusTone {
+  if (classification === 'HEALTHY') return 'ready';
+  if (classification === 'CORRUPTION_PRESENT' || classification === 'STORE_UNAVAILABLE') return 'blocked';
+  return 'warning';
+}
+
+function formatBytes(value: number): string {
+  if (value < 1024) return `${value} B`;
+  if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KiB`;
+  return `${(value / (1024 * 1024)).toFixed(1)} MiB`;
+}
+
+function ReviewGenerationRow({ generation }: { readonly generation: ReviewGenerationSnapshot }): ReactNode {
+  const isCurrent = generation.currentness === 'CURRENT';
+  return (
+    <tr className={isCurrent ? 'row-selected' : undefined}>
+      <td>
+        {/* The label is text first. The row treatment is an aid, not the claim. */}
+        <strong>{isCurrent ? 'CURRENT REVIEW' : 'HISTORICAL REVIEW'}</strong>
+        <small>{isCurrent ? 'binds to the current artifact' : 'does not bind to the current artifact'}</small>
+        <small>{generation.reviewIdentity}</small>
+      </td>
+      <td>
+        <strong>{formatCategory(generation.decision)}</strong>
+        <small>{formatCategory(generation.resultingState)}</small>
+      </td>
+      <td>
+        <small>stored {formatTimestamp(generation.storedAt)}</small>
+        <small>reviewed {formatTimestamp(generation.reviewedAt)}</small>
+      </td>
+      <td>
+        <small>{generation.sourceSha}</small>
+        <small>{generation.campaignId}</small>
+      </td>
+      <td>
+        <small>{generation.dossierDigest}</small>
+        {generation.staleReason === null ? null : <small>{formatCategory(generation.staleReason)}</small>}
+      </td>
+      <td>
+        <small>expectation UNKNOWN</small>
+        <small>{formatCategory(generation.identityAbsenceReason)}</small>
+      </td>
+    </tr>
+  );
+}
+
+function ReviewHistoryPanel({
+  findingId,
+  state,
+  filingState,
+  onShowFiling,
+  onClose,
+  onRetry,
+}: {
+  readonly findingId: string | null;
+  readonly state: DataLoadState<ReviewHistorySnapshot>;
+  readonly filingState: DataLoadState<ReviewFilingSnapshot>;
+  readonly onShowFiling: () => void;
+  readonly onClose: () => void;
+  readonly onRetry: () => void;
+}): ReactNode {
+  if (findingId === null) {
+    return (
+      <article className="panel empty-table">
+        <div className="empty-mark"><Icon name="review-store" /></div>
+        <h2>No finding selected</h2>
+        <p>Open a finding from the index above to see every stored review generation for it, newest first.</p>
+      </article>
+    );
+  }
+  if (state.kind === 'loading' || state.kind === 'idle') return <LoadingState />;
+  if (state.kind === 'error') return <DataErrorState title="Review history unavailable" onRetry={onRetry} />;
+  const history = state.data;
+  return (
+    <article className="panel">
+      <div className="panel-heading">
+        <div>
+          <p className="eyebrow">GENERATION HISTORY</p>
+          <h2>{history.findingId}</h2>
+        </div>
+        <div className="panel-actions">
+          <button className="table-action" type="button" onClick={onShowFiling}>Filing report <Icon name="arrow" /></button>
+          <button className="table-action" type="button" onClick={onClose}>Close</button>
+        </div>
+      </div>
+      <section className="metric-grid">
+        <MetricCard label="Store state" value={formatCategory(history.state)} detail="Against the current artifact" tone={history.state === 'CURRENT' ? 'ready' : 'warning'} />
+        <MetricCard label="Generations" value={String(history.page.total)} detail={`${history.staleGenerationCount} historical`} />
+        <MetricCard
+          label="Current review"
+          value={history.currentGeneration === null ? 'NONE' : 'PRESENT'}
+          detail={history.currentGeneration === null ? 'No stored review binds to this generation' : 'One stored review binds'}
+          tone={history.currentGeneration === null ? 'warning' : 'ready'}
+        />
+        <MetricCard
+          label="Decision changed"
+          value={history.decisionChangedAcrossGenerations ? 'YES' : 'NO'}
+          detail="A local historical fact only"
+          tone={history.decisionChangedAcrossGenerations ? 'warning' : 'neutral'}
+        />
+      </section>
+      <div className="callout">
+        <strong>Current artifact identity</strong>
+        <span>
+          Expectation {history.currentExpectationId ?? 'UNKNOWN'} · contract {history.currentSemanticContractId ?? 'UNKNOWN'}. These describe the
+          artifact as it exists now. The v1 review binding stores no semantic identity, so no generation below claims one.
+        </span>
+      </div>
+      {history.generations.length === 0
+        ? <div className="mini-state mini-state-warning">No stored review generations for this finding. That is not a claim that it was reviewed and cleared.</div>
+        : <div className="table-scroll"><table>
+            <thead><tr>
+              <th scope="col">Generation</th>
+              <th scope="col">Decision</th>
+              <th scope="col">When</th>
+              <th scope="col">Bound to</th>
+              <th scope="col">Artifact</th>
+              <th scope="col">Identity</th>
+            </tr></thead>
+            <tbody>{history.generations.map((generation) => <ReviewGenerationRow key={generation.reviewIdentity} generation={generation} />)}</tbody>
+          </table></div>}
+      {history.page.truncated ? <div className="mini-state">Showing {history.generations.length} of {history.page.total} generations. Rows are bounded; counts are exact.</div> : null}
+      {history.corruption.length === 0 ? null : (
+        <div className="mini-state mini-state-warning">
+          {history.corruption.length} stored generation(s) did not survive validation and are excluded above. They were not deleted.
+        </div>
+      )}
+      {filingState.kind === 'idle' ? null : filingState.kind === 'loading' ? <LoadingState /> : filingState.kind === 'error'
+        ? <DataErrorState title="Filing report unavailable" onRetry={onShowFiling} />
+        : (
+          <section className="panel-subsection">
+            <div className="panel-heading">
+              <div><p className="eyebrow">PRIVATE FILING REPORT</p><h2>Local review state: {formatCategory(filingState.data.reviewState)}</h2></div>
+              <StatusPill value={filingState.data.reviewState === 'CURRENT' ? 'READY' : 'WARNING'} label={formatCategory(filingState.data.reviewState)} />
+            </div>
+            <pre className="filing-report" data-testid="filing-report">{filingState.data.markdown}</pre>
+            <div className="callout callout-warning">
+              <strong>Private and local</strong>
+              <span>This report is copied by a human. Nothing here submits it anywhere, and a local review is not a Leslie verdict, a Pondr approval, or organizational sign-off.</span>
+            </div>
+          </section>
+        )}
+    </article>
+  );
+}
+
+function ReviewStoreView({
+  state,
+  selectedFindingId,
+  historyState,
+  filingState,
+  onSelectFinding,
+  onShowFiling,
+  onCloseFinding,
+  onRetry,
+}: {
+  readonly state: DataLoadState<ReviewStoreSnapshot>;
+  readonly selectedFindingId: string | null;
+  readonly historyState: DataLoadState<ReviewHistorySnapshot>;
+  readonly filingState: DataLoadState<ReviewFilingSnapshot>;
+  readonly onSelectFinding: (findingId: string) => void;
+  readonly onShowFiling: () => void;
+  readonly onCloseFinding: () => void;
+  readonly onRetry: () => void;
+}): ReactNode {
+  if (state.kind === 'loading' || state.kind === 'idle') return <LoadingState />;
+  if (state.kind === 'error') return <DataErrorState title="Review store unavailable" onRetry={onRetry} />;
+  const inventory = state.data;
+  const counts = inventory.counts;
+  const strangers = counts.unknownEntries + counts.nonFileEntries;
+  return (
+    <div className="view-stack">
+      <section className="page-intro">
+        <div>
+          <p className="eyebrow">OPERATIONS / REVIEW STORE</p>
+          <h1>See what the store holds, and change none of it.</h1>
+          <p>
+            The owner-local review store is never pruned automatically: a stale generation is the preserved evidence of what was reviewed
+            against an artifact that has since been regenerated. This view is read-only, and no retention policy exists to invoke.
+          </p>
+        </div>
+        <StatusPill value={inventory.health.classification} />
+      </section>
+      <section className="metric-grid">
+        <MetricCard label="Stored reviews" value={String(counts.validArtifacts)} detail={`${counts.uniqueFindings} unique finding(s)`} />
+        <MetricCard
+          label="Generations"
+          value={String(counts.generations)}
+          detail={`${counts.findingsWithMultipleGenerations} finding(s) with history`}
+          tone={counts.findingsWithMultipleGenerations > 0 ? 'warning' : 'neutral'}
+        />
+        <MetricCard
+          label="Current / stale"
+          value={inventory.currentnessResolved ? `${counts.current} / ${counts.stale}` : 'NOT RESOLVED'}
+          detail={inventory.currentnessResolved ? 'Resolved against current artifacts' : 'No current artifacts were supplied'}
+          tone={inventory.currentnessResolved ? (counts.stale > 0 ? 'warning' : 'ready') : 'warning'}
+        />
+        <MetricCard
+          label="Corrupt"
+          value={String(counts.corruptArtifacts)}
+          detail={counts.corruptArtifacts === 0 ? 'Every artifact validated' : 'Reported, never removed'}
+          tone={counts.corruptArtifacts > 0 ? 'blocked' : 'ready'}
+        />
+        <MetricCard label="Disk" value={formatBytes(inventory.bytes.total)} detail={`${formatBytes(inventory.bytes.canonical)} canonical`} />
+        <MetricCard
+          label="Unrecognized"
+          value={String(strangers)}
+          detail="Never opened, never named, never removed"
+          tone={strangers > 0 ? 'warning' : 'neutral'}
+        />
+      </section>
+      <article className="panel">
+        <div className="panel-heading">
+          <div><p className="eyebrow">STORE HEALTH</p><h2>Every condition that holds</h2></div>
+          <StatusPill value={inventory.health.classification} />
+        </div>
+        <ul className="condition-list" data-testid="review-store-conditions">
+          {inventory.health.conditions.map((condition) => (
+            <li key={condition}>
+              <StatusPill value={condition} label={formatCategory(condition)} />
+              <span className={`text-${reviewHealthTone(condition)}`}>
+                {condition === 'STALE_HISTORY_PRESENT'
+                  ? 'Historical evidence is present. This is the store working as designed, not a fault.'
+                  : condition === 'UNKNOWN_FILES_PRESENT'
+                    ? 'One or more files in the store were not written by Nightwatch. They are counted and left alone.'
+                    : condition === 'TEMPORARY_RESIDUE_PRESENT'
+                      ? 'An interrupted publish left a temporary. Recovery is a separate, explicit owner action.'
+                      : condition === 'CORRUPTION_PRESENT'
+                        ? 'One or more stored reviews did not survive validation. They are reported, never deleted.'
+                        : condition === 'STORE_UNAVAILABLE'
+                          ? 'The store could not be read. No claim is made about its contents.'
+                          : 'No condition applies.'}
+              </span>
+            </li>
+          ))}
+        </ul>
+        <div className="table-scroll">
+          <table>
+            <thead><tr><th scope="col">Decision</th><th scope="col">Count</th><th scope="col">Resulting state</th><th scope="col">Count</th></tr></thead>
+            <tbody>{inventory.byDecision.map((decision, index) => (
+              <tr key={decision.code}>
+                <td>{formatCategory(decision.code)}</td>
+                <td>{decision.count}</td>
+                <td>{inventory.byResultingState[index] === undefined ? '' : formatCategory(inventory.byResultingState[index]!.code)}</td>
+                <td>{inventory.byResultingState[index]?.count ?? ''}</td>
+              </tr>
+            ))}</tbody>
+          </table>
+        </div>
+        <div className="callout">
+          <strong>Retention</strong>
+          <span>
+            No automatic deletion, archival or pruning exists. Oldest stored review {inventory.oldestStoredAt ?? 'n/a'}; newest{' '}
+            {inventory.newestStoredAt ?? 'n/a'}. Retention remains an owner decision.
+          </span>
+        </div>
+      </article>
+      <article className="panel">
+        <div className="panel-heading">
+          <div><p className="eyebrow">REVIEWED FINDINGS</p><h2>Drill into a generation history</h2></div>
+          <span className="table-limit">Showing {inventory.findings.length} of {inventory.findingsPage.total}</span>
+        </div>
+        {inventory.findings.length === 0
+          ? <div className="mini-state mini-state-warning">{inventory.exists ? 'No stored reviews. Empty is not proof that nothing needs review.' : 'The review store is not present. No claim is made about its contents.'}</div>
+          : <div className="table-scroll"><table>
+              <thead><tr>
+                <th scope="col">Finding</th>
+                <th scope="col">Generations</th>
+                <th scope="col">Current</th>
+                <th scope="col">Historical</th>
+                <th scope="col">Unresolved</th>
+                <th scope="col"><span className="sr-only">Open</span></th>
+              </tr></thead>
+              <tbody>{inventory.findings.map((row) => (
+                <tr key={row.findingId} className={selectedFindingId === row.findingId ? 'row-selected' : undefined}>
+                  <td><strong>{row.findingId}</strong></td>
+                  <td>{row.generations}</td>
+                  <td>{row.currentGenerations}</td>
+                  <td>{row.staleGenerations}</td>
+                  <td>{row.unknownGenerations}</td>
+                  <td><button className="table-action" type="button" onClick={() => onSelectFinding(row.findingId)}>History <Icon name="arrow" /></button></td>
+                </tr>
+              ))}</tbody>
+            </table></div>}
+        {inventory.findingsPage.truncated ? <div className="mini-state">Rows are bounded; the counts above are global and exact.</div> : null}
+      </article>
+      <ReviewHistoryPanel
+        findingId={selectedFindingId}
+        state={historyState}
+        filingState={filingState}
+        onShowFiling={onShowFiling}
+        onClose={onCloseFinding}
+        onRetry={onRetry}
+      />
+      {inventory.temporaries.length === 0 && inventory.unknownEntries.length === 0 && inventory.corruption.length === 0 ? null : (
+        <article className="panel">
+          <div className="panel-heading"><div><p className="eyebrow">DIAGNOSTICS</p><h2>Everything else in the store</h2></div></div>
+          {inventory.corruption.length === 0 ? null : (
+            <div className="table-scroll"><table>
+              <thead><tr><th scope="col">Corrupt artifact</th><th scope="col">Code</th></tr></thead>
+              <tbody>{inventory.corruption.map((row) => <tr key={row.fileName}><td>{row.fileName}</td><td>{formatCategory(row.code)}</td></tr>)}</tbody>
+            </table></div>
+          )}
+          {inventory.temporaries.length === 0 ? null : (
+            <div className="table-scroll"><table>
+              <thead><tr><th scope="col">Interrupted publish</th><th scope="col">Size</th></tr></thead>
+              <tbody>{inventory.temporaries.map((row) => <tr key={row.name}><td>{row.name}</td><td>{formatBytes(row.bytes)}</td></tr>)}</tbody>
+            </table></div>
+          )}
+          {inventory.unknownEntries.length === 0 ? null : (
+            <div className="table-scroll"><table>
+              <thead><tr><th scope="col">Unrecognized entry (digest)</th><th scope="col">Kind</th><th scope="col">Size</th></tr></thead>
+              <tbody>{inventory.unknownEntries.map((row) => (
+                <tr key={row.nameDigest}><td>{row.nameDigest}</td><td>{formatCategory(row.kind)}</td><td>{formatBytes(row.bytes)}</td></tr>
+              ))}</tbody>
+            </table></div>
+          )}
+          <div className="callout callout-warning">
+            <strong>Unrecognized entries are reported by digest</strong>
+            <span>A name Nightwatch did not choose is never echoed. These files are not opened, not interpreted, and not removed.</span>
+          </div>
+        </article>
+      )}
+      <div className="callout callout-warning">
+        <strong>Read-only surface</strong>
+        <span>Nothing in this view deletes, repairs, archives or rewrites a review. A local review decision is not a Leslie verdict, a Pondr approval, or organizational sign-off.</span>
+      </div>
+    </div>
   );
 }
 
@@ -1006,6 +1351,10 @@ function DashboardApp(): ReactNode {
   const [sourceGraphState, setSourceGraphState] = useState<DataLoadState<SourceGraphSnapshot>>({ kind: 'idle' });
   const [findingsState, setFindingsState] = useState<DataLoadState<FindingsSnapshot>>({ kind: 'idle' });
   const [reviewerState, setReviewerState] = useState<DataLoadState<ReviewerSnapshot>>({ kind: 'idle' });
+  const [reviewStoreState, setReviewStoreState] = useState<DataLoadState<ReviewStoreSnapshot>>({ kind: 'idle' });
+  const [selectedReviewFindingId, setSelectedReviewFindingId] = useState<string | null>(null);
+  const [reviewHistoryState, setReviewHistoryState] = useState<DataLoadState<ReviewHistorySnapshot>>({ kind: 'idle' });
+  const [reviewFilingState, setReviewFilingState] = useState<DataLoadState<ReviewFilingSnapshot>>({ kind: 'idle' });
   const refresh = useCallback((): void => setRefreshKey((value) => value + 1), []);
 
   useEffect(() => {
@@ -1147,6 +1496,36 @@ function DashboardApp(): ReactNode {
     return () => { cancelled = true; };
   }, [activeView, refreshKey]);
 
+  // The review-store inventory. Loaded only when the view is open, like every
+  // other data view: an operations read over a 50,000-artifact store is not
+  // something a user who is looking at Runs should pay for.
+  useEffect(() => {
+    if (activeView !== 'review-store') return;
+    let cancelled = false;
+    setReviewStoreState({ kind: 'loading' });
+    loadReviewStore().then((data) => {
+      if (!cancelled) setReviewStoreState({ kind: 'ready', data });
+    }).catch(() => {
+      if (!cancelled) setReviewStoreState({ kind: 'error' });
+    });
+    return () => { cancelled = true; };
+  }, [activeView, refreshKey]);
+
+  // One finding's generation history. Selecting a different finding discards
+  // the previous filing report rather than leaving it on screen under a new
+  // heading, which would attribute one finding's review to another.
+  useEffect(() => {
+    if (activeView !== 'review-store' || selectedReviewFindingId === null) return;
+    let cancelled = false;
+    setReviewHistoryState({ kind: 'loading' });
+    loadReviewHistory(selectedReviewFindingId).then((data) => {
+      if (!cancelled) setReviewHistoryState({ kind: 'ready', data });
+    }).catch(() => {
+      if (!cancelled) setReviewHistoryState({ kind: 'error' });
+    });
+    return () => { cancelled = true; };
+  }, [activeView, selectedReviewFindingId, refreshKey]);
+
   useEffect(() => {
     if (activeView !== 'execution-graph' || selectedRunId === null) return;
     let cancelled = false;
@@ -1170,6 +1549,27 @@ function DashboardApp(): ReactNode {
   const retryRunData = useCallback((): void => setRefreshKey((value) => value + 1), []);
   const selectRun = useCallback((runId: string): void => setSelectedRunId(runId), []);
   const selectSurface = useCallback((surfaceId: string): void => setSelectedSurfaceId(surfaceId), []);
+  const selectReviewFinding = useCallback((findingId: string): void => {
+    setSelectedReviewFindingId(findingId);
+    setReviewFilingState({ kind: 'idle' });
+  }, []);
+  const closeReviewFinding = useCallback((): void => {
+    setSelectedReviewFindingId(null);
+    setReviewHistoryState({ kind: 'idle' });
+    setReviewFilingState({ kind: 'idle' });
+  }, []);
+  const showReviewFiling = useCallback((): void => {
+    if (selectedReviewFindingId === null) return;
+    const findingId = selectedReviewFindingId;
+    setReviewFilingState({ kind: 'loading' });
+    loadReviewFiling(findingId).then((data) => {
+      // Discard a response that arrived after the operator moved on: a
+      // report rendered under another finding's heading is worse than none.
+      setReviewFilingState((previous) => (findingId === selectedReviewFindingId ? { kind: 'ready', data } : previous));
+    }).catch(() => {
+      setReviewFilingState((previous) => (findingId === selectedReviewFindingId ? { kind: 'error' } : previous));
+    });
+  }, [selectedReviewFindingId]);
 
   const renderDataView = (): ReactNode => {
     if (activeView === 'runs') return <RunsView state={runState} selectedRunId={selectedRunId} detailState={detailState} timelineState={timelineState} onSelectRun={selectRun} onRetry={retryRunData} />;
@@ -1177,6 +1577,20 @@ function DashboardApp(): ReactNode {
     if (activeView === 'campaigns') return <CampaignView summaryState={campaignSummaryState} coverageState={campaignCoverageState} onRetry={retryRunData} />;
     if (activeView === 'findings') return <FindingsView state={findingsState} onRetry={retryRunData} />;
     if (activeView === 'reviewer') return <ReviewerView state={reviewerState} onRetry={retryRunData} />;
+    if (activeView === 'review-store') {
+      return (
+        <ReviewStoreView
+          state={reviewStoreState}
+          selectedFindingId={selectedReviewFindingId}
+          historyState={reviewHistoryState}
+          filingState={reviewFilingState}
+          onSelectFinding={selectReviewFinding}
+          onShowFiling={showReviewFiling}
+          onCloseFinding={closeReviewFinding}
+          onRetry={retryRunData}
+        />
+      );
+    }
     if (activeView === 'system-map') return <SystemMapView refreshKey={refreshKey} />;
     if (activeView === 'source-intelligence') {
       if (loadState.kind === 'loading') return <LoadingState />;

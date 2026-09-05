@@ -356,6 +356,7 @@ export class ReviewStore {
     let currentEnvelope: StoredReviewEnvelope | null = null;
     let staleEnvelope: StoredReviewEnvelope | null = null;
     let staleReason: string | null = null;
+    const staleReasons: { readonly reviewIdentity: string; readonly reason: string }[] = [];
 
     for (const fileName of this.fileNamesFor(findingId, listing)) {
       const inspected = this.inspect(fileName);
@@ -381,6 +382,10 @@ export class ReviewStore {
       } catch (error) {
         const message = (error as Error).message;
         if (message.startsWith('FINDING_REVIEW_STALE')) {
+          // Recorded for EVERY non-binding generation, not just the first:
+          // a history view has to say why each one stopped binding, and the
+          // answer was already computed here.
+          staleReasons.push({ reviewIdentity: envelope.reviewIdentity, reason: message });
           if (staleEnvelope === null) {
             staleEnvelope = envelope;
             staleReason = message;
@@ -399,6 +404,7 @@ export class ReviewStore {
         state: 'CURRENT',
         envelope: currentEnvelope,
         staleReason: null,
+        staleReasons,
         corruption,
         generations,
         organizationalAuthority: 'NONE_LOCAL_REVIEW_ONLY',
@@ -409,6 +415,7 @@ export class ReviewStore {
         state: 'STALE',
         envelope: staleEnvelope,
         staleReason,
+        staleReasons,
         corruption,
         generations,
         organizationalAuthority: 'NONE_LOCAL_REVIEW_ONLY',
@@ -418,6 +425,7 @@ export class ReviewStore {
       state: corruption.length > 0 ? 'CORRUPT' : 'NO_REVIEW',
       envelope: null,
       staleReason: null,
+      staleReasons,
       corruption,
       generations,
       organizationalAuthority: 'NONE_LOCAL_REVIEW_ONLY',

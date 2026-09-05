@@ -10,7 +10,9 @@ import { projectCampaignCoverage, projectCampaignSummary } from '../adapters/cam
 import { projectSourceGraph, projectSourceSummary, projectSourceSurfaces, type SourceSummaryAuthorityInput } from '../adapters/sourceAdapter';
 import { projectFindings } from '../adapters/findingsAdapter';
 import { projectReviewer } from '../adapters/reviewerAdapter';
+import { projectReviewFiling, projectReviewHistory, projectReviewStoreInventory, unavailableReviewStore } from '../adapters/reviewStoreAdapter';
 import { reviewerInputsFromFindings } from '../authorities/reviewerAuthority';
+import { ControlCenterReviewStoreAuthority } from '../authorities/reviewStoreAuthority';
 import type { ControlCenterReviewAuthority } from '../authorities/reviewWriteAuthority';
 import type { ControlCenterReviewDecisionResponse } from './server';
 import { LEVEL_FOR_SEGMENT, QUERY_FOR_SEGMENT, systemMapInputFromDiscovery, systemMapLevel, systemMapQuery } from '../adapters/systemMapAdapter';
@@ -85,6 +87,17 @@ export interface DefaultControlCenterCollectorOptions {
    * before persistence existed and remains the truthful answer.
    */
   readonly reviewAuthority?: ControlCenterReviewAuthority;
+  /**
+   * The read-only review-store operations authority.
+   *
+   * Constructed by default, unlike the WRITE authority, because reading a
+   * store is not a capability that needs opting into: without it an operator
+   * simply cannot see what their store contains, and the surface would report
+   * UNAVAILABLE for a store that is present and healthy. It holds a
+   * `createIfMissing: false` handle, so it can add no authority the collector
+   * did not already have.
+   */
+  readonly reviewStoreAuthority?: ControlCenterReviewStoreAuthority;
   readonly runSnapshotTtlMs?: number;
   readonly sourceSnapshotTtlMs?: number;
   readonly now?: () => number;
@@ -279,6 +292,8 @@ export function createControlCenterServices(options: DefaultControlCenterCollect
   // NO_LOCAL_REVIEW_STORE for every finding, exactly as it did before
   // persistence existed.
   const reviewAuthority = options.reviewAuthority ?? null;
+  // Read-only by construction; see the option's note for why it is not opt-in.
+  const reviewStoreAuthority = options.reviewStoreAuthority ?? new ControlCenterReviewStoreAuthority();
   const now = options.now ?? (() => Date.now());
   const ttlMs = options.runSnapshotTtlMs === undefined
     ? 250
@@ -437,6 +452,48 @@ export function createControlCenterServices(options: DefaultControlCenterCollect
         }),
         query.limit
       );
+    },
+    reviewStoreInventory: async (query) => {
+      const { findings, campaign } = await readAuthoritySnapshot();
+      try {
+        return projectReviewStoreInventory(
+          reviewStoreAuthority.inventory({
+            rowLimit: query.limit,
+            findingsOffset: query.offset,
+            // Currentness is claimed only when the findings snapshot can
+            // support it. An unavailable snapshot leaves every review
+            // UNKNOWN, which is what it is.
+            ...(findings.state === 'AVAILABLE'
+              ? { context: { dossiers: findings.dossiers, campaignId: campaign.generation } }
+              : {}),
+          })
+        );
+      } catch {
+        // An unreadable store never takes the surface down, and it never
+        // looks like an empty healthy one either.
+        return unavailableReviewStore();
+      }
+    },
+    reviewStoreHistory: async (findingId, query) => {
+      const { findings, campaign } = await readAuthoritySnapshot();
+      if (findings.state === 'UNAVAILABLE') return null;
+      const history = reviewStoreAuthority.history(
+        findingId,
+        { dossiers: findings.dossiers, campaignId: campaign.generation },
+        { offset: query.offset, limit: query.limit }
+      );
+      // A finding outside the current snapshot is a 404, not a document
+      // asserting that every generation is stale.
+      return 'absent' in history ? null : projectReviewHistory(history);
+    },
+    reviewStoreFiling: async (findingId) => {
+      const { findings, campaign } = await readAuthoritySnapshot();
+      if (findings.state === 'UNAVAILABLE') return null;
+      const artifact = reviewStoreAuthority.filingReport(findingId, {
+        dossiers: findings.dossiers,
+        campaignId: campaign.generation,
+      });
+      return 'absent' in artifact ? null : projectReviewFiling(artifact);
     },
   };
 

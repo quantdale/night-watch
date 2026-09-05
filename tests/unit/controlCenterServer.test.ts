@@ -6,6 +6,7 @@ import path from 'node:path';
 import { createControlCenterServer, createDefaultHealth } from '../../src/controlCenter/server';
 import { projectMeta } from '../../src/controlCenter/adapters/metaAdapter';
 import { projectSafety } from '../../src/controlCenter/adapters/safetyAdapter';
+import { unavailableReviewStore } from '../../src/controlCenter/adapters/reviewStoreAdapter';
 import { projectReviewer } from '../../src/controlCenter/adapters/reviewerAdapter';
 import type { ControlCenterCollector } from '../../src/controlCenter/server/collector';
 import type { ControlCenterEventDto } from '../../src/controlCenter/contracts/events';
@@ -74,6 +75,10 @@ function emptyCollector(): ControlCenterCollector {
   const sourceGraph = { schemaVersion: CONTROL_CENTER_SOURCE_GRAPH_SCHEMA_VERSION, surfaceId: null, depth: 0, nodes: [], edges: [], nodeLimit: 250, edgeLimit: 500, truncated: false } as unknown as ControlCenterSourceGraphDto;
   const findings = { schemaVersion: CONTROL_CENTER_FINDINGS_SCHEMA_VERSION, state: 'EMPTY', items: [], page: { limit: 50, nextCursor: null, truncated: false } } as ControlCenterFindingsDto;
   const reviewer = projectReviewer({ findings: [] });
+  // The review-store surface answers UNAVAILABLE in this stub: the transport
+  // tests are about routing and bounds, and a real store would make them
+  // depend on the operator's machine.
+  const reviewStore = unavailableReviewStore();
   return {
     health: () => createDefaultHealth(),
     meta: () => projectMeta(),
@@ -88,6 +93,9 @@ function emptyCollector(): ControlCenterCollector {
     sourceSummary: () => sourceSummary,
     sourceSurfaces: () => sourceSurfaces,
     sourceGraph: () => sourceGraph,
+    reviewStoreInventory: () => reviewStore,
+    reviewStoreHistory: () => null,
+    reviewStoreFiling: () => null,
     findings: () => findings,
     reviewer: () => reviewer,
   systemMapLevel: () => null,

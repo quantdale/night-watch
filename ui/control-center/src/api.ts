@@ -9,6 +9,9 @@ import type {
   CampaignSummarySnapshot,
   FindingsSnapshot,
   ReviewerSnapshot,
+  ReviewFilingSnapshot,
+  ReviewHistorySnapshot,
+  ReviewStoreSnapshot,
   RunDetailSnapshot,
   RunListSnapshot,
   SafetySnapshot,
@@ -34,6 +37,10 @@ export const CONTROL_CENTER_API_PATHS = Object.freeze({
   findings: '/api/v1/findings',
   reviewer: '/api/v1/reviewer',
   reviewerDecision: '/api/v1/reviewer/decision',
+  /** Read-only review-store operations. There is no fourth, writing path. */
+  reviewStoreInventory: '/api/v1/review-store/inventory',
+  reviewStoreHistory: '/api/v1/review-store/history',
+  reviewStoreFiling: '/api/v1/review-store/filing',
   /** C-15c. Explicitly v2: v1 is never reinterpreted. */
   systemMap: '/api/v2/system-map',
 });
@@ -221,6 +228,29 @@ export function loadSourceGraph(surfaceId: string | null, depth = 2): Promise<So
 export function loadReviewer(limit = 50): Promise<ReviewerSnapshot> {
   const boundedLimit = Number.isInteger(limit) && limit > 0 && limit <= 50 ? limit : 50;
   return fetchSnapshot<ReviewerSnapshot>(`${CONTROL_CENTER_API_PATHS.reviewer}?limit=${boundedLimit}`);
+}
+
+/** Row bounds are clamped client-side too: a UI never asks for an unbounded page. */
+function boundedRows(limit: number): number {
+  return Number.isInteger(limit) && limit > 0 && limit <= 100 ? limit : 50;
+}
+
+export function loadReviewStore(limit = 50, offset = 0): Promise<ReviewStoreSnapshot> {
+  const boundedOffset = Number.isInteger(offset) && offset >= 0 ? offset : 0;
+  return fetchSnapshot<ReviewStoreSnapshot>(
+    `${CONTROL_CENTER_API_PATHS.reviewStoreInventory}?limit=${boundedRows(limit)}&offset=${boundedOffset}`
+  );
+}
+
+export function loadReviewHistory(findingId: string, limit = 50, offset = 0): Promise<ReviewHistorySnapshot> {
+  const boundedOffset = Number.isInteger(offset) && offset >= 0 ? offset : 0;
+  return fetchSnapshot<ReviewHistorySnapshot>(
+    `${CONTROL_CENTER_API_PATHS.reviewStoreHistory}/${encodeURIComponent(findingId)}?limit=${boundedRows(limit)}&offset=${boundedOffset}`
+  );
+}
+
+export function loadReviewFiling(findingId: string): Promise<ReviewFilingSnapshot> {
+  return fetchSnapshot<ReviewFilingSnapshot>(`${CONTROL_CENTER_API_PATHS.reviewStoreFiling}/${encodeURIComponent(findingId)}`);
 }
 
 export function loadFindings(limit = 50): Promise<FindingsSnapshot> {

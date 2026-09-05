@@ -201,12 +201,15 @@ export function reviewHistoryFor(
   // which `read()` already performed. Matching on identity rather than
   // re-running the check keeps ONE currentness judgement in the system.
   const currentIdentity = result.state === 'CURRENT' && result.envelope !== null ? result.envelope.reviewIdentity : null;
-  const staleIdentity = result.state === 'STALE' && result.envelope !== null ? result.envelope.reviewIdentity : null;
 
+  // Every non-binding generation's reason, from the ONE currentness
+  // judgement `read()` already made. Looked up by identity rather than
+  // recomputed, so this module still has no staleness rule of its own.
+  const reasonByIdentity = new Map(result.staleReasons.map((entry) => [entry.reviewIdentity, entry.reason]));
   const ordered = [...result.generations].sort(compareReviewGenerations);
   const rows = ordered.map((envelope) => {
     const currentness: ReviewArtifactCurrentness = envelope.reviewIdentity === currentIdentity ? 'CURRENT' : 'STALE';
-    const staleReason = currentness === 'STALE' && envelope.reviewIdentity === staleIdentity ? result.staleReason : null;
+    const staleReason = currentness === 'STALE' ? reasonByIdentity.get(envelope.reviewIdentity) ?? null : null;
     return generationOf(envelope, currentness, staleReason);
   });
 
