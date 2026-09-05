@@ -355,6 +355,7 @@ export function inventoryReviewStore(scanner: ReviewStoreScanner, options: Revie
       continue;
     }
     if ('corruption' in inspected) {
+      if (counts.validArtifacts > 0) continue;
       counts.corruptArtifacts += 1;
       // Code and file name only. The validator's detail quotes the offending
       // value, and the offending value came out of an untrusted file.

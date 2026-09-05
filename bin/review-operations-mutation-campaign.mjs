@@ -338,8 +338,8 @@ const MUTATIONS = [
     to: "    if (dossier === undefined) return { absent: 'FINDING_NOT_IN_CURRENT_SNAPSHOT' as never, generations: [] } as never;\n    const current = currentReviewArtifacts(dossier",
     kind: 'EQUIVALENT',
     why:
-      'The returned object still carries `absent`, and every caller branches ' +
-      'on `\\'absent\\' in result` rather than on the object\\'s shape, so the ' +
+      'The returned object still carries the `absent` discriminant, and every ' +
+      'caller branches on that key rather than on the object shape, so the ' +
       'behaviour is identical. Included to record that the absence contract ' +
       'is keyed on the discriminant and not on the absence of other fields.',
     suites: OPS_SUITES,
