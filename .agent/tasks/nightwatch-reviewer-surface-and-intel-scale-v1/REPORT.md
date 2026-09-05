@@ -156,6 +156,6 @@ useful without changing a single classification rule.
 C-12 live execution, C-13, C-14, C-08b and C-07 DEV remain external and
 unauthorized. Nothing in this campaign advances them.
 
-Status: IN_PROGRESS (flip to COMPLETE only when every value above is actual;
+Status: COMPLETE (every value above is actual;
 never leave future-value placeholders such as "(filled after push)" in a
 COMPLETE report; live final HEAD/CI are Git/GitHub-Actions authority).

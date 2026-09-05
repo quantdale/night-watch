@@ -4,24 +4,24 @@
 
 Task ID: nightwatch-reviewer-surface-and-intel-scale-v1
 Phase: REVIEWER_SURFACE_AND_INTEL_SCALE_V1
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: 868761d2128d5155db454623bc2fa01622a57d33
-Last validated implementation SHA: 882138c40e650b95ff8923b790b4b90c7edefdfa
-Last substantive checkpoint SHA: 882138c40e650b95ff8923b790b4b90c7edefdfa
-Last documentation checkpoint SHA: 96b100af42e7335ce39e2652265c458e2210522a
+Last validated implementation SHA: aa1f73d272924ed568d3a5d1089f19efd0f6dd3e
+Last substantive checkpoint SHA: aa1f73d272924ed568d3a5d1089f19efd0f6dd3e
+Last documentation checkpoint SHA: 85e8f654fba29ca91286f0bab9eecf9cc3c68fa1
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-reviewer-surface-and--30ec5809
-Last checkpoint: M1 COMPLETE and gate-certified — gate:local PASS 11/11 (receipt:sha256:2a2896e1ce24ebc6106d3a02); next M2 reviewer projection
+Last checkpoint: close-out — M1–M9 complete; implementation aa1f73d certified (gate:local PASS 11/11, gate:clean PASS Node 20 fresh install, regression 3931/0/13, 20 mutations / 0 survivors, determinism 20/1); STOP
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 868761d2128d5155db454623bc2fa01622a57d33
-LAST_VALIDATED_IMPLEMENTATION_SHA: 882138c40e650b95ff8923b790b4b90c7edefdfa
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 882138c40e650b95ff8923b790b4b90c7edefdfa
-LAST_DOCUMENTATION_CHECKPOINT_SHA: 96b100af42e7335ce39e2652265c458e2210522a
+LAST_VALIDATED_IMPLEMENTATION_SHA: aa1f73d272924ed568d3a5d1089f19efd0f6dd3e
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: aa1f73d272924ed568d3a5d1089f19efd0f6dd3e
+LAST_DOCUMENTATION_CHECKPOINT_SHA: 85e8f654fba29ca91286f0bab9eecf9cc3c68fa1
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
-PHASE_REVIEWER_SURFACE_AND_INTEL_SCALE_V1_STATUS: IN_PROGRESS
+PHASE_REVIEWER_SURFACE_AND_INTEL_SCALE_V1_STATUS: COMPLETE
 
 ## Objective
 
@@ -36,8 +36,7 @@ contact.
 
 ## Current Milestone
 
-M8 (W7) — durable documentation reconciled. M7's certification evidence is
-recorded below; M9 (final certification and REPORT) is next.
+COMPLETE / STOP — all milestones closed, REPORT final.
 
 ## Completed Milestones
 
@@ -73,7 +72,7 @@ recorded below; M9 (final certification and REPORT) is next.
 
 ## Work In Progress
 
-M4. Finding-intelligence scale measurement at 1k / 5k / 10k.
+NONE. All milestones are terminal.
 
 Closed in M1:
 
@@ -263,10 +262,9 @@ truthfully labelled, not a faster answer to the same question.
 
 ## Exact Next Action
 
-M9 (W8): run the authoritative full regression and `gate:local` on the
-committed tree, run `gate:clean` on a fresh `npm ci`, fill the completion
-snapshot and `REPORT.md`, then STOP before any live C-12 / DEV / NEXT /
-production work.
+STOP — integrate to main, release the session, remove the worktree. No
+live C-12 / DEV / NEXT / production work is authorized in this campaign
+and none was performed.
 
 ## Files Changed
 
@@ -336,6 +334,8 @@ production work.
 | Mutation campaign (20 reversible) | 18 detected, 2 equivalent with evidence, 0 survivors, 0 restore drift |
 | `node bin/frontier-determinism.mjs 20` | PASS, 1 unique digest across 20 fresh processes |
 | `npx playwright test` (full regression) | 3944 total / 3931 passed / 13 skipped / 0 failed (9.5 m) |
+| `npm run gate:local` (committed tree, final) | PASS 11/11, receipt:sha256:11122985894cd43fb2cf953b |
+| `npm run gate:clean` (Node 20, fresh npm ci) | PASS 11/11, clean-receipt:sha256:50c7e633c90e7ecfb5a68574, nodeModulesReused false, siblingWrites 0 |
 | RS-1 scale-probe purity probe | fires on `Math.random` in the probe |
 | `npm run typecheck` | clean |
 | `npm run hardening:check` | PASS |
@@ -421,11 +421,34 @@ access. No sibling-repository write. No force push. No history rewrite.
 
 ## Resume Recipe
 
-1. `cd /home/dalepalaca/.nightwatch/worktrees/nightwatch-reviewer-surface-and--30ec5809`
-2. `node bin/nightwatch-session.mjs claim --task nightwatch-reviewer-surface-and-intel-scale-v1 --adopt`
-3. Read this `STATE.md`, then `PLAN.md` for the current milestone.
-4. Continue from `## Exact Next Action`.
+Task complete. Do not resume. The campaign is closed and its work is
+integrated; a successor needs a fresh task, not this one.
 
 ## Completion Snapshot
 
-(filled at close)
+Task complete. All nine milestones closed; every required gate PASS; STOP. DEF-FC-04 repaired and mechanically guarded;
+the deferred reviewer experience implemented and browser-qualified; the
+scale envelope measured at 1,000 / 5,000 / 10,000 findings and recorded;
+one optimization landed with a re-measured delta and proven output
+equivalence; large-corpus and endurance coverage added; the campaign
+re-certified.
+
+```text
+implementation checkpoint:   aa1f73d
+documentation checkpoint:    85e8f65
+gate:local:                  PASS 11/11   receipt:sha256:11122985894cd43fb2cf953b
+gate:clean (Node 20, fresh): PASS 11/11   clean-receipt:sha256:50c7e633c90e7ecfb5a68574
+full regression:             3944 / 3931 passed / 13 skipped / 0 failed
+determinism:                 20 fresh processes, 1 unique semantic digest
+mutations:                   20 introduced, 18 detected, 2 equivalent, 0 survivors
+restore drift:               0
+endurance:                   200/200 identical responses; browser lane 30/30
+served path @ 10,000:        30,264 ms -> 26.0 ms, QUADRATIC -> LINEAR
+worst-case page @ 10,000:    359.5 ms
+```
+
+Safety accounting: production contact 0, NEXT contact 0, DEV requests 0,
+live C-12 executions 0, credential acquisitions 0, sibling writes 0,
+external filings 0, force pushes 0, history rewrites 0. One
+workspace-integrity event, caused by agent tooling rather than by campaign
+work, detected by `agent:check` and repaired — see `## Safety Events`.

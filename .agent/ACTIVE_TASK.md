@@ -3,23 +3,23 @@
 Task ID: nightwatch-reviewer-surface-and-intel-scale-v1
 Phase: REVIEWER_SURFACE_AND_INTEL_SCALE_V1
 Title: Reviewer Surface & Finding-Intelligence Scale
-Status: IN_PROGRESS
+Status: COMPLETE
 Task directory: .agent/tasks/nightwatch-reviewer-surface-and-intel-scale-v1
 Starting SHA: 868761d2128d5155db454623bc2fa01622a57d33
-Last validated implementation SHA: 882138c40e650b95ff8923b790b4b90c7edefdfa
-Last checkpoint: M1 COMPLETE, integrated at 96b100a (implementation 882138c, gate:local PASS 11/11); M2 reviewer projection in progress
-Current milestone: M2 (W1) — reviewer projection over the finding-intelligence and review cones
-Next action: M3 — the Control Center reviewer UI over the projection
+Last validated implementation SHA: aa1f73d272924ed568d3a5d1089f19efd0f6dd3e
+Last checkpoint: close-out — M1–M9 complete; implementation aa1f73d certified (gate:local PASS 11/11, gate:clean PASS Node 20 fresh install, regression 3931/0/13, 20 mutations / 0 survivors, determinism 20/1); STOP
+Current milestone: COMPLETE / STOP — all milestones closed, REPORT final
+Next action: STOP — integrate to main, release the session, remove the worktree
 Authorization class: REVIEWER_SURFACE_AND_INTEL_SCALE_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 868761d2128d5155db454623bc2fa01622a57d33
-LAST_VALIDATED_IMPLEMENTATION_SHA: 882138c40e650b95ff8923b790b4b90c7edefdfa
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 882138c40e650b95ff8923b790b4b90c7edefdfa
-LAST_DOCUMENTATION_CHECKPOINT_SHA: 96b100af42e7335ce39e2652265c458e2210522a
+LAST_VALIDATED_IMPLEMENTATION_SHA: aa1f73d272924ed568d3a5d1089f19efd0f6dd3e
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: aa1f73d272924ed568d3a5d1089f19efd0f6dd3e
+LAST_DOCUMENTATION_CHECKPOINT_SHA: 85e8f654fba29ca91286f0bab9eecf9cc3c68fa1
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
-PHASE_REVIEWER_SURFACE_AND_INTEL_SCALE_V1_STATUS: IN_PROGRESS
+PHASE_REVIEWER_SURFACE_AND_INTEL_SCALE_V1_STATUS: COMPLETE
 
 ## Routing and safety
 

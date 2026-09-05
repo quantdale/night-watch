@@ -1,7 +1,7 @@
 # EXECUTION PROMPT — Reviewer Surface & Finding-Intelligence Scale
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
-Status: IN_PROGRESS
+Status: COMPLETE
 Campaign ID: nightwatch-reviewer-surface-and-intel-scale-v1
 OpenSpec: openspec/changes/nightwatch-reviewer-surface-and-intel-scale-v1/
 Planned-From: 868761d2128d5155db454623bc2fa01622a57d33
