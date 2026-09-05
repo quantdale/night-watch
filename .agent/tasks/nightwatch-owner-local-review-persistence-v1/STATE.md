@@ -37,7 +37,7 @@ C-12 contact.
 
 ## Current Milestone
 
-M3 — Control Center write and read integration.
+M4 — store-boundary hardening.
 
 ## Completed Milestones
 
@@ -78,6 +78,22 @@ M3 — Control Center write and read integration.
   `tests/helpers/reviewerCorpus.ts` is the permanent synthetic corpus,
   built from six named families so over-collapse is measurable rather
   than assumed.
+- M3: Control Center integration. The reviewer surface projects real
+  persisted review state, page-bounded by construction: the authority
+  invokes `localReviewLookup` / `reviewIdentityFor` only for rows it
+  selected, so cost scales with rows RENDERED, not findings held, and
+  `reviewerAuthority` stays pure. One `reviewBindingFor` serves both the
+  read and the write path, because two independent derivations would
+  eventually disagree and the symptom would be every stored review
+  silently going stale. The write route is OPT-IN: without an authority
+  the server is exactly as read-only as before, answering POST with
+  `405 Allow: GET, HEAD` for every path. The client never chooses its
+  binding — it submits the identity it was shown and the server
+  recomputes. `contentDigest` binds to the WHOLE parsed dossier, so an
+  edit to an unprojected field still makes a review stale. The UI offers
+  the five canonical decisions and nothing else, removes them once a
+  decision is terminal, and refuses a response claiming organizational
+  authority even if the server sent one.
 
 ## Work In Progress
 
@@ -112,9 +128,8 @@ None.
 
 ## Exact Next Action
 
-Execute M3: add the narrow Control Center review-decision write authority
-and route, wire the page-bounded persisted review read path into the
-reviewer projection, and connect the reviewer UI.
+Execute M4: add occurrence-complete store-boundary hardening rules, and
+prove each one bites by mutating the artifact it guards.
 
 ## Files Changed
 
@@ -143,6 +158,9 @@ reviewer projection, and connect the reviewer UI.
   `tests/unit/reviewerPersistence.test.ts` 30/30 PASS;
   FULL unit regression 4017 passed / 0 failed / 13 skipped
   (the same 13 skips the predecessor recorded).
+- M3 (UI): `control-center:ui:typecheck` PASS; `control-center:ui:test`
+  20/20 PASS (6 new review-persistence cases);
+  `control-center:ui:build` PASS — 3 built files, no external references.
 
 ## Decisions Made During This Task
 

@@ -115,6 +115,17 @@ export interface ControlCenterReviewerFindingDto {
   readonly confidence: ControlCenterReviewerElementDto<SafeControlCenterCode>;
   readonly alphausRecommendation: ControlCenterAlphausRecommendationDto;
   readonly localReview: ControlCenterReviewerElementDto<ControlCenterLocalReviewValueDto>;
+  /**
+   * The identity a local decision must be submitted against.
+   *
+   * Null when no review store is configured, which is also when no decision
+   * can be recorded. It is a digest of the review binding and carries no
+   * finding content, so publishing it costs nothing; what it buys is that a
+   * client submits the identity it was SHOWN. If the artifacts moved between
+   * render and click, the server recomputes a different identity and refuses
+   * the write instead of binding a decision to a state the reviewer never saw.
+   */
+  readonly reviewIdentity: SafeControlCenterId | null;
   readonly unknowns: readonly SafeControlCenterCode[];
 }
 

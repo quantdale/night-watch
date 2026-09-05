@@ -178,6 +178,11 @@ export interface ReviewerFindingInput {
   readonly alphausRecommendation: ReviewerAlphausRecommendationInput;
   /** null when no local review decision has been recorded. */
   readonly localReview: ReviewerLocalReviewInput | null;
+  /**
+   * Identity a decision binds to; null or absent when no review store is
+   * configured. Optional so a caller with no store need not say so twice.
+   */
+  readonly reviewIdentity?: string | null;
   readonly unknowns: readonly string[];
 }
 
@@ -430,6 +435,9 @@ function projectFinding(input: ReviewerFindingInput, index: number): ControlCent
     confidence: projectConfidence(input.confidence, `${scope}.confidence`),
     alphausRecommendation: projectAlphausRecommendation(input.alphausRecommendation, `${scope}.alphausRecommendation`),
     localReview: projectLocalReview(input.localReview, `${scope}.localReview`),
+    reviewIdentity: input.reviewIdentity === null || input.reviewIdentity === undefined
+      ? null
+      : safeId(input.reviewIdentity, `${scope}.reviewIdentity`),
     unknowns: codeList(input.unknowns, `${scope}.unknowns`, MAX_UNKNOWNS),
   };
 }

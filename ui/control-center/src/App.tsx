@@ -1,6 +1,6 @@
 import { Component, useCallback, useEffect, useState, type ErrorInfo, type KeyboardEvent, type ReactNode } from 'react';
-import { apiErrorLabel, loadCampaignCoverage, loadCampaignSummary, loadExecutionGraph, loadFindings, loadOverview, loadReviewer, loadRunDetail, loadRuns, loadSourceGraph, loadSourceSurfaces, loadSystemMapLevel, loadSystemMapQuery, loadTimeline, subscribeToControlCenterEvents } from './api';
-import type { CampaignCoverageSnapshot, CampaignSummarySnapshot, DataLoadState, EpistemicClass, ExecutionGraphSnapshot, FindingsSnapshot, OverviewLoadState, OverviewSnapshot, ReviewerElement, ReviewerSnapshot, RunDetailSnapshot, RunListSnapshot, SourceGraphSnapshot, SourceSurfaceSnapshot, SourceSurfacesSnapshot, SystemMapBound, SystemMapLevelSegment, SystemMapNodeView, SystemMapQuerySegment, SystemMapSnapshot, TimelineSnapshot, ViewId } from './types';
+import { apiErrorLabel, loadCampaignCoverage, loadCampaignSummary, loadExecutionGraph, loadFindings, loadOverview, loadReviewer, loadRunDetail, loadRuns, loadSourceGraph, loadSourceSurfaces, loadSystemMapLevel, loadSystemMapQuery, loadTimeline, subscribeToControlCenterEvents, submitReviewDecision, REVIEW_DECISIONS, type ReviewDecision } from './api';
+import type { CampaignCoverageSnapshot, CampaignSummarySnapshot, DataLoadState, EpistemicClass, ExecutionGraphSnapshot, FindingsSnapshot, OverviewLoadState, OverviewSnapshot, ReviewerElement, ReviewerFindingSnapshot, ReviewerSnapshot, RunDetailSnapshot, RunListSnapshot, SourceGraphSnapshot, SourceSurfaceSnapshot, SourceSurfacesSnapshot, SystemMapBound, SystemMapLevelSegment, SystemMapNodeView, SystemMapQuerySegment, SystemMapSnapshot, TimelineSnapshot, ViewId } from './types';
 import { SYSTEM_MAP_QUERY_SEGMENTS, VIEW_DEFINITIONS } from './types';
 
 interface ErrorBoundaryProps {
@@ -426,6 +426,114 @@ function ReviewerElementCell<T>({ element, render }: {
   );
 }
 
+/**
+ * The owner-local decision control for one finding.
+ *
+ * Deliberately narrow. It offers the five canonical decisions and no free-form
+ * state, it disappears once a decision is terminal, and it never claims the
+ * decision means more than it does. Bypassing it changes nothing: the server
+ * refuses a second decision on the same binding regardless of what the UI
+ * shows.
+ */
+function ReviewDecisionCell({
+  item,
+  onDecided,
+}: {
+  readonly item: ReviewerFindingSnapshot;
+  readonly onDecided: () => void;
+}): ReactNode {
+  const [pending, setPending] = useState(false);
+  const [outcome, setOutcome] = useState<string | null>(null);
+  const [rationale, setRationale] = useState('');
+
+  const value = item.localReview.value;
+  const decided = value !== null && value.decision !== null && value.bindingCurrentness === 'CURRENT';
+
+  // No store configured: there is nothing to decide against, and saying so is
+  // better than showing controls that cannot work.
+  if (item.reviewIdentity === null) {
+    return (
+      <td>
+        <small>No owner-local review store</small>
+      </td>
+    );
+  }
+
+  if (decided) {
+    return (
+      <td>
+        <strong>Decided</strong>
+        <small>{formatCategory(value.decision ?? '')}</small>
+        <small>{value.reviewedAt === null ? 'No timestamp recorded' : value.reviewedAt}</small>
+        <small>Terminal. A second decision is refused by the server.</small>
+      </td>
+    );
+  }
+
+  const submit = async (decision: ReviewDecision): Promise<void> => {
+    setPending(true);
+    setOutcome(null);
+    try {
+      const response = await submitReviewDecision({
+        findingId: item.findingId,
+        reviewIdentity: item.reviewIdentity as string,
+        decision,
+        ...(rationale.trim() === '' ? {} : { rationale: rationale.trim() }),
+      });
+      setOutcome(response.result);
+      if (response.result === 'ACCEPTED') {
+        setRationale('');
+        onDecided();
+      }
+    } catch {
+      setOutcome('REQUEST_FAILED');
+    } finally {
+      setPending(false);
+    }
+  };
+
+  return (
+    <td>
+      <label className="visually-hidden" htmlFor={`rationale-${item.findingId}`}>
+        Rationale for {item.findingId}
+      </label>
+      <textarea
+        id={`rationale-${item.findingId}`}
+        className="review-rationale"
+        value={rationale}
+        maxLength={2000}
+        rows={2}
+        placeholder="Rationale (optional, no customer values)"
+        disabled={pending}
+        onChange={(event) => setRationale(event.target.value)}
+      />
+      <div className="review-actions">
+        {REVIEW_DECISIONS.map((decision) => (
+          <button
+            key={decision}
+            type="button"
+            className="review-action"
+            disabled={pending}
+            onClick={() => {
+              void submit(decision);
+            }}
+          >
+            {formatCategory(decision)}
+          </button>
+        ))}
+      </div>
+      {outcome === null ? null : (
+        <small className={outcome === 'ACCEPTED' ? 'review-outcome-ok' : 'review-outcome-warn'}>
+          {outcome === 'ACCEPTED'
+            ? 'Recorded locally. This is not Leslie or Pondr sign-off.'
+            : `Refused: ${formatCategory(outcome)}`}
+        </small>
+      )}
+      <small>Owner-local only. Never organizational sign-off.</small>
+    </td>
+  );
+}
+
 function ReviewerView({ state, onRetry }: { readonly state: DataLoadState<ReviewerSnapshot>; readonly onRetry: () => void }): ReactNode {
   if (state.kind === 'loading' || state.kind === 'idle') return <LoadingState />;
   if (state.kind === 'error') return <DataErrorState title="Reviewer intelligence unavailable" onRetry={onRetry} />;
@@ -466,6 +574,7 @@ function ReviewerView({ state, onRetry }: { readonly state: DataLoadState<Review
                 <th scope="col">Expectation provenance</th>
                 <th scope="col">Confidence</th>
                 <th scope="col">Local review</th>
+                <th scope="col">Decision</th>
               </tr></thead>
               <tbody>{items.map((item) => (
                 <tr key={item.findingId}>
@@ -507,6 +616,7 @@ function ReviewerView({ state, onRetry }: { readonly state: DataLoadState<Review
                     <small>Binding {formatCategory(value.bindingCurrentness)}</small>
                     <small>Local review only. Not Leslie or Pondr sign-off.</small>
                   </>} />
+                  <ReviewDecisionCell item={item} onDecided={onRetry} />
                 </tr>
               ))}</tbody>
             </table></div>}

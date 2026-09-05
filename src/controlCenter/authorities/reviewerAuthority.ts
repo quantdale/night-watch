@@ -102,6 +102,11 @@ export interface ReviewerAuthorityInput {
    * authority; this authority calls a function it was handed and has none.
    */
   readonly localReviewLookup?: (dossier: FindingsDossierMetadata) => ReviewerLocalReviewInput | null;
+  /**
+   * The identity a decision for this finding must bind to. Supplied by the
+   * same authority that owns the store, and computed for page rows only.
+   */
+  readonly reviewIdentityFor?: (dossier: FindingsDossierMetadata) => string | null;
 }
 
 function descriptorFor(dossier: FindingsDossierMetadata): IntelFindingDescriptor | null {
@@ -191,6 +196,7 @@ export function reviewerInputsFromFindings(input: ReviewerAuthorityInput): Revie
   const limit = typeof input.limit === 'number' && Number.isSafeInteger(input.limit) && input.limit > 0 ? input.limit : Number.MAX_SAFE_INTEGER;
   const campaignId = typeof input.campaignId === 'string' && ID_RE.test(input.campaignId) ? input.campaignId : null;
   const lookupLocalReview = typeof input.localReviewLookup === 'function' ? input.localReviewLookup : null;
+  const lookupReviewIdentity = typeof input.reviewIdentityFor === 'function' ? input.reviewIdentityFor : null;
 
   const entries = dossiers
     .map((dossier) => ({ dossier, descriptor: descriptorFor(dossier), at: observedAtMs(dossier.firstObserved) }))
@@ -307,6 +313,7 @@ export function reviewerInputsFromFindings(input: ReviewerAuthorityInput): Revie
         teamEvidence: null,
       },
       localReview,
+      reviewIdentity: lookupReviewIdentity === null ? null : lookupReviewIdentity(entry.dossier),
       unknowns,
     };
   }

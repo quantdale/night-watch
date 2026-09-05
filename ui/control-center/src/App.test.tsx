@@ -526,6 +526,212 @@ describe('Control Center UI shell', () => {
     expect(document.body).not.toHaveTextContent('SENTINEL_REVIEW_PROSE');
   });
 
+  // Owner-local review persistence. The failures worth testing for are: a
+  // decision control offered when nothing can be written, a terminal decision
+  // still offering to be changed, a refusal reported as a success, and a local
+  // decision presented as organizational sign-off.
+  const reviewerItem = (overrides: Record<string, unknown> = {}) => {
+    const element = (epistemicClass: string, value: unknown, basis: readonly string[] = []) => ({ epistemicClass, value, basis });
+    return {
+      findingId: 'cc-reviewer-01',
+      relationship: element('UNKNOWN', null, []),
+      probableDuplicates: [],
+      recurrence: element('UNKNOWN', null, []),
+      defectClass: element('UNKNOWN', null, []),
+      expectationProvenance: element('FACT', 'MACHINE_CONTRACT', ['MACHINE_CONTRACT']),
+      confidence: element('FACT', 'HIGH_CONFIDENCE', ['HIGH_CONFIDENCE']),
+      alphausRecommendation: {
+        severity: element('RECOMMENDATION', 'CRITICAL', ['DOSSIER_TECHNICAL_SEVERITY']),
+        catchStage: element('RECOMMENDATION', 'PR_REVIEW', ['LOCAL_PRE_REVIEW_OBSERVATION']),
+        source: element('RECOMMENDATION', 'SELF_FOUND', ['NIGHTWATCH_LOCAL_DISCOVERY']),
+        team: element('UNKNOWN', null, []),
+      },
+      localReview: element('UNKNOWN', null, []),
+      reviewIdentity: 'a'.repeat(24),
+      unknowns: ['NO_LOCAL_REVIEW'],
+      ...overrides,
+    };
+  };
+
+  const reviewerResponses = (item: unknown): Record<string, unknown> => ({
+    [CONTROL_CENTER_API_PATHS.health]: overview.health,
+    [CONTROL_CENTER_API_PATHS.meta]: overview.meta,
+    [CONTROL_CENTER_API_PATHS.readiness]: overview.readiness,
+    [CONTROL_CENTER_API_PATHS.safety]: overview.safety,
+    [CONTROL_CENTER_API_PATHS.sourceSummary]: overview.source,
+    '/api/v1/reviewer?limit=50': {
+      schemaVersion: 'nightwatch.control-center.reviewer.v1',
+      state: 'AVAILABLE',
+      items: [item],
+      page: { limit: 50, nextCursor: null, truncated: false },
+      finalVerdictAuthority: 'HUMAN_ORGANIZATIONAL',
+      organizationalAuthority: 'NONE_LOCAL_REVIEW_ONLY',
+    },
+  });
+
+  const openReviewer = async (user: ReturnType<typeof userEvent.setup>): Promise<void> => {
+    render(<App />);
+    await screen.findByRole('heading', { name: 'Know the posture before the next run.' });
+    await user.click(within(screen.getByRole('navigation', { name: 'Primary' })).getByRole('link', { name: 'Reviewer' }));
+    await screen.findByRole('heading', { name: 'Separate what was proved from what is suggested.' });
+  };
+
+  it('offers no decision control when there is no owner-local review store', async () => {
+    const user = userEvent.setup();
+    const responses = reviewerResponses(reviewerItem({ reviewIdentity: null, unknowns: ['NO_LOCAL_REVIEW_STORE'] }));
+    vi.stubGlobal('fetch', vi.fn((input: RequestInfo | URL) => Promise.resolve(responseFor(responses[String(input)]))));
+    await openReviewer(user);
+
+    expect(screen.getByText('No owner-local review store')).toBeInTheDocument();
+    // Not a disabled button, and not a button that would fail on click: no
+    // control at all, because there is nothing it could bind to.
+    expect(screen.queryByRole('button', { name: 'Accept Evidence' })).not.toBeInTheDocument();
+  });
+
+  it('offers only the canonical decisions, and records one locally', async () => {
+    const user = userEvent.setup();
+    const responses = reviewerResponses(reviewerItem());
+    const calls: Array<{ url: string; init?: RequestInit }> = [];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+        calls.push({ url: String(input), init });
+        if (String(input) === CONTROL_CENTER_API_PATHS.reviewerDecision) {
+          return Promise.resolve(
+            responseFor({ schemaVersion: 'nightwatch.control-center.review-decision.v1', result: 'ACCEPTED', reviewIdentity: 'a'.repeat(24), organizationalAuthority: 'NONE_LOCAL_REVIEW_ONLY' })
+          );
+        }
+        return Promise.resolve(responseFor(responses[String(input)]));
+      })
+    );
+    await openReviewer(user);
+
+    // Exactly the five canonical decisions. No free-form state mutation.
+    for (const label of ['Accept Evidence', 'Request Followup', 'Mark Insufficient', 'Mark Duplicate Candidate', 'Supersede']) {
+      expect(screen.getByRole('button', { name: label })).toBeInTheDocument();
+    }
+    expect(screen.queryByRole('button', { name: /approve/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /leslie/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /pondr/i })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Accept Evidence' }));
+
+    await waitFor(() => expect(screen.getByText(/Recorded locally/)).toBeInTheDocument());
+    // The success message itself refuses the organizational reading.
+    expect(screen.getByText('Recorded locally. This is not Leslie or Pondr sign-off.')).toBeInTheDocument();
+
+    const write = calls.find((call) => call.url === CONTROL_CENTER_API_PATHS.reviewerDecision);
+    expect(write).toBeDefined();
+    expect(write!.init?.method).toBe('POST');
+    // The identity submitted is the identity the surface was SHOWN.
+    expect(JSON.parse(String(write!.init?.body))).toMatchObject({
+      findingId: 'cc-reviewer-01',
+      reviewIdentity: 'a'.repeat(24),
+      decision: 'ACCEPT_EVIDENCE',
+    });
+    // The header a cross-origin form cannot set.
+    expect((write!.init?.headers as Record<string, string>)['X-Nightwatch-Local-Review']).toBe('1');
+  });
+
+  it('removes the controls once a decision is terminal and shows the receipt', async () => {
+    const user = userEvent.setup();
+    const decided = reviewerItem({
+      localReview: {
+        epistemicClass: 'FACT',
+        value: {
+          state: 'REVIEWED', decision: 'ACCEPT_EVIDENCE', reviewedAt: '2026-09-05T12:00:00Z',
+          transitionCount: 1, bindingCurrentness: 'CURRENT',
+          organizationalAuthority: 'NONE_LOCAL_REVIEW_ONLY',
+          notEquivalentTo: ['LESLIE_GENUINE', 'LESLIE_INVALID', 'PONDR_APPROVED'],
+        },
+        basis: ['REVIEWED'],
+      },
+      unknowns: [],
+    });
+    const responses = reviewerResponses(decided);
+    vi.stubGlobal('fetch', vi.fn((input: RequestInfo | URL) => Promise.resolve(responseFor(responses[String(input)]))));
+    await openReviewer(user);
+
+    expect(screen.getByText('Decided')).toBeInTheDocument();
+    expect(screen.getByText('2026-09-05T12:00:00Z')).toBeInTheDocument();
+    expect(screen.getByText('Terminal. A second decision is refused by the server.')).toBeInTheDocument();
+    for (const label of ['Accept Evidence', 'Request Followup', 'Mark Insufficient', 'Mark Duplicate Candidate', 'Supersede']) {
+      expect(screen.queryByRole('button', { name: label })).not.toBeInTheDocument();
+    }
+  });
+
+  it('still offers a decision when the stored one is stale, and does not show it as live', async () => {
+    const user = userEvent.setup();
+    const stale = reviewerItem({
+      localReview: {
+        epistemicClass: 'UNKNOWN',
+        value: {
+          state: 'REVIEWED', decision: 'ACCEPT_EVIDENCE', reviewedAt: '2026-09-05T12:00:00Z',
+          transitionCount: 1, bindingCurrentness: 'STALE',
+          organizationalAuthority: 'NONE_LOCAL_REVIEW_ONLY',
+          notEquivalentTo: ['LESLIE_GENUINE', 'LESLIE_INVALID', 'PONDR_APPROVED'],
+        },
+        basis: ['REVIEWED'],
+      },
+      unknowns: ['LOCAL_REVIEW_STALE'],
+    });
+    const responses = reviewerResponses(stale);
+    vi.stubGlobal('fetch', vi.fn((input: RequestInfo | URL) => Promise.resolve(responseFor(responses[String(input)]))));
+    await openReviewer(user);
+
+    // The stale decision is visible, and it is labelled UNKNOWN rather than
+    // rendered as a live decision.
+    expect(screen.getByText('Binding Stale')).toBeInTheDocument();
+    expect(screen.getByText(/Local review stale/i)).toBeInTheDocument();
+    // The current artifacts have not been reviewed, so a decision is offered.
+    expect(screen.getByRole('button', { name: 'Accept Evidence' })).toBeInTheDocument();
+  });
+
+  it('reports a server refusal as a refusal, never as a success', async () => {
+    const user = userEvent.setup();
+    const responses = reviewerResponses(reviewerItem());
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((input: RequestInfo | URL) => {
+        if (String(input) === CONTROL_CENTER_API_PATHS.reviewerDecision) {
+          return Promise.resolve(
+            responseFor({ schemaVersion: 'nightwatch.control-center.review-decision.v1', result: 'ALREADY_DECIDED', reviewIdentity: null, organizationalAuthority: 'NONE_LOCAL_REVIEW_ONLY' })
+          );
+        }
+        return Promise.resolve(responseFor(responses[String(input)]));
+      })
+    );
+    await openReviewer(user);
+
+    await user.click(screen.getByRole('button', { name: 'Accept Evidence' }));
+    await waitFor(() => expect(screen.getByText('Refused: Already Decided')).toBeInTheDocument());
+    expect(screen.queryByText(/Recorded locally/)).not.toBeInTheDocument();
+  });
+
+  it('refuses a response that claims organizational authority', async () => {
+    const user = userEvent.setup();
+    const responses = reviewerResponses(reviewerItem());
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((input: RequestInfo | URL) => {
+        if (String(input) === CONTROL_CENTER_API_PATHS.reviewerDecision) {
+          // A response that came back claiming Leslie authority is a breach,
+          // not a success, and the client refuses it too.
+          return Promise.resolve(
+            responseFor({ schemaVersion: 'nightwatch.control-center.review-decision.v1', result: 'ACCEPTED', reviewIdentity: 'a'.repeat(24), organizationalAuthority: 'LESLIE_GENUINE' })
+          );
+        }
+        return Promise.resolve(responseFor(responses[String(input)]));
+      })
+    );
+    await openReviewer(user);
+
+    await user.click(screen.getByRole('button', { name: 'Accept Evidence' }));
+    await waitFor(() => expect(screen.getByText('Refused: Request Failed')).toBeInTheDocument());
+    expect(screen.queryByText(/Recorded locally/)).not.toBeInTheDocument();
+    expect(document.body).not.toHaveTextContent('LESLIE_GENUINE');
+  });
+
   it('states plainly when reviewer intelligence is unavailable', async () => {
     const user = userEvent.setup();
     const responses: Record<string, unknown> = {

@@ -33,6 +33,7 @@ export const CONTROL_CENTER_API_PATHS = Object.freeze({
   sourceGraph: '/api/v1/source/graph',
   findings: '/api/v1/findings',
   reviewer: '/api/v1/reviewer',
+  reviewerDecision: '/api/v1/reviewer/decision',
   /** C-15c. Explicitly v2: v1 is never reinterpreted. */
   systemMap: '/api/v2/system-map',
 });
@@ -77,6 +78,76 @@ async function fetchSnapshot<T>(path: string): Promise<T> {
   }
   if (!isSnapshot(payload)) throw new ControlCenterApiError('INVALID_RESPONSE');
   return payload as T;
+}
+
+/** The canonical local review decisions. The UI offers these and nothing else. */
+export const REVIEW_DECISIONS = Object.freeze([
+  'ACCEPT_EVIDENCE',
+  'REQUEST_FOLLOWUP',
+  'MARK_INSUFFICIENT',
+  'MARK_DUPLICATE_CANDIDATE',
+  'SUPERSEDE',
+] as const);
+
+export type ReviewDecision = (typeof REVIEW_DECISIONS)[number];
+
+export interface ReviewDecisionResponse {
+  readonly result: string;
+  readonly reviewIdentity: string | null;
+  readonly organizationalAuthority: string;
+}
+
+/**
+ * Record one owner-local review decision.
+ *
+ * The `reviewIdentity` is the one the surface was SHOWN. If the artifacts
+ * moved since, the server recomputes a different identity and answers
+ * BINDING_MISMATCH rather than binding the decision to a state the reviewer
+ * never saw. The UI reports that rather than retrying with a fresh identity,
+ * because a silent retry would record a decision about something else.
+ */
+export async function submitReviewDecision(input: {
+  readonly findingId: string;
+  readonly reviewIdentity: string;
+  readonly decision: ReviewDecision;
+  readonly rationale?: string;
+}): Promise<ReviewDecisionResponse> {
+  let response: Response;
+  try {
+    response = await fetch(CONTROL_CENTER_API_PATHS.reviewerDecision, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        // Never settable by a cross-origin form or navigation.
+        'X-Nightwatch-Local-Review': '1',
+      },
+      credentials: 'omit',
+      cache: 'no-store',
+      redirect: 'error',
+      body: JSON.stringify(input),
+    });
+  } catch {
+    throw new ControlCenterApiError('NETWORK');
+  }
+  if (!response.ok) throw new ControlCenterApiError('HTTP', response.status);
+  let payload: unknown;
+  try {
+    payload = await response.json();
+  } catch {
+    throw new ControlCenterApiError('INVALID_RESPONSE');
+  }
+  if (payload === null || typeof payload !== 'object') throw new ControlCenterApiError('INVALID_RESPONSE');
+  const body = payload as Record<string, unknown>;
+  if (typeof body.result !== 'string') throw new ControlCenterApiError('INVALID_RESPONSE');
+  // A local decision that came back claiming organizational authority is a
+  // breach, not a success. It is refused at the client too.
+  if (body.organizationalAuthority !== 'NONE_LOCAL_REVIEW_ONLY') throw new ControlCenterApiError('INVALID_RESPONSE');
+  return {
+    result: body.result,
+    reviewIdentity: typeof body.reviewIdentity === 'string' ? body.reviewIdentity : null,
+    organizationalAuthority: body.organizationalAuthority,
+  };
 }
 
 export function loadOverview(): Promise<OverviewSnapshot> {

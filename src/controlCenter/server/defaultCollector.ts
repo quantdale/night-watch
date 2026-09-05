@@ -456,7 +456,10 @@ export function createDefaultControlCenterCollector(options: DefaultControlCente
           // listing per finding rendered, not one per finding held.
           ...(reviewAuthority === null
             ? {}
-            : { localReviewLookup: reviewAuthority.localReviewLookup({ campaignId: campaign.generation }) }),
+            : {
+                localReviewLookup: reviewAuthority.localReviewLookup({ campaignId: campaign.generation }),
+                reviewIdentityFor: (dossier) => reviewAuthority.identityFor(dossier, { campaignId: campaign.generation }),
+              }),
         }),
         query.limit
       );

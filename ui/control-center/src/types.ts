@@ -490,6 +490,8 @@ export interface ReviewerFindingSnapshot {
   readonly confidence: ReviewerElement<string>;
   readonly alphausRecommendation: ReviewerAlphausRecommendation;
   readonly localReview: ReviewerElement<ReviewerLocalReviewValue>;
+  /** Identity a decision binds to; null when no owner-local review store exists. */
+  readonly reviewIdentity: string | null;
   readonly unknowns: readonly string[];
 }
 

@@ -66,7 +66,12 @@ function collectorFor(
           dossiers,
           campaignId: CAMPAIGN,
           limit: query.limit,
-          ...(authority === null ? {} : { localReviewLookup: authority.localReviewLookup({ campaignId: CAMPAIGN }) }),
+          ...(authority === null
+            ? {}
+            : {
+                localReviewLookup: authority.localReviewLookup({ campaignId: CAMPAIGN }),
+                reviewIdentityFor: (dossier) => authority.identityFor(dossier, { campaignId: CAMPAIGN }),
+              }),
         }),
         query.limit
       ),
