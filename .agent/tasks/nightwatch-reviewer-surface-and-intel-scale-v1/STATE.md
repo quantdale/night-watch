@@ -335,6 +335,7 @@ production work.
 | Control Center browser lane x30 | 30 pass / 0 fail |
 | Mutation campaign (20 reversible) | 18 detected, 2 equivalent with evidence, 0 survivors, 0 restore drift |
 | `node bin/frontier-determinism.mjs 20` | PASS, 1 unique digest across 20 fresh processes |
+| `npx playwright test` (full regression) | 3944 total / 3931 passed / 13 skipped / 0 failed (9.5 m) |
 | RS-1 scale-probe purity probe | fires on `Math.random` in the probe |
 | `npm run typecheck` | clean |
 | `npm run hardening:check` | PASS |
@@ -385,7 +386,31 @@ production work.
 
 ## Safety Events
 
-None. No production, NEXT, DEV, or live C-12 contact. No credential
+One workspace-integrity event, detected by the repository's own check and
+repaired; no data, privacy, or authority consequence.
+
+- 2026-09-05, M9. `npm run agent:check` failed with ten
+  `WORKSPACE_EXCLUDE_DRIFT` errors: ten `**/.claude/...` patterns had been
+  written into the SHARED `$GIT_COMMON_DIR/info/exclude`, which C-00
+  requires to hold zero effective patterns because it is common to every
+  worktree and is never private per-session scratch state.
+- Cause: an agent-harness `ScheduleWakeup` call during this session. The
+  harness initialized its scheduled-task machinery, wrote its runtime
+  paths into the shared exclude, and created
+  `.claude/scheduled_tasks.lock` in the canonical checkout. Not a campaign
+  change and not a repository decision.
+- Repair: the shared exclude was restored to the stock comment-only git
+  template and the stale lock file removed. The patterns were deliberately
+  NOT migrated into the tracked `.gitignore`: whether the repository
+  ignores harness runtime state is a repository decision, and encoding a
+  tooling side effect as policy would be the wrong resolution.
+- Verification: `npm run agent:check` returns to PASS with its three known
+  warnings; `WORKSPACE_EXCLUDE_POLICY` is green.
+- Worth noting for the next session: the C-00 shared-exclude invariant is
+  load-bearing precisely because an external tool can write there without
+  the repository noticing. It noticed.
+
+No production, NEXT, DEV, or live C-12 contact. No credential
 access. No sibling-repository write. No force push. No history rewrite.
 
 ## Deferred / Follow-Up
