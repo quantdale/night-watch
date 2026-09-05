@@ -340,6 +340,17 @@ Under v2 the checker enforces a cross-file task-status state machine:
 - Tracked documents record only SHAs and CI run IDs already known before the
   document commit; live HEAD is discovered from Git; a document never predicts
   the SHA or CI run of the commit that contains itself.
+- The `## Routing and safety` block of `.agent/ACTIVE_TASK.md` is bound to the
+  active campaign, not trusted as prose. It declares `CAMPAIGN` and
+  `SESSION WORKTREE` inside its authority fence; both are checked against the
+  active task's own identity and its `STATE.md` branch, and every `session/...`
+  reference anywhere in the document must be the declared worktree. A
+  predecessor block, a missing block, a duplicate directive, or one stale
+  worktree mention among correct ones all fail closed
+  (`ACTIVE_TASK_ROUTING_*`). This is DEF-FC-04: a campaign-open commit rewrites
+  the identity fields and leaves the prose, so an entire campaign once ran with
+  a routing block naming a retired worktree and authorizing "one focused
+  coherence test file only".
 - `npm run agent:check` strict-validates the active task and every v2 task
   directory; `npm run agent:audit` reports the full history inventory.
   Historical tasks without the marker remain readable legacy v1 records

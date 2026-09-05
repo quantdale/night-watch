@@ -14,3 +14,12 @@ export function classifySha(
   disallowed?: string[];
   reason: string;
 };
+export function inspectActiveTaskRouting(
+  activeText: string,
+  taskId: string,
+  stateBranch?: string | undefined
+): {
+  errors: string[];
+  declaredCampaign: string | undefined;
+  declaredWorktree: string | undefined;
+};

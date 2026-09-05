@@ -67,6 +67,81 @@ const REQUIRED_STATE_HEADINGS = [
   '## Completion Snapshot',
 ];
 
+// DEF-FC-04. The `## Routing and safety` block is what an agent reads to
+// decide what it may write, and it is the one part of ACTIVE_TASK.md that a
+// campaign-open commit historically left behind: identity fields are rewritten
+// while the predecessor's authority prose survives verbatim. A checker cannot
+// bind prose, so the block declares `CAMPAIGN` and `SESSION WORKTREE` and both
+// are bound here to the active task's own identity.
+//
+// The session-worktree scan is occurrence-complete on purpose. A rule that
+// accepts the document because one correct `session/...` mention exists would
+// pass while another line still names a retired worktree — the exact shape
+// that let this defect survive a whole campaign.
+export function inspectActiveTaskRouting(activeText, taskId, stateBranch) {
+  const errors = [];
+  // Deliberately not parseMarkdownSections: that helper drops fenced lines,
+  // and the routing directives belong inside the authority fence they govern.
+  const body = extractSectionRaw(activeText, '## Routing and safety');
+  if (body === null || body.trim() === '') {
+    errors.push('ACTIVE_TASK_ROUTING_BLOCK_MISSING: no `## Routing and safety` section');
+    return { errors, declaredCampaign: undefined, declaredWorktree: undefined };
+  }
+
+  const declaredCampaign = matchSingleDirective(body, 'CAMPAIGN', errors);
+  const declaredWorktree = matchSingleDirective(body, 'SESSION WORKTREE', errors);
+
+  if (declaredCampaign === undefined) {
+    errors.push('ACTIVE_TASK_ROUTING_CAMPAIGN_MISSING: routing block declares no CAMPAIGN');
+  } else if (taskId && declaredCampaign !== taskId) {
+    errors.push(
+      `ACTIVE_TASK_ROUTING_CAMPAIGN_DRIFT: routing block declares CAMPAIGN ${declaredCampaign} but the active task is ${taskId}`
+    );
+  }
+
+  if (declaredWorktree === undefined) {
+    errors.push('ACTIVE_TASK_ROUTING_SESSION_WORKTREE_MISSING: routing block declares no SESSION WORKTREE');
+  } else if (stateBranch && declaredWorktree !== stateBranch) {
+    errors.push(
+      `ACTIVE_TASK_ROUTING_SESSION_WORKTREE_DRIFT: routing block declares SESSION WORKTREE ${declaredWorktree} but STATE.md records branch ${stateBranch}`
+    );
+  }
+
+  if (declaredWorktree !== undefined) {
+    const seen = new Set();
+    for (const match of activeText.matchAll(/session\/[A-Za-z0-9._\/-]+/g)) {
+      const occurrence = match[0].replace(/[.`,;:)]+$/, '');
+      if (occurrence !== declaredWorktree) seen.add(occurrence);
+    }
+    for (const stray of [...seen].sort()) {
+      errors.push(
+        `ACTIVE_TASK_ROUTING_FOREIGN_WORKTREE_REFERENCE: ${stray} is named in ACTIVE_TASK.md but the declared SESSION WORKTREE is ${declaredWorktree}`
+      );
+    }
+  }
+
+  return { errors, declaredCampaign, declaredWorktree };
+}
+
+function extractSectionRaw(text, heading) {
+  const lines = String(text ?? '').split(/\r?\n/);
+  const start = lines.findIndex((line) => line.trim() === heading);
+  if (start === -1) return null;
+  const rest = lines.slice(start + 1);
+  const end = rest.findIndex((line) => /^##\s+/.test(line.trim()));
+  return (end === -1 ? rest : rest.slice(0, end)).join('\n');
+}
+
+function matchSingleDirective(body, name, errors) {
+  const pattern = new RegExp(`^[ \\t]*${name}:[ \\t]*(\\S.*?)[ \\t]*$`, 'gm');
+  const values = [...body.matchAll(pattern)].map((match) => match[1]);
+  if (values.length === 0) return undefined;
+  if (values.length > 1) {
+    errors.push(`ACTIVE_TASK_ROUTING_DUPLICATE_DIRECTIVE: ${name} declared ${values.length} times`);
+  }
+  return values[0];
+}
+
 function parseArgs(argv) {
   const rootIndex = argv.indexOf('--root');
   if (rootIndex !== -1) {
@@ -792,6 +867,9 @@ export function validate(root, auditMode = false) {
     if (state !== undefined) requireHeadings(state, REQUIRED_STATE_HEADINGS, 'STATE.md', errors);
 
     const stateFields = state ? parseKeyValueFile(state) : new Map();
+    for (const routingError of inspectActiveTaskRouting(activeText, taskId, stateFields.get('Branch')).errors) {
+      errors.push(routingError);
+    }
     if (state && stateFields.get('Task ID') !== taskId) {
       errors.push(`STATE Task ID does not match ACTIVE_TASK: ${stateFields.get('Task ID') ?? '<missing>'} != ${taskId}`);
     }
