@@ -258,7 +258,7 @@ test.describe('properties (deterministic seeds)', () => {
     // one. A new method cannot be added without this test being updated,
     // which is the point — a publication method would have to be declared.
     expect([...surface].filter((name) => name !== 'constructor').sort()).toEqual(
-      ['artifacts', 'fileNamesFor', 'policy', 'putDecision', 'read', 'recoverTemporaries', 'root'].sort()
+      ['artifacts', 'fileNamesFor', 'policy', 'putDecision', 'read', 'recoverTemporaries', 'root', 'snapshotListing'].sort()
     );
   });
 });
@@ -293,6 +293,98 @@ function withFsFault<T>(method: keyof typeof fs, nth: number, code: string, run:
     Reflect.set(fs, method, original);
   }
 }
+
+test.describe('the request-scoped listing is a discovery aid, never an authority', () => {
+  test('a listing serves a whole page with one directory read', () => {
+    const root = tempRoot();
+    const store = new ReviewStore({ root });
+    const findings = Array.from({ length: 40 }, (_, index) => {
+      const value = artifacts(`listing-${index}`);
+      const findingId = `finding:listing-${index}`;
+      store.putDecision({ binding: bindingFor(value, findingId), decision: 'ACCEPT_EVIDENCE', reviewedAt: REVIEWED_AT, storedAt: STORED_AT });
+      return { findingId, value };
+    });
+
+    // Count the directory reads a page costs. This is the invariant the
+    // measurement exposed: it must be ONE, not one per row.
+    const originalReaddir = fs.readdirSync;
+    let reads = 0;
+    (fs as { readdirSync: typeof fs.readdirSync }).readdirSync = ((...args: Parameters<typeof fs.readdirSync>) => {
+      reads += 1;
+      return originalReaddir(...args);
+    }) as typeof fs.readdirSync;
+    try {
+      const listing = store.snapshotListing();
+      for (const finding of findings) {
+        expect(store.read(finding.findingId, currentFor(finding.value), listing).state).toBe('CURRENT');
+      }
+    } finally {
+      (fs as { readdirSync: typeof fs.readdirSync }).readdirSync = originalReaddir;
+    }
+    expect(reads).toBe(1);
+  });
+
+  test('without a listing the same page costs one directory read per row', () => {
+    // The control for the test above. If this were also 1 the assertion
+    // there would prove nothing about the listing.
+    const root = tempRoot();
+    const store = new ReviewStore({ root });
+    const findings = Array.from({ length: 8 }, (_, index) => {
+      const value = artifacts(`unlisted-${index}`);
+      const findingId = `finding:unlisted-${index}`;
+      store.putDecision({ binding: bindingFor(value, findingId), decision: 'ACCEPT_EVIDENCE', reviewedAt: REVIEWED_AT, storedAt: STORED_AT });
+      return { findingId, value };
+    });
+    const originalReaddir = fs.readdirSync;
+    let reads = 0;
+    (fs as { readdirSync: typeof fs.readdirSync }).readdirSync = ((...args: Parameters<typeof fs.readdirSync>) => {
+      reads += 1;
+      return originalReaddir(...args);
+    }) as typeof fs.readdirSync;
+    try {
+      for (const finding of findings) store.read(finding.findingId, currentFor(finding.value));
+    } finally {
+      (fs as { readdirSync: typeof fs.readdirSync }).readdirSync = originalReaddir;
+    }
+    expect(reads).toBe(8);
+  });
+
+  test('a listing that points at the wrong file cannot make bytes authoritative', () => {
+    // The listing decides WHICH files are looked at. It never decides whether
+    // what is found is valid: the envelope is still validated in full, and a
+    // file whose name does not match its contents is refused.
+    const root = tempRoot();
+    const store = new ReviewStore({ root });
+    const first = artifacts('listing-a');
+    const second = artifacts('listing-b');
+    store.putDecision({ binding: bindingFor(first, 'finding:listing-a'), decision: 'ACCEPT_EVIDENCE', reviewedAt: REVIEWED_AT, storedAt: STORED_AT });
+    const written = store.putDecision({ binding: bindingFor(second, 'finding:listing-b'), decision: 'SUPERSEDE', reviewedAt: REVIEWED_AT, storedAt: STORED_AT });
+
+    // A forged listing that offers B's file under A's discovery key. B's file
+    // is perfectly VALID — its name matches its contents — so envelope
+    // validation alone would accept it. What refuses it is the read checking
+    // that the envelope belongs to the finding that was asked for.
+    const forged = { byDiscoveryKey: new Map([[reviewFileName(bindingFor(first, 'finding:listing-a')).split('.')[1] as string, [written.fileName]]]) };
+    const read = store.read('finding:listing-a', currentFor(first), forged);
+    expect(read.state).not.toBe('CURRENT');
+    expect(read.corruption[0]?.code).toBe('REVIEW_STORE_IDENTITY_MISMATCH');
+    expect(read.corruption[0]?.detail).toContain('another finding');
+    // B's review is not adopted as A's, under any state.
+    expect(read.envelope).toBeNull();
+    expect(read.generations).toEqual([]);
+  });
+
+  test('an empty listing reads as no review, never as an error', () => {
+    const root = tempRoot();
+    const store = new ReviewStore({ root });
+    const value = artifacts('listing-empty');
+    store.putDecision({ binding: bindingFor(value, 'finding:listing-empty'), decision: 'ACCEPT_EVIDENCE', reviewedAt: REVIEWED_AT, storedAt: STORED_AT });
+    const empty = { byDiscoveryKey: new Map<string, readonly string[]>() };
+    expect(store.read('finding:listing-empty', currentFor(value), empty).state).toBe('NO_REVIEW');
+    // And the real listing still finds it.
+    expect(store.read('finding:listing-empty', currentFor(value), store.snapshotListing()).state).toBe('CURRENT');
+  });
+});
 
 test.describe('injected crash consistency', () => {
   const INJECTION_POINTS: readonly (readonly [keyof typeof fs, number])[] = [

@@ -155,6 +155,17 @@ export function validateStoredReviewEnvelope(value: unknown, fileName: string): 
   return record as unknown as StoredReviewEnvelope;
 }
 
+/**
+ * A request-scoped view of which files exist, grouped by discovery key.
+ *
+ * The listing is a discovery aid ONLY. Every envelope it points at is still
+ * validated in full on read, so a stale or hand-crafted listing can never make
+ * bytes authoritative — it can only decide which files are looked at.
+ */
+export interface ReviewStoreListing {
+  readonly byDiscoveryKey: ReadonlyMap<string, readonly string[]>;
+}
+
 export interface ReviewStoreOptions {
   /** Test-injected root. Omitted in normal use, where the root is derived. */
   readonly root?: string;
@@ -248,8 +259,36 @@ export class ReviewStore {
   }
 
   /** Every stored generation's file name for one finding, via the derived key. */
-  fileNamesFor(findingId: string): readonly string[] {
+  fileNamesFor(findingId: string, listing?: ReviewStoreListing): readonly string[] {
+    if (listing !== undefined) return listing.byDiscoveryKey.get(findingDiscoveryKey(findingId)) ?? [];
     return this.artifacts.listJson(reviewFileNamePrefix(findingId));
+  }
+
+  /**
+   * One directory listing, grouped by discovery key, for a whole page.
+   *
+   * Without this a page costs `rows x store`: `fileNamesFor` lists the
+   * directory per finding, so rendering fifty rows over a 10,000-review store
+   * scanned half a million entries. Measured at 10k/100% reviewed that was
+   * 325 ms of listing for a 50-row page, and it grew with the STORE rather
+   * than with the page — the exact shape the page-scoping optimization
+   * removed from the intelligence path.
+   *
+   * The listing is a SNAPSHOT. A review written after it is taken is not
+   * visible to it, which is the same request-scoped semantics the findings
+   * authority already has, and is why it is created per request rather than
+   * cached on the store.
+   */
+  snapshotListing(): ReviewStoreListing {
+    const byDiscoveryKey = new Map<string, string[]>();
+    for (const fileName of this.artifacts.listJson('review.')) {
+      const parsed = parseReviewFileName(fileName);
+      if (parsed === null) continue;
+      const bucket = byDiscoveryKey.get(parsed.discoveryKey);
+      if (bucket === undefined) byDiscoveryKey.set(parsed.discoveryKey, [fileName]);
+      else bucket.push(fileName);
+    }
+    return { byDiscoveryKey };
   }
 
   /**
@@ -263,14 +302,14 @@ export class ReviewStore {
    * produces CURRENT, and it is reported either way rather than hidden by a
    * valid sibling generation.
    */
-  read(findingId: string, current: CurrentReviewArtifacts): ReviewStoreReadResult {
+  read(findingId: string, current: CurrentReviewArtifacts, listing?: ReviewStoreListing): ReviewStoreReadResult {
     const corruption: ReviewStoreCorruption[] = [];
     const generations: StoredReviewEnvelope[] = [];
     let currentEnvelope: StoredReviewEnvelope | null = null;
     let staleEnvelope: StoredReviewEnvelope | null = null;
     let staleReason: string | null = null;
 
-    for (const fileName of this.fileNamesFor(findingId)) {
+    for (const fileName of this.fileNamesFor(findingId, listing)) {
       let raw: unknown;
       try {
         raw = this.artifacts.readJson(fileName);
@@ -285,6 +324,14 @@ export class ReviewStore {
       } catch (error) {
         const code = error instanceof ReviewStoreError ? error.code : 'REVIEW_STORE_CORRUPT';
         corruption.push({ fileName, code, detail: (error as Error).message });
+        continue;
+      }
+      // The envelope must belong to the finding that was ASKED for. The
+      // listing decides which files are opened, and a listing is a discovery
+      // aid rather than an authority — a wrong or forged one must not be able
+      // to surface another finding's review under this finding's name.
+      if (envelope.findingId !== findingId) {
+        corruption.push({ fileName, code: 'REVIEW_STORE_IDENTITY_MISMATCH', detail: 'envelope belongs to another finding' });
         continue;
       }
       generations.push(envelope);

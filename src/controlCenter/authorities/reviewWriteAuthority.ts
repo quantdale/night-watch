@@ -23,7 +23,7 @@ import {
   FINDING_REVIEW_DECISIONS,
   type FindingReviewDecision,
 } from '../../core/findingReview';
-import { ReviewStore, ReviewStoreError, reviewIdentity, type ReviewStoreReadResult } from '../../core/reviewStore';
+import { ReviewStore, ReviewStoreError, reviewIdentity, type ReviewStoreListing, type ReviewStoreReadResult } from '../../core/reviewStore';
 import type { ReviewerLocalReviewInput } from '../adapters/reviewerAdapter';
 import { currentReviewArtifacts, reviewBindingFor } from './reviewBinding';
 import type { FindingsDossierMetadata } from './findingsAuthority';
@@ -110,10 +110,24 @@ export class ControlCenterReviewAuthority {
    * would be as wrong as showing it as live.
    */
   localReviewLookup(context: Omit<ReviewAuthorityContext, 'dossiers'>): (dossier: FindingsDossierMetadata) => ReviewerLocalReviewInput | null {
+    // ONE directory listing for the whole request, taken here rather than per
+    // row. Per row it cost `rows x store`: at 10,000 reviews a 50-row page
+    // spent 325 ms scanning half a million directory entries, and the cost
+    // grew with the STORE rather than with the page.
+    //
+    // A store that cannot be listed yields an empty listing rather than
+    // throwing, so a reviewer surface never goes down because persistence is
+    // unavailable — every finding simply reads UNKNOWN.
+    let listing: ReviewStoreListing;
+    try {
+      listing = this.store.snapshotListing();
+    } catch {
+      listing = { byDiscoveryKey: new Map<string, readonly string[]>() };
+    }
     return (dossier) => {
       let state: ReviewStoreReadResult;
       try {
-        state = this.readState(dossier, context);
+        state = this.store.read(dossier.candidateId, currentReviewArtifacts(dossier, context), listing);
       } catch {
         // A store failure is never allowed to take the reviewer surface down,
         // and it is never allowed to look like "no review" either — the

@@ -25,6 +25,7 @@ export {
   ReviewStoreError,
   validateStoredReviewEnvelope,
   type PutReviewDecisionInput,
+  type ReviewStoreListing,
   type PutReviewDecisionResult,
   type ReviewStoreOptions,
 } from './store';

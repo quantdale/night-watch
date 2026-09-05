@@ -278,6 +278,22 @@ const MUTATIONS = [
     suites: STORE_SUITES,
   },
   {
+    id: 'B-32',
+    title: 'let a listing surface another finding\'s review',
+    file: 'src/core/reviewStore/store.ts',
+    from: '      if (envelope.findingId !== findingId) {',
+    to: '      if (false) {',
+    suites: STORE_SUITES,
+  },
+  {
+    id: 'B-33',
+    title: 'take the directory listing per row instead of per request',
+    file: 'src/controlCenter/authorities/reviewWriteAuthority.ts',
+    from: '      listing = this.store.snapshotListing();',
+    to: '      listing = { byDiscoveryKey: new Map() };',
+    suites: [...STORE_SUITES, ...SERVED_SUITES],
+  },
+  {
     id: 'B-30',
     title: 'CONTROL: reword a comment in the store',
     file: 'src/core/reviewStore/store.ts',
