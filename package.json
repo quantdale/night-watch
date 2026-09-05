@@ -87,7 +87,8 @@
     "ai:owner-review": "node bin/ai-owner-review.mjs",
     "auth:capture": "node bin/auth-capture.mjs",
     "auth:configure": "node bin/auth-configure.mjs",
-    "scenario": "node bin/nightwatch.mjs"
+    "scenario": "node bin/nightwatch.mjs",
+    "mutation:review": "node bin/review-mutation-campaign.mjs"
   },
   "devDependencies": {
     "@playwright/test": "1.62.1",
