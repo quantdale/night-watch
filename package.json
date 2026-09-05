@@ -92,7 +92,8 @@
     "review:scale": "node bin/review-persistence-scale.mjs",
     "review": "node bin/nightwatch-review.mjs",
     "review:inventory": "node bin/nightwatch-review.mjs inventory",
-    "review:ops-scale": "node bin/review-operations-scale.mjs"
+    "review:ops-scale": "node bin/review-operations-scale.mjs",
+    "mutation:review-ops": "node bin/review-operations-mutation-campaign.mjs"
   },
   "devDependencies": {
     "@playwright/test": "1.62.1",
