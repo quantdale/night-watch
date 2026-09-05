@@ -3778,11 +3778,17 @@ function checkReviewStoreBoundary() {
 
   // --- validate before publish, and no read-then-write race ---
   const putStart = storeCode.indexOf('putDecision(input: PutReviewDecisionInput)');
-  // Anchored on the NEXT METHOD SIGNATURE, not on a bare call name: a
+  // Anchored on the NEXT METHOD DECLARATION, not on a bare call name: a
   // mutation that introduces `this.fileNamesFor(...)` inside putDecision would
   // otherwise truncate the body being inspected and the rule would report the
   // wrong violation.
-  const putEnd = storeCode.indexOf('  fileNamesFor(findingId: string)', putStart);
+  //
+  // Matched on the signature PREFIX rather than its full text, because
+  // pinning the full parameter list makes the rule fail the moment that
+  // method gains an argument — which it did, and the failure said
+  // "publishes before validating" rather than "the anchor moved". A
+  // structural rule must not be brittle about details it does not govern.
+  const putEnd = storeCode.indexOf('\n  fileNamesFor(', putStart);
   const putBody = putStart >= 0 && putEnd > putStart ? storeCode.slice(putStart, putEnd) : '';
   if (!putBody) fail('review store putDecision body could not be located');
   const validateAt = putBody.indexOf('validateStoredReviewEnvelope(');
