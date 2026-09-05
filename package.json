@@ -22,6 +22,7 @@
     "gate:predev": "node bin/quality-gate.mjs predev",
     "gate:inventory": "node bin/quality-gate-inventory.mjs",
     "test:semantic-compat": "node bin/semantic-compat.mjs",
+    "frontier:determinism": "node bin/frontier-determinism.mjs",
     "dev:phase23": "node bin/phase23-dev.mjs",
     "dev:phase23:manifest": "node bin/phase23-dev.mjs manifest",
     "dev:phase23:dry-run": "node bin/phase23-dev.mjs dry-run",
@@ -90,6 +91,7 @@
   "devDependencies": {
     "@playwright/test": "1.62.1",
     "@types/node": "^22.10.0",
-    "typescript": "^5.7.0"
+    "typescript": "^5.7.0",
+    "vue": "2.6.12"
   }
 }

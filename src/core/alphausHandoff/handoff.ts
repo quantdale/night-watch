@@ -263,6 +263,12 @@ function facts(input: AlphausHandoffInput): AlphausFindingFacts {
   if (CONFIDENCE_LEVELS[dossier.confidence?.level] !== true) invalid('CONFIDENCE_LEVEL');
   const evidenceRefs = bugDraft ? textList(bugDraft.evidenceRefs, 'EVIDENCE_REF', 200) : [];
   const sourceRefs = bugDraft ? textList(bugDraft.sourceRefs, 'SOURCE_REF', 200) : [];
+  // DEF-FC-01: AI prose is bound to the exact finding it describes. A draft
+  // written for another candidate must never supply this handoff's
+  // reproduction/expected/actual/impact text or uncertainties.
+  if (bugDraft !== null && bugDraft !== undefined && bugDraft.candidateId !== dossier.candidateId) {
+    invalid('BUG_DRAFT_CANDIDATE_MISMATCH');
+  }
   return {
     candidateId: id(dossier.candidateId, 'CANDIDATE'),
     dossierVersion: dossier.schemaVersion,

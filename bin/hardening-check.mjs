@@ -2450,12 +2450,16 @@ function checkP1ObservationScopeBoundary() {
     ]) if (pattern.test(source)) fail(`${file} contains ${description}; the P1 cone must contain no traffic, actuation, replay, or credential path`);
   }
 
-  // --- F-12, the other direction: only the P1 cone and tests may reach P1 machinery ---
+  // --- F-12, the other direction: only the P1 cone, the offline rehearsal
+  // cone, and tests may reach P1 machinery. The rehearsal cone is the single
+  // authorized local consumer (FC-1): it drives the real admission/session/
+  // attribution core against mock edges and is itself constrained by
+  // checkC12RehearsalBoundary below. ---
   for (const file of gitFiles()) {
-    if (!file.endsWith('.ts') || file.startsWith('tests/') || file.startsWith(`${coneDirectory}/`)) continue;
+    if (!file.endsWith('.ts') || file.startsWith('tests/') || file.startsWith(`${coneDirectory}/`) || file.startsWith('src/core/c12Rehearsal/')) continue;
     const source = withoutComments(read(file));
     if (/from\s+['"][^'"]*core\/prodObserveP1/.test(source)) {
-      fail(`${file} imports the P1 observation-scope machinery; only the P1 cone and tests/** may reach it`);
+      fail(`${file} imports the P1 observation-scope machinery; only the P1 cone, src/core/c12Rehearsal/, and tests/** may reach it`);
     }
   }
 
@@ -2594,6 +2598,161 @@ function checkAlphausHandoffBoundary() {
   }
 }
 
+/**
+ * FC-1 C-12 offline-rehearsal invariants.
+ *
+ * `src/core/c12Rehearsal/` is the single authorized local consumer of the P1
+ * machinery outside tests. The exception is narrow and itself checked: the
+ * cone must stay transport/actuation-free, fixture-pinned to the synthetic
+ * `.invalid` namespace, structurally incapable of conferring live
+ * authorization, and decoupled from the c12Readiness/alphausHandoff cones
+ * (version strings are deliberate literal duplicates, the F-12 discipline
+ * the P1 cone documents in its own types.ts).
+ */
+/**
+ * FC-2 declared-dependency resolvability.
+ *
+ * DEF-FC-03: the `vue` devDependency was removed as "unused" while
+ * tests/unit/rippleReadiness.test.ts still reached it through
+ * `require.resolve('vue/dist/vue.js')`. Stale node_modules residue in the
+ * canonical checkout hid the break; only a fresh install failed. Import
+ * scanners miss require.resolve, so the invariant is enforced here: every
+ * bare module specifier reached from tracked source must be a declared
+ * dependency. A dependency a test resolves is by definition used.
+ */
+function checkDeclaredDependencyResolvability() {
+  const manifest = JSON.parse(read('package.json'));
+  const declared = new Set([
+    ...Object.keys(manifest.dependencies ?? {}),
+    ...Object.keys(manifest.devDependencies ?? {}),
+  ]);
+  const specifierPattern = /(?:require\.resolve\(|import\(|\bfrom\s+)\s*['"]([^'"]+)['"]/g;
+  for (const file of gitFiles()) {
+    if (!file.endsWith('.ts') && !file.endsWith('.mjs')) continue;
+    // ui/** is a separate workspace with its own manifest.
+    if (file.startsWith('ui/')) continue;
+    const source = withoutComments(read(file));
+    for (const match of source.matchAll(specifierPattern)) {
+      const specifier = match[1];
+      if (specifier.startsWith('.') || specifier.startsWith('/') || specifier.startsWith('node:')) continue;
+      // Template placeholders are not real specifiers.
+      if (specifier.includes('${') || specifier.includes('\\')) continue;
+      const packageName = specifier.startsWith('@')
+        ? specifier.split('/').slice(0, 2).join('/')
+        : specifier.split('/')[0];
+      if (!declared.has(packageName)) {
+        fail(`${file} resolves '${specifier}' but '${packageName}' is not a declared dependency; a package tracked source reaches is used and must stay declared`);
+      }
+    }
+  }
+}
+
+function checkC12RehearsalBoundary() {
+  const coneDirectory = 'src/core/c12Rehearsal';
+  const coneFiles = gitFiles().filter((file) => file.startsWith(`${coneDirectory}/`) && file.endsWith('.ts'));
+  if (coneFiles.length === 0) {
+    fail('FC-1 the C-12 offline-rehearsal cone is missing');
+    return;
+  }
+  for (const file of coneFiles) {
+    const source = withoutComments(read(file));
+    for (const [pattern, description] of [
+      [/from\s+['"]node:(?:net|http|https|dns|child_process|fs|os|path|url|util|events|stream|worker_threads)[^'"]*['"]/, 'a network/process/filesystem runtime import (any subpath)'],
+      [/from\s+['"]child_process[^'"]*['"]/, 'a bare child_process import (no node: prefix)'],
+      [/import\s*\(\s*['"]node:[^'"]+['"]\s*\)/, 'a dynamic runtime import'],
+      [/\brequire\s*\(\s*['"]/, 'a require() call'],
+      [/\bfetch\s*\(/, 'fetch()'],
+      [/\.goto\(/, 'a navigation primitive'],
+      [/\.click\(/, 'a click primitive'],
+      [/storageState/, 'a storage-state path'],
+      [/from\s+['"][^'"]*browser\//, 'the browser cone'],
+      [/from\s+['"][^'"]*campaign\//, 'the campaign execution path'],
+      [/from\s+['"][^'"]*core\/prodObserve[^P]/, 'the C-11 request chain'],
+      [/from\s+['"][^'"]*core\/(alphausHandoff|c12Readiness)/, 'an AH-1 cone import (versions stay deliberate literal duplicates)'],
+      [/from\s+['"][^'"]*(slack|leslie|pondr)[^'"]*['"]/i, 'an external submission import'],
+      [/expectedPoints|estimatedReward|rewardTier|bountyPoints|bountyScore|calculateBounty|bountyCalculator/i, 'a bounty-scoring surface'],
+    ]) if (pattern.test(source)) fail(`${file} contains ${description}; the rehearsal cone must stay local-only`);
+  }
+  const rehearsal = withoutComments(read(`${coneDirectory}/rehearsal.ts`));
+  // Occurrence-complete, not merely present: a surviving safe literal on one
+  // return path must not license an unsafe one on another (mutation M13).
+  for (const [file, source] of [['rehearsal.ts', rehearsal], ['types.ts', withoutComments(read(`${coneDirectory}/types.ts`))]]) {
+    for (const assignment of source.match(/liveAuthorization\s*:\s*'[^']*'/g) ?? []) {
+      if (!assignment.endsWith("'NOT_CONFERRED_SYNTHETIC_ONLY'")) {
+        fail(`${coneDirectory}/${file} assigns ${assignment}; every rehearsal live-authorization value must be NOT_CONFERRED_SYNTHETIC_ONLY`);
+      }
+    }
+  }
+  const mockSubject = withoutComments(read(`${coneDirectory}/mockSubject.ts`));
+  for (const literal of ['C12_REHEARSAL_REFUSES_NON_SYNTHETIC_HOST', "'NOT_CONFERRED_SYNTHETIC_ONLY'", "'LOCAL_REHEARSAL_PASS'", 'c12LiveReadiness', 'chainDefinitionDigest']) {
+    if (!rehearsal.includes(literal)) fail(`FC-1 the rehearsal runner must retain ${literal}`);
+  }
+  if (!mockSubject.includes('.invalid')) fail('FC-1 the mock subject must stay pinned to the synthetic .invalid host namespace');
+  // The readiness-version duplicate must track the AH-1 cone literally.
+  const readinessTypes = withoutComments(read('src/core/c12Readiness/types.ts'));
+  const bound = /C12_READINESS_VERSION_BOUND = '([^']+)'/.exec(rehearsal);
+  if (bound === null || !readinessTypes.includes(`C12_READINESS_VERSION = '${bound[1]}'`)) {
+    fail('FC-1 the rehearsal readiness-version duplicate has drifted from C12_READINESS_VERSION');
+  }
+  // The rehearsal cone must actually exercise the production-intended core,
+  // not a reimplementation: admission, attach, and grant issuance.
+  for (const token of ['evaluateP1ObservationScope', 'attachP1ObservationSession', 'issueP1ObserveGrant']) {
+    if (!rehearsal.includes(token)) fail(`FC-1 the rehearsal must drive the real P1 core (${token})`);
+  }
+}
+
+
+/**
+ * FC-1 finding-review / finding-intel invariants.
+ *
+ * The `src/core/findingReview/` and `src/core/findingIntel/` cones are pure
+ * local lifecycle/intelligence machinery. They must stay free of external
+ * submission, bounty-scoring, and organizational-verdict surfaces, and must
+ * retain the literal markers that keep local review advisory-only.
+ */
+function checkFindingFrontierBoundary() {
+  const cones = ['src/core/findingReview', 'src/core/findingIntel'];
+  for (const coneDirectory of cones) {
+    const coneFiles = gitFiles().filter((file) => file.startsWith(`${coneDirectory}/`) && file.endsWith('.ts'));
+    if (coneFiles.length === 0) {
+      fail(`FC-1 the ${coneDirectory} cone is missing`);
+      return;
+    }
+    for (const file of coneFiles) {
+      const source = withoutComments(read(file));
+      for (const [pattern, description] of [
+        [/from\s+['"]node:(?:net|http|https|dns|child_process|fs|os|path|url|util|events|stream|worker_threads)[^'"]*['"]/, 'a network/process/filesystem runtime import (any subpath)'],
+        [/\brequire\s*\(\s*['"]/, 'a require() call'],
+        [/\bfetch\s*\(/, 'fetch()'],
+        [/from\s+['"][^'"]*(slack|leslie|pondr)[^'"]*['"]/i, 'an external submission import'],
+        [/(Slack|Leslie|Pondr)(Client|Webhook|Api|API|Message|Ticket|Issue)|postTo(Slack|Leslie|Pondr)|file(Leslie|Pondr|Slack)Report|create(GitHub|Slack|Pondr)(Issue|Message|Task)/, 'an external submission connector'],
+        [/expectedPoints|estimatedReward|rewardTier|bountyPoints|bountyScore|calculateBounty|bountyCalculator/i, 'a bounty-scoring surface'],
+        [/from\s+['"][^'"]*core\/(alphausHandoff|c12Readiness|prodObserveP1|prodObserve[^P])/, 'a production-cone import (review/intel bind digests only)'],
+      ]) if (pattern.test(source)) fail(`${file} contains ${description}; the finding-frontier cones must stay local-only`);
+    }
+  }
+  const lifecycle = withoutComments(read('src/core/findingReview/lifecycle.ts'));
+  // Stale-review rejection and the non-equivalence guard are the load-bearing
+  // properties: a weakened binding must fail this check, not just tests.
+  for (const literal of ['FINDING_REVIEW_STALE', "'NONE_LOCAL_REVIEW_ONLY'"]) {
+    if (!lifecycle.includes(literal)) fail(`FC-1 the review lifecycle must retain ${literal}`);
+  }
+  // Occurrence-complete: the emitted receipt value and the verification
+  // comparison must BOTH be the local-only literal. A safe occurrence
+  // elsewhere in the file must not satisfy this rule (mutation M12).
+  for (const file of ['src/core/findingReview/lifecycle.ts', 'src/core/findingReview/types.ts']) {
+    const source = withoutComments(read(file));
+    for (const assignment of source.match(/organizationalAuthority\s*(?::|!==|===)\s*'[^']*'/g) ?? []) {
+      if (!assignment.endsWith("'NONE_LOCAL_REVIEW_ONLY'")) {
+        fail(`${file} carries ${assignment}; local review authority must always be NONE_LOCAL_REVIEW_ONLY`);
+      }
+    }
+  }
+  const relationships = withoutComments(read('src/core/findingIntel/relationships.ts'));
+  for (const literal of ['advisoryOnly: true', "finalVerdictAuthority: 'HUMAN_ORGANIZATIONAL'", 'REGRESSION_CANDIDATE']) {
+    if (!relationships.includes(literal)) fail(`FC-1 the relationship classifier must retain ${literal}`);
+  }
+}
 /**
  * AH-1 documentation-freshness invariants (narrow, against demonstrated
  * failure modes — the 2026-09-01 header that survived MA-8 completion and
@@ -3602,6 +3761,9 @@ checkPhase22IntegrationSeams();
 checkPhase23QualityGate();
 checkC00WorkspaceIntegrity();
 checkC10ProductionPrivacyBoundary();
+checkC12RehearsalBoundary();
+checkFindingFrontierBoundary();
+checkDeclaredDependencyResolvability();
 checkC105ProvenanceAuthorityBoundary();
 checkR11ProxyGateReliability();
 checkC11ProdObserveBoundary();

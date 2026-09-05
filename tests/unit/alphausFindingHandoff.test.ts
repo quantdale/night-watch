@@ -14,6 +14,11 @@ import {
   ALPHAUS_FINDING_HANDOFF_VERSION,
   projectAlphausFindingHandoff,
 } from '../../src/core/alphausHandoff';
+import {
+  ALPHAUS_CATCH_STAGE_VALUES,
+  ALPHAUS_SEVERITY_VALUES,
+  ALPHAUS_SOURCE_VALUES,
+} from '../../src/core/alphausHandoff/types';
 import { createBugDossier, minimizeFailure, PASSIVE_MINIMIZATION_SAFETY } from '../../src/core/triage';
 import { compareBrowserAndApi } from '../../src/core/triage/differential';
 import { correlateSourceChanges } from '../../src/core/triage/correlation';
@@ -93,15 +98,19 @@ function draftFixture(overrides: Partial<AiBugModelOutput> = {}): AiBugModelOutp
 }
 
 async function handoffInput(overrides: Partial<AlphausHandoffInput> = {}): Promise<AlphausHandoffInput> {
+  // DEF-FC-01: the draft is bound to the exact dossier it describes; a valid
+  // fixture never pairs a draft written for another candidate.
+  const dossier = overrides.dossier ?? (await dossierFixture());
+  const bugDraft = overrides.bugDraft !== undefined ? overrides.bugDraft : draftFixture({ candidateId: dossier.candidateId });
   return {
-    dossier: await dossierFixture(),
-    bugDraft: draftFixture(),
     campaignRef: 'synthetic-campaign-1',
     observationProvenance: { stage: 'LOCAL', outageEvidence: false, customerReported: false, customerReportRef: null },
     severityEvidence: [],
     severityProvenance: '',
     classRemovalEvidence: null,
     ...overrides,
+    dossier,
+    bugDraft,
   };
 }
 
@@ -131,6 +140,14 @@ test.describe('AH-1 schema and contract', () => {
     expect(artifact.catchStageRecommendation.value).toBe('next');
     expect(artifact.sourceRecommendation.value).toBe('self_found');
     expect(artifact.reportTypeRecommendation.value).toBe('BUG_REPORT');
+  });
+
+  test('a draft written for another candidate refuses (DEF-FC-01)', async () => {
+    const base = await handoffInput();
+    const foreign = draftFixture({ candidateId: 'candidate:sha256:ffffffffffffffffffffffff' });
+    expect(() => projectAlphausFindingHandoff({ ...base, bugDraft: foreign })).toThrow(
+      'ALPHAUS_HANDOFF_INVALID:BUG_DRAFT_CANDIDATE_MISMATCH',
+    );
   });
 
   test('serialization is deterministic', async () => {
@@ -338,36 +355,42 @@ test.describe('AH-1 team and report type', () => {
 test.describe('AH-1 privacy boundary', () => {
   test('planted bearer token in a draft refuses', async () => {
     const base = await handoffInput();
-    const draft = draftFixture({ impactDraft: 'call with Authorization: Bearer synthetic-planted-token-value' });
+    const _dossierId = base.dossier.candidateId;
+    const draft = draftFixture({ candidateId: _dossierId, impactDraft: 'call with Authorization: Bearer synthetic-planted-token-value' });
     expect(() => projectAlphausFindingHandoff({ ...base, bugDraft: draft })).toThrow(/ALPHAUS_HANDOFF_INVALID:(DRAFT_IMPACT_SENTINEL|PRIVACY_BLOCKED)/);
   });
 
   test('planted JWT in expected behavior refuses', async () => {
     const base = await handoffInput();
-    const draft = draftFixture({ expectedBehaviorDraft: 'token eyJhbGciOiJIUzI1NiJ9.c3ludGhldGlj.c2lnbmF0dXJl' });
+    const _dossierId = base.dossier.candidateId;
+    const draft = draftFixture({ candidateId: _dossierId, expectedBehaviorDraft: 'token eyJhbGciOiJIUzI1NiJ9.c3ludGhldGlj.c2lnbmF0dXJl' });
     expect(() => projectAlphausFindingHandoff({ ...base, bugDraft: draft })).toThrow(/ALPHAUS_HANDOFF_INVALID/);
   });
 
   test('planted AWS key in reproduction refuses', async () => {
     const base = await handoffInput();
-    const draft = draftFixture({ reproductionDraft: 'export AWS_KEY=AKIAIOSFODNN7EXAMPLE' });
+    const _dossierId = base.dossier.candidateId;
+    const draft = draftFixture({ candidateId: _dossierId, reproductionDraft: 'export AWS_KEY=AKIAIOSFODNN7EXAMPLE' });
     expect(() => projectAlphausFindingHandoff({ ...base, bugDraft: draft })).toThrow(/ALPHAUS_HANDOFF_INVALID/);
   });
 
   test('planted customer sentinel in uncertainties refuses', async () => {
     const base = await handoffInput();
-    const draft = draftFixture({ uncertainties: ['CUSTOMER_SENTINEL-alpha'] });
+    const _dossierId = base.dossier.candidateId;
+    const draft = draftFixture({ candidateId: _dossierId, uncertainties: ['CUSTOMER_SENTINEL-alpha'] });
     expect(() => projectAlphausFindingHandoff({ ...base, bugDraft: draft })).toThrow(/ALPHAUS_HANDOFF_INVALID/);
   });
   test('planted plain email in observed behavior refuses (D-AH1-001)', async () => {
     const base = await handoffInput();
-    const draft = draftFixture({ observedBehaviorDraft: 'alice@alphaus.cloud customer data visible' });
+    const _dossierId = base.dossier.candidateId;
+    const draft = draftFixture({ candidateId: _dossierId, observedBehaviorDraft: 'alice@alphaus.cloud customer data visible' });
     expect(() => projectAlphausFindingHandoff({ ...base, bugDraft: draft })).toThrow(/ALPHAUS_HANDOFF_INVALID/);
   });
 
   test('planted SSN-shaped value in impact refuses (D-AH1-001)', async () => {
     const base = await handoffInput();
-    const draft = draftFixture({ impactDraft: 'customer ID 123-45-6789 leaked in output' });
+    const _dossierId = base.dossier.candidateId;
+    const draft = draftFixture({ candidateId: _dossierId, impactDraft: 'customer ID 123-45-6789 leaked in output' });
     expect(() => projectAlphausFindingHandoff({ ...base, bugDraft: draft })).toThrow(/ALPHAUS_HANDOFF_INVALID/);
   });
 
@@ -383,7 +406,8 @@ test.describe('AH-1 privacy boundary', () => {
 
   test('planted private key block in a draft refuses', async () => {
     const base = await handoffInput();
-    const draft = draftFixture({ summaryDraft: 'key -----BEGIN RSA PRIVATE KEY----- synthetic' });
+    const _dossierId = base.dossier.candidateId;
+    const draft = draftFixture({ candidateId: _dossierId, summaryDraft: 'key -----BEGIN RSA PRIVATE KEY----- synthetic' });
     expect(() => projectAlphausFindingHandoff({ ...base, bugDraft: draft })).toThrow(/ALPHAUS_HANDOFF_INVALID/);
   });
 
@@ -442,5 +466,35 @@ test.describe('AH-1 authority and scoring exclusion', () => {
     expect(() => projectAlphausFindingHandoff({ ...base, dossier: badConfidence })).toThrow(
       'ALPHAUS_HANDOFF_INVALID:CONFIDENCE_LEVEL',
     );
+    // The reproduction RESULT vocabulary, not only its count (mutation M30).
+    for (const result of ['MAYBE', 'reproduced', '', null]) {
+      const badResult = {
+        ...(await dossierFixture()),
+        reproduction: { result, count: 2, minimalityGuarantee: '1-MINIMAL' },
+      } as unknown as BugDossier;
+      expect(() => projectAlphausFindingHandoff({ ...base, dossier: badResult }), String(result)).toThrow(
+        'ALPHAUS_HANDOFF_INVALID:REPRODUCTION_RESULT',
+      );
+    }
+    const badMinimality = {
+      ...(await dossierFixture()),
+      reproduction: { result: 'REPRODUCED', count: 2, minimalityGuarantee: 'VERY' },
+    } as unknown as BugDossier;
+    expect(() => projectAlphausFindingHandoff({ ...base, dossier: badMinimality })).toThrow(
+      'ALPHAUS_HANDOFF_INVALID:MINIMALITY_GUARANTEE',
+    );
+  });
+
+  // The organizational vocabularies are owner-supplied facts, not Nightwatch
+  // choices. Pinning them here means a future edit that widens or renames a
+  // value fails a test rather than silently changing what Nightwatch
+  // recommends to a human reviewer (mutations M25-M27).
+  test('the Alphaus vocabularies are exactly the owner-supplied sets', () => {
+    expect([...ALPHAUS_SEVERITY_VALUES]).toEqual(['blocker', 'critical', 'major', 'minor']);
+    expect([...ALPHAUS_CATCH_STAGE_VALUES]).toEqual(['pr_review', 'next', 'production', 'production_outage']);
+    expect([...ALPHAUS_SOURCE_VALUES]).toEqual(['self_found', 'customer_escaped']);
+    // No LOW/MEDIUM/HIGH <-> S1-S4 mapping may appear anywhere in the vocabulary.
+    const all = [...ALPHAUS_SEVERITY_VALUES, ...ALPHAUS_CATCH_STAGE_VALUES, ...ALPHAUS_SOURCE_VALUES].join(' ');
+    expect(all).not.toMatch(/\bS[1-4]\b|\bLOW\b|\bMEDIUM\b|\bHIGH\b/);
   });
 });
