@@ -16,6 +16,17 @@
   - Live Grok hunt on `bench-billing-rounding-001` before session isolation: leaked=[], admitted=false, outcome=MISS, BUDGET_EXHAUSTED/NO_PROGRESS. Root cause: Grok reused the cwd session (`Error: max turns reached`) and the print prompt taught empty `intents:[]`.
   - Live Grok hunt on `bench-billing-rounding-001` after `__SESSION_ID__` + `__CWD__` isolation (maxTurns=6, twice): leaked=[], admitted=true, outcome=SAME_ROOT_CAUSE_ALTERNATE, reasonerCalls=6, terminationReason=NO_PROGRESS, candidateIds=[] (hypotheses only). keywordRecall≈0.46, fileHits=0. Not EXACT. Not claimed as hybrid superiority. Not a real Alphaus bug.
   - Live Grok after intent salvage: `bench-billing-rounding-001` COMPLETE_WITH_FINDING in 3 turns, proposed `c1`, leaked=[], outcome=SAME_ROOT_CAUSE_ALTERNATE (keywordRecall≈0.31, fileHits=0). `bench-negative-quiet-000` COMPLETE_NO_FINDING, admitted=false, outcome=MISS, leaked=[]. Admission now requires PROPOSE_CANDIDATE so a no-defect hypothesis is not a false positive.
+  - Live Grok corpus (maxTurns=4, isolated session, leak=[] on every case). EXACT is structurally out of reach without the hidden failing-test name. Not claimed as hybrid superiority. Not real Alphaus bugs.
+    - billing-001: admitted SAME_ROOT_CAUSE_ALTERNATE
+    - api-002: admitted SAME_ROOT_CAUSE_ALTERNATE (keywordRecall≈0.33)
+    - backend-003: admitted SAME_ROOT_CAUSE_ALTERNATE (≈0.38)
+    - frontend-004: admitted SAME_ROOT_CAUSE_ALTERNATE (0.40)
+    - data-005: admitted MISS (keywordRecall≈0.13; timezone hypothesis was filed)
+    - integration-006: admitted SAME_ROOT_CAUSE_ALTERNATE (≈0.38)
+    - regression-007: admitted SAME_ROOT_CAUSE_ALTERNATE (0.25)
+    - state-008: admitted SAME_ROOT_CAUSE_ALTERNATE (0.25)
+    - negative-000: not admitted, MISS
+
 
 
 
