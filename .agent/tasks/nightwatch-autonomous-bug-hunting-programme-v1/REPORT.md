@@ -62,6 +62,8 @@
   - Twenty-fourth unused mined repo `alphauslabs/docs-ja` (`mined-bugatlas-git-alphauslabs-docs-ja-16142032e2f4`), Japanese docs, not an English-docs re-run: PARTIAL_REDISCOVERY fileHits=1/1 keywordRecall=0.40 keywordTotal=5 leak=[] admitted. Named mkdocs.yml. reproductionCount=0. Twenty-four-case set: 7 PARTIAL + 14 SAME_ROOT_CAUSE + 3 MISS.
   - Twenty-fifth unused mined repo `alphauslabs/internal-docs` (`mined-bugatlas-git-alphauslabs-internal-docs-fb69229726a1`), internal MkDocs, last unused repo at maxRepos=200/maxCommitsPerRepo=80: PARTIAL_REDISCOVERY fileHits=1/1 keywordRecall=1.00 keywordTotal=3 leak=[] admitted. Named `docs/team-composition.md`. reproductionCount=0. Twenty-five-case set: 8 PARTIAL + 14 SAME_ROOT_CAUSE + 3 MISS. Unused mined-repo pool at this depth is exhausted.
   - Twenty-sixth unused mined repo `alphauslabs/blue-sdk-go` (`mined-bugatlas-git-alphauslabs-blue-sdk-go-95bb049ced00`), Go SDK, deeper mine (maxCommitsPerRepo=200), not a TS SDK re-run: SAME_ROOT_CAUSE_ALTERNATE fileHits=1/1 keywordRecall=0 keywordTotal=2 leak=[] admitted. reproductionCount=0. Twenty-six-case set: 8 PARTIAL + 15 SAME_ROOT_CAUSE + 3 MISS.
+  - Twenty-seventh case: second unused Pondr mined case carrying an added test (`mined-bugatlas-git-alphauslabs-internal-project-v2-feac8eaac449`, hidden knownFailingTest=`batch/kanban-jobs/tests/memberInsights/calculatePeriod.test.ts`), distinct commit from the githubPrPoll case: testMatch=false, SAME_ROOT_CAUSE_ALTERNATE fileHits=1/1 keywordRecall=0.041 keywordTotal=73 leak=[] admitted. reproductionCount=0. Named `batch/kanban-jobs/lib/memberInsights/run.ts`. Twenty-seven-case set: 8 PARTIAL + 16 SAME_ROOT_CAUSE + 3 MISS. Three leak-free added-test cases have now been hunted; none named the hidden test, so EXACT stays 0.
+
 
 
 
@@ -116,7 +118,7 @@
 - Remaining blockers:
   - DEV/NEXT not authorized (external).
   - Historical EXACT/reproduced NOT PROVEN. Current-harness set: aqua-ui PARTIAL (2/3, 0.375), Octo-Design-System PARTIAL (1/1, 0.50), blue-sdk-ts PARTIAL (1/2, 0.667), iam PARTIAL (1/1, 0.50), alpha-one-event-hub-ui PARTIAL (0/1, 0.50), alphaus-design-system PARTIAL (1/1, 0.333), docs-ja PARTIAL (1/1, 0.40), internal-docs PARTIAL (1/1, 1.00), ai-driven-bug-hunting SAME_ROOT_CAUSE (1/2, 0), alupi MISS (0/2, 0.222), blog SAME_ROOT_CAUSE (1/1, 0), compare-risp SAME_ROOT_CAUSE (1/1, 0), grpc-chunk-parser SAME_ROOT_CAUSE (1/2, 0.167), bluectl SAME_ROOT_CAUSE (1/5, 0), blueapi SAME_ROOT_CAUSE (1/1, 0), blueinternal SAME_ROOT_CAUSE (1/2, 0), internal-project-v2 SAME_ROOT_CAUSE (1/2, 0.107, testMatch=false), internal-projects SAME_ROOT_CAUSE (1/2, 0.143), ouchan MISS (0/4, 0.122, testMatch=false), ripple-api SAME_ROOT_CAUSE (1/1, 0.128), ripple-ui MISS (0/2, 0.111), wave-api SAME_ROOT_CAUSE (1/1, 0), protobuf SAME_ROOT_CAUSE (2/8, 0.40), wave-ui SAME_ROOT_CAUSE (1/1, 0), docs SAME_ROOT_CAUSE (1/1, 0), blue-sdk-go SAME_ROOT_CAUSE (1/1, 0). leak=[] all. reproductionCount=0.
-  - Exact seeded rediscovery structurally needs the hidden failing-test name in candidate text. Two mined cases now carry leak-free added-test paths (Pondr, ouchan billing); neither live hunt named the test.
+  - Exact seeded rediscovery structurally needs the hidden failing-test name in candidate text. Three mined cases carry leak-free added-test paths (Pondr githubPrPoll, Pondr calculatePeriod, ouchan billing); no live hunt named the test. EXACT=0 across 27 live mined cases.
   - Hybrid not superior to Grok-alone on the billing snapshot.
 
 
