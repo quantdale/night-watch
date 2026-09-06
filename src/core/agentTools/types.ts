@@ -9,9 +9,10 @@
 
 import type { AgentToolEnvironment, AgentToolId } from '../agentProtocol/tools';
 import type { UntrustedEnvelope } from '../agentProtocol/untrusted';
+import type { BugAtlasStore } from '../bugAtlas/store';
+import type { SystemAtlasOverlay } from '../systemAtlas/overlay';
 import type { SystemMapInput } from '../systemMap/projections';
 import type { StaticLexicalLanguage } from '../source/lexical';
-
 /** Minimal validated CALL_TOOL intent view. The runtime accepts the tool id
  * only from this field — never from `arguments` (see runtime.ts). */
 export interface AgentToolCallIntent {
@@ -37,6 +38,10 @@ export interface AgentToolFixtures {
   readonly systemMap?: SystemMapInput;
   readonly evidenceStore?: Readonly<Record<string, unknown>>;
   readonly oracleAnswers?: Readonly<Record<string, unknown>>;
+  /** When omitted, LOCAL queries use the synthetic Bug Atlas fixture corpus. */
+  readonly bugAtlas?: BugAtlasStore;
+  /** When omitted, LOCAL queries use the synthetic System Atlas overlay. */
+  readonly systemAtlas?: SystemAtlasOverlay;
 }
 
 export interface AgentToolExecutionContext {

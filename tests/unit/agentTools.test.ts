@@ -245,16 +245,31 @@ test.describe('lane C agent tool protocol', () => {
     }
   });
 
-  test('atlas tools return lane-not-integrated without inventing data', () => {
-    for (const toolId of ['QUERY_BUG_ATLAS', 'QUERY_SYSTEM_ATLAS', 'REQUEST_RELATED_HISTORICAL_BUGS'] as const) {
-      const result = executeAgentTool(call(toolId, { query: 'anything' }), WITH_FIXTURES);
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        const data = result.data as { integration: string; records: unknown[] };
-        expect(data.integration).toBe('LANE_NOT_INTEGRATED');
-        expect(data.records).toEqual([]);
-        expect(result.mutationCapability).toBe('NONE');
-      }
+  test('atlas tools retrieve bounded synthetic records and invent nothing', () => {
+    const empty = executeAgentTool(call('QUERY_BUG_ATLAS', { terms: [] }), WITH_FIXTURES);
+    expect(empty.ok).toBe(true);
+    if (empty.ok) {
+      const data = empty.data as { integration: string; records: unknown[] };
+      expect(data.integration).toBe('BUG_ATLAS');
+      expect(data.records).toEqual([]);
+    }
+    const bugs = executeAgentTool(call('QUERY_BUG_ATLAS', { terms: ['coupon'], limit: 5 }), WITH_FIXTURES);
+    expect(bugs.ok).toBe(true);
+    if (bugs.ok) {
+      const data = bugs.data as { integration: string; records: Array<{ bugId: string; provenance: { category: string } }> };
+      expect(data.integration).toBe('BUG_ATLAS');
+      expect(data.records.length).toBeGreaterThan(0);
+      expect(data.records.length).toBeLessThanOrEqual(8);
+      expect(data.records[0]?.provenance.category).toBeTruthy();
+      expect(bugs.mutationCapability).toBe('NONE');
+    }
+    const concepts = executeAgentTool(call('QUERY_SYSTEM_ATLAS', { terms: ['billing'] }), WITH_FIXTURES);
+    expect(concepts.ok).toBe(true);
+    if (concepts.ok) {
+      const data = concepts.data as { integration: string; records: unknown[] };
+      expect(data.integration).toBe('SYSTEM_ATLAS');
+      expect(Array.isArray(data.records)).toBe(true);
+      expect(data.records.length).toBeLessThanOrEqual(8);
     }
   });
 

@@ -13,9 +13,16 @@
 // ---------------------------------------------------------------------------
 
 import { AGENT_TOOL_PROTOCOL_VERSION } from '../agentProtocol/versions';
+import { ATLAS_QUERY_VERSION, clampAtlasLimit } from '../agentProtocol/atlas';
 import { lookupAgentTool, type AgentToolId } from '../agentProtocol/tools';
 import type { UntrustedSource } from '../agentProtocol/untrusted';
 import { decideOwnerScope } from '../policy/ownerScope';
+import { createBugAtlasStore } from '../bugAtlas/store';
+import { bugAtlasFixtureCorpus } from '../bugAtlas/fixtures';
+import { createAtlasQuery, querySystemAtlas } from '../systemAtlas/overlay';
+import { createSyntheticSystemAtlasOverlay } from '../systemAtlas/fixtures';
+import { buildAutonomousFindingDossier } from '../autonomousFinding/dossier';
+import type { AutonomousFindingDraft } from '../autonomousFinding/types';
 import { tokenizeStaticSource, type StaticLexicalLanguage } from '../source/lexical';
 import {
   projectCompany,
@@ -282,7 +289,6 @@ function adaptRequestRouteContractProof(
   if (!match) {
     return { ok: false, class: 'ADAPTER_UNAVAILABLE', reason: 'no matching operation in the provided system map; refusing to invent a proof' };
   }
-  // Echo only stored proof fields — never synthesize PROVEN.
   return {
     ok: true,
     source: 'SOURCE_CODE',
@@ -293,8 +299,6 @@ function adaptRequestRouteContractProof(
       routeProof: match.routeProof,
       readOnlyClassification: match.readOnlyClassification,
       factCategory: match.factCategory,
-      repoId: match.repoId,
-      sourceSha: match.sourceSha,
     },
   };
 }
@@ -306,10 +310,27 @@ function adaptRequestFindingProposal(args: Record<string, unknown>): AdapterOutc
     return { ok: false, class: 'MALFORMED_ARGUMENTS', reason: 'candidateId must be a non-empty string' };
   }
   if (!Array.isArray(evidenceRefs) || evidenceRefs.length === 0 || !evidenceRefs.every((ref) => typeof ref === 'string' && ref.length > 0)) {
-    // Mirrors proposeCandidateRequiresEvidence: no evidence, no proposal.
     return { ok: false, class: 'MALFORMED_ARGUMENTS', reason: 'evidenceRefs must be a non-empty string array' };
   }
-  // Proposal only: no filing, publication, or notification authority.
+  if (isRecord(args['draft'])) {
+    try {
+      const dossier = buildAutonomousFindingDossier(args['draft'] as unknown as AutonomousFindingDraft);
+      return {
+        ok: true,
+        source: 'LOG',
+        data: {
+          candidateId,
+          evidenceRefs: [...evidenceRefs],
+          status: 'DOSSIER_BUILT_NO_AUTHORITY',
+          dossier,
+          authority: dossier.authority,
+        },
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'INVALID_DRAFT';
+      return { ok: false, class: 'MALFORMED_ARGUMENTS', reason: message };
+    }
+  }
   return {
     ok: true,
     source: 'HISTORICAL_RECORD',
@@ -359,19 +380,62 @@ function adaptDevObservation(toolId: AgentToolId): AdapterOutcome {
   };
 }
 
-function adaptLaneNotIntegrated(toolId: AgentToolId): AdapterOutcome {
-  // Honest structured answer: the owning lane is not integrated, so there
-  // are zero records — atlas data is never invented here.
+function parseAtlasTerms(args: Record<string, unknown>): readonly string[] {
+  if (Array.isArray(args['terms']) && args['terms'].every((item) => typeof item === 'string')) {
+    return args['terms'] as readonly string[];
+  }
+  const query = asNonEmptyString(args['query']);
+  if (query === null) return [];
+  return query.split(/[^A-Za-z0-9]+/).filter((token) => token.length >= 2);
+}
+
+function adaptQueryBugAtlas(args: Record<string, unknown>, fixtures: AgentToolFixtures | undefined): AdapterOutcome {
+  const terms = parseAtlasTerms(args);
+  const store = fixtures?.bugAtlas ?? createBugAtlasStore(bugAtlasFixtureCorpus());
+  const result = store.query({
+    schemaVersion: ATLAS_QUERY_VERSION,
+    terms,
+    limit: clampAtlasLimit(typeof args['limit'] === 'number' ? args['limit'] : 5),
+  });
   return {
     ok: true,
     source: 'HISTORICAL_RECORD',
     data: {
-      toolId,
-      integration: 'LANE_NOT_INTEGRATED',
-      records: [],
-      reason: 'owning atlas lane is not integrated in this wave; no historical data is claimed',
+      integration: 'BUG_ATLAS',
+      truncated: result.truncated,
+      records: result.records.map((record) => ({
+        bugId: record.bugId,
+        product: record.product,
+        repository: record.repository,
+        symptom: record.symptom,
+        provenance: record.provenance,
+      })),
     },
   };
+}
+
+function adaptQuerySystemAtlas(args: Record<string, unknown>, fixtures: AgentToolFixtures | undefined): AdapterOutcome {
+  const terms = parseAtlasTerms(args);
+  const overlay = fixtures?.systemAtlas ?? createSyntheticSystemAtlasOverlay();
+  const result = querySystemAtlas(overlay, createAtlasQuery(terms, typeof args['limit'] === 'number' ? args['limit'] : 5));
+  return {
+    ok: true,
+    source: 'DOCUMENTATION',
+    data: {
+      integration: 'SYSTEM_ATLAS',
+      truncated: result.truncated,
+      records: result.records.map((record) => ({
+        conceptId: record.conceptId,
+        kind: record.kind,
+        label: record.label,
+        provenance: record.provenance,
+      })),
+    },
+  };
+}
+
+function adaptRelatedHistoricalBugs(args: Record<string, unknown>, fixtures: AgentToolFixtures | undefined): AdapterOutcome {
+  return adaptQueryBugAtlas(args, fixtures);
 }
 
 // --- entry point -------------------------------------------------------------
@@ -449,9 +513,13 @@ export function executeAgentTool(intent: unknown, context: AgentToolExecutionCon
       outcome = adaptDevObservation(descriptor.id);
       break;
     case 'QUERY_BUG_ATLAS':
+      outcome = adaptQueryBugAtlas(args, fixtures);
+      break;
     case 'QUERY_SYSTEM_ATLAS':
+      outcome = adaptQuerySystemAtlas(args, fixtures);
+      break;
     case 'REQUEST_RELATED_HISTORICAL_BUGS':
-      outcome = adaptLaneNotIntegrated(descriptor.id);
+      outcome = adaptRelatedHistoricalBugs(args, fixtures);
       break;
     default:
       return fail(rawToolId, 'UNKNOWN_TOOL', `unhandled tool id: ${rawToolId}`, injectionDetected);
