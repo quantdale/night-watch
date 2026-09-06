@@ -2,10 +2,12 @@
   "schemaVersion": "nightwatch.autonomous-programme-state.v1",
   "programmeId": "nightwatch-autonomous-bug-hunting-programme-v1",
   "programmeStatus": "IN_PROGRESS",
-  "currentWave": "W0",
+  "currentWave": "W1",
   "startingSha": "d1ebde90c1454b31d6b93d9df503a4c5f196d7c8",
   "wave0Sha": "bd9be1b2a93107388b868cf2febc87bc84a8a428",
-  "programmeIntegrationHead": "DISCOVER_FROM_GIT",
+  "programmeIntegrationHead": "b3a780816c111399026844615b8b915899cf7156",
+  "worktreeLimit": 8,
+  "parallelismNote": "Canonical + stale review-ops + orchestrator consume 3 slots; Wave 1 width is 5. F and G wait.",
   "orchestrator": {
     "taskId": "nightwatch-autonomous-bug-hunting-programme-v1",
     "sessionId": "sess-d9ba4a6459ef",
@@ -39,64 +41,67 @@
   "campaigns": {
     "W0": {
       "taskId": "nightwatch-autonomous-bug-hunting-programme-v1",
-      "status": "running",
-      "ownedPaths": [
-        "src/core/agentProtocol/**",
-        "src/core/policy/ownerScope.ts",
-        "tests/unit/agentProtocol.test.ts",
-        "tests/unit/ownerScope.test.ts",
-        "bin/hardening-check.mjs",
-        ".agent/ACTIVE_TASK.md",
-        ".agent/EXECUTION_PROMPT.md",
-        ".agent/tasks/nightwatch-autonomous-bug-hunting-programme-v1/**",
-        "openspec/changes/nightwatch-autonomous-bug-hunting-programme-v1/**"
-      ]
+      "status": "integrated",
+      "validatedSha": "bd9be1b2a93107388b868cf2febc87bc84a8a428",
+      "integrationSha": "b3a780816c111399026844615b8b915899cf7156"
     },
     "A": {
       "taskId": "nightwatch-autonomous-agent-runtime-v1",
-      "status": "planned",
-      "ownedPaths": ["src/core/agentRuntime/**", "tests/unit/agentRuntime*.test.ts"],
-      "forbiddenWritePaths": ["src/core/agentProtocol/**", "src/core/aiReview/**", "docs/CURRENT_STATE.md"]
+      "status": "running",
+      "worktree": "/home/dalepalaca/.nightwatch/worktrees/nightwatch-autonomous-agent-runt-c389f554",
+      "branch": "session/nightwatch-autonomous-agent-runt-c389f554",
+      "baseSha": "b3a780816c111399026844615b8b915899cf7156",
+      "ownedPaths": ["src/core/agentRuntime/**", "tests/unit/agentRuntime*.test.ts"]
     },
     "B": {
       "taskId": "nightwatch-cli-reasoner-gateway-v1",
-      "status": "planned",
-      "ownedPaths": ["src/core/reasoner/**", "tests/unit/reasoner*.test.ts"],
-      "forbiddenWritePaths": ["src/core/agentProtocol/**", "src/core/aiReview/**"]
+      "status": "running",
+      "worktree": "/home/dalepalaca/.nightwatch/worktrees/nightwatch-cli-reasoner-gateway--34f9022f",
+      "branch": "session/nightwatch-cli-reasoner-gateway--34f9022f",
+      "baseSha": "b3a780816c111399026844615b8b915899cf7156",
+      "ownedPaths": ["src/core/reasoner/**", "tests/unit/reasoner*.test.ts"]
     },
     "C": {
       "taskId": "nightwatch-agent-tool-protocol-v1",
-      "status": "planned",
-      "ownedPaths": ["src/core/agentTools/**", "tests/unit/agentTools*.test.ts"],
-      "forbiddenWritePaths": ["src/core/agentProtocol/**", "src/core/aiReview/**"]
+      "status": "running",
+      "worktree": "/home/dalepalaca/.nightwatch/worktrees/nightwatch-agent-tool-protocol-v-1858226c",
+      "branch": "session/nightwatch-agent-tool-protocol-v-1858226c",
+      "baseSha": "b3a780816c111399026844615b8b915899cf7156",
+      "ownedPaths": ["src/core/agentTools/**", "tests/unit/agentTools*.test.ts"]
     },
     "D": {
       "taskId": "nightwatch-bug-atlas-v1",
-      "status": "planned",
-      "ownedPaths": ["src/core/bugAtlas/**", "tests/unit/bugAtlas*.test.ts"],
-      "forbiddenWritePaths": ["src/core/agentProtocol/**"]
+      "status": "running",
+      "worktree": "/home/dalepalaca/.nightwatch/worktrees/nightwatch-bug-atlas-v1-1da84712",
+      "branch": "session/nightwatch-bug-atlas-v1-1da84712",
+      "baseSha": "b3a780816c111399026844615b8b915899cf7156",
+      "ownedPaths": ["src/core/bugAtlas/**", "tests/unit/bugAtlas*.test.ts"]
     },
     "E": {
       "taskId": "nightwatch-system-atlas-v1",
-      "status": "planned",
-      "ownedPaths": ["src/core/systemAtlas/**", "tests/unit/systemAtlas*.test.ts"],
-      "forbiddenWritePaths": ["src/core/agentProtocol/**", "src/core/systemMap/**"]
+      "status": "running",
+      "worktree": "/home/dalepalaca/.nightwatch/worktrees/nightwatch-system-atlas-v1-2683ecdc",
+      "branch": "session/nightwatch-system-atlas-v1-2683ecdc",
+      "baseSha": "b3a780816c111399026844615b8b915899cf7156",
+      "ownedPaths": ["src/core/systemAtlas/**", "tests/unit/systemAtlas*.test.ts"]
     },
     "F": {
       "taskId": "nightwatch-historical-benchmark-v1",
-      "status": "planned",
-      "ownedPaths": ["src/core/benchmark/**", "tests/unit/benchmark*.test.ts"],
-      "forbiddenWritePaths": ["src/core/agentProtocol/**"]
+      "status": "blocked",
+      "reason": "WORKSPACE_WORKTREE_LIMIT_EXCEEDED — waiting for a Wave 1 slot",
+      "ownedPaths": ["src/core/benchmark/**", "tests/unit/benchmark*.test.ts"]
     },
     "G": {
       "taskId": "nightwatch-autonomous-finding-dossier-v1",
-      "status": "planned",
-      "ownedPaths": ["src/core/autonomousFinding/**", "tests/unit/autonomousFinding*.test.ts"],
-      "forbiddenWritePaths": ["src/core/agentProtocol/**", "src/core/aiReview/**", "src/core/alphausHandoff/**"]
+      "status": "blocked",
+      "reason": "WORKSPACE_WORKTREE_LIMIT_EXCEEDED — waiting for a Wave 1 slot",
+      "ownedPaths": ["src/core/autonomousFinding/**", "tests/unit/autonomousFinding*.test.ts"]
     }
   },
   "frozenInterfaces": "src/core/agentProtocol/",
-  "blockers": [],
-  "exactNextAction": "Validate Wave 0, integrate, launch Wave 1 lanes A-G",
-  "resumeRecipe": "Read PROGRAMME.json, ACTIVE_TASK.md, task STATE.md, inspect worktrees, continue exactNextAction"
+  "blockers": [
+    "Worktree cap 8 with one do-not-touch stale session limits Wave 1 to 5 concurrent writers"
+  ],
+  "exactNextAction": "Review Wave 1 executor diffs as they complete; integrate accepted lanes; then start F and G",
+  "resumeRecipe": "Read PROGRAMME.json, inspect worktrees, hub list Wave 1 executors, review diffs not summaries"
 }
