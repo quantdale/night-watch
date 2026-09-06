@@ -79,11 +79,26 @@ Command: `npm run hardening:check`, `npm run project:check`, `npm run workspace:
 Result: PASS
 
 Command: `npm run agent:check`
-Result: FAIL then repaired. Relabelling the documentation descendant as the
-implementation anchor raised INVALID_IMPLEMENTATION_ROLE and
-CONTINUITY_ANCHOR_MISMATCH. The implementation anchor was restored to
-`053f27317e864d178d3dcba7b478d40db3bcb61a` and the descendant recorded under
-LAST_DOCUMENTATION_CHECKPOINT_SHA instead.
+Result: FAIL then repaired, twice. Labelling the REPORT-only descendant as the
+implementation checkpoint raised INVALID_IMPLEMENTATION_ROLE and
+CONTINUITY_ANCHOR_MISMATCH; restoring `053f2731...` then raised
+INVALID_DOCUMENTATION_CHECKPOINT because that range still contained
+`src/`, `bin/` and `tests/` changes. The true implementation tip is
+`fe919b2cc1fcd3dc79062f336185647c3225a99a`; `fe919b2..ab658eb` is REPORT.md
+only. Final: PASS with 4 advisory warnings (CHECKPOINT_ADVANCE on approved
+doc paths, 31 legacy v1 tasks, one non-live sibling STALE_SESSION, stale base).
+
+Command: `npm run gate:local`
+Result: FULL PASS at `20f830f3539dcd2687134e2df9cffade57cf0bb6`, all eleven
+required groups, receipt `receipt:sha256:16ed7c4dfe9f939f64893483`
+(SEMANTIC_COMPATIBILITY 2067 passed / 13 skipped / 0 failed, OWNER_PROVENANCE
+91, SYNTHETIC_CAMPAIGN 1131 / 0 failed). An earlier attempt at `a75a0db`
+stopped at PROJECT_TRUTH because the project baseline still named `053f2731...`.
+
+Command: `npm run gate:clean`
+Result: PASS at `20f830f3539dcd2687134e2df9cffade57cf0bb6` — Node 20 clean
+clone, `installResult` PASS, `gateResult` PASS, inner receipt
+`receipt:sha256:73bbcdd6a3201e7145f796f2`.
 
 ## Decisions Made During This Task
 
