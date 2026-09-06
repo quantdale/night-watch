@@ -45,6 +45,8 @@
   - Seventh unused mined repo `alphauslabs/compare-risp` (`mined-bugatlas-git-alphauslabs-compare-risp-f7373ce29471`), billing-adjacent TSX, not a re-run: SAME_ROOT_CAUSE_ALTERNATE fileHits=1/1 keywordRecall=0 keywordTotal=5 leak=[] admitted. reproductionCount=0. Seven-case set: 3 PARTIAL + 3 SAME_ROOT_CAUSE + 1 MISS.
   - Eighth unused mined repo `alphauslabs/grpc-chunk-parser` (`mined-bugatlas-git-alphauslabs-grpc-chunk-parser-fd6ebc3beca3`), backend TS, not a re-run: SAME_ROOT_CAUSE_ALTERNATE fileHits=1/2 keywordRecall=0.167 keywordTotal=6 leak=[] admitted. reproductionCount=0. Eight-case set: 3 PARTIAL + 4 SAME_ROOT_CAUSE + 1 MISS.
   - Ninth unused mined repo `alphauslabs/bluectl` (`mined-bugatlas-git-alphauslabs-bluectl-afcb80792b97`), CLI Go, not a re-run: SAME_ROOT_CAUSE_ALTERNATE fileHits=1/5 keywordRecall=0 keywordTotal=1 leak=[] admitted. reproductionCount=0. Nine-case set: 3 PARTIAL + 5 SAME_ROOT_CAUSE + 1 MISS.
+  - Tenth unused mined repo `alphauslabs/blueapi` (`mined-bugatlas-git-alphauslabs-blueapi-423a57bd6554`), API proto, not a re-run: SAME_ROOT_CAUSE_ALTERNATE fileHits=1/1 keywordRecall=0 keywordTotal=4 leak=[] admitted. reproductionCount=0. Ten-case set: 3 PARTIAL + 6 SAME_ROOT_CAUSE + 1 MISS.
+
 
 
 
@@ -81,7 +83,7 @@
 
 - Remaining blockers:
   - DEV/NEXT not authorized (external).
-  - Historical EXACT/reproduced NOT PROVEN. Current-harness set: aqua-ui PARTIAL (2/3, 0.375), Octo-Design-System PARTIAL (1/1, 0.50), ai-driven-bug-hunting SAME_ROOT_CAUSE (1/2, 0), alupi MISS (0/2, 0.222), blog SAME_ROOT_CAUSE (1/1, 0), blue-sdk-ts PARTIAL (1/2, 0.667), compare-risp SAME_ROOT_CAUSE (1/1, 0), grpc-chunk-parser SAME_ROOT_CAUSE (1/2, 0.167), bluectl SAME_ROOT_CAUSE (1/5, 0). leak=[] all. reproductionCount=0.
+  - Historical EXACT/reproduced NOT PROVEN. Current-harness set: aqua-ui PARTIAL (2/3, 0.375), Octo-Design-System PARTIAL (1/1, 0.50), ai-driven-bug-hunting SAME_ROOT_CAUSE (1/2, 0), alupi MISS (0/2, 0.222), blog SAME_ROOT_CAUSE (1/1, 0), blue-sdk-ts PARTIAL (1/2, 0.667), compare-risp SAME_ROOT_CAUSE (1/1, 0), grpc-chunk-parser SAME_ROOT_CAUSE (1/2, 0.167), bluectl SAME_ROOT_CAUSE (1/5, 0), blueapi SAME_ROOT_CAUSE (1/1, 0). leak=[] all. reproductionCount=0.
   - Exact seeded rediscovery structurally needs the hidden failing-test name in candidate text.
   - Hybrid not superior to Grok-alone on the billing snapshot.
 
