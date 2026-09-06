@@ -51,6 +51,8 @@
   - Thirteenth unused mined repo `alphauslabs/iam` (`mined-bugatlas-git-alphauslabs-iam-0c082a865451`), IAM CLI, not a re-run: PARTIAL_REDISCOVERY fileHits=1/1 keywordRecall=0.50 keywordTotal=2 leak=[] admitted. reproductionCount=0. Thirteen-case set: 4 PARTIAL + 8 SAME_ROOT_CAUSE + 1 MISS.
   - Fourteenth unused mined repo `alphauslabs/internal-projects` (`mined-bugatlas-git-alphauslabs-internal-projects-bb894fd1cc1b`), not Pondr v2, not a re-run: SAME_ROOT_CAUSE_ALTERNATE fileHits=1/2 keywordRecall=0.143 keywordTotal=7 leak=[] admitted. reproductionCount=0. Fourteen-case set: 4 PARTIAL + 9 SAME_ROOT_CAUSE + 1 MISS.
   - Fifteenth unused mined repo `mobingilabs/ouchan` (`mined-bugatlas-git-mobingilabs-ouchan-5985281b43cd`), Go billing backend, new org, allowlisted past the 32-repo alphauslabs cap. Hidden knownFailingTest=`services/billingd/services/billingsvc/childbillinggroup_test.go`, testMatch=false, MISS fileHits=0/4 keywordRecall=0.122 leak=[] admitted. reproductionCount=0. Fifteen-case set: 4 PARTIAL + 9 SAME_ROOT_CAUSE + 2 MISS.
+  - Sixteenth unused mined repo `mobingilabs/ripple-api` (`mined-bugatlas-git-mobingilabs-ripple-api-4f00d135578c`), PHP API, not a re-run: SAME_ROOT_CAUSE_ALTERNATE fileHits=1/1 keywordRecall=0.128 keywordTotal=47 leak=[] admitted. reproductionCount=0. Sixteen-case set: 4 PARTIAL + 10 SAME_ROOT_CAUSE + 2 MISS.
+
 
 
 
@@ -93,7 +95,7 @@
 
 - Remaining blockers:
   - DEV/NEXT not authorized (external).
-  - Historical EXACT/reproduced NOT PROVEN. Current-harness set: aqua-ui PARTIAL (2/3, 0.375), Octo-Design-System PARTIAL (1/1, 0.50), blue-sdk-ts PARTIAL (1/2, 0.667), iam PARTIAL (1/1, 0.50), ai-driven-bug-hunting SAME_ROOT_CAUSE (1/2, 0), alupi MISS (0/2, 0.222), blog SAME_ROOT_CAUSE (1/1, 0), compare-risp SAME_ROOT_CAUSE (1/1, 0), grpc-chunk-parser SAME_ROOT_CAUSE (1/2, 0.167), bluectl SAME_ROOT_CAUSE (1/5, 0), blueapi SAME_ROOT_CAUSE (1/1, 0), blueinternal SAME_ROOT_CAUSE (1/2, 0), internal-project-v2 SAME_ROOT_CAUSE (1/2, 0.107, testMatch=false), internal-projects SAME_ROOT_CAUSE (1/2, 0.143), ouchan MISS (0/4, 0.122, testMatch=false). leak=[] all. reproductionCount=0.
+  - Historical EXACT/reproduced NOT PROVEN. Current-harness set: aqua-ui PARTIAL (2/3, 0.375), Octo-Design-System PARTIAL (1/1, 0.50), blue-sdk-ts PARTIAL (1/2, 0.667), iam PARTIAL (1/1, 0.50), ai-driven-bug-hunting SAME_ROOT_CAUSE (1/2, 0), alupi MISS (0/2, 0.222), blog SAME_ROOT_CAUSE (1/1, 0), compare-risp SAME_ROOT_CAUSE (1/1, 0), grpc-chunk-parser SAME_ROOT_CAUSE (1/2, 0.167), bluectl SAME_ROOT_CAUSE (1/5, 0), blueapi SAME_ROOT_CAUSE (1/1, 0), blueinternal SAME_ROOT_CAUSE (1/2, 0), internal-project-v2 SAME_ROOT_CAUSE (1/2, 0.107, testMatch=false), internal-projects SAME_ROOT_CAUSE (1/2, 0.143), ouchan MISS (0/4, 0.122, testMatch=false), ripple-api SAME_ROOT_CAUSE (1/1, 0.128). leak=[] all. reproductionCount=0.
   - Exact seeded rediscovery structurally needs the hidden failing-test name in candidate text. Two mined cases now carry leak-free added-test paths (Pondr, ouchan billing); neither live hunt named the test.
   - Hybrid not superior to Grok-alone on the billing snapshot.
 
