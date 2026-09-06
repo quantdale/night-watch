@@ -55,6 +55,8 @@
   - Seventeenth unused mined repo `mobingilabs/ripple-ui` (`mined-bugatlas-git-mobingilabs-ripple-ui-5c5ff3a2e3fa`), legacy Vue 2, not a re-run: MISS fileHits=0/2 keywordRecall=0.111 keywordTotal=9 leak=[] admitted. reproductionCount=0. Seventeen-case set: 4 PARTIAL + 10 SAME_ROOT_CAUSE + 3 MISS.
   - Eighteenth unused mined repo `mobingilabs/wave-api` (`mined-bugatlas-git-mobingilabs-wave-api-c619ab121513`), Wave PHP API, not a Ripple re-run: SAME_ROOT_CAUSE_ALTERNATE fileHits=1/1 keywordRecall=0 keywordTotal=0 leak=[] admitted. reproductionCount=0. Eighteen-case set: 4 PARTIAL + 11 SAME_ROOT_CAUSE + 3 MISS.
   - Nineteenth unused mined repo `mobingilabs/protobuf` (`mined-bugatlas-git-mobingilabs-protobuf-c8f15b28e510`), shared generated types, not a product-API re-run: SAME_ROOT_CAUSE_ALTERNATE fileHits=2/8 keywordRecall=0.40 keywordTotal=5 leak=[] admitted. reproductionCount=0. Nineteen-case set: 4 PARTIAL + 12 SAME_ROOT_CAUSE + 3 MISS.
+  - Twentieth unused mined repo `mobingilabs/wave-ui` (`mined-bugatlas-git-mobingilabs-wave-ui-8002d067a9aa`), Wave Vue UI, not a Ripple re-run: SAME_ROOT_CAUSE_ALTERNATE fileHits=1/1 keywordRecall=0 keywordTotal=2 leak=[] admitted. reproductionCount=0. Twenty-case set: 4 PARTIAL + 13 SAME_ROOT_CAUSE + 3 MISS.
+
 
 
 
@@ -101,7 +103,7 @@
 
 - Remaining blockers:
   - DEV/NEXT not authorized (external).
-  - Historical EXACT/reproduced NOT PROVEN. Current-harness set: aqua-ui PARTIAL (2/3, 0.375), Octo-Design-System PARTIAL (1/1, 0.50), blue-sdk-ts PARTIAL (1/2, 0.667), iam PARTIAL (1/1, 0.50), ai-driven-bug-hunting SAME_ROOT_CAUSE (1/2, 0), alupi MISS (0/2, 0.222), blog SAME_ROOT_CAUSE (1/1, 0), compare-risp SAME_ROOT_CAUSE (1/1, 0), grpc-chunk-parser SAME_ROOT_CAUSE (1/2, 0.167), bluectl SAME_ROOT_CAUSE (1/5, 0), blueapi SAME_ROOT_CAUSE (1/1, 0), blueinternal SAME_ROOT_CAUSE (1/2, 0), internal-project-v2 SAME_ROOT_CAUSE (1/2, 0.107, testMatch=false), internal-projects SAME_ROOT_CAUSE (1/2, 0.143), ouchan MISS (0/4, 0.122, testMatch=false), ripple-api SAME_ROOT_CAUSE (1/1, 0.128), ripple-ui MISS (0/2, 0.111), wave-api SAME_ROOT_CAUSE (1/1, 0), protobuf SAME_ROOT_CAUSE (2/8, 0.40). leak=[] all. reproductionCount=0.
+  - Historical EXACT/reproduced NOT PROVEN. Current-harness set: aqua-ui PARTIAL (2/3, 0.375), Octo-Design-System PARTIAL (1/1, 0.50), blue-sdk-ts PARTIAL (1/2, 0.667), iam PARTIAL (1/1, 0.50), ai-driven-bug-hunting SAME_ROOT_CAUSE (1/2, 0), alupi MISS (0/2, 0.222), blog SAME_ROOT_CAUSE (1/1, 0), compare-risp SAME_ROOT_CAUSE (1/1, 0), grpc-chunk-parser SAME_ROOT_CAUSE (1/2, 0.167), bluectl SAME_ROOT_CAUSE (1/5, 0), blueapi SAME_ROOT_CAUSE (1/1, 0), blueinternal SAME_ROOT_CAUSE (1/2, 0), internal-project-v2 SAME_ROOT_CAUSE (1/2, 0.107, testMatch=false), internal-projects SAME_ROOT_CAUSE (1/2, 0.143), ouchan MISS (0/4, 0.122, testMatch=false), ripple-api SAME_ROOT_CAUSE (1/1, 0.128), ripple-ui MISS (0/2, 0.111), wave-api SAME_ROOT_CAUSE (1/1, 0), protobuf SAME_ROOT_CAUSE (2/8, 0.40), wave-ui SAME_ROOT_CAUSE (1/1, 0). leak=[] all. reproductionCount=0.
   - Exact seeded rediscovery structurally needs the hidden failing-test name in candidate text. Two mined cases now carry leak-free added-test paths (Pondr, ouchan billing); neither live hunt named the test.
   - Hybrid not superior to Grok-alone on the billing snapshot.
 
