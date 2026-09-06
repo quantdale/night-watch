@@ -6,8 +6,8 @@ Task ID: nightwatch-autonomous-bug-hunting-programme-v1
 Phase: AUTONOMOUS_BUG_HUNTING_PROGRAMME_V1
 Status: IN_PROGRESS
 Starting SHA: d1ebde90c1454b31d6b93d9df503a4c5f196d7c8
-Last validated implementation SHA: bd9be1b2a93107388b868cf2febc87bc84a8a428
-Last substantive checkpoint SHA: bd9be1b2a93107388b868cf2febc87bc84a8a428
+Last validated implementation SHA: 053f27317e864d178d3dcba7b478d40db3bcb61a
+Last substantive checkpoint SHA: 053f27317e864d178d3dcba7b478d40db3bcb61a
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-autonomous-bug-huntin-725fbbbe
@@ -15,8 +15,8 @@ Last checkpoint: Wave 0 protocol freeze drafting
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: d1ebde90c1454b31d6b93d9df503a4c5f196d7c8
-LAST_VALIDATED_IMPLEMENTATION_SHA: bd9be1b2a93107388b868cf2febc87bc84a8a428
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: bd9be1b2a93107388b868cf2febc87bc84a8a428
+LAST_VALIDATED_IMPLEMENTATION_SHA: 053f27317e864d178d3dcba7b478d40db3bcb61a
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 053f27317e864d178d3dcba7b478d40db3bcb61a
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
 

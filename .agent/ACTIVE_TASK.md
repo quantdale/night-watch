@@ -6,16 +6,16 @@ Title: Autonomous Bug-Hunting Programme
 Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-autonomous-bug-hunting-programme-v1
 Starting SHA: d1ebde90c1454b31d6b93d9df503a4c5f196d7c8
-Last validated implementation SHA: bd9be1b2a93107388b868cf2febc87bc84a8a428
-Last checkpoint: Wave 0 interface freeze in progress
-Current milestone: W0 — protocol freeze, programme state, DAG
-Next action: Finish Wave 0 frozen contracts, validate, integrate, then launch Wave 1 executor lanes
+Last validated implementation SHA: 053f27317e864d178d3dcba7b478d40db3bcb61a
+Last checkpoint: Wave 1 A–G integrated; autonomy loop proven; operator CLI landed
+Current milestone: W2 — certification
+Next action: Run gate:local after documenting the 053f273 implementation baseline
 Authorization class: AUTONOMOUS_BUG_HUNTING_PROGRAMME_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: d1ebde90c1454b31d6b93d9df503a4c5f196d7c8
-LAST_VALIDATED_IMPLEMENTATION_SHA: bd9be1b2a93107388b868cf2febc87bc84a8a428
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: bd9be1b2a93107388b868cf2febc87bc84a8a428
+LAST_VALIDATED_IMPLEMENTATION_SHA: 053f27317e864d178d3dcba7b478d40db3bcb61a
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 053f27317e864d178d3dcba7b478d40db3bcb61a
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PHASE_AUTONOMOUS_BUG_HUNTING_PROGRAMME_V1_STATUS: IN_PROGRESS
