@@ -108,7 +108,7 @@ test('print adapter unwraps markdown-fenced JSON inside a text envelope', () => 
       timeout: 10_000,
       shell: false,
     });
-    expect(result.status).toBe(0, result.stderr);
+    expect(result.status).toBe(0);
     const parsed = JSON.parse(result.stdout);
     expect(parsed.intents).toEqual([{ kind: 'TERMINATE', reason: 'COMPLETE_NO_FINDING' }]);
   } finally {
@@ -204,7 +204,7 @@ process.stdout.write(JSON.stringify({
       timeout: 10_000,
       shell: false,
     });
-    expect(result.status).toBe(0, result.stderr);
+    expect(result.status).toBe(0);
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }
@@ -255,11 +255,12 @@ process.stdout.write(JSON.stringify({
       timeout: 10_000,
       shell: false,
     });
-    expect(result.status).toBe(0, result.stderr);
-    const parsed = JSON.parse(result.stdout);
+    expect(result.status).toBe(0);
+    const parsed = JSON.parse(result.stdout) as { intents: Array<{ kind: string; hypothesisId?: string; evidenceRefs?: string[] }>; hypotheses: unknown };
     expect(parsed.intents.map((intent) => intent.kind)).toEqual(['FORM_HYPOTHESIS', 'PROPOSE_CANDIDATE']);
-    expect(parsed.intents[0].hypothesisId).toBe('Hypothesis-1');
-    expect(parsed.intents[1].evidenceRefs).toEqual(['ev:sha256:aaaaaaaaaaaaaaaaaaaaaaaa']);
+    const [hypothesis, proposal] = parsed.intents;
+    expect(hypothesis?.hypothesisId).toBe('Hypothesis-1');
+    expect(proposal?.evidenceRefs).toEqual(['ev:sha256:aaaaaaaaaaaaaaaaaaaaaaaa']);
     expect(parsed.hypotheses).toEqual([]);
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
