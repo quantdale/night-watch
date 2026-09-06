@@ -54,6 +54,7 @@ if (command === 'status') {
     'tests/unit/autonomousFinding.test.ts',
     'tests/unit/localCampaign.test.ts',
     'tests/unit/historicalRediscovery.test.ts',
+    'tests/unit/preFixSource.test.ts',
   ];
   const result = spawnSync(pwBin, ['test', ...suites, '--project=nightwatch', '--workers=1'], {
     cwd: root,
@@ -87,11 +88,16 @@ if (command === 'status') {
         fail(2, 'campaign run --max-turns must be an integer 1..50');
       } else {
         const [mod] = loadTypeScriptModules(['src/core/agentRuntime/localCampaign.ts'], { root });
+        const extraArgs = [];
+        if (typeof process.env.NIGHTWATCH_REASONER_SCRIPT === 'string' && process.env.NIGHTWATCH_REASONER_SCRIPT.length > 0) {
+          extraArgs.push(process.env.NIGHTWATCH_REASONER_SCRIPT);
+        }
         try {
           const result = await mod.runLocalCliCampaign({
             campaignId: typeof flags.id === 'string' && flags.id.length > 0 ? flags.id : `local-${Date.now()}`,
             ceilingName: DURATIONS.get(flags.duration),
             executable: process.env.NIGHTWATCH_REASONER_CLI,
+            args: extraArgs,
             provider: process.env.NIGHTWATCH_REASONER_PROVIDER ?? 'configured',
             model: process.env.NIGHTWATCH_REASONER_MODEL ?? 'configured',
             maxTurns,
@@ -102,12 +108,52 @@ if (command === 'status') {
         }
       }
     }
-  } else if (sub === 'status' || sub === 'pause' || sub === 'resume' || sub === 'findings') {
-    console.log(JSON.stringify({
-      command: sub,
-      campaigns: [],
-      note: 'No live autonomous campaign is registered in this process. Checkpoints are owner-local.',
-    }, null, 2));
+  } else if (sub === 'status' || sub === 'pause' || sub === 'findings') {
+    const [mod] = loadTypeScriptModules(['src/core/agentRuntime/localCampaign.ts'], { root });
+    const campaigns = mod.listLocalCampaigns();
+    const payload = sub === 'findings'
+      ? {
+          command: sub,
+          candidateIds: campaigns.flatMap((item) => item.candidateIds),
+          campaigns,
+        }
+      : {
+          command: sub,
+          liveProcess: false,
+          campaigns,
+          note: sub === 'pause'
+            ? 'campaign run is blocking in this process; stored checkpoints are listed. Resume with campaign resume --id=...'
+            : 'No in-process campaign. Owner-local checkpoints are listed.',
+        };
+    console.log(JSON.stringify(payload, null, 2));
+  } else if (sub === 'resume') {
+    if (!process.env.NIGHTWATCH_REASONER_CLI) {
+      fail(2, 'REASONER_CLI_NOT_CONFIGURED — set NIGHTWATCH_REASONER_CLI to resume');
+    } else if (typeof flags.id !== 'string' || flags.id.length === 0) {
+      fail(2, 'campaign resume requires --id=<campaignId>');
+    } else {
+      const [mod] = loadTypeScriptModules(['src/core/agentRuntime/localCampaign.ts'], { root });
+      const extraArgs = [];
+      if (typeof process.env.NIGHTWATCH_REASONER_SCRIPT === 'string' && process.env.NIGHTWATCH_REASONER_SCRIPT.length > 0) {
+        extraArgs.push(process.env.NIGHTWATCH_REASONER_SCRIPT);
+      }
+      const maxTurnsRaw = flags['max-turns'];
+      const maxTurns = maxTurnsRaw === undefined ? undefined : Number(maxTurnsRaw);
+      try {
+        const result = await mod.resumeLocalCliCampaign({
+          campaignId: flags.id,
+          ceilingName: 'HOUR_1',
+          executable: process.env.NIGHTWATCH_REASONER_CLI,
+          args: extraArgs,
+          provider: process.env.NIGHTWATCH_REASONER_PROVIDER ?? 'configured',
+          model: process.env.NIGHTWATCH_REASONER_MODEL ?? 'configured',
+          maxTurns: Number.isInteger(maxTurns) ? maxTurns : 8,
+        });
+        console.log(JSON.stringify(result, null, 2));
+      } catch (error) {
+        fail(2, error instanceof Error ? error.message : 'LOCAL_CAMPAIGN_RESUME_FAILED');
+      }
+    }
   } else {
     fail(2, 'usage: nightwatch-agent campaign run --reasoner=cli --duration=1h|4h|8h|overnight');
   }

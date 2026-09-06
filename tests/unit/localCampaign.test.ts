@@ -6,6 +6,8 @@ import { REASONER_TURN_RESPONSE_VERSION } from '../../src/core/agentProtocol';
 import {
   LOCAL_CAMPAIGN_VERSION,
   LocalCampaignError,
+  listLocalCampaigns,
+  resumeLocalCliCampaign,
   runLocalCliCampaign,
 } from '../../src/core/agentRuntime/localCampaign';
 
@@ -89,3 +91,52 @@ test('fake CLI reasoner runs a LOCAL campaign and admits no finding', async () =
   expect(result.actionCount).toBeGreaterThan(0);
   expect(result.checkpointFile).toBeNull();
 });
+
+function pauseScript(dir: string): string {
+  const body = JSON.stringify({
+    schemaVersion: REASONER_TURN_RESPONSE_VERSION,
+    intents: [{ kind: 'PAUSE' }],
+    hypotheses: [],
+  });
+  return writeFake(
+    dir,
+    'pause.mjs',
+    `
+const chunks = [];
+process.stdin.on('data', (d) => chunks.push(d)).on('end', () => {
+  process.stdout.write(${JSON.stringify(body)});
+});
+`,
+  );
+}
+
+test('paused campaign writes a checkpoint that status lists and resume can finish', async () => {
+  const dir = scratchDir();
+  const paused = await runLocalCliCampaign({
+    campaignId: 'camp-pause-resume',
+    ceilingName: 'HOUR_1',
+    executable: NODE,
+    args: [pauseScript(dir)],
+    provider: 'test-provider',
+    model: 'fake-1',
+    maxTurns: 3,
+    stateDirectory: dir,
+  });
+  expect(paused.terminationReason).toBe('PAUSED');
+  expect(paused.checkpointFile).toBeTruthy();
+  const listed = listLocalCampaigns(dir);
+  expect(listed.map((item) => item.campaignId)).toContain('camp-pause-resume');
+  const resumed = await resumeLocalCliCampaign({
+    campaignId: 'camp-pause-resume',
+    ceilingName: 'HOUR_1',
+    executable: NODE,
+    args: [terminateScript(dir)],
+    provider: 'test-provider',
+    model: 'fake-1',
+    maxTurns: 3,
+    stateDirectory: dir,
+  });
+  expect(resumed.terminationReason).toBe('COMPLETE_NO_FINDING');
+  expect(resumed.candidateIds).toEqual([]);
+});
+

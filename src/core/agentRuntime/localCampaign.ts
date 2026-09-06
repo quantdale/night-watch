@@ -17,7 +17,7 @@ import {
 } from '../agentProtocol';
 import { executeAgentTool } from '../agentTools';
 import { createCliReasonerDriver } from '../reasoner/cliReasoner';
-import { assertCheckpointHasNoSecrets } from './checkpoint';
+import { assertCheckpointHasNoSecrets, parseCheckpoint } from './checkpoint';
 import { AgentRuntime } from './runtime';
 import type { AgentToolExecutor } from './types';
 
@@ -56,6 +56,16 @@ export interface LocalCampaignResult {
   readonly environment: 'LOCAL';
 }
 
+export interface LocalCampaignListing {
+  readonly campaignId: string;
+  readonly status: string;
+  readonly terminationReason: string | null;
+  readonly candidateIds: readonly string[];
+  readonly resumeCursor: string;
+  readonly checkpointFile: string;
+}
+
+
 function localTools(): AgentToolExecutor {
   return {
     async execute(call) {
@@ -77,12 +87,13 @@ function localTools(): AgentToolExecutor {
   };
 }
 
-function defaultStateDirectory(override: string | undefined): string {
+export function defaultCampaignStateDirectory(override?: string): string {
   if (typeof override === 'string' && override.trim().length > 0) {
     return path.resolve(override.trim());
   }
   return path.join(os.homedir(), '.nightwatch', 'campaigns');
 }
+
 
 function ensurePrivateDirectory(directory: string): void {
   try {
@@ -108,7 +119,59 @@ function persistCheckpoint(directory: string, campaignId: string, checkpoint: Ag
   return file;
 }
 
-export async function runLocalCliCampaign(input: LocalCampaignInput): Promise<LocalCampaignResult> {
+function checkpointPath(directory: string, campaignId: string): string {
+  return path.join(directory, `${campaignId}.checkpoint.json`);
+}
+
+export function loadLocalCampaignCheckpoint(campaignId: string, stateDirectory?: string): AgentCheckpoint {
+  if (!CAMPAIGN_ID_RE.test(campaignId)) {
+    throw new LocalCampaignError('MALFORMED_CAMPAIGN_ID', 'campaignId must match [A-Za-z0-9._-]{1,80}');
+  }
+  const file = checkpointPath(defaultCampaignStateDirectory(stateDirectory), campaignId);
+  try {
+    if (fs.lstatSync(file).isSymbolicLink() || !fs.lstatSync(file).isFile()) {
+      throw new LocalCampaignError('CHECKPOINT_UNSAFE', 'checkpoint is not a regular file');
+    }
+  } catch (error) {
+    if (error instanceof LocalCampaignError) throw error;
+    throw new LocalCampaignError('CHECKPOINT_MISSING', `no checkpoint for ${campaignId}`);
+  }
+  const parsed: unknown = JSON.parse(fs.readFileSync(file, 'utf8'));
+  return parseCheckpoint(parsed);
+}
+
+export function listLocalCampaigns(stateDirectory?: string): readonly LocalCampaignListing[] {
+  const directory = defaultCampaignStateDirectory(stateDirectory);
+  let names: string[] = [];
+  try {
+    if (fs.lstatSync(directory).isSymbolicLink()) return [];
+    names = fs.readdirSync(directory);
+  } catch {
+    return [];
+  }
+  const listings: LocalCampaignListing[] = [];
+  for (const name of names.sort()) {
+    if (!name.endsWith('.checkpoint.json')) continue;
+    const campaignId = name.slice(0, -'.checkpoint.json'.length);
+    if (!CAMPAIGN_ID_RE.test(campaignId)) continue;
+    try {
+      const checkpoint = loadLocalCampaignCheckpoint(campaignId, directory);
+      listings.push({
+        campaignId,
+        status: checkpoint.state.status,
+        terminationReason: checkpoint.state.terminationReason,
+        candidateIds: [...checkpoint.state.candidateIds],
+        resumeCursor: checkpoint.resumeCursor,
+        checkpointFile: checkpointPath(directory, campaignId),
+      });
+    } catch {
+      continue;
+    }
+  }
+  return listings;
+}
+
+function driverAndPolicy(input: LocalCampaignInput) {
   if (!CAMPAIGN_ID_RE.test(input.campaignId)) {
     throw new LocalCampaignError('MALFORMED_CAMPAIGN_ID', 'campaignId must match [A-Za-z0-9._-]{1,80}');
   }
@@ -121,27 +184,26 @@ export async function runLocalCliCampaign(input: LocalCampaignInput): Promise<Lo
   if (input.maxTurns !== undefined && (!Number.isInteger(input.maxTurns) || input.maxTurns < 1 || input.maxTurns > 50)) {
     throw new LocalCampaignError('MALFORMED_MAX_TURNS', 'maxTurns must be an integer 1..50');
   }
-
-  const reasoner = createCliReasonerDriver({
-    executable: input.executable,
-    args: input.args ?? [],
-    provider: input.provider ?? 'configured',
-    model: input.model ?? 'configured',
-    validationContext: { authorizedEnvironments: ['LOCAL'] },
-  });
-
-  const runtime = new AgentRuntime({
-    campaignId: input.campaignId,
+  return {
+    reasoner: createCliReasonerDriver({
+      executable: input.executable,
+      args: input.args ?? [],
+      provider: input.provider ?? 'configured',
+      model: input.model ?? 'configured',
+      validationContext: { authorizedEnvironments: ['LOCAL'] as const },
+    }),
     budgetPolicy: defaultAgentBudgetPolicy(input.ceilingName),
-    reasoner,
-    tools: localTools(),
-    authorizedEnvironments: ['LOCAL'],
-    maxTurns: input.maxTurns,
-  });
+  };
+}
+
+async function finishRun(
+  input: LocalCampaignInput,
+  runtime: AgentRuntime,
+): Promise<LocalCampaignResult> {
   const ran = await runtime.run({ maxTurns: input.maxTurns });
   let checkpointFile: string | null = null;
   if (ran.checkpoint !== null) {
-    checkpointFile = persistCheckpoint(defaultStateDirectory(input.stateDirectory), input.campaignId, ran.checkpoint);
+    checkpointFile = persistCheckpoint(defaultCampaignStateDirectory(input.stateDirectory), input.campaignId, ran.checkpoint);
   }
   return {
     schemaVersion: LOCAL_CAMPAIGN_VERSION,
@@ -152,4 +214,31 @@ export async function runLocalCliCampaign(input: LocalCampaignInput): Promise<Lo
     checkpointFile,
     environment: 'LOCAL',
   };
+}
+
+export async function runLocalCliCampaign(input: LocalCampaignInput): Promise<LocalCampaignResult> {
+  const { reasoner, budgetPolicy } = driverAndPolicy(input);
+  const runtime = new AgentRuntime({
+    campaignId: input.campaignId,
+    budgetPolicy,
+    reasoner,
+    tools: localTools(),
+    authorizedEnvironments: ['LOCAL'],
+    maxTurns: input.maxTurns,
+  });
+  return finishRun(input, runtime);
+}
+
+export async function resumeLocalCliCampaign(input: LocalCampaignInput): Promise<LocalCampaignResult> {
+  const { reasoner, budgetPolicy } = driverAndPolicy(input);
+  const checkpoint = loadLocalCampaignCheckpoint(input.campaignId, input.stateDirectory);
+  const runtime = AgentRuntime.resumeFromCheckpoint(checkpoint, {
+    campaignId: input.campaignId,
+    budgetPolicy,
+    reasoner,
+    tools: localTools(),
+    authorizedEnvironments: ['LOCAL'],
+    maxTurns: input.maxTurns,
+  });
+  return finishRun(input, runtime);
 }

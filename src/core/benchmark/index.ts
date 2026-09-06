@@ -28,6 +28,13 @@ export {
   type LeakRecordingDriver,
 } from './hunt';
 export {
+  PRE_FIX_SOURCE_VERSION,
+  extractPreFixSnapshot,
+  type PreFixExtractionStatus,
+  type PreFixSnapshot,
+} from './preFixSource';
+
+export {
   BENCHMARK_EXACT_MIN_FILE_RECALL,
   BENCHMARK_EXACT_MIN_KEYWORD_RECALL,
   BENCHMARK_PARTIAL_MIN_FILE_RECALL,
