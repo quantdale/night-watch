@@ -111,6 +111,51 @@ test('mined record becomes a leak-free pre-fix case on a local git fixture', asy
   }
 });
 
+test('added test file in the fix is hidden knownFailingTest and does not leak', async () => {
+  const repo = fs.mkdtempSync(path.join(os.tmpdir(), 'nw-mined-added-test-'));
+  try {
+    git(repo, ['init', '-b', 'main']);
+    git(repo, ['config', 'user.email', 'nightwatch@example.invalid']);
+    git(repo, ['config', 'user.name', 'Nightwatch Fixture']);
+    fs.writeFileSync(path.join(repo, 'total.ts'), 'export const total = 101;\n');
+    git(repo, ['add', 'total.ts']);
+    git(repo, ['commit', '-m', 'seed cart total']);
+    fs.writeFileSync(path.join(repo, 'total.ts'), 'export const total = 100;\n');
+    fs.writeFileSync(path.join(repo, 'total.test.ts'), 'import { total } from "./total";\nif (total !== 100) throw new Error("off-by-one");\n');
+    git(repo, ['add', 'total.ts', 'total.test.ts']);
+    git(repo, ['commit', '-m', 'fix off-by-one cart total']);
+    const sha = git(repo, ['rev-parse', 'HEAD']);
+    const defined = tryDefineMinedBenchmarkCase(
+      record({
+        bugId: 'FIXTURE-ADDED-TEST',
+        repository: 'example/ledger',
+        symptom: 'fix off-by-one cart total',
+        provenance: {
+          category: 'OBSERVATION',
+          repository: 'example/ledger',
+          sourceSha: sha,
+          locator: null,
+          confidence: 'LOW',
+        },
+      }),
+      repo,
+    );
+    expect(defined).not.toBeNull();
+    expect(defined!.hidden.knownFailingTest).toBe('total.test.ts');
+    expect(defined!.preFix.sourceSnapshot).not.toContain('total.test.ts');
+    expect(defined!.preFix.sourceSnapshot).toContain('export const total = 101;');
+    const named = scoreBenchmarkCandidate('total.test.ts covers total.ts off-by-one', defined!.hidden, {
+      visibleFiles: ['total.ts'],
+    });
+    expect(named.testMatch).toBe(true);
+    const hunt = await runBenchmarkHunt(defined!, { reasoner: BLIND, maxTurns: 3 });
+    expect(hunt.leaked).toEqual([]);
+  } finally {
+    fs.rmSync(repo, { recursive: true, force: true });
+  }
+});
+
+
 test('bounded sibling mine runs isolated hunts without leaking fix SHAs', async () => {
   const report = mineLocalGitHistory({ maxRepos: 2, maxCommitsPerRepo: 20 });
   test.skip(report.status !== 'MINED' || report.records.length === 0, 'sibling historical data unavailable');

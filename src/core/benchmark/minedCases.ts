@@ -11,10 +11,12 @@ import path from 'node:path';
 import type { BugAtlasRecord } from '../agentProtocol/atlas';
 import { detectBenchmarkLeakage } from '../agentProtocol/benchmark';
 import { defineBenchmarkCase, type DefinedBenchmarkCase } from './case';
-import { extractPreFixSnapshot } from './preFixSource';
+import { extractPreFixSnapshot, parsePreFixSnapshotFiles, type PreFixSnapshot } from './preFixSource';
 
 const REPO_ID_RE = /^[A-Za-z0-9][A-Za-z0-9._-]*\/[A-Za-z0-9][A-Za-z0-9._-]*$/;
 const SHA_RE = /^[0-9a-f]{7,40}$/i;
+const ADDED_TEST_FILE_RE =
+  /(?:^|\/)(?:[^/]+_test\.go|[^/]+\.test\.[cm]?[jt]sx?|[^/]+\.spec\.[cm]?[jt]sx?|test_[^/]+\.py)$/i;
 
 export function resolveMinedRepoPath(repositoriesRoot: string, repository: string | null): string | null {
   if (typeof repository !== 'string' || !REPO_ID_RE.test(repository)) return null;
@@ -34,6 +36,18 @@ function isolated(value: string | null, haystack: string): string | null {
   return value;
 }
 
+/** Test path added in the fix (not present in the pre-fix snapshot). Hidden-only. */
+function firstAddedTestPath(extracted: PreFixSnapshot): string | null {
+  if (extracted.status !== 'EXTRACTED') return null;
+  const snapshot = parsePreFixSnapshotFiles(extracted.snapshot);
+  for (const file of extracted.files) {
+    if (!ADDED_TEST_FILE_RE.test(file)) continue;
+    if (snapshot.has(file)) continue;
+    return file;
+  }
+  return null;
+}
+
 export function tryDefineMinedBenchmarkCase(
   record: BugAtlasRecord,
   repoPath: string,
@@ -50,7 +64,7 @@ export function tryDefineMinedBenchmarkCase(
     fixDiff: isolated(record.fixLocator, haystack),
     issueTitle: null,
     bugDescription: isolated(record.symptom, haystack),
-    knownFailingTest: isolated(record.testsAdded[0] ?? null, haystack),
+    knownFailingTest: isolated(record.testsAdded[0] ?? firstAddedTestPath(extracted), haystack),
     explanation: isolated(record.rootCause, haystack) ?? isolated(record.symptom, haystack),
   };
   const leaked = detectBenchmarkLeakage(
