@@ -267,4 +267,66 @@ process.stdout.write(JSON.stringify({
   }
 });
 
+test('print adapter keeps a 10k untrusted snapshot in the prompt', () => {
+  const dir = scratchDir();
+  try {
+    const fake = path.join(dir, 'print.mjs');
+    fs.writeFileSync(
+      fake,
+      `
+import fs from 'node:fs';
+const promptPath = process.argv[2];
+const prompt = fs.readFileSync(promptPath, 'utf8');
+if (!prompt.includes('MARKER_AT_5000')) {
+  process.stderr.write('missing 5k marker\\n');
+  process.exit(3);
+}
+process.stdout.write(JSON.stringify({
+  schemaVersion: '${REASONER_TURN_RESPONSE_VERSION}',
+  intents: [{ kind: 'TERMINATE', reason: 'COMPLETE_NO_FINDING' }],
+  hypotheses: [],
+}));
+`,
+      { mode: 0o700 },
+    );
+    const blob = `${'a'.repeat(4990)}MARKER_AT_5000${'b'.repeat(5000)}`;
+    const request = {
+      schemaVersion: REASONER_TURN_REQUEST_VERSION,
+      campaignId: 'camp-print-snapshot',
+      turnId: 'camp-print-snapshot:turn:1',
+      observation: {
+        phase: 'OBSERVE',
+        untrusted: [
+          {
+            schemaVersion: 'nightwatch.untrusted-envelope.v1',
+            trust: 'UNTRUSTED',
+            source: 'SOURCE_CODE',
+            digest: 'bench:sha256:snapshot',
+            bytes: blob,
+          },
+        ],
+        evidenceRefs: [],
+        allowedToolIds: [],
+        allowedIntentKinds: ['TERMINATE'],
+      },
+      budgetRemaining: { policy: defaultAgentBudgetPolicy('HOUR_1'), usage: ZERO_AGENT_BUDGET_USAGE },
+    };
+    const result = spawnSync(NODE, [SHIM], {
+      encoding: 'utf8',
+      input: JSON.stringify(request),
+      env: {
+        ...process.env,
+        NIGHTWATCH_PRINT_CLI: NODE,
+        NIGHTWATCH_PRINT_ARGS: JSON.stringify([fake, '__PROMPT_FILE__']),
+      },
+      timeout: 10_000,
+      shell: false,
+    });
+    expect(result.status).toBe(0);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+
 

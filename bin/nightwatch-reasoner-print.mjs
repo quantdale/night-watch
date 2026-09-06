@@ -20,7 +20,7 @@ const RESPONSE_VERSION = 'nightwatch.reasoner-turn-response.v1';
 const TIMEOUT_MS = 120_000;
 const MAX_STDOUT = 1_048_576;
 const MAX_UNTRUSTED_ENVELOPES = 6;
-const MAX_UNTRUSTED_BYTES = 2_000;
+const MAX_UNTRUSTED_BYTES = 24_000;
 const MAX_PROMPT_CHARS = 48_000;
 
 function boundRequestForPrompt(request) {
