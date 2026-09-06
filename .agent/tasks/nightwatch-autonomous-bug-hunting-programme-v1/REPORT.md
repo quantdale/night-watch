@@ -11,7 +11,7 @@
   - `npm run agent:check`: PASS with warnings (stale implementation baseline vs live HEAD; stale review-ops worktree left untouched).
   - Sibling mined hunts (`tests/unit/minedCases.test.ts`): leak=0, admitted=0, outcome=MISS with a blind reasoner.
   - `npm run gate:local`: PASS on `6fdf5353762883bb6aae3f4f703b819f30b57e10` (SEMANTIC_COMPATIBILITY 2067 passed / 13 skipped / 0 failed; SYNTHETIC_CAMPAIGN 1131 passed; PATCH_INTEGRITY/WORKSPACE_INTEGRITY PASS). Prior dirty-tree run failed PATCH_INTEGRITY (`SELFDEV_CATALOG_INTEGRITY_CHECKOUT_DIRTY`) then passed after the report commit.
-  - `gate:clean`: not re-run on this HEAD.
+  - `npm run gate:clean`: PASS on `90387370c958c44c64741ace04df997580eea862` (install PASS; all groups PASS; cleanBefore/cleanAfter true; siblingWrites 0).
 - Decisions: Lane H merged into Lane A. System Atlas is an overlay on systemMap. `aiReview` remains end-stage. Fake/blind reasoners never count as rediscovery.
 - Safety events: NONE. No DEV/NEXT/production contact. No Slack/Leslie/Pondr. No sibling writes. No force-push.
 - Deferred items: DEV/NEXT hunt; communication-evidence atlas; live 1h campaign until `NIGHTWATCH_REASONER_CLI` is set.
