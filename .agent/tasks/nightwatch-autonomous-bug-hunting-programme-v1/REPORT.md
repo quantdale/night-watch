@@ -2,13 +2,96 @@
 
 - Starting SHA: `d1ebde90c1454b31d6b93d9df503a4c5f196d7c8`
 - Resulting SHA: Live HEAD: DISCOVER_FROM_GIT
-- Task objective: Locally executable autonomous bug-hunting above the existing Nightwatch safety kernel.
-- Changes: Wave 0 protocol freeze in progress (`src/core/agentProtocol/`, owner-scope class, continuity, OpenSpec).
-- Tests/validation: focused protocol/owner-scope suites 19 passed; typecheck PASS; hardening PASS. Continuity repair in progress.
-- Decisions: Lane H merged into Lane A; System Atlas is an overlay; aiReview remains end-stage.
-- Safety events: NONE
-- Deferred items: DEV/NEXT hunt; communication-evidence atlas population.
-- Remaining blockers: none for Wave 0 local freeze.
-- Recommended next phase/task: Wave 1 independent lanes after Wave 0 integrate.
+- Task objective: Locally executable autonomous bug-hunting above the existing Nightwatch safety kernel. Frontier reasoner decides what to investigate; Nightwatch decides what it may do.
+- Changes: Wave 0 protocol freeze; Wave 1 lanes A–G integrated; AgentRuntime loop; CLI reasoner gateway; agent tools over existing engines; Bug Atlas miner; System Atlas overlay; historical replay harness; finding dossiers; local CLI campaign run/status/resume; pre-fix snapshot extraction; mined sibling cases with leak isolation.
+- Tests/validation:
+  - Targeted autonomous suites: PASS (protocol, runtime, tools, atlas, benchmark, localCampaign, historicalRediscovery, preFixSource, minedCases).
+  - `npx tsc --noEmit`: PASS on integration commits.
+  - `npm run hardening:check`: PASS on `7061a070367bd6e376e1918513dd5f8788e5bb90`.
+  - `npm run agent:check`: PASS with warnings (stale implementation baseline vs live HEAD; stale review-ops worktree left untouched).
+  - Sibling mined hunts (`tests/unit/minedCases.test.ts`): leak=0, admitted=0, outcome=MISS with a blind reasoner.
+  - `gate:local` / `gate:clean`: not yet re-run on this HEAD (in progress or pending).
+- Decisions: Lane H merged into Lane A. System Atlas is an overlay on systemMap. `aiReview` remains end-stage. Fake/blind reasoners never count as rediscovery.
+- Safety events: NONE. No DEV/NEXT/production contact. No Slack/Leslie/Pondr. No sibling writes. No force-push.
+- Deferred items: DEV/NEXT hunt; communication-evidence atlas; live 1h campaign until `NIGHTWATCH_REASONER_CLI` is set.
+- Remaining blockers:
+  - `NIGHTWATCH_REASONER_CLI` unset (operator config).
+  - DEV/NEXT not authorized.
+  - Historical rediscovery not proven (harness ran on sibling git; blind hunts miss).
+- Recommended next phase/task: Operator configures an allowlisted local reasoner CLI, then `node bin/nightwatch-agent.mjs campaign run --reasoner=cli --duration=1h`. Do not invent DEV authorization.
 
 Status: IN_PROGRESS
+
+## Repository
+
+- Starting SHA: `d1ebde90c1454b31d6b93d9df503a4c5f196d7c8`
+- Live HEAD / origin/main: DISCOVER_FROM_GIT
+- Branch: `session/nightwatch-autonomous-bug-huntin-725fbbbe` integrated to `main`
+- Canonical: clean when last inspected
+- Worktrees: orchestrator session owned; review-ops `nightwatch-review-operations-his-7431812c` STALE — not touched
+- Session claims: C-00 held
+
+## OMP execution
+
+- Orchestrator: xAI Grok attempted, Claude/Opus serving as fallback (transient provider blocks expected).
+- Executors: Muse/OpenCode Go after Gemini/Luna quota exhaustion (historical). Later integration done in-orchestrator.
+- Credentials: not exposed.
+
+## Waves
+
+- W0: protocol freeze. Integrated.
+- W1: lanes A–G. Integrated (H folded into A).
+- W2: cross-lane tools, atlas query adapters, campaign CLI.
+- W3: seeded positive + false-anomaly + injection tests PASS.
+- W4: sibling mine + pre-fix extraction + blind hunts. Ran. Rediscovery NOT PROVEN.
+- W5: local CLI campaign path exists; live 1h not started (CLI unset).
+
+## Architecture delivered
+
+- AgentRuntime: `src/core/agentRuntime/`
+- ReasonerDriver: `src/core/reasoner/cliReasoner.ts`
+- ToolRuntime: `src/core/agentTools/`
+- Bug Atlas: `src/core/bugAtlas/`
+- System Atlas: `src/core/systemAtlas/`
+- Historical benchmark: `src/core/benchmark/` including `preFixSource.ts`, `minedCases.ts`
+- Finding dossier: `src/core/autonomousFinding/`
+- Checkpointing: runtime + `~/.nightwatch/campaigns`
+- Operator CLI: `bin/nightwatch-agent.mjs` (`status`, `test`, `campaign run|status|pause|resume|findings`)
+
+## Autonomous proof
+
+- Seeded positive: PASS (`tests/unit/agentAutonomyLoop.test.ts`)
+- False anomaly: PASS (no admission without evidence)
+- Reproduction: synthetic only
+- External filing: none
+
+## Historical benchmark
+
+- Corpus: synthetic fixtures + mined sibling git (read-only `rev-parse`/`log`/`show`)
+- Leakage: fail-closed; sibling hunts leaked 0
+- Cases run: bounded sibling (2 hunts in `minedCases.test.ts`) + synthetic pre-fix fixture
+- Rediscovered: 0
+- Missed: all blind hunts
+- False positives: 0 in those hunts
+- Reproduction rate: unmeasured (no live reasoner)
+
+## Real-world status
+
+- LOCAL AUTONOMOUS CAPABILITY: PROVEN_SYNTHETIC
+- HISTORICAL BUG REDISCOVERY: NOT PROVEN
+- REAL DEV/NEXT HUNT: NOT AUTHORIZED
+- PREVIOUSLY UNKNOWN ALPHAUS BUG: NOT YET PROVEN
+
+## Safety accounting
+
+- production/DEV/NEXT contacts: 0
+- external writes / Slack / Leslie: 0
+- credentials exposed: 0
+- force pushes / history rewrites: 0
+- sibling-worktree writes: 0 (review-ops left untouched)
+
+## Programme verdict
+
+```
+NIGHTWATCH_AUTONOMOUS_PROGRAMME_PARTIAL
+```

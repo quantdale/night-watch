@@ -20,6 +20,7 @@
     "falseAnomaly": "PASS",
     "injectionUnsafeIntent": "PASS",
     "historicalIsolation": "PASS tests/unit/historicalRediscovery.test.ts",
+    "minedSiblingHunts": "PASS tests/unit/minedCases.test.ts leak=0 admitted=0 outcome=MISS",
     "localCliCampaign": "PASS tests/unit/localCampaign.test.ts (fake CLI)"
   },
   "realWorld": {
