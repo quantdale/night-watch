@@ -11,7 +11,7 @@
   - `npm run agent:check`: PASS with warnings (stale implementation baseline vs live HEAD; stale review-ops worktree left untouched).
   - Sibling mined hunts (`tests/unit/minedCases.test.ts`): leak=0, admitted=0, outcome=MISS with a blind reasoner.
   - `npm run gate:local`: PASS on `7c018663d201c754bd3499201b7ab7e06649ae5a` (STATIC/HARDENING/SEMANTIC_COMPATIBILITY 2067 passed / 13 skipped / 0 failed; SYNTHETIC_CAMPAIGN 1131 passed; PATCH_INTEGRITY/WORKSPACE_INTEGRITY PASS). Prior STATIC failure was tsc on `reasonerPrint.test.ts` (`toBe` arity); fixed then re-run.
-  - `npm run gate:clean`: PASS on `90387370c958c44c64741ace04df997580eea862` (install PASS; all groups PASS; cleanBefore/cleanAfter true; siblingWrites 0).
+  - `npm run gate:clean`: PASS on `2a18e66360e36d27b129b22eed30fc2bb4bef862` (install PASS; all groups PASS; SEMANTIC_COMPATIBILITY 2067/13/0; SYNTHETIC_CAMPAIGN 1131; cleanBefore/cleanAfter true; siblingWrites 0; node 20).
   - Live LOCAL campaign `camp-grok-local-1` via print adapter + Grok CLI: 3 turns, terminationReason=NO_PROGRESS, candidateIds=[], environment=LOCAL. Not a rediscovery proof.
   - Live Grok hunt on `bench-billing-rounding-001` before session isolation: leaked=[], admitted=false, outcome=MISS, BUDGET_EXHAUSTED/NO_PROGRESS. Root cause: Grok reused the cwd session (`Error: max turns reached`) and the print prompt taught empty `intents:[]`.
   - Live Grok hunt on `bench-billing-rounding-001` after `__SESSION_ID__` + `__CWD__` isolation (maxTurns=6, twice): leaked=[], admitted=true, outcome=SAME_ROOT_CAUSE_ALTERNATE, reasonerCalls=6, terminationReason=NO_PROGRESS, candidateIds=[] (hypotheses only). keywordRecall≈0.46, fileHits=0. Not EXACT. Not claimed as hybrid superiority. Not a real Alphaus bug.
