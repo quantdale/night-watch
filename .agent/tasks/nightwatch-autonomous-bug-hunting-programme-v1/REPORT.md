@@ -13,17 +13,21 @@
   - `npm run gate:local`: PASS on `6fdf5353762883bb6aae3f4f703b819f30b57e10` (SEMANTIC_COMPATIBILITY 2067 passed / 13 skipped / 0 failed; SYNTHETIC_CAMPAIGN 1131 passed; PATCH_INTEGRITY/WORKSPACE_INTEGRITY PASS). Prior dirty-tree run failed PATCH_INTEGRITY (`SELFDEV_CATALOG_INTEGRITY_CHECKOUT_DIRTY`) then passed after the report commit.
   - `npm run gate:clean`: PASS on `90387370c958c44c64741ace04df997580eea862` (install PASS; all groups PASS; cleanBefore/cleanAfter true; siblingWrites 0).
   - Live LOCAL campaign `camp-grok-local-1` via print adapter + Grok CLI: 3 turns, terminationReason=NO_PROGRESS, candidateIds=[], environment=LOCAL. Not a rediscovery proof.
-  - Live Grok hunt on `bench-billing-rounding-001` (print adapter, maxTurns=6, twice): leaked=[], admitted=false, outcome=MISS, reasonerCalls=6, terminationReason=BUDGET_EXHAUSTED. Seeded fixture was not rediscovered. Not claimed as hybrid superiority.
+  - Live Grok hunt on `bench-billing-rounding-001` before session isolation: leaked=[], admitted=false, outcome=MISS, BUDGET_EXHAUSTED/NO_PROGRESS. Root cause: Grok reused the cwd session (`Error: max turns reached`) and the print prompt taught empty `intents:[]`.
+  - Live Grok hunt on `bench-billing-rounding-001` after `__SESSION_ID__` + `__CWD__` isolation (maxTurns=6, twice): leaked=[], admitted=true, outcome=SAME_ROOT_CAUSE_ALTERNATE, reasonerCalls=6, terminationReason=NO_PROGRESS, candidateIds=[] (hypotheses only). keywordRecall≈0.46, fileHits=0. Not EXACT. Not claimed as hybrid superiority. Not a real Alphaus bug.
+
 
 
 - Decisions: Lane H merged into Lane A. System Atlas is an overlay on systemMap. `aiReview` remains end-stage. Fake/blind reasoners never count as rediscovery.
 - Safety events: NONE. No DEV/NEXT/production contact. No Slack/Leslie/Pondr. No sibling writes. No force-push.
-- Deferred items: DEV/NEXT hunt; communication-evidence atlas; live 1h campaign until `NIGHTWATCH_REASONER_CLI` is set.
+- Deferred items:
+  - DEV/NEXT hunt; communication-evidence atlas; live 1h campaign with isolated Grok sessions.
+  - Live Grok still emits MALFORMED_OUTPUT on some turns; no PROPOSE_CANDIDATE yet.
+
 - Remaining blockers:
-  - `NIGHTWATCH_REASONER_CLI` unset (operator config).
   - DEV/NEXT not authorized.
-  - Historical rediscovery not proven (harness ran on sibling git; blind hunts miss).
-- Recommended next phase/task: Operator configures an allowlisted local reasoner CLI, then `node bin/nightwatch-agent.mjs campaign run --reasoner=cli --duration=1h`. Do not invent DEV authorization.
+  - Exact seeded rediscovery and real historical-bug rediscovery not proven.
+  - Operator must pass `--session-id __SESSION_ID__ --cwd __CWD__` in `NIGHTWATCH_PRINT_ARGS` so Grok does not reuse a directory session.
 
 Status: IN_PROGRESS
 

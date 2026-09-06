@@ -67,6 +67,56 @@ process.stdout.write(JSON.stringify({ text: body }));
   }
 });
 
+test('print adapter unwraps markdown-fenced JSON inside a text envelope', () => {
+  const dir = scratchDir();
+  try {
+    const fake = path.join(dir, 'print.mjs');
+    fs.writeFileSync(
+      fake,
+      [
+        "const fence = '`'.repeat(3);",
+        "const body = fence + 'json\\n' + JSON.stringify({",
+        `  schemaVersion: '${REASONER_TURN_RESPONSE_VERSION}',`,
+        "  intents: [{ kind: 'TERMINATE', reason: 'COMPLETE_NO_FINDING' }],",
+        "  hypotheses: [],",
+        "}) + '\\n' + fence;",
+        'process.stdout.write(JSON.stringify({ text: body }));',
+      ].join('\n'),
+      { mode: 0o700 },
+    );
+    const request = {
+      schemaVersion: REASONER_TURN_REQUEST_VERSION,
+      campaignId: 'camp-print-fence',
+      turnId: 'camp-print-fence:turn:1',
+      observation: {
+        phase: 'PLAN',
+        untrusted: [],
+        evidenceRefs: [],
+        allowedToolIds: [],
+        allowedIntentKinds: ['TERMINATE'],
+      },
+      budgetRemaining: { policy: defaultAgentBudgetPolicy('HOUR_1'), usage: ZERO_AGENT_BUDGET_USAGE },
+    };
+    const result = spawnSync(NODE, [SHIM], {
+      encoding: 'utf8',
+      input: JSON.stringify(request),
+      env: {
+        ...process.env,
+        NIGHTWATCH_PRINT_CLI: NODE,
+        NIGHTWATCH_PRINT_ARGS: JSON.stringify([fake]),
+      },
+      timeout: 10_000,
+      shell: false,
+    });
+    expect(result.status).toBe(0, result.stderr);
+    const parsed = JSON.parse(result.stdout);
+    expect(parsed.intents).toEqual([{ kind: 'TERMINATE', reason: 'COMPLETE_NO_FINDING' }]);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+
 test('campaign run through the print adapter admits no finding', async () => {
   const dir = scratchDir();
   const previousCli = process.env.NIGHTWATCH_PRINT_CLI;
@@ -107,3 +157,56 @@ process.stdout.write(JSON.stringify({ text: body }));
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test('print adapter replaces __SESSION_ID__ with a UUID', () => {
+  const dir = scratchDir();
+  try {
+    const fake = path.join(dir, 'print.mjs');
+    fs.writeFileSync(
+      fake,
+      `
+const id = process.argv[2];
+if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) {
+  process.stderr.write('missing session id');
+  process.exit(3);
+}
+process.stdout.write(JSON.stringify({
+  text: JSON.stringify({
+    schemaVersion: '${REASONER_TURN_RESPONSE_VERSION}',
+    intents: [{ kind: 'TERMINATE', reason: 'COMPLETE_NO_FINDING' }],
+    hypotheses: [],
+  }),
+}));
+`,
+      { mode: 0o700 },
+    );
+    const request = {
+      schemaVersion: REASONER_TURN_REQUEST_VERSION,
+      campaignId: 'camp-print-session',
+      turnId: 'camp-print-session:turn:1',
+      observation: {
+        phase: 'PLAN',
+        untrusted: [],
+        evidenceRefs: [],
+        allowedToolIds: [],
+        allowedIntentKinds: ['TERMINATE'],
+      },
+      budgetRemaining: { policy: defaultAgentBudgetPolicy('HOUR_1'), usage: ZERO_AGENT_BUDGET_USAGE },
+    };
+    const result = spawnSync(NODE, [SHIM], {
+      encoding: 'utf8',
+      input: JSON.stringify(request),
+      env: {
+        ...process.env,
+        NIGHTWATCH_PRINT_CLI: NODE,
+        NIGHTWATCH_PRINT_ARGS: JSON.stringify([fake, '__SESSION_ID__']),
+      },
+      timeout: 10_000,
+      shell: false,
+    });
+    expect(result.status).toBe(0, result.stderr);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
