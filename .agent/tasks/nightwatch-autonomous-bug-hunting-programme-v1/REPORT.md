@@ -34,6 +34,7 @@
   - Live Grok on mined sibling case `mined-bugatlas-git-alphauslabs-octo-design-system-b935967bb754` (`alphauslabs/Octo-Design-System`): leaked=[], admitted=true (proposed c1), outcome=MISS, keywordRecall=0, fileHits=0. Historical rediscovery remains NOT PROVEN.
   - Two further mined live hunts (distinct repos, leak=[] both): `alphauslabs/ai-driven-bug-hunting` admitted MISS; `alphauslabs/alupi` not admitted MISS (Grok NONZERO_EXIT on ANALYZE). 0/3 historical rediscoveries. Not cherry-picked after the first miss.
   - Operator `campaign run` now starts from `NIGHTWATCH_PRINT_CLI` alone (defaults executable to node + print adapter). Smoke: `camp-print-default-1` COMPLETE_NO_FINDING, LOCAL. Print adapter always isolates spawn cwd so Grok cannot reuse the checkout session without `__CWD__`.
+  - Local campaign `dossierStatus`: `NONE` with no candidate; `REFUSED_NO_REPRODUCTION` when a candidate is proposed. Dossiers are never auto-emitted (`reproductionCount` would be fabricated). `tests/unit/localCampaign.test.ts` 5 passed.
 
 
 

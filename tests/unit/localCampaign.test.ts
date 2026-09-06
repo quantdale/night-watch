@@ -90,6 +90,7 @@ test('fake CLI reasoner runs a LOCAL campaign and admits no finding', async () =
   expect(result.candidateIds).toEqual([]);
   expect(result.actionCount).toBeGreaterThan(0);
   expect(result.checkpointFile).toBeNull();
+  expect(result.dossierStatus).toBe('NONE');
 });
 
 function pauseScript(dir: string): string {
@@ -139,4 +140,39 @@ test('paused campaign writes a checkpoint that status lists and resume can finis
   expect(resumed.terminationReason).toBe('COMPLETE_NO_FINDING');
   expect(resumed.candidateIds).toEqual([]);
 });
+
+test('a proposed candidate is not packaged without a reproduction', async () => {
+  const dir = scratchDir();
+  const body = JSON.stringify({
+    schemaVersion: REASONER_TURN_RESPONSE_VERSION,
+    intents: [
+      { kind: 'PROPOSE_CANDIDATE', candidateId: 'c1', evidenceRefs: ['ev:sha256:aaaaaaaaaaaaaaaaaaaaaaaa'] },
+      { kind: 'TERMINATE', reason: 'COMPLETE_WITH_FINDING' },
+    ],
+    hypotheses: [],
+  });
+  const fake = writeFake(
+    dir,
+    'propose.mjs',
+    `
+process.stdin.on('data', () => {}).on('end', () => {
+  process.stdout.write(${JSON.stringify(body)});
+});
+`,
+  );
+  const result = await runLocalCliCampaign({
+    campaignId: 'camp-propose-no-repro',
+    ceilingName: 'HOUR_1',
+    executable: NODE,
+    args: [fake],
+    provider: 'test-provider',
+    model: 'fake-1',
+    maxTurns: 2,
+    stateDirectory: dir,
+  });
+  expect(result.candidateIds).toEqual(['c1']);
+  expect(result.dossierStatus).toBe('REFUSED_NO_REPRODUCTION');
+  expect(result.terminationReason).toBe('COMPLETE_WITH_FINDING');
+});
+
 

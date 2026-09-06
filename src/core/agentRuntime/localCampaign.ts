@@ -23,6 +23,8 @@ import type { AgentToolExecutor } from './types';
 
 export const LOCAL_CAMPAIGN_VERSION = 'nightwatch.local-cli-campaign.v1' as const;
 export const AGENT_BUDGET_CEILING_NAMES = ['HOUR_1', 'HOUR_4', 'HOUR_8', 'OVERNIGHT'] as const;
+export const LOCAL_CAMPAIGN_DOSSIER_STATUSES = ['NONE', 'REFUSED_NO_REPRODUCTION'] as const;
+export type LocalCampaignDossierStatus = (typeof LOCAL_CAMPAIGN_DOSSIER_STATUSES)[number];
 
 const CAMPAIGN_ID_RE = /^[A-Za-z0-9._-]{1,80}$/;
 
@@ -54,6 +56,8 @@ export interface LocalCampaignResult {
   readonly actionCount: number;
   readonly checkpointFile: string | null;
   readonly environment: 'LOCAL';
+  /** NONE when no candidate. REFUSED_NO_REPRODUCTION when proposed but not packaged. */
+  readonly dossierStatus: LocalCampaignDossierStatus;
 }
 
 export interface LocalCampaignListing {
@@ -216,14 +220,16 @@ async function finishRun(
   if (ran.checkpoint !== null) {
     checkpointFile = persistCheckpoint(defaultCampaignStateDirectory(input.stateDirectory), input.campaignId, ran.checkpoint);
   }
+  const candidateIds = [...ran.state.candidateIds];
   return {
     schemaVersion: LOCAL_CAMPAIGN_VERSION,
     campaignId: input.campaignId,
     terminationReason: ran.terminationReason,
-    candidateIds: [...ran.state.candidateIds],
+    candidateIds,
     actionCount: ran.state.actionLog.length,
     checkpointFile,
     environment: 'LOCAL',
+    dossierStatus: candidateIds.length > 0 ? 'REFUSED_NO_REPRODUCTION' : 'NONE',
   };
 }
 
