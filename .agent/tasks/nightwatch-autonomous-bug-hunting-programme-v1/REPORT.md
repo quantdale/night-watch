@@ -26,6 +26,12 @@
     - regression-007: admitted SAME_ROOT_CAUSE_ALTERNATE (0.25)
     - state-008: admitted SAME_ROOT_CAUSE_ALTERNATE (0.25)
     - negative-000: not admitted, MISS
+  - Mode comparison on `bench-billing-rounding-001` (same visible snapshot, hidden ground truth isolated):
+    - A Grok-alone source review: SAME_ROOT_CAUSE_ALTERNATE, keywordRecall≈0.38, fileHits=0
+    - B NightWatch deterministic / blind reasoner: MISS (prior mined/blind suites)
+    - C Grok+NightWatch: SAME_ROOT_CAUSE_ALTERNATE, keywordRecall≈0.31, fileHits=0
+    Hybrid is not superior on this fixture. The buggy `roundBankers` fold is already in the visible snapshot. NightWatch's measured value here is protocol (typed intents, leak isolation, negative-control rejection), not higher rediscovery score.
+
 
 
 
