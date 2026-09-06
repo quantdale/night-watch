@@ -283,6 +283,9 @@ test.describe('visible discriminator reproduction', () => {
     expect(result.reproductionCount).toBe(1);
     expect(result.discriminatorObservation?.mismatch).toBe(true);
     expect(result.admitted).toBe(true);
+    expect(result.dossier?.reproductionCount).toBe(1);
+    expect(result.dossier?.authority.externalPublication).toBe('PROHIBITED');
+    expect(result.dossier?.title).not.toContain(String(fixture.hidden.knownFailingTest));
   });
 
   test('RERUN_SAFE_REPRODUCTION on the negative control does not reproduce a defect', async () => {
@@ -298,6 +301,7 @@ test.describe('visible discriminator reproduction', () => {
     expect(result.reproductionCount).toBe(0);
     expect(result.discriminatorObservation?.mismatch).toBe(false);
     expect(result.admitted).toBe(false);
+    expect(result.dossier).toBeNull();
   });
 
   test('a proposed candidate without RERUN has reproductionCount 0', async () => {
@@ -312,6 +316,7 @@ test.describe('visible discriminator reproduction', () => {
     const result = await runBenchmarkHunt(fixture, { reasoner: stub.driver, budgetPolicy: defaultBenchmarkBudgetPolicy(), maxTurns: 3 });
     expect(result.admitted).toBe(true);
     expect(result.reproductionCount).toBe(0);
+    expect(result.dossier).toBeNull();
   });
 
   test('dossier builds only after a real mismatch reproduction', async () => {
@@ -373,6 +378,39 @@ test.describe('visible discriminator reproduction', () => {
       }),
     ).toThrow(/MISSING_REPRODUCTION_COUNT/);
   });
+
+  test('frontend stale cache and open redirect discriminators reproduce without leakage', async () => {
+    for (const caseId of ['bench-frontend-cache-004', 'bench-regression-redirect-007'] as const) {
+      const fixture = benchmarkFixtureById(caseId);
+      const stub = scriptDriver([
+        () =>
+          okTurn([
+            { kind: 'CALL_TOOL', toolId: 'RERUN_SAFE_REPRODUCTION', argumentDigest: CALL_DIGEST, arguments: {} },
+          ]),
+        () =>
+          okTurn([
+            {
+              kind: 'PROPOSE_CANDIDATE',
+              candidateId: `c-${caseId}`,
+              evidenceRefs: [`bench:${caseId}:repro:1`],
+            },
+            { kind: 'TERMINATE', reason: 'COMPLETE_WITH_FINDING' },
+          ]),
+      ]);
+      const result = await runBenchmarkHunt(fixture, { reasoner: stub.driver, budgetPolicy: defaultBenchmarkBudgetPolicy(), maxTurns: 4 });
+      expect(result.leaked).toEqual([]);
+      expect(result.reproductionCount).toBe(1);
+      expect(result.discriminatorObservation?.mismatch).toBe(true);
+      expect(result.dossier?.reproductionCount).toBe(1);
+      for (const value of Object.values(fixture.hidden)) {
+        if (typeof value === 'string' && value.length > 0) {
+          expect(result.dossier?.title ?? '').not.toContain(value);
+          expect(result.dossier?.actual ?? '').not.toContain(value);
+        }
+      }
+    }
+  });
 });
+
 
 

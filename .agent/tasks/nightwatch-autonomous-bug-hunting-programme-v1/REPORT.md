@@ -37,6 +37,7 @@
   - Local campaign `dossierStatus`: `NONE` with no candidate; `REFUSED_NO_REPRODUCTION` when a candidate is proposed. Dossiers are never auto-emitted (`reproductionCount` would be fabricated). `tests/unit/localCampaign.test.ts` 5 passed.
   - Visible discriminator: `RERUN_SAFE_REPRODUCTION` runs the pre-fix algorithm (no eval/spawn). Billing ROUND_THEN_SUM mismatch=true, reproductionCount=1; negative HEALTH_OK mismatch=false. Dossier builds only with reproductionCount>=1. `tests/unit/benchmark.test.ts` 21 passed.
   - Live Grok after VERIFY→RERUN prompt: `bench-billing-rounding-001` called `RERUN_SAFE_REPRODUCTION`, leaked=[], admitted c1, reproductionCount=1, observation `{mismatch:true,captured:30.39,displayed:30.375}`, outcome SAME_ROOT_CAUSE_ALTERNATE, terminated NO_PROGRESS. Dossier built (humanReviewRequired, externalPublication PROHIBITED). `bench-negative-quiet-000` COMPLETE_NO_FINDING, admitted=false, reproductionCount=0.
+  - Hunt now auto-attaches a visible-only dossier when admitted && reproductionCount>=1 && mismatch. Frontend STALE_CACHE and redirect OPEN_REDIRECT discriminators reproduce without leakage. `tests/unit/benchmark.test.ts` 22 passed.
 
 
 

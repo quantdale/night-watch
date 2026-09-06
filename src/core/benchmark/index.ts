@@ -46,6 +46,7 @@ export {
   type VisibleDiscriminator,
   type VisibleReproObservation,
 } from './visibleRepro';
+export { tryBuildVisibleHuntDossier } from './huntDossier';
 export {
   BENCHMARK_EXACT_MIN_FILE_RECALL,
   BENCHMARK_EXACT_MIN_KEYWORD_RECALL,

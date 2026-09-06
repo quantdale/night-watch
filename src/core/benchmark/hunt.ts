@@ -30,6 +30,7 @@ import {
 import { UNTRUSTED_ENVELOPE_VERSION } from '../agentProtocol/untrusted';
 import { AgentRuntime, type AgentToolCall, type AgentToolExecutor, type AgentToolResult } from '../agentRuntime';
 import { buildReasonerVisibleContext, type DefinedBenchmarkCase } from './case';
+import { tryBuildVisibleHuntDossier } from './huntDossier';
 import { scoreBenchmarkCandidate, type BenchmarkScore } from './score';
 import {
   runVisibleDiscriminator,
@@ -37,6 +38,7 @@ import {
   type VisibleDiscriminator,
   type VisibleReproObservation,
 } from './visibleRepro';
+import type { AutonomousFindingDossier } from '../autonomousFinding';
 
 export const BENCHMARK_HUNT_MAX_TURNS = 12;
 
@@ -76,9 +78,9 @@ export interface BenchmarkHuntResult {
   readonly requestBlobs: readonly string[];
   readonly visibleContext: ReasonerVisibleContext;
   readonly reasonerCalls: number;
-  /** Count of RERUN_SAFE_REPRODUCTION calls that observed a mismatch. */
   readonly reproductionCount: number;
   readonly discriminatorObservation: VisibleReproObservation | null;
+  readonly dossier: AutonomousFindingDossier | null;
 }
 
 function envelope(source: UntrustedEnvelope['source'], digest: string, bytes: string): UntrustedEnvelope {
@@ -185,6 +187,14 @@ export async function runBenchmarkHunt(
       (entry.resultClass === 'REPRODUCED' || entry.resultClass === 'NOT_REPRODUCED'),
   );
   const discriminator = definedCase.preFix.discriminator ?? null;
+  const discriminatorObservation =
+    ranDiscriminator && discriminator !== null ? runVisibleDiscriminator(discriminator) : null;
+  const dossier = tryBuildVisibleHuntDossier({
+    caseId: definedCase.caseId,
+    admitted,
+    reproductionCount,
+    observation: discriminatorObservation,
+  });
   return {
     caseId: definedCase.caseId,
     terminationReason: run.terminationReason,
@@ -198,7 +208,7 @@ export async function runBenchmarkHunt(
     visibleContext: visible,
     reasonerCalls: run.state.budget.usage.reasonerCalls,
     reproductionCount,
-    discriminatorObservation:
-      ranDiscriminator && discriminator !== null ? runVisibleDiscriminator(discriminator) : null,
+    discriminatorObservation,
+    dossier,
   };
 }

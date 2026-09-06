@@ -149,6 +149,7 @@ const FIXTURE_INPUTS: readonly BenchmarkCaseInput[] = [
         '1. Sign in with two accessible accounts. ' +
         '2. Open the first account dashboard, then use the switcher to open the second. ' +
         '3. Compare the header name and balances against the second account record.',
+      discriminator: { kind: 'STALE_CACHE', cachedId: 1, requestedId: 2 },
     },
   },
   {
@@ -251,6 +252,7 @@ const FIXTURE_INPUTS: readonly BenchmarkCaseInput[] = [
         '1. Start sign-in with a return destination pointing at an external domain. ' +
         '2. Complete authentication. ' +
         '3. Record the landing location of the final navigation.',
+      discriminator: { kind: 'OPEN_REDIRECT', returnTo: 'https://offsite.test' },
     },
   },
   {
