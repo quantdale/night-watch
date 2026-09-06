@@ -11,6 +11,8 @@
   - `npm run agent:check`: PASS with warnings (stale implementation baseline vs live HEAD; stale review-ops worktree left untouched).
   - Sibling mined hunts (`tests/unit/minedCases.test.ts`): leak=0, admitted=0, outcome=MISS with a blind reasoner.
   - `npm run gate:local`: PASS on `7c018663d201c754bd3499201b7ab7e06649ae5a` (STATIC/HARDENING/SEMANTIC_COMPATIBILITY 2067 passed / 13 skipped / 0 failed; SYNTHETIC_CAMPAIGN 1131 passed; PATCH_INTEGRITY/WORKSPACE_INTEGRITY PASS). Prior STATIC failure was tsc on `reasonerPrint.test.ts` (`toBe` arity); fixed then re-run.
+  - `npm run gate:local`: PASS on `c7c07f2b3abf45a897dc15242d5567abf0954f42` (STATIC/HARDENING/HANDOFF/PROJECT/AGENT_CONTINUITY PASS; SEMANTIC_COMPATIBILITY 2067 passed / 13 skipped / 0 failed; OWNER_PROVENANCE 91 passed; SYNTHETIC_CAMPAIGN 1131 passed, deepContainmentLane=PROVEN; PATCH_INTEGRITY/WORKSPACE_INTEGRITY PASS). Receipt `receipt:sha256:dce9c49b9af7cd38e32462df`.
+
   - `npm run gate:clean`: PASS on `2a18e66360e36d27b129b22eed30fc2bb4bef862` (install PASS; all groups PASS; SEMANTIC_COMPATIBILITY 2067/13/0; SYNTHETIC_CAMPAIGN 1131; cleanBefore/cleanAfter true; siblingWrites 0; node 20).
   - Live LOCAL campaign `camp-grok-local-1` via print adapter + Grok CLI: 3 turns, terminationReason=NO_PROGRESS, candidateIds=[], environment=LOCAL. Not a rediscovery proof.
   - Live Grok hunt on `bench-billing-rounding-001` before session isolation: leaked=[], admitted=false, outcome=MISS, BUDGET_EXHAUSTED/NO_PROGRESS. Root cause: Grok reused the cwd session (`Error: max turns reached`) and the print prompt taught empty `intents:[]`.
