@@ -43,6 +43,8 @@
   - Fifth unused mined repo `alphauslabs/blog` (`mined-bugatlas-git-alphauslabs-blog-cbfb4a149c2f`), not a re-run: SAME_ROOT_CAUSE_ALTERNATE fileHits=1/1 keywordRecall=0 keywordTotal=1 leak=[] admitted. reproductionCount=0. Five-case current-harness set: 2 PARTIAL + 2 SAME_ROOT_CAUSE + 1 MISS.
   - Sixth unused mined repo `alphauslabs/blue-sdk-ts` (`mined-bugatlas-git-alphauslabs-blue-sdk-ts-dc5d0559eba4`), SDK not UI, not a re-run: PARTIAL_REDISCOVERY fileHits=1/2 keywordRecall=0.667 keywordTotal=6 leak=[] admitted. reproductionCount=0. Six-case set: 3 PARTIAL + 2 SAME_ROOT_CAUSE + 1 MISS.
   - Seventh unused mined repo `alphauslabs/compare-risp` (`mined-bugatlas-git-alphauslabs-compare-risp-f7373ce29471`), billing-adjacent TSX, not a re-run: SAME_ROOT_CAUSE_ALTERNATE fileHits=1/1 keywordRecall=0 keywordTotal=5 leak=[] admitted. reproductionCount=0. Seven-case set: 3 PARTIAL + 3 SAME_ROOT_CAUSE + 1 MISS.
+  - Eighth unused mined repo `alphauslabs/grpc-chunk-parser` (`mined-bugatlas-git-alphauslabs-grpc-chunk-parser-fd6ebc3beca3`), backend TS, not a re-run: SAME_ROOT_CAUSE_ALTERNATE fileHits=1/2 keywordRecall=0.167 keywordTotal=6 leak=[] admitted. reproductionCount=0. Eight-case set: 3 PARTIAL + 4 SAME_ROOT_CAUSE + 1 MISS.
+
 
 
 
@@ -77,7 +79,7 @@
 
 - Remaining blockers:
   - DEV/NEXT not authorized (external).
-  - Historical EXACT/reproduced NOT PROVEN. Current-harness set: aqua-ui PARTIAL (2/3, 0.375), Octo-Design-System PARTIAL (1/1, 0.50), ai-driven-bug-hunting SAME_ROOT_CAUSE (1/2, 0), alupi MISS (0/2, 0.222), blog SAME_ROOT_CAUSE (1/1, 0), blue-sdk-ts PARTIAL (1/2, 0.667), compare-risp SAME_ROOT_CAUSE (1/1, 0). leak=[] all. reproductionCount=0.
+  - Historical EXACT/reproduced NOT PROVEN. Current-harness set: aqua-ui PARTIAL (2/3, 0.375), Octo-Design-System PARTIAL (1/1, 0.50), ai-driven-bug-hunting SAME_ROOT_CAUSE (1/2, 0), alupi MISS (0/2, 0.222), blog SAME_ROOT_CAUSE (1/1, 0), blue-sdk-ts PARTIAL (1/2, 0.667), compare-risp SAME_ROOT_CAUSE (1/1, 0), grpc-chunk-parser SAME_ROOT_CAUSE (1/2, 0.167). leak=[] all. reproductionCount=0.
   - Exact seeded rediscovery structurally needs the hidden failing-test name in candidate text.
   - Hybrid not superior to Grok-alone on the billing snapshot.
 
