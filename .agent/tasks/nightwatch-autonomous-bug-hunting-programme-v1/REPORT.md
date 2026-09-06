@@ -31,6 +31,8 @@
     - B NightWatch deterministic / blind reasoner: MISS (prior mined/blind suites)
     - C Grok+NightWatch: SAME_ROOT_CAUSE_ALTERNATE, keywordRecall≈0.31, fileHits=0
     Hybrid is not superior on this fixture. The buggy `roundBankers` fold is already in the visible snapshot. NightWatch's measured value here is protocol (typed intents, leak isolation, negative-control rejection), not higher rediscovery score.
+  - Live Grok on mined sibling case `mined-bugatlas-git-alphauslabs-octo-design-system-b935967bb754` (`alphauslabs/Octo-Design-System`): leaked=[], admitted=true (proposed c1), outcome=MISS, keywordRecall=0, fileHits=0. Historical rediscovery remains NOT PROVEN.
+
 
 
 
