@@ -8,13 +8,18 @@
   - Targeted autonomous suites: PASS (protocol, runtime, tools, atlas, benchmark, localCampaign, historicalRediscovery, preFixSource, minedCases).
   - `npx tsc --noEmit`: PASS on integration commits.
   - `npm run hardening:check`: PASS.
-  - `npm run agent:check`: PASS with warnings (stale implementation baseline vs live HEAD; stale review-ops worktree left untouched).
+  - `npm run agent:check`: PASS with advisory warnings (documentation CHECKPOINT_ADVANCE over approved paths; 31 legacy v1 task records; the untouched non-live review-ops sibling worktree; stale session base).
   - Sibling mined hunts (`tests/unit/minedCases.test.ts`): leak=0, admitted=0, outcome=MISS with a blind reasoner.
   - `npm run gate:local`: PASS on `7c018663d201c754bd3499201b7ab7e06649ae5a` (STATIC/HARDENING/SEMANTIC_COMPATIBILITY 2067 passed / 13 skipped / 0 failed; SYNTHETIC_CAMPAIGN 1131 passed; PATCH_INTEGRITY/WORKSPACE_INTEGRITY PASS). Prior STATIC failure was tsc on `reasonerPrint.test.ts` (`toBe` arity); fixed then re-run.
   - `npm run gate:local`: PASS on `c7c07f2b3abf45a897dc15242d5567abf0954f42` (STATIC/HARDENING/HANDOFF/PROJECT/AGENT_CONTINUITY PASS; SEMANTIC_COMPATIBILITY 2067 passed / 13 skipped / 0 failed; OWNER_PROVENANCE 91 passed; SYNTHETIC_CAMPAIGN 1131 passed, deepContainmentLane=PROVEN; PATCH_INTEGRITY/WORKSPACE_INTEGRITY PASS). Receipt `receipt:sha256:dce9c49b9af7cd38e32462df`.
 
   - `npm run gate:clean`: PASS on `2a18e66360e36d27b129b22eed30fc2bb4bef862` (install PASS; all groups PASS; SEMANTIC_COMPATIBILITY 2067/13/0; SYNTHETIC_CAMPAIGN 1131; cleanBefore/cleanAfter true; siblingWrites 0; node 20).
   - `npm run gate:clean`: PASS on `6923bfe0e5dcdc904da4507bf9ad2df60efe0f29` (install PASS; node 20; SEMANTIC_COMPATIBILITY 2067 passed / 13 skipped / 0 failed; OWNER_PROVENANCE 91; SYNTHETIC_CAMPAIGN 1131, deepContainmentLane=PROVEN; cleanBefore/cleanAfter true; nodeModulesReused false; siblingWrites 0). Receipt `clean-receipt:sha256:9ffe3e25b38472a7cb41e911`.
+  - `npm run typecheck`: PASS on the Wave-5 tree.
+  - `npm test` (full regression): PASS — 4288 passed, 0 failed, 13 skipped, 8.1m. Baseline was 4076/0/13; the increase is new tests, and there is no unexplained regression.
+  - `npm run gate:local`: FULL PASS on `20f830f3539dcd2687134e2df9cffade57cf0bb6`, all eleven required groups, receipt `receipt:sha256:16ed7c4dfe9f939f64893483` (SEMANTIC_COMPATIBILITY 2067 passed / 13 skipped / 0 failed; OWNER_PROVENANCE 91; SYNTHETIC_CAMPAIGN 1131 / 0 failed). A first attempt at `a75a0db` legitimately stopped at PROJECT_TRUTH: the project baseline still named `053f2731...` while the active task had validated a strictly newer implementation. Not hidden, not retried away — the baseline was corrected and the gate re-run.
+  - `npm run gate:clean`: PASS on `20f830f3539dcd2687134e2df9cffade57cf0bb6` — Node 20 clean clone, `installResult` PASS, `gateResult` PASS, inner receipt `receipt:sha256:73bbcdd6a3201e7145f796f2`.
+  - `npm run agent:check`: two genuine FAILs during continuity repair, both fixed rather than relabelled. Labelling a REPORT-only commit as the implementation checkpoint raised INVALID_IMPLEMENTATION_ROLE / CONTINUITY_ANCHOR_MISMATCH; reverting to `053f2731...` then raised INVALID_DOCUMENTATION_CHECKPOINT because that range still carried `src/`, `bin/` and `tests/` changes. True implementation tip is `fe919b2cc1fcd3dc79062f336185647c3225a99a`. Final state PASS with 4 advisory warnings.
 
   - Live LOCAL campaign `camp-grok-local-1` via print adapter + Grok CLI: 3 turns, terminationReason=NO_PROGRESS, candidateIds=[], environment=LOCAL. Not a rediscovery proof.
   - Live Grok hunt on `bench-billing-rounding-001` before session isolation: leaked=[], admitted=false, outcome=MISS, BUDGET_EXHAUSTED/NO_PROGRESS. Root cause: Grok reused the cwd session (`Error: max turns reached`) and the print prompt taught empty `intents:[]`.
