@@ -39,6 +39,8 @@
   - Same harness re-measure of two earlier cases, not cherry-picks: `alphauslabs/Octo-Design-System` fileHits=1/fileTotal=1 SAME_ROOT_CAUSE_ALTERNATE; `alphauslabs/ai-driven-bug-hunting` fileHits=1/fileTotal=2 SAME_ROOT_CAUSE_ALTERNATE. leak=[] all. keywordRecall=0 all (pre-explanation-fill). File-mention recall only at that checkpoint.
   - Git-mined records had `rootCause: null`, so keyword scoring could never fire. Isolated commit symptom now fills `hidden.explanation` when it is absent from the snapshot. Aqua-ui re-hunt: keywordRecall=0.3125, fileHits=0 (named basename not full path), outcome=SAME_ROOT_CAUSE_ALTERNATE, leak=[]. Unique long basenames now count as file hits. This is commit-message token overlap, not EXACT rediscovery.
   - Aqua-ui re-hunt on committed basename+keyword scoring: leaked=[], admitted=true, fileHits=2, fileTotal=3, keywordRecall=0.375, keywordTotal=16, outcome=PARTIAL_REDISCOVERY (fileRecall>=0.5 and keywordRecall>=0.25). Named full path `AwsRiUtilizationCharts.vue`. reproductionCount=0. Not EXACT (no failing-test match). First mined PARTIAL.
+  - Current-harness re-measure of the other original cases (not cherry-picks): `alphauslabs/Octo-Design-System` PARTIAL_REDISCOVERY fileHits=1/1 keywordRecall=0.5 keywordTotal=4 leak=[]. `alphauslabs/alupi` MISS fileHits=0/2 keywordRecall=0.222 keywordTotal=18 leak=[] (hypothesis did not name the inspected path). reproductionCount=0 both. EXACT still 0. Historical: 2 PARTIAL + 1 MISS under current scoring; defect rediscovery still NOT PROVEN as EXACT/reproduced.
+
 
 
 
