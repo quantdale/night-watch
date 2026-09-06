@@ -46,13 +46,16 @@
 - Decisions: Lane H merged into Lane A. System Atlas is an overlay on systemMap. `aiReview` remains end-stage. Fake/blind reasoners never count as rediscovery.
 - Safety events: NONE. No DEV/NEXT/production contact. No Slack/Leslie/Pondr. No sibling writes. No force-push.
 - Deferred items:
-  - DEV/NEXT hunt; communication-evidence atlas; live 1h campaign with isolated Grok sessions.
-  - Live Grok still emits MALFORMED_OUTPUT on some turns; no PROPOSE_CANDIDATE yet.
+  - DEV/NEXT hunt; communication-evidence atlas.
+  - Honest finding dossiers require a real reproduction (`reproductionCount >= 1`); auto-filling that from a proposal would be fabricated evidence.
+  - Issue/PR titles are Wave-4 leak-class (`issue title` / `bug description` must not enter reasoner context). Git-commit mining therefore cannot show a ticket statement without leaking the fix subject. An operator-paraphrased alupi PR 512 hunt scored PARTIAL_REDISCOVERY and is **not counted**.
 
 - Remaining blockers:
-  - DEV/NEXT not authorized.
-  - Exact seeded rediscovery and real historical-bug rediscovery not proven.
-  - Operator must pass `--session-id __SESSION_ID__ --cwd __CWD__` in `NIGHTWATCH_PRINT_ARGS` so Grok does not reuse a directory session.
+  - DEV/NEXT not authorized (external).
+  - Historical rediscovery NOT PROVEN (0/3 live mined hunts, leak=[]).
+  - Exact seeded rediscovery structurally needs the hidden failing-test name in candidate text.
+  - Hybrid not superior to Grok-alone on the billing snapshot.
+
 
 Status: IN_PROGRESS
 
@@ -76,9 +79,10 @@ Status: IN_PROGRESS
 - W0: protocol freeze. Integrated.
 - W1: lanes A–G. Integrated (H folded into A).
 - W2: cross-lane tools, atlas query adapters, campaign CLI.
-- W3: seeded positive + false-anomaly + injection tests PASS.
-- W4: sibling mine + pre-fix extraction + blind hunts. Ran. Rediscovery NOT PROVEN.
-- W5: local CLI campaign path exists; live 1h not started (CLI unset).
+- W3: seeded positive + false-anomaly + injection tests PASS; live Grok positive/negative hunts.
+- W4: sibling mine + pre-fix extraction + live Grok. Rediscovery NOT PROVEN (0/3).
+- W5: `campaign run` via `NIGHTWATCH_PRINT_CLI`; cwd always isolated. Empty LOCAL finds nothing.
+
 
 ## Architecture delivered
 
@@ -94,20 +98,21 @@ Status: IN_PROGRESS
 
 ## Autonomous proof
 
-- Seeded positive: PASS (`tests/unit/agentAutonomyLoop.test.ts`)
-- False anomaly: PASS (no admission without evidence)
-- Reproduction: synthetic only
+- Seeded positive (synthetic live Grok): admitted SAME_ROOT_CAUSE_ALTERNATE on 7/8 fixtures; PROPOSE_CANDIDATE on billing.
+- False anomaly (live Grok): `bench-negative-quiet-000` COMPLETE_NO_FINDING, not admitted.
+- Reproduction: none (no failing-test execution). Dossiers not emitted.
 - External filing: none
 
 ## Historical benchmark
 
-- Corpus: synthetic fixtures + mined sibling git (read-only `rev-parse`/`log`/`show`)
-- Leakage: fail-closed; sibling hunts leaked 0
-- Cases run: bounded sibling (2 hunts in `minedCases.test.ts`) + synthetic pre-fix fixture
-- Rediscovered: 0
-- Missed: all blind hunts
-- False positives: 0 in those hunts
-- Reproduction rate: unmeasured (no live reasoner)
+- Corpus: synthetic fixtures (8 positive + 1 negative) + mined sibling git (read-only)
+- Leakage: fail-closed; live and blind hunts leaked 0
+- Synthetic live Grok: 7/8 SAME_ROOT_CAUSE_ALTERNATE, 1 admitted MISS (data-005), negative not admitted
+- Mined live Grok: 3 cases, 3 MISS (Octo-Design-System, ai-driven-bug-hunting, alupi)
+- Rediscovered (historical): 0
+- False positives: 0 on negative control
+- Reproduction rate: unmeasured (no real failing-test execution)
+
 
 ## Real-world status
 
