@@ -1,11 +1,12 @@
 # Nightwatch — CURRENT STATE
 
-> Durable memory for the next agent/session. Last updated: **2026-09-05**
-> at RS-1 close-out (Reviewer Surface & Finding-Intelligence Scale,
+> Durable memory for the next agent/session. Last updated: **2026-09-07**
+> during the autonomous bug-hunting programme (Wave 0 protocol freeze and
+> Wave 1 lanes A–E integrated). RS-1 close-out remains
 > COMPLETE: DEF-FC-04 continuity repair, the Control Center reviewer
 > experience with explicit FACT / RECOMMENDATION / UNKNOWN labelling, a
 > measured 1k/5k/10k scale envelope, one measurement-justified
-> optimization, and large-corpus plus endurance coverage). Its predecessor
+> optimization, and large-corpus plus endurance coverage. Its predecessor
 > FC-1 (Frontier Completion & Deep Reliability) is COMPLETE:
 > finding review lifecycle, finding intelligence, human filing report,
 > C-12 offline rehearsal, environmental-lane forensics, dependency-truth
