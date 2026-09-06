@@ -30,6 +30,7 @@ import {
 import { UNTRUSTED_ENVELOPE_VERSION } from '../agentProtocol/untrusted';
 import { AgentRuntime, type AgentToolCall, type AgentToolExecutor, type AgentToolResult } from '../agentRuntime';
 import { buildReasonerVisibleContext, type DefinedBenchmarkCase } from './case';
+import { parsePreFixSnapshotFiles } from './preFixSource';
 import { tryBuildVisibleHuntDossier } from './huntDossier';
 import { scoreBenchmarkCandidate, type BenchmarkScore } from './score';
 import {
@@ -86,11 +87,10 @@ export interface BenchmarkHuntResult {
 function envelope(source: UntrustedEnvelope['source'], digest: string, bytes: string): UntrustedEnvelope {
   return { schemaVersion: UNTRUSTED_ENVELOPE_VERSION, trust: 'UNTRUSTED', source, digest, bytes };
 }
-
 /**
- * Default tool executor: serves only the pre-fix view, one blob per call in
- * fixed order (symptom, snapshot, repro, then repro repeats). RERUN_SAFE_REPRODUCTION
- * runs the visible discriminator when present. It never sees hidden ground truth.
+ * Default tool executor: serves the pre-fix view. INSPECT_SOURCE_SURFACE with a
+ * path returns that file when the snapshot is `--- path` chunks; otherwise blobs
+ * stay sequential. RERUN_SAFE_REPRODUCTION runs the visible discriminator.
  */
 export function createPreFixViewExecutor(
   visible: ReasonerVisibleContext,
@@ -99,6 +99,7 @@ export function createPreFixViewExecutor(
 ): AgentToolExecutor {
   const blobs = [...visible.blobs];
   const kinds = ['DOCUMENTATION', 'SOURCE_CODE', 'DOCUMENTATION'] as const;
+  const files = parsePreFixSnapshotFiles(blobs[1] ?? '');
   let calls = 0;
   return {
     async execute(call: AgentToolCall): Promise<AgentToolResult> {
@@ -114,6 +115,27 @@ export function createPreFixViewExecutor(
           evidenceRefs: [`bench:${caseId}:repro:1`],
           outputBytes: Buffer.byteLength(bytes, 'utf8'),
           untrusted: [envelope('LOG', `bench:sha256:${caseId}:repro`, bytes)],
+        };
+      }
+      if (call.toolId === 'INSPECT_SOURCE_SURFACE' && files.size > 0) {
+        const requested = typeof call.arguments.path === 'string' ? call.arguments.path : '';
+        const body = files.get(requested);
+        if (body !== undefined) {
+          return {
+            ok: true,
+            resultClass: 'PREFIX_FILE',
+            evidenceRefs: [`bench:${caseId}:file:${requested}`],
+            outputBytes: Buffer.byteLength(body, 'utf8'),
+            untrusted: [envelope('SOURCE_CODE', `bench:sha256:${caseId}:file`, body)],
+          };
+        }
+        const listing = [...files.keys()].join('\n');
+        return {
+          ok: true,
+          resultClass: 'PREFIX_INDEX',
+          evidenceRefs: [`bench:${caseId}:index`],
+          outputBytes: Buffer.byteLength(listing, 'utf8'),
+          untrusted: [envelope('DOCUMENTATION', `bench:sha256:${caseId}:index`, listing)],
         };
       }
       const index = Math.min(calls, blobs.length - 1);

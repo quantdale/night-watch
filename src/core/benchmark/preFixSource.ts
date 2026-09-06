@@ -63,6 +63,22 @@ function safePath(value: string): string | null {
   return value;
 }
 
+/** Split a `--- path\\nbody` snapshot into path → body. Unknown shapes yield an empty map. */
+export function parsePreFixSnapshotFiles(snapshot: string): ReadonlyMap<string, string> {
+  const files = new Map<string, string>();
+  if (typeof snapshot !== 'string' || snapshot.length === 0) return files;
+  const parts = snapshot.split(/^--- /m);
+  for (const part of parts) {
+    if (part.length === 0) continue;
+    const newline = part.indexOf('\n');
+    if (newline <= 0) continue;
+    const name = safePath(part.slice(0, newline).trim());
+    if (name === null) continue;
+    files.set(name, part.slice(newline + 1));
+  }
+  return files;
+}
+
 export function extractPreFixSnapshot(repoPath: string, fixSha: string): PreFixSnapshot {
   const sha = safeSha(fixSha);
   if (sha === null) return blocked('FIX_SHA_INVALID');

@@ -412,5 +412,47 @@ test.describe('visible discriminator reproduction', () => {
   });
 });
 
+test('INSPECT_SOURCE_SURFACE with a path returns that pre-fix file only', async () => {
+  const defined = defineBenchmarkCase({
+    caseId: 'bench-path-inspect-001',
+    productFamily: 'ledger-web',
+    category: 'backend',
+    hidden: {
+      fixCommit: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+      fixDiff: 'unique-hidden-diff-token-xyz',
+      issueTitle: 'unique-hidden-title-xyz',
+      bugDescription: 'unique-hidden-desc-xyz',
+      knownFailingTest: 'unique-hidden-test.spec.ts',
+      explanation: 'unique-hidden-explanation-xyz',
+    },
+    preFix: {
+      symptomReport: 'look at listed modules',
+      sourceSnapshot: '--- src/keep.ts\nexport const keep = 1;\n--- src/other.ts\nexport const other = 2;\n',
+      reproSteps: 'inspect one file',
+    },
+  });
+  const stub = scriptDriver([
+    () => okTurn([{ kind: 'CALL_TOOL', toolId: 'INSPECT_SOURCE_SURFACE', argumentDigest: CALL_DIGEST, arguments: {} }]),
+    () =>
+      okTurn([
+        {
+          kind: 'CALL_TOOL',
+          toolId: 'INSPECT_SOURCE_SURFACE',
+          argumentDigest: CALL_DIGEST,
+          arguments: { path: 'src/keep.ts' },
+        },
+      ]),
+    () => okTurn([{ kind: 'TERMINATE', reason: 'COMPLETE_NO_FINDING' }]),
+  ]);
+  const result = await runBenchmarkHunt(defined, { reasoner: stub.driver, budgetPolicy: defaultBenchmarkBudgetPolicy(), maxTurns: 4 });
+  expect(result.leaked).toEqual([]);
+  const traffic = result.requestBlobs.join('\n');
+  expect(traffic).toContain('src/keep.ts');
+  expect(traffic).toContain('export const keep = 1;');
+  expect(traffic).not.toContain('export const other = 2;');
+  expect(traffic).not.toContain('unique-hidden-diff-token-xyz');
+});
+
+
 
 

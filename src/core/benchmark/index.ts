@@ -30,6 +30,7 @@ export {
 export {
   PRE_FIX_SOURCE_VERSION,
   extractPreFixSnapshot,
+  parsePreFixSnapshotFiles,
   type PreFixExtractionStatus,
   type PreFixSnapshot,
 } from './preFixSource';
