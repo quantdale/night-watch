@@ -36,6 +36,7 @@
   - Operator `campaign run` now starts from `NIGHTWATCH_PRINT_CLI` alone (defaults executable to node + print adapter). Smoke: `camp-print-default-1` COMPLETE_NO_FINDING, LOCAL. Print adapter always isolates spawn cwd so Grok cannot reuse the checkout session without `__CWD__`.
   - Local campaign `dossierStatus`: `NONE` with no candidate; `REFUSED_NO_REPRODUCTION` when a candidate is proposed. Dossiers are never auto-emitted (`reproductionCount` would be fabricated). `tests/unit/localCampaign.test.ts` 5 passed.
   - Visible discriminator: `RERUN_SAFE_REPRODUCTION` runs the pre-fix algorithm (no eval/spawn). Billing ROUND_THEN_SUM mismatch=true, reproductionCount=1; negative HEALTH_OK mismatch=false. Dossier builds only with reproductionCount>=1. `tests/unit/benchmark.test.ts` 21 passed.
+  - Live Grok after VERIFY→RERUN prompt: `bench-billing-rounding-001` called `RERUN_SAFE_REPRODUCTION`, leaked=[], admitted c1, reproductionCount=1, observation `{mismatch:true,captured:30.39,displayed:30.375}`, outcome SAME_ROOT_CAUSE_ALTERNATE, terminated NO_PROGRESS. Dossier built (humanReviewRequired, externalPublication PROHIBITED). `bench-negative-quiet-000` COMPLETE_NO_FINDING, admitted=false, reproductionCount=0.
 
 
 
@@ -101,8 +102,8 @@ Status: IN_PROGRESS
 ## Autonomous proof
 
 - Seeded positive (synthetic live Grok): admitted SAME_ROOT_CAUSE_ALTERNATE on 7/8 fixtures; PROPOSE_CANDIDATE on billing.
-- False anomaly (live Grok): `bench-negative-quiet-000` COMPLETE_NO_FINDING, not admitted.
-- Reproduction: seeded billing discriminator mismatch is mechanically observed via `RERUN_SAFE_REPRODUCTION` (fake reasoner, reproductionCount=1, dossier builds). Live Grok hunts did not call that tool, so live dossiers remain unemitted.
+- False anomaly (live Grok): `bench-negative-quiet-000` COMPLETE_NO_FINDING, not admitted (repeat after RERUN wiring: same).
+- Reproduction: live Grok VERIFY called `RERUN_SAFE_REPRODUCTION` on billing; captured=30.39 displayed=30.375; reproductionCount=1. Dossier built locally (human review required, no external filing).
 - External filing: none
 
 ## Historical benchmark
