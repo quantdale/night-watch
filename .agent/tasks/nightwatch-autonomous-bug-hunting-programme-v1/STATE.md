@@ -6,17 +6,17 @@ Task ID: nightwatch-autonomous-bug-hunting-programme-v1
 Phase: AUTONOMOUS_BUG_HUNTING_PROGRAMME_V1
 Status: IN_PROGRESS
 Starting SHA: d1ebde90c1454b31d6b93d9df503a4c5f196d7c8
-Last validated implementation SHA: 053f27317e864d178d3dcba7b478d40db3bcb61a
-Last substantive checkpoint SHA: 053f27317e864d178d3dcba7b478d40db3bcb61a
+Last validated implementation SHA: ab658ebe800d10ff92d0198eac3efebc13fdeba6
+Last substantive checkpoint SHA: ab658ebe800d10ff92d0198eac3efebc13fdeba6
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-autonomous-bug-huntin-725fbbbe
-Last checkpoint: Wave 0 protocol freeze drafting
+Last checkpoint: Wave 5 campaigns + reasoner-provider comparison
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: d1ebde90c1454b31d6b93d9df503a4c5f196d7c8
-LAST_VALIDATED_IMPLEMENTATION_SHA: 053f27317e864d178d3dcba7b478d40db3bcb61a
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 053f27317e864d178d3dcba7b478d40db3bcb61a
+LAST_VALIDATED_IMPLEMENTATION_SHA: ab658ebe800d10ff92d0198eac3efebc13fdeba6
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: ab658ebe800d10ff92d0198eac3efebc13fdeba6
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
 
@@ -29,7 +29,7 @@ existing Nightwatch safety kernel.
 
 Milestone ID: W5
 Milestone status: IN_PROGRESS
-What is being attempted: historical EXACT/reproduced remains unproven; DEV unauthorized. gate:local and gate:clean PASS. Do not declare COMPLETE.
+What is being attempted: Wave 5 bounded local campaigns executed on the real CLI path. Historical EXACT/reproduced still unproven; DEV unauthorized. Do not declare COMPLETE.
 
 
 ## Completed Milestones
@@ -41,7 +41,7 @@ What is being attempted: historical EXACT/reproduced remains unproven; DEV unaut
 
 ## Work In Progress
 
-Print-adapter Grok hunts ran. Current-harness mined set: 2 PARTIAL + 1 SAME_ROOT_CAUSE + 1 MISS. No mined reproduction.
+Live mined historical set is now 27 Grok cases (8 PARTIAL + 16 SAME_ROOT_CAUSE + 3 MISS, EXACT 0, reproductionCount 0) plus 3 OpenCode Go re-hunts. Wave 5 ran two HOUR_1 campaigns on the real CLI path: `wave5-1h-local` BUDGET_EXHAUSTED via consecutiveFailures (Grok 402 balance exhausted), `wave5-1h-opencode` NO_PROGRESS at 102s/12 actions. No fabricated candidate or dossier.
 
 
 ## Exact Next Action
@@ -63,6 +63,18 @@ Keep the programme IN_PROGRESS / PARTIAL. Historical EXACT and mined reproductio
 Command: session start/claim
 Result: PASS — worktree `nightwatch-autonomous-bug-huntin-725fbbbe`,
 session `sess-d9ba4a6459ef`, base `d1ebde90c1454b31d6b93d9df503a4c5f196d7c8`
+
+Command: `npm run typecheck`
+Result: PASS at `ab658ebe800d10ff92d0198eac3efebc13fdeba6`
+
+Command: `npm test` (full regression)
+Result: PASS at `ab658ebe800d10ff92d0198eac3efebc13fdeba6` — 4288 passed, 0 failed,
+13 skipped, 8.1m. No unexplained regression against the 4076 historical baseline.
+
+Command: `npm run hardening:check`, `npm run agent:check`, `npm run project:check`,
+`npm run workspace:check`
+Result: PASS (agent:check PASS with 4 advisory warnings: stale-baseline before this
+refresh, 31 legacy v1 tasks, one non-live sibling STALE_SESSION, stale session base)
 
 ## Decisions Made During This Task
 
@@ -91,7 +103,7 @@ NONE
 
 - DEV/NEXT hunt unauthorized.
 - Communication-evidence atlas population unauthorized.
-- NIGHTWATCH_REASONER_CLI unset; live 1h hunt not run.
+- Full-hour endurance is provider-quality bound: the loop guard ends runs early, so a true 1h wall-clock campaign is still unproven.
 - Historical sibling mining isolation PASS; rediscovery not proven.
 
 
