@@ -48,6 +48,8 @@
   - Tenth unused mined repo `alphauslabs/blueapi` (`mined-bugatlas-git-alphauslabs-blueapi-423a57bd6554`), API proto, not a re-run: SAME_ROOT_CAUSE_ALTERNATE fileHits=1/1 keywordRecall=0 keywordTotal=4 leak=[] admitted. reproductionCount=0. Ten-case set: 3 PARTIAL + 6 SAME_ROOT_CAUSE + 1 MISS.
   - Eleventh unused mined repo `alphauslabs/blueinternal` (`mined-bugatlas-git-alphauslabs-blueinternal-e68406ede272`), internal API proto, not a re-run: SAME_ROOT_CAUSE_ALTERNATE fileHits=1/2 keywordRecall=0 keywordTotal=1 leak=[] admitted. reproductionCount=0. Eleven-case set: 3 PARTIAL + 7 SAME_ROOT_CAUSE + 1 MISS. Probe of 34 definable mined cases: 0 added test files; 1 changed test (already-hunted alupi). Filling `testsAdded` cannot enable EXACT on this corpus.
   - Wider mine (maxRepos 80): 1 added test in unused `alphauslabs/internal-project-v2`. `tryDefineMinedBenchmarkCase` now sets hidden `knownFailingTest` from a test path added in the fix and absent from the pre-fix snapshot. Live hunt `mined-bugatlas-git-alphauslabs-internal-project-v2-ae3fdb28fe97`: knownFailingTest=`batch/kanban-jobs/tests/jobs/githubPrPoll.test.ts`, testMatch=false, SAME_ROOT_CAUSE_ALTERNATE fileHits=1/2 keywordRecall=0.107 leak=[] admitted. reproductionCount=0. Reasoner named the source file, not the hidden test. Twelve-case set: 3 PARTIAL + 8 SAME_ROOT_CAUSE + 1 MISS.
+  - Thirteenth unused mined repo `alphauslabs/iam` (`mined-bugatlas-git-alphauslabs-iam-0c082a865451`), IAM CLI, not a re-run: PARTIAL_REDISCOVERY fileHits=1/1 keywordRecall=0.50 keywordTotal=2 leak=[] admitted. reproductionCount=0. Thirteen-case set: 4 PARTIAL + 8 SAME_ROOT_CAUSE + 1 MISS.
+
 
 
 
@@ -87,7 +89,7 @@
 
 - Remaining blockers:
   - DEV/NEXT not authorized (external).
-  - Historical EXACT/reproduced NOT PROVEN. Current-harness set: aqua-ui PARTIAL (2/3, 0.375), Octo-Design-System PARTIAL (1/1, 0.50), ai-driven-bug-hunting SAME_ROOT_CAUSE (1/2, 0), alupi MISS (0/2, 0.222), blog SAME_ROOT_CAUSE (1/1, 0), blue-sdk-ts PARTIAL (1/2, 0.667), compare-risp SAME_ROOT_CAUSE (1/1, 0), grpc-chunk-parser SAME_ROOT_CAUSE (1/2, 0.167), bluectl SAME_ROOT_CAUSE (1/5, 0), blueapi SAME_ROOT_CAUSE (1/1, 0), blueinternal SAME_ROOT_CAUSE (1/2, 0), internal-project-v2 SAME_ROOT_CAUSE (1/2, 0.107, testMatch=false). leak=[] all. reproductionCount=0.
+  - Historical EXACT/reproduced NOT PROVEN. Current-harness set: aqua-ui PARTIAL (2/3, 0.375), Octo-Design-System PARTIAL (1/1, 0.50), blue-sdk-ts PARTIAL (1/2, 0.667), iam PARTIAL (1/1, 0.50), ai-driven-bug-hunting SAME_ROOT_CAUSE (1/2, 0), alupi MISS (0/2, 0.222), blog SAME_ROOT_CAUSE (1/1, 0), compare-risp SAME_ROOT_CAUSE (1/1, 0), grpc-chunk-parser SAME_ROOT_CAUSE (1/2, 0.167), bluectl SAME_ROOT_CAUSE (1/5, 0), blueapi SAME_ROOT_CAUSE (1/1, 0), blueinternal SAME_ROOT_CAUSE (1/2, 0), internal-project-v2 SAME_ROOT_CAUSE (1/2, 0.107, testMatch=false). leak=[] all. reproductionCount=0.
   - Exact seeded rediscovery structurally needs the hidden failing-test name in candidate text. One mined case now carries a leak-free added-test path; the live hunt did not name it.
   - Hybrid not superior to Grok-alone on the billing snapshot.
 
