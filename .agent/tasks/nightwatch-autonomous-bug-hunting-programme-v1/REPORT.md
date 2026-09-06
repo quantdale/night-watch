@@ -33,6 +33,8 @@
     Hybrid is not superior on this fixture. The buggy `roundBankers` fold is already in the visible snapshot. NightWatch's measured value here is protocol (typed intents, leak isolation, negative-control rejection), not higher rediscovery score.
   - Live Grok on mined sibling case `mined-bugatlas-git-alphauslabs-octo-design-system-b935967bb754` (`alphauslabs/Octo-Design-System`): leaked=[], admitted=true (proposed c1), outcome=MISS, keywordRecall=0, fileHits=0. Historical rediscovery remains NOT PROVEN.
   - Two further mined live hunts (distinct repos, leak=[] both): `alphauslabs/ai-driven-bug-hunting` admitted MISS; `alphauslabs/alupi` not admitted MISS (Grok NONZERO_EXIT on ANALYZE). 0/3 historical rediscoveries. Not cherry-picked after the first miss.
+  - Operator `campaign run` now starts from `NIGHTWATCH_PRINT_CLI` alone (defaults executable to node + print adapter). Smoke: `camp-print-default-1` COMPLETE_NO_FINDING, LOCAL. Print adapter always isolates spawn cwd so Grok cannot reuse the checkout session without `__CWD__`.
+
 
 
 

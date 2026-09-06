@@ -81,8 +81,8 @@ if (command === 'status') {
       fail(2, 'campaign run requires --duration=1h|4h|8h|overnight');
     } else if (flags.env === 'dev' || flags.env === 'next' || flags.env === 'production') {
       fail(2, `environment ${flags.env} is NOT AUTHORIZED for this programme`);
-    } else if (!process.env.NIGHTWATCH_REASONER_CLI) {
-      fail(2, 'REASONER_CLI_NOT_CONFIGURED — set NIGHTWATCH_REASONER_CLI to an allowlisted executable; refusing to start');
+    } else if (!process.env.NIGHTWATCH_REASONER_CLI && !process.env.NIGHTWATCH_PRINT_CLI) {
+      fail(2, 'REASONER_CLI_NOT_CONFIGURED — set NIGHTWATCH_REASONER_CLI or NIGHTWATCH_PRINT_CLI; refusing to start');
     } else {
       const maxTurnsRaw = flags['max-turns'];
       const maxTurns = maxTurnsRaw === undefined ? undefined : Number(maxTurnsRaw);
@@ -93,12 +93,14 @@ if (command === 'status') {
         const extraArgs = [];
         if (typeof process.env.NIGHTWATCH_REASONER_SCRIPT === 'string' && process.env.NIGHTWATCH_REASONER_SCRIPT.length > 0) {
           extraArgs.push(process.env.NIGHTWATCH_REASONER_SCRIPT);
+        } else if (process.env.NIGHTWATCH_PRINT_CLI) {
+          extraArgs.push(path.join(root, 'bin/nightwatch-reasoner-print.mjs'));
         }
         try {
           const result = await mod.runLocalCliCampaign({
             campaignId: typeof flags.id === 'string' && flags.id.length > 0 ? flags.id : `local-${Date.now()}`,
             ceilingName: DURATIONS.get(flags.duration),
-            executable: process.env.NIGHTWATCH_REASONER_CLI,
+            executable: process.env.NIGHTWATCH_REASONER_CLI || process.execPath,
             args: extraArgs,
             provider: process.env.NIGHTWATCH_REASONER_PROVIDER ?? 'configured',
             model: process.env.NIGHTWATCH_REASONER_MODEL ?? 'configured',

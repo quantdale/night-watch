@@ -222,9 +222,7 @@ fs.writeFileSync(promptFile, boundedPrompt, { mode: 0o600 });
 let isolatedCwd = null;
 try {
   const sessionId = randomUUID();
-  if (argvTemplate.includes('__CWD__')) {
-    isolatedCwd = fs.mkdtempSync(path.join(os.tmpdir(), 'nw-print-cwd-'));
-  }
+  isolatedCwd = fs.mkdtempSync(path.join(os.tmpdir(), 'nw-print-cwd-'));
   const argv = argvTemplate.map((item) => {
     if (item === '__PROMPT__') return boundedPrompt;
     if (item === '__PROMPT_FILE__') return promptFile;
