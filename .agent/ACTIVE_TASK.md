@@ -8,8 +8,8 @@ Task directory: .agent/tasks/nightwatch-autonomous-bug-hunting-programme-v1
 Starting SHA: d1ebde90c1454b31d6b93d9df503a4c5f196d7c8
 Last validated implementation SHA: 053f27317e864d178d3dcba7b478d40db3bcb61a
 Last checkpoint: Wave 1 A–G integrated; autonomy loop proven; operator CLI landed
-Current milestone: W2 — certification
-Next action: Run gate:local after documenting the 053f273 implementation baseline
+Current milestone: W5 — historical EXACT unproven after gate:local/gate:clean PASS
+Next action: Keep PARTIAL. Do not declare COMPLETE. DEV/NEXT unauthorized.
 Authorization class: AUTONOMOUS_BUG_HUNTING_PROGRAMME_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2

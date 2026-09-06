@@ -29,7 +29,8 @@ existing Nightwatch safety kernel.
 
 Milestone ID: W5
 Milestone status: IN_PROGRESS
-What is being attempted: live CLI campaign remains operator-blocked; historical mining is isolation-proven only.
+What is being attempted: historical EXACT/reproduced remains unproven; DEV unauthorized. gate:local and gate:clean PASS. Do not declare COMPLETE.
+
 
 ## Completed Milestones
 
@@ -40,12 +41,13 @@ What is being attempted: live CLI campaign remains operator-blocked; historical 
 
 ## Work In Progress
 
-Local CLI campaign launcher landed. Live yield still needs a configured reasoner.
+Print-adapter Grok hunts ran. Current-harness mined set: 2 PARTIAL + 1 SAME_ROOT_CAUSE + 1 MISS. No mined reproduction.
 
 
 ## Exact Next Action
 
-Keep the programme IN_PROGRESS. Live yield needs NIGHTWATCH_REASONER_CLI. Do not declare COMPLETE.
+Keep the programme IN_PROGRESS / PARTIAL. Historical EXACT and mined reproduction are unproven. DEV/NEXT unauthorized. Do not declare COMPLETE.
+
 
 
 ## Files Changed

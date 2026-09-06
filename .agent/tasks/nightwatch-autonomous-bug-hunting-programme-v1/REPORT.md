@@ -71,9 +71,11 @@
 
 - Remaining blockers:
   - DEV/NEXT not authorized (external).
-  - Historical rediscovery NOT PROVEN (0/3 live mined hunts, leak=[]).
+  - Historical EXACT/reproduced NOT PROVEN. Current-harness four-case set: aqua-ui PARTIAL (2/3, 0.375), Octo-Design-System PARTIAL (1/1, 0.50), ai-driven-bug-hunting SAME_ROOT_CAUSE (1/2, 0), alupi MISS (0/2, 0.222). leak=[] all. reproductionCount=0. Git-mined cases have no visible discriminator.
   - Exact seeded rediscovery structurally needs the hidden failing-test name in candidate text.
   - Hybrid not superior to Grok-alone on the billing snapshot.
+
+
 
 
 Status: IN_PROGRESS
@@ -99,8 +101,9 @@ Status: IN_PROGRESS
 - W1: lanes A–G. Integrated (H folded into A).
 - W2: cross-lane tools, atlas query adapters, campaign CLI.
 - W3: seeded positive + false-anomaly + injection tests PASS; live Grok positive/negative hunts.
-- W4: sibling mine + pre-fix extraction + live Grok. Rediscovery NOT PROVEN (0/3).
-- W5: `campaign run` via `NIGHTWATCH_PRINT_CLI`; cwd always isolated. Empty LOCAL finds nothing.
+- W4: sibling mine + pre-fix extraction + live Grok. Current-harness four-case set: 2 PARTIAL + 1 SAME_ROOT_CAUSE + 1 MISS. EXACT/reproduced NOT PROVEN.
+- W5: `campaign run` via `NIGHTWATCH_PRINT_CLI`; cwd always isolated. Empty LOCAL finds nothing. 1h endurance not run (historical EXACT unproven).
+
 
 
 ## Architecture delivered
@@ -127,10 +130,11 @@ Status: IN_PROGRESS
 - Corpus: synthetic fixtures (8 positive + 1 negative) + mined sibling git (read-only)
 - Leakage: fail-closed; live and blind hunts leaked 0
 - Synthetic live Grok: 7/8 SAME_ROOT_CAUSE_ALTERNATE, 1 admitted MISS (data-005), negative not admitted
-- Mined live Grok: 4 cases, 4 MISS (Octo-Design-System, ai-driven-bug-hunting, alupi, aqua-ui). Not cherry-picked.
-- Rediscovered (historical): 0
-- False positives: 0 on negative control
-- Reproduction rate: unmeasured (no real failing-test execution)
+  - Mined live Grok (current harness): aqua-ui PARTIAL; Octo-Design-System PARTIAL; ai-driven-bug-hunting SAME_ROOT_CAUSE_ALTERNATE; alupi MISS. Not cherry-picked.
+  - Rediscovered EXACT (historical): 0
+  - False positives: 0 on negative control
+  - Reproduction rate (mined): 0 (no visible discriminator)
+
 
 
 ## Real-world status
