@@ -41,6 +41,8 @@
   - `INSPECT_SOURCE_SURFACE` now returns a file index with first-line previews, then a single pre-fix file when `arguments.path` matches. Print prompt shows the path example. Mined git `fixDiff` is `commit <sha>`, so `parseFixDiffFiles` was always empty and historical hunts could never award fileHits. Scoring now uses pre-fix snapshot paths when the hidden diff is not a unified diff. Aqua-ui re-hunt: fileTotal=3, fileHits=0, admitted=true, outcome=MISS, leak=[]. Hypothesis described a chart onClick index mismatch but did not name a snapshot path.
   - Aqua-ui re-hunt after the hypothesis-must-name-path prompt: leaked=[], admitted=true, fileHits=1, fileTotal=3, keywordRecall=0, outcome=SAME_ROOT_CAUSE_ALTERNATE. Named `src/views/SpUtilization/AwsSpUtilization/AwsSpUtilizationCharts.vue`. Weakest positive bucket (named a snapshot/fix file). Not EXACT.
   - Fifth unused mined repo `alphauslabs/blog` (`mined-bugatlas-git-alphauslabs-blog-cbfb4a149c2f`), not a re-run: SAME_ROOT_CAUSE_ALTERNATE fileHits=1/1 keywordRecall=0 keywordTotal=1 leak=[] admitted. reproductionCount=0. Five-case current-harness set: 2 PARTIAL + 2 SAME_ROOT_CAUSE + 1 MISS.
+  - Sixth unused mined repo `alphauslabs/blue-sdk-ts` (`mined-bugatlas-git-alphauslabs-blue-sdk-ts-dc5d0559eba4`), SDK not UI, not a re-run: PARTIAL_REDISCOVERY fileHits=1/2 keywordRecall=0.667 keywordTotal=6 leak=[] admitted. reproductionCount=0. Six-case set: 3 PARTIAL + 2 SAME_ROOT_CAUSE + 1 MISS.
+
 
   - Same harness re-measure of two earlier cases, not cherry-picks: `alphauslabs/Octo-Design-System` fileHits=1/fileTotal=1 SAME_ROOT_CAUSE_ALTERNATE; `alphauslabs/ai-driven-bug-hunting` fileHits=1/fileTotal=2 SAME_ROOT_CAUSE_ALTERNATE. leak=[] all. keywordRecall=0 all (pre-explanation-fill). File-mention recall only at that checkpoint.
   - Git-mined records had `rootCause: null`, so keyword scoring could never fire. Isolated commit symptom now fills `hidden.explanation` when it is absent from the snapshot. Aqua-ui re-hunt: keywordRecall=0.3125, fileHits=0 (named basename not full path), outcome=SAME_ROOT_CAUSE_ALTERNATE, leak=[]. Unique long basenames now count as file hits. This is commit-message token overlap, not EXACT rediscovery.
@@ -73,7 +75,7 @@
 
 - Remaining blockers:
   - DEV/NEXT not authorized (external).
-  - Historical EXACT/reproduced NOT PROVEN. Current-harness set: aqua-ui PARTIAL (2/3, 0.375), Octo-Design-System PARTIAL (1/1, 0.50), ai-driven-bug-hunting SAME_ROOT_CAUSE (1/2, 0), alupi MISS (0/2, 0.222), blog SAME_ROOT_CAUSE (1/1, 0). leak=[] all. reproductionCount=0.
+  - Historical EXACT/reproduced NOT PROVEN. Current-harness set: aqua-ui PARTIAL (2/3, 0.375), Octo-Design-System PARTIAL (1/1, 0.50), ai-driven-bug-hunting SAME_ROOT_CAUSE (1/2, 0), alupi MISS (0/2, 0.222), blog SAME_ROOT_CAUSE (1/1, 0), blue-sdk-ts PARTIAL (1/2, 0.667). leak=[] all. reproductionCount=0.
   - Exact seeded rediscovery structurally needs the hidden failing-test name in candidate text.
   - Hybrid not superior to Grok-alone on the billing snapshot.
 
