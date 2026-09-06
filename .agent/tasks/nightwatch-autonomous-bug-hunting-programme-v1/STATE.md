@@ -27,25 +27,25 @@ existing Nightwatch safety kernel.
 
 ## Current Milestone
 
-Milestone ID: W0
+Milestone ID: W2
 Milestone status: IN_PROGRESS
-What is being attempted: freeze agentProtocol, programme state, and DAG.
+What is being attempted: operator CLI, autonomy loop proof, certification gates.
 
 ## Completed Milestones
 
-- M0 recon: HEAD `d1ebde90c1454b31d6b93d9df503a4c5f196d7c8` == origin/main;
-  canonical clean; stale review-operations session left untouched;
-  ACTIVE predecessor COMPLETE; no AgentRuntime existed.
+- M0 recon: HEAD `d1ebde90c1454b31d6b93d9df503a4c5f196d7c8` == origin/main.
+- W0 protocol freeze integrated at `b3a780816c111399026844615b8b915899cf7156`.
+- W1 lanes A–G independently reviewed and integrated.
+- Seeded positive / false-anomaly / injection loop tests 3/3.
 
 ## Work In Progress
 
-Wave 0 frozen protocol, owner-scope class, hardening rule, continuity
-files, OpenSpec, PROGRAMME.json.
+Operator CLI, programme-state docs, gate:local / clean certification.
 
 ## Exact Next Action
 
-Validate Wave 0 focused tests and continuity, commit, integrate, then
-start Wave 1 executor sessions from canonical main.
+Commit operator CLI, integrate, run gate:local, then classify remaining
+external items (real historical yield, DEV hunt, 1h live reasoner).
 
 ## Files Changed
 

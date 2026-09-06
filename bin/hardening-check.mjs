@@ -60,6 +60,7 @@ function checkChildProcessBoundaries() {
     'bin/observe-canary.mjs',
     'bin/auth-capture.mjs',
     'bin/nightwatch.mjs',
+    'bin/nightwatch-agent.mjs',
     'bin/quality-gate.mjs',
     'bin/quality-gate-clean.mjs',
     'bin/planner-handoff-check.mjs',

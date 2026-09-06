@@ -43,6 +43,8 @@
     "hygiene:status": "node bin/nightwatch-hygiene.mjs status",
     "hygiene:clean": "node bin/nightwatch-hygiene.mjs clean",
     "nightwatch": "node bin/nightwatch.mjs",
+    "agent:status": "node bin/nightwatch-agent.mjs status",
+    "agent:test": "node bin/nightwatch-agent.mjs test",
     "nightwatch:status": "node bin/nightwatch-intelligence.mjs status",
     "campaign:plan": "node bin/nightwatch-intelligence.mjs plan",
     "campaign:coverage": "node bin/nightwatch-intelligence.mjs coverage",

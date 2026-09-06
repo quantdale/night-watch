@@ -2,99 +2,32 @@
   "schemaVersion": "nightwatch.autonomous-programme-state.v1",
   "programmeId": "nightwatch-autonomous-bug-hunting-programme-v1",
   "programmeStatus": "IN_PROGRESS",
-  "currentWave": "W1",
+  "currentWave": "W2",
   "startingSha": "d1ebde90c1454b31d6b93d9df503a4c5f196d7c8",
   "wave0Sha": "bd9be1b2a93107388b868cf2febc87bc84a8a428",
-  "programmeIntegrationHead": "be5f744590154d560727dde0604c0418d8038659",
-  "worktreeLimit": 8,
-  "orchestrator": {
-    "taskId": "nightwatch-autonomous-bug-hunting-programme-v1",
-    "sessionId": "sess-d9ba4a6459ef",
-    "worktree": "/home/dalepalaca/.nightwatch/worktrees/nightwatch-autonomous-bug-huntin-725fbbbe",
-    "branch": "session/nightwatch-autonomous-bug-huntin-725fbbbe",
-    "baseSha": "d1ebde90c1454b31d6b93d9df503a4c5f196d7c8"
+  "programmeIntegrationHead": "7bf5ebdff0d5429adae15f6c6eaee01b1d21a73b",
+  "lanes": {
+    "A": { "status": "integrated", "workerSha": "bb1a51b6efe893432feb95e16309f9bd0c0f1b56" },
+    "B": { "status": "integrated", "workerSha": "ee6a6a9462c5134d8ce89ccdd62b6ff900630503" },
+    "C": { "status": "integrated", "workerSha": "0e83d23f7e5a20669e1a7fef05c8915fee0a294e" },
+    "D": { "status": "integrated", "workerSha": "751724aebf69b2f1635ec9d26b0a1c7476ec6186" },
+    "E": { "status": "integrated", "workerSha": "ffe2b01c945c3b16fbf51d1ca81060b1b60abef0" },
+    "F": { "status": "integrated", "workerSha": "7d0f16d7dbb416745364145513d0c32f974adb67", "realHistoricalData": false },
+    "G": { "status": "integrated", "workerSha": "2e6e4ad4ed65ace97cc82112bd04cde312e98ad9" }
   },
-  "untouchedSessions": [
-    {
-      "name": "nightwatch-review-operations-his-7431812c",
-      "taskId": "nightwatch-review-operations-history-filing-v1",
-      "policy": "DO_NOT_TOUCH"
-    }
-  ],
-  "dependencyGraph": {
-    "W0": [],
-    "A": ["W0"],
-    "B": ["W0"],
-    "C": ["W0"],
-    "D": ["W0"],
-    "E": ["W0"],
-    "F": ["W0"],
-    "G": ["W0"],
-    "W2": ["A", "B", "C", "D", "E", "F", "G"],
-    "W3": ["W2"],
-    "W4": ["W2", "D", "F"],
-    "W5": ["W3", "W4"]
+  "proof": {
+    "seededPositive": "PASS tests/unit/agentAutonomyLoop.test.ts",
+    "falseAnomaly": "PASS",
+    "injectionUnsafeIntent": "PASS",
+    "autonomousSuites": "147 passed"
   },
-  "campaigns": {
-    "W0": {
-      "status": "integrated",
-      "validatedSha": "bd9be1b2a93107388b868cf2febc87bc84a8a428",
-      "integrationSha": "b3a780816c111399026844615b8b915899cf7156"
-    },
-    "A": {
-      "taskId": "nightwatch-autonomous-agent-runtime-v1",
-      "status": "integrated",
-      "workerSha": "bb1a51b6efe893432feb95e16309f9bd0c0f1b56",
-      "integrationSha": "6bd90305a2ad43aca9706eb59da9f7caf04f38b3",
-      "review": "ACCEPT",
-      "tests": "15 passed post-reconcile"
-    },
-    "B": {
-      "taskId": "nightwatch-cli-reasoner-gateway-v1",
-      "status": "integrated",
-      "workerSha": "ee6a6a9462c5134d8ce89ccdd62b6ff900630503",
-      "integrationSha": "6cf6248d20146f8392d2aeef0f004e53135c8dd2",
-      "review": "ACCEPT",
-      "tests": "25 passed post-reconcile"
-    },
-    "C": {
-      "taskId": "nightwatch-agent-tool-protocol-v1",
-      "status": "integrated",
-      "workerSha": "0e83d23f7e5a20669e1a7fef05c8915fee0a294e",
-      "integrationSha": "c9bb0efd3d8ac54ce796f242ad48f5ae39e1bfbf",
-      "review": "ACCEPT",
-      "tests": "16 passed post-reconcile"
-    },
-    "D": {
-      "taskId": "nightwatch-bug-atlas-v1",
-      "status": "integrated",
-      "workerSha": "751724aebf69b2f1635ec9d26b0a1c7476ec6186",
-      "integrationSha": "be5f744590154d560727dde0604c0418d8038659",
-      "review": "ACCEPT",
-      "tests": "21 passed post-reconcile"
-    },
-    "E": {
-      "taskId": "nightwatch-system-atlas-v1",
-      "status": "integrated",
-      "workerSha": "ffe2b01c945c3b16fbf51d1ca81060b1b60abef0",
-      "integrationSha": "ffe2b01c945c3b16fbf51d1ca81060b1b60abef0",
-      "review": "ACCEPT",
-      "tests": "17 passed independent"
-    },
-    "F": {
-      "taskId": "nightwatch-historical-benchmark-v1",
-      "status": "ready",
-      "ownedPaths": ["src/core/benchmark/**", "tests/unit/benchmark*.test.ts"]
-    },
-    "G": {
-      "taskId": "nightwatch-autonomous-finding-dossier-v1",
-      "status": "ready",
-      "ownedPaths": ["src/core/autonomousFinding/**", "tests/unit/autonomousFinding*.test.ts"]
-    }
+  "realWorld": {
+    "LOCAL_AUTONOMOUS_CAPABILITY": "PROVEN_SYNTHETIC",
+    "HISTORICAL_BUG_REDISCOVERY": "HARNESS_ONLY_FIXTURES",
+    "REAL_DEV_NEXT_HUNT": "NOT_AUTHORIZED",
+    "PREVIOUSLY_UNKNOWN_ALPHAUS_BUG": "NOT_YET_PROVEN"
   },
-  "combinedWave1Tests": "113 passed on canonical be5f744",
-  "frozenInterfaces": "src/core/agentProtocol/",
   "blockers": [],
-  "exactNextAction": "Remove integrated Wave 1 worktrees, start F and G, then Wave 2 wiring",
-  "resumeRecipe": "Read PROGRAMME.json, inspect worktrees, start F/G if slots free"
+  "exactNextAction": "Integrate operator CLI + loop tests; run gate:local; remove leftover Wave 1 worktrees",
+  "resumeRecipe": "Read PROGRAMME.json, inspect origin/main, continue certification"
 }

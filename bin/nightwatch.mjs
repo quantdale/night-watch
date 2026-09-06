@@ -20,7 +20,18 @@ import { buildChildEnvironment, emitChildStdio } from './child-environment.mjs';
 const args = process.argv.slice(2);
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const operatorCommands = new Set(['status', 'plan', 'coverage', 'campaign', 'contracts', 'gaps', 'differential', 'replay-coverage', 'minimization-coverage', 'mutation-score', 'findings', 'explain']);
-if (operatorCommands.has(args[0])) {
+if (args[0] === 'agent') {
+  const result = spawnSync(process.execPath, [path.join(root, 'bin', 'nightwatch-agent.mjs'), ...args.slice(1)], {
+    cwd: root,
+    env: buildChildEnvironment(process.env, { NIGHTWATCH_OPERATOR_SCOPE: 'LOCAL_SYNTHETIC_ONLY' }),
+    stdio: ['ignore', 'pipe', 'pipe'],
+    timeout: 180_000,
+    maxBuffer: 2 * 1024 * 1024,
+    shell: false,
+  });
+  emitChildStdio(result);
+  process.exitCode = result.status ?? 1;
+} else if (operatorCommands.has(args[0])) {
   const result = spawnSync(process.execPath, [path.join(root, 'bin', 'nightwatch-intelligence.mjs'), ...args], {
     cwd: root,
     env: buildChildEnvironment(process.env, { NIGHTWATCH_OPERATOR_SCOPE: 'LOCAL_SYNTHETIC_ONLY' }),
