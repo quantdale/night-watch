@@ -6,8 +6,8 @@ Task ID: nightwatch-autonomous-bug-hunting-programme-v1
 Phase: AUTONOMOUS_BUG_HUNTING_PROGRAMME_V1
 Status: IN_PROGRESS
 Starting SHA: d1ebde90c1454b31d6b93d9df503a4c5f196d7c8
-Last validated implementation SHA: ab658ebe800d10ff92d0198eac3efebc13fdeba6
-Last substantive checkpoint SHA: ab658ebe800d10ff92d0198eac3efebc13fdeba6
+Last validated implementation SHA: fe919b2cc1fcd3dc79062f336185647c3225a99a
+Last substantive checkpoint SHA: fe919b2cc1fcd3dc79062f336185647c3225a99a
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-autonomous-bug-huntin-725fbbbe
@@ -15,8 +15,9 @@ Last checkpoint: Wave 5 campaigns + reasoner-provider comparison
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: d1ebde90c1454b31d6b93d9df503a4c5f196d7c8
-LAST_VALIDATED_IMPLEMENTATION_SHA: ab658ebe800d10ff92d0198eac3efebc13fdeba6
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: ab658ebe800d10ff92d0198eac3efebc13fdeba6
+LAST_VALIDATED_IMPLEMENTATION_SHA: fe919b2cc1fcd3dc79062f336185647c3225a99a
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: fe919b2cc1fcd3dc79062f336185647c3225a99a
+LAST_DOCUMENTATION_CHECKPOINT_SHA: ab658ebe800d10ff92d0198eac3efebc13fdeba6
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
 
@@ -65,16 +66,24 @@ Result: PASS — worktree `nightwatch-autonomous-bug-huntin-725fbbbe`,
 session `sess-d9ba4a6459ef`, base `d1ebde90c1454b31d6b93d9df503a4c5f196d7c8`
 
 Command: `npm run typecheck`
-Result: PASS at `ab658ebe800d10ff92d0198eac3efebc13fdeba6`
+Result: PASS on the tree at documentation descendant
+`ab658ebe800d10ff92d0198eac3efebc13fdeba6`, whose implementation content is
+unchanged from `fe919b2cc1fcd3dc79062f336185647c3225a99a` (the range is
+REPORT.md only).
 
 Command: `npm test` (full regression)
-Result: PASS at `ab658ebe800d10ff92d0198eac3efebc13fdeba6` — 4288 passed, 0 failed,
-13 skipped, 8.1m. No unexplained regression against the 4076 historical baseline.
+Result: PASS on that same tree — 4288 passed, 0 failed, 13 skipped, 8.1m.
+No unexplained regression against the 4076 historical baseline.
 
-Command: `npm run hardening:check`, `npm run agent:check`, `npm run project:check`,
-`npm run workspace:check`
-Result: PASS (agent:check PASS with 4 advisory warnings: stale-baseline before this
-refresh, 31 legacy v1 tasks, one non-live sibling STALE_SESSION, stale session base)
+Command: `npm run hardening:check`, `npm run project:check`, `npm run workspace:check`
+Result: PASS
+
+Command: `npm run agent:check`
+Result: FAIL then repaired. Relabelling the documentation descendant as the
+implementation anchor raised INVALID_IMPLEMENTATION_ROLE and
+CONTINUITY_ANCHOR_MISMATCH. The implementation anchor was restored to
+`053f27317e864d178d3dcba7b478d40db3bcb61a` and the descendant recorded under
+LAST_DOCUMENTATION_CHECKPOINT_SHA instead.
 
 ## Decisions Made During This Task
 
