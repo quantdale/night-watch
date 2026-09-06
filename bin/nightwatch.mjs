@@ -29,6 +29,8 @@ if (args[0] === 'agent') {
       NIGHTWATCH_REASONER_SCRIPT: process.env.NIGHTWATCH_REASONER_SCRIPT,
       NIGHTWATCH_REASONER_PROVIDER: process.env.NIGHTWATCH_REASONER_PROVIDER,
       NIGHTWATCH_REASONER_MODEL: process.env.NIGHTWATCH_REASONER_MODEL,
+      NIGHTWATCH_PRINT_CLI: process.env.NIGHTWATCH_PRINT_CLI,
+      NIGHTWATCH_PRINT_ARGS: process.env.NIGHTWATCH_PRINT_ARGS,
     }),
     stdio: ['ignore', 'pipe', 'pipe'],
     timeout: 180_000,

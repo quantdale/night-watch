@@ -184,12 +184,23 @@ function driverAndPolicy(input: LocalCampaignInput) {
   if (input.maxTurns !== undefined && (!Number.isInteger(input.maxTurns) || input.maxTurns < 1 || input.maxTurns > 50)) {
     throw new LocalCampaignError('MALFORMED_MAX_TURNS', 'maxTurns must be an integer 1..50');
   }
+  const extraEnv: Record<string, string> = {};
+  const allowedEnvKeys: string[] = [];
+  for (const key of ['NIGHTWATCH_PRINT_CLI', 'NIGHTWATCH_PRINT_ARGS']) {
+    const value = process.env[key];
+    if (typeof value === 'string' && value.length > 0) {
+      extraEnv[key] = value;
+      allowedEnvKeys.push(key);
+    }
+  }
   return {
     reasoner: createCliReasonerDriver({
       executable: input.executable,
       args: input.args ?? [],
       provider: input.provider ?? 'configured',
       model: input.model ?? 'configured',
+      extraEnv,
+      allowedEnvKeys,
       validationContext: { authorizedEnvironments: ['LOCAL'] as const },
     }),
     budgetPolicy: defaultAgentBudgetPolicy(input.ceilingName),

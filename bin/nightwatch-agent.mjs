@@ -56,6 +56,7 @@ if (command === 'status') {
     'tests/unit/historicalRediscovery.test.ts',
     'tests/unit/preFixSource.test.ts',
     'tests/unit/minedCases.test.ts',
+    'tests/unit/reasonerPrint.test.ts',
   ];
   const result = spawnSync(pwBin, ['test', ...suites, '--project=nightwatch', '--workers=1'], {
     cwd: root,
