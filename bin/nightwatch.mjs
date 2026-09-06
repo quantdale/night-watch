@@ -23,7 +23,12 @@ const operatorCommands = new Set(['status', 'plan', 'coverage', 'campaign', 'con
 if (args[0] === 'agent') {
   const result = spawnSync(process.execPath, [path.join(root, 'bin', 'nightwatch-agent.mjs'), ...args.slice(1)], {
     cwd: root,
-    env: buildChildEnvironment(process.env, { NIGHTWATCH_OPERATOR_SCOPE: 'LOCAL_SYNTHETIC_ONLY' }),
+    env: buildChildEnvironment(process.env, {
+      NIGHTWATCH_OPERATOR_SCOPE: 'LOCAL_SYNTHETIC_ONLY',
+      NIGHTWATCH_REASONER_CLI: process.env.NIGHTWATCH_REASONER_CLI,
+      NIGHTWATCH_REASONER_PROVIDER: process.env.NIGHTWATCH_REASONER_PROVIDER,
+      NIGHTWATCH_REASONER_MODEL: process.env.NIGHTWATCH_REASONER_MODEL,
+    }),
     stdio: ['ignore', 'pipe', 'pipe'],
     timeout: 180_000,
     maxBuffer: 2 * 1024 * 1024,

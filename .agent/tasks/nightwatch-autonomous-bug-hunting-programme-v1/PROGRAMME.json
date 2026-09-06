@@ -2,32 +2,38 @@
   "schemaVersion": "nightwatch.autonomous-programme-state.v1",
   "programmeId": "nightwatch-autonomous-bug-hunting-programme-v1",
   "programmeStatus": "IN_PROGRESS",
-  "currentWave": "W2",
+  "currentWave": "W5",
   "startingSha": "d1ebde90c1454b31d6b93d9df503a4c5f196d7c8",
   "wave0Sha": "bd9be1b2a93107388b868cf2febc87bc84a8a428",
-  "programmeIntegrationHead": "7bf5ebdff0d5429adae15f6c6eaee01b1d21a73b",
+  "programmeIntegrationHead": "DISCOVER_FROM_GIT",
   "lanes": {
     "A": { "status": "integrated", "workerSha": "bb1a51b6efe893432feb95e16309f9bd0c0f1b56" },
     "B": { "status": "integrated", "workerSha": "ee6a6a9462c5134d8ce89ccdd62b6ff900630503" },
     "C": { "status": "integrated", "workerSha": "0e83d23f7e5a20669e1a7fef05c8915fee0a294e" },
     "D": { "status": "integrated", "workerSha": "751724aebf69b2f1635ec9d26b0a1c7476ec6186" },
     "E": { "status": "integrated", "workerSha": "ffe2b01c945c3b16fbf51d1ca81060b1b60abef0" },
-    "F": { "status": "integrated", "workerSha": "7d0f16d7dbb416745364145513d0c32f974adb67", "realHistoricalData": false },
+    "F": { "status": "integrated", "workerSha": "7d0f16d7dbb416745364145513d0c32f974adb67", "siblingMining": "MINED", "realHistoricalRediscovery": false },
     "G": { "status": "integrated", "workerSha": "2e6e4ad4ed65ace97cc82112bd04cde312e98ad9" }
   },
   "proof": {
     "seededPositive": "PASS tests/unit/agentAutonomyLoop.test.ts",
     "falseAnomaly": "PASS",
     "injectionUnsafeIntent": "PASS",
-    "autonomousSuites": "147 passed"
+    "historicalIsolation": "PASS tests/unit/historicalRediscovery.test.ts",
+    "localCliCampaign": "PASS tests/unit/localCampaign.test.ts (fake CLI)"
   },
   "realWorld": {
     "LOCAL_AUTONOMOUS_CAPABILITY": "PROVEN_SYNTHETIC",
-    "HISTORICAL_BUG_REDISCOVERY": "HARNESS_ONLY_FIXTURES",
+    "HISTORICAL_BUG_REDISCOVERY": "MINED_NOT_REDISCOVERED",
     "REAL_DEV_NEXT_HUNT": "NOT_AUTHORIZED",
-    "PREVIOUSLY_UNKNOWN_ALPHAUS_BUG": "NOT_YET_PROVEN"
+    "PREVIOUSLY_UNKNOWN_ALPHAUS_BUG": "NOT_YET_PROVEN",
+    "LIVE_CLI_REASONER": "NOT_CONFIGURED"
   },
-  "blockers": [],
-  "exactNextAction": "Integrate operator CLI + loop tests; run gate:local; remove leftover Wave 1 worktrees",
-  "resumeRecipe": "Read PROGRAMME.json, inspect origin/main, continue certification"
+  "blockers": [
+    "NIGHTWATCH_REASONER_CLI unset — live 1h campaign needs an allowlisted local executable",
+    "DEV/NEXT execution not authorized",
+    "historical rediscovery not proven: sibling git is mined, hunts are isolation-only with a blind/fake reasoner"
+  ],
+  "exactNextAction": "Operator sets NIGHTWATCH_REASONER_CLI to a local allowlisted executable, then `node bin/nightwatch-agent.mjs campaign run --reasoner=cli --duration=1h`. Do not invent DEV authorization.",
+  "resumeRecipe": "Read PROGRAMME.json and git HEAD. Local CLI campaign path exists. Real yield remains unproven until a configured reasoner hunts."
 }

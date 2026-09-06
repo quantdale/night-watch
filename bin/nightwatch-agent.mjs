@@ -13,6 +13,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { buildChildEnvironment, emitChildStdio } from './child-environment.mjs';
+import { loadTypeScriptModules } from './lib/typescript-runtime-loader.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
@@ -51,6 +52,8 @@ if (command === 'status') {
     'tests/unit/systemAtlas.test.ts',
     'tests/unit/benchmark.test.ts',
     'tests/unit/autonomousFinding.test.ts',
+    'tests/unit/localCampaign.test.ts',
+    'tests/unit/historicalRediscovery.test.ts',
   ];
   const result = spawnSync(pwBin, ['test', ...suites, '--project=nightwatch', '--workers=1'], {
     cwd: root,
@@ -78,7 +81,26 @@ if (command === 'status') {
     } else if (!process.env.NIGHTWATCH_REASONER_CLI) {
       fail(2, 'REASONER_CLI_NOT_CONFIGURED — set NIGHTWATCH_REASONER_CLI to an allowlisted executable; refusing to start');
     } else {
-      fail(2, 'LIVE_CLI_REASONER_CAMPAIGN_NOT_STARTED — operator CLI is wired fail-closed until an allowlisted local executable is independently configured');
+      const maxTurnsRaw = flags['max-turns'];
+      const maxTurns = maxTurnsRaw === undefined ? undefined : Number(maxTurnsRaw);
+      if (maxTurns !== undefined && (!Number.isInteger(maxTurns) || maxTurns < 1 || maxTurns > 50)) {
+        fail(2, 'campaign run --max-turns must be an integer 1..50');
+      } else {
+        const [mod] = loadTypeScriptModules(['src/core/agentRuntime/localCampaign.ts'], { root });
+        try {
+          const result = await mod.runLocalCliCampaign({
+            campaignId: typeof flags.id === 'string' && flags.id.length > 0 ? flags.id : `local-${Date.now()}`,
+            ceilingName: DURATIONS.get(flags.duration),
+            executable: process.env.NIGHTWATCH_REASONER_CLI,
+            provider: process.env.NIGHTWATCH_REASONER_PROVIDER ?? 'configured',
+            model: process.env.NIGHTWATCH_REASONER_MODEL ?? 'configured',
+            maxTurns,
+          });
+          console.log(JSON.stringify(result, null, 2));
+        } catch (error) {
+          fail(2, error instanceof Error ? error.message : 'LOCAL_CAMPAIGN_FAILED');
+        }
+      }
     }
   } else if (sub === 'status' || sub === 'pause' || sub === 'resume' || sub === 'findings') {
     console.log(JSON.stringify({

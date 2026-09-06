@@ -27,9 +27,9 @@ existing Nightwatch safety kernel.
 
 ## Current Milestone
 
-Milestone ID: W2
+Milestone ID: W5
 Milestone status: IN_PROGRESS
-What is being attempted: operator CLI, autonomy loop proof, certification gates.
+What is being attempted: live CLI campaign remains operator-blocked; historical mining is isolation-proven only.
 
 ## Completed Milestones
 
@@ -40,12 +40,13 @@ What is being attempted: operator CLI, autonomy loop proof, certification gates.
 
 ## Work In Progress
 
-Operator CLI, programme-state docs, gate:local / clean certification.
+Local CLI campaign launcher landed. Live yield still needs a configured reasoner.
+
 
 ## Exact Next Action
 
-Commit operator CLI, integrate, run gate:local, then classify remaining
-external items (real historical yield, DEV hunt, 1h live reasoner).
+Keep the programme IN_PROGRESS. Live yield needs NIGHTWATCH_REASONER_CLI. Do not declare COMPLETE.
+
 
 ## Files Changed
 
@@ -88,6 +89,9 @@ NONE
 
 - DEV/NEXT hunt unauthorized.
 - Communication-evidence atlas population unauthorized.
+- NIGHTWATCH_REASONER_CLI unset; live 1h hunt not run.
+- Historical sibling mining isolation PASS; rediscovery not proven.
+
 
 ## Resume Recipe
 
