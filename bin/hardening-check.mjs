@@ -3723,6 +3723,38 @@ function checkC07DerivedSemanticsBoundary() {
   }
 }
 
+function checkAgentProtocolBoundary() {
+  const cone = 'src/core/agentProtocol';
+  const coneFiles = gitFiles().filter((file) => file.startsWith(`${cone}/`) && file.endsWith('.ts'));
+  if (coneFiles.length === 0) {
+    fail('agent protocol cone is missing');
+    return;
+  }
+  for (const file of coneFiles) {
+    const source = withoutComments(read(file));
+    for (const [pattern, description] of [
+      [/from\s+['"]node:(?:net|http|https|dns|child_process|fs|os|path|url|events|stream|worker_threads)[^'"]*['"]/, 'a network/process/filesystem runtime import'],
+      [/from\s+['"]child_process[^'"]*['"]/, 'a bare child_process import'],
+      [/\brequire\s*\(\s*['"]/, 'a require() call'],
+      [/\beval\s*\(|new\s+Function\s*\(/, 'dynamic evaluation'],
+      [/from\s+['"][^'"]*core\/aiReview/, 'the aiReview cone'],
+      [/from\s+['"][^'"]*core\/campaign\//, 'the campaign execution path'],
+      [/from\s+['"][^'"]*browser\//, 'the browser cone'],
+      [/(Slack|Leslie|Pondr)(Client|Webhook|Api)|postTo(Slack|Leslie|Pondr)/, 'an external submission connector'],
+    ]) if (pattern.test(source)) fail(`${file} contains ${description}; agentProtocol must stay pure`);
+  }
+  const validate = withoutComments(read('src/core/agentProtocol/validate.ts'));
+  for (const token of ['UNKNOWN_TOOL', 'UNSAFE_INTENT', 'UNAUTHORIZED_ENVIRONMENT', 'SECRET_ECHO', 'MALFORMED_OUTPUT']) {
+    if (!validate.includes(token)) fail(`agentProtocol validator is missing ${token}`);
+  }
+  const owner = read('src/core/policy/ownerScope.ts');
+  if (!/AUTONOMOUS_AGENT_LOCAL/.test(owner)) fail('owner scope is missing AUTONOMOUS_AGENT_LOCAL');
+  const finding = withoutComments(read('src/core/agentProtocol/finding.ts'));
+  for (const literal of ["humanReviewRequired: true", "externalPublication: 'PROHIBITED'", 'autoLeslie: false']) {
+    if (!finding.includes(literal)) fail(`autonomous finding authority is missing ${literal}`);
+  }
+}
+
 function checkReviewStoreBoundary() {
   const types = read('src/core/reviewStore/types.ts');
   const identity = read('src/core/reviewStore/identity.ts');
@@ -3891,6 +3923,7 @@ function checkReviewStoreBoundary() {
 
 checkChildProcessBoundaries();
 checkReviewStoreBoundary();
+checkAgentProtocolBoundary();
 checkL6ProcessNetworkBoundary();
 checkTargetPolicy();
 checkTypecheckCoverage();

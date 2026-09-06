@@ -46,4 +46,10 @@ test.describe('owner infrastructure/data freeze', () => {
     expect(() => executeOwnerScoped('SELF_DEVELOPMENT_UNKNOWN_FUTURE_OPERATION', () => { executed = true; })).toThrow(OWNER_POLICY_BLOCKED);
     expect(executed).toBe(false);
   });
+
+  test('autonomous agent local loop is allowed; unknown future agent ops stay blocked', () => {
+    expect(decideOwnerScope('AUTONOMOUS_AGENT_LOCAL').allowed).toBe(true);
+    expect(executeOwnerScoped('AUTONOMOUS_AGENT_LOCAL', () => 'loop')).toBe('loop');
+    expect(decideOwnerScope('AUTONOMOUS_AGENT_REMOTE_UNRESTRICTED').allowed).toBe(false);
+  });
 });

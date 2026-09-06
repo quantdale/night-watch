@@ -1,0 +1,101 @@
+{
+  "schemaVersion": "nightwatch.autonomous-programme-state.v1",
+  "programmeId": "nightwatch-autonomous-bug-hunting-programme-v1",
+  "programmeStatus": "IN_PROGRESS",
+  "currentWave": "W0",
+  "startingSha": "d1ebde90c1454b31d6b93d9df503a4c5f196d7c8",
+  "programmeIntegrationHead": "DISCOVER_FROM_GIT",
+  "orchestrator": {
+    "taskId": "nightwatch-autonomous-bug-hunting-programme-v1",
+    "sessionId": "sess-d9ba4a6459ef",
+    "worktree": "/home/dalepalaca/.nightwatch/worktrees/nightwatch-autonomous-bug-huntin-725fbbbe",
+    "branch": "session/nightwatch-autonomous-bug-huntin-725fbbbe",
+    "baseSha": "d1ebde90c1454b31d6b93d9df503a4c5f196d7c8"
+  },
+  "untouchedSessions": [
+    {
+      "name": "nightwatch-review-operations-his-7431812c",
+      "branch": "session/nightwatch-review-operations-his-7431812c",
+      "taskId": "nightwatch-review-operations-history-filing-v1",
+      "class": "STALE_SESSION",
+      "policy": "DO_NOT_TOUCH"
+    }
+  ],
+  "dependencyGraph": {
+    "W0": [],
+    "A": ["W0"],
+    "B": ["W0"],
+    "C": ["W0"],
+    "D": ["W0"],
+    "E": ["W0"],
+    "F": ["W0"],
+    "G": ["W0"],
+    "W2": ["A", "B", "C", "D", "E", "F", "G"],
+    "W3": ["W2"],
+    "W4": ["W2", "D", "F"],
+    "W5": ["W3", "W4"]
+  },
+  "campaigns": {
+    "W0": {
+      "taskId": "nightwatch-autonomous-bug-hunting-programme-v1",
+      "status": "running",
+      "ownedPaths": [
+        "src/core/agentProtocol/**",
+        "src/core/policy/ownerScope.ts",
+        "tests/unit/agentProtocol.test.ts",
+        "tests/unit/ownerScope.test.ts",
+        "bin/hardening-check.mjs",
+        ".agent/ACTIVE_TASK.md",
+        ".agent/EXECUTION_PROMPT.md",
+        ".agent/tasks/nightwatch-autonomous-bug-hunting-programme-v1/**",
+        "openspec/changes/nightwatch-autonomous-bug-hunting-programme-v1/**"
+      ]
+    },
+    "A": {
+      "taskId": "nightwatch-autonomous-agent-runtime-v1",
+      "status": "planned",
+      "ownedPaths": ["src/core/agentRuntime/**", "tests/unit/agentRuntime*.test.ts"],
+      "forbiddenWritePaths": ["src/core/agentProtocol/**", "src/core/aiReview/**", "docs/CURRENT_STATE.md"]
+    },
+    "B": {
+      "taskId": "nightwatch-cli-reasoner-gateway-v1",
+      "status": "planned",
+      "ownedPaths": ["src/core/reasoner/**", "tests/unit/reasoner*.test.ts"],
+      "forbiddenWritePaths": ["src/core/agentProtocol/**", "src/core/aiReview/**"]
+    },
+    "C": {
+      "taskId": "nightwatch-agent-tool-protocol-v1",
+      "status": "planned",
+      "ownedPaths": ["src/core/agentTools/**", "tests/unit/agentTools*.test.ts"],
+      "forbiddenWritePaths": ["src/core/agentProtocol/**", "src/core/aiReview/**"]
+    },
+    "D": {
+      "taskId": "nightwatch-bug-atlas-v1",
+      "status": "planned",
+      "ownedPaths": ["src/core/bugAtlas/**", "tests/unit/bugAtlas*.test.ts"],
+      "forbiddenWritePaths": ["src/core/agentProtocol/**"]
+    },
+    "E": {
+      "taskId": "nightwatch-system-atlas-v1",
+      "status": "planned",
+      "ownedPaths": ["src/core/systemAtlas/**", "tests/unit/systemAtlas*.test.ts"],
+      "forbiddenWritePaths": ["src/core/agentProtocol/**", "src/core/systemMap/**"]
+    },
+    "F": {
+      "taskId": "nightwatch-historical-benchmark-v1",
+      "status": "planned",
+      "ownedPaths": ["src/core/benchmark/**", "tests/unit/benchmark*.test.ts"],
+      "forbiddenWritePaths": ["src/core/agentProtocol/**"]
+    },
+    "G": {
+      "taskId": "nightwatch-autonomous-finding-dossier-v1",
+      "status": "planned",
+      "ownedPaths": ["src/core/autonomousFinding/**", "tests/unit/autonomousFinding*.test.ts"],
+      "forbiddenWritePaths": ["src/core/agentProtocol/**", "src/core/aiReview/**", "src/core/alphausHandoff/**"]
+    }
+  },
+  "frozenInterfaces": "src/core/agentProtocol/",
+  "blockers": [],
+  "exactNextAction": "Validate Wave 0, integrate, launch Wave 1 lanes A-G",
+  "resumeRecipe": "Read PROGRAMME.json, ACTIVE_TASK.md, task STATE.md, inspect worktrees, continue exactNextAction"
+}
