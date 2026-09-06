@@ -174,6 +174,28 @@ test.describe('benchmark fake-hunt replay', () => {
     expect(result.leaked).toEqual([]);
   });
 
+  test('a no-finding hypothesis on a negative control is not a false positive', async () => {
+    const fixture = benchmarkFixtureById('bench-negative-quiet-000');
+    const stub = scriptDriver([
+      () => okTurn([{ kind: 'CALL_TOOL', toolId: 'INSPECT_SOURCE_SURFACE', argumentDigest: CALL_DIGEST, arguments: { path: 'src/health/status.ts' } }]),
+      () =>
+        okTurn([
+          {
+            kind: 'FORM_HYPOTHESIS',
+            hypothesisId: 'h-quiet-1',
+            statement: 'The health endpoint is quiet; no defect to file.',
+            evidenceRefs: ['ev:sha256:quiet0001'],
+          },
+          { kind: 'TERMINATE', reason: 'COMPLETE_NO_FINDING' },
+        ]),
+    ]);
+    const result = await runBenchmarkHunt(fixture, { reasoner: stub.driver, budgetPolicy: defaultBenchmarkBudgetPolicy(), maxTurns: 4 });
+    expect(result.terminationReason).toBe('COMPLETE_NO_FINDING');
+    expect(result.admitted).toBe(false);
+    expect(result.outcome).toBe('MISS');
+  });
+
+
   test('admission on a negative control scores FALSE_POSITIVE', async () => {
     const fixture = benchmarkFixtureById('bench-negative-quiet-000');
     const stub = scriptDriver([

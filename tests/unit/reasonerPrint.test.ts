@@ -210,3 +210,60 @@ process.stdout.write(JSON.stringify({
   }
 });
 
+test('print adapter salvages FORM_HYPOTHESIS without evidenceRefs and drops unknown intents', () => {
+  const dir = scratchDir();
+  try {
+    const fake = path.join(dir, 'print.mjs');
+    fs.writeFileSync(
+      fake,
+      `
+process.stdout.write(JSON.stringify({
+  text: JSON.stringify({
+    schemaVersion: '${REASONER_TURN_RESPONSE_VERSION}',
+    intents: [
+      { kind: 'SHELL', command: 'rm -rf /' },
+      { kind: 'FORM_HYPOTHESIS', hypothesisId: 'Hypothesis 1', statement: 'rounding drifts by a cent' },
+      { kind: 'PROPOSE_CANDIDATE', candidateId: 'c1' },
+    ],
+    hypotheses: 'not-an-array',
+  }),
+}));
+`,
+      { mode: 0o700 },
+    );
+    const request = {
+      schemaVersion: REASONER_TURN_REQUEST_VERSION,
+      campaignId: 'camp-print-salvage',
+      turnId: 'camp-print-salvage:turn:1',
+      observation: {
+        phase: 'HYPOTHESIZE',
+        untrusted: [],
+        evidenceRefs: ['ev:sha256:aaaaaaaaaaaaaaaaaaaaaaaa'],
+        allowedToolIds: [],
+        allowedIntentKinds: ['FORM_HYPOTHESIS', 'PROPOSE_CANDIDATE', 'TERMINATE'],
+      },
+      budgetRemaining: { policy: defaultAgentBudgetPolicy('HOUR_1'), usage: ZERO_AGENT_BUDGET_USAGE },
+    };
+    const result = spawnSync(NODE, [SHIM], {
+      encoding: 'utf8',
+      input: JSON.stringify(request),
+      env: {
+        ...process.env,
+        NIGHTWATCH_PRINT_CLI: NODE,
+        NIGHTWATCH_PRINT_ARGS: JSON.stringify([fake]),
+      },
+      timeout: 10_000,
+      shell: false,
+    });
+    expect(result.status).toBe(0, result.stderr);
+    const parsed = JSON.parse(result.stdout);
+    expect(parsed.intents.map((intent) => intent.kind)).toEqual(['FORM_HYPOTHESIS', 'PROPOSE_CANDIDATE']);
+    expect(parsed.intents[0].hypothesisId).toBe('Hypothesis-1');
+    expect(parsed.intents[1].evidenceRefs).toEqual(['ev:sha256:aaaaaaaaaaaaaaaaaaaaaaaa']);
+    expect(parsed.hypotheses).toEqual([]);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+

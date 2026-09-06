@@ -147,8 +147,8 @@ export async function runBenchmarkHunt(
   const statements = run.state.hypotheses.map((hypothesis) => hypothesis.statement);
   const candidateIds = [...run.state.candidateIds];
   const candidateText = [...statements, ...candidateIds].join('\n');
-  const admitted = candidateText.trim().length > 0;
-  const score = scoreBenchmarkCandidate(candidateText, hidden);
+  const admitted = candidateIds.length > 0;
+  const score = scoreBenchmarkCandidate(candidateText, hidden, { proposed: admitted });
   return {
     caseId: definedCase.caseId,
     terminationReason: run.terminationReason,

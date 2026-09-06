@@ -50,7 +50,7 @@ export interface BenchmarkScore {
   readonly keywordTotal: number;
 }
 
-function isNegativeControl(hidden: HiddenGroundTruth): boolean {
+export function isNegativeControl(hidden: HiddenGroundTruth): boolean {
   return (
     hidden.fixCommit === null &&
     hidden.fixDiff === null &&
@@ -63,15 +63,19 @@ function isNegativeControl(hidden: HiddenGroundTruth): boolean {
 
 /**
  * Score candidate text (hunt hypothesis statements + candidate ids) against
- * hidden truth. Empty candidates always MISS. On negative controls any
- * admitted candidate is a FALSE_POSITIVE.
+ * hidden truth. Empty candidates always MISS. On negative controls a proposed
+ * candidate is a FALSE_POSITIVE; a no-finding hypothesis is a MISS.
  */
-export function scoreBenchmarkCandidate(candidateText: string, hidden: HiddenGroundTruth): BenchmarkScore {
+export function scoreBenchmarkCandidate(
+  candidateText: string,
+  hidden: HiddenGroundTruth,
+  options?: { readonly proposed?: boolean },
+): BenchmarkScore {
   const text = typeof candidateText === 'string' ? candidateText : '';
   if (isNegativeControl(hidden)) {
-    const admitted = text.trim().length > 0;
+    const falsePositive = options?.proposed === true;
     return {
-      outcome: admitted ? 'FALSE_POSITIVE' : 'MISS',
+      outcome: falsePositive ? 'FALSE_POSITIVE' : 'MISS',
       testMatch: false,
       fileHits: 0,
       fileTotal: 0,
