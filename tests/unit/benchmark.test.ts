@@ -235,6 +235,29 @@ test.describe('benchmark scoring tiers', () => {
     expect(score.fileHits).toBe(1);
   });
 
+  test('mined locator fixDiff scores named snapshot paths as file hits', () => {
+    const minedHidden = {
+      fixCommit: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+      fixDiff: 'commit aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+      issueTitle: null,
+      bugDescription: null,
+      knownFailingTest: null,
+      explanation: null,
+    };
+    const miss = scoreBenchmarkCandidate('charts look off', minedHidden, {
+      visibleFiles: ['src/keep.ts', 'src/other.ts'],
+    });
+    expect(miss.fileHits).toBe(0);
+    expect(miss.outcome).toBe('MISS');
+    const hit = scoreBenchmarkCandidate('Aggregation is wrong in src/keep.ts', minedHidden, {
+      visibleFiles: ['src/keep.ts', 'src/other.ts'],
+    });
+    expect(hit.fileHits).toBe(1);
+    expect(hit.fileTotal).toBe(2);
+    expect(hit.outcome).toBe('SAME_ROOT_CAUSE_ALTERNATE');
+  });
+
+
   test('unrelated narrative is a miss; empty candidate is a miss', () => {
     expect(scoreBenchmarkCandidate('Weather patterns suggest no defect in the export pipeline.', hidden).outcome).toBe('MISS');
     expect(scoreBenchmarkCandidate('   ', hidden).outcome).toBe('MISS');
@@ -454,6 +477,53 @@ test('INSPECT_SOURCE_SURFACE with a path returns that pre-fix file only', async 
   expect(traffic).not.toContain('const OTHER_ONLY = true;');
   expect(traffic).not.toContain('unique-hidden-diff-token-xyz');
 });
+
+test('hunt scores a named snapshot path when hidden fixDiff is a commit locator', async () => {
+  const defined = defineBenchmarkCase({
+    caseId: 'bench-mined-score-001',
+    productFamily: 'ledger-web',
+    category: 'backend',
+    hidden: {
+      fixCommit: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+      fixDiff: 'commit aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+      issueTitle: null,
+      bugDescription: null,
+      knownFailingTest: null,
+      explanation: null,
+    },
+    preFix: {
+      symptomReport: 'inspect listed modules',
+      sourceSnapshot: '--- src/keep.ts\nexport const keep = 1;\n--- src/other.ts\nexport const other = 2;\n',
+      reproSteps: 'observe pre-fix blobs only',
+    },
+  });
+  const stub = scriptDriver([
+    () =>
+      okTurn([
+        {
+          kind: 'CALL_TOOL',
+          toolId: 'INSPECT_SOURCE_SURFACE',
+          argumentDigest: CALL_DIGEST,
+          arguments: { path: 'src/keep.ts' },
+        },
+      ]),
+    () =>
+      okTurn([
+        {
+          kind: 'FORM_HYPOTHESIS',
+          hypothesisId: 'h1',
+          statement: 'Aggregation is wrong in src/keep.ts',
+          evidenceRefs: ['bench:bench-mined-score-001:file:src/keep.ts'],
+        },
+      ]),
+    () => okTurn([{ kind: 'TERMINATE', reason: 'COMPLETE_NO_FINDING' }]),
+  ]);
+  const result = await runBenchmarkHunt(defined, { reasoner: stub.driver, budgetPolicy: defaultBenchmarkBudgetPolicy(), maxTurns: 4 });
+  expect(result.leaked).toEqual([]);
+  expect(result.score.fileHits).toBe(1);
+  expect(result.score.outcome).toBe('SAME_ROOT_CAUSE_ALTERNATE');
+});
+
 
 
 

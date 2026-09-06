@@ -204,7 +204,10 @@ export async function runBenchmarkHunt(
   const candidateIds = [...run.state.candidateIds];
   const candidateText = [...statements, ...candidateIds].join('\n');
   const admitted = candidateIds.length > 0;
-  const score = scoreBenchmarkCandidate(candidateText, hidden, { proposed: admitted });
+  const score = scoreBenchmarkCandidate(candidateText, hidden, {
+    proposed: admitted,
+    visibleFiles: [...parsePreFixSnapshotFiles(visible.blobs[1] ?? '').keys()],
+  });
   const reproductionCount = run.state.actionLog.filter(
     (entry) => entry.toolId === 'RERUN_SAFE_REPRODUCTION' && entry.resultClass === 'REPRODUCED',
   ).length;

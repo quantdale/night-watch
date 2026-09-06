@@ -341,6 +341,10 @@ if (!prompt.includes('"path":"<file from the index>"')) {
   process.stderr.write('missing inspect path example\\n');
   process.exit(3);
 }
+if (!prompt.includes('FORM_HYPOTHESIS statement must include the inspected source path.')) {
+  process.stderr.write('missing hypothesis path rule\\n');
+  process.exit(3);
+}
 process.stdout.write(JSON.stringify({
   schemaVersion: '${REASONER_TURN_RESPONSE_VERSION}',
   intents: [{ kind: 'TERMINATE', reason: 'COMPLETE_NO_FINDING' }],

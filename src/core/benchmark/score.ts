@@ -65,11 +65,13 @@ export function isNegativeControl(hidden: HiddenGroundTruth): boolean {
  * Score candidate text (hunt hypothesis statements + candidate ids) against
  * hidden truth. Empty candidates always MISS. On negative controls a proposed
  * candidate is a FALSE_POSITIVE; a no-finding hypothesis is a MISS.
+ * When hidden.fixDiff is not a unified diff (mined locator strings), optional
+ * visibleFiles — pre-fix snapshot paths — are the file-recall set.
  */
 export function scoreBenchmarkCandidate(
   candidateText: string,
   hidden: HiddenGroundTruth,
-  options?: { readonly proposed?: boolean },
+  options?: { readonly proposed?: boolean; readonly visibleFiles?: readonly string[] },
 ): BenchmarkScore {
   const text = typeof candidateText === 'string' ? candidateText : '';
   if (isNegativeControl(hidden)) {
@@ -92,7 +94,10 @@ export function scoreBenchmarkCandidate(
     typeof hidden.knownFailingTest === 'string' &&
     hidden.knownFailingTest.length > 0 &&
     text.includes(hidden.knownFailingTest);
-  const files = parseFixDiffFiles(hidden.fixDiff);
+  const filesFromDiff = parseFixDiffFiles(hidden.fixDiff);
+  const files = filesFromDiff.length > 0
+    ? filesFromDiff
+    : (options?.visibleFiles ?? []).filter((file) => file.length > 0);
   let fileHits = 0;
   for (const file of files) {
     if (file.length > 0 && lowered.includes(file.toLowerCase())) fileHits += 1;

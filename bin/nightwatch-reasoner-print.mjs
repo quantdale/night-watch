@@ -199,6 +199,7 @@ const prompt = [
   'CALL_TOOL: {"kind":"CALL_TOOL","toolId":"<allowed id>","arguments":{}}',
   'INSPECT_SOURCE_SURFACE: {"kind":"CALL_TOOL","toolId":"INSPECT_SOURCE_SURFACE","arguments":{"path":"<file from the index>"}}',
   'FORM_HYPOTHESIS: {"kind":"FORM_HYPOTHESIS","hypothesisId":"h1","statement":"...","evidenceRefs":[]}',
+  'FORM_HYPOTHESIS statement must include the inspected source path.',
   'PROPOSE_CANDIDATE: {"kind":"PROPOSE_CANDIDATE","candidateId":"c1","evidenceRefs":["<ref from this campaign>"]}',
   'TERMINATE: {"kind":"TERMINATE","reason":"COMPLETE_WITH_FINDING"} or COMPLETE_NO_FINDING.',
   'On OBSERVE/PLAN, CALL_TOOL an allowed tool. Empty INSPECT_SOURCE_SURFACE arguments return the file index; then inspect one listed path. After tool results exist, FORM_HYPOTHESIS then PROPOSE_CANDIDATE using campaign evidence refs.',
