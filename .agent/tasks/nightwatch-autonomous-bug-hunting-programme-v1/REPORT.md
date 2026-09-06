@@ -32,7 +32,7 @@
     - C Grok+NightWatch: SAME_ROOT_CAUSE_ALTERNATE, keywordRecall≈0.31, fileHits=0
     Hybrid is not superior on this fixture. The buggy `roundBankers` fold is already in the visible snapshot. NightWatch's measured value here is protocol (typed intents, leak isolation, negative-control rejection), not higher rediscovery score.
   - Live Grok on mined sibling case `mined-bugatlas-git-alphauslabs-octo-design-system-b935967bb754` (`alphauslabs/Octo-Design-System`): leaked=[], admitted=true (proposed c1), outcome=MISS, keywordRecall=0, fileHits=0. Historical rediscovery remains NOT PROVEN.
-  - Two further mined live hunts (distinct repos, leak=[] both): `alphauslabs/ai-driven-bug-hunting` admitted MISS; `alphauslabs/alupi` not admitted MISS (Grok NONZERO_EXIT on ANALYZE). 0/3 historical rediscoveries. Not cherry-picked after the first miss.
+  - Two further mined live hunts (distinct repos, leak=[] both): `alphauslabs/ai-driven-bug-hunting` admitted MISS; `alphauslabs/alupi` not admitted MISS (Grok NONZERO_EXIT on ANALYZE). Then first unused repo `alphauslabs/aqua-ui` (`mined-bugatlas-git-alphauslabs-aqua-ui-14ac7d8e9c09`): leaked=[], admitted=true, outcome=MISS, keywordRecall=0, fileHits=0, reproductionCount=0. 0/4 historical rediscoveries. Not cherry-picked after prior misses.
   - Operator `campaign run` now starts from `NIGHTWATCH_PRINT_CLI` alone (defaults executable to node + print adapter). Smoke: `camp-print-default-1` COMPLETE_NO_FINDING, LOCAL. Print adapter always isolates spawn cwd so Grok cannot reuse the checkout session without `__CWD__`.
   - Local campaign `dossierStatus`: `NONE` with no candidate; `REFUSED_NO_REPRODUCTION` when a candidate is proposed. Dossiers are never auto-emitted (`reproductionCount` would be fabricated). `tests/unit/localCampaign.test.ts` 5 passed.
   - Visible discriminator: `RERUN_SAFE_REPRODUCTION` runs the pre-fix algorithm (no eval/spawn). Billing ROUND_THEN_SUM mismatch=true, reproductionCount=1; negative HEALTH_OK mismatch=false. Dossier builds only with reproductionCount>=1. `tests/unit/benchmark.test.ts` 21 passed.
@@ -112,7 +112,7 @@ Status: IN_PROGRESS
 - Corpus: synthetic fixtures (8 positive + 1 negative) + mined sibling git (read-only)
 - Leakage: fail-closed; live and blind hunts leaked 0
 - Synthetic live Grok: 7/8 SAME_ROOT_CAUSE_ALTERNATE, 1 admitted MISS (data-005), negative not admitted
-- Mined live Grok: 3 cases, 3 MISS (Octo-Design-System, ai-driven-bug-hunting, alupi)
+- Mined live Grok: 4 cases, 4 MISS (Octo-Design-System, ai-driven-bug-hunting, alupi, aqua-ui). Not cherry-picked.
 - Rediscovered (historical): 0
 - False positives: 0 on negative control
 - Reproduction rate: unmeasured (no real failing-test execution)
