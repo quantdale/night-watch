@@ -4,6 +4,7 @@
   "programmeStatus": "IN_PROGRESS",
   "currentWave": "W0",
   "startingSha": "d1ebde90c1454b31d6b93d9df503a4c5f196d7c8",
+  "wave0Sha": "bd9be1b2a93107388b868cf2febc87bc84a8a428",
   "programmeIntegrationHead": "DISCOVER_FROM_GIT",
   "orchestrator": {
     "taskId": "nightwatch-autonomous-bug-hunting-programme-v1",
