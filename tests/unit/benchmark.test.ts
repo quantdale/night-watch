@@ -427,7 +427,8 @@ test('INSPECT_SOURCE_SURFACE with a path returns that pre-fix file only', async 
     },
     preFix: {
       symptomReport: 'look at listed modules',
-      sourceSnapshot: '--- src/keep.ts\nexport const keep = 1;\n--- src/other.ts\nexport const other = 2;\n',
+      sourceSnapshot:
+        '--- src/keep.ts\nexport const keep = 1;\nconst KEEP_ONLY = true;\n--- src/other.ts\nexport const other = 2;\nconst OTHER_ONLY = true;\n',
       reproSteps: 'inspect one file',
     },
   });
@@ -448,8 +449,9 @@ test('INSPECT_SOURCE_SURFACE with a path returns that pre-fix file only', async 
   expect(result.leaked).toEqual([]);
   const traffic = result.requestBlobs.join('\n');
   expect(traffic).toContain('src/keep.ts');
-  expect(traffic).toContain('export const keep = 1;');
-  expect(traffic).not.toContain('export const other = 2;');
+  expect(traffic).toContain('export const other = 2;');
+  expect(traffic).toContain('const KEEP_ONLY = true;');
+  expect(traffic).not.toContain('const OTHER_ONLY = true;');
   expect(traffic).not.toContain('unique-hidden-diff-token-xyz');
 });
 

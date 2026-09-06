@@ -129,7 +129,12 @@ export function createPreFixViewExecutor(
             untrusted: [envelope('SOURCE_CODE', `bench:sha256:${caseId}:file`, body)],
           };
         }
-        const listing = [...files.keys()].join('\n');
+        const listing = [...files.entries()]
+          .map(([name, body]) => {
+            const first = body.split('\n').find((line) => line.trim().length > 0) ?? '';
+            return `${name}\n${first.slice(0, 200)}`;
+          })
+          .join('\n---\n');
         return {
           ok: true,
           resultClass: 'PREFIX_INDEX',

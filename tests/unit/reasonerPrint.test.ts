@@ -328,5 +328,57 @@ process.stdout.write(JSON.stringify({
   }
 });
 
+test('print adapter prompt shows INSPECT_SOURCE_SURFACE with a path argument', () => {
+  const dir = scratchDir();
+  try {
+    const fake = path.join(dir, 'print.mjs');
+    fs.writeFileSync(
+      fake,
+      `
+import fs from 'node:fs';
+const prompt = fs.readFileSync(process.argv[2], 'utf8');
+if (!prompt.includes('"path":"<file from the index>"')) {
+  process.stderr.write('missing inspect path example\\n');
+  process.exit(3);
+}
+process.stdout.write(JSON.stringify({
+  schemaVersion: '${REASONER_TURN_RESPONSE_VERSION}',
+  intents: [{ kind: 'TERMINATE', reason: 'COMPLETE_NO_FINDING' }],
+  hypotheses: [],
+}));
+`,
+      { mode: 0o700 },
+    );
+    const request = {
+      schemaVersion: REASONER_TURN_REQUEST_VERSION,
+      campaignId: 'camp-print-inspect-path',
+      turnId: 'camp-print-inspect-path:turn:1',
+      observation: {
+        phase: 'OBSERVE',
+        untrusted: [],
+        evidenceRefs: [],
+        allowedToolIds: ['INSPECT_SOURCE_SURFACE'],
+        allowedIntentKinds: ['CALL_TOOL', 'TERMINATE'],
+      },
+      budgetRemaining: { policy: defaultAgentBudgetPolicy('HOUR_1'), usage: ZERO_AGENT_BUDGET_USAGE },
+    };
+    const result = spawnSync(NODE, [SHIM], {
+      encoding: 'utf8',
+      input: JSON.stringify(request),
+      env: {
+        ...process.env,
+        NIGHTWATCH_PRINT_CLI: NODE,
+        NIGHTWATCH_PRINT_ARGS: JSON.stringify([fake, '__PROMPT_FILE__']),
+      },
+      timeout: 10_000,
+      shell: false,
+    });
+    expect(result.status).toBe(0);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+
 
 
