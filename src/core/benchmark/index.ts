@@ -38,7 +38,14 @@ export {
   resolveMinedRepoPath,
   tryDefineMinedBenchmarkCase,
 } from './minedCases';
-
+export {
+  parseVisibleDiscriminator,
+  runVisibleDiscriminator,
+  stringifyVisibleRepro,
+  VISIBLE_DISCRIMINATOR_KINDS,
+  type VisibleDiscriminator,
+  type VisibleReproObservation,
+} from './visibleRepro';
 export {
   BENCHMARK_EXACT_MIN_FILE_RECALL,
   BENCHMARK_EXACT_MIN_KEYWORD_RECALL,

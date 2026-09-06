@@ -11,6 +11,7 @@ import {
   type HiddenGroundTruth,
   type ReasonerVisibleContext,
 } from '../agentProtocol/benchmark';
+import { parseVisibleDiscriminator, type VisibleDiscriminator } from './visibleRepro';
 
 export const BENCHMARK_CORPUS_CATEGORIES = [
   'billing',
@@ -29,6 +30,8 @@ export interface BenchmarkPreFixView {
   readonly symptomReport: string;
   readonly sourceSnapshot: string;
   readonly reproSteps: string;
+  /** Optional visible discriminator. Never hidden ground truth. */
+  readonly discriminator?: VisibleDiscriminator | null;
 }
 
 export interface DefinedBenchmarkCase extends BenchmarkCase {
@@ -71,6 +74,14 @@ export function defineBenchmarkCase(input: BenchmarkCaseInput): DefinedBenchmark
   if (input.hidden === null || typeof input.hidden !== 'object') {
     throw new BenchmarkCaseError(`case ${input.caseId}: hidden ground truth must be an object`);
   }
+  const rawDiscriminator = input.preFix?.discriminator;
+  const discriminator =
+    rawDiscriminator === undefined || rawDiscriminator === null
+      ? null
+      : parseVisibleDiscriminator(rawDiscriminator);
+  if (rawDiscriminator !== undefined && rawDiscriminator !== null && discriminator === null) {
+    throw new BenchmarkCaseError(`case ${input.caseId}: preFix.discriminator is malformed`);
+  }
   const defined: DefinedBenchmarkCase = Object.freeze({
     schemaVersion: BENCHMARK_CASE_VERSION,
     caseId: input.caseId,
@@ -81,13 +92,13 @@ export function defineBenchmarkCase(input: BenchmarkCaseInput): DefinedBenchmark
       symptomReport: preFixBlob(input.preFix?.symptomReport, 'symptomReport', input.caseId),
       sourceSnapshot: preFixBlob(input.preFix?.sourceSnapshot, 'sourceSnapshot', input.caseId),
       reproSteps: preFixBlob(input.preFix?.reproSteps, 'reproSteps', input.caseId),
+      discriminator,
     }),
   });
   // Fail-closed at definition time: fixture authors must not embed answers.
-  assertNoBenchmarkLeakage(
-    { blobs: [defined.preFix.symptomReport, defined.preFix.sourceSnapshot, defined.preFix.reproSteps] },
-    defined.hidden,
-  );
+  const leakBlobs = [defined.preFix.symptomReport, defined.preFix.sourceSnapshot, defined.preFix.reproSteps];
+  if (discriminator !== null) leakBlobs.push(JSON.stringify(discriminator));
+  assertNoBenchmarkLeakage({ blobs: leakBlobs }, defined.hidden);
   return defined;
 }
 

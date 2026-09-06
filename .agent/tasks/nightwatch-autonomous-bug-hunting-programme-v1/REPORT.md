@@ -35,6 +35,7 @@
   - Two further mined live hunts (distinct repos, leak=[] both): `alphauslabs/ai-driven-bug-hunting` admitted MISS; `alphauslabs/alupi` not admitted MISS (Grok NONZERO_EXIT on ANALYZE). 0/3 historical rediscoveries. Not cherry-picked after the first miss.
   - Operator `campaign run` now starts from `NIGHTWATCH_PRINT_CLI` alone (defaults executable to node + print adapter). Smoke: `camp-print-default-1` COMPLETE_NO_FINDING, LOCAL. Print adapter always isolates spawn cwd so Grok cannot reuse the checkout session without `__CWD__`.
   - Local campaign `dossierStatus`: `NONE` with no candidate; `REFUSED_NO_REPRODUCTION` when a candidate is proposed. Dossiers are never auto-emitted (`reproductionCount` would be fabricated). `tests/unit/localCampaign.test.ts` 5 passed.
+  - Visible discriminator: `RERUN_SAFE_REPRODUCTION` runs the pre-fix algorithm (no eval/spawn). Billing ROUND_THEN_SUM mismatch=true, reproductionCount=1; negative HEALTH_OK mismatch=false. Dossier builds only with reproductionCount>=1. `tests/unit/benchmark.test.ts` 21 passed.
 
 
 
@@ -101,7 +102,7 @@ Status: IN_PROGRESS
 
 - Seeded positive (synthetic live Grok): admitted SAME_ROOT_CAUSE_ALTERNATE on 7/8 fixtures; PROPOSE_CANDIDATE on billing.
 - False anomaly (live Grok): `bench-negative-quiet-000` COMPLETE_NO_FINDING, not admitted.
-- Reproduction: none (no failing-test execution). Dossiers not emitted.
+- Reproduction: seeded billing discriminator mismatch is mechanically observed via `RERUN_SAFE_REPRODUCTION` (fake reasoner, reproductionCount=1, dossier builds). Live Grok hunts did not call that tool, so live dossiers remain unemitted.
 - External filing: none
 
 ## Historical benchmark

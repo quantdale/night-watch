@@ -31,6 +31,12 @@ import { UNTRUSTED_ENVELOPE_VERSION } from '../agentProtocol/untrusted';
 import { AgentRuntime, type AgentToolCall, type AgentToolExecutor, type AgentToolResult } from '../agentRuntime';
 import { buildReasonerVisibleContext, type DefinedBenchmarkCase } from './case';
 import { scoreBenchmarkCandidate, type BenchmarkScore } from './score';
+import {
+  runVisibleDiscriminator,
+  stringifyVisibleRepro,
+  type VisibleDiscriminator,
+  type VisibleReproObservation,
+} from './visibleRepro';
 
 export const BENCHMARK_HUNT_MAX_TURNS = 12;
 
@@ -70,6 +76,9 @@ export interface BenchmarkHuntResult {
   readonly requestBlobs: readonly string[];
   readonly visibleContext: ReasonerVisibleContext;
   readonly reasonerCalls: number;
+  /** Count of RERUN_SAFE_REPRODUCTION calls that observed a mismatch. */
+  readonly reproductionCount: number;
+  readonly discriminatorObservation: VisibleReproObservation | null;
 }
 
 function envelope(source: UntrustedEnvelope['source'], digest: string, bytes: string): UntrustedEnvelope {
@@ -78,15 +87,33 @@ function envelope(source: UntrustedEnvelope['source'], digest: string, bytes: st
 
 /**
  * Default tool executor: serves only the pre-fix view, one blob per call in
- * fixed order (symptom, snapshot, repro, then repro repeats). It never sees
- * hidden ground truth — it is constructed from the visible context alone.
+ * fixed order (symptom, snapshot, repro, then repro repeats). RERUN_SAFE_REPRODUCTION
+ * runs the visible discriminator when present. It never sees hidden ground truth.
  */
-export function createPreFixViewExecutor(visible: ReasonerVisibleContext, caseId: string): AgentToolExecutor {
+export function createPreFixViewExecutor(
+  visible: ReasonerVisibleContext,
+  caseId: string,
+  discriminator: VisibleDiscriminator | null = null,
+): AgentToolExecutor {
   const blobs = [...visible.blobs];
   const kinds = ['DOCUMENTATION', 'SOURCE_CODE', 'DOCUMENTATION'] as const;
   let calls = 0;
   return {
-    async execute(_call: AgentToolCall): Promise<AgentToolResult> {
+    async execute(call: AgentToolCall): Promise<AgentToolResult> {
+      if (call.toolId === 'RERUN_SAFE_REPRODUCTION') {
+        if (discriminator === null) {
+          return { ok: true, resultClass: 'NOT_AVAILABLE', evidenceRefs: [], outputBytes: 0, untrusted: [] };
+        }
+        const observation = runVisibleDiscriminator(discriminator);
+        const bytes = stringifyVisibleRepro(observation);
+        return {
+          ok: true,
+          resultClass: observation.mismatch ? 'REPRODUCED' : 'NOT_REPRODUCED',
+          evidenceRefs: [`bench:${caseId}:repro:1`],
+          outputBytes: Buffer.byteLength(bytes, 'utf8'),
+          untrusted: [envelope('LOG', `bench:sha256:${caseId}:repro`, bytes)],
+        };
+      }
       const index = Math.min(calls, blobs.length - 1);
       calls += 1;
       const bytes = blobs[index] ?? '';
@@ -133,7 +160,7 @@ export async function runBenchmarkHunt(
     campaignId: `benchmark:${definedCase.caseId}`,
     budgetPolicy: ports.budgetPolicy ?? defaultBenchmarkBudgetPolicy(),
     reasoner: recording.driver,
-    tools: ports.tools ?? createPreFixViewExecutor(visible, definedCase.caseId),
+    tools: ports.tools ?? createPreFixViewExecutor(visible, definedCase.caseId, definedCase.preFix.discriminator ?? null),
     authorizedEnvironments: ['LOCAL'],
     maxTurns: ports.maxTurns ?? BENCHMARK_HUNT_MAX_TURNS,
   });
@@ -149,6 +176,15 @@ export async function runBenchmarkHunt(
   const candidateText = [...statements, ...candidateIds].join('\n');
   const admitted = candidateIds.length > 0;
   const score = scoreBenchmarkCandidate(candidateText, hidden, { proposed: admitted });
+  const reproductionCount = run.state.actionLog.filter(
+    (entry) => entry.toolId === 'RERUN_SAFE_REPRODUCTION' && entry.resultClass === 'REPRODUCED',
+  ).length;
+  const ranDiscriminator = run.state.actionLog.some(
+    (entry) =>
+      entry.toolId === 'RERUN_SAFE_REPRODUCTION' &&
+      (entry.resultClass === 'REPRODUCED' || entry.resultClass === 'NOT_REPRODUCED'),
+  );
+  const discriminator = definedCase.preFix.discriminator ?? null;
   return {
     caseId: definedCase.caseId,
     terminationReason: run.terminationReason,
@@ -161,5 +197,8 @@ export async function runBenchmarkHunt(
     requestBlobs: Object.freeze(requestBlobs),
     visibleContext: visible,
     reasonerCalls: run.state.budget.usage.reasonerCalls,
+    reproductionCount,
+    discriminatorObservation:
+      ranDiscriminator && discriminator !== null ? runVisibleDiscriminator(discriminator) : null,
   };
 }

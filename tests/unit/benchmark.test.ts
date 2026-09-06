@@ -21,6 +21,7 @@ import {
   type ReasonerTurnResponse,
 } from '../../src/core/agentProtocol';
 import { defaultBenchmarkBudgetPolicy, runBenchmarkHunt } from '../../src/core/benchmark/hunt';
+import { buildAutonomousFindingDossier } from '../../src/core/autonomousFinding';
 import { buildReasonerVisibleContext, defineBenchmarkCase } from '../../src/core/benchmark/case';
 import { explanationKeywords, parseFixDiffFiles, scoreBenchmarkCandidate } from '../../src/core/benchmark/score';
 import {
@@ -258,3 +259,120 @@ test.describe('benchmark scoring tiers', () => {
     }
   });
 });
+
+test.describe('visible discriminator reproduction', () => {
+  test('RERUN_SAFE_REPRODUCTION on billing observes a real mismatch', async () => {
+    const fixture = benchmarkFixtureById('bench-billing-rounding-001');
+    const stub = scriptDriver([
+      () =>
+        okTurn([
+          { kind: 'CALL_TOOL', toolId: 'RERUN_SAFE_REPRODUCTION', argumentDigest: CALL_DIGEST, arguments: {} },
+        ]),
+      () =>
+        okTurn([
+          {
+            kind: 'PROPOSE_CANDIDATE',
+            candidateId: 'c-repro-billing',
+            evidenceRefs: ['bench:bench-billing-rounding-001:repro:1'],
+          },
+          { kind: 'TERMINATE', reason: 'COMPLETE_WITH_FINDING' },
+        ]),
+    ]);
+    const result = await runBenchmarkHunt(fixture, { reasoner: stub.driver, budgetPolicy: defaultBenchmarkBudgetPolicy(), maxTurns: 4 });
+    expect(result.leaked).toEqual([]);
+    expect(result.reproductionCount).toBe(1);
+    expect(result.discriminatorObservation?.mismatch).toBe(true);
+    expect(result.admitted).toBe(true);
+  });
+
+  test('RERUN_SAFE_REPRODUCTION on the negative control does not reproduce a defect', async () => {
+    const fixture = benchmarkFixtureById('bench-negative-quiet-000');
+    const stub = scriptDriver([
+      () =>
+        okTurn([
+          { kind: 'CALL_TOOL', toolId: 'RERUN_SAFE_REPRODUCTION', argumentDigest: CALL_DIGEST, arguments: {} },
+        ]),
+      () => okTurn([{ kind: 'TERMINATE', reason: 'COMPLETE_NO_FINDING' }]),
+    ]);
+    const result = await runBenchmarkHunt(fixture, { reasoner: stub.driver, budgetPolicy: defaultBenchmarkBudgetPolicy(), maxTurns: 4 });
+    expect(result.reproductionCount).toBe(0);
+    expect(result.discriminatorObservation?.mismatch).toBe(false);
+    expect(result.admitted).toBe(false);
+  });
+
+  test('a proposed candidate without RERUN has reproductionCount 0', async () => {
+    const fixture = benchmarkFixtureById('bench-billing-rounding-001');
+    const stub = scriptDriver([
+      () =>
+        okTurn([
+          { kind: 'PROPOSE_CANDIDATE', candidateId: 'c-no-repro', evidenceRefs: ['ev:sha256:aaaaaaaaaaaaaaaaaaaaaaaa'] },
+          { kind: 'TERMINATE', reason: 'COMPLETE_WITH_FINDING' },
+        ]),
+    ]);
+    const result = await runBenchmarkHunt(fixture, { reasoner: stub.driver, budgetPolicy: defaultBenchmarkBudgetPolicy(), maxTurns: 3 });
+    expect(result.admitted).toBe(true);
+    expect(result.reproductionCount).toBe(0);
+  });
+
+  test('dossier builds only after a real mismatch reproduction', async () => {
+    const fixture = benchmarkFixtureById('bench-billing-rounding-001');
+    const stub = scriptDriver([
+      () =>
+        okTurn([
+          { kind: 'CALL_TOOL', toolId: 'RERUN_SAFE_REPRODUCTION', argumentDigest: CALL_DIGEST, arguments: {} },
+        ]),
+      () =>
+        okTurn([
+          {
+            kind: 'PROPOSE_CANDIDATE',
+            candidateId: 'c-repro-billing',
+            evidenceRefs: ['bench:bench-billing-rounding-001:repro:1'],
+          },
+          { kind: 'TERMINATE', reason: 'COMPLETE_WITH_FINDING' },
+        ]),
+    ]);
+    const hunt = await runBenchmarkHunt(fixture, { reasoner: stub.driver, budgetPolicy: defaultBenchmarkBudgetPolicy(), maxTurns: 4 });
+    expect(hunt.reproductionCount).toBeGreaterThanOrEqual(1);
+    const observation = hunt.discriminatorObservation;
+    expect(observation?.mismatch).toBe(true);
+    const dossier = buildAutonomousFindingDossier({
+      title: 'Captured invoice total disagrees with displayed line sum',
+      description: 'Visible ROUND_THEN_SUM discriminator observed captured !== displayed.',
+      recommendedSeverity: 'S3',
+      severityConfidence: 'MEDIUM',
+      severityRationale: 'Mismatch is one currency unit on a three-line basket.',
+      reproduction: 'RERUN_SAFE_REPRODUCTION on the visible ROUND_THEN_SUM discriminator.',
+      expected: 'captured total equals displayed line sum',
+      actual: `captured=${String(observation?.captured)} displayed=${String(observation?.displayed)}`,
+      evidenceRefs: ['bench:bench-billing-rounding-001:repro:1'],
+      environment: 'SYNTHETIC',
+      confidence: 'MEDIUM',
+      falsePositiveChecks: ['HEALTH_OK discriminator reports mismatch=false'],
+      reproductionCount: hunt.reproductionCount,
+      provenance: ['benchmark:bench-billing-rounding-001'],
+    });
+    expect(dossier.authority.humanReviewRequired).toBe(true);
+    expect(dossier.authority.externalPublication).toBe('PROHIBITED');
+    expect(dossier.reproductionCount).toBe(1);
+    expect(() =>
+      buildAutonomousFindingDossier({
+        title: 'Captured invoice total disagrees with displayed line sum',
+        description: 'Visible ROUND_THEN_SUM discriminator observed captured !== displayed.',
+        recommendedSeverity: 'S3',
+        severityConfidence: 'MEDIUM',
+        severityRationale: 'Mismatch is one currency unit on a three-line basket.',
+        reproduction: 'none',
+        expected: 'equal totals',
+        actual: 'unknown',
+        evidenceRefs: ['bench:bench-billing-rounding-001:repro:1'],
+        environment: 'SYNTHETIC',
+        confidence: 'MEDIUM',
+        falsePositiveChecks: ['none'],
+        reproductionCount: 0,
+        provenance: ['benchmark:bench-billing-rounding-001'],
+      }),
+    ).toThrow(/MISSING_REPRODUCTION_COUNT/);
+  });
+});
+
+

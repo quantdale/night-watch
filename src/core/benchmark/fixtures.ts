@@ -45,6 +45,7 @@ const FIXTURE_INPUTS: readonly BenchmarkCaseInput[] = [
         '1. Build a basket with three lines priced to produce fractional sub-cent amounts. ' +
         '2. Charge the basket and record the captured total. ' +
         '3. Sum the displayed line amounts and compare against the captured total.',
+      discriminator: { kind: 'ROUND_THEN_SUM', amounts: [10.125, 10.125, 10.125], scale: 100 },
     },
   },
   {
@@ -309,6 +310,7 @@ const FIXTURE_INPUTS: readonly BenchmarkCaseInput[] = [
         '1. Query the local health endpoint ten times. ' +
         '2. Confirm every response carries the expected version marker. ' +
         '3. Confirm no error responses were recorded.',
+      discriminator: { kind: 'HEALTH_OK', version: '1.0' },
     },
   },
 ];
