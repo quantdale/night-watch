@@ -51,7 +51,7 @@ export function tryDefineMinedBenchmarkCase(
     issueTitle: null,
     bugDescription: isolated(record.symptom, haystack),
     knownFailingTest: isolated(record.testsAdded[0] ?? null, haystack),
-    explanation: isolated(record.rootCause, haystack),
+    explanation: isolated(record.rootCause, haystack) ?? isolated(record.symptom, haystack),
   };
   const leaked = detectBenchmarkLeakage(
     {

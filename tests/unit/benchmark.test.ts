@@ -255,6 +255,13 @@ test.describe('benchmark scoring tiers', () => {
     expect(hit.fileHits).toBe(1);
     expect(hit.fileTotal).toBe(2);
     expect(hit.outcome).toBe('SAME_ROOT_CAUSE_ALTERNATE');
+    const baseHit = scoreBenchmarkCandidate('AwsRiUtilizationCharts.vue click index is wrong', minedHidden, {
+      visibleFiles: [
+        'src/views/RiUtilization/AwsRiUtilization/AwsRiUtilizationCharts.vue',
+        'src/other.ts',
+      ],
+    });
+    expect(baseHit.fileHits).toBe(1);
   });
 
 

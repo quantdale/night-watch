@@ -30,6 +30,15 @@ export function parseFixDiffFiles(fixDiff: string | null): readonly string[] {
   return files;
 }
 
+function candidateMentionsFile(lowered: string, file: string, files: readonly string[]): boolean {
+  if (file.length > 0 && lowered.includes(file.toLowerCase())) return true;
+  const base = file.split('/').pop() ?? '';
+  if (base.length <= 10) return false;
+  const unique = files.filter((item) => (item.split('/').pop() ?? '') === base).length === 1;
+  return unique && lowered.includes(base.toLowerCase());
+}
+
+
 /** Stopword-filtered lowercase tokens (length > 3) of an explanation. */
 export function explanationKeywords(explanation: string | null): readonly string[] {
   if (typeof explanation !== 'string' || explanation.length === 0) return [];
@@ -100,7 +109,7 @@ export function scoreBenchmarkCandidate(
     : (options?.visibleFiles ?? []).filter((file) => file.length > 0);
   let fileHits = 0;
   for (const file of files) {
-    if (file.length > 0 && lowered.includes(file.toLowerCase())) fileHits += 1;
+    if (candidateMentionsFile(lowered, file, files)) fileHits += 1;
   }
   const fileTotal = files.length;
   const fileRecall = fileTotal === 0 ? 1 : fileHits / fileTotal;

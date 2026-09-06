@@ -15,6 +15,7 @@ import { mineLocalGitHistory } from '../../src/core/bugAtlas';
 import {
   resolveMinedRepoPath,
   runBenchmarkHunt,
+  scoreBenchmarkCandidate,
   tryDefineMinedBenchmarkCase,
 } from '../../src/core/benchmark';
 import { DEFAULT_SIBLING_ROOT } from '../../src/core/source/siblingSource';
@@ -91,9 +92,16 @@ test('mined record becomes a leak-free pre-fix case on a local git fixture', asy
       repo,
     );
     expect(defined).not.toBeNull();
+    expect(defined!.hidden.explanation).toBe('fix off-by-one cart total');
     expect(defined!.preFix.sourceSnapshot).toContain('export const total = 101;');
     expect(defined!.preFix.sourceSnapshot).not.toContain(sha);
     expect(defined!.preFix.symptomReport).not.toContain('fix off-by-one');
+    const overlap = scoreBenchmarkCandidate('off-by-one cart total in total.ts', defined!.hidden, {
+      visibleFiles: ['total.ts'],
+    });
+    expect(overlap.fileHits).toBe(1);
+    expect(overlap.keywordRecall).toBeGreaterThan(0);
+    expect(overlap.outcome).not.toBe('MISS');
     const hunt = await runBenchmarkHunt(defined!, { reasoner: BLIND, maxTurns: 3 });
     expect(hunt.leaked).toEqual([]);
     expect(hunt.admitted).toBe(false);
