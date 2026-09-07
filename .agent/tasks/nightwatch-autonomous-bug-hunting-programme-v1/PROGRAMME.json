@@ -58,11 +58,25 @@
       "productPathVerdict": "REAL mined mobingilabs/ouchan 5985281b43cd replayed through runLocalCliCampaign with the real contained engine: REPRODUCED/PRE_FAIL_POST_PASS 72.7s, dossierStatus=VERIFIED_REPRODUCTION, reproductionCount=1 (forged draft 99 ignored), leak=[], siblingMutation=0"
     },
     "EFFICACY": {
-      "status": "planned",
+      "status": "integrated",
       "taskId": "nightwatch-autonomous-efficacy-real-local-substrate-v1",
       "role": "W8_AUTONOMOUS_EFFICACY_REAL_LOCAL_SUBSTRATE",
+      "worktree": "nightwatch-autonomous-bug-huntin-725fbbbe",
+      "branch": "session/nightwatch-autonomous-bug-huntin-725fbbbe",
       "baseSha": "4b3b183e07a9a348b8904f618a3bc35e4990df1c",
-      "objective": "Add bounded turn/campaign investigation memory, target diversity, mechanically grounded verification/reproduction readiness, and fixed-corpus/live-provider efficacy evidence on the already-proven W7 real local substrate without weakening W7 safety or admission."
+      "freezeSha": "87f0ded13e3d16b4130abeadfd95fa88aba04b61",
+      "workerShas": {
+        "memoryProof": "fe4033fa",
+        "campaignDiversity": "c33535a",
+        "promptAdapter": "20fbd08",
+        "efficacyDepth": "e1b3c087",
+        "leakageProof": "9352bac5"
+      },
+      "integrationSha": "3d624fbcc42da808ce1c7e9cbc6b780b82d90820",
+      "reviewVerdict": "ACCEPTED_AFTER_ORCHESTRATOR_DIFF_REVIEW_AND_POST_RECONCILE_RERUN",
+      "objective": "Add bounded turn/campaign investigation memory, target diversity, mechanically grounded verification/reproduction readiness, and fixed-corpus/live-provider efficacy evidence on the already-proven W7 real local substrate without weakening W7 safety or admission.",
+      "efficacyVerdict": "fixed corpus nightwatch.efficacy-corpus.v2 (13 cases, 2 negative controls), baseline -> final: unique source targets 13 -> 31, grounded hypotheses 0 -> 17, verification-ready 0 -> 17, grounded reproduction attempts 0 -> 17, mechanical reproductions 0 -> 6, admitted candidates 0 -> 6, disproved hypotheses 0 -> 6, VERIFIED_ROOT_CAUSE_REDISCOVERY 0 -> 3, false positives 0 -> 0, leaked cases 0 -> 0, EXACT 0 -> 0 unchanged; costs rose (reasoner calls 39 -> 102, tool actions 26 -> 67, stagnation terminations 0 -> 1)",
+      "liveProviderVerdict": "opencode-go/deepseek-v4-flash: leak-isolated historical proof reached VERIFIED_ROOT_CAUSE_REDISCOVERY with mechanical reproduction on 2 of 3 cases (negative control candidate-free, leaked=[] everywhere); two real owner-local campaigns explored distinct blue-sdk-go surfaces with grounded hypotheses and admitted nothing — the one live candidate was refused MISSING_REPRODUCTION"
     }
   },
   "proof": {
@@ -77,24 +91,25 @@
     "normalProductPathRealLocalSubstrate": "PROVEN — real owner-local source/System Map/mined Bug Atlas sensing plus shared deterministic reproduction and mechanical admission on `nightwatch-agent campaign run`; the REAL contained replay of mined ouchan 5985281b43cd through the product path yields REPRODUCED/PRE_FAIL_POST_PASS and dossierStatus=VERIFIED_REPRODUCTION with reproductionCount=1 and zero leakage (opt-in tests/unit/realHistoricalProductPathProof.test.ts)",
     "programmeIdentityValidation": "PASS bin/lib/programme-state.mjs in agent:check (duplicate lane keys rejected pre-parse)",
     "liveProviderRealSubstrateCampaign": "OpenCode Go, 8 investigations, 24 reasoner calls, 26 real tool actions, 0 provider failures, 595.5s, NO_PROGRESS, zero fabricated findings",
-    "w8AutonomousEfficacy": "NOT_YET_PROVEN"
+    "w8AutonomousEfficacy": "PROVEN_LOCAL_AND_LIVE_PROVIDER — bounded per-turn investigation memory + campaign strategy memory + mechanical verification/reproduction readiness raised the fixed 13-case corpus from 13xMISS/0 grounded hypotheses/0 reproductions/0 admitted to 3 PARTIAL + 5 SAME_ROOT_CAUSE with 17 grounded hypotheses, 17 grounded reproduction attempts, 6 mechanical reproductions, 6 admitted candidates, 3 VERIFIED_ROOT_CAUSE_REDISCOVERY, 0 false positives, 0 leaks and EXACT unchanged at 0; the live opencode-go historical proof reached VERIFIED_ROOT_CAUSE_REDISCOVERY on 2 of 3 cases; a live runtime waste defect (non-consecutive identical failed call re-executed) was reproduced and fixed at 3d624fb",
+    "w8LiveOwnerLocalCampaign": "opencode-go, 3 investigations, 28 reasoner calls, 23 tool actions, 0 provider failures, 795.5s, BUDGET_EXHAUSTED on the outputBytes ceiling; 10 distinct real blue-sdk-go targets, 5 grounded hypotheses, 1 candidate proposed and mechanically REFUSED (MISSING_REPRODUCTION); zero dossiers, zero fabricated findings"
   },
   "realWorld": {
     "LOCAL_AUTONOMOUS_CAPABILITY": "PROVEN_SYNTHETIC_AND_ONE_REAL_HISTORICAL_REPRODUCTION",
     "HISTORICAL_BUG_REDISCOVERY": "REPRODUCED_NOT_EXACT",
     "NORMAL_CAMPAIGN_REAL_LOCAL_SENSING": "PROVEN_LOCAL",
-    "AUTONOMOUS_EFFICACY_REAL_LOCAL_SUBSTRATE": "NOT_YET_PROVEN",
+    "AUTONOMOUS_EFFICACY_REAL_LOCAL_SUBSTRATE": "PROVEN_LOCAL_FIXED_CORPUS_AND_LIVE_PROVIDER",
     "REAL_DEV_NEXT_HUNT": "NOT_AUTHORIZED",
     "PREVIOUSLY_UNKNOWN_ALPHAUS_BUG": "NOT_YET_PROVEN",
     "LIVE_CLI_REASONER": "CONFIGURED_OPENCODE_GO_AFTER_GROK_402_AND_LUNA_QUOTA"
   },
   "blockers": [
-    "Autonomous efficacy on the real substrate is unproven: W7 live-provider campaigns sensed real source/Atlas data but terminated NO_PROGRESS without candidates",
     "DEV/NEXT execution not authorized (external)",
     "EXACT rediscovery unproven: no live hunt has named the hidden failing test; retain this strict metric but do not optimize the product solely around guessing hidden test paths",
+    "previously unknown Alphaus bug yield unproven: the one live owner-local candidate was mechanically refused for missing reproduction",
     "contained replay coverage remains limited across the historical corpus",
-    "no campaign has yet consumed a full HOUR_1 wall ceiling on a live provider"
+    "no campaign has yet consumed a full HOUR_1 wall ceiling on a live provider: both W8 live campaigns terminated on the cumulative outputBytes budget first"
   ],
-  "exactNextAction": "Execute W8 task nightwatch-autonomous-efficacy-real-local-substrate-v1 from live Git truth. Improve bounded reasoning memory, cross-investigation strategy, target diversity, verification/reproduction readiness, and measured live-provider efficacy. Do not re-plumb W7 sensing/reproduction/admission. DEV/NEXT remain unauthorized.",
-  "resumeRecipe": "Read .agent/tasks/nightwatch-autonomous-efficacy-real-local-substrate-v1/{SPEC,PLAN,STATE,REPORT}. Then read W7 nightwatch-real-local-investigation-substrate-v1 STATE/REPORT and the parent programme STATE/REPORT. Re-discover live git/workspace/session truth. W0-W7 are integrated; W8 owns efficacy, not substrate plumbing."
+  "exactNextAction": "W8 is integrated and certified at 3d624fbcc42da808ce1c7e9cbc6b780b82d90820. The parent programme remains IN_PROGRESS on its own criteria. Next candidate wave (requires a fresh task, not a continuation of W8): raise real owner-local yield toward a mechanically reproducible previously unknown defect — the current gap is that live reproduction attempts on non-historical owner-local source have no executable contained replay target, so grounded hypotheses cannot earn reproduction credit. Consider extending the deterministic reproduction provider to owner-local Go packages that already vendor dependencies, and widening the live budget's outputBytes ceiling so a full HOUR_1 endurance run is reachable. DEV/NEXT remain unauthorized.",
+  "resumeRecipe": "Read .agent/ACTIVE_TASK.md, then .agent/tasks/nightwatch-autonomous-efficacy-real-local-substrate-v1/{SPEC,PLAN,STATE,REPORT} for the W8 terminal evidence and W7 nightwatch-real-local-investigation-substrate-v1 STATE/REPORT for the substrate. Re-discover live git/workspace/session truth. W0-W8 are integrated and certified: do not re-plumb sensing, reproduction sharing, admission grounding, investigation memory or the efficacy harness."
 }

@@ -128,7 +128,7 @@
 
 
 - Decisions: Lane H merged into Lane A. System Atlas is an overlay on systemMap. `aiReview` remains end-stage. Fake/blind reasoners never count as rediscovery.
-- Safety events: NONE. No DEV/NEXT/production contact. No Slack/Leslie/Pondr. No sibling writes. No force-push.
+- Safety events: three during W8 execution — `_edit` calls intended for the session worktree resolved against the CANONICAL checkout (relative paths resolve from the process cwd). Each was detected immediately with `git status`, reverse-applied with `git apply -R` on that single self-authored path, and canonical was verified clean; no commit was ever created there. See the parent `STATE.md` `## Safety Events` and the W8 task `STATE.md`. No DEV/NEXT/production contact. No Slack/Leslie/Pondr. No sibling writes. No force-push.
 - Deferred items:
   - DEV/NEXT hunt; communication-evidence atlas.
   - Honest finding dossiers require a real reproduction (`reproductionCount >= 1`); auto-filling that from a proposal would be fabricated evidence.
@@ -169,6 +169,9 @@ Status: IN_PROGRESS
 - W3: seeded positive + false-anomaly + injection tests PASS; live Grok positive/negative hunts.
 - W4: sibling mine + pre-fix extraction + live Grok. Current-harness four-case set: 2 PARTIAL + 1 SAME_ROOT_CAUSE + 1 MISS. EXACT/reproduced NOT PROVEN.
 - W5: `campaign run` via `NIGHTWATCH_PRINT_CLI`; cwd always isolated. Empty LOCAL finds nothing. 1h endurance not run (historical EXACT unproven).
+- W6: contained historical replay + multi-investigation campaigns. Real mined ouchan `5985281b43cd` reproduced PRE_FAIL_POST_PASS with a dossier and leak=[].
+- W7: real local investigation substrate on the ordinary campaign path; one historical defect reproduced and mechanically admitted through the product path; live-provider efficacy still `NO_PROGRESS` with zero candidates.
+- W8: autonomous efficacy. Bounded per-turn investigation memory (`reasoner-turn-request.v2`), campaign strategy memory, mechanical hypothesis/reproduction readiness, exhausted-action guard, fixed-corpus before/after harness. Fixed corpus (13 cases, 2 negative controls) baseline -> final: 13x`MISS` -> 3 `PARTIAL` + 5 `SAME_ROOT_CAUSE` + 5 `MISS` + 0 `FALSE_POSITIVE`; grounded hypotheses 0 -> 17; mechanical reproductions 0 -> 6; admitted candidates 0 -> 6; `VERIFIED_ROOT_CAUSE_REDISCOVERY` 0 -> 3; false positives and leaks 0 -> 0; EXACT unchanged at 0. Live opencode-go historical proof: `VERIFIED_ROOT_CAUSE_REDISCOVERY` on 2 of 3 cases. Live real owner-local campaigns: diversified grounded progress, zero admitted findings, the single candidate refused for `MISSING_REPRODUCTION`. Certified at `3d624fbcc42da808ce1c7e9cbc6b780b82d90820`.
 
 
 
@@ -205,8 +208,9 @@ Status: IN_PROGRESS
 
 ## Real-world status
 
-- LOCAL AUTONOMOUS CAPABILITY: PROVEN_SYNTHETIC
-- HISTORICAL BUG REDISCOVERY: NOT PROVEN
+- LOCAL AUTONOMOUS CAPABILITY: PROVEN_SYNTHETIC_AND_ONE_REAL_HISTORICAL_REPRODUCTION
+- AUTONOMOUS EFFICACY ON THE REAL LOCAL SUBSTRATE: PROVEN_LOCAL_FIXED_CORPUS_AND_LIVE_PROVIDER (W8)
+- HISTORICAL BUG REDISCOVERY: REPRODUCED_NOT_EXACT (verified root-cause tier reached live; strict EXACT still 0)
 - REAL DEV/NEXT HUNT: NOT AUTHORIZED
 - PREVIOUSLY UNKNOWN ALPHAUS BUG: NOT YET PROVEN
 

@@ -1,11 +1,29 @@
 # PLAN — nightwatch-autonomous-efficacy-real-local-substrate-v1
 
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
-Status: IN_PROGRESS
+Status: COMPLETE
 Task: nightwatch-autonomous-efficacy-real-local-substrate-v1
 Parent programme: nightwatch-autonomous-bug-hunting-programme-v1
 Wave: W8
 Planned-From: 4b3b183e07a9a348b8904f618a3bc35e4990df1c
+
+
+## Milestone status (live)
+
+| Milestone | Status |
+|---|---|
+| M0 live truth + baseline capture | COMPLETE |
+| M1 freeze working-memory/readiness contracts | COMPLETE |
+| M2 runtime working memory | COMPLETE |
+| M3 cross-investigation strategy memory | COMPLETE |
+| M4 verification and reproduction readiness | COMPLETE |
+| M5 reasoner guidance / print adapter | COMPLETE |
+| M6 efficacy harness + historical fixed corpus | COMPLETE |
+| M7 independent integration review | COMPLETE |
+| M8 live-provider efficacy proof | COMPLETE |
+| M9 full certification and truthful closeout | COMPLETE |
+
+No live milestone remains open. Evidence is in `STATE.md` `## Validation Ledger` and `REPORT.md`.
 
 ## Purpose
 

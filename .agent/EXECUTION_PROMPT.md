@@ -13,6 +13,10 @@ Child task: `nightwatch-autonomous-efficacy-real-local-substrate-v1`
 Child task directory: `.agent/tasks/nightwatch-autonomous-efficacy-real-local-substrate-v1`
 Live HEAD: discover from Git; never trust a stale SHA in prose.
 
+## Handoff outcome
+
+This handoff's W8 assignment is DISCHARGED; the `Status` field above tracks the parent CAMPAIGN, which is still IN_PROGRESS. W8 was executed to its terminal criteria and integrated at `3d624fbcc42da808ce1c7e9cbc6b780b82d90820` (`origin/main` verified equal at that SHA). Evidence: `.agent/tasks/nightwatch-autonomous-efficacy-real-local-substrate-v1/{STATE,REPORT}.md`. The programme's remaining criteria are separate (previously unknown Alphaus defect yield, strict `EXACT_REDISCOVERY`, DEV/NEXT authorization); a next wave needs a fresh handoff and a fresh task directory. Everything below is the historical W8 assignment, retained as the record of what was authorized.
+
 ## Mission
 
 Continue the existing Nightwatch autonomous bug-hunting programme from its LIVE repository state. W0-W7 are already integrated. Do not repeat them.
