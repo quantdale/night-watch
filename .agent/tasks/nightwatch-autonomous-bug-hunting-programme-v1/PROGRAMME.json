@@ -52,10 +52,10 @@
         "context": "2604852",
         "replay": "153cb1d"
       },
-      "integrationSha": "20a6b9e044e56756c791a952aab9ed6b2e26d0cd",
+      "integrationSha": "e368f9255142d1b30dd66825d93f6f321ba6ecbf",
       "reviewVerdict": "ACCEPTED_AFTER_ORCHESTRATOR_DIFF_REVIEW_REPAIRS_AND_FULL_RERUN",
       "objective": "Unify the normal autonomous campaign path with real owner-local source, System Map, Bug Atlas, System Atlas, evidence and deterministic reproduction; mechanically ground dossier admission; prove one historical reproduced defect through the product path.",
-      "productPathVerdict": "VERIFIED_REPRODUCTION reproductionCount=1 leak=[] siblingMutation=0"
+      "productPathVerdict": "REAL mined mobingilabs/ouchan 5985281b43cd replayed through runLocalCliCampaign with the real contained engine: REPRODUCED/PRE_FAIL_POST_PASS 72.7s, dossierStatus=VERIFIED_REPRODUCTION, reproductionCount=1 (forged draft 99 ignored), leak=[], siblingMutation=0"
     }
   },
   "proof": {
@@ -67,7 +67,7 @@
     "localCliCampaign": "PASS tests/unit/localCampaign.test.ts (fake CLI)",
     "containedHistoricalReplay": "REPRODUCED mobingilabs/ouchan services/billingd/services/billingsvc — pre-fix FAIL exit 1, post-fix PASS exit 0, sibling repo unmutated",
     "minedReproductionWithDossier": "reproductionCount=1 hasDossier=true leaked=[] on mined-bugatlas-git-mobingilabs-ouchan-5985281b43cd (OpenCode Go, 8-turn ceiling)",
-    "normalProductPathRealLocalSubstrate": "PROVEN — real owner-local source/System Map/mined Bug Atlas sensing plus shared deterministic reproduction and mechanical admission on `nightwatch-agent campaign run`; product-path historical case yields dossierStatus=VERIFIED_REPRODUCTION with reproductionCount=1 and zero leakage",
+    "normalProductPathRealLocalSubstrate": "PROVEN — real owner-local source/System Map/mined Bug Atlas sensing plus shared deterministic reproduction and mechanical admission on `nightwatch-agent campaign run`; the REAL contained replay of mined ouchan 5985281b43cd through the product path yields REPRODUCED/PRE_FAIL_POST_PASS and dossierStatus=VERIFIED_REPRODUCTION with reproductionCount=1 and zero leakage (opt-in tests/unit/realHistoricalProductPathProof.test.ts)",
     "programmeIdentityValidation": "PASS bin/lib/programme-state.mjs in agent:check (duplicate lane keys rejected pre-parse)",
     "liveProviderRealSubstrateCampaign": "OpenCode Go, 8 investigations, 24 reasoner calls, 26 real tool actions, 0 provider failures, 595.5s, NO_PROGRESS, zero fabricated findings"
   },

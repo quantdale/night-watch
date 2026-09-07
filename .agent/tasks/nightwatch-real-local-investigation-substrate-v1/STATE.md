@@ -6,16 +6,16 @@ Task ID: nightwatch-real-local-investigation-substrate-v1
 Phase: W7_REAL_LOCAL_INVESTIGATION_SUBSTRATE
 Status: COMPLETE
 Starting SHA: 9cb2ec76cc026eed093e86d2758f795ff018ad8a
-Last validated implementation SHA: 06166f362491cab06a52cb378328e3178dddea62
-Last substantive checkpoint SHA: 06166f362491cab06a52cb378328e3178dddea62
+Last validated implementation SHA: e368f9255142d1b30dd66825d93f6f321ba6ecbf
+Last substantive checkpoint SHA: e368f9255142d1b30dd66825d93f6f321ba6ecbf
 Live HEAD authority: GIT
 Branch: session/nightwatch-autonomous-bug-huntin-725fbbbe
 Last checkpoint: W7 complete — real owner-local sensing, shared deterministic reproduction, and mechanical dossier admission run on the normal campaign path; full local and clean-clone certification passed
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 9cb2ec76cc026eed093e86d2758f795ff018ad8a
-LAST_VALIDATED_IMPLEMENTATION_SHA: 06166f362491cab06a52cb378328e3178dddea62
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 06166f362491cab06a52cb378328e3178dddea62
+LAST_VALIDATED_IMPLEMENTATION_SHA: e368f9255142d1b30dd66825d93f6f321ba6ecbf
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: e368f9255142d1b30dd66825d93f6f321ba6ecbf
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
 
@@ -38,7 +38,7 @@ COMPLETE — M0 through M9 are closed. W7 is finished; the parent programme rema
 - M6: `classifyVerifiedBenchmarkTier` adds `VERIFIED_ROOT_CAUSE_REDISCOVERY` (admitted + non-MISS score + mechanical reproduction + zero leakage) without touching EXACT constants or `scoreBenchmarkCandidate`.
 - M7: `tests/unit/realLocalCampaignPath.test.ts` drives `runLocalCliCampaign` with an out-of-process CLI reasoner over a leak-isolated historical pre-fix surface: index → selected read → hypothesis → shared reproduction (pre-fix FAIL / post-fix PASS) → proposal → candidate, ending in `dossierStatus=VERIFIED_REPRODUCTION`, `reproductionCount=1`, and captured request traffic containing the visible source canary but never the hidden test path, fix SHA, or replay stderr.
 - M8: bounded real-substrate campaigns executed through `bin/nightwatch-agent.mjs campaign run`: deterministic CLI (4 investigations, 12 tool actions, NO_PROGRESS) and live OpenCode Go (8 investigations, 24 reasoner calls, 26 tool actions, 0 provider failures, 595.5s, NO_PROGRESS). Neither fabricated a candidate or a dossier.
-- M9: full regression, typecheck, hardening/agent/project/workspace checks, `gate:local` FULL PASS (11/11 groups, receipt `receipt:sha256:8205a52e13f74763a855dc41`) and `gate:clean` PASS on Node 20 (inner receipt `receipt:sha256:c44ac4ba9ed23d2d5fbf6167`).
+- M9: full regression, typecheck, hardening/agent/project/workspace checks, `gate:local` FULL PASS (11/11 groups, receipt `receipt:sha256:85ace28cea2d1e5de2af9723`) and `gate:clean` PASS on Node 20 (inner receipt `receipt:sha256:c6f3ecdc4d45b7494d961272`).
 
 ## Work In Progress
 
@@ -107,7 +107,10 @@ Command: `npx playwright test tests/unit/localCampaign.test.ts tests/unit/reason
 Result: PASS — 52 passed (campaign integration).
 
 Command: `npx playwright test tests/unit/realLocalCampaignPath.test.ts`
-Result: PASS — product-path historical proof: `dossierStatus=VERIFIED_REPRODUCTION`, `reproductionCount=1`, zero hidden-truth leakage in captured reasoner requests.
+Result: PASS — hermetic product-path proof with an injected replay result: `dossierStatus=VERIFIED_REPRODUCTION`, `reproductionCount=1`, zero hidden-truth leakage in captured reasoner requests. This is the deterministic regression; the REAL-engine proof below is the load-bearing one.
+
+Command: `NIGHTWATCH_REAL_HISTORICAL_PROOF=1 npx playwright test tests/unit/realHistoricalProductPathProof.test.ts --project=nightwatch --workers=1`
+Result: PASS in 1.4m — the load-bearing architecture proof. A REAL mined Bug Atlas record (`bugatlas-git-mobingilabs-ouchan-5985281b43cd`, mined read-only from `mobingilabs/ouchan`) was isolated into a leak-free pre-fix case (4 visible files) and run through `runLocalCliCampaign` with NO replay stub: index -> selected `services/billingd/services/billingsvc/childbillinggroup.go` -> hypothesis -> `RERUN_SAFE_REPRODUCTION` -> proposal -> candidate. The shared provider executed `runContainedTestReplay`, which materialized disposable pre-fix/post-fix trees from read-only Git plumbing and returned `REPRODUCED / PRE_FAIL_POST_PASS` in 72.7s. Mechanical admission derived `reproductionCount=1` and ignored the draft's forged `reproductionCount: 99`; the dossier carries `humanReviewRequired=true`, `externalPublication=PROHIBITED`, source `childbillinggroup.go`, and no hidden test path. `detectBenchmarkLeakage` returned `[]` and every hidden field (fixCommit, fixDiff, bugDescription, knownFailingTest, explanation) was absent from all captured reasoner requests. Default-skip verified: the same file reports `1 skipped` without the env flag.
 
 Command: `node bin/nightwatch-agent.mjs campaign run --reasoner=cli --duration=1h --max-turns=6 --id=w7-owner-local-smoke` (deterministic CLI, real owner-local context)
 Result: 6 real tool actions — SOURCE_INDEX and SOURCE_FILE over `alphauslabs/blue-sdk-go`, real System Map COVERAGE_GAPS containing `mobingilabs/ouchan` source-fact operations, mined Bug Atlas records (`bugatlas-git-alphauslabs-blueapi-f71bc3757f84`), and an explicit System Atlas refusal that minted no evidence.
@@ -122,19 +125,19 @@ Command: `npm run typecheck`
 Result: PASS.
 
 Command: `npm test`
-Result: PASS — 4378 passed / 0 failed / 13 skipped after repairing the 27 checker-fixture failures caused by the new `bin/lib/programme-state.mjs` dependency (fixtures now copy it).
+Result: PASS — 4378 passed / 0 failed / 14 skipped after repairing the 27 checker-fixture failures caused by the new `bin/lib/programme-state.mjs` dependency (fixtures now copy it).
 
 Command: `npm run hardening:check`, `npm run workspace:check`, `npm run agent:check`, `npm run handoff:check`
 Result: PASS. `handoff:check` initially FAILED with `HANDOFF_HEADER_UNKNOWN_FIELD` / `HANDOFF_REQUIRED_FIELD_MISSING` — a pre-existing regression inherited from the W7 handoff commit `98abb37`; the header was restored to the protocol contract rather than the checker loosened.
 
 Command: `npm run gate:local`
-Result: FULL PASS 11/11 groups at `20a6b9e044e56756c791a952aab9ed6b2e26d0cd`, receipt `receipt:sha256:8205a52e13f74763a855dc41` (SEMANTIC_COMPATIBILITY 2067 passed / 0 failed, SYNTHETIC_CAMPAIGN 1194 passed / 0 failed, OWNER_PROVENANCE 91).
+Result: FULL PASS 11/11 groups at `e368f9255142d1b30dd66825d93f6f321ba6ecbf`, receipt `receipt:sha256:85ace28cea2d1e5de2af9723` (SEMANTIC_COMPATIBILITY 2067 passed / 0 failed, SYNTHETIC_CAMPAIGN 1194 passed / 0 failed, OWNER_PROVENANCE 91).
 
 Command: `npm run gate:clean`
-Result: PASS on Node 20 clean clone of `20a6b9e0...`; `installResult=PASS`, `gateResult=PASS`, inner receipt `receipt:sha256:c44ac4ba9ed23d2d5fbf6167`.
+Result: PASS on Node 20 clean clone of `e368f925...`; `installResult=PASS`, `gateResult=PASS`, inner receipt `receipt:sha256:c6f3ecdc4d45b7494d961272`.
 
 Command: sibling integrity check on `REPOSITORIES/mobingilabs/ouchan`
-Result: HEAD `565f00a87fb7616cc23c45d4ffeabee38a41c65f` unchanged, porcelain digest `e70962729e91fa4760c3878e4fbde1b02f99437c507de112f20f25625c82e04e` unchanged, single worktree. Zero sibling mutation.
+Result: HEAD `565f00a87fb7616cc23c45d4ffeabee38a41c65f` unchanged, porcelain digest `e70962729e91fa4760c3878e4fbde1b02f99437c507de112f20f25625c82e04e` unchanged, single worktree, both before and after the two real contained replays. The three stash entries are the owner's, all dated 2026-07-15, weeks before this session. Zero sibling mutation.
 
 ## Decisions Made During This Task
 
@@ -208,9 +211,9 @@ Task complete. Do not resume this task; the parent programme record `.agent/ACTI
 
 Completion status: COMPLETE
 Terminal criteria: MET for W7 as specified. The normal `nightwatch-agent campaign run` path consumes real owner-local source/System Map/Bug Atlas/System Atlas/evidence through shared fail-closed providers, executes the shared deterministic reproduction provider, and can only emit a dossier through the mechanical admission gate.
-Validated implementation checkpoint: 06166f362491cab06a52cb378328e3178dddea62
-Certified documentation descendant: 20a6b9e044e56756c791a952aab9ed6b2e26d0cd (planner-handoff header repair; gate receipts were observed at this SHA)
+Validated implementation checkpoint: e368f9255142d1b30dd66825d93f6f321ba6ecbf
+Intermediate documentation descendant: 20a6b9e044e56756c791a952aab9ed6b2e26d0cd (planner-handoff header repair; an earlier gate pass was observed there before the real-proof harness landed)
 Live head discovery: GIT
-Certification: `npm test` 4378 passed / 13 skipped; `npm run typecheck` PASS; hardening/workspace/agent/project/handoff checks PASS; `gate:local` FULL PASS receipt `receipt:sha256:8205a52e13f74763a855dc41`; `gate:clean` PASS on Node 20 inner receipt `receipt:sha256:c44ac4ba9ed23d2d5fbf6167`.
+Certification: `npm test` 4378 passed / 14 skipped; `npm run typecheck` PASS; hardening/workspace/agent/project/handoff checks PASS; `gate:local` FULL PASS receipt `receipt:sha256:85ace28cea2d1e5de2af9723`; `gate:clean` PASS on Node 20 inner receipt `receipt:sha256:c6f3ecdc4d45b7494d961272`.
 Product-path proof: one historical pre-fix defect reproduced through the ordinary campaign machinery (`dossierStatus=VERIFIED_REPRODUCTION`, `reproductionCount=1`) with zero hidden-ground-truth leakage and zero sibling mutation.
 Not claimed: previously unknown Alphaus bug discovery, EXACT rediscovery, DEV/NEXT execution, production contact, or parent programme completion.

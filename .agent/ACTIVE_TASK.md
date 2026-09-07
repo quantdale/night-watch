@@ -6,7 +6,7 @@ Title: Autonomous Bug-Hunting Programme
 Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-autonomous-bug-hunting-programme-v1
 Starting SHA: d1ebde90c1454b31d6b93d9df503a4c5f196d7c8
-Last validated implementation SHA: 06166f362491cab06a52cb378328e3178dddea62
+Last validated implementation SHA: e368f9255142d1b30dd66825d93f6f321ba6ecbf
 Last checkpoint: W7 real-local investigation substrate integrated and certified — the normal campaign path senses real owner-local source/System Map/Bug Atlas, shares the deterministic reproduction provider with the historical benchmark, and can only emit a dossier through the mechanical admission gate
 Current milestone: W8 — AUTONOMOUS EFFICACY ON THE REAL LOCAL SUBSTRATE
 Next action: Open a successor task that raises hypothesis/verification quality and reproduction targeting on the now-real substrate. Do not re-plumb sensing, reproduction sharing, or admission grounding (W7, integrated). Keep parent programme PARTIAL/IN_PROGRESS. DEV/NEXT unauthorized.
@@ -14,8 +14,8 @@ Authorization class: AUTONOMOUS_BUG_HUNTING_PROGRAMME_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: d1ebde90c1454b31d6b93d9df503a4c5f196d7c8
-LAST_VALIDATED_IMPLEMENTATION_SHA: 06166f362491cab06a52cb378328e3178dddea62
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 06166f362491cab06a52cb378328e3178dddea62
+LAST_VALIDATED_IMPLEMENTATION_SHA: e368f9255142d1b30dd66825d93f6f321ba6ecbf
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: e368f9255142d1b30dd66825d93f6f321ba6ecbf
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PHASE_AUTONOMOUS_BUG_HUNTING_PROGRAMME_V1_STATUS: IN_PROGRESS

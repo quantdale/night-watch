@@ -6,8 +6,8 @@ Task ID: nightwatch-autonomous-bug-hunting-programme-v1
 Phase: AUTONOMOUS_BUG_HUNTING_PROGRAMME_V1
 Status: IN_PROGRESS
 Starting SHA: d1ebde90c1454b31d6b93d9df503a4c5f196d7c8
-Last validated implementation SHA: 06166f362491cab06a52cb378328e3178dddea62
-Last substantive checkpoint SHA: 06166f362491cab06a52cb378328e3178dddea62
+Last validated implementation SHA: e368f9255142d1b30dd66825d93f6f321ba6ecbf
+Last substantive checkpoint SHA: e368f9255142d1b30dd66825d93f6f321ba6ecbf
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-autonomous-bug-huntin-725fbbbe
@@ -15,8 +15,8 @@ Last checkpoint: W7 real-local investigation substrate integrated and certified;
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: d1ebde90c1454b31d6b93d9df503a4c5f196d7c8
-LAST_VALIDATED_IMPLEMENTATION_SHA: 06166f362491cab06a52cb378328e3178dddea62
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 06166f362491cab06a52cb378328e3178dddea62
+LAST_VALIDATED_IMPLEMENTATION_SHA: e368f9255142d1b30dd66825d93f6f321ba6ecbf
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: e368f9255142d1b30dd66825d93f6f321ba6ecbf
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
 
@@ -39,7 +39,7 @@ What is being attempted: autonomous efficacy on the now-real local substrate —
 - W5 bounded HOUR_1 campaigns executed on the real CLI path; provider fallback exercised.
 - W6 integrated contained historical replay and multi-investigation campaigns.
 - W6 real historical proof: `mobingilabs/ouchan` fix `5985281b43cd` reproduced as PRE_FAIL_POST_PASS; mined hunt reached VERIFY, earned `reproductionCount=1`, built a dossier, and leaked no hidden truth.
-- W7 integrated: real owner-local sensing plus shared deterministic reproduction plus mechanical dossier admission on the ordinary `nightwatch-agent campaign run` path; product-path historical case reached `dossierStatus=VERIFIED_REPRODUCTION` with `reproductionCount=1`, zero leakage, zero sibling mutation; durable programme identity machine-validated. Implementation checkpoint `06166f362491cab06a52cb378328e3178dddea62` (`npm test` 4378 passed); certification observed at documentation descendant `20a6b9e044e56756c791a952aab9ed6b2e26d0cd`: `gate:local` FULL PASS `receipt:sha256:8205a52e13f74763a855dc41`, `gate:clean` PASS `receipt:sha256:c44ac4ba9ed23d2d5fbf6167`.
+- W7 integrated: real owner-local sensing plus shared deterministic reproduction plus mechanical dossier admission on the ordinary `nightwatch-agent campaign run` path; product-path historical case reached `dossierStatus=VERIFIED_REPRODUCTION` with `reproductionCount=1`, zero leakage, zero sibling mutation; durable programme identity machine-validated. Implementation checkpoint `e368f9255142d1b30dd66825d93f6f321ba6ecbf` (`npm test` 4378 passed); certification observed at `e368f9255142d1b30dd66825d93f6f321ba6ecbf`: `gate:local` FULL PASS `receipt:sha256:85ace28cea2d1e5de2af9723`, `gate:clean` PASS `receipt:sha256:c6f3ecdc4d45b7494d961272`.
 
 ## Work In Progress
 
