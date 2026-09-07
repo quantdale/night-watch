@@ -5,6 +5,7 @@ import type { BugAtlasStore } from '../bugAtlas/store';
 import type { SourceScanLanguage } from '../source/scanTypes';
 import type { SystemAtlasOverlay } from '../systemAtlas/overlay';
 import type { SystemMapInput } from '../systemMap/projections';
+import type { OwnerLocalCurrentSourceProof } from './currentSourceProof';
 
 export const LOCAL_INVESTIGATION_CONTEXT_VERSION = 'nightwatch.local-investigation-context.v1' as const;
 export const LOCAL_INVESTIGATION_HISTORY_VERSION = 'nightwatch.local-investigation-history.v1' as const;
@@ -71,7 +72,20 @@ export interface LocalEvidenceProvider {
   get(evidenceRef: string): Promise<LocalProviderResult<LocalEvidenceRecord>>;
 }
 
-export type LocalReproductionVerdict = 'REPRODUCED' | 'NOT_REPRODUCED' | 'ENVIRONMENT_BLOCKED' | 'NOT_AVAILABLE';
+/**
+ * Reproduction verdicts. The first four are the frozen W7 set. W9 adds
+ * `REPRODUCED_CURRENT_FAILURE` (current owner-local source failed a
+ * pre-existing repository check repeatably — explicitly WEAKER than the
+ * historical pre-fix/post-fix discriminator, and never interchangeable with
+ * it) and `INCONCLUSIVE` (executed but produced no usable classification).
+ */
+export type LocalReproductionVerdict =
+  | 'REPRODUCED'
+  | 'NOT_REPRODUCED'
+  | 'ENVIRONMENT_BLOCKED'
+  | 'NOT_AVAILABLE'
+  | 'REPRODUCED_CURRENT_FAILURE'
+  | 'INCONCLUSIVE';
 export type LocalReproductionSignal = 'PASS' | 'FAIL' | 'BLOCKED' | 'NOT_RUN';
 
 export interface LocalReproductionRequest {
@@ -91,6 +105,12 @@ export interface LocalReproductionProviderResult {
   readonly provenanceRefs: readonly string[];
   readonly preFix: LocalReproductionSignal;
   readonly postFix: LocalReproductionSignal;
+  /**
+   * W9: present only when the provider mechanically proved a repeatable
+   * current-source failure. Minted by the provider; a model can never reach
+   * this field. Absent/null on every historical and blocked result.
+   */
+  readonly currentSourceProof?: OwnerLocalCurrentSourceProof | null;
   /** Harness-side only. Tool sessions must never place this value in reasoner traffic. */
   readonly audit: unknown;
 }
@@ -134,6 +154,8 @@ export interface LocalReproductionReceipt {
   readonly preFix: LocalReproductionSignal;
   readonly postFix: LocalReproductionSignal;
   readonly provenanceRefs: readonly string[];
+  /** W9: carried verbatim from the provider result. Absent on W7/W8 receipts. */
+  readonly currentSourceProof?: OwnerLocalCurrentSourceProof | null;
 }
 
 export interface LocalFindingProposal {

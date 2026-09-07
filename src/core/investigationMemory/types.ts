@@ -73,12 +73,30 @@ export const HYPOTHESIS_PROGRESS_STATES = [
 ] as const;
 export type HypothesisProgress = (typeof HYPOTHESIS_PROGRESS_STATES)[number];
 
-/** Neutral reproduction readiness. Never names a hidden test, fix or replay coordinate. */
+/**
+ * Neutral reproduction readiness. Never names a hidden test, fix, replay
+ * coordinate, command string, absolute path or provider audit detail.
+ *
+ * The first four values are the frozen W8 grounding ladder (does this
+ * investigation even hold the (path, evidenceRef, grounded hypothesis) triple
+ * the host demands before it will run anything). W9 appends the OWNER-LOCAL
+ * EXECUTION states: once grounding exists, a stateless reasoner still needs
+ * to know whether an executable target exists, whether its prerequisites are
+ * blocked, whether an attempt already refused deterministically, whether a
+ * transient failure still has retry budget, and whether the current source
+ * already reproduced or already ran clean.
+ */
 export const REPRODUCTION_READINESS_STATES = [
   'NOT_READY_NO_INSPECTED_SOURCE',
   'NOT_READY_NO_SOURCE_EVIDENCE',
   'NOT_READY_NO_GROUNDED_HYPOTHESIS',
   'READY',
+  'NOT_READY_NO_EXECUTABLE_TARGET',
+  'NOT_READY_TARGET_BLOCKED',
+  'REFUSED_DETERMINISTIC',
+  'TRANSIENT_RETRY_REMAINING',
+  'CURRENT_FAILURE_REPRODUCED',
+  'RAN_WITHOUT_REPRODUCING',
 ] as const;
 export type ReproductionReadiness = (typeof REPRODUCTION_READINESS_STATES)[number];
 

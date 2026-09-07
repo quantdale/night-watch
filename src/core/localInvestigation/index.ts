@@ -59,3 +59,22 @@ export {
   type HistoricalReplayAudit,
   type HistoricalReproductionProviderOptions,
 } from './historical';
+export {
+  CURRENT_SOURCE_DISCRIMINATOR_ORIGINS,
+  CURRENT_SOURCE_FAILURE_CLASSES,
+  CURRENT_SOURCE_PROOF_KINDS,
+  FAILURE_FINGERPRINT_PREFIX,
+  MIN_CURRENT_SOURCE_EXECUTIONS,
+  OWNER_LOCAL_CURRENT_SOURCE_PROOF_VERSION,
+  QUALIFYING_CURRENT_SOURCE_DISCRIMINATOR_ORIGIN,
+  QUALIFYING_CURRENT_SOURCE_FAILURE_CLASS,
+  TARGET_DIGEST_PREFIX,
+  isQualifyingCurrentSourceProof,
+  validateCurrentSourceProof,
+  type CurrentSourceDiscriminatorOrigin,
+  type CurrentSourceFailureClass,
+  type CurrentSourceProofExpectations,
+  type CurrentSourceProofKind,
+  type CurrentSourceProofRefusal,
+  type OwnerLocalCurrentSourceProof,
+} from './currentSourceProof';

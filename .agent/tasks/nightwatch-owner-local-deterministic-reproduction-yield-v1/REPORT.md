@@ -30,21 +30,26 @@ The accepted open gap is current owner-local reproduction: a grounded live hypot
 
 ## Evidence ledger
 
-No W9 implementation evidence yet. Populate from observed commands/results only.
+### M0 diagnosis
 
-Required final evidence includes:
+- Live Git/session: canonical main was clean and 22 commits behind live `origin/main`; it was fast-forwarded to `2886a85e3b3ceeabd05f4e291dc9cbc47b0d0bd9`. Dedicated C-00 worktree `session/nightwatch-owner-local-determini-47add5e3` was created/claimed at that base.
+- REAL_LOCAL reproduction gap: CONFIRMED. The ordinary CLI passes zero options to `createOwnerLocalInvestigationContext()`, which installs `unavailable-local-reproduction`; its `run()` returns `BLOCKED / NOT_CONFIGURED`, the tool session returns `ADAPTER_UNAVAILABLE`, no reproduction receipt exists, and `admitLocalFinding` returns `MISSING_REPRODUCTION`.
+- Byte audit: CONFIRMED double counting. `AgentRuntime.runTurn` charged transport `stdoutBytes + stderrBytes`, then charged the validated `call.response` serialized from that same stdout. Tool output was also charged before the 16 KiB untrusted-envelope cap. HOUR_1 stayed at 2,000,000 output bytes pending repair/calibration.
+- Exhaustion audit: CONFIRMED over-broad. Every executor `ok:false` collapsed to `TOOL_ERROR`, while `detectExhaustedAction` marked any matching `TOOL_ERROR` permanently exhausted. Transient file races, stale-HEAD reads and provider throws therefore became terminal. The validator also accepted model-supplied regex-shaped argument digests without recomputation.
+- Offline class recon: Go 1.25.3 host + cached Go 1.25.8 toolchain; `mobingilabs/ouchan` vendors 418 modules. A 63 MiB disposable dependency/test closure ran with `GOPROXY=off`, `GOTOOLCHAIN=local`, `-mod=vendor`. `pkg/gcsv`'s pre-existing `TestGolangCsv` failed twice at the same `info_test.go:557` assertion (cold 53.3s, warm 2.2s). This is a candidate qualifying current-source failure, not a claim of previously unknown defect.
 
-- live M0 reproduction-gap trace;
-- byte-accounting baseline and any proved double counting/amplification;
-- frozen W9 target/receipt/failure-disposition contracts;
-- fabricated/disposable provider corpus results;
-- real owner-local supported-package execution;
-- deterministic/transient retry evidence;
-- sibling integrity before/after success/failure/timeout;
-- live subscribed reasoner campaign using the provider;
-- post-calibration HOUR_1 policy/endurance evidence;
-- focused + full regression + local/clean gate results;
-- exact implementation/documentation/origin SHAs.
+### M1 frozen contracts
+
+- `nightwatch.owner-local-reproduction-target.v1`: only `GO_VENDORED_PACKAGE_TEST`; host-derived structured module/package/source identity; no command/env/executable input; hard materialization, execution, output, file, byte and repeat ceilings.
+- `nightwatch.owner-local-current-source-proof.v1`: explicit `CURRENT_SOURCE_REPEATED_TEST_FAILURE`; only `PRE_EXISTING_REPOSITORY_TEST + TEST_ASSERTION_FAILURE + >=2 fresh identical fingerprints + siblingIdentityStable + networkDisabled` can qualify. Historical PRE_FAIL_POST_PASS remains distinct.
+- Host-owned action disposition: `DETERMINISTIC_TERMINAL | ENVIRONMENT_BLOCKED | TRANSIENT_RETRYABLE`; transient budget fixed at 2.
+- `nightwatch.agent-byte-ledger.v1`: request, memory, untrusted prompt, stdout, stderr, parsed response, tool result and tool envelope buckets; parsed response measured but not charged twice.
+- Additive reasoner-visible readiness: no target, target blocked, ready, deterministic refusal, transient retry remaining, current failure reproduced, ran without reproduction.
+- Validation after pinned local dependency install: W9 contract suite 6/6 PASS; `npm run typecheck` PASS.
+
+### Intermediate failure
+
+The first M1 checks ran before `node_modules` existed in the new worktree. `npx` used external/global tools: Playwright could not resolve `@playwright/test`; global TypeScript rejected the repository's legacy `moduleResolution=node10`. This was an environment/setup failure, not hidden. `npm ci --ignore-scripts` installed the lockfile-pinned dependencies; unchanged checks then passed.
 
 ## Truth constraints
 

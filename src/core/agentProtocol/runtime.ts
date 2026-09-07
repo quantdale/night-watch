@@ -68,6 +68,91 @@ export interface AgentBudgetSnapshot {
   readonly usage: AgentBudgetUsage;
 }
 
+/**
+ * W9 frozen vocabulary: host-owned disposition of a FAILED tool action.
+ *
+ * W8 collapsed every `ok:false` executor result into one `TOOL_ERROR` class
+ * and treated any repeat of that fingerprint as permanently exhausted. That
+ * is correct for a deterministic refusal (malformed arguments, unapproved
+ * path, ungrounded reproduction) and wrong for a transient one (a file
+ * rotated between index and read, a provider that threw on a filesystem
+ * race, a stale-HEAD re-check). The disposition is set by the EXECUTOR, never
+ * by the reasoner and never derived from model-supplied argument text.
+ */
+export const ACTION_FAILURE_DISPOSITIONS = [
+  'DETERMINISTIC_TERMINAL',
+  'ENVIRONMENT_BLOCKED',
+  'TRANSIENT_RETRYABLE',
+] as const;
+export type ActionFailureDisposition = (typeof ACTION_FAILURE_DISPOSITIONS)[number];
+
+/**
+ * Strict finite retry budget for one action fingerprint whose failures are
+ * classified transient. Exceeding it exhausts the fingerprint exactly like a
+ * deterministic refusal, so a flapping environment cannot spin forever.
+ */
+export const TRANSIENT_ACTION_RETRY_BUDGET = 2 as const;
+
+export const AGENT_BYTE_LEDGER_VERSION = 'nightwatch.agent-byte-ledger.v1' as const;
+
+/**
+ * W9 component byte accounting. `AgentBudgetUsage` keeps the two frozen
+ * cumulative totals that budget policy compares; this ledger explains where
+ * they came from and additionally MEASURES payloads that are deliberately not
+ * charged (so a ceiling decision can be justified from evidence).
+ *
+ * Charged into `usage.inputBytes`:  requestBytes.
+ * Charged into `usage.outputBytes`: providerStdoutBytes + providerStderrBytes
+ *                                   + toolResultBytes.
+ * Measured only: requestMemoryBytes and requestUntrustedBytes (subsets of
+ * requestBytes), parsedResponseBytes (the same document already charged as
+ * provider stdout — charging it again was the W8 double count), and
+ * toolEnvelopeBytes (what actually crossed to the reasoner after truncation).
+ */
+export interface AgentByteLedger {
+  readonly schemaVersion: typeof AGENT_BYTE_LEDGER_VERSION;
+  readonly requestBytes: number;
+  readonly requestMemoryBytes: number;
+  readonly requestUntrustedBytes: number;
+  readonly providerStdoutBytes: number;
+  readonly providerStderrBytes: number;
+  readonly parsedResponseBytes: number;
+  readonly toolResultBytes: number;
+  readonly toolEnvelopeBytes: number;
+}
+
+export const ZERO_AGENT_BYTE_LEDGER: AgentByteLedger = Object.freeze({
+  schemaVersion: AGENT_BYTE_LEDGER_VERSION,
+  requestBytes: 0,
+  requestMemoryBytes: 0,
+  requestUntrustedBytes: 0,
+  providerStdoutBytes: 0,
+  providerStderrBytes: 0,
+  parsedResponseBytes: 0,
+  toolResultBytes: 0,
+  toolEnvelopeBytes: 0,
+});
+
+/** Component-wise sum. Used to fold per-investigation ledgers into a campaign total. */
+export function addAgentByteLedgers(a: AgentByteLedger, b: AgentByteLedger): AgentByteLedger {
+  return {
+    schemaVersion: AGENT_BYTE_LEDGER_VERSION,
+    requestBytes: a.requestBytes + b.requestBytes,
+    requestMemoryBytes: a.requestMemoryBytes + b.requestMemoryBytes,
+    requestUntrustedBytes: a.requestUntrustedBytes + b.requestUntrustedBytes,
+    providerStdoutBytes: a.providerStdoutBytes + b.providerStdoutBytes,
+    providerStderrBytes: a.providerStderrBytes + b.providerStderrBytes,
+    parsedResponseBytes: a.parsedResponseBytes + b.parsedResponseBytes,
+    toolResultBytes: a.toolResultBytes + b.toolResultBytes,
+    toolEnvelopeBytes: a.toolEnvelopeBytes + b.toolEnvelopeBytes,
+  };
+}
+
+/** The exact charged-output identity every accounting test asserts. */
+export function chargedOutputBytes(ledger: AgentByteLedger): number {
+  return ledger.providerStdoutBytes + ledger.providerStderrBytes + ledger.toolResultBytes;
+}
+
 export const ZERO_AGENT_BUDGET_USAGE: AgentBudgetUsage = Object.freeze({
   wallTimeMs: 0,
   reasonerCalls: 0,
@@ -140,6 +225,12 @@ export interface AgentActionRecord {
    * what it found. Never raw source text.
    */
   readonly salient?: readonly string[];
+  /**
+   * W9: host-owned disposition of a FAILED action. Absent on successes and on
+   * pre-W9 checkpoints (absence is read as DETERMINISTIC_TERMINAL, preserving
+   * W8 exhaustion behavior exactly).
+   */
+  readonly disposition?: ActionFailureDisposition | null;
 }
 
 export interface AgentRuntimeState {
@@ -158,6 +249,11 @@ export interface AgentRuntimeState {
    * ordered, capped by the runtime. Empty on pre-W8 checkpoints.
    */
   readonly knownTargets: readonly string[];
+  /**
+   * W9: component byte accounting explaining `budget.usage.inputBytes` and
+   * `budget.usage.outputBytes`. Absent on pre-W9 checkpoints.
+   */
+  readonly byteLedger?: AgentByteLedger;
   readonly terminationReason: string | null;
 }
 

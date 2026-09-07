@@ -36,7 +36,7 @@ Required evidence:
 - byte ledger from a bounded deterministic/live campaign;
 - source references showing current failure semantics.
 
-Status: NOT_STARTED
+Status: COMPLETE — live Git/session/provider truth re-established; zero-argument REAL_LOCAL campaign wiring was traced to the `NOT_CONFIGURED` reproduction provider; successful reasoner responses were proved double-charged (raw stdout plus parsed-response serialization); untruncated tool payloads were proved charged beyond the capped reasoner envelope; generic `TOOL_ERROR` exhaustion was proved to collapse transient provider/filesystem failures; and an offline vendored Go class was proved viable on `mobingilabs/ouchan` using the cached Go 1.25.8 toolchain.
 
 ### M1 — Freeze W9 shared contracts
 
@@ -59,7 +59,7 @@ Acceptance:
 - no authority broadening;
 - historical W7/W8 receipt/admission behavior remains compatible.
 
-Status: NOT_STARTED
+Status: COMPLETE — `nightwatch.owner-local-reproduction-target.v1`, `nightwatch.owner-local-current-source-proof.v1`, explicit execution/failure classes, host-owned failure dispositions with a two-attempt transient budget, `nightwatch.agent-byte-ledger.v1`, and additive owner-local readiness states frozen. Six pure contract tests and TypeScript typecheck pass.
 
 ### M2 — Owner-local target discovery + disposable execution
 
