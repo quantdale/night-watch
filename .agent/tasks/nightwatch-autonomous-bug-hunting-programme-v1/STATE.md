@@ -11,7 +11,7 @@ Last substantive checkpoint SHA: e368f9255142d1b30dd66825d93f6f321ba6ecbf
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-autonomous-bug-huntin-725fbbbe
-Last checkpoint: W7 real-local investigation substrate integrated and certified; parent programme still IN_PROGRESS on efficacy
+Last checkpoint: W7 real-local investigation substrate integrated/certified; W8 autonomous-efficacy successor task created and handed off
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: d1ebde90c1454b31d6b93d9df503a4c5f196d7c8
@@ -27,111 +27,120 @@ Deliver a locally executable autonomous bug-hunting programme above the existing
 ## Current Milestone
 
 Milestone ID: W8
-Milestone status: NOT_STARTED
-What is being attempted: autonomous efficacy on the now-real local substrate — better hypothesis/verification loops and reproduction targeting so live campaigns can earn candidates instead of terminating NO_PROGRESS. Sensing, reproduction sharing, and admission grounding are DONE (W7) and must not be re-plumbed. DEV/NEXT remain unauthorized. Do not declare the parent programme COMPLETE.
+Milestone status: IN_PROGRESS
+Child task: `nightwatch-autonomous-efficacy-real-local-substrate-v1`
+Child task directory: `.agent/tasks/nightwatch-autonomous-efficacy-real-local-substrate-v1`
+
+What is being attempted: autonomous efficacy on the now-real local substrate — bounded turn/campaign reasoning memory, target diversity, better evidence-grounded hypotheses, verification/reproduction readiness, and measured fixed-corpus/live-provider improvement so campaigns stop wasting budget on repetitive `NO_PROGRESS` behavior.
+
+Sensing, reproduction sharing, and admission grounding are DONE in W7 and are not W8 plumbing work unless live recon finds a concrete regression. DEV/NEXT remain unauthorized. Do not declare the parent programme COMPLETE.
 
 ## Completed Milestones
 
-- M0 recon: HEAD `d1ebde90c1454b31d6b93d9df503a4c5f196d7c8` == origin/main at programme start.
-- W0 protocol freeze integrated at `b3a780816c111399026844615b8b915899cf7156`.
-- W1 lanes A–G independently reviewed and integrated.
-- Seeded positive / false-anomaly / injection loop tests 3/3.
-- W5 bounded HOUR_1 campaigns executed on the real CLI path; provider fallback exercised.
-- W6 integrated contained historical replay and multi-investigation campaigns.
-- W6 real historical proof: `mobingilabs/ouchan` fix `5985281b43cd` reproduced as PRE_FAIL_POST_PASS; mined hunt reached VERIFY, earned `reproductionCount=1`, built a dossier, and leaked no hidden truth.
-- W7 integrated: real owner-local sensing plus shared deterministic reproduction plus mechanical dossier admission on the ordinary `nightwatch-agent campaign run` path; product-path historical case reached `dossierStatus=VERIFIED_REPRODUCTION` with `reproductionCount=1`, zero leakage, zero sibling mutation; durable programme identity machine-validated. Implementation checkpoint `e368f9255142d1b30dd66825d93f6f321ba6ecbf` (`npm test` 4378 passed); certification observed at `e368f9255142d1b30dd66825d93f6f321ba6ecbf`: `gate:local` FULL PASS `receipt:sha256:85ace28cea2d1e5de2af9723`, `gate:clean` PASS `receipt:sha256:c6f3ecdc4d45b7494d961272`.
+- M0 programme recon at `d1ebde90c1454b31d6b93d9df503a4c5f196d7c8`.
+- W0 protocol freeze integrated.
+- W1 lanes A-G integrated.
+- Seeded positive / false-anomaly / injection loop proofs integrated.
+- W5 bounded subscribed-CLI campaigns exercised provider fallback.
+- W6 contained historical replay + multi-investigation campaigns integrated.
+- W6 real historical proof: `mobingilabs/ouchan` fix `5985281b43cd` reproduced PRE_FAIL_POST_PASS; mined hunt reached VERIFY, earned `reproductionCount=1`, built a dossier, leak=[].
+- W7 real-local substrate COMPLETE and integrated: ordinary campaign path uses real owner-local source/System Map/Bug Atlas/System Atlas/evidence providers, product/benchmark share deterministic reproduction/provider semantics, final dossier admission is mechanical, and durable programme identity is machine-validated.
+- W7 load-bearing product-path proof: real mined ouchan case replayed through `runLocalCliCampaign` with the real contained engine, `REPRODUCED / PRE_FAIL_POST_PASS`, `dossierStatus=VERIFIED_REPRODUCTION`, mechanically derived `reproductionCount=1`, zero hidden-truth leakage, zero sibling mutation.
+- W7 certification at implementation checkpoint `e368f9255142d1b30dd66825d93f6f321ba6ecbf`: `npm test` 4378 passed / 0 failed / 14 skipped; typecheck/hardening/workspace/agent/project/handoff PASS; `gate:local` FULL PASS 11/11 receipt `receipt:sha256:85ace28cea2d1e5de2af9723`; `gate:clean` PASS Node 20 inner receipt `receipt:sha256:c6f3ecdc4d45b7494d961272`.
 
 ## Work In Progress
 
-None in flight. W7 closed the product/benchmark substrate split that blocked credible general autonomous hunting.
+W8 is active at M0. No W8 implementation is accepted yet.
 
-What remains open for the programme:
+The honest efficacy baseline that motivates W8 remains:
 
-- Efficacy: live-provider campaigns now sense real source/System Map/mined Bug Atlas data but still terminate `NO_PROGRESS` with zero candidates (OpenCode Go: 8 investigations, 24 reasoner calls, 26 tool actions, 0 provider failures, 595.5s).
-- Strict `EXACT_REDISCOVERY` remains 0 and deliberately unchanged; the additive `VERIFIED_ROOT_CAUSE_REDISCOVERY` tier exists but does not replace it.
-- Historical mined corpus remains 28 cases with one mechanically reproduced defect.
-- No literal full-hour live-provider soak has been consumed; this stays secondary to efficacy.
-- DEV/NEXT and previously unknown Alphaus bug yield remain out of scope/unauthorized.
+- live OpenCode Go on the W7 real substrate;
+- 8 investigations;
+- 24 reasoner calls;
+- 26 tool actions;
+- 0 provider failures;
+- ~595.5s;
+- termination `NO_PROGRESS`;
+- zero candidates / zero dossiers.
+
+Likely causes to verify during W8 recon include stateless per-turn request context and insufficient cross-investigation strategic memory. These are hypotheses, not pre-approved conclusions.
 
 ## Exact Next Action
 
-Open a W8 successor task focused on autonomous efficacy over the real local substrate: hypothesis quality, verification targeting, and reproduction selection. Do not re-plumb sensing/reproduction/admission (W7, integrated and certified). Keep the parent programme IN_PROGRESS/PARTIAL. DEV/NEXT unauthorized.
+Execute `.agent/tasks/nightwatch-autonomous-efficacy-real-local-substrate-v1/{SPEC,PLAN,STATE,REPORT}.md` from live Git/workspace/session truth. Begin at M0 baseline capture, freeze W8 memory/readiness interfaces at M1, then continue through M9 integration, live-provider proof and certification. Do not re-plumb W7 sensing/reproduction/admission. DEV/NEXT unauthorized.
 
-## Files Changed
+## Files Changed / programme surfaces
 
-| Path | Reason | Status |
+| Path | Purpose | Status |
 |---|---|---|
-| `src/core/agentProtocol/**` | Frozen cross-lane contracts | integrated |
-| `src/core/policy/ownerScope.ts` | `AUTONOMOUS_AGENT_LOCAL` | integrated |
-| `.agent/tasks/nightwatch-autonomous-bug-hunting-programme-v1/**` | Parent continuity | in progress |
-| `.agent/tasks/nightwatch-real-local-investigation-substrate-v1/**` | W7 task continuity | in progress |
+| `src/core/agentProtocol/**` | existing frozen/autonomous contracts; W8 may evolve additively if required | integrated baseline |
+| `src/core/agentRuntime/**` | runtime/campaign; W8 efficacy target | active W8 scope |
+| `src/core/localInvestigation/**` | W7 real provider/reproduction/admission substrate | integrated; preserve |
+| `src/core/benchmark/**` | historical efficacy measurement / strict EXACT + verified tier | active W8 measurement scope |
+| `.agent/tasks/nightwatch-real-local-investigation-substrate-v1/**` | W7 terminal evidence | COMPLETE |
+| `.agent/tasks/nightwatch-autonomous-efficacy-real-local-substrate-v1/**` | W8 SPEC/PLAN/STATE/REPORT | IN_PROGRESS |
+| `.agent/ACTIVE_TASK.md`, `.agent/EXECUTION_PROMPT.md` | W8 handoff | IN_PROGRESS |
 
-## Validation Ledger
+## Current proof ledger
 
-Command: session start/claim
-Result: PASS — programme worktree `nightwatch-autonomous-bug-huntin-725fbbbe`, session `sess-d9ba4a6459ef`, base `d1ebde90c1454b31d6b93d9df503a4c5f196d7c8` at programme start.
+W7 proven:
 
-Command: `npm run typecheck`
-Result: PASS on the Wave-5 tree at documentation descendant `ab658ebe800d10ff92d0198eac3efebc13fdeba6`, whose implementation content was unchanged from `fe919b2cc1fcd3dc79062f336185647c3225a99a`.
+- real product-path sensing;
+- shared deterministic reproduction;
+- mechanical final admission;
+- zero hidden-truth leakage in the real historical proof;
+- zero sibling mutation;
+- strict `EXACT_REDISCOVERY` unchanged and still 0;
+- additive `VERIFIED_ROOT_CAUSE_REDISCOVERY` exists;
+- full local/clean certification passed.
 
-Command: `npm test` (full regression)
-Result: PASS on that Wave-5 tree — 4288 passed, 0 failed, 13 skipped, 8.1m. Later Wave-6 certification recorded 4315 passed / 0 failed / 13 skipped.
+Not yet proven:
 
-Command: `npm run hardening:check`, `npm run project:check`, `npm run workspace:check`
-Result: PASS at the last certified implementation state.
+- W8 bounded turn working memory;
+- W8 cross-investigation strategy memory;
+- material target-diversity / grounded-hypothesis improvement;
+- live-provider verified-root-cause rediscovery under the W8 reasoning loop;
+- previously unknown Alphaus bug yield;
+- DEV/NEXT/production behavior;
+- parent programme completion.
 
-Command: `npm run agent:check`
-Result: earlier continuity failures were repaired rather than relabelled. Final pre-W7 state PASS with advisory warnings. W7 must rerun after its own documentation/code changes.
+## Decisions
 
-Command: `npm run gate:local`
-Result: Wave-6 FULL PASS 11/11 at certified implementation SHA `3476d264f0b37be8c84246df247ac932e49c711e`; receipt recorded in parent REPORT. W7 must obtain a fresh gate after implementation.
+Decision: W8 is efficacy, not substrate plumbing.
+Reason: W7 already mechanically proved the normal product path can sense, reproduce and admit safely; the live reasoner still stalls without candidates.
 
-Command: `npm run gate:clean`
-Result: Wave-6 PASS on a Node 20 fresh clone at the certified implementation state. W7 must obtain a fresh clean-clone gate after implementation.
+Decision: preserve strict `EXACT_REDISCOVERY` separately from mechanically meaningful verified root-cause reproduction.
+Reason: lowering EXACT would hide rather than solve the efficacy problem.
 
-## Decisions Made During This Task
+Decision: require fixed-corpus before/after metrics and negative controls.
+Reason: more actions/tokens do not by themselves prove better investigation.
 
-Decision: Merge Lane H into Lane A.
-Reason: Checkpoint/budget/observability must not fork.
-
-Decision: System Atlas overlay rather than mutating systemMap kinds.
-Reason: C-15b fact-category contracts stay stable.
-
-Decision: W7 prioritizes real product-path sensing/reproduction over forcing strict EXACT=1 or a literal one-hour soak.
-Reason: the product/benchmark capability split is now the highest-value blocker to a credible general autonomous bug hunter.
-
-Decision: Preserve strict `EXACT_REDISCOVERY` and add a separate mechanically meaningful verified root-cause/reproduction tier rather than lowering the strict metric.
-Reason: naming a hidden regression-test path is useful but is not identical to independently identifying and mechanically proving the defect.
-
-## Discoveries
-
-- Pre-existing review-operations worktree/session remains foreign to this campaign and must not be touched.
-- Parent `PROGRAMME.json` previously reused the `E` key for W1 System Atlas and W6 multi-investigation; ordinary JSON parsing would discard one record. Documentation repair is applied; machine enforcement is W7 work.
-- Generic product tool semantics and historical benchmark tool semantics are not yet proven equivalent; W7 owns convergence.
+Decision: freeze shared W8 memory/readiness contracts before parallel writes.
+Reason: overlapping runtime/campaign/prompt changes can otherwise fork semantics and invalidate efficacy measurements.
 
 ## Blockers
 
-None for locally executable W7 work. External provider quota/account blocks may affect live-model proof but do not authorize premature completion while deterministic/local work remains.
+No known blocker to M0-M7 deterministic/local W8 work. Live-provider quota/account availability may block M8; such a block does not authorize false completion while other work remains executable.
 
 ## Safety Events
 
-NONE recorded through W6. W7 inherits the same prohibitions.
+NONE recorded for the W8 planning handoff.
 
 ## Deferred / Follow-Up
 
 - DEV/NEXT hunt unauthorized.
 - Communication-evidence atlas population unauthorized.
-- Previously unknown Alphaus bug yield unproven.
-- Full-hour live-provider endurance remains useful after the real local substrate is wired.
-- Historical replay coverage beyond currently executable cases remains follow-up unless required for the W7 shared provider proof.
+- Previously unknown Alphaus bug yield remains unproven.
+- Literal full-hour live-provider endurance remains secondary to W8 efficacy and can follow once the reasoning loop demonstrates useful progress.
 
 ## Resume Recipe
 
 1. Read `.agent/ACTIVE_TASK.md` and `.agent/EXECUTION_PROMPT.md`.
-2. Read `.agent/tasks/nightwatch-real-local-investigation-substrate-v1/{SPEC,PLAN,STATE,REPORT}`.
-3. Read parent PROGRAMME/STATE/REPORT and discover live Git/workspace/session truth.
-4. Do not repeat W0-W6. Execute W7 to terminal criteria.
+2. Read `.agent/tasks/nightwatch-autonomous-efficacy-real-local-substrate-v1/{SPEC,PLAN,STATE,REPORT}.md`.
+3. Read W7 `nightwatch-real-local-investigation-substrate-v1/{STATE,REPORT}.md` and parent PROGRAMME/REPORT.
+4. Discover live Git/workspace/session truth.
+5. Execute W8 M0-M9; do not repeat W0-W7 or declare completion at an intermediate milestone.
 
 ## Completion Snapshot
 
-Parent programme not complete. Populate only when its full terminal criteria are independently satisfied.
+Parent programme not complete. W8 has only been planned/handed off; populate W8 and parent completion evidence only after observed terminal criteria are met.
