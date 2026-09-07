@@ -296,6 +296,10 @@ test.describe('visible discriminator reproduction', () => {
     const stub = scriptDriver([
       () =>
         okTurn([
+          { kind: 'CALL_TOOL', toolId: 'INSPECT_SOURCE_SURFACE', argumentDigest: CALL_DIGEST, arguments: { path: 'visible-context.md' } },
+        ]),
+      () =>
+        okTurn([
           { kind: 'CALL_TOOL', toolId: 'RERUN_SAFE_REPRODUCTION', argumentDigest: CALL_DIGEST, arguments: {} },
         ]),
       () =>
@@ -321,6 +325,10 @@ test.describe('visible discriminator reproduction', () => {
   test('RERUN_SAFE_REPRODUCTION on the negative control does not reproduce a defect', async () => {
     const fixture = benchmarkFixtureById('bench-negative-quiet-000');
     const stub = scriptDriver([
+      () =>
+        okTurn([
+          { kind: 'CALL_TOOL', toolId: 'INSPECT_SOURCE_SURFACE', argumentDigest: CALL_DIGEST, arguments: { path: 'visible-context.md' } },
+        ]),
       () =>
         okTurn([
           { kind: 'CALL_TOOL', toolId: 'RERUN_SAFE_REPRODUCTION', argumentDigest: CALL_DIGEST, arguments: {} },
@@ -352,6 +360,10 @@ test.describe('visible discriminator reproduction', () => {
   test('dossier builds only after a real mismatch reproduction', async () => {
     const fixture = benchmarkFixtureById('bench-billing-rounding-001');
     const stub = scriptDriver([
+      () =>
+        okTurn([
+          { kind: 'CALL_TOOL', toolId: 'INSPECT_SOURCE_SURFACE', argumentDigest: CALL_DIGEST, arguments: { path: 'visible-context.md' } },
+        ]),
       () =>
         okTurn([
           { kind: 'CALL_TOOL', toolId: 'RERUN_SAFE_REPRODUCTION', argumentDigest: CALL_DIGEST, arguments: {} },
@@ -413,6 +425,10 @@ test.describe('visible discriminator reproduction', () => {
     for (const caseId of ['bench-frontend-cache-004', 'bench-regression-redirect-007'] as const) {
       const fixture = benchmarkFixtureById(caseId);
       const stub = scriptDriver([
+        () =>
+          okTurn([
+            { kind: 'CALL_TOOL', toolId: 'INSPECT_SOURCE_SURFACE', argumentDigest: CALL_DIGEST, arguments: { path: 'visible-context.md' } },
+          ]),
         () =>
           okTurn([
             { kind: 'CALL_TOOL', toolId: 'RERUN_SAFE_REPRODUCTION', argumentDigest: CALL_DIGEST, arguments: {} },
@@ -479,7 +495,7 @@ test('INSPECT_SOURCE_SURFACE with a path returns that pre-fix file only', async 
   expect(result.leaked).toEqual([]);
   const traffic = result.requestBlobs.join('\n');
   expect(traffic).toContain('src/keep.ts');
-  expect(traffic).toContain('export const other = 2;');
+  expect(traffic).toContain('src/other.ts');
   expect(traffic).toContain('const KEEP_ONLY = true;');
   expect(traffic).not.toContain('const OTHER_ONLY = true;');
   expect(traffic).not.toContain('unique-hidden-diff-token-xyz');

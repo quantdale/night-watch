@@ -705,7 +705,7 @@ test.describe('mined replay executor wiring', () => {
     const { root } = repoRoot();
     try {
       for (const [verdict, mapped] of [
-        ['ENVIRONMENT_BLOCKED', 'NOT_AVAILABLE'],
+        ['ENVIRONMENT_BLOCKED', 'ENVIRONMENT_BLOCKED'],
         ['INCONCLUSIVE', 'NOT_REPRODUCED'],
         ['NOT_REPRODUCED', 'NOT_REPRODUCED'],
       ] as const) {
@@ -764,6 +764,10 @@ test.describe('mined replay hunt isolation', () => {
       expect(defined.minedReplay?.testPath).toBe('total.test.ts');
       const caseId = defined.caseId;
       const driver = scriptDriver([
+        () =>
+          okTurn([
+            { kind: 'CALL_TOOL', toolId: 'INSPECT_SOURCE_SURFACE', argumentDigest: CALL_DIGEST, arguments: { path: 'total.ts' } },
+          ]),
         () =>
           okTurn([
             {

@@ -1,14 +1,21 @@
 // ---------------------------------------------------------------------------
-// Lane F: historical replay hunt. Builds the pre-fix reasoner view, runs a
-// hunt through the injected Lane A AgentRuntime / ReasonerDriver ports, then
-// scores the outcome against hidden truth.
+// W7 replay lane: historical replay hunt through the shared local-
+// investigation provider contract. Builds the leak-isolated pre-fix
+// reasoner view, serves it through historical source/reproduction
+// adapters behind createLocalInvestigationToolSession, runs the hunt
+// through the injected AgentRuntime / ReasonerDriver ports, then scores
+// against hidden truth.
 //
-// Ground-truth isolation: the reasoner only ever receives pre-fix blobs via
-// the visible context and the pre-fix tool executor. A leak-guard wrapper
-// records every serialized reasoner request (request side only — reasoner
-// outputs are never attributed to the harness) and the hunt asserts clean
-// with the frozen assertNoBenchmarkLeakage after run. Any leak throws
-// BENCHMARK_GROUND_TRUTH_LEAK:* instead of returning a score.
+// Ground-truth isolation: the reasoner only ever receives pre-fix blobs
+// via the visible context and the shared session executor. Hidden replay
+// coordinates, fix diffs, test paths, assertion text, and harness-side
+// stderr never enter reasoner requests or envelopes. A leak-guard wrapper
+// records every serialized reasoner request (request side only) and the
+// hunt asserts clean with the frozen assertNoBenchmarkLeakage after run.
+// Any leak throws BENCHMARK_GROUND_TRUTH_LEAK:* instead of returning
+// a score. File grounding is required before provider execution:
+// RERUN_SAFE_REPRODUCTION runs only for an already-inspected sourcePath
+// plus its observed source evidence ref.
 // ---------------------------------------------------------------------------
 
 import {
@@ -25,17 +32,18 @@ import {
   type AgentTerminationReason,
   type ReasonerDriver,
   type ReasonerTurnRequest,
-  type UntrustedEnvelope,
 } from '../agentProtocol';
-import { UNTRUSTED_ENVELOPE_VERSION } from '../agentProtocol/untrusted';
 import { AgentRuntime, type AgentToolCall, type AgentToolExecutor, type AgentToolResult } from '../agentRuntime';
+import { UNTRUSTED_ENVELOPE_VERSION } from '../agentProtocol/untrusted';
 import type { AutonomousFindingDossier } from '../autonomousFinding';
-import { DEFAULT_SIBLING_ROOT } from '../source/siblingSource';
-import { buildReasonerVisibleContext, type DefinedBenchmarkCase } from './case';
-import { resolveMinedRepoPath } from './minedCases';
+import { createLocalInvestigationToolSession } from '../localInvestigation/session';
 import {
-  runContainedTestReplay,
-  stringifyMinedReplayVerdict,
+  createHistoricalLocalInvestigationContext,
+  createHistoricalReproductionProvider,
+  historicalVisiblePaths,
+} from '../localInvestigation/historical';
+import { buildReasonerVisibleContext, type DefinedBenchmarkCase } from './case';
+import {
   type ContainedTestReplayRequest,
   type ContainedTestReplayResult,
   type ContainedTestReplayVerdict,
@@ -46,7 +54,6 @@ import { tryBuildMinedReplayDossier, tryBuildVisibleHuntDossier } from './huntDo
 import { scoreBenchmarkCandidate, type BenchmarkScore } from './score';
 import {
   runVisibleDiscriminator,
-  stringifyVisibleRepro,
   type VisibleDiscriminator,
   type VisibleReproObservation,
 } from './visibleRepro';
@@ -140,13 +147,15 @@ export interface MinedReplayExecutorOptions {
   readonly audit?: { current: MinedReplayAudit | null };
 }
 
-function envelope(source: UntrustedEnvelope['source'], digest: string, bytes: string): UntrustedEnvelope {
-  return { schemaVersion: UNTRUSTED_ENVELOPE_VERSION, trust: 'UNTRUSTED', source, digest, bytes };
-}
 /**
- * Default tool executor: serves the pre-fix view. INSPECT_SOURCE_SURFACE with a
- * path returns that file when the snapshot is `--- path` chunks; otherwise blobs
- * stay sequential. RERUN_SAFE_REPRODUCTION runs the visible discriminator.
+ * Compatibility wrapper over the shared historical providers and tool
+ * session. New code should build a historical context and a tool session
+ * directly; this shim exists so existing direct-executor callers keep
+ * working while the hunt itself runs through the shared session path.
+ * INSPECT_SOURCE_SURFACE delegates to the session executor (bounded
+ * index / single approved file). RERUN_SAFE_REPRODUCTION executes
+ * through the shared historical reproduction provider with the same
+ * grounding gate, neutral observations, and harness-side audit.
  */
 export function createPreFixViewExecutor(
   visible: ReasonerVisibleContext,
@@ -154,156 +163,106 @@ export function createPreFixViewExecutor(
   discriminator: VisibleDiscriminator | null = null,
   options: MinedReplayExecutorOptions = {},
 ): AgentToolExecutor {
-  const blobs = [...visible.blobs];
-  const kinds = ['DOCUMENTATION', 'SOURCE_CODE', 'DOCUMENTATION'] as const;
-  const files = parsePreFixSnapshotFiles(blobs[1] ?? '');
-  let calls = 0;
-  const neutralReplayResult = (
-    resultClass: 'REPRODUCED' | 'NOT_REPRODUCED' | 'NOT_AVAILABLE',
-  ): AgentToolResult => {
-    // Fixed template: verdict token only. File names, diffs, commit
-    // messages, and assertion text cannot reach reasoner context here.
-    const bytes = stringifyMinedReplayVerdict(resultClass);
-    return {
-      ok: true,
-      resultClass,
-      evidenceRefs: [`bench:${caseId}:repro:1`],
-      outputBytes: Buffer.byteLength(bytes, 'utf8'),
-      untrusted: [envelope('LOG', `bench:sha256:${caseId}:repro`, bytes)],
-    };
-  };
-  const unavailable = (): AgentToolResult => ({
-    ok: true,
-    resultClass: 'NOT_AVAILABLE',
-    evidenceRefs: [],
-    outputBytes: 0,
-    untrusted: [],
+  const visibleFiles = historicalVisiblePaths(visible);
+  const session = createLocalInvestigationToolSession(
+    createHistoricalLocalInvestigationContext({
+      visible,
+      caseId,
+      discriminator,
+      minedReplay: options.minedReplay ?? null,
+      repositoriesRoot: options.repositoriesRoot,
+      runReplay: options.runReplay,
+      hasGrounding: options.hasGrounding,
+      auditBox: options.audit,
+    }),
+  );
+  const reproduction = createHistoricalReproductionProvider({
+    caseId,
+    visibleFiles,
+    discriminator,
+    minedReplay: options.minedReplay ?? null,
+    repositoriesRoot: options.repositoriesRoot,
+    runReplay: options.runReplay,
+    hasGrounding: options.hasGrounding,
+    auditBox: options.audit,
   });
   return {
     async execute(call: AgentToolCall): Promise<AgentToolResult> {
-      if (call.toolId === 'RERUN_SAFE_REPRODUCTION') {
-        if (discriminator !== null) {
-          const observation = runVisibleDiscriminator(discriminator);
-          const bytes = stringifyVisibleRepro(observation);
-          return {
-            ok: true,
-            resultClass: observation.mismatch ? 'REPRODUCED' : 'NOT_REPRODUCED',
-            evidenceRefs: [`bench:${caseId}:repro:1`],
-            outputBytes: Buffer.byteLength(bytes, 'utf8'),
-            untrusted: [envelope('LOG', `bench:sha256:${caseId}:repro`, bytes)],
-          };
-        }
-        const mined = options.minedReplay ?? null;
-        if (mined === null) return unavailable();
-        // Anti-inflation gate: no named pre-fix file, no replay.
-        let grounded = true;
-        try {
-          grounded = options.hasGrounding ? options.hasGrounding() : true;
-        } catch {
-          grounded = false;
-        }
-        if (!grounded) {
-          if (options.audit) {
-            options.audit.current = {
-              grounded: false,
-              repoResolved: false,
-              verdict: null,
-              reason: 'GATE_REFUSED_NO_FILE_GROUNDING',
-              durationMs: null,
-              timedOut: null,
-              stderrHead: null,
-            };
-          }
-          return unavailable();
-        }
-        const repoPath = resolveMinedRepoPath(options.repositoriesRoot ?? DEFAULT_SIBLING_ROOT, mined.repository);
-        if (repoPath === null) {
-          if (options.audit) {
-            options.audit.current = {
-              grounded: true,
-              repoResolved: false,
-              verdict: null,
-              reason: 'REPO_UNRESOLVED',
-              durationMs: null,
-              timedOut: null,
-              stderrHead: null,
-            };
-          }
-          return unavailable();
-        }
-        try {
-          const replay = options.runReplay ?? runContainedTestReplay;
-          const result = await replay({
-            repoPath,
-            fixCommit: mined.fixCommit,
-            testPath: mined.testPath,
-            packageDir: mined.packageDir,
-          });
-          if (options.audit) {
-            options.audit.current = {
-              grounded: true,
-              repoResolved: true,
-              verdict: result.verdict,
-              reason: result.reason,
-              durationMs: result.durationMs,
-              timedOut: result.preFix.timedOut || result.postFix.timedOut,
-              stderrHead: result.stderrHead,
-            };
-          }
-          if (result.verdict === 'REPRODUCED') return neutralReplayResult('REPRODUCED');
-          if (result.verdict === 'ENVIRONMENT_BLOCKED') return unavailable();
-          return neutralReplayResult('NOT_REPRODUCED');
-        } catch {
-          if (options.audit) {
-            options.audit.current = {
-              grounded: true,
-              repoResolved: true,
-              verdict: null,
-              reason: 'REPLAY_EXECUTOR_FAILED',
-              durationMs: null,
-              timedOut: null,
-              stderrHead: null,
-            };
-          }
-          return unavailable();
-        }
+      if (call.toolId === 'INSPECT_SOURCE_SURFACE') {
+        return session.executor.execute(call);
       }
-      if (call.toolId === 'INSPECT_SOURCE_SURFACE' && files.size > 0) {
-        const requested = typeof call.arguments.path === 'string' ? call.arguments.path : '';
-        const body = files.get(requested);
-        if (body !== undefined) {
-          return {
-            ok: true,
-            resultClass: 'PREFIX_FILE',
-            evidenceRefs: [`bench:${caseId}:file:${requested}`],
-            outputBytes: Buffer.byteLength(body, 'utf8'),
-            untrusted: [envelope('SOURCE_CODE', `bench:sha256:${caseId}:file`, body)],
-          };
+      if (call.toolId === 'RERUN_SAFE_REPRODUCTION') {
+        if (discriminator === null && (options.minedReplay ?? null) !== null && options.hasGrounding) {
+          let grounded = true;
+          try {
+            grounded = options.hasGrounding();
+          } catch {
+            grounded = false;
+          }
+          if (!grounded) {
+            if (options.audit) {
+              options.audit.current = {
+                grounded: false,
+                repoResolved: false,
+                verdict: null,
+                reason: 'GATE_REFUSED_NO_FILE_GROUNDING',
+                durationMs: null,
+                timedOut: null,
+                stderrHead: null,
+              };
+            }
+            return { ok: true, resultClass: 'NOT_AVAILABLE', evidenceRefs: [], outputBytes: 0, untrusted: [] };
+          }
         }
-        const listing = [...files.entries()]
-          .map(([name, body]) => {
-            const first = body.split('\n').find((line) => line.trim().length > 0) ?? '';
-            return `${name}\n${first.slice(0, 200)}`;
-          })
-          .join('\n---\n');
+        const args = call.arguments as Record<string, unknown>;
+        const fallbackPath = visibleFiles[0] ?? null;
+        const sourcePath =
+          typeof args['sourcePath'] === 'string' && (args['sourcePath'] as string).length > 0
+            ? (args['sourcePath'] as string)
+            : (fallbackPath ?? '');
+        const sourceEvidenceRef =
+          typeof args['sourceEvidenceRef'] === 'string' && (args['sourceEvidenceRef'] as string).length > 0
+            ? (args['sourceEvidenceRef'] as string)
+            : `bench:${caseId}:file:${sourcePath}`;
+        const outcome = await reproduction.run({
+          reproductionId: typeof args['reproductionId'] === 'string' ? (args['reproductionId'] as string) : `bench:${caseId}:repro:1`,
+          candidateId: typeof args['candidateId'] === 'string' ? (args['candidateId'] as string) : null,
+          sourcePath,
+          sourceEvidenceRef,
+          observedEvidenceRefs: Array.isArray(args['observedEvidenceRefs'])
+            ? (args['observedEvidenceRefs'] as unknown[]).filter(
+                (item): item is string => typeof item === 'string',
+              )
+            : [],
+        });
+        if (outcome.status === 'BLOCKED') {
+          return { ok: false, resultClass: 'ADAPTER_UNAVAILABLE', evidenceRefs: [], outputBytes: 0, untrusted: [] };
+        }
+        const value = outcome.value;
+        if (value.verdict === 'NOT_AVAILABLE') {
+          return { ok: true, resultClass: 'NOT_AVAILABLE', evidenceRefs: [], outputBytes: 0, untrusted: [] };
+        }
+        if (value.verdict === 'ENVIRONMENT_BLOCKED') {
+          return { ok: true, resultClass: 'ENVIRONMENT_BLOCKED', evidenceRefs: [], outputBytes: 0, untrusted: [] };
+        }
+        const bytes = JSON.stringify(value.reasonerVisible);
         return {
           ok: true,
-          resultClass: 'PREFIX_INDEX',
-          evidenceRefs: [`bench:${caseId}:index`],
-          outputBytes: Buffer.byteLength(listing, 'utf8'),
-          untrusted: [envelope('DOCUMENTATION', `bench:sha256:${caseId}:index`, listing)],
+          resultClass: value.verdict,
+          evidenceRefs: value.evidenceRef ? [value.evidenceRef] : [],
+          outputBytes: Buffer.byteLength(bytes, 'utf8'),
+          untrusted: [
+            {
+              schemaVersion: UNTRUSTED_ENVELOPE_VERSION,
+              trust: 'UNTRUSTED',
+              source: 'LOG',
+              digest: `bench:sha256:${caseId}:repro`,
+              bytes,
+            },
+          ],
         };
       }
-      const index = Math.min(calls, blobs.length - 1);
-      calls += 1;
-      const bytes = blobs[index] ?? '';
-      return {
-        ok: true,
-        resultClass: 'PREFIX_VIEW',
-        evidenceRefs: [`bench:${caseId}:prefix-view:${index}`],
-        outputBytes: Buffer.byteLength(bytes, 'utf8'),
-        untrusted: [envelope(kinds[index] ?? 'DOCUMENTATION', `bench:sha256:${caseId}:${index}`, bytes)],
-      };
+      return session.executor.execute(call);
     },
   };
 }
@@ -336,43 +295,72 @@ export async function runBenchmarkHunt(
   const hidden: HiddenGroundTruth = definedCase.hidden;
   const visible = buildReasonerVisibleContext(definedCase);
   const recording = createLeakRecordingDriver(ports.reasoner);
-  // Mined-case contained replay: the default executor carries the hidden
-  // replay descriptor. The file-grounding gate reads the live runtime
-  // snapshot through this box (populated before the first turn runs).
+  // Historical product-path context: leak-isolated pre-fix visible
+  // source plus the hidden mined replay coordinates closed over by the
+  // shared reproduction provider. Atlas/evidence stay explicit BLOCKED.
   const minedDescriptor = definedCase.minedReplay ?? null;
   const minedAuditBox: { current: MinedReplayAudit | null } = { current: null };
-  const runtimeBox: { current: AgentRuntime | null } = { current: null };
-  const visibleFiles = [...parsePreFixSnapshotFiles(visible.blobs[1] ?? '').keys()];
+  const historicalContext = createHistoricalLocalInvestigationContext({
+    visible,
+    caseId: definedCase.caseId,
+    discriminator: definedCase.preFix.discriminator ?? null,
+    minedReplay: minedDescriptor,
+    repositoriesRoot: ports.minedReplay?.repositoriesRoot,
+    runReplay: ports.minedReplay?.runReplay,
+    auditBox: minedAuditBox,
+  });
+  const investigation = createLocalInvestigationToolSession(historicalContext);
+  // Grounding injector: RERUN_SAFE_REPRODUCTION requires an
+  // already-inspected sourcePath plus its observed source evidence ref.
+  // Scripted reasoners that call RERUN bare after an inspection inherit
+  // the most recent inspected source; calls with no inspected history
+  // fall through so the session can refuse fail-closed.
+  const sessionTools: AgentToolExecutor = {
+    async execute(call: AgentToolCall): Promise<AgentToolResult> {
+      if (call.toolId !== 'RERUN_SAFE_REPRODUCTION') {
+        return investigation.executor.execute(call);
+      }
+      const args = call.arguments as Record<string, unknown>;
+      const hasPath = typeof args['sourcePath'] === 'string' && (args['sourcePath'] as string).length > 0;
+      const hasRef = typeof args['sourceEvidenceRef'] === 'string' && (args['sourceEvidenceRef'] as string).length > 0;
+      if (hasPath && hasRef) {
+        return investigation.executor.execute(call);
+      }
+      const history = investigation.snapshot();
+      const last = history.inspectedSources[history.inspectedSources.length - 1] ?? null;
+      if (last === null) {
+        if (minedAuditBox.current === null) {
+          minedAuditBox.current = {
+            grounded: false,
+            repoResolved: false,
+            verdict: null,
+            reason: 'GATE_REFUSED_NO_FILE_GROUNDING',
+            durationMs: null,
+            timedOut: null,
+            stderrHead: null,
+          };
+        }
+        return investigation.executor.execute(call);
+      }
+      return investigation.executor.execute({
+        ...call,
+        arguments: {
+          ...args,
+          sourcePath: last.path,
+          sourceEvidenceRef: last.evidenceRef,
+          observedEvidenceRefs: Array.isArray(args['observedEvidenceRefs']) ? args['observedEvidenceRefs'] : [],
+        },
+      });
+    },
+  };
   const runtime = new AgentRuntime({
     campaignId: `benchmark:${definedCase.caseId}`,
     budgetPolicy: ports.budgetPolicy ?? defaultBenchmarkBudgetPolicy(),
     reasoner: recording.driver,
-    tools:
-      ports.tools ??
-      createPreFixViewExecutor(visible, definedCase.caseId, definedCase.preFix.discriminator ?? null, {
-        minedReplay: minedDescriptor,
-        repositoriesRoot: ports.minedReplay?.repositoriesRoot,
-        runReplay: ports.minedReplay?.runReplay,
-        hasGrounding:
-          minedDescriptor === null
-            ? undefined
-            : () => {
-                const snapshot = runtimeBox.current?.snapshot();
-                if (!snapshot) return false;
-                const groundedText = [
-                  ...snapshot.hypotheses.map((hypothesis) => hypothesis.statement),
-                  ...snapshot.candidateIds,
-                ].join('\n');
-                return (
-                  scoreBenchmarkCandidate(groundedText, hidden, { visibleFiles }).fileHits > 0
-                );
-              },
-        audit: minedAuditBox,
-      }),
+    tools: ports.tools ?? sessionTools,
     authorizedEnvironments: ['LOCAL'],
     maxTurns: ports.maxTurns ?? BENCHMARK_HUNT_MAX_TURNS,
   });
-  runtimeBox.current = runtime;
   const run = await runtime.run({ maxTurns: ports.maxTurns ?? BENCHMARK_HUNT_MAX_TURNS });
 
   // Fail-closed: any hidden field reaching the reasoner voids the replay.
@@ -388,9 +376,18 @@ export async function runBenchmarkHunt(
     proposed: admitted,
     visibleFiles: [...parsePreFixSnapshotFiles(visible.blobs[1] ?? '').keys()],
   });
-  const reproductionCount = run.state.actionLog.filter(
+  // Reproduction count derives from the shared session history when the
+  // hunt runs through the session executor; custom-tool overrides fall
+  // back to the runtime action log. Only REPRODUCED mints credit:
+  // ENVIRONMENT_BLOCKED and inconclusive results never count.
+  const sessionReproductions =
+    ports.tools === undefined
+      ? investigation.snapshot().reproductions.filter((receipt) => receipt.verdict === 'REPRODUCED').length
+      : 0;
+  const logReproductions = run.state.actionLog.filter(
     (entry) => entry.toolId === 'RERUN_SAFE_REPRODUCTION' && entry.resultClass === 'REPRODUCED',
   ).length;
+  const reproductionCount = ports.tools === undefined ? sessionReproductions : logReproductions;
   const ranDiscriminator = run.state.actionLog.some(
     (entry) =>
       entry.toolId === 'RERUN_SAFE_REPRODUCTION' &&
