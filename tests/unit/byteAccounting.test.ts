@@ -105,6 +105,14 @@ function envelopeWith(bytes: string): UntrustedEnvelope {
   };
 }
 
+function okResponse(intents: unknown[]): ReasonerTurnResponse {
+  return {
+    schemaVersion: REASONER_TURN_RESPONSE_VERSION,
+    intents: intents as AgentIntent[],
+    hypotheses: [],
+  };
+}
+
 function terminateResponse(): ReasonerTurnResponse {
   return {
     schemaVersion: REASONER_TURN_RESPONSE_VERSION,

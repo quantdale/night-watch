@@ -10,7 +10,7 @@ Last validated implementation SHA: 3d624fbcc42da808ce1c7e9cbc6b780b82d90820
 Last substantive checkpoint SHA: 3d624fbcc42da808ce1c7e9cbc6b780b82d90820
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
-Branch: DISCOVER_FROM_GIT
+Branch: session/nightwatch-owner-local-determini-47add5e3
 Last checkpoint: W8 COMPLETE and certified; W9 owner-local deterministic reproduction/yield child opened
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 

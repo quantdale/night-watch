@@ -92,7 +92,7 @@ function toolThenPauseScript(dir: string, counterFile: string, name = 'tool-paus
     dir,
     name,
     `
-const fs = require('node:fs');
+import fs from 'node:fs';
 let n = 0;
 try { n = Number(fs.readFileSync(${JSON.stringify(counterFile)}, 'utf8')) || 0; } catch {}
 n += 1;

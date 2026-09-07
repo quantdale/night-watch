@@ -309,7 +309,7 @@ test.describe('w9 digest forgery and self-label resistance', () => {
     const tools = stubTools(() => ({ ok: false, resultClass: 'REPRODUCTION_REFUSED', evidenceRefs: [], outputBytes: 8, untrusted: [] }));
     const labelled = () =>
       okTurn([callTool('RERUN_SAFE_REPRODUCTION', { ...REPRO_ARGS }, { disposition: 'TRANSIENT_RETRYABLE' })]);
-    const stub = scriptDriver([labelled(), labelled(), () => completeNoFinding()]);
+    const stub = scriptDriver([labelled, labelled, () => completeNoFinding()]);
     const runtime = new AgentRuntime(depsFor('w9-self-label', stub.driver, tools));
     await runtime.run({ maxTurns: 4 });
 

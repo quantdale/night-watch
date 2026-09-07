@@ -56,7 +56,7 @@ The open gap is current owner-local reproduction coverage: normal REAL_LOCAL con
 CAMPAIGN: nightwatch-autonomous-bug-hunting-programme-v1
 CHILD TASK: nightwatch-owner-local-deterministic-reproduction-yield-v1
 WAVE: W9
-SESSION WORKTREE: DISCOVER_FROM_LIVE_SESSION_STATE
+SESSION WORKTREE: session/nightwatch-owner-local-determini-47add5e3
 
 IMPLEMENTATION AUTHORIZED:
   Nightwatch repository source/tests/contracts/CLI/docs/OpenSpec/task state,
