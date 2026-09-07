@@ -871,6 +871,7 @@ function seedFromCheckpointState(engine: CampaignEngine, state: AgentRuntimeStat
   acc.reasonerCalls = state.budget.usage.reasonerCalls;
   acc.inputBytes = state.budget.usage.inputBytes;
   acc.outputBytes = state.budget.usage.outputBytes;
+  acc.toolPayloadBytes = state.budget.usage.toolPayloadBytes;
   acc.toolActions = state.budget.usage.toolActions;
   acc.retries = state.budget.usage.retries;
   acc.providerFailures = state.budget.usage.providerFailures;
@@ -880,7 +881,7 @@ function seedFromCheckpointState(engine: CampaignEngine, state: AgentRuntimeStat
   // carry, so the restored ledger still reconciles with the usage above.
   acc.byteLedger = isAgentByteLedger(state.byteLedger)
     ? { ...state.byteLedger }
-    : legacyAgentByteLedger(state.budget.usage.inputBytes, state.budget.usage.outputBytes);
+    : legacyAgentByteLedger(state.budget.usage.inputBytes, state.budget.usage.outputBytes, state.budget.usage.toolPayloadBytes);
   acc.knownTargets = [...(state.knownTargets ?? [])];
   acc.lastPhase = state.phase;
 }

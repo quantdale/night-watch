@@ -191,7 +191,7 @@ test.describe('lane D separated budget dimensions', () => {
     expect(usage.toolPayloadBytes).toBe(chargedToolPayloadBytes(ledger));
   });
 
-  test('v1 checkpoint resume preserves cumulative usage without double counting', async () => {
+  test('v1 checkpoint resume charges the mixed total once, in the payload dimension', async () => {
     const first = scriptDriver([inspectTurn(1000, 200)]);
     const tools = sourceFileTools(500);
     const runtime = new AgentRuntime(depsFor('lane-d-v1-resume', first.driver, tools));
@@ -199,7 +199,6 @@ test.describe('lane D separated budget dimensions', () => {
     const v2 = JSON.parse(JSON.stringify(runtime.checkpoint())) as Record<string, unknown>;
     const v2State = v2['state'] as Record<string, unknown>;
     const v2Budget = v2State['budget'] as Record<string, unknown>;
-    const v2Policy = v2Budget['policy'] as Record<string, unknown>;
     const v2Usage = v2Budget['usage'] as Record<string, unknown>;
     const v2Ledger = v2State['byteLedger'] as Record<string, unknown>;
 
@@ -220,16 +219,20 @@ test.describe('lane D separated budget dimensions', () => {
     expect(mixedOutput).toBe(1700);
 
     const parsed = parseCheckpoint(v1);
-    expect(parsed.state.budget.usage.outputBytes).toBe(1700);
-    expect(parsed.state.budget.usage.toolPayloadBytes).toBe(0);
+    // A v1 total mixes transport with payload, so it is not a v2 outputBytes
+    // value: it moves whole into the payload dimension, where measurement
+    // shows nearly all of it belongs and where the ceiling is sized for it.
+    expect(parsed.state.budget.usage.outputBytes).toBe(0);
+    expect(parsed.state.budget.usage.toolPayloadBytes).toBe(1700);
+    expect(parsed.state.budget.policy.outputBytes).toBe(defaultAgentBudgetPolicy('HOUR_1').outputBytes);
     expect(parsed.state.budget.policy.toolPayloadBytes).toBe(
       defaultAgentBudgetPolicy('HOUR_1').toolPayloadBytes,
     );
-    // The v1 component breakdown is ambiguous in the split world, so the
-    // parser rebuilds exact legacy carry: totals truthful, payload zero.
-    expect(parsed.state.byteLedger!.legacyOutputBytes).toBe(1700);
+    // The v1 component breakdown is ambiguous once the dimensions split, so
+    // the parser rebuilds exact carry rather than inventing components.
+    expect(parsed.state.byteLedger!.legacyOutputBytes).toBe(0);
+    expect(parsed.state.byteLedger!.legacyToolPayloadBytes).toBe(1700);
     expect(parsed.state.byteLedger!.toolResultBytes).toBe(0);
-    expect(parsed.state.byteLedger!.legacyToolPayloadBytes).toBe(0);
 
     const second = scriptDriver([inspectTurn(50), () => ({
       ok: true,
@@ -242,19 +245,52 @@ test.describe('lane D separated budget dimensions', () => {
       parsed,
       depsFor('lane-d-v1-resume', second.driver, sourceFileTools(70)),
     );
-    // Cumulative output stays truthful; the new dimension starts at zero.
-    expect(resumed.snapshot().budget.usage.outputBytes).toBe(1700);
-    expect(resumed.snapshot().budget.usage.toolPayloadBytes).toBe(0);
+    expect(resumed.snapshot().budget.usage.toolPayloadBytes).toBe(1700);
+    expect(resumed.snapshot().budget.usage.outputBytes).toBe(0);
     const finished = await resumed.run({ maxTurns: 3 });
     const usage = finished.state.budget.usage;
     const ledger = finished.state.byteLedger!;
-    // The pre-restore 500 tool bytes are NOT charged again: payload counts
-    // only the fresh 70, while output keeps the truthful cumulative total.
-    expect(usage.toolPayloadBytes).toBe(70);
-    expect(usage.outputBytes).toBe(1700 + 50 + 10);
+    // Every pre-restore byte stays charged exactly once, and fresh traffic
+    // lands in the dimension that produced it.
+    expect(usage.toolPayloadBytes).toBe(1700 + 70);
+    expect(usage.outputBytes).toBe(50 + 10);
     expect(usage.inputBytes).toBe(chargedInputBytes(ledger));
     expect(usage.outputBytes).toBe(chargedOutputBytes(ledger));
     expect(usage.toolPayloadBytes).toBe(chargedToolPayloadBytes(ledger));
+  });
+
+  test('a v1 campaign larger than the new transport ceiling still resumes', async () => {
+    const first = scriptDriver([inspectTurn(1000, 200)]);
+    const runtime = new AgentRuntime(depsFor('lane-d-v1-heavy', first.driver, sourceFileTools(500)));
+    await runtime.run({ maxTurns: 1 });
+    const document = JSON.parse(JSON.stringify(runtime.checkpoint())) as Record<string, unknown>;
+    const state = document['state'] as Record<string, unknown>;
+    const budget = state['budget'] as Record<string, unknown>;
+    const policy = budget['policy'] as Record<string, unknown>;
+    const usage = budget['usage'] as Record<string, unknown>;
+    const ledger = state['byteLedger'] as Record<string, unknown>;
+    // A real owner-local v1 campaign accumulated megabytes of source reads
+    // under the old mixed total — far past the new transport ceiling.
+    const mixed = 3_000_000;
+    policy['schemaVersion'] = AGENT_BUDGET_VERSION_V1;
+    delete policy['toolPayloadBytes'];
+    usage['outputBytes'] = mixed;
+    delete usage['toolPayloadBytes'];
+    ledger['providerResponseBytes'] = mixed - (ledger['toolResultBytes'] as number) - (ledger['providerStderrBytes'] as number);
+    delete ledger['legacyToolPayloadBytes'];
+    expect(mixed).toBeGreaterThan(defaultAgentBudgetPolicy('HOUR_1').outputBytes);
+
+    const parsed = parseCheckpoint(document);
+    const resumed = AgentRuntime.resumeFromCheckpoint(
+      parsed,
+      depsFor('lane-d-v1-heavy', scriptDriver([completeNoFinding]).driver, sourceFileTools(10), defaultAgentBudgetPolicy('HOUR_1')),
+    );
+    const finished = await resumed.run({ maxTurns: 2 });
+    // Charging those bytes against the transport ceiling would end the
+    // campaign before it executed a single turn.
+    expect(finished.terminationReason).toBe('COMPLETE_NO_FINDING');
+    expect(finished.state.budget.usage.toolPayloadBytes).toBe(mixed);
+    expect(finished.state.budget.usage.outputBytes).toBeLessThan(defaultAgentBudgetPolicy('HOUR_1').outputBytes);
   });
 
   test('malformed v2 budgets fail closed', async () => {

@@ -103,13 +103,20 @@ function isFiniteNumber(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value) && value >= 0;
 }
 /**
- * Lane D v1 -> v2 budget migration rule. A v1 snapshot parses: its cumulative
- * outputBytes stays truthful — already-charged tool bytes REMAIN charged
- * under outputBytes (their original home) and are never reattributed, so
- * they cannot be double counted. The new toolPayloadBytes dimension starts
- * at zero usage with the standard tier ceiling, and the v1 ledger's
- * toolResultBytes component is ignored on resume (the runtime rebuilds exact
- * legacy carry from the migrated usage totals instead).
+ * Lane D v1 -> v2 budget migration rule.
+ *
+ * A v1 `outputBytes` total is provider transport AND tool payload mixed
+ * together — that conflation is the defect v2 fixes, so the total is not a v2
+ * `outputBytes` value and cannot stay there. Every byte still has to be
+ * charged, so the mixed total moves whole into the tool-payload dimension:
+ * measurement of a real campaign put local tool payload at 99.8 % of it
+ * (2 950 229 B of 2 957 398 B), and the payload ceiling is the dimension
+ * scaled for that traffic. The cost is that a resumed v1 campaign starts with
+ * a fresh transport allowance, understating transport by at most the small
+ * amount it had already spent; the alternative — charging megabytes of source
+ * reads against a transport ceiling sized in hundreds of kilobytes — would
+ * make every pre-v2 checkpoint resume straight into BUDGET_EXHAUSTED.
+ * Nothing is dropped and nothing is double counted.
  */
 const V1_POLICY_KEYS = [
   'wallTimeMs',
@@ -156,9 +163,15 @@ function parseBudgetSnapshot(value: unknown, where: string): AgentCheckpoint['st
       if (!isFiniteNumber(usage[key])) throw new AgentCheckpointError('CORRUPT', `${where}.budget.usage.${key} is invalid`);
     }
     const tier = policy.ceilingName as AgentBudgetCeilingName;
+    const defaults = defaultAgentBudgetPolicy(tier);
     return {
-      policy: { ...policy, schemaVersion: AGENT_BUDGET_VERSION, toolPayloadBytes: defaultAgentBudgetPolicy(tier).toolPayloadBytes },
-      usage: { ...usage, toolPayloadBytes: 0 },
+      policy: {
+        ...policy,
+        schemaVersion: AGENT_BUDGET_VERSION,
+        outputBytes: defaults.outputBytes,
+        toolPayloadBytes: defaults.toolPayloadBytes,
+      },
+      usage: { ...usage, outputBytes: 0, toolPayloadBytes: usage.outputBytes },
     } as unknown as AgentCheckpoint['state']['budget'];
   }
   if (policy.schemaVersion !== AGENT_BUDGET_VERSION) {
@@ -251,9 +264,10 @@ function parseRuntimeState(value: unknown): AgentRuntimeState {
   // corrupt, never silently zeroed. A present ledger must also reconcile
   // EXACTLY with the frozen cumulative budget totals, so a forged or drifted
   // component breakdown can never resume as authority for a ceiling decision.
-  // A v1-budget checkpoint validates its v1-shaped ledger under v1
-  // arithmetic (tool bytes charged under output) and resumes it through the
-  // exact legacy-carry rebuild, never by reattributing old bytes.
+  // A v1-budget checkpoint validates its v1-shaped ledger under v1 arithmetic
+  // (transport and tool bytes both charged under `outputBytes`) and resumes
+  // through the exact legacy-carry rebuild, where that mixed total becomes
+  // payload carry per the migration rule above.
   const budgetIsV1 =
     isRecord(value.budget) &&
     isRecord(value.budget.policy) &&
@@ -267,7 +281,11 @@ function parseRuntimeState(value: unknown): AgentRuntimeState {
       if (chargedInputBytes(value.byteLedger) !== budget.usage.inputBytes) {
         throw new AgentCheckpointError('CORRUPT', 'state.byteLedger charged input does not reconcile with budget usage');
       }
-      if (chargedOutputBytes(value.byteLedger) + value.byteLedger.toolResultBytes !== budget.usage.outputBytes) {
+      // v1 arithmetic: transport plus tool payload equal the mixed v1 total,
+      // which migration has already moved into the payload dimension.
+      if (
+        chargedOutputBytes(value.byteLedger) + value.byteLedger.toolResultBytes !== budget.usage.toolPayloadBytes
+      ) {
         throw new AgentCheckpointError('CORRUPT', 'state.byteLedger charged output does not reconcile with budget usage');
       }
     } else {
@@ -293,16 +311,16 @@ function parseRuntimeState(value: unknown): AgentRuntimeState {
   }
   // Return the migrated budget pair (identity for v2): resume must see the
   // toolPayloadBytes dimension even when the persisted document predates it.
-  // A v1 budget additionally rebuilds the ledger as exact legacy carry: the
-  // v1 component breakdown is ambiguous in the split world, so the totals
-  // move into carry (input/output truthful, payload zero) and the returned
-  // document re-parses cleanly under v2 arithmetic (idempotent parse).
+  // A v1 budget additionally rebuilds the ledger as exact legacy carry: its
+  // component breakdown is ambiguous once the dimensions are split, so the
+  // migrated totals move into carry and the returned document re-parses
+  // cleanly under v2 arithmetic (idempotent parse).
   const budget = parseBudgetSnapshot(value.budget, 'state');
   if (!budgetIsV1) return { ...value, budget } as unknown as AgentRuntimeState;
   return {
     ...value,
     budget,
-    byteLedger: legacyAgentByteLedger(budget.usage.inputBytes, budget.usage.outputBytes, 0),
+    byteLedger: legacyAgentByteLedger(budget.usage.inputBytes, budget.usage.outputBytes, budget.usage.toolPayloadBytes),
   } as unknown as AgentRuntimeState;
 }
 
