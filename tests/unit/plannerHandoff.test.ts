@@ -270,6 +270,7 @@ function makeFixture(options: FixtureOptions = {}): Fixture {
     'bin/planner-handoff-protocol.mjs',
     'bin/planner-handoff-check.mjs',
     'bin/workspace-integrity.mjs',
+    'bin/lib/programme-state.mjs',
   ]) {
     fs.mkdirSync(path.dirname(path.join(root, relativePath)), { recursive: true });
     fs.copyFileSync(path.join(ROOT, relativePath), path.join(root, relativePath));
