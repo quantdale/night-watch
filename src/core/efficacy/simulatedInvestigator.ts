@@ -247,60 +247,24 @@ export function decideInvestigatorTurn(request: ReasonerTurnRequest): ReasonerTu
 
   // 3. Everything known is inspected. Progress along the verification ladder,
   //    using only explicitly paired grounding.
+  //
+  //    ORDER MATTERS. Admission comes first, then verification of the current
+  //    grounded hypothesis, and only then a new hypothesis. An investigator
+  //    that keeps enumerating targets after it already reproduced a defect is
+  //    wasting budget, and one that generates every hypothesis before testing
+  //    any wastes the turns it needs to reach admission. This ordering is
+  //    identical in both modes; the W7 baseline never reaches step 3 at all
+  //    because it can never pair a target with its evidence ref.
   const groundable = memory.inspected.filter((entry) => entry.evidenceRef !== null);
-
-  // 3a. Ground a hypothesis on an inspected target that has no hypothesis yet.
-  //     The statement cites the salient symbols the host carried for that
-  //     target. They were extracted deterministically from the pre-fix VISIBLE
-  //     source already delivered for it, never from hidden truth, so a
-  //     stateless turn can name WHAT it observed instead of emitting a generic
-  //     placeholder. The W7 baseline carries no memory and therefore no
-  //     salient symbols; the policy below is otherwise identical in both modes.
-  for (const entry of groundable) {
-    const ref = entry.evidenceRef as string;
-    const covered = memory.hypotheses.some((item) => item.evidenceRefs.includes(ref));
-    if (covered) continue;
-    const hypothesisId = `sim-h-${memory.hypotheses.length + 1}`;
-    const observed = entry.salient.filter((symbol) => symbol.length > 0).slice(0, 4);
-    const detail =
-      observed.length > 0
-        ? `${entry.target} (observed ${observed.join(', ')}): inspected source surface is the suspected defect site for the reported symptom`
-        : `${entry.target}: inspected source surface is the suspected defect site for the reported symptom`;
-    return response([
-      {
-        kind: 'FORM_HYPOTHESIS',
-        hypothesisId,
-        statement: bounded(detail),
-        evidenceRefs: [ref],
-      },
-    ]);
-  }
-
-  // 3b. A grounded, non-disproved hypothesis whose target has no reproduction
-  //     attempt yet: run the host-gated deterministic reproduction.
-  if (canReproduce) {
-    for (const entry of groundable) {
-      const ref = entry.evidenceRef as string;
-      const hypothesis = memory.hypotheses.find(
-        (item) => item.evidenceRefs.includes(ref) && item.status !== 'DISPROVED',
-      );
-      if (hypothesis === undefined) continue;
-      if (memory.attemptedReproductionTargets.includes(entry.target)) continue;
-      return response([
-        callTool('RERUN_SAFE_REPRODUCTION', {
-          reproductionId: `sim-r-${memory.attemptedReproductionTargets.length + 1}`,
-          candidateId: 'sim-c-1',
-          sourcePath: entry.target,
-          sourceEvidenceRef: ref,
-          observedEvidenceRefs: [ref],
-        }),
-      ]);
-    }
-  }
-
-  // 3c. A mechanically reproduced target with no captured proposal: capture one.
   const reproducedEntry = groundable.find((entry) => memory.reproducedTargets.includes(entry.target)) ?? null;
-  if (reproducedEntry !== null && canPropose && !memory.proposalCandidateIds.includes('sim-c-1') && !facts.proposalCaptured) {
+
+  // 3a. A mechanically reproduced target with no captured proposal: capture one.
+  if (
+    reproducedEntry !== null &&
+    canPropose &&
+    !memory.proposalCandidateIds.includes('sim-c-1') &&
+    !facts.proposalCaptured
+  ) {
     const ref = reproducedEntry.evidenceRef as string;
     return response([
       callTool('REQUEST_FINDING_PROPOSAL', {
@@ -321,7 +285,7 @@ export function decideInvestigatorTurn(request: ReasonerTurnRequest): ReasonerTu
     ]);
   }
 
-  // 3d. Proposal captured: propose the candidate on observed evidence only.
+  // 3b. Proposal captured: propose the candidate on observed evidence only.
   if (reproducedEntry !== null && (facts.proposalCaptured || memory.proposalCandidateIds.includes('sim-c-1'))) {
     if (!memory.candidateIds.includes('sim-c-1')) {
       return response([
@@ -329,6 +293,55 @@ export function decideInvestigatorTurn(request: ReasonerTurnRequest): ReasonerTu
       ]);
     }
     return response([{ kind: 'TERMINATE', reason: 'COMPLETE_WITH_FINDING' }]);
+  }
+
+  // 3c. Verify the strongest grounded, non-disproved hypothesis whose target
+  //     has no reproduction attempt yet, before inventing another hypothesis.
+  if (canReproduce) {
+    for (const entry of groundable) {
+      const ref = entry.evidenceRef as string;
+      const hypothesis = memory.hypotheses.find(
+        (item) => item.evidenceRefs.includes(ref) && item.status !== 'DISPROVED',
+      );
+      if (hypothesis === undefined) continue;
+      if (memory.attemptedReproductionTargets.includes(entry.target)) continue;
+      return response([
+        callTool('RERUN_SAFE_REPRODUCTION', {
+          reproductionId: `sim-r-${memory.attemptedReproductionTargets.length + 1}`,
+          candidateId: 'sim-c-1',
+          sourcePath: entry.target,
+          sourceEvidenceRef: ref,
+          observedEvidenceRefs: [ref],
+        }),
+      ]);
+    }
+  }
+
+  // 3d. Ground a new hypothesis on an inspected target that has none yet.
+  //     The statement cites the salient symbols the host carried for that
+  //     target. They were extracted deterministically from the pre-fix VISIBLE
+  //     source already delivered for it, never from hidden truth, so a
+  //     stateless turn can name WHAT it observed instead of emitting a generic
+  //     placeholder. The W7 baseline carries no memory and therefore no
+  //     salient symbols.
+  for (const entry of groundable) {
+    const ref = entry.evidenceRef as string;
+    const covered = memory.hypotheses.some((item) => item.evidenceRefs.includes(ref));
+    if (covered) continue;
+    const hypothesisId = `sim-h-${memory.hypotheses.length + 1}`;
+    const observed = entry.salient.filter((symbol) => symbol.length > 0).slice(0, 4);
+    const detail =
+      observed.length > 0
+        ? `${entry.target} (observed ${observed.join(', ')}): inspected source surface is the suspected defect site for the reported symptom`
+        : `${entry.target}: inspected source surface is the suspected defect site for the reported symptom`;
+    return response([
+      {
+        kind: 'FORM_HYPOTHESIS',
+        hypothesisId,
+        statement: bounded(detail),
+        evidenceRefs: [ref],
+      },
+    ]);
   }
 
   // 4. Nothing left to explore and nothing reproducible: stop honestly.
