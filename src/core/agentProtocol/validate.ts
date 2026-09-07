@@ -106,9 +106,12 @@ function parseIntent(value: unknown, context: ReasonerValidationContext): Protoc
     if (!context.authorizedEnvironments.includes(tool.environment)) return reject('UNAUTHORIZED_ENVIRONMENT');
     if (!decideOwnerScope(tool.authorizationClass).allowed) return reject('UNSAFE_INTENT');
     if (!isRecord(value.arguments)) return reject('MALFORMED_OUTPUT');
-    const argumentDigest = typeof value.argumentDigest === 'string' && /^arg:sha256:[0-9a-f]{24}$/.test(value.argumentDigest)
-      ? value.argumentDigest
-      : prefixedDigest24('arg', value.arguments);
+    // W9: the digest is always recomputed from the canonical validated
+    // arguments. Any model-supplied argumentDigest is ignored entirely, so
+    // identical args cannot rotate digests to evade the host retry ceiling.
+    // The reasoner likewise cannot self-label retryability: no disposition
+    // field is read from model output here or anywhere else.
+    const argumentDigest = prefixedDigest24('arg', value.arguments);
     return {
       ok: true,
       value: {

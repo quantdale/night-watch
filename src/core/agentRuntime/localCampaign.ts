@@ -36,12 +36,16 @@ import {
   AGENT_CHECKPOINT_VERSION,
   AGENT_RUNTIME_STATE_VERSION,
   AGENT_TERMINATION_REASONS,
+  ZERO_AGENT_BYTE_LEDGER,
+  addAgentByteLedgers,
   classifyBudgetExhaustion,
   defaultAgentBudgetPolicy,
+  isAgentByteLedger,
   type AgentActionRecord,
   type AgentBudgetCeilingName,
   type AgentBudgetPolicy,
   type AgentBudgetUsage,
+  type AgentByteLedger,
   type AgentCheckpoint,
   type AgentHypothesis,
   type AgentPhase,
@@ -149,6 +153,12 @@ export interface LocalCampaignResult {
   readonly reasonerCalls: number;
   readonly providerFailures: number;
   readonly wallTimeMs: number;
+  /**
+   * W9 component byte accounting folded across every investigation in the
+   * campaign (component-wise sum via addAgentByteLedgers). Remaining-policy
+   * arithmetic continues to use the frozen budget totals, never this ledger.
+   */
+  readonly byteLedger: AgentByteLedger;
   /**
    * Bounded cross-investigation strategy accumulated so far. Observable
    * without reading the checkpoint file. Bounded by MEMORY_CAPS and
@@ -458,6 +468,7 @@ interface CampaignAccumulators {
   retries: number;
   providerFailures: number;
   consecutiveFailures: number;
+  byteLedger: AgentByteLedger;
   lastPhase: AgentPhase;
   nextIndex: number;
   stagnant: number;
@@ -483,6 +494,7 @@ function freshAccumulators(campaignId: string): CampaignAccumulators {
     retries: 0,
     providerFailures: 0,
     consecutiveFailures: 0,
+    byteLedger: { ...ZERO_AGENT_BYTE_LEDGER },
     lastPhase: 'PLAN',
     nextIndex: 0,
     stagnant: 0,
@@ -530,6 +542,10 @@ function absorbInvestigation(engine: CampaignEngine, ran: AgentRunResult, countS
   acc.toolActions += usage.toolActions;
   acc.retries += usage.retries;
   acc.providerFailures += usage.providerFailures;
+  // W9: fold the investigation component ledger. Pre-W9 states carry no
+  // ledger and fold as zero; the frozen usage totals above remain the sole
+  // basis for remaining-policy arithmetic.
+  acc.byteLedger = addAgentByteLedgers(acc.byteLedger, isAgentByteLedger(ran.state.byteLedger) ? ran.state.byteLedger : ZERO_AGENT_BYTE_LEDGER);
   if (ran.terminationReason === 'REASONER_FAILURE') {
     // A validated self-reported failure resets the runtime streak to zero, so
     // count the event itself to keep the campaign streak honest.
@@ -611,6 +627,7 @@ function campaignStateOf(
     evidenceRefs: [...acc.evidenceRefs],
     candidateIds: [...acc.candidateIds],
     knownTargets: [...acc.knownTargets],
+    byteLedger: { ...acc.byteLedger },
     budget: { policy: engine.policy, usage: campaignUsageOf(engine) },
     terminationReason,
   };
@@ -700,6 +717,7 @@ function resultOf(
     reasonerCalls: engine.acc.reasonerCalls,
     providerFailures: engine.acc.providerFailures,
     wallTimeMs: wallTimeMs ?? campaignUsageOf(engine).wallTimeMs,
+    byteLedger: { ...engine.acc.byteLedger },
     campaignStrategy: engine.acc.strategy,
   };
 }
@@ -845,6 +863,10 @@ function seedFromCheckpointState(engine: CampaignEngine, state: AgentRuntimeStat
   acc.retries = state.budget.usage.retries;
   acc.providerFailures = state.budget.usage.providerFailures;
   acc.consecutiveFailures = state.budget.usage.consecutiveFailures;
+  // W9: restore the folded component ledger. Pre-W9 checkpoints carry none
+  // and seed a zero ledger while the frozen usage totals above are preserved
+  // verbatim for remaining-policy arithmetic.
+  acc.byteLedger = isAgentByteLedger(state.byteLedger) ? { ...state.byteLedger } : { ...ZERO_AGENT_BYTE_LEDGER };
   acc.knownTargets = [...(state.knownTargets ?? [])];
   acc.lastPhase = state.phase;
 }

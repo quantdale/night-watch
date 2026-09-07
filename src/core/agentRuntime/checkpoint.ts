@@ -10,6 +10,8 @@ import {
   AGENT_PHASES,
   AGENT_RUNTIME_STATE_VERSION,
   AGENT_RUNTIME_STATUSES,
+  isActionFailureDisposition,
+  isAgentByteLedger,
   type AgentCheckpoint,
   type AgentPhase,
   type AgentRuntimeState,
@@ -168,9 +170,20 @@ function parseRuntimeState(value: unknown): AgentRuntimeState {
     if (item.salient !== undefined && !isStringArray(item.salient)) {
       throw new AgentCheckpointError('CORRUPT', 'state.actionLog entry salient is invalid');
     }
+    // W9 additive disposition. Absent or null is valid (pre-W9 checkpoints
+    // and successes resume); a present-but-unknown value is corrupt, never
+    // silently coerced, so a forged retry label cannot resume.
+    if (item.disposition !== undefined && item.disposition !== null && !isActionFailureDisposition(item.disposition)) {
+      throw new AgentCheckpointError('CORRUPT', 'state.actionLog entry disposition is invalid');
+    }
   }
   if (value.knownTargets !== undefined && !isStringArray(value.knownTargets)) {
     throw new AgentCheckpointError('CORRUPT', 'state.knownTargets is invalid');
+  }
+  // W9 additive byte ledger. Absent is valid (pre-W9 checkpoints resume with
+  // a zero ledger); present-but-malformed is corrupt, never silently zeroed.
+  if (value.byteLedger !== undefined && value.byteLedger !== null && !isAgentByteLedger(value.byteLedger)) {
+    throw new AgentCheckpointError('CORRUPT', 'state.byteLedger is invalid');
   }
   if (!isStringArray(value.evidenceRefs)) throw new AgentCheckpointError('CORRUPT', 'state.evidenceRefs is invalid');
   if (!isStringArray(value.candidateIds)) throw new AgentCheckpointError('CORRUPT', 'state.candidateIds is invalid');
