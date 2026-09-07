@@ -2,7 +2,7 @@
   "schemaVersion": "nightwatch.autonomous-programme-state.v1",
   "programmeId": "nightwatch-autonomous-bug-hunting-programme-v1",
   "programmeStatus": "IN_PROGRESS",
-  "currentWave": "W7",
+  "currentWave": "W8",
   "startingSha": "d1ebde90c1454b31d6b93d9df503a4c5f196d7c8",
   "wave0Sha": "bd9be1b2a93107388b868cf2febc87bc84a8a428",
   "programmeIntegrationHead": "DISCOVER_FROM_GIT",
@@ -56,6 +56,13 @@
       "reviewVerdict": "ACCEPTED_AFTER_ORCHESTRATOR_DIFF_REVIEW_REPAIRS_AND_FULL_RERUN",
       "objective": "Unify the normal autonomous campaign path with real owner-local source, System Map, Bug Atlas, System Atlas, evidence and deterministic reproduction; mechanically ground dossier admission; prove one historical reproduced defect through the product path.",
       "productPathVerdict": "REAL mined mobingilabs/ouchan 5985281b43cd replayed through runLocalCliCampaign with the real contained engine: REPRODUCED/PRE_FAIL_POST_PASS 72.7s, dossierStatus=VERIFIED_REPRODUCTION, reproductionCount=1 (forged draft 99 ignored), leak=[], siblingMutation=0"
+    },
+    "EFFICACY": {
+      "status": "planned",
+      "taskId": "nightwatch-autonomous-efficacy-real-local-substrate-v1",
+      "role": "W8_AUTONOMOUS_EFFICACY_REAL_LOCAL_SUBSTRATE",
+      "baseSha": "4b3b183e07a9a348b8904f618a3bc35e4990df1c",
+      "objective": "Add bounded turn/campaign investigation memory, target diversity, mechanically grounded verification/reproduction readiness, and fixed-corpus/live-provider efficacy evidence on the already-proven W7 real local substrate without weakening W7 safety or admission."
     }
   },
   "proof": {
@@ -69,23 +76,25 @@
     "minedReproductionWithDossier": "reproductionCount=1 hasDossier=true leaked=[] on mined-bugatlas-git-mobingilabs-ouchan-5985281b43cd (OpenCode Go, 8-turn ceiling)",
     "normalProductPathRealLocalSubstrate": "PROVEN — real owner-local source/System Map/mined Bug Atlas sensing plus shared deterministic reproduction and mechanical admission on `nightwatch-agent campaign run`; the REAL contained replay of mined ouchan 5985281b43cd through the product path yields REPRODUCED/PRE_FAIL_POST_PASS and dossierStatus=VERIFIED_REPRODUCTION with reproductionCount=1 and zero leakage (opt-in tests/unit/realHistoricalProductPathProof.test.ts)",
     "programmeIdentityValidation": "PASS bin/lib/programme-state.mjs in agent:check (duplicate lane keys rejected pre-parse)",
-    "liveProviderRealSubstrateCampaign": "OpenCode Go, 8 investigations, 24 reasoner calls, 26 real tool actions, 0 provider failures, 595.5s, NO_PROGRESS, zero fabricated findings"
+    "liveProviderRealSubstrateCampaign": "OpenCode Go, 8 investigations, 24 reasoner calls, 26 real tool actions, 0 provider failures, 595.5s, NO_PROGRESS, zero fabricated findings",
+    "w8AutonomousEfficacy": "NOT_YET_PROVEN"
   },
   "realWorld": {
     "LOCAL_AUTONOMOUS_CAPABILITY": "PROVEN_SYNTHETIC_AND_ONE_REAL_HISTORICAL_REPRODUCTION",
     "HISTORICAL_BUG_REDISCOVERY": "REPRODUCED_NOT_EXACT",
     "NORMAL_CAMPAIGN_REAL_LOCAL_SENSING": "PROVEN_LOCAL",
+    "AUTONOMOUS_EFFICACY_REAL_LOCAL_SUBSTRATE": "NOT_YET_PROVEN",
     "REAL_DEV_NEXT_HUNT": "NOT_AUTHORIZED",
     "PREVIOUSLY_UNKNOWN_ALPHAUS_BUG": "NOT_YET_PROVEN",
     "LIVE_CLI_REASONER": "CONFIGURED_OPENCODE_GO_AFTER_GROK_402_AND_LUNA_QUOTA"
   },
   "blockers": [
-    "Autonomous efficacy on the real substrate is unproven: live-provider campaigns sense real source/Atlas data but terminate NO_PROGRESS without candidates",
+    "Autonomous efficacy on the real substrate is unproven: W7 live-provider campaigns sensed real source/Atlas data but terminated NO_PROGRESS without candidates",
     "DEV/NEXT execution not authorized (external)",
     "EXACT rediscovery unproven: no live hunt has named the hidden failing test; retain this strict metric but do not optimize the product solely around guessing hidden test paths",
     "contained replay coverage remains limited across the historical corpus",
     "no campaign has yet consumed a full HOUR_1 wall ceiling on a live provider"
   ],
-  "exactNextAction": "W7 is integrated. Next: raise autonomous efficacy on the now-real local substrate (better hypothesis/verification loop and reproduction targeting) rather than re-plumbing sensing. Retain strict EXACT as a separate unproven metric. DEV/NEXT remain unauthorized.",
-  "resumeRecipe": "Read .agent/tasks/nightwatch-real-local-investigation-substrate-v1/{SPEC,PLAN,STATE,REPORT} for the W7 substrate contract and evidence, then the parent STATE/REPORT. Re-discover live git/workspace truth. W0-W7 are integrated; do not re-plumb real local sensing, reproduction sharing, or admission grounding."
+  "exactNextAction": "Execute W8 task nightwatch-autonomous-efficacy-real-local-substrate-v1 from live Git truth. Improve bounded reasoning memory, cross-investigation strategy, target diversity, verification/reproduction readiness, and measured live-provider efficacy. Do not re-plumb W7 sensing/reproduction/admission. DEV/NEXT remain unauthorized.",
+  "resumeRecipe": "Read .agent/tasks/nightwatch-autonomous-efficacy-real-local-substrate-v1/{SPEC,PLAN,STATE,REPORT}. Then read W7 nightwatch-real-local-investigation-substrate-v1 STATE/REPORT and the parent programme STATE/REPORT. Re-discover live git/workspace/session truth. W0-W7 are integrated; W8 owns efficacy, not substrate plumbing."
 }
