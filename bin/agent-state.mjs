@@ -19,6 +19,7 @@ import {
   isApprovedCheckpointPath,
 } from './agent-continuity-protocol.mjs';
 import { inspectWorkspace } from './workspace-integrity.mjs';
+import { validateProgrammeState } from './lib/programme-state.mjs';
 
 const ACTIVE_STATUSES = new Set(['NONE', 'IN_PROGRESS', 'BLOCKED', 'COMPLETE']);
 const REQUIRED_ACTIVE_FIELDS = [
@@ -794,6 +795,29 @@ function auditTaskHistory(root, head, auditMode, errors, warnings, skipDirectory
         );
         for (const finding of findings) {
           taskWarnings.push(`LEGACY_HIGH_SEVERITY_CONTINUITY_FINDING: ${formatProtocolDiagnostic(finding)}`);
+        }
+      }
+    }
+    // W7 durable programme-state integrity. Every discovered PROGRAMME.json is
+    // validated from its raw bytes: the duplicate-key scan runs before
+    // JSON.parse so a repeated lane key cannot silently discard a historical
+    // record again. Read-only: bytes are inspected, never rewritten; malformed
+    // documents are errors, never crashes or silent skips.
+    const programmeRaw = readTaskFile('PROGRAMME.json');
+    if (programmeRaw !== null) {
+      let programmeResult = null;
+      try {
+        programmeResult = validateProgrammeState(programmeRaw);
+      } catch (error) {
+        programmeResult = null;
+        const detail = error instanceof Error ? error.message : String(error);
+        taskErrors.push(
+          `PROGRAMME_STATE_VALIDATOR_FAILED: .agent/tasks/${entry.name}/PROGRAMME.json — ${detail.replace(/[\0-\x1F\x7F]+/g, '?').slice(0, 120)}`
+        );
+      }
+      if (programmeResult !== null && !programmeResult.ok) {
+        for (const programmeDiagnostic of programmeResult.errors) {
+          taskErrors.push(`PROGRAMME_STATE_INVALID: .agent/tasks/${entry.name}/PROGRAMME.json — ${programmeDiagnostic}`);
         }
       }
     }
