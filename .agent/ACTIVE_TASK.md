@@ -7,9 +7,9 @@ Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-autonomous-bug-hunting-programme-v1
 Starting SHA: d1ebde90c1454b31d6b93d9df503a4c5f196d7c8
 Last validated implementation SHA: 2437895c883902bbbccaf796c278863cade0cbbc
-Last checkpoint: Wave 6 lanes R and E integrated; first real historical reproduction
-Current milestone: W6 — reproduction PROVEN, EXACT rediscovery still unproven
-Next action: Keep PARTIAL. Do not declare COMPLETE. DEV/NEXT unauthorized.
+Last checkpoint: Wave 6 lanes R and E integrated; first real historical reproduction proven; W7 real-local substrate task authored
+Current milestone: W7 — REAL LOCAL INVESTIGATION SUBSTRATE
+Next action: Execute `.agent/tasks/nightwatch-real-local-investigation-substrate-v1/` to terminal criteria. Do not repeat W0-W6. Keep parent programme PARTIAL/IN_PROGRESS. DEV/NEXT unauthorized.
 Authorization class: AUTONOMOUS_BUG_HUNTING_PROGRAMME_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
@@ -20,20 +20,36 @@ LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PHASE_AUTONOMOUS_BUG_HUNTING_PROGRAMME_V1_STATUS: IN_PROGRESS
 
+## W7 execution handoff
+
+Primary child task: `nightwatch-real-local-investigation-substrate-v1`
+
+Read:
+
+- `.agent/EXECUTION_PROMPT.md`
+- `.agent/tasks/nightwatch-real-local-investigation-substrate-v1/SPEC.md`
+- `.agent/tasks/nightwatch-real-local-investigation-substrate-v1/PLAN.md`
+- `.agent/tasks/nightwatch-real-local-investigation-substrate-v1/STATE.md`
+- parent programme `PROGRAMME.json`, `STATE.md`, `REPORT.md`
+
+W7 P0: make the NORMAL `nightwatch-agent campaign run` path consume real owner-local source/System Map/Bug Atlas/System Atlas/evidence/deterministic reproduction through shared safe providers; mechanically ground dossier admission; prove one leak-free historical reproduced defect through that same product path; repair and machine-check durable programme identity uniqueness.
+
+Do not prioritize guessing a hidden test filename or burning a literal one-hour wall clock before the real product-path substrate is correct.
+
 ## Routing and safety
 
 ```
 CAMPAIGN: nightwatch-autonomous-bug-hunting-programme-v1
-SESSION WORKTREE: session/nightwatch-autonomous-bug-huntin-725fbbbe
+CHILD TASK: nightwatch-real-local-investigation-substrate-v1
 
 IMPLEMENTATION AUTHORIZED:
   Nightwatch repository source, tests, schemas, contracts, CLI,
   autonomous agent protocol, AgentRuntime, CLI reasoner gateway,
   agent tools over existing Nightwatch engines, Bug Atlas, System Atlas,
   historical replay benchmark, finding dossiers, campaign lifecycle,
-  synthetic and local fixtures, adversarial tests, documentation,
-  OpenSpec, lifecycle state, diagnostics, commits, pushes,
-  clean-clone certification
+  synthetic and local fixtures, owner-local read-only providers,
+  documentation, OpenSpec, lifecycle state, diagnostics, commits,
+  pushes, clean-clone certification
 
 REAL PRODUCTION CONTACT:
   NOT AUTHORIZED
@@ -58,8 +74,6 @@ FORCE PUSH, HISTORY REWRITE:
   NOT AUTHORIZED
 ```
 
-Repository-local and offline. No production contact, no NEXT contact, no
-DEV request, no credential acquisition.
+Repository-local and offline except for already-authorized provider CLI calls used as the reasoner. No production contact, no NEXT contact, no DEV request, no credential acquisition.
 
-C-00 governs: all implementation happens in owned session worktrees.
-The canonical checkout is never used for implementation.
+C-00 governs: all implementation happens in owned session worktrees. The canonical checkout is never used for implementation.
