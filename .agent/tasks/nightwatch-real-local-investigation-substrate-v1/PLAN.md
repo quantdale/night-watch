@@ -1,7 +1,7 @@
 # PLAN — nightwatch-real-local-investigation-substrate-v1
 
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
-Status: IN_PROGRESS
+Status: COMPLETE
 Parent programme: nightwatch-autonomous-bug-hunting-programme-v1
 
 ## Operating model
@@ -9,6 +9,23 @@ Parent programme: nightwatch-autonomous-bug-hunting-programme-v1
 One frontier orchestrator owns programme truth, interfaces, review, integration, and final certification. It MAY delegate bounded implementation lanes to subagents in separate C-00 session worktrees. Executors must be leaf workers: they do not redefine programme scope, do not integrate themselves, and do not edit orchestrator-owned global state unless explicitly assigned.
 
 Parallelism is by ownership, not by hope.
+
+## Milestone status (live)
+
+| Milestone | Status |
+|---|---|
+| M0 live truth | COMPLETE |
+| M1 programme identity | COMPLETE |
+| M2 provider contract freeze | COMPLETE |
+| M3 real local sensing on the normal path | COMPLETE |
+| M4 unified deterministic reproduction | COMPLETE |
+| M5 mechanical finding admission | COMPLETE |
+| M6 additive verified tier | COMPLETE |
+| M7 product-path historical proof | COMPLETE |
+| M8 endurance sanity | COMPLETE |
+| M9 integration review and certification | COMPLETE |
+
+No live milestone remains open. See `STATE.md` Validation Ledger and `REPORT.md` for evidence.
 
 ## M0 — Re-establish live truth before changing code
 

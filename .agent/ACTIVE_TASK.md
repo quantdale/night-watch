@@ -6,35 +6,33 @@ Title: Autonomous Bug-Hunting Programme
 Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-autonomous-bug-hunting-programme-v1
 Starting SHA: d1ebde90c1454b31d6b93d9df503a4c5f196d7c8
-Last validated implementation SHA: 2437895c883902bbbccaf796c278863cade0cbbc
-Last checkpoint: Wave 6 lanes R and E integrated; first real historical reproduction proven; W7 real-local substrate task authored
-Current milestone: W7 — REAL LOCAL INVESTIGATION SUBSTRATE
-Next action: Execute `.agent/tasks/nightwatch-real-local-investigation-substrate-v1/` to terminal criteria. Do not repeat W0-W6. Keep parent programme PARTIAL/IN_PROGRESS. DEV/NEXT unauthorized.
+Last validated implementation SHA: 06166f362491cab06a52cb378328e3178dddea62
+Last checkpoint: W7 real-local investigation substrate integrated and certified — the normal campaign path senses real owner-local source/System Map/Bug Atlas, shares the deterministic reproduction provider with the historical benchmark, and can only emit a dossier through the mechanical admission gate
+Current milestone: W8 — AUTONOMOUS EFFICACY ON THE REAL LOCAL SUBSTRATE
+Next action: Open a successor task that raises hypothesis/verification quality and reproduction targeting on the now-real substrate. Do not re-plumb sensing, reproduction sharing, or admission grounding (W7, integrated). Keep parent programme PARTIAL/IN_PROGRESS. DEV/NEXT unauthorized.
 Authorization class: AUTONOMOUS_BUG_HUNTING_PROGRAMME_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: d1ebde90c1454b31d6b93d9df503a4c5f196d7c8
-LAST_VALIDATED_IMPLEMENTATION_SHA: 2437895c883902bbbccaf796c278863cade0cbbc
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 2437895c883902bbbccaf796c278863cade0cbbc
+LAST_VALIDATED_IMPLEMENTATION_SHA: 06166f362491cab06a52cb378328e3178dddea62
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 06166f362491cab06a52cb378328e3178dddea62
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PHASE_AUTONOMOUS_BUG_HUNTING_PROGRAMME_V1_STATUS: IN_PROGRESS
 
-## W7 execution handoff
+## W7 outcome and next handoff
 
-Primary child task: `nightwatch-real-local-investigation-substrate-v1`
+Completed child task: `nightwatch-real-local-investigation-substrate-v1` (STATUS COMPLETE — see its `STATE.md` completion snapshot and `REPORT.md` truth table).
 
 Read:
 
 - `.agent/EXECUTION_PROMPT.md`
-- `.agent/tasks/nightwatch-real-local-investigation-substrate-v1/SPEC.md`
-- `.agent/tasks/nightwatch-real-local-investigation-substrate-v1/PLAN.md`
-- `.agent/tasks/nightwatch-real-local-investigation-substrate-v1/STATE.md`
+- `.agent/tasks/nightwatch-real-local-investigation-substrate-v1/{SPEC,PLAN,STATE,REPORT}.md`
 - parent programme `PROGRAMME.json`, `STATE.md`, `REPORT.md`
 
-W7 P0: make the NORMAL `nightwatch-agent campaign run` path consume real owner-local source/System Map/Bug Atlas/System Atlas/evidence/deterministic reproduction through shared safe providers; mechanically ground dossier admission; prove one leak-free historical reproduced defect through that same product path; repair and machine-check durable programme identity uniqueness.
+W7 result: the ordinary `nightwatch-agent campaign run` path now consumes real owner-local source/System Map/Bug Atlas/System Atlas/evidence through shared fail-closed providers, executes the same deterministic reproduction provider as the historical benchmark, and reaches `dossierStatus=VERIFIED_REPRODUCTION` only through mechanical admission. Durable programme identity is machine-validated.
 
-Do not prioritize guessing a hidden test filename or burning a literal one-hour wall clock before the real product-path substrate is correct.
+Open problem for the next wave: efficacy, not plumbing. Live-provider campaigns on the real substrate terminate `NO_PROGRESS` with zero candidates; strict `EXACT_REDISCOVERY` remains 0 and unchanged.
 
 ## Routing and safety
 
