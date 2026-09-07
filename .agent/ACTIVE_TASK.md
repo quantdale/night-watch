@@ -6,17 +6,16 @@ Title: Autonomous Bug-Hunting Programme
 Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-autonomous-bug-hunting-programme-v1
 Starting SHA: d1ebde90c1454b31d6b93d9df503a4c5f196d7c8
-Last validated implementation SHA: fe919b2cc1fcd3dc79062f336185647c3225a99a
-Last checkpoint: Wave 5 bounded 1h campaigns run on the real CLI path
-Current milestone: W5 — historical EXACT unproven; full regression 4288 passed
+Last validated implementation SHA: 2437895c883902bbbccaf796c278863cade0cbbc
+Last checkpoint: Wave 6 lanes R and E integrated; first real historical reproduction
+Current milestone: W6 — reproduction PROVEN, EXACT rediscovery still unproven
 Next action: Keep PARTIAL. Do not declare COMPLETE. DEV/NEXT unauthorized.
 Authorization class: AUTONOMOUS_BUG_HUNTING_PROGRAMME_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: d1ebde90c1454b31d6b93d9df503a4c5f196d7c8
-LAST_VALIDATED_IMPLEMENTATION_SHA: fe919b2cc1fcd3dc79062f336185647c3225a99a
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: fe919b2cc1fcd3dc79062f336185647c3225a99a
-LAST_DOCUMENTATION_CHECKPOINT_SHA: ab658ebe800d10ff92d0198eac3efebc13fdeba6
+LAST_VALIDATED_IMPLEMENTATION_SHA: 2437895c883902bbbccaf796c278863cade0cbbc
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 2437895c883902bbbccaf796c278863cade0cbbc
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PHASE_AUTONOMOUS_BUG_HUNTING_PROGRAMME_V1_STATUS: IN_PROGRESS

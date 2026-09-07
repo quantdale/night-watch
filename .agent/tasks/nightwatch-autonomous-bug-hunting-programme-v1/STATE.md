@@ -6,18 +6,17 @@ Task ID: nightwatch-autonomous-bug-hunting-programme-v1
 Phase: AUTONOMOUS_BUG_HUNTING_PROGRAMME_V1
 Status: IN_PROGRESS
 Starting SHA: d1ebde90c1454b31d6b93d9df503a4c5f196d7c8
-Last validated implementation SHA: fe919b2cc1fcd3dc79062f336185647c3225a99a
-Last substantive checkpoint SHA: fe919b2cc1fcd3dc79062f336185647c3225a99a
+Last validated implementation SHA: 2437895c883902bbbccaf796c278863cade0cbbc
+Last substantive checkpoint SHA: 2437895c883902bbbccaf796c278863cade0cbbc
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-autonomous-bug-huntin-725fbbbe
-Last checkpoint: Wave 5 campaigns + reasoner-provider comparison
+Last checkpoint: Wave 6 lanes R and E integrated; first real historical reproduction
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: d1ebde90c1454b31d6b93d9df503a4c5f196d7c8
-LAST_VALIDATED_IMPLEMENTATION_SHA: fe919b2cc1fcd3dc79062f336185647c3225a99a
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: fe919b2cc1fcd3dc79062f336185647c3225a99a
-LAST_DOCUMENTATION_CHECKPOINT_SHA: ab658ebe800d10ff92d0198eac3efebc13fdeba6
+LAST_VALIDATED_IMPLEMENTATION_SHA: 2437895c883902bbbccaf796c278863cade0cbbc
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 2437895c883902bbbccaf796c278863cade0cbbc
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
 
@@ -28,9 +27,9 @@ existing Nightwatch safety kernel.
 
 ## Current Milestone
 
-Milestone ID: W5
+Milestone ID: W6
 Milestone status: IN_PROGRESS
-What is being attempted: Wave 5 bounded local campaigns executed on the real CLI path. Historical EXACT/reproduced still unproven; DEV unauthorized. Do not declare COMPLETE.
+What is being attempted: Wave 6 delivered a contained historical test replay and multi-investigation campaigns. One real historical Alphaus defect is now mechanically reproduced with a dossier. EXACT rediscovery and real-world unknown-bug yield remain unproven; DEV unauthorized. Do not declare COMPLETE.
 
 
 ## Completed Milestones
@@ -39,15 +38,16 @@ What is being attempted: Wave 5 bounded local campaigns executed on the real CLI
 - W0 protocol freeze integrated at `b3a780816c111399026844615b8b915899cf7156`.
 - W1 lanes A–G independently reviewed and integrated.
 - Seeded positive / false-anomaly / injection loop tests 3/3.
+- W5 bounded HOUR_1 campaigns executed on the real CLI path; provider fallback exercised.
 
 ## Work In Progress
-
-Live mined historical set is now 27 Grok cases (8 PARTIAL + 16 SAME_ROOT_CAUSE + 3 MISS, EXACT 0, reproductionCount 0) plus 3 OpenCode Go re-hunts. Wave 5 ran two HOUR_1 campaigns on the real CLI path: `wave5-1h-local` BUDGET_EXHAUSTED via consecutiveFailures (Grok 402 balance exhausted), `wave5-1h-opencode` NO_PROGRESS at 102s/12 actions. No fabricated candidate or dossier.
+Wave 6 integrated: lane R contained replay (worker `a842f9b`) and lane E multi-investigation campaigns (worker `de2f58e`, reconcile `7dd51cf`). Live mined hunt on `mined-bugatlas-git-mobingilabs-ouchan-5985281b43cd` reached VERIFY, called `RERUN_SAFE_REPRODUCTION`, and earned `reproductionCount=1`, `hasDossier=true`, `leaked=[]`. Orchestrator independently re-ran the real replay: `REPRODUCED` / `PRE_FAIL_POST_PASS`, sibling repo unmutated. Mined corpus is now 28 cases with 1 reproduction and EXACT still 0.
+Wave 5 measured two HOUR_1 campaigns (`wave5-1h-local` BUDGET_EXHAUSTED via the consecutive-failure ceiling after Grok returned HTTP 402; `wave5-1h-opencode` NO_PROGRESS at 102s/12 actions). Wave 6 then removed the two structural limits those runs exposed. Mined historical corpus is 28 cases: 8 PARTIAL, 16 SAME_ROOT_CAUSE, 3 MISS under Grok, plus 3 OpenCode Go re-hunts, EXACT 0, and now exactly 1 real reproduction.
 
 
 ## Exact Next Action
 
-Keep the programme IN_PROGRESS / PARTIAL. Historical EXACT and mined reproduction are unproven. DEV/NEXT unauthorized. Do not declare COMPLETE.
+Keep the programme IN_PROGRESS / PARTIAL. Reproduction of a real historical defect is now PROVEN; EXACT rediscovery and previously-unknown-bug yield are NOT. DEV/NEXT unauthorized. Do not declare COMPLETE.
 
 
 
