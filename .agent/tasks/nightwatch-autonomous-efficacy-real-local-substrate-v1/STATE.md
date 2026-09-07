@@ -171,6 +171,7 @@ Response: each detected immediately with `git status`, reverse-applied with `git
 - Contained real-replay coverage beyond the already-proven mined ouchan case.
 - A full HOUR_1 wall-clock live campaign: both live runs ended on the `outputBytes` ceiling first.
 - DEV/NEXT/production execution remains unauthorized.
+- The five W8 lane worktrees released their C-00 sessions but remain REGISTERED (each now reports `STALE_SESSION`). `nightwatch-session.mjs remove` refused them with `SESSION_REMOVE_REFUSED_UNMERGED` because their work was integrated by reviewed cherry-pick, so the original commit objects are not ancestors of `origin/main`. `--abandon-unmerged` was deliberately NOT used: those commit objects are the provenance for the worker SHAs cited in `REPORT.md`. `workspace:check` still reports `verdict=PASS` with `canonicalSafe=true`; the six `attention` entries are the five released W8 lanes plus the pre-existing foreign review-operations worktree, which was never touched.
 
 ## Resume Recipe
 
