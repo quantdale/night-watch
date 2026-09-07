@@ -135,3 +135,92 @@ export function scoreBenchmarkCandidate(
   }
   return { outcome, testMatch, fileHits, fileTotal, fileRecall, keywordRecall, keywordTotal };
 }
+
+// ---------------------------------------------------------------------------
+// W7 admission lane — additive verified benchmark tier.
+//
+// Strict EXACT constants and `scoreBenchmarkCandidate` above are unchanged.
+// `classifyVerifiedBenchmarkTier` is a separate mechanical gate: an admitted
+// candidate with a non-MISS source/root-cause score, a mechanically observed
+// reproduction, and zero ground-truth leakage. Unrelated or unproven
+// reproduction (admitted=false and/or no mechanical count) never upgrades.
+// Pure data; no I/O.
+// ---------------------------------------------------------------------------
+
+export type BenchmarkVerificationTier = 'VERIFIED_ROOT_CAUSE_REDISCOVERY' | 'NOT_VERIFIED';
+
+export interface ClassifyVerifiedBenchmarkTierInput {
+  readonly admitted?: unknown;
+  readonly candidateAdmitted?: unknown;
+  readonly score?: unknown;
+  readonly outcome?: unknown;
+  readonly mechanicalReproductionCount?: unknown;
+  readonly reproductionCount?: unknown;
+  readonly hasMechanicalReproduction?: unknown;
+  readonly leakage?: unknown;
+  readonly leakageClasses?: unknown;
+  readonly leaked?: unknown;
+  readonly leakageCount?: unknown;
+}
+
+function verifiedTierOutcome(score: unknown, fallback: unknown): string | null {
+  if (score !== null && typeof score === 'object' && !Array.isArray(score)) {
+    const outcome = (score as { outcome?: unknown }).outcome;
+    if (typeof outcome === 'string') return outcome;
+  }
+  return typeof fallback === 'string' ? fallback : null;
+}
+
+function verifiedTierMechanicalCount(raw: ClassifyVerifiedBenchmarkTierInput): number {
+  const candidates = [raw.mechanicalReproductionCount, raw.reproductionCount];
+  for (const value of candidates) {
+    if (typeof value === 'number' && Number.isInteger(value) && value > 0) return value;
+  }
+  return 0;
+}
+
+function verifiedTierHasMechanical(raw: ClassifyVerifiedBenchmarkTierInput): boolean {
+  if (verifiedTierMechanicalCount(raw) > 0) return true;
+  return raw.hasMechanicalReproduction === true;
+}
+
+function verifiedTierLeakage(raw: ClassifyVerifiedBenchmarkTierInput): { readonly classes: readonly unknown[]; readonly count: number } {
+  const sources = [raw.leakage, raw.leakageClasses, raw.leaked];
+  for (const source of sources) {
+    if (Array.isArray(source)) return { classes: source, count: source.length };
+  }
+  const count = raw.leakageCount;
+  if (typeof count === 'number' && Number.isInteger(count) && count > 0) {
+    return { classes: ['LEAKAGE_COUNT'], count };
+  }
+  return { classes: [], count: 0 };
+}
+
+/**
+ * Additive verified-tier classifier. Requires all four conditions:
+ * admitted candidate, non-MISS source/root-cause score
+ * (EXACT/PARTIAL/SAME_ROOT_CAUSE_ALTERNATE), mechanically observed
+ * reproduction, and zero leakage. Anything else is NOT_VERIFIED.
+ */
+export function classifyVerifiedBenchmarkTier(
+  input: ClassifyVerifiedBenchmarkTierInput | null | undefined,
+): BenchmarkVerificationTier {
+  if (input === null || input === undefined || typeof input !== 'object' || Array.isArray(input)) {
+    return 'NOT_VERIFIED';
+  }
+  const raw = input as ClassifyVerifiedBenchmarkTierInput;
+  const admitted = raw.admitted === true || raw.candidateAdmitted === true;
+  if (!admitted) return 'NOT_VERIFIED';
+  const outcome = verifiedTierOutcome(raw.score, raw.outcome);
+  if (
+    outcome !== 'EXACT_REDISCOVERY' &&
+    outcome !== 'PARTIAL_REDISCOVERY' &&
+    outcome !== 'SAME_ROOT_CAUSE_ALTERNATE'
+  ) {
+    return 'NOT_VERIFIED';
+  }
+  if (!verifiedTierHasMechanical(raw)) return 'NOT_VERIFIED';
+  const leakage = verifiedTierLeakage(raw);
+  if (leakage.classes.length > 0 || leakage.count > 0) return 'NOT_VERIFIED';
+  return 'VERIFIED_ROOT_CAUSE_REDISCOVERY';
+}
