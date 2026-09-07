@@ -11,7 +11,7 @@ Last substantive checkpoint SHA: 2437895c883902bbbccaf796c278863cade0cbbc
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-autonomous-bug-huntin-725fbbbe
-Last checkpoint: Wave 6 lanes R and E integrated; first real historical reproduction
+Last checkpoint: Wave 6 lanes R and E integrated; first real historical reproduction proven; W7 real-local substrate task authored
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: d1ebde90c1454b31d6b93d9df503a4c5f196d7c8
@@ -22,121 +22,115 @@ PROJECT_VERDICT_EFFECT: PRESERVE
 
 ## Objective
 
-Deliver a locally executable autonomous bug-hunting programme above the
-existing Nightwatch safety kernel.
+Deliver a locally executable autonomous bug-hunting programme above the existing Nightwatch safety kernel.
 
 ## Current Milestone
 
-Milestone ID: W6
+Milestone ID: W7
 Milestone status: IN_PROGRESS
-What is being attempted: Wave 6 delivered a contained historical test replay and multi-investigation campaigns. One real historical Alphaus defect is now mechanically reproduced with a dossier. EXACT rediscovery and real-world unknown-bug yield remain unproven; DEV unauthorized. Do not declare COMPLETE.
-
+What is being attempted: `nightwatch-real-local-investigation-substrate-v1`. Connect the ordinary autonomous campaign path to real owner-local source/System Map/Bug Atlas/System Atlas/evidence/deterministic reproduction through shared safe providers; mechanically ground final dossier admission; preserve strict EXACT while adding a meaningful verified root-cause/reproduction tier; prove one leak-free historical reproduced defect through the same normal product path. DEV/NEXT remain unauthorized. Do not declare the parent programme COMPLETE.
 
 ## Completed Milestones
 
-- M0 recon: HEAD `d1ebde90c1454b31d6b93d9df503a4c5f196d7c8` == origin/main.
+- M0 recon: HEAD `d1ebde90c1454b31d6b93d9df503a4c5f196d7c8` == origin/main at programme start.
 - W0 protocol freeze integrated at `b3a780816c111399026844615b8b915899cf7156`.
 - W1 lanes A–G independently reviewed and integrated.
 - Seeded positive / false-anomaly / injection loop tests 3/3.
 - W5 bounded HOUR_1 campaigns executed on the real CLI path; provider fallback exercised.
+- W6 integrated contained historical replay and multi-investigation campaigns.
+- W6 real historical proof: `mobingilabs/ouchan` fix `5985281b43cd` reproduced as PRE_FAIL_POST_PASS; mined hunt reached VERIFY, earned `reproductionCount=1`, built a dossier, and leaked no hidden truth.
 
 ## Work In Progress
-Wave 6 integrated: lane R contained replay (worker `a842f9b`) and lane E multi-investigation campaigns (worker `de2f58e`, reconcile `7dd51cf`). Live mined hunt on `mined-bugatlas-git-mobingilabs-ouchan-5985281b43cd` reached VERIFY, called `RERUN_SAFE_REPRODUCTION`, and earned `reproductionCount=1`, `hasDossier=true`, `leaked=[]`. Orchestrator independently re-ran the real replay: `REPRODUCED` / `PRE_FAIL_POST_PASS`, sibling repo unmutated. Mined corpus is now 28 cases with 1 reproduction and EXACT still 0.
-Wave 5 measured two HOUR_1 campaigns (`wave5-1h-local` BUDGET_EXHAUSTED via the consecutive-failure ceiling after Grok returned HTTP 402; `wave5-1h-opencode` NO_PROGRESS at 102s/12 actions). Wave 6 then removed the two structural limits those runs exposed. Mined historical corpus is 28 cases: 8 PARTIAL, 16 SAME_ROOT_CAUSE, 3 MISS under Grok, plus 3 OpenCode Go re-hunts, EXACT 0, and now exactly 1 real reproduction.
 
+W7 child task: `.agent/tasks/nightwatch-real-local-investigation-substrate-v1/`.
+
+The initiating repository audit found that the autonomous runtime is real, but the normal `nightwatch-agent campaign run` path is not yet proven to consume real local source/System Map/evidence providers and can fall back to fixture/synthetic Atlas data, while the historical benchmark owns a richer private executor. W7 closes that product/benchmark split before spending effort optimizing EXACT=1 or a literal one-hour wall soak.
+
+The same audit found a duplicate `E` key in durable `PROGRAMME.json`; the parent state has now been rewritten with unique `E` (W1 System Atlas) and `E6` (W6 multi-investigation) records. W7 must add machine enforcement so duplicate/ambiguous durable identities cannot recur silently.
+
+Wave 5 measured two HOUR_1 campaigns (`wave5-1h-local` BUDGET_EXHAUSTED via the consecutive-failure ceiling after Grok returned HTTP 402; `wave5-1h-opencode` NO_PROGRESS at 102s/12 actions). Wave 6 removed the structural single-investigation limit. A literal full-hour live-provider soak remains useful but is secondary to wiring the real product substrate.
+
+Historical mined corpus remains 28 cases with one mechanically reproduced defect and strict EXACT still 0. Do not weaken EXACT merely to turn the metric green.
 
 ## Exact Next Action
 
-Keep the programme IN_PROGRESS / PARTIAL. Reproduction of a real historical defect is now PROVEN; EXACT rediscovery and previously-unknown-bug yield are NOT. DEV/NEXT unauthorized. Do not declare COMPLETE.
-
-
+Execute `nightwatch-real-local-investigation-substrate-v1` from live repository truth to its terminal acceptance criteria. Read `.agent/EXECUTION_PROMPT.md` plus the child SPEC/PLAN/STATE/REPORT. Reproduce the current product-path limitations first, freeze shared provider interfaces, then implement/integrate/review/certify. Keep the parent programme IN_PROGRESS/PARTIAL. DEV/NEXT unauthorized.
 
 ## Files Changed
 
 | Path | Reason | Status |
 |---|---|---|
-| `src/core/agentProtocol/**` | Frozen cross-lane contracts | in progress |
-| `src/core/policy/ownerScope.ts` | `AUTONOMOUS_AGENT_LOCAL` | in progress |
-| `.agent/tasks/nightwatch-autonomous-bug-hunting-programme-v1/**` | Continuity | in progress |
+| `src/core/agentProtocol/**` | Frozen cross-lane contracts | integrated |
+| `src/core/policy/ownerScope.ts` | `AUTONOMOUS_AGENT_LOCAL` | integrated |
+| `.agent/tasks/nightwatch-autonomous-bug-hunting-programme-v1/**` | Parent continuity | in progress |
+| `.agent/tasks/nightwatch-real-local-investigation-substrate-v1/**` | W7 task continuity | in progress |
 
 ## Validation Ledger
 
 Command: session start/claim
-Result: PASS — worktree `nightwatch-autonomous-bug-huntin-725fbbbe`,
-session `sess-d9ba4a6459ef`, base `d1ebde90c1454b31d6b93d9df503a4c5f196d7c8`
+Result: PASS — programme worktree `nightwatch-autonomous-bug-huntin-725fbbbe`, session `sess-d9ba4a6459ef`, base `d1ebde90c1454b31d6b93d9df503a4c5f196d7c8` at programme start.
 
 Command: `npm run typecheck`
-Result: PASS on the tree at documentation descendant
-`ab658ebe800d10ff92d0198eac3efebc13fdeba6`, whose implementation content is
-unchanged from `fe919b2cc1fcd3dc79062f336185647c3225a99a` (the range is
-REPORT.md only).
+Result: PASS on the Wave-5 tree at documentation descendant `ab658ebe800d10ff92d0198eac3efebc13fdeba6`, whose implementation content was unchanged from `fe919b2cc1fcd3dc79062f336185647c3225a99a`.
 
 Command: `npm test` (full regression)
-Result: PASS on that same tree — 4288 passed, 0 failed, 13 skipped, 8.1m.
-No unexplained regression against the 4076 historical baseline.
+Result: PASS on that Wave-5 tree — 4288 passed, 0 failed, 13 skipped, 8.1m. Later Wave-6 certification recorded 4315 passed / 0 failed / 13 skipped.
 
 Command: `npm run hardening:check`, `npm run project:check`, `npm run workspace:check`
-Result: PASS
+Result: PASS at the last certified implementation state.
 
 Command: `npm run agent:check`
-Result: FAIL then repaired, twice. Labelling the REPORT-only descendant as the
-implementation checkpoint raised INVALID_IMPLEMENTATION_ROLE and
-CONTINUITY_ANCHOR_MISMATCH; restoring `053f2731...` then raised
-INVALID_DOCUMENTATION_CHECKPOINT because that range still contained
-`src/`, `bin/` and `tests/` changes. The true implementation tip is
-`fe919b2cc1fcd3dc79062f336185647c3225a99a`; `fe919b2..ab658eb` is REPORT.md
-only. Final: PASS with 4 advisory warnings (CHECKPOINT_ADVANCE on approved
-doc paths, 31 legacy v1 tasks, one non-live sibling STALE_SESSION, stale base).
+Result: earlier continuity failures were repaired rather than relabelled. Final pre-W7 state PASS with advisory warnings. W7 must rerun after its own documentation/code changes.
 
 Command: `npm run gate:local`
-Result: FULL PASS at `20f830f3539dcd2687134e2df9cffade57cf0bb6`, all eleven
-required groups, receipt `receipt:sha256:16ed7c4dfe9f939f64893483`
-(SEMANTIC_COMPATIBILITY 2067 passed / 13 skipped / 0 failed, OWNER_PROVENANCE
-91, SYNTHETIC_CAMPAIGN 1131 / 0 failed). An earlier attempt at `a75a0db`
-stopped at PROJECT_TRUTH because the project baseline still named `053f2731...`.
+Result: Wave-6 FULL PASS 11/11 at certified implementation SHA `3476d264f0b37be8c84246df247ac932e49c711e`; receipt recorded in parent REPORT. W7 must obtain a fresh gate after implementation.
 
 Command: `npm run gate:clean`
-Result: PASS at `20f830f3539dcd2687134e2df9cffade57cf0bb6` — Node 20 clean
-clone, `installResult` PASS, `gateResult` PASS, inner receipt
-`receipt:sha256:73bbcdd6a3201e7145f796f2`.
+Result: Wave-6 PASS on a Node 20 fresh clone at the certified implementation state. W7 must obtain a fresh clean-clone gate after implementation.
 
 ## Decisions Made During This Task
 
 Decision: Merge Lane H into Lane A.
 Reason: Checkpoint/budget/observability must not fork.
-Evidence/constraint: programme brief overlapping-lane rule.
 
 Decision: System Atlas overlay rather than mutating systemMap kinds.
 Reason: C-15b fact-category contracts stay stable.
-Evidence/constraint: `src/core/systemMap/model.ts` FACT_CATEGORIES.
+
+Decision: W7 prioritizes real product-path sensing/reproduction over forcing strict EXACT=1 or a literal one-hour soak.
+Reason: the product/benchmark capability split is now the highest-value blocker to a credible general autonomous bug hunter.
+
+Decision: Preserve strict `EXACT_REDISCOVERY` and add a separate mechanically meaningful verified root-cause/reproduction tier rather than lowering the strict metric.
+Reason: naming a hidden regression-test path is useful but is not identical to independently identifying and mechanically proving the defect.
 
 ## Discoveries
 
-- Stale session `nightwatch-review-operations-his-7431812c` has uncommitted
-  and committed review-operations work on the same base SHA. Do not touch.
+- Pre-existing review-operations worktree/session remains foreign to this campaign and must not be touched.
+- Parent `PROGRAMME.json` previously reused the `E` key for W1 System Atlas and W6 multi-investigation; ordinary JSON parsing would discard one record. Documentation repair is applied; machine enforcement is W7 work.
+- Generic product tool semantics and historical benchmark tool semantics are not yet proven equivalent; W7 owns convergence.
 
 ## Blockers
 
-None.
+None for locally executable W7 work. External provider quota/account blocks may affect live-model proof but do not authorize premature completion while deterministic/local work remains.
 
 ## Safety Events
 
-NONE
+NONE recorded through W6. W7 inherits the same prohibitions.
 
 ## Deferred / Follow-Up
 
 - DEV/NEXT hunt unauthorized.
 - Communication-evidence atlas population unauthorized.
-- Full-hour endurance is provider-quality bound: the loop guard ends runs early, so a true 1h wall-clock campaign is still unproven.
-- Historical sibling mining isolation PASS; rediscovery not proven.
-
+- Previously unknown Alphaus bug yield unproven.
+- Full-hour live-provider endurance remains useful after the real local substrate is wired.
+- Historical replay coverage beyond currently executable cases remains follow-up unless required for the W7 shared provider proof.
 
 ## Resume Recipe
 
-1. Read SPEC, PLAN, STATE, PROGRAMME.json.
-2. Inspect git status in `session/nightwatch-autonomous-bug-huntin-725fbbbe`.
-3. Continue Exact Next Action.
+1. Read `.agent/ACTIVE_TASK.md` and `.agent/EXECUTION_PROMPT.md`.
+2. Read `.agent/tasks/nightwatch-real-local-investigation-substrate-v1/{SPEC,PLAN,STATE,REPORT}`.
+3. Read parent PROGRAMME/STATE/REPORT and discover live Git/workspace/session truth.
+4. Do not repeat W0-W6. Execute W7 to terminal criteria.
 
 ## Completion Snapshot
 
-Populate only when complete.
+Parent programme not complete. Populate only when its full terminal criteria are independently satisfied.
