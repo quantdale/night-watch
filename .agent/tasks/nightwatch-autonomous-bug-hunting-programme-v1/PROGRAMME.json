@@ -2,7 +2,7 @@
   "schemaVersion": "nightwatch.autonomous-programme-state.v1",
   "programmeId": "nightwatch-autonomous-bug-hunting-programme-v1",
   "programmeStatus": "IN_PROGRESS",
-  "currentWave": "W9",
+  "currentWave": "W10",
   "startingSha": "d1ebde90c1454b31d6b93d9df503a4c5f196d7c8",
   "wave0Sha": "bd9be1b2a93107388b868cf2febc87bc84a8a428",
   "programmeIntegrationHead": "DISCOVER_FROM_GIT",
@@ -88,6 +88,13 @@
       "objective": "Add safe host-derived deterministic reproduction for supported current owner-local packages, explicit current-source proof semantics, deterministic-vs-transient retry disposition, measured byte-accounting/budget calibration, and a truthful live-provider yield proof without weakening W7/W8 invariants.",
       "yieldVerdict": "bounded GO_VENDORED_PACKAGE_TEST provider and CURRENT_SOURCE_REPEATED_TEST_FAILURE admission proven; real current package executed twice and honestly returned NOT_REPRODUCED; final opencode-go/omen-alpha HOUR_1 campaign ran 3673995 ms with 7 investigations, 79 reasoner calls, 56 tool actions, 26 unique targets, 28 grounded hypotheses, 7 deterministic NOT_AVAILABLE reproductions, 1 candidate, 0 admitted findings and 1 MISSING_REPRODUCTION refusal; wall time bound while byte ceilings retained headroom",
       "certification": "implementation bb28480; focused 295 passed/3 skipped; full npm test 4565 passed/16 skipped; gate:local receipt:sha256:6fb76272f121ec1bed5b74bf; fresh Node20 gate:clean clean-receipt:sha256:d914db277a583699a1ff68c3; real current and historical product-path proofs PASS"
+    },
+    "REPRODUCTION_COVERAGE_YIELD": {
+      "status": "planned",
+      "taskId": "nightwatch-reproduction-surface-coverage-autonomous-yield-v1",
+      "role": "W10_REPRODUCTION_SURFACE_COVERAGE_AUTONOMOUS_YIELD",
+      "baseSha": "0664c69cc72acbbf848bf6dd64e7e9d868d80601",
+      "objective": "Census and materially expand safe current-source reproduction coverage, expose bounded reproduction capability before verification, reduce NOT_AVAILABLE waste, prove generality across real targets, run multiple long live-provider campaigns, and preserve W7-W9 evidence/safety semantics."
     }
   },
   "proof": {
@@ -102,7 +109,8 @@
     "normalProductPathRealLocalSubstrate": "PROVEN — real owner-local source/System Map/mined Bug Atlas sensing plus shared deterministic reproduction and mechanical admission on nightwatch-agent campaign run; the REAL contained replay of mined ouchan 5985281b43cd through the product path yields REPRODUCED/PRE_FAIL_POST_PASS and dossierStatus=VERIFIED_REPRODUCTION with reproductionCount=1 and zero leakage",
     "programmeIdentityValidation": "PASS bin/lib/programme-state.mjs in agent:check (duplicate lane keys rejected pre-parse)",
     "w8AutonomousEfficacy": "PROVEN_LOCAL_AND_LIVE_PROVIDER — bounded turn/campaign memory + mechanical verification/reproduction readiness materially improved the fixed corpus with zero added false positives/leaks; live historical proof reached VERIFIED_ROOT_CAUSE_REDISCOVERY; owner-local live candidate remained mechanically refused without reproduction",
-    "ownerLocalCurrentSourceReproduction": "PROVEN_BOUNDED_LOCAL — host-derived GO_VENDORED_PACKAGE_TEST provider, explicit CURRENT_SOURCE_REPEATED_TEST_FAILURE proof/admission and conservative no-credit outcomes; real current package execution completed honestly without a qualifying failure; live omen-alpha candidate was refused MISSING_REPRODUCTION"
+    "ownerLocalCurrentSourceReproduction": "PROVEN_BOUNDED_LOCAL — host-derived GO_VENDORED_PACKAGE_TEST provider, explicit CURRENT_SOURCE_REPEATED_TEST_FAILURE proof/admission and conservative no-credit outcomes; real current package execution completed honestly without a qualifying failure; live omen-alpha candidate was refused MISSING_REPRODUCTION",
+    "w10ReproductionSurfaceCoverage": "NOT_YET_PROVEN"
   },
   "realWorld": {
     "LOCAL_AUTONOMOUS_CAPABILITY": "PROVEN_SYNTHETIC_AND_ONE_REAL_HISTORICAL_REPRODUCTION",
@@ -110,15 +118,17 @@
     "NORMAL_CAMPAIGN_REAL_LOCAL_SENSING": "PROVEN_LOCAL",
     "AUTONOMOUS_EFFICACY_REAL_LOCAL_SUBSTRATE": "PROVEN_LOCAL_FIXED_CORPUS_AND_LIVE_PROVIDER",
     "OWNER_LOCAL_DETERMINISTIC_REPRODUCTION": "PROVEN_BOUNDED_LOCAL_GO_VENDORED_PACKAGE_TEST",
+    "REPRODUCTION_SURFACE_COVERAGE": "W10_IN_PROGRESS",
     "REAL_DEV_NEXT_HUNT": "NOT_AUTHORIZED",
     "PREVIOUSLY_UNKNOWN_ALPHAUS_BUG": "NOT_YET_PROVEN",
     "LIVE_CLI_REASONER": "OPENCODE_GO_OMEN_ALPHA_FINAL_W9"
   },
   "blockers": [
+    "W10 reproduction-surface coverage and capability-aware yield are not yet proven; W9 live reference had 7/7 NOT_AVAILABLE reproduction attempts",
     "DEV/NEXT execution not authorized (external)",
     "EXACT rediscovery remains unproven and stays a separate strict metric",
     "previously unknown Alphaus bug yield remains unproven"
   ],
-  "exactNextAction": "W9 is COMPLETE at implementation checkpoint bb28480c6a6969a06744c75c4c947851d5bece7c. Do not reopen it. Keep the parent programme IN_PROGRESS/PARTIAL; start only a separately specified and authorized successor wave from live Git truth. DEV/NEXT, strict EXACT, organizational approval and previously-unknown-defect claims remain unauthorized or unproven.",
-  "resumeRecipe": "Read .agent/ACTIVE_TASK.md and parent PROGRAMME/STATE/REPORT, then the terminal W9 SPEC/PLAN/STATE/REPORT. Re-discover live git/workspace/session truth. W0-W9 are frozen complete; no successor implementation wave is currently authorized."
+  "exactNextAction": "Execute child task nightwatch-reproduction-surface-coverage-autonomous-yield-v1 from live Git truth. Start with the owner-approved reproduction capability census; freeze shared W10 contracts before parallel lanes; then improve executable target coverage/selection, run multiple substantial live campaigns, and certify. Do not reopen W0-W9 or infer DEV/NEXT authorization.",
+  "resumeRecipe": "Read .agent/ACTIVE_TASK.md and .agent/EXECUTION_PROMPT.md, then W10 SPEC/PLAN/STATE/REPORT, followed by terminal W9 STATE/REPORT. Re-discover live git/workspace/session truth. W0-W9 are frozen complete; W10 is the only active implementation wave."
 }
