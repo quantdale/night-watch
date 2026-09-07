@@ -29,6 +29,7 @@ import {
 import {
   defaultAgentBudgetPolicy,
   type AgentBudgetPolicy,
+  type AgentRuntimeState,
   type AgentTerminationReason,
   type ReasonerDriver,
   type ReasonerTurnRequest,
@@ -42,6 +43,7 @@ import {
   createHistoricalReproductionProvider,
   historicalVisiblePaths,
 } from '../localInvestigation/historical';
+import type { LocalInvestigationHistory } from '../localInvestigation/types';
 import { buildReasonerVisibleContext, type DefinedBenchmarkCase } from './case';
 import {
   type ContainedTestReplayRequest,
@@ -114,6 +116,17 @@ export interface BenchmarkHuntResult {
    */
   readonly minedReplayAudit: MinedReplayAudit | null;
   readonly dossier: AutonomousFindingDossier | null;
+  /**
+   * Harness-side final runtime state. Instrumentation only (W8 efficacy
+   * metrics); it carries the same ids/refs the reasoner already observed and
+   * never hidden ground truth.
+   */
+  readonly runtimeState: AgentRuntimeState;
+  /**
+   * Harness-side tool-session history when the hunt ran through the shared
+   * session executor (null when `ports.tools` overrode it).
+   */
+  readonly investigationHistory: LocalInvestigationHistory | null;
 }
 
 /**
@@ -435,5 +448,7 @@ export async function runBenchmarkHunt(
     discriminatorObservation,
     minedReplayAudit,
     dossier,
+    runtimeState: run.state,
+    investigationHistory: ports.tools === undefined ? investigation.snapshot() : null,
   };
 }

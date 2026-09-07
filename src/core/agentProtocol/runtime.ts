@@ -127,6 +127,19 @@ export interface AgentActionRecord {
   readonly argumentDigest: string | null;
   readonly resultClass: string;
   readonly evidenceRefs: readonly string[];
+  /**
+   * W8: the authoritative subject of the action as reported by the executor —
+   * an approved source path, a reproduction source path, or a proposal
+   * candidate id. Never raw arguments and never model-supplied text that the
+   * executor did not confirm. Absent on pre-W8 checkpoints.
+   */
+  readonly target?: string | null;
+  /**
+   * W8: bounded salient symbols the executor extracted from material the
+   * reasoner already received for this target, so a stateless turn can recall
+   * what it found. Never raw source text.
+   */
+  readonly salient?: readonly string[];
 }
 
 export interface AgentRuntimeState {
@@ -139,6 +152,12 @@ export interface AgentRuntimeState {
   readonly evidenceRefs: readonly string[];
   readonly candidateIds: readonly string[];
   readonly budget: AgentBudgetSnapshot;
+  /**
+   * W8: approved targets this investigation has learned about (from bounded
+   * index enumerations and confirmed actions). Deduplicated, insertion
+   * ordered, capped by the runtime. Empty on pre-W8 checkpoints.
+   */
+  readonly knownTargets: readonly string[];
   readonly terminationReason: string | null;
 }
 

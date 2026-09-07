@@ -160,6 +160,17 @@ function parseRuntimeState(value: unknown): AgentRuntimeState {
     ) {
       throw new AgentCheckpointError('CORRUPT', 'state.actionLog entry is invalid');
     }
+    // W8 additive fields. Absent is valid (pre-W8 checkpoints resume);
+    // present-but-malformed is corrupt, never silently discarded.
+    if (item.target !== undefined && item.target !== null && typeof item.target !== 'string') {
+      throw new AgentCheckpointError('CORRUPT', 'state.actionLog entry target is invalid');
+    }
+    if (item.salient !== undefined && !isStringArray(item.salient)) {
+      throw new AgentCheckpointError('CORRUPT', 'state.actionLog entry salient is invalid');
+    }
+  }
+  if (value.knownTargets !== undefined && !isStringArray(value.knownTargets)) {
+    throw new AgentCheckpointError('CORRUPT', 'state.knownTargets is invalid');
   }
   if (!isStringArray(value.evidenceRefs)) throw new AgentCheckpointError('CORRUPT', 'state.evidenceRefs is invalid');
   if (!isStringArray(value.candidateIds)) throw new AgentCheckpointError('CORRUPT', 'state.candidateIds is invalid');

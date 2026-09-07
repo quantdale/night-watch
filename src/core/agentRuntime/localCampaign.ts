@@ -62,6 +62,12 @@ import {
 import { createCliReasonerDriver } from '../reasoner/cliReasoner';
 import { AgentCheckpointError, assertCheckpointHasNoSecrets, parseCheckpoint } from './checkpoint';
 import { AgentRuntime } from './runtime';
+import {
+  absorbInvestigationIntoStrategy,
+  emptyCampaignStrategyState,
+  parseCampaignStrategyState,
+} from '../investigationMemory/derive';
+import type { CampaignStrategyState } from '../investigationMemory/types';
 import type { AgentRunResult, AgentToolExecutor } from './types';
 
 export const LOCAL_CAMPAIGN_VERSION = 'nightwatch.local-cli-campaign.v1' as const;
@@ -164,6 +170,12 @@ interface CampaignProgress {
   readonly completedInvestigations: number;
   readonly stagnantInvestigations: number;
   readonly terminationCounts: CampaignTerminationCounts;
+  /**
+   * W8 bounded cross-investigation strategy. Absent on pre-W8 envelopes; a
+   * malformed value degrades to a fresh strategy rather than injecting
+   * unvalidated state into a reasoner request.
+   */
+  readonly strategy: CampaignStrategyState | null;
   /** Present only when the campaign paused mid-investigation. */
   readonly pausedInvestigation: AgentCheckpoint | null;
 }
@@ -226,7 +238,7 @@ function isNonNegativeInteger(value: unknown): value is number {
 }
 
 /** Strict, fail-closed parse of the resume envelope. Null = legacy checkpoint. */
-function parseCampaignProgress(value: unknown): CampaignProgress | null {
+function parseCampaignProgress(value: unknown, campaignId: string): CampaignProgress | null {
   if (value === undefined) return null;
   if (!isRecord(value)) throw new AgentCheckpointError('CORRUPT', 'campaignProgress is not an object');
   if (value.version !== CAMPAIGN_PROGRESS_VERSION) {
@@ -257,12 +269,17 @@ function parseCampaignProgress(value: unknown): CampaignProgress | null {
   if (value.pausedInvestigation !== undefined && value.pausedInvestigation !== null) {
     pausedInvestigation = parseCheckpoint(value.pausedInvestigation);
   }
+  const strategy =
+    value.strategy === undefined || value.strategy === null
+      ? null
+      : parseCampaignStrategyState(value.strategy, campaignId);
   return {
     version: CAMPAIGN_PROGRESS_VERSION,
     nextInvestigationIndex: value.nextInvestigationIndex,
     completedInvestigations: value.completedInvestigations,
     stagnantInvestigations: value.stagnantInvestigations,
     terminationCounts: counts,
+    strategy,
     pausedInvestigation,
   };
 }
@@ -309,7 +326,7 @@ export function listLocalCampaigns(stateDirectory?: string): readonly LocalCampa
       let started = 1;
       let completed = checkpoint.state.status === 'TERMINATED' ? 1 : 0;
       try {
-        const progress = parseCampaignProgress((raw as Record<string, unknown>).campaignProgress);
+        const progress = parseCampaignProgress((raw as Record<string, unknown>).campaignProgress, checkpoint.campaignId);
         if (progress !== null) {
           // PAUSED campaigns carry one in-flight investigation: started but
           // not completed.
@@ -441,9 +458,11 @@ interface CampaignAccumulators {
   investigationsStarted: number;
   investigationsCompleted: number;
   pendingResume: AgentCheckpoint | null;
+  knownTargets: string[];
+  strategy: CampaignStrategyState;
 }
 
-function freshAccumulators(): CampaignAccumulators {
+function freshAccumulators(campaignId: string): CampaignAccumulators {
   return {
     actionLog: [],
     evidenceRefs: [],
@@ -464,6 +483,8 @@ function freshAccumulators(): CampaignAccumulators {
     investigationsStarted: 0,
     investigationsCompleted: 0,
     pendingResume: null,
+    knownTargets: [],
+    strategy: emptyCampaignStrategyState(campaignId),
   };
 }
 
@@ -531,7 +552,18 @@ function absorbInvestigation(engine: CampaignEngine, ran: AgentRunResult, countS
     }
   }
   acc.actionLog.push(...ran.state.actionLog.map((record) => ({ ...record, evidenceRefs: [...record.evidenceRefs] })));
+  for (const target of ran.state.knownTargets ?? []) {
+    if (!acc.knownTargets.includes(target)) acc.knownTargets.push(target);
+  }
   acc.lastPhase = ran.state.phase;
+  // Fold the finished investigation into the bounded cross-investigation
+  // strategy so the NEXT fresh AgentRuntime does not start from zero.
+  acc.strategy = absorbInvestigationIntoStrategy(acc.strategy, {
+    state: ran.state,
+    terminationReason: ran.terminationReason,
+    newEvidence,
+    newCandidates,
+  });
   if (countStart) acc.investigationsStarted += 1;
   acc.investigationsCompleted += 1;
   // The slot always advances past the finished investigation, even when its
@@ -571,6 +603,7 @@ function campaignStateOf(
     actionLog: acc.actionLog.map((record) => ({ ...record, evidenceRefs: [...record.evidenceRefs] })),
     evidenceRefs: [...acc.evidenceRefs],
     candidateIds: [...acc.candidateIds],
+    knownTargets: [...acc.knownTargets],
     budget: { policy: engine.policy, usage: campaignUsageOf(engine) },
     terminationReason,
   };
@@ -596,6 +629,7 @@ function buildCampaignCheckpoint(
     completedInvestigations: acc.investigationsCompleted,
     stagnantInvestigations: acc.stagnant,
     terminationCounts: { ...acc.terminationCounts },
+    strategy: acc.strategy,
     pausedInvestigation,
   };
   const document: Record<string, unknown> = { ...checkpoint, campaignProgress: { ...progress } };
@@ -688,6 +722,7 @@ async function runOneInvestigation(engine: CampaignEngine, investigationId: stri
       authorizedEnvironments: ['LOCAL'] as const,
       maxTurns: engine.input.maxTurns,
       now: engine.now,
+      priorStrategy: engine.acc.strategy,
     }).run({ maxTurns: engine.input.maxTurns });
   } else {
     ran = await new AgentRuntime({
@@ -698,6 +733,7 @@ async function runOneInvestigation(engine: CampaignEngine, investigationId: stri
       authorizedEnvironments: ['LOCAL'] as const,
       maxTurns: engine.input.maxTurns,
       now: engine.now,
+      priorStrategy: engine.acc.strategy,
     }).run({ maxTurns: engine.input.maxTurns });
   }
   engine.acc.histories.push(session.snapshot());
@@ -777,6 +813,7 @@ function seedFromCheckpointState(engine: CampaignEngine, state: AgentRuntimeStat
     acc.investigationsCompleted = progress.completedInvestigations;
     acc.stagnant = progress.stagnantInvestigations;
     acc.terminationCounts = { ...progress.terminationCounts };
+    acc.strategy = progress.strategy ?? emptyCampaignStrategyState(engine.input.campaignId);
     acc.pendingResume = progress.pausedInvestigation;
   } else if (state.status === 'TERMINATED') {
     // Legacy single-investigation checkpoint: the stored run finished.
@@ -800,6 +837,7 @@ function seedFromCheckpointState(engine: CampaignEngine, state: AgentRuntimeStat
   acc.retries = state.budget.usage.retries;
   acc.providerFailures = state.budget.usage.providerFailures;
   acc.consecutiveFailures = state.budget.usage.consecutiveFailures;
+  acc.knownTargets = [...(state.knownTargets ?? [])];
   acc.lastPhase = state.phase;
 }
 
@@ -817,7 +855,7 @@ export async function runLocalCliCampaign(input: LocalCampaignInput): Promise<Lo
     directory,
     now,
     campaignStartMs: now(),
-    acc: freshAccumulators(),
+    acc: freshAccumulators(input.campaignId),
   };
   return runCampaignLoop(engine);
 }
@@ -842,7 +880,7 @@ export async function resumeLocalCliCampaign(input: LocalCampaignInput): Promise
   // The campaign resumes under its own stored policy (the ceiling it started
   // with), not the caller's ceilingName.
   const policy = policyFromCheckpoint(checkpoint, input.campaignId);
-  const progress = parseCampaignProgress((raw as Record<string, unknown>).campaignProgress);
+  const progress = parseCampaignProgress((raw as Record<string, unknown>).campaignProgress, input.campaignId);
 
   if (checkpoint.state.status === 'TERMINATED') {
     // Idempotent resume: the campaign already finished. Report the stored
@@ -850,7 +888,7 @@ export async function resumeLocalCliCampaign(input: LocalCampaignInput): Promise
     const engine: CampaignEngine = {
       input, policy, reasoner, directory, now,
       campaignStartMs: now(),
-      acc: freshAccumulators(),
+      acc: freshAccumulators(input.campaignId),
     };
     seedFromCheckpointState(engine, checkpoint.state, progress);
     return resultOf(
@@ -870,7 +908,7 @@ export async function resumeLocalCliCampaign(input: LocalCampaignInput): Promise
     const engine: CampaignEngine = {
       input, policy, reasoner, directory, now,
       campaignStartMs: now() - checkpoint.state.budget.usage.wallTimeMs,
-      acc: freshAccumulators(),
+      acc: freshAccumulators(input.campaignId),
     };
     engine.acc.pendingResume = checkpoint;
     return runCampaignLoop(engine, input.campaignId);
@@ -882,7 +920,7 @@ export async function resumeLocalCliCampaign(input: LocalCampaignInput): Promise
   const engine: CampaignEngine = {
     input, policy, reasoner, directory, now,
     campaignStartMs: now() - checkpoint.state.budget.usage.wallTimeMs,
-    acc: freshAccumulators(),
+    acc: freshAccumulators(input.campaignId),
   };
   seedFromCheckpointState(engine, checkpoint.state, progress);
   return runCampaignLoop(engine);

@@ -105,6 +105,40 @@ function asLimit(value: unknown, fallback: number): number | null {
   return Math.max(0, Math.min(MAX_PROJECTION_LIMIT, Math.trunc(value)));
 }
 
+const SALIENT_PATH_RE = /[A-Za-z0-9_][A-Za-z0-9_./-]*\.[A-Za-z]{2,5}(?![A-Za-z])/g;
+const SALIENT_IDENTIFIER_RE = /[A-Za-z_][A-Za-z0-9_]{5,}/g;
+const MAX_SALIENT_SYMBOLS = 4;
+const MAX_SALIENT_CHARS = 64;
+const MAX_SALIENT_SCAN_CHARS = 8_192;
+
+/**
+ * Deterministic salient symbols for working memory: path-like tokens first (in
+ * first-appearance order), then the longest identifiers (length desc, then
+ * lexicographic) so the same text always yields the same list. Extracted from
+ * text that was already sanitized and already delivered to the reasoner, so
+ * this exposes nothing new — it only lets a stateless turn recall what it saw.
+ */
+export function extractSalientSymbols(text: string): readonly string[] {
+  if (typeof text !== 'string' || text.length === 0) return Object.freeze([]);
+  const scanned = text.length > MAX_SALIENT_SCAN_CHARS ? text.slice(0, MAX_SALIENT_SCAN_CHARS) : text;
+  const out: string[] = [];
+  for (const match of scanned.match(SALIENT_PATH_RE) ?? []) {
+    if (out.length >= MAX_SALIENT_SYMBOLS) break;
+    if (match.length > MAX_SALIENT_CHARS || out.includes(match)) continue;
+    out.push(match);
+  }
+  if (out.length < MAX_SALIENT_SYMBOLS) {
+    const identifiers = [...new Set(scanned.match(SALIENT_IDENTIFIER_RE) ?? [])]
+      .filter((item) => item.length <= MAX_SALIENT_CHARS && !out.includes(item))
+      .sort((left, right) => (right.length - left.length) || (left < right ? -1 : left > right ? 1 : 0));
+    for (const identifier of identifiers) {
+      if (out.length >= MAX_SALIENT_SYMBOLS) break;
+      out.push(identifier);
+    }
+  }
+  return Object.freeze(out);
+}
+
 function failResult(resultClass: string): AgentToolResult {
   return { ok: false, resultClass, evidenceRefs: [], outputBytes: 0, untrusted: [] };
 }
@@ -289,21 +323,28 @@ export function createLocalInvestigationToolSession(context: LocalInvestigationC
     const resolved = await resolveProvider<LocalSourceIndex>(() => context.source.index());
     if ('blocked' in resolved) return failResult('ADAPTER_UNAVAILABLE');
     const entries = resolved.value.entries.slice(0, MAX_REASONER_SOURCE_INDEX_ENTRIES);
-    return succeed('INSPECT_SOURCE_SURFACE', 'SOURCE_INDEX', {
+    const indexed = succeed('INSPECT_SOURCE_SURFACE', 'SOURCE_INDEX', {
       entries,
       total: resolved.value.total,
       truncated: resolved.value.truncated || entries.length < resolved.value.entries.length,
     }, 'SOURCE_CODE');
+    // The approved paths are already inside the envelope the reasoner just
+    // received; reporting them as memory facts is what lets a later stateless
+    // turn still know they exist.
+    return { ...indexed, memory: { availableTargets: entries.map((entry) => entry.path) } };
   }
 
   async function runSourceRead(path: string): Promise<AgentToolResult> {
     const resolved = await resolveProvider<LocalSourceDocument>(() => context.source.read(path));
-    if ('blocked' in resolved) return failResult('ADAPTER_UNAVAILABLE');
+    // A refused read still names the requested subject so working memory can
+    // record the attempt as exhausted. The runtime never promotes a failed
+    // subject to an approved target.
+    if ('blocked' in resolved) return { ...failResult('ADAPTER_UNAVAILABLE'), memory: { target: path } };
     const document = resolved.value;
     // The session never trusts provider bytes blindly: the digest must match
     // the exact text before anything is observed or grounded on it.
     if (sourceContentDigest(document.text) !== document.contentDigest) {
-      return failResult('ADAPTER_UNAVAILABLE');
+      return { ...failResult('ADAPTER_UNAVAILABLE'), memory: { target: path } };
     }
     const lexical = lexicalLanguageFor(document.language);
     const tokens = lexical === null ? null : tokenizeStaticSource(document.text, lexical);
@@ -338,6 +379,7 @@ export function createLocalInvestigationToolSession(context: LocalInvestigationC
       evidenceRefs: [evidenceRef],
       outputBytes: outputBytesOf(data),
       untrusted: [envelope],
+      memory: { target: document.path, salient: extractSalientSymbols(document.text) },
     };
   }
 
@@ -519,6 +561,7 @@ export function createLocalInvestigationToolSession(context: LocalInvestigationC
         evidenceRefs: [result.evidenceRef],
         outputBytes: outputBytesOf(result.reasonerVisible),
         untrusted: [envelope],
+        memory: { target: request.sourcePath },
       };
     }
     return {
@@ -527,6 +570,7 @@ export function createLocalInvestigationToolSession(context: LocalInvestigationC
       evidenceRefs: [],
       outputBytes: outputBytesOf(result.reasonerVisible),
       untrusted: [envelope],
+      memory: { target: request.sourcePath },
     };
   }
 
@@ -576,6 +620,7 @@ export function createLocalInvestigationToolSession(context: LocalInvestigationC
       evidenceRefs: [],
       outputBytes: outputBytesOf(data),
       untrusted: [wrapUntrusted('HISTORICAL_RECORD', sanitizeJsonText(data).text)],
+      memory: { target: candidateId },
     };
   }
 

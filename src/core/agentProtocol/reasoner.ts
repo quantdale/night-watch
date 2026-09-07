@@ -3,6 +3,7 @@
 // This module never spawns a process. Pure types + constants.
 // ---------------------------------------------------------------------------
 
+import type { InvestigationMemory } from '../investigationMemory/types';
 import type { AgentIntent, AgentIntentKind } from './intents';
 import type { AgentBudgetSnapshot, AgentPhase } from './runtime';
 import type { UntrustedEnvelope } from './untrusted';
@@ -56,6 +57,19 @@ export interface ReasonerObservation {
   readonly evidenceRefs: readonly string[];
   readonly allowedToolIds: readonly string[];
   readonly allowedIntentKinds: readonly AgentIntentKind[];
+  /**
+   * W8 (`reasoner-turn-request.v2`): bounded, deterministic working memory of
+   * the investigation so far. A print-mode reasoner is a fresh process per
+   * turn, so without this a stateless turn cannot know which targets it
+   * inspected, which evidence ref grounds which source path, which hypotheses
+   * exist, or whether a reproduction is legally issuable.
+   *
+   * Derived entirely from Nightwatch-observed state. It grants no authority,
+   * carries no raw source text, no provider audit material and no hidden
+   * benchmark truth, and travels inside the request so the existing benchmark
+   * leak guard covers it.
+   */
+  readonly memory: InvestigationMemory;
 }
 
 export interface ReasonerTurnRequest {

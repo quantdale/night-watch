@@ -30,9 +30,11 @@ import {
 } from '../../src/core/agentProtocol/reasoner';
 import {
   AGENT_BUDGET_VERSION,
+  AGENT_RUNTIME_STATE_VERSION,
   ZERO_AGENT_BUDGET_USAGE,
   defaultAgentBudgetPolicy,
 } from '../../src/core/agentProtocol/runtime';
+import { deriveInvestigationMemory } from '../../src/core/investigationMemory/derive';
 
 const NODE = process.execPath;
 const RESPONSE_VERSION = REASONER_TURN_RESPONSE_VERSION;
@@ -74,6 +76,19 @@ function makeRequest(): ReasonerTurnRequest {
       evidenceRefs: [],
       allowedToolIds: [],
       allowedIntentKinds: [],
+      memory: deriveInvestigationMemory({
+        schemaVersion: AGENT_RUNTIME_STATE_VERSION,
+        campaignId: 'camp-lane-b-test',
+        status: 'RUNNING',
+        phase: 'PLAN',
+        hypotheses: [],
+        actionLog: [],
+        evidenceRefs: [],
+        candidateIds: [],
+        knownTargets: [],
+        budget: { policy: defaultAgentBudgetPolicy('HOUR_1'), usage: ZERO_AGENT_BUDGET_USAGE },
+        terminationReason: null,
+      }),
     },
     budgetRemaining: {
       policy: defaultAgentBudgetPolicy('HOUR_1'),

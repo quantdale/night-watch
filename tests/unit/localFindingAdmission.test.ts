@@ -27,6 +27,7 @@ const REPRO_EVIDENCE = 'ev:repro:rep-1';
 function makeState(overrides: Partial<AgentRuntimeState> = {}): AgentRuntimeState {
   return {
     schemaVersion: AGENT_RUNTIME_STATE_VERSION,
+    knownTargets: [],
     campaignId: 'campaign-admission-test',
     status: 'RUNNING',
     phase: 'VERIFY',

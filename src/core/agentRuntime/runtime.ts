@@ -45,6 +45,8 @@ import {
   type AgentToolDescriptor,
 } from '../agentProtocol';
 import { createCheckpoint, AgentCheckpointError, parseCheckpoint, parseResumeCursor } from './checkpoint';
+import { deriveInvestigationMemory } from '../investigationMemory/derive';
+import { MEMORY_CAPS, type CampaignStrategyState } from '../investigationMemory/types';
 import {
   normalizeToolResult,
   type AgentRunOptions,
@@ -120,6 +122,8 @@ export class AgentRuntime {
   private cancelled = false;
   private runAbort: AbortController | null = null;
   private pendingUntrusted: UntrustedEnvelope[] = [];
+  private knownTargets: string[] = [];
+  private readonly priorStrategy: CampaignStrategyState | null;
 
   constructor(deps: AgentRuntimeDeps | AgentRuntimeResumeDeps) {
     if (typeof deps.campaignId !== 'string' || deps.campaignId.length === 0) {
@@ -133,6 +137,7 @@ export class AgentRuntime {
     this.allowedToolIds = deps.allowedToolIds ?? defaultAllowedToolIds(this.authorizedEnvironments);
     this.defaultMaxTurns = deps.maxTurns ?? AGENT_RUNTIME_DEFAULT_MAX_TURNS;
     this.now = deps.now ?? Date.now;
+    this.priorStrategy = deps.priorStrategy ?? null;
     if (isResumeDeps(deps)) {
       const restored = deps.restored;
       if (restored.state.campaignId !== this.campaignId) {
@@ -140,7 +145,14 @@ export class AgentRuntime {
       }
       this.phase = restored.state.phase;
       this.hypotheses = restored.state.hypotheses.map((item) => ({ ...item, evidenceRefs: [...item.evidenceRefs] }));
-      this.actionLog = restored.state.actionLog.map((item) => ({ ...item, evidenceRefs: [...item.evidenceRefs] }));
+      this.actionLog = restored.state.actionLog.map((item) => ({
+        ...item,
+        evidenceRefs: [...item.evidenceRefs],
+        ...(item.salient === undefined ? {} : { salient: [...item.salient] }),
+      }));
+      // Pre-W8 checkpoints have no target ledger: resume with an empty one
+      // rather than refusing an otherwise valid checkpoint.
+      this.knownTargets = [...(restored.state.knownTargets ?? [])];
       this.evidenceRefs = [...restored.state.evidenceRefs];
       this.candidateIds = [...restored.state.candidateIds];
       this.usage = { ...restored.state.budget.usage };
@@ -185,9 +197,16 @@ export class AgentRuntime {
       status: this.status,
       phase: this.phase,
       hypotheses: this.hypotheses.map((item) => Object.freeze({ ...item, evidenceRefs: Object.freeze([...item.evidenceRefs]) })),
-      actionLog: this.actionLog.map((item) => Object.freeze({ ...item, evidenceRefs: Object.freeze([...item.evidenceRefs]) })),
+      actionLog: this.actionLog.map((item) =>
+        Object.freeze({
+          ...item,
+          evidenceRefs: Object.freeze([...item.evidenceRefs]),
+          ...(item.salient === undefined ? {} : { salient: Object.freeze([...item.salient]) }),
+        }),
+      ),
       evidenceRefs: Object.freeze([...this.evidenceRefs]),
       candidateIds: Object.freeze([...this.candidateIds]),
+      knownTargets: Object.freeze([...this.knownTargets]),
       budget: Object.freeze({ policy: this.policy, usage: Object.freeze({ ...this.usage }) }),
       terminationReason: this.terminationReason,
     };
@@ -567,6 +586,9 @@ export class AgentRuntime {
         argumentDigest,
         resultClass: 'DEDUPED_REPEAT',
         evidenceRefs: [],
+        // Attribute the discard to the target the executor already confirmed
+        // for this exact call, so working memory can surface the waste.
+        target: this.lastConfirmedTargetFor(toolId, argumentDigest),
       });
       return null;
     }
@@ -583,15 +605,32 @@ export class AgentRuntime {
     if (result.untrusted.length > 0) {
       this.pendingUntrusted = [...this.pendingUntrusted, ...result.untrusted].slice(-PENDING_UNTRUSTED_CAP);
     }
+    const facts = result.memory;
+    const target = facts?.target ?? null;
+    // Only SUCCESSFUL source-surface work contributes approved targets. A
+    // refused read still reports its requested subject (so memory can mark it
+    // exhausted) but must never be offered again as an approved target, and a
+    // proposal's subject is a candidate id, not a source path.
+    const learnable = toolId === 'INSPECT_SOURCE_SURFACE' || toolId === 'RERUN_SAFE_REPRODUCTION';
+    if (result.ok && learnable) {
+      if (facts?.availableTargets !== undefined) this.learnTargets(facts.availableTargets);
+      if (target !== null) this.learnTargets([target]);
+    }
+    const resultClass = result.ok ? result.resultClass : 'TOOL_ERROR';
     this.record({
       turnId,
       phase: this.phase,
       intentKind: 'CALL_TOOL',
       toolId,
       argumentDigest,
-      resultClass: result.ok ? result.resultClass : 'TOOL_ERROR',
+      resultClass,
       evidenceRefs: [...result.evidenceRefs],
+      target,
+      ...(facts?.salient === undefined ? {} : { salient: facts.salient }),
     });
+    if (toolId === 'RERUN_SAFE_REPRODUCTION' && target !== null) {
+      this.applyReproductionVerdict(target, resultClass);
+    }
     return null;
   }
 
@@ -606,6 +645,9 @@ export class AgentRuntime {
         evidenceRefs: [...this.evidenceRefs],
         allowedToolIds: [...this.allowedToolIds],
         allowedIntentKinds: [...AGENT_INTENT_KINDS],
+        // Derived, never stored: memory is a pure projection of observed
+        // state, so a checkpoint can never carry a stale or forged copy.
+        memory: deriveInvestigationMemory(this.snapshot(), { campaign: this.priorStrategy }),
       },
       budgetRemaining: { policy: this.policy, usage: { ...this.usage } },
     };
@@ -627,8 +669,58 @@ export class AgentRuntime {
     readonly argumentDigest: string | null;
     readonly resultClass: string;
     readonly evidenceRefs: readonly string[];
+    readonly target?: string | null;
+    readonly salient?: readonly string[];
   }): void {
-    this.actionLog.push({ ...entry, evidenceRefs: [...entry.evidenceRefs] });
+    this.actionLog.push({
+      ...entry,
+      target: entry.target ?? null,
+      evidenceRefs: [...entry.evidenceRefs],
+      ...(entry.salient === undefined ? {} : { salient: [...entry.salient] }),
+    });
+  }
+
+  /** Remember an executor-confirmed approved target. Bounded and deduplicated. */
+  private learnTargets(targets: readonly string[]): void {
+    for (const target of targets) {
+      if (this.knownTargets.length >= MEMORY_CAPS.knownTargets) return;
+      if (target.length === 0 || this.knownTargets.includes(target)) continue;
+      this.knownTargets.push(target);
+    }
+  }
+
+  /** The executor-confirmed target of the most recent identical call, if any. */
+  private lastConfirmedTargetFor(toolId: AgentToolId, argumentDigest: string): string | null {
+    for (let index = this.actionLog.length - 1; index >= 0; index -= 1) {
+      const record = this.actionLog[index]!;
+      if (record.toolId === toolId && record.argumentDigest === argumentDigest) {
+        return record.target ?? null;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Mechanical hypothesis lifecycle. An observed reproduction verdict on a
+   * target promotes or refutes every hypothesis grounded on that target's
+   * source evidence. Model prose never performs this transition.
+   */
+  private applyReproductionVerdict(target: string, resultClass: string): void {
+    if (resultClass !== 'REPRODUCED' && resultClass !== 'NOT_REPRODUCED') return;
+    const groundingRefs = new Set<string>();
+    for (const record of this.actionLog) {
+      if (record.toolId !== 'INSPECT_SOURCE_SURFACE') continue;
+      if (record.resultClass !== 'SOURCE_FILE') continue;
+      if ((record.target ?? null) !== target) continue;
+      for (const ref of record.evidenceRefs) groundingRefs.add(ref);
+    }
+    if (groundingRefs.size === 0) return;
+    const next: AgentHypothesis['status'] = resultClass === 'REPRODUCED' ? 'SUPPORTED' : 'DISPROVED';
+    this.hypotheses = this.hypotheses.map((hypothesis) => {
+      if (hypothesis.status === 'DISPROVED' && next === 'DISPROVED') return hypothesis;
+      if (!hypothesis.evidenceRefs.some((ref) => groundingRefs.has(ref))) return hypothesis;
+      return { ...hypothesis, status: next };
+    });
   }
 
   private refreshWallTime(): void {

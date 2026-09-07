@@ -7,7 +7,7 @@
 
 export const AGENT_PROTOCOL_VERSION = 'nightwatch.agent-protocol.v1' as const;
 export const REASONER_DRIVER_VERSION = 'nightwatch.reasoner-driver.v1' as const;
-export const REASONER_TURN_REQUEST_VERSION = 'nightwatch.reasoner-turn-request.v1' as const;
+export const REASONER_TURN_REQUEST_VERSION = 'nightwatch.reasoner-turn-request.v2' as const;
 export const REASONER_TURN_RESPONSE_VERSION = 'nightwatch.reasoner-turn-response.v1' as const;
 export const AGENT_TOOL_PROTOCOL_VERSION = 'nightwatch.agent-tool-protocol.v1' as const;
 export const AGENT_RUNTIME_STATE_VERSION = 'nightwatch.agent-runtime-state.v1' as const;
