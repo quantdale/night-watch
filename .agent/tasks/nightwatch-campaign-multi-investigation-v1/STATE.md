@@ -6,9 +6,8 @@ Task ID: nightwatch-campaign-multi-investigation-v1
 Phase: E-endurance implementation
 Status: COMPLETE
 Starting SHA: d2aa960c2491817c70cd36f422b0e20c58dcc80d
-Last validated implementation SHA: d2aa960c2491817c70cd36f422b0e20c58dcc80d
-Last substantive checkpoint SHA: DISCOVER_FROM_GIT
-Last documentation checkpoint SHA: DISCOVER_FROM_GIT
+Last validated implementation SHA: de2f58e649f1c29e8b68f1a20d90d6285ce86d36
+Last substantive checkpoint SHA: de2f58e649f1c29e8b68f1a20d90d6285ce86d36
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-campaign-multi-invest-2229385c
@@ -16,9 +15,8 @@ Last checkpoint: 2026-09-07 committed on session branch; targeted suites green
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: d2aa960c2491817c70cd36f422b0e20c58dcc80d
-LAST_VALIDATED_IMPLEMENTATION_SHA: d2aa960c2491817c70cd36f422b0e20c58dcc80d
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: DISCOVER_FROM_GIT
-LAST_DOCUMENTATION_CHECKPOINT_SHA: DISCOVER_FROM_GIT
+LAST_VALIDATED_IMPLEMENTATION_SHA: de2f58e649f1c29e8b68f1a20d90d6285ce86d36
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: de2f58e649f1c29e8b68f1a20d90d6285ce86d36
 LIVE_HEAD_AUTHORITY: GIT
 
 ## Objective
@@ -30,9 +28,9 @@ and correct checkpoint/resume.
 
 ## Current Milestone
 
-Milestone ID: M4
-Milestone status: COMPLETE
-What is being attempted: nothing — task complete.
+COMPLETE / STOP. The multi-investigation campaign loop, shared cumulative
+budget, fatal-state stops, stagnation stop and checkpoint/resume are all
+implemented and proven. No further implementation remains in this task.
 
 ## Completed Milestones
 
@@ -55,7 +53,7 @@ NONE.
 
 ## Exact Next Action
 
-STOP. Task complete. Do not resume; any follow-up starts as a new authorized task.
+STOP — task complete.
 
 ## Files Changed
 
