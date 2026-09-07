@@ -149,6 +149,13 @@ export interface LocalCampaignResult {
   readonly reasonerCalls: number;
   readonly providerFailures: number;
   readonly wallTimeMs: number;
+  /**
+   * Bounded cross-investigation strategy accumulated so far. Observable
+   * without reading the checkpoint file. Bounded by MEMORY_CAPS and
+   * secret-free by construction (secret-shaped entries are dropped, not
+   * truncated).
+   */
+  readonly campaignStrategy: CampaignStrategyState;
 }
 
 export interface LocalCampaignListing {
@@ -693,6 +700,7 @@ function resultOf(
     reasonerCalls: engine.acc.reasonerCalls,
     providerFailures: engine.acc.providerFailures,
     wallTimeMs: wallTimeMs ?? campaignUsageOf(engine).wallTimeMs,
+    campaignStrategy: engine.acc.strategy,
   };
 }
 
