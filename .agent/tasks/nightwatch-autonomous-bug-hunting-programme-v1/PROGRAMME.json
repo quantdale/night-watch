@@ -2,7 +2,7 @@
   "schemaVersion": "nightwatch.autonomous-programme-state.v1",
   "programmeId": "nightwatch-autonomous-bug-hunting-programme-v1",
   "programmeStatus": "IN_PROGRESS",
-  "currentWave": "W5",
+  "currentWave": "W6",
   "startingSha": "d1ebde90c1454b31d6b93d9df503a4c5f196d7c8",
   "wave0Sha": "bd9be1b2a93107388b868cf2febc87bc84a8a428",
   "programmeIntegrationHead": "DISCOVER_FROM_GIT",
@@ -13,7 +13,31 @@
     "D": { "status": "integrated", "workerSha": "751724aebf69b2f1635ec9d26b0a1c7476ec6186" },
     "E": { "status": "integrated", "workerSha": "ffe2b01c945c3b16fbf51d1ca81060b1b60abef0" },
     "F": { "status": "integrated", "workerSha": "7d0f16d7dbb416745364145513d0c32f974adb67", "siblingMining": "MINED", "realHistoricalRediscovery": false },
-    "G": { "status": "integrated", "workerSha": "2e6e4ad4ed65ace97cc82112bd04cde312e98ad9" }
+    "G": { "status": "integrated", "workerSha": "2e6e4ad4ed65ace97cc82112bd04cde312e98ad9" },
+    "R": {
+      "status": "integrated",
+      "taskId": "nightwatch-mined-repro-discriminator-v1",
+      "worktree": "nightwatch-mined-repro-discrimin-c85df9d9",
+      "branch": "session/nightwatch-mined-repro-discrimin-c85df9d9",
+      "baseSha": "d2aa960c2491817c70cd36f422b0e20c58dcc80d",
+      "workerSha": "a842f9bdf67e41bf962262c6a25fb82b34056560",
+      "integrationSha": "a842f9bdf67e41bf962262c6a25fb82b34056560",
+      "ownedPaths": ["src/core/benchmark/**", ".agent/tasks/nightwatch-mined-repro-discriminator-v1/**"],
+      "reviewVerdict": "ACCEPTED_AFTER_INDEPENDENT_REPLAY_AND_53_TEST_RERUN",
+      "realCaseVerdict": "REPRODUCED/PRE_FAIL_POST_PASS on mobingilabs/ouchan 5985281b43cd"
+    },
+    "E": {
+      "status": "integrated",
+      "taskId": "nightwatch-campaign-multi-investigation-v1",
+      "worktree": "nightwatch-campaign-multi-invest-2229385c",
+      "branch": "session/nightwatch-campaign-multi-invest-2229385c",
+      "baseSha": "d2aa960c2491817c70cd36f422b0e20c58dcc80d",
+      "workerSha": "de2f58e649f1c29e8b68f1a20d90d6285ce86d36",
+      "integrationSha": "7dd51cff7d4faea6885d61f95d29c44ccf72aa28",
+      "ownedPaths": ["src/core/agentRuntime/localCampaign.ts", "bin/nightwatch-agent.mjs", "tests/unit/campaignEndurance.test.ts"],
+      "reviewVerdict": "ACCEPTED_AFTER_POST_RECONCILE_72_TEST_RERUN",
+      "investigationsInOneCampaign": 5
+    }
   },
   "proof": {
     "seededPositive": "PASS tests/unit/agentAutonomyLoop.test.ts",
@@ -21,20 +45,23 @@
     "injectionUnsafeIntent": "PASS",
     "historicalIsolation": "PASS tests/unit/historicalRediscovery.test.ts",
     "minedSiblingHunts": "PASS tests/unit/minedCases.test.ts leak=0 admitted=0 outcome=MISS",
-    "localCliCampaign": "PASS tests/unit/localCampaign.test.ts (fake CLI)"
+    "localCliCampaign": "PASS tests/unit/localCampaign.test.ts (fake CLI)",
+    "containedHistoricalReplay": "REPRODUCED mobingilabs/ouchan services/billingd/services/billingsvc — pre-fix FAIL exit 1, post-fix PASS exit 0, sibling repo unmutated",
+    "minedReproductionWithDossier": "reproductionCount=1 hasDossier=true leaked=[] on mined-bugatlas-git-mobingilabs-ouchan-5985281b43cd (OpenCode Go, 8-turn ceiling)"
   },
   "realWorld": {
-    "LOCAL_AUTONOMOUS_CAPABILITY": "PROVEN_SYNTHETIC",
-    "HISTORICAL_BUG_REDISCOVERY": "MINED_NOT_REDISCOVERED",
+    "LOCAL_AUTONOMOUS_CAPABILITY": "PROVEN_SYNTHETIC_AND_ONE_REAL_HISTORICAL_REPRODUCTION",
+    "HISTORICAL_BUG_REDISCOVERY": "REPRODUCED_NOT_EXACT",
     "REAL_DEV_NEXT_HUNT": "NOT_AUTHORIZED",
     "PREVIOUSLY_UNKNOWN_ALPHAUS_BUG": "NOT_YET_PROVEN",
-    "LIVE_CLI_REASONER": "NOT_CONFIGURED"
+    "LIVE_CLI_REASONER": "CONFIGURED_OPENCODE_GO_AFTER_GROK_402_AND_LUNA_QUOTA"
   },
   "blockers": [
-    "NIGHTWATCH_REASONER_CLI unset — live 1h campaign needs an allowlisted local executable",
-    "DEV/NEXT execution not authorized",
-    "historical rediscovery not proven: sibling git is mined, hunts are isolation-only with a blind/fake reasoner"
+    "DEV/NEXT execution not authorized (external)",
+    "EXACT rediscovery unproven: no live hunt has named the hidden failing test",
+    "contained replay is limited to sibling repos that vendor dependencies and whose fix added a runnable test; Pondr TypeScript replay is offline-blocked (no node_modules, no network)",
+    "no campaign has yet consumed a full HOUR_1 wall ceiling on a live provider"
   ],
-  "exactNextAction": "Operator sets NIGHTWATCH_REASONER_CLI to a local allowlisted executable, then `node bin/nightwatch-agent.mjs campaign run --reasoner=cli --duration=1h`. Do not invent DEV authorization.",
-  "resumeRecipe": "Read PROGRAMME.json and git HEAD. Local CLI campaign path exists. Real yield remains unproven until a configured reasoner hunts."
+  "exactNextAction": "Extend contained replay coverage beyond vendored-Go cases, or obtain explicit DEV authorization. Do not fabricate reproductions for cases the replay cannot execute.",
+  "resumeRecipe": "Read PROGRAMME.json, REPORT.md and git HEAD. Wave 6 lanes R and E are integrated. One real historical defect is mechanically reproduced (ouchan childbillinggroup). EXACT rediscovery and real-world unknown-bug yield remain unproven."
 }

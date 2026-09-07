@@ -9,7 +9,7 @@ import {
   defaultAgentBudgetPolicy,
   ZERO_AGENT_BUDGET_USAGE,
 } from '../../src/core/agentProtocol';
-import { runLocalCliCampaign } from '../../src/core/agentRuntime/localCampaign';
+import { CAMPAIGN_STAGNATION_LIMIT, runLocalCliCampaign } from '../../src/core/agentRuntime/localCampaign';
 
 const NODE = process.execPath;
 const SHIM = path.resolve('bin/nightwatch-reasoner-print.mjs');
@@ -147,8 +147,15 @@ process.stdout.write(JSON.stringify({ text: body }));
       maxTurns: 3,
       stateDirectory: dir,
     });
-    expect(result.terminationReason).toBe('COMPLETE_NO_FINDING');
+    // A campaign is a sequence of investigations under one budget, so a single
+    // COMPLETE_NO_FINDING investigation no longer ends the campaign: the loop
+    // keeps hunting until global stagnation, then stops NO_PROGRESS having
+    // fabricated nothing.
+    expect(result.terminationReason).toBe('NO_PROGRESS');
+    expect(result.investigationsStarted).toBe(CAMPAIGN_STAGNATION_LIMIT);
+    expect(result.terminationCounts.COMPLETE_NO_FINDING).toBe(CAMPAIGN_STAGNATION_LIMIT);
     expect(result.candidateIds).toEqual([]);
+    expect(result.dossierStatus).toBe('NONE');
   } finally {
     if (previousCli === undefined) delete process.env.NIGHTWATCH_PRINT_CLI;
     else process.env.NIGHTWATCH_PRINT_CLI = previousCli;
