@@ -5,18 +5,18 @@
 Task ID: nightwatch-real-local-investigation-substrate-v1
 Phase: W7_REAL_LOCAL_INVESTIGATION_SUBSTRATE
 Status: IN_PROGRESS
-Starting SHA: DISCOVER_FROM_GIT
-Last validated implementation SHA: NONE
-Last substantive checkpoint SHA: NONE
+Starting SHA: 9cb2ec76cc026eed093e86d2758f795ff018ad8a
+Last validated implementation SHA: 2437895c883902bbbccaf796c278863cade0cbbc
+Last substantive checkpoint SHA: 2437895c883902bbbccaf796c278863cade0cbbc
 Live HEAD authority: GIT
-Current local/remote HEAD: DISCOVER_FROM_GIT
-Branch: DISCOVER_FROM_GIT
-Last checkpoint: task authored from repository audit; implementation not started
+Current local/remote HEAD: 130231b0968cf68a89ab780e22d2512996c451e9 / 9cb2ec76cc026eed093e86d2758f795ff018ad8a
+Branch: session/nightwatch-autonomous-bug-huntin-725fbbbe
+Last checkpoint: M0 live truth reconciled; shared real-local provider interfaces frozen and typechecked
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
-STARTING_SHA: DISCOVER_FROM_GIT
-LAST_VALIDATED_IMPLEMENTATION_SHA: NONE
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: NONE
+STARTING_SHA: 9cb2ec76cc026eed093e86d2758f795ff018ad8a
+LAST_VALIDATED_IMPLEMENTATION_SHA: 2437895c883902bbbccaf796c278863cade0cbbc
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 2437895c883902bbbccaf796c278863cade0cbbc
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
 
@@ -26,23 +26,31 @@ Make the normal Nightwatch autonomous campaign path consume real owner-local sou
 
 ## Current Milestone
 
-M0 — re-establish live repository truth and reproduce the product-vs-benchmark capability gap before implementation.
+M1/M3-M6 — provider contracts are frozen; execute ownership-separated continuity, provider, replay, and admission/scoring lanes before orchestrator campaign integration.
 
 ## Completed Milestones
 
-NONE in this child task. Parent W0-W6 are already integrated and must not be repeated.
+- M0: reconciled the owned orchestrator session with origin/main, inspected the product/benchmark seams, and reproduced the encoded semantic split with the 46-test focused baseline.
+- M2 interface freeze: `src/core/localInvestigation/types.ts` now defines the only shared provider/context/history/reproduction contracts. Separate lanes may implement against it but may not change it.
 
 ## Work In Progress
 
-Implementation not started. The next executor must discover live Git/workspace/session truth, reproduce the current generic-path limitations, and freeze the shared local investigation provider interfaces before delegating overlapping implementation work.
+Implementation map and ownership freeze:
+
+- Orchestrator-only: `src/core/localInvestigation/types.ts`, `index.ts`, `src/core/agentRuntime/localCampaign.ts`, `bin/nightwatch-agent.mjs`, global task/programme/current-state/OpenSpec records, final integration tests and certification.
+- Context lane: provider-backed tool session plus real owner-local source/System Map/Bug Atlas/System Atlas/evidence adapters.
+- Replay lane: historical/pre-fix adapters and benchmark migration onto the shared provider contract.
+- Admission lane: runtime-history-derived finding admission and additive verified root-cause/reproduction tier; strict EXACT remains unchanged.
+- Continuity lane: duplicate/ambiguous programme identity parser/validator wired into agent-state checks.
+
+Observed gap at the M0 baseline: generic `localCampaign.ts` injects `{ authorizedEnvironments: ['LOCAL'] }` with no data providers; source/System Map/evidence are unavailable; Bug/System Atlas silently fall back to synthetic fixtures; generic reproduction validates a plan without execution. `benchmark/hunt.ts` owns a separate richer pre-fix source and contained-replay executor.
 
 ## Exact Next Action
 
-1. Discover live HEAD/origin/main and workspace/session truth.
-2. Read SPEC/PLAN plus parent programme continuity and relevant implementation/tests.
-3. Reproduce the generic-product-path limitations with focused tests/operator probes.
-4. Freeze the shared `LocalInvestigationContext`/provider interfaces before delegating parallel code changes.
-5. Proceed milestone-by-milestone; do not declare the task COMPLETE until M9 certification.
+1. Commit and integrate the frozen provider-contract checkpoint so C-00 worker sessions share one base.
+2. Start ownership-separated context, replay, admission, and continuity workers.
+3. Inspect and reconcile every worker diff; independently rerun each lane's focused acceptance.
+4. Wire the normal CLI campaign path, run the leak-isolated historical product-path proof, then execute M9 certification.
 
 ## Known facts from the initiating audit
 
@@ -65,10 +73,19 @@ These are observations to verify against live code before acting, not permission
 | `.agent/tasks/nightwatch-real-local-investigation-substrate-v1/PLAN.md` | W7 execution plan | DONE |
 | `.agent/tasks/nightwatch-real-local-investigation-substrate-v1/STATE.md` | W7 continuity | IN_PROGRESS |
 | `.agent/tasks/nightwatch-real-local-investigation-substrate-v1/REPORT.md` | W7 evidence ledger | IN_PROGRESS |
+| `src/core/localInvestigation/types.ts` | Frozen shared provider/context/history/reproduction interface | DONE |
+| `src/core/localInvestigation/index.ts` | Shared contract exports | DONE |
 
 ## Validation Ledger
 
-No implementation validation has been run for this child task yet. Parent Wave-6 certification must not be relabelled as W7 certification.
+Command: `npm run session:status` before and after reconciliation
+Result: PASS. Owned orchestrator worktree; canonical clean; foreign review-operations worktree remains STALE and untouched. Initial origin/main advanced to `9cb2ec76...`; `node bin/nightwatch-session.mjs reconcile` created local merge `130231b0...`.
+
+Command: `npx playwright test tests/unit/agentTools.test.ts tests/unit/localCampaign.test.ts tests/unit/benchmark.test.ts --project=nightwatch --workers=1`
+Result: PASS — 46 passed. This is the M0 encoded baseline: the current tests explicitly prove generic reproduction is validation-only and generic local campaigns lack real providers.
+
+Command: `npm run typecheck`
+Result: PASS after the shared provider contract freeze.
 
 ## Decisions Made During This Task
 
@@ -80,10 +97,21 @@ Decision: shared provider interfaces must be frozen before parallel delegated wr
 Reason: source/replay/admission lanes otherwise risk forking authority and recreating benchmark-private behavior.
 Evidence/constraint: C-00 ownership discipline and parent programme parallelism rules.
 
+Decision: freeze one `LocalInvestigationContext` seam with six narrow providers and one harness-only tool-session history rather than widening `AgentRuntime`.
+Reason: the runtime remains provider-neutral; product and benchmark adapters share the same executor semantics; hidden replay audit data cannot enter reasoner envelopes.
+Evidence/constraint: `AgentToolExecutor` is already the runtime seam, while the current product/benchmark split lives entirely in executor construction.
+
+Decision: provider absence is a typed BLOCKED result; every context property is required.
+Reason: optional fixture fallback recreated the exact claimed-real ambiguity W7 must remove.
+Evidence/constraint: SPEC A-C and the current `bugAtlasFixtureCorpus()` / `createSyntheticSystemAtlasOverlay()` defaults.
+
 ## Discoveries
 
 - Parent programme durable state previously reused lane key `E`; documentation repair applied before W7 implementation, machine validation still pending.
 - Parent programme remains PARTIAL/IN_PROGRESS; W7 completion does not imply unknown-bug yield or DEV/NEXT proof.
+- Live Git after reconciliation: local session `130231b0968cf68a89ab780e22d2512996c451e9`; origin/main `9cb2ec76cc026eed093e86d2758f795ff018ad8a`; canonical main `e94f9455cd9ee0fa6bc148747191d072bcad7ab4`.
+- The existing sibling-source module already provides bounded, no-follow, admission-ledgered reads and enumeration. The owner-local source provider will adapt it rather than create a second filesystem authority.
+- Bug Atlas already has an owner-private snapshot loader and bounded read-only miner. System Atlas has no real snapshot loader today; absence must remain explicit rather than synthetic.
 
 ## Blockers
 

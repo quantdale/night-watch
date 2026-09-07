@@ -41,6 +41,8 @@ Do not prioritize guessing a hidden test filename or burning a literal one-hour 
 ```
 CAMPAIGN: nightwatch-autonomous-bug-hunting-programme-v1
 CHILD TASK: nightwatch-real-local-investigation-substrate-v1
+SESSION WORKTREE: session/nightwatch-autonomous-bug-huntin-725fbbbe
+
 
 IMPLEMENTATION AUTHORIZED:
   Nightwatch repository source, tests, schemas, contracts, CLI,
