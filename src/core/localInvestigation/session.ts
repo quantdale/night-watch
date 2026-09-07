@@ -19,6 +19,7 @@
 // ---------------------------------------------------------------------------
 
 import { ATLAS_QUERY_VERSION, clampAtlasLimit } from '../agentProtocol/atlas';
+import type { ActionFailureDisposition } from '../agentProtocol/runtime';
 import { lookupAgentTool, type AgentToolId } from '../agentProtocol/tools';
 import type { UntrustedSource } from '../agentProtocol/untrusted';
 import type { AgentToolCall, AgentToolExecutor, AgentToolResult } from '../agentRuntime/types';
@@ -81,6 +82,8 @@ export const LOCAL_SESSION_RESULT_CLASSES = [
   'NOT_REPRODUCED',
   'ENVIRONMENT_BLOCKED',
   'NOT_AVAILABLE',
+  'REPRODUCED_CURRENT_FAILURE',
+  'INCONCLUSIVE',
 ] as const;
 
 const SAFE_EVIDENCE_REF_RE = /^[A-Za-z0-9][A-Za-z0-9:._/-]{0,511}$/;
@@ -139,8 +142,40 @@ export function extractSalientSymbols(text: string): readonly string[] {
   return Object.freeze(out);
 }
 
-function failResult(resultClass: string): AgentToolResult {
-  return { ok: false, resultClass, evidenceRefs: [], outputBytes: 0, untrusted: [] };
+/**
+ * W9 host-owned failure result. The disposition is set ONLY here, from
+ * fail-closed session constants and provider block classes — never from
+ * reasoner arguments or text. The runtime lane declares `disposition` on
+ * AgentToolResult and folds it into the action log; successes never carry one,
+ * so this helper is the single failure constructor.
+ */
+function failResult(resultClass: string, disposition: ActionFailureDisposition): AgentToolResult {
+  return {
+    ok: false,
+    resultClass,
+    evidenceRefs: [],
+    outputBytes: 0,
+    untrusted: [],
+    disposition,
+  } as AgentToolResult;
+}
+
+/**
+ * Host-owned mapping from provider block class to failure disposition.
+ * Thrown providers surface as DATA_BLOCKED via resolveProvider below, hence
+ * transient: a throw may be a filesystem race, never a verdict.
+ */
+function dispositionForBlockClass(cls: LocalProviderBlockClass): ActionFailureDisposition {
+  switch (cls) {
+    case 'NOT_CONFIGURED':
+    case 'SOURCE_UNAVAILABLE':
+      return 'ENVIRONMENT_BLOCKED';
+    case 'SOURCE_STALE':
+    case 'DATA_BLOCKED':
+      return 'TRANSIENT_RETRYABLE';
+    case 'UNSAFE_INPUT':
+      return 'DETERMINISTIC_TERMINAL';
+  }
 }
 
 function outputBytesOf(data: unknown): number {
@@ -321,7 +356,7 @@ export function createLocalInvestigationToolSession(context: LocalInvestigationC
 
   async function runSourceIndex(): Promise<AgentToolResult> {
     const resolved = await resolveProvider<LocalSourceIndex>(() => context.source.index());
-    if ('blocked' in resolved) return failResult('ADAPTER_UNAVAILABLE');
+    if ('blocked' in resolved) return failResult('ADAPTER_UNAVAILABLE', dispositionForBlockClass(resolved.class));
     const entries = resolved.value.entries.slice(0, MAX_REASONER_SOURCE_INDEX_ENTRIES);
     const indexed = succeed('INSPECT_SOURCE_SURFACE', 'SOURCE_INDEX', {
       entries,
@@ -339,12 +374,12 @@ export function createLocalInvestigationToolSession(context: LocalInvestigationC
     // A refused read still names the requested subject so working memory can
     // record the attempt as exhausted. The runtime never promotes a failed
     // subject to an approved target.
-    if ('blocked' in resolved) return { ...failResult('ADAPTER_UNAVAILABLE'), memory: { target: path } };
+    if ('blocked' in resolved) return { ...failResult('ADAPTER_UNAVAILABLE', dispositionForBlockClass(resolved.class)), memory: { target: path } };
     const document = resolved.value;
     // The session never trusts provider bytes blindly: the digest must match
     // the exact text before anything is observed or grounded on it.
     if (sourceContentDigest(document.text) !== document.contentDigest) {
-      return { ...failResult('ADAPTER_UNAVAILABLE'), memory: { target: path } };
+      return { ...failResult('ADAPTER_UNAVAILABLE', 'DETERMINISTIC_TERMINAL'), memory: { target: path } };
     }
     const lexical = lexicalLanguageFor(document.language);
     const tokens = lexical === null ? null : tokenizeStaticSource(document.text, lexical);
@@ -383,21 +418,23 @@ export function createLocalInvestigationToolSession(context: LocalInvestigationC
     };
   }
 
-  async function loadSystemMap(): Promise<{ readonly input: SystemMapInput } | null> {
+  async function loadSystemMap(): Promise<
+    { readonly input: SystemMapInput } | { readonly blocked: true; readonly class: LocalProviderBlockClass }
+  > {
     const resolved = await resolveProvider<SystemMapInput>(() => context.systemMap.load());
-    if ('blocked' in resolved) return null;
+    if ('blocked' in resolved) return { blocked: true, class: resolved.class };
     return { input: resolved.value };
   }
 
   async function runSystemMap(args: Record<string, unknown>): Promise<AgentToolResult> {
     const loaded = await loadSystemMap();
-    if (loaded === null) return failResult('ADAPTER_UNAVAILABLE');
+    if ('blocked' in loaded) return failResult('ADAPTER_UNAVAILABLE', dispositionForBlockClass(loaded.class));
     const systemMap = loaded.input;
     const query = args['query'] === undefined ? 'COMPANY' : args['query'];
-    if (typeof query !== 'string') return failResult('MALFORMED_ARGUMENTS');
+    if (typeof query !== 'string') return failResult('MALFORMED_ARGUMENTS', 'DETERMINISTIC_TERMINAL');
     const nodeLimit = asLimit(args['nodeLimit'], DEFAULT_NODE_LIMIT);
     const edgeLimit = asLimit(args['edgeLimit'], DEFAULT_EDGE_LIMIT);
-    if (nodeLimit === null || edgeLimit === null) return failResult('MALFORMED_ARGUMENTS');
+    if (nodeLimit === null || edgeLimit === null) return failResult('MALFORMED_ARGUMENTS', 'DETERMINISTIC_TERMINAL');
     const limits = { nodeLimit, edgeLimit };
     switch (query) {
       case 'COMPANY':
@@ -411,23 +448,23 @@ export function createLocalInvestigationToolSession(context: LocalInvestigationC
       case 'FINDINGS_ATTACHED_TO_TOPOLOGY':
         return succeed('QUERY_SYSTEM_MAP', 'SYSTEM_MAP', queryFindingsAttachedToTopology(systemMap, limits), 'DOCUMENTATION');
       default:
-        return failResult('MALFORMED_ARGUMENTS');
+        return failResult('MALFORMED_ARGUMENTS', 'DETERMINISTIC_TERMINAL');
     }
   }
 
   async function runRouteContractProof(args: Record<string, unknown>): Promise<AgentToolResult> {
     const loaded = await loadSystemMap();
-    if (loaded === null) return failResult('ADAPTER_UNAVAILABLE');
+    if ('blocked' in loaded) return failResult('ADAPTER_UNAVAILABLE', dispositionForBlockClass(loaded.class));
     const operationId = typeof args['operationId'] === 'string' ? (args['operationId'] as string) : null;
     const routeTemplate = typeof args['routeTemplate'] === 'string' ? (args['routeTemplate'] as string) : null;
     const method = typeof args['method'] === 'string' ? (args['method'] as string) : null;
-    if (operationId === null && routeTemplate === null) return failResult('MALFORMED_ARGUMENTS');
+    if (operationId === null && routeTemplate === null) return failResult('MALFORMED_ARGUMENTS', 'DETERMINISTIC_TERMINAL');
     const match = loaded.input.operations.find((operation) =>
       operationId !== null
         ? operation.operationId === operationId
         : operation.routeTemplate === routeTemplate && (method === null || operation.method === method),
     );
-    if (!match) return failResult('ADAPTER_UNAVAILABLE');
+    if (!match) return failResult('ADAPTER_UNAVAILABLE', 'DETERMINISTIC_TERMINAL');
     return succeed('REQUEST_ROUTE_CONTRACT_PROOF', 'ROUTE_CONTRACT_PROOF', {
       operationId: match.operationId,
       method: match.method,
@@ -440,9 +477,9 @@ export function createLocalInvestigationToolSession(context: LocalInvestigationC
 
   async function runBugAtlas(toolId: AgentToolId, args: Record<string, unknown>): Promise<AgentToolResult> {
     const terms = parseAtlasTerms(args);
-    if (terms === null) return failResult('MALFORMED_ARGUMENTS');
+    if (terms === null) return failResult('MALFORMED_ARGUMENTS', 'DETERMINISTIC_TERMINAL');
     const resolved = await resolveProvider<BugAtlasStore>(() => context.bugAtlas.load());
-    if ('blocked' in resolved) return failResult('ADAPTER_UNAVAILABLE');
+    if ('blocked' in resolved) return failResult('ADAPTER_UNAVAILABLE', dispositionForBlockClass(resolved.class));
     // No synthetic fallback: a BLOCKED provider fails here, above.
     const result = resolved.value.query({
       schemaVersion: ATLAS_QUERY_VERSION,
@@ -464,15 +501,15 @@ export function createLocalInvestigationToolSession(context: LocalInvestigationC
 
   async function runSystemAtlas(args: Record<string, unknown>): Promise<AgentToolResult> {
     const terms = parseAtlasTerms(args);
-    if (terms === null) return failResult('MALFORMED_ARGUMENTS');
+    if (terms === null) return failResult('MALFORMED_ARGUMENTS', 'DETERMINISTIC_TERMINAL');
     let query;
     try {
       query = createAtlasQuery(terms, readAtlasLimit(args));
     } catch {
-      return failResult('MALFORMED_ARGUMENTS');
+      return failResult('MALFORMED_ARGUMENTS', 'DETERMINISTIC_TERMINAL');
     }
     const resolved = await resolveProvider<SystemAtlasOverlay>(() => context.systemAtlas.load());
-    if ('blocked' in resolved) return failResult('ADAPTER_UNAVAILABLE');
+    if ('blocked' in resolved) return failResult('ADAPTER_UNAVAILABLE', dispositionForBlockClass(resolved.class));
     // No synthetic fallback: a BLOCKED provider fails here, above.
     const result = querySystemAtlas(resolved.value, query);
     return succeed('QUERY_SYSTEM_ATLAS', 'SYSTEM_ATLAS', {
@@ -489,7 +526,7 @@ export function createLocalInvestigationToolSession(context: LocalInvestigationC
 
   async function runEvidence(args: Record<string, unknown>): Promise<AgentToolResult> {
     const evidenceRef = asNonEmptyString(args['evidenceRef']);
-    if (evidenceRef === null) return failResult('MALFORMED_ARGUMENTS');
+    if (evidenceRef === null) return failResult('MALFORMED_ARGUMENTS', 'DETERMINISTIC_TERMINAL');
     const observed = history.observedRecords.get(evidenceRef);
     if (observed !== undefined) {
       return succeed('RETRIEVE_SANITIZED_EVIDENCE', 'EVIDENCE', {
@@ -498,7 +535,7 @@ export function createLocalInvestigationToolSession(context: LocalInvestigationC
       }, observed.source);
     }
     const resolved = await resolveProvider<LocalEvidenceRecord>(() => context.evidence.get(evidenceRef));
-    if ('blocked' in resolved) return failResult('ADAPTER_UNAVAILABLE');
+    if ('blocked' in resolved) return failResult('ADAPTER_UNAVAILABLE', dispositionForBlockClass(resolved.class));
     // Re-sanitized on the way out: provider bytes are still untrusted.
     return succeed('RETRIEVE_SANITIZED_EVIDENCE', 'EVIDENCE', {
       evidenceRef,
@@ -508,26 +545,26 @@ export function createLocalInvestigationToolSession(context: LocalInvestigationC
 
   async function runReproduction(args: Record<string, unknown>): Promise<AgentToolResult> {
     const request = readReproductionRequest(args);
-    if (request === null) return failResult('MALFORMED_ARGUMENTS');
+    if (request === null) return failResult('MALFORMED_ARGUMENTS', 'DETERMINISTIC_TERMINAL');
     // Grounding gate: the source path must have been inspected through this
     // session AND the presented ref must be that inspection's observed source
     // evidence ref. Anything else never reaches the provider.
     const observedRef = history.sourceEvidenceByPath.get(request.sourcePath);
     if (observedRef === undefined || observedRef !== request.sourceEvidenceRef) {
-      return failResult('UNSAFE_INTENT');
+      return failResult('UNSAFE_INTENT', 'DETERMINISTIC_TERMINAL');
     }
     const provider: DeterministicReproductionProvider = context.reproduction;
     const resolved = await resolveProvider(() => provider.run(request));
-    if ('blocked' in resolved) return failResult('ADAPTER_UNAVAILABLE');
+    if ('blocked' in resolved) return failResult('ADAPTER_UNAVAILABLE', dispositionForBlockClass(resolved.class));
     const result = resolved.value;
     if (
       result.evidenceRef !== null &&
       !SAFE_EVIDENCE_REF_RE.test(result.evidenceRef)
     ) {
-      return failResult('ADAPTER_UNAVAILABLE');
+      return failResult('ADAPTER_UNAVAILABLE', 'DETERMINISTIC_TERMINAL');
     }
     if (!result.provenanceRefs.every((ref) => SAFE_EVIDENCE_REF_RE.test(ref))) {
-      return failResult('ADAPTER_UNAVAILABLE');
+      return failResult('ADAPTER_UNAVAILABLE', 'DETERMINISTIC_TERMINAL');
     }
     history.reproductions.push({
       schemaVersion: LOCAL_REPRODUCTION_RECEIPT_VERSION,
@@ -541,9 +578,17 @@ export function createLocalInvestigationToolSession(context: LocalInvestigationC
       preFix: result.preFix,
       postFix: result.postFix,
       provenanceRefs: [...result.provenanceRefs],
+      // W9: harness-only proof, carried verbatim when the provider minted one.
+      // Absent (not null) on historical and blocked results, preserving the
+      // W7 receipt shape byte-identically. Never sanitized into an envelope:
+      // only reasonerVisible below crosses to the reasoner.
+      ...(result.currentSourceProof === null || result.currentSourceProof === undefined
+        ? {}
+        : { currentSourceProof: result.currentSourceProof }),
     });
-    // Only reasonerVisible crosses to the reasoner; audit stays harness-side
-    // (it is not even stored — receipts carry no audit field by construction).
+    // Only reasonerVisible crosses to the reasoner; the proof, audit payload
+    // and raw provider stderr stay harness-side (they are not even stored —
+    // receipts carry no audit field by construction).
     const sanitized = sanitizeJsonText(result.reasonerVisible);
     const envelope = wrapUntrusted('LOG', sanitized.text);
     if (result.evidenceRef !== null) {
@@ -577,25 +622,25 @@ export function createLocalInvestigationToolSession(context: LocalInvestigationC
   function runFindingProposal(args: Record<string, unknown>): AgentToolResult {
     const candidateId = asNonEmptyString(args['candidateId']);
     const evidenceRefs = args['evidenceRefs'];
-    if (candidateId === null) return failResult('MALFORMED_ARGUMENTS');
+    if (candidateId === null) return failResult('MALFORMED_ARGUMENTS', 'DETERMINISTIC_TERMINAL');
     if (
       !Array.isArray(evidenceRefs) || evidenceRefs.length === 0 ||
       !evidenceRefs.every((ref) => typeof ref === 'string' && ref.length > 0)
     ) {
-      return failResult('MALFORMED_ARGUMENTS');
+      return failResult('MALFORMED_ARGUMENTS', 'DETERMINISTIC_TERMINAL');
     }
     const refs = [...(evidenceRefs as readonly string[])];
     const draftRaw = args['draft'];
     let draft: Readonly<Record<string, unknown>> | null = null;
     if (draftRaw !== undefined) {
-      if (!isRecord(draftRaw)) return failResult('MALFORMED_ARGUMENTS');
+      if (!isRecord(draftRaw)) return failResult('MALFORMED_ARGUMENTS', 'DETERMINISTIC_TERMINAL');
       const sanitizedDraft = sanitizeJsonText(draftRaw);
       try {
         const parsed: unknown = JSON.parse(sanitizedDraft.text);
-        if (!isRecord(parsed)) return failResult('MALFORMED_ARGUMENTS');
+        if (!isRecord(parsed)) return failResult('MALFORMED_ARGUMENTS', 'DETERMINISTIC_TERMINAL');
         draft = { ...parsed };
       } catch {
-        return failResult('MALFORMED_ARGUMENTS');
+        return failResult('MALFORMED_ARGUMENTS', 'DETERMINISTIC_TERMINAL');
       }
     }
     // Capture-only: evidence membership and reproduction are checked by the
@@ -626,27 +671,27 @@ export function createLocalInvestigationToolSession(context: LocalInvestigationC
 
   function runCompare(args: Record<string, unknown>): AgentToolResult {
     const browser = readBrowserObservation(args['browser']);
-    if (browser === null) return failResult('MALFORMED_ARGUMENTS');
+    if (browser === null) return failResult('MALFORMED_ARGUMENTS', 'DETERMINISTIC_TERMINAL');
     const parsedApi = readApiObservation(args['api'] ?? null);
-    if (parsedApi.malformed) return failResult('MALFORMED_ARGUMENTS');
+    if (parsedApi.malformed) return failResult('MALFORMED_ARGUMENTS', 'DETERMINISTIC_TERMINAL');
     return succeed('COMPARE_OBSERVATIONS', 'OBSERVATION_COMPARISON', compareBrowserAndApi(browser, parsedApi.api), 'API_RESPONSE');
   }
 
   const executor: AgentToolExecutor = {
     async execute(call: AgentToolCall): Promise<AgentToolResult> {
       const descriptor = lookupAgentTool(call.toolId);
-      if (descriptor === null) return failResult('UNKNOWN_TOOL');
-      if (descriptor.mutationCapability !== 'NONE') return failResult('UNSAFE_INTENT');
+      if (descriptor === null) return failResult('UNKNOWN_TOOL', 'DETERMINISTIC_TERMINAL');
+      if (descriptor.mutationCapability !== 'NONE') return failResult('UNSAFE_INTENT', 'DETERMINISTIC_TERMINAL');
       // This session is LOCAL-only by construction.
-      if (descriptor.environment !== 'LOCAL') return failResult('UNAUTHORIZED_ENVIRONMENT');
-      if (!decideOwnerScope(descriptor.authorizationClass).allowed) return failResult('UNSAFE_INTENT');
+      if (descriptor.environment !== 'LOCAL') return failResult('UNAUTHORIZED_ENVIRONMENT', 'DETERMINISTIC_TERMINAL');
+      if (!decideOwnerScope(descriptor.authorizationClass).allowed) return failResult('UNSAFE_INTENT', 'DETERMINISTIC_TERMINAL');
       const args = isRecord(call.arguments) ? (call.arguments as Record<string, unknown>) : null;
-      if (args === null) return failResult('MALFORMED_ARGUMENTS');
+      if (args === null) return failResult('MALFORMED_ARGUMENTS', 'DETERMINISTIC_TERMINAL');
       switch (descriptor.id) {
         case 'INSPECT_SOURCE_SURFACE': {
           const requestedPath = typeof args['path'] === 'string' ? (args['path'] as string) : null;
           if (requestedPath === null) return runSourceIndex();
-          if (requestedPath.length === 0) return failResult('MALFORMED_ARGUMENTS');
+          if (requestedPath.length === 0) return failResult('MALFORMED_ARGUMENTS', 'DETERMINISTIC_TERMINAL');
           return runSourceRead(requestedPath);
         }
         case 'QUERY_SYSTEM_MAP':
@@ -669,12 +714,12 @@ export function createLocalInvestigationToolSession(context: LocalInvestigationC
           return runCompare(args);
         case 'ASK_DETERMINISTIC_ORACLE':
           // No oracle provider exists in the frozen context: fail closed.
-          return failResult('ADAPTER_UNAVAILABLE');
+          return failResult('ADAPTER_UNAVAILABLE', 'DETERMINISTIC_TERMINAL');
         case 'REQUEST_BROWSER_OBSERVATION':
         case 'REQUEST_API_OBSERVATION':
-          return failResult('UNAUTHORIZED_ENVIRONMENT');
+          return failResult('UNAUTHORIZED_ENVIRONMENT', 'DETERMINISTIC_TERMINAL');
         default:
-          return failResult('UNKNOWN_TOOL');
+          return failResult('UNKNOWN_TOOL', 'DETERMINISTIC_TERMINAL');
       }
     },
   };

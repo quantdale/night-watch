@@ -201,6 +201,33 @@ function memoryCampaignLines(campaign) {
   return lines;
 }
 
+// W9 neutral readiness instructions. Each line is a fixed host template keyed
+// ONLY by the readiness enum — never by proof/audit content, commands,
+// absolute paths, or hidden truth. The reasoner learns what the host will
+// allow next, never executor internals, and retry authority stays host-owned:
+// only TRANSIENT_RETRY_REMAINING authorizes one same-target retry; the
+// reasoner may never self-declare retryability.
+const READINESS_INSTRUCTIONS = Object.freeze({
+  NOT_READY_NO_INSPECTED_SOURCE: 'readiness: no inspected source yet — discover the index with an empty-arguments INSPECT_SOURCE_SURFACE call.',
+  NOT_READY_NO_SOURCE_EVIDENCE: 'readiness: inspected targets yielded no source evidence — re-inspect an approved target to mint an evidence ref.',
+  NOT_READY_NO_GROUNDED_HYPOTHESIS: 'readiness: no grounded hypothesis yet — FORM_HYPOTHESIS citing an observed evidence ref from working memory.',
+  READY: 'readiness: reproduction is available — RERUN_SAFE_REPRODUCTION with the inspected sourcePath and its exact listed sourceEvidenceRef.',
+  NOT_READY_NO_EXECUTABLE_TARGET: 'readiness: the inspected source has no executable target — do not retry reproduction; inspect other approved targets.',
+  NOT_READY_TARGET_BLOCKED: 'readiness: the reproduction target is blocked in this environment — do not retry the same call; inspect other approved targets.',
+  REFUSED_DETERMINISTIC: 'readiness: the last reproduction was refused deterministically — the same call will keep failing; use a different grounded target and evidence ref.',
+  TRANSIENT_RETRY_REMAINING: 'readiness: the last reproduction hit a transient environment issue with retry budget remaining — you may retry the same grounded reproduction once; further repeats are discarded.',
+  CURRENT_FAILURE_REPRODUCED: 'readiness: a repeatable current-source failure is already observed — do not re-run; capture REQUEST_FINDING_PROPOSAL with the observed reproduction ref, then PROPOSE_CANDIDATE.',
+  RAN_WITHOUT_REPRODUCING: 'readiness: a prior execution ran without reproducing — do not re-run the same reproduction; inspect a new target or refine the hypothesis.',
+});
+
+function memoryReadinessLines(readiness) {
+  const lines = [];
+  const instruction = typeof readiness === 'string' ? READINESS_INSTRUCTIONS[readiness] : undefined;
+  if (typeof instruction === 'string') lines.push(instruction);
+  lines.push('retry authority is host-owned: a failed reproduction may be retried only when readiness says TRANSIENT_RETRY_REMAINING; never self-declare a failure retryable or re-run a refused reproduction.');
+  return lines;
+}
+
 function renderMemoryBlock(memory) {
   if (!isPlainObject(memory)) {
     return 'Investigation working memory: unavailable (absent or malformed). Proceed from the tool index and the untrusted observation below; inspect one approved target first.';
@@ -227,6 +254,7 @@ function renderMemoryBlock(memory) {
       `  - target=${quoted(entry.target ?? '(unknown)', MAX_MEMORY_TARGET_CHARS)} verdict=${typeof entry.resultClass === 'string' ? entry.resultClass : 'UNKNOWN'}`,
     );
   }
+  lines.push(...memoryReadinessLines(isPlainObject(memory.progress) ? memory.progress.reproductionReadiness : undefined));
   const { total: actionTotal, shown: actionShown } = objectItems(memory.recentActions, MAX_MEMORY_ROWS.recentActions);
   lines.push(`recent actions (${actionShown.length} shown of ${actionTotal}):`);
   if (actionShown.length === 0) lines.push('  (none yet)');

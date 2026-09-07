@@ -54,6 +54,7 @@ import type {
   LocalSystemMapProvider,
 } from './types';
 import { LOCAL_INVESTIGATION_CONTEXT_VERSION } from './types';
+import { createOwnerLocalReproductionProvider } from '../ownerLocalReproduction/provider';
 
 export const OWNER_LOCAL_CONTEXT_VERSION = 'nightwatch.owner-local-investigation-context.v1' as const;
 
@@ -119,6 +120,7 @@ function decodeSourcePath(path: string): { readonly repository: string; readonly
 }
 
 interface PreparedSource {
+  readonly siblingRoot: string;
   readonly access: SiblingSourceAccess;
   readonly config: RealSourceScanConfig;
   readonly indexLimit: number;
@@ -142,6 +144,7 @@ function prepareSource(options: OwnerLocalInvestigationOptions): PreparedSource 
   };
   return {
     access,
+    siblingRoot,
     config,
     indexLimit,
     discovery,
@@ -403,16 +406,40 @@ export function createOwnerLocalInvestigationContext(options: OwnerLocalInvestig
     throw new Error(`OWNER_LOCAL_DATA_CLASS_INVALID:${String(dataClass)}`);
   }
   const prepared = prepareSource(options);
+  // One source provider instance serves reads and grounds reproduction: the
+  // reproduction provider re-reads request.sourcePath through it and binds
+  // the proof digest to the inspected source.
+  const source = createOwnerSourceProvider(prepared);
   return {
     schemaVersion: LOCAL_INVESTIGATION_CONTEXT_VERSION,
     dataClass,
-    source: createOwnerSourceProvider(prepared),
+    source,
     systemMap: createOwnerSystemMapProvider(prepared),
     bugAtlas: createOwnerBugAtlasProvider(options, prepared),
     systemAtlas: createOwnerSystemAtlasProvider(options),
     evidence: createOwnerEvidenceProvider(options),
-    reproduction: options.reproduction ?? createBlockedReproductionProvider(),
+    reproduction: options.reproduction ?? createDefaultReproductionProvider(dataClass, prepared, source),
   };
+}
+
+/**
+ * W9 zero-option REAL_LOCAL default: the host-owned current-source
+ * reproduction provider over the same sibling root and approved repositories
+ * the source provider reads. An explicit options.reproduction still overrides
+ * (tests, historical composition); non-REAL_LOCAL data classes stay
+ * fail-closed BLOCKED without an injected provider.
+ */
+function createDefaultReproductionProvider(
+  dataClass: LocalInvestigationDataClass,
+  prepared: PreparedSource,
+  source: LocalSourceProvider,
+): DeterministicReproductionProvider {
+  if (dataClass !== 'REAL_LOCAL') return createBlockedReproductionProvider();
+  return createOwnerLocalReproductionProvider({
+    siblingRoot: prepared.siblingRoot,
+    repositoryIds: prepared.config.approvedRepositories.map((repository) => repository.repoId),
+    sourceProvider: source,
+  });
 }
 
 const UNAVAILABLE_REASON =

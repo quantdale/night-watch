@@ -14,7 +14,7 @@
 // Pure. No fs/network/child_process/AI authority.
 // ---------------------------------------------------------------------------
 
-import type { AgentActionRecord, AgentRuntimeState } from '../agentProtocol/runtime';
+import { TRANSIENT_ACTION_RETRY_BUDGET, type AgentRuntimeState } from '../agentProtocol/runtime';
 import {
   CAMPAIGN_STRATEGY_STATE_VERSION,
   INVESTIGATION_MEMORY_VERSION,
@@ -70,8 +70,20 @@ interface TargetLedgerEntry {
   reproductionAttempts: number;
   lastResultClass: string;
   reproducedHere: boolean;
-  verificationFailedHere: boolean;
+  ranWithoutReproducingHere: boolean;
   dedupedHere: boolean;
+  /** W9: an executed REPRODUCED_CURRENT_FAILURE verdict was observed here. */
+  currentFailureHere: boolean;
+  /** W9: an executed NOT_AVAILABLE verdict was observed here. */
+  noExecutableTargetHere: boolean;
+  /** W9: an executed ENVIRONMENT_BLOCKED verdict was observed here. */
+  targetBlockedHere: boolean;
+  /** W9: a failed attempt with host-owned ENVIRONMENT_BLOCKED disposition. */
+  environmentRefusedHere: boolean;
+  /** W9: a failed attempt with DETERMINISTIC_TERMINAL disposition (or absent on pre-W9 records). */
+  deterministicRefusedHere: boolean;
+  /** W9: count of failed attempts with TRANSIENT_RETRYABLE disposition. */
+  transientFailuresHere: number;
 }
 
 interface DerivedLedger {
@@ -85,6 +97,20 @@ interface DerivedLedger {
   readonly repeatedActionCount: number;
   readonly actions: readonly MemoryAction[];
 }
+
+/**
+ * W9 frozen reproduction verdicts (see LocalReproductionVerdict). Any other
+ * RERUN_SAFE_REPRODUCTION result class is a FAILED attempt, never an executed
+ * outcome, and carries the host-owned disposition instead.
+ */
+const REPRODUCTION_VERDICTS: Record<string, true> = {
+  REPRODUCED: true,
+  NOT_REPRODUCED: true,
+  ENVIRONMENT_BLOCKED: true,
+  NOT_AVAILABLE: true,
+  REPRODUCED_CURRENT_FAILURE: true,
+  INCONCLUSIVE: true,
+};
 
 function deriveLedger(state: AgentRuntimeState): DerivedLedger {
   const targets = new Map<string, TargetLedgerEntry>();
@@ -137,8 +163,14 @@ function deriveLedger(state: AgentRuntimeState): DerivedLedger {
         reproductionAttempts: 0,
         lastResultClass: record.resultClass,
         reproducedHere: false,
-        verificationFailedHere: false,
+        ranWithoutReproducingHere: false,
         dedupedHere: false,
+        currentFailureHere: false,
+        noExecutableTargetHere: false,
+        targetBlockedHere: false,
+        environmentRefusedHere: false,
+        deterministicRefusedHere: false,
+        transientFailuresHere: 0,
       };
       targets.set(target, entry);
     }
@@ -163,10 +195,24 @@ function deriveLedger(state: AgentRuntimeState): DerivedLedger {
       continue;
     }
 
-    // RERUN_SAFE_REPRODUCTION
+    // RERUN_SAFE_REPRODUCTION: executed verdicts record what the host
+    // observed; any other result class is a failed attempt classified by its
+    // host-owned disposition.
     entry.reproductionAttempts += 1;
-    if (record.resultClass === 'REPRODUCED') entry.reproducedHere = true;
-    if (record.resultClass === 'NOT_REPRODUCED') entry.verificationFailedHere = true;
+    if (REPRODUCTION_VERDICTS[record.resultClass] !== true) {
+      // Failed attempt: host-owned disposition decides retryability. Absent
+      // on pre-W9 checkpoints reads as deterministic per the frozen runtime
+      // contract, preserving W8 exhaustion exactly; unknown values fail
+      // closed the same way. Never derived from model text.
+      if (record.disposition === 'TRANSIENT_RETRYABLE') entry.transientFailuresHere += 1;
+      else if (record.disposition === 'ENVIRONMENT_BLOCKED') entry.environmentRefusedHere = true;
+      else entry.deterministicRefusedHere = true;
+    } else if (record.resultClass === 'REPRODUCED') entry.reproducedHere = true;
+    else if (record.resultClass === 'REPRODUCED_CURRENT_FAILURE') entry.currentFailureHere = true;
+    else if (record.resultClass === 'NOT_REPRODUCED' || record.resultClass === 'INCONCLUSIVE') {
+      entry.ranWithoutReproducingHere = true;
+    } else if (record.resultClass === 'NOT_AVAILABLE') entry.noExecutableTargetHere = true;
+    else if (record.resultClass === 'ENVIRONMENT_BLOCKED') entry.targetBlockedHere = true;
     reproductions.push({ target, resultClass: record.resultClass });
   }
 
@@ -200,6 +246,47 @@ export interface DeriveInvestigationMemoryOptions {
   readonly campaign?: CampaignStrategyState | null;
 }
 
+/**
+ * W9 owner-local execution readiness. Returns null when no owner-local
+ * execution signal exists (no reproduction attempts beyond historical
+ * verdicts), so the caller keeps the frozen W8 grounding ladder
+ * byte-identically. Otherwise the strongest observed execution signal wins:
+ * a repeatable current-source failure outranks a clean run, which outranks
+ * target/environment refusals, which outrank a deterministic refusal; a
+ * transient failure reads as retry-remaining only while its count is still
+ * under the frozen retry budget, and as refused once the budget is consumed
+ * (a flapping environment then exhausts exactly like a refusal).
+ */
+function deriveExecutionReadiness(ledger: DerivedLedger): ReproductionReadiness | null {
+  let currentFailure = false;
+  let ranWithoutReproducing = false;
+  let noExecutableTarget = false;
+  let targetBlocked = false;
+  let deterministicRefused = false;
+  let transientFailures = 0;
+  for (const entry of ledger.targets.values()) {
+    if (entry.reproductionAttempts === 0) continue;
+    if (entry.currentFailureHere) currentFailure = true;
+    if (entry.ranWithoutReproducingHere) ranWithoutReproducing = true;
+    if (entry.noExecutableTargetHere) noExecutableTarget = true;
+    if (entry.targetBlockedHere || entry.environmentRefusedHere) targetBlocked = true;
+    if (entry.deterministicRefusedHere) deterministicRefused = true;
+    transientFailures += entry.transientFailuresHere;
+  }
+  if (
+    !currentFailure && !ranWithoutReproducing && !noExecutableTarget && !targetBlocked &&
+    !deterministicRefused && transientFailures === 0
+  ) {
+    return null;
+  }
+  if (currentFailure) return 'CURRENT_FAILURE_REPRODUCED';
+  if (ranWithoutReproducing) return 'RAN_WITHOUT_REPRODUCING';
+  if (noExecutableTarget) return 'NOT_READY_NO_EXECUTABLE_TARGET';
+  if (targetBlocked) return 'NOT_READY_TARGET_BLOCKED';
+  if (deterministicRefused || transientFailures >= TRANSIENT_ACTION_RETRY_BUDGET) return 'REFUSED_DETERMINISTIC';
+  return 'TRANSIENT_RETRY_REMAINING';
+}
+
 export function deriveInvestigationMemory(
   state: AgentRuntimeState,
   options: DeriveInvestigationMemoryOptions = {},
@@ -230,8 +317,19 @@ export function deriveInvestigationMemory(
 
   const exhausted: string[] = [];
   for (const entry of ledger.targets.values()) {
-    const failedInspection = entry.evidenceRef === null && entry.timesInspected >= 1;
-    const failedVerification = entry.reproductionAttempts >= 1 && !entry.reproducedHere;
+    const reproduced = entry.reproducedHere || entry.currentFailureHere;
+    // A transient failure stays retryable (non-exhausted) only while its
+    // count is under the frozen budget and no terminal signal exists for the
+    // target; deterministic and environment failures exhaust immediately.
+    const transientPending =
+      entry.transientFailuresHere > 0 &&
+      entry.transientFailuresHere < TRANSIENT_ACTION_RETRY_BUDGET &&
+      !entry.deterministicRefusedHere &&
+      !entry.environmentRefusedHere &&
+      !entry.ranWithoutReproducingHere &&
+      !entry.noExecutableTargetHere &&
+      !entry.targetBlockedHere;
+    const failedVerification = entry.reproductionAttempts >= 1 && !reproduced && !transientPending;
     if (!failedInspection && !failedVerification && !entry.dedupedHere) continue;
     if (!exhausted.includes(entry.target)) exhausted.push(entry.target);
   }
@@ -247,7 +345,10 @@ export function deriveInvestigationMemory(
       if (target !== undefined && !groundedOnTargets.includes(target)) groundedOnTargets.push(target);
     }
     const cites = evidenceRefs.some((ref) => observedRefs.has(ref));
-    const reproducedTarget = groundedOnTargets.some((target) => ledger.targets.get(target)?.reproducedHere === true);
+    const reproducedTarget = groundedOnTargets.some((target) => {
+      const entry = ledger.targets.get(target);
+      return entry?.reproducedHere === true || entry?.currentFailureHere === true;
+    });
     let progress: HypothesisProgress;
     if (hypothesis.status === 'DISPROVED') progress = 'DISPROVED';
     else if (reproducedTarget) progress = 'REPRODUCED';
@@ -273,13 +374,21 @@ export function deriveInvestigationMemory(
     (item) => item.progress === 'VERIFICATION_READY' || item.progress === 'REPRODUCED',
   ).length;
   const groundableTargets = inspected.filter((item) => item.evidenceRef !== null);
-  const mechanicalReproductions = ledger.reproductions.filter((item) => item.resultClass === 'REPRODUCED').length;
+  const mechanicalReproductions = ledger.reproductions.filter(
+    (item) => item.resultClass === 'REPRODUCED' || item.resultClass === 'REPRODUCED_CURRENT_FAILURE',
+  ).length;
 
   let reproductionReadiness: ReproductionReadiness;
   if (inspected.length === 0) reproductionReadiness = 'NOT_READY_NO_INSPECTED_SOURCE';
   else if (groundableTargets.length === 0) reproductionReadiness = 'NOT_READY_NO_SOURCE_EVIDENCE';
-  else if (verificationReadyCount === 0) reproductionReadiness = 'NOT_READY_NO_GROUNDED_HYPOTHESIS';
-  else reproductionReadiness = 'READY';
+  else {
+    // W9 execution states refine the ladder once the host has attempted an
+    // owner-local execution; without such a signal the W8 outcome stands.
+    const execution = deriveExecutionReadiness(ledger);
+    if (execution !== null) reproductionReadiness = execution;
+    else if (verificationReadyCount === 0) reproductionReadiness = 'NOT_READY_NO_GROUNDED_HYPOTHESIS';
+    else reproductionReadiness = 'READY';
+  }
 
   const turnsSinceNewEvidence =
     ledger.lastEvidenceGainOrdinal === null ? turnOrdinal : turnOrdinal - ledger.lastEvidenceGainOrdinal;
@@ -383,7 +492,22 @@ function deriveDirectives(input: DirectiveInput): readonly string[] {
       );
     }
   }
-  const reproducedTarget = input.reproductions.find((item) => item.resultClass === 'REPRODUCED') ?? null;
+  // A transient environment failure with retry budget remaining is the only
+  // host-authorized retry: name the same grounded target once. Every other
+  // execution outcome is terminal for its target — the host will not run it
+  // again, so no directive nudges a repeat.
+  if (input.reproductionReadiness === 'TRANSIENT_RETRY_REMAINING' && readyHypothesis !== null) {
+    const target = readyHypothesis.groundedOnTargets[0] ?? null;
+    const entry = target === null ? null : input.groundableTargets.find((item) => item.target === target) ?? null;
+    if (entry !== null && entry.evidenceRef !== null) {
+      push(
+        `The last reproduction for ${entry.target} hit a transient environment issue with retry budget remaining: you may retry RERUN_SAFE_REPRODUCTION once with sourcePath=${entry.target} sourceEvidenceRef=${String(entry.evidenceRef)} for ${readyHypothesis.hypothesisId}; further repeats are discarded.`,
+      );
+    }
+  }
+  const reproducedTarget =
+    input.reproductions.find((item) => item.resultClass === 'REPRODUCED' || item.resultClass === 'REPRODUCED_CURRENT_FAILURE') ??
+    null;
   if (reproducedTarget !== null) {
     const entry = input.groundableTargets.find((item) => item.target === reproducedTarget.target) ?? null;
     if (entry !== null && input.proposalCandidateIds.length === 0) {
@@ -469,7 +593,10 @@ export function absorbInvestigationIntoStrategy(
     if (!inspectedTargets.includes(target.target)) inspectedTargets.push(target.target);
   }
   for (const reproduction of memory.reproductions) {
-    if (reproduction.resultClass === 'REPRODUCED' && !reproducedTargets.includes(reproduction.target)) {
+    if (
+      (reproduction.resultClass === 'REPRODUCED' || reproduction.resultClass === 'REPRODUCED_CURRENT_FAILURE') &&
+      !reproducedTargets.includes(reproduction.target)
+    ) {
       reproducedTargets.push(reproduction.target);
     }
   }
