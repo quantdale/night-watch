@@ -77,7 +77,8 @@ export const MIN_CURRENT_SOURCE_EXECUTIONS = 2 as const;
 export const TARGET_DIGEST_PREFIX = 'tgt' as const;
 export const FAILURE_FINGERPRINT_PREFIX = 'fp' as const;
 
-const DIGEST_RE = /^(?:tgt|fp):sha256:[0-9a-f]{24}$/;
+const TARGET_DIGEST_RE = /^tgt:sha256:[0-9a-f]{24}$/;
+const FAILURE_FINGERPRINT_RE = /^fp:sha256:[0-9a-f]{24}$/;
 const SHA_RE = /^[0-9a-f]{7,64}$/;
 const CONTENT_DIGEST_RE = /^[A-Za-z0-9][A-Za-z0-9:._-]{0,127}$/;
 const REPOSITORY_RE = /^[A-Za-z0-9][A-Za-z0-9._-]*\/[A-Za-z0-9][A-Za-z0-9._-]*$/;
@@ -179,6 +180,13 @@ export function validateCurrentSourceProof(
   }
   if (!nonEmptyString(value['sourcePath'])) return 'PROOF_MALFORMED';
   if (value['sourcePath'] !== expectations.sourcePath) return 'PROOF_SOURCE_MISMATCH';
+  const sourceSeparator = expectations.sourcePath.indexOf(':');
+  if (
+    sourceSeparator <= 0 ||
+    expectations.sourcePath.slice(0, sourceSeparator) !== value['repository']
+  ) {
+    return 'PROOF_SOURCE_MISMATCH';
+  }
   if (
     !nonEmptyString(value['sourceContentDigest'], 128) ||
     !CONTENT_DIGEST_RE.test(value['sourceContentDigest'] as string)
@@ -186,9 +194,13 @@ export function validateCurrentSourceProof(
     return 'PROOF_MALFORMED';
   }
   const targetDigest = value['targetDigest'];
-  if (typeof targetDigest !== 'string' || !DIGEST_RE.test(targetDigest)) return 'PROOF_TARGET_DIGEST_INVALID';
+  if (typeof targetDigest !== 'string' || !TARGET_DIGEST_RE.test(targetDigest)) {
+    return 'PROOF_TARGET_DIGEST_INVALID';
+  }
   const fingerprint = value['failureFingerprint'];
-  if (typeof fingerprint !== 'string' || !DIGEST_RE.test(fingerprint)) return 'PROOF_FINGERPRINT_INVALID';
+  if (typeof fingerprint !== 'string' || !FAILURE_FINGERPRINT_RE.test(fingerprint)) {
+    return 'PROOF_FINGERPRINT_INVALID';
+  }
   const failureClass = value['failureClass'];
   if (
     typeof failureClass !== 'string' ||

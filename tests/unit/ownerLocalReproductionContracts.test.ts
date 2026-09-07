@@ -128,6 +128,18 @@ test.describe('W9 frozen owner-local reproduction contracts', () => {
     expect(validateCurrentSourceProof(proof({ networkDisabled: false }), expectations)).toBe(
       'PROOF_NETWORK_NOT_DISABLED',
     );
+    expect(validateCurrentSourceProof(proof({ targetDigest: 'fp:sha256:0123456789abcdef01234567' }), expectations)).toBe(
+      'PROOF_TARGET_DIGEST_INVALID',
+    );
+    expect(
+      validateCurrentSourceProof(
+        proof({ failureFingerprint: 'tgt:sha256:0123456789abcdef01234567' }),
+        expectations,
+      ),
+    ).toBe('PROOF_FINGERPRINT_INVALID');
+    expect(validateCurrentSourceProof(proof({ repository: 'alphauslabs/bluectl' }), expectations)).toBe(
+      'PROOF_SOURCE_MISMATCH',
+    );
   });
 
   test('transient retry policy is host-owned and strictly finite', () => {
