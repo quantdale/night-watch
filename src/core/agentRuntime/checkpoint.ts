@@ -6,15 +6,22 @@
 
 import {
   AGENT_BUDGET_VERSION,
+  AGENT_BUDGET_VERSION_V1,
+  AGENT_BUDGET_CEILINGS,
+  AGENT_BYTE_LEDGER_COUNT_KEYS,
+  AGENT_BYTE_LEDGER_VERSION,
   AGENT_CHECKPOINT_VERSION,
   AGENT_PHASES,
   AGENT_RUNTIME_STATE_VERSION,
   AGENT_RUNTIME_STATUSES,
   chargedInputBytes,
   chargedOutputBytes,
+  chargedToolPayloadBytes,
+  defaultAgentBudgetPolicy,
   isActionFailureDisposition,
   isAgentByteLedger,
   legacyAgentByteLedger,
+  type AgentBudgetCeilingName,
   type AgentByteLedger,
   type AgentCheckpoint,
   type AgentPhase,
@@ -95,12 +102,65 @@ function isStatus(value: unknown): value is AgentRuntimeStatus {
 function isFiniteNumber(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value) && value >= 0;
 }
+/**
+ * Lane D v1 -> v2 budget migration rule. A v1 snapshot parses: its cumulative
+ * outputBytes stays truthful — already-charged tool bytes REMAIN charged
+ * under outputBytes (their original home) and are never reattributed, so
+ * they cannot be double counted. The new toolPayloadBytes dimension starts
+ * at zero usage with the standard tier ceiling, and the v1 ledger's
+ * toolResultBytes component is ignored on resume (the runtime rebuilds exact
+ * legacy carry from the migrated usage totals instead).
+ */
+const V1_POLICY_KEYS = [
+  'wallTimeMs',
+  'reasonerCalls',
+  'inputBytes',
+  'outputBytes',
+  'toolActions',
+  'perActionTimeoutMs',
+  'candidateCap',
+  'retries',
+  'consecutiveFailures',
+  'providerFailures',
+] as const;
+
+const V1_USAGE_KEYS = [
+  'wallTimeMs',
+  'reasonerCalls',
+  'inputBytes',
+  'outputBytes',
+  'toolActions',
+  'candidateCount',
+  'retries',
+  'consecutiveFailures',
+  'providerFailures',
+] as const;
 
 function parseBudgetSnapshot(value: unknown, where: string): AgentCheckpoint['state']['budget'] {
   if (!isRecord(value) || !isRecord(value.policy) || !isRecord(value.usage)) {
     throw new AgentCheckpointError('CORRUPT', `${where}.budget is not a policy/usage pair`);
   }
   const policy = value.policy;
+  if (policy.schemaVersion === AGENT_BUDGET_VERSION_V1) {
+    for (const key of V1_POLICY_KEYS) {
+      if (!isFiniteNumber(policy[key])) throw new AgentCheckpointError('CORRUPT', `${where}.budget.policy.${key} is invalid`);
+    }
+    if (typeof policy.ceilingName !== 'string') throw new AgentCheckpointError('CORRUPT', `${where}.budget.policy.ceilingName is invalid`);
+    // The new dimension's ceiling must be derivable: an unknown tier cannot
+    // migrate honestly, so it fails closed instead of guessing a ceiling.
+    if (!Object.prototype.hasOwnProperty.call(AGENT_BUDGET_CEILINGS, policy.ceilingName)) {
+      throw new AgentCheckpointError('CORRUPT', `${where}.budget.policy.ceilingName is not a known tier`);
+    }
+    const usage = value.usage;
+    for (const key of V1_USAGE_KEYS) {
+      if (!isFiniteNumber(usage[key])) throw new AgentCheckpointError('CORRUPT', `${where}.budget.usage.${key} is invalid`);
+    }
+    const tier = policy.ceilingName as AgentBudgetCeilingName;
+    return {
+      policy: { ...policy, schemaVersion: AGENT_BUDGET_VERSION, toolPayloadBytes: defaultAgentBudgetPolicy(tier).toolPayloadBytes },
+      usage: { ...usage, toolPayloadBytes: 0 },
+    } as unknown as AgentCheckpoint['state']['budget'];
+  }
   if (policy.schemaVersion !== AGENT_BUDGET_VERSION) {
     throw new AgentCheckpointError('CORRUPT', `${where}.budget.policy has an unknown schema version`);
   }
@@ -109,6 +169,7 @@ function parseBudgetSnapshot(value: unknown, where: string): AgentCheckpoint['st
     'reasonerCalls',
     'inputBytes',
     'outputBytes',
+    'toolPayloadBytes',
     'toolActions',
     'perActionTimeoutMs',
     'candidateCap',
@@ -125,6 +186,7 @@ function parseBudgetSnapshot(value: unknown, where: string): AgentCheckpoint['st
     'reasonerCalls',
     'inputBytes',
     'outputBytes',
+    'toolPayloadBytes',
     'toolActions',
     'candidateCount',
     'retries',
@@ -184,21 +246,44 @@ function parseRuntimeState(value: unknown): AgentRuntimeState {
   if (value.knownTargets !== undefined && !isStringArray(value.knownTargets)) {
     throw new AgentCheckpointError('CORRUPT', 'state.knownTargets is invalid');
   }
-  // W9 additive byte ledger. Absent is valid (pre-W9 checkpoints resume with
-  // explicit legacy carry); present-but-malformed is corrupt, never silently
-  // zeroed. A present ledger must also reconcile EXACTLY with the frozen
-  // cumulative budget totals, so a forged or drifted component breakdown can
-  // never resume as authority for a ceiling decision.
+  // Byte ledger (additive across W9 and Lane D). Absent is valid (pre-W9
+  // checkpoints resume with explicit legacy carry); present-but-malformed is
+  // corrupt, never silently zeroed. A present ledger must also reconcile
+  // EXACTLY with the frozen cumulative budget totals, so a forged or drifted
+  // component breakdown can never resume as authority for a ceiling decision.
+  // A v1-budget checkpoint validates its v1-shaped ledger under v1
+  // arithmetic (tool bytes charged under output) and resumes it through the
+  // exact legacy-carry rebuild, never by reattributing old bytes.
+  const budgetIsV1 =
+    isRecord(value.budget) &&
+    isRecord(value.budget.policy) &&
+    value.budget.policy.schemaVersion === AGENT_BUDGET_VERSION_V1;
   if (value.byteLedger !== undefined && value.byteLedger !== null) {
-    if (!isAgentByteLedger(value.byteLedger)) {
-      throw new AgentCheckpointError('CORRUPT', 'state.byteLedger is invalid');
-    }
-    const budget = parseBudgetSnapshot(value.budget, 'state');
-    if (chargedInputBytes(value.byteLedger) !== budget.usage.inputBytes) {
-      throw new AgentCheckpointError('CORRUPT', 'state.byteLedger charged input does not reconcile with budget usage');
-    }
-    if (chargedOutputBytes(value.byteLedger) !== budget.usage.outputBytes) {
-      throw new AgentCheckpointError('CORRUPT', 'state.byteLedger charged output does not reconcile with budget usage');
+    if (budgetIsV1) {
+      if (!isV1ByteLedger(value.byteLedger)) {
+        throw new AgentCheckpointError('CORRUPT', 'state.byteLedger is invalid');
+      }
+      const budget = parseBudgetSnapshot(value.budget, 'state');
+      if (chargedInputBytes(value.byteLedger) !== budget.usage.inputBytes) {
+        throw new AgentCheckpointError('CORRUPT', 'state.byteLedger charged input does not reconcile with budget usage');
+      }
+      if (chargedOutputBytes(value.byteLedger) + value.byteLedger.toolResultBytes !== budget.usage.outputBytes) {
+        throw new AgentCheckpointError('CORRUPT', 'state.byteLedger charged output does not reconcile with budget usage');
+      }
+    } else {
+      if (!isAgentByteLedger(value.byteLedger)) {
+        throw new AgentCheckpointError('CORRUPT', 'state.byteLedger is invalid');
+      }
+      const budget = parseBudgetSnapshot(value.budget, 'state');
+      if (chargedInputBytes(value.byteLedger) !== budget.usage.inputBytes) {
+        throw new AgentCheckpointError('CORRUPT', 'state.byteLedger charged input does not reconcile with budget usage');
+      }
+      if (chargedOutputBytes(value.byteLedger) !== budget.usage.outputBytes) {
+        throw new AgentCheckpointError('CORRUPT', 'state.byteLedger charged output does not reconcile with budget usage');
+      }
+      if (chargedToolPayloadBytes(value.byteLedger) !== budget.usage.toolPayloadBytes) {
+        throw new AgentCheckpointError('CORRUPT', 'state.byteLedger charged tool payload does not reconcile with budget usage');
+      }
     }
   }
   if (!isStringArray(value.evidenceRefs)) throw new AgentCheckpointError('CORRUPT', 'state.evidenceRefs is invalid');
@@ -206,8 +291,36 @@ function parseRuntimeState(value: unknown): AgentRuntimeState {
   if (!(typeof value.terminationReason === 'string' || value.terminationReason === null)) {
     throw new AgentCheckpointError('CORRUPT', 'state.terminationReason is invalid');
   }
-  parseBudgetSnapshot(value.budget, 'state');
-  return value as unknown as AgentRuntimeState;
+  // Return the migrated budget pair (identity for v2): resume must see the
+  // toolPayloadBytes dimension even when the persisted document predates it.
+  // A v1 budget additionally rebuilds the ledger as exact legacy carry: the
+  // v1 component breakdown is ambiguous in the split world, so the totals
+  // move into carry (input/output truthful, payload zero) and the returned
+  // document re-parses cleanly under v2 arithmetic (idempotent parse).
+  const budget = parseBudgetSnapshot(value.budget, 'state');
+  if (!budgetIsV1) return { ...value, budget } as unknown as AgentRuntimeState;
+  return {
+    ...value,
+    budget,
+    byteLedger: legacyAgentByteLedger(budget.usage.inputBytes, budget.usage.outputBytes, 0),
+  } as unknown as AgentRuntimeState;
+}
+
+/**
+ * v1-shaped ledger guard for the migration path: every v2 count key except
+ * the additive legacyToolPayloadBytes must be a safe non-negative integer.
+ * A v1 ledger failing even this stays corrupt; it is never coerced.
+ */
+function isV1ByteLedger(value: unknown): value is AgentByteLedger {
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) return false;
+  const record = value as Record<string, unknown>;
+  if (record.schemaVersion !== AGENT_BYTE_LEDGER_VERSION) return false;
+  for (const key of AGENT_BYTE_LEDGER_COUNT_KEYS) {
+    if (key === 'legacyToolPayloadBytes') continue;
+    const entry = record[key];
+    if (typeof entry !== 'number' || !Number.isSafeInteger(entry) || entry < 0) return false;
+  }
+  return true;
 }
 
 /** Fail-closed checkpoint parser. Unknown shapes never resume. */
@@ -255,7 +368,7 @@ function utf8Bytes(value: string): number {
 function ledgerOf(state: AgentRuntimeState): AgentByteLedger {
   return isAgentByteLedger(state.byteLedger)
     ? state.byteLedger
-    : legacyAgentByteLedger(state.budget.usage.inputBytes, state.budget.usage.outputBytes);
+    : legacyAgentByteLedger(state.budget.usage.inputBytes, state.budget.usage.outputBytes, state.budget.usage.toolPayloadBytes);
 }
 
 function withCheckpointBytes(

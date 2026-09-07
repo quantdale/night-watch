@@ -23,6 +23,7 @@ import {
   ZERO_AGENT_BYTE_LEDGER,
   chargedInputBytes,
   chargedOutputBytes,
+  chargedToolPayloadBytes,
   classifyBudgetExhaustion,
   detectExhaustedAction,
   detectNoProgress,
@@ -169,7 +170,7 @@ export class AgentRuntime {
       // checkpoint parser.
       this.byteLedger = isAgentByteLedger(restored.state.byteLedger)
         ? { ...restored.state.byteLedger }
-        : legacyAgentByteLedger(restored.state.budget.usage.inputBytes, restored.state.budget.usage.outputBytes);
+        : legacyAgentByteLedger(restored.state.budget.usage.inputBytes, restored.state.budget.usage.outputBytes, restored.state.budget.usage.toolPayloadBytes);
       this.evidenceRefs = [...restored.state.evidenceRefs];
       this.candidateIds = [...restored.state.candidateIds];
       this.usage = { ...restored.state.budget.usage };
@@ -182,6 +183,7 @@ export class AgentRuntime {
         reasonerCalls: 0,
         inputBytes: 0,
         outputBytes: 0,
+        toolPayloadBytes: 0,
         toolActions: 0,
         candidateCount: 0,
         retries: 0,
@@ -658,6 +660,7 @@ export class AgentRuntime {
       ...this.usage,
       toolActions: this.usage.toolActions + 1,
       outputBytes: chargedOutputBytes(this.byteLedger),
+      toolPayloadBytes: chargedToolPayloadBytes(this.byteLedger),
       ...(result.ok ? {} : { consecutiveFailures: this.usage.consecutiveFailures + 1, retries: this.usage.retries + 1 }),
     };
     this.addEvidence(result.evidenceRefs);

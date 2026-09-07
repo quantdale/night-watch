@@ -434,6 +434,7 @@ function remainingPolicyFor(policy: AgentBudgetPolicy, usage: AgentBudgetUsage):
     reasonerCalls: Math.max(0, policy.reasonerCalls - usage.reasonerCalls),
     inputBytes: Math.max(0, policy.inputBytes - usage.inputBytes),
     outputBytes: Math.max(0, policy.outputBytes - usage.outputBytes),
+    toolPayloadBytes: Math.max(0, policy.toolPayloadBytes - usage.toolPayloadBytes),
     toolActions: Math.max(0, policy.toolActions - usage.toolActions),
     candidateCap: Math.max(0, policy.candidateCap - usage.candidateCount),
     retries: Math.max(0, policy.retries - usage.retries),
@@ -448,6 +449,7 @@ function addUsage(base: AgentBudgetUsage, extra: AgentBudgetUsage): AgentBudgetU
     reasonerCalls: base.reasonerCalls + extra.reasonerCalls,
     inputBytes: base.inputBytes + extra.inputBytes,
     outputBytes: base.outputBytes + extra.outputBytes,
+    toolPayloadBytes: base.toolPayloadBytes + extra.toolPayloadBytes,
     toolActions: base.toolActions + extra.toolActions,
     candidateCount: base.candidateCount + extra.candidateCount,
     retries: base.retries + extra.retries,
@@ -461,10 +463,11 @@ interface CampaignAccumulators {
   evidenceRefs: string[];
   candidateIds: string[];
   hypotheses: AgentHypothesis[];
-  histories: LocalInvestigationHistory[];
   reasonerCalls: number;
+  histories: LocalInvestigationHistory[];
   inputBytes: number;
   outputBytes: number;
+  toolPayloadBytes: number;
   toolActions: number;
   retries: number;
   providerFailures: number;
@@ -491,6 +494,7 @@ function freshAccumulators(campaignId: string): CampaignAccumulators {
     reasonerCalls: 0,
     inputBytes: 0,
     outputBytes: 0,
+    toolPayloadBytes: 0,
     toolActions: 0,
     retries: 0,
     providerFailures: 0,
@@ -524,6 +528,7 @@ function campaignUsageOf(engine: CampaignEngine): AgentBudgetUsage {
     reasonerCalls: engine.acc.reasonerCalls,
     inputBytes: engine.acc.inputBytes,
     outputBytes: engine.acc.outputBytes,
+    toolPayloadBytes: engine.acc.toolPayloadBytes,
     toolActions: engine.acc.toolActions,
     candidateCount: engine.acc.candidateIds.length,
     retries: engine.acc.retries,
@@ -540,6 +545,7 @@ function absorbInvestigation(engine: CampaignEngine, ran: AgentRunResult, countS
   acc.reasonerCalls += usage.reasonerCalls;
   acc.inputBytes += usage.inputBytes;
   acc.outputBytes += usage.outputBytes;
+  acc.toolPayloadBytes += usage.toolPayloadBytes;
   acc.toolActions += usage.toolActions;
   acc.retries += usage.retries;
   acc.providerFailures += usage.providerFailures;
@@ -549,7 +555,7 @@ function absorbInvestigation(engine: CampaignEngine, ran: AgentRunResult, countS
   // usage totals above.
   acc.byteLedger = addAgentByteLedgers(
     acc.byteLedger,
-    isAgentByteLedger(ran.state.byteLedger) ? ran.state.byteLedger : legacyAgentByteLedger(usage.inputBytes, usage.outputBytes),
+    isAgentByteLedger(ran.state.byteLedger) ? ran.state.byteLedger : legacyAgentByteLedger(usage.inputBytes, usage.outputBytes, usage.toolPayloadBytes),
   );
   if (ran.terminationReason === 'REASONER_FAILURE') {
     // A validated self-reported failure resets the runtime streak to zero, so
