@@ -91,7 +91,10 @@
     "auth:configure": "node bin/auth-configure.mjs",
     "scenario": "node bin/nightwatch.mjs",
     "mutation:review": "node bin/review-mutation-campaign.mjs",
-    "review:scale": "node bin/review-persistence-scale.mjs"
+    "review:scale": "node bin/review-persistence-scale.mjs",
+    "efficacy:baseline": "node bin/efficacy-corpus.mjs baseline",
+    "efficacy:candidate": "node bin/efficacy-corpus.mjs candidate",
+    "efficacy:compare": "node bin/efficacy-corpus.mjs compare"
   },
   "devDependencies": {
     "@playwright/test": "1.62.1",
