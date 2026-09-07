@@ -135,14 +135,14 @@ test.describe('w9 campaign ledger exposure', () => {
     const document = readCheckpointDocument(result.checkpointFile!);
     const checkpoint = parseCheckpoint(document);
     expect(checkpoint.state.byteLedger).toEqual(result.byteLedger);
-    expect(checkpoint.state.budget.usage.inputBytes).toBe(checkpoint.state.byteLedger!.requestBytes);
+    expect(checkpoint.state.budget.usage.inputBytes).toBe(checkpoint.state.byteLedger!.renderedInputBytes);
     expect(checkpoint.state.budget.usage.outputBytes).toBe(chargedOutputBytes(checkpoint.state.byteLedger!));
 
     const progress = document['campaignProgress'] as Record<string, unknown>;
     const pausedInvestigation = progress['pausedInvestigation'] as Record<string, unknown>;
     const pausedLedger = (pausedInvestigation['state'] as Record<string, unknown>)['byteLedger'] as AgentByteLedger;
-    expect(pausedLedger.requestBytes).toBeGreaterThan(0);
-    expect(pausedLedger.providerStdoutBytes).toBeGreaterThan(0);
+    expect(pausedLedger.renderedInputBytes).toBeGreaterThan(0);
+    expect(pausedLedger.providerResponseBytes).toBeGreaterThan(0);
   });
 
   test('resume folds the paused investigation ledger into the campaign total', async () => {
@@ -165,7 +165,7 @@ test.describe('w9 campaign ledger exposure', () => {
     const progress = pausedDocument['campaignProgress'] as Record<string, unknown>;
     const pausedInvestigation = progress['pausedInvestigation'] as Record<string, unknown>;
     const pausedLedger = (pausedInvestigation['state'] as Record<string, unknown>)['byteLedger'] as AgentByteLedger;
-    expect(pausedLedger.requestBytes).toBeGreaterThan(0);
+    expect(pausedLedger.renderedInputBytes).toBeGreaterThan(0);
     const pausedInvestigationUsage = (pausedInvestigation['state'] as Record<string, unknown>)['budget'] as Record<string, unknown>;
     const pausedInvestigationOutput = (pausedInvestigationUsage['usage'] as Record<string, unknown>)['outputBytes'];
     expect(pausedInvestigationOutput).toBe(chargedOutputBytes(pausedLedger));
@@ -182,8 +182,8 @@ test.describe('w9 campaign ledger exposure', () => {
     });
 
     expect(finished.terminationReason).toBe('NO_PROGRESS');
-    expect(finished.byteLedger.requestBytes).toBeGreaterThanOrEqual(pausedLedger.requestBytes);
-    expect(finished.byteLedger.providerStdoutBytes).toBeGreaterThanOrEqual(pausedLedger.providerStdoutBytes);
+    expect(finished.byteLedger.renderedInputBytes).toBeGreaterThanOrEqual(pausedLedger.renderedInputBytes);
+    expect(finished.byteLedger.providerResponseBytes).toBeGreaterThanOrEqual(pausedLedger.providerResponseBytes);
     expect(finished.byteLedger.schemaVersion).toBe(AGENT_BYTE_LEDGER_VERSION);
   });
 
@@ -222,6 +222,38 @@ test.describe('w9 campaign ledger exposure', () => {
 
     expect(finished.terminationReason).toBe('NO_PROGRESS');
     expect(finished.byteLedger.schemaVersion).toBe(AGENT_BYTE_LEDGER_VERSION);
-    expect(finished.byteLedger.requestBytes).toBeGreaterThan(0);
+    expect(finished.byteLedger.renderedInputBytes).toBeGreaterThan(0);
+  });
+
+  test('the campaign checkpoint measures its own embedded document, not the envelope', async () => {
+    const dir = scratchDir();
+    const counterFile = path.join(dir, 'counter.txt');
+    const result = await runLocalCliCampaign({
+      campaignId: 'w9-acct-ckpt',
+      ceilingName: 'HOUR_1',
+      executable: NODE,
+      args: [toolThenPauseScript(dir, counterFile)],
+      provider: 'test-provider',
+      model: 'fake-1',
+      maxTurns: 4,
+      stateDirectory: dir,
+    });
+    expect(result.checkpointFile).not.toBeNull();
+
+    const document = readCheckpointDocument(result.checkpointFile!);
+    const checkpoint = parseCheckpoint(document);
+    // The campaign envelope adds campaignProgress framing on top of the
+    // checkpoint; the measured value is a property of the checkpoint codec, so
+    // it equals the embedded document exactly and stays below the file size.
+    const embedded = checkpoint.state.byteLedger!.checkpointBytes;
+    expect(embedded).toBe(Buffer.byteLength(JSON.stringify(checkpoint), 'utf8'));
+    expect(embedded).toBeLessThan(fs.statSync(result.checkpointFile!).size);
+    // The returned result reports the same accounting as the persisted file.
+    expect(result.byteLedger).toEqual(checkpoint.state.byteLedger);
+    // The paused investigation measured its own checkpoint independently.
+    const progress = document['campaignProgress'] as Record<string, unknown>;
+    const pausedInvestigation = progress['pausedInvestigation'] as Record<string, unknown>;
+    const pausedLedger = (pausedInvestigation['state'] as Record<string, unknown>)['byteLedger'] as AgentByteLedger;
+    expect(pausedLedger.checkpointBytes).toBe(Buffer.byteLength(JSON.stringify(pausedInvestigation), 'utf8'));
   });
 });

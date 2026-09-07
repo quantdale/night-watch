@@ -114,78 +114,116 @@ export const TRANSIENT_ACTION_RETRY_BUDGET = 2 as const;
 export const AGENT_BYTE_LEDGER_VERSION = 'nightwatch.agent-byte-ledger.v1' as const;
 
 /**
- * W9 component byte accounting. `AgentBudgetUsage` keeps the two frozen
- * cumulative totals that budget policy compares; this ledger explains where
- * they came from and additionally MEASURES payloads that are deliberately not
- * charged (so a ceiling decision can be justified from evidence).
+ * W9 exact component byte accounting. `AgentBudgetUsage` remains the
+ * authoritative cumulative budget surface. This ledger explains those totals
+ * and separately measures bytes that are useful evidence but are not charged.
  *
- * Charged into `usage.inputBytes`:  requestBytes.
- * Charged into `usage.outputBytes`: providerStdoutBytes + providerStderrBytes
- *                                   + toolResultBytes.
- * Measured only: requestMemoryBytes and requestUntrustedBytes (subsets of
- * requestBytes), parsedResponseBytes (the same document already charged as
- * provider stdout — charging it again was the W8 double count), and
- * toolEnvelopeBytes (what actually crossed to the reasoner after truncation).
+ * Charged input:
+ *   legacyInputBytes + renderedInputBytes
+ * Charged output:
+ *   legacyOutputBytes + providerResponseBytes + providerStderrBytes
+ *   + toolResultBytes
+ *
+ * `reasonerOutputBytes` is the canonical parsed response. It is the same
+ * document already represented by providerResponseBytes and is therefore
+ * measured, never charged twice. `requestMemoryBytes`,
+ * `requestUntrustedBytes`, `toolEnvelopeBytes`, and `checkpointBytes` are also
+ * measured-only. Checkpoint bytes count exact generated/persisted UTF-8
+ * documents according to the checkpoint codec's non-recursive fixed point.
+ *
+ * Legacy fields carry otherwise unattributable cumulative usage from a valid
+ * pre-W9 checkpoint. They prevent resume from inventing component attribution
+ * while preserving exact cumulative totals.
  */
 export interface AgentByteLedger {
   readonly schemaVersion: typeof AGENT_BYTE_LEDGER_VERSION;
-  readonly requestBytes: number;
+  readonly legacyInputBytes: number;
+  readonly legacyOutputBytes: number;
+  readonly renderedInputBytes: number;
   readonly requestMemoryBytes: number;
   readonly requestUntrustedBytes: number;
-  readonly providerStdoutBytes: number;
+  /** Raw provider stdout bytes: the CLI transport response. */
+  readonly providerResponseBytes: number;
   readonly providerStderrBytes: number;
-  readonly parsedResponseBytes: number;
+  /** Canonical parsed reasoner response bytes; measured, not charged twice. */
+  readonly reasonerOutputBytes: number;
+  /** Executor-reported pre-truncation output bytes; charged. */
   readonly toolResultBytes: number;
+  /** Serialized bounded untrusted envelopes produced by tools; measured. */
   readonly toolEnvelopeBytes: number;
+  /** Exact bytes of checkpoint documents generated or persisted. */
+  readonly checkpointBytes: number;
 }
 
 export const ZERO_AGENT_BYTE_LEDGER: AgentByteLedger = Object.freeze({
   schemaVersion: AGENT_BYTE_LEDGER_VERSION,
-  requestBytes: 0,
+  legacyInputBytes: 0,
+  legacyOutputBytes: 0,
+  renderedInputBytes: 0,
   requestMemoryBytes: 0,
   requestUntrustedBytes: 0,
-  providerStdoutBytes: 0,
+  providerResponseBytes: 0,
   providerStderrBytes: 0,
-  parsedResponseBytes: 0,
+  reasonerOutputBytes: 0,
   toolResultBytes: 0,
   toolEnvelopeBytes: 0,
+  checkpointBytes: 0,
 });
 
 /** Component-wise sum. Used to fold per-investigation ledgers into a campaign total. */
 export function addAgentByteLedgers(a: AgentByteLedger, b: AgentByteLedger): AgentByteLedger {
   return {
     schemaVersion: AGENT_BYTE_LEDGER_VERSION,
-    requestBytes: a.requestBytes + b.requestBytes,
+    legacyInputBytes: a.legacyInputBytes + b.legacyInputBytes,
+    legacyOutputBytes: a.legacyOutputBytes + b.legacyOutputBytes,
+    renderedInputBytes: a.renderedInputBytes + b.renderedInputBytes,
     requestMemoryBytes: a.requestMemoryBytes + b.requestMemoryBytes,
     requestUntrustedBytes: a.requestUntrustedBytes + b.requestUntrustedBytes,
-    providerStdoutBytes: a.providerStdoutBytes + b.providerStdoutBytes,
+    providerResponseBytes: a.providerResponseBytes + b.providerResponseBytes,
     providerStderrBytes: a.providerStderrBytes + b.providerStderrBytes,
-    parsedResponseBytes: a.parsedResponseBytes + b.parsedResponseBytes,
+    reasonerOutputBytes: a.reasonerOutputBytes + b.reasonerOutputBytes,
     toolResultBytes: a.toolResultBytes + b.toolResultBytes,
     toolEnvelopeBytes: a.toolEnvelopeBytes + b.toolEnvelopeBytes,
+    checkpointBytes: a.checkpointBytes + b.checkpointBytes,
   };
 }
 
-/** The exact charged-output identity every accounting test asserts. */
+/** Exact cumulative charged-input identity. */
+export function chargedInputBytes(ledger: AgentByteLedger): number {
+  return ledger.legacyInputBytes + ledger.renderedInputBytes;
+}
+
+/** Exact cumulative charged-output identity. */
 export function chargedOutputBytes(ledger: AgentByteLedger): number {
-  return ledger.providerStdoutBytes + ledger.providerStderrBytes + ledger.toolResultBytes;
+  return ledger.legacyOutputBytes + ledger.providerResponseBytes + ledger.providerStderrBytes + ledger.toolResultBytes;
+}
+
+/** Build honest W9 attribution for a valid pre-W9 cumulative budget snapshot. */
+export function legacyAgentByteLedger(inputBytes: number, outputBytes: number): AgentByteLedger {
+  return {
+    ...ZERO_AGENT_BYTE_LEDGER,
+    legacyInputBytes: inputBytes,
+    legacyOutputBytes: outputBytes,
+  };
 }
 
 const AGENT_BYTE_LEDGER_COUNT_KEYS = [
-  'requestBytes',
+  'legacyInputBytes',
+  'legacyOutputBytes',
+  'renderedInputBytes',
   'requestMemoryBytes',
   'requestUntrustedBytes',
-  'providerStdoutBytes',
+  'providerResponseBytes',
   'providerStderrBytes',
-  'parsedResponseBytes',
+  'reasonerOutputBytes',
   'toolResultBytes',
   'toolEnvelopeBytes',
+  'checkpointBytes',
 ] as const;
 
 /**
  * Fail-closed ledger guard for checkpoint parsing. Present-but-malformed
- * ledgers are corrupt (never silently zeroed); absence is handled by the
- * caller as pre-W9 compatibility (resume with a zero ledger).
+ * ledgers are corrupt; absence is handled as pre-W9 compatibility.
  */
 export function isAgentByteLedger(value: unknown): value is AgentByteLedger {
   if (value === null || typeof value !== 'object' || Array.isArray(value)) return false;
@@ -193,7 +231,7 @@ export function isAgentByteLedger(value: unknown): value is AgentByteLedger {
   if (record.schemaVersion !== AGENT_BYTE_LEDGER_VERSION) return false;
   for (const key of AGENT_BYTE_LEDGER_COUNT_KEYS) {
     const entry = record[key];
-    if (typeof entry !== 'number' || !Number.isFinite(entry) || entry < 0) return false;
+    if (typeof entry !== 'number' || !Number.isSafeInteger(entry) || entry < 0) return false;
   }
   return true;
 }

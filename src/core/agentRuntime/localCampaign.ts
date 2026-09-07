@@ -41,6 +41,7 @@ import {
   classifyBudgetExhaustion,
   defaultAgentBudgetPolicy,
   isAgentByteLedger,
+  legacyAgentByteLedger,
   type AgentActionRecord,
   type AgentBudgetCeilingName,
   type AgentBudgetPolicy,
@@ -64,7 +65,7 @@ import {
   type LocalInvestigationHistory,
 } from '../localInvestigation/types';
 import { createCliReasonerDriver } from '../reasoner/cliReasoner';
-import { AgentCheckpointError, assertCheckpointHasNoSecrets, parseCheckpoint } from './checkpoint';
+import { AgentCheckpointError, assertCheckpointHasNoSecrets, finalizeCheckpoint, parseCheckpoint } from './checkpoint';
 import { AgentRuntime } from './runtime';
 import {
   absorbInvestigationIntoStrategy,
@@ -542,10 +543,14 @@ function absorbInvestigation(engine: CampaignEngine, ran: AgentRunResult, countS
   acc.toolActions += usage.toolActions;
   acc.retries += usage.retries;
   acc.providerFailures += usage.providerFailures;
-  // W9: fold the investigation component ledger. Pre-W9 states carry no
-  // ledger and fold as zero; the frozen usage totals above remain the sole
-  // basis for remaining-policy arithmetic.
-  acc.byteLedger = addAgentByteLedgers(acc.byteLedger, isAgentByteLedger(ran.state.byteLedger) ? ran.state.byteLedger : ZERO_AGENT_BYTE_LEDGER);
+  // W9: fold the investigation component ledger. A pre-W9 investigation state
+  // carries cumulative usage without attribution and folds as explicit legacy
+  // carry, so the campaign ledger still reconciles exactly with the frozen
+  // usage totals above.
+  acc.byteLedger = addAgentByteLedgers(
+    acc.byteLedger,
+    isAgentByteLedger(ran.state.byteLedger) ? ran.state.byteLedger : legacyAgentByteLedger(usage.inputBytes, usage.outputBytes),
+  );
   if (ran.terminationReason === 'REASONER_FAILURE') {
     // A validated self-reported failure resets the runtime streak to zero, so
     // count the event itself to keep the campaign streak honest.
@@ -640,13 +645,14 @@ function buildCampaignCheckpoint(
   pausedInvestigation: AgentCheckpoint | null,
 ): Record<string, unknown> {
   const acc = engine.acc;
-  const state = campaignStateOf(engine, status, terminationReason);
-  const checkpoint: AgentCheckpoint = {
-    schemaVersion: AGENT_CHECKPOINT_VERSION,
-    campaignId: engine.input.campaignId,
-    state,
-    resumeCursor: campaignResumeCursor(engine.input.campaignId, acc.nextIndex, acc.actionLog),
-  };
+  // The embedded campaign checkpoint is measured by the checkpoint codec's
+  // fixed point; adopt the measured ledger so the persisted document and the
+  // returned campaign result report identical accounting.
+  const checkpoint = finalizeCheckpoint(
+    campaignStateOf(engine, status, terminationReason),
+    campaignResumeCursor(engine.input.campaignId, acc.nextIndex, acc.actionLog),
+  );
+  acc.byteLedger = { ...checkpoint.state.byteLedger! };
   const progress: CampaignProgress = {
     version: CAMPAIGN_PROGRESS_VERSION,
     nextInvestigationIndex: acc.nextIndex,
@@ -863,10 +869,12 @@ function seedFromCheckpointState(engine: CampaignEngine, state: AgentRuntimeStat
   acc.retries = state.budget.usage.retries;
   acc.providerFailures = state.budget.usage.providerFailures;
   acc.consecutiveFailures = state.budget.usage.consecutiveFailures;
-  // W9: restore the folded component ledger. Pre-W9 checkpoints carry none
-  // and seed a zero ledger while the frozen usage totals above are preserved
-  // verbatim for remaining-policy arithmetic.
-  acc.byteLedger = isAgentByteLedger(state.byteLedger) ? { ...state.byteLedger } : { ...ZERO_AGENT_BYTE_LEDGER };
+  // W9: restore the folded component ledger. A pre-W9 campaign checkpoint
+  // carries cumulative usage without attribution and seeds explicit legacy
+  // carry, so the restored ledger still reconciles with the usage above.
+  acc.byteLedger = isAgentByteLedger(state.byteLedger)
+    ? { ...state.byteLedger }
+    : legacyAgentByteLedger(state.budget.usage.inputBytes, state.budget.usage.outputBytes);
   acc.knownTargets = [...(state.knownTargets ?? [])];
   acc.lastPhase = state.phase;
 }

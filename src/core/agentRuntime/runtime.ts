@@ -21,11 +21,14 @@ import {
   REASONER_STDOUT_BYTE_CAP,
   REASONER_TURN_REQUEST_VERSION,
   ZERO_AGENT_BYTE_LEDGER,
+  chargedInputBytes,
+  chargedOutputBytes,
   classifyBudgetExhaustion,
   detectExhaustedAction,
   detectNoProgress,
   detectRepeatedAction,
   isAgentByteLedger,
+  legacyAgentByteLedger,
   lookupAgentTool,
   proposeCandidateRequiresEvidence,
   validateReasonerTurnResponse,
@@ -160,11 +163,13 @@ export class AgentRuntime {
       // Pre-W8 checkpoints have no target ledger: resume with an empty one
       // rather than refusing an otherwise valid checkpoint.
       this.knownTargets = [...(restored.state.knownTargets ?? [])];
-      // Pre-W9 checkpoints carry no byte ledger: resume with a zero ledger
-      // (fresh W9 accounting) while the frozen usage totals are preserved
-      // verbatim for remaining-policy arithmetic. A present-but-malformed
-      // ledger never reaches here: parseCheckpoint rejects it fail-closed.
-      this.byteLedger = isAgentByteLedger(restored.state.byteLedger) ? { ...restored.state.byteLedger } : { ...ZERO_AGENT_BYTE_LEDGER };
+      // Pre-W9 checkpoints carry cumulative budget usage but no component
+      // attribution. Preserve it honestly as legacy carry. A present ledger
+      // has already been structurally and arithmetically validated by the
+      // checkpoint parser.
+      this.byteLedger = isAgentByteLedger(restored.state.byteLedger)
+        ? { ...restored.state.byteLedger }
+        : legacyAgentByteLedger(restored.state.budget.usage.inputBytes, restored.state.budget.usage.outputBytes);
       this.evidenceRefs = [...restored.state.evidenceRefs];
       this.candidateIds = [...restored.state.candidateIds];
       this.usage = { ...restored.state.budget.usage };
@@ -226,9 +231,11 @@ export class AgentRuntime {
     };
   }
 
-  /** Secret-free checkpoint of the current state (fail-closed on secrets). */
+  /** Generate and account for one secret-free checkpoint document. */
   checkpoint(): AgentCheckpoint {
-    return createCheckpoint(this.snapshot(), this.turnBase + this.turnsThisRun);
+    const checkpoint = createCheckpoint(this.snapshot(), this.turnBase + this.turnsThisRun);
+    this.byteLedger = { ...checkpoint.state.byteLedger! };
+    return checkpoint;
   }
 
   /** External pause: the loop halts at the next turn boundary. */
@@ -306,18 +313,18 @@ export class AgentRuntime {
    */
   private async runTurn(turnId: string): Promise<TerminalOutcome | null> {
     const request = this.buildRequest(turnId);
-    // W9 ledger: the full serialized request is charged into inputBytes;
-    // memory and pending-untrusted serializations are measured subsets of it.
-    const requestBytes = utf8Bytes(JSON.stringify(request));
+    // The full rendered request is charged once as model input. Memory and
+    // pending-untrusted serializations are measured subsets of that request.
+    const renderedInputBytes = utf8Bytes(JSON.stringify(request));
     const requestMemoryBytes = utf8Bytes(JSON.stringify(request.observation.memory));
     const requestUntrustedBytes = utf8Bytes(JSON.stringify(request.observation.untrusted));
-    this.usage = { ...this.usage, inputBytes: this.usage.inputBytes + requestBytes };
     this.byteLedger = {
       ...this.byteLedger,
-      requestBytes: this.byteLedger.requestBytes + requestBytes,
+      renderedInputBytes: this.byteLedger.renderedInputBytes + renderedInputBytes,
       requestMemoryBytes: this.byteLedger.requestMemoryBytes + requestMemoryBytes,
       requestUntrustedBytes: this.byteLedger.requestUntrustedBytes + requestUntrustedBytes,
     };
+    this.usage = { ...this.usage, inputBytes: chargedInputBytes(this.byteLedger) };
 
     let call: Awaited<ReturnType<ReasonerDriver['complete']>>;
     try {
@@ -348,15 +355,15 @@ export class AgentRuntime {
       return null;
     }
 
+    this.byteLedger = {
+      ...this.byteLedger,
+      providerResponseBytes: this.byteLedger.providerResponseBytes + call.stdoutBytes,
+      providerStderrBytes: this.byteLedger.providerStderrBytes + call.stderrBytes,
+    };
     this.usage = {
       ...this.usage,
       reasonerCalls: this.usage.reasonerCalls + 1,
-      outputBytes: this.usage.outputBytes + call.stdoutBytes + call.stderrBytes,
-    };
-    this.byteLedger = {
-      ...this.byteLedger,
-      providerStdoutBytes: this.byteLedger.providerStdoutBytes + call.stdoutBytes,
-      providerStderrBytes: this.byteLedger.providerStderrBytes + call.stderrBytes,
+      outputBytes: chargedOutputBytes(this.byteLedger),
     };
 
     if (!call.ok) {
@@ -378,13 +385,11 @@ export class AgentRuntime {
       return null;
     }
 
-    // W9 double-count fix: the parsed response is the same document already
-    // charged as provider stdout. It is measured into parsedResponseBytes but
-    // never charged into usage.outputBytes again, so usage.outputBytes equals
-    // providerStdoutBytes + providerStderrBytes + toolResultBytes exactly.
+    // The parsed reasoner output is the same document already charged as the
+    // provider response. Measure it for evidence; never charge it twice.
     this.byteLedger = {
       ...this.byteLedger,
-      parsedResponseBytes: this.byteLedger.parsedResponseBytes + utf8Bytes(JSON.stringify(call.response)),
+      reasonerOutputBytes: this.byteLedger.reasonerOutputBytes + utf8Bytes(JSON.stringify(call.response)),
     };
 
     const validated = validateReasonerTurnResponse(call.response as unknown, {
@@ -640,22 +645,20 @@ export class AgentRuntime {
     const call: AgentToolCall = { campaignId: this.campaignId, turnId, toolId, arguments: args, argumentDigest };
     const raw = await this.tools.execute(call);
     const result = normalizeToolResult(raw);
-    // W9 ledger: the pre-truncation tool payload is charged; the truncated
-    // envelopes that actually cross to the reasoner are measured only.
-    let toolEnvelopeBytes = 0;
-    for (const envelope of result.untrusted) {
-      if (typeof envelope?.bytes === 'string') toolEnvelopeBytes += utf8Bytes(envelope.bytes);
-    }
-    this.usage = {
-      ...this.usage,
-      toolActions: this.usage.toolActions + 1,
-      outputBytes: this.usage.outputBytes + result.outputBytes,
-      ...(result.ok ? {} : { consecutiveFailures: this.usage.consecutiveFailures + 1, retries: this.usage.retries + 1 }),
-    };
+    // The executor's pre-truncation result is charged. The complete serialized
+    // bounded envelope array is measured separately; it becomes a subset of a
+    // later rendered request and is never charged here.
+    const toolEnvelopeBytes = utf8Bytes(JSON.stringify(result.untrusted));
     this.byteLedger = {
       ...this.byteLedger,
       toolResultBytes: this.byteLedger.toolResultBytes + result.outputBytes,
       toolEnvelopeBytes: this.byteLedger.toolEnvelopeBytes + toolEnvelopeBytes,
+    };
+    this.usage = {
+      ...this.usage,
+      toolActions: this.usage.toolActions + 1,
+      outputBytes: chargedOutputBytes(this.byteLedger),
+      ...(result.ok ? {} : { consecutiveFailures: this.usage.consecutiveFailures + 1, retries: this.usage.retries + 1 }),
     };
     this.addEvidence(result.evidenceRefs);
     if (result.untrusted.length > 0) {
@@ -795,12 +798,14 @@ export class AgentRuntime {
     this.refreshWallTime();
     this.terminationReason = outcome.reason;
     this.status = outcome.reason === 'PAUSED' ? 'PAUSED' : 'TERMINATED';
-    const state = this.snapshot();
+    let state = this.snapshot();
     let checkpoint: AgentCheckpoint | null = null;
     if (outcome.withCheckpoint) {
-      // Checkpoint creation is fail-closed on secrets; a secret-bearing state
-      // must never be persisted. Surface the corruption instead of resuming.
+      // Checkpoint creation measures its exact UTF-8 document through a stable
+      // fixed point. Adopt the measured state so result and checkpoint agree.
       checkpoint = createCheckpoint(state, this.turnBase + this.turnsThisRun);
+      state = checkpoint.state;
+      this.byteLedger = { ...state.byteLedger! };
     }
     return { terminationReason: outcome.reason, state, checkpoint };
   }

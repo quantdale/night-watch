@@ -7,6 +7,7 @@ import {
   REASONER_TURN_RESPONSE_VERSION,
   UNTRUSTED_ENVELOPE_VERSION,
   ZERO_AGENT_BYTE_LEDGER,
+  chargedInputBytes,
   chargedOutputBytes,
   defaultAgentBudgetPolicy,
   type AgentBudgetPolicy,
@@ -134,16 +135,26 @@ test.describe('w9 charged-output identity', () => {
     const ledger = result.state.byteLedger!;
 
     expect(ledger.schemaVersion).toBe(AGENT_BYTE_LEDGER_VERSION);
-    expect(ledger.providerStdoutBytes).toBe(1050);
+    expect(ledger.providerResponseBytes).toBe(1050);
     expect(ledger.providerStderrBytes).toBe(210);
     expect(ledger.toolResultBytes).toBe(500);
-    expect(ledger.toolEnvelopeBytes).toBe(utf8Bytes('hello'));
-    expect(ledger.parsedResponseBytes).toBe(utf8Bytes(JSON.stringify(toolResponse)) + utf8Bytes(JSON.stringify(terminateResponse())));
-    expect(result.state.budget.usage.inputBytes).toBe(ledger.requestBytes);
+    // Envelopes are measured as the exact serialized payload the reasoner will
+    // receive: strictly larger than the raw bytes it wraps (digest, trust,
+    // source framing) and strictly smaller than a whole rendered request.
+    expect(ledger.toolEnvelopeBytes).toBe(utf8Bytes(JSON.stringify([envelopeWith('hello')])));
+    expect(ledger.toolEnvelopeBytes).toBeGreaterThan(utf8Bytes('hello'));
+    expect(ledger.toolEnvelopeBytes).toBeLessThan(ledger.renderedInputBytes);
+    expect(ledger.reasonerOutputBytes).toBe(utf8Bytes(JSON.stringify(toolResponse)) + utf8Bytes(JSON.stringify(terminateResponse())));
+    expect(ledger.legacyInputBytes).toBe(0);
+    expect(ledger.legacyOutputBytes).toBe(0);
+    expect(result.state.budget.usage.inputBytes).toBe(chargedInputBytes(ledger));
+    expect(result.state.budget.usage.inputBytes).toBe(ledger.renderedInputBytes);
     expect(result.state.budget.usage.outputBytes).toBe(1000 + 200 + 50 + 10 + 500);
     expect(result.state.budget.usage.outputBytes).toBe(chargedOutputBytes(ledger));
-    expect(ledger.requestMemoryBytes).toBeLessThanOrEqual(ledger.requestBytes);
-    expect(ledger.requestUntrustedBytes).toBeLessThanOrEqual(ledger.requestBytes);
+    // The parsed reasoner output is never charged again on top of the response.
+    expect(result.state.budget.usage.outputBytes).toBeLessThan(chargedOutputBytes(ledger) + ledger.reasonerOutputBytes);
+    expect(ledger.requestMemoryBytes).toBeLessThanOrEqual(ledger.renderedInputBytes);
+    expect(ledger.requestUntrustedBytes).toBeLessThanOrEqual(ledger.renderedInputBytes);
   });
 
   test('whitespace and JSONL framing does not inflate parsed accounting', async () => {
@@ -158,9 +169,9 @@ test.describe('w9 charged-output identity', () => {
     const result = await runtime.run({ maxTurns: 2 });
     const ledger = result.state.byteLedger!;
 
-    expect(ledger.providerStdoutBytes).toBe(5000);
-    expect(ledger.parsedResponseBytes).toBe(utf8Bytes(JSON.stringify(response)));
-    expect(ledger.parsedResponseBytes).toBeLessThan(ledger.providerStdoutBytes);
+    expect(ledger.providerResponseBytes).toBe(5000);
+    expect(ledger.reasonerOutputBytes).toBe(utf8Bytes(JSON.stringify(response)));
+    expect(ledger.reasonerOutputBytes).toBeLessThan(ledger.providerResponseBytes);
     expect(result.state.budget.usage.outputBytes).toBe(5100);
     expect(result.state.budget.usage.outputBytes).toBe(chargedOutputBytes(ledger));
   });
@@ -175,9 +186,9 @@ test.describe('w9 charged-output identity', () => {
     const result = await runtime.run({ maxTurns: 3 });
     const ledger = result.state.byteLedger!;
 
-    expect(ledger.providerStdoutBytes).toBe(350);
+    expect(ledger.providerResponseBytes).toBe(350);
     expect(ledger.providerStderrBytes).toBe(50);
-    expect(ledger.parsedResponseBytes).toBe(utf8Bytes(JSON.stringify(terminateResponse())));
+    expect(ledger.reasonerOutputBytes).toBe(utf8Bytes(JSON.stringify(terminateResponse())));
     expect(result.state.budget.usage.outputBytes).toBe(400);
     expect(result.state.budget.usage.outputBytes).toBe(chargedOutputBytes(ledger));
     expect(result.state.budget.usage.providerFailures).toBe(1);
@@ -206,7 +217,10 @@ test.describe('w9 charged-output identity', () => {
     const ledger = result.state.byteLedger!;
 
     expect(ledger.toolResultBytes).toBe(100_000);
-    expect(ledger.toolEnvelopeBytes).toBe(100);
+    expect(ledger.toolEnvelopeBytes).toBe(utf8Bytes(JSON.stringify([envelopeWith('x'.repeat(100))])));
+    // A 100 KB tool payload is charged in full while only the truncated
+    // envelope is measured as reaching the reasoner.
+    expect(ledger.toolEnvelopeBytes).toBeLessThan(ledger.toolResultBytes);
     expect(result.state.budget.usage.outputBytes).toBe(100 + 20 + 100_000);
     expect(result.state.budget.usage.outputBytes).toBe(chargedOutputBytes(ledger));
   });
@@ -240,15 +254,15 @@ test.describe('w9 ledger snapshot, checkpoint, and resume', () => {
     const finished = await resumed.run({ maxTurns: 4 });
     const folded = finished.state.byteLedger!;
 
-    expect(folded.requestBytes).toBeGreaterThan(pausedLedger.requestBytes);
-    expect(folded.providerStdoutBytes).toBe(pausedLedger.providerStdoutBytes + 70);
+    expect(folded.renderedInputBytes).toBeGreaterThan(pausedLedger.renderedInputBytes);
+    expect(folded.providerResponseBytes).toBe(pausedLedger.providerResponseBytes + 70);
     expect(folded.providerStderrBytes).toBe(pausedLedger.providerStderrBytes + 8);
     expect(folded.toolResultBytes).toBe(pausedLedger.toolResultBytes);
-    expect(finished.state.budget.usage.inputBytes).toBe(folded.requestBytes);
+    expect(finished.state.budget.usage.inputBytes).toBe(folded.renderedInputBytes);
     expect(finished.state.budget.usage.outputBytes).toBe(chargedOutputBytes(folded));
   });
 
-  test('pre-W9 checkpoints without a ledger resume with a zero ledger', async () => {
+  test('pre-W9 checkpoints without a ledger resume with explicit legacy carry', async () => {
     const first = scriptDriver([
       () => ({
         ok: true,
@@ -271,24 +285,48 @@ test.describe('w9 ledger snapshot, checkpoint, and resume', () => {
 
     const second = scriptDriver([() => ({ ok: true, response: terminateResponse(), provenance: PROVENANCE, stdoutBytes: 10, stderrBytes: 0 })]);
     const resumed = AgentRuntime.resumeFromCheckpoint(parsed, depsFor('w9-acct-legacy', second.driver, executor));
-    expect(resumed.snapshot().byteLedger).toEqual(ZERO_AGENT_BYTE_LEDGER);
-    expect(resumed.snapshot().budget.usage.inputBytes).toBe(paused.state.budget.usage.inputBytes);
+    const restored = resumed.snapshot().byteLedger!;
+    // Unattributable pre-W9 consumption is carried as legacy, never invented
+    // as provider or tool components, and the cumulative totals survive.
+    expect(restored.legacyInputBytes).toBe(paused.state.budget.usage.inputBytes);
+    expect(restored.legacyOutputBytes).toBe(paused.state.budget.usage.outputBytes);
+    expect(restored.renderedInputBytes).toBe(0);
+    expect(restored.providerResponseBytes).toBe(0);
+    expect(restored.toolResultBytes).toBe(0);
+    expect(chargedInputBytes(restored)).toBe(paused.state.budget.usage.inputBytes);
+    expect(chargedOutputBytes(restored)).toBe(paused.state.budget.usage.outputBytes);
+
     const finished = await resumed.run({ maxTurns: 3 });
-    expect(finished.state.byteLedger!.requestBytes).toBeGreaterThan(0);
+    const folded = finished.state.byteLedger!;
+    expect(folded.renderedInputBytes).toBeGreaterThan(0);
+    expect(folded.legacyInputBytes).toBe(restored.legacyInputBytes);
+    expect(folded.providerResponseBytes).toBe(10);
+    expect(finished.state.budget.usage.inputBytes).toBe(chargedInputBytes(folded));
+    expect(finished.state.budget.usage.outputBytes).toBe(chargedOutputBytes(folded));
   });
 
-  test('malformed ledgers and unknown dispositions fail closed', async () => {
+  test('malformed, drifted and unknown-disposition checkpoints fail closed', async () => {
     const stub = scriptDriver([() => ({ ok: true, response: terminateResponse(), provenance: PROVENANCE, stdoutBytes: 10, stderrBytes: 0 })]);
     const runtime = new AgentRuntime(depsFor('w9-acct-corrupt', stub.driver, stubTools(() => ({ ok: true, resultClass: 'OBSERVATION', evidenceRefs: [], outputBytes: 0, untrusted: [] }))));
     await runtime.run({ maxTurns: 2 });
     const good = JSON.parse(JSON.stringify(runtime.checkpoint())) as Record<string, unknown>;
     const state = good['state'] as Record<string, unknown>;
+    const ledger = state['byteLedger'] as Record<string, unknown>;
+    expect(() => parseCheckpoint(good)).not.toThrow();
 
     for (const badLedger of [
-      { ...ZERO_AGENT_BYTE_LEDGER, schemaVersion: 'bogus' },
-      { ...ZERO_AGENT_BYTE_LEDGER, requestBytes: -1 },
-      { ...ZERO_AGENT_BYTE_LEDGER, toolResultBytes: 'many' },
-      { ...ZERO_AGENT_BYTE_LEDGER, providerStdoutBytes: Number.NaN },
+      { ...ledger, schemaVersion: 'bogus' },
+      { ...ledger, renderedInputBytes: -1 },
+      { ...ledger, toolResultBytes: 'many' },
+      { ...ledger, providerResponseBytes: Number.NaN },
+      { ...ledger, checkpointBytes: 12.5 },
+      // Structurally valid but arithmetically drifted: a forged component
+      // breakdown must never resume as ceiling authority.
+      { ...ledger, renderedInputBytes: (ledger['renderedInputBytes'] as number) + 1 },
+      { ...ledger, providerStderrBytes: (ledger['providerStderrBytes'] as number) + 7 },
+      // Legacy carry cannot be invented on top of attributed components.
+      { ...ledger, legacyInputBytes: 1 },
+      { ...ledger, legacyOutputBytes: 1 },
     ]) {
       expect(() => parseCheckpoint({ ...good, state: { ...state, byteLedger: badLedger } })).toThrow(/AGENT_CHECKPOINT_CORRUPT/);
     }
@@ -298,6 +336,40 @@ test.describe('w9 ledger snapshot, checkpoint, and resume', () => {
         state: { ...state, actionLog: [{ turnId: 't', phase: 'PLAN', intentKind: 'CALL_TOOL', toolId: 'INSPECT_SOURCE_SURFACE', argumentDigest: 'arg:sha256:0123456789abcdef01234567', resultClass: 'TOOL_ERROR', evidenceRefs: [], disposition: 'RETRY_FOREVER' }] },
       }),
     ).toThrow(/AGENT_CHECKPOINT_CORRUPT/);
+  });
+
+  test('checkpoint bytes measure the exact documents this codec produced', async () => {
+    const stub = scriptDriver([
+      () => ({
+        ok: true,
+        response: okResponse([{ kind: 'CALL_TOOL', toolId: 'INSPECT_SOURCE_SURFACE', arguments: { path: 'src/c.ts' } }]),
+        provenance: PROVENANCE,
+        stdoutBytes: 120,
+        stderrBytes: 4,
+      }),
+      () => ({ ok: true, response: { schemaVersion: REASONER_TURN_RESPONSE_VERSION, intents: [{ kind: 'PAUSE' }], hypotheses: [] } as unknown as ReasonerTurnResponse, provenance: PROVENANCE, stdoutBytes: 30, stderrBytes: 0 }),
+    ]);
+    const tools = stubTools(() => ({ ok: true, resultClass: 'SOURCE_FILE', evidenceRefs: [], outputBytes: 40, untrusted: [envelopeWith('body')] }));
+    const runtime = new AgentRuntime(depsFor('w9-acct-ckpt-bytes', stub.driver, tools));
+    const paused = await runtime.run({ maxTurns: 4 });
+    const first = paused.checkpoint!;
+
+    // The recorded count is the exact size of the document that carries it:
+    // the fixed point is reached, not approximated.
+    expect(first.state.byteLedger!.checkpointBytes).toBe(utf8Bytes(JSON.stringify(first)));
+    // Checkpoint bytes are local storage, never model I/O.
+    expect(paused.state.budget.usage.inputBytes).toBe(chargedInputBytes(first.state.byteLedger!));
+    expect(paused.state.budget.usage.outputBytes).toBe(chargedOutputBytes(first.state.byteLedger!));
+    // The run result agrees with the emitted document.
+    expect(paused.state.byteLedger).toEqual(first.state.byteLedger);
+
+    // A second generated document accumulates on top of the first, and each
+    // recorded value still equals prior bytes plus its own exact size.
+    const second = runtime.checkpoint();
+    expect(second.state.byteLedger!.checkpointBytes).toBe(
+      first.state.byteLedger!.checkpointBytes + utf8Bytes(JSON.stringify(second)),
+    );
+    expect(parseCheckpoint(JSON.parse(JSON.stringify(second))).state.byteLedger).toEqual(second.state.byteLedger);
   });
 
   test('the HOUR_1 output ceiling still terminates a runaway', async () => {

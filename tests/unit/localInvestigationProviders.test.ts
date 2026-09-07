@@ -34,6 +34,7 @@ import {
   type OwnerLocalEvidenceInput,
 } from '../../src/core/localInvestigation/ownerLocal';
 import { createRealSourceScanConfig } from '../../src/core/source/scan';
+import { OWNER_LOCAL_REPRODUCTION_PROVIDER_ID } from '../../src/core/ownerLocalReproduction/provider';
 import { sourceContentDigest } from '../../src/core/source/scanTypes';
 import { createSystemAtlasOverlay } from '../../src/core/systemAtlas/overlay';
 import { createSystemAtlasRecord } from '../../src/core/systemAtlas/model';
@@ -821,10 +822,30 @@ test.describe('owner-local adapters over temp checkouts', () => {
     expect(empty.status).toBe('BLOCKED');
   });
 
-  test('default reproduction is BLOCKED and injection passes through', async () => {
+  test('the REAL_LOCAL default is the owner-local provider, refusing unapproved paths, and injection still overrides', async () => {
     const root = makeTempRoot();
-    const blocked = createOwnerLocalInvestigationContext({ siblingRoot: root, scanConfig: fakeScanConfig() });
-    const unavailable = await blocked.reproduction.run({
+    const context = createOwnerLocalInvestigationContext({ siblingRoot: root, scanConfig: fakeScanConfig() });
+    // W9: a zero-option REAL_LOCAL context reproduces against current source
+    // instead of failing closed as unconfigured.
+    expect(context.reproduction.providerId).toBe(OWNER_LOCAL_REPRODUCTION_PROVIDER_ID);
+    const refused = await context.reproduction.run({
+      reproductionId: 'r',
+      candidateId: null,
+      sourcePath: 'x',
+      sourceEvidenceRef: 'ev:x',
+      observedEvidenceRefs: [],
+    });
+    // An unapproved, unparseable source path never reaches discovery or
+    // execution: it is a deterministic refusal, not an environment problem.
+    expect(refused.status).toBe('BLOCKED');
+    if (refused.status === 'BLOCKED') expect(refused.class).toBe('UNSAFE_INPUT');
+    // A non-REAL_LOCAL context still has no reproduction authority at all.
+    const historical = createOwnerLocalInvestigationContext({
+      siblingRoot: root,
+      scanConfig: fakeScanConfig(),
+      dataClass: 'REAL_HISTORICAL',
+    });
+    const unavailable = await historical.reproduction.run({
       reproductionId: 'r',
       candidateId: null,
       sourcePath: 'x',

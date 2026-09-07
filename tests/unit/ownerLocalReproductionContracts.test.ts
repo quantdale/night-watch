@@ -7,6 +7,7 @@ import {
   AGENT_BYTE_LEDGER_VERSION,
   TRANSIENT_ACTION_RETRY_BUDGET,
   ZERO_AGENT_BYTE_LEDGER,
+  chargedInputBytes,
   chargedOutputBytes,
 } from '../../src/core/agentProtocol/runtime';
 import {
@@ -154,16 +155,23 @@ test.describe('W9 frozen owner-local reproduction contracts', () => {
   test('byte ledger charges provider transport plus tool output exactly once', () => {
     const ledger = {
       ...ZERO_AGENT_BYTE_LEDGER,
-      providerStdoutBytes: 100,
+      renderedInputBytes: 300,
+      providerResponseBytes: 100,
       providerStderrBytes: 20,
-      parsedResponseBytes: 91,
+      reasonerOutputBytes: 91,
       toolResultBytes: 40,
       toolEnvelopeBytes: 32,
+      checkpointBytes: 4_096,
     };
     expect(ledger.schemaVersion).toBe(AGENT_BYTE_LEDGER_VERSION);
+    expect(chargedInputBytes(ledger)).toBe(300);
     expect(chargedOutputBytes(ledger)).toBe(160);
-    // parsedResponseBytes is measured, not charged a second time.
+    // The parsed reasoner output is measured, never charged a second time on
+    // top of the provider response that already carried it; envelope and
+    // checkpoint bytes are local measurements and are never charged at all.
     expect(chargedOutputBytes(ledger)).not.toBe(251);
+    expect(chargedInputBytes(ledger)).not.toBe(300 + 32);
+    expect(chargedOutputBytes(ledger)).not.toBe(160 + 4_096);
   });
 
   test('readiness can distinguish all owner-local execution states without commands', () => {

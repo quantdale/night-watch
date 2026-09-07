@@ -10,8 +10,12 @@ import {
   AGENT_PHASES,
   AGENT_RUNTIME_STATE_VERSION,
   AGENT_RUNTIME_STATUSES,
+  chargedInputBytes,
+  chargedOutputBytes,
   isActionFailureDisposition,
   isAgentByteLedger,
+  legacyAgentByteLedger,
+  type AgentByteLedger,
   type AgentCheckpoint,
   type AgentPhase,
   type AgentRuntimeState,
@@ -181,9 +185,21 @@ function parseRuntimeState(value: unknown): AgentRuntimeState {
     throw new AgentCheckpointError('CORRUPT', 'state.knownTargets is invalid');
   }
   // W9 additive byte ledger. Absent is valid (pre-W9 checkpoints resume with
-  // a zero ledger); present-but-malformed is corrupt, never silently zeroed.
-  if (value.byteLedger !== undefined && value.byteLedger !== null && !isAgentByteLedger(value.byteLedger)) {
-    throw new AgentCheckpointError('CORRUPT', 'state.byteLedger is invalid');
+  // explicit legacy carry); present-but-malformed is corrupt, never silently
+  // zeroed. A present ledger must also reconcile EXACTLY with the frozen
+  // cumulative budget totals, so a forged or drifted component breakdown can
+  // never resume as authority for a ceiling decision.
+  if (value.byteLedger !== undefined && value.byteLedger !== null) {
+    if (!isAgentByteLedger(value.byteLedger)) {
+      throw new AgentCheckpointError('CORRUPT', 'state.byteLedger is invalid');
+    }
+    const budget = parseBudgetSnapshot(value.budget, 'state');
+    if (chargedInputBytes(value.byteLedger) !== budget.usage.inputBytes) {
+      throw new AgentCheckpointError('CORRUPT', 'state.byteLedger charged input does not reconcile with budget usage');
+    }
+    if (chargedOutputBytes(value.byteLedger) !== budget.usage.outputBytes) {
+      throw new AgentCheckpointError('CORRUPT', 'state.byteLedger charged output does not reconcile with budget usage');
+    }
   }
   if (!isStringArray(value.evidenceRefs)) throw new AgentCheckpointError('CORRUPT', 'state.evidenceRefs is invalid');
   if (!isStringArray(value.candidateIds)) throw new AgentCheckpointError('CORRUPT', 'state.candidateIds is invalid');
@@ -225,13 +241,79 @@ export function parseCheckpoint(value: unknown): AgentCheckpoint {
   return checkpoint;
 }
 
-export function createCheckpoint(state: AgentRuntimeState, completedTurns: number): AgentCheckpoint {
+/**
+ * Bound on the checkpoint-byte fixed-point search. Each iteration can only
+ * grow the recorded value's decimal width by one digit, so convergence is
+ * reached far below this bound for any representable byte count.
+ */
+const CHECKPOINT_BYTES_FIXED_POINT_ITERATIONS = 24;
+
+function utf8Bytes(value: string): number {
+  return Buffer.byteLength(value, 'utf8');
+}
+
+function ledgerOf(state: AgentRuntimeState): AgentByteLedger {
+  return isAgentByteLedger(state.byteLedger)
+    ? state.byteLedger
+    : legacyAgentByteLedger(state.budget.usage.inputBytes, state.budget.usage.outputBytes);
+}
+
+function withCheckpointBytes(
+  state: AgentRuntimeState,
+  ledger: AgentByteLedger,
+  checkpointBytes: number,
+): AgentRuntimeState {
+  return { ...state, byteLedger: { ...ledger, checkpointBytes } };
+}
+
+/**
+ * Build one accounted checkpoint document.
+ *
+ * `checkpointBytes` counts the exact UTF-8 size of every checkpoint document
+ * this codec has produced for the campaign, including the one being built.
+ * Because the count lives inside the document it measures, it is resolved as
+ * the least fixed point of `bytes = priorBytes + size(document(bytes))`,
+ * iterated from below: the search is deterministic, terminates, and never
+ * depends on serialization order or wall-clock state. Checkpoint bytes are
+ * local storage, never model I/O, so they are measured only and are never
+ * charged into `usage.inputBytes`/`usage.outputBytes`.
+ *
+ * A campaign envelope that embeds this checkpoint carries its own framing;
+ * that framing is deliberately outside this fixed point, so the value stays
+ * a property of the checkpoint codec rather than of any wrapper.
+ */
+export function finalizeCheckpoint(state: AgentRuntimeState, resumeCursor: string): AgentCheckpoint {
+  const ledger = ledgerOf(state);
+  const priorBytes = ledger.checkpointBytes;
+  let bytes = priorBytes;
+  let converged = false;
+  for (let iteration = 0; iteration < CHECKPOINT_BYTES_FIXED_POINT_ITERATIONS; iteration += 1) {
+    const candidate: AgentCheckpoint = {
+      schemaVersion: AGENT_CHECKPOINT_VERSION,
+      campaignId: state.campaignId,
+      state: withCheckpointBytes(state, ledger, bytes),
+      resumeCursor,
+    };
+    const measured = priorBytes + utf8Bytes(JSON.stringify(candidate));
+    if (measured === bytes) {
+      converged = true;
+      break;
+    }
+    bytes = measured;
+  }
+  if (!converged) {
+    throw new AgentCheckpointError('CORRUPT', 'checkpoint byte measurement did not converge');
+  }
   const checkpoint: AgentCheckpoint = {
     schemaVersion: AGENT_CHECKPOINT_VERSION,
     campaignId: state.campaignId,
-    state,
-    resumeCursor: resumeCursorFor(state.campaignId, completedTurns),
+    state: withCheckpointBytes(state, ledger, bytes),
+    resumeCursor,
   };
   assertCheckpointHasNoSecrets(checkpoint);
   return checkpoint;
+}
+
+export function createCheckpoint(state: AgentRuntimeState, completedTurns: number): AgentCheckpoint {
+  return finalizeCheckpoint(state, resumeCursorFor(state.campaignId, completedTurns));
 }

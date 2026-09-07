@@ -260,7 +260,7 @@ test('a real session reproduction keeps proof, audit and raw stderr out of the p
           evidenceRef: 'ev:stub-current-1',
           provenanceRefs: [request.sourceEvidenceRef],
           preFix: 'FAIL',
-          postFix: 'NOT_APPLICABLE',
+          postFix: 'NOT_RUN',
           audit: { marker: AUDIT_MARKER_W9, stderr: STDERR_MARKER_W9, command: COMMAND_MARKER_W9, workspace: ABSOLUTE_PATH_MARKER_W9, note: INSTRUCTION_MARKER_W9 },
           currentSourceProof: {
             schemaVersion: OWNER_LOCAL_CURRENT_SOURCE_PROOF_VERSION,
