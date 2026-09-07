@@ -11,6 +11,13 @@
 // trusted. Forged evidence refs are refused; forged counts/provenance/
 // authority are ignored in favour of derived/pinned values.
 //
+// W9 adds a second explicit branch for current-source receipts (verdict
+// REPRODUCED_CURRENT_FAILURE): pre-fix FAIL with post-fix NOT_RUN, linked to
+// an actually inspected (sourcePath, sourceEvidenceRef) and candidate exactly
+// like the historical branch, plus a qualifying provider-minted proof per
+// `validateCurrentSourceProof`. Historical receipts keep byte-identical
+// semantics; the historical branch condition is unchanged.
+//
 // When grounding is incomplete the gate returns a typed refusal, never a
 // dossier. No I/O, no clock, no network, no sibling writes, no secrets.
 // ---------------------------------------------------------------------------
@@ -18,6 +25,7 @@
 import { buildAutonomousFindingDossier } from '../autonomousFinding/dossier';
 import type { AutonomousFindingDossier } from '../agentProtocol/finding';
 import type { AgentRuntimeState } from '../agentProtocol/runtime';
+import { validateCurrentSourceProof } from './currentSourceProof';
 import type {
   LocalInvestigationHistory,
   LocalReproductionReceipt,
@@ -245,6 +253,45 @@ function isQualifyingReceipt(
 }
 
 /**
+ * W9 current-source branch. Mirrors the historical candidate/source linkage
+ * exactly, but requires verdict REPRODUCED_CURRENT_FAILURE with pre-fix FAIL
+ * and post-fix NOT_RUN (there is no post-fix revision to execute) plus a
+ * qualifying provider-minted proof bound to this receipt's provider and
+ * source path. Any proof refusal — absent, malformed, mismatched, weak, or
+ * non-qualifying — fails the whole receipt. Never reads the model draft.
+ */
+function isQualifyingCurrentSourceReceipt(
+  receipt: LocalReproductionReceipt,
+  candidateId: string,
+  inspectedByPath: ReadonlyMap<string, ReadonlySet<string>>,
+  candidateEvidence: ReadonlySet<string>,
+): boolean {
+  if (receipt.verdict !== 'REPRODUCED_CURRENT_FAILURE') return false;
+  if (receipt.preFix !== 'FAIL' || receipt.postFix !== 'NOT_RUN') return false;
+  if (typeof receipt.sourcePath !== 'string' || receipt.sourcePath.length === 0) return false;
+  if (typeof receipt.sourceEvidenceRef !== 'string' || receipt.sourceEvidenceRef.trim().length === 0) {
+    return false;
+  }
+  const sourceEvidenceRef = receipt.sourceEvidenceRef.trim();
+  const allowed = inspectedByPath.get(receipt.sourcePath);
+  if (allowed === undefined || !allowed.has(sourceEvidenceRef)) return false;
+  const receiptCandidate = receipt.candidateId;
+  if (typeof receiptCandidate === 'string' && receiptCandidate.length > 0) {
+    if (receiptCandidate !== candidateId) return false;
+  } else if (!candidateEvidence.has(sourceEvidenceRef)) {
+    // Unattributed receipts only count when their source evidence is part of
+    // this candidate's own claimed evidence.
+    return false;
+  }
+  return (
+    validateCurrentSourceProof(receipt.currentSourceProof, {
+      providerId: receipt.providerId,
+      sourcePath: receipt.sourcePath,
+    }) === null
+  );
+}
+
+/**
  * Deterministic mechanical admission gate. Derives every authority-bearing
  * field from harness-observed state/history; the model draft only suggests
  * presentation fields. Returns a refusal (never a dossier) when grounding is
@@ -326,7 +373,7 @@ export function admitLocalFinding(input: AdmitLocalFindingInput): AdmitLocalFind
   }
   const candidateEvidenceSet = new Set<string>(proposalRefs);
 
-  const qualifying = reproductions
+  const historicalQualifying = reproductions
     .filter((receipt) => isQualifyingReceipt(receipt, candidateId, inspectedByPath, candidateEvidenceSet))
     .slice()
     .sort((a, b) => {
@@ -334,14 +381,39 @@ export function admitLocalFinding(input: AdmitLocalFindingInput): AdmitLocalFind
       if (byId !== 0) return byId;
       return String(a.providerId ?? '').localeCompare(String(b.providerId ?? ''));
     });
+  const currentQualifying = reproductions
+    .filter((receipt) =>
+      isQualifyingCurrentSourceReceipt(receipt, candidateId, inspectedByPath, candidateEvidenceSet),
+    )
+    .slice()
+    .sort((a, b) => {
+      const byId = String(a.reproductionId ?? '').localeCompare(String(b.reproductionId ?? ''));
+      if (byId !== 0) return byId;
+      return String(a.providerId ?? '').localeCompare(String(b.providerId ?? ''));
+    });
+  const qualifying = [...historicalQualifying, ...currentQualifying].slice().sort((a, b) => {
+    const byId = String(a.reproductionId ?? '').localeCompare(String(b.reproductionId ?? ''));
+    if (byId !== 0) return byId;
+    return String(a.providerId ?? '').localeCompare(String(b.providerId ?? ''));
+  });
 
   if (qualifying.length === 0) {
-    const reproduced = reproductions.filter((receipt) => receipt.verdict === 'REPRODUCED');
+    const reproduced = reproductions.filter(
+      (receipt) => receipt.verdict === 'REPRODUCED' || receipt.verdict === 'REPRODUCED_CURRENT_FAILURE',
+    );
     if (reproduced.length === 0) {
       return refused(
         candidateId,
         'MISSING_REPRODUCTION',
         `candidate ${candidateId} has no REPRODUCED session receipt`,
+      );
+    }
+    if (reproduced.some((receipt) => receipt.verdict === 'REPRODUCED_CURRENT_FAILURE')) {
+      return refused(
+        candidateId,
+        'UNLINKED_REPRODUCTION',
+        `candidate ${candidateId} has no linked qualifying receipt for an inspected source ` +
+          `(historical pre-fix FAIL/post-fix PASS or current-source repeated failure with valid proof)`,
       );
     }
     return refused(
@@ -354,6 +426,12 @@ export function admitLocalFinding(input: AdmitLocalFindingInput): AdmitLocalFind
   const reproductionCount = qualifying.length;
   const reproductionIds = uniqueSorted(qualifying.map((receipt) => String(receipt.reproductionId)));
   const sourcePaths = uniqueSorted(qualifying.map((receipt) => receipt.sourcePath));
+  const hasHistorical = historicalQualifying.length > 0;
+  const hasCurrentSource = currentQualifying.length > 0;
+  const historicalIds = uniqueSorted(historicalQualifying.map((receipt) => String(receipt.reproductionId)));
+  const currentIds = uniqueSorted(currentQualifying.map((receipt) => String(receipt.reproductionId)));
+  const historicalPaths = uniqueSorted(historicalQualifying.map((receipt) => receipt.sourcePath));
+  const currentPaths = uniqueSorted(currentQualifying.map((receipt) => receipt.sourcePath));
   const receiptEvidenceRefs: string[] = [];
   const provenanceParts: string[] = [];
   for (const receipt of qualifying) {
@@ -374,19 +452,38 @@ export function admitLocalFinding(input: AdmitLocalFindingInput): AdmitLocalFind
     provenanceRefs = Object.freeze([`reproduction:${reproductionIds[0]}`]);
   }
 
-  const falsePositiveChecks = Object.freeze([
-    ...qualifying.map(
-      (receipt) =>
-        `mechanical reproduction ${String(receipt.reproductionId)} on ${receipt.sourcePath}: ` +
-        `pre-fix FAIL and post-fix PASS observed (provider ${String(receipt.providerId)}, verdict REPRODUCED)`,
-    ),
-    'human-review-required: confirm scope, non-flakiness, and impact; no auto-file or external publication',
-  ]);
+  const falsePositiveChecks = !hasCurrentSource
+    ? Object.freeze([
+        ...qualifying.map(
+          (receipt) =>
+            `mechanical reproduction ${String(receipt.reproductionId)} on ${receipt.sourcePath}: ` +
+            `pre-fix FAIL and post-fix PASS observed (provider ${String(receipt.providerId)}, verdict REPRODUCED)`,
+        ),
+        'human-review-required: confirm scope, non-flakiness, and impact; no auto-file or external publication',
+      ])
+    : Object.freeze([
+        ...historicalQualifying.map(
+          (receipt) =>
+            `mechanical reproduction ${String(receipt.reproductionId)} on ${receipt.sourcePath}: ` +
+            `pre-fix FAIL and post-fix PASS observed (provider ${String(receipt.providerId)}, verdict REPRODUCED)`,
+        ),
+        ...currentQualifying.map(
+          (receipt) =>
+            `mechanical reproduction ${String(receipt.reproductionId)} on ${receipt.sourcePath}: ` +
+            `repeated CURRENT source failure observed (provider ${String(receipt.providerId)}, ` +
+            `verdict REPRODUCED_CURRENT_FAILURE, repeated test failure proof)`,
+        ),
+        'human-review-required: confirm scope, non-flakiness, and impact; no auto-file or external publication',
+      ]);
 
   const titleRaw = suggestionString(draft, 'title') ?? `Local finding ${candidateId}`;
   const descriptionRaw =
     suggestionString(draft, 'description') ??
-    `Mechanically admitted local finding ${candidateId} with linked pre-fix FAIL and post-fix PASS reproduction.`;
+    (!hasCurrentSource
+      ? `Mechanically admitted local finding ${candidateId} with linked pre-fix FAIL and post-fix PASS reproduction.`
+      : !hasHistorical
+        ? `Mechanically admitted local finding ${candidateId} with linked repeated CURRENT source failure reproduction (no post-fix PASS observed or claimed).`
+        : `Mechanically admitted local finding ${candidateId} with linked pre-fix FAIL/post-fix PASS and repeated CURRENT source failure reproductions (no post-fix PASS claimed for the current-source receipt(s)).`);
   const severityRaw = suggestionString(draft, 'recommendedSeverity');
   const recommendedSeverity = severityRaw !== null && SEVERITIES.has(severityRaw) ? severityRaw : 'S3';
   const severityConfidenceRaw = suggestionString(draft, 'severityConfidence');
@@ -399,14 +496,39 @@ export function admitLocalFinding(input: AdmitLocalFindingInput): AdmitLocalFind
     `Severity is a recommendation only; grounded in linked reproduction ${reproductionIds.join(', ')}.`;
   const alternativeHypotheses = Object.freeze(suggestionStringList(draft, 'alternativeHypotheses'));
 
-  const reproductionText =
-    `RERUN_SAFE_REPRODUCTION ${reproductionIds.join(', ')} on ${sourcePaths.join(', ')}: ` +
-    `pre-fix FAIL observed, post-fix PASS observed (verdict REPRODUCED, ${reproductionCount} receipt(s)). ` +
-    `No audit bytes exposed.`;
-  const expectedText = 'pre-fix signal FAIL and post-fix signal PASS on the inspected source-linked reproduction';
-  const actualText =
-    `observed ${reproductionCount} linked REPRODUCED receipt(s) ` +
-    `${reproductionIds.join(', ')} on ${sourcePaths.join(', ')} (pre-fix FAIL, post-fix PASS)`;
+  const reproductionText = !hasCurrentSource
+    ? `RERUN_SAFE_REPRODUCTION ${reproductionIds.join(', ')} on ${sourcePaths.join(', ')}: ` +
+      `pre-fix FAIL observed, post-fix PASS observed (verdict REPRODUCED, ${reproductionCount} receipt(s)). ` +
+      `No audit bytes exposed.`
+    : !hasHistorical
+      ? `RERUN_SAFE_REPRODUCTION ${currentIds.join(', ')} on ${currentPaths.join(', ')}: ` +
+        `repeated CURRENT source failure observed (verdict REPRODUCED_CURRENT_FAILURE, ` +
+        `${currentQualifying.length} receipt(s); pre-fix FAIL, post-fix NOT_RUN — no post-fix PASS observed or claimed). ` +
+        `No audit bytes exposed.`
+      : `RERUN_SAFE_REPRODUCTION ${historicalIds.join(', ')} on ${historicalPaths.join(', ')}: ` +
+        `pre-fix FAIL observed, post-fix PASS observed (verdict REPRODUCED, ` +
+        `${historicalQualifying.length} receipt(s)); ` +
+        `RERUN_SAFE_REPRODUCTION ${currentIds.join(', ')} on ${currentPaths.join(', ')}: ` +
+        `repeated CURRENT source failure observed (verdict REPRODUCED_CURRENT_FAILURE, ` +
+        `${currentQualifying.length} receipt(s); no post-fix PASS observed or claimed). ` +
+        `No audit bytes exposed.`;
+  const expectedText = !hasCurrentSource
+    ? 'pre-fix signal FAIL and post-fix signal PASS on the inspected source-linked reproduction'
+    : !hasHistorical
+      ? 'repeated CURRENT source test failure on the inspected source-linked reproduction (pre-fix FAIL, post-fix NOT_RUN; no post-fix PASS claimed)'
+      : 'pre-fix FAIL/post-fix PASS on the inspected historical source-linked reproduction and repeated CURRENT source test failure on the inspected current source-linked reproduction (no post-fix PASS claimed for current source)';
+  const actualText = !hasCurrentSource
+    ? `observed ${reproductionCount} linked REPRODUCED receipt(s) ` +
+      `${reproductionIds.join(', ')} on ${sourcePaths.join(', ')} (pre-fix FAIL, post-fix PASS)`
+    : !hasHistorical
+      ? `observed ${currentQualifying.length} linked REPRODUCED_CURRENT_FAILURE receipt(s) ` +
+        `${currentIds.join(', ')} on ${currentPaths.join(', ')} ` +
+        `(repeated CURRENT source failure; pre-fix FAIL, post-fix NOT_RUN, no post-fix PASS observed)`
+      : `observed ${historicalQualifying.length} linked REPRODUCED receipt(s) ` +
+        `${historicalIds.join(', ')} on ${historicalPaths.join(', ')} (pre-fix FAIL, post-fix PASS) and ` +
+        `${currentQualifying.length} linked REPRODUCED_CURRENT_FAILURE receipt(s) ` +
+        `${currentIds.join(', ')} on ${currentPaths.join(', ')} ` +
+        `(repeated CURRENT source failure; no post-fix PASS observed)`;
 
   const dossier = buildAutonomousFindingDossier({
     title: truncate(titleRaw, MAX_TITLE),
