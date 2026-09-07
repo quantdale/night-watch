@@ -31,6 +31,9 @@ import {
   type OwnerLocalGoRunResult,
   type OwnerLocalReproductionPorts,
 } from '../../src/core/ownerLocalReproduction/provider';
+const HEAD_SHA = '0123456789abcdef0123456789abcdef01234567';
+const REPO = 'mobingilabs/ouchan';
+const SOURCE_REL = 'pkg/gcsv/info.go';
 const SOURCE_PATH = `${REPO}:${SOURCE_REL}`;
 const SOURCE_EVIDENCE_REF = 'srcobs:sha256:0123456789abcdef01234567';
 

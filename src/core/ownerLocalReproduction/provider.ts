@@ -640,6 +640,7 @@ export function resolveOwnerLocalGoBinary(
       typeof input.moduleCacheDir === 'string' && input.moduleCacheDir.length > 0
         ? input.moduleCacheDir
         : defaultModuleCacheDir();
+    const cached = findCachedToolchain(moduleCacheDir, required);
     if (cached !== null && isUsableExecFile(cached)) {
       const version = goVersionOf(cached);
       if (version !== null && compareGoVersions(version, required) >= 0) {
@@ -1366,6 +1367,14 @@ export interface ExecuteOwnerLocalTargetInput {
   readonly goBinary: string;
   readonly limits: OwnerLocalReproductionLimits;
   readonly tempRoot?: string;
+  readonly ports?: OwnerLocalReproductionPorts;
+}
+
+export interface OwnerLocalSingleExecution {
+  readonly record: OwnerLocalExecutionRecord;
+  readonly stdoutHead: string;
+  readonly stderrHead: string;
+}
 export async function executeOwnerLocalTarget(
   input: ExecuteOwnerLocalTargetInput,
 ): Promise<OwnerLocalSingleExecution> {

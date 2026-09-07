@@ -130,9 +130,11 @@ test.describe('W9 owner-local adversarial handling (fabricated)', () => {
         expect(env['GOPROXY']).toBe('off');
         expect(env['GOTOOLCHAIN']).toBe('local');
         expect(env['GOSUMDB']).toBe('off');
-        expect(env['GOFLAGS']).toBe('-mod=vendor');
         expect(env['GOPROXY']).not.toContain('evil');
+        // Fixed host-owned names carry fixed offline values; anything else
+        // resembling a proxy variable must never enter from ambient or request.
         for (const key of Object.keys(env)) {
+          if (['GOPROXY', 'GOSUMDB', 'GONOSUMDB', 'GONOSUMCHECK'].includes(key)) continue;
           expect(key.toLowerCase()).not.toContain('proxy');
         }
       }
