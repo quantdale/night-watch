@@ -11,11 +11,18 @@ import os from 'node:os';
 import path from 'node:path';
 
 import {
+  OWNER_LOCAL_FIXED_GO_BINARIES,
   OWNER_LOCAL_REPRODUCTION_PROVIDER_ID,
   classifyGoTestOutput,
   createOwnerLocalReproductionProvider,
+  discoverOwnerLocalTarget,
+  executeOwnerLocalTarget,
   failureFingerprintForOutput,
+  ownerLocalBwrapArgv,
   resolveOwnerLocalGoBinary,
+  resolveOwnerLocalSandbox,
+  runBoundedOwnerLocalGoTest,
+  type OwnerLocalClosureListInput,
   type OwnerLocalGitRunner,
   type OwnerLocalGoRunInput,
   type OwnerLocalGoRunResult,
@@ -88,6 +95,10 @@ test.describe('W9 owner-local adversarial handling (fabricated)', () => {
             return PASS_RUN;
           },
           resolveGoBinary: () => ({ status: 'RESOLVED', binary: '/fake/go', version: '1.23.0' }),
+          resolveSandbox: () => ({ status: 'RESOLVED', binary: '/fake/bwrap' }),
+          listClosurePackages: async (input: OwnerLocalClosureListInput) => [
+            path.join(input.moduleRoot, 'pkg', 'gcsv'),
+          ],
         },
       });
       const hostile = {
@@ -251,6 +262,10 @@ test.describe('W9 owner-local adversarial handling (fabricated)', () => {
             return PASS_RUN;
           },
           resolveGoBinary: () => ({ status: 'RESOLVED', binary: '/fake/go', version: '1.23.0' }),
+          resolveSandbox: () => ({ status: 'RESOLVED', binary: '/fake/bwrap' }),
+          listClosurePackages: async (input: OwnerLocalClosureListInput) => [
+            path.join(input.moduleRoot, 'pkg', 'gcsv'),
+          ],
         },
       });
       const result = await provider.run({
@@ -373,6 +388,10 @@ test.describe('W9 owner-local adversarial handling (fabricated)', () => {
             return PASS_RUN;
           },
           resolveGoBinary: () => ({ status: 'RESOLVED', binary: '/fake/go', version: '1.23.0' }),
+          resolveSandbox: () => ({ status: 'RESOLVED', binary: '/fake/bwrap' }),
+          listClosurePackages: async (input: OwnerLocalClosureListInput) => [
+            path.join(input.moduleRoot, 'pkg', 'gcsv'),
+          ],
         },
       });
       const result = await provider.run({
@@ -386,6 +405,224 @@ test.describe('W9 owner-local adversarial handling (fabricated)', () => {
       if (result.status !== 'AVAILABLE') return;
       expect(result.value.verdict).toBe('ENVIRONMENT_BLOCKED');
       expect(executions).toBe(0);
+      expect(fs.readdirSync(tempRoot)).toEqual([]);
+    } finally {
+      fs.rmSync(siblingRoot, { recursive: true, force: true });
+      fs.rmSync(tempRoot, { recursive: true, force: true });
+    }
+  });
+  test('output cap is byte-exact over multibyte UTF-8', async () => {
+    const oversize = await runBoundedOwnerLocalGoTest({
+      binary: process.execPath,
+      args: ['-e', 'process.stdout.write("é".repeat(100))'],
+      cwd: os.tmpdir(),
+      env: { PATH: '/usr/bin:/bin' },
+      timeoutMs: 30_000,
+      outputCapBytes: 10,
+    });
+    // 100 two-byte characters capped at 10 BYTES (a char count would allow 20).
+    expect(
+      Buffer.byteLength(oversize.stdout, 'utf8') + Buffer.byteLength(oversize.stderr, 'utf8'),
+    ).toBeLessThanOrEqual(10);
+    expect(oversize.truncated).toBe(true);
+    const exact = await runBoundedOwnerLocalGoTest({
+      binary: process.execPath,
+      args: ['-e', 'process.stdout.write("hi")'],
+      cwd: os.tmpdir(),
+      env: { PATH: '/usr/bin:/bin' },
+      timeoutMs: 30_000,
+      outputCapBytes: 1024,
+    });
+    expect(exact.stdout).toBe('hi');
+    expect(exact.truncated).toBe(false);
+    expect(exact.exitCode).toBe(0);
+  });
+
+  test('missing sandbox blocks execution without spawning the toolchain', async () => {
+    const siblingRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'nw-adv-sib-'));
+    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'nw-adv-tmp-'));
+    try {
+      writeRepo(siblingRoot, fullTree());
+      let goCalls = 0;
+      let listed = 0;
+      const discovery = discoverOwnerLocalTarget({ sourcePath: SOURCE_PATH, siblingRoot });
+      expect(discovery.status).toBe('SUPPORTED');
+      if (discovery.status !== 'SUPPORTED') return;
+      const execution = await executeOwnerLocalTarget({
+        target: discovery.target,
+        siblingRoot,
+        attempt: 1,
+        goBinary: '/fake/go',
+        limits: {
+          materializeMs: 60_000,
+          executionMs: 60_000,
+          capturedOutputBytes: 65_536,
+          materializedFiles: 20_000,
+          materializedBytes: 1_048_576,
+          executions: 2,
+        },
+        tempRoot,
+        ports: {
+          resolveSandbox: () => ({ status: 'BLOCKED' }),
+          runGoTest: async () => {
+            goCalls += 1;
+            return PASS_RUN;
+          },
+          listClosurePackages: async () => {
+            listed += 1;
+            return [];
+          },
+        },
+      });
+      expect(execution.record.outcome).toBe('ENVIRONMENT_BLOCKED');
+      expect(goCalls).toBe(0);
+      expect(listed).toBe(0);
+    } finally {
+      fs.rmSync(siblingRoot, { recursive: true, force: true });
+      fs.rmSync(tempRoot, { recursive: true, force: true });
+    }
+  });
+
+  test('sandbox argv unshares the network and preserves the fixed go command', () => {
+    const argv = ownerLocalBwrapArgv({
+      bwrapBinary: '/usr/bin/bwrap',
+      execRoot: '/tmp/nw-exec-1',
+      goBinary: '/usr/local/go/bin/go',
+      goArgs: ['test', '-mod=vendor', '-count=1', './pkg/gcsv'],
+      env: {
+        GOPROXY: 'off',
+        GOTOOLCHAIN: 'local',
+        GOSUMDB: 'off',
+        HOME: '/tmp/nw-exec-1/.h',
+        HTTP_PROXY: 'http://evil.example',
+      },
+    });
+    expect(argv).toContain('--unshare-net');
+    expect(argv).toContain('--clearenv');
+    const separator = argv.indexOf('--');
+    expect(separator).toBeGreaterThan(0);
+    expect(argv.slice(separator + 1)).toEqual([
+      '/usr/local/go/bin/go',
+      'test',
+      '-mod=vendor',
+      '-count=1',
+      './pkg/gcsv',
+    ]);
+    expect(argv).toContain('/usr/bin:/bin');
+    expect(JSON.stringify(argv)).not.toContain('evil.example');
+  });
+
+  test('toolchain resolution ignores ambient PATH entries', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'nw-adv-path-'));
+    const previousPath = process.env['PATH'];
+    try {
+      fs.writeFileSync(path.join(dir, 'go'), '#!/bin/sh\necho FAKE-GO\n', { mode: 0o755 });
+      process.env['PATH'] = `${dir}${path.delimiter}${previousPath ?? ''}`;
+      const resolution = resolveOwnerLocalGoBinary({ requiredVersion: null });
+      if (resolution.status === 'RESOLVED') {
+        expect(resolution.binary).not.toBe(path.join(dir, 'go'));
+        const fixed = OWNER_LOCAL_FIXED_GO_BINARIES.includes(resolution.binary);
+        expect(fixed || resolution.binary.includes('toolchain@')).toBe(true);
+      } else {
+        expect(resolution.status).toBe('BLOCKED');
+      }
+    } finally {
+      if (previousPath === undefined) delete process.env['PATH'];
+      else process.env['PATH'] = previousPath;
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test('closure copies only selected packages and required metadata', async () => {
+    const siblingRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'nw-adv-sib-'));
+    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'nw-adv-tmp-'));
+    try {
+      const repoRoot = writeRepo(siblingRoot, {
+        ...fullTree(),
+        'pkg/other/other.go': 'package other\n\nfunc Other() int { return 1 }\n',
+        'pkg/other/other_test.go': 'package other\n\nimport "testing"\n\nfunc TestOther(t *testing.T) {}\n',
+      });
+      const seen: string[] = [];
+      const provider = createOwnerLocalReproductionProvider({
+        siblingRoot,
+        tempRoot,
+        ports: {
+          runGit: stableGit(repoRoot),
+          runGoTest: async (input: OwnerLocalGoRunInput) => {
+            const found: string[] = [];
+            const walk = (dir: string): void => {
+              for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+                const full = path.join(dir, entry.name);
+                if (entry.isDirectory()) walk(full);
+                else if (entry.isFile()) found.push(path.relative(input.cwd, full).split(path.sep).join('/'));
+              }
+            };
+            walk(input.cwd);
+            seen.push(...found.sort());
+            return PASS_RUN;
+          },
+          resolveGoBinary: () => ({ status: 'RESOLVED', binary: '/fake/go', version: '1.23.0' }),
+          resolveSandbox: () => ({ status: 'RESOLVED', binary: '/fake/bwrap' }),
+          listClosurePackages: async (input: OwnerLocalClosureListInput) => [
+            path.join(input.moduleRoot, 'pkg', 'gcsv'),
+          ],
+        },
+      });
+      const result = await provider.run({
+        reproductionId: 'rep-1',
+        candidateId: null,
+        sourcePath: SOURCE_PATH,
+        sourceEvidenceRef: 'srcobs:x',
+        observedEvidenceRefs: [],
+      });
+      expect(result.status).toBe('AVAILABLE');
+      if (result.status !== 'AVAILABLE') return;
+      expect(result.value.verdict).toBe('NOT_REPRODUCED');
+      expect(seen.length).toBeGreaterThan(0);
+      for (const file of seen) {
+        expect(file).not.toContain('pkg/other/');
+      }
+      expect(seen).toContain('go.mod');
+      expect(seen).toContain('vendor/modules.txt');
+      expect(seen).toContain('pkg/gcsv/info.go');
+      expect(seen).toContain('pkg/gcsv/info_test.go');
+    } finally {
+      fs.rmSync(siblingRoot, { recursive: true, force: true });
+      fs.rmSync(tempRoot, { recursive: true, force: true });
+    }
+  });
+
+  test('closure listing failure blocks without executing', async () => {
+    const siblingRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'nw-adv-sib-'));
+    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'nw-adv-tmp-'));
+    try {
+      const repoRoot = writeRepo(siblingRoot, fullTree());
+      let goCalls = 0;
+      const provider = createOwnerLocalReproductionProvider({
+        siblingRoot,
+        tempRoot,
+        ports: {
+          runGit: stableGit(repoRoot),
+          runGoTest: async () => {
+            goCalls += 1;
+            return PASS_RUN;
+          },
+          resolveGoBinary: () => ({ status: 'RESOLVED', binary: '/fake/go', version: '1.23.0' }),
+          resolveSandbox: () => ({ status: 'RESOLVED', binary: '/fake/bwrap' }),
+          listClosurePackages: async () => null,
+        },
+      });
+      const result = await provider.run({
+        reproductionId: 'rep-1',
+        candidateId: null,
+        sourcePath: SOURCE_PATH,
+        sourceEvidenceRef: 'srcobs:x',
+        observedEvidenceRefs: [],
+      });
+      expect(result.status).toBe('AVAILABLE');
+      if (result.status !== 'AVAILABLE') return;
+      expect(result.value.verdict).toBe('ENVIRONMENT_BLOCKED');
+      expect(goCalls).toBe(0);
       expect(fs.readdirSync(tempRoot)).toEqual([]);
     } finally {
       fs.rmSync(siblingRoot, { recursive: true, force: true });

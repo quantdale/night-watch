@@ -25,15 +25,12 @@ import {
   OWNER_LOCAL_REPRODUCTION_PROVIDER_ID,
   createOwnerLocalReproductionProvider,
   discoverOwnerLocalTarget,
+  type OwnerLocalClosureListInput,
   type OwnerLocalGitRunner,
   type OwnerLocalGoRunInput,
   type OwnerLocalGoRunResult,
   type OwnerLocalReproductionPorts,
 } from '../../src/core/ownerLocalReproduction/provider';
-
-const HEAD_SHA = '0123456789abcdef0123456789abcdef01234567';
-const REPO = 'mobingilabs/ouchan';
-const SOURCE_REL = 'pkg/gcsv/info.go';
 const SOURCE_PATH = `${REPO}:${SOURCE_REL}`;
 const SOURCE_EVIDENCE_REF = 'srcobs:sha256:0123456789abcdef01234567';
 
@@ -277,6 +274,10 @@ test.describe('W9 owner-local reproduction provider (fabricated)', () => {
           runGit: stubGit(repoRoot, ['', '']),
           runGoTest: scriptedGo([FAIL_RUN, FAIL_RUN], seen),
           resolveGoBinary: stubToolchain(),
+          resolveSandbox: () => ({ status: 'RESOLVED', binary: '/fake/bwrap' }),
+          listClosurePackages: async (input: OwnerLocalClosureListInput) => [
+            path.join(input.moduleRoot, 'pkg', 'gcsv'),
+          ],
         },
       });
       const result = await provider.run(requestFor());
@@ -323,6 +324,10 @@ test.describe('W9 owner-local reproduction provider (fabricated)', () => {
           runGit: stubGit(repoRoot, ['', '']),
           runGoTest: scriptedGo([PASS_RUN, PASS_RUN], seen),
           resolveGoBinary: stubToolchain(),
+          resolveSandbox: () => ({ status: 'RESOLVED', binary: '/fake/bwrap' }),
+          listClosurePackages: async (input: OwnerLocalClosureListInput) => [
+            path.join(input.moduleRoot, 'pkg', 'gcsv'),
+          ],
         },
       });
       const result = await provider.run(requestFor());
@@ -353,6 +358,10 @@ test.describe('W9 owner-local reproduction provider (fabricated)', () => {
           runGit: stubGit(repoRoot, ['', '']),
           runGoTest: scriptedGo([BUILD_RUN, BUILD_RUN], []),
           resolveGoBinary: stubToolchain(),
+          resolveSandbox: () => ({ status: 'RESOLVED', binary: '/fake/bwrap' }),
+          listClosurePackages: async (input: OwnerLocalClosureListInput) => [
+            path.join(input.moduleRoot, 'pkg', 'gcsv'),
+          ],
         },
       });
       const result = await provider.run(requestFor());
@@ -380,6 +389,10 @@ test.describe('W9 owner-local reproduction provider (fabricated)', () => {
           runGit: stubGit(repoRoot, ['', '']),
           runGoTest: scriptedGo([TIMEOUT_RUN, TIMEOUT_RUN], []),
           resolveGoBinary: stubToolchain(),
+          resolveSandbox: () => ({ status: 'RESOLVED', binary: '/fake/bwrap' }),
+          listClosurePackages: async (input: OwnerLocalClosureListInput) => [
+            path.join(input.moduleRoot, 'pkg', 'gcsv'),
+          ],
         },
       });
       const result = await provider.run(requestFor());
@@ -434,6 +447,10 @@ test.describe('W9 owner-local reproduction provider (fabricated)', () => {
           runGit: stubGit(repoRoot, ['', ' M pkg/gcsv/info.go\n']),
           runGoTest: scriptedGo([FAIL_RUN, FAIL_RUN], []),
           resolveGoBinary: stubToolchain(),
+          resolveSandbox: () => ({ status: 'RESOLVED', binary: '/fake/bwrap' }),
+          listClosurePackages: async (input: OwnerLocalClosureListInput) => [
+            path.join(input.moduleRoot, 'pkg', 'gcsv'),
+          ],
         },
       });
       const result = await provider.run(requestFor());

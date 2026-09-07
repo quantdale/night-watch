@@ -526,8 +526,21 @@ export function siblingIdentityStable(
 }
 
 // ---------------------------------------------------------------------------
-// Toolchain resolution (allowlisted binaries only; never downloads).
+// Toolchain resolution (fixed allowlist only; never downloads).
 // ---------------------------------------------------------------------------
+
+/**
+ * Fixed production allowlist for system `go` binaries. Ambient PATH and
+ * GOROOT are deliberately NOT consulted: neither is a fixed allowlist and
+ * both can be influenced outside Nightwatch's control. An explicit binary is
+ * honored only as a test seam (provider option, never the request).
+ */
+export const OWNER_LOCAL_FIXED_GO_BINARIES = Object.freeze([
+  '/usr/local/go/bin/go',
+  '/usr/lib/go/bin/go',
+  '/usr/lib/golang/bin/go',
+  '/opt/go/bin/go',
+]);
 
 export type OwnerLocalToolchainResolution =
   | { readonly status: 'RESOLVED'; readonly binary: string; readonly version: string | null }
@@ -548,7 +561,7 @@ export interface ResolveOwnerLocalGoBinaryInput {
   ) => OwnerLocalToolchainResolution;
 }
 
-function isUsableGoBinary(candidate: string): boolean {
+function isUsableExecFile(candidate: string): boolean {
   try {
     const stats = fs.lstatSync(candidate);
     if (stats.isSymbolicLink() || !stats.isFile()) return false;
@@ -577,18 +590,8 @@ function goVersionOf(binary: string): string | null {
   }
 }
 
-function findAmbientGoBinaries(): readonly string[] {
-  const found: string[] = [];
-  const goroot = process.env['GOROOT'];
-  if (typeof goroot === 'string' && goroot.length > 0) {
-    found.push(path.join(goroot, 'bin', 'go'));
-  }
-  const pathVar = process.env['PATH'] ?? '';
-  for (const dir of pathVar.split(':')) {
-    if (dir.length === 0 || !path.isAbsolute(dir)) continue;
-    found.push(path.join(dir, 'go'));
-  }
-  return [...new Set(found)];
+function findFixedGoBinaries(): readonly string[] {
+  return OWNER_LOCAL_FIXED_GO_BINARIES.filter(isUsableExecFile);
 }
 
 function defaultModuleCacheDir(): string {
@@ -610,7 +613,8 @@ export function resolveOwnerLocalGoBinary(
     return compareGoVersions(version, required) >= 0;
   };
   if (typeof input.explicitBinary === 'string' && input.explicitBinary.length > 0) {
-    if (!isUsableGoBinary(input.explicitBinary)) {
+    // Test seam only: production never sets this (fixed allowlist below).
+    if (!isUsableExecFile(input.explicitBinary)) {
       return { status: 'BLOCKED', block: 'TOOLCHAIN_UNAVAILABLE' };
     }
     const version = goVersionOf(input.explicitBinary);
@@ -623,8 +627,7 @@ export function resolveOwnerLocalGoBinary(
     return { status: 'RESOLVED', binary: input.explicitBinary, version };
   }
   let sawOlder = false;
-  for (const candidate of findAmbientGoBinaries()) {
-    if (!isUsableGoBinary(candidate)) continue;
+  for (const candidate of findFixedGoBinaries()) {
     const version = goVersionOf(candidate);
     if (version === null) continue;
     if (required === null || compareGoVersions(version, required) >= 0) {
@@ -637,8 +640,7 @@ export function resolveOwnerLocalGoBinary(
       typeof input.moduleCacheDir === 'string' && input.moduleCacheDir.length > 0
         ? input.moduleCacheDir
         : defaultModuleCacheDir();
-    const cached = findCachedToolchain(moduleCacheDir, required);
-    if (cached !== null && isUsableGoBinary(cached)) {
+    if (cached !== null && isUsableExecFile(cached)) {
       const version = goVersionOf(cached);
       if (version !== null && compareGoVersions(version, required) >= 0) {
         return { status: 'RESOLVED', binary: cached, version };
@@ -656,6 +658,125 @@ export function requiredGoVersionForModule(moduleRoot: string): string | null {
   const text = readBoundedTextNoFollow(path.join(moduleRoot, 'go.mod'), 64 * 1024);
   if (text === null) return null;
   return parseGoModRequiredVersion(text);
+}
+
+// ---------------------------------------------------------------------------
+// Host-derived Go closure. Production never copies the whole module tree: the
+// closure is the fixed offline `go list -e -mod=vendor -deps -test -json
+// ./<package>` package set (in-module and vendored dependency dirs only;
+// GOROOT and foreign trees are excluded), plus go.mod, go.sum when present,
+// and vendor/modules.txt. `go list` runs read-only against the sibling
+// module root with isolated caches; any listing failure refuses outright —
+// there is no whole-tree fallback.
+// ---------------------------------------------------------------------------
+
+const GO_LIST_TIMEOUT_MS = 60_000;
+const GO_LIST_MAX_BUFFER = 32 * 1024 * 1024;
+const GO_LIST_MAX_PACKAGES = 50_000;
+
+/** Split a `go list -json` stream into top-level objects. Null on malformation. */
+export function splitGoListJson(stream: string): string[] | null {
+  const objects: string[] = [];
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+  let start = -1;
+  for (let index = 0; index < stream.length; index += 1) {
+    const ch = stream[index] ?? '';
+    if (start === -1) {
+      if (ch === '{') {
+        start = index;
+        depth = 1;
+        inString = false;
+        escaped = false;
+      } else if (ch.trim() !== '') {
+        return null;
+      }
+      continue;
+    }
+    if (inString) {
+      if (escaped) escaped = false;
+      else if (ch === '\\') escaped = true;
+      else if (ch === '"') inString = false;
+      continue;
+    }
+    if (ch === '"') inString = true;
+    else if (ch === '{') depth += 1;
+    else if (ch === '}') {
+      depth -= 1;
+      if (depth === 0) {
+        objects.push(stream.slice(start, index + 1));
+        start = -1;
+        if (objects.length > GO_LIST_MAX_PACKAGES) return null;
+      } else if (depth < 0) {
+        return null;
+      }
+    }
+  }
+  if (start !== -1 || inString) return null;
+  return objects;
+}
+
+export interface OwnerLocalClosureListInput {
+  readonly goBinary: string;
+  readonly moduleRoot: string;
+  readonly packageDirAbs: string;
+  readonly packageSelector: string;
+  readonly env: NodeJS.ProcessEnv;
+  readonly timeoutMs?: number;
+}
+
+/**
+ * Absolute in-module package dirs of the test closure. Null when the offline
+ * listing fails for any reason. The tested package dir is always included.
+ */
+export async function resolveOwnerLocalClosureDirs(
+  input: OwnerLocalClosureListInput,
+): Promise<readonly string[] | null> {
+  const moduleRoot = path.resolve(input.moduleRoot);
+  const packageDirAbs = path.resolve(input.packageDirAbs);
+  if (!isPathInside(packageDirAbs, moduleRoot)) return null;
+  let stdout: string;
+  try {
+    const result = spawnSync(
+      input.goBinary,
+      ['list', '-e', '-mod=vendor', '-deps', '-test', '-json', input.packageSelector],
+      {
+        cwd: moduleRoot,
+        env: input.env,
+        timeout: input.timeoutMs ?? GO_LIST_TIMEOUT_MS,
+        maxBuffer: GO_LIST_MAX_BUFFER,
+        encoding: 'utf8',
+        shell: false,
+      },
+    );
+    if (result.error !== undefined || result.status !== 0) return null;
+    stdout = String(result.stdout ?? '');
+  } catch {
+    return null;
+  }
+  const objects = splitGoListJson(stdout);
+  if (objects === null) return null;
+  const dirs = new Set<string>();
+  dirs.add(packageDirAbs);
+  for (const object of objects) {
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(object);
+    } catch {
+      return null;
+    }
+    if (typeof parsed !== 'object' || parsed === null || !('Dir' in parsed)) continue;
+    const dir: unknown = parsed.Dir;
+    if (typeof dir !== 'string' || dir.length === 0) continue;
+    const resolved = path.resolve(dir);
+    // In-module only: stdlib (GOROOT) and foreign trees are never copied.
+    if (!isPathInside(resolved, moduleRoot)) continue;
+    if (!isRegularDirectoryNoFollow(resolved)) continue;
+    dirs.add(resolved);
+  }
+  if (dirs.size === 0) return null;
+  return [...dirs].sort();
 }
 
 // ---------------------------------------------------------------------------
@@ -679,10 +800,13 @@ export class OwnerLocalMaterializationError extends Error {
 
 export interface MaterializeOwnerLocalClosureInput {
   readonly moduleRoot: string;
+  /** Tested package dir (absolute); always included in the closure. */
+  readonly packageDirAbs: string;
+  /** Host-derived absolute in-module dirs to copy (from `go list`). */
+  readonly closureDirs: readonly string[];
   readonly limits: OwnerLocalReproductionLimits;
   readonly tempRoot?: string;
 }
-
 export interface MaterializedOwnerLocalClosure {
   readonly execRoot: string;
   readonly fileCount: number;
@@ -720,70 +844,140 @@ export function materializeOwnerLocalClosure(
   let fileCount = 0;
   let byteCount = 0;
   let checked = 0;
-  try {
-    const stack: string[] = [moduleRoot];
-    while (stack.length > 0) {
-      const dir = stack.pop();
-      if (dir === undefined) break;
-      let entries: readonly fs.Dirent[];
+  const checkDeadline = (): void => {
+    if (checked % 128 === 0 && Date.now() > deadline) {
+      throw new OwnerLocalMaterializationError('MATERIALIZATION_FAILED', 'MATERIALIZE_TIMEOUT');
+    }
+  };
+  const copyOneFile = (src: string, stats: fs.Stats): void => {
+    const relative = path.relative(moduleRoot, src);
+    if (relative.startsWith('..') || path.isAbsolute(relative) || relative === '') {
+      throw new OwnerLocalMaterializationError('MATERIALIZATION_FAILED', 'PATH_ESCAPE');
+    }
+    const dst = path.join(dest, relative);
+    if (!isPathInside(dst, dest)) {
+      throw new OwnerLocalMaterializationError('MATERIALIZATION_FAILED', 'PATH_ESCAPE');
+    }
+    fileCount += 1;
+    byteCount += stats.size;
+    if (fileCount > input.limits.materializedFiles || byteCount > input.limits.materializedBytes) {
+      throw new OwnerLocalMaterializationError('MATERIALIZATION_LIMIT_EXCEEDED', 'CLOSURE_TOO_LARGE');
+    }
+    try {
+      fs.mkdirSync(path.dirname(dst), { recursive: true });
+      fs.copyFileSync(src, dst);
+    } catch {
+      throw new OwnerLocalMaterializationError('MATERIALIZATION_FAILED', 'COPY_FAILED');
+    }
+    checked += 1;
+    checkDeadline();
+  };
+  const dirHasGoFiles = (dir: string): boolean => {
+    let entries: readonly fs.Dirent[];
+    try {
+      entries = fs.readdirSync(dir, { withFileTypes: true });
+    } catch {
+      return false;
+    }
+    return entries.some((entry) => entry.isFile() && entry.name.endsWith('.go'));
+  };
+  const selected = new Set<string>();
+  const selectedBeneath = (dir: string): boolean => {
+    const prefix = `${dir}${path.sep}`;
+    for (const candidate of selected) {
+      if (candidate.startsWith(prefix)) return true;
+    }
+    return false;
+  };
+  const copySelectedDir = (srcDir: string, pruneNested: boolean): void => {
+    let entries: readonly fs.Dirent[];
+    try {
+      entries = fs
+        .readdirSync(srcDir, { withFileTypes: true })
+        .sort((left, right) => left.name.localeCompare(right.name));
+    } catch {
+      throw new OwnerLocalMaterializationError('MATERIALIZATION_FAILED', 'ENUMERATE_FAILED');
+    }
+    for (const entry of entries) {
+      if (entry.name === '.git') continue;
+      const src = path.join(srcDir, entry.name);
+      let stats: fs.Stats;
       try {
-        entries = fs
-          .readdirSync(dir, { withFileTypes: true })
-          .sort((left, right) => left.name.localeCompare(right.name));
+        stats = fs.lstatSync(src);
       } catch {
-        throw new OwnerLocalMaterializationError('MATERIALIZATION_FAILED', 'ENUMERATE_FAILED');
+        throw new OwnerLocalMaterializationError('MATERIALIZATION_FAILED', 'STAT_FAILED');
       }
-      for (const entry of entries) {
-        if (entry.name === '.git') continue;
-        const src = path.join(dir, entry.name);
-        const relative = path.relative(moduleRoot, src);
-        if (relative.startsWith('..') || path.isAbsolute(relative)) {
-          throw new OwnerLocalMaterializationError('MATERIALIZATION_FAILED', 'PATH_ESCAPE');
+      // Fail closed on symlinks: never follow, hardlink, or recreate them.
+      if (stats.isSymbolicLink()) {
+        throw new OwnerLocalMaterializationError('MATERIALIZATION_FAILED', 'SYMLINK_REJECTED');
+      }
+      if (stats.isDirectory()) {
+        const resolved = path.resolve(src);
+        // Prune unrelated nested packages: descend only into testdata (kept
+        // whole, including data files), selected dirs, and ancestors of
+        // selected dirs. Bare resource dirs without Go files are kept.
+        if (
+          pruneNested &&
+          entry.name !== 'testdata' &&
+          !selected.has(resolved) &&
+          !selectedBeneath(resolved) &&
+          dirHasGoFiles(resolved)
+        ) {
+          continue;
         }
+        const relative = path.relative(moduleRoot, src);
         const dst = path.join(dest, relative);
         if (!isPathInside(dst, dest)) {
           throw new OwnerLocalMaterializationError('MATERIALIZATION_FAILED', 'PATH_ESCAPE');
         }
-        let stats: fs.Stats;
         try {
-          stats = fs.lstatSync(src);
+          fs.mkdirSync(dst, { recursive: true });
         } catch {
-          throw new OwnerLocalMaterializationError('MATERIALIZATION_FAILED', 'STAT_FAILED');
-        }
-        // Fail closed on symlinks: never follow, hardlink, or recreate them.
-        if (stats.isSymbolicLink()) {
-          throw new OwnerLocalMaterializationError('MATERIALIZATION_FAILED', 'SYMLINK_REJECTED');
-        }
-        if (stats.isDirectory()) {
-          try {
-            fs.mkdirSync(dst, { recursive: true });
-          } catch {
-            throw new OwnerLocalMaterializationError('MATERIALIZATION_FAILED', 'MKDIR_FAILED');
-          }
-          stack.push(src);
-        } else if (stats.isFile()) {
-          fileCount += 1;
-          byteCount += stats.size;
-          if (fileCount > input.limits.materializedFiles || byteCount > input.limits.materializedBytes) {
-            throw new OwnerLocalMaterializationError(
-              'MATERIALIZATION_LIMIT_EXCEEDED',
-              'CLOSURE_TOO_LARGE',
-            );
-          }
-          try {
-            fs.mkdirSync(path.dirname(dst), { recursive: true });
-            fs.copyFileSync(src, dst);
-          } catch {
-            throw new OwnerLocalMaterializationError('MATERIALIZATION_FAILED', 'COPY_FAILED');
-          }
-        } else {
-          throw new OwnerLocalMaterializationError('MATERIALIZATION_FAILED', 'NOT_REGULAR');
+          throw new OwnerLocalMaterializationError('MATERIALIZATION_FAILED', 'MKDIR_FAILED');
         }
         checked += 1;
-        if (checked % 128 === 0 && Date.now() > deadline) {
-          throw new OwnerLocalMaterializationError('MATERIALIZATION_FAILED', 'MATERIALIZE_TIMEOUT');
-        }
+        checkDeadline();
+        copySelectedDir(src, pruneNested && entry.name !== 'testdata');
+      } else if (stats.isFile()) {
+        copyOneFile(src, stats);
+      } else {
+        throw new OwnerLocalMaterializationError('MATERIALIZATION_FAILED', 'NOT_REGULAR');
       }
+    }
+  };
+  const copyTopFile = (relative: string, required: boolean): void => {
+    const src = path.join(moduleRoot, ...relative.split('/'));
+    let stats: fs.Stats;
+    try {
+      stats = fs.lstatSync(src);
+    } catch {
+      if (!required) return;
+      throw new OwnerLocalMaterializationError('MATERIALIZATION_FAILED', 'MANIFEST_MISSING');
+    }
+    if (stats.isSymbolicLink() || !stats.isFile() || !hasNoSymlinkPath(src)) {
+      if (!required) return;
+      throw new OwnerLocalMaterializationError('MATERIALIZATION_FAILED', 'MANIFEST_MISSING');
+    }
+    copyOneFile(src, stats);
+  };
+  try {
+    const packageDirAbs = path.resolve(input.packageDirAbs);
+    if (!isPathInside(packageDirAbs, moduleRoot) || !isRegularDirectoryNoFollow(packageDirAbs)) {
+      throw new OwnerLocalMaterializationError('WORKSPACE_UNAVAILABLE', 'PACKAGE_DIR_UNREADABLE');
+    }
+    selected.add(packageDirAbs);
+    for (const dir of input.closureDirs) {
+      const resolved = path.resolve(dir);
+      if (!isPathInside(resolved, moduleRoot) || !isRegularDirectoryNoFollow(resolved)) {
+        throw new OwnerLocalMaterializationError('MATERIALIZATION_FAILED', 'CLOSURE_DIR_UNREADABLE');
+      }
+      selected.add(resolved);
+    }
+    copyTopFile('go.mod', true);
+    copyTopFile('go.sum', false);
+    copyTopFile(path.join('vendor', 'modules.txt'), true);
+    for (const dir of [...selected].sort()) {
+      copySelectedDir(dir, true);
     }
   } catch (error) {
     removeTreeBestEffort(dest);
@@ -797,11 +991,103 @@ export function materializeOwnerLocalClosure(
     cleanup: () => removeTreeBestEffort(dest),
   };
 }
+// ---------------------------------------------------------------------------
+// Network-namespace sandbox. The test binary runs under rootless bwrap with
+// the network namespace unshared: GOPROXY=off alone only stops the go tool
+// from fetching, while test code itself could still dial out. No proof is
+// minted unless the real execution ran inside this namespace (injected fake
+// runners perform no I/O at all, so the claim is vacuous for them).
+// ---------------------------------------------------------------------------
+
+/** Fixed allowlist for the sandbox binary. Never resolved via PATH. */
+export const OWNER_LOCAL_BWRAP_BINARIES = Object.freeze(['/usr/bin/bwrap', '/bin/bwrap']);
+
+export type OwnerLocalSandboxResolution =
+  | { readonly status: 'RESOLVED'; readonly binary: string }
+  | { readonly status: 'BLOCKED' };
+
+export interface ResolveOwnerLocalSandboxInput {
+  /** Test seam: override the fixed search paths. Production omits this. */
+  readonly searchPaths?: readonly string[];
+}
+
+export function resolveOwnerLocalSandbox(
+  input: ResolveOwnerLocalSandboxInput = {},
+): OwnerLocalSandboxResolution {
+  const paths = input.searchPaths ?? OWNER_LOCAL_BWRAP_BINARIES;
+  for (const candidate of paths) {
+    if (isUsableExecFile(candidate)) return { status: 'RESOLVED', binary: candidate };
+  }
+  return { status: 'BLOCKED' };
+}
+
+/** Exact environment names carried into the sandbox (PATH is fixed, never inherited). */
+const BWRAP_PASSTHROUGH_ENV = Object.freeze([
+  'GOFLAGS',
+  'GOPROXY',
+  'GOSUMDB',
+  'GONOSUMDB',
+  'GONOSUMCHECK',
+  'GOTOOLCHAIN',
+  'GOCACHE',
+  'GOMODCACHE',
+  'GOTMPDIR',
+  'HOME',
+] as const);
+
+export interface OwnerLocalBwrapInput {
+  /** Already-resolved bwrap binary; echoed into argv, never searched. */
+  readonly bwrapBinary: string;
+  readonly execRoot: string;
+  readonly goBinary: string;
+  readonly goArgs: readonly string[];
+  readonly env: NodeJS.ProcessEnv;
+}
+
+/**
+ * Fixed bwrap argv: clear the ambient environment, unshare the network
+ * namespace, bind the host root read-only, rebind the disposable tree (and
+ * /tmp, /dev, /proc) appropriately, then exec the fixed go argv. The go
+ * command line itself is byte-identical to the unsandboxed form.
+ */
+export function ownerLocalBwrapArgv(input: OwnerLocalBwrapInput): readonly string[] {
+  const argv: string[] = [
+    '--clearenv',
+    '--unshare-net',
+    '--die-with-parent',
+    '--ro-bind',
+    '/',
+    '/',
+    '--dev',
+    '/dev',
+    '--proc',
+    '/proc',
+    '--tmpfs',
+    '/tmp',
+    '--bind',
+    input.execRoot,
+    input.execRoot,
+    '--chdir',
+    input.execRoot,
+  ];
+  const goTmpDir = input.env['GOTMPDIR'];
+  if (typeof goTmpDir === 'string') argv.push('--setenv', 'TMPDIR', goTmpDir);
+  for (const name of BWRAP_PASSTHROUGH_ENV) {
+    const value = input.env[name];
+    if (typeof value === 'string') argv.push('--setenv', name, value);
+  }
+  argv.push('--setenv', 'PATH', '/usr/bin:/bin');
+  argv.push('--', input.goBinary, ...input.goArgs);
+  return argv;
+}
+
+/** The sandbox itself failed (no net namespace): never a test signal. */
+const BWRAP_FAILURE_RE = /^bwrap: /m;
+
 
 // ---------------------------------------------------------------------------
 // Offline `go test` execution (argv array only; detached group; group kill).
 // ---------------------------------------------------------------------------
-
 export interface OwnerLocalGoRunInput {
   readonly binary: string;
   readonly args: readonly string[];
@@ -809,6 +1095,12 @@ export interface OwnerLocalGoRunInput {
   readonly env: NodeJS.ProcessEnv;
   readonly timeoutMs: number;
   readonly outputCapBytes: number;
+  /**
+   * Net-namespace sandbox. Null/undefined runs the binary directly (tests
+   * with injected runners, and the byte-cap unit probe); the production
+   * executor always resolves and requires it.
+   */
+  readonly sandbox?: OwnerLocalSandboxResolution | null;
 }
 
 export interface OwnerLocalGoRunResult {
@@ -872,7 +1164,12 @@ function errorText(error: unknown): string {
 export function runBoundedOwnerLocalGoTest(
   input: OwnerLocalGoRunInput,
 ): Promise<OwnerLocalGoRunResult> {
-  const { promise, resolve } = Promise.withResolvers<OwnerLocalGoRunResult>();
+  // Explicit resolver pair: Promise.withResolvers is unavailable under the
+  // project's ES2022 lib target, and the lib must not be raised for this.
+  let resolve!: (run: OwnerLocalGoRunResult) => void;
+  const promise = new Promise<OwnerLocalGoRunResult>((res) => {
+    resolve = res;
+  });
   let settled = false;
   const done = (run: OwnerLocalGoRunResult): void => {
     if (!settled) {
@@ -880,9 +1177,24 @@ export function runBoundedOwnerLocalGoTest(
       resolve(run);
     }
   };
+  let file = input.binary;
+  let spawnArgs = [...input.args];
+  const sandbox = input.sandbox;
+  if (sandbox !== undefined && sandbox !== null && sandbox.status === 'RESOLVED') {
+    file = sandbox.binary;
+    spawnArgs = [
+      ...ownerLocalBwrapArgv({
+        bwrapBinary: sandbox.binary,
+        execRoot: input.cwd,
+        goBinary: input.binary,
+        goArgs: [...input.args],
+        env: input.env,
+      }),
+    ];
+  }
   let child: ChildProcess;
   try {
-    child = spawn(input.binary, [...input.args], {
+    child = spawn(file, spawnArgs, {
       cwd: input.cwd,
       env: input.env,
       shell: false,
@@ -900,23 +1212,31 @@ export function runBoundedOwnerLocalGoTest(
     });
     return promise;
   }
-  let stdout = '';
-  let stderr = '';
+  // Byte-exact accounting: chunk bytes (never JS string length, which
+  // undercounts multibyte UTF-8) against the combined cap. Bytes past the
+  // cap are dropped and the whole process group is reaped.
+  const stdoutChunks: Buffer[] = [];
+  const stderrChunks: Buffer[] = [];
+  let heldBytes = 0;
   let truncated = false;
   let timedOut = false;
-  const combinedLength = (): number => stdout.length + stderr.length;
-  const appendCapped = (current: string, chunk: Buffer | string): string => {
-    if (combinedLength() >= input.outputCapBytes) return current;
-    const text = typeof chunk === 'string' ? chunk : chunk.toString('utf8');
-    return (current + text).slice(0, Math.max(0, input.outputCapBytes - (combinedLength() - current.length)));
-  };
+  const frozenText = (chunks: readonly Buffer[]): string =>
+    Buffer.concat(chunks).toString('utf8');
   const onData = (which: 'stdout' | 'stderr') => (chunk: Buffer) => {
-    if (which === 'stdout') stdout = appendCapped(stdout, chunk);
-    else stderr = appendCapped(stderr, chunk);
-    if (combinedLength() >= input.outputCapBytes && !truncated) {
+    const room = input.outputCapBytes - heldBytes;
+    if (room <= 0 || truncated) {
+      if (!truncated) {
+        truncated = true;
+        killProcessGroup(child.pid, child);
+      }
+      return;
+    }
+    const kept = chunk.length > room ? chunk.subarray(0, room) : chunk;
+    if (which === 'stdout') stdoutChunks.push(kept);
+    else stderrChunks.push(kept);
+    heldBytes += kept.length;
+    if (kept.length < chunk.length && !truncated) {
       truncated = true;
-      // Oversize output: reap the whole tree rather than letting a verbose
-      // child run unbounded.
       killProcessGroup(child.pid, child);
     }
   };
@@ -926,8 +1246,8 @@ export function runBoundedOwnerLocalGoTest(
     clearTimeout(timer);
     done({
       exitCode: null,
-      stdout,
-      stderr,
+      stdout: frozenText(stdoutChunks),
+      stderr: frozenText(stderrChunks),
       timedOut: false,
       truncated,
       spawnFailed: errorText(error),
@@ -940,6 +1260,8 @@ export function runBoundedOwnerLocalGoTest(
   if (typeof timer.unref === 'function') timer.unref();
   child.on('close', (code) => {
     clearTimeout(timer);
+    const stdout = frozenText(stdoutChunks);
+    const stderr = frozenText(stderrChunks);
     done({ exitCode: code, stdout, stderr, timedOut, truncated, spawnFailed: null });
   });
   return promise;
@@ -972,6 +1294,10 @@ export function classifyGoTestOutput(run: ClassifiableOwnerLocalRun): OwnerLocal
   if (run.spawnFailed !== null) return 'ENVIRONMENT_BLOCKED';
   if (run.timedOut) return 'TIMEOUT';
   const combined = `${run.stdout}\n${run.stderr}`;
+  // The sandbox could not establish its network namespace (bubblewrap
+  // reports `bwrap: ...` and a nonzero exit): the test never ran, so this is
+  // environmental, never a build or test signal.
+  if (BWRAP_FAILURE_RE.test(combined)) return 'ENVIRONMENT_BLOCKED';
   if (NO_TESTS_RE.test(combined)) return 'NO_TESTS';
   if (run.exitCode === 0) return 'TEST_PASS';
   if (run.exitCode === null) return 'PROCESS_FAILURE';
@@ -1022,6 +1348,15 @@ export interface OwnerLocalReproductionPorts {
   readonly resolveGoBinary?: (
     requiredVersion: string | null,
   ) => OwnerLocalToolchainResolution;
+  /** Test seam: resolve the net-namespace sandbox without touching fixed paths. */
+  readonly resolveSandbox?: () => OwnerLocalSandboxResolution;
+  /**
+   * Closure override (tests): list absolute in-module closure dirs.
+   * Production omits this and runs the fixed offline `go list`.
+   */
+  readonly listClosurePackages?: (
+    input: OwnerLocalClosureListInput,
+  ) => Promise<readonly string[] | null>;
 }
 
 export interface ExecuteOwnerLocalTargetInput {
@@ -1031,15 +1366,6 @@ export interface ExecuteOwnerLocalTargetInput {
   readonly goBinary: string;
   readonly limits: OwnerLocalReproductionLimits;
   readonly tempRoot?: string;
-  readonly ports?: OwnerLocalReproductionPorts;
-}
-
-export interface OwnerLocalSingleExecution {
-  readonly record: OwnerLocalExecutionRecord;
-  readonly stdoutHead: string;
-  readonly stderrHead: string;
-}
-
 export async function executeOwnerLocalTarget(
   input: ExecuteOwnerLocalTargetInput,
 ): Promise<OwnerLocalSingleExecution> {
@@ -1048,13 +1374,82 @@ export async function executeOwnerLocalTarget(
   if (moduleRoot === null) {
     throw new OwnerLocalMaterializationError('WORKSPACE_UNAVAILABLE', 'MODULE_ROOT_UNRESOLVED');
   }
+  const selector = ownerLocalPackageSelector(input.target);
+  const packageDirAbs =
+    input.target.packageRelativePath === '.' || input.target.packageRelativePath === ''
+      ? moduleRoot
+      : path.resolve(moduleRoot, ...input.target.packageRelativePath.split('/'));
+  if (!isPathInside(packageDirAbs, moduleRoot) || !isRegularDirectoryNoFollow(packageDirAbs)) {
+    throw new OwnerLocalMaterializationError('WORKSPACE_UNAVAILABLE', 'PACKAGE_DIR_UNREADABLE');
+  }
+  // Net-namespace gate: no proof without it. Injected fake runners perform
+  // no I/O, but resolution is still required so tests declare the sandbox
+  // assumption explicitly instead of silently bypassing it.
+  const sandbox =
+    input.ports?.resolveSandbox !== undefined
+      ? input.ports.resolveSandbox()
+      : resolveOwnerLocalSandbox();
+  if (sandbox.status === 'BLOCKED') {
+    return {
+      record: {
+        attempt: input.attempt,
+        outcome: 'ENVIRONMENT_BLOCKED',
+        exitCode: null,
+        durationMs: Date.now() - started,
+        timedOut: false,
+        failureFingerprint: null,
+        capturedBytes: 0,
+        truncated: false,
+      },
+      stdoutHead: '',
+      stderrHead: '',
+    };
+  }
+  const tempParent =
+    typeof input.tempRoot === 'string' && input.tempRoot.length > 0
+      ? path.resolve(input.tempRoot)
+      : os.tmpdir();
+  let probe: string | null = null;
+  let closureDirs: readonly string[] | null = null;
+  try {
+    fs.mkdirSync(tempParent, { recursive: true });
+    probe = fs.mkdtempSync(path.join(tempParent, 'nw-owner-local-probe-'));
+    const probeEnv = ownerLocalGoEnv(probe);
+    const listInput: OwnerLocalClosureListInput = {
+      goBinary: input.goBinary,
+      moduleRoot,
+      packageDirAbs,
+      packageSelector: selector,
+      env: probeEnv,
+    };
+    if (input.ports?.listClosurePackages !== undefined) {
+      try {
+        closureDirs = await input.ports.listClosurePackages(listInput);
+      } catch {
+        closureDirs = null;
+      }
+    } else {
+      closureDirs = await resolveOwnerLocalClosureDirs(listInput);
+    }
+  } catch {
+    closureDirs = null;
+  } finally {
+    if (probe !== null) removeTreeBestEffort(probe);
+  }
+  if (probe === null) {
+    throw new OwnerLocalMaterializationError('WORKSPACE_UNAVAILABLE', 'TEMP_CREATE_FAILED');
+  }
+  if (closureDirs === null) {
+    throw new OwnerLocalMaterializationError('MATERIALIZATION_FAILED', 'CLOSURE_LIST_FAILED');
+  }
   const closure = materializeOwnerLocalClosure({
     moduleRoot,
+    packageDirAbs,
+    closureDirs,
     limits: input.limits,
     tempRoot: input.tempRoot,
   });
   try {
-    const selector = ownerLocalPackageSelector(input.target);
     // Host-derived argv only: `go test -mod=vendor -count=1 ./<package>`.
     const args = ['test', '-mod=vendor', '-count=1', selector] as const;
     const env = ownerLocalGoEnv(closure.execRoot);
@@ -1069,6 +1464,7 @@ export async function executeOwnerLocalTarget(
               env,
               timeoutMs: input.limits.executionMs,
               outputCapBytes: input.limits.capturedOutputBytes,
+              sandbox,
             })
           : await runBoundedOwnerLocalGoTest({
               binary: input.goBinary,
@@ -1077,6 +1473,7 @@ export async function executeOwnerLocalTarget(
               env,
               timeoutMs: input.limits.executionMs,
               outputCapBytes: input.limits.capturedOutputBytes,
+              sandbox,
             });
     } catch (error) {
       run = {
@@ -1237,7 +1634,28 @@ export function createOwnerLocalReproductionProvider(
           limits,
           sourceContentDigest: boundContentDigest,
         });
-        if (discovery.status === 'UNSUPPORTED') {
+        // Narrowed on SUPPORTED (not merely "not UNSUPPORTED"): the discovery
+        // union also carries BLOCKED, so only this form lets later code touch
+        // `.target` soundly.
+        if (discovery.status !== 'SUPPORTED') {
+          if (discovery.status === 'BLOCKED') {
+            const environmentValue: LocalReproductionProviderResult = {
+              verdict: 'ENVIRONMENT_BLOCKED',
+              reasonerVisible: observation('ENVIRONMENT_BLOCKED', '', 0, null),
+              evidenceRef: null,
+              provenanceRefs: [],
+              preFix: 'NOT_RUN',
+              postFix: 'NOT_RUN',
+              currentSourceProof: null,
+              audit: {
+                providerId,
+                block: discovery.block,
+                disposition: 'ENVIRONMENT_BLOCKED' satisfies OwnerLocalDisposition,
+                durationMs: Date.now() - started,
+              },
+            };
+            return { status: 'AVAILABLE', value: environmentValue };
+          }
           if (discovery.refusal === 'PATH_MALFORMED' || discovery.refusal === 'PATH_NOT_APPROVED') {
             return blocked('UNSAFE_INPUT', 'UNKNOWN_SOURCE_PATH');
           }
@@ -1263,13 +1681,14 @@ export function createOwnerLocalReproductionProvider(
           };
           return { status: 'AVAILABLE', value };
         }
+        const discoveredTarget = discovery.target;
 
         // Toolchain (host-resolved, allowlisted, never downloaded).
-        const moduleRoot = ownerLocalModuleRoot(siblingRoot, discovery.target);
+        const moduleRoot = ownerLocalModuleRoot(siblingRoot, discoveredTarget);
         if (moduleRoot === null) {
           return availableBlocked(
             providerId,
-            discovery.target,
+            discoveredTarget,
             'WORKSPACE_UNAVAILABLE',
             'NOT_RUN',
             started,
@@ -1284,16 +1703,16 @@ export function createOwnerLocalReproductionProvider(
         if (toolchain.status === 'BLOCKED') {
           return availableBlocked(
             providerId,
-            discovery.target,
+            discoveredTarget,
             toolchain.block,
             'NOT_RUN',
             started,
           );
         }
         const target: OwnerLocalReproductionTarget = {
-          ...discovery.target,
+          ...discoveredTarget,
           prerequisites: [
-            ...discovery.target.prerequisites,
+            ...discoveredTarget.prerequisites,
             'TOOLCHAIN_BINARY',
             'TOOLCHAIN_VERSION_SATISFIED',
           ],
