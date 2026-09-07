@@ -4,6 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { REASONER_TURN_RESPONSE_VERSION } from '../../src/core/agentProtocol';
 import {
+  CAMPAIGN_STAGNATION_LIMIT,
   LOCAL_CAMPAIGN_VERSION,
   LocalCampaignError,
   listLocalCampaigns,
@@ -71,7 +72,6 @@ test('malformed campaign id is rejected', async () => {
     stateDirectory: scratchDir(),
   })).rejects.toBeInstanceOf(LocalCampaignError);
 });
-
 test('fake CLI reasoner runs a LOCAL campaign and admits no finding', async () => {
   const dir = scratchDir();
   const result = await runLocalCliCampaign({
@@ -86,9 +86,17 @@ test('fake CLI reasoner runs a LOCAL campaign and admits no finding', async () =
   });
   expect(result.schemaVersion).toBe(LOCAL_CAMPAIGN_VERSION);
   expect(result.environment).toBe('LOCAL');
-  expect(result.terminationReason).toBe('COMPLETE_NO_FINDING');
+  // The campaign continues past per-investigation completions until global
+  // stagnation: three empty COMPLETE_NO_FINDING investigations, then
+  // NO_PROGRESS with no checkpoint and no fabricated finding.
+  expect(result.terminationReason).toBe('NO_PROGRESS');
+  expect(result.investigationsStarted).toBe(CAMPAIGN_STAGNATION_LIMIT);
+  expect(result.investigationsCompleted).toBe(CAMPAIGN_STAGNATION_LIMIT);
+  expect(result.terminationCounts.COMPLETE_NO_FINDING).toBe(CAMPAIGN_STAGNATION_LIMIT);
   expect(result.candidateIds).toEqual([]);
   expect(result.actionCount).toBeGreaterThan(0);
+  expect(result.reasonerCalls).toBe(CAMPAIGN_STAGNATION_LIMIT);
+  expect(result.providerFailures).toBe(0);
   expect(result.checkpointFile).toBeNull();
   expect(result.dossierStatus).toBe('NONE');
 });
@@ -125,8 +133,17 @@ test('paused campaign writes a checkpoint that status lists and resume can finis
   });
   expect(paused.terminationReason).toBe('PAUSED');
   expect(paused.checkpointFile).toBeTruthy();
+  // The paused investigation counts as started but not completed.
+  expect(paused.investigationsStarted).toBe(1);
+  expect(paused.investigationsCompleted).toBe(0);
+  expect(paused.terminationCounts.PAUSED).toBe(1);
   const listed = listLocalCampaigns(dir);
   expect(listed.map((item) => item.campaignId)).toContain('camp-pause-resume');
+  const entry = listed.find((item) => item.campaignId === 'camp-pause-resume')!;
+  expect(entry.status).toBe('PAUSED');
+  expect(entry.investigationsStarted).toBe(1);
+  expect(entry.investigationsCompleted).toBe(0);
+  expect(entry.actionCount).toBe(0);
   const resumed = await resumeLocalCliCampaign({
     campaignId: 'camp-pause-resume',
     ceilingName: 'HOUR_1',
@@ -137,8 +154,17 @@ test('paused campaign writes a checkpoint that status lists and resume can finis
     maxTurns: 3,
     stateDirectory: dir,
   });
-  expect(resumed.terminationReason).toBe('COMPLETE_NO_FINDING');
-  expect(resumed.candidateIds).toEqual([]);
+  // Resume finishes the paused investigation without replaying it, then the
+  // campaign keeps hunting: three empty completions hit global stagnation.
+  // The resumed slot is not recounted as a new start.
+  expect(resumed.terminationReason).toBe('NO_PROGRESS');
+  expect(resumed.investigationsStarted).toBe(CAMPAIGN_STAGNATION_LIMIT);
+  expect(resumed.investigationsCompleted).toBe(CAMPAIGN_STAGNATION_LIMIT);
+  expect(resumed.terminationCounts.PAUSED).toBe(1);
+  expect(resumed.terminationCounts.COMPLETE_NO_FINDING).toBe(CAMPAIGN_STAGNATION_LIMIT);
+  expect(resumed.checkpointFile).toBeNull();
+  // The terminal campaign leaves no stale checkpoint behind for status.
+  expect(listLocalCampaigns(dir)).toEqual([]);
 });
 
 test('a proposed candidate is not packaged without a reproduction', async () => {
@@ -170,9 +196,15 @@ process.stdin.on('data', () => {}).on('end', () => {
     maxTurns: 2,
     stateDirectory: dir,
   });
+  // The candidate is recorded but never packaged: the dossier stays refused,
+  // and the campaign keeps hunting until the repeated identical finding hits
+  // global stagnation — honestly admitting the campaign, not a success.
   expect(result.candidateIds).toEqual(['c1']);
   expect(result.dossierStatus).toBe('REFUSED_NO_REPRODUCTION');
-  expect(result.terminationReason).toBe('COMPLETE_WITH_FINDING');
+  expect(result.terminationReason).toBe('NO_PROGRESS');
+  expect(result.investigationsStarted).toBe(1 + CAMPAIGN_STAGNATION_LIMIT);
+  expect(result.terminationCounts.COMPLETE_WITH_FINDING).toBe(1 + CAMPAIGN_STAGNATION_LIMIT);
+  expect(result.checkpointFile).toBeNull();
 });
 
 

@@ -131,8 +131,8 @@ if (command === 'status') {
         };
     console.log(JSON.stringify(payload, null, 2));
   } else if (sub === 'resume') {
-    if (!process.env.NIGHTWATCH_REASONER_CLI) {
-      fail(2, 'REASONER_CLI_NOT_CONFIGURED — set NIGHTWATCH_REASONER_CLI to resume');
+    if (!process.env.NIGHTWATCH_REASONER_CLI && !process.env.NIGHTWATCH_PRINT_CLI) {
+      fail(2, 'REASONER_CLI_NOT_CONFIGURED — set NIGHTWATCH_REASONER_CLI or NIGHTWATCH_PRINT_CLI to resume');
     } else if (typeof flags.id !== 'string' || flags.id.length === 0) {
       fail(2, 'campaign resume requires --id=<campaignId>');
     } else {
@@ -140,14 +140,20 @@ if (command === 'status') {
       const extraArgs = [];
       if (typeof process.env.NIGHTWATCH_REASONER_SCRIPT === 'string' && process.env.NIGHTWATCH_REASONER_SCRIPT.length > 0) {
         extraArgs.push(process.env.NIGHTWATCH_REASONER_SCRIPT);
+      } else if (process.env.NIGHTWATCH_PRINT_CLI) {
+        extraArgs.push(path.join(root, 'bin/nightwatch-reasoner-print.mjs'));
       }
       const maxTurnsRaw = flags['max-turns'];
       const maxTurns = maxTurnsRaw === undefined ? undefined : Number(maxTurnsRaw);
       try {
+        // ceilingName is required input but resume runs under the checkpoint's
+        // own stored budget policy; the multi-investigation progress (next
+        // investigation index, stagnation count, termination counts) resumes
+        // from the checkpoint envelope without restarting finished work.
         const result = await mod.resumeLocalCliCampaign({
           campaignId: flags.id,
           ceilingName: 'HOUR_1',
-          executable: process.env.NIGHTWATCH_REASONER_CLI,
+          executable: process.env.NIGHTWATCH_REASONER_CLI || process.execPath,
           args: extraArgs,
           provider: process.env.NIGHTWATCH_REASONER_PROVIDER ?? 'configured',
           model: process.env.NIGHTWATCH_REASONER_MODEL ?? 'configured',
