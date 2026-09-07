@@ -43,6 +43,13 @@ export interface AgentBudgetPolicy {
   readonly reasonerCalls: number;
   readonly inputBytes: number;
   readonly outputBytes: number;
+  /**
+   * Lane D: executor-reported pre-truncation tool result bytes get their own
+   * ceiling. `outputBytes` charges provider transport only, so a tool-heavy
+   * local campaign is bounded by this dimension instead of tripping the
+   * model-output guard on source reads it never generated.
+   */
+  readonly toolPayloadBytes: number;
   readonly toolActions: number;
   readonly perActionTimeoutMs: number;
   readonly candidateCap: number;
@@ -56,6 +63,8 @@ export interface AgentBudgetUsage {
   readonly reasonerCalls: number;
   readonly inputBytes: number;
   readonly outputBytes: number;
+  /** Cumulative executor-reported pre-truncation tool result bytes. */
+  readonly toolPayloadBytes: number;
   readonly toolActions: number;
   readonly candidateCount: number;
   readonly retries: number;
@@ -120,9 +129,10 @@ export const AGENT_BYTE_LEDGER_VERSION = 'nightwatch.agent-byte-ledger.v1' as co
  *
  * Charged input:
  *   legacyInputBytes + renderedInputBytes
- * Charged output:
+ * Charged output (provider transport only):
  *   legacyOutputBytes + providerResponseBytes + providerStderrBytes
- *   + toolResultBytes
+ * Charged tool payload:
+ *   legacyToolPayloadBytes + toolResultBytes
  *
  * `reasonerOutputBytes` is the canonical parsed response. It is the same
  * document already represented by providerResponseBytes and is therefore
@@ -139,6 +149,12 @@ export interface AgentByteLedger {
   readonly schemaVersion: typeof AGENT_BYTE_LEDGER_VERSION;
   readonly legacyInputBytes: number;
   readonly legacyOutputBytes: number;
+  /**
+   * Lane D: unattributable pre-restore tool payload, mirroring the legacy
+   * input/output carry. Present so all three charged identities reconcile
+   * exactly after every resume path; zero on fresh runs.
+   */
+  readonly legacyToolPayloadBytes: number;
   readonly renderedInputBytes: number;
   readonly requestMemoryBytes: number;
   readonly requestUntrustedBytes: number;
@@ -147,7 +163,7 @@ export interface AgentByteLedger {
   readonly providerStderrBytes: number;
   /** Canonical parsed reasoner response bytes; measured, not charged twice. */
   readonly reasonerOutputBytes: number;
-  /** Executor-reported pre-truncation output bytes; charged. */
+  /** Executor-reported pre-truncation output bytes; charged to tool payload. */
   readonly toolResultBytes: number;
   /** Serialized bounded untrusted envelopes produced by tools; measured. */
   readonly toolEnvelopeBytes: number;
@@ -159,6 +175,7 @@ export const ZERO_AGENT_BYTE_LEDGER: AgentByteLedger = Object.freeze({
   schemaVersion: AGENT_BYTE_LEDGER_VERSION,
   legacyInputBytes: 0,
   legacyOutputBytes: 0,
+  legacyToolPayloadBytes: 0,
   renderedInputBytes: 0,
   requestMemoryBytes: 0,
   requestUntrustedBytes: 0,
@@ -176,6 +193,7 @@ export function addAgentByteLedgers(a: AgentByteLedger, b: AgentByteLedger): Age
     schemaVersion: AGENT_BYTE_LEDGER_VERSION,
     legacyInputBytes: a.legacyInputBytes + b.legacyInputBytes,
     legacyOutputBytes: a.legacyOutputBytes + b.legacyOutputBytes,
+    legacyToolPayloadBytes: a.legacyToolPayloadBytes + b.legacyToolPayloadBytes,
     renderedInputBytes: a.renderedInputBytes + b.renderedInputBytes,
     requestMemoryBytes: a.requestMemoryBytes + b.requestMemoryBytes,
     requestUntrustedBytes: a.requestUntrustedBytes + b.requestUntrustedBytes,
@@ -193,23 +211,33 @@ export function chargedInputBytes(ledger: AgentByteLedger): number {
   return ledger.legacyInputBytes + ledger.renderedInputBytes;
 }
 
-/** Exact cumulative charged-output identity. */
+/** Exact cumulative charged-output identity (provider transport only). */
 export function chargedOutputBytes(ledger: AgentByteLedger): number {
-  return ledger.legacyOutputBytes + ledger.providerResponseBytes + ledger.providerStderrBytes + ledger.toolResultBytes;
+  return ledger.legacyOutputBytes + ledger.providerResponseBytes + ledger.providerStderrBytes;
 }
 
-/** Build honest W9 attribution for a valid pre-W9 cumulative budget snapshot. */
-export function legacyAgentByteLedger(inputBytes: number, outputBytes: number): AgentByteLedger {
+/** Exact cumulative charged-tool-payload identity. */
+export function chargedToolPayloadBytes(ledger: AgentByteLedger): number {
+  return ledger.legacyToolPayloadBytes + ledger.toolResultBytes;
+}
+
+/** Build honest attribution for a valid pre-W9 cumulative budget snapshot. */
+export function legacyAgentByteLedger(
+  inputBytes: number,
+  outputBytes: number,
+  toolPayloadBytes = 0,
+): AgentByteLedger {
   return {
     ...ZERO_AGENT_BYTE_LEDGER,
     legacyInputBytes: inputBytes,
     legacyOutputBytes: outputBytes,
+    legacyToolPayloadBytes: toolPayloadBytes,
   };
 }
-
-const AGENT_BYTE_LEDGER_COUNT_KEYS = [
+export const AGENT_BYTE_LEDGER_COUNT_KEYS = [
   'legacyInputBytes',
   'legacyOutputBytes',
+  'legacyToolPayloadBytes',
   'renderedInputBytes',
   'requestMemoryBytes',
   'requestUntrustedBytes',
@@ -241,22 +269,78 @@ export const ZERO_AGENT_BUDGET_USAGE: AgentBudgetUsage = Object.freeze({
   reasonerCalls: 0,
   inputBytes: 0,
   outputBytes: 0,
+  toolPayloadBytes: 0,
   toolActions: 0,
   candidateCount: 0,
   retries: 0,
   consecutiveFailures: 0,
   providerFailures: 0,
 });
+/**
+ * Lane D calibration from the w9-live-1 owner-local campaign (19 reasoner
+ * calls in 282 s with ledger renderedInputBytes=231425,
+ * providerResponseBytes=7169, providerStderrBytes=0, toolResultBytes=2950229):
+ *
+ *   measured per call: input 231425/19 = 12_181 B, transport 7169/19 = 378 B,
+ *   tool payload 2950229/19 = 155_276 B.
+ *
+ * Turn-rate assumption: model latency dominates at ~15 s/call observed, so
+ * calls scale with wall time at roughly wall/18s: 200 / 800 / 1600 / 2400
+ * calls for HOUR_1 / HOUR_4 / HOUR_8 / OVERNIGHT (12 h). Per-call costs are
+ * rounded UP from measured (input 12_200, transport 380, payload 156_000)
+ * with a further x2 headroom, then rounded up to clean numbers. Result: at
+ * observed pace every tier carries 10-20x the evidence in each byte
+ * dimension, so campaigns are bounded by wall time and reasonerCalls, while
+ * a runaway model emitting ~100 KB/call still trips the transport ceiling
+ * on its second turn.
+ */
+const BUDGET_REASONER_CALLS: Record<AgentBudgetCeilingName, number> = {
+  HOUR_1: 200,
+  HOUR_4: 800,
+  HOUR_8: 1600,
+  OVERNIGHT: 2400,
+};
+// calls x 12_200 B x 2 headroom: 4_880_000 / 19_520_000 / 39_040_000 / 58_560_000.
+const BUDGET_INPUT_BYTES: Record<AgentBudgetCeilingName, number> = {
+  HOUR_1: 5_000_000,
+  HOUR_4: 20_000_000,
+  HOUR_8: 40_000_000,
+  OVERNIGHT: 60_000_000,
+};
+// calls x 380 B x 2 headroom: 152_000 / 608_000 / 1_216_000 / 1_824_000.
+const BUDGET_OUTPUT_BYTES: Record<AgentBudgetCeilingName, number> = {
+  HOUR_1: 160_000,
+  HOUR_4: 640_000,
+  HOUR_8: 1_280_000,
+  OVERNIGHT: 1_920_000,
+};
+// calls x 156_000 B x 2 headroom: 62_400_000 / 249_600_000 / 499_200_000 / 748_800_000.
+const BUDGET_TOOL_PAYLOAD_BYTES: Record<AgentBudgetCeilingName, number> = {
+  HOUR_1: 64_000_000,
+  HOUR_4: 256_000_000,
+  HOUR_8: 512_000_000,
+  OVERNIGHT: 768_000_000,
+};
+// Tool actions track calls at the pre-existing HOUR_1 ratio (2 actions per
+// call); longer tiers scale proportionally so the count guard never binds a
+// healthy campaign before wall time or reasonerCalls do.
+const BUDGET_TOOL_ACTIONS: Record<AgentBudgetCeilingName, number> = {
+  HOUR_1: 400,
+  HOUR_4: 1600,
+  HOUR_8: 3200,
+  OVERNIGHT: 4800,
+};
 
 export function defaultAgentBudgetPolicy(ceilingName: AgentBudgetCeilingName): AgentBudgetPolicy {
   return {
     schemaVersion: AGENT_BUDGET_VERSION,
     ceilingName,
     wallTimeMs: AGENT_BUDGET_CEILINGS[ceilingName],
-    reasonerCalls: 200,
-    inputBytes: 8_000_000,
-    outputBytes: 2_000_000,
-    toolActions: 400,
+    reasonerCalls: BUDGET_REASONER_CALLS[ceilingName],
+    inputBytes: BUDGET_INPUT_BYTES[ceilingName],
+    outputBytes: BUDGET_OUTPUT_BYTES[ceilingName],
+    toolPayloadBytes: BUDGET_TOOL_PAYLOAD_BYTES[ceilingName],
+    toolActions: BUDGET_TOOL_ACTIONS[ceilingName],
     perActionTimeoutMs: 120_000,
     candidateCap: 20,
     retries: 8,
@@ -272,6 +356,7 @@ export function classifyBudgetExhaustion(policy: AgentBudgetPolicy, usage: Agent
   if (usage.reasonerCalls >= policy.reasonerCalls) return 'SAFE_TERMINATION_CHECKPOINT';
   if (usage.inputBytes >= policy.inputBytes) return 'SAFE_TERMINATION_CHECKPOINT';
   if (usage.outputBytes >= policy.outputBytes) return 'SAFE_TERMINATION_CHECKPOINT';
+  if (usage.toolPayloadBytes >= policy.toolPayloadBytes) return 'SAFE_TERMINATION_CHECKPOINT';
   if (usage.toolActions >= policy.toolActions) return 'SAFE_TERMINATION_CHECKPOINT';
   if (usage.candidateCount >= policy.candidateCap) return 'SAFE_TERMINATION_CHECKPOINT';
   if (usage.retries >= policy.retries) return 'SAFE_TERMINATION_CHECKPOINT';

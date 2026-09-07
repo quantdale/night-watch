@@ -608,5 +608,5 @@ test('result descriptions are secret-safe', async () => {
 test('protocol budget constants are honored, not forked', () => {
   expect(REASONER_STDOUT_BYTE_CAP).toBe(1_048_576);
   expect(REASONER_STDERR_BYTE_CAP).toBe(262_144);
-  expect(AGENT_BUDGET_VERSION).toBe('nightwatch.agent-budget.v1');
+  expect(AGENT_BUDGET_VERSION).toBe('nightwatch.agent-budget.v2');
 });

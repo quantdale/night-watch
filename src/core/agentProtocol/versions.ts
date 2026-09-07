@@ -12,7 +12,9 @@ export const REASONER_TURN_RESPONSE_VERSION = 'nightwatch.reasoner-turn-response
 export const AGENT_TOOL_PROTOCOL_VERSION = 'nightwatch.agent-tool-protocol.v1' as const;
 export const AGENT_RUNTIME_STATE_VERSION = 'nightwatch.agent-runtime-state.v1' as const;
 export const AGENT_CHECKPOINT_VERSION = 'nightwatch.agent-checkpoint.v1' as const;
-export const AGENT_BUDGET_VERSION = 'nightwatch.agent-budget.v1' as const;
+export const AGENT_BUDGET_VERSION = 'nightwatch.agent-budget.v2' as const;
+/** Previous budget schema: v1 checkpoints still parse via the documented migration. */
+export const AGENT_BUDGET_VERSION_V1 = 'nightwatch.agent-budget.v1' as const;
 export const BUG_ATLAS_RECORD_VERSION = 'nightwatch.bug-atlas-record.v1' as const;
 export const SYSTEM_ATLAS_RECORD_VERSION = 'nightwatch.system-atlas-record.v1' as const;
 export const ATLAS_QUERY_VERSION = 'nightwatch.atlas-query.v1' as const;

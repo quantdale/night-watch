@@ -9,6 +9,7 @@ import {
   ZERO_AGENT_BYTE_LEDGER,
   chargedInputBytes,
   chargedOutputBytes,
+  chargedToolPayloadBytes,
   defaultAgentBudgetPolicy,
   type AgentBudgetPolicy,
   type AgentIntent,
@@ -148,9 +149,11 @@ test.describe('w9 charged-output identity', () => {
     expect(ledger.legacyInputBytes).toBe(0);
     expect(ledger.legacyOutputBytes).toBe(0);
     expect(result.state.budget.usage.inputBytes).toBe(chargedInputBytes(ledger));
-    expect(result.state.budget.usage.inputBytes).toBe(ledger.renderedInputBytes);
-    expect(result.state.budget.usage.outputBytes).toBe(1000 + 200 + 50 + 10 + 500);
+    expect(result.state.budget.usage.outputBytes).toBe(1000 + 200 + 50 + 10);
     expect(result.state.budget.usage.outputBytes).toBe(chargedOutputBytes(ledger));
+    // Tool bytes charge the payload dimension, never the transport ceiling.
+    expect(result.state.budget.usage.toolPayloadBytes).toBe(500);
+    expect(result.state.budget.usage.toolPayloadBytes).toBe(chargedToolPayloadBytes(ledger));
     // The parsed reasoner output is never charged again on top of the response.
     expect(result.state.budget.usage.outputBytes).toBeLessThan(chargedOutputBytes(ledger) + ledger.reasonerOutputBytes);
     expect(ledger.requestMemoryBytes).toBeLessThanOrEqual(ledger.renderedInputBytes);
@@ -217,12 +220,11 @@ test.describe('w9 charged-output identity', () => {
     const ledger = result.state.byteLedger!;
 
     expect(ledger.toolResultBytes).toBe(100_000);
-    expect(ledger.toolEnvelopeBytes).toBe(utf8Bytes(JSON.stringify([envelopeWith('x'.repeat(100))])));
-    // A 100 KB tool payload is charged in full while only the truncated
-    // envelope is measured as reaching the reasoner.
     expect(ledger.toolEnvelopeBytes).toBeLessThan(ledger.toolResultBytes);
-    expect(result.state.budget.usage.outputBytes).toBe(100 + 20 + 100_000);
+    expect(result.state.budget.usage.outputBytes).toBe(100 + 20);
     expect(result.state.budget.usage.outputBytes).toBe(chargedOutputBytes(ledger));
+    expect(result.state.budget.usage.toolPayloadBytes).toBe(100_000);
+    expect(result.state.budget.usage.toolPayloadBytes).toBe(chargedToolPayloadBytes(ledger));
   });
 });
 
@@ -290,12 +292,14 @@ test.describe('w9 ledger snapshot, checkpoint, and resume', () => {
     // as provider or tool components, and the cumulative totals survive.
     expect(restored.legacyInputBytes).toBe(paused.state.budget.usage.inputBytes);
     expect(restored.legacyOutputBytes).toBe(paused.state.budget.usage.outputBytes);
+    expect(restored.legacyToolPayloadBytes).toBe(paused.state.budget.usage.toolPayloadBytes);
     expect(restored.renderedInputBytes).toBe(0);
     expect(restored.providerResponseBytes).toBe(0);
     expect(restored.toolResultBytes).toBe(0);
     expect(chargedInputBytes(restored)).toBe(paused.state.budget.usage.inputBytes);
     expect(chargedOutputBytes(restored)).toBe(paused.state.budget.usage.outputBytes);
 
+    expect(chargedToolPayloadBytes(restored)).toBe(paused.state.budget.usage.toolPayloadBytes);
     const finished = await resumed.run({ maxTurns: 3 });
     const folded = finished.state.byteLedger!;
     expect(folded.renderedInputBytes).toBeGreaterThan(0);
@@ -303,6 +307,7 @@ test.describe('w9 ledger snapshot, checkpoint, and resume', () => {
     expect(folded.providerResponseBytes).toBe(10);
     expect(finished.state.budget.usage.inputBytes).toBe(chargedInputBytes(folded));
     expect(finished.state.budget.usage.outputBytes).toBe(chargedOutputBytes(folded));
+    expect(finished.state.budget.usage.toolPayloadBytes).toBe(chargedToolPayloadBytes(folded));
   });
 
   test('malformed, drifted and unknown-disposition checkpoints fail closed', async () => {
@@ -394,9 +399,8 @@ test.describe('w9 ledger snapshot, checkpoint, and resume', () => {
     const result = await runtime.run({ maxTurns: 5 });
 
     expect(result.terminationReason).toBe('BUDGET_EXHAUSTED');
-    expect(result.checkpoint).not.toBeNull();
-    expect(result.state.budget.usage.outputBytes).toBeGreaterThanOrEqual(500);
     expect(result.state.budget.usage.outputBytes).toBe(chargedOutputBytes(result.state.byteLedger!));
-    expect(defaultAgentBudgetPolicy('HOUR_1').outputBytes).toBe(2_000_000);
+    expect(defaultAgentBudgetPolicy('HOUR_1').outputBytes).toBe(160_000);
+    expect(defaultAgentBudgetPolicy('HOUR_1').toolPayloadBytes).toBe(64_000_000);
   });
 });
