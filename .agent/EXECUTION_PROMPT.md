@@ -2,11 +2,16 @@
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
 Status: IN_PROGRESS
-Parent Campaign ID: nightwatch-autonomous-bug-hunting-programme-v1
-Task ID: nightwatch-real-local-investigation-substrate-v1
-Task directory: .agent/tasks/nightwatch-real-local-investigation-substrate-v1
+Campaign ID: nightwatch-autonomous-bug-hunting-programme-v1
+OpenSpec: openspec/changes/nightwatch-autonomous-bug-hunting-programme-v1/
+Planned-From: d1ebde90c1454b31d6b93d9df503a4c5f196d7c8
 Target Branch: main
-Live HEAD: DISCOVER_FROM_GIT
+Predecessor Task ID: nightwatch-owner-local-review-persistence-v1
+Predecessor Status: COMPLETE
+
+Child task: `nightwatch-real-local-investigation-substrate-v1`
+Child task directory: `.agent/tasks/nightwatch-real-local-investigation-substrate-v1`
+Live HEAD: discovered from Git, never from this document.
 
 ## Mission
 
