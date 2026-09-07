@@ -4,22 +4,22 @@
 
 Task ID: nightwatch-owner-local-deterministic-reproduction-yield-v1
 Phase: W9_OWNER_LOCAL_DETERMINISTIC_REPRODUCTION_YIELD
-Status: IN_PROGRESS
+Status: COMPLETE
 Parent programme: nightwatch-autonomous-bug-hunting-programme-v1
 Starting SHA: 8f385e5fd404bd694db516e0fe3be473f29380af
-Last validated implementation SHA: 3d624fbcc42da808ce1c7e9cbc6b780b82d90820
-Last substantive checkpoint SHA: 3d624fbcc42da808ce1c7e9cbc6b780b82d90820
+Last validated implementation SHA: bb28480c6a6969a06744c75c4c947851d5bece7c
+Last substantive checkpoint SHA: bb28480c6a6969a06744c75c4c947851d5bece7c
 Live HEAD authority: GIT
 Branch: session/nightwatch-owner-local-determini-47add5e3
-Last checkpoint: lanes A/B/C/M6 integrated at `979c370`; real owner-local reproduction and a live subscribed campaign both executed; budget-dimension calibration (Lane D live finding) delegated
+Last checkpoint: W9 implementation integrated and certified at `bb28480`; owner-local reproduction, explicit current-source proof/admission, host-owned retries, separated byte budgets, real local proof, subscribed-reasoner yield and HOUR_1 endurance are complete
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 8f385e5fd404bd694db516e0fe3be473f29380af
-LAST_VALIDATED_IMPLEMENTATION_SHA: 3d624fbcc42da808ce1c7e9cbc6b780b82d90820
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 3d624fbcc42da808ce1c7e9cbc6b780b82d90820
+LAST_VALIDATED_IMPLEMENTATION_SHA: bb28480c6a6969a06744c75c4c947851d5bece7c
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: bb28480c6a6969a06744c75c4c947851d5bece7c
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
-PHASE_W9_OWNER_LOCAL_DETERMINISTIC_REPRODUCTION_YIELD_STATUS: IN_PROGRESS
+PHASE_W9_OWNER_LOCAL_DETERMINISTIC_REPRODUCTION_YIELD_STATUS: COMPLETE
 
 ## Objective
 
@@ -27,14 +27,14 @@ Add a safe deterministic reproduction path for supported current owner-local sou
 
 ## Current Milestone
 
-Milestone ID: M7-M8
-Milestone status: IN_PROGRESS
-
-What is being attempted: reconcile every lane diff into the integration branch, then close the live-proof milestone. Lanes A (provider), B (admission), C (disposition/retry), D-part-1 (exact byte ledger) and M6 (readiness + neutral prompt instructions) are integrated and green; the live campaign exposed a budget-dimension defect now being repaired.
+COMPLETE — M9 closed.
+Milestone ID: M9
+Milestone status: COMPLETE
+All W9 milestones are closed. The implementation checkpoint `bb28480c6a6969a06744c75c4c947851d5bece7c` is integrated on `origin/main` and passed focused, full local and fresh Node 20 clean-clone certification. Parent programme status remains independently `IN_PROGRESS`.
 
 ## M2-M6 integration (this session)
 
-Integration branch `session/nightwatch-owner-local-determini-47add5e3` at `979c370`, cherry-picked lane by lane with reconciliation:
+Integration branch `session/nightwatch-owner-local-determini-47add5e3` was reviewed and integrated through `bb28480c6a6969a06744c75c4c947851d5bece7c`, cherry-picked lane by lane with reconciliation:
 
 | Commit | Lane | Content |
 |---|---|---|
@@ -44,24 +44,29 @@ Integration branch `session/nightwatch-owner-local-determini-47add5e3` at `979c3
 | `ccdff51` | integration | lane fixture repairs (stale driver script, ESM import, missing helper) |
 | `febb49a`, `8c05616` | M6 | verdicts/dispositions/proof carriage/REAL_LOCAL default/readiness + neutral print instructions; `failedInspection` restore and per-`argumentDigest` transient budget |
 | `7c56eb0`, `2c7a13f` | A | bounded `go list -deps -test` closure, byte-exact output cap, real `bwrap --unshare-net` execution, fixed toolchain allowlist, restored declarations |
-| `de3098e` | D | exact component byte ledger (below) |
+| `de3098e` | D1 | exact component byte ledger |
 | `979c370` | C | host-owned retry adversarial matrix (7 behavioral cases; no contract bug found) |
+| `d91f11b` | D2 | separate provider transport and tool payload budget dimensions; calibrated v2 ceilings |
+| `bb28480` | D2 repair | migrate v1 mixed totals once into payload carry so old tool-heavy checkpoints remain resumable |
 
 Reconciliation defects found by orchestrator review and repaired in-lane before integration: whole-module-tree materialization instead of a dependency closure; output cap counted JS chars not UTF-8 bytes; `networkDisabled: true` asserted from `GOPROXY=off` alone with no network namespace; ambient `PATH`/`GOROOT` toolchain discovery; two commits that deleted declarations they were editing around; a readiness loop referencing a deleted binding; a retry budget summed across targets instead of per exact action digest.
 
-## Exact byte accounting (`de3098e`)
+## Exact byte accounting and calibrated endurance
 
-`nightwatch.agent-byte-ledger.v1` now names every component and reconciles exactly with the frozen cumulative totals: `chargedInputBytes = legacyInputBytes + renderedInputBytes`, `chargedOutputBytes = legacyOutputBytes + providerResponseBytes + providerStderrBytes + toolResultBytes`. `reasonerOutputBytes` (the parsed response already carried by the provider response), `requestMemoryBytes`, `requestUntrustedBytes`, `toolEnvelopeBytes` and `checkpointBytes` are measured, never charged. A pre-W9 checkpoint with no ledger resumes through explicit legacy carry rather than fabricating provider/tool attribution, and `parseCheckpoint` now rejects a structurally valid but arithmetically drifted ledger. `checkpointBytes` counts the exact UTF-8 documents the checkpoint codec produced, resolved as the least fixed point of `bytes = priorBytes + size(document(bytes))` (the count lives inside the document it measures); a campaign envelope's `campaignProgress` framing is deliberately outside that fixed point.
+`nightwatch.agent-byte-ledger.v1` names every component and reconciles exactly with the v2 budget totals: `chargedInputBytes = legacyInputBytes + renderedInputBytes`; `chargedOutputBytes = legacyOutputBytes + providerResponseBytes + providerStderrBytes`; `chargedToolPayloadBytes = legacyToolPayloadBytes + toolResultBytes`. Parsed reasoner output, prompt-memory/untrusted subsets, capped tool envelopes and checkpoint documents are measured but never charged twice. Structurally valid but arithmetically drifted ledgers fail closed.
+
+The v1 snapshot had one ambiguous mixed output total. Migration drops no bytes: it moves the entire old total once into `legacyToolPayloadBytes`, resets v2 transport usage to zero, and restores the standard v2 transport ceiling. This conservatively over-attributes the small historical transport component but avoids making a tool-heavy valid v1 checkpoint terminate immediately against the much smaller v2 transport ceiling. Idempotent parsing, resumed accumulation and a 3,000,000-byte legacy case are permanent regressions.
+
+Calibrated ceilings use the observed `w9-live-1` rate with two-times headroom: HOUR_1 = 200 reasoner calls / 5,000,000 input B / 160,000 transport B / 64,000,000 tool-payload B / 400 tool actions; longer tiers scale proportionally. Independent transport and payload runaway tests still terminate safely.
 
 ## M8 live proof
 
 - Real owner-local reproduction, real toolchain, real containment: `mobingilabs/ouchan:pkg/almcreds/creds.go` discovered generically from repository metadata, module `ouchan` @ `565f00a87fb7616cc23c45d4ffeabee38a41c65f`, toolchain `go1.25.8` from the cached allowlisted path, two fresh disposable executions inside `bwrap --unshare-net`, both `TEST_PASS` (11.1 s / 9.8 s) → honest `NOT_REPRODUCED`, `preFix=PASS`, `postFix=NOT_RUN`, `currentSourceProof=null`, `siblingIdentityStable=true`, `networkDisabled=true`, zero temp residue, sibling repository unmodified. The capability executes; this package simply holds no qualifying defect.
-- Live subscribed reasoner campaign `w9-live-1` (`campaign run --reasoner=cli --duration=1h --max-turns=10`, real `opencode-go/deepseek-v4-flash`): 2 investigations, 19 reasoner calls, 0 provider failures, 14 real Alphaus source targets inspected, 14 evidence refs, 0 candidates, terminated `BUDGET_EXHAUSTED` after 284.5 s.
-- Ledger from that live run: renderedInput 231 425 B, providerResponse 7 169 B, providerStderr 0 B, reasonerOutput 8 085 B, toolResult 2 950 229 B, toolEnvelope 153 909 B, checkpoint 20 371 B.
-
-## Live finding: the output ceiling is a tool-payload ceiling
-
-Charging pre-truncation tool payloads into the same `outputBytes` ceiling as provider transport makes local source reads 99.8 % of that budget dimension: the HOUR_1 campaign died at 4.7 minutes of a 60-minute wall-time allowance while the model produced only 7 KB. Raising the number would hide the category error, so the repair separates the dimensions (`toolPayloadBytes` in policy/usage, `outputBytes` for provider transport only, budget schema v2 with v1 resume preserved) and calibrates all four ceilings from the measured per-turn rates. Delegated to the implementation lane with mandatory full-unit validation.
+- Initial live subscribed reasoner campaign `w9-live-1` (historical pre-owner model-switch run, ordinary `campaign run`, `opencode-go/deepseek-v4-flash`): 2 investigations, 19 reasoner calls, 0 provider failures, 14 real source targets, 14 evidence refs, 0 candidates; `BUDGET_EXHAUSTED` after 284.5 s. Ledger: rendered input 231,425 B; provider response 7,169 B; stderr 0 B; parsed output 8,085 B; tool result 2,950,229 B; tool envelope 153,909 B; checkpoint 20,371 B. This exposed the mixed-dimension defect; it is retained as historical evidence, not the final provider.
+- The first post-repair endurance attempt was stopped immediately when the owner directed replacement of that model; no result or evidence claim was taken from it.
+- Final owner-directed endurance campaign `w9-endurance-omen-1` used `opencode-go/omen-alpha` through ordinary `campaign run --reasoner=cli --duration=1h --max-turns=12`. It ran 3,673,995 ms, started/completed 7 investigations, made 79 reasoner calls and 56 tool actions, recorded 3 provider failures (2 timeouts + 1 nonzero exit) with 3 bounded provider retries, inspected 26 unique real source targets, minted 27 evidence refs, formed 28 grounded/verification-ready hypotheses, attempted 7 reproductions, and received 7 deterministic `NOT_AVAILABLE` outcomes because those inspected files had no supported executable target. Reproduction transient retries: 0. Candidates: 1; admissions: 0; refusals: 1 (`MISSING_REPRODUCTION`); qualifying current-source reproductions: 0.
+- Endurance bytes: rendered input 1,112,083 B; memory contribution 435,205 B; untrusted contribution 573,362 B; provider response 51,720 B; provider stderr 113 B; parsed reasoner output 54,724 B; tool result 10,661,051 B; tool envelope 608,658 B; checkpoint 40,584 B. Final charged usage was input 1,112,083 / 5,000,000 B, transport 51,833 / 160,000 B, and tool payload 10,661,051 / 64,000,000 B.
+- Exact outer termination: `BUDGET_EXHAUSTED` on HOUR_1 wall time (3,673,995 ms used vs 3,600,000 ms; one bounded in-flight call completed before termination), not input, transport, payload, calls, actions, candidates, retries or provider-failure ceilings. Inner outcomes: 2 `COMPLETE_NO_FINDING`, 5 `NO_PROGRESS`. No finding was fabricated; no previously unknown Alphaus defect is claimed.
 
 ## Starting facts carried from the accepted W8 closeout
 
@@ -91,14 +96,11 @@ These are observations/hypotheses to VERIFY from live code and traces before imp
 
 ## Work In Progress
 
-Lane implementation is complete and integrated except the budget-dimension calibration, which one lane owns exclusively because it edits budget policy, the campaign fold and the checkpoint parser together. Global W9/programme/current-state/OpenSpec files remain orchestrator-owned.
+None. W9 is terminal.
 
 ## Exact Next Action
 
-1. Integrate the budget-dimension calibration commit, then rerun the full unit suite plus typecheck at the integration head.
-2. Re-run the bounded HOUR_1 endurance campaign against the calibrated ceilings and record whether it is bounded by wall time/reasoner calls rather than bytes.
-3. Re-run the real historical ouchan product-path proof, then M9: focused W9 + W7/W8 regression suites, `gate:local`, `gate:clean`, and the hygiene checks.
-4. Reconcile the stale session base against `origin/main`, integrate, then update W9 STATE/PLAN/REPORT and parent programme truth and release the finished lane worktrees.
+STOP. W9 is closed and frozen. Any successor is a separate task requiring explicit owner authorization; DEV/NEXT, external filing and previously-unknown-defect claims remain unauthorized/unproven.
 
 ## Files Changed
 
@@ -106,8 +108,8 @@ Lane implementation is complete and integrated except the budget-dimension calib
 |---|---|---|
 | `.agent/tasks/nightwatch-owner-local-deterministic-reproduction-yield-v1/SPEC.md` | W9 contract | DONE |
 | `.agent/tasks/nightwatch-owner-local-deterministic-reproduction-yield-v1/PLAN.md` | W9 execution plan | DONE |
-| `.agent/tasks/nightwatch-owner-local-deterministic-reproduction-yield-v1/STATE.md` | continuity | IN_PROGRESS |
-| `.agent/tasks/nightwatch-owner-local-deterministic-reproduction-yield-v1/REPORT.md` | evidence ledger | IN_PROGRESS |
+| `.agent/tasks/nightwatch-owner-local-deterministic-reproduction-yield-v1/STATE.md` | continuity | COMPLETE |
+| `.agent/tasks/nightwatch-owner-local-deterministic-reproduction-yield-v1/REPORT.md` | evidence ledger | COMPLETE |
 | `src/core/localInvestigation/currentSourceProof.ts`, `types.ts` | explicit current-source proof/verdict contract | FROZEN |
 | `src/core/ownerLocalReproduction/contracts.ts` | host-derived target/execution contract | FROZEN |
 | `src/core/agentProtocol/runtime.ts` | disposition/retry/byte-ledger contract | FROZEN |
@@ -127,6 +129,12 @@ M0/M1 validation: `npx playwright test tests/unit/ownerLocalReproductionContract
 M2-M6 integration validation at `979c370`: `npm run typecheck` PASS; `npx playwright test tests/unit` PASS (4519 passed, 16 skipped, 8.4 min) at `de3098e` plus the retry matrix suite green in-lane (33/33) after the last cherry-pick; `npm run hardening:check` PASS; `npm run workspace:check`, `npm run agent:check`, `npm run project:check` PASS with expected mid-task warnings (stale implementation baseline, stale session base, one unrelated stale worktree claim).
 
 M8 validation: `NIGHTWATCH_REAL_OWNER_LOCAL_PROOF=1 npx playwright test tests/unit/realOwnerLocalReproductionProof.test.ts --project=nightwatch --workers=1` PASS (26.4 s, real toolchain and containment); the same provider driven directly produced the `pkg/almcreds` receipt recorded above; `campaign run --reasoner=cli --duration=1h --max-turns=10 --id=w9-live-1` against the real subscribed provider completed with 0 provider failures and the ledger recorded above.
+
+M7 post-reconcile validation at implementation checkpoint `bb28480c6a6969a06744c75c4c947851d5bece7c`: full `tests/unit` 4531 passed / 16 skipped / 0 failed after the v1 migration correction; focused W9/W7/W8 matrix 295 passed / 3 skipped / 0 failed.
+
+M8 final live validation: `w9-endurance-omen-1` ran through the ordinary subscribed CLI path with `opencode-go/omen-alpha` for 3,673,995 ms and ended on the HOUR_1 wall-time ceiling while all byte/count ceilings retained headroom. Metrics and non-claims are recorded above.
+
+M9 certification at `bb28480`: `npm run typecheck`, `hardening:check`, `agent:check`, `handoff:check`, `project:check`, `workspace:check`, `session:check` PASS (only expected stale-task/worktree advisory warnings); full `npm test` 4565 passed / 16 skipped / 0 failed; `gate:local` all 11 groups PASS with `receipt:sha256:6fb76272f121ec1bed5b74bf`; fresh Node 20 `gate:clean` used no prior `node_modules`, left source clean, recorded `siblingWrites=0`, and PASS with `clean-receipt:sha256:d914db277a583699a1ff68c3`. Opt-in real historical ouchan product-path proof PASS; opt-in real current owner-local provider proof PASS.
 
 ## Decisions Made During This Task
 
@@ -160,13 +168,19 @@ Reason: a byte ceiling that ends a 60-minute campaign in 4.7 minutes silently re
 Decision: `checkpointBytes` is measured, never charged, and its fixed point covers only the checkpoint codec's own document.
 Reason: checkpoints are local storage rather than model I/O, and including a wrapper's framing would make the value depend on the caller instead of the codec.
 
+Decision: migrate an ambiguous v1 mixed output total wholly into v2 payload carry, not v2 transport.
+Reason: every byte remains charged exactly once; measured traffic was 99.8% tool payload, while retaining megabytes of old tool reads under the 160 KB transport guard would make valid pre-v2 checkpoints non-resumable. The bounded downside is a fresh small transport allowance on resume, explicitly tested and documented.
+
+Decision: use `opencode-go/omen-alpha` for the final subscribed endurance campaign.
+Reason: the owner explicitly replaced `opencode-go/deepseek-v4-flash`; the in-flight post-repair attempt on the old model was canceled and no result was claimed. Historical pre-directive `w9-live-1` data remains truthful provenance for the discovered accounting defect.
+
 ## Blockers
 
-None known for repository-owned M0 work. Provider quota may affect later live proof but does not block deterministic/local implementation and testing.
+None for W9. Parent-level DEV/NEXT authorization, strict EXACT proof and independently established previously-unknown-defect status remain outside W9 and do not invalidate its terminal LOCAL result.
 
 ## Safety Events
 
-NONE in W9 at task creation.
+No safety-boundary violations. Production/DEV/NEXT contacts, external publications, credential/deployment changes, force pushes/history rewrites and sibling writes: 0. Reproduction execution stayed in disposable Nightwatch-owned state with before/after sibling identity checks. The owner-directed reasoner switch was honored immediately; the superseded endurance process was canceled and the terminal campaign used `opencode-go/omen-alpha`.
 
 ## Deferred / Follow-Up
 
@@ -177,13 +191,16 @@ NONE in W9 at task creation.
 
 ## Resume Recipe
 
-1. Read `.agent/ACTIVE_TASK.md` and `.agent/EXECUTION_PROMPT.md`.
-2. Read this task's SPEC/PLAN/STATE/REPORT.
-3. Read W8 `nightwatch-autonomous-efficacy-real-local-substrate-v1/{STATE,REPORT}.md`.
-4. Read W7 `nightwatch-real-local-investigation-substrate-v1/{STATE,REPORT}.md`.
-5. Read parent PROGRAMME/STATE/REPORT and live Git/workspace/session truth.
-6. Continue the Exact Next Action; do not reopen W0-W8.
+Task complete. Do not resume this task.
+Read `.agent/ACTIVE_TASK.md`, parent PROGRAMME/STATE/REPORT and this terminal record only for continuity. A future successor requires new authorization and its own task from live Git truth; W9 safety/evidence contracts remain frozen.
 
 ## Completion Snapshot
 
-Not complete. Populate only after M0-M9 are actually closed and W9 has its own certified implementation checkpoint.
+Task complete.
+Milestones M0-M9: COMPLETE.
+Validated implementation and substantive checkpoint: `bb28480c6a6969a06744c75c4c947851d5bece7c`.
+Local gate: PASS, `receipt:sha256:6fb76272f121ec1bed5b74bf`.
+Fresh Node 20 clean gate: PASS, `clean-receipt:sha256:d914db277a583699a1ff68c3`.
+Current-source capability: PROVEN for the bounded `GO_VENDORED_PACKAGE_TEST` class.
+Live yield: zero admitted findings; one candidate correctly refused without qualifying reproduction.
+Parent programme: IN_PROGRESS / PARTIAL. No parent-completion, strict-EXACT, DEV/NEXT/production, organizational-approval or previously-unknown-defect claim.

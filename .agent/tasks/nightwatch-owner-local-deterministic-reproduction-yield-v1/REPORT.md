@@ -1,7 +1,7 @@
 # REPORT — nightwatch-owner-local-deterministic-reproduction-yield-v1
 
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
-Status: IN_PROGRESS
+Status: COMPLETE
 Parent programme: nightwatch-autonomous-bug-hunting-programme-v1
 Wave: W9 — OWNER-LOCAL DETERMINISTIC REPRODUCTION & YIELD
 
@@ -28,67 +28,142 @@ W8 is terminal and must not be reopened absent a concrete regression:
 
 The accepted open gap is current owner-local reproduction: a grounded live hypothesis can become verification-ready, but the default real owner-local context has no executable reproduction provider, so the host correctly refuses reproduction/admission.
 
-## Evidence ledger
+## Delivered
 
-### M0 diagnosis
+### Diagnosis and frozen contracts
 
-- Live Git/session: canonical main was clean and 22 commits behind live `origin/main`; it was fast-forwarded to `2886a85e3b3ceeabd05f4e291dc9cbc47b0d0bd9`. Dedicated C-00 worktree `session/nightwatch-owner-local-determini-47add5e3` was created/claimed at that base.
-- REAL_LOCAL reproduction gap: CONFIRMED. The ordinary CLI passes zero options to `createOwnerLocalInvestigationContext()`, which installs `unavailable-local-reproduction`; its `run()` returns `BLOCKED / NOT_CONFIGURED`, the tool session returns `ADAPTER_UNAVAILABLE`, no reproduction receipt exists, and `admitLocalFinding` returns `MISSING_REPRODUCTION`.
-- Byte audit: CONFIRMED double counting. `AgentRuntime.runTurn` charged transport `stdoutBytes + stderrBytes`, then charged the validated `call.response` serialized from that same stdout. Tool output was also charged before the 16 KiB untrusted-envelope cap. HOUR_1 stayed at 2,000,000 output bytes pending repair/calibration.
-- Exhaustion audit: CONFIRMED over-broad. Every executor `ok:false` collapsed to `TOOL_ERROR`, while `detectExhaustedAction` marked any matching `TOOL_ERROR` permanently exhausted. Transient file races, stale-HEAD reads and provider throws therefore became terminal. The validator also accepted model-supplied regex-shaped argument digests without recomputation.
-- Offline class recon: Go 1.25.3 host + cached Go 1.25.8 toolchain; `mobingilabs/ouchan` vendors 418 modules. A 63 MiB disposable dependency/test closure ran with `GOPROXY=off`, `GOTOOLCHAIN=local`, `-mod=vendor`. `pkg/gcsv`'s pre-existing `TestGolangCsv` failed twice at the same `info_test.go:557` assertion (cold 53.3s, warm 2.2s). This is a candidate qualifying current-source failure, not a claim of previously unknown defect.
+- Confirmed the ordinary REAL_LOCAL path installed `unavailable-local-reproduction`, returned `BLOCKED / NOT_CONFIGURED`, minted no receipt and forced admission to `MISSING_REPRODUCTION`.
+- Confirmed two accounting defects: successful provider response bytes were charged once as raw transport and again as parsed JSON; uncapped source/tool objects shared that same ceiling even though the prompt saw capped envelopes.
+- Confirmed transient executor failures were collapsed to generic `TOOL_ERROR` and permanently exhausted; model-supplied argument digests could evade host retry accounting.
+- Proved one narrow offline class viable: host-derived Go packages in approved repositories with already-local vendored/cached dependencies.
+- Froze `nightwatch.owner-local-reproduction-target.v1`, `nightwatch.owner-local-current-source-proof.v1`, host-owned execution/disposition vocabulary, finite two-attempt transient policy, `nightwatch.agent-byte-ledger.v1`, and neutral owner-local readiness.
 
-### M1 frozen contracts
+### Owner-local executable provider
 
-- `nightwatch.owner-local-reproduction-target.v1`: only `GO_VENDORED_PACKAGE_TEST`; host-derived structured module/package/source identity; no command/env/executable input; hard materialization, execution, output, file, byte and repeat ceilings.
-- `nightwatch.owner-local-current-source-proof.v1`: explicit `CURRENT_SOURCE_REPEATED_TEST_FAILURE`; only `PRE_EXISTING_REPOSITORY_TEST + TEST_ASSERTION_FAILURE + >=2 fresh identical fingerprints + siblingIdentityStable + networkDisabled` can qualify. Historical PRE_FAIL_POST_PASS remains distinct.
-- Host-owned action disposition: `DETERMINISTIC_TERMINAL | ENVIRONMENT_BLOCKED | TRANSIENT_RETRYABLE`; transient budget fixed at 2.
-- `nightwatch.agent-byte-ledger.v1`: request, memory, untrusted prompt, stdout, stderr, parsed response, tool result and tool envelope buckets; parsed response measured but not charged twice.
-- Additive reasoner-visible readiness: no target, target blocked, ready, deterministic refusal, transient retry remaining, current failure reproduced, ran without reproduction.
-- Validation after pinned local dependency install: W9 contract suite 6/6 PASS; `npm run typecheck` PASS.
+One production path, no reasoner-selected command surface:
 
-### Intermediate failure
+- target class: `GO_VENDORED_PACKAGE_TEST`;
+- repository/module/package/source/toolchain facts derived by the host from approved current sibling source;
+- fixed allowlisted cached Go toolchain; no ambient executable lookup;
+- bounded `go list -deps -test` closure; byte/file/tree caps;
+- materialization only into disposable Nightwatch-owned state;
+- `spawn` argv arrays with `shell:false`;
+- `GOPROXY=off`, `GOTOOLCHAIN=local`, `-mod=vendor`;
+- `bwrap --unshare-net` process/network containment;
+- hard action timeout, output cap and process-group termination;
+- explicit PASS / TEST_FAILURE / BUILD_FAILURE / TIMEOUT / ENVIRONMENT_BLOCKED / PROCESS_FAILURE;
+- sibling identity verified before and after every run;
+- cleanup in `finally`.
 
-The first M1 checks ran before `node_modules` existed in the new worktree. `npx` used external/global tools: Playwright could not resolve `@playwright/test`; global TypeScript rejected the repository's legacy `moduleResolution=node10`. This was an environment/setup failure, not hidden. `npm ci --ignore-scripts` installed the lockfile-pinned dependencies; unchanged checks then passed.
+Command, path, executable, environment, Git, network and sibling-write injection are rejected. Build/process/timeout/environment failures never mint defect credit.
 
-## Truth constraints
+### Current-source proof and admission
 
-Do not claim any of the following without direct evidence:
+`CURRENT_SOURCE_REPEATED_TEST_FAILURE` is distinct from historical `PRE_FAIL_POST_PASS`. It requires a pre-existing repository test, `TEST_ASSERTION_FAILURE`, two fresh executions with the same normalized fingerprint, stable source/provenance/sibling identity, disabled network, and provider-bound Nightwatch minting. Model prose/counts, one flaky failure, generic nonzero exit, generated assertion, forged receipt/proof and unsupported target never qualify.
 
-- a generic process failure is a bug;
-- current-source reproduction is equivalent to historical PRE_FAIL_POST_PASS;
-- a model-generated test proves an existing product contract by itself;
-- a single flaky failure is a reproduced defect;
-- previously unknown Alphaus bug discovery;
-- strict EXACT rediscovery;
-- DEV/NEXT/production proof;
-- organizational approval;
-- parent programme completion.
+Historical W7/W8 behavior is unchanged. A qualifying current-source finding still has `humanReviewRequired=true` and external publication prohibited.
 
-## Known design risks to investigate
+### Failure disposition and retry
 
-1. Current `TOOL_ERROR` exhaustion may be too coarse once a provider has transient failures.
-2. Current owner-local context may need a carefully bounded source-to-package target derivation rather than a broad executor.
-3. Existing admission semantics are historically oriented; current-source proof must be additive and explicit.
-4. W8 output-byte exhaustion may reflect legitimate traffic, double counting, prompt/memory amplification, or a combination. Measure before changing policy.
-5. Supporting too many languages/package managers in one wave would increase unsafe command/dependency surface; prefer a conservative first class.
+The host alone assigns `DETERMINISTIC_TERMINAL`, `ENVIRONMENT_BLOCKED`, or `TRANSIENT_RETRYABLE`. Exact host-recomputed action digests receive at most two transient attempts. Deterministic refusals and environment blocks do not spin; independent digests retain independent budgets; resume cannot reset an exhausted digest. Reasoner-supplied retry labels and digests are inert.
 
-## Safety ledger
+### Byte accounting and calibration
 
-W9 starts with the same hard boundaries as W7/W8:
+Budget schema v2 separates provider transport from executor payload:
 
-- LOCAL only;
-- sibling repositories read-only;
-- no arbitrary shell/Git/network/filesystem authority for the reasoner;
-- no DEV/NEXT/production;
-- no Slack/Leslie/Pondr/Notion/external filing;
-- no credential/deployment changes;
-- no force push/history rewrite/destructive recovery;
-- all reproduction writes in disposable Nightwatch-owned state;
-- no network dependency fetching to force tests to run.
+- charged input = legacy input + rendered request;
+- charged transport = legacy output + provider stdout + provider stderr;
+- charged payload = legacy payload + pre-envelope tool result;
+- parsed response, memory/untrusted subsets, capped tool envelope and checkpoint document remain measured but are not charged twice.
 
-Safety events: NONE at task creation.
+A v1 mixed output total migrates once into v2 payload carry, with zero bytes dropped or duplicated. This slightly over-attributes historical transport but keeps valid tool-heavy pre-v2 checkpoints resumable; a permanent 3,000,000-byte legacy regression proves the case that would otherwise exceed the 160,000-byte transport ceiling before one new turn.
+
+Calibrated HOUR_1 ceilings: 3,600,000 ms, 200 reasoner calls, 5,000,000 input B, 160,000 transport B, 64,000,000 tool-payload B, 400 tool actions. HOUR_4/HOUR_8/OVERNIGHT scale proportionally. Independent transport and payload runaway tests remain fail-closed.
+
+## Real proof and measured yield
+
+### Generic real owner-local execution
+
+The generic provider discovered `mobingilabs/ouchan:pkg/almcreds/creds.go` at sibling HEAD `565f00a87fb7616cc23c45d4ffeabee38a41c65f`. Cached Go 1.25.8 ran the package twice in fresh disposable `bwrap --unshare-net` executions (11.1 s / 9.8 s). Both passed. Truthful receipt: `NOT_REPRODUCED`, `preFix=PASS`, `postFix=NOT_RUN`, `currentSourceProof=null`, `networkDisabled=true`, `siblingIdentityStable=true`; no temp residue and no sibling mutation.
+
+The opt-in historical product-path proof also remained green: the known ouchan `5985281b43cd` case reproduced `PRE_FAIL_POST_PASS` and admitted through the ordinary campaign path. This does not change strict EXACT.
+
+### Live subscribed reasoner
+
+Initial pre-owner-switch campaign `w9-live-1` used `opencode-go/deepseek-v4-flash` and exposed the accounting category error: 2 investigations, 19 calls, 14 targets, 0 provider failures/candidates, 284.5 s, then old mixed `outputBytes` exhaustion while model transport was only 7,169 B and tool payload was 2,950,229 B. It is historical diagnostic evidence only.
+
+When the owner replaced that model, the in-flight post-repair attempt was canceled immediately and produced no claimed result. The terminal endurance campaign used `opencode-go/omen-alpha`:
+
+| Metric | Observed |
+|---|---:|
+| investigations started/completed | 7 / 7 |
+| reasoner calls | 79 |
+| tool actions | 56 |
+| provider failures | 3 (2 timeout, 1 nonzero) |
+| bounded provider retries | 3 |
+| wall time | 3,673,995 ms |
+| unique current-source targets | 26 |
+| evidence refs | 27 |
+| grounded / verification-ready hypotheses | 28 / 28 |
+| reproduction attempts | 7 |
+| reproduction outcomes | 7 `NOT_AVAILABLE`; 0 qualifying |
+| deterministic no-target refusals | 7 |
+| reproduction transient retries | 0 |
+| candidates | 1 |
+| findings admitted / refused | 0 / 1 (`MISSING_REPRODUCTION`) |
+| inner terminations | 2 `COMPLETE_NO_FINDING`; 5 `NO_PROGRESS` |
+| outer termination | `BUDGET_EXHAUSTED` on HOUR_1 wall time |
+
+Byte ledger:
+
+| Component | Bytes |
+|---|---:|
+| rendered input | 1,112,083 |
+| memory contribution | 435,205 |
+| untrusted contribution | 573,362 |
+| provider response | 51,720 |
+| provider stderr | 113 |
+| parsed reasoner output | 54,724 |
+| tool result | 10,661,051 |
+| capped tool envelope | 608,658 |
+| checkpoint document | 40,584 |
+
+Charged terminal usage: input 1,112,083 / 5,000,000; transport 51,833 / 160,000; payload 10,661,051 / 64,000,000; calls 79 / 200; actions 56 / 400. Only wall time bound the run (3,673,995 / 3,600,000 ms; the bounded in-flight call completed before termination). The former unexplained early byte termination is repaired.
+
+No qualifying defect was found. Zero admissions is legitimate; the candidate without reproduction was refused. No claim is made that any hypothesis is a previously unknown Alphaus defect.
+
+## Validation
+
+Validated implementation and substantive checkpoint: `bb28480c6a6969a06744c75c4c947851d5bece7c`, integrated to `origin/main`.
+
+- post-reconcile full unit suite: 4531 passed / 16 skipped / 0 failed;
+- focused W9 + W7/W8 regression matrix: 295 passed / 3 skipped / 0 failed;
+- full `npm test`: 4565 passed / 16 skipped / 0 failed;
+- `npm run typecheck`: PASS;
+- hardening, agent continuity/audit, planner handoff, project truth, workspace and session checks: PASS (expected advisory warnings only);
+- `gate:local`: all 11 groups PASS, `receipt:sha256:6fb76272f121ec1bed5b74bf`;
+- fresh Node 20 `gate:clean`: install PASS, no reused `node_modules`, source clean before/after, `siblingWrites=0`, all groups PASS, `clean-receipt:sha256:d914db277a583699a1ff68c3`;
+- opt-in real current owner-local proof: PASS;
+- opt-in real historical ouchan product-path proof: PASS.
+
+Intermediate failures were retained in STATE: missing local dependencies before `npm ci`; lane reconciliation defects; old mixed-byte campaign exhaustion; two self-caught Lane-D edit drops; incorrect first-pass v1 migration that would strand tool-heavy old checkpoints; owner-directed cancellation of the superseded model run.
+
+## Safety and non-claims
+
+- LOCAL only; production/DEV/NEXT contact: 0.
+- External filing/Slack/Leslie/Pondr/Notion: 0.
+- Credential/deployment changes: 0.
+- Sibling writes: 0.
+- Force push/history rewrite/destructive recovery: 0.
+- Arbitrary reasoner shell/Git/network/filesystem authority: 0.
+- Historical `PRE_FAIL_POST_PASS`, leakage controls, scoring and strict EXACT thresholds were not weakened.
+- Strict `EXACT_REDISCOVERY`: still 0 / unproven.
+- Previously unknown Alphaus defect: not proven.
+- Organizational approval: not claimed.
+- Parent programme: remains `IN_PROGRESS` / PARTIAL.
 
 ## Programme verdict
 
-`IN_PROGRESS` — W9 has been opened but implementation has not started. Parent programme remains independently IN_PROGRESS.
+`W9_COMPLETE_LOCAL_NOT_CI_VERIFIED`.
+
+The bounded owner-local reproduction capability and live yield path are proven and certified locally. W9 is terminal. Parent completion and any successor live/DEV wave require separate criteria and authorization.

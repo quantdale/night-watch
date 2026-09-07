@@ -172,6 +172,9 @@ Status: IN_PROGRESS
 - W6: contained historical replay + multi-investigation campaigns. Real mined ouchan `5985281b43cd` reproduced PRE_FAIL_POST_PASS with a dossier and leak=[].
 - W7: real local investigation substrate on the ordinary campaign path; one historical defect reproduced and mechanically admitted through the product path; live-provider efficacy still `NO_PROGRESS` with zero candidates.
 - W8: autonomous efficacy. Bounded per-turn investigation memory (`reasoner-turn-request.v2`), campaign strategy memory, mechanical hypothesis/reproduction readiness, exhausted-action guard, fixed-corpus before/after harness. Fixed corpus (13 cases, 2 negative controls) baseline -> final: 13x`MISS` -> 3 `PARTIAL` + 5 `SAME_ROOT_CAUSE` + 5 `MISS` + 0 `FALSE_POSITIVE`; grounded hypotheses 0 -> 17; mechanical reproductions 0 -> 6; admitted candidates 0 -> 6; `VERIFIED_ROOT_CAUSE_REDISCOVERY` 0 -> 3; false positives and leaks 0 -> 0; EXACT unchanged at 0. Live opencode-go historical proof: `VERIFIED_ROOT_CAUSE_REDISCOVERY` on 2 of 3 cases. Live real owner-local campaigns: diversified grounded progress, zero admitted findings, the single candidate refused for `MISSING_REPRODUCTION`. Certified at `3d624fbcc42da808ce1c7e9cbc6b780b82d90820`.
+- W9: owner-local deterministic reproduction and yield COMPLETE at `bb28480c6a6969a06744c75c4c947851d5bece7c`. One bounded host-derived `GO_VENDORED_PACKAGE_TEST` class executes only in disposable `bwrap --unshare-net` state using fixed cached Go, no dependency fetch, argv arrays/`shell:false`, hard time/output/tree ceilings and before/after sibling identity. `CURRENT_SOURCE_REPEATED_TEST_FAILURE` requires two fresh matching pre-existing assertion failures and remains distinct from historical `PRE_FAIL_POST_PASS`; host-owned deterministic/environment/transient dispositions and finite per-digest retry replace generic `TOOL_ERROR` exhaustion.
+- W9 accounting: removed provider-response double charging and split provider transport from tool payload under budget v2; exact component ledger and conservative v1 mixed-total migration are regression-covered. Final `opencode-go/omen-alpha` HOUR_1 campaign ran 3,673,995 ms, 7 investigations, 79 reasoner calls, 56 tool actions, 26 source targets, 28 grounded hypotheses, 7 deterministic `NOT_AVAILABLE` reproduction attempts, 1 candidate, 0 admissions / 1 `MISSING_REPRODUCTION` refusal; only wall time bound, with input/transport/payload at 1,112,083/5,000,000 B, 51,833/160,000 B and 10,661,051/64,000,000 B.
+- W9 certification: focused 295/0 failed/3 skipped; full `npm test` 4565/0 failed/16 skipped; local gate all 11 groups PASS (`receipt:sha256:6fb76272f121ec1bed5b74bf`); fresh Node 20 clean gate PASS (`clean-receipt:sha256:d914db277a583699a1ff68c3`); real current owner-local and historical ouchan product-path proofs PASS. No previously unknown defect or strict EXACT claim.
 
 
 
@@ -208,8 +211,9 @@ Status: IN_PROGRESS
 
 ## Real-world status
 
-- LOCAL AUTONOMOUS CAPABILITY: PROVEN_SYNTHETIC_AND_ONE_REAL_HISTORICAL_REPRODUCTION
+- LOCAL AUTONOMOUS CAPABILITY: PROVEN_SYNTHETIC_REAL_HISTORICAL_AND_BOUNDED_CURRENT_SOURCE_EXECUTION
 - AUTONOMOUS EFFICACY ON THE REAL LOCAL SUBSTRATE: PROVEN_LOCAL_FIXED_CORPUS_AND_LIVE_PROVIDER (W8)
+- OWNER-LOCAL DETERMINISTIC REPRODUCTION: PROVEN_BOUNDED_LOCAL_GO_VENDORED_PACKAGE_TEST (W9)
 - HISTORICAL BUG REDISCOVERY: REPRODUCED_NOT_EXACT (verified root-cause tier reached live; strict EXACT still 0)
 - REAL DEV/NEXT HUNT: NOT AUTHORIZED
 - PREVIOUSLY UNKNOWN ALPHAUS BUG: NOT YET PROVEN

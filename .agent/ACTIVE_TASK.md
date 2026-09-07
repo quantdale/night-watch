@@ -6,26 +6,26 @@ Title: Autonomous Bug-Hunting Programme
 Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-autonomous-bug-hunting-programme-v1
 Starting SHA: d1ebde90c1454b31d6b93d9df503a4c5f196d7c8
-Last validated implementation SHA: 3d624fbcc42da808ce1c7e9cbc6b780b82d90820
-Last checkpoint: W8 autonomous efficacy COMPLETE and certified; W9 owner-local deterministic reproduction/yield task opened from main at 8f385e5
-Current milestone: W9 — OWNER-LOCAL DETERMINISTIC REPRODUCTION & YIELD
-Next action: Execute child task `nightwatch-owner-local-deterministic-reproduction-yield-v1` from live Git truth. First prove the owner-local NOT_CONFIGURED reproduction gap and audit W8 output-byte exhaustion; then freeze W9 target/receipt/failure-disposition contracts before parallel implementation. Do not reopen W7/W8. DEV/NEXT unauthorized.
+Last validated implementation SHA: bb28480c6a6969a06744c75c4c947851d5bece7c
+Last checkpoint: W9 owner-local deterministic reproduction/yield COMPLETE, integrated and locally/clean certified at `bb28480`; parent programme remains PARTIAL/IN_PROGRESS
+Current milestone: POST-W9 SUCCESSOR DEFINITION — W9 COMPLETE
+Next action: On explicit owner continuation, define a separately specified/authorized successor child from live Git and project truth before implementation. Preserve W0-W9 as frozen complete; DEV/NEXT, strict EXACT and previously-unknown-defect claims remain unauthorized/unproven.
 Authorization class: AUTONOMOUS_BUG_HUNTING_PROGRAMME_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: d1ebde90c1454b31d6b93d9df503a4c5f196d7c8
-LAST_VALIDATED_IMPLEMENTATION_SHA: 3d624fbcc42da808ce1c7e9cbc6b780b82d90820
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 3d624fbcc42da808ce1c7e9cbc6b780b82d90820
+LAST_VALIDATED_IMPLEMENTATION_SHA: bb28480c6a6969a06744c75c4c947851d5bece7c
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: bb28480c6a6969a06744c75c4c947851d5bece7c
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PHASE_AUTONOMOUS_BUG_HUNTING_PROGRAMME_V1_STATUS: IN_PROGRESS
 
-## Active W9 child task
+## Completed W9 child task
 
 Child task: `nightwatch-owner-local-deterministic-reproduction-yield-v1`
 Child task directory: `.agent/tasks/nightwatch-owner-local-deterministic-reproduction-yield-v1`
 Wave: `W9_OWNER_LOCAL_DETERMINISTIC_REPRODUCTION_YIELD`
-Child status: IN_PROGRESS — task opened, implementation not yet validated.
+Child status: COMPLETE at implementation checkpoint `bb28480c6a6969a06744c75c4c947851d5bece7c`; no successor child is open.
 
 Read in this order:
 
@@ -48,25 +48,21 @@ Do not rebuild these unless live recon finds a concrete regression:
 - W8 efficacy corpus and memory-aware print adapter;
 - W8 exhausted-action protection, subject to W9's explicit deterministic-vs-transient failure audit.
 
-The open gap is current owner-local reproduction coverage: normal REAL_LOCAL context still has no default executable reproduction backend, so grounded live hypotheses cannot earn qualifying current-source reproduction credit. A second gap is budget accounting: W8 live campaigns ended on cumulative `outputBytes` before HOUR_1 wall time, and accounting/waste must be understood before raising a ceiling.
+W9 closed the owner-local reproduction and byte-accounting gaps: supported REAL_LOCAL targets use the bounded host-derived Go provider; current-source evidence has explicit repeated-failure semantics; retries are host-owned and finite; provider transport and tool payload have separate calibrated budgets. Final `opencode-go/omen-alpha` HOUR_1 evidence bound on wall time with zero admissions and one correct `MISSING_REPRODUCTION` refusal.
 
 ## Routing and safety
 
 ```
 CAMPAIGN: nightwatch-autonomous-bug-hunting-programme-v1
-CHILD TASK: nightwatch-owner-local-deterministic-reproduction-yield-v1
-WAVE: W9
+CHILD TASK: nightwatch-owner-local-deterministic-reproduction-yield-v1 (COMPLETE)
+WAVE: W9 (COMPLETE)
 SESSION WORKTREE: session/nightwatch-owner-local-determini-47add5e3
 
 IMPLEMENTATION AUTHORIZED:
-  Nightwatch repository source/tests/contracts/CLI/docs/OpenSpec/task state,
-  owner-local deterministic reproduction target/provider logic,
-  additive current-source proof/admission semantics,
-  deterministic/transient failure disposition and bounded retry logic,
-  byte-accounting instrumentation and evidence-based budget calibration,
-  fabricated/disposable reproduction fixtures and negative controls,
-  read-only owner-local provider proofs, subscribed LOCAL reasoner runs,
-  commits/pushes/integration/local and clean-clone certification.
+  No successor implementation is currently authorized.
+  Parent/task continuity maintenance and bounded successor planning may occur
+  only on explicit owner continuation from live Git/project truth.
+  W0-W9 implementation and evidence contracts are frozen.
 
 REAL PRODUCTION CONTACT:            NOT AUTHORIZED
 NEXT / DEV EXECUTION:               NOT AUTHORIZED

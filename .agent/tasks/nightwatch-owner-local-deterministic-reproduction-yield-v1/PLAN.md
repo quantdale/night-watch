@@ -1,7 +1,7 @@
 # PLAN — nightwatch-owner-local-deterministic-reproduction-yield-v1
 
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
-Status: IN_PROGRESS
+Status: COMPLETE
 Task: nightwatch-owner-local-deterministic-reproduction-yield-v1
 Parent programme: nightwatch-autonomous-bug-hunting-programme-v1
 Wave: W9 — OWNER-LOCAL DETERMINISTIC REPRODUCTION & YIELD
@@ -81,7 +81,7 @@ Requirements:
 
 Suggested worker lane after M1: target discovery/provider.
 
-Status: NOT_STARTED
+Status: COMPLETE — one host-derived `GO_VENDORED_PACKAGE_TEST` class discovers package metadata from approved sibling source, materializes a bounded dependency/test closure into disposable Nightwatch-owned state, runs the fixed cached Go toolchain with argv arrays and `shell:false` inside `bwrap --unshare-net`, applies hard time/output/tree ceilings, verifies sibling identity before/after, and cleans in `finally`.
 
 ### M3 — Current-source proof semantics + admission
 
@@ -100,7 +100,7 @@ Requirements:
 
 Suggested worker lane after M1: receipt/admission.
 
-Status: NOT_STARTED
+Status: COMPLETE — `CURRENT_SOURCE_REPEATED_TEST_FAILURE` is additive to historical `PRE_FAIL_POST_PASS`; only two fresh matching pre-existing repository assertion failures with stable source/sibling/network/provider bindings qualify, and forged/model-authored/generic nonzero/build/environment/timeout evidence is refused.
 
 ### M4 — Failure disposition + bounded retry semantics
 
@@ -124,7 +124,7 @@ Requirements:
 
 Suggested worker lane after M1: failure/retry.
 
-Status: NOT_STARTED
+Status: COMPLETE — the host assigns `DETERMINISTIC_TERMINAL`, `ENVIRONMENT_BLOCKED`, or `TRANSIENT_RETRYABLE`; exact action digests govern a finite two-attempt transient budget, deterministic/environment-blocked repeats do not execute again, and reasoner-supplied retry labels/digests carry no authority.
 
 ### M5 — Byte accounting and evidence-based budget calibration
 
@@ -143,7 +143,7 @@ Work:
 
 Suggested worker lane after M1: budget accounting.
 
-Status: NOT_STARTED
+Status: COMPLETE — response serialization double charging was removed; provider transport and executor payload now have separate v2 budget dimensions and an exact component ledger. HOUR_1 calibration is based on observed live traffic, v1 mixed totals migrate once into bounded payload carry, and runaway transport/payload termination remains tested.
 
 ### M6 — Owner-local readiness/memory integration
 
@@ -155,7 +155,7 @@ Reasoner-visible states should distinguish no target, target blocked, ready, det
 
 No commands, absolute paths, secrets, raw audit, or hidden historical truth become reasoner-visible.
 
-Status: NOT_STARTED
+Status: COMPLETE — existing W8 memory now exposes only neutral host-derived owner-local readiness states (`READY`, no target, blocked target, deterministic refusal, transient retry remaining, current failure reproduced, ran without reproduction); no command, absolute path, raw audit, proof internals, or retry authority enters the prompt.
 
 ### M7 — Fixed provider/retry/admission corpus + integration review
 
@@ -176,7 +176,7 @@ Required:
 
 Orchestrator must inspect every delegated diff and rerun acceptance suites after reconciliation before integration.
 
-Status: NOT_STARTED
+Status: COMPLETE — fabricated/disposable provider, proof, admission, retry, injection, integrity and historical-compatibility matrices pass; every worker diff was independently reviewed, reconciliation defects were repaired, and the post-reconcile unit suite passed before integration.
 
 ### M8 — Real owner-local + live-provider yield proof
 
@@ -204,7 +204,7 @@ Record:
 
 A no-new-defect result is valid. A candidate without qualifying reproduction must still be refused.
 
-Status: NOT_STARTED
+Status: COMPLETE — real generic provider proof executed a current `mobingilabs/ouchan` package twice under containment and honestly returned `NOT_REPRODUCED`; the ordinary CLI campaign path ran with subscribed providers; the final owner-directed `opencode-go/omen-alpha` endurance run consumed 3,673,995 ms and ended on the HOUR_1 wall-time ceiling, not either byte ceiling, with zero admitted findings.
 
 ### M9 — Full certification and truthful closeout
 
@@ -225,7 +225,7 @@ Required before W9 COMPLETE:
 - `npm run gate:clean` PASS on a fresh Node 20 clone with no reused node_modules;
 - task/parent state updated from observed evidence only.
 
-Status: NOT_STARTED
+Status: COMPLETE — focused W9/W7/W8 suites 295 passed / 3 skipped; full `npm test` 4565 passed / 16 skipped; typecheck, hardening, continuity, handoff, project, workspace and session checks pass; `gate:local` PASS (`receipt:sha256:6fb76272f121ec1bed5b74bf`); fresh Node 20 `gate:clean` PASS (`clean-receipt:sha256:d914db277a583699a1ff68c3`); real historical ouchan product-path proof pass.
 
 ## Suggested post-freeze lane ownership
 
