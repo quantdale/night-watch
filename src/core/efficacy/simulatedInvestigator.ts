@@ -107,6 +107,13 @@ function decodeEnvelopes(observation: unknown): EnvelopeFacts {
 interface MemoryTarget {
   readonly target: string;
   readonly evidenceRef: string | null;
+  /**
+   * Bounded salient symbols the host extracted deterministically from the
+   * pre-fix VISIBLE source already delivered for this target. Never hidden
+   * truth: the driver cites them so a hypothesis names WHAT was observed,
+   * not merely that a path was opened.
+   */
+  readonly salient: readonly string[];
 }
 
 /**
@@ -147,7 +154,11 @@ export function readMemoryView(observation: unknown): MemoryView {
     if (!isRecord(entry)) continue;
     const target = nonEmptyString(entry['target']);
     if (target === null) continue;
-    inspected.push({ target, evidenceRef: nonEmptyString(entry['evidenceRef']) });
+    inspected.push({
+      target,
+      evidenceRef: nonEmptyString(entry['evidenceRef']),
+      salient: Object.freeze([...stringList(entry['salient'])]),
+    });
   }
   const hypotheses: { hypothesisId: string; status: string; evidenceRefs: readonly string[] }[] = [];
   for (const entry of Array.isArray(memory['hypotheses']) ? memory['hypotheses'] : []) {
@@ -239,18 +250,27 @@ export function decideInvestigatorTurn(request: ReasonerTurnRequest): ReasonerTu
   const groundable = memory.inspected.filter((entry) => entry.evidenceRef !== null);
 
   // 3a. Ground a hypothesis on an inspected target that has no hypothesis yet.
+  //     The statement cites the salient symbols the host carried for that
+  //     target. They were extracted deterministically from the pre-fix VISIBLE
+  //     source already delivered for it, never from hidden truth, so a
+  //     stateless turn can name WHAT it observed instead of emitting a generic
+  //     placeholder. The W7 baseline carries no memory and therefore no
+  //     salient symbols; the policy below is otherwise identical in both modes.
   for (const entry of groundable) {
     const ref = entry.evidenceRef as string;
     const covered = memory.hypotheses.some((item) => item.evidenceRefs.includes(ref));
     if (covered) continue;
     const hypothesisId = `sim-h-${memory.hypotheses.length + 1}`;
+    const observed = entry.salient.filter((symbol) => symbol.length > 0).slice(0, 4);
+    const detail =
+      observed.length > 0
+        ? `${entry.target} (observed ${observed.join(', ')}): inspected source surface is the suspected defect site for the reported symptom`
+        : `${entry.target}: inspected source surface is the suspected defect site for the reported symptom`;
     return response([
       {
         kind: 'FORM_HYPOTHESIS',
         hypothesisId,
-        statement: bounded(
-          `${entry.target}: inspected source surface is the suspected defect site for the reported symptom`,
-        ),
+        statement: bounded(detail),
         evidenceRefs: [ref],
       },
     ]);
