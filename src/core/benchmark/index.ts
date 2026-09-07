@@ -25,8 +25,32 @@ export {
   runBenchmarkHunt,
   type BenchmarkHuntPorts,
   type BenchmarkHuntResult,
-  type LeakRecordingDriver,
+  type MinedReplayAudit,
+  type MinedReplayExecutorOptions,
 } from './hunt';
+export {
+  CONTAINED_TEST_REPLAY_MATERIALIZE_MS_DEFAULT,
+  CONTAINED_TEST_REPLAY_TIMEOUT_MS_DEFAULT,
+  MINED_TEST_REPLAY_VERSION,
+  REPLAY_STDERR_HEAD_CHARS,
+  classifyPackageRun,
+  compareGoVersions,
+  findCachedToolchain,
+  packageDirForTestPath,
+  parseGoModRequiredVersion,
+  parseMinedTestReplayDescriptor,
+  runContainedTestReplay,
+  scrubReplaySecrets,
+  stringifyMinedReplayVerdict,
+  type ContainedPackageRun,
+  type ContainedTestReplayRequest,
+  type ContainedTestReplayResult,
+  type ContainedTestReplayVerdict,
+  type ContainedTreeOutcome,
+  type MinedTestReplayDescriptor,
+  type PackageRunner,
+  type PackageSignal,
+} from './containedTestReplay';
 export {
   PRE_FIX_SOURCE_VERSION,
   extractPreFixSnapshot,
@@ -41,13 +65,12 @@ export {
 } from './minedCases';
 export {
   parseVisibleDiscriminator,
-  runVisibleDiscriminator,
   stringifyVisibleRepro,
   VISIBLE_DISCRIMINATOR_KINDS,
   type VisibleDiscriminator,
   type VisibleReproObservation,
 } from './visibleRepro';
-export { tryBuildVisibleHuntDossier } from './huntDossier';
+export { tryBuildMinedReplayDossier, tryBuildVisibleHuntDossier } from './huntDossier';
 export {
   BENCHMARK_EXACT_MIN_FILE_RECALL,
   BENCHMARK_EXACT_MIN_KEYWORD_RECALL,

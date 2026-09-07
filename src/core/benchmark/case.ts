@@ -11,6 +11,7 @@ import {
   type HiddenGroundTruth,
   type ReasonerVisibleContext,
 } from '../agentProtocol/benchmark';
+import { parseMinedTestReplayDescriptor, type MinedTestReplayDescriptor } from './containedTestReplay';
 import { parseVisibleDiscriminator, type VisibleDiscriminator } from './visibleRepro';
 
 export const BENCHMARK_CORPUS_CATEGORIES = [
@@ -38,6 +39,12 @@ export interface DefinedBenchmarkCase extends BenchmarkCase {
   readonly productFamily: string;
   readonly category: BenchmarkCorpusCategory;
   readonly preFix: BenchmarkPreFixView;
+  /**
+   * Hidden-only contained-replay coordinates for mined cases (null for
+   * synthetic fixtures). Never enters the visible context: it names the
+   * fix commit and the fix-added test file, both hidden ground truth.
+   */
+  readonly minedReplay: MinedTestReplayDescriptor | null;
 }
 
 export interface BenchmarkCaseInput {
@@ -46,6 +53,7 @@ export interface BenchmarkCaseInput {
   readonly category: BenchmarkCorpusCategory;
   readonly hidden: HiddenGroundTruth;
   readonly preFix: BenchmarkPreFixView;
+  readonly minedReplay?: MinedTestReplayDescriptor | null;
 }
 
 export class BenchmarkCaseError extends Error {
@@ -82,6 +90,12 @@ export function defineBenchmarkCase(input: BenchmarkCaseInput): DefinedBenchmark
   if (rawDiscriminator !== undefined && rawDiscriminator !== null && discriminator === null) {
     throw new BenchmarkCaseError(`case ${input.caseId}: preFix.discriminator is malformed`);
   }
+  const rawReplay = input.minedReplay;
+  const minedReplay =
+    rawReplay === undefined || rawReplay === null ? null : parseMinedTestReplayDescriptor(rawReplay);
+  if (rawReplay !== undefined && rawReplay !== null && minedReplay === null) {
+    throw new BenchmarkCaseError(`case ${input.caseId}: minedReplay descriptor is malformed`);
+  }
   const defined: DefinedBenchmarkCase = Object.freeze({
     schemaVersion: BENCHMARK_CASE_VERSION,
     caseId: input.caseId,
@@ -94,11 +108,30 @@ export function defineBenchmarkCase(input: BenchmarkCaseInput): DefinedBenchmark
       reproSteps: preFixBlob(input.preFix?.reproSteps, 'reproSteps', input.caseId),
       discriminator,
     }),
+    minedReplay,
   });
   // Fail-closed at definition time: fixture authors must not embed answers.
   const leakBlobs = [defined.preFix.symptomReport, defined.preFix.sourceSnapshot, defined.preFix.reproSteps];
   if (discriminator !== null) leakBlobs.push(JSON.stringify(discriminator));
   assertNoBenchmarkLeakage({ blobs: leakBlobs }, defined.hidden);
+  if (minedReplay !== null) {
+    // The descriptor re-states hidden secrets (fix SHA, added test path)
+    // for the contained replay; prove they are absent from the visible
+    // material even when hidden carries different values. The repository
+    // id is intentionally not asserted: import paths in the snapshot may
+    // legitimately contain it and it is not hidden ground truth.
+    assertNoBenchmarkLeakage(
+      { blobs: leakBlobs },
+      {
+        fixCommit: minedReplay.fixCommit,
+        fixDiff: null,
+        issueTitle: null,
+        bugDescription: null,
+        knownFailingTest: minedReplay.testPath,
+        explanation: null,
+      },
+    );
+  }
   return defined;
 }
 
