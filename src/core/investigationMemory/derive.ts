@@ -82,8 +82,8 @@ interface TargetLedgerEntry {
   environmentRefusedHere: boolean;
   /** W9: a failed attempt with DETERMINISTIC_TERMINAL disposition (or absent on pre-W9 records). */
   deterministicRefusedHere: boolean;
-  /** W9: count of failed attempts with TRANSIENT_RETRYABLE disposition. */
-  transientFailuresHere: number;
+  /** W9: per-action counts of failed attempts with TRANSIENT_RETRYABLE disposition, keyed by host argumentDigest. */
+  transientDigests: Map<string, number>;
 }
 
 interface DerivedLedger {
@@ -96,6 +96,8 @@ interface DerivedLedger {
   readonly lastEvidenceGainOrdinal: number | null;
   readonly repeatedActionCount: number;
   readonly actions: readonly MemoryAction[];
+  /** W9: TRANSIENT_RETRYABLE reproduction failures per host argumentDigest (the retry budget is per exact action). */
+  transientFailuresByDigest: ReadonlyMap<string, number>;
 }
 
 /**
@@ -115,6 +117,7 @@ const REPRODUCTION_VERDICTS: Record<string, true> = {
 function deriveLedger(state: AgentRuntimeState): DerivedLedger {
   const targets = new Map<string, TargetLedgerEntry>();
   const refToTarget = new Map<string, string>();
+  const transientFailuresByDigest = new Map<string, number>();
   const proposalCandidateIds: string[] = [];
   const reproductions: MemoryReproduction[] = [];
   const turnOrdinals = new Map<string, number>();
@@ -170,7 +173,7 @@ function deriveLedger(state: AgentRuntimeState): DerivedLedger {
         targetBlockedHere: false,
         environmentRefusedHere: false,
         deterministicRefusedHere: false,
-        transientFailuresHere: 0,
+        transientDigests: new Map(),
       };
       targets.set(target, entry);
     }
@@ -204,8 +207,13 @@ function deriveLedger(state: AgentRuntimeState): DerivedLedger {
       // on pre-W9 checkpoints reads as deterministic per the frozen runtime
       // contract, preserving W8 exhaustion exactly; unknown values fail
       // closed the same way. Never derived from model text.
-      if (record.disposition === 'TRANSIENT_RETRYABLE') entry.transientFailuresHere += 1;
-      else if (record.disposition === 'ENVIRONMENT_BLOCKED') entry.environmentRefusedHere = true;
+      if (record.disposition === 'TRANSIENT_RETRYABLE') {
+        // Per-action budget: the host argumentDigest identifies the exact
+        // retried action; a null digest is its own bucket.
+        const digest = record.argumentDigest ?? '';
+        entry.transientDigests.set(digest, (entry.transientDigests.get(digest) ?? 0) + 1);
+        transientFailuresByDigest.set(digest, (transientFailuresByDigest.get(digest) ?? 0) + 1);
+      } else if (record.disposition === 'ENVIRONMENT_BLOCKED') entry.environmentRefusedHere = true;
       else entry.deterministicRefusedHere = true;
     } else if (record.resultClass === 'REPRODUCED') entry.reproducedHere = true;
     else if (record.resultClass === 'REPRODUCED_CURRENT_FAILURE') entry.currentFailureHere = true;
@@ -218,6 +226,7 @@ function deriveLedger(state: AgentRuntimeState): DerivedLedger {
 
   return {
     targets,
+    transientFailuresByDigest,
     refToTarget,
     proposalCandidateIds: Object.freeze(proposalCandidateIds),
     reproductions: Object.freeze(reproductions),
@@ -263,7 +272,8 @@ function deriveExecutionReadiness(ledger: DerivedLedger): ReproductionReadiness 
   let noExecutableTarget = false;
   let targetBlocked = false;
   let deterministicRefused = false;
-  let transientFailures = 0;
+  let transientPending = false;
+  let transientConsumed = false;
   for (const entry of ledger.targets.values()) {
     if (entry.reproductionAttempts === 0) continue;
     if (entry.currentFailureHere) currentFailure = true;
@@ -271,11 +281,16 @@ function deriveExecutionReadiness(ledger: DerivedLedger): ReproductionReadiness 
     if (entry.noExecutableTargetHere) noExecutableTarget = true;
     if (entry.targetBlockedHere || entry.environmentRefusedHere) targetBlocked = true;
     if (entry.deterministicRefusedHere) deterministicRefused = true;
-    transientFailures += entry.transientFailuresHere;
+  }
+  // The retry budget is per exact action (host argumentDigest): one transient
+  // on each of two different actions leaves both retryable.
+  for (const count of ledger.transientFailuresByDigest.values()) {
+    if (count < TRANSIENT_ACTION_RETRY_BUDGET) transientPending = true;
+    else transientConsumed = true;
   }
   if (
     !currentFailure && !ranWithoutReproducing && !noExecutableTarget && !targetBlocked &&
-    !deterministicRefused && transientFailures === 0
+    !deterministicRefused && !transientPending && !transientConsumed
   ) {
     return null;
   }
@@ -283,7 +298,7 @@ function deriveExecutionReadiness(ledger: DerivedLedger): ReproductionReadiness 
   if (ranWithoutReproducing) return 'RAN_WITHOUT_REPRODUCING';
   if (noExecutableTarget) return 'NOT_READY_NO_EXECUTABLE_TARGET';
   if (targetBlocked) return 'NOT_READY_TARGET_BLOCKED';
-  if (deterministicRefused || transientFailures >= TRANSIENT_ACTION_RETRY_BUDGET) return 'REFUSED_DETERMINISTIC';
+  if (deterministicRefused || transientConsumed) return 'REFUSED_DETERMINISTIC';
   return 'TRANSIENT_RETRY_REMAINING';
 }
 
@@ -317,18 +332,19 @@ export function deriveInvestigationMemory(
 
   const exhausted: string[] = [];
   for (const entry of ledger.targets.values()) {
+    const failedInspection = entry.evidenceRef === null && entry.timesInspected >= 1;
     const reproduced = entry.reproducedHere || entry.currentFailureHere;
     // A transient failure stays retryable (non-exhausted) only while its
-    // count is under the frozen budget and no terminal signal exists for the
-    // target; deterministic and environment failures exhaust immediately.
+    // per-action count is under the frozen budget and no terminal signal
+    // exists for the target; deterministic and environment failures exhaust
+    // immediately.
     const transientPending =
-      entry.transientFailuresHere > 0 &&
-      entry.transientFailuresHere < TRANSIENT_ACTION_RETRY_BUDGET &&
       !entry.deterministicRefusedHere &&
       !entry.environmentRefusedHere &&
       !entry.ranWithoutReproducingHere &&
       !entry.noExecutableTargetHere &&
-      !entry.targetBlockedHere;
+      !entry.targetBlockedHere &&
+      [...entry.transientDigests.values()].some((count) => count < TRANSIENT_ACTION_RETRY_BUDGET);
     const failedVerification = entry.reproductionAttempts >= 1 && !reproduced && !transientPending;
     if (!failedInspection && !failedVerification && !entry.dedupedHere) continue;
     if (!exhausted.includes(entry.target)) exhausted.push(entry.target);

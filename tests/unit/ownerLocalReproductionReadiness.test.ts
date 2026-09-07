@@ -459,7 +459,11 @@ function reproAction(
   turnId: string,
   target: string,
   resultClass: string,
-  options: { readonly disposition?: AgentActionRecord['disposition']; readonly evidenceRefs?: readonly string[] } = {},
+  options: {
+    readonly disposition?: AgentActionRecord['disposition'];
+    readonly evidenceRefs?: readonly string[];
+    readonly argumentDigest?: string | null;
+  } = {},
 ): AgentActionRecord {
   return makeAction({
     turnId,
@@ -468,6 +472,7 @@ function reproAction(
     evidenceRefs: options.evidenceRefs === undefined ? [] : [...options.evidenceRefs],
     target,
     ...(options.disposition === undefined ? {} : { disposition: options.disposition }),
+    ...(options.argumentDigest === undefined ? {} : { argumentDigest: options.argumentDigest }),
   });
 }
 
@@ -556,6 +561,29 @@ test.describe('W9 derivation readiness', () => {
     );
     const consumed = groundedState({ actionLog: [inspectAction('t1', TARGET, 'ev:src-1'), ...exhaustedTurns] });
     expect(readinessOf(consumed)).toBe('REFUSED_DETERMINISTIC');
+  });
+
+  test('one transient on each of two different actions stays retryable (per-digest budget)', () => {
+    // The retry budget is per exact action (host argumentDigest): two
+    // different digests failing once must not collapse into exhausted.
+    const state = groundedState({
+      actionLog: [
+        inspectAction('t1', TARGET, 'ev:src-1'),
+        reproAction('t2', TARGET, 'ADAPTER_UNAVAILABLE', { disposition: 'TRANSIENT_RETRYABLE', argumentDigest: 'digest-a' }),
+        reproAction('t3', TARGET, 'ADAPTER_UNAVAILABLE', { disposition: 'TRANSIENT_RETRYABLE', argumentDigest: 'digest-b' }),
+      ],
+    });
+    expect(readinessOf(state)).toBe('TRANSIENT_RETRY_REMAINING');
+    expect(deriveInvestigationMemory(state).exhaustedTargets).not.toContain(TARGET);
+    const sameDigest = groundedState({
+      actionLog: [
+        inspectAction('t1', TARGET, 'ev:src-1'),
+        reproAction('t2', TARGET, 'ADAPTER_UNAVAILABLE', { disposition: 'TRANSIENT_RETRYABLE', argumentDigest: 'digest-a' }),
+        reproAction('t3', TARGET, 'ADAPTER_UNAVAILABLE', { disposition: 'TRANSIENT_RETRYABLE', argumentDigest: 'digest-a' }),
+      ],
+    });
+    expect(readinessOf(sameDigest)).toBe('REFUSED_DETERMINISTIC');
+    expect(deriveInvestigationMemory(sameDigest).exhaustedTargets).toContain(TARGET);
   });
 
   test('a repeatable current-source failure reproduces and promotes the hypothesis', () => {
