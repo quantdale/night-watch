@@ -12,6 +12,12 @@ import type { BugAtlasRecord } from '../agentProtocol/atlas';
 import { detectBenchmarkLeakage } from '../agentProtocol/benchmark';
 import { defineBenchmarkCase, type DefinedBenchmarkCase } from './case';
 import { extractPreFixSnapshot, parsePreFixSnapshotFiles, type PreFixSnapshot } from './preFixSource';
+import {
+  MINED_TEST_REPLAY_VERSION,
+  packageDirForTestPath,
+  parseMinedTestReplayDescriptor,
+  type MinedTestReplayDescriptor,
+} from './containedTestReplay';
 
 const REPO_ID_RE = /^[A-Za-z0-9][A-Za-z0-9._-]*\/[A-Za-z0-9][A-Za-z0-9._-]*$/;
 const SHA_RE = /^[0-9a-f]{7,40}$/i;
@@ -81,6 +87,20 @@ export function tryDefineMinedBenchmarkCase(
 
   const caseId = `mined-${record.bugId}`.replace(/[^A-Za-z0-9._-]+/g, '-').slice(0, 80);
   if (caseId.length < 8) return null;
+  // Hidden-only contained-replay coordinates: the isolated added test file
+  // (null when no added test survived isolation). The descriptor is never
+  // part of the visible context; defineBenchmarkCase re-proves its secrets
+  // are absent from the visible blobs.
+  let minedReplay: MinedTestReplayDescriptor | null = null;
+  if (typeof hidden.knownFailingTest === 'string' && typeof record.repository === 'string') {
+    minedReplay = parseMinedTestReplayDescriptor({
+      schemaVersion: MINED_TEST_REPLAY_VERSION,
+      repository: record.repository,
+      fixCommit: sha,
+      testPath: hidden.knownFailingTest,
+      packageDir: packageDirForTestPath(hidden.knownFailingTest),
+    });
+  }
   try {
     return defineBenchmarkCase({
       caseId,
@@ -92,6 +112,7 @@ export function tryDefineMinedBenchmarkCase(
         sourceSnapshot: extracted.snapshot,
         reproSteps: 'observe pre-fix blobs only',
       },
+      minedReplay,
     });
   } catch {
     return null;

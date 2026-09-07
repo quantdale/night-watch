@@ -12,6 +12,8 @@ export {
 export { normalizeToolResult, type AgentToolCall, type AgentToolResult, type AgentToolExecutor } from './types';
 export {
   AGENT_BUDGET_CEILING_NAMES,
+  CAMPAIGN_PROGRESS_VERSION,
+  CAMPAIGN_STAGNATION_LIMIT,
   LOCAL_CAMPAIGN_VERSION,
   LocalCampaignError,
   defaultCampaignStateDirectory,
@@ -19,6 +21,7 @@ export {
   loadLocalCampaignCheckpoint,
   resumeLocalCliCampaign,
   runLocalCliCampaign,
+  type CampaignTerminationCounts,
   type LocalCampaignInput,
   type LocalCampaignListing,
   type LocalCampaignResult,

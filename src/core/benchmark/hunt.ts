@@ -29,9 +29,20 @@ import {
 } from '../agentProtocol';
 import { UNTRUSTED_ENVELOPE_VERSION } from '../agentProtocol/untrusted';
 import { AgentRuntime, type AgentToolCall, type AgentToolExecutor, type AgentToolResult } from '../agentRuntime';
+import type { AutonomousFindingDossier } from '../autonomousFinding';
+import { DEFAULT_SIBLING_ROOT } from '../source/siblingSource';
 import { buildReasonerVisibleContext, type DefinedBenchmarkCase } from './case';
+import { resolveMinedRepoPath } from './minedCases';
+import {
+  runContainedTestReplay,
+  stringifyMinedReplayVerdict,
+  type ContainedTestReplayRequest,
+  type ContainedTestReplayResult,
+  type ContainedTestReplayVerdict,
+  type MinedTestReplayDescriptor,
+} from './containedTestReplay';
 import { parsePreFixSnapshotFiles } from './preFixSource';
-import { tryBuildVisibleHuntDossier } from './huntDossier';
+import { tryBuildMinedReplayDossier, tryBuildVisibleHuntDossier } from './huntDossier';
 import { scoreBenchmarkCandidate, type BenchmarkScore } from './score';
 import {
   runVisibleDiscriminator,
@@ -39,7 +50,6 @@ import {
   type VisibleDiscriminator,
   type VisibleReproObservation,
 } from './visibleRepro';
-import type { AutonomousFindingDossier } from '../autonomousFinding';
 
 export const BENCHMARK_HUNT_MAX_TURNS = 12;
 
@@ -63,6 +73,15 @@ export interface BenchmarkHuntPorts {
   readonly tools?: AgentToolExecutor;
   readonly budgetPolicy?: AgentBudgetPolicy;
   readonly maxTurns?: number;
+  /**
+   * Contained-replay seam for mined cases (tests/harness). When the hunt
+   * builds its default executor, these override replay execution and repo
+   * resolution. The file-grounding gate and neutral observations stay on.
+   */
+  readonly minedReplay?: {
+    readonly runReplay?: (request: ContainedTestReplayRequest) => Promise<ContainedTestReplayResult>;
+    readonly repositoriesRoot?: string;
+  };
 }
 
 export interface BenchmarkHuntResult {
@@ -81,7 +100,44 @@ export interface BenchmarkHuntResult {
   readonly reasonerCalls: number;
   readonly reproductionCount: number;
   readonly discriminatorObservation: VisibleReproObservation | null;
+  /**
+   * Harness-side contained-replay audit for mined cases (null when no
+   * replay was requested). The stderr head inside is audit material only
+   * and must never enter reasoner context.
+   */
+  readonly minedReplayAudit: MinedReplayAudit | null;
   readonly dossier: AutonomousFindingDossier | null;
+}
+
+/**
+ * Harness-side record of one mined-case contained replay request. The
+ * stderr head is audit material only; the reasoner sees solely the
+ * fixed-template neutral observation built from the mapped result class.
+ */
+export interface MinedReplayAudit {
+  readonly grounded: boolean;
+  readonly repoResolved: boolean;
+  readonly verdict: ContainedTestReplayVerdict | null;
+  readonly reason: string | null;
+  readonly durationMs: number | null;
+  readonly timedOut: boolean | null;
+  readonly stderrHead: string | null;
+}
+
+export interface MinedReplayExecutorOptions {
+  /** Hidden mined-case replay coordinates (null for synthetic fixtures). */
+  readonly minedReplay?: MinedTestReplayDescriptor | null;
+  readonly repositoriesRoot?: string;
+  /**
+   * Anti-inflation gate: true only when the candidate/hypothesis text
+   * already names a real pre-fix snapshot file. Absent means unmanaged
+   * (the hunt always supplies it); false refuses the replay.
+   */
+  readonly hasGrounding?: () => boolean;
+  /** Injectable replay (tests). Defaults to the real contained engine. */
+  readonly runReplay?: (request: ContainedTestReplayRequest) => Promise<ContainedTestReplayResult>;
+  /** Harness-side audit box. Never reasoner-visible. */
+  readonly audit?: { current: MinedReplayAudit | null };
 }
 
 function envelope(source: UntrustedEnvelope['source'], digest: string, bytes: string): UntrustedEnvelope {
@@ -96,26 +152,121 @@ export function createPreFixViewExecutor(
   visible: ReasonerVisibleContext,
   caseId: string,
   discriminator: VisibleDiscriminator | null = null,
+  options: MinedReplayExecutorOptions = {},
 ): AgentToolExecutor {
   const blobs = [...visible.blobs];
   const kinds = ['DOCUMENTATION', 'SOURCE_CODE', 'DOCUMENTATION'] as const;
   const files = parsePreFixSnapshotFiles(blobs[1] ?? '');
   let calls = 0;
+  const neutralReplayResult = (
+    resultClass: 'REPRODUCED' | 'NOT_REPRODUCED' | 'NOT_AVAILABLE',
+  ): AgentToolResult => {
+    // Fixed template: verdict token only. File names, diffs, commit
+    // messages, and assertion text cannot reach reasoner context here.
+    const bytes = stringifyMinedReplayVerdict(resultClass);
+    return {
+      ok: true,
+      resultClass,
+      evidenceRefs: [`bench:${caseId}:repro:1`],
+      outputBytes: Buffer.byteLength(bytes, 'utf8'),
+      untrusted: [envelope('LOG', `bench:sha256:${caseId}:repro`, bytes)],
+    };
+  };
+  const unavailable = (): AgentToolResult => ({
+    ok: true,
+    resultClass: 'NOT_AVAILABLE',
+    evidenceRefs: [],
+    outputBytes: 0,
+    untrusted: [],
+  });
   return {
     async execute(call: AgentToolCall): Promise<AgentToolResult> {
       if (call.toolId === 'RERUN_SAFE_REPRODUCTION') {
-        if (discriminator === null) {
-          return { ok: true, resultClass: 'NOT_AVAILABLE', evidenceRefs: [], outputBytes: 0, untrusted: [] };
+        if (discriminator !== null) {
+          const observation = runVisibleDiscriminator(discriminator);
+          const bytes = stringifyVisibleRepro(observation);
+          return {
+            ok: true,
+            resultClass: observation.mismatch ? 'REPRODUCED' : 'NOT_REPRODUCED',
+            evidenceRefs: [`bench:${caseId}:repro:1`],
+            outputBytes: Buffer.byteLength(bytes, 'utf8'),
+            untrusted: [envelope('LOG', `bench:sha256:${caseId}:repro`, bytes)],
+          };
         }
-        const observation = runVisibleDiscriminator(discriminator);
-        const bytes = stringifyVisibleRepro(observation);
-        return {
-          ok: true,
-          resultClass: observation.mismatch ? 'REPRODUCED' : 'NOT_REPRODUCED',
-          evidenceRefs: [`bench:${caseId}:repro:1`],
-          outputBytes: Buffer.byteLength(bytes, 'utf8'),
-          untrusted: [envelope('LOG', `bench:sha256:${caseId}:repro`, bytes)],
-        };
+        const mined = options.minedReplay ?? null;
+        if (mined === null) return unavailable();
+        // Anti-inflation gate: no named pre-fix file, no replay.
+        let grounded = true;
+        try {
+          grounded = options.hasGrounding ? options.hasGrounding() : true;
+        } catch {
+          grounded = false;
+        }
+        if (!grounded) {
+          if (options.audit) {
+            options.audit.current = {
+              grounded: false,
+              repoResolved: false,
+              verdict: null,
+              reason: 'GATE_REFUSED_NO_FILE_GROUNDING',
+              durationMs: null,
+              timedOut: null,
+              stderrHead: null,
+            };
+          }
+          return unavailable();
+        }
+        const repoPath = resolveMinedRepoPath(options.repositoriesRoot ?? DEFAULT_SIBLING_ROOT, mined.repository);
+        if (repoPath === null) {
+          if (options.audit) {
+            options.audit.current = {
+              grounded: true,
+              repoResolved: false,
+              verdict: null,
+              reason: 'REPO_UNRESOLVED',
+              durationMs: null,
+              timedOut: null,
+              stderrHead: null,
+            };
+          }
+          return unavailable();
+        }
+        try {
+          const replay = options.runReplay ?? runContainedTestReplay;
+          const result = await replay({
+            repoPath,
+            fixCommit: mined.fixCommit,
+            testPath: mined.testPath,
+            packageDir: mined.packageDir,
+          });
+          if (options.audit) {
+            options.audit.current = {
+              grounded: true,
+              repoResolved: true,
+              verdict: result.verdict,
+              reason: result.reason,
+              durationMs: result.durationMs,
+              timedOut: result.preFix.timedOut || result.postFix.timedOut,
+              stderrHead: result.stderrHead,
+            };
+          }
+          if (result.verdict === 'REPRODUCED') return neutralReplayResult('REPRODUCED');
+          if (result.verdict === 'ENVIRONMENT_BLOCKED') return unavailable();
+          return neutralReplayResult('NOT_REPRODUCED');
+        } catch {
+          if (options.audit) {
+            options.audit.current = {
+              grounded: true,
+              repoResolved: true,
+              verdict: null,
+              reason: 'REPLAY_EXECUTOR_FAILED',
+              durationMs: null,
+              timedOut: null,
+              stderrHead: null,
+            };
+          }
+          return unavailable();
+        }
       }
       if (call.toolId === 'INSPECT_SOURCE_SURFACE' && files.size > 0) {
         const requested = typeof call.arguments.path === 'string' ? call.arguments.path : '';
@@ -185,14 +336,43 @@ export async function runBenchmarkHunt(
   const hidden: HiddenGroundTruth = definedCase.hidden;
   const visible = buildReasonerVisibleContext(definedCase);
   const recording = createLeakRecordingDriver(ports.reasoner);
+  // Mined-case contained replay: the default executor carries the hidden
+  // replay descriptor. The file-grounding gate reads the live runtime
+  // snapshot through this box (populated before the first turn runs).
+  const minedDescriptor = definedCase.minedReplay ?? null;
+  const minedAuditBox: { current: MinedReplayAudit | null } = { current: null };
+  const runtimeBox: { current: AgentRuntime | null } = { current: null };
+  const visibleFiles = [...parsePreFixSnapshotFiles(visible.blobs[1] ?? '').keys()];
   const runtime = new AgentRuntime({
     campaignId: `benchmark:${definedCase.caseId}`,
     budgetPolicy: ports.budgetPolicy ?? defaultBenchmarkBudgetPolicy(),
     reasoner: recording.driver,
-    tools: ports.tools ?? createPreFixViewExecutor(visible, definedCase.caseId, definedCase.preFix.discriminator ?? null),
+    tools:
+      ports.tools ??
+      createPreFixViewExecutor(visible, definedCase.caseId, definedCase.preFix.discriminator ?? null, {
+        minedReplay: minedDescriptor,
+        repositoriesRoot: ports.minedReplay?.repositoriesRoot,
+        runReplay: ports.minedReplay?.runReplay,
+        hasGrounding:
+          minedDescriptor === null
+            ? undefined
+            : () => {
+                const snapshot = runtimeBox.current?.snapshot();
+                if (!snapshot) return false;
+                const groundedText = [
+                  ...snapshot.hypotheses.map((hypothesis) => hypothesis.statement),
+                  ...snapshot.candidateIds,
+                ].join('\n');
+                return (
+                  scoreBenchmarkCandidate(groundedText, hidden, { visibleFiles }).fileHits > 0
+                );
+              },
+        audit: minedAuditBox,
+      }),
     authorizedEnvironments: ['LOCAL'],
     maxTurns: ports.maxTurns ?? BENCHMARK_HUNT_MAX_TURNS,
   });
+  runtimeBox.current = runtime;
   const run = await runtime.run({ maxTurns: ports.maxTurns ?? BENCHMARK_HUNT_MAX_TURNS });
 
   // Fail-closed: any hidden field reaching the reasoner voids the replay.
@@ -219,12 +399,21 @@ export async function runBenchmarkHunt(
   const discriminator = definedCase.preFix.discriminator ?? null;
   const discriminatorObservation =
     ranDiscriminator && discriminator !== null ? runVisibleDiscriminator(discriminator) : null;
-  const dossier = tryBuildVisibleHuntDossier({
-    caseId: definedCase.caseId,
-    admitted,
-    reproductionCount,
-    observation: discriminatorObservation,
-  });
+  const minedReplayAudit = minedAuditBox.current;
+  const dossier =
+    tryBuildVisibleHuntDossier({
+      caseId: definedCase.caseId,
+      admitted,
+      reproductionCount,
+      observation: discriminatorObservation,
+    }) ??
+    (minedReplayAudit?.verdict === 'REPRODUCED'
+      ? tryBuildMinedReplayDossier({
+          caseId: definedCase.caseId,
+          admitted,
+          reproductionCount,
+        })
+      : null);
   return {
     caseId: definedCase.caseId,
     terminationReason: run.terminationReason,
@@ -239,6 +428,7 @@ export async function runBenchmarkHunt(
     reasonerCalls: run.state.budget.usage.reasonerCalls,
     reproductionCount,
     discriminatorObservation,
+    minedReplayAudit,
     dossier,
   };
 }
