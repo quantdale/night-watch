@@ -61,6 +61,12 @@
     "tests/unit/c07DerivedSemantics.test.ts",
     "tests/unit/alphausFindingHandoff.test.ts",
     "tests/unit/c12ReadinessPreflight.test.ts",
-    "tests/unit/alphausHandoffProperties.test.ts"
+    "tests/unit/alphausHandoffProperties.test.ts",
+    "tests/unit/programmeState.test.ts",
+    "tests/unit/localInvestigationProviders.test.ts",
+    "tests/unit/localFindingAdmission.test.ts",
+    "tests/unit/benchmarkVerificationTier.test.ts",
+    "tests/unit/historicalProductPath.test.ts",
+    "tests/unit/realLocalCampaignPath.test.ts"
   ]
 }
