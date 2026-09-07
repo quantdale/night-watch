@@ -25,7 +25,7 @@ PHASE_AUTONOMOUS_BUG_HUNTING_PROGRAMME_V1_STATUS: IN_PROGRESS
 Child task: `nightwatch-autonomous-efficacy-real-local-substrate-v1`
 Child task directory: `.agent/tasks/nightwatch-autonomous-efficacy-real-local-substrate-v1`
 Wave: `W8_AUTONOMOUS_EFFICACY_REAL_LOCAL_SUBSTRATE`
-Status: IN_PROGRESS — begin at M0 live truth/baseline.
+Child status: IN_PROGRESS — freeze integrated at `87f0ded13e3d16b4130abeadfd95fa88aba04b61`; lanes in flight.
 
 Read in this order:
 
@@ -59,6 +59,7 @@ The W8 task must determine why and improve useful investigation behavior while k
 CAMPAIGN: nightwatch-autonomous-bug-hunting-programme-v1
 CHILD TASK: nightwatch-autonomous-efficacy-real-local-substrate-v1
 WAVE: W8
+SESSION WORKTREE: session/nightwatch-autonomous-bug-huntin-725fbbbe
 
 IMPLEMENTATION AUTHORIZED:
   Nightwatch repository source/tests/contracts/CLI/docs/OpenSpec/task state,

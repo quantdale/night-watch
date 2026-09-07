@@ -50,7 +50,7 @@ Sensing, reproduction sharing, and admission grounding are DONE in W7 and are no
 
 ## Work In Progress
 
-W8 is active at M0. No W8 implementation is accepted yet.
+W8 is active. Its shared contract freeze is integrated at `87f0ded13e3d16b4130abeadfd95fa88aba04b61`; five delegated lanes are in flight and no lane work is accepted yet. W8 terminal criteria, live-provider proof and certification remain open, so the parent programme stays IN_PROGRESS.
 
 The honest efficacy baseline that motivates W8 remains:
 
@@ -69,7 +69,7 @@ Likely causes to verify during W8 recon include stateless per-turn request conte
 
 Execute `.agent/tasks/nightwatch-autonomous-efficacy-real-local-substrate-v1/{SPEC,PLAN,STATE,REPORT}.md` from live Git/workspace/session truth. Begin at M0 baseline capture, freeze W8 memory/readiness interfaces at M1, then continue through M9 integration, live-provider proof and certification. Do not re-plumb W7 sensing/reproduction/admission. DEV/NEXT unauthorized.
 
-## Files Changed / programme surfaces
+## Files Changed
 
 | Path | Purpose | Status |
 |---|---|---|
@@ -80,6 +80,26 @@ Execute `.agent/tasks/nightwatch-autonomous-efficacy-real-local-substrate-v1/{SP
 | `.agent/tasks/nightwatch-real-local-investigation-substrate-v1/**` | W7 terminal evidence | COMPLETE |
 | `.agent/tasks/nightwatch-autonomous-efficacy-real-local-substrate-v1/**` | W8 SPEC/PLAN/STATE/REPORT | IN_PROGRESS |
 | `.agent/ACTIVE_TASK.md`, `.agent/EXECUTION_PROMPT.md` | W8 handoff | IN_PROGRESS |
+
+## Validation Ledger
+
+Command: W7 certification set (`npm test`, typecheck, hardening/workspace/agent/project/handoff, `gate:local`, `gate:clean`)
+Result: PASS at the W7 implementation checkpoint `e368f9255142d1b30dd66825d93f6f321ba6ecbf` — see the Completed Milestones entry for the exact counts and gate receipts.
+
+Command: W8 focused agent/campaign/benchmark/reasoner suites plus `npx tsc --noEmit`
+Result: PASS at the W8 freeze `87f0ded13e3d16b4130abeadfd95fa88aba04b61` — 164 passed, 0 failed across 14 suites.
+
+Command: `node bin/efficacy-corpus.mjs compare`
+Result: recorded in the W8 task `STATE.md` Validation Ledger. Fixed 9-case corpus, baseline -> candidate: grounded hypotheses 0 -> 9, verification-ready 0 -> 9, grounded reproduction attempts 0 -> 9, mechanical reproductions 0 -> 3, admitted candidates 0 -> 3, false positives 0 -> 0, leaked cases 0 -> 0, EXACT 0 in both modes.
+
+Command: full `npm test`, `npm run gate:local`, `npm run gate:clean` for W8
+Result: NOT YET RUN at the W8 head. Required before W8 closure; the parent programme may not advance on W8 evidence until they pass.
+
+## Discoveries
+
+- The W7 `NO_PROGRESS` result has a mechanical cause, not merely a model-quality cause: the `(sourcePath, sourceEvidenceRef)` pair that the host demands before it will execute a deterministic reproduction was not derivable from ANY field of a `reasoner-turn-request.v1`. A stateless print-mode reasoner therefore could not reach verification at all. Details and the other confirmed causes are recorded in the W8 task `STATE.md` `## Discoveries`.
+- `AgentHypothesis.status` was only ever written as `'OPEN'`, so "disproved hypothesis" was unrepresentable before W8.
+- The inherited W8 planning documents did not pass `npm run agent:check`; they were repaired during W8 execution rather than relabelled.
 
 ## Current proof ledger
 
@@ -104,7 +124,7 @@ Not yet proven:
 - DEV/NEXT/production behavior;
 - parent programme completion.
 
-## Decisions
+## Decisions Made During This Task
 
 Decision: W8 is efficacy, not substrate plumbing.
 Reason: W7 already mechanically proved the normal product path can sense, reproduce and admit safely; the live reasoner still stalls without candidates.
