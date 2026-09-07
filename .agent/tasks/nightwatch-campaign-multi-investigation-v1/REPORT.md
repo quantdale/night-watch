@@ -19,7 +19,7 @@
 - Recommended next phase/task: orchestrator integration (gate:local/gate:clean),
   then a real subscribed-CLI soak to observe multi-investigation behavior live.
 
-Status: COMPLETE. Do not resume; any follow-up starts as a new authorized task.
+Status: COMPLETE
 
 ## Design
 
