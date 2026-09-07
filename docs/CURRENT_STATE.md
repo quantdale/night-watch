@@ -682,9 +682,9 @@ when its OWN evidence exists.
 
 | Field | Claims | Current value | Why |
 | --- | --- | --- | --- |
-| `LAST_SUBSTANTIVE_IMPLEMENTATION_SHA` | the last commit that changed implementation AND was validated | `1ec3ae0` | RP-1 owner-local review persistence: a binding-keyed, atomic, no-replace review store over the existing private-artifact primitive; a narrow opt-in Control Center write authority and a page-bounded read path; expectation and semantic-contract identity propagation; validated by typecheck, hardening, full regression 4076/0/13 twice, `gate:local` 11/11, 54 mutations across two campaigns with 0 unexplained survivors, 72 injected crash scenarios, concurrency to 16 competing writers, and 30 browser workflow passes (DEF-RP-1 closed). Prior anchor `8265ace` | FC-1 frontier checkpoint: finding review lifecycle with immutable artifact binding, deterministic advisory finding intelligence, and the C-12 offline rehearsal on the real P1 core; validated by typecheck, hardening (61/61 rules live), full regression 3885/0/13, 41 mutations / 39 detected / 0 survivors, determinism 20 runs / 1 digest, environmental lane 100/100 (DEF-FC-01..03 closed). Historical MA-8/F-13 anchor `4642c16`: fifteen-gate scope chain, one-shot P1 grants, external scope config, attribution, bounded session; validated by typecheck, 141 focused tests, hardening, synthetic lane 1051/1051, full regression 3729/0/13, 14/14 mutations detected (DEF-P1-1..3 closed) |
-| `LAST_LOCALLY_VALIDATED_SHA` | the last commit where the local quality gate passed | `05bd7ad` | `gate:local` FULL PASS, all eleven required groups, receipt `receipt:sha256:3a6cefdd1ea57fc65e74b6d7` (SEMANTIC 2033/2020/13/0, OWNER 91/91, SYNTHETIC 1051/1051/0) |
-| `LAST_CLEAN_VALIDATED_SHA` | the last commit where the clean Node 20 gate passed | `b31f0bf` | `gate:clean` PASS, Node 20, `installResult` PASS, inner receipt `receipt:sha256:9851e74bd438a21073093c83` |
+| `LAST_SUBSTANTIVE_IMPLEMENTATION_SHA` | the last commit that changed implementation AND was validated | `3d624fb` | W8 autonomous efficacy: bounded investigation/campaign memory through `reasoner-turn-request.v2`, mechanical hypothesis/reproduction readiness, the exhausted-action guard, and the fixed-corpus efficacy harness; validated by typecheck, hardening, full regression 4429/0/15, `gate:local` 11/11, `gate:clean` Node 20, plus the opt-in live-provider and real-historical product-path proofs |
+| `LAST_LOCALLY_VALIDATED_SHA` | the last commit where the local quality gate passed | `3d624fb` | `gate:local` FULL PASS, all eleven required groups, receipt `receipt:sha256:0d892de64df3e499898a8289` (SEMANTIC 2080/2067/13/0, OWNER 91/91, SYNTHETIC 1194/1194/0) |
+| `LAST_CLEAN_VALIDATED_SHA` | the last commit where the clean Node 20 gate passed | `3d624fb` | `gate:clean` PASS, Node 20, `installResult` PASS, inner receipt `receipt:sha256:c6737eb5be31ce52f13647c4` |
 | `CI_OBSERVED_SHA` | the commit whose CI result was observed | `27bfe44` | run `33864698218` (2026-09-04): zero steps under the external runner block (`runner_id = 0`), recorded as `NO_STEPS_EXTERNAL_NON_EVIDENCE`; a docs-descendant head covering the `4642c16` implementation |
 | `CI_EXECUTED_SHA` | the commit CI actually executed the gate at | `4e0bfc1` | same run; both `EXECUTED_PASS` and `EXECUTED_FAIL` require observed == executed, and this one is `EXECUTED_PASS` with receipt `receipt:sha256:f313d77bf52b8b06dbde2e5c` |
 
@@ -744,9 +744,9 @@ RELEASE_CERTIFICATION_PROTOCOL_VERSION: nightwatch.release-certification.v1
 PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
 RELEASE_CHECKPOINT_SHA: 2576c5751d33bb40046246e8fcf57c7cc5c30a57
 LIVE_HEAD_SHA: DISCOVER_FROM_GIT
-LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: e368f9255142d1b30dd66825d93f6f321ba6ecbf
-LAST_LOCALLY_VALIDATED_SHA: e368f9255142d1b30dd66825d93f6f321ba6ecbf
-LAST_CLEAN_VALIDATED_SHA: e368f9255142d1b30dd66825d93f6f321ba6ecbf
+LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: 3d624fbcc42da808ce1c7e9cbc6b780b82d90820
+LAST_LOCALLY_VALIDATED_SHA: 3d624fbcc42da808ce1c7e9cbc6b780b82d90820
+LAST_CLEAN_VALIDATED_SHA: 3d624fbcc42da808ce1c7e9cbc6b780b82d90820
 CI_OBSERVED_SHA: NONE
 CI_EXECUTED_SHA: NONE
 CI_STATUS: NOT_OBSERVED
