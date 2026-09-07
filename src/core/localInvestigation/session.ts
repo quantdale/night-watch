@@ -1,0 +1,634 @@
+// ---------------------------------------------------------------------------
+// W7 context lane — stateful provider-backed investigation tool session.
+//
+// One session wraps one frozen LocalInvestigationContext and exposes a single
+// AgentToolExecutor. Providers stay behind the session: callers never touch
+// them. Every reasoner-visible byte is sanitized into UNTRUSTED envelopes and
+// every success mints a content-derived evidence ref that is tracked in the
+// harness-only history returned by snapshot().
+//
+// Authority preserved: LOCAL only (DEV browser/API tools fail closed), no
+// sibling writes, no secrets (sanitized before envelopes), no network (no
+// provider may add any; this module spawns nothing). Provider `audit` payloads
+// never enter tool envelopes, tool data, or history.
+//
+// Tool semantics reuse the existing engines (static lexer, system-map
+// projections, Bug/System Atlas retrieval, browser/API differential, dossier
+// builder) without restoring fixture fallbacks: a BLOCKED provider is an
+// explicit ADAPTER_UNAVAILABLE failure, never a synthetic answer.
+// ---------------------------------------------------------------------------
+
+import { ATLAS_QUERY_VERSION, clampAtlasLimit } from '../agentProtocol/atlas';
+import { lookupAgentTool, type AgentToolId } from '../agentProtocol/tools';
+import type { UntrustedSource } from '../agentProtocol/untrusted';
+import type { AgentToolCall, AgentToolExecutor, AgentToolResult } from '../agentRuntime/types';
+import { buildAutonomousFindingDossier } from '../autonomousFinding/dossier';
+import type { AutonomousFindingDraft } from '../autonomousFinding/types';
+import {
+  evidenceRefFor,
+  sanitizeJsonText,
+  wrapUntrusted,
+} from '../agentTools/sanitize';
+import { decideOwnerScope } from '../policy/ownerScope';
+import { tokenizeStaticSource, type StaticLexicalLanguage } from '../source/lexical';
+import { sourceContentDigest, type SourceScanLanguage } from '../source/scanTypes';
+import {
+  projectCompany,
+  queryCoverageGaps,
+  queryFindingsAttachedToTopology,
+  queryMutationCapableRoutes,
+  queryUntestedReadOnlyRoutes,
+  type SystemMapInput,
+} from '../systemMap/projections';
+import { createAtlasQuery, querySystemAtlas } from '../systemAtlas/overlay';
+import { compareBrowserAndApi } from '../triage/differential';
+import type { ApiObservation, BrowserObservation } from '../triage/types';
+import type {
+  DeterministicReproductionProvider,
+  LocalEvidenceRecord,
+  LocalFindingProposal,
+  LocalInvestigationContext,
+  LocalInvestigationHistory,
+  LocalInvestigationToolSession,
+  LocalObservedEvidence,
+  LocalProviderBlockClass,
+  LocalProviderResult,
+  LocalReproductionReceipt,
+  LocalReproductionRequest,
+  LocalSourceDocument,
+  LocalSourceIndex,
+  LocalSourceObservation,
+} from './types';
+import {
+  LOCAL_INVESTIGATION_HISTORY_VERSION,
+  LOCAL_REPRODUCTION_RECEIPT_VERSION,
+} from './types';
+import type { BugAtlasStore } from '../bugAtlas/store';
+import type { SystemAtlasOverlay } from '../systemAtlas/overlay';
+
+export const LOCAL_INVESTIGATION_SESSION_VERSION = 'nightwatch.local-investigation-session.v1' as const;
+
+/** Success result classes minted by this session (reproduction mirrors the provider verdict). */
+export const LOCAL_SESSION_RESULT_CLASSES = [
+  'SOURCE_INDEX',
+  'SOURCE_FILE',
+  'SYSTEM_MAP',
+  'BUG_ATLAS',
+  'SYSTEM_ATLAS',
+  'EVIDENCE',
+  'OBSERVATION_COMPARISON',
+  'ROUTE_CONTRACT_PROOF',
+  'FINDING_PROPOSAL',
+  'REPRODUCED',
+  'NOT_REPRODUCED',
+  'ENVIRONMENT_BLOCKED',
+  'NOT_AVAILABLE',
+] as const;
+
+const MAX_PROJECTION_LIMIT = 200;
+const DEFAULT_NODE_LIMIT = 50;
+const DEFAULT_EDGE_LIMIT = 50;
+const ATLAS_DEFAULT_LIMIT = 5;
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+function asNonEmptyString(value: unknown): string | null {
+  return typeof value === 'string' && value.length > 0 ? value : null;
+}
+
+function asLimit(value: unknown, fallback: number): number | null {
+  if (value === undefined) return fallback;
+  if (typeof value !== 'number' || !Number.isFinite(value)) return null;
+  return Math.max(0, Math.min(MAX_PROJECTION_LIMIT, Math.trunc(value)));
+}
+
+function failResult(resultClass: string): AgentToolResult {
+  return { ok: false, resultClass, evidenceRefs: [], outputBytes: 0, untrusted: [] };
+}
+
+function outputBytesOf(data: unknown): number {
+  try {
+    return Buffer.byteLength(JSON.stringify(data) ?? 'null', 'utf8');
+  } catch {
+    return Buffer.byteLength('{"unserializable":true}', 'utf8');
+  }
+}
+
+/** Resolve a provider result fail-closed: BLOCKED and thrown providers both become null. */
+async function resolveProvider<T>(
+  invoke: () => Promise<LocalProviderResult<T>>,
+): Promise<{ readonly value: T } | { readonly blocked: true; readonly class: LocalProviderBlockClass; readonly reason: string }> {
+  let result: LocalProviderResult<T>;
+  try {
+    result = await invoke();
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : 'PROVIDER_THREW';
+    return { blocked: true, class: 'DATA_BLOCKED', reason: `provider threw; failing closed: ${detail}` };
+  }
+  if (result.status === 'BLOCKED') {
+    return { blocked: true, class: result.class, reason: result.reason };
+  }
+  return { value: result.value };
+}
+
+function lexicalLanguageFor(language: SourceScanLanguage): StaticLexicalLanguage | null {
+  switch (language) {
+    case 'TYPESCRIPT':
+      return 'TYPESCRIPT';
+    case 'JAVASCRIPT':
+      return 'JAVASCRIPT';
+    case 'GO':
+      return 'GO';
+    default:
+      return null;
+  }
+}
+
+function parseAtlasTerms(args: Record<string, unknown>): readonly string[] | null {
+  if (args['terms'] !== undefined) {
+    if (!Array.isArray(args['terms']) || !args['terms'].every((item) => typeof item === 'string')) {
+      return null;
+    }
+    return args['terms'] as readonly string[];
+  }
+  const query = asNonEmptyString(args['query']);
+  if (query === null) return [];
+  return query.split(/[^A-Za-z0-9]+/).filter((token) => token.length >= 2);
+}
+
+function readAtlasLimit(args: Record<string, unknown>): number {
+  return typeof args['limit'] === 'number' ? args['limit'] : ATLAS_DEFAULT_LIMIT;
+}
+
+function readBrowserObservation(value: unknown): BrowserObservation | null {
+  if (!isRecord(value)) return null;
+  const failed = value['failed'];
+  const routeClass = asNonEmptyString(value['routeClass']);
+  const structuralState = asNonEmptyString(value['structuralState']);
+  const operationFamily = asNonEmptyString(value['operationFamily']);
+  const statusClass = asNonEmptyString(value['statusClass']);
+  const contentTypeClass = asNonEmptyString(value['contentTypeClass']);
+  const oracleFingerprint = asNonEmptyString(value['oracleFingerprint']);
+  const runtimeCategory = asNonEmptyString(value['runtimeCategory']);
+  if (
+    typeof failed !== 'boolean' || !routeClass || !structuralState || !operationFamily ||
+    !statusClass || !contentTypeClass || !oracleFingerprint || !runtimeCategory
+  ) {
+    return null;
+  }
+  return { failed, routeClass, structuralState, operationFamily, statusClass, contentTypeClass, oracleFingerprint, runtimeCategory };
+}
+
+function readApiObservation(value: unknown): { readonly api: ApiObservation | null; readonly malformed: boolean } {
+  if (value === null || value === undefined) return { api: null, malformed: false };
+  if (!isRecord(value)) return { api: null, malformed: true };
+  const available = value['available'];
+  const failed = value['failed'];
+  const operationFamily = asNonEmptyString(value['operationFamily']);
+  const statusClass = asNonEmptyString(value['statusClass']);
+  const contentTypeClass = asNonEmptyString(value['contentTypeClass']);
+  const parseCategory = asNonEmptyString(value['parseCategory']);
+  const oracleFingerprint = asNonEmptyString(value['oracleFingerprint']);
+  if (
+    typeof available !== 'boolean' || typeof failed !== 'boolean' || !operationFamily ||
+    !statusClass || !contentTypeClass || !parseCategory || !oracleFingerprint
+  ) {
+    return { api: null, malformed: true };
+  }
+  const routeClass = value['routeClass'];
+  const structuralState = value['structuralState'];
+  return {
+    malformed: false,
+    api: {
+      available,
+      failed,
+      operationFamily,
+      statusClass,
+      contentTypeClass,
+      parseCategory,
+      oracleFingerprint,
+      ...(typeof routeClass === 'string' ? { routeClass } : {}),
+      ...(typeof structuralState === 'string' ? { structuralState } : {}),
+    },
+  };
+}
+
+function readReproductionRequest(args: Record<string, unknown>): LocalReproductionRequest | null {
+  const reproductionId = asNonEmptyString(args['reproductionId']);
+  const sourcePath = asNonEmptyString(args['sourcePath']);
+  const sourceEvidenceRef = asNonEmptyString(args['sourceEvidenceRef']);
+  if (reproductionId === null || sourcePath === null || sourceEvidenceRef === null) return null;
+  const candidateRaw = args['candidateId'];
+  if (candidateRaw !== undefined && candidateRaw !== null && typeof candidateRaw !== 'string') return null;
+  const observedRaw = args['observedEvidenceRefs'];
+  if (observedRaw !== undefined && (!Array.isArray(observedRaw) || !observedRaw.every((item) => typeof item === 'string'))) {
+    return null;
+  }
+  return {
+    reproductionId,
+    candidateId: typeof candidateRaw === 'string' ? candidateRaw : null,
+    sourcePath,
+    sourceEvidenceRef,
+    observedEvidenceRefs: observedRaw === undefined ? [] : [...(observedRaw as readonly string[])],
+  };
+}
+
+interface MutableHistory {
+  readonly observedEvidence: LocalObservedEvidence[];
+  readonly inspectedSources: LocalSourceObservation[];
+  readonly sourceEvidenceByPath: Map<string, string>;
+  readonly reproductions: LocalReproductionReceipt[];
+  readonly findingProposals: LocalFindingProposal[];
+}
+
+/**
+ * Create one stateful tool session over the given provider context.
+ * History is harness-only: snapshot() is never reasoner-visible.
+ */
+export function createLocalInvestigationToolSession(context: LocalInvestigationContext): LocalInvestigationToolSession {
+  const history: MutableHistory = {
+    observedEvidence: [],
+    inspectedSources: [],
+    sourceEvidenceByPath: new Map<string, string>(),
+    reproductions: [],
+    findingProposals: [],
+  };
+
+  function observe(toolId: AgentToolId, source: UntrustedSource, sanitizedBytes: string): string {
+    const evidenceRef = evidenceRefFor(sanitizedBytes);
+    history.observedEvidence.push({ evidenceRef, toolId, source });
+    return evidenceRef;
+  }
+
+  function succeed(toolId: AgentToolId, resultClass: string, data: unknown, source: UntrustedSource): AgentToolResult {
+    const sanitized = sanitizeJsonText(data);
+    const envelope = wrapUntrusted(source, sanitized.text);
+    const evidenceRef = observe(toolId, source, sanitized.text);
+    return {
+      ok: true,
+      resultClass,
+      evidenceRefs: [evidenceRef],
+      outputBytes: outputBytesOf(data),
+      untrusted: [envelope],
+    };
+  }
+
+  async function runSourceIndex(): Promise<AgentToolResult> {
+    const resolved = await resolveProvider<LocalSourceIndex>(() => context.source.index());
+    if ('blocked' in resolved) return failResult('ADAPTER_UNAVAILABLE');
+    return succeed('INSPECT_SOURCE_SURFACE', 'SOURCE_INDEX', {
+      entries: [...resolved.value.entries],
+      total: resolved.value.total,
+      truncated: resolved.value.truncated,
+    }, 'SOURCE_CODE');
+  }
+
+  async function runSourceRead(path: string): Promise<AgentToolResult> {
+    const resolved = await resolveProvider<LocalSourceDocument>(() => context.source.read(path));
+    if ('blocked' in resolved) return failResult('ADAPTER_UNAVAILABLE');
+    const document = resolved.value;
+    // The session never trusts provider bytes blindly: the digest must match
+    // the exact text before anything is observed or grounded on it.
+    if (sourceContentDigest(document.text) !== document.contentDigest) {
+      return failResult('ADAPTER_UNAVAILABLE');
+    }
+    const lexical = lexicalLanguageFor(document.language);
+    const tokens = lexical === null ? null : tokenizeStaticSource(document.text, lexical);
+    const kindHistogram: Record<string, number> | null = tokens === null
+      ? null
+      : (() => {
+        const histogram: Record<string, number> = {};
+        for (const token of tokens) histogram[token.kind] = (histogram[token.kind] ?? 0) + 1;
+        return histogram;
+      })();
+    const data = {
+      path: document.path,
+      repository: document.repository,
+      relativePath: document.relativePath,
+      sourceSha: document.sourceSha,
+      language: document.language,
+      byteCount: document.byteCount,
+      contentDigest: document.contentDigest,
+      charCount: document.text.length,
+      tokenCount: tokens === null ? null : tokens.length,
+      kindHistogram,
+      text: document.text,
+    };
+    const sanitized = sanitizeJsonText(data);
+    const envelope = wrapUntrusted('SOURCE_CODE', sanitized.text);
+    const evidenceRef = observe('INSPECT_SOURCE_SURFACE', 'SOURCE_CODE', sanitized.text);
+    history.inspectedSources.push({ path: document.path, evidenceRef });
+    history.sourceEvidenceByPath.set(document.path, evidenceRef);
+    return {
+      ok: true,
+      resultClass: 'SOURCE_FILE',
+      evidenceRefs: [evidenceRef],
+      outputBytes: outputBytesOf(data),
+      untrusted: [envelope],
+    };
+  }
+
+  async function loadSystemMap(): Promise<{ readonly input: SystemMapInput } | null> {
+    const resolved = await resolveProvider<SystemMapInput>(() => context.systemMap.load());
+    if ('blocked' in resolved) return null;
+    return { input: resolved.value };
+  }
+
+  async function runSystemMap(args: Record<string, unknown>): Promise<AgentToolResult> {
+    const loaded = await loadSystemMap();
+    if (loaded === null) return failResult('ADAPTER_UNAVAILABLE');
+    const systemMap = loaded.input;
+    const query = args['query'] === undefined ? 'COMPANY' : args['query'];
+    if (typeof query !== 'string') return failResult('MALFORMED_ARGUMENTS');
+    const nodeLimit = asLimit(args['nodeLimit'], DEFAULT_NODE_LIMIT);
+    const edgeLimit = asLimit(args['edgeLimit'], DEFAULT_EDGE_LIMIT);
+    if (nodeLimit === null || edgeLimit === null) return failResult('MALFORMED_ARGUMENTS');
+    const limits = { nodeLimit, edgeLimit };
+    switch (query) {
+      case 'COMPANY':
+        return succeed('QUERY_SYSTEM_MAP', 'SYSTEM_MAP', projectCompany(systemMap, limits), 'DOCUMENTATION');
+      case 'COVERAGE_GAPS':
+        return succeed('QUERY_SYSTEM_MAP', 'SYSTEM_MAP', queryCoverageGaps(systemMap, limits), 'DOCUMENTATION');
+      case 'UNTESTED_READ_ONLY_ROUTES':
+        return succeed('QUERY_SYSTEM_MAP', 'SYSTEM_MAP', queryUntestedReadOnlyRoutes(systemMap, limits), 'DOCUMENTATION');
+      case 'MUTATION_CAPABLE_ROUTES':
+        return succeed('QUERY_SYSTEM_MAP', 'SYSTEM_MAP', queryMutationCapableRoutes(systemMap, limits), 'DOCUMENTATION');
+      case 'FINDINGS_ATTACHED_TO_TOPOLOGY':
+        return succeed('QUERY_SYSTEM_MAP', 'SYSTEM_MAP', queryFindingsAttachedToTopology(systemMap, limits), 'DOCUMENTATION');
+      default:
+        return failResult('MALFORMED_ARGUMENTS');
+    }
+  }
+
+  async function runRouteContractProof(args: Record<string, unknown>): Promise<AgentToolResult> {
+    const loaded = await loadSystemMap();
+    if (loaded === null) return failResult('ADAPTER_UNAVAILABLE');
+    const operationId = typeof args['operationId'] === 'string' ? (args['operationId'] as string) : null;
+    const routeTemplate = typeof args['routeTemplate'] === 'string' ? (args['routeTemplate'] as string) : null;
+    const method = typeof args['method'] === 'string' ? (args['method'] as string) : null;
+    if (operationId === null && routeTemplate === null) return failResult('MALFORMED_ARGUMENTS');
+    const match = loaded.input.operations.find((operation) =>
+      operationId !== null
+        ? operation.operationId === operationId
+        : operation.routeTemplate === routeTemplate && (method === null || operation.method === method),
+    );
+    if (!match) return failResult('ADAPTER_UNAVAILABLE');
+    return succeed('REQUEST_ROUTE_CONTRACT_PROOF', 'ROUTE_CONTRACT_PROOF', {
+      operationId: match.operationId,
+      method: match.method,
+      routeTemplate: match.routeTemplate,
+      routeProof: match.routeProof,
+      readOnlyClassification: match.readOnlyClassification,
+      factCategory: match.factCategory,
+    }, 'SOURCE_CODE');
+  }
+
+  async function runBugAtlas(toolId: AgentToolId, args: Record<string, unknown>): Promise<AgentToolResult> {
+    const terms = parseAtlasTerms(args);
+    if (terms === null) return failResult('MALFORMED_ARGUMENTS');
+    const resolved = await resolveProvider<BugAtlasStore>(() => context.bugAtlas.load());
+    if ('blocked' in resolved) return failResult('ADAPTER_UNAVAILABLE');
+    // No synthetic fallback: a BLOCKED provider fails here, above.
+    const result = resolved.value.query({
+      schemaVersion: ATLAS_QUERY_VERSION,
+      terms,
+      limit: clampAtlasLimit(readAtlasLimit(args)),
+    });
+    return succeed(toolId, 'BUG_ATLAS', {
+      integration: 'BUG_ATLAS',
+      truncated: result.truncated,
+      records: result.records.map((record) => ({
+        bugId: record.bugId,
+        product: record.product,
+        repository: record.repository,
+        symptom: record.symptom,
+        provenance: record.provenance,
+      })),
+    }, 'HISTORICAL_RECORD');
+  }
+
+  async function runSystemAtlas(args: Record<string, unknown>): Promise<AgentToolResult> {
+    const terms = parseAtlasTerms(args);
+    if (terms === null) return failResult('MALFORMED_ARGUMENTS');
+    let query;
+    try {
+      query = createAtlasQuery(terms, readAtlasLimit(args));
+    } catch {
+      return failResult('MALFORMED_ARGUMENTS');
+    }
+    const resolved = await resolveProvider<SystemAtlasOverlay>(() => context.systemAtlas.load());
+    if ('blocked' in resolved) return failResult('ADAPTER_UNAVAILABLE');
+    // No synthetic fallback: a BLOCKED provider fails here, above.
+    const result = querySystemAtlas(resolved.value, query);
+    return succeed('QUERY_SYSTEM_ATLAS', 'SYSTEM_ATLAS', {
+      integration: 'SYSTEM_ATLAS',
+      truncated: result.truncated,
+      records: result.records.map((record) => ({
+        conceptId: record.conceptId,
+        kind: record.kind,
+        label: record.label,
+        provenance: record.provenance,
+      })),
+    }, 'DOCUMENTATION');
+  }
+
+  async function runEvidence(args: Record<string, unknown>): Promise<AgentToolResult> {
+    const evidenceRef = asNonEmptyString(args['evidenceRef']);
+    if (evidenceRef === null) return failResult('MALFORMED_ARGUMENTS');
+    const resolved = await resolveProvider<LocalEvidenceRecord>(() => context.evidence.get(evidenceRef));
+    if ('blocked' in resolved) return failResult('ADAPTER_UNAVAILABLE');
+    // Re-sanitized on the way out: provider bytes are still untrusted.
+    return succeed('RETRIEVE_SANITIZED_EVIDENCE', 'EVIDENCE', {
+      evidenceRef,
+      record: resolved.value.record,
+    }, resolved.value.source);
+  }
+
+  async function runReproduction(args: Record<string, unknown>): Promise<AgentToolResult> {
+    const request = readReproductionRequest(args);
+    if (request === null) return failResult('MALFORMED_ARGUMENTS');
+    // Grounding gate: the source path must have been inspected through this
+    // session AND the presented ref must be that inspection's observed source
+    // evidence ref. Anything else never reaches the provider.
+    const observedRef = history.sourceEvidenceByPath.get(request.sourcePath);
+    if (observedRef === undefined || observedRef !== request.sourceEvidenceRef) {
+      return failResult('UNSAFE_INTENT');
+    }
+    const provider: DeterministicReproductionProvider = context.reproduction;
+    const resolved = await resolveProvider(() => provider.run(request));
+    if ('blocked' in resolved) return failResult('ADAPTER_UNAVAILABLE');
+    const result = resolved.value;
+    history.reproductions.push({
+      schemaVersion: LOCAL_REPRODUCTION_RECEIPT_VERSION,
+      providerId: provider.providerId,
+      reproductionId: request.reproductionId,
+      candidateId: request.candidateId,
+      sourcePath: request.sourcePath,
+      sourceEvidenceRef: request.sourceEvidenceRef,
+      evidenceRef: result.evidenceRef,
+      verdict: result.verdict,
+      preFix: result.preFix,
+      postFix: result.postFix,
+      provenanceRefs: [...result.provenanceRefs],
+    });
+    // Only reasonerVisible crosses to the reasoner; audit stays harness-side
+    // (it is not even stored — receipts carry no audit field by construction).
+    const sanitized = sanitizeJsonText(result.reasonerVisible);
+    const envelope = wrapUntrusted('LOG', sanitized.text);
+    if (result.evidenceRef !== null) {
+      history.observedEvidence.push({ evidenceRef: result.evidenceRef, toolId: 'RERUN_SAFE_REPRODUCTION', source: 'LOG' });
+      return {
+        ok: true,
+        resultClass: result.verdict,
+        evidenceRefs: [result.evidenceRef],
+        outputBytes: outputBytesOf(result.reasonerVisible),
+        untrusted: [envelope],
+      };
+    }
+    return {
+      ok: true,
+      resultClass: result.verdict,
+      evidenceRefs: [],
+      outputBytes: outputBytesOf(result.reasonerVisible),
+      untrusted: [envelope],
+    };
+  }
+
+  function runFindingProposal(args: Record<string, unknown>): AgentToolResult {
+    const candidateId = asNonEmptyString(args['candidateId']);
+    const evidenceRefs = args['evidenceRefs'];
+    if (candidateId === null) return failResult('MALFORMED_ARGUMENTS');
+    if (
+      !Array.isArray(evidenceRefs) || evidenceRefs.length === 0 ||
+      !evidenceRefs.every((ref) => typeof ref === 'string' && ref.length > 0)
+    ) {
+      return failResult('MALFORMED_ARGUMENTS');
+    }
+    const refs = [...(evidenceRefs as readonly string[])];
+    const draftRaw = args['draft'];
+    // Capture-only: membership of the refs in observed evidence is the
+    // admission lane's job. The session records the proposal verbatim and
+    // grants it no authority; the proposal envelope itself is reasoner traffic
+    // but observes no new evidence (returning a fresh ref would let a proposal
+    // self-ground).
+    if (draftRaw !== undefined) {
+      if (!isRecord(draftRaw)) return failResult('MALFORMED_ARGUMENTS');
+      try {
+        const dossier = buildAutonomousFindingDossier(draftRaw as unknown as AutonomousFindingDraft);
+        history.findingProposals.push({ candidateId, evidenceRefs: refs, draft: { ...(draftRaw as Record<string, unknown>) } });
+        const data = {
+          candidateId,
+          evidenceRefs: refs,
+          status: 'DOSSIER_BUILT_NO_AUTHORITY',
+          dossier,
+          authority: dossier.authority,
+        };
+        return {
+          ok: true,
+          resultClass: 'FINDING_PROPOSAL',
+          evidenceRefs: [],
+          outputBytes: outputBytesOf(data),
+          untrusted: [wrapUntrusted('LOG', sanitizeJsonText(data).text)],
+        };
+      } catch {
+        return failResult('MALFORMED_ARGUMENTS');
+      }
+    }
+    history.findingProposals.push({ candidateId, evidenceRefs: refs, draft: null });
+    const data = {
+      candidateId,
+      evidenceRefs: refs,
+      status: 'PROPOSAL_ONLY_NO_AUTHORITY',
+      authority: {
+        humanReviewRequired: true,
+        externalPublication: 'PROHIBITED',
+        autoFile: false,
+        autoLeslie: false,
+        autoSlack: false,
+      },
+    };
+    return {
+      ok: true,
+      resultClass: 'FINDING_PROPOSAL',
+      evidenceRefs: [],
+      outputBytes: outputBytesOf(data),
+      untrusted: [wrapUntrusted('HISTORICAL_RECORD', sanitizeJsonText(data).text)],
+    };
+  }
+
+  function runCompare(args: Record<string, unknown>): AgentToolResult {
+    const browser = readBrowserObservation(args['browser']);
+    if (browser === null) return failResult('MALFORMED_ARGUMENTS');
+    const parsedApi = readApiObservation(args['api'] ?? null);
+    if (parsedApi.malformed) return failResult('MALFORMED_ARGUMENTS');
+    return succeed('COMPARE_OBSERVATIONS', 'OBSERVATION_COMPARISON', compareBrowserAndApi(browser, parsedApi.api), 'API_RESPONSE');
+  }
+
+  const executor: AgentToolExecutor = {
+    async execute(call: AgentToolCall): Promise<AgentToolResult> {
+      const descriptor = lookupAgentTool(call.toolId);
+      if (descriptor === null) return failResult('UNKNOWN_TOOL');
+      if (descriptor.mutationCapability !== 'NONE') return failResult('UNSAFE_INTENT');
+      // This session is LOCAL-only by construction.
+      if (descriptor.environment !== 'LOCAL') return failResult('UNAUTHORIZED_ENVIRONMENT');
+      if (!decideOwnerScope(descriptor.authorizationClass).allowed) return failResult('UNSAFE_INTENT');
+      const args = isRecord(call.arguments) ? (call.arguments as Record<string, unknown>) : null;
+      if (args === null) return failResult('MALFORMED_ARGUMENTS');
+      switch (descriptor.id) {
+        case 'INSPECT_SOURCE_SURFACE': {
+          const requestedPath = typeof args['path'] === 'string' ? (args['path'] as string) : null;
+          if (requestedPath === null) return runSourceIndex();
+          if (requestedPath.length === 0) return failResult('MALFORMED_ARGUMENTS');
+          return runSourceRead(requestedPath);
+        }
+        case 'QUERY_SYSTEM_MAP':
+          return runSystemMap(args);
+        case 'QUERY_BUG_ATLAS':
+          return runBugAtlas(descriptor.id, args);
+        case 'REQUEST_RELATED_HISTORICAL_BUGS':
+          return runBugAtlas(descriptor.id, args);
+        case 'QUERY_SYSTEM_ATLAS':
+          return runSystemAtlas(args);
+        case 'RETRIEVE_SANITIZED_EVIDENCE':
+          return runEvidence(args);
+        case 'RERUN_SAFE_REPRODUCTION':
+          return runReproduction(args);
+        case 'REQUEST_FINDING_PROPOSAL':
+          return runFindingProposal(args);
+        case 'REQUEST_ROUTE_CONTRACT_PROOF':
+          return runRouteContractProof(args);
+        case 'COMPARE_OBSERVATIONS':
+          return runCompare(args);
+        case 'ASK_DETERMINISTIC_ORACLE':
+          // No oracle provider exists in the frozen context: fail closed.
+          return failResult('ADAPTER_UNAVAILABLE');
+        case 'REQUEST_BROWSER_OBSERVATION':
+        case 'REQUEST_API_OBSERVATION':
+          return failResult('UNAUTHORIZED_ENVIRONMENT');
+        default:
+          return failResult('UNKNOWN_TOOL');
+      }
+    },
+  };
+
+  return {
+    executor,
+    snapshot(): LocalInvestigationHistory {
+      return {
+        schemaVersion: LOCAL_INVESTIGATION_HISTORY_VERSION,
+        observedEvidence: history.observedEvidence.map((entry) => ({ ...entry })),
+        inspectedSources: history.inspectedSources.map((entry) => ({ ...entry })),
+        reproductions: history.reproductions.map((entry) => ({ ...entry, provenanceRefs: [...entry.provenanceRefs] })),
+        findingProposals: history.findingProposals.map((entry) => ({
+          ...entry,
+          evidenceRefs: [...entry.evidenceRefs],
+          draft: entry.draft === null ? null : { ...entry.draft },
+        })),
+      };
+    },
+  };
+}
+
+/** End of session module. Provider vocabulary lives in ./types. */
