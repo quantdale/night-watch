@@ -13,17 +13,15 @@
 // never enter tool envelopes, tool data, or history.
 //
 // Tool semantics reuse the existing engines (static lexer, system-map
-// projections, Bug/System Atlas retrieval, browser/API differential, dossier
-// builder) without restoring fixture fallbacks: a BLOCKED provider is an
-// explicit ADAPTER_UNAVAILABLE failure, never a synthetic answer.
+// projections, Bug/System Atlas retrieval, and browser/API differential)
+// without restoring fixture fallbacks: a BLOCKED provider is an explicit
+// ADAPTER_UNAVAILABLE failure, never a synthetic answer.
 // ---------------------------------------------------------------------------
 
 import { ATLAS_QUERY_VERSION, clampAtlasLimit } from '../agentProtocol/atlas';
 import { lookupAgentTool, type AgentToolId } from '../agentProtocol/tools';
 import type { UntrustedSource } from '../agentProtocol/untrusted';
 import type { AgentToolCall, AgentToolExecutor, AgentToolResult } from '../agentRuntime/types';
-import { buildAutonomousFindingDossier } from '../autonomousFinding/dossier';
-import type { AutonomousFindingDraft } from '../autonomousFinding/types';
 import {
   evidenceRefFor,
   sanitizeJsonText,
@@ -84,6 +82,9 @@ export const LOCAL_SESSION_RESULT_CLASSES = [
   'ENVIRONMENT_BLOCKED',
   'NOT_AVAILABLE',
 ] as const;
+
+const SAFE_EVIDENCE_REF_RE = /^[A-Za-z0-9][A-Za-z0-9:._/-]{0,511}$/;
+const MAX_REASONER_SOURCE_INDEX_ENTRIES = 32;
 
 const MAX_PROJECTION_LIMIT = 200;
 const DEFAULT_NODE_LIMIT = 50;
@@ -239,6 +240,7 @@ interface MutableHistory {
   readonly observedEvidence: LocalObservedEvidence[];
   readonly inspectedSources: LocalSourceObservation[];
   readonly sourceEvidenceByPath: Map<string, string>;
+  readonly observedRecords: Map<string, { readonly source: UntrustedSource; readonly record: unknown }>;
   readonly reproductions: LocalReproductionReceipt[];
   readonly findingProposals: LocalFindingProposal[];
 }
@@ -252,13 +254,21 @@ export function createLocalInvestigationToolSession(context: LocalInvestigationC
     observedEvidence: [],
     inspectedSources: [],
     sourceEvidenceByPath: new Map<string, string>(),
+    observedRecords: new Map(),
     reproductions: [],
     findingProposals: [],
   };
 
   function observe(toolId: AgentToolId, source: UntrustedSource, sanitizedBytes: string): string {
     const evidenceRef = evidenceRefFor(sanitizedBytes);
+    let record: unknown = sanitizedBytes;
+    try {
+      record = JSON.parse(sanitizedBytes);
+    } catch {
+      // Sanitized non-JSON text remains a bounded string record.
+    }
     history.observedEvidence.push({ evidenceRef, toolId, source });
+    history.observedRecords.set(evidenceRef, { source, record });
     return evidenceRef;
   }
 
@@ -278,10 +288,11 @@ export function createLocalInvestigationToolSession(context: LocalInvestigationC
   async function runSourceIndex(): Promise<AgentToolResult> {
     const resolved = await resolveProvider<LocalSourceIndex>(() => context.source.index());
     if ('blocked' in resolved) return failResult('ADAPTER_UNAVAILABLE');
+    const entries = resolved.value.entries.slice(0, MAX_REASONER_SOURCE_INDEX_ENTRIES);
     return succeed('INSPECT_SOURCE_SURFACE', 'SOURCE_INDEX', {
-      entries: [...resolved.value.entries],
+      entries,
       total: resolved.value.total,
-      truncated: resolved.value.truncated,
+      truncated: resolved.value.truncated || entries.length < resolved.value.entries.length,
     }, 'SOURCE_CODE');
   }
 
@@ -437,6 +448,13 @@ export function createLocalInvestigationToolSession(context: LocalInvestigationC
   async function runEvidence(args: Record<string, unknown>): Promise<AgentToolResult> {
     const evidenceRef = asNonEmptyString(args['evidenceRef']);
     if (evidenceRef === null) return failResult('MALFORMED_ARGUMENTS');
+    const observed = history.observedRecords.get(evidenceRef);
+    if (observed !== undefined) {
+      return succeed('RETRIEVE_SANITIZED_EVIDENCE', 'EVIDENCE', {
+        evidenceRef,
+        record: observed.record,
+      }, observed.source);
+    }
     const resolved = await resolveProvider<LocalEvidenceRecord>(() => context.evidence.get(evidenceRef));
     if ('blocked' in resolved) return failResult('ADAPTER_UNAVAILABLE');
     // Re-sanitized on the way out: provider bytes are still untrusted.
@@ -460,6 +478,15 @@ export function createLocalInvestigationToolSession(context: LocalInvestigationC
     const resolved = await resolveProvider(() => provider.run(request));
     if ('blocked' in resolved) return failResult('ADAPTER_UNAVAILABLE');
     const result = resolved.value;
+    if (
+      result.evidenceRef !== null &&
+      !SAFE_EVIDENCE_REF_RE.test(result.evidenceRef)
+    ) {
+      return failResult('ADAPTER_UNAVAILABLE');
+    }
+    if (!result.provenanceRefs.every((ref) => SAFE_EVIDENCE_REF_RE.test(ref))) {
+      return failResult('ADAPTER_UNAVAILABLE');
+    }
     history.reproductions.push({
       schemaVersion: LOCAL_REPRODUCTION_RECEIPT_VERSION,
       providerId: provider.providerId,
@@ -479,6 +506,13 @@ export function createLocalInvestigationToolSession(context: LocalInvestigationC
     const envelope = wrapUntrusted('LOG', sanitized.text);
     if (result.evidenceRef !== null) {
       history.observedEvidence.push({ evidenceRef: result.evidenceRef, toolId: 'RERUN_SAFE_REPRODUCTION', source: 'LOG' });
+      let record: unknown = sanitized.text;
+      try {
+        record = JSON.parse(sanitized.text);
+      } catch {
+        // Sanitized non-JSON text remains a bounded string record.
+      }
+      history.observedRecords.set(result.evidenceRef, { source: 'LOG', record });
       return {
         ok: true,
         resultClass: result.verdict,
@@ -508,39 +542,26 @@ export function createLocalInvestigationToolSession(context: LocalInvestigationC
     }
     const refs = [...(evidenceRefs as readonly string[])];
     const draftRaw = args['draft'];
-    // Capture-only: membership of the refs in observed evidence is the
-    // admission lane's job. The session records the proposal verbatim and
-    // grants it no authority; the proposal envelope itself is reasoner traffic
-    // but observes no new evidence (returning a fresh ref would let a proposal
-    // self-ground).
+    let draft: Readonly<Record<string, unknown>> | null = null;
     if (draftRaw !== undefined) {
       if (!isRecord(draftRaw)) return failResult('MALFORMED_ARGUMENTS');
+      const sanitizedDraft = sanitizeJsonText(draftRaw);
       try {
-        const dossier = buildAutonomousFindingDossier(draftRaw as unknown as AutonomousFindingDraft);
-        history.findingProposals.push({ candidateId, evidenceRefs: refs, draft: { ...(draftRaw as Record<string, unknown>) } });
-        const data = {
-          candidateId,
-          evidenceRefs: refs,
-          status: 'DOSSIER_BUILT_NO_AUTHORITY',
-          dossier,
-          authority: dossier.authority,
-        };
-        return {
-          ok: true,
-          resultClass: 'FINDING_PROPOSAL',
-          evidenceRefs: [],
-          outputBytes: outputBytesOf(data),
-          untrusted: [wrapUntrusted('LOG', sanitizeJsonText(data).text)],
-        };
+        const parsed: unknown = JSON.parse(sanitizedDraft.text);
+        if (!isRecord(parsed)) return failResult('MALFORMED_ARGUMENTS');
+        draft = { ...parsed };
       } catch {
         return failResult('MALFORMED_ARGUMENTS');
       }
     }
-    history.findingProposals.push({ candidateId, evidenceRefs: refs, draft: null });
+    // Capture-only: evidence membership and reproduction are checked by the
+    // mechanical admission gate. This tool never builds a dossier and never
+    // trusts model-supplied reproduction counts or authority.
+    history.findingProposals.push({ candidateId, evidenceRefs: refs, draft });
     const data = {
       candidateId,
       evidenceRefs: refs,
-      status: 'PROPOSAL_ONLY_NO_AUTHORITY',
+      status: 'PROPOSAL_CAPTURED_NO_AUTHORITY',
       authority: {
         humanReviewRequired: true,
         externalPublication: 'PROHIBITED',

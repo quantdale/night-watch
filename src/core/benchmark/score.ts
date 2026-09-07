@@ -151,49 +151,9 @@ export type BenchmarkVerificationTier = 'VERIFIED_ROOT_CAUSE_REDISCOVERY' | 'NOT
 
 export interface ClassifyVerifiedBenchmarkTierInput {
   readonly admitted?: unknown;
-  readonly candidateAdmitted?: unknown;
   readonly score?: unknown;
-  readonly outcome?: unknown;
   readonly mechanicalReproductionCount?: unknown;
-  readonly reproductionCount?: unknown;
-  readonly hasMechanicalReproduction?: unknown;
   readonly leakage?: unknown;
-  readonly leakageClasses?: unknown;
-  readonly leaked?: unknown;
-  readonly leakageCount?: unknown;
-}
-
-function verifiedTierOutcome(score: unknown, fallback: unknown): string | null {
-  if (score !== null && typeof score === 'object' && !Array.isArray(score)) {
-    const outcome = (score as { outcome?: unknown }).outcome;
-    if (typeof outcome === 'string') return outcome;
-  }
-  return typeof fallback === 'string' ? fallback : null;
-}
-
-function verifiedTierMechanicalCount(raw: ClassifyVerifiedBenchmarkTierInput): number {
-  const candidates = [raw.mechanicalReproductionCount, raw.reproductionCount];
-  for (const value of candidates) {
-    if (typeof value === 'number' && Number.isInteger(value) && value > 0) return value;
-  }
-  return 0;
-}
-
-function verifiedTierHasMechanical(raw: ClassifyVerifiedBenchmarkTierInput): boolean {
-  if (verifiedTierMechanicalCount(raw) > 0) return true;
-  return raw.hasMechanicalReproduction === true;
-}
-
-function verifiedTierLeakage(raw: ClassifyVerifiedBenchmarkTierInput): { readonly classes: readonly unknown[]; readonly count: number } {
-  const sources = [raw.leakage, raw.leakageClasses, raw.leaked];
-  for (const source of sources) {
-    if (Array.isArray(source)) return { classes: source, count: source.length };
-  }
-  const count = raw.leakageCount;
-  if (typeof count === 'number' && Number.isInteger(count) && count > 0) {
-    return { classes: ['LEAKAGE_COUNT'], count };
-  }
-  return { classes: [], count: 0 };
 }
 
 /**
@@ -209,9 +169,12 @@ export function classifyVerifiedBenchmarkTier(
     return 'NOT_VERIFIED';
   }
   const raw = input as ClassifyVerifiedBenchmarkTierInput;
-  const admitted = raw.admitted === true || raw.candidateAdmitted === true;
-  if (!admitted) return 'NOT_VERIFIED';
-  const outcome = verifiedTierOutcome(raw.score, raw.outcome);
+  if (raw.admitted !== true) return 'NOT_VERIFIED';
+  const score = raw.score;
+  const outcome =
+    score !== null && typeof score === 'object' && !Array.isArray(score) && 'outcome' in score
+      ? score.outcome
+      : null;
   if (
     outcome !== 'EXACT_REDISCOVERY' &&
     outcome !== 'PARTIAL_REDISCOVERY' &&
@@ -219,8 +182,13 @@ export function classifyVerifiedBenchmarkTier(
   ) {
     return 'NOT_VERIFIED';
   }
-  if (!verifiedTierHasMechanical(raw)) return 'NOT_VERIFIED';
-  const leakage = verifiedTierLeakage(raw);
-  if (leakage.classes.length > 0 || leakage.count > 0) return 'NOT_VERIFIED';
+  if (
+    typeof raw.mechanicalReproductionCount !== 'number' ||
+    !Number.isInteger(raw.mechanicalReproductionCount) ||
+    raw.mechanicalReproductionCount < 1
+  ) {
+    return 'NOT_VERIFIED';
+  }
+  if (!Array.isArray(raw.leakage) || raw.leakage.length > 0) return 'NOT_VERIFIED';
   return 'VERIFIED_ROOT_CAUSE_REDISCOVERY';
 }

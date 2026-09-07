@@ -27,3 +27,35 @@ export {
   type LocalSystemAtlasProvider,
   type LocalSystemMapProvider,
 } from './types';
+
+export {
+  LOCAL_INVESTIGATION_SESSION_VERSION,
+  LOCAL_SESSION_RESULT_CLASSES,
+  createLocalInvestigationToolSession,
+} from './session';
+export {
+  OWNER_LOCAL_CONTEXT_VERSION,
+  OWNER_LOCAL_PROVIDER_TOOL_IDS,
+  createOwnerLocalInvestigationContext,
+  createUnavailableLocalInvestigationContext,
+  type OwnerLocalEvidenceInput,
+  type OwnerLocalInvestigationOptions,
+} from './ownerLocal';
+export {
+  admitLocalFinding,
+  type AdmitLocalFindingInput,
+  type AdmitLocalFindingRefusalReason,
+  type AdmitLocalFindingResult,
+  type AdmittedLocalFinding,
+  type RefusedLocalFinding,
+} from './admission';
+export {
+  createHistoricalLocalInvestigationContext,
+  createHistoricalReproductionProvider,
+  createHistoricalSourceProvider,
+  historicalVisibleFiles,
+  historicalVisiblePaths,
+  type HistoricalLocalInvestigationContextOptions,
+  type HistoricalReplayAudit,
+  type HistoricalReproductionProviderOptions,
+} from './historical';

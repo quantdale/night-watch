@@ -48,7 +48,17 @@ import {
   type AgentRuntimeState,
   type AgentTerminationReason,
 } from '../agentProtocol';
-import { executeAgentTool } from '../agentTools';
+import {
+  admitLocalFinding,
+  type AdmitLocalFindingResult,
+} from '../localInvestigation/admission';
+import { createUnavailableLocalInvestigationContext } from '../localInvestigation/ownerLocal';
+import { createLocalInvestigationToolSession } from '../localInvestigation/session';
+import {
+  LOCAL_INVESTIGATION_HISTORY_VERSION,
+  type LocalInvestigationContext,
+  type LocalInvestigationHistory,
+} from '../localInvestigation/types';
 import { createCliReasonerDriver } from '../reasoner/cliReasoner';
 import { AgentCheckpointError, assertCheckpointHasNoSecrets, parseCheckpoint } from './checkpoint';
 import { AgentRuntime } from './runtime';
@@ -56,7 +66,11 @@ import type { AgentRunResult, AgentToolExecutor } from './types';
 
 export const LOCAL_CAMPAIGN_VERSION = 'nightwatch.local-cli-campaign.v1' as const;
 export const AGENT_BUDGET_CEILING_NAMES = ['HOUR_1', 'HOUR_4', 'HOUR_8', 'OVERNIGHT'] as const;
-export const LOCAL_CAMPAIGN_DOSSIER_STATUSES = ['NONE', 'REFUSED_NO_REPRODUCTION'] as const;
+export const LOCAL_CAMPAIGN_DOSSIER_STATUSES = [
+  'NONE',
+  'REFUSED_NO_REPRODUCTION',
+  'VERIFIED_REPRODUCTION',
+] as const;
 export type LocalCampaignDossierStatus = (typeof LOCAL_CAMPAIGN_DOSSIER_STATUSES)[number];
 
 /**
@@ -96,6 +110,11 @@ export interface LocalCampaignInput {
   readonly model?: string;
   readonly maxTurns?: number;
   readonly stateDirectory?: string;
+  /**
+   * Explicit sensing/reproduction substrate. Product CLI injects the real
+   * owner-local context; direct callers without one fail provider tools closed.
+   */
+  readonly investigationContext?: LocalInvestigationContext;
   /** Clock seam for deterministic tests. Defaults to Date.now. */
   readonly now?: () => number;
 }
@@ -113,6 +132,10 @@ export interface LocalCampaignResult {
   readonly environment: 'LOCAL';
   /** NONE when no candidate. REFUSED_NO_REPRODUCTION when proposed but not packaged. */
   readonly dossierStatus: LocalCampaignDossierStatus;
+  /** Mechanical candidate admission outcomes; never model-self-certified. */
+  readonly findingAdmissions: readonly AdmitLocalFindingResult[];
+  /** Sum of qualifying pre-fix FAIL/post-fix PASS receipts across admitted findings. */
+  readonly reproductionCount: number;
   /** Campaign-measured metrics (cumulative across investigations). */
   readonly investigationsStarted: number;
   readonly investigationsCompleted: number;
@@ -151,26 +174,6 @@ function zeroTerminationCounts(): CampaignTerminationCounts {
   return counts;
 }
 
-function localTools(): AgentToolExecutor {
-  return {
-    async execute(call) {
-      const result = executeAgentTool(
-        { kind: 'CALL_TOOL', toolId: call.toolId, arguments: call.arguments },
-        { authorizedEnvironments: ['LOCAL'] },
-      );
-      if (!result.ok) {
-        return { ok: false, resultClass: result.class, evidenceRefs: [], outputBytes: 0, untrusted: [] };
-      }
-      return {
-        ok: true,
-        resultClass: 'OBSERVED',
-        evidenceRefs: result.evidenceRefs,
-        outputBytes: Buffer.byteLength(JSON.stringify(result.data), 'utf8'),
-        untrusted: result.envelopes,
-      };
-    },
-  };
-}
 
 export function defaultCampaignStateDirectory(override?: string): string {
   if (typeof override === 'string' && override.trim().length > 0) {
@@ -423,6 +426,7 @@ interface CampaignAccumulators {
   evidenceRefs: string[];
   candidateIds: string[];
   hypotheses: AgentHypothesis[];
+  histories: LocalInvestigationHistory[];
   reasonerCalls: number;
   inputBytes: number;
   outputBytes: number;
@@ -445,6 +449,7 @@ function freshAccumulators(): CampaignAccumulators {
     evidenceRefs: [],
     candidateIds: [],
     hypotheses: [],
+    histories: [],
     reasonerCalls: 0,
     inputBytes: 0,
     outputBytes: 0,
@@ -466,7 +471,6 @@ interface CampaignEngine {
   readonly input: LocalCampaignInput;
   readonly policy: AgentBudgetPolicy;
   readonly reasoner: ReturnType<typeof createCliReasonerDriver>;
-  readonly tools: AgentToolExecutor;
   readonly directory: string;
   readonly now: () => number;
   readonly campaignStartMs: number;
@@ -552,14 +556,13 @@ function absorbPausedInvestigationPrefix(engine: CampaignEngine, ran: AgentRunRe
   engine.acc.lastPhase = ran.state.phase;
 }
 
-function buildCampaignCheckpoint(
+function campaignStateOf(
   engine: CampaignEngine,
   status: 'PAUSED' | 'TERMINATED',
   terminationReason: AgentTerminationReason,
-  pausedInvestigation: AgentCheckpoint | null,
-): Record<string, unknown> {
+): AgentRuntimeState {
   const acc = engine.acc;
-  const state: AgentRuntimeState = {
+  return {
     schemaVersion: AGENT_RUNTIME_STATE_VERSION,
     campaignId: engine.input.campaignId,
     status,
@@ -571,6 +574,16 @@ function buildCampaignCheckpoint(
     budget: { policy: engine.policy, usage: campaignUsageOf(engine) },
     terminationReason,
   };
+}
+
+function buildCampaignCheckpoint(
+  engine: CampaignEngine,
+  status: 'PAUSED' | 'TERMINATED',
+  terminationReason: AgentTerminationReason,
+  pausedInvestigation: AgentCheckpoint | null,
+): Record<string, unknown> {
+  const acc = engine.acc;
+  const state = campaignStateOf(engine, status, terminationReason);
   const checkpoint: AgentCheckpoint = {
     schemaVersion: AGENT_CHECKPOINT_VERSION,
     campaignId: engine.input.campaignId,
@@ -590,6 +603,16 @@ function buildCampaignCheckpoint(
   return document;
 }
 
+function mergedInvestigationHistory(engine: CampaignEngine): LocalInvestigationHistory {
+  return {
+    schemaVersion: LOCAL_INVESTIGATION_HISTORY_VERSION,
+    observedEvidence: engine.acc.histories.flatMap((history) => history.observedEvidence),
+    inspectedSources: engine.acc.histories.flatMap((history) => history.inspectedSources),
+    reproductions: engine.acc.histories.flatMap((history) => history.reproductions),
+    findingProposals: engine.acc.histories.flatMap((history) => history.findingProposals),
+  };
+}
+
 function resultOf(
   engine: CampaignEngine,
   terminationReason: AgentTerminationReason,
@@ -597,6 +620,23 @@ function resultOf(
   wallTimeMs?: number,
 ): LocalCampaignResult {
   const candidateIds = [...engine.acc.candidateIds];
+  const history = mergedInvestigationHistory(engine);
+  const status = terminationReason === 'PAUSED' ? 'PAUSED' : 'TERMINATED';
+  const state = campaignStateOf(engine, status, terminationReason);
+  const findingAdmissions = candidateIds.map((candidateId) => {
+    const proposals = history.findingProposals.filter((proposal) => proposal.candidateId === candidateId);
+    const proposal = proposals[proposals.length - 1] ?? null;
+    return admitLocalFinding({
+      state,
+      history,
+      candidateId,
+      draft: proposal?.draft ?? null,
+    });
+  });
+  const reproductionCount = findingAdmissions.reduce(
+    (total, admission) => total + (admission.admitted ? admission.reproductionCount : 0),
+    0,
+  );
   return {
     schemaVersion: LOCAL_CAMPAIGN_VERSION,
     campaignId: engine.input.campaignId,
@@ -605,7 +645,14 @@ function resultOf(
     actionCount: engine.acc.actionLog.length,
     checkpointFile,
     environment: 'LOCAL',
-    dossierStatus: candidateIds.length > 0 ? 'REFUSED_NO_REPRODUCTION' : 'NONE',
+    dossierStatus:
+      findingAdmissions.some((admission) => admission.admitted)
+        ? 'VERIFIED_REPRODUCTION'
+        : candidateIds.length > 0
+          ? 'REFUSED_NO_REPRODUCTION'
+          : 'NONE',
+    findingAdmissions,
+    reproductionCount,
     investigationsStarted: engine.acc.investigationsStarted,
     investigationsCompleted: engine.acc.investigationsCompleted,
     terminationCounts: { ...engine.acc.terminationCounts },
@@ -618,6 +665,10 @@ function resultOf(
 async function runOneInvestigation(engine: CampaignEngine, investigationId: string): Promise<AgentRunResult> {
   const pending = engine.acc.pendingResume;
   let basis = campaignUsageOf(engine);
+  const context =
+    engine.input.investigationContext ?? createUnavailableLocalInvestigationContext();
+  const session = createLocalInvestigationToolSession(context);
+  let ran: AgentRunResult;
   if (pending !== null) {
     if (pending.campaignId !== investigationId) {
       throw new LocalCampaignError('CHECKPOINT_MISMATCH', 'paused investigation does not belong to the next investigation slot');
@@ -629,25 +680,28 @@ async function runOneInvestigation(engine: CampaignEngine, investigationId: stri
     basis = addUsage(basis, pending.state.budget.usage);
     basis = { ...basis, wallTimeMs: campaignUsageOf(engine).wallTimeMs };
     engine.acc.pendingResume = null;
-    return AgentRuntime.resumeFromCheckpoint(pending, {
+    ran = await AgentRuntime.resumeFromCheckpoint(pending, {
       campaignId: investigationId,
       budgetPolicy: remainingPolicyFor(engine.policy, basis),
       reasoner: engine.reasoner,
-      tools: engine.tools,
+      tools: session.executor,
+      authorizedEnvironments: ['LOCAL'] as const,
+      maxTurns: engine.input.maxTurns,
+      now: engine.now,
+    }).run({ maxTurns: engine.input.maxTurns });
+  } else {
+    ran = await new AgentRuntime({
+      campaignId: investigationId,
+      budgetPolicy: remainingPolicyFor(engine.policy, basis),
+      reasoner: engine.reasoner,
+      tools: session.executor,
       authorizedEnvironments: ['LOCAL'] as const,
       maxTurns: engine.input.maxTurns,
       now: engine.now,
     }).run({ maxTurns: engine.input.maxTurns });
   }
-  return new AgentRuntime({
-    campaignId: investigationId,
-    budgetPolicy: remainingPolicyFor(engine.policy, basis),
-    reasoner: engine.reasoner,
-    tools: engine.tools,
-    authorizedEnvironments: ['LOCAL'] as const,
-    maxTurns: engine.input.maxTurns,
-    now: engine.now,
-  }).run({ maxTurns: engine.input.maxTurns });
+  engine.acc.histories.push(session.snapshot());
+  return ran;
 }
 
 /**
@@ -760,7 +814,6 @@ export async function runLocalCliCampaign(input: LocalCampaignInput): Promise<Lo
     input,
     policy: budgetPolicy,
     reasoner,
-    tools: localTools(),
     directory,
     now,
     campaignStartMs: now(),
@@ -795,7 +848,7 @@ export async function resumeLocalCliCampaign(input: LocalCampaignInput): Promise
     // Idempotent resume: the campaign already finished. Report the stored
     // terminal outcome without restarting any investigation.
     const engine: CampaignEngine = {
-      input, policy, reasoner, tools: localTools(), directory, now,
+      input, policy, reasoner, directory, now,
       campaignStartMs: now(),
       acc: freshAccumulators(),
     };
@@ -815,7 +868,7 @@ export async function resumeLocalCliCampaign(input: LocalCampaignInput): Promise
     // `<id>:inv:1` onward. The seed prefix stays empty so the resumed run
     // merges exactly once.
     const engine: CampaignEngine = {
-      input, policy, reasoner, tools: localTools(), directory, now,
+      input, policy, reasoner, directory, now,
       campaignStartMs: now() - checkpoint.state.budget.usage.wallTimeMs,
       acc: freshAccumulators(),
     };
@@ -827,7 +880,7 @@ export async function resumeLocalCliCampaign(input: LocalCampaignInput): Promise
     throw new LocalCampaignError('CHECKPOINT_MISSING', 'paused campaign has no paused-investigation checkpoint');
   }
   const engine: CampaignEngine = {
-    input, policy, reasoner, tools: localTools(), directory, now,
+    input, policy, reasoner, directory, now,
     campaignStartMs: now() - checkpoint.state.budget.usage.wallTimeMs,
     acc: freshAccumulators(),
   };

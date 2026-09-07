@@ -4,6 +4,9 @@
 // file grounding precedes execution, environment-blocked mints no
 // credit, and hidden coordinates never enter reasoner-visible bytes.
 import { test, expect } from '@playwright/test';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import { createLocalInvestigationToolSession } from '../../src/core/localInvestigation/session';
 import {
   createHistoricalLocalInvestigationContext,
@@ -18,6 +21,21 @@ import {
 const FILE_CANARY = 'product-path-file-canary-m7q2';
 const STDERR_CANARY = 'product-path-stderr-canary-t8w4';
 const FIX_SHA = 'b'.repeat(40);
+
+const replayRoots: string[] = [];
+test.afterEach(() => {
+  while (replayRoots.length > 0) {
+    const root = replayRoots.pop();
+    if (root !== undefined) fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+function replayRoot(): string {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'nw-historical-product-'));
+  fs.mkdirSync(path.join(root, 'example', 'ledger'), { recursive: true });
+  replayRoots.push(root);
+  return root;
+}
 
 function descriptor() {
   const parsed = parseMinedTestReplayDescriptor({
@@ -66,7 +84,7 @@ test.describe('historical product path shares the provider contract', () => {
       visible: visible(),
       caseId: 'hist-product-001',
       minedReplay: descriptor(),
-      repositoriesRoot: '/nonexistent-replay-root',
+      repositoriesRoot: replayRoot(),
       runReplay: async (request) => {
         expect(request.testPath).toBe('total.test.ts');
         expect(request.fixCommit).toBe(FIX_SHA);
@@ -106,6 +124,7 @@ test.describe('historical product path shares the provider contract', () => {
       turnId: 't2',
       toolId: 'RERUN_SAFE_REPRODUCTION',
       arguments: {
+        reproductionId: 'historical-product-path-reproduced',
         sourcePath: 'total.ts',
         sourceEvidenceRef: inspected!.evidenceRef,
         observedEvidenceRefs: [],
@@ -134,7 +153,7 @@ test.describe('historical product path shares the provider contract', () => {
       visible: visible(),
       caseId: 'hist-product-002',
       minedReplay: descriptor(),
-      repositoriesRoot: '/nonexistent-replay-root',
+      repositoriesRoot: replayRoot(),
       runReplay: async () => {
         calls += 1;
         return reproducedResult();
@@ -158,7 +177,7 @@ test.describe('historical product path shares the provider contract', () => {
       visible: visible(),
       caseId: 'hist-product-003',
       minedReplay: descriptor(),
-      repositoriesRoot: '/nonexistent-replay-root',
+      repositoriesRoot: replayRoot(),
       runReplay: async () => blockedResult(),
     });
     const session = createLocalInvestigationToolSession(context);
@@ -176,6 +195,7 @@ test.describe('historical product path shares the provider contract', () => {
       turnId: 't2',
       toolId: 'RERUN_SAFE_REPRODUCTION',
       arguments: {
+        reproductionId: 'historical-product-path-blocked',
         sourcePath: 'total.ts',
         sourceEvidenceRef: inspected!.evidenceRef,
         observedEvidenceRefs: [],

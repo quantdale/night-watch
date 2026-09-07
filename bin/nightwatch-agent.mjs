@@ -89,7 +89,10 @@ if (command === 'status') {
       if (maxTurns !== undefined && (!Number.isInteger(maxTurns) || maxTurns < 1 || maxTurns > 50)) {
         fail(2, 'campaign run --max-turns must be an integer 1..50');
       } else {
-        const [mod] = loadTypeScriptModules(['src/core/agentRuntime/localCampaign.ts'], { root });
+        const [mod, contextMod] = loadTypeScriptModules(
+          ['src/core/agentRuntime/localCampaign.ts', 'src/core/localInvestigation/ownerLocal.ts'],
+          { root },
+        );
         const extraArgs = [];
         if (typeof process.env.NIGHTWATCH_REASONER_SCRIPT === 'string' && process.env.NIGHTWATCH_REASONER_SCRIPT.length > 0) {
           extraArgs.push(process.env.NIGHTWATCH_REASONER_SCRIPT);
@@ -105,6 +108,7 @@ if (command === 'status') {
             provider: process.env.NIGHTWATCH_REASONER_PROVIDER ?? 'configured',
             model: process.env.NIGHTWATCH_REASONER_MODEL ?? 'configured',
             maxTurns,
+            investigationContext: contextMod.createOwnerLocalInvestigationContext(),
           });
           console.log(JSON.stringify(result, null, 2));
         } catch (error) {
@@ -136,7 +140,10 @@ if (command === 'status') {
     } else if (typeof flags.id !== 'string' || flags.id.length === 0) {
       fail(2, 'campaign resume requires --id=<campaignId>');
     } else {
-      const [mod] = loadTypeScriptModules(['src/core/agentRuntime/localCampaign.ts'], { root });
+      const [mod, contextMod] = loadTypeScriptModules(
+        ['src/core/agentRuntime/localCampaign.ts', 'src/core/localInvestigation/ownerLocal.ts'],
+        { root },
+      );
       const extraArgs = [];
       if (typeof process.env.NIGHTWATCH_REASONER_SCRIPT === 'string' && process.env.NIGHTWATCH_REASONER_SCRIPT.length > 0) {
         extraArgs.push(process.env.NIGHTWATCH_REASONER_SCRIPT);
@@ -158,6 +165,7 @@ if (command === 'status') {
           provider: process.env.NIGHTWATCH_REASONER_PROVIDER ?? 'configured',
           model: process.env.NIGHTWATCH_REASONER_MODEL ?? 'configured',
           maxTurns: Number.isInteger(maxTurns) ? maxTurns : 8,
+          investigationContext: contextMod.createOwnerLocalInvestigationContext(),
         });
         console.log(JSON.stringify(result, null, 2));
       } catch (error) {

@@ -132,7 +132,7 @@ test.describe('benchmark fake-hunt replay', () => {
       'lines, so the charged total drifts from the displayed line arithmetic; rounding once over the order total ' +
       'removes the drift. Captured by invoice-totals-rounding.spec.ts.';
     const stub = scriptDriver([
-      () => okTurn([{ kind: 'CALL_TOOL', toolId: 'INSPECT_SOURCE_SURFACE', argumentDigest: CALL_DIGEST, arguments: { path: 'src/billing/invoice.ts' } }]),
+      () => okTurn([{ kind: 'CALL_TOOL', toolId: 'INSPECT_SOURCE_SURFACE', argumentDigest: CALL_DIGEST, arguments: { path: 'visible-context.md' } }]),
       () =>
         okTurn([
           { kind: 'FORM_HYPOTHESIS', hypothesisId: 'h-bench-billing-1', statement, evidenceRefs: ['ev:sha256:benchbilling0001'] } as AgentIntent,
@@ -154,7 +154,7 @@ test.describe('benchmark fake-hunt replay', () => {
     expect(stub.requests).toHaveLength(3);
     // The driver demonstrably saw the pre-fix view and never the hidden fields.
     const traffic = result.requestBlobs.join('\n');
-    expect(traffic).toContain('Support tickets describe checkout charges');
+    expect(traffic).toContain('totalInvoice(lines)');
     expect(detectBenchmarkLeakage({ blobs: result.requestBlobs }, fixture.hidden)).toEqual([]);
     for (const value of Object.values(fixture.hidden)) {
       if (typeof value === 'string' && value.length > 0) expect(traffic).not.toContain(value);
@@ -164,7 +164,7 @@ test.describe('benchmark fake-hunt replay', () => {
   test('negative control does not admit a finding', async () => {
     const fixture = benchmarkFixtureById('bench-negative-quiet-000');
     const stub = scriptDriver([
-      () => okTurn([{ kind: 'CALL_TOOL', toolId: 'INSPECT_SOURCE_SURFACE', argumentDigest: CALL_DIGEST, arguments: { path: 'src/health/status.ts' } }]),
+      () => okTurn([{ kind: 'CALL_TOOL', toolId: 'INSPECT_SOURCE_SURFACE', argumentDigest: CALL_DIGEST, arguments: { path: 'visible-context.md' } }]),
       () => okTurn([{ kind: 'TERMINATE', reason: 'COMPLETE_NO_FINDING' }]),
     ]);
     const result = await runBenchmarkHunt(fixture, { reasoner: stub.driver, budgetPolicy: defaultBenchmarkBudgetPolicy(), maxTurns: 4 });
@@ -178,7 +178,7 @@ test.describe('benchmark fake-hunt replay', () => {
   test('a no-finding hypothesis on a negative control is not a false positive', async () => {
     const fixture = benchmarkFixtureById('bench-negative-quiet-000');
     const stub = scriptDriver([
-      () => okTurn([{ kind: 'CALL_TOOL', toolId: 'INSPECT_SOURCE_SURFACE', argumentDigest: CALL_DIGEST, arguments: { path: 'src/health/status.ts' } }]),
+      () => okTurn([{ kind: 'CALL_TOOL', toolId: 'INSPECT_SOURCE_SURFACE', argumentDigest: CALL_DIGEST, arguments: { path: 'visible-context.md' } }]),
       () =>
         okTurn([
           {

@@ -28,6 +28,7 @@ import {
   type LocalInvestigationContext,
   type LocalProviderResult,
   type LocalReproductionProviderResult,
+  type LocalReproductionRequest,
   type LocalReproductionSignal,
   type LocalSourceDocument,
   type LocalSourceIndex,
@@ -168,7 +169,7 @@ export function createHistoricalReproductionProvider(
   const provenance = Object.freeze([`benchmark:${caseId}`]);
   return Object.freeze({
     providerId: HISTORICAL_REPRODUCTION_PROVIDER_ID,
-    async run(request): Promise<LocalProviderResult<LocalReproductionProviderResult>> {
+    async run(request: LocalReproductionRequest): Promise<LocalProviderResult<LocalReproductionProviderResult>> {
       const sourcePath = typeof request.sourcePath === 'string' ? request.sourcePath : '';
       const sourceEvidenceRef = typeof request.sourceEvidenceRef === 'string' ? request.sourceEvidenceRef : '';
       if (sourcePath.length === 0 || sourceEvidenceRef.length === 0) {

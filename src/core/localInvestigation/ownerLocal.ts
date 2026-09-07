@@ -23,11 +23,11 @@ import { createBugAtlasStore, type BugAtlasStore } from '../bugAtlas/store';
 import { loadBugAtlasSnapshot } from '../bugAtlas/snapshot';
 import { mineLocalGitHistory } from '../bugAtlas/miner';
 import { createApprovedRealSourceScanConfig } from '../source/approvedScan';
-import { scanSource } from '../source/scan';
-import type {
-  RealSourceScanConfig,
-  RealSourceSnapshotInventory,
-} from '../source/scanTypes';
+import {
+  discoverSourceSurfaces,
+  type SourceSurfaceDiscovery,
+} from '../source/surfaces';
+import type { RealSourceScanConfig, RealSourceSnapshotInventory } from '../source/scanTypes';
 import {
   createSiblingSourceAccess,
   DEFAULT_SIBLING_ROOT,
@@ -36,6 +36,7 @@ import {
 import { createSystemAtlasOverlay, type SystemAtlasOverlay } from '../systemAtlas/overlay';
 import { SYSTEM_ATLAS_SYNTHETIC_PREFIX } from '../systemAtlas/model';
 import type { SystemMapInput } from '../systemMap/projections';
+import { systemMapInputFromDiscovery } from '../systemMap/input';
 import type {
   DeterministicReproductionProvider,
   LocalBugAtlasProvider,
@@ -122,6 +123,7 @@ interface PreparedSource {
   readonly config: RealSourceScanConfig;
   readonly indexLimit: number;
   inventory(): RealSourceSnapshotInventory;
+  discovery(): SourceSurfaceDiscovery;
 }
 
 function prepareSource(options: OwnerLocalInvestigationOptions): PreparedSource {
@@ -133,14 +135,18 @@ function prepareSource(options: OwnerLocalInvestigationOptions): PreparedSource 
     admittedRepositoryIds: config.approvedRepositories.map((repository) => repository.repoId),
   });
   const indexLimit = options.sourceIndexLimit ?? DEFAULT_SOURCE_INDEX_LIMIT;
-  let cached: RealSourceSnapshotInventory | null = null;
+  let cached: SourceSurfaceDiscovery | null = null;
+  const discovery = (): SourceSurfaceDiscovery => {
+    if (cached === null) cached = discoverSourceSurfaces({ access, config });
+    return cached;
+  };
   return {
     access,
     config,
     indexLimit,
+    discovery,
     inventory(): RealSourceSnapshotInventory {
-      if (cached === null) cached = scanSource({ access, config });
-      return cached;
+      return discovery().inventory;
     },
   };
 }
@@ -258,37 +264,29 @@ function createOwnerSourceProvider(prepared: PreparedSource): LocalSourceProvide
 }
 
 function createOwnerSystemMapProvider(prepared: PreparedSource): LocalSystemMapProvider {
-  let cached: SystemMapInput | 'BLOCKED' | null = null;
-  const input = (): SystemMapInput | null => {
-    if (cached !== null) return cached === 'BLOCKED' ? null : cached;
-    const inventory = prepared.inventory();
-    const current = inventory.repositories.filter((repository) => repository.status === 'CURRENT');
-    if (current.length === 0) {
-      cached = 'BLOCKED';
-      return null;
-    }
-    // Modest and honest: the map carries the approved-repository surface that
-    // was mechanically observed. No operation discovery is wired in v1, so
-    // operations stay empty and the population total stays null (unknowable),
-    // rather than minting topology.
-    cached = {
-      operations: Object.freeze([]),
-      serviceBindings: Object.freeze([]),
-      consumerEdges: Object.freeze([]),
-      findings: Object.freeze([]),
-      operationPopulationTotal: null,
-      productOfRepository: Object.freeze({}),
-    };
-    return cached;
-  };
+  let cached: SystemMapInput | null = null;
   return {
     providerId: OWNER_LOCAL_SYSTEM_MAP_PROVIDER_ID,
     async load(): Promise<LocalProviderResult<SystemMapInput>> {
-      const value = input();
-      if (value === null) {
-        return blocked('SOURCE_UNAVAILABLE', 'no CURRENT owner-approved source repository; refusing to invent topology');
+      try {
+        const discovery = prepared.discovery();
+        const current = discovery.inventory.repositories.some(
+          (repository) => repository.status === 'CURRENT',
+        );
+        if (!current) {
+          return blocked(
+            'SOURCE_UNAVAILABLE',
+            'no CURRENT owner-approved source repository; refusing to invent topology',
+          );
+        }
+        if (cached === null) cached = systemMapInputFromDiscovery(discovery);
+        return { status: 'AVAILABLE', value: cached };
+      } catch {
+        return blocked(
+          'SOURCE_UNAVAILABLE',
+          'owner-approved source discovery failed; refusing to invent topology',
+        );
       }
-      return { status: 'AVAILABLE', value };
     },
   };
 }

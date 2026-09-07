@@ -436,6 +436,21 @@ test.describe('session over stub providers', () => {
     expect(missing.resultClass).toBe('ADAPTER_UNAVAILABLE');
   });
 
+  test('evidence retrieves sanitized records observed in the current session', async () => {
+    const session = createLocalInvestigationToolSession(stubContext({ evidenceRecords: {} }));
+    const source = await session.executor.execute(
+      call('INSPECT_SOURCE_SURFACE', { path: SOURCE_PATH }),
+    );
+    const sourceRef = source.evidenceRefs[0];
+    expect(sourceRef).toBeDefined();
+    const retrieved = await session.executor.execute(
+      call('RETRIEVE_SANITIZED_EVIDENCE', { evidenceRef: sourceRef }),
+    );
+    expect(retrieved.ok).toBe(true);
+    expect(retrieved.resultClass).toBe('EVIDENCE');
+    expect(retrieved.untrusted[0]?.bytes).toContain('src/total.ts');
+  });
+
   test('reproduction requires the inspected path plus its observed source evidence ref', async () => {
     const reproduction = stubReproduction();
     const session = createLocalInvestigationToolSession(stubContext({ reproduction }));
@@ -530,24 +545,24 @@ test.describe('session over stub providers', () => {
     expect(result.resultClass).toBe('FINDING_PROPOSAL');
     expect(result.evidenceRefs).toEqual([]);
     const data = envelopeJson<{ status: string; authority: { humanReviewRequired: boolean; externalPublication: string } }>(result);
-    expect(data.status).toBe('PROPOSAL_ONLY_NO_AUTHORITY');
+    expect(data.status).toBe('PROPOSAL_CAPTURED_NO_AUTHORITY');
     expect(data.authority.humanReviewRequired).toBe(true);
     expect(data.authority.externalPublication).toBe('PROHIBITED');
     expect(session.snapshot().findingProposals).toEqual([{ candidateId: 'c1', evidenceRefs: ['ev:known'], draft: null }]);
     const refused = await session.executor.execute(call('REQUEST_FINDING_PROPOSAL', { candidateId: 'c1', evidenceRefs: [] }));
     expect(refused.ok).toBe(false);
     expect(refused.resultClass).toBe('MALFORMED_ARGUMENTS');
-    const badDraft = await session.executor.execute(call('REQUEST_FINDING_PROPOSAL', {
+    const presentationDraft = await session.executor.execute(call('REQUEST_FINDING_PROPOSAL', {
       candidateId: 'c1',
       evidenceRefs: ['ev:known'],
-      draft: { title: 'incomplete' },
+      draft: { title: 'Presentation suggestion only' },
     }));
-    expect(badDraft.ok).toBe(false);
-    expect(badDraft.resultClass).toBe('MALFORMED_ARGUMENTS');
-    expect(session.snapshot().findingProposals).toHaveLength(1);
+    expect(presentationDraft.ok).toBe(true);
+    expect(presentationDraft.resultClass).toBe('FINDING_PROPOSAL');
+    expect(session.snapshot().findingProposals).toHaveLength(2);
   });
 
-  test('draft proposals build dossiers without authority', async () => {
+  test('draft proposals never build or self-certify a dossier', async () => {
     const session = createLocalInvestigationToolSession(stubContext());
     const result = await session.executor.execute(call('REQUEST_FINDING_PROPOSAL', {
       candidateId: 'c2',
@@ -571,9 +586,11 @@ test.describe('session over stub providers', () => {
     }));
     expect(result.ok).toBe(true);
     const data = envelopeJson<{ status: string; authority: { humanReviewRequired: boolean; externalPublication: string } }>(result);
-    expect(data.status).toBe('DOSSIER_BUILT_NO_AUTHORITY');
+    expect(data.status).toBe('PROPOSAL_CAPTURED_NO_AUTHORITY');
     expect(data.authority.humanReviewRequired).toBe(true);
     expect(data.authority.externalPublication).toBe('PROHIBITED');
+    expect(JSON.stringify(data)).not.toContain('reproductionCount');
+    expect(JSON.stringify(data)).not.toContain('DOSSIER_BUILT');
     expect(session.snapshot().findingProposals).toHaveLength(1);
   });
 

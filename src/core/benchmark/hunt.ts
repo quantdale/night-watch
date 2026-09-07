@@ -320,10 +320,14 @@ export async function runBenchmarkHunt(
       if (call.toolId !== 'RERUN_SAFE_REPRODUCTION') {
         return investigation.executor.execute(call);
       }
-      const args = call.arguments as Record<string, unknown>;
-      const hasPath = typeof args['sourcePath'] === 'string' && (args['sourcePath'] as string).length > 0;
-      const hasRef = typeof args['sourceEvidenceRef'] === 'string' && (args['sourceEvidenceRef'] as string).length > 0;
-      if (hasPath && hasRef) {
+      const args = call.arguments;
+      const sourcePath = args['sourcePath'];
+      const sourceEvidenceRef = args['sourceEvidenceRef'];
+      const hasPath = typeof sourcePath === 'string' && sourcePath.length > 0;
+      const hasRef = typeof sourceEvidenceRef === 'string' && sourceEvidenceRef.length > 0;
+      const hasReproductionId =
+        typeof args['reproductionId'] === 'string' && args['reproductionId'].length > 0;
+      if (hasPath && hasRef && hasReproductionId) {
         return investigation.executor.execute(call);
       }
       const history = investigation.snapshot();
@@ -346,6 +350,10 @@ export async function runBenchmarkHunt(
         ...call,
         arguments: {
           ...args,
+          reproductionId:
+            typeof args['reproductionId'] === 'string' && args['reproductionId'].length > 0
+              ? args['reproductionId']
+              : `benchmark-${definedCase.caseId}-${history.reproductions.length + 1}`,
           sourcePath: last.path,
           sourceEvidenceRef: last.evidenceRef,
           observedEvidenceRefs: Array.isArray(args['observedEvidenceRefs']) ? args['observedEvidenceRefs'] : [],

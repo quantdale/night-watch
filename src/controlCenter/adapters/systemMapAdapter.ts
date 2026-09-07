@@ -14,6 +14,7 @@ import {
   layoutSystemMap,
   type SystemMapLayout,
 } from '../../core/systemMap/layout';
+export { systemMapInputFromDiscovery } from '../../core/systemMap/input';
 import type { ProjectionBound, SystemMapEdge, SystemMapNode } from '../../core/systemMap/model';
 import {
   projectCompany,
@@ -277,47 +278,6 @@ export function systemMapQuery(input: SystemMapInput, query: OperatorQuery, focu
   });
 }
 
-/**
- * Build a `SystemMapInput` from the source authority's discovery.
- *
- * `operationPopulationTotal` is the one field that must not be guessed: it is
- * null whenever the upstream enumeration is truncated, because a derived total
- * over an unknown population is unknowable rather than merely large. The
- * ouchan enumeration IS truncated today, so this is null in practice — and
- * every bound downstream correctly reports `remainingUnknown`.
- */
-export function systemMapInputFromDiscovery(discovery: {
-  readonly operations?: readonly Record<string, unknown>[];
-  readonly operationCompleteness?: { readonly totalOperations?: number | null };
-} | null | undefined): SystemMapInput {
-  const operations = discovery?.operations ?? [];
-  const asString = (value: unknown, fallback = ''): string => (typeof value === 'string' ? value : fallback);
-  const asNullableString = (value: unknown): string | null => (typeof value === 'string' && value.length > 0 ? value : null);
-  return Object.freeze({
-    operations: Object.freeze(operations.map((operation) => Object.freeze({
-      operationId: asString(operation.operationId),
-      repoId: asString(operation.repository),
-      sourceSha: asString(operation.sourceSha),
-      method: asString(operation.method),
-      routeTemplate: asString(operation.routeTemplate),
-      // Every operation is source-derived; nothing here is a deployment or
-      // runtime fact, and labelling one as such would strengthen a join.
-      factCategory: 'SOURCE_FACT' as const,
-      readOnlyClassification: asString(operation.readOnlyClassification, 'UNSUPPORTED'),
-      routeProof: asString(operation.routeProof, 'UNSUPPORTED'),
-      protoServiceIdentity: asNullableString(operation.protoServiceIdentity),
-      blockingStage: asNullableString(operation.blockingStage),
-      blockingReason: asNullableString(operation.blockingReason),
-    }))),
-    // C-03 topology and C-04 consumer edges are supplied by their own
-    // authorities; absent here they are empty rather than invented.
-    serviceBindings: Object.freeze([]),
-    consumerEdges: Object.freeze([]),
-    findings: Object.freeze([]),
-    operationPopulationTotal: discovery?.operationCompleteness?.totalOperations ?? null,
-    productOfRepository: Object.freeze({}),
-  });
-}
 
 /** URL segment → disclosure level. The segment set is closed. */
 export const LEVEL_FOR_SEGMENT: Readonly<Record<string, DisclosureLevel>> = Object.freeze({
