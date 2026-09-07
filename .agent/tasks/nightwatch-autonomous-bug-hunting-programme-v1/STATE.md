@@ -10,8 +10,8 @@ Last validated implementation SHA: bb28480c6a6969a06744c75c4c947851d5bece7c
 Last substantive checkpoint SHA: bb28480c6a6969a06744c75c4c947851d5bece7c
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
-Branch: session/nightwatch-owner-local-determini-47add5e3
-Last checkpoint: W9 owner-local deterministic reproduction/yield COMPLETE, integrated and locally/clean certified at `bb28480`; parent programme remains PARTIAL/IN_PROGRESS
+Branch: DISCOVER_FROM_SESSION
+Last checkpoint: W9 complete/certified at `bb28480`; W10 reproduction-surface coverage/autonomous yield is now the active child
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: d1ebde90c1454b31d6b93d9df503a4c5f196d7c8
@@ -27,133 +27,129 @@ Deliver a locally executable autonomous bug-hunting programme above the existing
 
 ## Current Milestone
 
-Milestone ID: POST_W9_SUCCESSOR_DEFINITION
+Milestone ID: W10
 Milestone status: IN_PROGRESS
-Completed child: `nightwatch-owner-local-deterministic-reproduction-yield-v1`
-Completed child directory: `.agent/tasks/nightwatch-owner-local-deterministic-reproduction-yield-v1`
+Child task: `nightwatch-reproduction-surface-coverage-autonomous-yield-v1`
+Child directory: `.agent/tasks/nightwatch-reproduction-surface-coverage-autonomous-yield-v1`
 
-W9 is terminal at implementation checkpoint `bb28480c6a6969a06744c75c4c947851d5bece7c`. The parent programme remains PARTIAL/IN_PROGRESS because strict EXACT, a previously unknown Alphaus defect and any DEV/NEXT acceptance remain independently unproven/unauthorized. No successor implementation wave is currently open.
+W9 is frozen terminal at implementation checkpoint `bb28480c6a6969a06744c75c4c947851d5bece7c` and documentation head `0664c69cc72acbbf848bf6dd64e7e9d868d80601` at W10 planning time.
 
-DEV/NEXT remain unauthorized.
+W10 is now authorized LOCAL work. Its objective is to census and materially improve current-source deterministic reproduction coverage/selection so grounded live hypotheses stop wasting verification turns on surfaces that cannot produce mechanical evidence.
+
+DEV/NEXT remain unauthorized. Strict EXACT and previously-unknown-defect status remain separate/unproven.
 
 ## Completed Milestones
 
-- W0 protocol freeze integrated.
-- W1 implementation lanes integrated.
-- Seeded positive / false-anomaly / injection proofs integrated.
-- W5 subscribed-CLI campaign/provider fallback exercised.
-- W6 contained historical replay + multi-investigation campaign sequencing integrated.
-- W6 real historical `mobingilabs/ouchan` defect mechanically reproduced PRE_FAIL_POST_PASS.
-- W7 `nightwatch-real-local-investigation-substrate-v1` COMPLETE: normal product campaign path consumes real owner-local sensing/providers, historical/product reproduction semantics share the deterministic provider contract, final dossier admission is mechanical, programme identity is machine-validated, and the real ouchan defect was reproduced through the ordinary product path with zero hidden-truth leakage and zero sibling mutation.
-- W7 certification at `e368f9255142d1b30dd66825d93f6f321ba6ecbf`: regression 4378 passed / 0 failed / 14 skipped, typecheck/hardening/workspace/agent/project/handoff PASS, `gate:local` FULL PASS and `gate:clean` PASS Node 20.
-- W8 `nightwatch-autonomous-efficacy-real-local-substrate-v1` COMPLETE at `3d624fbcc42da808ce1c7e9cbc6b780b82d90820`: bounded turn investigation memory, bounded cross-investigation campaign strategy, executor-confirmed targets, mechanical hypothesis lifecycle/reproduction readiness, memory-aware print reasoner and fixed efficacy corpus integrated.
-- W8 fixed corpus: unique targets 13 -> 31; grounded hypotheses 0 -> 17; verification-ready 0 -> 17; grounded reproduction attempts 0 -> 17; mechanical reproductions 0 -> 6; admitted candidates 0 -> 6; disproved hypotheses 0 -> 6; `VERIFIED_ROOT_CAUSE_REDISCOVERY` 0 -> 3; false positives 0 -> 0; leaks 0 -> 0; strict `EXACT_REDISCOVERY` remained 0. Costs rose honestly (39 -> 102 reasoner calls; 26 -> 67 tool actions; stagnation terminations 0 -> 1).
-- W8 live provider proof reached `VERIFIED_ROOT_CAUSE_REDISCOVERY` with mechanical reproduction on historical cases while a real owner-local candidate was mechanically refused `MISSING_REPRODUCTION` rather than fabricated.
-- W8 certification at `3d624fb`: `npm test` 4429 passed / 0 failed / 15 skipped; typecheck/hardening/agent/project/workspace/session PASS; `gate:local` FULL PASS; `gate:clean` PASS on fresh Node 20 clone; W7 real ouchan product-path proof still PASS.
-- W9 `nightwatch-owner-local-deterministic-reproduction-yield-v1` COMPLETE at `bb28480c6a6969a06744c75c4c947851d5bece7c`: bounded host-derived `GO_VENDORED_PACKAGE_TEST` reproduction, explicit current-source repeated-failure proof/admission, host-owned deterministic/environment/transient dispositions, finite retry, exact v2 transport/payload accounting, conservative v1 resume migration, real current/historical proofs and subscribed reasoner yield/endurance.
-- W9 final `opencode-go/omen-alpha` HOUR_1 campaign: 7 investigations, 79 reasoner calls, 56 tool actions, 26 source targets, 28 grounded hypotheses, 7 deterministic no-target reproduction refusals, 1 candidate, 0 admissions / 1 `MISSING_REPRODUCTION` refusal; wall-time bound at 3,673,995 ms while all byte/count ceilings retained headroom.
-- W9 certification: focused 295 passed / 3 skipped; full `npm test` 4565 passed / 16 skipped; all hygiene checks PASS; `gate:local` `receipt:sha256:6fb76272f121ec1bed5b74bf`; fresh Node 20 `gate:clean` `clean-receipt:sha256:d914db277a583699a1ff68c3`.
+- W0-W6 programme foundations, deterministic campaigns and historical replay integrated.
+- W7 real owner-local sensing/provider substrate + shared product/historical reproduction + mechanical admission COMPLETE.
+- W7 real `mobingilabs/ouchan` product-path proof: `PRE_FAIL_POST_PASS`, mechanical dossier admission, zero hidden-truth leakage and zero sibling mutation.
+- W8 bounded stateless-turn investigation memory, cross-investigation campaign strategy, mechanical hypothesis lifecycle/readiness, efficacy harness and memory-aware print reasoner COMPLETE.
+- W8 fixed corpus materially improved grounded hypotheses/reproductions/admissions with 0 added false positives/leaks; strict EXACT remained 0.
+- W9 host-derived `GO_VENDORED_PACKAGE_TEST`, explicit `CURRENT_SOURCE_REPEATED_TEST_FAILURE`, host-owned deterministic/environment/transient retry disposition, exact separated transport/payload byte accounting and HOUR_1 calibrated budget COMPLETE.
+- W9 final `opencode-go/omen-alpha` HOUR_1 campaign: 7 investigations, 79 calls, 56 actions, 26 unique source targets, 28 grounded hypotheses, 7 reproduction attempts, 7 `NOT_AVAILABLE`, 1 candidate, 0 admissions / 1 `MISSING_REPRODUCTION`; wall-time bound with byte headroom.
+- W9 certification at `bb28480`: focused 295 passed / 3 skipped; full `npm test` 4565 passed / 16 skipped / 0 failed; typecheck/hardening/agent/handoff/project/workspace/session PASS; `gate:local` `receipt:sha256:6fb76272f121ec1bed5b74bf`; clean Node 20 `clean-receipt:sha256:d914db277a583699a1ff68c3`; real current and historical proofs PASS.
 
 ## Work In Progress
 
-No child implementation is active. The programme is awaiting a separately specified and authorized successor wave; W9 itself is closed and must not be reopened by default.
+W10 child is specified and active. No W10 implementation checkpoint exists yet.
+
+The active W10 plan is deliberately long-running and includes:
+
+- M0 full owner-approved reproduction-capability census;
+- M1 shared contract freeze;
+- parallel coverage/map/executor/failure-evidence/yield/resilience lanes;
+- safe Go offline-cache coverage expansion if live census justifies it;
+- optional one non-Go class only after explicit threat-model GO decision;
+- fixed before/after coverage/yield benchmark;
+- real reproduction generality proof;
+- multiple substantial live-provider campaigns including reproduction-rich and broad HOUR_1-class runs;
+- pause/resume/failure-recovery proof;
+- full local + fresh clean-clone certification.
 
 ## Exact Next Action
 
-On explicit owner continuation, define the next bounded child task from live Git/project truth and its own acceptance criteria before any implementation. Preserve W0-W9 as frozen completed waves. Do not infer DEV/NEXT authorization, relax strict EXACT, or convert W9's zero-admission live result into a previously-unknown-defect claim.
+Execute W10 `nightwatch-reproduction-surface-coverage-autonomous-yield-v1` from live Git truth. Begin with M0 census and diagnosis before code. Freeze shared W10 contracts before parallel implementation lanes. Preserve W0-W9. Run the long live campaign series only after deterministic integration is green, then complete full certification and truthful closeout.
 
 ## Files Changed
 
 | Path | Purpose | Status |
 |---|---|---|
-| `.agent/tasks/nightwatch-owner-local-deterministic-reproduction-yield-v1/**` | W9 terminal specification, plan, state and report | COMPLETE / frozen |
-| `.agent/tasks/nightwatch-autonomous-efficacy-real-local-substrate-v1/**` | W8 terminal evidence | COMPLETE / frozen |
-| `.agent/tasks/nightwatch-real-local-investigation-substrate-v1/**` | W7 terminal evidence | COMPLETE / frozen |
-| `src/core/ownerLocalReproduction/**`, `src/core/localInvestigation/**` | bounded owner-local execution and explicit current-source proof/admission | integrated |
-| `src/core/agentRuntime/**`, `src/core/agentProtocol/**` | host-owned retry plus v2 transport/payload accounting | integrated |
-| `src/core/investigationMemory/**`, `bin/nightwatch-reasoner-print.mjs` | neutral bounded W9 readiness on W8 memory | integrated |
-| `.agent/ACTIVE_TASK.md`, `.agent/EXECUTION_PROMPT.md`, `PROGRAMME.json` | parent continuity after W9 | IN_PROGRESS / successor not opened |
+| `.agent/tasks/nightwatch-reproduction-surface-coverage-autonomous-yield-v1/**` | W10 SPEC/PLAN/STATE/REPORT | IN_PROGRESS |
+| `.agent/tasks/nightwatch-owner-local-deterministic-reproduction-yield-v1/**` | W9 terminal evidence | COMPLETE / frozen |
+| `src/core/ownerLocalReproduction/**`, `src/core/localInvestigation/**` | W9 current-source reproduction baseline | integrated / preserve |
+| `src/core/investigationMemory/**`, `src/core/agentRuntime/**`, `src/core/agentProtocol/**` | W8/W9 memory/retry/budget baseline | integrated / preserve |
+| `.agent/ACTIVE_TASK.md`, `.agent/EXECUTION_PROMPT.md`, `PROGRAMME.json` | W10 parent handoff | ACTIVE |
 
 ## Validation Ledger
 
-W9 validated implementation and substantive checkpoint: `bb28480c6a6969a06744c75c4c947851d5bece7c`, integrated to `origin/main`.
+Accepted W9 predecessor certification to preserve/re-run as relevant:
 
-- post-reconcile full unit suite: 4531 passed / 16 skipped / 0 failed;
-- focused W9/W7/W8 suites: 295 passed / 3 skipped / 0 failed;
+- focused W9/W7/W8: 295 passed / 3 skipped;
 - full `npm test`: 4565 passed / 16 skipped / 0 failed;
-- typecheck, hardening, agent/handoff/project/workspace/session checks: PASS;
-- `gate:local`: all 11 groups PASS, `receipt:sha256:6fb76272f121ec1bed5b74bf`;
-- fresh Node 20 `gate:clean`: PASS, no reused dependencies, clean before/after, sibling writes 0, `clean-receipt:sha256:d914db277a583699a1ff68c3`;
-- real owner-local generic provider proof: PASS with honest `NOT_REPRODUCED`;
-- real historical ouchan ordinary product-path proof: PASS;
-- final subscribed endurance: `opencode-go/omen-alpha`, HOUR_1 wall-time bound with byte/count headroom, 0 admitted findings.
+- typecheck, hardening, agent/handoff/project/workspace/session: PASS;
+- `gate:local`: `receipt:sha256:6fb76272f121ec1bed5b74bf`;
+- fresh Node 20 `gate:clean`: `clean-receipt:sha256:d914db277a583699a1ff68c3`;
+- real current owner-local proof: PASS with honest NOT_REPRODUCED;
+- historical ouchan product-path proof: PASS.
+
+No W10 implementation validation yet.
 
 ## Decisions Made During This Task
 
-Decision: W9 is owner-local deterministic reproduction coverage and yield, not another memory/plumbing rewrite.
-Reason: W7/W8 already proved sensing, admission and reasoning efficacy; current source still lacks executable reproduction credit.
+Decision: W10 targets reproduction-surface coverage and capability-aware yield, not another reasoning-memory rewrite.
+Reason: W8 proved reasoning progress; W9 proved current-source execution, but the final live run still had 7/7 NOT_AVAILABLE reproduction attempts.
 
-Decision: current-source proof semantics must be explicit and separate from historical PRE_FAIL_POST_PASS.
-Reason: a current defect has no known post-fix revision; fabricating one would corrupt the evidence model.
+Decision: census before executor expansion.
+Reason: widen authority only where measured live coverage justifies it.
 
-Decision: unknown-bug discovery is not a W9 completion requirement.
-Reason: forcing a defect to exist rewards cherry-picking/fabrication. Capability + truthful live yield + certification can complete W9 honestly.
+Decision: unsupported source remains visible for exploration.
+Reason: static/root-cause value and executable reproduction value are different; the reasoner should be informed, not artificially narrowed.
 
-Decision: audit bytes before raising the live output ceiling.
-Reason: a policy increase cannot substitute for fixing double counting or avoidable amplification.
+Decision: W10 is intentionally long-running.
+Reason: it must complete census, contract freeze, independent lanes, real proofs, multiple HOUR_1-class live runs, resilience testing and full certification rather than stop at one success.
 
-Decision: retryability is host-owned.
-Reason: a model must never self-promote a failed execution into a retryable/qualifying state.
-
-Decision: close W9 without claiming a new Alphaus defect.
-Reason: the final live candidate had no qualifying current-source reproduction and was correctly refused; capability and boundary proof do not imply a defect exists or is previously unknown.
-
-Decision: keep the parent programme `IN_PROGRESS` / PARTIAL after W9.
-Reason: strict EXACT, previously-unknown status, any DEV/NEXT execution and parent terminal criteria remain separate. W9 completion cannot silently satisfy them.
+Decision: unknown-bug discovery is not W10's forced terminal requirement.
+Reason: forcing a defect to exist rewards fabrication/cherry-picking. Parent unknown-bug status advances only on genuine separately evidenced mechanical admission.
 
 ## Discoveries
 
-- REAL_LOCAL now defaults to the bounded host-derived Go reproduction provider for supported targets; unsupported targets fail closed.
-- Current-source proof requires repeated current assertion failure and is intentionally distinct from historical `PRE_FAIL_POST_PASS`.
-- The generic `TOOL_ERROR` exhausted-action bug was replaced by host-owned deterministic/environment/transient dispositions and finite per-digest retry.
-- W8's early byte exhaustion was a category error: tool payload accounted for 99.8% of the old mixed output dimension. v2 separates transport/payload and the final HOUR_1 run bound on wall time with substantial byte headroom.
-- Final `opencode-go/omen-alpha` yield was honest but not defect-bearing: 28 grounded hypotheses, 7 unsupported-target reproduction refusals, 1 candidate, 0 admissions.
-
-Full evidence lives in the terminal W9 STATE/REPORT; do not reinterpret the zero-admission result as a failure or a bug discovery.
+Accepted starting fact to re-verify at M0: W9 target discovery supports `.go` source only when approved/current, under a module with `vendor/modules.txt`, with package `_test.go` files and a compatible allowlisted/cached toolchain. The approved universe also contains PHP, Vue/JS/TS/proto/OpenAPI surfaces.
 
 ## Blockers
 
-No repository-owned W9 blocker. Parent-level blockers remain:
+No repository-owned W10 blocker known at activation.
 
-- DEV/NEXT execution is not authorized;
-- strict EXACT rediscovery remains unproven;
-- previously unknown Alphaus defect status remains unproven;
-- no successor child task has been specified or authorized.
+Potential external blocker: subscribed-provider quota/auth for the required long live campaign series. Deterministic/local work must continue if provider access temporarily blocks.
+
+Parent-level blockers remain:
+
+- DEV/NEXT not authorized;
+- strict EXACT unproven;
+- previously unknown Alphaus defect unproven.
 
 ## Safety Events
 
-W9 had no safety-boundary violation: production/DEV/NEXT contacts, external filing, credentials/deployment changes, force pushes/history rewrites and sibling writes all remained zero. The owner-directed provider switch was honored; the superseded endurance run was canceled and final evidence used `opencode-go/omen-alpha`.
+NONE in W10 at activation.
 
-Historical W8 safety events remain recorded in W8 and are not relabeled.
+Historical W8 safety events remain in W8 records; W9 reported zero safety-boundary violations. Do not relabel predecessor events.
 
 ## Deferred / Follow-Up
 
 - DEV/NEXT/production execution unauthorized.
-- Strict EXACT remains separate/unproven.
+- Strict EXACT remains separate.
 - Parent programme completion remains separate.
-- Previously unknown Alphaus defect yield remains unproven unless W9 or a later authorized wave genuinely proves one.
+- More than one optional non-Go execution class is out of W10 scope.
 
 ## Resume Recipe
 
-1. Read `.agent/ACTIVE_TASK.md`, `.agent/EXECUTION_PROMPT.md` and parent PROGRAMME/STATE/REPORT.
-2. Read terminal W9 SPEC/PLAN/STATE/REPORT; W0-W9 are frozen complete.
-3. Re-discover live Git/workspace/session truth.
-4. On explicit owner continuation, define a separate successor task and acceptance criteria before implementation.
+1. Read `.agent/ACTIVE_TASK.md`, `.agent/EXECUTION_PROMPT.md`.
+2. Read W10 SPEC/PLAN/STATE/REPORT.
+3. Read W9 terminal STATE/REPORT; read W8/W7 as needed.
+4. Discover live Git/workspace/session truth.
+5. Continue from W10 M0; do not restart W0-W9.
 
 ## Completion Snapshot
 
-Parent programme status: IN_PROGRESS / PARTIAL.
-Completed through W9 at implementation checkpoint `bb28480c6a6969a06744c75c4c947851d5bece7c`.
-W9 status: COMPLETE_LOCAL_NOT_CI_VERIFIED.
-No active successor child.
-Parent completion, strict EXACT, DEV/NEXT/production proof, organizational approval and previously-unknown-defect status: not claimed.
+Parent programme remains IN_PROGRESS / PARTIAL.
+W10 is active and not yet validated.
+Do not populate W10 completion evidence until M0-M12 and full certification close truthfully.
