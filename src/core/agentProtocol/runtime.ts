@@ -189,6 +189,28 @@ export function detectRepeatedAction(
   return false;
 }
 
+/**
+ * Result classes that mean an executed call yielded nothing reusable. A tool
+ * call is deterministic in its own argument digest within one session, so a
+ * later call with the same fingerprint cannot produce different evidence — it
+ * can only spend another real reasoner turn. A justified re-check always
+ * carries different arguments and therefore a different digest, so it stays
+ * admissible.
+ */
+export const EXHAUSTED_ACTION_RESULT_CLASSES: readonly string[] = ['TOOL_ERROR', 'DEDUPED_REPEAT'] as const;
+
+export function detectExhaustedAction(
+  history: readonly AgentActionRecord[],
+  next: Pick<AgentActionRecord, 'intentKind' | 'toolId' | 'argumentDigest'>,
+): boolean {
+  const fingerprint = actionFingerprint(next);
+  for (const record of history) {
+    if (actionFingerprint(record) !== fingerprint) continue;
+    if (EXHAUSTED_ACTION_RESULT_CLASSES.includes(record.resultClass)) return true;
+  }
+  return false;
+}
+
 export function detectNoProgress(history: readonly AgentActionRecord[], windowSize: number = 6): boolean {
   if (history.length < windowSize) return false;
   const window = history.slice(-windowSize);

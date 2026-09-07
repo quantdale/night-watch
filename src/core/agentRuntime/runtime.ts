@@ -21,6 +21,7 @@ import {
   REASONER_STDOUT_BYTE_CAP,
   REASONER_TURN_REQUEST_VERSION,
   classifyBudgetExhaustion,
+  detectExhaustedAction,
   detectNoProgress,
   detectRepeatedAction,
   lookupAgentTool,
@@ -577,7 +578,12 @@ export class AgentRuntime {
     turnId: string,
   ): Promise<TerminalOutcome | null> {
     const fingerprint = { intentKind: 'CALL_TOOL', toolId, argumentDigest };
-    if (detectRepeatedAction(this.actionLog, fingerprint)) {
+    // Two independent wastes are discarded here: a consecutive streak of the
+    // same call, and any repeat of a call whose identical fingerprint already
+    // failed earlier in this investigation (observed live: one reproduction
+    // digest executed three times because productive reads sat between the
+    // attempts).
+    if (detectRepeatedAction(this.actionLog, fingerprint) || detectExhaustedAction(this.actionLog, fingerprint)) {
       this.record({
         turnId,
         phase: this.phase,

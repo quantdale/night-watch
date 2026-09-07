@@ -208,6 +208,43 @@ test.describe('agentRuntime loop guards', () => {
     expect(classes).toEqual(['OBSERVATION', 'OBSERVATION', 'OBSERVATION', 'DEDUPED_REPEAT']);
   });
 
+  test('an identical call that already failed is never re-executed, even after unrelated progress', async () => {
+    // Reproduces observed waste from the live `w8-owner-local-live` campaign:
+    // one RERUN_SAFE_REPRODUCTION argument digest was executed three times in
+    // a single investigation (turns 4, 6, 8) because the streak guard only
+    // looked at CONSECUTIVE repeats and productive reads sat in between. A
+    // tool call is deterministic in its own argument digest within a session,
+    // so repeating a call that already failed cannot produce new evidence; it
+    // only burns a real provider turn.
+    const tools = stubTools((call) =>
+      call.toolId === 'RERUN_SAFE_REPRODUCTION'
+        ? { ok: false, resultClass: 'REPRODUCTION_REFUSED', evidenceRefs: [], outputBytes: 8, untrusted: [] }
+        : { ok: true, resultClass: 'SOURCE_FILE', evidenceRefs: [`ev:sha256:${call.turnId}`], outputBytes: 32, untrusted: [] },
+    );
+    const repro = () =>
+      okTurn([
+        {
+          kind: 'CALL_TOOL',
+          toolId: 'RERUN_SAFE_REPRODUCTION',
+          arguments: { sourcePath: 'src/same.ts', sourceEvidenceRef: 'ev:sha256:same' },
+        },
+      ]);
+    const read = () => okTurn([{ kind: 'CALL_TOOL', toolId: 'INSPECT_SOURCE_SURFACE', arguments: { path: 'src/other.ts' } }]);
+    const stub = scriptDriver([repro, read, repro, read, repro, () => completeNoFinding()]);
+    const runtime = new AgentRuntime(depsFor('campaign-failed-repeat', stub.driver, tools));
+    await runtime.run({ maxTurns: 6 });
+
+    expect(tools.calls.filter((call) => call.toolId === 'RERUN_SAFE_REPRODUCTION')).toHaveLength(1);
+    expect(runtime.snapshot().actionLog.map((item) => item.resultClass)).toEqual([
+      'TOOL_ERROR',
+      'SOURCE_FILE',
+      'DEDUPED_REPEAT',
+      'SOURCE_FILE',
+      'DEDUPED_REPEAT',
+      'TERMINATED_COMPLETE_NO_FINDING',
+    ]);
+  });
+
   test('no-progress loop terminates instead of spinning', async () => {
     const tools = quietTools();
     const callTool = () => okTurn([{ kind: 'CALL_TOOL', toolId: 'INSPECT_SOURCE_SURFACE', arguments: { path: 'src/loop.ts' } }]);
