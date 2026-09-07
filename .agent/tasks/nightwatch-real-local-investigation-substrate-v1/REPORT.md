@@ -53,7 +53,7 @@ One shared seam replaced the product/benchmark capability split:
 | Hidden ground truth leakage remains zero | PROVEN | captured request traffic assertions; `assertNoBenchmarkLeakage` still fail-closed |
 | Sibling repository mutation remains zero | PROVEN | ouchan HEAD `565f00a8...` and porcelain digest `e7096272...` unchanged, single worktree |
 | Duplicate/ambiguous programme identity repaired and machine-checked | PROVEN | `bin/lib/programme-state.mjs` in `agent:check`; 7 validator tests |
-| Full regression | PROVEN | `npm test` 4351 passed / 13 skipped |
+| Full regression | PROVEN | `npm test` 4378 passed / 13 skipped |
 | gate:local | PROVEN | FULL PASS 11/11, receipt `receipt:sha256:8205a52e13f74763a855dc41` |
 | gate:clean | PROVEN | Node 20 clean clone PASS, inner receipt `receipt:sha256:c44ac4ba9ed23d2d5fbf6167` |
 

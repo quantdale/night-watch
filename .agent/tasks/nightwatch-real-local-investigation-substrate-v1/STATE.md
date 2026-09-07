@@ -122,7 +122,7 @@ Command: `npm run typecheck`
 Result: PASS.
 
 Command: `npm test`
-Result: PASS — 4351 passed / 13 skipped after repairing the 27 checker-fixture failures caused by the new `bin/lib/programme-state.mjs` dependency (fixtures now copy it).
+Result: PASS — 4378 passed / 0 failed / 13 skipped after repairing the 27 checker-fixture failures caused by the new `bin/lib/programme-state.mjs` dependency (fixtures now copy it).
 
 Command: `npm run hardening:check`, `npm run workspace:check`, `npm run agent:check`, `npm run handoff:check`
 Result: PASS. `handoff:check` initially FAILED with `HANDOFF_HEADER_UNKNOWN_FIELD` / `HANDOFF_REQUIRED_FIELD_MISSING` — a pre-existing regression inherited from the W7 handoff commit `98abb37`; the header was restored to the protocol contract rather than the checker loosened.
@@ -211,6 +211,6 @@ Terminal criteria: MET for W7 as specified. The normal `nightwatch-agent campaig
 Validated implementation checkpoint: 06166f362491cab06a52cb378328e3178dddea62
 Certified documentation descendant: 20a6b9e044e56756c791a952aab9ed6b2e26d0cd (planner-handoff header repair; gate receipts were observed at this SHA)
 Live head discovery: GIT
-Certification: `npm test` 4351 passed / 13 skipped; `npm run typecheck` PASS; hardening/workspace/agent/project/handoff checks PASS; `gate:local` FULL PASS receipt `receipt:sha256:8205a52e13f74763a855dc41`; `gate:clean` PASS on Node 20 inner receipt `receipt:sha256:c44ac4ba9ed23d2d5fbf6167`.
+Certification: `npm test` 4378 passed / 13 skipped; `npm run typecheck` PASS; hardening/workspace/agent/project/handoff checks PASS; `gate:local` FULL PASS receipt `receipt:sha256:8205a52e13f74763a855dc41`; `gate:clean` PASS on Node 20 inner receipt `receipt:sha256:c44ac4ba9ed23d2d5fbf6167`.
 Product-path proof: one historical pre-fix defect reproduced through the ordinary campaign machinery (`dossierStatus=VERIFIED_REPRODUCTION`, `reproductionCount=1`) with zero hidden-ground-truth leakage and zero sibling mutation.
 Not claimed: previously unknown Alphaus bug discovery, EXACT rediscovery, DEV/NEXT execution, production contact, or parent programme completion.
