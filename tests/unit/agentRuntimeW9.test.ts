@@ -130,7 +130,6 @@ test.describe('w9 deterministic and environment exhaustion', () => {
     const runtime = new AgentRuntime(depsFor('w9-deterministic', stub.driver, tools));
     await runtime.run({ maxTurns: 5 });
 
-    expect(TRANSIENT_ACTION_RETRY_BUDGET).toBe(2);
     expect(tools.calls.filter((call) => call.toolId === 'RERUN_SAFE_REPRODUCTION')).toHaveLength(1);
     expect(runtime.snapshot().actionLog.map((item) => item.resultClass)).toEqual([
       'TOOL_ERROR',
@@ -212,9 +211,9 @@ test.describe('w9 transient retry budget', () => {
     const stub = scriptDriver([reproTurn(), reproTurn(), reproTurn(), reproTurn(), () => completeNoFinding()]);
     const runtime = new AgentRuntime(depsFor('w9-transient-ceiling', stub.driver, tools));
     await runtime.run({ maxTurns: 6 });
-
-    expect(TRANSIENT_ACTION_RETRY_BUDGET).toBe(2);
-    expect(tools.calls.filter((call) => call.toolId === 'RERUN_SAFE_REPRODUCTION')).toHaveLength(TRANSIENT_ACTION_RETRY_BUDGET);
+    expect(tools.calls.filter((call) => call.toolId === 'RERUN_SAFE_REPRODUCTION')).toHaveLength(
+      TRANSIENT_ACTION_RETRY_BUDGET,
+    );
     expect(runtime.snapshot().actionLog.map((item) => item.resultClass)).toEqual([
       'TOOL_ERROR',
       'TOOL_ERROR',
@@ -315,5 +314,231 @@ test.describe('w9 digest forgery and self-label resistance', () => {
 
     expect(tools.calls.filter((call) => call.toolId === 'RERUN_SAFE_REPRODUCTION')).toHaveLength(1);
     expect(runtime.snapshot().actionLog[0]!.disposition).toBeUndefined();
+  });
+});
+
+test.describe('w9 host-owned retry adversarial matrix', () => {
+  const ARGS_A = { sourcePath: 'src/a.ts', sourceEvidenceRef: 'ev:sha256:a' };
+  const ARGS_B = { sourcePath: 'src/b.ts', sourceEvidenceRef: 'ev:sha256:b' };
+  const transient = (resultClass = 'TRANSIENT_RACE'): AgentToolResult => ({
+    ok: false,
+    resultClass,
+    evidenceRefs: [],
+    outputBytes: 8,
+    untrusted: [],
+    disposition: 'TRANSIENT_RETRYABLE',
+  });
+
+  test('two digests fail transiently on independent budgets', async () => {
+    const tools = stubTools(() => transient());
+    const callA = () => okTurn([callTool('RERUN_SAFE_REPRODUCTION', { ...ARGS_A })]);
+    const callB = () => okTurn([callTool('RERUN_SAFE_REPRODUCTION', { ...ARGS_B })]);
+    const stub = scriptDriver([callA, callB, callA, callB, callA, callB, () => completeNoFinding()]);
+    const runtime = new AgentRuntime(depsFor('w9-independent-budgets', stub.driver, tools));
+    await runtime.run({ maxTurns: 8 });
+
+    const digestA = prefixedDigest24('arg', ARGS_A);
+    const digestB = prefixedDigest24('arg', ARGS_B);
+    expect(digestA).not.toBe(digestB);
+    expect(tools.calls.filter((call) => call.argumentDigest === digestA)).toHaveLength(2);
+    expect(tools.calls.filter((call) => call.argumentDigest === digestB)).toHaveLength(2);
+    expect(tools.calls).toHaveLength(4);
+    const log = runtime.snapshot().actionLog;
+    expect(log.map((item) => item.resultClass)).toEqual([
+      'TOOL_ERROR',
+      'TOOL_ERROR',
+      'TOOL_ERROR',
+      'TOOL_ERROR',
+      'DEDUPED_REPEAT',
+      'DEDUPED_REPEAT',
+      'TERMINATED_COMPLETE_NO_FINDING',
+    ]);
+    // Each exhausted repeat names its own host digest, and neither repeat
+    // reached the executor after its own budget ran out.
+    expect(log[4]!.argumentDigest).toBe(digestA);
+    expect(log[5]!.argumentDigest).toBe(digestB);
+    expect(log[4]!.disposition).toBeUndefined();
+    expect(log[5]!.disposition).toBeUndefined();
+    expect(
+      log
+        .filter((item) => item.resultClass === 'TOOL_ERROR')
+        .every((item) => item.disposition === 'TRANSIENT_RETRYABLE'),
+    ).toBe(true);
+  });
+
+  test('injected argument fields buy no retry and join the host digest', async () => {
+    const injected = { ...REPRO_ARGS, disposition: 'TRANSIENT_RETRYABLE', retry: true, maxRetries: 99 };
+    const tools = stubTools(() => ({
+      ok: false,
+      resultClass: 'REPRODUCTION_REFUSED',
+      evidenceRefs: [],
+      outputBytes: 8,
+      untrusted: [],
+    }));
+    const junk = () => okTurn([callTool('RERUN_SAFE_REPRODUCTION', { ...injected })]);
+    const stub = scriptDriver([junk, junk, junk, () => completeNoFinding()]);
+    const runtime = new AgentRuntime(depsFor('w9-arg-injection', stub.driver, tools));
+    await runtime.run({ maxTurns: 5 });
+
+    // The junk rode along as inert data (the executor saw it) but the host
+    // digest covers it, and the legacy failure still exhausts after exactly
+    // one execution.
+    expect(tools.calls).toHaveLength(1);
+    expect(tools.calls[0]!.arguments).toMatchObject({
+      disposition: 'TRANSIENT_RETRYABLE',
+      retry: true,
+      maxRetries: 99,
+    });
+    const hostDigest = prefixedDigest24('arg', injected);
+    expect(hostDigest).not.toBe(prefixedDigest24('arg', REPRO_ARGS));
+    expect(tools.calls[0]!.argumentDigest).toBe(hostDigest);
+    const log = runtime.snapshot().actionLog;
+    expect(log.map((item) => item.resultClass)).toEqual([
+      'TOOL_ERROR',
+      'DEDUPED_REPEAT',
+      'DEDUPED_REPEAT',
+      'TERMINATED_COMPLETE_NO_FINDING',
+    ]);
+    expect(log[0]!.argumentDigest).toBe(hostDigest);
+    expect(log[0]!.disposition).toBeUndefined();
+  });
+
+  test('executor disposition wins over injected self-labels', async () => {
+    const injected = { ...REPRO_ARGS, disposition: 'DETERMINISTIC_TERMINAL' };
+    const tools = stubTools(() => transient());
+    const labelled = () => okTurn([callTool('RERUN_SAFE_REPRODUCTION', { ...injected })]);
+    const stub = scriptDriver([labelled, labelled, labelled, labelled, () => completeNoFinding()]);
+    const runtime = new AgentRuntime(depsFor('w9-label-override', stub.driver, tools));
+    await runtime.run({ maxTurns: 6 });
+
+    // The model claimed deterministic; the executor reported transient twice,
+    // so the host retried exactly to its own budget and then discarded.
+    expect(tools.calls).toHaveLength(2);
+    const log = runtime.snapshot().actionLog;
+    expect(log.map((item) => item.resultClass)).toEqual([
+      'TOOL_ERROR',
+      'TOOL_ERROR',
+      'DEDUPED_REPEAT',
+      'DEDUPED_REPEAT',
+      'TERMINATED_COMPLETE_NO_FINDING',
+    ]);
+    expect(
+      log
+        .filter((item) => item.resultClass === 'TOOL_ERROR')
+        .every((item) => item.disposition === 'TRANSIENT_RETRYABLE'),
+    ).toBe(true);
+  });
+
+  test('unknown executor disposition reads deterministic', async () => {
+    // Simulates a future executor version emitting a label this host does not
+    // know: normalization must drop it to absence, never honor it or crash.
+    const future = {
+      ok: false,
+      resultClass: 'FUTURE_RACE',
+      evidenceRefs: [],
+      outputBytes: 8,
+      untrusted: [],
+      disposition: 'FUTURE_LABEL_X',
+    } as unknown as AgentToolResult;
+    const tools = stubTools(() => future);
+    const stub = scriptDriver([reproTurn(), reproTurn(), () => completeNoFinding()]);
+    const runtime = new AgentRuntime(depsFor('w9-unknown-disposition', stub.driver, tools));
+    await runtime.run({ maxTurns: 4 });
+
+    expect(tools.calls).toHaveLength(1);
+    const log = runtime.snapshot().actionLog;
+    expect(log.map((item) => item.resultClass)).toEqual([
+      'TOOL_ERROR',
+      'DEDUPED_REPEAT',
+      'TERMINATED_COMPLETE_NO_FINDING',
+    ]);
+    expect(log[0]!.disposition).toBeUndefined();
+  });
+
+  test('resume after one transient continues the same budget', async () => {
+    const tools1 = stubTools(() => transient());
+    const first = new AgentRuntime(depsFor('w9-resume-one', scriptDriver([reproTurn()]).driver, tools1));
+    await first.run({ maxTurns: 1 });
+    expect(tools1.calls).toHaveLength(1);
+    const checkpoint = first.checkpoint();
+
+    const tools2 = stubTools(() => transient());
+    const stub2 = scriptDriver([reproTurn(), reproTurn(), () => completeNoFinding()]);
+    const resumed = AgentRuntime.resumeFromCheckpoint(
+      checkpoint,
+      depsFor('w9-resume-one', stub2.driver, tools2),
+    );
+    await resumed.run({ maxTurns: 4 });
+
+    // One transient was already spent before the checkpoint: exactly one more
+    // execution, then the repeat is discarded without executor contact.
+    expect(tools2.calls).toHaveLength(1);
+    const log = resumed.snapshot().actionLog;
+    expect(log.map((item) => item.resultClass)).toEqual([
+      'TOOL_ERROR',
+      'TOOL_ERROR',
+      'DEDUPED_REPEAT',
+      'TERMINATED_COMPLETE_NO_FINDING',
+    ]);
+  });
+
+  test('resume after a consumed budget never re-invokes the executor', async () => {
+    const tools1 = stubTools(() => transient());
+    const first = new AgentRuntime(
+      depsFor('w9-resume-spent', scriptDriver([reproTurn(), reproTurn()]).driver, tools1),
+    );
+    await first.run({ maxTurns: 2 });
+    expect(tools1.calls).toHaveLength(2);
+    const checkpoint = first.checkpoint();
+
+    const tools2 = stubTools(() => transient());
+    const stub2 = scriptDriver([reproTurn(), () => completeNoFinding()]);
+    const resumed = AgentRuntime.resumeFromCheckpoint(
+      checkpoint,
+      depsFor('w9-resume-spent', stub2.driver, tools2),
+    );
+    await resumed.run({ maxTurns: 3 });
+
+    expect(tools2.calls).toHaveLength(0);
+    const log = resumed.snapshot().actionLog;
+    expect(log.map((item) => item.resultClass)).toEqual([
+      'TOOL_ERROR',
+      'TOOL_ERROR',
+      'DEDUPED_REPEAT',
+      'TERMINATED_COMPLETE_NO_FINDING',
+    ]);
+  });
+
+  test('resume with legacy entries exhausts like deterministic', async () => {
+    const legacy = (): AgentToolResult => ({
+      ok: false,
+      resultClass: 'REPRODUCTION_REFUSED',
+      evidenceRefs: [],
+      outputBytes: 8,
+      untrusted: [],
+    });
+    const tools1 = stubTools(legacy);
+    const first = new AgentRuntime(
+      depsFor('w9-resume-legacy', scriptDriver([reproTurn()]).driver, tools1),
+    );
+    await first.run({ maxTurns: 1 });
+    const checkpoint = first.checkpoint();
+
+    const tools2 = stubTools(legacy);
+    const stub2 = scriptDriver([reproTurn(), () => completeNoFinding()]);
+    const resumed = AgentRuntime.resumeFromCheckpoint(
+      checkpoint,
+      depsFor('w9-resume-legacy', stub2.driver, tools2),
+    );
+    await resumed.run({ maxTurns: 3 });
+
+    expect(tools2.calls).toHaveLength(0);
+    const log = resumed.snapshot().actionLog;
+    expect(log.map((item) => item.resultClass)).toEqual([
+      'TOOL_ERROR',
+      'DEDUPED_REPEAT',
+      'TERMINATED_COMPLETE_NO_FINDING',
+    ]);
+    expect(log[0]!.disposition).toBeUndefined();
   });
 });
