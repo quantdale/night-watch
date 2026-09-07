@@ -85,6 +85,24 @@ export const ACTION_FAILURE_DISPOSITIONS = [
   'TRANSIENT_RETRYABLE',
 ] as const;
 export type ActionFailureDisposition = (typeof ACTION_FAILURE_DISPOSITIONS)[number];
+/**
+ * Strict host-owned disposition guard. Only the three frozen values pass;
+ * everything else (including null/undefined/unknown strings) is rejected.
+ * The executor is the sole authority: reasoner intents never carry this
+ * field and validate.ts never reads it from model output.
+ */
+export function isActionFailureDisposition(value: unknown): value is ActionFailureDisposition {
+  return typeof value === 'string' && (ACTION_FAILURE_DISPOSITIONS as readonly string[]).includes(value);
+}
+
+/**
+ * Fail-closed normalization for executor-supplied dispositions. Valid frozen
+ * values are kept; absent or unknown values become undefined (callers read
+ * absence as DETERMINISTIC_TERMINAL, preserving W8 exhaustion exactly).
+ */
+export function normalizeActionFailureDisposition(value: unknown): ActionFailureDisposition | undefined {
+  return isActionFailureDisposition(value) ? value : undefined;
+}
 
 /**
  * Strict finite retry budget for one action fingerprint whose failures are
@@ -151,6 +169,33 @@ export function addAgentByteLedgers(a: AgentByteLedger, b: AgentByteLedger): Age
 /** The exact charged-output identity every accounting test asserts. */
 export function chargedOutputBytes(ledger: AgentByteLedger): number {
   return ledger.providerStdoutBytes + ledger.providerStderrBytes + ledger.toolResultBytes;
+}
+
+const AGENT_BYTE_LEDGER_COUNT_KEYS = [
+  'requestBytes',
+  'requestMemoryBytes',
+  'requestUntrustedBytes',
+  'providerStdoutBytes',
+  'providerStderrBytes',
+  'parsedResponseBytes',
+  'toolResultBytes',
+  'toolEnvelopeBytes',
+] as const;
+
+/**
+ * Fail-closed ledger guard for checkpoint parsing. Present-but-malformed
+ * ledgers are corrupt (never silently zeroed); absence is handled by the
+ * caller as pre-W9 compatibility (resume with a zero ledger).
+ */
+export function isAgentByteLedger(value: unknown): value is AgentByteLedger {
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) return false;
+  const record = value as Record<string, unknown>;
+  if (record.schemaVersion !== AGENT_BYTE_LEDGER_VERSION) return false;
+  for (const key of AGENT_BYTE_LEDGER_COUNT_KEYS) {
+    const entry = record[key];
+    if (typeof entry !== 'number' || !Number.isFinite(entry) || entry < 0) return false;
+  }
+  return true;
 }
 
 export const ZERO_AGENT_BUDGET_USAGE: AgentBudgetUsage = Object.freeze({
@@ -286,12 +331,22 @@ export function detectRepeatedAction(
 }
 
 /**
- * Result classes that mean an executed call yielded nothing reusable. A tool
- * call is deterministic in its own argument digest within one session, so a
- * later call with the same fingerprint cannot produce different evidence — it
- * can only spend another real reasoner turn. A justified re-check always
- * carries different arguments and therefore a different digest, so it stays
- * admissible.
+ * W9 disposition-aware exhaustion. A tool call is deterministic in its own
+ * host-computed argument digest within one session, so a justified re-check
+ * always carries different arguments and therefore a different fingerprint.
+ *
+ * Counting is over TOTAL prior executions of the same fingerprint across the
+ * whole history (never a consecutive streak): an unrelated action between
+ * attempts does not reset the budget, and a changed canonical digest is a
+ * fresh fingerprint. DEDUPED_REPEAT discards are not executions but prove a
+ * fingerprint already exhausted.
+ *
+ * - DETERMINISTIC_TERMINAL / ENVIRONMENT_BLOCKED (including absent/legacy
+ *   dispositions, which read as DETERMINISTIC_TERMINAL): execute once, then
+ *   exhaust. Preserves W8 behavior exactly for pre-W9 records.
+ * - TRANSIENT_RETRYABLE: execute at most TRANSIENT_ACTION_RETRY_BUDGET total
+ *   attempts for the fingerprint, then exhaust like a deterministic refusal.
+ * - Successes (any non-TOOL_ERROR class) never exhaust.
  */
 export const EXHAUSTED_ACTION_RESULT_CLASSES: readonly string[] = ['TOOL_ERROR', 'DEDUPED_REPEAT'] as const;
 
@@ -300,9 +355,15 @@ export function detectExhaustedAction(
   next: Pick<AgentActionRecord, 'intentKind' | 'toolId' | 'argumentDigest'>,
 ): boolean {
   const fingerprint = actionFingerprint(next);
+  let transientFailures = 0;
   for (const record of history) {
     if (actionFingerprint(record) !== fingerprint) continue;
-    if (EXHAUSTED_ACTION_RESULT_CLASSES.includes(record.resultClass)) return true;
+    if (record.resultClass === 'DEDUPED_REPEAT') return true;
+    if (record.resultClass !== 'TOOL_ERROR') continue;
+    const disposition = normalizeActionFailureDisposition(record.disposition ?? null) ?? 'DETERMINISTIC_TERMINAL';
+    if (disposition === 'DETERMINISTIC_TERMINAL' || disposition === 'ENVIRONMENT_BLOCKED') return true;
+    transientFailures += 1;
+    if (transientFailures >= TRANSIENT_ACTION_RETRY_BUDGET) return true;
   }
   return false;
 }

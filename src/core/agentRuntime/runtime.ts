@@ -20,16 +20,20 @@ import {
   REASONER_STDERR_BYTE_CAP,
   REASONER_STDOUT_BYTE_CAP,
   REASONER_TURN_REQUEST_VERSION,
+  ZERO_AGENT_BYTE_LEDGER,
   classifyBudgetExhaustion,
   detectExhaustedAction,
   detectNoProgress,
   detectRepeatedAction,
+  isAgentByteLedger,
   lookupAgentTool,
   proposeCandidateRequiresEvidence,
   validateReasonerTurnResponse,
+  type ActionFailureDisposition,
   type AgentActionRecord,
   type AgentBudgetPolicy,
   type AgentBudgetUsage,
+  type AgentByteLedger,
   type AgentCheckpoint,
   type AgentHypothesis,
   type AgentIntent,
@@ -114,6 +118,8 @@ export class AgentRuntime {
   private evidenceRefs: string[] = [];
   private candidateIds: string[] = [];
   private usage: AgentBudgetUsage;
+  /** W9 component accounting explaining usage.inputBytes/outputBytes. */
+  private byteLedger: AgentByteLedger;
   private terminationReason: AgentTerminationReason | null = null;
   private turnBase: number;
   private turnsThisRun = 0;
@@ -154,12 +160,18 @@ export class AgentRuntime {
       // Pre-W8 checkpoints have no target ledger: resume with an empty one
       // rather than refusing an otherwise valid checkpoint.
       this.knownTargets = [...(restored.state.knownTargets ?? [])];
+      // Pre-W9 checkpoints carry no byte ledger: resume with a zero ledger
+      // (fresh W9 accounting) while the frozen usage totals are preserved
+      // verbatim for remaining-policy arithmetic. A present-but-malformed
+      // ledger never reaches here: parseCheckpoint rejects it fail-closed.
+      this.byteLedger = isAgentByteLedger(restored.state.byteLedger) ? { ...restored.state.byteLedger } : { ...ZERO_AGENT_BYTE_LEDGER };
       this.evidenceRefs = [...restored.state.evidenceRefs];
       this.candidateIds = [...restored.state.candidateIds];
       this.usage = { ...restored.state.budget.usage };
       this.turnBase = restored.completedTurns;
       this.wallBaseMs = restored.state.budget.usage.wallTimeMs;
     } else {
+      this.byteLedger = { ...ZERO_AGENT_BYTE_LEDGER };
       this.usage = {
         wallTimeMs: 0,
         reasonerCalls: 0,
@@ -208,6 +220,7 @@ export class AgentRuntime {
       evidenceRefs: Object.freeze([...this.evidenceRefs]),
       candidateIds: Object.freeze([...this.candidateIds]),
       knownTargets: Object.freeze([...this.knownTargets]),
+      byteLedger: Object.freeze({ ...this.byteLedger }),
       budget: Object.freeze({ policy: this.policy, usage: Object.freeze({ ...this.usage }) }),
       terminationReason: this.terminationReason,
     };
@@ -293,7 +306,18 @@ export class AgentRuntime {
    */
   private async runTurn(turnId: string): Promise<TerminalOutcome | null> {
     const request = this.buildRequest(turnId);
-    this.usage = { ...this.usage, inputBytes: this.usage.inputBytes + utf8Bytes(JSON.stringify(request)) };
+    // W9 ledger: the full serialized request is charged into inputBytes;
+    // memory and pending-untrusted serializations are measured subsets of it.
+    const requestBytes = utf8Bytes(JSON.stringify(request));
+    const requestMemoryBytes = utf8Bytes(JSON.stringify(request.observation.memory));
+    const requestUntrustedBytes = utf8Bytes(JSON.stringify(request.observation.untrusted));
+    this.usage = { ...this.usage, inputBytes: this.usage.inputBytes + requestBytes };
+    this.byteLedger = {
+      ...this.byteLedger,
+      requestBytes: this.byteLedger.requestBytes + requestBytes,
+      requestMemoryBytes: this.byteLedger.requestMemoryBytes + requestMemoryBytes,
+      requestUntrustedBytes: this.byteLedger.requestUntrustedBytes + requestUntrustedBytes,
+    };
 
     let call: Awaited<ReturnType<ReasonerDriver['complete']>>;
     try {
@@ -329,6 +353,11 @@ export class AgentRuntime {
       reasonerCalls: this.usage.reasonerCalls + 1,
       outputBytes: this.usage.outputBytes + call.stdoutBytes + call.stderrBytes,
     };
+    this.byteLedger = {
+      ...this.byteLedger,
+      providerStdoutBytes: this.byteLedger.providerStdoutBytes + call.stdoutBytes,
+      providerStderrBytes: this.byteLedger.providerStderrBytes + call.stderrBytes,
+    };
 
     if (!call.ok) {
       this.usage = {
@@ -349,7 +378,14 @@ export class AgentRuntime {
       return null;
     }
 
-    this.usage = { ...this.usage, outputBytes: this.usage.outputBytes + utf8Bytes(JSON.stringify(call.response)) };
+    // W9 double-count fix: the parsed response is the same document already
+    // charged as provider stdout. It is measured into parsedResponseBytes but
+    // never charged into usage.outputBytes again, so usage.outputBytes equals
+    // providerStdoutBytes + providerStderrBytes + toolResultBytes exactly.
+    this.byteLedger = {
+      ...this.byteLedger,
+      parsedResponseBytes: this.byteLedger.parsedResponseBytes + utf8Bytes(JSON.stringify(call.response)),
+    };
 
     const validated = validateReasonerTurnResponse(call.response as unknown, {
       authorizedEnvironments: this.authorizedEnvironments,
@@ -578,11 +614,14 @@ export class AgentRuntime {
     turnId: string,
   ): Promise<TerminalOutcome | null> {
     const fingerprint = { intentKind: 'CALL_TOOL', toolId, argumentDigest };
-    // Two independent wastes are discarded here: a consecutive streak of the
-    // same call, and any repeat of a call whose identical fingerprint already
-    // failed earlier in this investigation (observed live: one reproduction
-    // digest executed three times because productive reads sat between the
-    // attempts).
+    // W9 disposition-aware exhaustion (see detectExhaustedAction): a
+    // consecutive streak of the same call is discarded, and any repeat of a
+    // fingerprint whose prior executions already exhausted it — one
+    // deterministic/environment failure, or TRANSIENT_ACTION_RETRY_BUDGET
+    // transient failures — is discarded even when productive reads sit
+    // between the attempts. Counting is over total prior executions of the
+    // host-computed fingerprint, never a streak; a changed canonical digest
+    // is a fresh fingerprint.
     if (detectRepeatedAction(this.actionLog, fingerprint) || detectExhaustedAction(this.actionLog, fingerprint)) {
       this.record({
         turnId,
@@ -601,11 +640,22 @@ export class AgentRuntime {
     const call: AgentToolCall = { campaignId: this.campaignId, turnId, toolId, arguments: args, argumentDigest };
     const raw = await this.tools.execute(call);
     const result = normalizeToolResult(raw);
+    // W9 ledger: the pre-truncation tool payload is charged; the truncated
+    // envelopes that actually cross to the reasoner are measured only.
+    let toolEnvelopeBytes = 0;
+    for (const envelope of result.untrusted) {
+      if (typeof envelope?.bytes === 'string') toolEnvelopeBytes += utf8Bytes(envelope.bytes);
+    }
     this.usage = {
       ...this.usage,
       toolActions: this.usage.toolActions + 1,
       outputBytes: this.usage.outputBytes + result.outputBytes,
       ...(result.ok ? {} : { consecutiveFailures: this.usage.consecutiveFailures + 1, retries: this.usage.retries + 1 }),
+    };
+    this.byteLedger = {
+      ...this.byteLedger,
+      toolResultBytes: this.byteLedger.toolResultBytes + result.outputBytes,
+      toolEnvelopeBytes: this.byteLedger.toolEnvelopeBytes + toolEnvelopeBytes,
     };
     this.addEvidence(result.evidenceRefs);
     if (result.untrusted.length > 0) {
@@ -623,6 +673,10 @@ export class AgentRuntime {
       if (target !== null) this.learnTargets([target]);
     }
     const resultClass = result.ok ? result.resultClass : 'TOOL_ERROR';
+    // W9: persist the host-owned disposition on FAILED actions only. Absent
+    // on successes and on legacy executors (absence reads as
+    // DETERMINISTIC_TERMINAL, preserving W8 exhaustion exactly).
+    const disposition: ActionFailureDisposition | undefined = result.ok ? undefined : (result.disposition ?? undefined);
     this.record({
       turnId,
       phase: this.phase,
@@ -633,6 +687,7 @@ export class AgentRuntime {
       evidenceRefs: [...result.evidenceRefs],
       target,
       ...(facts?.salient === undefined ? {} : { salient: facts.salient }),
+      ...(disposition === undefined ? {} : { disposition }),
     });
     if (toolId === 'RERUN_SAFE_REPRODUCTION' && target !== null) {
       this.applyReproductionVerdict(target, resultClass);
@@ -677,12 +732,14 @@ export class AgentRuntime {
     readonly evidenceRefs: readonly string[];
     readonly target?: string | null;
     readonly salient?: readonly string[];
+    readonly disposition?: ActionFailureDisposition | null;
   }): void {
     this.actionLog.push({
       ...entry,
       target: entry.target ?? null,
       evidenceRefs: [...entry.evidenceRefs],
       ...(entry.salient === undefined ? {} : { salient: [...entry.salient] }),
+      ...(entry.disposition === undefined || entry.disposition === null ? {} : { disposition: entry.disposition }),
     });
   }
 

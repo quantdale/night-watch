@@ -5,16 +5,18 @@
 // process and never touches the network.
 // ---------------------------------------------------------------------------
 
-import type {
-  AgentBudgetPolicy,
-  AgentBudgetUsage,
-  AgentCheckpoint,
-  AgentRuntimeState,
-  AgentTerminationReason,
-  AgentToolEnvironment,
-  AgentToolId,
-  ReasonerDriver,
-  UntrustedEnvelope,
+import {
+  normalizeActionFailureDisposition,
+  type ActionFailureDisposition,
+  type AgentBudgetPolicy,
+  type AgentBudgetUsage,
+  type AgentCheckpoint,
+  type AgentRuntimeState,
+  type AgentTerminationReason,
+  type AgentToolEnvironment,
+  type AgentToolId,
+  type ReasonerDriver,
+  type UntrustedEnvelope,
 } from '../agentProtocol';
 import type { CampaignStrategyState } from '../investigationMemory/types';
 
@@ -46,6 +48,12 @@ export interface AgentToolResult {
    * working memory. Optional; a legacy executor simply contributes nothing.
    */
   readonly memory?: AgentToolMemoryFacts;
+  /**
+   * W9: host-owned disposition of a FAILED action, set by the injected
+   * executor only. Never read from reasoner intents. Absent on successes
+   * and on legacy executors (absence reads as DETERMINISTIC_TERMINAL).
+   */
+  readonly disposition?: ActionFailureDisposition | null;
 }
 
 /**
@@ -127,6 +135,10 @@ export function normalizeToolResult(value: unknown): AgentToolResult {
       : base.outputBytes;
   const untrusted = Array.isArray(record.untrusted) ? (record.untrusted as UntrustedEnvelope[]) : base.untrusted;
   const memory = normalizeToolMemoryFacts(record.memory);
+  // W9: trusted only because it arrives over the injected executor port, never
+  // from reasoner intents. Strict frozen-enum match; unknown values are
+  // dropped to absence (which exhaustion reads as DETERMINISTIC_TERMINAL).
+  const disposition = normalizeActionFailureDisposition(record.disposition);
   return {
     ok: record.ok !== false,
     resultClass,
@@ -134,6 +146,7 @@ export function normalizeToolResult(value: unknown): AgentToolResult {
     outputBytes,
     untrusted,
     ...(memory === undefined ? {} : { memory }),
+    ...(disposition === undefined ? {} : { disposition }),
   };
 }
 
