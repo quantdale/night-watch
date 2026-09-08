@@ -6,16 +6,16 @@ Title: Repository Master Hardening Implementation
 Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-repository-hardening-implementation-v1
 Starting SHA: 0ac7b3d037b5059f670eca715fc30adaf58e7334
-Last validated implementation SHA: 62d23e2622ab0a282584c5cf27d92b6b603f9192
-Last checkpoint: campaign opened from origin/main 0ac7b3d; M0 execution truth established; M1 (NW-06) in progress
-Current milestone: M1 — NW-06 prospective worktree admission and bounded rollback
-Next action: Model the candidate worktree registration against the canonical integrity model before any mutation in `commandStart`, refuse over-capacity starts with a bounded reason, add proof-gated rollback for an owned partial failure, and extend the C-00 adversarial matrix with NW-06 cases at 0, 7 and 8 worktrees.
+Last validated implementation SHA: 2ebb598c7bc13adf0d92b5422e0f844c3442b750
+Last checkpoint: M1 / NW-06 CLOSED and validated at the recorded implementation SHA; M2 (NW-01) is the active milestone
+Current milestone: M2 — NW-01 closed reasoner-facing vocabularies
+Next action: Probe the live NW-01 evidence, then close the reasoner-facing protocol vocabularies in `src/core/agentProtocol/validate.ts`, `src/core/agentProtocol/tools.ts` and `src/core/autonomousFinding/dossier.ts` against prototype inheritance and coercion using own-key membership and exhaustive dispatch, proving valid persisted protocol inputs still load.
 Authorization class: REPOSITORY_HARDENING_IMPLEMENTATION_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 0ac7b3d037b5059f670eca715fc30adaf58e7334
-LAST_VALIDATED_IMPLEMENTATION_SHA: 62d23e2622ab0a282584c5cf27d92b6b603f9192
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 62d23e2622ab0a282584c5cf27d92b6b603f9192
+LAST_VALIDATED_IMPLEMENTATION_SHA: 2ebb598c7bc13adf0d92b5422e0f844c3442b750
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 2ebb598c7bc13adf0d92b5422e0f844c3442b750
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PHASE_REPOSITORY_HARDENING_IMPLEMENTATION_V1_STATUS: IN_PROGRESS
