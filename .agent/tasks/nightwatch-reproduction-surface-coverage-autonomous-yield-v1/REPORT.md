@@ -153,6 +153,14 @@ rather than activity volume.
    suite. Repaired with a narrow host-fixed allowlist that keeps the real
    invariant intact — `NODE_OPTIONS` is still never inherited from the parent,
    and an arbitrary key is still rejected. Regression test asserts both halves.
+3. **Live campaign-boundary defect, caught by Run C.** Capability-aware memory
+   worked within an investigation, but `CampaignAccumulators` carried
+   `knownTargets` and dropped `reproductionSurface` between investigations.
+   Run C therefore ended with 32 known targets and zero persisted capability
+   entries despite 31 source actions. The campaign accumulator now retains a
+   bounded newest-wins capability map, omits the field when empty for old
+   checkpoint byte compatibility, and has a two-case regression. Run D
+   preserved all 32 entries across five investigations.
 
 ### Live campaign — Run B, broad owner-local HOUR_1 (M9.2)
 
@@ -195,9 +203,78 @@ capability-aware memory lane, which integrated later. The reasoner therefore
 saw a diverse index without any readiness signal or capability directive in
 its working memory. Run C exists to measure the full stack.
 
-### Certification (M11)
+### Live campaign — Run C, full capability-aware broad HOUR_1 (M9.2)
 
-Certified head `ed4e32602170e7e181b6e4841677fa8bff39d4ea`.
+Campaign `w10-capability-omen-2`, `opencode-go/omen-alpha`, ordinary broad
+owner-local path after the M3 memory lane integrated.
+
+| Metric | Result |
+|---|---:|
+| wall time (ms) | 3,702,379 |
+| investigations started / completed | 6 / 6 |
+| reasoner calls | 63 |
+| logged actions / charged tool actions | 71 / 39 |
+| provider failures / retries | 7 / 8 |
+| inspected targets | 21 across all 8 approved repositories |
+| candidates / admissions | 2 / 0 |
+| reproductions | 0 |
+| refusals | 2 `MISSING_REPRODUCTION` |
+| charged input / provider output / tool payload bytes | 841,348 / 32,431 / 896,477 |
+| outer termination | `BUDGET_EXHAUSTED` (wall) |
+
+Run C did not issue a reproduction attempt. It is preserved as a miss, not
+reported as a lower refusal rate. It also exposed the cross-investigation
+capability-carry defect described above: campaign strategy v2 was active, but
+the terminal checkpoint contained zero `reproductionSurface` entries.
+
+### Live campaign — Run D, robustness repeat after carry repair (M9.3)
+
+Campaign `w10-repeat-omen-3`, `opencode-go/omen-alpha`, fresh id and ordinary
+broad owner-local path. No second subscribed provider was available without
+changing authority, so the primary provider/model was repeated as permitted.
+
+| Metric | Result |
+|---|---:|
+| wall time (ms) | 3,696,810 |
+| investigations started / completed | 5 / 5 |
+| reasoner calls | 57 |
+| logged actions / charged tool actions | 70 / 38 |
+| provider failures / retries | 8 / 8 |
+| inspected targets | 22 across all 8 approved repositories |
+| persisted capability surface | 32 entries: 5 executable, 27 not executable |
+| candidates / admissions | 1 / 0 |
+| reproductions | 0 |
+| refusals | 1 `MISSING_REPRODUCTION` |
+| charged input / provider output / tool payload bytes | 802,203 / 28,652 / 944,890 |
+| outer termination | `BUDGET_EXHAUSTED` (wall) |
+
+This is the live proof of the carry repair: the terminal campaign checkpoint
+retains the complete bounded surface across investigations. The provider still
+chose zero reproduction attempts. That negative result is why M9.1 uses the
+census-derived host-owned executable-rich scope rather than calling Run D a
+yield success.
+
+### Host-owned reproduction-rich scope (M9.1 preflight)
+
+The campaign engine already accepted a host-built investigation context, but
+the operator CLI always constructed the full-universe zero-option context.
+`--repository=<approved-org/repo>` now forwards one host-owned repository id to
+the existing owner-approved configuration boundary on both run and resume.
+An unapproved value fails with exit 2 before the reasoner starts. There is no
+path, command, argv or model-controlled scope input.
+
+The M0 census selects `mobingilabs/ouchan`: it is the only approved repository
+with executable targets. Live preflight through the production provider gives
+32/32 `EXECUTABLE_NOW` entries across 18 distinct packages, versus 5/32 across
+5 packages in the broad window. Campaign `w10-rich-omen-4` is the required
+HOUR_1 Run A; its terminal result will be recorded without cherry-picking.
+
+### Pre-carry certification checkpoint (not final M11 evidence)
+
+Checkpoint `ed4e32602170e7e181b6e4841677fa8bff39d4ea` passed the following
+before the live-discovered campaign carry repair and operator scope seam.
+Final M11 certification must therefore run again on the terminal W10
+implementation head.
 
 | Check | Result |
 |---|---|
