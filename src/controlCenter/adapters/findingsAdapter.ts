@@ -64,7 +64,7 @@ function safeDossier(dossier: BugDossier | BugDossierV2 | FindingsDossierMetadat
   });
 }
 
-export function projectFindings(input: FindingsAuthorityInput, requestedLimit?: unknown): ControlCenterFindingsDto {
+export function projectFindings(input: FindingsAuthorityInput, requestedLimit?: unknown, cursor?: unknown): ControlCenterFindingsDto {
   if (input.available === false) {
     return {
       schemaVersion: CONTROL_CENTER_FINDINGS_SCHEMA_VERSION,
@@ -77,7 +77,7 @@ export function projectFindings(input: FindingsAuthorityInput, requestedLimit?: 
     .map(safeDossier)
     .filter((row): row is ControlCenterFindingSummaryDto => row !== null)
     .sort((left, right) => left.findingId.localeCompare(right.findingId));
-  const collection = boundedCollection(rows, requestedLimit);
+  const collection = boundedCollection(rows, requestedLimit, cursor);
   return {
     schemaVersion: CONTROL_CENTER_FINDINGS_SCHEMA_VERSION,
     state: input.state ?? (rows.length === 0 ? 'EMPTY' : 'AVAILABLE'),

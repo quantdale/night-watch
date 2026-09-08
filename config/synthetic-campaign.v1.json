@@ -84,6 +84,9 @@
     "tests/unit/nw12SseBackpressure.test.ts",
     "tests/unit/controlCenterServer.test.ts",
     "tests/unit/nw09ShippedReviewCapability.test.ts",
-    "tests/unit/reviewerPersistence.test.ts"
+    "tests/unit/reviewerPersistence.test.ts",
+    "tests/unit/nw10PaginationContinuation.test.ts",
+    "tests/unit/reviewerProjection.test.ts",
+    "tests/unit/controlCenterAdapters.test.ts"
   ]
 }

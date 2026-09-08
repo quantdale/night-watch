@@ -347,7 +347,7 @@ export function createControlCenterServices(options: DefaultControlCenterCollect
     safety: () => projectSafety(DEFAULT_CONTROL_CENTER_SAFETY_INPUT),
     runs: async (query) => {
       const snapshot = await readRunSnapshot();
-      return projectRunList(snapshot.records, query.limit, { state: snapshot.state, reasonCodes: snapshot.reasonCodes });
+      return projectRunList(snapshot.records, query.limit, { state: snapshot.state, reasonCodes: snapshot.reasonCodes }, query.cursor);
     },
     run: async (runId): Promise<ControlCenterRunDetailDto | null> => {
       const record = (await readRunSnapshot()).records.find((candidate) => candidate.summary.runId === runId);
@@ -374,7 +374,7 @@ export function createControlCenterServices(options: DefaultControlCenterCollect
     campaignCoverage: async (query) => {
       const { campaign } = await readAuthoritySnapshot();
       return campaign.plan !== null && campaign.coverage !== null && campaign.state === 'AVAILABLE'
-        ? projectCampaignCoverage({ plan: campaign.plan, coverage: campaign.coverage, findingCount: campaign.findingCount, blockerCodes: campaign.blockerCodes, sourceCurrentnessByMemberId: campaign.sourceCurrentnessByMemberId }, query.limit)
+        ? projectCampaignCoverage({ plan: campaign.plan, coverage: campaign.coverage, findingCount: campaign.findingCount, blockerCodes: campaign.blockerCodes, sourceCurrentnessByMemberId: campaign.sourceCurrentnessByMemberId }, query.limit, query.cursor)
         : unavailableCampaignCoverage(query);
     },
     sourceSummary: async () => {
@@ -386,7 +386,7 @@ export function createControlCenterServices(options: DefaultControlCenterCollect
     },
     sourceSurfaces: async (query) => {
       const { source } = await readAuthoritySnapshot();
-      return projectSourceSurfaces(source.discovery?.surfaces ?? [], query.repositoryId === null ? undefined : query.repositoryId, query.limit);
+      return projectSourceSurfaces(source.discovery?.surfaces ?? [], query.repositoryId === null ? undefined : query.repositoryId, query.limit, query.cursor);
     },
     sourceGraph: async (surfaceId, depth): Promise<ControlCenterSourceGraphDto | null> => {
       const { source } = await readAuthoritySnapshot();
@@ -412,11 +412,11 @@ export function createControlCenterServices(options: DefaultControlCenterCollect
         dossiers: findings.dossiers,
         state: findings.state,
         available: findings.state !== 'UNAVAILABLE',
-      }, query.limit);
+      }, query.limit, query.cursor);
     },
     reviewer: async (query) => {
       const { findings, campaign } = await readAuthoritySnapshot();
-      if (findings.state === 'UNAVAILABLE') return projectReviewer({ findings: [], available: false }, query.limit);
+      if (findings.state === 'UNAVAILABLE') return projectReviewer({ findings: [], available: false }, query.limit, query.cursor);
       // The limit is passed to the AUTHORITY, not only to the projection:
       // that is what keeps a 10,000-finding corpus from computing whole-corpus
       // intelligence to render one bounded page (M4/M5).
@@ -425,6 +425,11 @@ export function createControlCenterServices(options: DefaultControlCenterCollect
           dossiers: findings.dossiers,
           campaignId: campaign.generation,
           limit: query.limit,
+          // NW-10. The CURSOR goes to the authority for the same reason the
+          // limit does: the authority chooses the page, so a cursor that
+          // reached only the projection would have had nothing left to
+          // select from.
+          cursor: query.cursor,
           // Page-bounded by construction: the authority invokes this only for
           // the rows it selected, so a 10,000-finding corpus costs one store
           // listing per finding rendered, not one per finding held.
@@ -435,7 +440,8 @@ export function createControlCenterServices(options: DefaultControlCenterCollect
                 reviewIdentityFor: (dossier) => reviewAuthority.identityFor(dossier, { campaignId: campaign.generation }),
               }),
         }),
-        query.limit
+        query.limit,
+        query.cursor
       );
     },
   };

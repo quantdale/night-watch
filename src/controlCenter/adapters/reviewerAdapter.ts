@@ -59,7 +59,8 @@ import {
   type ControlCenterReviewerElementDto,
   type ControlCenterReviewerFindingDto,
 } from '../contracts/reviewer';
-import { boundedCollection, boundedCount, safePublicId } from './common';
+import { boundedCollection,
+  boundedCursorOffset, boundedCount, safePublicId } from './common';
 
 /**
  * The same sentinel vocabulary the FC-1 filing report screens. Two screens
@@ -196,6 +197,14 @@ export interface ReviewerProjectionInput {
    * page-scoping removes.
    */
   readonly total?: number;
+  /**
+   * NW-10. When the caller already selected the page, the offset it selected
+   * at. Its presence means `findings` IS the page: the projection must not
+   * slice again — doing so would page twice and skip records — and the
+   * continuation cursor is measured from here instead of from the page
+   * length.
+   */
+  readonly pageOffset?: number;
 }
 
 function projectRelationship(
@@ -442,7 +451,7 @@ function projectFinding(input: ReviewerFindingInput, index: number): ControlCent
   };
 }
 
-export function projectReviewer(input: ReviewerProjectionInput, requestedLimit?: unknown): ControlCenterReviewerDto {
+export function projectReviewer(input: ReviewerProjectionInput, requestedLimit?: unknown, cursor?: unknown): ControlCenterReviewerDto {
   if (!isRecord(input)) fail('input');
   if (input.available === false) {
     return {
@@ -459,12 +468,24 @@ export function projectReviewer(input: ReviewerProjectionInput, requestedLimit?:
   const rows = input.findings
     .map((finding, index) => projectFinding(finding, index))
     .sort((left, right) => left.findingId.localeCompare(right.findingId));
-  const collection = boundedCollection(rows, requestedLimit);
+  // NW-10. A caller that already paged hands us THE page, so slicing again
+  // here would page twice. `pageOffset` is how we tell the two cases apart.
+  const preSelected = typeof input.pageOffset === 'number' && Number.isSafeInteger(input.pageOffset) && input.pageOffset >= 0;
+  const collection = preSelected
+    ? boundedCollection(rows, requestedLimit)
+    : boundedCollection(rows, requestedLimit, cursor);
+  // How far into the corpus this page reaches. Both the truncation claim and
+  // the fallback cursor must be expressed against THIS, not against the page
+  // length: `items.length` equals the consumed count only on the first page,
+  // so a fallback built from it re-emitted the same cursor on page two and
+  // paged forever in place.
+  const consumed = (preSelected ? (input.pageOffset as number) : boundedCursorOffset(cursor, rows.length))
+    + collection.items.length;
   const total = input.total ?? rows.length;
   // Truncation is a claim about the corpus, not about the array that arrived.
-  const truncated = collection.page.truncated || total > collection.items.length;
+  const truncated = collection.page.truncated || total > consumed;
   const nextCursor = truncated
-    ? (collection.page.nextCursor ?? asSafeControlCenterCursor(String(collection.items.length)))
+    ? (collection.page.nextCursor ?? asSafeControlCenterCursor(String(consumed)))
     : null;
   return {
     schemaVersion: CONTROL_CENTER_REVIEWER_SCHEMA_VERSION,

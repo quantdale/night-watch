@@ -35,7 +35,7 @@ import {
 } from '../../core/findingIntel';
 import type { FindingsDossierMetadata } from './findingsAuthority';
 import type { ReviewerFindingInput, ReviewerLocalReviewInput, ReviewerProjectionInput } from '../adapters/reviewerAdapter';
-import { safePublicId } from '../adapters/common';
+import { boundedCursorOffset, safePublicId } from '../adapters/common';
 
 /** Pinned duplicates of ALPHAUS_SEVERITY_VALUES / _CATCH_STAGE_ / _SOURCE_. */
 const ALPHAUS_SEVERITY_LITERALS = ['blocker', 'critical', 'major', 'minor'] as const;
@@ -70,6 +70,13 @@ const ID_RE = /^[A-Za-z0-9_.:/-]{1,160}$/;
 
 export interface ReviewerAuthorityInput {
   readonly dossiers: readonly FindingsDossierMetadata[];
+  /**
+   * NW-10. Offset of the requested page, as the opaque cursor the previous
+   * DTO emitted. Without it this function always selected the FIRST `limit`
+   * rows, so the reviewer surface could never serve a second page however
+   * faithfully the client passed the cursor back.
+   */
+  readonly cursor?: unknown;
   /** Campaign identity for recurrence chronology; UNKNOWN_HISTORY without it. */
   readonly campaignId: string | null;
   /**
@@ -226,7 +233,8 @@ export function reviewerInputsFromFindings(input: ReviewerAuthorityInput): Revie
   const ordering = entries
     .map((entry, index) => ({ index, id: safePublicId(entry.descriptor.findingId, 'cc-reviewer') as string }))
     .sort((left, right) => left.id.localeCompare(right.id));
-  const selected = new Set(ordering.slice(0, limit).map((row) => row.index));
+  const pageOffset = boundedCursorOffset(input.cursor, ordering.length);
+  const selected = new Set(ordering.slice(pageOffset, pageOffset + limit).map((row) => row.index));
 
   const history: IntelHistoryEntry[] = [];
   const findings = entries.flatMap((entry, index) => {
@@ -248,7 +256,7 @@ export function reviewerInputsFromFindings(input: ReviewerAuthorityInput): Revie
     }
     return [projectEntry(entry, index)];
   });
-  return { findings, total: entries.length };
+  return { findings, total: entries.length, pageOffset };
 
   function projectEntry(entry: { dossier: FindingsDossierMetadata; descriptor: IntelFindingDescriptor; at: number | null }, index: number): ReviewerFindingInput {
     const { best, duplicates } = pairwise

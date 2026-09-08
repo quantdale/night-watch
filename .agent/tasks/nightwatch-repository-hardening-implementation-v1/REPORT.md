@@ -641,6 +641,71 @@ now additionally reads back and reports that nothing was recorded.
 | measured against the defect | 5 of 6 launcher cases and 5 UI cases fail pre-repair; the sixth launcher case is the flag-refusal control |
 | UI lane green | UI 24 passed, UI typecheck PASS, UI build PASS (3 files, 292,622 bytes, no external references) |
 
+### NW-10 — implement bounded end-to-end dashboard pagination
+
+**The review's diagnosis was incomplete, and following it as written would
+have made the surface worse.** The finding said the server accepts a cursor
+and only the UI ignores it. Measurement showed nothing consumed the cursor at
+all: `boundedCollection` always sliced from index 0, and the default collector
+dropped `query.cursor` after the server had validated it. Paging was cosmetic
+end to end — every list DTO advertised a continuation that no layer could
+honour.
+
+So adding client cursor state alone would have produced a "load more" that
+re-appended the first page forever, and identity deduplication would have
+turned that into a button that visibly did nothing. The repair had to start at
+the bottom.
+
+**Repair, layer by layer.**
+
+| Layer | Defect | Repair |
+| --- | --- | --- |
+| `adapters/common.ts` | always sliced `[0, limit)`; emitted a cursor it could not consume | `boundedCursorOffset` + slice `[offset, offset+limit)`; `truncated` now means "more remain AFTER this page"; past-the-end clamps to an empty final page; malformed falls back to page one |
+| five list adapters | no cursor parameter | accept and forward it |
+| `defaultCollector` | dropped `query.cursor` | passes it to every list projection |
+| `reviewerAdapter` | corpus-aware `nextCursor` fallback built from the PAGE length, which equals the consumed count only on page one | measured from how far into the corpus the page reaches, so page two advances instead of re-emitting its own cursor |
+| `reviewerAuthority` | selects the page with `ordering.slice(0, limit)`, so a cursor reaching only the projection had nothing left to select from | takes the cursor, returns the `pageOffset` it used |
+| `reviewerAdapter` again | would then slice a pre-selected page a second time and skip records | `pageOffset` tells the two cases apart |
+| `api.ts` | loaders requested only a limit | each takes an opaque cursor, screened against the shape the server accepts |
+| `App.tsx` | no continuation state | one `usePagedCollection` hook for all five bounded views |
+
+Deduplication is by stable identity, not position, because the cursor is an
+offset into a snapshot: if the list shifts between pages an item can
+legitimately arrive twice, and rendering it twice would be a visible untruth.
+A changed generation resets rather than mixes, since splicing two snapshots
+into one table is the failure that guard exists for. A failed CONTINUATION
+keeps the loaded pages and says so; only a failed FIRST page is a view-level
+error.
+
+**Regression.** Seven server cases in
+`tests/unit/nw10PaginationContinuation.test.ts`: the slice-and-report
+contract; paging a 23-item corpus at limit 5 to exhaustion in exactly 5 pages
+reaching every record once; a cursor past the end; nine malformed cursors; the
+reviewer projection advancing; the same over real HTTP with a 12-record corpus
+asserting 12 distinct records across more than one request; and a traversal
+cursor refused by the server before it reaches an adapter. Every paging loop
+carries a hard iteration bound, so a non-terminating continuation fails as a
+test rather than hanging.
+
+Four UI cases: a record beyond the first page becomes reachable and earlier
+pages are kept; an overlapping page yields 3 loaded records rather than 4; a
+failed continuation keeps what was loaded and reports it without turning the
+view into an error; and a single-page list offers no continuation control at
+all rather than an inert button.
+
+**Acceptance.**
+
+| Criterion | Evidence |
+| --- | --- |
+| the UI reaches a record beyond each first-page boundary | the reviewer case reaches page two; the shared hook wires runs, findings, reviewer, coverage and surfaces through the same path |
+| ordering and deduplication are deterministic | exhaustion case: 23 records, 5 pages, every record exactly once; overlap case: 3 loaded, not 4 |
+| generation changes cannot mix snapshots | the hook clears the accumulator when an observed generation differs mid-paging |
+| controls are keyboard-operable with visible state | the control is a `button` reached by role in every case, and states loaded count, end, and continuation failure |
+| server caps preserved | limits still bounded by `boundedPageLimit`; the malformed-cursor case asserts the server refuses before an adapter sees it |
+| requests stay bounded | the HTTP case asserts fewer than 12 requests for a 12-record corpus and terminates on a null cursor |
+| measured against the defect | 6 of 7 server cases and all 4 UI cases fail against the pre-repair code |
+| no regression | 101 passed across the paging-adjacent server suites; UI 28 passed; UI typecheck and build PASS |
+
 ## Validation receipts
 
 Recorded per milestone as they are produced. No receipt is copied from a

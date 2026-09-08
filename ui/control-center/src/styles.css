@@ -1451,6 +1451,19 @@ tbody tr.row-selected {
   resize: vertical;
 }
 
+/* NW-10. The continuation control for a bounded list. */
+.load-more {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.75rem;
+}
+
+.load-more small {
+  opacity: 0.8;
+}
+
 .review-actions {
   display: flex;
   flex-wrap: wrap;

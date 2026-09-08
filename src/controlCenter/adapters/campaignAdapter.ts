@@ -99,12 +99,12 @@ function coverageRow(row: CampaignCoverageReport['rows'][number], input: Campaig
   };
 }
 
-export function projectCampaignCoverage(input: CampaignAuthorityInput, requestedLimit?: unknown): ControlCenterCampaignCoverageDto {
+export function projectCampaignCoverage(input: CampaignAuthorityInput, requestedLimit?: unknown, cursor?: unknown): ControlCenterCampaignCoverageDto {
   const rows = input.coverage.rows
     .map((row) => coverageRow(row, input))
     .filter((row): row is ControlCenterCampaignCoverageRowDto => row !== null)
     .sort((left, right) => `${left.contractId}:${left.memberId}`.localeCompare(`${right.contractId}:${right.memberId}`));
-  const collection = boundedCollection(rows, requestedLimit);
+  const collection = boundedCollection(rows, requestedLimit, cursor);
   return {
     schemaVersion: CONTROL_CENTER_CAMPAIGN_COVERAGE_SCHEMA_VERSION,
     ...collection,

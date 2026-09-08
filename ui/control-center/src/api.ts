@@ -209,9 +209,23 @@ function safePathId(value: string): string | null {
   return /^[A-Za-z0-9:_~.-]{1,96}$/.test(value) ? value : null;
 }
 
-export function loadRuns(limit = 20): Promise<RunListSnapshot> {
+/**
+ * NW-10. Serialise an opaque continuation cursor.
+ *
+ * The cursor is the server's own token echoed back verbatim, screened against
+ * the same shape the server accepts so a tampered or malformed value is
+ * dropped here rather than producing a rejected request. An omitted cursor
+ * means the first page, which is what every loader did unconditionally
+ * before.
+ */
+function cursorParam(cursor: string | null): string {
+  if (cursor === null || !/^[A-Za-z0-9._~-]{1,128}$/.test(cursor)) return '';
+  return `&cursor=${encodeURIComponent(cursor)}`;
+}
+
+export function loadRuns(limit = 20, cursor: string | null = null): Promise<RunListSnapshot> {
   const boundedLimit = Number.isInteger(limit) && limit > 0 && limit <= 50 ? limit : 20;
-  return fetchSnapshot<RunListSnapshot>(`/api/v1/runs?limit=${boundedLimit}`);
+  return fetchSnapshot<RunListSnapshot>(`/api/v1/runs?limit=${boundedLimit}${cursorParam(cursor)}`);
 }
 
 export function loadRunDetail(runId: string): Promise<RunDetailSnapshot> {
@@ -237,14 +251,14 @@ export function loadCampaignSummary(): Promise<CampaignSummarySnapshot> {
   return fetchSnapshot<CampaignSummarySnapshot>(CONTROL_CENTER_API_PATHS.campaignSummary);
 }
 
-export function loadCampaignCoverage(limit = 50): Promise<CampaignCoverageSnapshot> {
+export function loadCampaignCoverage(limit = 50, cursor: string | null = null): Promise<CampaignCoverageSnapshot> {
   const boundedLimit = Number.isInteger(limit) && limit > 0 && limit <= 50 ? limit : 50;
-  return fetchSnapshot<CampaignCoverageSnapshot>(`${CONTROL_CENTER_API_PATHS.campaignCoverage}?limit=${boundedLimit}`);
+  return fetchSnapshot<CampaignCoverageSnapshot>(`${CONTROL_CENTER_API_PATHS.campaignCoverage}?limit=${boundedLimit}${cursorParam(cursor)}`);
 }
 
-export function loadSourceSurfaces(limit = 50): Promise<SourceSurfacesSnapshot> {
+export function loadSourceSurfaces(limit = 50, cursor: string | null = null): Promise<SourceSurfacesSnapshot> {
   const boundedLimit = Number.isInteger(limit) && limit > 0 && limit <= 50 ? limit : 50;
-  return fetchSnapshot<SourceSurfacesSnapshot>(`${CONTROL_CENTER_API_PATHS.sourceSurfaces}?limit=${boundedLimit}`);
+  return fetchSnapshot<SourceSurfacesSnapshot>(`${CONTROL_CENTER_API_PATHS.sourceSurfaces}?limit=${boundedLimit}${cursorParam(cursor)}`);
 }
 
 export function loadSourceGraph(surfaceId: string | null, depth = 2): Promise<SourceGraphSnapshot> {
@@ -258,14 +272,14 @@ export function loadSourceGraph(surfaceId: string | null, depth = 2): Promise<So
   return fetchSnapshot<SourceGraphSnapshot>(`${CONTROL_CENTER_API_PATHS.sourceGraph}?${params.toString()}`);
 }
 
-export function loadReviewer(limit = 50): Promise<ReviewerSnapshot> {
+export function loadReviewer(limit = 50, cursor: string | null = null): Promise<ReviewerSnapshot> {
   const boundedLimit = Number.isInteger(limit) && limit > 0 && limit <= 50 ? limit : 50;
-  return fetchSnapshot<ReviewerSnapshot>(`${CONTROL_CENTER_API_PATHS.reviewer}?limit=${boundedLimit}`);
+  return fetchSnapshot<ReviewerSnapshot>(`${CONTROL_CENTER_API_PATHS.reviewer}?limit=${boundedLimit}${cursorParam(cursor)}`);
 }
 
-export function loadFindings(limit = 50): Promise<FindingsSnapshot> {
+export function loadFindings(limit = 50, cursor: string | null = null): Promise<FindingsSnapshot> {
   const boundedLimit = Number.isInteger(limit) && limit > 0 && limit <= 50 ? limit : 50;
-  return fetchSnapshot<FindingsSnapshot>(`${CONTROL_CENTER_API_PATHS.findings}?limit=${boundedLimit}`);
+  return fetchSnapshot<FindingsSnapshot>(`${CONTROL_CENTER_API_PATHS.findings}?limit=${boundedLimit}${cursorParam(cursor)}`);
 }
 
 const CONTROL_CENTER_NOTIFICATION_TYPES = ['readiness.changed', 'safety.changed', 'run.updated', 'run.completed', 'campaign.snapshot.changed', 'source.snapshot.changed', 'findings.snapshot.changed'] as const;

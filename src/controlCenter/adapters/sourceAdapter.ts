@@ -248,14 +248,14 @@ function sourceCompletenessDto(
 }
 
 /** Project source descriptors without exposing source paths, symbols, or text. */
-export function projectSourceSurfaces(descriptors: readonly RealSourceSurfaceDescriptor[], repositoryFilter?: unknown, requestedLimit?: unknown): ControlCenterSourceSurfacesDto {
+export function projectSourceSurfaces(descriptors: readonly RealSourceSurfaceDescriptor[], repositoryFilter?: unknown, requestedLimit?: unknown, cursor?: unknown): ControlCenterSourceSurfacesDto {
   const filter = typeof repositoryFilter === 'string' ? repositoryFilter : null;
   const rows = descriptors
     .filter((descriptor) => filter === null || descriptor.source.repoId === filter)
     .map(surfaceDto)
     .filter((surface): surface is ControlCenterSourceSurfaceDto => surface !== null)
     .sort((left, right) => left.surfaceId.localeCompare(right.surfaceId));
-  const collection = boundedCollection(rows, requestedLimit);
+  const collection = boundedCollection(rows, requestedLimit, cursor);
   return {
     schemaVersion: CONTROL_CENTER_SOURCE_SURFACES_SCHEMA_VERSION,
     ...collection,

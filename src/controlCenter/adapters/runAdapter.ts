@@ -189,11 +189,12 @@ export function projectRunList(
   inputs: readonly RunAuthorityInput[],
   requestedLimit?: unknown,
   authority?: { readonly state?: ControlCenterRunCollectionState; readonly reasonCodes?: readonly string[] },
+  cursor?: unknown,
 ): ControlCenterRunListDto {
   const rows = inputs
     .map(runItem)
     .sort((left, right) => left.runId.localeCompare(right.runId));
-  const collection = boundedCollection(rows, requestedLimit);
+  const collection = boundedCollection(rows, requestedLimit, cursor);
   return {
     schemaVersion: CONTROL_CENTER_RUN_LIST_SCHEMA_VERSION,
     ...collection,

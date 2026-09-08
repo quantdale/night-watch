@@ -494,7 +494,7 @@ Priority meanings: P0 is demonstrated catastrophic failure requiring immediate c
 
 ### NW-10 — Implement bounded end-to-end dashboard pagination
 
-- **Priority / category / confidence / status:** P2; completeness and usability; CONFIRMED source behavior; NOT STARTED.
+- **Priority / category / confidence / status:** P2; completeness and usability; CONFIRMED source behavior; **CLOSED** — repaired and regression-proven under `nightwatch-repository-hardening-implementation-v1` M9.
 - **Affected surfaces:** `ui/control-center/src/api.ts`, `App.tsx` views/state, server pagination contracts and browser tests.
 - **Evidence:** server endpoints accept cursor or `afterSeq` and DTOs expose continuations, but UI loaders request only limits and do not consume cursors. Records beyond the first 20 runs, 50 findings/reviewer/source/coverage entries, or first 100 timeline entries are unreachable.
 - **Problem, impact, root cause:** bounded server APIs were added without client continuation state, making larger valid local datasets incomplete to the operator.
@@ -503,6 +503,51 @@ Priority meanings: P0 is demonstrated catastrophic failure requiring immediate c
 - **Tests and validation:** multi-page fixtures for every cursor endpoint and timeline sequence; empty/duplicate/stale cursor, generation change, page error/retry, navigation reset, keyboard focus, and small viewport. Assert requests/cached items remain bounded.
 - **Acceptance:** the UI reaches a record beyond each first-page boundary; ordering/deduplication is deterministic; generation changes cannot mix snapshots; controls are keyboard-operable with visible state.
 - **Dependencies / risks / parallelization:** freeze server DTO/capability contracts after NW-09. One UI writer should own API and App changes. Risk is large accumulated DOM; cap retained pages or virtualize only if measurement requires it.
+
+- **Resolution evidence (2026-09-09):** the review's diagnosis was
+  incomplete, and acting on it as written would have made the surface worse.
+  The finding said the server accepts a cursor and only the UI loaders ignore
+  it. Measurement showed **nothing** consumed the cursor:
+  `boundedCollection` always sliced from index 0, and the default collector
+  dropped `query.cursor` entirely. The server validated the query parameter
+  and then discarded it. So paging was cosmetic end to end — passing the
+  cursor back returned page one — and adding client cursor state alone would
+  have produced a "load more" that re-appended the first page forever, which
+  identity deduplication would have rendered as a button that did nothing.
+  The repair therefore starts at the bottom. `boundedCollection` now takes a
+  cursor, slices `[offset, offset+limit)`, and reports `truncated` as "more
+  remain AFTER this page", which is what a continuation needs; a cursor past
+  the end yields an empty final page rather than restarting, and a malformed
+  one falls back to the first page as defence in depth behind the server's own
+  `CONTROL_CENTER_PATH_REJECTED`. All five list adapters accept and forward
+  it, and the default collector passes `query.cursor` through.
+  Two further defects surfaced while wiring it. The reviewer adapter's
+  corpus-aware `nextCursor` fallback was built from the PAGE length, which
+  equals the consumed count only on page one — so it re-emitted the same
+  cursor on page two and paged forever in place; it is now measured from how
+  far into the corpus the page reaches. And the reviewer AUTHORITY selects the
+  page (`ordering.slice(0, limit)`), so a cursor that reached only the
+  projection had nothing left to select from: the authority now takes the
+  cursor and returns the `pageOffset` it used, and the projection refuses to
+  slice a second time when handed a pre-selected page.
+  Client side: every loader takes an opaque cursor screened against the shape
+  the server accepts, and one `usePagedCollection` hook owns accumulation,
+  deduplication by stable identity, generation-change reset, and explicit
+  end/error states for all five bounded views — runs, findings, reviewer,
+  campaign coverage and source surfaces. Deduplication is by identity rather
+  than position because the cursor is a snapshot offset: a shifted list can
+  legitimately resend an item, and rendering it twice would be a visible
+  untruth. A failed CONTINUATION keeps the loaded pages and says so; only a
+  failed FIRST page is a view-level error.
+  Seven server cases in `tests/unit/nw10PaginationContinuation.test.ts` page a
+  corpus to exhaustion through the pure adapters and then over real HTTP,
+  asserting every record is reached exactly once and that paging terminates; 6
+  of the 7 fail against the pre-repair stack. Four UI cases prove a record
+  beyond the first page becomes reachable, an overlapping page is deduplicated
+  to 3 records rather than 4, a failed continuation keeps what was loaded, and
+  a single-page list offers no continuation control at all; all 4 fail against
+  the pre-repair UI. No regression: 101 passed across the paging-adjacent
+  server suites, UI 28 passed, UI typecheck and build PASS.
 
 ### NW-11 — Validate and cancel dashboard requests and coalesce refreshes
 

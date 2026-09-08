@@ -1,8 +1,163 @@
-import { Component, useCallback, useEffect, useState, type ErrorInfo, type KeyboardEvent, type ReactNode } from 'react';
+import { Component, useCallback, useEffect, useRef, useState, type ErrorInfo, type KeyboardEvent, type ReactNode } from 'react';
 import { apiErrorLabel, loadCampaignCoverage, loadCampaignSummary, loadExecutionGraph, loadFindings, loadOverview, loadReviewer, loadRunDetail, loadRuns, loadSourceGraph, loadSourceSurfaces, loadSystemMapLevel, loadSystemMapQuery, loadTimeline, subscribeToControlCenterEvents, readBackReviewDecision,
   submitReviewDecision, REVIEW_DECISIONS, type ReviewDecision } from './api';
 import type { CampaignCoverageSnapshot, CampaignSummarySnapshot, DataLoadState, EpistemicClass, ExecutionGraphSnapshot, FindingsSnapshot, OverviewLoadState, OverviewSnapshot, ReviewerElement, ReviewerFindingSnapshot, ReviewerSnapshot, RunDetailSnapshot, RunListSnapshot, SourceGraphSnapshot, SourceSurfaceSnapshot, SourceSurfacesSnapshot, SystemMapBound, SystemMapLevelSegment, SystemMapNodeView, SystemMapQuerySegment, SystemMapSnapshot, TimelineSnapshot, ViewId } from './types';
 import { SYSTEM_MAP_QUERY_SEGMENTS, VIEW_DEFINITIONS } from './types';
+
+/**
+ * NW-10. One paged collection, for every bounded list view.
+ *
+ * Every list DTO exposes `page.nextCursor`, and every loader used to request
+ * only a limit — so records past the first 20 runs, 50
+ * findings/reviewer/coverage/surface entries were unreachable from the UI
+ * however much data the operator had locally.
+ *
+ * The accumulated items replace `snapshot.items`, so the existing views
+ * render the whole loaded set without changing how they read it, and only a
+ * continuation control is added.
+ *
+ * Deduplication is by stable identity, not by position: the cursor is an
+ * offset into a snapshot, so if the underlying list shifts between pages an
+ * item can legitimately arrive twice, and rendering it twice would be a
+ * visible untruth. A changed generation resets rather than mixes — mixing two
+ * snapshots into one table is the failure this guards.
+ */
+interface PagedCollection<S> {
+  readonly state: DataLoadState<S>;
+  readonly loadMore: () => void;
+  readonly loadingMore: boolean;
+  readonly pageError: boolean;
+  readonly atEnd: boolean;
+  readonly pagesLoaded: number;
+}
+
+interface PagedSnapshot<T> {
+  readonly items: readonly T[];
+  readonly page: { readonly nextCursor: string | null };
+}
+
+function usePagedCollection<S extends PagedSnapshot<T>, T>(options: {
+  readonly active: boolean;
+  readonly refreshKey: number;
+  readonly load: (cursor: string | null) => Promise<S>;
+  readonly identity: (item: T) => string;
+  /** A snapshot generation, where the DTO carries one. A change resets paging. */
+  readonly generation?: (snapshot: S) => string | null;
+}): PagedCollection<S> {
+  const { active, refreshKey, load, identity, generation } = options;
+  const [state, setState] = useState<DataLoadState<S>>({ kind: 'idle' });
+  const [cursor, setCursor] = useState<string | null>(null);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [pageError, setPageError] = useState(false);
+  const [pagesLoaded, setPagesLoaded] = useState(0);
+  const accumulated = useRef<T[]>([]);
+  const seen = useRef<Set<string>>(new Set<string>());
+  const generationSeen = useRef<string | null>(null);
+  const nextCursor = useRef<string | null>(null);
+
+  // A view change or a refresh starts over. Keeping the old pages would show
+  // a stale first page above a fresh second one.
+  useEffect(() => {
+    accumulated.current = [];
+    seen.current = new Set<string>();
+    generationSeen.current = null;
+    nextCursor.current = null;
+    setPagesLoaded(0);
+    setPageError(false);
+    setCursor(null);
+  }, [active, refreshKey]);
+
+  useEffect(() => {
+    if (!active) return;
+    let cancelled = false;
+    if (cursor === null) setState({ kind: 'loading' });
+    else setLoadingMore(true);
+    load(cursor)
+      .then((snapshot) => {
+        if (cancelled) return;
+        const observed = generation === undefined ? null : generation(snapshot);
+        if (cursor !== null && generationSeen.current !== null && observed !== generationSeen.current) {
+          // The snapshot moved under us. Positional cursors are only
+          // meaningful within one snapshot, so start the list over rather
+          // than splicing two of them together.
+          accumulated.current = [];
+          seen.current = new Set<string>();
+        }
+        generationSeen.current = observed;
+        for (const item of snapshot.items) {
+          const id = identity(item);
+          if (seen.current.has(id)) continue;
+          seen.current.add(id);
+          accumulated.current.push(item);
+        }
+        nextCursor.current = snapshot.page.nextCursor;
+        setPagesLoaded((value) => value + 1);
+        setPageError(false);
+        setState({ kind: 'ready', data: { ...snapshot, items: [...accumulated.current] } });
+      })
+      .catch((error: unknown) => {
+        if (cancelled) return;
+        void apiErrorLabel(error);
+        // A failed CONTINUATION keeps what was already loaded and reports the
+        // failure; only a failed FIRST page is a view-level error.
+        if (cursor === null) setState({ kind: 'error' });
+        else setPageError(true);
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingMore(false);
+      });
+    return () => { cancelled = true; };
+  }, [active, refreshKey, cursor, load, identity, generation]);
+
+  const loadMore = useCallback((): void => {
+    const candidate = nextCursor.current;
+    if (candidate === null) return;
+    setCursor(candidate);
+  }, []);
+
+  return {
+    state,
+    loadMore,
+    loadingMore,
+    pageError,
+    atEnd: state.kind === 'ready' && state.data.page.nextCursor === null,
+    pagesLoaded,
+  };
+}
+
+/**
+ * The continuation control. It states which of the three situations the list
+ * is in — more to load, everything loaded, or a failed continuation — rather
+ * than leaving an operator to infer it from a button that does nothing.
+ */
+function LoadMoreControl({
+  label,
+  loaded,
+  paged,
+}: {
+  readonly label: string;
+  readonly loaded: number;
+  readonly paged: PagedCollection<PagedSnapshot<unknown>>;
+}): ReactNode {
+  if (paged.state.kind !== 'ready') return null;
+  return (
+    <div className="load-more">
+      <small>{loaded} {label} loaded</small>
+      {paged.atEnd ? (
+        <small>All loaded.</small>
+      ) : (
+        <button type="button" className="table-action" disabled={paged.loadingMore} onClick={paged.loadMore}>
+          {paged.loadingMore ? 'Loading…' : `Load more ${label}`}
+        </button>
+      )}
+      {paged.pageError ? (
+        <small className="review-outcome-warn" role="status">
+          The next page could not be loaded. Everything above is still what the server returned.
+        </small>
+      ) : null}
+    </div>
+  );
+}
 
 interface ErrorBoundaryProps {
   readonly children: ReactNode;
@@ -1045,17 +1200,48 @@ function DashboardApp(): ReactNode {
   const [refreshKey, setRefreshKey] = useState(0);
   const [loadState, setLoadState] = useState<OverviewLoadState>({ kind: 'loading' });
   const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
-  const [runState, setRunState] = useState<DataLoadState<RunListSnapshot>>({ kind: 'idle' });
+  // NW-10. Paged, so the operator can reach past the first page of each list.
+  const runsPaged = usePagedCollection<RunListSnapshot, RunListSnapshot['items'][number]>({
+    active: activeView === 'runs',
+    refreshKey,
+    load: useCallback((cursor: string | null) => loadRuns(20, cursor), []),
+    identity: useCallback((item: RunListSnapshot['items'][number]) => item.runId, []),
+  });
+  const runState = runsPaged.state;
   const [detailState, setDetailState] = useState<DataLoadState<RunDetailSnapshot>>({ kind: 'idle' });
   const [timelineState, setTimelineState] = useState<DataLoadState<TimelineSnapshot>>({ kind: 'idle' });
   const [graphState, setGraphState] = useState<DataLoadState<ExecutionGraphSnapshot>>({ kind: 'idle' });
   const [campaignSummaryState, setCampaignSummaryState] = useState<DataLoadState<CampaignSummarySnapshot>>({ kind: 'idle' });
-  const [campaignCoverageState, setCampaignCoverageState] = useState<DataLoadState<CampaignCoverageSnapshot>>({ kind: 'idle' });
+  const coveragePaged = usePagedCollection<CampaignCoverageSnapshot, CampaignCoverageSnapshot['items'][number]>({
+    active: activeView === 'campaigns',
+    refreshKey,
+    load: useCallback((cursor: string | null) => loadCampaignCoverage(50, cursor), []),
+    identity: useCallback((item: CampaignCoverageSnapshot['items'][number]) => item.memberId, []),
+  });
+  const campaignCoverageState = coveragePaged.state;
   const [selectedSurfaceId, setSelectedSurfaceId] = useState<string | null>(null);
-  const [sourceSurfaceState, setSourceSurfaceState] = useState<DataLoadState<SourceSurfacesSnapshot>>({ kind: 'idle' });
+  const surfacesPaged = usePagedCollection<SourceSurfacesSnapshot, SourceSurfaceSnapshot>({
+    active: activeView === 'source-intelligence',
+    refreshKey,
+    load: useCallback((cursor: string | null) => loadSourceSurfaces(50, cursor), []),
+    identity: useCallback((item: SourceSurfaceSnapshot) => item.surfaceId, []),
+  });
+  const sourceSurfaceState = surfacesPaged.state;
   const [sourceGraphState, setSourceGraphState] = useState<DataLoadState<SourceGraphSnapshot>>({ kind: 'idle' });
-  const [findingsState, setFindingsState] = useState<DataLoadState<FindingsSnapshot>>({ kind: 'idle' });
-  const [reviewerState, setReviewerState] = useState<DataLoadState<ReviewerSnapshot>>({ kind: 'idle' });
+  const findingsPaged = usePagedCollection<FindingsSnapshot, FindingsSnapshot['items'][number]>({
+    active: activeView === 'findings',
+    refreshKey,
+    load: useCallback((cursor: string | null) => loadFindings(50, cursor), []),
+    identity: useCallback((item: FindingsSnapshot['items'][number]) => item.findingId, []),
+  });
+  const findingsState = findingsPaged.state;
+  const reviewerPaged = usePagedCollection<ReviewerSnapshot, ReviewerFindingSnapshot>({
+    active: activeView === 'reviewer',
+    refreshKey,
+    load: useCallback((cursor: string | null) => loadReviewer(50, cursor), []),
+    identity: useCallback((item: ReviewerFindingSnapshot) => item.findingId, []),
+  });
+  const reviewerState = reviewerPaged.state;
   const refresh = useCallback((): void => setRefreshKey((value) => value + 1), []);
 
   useEffect(() => {
@@ -1081,36 +1267,6 @@ function DashboardApp(): ReactNode {
   }, [refreshKey]);
 
   useEffect(() => subscribeToControlCenterEvents(() => setRefreshKey((value) => value + 1)), []);
-
-  useEffect(() => {
-    if (activeView !== 'runs') return;
-    let cancelled = false;
-    setRunState({ kind: 'loading' });
-    loadRuns().then((data) => {
-      if (!cancelled) setRunState({ kind: 'ready', data });
-    }).catch((error: unknown) => {
-      if (!cancelled) {
-        void apiErrorLabel(error);
-        setRunState({ kind: 'error' });
-      }
-    });
-    return () => { cancelled = true; };
-  }, [activeView, refreshKey]);
-
-  useEffect(() => {
-    if (activeView !== 'source-intelligence') return;
-    let cancelled = false;
-    setSourceSurfaceState({ kind: 'loading' });
-    loadSourceSurfaces().then((data) => {
-      if (!cancelled) setSourceSurfaceState({ kind: 'ready', data });
-    }).catch((error: unknown) => {
-      if (!cancelled) {
-        void apiErrorLabel(error);
-        setSourceSurfaceState({ kind: 'error' });
-      }
-    });
-    return () => { cancelled = true; };
-  }, [activeView, refreshKey]);
 
   useEffect(() => {
     if (activeView !== 'source-intelligence' || selectedSurfaceId === null) return;
@@ -1151,47 +1307,12 @@ function DashboardApp(): ReactNode {
     if (activeView !== 'campaigns') return;
     let cancelled = false;
     setCampaignSummaryState({ kind: 'loading' });
-    setCampaignCoverageState({ kind: 'loading' });
-    Promise.all([loadCampaignSummary(), loadCampaignCoverage()]).then(([summary, coverage]) => {
-      if (!cancelled) {
-        setCampaignSummaryState({ kind: 'ready', data: summary });
-        setCampaignCoverageState({ kind: 'ready', data: coverage });
-      }
+    loadCampaignSummary().then((summary) => {
+      if (!cancelled) setCampaignSummaryState({ kind: 'ready', data: summary });
     }).catch((error: unknown) => {
       if (!cancelled) {
         void apiErrorLabel(error);
         setCampaignSummaryState({ kind: 'error' });
-        setCampaignCoverageState({ kind: 'error' });
-      }
-    });
-    return () => { cancelled = true; };
-  }, [activeView, refreshKey]);
-
-  useEffect(() => {
-    if (activeView !== 'findings') return;
-    let cancelled = false;
-    setFindingsState({ kind: 'loading' });
-    loadFindings().then((data) => {
-      if (!cancelled) setFindingsState({ kind: 'ready', data });
-    }).catch((error: unknown) => {
-      if (!cancelled) {
-        void apiErrorLabel(error);
-        setFindingsState({ kind: 'error' });
-      }
-    });
-    return () => { cancelled = true; };
-  }, [activeView, refreshKey]);
-
-  useEffect(() => {
-    if (activeView !== 'reviewer') return;
-    let cancelled = false;
-    setReviewerState({ kind: 'loading' });
-    loadReviewer().then((data) => {
-      if (!cancelled) setReviewerState({ kind: 'ready', data });
-    }).catch((error: unknown) => {
-      if (!cancelled) {
-        void apiErrorLabel(error);
-        setReviewerState({ kind: 'error' });
       }
     });
     return () => { cancelled = true; };
@@ -1222,21 +1343,39 @@ function DashboardApp(): ReactNode {
   const selectSurface = useCallback((surfaceId: string): void => setSelectedSurfaceId(surfaceId), []);
 
   const renderDataView = (): ReactNode => {
-    if (activeView === 'runs') return <RunsView state={runState} selectedRunId={selectedRunId} detailState={detailState} timelineState={timelineState} onSelectRun={selectRun} onRetry={retryRunData} />;
+    // NW-10. The continuation control is rendered at the view boundary, so
+    // each bounded list gains a way past its first page without the dense
+    // view components changing how they read `items`.
+    if (activeView === 'runs') return <>
+      <RunsView state={runState} selectedRunId={selectedRunId} detailState={detailState} timelineState={timelineState} onSelectRun={selectRun} onRetry={retryRunData} />
+      <LoadMoreControl label="runs" loaded={runState.kind === 'ready' ? runState.data.items.length : 0} paged={runsPaged} />
+    </>;
     if (activeView === 'execution-graph') return <ExecutionGraphView selectedRunId={selectedRunId} state={graphState} onRetry={retryRunData} />;
-    if (activeView === 'campaigns') return <CampaignView summaryState={campaignSummaryState} coverageState={campaignCoverageState} onRetry={retryRunData} />;
-    if (activeView === 'findings') return <FindingsView state={findingsState} onRetry={retryRunData} />;
+    if (activeView === 'campaigns') return <>
+      <CampaignView summaryState={campaignSummaryState} coverageState={campaignCoverageState} onRetry={retryRunData} />
+      <LoadMoreControl label="coverage rows" loaded={campaignCoverageState.kind === 'ready' ? campaignCoverageState.data.items.length : 0} paged={coveragePaged} />
+    </>;
+    if (activeView === 'findings') return <>
+      <FindingsView state={findingsState} onRetry={retryRunData} />
+      <LoadMoreControl label="findings" loaded={findingsState.kind === 'ready' ? findingsState.data.items.length : 0} paged={findingsPaged} />
+    </>;
     if (activeView === 'reviewer') {
       // Fails closed while the overview is still loading or errored, and when
       // an older server omits the field entirely.
       const capability = loadState.kind === 'ready' ? loadState.data.meta.localReviewDecision ?? 'DISABLED' : 'UNKNOWN';
-      return <ReviewerView state={reviewerState} capability={capability} onRetry={retryRunData} />;
+      return <>
+        <ReviewerView state={reviewerState} capability={capability} onRetry={retryRunData} />
+        <LoadMoreControl label="reviewer findings" loaded={reviewerState.kind === 'ready' ? reviewerState.data.items.length : 0} paged={reviewerPaged} />
+      </>;
     }
     if (activeView === 'system-map') return <SystemMapView refreshKey={refreshKey} />;
     if (activeView === 'source-intelligence') {
       if (loadState.kind === 'loading') return <LoadingState />;
       if (loadState.kind === 'error') return <ErrorState onRetry={refresh} />;
-      return <SourceView summary={loadState.data.source} surfaceState={sourceSurfaceState} graphState={sourceGraphState} selectedSurfaceId={selectedSurfaceId} onSelectSurface={selectSurface} onRetry={retryRunData} />;
+      return <>
+        <SourceView summary={loadState.data.source} surfaceState={sourceSurfaceState} graphState={sourceGraphState} selectedSurfaceId={selectedSurfaceId} onSelectSurface={selectSurface} onRetry={retryRunData} />
+        <LoadMoreControl label="source surfaces" loaded={sourceSurfaceState.kind === 'ready' ? sourceSurfaceState.data.items.length : 0} paged={surfacesPaged} />
+      </>;
     }
     if (loadState.kind === 'loading') return <LoadingState />;
     if (loadState.kind === 'error') return <ErrorState onRetry={refresh} />;

@@ -881,4 +881,115 @@ describe('Control Center UI shell', () => {
     // Absence of findings is never presented as absence of defects.
     expect(screen.getByText(/This is not a claim that no defects exist/)).toBeInTheDocument();
   });
+
+  /**
+   * NW-10. Every list DTO advertised `page.nextCursor` and every loader
+   * requested only a limit, so records past the first page were unreachable
+   * from the UI. These cases page the reviewer list, which is the one with a
+   * decision surface attached and therefore the one where an unreachable
+   * record matters most.
+   */
+  describe('bounded pagination', () => {
+    const pageOf = (ids: readonly string[], nextCursor: string | null) => ({
+      schemaVersion: 'nightwatch.control-center.reviewer.v1',
+      state: 'AVAILABLE',
+      items: ids.map((id) => reviewerItem({ findingId: id, reviewIdentity: `identity-${id}` })),
+      page: { limit: 50, nextCursor, truncated: nextCursor !== null },
+      finalVerdictAuthority: 'HUMAN_ORGANIZATIONAL',
+      organizationalAuthority: 'NONE_LOCAL_REVIEW_ONLY',
+    });
+
+    function pagedFetch(pages: Record<string, unknown>, onRequest?: (url: string) => void) {
+      return vi.fn((input: RequestInfo | URL) => {
+        const url = String(input);
+        onRequest?.(url);
+        if (url.startsWith('/api/v1/reviewer?')) {
+          const supplied = pages[url];
+          if (supplied === undefined) return Promise.reject(new Error(`unexpected reviewer request ${url}`));
+          return Promise.resolve(responseFor(supplied));
+        }
+        return Promise.resolve(responseFor(reviewerResponses(reviewerItem())[url]));
+      });
+    }
+
+    it('reaches a record beyond the first page', async () => {
+      const user = userEvent.setup();
+      const requested: string[] = [];
+      vi.stubGlobal('fetch', pagedFetch({
+        '/api/v1/reviewer?limit=50': pageOf(['finding-a', 'finding-b'], '2'),
+        '/api/v1/reviewer?limit=50&cursor=2': pageOf(['finding-c'], null),
+      }, (url) => { if (url.startsWith('/api/v1/reviewer?')) requested.push(url); }));
+      await openReviewer(user);
+
+      // A finding id renders in both the reviewer table and the
+       // recommendations table, so reachability is asserted with getAllByText
+       // and the loaded COUNT is the unambiguous witness.
+      expect(screen.getAllByText('finding-a').length).toBeGreaterThan(0);
+      // Unreachable before the repair.
+      expect(screen.queryAllByText('finding-c')).toHaveLength(0);
+      expect(screen.getByText('2 reviewer findings loaded')).toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: 'Load more reviewer findings' }));
+      await waitFor(() => expect(screen.getAllByText('finding-c').length).toBeGreaterThan(0));
+      // Earlier pages are kept, not replaced.
+      expect(screen.getAllByText('finding-a').length).toBeGreaterThan(0);
+      expect(screen.getByText('3 reviewer findings loaded')).toBeInTheDocument();
+      // The end is stated, and the control is gone rather than inert.
+      expect(screen.getByText('All loaded.')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Load more reviewer findings' })).not.toBeInTheDocument();
+      expect(requested).toEqual(['/api/v1/reviewer?limit=50', '/api/v1/reviewer?limit=50&cursor=2']);
+    });
+
+    it('deduplicates by identity when a page overlaps', async () => {
+      const user = userEvent.setup();
+      vi.stubGlobal('fetch', pagedFetch({
+        '/api/v1/reviewer?limit=50': pageOf(['finding-a', 'finding-b'], '2'),
+        // The corpus shifted between pages, so an item repeats. A positional
+        // cursor makes this legitimate; rendering it twice would not be.
+        '/api/v1/reviewer?limit=50&cursor=2': pageOf(['finding-b', 'finding-c'], null),
+      }));
+      await openReviewer(user);
+      await user.click(screen.getByRole('button', { name: 'Load more reviewer findings' }));
+
+      await waitFor(() => expect(screen.getAllByText('finding-c').length).toBeGreaterThan(0));
+      // Three distinct records from two pages of two: the repeat was dropped.
+      // Four would mean the overlap rendered twice.
+      expect(screen.getByText('3 reviewer findings loaded')).toBeInTheDocument();
+      expect(screen.queryByText('4 reviewer findings loaded')).not.toBeInTheDocument();
+    });
+
+    it('keeps the loaded pages when a continuation fails, and says so', async () => {
+      const user = userEvent.setup();
+      vi.stubGlobal('fetch', vi.fn((input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url === '/api/v1/reviewer?limit=50') {
+          return Promise.resolve(responseFor(pageOf(['finding-a', 'finding-b'], '2')));
+        }
+        if (url.startsWith('/api/v1/reviewer?limit=50&cursor=')) {
+          return Promise.reject(new Error('socket hang up'));
+        }
+        return Promise.resolve(responseFor(reviewerResponses(reviewerItem())[url]));
+      }));
+      await openReviewer(user);
+      await user.click(screen.getByRole('button', { name: 'Load more reviewer findings' }));
+
+      await waitFor(() => expect(screen.getByText(/The next page could not be loaded/)).toBeInTheDocument());
+      // A failed continuation is not a failed view: what was loaded stays.
+      expect(screen.getAllByText('finding-a').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('finding-b').length).toBeGreaterThan(0);
+      expect(screen.getByText('2 reviewer findings loaded')).toBeInTheDocument();
+      expect(screen.queryByText('Reviewer intelligence unavailable')).not.toBeInTheDocument();
+    });
+
+    it('offers no continuation when the first page is the whole list', async () => {
+      const user = userEvent.setup();
+      vi.stubGlobal('fetch', pagedFetch({
+        '/api/v1/reviewer?limit=50': pageOf(['finding-a'], null),
+      }));
+      await openReviewer(user);
+
+      expect(screen.getByText('All loaded.')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Load more reviewer findings' })).not.toBeInTheDocument();
+    });
+  });
 });

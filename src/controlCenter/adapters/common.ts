@@ -41,13 +41,52 @@ export function sortedUniqueStrings(values: readonly string[]): readonly string[
   return [...new Set(values)].sort((left, right) => left.localeCompare(right));
 }
 
-export function boundedCollection<T>(items: readonly T[], requestedLimit: unknown = undefined): ControlCenterCollection<T> {
+/**
+ * NW-10. The cursor is an OFFSET into the current snapshot, encoded as
+ * decimal digits.
+ *
+ * It was previously emitted and never consumed: `boundedCollection` always
+ * sliced from index 0, so every list DTO advertised a `nextCursor` that no
+ * layer could honour. The server validated the query parameter and the
+ * default collector dropped it, so passing the cursor back returned page one
+ * again. Adding client cursor state without this would have produced a "load
+ * more" that re-appended the first page forever.
+ *
+ * A malformed cursor becomes offset 0 as defence in depth — the server
+ * already rejects one with `CONTROL_CENTER_PATH_REJECTED` before it reaches
+ * here. A cursor past the end clamps to the end, which yields an empty final
+ * page rather than silently restarting at the beginning.
+ *
+ * Because the offset is positional, it is only meaningful within one
+ * snapshot. A caller that pages across a snapshot change must reset rather
+ * than continue, and the DTO's own generation/digest fields are what tell it
+ * to; deduplication by stable identity keeps a shifted page from
+ * double-rendering an item in the meantime.
+ */
+export function boundedCursorOffset(cursor: unknown, total: number): number {
+  const text = typeof cursor === 'string' ? cursor : null;
+  if (text === null || !/^\d{1,7}$/.test(text)) return 0;
+  const parsed = Number(text);
+  if (!Number.isSafeInteger(parsed) || parsed < 0) return 0;
+  return Math.min(parsed, Math.max(total, 0));
+}
+
+export function boundedCollection<T>(
+  items: readonly T[],
+  requestedLimit: unknown = undefined,
+  cursor: unknown = undefined,
+): ControlCenterCollection<T> {
   const limit = boundedPageLimit(requestedLimit) ?? 50;
   const sortedItems = [...items];
-  const visible = sortedItems.slice(0, limit);
-  const truncated = sortedItems.length > visible.length;
+  const offset = boundedCursorOffset(cursor, sortedItems.length);
+  const visible = sortedItems.slice(offset, offset + limit);
+  const consumed = offset + visible.length;
+  // `truncated` means "more remain AFTER this page", which is what a
+  // continuation needs. On the first page that is the same claim it made
+  // before.
+  const truncated = sortedItems.length > consumed;
   const nextCursor: SafeControlCenterCursor | null = truncated
-    ? (asSafeControlCenterCursor(String(visible.length)) ?? null)
+    ? (asSafeControlCenterCursor(String(consumed)) ?? null)
     : null;
   return {
     items: visible,

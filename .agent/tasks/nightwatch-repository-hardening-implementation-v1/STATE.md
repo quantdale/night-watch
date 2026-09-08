@@ -13,7 +13,7 @@ Last validated implementation SHA: 54c7ed58b2482595da379830bb4a002a3076165f
 Last substantive checkpoint SHA: 54c7ed58b2482595da379830bb4a002a3076165f
 Live HEAD authority: GIT
 Branch: session/nightwatch-repository-hardening--e7b9be89
-Last checkpoint: M9 / NW-09 complete and validated — the shipped launcher now has a documented review opt-in, and the capability the server reports is the same expression that creates the route
+Last checkpoint: M9 / NW-10 complete and validated — the continuation cursor is consumed at every layer that had been discarding it, and all five bounded views can now be paged to exhaustion
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 0ac7b3d037b5059f670eca715fc30adaf58e7334
@@ -36,10 +36,9 @@ is consumed, not re-executed.
 
 Milestone ID: M9
 Milestone status: IN_PROGRESS
-What is being attempted: NW-10 — bounded end-to-end dashboard pagination on
-the now-frozen capability and pagination DTOs: per-view cursor state with
-identity deduplication, generation binding, and explicit end/error/retry
-states, so records beyond each first page are reachable.
+What is being attempted: NW-11 — exact per-endpoint DTO validation, composed
+navigation abort with a finite deadline, and bounded SSE-invalidation
+coalescing consistent with the M8 server policy.
 
 ## Completed Milestones
 
@@ -148,6 +147,22 @@ states, so records beyond each first page are reachable.
   sixth is the flag-refusal control) and 4 new UI cases (5 UI cases fail
   pre-repair including one updated existing case). UI 24 passed, UI
   typecheck/build PASS, server suites 68 passed.
+- **M9 / NW-10 COMPLETE** — the review's diagnosis was incomplete and acting
+  on it as written would have made the surface worse: NOTHING consumed the
+  cursor. `boundedCollection` always sliced from index 0 and the default
+  collector dropped `query.cursor`, so paging was cosmetic end to end and
+  client cursor state alone would have re-appended page one forever. The
+  repair starts at the bottom — `boundedCollection` slices from the cursor and
+  reports what remains after the page; all five list adapters forward it; the
+  collector passes it through. Two further defects surfaced: the reviewer
+  adapter's cursor fallback was built from the page length so it re-emitted
+  the same cursor on page two, and the reviewer AUTHORITY selects the page, so
+  it needed the cursor too and now returns the `pageOffset` it used while the
+  projection refuses to slice a pre-selected page twice. Client side, one
+  `usePagedCollection` hook owns accumulation, identity deduplication,
+  generation reset and explicit end/error states for all five bounded views.
+  7 server cases (6 fail pre-repair) and 4 UI cases (all 4 fail pre-repair);
+  101 passed across paging-adjacent server suites, UI 28 passed.
 
 ## Work In Progress
 
@@ -168,14 +183,31 @@ owner must hold the overlapping UI API and App surfaces.
 | NW-05 | M7 | CLOSED — repaired, 11 regressions, 4 proven failing pre-repair |
 | NW-12 | M8 | CLOSED — repaired, 11 regressions, quantified 38,216 bytes to 228 |
 | NW-09 | M9 | CLOSED — repaired, 6 launcher + 4 UI regressions, 5 of each proven failing pre-repair |
-| NW-10 | M9 | IN PROGRESS |
-| NW-11 | M9 | NOT STARTED |
+| NW-10 | M9 | CLOSED — repaired at every layer, 7 server + 4 UI regressions, 6 and 4 proven failing pre-repair |
+| NW-11 | M9 | IN PROGRESS |
 | NW-08 | M10 | PARTIAL — ten suites registered, two duplicate additions reverted; live denominator 218/336 files measured |
 | NW-14 | M11 | NOT STARTED |
 | NW-07 | M12 | NOT STARTED |
 | NW-15 | — | CLOSED BY W10 OWNER — consumed, out of scope |
 
 ## Exact Next Action
+
+1. Probe the live NW-11 evidence: confirm that `fetchSnapshot` checks only a
+   schema-version PREFIX and then casts to `T`, that fetches carry no signal
+   or deadline, and that each SSE event increments a shared refresh key with
+   no burst coalescing.
+2. Add exact per-endpoint runtime validators over the owned required fields
+   and the exact schema version, so a forward-compatible added field is still
+   accepted while a wrong shape never reaches render logic.
+3. Compose navigation abort with a finite deadline so an obsolete or hung
+   request is actually aborted rather than merely ignored, and dispose timers
+   and listeners.
+4. Coalesce SSE invalidations by generation/view over a bounded window with
+   at most one in-flight refresh plus one dirty follow-up, consistent with the
+   M8 server-side policy, and assert a documented bounded request count for
+   1, 100 and 1000-event bursts.
+
+## Superseded next action (M9 / NW-10, complete)
 
 1. Probe the live NW-10 evidence: confirm that the server endpoints already
    expose `page.nextCursor` while `ui/control-center/src/api.ts` loaders
