@@ -1,6 +1,6 @@
 # Nightwatch Master Implementation, Completion and Hardening Plan
 
-Status: EXECUTION IN PROGRESS under `nightwatch-repository-hardening-implementation-v1` — canonical implementation plan. NW-15 closed by the W10 owner; NW-06 CLOSED; NW-01 through NW-05 and NW-07 through NW-14 open.
+Status: **EXECUTION COMPLETE** under `nightwatch-repository-hardening-implementation-v1` — canonical implementation plan. All fifteen findings are closed: NW-15 by the W10 owner, NW-01 through NW-14 by this campaign. One evidence lane inside NW-14 — the online dependency-advisory scan — is recorded UNAVAILABLE with its own evidence requirement, because this campaign's safety boundary prohibits network dependency fetching. An absent scan is never a passing scan.
 
 Review baseline: `1942ea37757bbb914de6281f505ee6118b5c67f0` (2026-09-08). Reconciled source baseline: `ed4e32602170e7e181b6e4841677fa8bff39d4ea`. These are historical anchors, not live Git authority. Discover current `HEAD` and `origin/main` before execution. This plan authorizes no implementation, environment contact, external publication, or change to the owner scope freeze.
 
