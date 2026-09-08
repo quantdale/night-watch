@@ -298,6 +298,17 @@ session worktree awaiting an owner release. `npm run handoff:check` PASS,
 receipt campaign `nightwatch-repository-hardening-implementation-v1`,
 planned-from `0ac7b3d`. `npm run workspace:check` PASS.
 
+**M6 confirming shard sweep at the NW-04 head** — the full suite in four
+foreground shards, each reconciled against its own collection:
+
+| Shard | Collected | Passed | Skipped | Failed |
+|---|---:|---:|---:|---:|
+| 1/4 | 1190 | 1190 | 0 | 0 |
+| 2/4 | 1221 | 1220 | 1 | 0 |
+| 3/4 | 1135 | 1123 | 12 | 0 |
+| 4/4 | 1180 | 1175 | 5 | 0 |
+| total | **4726** | **4708** | **18** | **0** |
+
 M6: `tests/unit/nw04CheckpointDurability.test.ts` — 13 passed. With
 `localCampaign.ts` reverted to the pre-repair loader, the consumer-level case
 FAILED: an 8 MB+ checkpoint was read and decoded whole and threw
