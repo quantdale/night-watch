@@ -27,9 +27,9 @@ Measure and materially expand safe current-source reproduction coverage across t
 
 ## Current Milestone
 
-Milestone ID: M9.1
+Milestone ID: M11
 Milestone status: IN_PROGRESS
-What is being attempted: `w10-rich-omen-4` is running for HOUR_1 against the census-derived, host-owned `mobingilabs/ouchan` scope; its 32-entry preflight surface is 32/32 executable across 18 distinct package targets.
+What is being attempted: full regression and certification of the final W10 implementation head after the review-driven repairs and the terminal live campaign series.
 
 ## Completed Milestones
 
@@ -49,6 +49,8 @@ What is being attempted: `w10-rich-omen-4` is running for HOUR_1 against the cen
 - **M8 COMPLETE** — the unchanged W9 real proof passes, and a second distinct real package executes twice through the generic provider with sibling identity unchanged and no temp residue. Repository diversity is unavailable because the census proves only `mobingilabs/ouchan` has executable approved targets.
 - **M9.2 COMPLETE** — full-stack broad campaign `w10-capability-omen-2`: 3,702,379 ms, 6/6 investigations, 63 calls, 71 actions, 7 provider failures, 21 inspected targets across all 8 repositories, 5 reproduction attempts with 5 host executions and 0 `NOT_AVAILABLE`, 2 candidates, 0 admissions, 2 correct `MISSING_REPRODUCTION` refusals.
 - **M9.3 COMPLETE** — robustness campaign `w10-repeat-omen-3` after the carry repair: 3,696,810 ms, 5/5 investigations, 57 calls, 70 logged actions, 8 provider failures, 22 inspected targets across all 8 repositories, 5 attempts with 5 host executions and 0 `NOT_AVAILABLE`, 1 candidate, 0 admissions, 1 correct `MISSING_REPRODUCTION` refusal. Its checkpoint retains all 32 capability entries: 5 `EXECUTABLE_NOW`, 27 `NOT_EXECUTABLE`.
+- **M9.1 COMPLETE** — census-scoped reproduction-rich campaign `w10-rich-omen-4` through the new host-owned `--repository=mobingilabs/ouchan` scope: 3,648,130 ms, 5/5 investigations, 60 calls, 69 logged actions, 5 provider failures, 22 inspected targets, a 32/32 `EXECUTABLE_NOW` window over 18 distinct targets, 6 reproduction attempts with 6 host executions across 6 distinct packages, 0 `NOT_AVAILABLE`, 1 candidate, 0 admissions, 1 correct `MISSING_REPRODUCTION` refusal.
+- **Independent review repairs COMPLETE** — a read-only reviewer found eight issues on the integrated head; all were repaired with permanent tests: dead current-failure evidence now reaches the reasoner on qualifying results, campaign capability is seeded into fresh investigations and restored on resume, live yield is derived mechanically instead of by hand, operator repository scope persists and fails closed on resume, repeated-unsupported attempts are keyed by target rather than refusal class, index selection preserves entries beyond the probe ceiling, and the surface readiness tuple is fully enforced.
 
 ## Work In Progress
 
@@ -79,6 +81,7 @@ from each campaign's own action log:
 |---|---:|---:|---:|---:|
 | W9 `w9-endurance-omen-1` | 7 | 0 | 7 | 1.0000 |
 | Run B `w10-broad-omen-1` | 6 | 4 | 2 | 0.3333 |
+| Run A `w10-rich-omen-4` | 6 | 6 | 0 | 0.0000 |
 | Run C `w10-capability-omen-2` | 5 | 5 | 0 | 0.0000 |
 | Run D `w10-repeat-omen-3` | 5 | 5 | 0 | 0.0000 |
 
@@ -120,8 +123,7 @@ Root cause of W9's 7/7 `NOT_AVAILABLE`, established mechanically:
 `EXECUTABLE_NOW` entry anywhere at index 83. The reasoner's visible universe
 therefore ends 51 entries before the first executable target in the approved
 universe, and the preserved `w9-endurance-omen-1` checkpoint confirms all 32
-observed paths were in that one repository. The W9 result was structurally
-guaranteed, not a reasoning-quality outcome.
+observed paths were in that one repository.
 
 Hypothesis verdicts: H1 DISPROVED as stated (coverage is not scarce);
 H2 CONFIRMED (`deriveExecutionReadiness` skips targets with
@@ -135,10 +137,14 @@ capability-aware selection and index diversity.
 
 ## Exact Next Action
 
-1. Let `w10-rich-omen-4` reach its honest HOUR_1 terminal result; preserve every miss, provider failure, reproduction attempt and refusal.
-2. Record Run A beside the already-preserved broad and robustness runs.
-3. Run the complete M11 focused, regression, real-source, local-gate and fresh Node 20 clean-gate certification on the final implementation head.
-4. Close W10 STATE/PLAN/REPORT and parent/project/OpenSpec truth without claiming a new Alphaus defect or parent-programme completion.
+1. Complete M11 certification on the final implementation head: focused W10 and
+   W7-W9 suites, `npm test`, typecheck, hardening, agent, handoff, project,
+   workspace, session, `gate:local`, fresh Node 20 `gate:clean`, and the three
+   opt-in real proofs.
+2. Close W10 STATE/PLAN/REPORT, parent programme truth, `.agent/ACTIVE_TASK.md`,
+   `.agent/EXECUTION_PROMPT.md`, `docs/CURRENT_STATE.md` and OpenSpec.
+3. Claim no previously unknown Alphaus defect, no strict EXACT, no DEV/NEXT
+   authority and no parent-programme completion.
 
 ## Files Changed
 

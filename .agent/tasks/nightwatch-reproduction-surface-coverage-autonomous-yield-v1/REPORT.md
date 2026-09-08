@@ -267,6 +267,38 @@ Run C's yield independently — five attempts, five host executions against
 `pkg/almcreds` and `pkg/almtemplate`, zero `NOT_AVAILABLE`, and an honest zero
 qualifying failures because those packages' tests pass.
 
+### Live campaign — Run A, census-scoped reproduction-rich HOUR_1 (M9.1)
+
+Campaign `w10-rich-omen-4`, `opencode-go/omen-alpha`, ordinary
+`campaign run --reasoner=cli --duration=1h --max-turns=12` with the new
+host-owned `--repository=mobingilabs/ouchan` scope selected by the M0 census.
+
+| Metric | Result |
+|---|---:|
+| wall time (ms) | 3,648,130 |
+| investigations started / completed | 5 / 5 |
+| reasoner calls | 60 |
+| logged actions / charged tool actions | 69 / 39 |
+| provider failures / retries | 5 / 5 |
+| inspected targets | 22, all in `mobingilabs/ouchan` |
+| persisted capability surface | 32 entries, 32 `EXECUTABLE_NOW`, 18 distinct targets |
+| reproduction attempts / executed | 6 / 6 |
+| `NOT_AVAILABLE` outcomes | 0 |
+| distinct executed packages | 6 |
+| qualifying current-source reproductions | 0 |
+| candidates / admissions | 1 / 0 |
+| refusals | 1 `MISSING_REPRODUCTION` |
+| charged input / provider output / tool payload bytes | 731,915 / 33,729 / 216,033 |
+| outer termination | `BUDGET_EXHAUSTED` (wall) |
+
+Executed packages: `pkg/almcreds`, `pkg/awscostmanagement`, `pkg/awsrialerts`,
+`pkg/azure/az/helpers`, `pkg/azure`, `pkg/azuredb`. Six attempts, six real
+contained `go test` executions, six different packages, zero wasted
+`NOT_AVAILABLE` turns — against W9's seven attempts, zero executions and seven
+wasted turns at the same HOUR_1 budget. No qualifying failure was found and no
+finding was admitted: those packages' pre-existing tests pass, and the one
+candidate was correctly refused for missing reproduction.
+
 ### Live yield across every preserved campaign
 
 Derived mechanically by `deriveCampaignYieldMetrics` from each campaign's own
@@ -278,13 +310,14 @@ action log. No run is omitted.
 | Run B `w10-broad-omen-1` | 6 | 4 | 2 | 0.3333 | 0.6667 | 3 | 0 |
 | Run C `w10-capability-omen-2` | 5 | 5 | 0 | 0.0000 | 1.0000 | 2 | 0 |
 | Run D `w10-repeat-omen-3` | 5 | 5 | 0 | 0.0000 | 1.0000 | 2 | 0 |
+| Run A `w10-rich-omen-4` | 6 | 6 | 0 | 0.0000 | 1.0000 | 6 | 0 |
 
 This is the W10 live result: deterministic `NOT_AVAILABLE` waste fell from 7 of
-7 to 0 of 5 on two independent full-stack campaigns, and the host executed real
-Go package tests in contained disposable state on every attempt of those runs.
-Zero qualifying current-source failures were found, and zero findings were
-admitted — the executed packages simply pass. Capability, not defect discovery,
-is what these runs prove.
+7 to 0 of 6 on the census-scoped run and 0 of 5 on two independent broad
+campaigns, and the host executed real Go package tests in contained disposable
+state on every attempt of those runs. Zero qualifying current-source failures
+were found and zero findings were admitted — the executed packages simply pass.
+Capability, not defect discovery, is what these runs prove.
 
 ### Host-owned reproduction-rich scope (M9.1 preflight)
 
