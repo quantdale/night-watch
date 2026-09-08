@@ -684,9 +684,9 @@ when its OWN evidence exists.
 
 | Field | Claims | Current value | Why |
 | --- | --- | --- | --- |
-| `LAST_SUBSTANTIVE_IMPLEMENTATION_SHA` | the last commit that changed implementation AND was validated | `bb28480` | W9 owner-local deterministic reproduction/yield: bounded current-source execution/proof/admission, host-owned finite retry, v2 transport/payload accounting and v1 resume migration; focused 295/0/3, full regression 4565/0/16, real current/historical proofs, local and clean gates PASS |
-| `LAST_LOCALLY_VALIDATED_SHA` | the last commit where the local quality gate passed | `bb28480` | `gate:local` FULL PASS, all eleven required groups, receipt `receipt:sha256:6fb76272f121ec1bed5b74bf` (SEMANTIC 2080/2067/13/0, OWNER 91/91, SYNTHETIC 1194/1194/0) |
-| `LAST_CLEAN_VALIDATED_SHA` | the last commit where the clean Node 20 gate passed | `bb28480` | `gate:clean` PASS, Node 20, clean before/after, no reused `node_modules`, sibling writes 0, inner receipt `receipt:sha256:a527001803924c238b1af2e9`, clean receipt `clean-receipt:sha256:d914db277a583699a1ff68c3` |
+| `LAST_SUBSTANTIVE_IMPLEMENTATION_SHA` | the last commit that changed implementation AND was validated | `62d23e2` | W10 reproduction-surface coverage and autonomous yield: pre-attempt capability projection, diverse capability-aware selection, cross-investigation capability carry with resume restoration, sanitized current-failure triage evidence, mechanical live yield metrics and a fail-closed host-owned `--repository` scope; full regression 4659/0/18, real current/generality/historical proofs, local and clean gates PASS |
+| `LAST_LOCALLY_VALIDATED_SHA` | the last commit where the local quality gate passed | `ec3eacf` | `gate:local` FULL PASS, all eleven required groups, receipt `receipt:sha256:e4214a74ab2f310837f0035f` (SEMANTIC 2080/2067/13/0, OWNER 91/91, SYNTHETIC 1196/1196/0) |
+| `LAST_CLEAN_VALIDATED_SHA` | the last commit where the clean Node 20 gate passed | `ec3eacf` | `gate:clean` PASS, Node 20, clean before/after, no reused `node_modules`, sibling writes 0, clean receipt `clean-receipt:sha256:123c540d48a426504d4a81d2` |
 | `CI_OBSERVED_SHA` | the commit whose CI result was observed | `27bfe44` | run `33864698218` (2026-09-04): zero steps under the external runner block (`runner_id = 0`), recorded as `NO_STEPS_EXTERNAL_NON_EVIDENCE`; a docs-descendant head covering the `4642c16` implementation |
 | `CI_EXECUTED_SHA` | the commit CI actually executed the gate at | `4e0bfc1` | same run; both `EXECUTED_PASS` and `EXECUTED_FAIL` require observed == executed, and this one is `EXECUTED_PASS` with receipt `receipt:sha256:f313d77bf52b8b06dbde2e5c` |
 
@@ -746,9 +746,9 @@ RELEASE_CERTIFICATION_PROTOCOL_VERSION: nightwatch.release-certification.v1
 PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
 RELEASE_CHECKPOINT_SHA: 2576c5751d33bb40046246e8fcf57c7cc5c30a57
 LIVE_HEAD_SHA: DISCOVER_FROM_GIT
-LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: bb28480c6a6969a06744c75c4c947851d5bece7c
-LAST_LOCALLY_VALIDATED_SHA: bb28480c6a6969a06744c75c4c947851d5bece7c
-LAST_CLEAN_VALIDATED_SHA: bb28480c6a6969a06744c75c4c947851d5bece7c
+LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: 62d23e2622ab0a282584c5cf27d92b6b603f9192
+LAST_LOCALLY_VALIDATED_SHA: ec3eacf61c1b5bd3557eaf90594aecb2cd633b4f
+LAST_CLEAN_VALIDATED_SHA: ec3eacf61c1b5bd3557eaf90594aecb2cd633b4f
 CI_OBSERVED_SHA: NONE
 CI_EXECUTED_SHA: NONE
 CI_STATUS: NOT_OBSERVED

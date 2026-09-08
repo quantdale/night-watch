@@ -6,26 +6,26 @@ Title: Autonomous Bug-Hunting Programme
 Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-autonomous-bug-hunting-programme-v1
 Starting SHA: d1ebde90c1454b31d6b93d9df503a4c5f196d7c8
-Last validated implementation SHA: bb28480c6a6969a06744c75c4c947851d5bece7c
-Last checkpoint: W9 owner-local deterministic reproduction/yield COMPLETE and certified; W10 reproduction-surface coverage/yield is now the active successor
-Current milestone: W10 — REPRODUCTION SURFACE COVERAGE & AUTONOMOUS YIELD
-Next action: Execute child `nightwatch-reproduction-surface-coverage-autonomous-yield-v1` from live Git truth. Begin with a full owner-approved reproduction-capability census, freeze W10 contracts, then use independent C-00 lanes for coverage map, safe executor expansion, failure evidence, yield benchmark and long-run resilience. After integration run multiple substantial live-provider campaigns and full certification. Do not reopen W0-W9.
+Last validated implementation SHA: 62d23e2622ab0a282584c5cf27d92b6b603f9192
+Last checkpoint: W10 reproduction-surface coverage and autonomous yield COMPLETE and certified; no implementation wave is active
+Current milestone: NONE — W0-W10 are frozen complete
+Next action: Hold at W10 and report the certified outcome to the owner. When the owner authorizes a successor wave (strict EXACT rediscovery, previously-unknown-defect yield, or DEV/NEXT work), open that wave's own task directory from live Git truth and record it here. Do not reopen W0-W10.
 Authorization class: AUTONOMOUS_BUG_HUNTING_PROGRAMME_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: d1ebde90c1454b31d6b93d9df503a4c5f196d7c8
-LAST_VALIDATED_IMPLEMENTATION_SHA: bb28480c6a6969a06744c75c4c947851d5bece7c
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: bb28480c6a6969a06744c75c4c947851d5bece7c
+LAST_VALIDATED_IMPLEMENTATION_SHA: 62d23e2622ab0a282584c5cf27d92b6b603f9192
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 62d23e2622ab0a282584c5cf27d92b6b603f9192
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PHASE_AUTONOMOUS_BUG_HUNTING_PROGRAMME_V1_STATUS: IN_PROGRESS
 
-## Active W10 child task
+## Terminal W10 child task
 
 Child task: `nightwatch-reproduction-surface-coverage-autonomous-yield-v1`
 Child directory: `.agent/tasks/nightwatch-reproduction-surface-coverage-autonomous-yield-v1`
 Wave: `W10_REPRODUCTION_SURFACE_COVERAGE_AUTONOMOUS_YIELD`
-Child status: IN_PROGRESS — specified from W9 terminal documentation head `0664c69cc72acbbf848bf6dd64e7e9d868d80601`; no W10 implementation checkpoint yet.
+Child status: COMPLETE — implementation `62d23e2622ab0a282584c5cf27d92b6b603f9192`, certified documentation head `ec3eacf61c1b5bd3557eaf90594aecb2cd633b4f`.
 
 Read in this order:
 
@@ -45,9 +45,7 @@ Do not rebuild unless live recon finds a concrete regression:
 - W8 bounded turn/campaign memory, target ledger, hypothesis lifecycle, efficacy harness and memory-aware reasoner;
 - W9 host-derived current-source `GO_VENDORED_PACKAGE_TEST`, `CURRENT_SOURCE_REPEATED_TEST_FAILURE`, host-owned retry disposition and separated byte budgets.
 
-W9 final reference to beat honestly: HOUR_1 Omen run, 26 unique source targets, 28 grounded hypotheses, 7 reproduction attempts, **7 `NOT_AVAILABLE`**, 1 candidate, 0 admissions, wall-time bound with byte headroom.
-
-W10's job is to measure and reduce that reproduction-coverage/selection gap, not merely generate more activity.
+W9's live reference was 26 unique source targets, 28 grounded hypotheses, 7 reproduction attempts, **7 `NOT_AVAILABLE`**, 1 candidate, 0 admissions. W10 closed that gap: across four HOUR_1 campaigns, 16 of 22 reproduction attempts reached real contained execution and the census-scoped run wasted none, still with zero admissions and zero fabricated findings.
 
 ## Routing and safety
 

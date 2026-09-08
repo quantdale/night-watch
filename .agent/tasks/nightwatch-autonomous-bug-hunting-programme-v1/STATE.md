@@ -6,17 +6,17 @@ Task ID: nightwatch-autonomous-bug-hunting-programme-v1
 Phase: AUTONOMOUS_BUG_HUNTING_PROGRAMME_V1
 Status: IN_PROGRESS
 Starting SHA: d1ebde90c1454b31d6b93d9df503a4c5f196d7c8
-Last validated implementation SHA: bb28480c6a6969a06744c75c4c947851d5bece7c
-Last substantive checkpoint SHA: bb28480c6a6969a06744c75c4c947851d5bece7c
+Last validated implementation SHA: 62d23e2622ab0a282584c5cf27d92b6b603f9192
+Last substantive checkpoint SHA: 62d23e2622ab0a282584c5cf27d92b6b603f9192
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-reproduction-surface--0a9096be
-Last checkpoint: W9 complete/certified at `bb28480`; W10 reproduction-surface coverage/autonomous yield is now the active child
+Last checkpoint: W10 reproduction-surface coverage and autonomous yield COMPLETE and certified at implementation `62d23e2` / documentation `ec3eacf`; no wave is active
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: d1ebde90c1454b31d6b93d9df503a4c5f196d7c8
-LAST_VALIDATED_IMPLEMENTATION_SHA: bb28480c6a6969a06744c75c4c947851d5bece7c
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: bb28480c6a6969a06744c75c4c947851d5bece7c
+LAST_VALIDATED_IMPLEMENTATION_SHA: 62d23e2622ab0a282584c5cf27d92b6b603f9192
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 62d23e2622ab0a282584c5cf27d92b6b603f9192
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
 PHASE_AUTONOMOUS_BUG_HUNTING_PROGRAMME_V1_STATUS: IN_PROGRESS
@@ -28,15 +28,16 @@ Deliver a locally executable autonomous bug-hunting programme above the existing
 ## Current Milestone
 
 Milestone ID: W10
-Milestone status: IN_PROGRESS
+Milestone status: COMPLETE
 Child task: `nightwatch-reproduction-surface-coverage-autonomous-yield-v1`
 Child directory: `.agent/tasks/nightwatch-reproduction-surface-coverage-autonomous-yield-v1`
 
-W9 is frozen terminal at implementation checkpoint `bb28480c6a6969a06744c75c4c947851d5bece7c` and documentation head `0664c69cc72acbbf848bf6dd64e7e9d868d80601` at W10 planning time.
+W9 is frozen terminal at `bb28480c6a6969a06744c75c4c947851d5bece7c`. W10 is now
+frozen terminal at implementation `62d23e2622ab0a282584c5cf27d92b6b603f9192`
+with certified documentation head `ec3eacf61c1b5bd3557eaf90594aecb2cd633b4f`.
 
-W10 is now authorized LOCAL work. Its objective is to census and materially improve current-source deterministic reproduction coverage/selection so grounded live hypotheses stop wasting verification turns on surfaces that cannot produce mechanical evidence.
-
-DEV/NEXT remain unauthorized. Strict EXACT and previously-unknown-defect status remain separate/unproven.
+No implementation wave is active. DEV/NEXT remain unauthorized; strict EXACT
+and previously-unknown-defect status remain unproven.
 
 ## Completed Milestones
 
@@ -48,37 +49,31 @@ DEV/NEXT remain unauthorized. Strict EXACT and previously-unknown-defect status 
 - W9 host-derived `GO_VENDORED_PACKAGE_TEST`, explicit `CURRENT_SOURCE_REPEATED_TEST_FAILURE`, host-owned deterministic/environment/transient retry disposition, exact separated transport/payload byte accounting and HOUR_1 calibrated budget COMPLETE.
 - W9 final `opencode-go/omen-alpha` HOUR_1 campaign: 7 investigations, 79 calls, 56 actions, 26 unique source targets, 28 grounded hypotheses, 7 reproduction attempts, 7 `NOT_AVAILABLE`, 1 candidate, 0 admissions / 1 `MISSING_REPRODUCTION`; wall-time bound with byte headroom.
 - W9 certification at `bb28480`: focused 295 passed / 3 skipped; full `npm test` 4565 passed / 16 skipped / 0 failed; typecheck/hardening/agent/handoff/project/workspace/session PASS; `gate:local` `receipt:sha256:6fb76272f121ec1bed5b74bf`; clean Node 20 `clean-receipt:sha256:d914db277a583699a1ff68c3`; real current and historical proofs PASS.
+- W10 reproduction-surface coverage and capability-aware yield COMPLETE: bounded pre-attempt capability projection, diverse capability-aware index selection, cross-investigation capability carry with resume restoration, sanitized current-failure triage evidence, mechanical live yield metrics, and a host-owned `--repository` campaign scope that fails closed on an unapproved id and on a widened resume. Both candidate executor expansions were evidence-based NO-GO.
+- W10 live series (`opencode-go/omen-alpha`, four HOUR_1 campaigns): reproduction attempts reaching real contained execution went from 0/7 (W9) to 6/6 census-scoped, 5/5, 5/5 and 4/6 broad; `NOT_AVAILABLE` waste 7/7 → 0/6; zero qualifying current-source failures, zero admissions, zero false positives, zero leakage.
+- W10 certification: full `npm test` 4,659 passed / 18 skipped / 0 failed; `gate:local` all 11 groups PASS `receipt:sha256:e4214a74ab2f310837f0035f`; fresh Node 20 `gate:clean` PASS `clean-receipt:sha256:123c540d48a426504d4a81d2`; real owner-local, W10 generality and historical ouchan product-path proofs PASS.
 
 ## Work In Progress
 
-W10 child is specified and active. No W10 implementation checkpoint exists yet.
-
-The active W10 plan is deliberately long-running and includes:
-
-- M0 full owner-approved reproduction-capability census;
-- M1 shared contract freeze;
-- parallel coverage/map/executor/failure-evidence/yield/resilience lanes;
-- safe Go offline-cache coverage expansion if live census justifies it;
-- optional one non-Go class only after explicit threat-model GO decision;
-- fixed before/after coverage/yield benchmark;
-- real reproduction generality proof;
-- multiple substantial live-provider campaigns including reproduction-rich and broad HOUR_1-class runs;
-- pause/resume/failure-recovery proof;
-- full local + fresh clean-clone certification.
+None. No wave is active.
 
 ## Exact Next Action
 
-Execute W10 `nightwatch-reproduction-surface-coverage-autonomous-yield-v1` from live Git truth. Begin with M0 census and diagnosis before code. Freeze shared W10 contracts before parallel implementation lanes. Preserve W0-W9. Run the long live campaign series only after deterministic integration is green, then complete full certification and truthful closeout.
+Hold the programme at W10 and report the certified outcome to the owner. The
+next concrete step, once the owner authorizes a successor wave (strict EXACT
+rediscovery, previously-unknown-defect yield, or DEV/NEXT work), is to open
+that wave's own task directory under `.agent/tasks/` from live Git truth and
+record it here. Do not reopen W0-W10.
 
 ## Files Changed
 
 | Path | Purpose | Status |
 |---|---|---|
-| `.agent/tasks/nightwatch-reproduction-surface-coverage-autonomous-yield-v1/**` | W10 SPEC/PLAN/STATE/REPORT | IN_PROGRESS |
+| `.agent/tasks/nightwatch-reproduction-surface-coverage-autonomous-yield-v1/**` | W10 SPEC/PLAN/STATE/REPORT | COMPLETE / frozen |
 | `.agent/tasks/nightwatch-owner-local-deterministic-reproduction-yield-v1/**` | W9 terminal evidence | COMPLETE / frozen |
 | `src/core/ownerLocalReproduction/**`, `src/core/localInvestigation/**` | W9 current-source reproduction baseline | integrated / preserve |
 | `src/core/investigationMemory/**`, `src/core/agentRuntime/**`, `src/core/agentProtocol/**` | W8/W9 memory/retry/budget baseline | integrated / preserve |
-| `.agent/ACTIVE_TASK.md`, `.agent/EXECUTION_PROMPT.md`, `PROGRAMME.json` | W10 parent handoff | ACTIVE |
+| `.agent/ACTIVE_TASK.md`, `.agent/EXECUTION_PROMPT.md`, `PROGRAMME.json` | programme handoff | UPDATED |
 
 ## Validation Ledger
 
@@ -92,7 +87,13 @@ Accepted W9 predecessor certification to preserve/re-run as relevant:
 - real current owner-local proof: PASS with honest NOT_REPRODUCED;
 - historical ouchan product-path proof: PASS.
 
-No W10 implementation validation yet.
+W10 certification at implementation `62d23e2622ab0a282584c5cf27d92b6b603f9192` and documentation head `ec3eacf61c1b5bd3557eaf90594aecb2cd633b4f`:
+
+- full `npm test`: 4,659 passed / 18 skipped / 0 failed;
+- typecheck, hardening, agent/handoff/project/workspace/session: PASS;
+- `gate:local`: all 11 groups PASS, `receipt:sha256:e4214a74ab2f310837f0035f`;
+- fresh Node 20 `gate:clean`: PASS, `clean-receipt:sha256:123c540d48a426504d4a81d2`;
+- real owner-local reproduction, W10 generality and historical ouchan product-path proofs: PASS.
 
 ## Decisions Made During This Task
 

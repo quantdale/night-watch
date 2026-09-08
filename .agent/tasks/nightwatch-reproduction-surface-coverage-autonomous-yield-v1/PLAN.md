@@ -1,7 +1,7 @@
 # PLAN — nightwatch-reproduction-surface-coverage-autonomous-yield-v1
 
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
-Status: IN_PROGRESS
+Status: COMPLETE
 PROJECT_VERDICT_EFFECT: PRESERVE
 Task: nightwatch-reproduction-surface-coverage-autonomous-yield-v1
 Parent programme: nightwatch-autonomous-bug-hunting-programme-v1
@@ -319,7 +319,7 @@ Do not cherry-pick only successful runs.
 
 If a provider becomes quota/auth blocked, continue all deterministic work and preserve exact rerun commands.
 
-Status: IN_PROGRESS — broad full-stack and robustness-repeat HOUR_1 campaigns are preserved; the required census-scoped reproduction-rich HOUR_1 campaign is running.
+Status: COMPLETE — Run A (census-scoped, 6/6 executed, 0 `NOT_AVAILABLE`), Run B, Run C and Run D are all preserved, including their misses, provider failures and zero admissions.
 
 ### M10 — Long-run resilience / pause-resume / failure recovery
 
@@ -355,6 +355,8 @@ Run:
 - real owner-local generic reproduction proofs;
 - historical ouchan product-path proof.
 
+Status: COMPLETE — certified at documentation head `ec3eacf` over implementation `62d23e2`: `npm test` 4,659 passed / 18 skipped / 0 failed; typecheck, hardening, agent, handoff, project, workspace and session checks PASS; `gate:local` all 11 groups PASS (`receipt:sha256:e4214a74ab2f310837f0035f`); fresh Node 20 `gate:clean` PASS (`clean-receipt:sha256:123c540d48a426504d4a81d2`); all three opt-in real proofs PASS.
+
 Integration head and documentation descendants must be recorded separately if final docs land after certification. Re-run `gate:local` on the documentation descendant when project truth requires it.
 
 ### M12 — Terminal closeout
@@ -364,6 +366,8 @@ Update W10 STATE/PLAN/REPORT, parent PROGRAMME/STATE/REPORT as appropriate, `.ag
 Report all improvements and regressions.
 
 Do not declare parent programme COMPLETE unless its separate criteria are truly met.
+
+Status: COMPLETE — W10 STATE/PLAN/REPORT, the parent programme record, `.agent/ACTIVE_TASK.md`, `.agent/EXECUTION_PROMPT.md` and `docs/CURRENT_STATE.md` record the certified outcome. The parent programme deliberately remains `IN_PROGRESS`.
 
 ## Required safety checks throughout
 

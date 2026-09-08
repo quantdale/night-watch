@@ -90,11 +90,16 @@
       "certification": "implementation bb28480; focused 295 passed/3 skipped; full npm test 4565 passed/16 skipped; gate:local receipt:sha256:6fb76272f121ec1bed5b74bf; fresh Node20 gate:clean clean-receipt:sha256:d914db277a583699a1ff68c3; real current and historical product-path proofs PASS"
     },
     "REPRODUCTION_COVERAGE_YIELD": {
-      "status": "planned",
+      "status": "integrated",
       "taskId": "nightwatch-reproduction-surface-coverage-autonomous-yield-v1",
       "role": "W10_REPRODUCTION_SURFACE_COVERAGE_AUTONOMOUS_YIELD",
       "baseSha": "0664c69cc72acbbf848bf6dd64e7e9d868d80601",
-      "objective": "Census and materially expand safe current-source reproduction coverage, expose bounded reproduction capability before verification, reduce NOT_AVAILABLE waste, prove generality across real targets, run multiple long live-provider campaigns, and preserve W7-W9 evidence/safety semantics."
+      "integrationSha": "62d23e2622ab0a282584c5cf27d92b6b603f9192",
+      "documentationSha": "ec3eacf61c1b5bd3557eaf90594aecb2cd633b4f",
+      "reviewVerdict": "ACCEPTED_AFTER_INDEPENDENT_REVIEW_EIGHT_REPAIRS_POST_RECONCILE_RERUN_AND_LOCAL_CLEAN_CERTIFICATION",
+      "objective": "Census and materially expand safe current-source reproduction coverage, expose bounded reproduction capability before verification, reduce NOT_AVAILABLE waste, prove generality across real targets, run multiple long live-provider campaigns, and preserve W7-W9 evidence/safety semantics.",
+      "yieldVerdict": "the census proved W9's 7/7 NOT_AVAILABLE was structural index truncation, not scarce coverage (1,120 of 4,109 approved files and 152 distinct targets were already executable); capability-aware diverse selection, cross-investigation capability carry, sanitized current-failure triage evidence, mechanical live yield metrics and a host-owned --repository scope took live reproduction attempts reaching real contained execution from 0/7 to 6/6 census-scoped and 5/5 on two independent broad runs, with NOT_AVAILABLE waste 7/7 to 0/6; both candidate executor expansions were evidence-based NO-GO; zero qualifying current-source failures, zero admissions, zero false positives and zero leakage",
+      "certification": "implementation 62d23e2, documentation ec3eacf; full npm test 4659 passed/18 skipped/0 failed; gate:local all 11 groups PASS receipt:sha256:e4214a74ab2f310837f0035f; fresh Node20 gate:clean PASS clean-receipt:sha256:123c540d48a426504d4a81d2; real owner-local, W10 generality and historical ouchan product-path proofs PASS"
     }
   },
   "proof": {
@@ -110,7 +115,7 @@
     "programmeIdentityValidation": "PASS bin/lib/programme-state.mjs in agent:check (duplicate lane keys rejected pre-parse)",
     "w8AutonomousEfficacy": "PROVEN_LOCAL_AND_LIVE_PROVIDER — bounded turn/campaign memory + mechanical verification/reproduction readiness materially improved the fixed corpus with zero added false positives/leaks; live historical proof reached VERIFIED_ROOT_CAUSE_REDISCOVERY; owner-local live candidate remained mechanically refused without reproduction",
     "ownerLocalCurrentSourceReproduction": "PROVEN_BOUNDED_LOCAL — host-derived GO_VENDORED_PACKAGE_TEST provider, explicit CURRENT_SOURCE_REPEATED_TEST_FAILURE proof/admission and conservative no-credit outcomes; real current package execution completed honestly without a qualifying failure; live omen-alpha candidate was refused MISSING_REPRODUCTION",
-    "w10ReproductionSurfaceCoverage": "NOT_YET_PROVEN"
+    "w10ReproductionSurfaceCoverage": "PROVEN_LOCAL_AND_LIVE_PROVIDER — bounded pre-attempt capability projection, diverse capability-aware index selection, cross-investigation capability carry, sanitized current-failure triage evidence and mechanical live yield metrics; four HOUR_1 opencode-go/omen-alpha campaigns reached real contained execution on 16 of 22 reproduction attempts against W9's 0 of 7, with zero qualifying failures, zero admissions and zero leakage"
   },
   "realWorld": {
     "LOCAL_AUTONOMOUS_CAPABILITY": "PROVEN_SYNTHETIC_AND_ONE_REAL_HISTORICAL_REPRODUCTION",
@@ -118,17 +123,17 @@
     "NORMAL_CAMPAIGN_REAL_LOCAL_SENSING": "PROVEN_LOCAL",
     "AUTONOMOUS_EFFICACY_REAL_LOCAL_SUBSTRATE": "PROVEN_LOCAL_FIXED_CORPUS_AND_LIVE_PROVIDER",
     "OWNER_LOCAL_DETERMINISTIC_REPRODUCTION": "PROVEN_BOUNDED_LOCAL_GO_VENDORED_PACKAGE_TEST",
-    "REPRODUCTION_SURFACE_COVERAGE": "W10_IN_PROGRESS",
+    "REPRODUCTION_SURFACE_COVERAGE": "PROVEN_BOUNDED_LOCAL_CAPABILITY_AWARE_SELECTION",
     "REAL_DEV_NEXT_HUNT": "NOT_AUTHORIZED",
     "PREVIOUSLY_UNKNOWN_ALPHAUS_BUG": "NOT_YET_PROVEN",
     "LIVE_CLI_REASONER": "OPENCODE_GO_OMEN_ALPHA_FINAL_W9"
   },
   "blockers": [
-    "W10 reproduction-surface coverage and capability-aware yield are not yet proven; W9 live reference had 7/7 NOT_AVAILABLE reproduction attempts",
     "DEV/NEXT execution not authorized (external)",
     "EXACT rediscovery remains unproven and stays a separate strict metric",
-    "previously unknown Alphaus bug yield remains unproven"
+    "previously unknown Alphaus bug yield remains unproven",
+    "external CI remains unobserved for this programme's heads"
   ],
-  "exactNextAction": "Execute child task nightwatch-reproduction-surface-coverage-autonomous-yield-v1 from live Git truth. Start with the owner-approved reproduction capability census; freeze shared W10 contracts before parallel lanes; then improve executable target coverage/selection, run multiple substantial live campaigns, and certify. Do not reopen W0-W9 or infer DEV/NEXT authorization.",
-  "resumeRecipe": "Read .agent/ACTIVE_TASK.md and .agent/EXECUTION_PROMPT.md, then W10 SPEC/PLAN/STATE/REPORT, followed by terminal W9 STATE/REPORT. Re-discover live git/workspace/session truth. W0-W9 are frozen complete; W10 is the only active implementation wave."
+  "exactNextAction": "W10 is complete and certified. No wave is active. A successor (strict EXACT rediscovery, previously-unknown-defect yield, or any DEV/NEXT work) requires separate owner authorization and its own task. Do not reopen W0-W10.",
+  "resumeRecipe": "Read .agent/ACTIVE_TASK.md and .agent/EXECUTION_PROMPT.md, then the terminal W10 SPEC/PLAN/STATE/REPORT, followed by W9. Re-discover live git/workspace/session truth. W0-W10 are frozen complete; no wave is active."
 }

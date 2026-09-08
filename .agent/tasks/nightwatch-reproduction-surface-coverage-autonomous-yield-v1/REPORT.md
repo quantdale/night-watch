@@ -1,7 +1,7 @@
 # REPORT — nightwatch-reproduction-surface-coverage-autonomous-yield-v1
 
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
-Status: IN_PROGRESS
+Status: COMPLETE
 Parent programme: nightwatch-autonomous-bug-hunting-programme-v1
 Wave: W10 — REPRODUCTION SURFACE COVERAGE & AUTONOMOUS YIELD
 
@@ -331,15 +331,107 @@ path, command, argv or model-controlled scope input.
 The M0 census selects `mobingilabs/ouchan`: it is the only approved repository
 with executable targets. Live preflight through the production provider gives
 32/32 `EXECUTABLE_NOW` entries across 18 distinct packages, versus 5/32 across
-5 packages in the broad window. Campaign `w10-rich-omen-4` is the required
-HOUR_1 Run A; its terminal result will be recorded without cherry-picking.
+5 packages in the broad window. Run A above used exactly this scope.
 
-### Pre-carry certification checkpoint (not final M11 evidence)
+### Independent review and the repairs it forced
+
+A read-only reviewer inspected the integrated head against the SPEC and found
+eight issues. All eight are repaired with permanent tests; none was argued
+away:
+
+1. `deriveCurrentFailureEvidence` had no caller — the M6 triage projection was
+   dead code, so a qualifying failure would never have reached the reasoner.
+   It is now derived at the host-owned provider boundary and rides the
+   sanitized `reasonerVisible` envelope on qualifying results only.
+2. Campaign capability was serialized but never seeded into a fresh
+   investigation nor restored by resume, so the cross-investigation carry the
+   earlier evidence implied was unproven. Both paths are now wired, and the
+   proof reads what the SECOND investigation's reasoner actually received.
+3. No production path emitted W10 yield, so live numbers were hand-counted —
+   and one of those hand counts was wrong. `deriveCampaignYieldMetrics` now
+   derives them from the campaign's own action log.
+4. A scoped campaign persisted no scope, so a documented `--id`-only resume
+   would silently widen it back to the full universe. Scope is persisted and
+   resume fails closed on omission or mismatch.
+5. `repeatedUnsupportedAttempts` was keyed by refusal class, so two different
+   sources sharing one refusal counted as a repeat. It is keyed by attempted
+   source identity.
+6. Index selection ran over the probed prefix, capping any `sourceIndexLimit`
+   above the probe ceiling. Selection now runs over the full eligible set with
+   unprobed entries honestly `UNKNOWN`.
+7. Surface normalization accepted incoherent readiness tuples and coerced a
+   malformed target id to null. The complete tuple is now enforced and
+   malformed ids are dropped.
+8. This report still ended with a stale "no W10 implementation evidence
+   exists" verdict. It is replaced below.
+
+### Terminal certification (M11)
+
+Implementation head `62d23e2622ab0a282584c5cf27d92b6b603f9192`; certified
+documentation head `ec3eacf61c1b5bd3557eaf90594aecb2cd633b4f`.
+
+| Check | Result |
+|---|---|
+| full `npm test` (at `62d23e2`) | 4,659 passed / 18 skipped / **0 failed** (W9 baseline 4,565 / 16 / 0) |
+| `npm run typecheck` | PASS |
+| `npm run hardening:check` | PASS |
+| `npm run agent:check` | PASS (advisory warnings only) |
+| `npm run handoff:check` | PASS |
+| `npm run project:check` | PASS |
+| `npm run workspace:check` | PASS |
+| `npm run session:check` | PASS |
+| `npm run gate:local` (at `ec3eacf`) | FULL PASS, all 11 groups, `receipt:sha256:e4214a74ab2f310837f0035f` (SEMANTIC_COMPATIBILITY 2,067 / 13 skipped / 0 failed; OWNER_PROVENANCE 91; SYNTHETIC_CAMPAIGN 1,196 / 0 failed) |
+| fresh Node 20 `npm run gate:clean` | PASS, `installResult=PASS`, `nodeModulesReused=false`, `cleanBefore/cleanAfter=true`, `siblingWrites=0`, `clean-receipt:sha256:123c540d48a426504d4a81d2` |
+| real owner-local reproduction proof | PASS (1 passed, 30.6 s) |
+| W10 real generality proof | PASS (2 passed, 25.2 s) |
+| real historical ouchan product-path proof | PASS (1 passed, 1.9 m) |
+
+Two intermediate gate failures are recorded rather than hidden: `PROJECT_TRUTH`
+refused a dirty checkout, and `HARDENING` refused a `docs/CURRENT_STATE.md`
+edit whose header date still read the previous day. Both are the checks doing
+their job; both were fixed and the gate re-run in full.
+
+### Real reproduction targets and results
+
+| Proof | Target | Result |
+|---|---|---|
+| W9 real owner-local | `mobingilabs/ouchan:pkg/almcreds` | two fresh contained executions, both pass → honest `NOT_REPRODUCED`, sibling identity stable, no temp residue |
+| W10 generality | a second, mechanically distinct `mobingilabs/ouchan` package selected through the capability surface | executed through the generic provider, honest verdict, sibling identity unchanged before and after |
+| W7 historical product path | mined ouchan `5985281b43cd` | `PRE_FAIL_POST_PASS`, admitted through the ordinary campaign path |
+
+Live executions additionally covered `pkg/almcreds`, `pkg/almtemplate`,
+`pkg/auth/rbac`, `pkg/awscostmanagement`, `pkg/awsrialerts`,
+`pkg/azure/az/helpers`, `pkg/azure` and `pkg/azuredb` across the four
+campaigns. Retry/disposition statistics across those campaigns: 26 provider
+failures and 26 bounded provider retries in total (5+5 Run A, 4+4 Run B,
+7+8 Run C, 8+8 Run D), and zero reproduction transient retries — every
+reproduction attempt resolved on its first execution.
+
+### Remaining blockers and non-claims
+
+- No previously unknown Alphaus defect is claimed: zero qualifying
+  current-source failures were found and zero findings were admitted.
+- Strict `EXACT_REDISCOVERY` remains 0 and unproven.
+- DEV/NEXT/production remain unauthorized and uncontacted.
+- Organizational approval is not claimed; local review is never Alphaus
+  sign-off.
+- Repository diversity for executable targets is genuinely unavailable: only
+  `mobingilabs/ouchan` has any approved executable target.
+- External CI was not run and is not claimed green.
+
+### Exact next action for the parent programme
+
+W10 is closed. The parent programme remains `IN_PROGRESS`: its open items are
+strict EXACT rediscovery, a previously unknown defect, and any DEV/NEXT work —
+each requiring separate owner authorization and its own task. Do not reopen
+W0-W10.
+
+### Pre-carry certification checkpoint (historical, superseded)
 
 Checkpoint `ed4e32602170e7e181b6e4841677fa8bff39d4ea` passed the following
-before the live-discovered campaign carry repair and operator scope seam.
-Final M11 certification must therefore run again on the terminal W10
-implementation head.
+before the live-discovered campaign carry repair, the review repairs and the
+operator scope seam. It is retained as history; the terminal certification
+above is the authority.
 
 | Check | Result |
 |---|---|
@@ -375,4 +467,11 @@ Until independently proven, do not claim:
 
 ## Programme verdict
 
-`IN_PROGRESS` — W10 has been specified but no W10 implementation evidence exists yet.
+`W10_COMPLETE_LOCAL_NOT_CI_VERIFIED`.
+
+Reproduction capability is now visible before a verification turn is spent,
+carried across investigations, measured mechanically, and demonstrated on four
+HOUR_1 live campaigns whose reproduction attempts reached real contained
+execution 16 of 22 times against W9's 0 of 7. Zero findings were admitted and
+none were manufactured. The parent programme stays independently
+`IN_PROGRESS`.

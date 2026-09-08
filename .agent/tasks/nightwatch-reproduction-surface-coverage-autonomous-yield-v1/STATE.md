@@ -4,22 +4,22 @@
 
 Task ID: nightwatch-reproduction-surface-coverage-autonomous-yield-v1
 Phase: W10_REPRODUCTION_SURFACE_COVERAGE_AUTONOMOUS_YIELD
-Status: IN_PROGRESS
+Status: COMPLETE
 Parent programme: nightwatch-autonomous-bug-hunting-programme-v1
 Starting SHA: 0664c69cc72acbbf848bf6dd64e7e9d868d80601
-Last validated implementation SHA: 9f990af5a7f9f071d859caf1b2e78f0b059c7a6c
-Last substantive checkpoint SHA: 9f990af5a7f9f071d859caf1b2e78f0b059c7a6c
+Last validated implementation SHA: 62d23e2622ab0a282584c5cf27d92b6b603f9192
+Last substantive checkpoint SHA: 62d23e2622ab0a282584c5cf27d92b6b603f9192
 Live HEAD authority: GIT
 Branch: session/nightwatch-reproduction-surface--0a9096be
-Last checkpoint: M0-M8 and M10 implemented; broad and robustness HOUR_1 campaigns preserved; census-derived reproduction-rich HOUR_1 campaign running
+Last checkpoint: W10 complete and certified; implementation `62d23e2`, certified documentation head `ec3eacf` with `gate:local` and fresh Node 20 `gate:clean` both PASS
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 0664c69cc72acbbf848bf6dd64e7e9d868d80601
-LAST_VALIDATED_IMPLEMENTATION_SHA: 9f990af5a7f9f071d859caf1b2e78f0b059c7a6c
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 9f990af5a7f9f071d859caf1b2e78f0b059c7a6c
+LAST_VALIDATED_IMPLEMENTATION_SHA: 62d23e2622ab0a282584c5cf27d92b6b603f9192
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 62d23e2622ab0a282584c5cf27d92b6b603f9192
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
-PHASE_W10_REPRODUCTION_SURFACE_COVERAGE_AUTONOMOUS_YIELD_STATUS: IN_PROGRESS
+PHASE_W10_REPRODUCTION_SURFACE_COVERAGE_AUTONOMOUS_YIELD_STATUS: COMPLETE
 
 ## Objective
 
@@ -27,9 +27,10 @@ Measure and materially expand safe current-source reproduction coverage across t
 
 ## Current Milestone
 
-Milestone ID: M11
-Milestone status: IN_PROGRESS
-What is being attempted: full regression and certification of the final W10 implementation head after the review-driven repairs and the terminal live campaign series.
+COMPLETE — M12 closed.
+Milestone ID: M12
+Milestone status: COMPLETE
+All W10 milestones M0 through M12 are closed and certified.
 
 ## Completed Milestones
 
@@ -54,7 +55,7 @@ What is being attempted: full regression and certification of the final W10 impl
 
 ## Work In Progress
 
-M9.1 `w10-rich-omen-4` is running through the ordinary CLI campaign path with the new host-owned `--repository=mobingilabs/ouchan` scope. The option is validated by the existing owner-approved source boundary before the reasoner starts; a permanent regression proves an unapproved repository exits 2 without spawning the reasoner.
+None. W10 is terminal.
 
 ## Measured W10 outcome so far
 
@@ -137,14 +138,10 @@ capability-aware selection and index diversity.
 
 ## Exact Next Action
 
-1. Complete M11 certification on the final implementation head: focused W10 and
-   W7-W9 suites, `npm test`, typecheck, hardening, agent, handoff, project,
-   workspace, session, `gate:local`, fresh Node 20 `gate:clean`, and the three
-   opt-in real proofs.
-2. Close W10 STATE/PLAN/REPORT, parent programme truth, `.agent/ACTIVE_TASK.md`,
-   `.agent/EXECUTION_PROMPT.md`, `docs/CURRENT_STATE.md` and OpenSpec.
-3. Claim no previously unknown Alphaus defect, no strict EXACT, no DEV/NEXT
-   authority and no parent-programme completion.
+STOP. W10 is closed and certified. Any successor wave is a separate task
+requiring explicit owner authorization. DEV/NEXT, external filing, strict
+EXACT and previously-unknown-defect claims remain unauthorized or unproven,
+and the parent programme remains independently `IN_PROGRESS`.
 
 ## Files Changed
 
@@ -152,9 +149,16 @@ capability-aware selection and index diversity.
 |---|---|---|
 | `.agent/tasks/nightwatch-reproduction-surface-coverage-autonomous-yield-v1/SPEC.md` | W10 contract | CREATED |
 | `.agent/tasks/nightwatch-reproduction-surface-coverage-autonomous-yield-v1/PLAN.md` | W10 long execution plan | CREATED |
-| `.agent/tasks/nightwatch-reproduction-surface-coverage-autonomous-yield-v1/STATE.md` | W10 continuity | IN_PROGRESS |
-| `.agent/tasks/nightwatch-reproduction-surface-coverage-autonomous-yield-v1/REPORT.md` | W10 evidence ledger | INITIAL |
+| `.agent/tasks/nightwatch-reproduction-surface-coverage-autonomous-yield-v1/STATE.md` | W10 continuity | COMPLETE |
+| `.agent/tasks/nightwatch-reproduction-surface-coverage-autonomous-yield-v1/REPORT.md` | W10 evidence ledger | COMPLETE |
 | `.agent/tasks/nightwatch-reproduction-surface-coverage-autonomous-yield-v1/M0-CENSUS.md` | M0 bounded aggregate census evidence | CREATED |
+| `src/core/reproductionSurface/**` | surface contract, census, selection, benchmark, live yield | DONE |
+| `src/core/localInvestigation/{ownerLocal,session,currentFailureEvidence,types}.ts` | diverse capability-aware index, surface annotation, sanitized triage evidence | DONE |
+| `src/core/ownerLocalReproduction/provider.ts` | qualifying-failure evidence exposure | DONE |
+| `src/core/agentRuntime/{localCampaign,runtime,types,checkpoint}.ts` | capability carry, scope continuity, live yield metrics, fail-closed surface tuple | DONE |
+| `src/core/investigationMemory/{derive,types}.ts` | pre-action readiness and campaign strategy v2 | DONE |
+| `bin/nightwatch-agent.mjs`, `bin/child-environment.mjs` | host-owned `--repository` scope; repaired `nightwatch-agent test` | DONE |
+| `corpus/w10/cases.ts`, `tests/unit/w10*.test.ts`, `tests/unit/reproduction*.test.ts`, `tests/unit/currentFailureEvidence.test.ts`, `tests/unit/realOwnerLocalGeneralityProof.test.ts` | fixed corpus and W10 proofs | DONE |
 
 ## Validation Ledger
 
@@ -164,7 +168,12 @@ capability-aware selection and index diversity.
 - Pre-carry fresh Node 20 `gate:clean`: PASS, `nodeModulesReused=false`, `cleanBefore/cleanAfter=true`, `siblingWrites=0`, `clean-receipt:sha256:fb15a890643aa2be97fa0b7d`.
 - Campaign capability carry repair: focused 42 tests PASS; hardening PASS.
 - Host-owned repository-scope CLI seam at `9f990af`: `localCampaign.test.ts` 6 passed; typecheck PASS; hardening PASS; workspace integrity PASS.
-- Final M11 certification remains required after Run A and terminal documentation reconciliation.
+- Final certification at documentation head `ec3eacf61c1b5bd3557eaf90594aecb2cd633b4f` over implementation `62d23e2622ab0a282584c5cf27d92b6b603f9192`:
+  - full `npm test` at `62d23e2`: 4,659 passed / 18 skipped / 0 failed (W9 baseline 4,565 / 16 / 0);
+  - `npm run typecheck`, `hardening:check`, `agent:check`, `handoff:check`, `project:check`, `workspace:check`, `session:check`: PASS (advisory warnings only);
+  - `npm run gate:local`: all 11 groups PASS, `receipt:sha256:e4214a74ab2f310837f0035f` (SEMANTIC_COMPATIBILITY 2,067 passed / 13 skipped / 0 failed; OWNER_PROVENANCE 91; SYNTHETIC_CAMPAIGN 1,196 / 0 failed);
+  - fresh Node 20 `npm run gate:clean`: PASS, `installResult=PASS`, `nodeModulesReused=false`, `cleanBefore/cleanAfter=true`, `siblingWrites=0`, `clean-receipt:sha256:123c540d48a426504d4a81d2`;
+  - opt-in real proofs: W9 owner-local 1 passed (30.6 s), W10 generality 2 passed (25.2 s), historical ouchan product path 1 passed (1.9 m).
 
 ## Decisions Made During This Task
 
@@ -210,13 +219,13 @@ Source-policy fact verified: the owner-approved universe is eight repositories. 
 
 ## Blockers
 
-None known for repository-owned M0 work.
+None for W10. It is closed.
 
-Possible external blocker: subscribed provider quota/auth for M9 live campaigns. This does not block deterministic census/implementation/test work.
+External/standing: DEV/NEXT/production remain unauthorized; strict EXACT and previously-unknown-defect status remain unproven; parent-programme completion is separate.
 
 ## Safety Events
 
-NONE in W10 so far.
+NONE in W10. Zero DEV/NEXT/production contact, zero external filing, zero credential exposure, zero sibling writes, zero force pushes or history rewrites.
 
 W8 historical safety events and W9 zero-safety-event closeout remain recorded in their own task histories and must not be rewritten.
 
@@ -229,12 +238,32 @@ W8 historical safety events and W9 zero-safety-event closeout remain recorded in
 
 ## Resume Recipe
 
-1. Read `.agent/ACTIVE_TASK.md` and `.agent/EXECUTION_PROMPT.md`.
-2. Read this task's SPEC, PLAN, STATE, REPORT.
-3. Read W9 terminal STATE/REPORT, then W8/W7 terminal records as needed.
-4. Discover live Git/workspace/session truth.
-5. Continue from `## Exact Next Action`; do not restart W0-W9.
+Task complete — do not resume. This task's SPEC, PLAN, STATE and REPORT are
+frozen W10 evidence, and a successor wave requires new authorization.
 
 ## Completion Snapshot
 
-Not complete. Populate only after M0-M12 and full certification close truthfully.
+W10 is COMPLETE at implementation `62d23e2622ab0a282584c5cf27d92b6b603f9192`
+and certified documentation head `ec3eacf61c1b5bd3557eaf90594aecb2cd633b4f`.
+
+Delivered: the M0 reproduction-capability census; the frozen
+`nightwatch.reproduction-surface-map.v1` capability projection with
+pre-attempt readiness; repository and executable-target diverse index
+selection; capability carried into fresh investigations and restored on
+resume; sanitized `nightwatch.current-failure-evidence.v1` triage evidence on
+qualifying repeated assertion failures; mechanical
+`nightwatch.w10-campaign-yield.v1` live metrics; a host-owned `--repository`
+campaign scope that fails closed on an unapproved id and on a widened resume;
+a 59-case fixed benchmark; ten long-run resilience proofs; and four HOUR_1
+live campaigns.
+
+Measured: live reproduction attempts reaching real contained execution went
+from 0 of 7 (W9) to 6 of 6 on the census-scoped run and 5 of 5 on two
+independent broad runs; `NOT_AVAILABLE` waste fell from 7/7 to 0/6; the
+fixed corpus improved executable selection 0.0000 → 0.2857 at an identical
+attempt budget. Zero qualifying current-source failures, zero admissions,
+zero false positives, zero leakage.
+
+Not claimed: a previously unknown Alphaus defect, strict `EXACT_REDISCOVERY`,
+DEV/NEXT/production behaviour, organizational approval, or parent-programme
+completion.
