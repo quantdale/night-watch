@@ -114,12 +114,17 @@ function boundedMemoryList(value: unknown, max: number, charCap: number): readon
 }
 
 /**
- * Fail-closed surface normalization. Readiness, refusal and executor must each
- * be a member of their frozen vocabulary, and an `EXECUTABLE_NOW` claim without
- * an executor class is incoherent and dropped: capability is a host fact, so an
- * entry that cannot be validated is discarded rather than downgraded into a
- * plausible-looking one.
+ * Fail-closed surface normalization. Every entry must satisfy the complete
+ * readiness tuple from the shared surface contract, or it is dropped:
+ * `EXECUTABLE_NOW` requires a valid target id plus a non-null executor plus
+ * a null refusal; `NOT_EXECUTABLE` requires a null target id/executor plus a
+ * non-null valid refusal; `UNKNOWN` requires all three null. A malformed or
+ * coerced target id (non-string, empty, oversize, secret-shaped, or not a
+ * surface digest) is dropped rather than coerced to null: capability is a
+ * host fact, so an entry that cannot be validated is discarded rather than
+ * downgraded into a plausible-looking one.
  */
+const SURFACE_TARGET_ID_RE = /^surface:sha256:[0-9a-f]{24}$/;
 function normalizeSurfaceEntries(value: unknown): readonly ReproductionSurfaceEntry[] | undefined {
   if (!Array.isArray(value)) return undefined;
   const out: ReproductionSurfaceEntry[] = [];
@@ -148,14 +153,25 @@ function normalizeSurfaceEntries(value: unknown): readonly ReproductionSurfaceEn
           ? (executorRaw as ReproductionSurfaceEntry['executorClass'])
           : undefined;
     if (executorClass === undefined) continue;
-    if (readiness === 'EXECUTABLE_NOW' && executorClass === null) continue;
-    if (readiness !== 'EXECUTABLE_NOW' && executorClass !== null) continue;
     const targetIdRaw = record.targetId;
-    const targetId =
-      targetIdRaw === null || targetIdRaw === undefined
-        ? null
-        : boundedMemoryString(targetIdRaw, TOOL_MEMORY_CAPS.targetChars);
-    if (targetId === undefined) continue;
+    let targetId: string | null;
+    if (targetIdRaw === null || targetIdRaw === undefined) {
+      targetId = null;
+    } else if (typeof targetIdRaw !== 'string') {
+      continue;
+    } else if (boundedMemoryString(targetIdRaw, TOOL_MEMORY_CAPS.targetChars) === null) {
+      continue;
+    } else {
+      targetId = targetIdRaw;
+    }
+    if (readiness === 'EXECUTABLE_NOW') {
+      if (executorClass === null || refusal !== null) continue;
+      if (targetId === null || !SURFACE_TARGET_ID_RE.test(targetId)) continue;
+    } else if (readiness === 'NOT_EXECUTABLE') {
+      if (executorClass !== null || refusal === null || targetId !== null) continue;
+    } else {
+      if (executorClass !== null || refusal !== null || targetId !== null) continue;
+    }
     seen.add(sourcePath);
     out.push(Object.freeze({ sourcePath, readiness: readiness as ReproductionSurfaceEntry['readiness'], executorClass, refusal, targetId }));
   }
@@ -239,6 +255,15 @@ export interface AgentRuntimeDeps {
   /** Local turn cap (default 50). Exceeding it terminates NO_PROGRESS. */
   readonly maxTurns?: number;
   readonly now?: () => number;
+  /**
+   * W10: host-supplied campaign-carried reproduction capability for a fresh
+   * run, so a new investigation does not rediscover executability from zero.
+   * Bounded by `TOOL_MEMORY_CAPS.reproductionSurface` and validated by the
+   * same fail-closed readiness-tuple rule as executor-supplied memory facts;
+   * malformed or incoherent entries are dropped, never trusted. Fresh-run
+   * deps only: resume restores capability from the checkpoint state itself.
+   */
+  readonly priorSurface?: readonly ReproductionSurfaceEntry[];
   /**
    * W8: bounded campaign strategy carried in from earlier investigations of the
    * same campaign, so a fresh investigation does not restart from zero. Purely
