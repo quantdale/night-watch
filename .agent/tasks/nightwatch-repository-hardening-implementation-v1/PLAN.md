@@ -207,7 +207,9 @@ lifecycles, then the operator surface, then release accounting.
   and leaf-symlink variants fail before mutation; sentinels outside the state
   root stay byte-identical; no residue after controlled failures.
 - **Validation:** the Atlas publication suite with injectable failure points.
-- **Status:** NOT_STARTED
+- **Status:** COMPLETE — strict basename, proven containment on the NW-02
+  authority, temporary-plus-rename publication, and inode-level atomicity
+  measurement. 5 of the 8 cases fail against the pre-repair code.
 
 ### M5 — NW-13 content-free parser diagnostics
 

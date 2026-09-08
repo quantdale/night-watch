@@ -243,6 +243,68 @@ PASS while the containment decision had moved back into the consumer. The
 rule now matches the call form with each store's own error code, and all four
 probe variants fail as intended.
 
+### NW-03 — confine and safely publish Bug Atlas snapshots
+
+**Live revalidation, which executed the escape.** Measuring a
+filesystem-escape defect means performing it. Against the pre-repair module,
+the case that points the state directory at the canonical Nightwatch checkout
+created that directory and wrote a 0600 `bug-atlas-snapshot.json` into the
+tracked checkout. That residue was removed, the canonical checkout is clean,
+and a read-only porcelain scan confirmed no sibling repository was touched.
+The regression now scopes a `finally` cleanup to the exact fabricated name it
+chose, so re-measuring cannot leave it behind. Recorded as `SAFETY-M4-01`.
+
+The measurement also showed a consequence beyond the review's description:
+because the directory was created from `path.dirname(file)`, an escaping
+`fileName` created and chmodded `0700` a directory outside the authorized
+root — the escape mutated the filesystem before any write.
+
+**Repair.**
+
+| Defect | Repair |
+| --- | --- |
+| `path.join(root, fileName)` with no containment | `safeSnapshotFileName` requires the name to EQUAL its own basename, contain no dot-segment, and match the pinned `^[A-Za-z0-9][A-Za-z0-9._-]{0,160}\.json$`; then `snapshotFilePath` joins and PROVES the result is a direct child of the proven root |
+| directory created from the file's dirname | created from `snapshotStateRoot`, the proven root |
+| state root could be inside tracked source | held to the NW-02 authority — `BUG_ATLAS_STATE_ROOT_INSIDE_REPOSITORY` |
+| only the leaf lstat-checked | every path component checked, before and after creation |
+| `writeFileSync` straight onto the destination | `publishSnapshot` stages into an owner-only same-directory temporary opened `wx`, fsyncs, revalidates the boundary, then `rename`s; owned temporaries removed in `finally` |
+| overwrite semantics inherited | stated: a snapshot is mutable state, so a republish deliberately replaces — but only by renaming over a destination proven regular, owner-only and non-symlink |
+| recovery could touch unknown files | `listSnapshotTemporaries` recognises only the pinned temporary shape |
+
+`path.basename` alone would have been the wrong guard: it rewrites
+`../synthetic-escape.json` to `synthetic-escape.json`, converting a refused
+escape into a silent successful write to a different file.
+
+**Regression.** Eight cases in
+`tests/unit/nw03AtlasSnapshotConfinement.test.ts`: ten unsafe names
+(traversal at one and two levels, nested, dot-prefixed, absolute, `..`, `.`,
+empty, extensionless, hidden) with the escape target's sentinel asserted
+byte-identical and the state root asserted unchanged; an existing leaf
+symlink whose external target must survive; a symlinked ancestor of the state
+directory; a state root inside the real repositories tree; the normal
+save/load round trip with mode `0600`; the frozen default name; and the
+atomicity case.
+
+**Atomicity is measured, not asserted.** A direct `writeFileSync` truncates
+and rewrites the SAME inode, so a concurrent reader or an interrupted write
+sees a partial snapshot; a same-directory temporary published by `rename`
+always yields a DIFFERENT inode. The test compares inodes across a
+republish, which distinguishes the mechanism. One further case is labelled a
+**control** in the test itself, because normalisation runs before publication
+so it passes pre-repair too — it guards the ordering, not the atomicity.
+
+**Acceptance.**
+
+| Criterion | Evidence |
+| --- | --- |
+| every output is inside the authorized root | ten unsafe names refused; the escape target's sentinel byte-identical; the state root's listing unchanged |
+| unsafe names and symlinks fail before mutation | refusals throw before any create; the symlink target keeps its sentinel bytes and the link itself is left in place, unfollowed |
+| interruption yields a complete prior or new snapshot | inode changes across a republish, proving rename rather than in-place truncation; exactly one file remains and no temporary survives |
+| no residue after controlled failures | `fs.readdirSync(stateRoot)` equals `[BUG_ATLAS_SNAPSHOT_FILE]` after every refusal and after every publish |
+| schema and default location retained | `BUG_ATLAS_SNAPSHOT_FILE` still `bug-atlas-snapshot.json`; an explicit safe alternate name still accepted; round trip returns the same records |
+| measured against the defect | 5 of the 8 cases fail against the pre-repair module |
+| no consumer regression | `bugAtlas`, `systemAtlas`, `localInvestigationProviders` and the new suite — 74 passed |
+
 ## Validation receipts
 
 Recorded per milestone as they are produced. No receipt is copied from a

@@ -13,7 +13,7 @@ Last validated implementation SHA: 2ebb598c7bc13adf0d92b5422e0f844c3442b750
 Last substantive checkpoint SHA: 2ebb598c7bc13adf0d92b5422e0f844c3442b750
 Live HEAD authority: GIT
 Branch: session/nightwatch-repository-hardening--e7b9be89
-Last checkpoint: M3 / NW-02 complete and validated — one topology-aware private-path authority, both consumers converted, duplicated containment helpers deleted, and a call-form hardening lock probed four ways
+Last checkpoint: M4 / NW-03 complete and validated — strict basename, proven containment on the NW-02 authority, temporary-plus-rename publication, and inode-level atomicity measurement
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 0ac7b3d037b5059f670eca715fc30adaf58e7334
@@ -34,10 +34,11 @@ is consumed, not re-executed.
 
 ## Current Milestone
 
-Milestone ID: M4
+Milestone ID: M5
 Milestone status: IN_PROGRESS
-What is being attempted: NW-03 — confine Bug Atlas snapshot publication to
-its authorized root and make it atomic, on the NW-02 path authority.
+What is being attempted: NW-13 — convert sensitive parse and schema failures
+into categorical, content-free diagnostics, so no planted secret or content
+excerpt can reach an error, log, receipt or artifact.
 
 ## Completed Milestones
 
@@ -96,10 +97,22 @@ its authorized root and make it atomic, on the NW-02 path authority.
   `checkC00WorkspaceIntegrity` now requires the exact
   `assertOutsideSourceTopology(root, '<error code>'` call form in both
   surfaces, no `__dirname`, and fail-closed ambiguity in the authority.
+- **M4 COMPLETE (NW-03)** — `safeSnapshotFileName` requires a strict
+  basename with no dot-segment matching the pinned shape;
+  `path.basename` alone would have been wrong, since it rewrites `../x.json`
+  to `x.json` and converts an escape into a successful write elsewhere.
+  `snapshotStateRoot` holds the state root to the NW-02 authority,
+  `snapshotFilePath` joins then proves the result is a direct child, the
+  directory is created from the proven root rather than the file's dirname,
+  and `publishSnapshot` stages into an owner-only same-directory temporary
+  opened `wx`, fsyncs, revalidates the boundary and renames, cleaning owned
+  temporaries in `finally`. Eight cases; atomicity is measured by inode,
+  which distinguishes rename from in-place truncation. 5 of 8 fail
+  pre-repair. 74 passed across the Atlas and local-investigation suites.
 
 ## Work In Progress
 
-M4 / NW-03 in this session worktree. No other lane is dispatched.
+M5 / NW-13 in this session worktree. No other lane is dispatched.
 
 ## Findings register progress
 
@@ -108,20 +121,36 @@ M4 / NW-03 in this session worktree. No other lane is dispatched.
 | NW-06 | M1 | CLOSED — repaired, 9 regressions, 8 proven failing pre-repair |
 | NW-01 | M2 | CLOSED — repaired, 7 regressions, 5 proven failing pre-repair |
 | NW-02 | M3 | CLOSED — repaired, 7 regressions, consumer-level case proven failing pre-repair |
-| NW-03 | M4 | IN PROGRESS |
-| NW-13 | M5 | NOT STARTED |
+| NW-03 | M4 | CLOSED — repaired, 8 regressions, 5 proven failing pre-repair |
+| NW-13 | M5 | IN PROGRESS |
 | NW-04 | M6 | NOT STARTED |
 | NW-05 | M7 | NOT STARTED |
 | NW-12 | M8 | NOT STARTED |
 | NW-09 | M9 | NOT STARTED |
 | NW-10 | M9 | NOT STARTED |
 | NW-11 | M9 | NOT STARTED |
-| NW-08 | M10 | PARTIAL — six unmanifested suites registered as M2/M3 evidence |
+| NW-08 | M10 | PARTIAL — nine unmanifested suites registered as M2/M3/M4 evidence |
 | NW-14 | M11 | NOT STARTED |
 | NW-07 | M12 | NOT STARTED |
 | NW-15 | — | CLOSED BY W10 OWNER — consumed, out of scope |
 
 ## Exact Next Action
+
+1. Probe the live NW-13 evidence: plant fabricated secret text at the
+   beginning, middle and end of malformed JSON and confirm that
+   `src/browser/fixtures/storageState.ts` still surfaces a native parser
+   message carrying a prefix of it.
+2. Freeze the sensitive-diagnostic taxonomy first — missing, oversized,
+   unsafe path, malformed JSON, schema-invalid must stay distinguishable —
+   then convert those boundaries to categorical content-free codes and drop
+   native causes that could cross a log.
+3. Sweep the analogous credential and private-store parsers and the CLI error
+   rendering for the same `err.message` wrapping.
+4. Add the planted-secret search over every captured output — returned error,
+   stderr, logs, receipts and generated artifacts — and verify it fails
+   against the pre-repair code.
+
+## Superseded next action (M4, complete)
 
 1. Probe the live NW-03 evidence: confirm that `src/core/bugAtlas/snapshot.ts`
    still accepts a configured `fileName` containing a traversal segment and
@@ -188,6 +217,8 @@ M4 / NW-03 in this session worktree. No other lane is dispatched.
 | `src/core/policy/index.ts` | export the topology authority | MODIFIED |
 | `tests/unit/nw02PrivatePathTopology.test.ts` | seven NW-02 cases over three injected topologies | CREATED |
 | `bin/hardening-check.mjs` | call-form lock on both private-path surfaces | MODIFIED |
+| `src/core/bugAtlas/snapshot.ts` | strict basename, proven containment, temporary-plus-rename publication | MODIFIED |
+| `tests/unit/nw03AtlasSnapshotConfinement.test.ts` | eight NW-03 cases with sentinel and inode assertions | CREATED |
 | `docs/MASTER-IMPLEMENTATION-HARDENING-PLAN.md` | document status and NW-06 resolution evidence | MODIFIED |
 
 ## Validation Ledger
@@ -199,6 +230,11 @@ the inherited W10 anchor, 31 legacy v1 task records, and the integrated W10
 session worktree awaiting an owner release. `npm run handoff:check` PASS,
 receipt campaign `nightwatch-repository-hardening-implementation-v1`,
 planned-from `0ac7b3d`. `npm run workspace:check` PASS.
+
+M4: `tests/unit/nw03AtlasSnapshotConfinement.test.ts` — 8 passed; 5 fail
+against the pre-repair module. Consumer suites: `bugAtlas`, `systemAtlas`,
+`localInvestigationProviders` and the new suite — 74 passed.
+`npm run typecheck` and `npm run hardening:check` PASS.
 
 M3: `tests/unit/nw02PrivatePathTopology.test.ts` — 7 passed. With the
 consumers reverted to the pre-repair code, the consumer-level case FAILED:
@@ -263,6 +299,25 @@ only. The candidate registration is never modelled, and the same function
 returns on a failed ownership-record write with the branch and worktree
 already created.
 
+Discovery: NW-03's escape mutated the filesystem before the write. Evidence:
+`saveBugAtlasSnapshot` created the directory from `path.dirname(file)`, so an
+escaping `fileName` also created and chmodded `0700` a directory outside the
+authorized root, independently of where the snapshot bytes then landed.
+
+Discovery: the pre-repair NW-03 measurement wrote into the canonical
+checkout. Evidence: running the state-root case against the pre-repair module
+created `REPOSITORIES/nightwatch/synthetic-nw03-atlas-state/` containing a
+0600 `bug-atlas-snapshot.json`. It was removed, the canonical checkout is
+clean, no sibling was touched (verified by a read-only porcelain scan of every
+sibling), and the regression now scopes a `finally` cleanup to the exact
+fabricated name so the measurement cannot leave residue again.
+
+Discovery: `path.basename` is the wrong guard for a configurable file name.
+Evidence: it rewrites `../synthetic-escape.json` to `synthetic-escape.json`,
+so a rule built on it would turn a refused escape into a silent successful
+write to a different file. The check requires the name to EQUAL its own
+basename instead.
+
 Discovery: a substring hardening rule can be satisfied by the import line
 alone. Evidence: the first NW-02 rule tested for `assertOutsideSourceTopology`
 anywhere in the file, so replacing only the call site — leaving the import —
@@ -304,7 +359,21 @@ None.
 
 ## Safety Events
 
-NONE.
+One, self-inflicted by a pre-repair measurement and fully remediated.
+
+`SAFETY-M4-01` — running the NW-03 state-root case against the PRE-REPAIR
+module created `REPOSITORIES/nightwatch/synthetic-nw03-atlas-state/` in the
+canonical checkout and wrote a 0600 `bug-atlas-snapshot.json` into it. That is
+the defect behaving exactly as the finding describes. The directory was
+untracked and created by this session, so it was removed; the canonical
+checkout is clean. No sibling repository was written — verified by a read-only
+porcelain scan of every sibling under the repositories root. The regression
+now scopes a `finally` cleanup to the exact fabricated directory name, so
+re-measuring the defect cannot leave residue behind.
+
+Lesson recorded: measuring a filesystem-escape defect executes the escape. A
+pre-repair measurement of a containment finding must clean up on the failure
+path, not only the success path.
 
 ## Deferred / Follow-Up
 

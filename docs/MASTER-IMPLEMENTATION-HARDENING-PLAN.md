@@ -181,7 +181,7 @@ Priority meanings: P0 is demonstrated catastrophic failure requiring immediate c
 
 ### NW-03 — Confine and safely publish Bug Atlas snapshots
 
-- **Priority / category / confidence / status:** P1; filesystem integrity; CONFIRMED by execution; NOT STARTED.
+- **Priority / category / confidence / status:** P1; filesystem integrity; CONFIRMED by execution; **CLOSED** — repaired and regression-proven under `nightwatch-repository-hardening-implementation-v1` M4.
 - **Affected surfaces:** `src/core/bugAtlas/snapshot.ts` and Bug Atlas callers/tests.
 - **Evidence:** a synthetic `fileName: '../synthetic-escape.json'` wrote outside the configured state directory. An existing leaf symlink was followed and its external synthetic target overwritten. The current check covers the directory leaf, then calls direct `writeFileSync` on the destination.
 - **Problem, impact, root cause:** configurable path components are not confined, leaf identity is not verified, and direct truncation exposes unrelated files and partial snapshots.
@@ -190,6 +190,50 @@ Priority meanings: P0 is demonstrated catastrophic failure requiring immediate c
 - **Tests and validation:** traversal variants, absolute paths, separators, dot segments, ancestor/leaf symlinks, races at injectable publication steps, permission failures, and success/readback. Sentinels outside the state root must remain byte-identical.
 - **Acceptance:** every output is inside the authorized root; unsafe names and symlinks fail before mutation; interruption yields a complete prior or new snapshot; no residue remains after controlled failures.
 - **Dependencies / risks / parallelization:** depends on NW-02 path authority and informs NW-04 atomic primitives. Keep one storage owner until contracts freeze. Risk is changing overwrite behavior; specify it explicitly.
+
+- **Resolution evidence (2026-09-08):** revalidated, and the pre-repair
+  measurement did real damage worth recording: the case that points the state
+  directory at the canonical Nightwatch checkout **created that directory and
+  wrote a 0600 snapshot into the tracked checkout**. The residue was removed
+  and the canonical checkout returned to clean; the regression now scopes a
+  `finally` cleanup to the exact fabricated name it chose, so the measurement
+  cannot leave it behind again. No sibling repository was touched, verified by
+  a read-only scan of every sibling's porcelain status.
+  A second consequence the review had not stated: because the directory was
+  created from `path.dirname(file)`, an escaping `fileName` also created and
+  chmodded `0700` a directory outside the authorized root — the escape
+  mutated the filesystem before the write even happened.
+  Repair: `safeSnapshotFileName` requires the name to be exactly its own
+  basename, contain no dot-segment and match the pinned
+  `^[A-Za-z0-9][A-Za-z0-9._-]{0,160}\.json$` shape. `path.basename` alone
+  would have been wrong — it silently rewrites `../x.json` to `x.json`,
+  converting an escape attempt into a successful write to a different file.
+  `snapshotStateRoot` holds the state root to the NW-02 topology authority
+  (`BUG_ATLAS_STATE_ROOT_INSIDE_REPOSITORY`), `snapshotFilePath` joins and
+  then PROVES the result is a direct child of the proven root, the directory
+  is created from that proven root rather than from the file's dirname, every
+  path component is lstat-checked before and after creation, and
+  `publishSnapshot` stages the bytes into an owner-only same-directory
+  temporary opened `wx`, fsyncs, revalidates the publication boundary, and
+  `rename`s into place, removing owned temporaries in `finally`.
+  `listSnapshotTemporaries` recognises only the pinned temporary shape, so
+  recovery can never report or remove a file it did not create.
+  Replace semantics are stated explicitly rather than inherited: a snapshot
+  is mutable state, so a republish deliberately replaces the previous file,
+  but only by renaming over a destination proven to be a regular, owner-only,
+  non-symlink file.
+  Eight cases in `tests/unit/nw03AtlasSnapshotConfinement.test.ts` cover ten
+  unsafe names (traversal, nested, dot-segment, absolute, empty, extensionless,
+  hidden), a leaf symlink whose target sentinel must stay byte-identical, a
+  symlinked ancestor, a state root inside real source, the round trip, and the
+  frozen default name. Atomicity is measured by INODE: a direct
+  `writeFileSync` truncates and rewrites the same inode, while a
+  temporary-plus-rename always yields a different one, so the test
+  distinguishes the mechanism rather than asserting an unobservable claim. One
+  case is labelled a control because normalisation runs before publication and
+  it passes pre-repair too. 5 of the 8 fail against the pre-repair code.
+  Consumer suites after the repair: `bugAtlas`, `systemAtlas`,
+  `localInvestigationProviders` and the new suite — 74 passed.
 
 ### NW-04 — Make autonomous campaign checkpoints bounded and crash-safe
 
