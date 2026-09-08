@@ -13,7 +13,7 @@ Last validated implementation SHA: 5b909f4a9fcc5528f179323ab227e06a8bf829c7
 Last substantive checkpoint SHA: 5b909f4a9fcc5528f179323ab227e06a8bf829c7
 Live HEAD authority: GIT
 Branch: session/nightwatch-repository-hardening--e7b9be89
-Last checkpoint: M11 / NW-14 complete and validated — a current host capability and dependency matrix, bound to the manifest and to the live probe tokens, with the online advisory lane honestly UNAVAILABLE
+Last checkpoint: M12 / NW-07 complete and validated — all fourteen in-scope findings are CLOSED; certification is the only remaining milestone
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 0ac7b3d037b5059f670eca715fc30adaf58e7334
@@ -34,12 +34,13 @@ is consumed, not re-executed.
 
 ## Current Milestone
 
-Milestone ID: M12
+Milestone ID: M13
 Milestone status: IN_PROGRESS
-What is being attempted: NW-07 — the residual continuity and project-memory
-coherence: duplicated decision identities D-29 through D-34, the parent
-programme PLAN progression lagging its STATE, and one discoverable current
-view that agrees with the active structured state.
+What is being attempted: M13 — repository certification at one candidate
+checkpoint. All fourteen findings are CLOSED; what remains is to execute the
+plan's repository-level definition of done item by item and to report every
+unavailable external or host lane as UNAVAILABLE rather than inheriting a
+pass.
 
 ## Completed Milestones
 
@@ -205,10 +206,25 @@ view that agrees with the active structured state.
   ways. 8 permanent cases. The online advisory lane is explicitly
   **UNAVAILABLE** under this campaign's safety boundary, with its own
   evidence requirement — an absent scan is never a passing scan.
+- **M12 COMPLETE (NW-07)** — Erratum E-1 disambiguates the five collided
+  decision identities (D-29, D-30, D-31, D-33, D-34) with ten aliases, and
+  edits neither entry: the document's own rule is that changing a decision
+  requires a new entry, and renumbering one of a pair would rewrite evidence
+  other documents cite. The parent programme PLAN, which read "W0
+  IN_PROGRESS, W1-W5 NOT_STARTED" while its own STATE recorded W0-W10
+  certified, is reconciled from that STATE with an explicit note that nothing
+  new is asserted. `checkDecisionIdentityUniqueness` and
+  `checkActiveMilestoneProgression` make both drift classes fail closed; the
+  progression rule is narrow by NW-07's own constraint (active task only,
+  continuity v2 only, one direction only) and **was tested by failing on this
+  campaign's own PLAN first**, which had drifted at four milestones. 5
+  permanent cases plus four live probes.
+- **All fourteen in-scope findings are CLOSED.** NW-14's online advisory lane
+  is the one part recorded UNAVAILABLE with its own evidence requirement.
 
 ## Work In Progress
 
-M12 / NW-07 in this session worktree. No other lane is dispatched.
+M13 certification in this session worktree. No other lane is dispatched.
 session once the NW-09 capability and pagination DTOs are frozen, because one
 owner must hold the overlapping UI API and App surfaces.
 
@@ -229,10 +245,23 @@ owner must hold the overlapping UI API and App surfaces.
 | NW-11 | M9 | CLOSED — repaired, 13 regressions, 10 proven failing pre-repair |
 | NW-08 | M10 | CLOSED — 425 discovered / 252 gate / 173 classified / 0 unclassified, digest-pinned; 12 regressions plus four live probes |
 | NW-14 | M11 | CLOSED — matrix, EOL-aware fixture assessment and offline lockfile proof; the online advisory lane is explicitly UNAVAILABLE |
-| NW-07 | M12 | IN PROGRESS |
+| NW-07 | M12 | CLOSED — erratum aliases, programme PLAN reconciled, two narrow rules; 5 regressions plus four live probes |
 | NW-15 | — | CLOSED BY W10 OWNER — consumed, out of scope |
 
 ## Exact Next Action
+
+1. Run the full certification set at the integrated head from the CANONICAL
+   checkout on `main`, fast-forwarded to `origin/main` first: an integrated
+   session worktree becomes `STALE_SESSION` and fails `HANDOFF_TRUTH` there.
+2. Walk the plan's repository-level definition of done item by item, and
+   report every external or host lane that cannot execute as UNAVAILABLE with
+   its own evidence requirement — never as a pass.
+3. Record residual P2/P3 with impact, reason, owner decision and revisit
+   condition.
+4. Close the findings register, the campaign REPORT and continuity, then
+   integrate by verified fast-forward.
+
+## Superseded next action (M12 / NW-07, complete)
 
 1. Make the duplicated decision identities unambiguous: D-29 through D-34 are
    each used twice in `docs/DECISIONS.md`. Add an alias or erratum record
@@ -484,6 +513,15 @@ owner must hold the overlapping UI API and App surfaces.
 | `docs/MASTER-IMPLEMENTATION-HARDENING-PLAN.md` | document status and NW-06 resolution evidence | MODIFIED |
 
 ## Validation Ledger
+
+M12: `tests/unit/nw07ContinuityCoherence.test.ts` — 5 passed. Four live
+probes: an unrecorded sixth decision collision, an erratum row whose title was
+replaced, a completed milestone regressed to NOT_STARTED, and a completed
+milestone's PLAN section deleted; each failed `hardening:check` with its own
+message and PASS was restored. `npm run validation:universe`: 427 discovered /
+254 gate / 173 classified / 0 unclassified, digest
+`sha256:063ecd1f416bdcb540aff7a7`. `typecheck`, `hardening:check` and
+`agent:check` PASS.
 
 M11: `tests/unit/nw14HostCapabilityMatrix.test.ts` — 8 passed.
 `checkHostCapabilityMatrix` probed three ways against the live repository (an

@@ -50,36 +50,58 @@ Global files remain orchestrator-owned during parallel waves.
 
 ## Milestones
 
+Reconciled 2026-09-09 under NW-07 of
+`docs/MASTER-IMPLEMENTATION-HARDENING-PLAN.md`. These statuses had lagged
+this task's own `STATE.md` since the W0 checkpoint: the PLAN still read W0
+IN_PROGRESS and W1-W5 NOT_STARTED while the STATE recorded W0-W10 complete
+and certified, so a fresh reader following the PLAN would have restarted work
+that had already shipped.
+
+Each status below is taken from this task's `STATE.md` "Completed
+Milestones" and its recorded certification. Nothing here asserts a completion
+the STATE did not already record, and no historical SHA, receipt or wave
+narrative is rewritten.
+
 ### W0 — Protocol freeze
 
 - Objective: shared contracts, programme state, DAG.
 - Files/areas: `src/core/agentProtocol/**`, owner scope, task state, OpenSpec.
-- Status: IN_PROGRESS
+- Status: COMPLETE
 
 ### W1 — Independent lanes
 
 - Objective: implement A–G against frozen contracts.
-- Status: NOT_STARTED
+- Status: COMPLETE
 
 ### W2 — Integration
 
 - Objective: reconcile, integrate, cross-subsystem tests.
-- Status: NOT_STARTED
+- Status: COMPLETE
 
 ### W3 — Adversarial autonomous proof
 
 - Objective: seeded positive + false anomaly + required fail-closed cases.
-- Status: NOT_STARTED
+- Status: COMPLETE
 
 ### W4 — Historical rediscovery
 
 - Objective: run harness on real bugs if accessible, else fixture-classified.
-- Status: NOT_STARTED
+- Status: COMPLETE
 
 ### W5 — Local endurance and certification
 
 - Objective: bounded local campaigns, gates, clean clone, final report.
-- Status: NOT_STARTED
+- Status: COMPLETE
+
+### W6-W10 — successor waves, each with its own task directory
+
+- Objective: the waves opened after this PLAN was written. Each has its own
+  SPEC/PLAN/STATE/REPORT and its own certification; this row exists so the
+  PLAN does not appear to end at W5 while the STATE reports through W10.
+- Terminal wave: `nightwatch-reproduction-surface-coverage-autonomous-yield-v1`
+  (W10), COMPLETE at implementation `62d23e2622ab0a282584c5cf27d92b6b603f9192`
+  and documentation `ec3eacf61c1b5bd3557eaf90594aecb2cd633b4f`.
+- Status: COMPLETE
 
 ## Validation Strategy
 

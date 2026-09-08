@@ -125,7 +125,8 @@ lifecycles, then the operator surface, then release accounting.
   exist and agree.
 - **Validation:** `npm run session:status`, `npm run workspace:check`,
   `npm run agent:check`, `npm run handoff:check`.
-- **Status:** IN_PROGRESS
+- **Status:** COMPLETE — live baseline established, task opened, routing and
+  OpenSpec bound, all four checks PASS.
 
 ### M1 — NW-06 prospective worktree admission and bounded rollback
 
@@ -314,7 +315,11 @@ lifecycles, then the operator surface, then release accounting.
   keyboard, focus, announcement and retry checks.
 - **Validation:** control-center server suites, UI tests, UI typecheck and
   build, and the shipped-CLI browser workflow.
-- **Status:** NOT_STARTED
+- **Status:** COMPLETE — NW-09 shipped opt-in with a capability the server
+  fills from the route-creating option; NW-10 cursor consumption repaired at
+  every layer that discarded it; NW-11 exact validators, one abortable
+  deadline and bounded burst coalescing. 6 launcher + 7 server + 13 client
+  cases, plus 8 UI cases; UI 41 passed, typecheck and build PASS.
 
 ### M10 — NW-08 complete classified validation universe
 
@@ -335,7 +340,10 @@ lifecycles, then the operator surface, then release accounting.
 - **Validation:** fixture repositories for new, unclassified and deleted
   tests, duplicate selection, skips, zero-step groups, UI failure and
   unavailable host capability; then the complete offline and UI lanes.
-- **Status:** NOT_STARTED
+- **Status:** COMPLETE — 426 discovered / 253 authoritative gate / 173
+  classified / 0 unclassified, digest-pinned and enforced in a required
+  hardening rule. 24 safety-relevant suites promoted into the required lane.
+  12 permanent cases plus four live probes.
 
 ### M11 — NW-14 dependency, portability and release documentation truth
 
@@ -357,7 +365,11 @@ lifecycles, then the operator surface, then release accounting.
 - **Validation:** clean offline install, lockfile diff review, root and UI
   typecheck/tests/build, bin syntax and lint, documentation link and schema
   checks.
-- **Status:** NOT_STARTED
+- **Status:** COMPLETE — `docs/HOST-CAPABILITY-MATRIX.md` with seven probed
+  capabilities and ten separate lanes, an EOL-aware Vue fixture assessment,
+  and offline lockfile reproducibility. 8 cases plus three live probes. The
+  online advisory lane is recorded UNAVAILABLE with its own evidence
+  requirement.
 
 ### M12 — NW-07 residual continuity and project-memory coherence
 
@@ -378,7 +390,12 @@ lifecycles, then the operator surface, then release accounting.
   mass-migrated.
 - **Validation:** continuity fixture suites plus `npm run agent:check`,
   `npm run handoff:check`, `npm run project:check`.
-- **Status:** NOT_STARTED
+- **Status:** COMPLETE — Erratum E-1 disambiguates five collided decision
+  identities without editing either entry; the parent programme PLAN is
+  reconciled with its own terminal STATE; and two narrow rules
+  (`checkDecisionIdentityUniqueness`, `checkActiveMilestoneProgression`) make
+  both drift classes fail closed. The progression rule was tested by failing
+  on this campaign's own PLAN first. 5 cases plus four live probes.
 
 ### M13 — Repository certification at one candidate checkpoint
 

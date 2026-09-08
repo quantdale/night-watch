@@ -384,7 +384,7 @@ Priority meanings: P0 is demonstrated catastrophic failure requiring immediate c
 
 ### NW-07 — Keep continuity and project memory mechanically coherent
 
-- **Priority / category / confidence / status:** P2; documentation/release truth; PARTLY RESOLVED, residual work NOT STARTED.
+- **Priority / category / confidence / status:** P2; documentation/release truth; PARTLY RESOLVED at review time; **CLOSED** — residual work repaired and regression-proven under `nightwatch-repository-hardening-implementation-v1` M12.
 - **Affected surfaces:** `.agent/ACTIVE_TASK.md`, programme/child PLAN/STATE/REPORT, `docs/CURRENT_STATE.md`, `docs/DECISIONS.md`, `docs/ROADMAP.md`, and continuity checkers.
 - **Evidence:** the fixed baseline had an active routing worktree mismatch; current `main` repairs it and `agent:check`/`handoff:check` pass. Residual drift remains: the parent PLAN progression lags STATE/W10, five central documents exceed 14,000 lines with current and historical truth interwoven, and decision IDs D-29 through D-34 are duplicated.
 - **Problem, impact, root cause:** humans and agents can follow stale prose even when structured fields pass. Append-heavy memory and incomplete cross-document checks leave multiple apparent current authorities.
@@ -393,6 +393,53 @@ Priority meanings: P0 is demonstrated catastrophic failure requiring immediate c
 - **Tests and validation:** fixtures for stale worktree references, duplicate fields/IDs, PLAN-vs-STATE progression, historical aliases, and terminal/live combinations; agent/project/handoff checks on clean and intentionally invalid fixtures.
 - **Acceptance:** one discoverable current view agrees with active structured state; decision identities are unambiguous; live PLAN/STATE progression agrees; history remains immutable and readable.
 - **Dependencies / risks / parallelization:** W10 coordination required. A continuity lane owns `.agent` and central docs. Risk is false rejection of historical prose; apply new strict rules only to explicitly versioned live schemas.
+
+- **Resolution evidence (2026-09-09):**
+  **Decision identities.** Five numbers — D-29, D-30, D-31, D-33, D-34 — were
+  each issued for two unrelated decisions, so a citation of "D-31" could mean
+  minimization or DEV credential refresh. Neither entry was renumbered:
+  `docs/DECISIONS.md` states its own rule that changing a decision requires a
+  new entry rather than an edit, and renumbering one of a pair would silently
+  rewrite evidence other documents already cite. Erratum E-1 instead assigns
+  ten aliases (`D-29a`/`D-29b` …) keyed by number, title and scope, records
+  that the `a`/`b` ordering is a fact about the document rather than a claim
+  about chronology, states that neither decision supersedes the other, and
+  fixes the going-forward rule that a new decision takes the next unused
+  number. `checkDecisionIdentityUniqueness` fails on any duplicated `## D-N`
+  heading the erratum does not record with EVERY colliding title, so a bare
+  mention of the number cannot satisfy it and a sixth collision cannot arrive
+  unnoticed. Probed two ways: an unrecorded sixth collision, and an erratum
+  row whose title was replaced by "(see the entry below)".
+  **PLAN-vs-STATE progression.** The parent programme's PLAN read `W0
+  IN_PROGRESS, W1-W5 NOT_STARTED` while its own STATE recorded W0-W10
+  complete and certified — a fresh reader following that PLAN would have
+  restarted shipped work. It is reconciled from the programme's own
+  "Completed Milestones" and certification records, with an explicit note
+  that nothing asserts a completion the STATE did not already record and that
+  no historical SHA, receipt or wave narrative was rewritten. A W6-W10 row
+  was added so the PLAN no longer appears to end at W5.
+  `checkActiveMilestoneProgression` then makes the drift class impossible to
+  reintroduce silently: a milestone the ACTIVE task's STATE reports COMPLETE
+  must not still read NOT_STARTED or IN_PROGRESS in its PLAN. It is
+  deliberately narrow, per this finding's own constraint — the active task
+  only, continuity v2 only, and one direction only, because a PLAN milestone
+  may legitimately be complete before the STATE narrative mentions it.
+  It was tested by failing on live data first: **this campaign's own PLAN had
+  drifted at four milestones** (M0 IN_PROGRESS, M9/M10/M11 NOT_STARTED while
+  STATE recorded them COMPLETE). Those were reconciled, and the rule was then
+  probed twice more — a completed milestone regressed to NOT_STARTED, and a
+  completed milestone's PLAN section deleted.
+  **One discoverable current view.** `docs/HOST-CAPABILITY-MATRIX.md` §5 names
+  the ordered short list — README, the matrix, `AGENTS.md`,
+  `.agent/ACTIVE_TASK.md`, and this findings register — and states plainly
+  that the five central documents remain append-heavy archives that are not
+  rewritten. Five permanent cases in
+  `tests/unit/nw07ContinuityCoherence.test.ts`, including one that asserts
+  both halves of each collided decision still exist unedited.
+  Honest limit: the five central documents were NOT split. Their size and
+  interleaving are recorded and routed around rather than repaired, because
+  rewriting them would put historical receipts at risk for a readability
+  gain — the finding's own constraint that history stays immutable.
 
 ### NW-08 — Account for the complete test and package validation universe
 

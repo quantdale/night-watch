@@ -5,6 +5,42 @@ its rationale (grounded in `NIGHTWATCH_RECON_B.md` facts, cited by ID),
 the consequences, and the phases where it applies. Decisions are accepted
 unless marked superseded; changing one requires a new entry, not an edit.
 
+## Erratum E-1 — five decision identities were issued twice
+
+Five numbers were each used for two unrelated decisions. This record makes
+the identities unambiguous **without touching either entry**, because this
+document's own rule is that changing a decision requires a new entry rather
+than an edit — and renumbering one of a pair would silently rewrite evidence
+that other documents already cite.
+
+Cite the alias, not the bare number, when either could be meant. Both
+decisions in each row remain accepted; neither supersedes the other.
+
+| Alias | Number | Title | Scope |
+| --- | --- | --- | --- |
+| D-29a | D-29 | Owner-frozen infrastructure/data boundary | owner scope freeze |
+| D-29b | D-29 | Reviewed Chromium background hosts are exact local blocks | browser egress classification |
+| D-30a | D-30 | Private local evidence is the terminal output | evidence terminality |
+| D-30b | D-30 | Authentication capture separates oracle anomalies from safety failures | auth capture |
+| D-31a | D-31 | Deterministic minimization is subsequence-only replay | minimization |
+| D-31b | D-31 | Designated DEV credential refresh is external, narrow, and subordinate to Nightwatch safety | DEV credentials |
+| D-33a | D-33 | Campaign manifests freeze the executable surface | campaign manifests |
+| D-33b | D-33 | Phase 7B AI is a private review assistant, never an authority | AI review authority |
+| D-34a | D-34 | Private canonical GitHub remote with validated direct-to-main checkpoints | Git topology |
+| D-34b | D-34 | AI owner-scope operations are explicit and narrowly local | AI owner scope |
+
+The `a` suffix is the earlier occurrence in this file, the `b` suffix the
+later one. That ordering is a fact about the document, not a claim about which
+decision came first in time.
+
+**Rule going forward.** A new decision takes the next number above the
+highest already used, and never reuses one. `checkDecisionIdentityUniqueness`
+in `bin/hardening-check.mjs` fails on any duplicated `## D-N` heading that
+this erratum does not already record, so a sixth collision cannot arrive
+unnoticed.
+
+---
+
 ## D-34 — Private canonical GitHub remote with validated direct-to-main checkpoints
 
 **Decision.** Nightwatch's canonical writable Git root is

@@ -112,6 +112,7 @@
     "tests/unit/dossierIdentityPropagation.test.ts",
     "tests/unit/safetyEventAccounting.test.ts",
     "tests/unit/nw08ValidationUniverse.test.ts",
-    "tests/unit/nw14HostCapabilityMatrix.test.ts"
+    "tests/unit/nw14HostCapabilityMatrix.test.ts",
+    "tests/unit/nw07ContinuityCoherence.test.ts"
   ]
 }

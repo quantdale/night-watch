@@ -921,6 +921,77 @@ rather than fixed.
 | no advisory claimed from a version number alone | the online lane is UNAVAILABLE with its own evidence requirement |
 | the document cannot go stale silently | bound to the manifest and to live probe tokens in a required group; 3 live probes, 8 permanent cases |
 
+### NW-07 — keep continuity and project memory mechanically coherent
+
+Two drifts, both of which let a reader follow prose the structured state
+contradicted.
+
+**Five decision numbers issued twice.** D-29, D-30, D-31, D-33 and D-34 each
+name two unrelated decisions, so a citation of "D-31" could mean
+subsequence-only minimization or DEV credential refresh. Neither entry was
+renumbered. `docs/DECISIONS.md` states its own rule — changing a decision
+requires a new entry, not an edit — and renumbering one of a pair would
+silently rewrite evidence other documents already cite.
+
+Erratum E-1 assigns ten aliases keyed by number, title and scope; records
+that the `a`/`b` ordering is a fact about the document rather than a claim
+about chronology; states that neither decision supersedes the other; and
+fixes the rule that a new decision takes the next unused number.
+`checkDecisionIdentityUniqueness` fails on any duplicated heading the erratum
+does not record with EVERY colliding title — a bare mention of the number
+cannot satisfy it. Probed twice: an unrecorded sixth collision, and an
+erratum row whose title was replaced by "(see the entry below)".
+
+**A PLAN contradicting its own STATE.** The parent programme's PLAN read `W0
+IN_PROGRESS, W1-W5 NOT_STARTED` while its own STATE recorded W0-W10 complete
+and certified. A fresh reader following that PLAN would have restarted work
+that had already shipped — which is exactly the failure mode continuity
+records exist to prevent.
+
+It is reconciled from the programme's own Completed Milestones and
+certification records, with an explicit note in the document that nothing
+asserts a completion the STATE did not already record and that no historical
+SHA, receipt or wave narrative was rewritten, plus a W6-W10 row so the PLAN no
+longer appears to end at W5.
+
+`checkActiveMilestoneProgression` then makes the class impossible to
+reintroduce silently. It is narrow by this finding's own constraint — apply
+new strict rules only to explicitly versioned live schemas:
+
+| Bound | Why |
+| --- | --- |
+| the ACTIVE task only | the 140+ historical task directories are records, not live plans |
+| continuity v2 only | legacy v1 prose is never judged by a rule written after it |
+| one direction only | a PLAN milestone may legitimately be COMPLETE before the STATE narrative mentions it; the reverse is the defect |
+
+**The rule was tested by failing on live data first.** This campaign's own
+PLAN had drifted at four milestones — M0 reading IN_PROGRESS, and M9, M10 and
+M11 reading NOT_STARTED while STATE recorded them COMPLETE. The rule caught
+its own author. Those were reconciled and the rule was probed twice more: a
+completed milestone regressed to NOT_STARTED, and a completed milestone's
+PLAN section deleted.
+
+**One discoverable current view.** `docs/HOST-CAPABILITY-MATRIX.md` §5 names
+the ordered short list — README, the matrix, `AGENTS.md`,
+`.agent/ACTIVE_TASK.md`, and the findings register — and says plainly that the
+five central documents remain append-heavy archives that are not rewritten.
+
+**Acceptance.**
+
+| Criterion | Evidence |
+| --- | --- |
+| decision identities are unambiguous | ten aliases; both halves of each pair asserted still present and unedited; a sixth collision fails the gate |
+| one discoverable current view agrees with active structured state | §5's ordered list; the active PLAN and STATE now agree at every completed milestone, enforced |
+| live PLAN and STATE progression agree | `checkActiveMilestoneProgression` in a required group, probed twice |
+| history remains immutable and readable | no decision edited, no receipt or SHA rewritten, the archives left intact |
+| legacy v1 records are not mass-migrated | the rule refuses to judge anything that is not the active continuity-v2 task |
+| false rejection of historical prose avoided | the erratum rule matches only `## D-N —` headings, and the progression rule only the active task |
+
+**Honest limit.** The five central documents were not split. Their size and
+interleaving are recorded and routed around rather than repaired: rewriting
+them would put historical receipts at risk for a readability gain, which this
+finding's own constraint forbids.
+
 ## Validation receipts
 
 Recorded per milestone as they are produced. No receipt is copied from a

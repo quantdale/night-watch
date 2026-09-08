@@ -626,6 +626,102 @@ function checkOwnerReviewCliBoundary() {
  * checked in its source too, so a renamed probe fails here rather than
  * leaving a matrix row describing something that no longer exists.
  */
+/**
+ * NW-07. Decision identities must be unambiguous.
+ *
+ * Five numbers — D-29, D-30, D-31, D-33 and D-34 — were each issued for two
+ * unrelated decisions, so a citation of "D-31" could mean minimization or DEV
+ * credentials. The document's own rule forbids editing a decision, and
+ * renumbering one of a pair would silently rewrite evidence other documents
+ * already cite, so the collisions are recorded in an erratum instead.
+ *
+ * This rule enforces the part that matters going forward: a duplicate that
+ * the erratum does NOT record is a new collision, and it fails. Both titles
+ * must appear, so an erratum row cannot be satisfied by naming the number
+ * alone.
+ */
+/**
+ * NW-07. A live PLAN must not contradict its own STATE.
+ *
+ * The parent programme's PLAN read "W0 IN_PROGRESS, W1-W5 NOT_STARTED" while
+ * its own STATE recorded W0-W10 complete and certified, so a fresh reader
+ * following the PLAN would have restarted work that had already shipped.
+ * This campaign's own PLAN had drifted the same way at four milestones —
+ * which is how the rule was tested: it failed on live data before it passed.
+ *
+ * The rule is deliberately narrow, because NW-07's constraint is to apply
+ * new strict rules only to explicitly versioned live schemas:
+ *
+ *   - only the ACTIVE task, never the 140+ historical task directories;
+ *   - only continuity v2, so legacy v1 prose is never judged;
+ *   - only one direction. A milestone the STATE reports COMPLETE must not
+ *     still read NOT_STARTED or IN_PROGRESS in the PLAN. The reverse is
+ *     legitimate: a PLAN milestone may be complete before the STATE's
+ *     narrative section mentions it.
+ */
+function checkActiveMilestoneProgression() {
+  const activeText = read('.agent/ACTIVE_TASK.md');
+  if (activeText.length === 0) return;
+  const directory = /^Task directory:\s*(\S+)\s*$/m.exec(activeText)?.[1];
+  if (directory === undefined || !directory.startsWith('.agent/tasks/')) return;
+  const stateText = read(`${directory}/STATE.md`);
+  const planText = read(`${directory}/PLAN.md`);
+  if (stateText.length === 0 || planText.length === 0) return;
+  // Only the versioned live schema.
+  if (!stateText.includes('nightwatch.agent-continuity.v2')) return;
+
+  const complete = new Set();
+  for (const match of stateText.matchAll(/\*\*(M\d+)\b[^*]*\bCOMPLETE/g)) complete.add(match[1]);
+  for (const milestone of [...complete].sort()) {
+    const section = new RegExp(`^### ${milestone} —[\\s\\S]*?(?=^### |\\n## )`, 'm').exec(planText);
+    if (section === null) {
+      fail(`${directory}/PLAN.md has no '### ${milestone}' section although STATE.md reports it COMPLETE`);
+      continue;
+    }
+    const status = /^- \*\*Status:\*\*\s*(\S+)/m.exec(section[0])?.[1];
+    if (status === undefined) {
+      fail(`${directory}/PLAN.md milestone ${milestone} has no Status line although STATE.md reports it COMPLETE`);
+      continue;
+    }
+    if (status !== 'COMPLETE') {
+      fail(`${directory}/PLAN.md milestone ${milestone} reads ${status} but STATE.md reports it COMPLETE; a reader following the PLAN would redo shipped work`);
+    }
+  }
+}
+
+function checkDecisionIdentityUniqueness() {
+  const file = 'docs/DECISIONS.md';
+  const text = read(file);
+  if (text.length === 0) {
+    fail(`${file} is missing`);
+    return;
+  }
+  const headings = new Map();
+  for (const line of text.split(/\r?\n/)) {
+    const match = /^## (D-\d+) — (.+)$/.exec(line);
+    if (match === null) continue;
+    const id = match[1];
+    if (!headings.has(id)) headings.set(id, []);
+    headings.get(id).push(match[2].trim());
+  }
+  if (headings.size < 50) {
+    fail(`${file} yielded only ${headings.size} decision headings; the scan is broken rather than the document clean`);
+    return;
+  }
+  for (const [id, titles] of [...headings].sort((left, right) => left[0].localeCompare(right[0]))) {
+    if (titles.length === 1) continue;
+    // A recorded collision must name the number AND every colliding title,
+    // so the erratum cannot be satisfied by a bare mention.
+    const recorded = titles.every((title) => {
+      const row = new RegExp(`\\|\\s*${id}[a-z]\\s*\\|\\s*${id}\\s*\\|\\s*${title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*\\|`);
+      return row.test(text);
+    });
+    if (!recorded) {
+      fail(`${file} issues ${id} ${titles.length} times and the erratum does not record every colliding title; a new decision must take the next unused number`);
+    }
+  }
+}
+
 function checkHostCapabilityMatrix() {
   const matrixFile = 'docs/HOST-CAPABILITY-MATRIX.md';
   const matrix = read(matrixFile);
@@ -4265,6 +4361,8 @@ checkC11ProdObserveBoundary();
 checkP1ObservationScopeBoundary();
 checkAlphausHandoffBoundary();
 checkDocumentationFreshness();
+checkActiveMilestoneProgression();
+checkDecisionIdentityUniqueness();
 checkHostCapabilityMatrix();
 checkValidationUniverse();
 checkSyntax();
