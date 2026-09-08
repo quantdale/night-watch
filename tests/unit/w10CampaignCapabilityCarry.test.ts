@@ -17,7 +17,11 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { REASONER_TURN_RESPONSE_VERSION } from '../../src/core/agentProtocol';
-import { runLocalCliCampaign, loadLocalCampaignCheckpoint } from '../../src/core/agentRuntime/localCampaign';
+import {
+  loadLocalCampaignCheckpoint,
+  resumeLocalCliCampaign,
+  runLocalCliCampaign,
+} from '../../src/core/agentRuntime/localCampaign';
 import { sourceContentDigest } from '../../src/core/source/scanTypes';
 import {
   LOCAL_INVESTIGATION_CONTEXT_VERSION,
@@ -207,3 +211,122 @@ test('a campaign that learns no capability omits the field entirely', async () =
   expect('reproductionSurface' in checkpoint.state).toBe(false);
   expect([...checkpoint.state.knownTargets].sort()).toEqual(['alpha.go', 'beta.go']);
 });
+
+/**
+ * Investigation 0 inspects the index and completes; investigation 1 inspects
+ * nothing and terminates. Each turn's request is written to disk, so the
+ * assertion reads what the SECOND investigation's stateless reasoner was
+ * actually handed rather than what the checkpoint serialized afterwards.
+ */
+function recordingScript(dir: string): string {
+  const file = path.join(dir, 'recording-reasoner.mjs');
+  fs.writeFileSync(
+    file,
+    `import fs from 'node:fs';
+import path from 'node:path';
+let raw = '';
+for await (const chunk of process.stdin) raw += chunk;
+const req = JSON.parse(raw);
+const inv = Number(String(req.campaignId).split(':inv:')[1]);
+const turn = Number(String(req.turnId).split(':turn:')[1]);
+fs.writeFileSync(path.join(${JSON.stringify(dir)}, 'req-' + inv + '-' + turn + '.json'), raw, 'utf8');
+const V = ${JSON.stringify(V)};
+if (inv === 0 && turn === 1) {
+  process.stdout.write(JSON.stringify({ schemaVersion: V, hypotheses: [], intents: [
+    { kind: 'CALL_TOOL', toolId: 'INSPECT_SOURCE_SURFACE', arguments: {} },
+  ] }));
+} else {
+  process.stdout.write(JSON.stringify({ schemaVersion: V, hypotheses: [], intents: [
+    { kind: 'TERMINATE', reason: 'COMPLETE_NO_FINDING' },
+  ] }));
+}
+`,
+    'utf8',
+  );
+  return file;
+}
+
+test('a fresh investigation is handed the capability its campaign already proved', async () => {
+  const dir = scratchDir();
+  await runLocalCliCampaign({
+    campaignId: 'camp-w10-capability-forward',
+    ceilingName: 'HOUR_1',
+    executable: NODE,
+    args: [recordingScript(dir)],
+    provider: 'test-provider',
+    model: 'fake-1',
+    maxTurns: 3,
+    stateDirectory: dir,
+    investigationContext: makeContext(),
+  });
+
+  // Investigation 0 learned the capability by inspecting the index.
+  const first = JSON.parse(fs.readFileSync(path.join(dir, 'req-0-1.json'), 'utf8'));
+  expect(first.observation?.memory?.capabilitySummary ?? null).toBeNull();
+
+  // Investigation 1 inspected nothing at all, so anything it knows about
+  // executability crossed the campaign boundary.
+  const second = JSON.parse(fs.readFileSync(path.join(dir, 'req-1-1.json'), 'utf8'));
+  const summary = second.observation?.memory?.capabilitySummary ?? null;
+  expect(summary).not.toBeNull();
+  expect(summary.executableTargets).toBe(1);
+  expect(summary.distinctExecutableTargets).toBe(1);
+
+  // Capability crosses the boundary as COUNTS, never as new paths: a fresh
+  // investigation that has observed nothing is told an executable target
+  // exists elsewhere, and is handed no target it could not already list.
+  const capabilities: Array<{ target: string }> =
+    second.observation?.memory?.targetCapabilities ?? [];
+  expect(capabilities).toEqual([]);
+  expect(second.observation?.memory?.uninspectedTargets ?? []).toEqual([]);
+});
+
+test('resume restores the campaign capability instead of dropping it', async () => {
+  const dir = scratchDir();
+  const paused = await runLocalCliCampaign({
+    campaignId: 'camp-w10-capability-resume',
+    ceilingName: 'HOUR_1',
+    executable: NODE,
+    args: [indexThenPauseScript(dir)],
+    provider: 'test-provider',
+    model: 'fake-1',
+    maxTurns: 3,
+    stateDirectory: dir,
+    investigationContext: makeContext(),
+  });
+  expect(paused.terminationReason).toBe('PAUSED');
+  expect(paused.yieldMetrics.visibleSources).toBe(SURFACE.length);
+
+  // The resumed process re-reads only the checkpoint: nothing in memory
+  // carries over. A terminate-only reasoner adds no new capability, so any
+  // capability in the resumed result was restored from disk.
+  const resumed = await resumeLocalCliCampaign({
+    campaignId: 'camp-w10-capability-resume',
+    ceilingName: 'HOUR_1',
+    executable: NODE,
+    args: [terminateOnlyScript(dir)],
+    provider: 'test-provider',
+    model: 'fake-1',
+    maxTurns: 2,
+    stateDirectory: dir,
+    investigationContext: makeContext(),
+  });
+  expect(resumed.yieldMetrics.visibleSources).toBe(SURFACE.length);
+  expect(resumed.yieldMetrics.visibleExecutableSources).toBe(1);
+  expect(resumed.yieldMetrics.visibleExecutableTargets).toBe(1);
+});
+
+function terminateOnlyScript(dir: string): string {
+  const file = path.join(dir, 'terminate-reasoner.mjs');
+  fs.writeFileSync(
+    file,
+    `let raw = '';
+for await (const chunk of process.stdin) raw += chunk;
+process.stdout.write(JSON.stringify({ schemaVersion: ${JSON.stringify(V)}, hypotheses: [], intents: [
+  { kind: 'TERMINATE', reason: 'COMPLETE_NO_FINDING' },
+] }));
+`,
+    'utf8',
+  );
+  return file;
+}

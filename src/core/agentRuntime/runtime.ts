@@ -59,6 +59,7 @@ import { MEMORY_CAPS, type CampaignStrategyState } from '../investigationMemory/
 import type { ReproductionSurfaceEntry } from '../reproductionSurface/contracts';
 import {
   TOOL_MEMORY_CAPS,
+  normalizeSurfaceEntries,
   normalizeToolResult,
   type AgentRunOptions,
   type AgentRunResult,
@@ -191,6 +192,14 @@ export class AgentRuntime {
       this.wallBaseMs = restored.state.budget.usage.wallTimeMs;
     } else {
       this.byteLedger = { ...ZERO_AGENT_BYTE_LEDGER };
+      // W10: a fresh investigation inherits the capability its own campaign
+      // already proved, so executability is not rediscovered from zero every
+      // time. Host supplied and re-validated by the same fail-closed tuple
+      // rule as executor facts: an incoherent entry is dropped, never trusted.
+      for (const entry of normalizeSurfaceEntries(deps.priorSurface) ?? []) {
+        if (this.reproductionSurface.size >= TOOL_MEMORY_CAPS.reproductionSurface) break;
+        this.reproductionSurface.set(entry.sourcePath, entry);
+      }
       this.usage = {
         wallTimeMs: 0,
         reasonerCalls: 0,

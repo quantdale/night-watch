@@ -125,7 +125,7 @@ function boundedMemoryList(value: unknown, max: number, charCap: number): readon
  * downgraded into a plausible-looking one.
  */
 const SURFACE_TARGET_ID_RE = /^surface:sha256:[0-9a-f]{24}$/;
-function normalizeSurfaceEntries(value: unknown): readonly ReproductionSurfaceEntry[] | undefined {
+export function normalizeSurfaceEntries(value: unknown): readonly ReproductionSurfaceEntry[] | undefined {
   if (!Array.isArray(value)) return undefined;
   const out: ReproductionSurfaceEntry[] = [];
   const seen = new Set<string>();

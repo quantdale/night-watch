@@ -812,6 +812,10 @@ async function runOneInvestigation(engine: CampaignEngine, investigationId: stri
       maxTurns: engine.input.maxTurns,
       now: engine.now,
       priorStrategy: engine.acc.strategy,
+      // The capability this campaign already proved. Without it a fresh
+      // investigation re-learns executability from zero, which is the
+      // cross-investigation amnesia W10 exists to remove.
+      priorSurface: [...engine.acc.reproductionSurface.values()],
     }).run({ maxTurns: engine.input.maxTurns });
   }
   engine.acc.histories.push(session.snapshot());
@@ -923,6 +927,12 @@ function seedFromCheckpointState(engine: CampaignEngine, state: AgentRuntimeStat
     ? { ...state.byteLedger }
     : legacyAgentByteLedger(state.budget.usage.inputBytes, state.budget.usage.outputBytes, state.budget.usage.toolPayloadBytes);
   acc.knownTargets = [...(state.knownTargets ?? [])];
+  // W10: restore the capability the campaign already proved. A pre-W10
+  // checkpoint has none, which reads as UNKNOWN downstream and never as
+  // executable, so resume invents no capability it did not have.
+  acc.reproductionSurface = new Map(
+    (state.reproductionSurface ?? []).map((entry) => [entry.sourcePath, entry]),
+  );
   acc.lastPhase = state.phase;
 }
 
