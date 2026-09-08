@@ -73,7 +73,8 @@ import {
   parseCampaignStrategyState,
 } from '../investigationMemory/derive';
 import type { CampaignStrategyState } from '../investigationMemory/types';
-import type { AgentRunResult, AgentToolExecutor } from './types';
+import { TOOL_MEMORY_CAPS, type AgentRunResult, type AgentToolExecutor } from './types';
+import type { ReproductionSurfaceEntry } from '../reproductionSurface/contracts';
 
 export const LOCAL_CAMPAIGN_VERSION = 'nightwatch.local-cli-campaign.v1' as const;
 export const AGENT_BUDGET_CEILING_NAMES = ['HOUR_1', 'HOUR_4', 'HOUR_8', 'OVERNIGHT'] as const;
@@ -481,6 +482,13 @@ interface CampaignAccumulators {
   investigationsCompleted: number;
   pendingResume: AgentCheckpoint | null;
   knownTargets: string[];
+  /**
+   * W10 capability, folded across investigations. Without this the campaign
+   * accumulator copied `knownTargets` but not the annotation beside it, so
+   * every fresh investigation rediscovered executability from zero and the
+   * persisted checkpoint reported none at all.
+   */
+  reproductionSurface: Map<string, ReproductionSurfaceEntry>;
   strategy: CampaignStrategyState;
 }
 
@@ -508,6 +516,7 @@ function freshAccumulators(campaignId: string): CampaignAccumulators {
     investigationsCompleted: 0,
     pendingResume: null,
     knownTargets: [],
+    reproductionSurface: new Map(),
     strategy: emptyCampaignStrategyState(campaignId),
   };
 }
@@ -589,6 +598,18 @@ function absorbInvestigation(engine: CampaignEngine, ran: AgentRunResult, countS
   for (const target of ran.state.knownTargets ?? []) {
     if (!acc.knownTargets.includes(target)) acc.knownTargets.push(target);
   }
+  // Newest host classification wins: source can change between investigations,
+  // so a later observation of the same path replaces the earlier one rather
+  // than being discarded as a duplicate.
+  for (const entry of ran.state.reproductionSurface ?? []) {
+    if (
+      acc.reproductionSurface.size >= TOOL_MEMORY_CAPS.reproductionSurface &&
+      !acc.reproductionSurface.has(entry.sourcePath)
+    ) {
+      break;
+    }
+    acc.reproductionSurface.set(entry.sourcePath, entry);
+  }
   acc.lastPhase = ran.state.phase;
   // Fold the finished investigation into the bounded cross-investigation
   // strategy so the NEXT fresh AgentRuntime does not start from zero.
@@ -638,6 +659,11 @@ function campaignStateOf(
     evidenceRefs: [...acc.evidenceRefs],
     candidateIds: [...acc.candidateIds],
     knownTargets: [...acc.knownTargets],
+    // Omitted when empty so a campaign that learned no capability serializes
+    // byte-identically to a pre-W10 checkpoint.
+    ...(acc.reproductionSurface.size === 0
+      ? {}
+      : { reproductionSurface: [...acc.reproductionSurface.values()] }),
     byteLedger: { ...acc.byteLedger },
     budget: { policy: engine.policy, usage: campaignUsageOf(engine) },
     terminationReason,
