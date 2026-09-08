@@ -27,6 +27,10 @@ import {
   LOCAL_INVESTIGATION_CONTEXT_VERSION,
   LOCAL_INVESTIGATION_HISTORY_VERSION,
 } from '../../src/core/localInvestigation/types';
+import {
+  CURRENT_FAILURE_EVIDENCE_SCHEMA_VERSION,
+  deriveCurrentFailureEvidence,
+} from '../../src/core/localInvestigation/currentFailureEvidence';
 import { createLocalInvestigationToolSession } from '../../src/core/localInvestigation/session';
 import {
   createOwnerLocalInvestigationContext,
@@ -534,6 +538,84 @@ test.describe('session over stub providers', () => {
     expect(result.resultClass).toBe('NOT_REPRODUCED');
     expect(result.evidenceRefs).toEqual([]);
     expect(session.snapshot().reproductions).toHaveLength(1);
+  });
+
+  test('a qualifying current failure reaches the consumer with bounded evidence only', async () => {
+    const failureEvidence = deriveCurrentFailureEvidence({
+      stdout: '=== RUN   TestTotal\n--- FAIL: TestTotal (0.00s)\n    total_test.go:12: got 3 want 4\nFAIL\n',
+      stderr: '',
+      failureClass: 'TEST_ASSERTION_FAILURE',
+      matchingFreshExecutions: 2,
+      packagePath: 'src',
+      groundedSourcePaths: ['testorg/testrepo:src/total_test.go'],
+    });
+    expect(failureEvidence).not.toBeNull();
+    const reproduction = stubReproduction({
+      verdict: 'REPRODUCED_CURRENT_FAILURE',
+      reasonerVisible: {
+        harness: 'nightwatch.owner-local-reproduction-observation.v1',
+        outcome: 'REPRODUCED_CURRENT_FAILURE',
+        package: 'src',
+        executions: 2,
+        failureClass: 'TEST_ASSERTION_FAILURE',
+        failureEvidence,
+      },
+      evidenceRef: 'ev:stub-current-failure-1',
+      provenanceRefs: ['testorg/testrepo:src/total.ts'],
+      preFix: 'FAIL',
+      postFix: 'NOT_RUN',
+      currentSourceProof: null,
+    });
+    const session = createLocalInvestigationToolSession(stubContext({ reproduction }));
+    await session.executor.execute(call('INSPECT_SOURCE_SURFACE', { path: SOURCE_PATH }));
+    const sourceRef = session.snapshot().inspectedSources[0]?.evidenceRef ?? '';
+    const result = await session.executor.execute(call('RERUN_SAFE_REPRODUCTION', {
+      reproductionId: 'r-cfe-1',
+      sourcePath: SOURCE_PATH,
+      sourceEvidenceRef: sourceRef,
+      observedEvidenceRefs: [],
+    }));
+    expect(result.ok).toBe(true);
+    expect(result.resultClass).toBe('REPRODUCED_CURRENT_FAILURE');
+    const envelope = envelopeJson<Record<string, unknown>>(result);
+    expect(envelope).toHaveProperty('failureEvidence');
+    const exposed = envelope['failureEvidence'] as Record<string, unknown>;
+    expect(exposed['schemaVersion']).toBe(CURRENT_FAILURE_EVIDENCE_SCHEMA_VERSION);
+    expect(exposed['schemaVersion']).toBe('nightwatch.current-failure-evidence.v1');
+    expect(exposed['classification']).toBe('TEST_ASSERTION_FAILURE');
+    expect(exposed['testName']).toBe('TestTotal');
+    // The harness-only audit payload still never reaches the consumer.
+    expect(JSON.stringify(result)).not.toContain('AUDIT_MARKER_STUB_SECRET');
+    expect(JSON.stringify(session.snapshot())).not.toContain('AUDIT_MARKER_STUB_SECRET');
+  });
+
+  test('a non-qualifying session result omits the evidence key', async () => {
+    const reproduction = stubReproduction({
+      verdict: 'NOT_REPRODUCED',
+      reasonerVisible: {
+        harness: 'nightwatch.owner-local-reproduction-observation.v1',
+        outcome: 'NOT_REPRODUCED',
+        package: 'src',
+        executions: 2,
+        failureClass: null,
+      },
+      evidenceRef: null,
+      preFix: 'PASS',
+      postFix: 'NOT_RUN',
+    });
+    const session = createLocalInvestigationToolSession(stubContext({ reproduction }));
+    await session.executor.execute(call('INSPECT_SOURCE_SURFACE', { path: SOURCE_PATH }));
+    const sourceRef = session.snapshot().inspectedSources[0]?.evidenceRef ?? '';
+    const result = await session.executor.execute(call('RERUN_SAFE_REPRODUCTION', {
+      reproductionId: 'r-cfe-2',
+      sourcePath: SOURCE_PATH,
+      sourceEvidenceRef: sourceRef,
+      observedEvidenceRefs: [],
+    }));
+    expect(result.ok).toBe(true);
+    expect(result.resultClass).toBe('NOT_REPRODUCED');
+    const envelope = envelopeJson<Record<string, unknown>>(result);
+    expect('failureEvidence' in envelope).toBe(false);
   });
 
   test('finding proposals are captured with frozen authority and no new evidence', async () => {
