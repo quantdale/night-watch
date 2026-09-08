@@ -266,7 +266,27 @@ session worktree awaiting an owner release. `npm run handoff:check` PASS,
 receipt campaign `nightwatch-repository-hardening-implementation-v1`,
 planned-from `0ac7b3d`. `npm run workspace:check` PASS.
 
-M5 shard sweep at the M5 tree (the full suite in four foreground shards,
+**M5 confirming shard sweep at the committed head `e32ab5d`** — the full
+suite, four foreground shards, fully reconciled against collection:
+
+| Shard | Collected | Passed | Skipped | Failed |
+|---|---:|---:|---:|---:|
+| 1/4 | 1190 | 1190 | 0 | 0 |
+| 2/4 | 1208 | 1207 | 1 | 0 |
+| 3/4 | 1137 | 1125 | 12 | 0 |
+| 4/4 | 1178 | 1173 | 5 | 0 |
+| total | **4713** | **4695** | **18** | **0** |
+
+`npx playwright test --list` reports 4713 tests in 336 files, and the four
+shard `--list` sets were differenced against the full set to confirm they
+partition it exactly, so passed + skipped accounts for every collected test.
+Three earlier receipts were discarded rather than recorded: two background
+`npm test` runs killed mid-flight by session rotation (4635 and 1562 of 4708
+collected), and the first shard sweep, whose three real failures are
+diagnosed below.
+
+M5 first shard sweep, before those failures were resolved (the full suite in
+four foreground shards,
 because two consecutive background `npm test` runs were killed mid-flight by
 session rotation and were discarded rather than recorded):
 
@@ -291,7 +311,11 @@ All three failures were diagnosed rather than accepted:
   `SELFDEV_AUTHORITATIVE_SOURCE_DIRTY` because the self-dev CLI refuses to
   run against an uncommitted authoritative source tree, and this campaign's
   trust-root files were uncommitted at the time of the sweep. Re-verified
-  after the commit.
+  against the clean committed tree: `selfDevAdoptionCli`,
+  `phase23QualityGate` and `selfDevAdoptionSandbox` — 29 passed. The lesson
+  is recorded rather than worked around: these two cases are sensitive to
+  working-tree cleanliness, so a mid-milestone sweep with uncommitted
+  authoritative source will always show them red.
 
 M5: `tests/unit/nw13SensitiveDiagnostics.test.ts` — 5 passed; 2 fail against
 the pre-repair code. 52 passed across `storageState`, `environmentSelection`,
