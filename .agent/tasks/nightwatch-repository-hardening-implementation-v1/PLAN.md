@@ -288,7 +288,9 @@ lifecycles, then the operator surface, then release accounting.
   events and listeners; stalled clients coalesce or disconnect within policy;
   healthy peers keep receiving; cleanup leaves no registry entry.
 - **Validation:** the SSE backpressure suite with fake writable streams.
-- **Status:** NOT_STARTED
+- **Status:** COMPLETE — newest-only retention plus two documented
+  disconnection bounds; quantified pre-repair at 38,216 queued bytes versus a
+  bounded 228, by a case using only the pre-existing public surface.
 
 ### M9 — NW-09 / NW-10 / NW-11 operator dashboard workflow
 

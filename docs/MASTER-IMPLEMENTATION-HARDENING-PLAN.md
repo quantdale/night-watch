@@ -461,7 +461,7 @@ Priority meanings: P0 is demonstrated catastrophic failure requiring immediate c
 
 ### NW-12 — Bound SSE memory for slow or disconnected clients
 
-- **Priority / category / confidence / status:** P2; server availability and resource lifecycle; CONFIRMED source behavior; NOT STARTED.
+- **Priority / category / confidence / status:** P2; server availability and resource lifecycle; CONFIRMED source behavior; **CLOSED** — repaired and regression-proven under `nightwatch-repository-hardening-implementation-v1` M8.
 - **Affected surfaces:** `src/controlCenter/server/sse.ts`, connection lifecycle and server tests.
 - **Evidence:** client count is capped, but the code ignores `response.write(false)`. A stalled consumer can accumulate queued bytes until disconnect or process pressure.
 - **Problem, impact, root cause:** connection count is bounded while per-connection output memory is not; the implementation treats a writable stream as fire-and-forget.
@@ -470,6 +470,44 @@ Priority meanings: P0 is demonstrated catastrophic failure requiring immediate c
 - **Tests and validation:** fake writable streams returning false, delayed/no drain, close/error races, rapid events, client-cap interaction, and healthy peers. Assert bounded bytes/events/listeners and deterministic termination/coalescing.
 - **Acceptance:** per-client queued state has a fixed bound; stalled clients coalesce or disconnect within policy; healthy delivery continues; cleanup leaves no registry/listener entry.
 - **Dependencies / risks / parallelization:** dashboard-server lane with NW-09; coordinate invalidation semantics with NW-11. Risk is frequent reconnect for slow clients; document and test the chosen behavior.
+
+- **Resolution evidence (2026-09-08):** quantified against the pre-repair hub
+  through a case that uses ONLY the pre-existing public surface —
+  `subscribe`, `publish`, and the socket's own byte count. With one stalled
+  fake writable and 201 published events, the old hub handed it **38,216
+  bytes**; the repaired hub hands it **228** and nothing further. That
+  separation is the finding.
+  The policy is chosen and documented rather than left implicit, in three
+  parts. (1) Invalidation events need not be lossless — clients refetch a
+  snapshot when notified, so N pending notifications and one pending
+  notification produce the same refetch. While a client is backpressured the
+  hub therefore retains exactly the NEWEST frame, so per-client queued state
+  is one frame by construction. (2) Heartbeats are never queued while
+  backpressured: they carry no information and would displace the newest real
+  invalidation. (3) A client that never drains is disconnected, on whichever
+  of two independent bounds trips first — `MAX_COALESCED_FRAMES` (32) replaced
+  frames or `MAX_STALL_MS` (30 s) backpressured — because a slow client
+  reconnects and refetches while a permanently stalled one must not be
+  carried forever.
+  Lifecycle is deterministic: the `drain` listener is attached ONCE per
+  client rather than per write (attaching per write is how a listener leak
+  starts), removal detaches every listener, removal is idempotent so the
+  request and response both emitting `close` cannot double-count, and
+  `disconnectCounts()` reports why clients were dropped as counters only —
+  `WRITE_FAILED`, `COALESCE_LIMIT`, `STALL_TIMEOUT`, `HUB_CLOSED`.
+  Eleven cases in `tests/unit/nw12SseBackpressure.test.ts`, all driving fake
+  writables so "never drains" is exact, with time injected so nothing sleeps:
+  the API-free byte bound, newest-only retention with an exact coalesced
+  count, newest-frame delivery on drain, disconnection at each of the two
+  bounds, heartbeats neither queued nor exempt from the stall bound, a
+  healthy peer receiving all 12 frames while a stalled peer holds one, a
+  throwing write, hub close, double-`close` idempotence, and the client cap
+  with normal resumption after drain. Ten of the eleven also fail against the
+  old hub, but only the API-free case fails for the RIGHT reason — the others
+  assert `clientDiagnostics()` and `disconnectCounts()`, which did not exist
+  before the repair. That distinction is recorded rather than presented as
+  ten independent measurements. `controlCenterServer`, `c10AcceptanceSuite`
+  and `phase23QualityGate`: 85 passed.
 
 ### NW-13 — Remove sensitive input from parser diagnostics
 

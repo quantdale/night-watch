@@ -517,6 +517,52 @@ declared `maxBodyBytes` option was never read — `defaultFetch` hardcoded
 behaviour identical while making the declared option real. And the two
 duplicated `15_000` literals became one named constant.
 
+### NW-12 — bound SSE memory for slow or disconnected clients
+
+**Quantified, not characterised.** One stalled fake writable and 201
+published events: the pre-repair hub handed the socket **38,216 bytes**; the
+repaired hub hands it **228** and nothing further. That measurement uses only
+`subscribe`, `publish` and the socket's own byte count — the surface that
+existed before the repair — so it fails for the defect rather than for a
+missing method.
+
+**The policy, chosen explicitly.**
+
+| Part | Rule | Why |
+| --- | --- | --- |
+| 1 | while backpressured, retain exactly the NEWEST frame | invalidations need not be lossless: a client refetches a snapshot when notified, so N pending notifications and one produce the same refetch. Queued state is one frame by construction |
+| 2 | heartbeats are never queued while backpressured | they carry no information and would displace the newest real invalidation |
+| 3 | disconnect on `MAX_COALESCED_FRAMES` (32) or `MAX_STALL_MS` (30 s), whichever trips first | a slow client reconnects and refetches; a permanently stalled one must not be carried forever |
+
+Healthy peers are unaffected: backpressure is per client and a stalled
+client's frame is dropped rather than blocking the publish loop — asserted by
+a peer receiving all 12 frames while the stalled peer holds one.
+
+**Lifecycle.** The `drain` listener is attached ONCE per client, not per
+write — attaching per write is how a listener leak starts. Removal detaches
+every listener and is idempotent, so the request and the response both
+emitting `close` cannot double-count. `disconnectCounts()` reports why
+clients were dropped, as counters only: `WRITE_FAILED`, `COALESCE_LIMIT`,
+`STALL_TIMEOUT`, `HUB_CLOSED`.
+
+**Acceptance.**
+
+| Criterion | Evidence |
+| --- | --- |
+| per-client queued state has a fixed bound | newest-only retention; `pendingFrames` is 0 or 1 in every case; byte count stops growing after the discovery write |
+| stalled clients coalesce or disconnect within policy | exact coalesced count of 9 after 11 publishes; disconnection at the coalesce bound and at the stall bound, each with its own reason counter |
+| healthy delivery continues | the healthy peer receives all 12 frames while its stalled neighbour holds one |
+| cleanup leaves no registry entry, listener or timer | listener counts asserted 0 after a throwing write, after hub close, and after a self-close; removal is idempotent |
+| the client cap still holds | a third subscriber is refused at a cap of 2, and normal delivery resumes after drain |
+
+**An all-fail pre-repair result that was mostly meaningless.** All ten
+original cases failed against the old hub — but most asserted
+`clientDiagnostics()` or `disconnectCounts()`, methods the repair introduced,
+so they failed on API absence rather than on the defect. The eleventh case
+was added precisely to close that gap, and it is the one whose failure means
+something. "Every case fails pre-repair" is worth nothing unless the failure
+mode is the defect.
+
 ## Validation receipts
 
 Recorded per milestone as they are produced. No receipt is copied from a

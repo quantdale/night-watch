@@ -13,7 +13,7 @@ Last validated implementation SHA: 64fb907b6d536c87541641cd99aa47f9f5a6a170
 Last substantive checkpoint SHA: 64fb907b6d536c87541641cd99aa47f9f5a6a170
 Live HEAD authority: GIT
 Branch: session/nightwatch-repository-hardening--e7b9be89
-Last checkpoint: M7 / NW-05 complete and validated — one monotonic abortable deadline covering the whole relay operation, with a frozen failure taxonomy and injected time
+Last checkpoint: M8 / NW-12 complete and validated — a documented per-client SSE backpressure policy with two disconnection bounds, quantified from 38,216 queued bytes to 228
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 0ac7b3d037b5059f670eca715fc30adaf58e7334
@@ -34,11 +34,12 @@ is consumed, not re-executed.
 
 ## Current Milestone
 
-Milestone ID: M8
+Milestone ID: M9
 Milestone status: IN_PROGRESS
-What is being attempted: NW-12 — give each SSE client a fixed queued-state
-bound by honouring `response.write` backpressure, so one stalled consumer
-cannot accumulate bytes or degrade healthy peers.
+What is being attempted: NW-09 / NW-10 / NW-11 — the operator dashboard
+workflow: a shipped opt-in review capability with a truthful capability DTO,
+then bounded end-to-end pagination and validated, cancellable, coalesced
+client requests on the frozen DTOs.
 
 ## Completed Milestones
 
@@ -134,7 +135,9 @@ cannot accumulate bytes or degrade healthy peers.
 
 ## Work In Progress
 
-M8 / NW-12 in this session worktree. No other lane is dispatched.
+M9 / NW-09 in this session worktree. NW-10 and NW-11 follow in the same
+session once the NW-09 capability and pagination DTOs are frozen, because one
+owner must hold the overlapping UI API and App surfaces.
 
 ## Findings register progress
 
@@ -147,8 +150,8 @@ M8 / NW-12 in this session worktree. No other lane is dispatched.
 | NW-13 | M5 | CLOSED — repaired, 5 regressions, 2 proven failing pre-repair |
 | NW-04 | M6 | CLOSED — repaired, 13 regressions, consumer-level case proven failing pre-repair |
 | NW-05 | M7 | CLOSED — repaired, 11 regressions, 4 proven failing pre-repair |
-| NW-12 | M8 | IN PROGRESS |
-| NW-09 | M9 | NOT STARTED |
+| NW-12 | M8 | CLOSED — repaired, 11 regressions, quantified 38,216 bytes to 228 |
+| NW-09 | M9 | IN PROGRESS |
 | NW-10 | M9 | NOT STARTED |
 | NW-11 | M9 | NOT STARTED |
 | NW-08 | M10 | PARTIAL — ten suites registered, two duplicate additions reverted; live denominator 218/336 files measured |
@@ -157,6 +160,24 @@ M8 / NW-12 in this session worktree. No other lane is dispatched.
 | NW-15 | — | CLOSED BY W10 OWNER — consumed, out of scope |
 
 ## Exact Next Action
+
+1. Probe the live NW-09 evidence: confirm that
+   `bin/nightwatch-control-center.mjs` builds a default collector without
+   `reviewAuthority` and a server without `reviewDecision`, so the supported
+   review capability exists only as library injection and the existing browser
+   tests — which inject authority directly — do not exercise the shipped path.
+2. Freeze the capability DTO and the pagination DTOs together BEFORE touching
+   the UI, since NW-10 and NW-11 consume them.
+3. Add the launcher opt-in with an owner-local preflight that creates one
+   immutable authority and injects it into both collector and server, keeping
+   the default read-only and reading back by review identity on an uncertain
+   POST outcome rather than retrying.
+4. Then NW-10 cursor state with identity deduplication and generation
+   binding, and NW-11 exact per-endpoint validators, composed navigation
+   abort with a finite deadline, and bounded SSE-invalidation coalescing
+   consistent with the M8 server policy.
+
+## Superseded next action (M8, complete)
 
 1. Probe the live NW-12 evidence in `src/controlCenter/server/sse.ts`:
    confirm that `response.write`'s false return is ignored, so a stalled
@@ -306,6 +327,8 @@ M8 / NW-12 in this session worktree. No other lane is dispatched.
 | `src/api/phase5/deadline.ts` | frozen relay failure taxonomy and the one abortable operation deadline | CREATED |
 | `src/api/phase5/relay.ts` | one deadline threaded through auth, connection, redirect and body; signal reaches `fetch`; `maxBodyBytes` wired | MODIFIED |
 | `tests/unit/nw05RelayDeadline.test.ts` | eleven NW-05 cases with injected time and count-based assertions | CREATED |
+| `src/controlCenter/server/sse.ts` | per-client backpressure policy, two disconnection bounds, deterministic listener lifecycle | MODIFIED |
+| `tests/unit/nw12SseBackpressure.test.ts` | eleven NW-12 cases over fake writables, including an API-free byte bound | CREATED |
 | `docs/MASTER-IMPLEMENTATION-HARDENING-PLAN.md` | document status and NW-06 resolution evidence | MODIFIED |
 
 ## Validation Ledger
@@ -317,6 +340,16 @@ the inherited W10 anchor, 31 legacy v1 task records, and the integrated W10
 session worktree awaiting an owner release. `npm run handoff:check` PASS,
 receipt campaign `nightwatch-repository-hardening-implementation-v1`,
 planned-from `0ac7b3d`. `npm run workspace:check` PASS.
+
+M8: `tests/unit/nw12SseBackpressure.test.ts` — 11 passed. Against the
+pre-repair hub, the API-free case FAILED with 38,216 queued bytes where the
+bound is 228. Ten of the eleven fail against the old hub, but only that one
+fails for the right reason: the others assert `clientDiagnostics()` and
+`disconnectCounts()`, which did not exist before the repair, so they would
+fail on API absence. Recorded rather than counted as ten measurements.
+`controlCenterServer`, `c10AcceptanceSuite`, `phase23QualityGate` — 85
+passed. The authoritative gate now selects 223 unique test files with zero
+duplicates.
 
 M7: `tests/unit/nw05RelayDeadline.test.ts` — 11 passed; 4 fail against the
 pre-repair relay, one per defect (unbounded auth, doubled redirect budget,
@@ -472,6 +505,15 @@ tests `worktrees.length > maxWorktrees` over already-registered worktrees
 only. The candidate registration is never modelled, and the same function
 returns on a failed ownership-record write with the branch and worktree
 already created.
+
+Discovery: an all-fail pre-repair result can be mostly meaningless. Evidence:
+all ten original NW-12 cases failed against the old hub, but most asserted
+`clientDiagnostics()` or `disconnectCounts()` — methods the repair
+introduced — so they failed on API absence rather than on the defect. An
+eleventh case was added that uses only `subscribe`, `publish` and the
+socket's own byte count, and it fails for the right reason with a number
+attached. "Every case fails pre-repair" is worth nothing unless the failure
+mode is the defect.
 
 Discovery: a planted-secret fragment search can report a leak that is not
 one. Evidence: the NW-04 corrupt-state case planted
