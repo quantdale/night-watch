@@ -191,8 +191,11 @@ const MUTATIONS: readonly Mutation[] = [
   {
     name: 'M-18 give the reviewer read authority persistence authority',
     file: 'src/controlCenter/authorities/reviewerAuthority.ts',
-    from: "import { safePublicId } from '../adapters/common';",
-    to: "import { safePublicId } from '../adapters/common';\nimport { ReviewStore } from '../../core/reviewStore';",
+    // NW-10 added `boundedCursorOffset` to this import, so the anchor moved
+    // with it. The mutation itself is unchanged: inject persistence authority
+    // and require the hardening rule to catch it.
+    from: "import { boundedCursorOffset, safePublicId } from '../adapters/common';",
+    to: "import { boundedCursorOffset, safePublicId } from '../adapters/common';\nimport { ReviewStore } from '../../core/reviewStore';",
     expect: /reviewer authority holds persistence authority instead of receiving a lookup/,
   },
   {

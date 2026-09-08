@@ -59,8 +59,7 @@ import {
   type ControlCenterReviewerElementDto,
   type ControlCenterReviewerFindingDto,
 } from '../contracts/reviewer';
-import { boundedCollection,
-  boundedCursorOffset, boundedCount, safePublicId } from './common';
+import { boundedCollection, boundedCount, boundedCursorOffset, safePublicId } from './common';
 
 /**
  * The same sentinel vocabulary the FC-1 filing report screens. Two screens

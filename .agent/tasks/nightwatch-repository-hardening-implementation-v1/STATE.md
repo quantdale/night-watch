@@ -198,7 +198,7 @@ owner must hold the overlapping UI API and App surfaces.
 | NW-09 | M9 | CLOSED — repaired, 6 launcher + 4 UI regressions, 5 of each proven failing pre-repair |
 | NW-10 | M9 | CLOSED — repaired at every layer, 7 server + 4 UI regressions, 6 and 4 proven failing pre-repair |
 | NW-11 | M9 | CLOSED — repaired, 13 regressions, 10 proven failing pre-repair |
-| NW-08 | M10 | PARTIAL — ten suites registered, two duplicate additions reverted; live denominator 218/336 files measured |
+| NW-08 | M10 | PARTIAL — 227 unique authoritative test files registered with zero duplicates; classification and receipt binding still open |
 | NW-14 | M11 | NOT STARTED |
 | NW-07 | M12 | NOT STARTED |
 | NW-15 | — | CLOSED BY W10 OWNER — consumed, out of scope |
@@ -427,6 +427,28 @@ owner must hold the overlapping UI API and App surfaces.
 | `docs/MASTER-IMPLEMENTATION-HARDENING-PLAN.md` | document status and NW-06 resolution evidence | MODIFIED |
 
 ## Validation Ledger
+
+M9 full regression at the reconciled M9 head: `npm test` — **4743 passed / 18
+skipped / 0 failed**, 8.5 minutes. UI lane: 41 passed, typecheck PASS, build
+PASS (3 files, 297,422 bytes, no external references). `npm run typecheck`,
+`npm run hardening:check`, `npm run agent:check` PASS.
+
+Two regressions were introduced during M9 and repaired before integration.
+Both were caught by EXISTING guards, which is the outcome those guards exist
+for:
+
+- `reviewStoreHardening` M-18 failed with `mutation anchor must occur exactly
+  once`. NW-10 added `boundedCursorOffset` to the import line the mutation
+  probe anchors on in `reviewerAuthority.ts`. The anchor was updated to the
+  current text; the mutation itself — inject persistence authority and require
+  the hardening rule to catch it — is unchanged. 23 passed after the fix.
+- `phase23QualityGate` reported `UNCLASSIFIED_DUPLICATE` for
+  `tests/unit/reviewerProjection.test.ts`: registering it in the
+  synthetic-campaign lane would have executed it twice, since another
+  required lane already selects it. The registration was removed rather than
+  the assertion relaxed — the plan's own NW-08 constraint forbids duplicate
+  execution without a documented independent claim. `gate:inventory` now
+  reports zero duplicates across 227 unique authoritative test files.
 
 M0: `npm run session:status` PASS (`WORKSPACE_INTEGRITY_SATISFIED`, self
 `OWNED_SESSION`, clean, base CURRENT). `npm run agent:check` PASS with 3
