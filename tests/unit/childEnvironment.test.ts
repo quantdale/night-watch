@@ -114,3 +114,23 @@ test('child environment rejects non-Nightwatch explicit keys', () => {
   expect(result.status).toBe(0);
   expect(result.stdout).toContain('CHILD_ENV_EXPLICIT_KEY_INVALID');
 });
+
+test('a host-fixed NODE_OPTIONS is accepted explicitly but never inherited', () => {
+  // `nightwatch-agent test` passes NODE_OPTIONS=--expose-gc. The namespace
+  // check rejected it, so the subcommand threw before running a single suite.
+  // The invariant the check protects is that AMBIENT parent state never
+  // reaches a child, which is a different statement from "the launcher may
+  // not set a runtime flag it hard-codes itself".
+  const script = `
+    import { buildChildEnvironment } from ${JSON.stringify(builderModule)};
+    const explicit = buildChildEnvironment({ PATH: '/usr/bin' }, { NODE_OPTIONS: '--expose-gc' });
+    const inherited = buildChildEnvironment({ PATH: '/usr/bin', NODE_OPTIONS: '--parent-injected' }, {});
+    process.stdout.write(JSON.stringify({
+      explicit: explicit.NODE_OPTIONS ?? null,
+      inherited: inherited.NODE_OPTIONS ?? null,
+    }));
+  `;
+  const result = spawnSync(process.execPath, ['--input-type=module', '--eval', script], { encoding: 'utf8' });
+  expect(result.status).toBe(0);
+  expect(JSON.parse(result.stdout)).toEqual({ explicit: '--expose-gc', inherited: null });
+});

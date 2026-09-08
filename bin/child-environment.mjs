@@ -25,6 +25,19 @@ const INHERITED_KEYS = Object.freeze([
 ]);
 
 /**
+ * Non-Nightwatch keys a launcher may set EXPLICITLY.
+ *
+ * The namespace rule exists so ambient parent state cannot reach a child, and
+ * that stays true: these are never inherited from the parent, only supplied as
+ * a host-fixed literal by the launcher itself. Without this list
+ * `nightwatch-agent test` was dead on arrival — it passes
+ * `NODE_OPTIONS=--expose-gc`, which the namespace check rejected before any
+ * suite could run, so the subcommand threw `CHILD_ENV_EXPLICIT_KEY_INVALID`
+ * every single time it was invoked.
+ */
+const EXPLICIT_HOST_FIXED_KEYS = Object.freeze(['NODE_OPTIONS']);
+
+/**
  * @param {NodeJS.ProcessEnv} parentEnvironment
  * @param {Record<string, string | undefined>} explicitValues
  * @returns {NodeJS.ProcessEnv}
@@ -37,7 +50,9 @@ export function buildChildEnvironment(parentEnvironment, explicitValues = {}) {
     if (value !== undefined) childEnvironment[key] = value;
   }
   for (const [key, value] of Object.entries(explicitValues)) {
-    if (!/^NIGHTWATCH_[A-Z0-9_]+$/.test(key)) throw new Error(`CHILD_ENV_EXPLICIT_KEY_INVALID:${key}`);
+    if (!/^NIGHTWATCH_[A-Z0-9_]+$/.test(key) && !EXPLICIT_HOST_FIXED_KEYS.includes(key)) {
+      throw new Error(`CHILD_ENV_EXPLICIT_KEY_INVALID:${key}`);
+    }
     if (value !== undefined) childEnvironment[key] = value;
   }
   return childEnvironment;
