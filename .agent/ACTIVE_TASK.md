@@ -6,16 +6,16 @@ Title: Repository Master Hardening Implementation
 Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-repository-hardening-implementation-v1
 Starting SHA: 0ac7b3d037b5059f670eca715fc30adaf58e7334
-Last validated implementation SHA: 64fb907b6d536c87541641cd99aa47f9f5a6a170
-Last checkpoint: NW-06, NW-01, NW-02, NW-03, NW-13 and NW-04 CLOSED and validated; the reconciled full-suite receipt at the recorded implementation SHA is 4708 passed / 18 skipped / 0 failed of 4726 collected
-Current milestone: M7 — NW-05 one abortable Phase-5 relay deadline
-Next action: Probe the live NW-05 evidence in `src/api/phase5/relay.ts` — no AbortSignal, a Promise.race timeout that abandons upstream work, and a per-attempt timer that gives a redirect another full budget — then freeze the timeout-versus-network taxonomy and thread one monotonic deadline and abort signal through auth, connection, redirect and body.
+Last validated implementation SHA: 54c7ed58b2482595da379830bb4a002a3076165f
+Last checkpoint: eight findings CLOSED and validated — NW-06, NW-01, NW-02, NW-03, NW-13, NW-04, NW-05, NW-12, completing roadmap phases 0 through 3; the reconciled full-suite receipt at the recorded implementation SHA is 4730 passed / 18 skipped / 0 failed of 4748 collected
+Current milestone: M9 — NW-09 / NW-10 / NW-11 operator dashboard workflow
+Next action: Probe the live NW-09 evidence in `bin/nightwatch-control-center.mjs` (a default collector without `reviewAuthority` and a server without `reviewDecision`), freeze the capability and pagination DTOs together before touching the UI, then add the launcher opt-in with an owner-local preflight and one immutable injected authority, keeping the default read-only.
 Authorization class: REPOSITORY_HARDENING_IMPLEMENTATION_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 0ac7b3d037b5059f670eca715fc30adaf58e7334
-LAST_VALIDATED_IMPLEMENTATION_SHA: 64fb907b6d536c87541641cd99aa47f9f5a6a170
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 64fb907b6d536c87541641cd99aa47f9f5a6a170
+LAST_VALIDATED_IMPLEMENTATION_SHA: 54c7ed58b2482595da379830bb4a002a3076165f
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 54c7ed58b2482595da379830bb4a002a3076165f
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PHASE_REPOSITORY_HARDENING_IMPLEMENTATION_V1_STATUS: IN_PROGRESS

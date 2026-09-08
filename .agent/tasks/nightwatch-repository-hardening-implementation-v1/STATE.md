@@ -9,16 +9,16 @@ Phase: REPOSITORY_HARDENING_IMPLEMENTATION_V1
 Status: IN_PROGRESS
 Campaign: nightwatch-repository-hardening-implementation-v1
 Starting SHA: 0ac7b3d037b5059f670eca715fc30adaf58e7334
-Last validated implementation SHA: 64fb907b6d536c87541641cd99aa47f9f5a6a170
-Last substantive checkpoint SHA: 64fb907b6d536c87541641cd99aa47f9f5a6a170
+Last validated implementation SHA: 54c7ed58b2482595da379830bb4a002a3076165f
+Last substantive checkpoint SHA: 54c7ed58b2482595da379830bb4a002a3076165f
 Live HEAD authority: GIT
 Branch: session/nightwatch-repository-hardening--e7b9be89
 Last checkpoint: M8 / NW-12 complete and validated — a documented per-client SSE backpressure policy with two disconnection bounds, quantified from 38,216 queued bytes to 228
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 0ac7b3d037b5059f670eca715fc30adaf58e7334
-LAST_VALIDATED_IMPLEMENTATION_SHA: 64fb907b6d536c87541641cd99aa47f9f5a6a170
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 64fb907b6d536c87541641cd99aa47f9f5a6a170
+LAST_VALIDATED_IMPLEMENTATION_SHA: 54c7ed58b2482595da379830bb4a002a3076165f
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 54c7ed58b2482595da379830bb4a002a3076165f
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
 LIVE_COMPLETION_CLAIM: NONE
@@ -492,7 +492,7 @@ Accepted predecessor certification, not re-run here:
 - W10 `gate:local` and clean-clone receipts recorded in the W10 REPORT;
 - W10 full `npm test` and focused suite counts recorded in the W10 REPORT.
 
-The validated baseline is this campaign's M1 implementation `64fb907b6d536c87541641cd99aa47f9f5a6a170`; the inherited baseline it advanced from was the certified W10 implementation `62d23e2622ab0a282584c5cf27d92b6b603f9192`.
+The validated baseline is this campaign's M1 implementation `54c7ed58b2482595da379830bb4a002a3076165f`; the inherited baseline it advanced from was the certified W10 implementation `62d23e2622ab0a282584c5cf27d92b6b603f9192`.
 
 ## Decisions Made During This Task
 
