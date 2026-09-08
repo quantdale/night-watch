@@ -6,16 +6,16 @@ Title: Repository Master Hardening Implementation
 Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-repository-hardening-implementation-v1
 Starting SHA: 0ac7b3d037b5059f670eca715fc30adaf58e7334
-Last validated implementation SHA: 54c7ed58b2482595da379830bb4a002a3076165f
-Last checkpoint: eight findings CLOSED and validated — NW-06, NW-01, NW-02, NW-03, NW-13, NW-04, NW-05, NW-12, completing roadmap phases 0 through 3; the reconciled full-suite receipt at the recorded implementation SHA is 4730 passed / 18 skipped / 0 failed of 4748 collected
-Current milestone: M9 — NW-09 / NW-10 / NW-11 operator dashboard workflow
-Next action: Probe the live NW-09 evidence in `bin/nightwatch-control-center.mjs` (a default collector without `reviewAuthority` and a server without `reviewDecision`), freeze the capability and pagination DTOs together before touching the UI, then add the launcher opt-in with an owner-local preflight and one immutable injected authority, keeping the default read-only.
+Last validated implementation SHA: 43368276a59f8439e51af7d3ccf7b0cc0215d4b5
+Last checkpoint: M9 COMPLETE — the operator dashboard triad NW-09/NW-10/NW-11 is closed and the full suite is green at the recorded implementation SHA
+Current milestone: M10 — NW-08 complete classified validation universe
+Next action: Discover the live validation universe, classify every discovered test and check into exactly one required or explicitly excluded class, bind the gate receipt to an inventory digest with executed/skipped/unavailable counts, and prove an unclassified new test fails the gate rather than passing silently.
 Authorization class: REPOSITORY_HARDENING_IMPLEMENTATION_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 0ac7b3d037b5059f670eca715fc30adaf58e7334
-LAST_VALIDATED_IMPLEMENTATION_SHA: 54c7ed58b2482595da379830bb4a002a3076165f
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 54c7ed58b2482595da379830bb4a002a3076165f
+LAST_VALIDATED_IMPLEMENTATION_SHA: 43368276a59f8439e51af7d3ccf7b0cc0215d4b5
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 43368276a59f8439e51af7d3ccf7b0cc0215d4b5
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PHASE_REPOSITORY_HARDENING_IMPLEMENTATION_V1_STATUS: IN_PROGRESS

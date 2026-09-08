@@ -9,16 +9,16 @@ Phase: REPOSITORY_HARDENING_IMPLEMENTATION_V1
 Status: IN_PROGRESS
 Campaign: nightwatch-repository-hardening-implementation-v1
 Starting SHA: 0ac7b3d037b5059f670eca715fc30adaf58e7334
-Last validated implementation SHA: 54c7ed58b2482595da379830bb4a002a3076165f
-Last substantive checkpoint SHA: 54c7ed58b2482595da379830bb4a002a3076165f
+Last validated implementation SHA: 43368276a59f8439e51af7d3ccf7b0cc0215d4b5
+Last substantive checkpoint SHA: 43368276a59f8439e51af7d3ccf7b0cc0215d4b5
 Live HEAD authority: GIT
 Branch: session/nightwatch-repository-hardening--e7b9be89
 Last checkpoint: M9 COMPLETE — the operator dashboard triad NW-09/NW-10/NW-11 is closed: a shipped review opt-in with a capability that cannot disagree with the route, real end-to-end pagination, and a validated, cancellable, coalesced client
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 0ac7b3d037b5059f670eca715fc30adaf58e7334
-LAST_VALIDATED_IMPLEMENTATION_SHA: 54c7ed58b2482595da379830bb4a002a3076165f
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 54c7ed58b2482595da379830bb4a002a3076165f
+LAST_VALIDATED_IMPLEMENTATION_SHA: 43368276a59f8439e51af7d3ccf7b0cc0215d4b5
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 43368276a59f8439e51af7d3ccf7b0cc0215d4b5
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
 LIVE_COMPLETION_CLAIM: NONE
@@ -609,7 +609,7 @@ Accepted predecessor certification, not re-run here:
 - W10 `gate:local` and clean-clone receipts recorded in the W10 REPORT;
 - W10 full `npm test` and focused suite counts recorded in the W10 REPORT.
 
-The validated baseline is this campaign's M1 implementation `54c7ed58b2482595da379830bb4a002a3076165f`; the inherited baseline it advanced from was the certified W10 implementation `62d23e2622ab0a282584c5cf27d92b6b603f9192`.
+The validated baseline is this campaign's M1 implementation `43368276a59f8439e51af7d3ccf7b0cc0215d4b5`; the inherited baseline it advanced from was the certified W10 implementation `62d23e2622ab0a282584c5cf27d92b6b603f9192`.
 
 ## Decisions Made During This Task
 
