@@ -28,9 +28,10 @@
 // ---------------------------------------------------------------------------
 
 import type { AgentPhase } from '../agentProtocol/runtime';
+import type { SurfaceReadinessClass, SurfaceRefusalClass } from '../reproductionSurface/contracts';
 
 export const INVESTIGATION_MEMORY_VERSION = 'nightwatch.investigation-memory.v1' as const;
-export const CAMPAIGN_STRATEGY_STATE_VERSION = 'nightwatch.campaign-strategy-state.v1' as const;
+export const CAMPAIGN_STRATEGY_STATE_VERSION = 'nightwatch.campaign-strategy-state.v2' as const;
 
 /**
  * Hard caps. Memory must stay small enough that it can never crowd out the
@@ -54,6 +55,12 @@ export const MEMORY_CAPS = Object.freeze({
   knownTargets: 48,
   priorInvestigations: 5,
   campaignTargets: 32,
+  /** Host-classified surface entries consulted per turn (mirrors SURFACE_CAPS.entries). */
+  surfaceEntries: 32,
+  /** Per-target capability annotations: inspected first, then uninspected. */
+  targetCapabilities: 40,
+  /** Campaign-remembered deterministically unsupported targets. */
+  unsupportedTargets: 24,
   directiveChars: 160,
 });
 
@@ -130,6 +137,48 @@ export interface MemoryInspectedTarget {
    */
   readonly salient: readonly string[];
   readonly reproductionAttempts: number;
+  /**
+   * W10 host-derived pre-action capability for this source path. `UNKNOWN`
+   * when the source was never classified: an absent annotation is unclassified,
+   * never executable. Advisory only — exploratory reasoning on non-executable
+   * source stays fully possible.
+   */
+  readonly readiness: SurfaceReadinessClass;
+  /** Neutral refusal class when readiness is `NOT_EXECUTABLE`; null otherwise. */
+  readonly refusal: SurfaceRefusalClass | null;
+}
+
+/**
+ * W10 capability annotation for one reasoner-visible target. The `target`
+ * string is always a member of this memory's `inspectedTargets` or
+ * `uninspectedTargets`, so annotation never names anything the reasoner could
+ * not already see. Carries the neutral readiness/refusal vocabulary only: no
+ * executor class, no command, no path beyond the already-visible target.
+ */
+export interface MemoryTargetCapability {
+  readonly target: string;
+  readonly readiness: SurfaceReadinessClass;
+  readonly refusal: SurfaceRefusalClass | null;
+}
+
+/**
+ * W10 bounded campaign-visible capability summary. Counts only — no paths, no
+ * target identities — so a turn learns that a mechanically executable target
+ * exists ELSEWHERE without being handed anything it could not already list.
+ * Computed over the bounded classified window; `truncated` tells whether the
+ * host window itself was cut.
+ */
+export interface MemoryCapabilitySummary {
+  /** Window entries classified `EXECUTABLE_NOW`. */
+  readonly executableTargets: number;
+  /** Distinct executable target identities among them. */
+  readonly distinctExecutableTargets: number;
+  /** Distinct repositories with at least one executable entry. */
+  readonly executableRepositories: number;
+  /** Window entries classified `NOT_EXECUTABLE`. */
+  readonly notExecutableTargets: number;
+  /** True when the surface exceeded `MEMORY_CAPS.surfaceEntries`. */
+  readonly truncated: boolean;
 }
 
 export interface MemoryAction {
@@ -178,6 +227,14 @@ export interface CampaignStrategyState {
   readonly unproductiveTargets: readonly string[];
   /** Targets with an observed REPRODUCED verdict. */
   readonly reproducedTargets: readonly string[];
+  /**
+   * W10: targets observed as deterministically unsupported (an executed
+   * `NOT_AVAILABLE` verdict proved the surface has no executable target),
+   * insertion-ordered and bounded by `MEMORY_CAPS.unsupportedTargets`. Carried
+   * into the next investigation so the campaign does not re-attempt proven
+   * ground. Advisory: a deliberate revisit stays permitted.
+   */
+  readonly unsupportedTargets: readonly string[];
   readonly candidateIds: readonly string[];
   /** Consecutive completed investigations with zero new evidence and zero new candidates. */
   readonly stagnantInvestigations: number;
@@ -198,6 +255,21 @@ export interface InvestigationMemory {
   readonly inspectedTargets: readonly MemoryInspectedTarget[];
   /** Known approved targets not yet inspected in this investigation. */
   readonly uninspectedTargets: readonly string[];
+  /**
+   * W10 host-derived capability for the targets above (inspected first, then
+   * uninspected, deterministically truncated to
+   * `MEMORY_CAPS.targetCapabilities`). Same annotation as `inspectedTargets`
+   * carry, extended to the uninspected set without changing its shape, so an
+   * unsupported source stays offered for exploration and merely annotated.
+   */
+  readonly targetCapabilities: readonly MemoryTargetCapability[];
+  /**
+   * W10 bounded counts over the classified window, so a turn sees that a
+   * mechanically executable target exists ELSEWHERE even when its current
+   * source is not executable. Null when the host supplied no surface (a
+   * pre-W10 checkpoint): no capability is invented.
+   */
+  readonly capabilitySummary: MemoryCapabilitySummary | null;
   /**
    * Targets that are exhausted for this investigation: repeatedly requested,
    * refused, or inspected without yielding usable grounding. A deliberate

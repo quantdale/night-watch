@@ -16,6 +16,13 @@
 
 import { TRANSIENT_ACTION_RETRY_BUDGET, type AgentRuntimeState } from '../agentProtocol/runtime';
 import {
+  SURFACE_READINESS_CLASSES,
+  SURFACE_REFUSAL_CLASSES,
+  type ReproductionSurfaceEntry,
+  type SurfaceReadinessClass,
+  type SurfaceRefusalClass,
+} from '../reproductionSurface/contracts';
+import {
   CAMPAIGN_STRATEGY_STATE_VERSION,
   INVESTIGATION_MEMORY_VERSION,
   MEMORY_CAPS,
@@ -23,9 +30,11 @@ import {
   type HypothesisProgress,
   type InvestigationMemory,
   type MemoryAction,
+  type MemoryCapabilitySummary,
   type MemoryHypothesis,
   type MemoryInspectedTarget,
   type MemoryReproduction,
+  type MemoryTargetCapability,
   type ReproductionReadiness,
   type StagnationRisk,
 } from './types';
@@ -256,6 +265,108 @@ export interface DeriveInvestigationMemoryOptions {
 }
 
 /**
+ * W10 host-derived capability window. The runtime already fail-closed the
+ * surface on ingest, but derivation re-validates defensively: a model can
+ * never mint readiness, so an unrecognized readiness reads as `UNKNOWN` and a
+ * secret-shaped or unrecognized path is dropped rather than annotated. Order
+ * is the received (already deterministic) order, truncated to
+ * `MEMORY_CAPS.surfaceEntries`.
+ */
+function surfaceWindow(state: AgentRuntimeState): readonly ReproductionSurfaceEntry[] {
+  const surface = state.reproductionSurface;
+  if (surface === undefined) return Object.freeze([]);
+  const out: ReproductionSurfaceEntry[] = [];
+  const seen = new Set<string>();
+  for (const entry of surface) {
+    if (out.length >= MEMORY_CAPS.surfaceEntries) break;
+    if (entry === null || typeof entry !== 'object') continue;
+    const sourcePath = boundedString(entry.sourcePath, MEMORY_CAPS.targetChars);
+    if (sourcePath === null || seen.has(sourcePath)) continue;
+    const readiness: SurfaceReadinessClass = (SURFACE_READINESS_CLASSES as readonly string[]).includes(entry.readiness)
+      ? entry.readiness
+      : 'UNKNOWN';
+    const refusal: SurfaceRefusalClass | null =
+      readiness === 'NOT_EXECUTABLE' &&
+      typeof entry.refusal === 'string' &&
+      (SURFACE_REFUSAL_CLASSES as readonly string[]).includes(entry.refusal)
+        ? entry.refusal
+        : null;
+    // The window keeps the package-level identity for distinct-target counts
+    // only; it is never serialized into memory.
+    const targetId = boundedString(entry.targetId ?? null, MEMORY_CAPS.targetChars);
+    seen.add(sourcePath);
+    out.push({ sourcePath, readiness, executorClass: null, refusal, targetId });
+  }
+  return Object.freeze(out);
+}
+
+interface WindowCapability {
+  readonly readiness: SurfaceReadinessClass;
+  readonly refusal: SurfaceRefusalClass | null;
+}
+
+const UNKNOWN_CAPABILITY: WindowCapability = Object.freeze({ readiness: 'UNKNOWN', refusal: null });
+
+function capabilityLookup(
+  window: readonly ReproductionSurfaceEntry[],
+): ReadonlyMap<string, WindowCapability> {
+  const map = new Map<string, WindowCapability>();
+  for (const entry of window) {
+    if (entry.readiness === 'UNKNOWN') {
+      map.set(entry.sourcePath, UNKNOWN_CAPABILITY);
+    } else if (entry.readiness === 'EXECUTABLE_NOW') {
+      map.set(entry.sourcePath, { readiness: 'EXECUTABLE_NOW', refusal: null });
+    } else {
+      map.set(entry.sourcePath, { readiness: 'NOT_EXECUTABLE', refusal: entry.refusal });
+    }
+  }
+  return map;
+}
+
+/**
+ * Repository scope of one classified source path. Host paths encode
+ * `<repoId>:<relativePath>` with a colon-free repo id; anything else is an
+ * unscoped test-shaped path and counts as its own single bucket.
+ */
+function capabilityRepositoryOf(sourcePath: string): string {
+  const separator = sourcePath.indexOf(':');
+  return separator > 0 ? sourcePath.slice(0, separator) : '(unscoped)';
+}
+
+/**
+ * W10 bounded counts over the classified window. Counts only: no paths, no
+ * target identities, no executor detail. Null when the host supplied no
+ * surface at all (a pre-W10 checkpoint invents no capability).
+ */
+function summarizeCapability(
+  window: readonly ReproductionSurfaceEntry[],
+  surfacePresent: boolean,
+  truncated: boolean,
+): MemoryCapabilitySummary | null {
+  if (!surfacePresent) return null;
+  let executableTargets = 0;
+  let notExecutableTargets = 0;
+  const targetIds = new Set<string>();
+  const repositories = new Set<string>();
+  for (const entry of window) {
+    if (entry.readiness === 'EXECUTABLE_NOW') {
+      executableTargets += 1;
+      if (entry.targetId !== null) targetIds.add(entry.targetId);
+      repositories.add(capabilityRepositoryOf(entry.sourcePath));
+    } else if (entry.readiness === 'NOT_EXECUTABLE') {
+      notExecutableTargets += 1;
+    }
+  }
+  return {
+    executableTargets,
+    distinctExecutableTargets: targetIds.size,
+    executableRepositories: repositories.size,
+    notExecutableTargets,
+    truncated,
+  };
+}
+
+/**
  * W9 owner-local execution readiness. Returns null when no owner-local
  * execution signal exists (no reproduction attempts beyond historical
  * verdicts), so the caller keeps the frozen W8 grounding ladder
@@ -266,7 +377,13 @@ export interface DeriveInvestigationMemoryOptions {
  * under the frozen retry budget, and as refused once the budget is consumed
  * (a flapping environment then exhausts exactly like a refusal).
  */
-function deriveExecutionReadiness(ledger: DerivedLedger): ReproductionReadiness | null {
+function deriveExecutionReadiness(
+  ledger: DerivedLedger,
+  preAction?: {
+    readonly groundedTargets: readonly string[];
+    readonly capability: ReadonlyMap<string, WindowCapability>;
+  } | null,
+): ReproductionReadiness | null {
   let currentFailure = false;
   let ranWithoutReproducing = false;
   let noExecutableTarget = false;
@@ -289,17 +406,41 @@ function deriveExecutionReadiness(ledger: DerivedLedger): ReproductionReadiness 
     else transientConsumed = true;
   }
   if (
-    !currentFailure && !ranWithoutReproducing && !noExecutableTarget && !targetBlocked &&
-    !deterministicRefused && !transientPending && !transientConsumed
+    currentFailure || ranWithoutReproducing || noExecutableTarget || targetBlocked ||
+    deterministicRefused || transientPending || transientConsumed
   ) {
-    return null;
+    if (currentFailure) return 'CURRENT_FAILURE_REPRODUCED';
+    if (ranWithoutReproducing) return 'RAN_WITHOUT_REPRODUCING';
+    if (noExecutableTarget) return 'NOT_READY_NO_EXECUTABLE_TARGET';
+    if (targetBlocked) return 'NOT_READY_TARGET_BLOCKED';
+    if (deterministicRefused || transientConsumed) return 'REFUSED_DETERMINISTIC';
+    return 'TRANSIENT_RETRY_REMAINING';
   }
-  if (currentFailure) return 'CURRENT_FAILURE_REPRODUCED';
-  if (ranWithoutReproducing) return 'RAN_WITHOUT_REPRODUCING';
-  if (noExecutableTarget) return 'NOT_READY_NO_EXECUTABLE_TARGET';
-  if (targetBlocked) return 'NOT_READY_TARGET_BLOCKED';
-  if (deterministicRefused || transientConsumed) return 'REFUSED_DETERMINISTIC';
-  return 'TRANSIENT_RETRY_REMAINING';
+  // W10 pre-action prediction. No attempt has been observed, so the observed
+  // ladder above is silent; host-derived capability may still speak. It fires
+  // only when every grounded target is classified and none is executable or
+  // unclassified — a single EXECUTABLE_NOW or UNKNOWN grounded target keeps
+  // the W8 outcome (an attempt there could still succeed). Observed outcomes
+  // always outrank this guess by construction: this block is unreachable once
+  // any attempt exists, because every attempt sets one of the flags above.
+  if (preAction !== undefined && preAction !== null && preAction.groundedTargets.length > 0) {
+    let executableGrounded = false;
+    let unknownGrounded = false;
+    let refusedGrounded = false;
+    let blockedGrounded = false;
+    for (const target of preAction.groundedTargets) {
+      const annotated = preAction.capability.get(target);
+      if (annotated === undefined || annotated.readiness === 'UNKNOWN') unknownGrounded = true;
+      else if (annotated.readiness === 'EXECUTABLE_NOW') executableGrounded = true;
+      else if (annotated.refusal === 'ENVIRONMENT_BLOCKED') blockedGrounded = true;
+      else refusedGrounded = true;
+    }
+    if (!executableGrounded && !unknownGrounded) {
+      if (refusedGrounded) return 'NOT_READY_NO_EXECUTABLE_TARGET';
+      if (blockedGrounded) return 'NOT_READY_TARGET_BLOCKED';
+    }
+  }
+  return null;
 }
 
 export function deriveInvestigationMemory(
@@ -307,6 +448,9 @@ export function deriveInvestigationMemory(
   options: DeriveInvestigationMemoryOptions = {},
 ): InvestigationMemory {
   const ledger = deriveLedger(state);
+  // W10 host-derived capability, consulted before any attempt is spent.
+  const window = surfaceWindow(state);
+  const capability = capabilityLookup(window);
   const observedRefs = new Set(state.evidenceRefs);
   const turnOrdinal = ledger.turnOrdinals.size;
 
@@ -320,6 +464,8 @@ export function deriveInvestigationMemory(
       timesInspected: entry.timesInspected,
       salient: Object.freeze([...entry.salient]),
       reproductionAttempts: entry.reproductionAttempts,
+      readiness: capability.get(entry.target)?.readiness ?? 'UNKNOWN',
+      refusal: capability.get(entry.target)?.refusal ?? null,
     });
   }
   const inspectedNames = new Set(inspected.map((item) => item.target));
@@ -328,6 +474,27 @@ export function deriveInvestigationMemory(
     state.knownTargets.filter((target) => !inspectedNames.has(target)),
     MEMORY_CAPS.uninspectedTargets,
     MEMORY_CAPS.targetChars,
+  );
+  // W10 per-target capability for every reasoner-visible target: inspected
+  // first, then uninspected, deterministically truncated. Unsupported source
+  // is annotated, never filtered — exploration stays fully possible.
+  const capabilities: MemoryTargetCapability[] = [];
+  const pushCapability = (target: string): void => {
+    if (capabilities.length >= MEMORY_CAPS.targetCapabilities) return;
+    capabilities.push({
+      target,
+      readiness: capability.get(target)?.readiness ?? 'UNKNOWN',
+      refusal: capability.get(target)?.refusal ?? null,
+    });
+  };
+  for (const item of inspected) pushCapability(item.target);
+  for (const target of uninspectedTargets) pushCapability(target);
+  const targetCapabilities = Object.freeze(capabilities);
+
+  const capabilitySummary = summarizeCapability(
+    window,
+    state.reproductionSurface !== undefined,
+    (state.reproductionSurface?.length ?? 0) > window.length,
   );
 
   const exhausted: string[] = [];
@@ -399,8 +566,17 @@ export function deriveInvestigationMemory(
   else if (groundableTargets.length === 0) reproductionReadiness = 'NOT_READY_NO_SOURCE_EVIDENCE';
   else {
     // W9 execution states refine the ladder once the host has attempted an
-    // owner-local execution; without such a signal the W8 outcome stands.
-    const execution = deriveExecutionReadiness(ledger);
+    // owner-local execution; without such a signal the W8 outcome stands —
+    // unless W10 host capability already classifies every grounded target as
+    // non-executable, in which case the honest pre-action state wins over READY.
+    const groundedTargets: string[] = [];
+    for (const item of hypotheses) {
+      if (item.progress !== 'VERIFICATION_READY' && item.progress !== 'REPRODUCED') continue;
+      for (const target of item.groundedOnTargets) {
+        if (!groundedTargets.includes(target)) groundedTargets.push(target);
+      }
+    }
+    const execution = deriveExecutionReadiness(ledger, { groundedTargets, capability });
     if (execution !== null) reproductionReadiness = execution;
     else if (verificationReadyCount === 0) reproductionReadiness = 'NOT_READY_NO_GROUNDED_HYPOTHESIS';
     else reproductionReadiness = 'READY';
@@ -429,6 +605,7 @@ export function deriveInvestigationMemory(
     stagnationRisk,
     campaign: options.campaign ?? null,
     reproductions: ledger.reproductions,
+    capabilitySummary,
   });
 
   return {
@@ -453,6 +630,8 @@ export function deriveInvestigationMemory(
     hypotheses: boundedHypotheses,
     inspectedTargets: Object.freeze(inspected),
     uninspectedTargets,
+    targetCapabilities,
+    capabilitySummary,
     exhaustedTargets,
     recentActions: Object.freeze(ledger.actions.slice(-MEMORY_CAPS.recentActions)),
     reproductions: Object.freeze(ledger.reproductions.slice(-MEMORY_CAPS.reproductions)),
@@ -475,6 +654,7 @@ interface DirectiveInput {
   readonly stagnationRisk: StagnationRisk;
   readonly campaign: CampaignStrategyState | null;
   readonly reproductions: readonly MemoryReproduction[];
+  readonly capabilitySummary: MemoryCapabilitySummary | null;
 }
 
 /**
@@ -536,6 +716,22 @@ function deriveDirectives(input: DirectiveInput): readonly string[] {
       );
     }
   }
+  // W10 capability tradeoff: the current sources are classified non-executable
+  // while executable targets are visible elsewhere. Counts only — the summary
+  // never names a target — plus the already-visible uninspected list the turn
+  // can navigate to. Advisory: exploration of the current source stays open.
+  const groundableNonExecutable =
+    input.groundableTargets.length > 0 &&
+    input.groundableTargets.every((item) => item.readiness === 'NOT_EXECUTABLE');
+  if (
+    groundableNonExecutable &&
+    input.capabilitySummary !== null &&
+    input.capabilitySummary.executableTargets > 0
+  ) {
+    push(
+      `Host capability: inspected sources are NOT_EXECUTABLE but ${String(input.capabilitySummary.executableTargets)} executable target(s) across ${String(input.capabilitySummary.executableRepositories)} repositories are visible; prefer an unexplored target.`,
+    );
+  }
 
   const ungroundedTarget = input.groundableTargets.find(
     (item) => !input.hypotheses.some((hypothesis) => hypothesis.groundedOnTargets.includes(item.target)),
@@ -555,6 +751,14 @@ function deriveDirectives(input: DirectiveInput): readonly string[] {
   if (input.campaign !== null && input.campaign.inspectedTargets.length > 0) {
     push(
       `This campaign already inspected ${String(input.campaign.inspectedTargets.length)} target(s) across ${String(input.campaign.investigationsCompleted)} completed investigation(s); prefer a target absent from that set.`,
+    );
+  }
+  // W10 refusal memory: the campaign proved these targets have no executable
+  // surface. Counts only, advisory — a deliberate revisit stays permitted.
+  const unsupportedCount = input.campaign?.unsupportedTargets.length ?? 0;
+  if (unsupportedCount > 0) {
+    push(
+      `This campaign already proved ${String(unsupportedCount)} target(s) have no executable target; a deliberate revisit stays permitted but prefer unproven ground.`,
     );
   }
 
@@ -579,6 +783,7 @@ export function emptyCampaignStrategyState(campaignId: string): CampaignStrategy
     inspectedTargets: Object.freeze([]),
     unproductiveTargets: Object.freeze([]),
     reproducedTargets: Object.freeze([]),
+    unsupportedTargets: Object.freeze([]),
     candidateIds: Object.freeze([]),
     stagnantInvestigations: 0,
     priorOutcomes: Object.freeze([]),
@@ -605,6 +810,10 @@ export function absorbInvestigationIntoStrategy(
   const inspectedTargets = [...prior.inspectedTargets];
   const reproducedTargets = [...prior.reproducedTargets];
   const unproductive = [...prior.unproductiveTargets];
+  // W10 refusal memory: an executed NOT_AVAILABLE verdict proves the surface
+  // has no executable target. Tolerate a prior record without the field (a W9
+  // checkpoint resumes with an empty record, not a failure).
+  const unsupported = [...(prior.unsupportedTargets ?? [])];
   for (const target of memory.inspectedTargets) {
     if (!inspectedTargets.includes(target.target)) inspectedTargets.push(target.target);
   }
@@ -614,6 +823,9 @@ export function absorbInvestigationIntoStrategy(
       !reproducedTargets.includes(reproduction.target)
     ) {
       reproducedTargets.push(reproduction.target);
+    }
+    if (reproduction.resultClass === 'NOT_AVAILABLE' && !unsupported.includes(reproduction.target)) {
+      unsupported.push(reproduction.target);
     }
   }
   for (const target of memory.exhaustedTargets) {
@@ -642,6 +854,7 @@ export function absorbInvestigationIntoStrategy(
     inspectedTargets: boundedList(inspectedTargets, MEMORY_CAPS.campaignTargets, MEMORY_CAPS.targetChars),
     unproductiveTargets: boundedList(unproductive, MEMORY_CAPS.campaignTargets, MEMORY_CAPS.targetChars),
     reproducedTargets: boundedList(reproducedTargets, MEMORY_CAPS.campaignTargets, MEMORY_CAPS.targetChars),
+    unsupportedTargets: boundedList(unsupported, MEMORY_CAPS.unsupportedTargets, MEMORY_CAPS.targetChars),
     candidateIds: boundedList(candidateIds, MEMORY_CAPS.candidateIds, MEMORY_CAPS.targetChars),
     stagnantInvestigations: stagnant,
     priorOutcomes: Object.freeze(priorOutcomes),
@@ -671,10 +884,15 @@ function isNonNegativeInteger(value: unknown): value is number {
  * Fail-closed parse of a persisted campaign strategy. A malformed or
  * over-cap record yields null, so a corrupt resume envelope degrades to "no
  * campaign memory" instead of injecting unvalidated state into a request.
+ * A v1 record (pre-W10, no `unsupportedTargets`) resumes with an empty
+ * refusal record rather than failing: absence of knowledge is honest.
  */
 export function parseCampaignStrategyState(value: unknown, campaignId: string): CampaignStrategyState | null {
   if (!isRecord(value)) return null;
-  if (value['schemaVersion'] !== CAMPAIGN_STRATEGY_STATE_VERSION) return null;
+  const schemaVersion = value['schemaVersion'];
+  const isCurrent = schemaVersion === CAMPAIGN_STRATEGY_STATE_VERSION;
+  const isLegacyV1 = schemaVersion === 'nightwatch.campaign-strategy-state.v1';
+  if (!isCurrent && !isLegacyV1) return null;
   if (value['campaignId'] !== campaignId) return null;
   if (!isNonNegativeInteger(value['investigationsCompleted'])) return null;
   if (!isNonNegativeInteger(value['stagnantInvestigations'])) return null;
@@ -682,11 +900,16 @@ export function parseCampaignStrategyState(value: unknown, campaignId: string): 
   const unproductiveTargets = parseStringArray(value['unproductiveTargets'], MEMORY_CAPS.campaignTargets);
   const reproducedTargets = parseStringArray(value['reproducedTargets'], MEMORY_CAPS.campaignTargets);
   const candidateIds = parseStringArray(value['candidateIds'], MEMORY_CAPS.candidateIds);
+  // v1 has no refusal record: migrate to empty. v2 must carry a valid one.
+  const unsupportedTargets = isLegacyV1 && value['unsupportedTargets'] === undefined
+    ? Object.freeze([] as string[])
+    : parseStringArray(value['unsupportedTargets'], MEMORY_CAPS.unsupportedTargets);
   if (
     inspectedTargets === null ||
     unproductiveTargets === null ||
     reproducedTargets === null ||
-    candidateIds === null
+    candidateIds === null ||
+    unsupportedTargets === null
   ) {
     return null;
   }
@@ -723,6 +946,7 @@ export function parseCampaignStrategyState(value: unknown, campaignId: string): 
     inspectedTargets,
     unproductiveTargets,
     reproducedTargets,
+    unsupportedTargets,
     candidateIds,
     stagnantInvestigations: value['stagnantInvestigations'],
     priorOutcomes: Object.freeze(priorOutcomes),
