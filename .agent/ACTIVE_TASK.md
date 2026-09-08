@@ -6,16 +6,16 @@ Title: Repository Master Hardening Implementation
 Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-repository-hardening-implementation-v1
 Starting SHA: 0ac7b3d037b5059f670eca715fc30adaf58e7334
-Last validated implementation SHA: 43368276a59f8439e51af7d3ccf7b0cc0215d4b5
-Last checkpoint: M9 COMPLETE — the operator dashboard triad NW-09/NW-10/NW-11 is closed and the full suite is green at the recorded implementation SHA
-Current milestone: M10 — NW-08 complete classified validation universe
-Next action: Discover the live validation universe, classify every discovered test and check into exactly one required or explicitly excluded class, bind the gate receipt to an inventory digest with executed/skipped/unavailable counts, and prove an unclassified new test fails the gate rather than passing silently.
+Last validated implementation SHA: 5b909f4a9fcc5528f179323ab227e06a8bf829c7
+Last checkpoint: M10 / NW-08 complete and validated — the validation universe is mechanically complete and digest-pinned, with the full suite green on a clean tree
+Current milestone: M11 — NW-14 dependency, portability and release documentation truth
+Next action: Assess the Vue 2.6.12 development-fixture advisory with scope, reachability, owner rationale and a review date; document the Node/OS/Bubblewrap/Chrome capability matrix; and separate current operational guidance from the indexed archives without rewriting historical receipts.
 Authorization class: REPOSITORY_HARDENING_IMPLEMENTATION_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 0ac7b3d037b5059f670eca715fc30adaf58e7334
-LAST_VALIDATED_IMPLEMENTATION_SHA: 43368276a59f8439e51af7d3ccf7b0cc0215d4b5
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 43368276a59f8439e51af7d3ccf7b0cc0215d4b5
+LAST_VALIDATED_IMPLEMENTATION_SHA: 5b909f4a9fcc5528f179323ab227e06a8bf829c7
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 5b909f4a9fcc5528f179323ab227e06a8bf829c7
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PHASE_REPOSITORY_HARDENING_IMPLEMENTATION_V1_STATUS: IN_PROGRESS

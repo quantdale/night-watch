@@ -773,6 +773,74 @@ continuing stream costs one per window rather than one per event.
 | measured against the defect | 10 of the 13 fail against the pre-repair client; the 3 that pass are the acceptance and disposal controls |
 | UI lane green | UI 41 passed, UI typecheck PASS, UI build PASS |
 
+### NW-08 — account for the complete test and package validation universe
+
+**The count was stale; the deeper problem was that the gap was
+unobservable.** Measured live: 341 tracked root `.test.ts`/`.smoke.ts` files,
+227 selected by required lanes, **114 in no lane at all**, including
+`safety`, `redaction`, `proxy`, `devLoginSecurity`, `realRunGate`,
+`reviewStoreHardening` and five control-center suites. The review's `208 of
+321` was directionally right and numerically stale.
+
+But the gate's required lanes select from versioned manifests, and the
+data-only inventory validated those declarations *against each other* —
+never against what existed on disk. So a newly added test joined the
+repository and every gate stayed green without it. No amount of registering
+files fixes that; the missing thing was a relationship between the gate and
+the set of tests that exist.
+
+**Repair, part one — coverage.** Twenty-four offline, deterministic,
+safety-relevant suites promoted into the required SYNTHETIC_CAMPAIGN lane.
+Measured cost: 258 tests in 26 seconds, so the runtime objection the plan
+anticipated does not apply to them. The authoritative gate went from 227 to
+252 unique test files, with `gate:inventory` reporting zero duplicate
+executions.
+
+**Repair, part two — completeness.** `bin/lib/validation-universe.mjs` is a
+pure judgement over three inputs:
+
+| Input | Source | Why that source |
+| --- | --- | --- |
+| what exists | tracked Git paths | an untracked scratch file cannot enter the universe, and a tracked one cannot escape it |
+| what the gate runs | the same manifests the required lanes execute from | it cannot claim coverage the gate does not provide |
+| how the rest is covered | `config/validation-universe.v1.json` | each class carries a reason and the evidence lane that DOES cover it |
+
+`AUTHORITATIVE_GATE` is derived, never declarable — a declaration must not be
+able to claim gate coverage a lane does not give it.
+
+Live result: **425 discovered, 252 authoritative gate, 173 classified, 0
+unclassified.** FULL_REGRESSION 84 (`npm test`), BIN_SYNTAX 66
+(`node --check`), MANUAL_OWNER 12, LIVE_APP_SMOKE 6, BROWSER_WORKFLOW 3,
+UI_LANE 2. Discovery was widened beyond the review's scope to include
+`tests/browser/*.browser.ts` and `tests/manual/*.ts`, because they are
+executable checks and omitting them would be the same mistake at smaller
+scale.
+
+**Enforcement.** `checkValidationUniverse` runs the judgement in a REQUIRED
+hardening group, and the declaration pins an `inventoryDigest` over all three
+inputs. Nine violations fail closed: unclassified; double-classified; a
+declared file missing from disk; a lane selecting a file that does not exist;
+an excluded class claiming a file the gate runs; a class with no reason, no
+evidence lane, or no members; an unknown class name; and digest drift. A
+vacuous pass is refused if discovery finds implausibly few tests.
+
+**Acceptance.**
+
+| Criterion | Evidence |
+| --- | --- |
+| every discovered test belongs to exactly one required or excluded class | 252 + 173 = 425 = discovered, asserted as an equation in the live case |
+| no green receipt can omit a new test silently | a new unclassified `.test.ts` fails `hardening:check` with `VALIDATION_UNIVERSE_UNCLASSIFIED`, probed against the live repository |
+| every exclusion names a reason and its own evidence lane | enforced per class; a missing reason or lane is its own violation |
+| exact counts and inventory digest recorded | 425 / 252 / 173 / 0 and `sha256:b35012e4e1e9a3e575b0de38` |
+| local, clean, host and CI claims stay separate | the classes name distinct lanes; nothing was moved into CI that needs a host or a network |
+| no duplicate execution without an independent claim | `gate:inventory` duplicates: none, across 252 files |
+| the rule bites | four live probes — unclassified file, stale digest, double classification, gate contradiction — each fails with its own code; 12 permanent cases cover every path |
+
+**Honest limit.** Promoting the remaining 84 FULL_REGRESSION suites into the
+authoritative gate is a runtime decision this campaign did not take. What
+changed is that the decision is now explicit, digest-pinned and enforced
+instead of invisible.
+
 ## Validation receipts
 
 Recorded per milestone as they are produced. No receipt is copied from a

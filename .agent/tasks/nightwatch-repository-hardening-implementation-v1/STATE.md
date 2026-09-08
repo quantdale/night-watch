@@ -9,16 +9,16 @@ Phase: REPOSITORY_HARDENING_IMPLEMENTATION_V1
 Status: IN_PROGRESS
 Campaign: nightwatch-repository-hardening-implementation-v1
 Starting SHA: 0ac7b3d037b5059f670eca715fc30adaf58e7334
-Last validated implementation SHA: 43368276a59f8439e51af7d3ccf7b0cc0215d4b5
-Last substantive checkpoint SHA: 43368276a59f8439e51af7d3ccf7b0cc0215d4b5
+Last validated implementation SHA: 5b909f4a9fcc5528f179323ab227e06a8bf829c7
+Last substantive checkpoint SHA: 5b909f4a9fcc5528f179323ab227e06a8bf829c7
 Live HEAD authority: GIT
 Branch: session/nightwatch-repository-hardening--e7b9be89
 Last checkpoint: M10 / NW-08 complete and validated — the validation universe is mechanically complete at 425 discovered / 0 unclassified, digest-pinned and enforced in a required gate rule
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 0ac7b3d037b5059f670eca715fc30adaf58e7334
-LAST_VALIDATED_IMPLEMENTATION_SHA: 43368276a59f8439e51af7d3ccf7b0cc0215d4b5
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 43368276a59f8439e51af7d3ccf7b0cc0215d4b5
+LAST_VALIDATED_IMPLEMENTATION_SHA: 5b909f4a9fcc5528f179323ab227e06a8bf829c7
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 5b909f4a9fcc5528f179323ab227e06a8bf829c7
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
 LIVE_COMPLETION_CLAIM: NONE
@@ -457,6 +457,22 @@ owner must hold the overlapping UI API and App surfaces.
 
 ## Validation Ledger
 
+M10 full regression at the NW-08 implementation commit, on a CLEAN tree:
+`npm test` — **4755 passed / 18 skipped / 0 failed**, 8.5 minutes.
+`npm run validation:universe`: 425 discovered / 252 authoritative gate / 173
+classified / 0 unclassified, digest `sha256:b35012e4e1e9a3e575b0de38`.
+`gate:inventory`: 252 unique authoritative test files, zero duplicate
+executions. `npm run typecheck` and `npm run hardening:check` PASS.
+
+Validation-discipline note, learned here: an interim M10 full run showed two
+`selfDevAdoptionCli` failures that were NOT defects.
+`SELFDEV_AUTHORITATIVE_SOURCE_DIRTY` is the self-development CLI correctly
+refusing to operate against an uncommitted authoritative tree, and the run
+had uncommitted NW-08 work in it. Both pass on a clean tree. The full suite
+must therefore be run on a COMMITTED tree, or two of its cases report the
+harness rather than the code — the same shape as the campaign's existing
+"probe after commit" rule.
+
 M9 full regression at the reconciled M9 head: `npm test` — **4743 passed / 18
 skipped / 0 failed**, 8.5 minutes. UI lane: 41 passed, typecheck PASS, build
 PASS (3 files, 297,422 bytes, no external references). `npm run typecheck`,
@@ -638,7 +654,7 @@ Accepted predecessor certification, not re-run here:
 - W10 `gate:local` and clean-clone receipts recorded in the W10 REPORT;
 - W10 full `npm test` and focused suite counts recorded in the W10 REPORT.
 
-The validated baseline is this campaign's M1 implementation `43368276a59f8439e51af7d3ccf7b0cc0215d4b5`; the inherited baseline it advanced from was the certified W10 implementation `62d23e2622ab0a282584c5cf27d92b6b603f9192`.
+The validated baseline is this campaign's M1 implementation `5b909f4a9fcc5528f179323ab227e06a8bf829c7`; the inherited baseline it advanced from was the certified W10 implementation `62d23e2622ab0a282584c5cf27d92b6b603f9192`.
 
 ## Decisions Made During This Task
 
@@ -708,6 +724,15 @@ three deliberately broken manifests. Fixed by stripping comments first, and
 made structurally non-vacuous by failing when fewer than half the declared
 entries parse as TypeScript paths. Both the closure rule and the
 anti-vacuity guard were then probed and fire.
+
+Discovery: two full-suite cases measure the tree's cleanliness, not the code.
+Evidence: `selfDevAdoptionCli` "inspect on a missing exact artifact ID" and
+"run against a missing exact plan ID" returned
+`SELFDEV_AUTHORITATIVE_SOURCE_DIRTY` instead of their expected
+`SELFDEV_ARTIFACT_NOT_FOUND` / plan-not-found codes while NW-08 work was
+uncommitted, and both passed immediately after the commit with
+`git status --porcelain` empty. A full-suite receipt taken on a dirty tree is
+therefore not comparable to one taken on a clean tree.
 
 Discovery: NW-03's escape mutated the filesystem before the write. Evidence:
 `saveBugAtlasSnapshot` created the directory from `path.dirname(file)`, so an
