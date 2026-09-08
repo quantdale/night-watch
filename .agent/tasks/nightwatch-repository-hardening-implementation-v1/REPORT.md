@@ -470,6 +470,53 @@ content-free. A planted value must share no vocabulary with the diagnostics,
 the module name, or the test path; it is now
 `ZZQQ7_XYLOPHONE_…_MARMALADE_74`.
 
+### NW-05 — enforce one abortable Phase-5 relay deadline
+
+**All four defects measured through the consumer.** Against the pre-repair
+relay, 4 of the 11 new cases fail — one per defect — and the hung-auth case
+consumed the **full 5.0 s** injected hang, which is the difference between
+"late" and "unbounded".
+
+| Defect | Repair |
+| --- | --- |
+| `fetch` received no `AbortSignal`, so a rejected race left DNS, socket, headers and body running | the operation's signal is created at the boundary and passed into `fetch`; aborting stops the transport |
+| the timer wrapped one ATTEMPT, so a redirect got another full budget — 15 s bounding a 30 s operation | one deadline covers both attempts; each stage gets `remainingMs()` from the shared monotonic residual |
+| auth-header acquisition sat outside the timer entirely | the deadline is created BEFORE auth, and auth runs under it |
+| a deadline and a transport error were indistinguishable at the catch site | `DEADLINE_EXCEEDED` / `CALLER_ABORTED` / `TRANSPORT_FAILED`, frozen in `deadline.ts` with the owning stage, surfaced as `relayFailure` and `X-Nightwatch-Relay-Failure` |
+
+Cancellation composes: a caller's signal aborts the operation's signal, and it
+is the operation's signal that reaches the transport. `dispose()` is
+idempotent, clears the timer and detaches the caller listener on every
+terminal path, and a test proves a disposed timer cannot fire later. Body
+consumption checks the signal each iteration and cancels the reader in a
+`catch`, so no stream is left owned. The clock is monotonic
+(`process.hrtime`), so a wall-clock adjustment mid-operation cannot extend or
+collapse the budget.
+
+**No wall-clock assertions.** Every case asserts an operation count, a signal
+state or a call order, with time injected through a fake monotonic clock and
+timer. A threshold test on a shared machine measures load, not the property —
+and the doubled-redirect-budget defect in particular is proven by the redirect
+attempt never being ISSUED, not by measuring how long it took.
+
+**Acceptance.**
+
+| Criterion | Evidence |
+| --- | --- |
+| one documented deadline covers the whole operation | the hung-auth case never reaches the transport (`fetches === 0`); the redirect case never issues the second attempt (`targets.length === 1`) |
+| every terminal path disposes timers and aborts owned work | idempotent-dispose case with a live-timer count; the disposed timer cannot fire; body reader cancelled in `catch` |
+| redirect count and total time remain bounded | the bounded-chain case: exactly 2 calls, second redirect `BLOCKED` not followed |
+| error categories contain no secrets | `RelayOperationError` carries only a class and a stage name; the taxonomy case asserts each mapping |
+| writes are never retried | no retry path exists; the bounded-chain case pins the call count |
+| a valid near-deadline request still succeeds | asserted explicitly, so the repair cannot pass by failing everything |
+| measured against the defect | 4 of 11 fail pre-repair; the 7 that pass are the new module's own unit cases and the two success controls |
+
+**Two incidental corrections, recorded rather than folded in silently.** The
+declared `maxBodyBytes` option was never read — `defaultFetch` hardcoded
+2 MiB — so it is now wired with that same value as its default, leaving
+behaviour identical while making the declared option real. And the two
+duplicated `15_000` literals became one named constant.
+
 ## Validation receipts
 
 Recorded per milestone as they are produced. No receipt is copied from a

@@ -269,7 +269,10 @@ lifecycles, then the operator surface, then release accounting.
   contain no secrets; writes are never retried.
 - **Validation:** the relay lifecycle suite over synthetic loopback and fake
   transports, asserting signals and call counts rather than wall clocks.
-- **Status:** NOT_STARTED
+- **Status:** COMPLETE — one monotonic deadline created before auth and
+  threaded through every stage, a frozen three-class taxonomy, and injected
+  time so no assertion depends on a wall clock. 4 of the 11 cases fail
+  against the pre-repair relay.
 
 ### M8 — NW-12 bounded per-client SSE state
 

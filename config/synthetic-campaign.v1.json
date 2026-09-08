@@ -78,6 +78,8 @@
     "tests/unit/systemAtlas.test.ts",
     "tests/unit/nw13SensitiveDiagnostics.test.ts",
     "tests/unit/storageState.test.ts",
-    "tests/unit/nw04CheckpointDurability.test.ts"
+    "tests/unit/nw04CheckpointDurability.test.ts",
+    "tests/unit/nw05RelayDeadline.test.ts",
+    "tests/unit/phase5Api.test.ts"
   ]
 }

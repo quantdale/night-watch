@@ -298,7 +298,7 @@ Priority meanings: P0 is demonstrated catastrophic failure requiring immediate c
 
 ### NW-05 — Enforce one abortable Phase-5 relay deadline
 
-- **Priority / category / confidence / status:** P1; network lifecycle and bounded execution; CONFIRMED source behavior; NOT STARTED.
+- **Priority / category / confidence / status:** P1; network lifecycle and bounded execution; CONFIRMED source behavior; **CLOSED** — repaired and regression-proven under `nightwatch-repository-hardening-implementation-v1` M7.
 - **Affected surfaces:** `src/api/phase5/relay.ts`, auth-header acquisition, redirects, response-body handling, and relay tests.
 - **Evidence:** default `fetch` receives no `AbortSignal`. A `Promise.race` timeout rejects without aborting upstream work; auth-header work is outside the timer, and a redirect receives another full timeout.
 - **Problem, impact, root cause:** the caller can receive a terminal timeout while DNS/socket/body work remains active. Per-attempt timers do not form an end-to-end deadline, and resource ownership is split across helpers.
@@ -307,6 +307,44 @@ Priority meanings: P0 is demonstrated catastrophic failure requiring immediate c
 - **Tests and validation:** hung auth, connection, headers, body, redirect, caller abort, abort race, and successful near-deadline requests using synthetic loopback/fake transports. Assert calls, signals, body cancellation, timer disposal, and no work after cleanup grace.
 - **Acceptance:** one documented deadline covers the whole operation; every terminal path disposes timers and aborts owned work; redirect count and total time remain bounded; error categories contain no secrets.
 - **Dependencies / risks / parallelization:** independent after Phase 0. A dedicated API lane can run beside protocol/storage work. Risk is misclassifying timeout versus network failure; freeze taxonomy before editing.
+
+- **Resolution evidence (2026-09-08):** all four defects reproduce and are
+  measured through `executeNativePhase5Operation`, the consumer's own entry
+  point. Against the pre-repair relay, 4 of the 11 new cases fail, one per
+  defect — and the hung-auth case took the full **5.0 s** injected hang,
+  proving the credential fetch was unbounded rather than merely late.
+  `src/api/phase5/deadline.ts` freezes the taxonomy and owns the lifecycle.
+  One `createRelayDeadline` is created at the operation boundary, **before**
+  auth-header acquisition, and covers auth, connection, headers, redirect and
+  body. `remainingMs()` is a monotonic residual budget the stages share, so a
+  redirect no longer receives a second full `timeoutMs` — the previous
+  per-attempt timer let a 15 s bound govern a 30 s operation. A caller's
+  signal composes into the operation's signal, and it is the operation's
+  signal that reaches `fetch`, so aborting stops the transport instead of
+  abandoning it. `dispose()` is idempotent and clears both the timer and the
+  caller listener on every terminal path.
+  The taxonomy is the part the review asked to freeze first:
+  `DEADLINE_EXCEEDED`, `CALLER_ABORTED` and `TRANSPORT_FAILED` are distinct,
+  carry the stage that owned the budget, and are surfaced on the observation
+  as `relayFailure` and on the relay response as
+  `X-Nightwatch-Relay-Failure`. The oracle result stays `NETWORK_FAILURE`, so
+  no existing consumer changes. Body consumption checks the signal each
+  iteration and cancels the reader in a `catch`, so no stream is left owned.
+  Two incidental corrections in the same file, recorded rather than silently
+  folded in: the declared `maxBodyBytes` option was never read — it now feeds
+  the body cap with the value the function always hardcoded, so behaviour is
+  unchanged — and the two 15 s literals became one named constant.
+  Eleven cases in `tests/unit/nw05RelayDeadline.test.ts`. Every assertion is
+  an operation count, a signal state or a call order; time is injected through
+  a fake monotonic clock and timer, because a wall-clock threshold on a shared
+  machine measures load rather than the property. Cases cover deadline expiry
+  and residual budget, caller-abort composition including an already-aborted
+  caller, idempotent disposal with a proof that a disposed timer cannot fire,
+  a hung stage naming its stage, the taxonomy, hung auth, the shared redirect
+  budget, signal and budget delivery to the fetcher, caller abort mid-flight,
+  a successful near-deadline request that must NOT be failed, and the bounded
+  redirect chain. `phase5Api`, `phase5Fixture` and `phase23QualityGate`: 35
+  passed.
 
 ### NW-06 — Reject over-capacity sessions before creating worktrees
 

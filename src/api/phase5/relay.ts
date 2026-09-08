@@ -4,6 +4,12 @@ import type { AddressInfo } from 'node:net';
 import { OutboundPolicy } from '../../core/safety/outboundPolicy';
 import type { EnvironmentConfig } from '../../core/environment/types';
 import { evaluateApiResponse } from './oracle';
+import {
+  classifyRelayFailure,
+  createRelayDeadline,
+  withDeadline,
+  type RelayDeadline,
+} from './deadline';
 import type { ApiOperation, ApiOracleObservation, ApiCatalog } from './types';
 
 // Phase 15P A15 convergence: relay option/context shapes are module-private;
@@ -17,6 +23,17 @@ interface RelayRequestContext {
   operation: ApiOperation;
   target: URL;
   headers: Readonly<Record<string, string>>;
+  /**
+   * NW-05: the operation's ONE abort signal. A fetcher must pass this to the
+   * transport, so a deadline or a caller cancellation actually stops the
+   * request and its body stream instead of abandoning them. Optional so
+   * existing injected test fetchers keep working unchanged.
+   */
+  signal?: AbortSignal;
+  /** Milliseconds left in the whole operation, not this attempt. */
+  remainingMs?: () => number;
+  /** Body cap for this operation. */
+  maxBodyBytes?: number;
 }
 
 export interface RelayFetchResponse {
@@ -37,6 +54,11 @@ export interface RelayObservation {
   requestPathClass: 'CATALOG_RESOLVED';
   oracle: ApiOracleObservation;
   redirect: 'NONE' | 'APPROVED_SAME_ORIGIN' | 'BLOCKED';
+  /**
+   * NW-05: why the operation failed, when it did. A deadline and a transport
+   * failure were previously indistinguishable at the catch site.
+   */
+  relayFailure?: 'DEADLINE_EXCEEDED' | 'CALLER_ABORTED' | 'TRANSPORT_FAILED';
   safetyBlock?: 'UNKNOWN_OPERATION' | 'KNOWN_MUTATION' | 'UNKNOWN_DESTINATION' | 'PRODUCTION_DESTINATION' | 'OPERATION_MISMATCH' | 'UNSAFE_INBOUND_HEADER';
   bodyForwardedToOops: false;
 }
@@ -63,6 +85,8 @@ interface StartRelayOptions {
   upstreamTimeoutMs?: number;
 }
 
+const DEFAULT_MAX_BODY_BYTES = 2 * 1024 * 1024;
+const DEFAULT_UPSTREAM_TIMEOUT_MS = 15_000;
 const PERIOD_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
 const OPERATION_PATH_RE = /^\/v1\/operations\/([a-z][a-z0-9]*(?:[._-][a-z0-9]+)+)$/;
 const SAFE_INBOUND_HEADERS = new Set(['accept', 'host', 'x-nightwatch-operation-id', 'connection', 'user-agent', 'accept-encoding', 'accept-language', 'sec-fetch-mode', 'content-length']);
@@ -114,28 +138,48 @@ function policyAllowsTarget(target: URL, operation: ApiOperation, environment: E
 }
 
 async function defaultFetch(context: RelayRequestContext): Promise<RelayFetchResponse> {
+  // NW-05: the signal is what makes a deadline real. Without it the losing
+  // race branch rejected while this request, its socket and its body stream
+  // all kept running.
   const response = await fetch(context.target, {
     method: 'GET',
     headers: context.headers,
     redirect: 'manual',
+    ...(context.signal === undefined ? {} : { signal: context.signal }),
   });
   const reader = response.body?.getReader();
   if (reader === undefined) return { status: response.status, headers: { 'content-type': response.headers.get('content-type') ?? undefined }, body: new Uint8Array() };
   const chunks: Uint8Array[] = [];
   let total = 0;
   let complete = true;
-  const max = 2 * 1024 * 1024;
-  while (true) {
-    const next = await reader.read();
-    if (next.done) break;
-    const chunk = next.value;
-    if (total + chunk.byteLength > max) {
-      complete = false;
-      await reader.cancel();
-      break;
+  // The declared maxBodyBytes option existed but was never read; the default
+  // is the value this function always used, so behaviour is unchanged.
+  const max = context.maxBodyBytes ?? DEFAULT_MAX_BODY_BYTES;
+  try {
+    while (true) {
+      // Body consumption is inside the deadline: a stalled stream must not
+      // outlive the operation that owns it.
+      if (context.signal?.aborted === true) {
+        complete = false;
+        await reader.cancel();
+        break;
+      }
+      const next = await reader.read();
+      if (next.done) break;
+      const chunk = next.value;
+      if (total + chunk.byteLength > max) {
+        complete = false;
+        await reader.cancel();
+        break;
+      }
+      chunks.push(chunk);
+      total += chunk.byteLength;
     }
-    chunks.push(chunk);
-    total += chunk.byteLength;
+  } catch (error) {
+    // An aborted read is the deadline working, not a separate failure. The
+    // reader is released either way so no stream is left owned.
+    await reader.cancel().catch(() => undefined);
+    throw error;
   }
   const body = new Uint8Array(total);
   let offset = 0;
@@ -159,22 +203,14 @@ async function callWithRedirectPolicy(
   context: RelayRequestContext,
   fetcher: RelayFetcher,
   mode: 'local' | 'dev',
-  timeoutMs: number,
+  deadline: RelayDeadline,
 ): Promise<{ response: RelayFetchResponse; redirect: RelayObservation['redirect'] }> {
-  const withTimeout = async (request: RelayRequestContext): Promise<RelayFetchResponse> => {
-    let timer: NodeJS.Timeout | undefined;
-    try {
-      return await Promise.race([
-        fetcher(request),
-        new Promise<RelayFetchResponse>((_, reject) => {
-          timer = setTimeout(() => reject(new Error('relay upstream timeout')), timeoutMs);
-        }),
-      ]);
-    } finally {
-      if (timer !== undefined) clearTimeout(timer);
-    }
-  };
-  let response = await withTimeout(context);
+  // NW-05: ONE deadline covers both the first request and any redirect. The
+  // previous per-attempt timer gave a redirect a second full budget, so a
+  // 15 s bound governed a 30 s operation.
+  const attempt = async (stage: string, request: RelayRequestContext): Promise<RelayFetchResponse> =>
+    withDeadline(stage, deadline, fetcher({ ...request, signal: deadline.signal, remainingMs: () => deadline.remainingMs() }));
+  let response = await attempt('request', context);
   if (!redirectStatus(response.status)) return { response, redirect: 'NONE' };
   const location = response.headers['location'];
   if (location === undefined) return { response, redirect: 'BLOCKED' };
@@ -189,7 +225,7 @@ async function callWithRedirectPolicy(
   // Local fixtures may exercise a same-origin redirect path. DEV is stricter:
   // a source operation may not silently turn into another path family.
   if (!sameOrigin || (mode === 'dev' && !samePath)) return { response, redirect: 'BLOCKED' };
-  response = await withTimeout({ ...context, target: redirect });
+  response = await attempt('redirect', { ...context, target: redirect });
   if (redirectStatus(response.status)) return { response, redirect: 'BLOCKED' };
   return { response, redirect: 'APPROVED_SAME_ORIGIN' };
 }
@@ -261,16 +297,33 @@ export async function startPhase5Relay(options: StartRelayOptions): Promise<Phas
     if (!policyAllowsTarget(target, operation, options.environment, options.mode)) {
       return reject(target.hostname === '127.0.0.1' || target.hostname === 'localhost' ? 'UNKNOWN_DESTINATION' : 'PRODUCTION_DESTINATION');
     }
-    const auth = options.authHeaders === undefined ? {} : await options.authHeaders();
-    const headers: Record<string, string> = { Accept: 'application/json', ...auth };
-    const context: RelayRequestContext = { operation, target, headers };
+    // NW-05: the deadline is created BEFORE auth-header acquisition, which
+    // used to sit outside the timer entirely, so a hung credential fetch was
+    // unbounded. It is disposed on every terminal path.
+    const deadline = createRelayDeadline(options.upstreamTimeoutMs ?? DEFAULT_UPSTREAM_TIMEOUT_MS);
     let result: { response: RelayFetchResponse; redirect: RelayObservation['redirect'] };
     try {
-      result = await callWithRedirectPolicy(context, fetcher, options.mode, options.upstreamTimeoutMs ?? 15_000);
-    } catch {
+      const auth = options.authHeaders === undefined
+        ? {}
+        : await withDeadline('auth', deadline, options.authHeaders());
+      const headers: Record<string, string> = { Accept: 'application/json', ...auth };
+      const context: RelayRequestContext = {
+        operation,
+        target,
+        headers,
+        maxBodyBytes: options.maxBodyBytes ?? DEFAULT_MAX_BODY_BYTES,
+      };
+      result = await callWithRedirectPolicy(context, fetcher, options.mode, deadline);
+    } catch (error) {
+      // The taxonomy is preserved: a deadline and a transport failure are
+      // different operator facts. The oracle result stays NETWORK_FAILURE for
+      // compatibility, and the distinction is reported in the header.
+      const failure = classifyRelayFailure(error);
       const oracle = { oracleId: operation.oracleProfile ?? operationId, result: 'NETWORK_FAILURE' as const, statusClass: 'network', contentTypeClass: 'absent', parseCategory: 'transport-error', streamCategory: 'unknown', bodyPersisted: false as const };
       observations.set(operationId, { operationId, destinationHostClass: options.mode === 'local' ? 'LOCAL_LOOPBACK' : 'DEV_API', destinationHost: target.hostname, method: 'GET', status: null, requestPathClass: 'CATALOG_RESOLVED', oracle, redirect: 'NONE', bodyForwardedToOops: false });
-      return writeEmpty(res, 502, { 'X-Nightwatch-Oracle': oracle.result });
+      return writeEmpty(res, 502, { 'X-Nightwatch-Oracle': oracle.result, 'X-Nightwatch-Relay-Failure': failure });
+    } finally {
+      deadline.dispose();
     }
     const response = result.response;
     const oracle = evaluateApiResponse(operation, response.status, response.headers, response.body, response.complete ?? true);
@@ -331,6 +384,9 @@ interface NativePhase5RequestOptions {
   fetcher?: RelayFetcher;
   authHeaders?: () => Promise<Readonly<Record<string, string>>>;
   upstreamTimeoutMs?: number;
+  maxBodyBytes?: number;
+  /** NW-05: a caller's cancellation, composed into the operation deadline. */
+  callerSignal?: AbortSignal;
 }
 
 /** Execute the same catalog-resolved request and oracle without OOPS. */
@@ -343,10 +399,25 @@ export async function executeNativePhase5Operation(options: NativePhase5RequestO
   if (!policyAllowsTarget(target, options.operation, options.environment, options.mode)) {
     throw new Error('fail-closed: native API target denied by outbound policy');
   }
-  const auth = options.authHeaders === undefined ? {} : await options.authHeaders();
   const fetcher = options.fetcher ?? defaultFetch;
+  const deadline = createRelayDeadline(options.upstreamTimeoutMs ?? DEFAULT_UPSTREAM_TIMEOUT_MS, {
+    ...(options.callerSignal === undefined ? {} : { callerSignal: options.callerSignal }),
+  });
   try {
-    const result = await callWithRedirectPolicy({ operation: options.operation, target, headers: { Accept: 'application/json', ...auth } }, fetcher, options.mode, options.upstreamTimeoutMs ?? 15_000);
+    const auth = options.authHeaders === undefined
+      ? {}
+      : await withDeadline('auth', deadline, options.authHeaders());
+    const result = await callWithRedirectPolicy(
+      {
+        operation: options.operation,
+        target,
+        headers: { Accept: 'application/json', ...auth },
+        maxBodyBytes: options.maxBodyBytes ?? DEFAULT_MAX_BODY_BYTES,
+      },
+      fetcher,
+      options.mode,
+      deadline,
+    );
     const oracle = evaluateApiResponse(options.operation, result.response.status, result.response.headers, result.response.body, result.response.complete ?? true);
     return {
       operationId: options.operation.operationId,
@@ -360,7 +431,7 @@ export async function executeNativePhase5Operation(options: NativePhase5RequestO
       ...(result.redirect === 'BLOCKED' ? { safetyBlock: 'UNKNOWN_DESTINATION' as const } : {}),
       bodyForwardedToOops: false,
     };
-  } catch {
+  } catch (error) {
     return {
       operationId: options.operation.operationId,
       destinationHostClass: options.mode === 'local' ? 'LOCAL_LOOPBACK' : 'DEV_API',
@@ -370,7 +441,10 @@ export async function executeNativePhase5Operation(options: NativePhase5RequestO
       requestPathClass: 'CATALOG_RESOLVED',
       oracle: { oracleId: options.operation.oracleProfile ?? options.operation.operationId, result: 'NETWORK_FAILURE', statusClass: 'network', contentTypeClass: 'absent', parseCategory: 'transport-error', streamCategory: 'unknown', bodyPersisted: false },
       redirect: 'NONE',
+      relayFailure: classifyRelayFailure(error),
       bodyForwardedToOops: false,
     };
+  } finally {
+    deadline.dispose();
   }
 }

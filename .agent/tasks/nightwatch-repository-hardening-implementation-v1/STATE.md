@@ -13,7 +13,7 @@ Last validated implementation SHA: 64fb907b6d536c87541641cd99aa47f9f5a6a170
 Last substantive checkpoint SHA: 64fb907b6d536c87541641cd99aa47f9f5a6a170
 Live HEAD authority: GIT
 Branch: session/nightwatch-repository-hardening--e7b9be89
-Last checkpoint: M6 / NW-04 complete and validated — one generation-bearing, bounded, atomic checkpoint publication and read path, with the crash matrix executed rather than inferred
+Last checkpoint: M7 / NW-05 complete and validated — one monotonic abortable deadline covering the whole relay operation, with a frozen failure taxonomy and injected time
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 0ac7b3d037b5059f670eca715fc30adaf58e7334
@@ -34,11 +34,11 @@ is consumed, not re-executed.
 
 ## Current Milestone
 
-Milestone ID: M7
+Milestone ID: M8
 Milestone status: IN_PROGRESS
-What is being attempted: NW-05 — replace the Phase-5 relay's per-attempt
-`Promise.race` timeouts with one monotonic deadline and `AbortController`
-threaded through auth, connection, redirect and body.
+What is being attempted: NW-12 — give each SSE client a fixed queued-state
+bound by honouring `response.write` backpressure, so one stalled consumer
+cannot accumulate bytes or degrade healthy peers.
 
 ## Completed Milestones
 
@@ -134,7 +134,7 @@ threaded through auth, connection, redirect and body.
 
 ## Work In Progress
 
-M7 / NW-05 in this session worktree. No other lane is dispatched.
+M8 / NW-12 in this session worktree. No other lane is dispatched.
 
 ## Findings register progress
 
@@ -146,8 +146,8 @@ M7 / NW-05 in this session worktree. No other lane is dispatched.
 | NW-03 | M4 | CLOSED — repaired, 8 regressions, 5 proven failing pre-repair |
 | NW-13 | M5 | CLOSED — repaired, 5 regressions, 2 proven failing pre-repair |
 | NW-04 | M6 | CLOSED — repaired, 13 regressions, consumer-level case proven failing pre-repair |
-| NW-05 | M7 | IN PROGRESS |
-| NW-12 | M8 | NOT STARTED |
+| NW-05 | M7 | CLOSED — repaired, 11 regressions, 4 proven failing pre-repair |
+| NW-12 | M8 | IN PROGRESS |
 | NW-09 | M9 | NOT STARTED |
 | NW-10 | M9 | NOT STARTED |
 | NW-11 | M9 | NOT STARTED |
@@ -157,6 +157,23 @@ M7 / NW-05 in this session worktree. No other lane is dispatched.
 | NW-15 | — | CLOSED BY W10 OWNER — consumed, out of scope |
 
 ## Exact Next Action
+
+1. Probe the live NW-12 evidence in `src/controlCenter/server/sse.ts`:
+   confirm that `response.write`'s false return is ignored, so a stalled
+   consumer's queued bytes grow without bound while the client count stays
+   capped.
+2. Choose and document ONE per-client policy — retain only the newest
+   invalidation while backpressured, or close the client after a bounded
+   queue or time threshold — and coordinate it with the NW-11 burst policy
+   before the UI lane starts.
+3. Track drain, close and error with deterministic listener and timer
+   removal, so cleanup leaves no registry entry.
+4. Drive it with fake writable streams that never drain, asserting bounded
+   bytes, events and listeners, that healthy peers keep receiving, and that
+   termination is deterministic; verify the cases fail against the pre-repair
+   server.
+
+## Superseded next action (M7, complete)
 
 1. Probe the live NW-05 evidence in `src/api/phase5/relay.ts`: `defaultFetch`
    passes no `AbortSignal`, `withTimeout` rejects via `Promise.race` without
@@ -286,6 +303,9 @@ M7 / NW-05 in this session worktree. No other lane is dispatched.
 | `src/core/agentRuntime/checkpointStore.ts` | generation-bearing bounded atomic checkpoint publication and read | CREATED |
 | `src/core/agentRuntime/localCampaign.ts` | publish/read through the store; supersede instead of delete on a fresh run | MODIFIED |
 | `tests/unit/nw04CheckpointDurability.test.ts` | thirteen NW-04 cases including the three-step crash matrix | CREATED |
+| `src/api/phase5/deadline.ts` | frozen relay failure taxonomy and the one abortable operation deadline | CREATED |
+| `src/api/phase5/relay.ts` | one deadline threaded through auth, connection, redirect and body; signal reaches `fetch`; `maxBodyBytes` wired | MODIFIED |
+| `tests/unit/nw05RelayDeadline.test.ts` | eleven NW-05 cases with injected time and count-based assertions | CREATED |
 | `docs/MASTER-IMPLEMENTATION-HARDENING-PLAN.md` | document status and NW-06 resolution evidence | MODIFIED |
 
 ## Validation Ledger
@@ -297,6 +317,14 @@ the inherited W10 anchor, 31 legacy v1 task records, and the integrated W10
 session worktree awaiting an owner release. `npm run handoff:check` PASS,
 receipt campaign `nightwatch-repository-hardening-implementation-v1`,
 planned-from `0ac7b3d`. `npm run workspace:check` PASS.
+
+M7: `tests/unit/nw05RelayDeadline.test.ts` — 11 passed; 4 fail against the
+pre-repair relay, one per defect (unbounded auth, doubled redirect budget,
+missing abort signal, uncomposed caller cancellation). The pre-repair
+hung-auth case consumed the full 5.0 s injected hang. `phase5Api`,
+`phase5Fixture` and `phase23QualityGate` — 35 passed. `npm run typecheck` and
+`npm run hardening:check` PASS. The authoritative gate now selects 221 unique
+test files with zero duplicates.
 
 **M6 confirming shard sweep at the NW-04 head** — the full suite in four
 foreground shards, each reconciled against its own collection:
