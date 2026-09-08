@@ -706,6 +706,73 @@ all rather than an inert button.
 | measured against the defect | 6 of 7 server cases and all 4 UI cases fail against the pre-repair code |
 | no regression | 101 passed across the paging-adjacent server suites; UI 28 passed; UI typecheck and build PASS |
 
+### NW-11 — validate and cancel dashboard requests, and coalesce refreshes
+
+All three parts share one seam, so they were repaired together.
+
+**Validation.** `isSnapshot` accepted any object whose `schemaVersion` merely
+STARTED WITH `nightwatch.control-center.` and then cast the payload to the
+requested type. A findings response therefore satisfied a reviewer read, and a
+`.v1` payload satisfied the `.v3` source-summary reader.
+`CONTROL_CENTER_SNAPSHOT_CONTRACTS` pins the exact version and the owned
+required fields for all sixteen endpoints. Membership is
+`Object.prototype.hasOwnProperty`, not `in`: a field inherited from a
+prototype is not a field the server sent. Unknown ADDED fields remain
+accepted deliberately — rejecting them would break forward compatibility with
+a server that grew one, so the contract checks the version exactly and the
+fields this client reads, and nothing more.
+
+**Deadline and cancellation.** `fetch` received no signal, so an effect's
+cleanup suppressed the state update while the transport kept running, and a
+hung request had no termination at all. Each request now composes the
+caller's signal with its own `AbortController` and a finite 15-second
+deadline, and disposes the timer in `finally` on every path. TIMEOUT and
+ABORTED are distinct error kinds from NETWORK, because an operation this
+client ended is not the same fact as a service that could not be reached, and
+collapsing them would send the operator after the wrong problem. An
+already-aborted caller signal makes no request at all. Every effect in
+`App.tsx` — overview, run detail and timeline, execution graph, campaign
+summary, source graph, system map, and the paged hook — now aborts on cleanup.
+
+**Burst coalescing.** Every notification incremented the shared refresh key
+directly, and one server-side snapshot change can emit several notifications,
+so a burst amplified local load in proportion to the server's chattiness. The
+policy is leading edge plus one trailing follow-up over a 250 ms window: the
+first event invalidates immediately so the UI stays responsive, everything
+else in the window collapses into exactly one further invalidation, and a
+continuing stream costs one per window rather than one per event.
+
+**Regression.** Thirteen cases in `ui/control-center/src/api.test.ts`.
+
+| Case | What it pins |
+| --- | --- |
+| exact contract with a future added field | forward compatibility is not sacrificed to validation |
+| a same-namespace payload from another endpoint | the prefix check was the defect |
+| an older version of the same endpoint | `.v0` does not satisfy `.v1` |
+| each required field deleted in turn | the owned fields are actually required |
+| an inherited `items` and `page` | own-key membership, not `in` |
+| `null`, a number, a string, an array | non-objects refused outright |
+| the signal reaching `fetch` | the transport is cancellable, which the defect lacked |
+| an already-aborted caller | no request is issued for obsolete work |
+| a hung request at the deadline | TIMEOUT, not an indefinite wait |
+| timer count after success | no timer left armed against a completed operation |
+| bursts of 1 / 100 / 1000 | 1 / 2 / 2 invalidations — a documented bound independent of burst size |
+| ten events per window over five windows | at most one refresh per window |
+| unsubscribe with a queued follow-up | the pending timer is disposed and nothing fires afterwards |
+
+**Acceptance.**
+
+| Criterion | Evidence |
+| --- | --- |
+| unsupported DTOs never reach render logic | every mismatch case rejects before returning; the loaders are the only path into the views |
+| obsolete and hung work is aborted | signal asserted at the transport; already-aborted makes no request; the deadline case terminates |
+| timers and listeners are disposed | timer count zero after success; unsubscribe disposes the window timer; the caller's abort listener is removed in `finally` |
+| event bursts cause a documented bounded number of requests | 1 / 2 / 2 for 1 / 100 / 1000 events, and ≤ 6 for fifty events across five windows |
+| the UI reports actionable safe states | TIMEOUT and ABORTED carry their own operator-facing labels, distinct from NETWORK |
+| forward-compatible DTO additions are not rejected | the added-field case passes |
+| measured against the defect | 10 of the 13 fail against the pre-repair client; the 3 that pass are the acceptance and disposal controls |
+| UI lane green | UI 41 passed, UI typecheck PASS, UI build PASS |
+
 ## Validation receipts
 
 Recorded per milestone as they are produced. No receipt is copied from a

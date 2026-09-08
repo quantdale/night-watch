@@ -551,7 +551,7 @@ Priority meanings: P0 is demonstrated catastrophic failure requiring immediate c
 
 ### NW-11 — Validate and cancel dashboard requests and coalesce refreshes
 
-- **Priority / category / confidence / status:** P2; client reliability and resource bounds; CONFIRMED source behavior; NOT STARTED.
+- **Priority / category / confidence / status:** P2; client reliability and resource bounds; CONFIRMED source behavior; **CLOSED** — repaired and regression-proven under `nightwatch-repository-hardening-implementation-v1` M9.
 - **Affected surfaces:** UI API client, React effects, SSE refresh scheduling, error/status components and tests.
 - **Evidence:** `fetchSnapshot` checks only a schema-version prefix then casts generic `T`; fetches have no signal/deadline. Effect cleanup suppresses state updates but leaves transport active. Each SSE event increments a shared refresh key and can refresh overview plus the current view without burst coalescing.
 - **Problem, impact, root cause:** malformed DTOs cross the trust boundary, obsolete navigation retains work, hung requests lack termination, and bursts can amplify local load.
@@ -560,6 +560,45 @@ Priority meanings: P0 is demonstrated catastrophic failure requiring immediate c
 - **Tests and validation:** wrong schema/version/shape/size, hung fetch, caller abort, deadline, rapid navigation, unmount, late result, 1/100/1000-event bursts, reconnect, and valid controls. Assert abort signals and bounded request counts.
 - **Acceptance:** unsupported DTOs never reach render logic; obsolete/hung work is aborted; timers/listeners are disposed; event bursts cause a documented bounded number of requests; UI reports actionable safe states.
 - **Dependencies / risks / parallelization:** share one UI lane with NW-10 after contract freeze. Coordinate burst policy with NW-12. Risk is rejecting forward-compatible DTO additions; validate owned required fields and exact schema version intentionally.
+
+- **Resolution evidence (2026-09-09):** all three parts confirmed in live
+  source and repaired together, since they share one seam.
+  **Validation.** `isSnapshot` accepted any object whose `schemaVersion`
+  merely STARTED WITH `nightwatch.control-center.` and then cast to `T`, so a
+  findings response satisfied a reviewer read and a `.v1` payload satisfied
+  the `.v3` source-summary reader. `CONTROL_CENTER_SNAPSHOT_CONTRACTS` now
+  pins the exact version and the owned required fields for all sixteen
+  endpoints, checked with `Object.prototype.hasOwnProperty` — `in` would have
+  accepted a field inherited from a prototype, which is not a field the server
+  sent. Unknown ADDED fields are still accepted on purpose: rejecting them
+  would break forward compatibility with a server that grew one.
+  **Deadline and cancellation.** `fetch` received no signal at all, so an
+  effect's cleanup suppressed the state update while the transport kept
+  running, and a hung request had no termination. Each request now composes
+  the caller's signal with its own `AbortController` and a finite
+  15-second deadline, disposes the timer on every path, and reports TIMEOUT
+  and ABORTED as distinct kinds from NETWORK — an operation this client ended
+  is not the same fact as a service that could not be reached. An
+  already-aborted caller signal makes no request at all. Every effect in
+  `App.tsx` now aborts on cleanup rather than only ignoring the result.
+  **Burst coalescing.** Every notification incremented the shared refresh key
+  directly, and one server-side snapshot change can emit several
+  notifications, so a burst amplified local load in proportion to the
+  server's chattiness. The policy is leading edge plus one trailing
+  follow-up over a 250 ms window: the first event invalidates immediately so
+  the UI stays responsive, everything else in the window collapses into
+  exactly ONE further invalidation, and a continuing stream costs one per
+  window. Bursts of 1, 100 and 1000 events are asserted to cost 1, 2 and 2
+  invalidations respectively, and unsubscribing disposes the pending window
+  timer so no follow-up fires afterwards.
+  Thirteen cases in `ui/control-center/src/api.test.ts`: exact-contract
+  acceptance including a future added field, a same-namespace wrong endpoint,
+  an older version of the same endpoint, each required field removed in turn,
+  an inherited field, non-objects and arrays, the signal reaching the
+  transport, an already-aborted caller, the deadline firing, timer disposal on
+  success, the three burst sizes, a steady stream, and unsubscribe disposal.
+  10 of the 13 fail against the pre-repair client; the 3 that pass are the
+  acceptance and disposal controls. UI 41 passed, UI typecheck and build PASS.
 
 ### NW-12 — Bound SSE memory for slow or disconnected clients
 

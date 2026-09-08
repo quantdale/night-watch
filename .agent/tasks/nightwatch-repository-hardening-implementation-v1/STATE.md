@@ -13,7 +13,7 @@ Last validated implementation SHA: 54c7ed58b2482595da379830bb4a002a3076165f
 Last substantive checkpoint SHA: 54c7ed58b2482595da379830bb4a002a3076165f
 Live HEAD authority: GIT
 Branch: session/nightwatch-repository-hardening--e7b9be89
-Last checkpoint: M9 / NW-10 complete and validated — the continuation cursor is consumed at every layer that had been discarding it, and all five bounded views can now be paged to exhaustion
+Last checkpoint: M9 COMPLETE — the operator dashboard triad NW-09/NW-10/NW-11 is closed: a shipped review opt-in with a capability that cannot disagree with the route, real end-to-end pagination, and a validated, cancellable, coalesced client
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 0ac7b3d037b5059f670eca715fc30adaf58e7334
@@ -34,11 +34,11 @@ is consumed, not re-executed.
 
 ## Current Milestone
 
-Milestone ID: M9
+Milestone ID: M10
 Milestone status: IN_PROGRESS
-What is being attempted: NW-11 — exact per-endpoint DTO validation, composed
-navigation abort with a finite deadline, and bounded SSE-invalidation
-coalescing consistent with the M8 server policy.
+What is being attempted: NW-08 — deterministic discovery and classification of
+the whole validation universe, with receipts bound to an inventory digest, so
+no green receipt can silently omit a newly added test.
 
 ## Completed Milestones
 
@@ -163,10 +163,23 @@ coalescing consistent with the M8 server policy.
   generation reset and explicit end/error states for all five bounded views.
   7 server cases (6 fail pre-repair) and 4 UI cases (all 4 fail pre-repair);
   101 passed across paging-adjacent server suites, UI 28 passed.
+- **M9 COMPLETE (NW-09, NW-10, NW-11)** — NW-11 closed the client trust
+  boundary: `CONTROL_CENTER_SNAPSHOT_CONTRACTS` pins the exact schema version
+  and owned required fields for all sixteen endpoints, checked with
+  `hasOwnProperty` so an inherited field is not mistaken for one the server
+  sent, while unknown ADDED fields stay accepted for forward compatibility.
+  Each request composes the caller's signal with its own controller and a
+  finite 15-second deadline, disposes its timer on every path, reports
+  TIMEOUT and ABORTED as distinct from NETWORK, and makes no request at all
+  for an already-aborted caller; every App effect now aborts on cleanup.
+  SSE invalidations coalesce leading-edge plus one trailing follow-up over a
+  250 ms window, so bursts of 1 / 100 / 1000 events cost 1 / 2 / 2
+  invalidations and unsubscribe disposes the pending timer. 13 cases, 10 fail
+  pre-repair. UI 41 passed, UI typecheck and build PASS.
 
 ## Work In Progress
 
-M9 / NW-09 in this session worktree. NW-10 and NW-11 follow in the same
+M10 / NW-08 in this session worktree. No other lane is dispatched.
 session once the NW-09 capability and pagination DTOs are frozen, because one
 owner must hold the overlapping UI API and App surfaces.
 
@@ -184,13 +197,29 @@ owner must hold the overlapping UI API and App surfaces.
 | NW-12 | M8 | CLOSED — repaired, 11 regressions, quantified 38,216 bytes to 228 |
 | NW-09 | M9 | CLOSED — repaired, 6 launcher + 4 UI regressions, 5 of each proven failing pre-repair |
 | NW-10 | M9 | CLOSED — repaired at every layer, 7 server + 4 UI regressions, 6 and 4 proven failing pre-repair |
-| NW-11 | M9 | IN PROGRESS |
+| NW-11 | M9 | CLOSED — repaired, 13 regressions, 10 proven failing pre-repair |
 | NW-08 | M10 | PARTIAL — ten suites registered, two duplicate additions reverted; live denominator 218/336 files measured |
 | NW-14 | M11 | NOT STARTED |
 | NW-07 | M12 | NOT STARTED |
 | NW-15 | — | CLOSED BY W10 OWNER — consumed, out of scope |
 
 ## Exact Next Action
+
+1. Discover the live validation universe: enumerate every tracked
+   `.test.ts` / `.smoke.ts`, every UI test, every `bin/*.mjs`, and compare
+   that discovered set against the union the required gate manifests actually
+   select. The current measured denominator is 218 of 336 root test files
+   registered; re-measure rather than trusting that number.
+2. Classify every discovered item into exactly one required or explicitly
+   excluded class, each exclusion carrying a reason and its own evidence lane,
+   and measure indirect execution before declaring any test unrun.
+3. Bind the gate receipt to an inventory digest with executed / skipped /
+   unavailable counts, keeping local, clean-checkout, host-qualified and CI
+   claims separate.
+4. Prove an unclassified new test FAILS the gate rather than passing
+   silently, using fixture repositories.
+
+## Superseded next action (M9 / NW-11, complete)
 
 1. Probe the live NW-11 evidence: confirm that `fetchSnapshot` checks only a
    schema-version PREFIX and then casts to `T`, that fetches carry no signal

@@ -423,7 +423,13 @@ export type OverviewLoadState =
   | { readonly kind: 'ready'; readonly data: OverviewSnapshot }
   | { readonly kind: 'error' };
 
-export type ApiErrorKind = 'NETWORK' | 'HTTP' | 'INVALID_RESPONSE';
+/**
+ * NW-11. TIMEOUT and ABORTED are distinct from NETWORK on purpose: an
+ * operation this client ended is not the same fact as a service that could
+ * not be reached, and reporting them as one would send the operator looking
+ * for the wrong problem.
+ */
+export type ApiErrorKind = 'NETWORK' | 'HTTP' | 'INVALID_RESPONSE' | 'TIMEOUT' | 'ABORTED';
 
 // ---------------------------------------------------------------------------
 // RS-1 reviewer surface.

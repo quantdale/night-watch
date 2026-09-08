@@ -39,7 +39,7 @@ interface PagedSnapshot<T> {
 function usePagedCollection<S extends PagedSnapshot<T>, T>(options: {
   readonly active: boolean;
   readonly refreshKey: number;
-  readonly load: (cursor: string | null) => Promise<S>;
+  readonly load: (cursor: string | null, signal: AbortSignal) => Promise<S>;
   readonly identity: (item: T) => string;
   /** A snapshot generation, where the DTO carries one. A change resets paging. */
   readonly generation?: (snapshot: S) => string | null;
@@ -70,9 +70,13 @@ function usePagedCollection<S extends PagedSnapshot<T>, T>(options: {
   useEffect(() => {
     if (!active) return;
     let cancelled = false;
+    // NW-11. Cleanup must ABORT the request, not merely ignore its result:
+    // suppressing the state update left the transport running, so a rapid
+    // navigation kept every superseded fetch alive.
+    const controller = new AbortController();
     if (cursor === null) setState({ kind: 'loading' });
     else setLoadingMore(true);
-    load(cursor)
+    load(cursor, controller.signal)
       .then((snapshot) => {
         if (cancelled) return;
         const observed = generation === undefined ? null : generation(snapshot);
@@ -106,7 +110,10 @@ function usePagedCollection<S extends PagedSnapshot<T>, T>(options: {
       .finally(() => {
         if (!cancelled) setLoadingMore(false);
       });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
   }, [active, refreshKey, cursor, load, identity, generation]);
 
   const loadMore = useCallback((): void => {
@@ -983,14 +990,15 @@ function SystemMapView({ refreshKey }: { readonly refreshKey: number }): ReactNo
 
   useEffect(() => {
     let cancelled = false;
+    const controller = new AbortController();
     setState({ kind: 'loading' });
     const request = query === null
-      ? loadSystemMapLevel(current.level, current.focusId)
-      : loadSystemMapQuery(query, queryFocusId);
+      ? loadSystemMapLevel(current.level, current.focusId, controller.signal)
+      : loadSystemMapQuery(query, queryFocusId, controller.signal);
     request.then((data) => { if (!cancelled) setState({ kind: 'ready', data }); }).catch((error: unknown) => {
       if (!cancelled) { void apiErrorLabel(error); setState({ kind: 'error' }); }
     });
-    return () => { cancelled = true; };
+    return () => { cancelled = true; controller.abort(); };
   }, [current.level, current.focusId, query, queryFocusId, refreshKey]);
 
   const goBack = useCallback((): void => {
@@ -1204,7 +1212,7 @@ function DashboardApp(): ReactNode {
   const runsPaged = usePagedCollection<RunListSnapshot, RunListSnapshot['items'][number]>({
     active: activeView === 'runs',
     refreshKey,
-    load: useCallback((cursor: string | null) => loadRuns(20, cursor), []),
+    load: useCallback((cursor: string | null, signal: AbortSignal) => loadRuns(20, cursor, signal), []),
     identity: useCallback((item: RunListSnapshot['items'][number]) => item.runId, []),
   });
   const runState = runsPaged.state;
@@ -1215,7 +1223,7 @@ function DashboardApp(): ReactNode {
   const coveragePaged = usePagedCollection<CampaignCoverageSnapshot, CampaignCoverageSnapshot['items'][number]>({
     active: activeView === 'campaigns',
     refreshKey,
-    load: useCallback((cursor: string | null) => loadCampaignCoverage(50, cursor), []),
+    load: useCallback((cursor: string | null, signal: AbortSignal) => loadCampaignCoverage(50, cursor, signal), []),
     identity: useCallback((item: CampaignCoverageSnapshot['items'][number]) => item.memberId, []),
   });
   const campaignCoverageState = coveragePaged.state;
@@ -1223,7 +1231,7 @@ function DashboardApp(): ReactNode {
   const surfacesPaged = usePagedCollection<SourceSurfacesSnapshot, SourceSurfaceSnapshot>({
     active: activeView === 'source-intelligence',
     refreshKey,
-    load: useCallback((cursor: string | null) => loadSourceSurfaces(50, cursor), []),
+    load: useCallback((cursor: string | null, signal: AbortSignal) => loadSourceSurfaces(50, cursor, signal), []),
     identity: useCallback((item: SourceSurfaceSnapshot) => item.surfaceId, []),
   });
   const sourceSurfaceState = surfacesPaged.state;
@@ -1231,14 +1239,14 @@ function DashboardApp(): ReactNode {
   const findingsPaged = usePagedCollection<FindingsSnapshot, FindingsSnapshot['items'][number]>({
     active: activeView === 'findings',
     refreshKey,
-    load: useCallback((cursor: string | null) => loadFindings(50, cursor), []),
+    load: useCallback((cursor: string | null, signal: AbortSignal) => loadFindings(50, cursor, signal), []),
     identity: useCallback((item: FindingsSnapshot['items'][number]) => item.findingId, []),
   });
   const findingsState = findingsPaged.state;
   const reviewerPaged = usePagedCollection<ReviewerSnapshot, ReviewerFindingSnapshot>({
     active: activeView === 'reviewer',
     refreshKey,
-    load: useCallback((cursor: string | null) => loadReviewer(50, cursor), []),
+    load: useCallback((cursor: string | null, signal: AbortSignal) => loadReviewer(50, cursor, signal), []),
     identity: useCallback((item: ReviewerFindingSnapshot) => item.findingId, []),
   });
   const reviewerState = reviewerPaged.state;
@@ -1252,8 +1260,9 @@ function DashboardApp(): ReactNode {
 
   useEffect(() => {
     let cancelled = false;
+    const controller = new AbortController();
     setLoadState({ kind: 'loading' });
-    loadOverview().then((data) => {
+    loadOverview(controller.signal).then((data) => {
       if (!cancelled) setLoadState({ kind: 'ready', data });
     }).catch((error: unknown) => {
       if (!cancelled) {
@@ -1263,6 +1272,7 @@ function DashboardApp(): ReactNode {
     });
     return () => {
       cancelled = true;
+      controller.abort();
     };
   }, [refreshKey]);
 
@@ -1271,8 +1281,9 @@ function DashboardApp(): ReactNode {
   useEffect(() => {
     if (activeView !== 'source-intelligence' || selectedSurfaceId === null) return;
     let cancelled = false;
+    const controller = new AbortController();
     setSourceGraphState({ kind: 'loading' });
-    loadSourceGraph(selectedSurfaceId).then((data) => {
+    loadSourceGraph(selectedSurfaceId, 2, controller.signal).then((data) => {
       if (!cancelled) setSourceGraphState({ kind: 'ready', data });
     }).catch((error: unknown) => {
       if (!cancelled) {
@@ -1280,15 +1291,19 @@ function DashboardApp(): ReactNode {
         setSourceGraphState({ kind: 'error' });
       }
     });
-    return () => { cancelled = true; };
+    return () => { cancelled = true; controller.abort(); };
   }, [activeView, refreshKey, selectedSurfaceId]);
 
   useEffect(() => {
     if (activeView !== 'runs' || selectedRunId === null) return;
     let cancelled = false;
+    const controller = new AbortController();
     setDetailState({ kind: 'loading' });
     setTimelineState({ kind: 'loading' });
-    Promise.all([loadRunDetail(selectedRunId), loadTimeline(selectedRunId)]).then(([detail, timeline]) => {
+    Promise.all([
+      loadRunDetail(selectedRunId, controller.signal),
+      loadTimeline(selectedRunId, 0, controller.signal),
+    ]).then(([detail, timeline]) => {
       if (!cancelled) {
         setDetailState({ kind: 'ready', data: detail });
         setTimelineState({ kind: 'ready', data: timeline });
@@ -1300,14 +1315,15 @@ function DashboardApp(): ReactNode {
         setTimelineState({ kind: 'error' });
       }
     });
-    return () => { cancelled = true; };
+    return () => { cancelled = true; controller.abort(); };
   }, [activeView, refreshKey, selectedRunId]);
 
   useEffect(() => {
     if (activeView !== 'campaigns') return;
     let cancelled = false;
+    const controller = new AbortController();
     setCampaignSummaryState({ kind: 'loading' });
-    loadCampaignSummary().then((summary) => {
+    loadCampaignSummary(controller.signal).then((summary) => {
       if (!cancelled) setCampaignSummaryState({ kind: 'ready', data: summary });
     }).catch((error: unknown) => {
       if (!cancelled) {
@@ -1315,14 +1331,15 @@ function DashboardApp(): ReactNode {
         setCampaignSummaryState({ kind: 'error' });
       }
     });
-    return () => { cancelled = true; };
+    return () => { cancelled = true; controller.abort(); };
   }, [activeView, refreshKey]);
 
   useEffect(() => {
     if (activeView !== 'execution-graph' || selectedRunId === null) return;
     let cancelled = false;
+    const controller = new AbortController();
     setGraphState({ kind: 'loading' });
-    loadExecutionGraph(selectedRunId).then((data) => {
+    loadExecutionGraph(selectedRunId, controller.signal).then((data) => {
       if (!cancelled) setGraphState({ kind: 'ready', data });
     }).catch((error: unknown) => {
       if (!cancelled) {
@@ -1330,7 +1347,7 @@ function DashboardApp(): ReactNode {
         setGraphState({ kind: 'error' });
       }
     });
-    return () => { cancelled = true; };
+    return () => { cancelled = true; controller.abort(); };
   }, [activeView, refreshKey, selectedRunId]);
 
   const navigate = useCallback((view: ViewId): void => {
