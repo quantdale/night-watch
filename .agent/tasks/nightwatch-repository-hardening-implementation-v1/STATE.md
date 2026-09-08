@@ -341,6 +341,21 @@ session worktree awaiting an owner release. `npm run handoff:check` PASS,
 receipt campaign `nightwatch-repository-hardening-implementation-v1`,
 planned-from `0ac7b3d`. `npm run workspace:check` PASS.
 
+**M8 confirming shard sweep at the NW-12 head** — the full suite in four
+foreground shards, each reconciled against its own collection:
+
+| Shard | Collected | Passed | Skipped | Failed |
+|---|---:|---:|---:|---:|
+| 1/4 | 1190 | 1190 | 0 | 0 |
+| 2/4 | 1188 | 1187 | 1 | 0 |
+| 3/4 | 1190 | 1178 | 12 | 0 |
+| 4/4 | 1180 | 1175 | 5 | 0 |
+| total | **4748** | **4730** | **18** | **0** |
+
+339 test files collected. The campaign has added 35 tests across six new
+suites since its own M2 baseline of 4713, and the skip count is unchanged at
+18 throughout — no suite has quietly started declining to run.
+
 M8: `tests/unit/nw12SseBackpressure.test.ts` — 11 passed. Against the
 pre-repair hub, the API-free case FAILED with 38,216 queued bytes where the
 bound is 228. Ten of the eleven fail against the old hub, but only that one
