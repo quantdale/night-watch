@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -205,6 +206,41 @@ process.stdin.on('data', () => {}).on('end', () => {
   expect(result.investigationsStarted).toBe(1 + CAMPAIGN_STAGNATION_LIMIT);
   expect(result.terminationCounts.COMPLETE_WITH_FINDING).toBe(1 + CAMPAIGN_STAGNATION_LIMIT);
   expect(result.checkpointFile).toBeNull();
+});
+
+test('operator repository scope rejects an unapproved repository before the reasoner starts', () => {
+  const dir = scratchDir();
+  const marker = path.join(dir, 'reasoner-started');
+  const fake = writeFake(
+    dir,
+    'must-not-start.mjs',
+    `import fs from 'node:fs'; fs.writeFileSync(${JSON.stringify(marker)}, 'started');`,
+  );
+  const result = spawnSync(
+    NODE,
+    [
+      path.join(process.cwd(), 'bin', 'nightwatch-agent.mjs'),
+      'campaign',
+      'run',
+      '--reasoner=cli',
+      '--duration=1h',
+      '--id=camp-unapproved-repository',
+      '--repository=not-approved/foreign',
+    ],
+    {
+      cwd: process.cwd(),
+      encoding: 'utf8',
+      env: {
+        ...process.env,
+        NIGHTWATCH_REASONER_CLI: NODE,
+        NIGHTWATCH_REASONER_SCRIPT: fake,
+      },
+      timeout: 60_000,
+    },
+  );
+  expect(result.status).toBe(2);
+  expect(result.stderr).toContain('REAL_SOURCE_SCAN_APPROVED_UNIVERSE');
+  expect(fs.existsSync(marker)).toBe(false);
 });
 
 

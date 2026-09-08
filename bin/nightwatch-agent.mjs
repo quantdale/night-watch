@@ -74,6 +74,7 @@ if (command === 'status') {
     const eq = item.indexOf('=');
     return eq === -1 ? [item.slice(2), 'true'] : [item.slice(2, eq), item.slice(eq + 1)];
   }));
+  const repositoryIds = flags.repository === undefined ? undefined : [flags.repository];
   if (sub === 'run') {
     if (flags.reasoner !== 'cli') {
       fail(2, 'campaign run requires --reasoner=cli');
@@ -108,7 +109,9 @@ if (command === 'status') {
             provider: process.env.NIGHTWATCH_REASONER_PROVIDER ?? 'configured',
             model: process.env.NIGHTWATCH_REASONER_MODEL ?? 'configured',
             maxTurns,
-            investigationContext: contextMod.createOwnerLocalInvestigationContext(),
+            investigationContext: contextMod.createOwnerLocalInvestigationContext(
+              repositoryIds === undefined ? {} : { repositoryIds },
+            ),
           });
           console.log(JSON.stringify(result, null, 2));
         } catch (error) {
@@ -165,7 +168,9 @@ if (command === 'status') {
           provider: process.env.NIGHTWATCH_REASONER_PROVIDER ?? 'configured',
           model: process.env.NIGHTWATCH_REASONER_MODEL ?? 'configured',
           maxTurns: Number.isInteger(maxTurns) ? maxTurns : 8,
-          investigationContext: contextMod.createOwnerLocalInvestigationContext(),
+          investigationContext: contextMod.createOwnerLocalInvestigationContext(
+            repositoryIds === undefined ? {} : { repositoryIds },
+          ),
         });
         console.log(JSON.stringify(result, null, 2));
       } catch (error) {
@@ -173,7 +178,7 @@ if (command === 'status') {
       }
     }
   } else {
-    fail(2, 'usage: nightwatch-agent campaign run --reasoner=cli --duration=1h|4h|8h|overnight');
+    fail(2, 'usage: nightwatch-agent campaign run --reasoner=cli --duration=1h|4h|8h|overnight [--repository=<approved-org/repo>]');
   }
 } else {
   console.log('usage: node bin/nightwatch-agent.mjs status|test|campaign');
