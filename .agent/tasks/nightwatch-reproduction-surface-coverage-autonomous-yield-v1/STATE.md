@@ -7,16 +7,16 @@ Phase: W10_REPRODUCTION_SURFACE_COVERAGE_AUTONOMOUS_YIELD
 Status: IN_PROGRESS
 Parent programme: nightwatch-autonomous-bug-hunting-programme-v1
 Starting SHA: 0664c69cc72acbbf848bf6dd64e7e9d868d80601
-Last validated implementation SHA: bb28480c6a6969a06744c75c4c947851d5bece7c
-Last substantive checkpoint SHA: bb28480c6a6969a06744c75c4c947851d5bece7c
+Last validated implementation SHA: 9f990af5a7f9f071d859caf1b2e78f0b059c7a6c
+Last substantive checkpoint SHA: 9f990af5a7f9f071d859caf1b2e78f0b059c7a6c
 Live HEAD authority: GIT
 Branch: session/nightwatch-reproduction-surface--0a9096be
-Last checkpoint: W10 task opened from the W9 terminal documentation head; no W10 implementation has been validated yet
+Last checkpoint: M0-M8 and M10 implemented; broad and robustness HOUR_1 campaigns preserved; census-derived reproduction-rich HOUR_1 campaign running
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 0664c69cc72acbbf848bf6dd64e7e9d868d80601
-LAST_VALIDATED_IMPLEMENTATION_SHA: bb28480c6a6969a06744c75c4c947851d5bece7c
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: bb28480c6a6969a06744c75c4c947851d5bece7c
+LAST_VALIDATED_IMPLEMENTATION_SHA: 9f990af5a7f9f071d859caf1b2e78f0b059c7a6c
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 9f990af5a7f9f071d859caf1b2e78f0b059c7a6c
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
 PHASE_W10_REPRODUCTION_SURFACE_COVERAGE_AUTONOMOUS_YIELD_STATUS: IN_PROGRESS
@@ -27,9 +27,9 @@ Measure and materially expand safe current-source reproduction coverage across t
 
 ## Current Milestone
 
-Milestone ID: M3 / M8 / M9
+Milestone ID: M9.1
 Milestone status: IN_PROGRESS
-What is being attempted: capability-aware memory is in a dispatched lane; the second real generality target and the live campaign series are next.
+What is being attempted: `w10-rich-omen-4` is running for HOUR_1 against the census-derived, host-owned `mobingilabs/ouchan` scope; its 32-entry preflight surface is 32/32 executable across 18 distinct package targets.
 
 ## Completed Milestones
 
@@ -45,11 +45,14 @@ What is being attempted: capability-aware memory is in a dispatched lane; the se
 - **M6 COMPLETE** — `nightwatch.current-failure-evidence.v1` sanitized triage evidence, 10 tests.
 - **M7 COMPLETE** — fixed 59-case corpus and pure baseline-vs-final evaluator, 8 tests.
 - **M10 COMPLETE** — 10 long-run resilience proofs (pause/resume, pre-W10 and pre-W9 checkpoint compatibility, transient budget survival, refusal non-spin, cancellation and timeout process-tree cleanup, exact ledger reconciliation, sibling integrity).
-- **M8 PARTIAL** — the W9 real owner-local reproduction proof passes unchanged on the integrated head (1 passed, 27.7 s, real toolchain, real `go test` in disposable trees).
+- **M3 COMPLETE** — capability readiness is carried through investigation memory and campaign strategy v2; target capabilities, unsupported targets, pre-action readiness, caps, injection inertia and resume behavior are covered by 16 dedicated tests. A live cross-investigation carry defect discovered by Run C was repaired and regression-covered before Run D.
+- **M8 COMPLETE** — the unchanged W9 real proof passes, and a second distinct real package executes twice through the generic provider with sibling identity unchanged and no temp residue. Repository diversity is unavailable because the census proves only `mobingilabs/ouchan` has executable approved targets.
+- **M9.2 COMPLETE** — full-stack broad campaign `w10-capability-omen-2`: 3,702,379 ms, 6/6 investigations, 63 calls, 71 actions, 7 provider failures, 21 inspected targets across all 8 repositories, 2 candidates, 0 admissions, 2 correct `MISSING_REPRODUCTION` refusals.
+- **M9.3 COMPLETE** — robustness campaign `w10-repeat-omen-3` after the carry repair: 3,696,810 ms, 5/5 investigations, 57 calls, 70 logged actions, 8 provider failures, 22 inspected targets across all 8 repositories, 1 candidate, 0 admissions, 1 correct `MISSING_REPRODUCTION` refusal. Its checkpoint retains all 32 capability entries: 5 `EXECUTABLE_NOW`, 27 `NOT_EXECUTABLE`.
 
 ## Work In Progress
 
-M3 capability-aware memory is running in lane `nightwatch-w10-capability-memory-lane-v1`.
+M9.1 `w10-rich-omen-4` is running through the ordinary CLI campaign path with the new host-owned `--repository=mobingilabs/ouchan` scope. The option is validated by the existing owner-approved source boundary before the reasoner starts; a permanent regression proves an unapproved repository exits 2 without spawning the reasoner.
 
 ## Measured W10 outcome so far
 
@@ -117,14 +120,10 @@ capability-aware selection and index diversity.
 
 ## Exact Next Action
 
-1. Freeze the additive W10 contracts: reproduction capability/refusal taxonomy,
-   bounded `ReproductionSurfaceMap`, executable readiness in investigation
-   memory and campaign strategy, sanitized current-failure evidence, and the
-   W10 coverage/yield metrics.
-2. Keep every W9 target/proof/retry/byte contract backwards compatible.
-3. Run the contract tests before dispatching any lane.
-4. Then dispatch the non-overlapping implementation lanes in their own C-00
-   session worktrees.
+1. Let `w10-rich-omen-4` reach its honest HOUR_1 terminal result; preserve every miss, provider failure, reproduction attempt and refusal.
+2. Record Run A beside the already-preserved broad and robustness runs.
+3. Run the complete M11 focused, regression, real-source, local-gate and fresh Node 20 clean-gate certification on the final implementation head.
+4. Close W10 STATE/PLAN/REPORT and parent/project/OpenSpec truth without claiming a new Alphaus defect or parent-programme completion.
 
 ## Files Changed
 
@@ -138,16 +137,13 @@ capability-aware selection and index diversity.
 
 ## Validation Ledger
 
-No W10 implementation validation yet.
-
-Accepted predecessor certification to re-verify as appropriate:
-
-- W9 focused W9/W7/W8: 295 passed / 3 skipped;
-- W9 full `npm test`: 4565 passed / 16 skipped / 0 failed;
-- W9 typecheck/hardening/agent/handoff/project/workspace/session: PASS;
-- W9 `gate:local`: `receipt:sha256:6fb76272f121ec1bed5b74bf`;
-- W9 clean clone: `clean-receipt:sha256:d914db277a583699a1ff68c3`;
-- W9 real owner-local and historical ouchan product-path proofs: PASS.
+- Focused W10 and predecessor-compatible implementation validation before the latest CLI seam: 127 related tests PASS; real W9 owner-local proof 1 PASS; second-package generality proof 2 PASS; historical ouchan product-path proof 1 PASS.
+- Full pre-carry implementation regression at `ed4e326`: 4,637 passed / 18 skipped / 0 failed.
+- Pre-carry `gate:local`: all 11 groups PASS, `receipt:sha256:45349304b70ae8bab3de5a82`.
+- Pre-carry fresh Node 20 `gate:clean`: PASS, `nodeModulesReused=false`, `cleanBefore/cleanAfter=true`, `siblingWrites=0`, `clean-receipt:sha256:fb15a890643aa2be97fa0b7d`.
+- Campaign capability carry repair: focused 42 tests PASS; hardening PASS.
+- Host-owned repository-scope CLI seam at `9f990af`: `localCampaign.test.ts` 6 passed; typecheck PASS; hardening PASS; workspace integrity PASS.
+- Final M11 certification remains required after Run A and terminal documentation reconciliation.
 
 ## Decisions Made During This Task
 
