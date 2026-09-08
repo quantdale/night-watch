@@ -5,7 +5,7 @@
 - M0 — session/bootstrap and fixed-snapshot inventory: COMPLETE
 - M1 — source/configuration/test/document review and baseline checks: COMPLETE
 - M2 — validate findings and synthesize canonical plan: COMPLETE
-- M3 — requirement audit, documentation validation, commit and integration: IN_PROGRESS
+- M3 — requirement audit, documentation validation, commit and integration: COMPLETE
 
 ## Review method
 

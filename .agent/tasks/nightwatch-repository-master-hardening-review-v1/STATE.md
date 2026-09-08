@@ -4,12 +4,12 @@
 
 Task ID: nightwatch-repository-master-hardening-review-v1
 Phase: REPOSITORY_MASTER_REVIEW
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: ed4e32602170e7e181b6e4841677fa8bff39d4ea
 Branch: session/nightwatch-repository-master-har-18614a8c
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 PROJECT_VERDICT_EFFECT: PRESERVE
-PHASE_REPOSITORY_MASTER_REVIEW_STATUS: IN_PROGRESS
+PHASE_REPOSITORY_MASTER_REVIEW_STATUS: COMPLETE
 STARTING_SHA: ed4e32602170e7e181b6e4841677fa8bff39d4ea
 LAST_VALIDATED_IMPLEMENTATION_SHA: ed4e32602170e7e181b6e4841677fa8bff39d4ea
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: ed4e32602170e7e181b6e4841677fa8bff39d4ea
@@ -17,27 +17,24 @@ LIVE_HEAD_AUTHORITY: GIT
 
 ## Current Milestone
 
-M3 — audit the completed plan against the requested structure, validate the
-documentation-only diff, commit, and integrate.
+COMPLETE / STOP — all review and documentation milestones are closed.
 
 ## Work In Progress
 
-Documentation only. M2 is complete: the canonical plan contains 15 findings,
-eight dependency-ordered phases, explicit parallel lanes, repository-level
+NONE. M0–M3 are complete. The canonical plan contains 15 findings, eight
+dependency-ordered phases, explicit parallel lanes, repository-level
 completion criteria, and external/manual evidence boundaries. It is reconciled
-with current origin/main and W10's active measured results without changing or
-duplicating W10.
+with W10's active measured results without changing or duplicating W10.
 
 ## Exact Next Action
 
-Audit the plan against every requested deliverable, validate documentation and
-continuity, commit, reconcile if origin/main moved, integrate, verify local
-HEAD equals origin/main, release, and stop.
+STOP. Any implementation starts as a separately authorized task using the
+canonical plan and current Git truth.
 
 ## Blockers
 
-None for repository-local planning. External/environment validation remains
-unperformed and does not block the documentation deliverable.
+None. External/environment evidence boundaries are classified in the plan and
+do not block this documentation-only review.
 
 ## Safety Events
 
@@ -48,10 +45,20 @@ session. Workspace integrity returned to PASS. No Alphaus boundary was crossed.
 
 ## Resume Recipe
 
-Use this owned worktree. Read SPEC, PLAN, STATE, the canonical master plan, and
-current Git diff/status. Continue M3; do not resume or modify W10.
+Task complete. Do not resume. Any follow-up starts as a new authorized task;
+the active W10 owner remains authoritative for reproduction/yield work.
 
 ## Completion Snapshot
 
-IN_PROGRESS. No functional changes. Final documentation validation, commit and
-integration have not yet occurred.
+Final documentation checkpoint: abd487e52aae7ca173335a528cbf55abebd19eb5
+Final task status: COMPLETE. Live HEAD: DISCOVER_FROM_GIT.
+Deliverable: docs/MASTER-IMPLEMENTATION-HARDENING-PLAN.md; 15 findings and
+eight implementation phases; no functional changes or tracked deletions.
+Validation: requirement audit PASS; workspace/session/agent/handoff/project/
+hardening checks PASS, with the active programme's documented stale-baseline
+and legacy-history warnings; diff/whitespace/privacy review PASS.
+Unexecuted by design: full regression, UI/browser, clean-clone, current online
+dependency audit, host qualification, and exact-SHA CI. The plan labels these
+as future evidence, not PASS.
+Recommended next task: Phase 0, beginning with NW-06 session-capacity admission
+and NW-08 complete test-universe accounting under a new owned task.
