@@ -607,6 +607,61 @@ function checkOwnerReviewCliBoundary() {
  * the gate. "Covered by a different lane" is a legitimate answer; "covered by
  * nothing, and nobody noticed" is the defect.
  */
+/**
+ * NW-14. The host capability matrix must not go stale.
+ *
+ * Dependency and platform claims outlive their evidence quietly: the `vue`
+ * devDependency was once removed as "unused" while a test still reached it
+ * through `require.resolve` (DEF-FC-03), and the qualified-host requirements
+ * lived only in prose that nothing checked. So the matrix is bound to two
+ * mechanical facts.
+ *
+ * First, every DECLARED dependency must be assessed in it. A dependency
+ * added without an assessment is the failure this catches — the manifest is
+ * the source of truth, so the document cannot fall behind it.
+ *
+ * Second, every capability token the CODE actually probes must be named. A
+ * capability that exists in the runtime but not in the matrix is an
+ * unqualified host waiting to inherit a pass it never earned. Each anchor is
+ * checked in its source too, so a renamed probe fails here rather than
+ * leaving a matrix row describing something that no longer exists.
+ */
+function checkHostCapabilityMatrix() {
+  const matrixFile = 'docs/HOST-CAPABILITY-MATRIX.md';
+  const matrix = read(matrixFile);
+  if (matrix.length === 0) {
+    fail(`${matrixFile} is missing; the qualified-host requirements must be documented`);
+    return;
+  }
+  const manifest = JSON.parse(read('package.json'));
+  for (const name of Object.keys({ ...(manifest.dependencies ?? {}), ...(manifest.devDependencies ?? {}) })) {
+    if (!matrix.includes(`\`${name}\``)) {
+      fail(`${matrixFile} does not assess the declared dependency '${name}'; a dependency without an assessment is an unevidenced claim`);
+    }
+  }
+  // token -> the source that must still probe it
+  for (const [token, source] of [
+    ['nightwatch.l6-runtime-capability.v1', 'src/core/oops/sandbox.ts'],
+    ['TOOLCHAIN_UNAVAILABLE', 'src/core/ownerLocalReproduction/contracts.ts'],
+    ['DEFAULT_SIBLING_ROOT', 'src/core/source/siblingSource.ts'],
+    ['deepContainmentLane', 'bin/quality-gate.mjs'],
+  ]) {
+    if (!read(source).includes(token)) {
+      fail(`${source} no longer references '${token}'; the host capability matrix row for it is stale`);
+      continue;
+    }
+    if (!matrix.includes(token)) {
+      fail(`${matrixFile} does not name the probed host capability '${token}'`);
+    }
+  }
+  // An unqualified host must never inherit a pass, and the matrix must say so.
+  // Whitespace-tolerant on purpose: prose wraps, and a rule that a reflowed
+  // paragraph can break is a rule that will be "fixed" by deleting it.
+  if (!/unsupported\s+capability/i.test(matrix) || !/never\s+inherits?/i.test(matrix)) {
+    fail(`${matrixFile} must state that an unqualified host reports unsupported capability and never inherits a pass`);
+  }
+}
+
 function checkValidationUniverse() {
   const result = spawnSync(process.execPath, [path.join(root, 'bin', 'validation-universe.mjs'), '--json'], {
     cwd: root,
@@ -4210,6 +4265,7 @@ checkC11ProdObserveBoundary();
 checkP1ObservationScopeBoundary();
 checkAlphausHandoffBoundary();
 checkDocumentationFreshness();
+checkHostCapabilityMatrix();
 checkValidationUniverse();
 checkSyntax();
 

@@ -31,6 +31,14 @@ escapes fail closed; unsupported host layouts remain unavailable rather than
 falling back to an uncontained process. The deterministic proof is in
 `tests/unit/l6Containment.test.ts` and is run by `npm run campaign:synthetic`.
 
+## Host requirements and validation lanes
+
+`docs/HOST-CAPABILITY-MATRIX.md` is the current answer to what a host must
+provide, which lane proves what, and which dependency claims still carry
+evidence. An unqualified host reports unsupported capability and never
+inherits a pass. The five central `docs/` documents remain append-heavy
+archives; that matrix's §5 names the short list to read for current truth.
+
 ## Quickstart
 
 ```bash

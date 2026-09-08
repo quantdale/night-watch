@@ -13,7 +13,7 @@ Last validated implementation SHA: 5b909f4a9fcc5528f179323ab227e06a8bf829c7
 Last substantive checkpoint SHA: 5b909f4a9fcc5528f179323ab227e06a8bf829c7
 Live HEAD authority: GIT
 Branch: session/nightwatch-repository-hardening--e7b9be89
-Last checkpoint: M10 / NW-08 complete and validated — the validation universe is mechanically complete at 425 discovered / 0 unclassified, digest-pinned and enforced in a required gate rule
+Last checkpoint: M11 / NW-14 complete and validated — a current host capability and dependency matrix, bound to the manifest and to the live probe tokens, with the online advisory lane honestly UNAVAILABLE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 0ac7b3d037b5059f670eca715fc30adaf58e7334
@@ -34,12 +34,12 @@ is consumed, not re-executed.
 
 ## Current Milestone
 
-Milestone ID: M11
+Milestone ID: M12
 Milestone status: IN_PROGRESS
-What is being attempted: NW-14 — reconcile dependency, portability and release
-documentation truth: the Vue 2.6.12 fixture advisory, the Node/OS/Bubblewrap/
-Chrome capability matrix, and separating current operational guidance from the
-indexed archives.
+What is being attempted: NW-07 — the residual continuity and project-memory
+coherence: duplicated decision identities D-29 through D-34, the parent
+programme PLAN progression lagging its STATE, and one discoverable current
+view that agrees with the active structured state.
 
 ## Completed Milestones
 
@@ -191,10 +191,24 @@ indexed archives.
   across six classes each with a reason and its evidence lane, pinned by an
   `inventoryDigest`. Nine violations fail closed in a REQUIRED hardening
   rule, probed four ways against the live repository. 12 permanent cases.
+- **M11 COMPLETE (NW-14)** — `docs/HOST-CAPABILITY-MATRIX.md` is the current
+  answer to what a host must provide: seven probed capabilities with their
+  probing source, the lane that needs each, and the behaviour when absent;
+  ten validation lanes as separate claims with "None subsumes another" said
+  explicitly. The Vue 2.6.12 fixture is assessed rather than upgraded or
+  removed — one call site, no runtime path, a fixed render function, no
+  untrusted template — and its **upstream EOL** is recorded prominently
+  because it means retention rests on reachability alone. Lockfile
+  reproducibility verified by a disposable `npm ci --offline`: 7 packages,
+  lockfile byte-identical. `checkHostCapabilityMatrix` binds the document to
+  the manifest and to the probe tokens in a required group, probed three
+  ways. 8 permanent cases. The online advisory lane is explicitly
+  **UNAVAILABLE** under this campaign's safety boundary, with its own
+  evidence requirement — an absent scan is never a passing scan.
 
 ## Work In Progress
 
-M11 / NW-14 in this session worktree. No other lane is dispatched.
+M12 / NW-07 in this session worktree. No other lane is dispatched.
 session once the NW-09 capability and pagination DTOs are frozen, because one
 owner must hold the overlapping UI API and App surfaces.
 
@@ -214,11 +228,25 @@ owner must hold the overlapping UI API and App surfaces.
 | NW-10 | M9 | CLOSED — repaired at every layer, 7 server + 4 UI regressions, 6 and 4 proven failing pre-repair |
 | NW-11 | M9 | CLOSED — repaired, 13 regressions, 10 proven failing pre-repair |
 | NW-08 | M10 | CLOSED — 425 discovered / 252 gate / 173 classified / 0 unclassified, digest-pinned; 12 regressions plus four live probes |
-| NW-14 | M11 | IN PROGRESS |
-| NW-07 | M12 | NOT STARTED |
+| NW-14 | M11 | CLOSED — matrix, EOL-aware fixture assessment and offline lockfile proof; the online advisory lane is explicitly UNAVAILABLE |
+| NW-07 | M12 | IN PROGRESS |
 | NW-15 | — | CLOSED BY W10 OWNER — consumed, out of scope |
 
 ## Exact Next Action
+
+1. Make the duplicated decision identities unambiguous: D-29 through D-34 are
+   each used twice in `docs/DECISIONS.md`. Add an alias or erratum record
+   rather than rewriting the historical evidence.
+2. Reconcile the parent programme PLAN progression with its STATE through the
+   programme owner's own records — the PLAN lags what W10 actually closed.
+3. Extend the deterministic continuity checks only where an unambiguous rule
+   exists, and only against explicitly versioned live schemas, so historical
+   v1 prose is not falsely rejected.
+4. Prove one discoverable current view agrees with the active structured
+   state, with fixtures for duplicate identities and PLAN-vs-STATE
+   progression.
+
+## Superseded next action (M11 / NW-14, complete)
 
 1. Assess the Vue 2.6.12 development-fixture advisory: record scope,
    reachability, owner rationale and a review date, or replace/isolate the
@@ -456,6 +484,15 @@ owner must hold the overlapping UI API and App surfaces.
 | `docs/MASTER-IMPLEMENTATION-HARDENING-PLAN.md` | document status and NW-06 resolution evidence | MODIFIED |
 
 ## Validation Ledger
+
+M11: `tests/unit/nw14HostCapabilityMatrix.test.ts` — 8 passed.
+`checkHostCapabilityMatrix` probed three ways against the live repository (an
+unassessed new dependency, a capability token removed from the matrix, the
+matrix deleted); each failed with its own message and PASS was restored.
+Disposable `npm ci --offline` from manifest+lockfile alone: 7 packages,
+lockfile byte-identical afterwards. `npm run validation:universe`: 426
+discovered / 253 gate / 173 classified / 0 unclassified, digest
+`sha256:9555a7ef1cc05bb2b70bc122`. `typecheck` and `hardening:check` PASS.
 
 M10 full regression at the NW-08 implementation commit, on a CLEAN tree:
 `npm test` — **4755 passed / 18 skipped / 0 failed**, 8.5 minutes.

@@ -755,7 +755,7 @@ Priority meanings: P0 is demonstrated catastrophic failure requiring immediate c
 
 ### NW-14 — Reconcile dependencies, portability, and release documentation
 
-- **Priority / category / confidence / status:** P2; maintainability and release qualification; MIXED, current audit required; NOT STARTED.
+- **Priority / category / confidence / status:** P2; maintainability and release qualification; MIXED, current audit required; **CLOSED with one lane explicitly UNAVAILABLE** — repaired and regression-proven under `nightwatch-repository-hardening-implementation-v1` M11.
 - **Affected surfaces:** root/UI manifests and lockfiles, fixture dependencies, bin validation, platform qualification, README/current-state/roadmap/architecture/decisions.
 - **Evidence:** install emits known Vue 2.6.12 deprecation warning; repository history documents it as a development fixture with an earlier low advisory. Root TypeScript excludes UI and bin JavaScript. Central documents are large and mix historical/current material. No current online advisory scan was run by this review.
 - **Problem, impact, root cause:** dependency and platform claims can outlive their evidence; separate packages/tools can escape a root-only check; historical documentation obscures the current supported path.
@@ -764,6 +764,67 @@ Priority meanings: P0 is demonstrated catastrophic failure requiring immediate c
 - **Tests and validation:** clean offline installs, dependency reachability report, lockfile diff review, root/UI typecheck/tests/build, bin syntax/lint, supported-host qualification, documentation link/schema checks.
 - **Acceptance:** every retained advisory has scope/reachability/owner rationale and review date; supported packages/tools have explicit gates; install/host requirements and historical-vs-current docs are unambiguous.
 - **Dependencies / risks / parallelization:** close with NW-08 after feature fixes stabilize. Dependency migration may be isolated if lockfile ownership is exclusive. Risks include fixture semantic drift and non-reproducible toolchain changes.
+
+- **Resolution evidence (2026-09-09):**
+  **The Vue fixture.** Assessed rather than upgraded or removed. It is one
+  devDependency reached from exactly one place —
+  `tests/unit/rippleReadiness.test.ts` loads `vue/dist/vue.js` into a
+  Playwright page through `require.resolve` to prove Vue REPLACES the
+  bootstrap mount element with the rendered shell, the behaviour the real
+  Ripple product's `render: h => h(App)` bootstrap depends on. Reachability:
+  Vue never executes in any Nightwatch runtime path; it runs only inside a
+  browser page, in one offline test, against content the test itself writes,
+  with a FIXED render function rather than a template compiled from untrusted
+  input, and with no network. The Vue 2 advisory class that matters in
+  practice — template compilation over attacker-controlled input — has no
+  path here. The version is pinned deliberately: 2.6.12 is what the product
+  bootstraps with, so upgrading would make the fixture stop representing what
+  it exists to represent.
+  The install warning was read rather than dismissed: `vue@2.6.12` is
+  **upstream END OF LIFE**. That is recorded prominently, because it changes
+  the shape of the argument — no patch will ever arrive, so retention rests
+  entirely on reachability rather than on a promise of future fixes, and four
+  named conditions reopen the decision, including "the fixture's single call
+  site grows a second consumer". Owner decision RETAIN, review date
+  2026-09-09.
+  **The advisory lane is UNAVAILABLE, not clean.** This campaign's safety
+  boundary prohibits network dependency fetching, so `npm audit` and every
+  registry-backed advisory query could not run. The matrix says so explicitly
+  and states that an absent scan is never a passing scan; the lane carries
+  its own evidence requirement (a read-only advisory query under permitted
+  network access, recorded with its query date). This is the one part of
+  NW-14 that is honestly not closed, and it is reported rather than papered
+  over.
+  **Portability.** `docs/HOST-CAPABILITY-MATRIX.md` is new and is the current
+  answer to what a host must provide. Seven probed capabilities are tabulated
+  with the source that probes each, the lane that needs it, and the behaviour
+  when the host cannot provide it: Bubblewrap namespaces, system Chrome, an
+  allowlisted cached Go toolchain, IPv6 loopback, parent-death teardown,
+  sibling checkouts, and network egress. The governing rule is stated once and
+  enforced: an unqualified host reports unsupported capability and never
+  inherits a pass. Ten validation lanes are listed as separate claims with
+  "None subsumes another" said explicitly, including the discipline that the
+  full regression must be run on a committed tree.
+  **Lockfile reproducibility.** Verified 2026-09-09 by a disposable
+  `npm ci --offline` from a copy of the manifest and lockfile alone: 7
+  packages installed, lockfile byte-identical afterwards.
+  **Documentation currency.** §5 records that the five central documents are
+  append-heavy archives with current and historical truth interleaved, leaves
+  them unrewritten so historical receipts stay exact, and names the ordered
+  short list to read for current truth. `README.md` routes an operator to the
+  matrix.
+  **Enforcement.** `checkHostCapabilityMatrix` runs in a required hardening
+  group and binds the document to two mechanical facts: every declared
+  dependency must be assessed in it, and every capability token the code
+  actually probes must be named — checked in the source too, so a renamed
+  probe fails rather than leaving a stale row. Probed three ways against the
+  live repository: an unassessed new dependency, a capability token removed
+  from the matrix, and the matrix deleted; each fails with its own message.
+  The prose assertions are whitespace-tolerant on purpose, because a rule a
+  reflowed paragraph can break is a rule that gets deleted rather than fixed.
+  Eight permanent cases in `tests/unit/nw14HostCapabilityMatrix.test.ts`,
+  including one that pins the fixture's single call site — the fact the whole
+  reachability argument rests on.
 
 ### NW-15 — Complete W10 reproduction-surface coverage and autonomous-yield proof
 

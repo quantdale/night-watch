@@ -841,6 +841,86 @@ authoritative gate is a runtime decision this campaign did not take. What
 changed is that the decision is now explicit, digest-pinned and enforced
 instead of invisible.
 
+### NW-14 — reconcile dependencies, portability and release documentation
+
+**The Vue fixture, assessed rather than upgraded or removed.** One
+devDependency, reached from exactly one place:
+`tests/unit/rippleReadiness.test.ts` loads `vue/dist/vue.js` into a Playwright
+page through `require.resolve`, proving Vue REPLACES the bootstrap mount
+element with the rendered shell — the behaviour the real Ripple product's
+`render: h => h(App)` bootstrap depends on.
+
+| Question | Answer |
+| --- | --- |
+| Does it run in Nightwatch's runtime? | No. Only inside a browser page, in one offline test |
+| What input reaches it? | Content the test itself writes, and a FIXED render function — never a template compiled from untrusted input |
+| Is the practical Vue 2 advisory class reachable? | No: it depends on template compilation over attacker-controlled input, which has no path here |
+| Why not upgrade? | 2.6.12 is what the product bootstraps with; upgrading makes the fixture stop representing what it exists to represent |
+| Why not remove? | It was removed once as "unused"; `require.resolve` is invisible to import scanners and only a fresh install failed (DEF-FC-03) |
+| Upstream status | **END OF LIFE**, per the `npm ci` warning |
+
+The EOL fact is recorded prominently because it changes the shape of the
+argument: no patch will ever arrive, so retention rests **entirely** on
+reachability rather than on a promise of future fixes. Four conditions reopen
+the decision, including "the fixture's single call site grows a second
+consumer" — which a test pins, because that single call site is what the whole
+argument rests on. Owner decision RETAIN, review date 2026-09-09.
+
+**The one lane that is NOT closed.** This campaign's safety boundary
+prohibits network dependency fetching, so `npm audit` and every
+registry-backed advisory query could not run. The matrix states that no
+current online advisory scan was performed, that the lane is UNAVAILABLE, and
+that an absent scan is never a passing scan. It carries its own evidence
+requirement: a read-only advisory query under permitted network access,
+recorded with its query date. Reported, not papered over.
+
+**Portability.** `docs/HOST-CAPABILITY-MATRIX.md` tabulates seven probed
+capabilities — Bubblewrap namespaces, system Chrome, an allowlisted cached Go
+toolchain, IPv6 loopback, parent-death teardown, sibling checkouts, network
+egress — each with the source that probes it, the lane that needs it, and the
+behaviour when the host cannot provide it. The governing rule is stated once:
+an unqualified host reports unsupported capability and never inherits a pass.
+Ten validation lanes are listed as separate claims, with "None subsumes
+another" said explicitly, and including the discipline learned at M10 that the
+full regression must be run on a committed tree.
+
+**Lockfile reproducibility.** A disposable `npm ci --offline` from a copy of
+the manifest and lockfile alone: 7 packages installed, lockfile byte-identical
+afterwards.
+
+**Documentation currency.** The five central documents stay unrewritten, so
+historical receipts, SHAs and decisions remain exactly as recorded; §5 says
+plainly that they are append-heavy archives with current and historical truth
+interleaved, and names the ordered short list to read for current truth.
+`README.md` routes an operator to the matrix.
+
+**Enforcement, and why it is shaped this way.**
+`checkHostCapabilityMatrix` binds the document to two mechanical facts rather
+than to a reviewer's memory: every DECLARED dependency must be assessed in it
+(the manifest is the source of truth, so the document cannot fall behind it),
+and every capability token the CODE probes must be named — checked in the
+source as well, so a renamed probe fails here rather than leaving a matrix row
+describing something that no longer exists. Probed three ways against the live
+repository: an unassessed new dependency, a capability token removed from the
+matrix, and the matrix deleted; each fails with its own message.
+
+The prose assertions are deliberately whitespace-tolerant. The first version
+was not, and it failed because the phrase it looked for had wrapped across two
+lines — a rule that a reflowed paragraph can break is a rule that gets deleted
+rather than fixed.
+
+**Acceptance.**
+
+| Criterion | Evidence |
+| --- | --- |
+| every retained advisory has scope, reachability, owner rationale and a review date | the Vue assessment carries all four plus upstream EOL and four reopen conditions |
+| supported packages and tools have explicit gates | ten lanes tabulated; the BIN_SYNTAX and UI_LANE classes are the NW-08 gates for the two surfaces the root program excludes |
+| install and host requirements are unambiguous | §1 and §2, with the unqualified-host rule stated and enforced |
+| historical vs current docs are unambiguous | §5, with the archives left intact |
+| lockfile reproducibility preserved | offline `npm ci`: 7 packages, byte-identical lockfile |
+| no advisory claimed from a version number alone | the online lane is UNAVAILABLE with its own evidence requirement |
+| the document cannot go stale silently | bound to the manifest and to live probe tokens in a required group; 3 live probes, 8 permanent cases |
+
 ## Validation receipts
 
 Recorded per milestone as they are produced. No receipt is copied from a
