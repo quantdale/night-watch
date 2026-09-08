@@ -9,16 +9,16 @@ Phase: REPOSITORY_HARDENING_IMPLEMENTATION_V1
 Status: IN_PROGRESS
 Campaign: nightwatch-repository-hardening-implementation-v1
 Starting SHA: 0ac7b3d037b5059f670eca715fc30adaf58e7334
-Last validated implementation SHA: 5b909f4a9fcc5528f179323ab227e06a8bf829c7
-Last substantive checkpoint SHA: 5b909f4a9fcc5528f179323ab227e06a8bf829c7
+Last validated implementation SHA: 264bbb11ebe265260bcc3ea886e05869c1fba0d4
+Last substantive checkpoint SHA: 264bbb11ebe265260bcc3ea886e05869c1fba0d4
 Live HEAD authority: GIT
 Branch: session/nightwatch-repository-hardening--e7b9be89
 Last checkpoint: M12 / NW-07 complete and validated — all fourteen in-scope findings are CLOSED; certification is the only remaining milestone
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 0ac7b3d037b5059f670eca715fc30adaf58e7334
-LAST_VALIDATED_IMPLEMENTATION_SHA: 5b909f4a9fcc5528f179323ab227e06a8bf829c7
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 5b909f4a9fcc5528f179323ab227e06a8bf829c7
+LAST_VALIDATED_IMPLEMENTATION_SHA: 264bbb11ebe265260bcc3ea886e05869c1fba0d4
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 264bbb11ebe265260bcc3ea886e05869c1fba0d4
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
 LIVE_COMPLETION_CLAIM: NONE
@@ -513,6 +513,9 @@ owner must hold the overlapping UI API and App surfaces.
 | `docs/MASTER-IMPLEMENTATION-HARDENING-PLAN.md` | document status and NW-06 resolution evidence | MODIFIED |
 
 ## Validation Ledger
+
+M12 full regression at the NW-07 implementation commit, on a CLEAN tree:
+`npm test` — **4768 passed / 18 skipped / 0 failed**, 8.5 minutes.
 
 M12: `tests/unit/nw07ContinuityCoherence.test.ts` — 5 passed. Four live
 probes: an unrecorded sixth decision collision, an erratum row whose title was

@@ -6,16 +6,16 @@ Title: Repository Master Hardening Implementation
 Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-repository-hardening-implementation-v1
 Starting SHA: 0ac7b3d037b5059f670eca715fc30adaf58e7334
-Last validated implementation SHA: 5b909f4a9fcc5528f179323ab227e06a8bf829c7
-Last checkpoint: M10 / NW-08 complete and validated — the validation universe is mechanically complete and digest-pinned, with the full suite green on a clean tree
-Current milestone: M11 — NW-14 dependency, portability and release documentation truth
-Next action: Assess the Vue 2.6.12 development-fixture advisory with scope, reachability, owner rationale and a review date; document the Node/OS/Bubblewrap/Chrome capability matrix; and separate current operational guidance from the indexed archives without rewriting historical receipts.
+Last validated implementation SHA: 264bbb11ebe265260bcc3ea886e05869c1fba0d4
+Last checkpoint: M12 / NW-07 complete — all fourteen in-scope findings CLOSED and the full suite green on a clean tree at the recorded implementation SHA
+Current milestone: M13 — repository certification at one candidate checkpoint
+Next action: Execute the repository-level definition of done from the canonical checkout on main, fast-forwarded to origin/main first, reporting every external or host lane that cannot execute as UNAVAILABLE with its own evidence requirement rather than as a pass.
 Authorization class: REPOSITORY_HARDENING_IMPLEMENTATION_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 0ac7b3d037b5059f670eca715fc30adaf58e7334
-LAST_VALIDATED_IMPLEMENTATION_SHA: 5b909f4a9fcc5528f179323ab227e06a8bf829c7
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 5b909f4a9fcc5528f179323ab227e06a8bf829c7
+LAST_VALIDATED_IMPLEMENTATION_SHA: 264bbb11ebe265260bcc3ea886e05869c1fba0d4
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 264bbb11ebe265260bcc3ea886e05869c1fba0d4
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PHASE_REPOSITORY_HARDENING_IMPLEMENTATION_V1_STATUS: IN_PROGRESS
