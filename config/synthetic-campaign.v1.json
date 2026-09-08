@@ -77,6 +77,7 @@
     "tests/unit/bugAtlas.test.ts",
     "tests/unit/systemAtlas.test.ts",
     "tests/unit/nw13SensitiveDiagnostics.test.ts",
-    "tests/unit/storageState.test.ts"
+    "tests/unit/storageState.test.ts",
+    "tests/unit/nw04CheckpointDurability.test.ts"
   ]
 }

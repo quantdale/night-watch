@@ -237,7 +237,7 @@ Priority meanings: P0 is demonstrated catastrophic failure requiring immediate c
 
 ### NW-04 — Make autonomous campaign checkpoints bounded and crash-safe
 
-- **Priority / category / confidence / status:** P1; durability and autonomous correctness; CONFIRMED source behavior, crash consequences strongly indicated; NOT STARTED.
+- **Priority / category / confidence / status:** P1; durability and autonomous correctness; CONFIRMED source behavior, crash consequences now EXECUTED; **CLOSED** — repaired and regression-proven under `nightwatch-repository-hardening-implementation-v1` M6.
 - **Affected surfaces:** `src/core/agentRuntime/localCampaign.ts`, newer checkpoint adapters, recovery CLI/tests, and any shared mutable JSON-state primitive.
 - **Evidence:** the local campaign store directly truncates the destination then chmods it, performs unbounded read before decoding, and can delete an existing same-ID checkpoint before new durable progress exists. Directory and basic symlink checks do not provide publication atomicity or writer coordination.
 - **Problem, impact, root cause:** interruption, disk pressure, or competing same-ID processes can corrupt or silently lose owner progress. Mutable campaign state was implemented separately from stronger established persistence patterns.
@@ -246,6 +246,55 @@ Priority meanings: P0 is demonstrated catastrophic failure requiring immediate c
 - **Tests and validation:** deterministic crash injection before write, mid-write, before/after rename and sync; simultaneous same-ID writers; stale generation; oversized/truncated/malformed state; resume old schemas; full byte-budget and W9/W10 checkpoint compatibility.
 - **Acceptance:** recovery observes either the complete previous generation or complete next generation; silent clobber is impossible; input allocation is capped; corrupt state yields content-free diagnostics and remains available for owner action.
 - **Dependencies / risks / parallelization:** depends on NW-02 and shared publication decisions from NW-03. One persistence lane should implement the primitive and migrate consumers incrementally. Durability varies by filesystem, so document qualified guarantees rather than claiming universal fsync semantics.
+
+- **Resolution evidence (2026-09-08):** the review rated the crash
+  consequences "strongly indicated"; they are now executed. Measured through
+  the consumer's own entry point, `loadLocalCampaignCheckpoint`, the
+  pre-repair loader given an 8 MB+ checkpoint read and decoded the whole file
+  and then threw
+  `Unexpected token 'x', "xxxxxxxxxx"... is not valid JSON` — one measurement
+  proving both the unbounded read and a content-window leak of the
+  checkpoint's own bytes, which are investigation state.
+  `src/core/agentRuntime/checkpointStore.ts` is now the single publication and
+  read path.
+  **Generations.** Every published document carries `checkpointGeneration`,
+  one greater than the generation it replaced. The field is additive:
+  `parseCheckpoint` reads named fields and ignores the rest, so a pre-NW-04
+  checkpoint reads as generation 0 and the next write becomes 1. Proven by a
+  dedicated old-reader case.
+  **Same-ID writers.** Single-host local operation, so the protocol is
+  compare-generation rather than a lock: the on-disk generation is re-read
+  immediately before the rename, and a change since staging refuses with
+  `CHECKPOINT_GENERATION_CONFLICT`. The limit is stated in the module rather
+  than overclaimed — it converts the common interleaving from silent loss into
+  a reported refusal, and the loser's bytes are never half-written into the
+  winner's file, but it does not eliminate the final rename race.
+  **Bounded reads.** The size is taken from the `lstat` and refused before any
+  allocation; corrupt, truncated and non-object documents are
+  `CHECKPOINT_CORRUPT` with the M5 content-free taxonomy, and the file is
+  left exactly where it is.
+  **Never delete owner evidence.** A corrupt predecessor is not treated as an
+  empty slot: publication refuses rather than overwriting it. And a fresh run
+  no longer DELETES the stored checkpoint for its id before durable progress
+  exists — `supersedeStoredCheckpoint` moves it to `<file>.superseded`,
+  keeping exactly one superseded document per id so the store stays bounded.
+  **Durability is qualified, not claimed.** The module fsyncs the file and the
+  containing directory where the platform allows, and documents that what it
+  guarantees is atomic VISIBILITY — a reader sees the complete previous or the
+  complete next document — rather than universal fsync semantics.
+  Thirteen cases in `tests/unit/nw04CheckpointDurability.test.ts`: the crash
+  matrix at all three publication steps (each asserting exactly one complete
+  generation, no partial file and no temporary residue), a competing same-id
+  writer interleaved precisely between staging and rename, inode-level proof
+  that a republish renames rather than truncating in place, oversized stored
+  and oversized proposed documents, corrupt and truncated state preserved and
+  reported without content, symlinked destination and out-of-directory
+  refusals, superseding, and pre-NW-04 compatibility. Crash injection uses
+  hooks that exist only in the primitive's signature — no campaign input DTO,
+  CLI flag or config file carries them, so a reasoner cannot reach them.
+  The consumer-level case fails against the pre-repair loader. Campaign,
+  runtime, checkpoint, byte-accounting, W10 capability-carry and long-run
+  resilience suites: 60 passed.
 
 ### NW-05 — Enforce one abortable Phase-5 relay deadline
 

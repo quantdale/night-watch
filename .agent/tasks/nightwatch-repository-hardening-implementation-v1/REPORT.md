@@ -398,6 +398,78 @@ not report success. Both the closure check and the anti-vacuity guard were
 then probed and fire: dropping any one of the four new trust-root entries is
 reported by name, including the two transitive cases.
 
+### NW-04 — make autonomous campaign checkpoints bounded and crash-safe
+
+**The review rated the crash consequences "strongly indicated". They are now
+executed.** Measured through the consumer's own entry point,
+`loadLocalCampaignCheckpoint`, the pre-repair loader given an 8 MB+ checkpoint
+read and decoded the whole file and then threw:
+
+```
+Unexpected token 'x', "xxxxxxxxxx"... is not valid JSON
+```
+
+One observation proving both defects at once: the unbounded read, and a
+content window of the checkpoint's own bytes — which are investigation state —
+leaking into the diagnostic.
+
+**Repair.** `src/core/agentRuntime/checkpointStore.ts` is the single
+publication and read path.
+
+| Property | How |
+| --- | --- |
+| generations | every document carries `checkpointGeneration`, one greater than the generation it replaced; additive, because `parseCheckpoint` reads named fields and ignores the rest, so a pre-NW-04 checkpoint reads as generation 0 |
+| same-ID writers | compare-generation: the on-disk generation is re-read immediately before the rename, and a change since staging refuses with `CHECKPOINT_GENERATION_CONFLICT` |
+| bound before allocate | the size comes from the `lstat`, so an oversized file is refused without being read; a proposed document is measured before staging |
+| atomic visibility | owner-only same-directory temporary opened `wx`, fsynced, boundary revalidated, renamed; owned temporaries removed in `finally` |
+| corrupt evidence | preserved exactly where it is; a corrupt predecessor is **not** treated as an empty slot, so publication refuses rather than overwriting it |
+| no delete before durable progress | a fresh run moves the previous checkpoint to `<file>.superseded` instead of unlinking it, keeping exactly one superseded document per id |
+| content-free diagnostics | corrupt, truncated, non-object and oversized states report through the M5 taxonomy |
+
+Two limits are stated in the module rather than overclaimed. Compare-generation
+converts the common interleaving from silent loss into a reported refusal and
+guarantees the loser's bytes are never half-written into the winner's file,
+but it does not eliminate the final rename race — this is single-host local
+operation, not a distributed lock. And durability is qualified: the module
+fsyncs the file and the containing directory where the platform allows, and
+claims atomic **visibility** — a reader sees the complete previous or the
+complete next document — rather than universal fsync semantics.
+
+**Regression.** Thirteen cases in
+`tests/unit/nw04CheckpointDurability.test.ts`. Crash injection uses hooks that
+exist only in the primitive's signature: no campaign input DTO, CLI flag or
+config file carries them, so a reasoner cannot reach them.
+
+| Case | Asserts |
+| --- | --- |
+| crash at `afterStage`, `beforeRename`, `afterRename` | exactly one COMPLETE generation is visible; before the rename the previous bytes are byte-identical, after it the new generation is complete; no partial file and no temporary residue in either direction |
+| competing same-id writer | a second publish interleaved precisely between staging and rename; the loser is refused and the winner's generation-2 document is intact |
+| republish inode | changes, proving rename rather than in-place truncation |
+| oversized stored / proposed | both refused; the stored file is preserved at its original size |
+| corrupt and truncated state | `CHECKPOINT_CORRUPT`, bytes preserved, publication refuses to overwrite, no fragment of a planted value in message, stack or own properties |
+| symlinked destination, out-of-directory target | refused; an external sentinel keeps its bytes |
+| superseding | the previous document is readable under `.superseded`, exactly one is retained, superseding nothing is not an error |
+| pre-NW-04 document | reads as generation 0 and advances to 1 |
+| consumer-level | the campaign loader bounds oversized state and reports corruption without content — **fails against the pre-repair loader** |
+
+**Acceptance.**
+
+| Criterion | Evidence |
+| --- | --- |
+| recovery observes the complete previous or complete next generation | the three-step crash matrix, each step asserting which one and that it is complete |
+| silent clobber is impossible | the interleaved same-id writer is refused by code, and the winner's document is verified intact |
+| input allocation is capped | refused from the `lstat` size before any read; also enforced on the proposed payload |
+| corrupt state yields content-free diagnostics and remains available | fragment search over message, stack and own properties; the corrupt bytes are asserted unchanged afterwards |
+| old valid checkpoint readers keep working | the pre-NW-04 compatibility case, plus `w10LongRunResilience`'s existing pre-W9 and W9-era resume proofs — 60 passed across the campaign, runtime and checkpoint suites |
+
+**A test that reported a leak that was not one.** The corrupt-state case
+originally planted `PLANTED_NW04_CHECKPOINT_SECRET_…`, and an
+eight-character window of it matched the error **code**
+`CHECKPOINT_CORRUPT` inside the very diagnostic that was correctly
+content-free. A planted value must share no vocabulary with the diagnostics,
+the module name, or the test path; it is now
+`ZZQQ7_XYLOPHONE_…_MARMALADE_74`.
+
 ## Validation receipts
 
 Recorded per milestone as they are produced. No receipt is copied from a

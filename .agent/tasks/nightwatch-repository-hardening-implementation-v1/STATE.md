@@ -13,7 +13,7 @@ Last validated implementation SHA: e32ab5d25ae6f19cfa0b5a207e715703df773d69
 Last substantive checkpoint SHA: e32ab5d25ae6f19cfa0b5a207e715703df773d69
 Live HEAD authority: GIT
 Branch: session/nightwatch-repository-hardening--e7b9be89
-Last checkpoint: M5 / NW-13 complete and validated — allowlist-only sensitive diagnostics, plus repair of a DEF-12-class trust-root closure regression this campaign introduced at NW-02 and a hardening rule to prevent its recurrence
+Last checkpoint: M6 / NW-04 complete and validated — one generation-bearing, bounded, atomic checkpoint publication and read path, with the crash matrix executed rather than inferred
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 0ac7b3d037b5059f670eca715fc30adaf58e7334
@@ -34,11 +34,11 @@ is consumed, not re-executed.
 
 ## Current Milestone
 
-Milestone ID: M6
+Milestone ID: M7
 Milestone status: IN_PROGRESS
-What is being attempted: NW-04 — give the autonomous campaign checkpoint
-store generations, bounded reads, explicit same-ID writer semantics and
-atomic publication, on the NW-02 and NW-03 primitives.
+What is being attempted: NW-05 — replace the Phase-5 relay's per-attempt
+`Promise.race` timeouts with one monotonic deadline and `AbortController`
+threaded through auth, connection, redirect and body.
 
 ## Completed Milestones
 
@@ -119,10 +119,22 @@ atomic publication, on the NW-02 and NW-03 primitives.
   pre-repair. Measurement refined the finding: the leak is a ~20-character
   window centred on the offending token, not a prefix, and two of the three
   inspection helpers had no catch at all so the raw `SyntaxError` propagated.
+- **M6 COMPLETE (NW-04)** — `src/core/agentRuntime/checkpointStore.ts` is the
+  single publication and read path: additive `checkpointGeneration` stamping
+  (a pre-NW-04 checkpoint reads as generation 0), compare-generation same-ID
+  refusal with the residual rename race stated rather than hidden, size
+  bounded from the `lstat` before any allocation, corrupt and truncated state
+  preserved and reported through the M5 content-free taxonomy, publication
+  through an owner-only same-directory temporary renamed into place, and a
+  fresh run that moves the previous checkpoint to `<file>.superseded` instead
+  of deleting it before durable progress exists. Thirteen cases including the
+  three-step crash matrix and an interleaved same-id writer; the
+  consumer-level case fails against the pre-repair loader, which read an 8 MB
+  file whole and then leaked a content window in its `SyntaxError`.
 
 ## Work In Progress
 
-M6 / NW-04 in this session worktree. No other lane is dispatched.
+M7 / NW-05 in this session worktree. No other lane is dispatched.
 
 ## Findings register progress
 
@@ -133,8 +145,8 @@ M6 / NW-04 in this session worktree. No other lane is dispatched.
 | NW-02 | M3 | CLOSED — repaired, 7 regressions, consumer-level case proven failing pre-repair |
 | NW-03 | M4 | CLOSED — repaired, 8 regressions, 5 proven failing pre-repair |
 | NW-13 | M5 | CLOSED — repaired, 5 regressions, 2 proven failing pre-repair |
-| NW-04 | M6 | IN PROGRESS |
-| NW-05 | M7 | NOT STARTED |
+| NW-04 | M6 | CLOSED — repaired, 13 regressions, consumer-level case proven failing pre-repair |
+| NW-05 | M7 | IN PROGRESS |
 | NW-12 | M8 | NOT STARTED |
 | NW-09 | M9 | NOT STARTED |
 | NW-10 | M9 | NOT STARTED |
@@ -145,6 +157,23 @@ M6 / NW-04 in this session worktree. No other lane is dispatched.
 | NW-15 | — | CLOSED BY W10 OWNER — consumed, out of scope |
 
 ## Exact Next Action
+
+1. Probe the live NW-05 evidence in `src/api/phase5/relay.ts`: `defaultFetch`
+   passes no `AbortSignal`, `withTimeout` rejects via `Promise.race` without
+   aborting upstream work, and it is applied per attempt so a redirect
+   receives another full `timeoutMs` — confirm the doubled bound and the
+   surviving body read with a fake transport.
+2. Freeze the timeout-versus-network-failure taxonomy before editing, so a
+   deadline cannot be misreported as a transport error.
+3. Create one monotonic deadline and `AbortController` at the operation
+   boundary and thread the remaining budget and signal through auth-header
+   acquisition, connection, redirect and body consumption; abort and cancel
+   bodies on timeout or caller cancellation and await bounded cleanup.
+4. Assert operation counts, signals, body cancellation and timer disposal
+   rather than wall-clock thresholds, and prove no owned work remains after
+   the cleanup grace.
+
+## Superseded next action (M6, complete)
 
 1. Probe the live NW-04 evidence in `src/core/agentRuntime/localCampaign.ts`:
    confirm the direct truncate-then-chmod publication, the unbounded read
@@ -254,6 +283,9 @@ M6 / NW-04 in this session worktree. No other lane is dispatched.
 | `src/core/source/siblingRoot.ts` | leaf constant so the topology authority does not drag in the sibling reader | CREATED |
 | `src/core/selfDev/provenanceManifest.ts` | trust root closed over the new imports | MODIFIED |
 | `tests/unit/nw13SensitiveDiagnostics.test.ts` | five NW-13 cases with fragment search over message, stack, cause and own properties | CREATED |
+| `src/core/agentRuntime/checkpointStore.ts` | generation-bearing bounded atomic checkpoint publication and read | CREATED |
+| `src/core/agentRuntime/localCampaign.ts` | publish/read through the store; supersede instead of delete on a fresh run | MODIFIED |
+| `tests/unit/nw04CheckpointDurability.test.ts` | thirteen NW-04 cases including the three-step crash matrix | CREATED |
 | `docs/MASTER-IMPLEMENTATION-HARDENING-PLAN.md` | document status and NW-06 resolution evidence | MODIFIED |
 
 ## Validation Ledger
@@ -265,6 +297,18 @@ the inherited W10 anchor, 31 legacy v1 task records, and the integrated W10
 session worktree awaiting an owner release. `npm run handoff:check` PASS,
 receipt campaign `nightwatch-repository-hardening-implementation-v1`,
 planned-from `0ac7b3d`. `npm run workspace:check` PASS.
+
+M6: `tests/unit/nw04CheckpointDurability.test.ts` — 13 passed. With
+`localCampaign.ts` reverted to the pre-repair loader, the consumer-level case
+FAILED: an 8 MB+ checkpoint was read and decoded whole and threw
+`Unexpected token 'x', "xxxxxxxxxx"... is not valid JSON`, proving the
+unbounded read and a content-window leak in one observation. Surrounding
+suites after the repair: `localCampaign`, `campaignEndurance`,
+`campaignStrategyMemory`, `localCampaignByteAccounting`,
+`w10CampaignCapabilityCarry`, `w10LongRunResilience`, `realLocalCampaignPath`,
+`agentRuntime`, `checkpoint`, `phase23QualityGate` — 60 passed.
+`npm run typecheck` and `npm run hardening:check` PASS. The authoritative gate
+now selects 219 unique test files with zero duplicates.
 
 **M5 confirming shard sweep at the committed head `e32ab5d`** — the full
 suite, four foreground shards, fully reconciled against collection:
@@ -389,6 +433,14 @@ tests `worktrees.length > maxWorktrees` over already-registered worktrees
 only. The candidate registration is never modelled, and the same function
 returns on a failed ownership-record write with the branch and worktree
 already created.
+
+Discovery: a planted-secret fragment search can report a leak that is not
+one. Evidence: the NW-04 corrupt-state case planted
+`PLANTED_NW04_CHECKPOINT_SECRET_...`, and an eight-character window of it
+matched the error CODE `CHECKPOINT_CORRUPT` in the very diagnostic that was
+correctly content-free. The planted value must share no vocabulary with the
+diagnostics, the module name or the test path; it is now
+`ZZQQ7_XYLOPHONE_..._MARMALADE_74`.
 
 Discovery: this campaign repeated the recorded DEF-12 defect exactly, and
 only the broad suite caught it. Evidence: `SELFDEV_AUTHORITATIVE_PATHS` is

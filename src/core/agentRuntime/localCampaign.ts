@@ -31,6 +31,13 @@
 
 import fs from 'node:fs';
 import os from 'node:os';
+import {
+  CheckpointStoreError,
+  ensureCheckpointDirectory,
+  publishCheckpointDocument,
+  readCheckpointDocument,
+  supersedeStoredCheckpoint,
+} from './checkpointStore';
 import path from 'node:path';
 import {
   AGENT_CHECKPOINT_VERSION,
@@ -237,37 +244,68 @@ export function defaultCampaignStateDirectory(override?: string): string {
 }
 
 function ensurePrivateDirectory(directory: string): void {
+  // NW-04: one publication authority (`checkpointStore.ts`) owns the
+  // directory contract, so the campaign store cannot drift from it.
   try {
-    if (fs.lstatSync(directory).isSymbolicLink()) {
+    ensureCheckpointDirectory(directory);
+  } catch (error) {
+    if (error instanceof CheckpointStoreError && error.code === 'CHECKPOINT_STATE_SYMLINK_REFUSED') {
       throw new LocalCampaignError('STATE_SYMLINK_REFUSED', 'campaign state directory must not be a symlink');
     }
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+    throw error;
   }
-  fs.mkdirSync(directory, { recursive: true, mode: 0o700 });
-  fs.chmodSync(directory, 0o700);
 }
 
 function checkpointPath(directory: string, campaignId: string): string {
   return path.join(directory, `${campaignId}.checkpoint.json`);
 }
 
-function persistCampaignFile(directory: string, campaignId: string, document: unknown): string {
+/**
+ * NW-04: was a direct `writeFileSync` onto the destination, which truncated
+ * the previous checkpoint in place and let a same-id writer clobber it
+ * silently. Publication is now atomic and generation-stamped.
+ */
+function persistCampaignFile(directory: string, campaignId: string, document: Record<string, unknown>): string {
   ensurePrivateDirectory(directory);
   const file = checkpointPath(directory, campaignId);
-  if (fs.existsSync(file) && fs.lstatSync(file).isSymbolicLink()) {
-    throw new LocalCampaignError('STATE_SYMLINK_REFUSED', 'checkpoint path must not be a symlink');
+  try {
+    return publishCheckpointDocument(directory, file, document).file;
+  } catch (error) {
+    if (error instanceof CheckpointStoreError && error.code === 'CHECKPOINT_STATE_SYMLINK_REFUSED') {
+      throw new LocalCampaignError('STATE_SYMLINK_REFUSED', 'checkpoint path must not be a symlink');
+    }
+    throw error;
   }
-  fs.writeFileSync(file, `${JSON.stringify(document)}\n`, { mode: 0o600 });
-  fs.chmodSync(file, 0o600);
-  return file;
 }
 
+/**
+ * Terminal cleanup: a campaign that reached a terminal state with no resume
+ * value leaves no checkpoint for `status` to list. This is the only path that
+ * removes a checkpoint, and it runs AFTER the run has produced its outcome —
+ * never before durable progress exists.
+ */
 function deleteStoredCheckpoint(directory: string, campaignId: string): void {
   try {
     fs.rmSync(checkpointPath(directory, campaignId), { force: true });
   } catch {
     // Best-effort hygiene; a stale file is re-listed, never executed.
+  }
+}
+
+/**
+ * NW-04: a fresh run used to DELETE the stored checkpoint for its id before
+ * any new durable progress existed, so a crash in that window destroyed the
+ * owner's previous checkpoint outright. It is now moved aside instead, so the
+ * previous generation survives for owner action while no longer shadowing the
+ * new run in `status`.
+ */
+function supersedePreviousCheckpoint(directory: string, campaignId: string): void {
+  try {
+    ensurePrivateDirectory(directory);
+    supersedeStoredCheckpoint(directory, checkpointPath(directory, campaignId));
+  } catch {
+    // A predecessor that cannot be moved aside is left exactly as it is; the
+    // fresh run's own publication will replace it atomically.
   }
 }
 
@@ -343,15 +381,24 @@ function parseCampaignProgress(value: unknown, campaignId: string): CampaignProg
 
 function readRawCheckpointFile(directory: string, campaignId: string): unknown {
   const file = checkpointPath(directory, campaignId);
+  // NW-04: bounded before allocation, owner-only, and content-free on
+  // corruption — the previous version read and decoded the whole file with no
+  // size bound and let a native SyntaxError carry checkpoint bytes into the
+  // diagnostic.
+  let document: Record<string, unknown> | null;
   try {
-    if (fs.lstatSync(file).isSymbolicLink() || !fs.lstatSync(file).isFile()) {
-      throw new LocalCampaignError('CHECKPOINT_UNSAFE', 'checkpoint is not a regular file');
-    }
+    document = readCheckpointDocument(file);
   } catch (error) {
-    if (error instanceof LocalCampaignError) throw error;
-    throw new LocalCampaignError('CHECKPOINT_MISSING', `no checkpoint for ${campaignId}`);
+    if (error instanceof CheckpointStoreError) {
+      if (error.code === 'CHECKPOINT_DESTINATION_UNSAFE') {
+        throw new LocalCampaignError('CHECKPOINT_UNSAFE', 'checkpoint is not a regular file');
+      }
+      throw error;
+    }
+    throw error;
   }
-  return JSON.parse(fs.readFileSync(file, 'utf8'));
+  if (document === null) throw new LocalCampaignError('CHECKPOINT_MISSING', `no checkpoint for ${campaignId}`);
+  return document;
 }
 
 export function loadLocalCampaignCheckpoint(campaignId: string, stateDirectory?: string): AgentCheckpoint {
@@ -973,8 +1020,10 @@ export async function runLocalCliCampaign(input: LocalCampaignInput): Promise<Lo
   const now = input.now ?? Date.now;
   const directory = defaultCampaignStateDirectory(input.stateDirectory);
   // A fresh run supersedes any stored checkpoint for this id; otherwise a
-  // previous PAUSED listing would shadow the new campaign.
-  deleteStoredCheckpoint(directory, input.campaignId);
+  // previous PAUSED listing would shadow the new campaign. NW-04: moved
+  // aside, not deleted, so a crash before the new run's first checkpoint
+  // cannot destroy the owner's previous generation.
+  supersedePreviousCheckpoint(directory, input.campaignId);
   const engine: CampaignEngine = {
     input,
     policy: budgetPolicy,

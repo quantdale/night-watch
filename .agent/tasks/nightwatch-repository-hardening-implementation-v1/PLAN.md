@@ -246,7 +246,11 @@ lifecycles, then the operator surface, then release accounting.
   reported without content; pre-W9, W9 and W10 checkpoints still resume.
 - **Validation:** the crash matrix plus W9/W10 checkpoint compatibility
   suites and byte-budget reconciliation.
-- **Status:** NOT_STARTED
+- **Status:** COMPLETE — one generation-bearing publication/read path,
+  compare-generation same-ID semantics with the limit stated rather than
+  overclaimed, bounded reads, corrupt evidence preserved, and a fresh run that
+  supersedes instead of deleting. 13 cases; the consumer-level case fails
+  against the pre-repair loader.
 
 ### M7 — NW-05 one abortable Phase-5 relay deadline
 
