@@ -57,6 +57,10 @@ import {
 } from '../source/universe';
 import { prefixedDigest24 } from '../identity/canonicalDigest';
 import {
+  deriveCurrentFailureEvidence,
+  type CurrentFailureEvidence,
+} from '../localInvestigation/currentFailureEvidence';
+import {
   FAILURE_FINGERPRINT_PREFIX,
   OWNER_LOCAL_CURRENT_SOURCE_PROOF_VERSION,
 } from '../localInvestigation/currentSourceProof';
@@ -1557,6 +1561,7 @@ function observation(
   packagePath: string,
   executions: number,
   failureClass: string | null,
+  failureEvidence?: CurrentFailureEvidence | null,
 ): unknown {
   return {
     harness: OWNER_LOCAL_REPRODUCTION_OBSERVATION_VERSION,
@@ -1564,6 +1569,12 @@ function observation(
     package: packagePath,
     executions,
     failureClass,
+    // W10 M6: bounded, sanitized triage evidence for a qualifying repeated
+    // current-source assertion failure. Present ONLY on the qualifying
+    // REPRODUCED_CURRENT_FAILURE path below; every other verdict omits the
+    // key entirely (absent, never null). Raw audit output, commands, argv,
+    // and absolute paths never enter this envelope.
+    ...(failureEvidence === null || failureEvidence === undefined ? {} : { failureEvidence }),
   };
 }
 
@@ -1924,6 +1935,21 @@ function mintAttemptResult(input: {
         siblingIdentityStable: true,
         networkDisabled: true,
       } as const;
+      // W10 M6: derive the bounded reasoner-safe triage projection from the
+      // matching audit executions. The heads are host-captured, secret-scrubbed,
+      // hard-capped output; derivation re-scrubs, re-caps, strips absolute
+      // paths, and refuses any non-assertion content. Only this projection
+      // crosses to the reasoner — raw audit output never does. A null return
+      // (fail closed) omits the key rather than exposing a weaker substitute.
+      const firstHead = input.heads[0] ?? { stdoutHead: '', stderrHead: '' };
+      const failureEvidence = deriveCurrentFailureEvidence({
+        stdout: firstHead.stdoutHead,
+        stderr: firstHead.stderrHead,
+        failureClass: 'TEST_ASSERTION_FAILURE',
+        matchingFreshExecutions: records.length,
+        packagePath,
+        groundedSourcePaths: [target.sourcePath],
+      });
       const value: LocalReproductionProviderResult = {
         verdict: 'REPRODUCED_CURRENT_FAILURE',
         reasonerVisible: observation(
@@ -1931,6 +1957,7 @@ function mintAttemptResult(input: {
           packagePath,
           records.length,
           'TEST_ASSERTION_FAILURE',
+          failureEvidence,
         ),
         evidenceRef: prefixedDigest24('ev', {
           provider: providerId,
