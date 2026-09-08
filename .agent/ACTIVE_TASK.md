@@ -6,16 +6,16 @@ Title: Repository Master Hardening Implementation
 Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-repository-hardening-implementation-v1
 Starting SHA: 0ac7b3d037b5059f670eca715fc30adaf58e7334
-Last validated implementation SHA: 2ebb598c7bc13adf0d92b5422e0f844c3442b750
-Last checkpoint: M1 / NW-06 CLOSED and validated at the recorded implementation SHA; M2 (NW-01) is the active milestone
-Current milestone: M2 — NW-01 closed reasoner-facing vocabularies
-Next action: Probe the live NW-01 evidence, then close the reasoner-facing protocol vocabularies in `src/core/agentProtocol/validate.ts`, `src/core/agentProtocol/tools.ts` and `src/core/autonomousFinding/dossier.ts` against prototype inheritance and coercion using own-key membership and exhaustive dispatch, proving valid persisted protocol inputs still load.
+Last validated implementation SHA: e32ab5d25ae6f19cfa0b5a207e715703df773d69
+Last checkpoint: NW-06, NW-01, NW-02, NW-03 and NW-13 CLOSED and validated; the reconciled full-suite receipt at the recorded implementation SHA is 4695 passed / 18 skipped / 0 failed of 4713 collected
+Current milestone: M6 — NW-04 bounded crash-safe autonomous checkpoints
+Next action: Probe the live NW-04 evidence in `src/core/agentRuntime/localCampaign.ts`, freeze the generation and same-ID writer semantics, then cap reads before allocation and publish checkpoints atomically on the NW-02/NW-03 primitives, keeping every pre-W9, W9 and W10 checkpoint readable and adding the crash matrix.
 Authorization class: REPOSITORY_HARDENING_IMPLEMENTATION_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 0ac7b3d037b5059f670eca715fc30adaf58e7334
-LAST_VALIDATED_IMPLEMENTATION_SHA: 2ebb598c7bc13adf0d92b5422e0f844c3442b750
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 2ebb598c7bc13adf0d92b5422e0f844c3442b750
+LAST_VALIDATED_IMPLEMENTATION_SHA: e32ab5d25ae6f19cfa0b5a207e715703df773d69
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: e32ab5d25ae6f19cfa0b5a207e715703df773d69
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PHASE_REPOSITORY_HARDENING_IMPLEMENTATION_V1_STATUS: IN_PROGRESS

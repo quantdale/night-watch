@@ -9,16 +9,16 @@ Phase: REPOSITORY_HARDENING_IMPLEMENTATION_V1
 Status: IN_PROGRESS
 Campaign: nightwatch-repository-hardening-implementation-v1
 Starting SHA: 0ac7b3d037b5059f670eca715fc30adaf58e7334
-Last validated implementation SHA: 2ebb598c7bc13adf0d92b5422e0f844c3442b750
-Last substantive checkpoint SHA: 2ebb598c7bc13adf0d92b5422e0f844c3442b750
+Last validated implementation SHA: e32ab5d25ae6f19cfa0b5a207e715703df773d69
+Last substantive checkpoint SHA: e32ab5d25ae6f19cfa0b5a207e715703df773d69
 Live HEAD authority: GIT
 Branch: session/nightwatch-repository-hardening--e7b9be89
 Last checkpoint: M5 / NW-13 complete and validated — allowlist-only sensitive diagnostics, plus repair of a DEF-12-class trust-root closure regression this campaign introduced at NW-02 and a hardening rule to prevent its recurrence
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 0ac7b3d037b5059f670eca715fc30adaf58e7334
-LAST_VALIDATED_IMPLEMENTATION_SHA: 2ebb598c7bc13adf0d92b5422e0f844c3442b750
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 2ebb598c7bc13adf0d92b5422e0f844c3442b750
+LAST_VALIDATED_IMPLEMENTATION_SHA: e32ab5d25ae6f19cfa0b5a207e715703df773d69
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: e32ab5d25ae6f19cfa0b5a207e715703df773d69
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
 LIVE_COMPLETION_CLAIM: NONE
@@ -361,7 +361,7 @@ Accepted predecessor certification, not re-run here:
 - W10 `gate:local` and clean-clone receipts recorded in the W10 REPORT;
 - W10 full `npm test` and focused suite counts recorded in the W10 REPORT.
 
-The validated baseline is this campaign's M1 implementation `2ebb598c7bc13adf0d92b5422e0f844c3442b750`; the inherited baseline it advanced from was the certified W10 implementation `62d23e2622ab0a282584c5cf27d92b6b603f9192`.
+The validated baseline is this campaign's M1 implementation `e32ab5d25ae6f19cfa0b5a207e715703df773d69`; the inherited baseline it advanced from was the certified W10 implementation `62d23e2622ab0a282584c5cf27d92b6b603f9192`.
 
 ## Decisions Made During This Task
 
