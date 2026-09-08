@@ -5,6 +5,7 @@
 
 export * from './atlas';
 export * from './benchmark';
+export * from './closedVocabulary';
 export * from './finding';
 export * from './intents';
 export * from './reasoner';

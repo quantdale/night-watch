@@ -165,7 +165,10 @@ lifecycles, then the operator surface, then release accounting.
   protocol inputs still load.
 - **Validation:** focused protocol/dossier suites plus the prototype probe
   matrix; `npm run typecheck`.
-- **Status:** NOT_STARTED
+- **Status:** COMPLETE — one closure primitive
+  (`src/core/agentProtocol/closedVocabulary.ts`) owns membership and lookup;
+  5 of the 7 new cases fail against the pre-repair code and the 2 that pass
+  are the compatibility controls.
 
 ### M3 — NW-02 topology-independent private-path policy
 

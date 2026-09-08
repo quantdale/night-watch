@@ -27,6 +27,7 @@ import {
 } from './reasoner';
 import { lookupAgentTool, type AgentToolEnvironment, type AgentToolId } from './tools';
 import { untrustedLooksLikeInjection, type UntrustedEnvelope } from './untrusted';
+import { closedVocabulary } from './closedVocabulary';
 import { AUTONOMOUS_FINDING_AUTHORITY, type AutonomousFindingDossier } from './finding';
 
 export type ProtocolReject = {
@@ -41,8 +42,13 @@ export type ProtocolAccept<T> = {
 
 export type ProtocolResult<T> = ProtocolAccept<T> | ProtocolReject;
 
-const INTENT_KIND_SET: Record<string, true> = Object.fromEntries(AGENT_INTENT_KINDS.map((kind) => [kind, true]));
-const TERMINATION_SET: Record<string, true> = Object.fromEntries(AGENT_TERMINATION_REASONS.map((reason) => [reason, true]));
+// NW-01: these were prototype-bearing objects queried by truthiness, so
+// `constructor`, `__proto__` and `toString` all passed membership. Worse, the
+// intent dispatch below ended in an unguarded fallback, so an
+// accepted-but-unknown kind was reinterpreted as TERMINATE with a
+// model-chosen reason. Membership is now own-only and dispatch is exhaustive.
+const isIntentKind = closedVocabulary(AGENT_INTENT_KINDS);
+const isTerminationReason = closedVocabulary(AGENT_TERMINATION_REASONS);
 const SAFE_ID_RE = /^[A-Za-z0-9._:-]{1,128}$/;
 const SAFE_CODE_RE = /^[A-Z][A-Z0-9_]{0,127}$/;
 const SECRET_RE =
@@ -95,7 +101,7 @@ export function classifyRawOutput(raw: string): ReasonerFailureClass | null {
 function parseIntent(value: unknown, context: ReasonerValidationContext): ProtocolResult<AgentIntent> {
   if (!isRecord(value) || typeof value.kind !== 'string') return reject('MALFORMED_OUTPUT');
   if (isUnsafeIntentKind(value.kind)) return reject('UNSAFE_INTENT');
-  if (!INTENT_KIND_SET[value.kind]) return reject('UNKNOWN_INTENT');
+  if (!isIntentKind(value.kind)) return reject('UNKNOWN_INTENT');
   const kind = value.kind as AgentIntentKind;
   if (kind === 'CALL_TOOL') {
     if (!isSafeId(value.toolId)) return reject('MALFORMED_OUTPUT');
@@ -145,8 +151,16 @@ function parseIntent(value: unknown, context: ReasonerValidationContext): Protoc
   }
   if (kind === 'PAUSE') return { ok: true, value: { kind } };
   if (kind === 'CANCEL') return { ok: true, value: { kind } };
-  if (!TERMINATION_SET[String(value.reason)]) return reject('MALFORMED_OUTPUT');
-  return { ok: true, value: { kind: 'TERMINATE', reason: value.reason } as TerminateIntent };
+  if (kind === 'TERMINATE') {
+    // No String() coercion: an object with a cooperative toString must not be
+    // able to name a termination reason it does not equal.
+    if (!isTerminationReason(value.reason)) return reject('MALFORMED_OUTPUT');
+    return { ok: true, value: { kind: 'TERMINATE', reason: value.reason } as TerminateIntent };
+  }
+  // Exhaustive: every member of AGENT_INTENT_KINDS is dispatched above, so
+  // this is only reachable if the vocabulary grows without a branch. It must
+  // refuse rather than fall into the previous case.
+  return reject('UNKNOWN_INTENT');
 }
 
 function parseHypothesis(value: unknown): ProtocolResult<ReasonerHypothesisDraft> {

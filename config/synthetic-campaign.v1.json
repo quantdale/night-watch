@@ -67,6 +67,9 @@
     "tests/unit/localFindingAdmission.test.ts",
     "tests/unit/benchmarkVerificationTier.test.ts",
     "tests/unit/historicalProductPath.test.ts",
-    "tests/unit/realLocalCampaignPath.test.ts"
+    "tests/unit/realLocalCampaignPath.test.ts",
+    "tests/unit/agentProtocol.test.ts",
+    "tests/unit/agentTools.test.ts",
+    "tests/unit/nw01ClosedVocabularies.test.ts"
   ]
 }

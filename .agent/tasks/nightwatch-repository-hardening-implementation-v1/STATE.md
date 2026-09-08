@@ -13,7 +13,7 @@ Last validated implementation SHA: 2ebb598c7bc13adf0d92b5422e0f844c3442b750
 Last substantive checkpoint SHA: 2ebb598c7bc13adf0d92b5422e0f844c3442b750
 Live HEAD authority: GIT
 Branch: session/nightwatch-repository-hardening--e7b9be89
-Last checkpoint: M1 / NW-06 complete and validated — prospective worktree admission, proof-gated rollback and post-creation verification, with 9 regressions of which 8 fail against the pre-repair code
+Last checkpoint: M2 / NW-01 complete and validated — one closure primitive for reasoner-facing vocabularies and lookups, exhaustive intent dispatch, with 7 regressions of which 5 fail against the pre-repair code
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 0ac7b3d037b5059f670eca715fc30adaf58e7334
@@ -34,11 +34,12 @@ is consumed, not re-executed.
 
 ## Current Milestone
 
-Milestone ID: M2
+Milestone ID: M3
 Milestone status: IN_PROGRESS
-What is being attempted: NW-01 — close the reasoner-facing protocol
-vocabularies against prototype inheritance and coercion, so an inherited or
-unknown discriminant is rejected before it has any effect.
+What is being attempted: NW-02 — replace the `__dirname`-derived
+repository/workspace roots in the private-path validators with one
+topology-aware, fail-closed, injected authority, so the same configured path
+gets the same decision from any supported checkout location.
 
 ## Completed Milestones
 
@@ -69,18 +70,32 @@ unknown discriminant is rejected before it has any effect.
   code (the ninth is the below-bound admit control) and the concurrent case
   reproduced the defect with 4 registrations against a bound of 3. All 48
   cases in that file pass after the repair.
+- **M2 COMPLETE (NW-01)** — `src/core/agentProtocol/closedVocabulary.ts` is
+  the single closure primitive: `closedVocabulary` returns a `Set`-backed
+  type guard that refuses non-strings without coercion, and `closedLookup`
+  returns a `Map`-backed catalog whose `has` and `get` answer from one table.
+  `validate.ts`, `tools.ts` and `src/core/autonomousFinding/dossier.ts` all
+  use it, and `parseIntent` now dispatches `TERMINATE` explicitly and ends in
+  `reject('UNKNOWN_INTENT')` instead of falling through. Seven cases in
+  `tests/unit/nw01ClosedVocabularies.test.ts` cover eight inherited names
+  across six vocabularies plus a coercion case and two compatibility
+  controls; 5 fail against the pre-repair code. 69 passed across the NW-01,
+  `agentProtocol`, `agentTools` and `dossierIdentityPropagation` suites.
+  `agentProtocol.test.ts`, `agentTools.test.ts` and the new suite were added
+  to `config/synthetic-campaign.v1.json` — the frozen protocol's own suite
+  was in no manifest, so the authoritative gate had never run it.
 
 ## Work In Progress
 
-M2 / NW-01 in this session worktree. No other lane is dispatched.
+M3 / NW-02 in this session worktree. No other lane is dispatched.
 
 ## Findings register progress
 
 | ID | Milestone | Status |
 | --- | --- | --- |
 | NW-06 | M1 | CLOSED — repaired, 9 regressions, 8 proven failing pre-repair |
-| NW-01 | M2 | IN PROGRESS |
-| NW-02 | M3 | NOT STARTED |
+| NW-01 | M2 | CLOSED — repaired, 7 regressions, 5 proven failing pre-repair |
+| NW-02 | M3 | IN PROGRESS |
 | NW-03 | M4 | NOT STARTED |
 | NW-13 | M5 | NOT STARTED |
 | NW-04 | M6 | NOT STARTED |
@@ -89,26 +104,32 @@ M2 / NW-01 in this session worktree. No other lane is dispatched.
 | NW-09 | M9 | NOT STARTED |
 | NW-10 | M9 | NOT STARTED |
 | NW-11 | M9 | NOT STARTED |
-| NW-08 | M10 | NOT STARTED |
+| NW-08 | M10 | PARTIAL — three unmanifested protocol suites registered as M2 evidence |
 | NW-14 | M11 | NOT STARTED |
 | NW-07 | M12 | NOT STARTED |
 | NW-15 | — | CLOSED BY W10 OWNER — consumed, out of scope |
 
 ## Exact Next Action
 
-1. Probe the live NW-01 evidence before changing anything: confirm that
-   `Object.fromEntries` membership maps in `src/core/agentProtocol/validate.ts`
-   accept `constructor`, `__proto__` and `toString` for intent, termination
-   reason, severity, environment and confidence, and that
-   `lookupAgentTool('constructor')` still returns an inherited function.
-2. Freeze the closure primitive — own-key membership plus exhaustive dispatch
-   — and apply it to `validate.ts`, `tools.ts` and
-   `src/core/autonomousFinding/dossier.ts`, removing default branches that
-   reinterpret an unknown discriminant.
-3. Prove valid persisted protocol inputs still load, so the closure is not a
-   compatibility break.
-4. Add the prototype/coercion probe matrix as a focused regression and verify
-   it fails against the pre-repair code.
+1. Probe the live NW-02 evidence: confirm that
+   `src/core/policy/privateArtifacts.ts` and
+   `src/core/prodEvidence/productionFindingsStore.ts` still derive their
+   repository and workspace roots from `__dirname`, and reproduce the
+   topology-dependent decision — the same configured path accepted from a
+   linked worktree and rejected from the canonical checkout.
+2. Freeze the shared path authority before touching any consumer, since
+   NW-03, NW-04 and NW-09 all build on it: canonical Nightwatch root,
+   sibling `REPOSITORIES` root, registered linked worktrees and permitted
+   owner-state roots, resolved from `DEFAULT_SIBLING_ROOT` or an explicit
+   `NIGHTWATCH_REPOS_ROOT`, failing closed on ambiguity, with no-follow
+   containment checks before creation.
+3. Convert the consumers to inject that authority instead of deriving it, and
+   keep existing safe owner artifacts readable.
+4. Add the topology matrix — canonical clone, linked worktree, relocated
+   fresh clone, explicit root, missing and ambiguous root, symlinked
+   ancestor, and canonical/sibling/worktree targets — and assert identical
+   decisions across topology, verifying it fails against the pre-repair
+   code.
 
 ## Files Changed
 
@@ -125,6 +146,13 @@ M2 / NW-01 in this session worktree. No other lane is dispatched.
 | `bin/nightwatch-session.mjs` | pre-mutation admission, proof-gated rollback, post-creation verification, narrow fault seam | MODIFIED |
 | `tests/unit/workspaceIsolation.test.ts` | nine NW-06 cases; fixture policy override; session env injection | MODIFIED |
 | `AGENTS.md` | C-00 admission and rollback behaviour | MODIFIED |
+| `src/core/agentProtocol/closedVocabulary.ts` | the one vocabulary/lookup closure primitive | CREATED |
+| `src/core/agentProtocol/validate.ts` | own-key membership, no coercion, exhaustive intent dispatch | MODIFIED |
+| `src/core/agentProtocol/tools.ts` | `Map`-backed tool catalog | MODIFIED |
+| `src/core/agentProtocol/index.ts` | export the closure primitive | MODIFIED |
+| `src/core/autonomousFinding/dossier.ts` | own-key severity/confidence/environment | MODIFIED |
+| `tests/unit/nw01ClosedVocabularies.test.ts` | seven NW-01 cases over eight inherited names | CREATED |
+| `config/synthetic-campaign.v1.json` | register the protocol suites the required gate lane never ran | MODIFIED |
 | `docs/MASTER-IMPLEMENTATION-HARDENING-PLAN.md` | document status and NW-06 resolution evidence | MODIFIED |
 
 ## Validation Ledger
@@ -136,6 +164,17 @@ the inherited W10 anchor, 31 legacy v1 task records, and the integrated W10
 session worktree awaiting an owner release. `npm run handoff:check` PASS,
 receipt campaign `nightwatch-repository-hardening-implementation-v1`,
 planned-from `0ac7b3d`. `npm run workspace:check` PASS.
+
+M2 full regression at the M2 tree: `npm test` — **4675 passed / 18 skipped /
+0 failed**, 15.7 minutes. This is the campaign's own measured baseline; it is
+not compared against the W10 report's 4565/16, because W10's later commits
+changed the suite between that receipt and this tree.
+
+M2: `tests/unit/nw01ClosedVocabularies.test.ts` with `agentProtocol`,
+`agentTools` and `dossierIdentityPropagation` — 69 passed / 0 failed after
+the repair. Pre-repair measurement of the seven new cases: 5 failed, 2 passed
+(the compatibility controls). `npm run typecheck` PASS.
+`npm run hardening:check` PASS.
 
 M1: `tests/unit/workspaceIsolation.test.ts` — 48 passed / 0 failed after the
 repair. Pre-repair measurement of the same nine new cases: 8 failed, 1 passed
@@ -176,6 +215,21 @@ tests `worktrees.length > maxWorktrees` over already-registered worktrees
 only. The candidate registration is never modelled, and the same function
 returns on a failed ownership-record write with the branch and worktree
 already created.
+
+Discovery: NW-01's unguarded fallback was worse than "invalid enums are
+accepted". Evidence: `parseIntent` ended with the TERMINATE branch instead of
+dispatching it, so `{kind: 'constructor', reason: 'COMPLETE_WITH_FINDING'}`
+validated as a TERMINATE intent — an accepted-but-unknown discriminant was
+reinterpreted as a terminal state the model never named. The
+`String(value.reason)` coercion compounded it: any object with a cooperative
+`toString` could name a termination reason it did not equal.
+
+Discovery: the frozen protocol's own test suite was in no gate manifest.
+Evidence: `config/synthetic-campaign.v1.json` did not list
+`tests/unit/agentProtocol.test.ts` or `tests/unit/agentTools.test.ts`, and no
+required gate group runs `tests/unit` wholesale, so the authoritative gate
+had never executed the trust boundary's regressions. Registered as part of
+M2; this is live NW-08 evidence, not a separate finding.
 
 Discovery: the prospective admission alone cannot hold the worktree bound.
 Evidence: three concurrent `start` invocations at a bound of 3 with 2

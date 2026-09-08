@@ -5,6 +5,7 @@
 // ---------------------------------------------------------------------------
 
 import type { OwnerAllowedOperation } from '../policy/ownerScope';
+import { closedLookup } from './closedVocabulary';
 
 export const AGENT_TOOL_IDS = [
   'INSPECT_SOURCE_SURFACE',
@@ -152,14 +153,16 @@ export const AGENT_TOOL_CATALOG: readonly AgentToolDescriptor[] = Object.freeze(
     budgetImpact: 'READ',
   }),
 ]);
-const TOOL_BY_ID: Record<string, AgentToolDescriptor> = Object.fromEntries(
-  AGENT_TOOL_CATALOG.map((tool) => [tool.id, tool]),
-);
+// NW-01: an object-backed catalog made `lookupAgentTool('constructor')`
+// return an inherited function while `isAgentToolId` correctly said no, so a
+// caller that trusted a non-null descriptor received `Object`. One closed
+// lookup now answers both questions from the same table.
+const TOOL_BY_ID = closedLookup<AgentToolDescriptor>(AGENT_TOOL_CATALOG.map((tool) => [tool.id, tool] as const));
 
 export function isAgentToolId(value: unknown): value is AgentToolId {
-  return typeof value === 'string' && Object.prototype.hasOwnProperty.call(TOOL_BY_ID, value);
+  return TOOL_BY_ID.has(value);
 }
 
 export function lookupAgentTool(toolId: string): AgentToolDescriptor | null {
-  return TOOL_BY_ID[toolId] ?? null;
+  return TOOL_BY_ID.get(toolId);
 }

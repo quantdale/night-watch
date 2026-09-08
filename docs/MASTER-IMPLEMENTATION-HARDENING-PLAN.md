@@ -83,7 +83,7 @@ Priority meanings: P0 is demonstrated catastrophic failure requiring immediate c
 
 ### NW-01 — Close reasoner-facing vocabularies against prototype inheritance
 
-- **Priority / category / confidence / status:** P1; trust boundary and validation; CONFIRMED by execution; NOT STARTED.
+- **Priority / category / confidence / status:** P1; trust boundary and validation; CONFIRMED by execution; **CLOSED** — repaired and regression-proven under `nightwatch-repository-hardening-implementation-v1` M2.
 - **Affected surfaces:** `src/core/agentProtocol/validate.ts`, `src/core/agentProtocol/tools.ts`, `src/core/autonomousFinding/dossier.ts`, their callers and focused tests.
 - **Evidence:** ordinary objects created with `Object.fromEntries` are queried by truthiness. Synthetic invalid values such as `constructor` and `__proto__` passed intent, termination-reason, severity, environment, or confidence membership. `lookupAgentTool('constructor')` returned an inherited function although `isAgentToolId` correctly rejected it.
 - **Problem, impact, root cause:** attacker/model-controlled strings can enter closed protocol states and map through non-exhaustive fallback behavior. No arbitrary command was demonstrated, but invalid terminal states, dossiers, or tool lookup results can acquire valid-looking authority. The root is prototype-bearing membership maps plus truthy lookup and default branches that silently reinterpret unknown discriminants.
@@ -92,6 +92,39 @@ Priority meanings: P0 is demonstrated catastrophic failure requiring immediate c
 - **Tests and validation:** table-test all `Object.prototype` names, symbols encoded as strings, boxed/coercible values, empty/mixed-case values, and valid controls. Assert invalid input invokes no tool callback and emits no valid checkpoint/dossier. Run protocol, autonomous-finding, resume compatibility, typecheck, hardening, and full offline regression.
 - **Acceptance:** every closed vocabulary uses own membership; exhaustive dispatch has an unreachable assertion; every adversarial value fails categorically before effects; all existing valid fixtures remain byte/schema compatible where promised.
 - **Dependencies / risks / parallelization:** independent after a legal C-00 session. One protocol lane should own shared validation helpers and these callers. Risk is accidental incompatibility with persisted valid intents; cover old checkpoints explicitly.
+
+- **Resolution evidence (2026-09-08):** revalidated by running the new
+  regression against the pre-repair code — 5 of its 7 cases failed and the 2
+  that passed are the compatibility controls. The measurement also found a
+  consequence the review had not stated: because `parseIntent` ended in an
+  unguarded fallback rather than an exhaustive dispatch, an
+  accepted-but-inherited intent kind was not merely admitted, it was
+  reinterpreted as the last branch — `{kind: 'constructor', reason:
+  'COMPLETE_WITH_FINDING'}` validated as a **TERMINATE intent**, minting a
+  terminal state the model never named. A `String()` coercion on the
+  termination reason additionally let any object with a cooperative
+  `toString` name a member it did not equal.
+  One closure primitive, `src/core/agentProtocol/closedVocabulary.ts`, now
+  owns both questions: `closedVocabulary` returns a `Set`-backed type guard
+  that refuses non-strings without coercion, and `closedLookup` returns a
+  `Map`-backed catalog whose `has` and `get` answer from the same table.
+  `validate.ts` uses it for the intent-kind and termination vocabularies and
+  dispatches `TERMINATE` explicitly, ending in `reject('UNKNOWN_INTENT')`;
+  `tools.ts` replaces the object-backed `TOOL_BY_ID`, so
+  `lookupAgentTool('constructor')` is now `null` instead of an inherited
+  function; `dossier.ts` uses it for severity, confidence and environment.
+  Seven cases in `tests/unit/nw01ClosedVocabularies.test.ts` cover eight
+  inherited names — `constructor`, `__proto__`, `toString`, `valueOf`,
+  `hasOwnProperty`, `isPrototypeOf`, `propertyIsEnumerable`,
+  `toLocaleString` — across intent kind, termination reason, tool id, and the
+  three dossier vocabularies, plus a coercion case and two compatibility
+  controls asserting every frozen member and a full valid dossier still
+  build. 69 passed across the NW-01, `agentProtocol`, `agentTools` and
+  `dossierIdentityPropagation` suites; `npm run typecheck` PASS.
+  `agentProtocol.test.ts`, `agentTools.test.ts` and the new suite were also
+  added to `config/synthetic-campaign.v1.json`: the frozen protocol's own
+  suite was in no manifest, so the authoritative gate had never run it. That
+  is recorded as NW-08 evidence.
 
 ### NW-02 — Make private-path exclusion independent of checkout topology
 

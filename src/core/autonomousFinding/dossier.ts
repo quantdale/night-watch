@@ -20,6 +20,7 @@ import {
   type AutonomousFindingDossier,
   type AutonomousSeverity,
 } from '../agentProtocol/finding';
+import { closedVocabulary } from '../agentProtocol/closedVocabulary';
 import { AUTONOMOUS_FINDING_VERSION } from '../agentProtocol/versions';
 import {
   AUTONOMOUS_FINDING_CONFIDENCES,
@@ -29,15 +30,11 @@ import {
   type AutonomousFindingEnvironment,
 } from './types';
 
-const SEVERITY_SET: Readonly<Record<string, true>> = Object.fromEntries(
-  AUTONOMOUS_SEVERITIES.map((severity) => [severity, true]),
-);
-const CONFIDENCE_SET: Readonly<Record<string, true>> = Object.fromEntries(
-  AUTONOMOUS_FINDING_CONFIDENCES.map((level) => [level, true]),
-);
-const ENVIRONMENT_SET: Readonly<Record<string, true>> = Object.fromEntries(
-  AUTONOMOUS_FINDING_ENVIRONMENTS.map((environment) => [environment, true]),
-);
+// NW-01: object-backed membership accepted every inherited name, so a draft
+// could carry `recommendedSeverity: 'constructor'` into a dossier field.
+const isSeverity = closedVocabulary(AUTONOMOUS_SEVERITIES);
+const isConfidence = closedVocabulary(AUTONOMOUS_FINDING_CONFIDENCES);
+const isEnvironment = closedVocabulary(AUTONOMOUS_FINDING_ENVIRONMENTS);
 
 const MAX_TITLE = 300;
 const MAX_PROSE = 4000;
@@ -79,18 +76,18 @@ function refList(value: unknown, field: string, minItems: number): readonly stri
 }
 
 function severity(value: unknown): AutonomousSeverity {
-  if (typeof value !== 'string' || !SEVERITY_SET[value]) invalid('UNKNOWN_SEVERITY');
-  return value as AutonomousSeverity;
+  if (!isSeverity(value)) invalid('UNKNOWN_SEVERITY');
+  return value;
 }
 
 function confidence(value: unknown, field: string): AutonomousFindingConfidence {
-  if (typeof value !== 'string' || !CONFIDENCE_SET[value]) invalid(`UNKNOWN_${field}`);
-  return value as AutonomousFindingConfidence;
+  if (!isConfidence(value)) invalid(`UNKNOWN_${field}`);
+  return value;
 }
 
 function environment(value: unknown): AutonomousFindingEnvironment {
-  if (typeof value !== 'string' || !ENVIRONMENT_SET[value]) invalid('UNKNOWN_ENVIRONMENT');
-  return value as AutonomousFindingEnvironment;
+  if (!isEnvironment(value)) invalid('UNKNOWN_ENVIRONMENT');
+  return value;
 }
 
 /**
