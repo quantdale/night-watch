@@ -174,6 +174,7 @@ and the parent programme remains independently `IN_PROGRESS`.
   - `npm run gate:local`: all 11 groups PASS, `receipt:sha256:e4214a74ab2f310837f0035f` (SEMANTIC_COMPATIBILITY 2,067 passed / 13 skipped / 0 failed; OWNER_PROVENANCE 91; SYNTHETIC_CAMPAIGN 1,196 / 0 failed);
   - fresh Node 20 `npm run gate:clean`: PASS, `installResult=PASS`, `nodeModulesReused=false`, `cleanBefore/cleanAfter=true`, `siblingWrites=0`, `clean-receipt:sha256:123c540d48a426504d4a81d2`;
   - opt-in real proofs: W9 owner-local 1 passed (30.6 s), W10 generality 2 passed (25.2 s), historical ouchan product path 1 passed (1.9 m).
+- Terminal documentation descendant `b408c6decef305812daaadd6e99d20d58a403a4a`: `gate:local` re-run, all 11 groups PASS, `receipt:sha256:872a758d1e5c9bc1b513a09d`.
 
 ## Decisions Made During This Task
 
