@@ -594,6 +594,49 @@ function checkOwnerReviewCliBoundary() {
   if (!/record(?:Confirmed)?OwnerDecision/.test(source) || !/AiReviewArtifactStore/.test(source)) fail(`${file} does not route its sole write through owner-review service/storage`);
 }
 
+/**
+ * NW-08. The gate had no mechanical relationship to the set of tests that
+ * EXIST. Its required lanes select from versioned manifests, and the
+ * data-only inventory validated those declarations against each other —
+ * never against what was discovered on disk. Measured at this campaign: 341
+ * tracked root test/smoke files, 227 selected by required lanes, 114 in no
+ * lane at all, including safety-relevant suites. A newly added test joined
+ * the repository silently and every gate stayed green without it.
+ *
+ * This rule runs in a REQUIRED gate group, so an unclassified test now fails
+ * the gate. "Covered by a different lane" is a legitimate answer; "covered by
+ * nothing, and nobody noticed" is the defect.
+ */
+function checkValidationUniverse() {
+  const result = spawnSync(process.execPath, [path.join(root, 'bin', 'validation-universe.mjs'), '--json'], {
+    cwd: root,
+    encoding: 'utf8',
+    timeout: 60_000,
+    maxBuffer: 8 * 1024 * 1024,
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+  if (result.error || typeof result.stdout !== 'string' || result.stdout.trim() === '') {
+    fail('validation universe could not be discovered');
+    return;
+  }
+  let judgement;
+  try {
+    judgement = JSON.parse(result.stdout);
+  } catch {
+    fail('validation universe judgement was not readable');
+    return;
+  }
+  for (const error of (judgement.errors ?? []).slice(0, 12)) {
+    fail(`validation universe: ${error.code}: ${error.detail}`);
+  }
+  const remaining = (judgement.errors ?? []).length - 12;
+  if (remaining > 0) fail(`validation universe: ${remaining} further violation(s)`);
+  // A judgement that classified nothing would pass vacuously.
+  if ((judgement.counts?.discovered ?? 0) < 100) {
+    fail('validation universe discovered implausibly few tests; discovery is broken rather than clean');
+  }
+}
+
 function checkSyntax() {
   const files = fs.readdirSync(path.join(root, 'bin')).filter((item) => item.endsWith('.mjs')).sort();
   if (files.length === 0) return;
@@ -4167,6 +4210,7 @@ checkC11ProdObserveBoundary();
 checkP1ObservationScopeBoundary();
 checkAlphausHandoffBoundary();
 checkDocumentationFreshness();
+checkValidationUniverse();
 checkSyntax();
 
 if (errors.length > 0) {

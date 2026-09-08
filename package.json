@@ -21,6 +21,7 @@
     "gate:clean-exec": "node bin/quality-gate.mjs clean",
     "gate:predev": "node bin/quality-gate.mjs predev",
     "gate:inventory": "node bin/quality-gate-inventory.mjs",
+    "validation:universe": "node bin/validation-universe.mjs",
     "test:semantic-compat": "node bin/semantic-compat.mjs",
     "frontier:determinism": "node bin/frontier-determinism.mjs",
     "intel:scale": "node bin/finding-intel-scale.mjs",

@@ -13,7 +13,7 @@ Last validated implementation SHA: 43368276a59f8439e51af7d3ccf7b0cc0215d4b5
 Last substantive checkpoint SHA: 43368276a59f8439e51af7d3ccf7b0cc0215d4b5
 Live HEAD authority: GIT
 Branch: session/nightwatch-repository-hardening--e7b9be89
-Last checkpoint: M9 COMPLETE — the operator dashboard triad NW-09/NW-10/NW-11 is closed: a shipped review opt-in with a capability that cannot disagree with the route, real end-to-end pagination, and a validated, cancellable, coalesced client
+Last checkpoint: M10 / NW-08 complete and validated — the validation universe is mechanically complete at 425 discovered / 0 unclassified, digest-pinned and enforced in a required gate rule
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 0ac7b3d037b5059f670eca715fc30adaf58e7334
@@ -34,11 +34,12 @@ is consumed, not re-executed.
 
 ## Current Milestone
 
-Milestone ID: M10
+Milestone ID: M11
 Milestone status: IN_PROGRESS
-What is being attempted: NW-08 — deterministic discovery and classification of
-the whole validation universe, with receipts bound to an inventory digest, so
-no green receipt can silently omit a newly added test.
+What is being attempted: NW-14 — reconcile dependency, portability and release
+documentation truth: the Vue 2.6.12 fixture advisory, the Node/OS/Bubblewrap/
+Chrome capability matrix, and separating current operational guidance from the
+indexed archives.
 
 ## Completed Milestones
 
@@ -176,10 +177,24 @@ no green receipt can silently omit a newly added test.
   250 ms window, so bursts of 1 / 100 / 1000 events cost 1 / 2 / 2
   invalidations and unsubscribe disposes the pending timer. 13 cases, 10 fail
   pre-repair. UI 41 passed, UI typecheck and build PASS.
+- **M10 COMPLETE (NW-08)** — the live denominator was measured, not
+  inherited: 341 tracked root test files, 227 in required lanes, **114 in no
+  lane at all**, including `safety`, `redaction`, `proxy`, `devLoginSecurity`,
+  `realRunGate`, `reviewStoreHardening` and five control-center suites. The
+  deeper defect was that the gap was unobservable — the required lanes select
+  from manifests and the inventory validated those declarations against each
+  other, never against what existed on disk. 24 offline safety-relevant
+  suites were promoted into the required lane (258 tests, 26 s), taking the
+  authoritative gate from 227 to 252 unique files with zero duplicates.
+  `bin/lib/validation-universe.mjs` then makes coverage mechanically
+  complete: 425 discovered, 252 gate, 173 classified, **0 unclassified**
+  across six classes each with a reason and its evidence lane, pinned by an
+  `inventoryDigest`. Nine violations fail closed in a REQUIRED hardening
+  rule, probed four ways against the live repository. 12 permanent cases.
 
 ## Work In Progress
 
-M10 / NW-08 in this session worktree. No other lane is dispatched.
+M11 / NW-14 in this session worktree. No other lane is dispatched.
 session once the NW-09 capability and pagination DTOs are frozen, because one
 owner must hold the overlapping UI API and App surfaces.
 
@@ -198,12 +213,26 @@ owner must hold the overlapping UI API and App surfaces.
 | NW-09 | M9 | CLOSED — repaired, 6 launcher + 4 UI regressions, 5 of each proven failing pre-repair |
 | NW-10 | M9 | CLOSED — repaired at every layer, 7 server + 4 UI regressions, 6 and 4 proven failing pre-repair |
 | NW-11 | M9 | CLOSED — repaired, 13 regressions, 10 proven failing pre-repair |
-| NW-08 | M10 | PARTIAL — 227 unique authoritative test files registered with zero duplicates; classification and receipt binding still open |
-| NW-14 | M11 | NOT STARTED |
+| NW-08 | M10 | CLOSED — 425 discovered / 252 gate / 173 classified / 0 unclassified, digest-pinned; 12 regressions plus four live probes |
+| NW-14 | M11 | IN PROGRESS |
 | NW-07 | M12 | NOT STARTED |
 | NW-15 | — | CLOSED BY W10 OWNER — consumed, out of scope |
 
 ## Exact Next Action
+
+1. Assess the Vue 2.6.12 development-fixture advisory: record scope,
+   reachability, owner rationale and a review date, or replace/isolate the
+   fixture with equivalent parser and readiness coverage. Do not claim a
+   fixed advisory from a version number alone.
+2. Document the supported-host capability matrix — Node, OS, Bubblewrap,
+   system Chrome, IPv6 — so an unqualified host reports unsupported
+   capability rather than inheriting a Linux pass.
+3. Separate current operational guidance from the indexed archives in the
+   five oversized central documents, without rewriting historical receipts.
+4. Re-verify lockfile reproducibility with a clean offline install, and keep
+   local / clean / host / CI claims separate.
+
+## Superseded next action (M10 / NW-08, complete)
 
 1. Discover the live validation universe: enumerate every tracked
    `.test.ts` / `.smoke.ts`, every UI test, every `bin/*.mjs`, and compare

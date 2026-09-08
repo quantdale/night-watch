@@ -396,7 +396,7 @@ Priority meanings: P0 is demonstrated catastrophic failure requiring immediate c
 
 ### NW-08 — Account for the complete test and package validation universe
 
-- **Priority / category / confidence / status:** P1; release evidence; STRONGLY INDICATED by manifest inventory; NOT STARTED.
+- **Priority / category / confidence / status:** P1; release evidence; STRONGLY INDICATED by manifest inventory; **CLOSED** — repaired and regression-proven under `nightwatch-repository-hardening-implementation-v1` M10.
 - **Affected surfaces:** quality-gate manifests/inventory, `package.json`, UI scripts, `.github/workflows/hardening.yml`, bin syntax checks, release receipts/docs.
 - **Evidence:** at the fixed baseline, explicit semantic/synthetic/provenance manifests selected 208 unique ordinary test files while 321 tracked `.test.ts`/`.smoke.ts` files existed; 113 were outside that explicit union, including smoke and newer agent runtime/protocol/reviewer/control-center/proxy/safety areas. The workflow calls `gate:ci`; UI and bin checks are separate. Indirect execution must be measured before declaring individual tests wholly unrun.
 - **Problem, impact, root cause:** release PASS does not mechanically classify the discovered test/package universe. Data-only group inventory validates declarations but does not compare them to all executable tests.
@@ -422,6 +422,59 @@ Priority meanings: P0 is demonstrated catastrophic failure requiring immediate c
   remain outside the explicit union. That is the live denominator M10 must
   classify; the fixed-baseline 208/321 comparison remains the reproducible
   historical anchor.
+
+- **Resolution evidence (2026-09-09):** the live denominator was measured
+  rather than inherited from the fixed baseline: **341 tracked root
+  `.test.ts`/`.smoke.ts` files, 227 selected by required lanes, 114 in no lane
+  at all** — including `safety`, `redaction`, `proxy`, `devLoginSecurity`,
+  `realRunGate`, `reviewStoreHardening` and five control-center suites. The
+  review's `208 of 321` was directionally right and numerically stale.
+  Two things were wrong, and only one of them was the count. The gate's
+  required lanes select from versioned manifests, and the data-only inventory
+  validated those declarations **against each other** — never against what
+  was discovered on disk. So the gap was not merely large, it was
+  *unobservable*: a newly added test joined the repository and every gate
+  stayed green without it.
+  Repair, in two parts. First, **coverage**: 24 offline, deterministic,
+  safety-relevant suites were promoted into the required SYNTHETIC_CAMPAIGN
+  lane — measured at 258 tests in 26 seconds, so the runtime objection does
+  not apply to them. The authoritative gate went from 227 to 252 unique test
+  files with zero duplicate executions.
+  Second, **completeness**, which is the durable part.
+  `bin/lib/validation-universe.mjs` is a pure judgement over three inputs:
+  what exists (tracked Git paths, so an untracked scratch file cannot enter
+  the universe and a tracked one cannot escape it), what the required lanes
+  actually select (read from the same manifests the lanes execute from, so it
+  cannot claim coverage the gate does not provide), and
+  `config/validation-universe.v1.json`, which must account for the remainder.
+  `AUTHORITATIVE_GATE` is DERIVED, never declarable — no declaration can
+  claim gate coverage a lane does not give it.
+  Live result: **425 discovered, 252 authoritative gate, 173 classified, 0
+  unclassified**, across six classes each carrying a reason and the evidence
+  lane that does cover it — FULL_REGRESSION 84 (`npm test`), BIN_SYNTAX 66
+  (`node --check`), MANUAL_OWNER 12, LIVE_APP_SMOKE 6, BROWSER_WORKFLOW 3,
+  UI_LANE 2. Discovery deliberately widened beyond the review's scope to
+  include `tests/browser/*.browser.ts` and `tests/manual/*.ts`: they are
+  executable checks, and leaving them out of the universe would have been the
+  same omission at smaller scale.
+  The judgement runs in `checkValidationUniverse`, a REQUIRED hardening rule,
+  and the declaration pins an `inventoryDigest` over all three inputs. Nine
+  distinct violations fail closed: unclassified, double-classified, declared
+  file missing from disk, a lane selecting a file that does not exist, an
+  excluded class claiming a file the gate runs, a class with no reason, with
+  no evidence lane, or with no members, an unknown class name, and digest
+  drift. It also refuses a vacuous pass if discovery finds implausibly few
+  tests.
+  Verified by probing the live repository four ways: an unclassified new test
+  file, a stale digest, a file in two classes, and an excluded class claiming
+  a gate-run file — each fails `hardening:check` with its own code. Twelve
+  permanent cases in `tests/unit/nw08ValidationUniverse.test.ts` cover every
+  failure path on synthetic inputs plus one case asserting the LIVE
+  declaration is complete and its digest matches.
+  Honest limit: promoting the remaining 84 FULL_REGRESSION suites into the
+  authoritative gate is a runtime decision this campaign did not take. What
+  changed is that the choice is now explicit, digest-pinned and enforced,
+  rather than invisible.
 
 ### NW-09 — Expose review decisions through a deliberate shipped capability
 
