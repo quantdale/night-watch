@@ -257,8 +257,13 @@ function createOwnerSourceProvider(prepared: PreparedSource): LocalSourceProvide
         ),
       );
     }
+    // Capability probing is bounded (it reads source bytes through the
+    // confined boundary), but the reasoner-visible window is selected from
+    // the FULL eligible set: unprobed entries stay eligible and surface as
+    // UNKNOWN via the fallback below, so a caller limit above the probe
+    // ceiling still returns the whole universe instead of the probed prefix.
     const selected = selectDiverseSourceIndex({
-      entries: probed.entries,
+      entries,
       limit: prepared.indexLimit,
       readinessByPath,
     });
