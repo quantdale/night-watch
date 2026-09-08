@@ -154,6 +154,67 @@ rather than activity volume.
    invariant intact — `NODE_OPTIONS` is still never inherited from the parent,
    and an arbitrary key is still rejected. Regression test asserts both halves.
 
+### Live campaign — Run B, broad owner-local HOUR_1 (M9.2)
+
+Campaign `w10-broad-omen-1`, provider `opencode-go/omen-alpha` — the same
+provider and model as the W9 reference — through the ordinary
+`campaign run --reasoner=cli --duration=1h --max-turns=12` path.
+
+| Metric | W9 `w9-endurance-omen-1` | W10 `w10-broad-omen-1` |
+|---|---:|---:|
+| wall time (ms) | 3,673,995 | 3,615,499 |
+| investigations started / completed | 7 / 7 | 6 / 6 |
+| reasoner calls | 79 | 68 |
+| tool actions | 56 | 81 |
+| unique source paths observed | 32 | 32 |
+| **repositories represented** | **1** | **8** |
+| reproduction attempts | 7 | 0 |
+| `NOT_AVAILABLE` outcomes | 7 | 0 |
+| candidates | 1 | 2 |
+| admissions | 0 | 0 |
+| refusals | 1 `MISSING_REPRODUCTION` | 2 `MISSING_REPRODUCTION` |
+| outer termination | `BUDGET_EXHAUSTED` (wall) | `BUDGET_EXHAUSTED` (wall) |
+
+Repository spread of the 32 observed paths: `mobingilabs/ouchan` 5,
+`mobingilabs/ripple-api` 5, `mobingilabs/wave-api` 5, `mobingilabs/ripple-ui` 5,
+`alphauslabs/blue-sdk-go` 5, `alphauslabs/blueapi` 5,
+`alphauslabs/blueinternal` 1, `alphauslabs/grpc-chunk-parser` 1. W9's identical
+32-path budget was 100% `alphauslabs/blue-sdk-go`.
+
+**Honest reading of the zero.** Run B made ZERO reproduction attempts, so its
+`NOT_AVAILABLE` count is zero because nothing was attempted — not because
+attempts succeeded. It is NOT claimed as a 100%-to-0% waste reduction. What
+Run B does prove on live evidence is the structural repair: the reasoner
+reached five distinct executable `mobingilabs/ouchan` packages
+(`pkg/almcreds`, `pkg/auth/rbac`, `pkg/awscostmanagement`, `pkg/almtemplate`,
+`pkg/almuser`) that were unreachable for the whole of W9.
+
+**Known limitation of Run B.** It launched from the integration head that
+carried the diverse index and the surface annotation but NOT the M3
+capability-aware memory lane, which integrated later. The reasoner therefore
+saw a diverse index without any readiness signal or capability directive in
+its working memory. Run C exists to measure the full stack.
+
+### Certification (M11)
+
+Certified head `ed4e32602170e7e181b6e4841677fa8bff39d4ea`.
+
+| Check | Result |
+|---|---|
+| full `npm test` | 4,637 passed / 18 skipped / **0 failed** (W9 baseline: 4,565 / 16 / 0) |
+| `npm run typecheck` | PASS |
+| `npm run hardening:check` | PASS |
+| `npm run agent:check` | PASS (3 advisory warnings) |
+| `npm run handoff:check` | PASS |
+| `npm run project:check` | PASS |
+| `npm run workspace:check` | PASS |
+| `npm run session:check` | PASS |
+| `npm run gate:local` | FULL PASS, all 11 groups, `receipt:sha256:45349304b70ae8bab3de5a82` |
+| fresh Node 20 `npm run gate:clean` | PASS, `nodeModulesReused=false`, `cleanBefore/cleanAfter=true`, `siblingWrites=0`, `clean-receipt:sha256:fb15a890643aa2be97fa0b7d` |
+| real owner-local reproduction proof | PASS (1 passed, 27.7 s) |
+| W10 real generality proof | PASS (2 passed, 18.8 s) |
+| real historical ouchan product-path proof | PASS (1 passed, 1.6 m) |
+
 ### Lane provenance
 
 All lanes ran in their own C-00 session worktrees, were reviewed by diff, were
