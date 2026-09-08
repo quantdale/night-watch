@@ -52,7 +52,10 @@ const SURFACE: readonly ReproductionSurfaceEntry[] = Object.freeze([
     readiness: 'EXECUTABLE_NOW' as const,
     executorClass: 'GO_VENDORED_PACKAGE_TEST' as const,
     refusal: null,
-    targetId: 'surface:aaaaaaaaaaaaaaaaaaaaaaaa',
+    // Real minted shape: `surface:sha256:<24 hex>`. A hand-shaped id is
+    // rejected by the fail-closed tuple rule, exactly as an executor-forged
+    // one would be.
+    targetId: 'surface:sha256:0123456789abcdef01234567',
   }),
   Object.freeze({
     sourcePath: 'beta.go',
