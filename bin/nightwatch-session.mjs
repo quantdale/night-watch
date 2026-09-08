@@ -19,6 +19,7 @@ import { spawnSync } from 'node:child_process';
 
 import {
   WORKSPACE_SESSION_SCHEMA,
+  admitProspectiveWorktree,
   bootDigest,
   inspectWorkspace,
   loadPolicy,
@@ -133,6 +134,63 @@ function holderIsLive(record) {
 // commands
 // ---------------------------------------------------------------------------
 
+// NW-06 test seam. Session creation is a multi-step mutation, so its rollback
+// path can only be proven by failing after a step has already succeeded. The
+// seam is deliberately narrow: exactly one environment variable, an exact
+// allowlisted token, a loud announcement whenever it is active, and a hard
+// CONFIG_INVALID for any other value — an unrecognised token never degrades
+// into "no injection". It can only cause a start to fail and roll back; it
+// grants no authority and reaches no other command.
+const SESSION_FAULT_INJECTION_POINTS = new Set(['AFTER_WORKTREE_ADD', 'AFTER_RECORD_WRITE']);
+
+function resolveFaultInjection(environment = process.env) {
+  const raw = environment.NIGHTWATCH_SESSION_FAULT_INJECTION;
+  if (raw === undefined || raw === '') return { point: null, invalid: null };
+  if (!SESSION_FAULT_INJECTION_POINTS.has(raw)) return { point: null, invalid: raw };
+  return { point: raw, invalid: null };
+}
+
+/**
+ * Undo ONLY the registration this invocation just created, and only after
+ * every identity claim is proven: the worktree resolves to the exact path we
+ * created, it is on the exact branch we created, its HEAD is still the exact
+ * base commit we created it at, its tree is clean, and the branch tip has not
+ * moved. Any mismatch leaves everything untouched and reports a bounded
+ * owner-action state, because a rollback that could delete an owner's work
+ * would be worse than the partial state it repairs.
+ */
+function rollbackCreatedSession(context, { target, branch, baseSha }) {
+  const steps = [];
+  const observedTop = gitValue(target, ['rev-parse', '--show-toplevel']);
+  if (observedTop === null || path.resolve(observedTop) !== path.resolve(target)) {
+    return { complete: false, reason: 'ROLLBACK_REFUSED_PATH_UNPROVEN', steps };
+  }
+  if (gitValue(target, ['rev-parse', '--abbrev-ref', 'HEAD']) !== branch) {
+    return { complete: false, reason: 'ROLLBACK_REFUSED_BRANCH_UNPROVEN', steps };
+  }
+  if (gitValue(target, ['rev-parse', 'HEAD']) !== baseSha) {
+    return { complete: false, reason: 'ROLLBACK_REFUSED_HEAD_ADVANCED', steps };
+  }
+  const status = git(target, ['status', '--porcelain']);
+  if (!status.ok) return { complete: false, reason: 'ROLLBACK_REFUSED_STATUS_UNKNOWN', steps };
+  if (status.stdout.trim() !== '') return { complete: false, reason: 'ROLLBACK_REFUSED_WORKTREE_NOT_EMPTY', steps };
+  const removed = git(context.root, ['worktree', 'remove', target]);
+  if (!removed.ok) return { complete: false, reason: 'ROLLBACK_WORKTREE_REMOVE_FAILED', steps };
+  steps.push('WORKTREE_REMOVED');
+  const tip = gitValue(context.root, ['rev-parse', '--verify', '--quiet', `refs/heads/${branch}`]);
+  if (tip === null) {
+    steps.push('BRANCH_ABSENT');
+    return { complete: true, reason: 'ROLLBACK_COMPLETE', steps };
+  }
+  // The branch was created at baseSha and start never commits, so an
+  // unmoved tip proves the ref holds no work of its own.
+  if (tip !== baseSha) return { complete: false, reason: 'ROLLBACK_BRANCH_RETAINED_TIP_MOVED', steps };
+  const deleted = git(context.root, ['branch', '-D', branch]);
+  if (!deleted.ok) return { complete: false, reason: 'ROLLBACK_BRANCH_DELETE_FAILED', steps };
+  steps.push('BRANCH_DELETED');
+  return { complete: true, reason: 'ROLLBACK_COMPLETE', steps };
+}
+
 function commandStatus(context, options) {
   const report = inspectWorkspace({ root: context.root });
   if (options.json) {
@@ -195,6 +253,11 @@ function commandClaim(context, options) {
 
 function commandStart(context, options) {
   if (options.taskId === null) return fail('SESSION_TASK_ID_REQUIRED', 'pass --task <task-id>');
+  const fault = resolveFaultInjection();
+  if (fault.invalid !== null) {
+    return fail('SESSION_FAULT_INJECTION_INVALID', `NIGHTWATCH_SESSION_FAULT_INJECTION must be one of ${[...SESSION_FAULT_INJECTION_POINTS].join(', ')}`);
+  }
+  if (fault.point !== null) emit('SESSION_FAULT_INJECTION_ACTIVE', fault.point);
   const pre = inspectWorkspace({ root: context.root });
   if (pre.verdict === 'FAIL' && !options.allowDrift) {
     console.error(renderText(pre));
@@ -209,14 +272,45 @@ function commandStart(context, options) {
   const prefix = context.policy?.canonical?.sessionBranchPrefix ?? 'session/';
   const name = `${slug(options.taskId)}-${crypto.randomBytes(4).toString('hex')}`;
   const branch = `${prefix}${name}`;
+  // NW-06: admit the candidate registration against the same policy the
+  // WORKSPACE_WORKTREE_METADATA invariant uses, BEFORE any mutation. Checking
+  // the topology that already exists lets an at-the-bound start pass its own
+  // precheck and then create the violation it was meant to prevent.
+  const admission = admitProspectiveWorktree(pre, name, context.policy);
+  if (!admission.admitted) {
+    for (const refusal of admission.refusals) console.error(`[session] ${refusal.code}: ${refusal.detail}`);
+    return fail(
+      'SESSION_START_REFUSED_PROSPECTIVE_TOPOLOGY',
+      `registered=${admission.registeredCount} prospective=${admission.prospectiveCount} max=${admission.maxWorktrees}; nothing was created`,
+    );
+  }
   const parent = options.directory ?? path.join(os.homedir(), '.nightwatch', 'worktrees');
   const target = path.join(parent, name);
   if (fs.existsSync(target)) return fail('SESSION_WORKTREE_PATH_OCCUPIED', name);
+  // Proven absent before creation, so a rollback can never delete a branch
+  // this invocation did not create.
+  if (gitValue(context.root, ['rev-parse', '--verify', '--quiet', `refs/heads/${branch}`]) !== null) {
+    return fail('SESSION_BRANCH_ALREADY_EXISTS', branch);
+  }
   fs.mkdirSync(parent, { recursive: true });
   const added = git(context.root, ['worktree', 'add', '-b', branch, target, baseSha]);
   if (!added.ok) return fail('SESSION_WORKTREE_ADD_FAILED', added.stderr.trim().split('\n').pop() ?? '');
+
+  // Past this point the workspace holds a partial creation, so every failure
+  // path rolls it back rather than returning and leaving it registered.
+  const abort = (code, detail) => {
+    const rollback = rollbackCreatedSession(context, { target, branch, baseSha });
+    if (rollback.complete) {
+      emit('SESSION_START_ROLLED_BACK', `${rollback.reason} steps=${rollback.steps.join(',') || 'NONE'}`);
+    } else {
+      console.error(`[session] SESSION_START_ROLLBACK_INCOMPLETE: ${rollback.reason}; worktree ${name} and branch ${branch} need owner action`);
+    }
+    return fail(code, detail);
+  };
+
+  if (fault.point === 'AFTER_WORKTREE_ADD') return abort('SESSION_FAULT_INJECTED', 'AFTER_WORKTREE_ADD');
   const created = resolveContext(target);
-  if (created === null) return fail('SESSION_WORKTREE_UNRESOLVED', name);
+  if (created === null) return abort('SESSION_WORKTREE_UNRESOLVED', name);
   const record = buildRecord({ taskId: options.taskId, campaignId: options.campaignId, role: options.role, branch, baseSha });
   // The creating process is not the owning agent; ownership starts released so
   // the agent that will actually write must claim it explicitly.
@@ -225,8 +319,28 @@ function commandStart(context, options) {
   try {
     writeRecordExclusive(sessionRecordPath(created.commonDir, created.worktreeName, created.policy), record);
   } catch (error) {
-    return fail('SESSION_RECORD_WRITE_FAILED', String(error?.code ?? 'UNKNOWN'));
+    return abort('SESSION_RECORD_WRITE_FAILED', String(error?.code ?? 'UNKNOWN'));
   }
+  if (fault.point === 'AFTER_RECORD_WRITE') return abort('SESSION_FAULT_INJECTED', 'AFTER_RECORD_WRITE');
+
+  // Verify the registration the owner is about to be handed, against the same
+  // model, rather than trusting that three successful steps composed. A
+  // released-but-unclaimed session is STALE_SESSION by design: that is the
+  // state `claim --adopt` consumes.
+  const post = inspectWorkspace({ root: context.root });
+  const registered = (post.worktrees ?? []).find((worktree) => worktree.name === name) ?? null;
+  if (registered === null) return abort('SESSION_START_UNVERIFIED', `${name} is not registered after creation`);
+  if ((registered.recordProblems ?? []).length > 0) {
+    return abort('SESSION_START_RECORD_INVALID', registered.recordProblems.join(','));
+  }
+  if (registered.class !== 'STALE_SESSION') {
+    return abort('SESSION_START_CLASS_UNEXPECTED', `${name} classified ${registered.class}: ${registered.classReason ?? 'no reason'}`);
+  }
+  const maxWorktrees = context.policy?.worktreePolicy?.maxWorktrees ?? 8;
+  if ((post.worktrees ?? []).length > maxWorktrees) {
+    return abort('SESSION_START_CAPACITY_VIOLATED', `${(post.worktrees ?? []).length} registered worktrees exceeds the ${maxWorktrees} bound`);
+  }
+
   emit('SESSION_WORKTREE_CREATED', `name=${name} branch=${branch} base=${baseSha} path=${target}`);
   emit('SESSION_NEXT_ACTION', `cd ${target} && node bin/nightwatch-session.mjs claim --task ${options.taskId} --adopt`);
   return record;
@@ -452,4 +566,4 @@ if (typeof process.argv[1] === 'string' && path.basename(process.argv[1]) === 'n
   main();
 }
 
-export { parseArgs, resolveContext, holderIsLive };
+export { parseArgs, resolveContext, holderIsLive, resolveFaultInjection, rollbackCreatedSession };

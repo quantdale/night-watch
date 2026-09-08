@@ -145,7 +145,10 @@ lifecycles, then the operator surface, then release accounting.
   `session:status` remains PASS.
 - **Validation:** the C-00 matrix suite plus new NW-06 cases at 0, 7 and 8
   worktrees; `npm run workspace:check`.
-- **Status:** NOT_STARTED
+- **Status:** COMPLETE — nine cases added, 8 of 9 fail against the pre-repair
+  code, all 48 cases in the C-00 file pass after it. The bound cases use a
+  policy-lowered `maxWorktrees` so the shipped rule is exercised without
+  creating eight worktrees.
 
 ### M2 — NW-01 closed reasoner-facing vocabularies
 

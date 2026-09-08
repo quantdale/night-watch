@@ -1,6 +1,6 @@
 # Nightwatch Master Implementation, Completion and Hardening Plan
 
-Status: REVIEW COMPLETE — canonical implementation plan; execution has not started.
+Status: EXECUTION IN PROGRESS under `nightwatch-repository-hardening-implementation-v1` — canonical implementation plan. NW-15 closed by the W10 owner; NW-06 CLOSED; NW-01 through NW-05 and NW-07 through NW-14 open.
 
 Review baseline: `1942ea37757bbb914de6281f505ee6118b5c67f0` (2026-09-08). Reconciled source baseline: `ed4e32602170e7e181b6e4841677fa8bff39d4ea`. These are historical anchors, not live Git authority. Discover current `HEAD` and `origin/main` before execution. This plan authorizes no implementation, environment contact, external publication, or change to the owner scope freeze.
 
@@ -143,7 +143,7 @@ Priority meanings: P0 is demonstrated catastrophic failure requiring immediate c
 
 ### NW-06 — Reject over-capacity sessions before creating worktrees
 
-- **Priority / category / confidence / status:** P1; workspace safety and developer operations; CONFIRMED by execution; NOT STARTED.
+- **Priority / category / confidence / status:** P1; workspace safety and developer operations; CONFIRMED by execution; **CLOSED** — repaired and regression-proven under `nightwatch-repository-hardening-implementation-v1` M1.
 - **Affected surfaces:** `bin/nightwatch-session.mjs`, workspace-integrity helpers and C-00 tests/docs.
 - **Evidence:** with eight registered worktrees, `start` passed the precheck, created a ninth, and only then caused `WORKSPACE_WORKTREE_LIMIT_EXCEEDED`. The review stopped and removed only its own empty worktree to restore PASS.
 - **Problem, impact, root cause:** the command validates current topology rather than prospective topology and lacks transactional rollback after partial creation.
@@ -152,6 +152,30 @@ Priority meanings: P0 is demonstrated catastrophic failure requiring immediate c
 - **Tests and validation:** boundaries at 0, 7, and 8 worktrees; injected failures after branch/worktree/claim creation; name collisions; concurrent starts; symlink/metadata anomalies. Assert no ninth registration and no changes to existing sessions.
 - **Acceptance:** over-capacity start fails before mutation; every post-mutation failure either returns to the exact prior topology or reports a bounded owner-action state; `session:status` remains PASS.
 - **Dependencies / risks / parallelization:** first implementation phase because it protects later lanes. Coordinate with all live session owners. Risk is rollback deleting an unrelated ref; require identity/SHA/path proof before cleanup.
+- **Resolution evidence (2026-09-08):** revalidated in live source before any
+  change — `commandStart` inspected the topology that already existed and
+  `checkWorktreeMetadata` compared `worktrees.length > maxWorktrees` over
+  already-registered worktrees, so the candidate was never modelled.
+  `admitProspectiveWorktree` (`bin/workspace-integrity.mjs`) now evaluates the
+  candidate registration against the same policy before any mutation, and
+  `commandStart` refuses with `SESSION_START_REFUSED_PROSPECTIVE_TOPOLOGY`.
+  `--allow-drift` does not bypass it. Creation is transactional: every
+  post-mutation failure calls a proof-gated rollback that removes only the
+  just-created worktree and branch after the path, branch name, HEAD and
+  branch tip are each proven unchanged and the tree is clean, and otherwise
+  reports `SESSION_START_ROLLBACK_INCOMPLETE` for owner action. The
+  registration handed to the owner is verified against the same integrity
+  model afterwards, which is what holds the bound under the inherently
+  non-atomic multi-process case. Nine cases added to the C-00 adversarial
+  matrix in `tests/unit/workspaceIsolation.test.ts`: bounds at 1, 2 and 3
+  worktrees, `--allow-drift`, injected failures after `worktree add` and
+  after the record write, an unrecognised fault token failing closed, a
+  retained unrelated branch surviving a rollback, and three concurrent starts
+  at the bound. Measured against the pre-repair code, 8 of the 9 fail and the
+  ninth is the below-bound admit control; the concurrent case reproduced the
+  defect directly with 4 registrations against a bound of 3. After the repair
+  all 48 cases in that file pass, and `hardening:check`, `workspace:check`
+  and `session:check` are PASS.
 
 ### NW-07 — Keep continuity and project memory mechanically coherent
 

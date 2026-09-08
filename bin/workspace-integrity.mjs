@@ -540,6 +540,48 @@ function activeTaskDirectory(root) {
   }
 }
 
+// ---------------------------------------------------------------------------
+// prospective admission (NW-06)
+// ---------------------------------------------------------------------------
+
+// `checkWorktreeMetadata` measures the topology that already exists, which is
+// the right question for `status`/`check` and the wrong one for `start`: at the
+// bound, a start that has not happened yet still passes, `git worktree add`
+// creates the over-limit registration, and only the NEXT inspection reports
+// `WORKSPACE_WORKTREE_LIMIT_EXCEEDED` — after the mutation, with the owner
+// now holding an illegal workspace. So the candidate registration is modelled
+// here, against the same policy the invariant uses, BEFORE anything is
+// created.
+//
+// This is deliberately not bypassable by `--allow-drift`. Drift tolerance
+// exists so an owner can start work in a workspace that already has an
+// unrelated violation; it must not be a route to creating a new one.
+export function admitProspectiveWorktree(report, candidateName, policy) {
+  const maxWorktrees = policy?.worktreePolicy?.maxWorktrees ?? 8;
+  const registered = Array.isArray(report?.worktrees) ? report.worktrees : [];
+  const prospectiveCount = registered.length + 1;
+  const refusals = [];
+  if (prospectiveCount > maxWorktrees) {
+    refusals.push({
+      code: 'WORKSPACE_PROSPECTIVE_WORKTREE_LIMIT_EXCEEDED',
+      detail: `creating ${candidateName} would register ${prospectiveCount} worktrees, exceeding the ${maxWorktrees} bound; release or remove a session you own first — never another owner's`,
+    });
+  }
+  if (registered.some((worktree) => worktree.name === candidateName)) {
+    refusals.push({
+      code: 'WORKSPACE_PROSPECTIVE_WORKTREE_NAME_REGISTERED',
+      detail: `a worktree named ${candidateName} is already registered`,
+    });
+  }
+  return Object.freeze({
+    admitted: refusals.length === 0,
+    registeredCount: registered.length,
+    prospectiveCount,
+    maxWorktrees,
+    refusals: Object.freeze(refusals),
+  });
+}
+
 export function parseDeclaredDeletions(specText, heading) {
   const lines = specText.split(/\r?\n/);
   const declared = [];

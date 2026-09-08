@@ -54,7 +54,67 @@ Live revalidation, before any change:
 The review's own evidence — a ninth worktree created at the bound, then
 `session:status` FAIL — is therefore structural, not incidental.
 
-Repair, regression and acceptance evidence: recorded at M1 close.
+**Repair.** `admitProspectiveWorktree` in `bin/workspace-integrity.mjs`
+models the candidate registration against the same policy the
+`WORKSPACE_WORKTREE_METADATA` invariant reads, returning the registered
+count, the prospective count, the bound and a refusal list.
+`commandStart` calls it before any mutation and refuses with
+`SESSION_START_REFUSED_PROSPECTIVE_TOPOLOGY`, listing
+`WORKSPACE_PROSPECTIVE_WORKTREE_LIMIT_EXCEEDED` or
+`WORKSPACE_PROSPECTIVE_WORKTREE_NAME_REGISTERED`. `--allow-drift` does not
+bypass it: drift tolerance exists so an owner can start work in a workspace
+that already has an unrelated violation, not so a new one can be created.
+
+The session branch is proven absent before creation, so a rollback can never
+delete a ref this invocation did not create. Past `git worktree add`, every
+failure path calls `rollbackCreatedSession`, which removes only the
+just-created worktree and branch and only after five proofs: the worktree
+resolves to the exact created path, it is on the exact created branch, its
+HEAD is still the exact base commit, its tree is clean, and the branch tip
+has not moved. Any mismatch leaves everything untouched and reports
+`SESSION_START_ROLLBACK_INCOMPLETE` with the specific unproven claim.
+
+The registration handed to the owner is then verified against the same
+integrity model — present, record valid, classified `STALE_SESSION`, and the
+post count within the bound — rather than trusting that three successful
+steps composed.
+
+A narrow fault seam makes the rollback path provable:
+`NIGHTWATCH_SESSION_FAULT_INJECTION` accepts exactly `AFTER_WORKTREE_ADD` or
+`AFTER_RECORD_WRITE`, announces itself on stdout whenever active, and fails
+closed with `SESSION_FAULT_INJECTION_INVALID` on any other value so an
+unrecognised token can never degrade into "no injection". It reaches no other
+command and can only cause a start to fail and roll back.
+
+**Regression.** Nine cases in `tests/unit/workspaceIsolation.test.ts`, all
+against disposable synthetic upstream+clone topologies: admission below the
+bound; refusal at the bound with the existing session's record, the worktree
+list and every branch tip asserted byte-identical afterwards; a bound of one
+where the canonical checkout alone fills capacity; `--allow-drift` refused;
+rollback after `worktree add`; rollback after the record write, including the
+private git directory; an unrecognised fault token failing closed; a retained
+unrelated session branch surviving a rollback; and three concurrent starts at
+the bound. Bound cases lower `maxWorktrees` in a copy of the real policy, so
+the rule under test is the shipped rule.
+
+**Acceptance.**
+
+| Criterion | Evidence |
+| --- | --- |
+| over-capacity start fails before mutation | refusal cases: exit 1, no `SESSION_WORKTREE_CREATED`, worktree list and branch tips unchanged, `worktrees/` directory unchanged |
+| post-mutation failure returns to the exact prior topology or reports a bounded owner state | both injection cases: `SESSION_START_ROLLED_BACK: ROLLBACK_COMPLETE` with `WORKTREE_REMOVED,BRANCH_DELETED`, topology equal to the pre-start snapshot; every unproven claim has its own `ROLLBACK_REFUSED_*` reason |
+| no existing session is modified | the owned session's ownership record is byte-identical after the refusal; a retained unrelated branch keeps its exact tip through a rollback |
+| `session:status` remains PASS | `integrityJson` verdict PASS after every case; `workspace:check` and `session:check` PASS in the live session |
+| measured against the defect | 8 of the 9 new cases fail against the pre-repair code; the ninth is the below-bound admit control. The concurrent case reproduced the defect directly: 4 registrations against a bound of 3 |
+| no regression in the C-00 matrix | 48 passed / 0 failed in `tests/unit/workspaceIsolation.test.ts` |
+
+**Contradiction of the plan's own recommendation, recorded.** The plan asked
+only for pre-mutation admission plus rollback. Measurement showed that is not
+sufficient: prospective admission is per-process, `git worktree add` is not
+serialized against it, and three concurrent starts at the bound produced four
+registrations. The bound is therefore held by the post-creation verification
+and rollback, with admission as the fast, informative refusal. The
+concurrent case is a required regression.
 
 ## Validation receipts
 

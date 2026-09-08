@@ -72,6 +72,20 @@ node bin/nightwatch-session.mjs release
 node bin/nightwatch-session.mjs remove --name <session> --delete-branch   # from canonical
 ```
 
+`start` admits the candidate registration before it mutates anything: the
+worktree it is about to create is measured against the same
+`maxWorktrees` bound the `WORKSPACE_WORKTREE_METADATA` invariant uses, so an
+at-capacity start fails with `SESSION_START_REFUSED_PROSPECTIVE_TOPOLOGY` and
+creates no branch, worktree or record. `--allow-drift` tolerates a
+pre-existing violation; it never authorizes a new one. Release or remove a
+session **you own** to make room — never another owner's.
+
+Past that point a start is transactional. A failure after the branch,
+worktree or ownership record exists rolls back only the registration that
+invocation created, and only after the path, branch, HEAD and branch tip are
+each proven unchanged; anything else is reported as
+`SESSION_START_ROLLBACK_INCOMPLETE` for owner action rather than guessed at.
+
 Worktree classes and write authority:
 
 | Class | Write authority |

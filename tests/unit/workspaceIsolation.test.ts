@@ -47,8 +47,14 @@ function integrityJson(cwd: string): { readonly report: Record<string, any>; rea
   return { report: JSON.parse(result.stdout ?? '{}'), status: result.status };
 }
 
-function session(cwd: string, args: readonly string[]): Run {
-  const result = spawnSync(process.execPath, [SESSION, ...args], { cwd, encoding: 'utf8', timeout: 60_000, maxBuffer: 8 * 1024 * 1024 });
+function session(cwd: string, args: readonly string[], environment: Readonly<Record<string, string>> = {}): Run {
+  const result = spawnSync(process.execPath, [SESSION, ...args], {
+    cwd,
+    encoding: 'utf8',
+    timeout: 60_000,
+    maxBuffer: 8 * 1024 * 1024,
+    env: { ...process.env, ...environment },
+  });
   return { status: result.status, stdout: result.stdout ?? '', stderr: result.stderr ?? '' };
 }
 
@@ -65,7 +71,12 @@ function invariant(report: Record<string, any>, id: string): string {
  * A disposable "upstream + canonical clone" topology, so that origin/main
  * exists and integration semantics are real rather than simulated.
  */
-function fixture(): { readonly base: string; readonly upstream: string; readonly canonical: string; readonly baseSha: string } {
+interface FixtureOptions {
+  /** Lower the worktree bound so capacity cases do not create eight worktrees. */
+  readonly maxWorktrees?: number;
+}
+
+function fixture(options: FixtureOptions = {}): { readonly base: string; readonly upstream: string; readonly canonical: string; readonly baseSha: string } {
   const base = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-c00-'));
   const upstream = path.join(base, 'upstream.git');
   const seed = path.join(base, 'seed');
@@ -73,7 +84,15 @@ function fixture(): { readonly base: string; readonly upstream: string; readonly
   gitOk(seed, ['init', '-b', 'main']);
   fs.mkdirSync(path.join(seed, '.agent/tasks/synthetic-task'), { recursive: true });
   fs.mkdirSync(path.join(seed, 'config'), { recursive: true });
-  fs.copyFileSync(POLICY, path.join(seed, 'config/workspace-integrity.v1.json'));
+  if (options.maxWorktrees === undefined) {
+    fs.copyFileSync(POLICY, path.join(seed, 'config/workspace-integrity.v1.json'));
+  } else {
+    // The real policy, with only the bound lowered: the rule under test must
+    // be the shipped rule, not a test-local reimplementation of it.
+    const policy = JSON.parse(fs.readFileSync(POLICY, 'utf8'));
+    policy.worktreePolicy.maxWorktrees = options.maxWorktrees;
+    fs.writeFileSync(path.join(seed, 'config/workspace-integrity.v1.json'), `${JSON.stringify(policy, null, 2)}\n`);
+  }
   fs.writeFileSync(path.join(seed, 'tracked.txt'), 'tracked content\n');
   fs.writeFileSync(path.join(seed, 'victim.txt'), 'another session owns this file\n');
   fs.writeFileSync(path.join(seed, '.agent/ACTIVE_TASK.md'), [
@@ -856,6 +875,223 @@ test.describe('C-00 diagnostics contract', () => {
       const second = integrityJson(canonical).report;
       const normalize = (report: Record<string, any>): string => JSON.stringify(report);
       expect(normalize(first)).toBe(normalize(second));
+    } finally {
+      cleanup(base);
+    }
+  });
+});
+
+/**
+ * NW-06. `start` used to validate the topology that already existed: at the
+ * worktree bound its own precheck passed, `git worktree add` created the
+ * over-limit registration, and only the next inspection reported
+ * WORKSPACE_WORKTREE_LIMIT_EXCEEDED — after the mutation. It also returned on
+ * a failed ownership-record write with the branch and worktree already
+ * created and nothing rolled back.
+ *
+ * Every case here asserts the topology itself, not the exit code alone: a
+ * refusal that still creates a registration is not a refusal.
+ */
+test.describe('NW-06 — prospective worktree admission and bounded rollback', () => {
+  /** Registered worktree paths, in git's own order. */
+  function registeredWorktrees(canonical: string): string[] {
+    return gitOk(canonical, ['worktree', 'list', '--porcelain'])
+      .split(/\r?\n/)
+      .filter((line) => line.startsWith('worktree '))
+      .map((line) => line.slice('worktree '.length));
+  }
+
+  /** Every local ref with its exact tip, so a rollback cannot hide a moved ref. */
+  function branchTips(canonical: string): string {
+    return gitOk(canonical, ['for-each-ref', '--format=%(refname) %(objectname)', 'refs/heads']);
+  }
+
+  function topology(canonical: string): { readonly worktrees: string[]; readonly branches: string } {
+    return { worktrees: registeredWorktrees(canonical), branches: branchTips(canonical) };
+  }
+
+  test('below the bound, a start is admitted and registers exactly one worktree', () => {
+    // Bound 3: canonical + one existing session = 2 registered, so the
+    // candidate is the third and last admissible registration.
+    const { base, canonical } = fixture({ maxWorktrees: 3 });
+    try {
+      startOwnedSession(canonical, base, 'synthetic-task');
+      expect(registeredWorktrees(canonical)).toHaveLength(2);
+      const started = session(canonical, ['start', '--task', 'synthetic-task', '--dir', path.join(base, 'worktrees')]);
+      expect(started.status, started.stderr).toBe(0);
+      expect(registeredWorktrees(canonical)).toHaveLength(3);
+      expect(integrityJson(canonical).report.verdict).toBe('PASS');
+    } finally {
+      cleanup(base);
+    }
+  });
+
+  test('at the bound, a start is refused BEFORE any mutation', () => {
+    const { base, canonical } = fixture({ maxWorktrees: 2 });
+    try {
+      const owned = startOwnedSession(canonical, base, 'synthetic-task');
+      const before = topology(canonical);
+      expect(before.worktrees).toHaveLength(2);
+      const ownedRecordBefore = fs.readFileSync(
+        path.join(canonical, '.git/worktrees', owned.name, 'nightwatch-session.v1.json'),
+        'utf8',
+      );
+
+      const refused = session(canonical, ['start', '--task', 'synthetic-task', '--dir', path.join(base, 'worktrees')]);
+
+      expect(refused.status).toBe(1);
+      expect(refused.stderr).toContain('WORKSPACE_PROSPECTIVE_WORKTREE_LIMIT_EXCEEDED');
+      expect(refused.stderr).toContain('SESSION_START_REFUSED_PROSPECTIVE_TOPOLOGY');
+      expect(refused.stderr).toContain('nothing was created');
+      // The defect: the refusal must not be the *consequence* of a creation.
+      expect(refused.stdout).not.toContain('SESSION_WORKTREE_CREATED');
+      expect(topology(canonical)).toEqual(before);
+      expect(fs.readdirSync(path.join(base, 'worktrees'))).toHaveLength(1);
+      // No existing session was touched to make room.
+      expect(fs.readFileSync(path.join(canonical, '.git/worktrees', owned.name, 'nightwatch-session.v1.json'), 'utf8'))
+        .toBe(ownedRecordBefore);
+      const after = integrityJson(canonical);
+      expect(after.report.verdict).toBe('PASS');
+      expect(codes(after.report)).not.toContain('WORKSPACE_WORKTREE_LIMIT_EXCEEDED');
+    } finally {
+      cleanup(base);
+    }
+  });
+
+  test('at a bound of one, the canonical checkout alone already fills capacity', () => {
+    const { base, canonical } = fixture({ maxWorktrees: 1 });
+    try {
+      const before = topology(canonical);
+      const refused = session(canonical, ['start', '--task', 'synthetic-task', '--dir', path.join(base, 'worktrees')]);
+      expect(refused.status).toBe(1);
+      expect(refused.stderr).toContain('WORKSPACE_PROSPECTIVE_WORKTREE_LIMIT_EXCEEDED');
+      expect(topology(canonical)).toEqual(before);
+      expect(fs.existsSync(path.join(base, 'worktrees'))).toBe(false);
+    } finally {
+      cleanup(base);
+    }
+  });
+
+  test('--allow-drift does not buy capacity', () => {
+    const { base, canonical } = fixture({ maxWorktrees: 2 });
+    try {
+      startOwnedSession(canonical, base, 'synthetic-task');
+      const before = topology(canonical);
+      const refused = session(canonical, [
+        'start', '--task', 'synthetic-task', '--allow-drift', '--dir', path.join(base, 'worktrees'),
+      ]);
+      expect(refused.status).toBe(1);
+      expect(refused.stderr).toContain('WORKSPACE_PROSPECTIVE_WORKTREE_LIMIT_EXCEEDED');
+      expect(topology(canonical)).toEqual(before);
+    } finally {
+      cleanup(base);
+    }
+  });
+
+  test('a failure after `worktree add` returns to the exact prior topology', () => {
+    const { base, canonical } = fixture();
+    try {
+      const before = topology(canonical);
+      const failed = session(
+        canonical,
+        ['start', '--task', 'synthetic-task', '--dir', path.join(base, 'worktrees')],
+        { NIGHTWATCH_SESSION_FAULT_INJECTION: 'AFTER_WORKTREE_ADD' },
+      );
+      expect(failed.status).toBe(1);
+      expect(failed.stdout).toContain('SESSION_FAULT_INJECTION_ACTIVE: AFTER_WORKTREE_ADD');
+      expect(failed.stdout).toContain('SESSION_START_ROLLED_BACK: ROLLBACK_COMPLETE');
+      expect(failed.stdout).toContain('WORKTREE_REMOVED');
+      expect(failed.stdout).toContain('BRANCH_DELETED');
+      expect(topology(canonical)).toEqual(before);
+      expect(fs.readdirSync(path.join(base, 'worktrees'))).toHaveLength(0);
+      expect(integrityJson(canonical).report.verdict).toBe('PASS');
+    } finally {
+      cleanup(base);
+    }
+  });
+
+  test('a failure after the ownership record is written also rolls back completely', () => {
+    const { base, canonical } = fixture();
+    try {
+      const before = topology(canonical);
+      const failed = session(
+        canonical,
+        ['start', '--task', 'synthetic-task', '--dir', path.join(base, 'worktrees')],
+        { NIGHTWATCH_SESSION_FAULT_INJECTION: 'AFTER_RECORD_WRITE' },
+      );
+      expect(failed.status).toBe(1);
+      expect(failed.stdout).toContain('SESSION_START_ROLLED_BACK: ROLLBACK_COMPLETE');
+      expect(topology(canonical)).toEqual(before);
+      // The record lives in the worktree's private git directory, which the
+      // rollback must take with it.
+      expect(fs.existsSync(path.join(canonical, '.git/worktrees'))
+        && fs.readdirSync(path.join(canonical, '.git/worktrees')).length > 0).toBe(false);
+      expect(integrityJson(canonical).report.verdict).toBe('PASS');
+    } finally {
+      cleanup(base);
+    }
+  });
+
+  test('an unrecognised fault token fails closed instead of silently disabling injection', () => {
+    const { base, canonical } = fixture();
+    try {
+      const before = topology(canonical);
+      const refused = session(
+        canonical,
+        ['start', '--task', 'synthetic-task', '--dir', path.join(base, 'worktrees')],
+        { NIGHTWATCH_SESSION_FAULT_INJECTION: 'AFTER_EVERYTHING' },
+      );
+      expect(refused.status).toBe(1);
+      expect(refused.stderr).toContain('SESSION_FAULT_INJECTION_INVALID');
+      expect(topology(canonical)).toEqual(before);
+    } finally {
+      cleanup(base);
+    }
+  });
+
+  test('a rollback deletes only the branch it created, never a retained one', () => {
+    const { base, canonical, baseSha } = fixture();
+    try {
+      // A session branch left behind by a removed worktree is exactly the kind
+      // of ref a careless rollback would collect. The rollback proof is
+      // path/branch/SHA-scoped to the registration the invocation itself
+      // created, so this ref must be untouched by a later failing start.
+      const probe = session(canonical, ['start', '--task', 'synthetic-task', '--dir', path.join(base, 'worktrees')]);
+      expect(probe.status, probe.stderr).toBe(0);
+      const retainedBranch = /branch=(\S+)/.exec(probe.stdout)![1]!;
+      gitOk(canonical, ['worktree', 'remove', /path=(\S+)/.exec(probe.stdout)![1]!]);
+      expect(gitOk(canonical, ['rev-parse', retainedBranch])).toBe(baseSha);
+      const tipsBefore = branchTips(canonical);
+
+      const failed = session(
+        canonical,
+        ['start', '--task', 'synthetic-task', '--dir', path.join(base, 'worktrees')],
+        { NIGHTWATCH_SESSION_FAULT_INJECTION: 'AFTER_WORKTREE_ADD' },
+      );
+      expect(failed.status).toBe(1);
+      expect(failed.stdout).toContain('SESSION_START_ROLLED_BACK: ROLLBACK_COMPLETE');
+      expect(branchTips(canonical)).toBe(tipsBefore);
+      expect(gitOk(canonical, ['rev-parse', retainedBranch])).toBe(baseSha);
+    } finally {
+      cleanup(base);
+    }
+  });
+
+  test('concurrent starts at the bound never leave an over-limit registration', () => {
+    // Bound 3 with one session already registered leaves room for exactly one
+    // more. Prospective admission is not atomic across processes, so the
+    // post-creation verification is what has to hold the invariant.
+    const { base, canonical } = fixture({ maxWorktrees: 3 });
+    try {
+      startOwnedSession(canonical, base, 'synthetic-task');
+      expect(registeredWorktrees(canonical)).toHaveLength(2);
+      const results = [0, 1, 2].map(() =>
+        session(canonical, ['start', '--task', 'synthetic-task', '--dir', path.join(base, 'worktrees')]));
+      const admitted = results.filter((result) => result.status === 0);
+      expect(admitted.length).toBeGreaterThanOrEqual(1);
+      expect(registeredWorktrees(canonical).length).toBeLessThanOrEqual(3);
+      const report = integrityJson(canonical).report;
+      expect(codes(report)).not.toContain('WORKSPACE_WORKTREE_LIMIT_EXCEEDED');
     } finally {
       cleanup(base);
     }
