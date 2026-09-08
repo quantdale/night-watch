@@ -2196,3 +2196,51 @@ but carrying different expectations, the classifier could previously only
 record `MISSING_COMPARISON_INPUT` — "I do not know". It now records
 `DIFFERENT_EXPECTATION` and `DIFFERENT_SEMANTIC_CONTRACT` — "these genuinely
 differ".
+
+### The review-operations surfaces are read projections, and cannot be otherwise
+
+`src/core/reviewStore/inventory.ts` and `history.ts` add no review semantics.
+They enumerate, count and order what `store.ts` already validates, and they
+hold no filesystem authority of their own: the scanner they are handed does
+the I/O.
+
+`ControlCenterReviewStoreAuthority` is the single composition point behind the
+CLI, the HTTP routes and the browser view. It builds its `ReviewStore` with
+`createIfMissing: false`, so the handle's write methods throw, and it exposes
+no mutator — a test enumerates its prototype so a future one cannot be added
+quietly. The existing `ControlCenterReviewAuthority` remains the only write
+path and is a different object.
+
+Two facts are kept separate because the store can only establish one of them.
+Integrity (VALID / CORRUPT) is a store-only judgement. Currentness (CURRENT /
+STALE / UNKNOWN) requires the artifacts that exist now, so it is supplied by a
+resolver or reported UNKNOWN, and `currentnessResolved` distinguishes "nothing
+is current" from "nobody asked". A review whose finding has left the snapshot
+is UNKNOWN rather than STALE: not binding and not resolvable are different
+facts.
+
+`ReviewStore.read()` and the inventory share one `inspect()`, so a corruption
+the inventory counts and one the reviewer surface refuses are the same
+judgement rather than two implementations that agree today. `read()` also
+records the staleness reason for every non-binding generation, not just the
+first — it already evaluated each one.
+
+Ordering is a property of content, never of the filesystem. Entries sort by
+name before anything is opened; generations sort by `storedAt`, then
+`reviewedAt`, then `reviewIdentity`, which is what makes the order total when
+two reviews land in the same second. No filesystem timestamp reaches the
+inventory document, so the same store content yields the same digest across
+processes, timezones, locales and enumeration order.
+
+### The filing report has a production path, and it reaches no raw dossier
+
+`buildFilingReport` composes the owner-local findings projection, the certified
+finding intelligence and the persisted review state. It never opens a dossier,
+so reproduction steps, evidence bodies and observed values are unavailable to
+it — and it says so in the report rather than describing behaviour it did not
+observe. That matters more than completeness for a document a human pastes
+into a bug tracker and is believed about.
+
+Its intelligence is scoped to the one finding the report is about. Asking for
+the whole corpus and discarding all but one row cost `corpus x corpus`,
+because each projected row is classified against every earlier finding.

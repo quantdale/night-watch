@@ -1569,3 +1569,44 @@ against both the safe-id pattern and the canonical sentinel set. The
 projection can only drop an identity. No raw dossier, finding or handoff
 content is stored: the binding carries digests, and duplicating the artifacts
 would add a privacy surface for no gain.
+
+## Review operations are read-only by construction (RO-1)
+
+The review store is designed to grow forever and never delete evidence, so
+every surface built over it is defined as much by what it cannot do.
+
+**No destructive capability exists to be misused.** The operations authority
+holds a `createIfMissing: false` store handle whose write methods throw, and
+exposes no mutator. The `nightwatch-review` CLI has no destructive verb in its
+argument grammar — `prune`, `delete`, `repair`, `archive` and their flag forms
+do not parse. The HTTP surface has three review-store routes, all reads;
+`/api/v1/review-store/prune` does not resolve. Each of these is asserted by a
+mutation that breaks it and is caught.
+
+**Reading changes nothing, and that is measured.** The browser lane compares
+every observable property of the store directory — name, size, mode, mtime and
+inode — before and after thirty full read loops.
+
+**An unrecognized file is preserved and never named.** It is counted, reported
+by a digest of its name and its size, and never opened, parsed or removed. The
+contract has no field for the name, so this is a channel that does not exist
+rather than a redaction that could be forgotten. A corruption row carries a
+categorical code and a pinned hex filename, never the validator's detail,
+because a detail quotes bytes out of an untrusted file.
+
+**A local review still carries no organizational authority.** Every projected
+payload restates `organizationalAuthority: NONE_LOCAL_REVIEW_ONLY`, and the
+filing report names, in four separate lines, each verdict it is not: a Leslie
+genuine verdict, a Leslie invalid verdict, a Pondr approval, and
+organizational sign-off. A stale decision is shown as historical and never
+under the current heading; a corrupt one names no decision at all.
+
+**No retention policy exists.** No automatic deletion, retention, archival or
+pruning is implemented, and the inventory payload says so with
+`retentionPolicy: NONE_OWNER_DECISION_PENDING`. The measured evidence a future
+decision would need is in `docs/DECISIONS.md` D-132; choosing among the
+options requires a separate owner authorization.
+
+**Nothing in the cone can publish.** The filing report is copied by a human.
+Hardening refuses an external submission import, an external URL, or a
+publication method anywhere in the report or operations cone.

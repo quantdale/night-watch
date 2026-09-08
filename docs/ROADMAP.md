@@ -2926,3 +2926,29 @@ server-restart and stale cycle; scale measured at 1k/5k/10k against
 **Next.** See the campaign REPORT's next recommendation. No externally gated
 step is executed: C-12 live, C-13, C-14, C-08b, C-07 DEV, and any
 Slack/Leslie/Pondr contact all remain unauthorized.
+
+## Review operations, history intelligence and human filing (RO-1) — COMPLETE — 2026-09-06
+
+Made the certified owner-local review store operationally useful over time and
+at scale, without granting it any destructive authority.
+
+Delivered: a structurally read-only inventory with a two-axis integrity /
+currentness model and a health precedence that treats stale history as the
+store working rather than failing; per-finding generation history with a total
+record-derived chronology and a proven current generation; a
+`nightwatch-review` CLI and a Control Center `#review-store` view over one
+shared authority; a review-state-aware human filing report with the
+production-local generation path it never had; and real historical identity in
+finding history.
+
+Defects closed: DEF-RO-1 (a terminal report naming a historical anchor with a
+live-authority marker), DEF-RO-2 (a regression-candidate lineage guard that
+tested a condition its validator had already proven), DEF-RO-3 (a REPORT
+anchor that lagged its own campaign's advance), DEF-RO-4 (a corruption count
+that only held when the broken file sorted first).
+
+Not done, deliberately: no retention or deletion policy, and no derived index.
+Both are recorded with the measurements a future decision would need.
+
+Next: retention remains an owner decision requiring separate authorization.
+C-12 live, C-13, C-14, C-08b and C-07 DEV remain externally gated.

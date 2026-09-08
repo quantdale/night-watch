@@ -73,19 +73,19 @@ The load-bearing decisions:
 
 - [x] M0 — Campaign open: OpenSpec, task records, execution prompt, routing. — DONE
 - [x] M1 — DEF-RO-1 terminal-anchor repair and its mechanical rule. — DONE
-- [ ] M2 — `listEntries()` and the inventory core.
-- [ ] M3 — The history core.
-- [ ] M4 — Historical identity propagation and DEF-RO-2.
-- [ ] M5 — Review-aware filing report and its production path.
-- [ ] M6 — The `nightwatch-review` CLI.
-- [ ] M7 — Control Center contracts, adapter, authority, routes and view.
-- [ ] M8 — Hardening rule, proven to bite.
-- [ ] M9 — Determinism, order-independence, concurrency, corruption, property
+- [x] M2 — `listEntries()` and the inventory core — DONE
+- [x] M3 — The history core — DONE
+- [x] M4 — Historical identity propagation and DEF-RO-2 — DONE
+- [x] M5 — Review-aware filing report and its production path — DONE
+- [x] M6 — The `nightwatch-review` CLI — DONE
+- [x] M7 — Control Center contracts, adapter, authority, routes and view — DONE
+- [x] M8 — Hardening rule, proven to bite — DONE
+- [x] M9 — Determinism, order-independence, concurrency, corruption, property — DONE
       tests, privacy red team.
-- [ ] M10 — Scale at 10k / 25k / 50k.
-- [ ] M11 — Mutation campaign, >= 30 mutations, zero unexplained survivors.
-- [ ] M12 — Browser qualification, >= 30 loops.
-- [ ] M13 — Documentation, REPORT, full regression, `gate:local`,
+- [x] M10 — Scale at 10k / 25k / 50k — DONE
+- [x] M11 — Mutation campaign, >= 30 mutations, zero unexplained survivors — DONE
+- [x] M12 — Browser qualification, >= 30 loops — DONE
+- [x] M13 — Documentation, REPORT, full regression, `gate:local`, — DONE
       `gate:clean` on a proven fresh install.
 
 ## Validation Strategy

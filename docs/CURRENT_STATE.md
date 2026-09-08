@@ -3646,3 +3646,79 @@ Certification for this campaign is recorded in
 
 No production, NEXT or DEV contact. No external filing. C-12 live, C-13,
 C-14, C-08b and C-07 DEV remain unauthorized and unexecuted.
+
+## Review operations, history intelligence and human filing — terminal COMPLETE — 2026-09-06
+
+The owner-local review store was durable and opaque. It is now observable, its
+history is auditable across artifact generations, and the artifact a human
+files says whether the review it reports is actually in force.
+
+**Three read surfaces, one composition point.** `nightwatch-review`
+(`inventory` / `history` / `inspect` / `filing`), the Control Center
+`#review-store` view, and `/api/v1/review-store/{inventory,history,filing}`
+all go through `ControlCenterReviewStoreAuthority`, so they cannot answer the
+same question differently.
+
+**Read-only by construction.** That authority holds a `createIfMissing: false`
+store handle, so every write method on it throws. It exposes no mutator, the
+CLI grammar has no destructive verb, and the router has no fourth route. This
+is not a surface that declines to delete; it is one that cannot.
+
+**Two independent axes.** Integrity (VALID / CORRUPT) comes from the store
+alone. Currentness (CURRENT / STALE / UNKNOWN) needs the current artifacts and
+is reported UNKNOWN unless a caller supplies them — with `currentnessResolved`
+alongside, because "nothing is current" and "nobody asked" are different
+facts. A review whose finding is no longer in the snapshot is UNKNOWN, not
+STALE.
+
+**Health names every condition that holds**, ordered
+`STORE_UNAVAILABLE > CORRUPTION_PRESENT > UNKNOWN_FILES_PRESENT >
+TEMPORARY_RESIDUE_PRESENT > STALE_HISTORY_PRESENT > HEALTHY`. Stale history is
+the least severe on purpose: it is the store working as designed.
+
+**Unrecognized entries are counted, digested and left alone.** The contract
+has no field for such a name, so there is nothing to forget to redact.
+Corruption rows carry a code and a pinned-shape filename, never a validator
+detail — a detail quotes bytes out of an untrusted file.
+
+**History is proven, not guessed.** Generations order by `storedAt`, then
+`reviewedAt`, then `reviewIdentity`; the current one is the one that passes
+`verifyReviewCurrent`, never the newest. Per-generation semantic identity is
+`null` with a stated reason — the v1 binding carries none — and the CURRENT
+artifact's identities are reported once, where they are true.
+
+**The filing report knows four review states.** NO_REVIEW, CURRENT, STALE and
+CORRUPT render textually disjoint ways; a stale decision is shown, labelled as
+not current, and never under the current heading; a corrupt one names no
+decision. `buildFilingReport` is the production-local path the report never
+had. It reaches no raw dossier, so it states what the projection withheld
+rather than describing behaviour it did not observe.
+
+**Historical identity is real.** The reviewer authority no longer fabricates
+`sourceSha: '0'.repeat(40)`; it carries the same named absence the review
+binding records. `IntelHistoryEntry` carries expectation and semantic-contract
+identity, both required in the type so an absence is stated rather than
+forgotten. `REGRESSION_CANDIDATE` now requires a proven prior fix AND a moved
+source lineage; the old guard tested a condition its own validator had already
+proven true.
+
+**Measured scale**, one fresh OS process per size, on this machine:
+
+| store | disk | discovery | shallow | deep | history | reviewer page | peak RSS |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 10,000 | 15.8 MiB | 26 ms | 26 ms | 443 ms | 12 ms | 224 ms | 110 MiB |
+| 25,000 | 39.5 MiB | 80 ms | 79 ms | 1112 ms | 23 ms | 372 ms | 154 MiB |
+| 50,000 | 79.0 MiB | 142 ms | 163 ms | 2185 ms | 45 ms | 609 ms | 179 MiB |
+
+Linear throughout, so no derived index was built. Machine-specific evidence,
+not a platform guarantee.
+
+**Retention remains undecided.** No deletion, retention, archival or pruning
+exists; the payload says `retentionPolicy: NONE_OWNER_DECISION_PENDING`. The
+evidence for a future decision is in `docs/DECISIONS.md` D-132.
+
+Certification for this campaign is recorded in
+`.agent/tasks/nightwatch-review-operations-history-filing-v1/REPORT.md`.
+
+No production, NEXT or DEV contact. No external filing. C-12 live, C-13,
+C-14, C-08b and C-07 DEV remain unauthorized and unexecuted.

@@ -4625,3 +4625,151 @@ retried away is worse than no bound at all. It is a deterministic assertion
 that a forty-row page costs exactly ONE directory read, with a control proving
 the same page costs eight without the listing so the assertion cannot pass
 vacuously.
+
+## D-126 — an inventory holds a handle that cannot write, not an intention not to
+
+The review-store inventory is built on a `createIfMissing: false`
+`PrivateArtifactStore`, so every write method on it throws
+`PRIVATE_ARTIFACT_READ_ONLY`. `assertReadOnlyScanner` makes that a runtime
+precondition of `inventoryReviewStore`, not a convention.
+
+The alternative — a writable handle used carefully — fails for a reason that
+is easy to miss. `readJson` calls `ensureOwnerDirectory` whenever the handle
+is not read-only, and that `mkdir`s and `chmod`s the store root. An inventory
+built on a writable handle would therefore have mutated the store's own
+metadata on every run, while every line of its code was a read.
+
+The same reasoning shapes `ControlCenterReviewStoreAuthority`: it exposes no
+mutator at all, and the test enumerates its prototype so a future one cannot
+be added quietly. The existing write path stays a different object.
+
+## D-127 — integrity and currentness are different questions, and the inventory answers only one
+
+A store can prove an envelope VALID. It cannot prove it CURRENT: currentness
+is `verifyReviewCurrent(receipt, currentArtifacts)`, and the current artifacts
+live in the findings authority.
+
+So the inventory carries two independent axes, and reports `currentness:
+UNKNOWN` for every artifact unless a caller supplies a resolver. It also
+carries `currentnessResolved`, because "nothing is current" and "nobody asked"
+are different facts and a reader must be able to tell them apart.
+
+The authority adds a third distinction the store cannot make: a review whose
+finding is not in the current snapshot is UNKNOWN, not STALE. "The review no
+longer binds" and "we cannot see what it would bind to" are different facts
+about an operator's store, and rounding the second into the first would report
+phantom staleness for every review of a finding that has simply been triaged
+away.
+
+## D-128 — store health is a precedence AND a set, and stale history is the least severe condition
+
+Several conditions hold at once in a real store, so health reports every
+condition that holds, sorted by a declared severity order, plus a single
+highest-precedence classification for a one-line answer. Reporting only the
+worst would let corruption swallow "there is a file here nobody recognizes".
+
+`STALE_HISTORY_PRESENT` ranks last on purpose. A stale generation is the store
+working exactly as designed — the preserved evidence of what was reviewed
+against an artifact that has since been regenerated. Ranking it above residue,
+or reporting it as corruption, would turn the store's entire purpose into a
+fault report. The CLI follows the same logic: stale history exits 0, because
+an exit code that called preserved evidence a failure would train an operator
+to ignore the one that means corruption.
+
+## D-129 — an unrecognized filename is the one string in the store Nightwatch did not choose
+
+Canonical and temporary artifacts have pinned hex name shapes, so echoing them
+leaks nothing. An unrecognized entry's name is arbitrary: it could be
+`customer-acme-invoice.json`.
+
+It is therefore projected as a 24-hex digest of the name plus a size, and the
+contract has no field for the name at all — so this is not a redaction that
+can be forgotten, it is a channel that does not exist. The file is not opened,
+not parsed, not classified by content, and not removed.
+
+Corruption rows follow the same rule for the same reason: they carry the
+categorical code and the pinned-shape file name, never the validator's detail,
+because a detail legitimately quotes the offending value and the offending
+value came out of an untrusted file.
+
+## D-130 — history chronology comes from records, and the current generation is proven
+
+Generations are ordered by `storedAt`, then `reviewedAt`, then
+`reviewIdentity`. The last key is what makes the order TOTAL: `storedAt` has
+second precision, so ties are ordinary rather than exotic, and a tie broken by
+directory order would be non-deterministic while looking correct in every test
+whose fixtures happened to be written a second apart.
+
+The current generation is the one whose receipt passes `verifyReviewCurrent` —
+never "the newest", which is a guess that is usually right and therefore worse
+than one that is always checked. The case it gets wrong is real: a finding
+whose newest stored generation no longer binds while an older one does.
+
+Per-generation semantic identity stays `null` with the categorical reason
+`REVIEW_BINDING_CARRIES_NO_SEMANTIC_IDENTITY`. The v1 binding carries none, and
+adding one would change every review identity and mark every stored review
+corrupt. The CURRENT artifact's identities are reported once at the top level,
+where they are true, rather than attributed to a historical generation, where
+they would be a fabrication about what was reviewed.
+
+## D-131 — the filing report has four review states, and they are textually disjoint
+
+`renderHumanFilingReport` is the artifact a person copies into a bug tracker
+and is believed about. Its review block used to express exactly two things: a
+decision, or `null`.
+
+It now renders NO_REVIEW, CURRENT, STALE and CORRUPT four different ways, and
+the pairing of state and fields is enforced rather than trusted — a CORRUPT
+review arriving with a decision filled in is refused, because that is the
+shape a silent-choice failure would actually take.
+
+A stale decision is SHOWN, under a heading and a per-line label that cannot be
+read as current, because destroying evidence is not caution. A corrupt review
+names no decision at all. And a corrupt generation sitting beside a valid one
+is named in the unknowns rather than dropped: the report must not be quieter
+than the store it read.
+
+## D-132 — no retention policy, and the evidence for deciding one later
+
+This campaign implemented no deletion, retention, archival or pruning, and the
+surfaces say so: the inventory payload carries
+`retentionPolicy: NONE_OWNER_DECISION_PENDING`, the CLI has no destructive verb
+in its grammar, and the router has no fourth review-store route.
+
+The measured evidence an owner would need, from
+`bin/review-operations-scale.mjs` on this machine:
+
+| store | disk | per review | discovery | shallow | deep inventory | one history | reviewer page | peak RSS |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 10,000 | 15.8 MiB | 1657 B | 26 ms | 26 ms | 443 ms | 12 ms | 224 ms | 110 MiB |
+| 25,000 | 39.5 MiB | 1657 B | 80 ms | 79 ms | 1112 ms | 23 ms | 372 ms | 154 MiB |
+| 50,000 | 79.0 MiB | 1657 B | 142 ms | 163 ms | 2185 ms | 45 ms | 609 ms | 179 MiB |
+
+Every curve is linear in store size. These are machine-specific measurements,
+not platform guarantees.
+
+The options, unranked and unchosen:
+
+- **Retain everything.** Maximum auditability; disk grows without bound;
+  zero destructive risk; no recovery question. At 1657 B per review, a
+  thousand reviews a week is about 84 MiB a year.
+- **Archive stale generations** to a compressed sidecar. Keeps evidence,
+  slows deep-inventory growth; adds a second format to validate and a second
+  place a review can be corrupt.
+- **Retain N generations per finding.** Bounds the worst case per finding;
+  silently destroys the evidence of what was reviewed at generation N+1,
+  which is the exact question this campaign built history to answer.
+- **Age-based archive.** Predictable growth; the age of a review is a poor
+  proxy for its value, and a long-lived finding's oldest review is often the
+  most interesting one.
+- **Manual-only cleanup.** No automatic destruction; requires an operator to
+  act, and an operator who never acts gets "retain everything".
+
+Deep inventory is the only cost that would become uncomfortable, and it is
+already avoidable: the SHALLOW mode answers "how big is this" in 163 ms at
+50,000 reviews without opening a file. Directory scans remain adequate, so no
+derived index was built — the brief permits one only after measuring, and the
+measurement says no.
+
+Choosing among these requires a separate owner authorization. This campaign
+produced the evidence and stopped.

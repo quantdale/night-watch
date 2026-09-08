@@ -234,3 +234,46 @@ from the review store to Slack, Leslie, Pondr or Notion, and hardening
 enforces that structurally rather than by convention: the cone holds no
 network authority, its import graph is confined, and the underlying private
 artifact store answers `publish()` by throwing.
+
+## RO-1 — the filing report now states whether its review is in force
+
+The handoff artifact a person copies into Leslie or Pondr previously had two
+review states: a decision, or nothing. That was enough while nothing generated
+it in production; it stopped being enough the moment a real store could hold a
+review that no longer binds.
+
+Four states now render four textually disjoint ways:
+
+- **NO_REVIEW** — `Local review (HUMAN DECISION REQUIRED)`. Nothing is stored.
+- **CURRENT** — `Local review (FACT: current local decision, not
+  organizational sign-off)`, with the decision, its resulting state, the time
+  and a bounded rationale, plus the statement that it binds to the artifacts
+  the report describes.
+- **STALE** — `Local review (HISTORICAL — DOES NOT BIND TO THIS GENERATION)`.
+  The historical decision is shown, labelled `Historical decision (NOT
+  current)`, followed by "Human review required for this generation". Hiding
+  it would destroy evidence; printing it unlabelled is the failure this state
+  exists to prevent.
+- **CORRUPT** — `Local review (UNAVAILABLE — FAIL CLOSED)`. A stored review
+  did not survive validation, so no decision is named. The nearest readable
+  generation is never substituted.
+
+Wherever a decision is shown, the non-equivalence block is four lines, not
+one, because the four things a reader might mistake it for are four different
+things: a Leslie genuine verdict, a Leslie invalid verdict, a Pondr approval,
+and organizational sign-off of any kind. A single "local only" line reads as a
+disclaimer; naming each reads as a boundary.
+
+**What the report cannot tell you, and says so.** `buildFilingReport` composes
+the owner-local findings projection, which deliberately withholds evidence
+bodies, source paths and observed values. So reproduction steps and evidence
+excerpts are not available to it, and the report states that rather than
+describing behaviour it did not observe. For a document a human is believed
+about, a report that reads as though it reproduced something is the failure
+that matters.
+
+**Still manual, still private.** The artifact carries
+`distribution: PRIVATE_LOCAL_MANUAL_COPY_ONLY`. No Slack, Leslie, Pondr,
+Notion, email or issue-filing client exists anywhere in the report cone, and
+hardening refuses an external submission import, an external URL, or a
+publication method there.
