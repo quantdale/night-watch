@@ -243,4 +243,55 @@ test('operator repository scope rejects an unapproved repository before the reas
   expect(fs.existsSync(marker)).toBe(false);
 });
 
+test('a scoped campaign cannot be silently resumed against the full universe', async () => {
+  const dir = scratchDir();
+  const paused = await runLocalCliCampaign({
+    campaignId: 'camp-scoped-resume',
+    ceilingName: 'HOUR_1',
+    executable: NODE,
+    args: [pauseScript(dir)],
+    provider: 'test-provider',
+    model: 'fake-1',
+    maxTurns: 3,
+    stateDirectory: dir,
+    investigationScope: ['mobingilabs/ouchan'],
+  });
+  expect(paused.terminationReason).toBe('PAUSED');
+
+  // Omitting the scope would widen the campaign back to every approved
+  // repository: the operator note tells them to resume with only --id, so
+  // this must fail rather than quietly change what is investigated.
+  await expect(resumeLocalCliCampaign({
+    campaignId: 'camp-scoped-resume',
+    ceilingName: 'HOUR_1',
+    executable: NODE,
+    args: [terminateScript(dir)],
+    maxTurns: 2,
+    stateDirectory: dir,
+  })).rejects.toMatchObject({ code: 'CAMPAIGN_SCOPE_MISMATCH' });
+
+  // A different scope is equally refused.
+  await expect(resumeLocalCliCampaign({
+    campaignId: 'camp-scoped-resume',
+    ceilingName: 'HOUR_1',
+    executable: NODE,
+    args: [terminateScript(dir)],
+    maxTurns: 2,
+    stateDirectory: dir,
+    investigationScope: ['alphauslabs/blue-sdk-go'],
+  })).rejects.toMatchObject({ code: 'CAMPAIGN_SCOPE_MISMATCH' });
+
+  // The original scope resumes normally.
+  const resumed = await resumeLocalCliCampaign({
+    campaignId: 'camp-scoped-resume',
+    ceilingName: 'HOUR_1',
+    executable: NODE,
+    args: [terminateScript(dir)],
+    maxTurns: 2,
+    stateDirectory: dir,
+    investigationScope: ['mobingilabs/ouchan'],
+  });
+  expect(resumed.terminationReason).toBe('NO_PROGRESS');
+});
+
 

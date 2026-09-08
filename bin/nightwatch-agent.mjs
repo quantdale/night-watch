@@ -109,6 +109,7 @@ if (command === 'status') {
             provider: process.env.NIGHTWATCH_REASONER_PROVIDER ?? 'configured',
             model: process.env.NIGHTWATCH_REASONER_MODEL ?? 'configured',
             maxTurns,
+            investigationScope: repositoryIds,
             investigationContext: contextMod.createOwnerLocalInvestigationContext(
               repositoryIds === undefined ? {} : { repositoryIds },
             ),
@@ -168,6 +169,7 @@ if (command === 'status') {
           provider: process.env.NIGHTWATCH_REASONER_PROVIDER ?? 'configured',
           model: process.env.NIGHTWATCH_REASONER_MODEL ?? 'configured',
           maxTurns: Number.isInteger(maxTurns) ? maxTurns : 8,
+          investigationScope: repositoryIds,
           investigationContext: contextMod.createOwnerLocalInvestigationContext(
             repositoryIds === undefined ? {} : { repositoryIds },
           ),

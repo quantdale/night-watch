@@ -131,6 +131,14 @@ export interface LocalCampaignInput {
    * owner-local context; direct callers without one fail provider tools closed.
    */
   readonly investigationContext?: LocalInvestigationContext;
+  /**
+   * Approved repository ids the host narrowed this campaign to, if any. The
+   * engine never interprets them: it persists them so a resume cannot
+   * silently widen a deliberately scoped campaign back to the full universe.
+   * The caller builds the matching investigation context and is the only
+   * authority that validates the ids against the approved universe.
+   */
+  readonly investigationScope?: readonly string[];
   /** Clock seam for deterministic tests. Defaults to Date.now. */
   readonly now?: () => number;
 }
@@ -205,6 +213,11 @@ interface CampaignProgress {
    * unvalidated state into a reasoner request.
    */
   readonly strategy: CampaignStrategyState | null;
+  /**
+   * Host-owned repository scope this campaign started with. Absent on
+   * pre-W10 envelopes and on unscoped campaigns.
+   */
+  readonly investigationScope: readonly string[] | null;
   /** Present only when the campaign paused mid-investigation. */
   readonly pausedInvestigation: AgentCheckpoint | null;
 }
@@ -302,6 +315,20 @@ function parseCampaignProgress(value: unknown, campaignId: string): CampaignProg
     value.strategy === undefined || value.strategy === null
       ? null
       : parseCampaignStrategyState(value.strategy, campaignId);
+  // Absent on pre-W10 and unscoped campaigns. A malformed value is corrupt,
+  // never "unscoped": silently widening a deliberately narrowed campaign is
+  // exactly the failure this field exists to prevent.
+  let investigationScope: readonly string[] | null = null;
+  if (value.investigationScope !== undefined && value.investigationScope !== null) {
+    if (
+      !Array.isArray(value.investigationScope) ||
+      value.investigationScope.length === 0 ||
+      !value.investigationScope.every((item) => typeof item === 'string' && item.length > 0)
+    ) {
+      throw new AgentCheckpointError('CORRUPT', 'campaignProgress.investigationScope is invalid');
+    }
+    investigationScope = Object.freeze([...(value.investigationScope as string[])]);
+  }
   return {
     version: CAMPAIGN_PROGRESS_VERSION,
     nextInvestigationIndex: value.nextInvestigationIndex,
@@ -309,6 +336,7 @@ function parseCampaignProgress(value: unknown, campaignId: string): CampaignProg
     stagnantInvestigations: value.stagnantInvestigations,
     terminationCounts: counts,
     strategy,
+    investigationScope,
     pausedInvestigation,
   };
 }
@@ -702,6 +730,10 @@ function buildCampaignCheckpoint(
     stagnantInvestigations: acc.stagnant,
     terminationCounts: { ...acc.terminationCounts },
     strategy: acc.strategy,
+    investigationScope:
+      engine.input.investigationScope === undefined || engine.input.investigationScope.length === 0
+        ? null
+        : [...engine.input.investigationScope],
     pausedInvestigation,
   };
   const document: Record<string, unknown> = { ...checkpoint, campaignProgress: { ...progress } };
@@ -963,6 +995,31 @@ function policyFromCheckpoint(checkpoint: AgentCheckpoint, campaignId: string): 
   return policy;
 }
 
+/**
+ * A scoped campaign must resume under exactly the scope it started with.
+ * Resuming a deliberately narrowed campaign against the full universe is a
+ * silent widening, so an omitted or different scope fails closed rather than
+ * quietly changing what the campaign investigates.
+ */
+function assertScopeContinuity(progress: CampaignProgress | null, input: LocalCampaignInput): void {
+  const stored = progress?.investigationScope ?? null;
+  const requested =
+    input.investigationScope === undefined || input.investigationScope.length === 0
+      ? null
+      : [...input.investigationScope];
+  const same =
+    (stored === null && requested === null) ||
+    (stored !== null &&
+      requested !== null &&
+      stored.length === requested.length &&
+      stored.every((item, index) => item === requested[index]));
+  if (same) return;
+  throw new LocalCampaignError(
+    'CAMPAIGN_SCOPE_MISMATCH',
+    `campaign ${input.campaignId} was scoped to ${stored === null ? 'the full approved universe' : stored.join(',')}; resume requested ${requested === null ? 'the full approved universe' : requested.join(',')}`,
+  );
+}
+
 export async function resumeLocalCliCampaign(input: LocalCampaignInput): Promise<LocalCampaignResult> {
   const { reasoner } = driverAndPolicy(input);
   const now = input.now ?? Date.now;
@@ -976,6 +1033,7 @@ export async function resumeLocalCliCampaign(input: LocalCampaignInput): Promise
   // with), not the caller's ceilingName.
   const policy = policyFromCheckpoint(checkpoint, input.campaignId);
   const progress = parseCampaignProgress((raw as Record<string, unknown>).campaignProgress, input.campaignId);
+  assertScopeContinuity(progress, input);
 
   if (checkpoint.state.status === 'TERMINATED') {
     // Idempotent resume: the campaign already finished. Report the stored
