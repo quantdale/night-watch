@@ -176,8 +176,9 @@ provider and model as the W9 reference — through the ordinary
 | tool actions | 56 | 81 |
 | unique source paths observed | 32 | 32 |
 | **repositories represented** | **1** | **8** |
-| reproduction attempts | 7 | 0 |
-| `NOT_AVAILABLE` outcomes | 7 | 0 |
+| reproduction attempts | 7 | 6 |
+| executed reproductions | 0 | 4 |
+| `NOT_AVAILABLE` outcomes | 7 | 2 |
 | candidates | 1 | 2 |
 | admissions | 0 | 0 |
 | refusals | 1 `MISSING_REPRODUCTION` | 2 `MISSING_REPRODUCTION` |
@@ -189,13 +190,18 @@ Repository spread of the 32 observed paths: `mobingilabs/ouchan` 5,
 `alphauslabs/blueinternal` 1, `alphauslabs/grpc-chunk-parser` 1. W9's identical
 32-path budget was 100% `alphauslabs/blue-sdk-go`.
 
-**Honest reading of the zero.** Run B made ZERO reproduction attempts, so its
-`NOT_AVAILABLE` count is zero because nothing was attempted — not because
-attempts succeeded. It is NOT claimed as a 100%-to-0% waste reduction. What
-Run B does prove on live evidence is the structural repair: the reasoner
-reached five distinct executable `mobingilabs/ouchan` packages
-(`pkg/almcreds`, `pkg/auth/rbac`, `pkg/awscostmanagement`, `pkg/almtemplate`,
-`pkg/almuser`) that were unreachable for the whole of W9.
+**Correction of an earlier reading of this run.** An intermediate reading of
+Run B in this report claimed it made ZERO reproduction attempts. That was
+wrong: it counted admitted reproductions instead of attempts. The run's own
+action log records six `RERUN_SAFE_REPRODUCTION` actions — four
+`NOT_REPRODUCED` (the host really executed the package) and two
+`NOT_AVAILABLE`. The mistaken claim is recorded here rather than quietly
+replaced, and it is the reason `deriveCampaignYieldMetrics` now produces this
+table mechanically instead of by hand.
+
+Run B executed three distinct real `mobingilabs/ouchan` packages
+(`pkg/almcreds`, `pkg/auth/rbac`, `pkg/almtemplate`) — packages that were
+structurally unreachable for the whole of W9.
 
 **Known limitation of Run B.** It launched from the integration head that
 carried the diverse index and the surface annotation but NOT the M3
@@ -217,15 +223,20 @@ owner-local path after the M3 memory lane integrated.
 | provider failures / retries | 7 / 8 |
 | inspected targets | 21 across all 8 approved repositories |
 | candidates / admissions | 2 / 0 |
-| reproductions | 0 |
+| reproduction attempts / executed | 5 / 5 |
+| `NOT_AVAILABLE` outcomes | 0 |
+| qualifying current-source reproductions | 0 |
 | refusals | 2 `MISSING_REPRODUCTION` |
 | charged input / provider output / tool payload bytes | 841,348 / 32,431 / 896,477 |
 | outer termination | `BUDGET_EXHAUSTED` (wall) |
 
-Run C did not issue a reproduction attempt. It is preserved as a miss, not
-reported as a lower refusal rate. It also exposed the cross-investigation
-capability-carry defect described above: campaign strategy v2 was active, but
-the terminal checkpoint contained zero `reproductionSurface` entries.
+Run C attempted five reproductions and the host executed all five, against two
+distinct real packages (`pkg/almcreds`, `pkg/auth/rbac`). Every execution
+returned an honest `NOT_REPRODUCED`: those packages' pre-existing tests pass,
+so no qualifying current-source failure exists to admit. It also exposed the
+cross-investigation capability-carry defect described above: campaign strategy
+v2 was active, but the terminal checkpoint contained zero `reproductionSurface`
+entries.
 
 ### Live campaign — Run D, robustness repeat after carry repair (M9.3)
 
@@ -243,16 +254,37 @@ changing authority, so the primary provider/model was repeated as permitted.
 | inspected targets | 22 across all 8 approved repositories |
 | persisted capability surface | 32 entries: 5 executable, 27 not executable |
 | candidates / admissions | 1 / 0 |
-| reproductions | 0 |
+| reproduction attempts / executed | 5 / 5 |
+| `NOT_AVAILABLE` outcomes | 0 |
+| qualifying current-source reproductions | 0 |
 | refusals | 1 `MISSING_REPRODUCTION` |
 | charged input / provider output / tool payload bytes | 802,203 / 28,652 / 944,890 |
 | outer termination | `BUDGET_EXHAUSTED` (wall) |
 
 This is the live proof of the carry repair: the terminal campaign checkpoint
-retains the complete bounded surface across investigations. The provider still
-chose zero reproduction attempts. That negative result is why M9.1 uses the
-census-derived host-owned executable-rich scope rather than calling Run D a
-yield success.
+retains the complete bounded surface across investigations. It also repeats
+Run C's yield independently — five attempts, five host executions against
+`pkg/almcreds` and `pkg/almtemplate`, zero `NOT_AVAILABLE`, and an honest zero
+qualifying failures because those packages' tests pass.
+
+### Live yield across every preserved campaign
+
+Derived mechanically by `deriveCampaignYieldMetrics` from each campaign's own
+action log. No run is omitted.
+
+| Campaign | attempts | executed | `NOT_AVAILABLE` | NA rate | executed rate | distinct executed packages | qualifying |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| W9 `w9-endurance-omen-1` | 7 | 0 | 7 | 1.0000 | 0.0000 | 0 | 0 |
+| Run B `w10-broad-omen-1` | 6 | 4 | 2 | 0.3333 | 0.6667 | 3 | 0 |
+| Run C `w10-capability-omen-2` | 5 | 5 | 0 | 0.0000 | 1.0000 | 2 | 0 |
+| Run D `w10-repeat-omen-3` | 5 | 5 | 0 | 0.0000 | 1.0000 | 2 | 0 |
+
+This is the W10 live result: deterministic `NOT_AVAILABLE` waste fell from 7 of
+7 to 0 of 5 on two independent full-stack campaigns, and the host executed real
+Go package tests in contained disposable state on every attempt of those runs.
+Zero qualifying current-source failures were found, and zero findings were
+admitted — the executed packages simply pass. Capability, not defect discovery,
+is what these runs prove.
 
 ### Host-owned reproduction-rich scope (M9.1 preflight)
 

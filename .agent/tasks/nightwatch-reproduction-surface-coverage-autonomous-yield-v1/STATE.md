@@ -47,8 +47,8 @@ What is being attempted: `w10-rich-omen-4` is running for HOUR_1 against the cen
 - **M10 COMPLETE** — 10 long-run resilience proofs (pause/resume, pre-W10 and pre-W9 checkpoint compatibility, transient budget survival, refusal non-spin, cancellation and timeout process-tree cleanup, exact ledger reconciliation, sibling integrity).
 - **M3 COMPLETE** — capability readiness is carried through investigation memory and campaign strategy v2; target capabilities, unsupported targets, pre-action readiness, caps, injection inertia and resume behavior are covered by 16 dedicated tests. A live cross-investigation carry defect discovered by Run C was repaired and regression-covered before Run D.
 - **M8 COMPLETE** — the unchanged W9 real proof passes, and a second distinct real package executes twice through the generic provider with sibling identity unchanged and no temp residue. Repository diversity is unavailable because the census proves only `mobingilabs/ouchan` has executable approved targets.
-- **M9.2 COMPLETE** — full-stack broad campaign `w10-capability-omen-2`: 3,702,379 ms, 6/6 investigations, 63 calls, 71 actions, 7 provider failures, 21 inspected targets across all 8 repositories, 2 candidates, 0 admissions, 2 correct `MISSING_REPRODUCTION` refusals.
-- **M9.3 COMPLETE** — robustness campaign `w10-repeat-omen-3` after the carry repair: 3,696,810 ms, 5/5 investigations, 57 calls, 70 logged actions, 8 provider failures, 22 inspected targets across all 8 repositories, 1 candidate, 0 admissions, 1 correct `MISSING_REPRODUCTION` refusal. Its checkpoint retains all 32 capability entries: 5 `EXECUTABLE_NOW`, 27 `NOT_EXECUTABLE`.
+- **M9.2 COMPLETE** — full-stack broad campaign `w10-capability-omen-2`: 3,702,379 ms, 6/6 investigations, 63 calls, 71 actions, 7 provider failures, 21 inspected targets across all 8 repositories, 5 reproduction attempts with 5 host executions and 0 `NOT_AVAILABLE`, 2 candidates, 0 admissions, 2 correct `MISSING_REPRODUCTION` refusals.
+- **M9.3 COMPLETE** — robustness campaign `w10-repeat-omen-3` after the carry repair: 3,696,810 ms, 5/5 investigations, 57 calls, 70 logged actions, 8 provider failures, 22 inspected targets across all 8 repositories, 5 attempts with 5 host executions and 0 `NOT_AVAILABLE`, 1 candidate, 0 admissions, 1 correct `MISSING_REPRODUCTION` refusal. Its checkpoint retains all 32 capability entries: 5 `EXECUTABLE_NOW`, 27 `NOT_EXECUTABLE`.
 
 ## Work In Progress
 
@@ -71,6 +71,21 @@ executable entries but only **1** distinct target: five sources in one Go
 package are one reproduction. Adding executable-target spread to selection
 took distinct targets from 1 to 5, so the same window now offers five
 genuinely different verifications instead of one repeated four times.
+
+Live reproduction yield, derived mechanically by `deriveCampaignYieldMetrics`
+from each campaign's own action log:
+
+| Campaign | attempts | executed | `NOT_AVAILABLE` | NA rate |
+|---|---:|---:|---:|---:|
+| W9 `w9-endurance-omen-1` | 7 | 0 | 7 | 1.0000 |
+| Run B `w10-broad-omen-1` | 6 | 4 | 2 | 0.3333 |
+| Run C `w10-capability-omen-2` | 5 | 5 | 0 | 0.0000 |
+| Run D `w10-repeat-omen-3` | 5 | 5 | 0 | 0.0000 |
+
+An earlier hand reading of Run B claimed zero reproduction attempts; it had
+counted admitted reproductions. The claim was wrong, is corrected in `REPORT.md`
+rather than silently replaced, and is why the campaign now derives this table
+itself.
 
 Fixed-corpus benchmark (M7), same implementation, baseline vs final policy:
 
