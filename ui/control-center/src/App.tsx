@@ -1,5 +1,6 @@
 import { Component, useCallback, useEffect, useState, type ErrorInfo, type KeyboardEvent, type ReactNode } from 'react';
-import { apiErrorLabel, loadCampaignCoverage, loadCampaignSummary, loadExecutionGraph, loadFindings, loadOverview, loadReviewer, loadRunDetail, loadRuns, loadSourceGraph, loadSourceSurfaces, loadSystemMapLevel, loadSystemMapQuery, loadTimeline, subscribeToControlCenterEvents, submitReviewDecision, REVIEW_DECISIONS, type ReviewDecision } from './api';
+import { apiErrorLabel, loadCampaignCoverage, loadCampaignSummary, loadExecutionGraph, loadFindings, loadOverview, loadReviewer, loadRunDetail, loadRuns, loadSourceGraph, loadSourceSurfaces, loadSystemMapLevel, loadSystemMapQuery, loadTimeline, subscribeToControlCenterEvents, readBackReviewDecision,
+  submitReviewDecision, REVIEW_DECISIONS, type ReviewDecision } from './api';
 import type { CampaignCoverageSnapshot, CampaignSummarySnapshot, DataLoadState, EpistemicClass, ExecutionGraphSnapshot, FindingsSnapshot, OverviewLoadState, OverviewSnapshot, ReviewerElement, ReviewerFindingSnapshot, ReviewerSnapshot, RunDetailSnapshot, RunListSnapshot, SourceGraphSnapshot, SourceSurfaceSnapshot, SourceSurfacesSnapshot, SystemMapBound, SystemMapLevelSegment, SystemMapNodeView, SystemMapQuerySegment, SystemMapSnapshot, TimelineSnapshot, ViewId } from './types';
 import { SYSTEM_MAP_QUERY_SEGMENTS, VIEW_DEFINITIONS } from './types';
 
@@ -437,9 +438,12 @@ function ReviewerElementCell<T>({ element, render }: {
  */
 function ReviewDecisionCell({
   item,
+  capability,
   onDecided,
 }: {
   readonly item: ReviewerFindingSnapshot;
+  /** NW-09. The SERVER's answer about the write route. */
+  readonly capability: 'ENABLED' | 'DISABLED' | 'UNKNOWN';
   readonly onDecided: () => void;
 }): ReactNode {
   const [pending, setPending] = useState(false);
@@ -448,6 +452,24 @@ function ReviewDecisionCell({
 
   const value = item.localReview.value;
   const decided = value !== null && value.decision !== null && value.bindingCurrentness === 'CURRENT';
+
+  // NW-09. Gate on the capability the SERVER reports, not on the per-finding
+  // review identity. The identity answers whether a review STORE exists; it
+  // says nothing about whether this server serves the write route, so the UI
+  // used to offer controls whose POST the server would refuse as not found.
+  // Unknown fails closed: an unloaded overview is not permission.
+  if (capability !== 'ENABLED') {
+    return (
+      <td>
+        <small>{capability === 'UNKNOWN' ? 'Review capability not yet known' : 'Read-only server'}</small>
+        <small>
+          {capability === 'UNKNOWN'
+            ? 'Waiting for the server capability report.'
+            : 'Start with --enable-local-review to record owner-local decisions.'}
+        </small>
+      </td>
+    );
+  }
 
   // No store configured: there is nothing to decide against, and saying so is
   // better than showing controls that cannot work.
@@ -473,10 +495,11 @@ function ReviewDecisionCell({
   const submit = async (decision: ReviewDecision): Promise<void> => {
     setPending(true);
     setOutcome(null);
+    const identity = item.reviewIdentity as string;
     try {
       const response = await submitReviewDecision({
         findingId: item.findingId,
-        reviewIdentity: item.reviewIdentity as string,
+        reviewIdentity: identity,
         decision,
         ...(rationale.trim() === '' ? {} : { rationale: rationale.trim() }),
       });
@@ -486,7 +509,22 @@ function ReviewDecisionCell({
         onDecided();
       }
     } catch {
-      setOutcome('REQUEST_FAILED');
+      // NW-09. The request failed without a readable answer, so whether the
+      // decision was recorded is UNKNOWN. Never retry: the store refuses a
+      // second decision on the same binding, so a retry would either
+      // duplicate the request or return ALREADY_DECIDED without telling the
+      // operator which attempt recorded it. Ask the server what it now holds
+      // for this exact review identity instead.
+      const readback = await readBackReviewDecision({ findingId: item.findingId, reviewIdentity: identity });
+      if (readback.state === 'RECORDED') {
+        setOutcome('RECORDED_CONFIRMED_BY_READBACK');
+        setRationale('');
+        onDecided();
+      } else if (readback.state === 'NOT_RECORDED') {
+        setOutcome('NOT_RECORDED_SAFE_TO_RETRY');
+      } else {
+        setOutcome('OUTCOME_UNKNOWN_READ_BACK_FAILED');
+      }
     } finally {
       setPending(false);
     }
@@ -523,10 +561,22 @@ function ReviewDecisionCell({
         ))}
       </div>
       {outcome === null ? null : (
-        <small className={outcome === 'ACCEPTED' ? 'review-outcome-ok' : 'review-outcome-warn'}>
+        <small
+          className={
+            outcome === 'ACCEPTED' || outcome === 'RECORDED_CONFIRMED_BY_READBACK'
+              ? 'review-outcome-ok'
+              : 'review-outcome-warn'
+          }
+        >
           {outcome === 'ACCEPTED'
             ? 'Recorded locally. This is not Leslie or Pondr sign-off.'
-            : `Refused: ${formatCategory(outcome)}`}
+            : outcome === 'RECORDED_CONFIRMED_BY_READBACK'
+              ? 'The response was lost, but a read-back confirms this decision is recorded. Not organizational sign-off.'
+              : outcome === 'NOT_RECORDED_SAFE_TO_RETRY'
+                ? 'The request failed and a read-back shows nothing was recorded. You can decide again.'
+                : outcome === 'OUTCOME_UNKNOWN_READ_BACK_FAILED'
+                  ? 'The request failed and the read-back could not reach the server. Whether it was recorded is unknown; refresh before deciding again.'
+                  : `Refused: ${formatCategory(outcome)}`}
         </small>
       )}
       <small>Owner-local only. Never organizational sign-off.</small>
@@ -534,7 +584,7 @@ function ReviewDecisionCell({
   );
 }
 
-function ReviewerView({ state, onRetry }: { readonly state: DataLoadState<ReviewerSnapshot>; readonly onRetry: () => void }): ReactNode {
+function ReviewerView({ state, capability, onRetry }: { readonly state: DataLoadState<ReviewerSnapshot>; readonly capability: 'ENABLED' | 'DISABLED' | 'UNKNOWN'; readonly onRetry: () => void }): ReactNode {
   if (state.kind === 'loading' || state.kind === 'idle') return <LoadingState />;
   if (state.kind === 'error') return <DataErrorState title="Reviewer intelligence unavailable" onRetry={onRetry} />;
   const items = state.data.items;
@@ -616,7 +666,7 @@ function ReviewerView({ state, onRetry }: { readonly state: DataLoadState<Review
                     <small>Binding {formatCategory(value.bindingCurrentness)}</small>
                     <small>Local review only. Not Leslie or Pondr sign-off.</small>
                   </>} />
-                  <ReviewDecisionCell item={item} onDecided={onRetry} />
+                  <ReviewDecisionCell item={item} capability={capability} onDecided={onRetry} />
                 </tr>
               ))}</tbody>
             </table></div>}
@@ -1176,7 +1226,12 @@ function DashboardApp(): ReactNode {
     if (activeView === 'execution-graph') return <ExecutionGraphView selectedRunId={selectedRunId} state={graphState} onRetry={retryRunData} />;
     if (activeView === 'campaigns') return <CampaignView summaryState={campaignSummaryState} coverageState={campaignCoverageState} onRetry={retryRunData} />;
     if (activeView === 'findings') return <FindingsView state={findingsState} onRetry={retryRunData} />;
-    if (activeView === 'reviewer') return <ReviewerView state={reviewerState} onRetry={retryRunData} />;
+    if (activeView === 'reviewer') {
+      // Fails closed while the overview is still loading or errored, and when
+      // an older server omits the field entirely.
+      const capability = loadState.kind === 'ready' ? loadState.data.meta.localReviewDecision ?? 'DISABLED' : 'UNKNOWN';
+      return <ReviewerView state={reviewerState} capability={capability} onRetry={retryRunData} />;
+    }
     if (activeView === 'system-map') return <SystemMapView refreshKey={refreshKey} />;
     if (activeView === 'source-intelligence') {
       if (loadState.kind === 'loading') return <LoadingState />;

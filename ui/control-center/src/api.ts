@@ -150,6 +150,46 @@ export async function submitReviewDecision(input: {
   };
 }
 
+/**
+ * What a readback found about one submitted decision.
+ *
+ * NW-09. A POST whose response never arrived, or arrived unreadable, is
+ * UNCERTAIN: the decision may or may not have been recorded. Retrying is not
+ * an option — the store refuses a second decision on the same binding, so a
+ * retry either duplicates the request or returns ALREADY_DECIDED, and the
+ * operator still cannot tell which of the two attempts recorded it. So the
+ * client asks the server what it now holds for that exact review identity.
+ */
+export type ReviewReadbackOutcome =
+  | { readonly state: 'RECORDED'; readonly decision: string }
+  | { readonly state: 'NOT_RECORDED' }
+  | { readonly state: 'UNKNOWN' };
+
+/**
+ * Read back one submitted decision by review identity. Never writes, never
+ * retries the POST.
+ */
+export async function readBackReviewDecision(input: {
+  readonly findingId: string;
+  readonly reviewIdentity: string;
+}): Promise<ReviewReadbackOutcome> {
+  let snapshot: ReviewerSnapshot;
+  try {
+    snapshot = await loadReviewer();
+  } catch {
+    return { state: 'UNKNOWN' };
+  }
+  const item = snapshot.items.find((candidate) => candidate.findingId === input.findingId);
+  if (item === undefined) return { state: 'UNKNOWN' };
+  // Identity must match exactly. A decision recorded against a DIFFERENT
+  // identity is not this submission, and reporting it as such would be the
+  // same mistake as retrying with a fresh identity.
+  if (item.reviewIdentity !== input.reviewIdentity) return { state: 'UNKNOWN' };
+  const value = item.localReview.value;
+  if (value === null || value.decision === null) return { state: 'NOT_RECORDED' };
+  return { state: 'RECORDED', decision: value.decision };
+}
+
 export function loadOverview(): Promise<OverviewSnapshot> {
   const health = fetchSnapshot<HealthSnapshot>(CONTROL_CENTER_API_PATHS.health);
   const meta = fetchSnapshot<MetaSnapshot>(CONTROL_CENTER_API_PATHS.meta);

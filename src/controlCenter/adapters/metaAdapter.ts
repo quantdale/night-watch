@@ -3,11 +3,20 @@ import {
   CONTROL_CENTER_LIMITS,
   CONTROL_CENTER_SCOPE,
 } from '../contracts/common';
-import type { ControlCenterMetaDto } from '../contracts/meta';
+import type { ControlCenterLocalReviewCapability, ControlCenterMetaDto } from '../contracts/meta';
 import { CONTROL_CENTER_META_SCHEMA_VERSION } from '../contracts/meta';
 
-/** Fixed local posture metadata; it never reports product or environment state. */
-export function projectMeta(): ControlCenterMetaDto {
+/**
+ * Fixed local posture metadata; it never reports product or environment state.
+ *
+ * `localReviewDecision` defaults to DISABLED and is ADVISORY here. The server
+ * overwrites it from the option that actually creates the write route, so a
+ * collector built with a review authority and a server built without one — or
+ * the reverse — can never present a capability the surface does not have.
+ */
+export function projectMeta(
+  options: { readonly localReviewDecision?: ControlCenterLocalReviewCapability } = {},
+): ControlCenterMetaDto {
   return {
     schemaVersion: CONTROL_CENTER_META_SCHEMA_VERSION,
     apiVersion: 'v1',
@@ -32,6 +41,7 @@ export function projectMeta(): ControlCenterMetaDto {
       findings: true,
       notifications: true,
     },
+    localReviewDecision: options.localReviewDecision ?? 'DISABLED',
     limits: {
       maxPageLimit: CONTROL_CENTER_LIMITS.maxPageLimit,
       maxTimelineLimit: CONTROL_CENTER_LIMITS.maxTimelineLimit,

@@ -362,8 +362,20 @@ async function dispatch(
     switch (route.kind) {
       case 'health':
         return sendJson(response, 200, await options.collector.health(), headOnly);
-      case 'meta':
-        return sendJson(response, 200, await options.collector.meta(), headOnly);
+      case 'meta': {
+        // NW-09. The capability is filled from the SAME expression that
+        // decides whether the write route exists, one screen below. A
+        // collector's advisory value is overwritten, so the reported
+        // capability and the served surface cannot disagree — which is the
+        // failure mode the UI had no way to detect.
+        const meta = await options.collector.meta();
+        return sendJson(
+          response,
+          200,
+          { ...meta, localReviewDecision: options.reviewDecision === undefined ? 'DISABLED' : 'ENABLED' },
+          headOnly,
+        );
+      }
       case 'readiness':
         return sendJson(response, 200, await options.collector.readiness(), headOnly);
       case 'safety':

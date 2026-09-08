@@ -563,6 +563,84 @@ was added precisely to close that gap, and it is the one whose failure means
 something. "Every case fails pre-repair" is worth nothing unless the failure
 mode is the defect.
 
+### NW-09 — expose review decisions through a deliberate shipped capability
+
+**Live revalidation, and a second defect the review had not stated.** The
+launcher called `createDefaultControlCenterCollector()` — the read-only half
+of the factory — and never passed `reviewDecision`, so the documented
+owner-local review workflow was unreachable from the shipped entry point. The
+existing browser tests inject an authority directly, so they proved the
+library path and never the shipped one.
+
+The sharper defect is on the client. The UI gated its decision controls on
+the per-finding `reviewIdentity`, which answers whether a review STORE
+exists — not whether THIS server serves the write route. A read-only server
+with a populated store therefore rendered working-looking controls whose POST
+it would refuse as not found, and no DTO field let the UI know better.
+
+**Repair.**
+
+| Concern | Repair |
+| --- | --- |
+| unreachable capability | `--enable-local-review`, the only route to the write surface |
+| preflight | constructing the authority resolves the private review root through the shared private-artifact policy, which after NW-02/NW-03 refuses a root inside Nightwatch source, a sibling checkout or a linked worktree; a refusal fails the start rather than downgrading to read-only |
+| two halves disagreeing | both built through `createControlCenterServices`, so collector and write handler cannot derive different campaign identities for the same state |
+| capability truth | `ControlCenterMetaDto.localReviewDecision`, filled by the SERVER from `options.reviewDecision === undefined` — the same expression that creates the route — overwriting any collector value |
+| UI gate | gated on that capability, not on `reviewIdentity`; an absent field is DISABLED |
+| uncertain POST | `readBackReviewDecision` reports RECORDED / NOT_RECORDED / UNKNOWN by review identity, and never retries |
+| opaque start failure | an allowlisted `CONTROL_CENTER_[A-Z_]+` code only — no native message, no path |
+| operator visibility | the launcher prints `NIGHTWATCH_CONTROL_CENTER_LOCAL_REVIEW ENABLED\|DISABLED` |
+
+`readOnly: true` and `mutationAuthority: 'NONE'` are unchanged and still
+accurate: an owner-local review decision writes only to the owner's private
+store and confers no product, execution or organizational authority. The DTO
+reports the review route separately rather than overloading `readOnly`, and
+says so in its own comment.
+
+Why read-back rather than retry: the store refuses a second decision on the
+same binding, so a retry either duplicates the request or returns
+ALREADY_DECIDED — and the operator still cannot tell which attempt recorded
+it. UNKNOWN is reported as unknown rather than upgraded to "not recorded",
+which would invite a second decision the store may already hold. An identity
+mismatch on read-back is UNKNOWN, not a match.
+
+**Regression.** Six cases in
+`tests/unit/nw09ShippedReviewCapability.test.ts` SPAWN the real launcher:
+the default read-only server with POST answered 404/405 and meta DISABLED;
+the opt-in where the route answers a review RESULT rather than "not found"
+and meta says ENABLED; product and environment flags still refused; a bounded
+start reason asserted to contain no `/home/` and no `Error` text; and both
+disagreement directions — a collector claiming ENABLED cannot enable a route
+the server does not serve, and one claiming DISABLED cannot hide a route it
+does.
+
+No case writes a decision through the shipped process, because the shipped
+store is the operator's real one. That boundary is deliberate: write
+behaviour stays proven against an injected temporary store in
+`reviewerPersistence.test.ts`, and what these cases prove is which surface
+the shipped entry point actually serves.
+
+Four UI cases: controls hidden when the server reports DISABLED even though
+the finding has a review identity; failing closed when an older server omits
+the field; the uncertain-outcome read-back ending in the terminal state with
+exactly ONE POST; and UNKNOWN reported as unknown when the read-back itself
+cannot reach the server. One existing case was strengthened rather than
+weakened — a response claiming organizational authority is still refused, and
+now additionally reads back and reports that nothing was recorded.
+
+**Acceptance.**
+
+| Criterion | Evidence |
+| --- | --- |
+| documented opt-in works end to end from the actual launcher | the spawned launcher with `--enable-local-review` serves the route and reports ENABLED |
+| default remains read-only | spawned default: POST 404/405, meta DISABLED, `readOnly: true` unchanged |
+| server and UI capability state agree | the server overwrites the collector's advisory value; both disagreement directions asserted; the UI gates on that field and fails closed without it |
+| no duplicate write on retry ambiguity | exactly one POST asserted; the client reads back instead of retrying |
+| unavailable review store does not masquerade as read-only | the preflight failure fails the start with `CONTROL_CENTER_REVIEW_STORE_UNAVAILABLE` |
+| loopback / Origin / CSRF / identity / no-replace guarantees retained | 68 passed across `reviewerPersistence`, `controlCenterServer`, `controlCenterContracts`, `controlCenterAdapters` |
+| measured against the defect | 5 of 6 launcher cases and 5 UI cases fail pre-repair; the sixth launcher case is the flag-refusal control |
+| UI lane green | UI 24 passed, UI typecheck PASS, UI build PASS (3 files, 292,622 bytes, no external references) |
+
 ## Validation receipts
 
 Recorded per milestone as they are produced. No receipt is copied from a

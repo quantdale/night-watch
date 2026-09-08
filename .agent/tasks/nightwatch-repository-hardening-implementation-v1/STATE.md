@@ -13,7 +13,7 @@ Last validated implementation SHA: 54c7ed58b2482595da379830bb4a002a3076165f
 Last substantive checkpoint SHA: 54c7ed58b2482595da379830bb4a002a3076165f
 Live HEAD authority: GIT
 Branch: session/nightwatch-repository-hardening--e7b9be89
-Last checkpoint: M8 / NW-12 complete and validated — a documented per-client SSE backpressure policy with two disconnection bounds, quantified from 38,216 queued bytes to 228
+Last checkpoint: M9 / NW-09 complete and validated — the shipped launcher now has a documented review opt-in, and the capability the server reports is the same expression that creates the route
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 0ac7b3d037b5059f670eca715fc30adaf58e7334
@@ -36,10 +36,10 @@ is consumed, not re-executed.
 
 Milestone ID: M9
 Milestone status: IN_PROGRESS
-What is being attempted: NW-09 / NW-10 / NW-11 — the operator dashboard
-workflow: a shipped opt-in review capability with a truthful capability DTO,
-then bounded end-to-end pagination and validated, cancellable, coalesced
-client requests on the frozen DTOs.
+What is being attempted: NW-10 — bounded end-to-end dashboard pagination on
+the now-frozen capability and pagination DTOs: per-view cursor state with
+identity deduplication, generation binding, and explicit end/error/retry
+states, so records beyond each first page are reachable.
 
 ## Completed Milestones
 
@@ -132,6 +132,22 @@ client requests on the frozen DTOs.
   three-step crash matrix and an interleaved same-id writer; the
   consumer-level case fails against the pre-repair loader, which read an 8 MB
   file whole and then leaked a content window in its `SyntaxError`.
+- **M9 / NW-09 COMPLETE** — `--enable-local-review` is the only route to the
+  write surface. It runs an owner-local preflight and builds both halves
+  through `createControlCenterServices`, so the collector and the write
+  handler cannot derive different campaign identities.
+  `ControlCenterMetaDto.localReviewDecision` is filled by the SERVER from
+  `options.reviewDecision === undefined` — the same expression that creates
+  the route — so the reported capability and the served surface cannot
+  disagree, asserted in both directions. The UI now gates its controls on
+  that capability instead of the per-finding review identity, which answered
+  a different question, and fails closed when the field is absent. Uncertain
+  POST outcomes read back by review identity and never retry; UNKNOWN stays
+  UNKNOWN. The launcher's blanket catch now echoes an allowlisted
+  `CONTROL_CENTER_*` code only. 6 launcher cases (5 fail pre-repair, the
+  sixth is the flag-refusal control) and 4 new UI cases (5 UI cases fail
+  pre-repair including one updated existing case). UI 24 passed, UI
+  typecheck/build PASS, server suites 68 passed.
 
 ## Work In Progress
 
@@ -151,8 +167,8 @@ owner must hold the overlapping UI API and App surfaces.
 | NW-04 | M6 | CLOSED — repaired, 13 regressions, consumer-level case proven failing pre-repair |
 | NW-05 | M7 | CLOSED — repaired, 11 regressions, 4 proven failing pre-repair |
 | NW-12 | M8 | CLOSED — repaired, 11 regressions, quantified 38,216 bytes to 228 |
-| NW-09 | M9 | IN PROGRESS |
-| NW-10 | M9 | NOT STARTED |
+| NW-09 | M9 | CLOSED — repaired, 6 launcher + 4 UI regressions, 5 of each proven failing pre-repair |
+| NW-10 | M9 | IN PROGRESS |
 | NW-11 | M9 | NOT STARTED |
 | NW-08 | M10 | PARTIAL — ten suites registered, two duplicate additions reverted; live denominator 218/336 files measured |
 | NW-14 | M11 | NOT STARTED |
@@ -161,21 +177,30 @@ owner must hold the overlapping UI API and App surfaces.
 
 ## Exact Next Action
 
+1. Probe the live NW-10 evidence: confirm that the server endpoints already
+   expose `page.nextCursor` while `ui/control-center/src/api.ts` loaders
+   request only limits, so records beyond the first 20 runs / 50
+   findings-reviewer-source-coverage entries / first 100 timeline entries are
+   unreachable.
+2. Add per-view cursor state with opaque cursors, deduplication by stable
+   identity, generation binding, reset on filter or snapshot-generation
+   change, and explicit end / error / retry states. Keep the server caps and
+   the current first-page behaviour.
+3. Prove the UI reaches a record beyond EVERY first-page boundary with
+   multi-page fixtures, and that a generation change resets rather than mixes
+   pages.
+4. Then NW-11: exact per-endpoint validators, composed navigation abort with
+   a finite deadline, and bounded SSE-invalidation coalescing consistent with
+   the M8 server policy.
+
+## Superseded next action (M9 / NW-09, complete)
+
 1. Probe the live NW-09 evidence: confirm that
    `bin/nightwatch-control-center.mjs` builds a default collector without
-   `reviewAuthority` and a server without `reviewDecision`, so the supported
-   review capability exists only as library injection and the existing browser
-   tests — which inject authority directly — do not exercise the shipped path.
-2. Freeze the capability DTO and the pagination DTOs together BEFORE touching
-   the UI, since NW-10 and NW-11 consume them.
-3. Add the launcher opt-in with an owner-local preflight that creates one
-   immutable authority and injects it into both collector and server, keeping
-   the default read-only and reading back by review identity on an uncertain
-   POST outcome rather than retrying.
-4. Then NW-10 cursor state with identity deduplication and generation
-   binding, and NW-11 exact per-endpoint validators, composed navigation
-   abort with a finite deadline, and bounded SSE-invalidation coalescing
-   consistent with the M8 server policy.
+   `reviewAuthority` and a server without `reviewDecision`.
+2. Freeze the capability DTO before touching the UI.
+3. Add the launcher opt-in with an owner-local preflight.
+4. Read back by review identity on an uncertain POST outcome.
 
 ## Superseded next action (M8, complete)
 
@@ -314,6 +339,15 @@ owner must hold the overlapping UI API and App surfaces.
 | `bin/hardening-check.mjs` | call-form lock on both private-path surfaces | MODIFIED |
 | `src/core/bugAtlas/snapshot.ts` | strict basename, proven containment, temporary-plus-rename publication | MODIFIED |
 | `tests/unit/nw03AtlasSnapshotConfinement.test.ts` | eight NW-03 cases with sentinel and inode assertions | CREATED |
+| `src/controlCenter/contracts/meta.ts` | `localReviewDecision` capability contract | MODIFIED |
+| `src/controlCenter/adapters/metaAdapter.ts` | advisory capability, server-authoritative | MODIFIED |
+| `src/controlCenter/server/server.ts` | capability filled from the route-creating option | MODIFIED |
+| `bin/nightwatch-control-center.mjs` | `--enable-local-review` opt-in, preflight, bounded start reason | MODIFIED |
+| `ui/control-center/src/types.ts` | capability field, absent means DISABLED | MODIFIED |
+| `ui/control-center/src/api.ts` | `readBackReviewDecision` for uncertain outcomes | MODIFIED |
+| `ui/control-center/src/App.tsx` | capability gate and read-back reporting | MODIFIED |
+| `tests/unit/nw09ShippedReviewCapability.test.ts` | six shipped-launcher and disagreement cases | CREATED |
+| `ui/control-center/src/App.test.tsx` | four NW-09 cases; one existing case strengthened | MODIFIED |
 | `src/core/policy/sensitiveDiagnostics.ts` | allowlist-only diagnostic taxonomy | CREATED |
 | `src/browser/fixtures/storageState.ts` | content-free parse/IO diagnostics; one shared reader for the three inspection helpers | MODIFIED |
 | `src/core/environment/index.ts` | content-free config read/parse diagnostics | MODIFIED |

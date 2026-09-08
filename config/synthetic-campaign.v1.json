@@ -82,6 +82,8 @@
     "tests/unit/nw05RelayDeadline.test.ts",
     "tests/unit/phase5Api.test.ts",
     "tests/unit/nw12SseBackpressure.test.ts",
-    "tests/unit/controlCenterServer.test.ts"
+    "tests/unit/controlCenterServer.test.ts",
+    "tests/unit/nw09ShippedReviewCapability.test.ts",
+    "tests/unit/reviewerPersistence.test.ts"
   ]
 }

@@ -35,6 +35,16 @@ export interface MetaSnapshot {
   readonly ownerScopeStatus: 'FROZEN_BY_OWNER';
   readonly ownerScopeReason: 'INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE';
   readonly features: Readonly<Record<string, boolean>>;
+  /**
+   * NW-09. Whether this server serves the owner-local review write route.
+   * The server fills it from the same option that creates the route, so the
+   * UI must gate its decision controls on THIS and not on a per-finding
+   * review identity — that answers a different question (does a review store
+   * exist) and let the UI offer controls the server would refuse.
+   *
+   * Absent on an older server: treated as DISABLED.
+   */
+  readonly localReviewDecision?: 'ENABLED' | 'DISABLED';
   readonly limits: Readonly<Record<string, number>>;
 }
 

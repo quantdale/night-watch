@@ -425,7 +425,7 @@ Priority meanings: P0 is demonstrated catastrophic failure requiring immediate c
 
 ### NW-09 — Expose review decisions through a deliberate shipped capability
 
-- **Priority / category / confidence / status:** P2; operator workflow and authorization; CONFIRMED source behavior; NOT STARTED.
+- **Priority / category / confidence / status:** P2; operator workflow and authorization; CONFIRMED source behavior; **CLOSED** — repaired and regression-proven under `nightwatch-repository-hardening-implementation-v1` M9.
 - **Affected surfaces:** `bin/nightwatch-control-center.mjs`, default collector, control-center server/auth contracts, UI capability rendering, owner docs/browser tests.
 - **Evidence:** the shipped launcher constructs a default collector without `reviewAuthority` and a server without `reviewDecision`. POST is denied and UI controls are disabled. Existing browser tests inject authority directly, so they do not prove the shipped path.
 - **Problem, impact, root cause:** a supported local capability exists as library injection but has no deliberate owner-facing activation path; implementation and product workflow diverged.
@@ -434,6 +434,63 @@ Priority meanings: P0 is demonstrated catastrophic failure requiring immediate c
 - **Tests and validation:** shipped CLI E2E: default refusal, opt-in decision, restart/readback, duplicate/conflict, stale artifact, malformed body, uncertain response/readback, disabled capability UI, and keyboard submission.
 - **Acceptance:** documented opt-in works end to end from the actual launcher; default remains read-only; server/UI capability state agrees; restart preserves immutable review identity; no duplicate write on retry ambiguity.
 - **Dependencies / risks / parallelization:** depends on NW-02 path policy and stable server contracts. Dashboard-server lane may combine with NW-12; coordinate UI lane. Main risk is accidental write enablement, addressed by negative default tests.
+
+- **Resolution evidence (2026-09-09):** revalidated in live source — the
+  launcher called `createDefaultControlCenterCollector()` (the read-only half
+  of the factory) and never passed `reviewDecision`, so the documented
+  owner-local review workflow was unreachable from the shipped entry point.
+  The measurement also found a second, sharper defect the review had not
+  stated: the UI gated its decision controls on the per-finding
+  `reviewIdentity`, which answers whether a review STORE exists, not whether
+  THIS server serves the write route. A read-only server with a populated
+  store therefore rendered working-looking controls whose POST it would
+  refuse as not found, and nothing in the DTO let the UI know.
+  Repair: `--enable-local-review` is the only way to obtain the write route.
+  It runs an owner-local preflight — constructing the authority resolves the
+  private review root through the shared private-artifact policy, which after
+  NW-02/NW-03 refuses a root inside Nightwatch source, a sibling checkout or
+  a linked worktree — then builds BOTH halves through
+  `createControlCenterServices`, so the collector and the write handler
+  cannot derive a different campaign identity for the same state. A preflight
+  refusal fails the start rather than silently downgrading to a read-only
+  server, and the launcher prints
+  `NIGHTWATCH_CONTROL_CENTER_LOCAL_REVIEW ENABLED|DISABLED` so the operator
+  is told which surface they got.
+  `ControlCenterMetaDto.localReviewDecision` is the truthful capability, and
+  the SERVER fills it from `options.reviewDecision === undefined` — the same
+  expression that decides whether the route exists — overwriting any
+  collector value. The two therefore cannot disagree, which is asserted in
+  both directions. `readOnly: true` and `mutationAuthority: 'NONE'` are
+  unchanged and still accurate: an owner-local review decision writes only to
+  the owner's private store and confers no product, execution or
+  organizational authority, and the DTO says so rather than overloading
+  `readOnly`.
+  Uncertain POST outcomes now read back by review identity and never retry:
+  `readBackReviewDecision` reports RECORDED, NOT_RECORDED or UNKNOWN, and
+  UNKNOWN is reported as unknown rather than upgraded to "not recorded",
+  which would invite a second decision the store may already hold. An
+  identity mismatch on read-back is UNKNOWN, not a match.
+  The blanket `catch {}` that printed only `CONTROL_CENTER_START_FAILED` now
+  echoes an allowlisted `CONTROL_CENTER_[A-Z_]+` code and nothing else, so an
+  operator can tell a rejected UI root from an unavailable review store
+  without a native message carrying a path.
+  Six cases in `tests/unit/nw09ShippedReviewCapability.test.ts` SPAWN the real
+  launcher: default read-only with POST 404/405 and meta DISABLED; the opt-in
+  with the route answering a review result rather than "not found" and meta
+  ENABLED; product/environment flags still refused; a bounded start reason
+  with no path and no `Error` text; and both disagreement directions. No case
+  writes a decision through the shipped process, because the shipped store is
+  the operator's real one — write behaviour stays proven against an injected
+  temporary store in `reviewerPersistence.test.ts`. 5 of the 6 fail against
+  the pre-repair code; the sixth is the flag-refusal control.
+  Four UI cases added: controls hidden when the server reports DISABLED even
+  though the finding has an identity, failing closed when an older server
+  omits the field, the uncertain-outcome read-back with exactly one POST, and
+  UNKNOWN reported as unknown. One existing case was updated rather than
+  weakened: a response claiming organizational authority is still refused,
+  and now additionally reads back and reports that nothing was recorded. 5 of
+  the UI cases fail against the pre-repair UI. UI suite 24 passed, UI
+  typecheck and build PASS; server suites 68 passed.
 
 ### NW-10 — Implement bounded end-to-end dashboard pagination
 

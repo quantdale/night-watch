@@ -28,6 +28,10 @@ const overview: OverviewSnapshot = {
     ownerScopeStatus: 'FROZEN_BY_OWNER',
     ownerScopeReason: 'INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE',
     features: { readiness: true, safety: true },
+    // NW-09. The decision controls are gated on the SERVER's capability, so a
+    // fixture that exercises the decision workflow must report it. The
+    // read-only default is covered by its own case below.
+    localReviewDecision: 'ENABLED',
     limits: { maxPageLimit: 50, maxTimelineLimit: 100, maxGraphDepth: 4 },
   },
   readiness: {
@@ -576,6 +580,126 @@ describe('Control Center UI shell', () => {
     await screen.findByRole('heading', { name: 'Separate what was proved from what is suggested.' });
   };
 
+  /**
+   * NW-09. The decision controls must be gated on the SERVER's capability.
+   * Before the repair the UI inferred availability from the per-finding
+   * review identity, which answers a different question — whether a review
+   * STORE exists — so a read-only server still rendered controls whose POST
+   * it would refuse as not found.
+   */
+  it('offers no decision control when the server reports the write route disabled', async () => {
+    const user = userEvent.setup();
+    const responses = reviewerResponses(reviewerItem());
+    responses[CONTROL_CENTER_API_PATHS.meta] = { ...overview.meta, localReviewDecision: 'DISABLED' };
+    vi.stubGlobal('fetch', vi.fn((input: RequestInfo | URL) => Promise.resolve(responseFor(responses[String(input)]))));
+    await openReviewer(user);
+
+    // The finding HAS a review identity: only the server capability is
+    // missing, which is exactly the case the old gate could not see.
+    expect(screen.getByText('Read-only server')).toBeInTheDocument();
+    expect(screen.getByText(/--enable-local-review/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Accept Evidence' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('textbox', { name: /Rationale/ })).not.toBeInTheDocument();
+  });
+
+  it('fails closed when the server has not reported a capability at all', async () => {
+    const user = userEvent.setup();
+    const responses = reviewerResponses(reviewerItem());
+    // An older server omits the field entirely. Absence is not permission.
+    const { localReviewDecision: _omitted, ...withoutCapability } = overview.meta as unknown as Record<string, unknown>;
+    responses[CONTROL_CENTER_API_PATHS.meta] = withoutCapability;
+    vi.stubGlobal('fetch', vi.fn((input: RequestInfo | URL) => Promise.resolve(responseFor(responses[String(input)]))));
+    await openReviewer(user);
+
+    expect(screen.getByText('Read-only server')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Accept Evidence' })).not.toBeInTheDocument();
+  });
+
+  it('reads back by review identity when the POST outcome is uncertain, and never retries', async () => {
+    const user = userEvent.setup();
+    const decided = reviewerItem({
+      localReview: {
+        epistemicClass: 'FACT',
+        value: {
+          state: 'REVIEWED', decision: 'ACCEPT_EVIDENCE', reviewedAt: '2026-09-05T12:00:00Z',
+          transitionCount: 1, bindingCurrentness: 'CURRENT',
+          organizationalAuthority: 'NONE_LOCAL_REVIEW_ONLY',
+          notEquivalentTo: ['LESLIE_GENUINE', 'LESLIE_INVALID', 'PONDR_APPROVED'],
+        },
+        basis: ['REVIEWED'],
+      },
+      unknowns: [],
+    });
+    const pendingResponses = reviewerResponses(reviewerItem());
+    const decidedResponses = reviewerResponses(decided);
+    let reviewerReads = 0;
+    let posts = 0;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url === CONTROL_CENTER_API_PATHS.reviewerDecision) {
+          posts += 1;
+          // The connection dies after the server has already recorded it:
+          // the classic uncertain outcome.
+          return Promise.reject(new Error('socket hang up'));
+        }
+        if (url === '/api/v1/reviewer?limit=50') {
+          reviewerReads += 1;
+          // The first read is the initial render; the read-back afterwards
+          // sees the decision the lost response had already recorded.
+          return Promise.resolve(responseFor(reviewerReads === 1 ? pendingResponses[url] : decidedResponses[url]));
+        }
+        return Promise.resolve(responseFor(pendingResponses[url]));
+      })
+    );
+    await openReviewer(user);
+
+    await user.click(screen.getByRole('button', { name: 'Accept Evidence' }));
+    // The read-back confirms the lost response had recorded it, so the row
+    // refreshes into its terminal state rather than reporting a failure the
+    // operator would act on by deciding again.
+    await waitFor(() => expect(screen.getByText('Decided')).toBeInTheDocument());
+    expect(screen.getByText('Terminal. A second decision is refused by the server.')).toBeInTheDocument();
+    // Exactly one POST. A retry would either duplicate the request or return
+    // ALREADY_DECIDED without telling the operator which attempt recorded it.
+    expect(posts).toBe(1);
+    // The read-back happened: the initial render plus at least one more read.
+    expect(reviewerReads).toBeGreaterThan(1);
+    expect(screen.queryByText(/Refused/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/read-back shows nothing was recorded/)).not.toBeInTheDocument();
+  });
+
+  it('says the outcome is unknown when the read-back itself cannot reach the server', async () => {
+    const user = userEvent.setup();
+    const responses = reviewerResponses(reviewerItem());
+    let reviewerReads = 0;
+    let posts = 0;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url === CONTROL_CENTER_API_PATHS.reviewerDecision) {
+          posts += 1;
+          return Promise.reject(new Error('socket hang up'));
+        }
+        if (url === '/api/v1/reviewer?limit=50') {
+          reviewerReads += 1;
+          if (reviewerReads > 1) return Promise.reject(new Error('socket hang up'));
+          return Promise.resolve(responseFor(responses[url]));
+        }
+        return Promise.resolve(responseFor(responses[url]));
+      })
+    );
+    await openReviewer(user);
+
+    await user.click(screen.getByRole('button', { name: 'Accept Evidence' }));
+    // UNKNOWN is reported as unknown. It is not upgraded to "not recorded",
+    // which would invite a second decision the store may already hold.
+    await waitFor(() => expect(screen.getByText(/Whether it was recorded is unknown/)).toBeInTheDocument());
+    expect(posts).toBe(1);
+  });
+
   it('offers no decision control when there is no owner-local review store', async () => {
     const user = userEvent.setup();
     const responses = reviewerResponses(reviewerItem({ reviewIdentity: null, unknowns: ['NO_LOCAL_REVIEW_STORE'] }));
@@ -727,7 +851,10 @@ describe('Control Center UI shell', () => {
     await openReviewer(user);
 
     await user.click(screen.getByRole('button', { name: 'Accept Evidence' }));
-    await waitFor(() => expect(screen.getByText('Refused: Request Failed')).toBeInTheDocument());
+    // NW-09. The client refuses the breach, which makes the outcome uncertain,
+    // so it reads back by review identity instead of retrying. The read-back
+    // shows nothing recorded, which is the truth the operator needs.
+    await waitFor(() => expect(screen.getByText(/read-back shows nothing was recorded/)).toBeInTheDocument());
     expect(screen.queryByText(/Recorded locally/)).not.toBeInTheDocument();
     expect(document.body).not.toHaveTextContent('LESLIE_GENUINE');
   });
