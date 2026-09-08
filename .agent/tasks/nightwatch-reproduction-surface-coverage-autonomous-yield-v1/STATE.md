@@ -27,9 +27,9 @@ Measure and materially expand safe current-source reproduction coverage across t
 
 ## Current Milestone
 
-Milestone ID: M1
+Milestone ID: M3 / M8 / M9
 Milestone status: IN_PROGRESS
-What is being attempted: freeze the additive W10 reproduction-surface contracts now that M0 has mechanically identified target-universe collapse — not executor coverage — as the dominant yield defect.
+What is being attempted: capability-aware memory is in a dispatched lane; the second real generality target and the live campaign series are next.
 
 ## Completed Milestones
 
@@ -38,10 +38,51 @@ What is being attempted: freeze the additive W10 reproduction-surface contracts 
 - W9 terminal documentation head at W10 planning time: `0664c69cc72acbbf848bf6dd64e7e9d868d80601`.
 - W9 final HOUR_1 Omen campaign: 26 unique targets / 28 grounded hypotheses / 7 reproduction attempts / 7 NOT_AVAILABLE / 1 candidate / 0 admissions; wall-time bound with byte headroom.
 - **M0 COMPLETE** — live truth rediscovered, W9 baseline re-verified, bounded aggregate reproduction-capability census built with the live W9 rules, and the exact cause of W9's 7/7 `NOT_AVAILABLE` established mechanically. H1 DISPROVED as stated, H2 CONFIRMED, H3/H4 DISPROVED (M4 and M5 are NO-GO), H5 UNPROVEN. Evidence: `M0-CENSUS.md`.
+- **M1 COMPLETE** — `nightwatch.reproduction-surface-map.v1`, the census and yield-metric contracts, and `selectDiverseSourceIndex` frozen and integrated. 20 contract tests.
+- **M2 COMPLETE** — deterministic pure census engine (`src/core/reproductionSurface/census.ts`), 7 tests, mutation-probed.
+- **M4 NO-GO (evidence-based)** — a Go local-cache executor class unlocks zero approved targets.
+- **M5 NO-GO (evidence-based)** — no approved repository has a local direct non-Go runner.
+- **M6 COMPLETE** — `nightwatch.current-failure-evidence.v1` sanitized triage evidence, 10 tests.
+- **M7 COMPLETE** — fixed 59-case corpus and pure baseline-vs-final evaluator, 8 tests.
+- **M10 COMPLETE** — 10 long-run resilience proofs (pause/resume, pre-W10 and pre-W9 checkpoint compatibility, transient budget survival, refusal non-spin, cancellation and timeout process-tree cleanup, exact ledger reconciliation, sibling integrity).
+- **M8 PARTIAL** — the W9 real owner-local reproduction proof passes unchanged on the integrated head (1 passed, 27.7 s, real toolchain, real `go test` in disposable trees).
 
 ## Work In Progress
 
-M1 shared contract freeze. No implementation lane has been dispatched.
+M3 capability-aware memory is running in lane `nightwatch-w10-capability-memory-lane-v1`.
+
+## Measured W10 outcome so far
+
+The live 32-entry window the reasoner actually receives, measured end to end
+through `createOwnerLocalInvestigationContext().source.index()` on the real
+approved universe:
+
+| Measure | W9 (before) | W10 (after) |
+|---|---:|---:|
+| repositories represented | 1 | 8 |
+| `EXECUTABLE_NOW` entries | 0 | 5 |
+| distinct executable targets | 0 | 5 |
+
+The first measurement after repository round-robin gave 8 repositories and 5
+executable entries but only **1** distinct target: five sources in one Go
+package are one reproduction. Adding executable-target spread to selection
+took distinct targets from 1 to 5, so the same window now offers five
+genuinely different verifications instead of one repeated four times.
+
+Fixed-corpus benchmark (M7), same implementation, baseline vs final policy:
+
+| Metric | BASELINE (W9-like) | FINAL (W10) |
+|---|---:|---:|
+| repositories visible | 1 | 3 |
+| executable visible | 0 | 7 |
+| executable targets | 0 | 6 |
+| reproduction attempts | 7 | 7 |
+| `NOT_AVAILABLE` rate | 1.0000 | 0.7143 |
+| executable selection rate | 0.0000 | 0.2857 |
+| attempts to first executable reproduction | none | 3 |
+
+Both improved at an identical attempt budget, so the gain is selection
+quality rather than activity volume.
 
 ## M0 evidence summary
 
