@@ -54,7 +54,15 @@ import type {
   LocalSystemMapProvider,
 } from './types';
 import { LOCAL_INVESTIGATION_CONTEXT_VERSION } from './types';
-import { createOwnerLocalReproductionProvider } from '../ownerLocalReproduction/provider';
+import {
+  createOwnerLocalReproductionProvider,
+  discoverOwnerLocalTarget,
+} from '../ownerLocalReproduction/provider';
+import {
+  projectDiscovery,
+  type ReproductionSurfaceEntry,
+} from '../reproductionSurface/contracts';
+import { selectDiverseSourceIndex } from '../reproductionSurface/selection';
 
 export const OWNER_LOCAL_CONTEXT_VERSION = 'nightwatch.owner-local-investigation-context.v1' as const;
 
@@ -66,6 +74,15 @@ const OWNER_LOCAL_EVIDENCE_PROVIDER_ID = 'owner-local-evidence' as const;
 const UNAVAILABLE_REPRODUCTION_PROVIDER_ID = 'unavailable-local-reproduction' as const;
 
 const DEFAULT_SOURCE_INDEX_LIMIT = 200;
+/**
+ * Capability classification reads source bytes through the confined boundary,
+ * so it is deliberately bounded: probe a small multiple of the window rather
+ * than the whole universe. Four times the window is enough for capability to
+ * reorder a repository's own share; the ceiling stops a large `indexLimit`
+ * from turning an index call into a full-universe scan.
+ */
+const CAPABILITY_PROBE_MULTIPLIER = 4;
+const CAPABILITY_PROBE_CEILING = 256;
 const DATA_CLASSES: readonly LocalInvestigationDataClass[] = ['REAL_LOCAL', 'REAL_HISTORICAL', 'SYNTHETIC_TEST'];
 const SOURCE_STALE_MARKER = 'OWNER_LOCAL_SOURCE_STALE' as const;
 
@@ -207,10 +224,53 @@ function createOwnerSourceProvider(prepared: PreparedSource): LocalSourceProvide
     if (indexCache !== null) return indexCache;
     const entries = all();
     const truncated = entries.length > prepared.indexLimit;
+    // W10. The old behaviour was `entries.slice(0, indexLimit)`, and because
+    // `loadEligibleEntries` sorts repository-major, that prefix was not a
+    // sample of the universe — it was the first repository. On the live
+    // universe it produced 32 entries from one repository with zero executable
+    // coverage while 152 executable targets sat behind it, which is exactly
+    // how W9 spent every reproduction attempt on an unsupported surface.
+    //
+    // Diversity is decided first and capability-blind, so no repository can be
+    // starved by having no executable packages. Only then is a bounded
+    // oversample classified, and capability merely orders each repository's
+    // own share. Classification is bounded because it reads source bytes
+    // through the confined boundary: probing the whole universe would charge
+    // thousands of reads to answer a question about 32 entries.
+    const probeLimit = Math.min(
+      entries.length,
+      prepared.indexLimit * CAPABILITY_PROBE_MULTIPLIER,
+      CAPABILITY_PROBE_CEILING,
+    );
+    const probed = selectDiverseSourceIndex({ entries, limit: probeLimit });
+    const readinessByPath = new Map<string, ReproductionSurfaceEntry>();
+    for (const entry of probed.entries) {
+      readinessByPath.set(
+        entry.path,
+        projectDiscovery(
+          entry.path,
+          discoverOwnerLocalTarget({
+            sourcePath: entry.path,
+            siblingRoot: prepared.siblingRoot,
+            repositoryIds: prepared.config.approvedRepositories.map((repository) => repository.repoId),
+          }),
+        ),
+      );
+    }
+    const selected = selectDiverseSourceIndex({
+      entries: probed.entries,
+      limit: prepared.indexLimit,
+      readinessByPath,
+    });
     indexCache = {
-      entries: Object.freeze((truncated ? entries.slice(0, prepared.indexLimit) : entries).map((entry) => ({ ...entry }))),
+      entries: Object.freeze(selected.entries.map((entry) => ({ ...entry }))),
       total: entries.length,
       truncated,
+      surface: Object.freeze(
+        selected.entries.map(
+          (entry) => readinessByPath.get(entry.path) ?? projectDiscovery(entry.path, { status: 'UNKNOWN' } as never),
+        ),
+      ),
     };
     return indexCache;
   };

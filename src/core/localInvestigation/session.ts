@@ -358,15 +358,29 @@ export function createLocalInvestigationToolSession(context: LocalInvestigationC
     const resolved = await resolveProvider<LocalSourceIndex>(() => context.source.index());
     if ('blocked' in resolved) return failResult('ADAPTER_UNAVAILABLE', dispositionForBlockClass(resolved.class));
     const entries = resolved.value.entries.slice(0, MAX_REASONER_SOURCE_INDEX_ENTRIES);
+    // W10. The provider already ordered the window by repository round-robin,
+    // so a prefix of it is diverse rather than one repository's alphabet.
+    // `surface` is positionally aligned with the provider's entries, so the
+    // same prefix length keeps the annotation aligned with what was shown.
+    const surface = resolved.value.surface?.slice(0, entries.length);
     const indexed = succeed('INSPECT_SOURCE_SURFACE', 'SOURCE_INDEX', {
       entries,
       total: resolved.value.total,
       truncated: resolved.value.truncated || entries.length < resolved.value.entries.length,
+      ...(surface === undefined ? {} : { surface }),
     }, 'SOURCE_CODE');
     // The approved paths are already inside the envelope the reasoner just
     // received; reporting them as memory facts is what lets a later stateless
-    // turn still know they exist.
-    return { ...indexed, memory: { availableTargets: entries.map((entry) => entry.path) } };
+    // turn still know they exist. The capability annotation rides with them so
+    // a later turn knows which of them can actually be verified BEFORE it
+    // spends a reproduction on one that cannot.
+    return {
+      ...indexed,
+      memory: {
+        availableTargets: entries.map((entry) => entry.path),
+        ...(surface === undefined ? {} : { reproductionSurface: surface }),
+      },
+    };
   }
 
   async function runSourceRead(path: string): Promise<AgentToolResult> {

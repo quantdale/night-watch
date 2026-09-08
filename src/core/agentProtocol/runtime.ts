@@ -5,6 +5,7 @@
 // ---------------------------------------------------------------------------
 
 import { AGENT_BUDGET_VERSION, AGENT_CHECKPOINT_VERSION, AGENT_RUNTIME_STATE_VERSION } from './versions';
+import type { ReproductionSurfaceEntry } from '../reproductionSurface/contracts';
 
 export { AGENT_BUDGET_VERSION, AGENT_CHECKPOINT_VERSION, AGENT_RUNTIME_STATE_VERSION };
 
@@ -417,6 +418,12 @@ export interface AgentRuntimeState {
    * ordered, capped by the runtime. Empty on pre-W8 checkpoints.
    */
   readonly knownTargets: readonly string[];
+  /**
+   * W10: host-derived reproduction capability for approved source paths this
+   * investigation enumerated. Absent on pre-W10 checkpoints, which resume with
+   * no capability knowledge rather than a fabricated one.
+   */
+  readonly reproductionSurface?: readonly ReproductionSurfaceEntry[];
   /**
    * W9: component byte accounting explaining `budget.usage.inputBytes` and
    * `budget.usage.outputBytes`. Absent on pre-W9 checkpoints.

@@ -5,6 +5,13 @@
 // process and never touches the network.
 // ---------------------------------------------------------------------------
 
+import { OWNER_LOCAL_EXECUTOR_KINDS } from '../ownerLocalReproduction/contracts';
+import {
+  SURFACE_CAPS,
+  SURFACE_READINESS_CLASSES,
+  SURFACE_REFUSAL_CLASSES,
+  type ReproductionSurfaceEntry,
+} from '../reproductionSurface/contracts';
 import {
   normalizeActionFailureDisposition,
   type ActionFailureDisposition,
@@ -68,6 +75,13 @@ export interface AgentToolMemoryFacts {
   readonly availableTargets?: readonly string[];
   /** Salient symbols extracted from material already delivered to the reasoner. */
   readonly salient?: readonly string[];
+  /**
+   * W10 capability annotation for targets this action enumerated. Executor
+   * supplied and host derived: the runtime validates every field against the
+   * frozen vocabularies, so a malformed or invented readiness is dropped
+   * rather than believed.
+   */
+  readonly reproductionSurface?: readonly ReproductionSurfaceEntry[];
 }
 
 /** Caps applied to executor-supplied memory facts. Over-cap input is truncated, never trusted. */
@@ -76,6 +90,7 @@ export const TOOL_MEMORY_CAPS = Object.freeze({
   availableTargets: 32,
   salient: 4,
   salientChars: 64,
+  reproductionSurface: SURFACE_CAPS.entries,
 });
 
 const TOOL_MEMORY_SECRET_RE =
@@ -98,6 +113,55 @@ function boundedMemoryList(value: unknown, max: number, charCap: number): readon
   return out.length === 0 ? undefined : Object.freeze(out);
 }
 
+/**
+ * Fail-closed surface normalization. Readiness, refusal and executor must each
+ * be a member of their frozen vocabulary, and an `EXECUTABLE_NOW` claim without
+ * an executor class is incoherent and dropped: capability is a host fact, so an
+ * entry that cannot be validated is discarded rather than downgraded into a
+ * plausible-looking one.
+ */
+function normalizeSurfaceEntries(value: unknown): readonly ReproductionSurfaceEntry[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const out: ReproductionSurfaceEntry[] = [];
+  const seen = new Set<string>();
+  for (const item of value) {
+    if (out.length >= TOOL_MEMORY_CAPS.reproductionSurface) break;
+    if (item === null || typeof item !== 'object' || Array.isArray(item)) continue;
+    const record = item as Record<string, unknown>;
+    const sourcePath = boundedMemoryString(record.sourcePath, TOOL_MEMORY_CAPS.targetChars);
+    if (sourcePath === null || seen.has(sourcePath)) continue;
+    const readiness = record.readiness;
+    if (typeof readiness !== 'string' || !SURFACE_READINESS_CLASSES.includes(readiness as never)) continue;
+    const refusalRaw = record.refusal;
+    const refusal =
+      refusalRaw === null || refusalRaw === undefined
+        ? null
+        : typeof refusalRaw === 'string' && SURFACE_REFUSAL_CLASSES.includes(refusalRaw as never)
+          ? (refusalRaw as ReproductionSurfaceEntry['refusal'])
+          : undefined;
+    if (refusal === undefined) continue;
+    const executorRaw = record.executorClass;
+    const executorClass =
+      executorRaw === null || executorRaw === undefined
+        ? null
+        : typeof executorRaw === 'string' && OWNER_LOCAL_EXECUTOR_KINDS.includes(executorRaw as never)
+          ? (executorRaw as ReproductionSurfaceEntry['executorClass'])
+          : undefined;
+    if (executorClass === undefined) continue;
+    if (readiness === 'EXECUTABLE_NOW' && executorClass === null) continue;
+    if (readiness !== 'EXECUTABLE_NOW' && executorClass !== null) continue;
+    const targetIdRaw = record.targetId;
+    const targetId =
+      targetIdRaw === null || targetIdRaw === undefined
+        ? null
+        : boundedMemoryString(targetIdRaw, TOOL_MEMORY_CAPS.targetChars);
+    if (targetId === undefined) continue;
+    seen.add(sourcePath);
+    out.push(Object.freeze({ sourcePath, readiness: readiness as ReproductionSurfaceEntry['readiness'], executorClass, refusal, targetId }));
+  }
+  return out.length === 0 ? undefined : Object.freeze(out);
+}
+
 /** Fail-closed normalization: malformed, oversize or secret-shaped facts are dropped. */
 export function normalizeToolMemoryFacts(value: unknown): AgentToolMemoryFacts | undefined {
   if (value === null || typeof value !== 'object' || Array.isArray(value)) return undefined;
@@ -109,11 +173,20 @@ export function normalizeToolMemoryFacts(value: unknown): AgentToolMemoryFacts |
     TOOL_MEMORY_CAPS.targetChars,
   );
   const salient = boundedMemoryList(record.salient, TOOL_MEMORY_CAPS.salient, TOOL_MEMORY_CAPS.salientChars);
-  if (target === null && availableTargets === undefined && salient === undefined) return undefined;
+  const reproductionSurface = normalizeSurfaceEntries(record.reproductionSurface);
+  if (
+    target === null &&
+    availableTargets === undefined &&
+    salient === undefined &&
+    reproductionSurface === undefined
+  ) {
+    return undefined;
+  }
   const facts: Record<string, unknown> = {};
   if (target !== null) facts.target = target;
   if (availableTargets !== undefined) facts.availableTargets = availableTargets;
   if (salient !== undefined) facts.salient = salient;
+  if (reproductionSurface !== undefined) facts.reproductionSurface = reproductionSurface;
   return Object.freeze(facts) as AgentToolMemoryFacts;
 }
 

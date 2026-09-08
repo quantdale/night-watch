@@ -28,6 +28,7 @@ import {
   type AgentRuntimeState,
   type AgentRuntimeStatus,
 } from '../agentProtocol';
+import { normalizeToolMemoryFacts } from './types';
 
 export type AgentCheckpointFailureCode = 'CORRUPT' | 'SECRET_DETECTED' | 'CAMPAIGN_MISMATCH';
 
@@ -258,6 +259,20 @@ function parseRuntimeState(value: unknown): AgentRuntimeState {
   }
   if (value.knownTargets !== undefined && !isStringArray(value.knownTargets)) {
     throw new AgentCheckpointError('CORRUPT', 'state.knownTargets is invalid');
+  }
+  // W10 additive capability annotation. Absent is valid (pre-W10 checkpoints
+  // resume with no capability knowledge). Present-but-malformed is corrupt
+  // rather than silently dropped: a checkpoint is a resume authority, so a
+  // forged `EXECUTABLE_NOW` must never survive into a live campaign.
+  if (value.reproductionSurface !== undefined) {
+    if (!Array.isArray(value.reproductionSurface)) {
+      throw new AgentCheckpointError('CORRUPT', 'state.reproductionSurface is invalid');
+    }
+    const accepted =
+      normalizeToolMemoryFacts({ reproductionSurface: value.reproductionSurface })?.reproductionSurface ?? [];
+    if (accepted.length !== value.reproductionSurface.length) {
+      throw new AgentCheckpointError('CORRUPT', 'state.reproductionSurface entry is invalid');
+    }
   }
   // Byte ledger (additive across W9 and Lane D). Absent is valid (pre-W9
   // checkpoints resume with explicit legacy carry); present-but-malformed is

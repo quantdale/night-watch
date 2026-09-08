@@ -55,6 +55,43 @@ export interface DiverseSelectionResult<T extends SelectableSourceEntry> {
 }
 
 /**
+ * Order executable entries so distinct verification targets come first.
+ *
+ * Five sources in one Go package are ONE reproduction: running the package
+ * again cannot tell you anything the first run did not. Measured on the live
+ * universe, a capability-first window that ignores this yields five executable
+ * entries covering a single distinct target — better than W9's zero, but still
+ * four wasted verification choices. Emitting one source per distinct target
+ * before any second source of an already-covered target turns the same window
+ * into that many genuinely different verifications.
+ *
+ * Stable within each target group, so selection stays deterministic.
+ */
+function spreadByTarget<T extends SelectableSourceEntry>(
+  executable: readonly T[],
+  readiness: ReadonlyMap<string, ReproductionSurfaceEntry>,
+): readonly T[] {
+  const groups = new Map<string, T[]>();
+  for (const entry of executable) {
+    // An executable entry without a target id cannot be proven distinct from
+    // any other, so it gets its own group keyed by path rather than being
+    // merged into a shared bucket it may not belong to.
+    const key = readiness.get(entry.path)?.targetId ?? `path:${entry.path}`;
+    const group = groups.get(key);
+    if (group === undefined) groups.set(key, [entry]);
+    else group.push(entry);
+  }
+  const spread: T[] = [];
+  for (let round = 0; spread.length < executable.length; round += 1) {
+    for (const group of groups.values()) {
+      const entry = group[round];
+      if (entry !== undefined) spread.push(entry);
+    }
+  }
+  return spread;
+}
+
+/**
  * Select a bounded, repository-diverse window.
  *
  * Round-robin across repositories in sorted order, taking one entry from each
@@ -98,7 +135,7 @@ export function selectDiverseSourceIndex<T extends SelectableSourceEntry>(
         }
       }
       bucket.length = 0;
-      bucket.push(...executable, ...rest);
+      bucket.push(...spreadByTarget(executable, readiness), ...rest);
     }
   }
 

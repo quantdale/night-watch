@@ -220,6 +220,50 @@ test('capability ordering surfaces executable entries without hiding the rest', 
   expect(result.omitted).toBe(0);
 });
 
+test('a window of executable entries covers distinct targets, not one package repeatedly', () => {
+  // Five sources, four in one package. Running that package five times is one
+  // reproduction, so a capability-first window that ignores target identity
+  // wastes four verification choices — measured on the live universe as
+  // 5 executable entries covering exactly 1 distinct target.
+  const entries = [
+    { path: 'mobingilabs/ouchan:pkg/almcreds/a.go', repository: 'mobingilabs/ouchan' },
+    { path: 'mobingilabs/ouchan:pkg/almcreds/b.go', repository: 'mobingilabs/ouchan' },
+    { path: 'mobingilabs/ouchan:pkg/almcreds/c.go', repository: 'mobingilabs/ouchan' },
+    { path: 'mobingilabs/ouchan:pkg/almcreds/d.go', repository: 'mobingilabs/ouchan' },
+    { path: 'mobingilabs/ouchan:pkg/almuser/e.go', repository: 'mobingilabs/ouchan' },
+  ];
+  const readinessByPath = new Map<string, ReproductionSurfaceEntry>();
+  for (const entry of entries) {
+    const packageRelativePath = entry.path.includes('almuser') ? 'pkg/almuser' : 'pkg/almcreds';
+    readinessByPath.set(
+      entry.path,
+      projectDiscovery(entry.path, { status: 'SUPPORTED', target: target({ packageRelativePath }) }),
+    );
+  }
+  const result = selectDiverseSourceIndex({ entries, limit: 2, readinessByPath });
+  const targets = new Set(result.entries.map((entry) => readinessByPath.get(entry.path)!.targetId));
+  expect(result.entries.length).toBe(2);
+  expect(targets.size).toBe(2);
+});
+
+test('target spread never drops an executable entry when the window is large enough', () => {
+  const entries = [
+    { path: 'r/one:pkg/a/1.go', repository: 'r/one' },
+    { path: 'r/one:pkg/a/2.go', repository: 'r/one' },
+    { path: 'r/one:pkg/b/3.go', repository: 'r/one' },
+  ];
+  const readinessByPath = new Map<string, ReproductionSurfaceEntry>();
+  for (const entry of entries) {
+    const packageRelativePath = entry.path.includes('pkg/b') ? 'pkg/b' : 'pkg/a';
+    readinessByPath.set(
+      entry.path,
+      projectDiscovery(entry.path, { status: 'SUPPORTED', target: target({ packageRelativePath }) }),
+    );
+  }
+  const result = selectDiverseSourceIndex({ entries, limit: 32, readinessByPath });
+  expect(result.entries.map((entry) => entry.path).sort()).toEqual(entries.map((entry) => entry.path).sort());
+});
+
 test('an unannotated path is never promoted as executable', () => {
   const entries = [
     { path: 'r/one:a.go', repository: 'r/one' },

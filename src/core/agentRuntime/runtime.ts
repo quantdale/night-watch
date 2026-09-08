@@ -56,7 +56,9 @@ import {
 import { createCheckpoint, AgentCheckpointError, parseCheckpoint, parseResumeCursor } from './checkpoint';
 import { deriveInvestigationMemory } from '../investigationMemory/derive';
 import { MEMORY_CAPS, type CampaignStrategyState } from '../investigationMemory/types';
+import type { ReproductionSurfaceEntry } from '../reproductionSurface/contracts';
 import {
+  TOOL_MEMORY_CAPS,
   normalizeToolResult,
   type AgentRunOptions,
   type AgentRunResult,
@@ -134,6 +136,12 @@ export class AgentRuntime {
   private runAbort: AbortController | null = null;
   private pendingUntrusted: UntrustedEnvelope[] = [];
   private knownTargets: string[] = [];
+  /**
+   * W10 capability annotation, keyed by approved source path. Executor
+   * supplied and host derived, so it is knowledge the campaign already
+   * observed rather than new authority. Bounded by TOOL_MEMORY_CAPS.
+   */
+  private reproductionSurface = new Map<string, ReproductionSurfaceEntry>();
   private readonly priorStrategy: CampaignStrategyState | null;
 
   constructor(deps: AgentRuntimeDeps | AgentRuntimeResumeDeps) {
@@ -164,6 +172,11 @@ export class AgentRuntime {
       // Pre-W8 checkpoints have no target ledger: resume with an empty one
       // rather than refusing an otherwise valid checkpoint.
       this.knownTargets = [...(restored.state.knownTargets ?? [])];
+      // Pre-W10 checkpoints have no capability annotation: resume without one.
+      // An absent annotation reads as UNKNOWN downstream, never as executable.
+      this.reproductionSurface = new Map(
+        (restored.state.reproductionSurface ?? []).map((entry) => [entry.sourcePath, entry]),
+      );
       // Pre-W9 checkpoints carry cumulative budget usage but no component
       // attribution. Preserve it honestly as legacy carry. A present ledger
       // has already been structurally and arithmetically validated by the
@@ -227,6 +240,12 @@ export class AgentRuntime {
       evidenceRefs: Object.freeze([...this.evidenceRefs]),
       candidateIds: Object.freeze([...this.candidateIds]),
       knownTargets: Object.freeze([...this.knownTargets]),
+      // Omitted entirely when empty: a campaign that learned no capability
+      // must serialize byte-identically to a pre-W10 checkpoint, so the
+      // additive field can never perturb the exact byte accounting.
+      ...(this.reproductionSurface.size === 0
+        ? {}
+        : { reproductionSurface: Object.freeze([...this.reproductionSurface.values()]) }),
       byteLedger: Object.freeze({ ...this.byteLedger }),
       budget: Object.freeze({ policy: this.policy, usage: Object.freeze({ ...this.usage }) }),
       terminationReason: this.terminationReason,
@@ -677,6 +696,17 @@ export class AgentRuntime {
     if (result.ok && learnable) {
       if (facts?.availableTargets !== undefined) this.learnTargets(facts.availableTargets);
       if (target !== null) this.learnTargets([target]);
+      // Capability is learned from the same successful enumeration that
+      // learned the targets, so an annotation can never outlive the evidence
+      // that produced it. A later observation of the same path replaces the
+      // earlier one: the newest host classification is the current truth.
+      if (facts?.reproductionSurface !== undefined) {
+        for (const entry of facts.reproductionSurface) {
+          if (this.reproductionSurface.size >= TOOL_MEMORY_CAPS.reproductionSurface
+            && !this.reproductionSurface.has(entry.sourcePath)) break;
+          this.reproductionSurface.set(entry.sourcePath, entry);
+        }
+      }
     }
     const resultClass = result.ok ? result.resultClass : 'TOOL_ERROR';
     // W9: persist the host-owned disposition on FAILED actions only. Absent

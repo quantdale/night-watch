@@ -3,6 +3,7 @@ import type { UntrustedSource } from '../agentProtocol/untrusted';
 import type { AgentToolExecutor } from '../agentRuntime/types';
 import type { BugAtlasStore } from '../bugAtlas/store';
 import type { SourceScanLanguage } from '../source/scanTypes';
+import type { ReproductionSurfaceEntry } from '../reproductionSurface/contracts';
 import type { SystemAtlasOverlay } from '../systemAtlas/overlay';
 import type { SystemMapInput } from '../systemMap/projections';
 import type { OwnerLocalCurrentSourceProof } from './currentSourceProof';
@@ -33,6 +34,12 @@ export interface LocalSourceIndex {
   readonly entries: readonly LocalSourceIndexEntry[];
   readonly total: number | null;
   readonly truncated: boolean;
+  /**
+   * W10 capability annotation, positionally aligned with `entries`. Optional
+   * because a provider that cannot classify (the historical replay provider)
+   * must stay valid and simply offer no readiness rather than a fabricated one.
+   */
+  readonly surface?: readonly ReproductionSurfaceEntry[];
 }
 
 export interface LocalSourceDocument extends LocalSourceIndexEntry {
