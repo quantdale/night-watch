@@ -74,6 +74,10 @@ import {
 } from '../investigationMemory/derive';
 import type { CampaignStrategyState } from '../investigationMemory/types';
 import { TOOL_MEMORY_CAPS, type AgentRunResult, type AgentToolExecutor } from './types';
+import {
+  deriveCampaignYieldMetrics,
+  type CampaignYieldMetrics,
+} from '../reproductionSurface/campaignYield';
 import type { ReproductionSurfaceEntry } from '../reproductionSurface/contracts';
 
 export const LOCAL_CAMPAIGN_VERSION = 'nightwatch.local-cli-campaign.v1' as const;
@@ -168,6 +172,12 @@ export interface LocalCampaignResult {
    * truncated).
    */
   readonly campaignStrategy: CampaignStrategyState;
+  /**
+   * W10 yield, derived from this campaign's own action log and carried
+   * capability. Mechanical: a reasoner cannot report it, and a human reading
+   * the checkpoint cannot mistake admitted findings for attempts.
+   */
+  readonly yieldMetrics: CampaignYieldMetrics;
 }
 
 export interface LocalCampaignListing {
@@ -757,6 +767,10 @@ function resultOf(
     wallTimeMs: wallTimeMs ?? campaignUsageOf(engine).wallTimeMs,
     byteLedger: { ...engine.acc.byteLedger },
     campaignStrategy: engine.acc.strategy,
+    yieldMetrics: deriveCampaignYieldMetrics({
+      actionLog: state.actionLog,
+      surface: state.reproductionSurface ?? [],
+    }),
   };
 }
 

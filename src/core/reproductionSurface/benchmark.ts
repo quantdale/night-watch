@@ -446,7 +446,12 @@ export function evaluateBenchmark(input: BenchmarkInput): BenchmarkResult {
   let attemptsToFirst: number | null = null;
   let callsToFirst: number | null = null;
   let callsSoFar = 0;
-  const seenRefusals = new Set<SurfaceRefusalClass>();
+  // Keyed by the attempted source, never by refusal class: two different
+  // sources that both lack a vendor directory are two first attempts, not a
+  // repeat. The frozen corpus forbids duplicate source paths, so this stays
+  // zero here by construction; the live campaign derivation
+  // (`deriveCampaignYieldMetrics`) is where a real repeat can occur.
+  const attemptedUnsupported = new Set<string>();
   attempts.forEach((attempt, index) => {
     callsSoFar += attempt.calls;
     if (attempt.executed) {
@@ -459,10 +464,8 @@ export function evaluateBenchmark(input: BenchmarkInput): BenchmarkResult {
       return;
     }
     notAvailableAttempts += 1;
-    if (attempt.refusal !== null) {
-      if (seenRefusals.has(attempt.refusal)) repeatedUnsupportedAttempts += 1;
-      else seenRefusals.add(attempt.refusal);
-    }
+    if (attemptedUnsupported.has(attempt.sourcePath)) repeatedUnsupportedAttempts += 1;
+    else attemptedUnsupported.add(attempt.sourcePath);
   });
 
   return {
