@@ -69,6 +69,8 @@ Acceptance:
 - H1-H5 in SPEC recorded as CONFIRMED / DISPROVED / PARTIAL with evidence;
 - no implementation lane started before this closes.
 
+Status: COMPLETE — bounded census and initiating-hypothesis verdicts are recorded in `M0-CENSUS.md`; W9's 7/7 refusal cause was mechanically isolated to the repository-major 32-entry prefix.
+
 ### M1 — Freeze shared reproduction-surface contracts
 
 Freeze additive/versioned contracts before parallel writes.
@@ -96,6 +98,8 @@ Orchestrator decision gate at end of M1:
 - GO for local-cache Go class only if live census proves meaningful reachable coverage and threat model is acceptable;
 - GO for one non-Go class only if its direct runner satisfies the SPEC; otherwise record NO-GO and do not delegate it.
 
+Status: COMPLETE — additive surface, census, yield and current-failure evidence contracts were frozen and contract-tested before independent lanes started.
+
 ### M2 — Reproduction capability census lane
 
 Implement deterministic reusable census logic over approved current source.
@@ -111,6 +115,8 @@ Deliver:
 - no sibling writes/network.
 
 Keep raw machine-specific detail owner-private when needed.
+
+Status: COMPLETE — deterministic reusable aggregate classification, refusal taxonomy and target deduplication are implemented with seven adversarial tests.
 
 ### M3 — Reproduction surface map + memory/campaign integration
 
@@ -134,6 +140,8 @@ Tests:
 - campaign resume retains capability knowledge;
 - unsupported target cannot self-upgrade;
 - executable target cannot be minted from model fields.
+
+Status: COMPLETE — capability is visible before reproduction, carried in memory and campaign strategy v2, bounded and fail-closed; the live-discovered cross-investigation carry defect is repaired and regression-covered.
 
 ### M4 — Safe Go coverage expansion
 
@@ -169,6 +177,8 @@ Adversarial coverage:
 
 If live data disproves the value/safety of this class, leave M4 as documented NO-GO and pursue equivalent coverage improvements through capability-aware targeting; do not force implementation.
 
+Status: COMPLETE / NO-GO — the live census proved a local-cache Go class would unlock zero approved targets, so no authority-expanding executor was added.
+
 ### M5 — Optional non-Go execution-class decision/implementation
 
 Only after M2 census.
@@ -189,6 +199,8 @@ A class may be implemented only if:
 At most one non-Go class in W10.
 
 NO-GO is a valid outcome.
+
+Status: COMPLETE / NO-GO — no approved non-Go repository has an already-local direct runner; network installation and package-script execution remain prohibited.
 
 ### M6 — Sanitized reproduced-failure evidence + triage
 
@@ -213,6 +225,8 @@ Tests:
 - malformed test names;
 - build/process/timeout cannot appear as assertion proof;
 - model prose cannot mint evidence.
+
+Status: COMPLETE — `nightwatch.current-failure-evidence.v1` exposes only bounded scrubbed mechanically repeated assertion evidence; ten tests cover secrets, injection and non-qualifying failures.
 
 ### M7 — W10 fixed coverage/yield benchmark
 
@@ -246,6 +260,8 @@ Measure:
 
 Do not tune only on one real repository.
 
+Status: COMPLETE — the fixed 59-case benchmark improves executable selection from 0.0000 to 0.2857 and lowers identical-budget `NOT_AVAILABLE` rate from 1.0000 to 0.7143 with zero false-positive or hidden-truth authority.
+
 ### M8 — Real reproduction generality proof
 
 Run real current-source generic provider proofs.
@@ -260,6 +276,8 @@ Required:
 6. Prove no sibling/temp residue.
 
 Any repeated current failure is triage evidence, not automatically unknown-bug proof.
+
+Status: COMPLETE — the unchanged W9 real package and one distinct second package execute through the generic provider in disposable state; repository diversity is unavailable because only `mobingilabs/ouchan` has approved executable targets.
 
 ### M9 — Long live-provider campaign series
 
@@ -301,6 +319,8 @@ Do not cherry-pick only successful runs.
 
 If a provider becomes quota/auth blocked, continue all deterministic work and preserve exact rerun commands.
 
+Status: IN_PROGRESS — broad full-stack and robustness-repeat HOUR_1 campaigns are preserved; the required census-scoped reproduction-rich HOUR_1 campaign is running.
+
 ### M10 — Long-run resilience / pause-resume / failure recovery
 
 Exercise:
@@ -313,6 +333,8 @@ Exercise:
 - tool timeout cleanup;
 - byte budgets and payload ledger exactness across long runs;
 - no sibling/temp residue.
+
+Status: COMPLETE — ten resilience proofs cover pause/resume, checkpoint generations, retry/refusal continuity, cancellation/timeout cleanup, exact accounting and sibling identity.
 
 ### M11 — Full regression and certification
 
