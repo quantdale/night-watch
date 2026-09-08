@@ -55,7 +55,7 @@ W10's job is to measure and reduce that reproduction-coverage/selection gap, not
 CAMPAIGN: nightwatch-autonomous-bug-hunting-programme-v1
 CHILD TASK: nightwatch-reproduction-surface-coverage-autonomous-yield-v1
 WAVE: W10
-SESSION WORKTREE: CREATE/CLAIM VIA C-00 FROM LIVE GIT
+SESSION WORKTREE: session/nightwatch-reproduction-surface--0a9096be
 
 IMPLEMENTATION AUTHORIZED:
   Nightwatch repository source/tests/contracts/CLI/docs/OpenSpec/task state,

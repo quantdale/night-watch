@@ -10,7 +10,7 @@ Last validated implementation SHA: bb28480c6a6969a06744c75c4c947851d5bece7c
 Last substantive checkpoint SHA: bb28480c6a6969a06744c75c4c947851d5bece7c
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
-Branch: DISCOVER_FROM_SESSION
+Branch: session/nightwatch-reproduction-surface--0a9096be
 Last checkpoint: W9 complete/certified at `bb28480`; W10 reproduction-surface coverage/autonomous yield is now the active child
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 

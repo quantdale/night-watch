@@ -10,7 +10,7 @@ Starting SHA: 0664c69cc72acbbf848bf6dd64e7e9d868d80601
 Last validated implementation SHA: bb28480c6a6969a06744c75c4c947851d5bece7c
 Last substantive checkpoint SHA: bb28480c6a6969a06744c75c4c947851d5bece7c
 Live HEAD authority: GIT
-Branch: DISCOVER_FROM_SESSION
+Branch: session/nightwatch-reproduction-surface--0a9096be
 Last checkpoint: W10 task opened from the W9 terminal documentation head; no W10 implementation has been validated yet
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
