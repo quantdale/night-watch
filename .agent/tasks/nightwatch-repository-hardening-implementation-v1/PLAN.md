@@ -412,7 +412,9 @@ lifecycles, then the operator surface, then release accounting.
   `npm run workspace:check`, `npm run session:check`, `npm test`,
   `npm run gate:local`, a fresh Node 20 `npm run gate:clean`, UI lanes, and
   `git diff --check`.
-- **Status:** NOT_STARTED
+- **Status:** COMPLETE — every lane green at the candidate checkpoint, and
+  the clean-checkout gate earned its place by finding a real defect first:
+  the third NW-02 surface, invisible to every other lane.
 
 ## Validation Strategy
 

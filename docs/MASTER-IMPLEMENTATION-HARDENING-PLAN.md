@@ -179,6 +179,29 @@ Priority meanings: P0 is demonstrated catastrophic failure requiring immediate c
   import line satisfied a substring test while the call site was replaced, so
   the rule was tightened to the call form and all four variants now fail.
 
+- **Completion of the third surface (2026-09-09, found by certification).**
+  The review named three surfaces; the M3 repair converted two. The clean
+  checkout gate found the third — "topology assumptions in auth/storage-state
+  validators" — because M10 promoted `storageState` into a required lane and
+  `gate:clean` clones into `/tmp/nightwatch-quality-gate-clean-XXXX`.
+  `storageState.ts` computed its workspace root as
+  `path.resolve(nightwatchRoot, '..')`, so in that clone the workspace root
+  became `/tmp` and every legitimate external storage-state path under /tmp
+  was refused as "inside the Alphaus workspace". Thirteen cases failed in
+  `gate:clean` while passing in `gate:local`, `npm test` and every isolated
+  run.
+  The lesson is sharper than the original finding: a topology-derived safety
+  decision does not have to be wrongly PERMISSIVE to be wrong. This one was
+  wrongly RESTRICTIVE, in a location the author never ran, and only a
+  relocated-checkout gate could see it.
+  The default is now the sibling `REPOSITORIES` root from the shared topology
+  authority; `nightwatchRoot` still covers this checkout, so nothing weakens.
+  Two test suites carried the same derivation while writing fixtures into
+  `os.tmpdir()`, so their acceptance cases refused their own fixtures; both
+  now use a synthetic workspace root that exists nowhere and therefore cannot
+  be an ancestor of a fixture. Every rejection case is untouched. Measured in
+  the exact failing shape: 10 failed before, 58 passed after.
+
 ### NW-03 — Confine and safely publish Bug Atlas snapshots
 
 - **Priority / category / confidence / status:** P1; filesystem integrity; CONFIRMED by execution; **CLOSED** — repaired and regression-proven under `nightwatch-repository-hardening-implementation-v1` M4.

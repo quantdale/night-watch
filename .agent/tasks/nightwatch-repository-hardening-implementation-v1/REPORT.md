@@ -992,6 +992,54 @@ interleaving are recorded and routed around rather than repaired: rewriting
 them would put historical receipts at risk for a readability gain, which this
 finding's own constraint forbids.
 
+## Repository-level definition of done
+
+The plan's fourteen items, each answered from the certification run at the
+candidate checkpoint.
+
+| # | Item | Result |
+| --- | --- | --- |
+| 1 | every finding has acceptance evidence; no unresolved P0/P1 | all 14 in-scope findings CLOSED with per-finding acceptance tables. No P0 was ever claimed. One evidence LANE inside NW-14 is UNAVAILABLE with its own requirement |
+| 2 | the seven checks pass and `git diff --check` is clean | `session:status`, `workspace:check`, `agent:check`, `handoff:check`, `project:check`, `hardening:check`, `git diff --check` — all PASS |
+| 3 | root typecheck, UI lane, classified offline regression | typecheck PASS; UI typecheck/41 tests/build PASS; `npm test` 4768 passed / 18 skipped / 0 failed; every discovered test classified, 0 unclassified |
+| 4 | prototype-name and coercion probes fail before effects | NW-01: eight inherited names across six vocabularies, plus a coercion case; valid persisted inputs still load |
+| 5 | every private store rejects source/worktree/traversal/symlink targets | NW-02 across three surfaces, NW-03 confinement, sentinels byte-identical |
+| 6 | crash injection yields one complete generation | NW-04 crash matrix; same-ID clobber impossible; corrupt state preserved |
+| 7 | timeout/cancel/disconnect leave no active owned work | NW-05 one abortable deadline; NW-12 bounded per-client SSE; NW-11 client abort and deadline |
+| 8 | shipped launcher proves read-only default plus opt-in review | NW-09, spawning the real launcher; restart readback by review identity; no duplicate write on ambiguity |
+| 9 | unsupported DTOs are safe errors; bursts are bounded | NW-11: exact per-endpoint contracts; 1/100/1000-event bursts cost 1/2/2 invalidations |
+| 10 | performance evidence names workload and measurements | NW-12 quantified 38,216 queued bytes to 228; NW-08 recorded 258 tests in 26 s for the promoted lane |
+| 11 | clean-checkout, host qualification and CI reported independently | `gate:clean` PASS on fresh Node 20 with no reused `node_modules`; the host matrix tabulates seven capabilities; CI is reported UNAVAILABLE, not projected |
+| 12 | W10 results stay source-current and denominator-honest | consumed unchanged; no W10 claim was restated or re-derived here |
+| 13 | commands, private-state locations, capabilities and lanes documented; Git holds no secrets | the host capability matrix plus §5's current-truth list; `git diff --check` clean; every fixture fabricated |
+| 14 | validated work committed in its owned session and integrated by fast-forward | every milestone integrated by verified fast-forward compare-and-swap from one C-00 session; no force push, no rebase, no sibling write |
+
+## What this campaign does NOT claim
+
+- No DEV, NEXT, production, cloud or datastore contact occurred or is
+  authorized, and none is proven.
+- No online dependency-advisory scan was performed. That lane is UNAVAILABLE
+  under this campaign's safety boundary; an absent scan is never a passing
+  scan.
+- No exact-checkpoint GitHub Actions run was inspected. CI is NOT_OBSERVED,
+  which is an absence of evidence rather than a failure — and not a pass.
+- No browser workflow, live-app smoke or owner-run manual harness was
+  executed; those lanes need a qualified host and owner authorization.
+- No formal third-party accessibility certification is claimed. The keyboard,
+  focus and status assertions are workflow checks.
+- Strict `EXACT_REDISCOVERY`, previously-unknown-defect yield and
+  parent-programme completion remain separate and unproven.
+- Completion grants no publication or organizational release authority.
+
+## Residual work, with owner decisions
+
+| Item | Impact | Reason it stays open | Revisit condition |
+| --- | --- | --- | --- |
+| 84 `FULL_REGRESSION` suites remain outside the authoritative gate | they run in `npm test`, not in `gate:local`/CI | promoting all of them is a runtime decision this campaign did not take; what changed is that the choice is now explicit, digest-pinned and enforced | when gate runtime budget is revisited, or when any of them becomes safety-load-bearing |
+| the five central documents were not split | current and historical truth remain interleaved across >10k lines each | rewriting them would put historical receipts at risk for a readability gain, which NW-07 forbids | if a generated current view can be produced without touching the archives |
+| the online advisory lane | a retained EOL dev fixture has no upstream scan | network dependency fetching is outside this campaign's safety boundary | when permitted network access is authorized |
+| `docs/CURRENT_STATE.md` CI fields | `CI_STATUS: NOT_OBSERVED` | no GitHub Actions run was inspected at this SHA | when a run is executed at the candidate checkpoint |
+
 ## Validation receipts
 
 Recorded per milestone as they are produced. No receipt is copied from a

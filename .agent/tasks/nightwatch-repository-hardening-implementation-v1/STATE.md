@@ -514,6 +514,50 @@ owner must hold the overlapping UI API and App surfaces.
 
 ## Validation Ledger
 
+### M13 certification at the candidate checkpoint
+
+| Lane | Result |
+| --- | --- |
+| `npm run typecheck` | PASS |
+| `npm run hardening:check` | PASS |
+| `npm run agent:check` | PASS (pre-existing warnings only) |
+| `npm run handoff:check` | PASS |
+| `npm run project:check` | PASS |
+| `npm run workspace:check` | PASS |
+| `npm run session:check` | PASS |
+| `npm run validation:universe` | PASS — 427 discovered / 254 gate / 173 classified / 0 unclassified |
+| `node --check` over 66 tracked `bin/*.mjs` | PASS |
+| `npm test` (clean tree) | **4768 passed / 18 skipped / 0 failed**, 8.1 min |
+| `npm run gate:local` | **PASS all 11 required groups**, `receipt:sha256:4f160f5f7f01cad4b9b042bf`, deep containment lane PROVEN |
+| fresh Node 20 `npm run gate:clean` | **PASS**, `clean-receipt:sha256:d85e1eda4537f9198983a5e9`, `nodeModulesReused: false` |
+| UI lane (`ui/control-center`) | typecheck PASS, 41 tests passed, build PASS (3 files, 297,422 bytes, no external references) |
+| `git diff --check` | PASS |
+| offline `npm ci` reproducibility | PASS — 7 packages, lockfile byte-identical |
+
+The clean-checkout gate earned its place. Its first run FAILED with 13 cases
+that `gate:local`, `npm test` and every isolated run passed, and the cause was
+a real defect: the third NW-02 surface, where `storageState.ts` derived its
+workspace root from `path.resolve(nightwatchRoot, '..')`. Because
+`gate:clean` clones into `/tmp/nightwatch-quality-gate-clean-XXXX`, that made
+the workspace root `/tmp` and refused every legitimate external path under it.
+A topology-derived safety decision does not have to be wrongly permissive to
+be wrong — this one was wrongly restrictive in a location no other lane
+visits. Reproducing it took building a clone whose root sits DIRECTLY under
+`/tmp`; a clone one level deeper passes, which is why the first four
+reproduction attempts all came back green.
+
+### Lanes reported UNAVAILABLE, never as a pass
+
+| Lane | Why | What would close it |
+| --- | --- | --- |
+| online dependency-advisory scan | this campaign's safety boundary prohibits network dependency fetching, so `npm audit` and every registry-backed query cannot run | a read-only advisory query under permitted network access, recorded with its query date |
+| exact-checkpoint GitHub Actions CI | external service; no run was inspected at this SHA | the run ID and executed SHA from a real run, recorded in `CI_OBSERVED_SHA` / `CI_EXECUTED_SHA` |
+| browser workflow lane | needs a system Chrome and a built UI on a qualified host | the browser lane on a qualified host |
+| owner-run manual and live-app smoke harnesses | need a running local product and owner authentication state | owner-run under explicit authorization |
+
+An absent scan is not a passing scan, and an unqualified host inherits
+nothing.
+
 M12 full regression at the NW-07 implementation commit, on a CLEAN tree:
 `npm test` — **4768 passed / 18 skipped / 0 failed**, 8.5 minutes.
 
