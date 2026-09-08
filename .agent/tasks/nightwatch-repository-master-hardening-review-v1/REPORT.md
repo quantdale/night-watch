@@ -3,8 +3,9 @@
 Status: COMPLETE
 
 The repository-wide analysis is complete. The canonical execution specification
-is `docs/MASTER-IMPLEMENTATION-HARDENING-PLAN.md`, committed at documentation
-checkpoint `abd487e52aae7ca173335a528cbf55abebd19eb5`.
+is `docs/MASTER-IMPLEMENTATION-HARDENING-PLAN.md`, initially committed at plan
+checkpoint `abd487e52aae7ca173335a528cbf55abebd19eb5` and reconciled with the
+subsequent W10 capability-carry and Run B evidence before integration.
 
 The review inventoried all 2,151 files at the fixed baseline, reconciled its
 findings with current W10 source and evidence, and produced 15 prioritized task
