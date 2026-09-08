@@ -6,23 +6,23 @@ STATE — nightwatch-repository-hardening-implementation-v1
 
 Task ID: nightwatch-repository-hardening-implementation-v1
 Phase: REPOSITORY_HARDENING_IMPLEMENTATION_V1
-Status: IN_PROGRESS
+Status: COMPLETE
 Campaign: nightwatch-repository-hardening-implementation-v1
 Starting SHA: 0ac7b3d037b5059f670eca715fc30adaf58e7334
-Last validated implementation SHA: 264bbb11ebe265260bcc3ea886e05869c1fba0d4
-Last substantive checkpoint SHA: 264bbb11ebe265260bcc3ea886e05869c1fba0d4
+Last validated implementation SHA: 8173ff719d472782f567766faf5e85cdd0b678c3
+Last substantive checkpoint SHA: 8173ff719d472782f567766faf5e85cdd0b678c3
 Live HEAD authority: GIT
 Branch: session/nightwatch-repository-hardening--e7b9be89
-Last checkpoint: M12 / NW-07 complete and validated — all fourteen in-scope findings are CLOSED; certification is the only remaining milestone
+Last checkpoint: M13 certification COMPLETE at implementation `3bf236e320712509805f78151cc7314208679178`; all fourteen in-scope findings closed and every lane either green or honestly reported UNAVAILABLE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 0ac7b3d037b5059f670eca715fc30adaf58e7334
-LAST_VALIDATED_IMPLEMENTATION_SHA: 264bbb11ebe265260bcc3ea886e05869c1fba0d4
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 264bbb11ebe265260bcc3ea886e05869c1fba0d4
+LAST_VALIDATED_IMPLEMENTATION_SHA: 8173ff719d472782f567766faf5e85cdd0b678c3
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 8173ff719d472782f567766faf5e85cdd0b678c3
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
-LIVE_COMPLETION_CLAIM: NONE
-PHASE_REPOSITORY_HARDENING_IMPLEMENTATION_V1_STATUS: IN_PROGRESS
+LIVE_COMPLETION_CLAIM: COMPLETE
+PHASE_REPOSITORY_HARDENING_IMPLEMENTATION_V1_STATUS: COMPLETE
 
 ## Objective
 
@@ -34,13 +34,14 @@ is consumed, not re-executed.
 
 ## Current Milestone
 
+COMPLETE — M13 closed; the campaign is finished.
 Milestone ID: M13
-Milestone status: IN_PROGRESS
-What is being attempted: M13 — repository certification at one candidate
-checkpoint. All fourteen findings are CLOSED; what remains is to execute the
-plan's repository-level definition of done item by item and to report every
-unavailable external or host lane as UNAVAILABLE rather than inheriting a
-pass.
+Milestone status: COMPLETE
+What is being attempted: NOTHING. The campaign is closed. All fourteen
+in-scope findings are CLOSED with acceptance evidence, the repository-level
+definition of done is satisfied item by item, and four lanes that cannot
+execute under this campaign's authority are recorded UNAVAILABLE with their
+own evidence requirements rather than inherited as passes.
 
 ## Completed Milestones
 
@@ -224,7 +225,7 @@ pass.
 
 ## Work In Progress
 
-M13 certification in this session worktree. No other lane is dispatched.
+NONE. The campaign is closed and no lane is dispatched.
 session once the NW-09 capability and pagination DTOs are frozen, because one
 owner must hold the overlapping UI API and App surfaces.
 
@@ -250,16 +251,19 @@ owner must hold the overlapping UI API and App surfaces.
 
 ## Exact Next Action
 
-1. Run the full certification set at the integrated head from the CANONICAL
-   checkout on `main`, fast-forwarded to `origin/main` first: an integrated
-   session worktree becomes `STALE_SESSION` and fails `HANDOFF_TRUTH` there.
-2. Walk the plan's repository-level definition of done item by item, and
-   report every external or host lane that cannot execute as UNAVAILABLE with
-   its own evidence requirement — never as a pass.
-3. Record residual P2/P3 with impact, reason, owner decision and revisit
-   condition.
-4. Close the findings register, the campaign REPORT and continuity, then
-   integrate by verified fast-forward.
+STOP. This campaign is complete and nothing further is authorized under it.
+
+The owner's next decisions, none of which this task may take:
+
+1. Authorize the online dependency-advisory lane, or accept the retained EOL
+   Vue development fixture on its recorded reachability argument.
+2. Inspect a GitHub Actions run at the candidate checkpoint and record its run
+   ID and executed SHA, which turns `CI_STATUS: NOT_OBSERVED` into evidence.
+3. Decide whether the 84 `FULL_REGRESSION` suites should join the
+   authoritative gate, now that the runtime cost of the choice is explicit.
+4. Open a successor task for anything above. Do not reopen NW-01 through
+   NW-14.
+
 
 ## Superseded next action (M12 / NW-07, complete)
 
@@ -941,14 +945,45 @@ path, not only the success path.
 
 ## Resume Recipe
 
-1. Read `.agent/ACTIVE_TASK.md` and this task's SPEC, PLAN, STATE, REPORT.
-2. Read `docs/MASTER-IMPLEMENTATION-HARDENING-PLAN.md` sections 4, 6 and 7.
-3. Discover live Git, worktree and session truth; claim this session with
-   `claim --task nightwatch-repository-hardening-implementation-v1 --adopt`
-   if its holder is no longer live.
-4. Continue from `## Exact Next Action`. Do not reopen W0-W10.
+Task complete — do not resume. There is no unfinished work in this campaign,
+and any successor requires new authorization and its own task directory.
+
+A fresh agent reading this should stop here and read
+`docs/MASTER-IMPLEMENTATION-HARDENING-PLAN.md` section 4 for what each
+finding now guarantees, and this task's REPORT for the evidence. Opening a
+successor requires the owner's authorization and its own task directory; do
+not reopen NW-01 through NW-14 or W0-W10.
 
 ## Completion Snapshot
 
-Not complete. Populate only after M0-M13 and full certification close
-truthfully.
+Complete.
+
+- Campaign: `nightwatch-repository-hardening-implementation-v1`
+- Scope: NW-01 through NW-14 of
+  `docs/MASTER-IMPLEMENTATION-HARDENING-PLAN.md`. NW-15 was closed by the W10
+  owner and consumed, never re-executed.
+- Outcome: **all fourteen in-scope findings CLOSED** with per-finding
+  acceptance evidence. No P0 was ever claimed and none was found.
+- Implementation anchor: `3bf236e320712509805f78151cc7314208679178`
+- Certification: `npm test` 4768 passed / 18 skipped / 0 failed;
+  `gate:local` PASS across all eleven required groups,
+  `receipt:sha256:4f160f5f7f01cad4b9b042bf`, deep containment lane PROVEN;
+  fresh Node 20 `gate:clean` PASS,
+  `clean-receipt:sha256:d85e1eda4537f9198983a5e9`, no reused `node_modules`;
+  UI typecheck / 41 tests / build PASS; typecheck, hardening, agent, handoff,
+  project, workspace, session and `git diff --check` PASS.
+- Validation universe: 427 discovered / 254 authoritative gate / 173
+  classified / **0 unclassified**, digest `sha256:063ecd1f416bdcb540aff7a7`.
+- Regressions added: every finding carries a focused adversarial suite, and
+  each was measured against the pre-repair code rather than assumed. Three
+  regressions this campaign introduced were caught by existing guards and
+  repaired at the cause.
+- Lanes reported UNAVAILABLE, never as a pass: the online
+  dependency-advisory scan, exact-checkpoint GitHub Actions CI, the browser
+  workflow lane, and the owner-run manual / live-app smoke harnesses.
+- Not claimed: DEV/NEXT/production proof, publication or organizational
+  release authority, strict `EXACT_REDISCOVERY`, previously-unknown-defect
+  yield, parent-programme completion, or formal accessibility certification.
+- Safety events: one, `SAFETY-M4-01`, self-inflicted by a pre-repair
+  measurement of a filesystem-escape finding and fully remediated; the
+  canonical checkout is clean and no sibling repository was written.

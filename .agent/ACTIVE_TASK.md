@@ -3,22 +3,31 @@
 Task ID: nightwatch-repository-hardening-implementation-v1
 Phase: REPOSITORY_HARDENING_IMPLEMENTATION_V1
 Title: Repository Master Hardening Implementation
-Status: IN_PROGRESS
+Status: COMPLETE
 Task directory: .agent/tasks/nightwatch-repository-hardening-implementation-v1
 Starting SHA: 0ac7b3d037b5059f670eca715fc30adaf58e7334
-Last validated implementation SHA: 264bbb11ebe265260bcc3ea886e05869c1fba0d4
-Last checkpoint: M12 / NW-07 complete — all fourteen in-scope findings CLOSED and the full suite green on a clean tree at the recorded implementation SHA
-Current milestone: M13 — repository certification at one candidate checkpoint
-Next action: Execute the repository-level definition of done from the canonical checkout on main, fast-forwarded to origin/main first, reporting every external or host lane that cannot execute as UNAVAILABLE with its own evidence requirement rather than as a pass.
+Last validated implementation SHA: 8173ff719d472782f567766faf5e85cdd0b678c3
+Last checkpoint: M13 certification COMPLETE at implementation `3bf236e320712509805f78151cc7314208679178`; all fourteen in-scope findings closed
+Current milestone: COMPLETE — M0 through M13 are closed
+Next action: STOP. Hold at this checkpoint and report the certified outcome to the owner. Four lanes remain UNAVAILABLE by authority rather than by failure — the online dependency-advisory scan, exact-checkpoint CI, the browser workflow, and the owner-run harnesses — and each needs an owner decision and its own successor task. Do not reopen NW-01 through NW-14.
 Authorization class: REPOSITORY_HARDENING_IMPLEMENTATION_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 0ac7b3d037b5059f670eca715fc30adaf58e7334
-LAST_VALIDATED_IMPLEMENTATION_SHA: 264bbb11ebe265260bcc3ea886e05869c1fba0d4
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 264bbb11ebe265260bcc3ea886e05869c1fba0d4
+LAST_VALIDATED_IMPLEMENTATION_SHA: 8173ff719d472782f567766faf5e85cdd0b678c3
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 8173ff719d472782f567766faf5e85cdd0b678c3
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
-PHASE_REPOSITORY_HARDENING_IMPLEMENTATION_V1_STATUS: IN_PROGRESS
+PHASE_REPOSITORY_HARDENING_IMPLEMENTATION_V1_STATUS: COMPLETE
+
+## Outcome
+
+All fourteen in-scope findings of `docs/MASTER-IMPLEMENTATION-HARDENING-PLAN.md`
+are CLOSED with acceptance evidence, and the repository-level definition of
+done is satisfied item by item. Four lanes are recorded UNAVAILABLE rather
+than passed: the online dependency-advisory scan, exact-checkpoint GitHub
+Actions CI, the browser workflow lane, and the owner-run manual and
+live-app smoke harnesses.
 
 ## Mission
 

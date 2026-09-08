@@ -1,7 +1,7 @@
 # SPEC — nightwatch-repository-hardening-implementation-v1
 
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
-Status: IN_PROGRESS
+Status: COMPLETE
 Task: nightwatch-repository-hardening-implementation-v1
 Campaign: nightwatch-repository-hardening-implementation-v1
 Planned-From: 0ac7b3d037b5059f670eca715fc30adaf58e7334
