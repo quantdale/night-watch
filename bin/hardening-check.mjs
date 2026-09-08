@@ -1848,6 +1848,35 @@ function checkC00WorkspaceIntegrity() {
       fail(`${file} must not derive the repositories root from its own checkout location`);
     }
   }
+  // NW-02. These two private stores had the same defect with worse
+  // consequences: the exclusion set that keeps owner state out of Nightwatch
+  // and sibling source was derived from module location, so a configured root
+  // beneath canonical source was rejected from the canonical checkout and
+  // ACCEPTED from a C-00 session worktree. The judgement now belongs to one
+  // authority; these surfaces must consume it and must not recompute it.
+  const topologyAuthority = 'src/core/policy/sourceTopology.ts';
+  const topologySource = withoutComments(read(topologyAuthority));
+  if (!/DEFAULT_SIBLING_ROOT/.test(topologySource)) {
+    fail(`${topologyAuthority} must resolve the repositories root through DEFAULT_SIBLING_ROOT`);
+  }
+  if (!/SOURCE_TOPOLOGY_REPOSITORIES_ROOT_AMBIGUOUS/.test(topologySource)) {
+    fail(`${topologyAuthority} must fail closed on an ambiguous repositories root`);
+  }
+  // The call form, not the identifier: a rule satisfied by the surviving
+  // import line would pass while the actual call site was replaced.
+  for (const [file, errorCode] of [
+    ['src/core/policy/privateArtifacts.ts', 'PRIVATE_ARTIFACT_ROOT_INSIDE_REPOSITORY'],
+    ['src/core/prodEvidence/productionFindingsStore.ts', 'PRODUCTION_ARTIFACT_ROOT_INSIDE_REPOSITORY'],
+  ]) {
+    const source = withoutComments(read(file));
+    const call = new RegExp(`assertOutsideSourceTopology\\(\\s*root\\s*,\\s*'${errorCode}'`);
+    if (!call.test(source)) {
+      fail(`${file} must refuse a private root through assertOutsideSourceTopology(root, '${errorCode}', ...)`);
+    }
+    if (/__dirname/.test(source)) {
+      fail(`${file} must not derive a path-safety decision from its own checkout location`);
+    }
+  }
 }
 
 /**

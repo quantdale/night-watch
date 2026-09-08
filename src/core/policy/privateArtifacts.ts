@@ -13,6 +13,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { assertOwnerPolicyAllows, type OwnerScopedOperation } from './ownerScope';
 import { containsPrivatePayloadShape } from './privateScreening';
+import { assertOutsideSourceTopology, resolveSourceTopology, type SourceTopology } from './sourceTopology';
 
 export const PRIVATE_ARTIFACT_POLICY_VERSION = 'nightwatch.private-artifact-policy.v1' as const;
 export const PRIVATE_ARTIFACT_ROOT_ENV = 'NIGHTWATCH_PRIVATE_STATE_DIR' as const;
@@ -74,8 +75,16 @@ const FILE_NAME_RE = /^[A-Za-z0-9][A-Za-z0-9._-]{0,160}\.json$/;
 export const PRIVATE_ARTIFACT_TEMPORARY_PREFIX = '.nightwatch-' as const;
 const TEMPORARY_FILE_RE = /^\.nightwatch-\d{1,10}-[0-9a-f]{32}\.tmp$/;
 
-const REPOSITORY_ROOT = path.resolve(__dirname, '..', '..', '..');
-const WORKSPACE_ROOT = path.resolve(REPOSITORY_ROOT, '..');
+/**
+ * NW-02: these roots were derived from this module's own location, so the
+ * exclusion set changed with the checkout — the canonical checkout excluded
+ * `REPOSITORIES`, while a C-00 session worktree excluded only
+ * `$HOME/.nightwatch/worktrees` and therefore ACCEPTED a private root beneath
+ * canonical or a sibling source tree. The judgement now lives in one
+ * topology-aware authority resolved from absolute, checkout-independent
+ * facts.
+ */
+const sourceTopology = (): SourceTopology => resolveSourceTopology();
 
 function assertKnownSubtree(subtree: PrivateArtifactSubtree): PrivateArtifactSubtree {
   // Runtime guard as well as a type: the union is the whole path-safety
@@ -93,15 +102,8 @@ function defaultRoot(subtree: PrivateArtifactSubtree = 'findings'): string {
     : configured;
 }
 
-function isInside(dir: string, candidate: string): boolean {
-  const relative = path.relative(dir, candidate);
-  return relative === '' || (!relative.startsWith('..') && !path.isAbsolute(relative));
-}
-
 function assertOutsideCanonicalWorkspace(root: string): void {
-  if (isInside(REPOSITORY_ROOT, root) || isInside(WORKSPACE_ROOT, root)) {
-    throw new Error('PRIVATE_ARTIFACT_ROOT_INSIDE_REPOSITORY');
-  }
+  assertOutsideSourceTopology(root, 'PRIVATE_ARTIFACT_ROOT_INSIDE_REPOSITORY', sourceTopology());
 }
 
 function ensureAbsolute(root: string): string {

@@ -175,6 +175,74 @@ had never executed the frozen trust boundary's own regressions. Both, and the
 new NW-01 suite, are now registered in that required lane. A guard the gate
 never runs is not a guard.
 
+### NW-02 — make private-path exclusion independent of checkout topology
+
+**Live revalidation, through the consumers rather than the new module.** A
+test that only exercises the replacement primitive cannot fail against the
+defect, so the measurement runs through `privateArtifactRoot()` and the two
+store constructors with a configured default root. With
+`NIGHTWATCH_PRIVATE_STATE_DIR` pointed at the canonical Nightwatch checkout,
+executed from this C-00 session worktree, the pre-repair code **accepted**
+it: `path.resolve(__dirname, '..', '..', '..')` made the excluded set
+`$HOME/.nightwatch/worktrees`, so canonical and every sibling source tree
+were outside it. Owner findings could have been written beneath tracked
+source. Post-repair the same call throws
+`PRIVATE_ARTIFACT_ROOT_INSIDE_REPOSITORY`, and the production store throws
+`PRODUCTION_ARTIFACT_ROOT_INSIDE_REPOSITORY`.
+
+**Repair.** `src/core/policy/sourceTopology.ts` is the single authority. Its
+excluded set is built only from absolute, checkout-independent facts:
+
+| Root | Source | Covers |
+| --- | --- | --- |
+| sibling `REPOSITORIES` root | explicit option, then `NIGHTWATCH_REPOS_ROOT`, then `DEFAULT_SIBLING_ROOT` | the canonical Nightwatch checkout and every sibling company repository |
+| `$HOME/.nightwatch/worktrees` | C-00 convention, home-relative | every linked implementation worktree |
+| this checkout's own root | module location | self-protection only; in every supported topology it already lies inside one of the two above |
+
+The third entry can only refuse more; it never defines the shared answer, and
+tests can omit it. A non-absolute or blank configured root throws
+`SOURCE_TOPOLOGY_REPOSITORIES_ROOT_AMBIGUOUS` rather than falling back to a
+default. Containment is lexical on normalized paths, which is sound only
+because the callers still refuse a symlink at every path component before
+creating anything — that dependency is stated in the module rather than
+assumed.
+
+Both consumers now inject the authority, and their duplicated local
+`isInside` helpers were deleted, so the containment judgement exists in
+exactly one place.
+
+**Regression.** Seven cases in `tests/unit/nw02PrivatePathTopology.test.ts`.
+The central one builds the full decision vector for six forbidden targets —
+the canonical checkout, the repositories root itself, two sibling subtrees,
+the worktree parent, and another session worktree — under three injected
+topologies (canonical checkout, linked session worktree, relocated clone) and
+requires the three vectors to be **identical**, so a topology-dependent
+answer fails as a whole rather than one assertion at a time. The rest cover
+the three legitimate owner roots being allowed in all three topologies,
+ambiguity failing closed, explicit-over-environment-over-default precedence,
+the self-protection entry, the consumer-level measurement, and a live
+end-to-end write into a disposable root. Every path is fabricated; nothing
+under a real repositories root is created, and the refusal is asserted to
+happen before creation.
+
+**Acceptance.**
+
+| Criterion | Evidence |
+| --- | --- |
+| all real stores reject every source/worktree root regardless of checkout location | six forbidden targets refused, decision vector identical across three topologies; both real stores throw their own documented codes |
+| valid owner state still works | the three default owner roots allowed in all three topologies; a disposable injected root writes and reads end to end with `rootClass: 'INJECTED_TEST_ROOT'` |
+| ambiguity fails closed | non-absolute and blank roots, a non-absolute home, and a non-absolute candidate each throw a distinct `SOURCE_TOPOLOGY_*` error |
+| no machine-specific path enters Git | the suite's paths are all `/synthetic/...`; the live case derives its path from the resolved topology at runtime and asserts nothing was created |
+| measured against the defect | with the consumers reverted, the consumer-level case fails: `privateArtifactRoot()` did not throw for a private root pointed at canonical source |
+| structurally locked | `checkC00WorkspaceIntegrity` requires the exact `assertOutsideSourceTopology(root, '<error code>'` call in both surfaces, forbids `__dirname` in them, and requires the authority to reference `DEFAULT_SIBLING_ROOT` and fail closed |
+
+**A rule that first proved nothing, recorded.** The initial hardening rule
+tested for the identifier `assertOutsideSourceTopology` anywhere in the file.
+Replacing only the call site — leaving the import — kept `hardening:check`
+PASS while the containment decision had moved back into the consumer. The
+rule now matches the call form with each store's own error code, and all four
+probe variants fail as intended.
+
 ## Validation receipts
 
 Recorded per milestone as they are produced. No receipt is copied from a

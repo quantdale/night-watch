@@ -128,7 +128,7 @@ Priority meanings: P0 is demonstrated catastrophic failure requiring immediate c
 
 ### NW-02 — Make private-path exclusion independent of checkout topology
 
-- **Priority / category / confidence / status:** P1; privacy and filesystem authority; CONFIRMED by synthetic execution; NOT STARTED.
+- **Priority / category / confidence / status:** P1; privacy and filesystem authority; CONFIRMED by synthetic execution; **CLOSED** — repaired and regression-proven under `nightwatch-repository-hardening-implementation-v1` M3.
 - **Affected surfaces:** `src/core/policy/privateArtifacts.ts`, `src/core/prodEvidence/productionFindingsStore.ts`, and topology assumptions in auth/storage-state validators.
 - **Evidence:** these modules derive repository/workspace roots from `__dirname`. The same configured synthetic path under a canonical `REPOSITORIES/nightwatch` tree was rejected with a canonical checkout `__dirname` but accepted when `__dirname` represented an external linked worktree.
 - **Problem, impact, root cause:** a safety decision changes with the implementation checkout location, allowing private artifacts beneath canonical or sibling source trees in supported worktree topology. Worktree-location independence was implemented elsewhere but not adopted here.
@@ -137,6 +137,47 @@ Priority meanings: P0 is demonstrated catastrophic failure requiring immediate c
 - **Tests and validation:** matrix canonical clone, linked worktree, relocated fresh clone, explicit root, missing/ambiguous root, symlinked ancestor, canonical/sibling/worktree targets, and valid owner directory. Assert identical decisions across topology.
 - **Acceptance:** all real stores and secret-path validators reject every source/worktree root regardless of checkout location; valid owner state works; no machine-specific path enters Git.
 - **Dependencies / risks / parallelization:** freeze this contract before NW-03/NW-04/NW-09 storage changes. A single private-state lane owns the shared primitive. Main risk is blocking legitimate legacy locations; provide categorical migration guidance without automatic moves.
+
+- **Resolution evidence (2026-09-08):** revalidated through the consumers'
+  own public paths, not the new module's. With
+  `NIGHTWATCH_PRIVATE_STATE_DIR` pointed at the canonical Nightwatch checkout
+  and run from a C-00 session worktree, the pre-repair
+  `privateArtifactRoot()` and `new PrivateArtifactStore()` **accepted** it —
+  the exclusion set was `$HOME/.nightwatch/worktrees`, so canonical and every
+  sibling source tree were outside it. That case now throws
+  `PRIVATE_ARTIFACT_ROOT_INSIDE_REPOSITORY`, and the production store throws
+  `PRODUCTION_ARTIFACT_ROOT_INSIDE_REPOSITORY`.
+  `src/core/policy/sourceTopology.ts` is the single authority. Its excluded
+  set is built from absolute, checkout-independent facts: the sibling
+  `REPOSITORIES` root (explicit root, then `NIGHTWATCH_REPOS_ROOT`, then
+  `DEFAULT_SIBLING_ROOT` — the order the rest of the repository already
+  uses), the C-00 session-worktree parent `$HOME/.nightwatch/worktrees`, and
+  this checkout's own root as additional self-protection that can only refuse
+  more, never define the shared answer. A non-absolute or blank configured
+  root throws `SOURCE_TOPOLOGY_REPOSITORIES_ROOT_AMBIGUOUS` rather than
+  falling back. Containment is lexical on normalized paths, which is sound
+  only because the callers still refuse a symlink at every path component
+  before creating anything; that ordering is documented in the module.
+  Both consumers now inject the authority, and their duplicated local
+  `isInside` helpers were deleted so containment exists in exactly one place.
+  Seven cases in `tests/unit/nw02PrivatePathTopology.test.ts` assert the full
+  decision vector for six forbidden targets — canonical checkout, the
+  repositories root itself, two sibling subtrees, the worktree parent and
+  another session worktree — across three injected topologies (canonical
+  checkout, linked session worktree, relocated clone) and require the three
+  vectors to be **identical**, plus the three legitimate owner roots allowed
+  in all three, ambiguity failing closed, precedence order, self-protection,
+  and the live end-to-end store case. All paths are fabricated; nothing under
+  a real repositories root is created, and the refusal is asserted to happen
+  before creation.
+  `checkC00WorkspaceIntegrity` in `bin/hardening-check.mjs` now locks
+  both surfaces: each must contain the exact
+  `assertOutsideSourceTopology(root, '<its own error code>'` call and must not
+  mention `__dirname`, and the authority itself must reference
+  `DEFAULT_SIBLING_ROOT` and fail closed on ambiguity. The rule was probed by
+  breaking it four ways; the first attempt passed because the surviving
+  import line satisfied a substring test while the call site was replaced, so
+  the rule was tightened to the call form and all four variants now fail.
 
 ### NW-03 — Confine and safely publish Bug Atlas snapshots
 

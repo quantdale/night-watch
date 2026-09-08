@@ -13,7 +13,7 @@ Last validated implementation SHA: 2ebb598c7bc13adf0d92b5422e0f844c3442b750
 Last substantive checkpoint SHA: 2ebb598c7bc13adf0d92b5422e0f844c3442b750
 Live HEAD authority: GIT
 Branch: session/nightwatch-repository-hardening--e7b9be89
-Last checkpoint: M2 / NW-01 complete and validated — one closure primitive for reasoner-facing vocabularies and lookups, exhaustive intent dispatch, with 7 regressions of which 5 fail against the pre-repair code
+Last checkpoint: M3 / NW-02 complete and validated — one topology-aware private-path authority, both consumers converted, duplicated containment helpers deleted, and a call-form hardening lock probed four ways
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 0ac7b3d037b5059f670eca715fc30adaf58e7334
@@ -34,12 +34,10 @@ is consumed, not re-executed.
 
 ## Current Milestone
 
-Milestone ID: M3
+Milestone ID: M4
 Milestone status: IN_PROGRESS
-What is being attempted: NW-02 — replace the `__dirname`-derived
-repository/workspace roots in the private-path validators with one
-topology-aware, fail-closed, injected authority, so the same configured path
-gets the same decision from any supported checkout location.
+What is being attempted: NW-03 — confine Bug Atlas snapshot publication to
+its authorized root and make it atomic, on the NW-02 path authority.
 
 ## Completed Milestones
 
@@ -84,10 +82,24 @@ gets the same decision from any supported checkout location.
   `agentProtocol.test.ts`, `agentTools.test.ts` and the new suite were added
   to `config/synthetic-campaign.v1.json` — the frozen protocol's own suite
   was in no manifest, so the authoritative gate had never run it.
+- **M3 COMPLETE (NW-02)** — `src/core/policy/sourceTopology.ts` is the single
+  topology authority. Its excluded set is built from absolute,
+  checkout-independent facts: the sibling `REPOSITORIES` root (explicit root,
+  then `NIGHTWATCH_REPOS_ROOT`, then `DEFAULT_SIBLING_ROOT`), the C-00
+  session-worktree parent, and this checkout's own root as additional
+  self-protection that can only refuse more. Ambiguity throws rather than
+  falling back. `privateArtifacts.ts` and `productionFindingsStore.ts` inject
+  it, and their duplicated local `isInside` helpers were deleted so
+  containment exists in one place. Seven cases in
+  `tests/unit/nw02PrivatePathTopology.test.ts` require the decision vector
+  for six forbidden targets to be identical across three injected topologies.
+  `checkC00WorkspaceIntegrity` now requires the exact
+  `assertOutsideSourceTopology(root, '<error code>'` call form in both
+  surfaces, no `__dirname`, and fail-closed ambiguity in the authority.
 
 ## Work In Progress
 
-M3 / NW-02 in this session worktree. No other lane is dispatched.
+M4 / NW-03 in this session worktree. No other lane is dispatched.
 
 ## Findings register progress
 
@@ -95,8 +107,8 @@ M3 / NW-02 in this session worktree. No other lane is dispatched.
 | --- | --- | --- |
 | NW-06 | M1 | CLOSED — repaired, 9 regressions, 8 proven failing pre-repair |
 | NW-01 | M2 | CLOSED — repaired, 7 regressions, 5 proven failing pre-repair |
-| NW-02 | M3 | IN PROGRESS |
-| NW-03 | M4 | NOT STARTED |
+| NW-02 | M3 | CLOSED — repaired, 7 regressions, consumer-level case proven failing pre-repair |
+| NW-03 | M4 | IN PROGRESS |
 | NW-13 | M5 | NOT STARTED |
 | NW-04 | M6 | NOT STARTED |
 | NW-05 | M7 | NOT STARTED |
@@ -104,12 +116,29 @@ M3 / NW-02 in this session worktree. No other lane is dispatched.
 | NW-09 | M9 | NOT STARTED |
 | NW-10 | M9 | NOT STARTED |
 | NW-11 | M9 | NOT STARTED |
-| NW-08 | M10 | PARTIAL — three unmanifested protocol suites registered as M2 evidence |
+| NW-08 | M10 | PARTIAL — six unmanifested suites registered as M2/M3 evidence |
 | NW-14 | M11 | NOT STARTED |
 | NW-07 | M12 | NOT STARTED |
 | NW-15 | — | CLOSED BY W10 OWNER — consumed, out of scope |
 
 ## Exact Next Action
+
+1. Probe the live NW-03 evidence: confirm that `src/core/bugAtlas/snapshot.ts`
+   still accepts a configured `fileName` containing a traversal segment and
+   still follows an existing leaf symlink, using fabricated paths and
+   sentinels in a disposable directory.
+2. Accept only a strict basename, join then prove containment through the
+   NW-02 authority, and publish through an owner-only same-directory
+   temporary with explicit replace semantics, revalidating parent and leaf
+   identity at the publication boundary and cleaning owned temporaries in
+   `finally`.
+3. Keep the snapshot schema and default location unchanged; state the
+   overwrite semantics explicitly rather than inheriting them.
+4. Add the traversal, absolute-path, separator, dot-segment, ancestor-symlink
+   and leaf-symlink cases with byte-identical sentinel assertions outside the
+   state root, and verify they fail against the pre-repair code.
+
+## Superseded next action (M3, complete)
 
 1. Probe the live NW-02 evidence: confirm that
    `src/core/policy/privateArtifacts.ts` and
@@ -152,7 +181,13 @@ M3 / NW-02 in this session worktree. No other lane is dispatched.
 | `src/core/agentProtocol/index.ts` | export the closure primitive | MODIFIED |
 | `src/core/autonomousFinding/dossier.ts` | own-key severity/confidence/environment | MODIFIED |
 | `tests/unit/nw01ClosedVocabularies.test.ts` | seven NW-01 cases over eight inherited names | CREATED |
-| `config/synthetic-campaign.v1.json` | register the protocol suites the required gate lane never ran | MODIFIED |
+| `config/synthetic-campaign.v1.json` | register the protocol, private-store and review-store suites the required gate lane never ran | MODIFIED |
+| `src/core/policy/sourceTopology.ts` | the one topology-aware private-path authority | CREATED |
+| `src/core/policy/privateArtifacts.ts` | inject the authority; drop the local containment helper | MODIFIED |
+| `src/core/prodEvidence/productionFindingsStore.ts` | inject the authority; drop the local containment helper | MODIFIED |
+| `src/core/policy/index.ts` | export the topology authority | MODIFIED |
+| `tests/unit/nw02PrivatePathTopology.test.ts` | seven NW-02 cases over three injected topologies | CREATED |
+| `bin/hardening-check.mjs` | call-form lock on both private-path surfaces | MODIFIED |
 | `docs/MASTER-IMPLEMENTATION-HARDENING-PLAN.md` | document status and NW-06 resolution evidence | MODIFIED |
 
 ## Validation Ledger
@@ -164,6 +199,18 @@ the inherited W10 anchor, 31 legacy v1 task records, and the integrated W10
 session worktree awaiting an owner release. `npm run handoff:check` PASS,
 receipt campaign `nightwatch-repository-hardening-implementation-v1`,
 planned-from `0ac7b3d`. `npm run workspace:check` PASS.
+
+M3: `tests/unit/nw02PrivatePathTopology.test.ts` — 7 passed. With the
+consumers reverted to the pre-repair code, the consumer-level case FAILED:
+`privateArtifactRoot()` did not throw for a `NIGHTWATCH_PRIVATE_STATE_DIR`
+pointed at the canonical Nightwatch checkout, run from this session
+worktree. Surrounding suites after the repair: `privateArtifacts`,
+`storageState` 35 passed; `privateArtifactAtomic`, `privateTriage`,
+`c10ProductionProjection`, `c11ProdObserveEvidence`, `reviewStore` 168
+passed. `npm run typecheck` PASS. `npm run hardening:check` PASS, and the new
+rule was probed by breaking it four ways — the first attempt passed because a
+surviving import satisfied a substring test, so the rule was tightened to the
+call form and all four variants then failed.
 
 M2 full regression at the M2 tree: `npm test` — **4675 passed / 18 skipped /
 0 failed**, 15.7 minutes. This is the campaign's own measured baseline; it is
@@ -215,6 +262,13 @@ tests `worktrees.length > maxWorktrees` over already-registered worktrees
 only. The candidate registration is never modelled, and the same function
 returns on a failed ownership-record write with the branch and worktree
 already created.
+
+Discovery: a substring hardening rule can be satisfied by the import line
+alone. Evidence: the first NW-02 rule tested for `assertOutsideSourceTopology`
+anywhere in the file, so replacing only the call site — leaving the import —
+kept `hardening:check` PASS while the containment decision had moved back
+into the consumer. The rule now requires the exact call form with each
+store's own error code, and was re-probed four ways.
 
 Discovery: NW-01's unguarded fallback was worse than "invalid enums are
 accepted". Evidence: `parseIntent` ended with the TERMINATE branch instead of

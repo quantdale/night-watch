@@ -188,7 +188,10 @@ lifecycles, then the operator surface, then release accounting.
   decisions; valid owner state still works; no machine-specific path is
   written into Git.
 - **Validation:** the new topology matrix suite; `npm run hardening:check`.
-- **Status:** NOT_STARTED
+- **Status:** COMPLETE — `src/core/policy/sourceTopology.ts` is the single
+  authority, both consumers inject it, their duplicated `isInside` helpers are
+  deleted, and a call-form hardening rule locks both surfaces. The
+  consumer-level case fails against the pre-repair code.
 
 ### M4 — NW-03 Bug Atlas confinement and safe publication
 

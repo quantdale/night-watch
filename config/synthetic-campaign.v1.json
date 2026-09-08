@@ -70,6 +70,9 @@
     "tests/unit/realLocalCampaignPath.test.ts",
     "tests/unit/agentProtocol.test.ts",
     "tests/unit/agentTools.test.ts",
-    "tests/unit/nw01ClosedVocabularies.test.ts"
+    "tests/unit/nw01ClosedVocabularies.test.ts",
+    "tests/unit/nw02PrivatePathTopology.test.ts",
+    "tests/unit/privateArtifactAtomic.test.ts",
+    "tests/unit/reviewStore.test.ts"
   ]
 }

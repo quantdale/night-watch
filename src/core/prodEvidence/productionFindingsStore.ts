@@ -25,6 +25,7 @@ import {
   NO_PROVEN_ROUTE_VOCABULARY,
   type RouteVocabularySource,
 } from '../prodPrivacy';
+import { assertOutsideSourceTopology, resolveSourceTopology, type SourceTopology } from '../policy/sourceTopology';
 import { assertPersistableProductionEvidence } from './firewall';
 import type { SafeProductionEvidence } from '../prodPrivacy';
 
@@ -39,8 +40,9 @@ export const MAX_PRODUCTION_FINDING_FILES = 1000;
 
 const FILE_NAME_RE = /^[A-Za-z0-9][A-Za-z0-9._-]{0,160}\.json$/;
 
-const REPOSITORY_ROOT = path.resolve(__dirname, '..', '..', '..');
-const WORKSPACE_ROOT = path.resolve(REPOSITORY_ROOT, '..');
+/** NW-02: see `src/core/policy/sourceTopology.ts` — this decision must not
+ * depend on where the code is checked out. */
+const sourceTopology = (): SourceTopology => resolveSourceTopology();
 
 export interface ProductionArtifactPolicyRecord {
   readonly policyVersion: typeof PRODUCTION_ARTIFACT_POLICY_VERSION;
@@ -51,11 +53,6 @@ export interface ProductionArtifactPolicyRecord {
   readonly evidenceSchema: 'nightwatch.production-evidence.v1';
 }
 
-function isInside(directory: string, candidate: string): boolean {
-  const relative = path.relative(directory, candidate);
-  return relative === '' || (!relative.startsWith('..') && !path.isAbsolute(relative));
-}
-
 function ensureAbsolute(root: string): string {
   if (typeof root !== 'string' || !path.isAbsolute(root)) {
     throw new Error('PRODUCTION_ARTIFACT_ROOT_NOT_ABSOLUTE');
@@ -64,9 +61,7 @@ function ensureAbsolute(root: string): string {
 }
 
 function assertOutsideCanonicalWorkspace(root: string): void {
-  if (isInside(REPOSITORY_ROOT, root) || isInside(WORKSPACE_ROOT, root)) {
-    throw new Error('PRODUCTION_ARTIFACT_ROOT_INSIDE_REPOSITORY');
-  }
+  assertOutsideSourceTopology(root, 'PRODUCTION_ARTIFACT_ROOT_INSIDE_REPOSITORY', sourceTopology());
 }
 
 /** Refuse a symlink at ANY path component, not merely at the leaf. */
