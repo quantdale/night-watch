@@ -13,6 +13,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { assertOwnerPolicyAllows, type OwnerScopedOperation } from './ownerScope';
 import { containsPrivatePayloadShape } from './privateScreening';
+import { errnoCode } from './sensitiveDiagnostics';
 import { assertOutsideSourceTopology, resolveSourceTopology, type SourceTopology } from './sourceTopology';
 
 export const PRIVATE_ARTIFACT_POLICY_VERSION = 'nightwatch.private-artifact-policy.v1' as const;
@@ -123,7 +124,8 @@ function assertNoSymlinkComponents(target: string, errorCode: string): void {
       stat = fs.lstatSync(current);
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code === 'ENOENT') return;
-      throw new Error(`${errorCode}:${(error as Error).message}`);
+      // NW-13: errno only. The native message embeds the absolute path.
+      throw new Error(`${errorCode}:${errnoCode(error)}`);
     }
     if (stat.isSymbolicLink()) throw new Error(errorCode);
   }

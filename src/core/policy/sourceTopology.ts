@@ -35,7 +35,7 @@
 
 import os from 'node:os';
 import path from 'node:path';
-import { DEFAULT_SIBLING_ROOT } from '../source/siblingSource';
+import { DEFAULT_SIBLING_ROOT } from '../source/siblingRoot';
 
 export const REPOSITORIES_ROOT_ENV = 'NIGHTWATCH_REPOS_ROOT' as const;
 

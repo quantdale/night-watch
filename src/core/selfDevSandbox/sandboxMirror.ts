@@ -23,6 +23,7 @@ import path from 'node:path';
 import { sha256LengthPrefixedEntries } from '../selfDev/canonical';
 import { SELFDEV_AUTHORITATIVE_PATHS } from '../selfDev/provenanceManifest';
 import { privateArtifactRoot } from '../policy/privateArtifacts';
+import { errnoCode } from '../policy/sensitiveDiagnostics';
 
 const MAX_SOURCE_MIRROR_BYTES = 8 * 1024 * 1024;
 
@@ -84,7 +85,7 @@ function firstMissingPathnameComponent(target: string): string | null {
       stat = fs.lstatSync(current);
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code === 'ENOENT') return current;
-      throw new Error(`SELFDEV_SANDBOX_BASE_UNSAFE:${(error as Error).message}`);
+      throw new Error(`SELFDEV_SANDBOX_BASE_UNSAFE:${errnoCode(error)}`);
     }
     if (stat.isSymbolicLink()) throw new Error('SELFDEV_SANDBOX_BASE_SYMLINK');
     if (!stat.isDirectory()) throw new Error('SELFDEV_SANDBOX_BASE_NOT_DIRECTORY');

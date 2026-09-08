@@ -24,6 +24,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { errnoCode, sensitiveDiagnostic } from '../../core/policy/sensitiveDiagnostics';
 
 export const NIGHTWATCH_STORAGE_STATE_VAR = 'NIGHTWATCH_STORAGE_STATE';
 
@@ -69,7 +70,8 @@ function assertNoSymlinkComponents(target: string, errorCode: string): void {
       stat = fs.lstatSync(current);
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code === 'ENOENT') return;
-      throw new Error(`${errorCode}: ${(error as Error).message}`);
+      // errno only: the native message embeds the absolute path.
+      throw new Error(`${errorCode}: ${sensitiveDiagnostic(errorCode, { failure: 'IO_ERROR', errno: errnoCode(error) })}`);
     }
     if (stat.isSymbolicLink()) throw new Error(errorCode);
   }
@@ -124,14 +126,21 @@ export function validateStorageStateFile(p: string, opts?: StorageStateOptions):
     fs.accessSync(abs, fs.constants.R_OK);
   } catch (err) {
     throw new Error(
-      `fail-closed: ${NIGHTWATCH_STORAGE_STATE_VAR} file is not readable: ${abs}: ${(err as Error).message}`
+      `fail-closed: ${NIGHTWATCH_STORAGE_STATE_VAR} file is not readable: ${sensitiveDiagnostic('STORAGE_STATE_UNREADABLE', { failure: 'NOT_READABLE', errno: errnoCode(err), target: abs })}`
     );
   }
   let parsed: unknown;
   try {
     parsed = JSON.parse(fs.readFileSync(abs, 'utf8'));
-  } catch (err) {
-    throw new Error(`fail-closed: ${NIGHTWATCH_STORAGE_STATE_VAR} file is not valid JSON: ${abs}: ${(err as Error).message}`);
+  } catch {
+    // NW-13: the native SyntaxError embeds a window of the INPUT around the
+    // offending token, so forwarding its message publishes credential bytes
+    // into whatever captured the throw. The category is preserved — callers
+    // and tests match on "not valid JSON" — and the location is identified by
+    // digest rather than printed.
+    throw new Error(
+      `fail-closed: ${NIGHTWATCH_STORAGE_STATE_VAR} file is not valid JSON: ${sensitiveDiagnostic('STORAGE_STATE_PARSE_REFUSED', { failure: 'MALFORMED_JSON', target: abs })}`,
+    );
   }
   if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
     throw new Error(`fail-closed: ${NIGHTWATCH_STORAGE_STATE_VAR} must be a JSON object (Playwright storage state)`);
@@ -170,6 +179,31 @@ interface StorageStateKeySemantics {
   appTypeMatchesExpected: boolean;
 }
 
+/**
+ * NW-13: the three key-inspection helpers each called `JSON.parse` with no
+ * catch, so a malformed storage-state file threw a native SyntaxError whose
+ * message carries a window of the credential bytes. They now share one reader
+ * that refuses content-free.
+ */
+function readStorageStateObject(p: string): Record<string, unknown> {
+  let raw: string;
+  try {
+    raw = fs.readFileSync(p, 'utf8');
+  } catch (error) {
+    throw new Error(sensitiveDiagnostic('STORAGE_STATE_UNREADABLE', { failure: 'NOT_READABLE', errno: errnoCode(error), target: p }));
+  }
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    throw new Error(sensitiveDiagnostic('STORAGE_STATE_PARSE_REFUSED', { failure: 'MALFORMED_JSON', target: p }));
+  }
+  if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    throw new Error(sensitiveDiagnostic('STORAGE_STATE_SHAPE_REFUSED', { failure: 'SCHEMA_INVALID', target: p }));
+  }
+  return parsed as Record<string, unknown>;
+}
+
 export function inspectStorageStateKeySemantics(
   p: string,
   opts: {
@@ -180,7 +214,7 @@ export function inspectStorageStateKeySemantics(
     appTypeExpected: string;
   },
 ): StorageStateKeySemantics {
-  const parsed = JSON.parse(fs.readFileSync(p, 'utf8')) as Record<string, unknown>;
+  const parsed = readStorageStateObject(p);
   const cookies = Array.isArray(parsed.cookies) ? parsed.cookies : [];
   const cookieMap = new Map<string, string>();
   for (const item of cookies) {
@@ -217,7 +251,7 @@ export function inspectStorageStateKeyPresence(
   p: string,
   keys: { cookie: readonly string[]; localStorage?: readonly string[] },
 ): StorageStateKeyPresence {
-  const parsed = JSON.parse(fs.readFileSync(p, 'utf8')) as Record<string, unknown>;
+  const parsed = readStorageStateObject(p);
   const cookies = Array.isArray(parsed.cookies) ? parsed.cookies : [];
   const origins = Array.isArray(parsed.origins) ? parsed.origins : [];
   const cookieNames = new Set(
@@ -289,7 +323,7 @@ export function inspectStorageStateCookiePageReadability(
   opts: { cookieKey: string; appOrigin: string; appPath: string },
   atEpochSeconds: number = Math.floor(Date.now() / 1000),
 ): CookiePageReadability {
-  const parsed = JSON.parse(fs.readFileSync(p, 'utf8')) as Record<string, unknown>;
+  const parsed = readStorageStateObject(p);
   const cookies = Array.isArray(parsed.cookies) ? parsed.cookies : [];
   const record = cookies.find(
     (item): item is Record<string, unknown> =>
@@ -368,7 +402,7 @@ export function validateStorageStateOutputPath(p: string, opts?: StorageStateOut
   try {
     fs.accessSync(parent, fs.constants.W_OK);
   } catch (err) {
-    throw new Error(`fail-closed: ${NIGHTWATCH_STORAGE_STATE_VAR} output parent is not writable: ${(err as Error).message}`);
+    throw new Error(`fail-closed: ${NIGHTWATCH_STORAGE_STATE_VAR} output parent is not writable: ${sensitiveDiagnostic('STORAGE_STATE_OUTPUT_PARENT_UNWRITABLE', { failure: 'NOT_READABLE', errno: errnoCode(err), target: parent })}`);
   }
   const parentStat = fs.lstatSync(parent);
   if (parentStat.isSymbolicLink()) throw new Error(`fail-closed: ${NIGHTWATCH_STORAGE_STATE_VAR} output parent is a symlink`);
@@ -454,7 +488,7 @@ export function atomicallyReplaceValidatedStorageState(
       fs.closeSync(directory);
     }
   } catch (error) {
-    throw new Error(`fail-closed: atomic storage-state replacement failed: ${(error as Error).message}`);
+    throw new Error(`fail-closed: atomic storage-state replacement failed: ${sensitiveDiagnostic('STORAGE_STATE_REPLACE_FAILED', { failure: 'IO_ERROR', errno: errnoCode(error) })}`);
   }
   return output;
 }

@@ -23,10 +23,22 @@ export const SELFDEV_AUTHORITATIVE_PATHS = Object.freeze([
   // privateArtifacts.ts but never extended the trust root, so every fixture
   // mirror failed to resolve them. The list must stay transitively closed
   // over the authoritative set's imports.
+  //
+  // NW-02/NW-13 repeated DEF-12 exactly: privateArtifacts.ts gained imports of
+  // the shared path-topology authority and the content-free diagnostic
+  // taxonomy, and the trust root was not extended, so every fixture mirror
+  // failed with "Cannot find module". Only the broader suite caught it — the
+  // existing hardening rule checks that selfDev files are covered, not that
+  // the set is CLOSED over its own imports. `checkSelfDevTrustRootClosure`
+  // now enforces the closure itself.
+  'src/core/agentProtocol/closedVocabulary.ts',
   'src/core/campaign/runtimeValidation.ts',
   'src/core/policy/ownerScope.ts',
   'src/core/policy/privateArtifacts.ts',
   'src/core/policy/privateScreening.ts',
+  'src/core/policy/sensitiveDiagnostics.ts',
+  'src/core/policy/sourceTopology.ts',
+  'src/core/source/siblingRoot.ts',
   'src/core/provenance/index.ts',
   'src/core/provenance/localGit.ts',
   'src/core/selfDev/adoptedCaseCatalog.generated.ts',

@@ -221,6 +221,74 @@ function selfDevelopmentSourceFiles() {
   return result.sort();
 }
 
+/**
+ * The self-dev trust root must be CLOSED over its own relative imports.
+ *
+ * `SELFDEV_AUTHORITATIVE_PATHS` is both the provenance digest input and the
+ * exact file set copied into every sandbox fixture mirror, so a listed module
+ * that imports an unlisted one produces a mirror that cannot resolve it:
+ * "Cannot find module". The existing rule checks only that the sandbox mirror
+ * REFERENCES the list.
+ *
+ * This has now happened twice. DEF-12 recorded it when imports were added to
+ * `ownerScope.ts` / `privateArtifacts.ts`; NW-02 and NW-13 repeated it
+ * exactly, and in both cases the failure surfaced only when the broad suite
+ * ran the sandbox fixtures. The rule below removes the possibility rather
+ * than the symptom: every relative import of every listed TypeScript file
+ * must itself be listed.
+ */
+function checkSelfDevTrustRootClosure() {
+  const manifest = 'src/core/selfDev/provenanceManifest.ts';
+  // Comments must go FIRST. The list carries prose inside the array literal,
+  // and an apostrophe in it ("the authoritative set's imports") shifts the
+  // quote pairing so a naive scan extracts the text BETWEEN entries instead of
+  // the entries — yielding zero TypeScript paths and a rule that passes
+  // vacuously. That is exactly how the first version of this rule proved
+  // nothing.
+  const source = withoutComments(read(manifest));
+  const block = /SELFDEV_AUTHORITATIVE_PATHS\s*=\s*Object\.freeze\(\[([\s\S]*?)\]\s*as const\)/.exec(source);
+  if (block === null) {
+    fail(`${manifest} does not declare SELFDEV_AUTHORITATIVE_PATHS as a frozen literal list`);
+    return;
+  }
+  const declared = [...block[1].matchAll(/'([^']+)'/g)].map((match) => match[1]);
+  if (declared.length === 0) {
+    fail(`${manifest} declares an empty authoritative path set`);
+    return;
+  }
+  const listed = new Set(declared);
+  const typescript = declared.filter((relative) => relative.endsWith('.ts'));
+  // A rule that iterates an empty set always passes. The self-dev trust root
+  // is majority TypeScript, so an extraction that finds almost none of it has
+  // misparsed rather than found a clean manifest.
+  if (typescript.length < declared.length / 2) {
+    fail(`${manifest}: extracted only ${typescript.length} TypeScript paths from ${declared.length} declared entries; the closure check would pass vacuously`);
+    return;
+  }
+  for (const relative of typescript) {
+    const absolute = path.join(root, relative);
+    if (!fs.existsSync(absolute)) {
+      fail(`self-dev trust root lists ${relative}, which does not exist`);
+      continue;
+    }
+    const body = withoutComments(fs.readFileSync(absolute, 'utf8'));
+    for (const match of body.matchAll(/(?:from|import)\s*\(?\s*['"](\.[^'"]*)['"]/g)) {
+      const specifier = match[1];
+      const resolvedBase = path.posix.normalize(path.posix.join(path.posix.dirname(relative), specifier));
+      const candidates = [`${resolvedBase}.ts`, path.posix.join(resolvedBase, 'index.ts'), resolvedBase];
+      const target = candidates.find((candidate) => listed.has(candidate))
+        ?? candidates.find((candidate) => fs.existsSync(path.join(root, candidate)));
+      if (target === undefined) {
+        fail(`self-dev trust root member ${relative} imports ${specifier}, which resolves to no file`);
+        continue;
+      }
+      if (!listed.has(target)) {
+        fail(`self-dev trust root is not closed: ${relative} imports ${specifier} (${target}), which is not in SELFDEV_AUTHORITATIVE_PATHS — every sandbox fixture mirror would fail to resolve it`);
+      }
+    }
+  }
+}
+
 function checkSelfDevelopmentBoundary() {
   const files = selfDevelopmentSourceFiles();
   if (files.length === 0) {
@@ -3965,6 +4033,7 @@ checkOwnerReviewCliBoundary();
 checkImmutablePrivatePublication();
 checkOwnerDecisionAuthority();
 checkSelfDevelopmentBoundary();
+checkSelfDevTrustRootClosure();
 checkPhase8BSandboxBoundary();
 checkPhase8B01CloseoutIntegrity();
 checkPhase8B10PortfolioIntegrity();

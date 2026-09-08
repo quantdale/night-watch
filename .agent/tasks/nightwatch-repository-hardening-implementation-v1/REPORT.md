@@ -305,6 +305,99 @@ so it passes pre-repair too — it guards the ordering, not the atomicity.
 | measured against the defect | 5 of the 8 cases fail against the pre-repair module |
 | no consumer regression | `bugAtlas`, `systemAtlas`, `localInvestigationProviders` and the new suite — 74 passed |
 
+### NW-13 — remove sensitive input from parser diagnostics
+
+**Live revalidation, which refined the finding.** The review recorded "a
+prefix of the planted secret text". Measured directly on Node 22.22.1, the
+leak is a **window** of roughly twenty characters centred on the offending
+token:
+
+```
+Unexpected token 'o', ..."_ABCDEF": oops}" is not valid JSON
+```
+
+so the excerpt is a prefix, a middle fragment, or a suffix depending on where
+the malformation sits — and a document whose syntax error is far from the
+secret leaks nothing at all. The invariant is therefore "no fragment", not
+"no prefix", and the regression searches for the longest substring of the
+planted value of length six or more.
+
+The sweep also found something worse than the site the review named: two of
+the three key-inspection helpers called `JSON.parse` with **no catch at
+all**, so the raw `SyntaxError` propagated with its window intact.
+Pre-repair, `validateStorageStateFile` leaked `"_MARKER"` and
+`inspectStorageStateKeyPresence` leaked content too.
+
+**Repair.** `src/core/policy/sensitiveDiagnostics.ts` is the shared taxonomy.
+`sensitiveDiagnostic` renders only allowlisted parts and has deliberately
+**no free-text parameter**, so a caller cannot route content through it even
+by mistake:
+
+| Part | What it is | What it is not |
+| --- | --- | --- |
+| `failure` | one of seven closed classes | free text |
+| `errno` | the errno **code**, shape-checked | the errno message, which embeds the path |
+| `bytes` | a non-negative integer | a content length that reveals a value |
+| `target` | rendered as coarse class + twelve-hex digest | the path itself |
+
+The three inspection helpers share one content-free reader. Errno-only
+wrapping replaced native messages in `src/core/environment/index.ts`,
+`src/core/policy/privateArtifacts.ts` and
+`src/core/selfDevSandbox/sandboxMirror.ts`.
+
+The five distinctions an operator needs — missing, unreadable, oversized,
+unsafe path, malformed JSON, schema-invalid — are all preserved. Collapsing
+them into one opaque failure would have traded a privacy bug for a
+diagnosability bug, and the existing `/not valid JSON/` assertion in
+`tests/unit/storageState.test.ts` still matches.
+
+`src/core/reviewStore/store.ts` was inspected and needed **no change**: it
+reads through `PrivateArtifactStore.readJson`, which already throws the
+content-free `PRIVATE_ARTIFACT_CORRUPT`, and its other wrapped messages are
+Nightwatch-generated codes rather than native output. Recorded so the
+finding's "analogous parsers" clause is answered rather than assumed.
+
+**Acceptance.**
+
+| Criterion | Evidence |
+| --- | --- |
+| no planted secret or excerpt in any returned error, stderr, log, receipt or artifact | five malformed shapes × two entry points; the search covers message, stack, `cause` and every own property of the thrown object |
+| operators still receive a stable category | `/not valid JSON/` still matches; a missing file yields a different category; the closed vocabulary retains all seven classes |
+| content cannot be smuggled through the renderer | no free-text parameter; an unknown failure class, an unsafe errno and a negative byte count each throw |
+| measured against the defect | 2 of the 5 cases fail pre-repair; the 3 that pass are the taxonomy and category controls |
+| no regression on the touched surfaces | 52 passed across `storageState`, `environmentSelection`, `authCaptureStages`, `privateArtifactAtomic`, `selfDevSandbox` |
+
+### A regression this campaign introduced, and the rule that now prevents it
+
+NW-02 added `privateArtifacts.ts -> ./sourceTopology` and NW-13 added
+`-> ./sensitiveDiagnostics`. `SELFDEV_AUTHORITATIVE_PATHS` is both the
+provenance digest input and the exact file set copied into every self-dev
+sandbox fixture mirror, and its own comment records that the list "must stay
+transitively closed over the authoritative set's imports" — the DEF-12
+lesson. Neither addition extended it, so all 15 `selfDevAdoptionSandbox`
+cases failed with `Cannot find module`. The per-milestone focused suites did
+not include that file, so NW-02 shipped the breakage and the M5 shard sweep
+found it.
+
+Repaired three ways: the trust root was extended and is closed again;
+`src/core/source/siblingRoot.ts` now holds `DEFAULT_SIBLING_ROOT` as a leaf
+constant so the topology authority needs one string rather than the whole
+sibling-reader cone; and `checkSelfDevTrustRootClosure` enforces the closure
+mechanically — every relative import of every listed TypeScript file must
+itself be listed.
+
+**That rule's first version passed while proving nothing, in a new way.** The
+manifest carries prose *inside* the array literal, and an apostrophe in it —
+"the authoritative set's imports" — shifted the quote pairing of a naive
+`'([^']+)'` scan so the extracted "entries" were the text *between* entries.
+Zero of 54 parsed as `.ts`, the closure loop iterated an empty set, and the
+rule reported PASS against all three deliberately broken manifests. It now
+strips comments first, and fails outright when fewer than half the declared
+entries parse as TypeScript paths — a rule that cannot find its subject must
+not report success. Both the closure check and the anti-vacuity guard were
+then probed and fire: dropping any one of the four new trust-root entries is
+reported by name, including the two transitive cases.
+
 ## Validation receipts
 
 Recorded per milestone as they are produced. No receipt is copied from a

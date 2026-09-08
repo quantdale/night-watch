@@ -224,7 +224,10 @@ lifecycles, then the operator surface, then release accounting.
   malformed input appear in no returned error, stderr, log, receipt or
   artifact, while the operator still receives a stable category.
 - **Validation:** the planted-secret search suite over all captured outputs.
-- **Status:** NOT_STARTED
+- **Status:** COMPLETE — one allowlist-only diagnostic taxonomy with no
+  free-text parameter; the leak is a window rather than a prefix, so the
+  regression searches for any fragment across message, stack, cause and own
+  properties. 2 of the 5 cases fail against the pre-repair code.
 
 ### M6 — NW-04 bounded crash-safe autonomous checkpoints
 

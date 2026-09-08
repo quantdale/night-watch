@@ -11,6 +11,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import type { EnvironmentConfig, EnvironmentName } from './types';
 import { isBrowserBackgroundClassification, type BrowserBackgroundHostConfig } from '../safety/types';
+import { errnoCode, sensitiveDiagnostic } from '../policy/sensitiveDiagnostics';
 
 export type { EnvironmentConfig, EnvironmentName } from './types';
 
@@ -52,16 +53,18 @@ export function loadEnvironmentConfig(name: EnvironmentName): EnvironmentConfig 
   try {
     raw = fs.readFileSync(file, 'utf8');
   } catch (err) {
+    // NW-13: errno only. The native fs message embeds the absolute path.
     throw new EnvironmentSelectionError(
-      `fail-closed: cannot read environment config for "${name}" at ${file}: ${(err as Error).message}`
+      `fail-closed: cannot read environment config for "${name}": ${sensitiveDiagnostic('ENVIRONMENT_CONFIG_UNREADABLE', { failure: 'NOT_READABLE', errno: errnoCode(err), target: file })}`
     );
   }
   let parsed: unknown;
   try {
     parsed = JSON.parse(raw);
-  } catch (err) {
+  } catch {
+    // NW-13: the native SyntaxError embeds a window of the file's bytes.
     throw new EnvironmentSelectionError(
-      `fail-closed: environment config ${file} is not valid JSON: ${(err as Error).message}`
+      `fail-closed: environment config is not valid JSON: ${sensitiveDiagnostic('ENVIRONMENT_CONFIG_PARSE_REFUSED', { failure: 'MALFORMED_JSON', target: file })}`
     );
   }
   return validateEnvironmentConfig(name, parsed, file);

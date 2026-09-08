@@ -72,10 +72,11 @@
     "tests/unit/agentTools.test.ts",
     "tests/unit/nw01ClosedVocabularies.test.ts",
     "tests/unit/nw02PrivatePathTopology.test.ts",
-    "tests/unit/privateArtifactAtomic.test.ts",
     "tests/unit/reviewStore.test.ts",
     "tests/unit/nw03AtlasSnapshotConfinement.test.ts",
     "tests/unit/bugAtlas.test.ts",
-    "tests/unit/systemAtlas.test.ts"
+    "tests/unit/systemAtlas.test.ts",
+    "tests/unit/nw13SensitiveDiagnostics.test.ts",
+    "tests/unit/storageState.test.ts"
   ]
 }

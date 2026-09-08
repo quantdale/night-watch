@@ -14,7 +14,9 @@ import path from 'node:path';
 import type { RealSourceCurrentness, RealSourceReader } from '../../oracles/expectations/recipes/types';
 import type { SourceScanExcludedDirectory, SourceScanRejectionReason } from './scanTypes';
 
-export const DEFAULT_SIBLING_ROOT = '/home/dalepalaca/go/src/alphaus-main/REPOSITORIES';
+// The constant itself lives in the leaf module `siblingRoot.ts`; re-exported
+// here so every existing import site is unchanged.
+export { DEFAULT_SIBLING_ROOT } from './siblingRoot';
 export const MAX_SIBLING_SOURCE_FILE_BYTES = 2_000_000;
 export const MAX_SIBLING_GIT_METADATA_BYTES = 64 * 1024;
 export const MAX_SIBLING_SOURCE_SCAN_FILES = 4096;

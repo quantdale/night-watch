@@ -13,7 +13,7 @@ Last validated implementation SHA: 2ebb598c7bc13adf0d92b5422e0f844c3442b750
 Last substantive checkpoint SHA: 2ebb598c7bc13adf0d92b5422e0f844c3442b750
 Live HEAD authority: GIT
 Branch: session/nightwatch-repository-hardening--e7b9be89
-Last checkpoint: M4 / NW-03 complete and validated — strict basename, proven containment on the NW-02 authority, temporary-plus-rename publication, and inode-level atomicity measurement
+Last checkpoint: M5 / NW-13 complete and validated — allowlist-only sensitive diagnostics, plus repair of a DEF-12-class trust-root closure regression this campaign introduced at NW-02 and a hardening rule to prevent its recurrence
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 0ac7b3d037b5059f670eca715fc30adaf58e7334
@@ -34,11 +34,11 @@ is consumed, not re-executed.
 
 ## Current Milestone
 
-Milestone ID: M5
+Milestone ID: M6
 Milestone status: IN_PROGRESS
-What is being attempted: NW-13 — convert sensitive parse and schema failures
-into categorical, content-free diagnostics, so no planted secret or content
-excerpt can reach an error, log, receipt or artifact.
+What is being attempted: NW-04 — give the autonomous campaign checkpoint
+store generations, bounded reads, explicit same-ID writer semantics and
+atomic publication, on the NW-02 and NW-03 primitives.
 
 ## Completed Milestones
 
@@ -109,10 +109,20 @@ excerpt can reach an error, log, receipt or artifact.
   temporaries in `finally`. Eight cases; atomicity is measured by inode,
   which distinguishes rename from in-place truncation. 5 of 8 fail
   pre-repair. 74 passed across the Atlas and local-investigation suites.
+- **M5 COMPLETE (NW-13)** — `src/core/policy/sensitiveDiagnostics.ts` renders
+  diagnostics from allowlisted parts only (closed failure vocabulary, errno
+  code, byte count, coarse path class plus twelve-hex digest) and has no
+  free-text parameter, so content cannot pass through it by mistake. The
+  three storage-state key-inspection helpers share one content-free reader;
+  `environment/index.ts`, `privateArtifacts.ts` and `sandboxMirror.ts` now
+  report errno codes rather than native messages. Five cases; 2 fail
+  pre-repair. Measurement refined the finding: the leak is a ~20-character
+  window centred on the offending token, not a prefix, and two of the three
+  inspection helpers had no catch at all so the raw `SyntaxError` propagated.
 
 ## Work In Progress
 
-M5 / NW-13 in this session worktree. No other lane is dispatched.
+M6 / NW-04 in this session worktree. No other lane is dispatched.
 
 ## Findings register progress
 
@@ -122,19 +132,37 @@ M5 / NW-13 in this session worktree. No other lane is dispatched.
 | NW-01 | M2 | CLOSED — repaired, 7 regressions, 5 proven failing pre-repair |
 | NW-02 | M3 | CLOSED — repaired, 7 regressions, consumer-level case proven failing pre-repair |
 | NW-03 | M4 | CLOSED — repaired, 8 regressions, 5 proven failing pre-repair |
-| NW-13 | M5 | IN PROGRESS |
-| NW-04 | M6 | NOT STARTED |
+| NW-13 | M5 | CLOSED — repaired, 5 regressions, 2 proven failing pre-repair |
+| NW-04 | M6 | IN PROGRESS |
 | NW-05 | M7 | NOT STARTED |
 | NW-12 | M8 | NOT STARTED |
 | NW-09 | M9 | NOT STARTED |
 | NW-10 | M9 | NOT STARTED |
 | NW-11 | M9 | NOT STARTED |
-| NW-08 | M10 | PARTIAL — nine unmanifested suites registered as M2/M3/M4 evidence |
+| NW-08 | M10 | PARTIAL — ten suites registered, two duplicate additions reverted; live denominator 218/336 files measured |
 | NW-14 | M11 | NOT STARTED |
 | NW-07 | M12 | NOT STARTED |
 | NW-15 | — | CLOSED BY W10 OWNER — consumed, out of scope |
 
 ## Exact Next Action
+
+1. Probe the live NW-04 evidence in `src/core/agentRuntime/localCampaign.ts`:
+   confirm the direct truncate-then-chmod publication, the unbounded read
+   before decoding, and the path that can delete an existing same-ID
+   checkpoint before new durable progress exists.
+2. Freeze the generation and same-ID writer semantics before changing any
+   consumer, and keep every pre-W9, W9 and W10 checkpoint readable.
+3. Cap file size before allocation; stage canonical bytes to an owner-only
+   same-directory temporary, sync where supported, replace atomically under
+   verified identity, then publish generation metadata. Preserve corrupt
+   evidence and fail categorically with content-free diagnostics from the
+   M5 taxonomy.
+4. Add the crash matrix — before write, mid-write, before and after rename —
+   plus simultaneous same-ID writers, stale generation, oversized, truncated
+   and malformed state, and W9/W10 checkpoint resume; verify the cases fail
+   against the pre-repair store.
+
+## Superseded next action (M5, complete)
 
 1. Probe the live NW-13 evidence: plant fabricated secret text at the
    beginning, middle and end of malformed JSON and confirm that
@@ -219,6 +247,13 @@ M5 / NW-13 in this session worktree. No other lane is dispatched.
 | `bin/hardening-check.mjs` | call-form lock on both private-path surfaces | MODIFIED |
 | `src/core/bugAtlas/snapshot.ts` | strict basename, proven containment, temporary-plus-rename publication | MODIFIED |
 | `tests/unit/nw03AtlasSnapshotConfinement.test.ts` | eight NW-03 cases with sentinel and inode assertions | CREATED |
+| `src/core/policy/sensitiveDiagnostics.ts` | allowlist-only diagnostic taxonomy | CREATED |
+| `src/browser/fixtures/storageState.ts` | content-free parse/IO diagnostics; one shared reader for the three inspection helpers | MODIFIED |
+| `src/core/environment/index.ts` | content-free config read/parse diagnostics | MODIFIED |
+| `src/core/selfDevSandbox/sandboxMirror.ts` | errno-only base diagnostic | MODIFIED |
+| `src/core/source/siblingRoot.ts` | leaf constant so the topology authority does not drag in the sibling reader | CREATED |
+| `src/core/selfDev/provenanceManifest.ts` | trust root closed over the new imports | MODIFIED |
+| `tests/unit/nw13SensitiveDiagnostics.test.ts` | five NW-13 cases with fragment search over message, stack, cause and own properties | CREATED |
 | `docs/MASTER-IMPLEMENTATION-HARDENING-PLAN.md` | document status and NW-06 resolution evidence | MODIFIED |
 
 ## Validation Ledger
@@ -230,6 +265,38 @@ the inherited W10 anchor, 31 legacy v1 task records, and the integrated W10
 session worktree awaiting an owner release. `npm run handoff:check` PASS,
 receipt campaign `nightwatch-repository-hardening-implementation-v1`,
 planned-from `0ac7b3d`. `npm run workspace:check` PASS.
+
+M5 shard sweep at the M5 tree (the full suite in four foreground shards,
+because two consecutive background `npm test` runs were killed mid-flight by
+session rotation and were discarded rather than recorded):
+
+| Shard | Collected | Passed | Skipped | Failed |
+|---|---:|---:|---:|---:|
+| 1/4 | 1190 | 1190 | 0 | 0 |
+| 2/4 | 1208 | 1207 | 1 | 0 |
+| 3/4 | 1137 | 1124 | 12 | 1 |
+| 4/4 | 1178 | 1171 | 5 | 2 |
+| total | 4713 | 4692 | 18 | 3 |
+
+All three failures were diagnosed rather than accepted:
+
+- `phase23QualityGate` "executable drift inventory" — REAL, introduced by
+  this campaign. Registering `selfDevAdoptionSandbox.test.ts` and
+  `privateArtifactAtomic.test.ts` in `SYNTHETIC_CAMPAIGN` duplicated suites
+  already selected by the required `SEMANTIC_COMPATIBILITY` and
+  `OWNER_PROVENANCE` lanes, and `quality-gate-inventory` reported both as
+  `UNCLASSIFIED_DUPLICATE`. Both additions were reverted; the inventory now
+  reports 218 unique files and zero duplicates, and the suite passes.
+- two `selfDevAdoptionCli` cases — NOT a regression. Both fail with
+  `SELFDEV_AUTHORITATIVE_SOURCE_DIRTY` because the self-dev CLI refuses to
+  run against an uncommitted authoritative source tree, and this campaign's
+  trust-root files were uncommitted at the time of the sweep. Re-verified
+  after the commit.
+
+M5: `tests/unit/nw13SensitiveDiagnostics.test.ts` — 5 passed; 2 fail against
+the pre-repair code. 52 passed across `storageState`, `environmentSelection`,
+`authCaptureStages`, `privateArtifactAtomic` and `selfDevSandbox`.
+`npm run typecheck` and `npm run hardening:check` PASS.
 
 M4: `tests/unit/nw03AtlasSnapshotConfinement.test.ts` — 8 passed; 5 fail
 against the pre-repair module. Consumer suites: `bugAtlas`, `systemAtlas`,
@@ -298,6 +365,31 @@ tests `worktrees.length > maxWorktrees` over already-registered worktrees
 only. The candidate registration is never modelled, and the same function
 returns on a failed ownership-record write with the branch and worktree
 already created.
+
+Discovery: this campaign repeated the recorded DEF-12 defect exactly, and
+only the broad suite caught it. Evidence: `SELFDEV_AUTHORITATIVE_PATHS` is
+both the provenance digest input and the file set copied into every self-dev
+sandbox fixture mirror, and its own comment says the list "must stay
+transitively closed over the authoritative set's imports". NW-02 added
+`privateArtifacts.ts -> ./sourceTopology` and NW-13 added
+`-> ./sensitiveDiagnostics` without extending it, so all 15
+`selfDevAdoptionSandbox` cases failed with `Cannot find module`. The focused
+per-milestone suites did not include that file, so NW-02 shipped the breakage
+and M5's wider run found it. Repaired by extending the trust root,
+introducing `src/core/source/siblingRoot.ts` so the topology authority needs
+only a one-constant leaf instead of the whole sibling-reader cone, and adding
+`checkSelfDevTrustRootClosure` to enforce the closure mechanically.
+
+Discovery: the first version of that closure rule passed while proving
+nothing, in a new way. Evidence: the manifest carries prose INSIDE the array
+literal, and an apostrophe in it — "the authoritative set's imports" —
+shifted the quote pairing of a naive `'([^']+)'` scan, so the extracted
+"entries" were the text BETWEEN entries. Zero of 54 ended in `.ts`, the
+closure loop iterated an empty set, and the rule reported PASS against all
+three deliberately broken manifests. Fixed by stripping comments first, and
+made structurally non-vacuous by failing when fewer than half the declared
+entries parse as TypeScript paths. Both the closure rule and the
+anti-vacuity guard were then probed and fire.
 
 Discovery: NW-03's escape mutated the filesystem before the write. Evidence:
 `saveBugAtlasSnapshot` created the directory from `path.dirname(file)`, so an

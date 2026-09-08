@@ -318,6 +318,23 @@ Priority meanings: P0 is demonstrated catastrophic failure requiring immediate c
 - **Tests and validation:** add fixture repos for new/unclassified/deleted tests, duplicate selection, skips, zero-step groups, UI failure, and unavailable host capability. Compare actual runner collection where feasible. Run complete offline and UI lanes after classification.
 - **Acceptance:** every discovered executable test/check belongs to exactly one required or explicitly excluded class; no green receipt can omit a new test silently; exact counts and inventory digest are recorded; CI workflow executes its stated classes.
 - **Dependencies / risks / parallelization:** inventory can start early and closes after changed surfaces stabilize. One release lane owns manifests/workflow. Risk is excessive runtime; optimize grouping only after coverage is explicit.
+- **Partial progress (2026-09-08, M2-M5):** ten previously unmanifested
+  suites were registered in the required `SYNTHETIC_CAMPAIGN` lane as each
+  finding closed, including `agentProtocol.test.ts` and `agentTools.test.ts`
+  — the frozen trust boundary's own regressions, which the authoritative gate
+  had never executed. Two further additions,
+  `tests/unit/selfDevAdoptionSandbox.test.ts` and
+  `tests/unit/privateArtifactAtomic.test.ts`, were **reverted**: they are
+  already selected by the required `SEMANTIC_COMPATIBILITY` and
+  `OWNER_PROVENANCE` lanes, and `bin/quality-gate-inventory.mjs` correctly
+  reported them as `UNCLASSIFIED_DUPLICATE`, failing
+  `tests/unit/phase23QualityGate.test.ts`. The gate's own no-duplicate
+  invariant works. Current measurement at this head: the authoritative gate
+  selects **218 unique test files** with zero duplicates, against **336**
+  collected test files and **4,713** collected tests — so roughly 118 files
+  remain outside the explicit union. That is the live denominator M10 must
+  classify; the fixed-baseline 208/321 comparison remains the reproducible
+  historical anchor.
 
 ### NW-09 — Expose review decisions through a deliberate shipped capability
 
@@ -369,7 +386,7 @@ Priority meanings: P0 is demonstrated catastrophic failure requiring immediate c
 
 ### NW-13 — Remove sensitive input from parser diagnostics
 
-- **Priority / category / confidence / status:** P1; privacy and diagnostics; CONFIRMED by execution; NOT STARTED.
+- **Priority / category / confidence / status:** P1; privacy and diagnostics; CONFIRMED by execution; **CLOSED** — repaired and regression-proven under `nightwatch-repository-hardening-implementation-v1` M5.
 - **Affected surfaces:** `src/browser/fixtures/storageState.ts` and analogous credential/private-store JSON parsers and CLI error rendering.
 - **Evidence:** the storage-state JSON catch includes the native parser message. On Node 22.22.1, malformed synthetic input caused the thrown error to contain a prefix of the planted secret text.
 - **Problem, impact, root cause:** runtime parser diagnostics may echo credential-bearing content into terminal logs or artifacts. Wrapping `err.message` assumes native messages are content-free.
@@ -378,6 +395,44 @@ Priority meanings: P0 is demonstrated catastrophic failure requiring immediate c
 - **Tests and validation:** planted fake secrets in malformed JSON at beginning/middle/end, invalid UTF-8 handling where applicable, schema errors, nested thrown causes, CLI stderr, logs, and generated artifacts. Search all outputs for planted values and substrings.
 - **Acceptance:** no planted secret or content excerpt appears in any returned error, stderr, log, receipt, or artifact; operators still receive a stable category and remediation.
 - **Dependencies / risks / parallelization:** align with NW-02/NW-04 private-state primitives. Can be a focused subtask after error taxonomy freezes. Risk is loss of debugging context; record safe byte length/hash only if policy permits and utility is proven.
+
+- **Resolution evidence (2026-09-08):** revalidated and refined. The review
+  described "a prefix of the planted secret text"; measurement on Node 22.22.1
+  shows the leak is a **window** of roughly twenty characters centred on the
+  offending token, so the excerpt can be a prefix, a middle fragment or a
+  suffix depending on where the malformation sits:
+  `Unexpected token 'o', ..."_ABCDEF": oops}" is not valid JSON`. The
+  invariant is therefore "no fragment", not "no prefix", and the regression
+  searches for the longest substring of the planted value of length six or
+  more across the message, the stack, the `cause` chain and every own
+  property of the thrown object.
+  The sweep also found that two of the three key-inspection helpers called
+  `JSON.parse` with **no catch at all**, so the raw `SyntaxError` propagated
+  with its window intact — a more direct leak than the wrapped site the
+  review named. Both are measured: pre-repair, `validateStorageStateFile`
+  leaked `"_MARKER"` and `inspectStorageStateKeyPresence` leaked content too.
+  Repair: `src/core/policy/sensitiveDiagnostics.ts` is the shared taxonomy.
+  `sensitiveDiagnostic` renders only allowlisted parts — a failure class from
+  a closed vocabulary, an errno **code** (never its message), a byte count,
+  and a coarse path class plus twelve-hex path digest — and has deliberately
+  **no free-text parameter**, so a caller cannot pass content through it by
+  mistake. The three inspection helpers share one content-free reader. The
+  five distinctions the operator needs (missing, unreadable, oversized,
+  unsafe path, malformed JSON, schema-invalid) are preserved, because
+  collapsing them would trade a privacy bug for a diagnosability bug; the
+  existing `/not valid JSON/` assertion in `tests/unit/storageState.test.ts`
+  still matches. Analogous sites converted: `src/core/environment/index.ts`
+  (config read and parse), and errno-only wrapping in
+  `src/core/policy/privateArtifacts.ts` and
+  `src/core/selfDevSandbox/sandboxMirror.ts`.
+  `src/core/reviewStore/store.ts` was inspected and needed no change: it
+  reads through `PrivateArtifactStore.readJson`, which already throws the
+  content-free `PRIVATE_ARTIFACT_CORRUPT`, and its other wrapped messages are
+  Nightwatch-generated codes.
+  Five cases in `tests/unit/nw13SensitiveDiagnostics.test.ts`; 2 fail against
+  the pre-repair code and the 3 that pass are the taxonomy and category
+  controls. 52 passed across the storage-state, environment, auth-capture and
+  private-store suites.
 
 ### NW-14 — Reconcile dependencies, portability, and release documentation
 
