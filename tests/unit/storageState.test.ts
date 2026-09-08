@@ -26,7 +26,23 @@ import { inspectRipplePageAuthReadability } from '../../src/browser/fixtures/pag
 import { startFixtureServer } from '../../src/browser/fixtures/fixtureServer';
 
 const NIGHTWATCH_ROOT = path.resolve(__dirname, '..', '..');
-const WORKSPACE_ROOT = path.resolve(NIGHTWATCH_ROOT, '..');
+/**
+ * A SYNTHETIC workspace root, not `path.resolve(NIGHTWATCH_ROOT, '..')`.
+ *
+ * This suite writes its fixtures into `os.tmpdir()`, and the old derivation
+ * made the workspace root "whatever directory contains this checkout". The
+ * clean-checkout gate clones into `/tmp/nightwatch-quality-gate-clean-XXXX`,
+ * so the workspace root became `/tmp`, every fixture was suddenly "inside the
+ * Alphaus workspace", and eight acceptance cases failed — in `gate:clean`
+ * only, while passing everywhere the author ever ran them.
+ *
+ * Containment is lexical, so a path that exists nowhere can never be an
+ * ancestor of a fixture. The rejection cases are unaffected: "inside the
+ * Nightwatch repo" still uses NIGHTWATCH_ROOT, and "inside the Alphaus
+ * workspace" builds its own disposable synthetic root and asserts against
+ * that.
+ */
+const WORKSPACE_ROOT = path.join(path.sep, 'synthetic-alphaus-workspace-root');
 
 /** A valid Playwright storage-state payload with obvious synthetic secrets. */
 const FAKE_STATE = {

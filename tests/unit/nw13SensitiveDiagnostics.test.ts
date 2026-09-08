@@ -69,7 +69,15 @@ function tmpStateFile(content: string): string {
 }
 
 const NIGHTWATCH_ROOT = path.resolve(__dirname, '..', '..');
-const WORKSPACE_ROOT = path.resolve(NIGHTWATCH_ROOT, '..');
+/**
+ * SYNTHETIC, for the same reason `storageState.test.ts` uses one: this suite
+ * writes fixtures into `os.tmpdir()`, and deriving the workspace root from
+ * this checkout's parent makes it `/tmp` when the clean-checkout gate clones
+ * into `/tmp/nightwatch-quality-gate-clean-XXXX`. Every fixture then trips
+ * the workspace-containment refusal before reaching the diagnostic under
+ * test, so the case asserted the wrong rejection in `gate:clean` only.
+ */
+const WORKSPACE_ROOT = path.join(path.sep, 'synthetic-alphaus-workspace-root');
 
 function everythingThrown(run: () => unknown): string {
   try {

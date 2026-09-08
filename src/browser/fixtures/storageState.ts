@@ -25,6 +25,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { errnoCode, sensitiveDiagnostic } from '../../core/policy/sensitiveDiagnostics';
+import { resolveSourceTopology } from '../../core/policy/sourceTopology';
 
 export const NIGHTWATCH_STORAGE_STATE_VAR = 'NIGHTWATCH_STORAGE_STATE';
 
@@ -51,7 +52,21 @@ interface AtomicStorageStateOptions extends StorageStateOptions {
 
 function defaultRoots(opts?: StorageStateOptions): { nightwatchRoot: string; workspaceRoot: string } {
   const nightwatchRoot = opts?.nightwatchRoot ?? path.resolve(__dirname, '..', '..', '..');
-  const workspaceRoot = opts?.workspaceRoot ?? path.resolve(nightwatchRoot, '..');
+  // NW-02, third surface. The workspace root was `path.resolve(nightwatchRoot,
+  // '..')` — "whatever directory happens to contain this checkout". That is
+  // the same defect the private stores had, and it bites hardest in a
+  // RELOCATED checkout: the clean-checkout gate clones into
+  // `/tmp/nightwatch-quality-gate-clean-XXXX`, so the workspace root became
+  // `/tmp` and every legitimate external storage-state path under /tmp was
+  // rejected as "inside the Alphaus workspace". Thirteen cases failed in
+  // `gate:clean` while passing everywhere else, which is exactly how a
+  // topology-derived safety decision fails: not wrongly permissive here, but
+  // wrongly restrictive somewhere the author never ran.
+  //
+  // The sibling REPOSITORIES root is an absolute, checkout-independent fact,
+  // so it means the same thing from any checkout. `nightwatchRoot` still
+  // covers THIS checkout, which is the protection that must not weaken.
+  const workspaceRoot = opts?.workspaceRoot ?? resolveSourceTopology().repositoriesRoot;
   return { nightwatchRoot, workspaceRoot };
 }
 
