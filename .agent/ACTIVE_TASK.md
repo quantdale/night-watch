@@ -3,22 +3,31 @@
 Task ID: nightwatch-residual-closure-and-lane-qualification-v1
 Phase: RESIDUAL_CLOSURE_AND_LANE_QUALIFICATION_V1
 Title: Residual Closure and Lane Qualification
-Status: IN_PROGRESS
+Status: COMPLETE
 Task directory: .agent/tasks/nightwatch-residual-closure-and-lane-qualification-v1
 Starting SHA: 58bbf2d028ce2d59e6c5616ffeeb65ab43eec142
-Last validated implementation SHA: 58bbf2d028ce2d59e6c5616ffeeb65ab43eec142
-Last checkpoint: M0 COMPLETE — planning checkpoint validated and integrated at `a180a081d92f32a75fd26909d6e3362459cea990`; R-07 registered from live use
-Current milestone: M0b — restore the planning-only handoff checkpoint (R-07)
-Next action: Teach `bin/project-state-check.mjs` to assert the predecessor binding for a `READY_FOR_EXECUTION` prompt instead of the campaign binding the handoff protocol forbids, add a regression covering the planning and active prompt states, then validate and continue to M1.
+Last validated implementation SHA: c18db55970a6497470191c8c9ef58f5012a96c8c
+Last checkpoint: M7 certification COMPLETE at implementation `c18db55970a6497470191c8c9ef58f5012a96c8c`; all seven findings closed and every declared lane resolved into exactly one class
+Current milestone: COMPLETE — M0 through M7 are closed
+Next action: STOP. Hold at this checkpoint and report the certified outcome to the owner. Three lanes remain UNAVAILABLE_CAPABILITY by authority rather than by failure — the online dependency-advisory scan, the 12 owner-run manual harnesses and the 6 live-app smoke lanes — and exact-checkpoint CI remains BLOCKED_EXTERNAL until the owner clears the GitHub billing block. Do not reopen R-01 through R-07. The recommended successor is the real-yield campaign, gated on confirmed provider capability.
 Authorization class: RESIDUAL_CLOSURE_AND_LANE_QUALIFICATION_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 58bbf2d028ce2d59e6c5616ffeeb65ab43eec142
-LAST_VALIDATED_IMPLEMENTATION_SHA: 58bbf2d028ce2d59e6c5616ffeeb65ab43eec142
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 58bbf2d028ce2d59e6c5616ffeeb65ab43eec142
+LAST_VALIDATED_IMPLEMENTATION_SHA: c18db55970a6497470191c8c9ef58f5012a96c8c
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: c18db55970a6497470191c8c9ef58f5012a96c8c
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
-PHASE_RESIDUAL_CLOSURE_AND_LANE_QUALIFICATION_V1_STATUS: IN_PROGRESS
+PHASE_RESIDUAL_CLOSURE_AND_LANE_QUALIFICATION_V1_STATUS: COMPLETE
+
+## Outcome
+
+All seven findings R-01 through R-07 are CLOSED with acceptance evidence.
+Every declared validation lane resolves to exactly one of `PROVEN`,
+`BLOCKED_EXTERNAL` or `UNAVAILABLE_CAPABILITY`, and no absent run is recorded
+as a pass. `gate:local` and a fresh Node 20 `gate:clean` both PASS at this
+checkpoint with their own receipts, so both validated-SHA anchors now name a
+commit whose evidence exists.
 
 ## Mission
 

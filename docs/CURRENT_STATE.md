@@ -685,8 +685,8 @@ when its OWN evidence exists.
 | Field | Claims | Current value | Why |
 | --- | --- | --- | --- |
 | `LAST_SUBSTANTIVE_IMPLEMENTATION_SHA` | the last commit that changed implementation AND was validated | `62d23e2` | W10 reproduction-surface coverage and autonomous yield: pre-attempt capability projection, diverse capability-aware selection, cross-investigation capability carry with resume restoration, sanitized current-failure triage evidence, mechanical live yield metrics and a fail-closed host-owned `--repository` scope; full regression 4659/0/18, real current/generality/historical proofs, local and clean gates PASS |
-| `LAST_LOCALLY_VALIDATED_SHA` | the last commit where the local quality gate passed | `ec3eacf` | `gate:local` FULL PASS, all eleven required groups, receipt `receipt:sha256:e4214a74ab2f310837f0035f` (SEMANTIC 2080/2067/13/0, OWNER 91/91, SYNTHETIC 1196/1196/0) |
-| `LAST_CLEAN_VALIDATED_SHA` | the last commit where the clean Node 20 gate passed | `ec3eacf` | `gate:clean` PASS, Node 20, clean before/after, no reused `node_modules`, sibling writes 0, clean receipt `clean-receipt:sha256:123c540d48a426504d4a81d2` |
+| `LAST_LOCALLY_VALIDATED_SHA` | the last commit where the local quality gate passed | `c18db55` | `gate:local` FULL PASS, all eleven required groups, receipt `receipt:sha256:5a261509b2f2b89819a5bc23` (SEMANTIC 2083/2070/13/0, OWNER 91, SYNTHETIC 1797/1797/0, deep containment lane PROVEN) |
+| `LAST_CLEAN_VALIDATED_SHA` | the last commit where the clean Node 20 gate passed | `c18db55` | `gate:clean` PASS, `nodeMajor` 20, install PASS, clean before/after, `nodeModulesReused` false, no auth or owner-finding state, sibling writes 0, inner gate receipt `receipt:sha256:b6ae47a38d8c653d245fe3bf`, clean receipt `clean-receipt:sha256:f1f125526bb37b67a0377dfb` |
 | `CI_OBSERVED_SHA` | the commit whose CI result was observed | `27bfe44` | run `33864698218` (2026-09-04): zero steps under the external runner block (`runner_id = 0`), recorded as `NO_STEPS_EXTERNAL_NON_EVIDENCE`; a docs-descendant head covering the `4642c16` implementation |
 | `CI_EXECUTED_SHA` | the commit CI actually executed the gate at | `4e0bfc1` | same run; both `EXECUTED_PASS` and `EXECUTED_FAIL` require observed == executed, and this one is `EXECUTED_PASS` with receipt `receipt:sha256:f313d77bf52b8b06dbde2e5c` |
 
@@ -746,10 +746,10 @@ RELEASE_CERTIFICATION_PROTOCOL_VERSION: nightwatch.release-certification.v1
 PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
 RELEASE_CHECKPOINT_SHA: 2576c5751d33bb40046246e8fcf57c7cc5c30a57
 LIVE_HEAD_SHA: DISCOVER_FROM_GIT
-LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: a063416fb24c6b85e5098970a674698ed2955d44
-LAST_LOCALLY_VALIDATED_SHA: ec3eacf61c1b5bd3557eaf90594aecb2cd633b4f
-LAST_CLEAN_VALIDATED_SHA: ec3eacf61c1b5bd3557eaf90594aecb2cd633b4f
-CI_OBSERVED_SHA: a063416fb24c6b85e5098970a674698ed2955d44
+LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: c18db55970a6497470191c8c9ef58f5012a96c8c
+LAST_LOCALLY_VALIDATED_SHA: c18db55970a6497470191c8c9ef58f5012a96c8c
+LAST_CLEAN_VALIDATED_SHA: c18db55970a6497470191c8c9ef58f5012a96c8c
+CI_OBSERVED_SHA: c18db55970a6497470191c8c9ef58f5012a96c8c
 CI_EXECUTED_SHA: NONE
 CI_STATUS: NO_STEPS_EXTERNAL_NON_EVIDENCE
 FINAL_DOCUMENTATION_SHA: DISCOVER_FROM_GIT
@@ -806,34 +806,34 @@ informational and are not interpreted as current authority.
 LIVE_STATE_PROTOCOL_VERSION: nightwatch.live-state.v1
 LIVE_TASK_ID: nightwatch-residual-closure-and-lane-qualification-v1
 LIVE_PHASE: RESIDUAL_CLOSURE_AND_LANE_QUALIFICATION_V1
-LIVE_TASK_STATUS: IN_PROGRESS
+LIVE_TASK_STATUS: COMPLETE
 LIVE_PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
 LIVE_PROJECT_VERDICT_EFFECT: PRESERVE
-LIVE_NEXT_ACTION_STATE: CONTINUE
-LIVE_COMPLETION_CLAIM: NONE
+LIVE_NEXT_ACTION_STATE: STOP
+LIVE_COMPLETION_CLAIM: COMPLETE
 ```
 
 ### Exact-head CI state (current live CI state)
 
-At the substantive baseline `a063416` CI is
+At the substantive baseline `c18db55` CI is
 `NO_STEPS_EXTERNAL_NON_EVIDENCE`: a run WAS inspected at this exact SHA and
 it never started. This is a recorded external block, not an uninspected lane
 and not a failing gate.
 
-Run `34303289286`, job `102314618949`, at head
-`a063416fb24c6b85e5098970a674698ed2955d44`: `status=completed`,
+Run `34304312294`, job `102317699005`, at head
+`c18db55970a6497470191c8c9ef58f5012a96c8c`: `status=completed`,
 `conclusion=failure`, **`stepCount=0`, `executed=false`**. The annotation
 reads "The job was not started because recent account payments have failed or
 your spending limit needs to be increased." `bin/phase23-ci.mjs observe
---run-id=34303289286` classified it through the real classifier as
+--run-id=34304312294` classified it through the real classifier as
 `NO_STEPS_BILLING_OR_PLATFORM_BLOCK` / `REQUIRED_JOB_STEPS_EMPTY` with
 `exactHead: true` and `executedJobNames: []`. The classification was produced
 by `src/core/qualityGate/externalCi.ts`, not asserted by hand.
 
 The block is account-wide and long-standing, not specific to this checkpoint:
-every one of the 100 most recent runs concluded `failure` in about three
-seconds with no step executed, from `2026-09-06T21:39:43Z` through
-`2026-09-09T02:27:33Z`. `CI_EXECUTED_SHA` therefore stays `NONE` — nothing
+at the time of this observation every one of the 100 most recent runs
+concluded `failure` in about three seconds with no step executed, spanning
+`2026-09-06T21:55:59Z` through `2026-09-09T02:42:58Z`. `CI_EXECUTED_SHA` therefore stays `NONE` — nothing
 has executed — while `CI_OBSERVED_SHA` names the head that was inspected.
 
 **Owner action, outside this repository.** Clearing the payment or
@@ -3735,3 +3735,63 @@ accessibility certification, and neither strict `EXACT_REDISCOVERY` nor
 previously-unknown-defect yield. Its completion granted no publication or
 organizational release authority. The existing `OPERATIONALLY_ACCEPTED`
 project authority was preserved, not advanced.
+
+## Residual closure and lane qualification — terminal COMPLETE — 2026-09-09
+
+The predecessor campaign left four lanes recorded UNAVAILABLE. Audited against
+this live host they were not equivalent, and lane state is now three-valued —
+`PROVEN`, `BLOCKED_EXTERNAL`, `UNAVAILABLE_CAPABILITY` — because a single
+UNAVAILABLE conflated an absent host capability with an authority a campaign
+did not hold.
+
+Every declared lane, resolved:
+
+| Lane | Class | Evidence |
+| --- | --- | --- |
+| Authoritative local gate | `PROVEN` | `gate:local` PASS, 11/11 groups, receipt `receipt:sha256:5a261509b2f2b89819a5bc23` |
+| Clean-checkout gate | `PROVEN` | `gate:clean` PASS, Node 20, no reused `node_modules`, clean receipt `clean-receipt:sha256:f1f125526bb37b67a0377dfb` |
+| Full offline regression | `PROVEN` | 4789 passed / 18 skipped / 0 failed |
+| UI lane | `PROVEN` | UI typecheck PASS, 41 tests PASS, build PASS (3 files, 297422 bytes) |
+| Browser workflow | `PROVEN` | 4 passed / 0 failed in an owned session; see `docs/HOST-CAPABILITY-MATRIX.md` §4a |
+| Deep containment (L6) | `PROVEN` | `deepContainmentLane: PROVEN` in both gate receipts |
+| Exact-checkpoint CI | `BLOCKED_EXTERNAL` | `NO_STEPS_BILLING_OR_PLATFORM_BLOCK`, `stepCount=0`, classified by `src/core/qualityGate/externalCi.ts` |
+| Online dependency advisory | `UNAVAILABLE_CAPABILITY` | needs authorized network egress |
+| Owner manual harnesses (12) | `UNAVAILABLE_CAPABILITY` | needs DEV authentication and separate authorization |
+| Live-app smoke (6) | `UNAVAILABLE_CAPABILITY` | needs DEV authentication and separate authorization |
+
+Seven findings closed:
+
+- **R-01** the browser workflow lane is `PROVEN` on this host, not
+  unavailable. The predecessor's record reflected untested host
+  qualification. Chrome 151.0.7922.173 and bubblewrap 0.9.0 observed directly.
+- **R-02** exact-head CI is a recorded external block rather than an
+  uninspected lane, with its run id, reason and block class.
+  `CI_EXECUTED_SHA` stays `NONE` because nothing executed.
+- **R-03** the predecessor campaign has its closure section, and both
+  validated-SHA anchors now name a checkpoint whose own receipts exist.
+- **R-04** `--enable-local-review`, the owner-local review store and the
+  reviewer's four answers are documented; `npm run contract:health` exposes
+  a check that was reachable only from a test.
+- **R-05** both stale session worktrees released, `attention=0`; six
+  provably-merged branches deleted; sixteen non-merged branches deliberately
+  left for an owner decision.
+- **R-06** local evidence growth is bounded by a refusal-first retention
+  capability. Measured on the real store: 13,368 entries, 204 refused (55
+  referenced by tracked state), 13,164 candidates, ~670 MB reclaimable.
+  Nothing was removed; `--apply` is the owner's decision.
+- **R-07** the documented planning-only `READY_FOR_EXECUTION` handoff
+  checkpoint is landable again. Two individually correct guards together
+  forbade a documented state; no planning checkpoint had been landable since
+  the cross-check was added on 2026-08-31.
+
+What this campaign does NOT claim: no DEV, NEXT, production, cloud or
+datastore contact; no network egress and no dependency-advisory scan; no
+executed CI run at any checkpoint; no formal accessibility certification; and
+neither strict `EXACT_REDISCOVERY` nor previously-unknown-defect yield, both
+still 0. The existing `OPERATIONALLY_ACCEPTED` project authority is preserved,
+not advanced.
+
+**Recommended next campaign.** The real-yield campaign: strict
+`EXACT_REDISCOVERY` and previously-unknown-defect yield remain 0 across W7
+through W10 while the machinery is ready and the host qualifies. It is gated on
+confirmed provider capability, not on repository work.

@@ -2,7 +2,7 @@
 
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 Task ID: nightwatch-residual-closure-and-lane-qualification-v1
-Status: IN_PROGRESS
+Status: COMPLETE
 
 Evidence ledger for this campaign. It records what was actually run and
 observed, not what was intended. Receipts are written as they are produced
@@ -351,13 +351,76 @@ bypassed.
 Commands are documented in `README.md`; `--apply` is deliberately not an
 `npm run` shortcut.
 
+## M7 — certification
+
+Every declared validation lane, resolved into exactly one class. No absent run
+is recorded as a pass.
+
+| Lane | Class | Evidence |
+| --- | --- | --- |
+| Authoritative local gate | `PROVEN` | `gate:local` PASS 11/11 at `c18db55`, receipt `receipt:sha256:5a261509b2f2b89819a5bc23` |
+| Clean-checkout gate | `PROVEN` | `gate:clean` PASS, `nodeMajor` 20, `nodeModulesReused: false`, clean receipt `clean-receipt:sha256:f1f125526bb37b67a0377dfb` |
+| Full offline regression | `PROVEN` | 4789 passed / 18 skipped / 0 failed |
+| UI lane | `PROVEN` | typecheck PASS, 41 tests PASS, build PASS (3 files, 297422 bytes) |
+| Browser workflow | `PROVEN` | 4 passed / 0 failed inside this owned session |
+| Deep containment (L6) | `PROVEN` | `deepContainmentLane: PROVEN` in both gate receipts |
+| Exact-checkpoint CI | `BLOCKED_EXTERNAL` | run `34304312294`, job `102317699005`, `stepCount=0`, classified `NO_STEPS_BILLING_OR_PLATFORM_BLOCK` |
+| Online dependency advisory | `UNAVAILABLE_CAPABILITY` | needs authorized network egress |
+| Owner manual harnesses (12) | `UNAVAILABLE_CAPABILITY` | needs DEV authentication and separate authorization |
+| Live-app smoke (6) | `UNAVAILABLE_CAPABILITY` | needs DEV authentication and separate authorization |
+
+The 18 regression skips are the same environment-conditional set the
+predecessor recorded. Skipped means skipped.
+
+**The validated-SHA anchors moved, and only now.** `LAST_LOCALLY_VALIDATED_SHA`
+and `LAST_CLEAN_VALIDATED_SHA` had named the W10 documentation SHA
+`ec3eacf6…` since before this campaign began. They now name
+`c18db55970a6497470191c8c9ef58f5012a96c8c`, because that is the first
+checkpoint in this campaign for which both a `gate:local` receipt and a fresh
+Node 20 `gate:clean` receipt actually exist. At M3 they were deliberately left
+alone rather than advanced on the predecessor's evidence; inheriting a receipt
+for a different SHA is the failure this repository forbids.
+
+**An environment block, recorded as one.** The first attempt at the full
+offline regression was killed by host memory pressure before producing any
+test output. That is neither a failure nor a pass; the suite was re-run alone
+and completed. The record says so rather than quietly reporting only the
+successful run.
+
+**A fabrication caught before commit.** A first draft of the CURRENT_STATE CI
+narrative carried an invented Actions run id for the `c18db55` head. It was
+detected and replaced with the genuinely observed run `34304312294` before
+anything was committed. No fabricated identifier reached a commit, and the
+correction is recorded here rather than silently fixed.
+
 ## Validation receipts
 
-Recorded per milestone as they are produced.
+| Receipt | Value |
+| --- | --- |
+| Gate definition digest | `sha256:4e676246bbfce731df63dab76248d9bbc8ce682986026721754cdfe0b6cb5f5a` |
+| Local gate receipt | `receipt:sha256:5a261509b2f2b89819a5bc23` |
+| Clean gate receipt | `clean-receipt:sha256:f1f125526bb37b67a0377dfb` |
+| Clean inner gate receipt | `receipt:sha256:b6ae47a38d8c653d245fe3bf` |
+| Validation universe digest | `sha256:b20bde104a58e1e4ed5c128a` |
+| Package lock digest | `sha256:e87bf7337541d2ce03bb701deb09fc14853b5711c45688fcf8b647d04ebfe45c` |
+
+None is copied from a predecessor campaign or from a worker summary.
 
 ## Safety events
 
 NONE.
+
+## Residual work, with owner decisions
+
+| Item | Impact | Reason it stays open | Revisit condition |
+| --- | --- | --- | --- |
+| exact-checkpoint CI | no gate has ever executed in Actions | an account payment/spending-limit block stops the job before step 1; clearing it is outside this repository | once cleared, re-run at the acceptance head and record the run id and executed SHA |
+| the online advisory lane | a retained EOL dev fixture has no upstream scan | network egress is outside this campaign's authority | when permitted network access is authorized |
+| 12 `MANUAL_OWNER` + 6 `LIVE_APP_SMOKE` lanes | owner workflows unproven | need DEV authentication and separate authorization | when the owner authorizes a contained DEV session |
+| 16 non-merged session branches | possibly-unique work sits outside `main` | their tips are not ancestors of `origin/main` yet spot checks show their files present on main; deciding needs per-branch content review | an owner review of each branch's unique content |
+| ~670 MB of unreferenced artifacts | disk only | `--apply` is deliberately the owner's decision, not the campaign's | when the owner runs `node bin/evidence-retention.mjs --apply` |
+| 84 `FULL_REGRESSION` suites outside the gate | they run in `npm test`, not `gate:local` | inherited from the predecessor; unchanged here except that the retention suite was promoted INTO the gate as safety-load-bearing | when gate runtime budget is revisited |
+| the five central documents were not split | current and historical truth stay interleaved | rewriting them risks historical receipts for a readability gain, which NW-07 forbids | if a generated current view can be produced without touching the archives |
 
 ## Honest limits
 
@@ -368,6 +431,11 @@ NONE.
 - No sibling repository was written.
 - No GitHub Actions run has executed at any checkpoint of this campaign, so
   CI remains non-passing evidence-absent rather than green.
-- Completion of this campaign will grant no publication or organizational
-  release authority, and will prove neither strict `EXACT_REDISCOVERY` nor
-  previously-unknown-defect yield.
+- Completion of this campaign grants no publication or organizational
+  release authority, and proves neither strict `EXACT_REDISCOVERY` nor
+  previously-unknown-defect yield. Both remain 0.
+- The browser workflow lane is proven on THIS host. An unqualified host still
+  reports unsupported capability and never inherits this pass.
+- Releasing a worktree did not close a task. The umbrella programme
+  `nightwatch-autonomous-bug-hunting-programme-v1` remains `IN_PROGRESS`
+  with no active wave, and this campaign did not close it.

@@ -1,7 +1,7 @@
 # EXECUTION PROMPT — Residual Closure and Lane Qualification
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
-Status: IN_PROGRESS
+Status: COMPLETE
 Campaign ID: nightwatch-residual-closure-and-lane-qualification-v1
 OpenSpec: openspec/changes/nightwatch-residual-closure-and-lane-qualification-v1/
 Planned-From: 58bbf2d028ce2d59e6c5616ffeeb65ab43eec142

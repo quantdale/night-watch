@@ -6,23 +6,24 @@ STATE — nightwatch-residual-closure-and-lane-qualification-v1
 
 Task ID: nightwatch-residual-closure-and-lane-qualification-v1
 Phase: RESIDUAL_CLOSURE_AND_LANE_QUALIFICATION_V1
-Status: IN_PROGRESS
+Status: COMPLETE
 Campaign: nightwatch-residual-closure-and-lane-qualification-v1
 Starting SHA: 58bbf2d028ce2d59e6c5616ffeeb65ab43eec142
-Last validated implementation SHA: 58bbf2d028ce2d59e6c5616ffeeb65ab43eec142
-Last substantive checkpoint SHA: 58bbf2d028ce2d59e6c5616ffeeb65ab43eec142
+Last validated implementation SHA: c18db55970a6497470191c8c9ef58f5012a96c8c
+Last substantive checkpoint SHA: c18db55970a6497470191c8c9ef58f5012a96c8c
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-residual-closure-and--e130f226
-Last checkpoint: M0 in progress; owned session sess-f4f1d66c73a2 claimed on base `58bbf2d028ce2d59e6c5616ffeeb65ab43eec142` with workspace verdict PASS
+Last checkpoint: M7 certification COMPLETE at implementation `c18db55970a6497470191c8c9ef58f5012a96c8c`; all seven findings closed, every declared lane resolved into exactly one class
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 58bbf2d028ce2d59e6c5616ffeeb65ab43eec142
-LAST_VALIDATED_IMPLEMENTATION_SHA: 58bbf2d028ce2d59e6c5616ffeeb65ab43eec142
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 58bbf2d028ce2d59e6c5616ffeeb65ab43eec142
+LAST_VALIDATED_IMPLEMENTATION_SHA: c18db55970a6497470191c8c9ef58f5012a96c8c
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: c18db55970a6497470191c8c9ef58f5012a96c8c
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
-PHASE_RESIDUAL_CLOSURE_AND_LANE_QUALIFICATION_V1_STATUS: IN_PROGRESS
+LIVE_COMPLETION_CLAIM: COMPLETE
+PHASE_RESIDUAL_CLOSURE_AND_LANE_QUALIFICATION_V1_STATUS: COMPLETE
 
 ## Objective
 
@@ -33,16 +34,26 @@ local evidence growth a bounded, refusal-first retention policy.
 
 ## Current Milestone
 
+COMPLETE — M7 closed; the campaign is finished.
 Milestone ID: M7
-Milestone status: IN_PROGRESS
-What is being attempted: certification. R-01 through R-07 are implemented and
-recorded; M7 runs the full offline regression, `gate:local` and the UI lanes,
-resolves every declared lane into exactly one class, and settles
-`LAST_LOCALLY_VALIDATED_SHA` and `LAST_CLEAN_VALIDATED_SHA` against this
-campaign's own receipts.
+Milestone status: COMPLETE
+What is being attempted: NOTHING. The campaign is closed. All seven findings
+R-01 through R-07 are CLOSED with acceptance evidence, every declared
+validation lane resolves to exactly one of `PROVEN`, `BLOCKED_EXTERNAL` or
+`UNAVAILABLE_CAPABILITY`, and no absent run is recorded as a pass.
 
 ## Completed Milestones
 
+- **M7 COMPLETE** — certification at implementation
+  `c18db55970a6497470191c8c9ef58f5012a96c8c`. `gate:local` PASS 11/11,
+  receipt `receipt:sha256:5a261509b2f2b89819a5bc23`, deep containment lane
+  PROVEN. `gate:clean` PASS on a fresh Node 20 clone with
+  `nodeModulesReused: false`, `cleanBefore`/`cleanAfter` true, zero sibling
+  writes, inner receipt `receipt:sha256:b6ae47a38d8c653d245fe3bf`, clean
+  receipt `clean-receipt:sha256:f1f125526bb37b67a0377dfb`. Full offline
+  regression 4789 passed / 18 skipped / 0 failed. UI typecheck, 41 tests and
+  build PASS. Both validated-SHA anchors advanced to a checkpoint whose own
+  receipts exist.
 - **M6 COMPLETE (R-06)** — refusal-first evidence retention.
   `src/core/evidenceRetention/index.ts` is a pure planner;
   `bin/evidence-retention.mjs` owns every mutation. 18 regressions pass,
@@ -102,8 +113,7 @@ campaign's own receipts.
 
 ## Work In Progress
 
-M7 only. R-01 through R-07 are implemented; M6's code and regressions are
-written and passing but not yet committed. Certification has not run.
+NONE.
 
 Historical, for the record — M0. The owned session worktree
 `nightwatch-residual-closure-and--e130f226` is claimed as session
@@ -117,12 +127,9 @@ checkpoint and the terminal predecessor legitimately remains the active task.
 
 ## Exact Next Action
 
-Commit the M6 checkpoint, then run M7 certification: the full offline
-regression, `gate:local`, the UI lanes and root typecheck; resolve every
-declared lane into exactly one of `PROVEN` / `BLOCKED_EXTERNAL` /
-`UNAVAILABLE_CAPABILITY`; then settle `LAST_LOCALLY_VALIDATED_SHA` and
-`LAST_CLEAN_VALIDATED_SHA` against the receipts this campaign produces, or
-leave them and say why.
+STOP. The campaign is COMPLETE. Report the certified outcome to the owner.
+Any follow-up starts as a new authorized task; do not reopen R-01 through
+R-07.
 
 ## Files Changed
 
@@ -269,6 +276,59 @@ until they were classified and the declared digest advanced from
 totality rule worked exactly as designed; nothing joined the repository
 silently.
 
+Command: `npm run gate:local`
+Result: PASS
+When: 2026-09-09
+Relevant failure/output summary: all eleven required groups PASS at
+`gitHead c18db55970a6497470191c8c9ef58f5012a96c8c`; SEMANTIC_COMPATIBILITY
+2083/2070/13/0, OWNER_PROVENANCE 91, SYNTHETIC_CAMPAIGN 1797/1797/0 with
+`deepContainmentLane: PROVEN`; `finalResult: PASS`; receipt
+`receipt:sha256:5a261509b2f2b89819a5bc23`.
+
+Command: `npm test`
+Result: PASS
+When: 2026-09-09
+Relevant failure/output summary: 4789 passed / 18 skipped / 0 failed in 8.6
+minutes. A FIRST attempt was killed by host memory pressure with no test
+output; that was recorded as an environment block, not as a failure and not as
+a pass, and the suite was re-run alone to completion.
+
+Command: `npm run gate:clean`
+Result: PASS
+When: 2026-09-09
+Relevant failure/output summary: `nodeMajor: 20` (the clean gate provisions
+its own Node 20; the host itself is v22.22.1), `installResult: PASS`,
+`gateResult: PASS`, all eleven groups PASS with `deepContainmentLane: PROVEN`,
+`cleanBefore`/`cleanAfter` true, `nodeModulesReused: false`,
+`authStateProvided: false`, `ownerFindingStateProvided: false`,
+`siblingWrites: 0`; inner gate receipt
+`receipt:sha256:b6ae47a38d8c653d245fe3bf`, clean receipt
+`clean-receipt:sha256:f1f125526bb37b67a0377dfb`.
+
+Command: `npm run control-center:ui:typecheck`, `:test`, `:build`
+Result: PASS
+When: 2026-09-09
+Relevant failure/output summary: typecheck clean; 2 files / 41 tests passed;
+build PASS at 3 files / 297422 bytes with no external references.
+
+Command: `node bin/evidence-retention.mjs status` against the real store
+Result: PASS (read-only; nothing removed)
+When: 2026-09-09
+Relevant failure/output summary: `entries=13368 refused=204 candidates=13164
+reclaimable=702226244` with `REFERENCED_BY_TRACKED_STATE=55`,
+`WITHIN_RECENT_WORKING_SET=100`, `ENTRY_NOT_A_DIRECTORY_FILE=48`,
+`ENTRY_NAME_UNSAFE=1`; `mode=STATUS result=PRESERVED`. `--apply` was NOT run;
+reclaiming ~670 MB is an owner decision.
+
+Command: `node bin/phase23-ci.mjs observe --run-id=34304312294`
+Result: classified NO_STEPS_BILLING_OR_PLATFORM_BLOCK at the exact head
+When: 2026-09-09
+Relevant failure/output summary: job `102317699005` `stepCount=0`
+`executed=false`, `exactHead: true` at `c18db55`. A first draft of the
+CURRENT_STATE narrative carried an INVENTED run id for this head; it was
+caught and replaced with this observed run before commit. No fabricated
+identifier reached a commit.
+
 ## Decisions Made During This Task
 
 Decision: classify lanes three ways rather than as available/unavailable.
@@ -402,12 +462,34 @@ NONE
 
 ## Resume Recipe
 
-1. Read SPEC.
-2. Read PLAN.
-3. Inspect `git status`, the current SHA and `node bin/nightwatch-session.mjs status`.
-4. Run the smallest relevant validation for the current milestone.
-5. Continue Exact Next Action.
+Task complete. Do not resume; any follow-up starts as a new authorized task.
 
 ## Completion Snapshot
 
-Not complete. Populate only at closure, with real evidence.
+Final substantive checkpoint: c18db55970a6497470191c8c9ef58f5012a96c8c
+Live HEAD: DISCOVER_FROM_GIT
+Tests: `gate:local` PASS 11/11 receipt
+`receipt:sha256:5a261509b2f2b89819a5bc23`; `gate:clean` PASS Node 20 clean
+receipt `clean-receipt:sha256:f1f125526bb37b67a0377dfb` with inner receipt
+`receipt:sha256:b6ae47a38d8c653d245fe3bf`; full offline regression 4789
+passed / 18 skipped / 0 failed; UI typecheck PASS, 41 UI tests PASS, UI build
+PASS; browser workflow lane 4 passed / 0 failed in this owned session;
+retention suite 18 passed; `projectState` 67 passed; `plannerHandoff` 12
+passed.
+Artifacts: `src/core/evidenceRetention/index.ts`,
+`bin/evidence-retention.mjs`, `tests/unit/evidenceRetention.test.ts`,
+`bin/project-state-check.mjs`, `bin/planner-handoff-protocol.mjs`,
+`docs/HOST-CAPABILITY-MATRIX.md` §4a, `docs/CURRENT_STATE.md` closure
+sections, `README.md`, `config/validation-universe.v1.json`,
+`config/synthetic-campaign.v1.json`, `package.json`.
+Known issues: exact-checkpoint CI is `BLOCKED_EXTERNAL` on an account
+payment/spending-limit block, which is an owner action outside this
+repository. The online dependency-advisory lane, the 12 owner manual
+harnesses and the 6 live-app smoke lanes remain `UNAVAILABLE_CAPABILITY`.
+Sixteen non-merged session branches are left intact pending an owner
+decision. ~670 MB of unreferenced artifacts remain on disk because `--apply`
+is the owner's call.
+Recommended next task: the real-yield campaign — strict `EXACT_REDISCOVERY`
+and previously-unknown-defect yield are still 0 across W7 through W10 while
+the machinery is ready and the host qualifies. It is gated on confirmed
+provider capability, not on repository work.

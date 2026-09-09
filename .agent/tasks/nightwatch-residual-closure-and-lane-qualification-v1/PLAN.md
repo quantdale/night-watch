@@ -222,7 +222,12 @@ whose reference status cannot be proven is refused rather than removed.
 - **Acceptance:** no absent run recorded as a pass; terminal continuity; clean
   tree.
 - **Validation:** the full certification set.
-- **Status:** NOT_STARTED.
+- **Status:** COMPLETE — `gate:local` PASS 11/11 receipt
+  `receipt:sha256:5a261509b2f2b89819a5bc23`; `gate:clean` PASS on a fresh
+  Node 20 clone, no reused `node_modules`, clean receipt
+  `clean-receipt:sha256:f1f125526bb37b67a0377dfb`; full offline regression
+  4789 passed / 18 skipped / 0 failed; UI typecheck, 41 tests and build PASS;
+  every declared lane resolved into exactly one class.
 
 ## Sequencing constraints
 
