@@ -40,43 +40,43 @@ and project state to its result.
 
 ## Completed Milestones
 
-- M0 — owned session `nightwatch-control-center-ui-com-9a04214f` created and
+- **M0 COMPLETE** — owned session `nightwatch-control-center-ui-com-9a04214f` created and
   claimed on base `11c9ea62405c5b9b0eddd011fb7083da83348ee7`;
   `npm run session:status` verdict PASS with all seven workspace invariants
   PASS; predecessor re-verified terminal COMPLETE and untouched.
-- M1 — U-01 closed. `nodes.slice(0, 24)` and `edges.slice(0, 48)` removed from
+- **M1 COMPLETE (U-01)** — `nodes.slice(0, 24)` and `edges.slice(0, 48)` removed from
   `GraphCanvas`; `layerAssignment` generalized to `LayoutGraph` and shared by
   both canvases; pan, zoom, search, execution-state filter and selection
   added; footer separates nodes drawn from filter matches and edges drawn from
   edges received; server truncation quoted with its bound; undrawn edges
   counted and attributed to the projection. Verified by reintroducing the
   slice: 2 of 3 new graph tests failed, and passed again on restore.
-- M2 — U-02 closed for run detail and the run list. Repository provenance with
+- **M2 COMPLETE (U-02)** — run detail and the run list. Repository provenance with
   dirty-tree state and file count, per-event-type and per-severity censuses,
   screenshot count, browser, ended timestamp, hard-failure count, hard-failure
   and note codes, and timeline truncation with the continuing sequence. Empty
   provenance and empty census state what absence means.
-- M3 — U-03 closed. Every safety check listed by name with state and reason
+- **M3 COMPLETE (U-03)** — Every safety check listed by name with state and reason
   code; refused operation classes named; auth mode and network posture;
   declared authorization class, findings storage, owner scope and feature
   flags; product readiness. An empty check set renders as absence of evidence.
-- M4 — U-04 closed. Approved targets and active-family coverage, currentness
+- **M4 COMPLETE (U-04)** — Approved targets and active-family coverage, currentness
   counts, stale and unavailable targets, compared and drifted campaign keys,
   pinned versus observed analyzer version and their agreement, deferred versus
   never-measured dimensions kept separate, blockers named with detail codes,
   external CI classification, frozen operation count, frozen-marker match.
-- M5 — U-02 closed for the remaining surfaces. Surface binding, handler state
+- **M5 COMPLETE (U-02)** — the remaining surfaces. Surface binding, handler state
   and three capability states; source anchor, evidence digest and exclusion
   reasons; proof-family portfolio, stage/status census, Phase 24 exclusions;
   capability rollup and inventory-digest presence; repository filter; reviewer
   counterevidence, duplicate basis, shared invariant, transition count and
   non-equivalence; system map projection version.
-- M6 — U-05 closed. Graph toolbar, search, filter and zoom styles; dimmed,
+- **M6 COMPLETE (U-05)** — Graph toolbar, search, filter and zoom styles; dimmed,
   selected and neutral node states and dimmed edges; run-detail code chips and
   census columns; `panel-full` for panels carrying tables. `orbit-ring-outer`
   and `safety-grid` were dangling modifiers with no rule and no effect, and
   were removed rather than given invented styles.
-- M7 — U-06 closed. `ui/control-center/src/contractCoverage.test.ts` and
+- **M7 COMPLETE (U-06)** — `ui/control-center/src/contractCoverage.test.ts` and
   `ui/control-center/src/styles.test.ts` added, each asserting its own
   extraction is non-vacuous and each carrying a reasoned exempt list. Both
   verified to FAIL on a reintroduced defect. Both registered in

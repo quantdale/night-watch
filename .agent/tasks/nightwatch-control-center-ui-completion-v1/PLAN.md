@@ -67,62 +67,147 @@ a structural `LayoutGraph` type so they cannot diverge again.
 
 ## Milestones
 
-### M0 — establish execution truth — COMPLETE
-Owned session `nightwatch-control-center-ui-com-9a04214f` claimed on base
-`11c9ea62405c5b9b0eddd011fb7083da83348ee7`; workspace verdict PASS; predecessor
-re-verified terminal COMPLETE and untouched.
+### M0 — Establish execution truth
 
-### M1 — the execution graph draws what the server sent (U-01) — COMPLETE
-Both slices removed; `layerAssignment` generalized to a `LayoutGraph`
-structural type shared by both canvases; pan, zoom, search, execution-state
-filter and selection added; footer separates nodes drawn from matches and
-edges drawn from received; server truncation quoted with its bound; undrawn
-edges counted and attributed to the projection.
+- **Objective:** an owned session on a current base, with the predecessor
+  proven terminal and untouched.
+- **Files / areas:** session registration, task SPEC/PLAN/STATE/REPORT,
+  OpenSpec route.
+- **Actions:** create and claim the session; verify the workspace verdict;
+  re-verify the predecessor; commit the campaign route.
+- **Acceptance:** `session:status` verdict PASS and this worktree classified
+  `OWNED_SESSION` for this task.
+- **Validation:** `npm run session:status`, `npm run agent:check`.
+- **Status:** COMPLETE — session `nightwatch-control-center-ui-com-9a04214f`,
+  identity `sess-da205e1a1006`, base `11c9ea62405c5b9b0eddd011fb7083da83348ee7`;
+  verdict PASS with all seven workspace invariants PASS. The work was first
+  implemented in the canonical checkout, refused there by `agent:check`, and
+  transferred with `git apply --index` after a byte comparison of both
+  `git diff HEAD` outputs.
 
-### M2 — run detail renders the contract it fetches (U-02) — COMPLETE
-Repository provenance with dirty-tree state, per-type and per-severity
-censuses, screenshot count, browser, ended timestamp, hard-failure count,
-hard-failure and note codes, and timeline truncation with the continuing
-sequence. Empty provenance and empty census state what absence means.
+### M1 — The execution graph draws what the server sent (U-01)
 
-### M3 — the Safety Center lists its checks (U-03) — COMPLETE
-Every check by name with state and reason code; refused operation classes
-named; auth mode and network posture; declared authorization class, findings
-storage, owner scope and feature flags; product readiness. An empty check set
-renders as absence of evidence.
+- **Objective:** no client-applied bound is presented as the server's bound or
+  as completeness.
+- **Files / areas:** `ui/control-center/src/App.tsx`, `App.test.tsx`.
+- **Actions:** remove both slices; generalize `layerAssignment` to a
+  `LayoutGraph` structural type shared with the source graph; add pan, zoom,
+  search, an execution-state filter and selection; separate nodes drawn from
+  filter matches and edges drawn from edges received; quote the server's
+  bound; count and name undrawn edges.
+- **Acceptance:** reintroducing either slice fails the suite.
+- **Validation:** `npm --prefix ui/control-center run test`.
+- **Status:** COMPLETE — both slices removed; verified adversarially by
+  reintroducing `.slice(0, 24)`, which failed exactly the two population and
+  disclosure tests and passed again on restore.
 
-### M4 — readiness shows its measurements (U-04) — COMPLETE
-Approved targets and active-family coverage, currentness counts, stale and
-unavailable targets, compared and drifted campaign keys, pinned versus
-observed analyzer version and their agreement, deferred versus never-measured
-dimensions kept separate, blockers named with detail codes, external CI
-classification, frozen operation count and frozen-marker match.
+### M2 — Run detail renders the contract it fetches (U-02)
 
-### M5 — source, reviewer and map surfaces complete (U-02) — COMPLETE
-Surface binding, handler state and the three capability states; source anchor,
-evidence digest and exclusion reasons; proof-family portfolio, stage/status
-census and Phase 24 exclusions; capability rollup and inventory-digest
-presence; repository filter; reviewer counterevidence, duplicate basis, shared
-invariant, transition count and non-equivalence; system map projection
-version.
+- **Objective:** an operator can see what a run was measured against and what
+  it reported.
+- **Files / areas:** `ui/control-center/src/App.tsx`, `styles.css`,
+  `App.test.tsx`.
+- **Actions:** render repository provenance with dirty-tree state, the
+  per-type and per-severity censuses, screenshot count, browser, ended
+  timestamp, hard-failure count, hard-failure and note codes, and timeline
+  truncation with the continuing sequence.
+- **Acceptance:** populated and empty fixtures both assert; absence is stated
+  rather than omitted.
+- **Validation:** `npm --prefix ui/control-center run test`.
+- **Status:** COMPLETE — two tests, one populated and one empty. Absent
+  provenance renders "Without it, this run anchors to no revision".
 
-### M6 — every rendered class has a rule (U-05) — COMPLETE
-Graph toolbar, search, filter and zoom styles; dimmed, selected and neutral
-node states and dimmed edges; run-detail code chips and census columns;
-`panel-full` for panels carrying tables; `orbit-ring-outer` and `safety-grid`
-dangling modifiers removed rather than styled.
+### M3 — The Safety Center lists its checks (U-03)
 
-### M7 — mechanical guards (U-06) — COMPLETE
-`contractCoverage.test.ts` and `styles.test.ts` added, each asserting its own
-extraction is non-vacuous, each carrying a reasoned exempt list, each verified
-to FAIL when the defect is reintroduced. Both registered in UI_LANE with
-`inventoryDigest` refreshed.
+- **Objective:** the view can answer which check is unknown.
+- **Files / areas:** `ui/control-center/src/App.tsx`, `styles.css`,
+  `App.test.tsx`.
+- **Actions:** list every check with state and reason code; name the refused
+  operation classes; render auth mode, network posture and the declared
+  service authority including the feature map.
+- **Acceptance:** an empty check set renders as absence of evidence, never a
+  pass.
+- **Validation:** `npm --prefix ui/control-center run test`.
+- **Status:** COMPLETE — a count in one metric card was replaced by the named
+  list its own hero promised; asserted by populated and empty tests.
 
-### M8 — certification — COMPLETE
-UI typecheck PASS, 55 tests PASS across 4 files, build PASS; root `typecheck`
-and `hardening:check` PASS; browser workflow lane 4 passed including the
-built-bundle computed-style assertion; `gate:local` PASS from this session;
-checkpoint committed.
+### M4 — Readiness shows its measurements (U-04)
+
+- **Objective:** the measurements behind a READY badge are visible, including
+  the ones that came back unmeasured.
+- **Files / areas:** `ui/control-center/src/App.tsx`, `App.test.tsx`.
+- **Actions:** render target coverage and currentness counts, stale and
+  unavailable targets, compared and drifted campaign keys, pinned versus
+  observed analyzer version and their agreement, deferred and never-measured
+  dimensions as separate lists, each blocker with its detail code, the CI
+  classification, frozen operation count and frozen-marker match.
+- **Acceptance:** a pinned version differing from the observed one renders as
+  a disagreement, not as READY.
+- **Validation:** `npm --prefix ui/control-center run test`.
+- **Status:** COMPLETE — asserted end to end, including that deferred and
+  never-measured render as distinct lists.
+
+### M5 — Source, reviewer and map surfaces complete (U-02)
+
+- **Objective:** the remaining fetched-but-unrendered fields reach the screen.
+- **Files / areas:** `ui/control-center/src/App.tsx`, `styles.css`.
+- **Actions:** render surface binding, handler state and the three capability
+  states, source anchor, evidence digest and exclusion reasons; the Phase 24
+  exclusions, stage/status census and ranked proof-family portfolio; the
+  capability rollup, inventory-digest presence and repository filter; reviewer
+  counterevidence, duplicate basis, shared invariant, transition count and
+  non-equivalence; the map's projection version.
+- **Acceptance:** `contractCoverage.test.ts` reports no unrendered field
+  outside the exempt set.
+- **Validation:** `npm --prefix ui/control-center run test`.
+- **Status:** COMPLETE — the coverage check reports an empty unrendered set.
+
+### M6 — Every rendered class has a rule (U-05)
+
+- **Objective:** a control that computes a state also shows it.
+- **Files / areas:** `ui/control-center/src/styles.css`, `App.tsx`.
+- **Actions:** add the graph toolbar, dimmed/selected/neutral node, dimmed
+  edge, code-chip, census and `panel-full` rules; remove dangling modifier
+  classes rather than inventing styles for them.
+- **Acceptance:** `styles.test.ts` reports no unstyled rendered class, and the
+  browser lane proves a rule applies in the built bundle.
+- **Validation:** `npm --prefix ui/control-center run test`,
+  `npm run control-center:ui:browser`.
+- **Status:** COMPLETE — nine missing rules added; `orbit-ring-outer` and
+  `safety-grid` removed as dangling modifiers with no rule and no effect.
+
+### M7 — Mechanical guards (U-06)
+
+- **Objective:** neither defect class can silently reopen.
+- **Files / areas:** `ui/control-center/src/contractCoverage.test.ts`,
+  `styles.test.ts`, `config/validation-universe.v1.json`.
+- **Actions:** add both coverage checks with non-vacuity assertions, reasoned
+  exempt lists and a staleness assertion on the exempt list; state each
+  check's limit in its own header; register both in UI_LANE and refresh
+  `inventoryDigest`.
+- **Acceptance:** each check fails on a reintroduced defect, and
+  `hardening:check` accepts the registration.
+- **Validation:** `npm --prefix ui/control-center run test`,
+  `node bin/hardening-check.mjs`.
+- **Status:** COMPLETE — `styles.test.ts` failed on real content on its first
+  run, naming `orbit-ring-outer` and `safety-grid`; a renamed rule failed the
+  interpolated-family assertion. `inventoryDigest` advanced from
+  `sha256:b20bde104a58e1e4ed5c128a` to `sha256:e6ad9456574d63403ba96436`.
+
+### M8 — Certification
+
+- **Objective:** a committed checkpoint with a `gate:local` receipt from this
+  owned session, and state reconciled to it.
+- **Files / areas:** task STATE/REPORT, `.agent/ACTIVE_TASK.md`,
+  `.agent/EXECUTION_PROMPT.md`, `docs/`.
+- **Actions:** commit the implementation checkpoint; run `gate:local`; fix any
+  regression it reports; reconcile task and project state to the result.
+- **Acceptance:** `gate:local` PASS at the committed checkpoint.
+- **Validation:** `npm run gate:local`.
+- **Status:** IN_PROGRESS — implementation committed at `9b30e27`; the first
+  `gate:local` from this session returned eight groups PASS and
+  `SYNTHETIC_CAMPAIGN` TEST_FAILURE on one continuity-coherence assertion
+  about this task's own milestone bookkeeping, now corrected.
 
 ## Validation Strategy
 
