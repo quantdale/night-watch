@@ -31,7 +31,7 @@ execute, and which must it report as unavailable.
 | Capability | Probed by | Lane that needs it | Behaviour when the host cannot provide it |
 | --- | --- | --- | --- |
 | Unprivileged Bubblewrap (`bwrap`) network namespace | `src/core/oops/sandbox.ts` (`nightwatch.l6-runtime-capability.v1`) | L6 process/network containment; the deep containment lane of `campaign:synthetic` | the capability reports UNSUPPORTED with a blocker code, the deterministic fail-closed path is proven instead, and the gate records the lane state (`deepContainmentLane`) rather than silently passing. `gate:local` requires PROVEN; CI accepts a recorded non-PROVEN lane but fails on an unclassifiable one |
-| System Chrome | Playwright configuration (default drives system Chrome) | browser workflow lane; the Ripple readiness fixture | `npx playwright install chromium` provides a fallback; without either, browser lanes are UNAVAILABLE and must be reported as such |
+| System Chrome | Playwright configuration (default drives system Chrome) | browser workflow lane; the Ripple readiness fixture | `npx playwright install chromium` provides a fallback; without either, browser lanes are UNAVAILABLE and must be reported as such. **Qualified and PROVEN on the current supported host** — see §4a |
 | Go toolchain, allowlisted and cached | `src/core/ownerLocalReproduction/provider.ts` | W9/W10 owner-local current-source reproduction | `TOOLCHAIN_UNAVAILABLE` / `TOOLCHAIN_VERSION_UNSATISFIED` environment block. An environment block is never a defect and never a reproduction |
 | IPv6 loopback | address policy and proxy admission | proxy and egress lanes | the affected cases report the unsupported address family rather than asserting an IPv4-only result |
 | Parent-death / process-tree teardown | `src/core/process` teardown paths | cancellation and timeout cleanup proofs | categorical teardown is asserted where the host supports it; elsewhere the lane is unavailable |
@@ -124,6 +124,45 @@ campaign's safety boundary prohibits network dependency fetching, so
 clean. That lane needs its own evidence: a read-only advisory query under
 permitted network access, recorded with its query date. An absent scan is
 never a passing scan.
+
+## 4a. Browser workflow lane — PROVEN on the qualified host
+
+Lane state is three-valued, because the predecessor campaign's single
+UNAVAILABLE conflated an absent host capability with an authority that
+campaign did not hold:
+
+- `PROVEN` — executed in an owned session worktree with a recorded receipt;
+- `BLOCKED_EXTERNAL` — a named external authority denies execution, with the
+  observed evidence and block class recorded;
+- `UNAVAILABLE_CAPABILITY` — the host or an owner capability is genuinely
+  absent, with the acquisition condition named.
+
+**Host capability, observed directly:** Google Chrome 151.0.7922.173 at
+`/usr/bin/google-chrome`, bubblewrap 0.9.0 at `/usr/bin/bwrap`.
+
+**Lane state: `PROVEN`.** Executed inside the owned session worktree
+`session/nightwatch-residual-closure-and--e130f226` (session
+`sess-f4f1d66c73a2`) under
+`nightwatch-residual-closure-and-lane-qualification-v1` R-01:
+
+```
+npm run control-center:ui:browser
+[control-center-ui] PASS: 3 built files, 297422 bytes total, no external references
+4 passed (3.8m)
+  controlCenterBrowser.browser.ts  — every built view over one synthetic authority
+  reviewPersistence.browser.ts     — decision survives reload, navigation, server restart
+  reviewPersistence.browser.ts     — the workflow holds over 30 consecutive decisions
+  systemMapV2.browser.ts           — C-15c map navigation without overstating knowledge
+```
+
+**Why the receipt must come from an owned session.** C-00 makes the canonical
+checkout a non-implementation worktree, so a lane run there has no session
+identity to bind a receipt to. The same lane was first observed passing from
+the canonical checkout during this campaign's audit; that run is recorded as
+evidence of executability and explicitly not as the receipt.
+
+An unqualified host still reports unsupported capability and never inherits
+this pass.
 
 ## 5. Documentation currency
 

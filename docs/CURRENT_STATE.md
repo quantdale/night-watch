@@ -1,6 +1,6 @@
 # Nightwatch — CURRENT STATE
 
-> Durable memory for the next agent/session. Last updated: **2026-09-08**
+> Durable memory for the next agent/session. Last updated: **2026-09-09**
 > during the autonomous bug-hunting programme (Wave 0 protocol freeze and
 > Wave 1 lanes A–E integrated). RS-1 close-out remains
 > COMPLETE: DEF-FC-04 continuity repair, the Control Center reviewer
@@ -746,12 +746,12 @@ RELEASE_CERTIFICATION_PROTOCOL_VERSION: nightwatch.release-certification.v1
 PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
 RELEASE_CHECKPOINT_SHA: 2576c5751d33bb40046246e8fcf57c7cc5c30a57
 LIVE_HEAD_SHA: DISCOVER_FROM_GIT
-LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: 8173ff719d472782f567766faf5e85cdd0b678c3
+LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: a063416fb24c6b85e5098970a674698ed2955d44
 LAST_LOCALLY_VALIDATED_SHA: ec3eacf61c1b5bd3557eaf90594aecb2cd633b4f
 LAST_CLEAN_VALIDATED_SHA: ec3eacf61c1b5bd3557eaf90594aecb2cd633b4f
-CI_OBSERVED_SHA: NONE
+CI_OBSERVED_SHA: a063416fb24c6b85e5098970a674698ed2955d44
 CI_EXECUTED_SHA: NONE
-CI_STATUS: NOT_OBSERVED
+CI_STATUS: NO_STEPS_EXTERNAL_NON_EVIDENCE
 FINAL_DOCUMENTATION_SHA: DISCOVER_FROM_GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 LIVE_HEAD_AUTHORITY: GIT
@@ -815,11 +815,33 @@ LIVE_COMPLETION_CLAIM: NONE
 
 ### Exact-head CI state (current live CI state)
 
-At the FC-1 substantive baseline `8265ace` CI is `NOT_OBSERVED`: no
-GitHub Actions run has been inspected at this SHA. This is an absence of
-evidence, not a failure, and it must not be read as either. The FC-1
-campaign deliberately did not provoke a runner (§68: no retry loops, no
-meaningless commits to trigger CI).
+At the substantive baseline `a063416` CI is
+`NO_STEPS_EXTERNAL_NON_EVIDENCE`: a run WAS inspected at this exact SHA and
+it never started. This is a recorded external block, not an uninspected lane
+and not a failing gate.
+
+Run `34303289286`, job `102314618949`, at head
+`a063416fb24c6b85e5098970a674698ed2955d44`: `status=completed`,
+`conclusion=failure`, **`stepCount=0`, `executed=false`**. The annotation
+reads "The job was not started because recent account payments have failed or
+your spending limit needs to be increased." `bin/phase23-ci.mjs observe
+--run-id=34303289286` classified it through the real classifier as
+`NO_STEPS_BILLING_OR_PLATFORM_BLOCK` / `REQUIRED_JOB_STEPS_EMPTY` with
+`exactHead: true` and `executedJobNames: []`. The classification was produced
+by `src/core/qualityGate/externalCi.ts`, not asserted by hand.
+
+The block is account-wide and long-standing, not specific to this checkpoint:
+every one of the 100 most recent runs concluded `failure` in about three
+seconds with no step executed, from `2026-09-06T21:39:43Z` through
+`2026-09-09T02:27:33Z`. `CI_EXECUTED_SHA` therefore stays `NONE` — nothing
+has executed — while `CI_OBSERVED_SHA` names the head that was inspected.
+
+**Owner action, outside this repository.** Clearing the payment or
+spending-limit block in GitHub Billing & plans is the only thing that can
+change this lane. Revisit condition: once cleared, re-run the workflow at the
+acceptance head and record the run id and executed SHA. No retry loop and no
+meaningless commit is used to provoke a runner. An absent run is never a
+pass, and a local or clean green result cannot substitute for it.
 
 Historical observation preserved below, no longer current authority:
 MA-8/F-13 head `27bfe44` had NO CI evidence. Run `33864698218`
@@ -3651,3 +3673,65 @@ Certification for this campaign is recorded in
 
 No production, NEXT or DEV contact. No external filing. C-12 live, C-13,
 C-14, C-08b and C-07 DEV remain unauthorized and unexecuted.
+
+## Repository master hardening implementation — terminal COMPLETE — 2026-09-09
+
+All fifteen findings of `docs/MASTER-IMPLEMENTATION-HARDENING-PLAN.md` are
+closed: NW-15 by the W10 owner, NW-01 through NW-14 by
+`nightwatch-repository-hardening-implementation-v1`. The repository-level
+definition of done is satisfied item by item. Certification at implementation
+`3bf236e320712509805f78151cc7314208679178`, closed at documentation
+`58bbf2d028ce2d59e6c5616ffeeb65ab43eec142`.
+
+What changed, in one line each:
+
+- **NW-01** reasoner-facing vocabularies are decided by own-key lookup, so an
+  inherited `constructor` or `__proto__` name has no effects.
+- **NW-02** one topology-aware authority decides private-path containment, so
+  the answer no longer depends on checkout location.
+- **NW-03** Bug Atlas snapshots are confined and atomically published.
+- **NW-04** autonomous campaign checkpoints are bounded, generation-bearing
+  and crash-safe; a crash yields the complete prior or new generation.
+- **NW-05** the Phase-5 relay has one abortable deadline covering auth,
+  redirects and bodies.
+- **NW-06** an over-capacity session start is refused before it mutates
+  anything, and a partial creation rolls back only what it created, on proof.
+- **NW-07** continuity and project memory are mechanically coherent.
+- **NW-08** the validation universe is discovered and every test belongs to
+  exactly one class; receipts bind to the inventory digest.
+- **NW-09** the shipped launcher enables review deliberately, through
+  `--enable-local-review`, and reports the capability truthfully.
+- **NW-10** dashboard pagination is bounded end to end, with no mixed
+  generations across a page boundary.
+- **NW-11** dashboard requests are validated, cancellable and coalesced.
+- **NW-12** slow or disconnected SSE clients have a fixed queued-state bound.
+- **NW-13** sensitive input never appears in parser diagnostics.
+- **NW-14** dependencies, portability and release documentation are
+  reconciled.
+
+Certification evidence: `npm test` 4768 passed / 18 skipped / 0 failed on a
+clean tree; `gate:local` PASS across all eleven required groups with the deep
+containment lane PROVEN; fresh Node 20 `gate:clean` PASS with no reused
+`node_modules`; UI typecheck, 41 tests and build PASS; typecheck, hardening,
+agent, handoff, project, workspace, session, validation-universe, 66 bin
+parse checks and `git diff --check` all PASS.
+
+Four lanes were recorded UNAVAILABLE rather than passed. The successor
+campaign `nightwatch-residual-closure-and-lane-qualification-v1` re-examined
+all four against the live host and found them not equivalent:
+
+- the **browser workflow lane** is not unavailable on this host. It executes
+  and passes — see that campaign's R-01 receipt. The predecessor's record
+  reflected untested host qualification rather than a failure;
+- **exact-checkpoint CI** is an observed external block, now recorded as
+  `NO_STEPS_EXTERNAL_NON_EVIDENCE` at `a063416` with its run id and reason;
+- the **online dependency-advisory lane** genuinely needs authorized network
+  egress and remains UNAVAILABLE;
+- the **owner-run manual and live-app harnesses** genuinely need DEV
+  authentication and separate authorization, and remain UNAVAILABLE.
+
+This campaign claimed no P0, no DEV/NEXT/production contact, no formal
+accessibility certification, and neither strict `EXACT_REDISCOVERY` nor
+previously-unknown-defect yield. Its completion granted no publication or
+organizational release authority. The existing `OPERATIONALLY_ACCEPTED`
+project authority was preserved, not advanced.

@@ -33,14 +33,52 @@ local evidence growth a bounded, refusal-first retention policy.
 
 ## Current Milestone
 
-Milestone ID: M0b
-Milestone status: IN_PROGRESS
-What is being attempted: R-07 — restoring the planning-only handoff
-checkpoint. The repair and its three regressions are written and validated;
-the milestone closes when the checkpoint is committed and integrated.
+Milestone ID: M6
+Milestone status: NOT_STARTED
+What is being attempted: nothing yet. M1 through M5 are closed and committed.
+M6 is the refusal-first evidence retention capability, and M7 the
+certification checkpoint that also settles the local/clean validated-SHA
+fields against this campaign's own receipts.
 
 ## Completed Milestones
 
+- **M1 COMPLETE (R-01)** — the browser workflow lane is `PROVEN`. Host
+  capability observed directly: Chrome 151.0.7922.173, bubblewrap 0.9.0. The
+  lane ran inside this owned session: 4 passed / 0 failed in 3.8 minutes,
+  including the 30-consecutive-decision review workflow.
+  `docs/HOST-CAPABILITY-MATRIX.md` §4a records the lane state and the
+  three-valued vocabulary. The audit's canonical-checkout run stays recorded
+  as evidence, not as the receipt.
+- **M2 COMPLETE (R-02)** — exact-head CI classified through the real
+  classifier: `bin/phase23-ci.mjs observe --run-id=34303289286` returned
+  `NO_STEPS_BILLING_OR_PLATFORM_BLOCK` / `REQUIRED_JOB_STEPS_EMPTY`,
+  `exactHead: true`, `stepCount=0`, `executed=false` at
+  `a063416fb24c6b85e5098970a674698ed2955d44`. Recorded as
+  `CI_STATUS: NO_STEPS_EXTERNAL_NON_EVIDENCE` with `CI_EXECUTED_SHA: NONE`.
+- **M3 COMPLETE (R-03)** — `docs/CURRENT_STATE.md` carries the predecessor
+  closure section in the established shape, and the substantive anchor
+  advanced to a real implementation commit. The local/clean validated-SHA
+  fields are deliberately left for M7 rather than inheriting a predecessor
+  receipt for a different SHA.
+- **M4 COMPLETE (R-04)** — `--enable-local-review`, the review store location
+  and the reviewer's four answers are documented in `README.md`;
+  `npm run contract:health` makes the phase-14 check discoverable.
+- **M0b COMPLETE (R-07)** — the planning-only handoff checkpoint is landable
+  again, integrated at `a063416fb24c6b85e5098970a674698ed2955d44`.
+  `bin/project-state-check.mjs` asserts the predecessor binding for a
+  `READY_FOR_EXECUTION` prompt and leaves the active-prompt rule untouched;
+  `bin/planner-handoff-protocol.mjs` gained one export. Three regressions,
+  both directions proven by mutation. `projectState.test.ts` 67 passed,
+  `plannerHandoff.test.ts` 12 passed, typecheck / `hardening:check` /
+  `handoff:check` / `project:check` PASS.
+- **M5 COMPLETE (R-05)** — both stale session worktrees released through the
+  session CLI after proving zero unmerged commits and clean trees;
+  `workspace:status` now `verdict=PASS attention=0`. Six provably-merged
+  session branches deleted with `git branch -d`. Two audit claims corrected
+  from live evidence: the two worktrees were not both COMPLETE (the umbrella
+  programme is `IN_PROGRESS` with no active wave), and only 6 of 24 session
+  branches were merged, not 25. The 16 remaining branches are left intact as
+  an owner decision.
 - **M0 COMPLETE** — execution truth established at planning checkpoint
   `a180a081d92f32a75fd26909d6e3362459cea990`. Owned session worktree
   `nightwatch-residual-closure-and--e130f226` claimed as `sess-f4f1d66c73a2`
@@ -55,12 +93,8 @@ the milestone closes when the checkpoint is committed and integrated.
 
 ## Work In Progress
 
-M0b. The R-07 repair is written and validated but not yet committed.
-`bin/planner-handoff-protocol.mjs` exports `HANDOFF_PLANNING_ONLY_STATUS`,
-and `bin/project-state-check.mjs` asserts the predecessor binding for a
-`READY_FOR_EXECUTION` prompt while leaving the active-prompt rule untouched.
-Three regressions in `tests/unit/projectState.test.ts` cover the planning
-pass and both wrong-predecessor failures.
+Nothing is partial. M0, M0b and M1 through M5 are complete and committed. M6
+and M7 have not started.
 
 Historical, for the record — M0. The owned session worktree
 `nightwatch-residual-closure-and--e130f226` is claimed as session
@@ -74,9 +108,13 @@ checkpoint and the terminal predecessor legitimately remains the active task.
 
 ## Exact Next Action
 
-Commit the M0b checkpoint and integrate it by fast-forward to `origin main`,
-then begin M1: re-execute the browser workflow lane inside this owned session
-and record its receipt.
+Begin M6: implement refusal-first evidence retention over repository-owned
+generated outputs — reporting by default, removal behind an explicit owner
+flag, the refusal set computed before any removal set, and unprovable
+reference status meaning refused — with regressions for the refusal set, the
+owner-flag boundary and the reclaim-nothing outcome. Then M7 certification,
+which also settles `LAST_LOCALLY_VALIDATED_SHA` and
+`LAST_CLEAN_VALIDATED_SHA`.
 
 ## Files Changed
 
@@ -158,6 +196,55 @@ When: 2026-09-09
 Relevant failure/output summary: no diagnostics; offline structural
 invariants hold with the repair in place.
 
+Command: `node bin/nightwatch-session.mjs remove --name <stale> --delete-branch` (x2)
+Result: PASS
+When: 2026-09-09
+Relevant failure/output summary: `SESSION_WORKTREE_REMOVED … contained=true`
+for both stale worktrees, after proving each was fully merged with a clean
+tree. `workspace:status` then reported `verdict=PASS`, `attention=0`.
+
+Command: `git branch -d <merged session branch>` (x6)
+Result: PASS
+When: 2026-09-09
+Relevant failure/output summary: six provably-merged branches deleted; `-d`
+refuses a non-merged branch by construction, and 16 non-merged branches were
+therefore left intact for an owner decision.
+
+Command: `npm run control-center:ui:browser` (inside the owned session)
+Result: PASS
+When: 2026-09-09
+Relevant failure/output summary: 4 passed / 0 failed in 3.8 minutes; UI build
+PASS at 3 files / 297422 bytes with no external references. This is the R-01
+receipt; the audit's canonical-checkout run is not.
+
+Command: `node bin/phase23-ci.mjs observe --run-id=34303289286`
+Result: classified NO_STEPS_BILLING_OR_PLATFORM_BLOCK
+When: 2026-09-09
+Relevant failure/output summary: `reasonCodes=["REQUIRED_JOB_STEPS_EMPTY"]`,
+`exactHead=true`, `executedJobNames=[]`, job `102314618949` `stepCount=0`
+`executed=false`. Not a test failure and not a pass.
+
+Command: `npm run hardening:check` after the M3/M4 documentation changes
+Result: PASS
+When: 2026-09-09
+Relevant failure/output summary: two structural rules fired first and were
+repaired rather than bypassed — the `CURRENT_STATE.md` header date had to be
+bumped to match its own last change, and PLAN milestones reported COMPLETE
+required `### M<n>` sections carrying a Status line.
+
+Command: `npm run quality-gate:spec`
+Result: PASS
+When: 2026-09-09
+Relevant failure/output summary: definition digest
+`sha256:4e676246bbfce731df63dab76248d9bbc8ce682986026721754cdfe0b6cb5f5a`,
+11 required groups, 22 compatibility phases over 149 files.
+
+Command: `npm run validation:universe` after adding a script
+Result: PASS
+When: 2026-09-09
+Relevant failure/output summary: every discovered test and check still belongs
+to exactly one class; zero unclassified.
+
 ## Decisions Made During This Task
 
 Decision: classify lanes three ways rather than as available/unavailable.
@@ -200,6 +287,16 @@ Evidence/constraint: observed directly — the repair touched
 `bin/project-state-check.mjs` and `bin/planner-handoff-protocol.mjs` and the
 guard named both files.
 
+Decision: release both stale worktrees but on separately stated grounds, and
+delete only provably-merged branches.
+Reason: the two worktrees were not in the same state, and most session
+branches were not merged at all, so a single rationale would have been false
+for one of them and a bulk deletion would have destroyed possibly-unique work.
+Evidence/constraint: the umbrella programme's STATE reads `IN_PROGRESS` with
+"no wave is active"; 16 of 24 session branches are not ancestors of
+`origin/main`, one of them carrying 16 commits over 72 files that its own tip
+commit describes as preserved parked work.
+
 Decision: exclude the real-yield campaign from this scope.
 Reason: it depends on confirmed provider capability, which this campaign does
 not establish, and it would make a bounded closure campaign unbounded.
@@ -224,6 +321,10 @@ yield are 0 across W7 through W10 and are recorded as separate and unproven.
   never mentions the shipped `--enable-local-review` flag or the review store.
 - `artifacts/` growth is unbounded: 13,367 run directories, 915 MB, and
   `hygiene` observes generated outputs without pruning any.
+- The audit's worktree and branch claims were both wrong in the safe
+  direction to check and the dangerous direction to assume: one "COMPLETE"
+  task is `IN_PROGRESS`, and only 6 of 24 session branches are merged rather
+  than 25. Sixteen branches hold commits that are not on `origin/main`.
 - R-07, found by using the protocol rather than reading it: the documented
   planning-only `READY_FOR_EXECUTION` checkpoint cannot land. `handoff:check`
   requires the active task to equal `Predecessor Task ID`, while

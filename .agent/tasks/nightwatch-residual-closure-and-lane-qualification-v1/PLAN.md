@@ -75,41 +75,145 @@ whose reference status cannot be proven is refused rather than removed.
 
 ## Milestones
 
-- **M0 — execution truth** — PENDING. Owned session claimed on a current
-  base with workspace verdict PASS; SPEC, PLAN, STATE and the OpenSpec route
-  committed; the predecessor re-verified terminal COMPLETE and untouched.
-- **M0b — restore the planning-only checkpoint (R-07)** — PENDING. Teach
-  project-state truth to assert the predecessor binding for a
-  `READY_FOR_EXECUTION` prompt, which is the binding that state actually has,
-  rather than the campaign binding the handoff protocol forbids. Keep the
-  active-prompt rule unchanged and add a regression for both states.
-- **M1 — browser lane qualification (R-01)** — PENDING. Record host
-  capability from observed binaries. Execute the lane inside this owned
-  session. Record the receipt and update the host-capability lane state to
-  the proven class.
-- **M2 — CI block observation (R-02)** — PENDING. Record the observed run
-  identity, annotation and existing block class in project state. Leave
-  `CI_STATUS` non-passing. Name the owner action and revisit condition.
-- **M3 — project-state reconciliation (R-03)** — PENDING. Add the
-  predecessor closure section in the established shape. Advance the
-  validated-SHA fields to a checkpoint whose receipts exist, or record the
-  mechanical reason they cannot advance. Prove no historical content changed.
-- **M4 — documented surface (R-04)** — PENDING. Document
-  `--enable-local-review`, its effect and the review store location. Give the
-  phase-14 contract-health check a documented script. Re-check
-  definition-of-done item 13 against the command surface.
-- **M5 — residue (R-05)** — PENDING. Release the two stale session worktrees
-  through the session CLI from the canonical checkout. Remove merged session
-  branches. Decide the legacy v1 records: migrate, or declare permanently
-  historical so the warning becomes intentional rather than noise.
-- **M6 — evidence retention (R-06)** — PENDING. Implement refusal-first
-  retention: status by default, removal behind an owner flag, a refusal set
-  computed before any removal set, unprovable means refused. Add regressions
-  for the refusal set, the owner-flag boundary and the reclaim-nothing case.
-- **M7 — certification** — PENDING. Full offline regression, `gate:local`,
-  UI typecheck/tests/build, root typecheck, `validation:universe`. Resolve
-  every declared lane into one of the three classes. Privacy and diff review,
-  continuity update, fast-forward integration, session release.
+### M0 — Establish execution truth
+
+- **Objective:** a live baseline and an owned session, so no repair is built
+  on review-time prose.
+- **Files / areas:** `.agent/tasks/nightwatch-residual-closure-and-lane-qualification-v1/*`,
+  `openspec/changes/nightwatch-residual-closure-and-lane-qualification-v1/*`,
+  `.agent/EXECUTION_PROMPT.md`, `.agent/ACTIVE_TASK.md`.
+- **Actions:** claim an owned session on a current base; re-verify the live
+  gates independently; register R-01 through R-07; commit the planning
+  checkpoint as documentation only and integrate it.
+- **Acceptance:** `session:status` PASS in this owned session; `handoff:check`
+  and `agent:check` PASS; the predecessor verified terminal COMPLETE.
+- **Validation:** `npm run session:status`, `npm run workspace:check`,
+  `npm run agent:check`, `npm run handoff:check`,
+  `npm run validation:universe`.
+- **Status:** COMPLETE — session `sess-f4f1d66c73a2` on base `58bbf2d`;
+  planning checkpoint integrated at `a180a08`; R-01 through R-07 registered.
+
+### M0b — Restore the planning-only handoff checkpoint (R-07)
+
+- **Objective:** the documented `READY_FOR_EXECUTION` state becomes landable
+  again, without relaxing any binding.
+- **Files / areas:** `bin/project-state-check.mjs`,
+  `bin/planner-handoff-protocol.mjs`, `tests/unit/projectState.test.ts`.
+- **Actions:** assert the predecessor binding for a planning prompt and leave
+  the active-prompt rule untouched; read the header through the handoff
+  protocol module; add regressions for the planning pass and both
+  wrong-predecessor failures; prove both directions by mutation.
+- **Acceptance:** a protocol-valid planning prompt passes `handoff:check` and
+  `project:check` together; a wrong predecessor still fails with the existing
+  codes; no error vocabulary added, renamed or removed.
+- **Validation:** `projectState.test.ts`, `plannerHandoff.test.ts`,
+  `npm run typecheck`, `npm run hardening:check`, `npm run project:check`.
+- **Status:** COMPLETE — integrated at `a063416`; 67 + 12 tests pass; both
+  mutation directions measured.
+
+### M1 — Qualify the browser workflow lane (R-01)
+
+- **Objective:** a lane that runs on this host stops being carried as
+  UNAVAILABLE, with a receipt that has an owning session.
+- **Files / areas:** `tests/browser/*`, `docs/HOST-CAPABILITY-MATRIX.md`,
+  task REPORT/STATE.
+- **Actions:** record host capability from observed binaries; execute the lane
+  inside this owned session; record the receipt and update the lane state.
+- **Acceptance:** the recorded state names this session; a canonical-checkout
+  run does not satisfy it.
+- **Validation:** `npm run control-center:ui:browser`.
+- **Status:** IN_PROGRESS — lane executed 4 passed / 0 failed in 3.8 minutes
+  inside this session; host Chrome 151.0.7922.173 and bubblewrap 0.9.0;
+  matrix update pending.
+
+### M2 — Record the CI block as classified observation (R-02)
+
+- **Objective:** an externally blocked lane becomes distinguishable from an
+  uninspected one, without modelling a green run.
+- **Files / areas:** `docs/CURRENT_STATE.md` release-truth and exact-head CI
+  sections.
+- **Actions:** observe the run at the exact head through
+  `bin/phase23-ci.mjs observe`; record the run id, reason and block class;
+  keep `CI_EXECUTED_SHA` at `NONE`; name the owner action.
+- **Acceptance:** `CI_STATUS` is non-passing; the classification comes from
+  the real classifier, not from prose.
+- **Validation:** `node bin/phase23-ci.mjs observe --run-id=<id>`,
+  `npm run project:check`.
+- **Status:** IN_PROGRESS — classified `NO_STEPS_BILLING_OR_PLATFORM_BLOCK` /
+  `REQUIRED_JOB_STEPS_EMPTY` at `a063416`, `exactHead: true`; fields written.
+
+### M3 — Reconcile project state (R-03)
+
+- **Objective:** the predecessor campaign is recorded in the shape every prior
+  campaign uses, and the validated-SHA fields stop misdescribing reality.
+- **Files / areas:** `docs/CURRENT_STATE.md`.
+- **Actions:** append the closure section; advance the substantive anchor to
+  the real implementation checkpoint; leave the local/clean anchors until this
+  campaign produces its own receipts at M7.
+- **Acceptance:** every pre-existing historical section, receipt and SHA is
+  unchanged.
+- **Validation:** `npm run project:check`, `npm run hardening:check`,
+  `git diff` review of the archive region.
+- **Status:** IN_PROGRESS — closure section and CI fields written; the
+  local/clean anchors are deliberately deferred to M7.
+
+### M4 — Document the shipped surface (R-04)
+
+- **Objective:** an operator can find the opt-in review capability and the
+  phase-14 check from the entry-point documentation.
+- **Files / areas:** `README.md`, `package.json`.
+- **Actions:** document `--enable-local-review`, what it enables, the
+  owner-local store location and the four reviewer answers; add a
+  `contract:health` script.
+- **Acceptance:** definition-of-done item 13 holds against the command
+  surface.
+- **Validation:** `npm run hardening:check`, `npm run contract:health`.
+- **Status:** IN_PROGRESS — README section and script added.
+
+### M5 — Clear workspace and record residue (R-05)
+
+- **Objective:** the standing stale-worktree warnings become zero or
+  intentional, with nothing destroyed that held unique work.
+- **Files / areas:** worktree registrations and session branches; no tracked
+  source.
+- **Actions:** prove merge status and cleanliness before touching anything;
+  release stale worktrees through the session CLI from the canonical checkout;
+  delete only provably-merged branches; leave the rest for an owner decision.
+- **Acceptance:** `workspace:status` reports `attention=0`; no branch with
+  unmerged commits is deleted.
+- **Validation:** `npm run workspace:status`, `npm run agent:check`.
+- **Status:** COMPLETE — both stale worktrees released
+  (`contained=true`), `attention=0`; six provably-merged branches deleted;
+  sixteen non-merged branches left intact as an owner decision; two audit
+  claims corrected from live evidence.
+
+### M6 — Bound evidence retention (R-06)
+
+- **Objective:** local evidence growth has a bounded, refusal-first policy
+  that never weakens immutable evidence identity.
+- **Files / areas:** a retention capability over repository-owned generated
+  outputs, plus regressions.
+- **Actions:** compute the refusal set before any removal set; report by
+  default; gate removal behind an explicit owner flag; treat unprovable
+  reference status as refused; never rewrite or truncate an artifact.
+- **Acceptance:** referenced artifacts are provably refused; nothing is
+  removed without the flag; reclaiming nothing is a valid outcome.
+- **Validation:** the new retention regressions plus `npm test`.
+- **Status:** NOT_STARTED.
+
+### M7 — Certify one checkpoint
+
+- **Objective:** one integrated checkpoint where every declared lane sits in
+  exactly one class.
+- **Files / areas:** the whole repository; task REPORT/STATE;
+  `docs/CURRENT_STATE.md`.
+- **Actions:** full offline regression, `gate:local`, UI lanes, root
+  typecheck, `validation:universe`; resolve every lane; privacy and diff
+  review; continuity; fast-forward integration; session release.
+- **Acceptance:** no absent run recorded as a pass; terminal continuity; clean
+  tree.
+- **Validation:** the full certification set.
+- **Status:** NOT_STARTED.
 
 ## Sequencing constraints
 

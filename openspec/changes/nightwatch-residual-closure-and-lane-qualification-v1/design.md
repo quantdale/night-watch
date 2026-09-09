@@ -60,9 +60,18 @@ archive rather than restructuring it.
 
 ## What the stale worktrees may and may not do
 
-Both stale session worktrees claim terminal-COMPLETE tasks, so release is the
-correct lifecycle step rather than adoption. Release and branch removal run
-from the canonical checkout through `bin/nightwatch-session.mjs`, never by
-deleting a directory or a branch by hand, and never against a worktree whose
-holder is live. If any check reports a live holder, that worktree is left
-exactly as it is and reported.
+One stale worktree claims a terminal-COMPLETE task and one claims the
+`IN_PROGRESS` umbrella programme whose record states that no wave is active.
+Release is the correct lifecycle step for both, but for different reasons, and
+the distinction is recorded rather than flattened: the first is released
+because its task is closed, the second because it holds no unmerged work and
+its programme has no active wave, so a future wave starts its own session.
+Releasing a worktree never changes a task's status, and this campaign does not
+close the parent programme.
+
+Release and branch removal run from the canonical checkout through
+`bin/nightwatch-session.mjs`, never by deleting a directory or a branch by
+hand, and never against a worktree whose holder is live. Merge status is
+proven before release, and a worktree with unmerged commits or a dirty tree is
+left exactly as it is and reported. If any check reports a live holder, the
+same applies.

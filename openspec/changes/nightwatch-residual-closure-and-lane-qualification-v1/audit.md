@@ -104,8 +104,16 @@ adopt-or-release decision:
 `nightwatch-autonomous-bug-huntin-725fbbbe` (claiming
 `nightwatch-autonomous-bug-hunting-programme-v1`) and
 `nightwatch-reproduction-surface--0a9096be` (claiming
-`nightwatch-reproduction-surface-coverage-autonomous-yield-v1`). Both claimed
-tasks are terminal COMPLETE.
+`nightwatch-reproduction-surface-coverage-autonomous-yield-v1`).
+
+The two are not in the same state, and an earlier draft of this audit was
+wrong to say both claimed tasks were terminal COMPLETE.
+`nightwatch-reproduction-surface-coverage-autonomous-yield-v1` is COMPLETE.
+`nightwatch-autonomous-bug-hunting-programme-v1` is `IN_PROGRESS` — it is the
+umbrella programme, whose own record says "no wave is active" after W10 closed
+and certified. Both branches are fully merged into `origin/main` with zero
+unmerged commits and clean trees, so releasing either loses no work, but only
+one of them is released on a completed-task rationale.
 
 25 merged `session/*` branches remain. `agent:check` also reports a
 `CHECKPOINT_ADVANCE` warning (validated SHA precedes live HEAD, approved

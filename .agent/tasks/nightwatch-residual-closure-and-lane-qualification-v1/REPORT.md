@@ -129,6 +129,174 @@ Validation at this milestone: `projectState.test.ts` 67 passed;
 `plannerHandoff.test.ts` 12 passed; `npm run typecheck` PASS;
 `npm run hardening:check` PASS; `npm run handoff:check` PASS.
 
+## M1 — browser workflow lane (R-01)
+
+**Host capability, observed rather than assumed:** Google Chrome
+151.0.7922.173 at `/usr/bin/google-chrome`; bubblewrap 0.9.0 at
+`/usr/bin/bwrap`.
+
+**Receipt, produced inside this owned session** — worktree
+`session/nightwatch-residual-closure-and--e130f226`, session
+`sess-f4f1d66c73a2`:
+
+```
+npm run control-center:ui:browser
+[control-center-ui] PASS: 3 built files, 297422 bytes total
+                          (271681 js / 24924 css), no external references
+Running 4 tests using 1 worker
+  ok controlCenterBrowser.browser.ts:252   every built view, one synthetic authority   864ms
+  ok reviewPersistence.browser.ts:207      survives reload, navigation, restart       31.4s
+  ok reviewPersistence.browser.ts:309      holds over 30 consecutive decisions         3.1m
+  ok systemMapV2.browser.ts:122            C-15c map navigation, no overstatement       7.2s
+4 passed (3.8m)
+```
+
+Lane state: **`PROVEN`**, recorded in `docs/HOST-CAPABILITY-MATRIX.md` §4a
+together with the three-valued lane vocabulary.
+
+The audit's canonical-checkout run of the same lane remains recorded as
+evidence of executability and is explicitly not this receipt: C-00 makes the
+canonical checkout a non-implementation worktree, so it has no session
+identity to bind to. The distinction cost one 3.8-minute re-run and is the
+difference between an anecdote and a receipt.
+
+## M2 — exact-head CI, classified rather than assumed (R-02)
+
+The classification was produced by the repository's own classifier, not
+asserted. `node bin/phase23-ci.mjs observe --run-id=34303289286` fed a
+sanitized observation through `src/core/qualityGate/externalCi.ts`:
+
+```
+classification: NO_STEPS_BILLING_OR_PLATFORM_BLOCK
+reasonCodes:    ["REQUIRED_JOB_STEPS_EMPTY"]
+exactHead:      true
+runId:          34303289286
+executedJobNames: []
+requiredJobNames: ["Executable quality gate"]
+job 102314618949  status=completed conclusion=failure stepCount=0 executed=false
+```
+
+The run is at the exact head `a063416fb24c6b85e5098970a674698ed2955d44`. The
+annotation reads "The job was not started because recent account payments have
+failed or your spending limit needs to be increased."
+
+Recorded in `docs/CURRENT_STATE.md` as
+`CI_STATUS: NO_STEPS_EXTERNAL_NON_EVIDENCE`, `CI_OBSERVED_SHA: a063416…`,
+`CI_EXECUTED_SHA: NONE`. The distinction now visible in project state is
+between *uninspected* and *inspected and externally blocked*; neither is a
+pass, and `CI_EXECUTED_SHA` stays `NONE` because nothing executed.
+
+The block is account-wide and long-standing, not specific to this checkpoint:
+all 100 most recent runs concluded `failure` in about three seconds with zero
+steps, from `2026-09-06T21:39:43Z` through `2026-09-09T02:27:33Z`. No retry
+loop and no meaningless commit was used to provoke a runner.
+
+**Owner action, outside this repository:** clear the payment or spending-limit
+block in GitHub Billing & plans, then re-run at the acceptance head and record
+the run id and executed SHA.
+
+## M3 — project-state reconciliation (R-03)
+
+`docs/CURRENT_STATE.md` now carries
+`## Repository master hardening implementation — terminal COMPLETE —
+2026-09-09` in the same shape every prior campaign uses, with the fourteen
+findings summarised one line each, the predecessor's certification evidence,
+and the four UNAVAILABLE lanes re-stated against what this campaign actually
+found. `LAST_SUBSTANTIVE_IMPLEMENTATION_SHA` advanced to
+`a063416fb24c6b85e5098970a674698ed2955d44`, a real implementation commit.
+
+`LAST_LOCALLY_VALIDATED_SHA` and `LAST_CLEAN_VALIDATED_SHA` are **deliberately
+not advanced yet**. They would have to name a checkpoint whose `gate:local`
+and fresh-Node-20 `gate:clean` receipts exist. Inheriting the predecessor's
+receipts for a different SHA would be exactly the copied-receipt failure this
+repository forbids, so those two fields move at M7 against this campaign's own
+receipts or not at all.
+
+No pre-existing historical section, receipt or SHA was rewritten; the change
+is an append plus the two current-anchor fields.
+
+## M4 — the shipped surface, documented (R-04)
+
+`README.md` gained an "Opt-in local review (off by default)" section under the
+Control Center: the `--enable-local-review` flag, the fact that without it the
+write route does not exist rather than being disabled, the owner-local store
+at `$HOME/.nightwatch/reviews` with its `NIGHTWATCH_REVIEW_STORE_DIR`
+override, the `CONTROL_CENTER_REVIEW_STORE_UNAVAILABLE` refusal, the four
+reviewer answers, and the standing non-equivalence of `ACCEPT_EVIDENCE` to
+Leslie/Pondr/bounty acceptance.
+
+`bin/phase14-contract-health.mjs` was reachable only from
+`tests/unit/phase14ContractReport.test.ts:328`. It now has a documented
+script, `npm run contract:health`, and a README line describing its
+source-only, read-only inputs.
+
+## M5 — worktree and record residue (R-05)
+
+Two corrections to the audit were forced by live evidence, and both are
+recorded rather than smoothed over.
+
+**The two stale worktrees were not in the same state.** The audit said both
+claimed terminal-COMPLETE tasks. Only
+`nightwatch-reproduction-surface-coverage-autonomous-yield-v1` is COMPLETE.
+`nightwatch-autonomous-bug-hunting-programme-v1` is `IN_PROGRESS` — the
+umbrella programme, whose own STATE records "no wave is active" after W10
+closed and certified. Before touching either worktree, both were proven fully
+merged into `origin/main` with zero unmerged commits and clean trees, so
+release lost no work. Both were released through
+`bin/nightwatch-session.mjs remove --name … --delete-branch` from the
+canonical checkout, never by hand:
+
+```
+SESSION_BRANCH_DELETED / SESSION_WORKTREE_REMOVED contained=true
+  nightwatch-reproduction-surface--0a9096be
+  nightwatch-autonomous-bug-huntin-725fbbbe
+```
+
+Releasing a worktree does not change a task's status. The parent programme
+remains `IN_PROGRESS` and this campaign does not close it. `workspace:status`
+now reports `verdict=PASS`, `attention=0`; the two standing
+`WORKSPACE_STALE_SESSION_WORKTREE` warnings are gone.
+
+**"25 merged session branches" was wrong.** Measured against `origin/main`,
+only 6 of the 24 session branches were provably merged. Those 6 were deleted
+with `git branch -d`, which refuses a non-merged branch by construction:
+
+```
+session/nightwatch-owner-local-determini-47add5e3
+session/nightwatch-w10-capability-memory-69e37993
+session/nightwatch-w10-census-engine-lan-1cad7b72
+session/nightwatch-w10-failure-evidence--7b5831c6
+session/nightwatch-w10-resilience-lane-v-c0af66fd
+session/nightwatch-w10-yield-benchmark-l-b22e8a6c
+```
+
+The remaining 16 are **not** deleted and are an owner decision. Their tips are
+not ancestors of `origin/main`, yet spot checks show the files they add are
+present on main, so their content largely landed through different commits
+while the tips diverged. One of them,
+`session/nightwatch-review-operations-his-7431812c`, holds 16 commits across
+72 files and about 10,000 insertions, with a tip commit that says in as many
+words that it preserves stale work before parking the worktree. Deciding
+whether any of these still holds something unique needs per-branch content
+review, which is not a judgement this campaign makes on the owner's behalf:
+
+- `session/nightwatch-reproduction-surface--516a6313`
+- `session/nightwatch-reproduction-surface--ce18f499`
+- `session/nightwatch-review-operations-his-7431812c`
+- `session/nightwatch-w7-context-providers--6f5b5426`
+- `session/nightwatch-w7-mechanical-admissi-b7ada8d7`
+- `session/nightwatch-w7-programme-identity-91c69c22`
+- `session/nightwatch-w7-replay-parity-v1-1f495e51`
+- `session/nightwatch-w8-campaign-diversity-f4bd878c`
+- `session/nightwatch-w8-efficacy-depth-lan-8c27e81c`
+- `session/nightwatch-w8-leakage-proof-lane-ae9ac68a`
+- `session/nightwatch-w8-memory-proof-lane--e5504c9e`
+- `session/nightwatch-w8-prompt-adapter-lan-340b9c8d`
+- `session/nightwatch-w9-current-source-adm-adc6d9b4`
+- `session/nightwatch-w9-owner-local-provid-ccd56c9f`
+- `session/nightwatch-w9-readiness-lane-v1-fae2fcb3`
+- `session/nightwatch-w9-runtime-semantics--2a772323`
+
 ## Validation receipts
 
 Recorded per milestone as they are produced.

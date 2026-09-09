@@ -23,6 +23,7 @@
     "gate:inventory": "node bin/quality-gate-inventory.mjs",
     "validation:universe": "node bin/validation-universe.mjs",
     "test:semantic-compat": "node bin/semantic-compat.mjs",
+    "contract:health": "node bin/phase14-contract-health.mjs",
     "frontier:determinism": "node bin/frontier-determinism.mjs",
     "intel:scale": "node bin/finding-intel-scale.mjs",
     "dev:phase23": "node bin/phase23-dev.mjs",

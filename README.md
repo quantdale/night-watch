@@ -130,6 +130,32 @@ commands, contact DEV/NEXT/production or external hosts, read authentication
 state, mutate repositories/data, or publish findings. SSE is advisory only;
 GET snapshots remain authoritative.
 
+### Opt-in local review (off by default)
+
+Recording a review decision is a separate, deliberately opt-in capability.
+Without it the Control Center is strictly `GET, HEAD` and the write route does
+not exist at all — it is omitted rather than disabled:
+
+```bash
+npm run control-center:start -- --enable-local-review
+```
+
+With the flag, one loopback route records an owner-local decision. Reviews
+live **outside the repository**, in `$HOME/.nightwatch/reviews` (override with
+`NIGHTWATCH_REVIEW_STORE_DIR`), owner-only, never committed and never
+deleted automatically. A review is keyed by its complete binding, so a
+regenerated artifact yields a new review instead of overwriting the old one,
+and the launcher refuses to start with the flag if that store is missing or
+is not a real directory (`CONTROL_CENTER_REVIEW_STORE_UNAVAILABLE`).
+
+The reviewer surface answers `NO_LOCAL_REVIEW_STORE` (no authority
+configured), `NO_LOCAL_REVIEW` (a store, no decision for this finding),
+`CURRENT` (a live decision) or `STALE` (a real decision that no longer binds
+to current artifacts — displayed, and displayed as UNKNOWN).
+
+`ACCEPT_EVIDENCE` and its siblings are owner-local and advisory. They are not
+Leslie genuine, not Pondr approved, and not a bounty acceptance.
+
 For the authoritative local certification, use the unified gate and its
 versioned inventory rather than an ad-hoc Phase-specific command:
 
@@ -142,6 +168,10 @@ npm run test:semantic-compat
 npm run gate:local
 npm run gate:clean
 ```
+
+Contract coverage health over an exact source snapshot is available as
+`npm run contract:health -- --snapshot=<dir> --sha=<sha>` (or
+`--inventory=<file.json>`); it is source-only and read-only.
 
 ## Layout
 
