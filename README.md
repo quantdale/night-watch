@@ -169,6 +169,34 @@ npm run gate:local
 npm run gate:clean
 ```
 
+### Local evidence retention
+
+Nightwatch writes one artifact directory per run and never overwrites one, so
+the store grows without bound. Retention is refusal-first and read-only by
+default:
+
+```bash
+npm run retention:status              # report only; removes nothing
+npm run retention:plan                # dry run, same guarantees
+node bin/evidence-retention.mjs --apply --keep-recent=100   # owner-gated
+```
+
+`status` and `plan` never mutate. `--apply` is the explicit owner flag and is
+deliberately not an `npm run` shortcut. The plan computes what must be
+REFUSED before what may be removed, and refuses:
+
+- any artifact whose name appears in tracked project state (`.agent`, `docs`,
+  `openspec`, `config`) — it is load-bearing evidence;
+- the newest `--keep-recent` directories, as the working set;
+- anything unmeasurable, and everything at all if the reference scan could not
+  complete — an incomplete scan cannot prove a negative;
+- anything that is not a plain directory, including symlinks.
+
+Removal operates on whole unreferenced run directories only. No artifact is
+ever rewritten, truncated or replaced, so the immutable-evidence and
+no-replace identity patterns the evidence and review stores rely on are
+preserved. Reclaiming nothing is a valid outcome, reported as `PRESERVED`.
+
 Contract coverage health over an exact source snapshot is available as
 `npm run contract:health -- --snapshot=<dir> --sha=<sha>` (or
 `--inventory=<file.json>`); it is source-only and read-only.

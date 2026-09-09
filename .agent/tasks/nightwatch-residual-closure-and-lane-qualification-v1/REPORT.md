@@ -297,6 +297,60 @@ review, which is not a judgement this campaign makes on the owner's behalf:
 - `session/nightwatch-w9-readiness-lane-v1-fae2fcb3`
 - `session/nightwatch-w9-runtime-semantics--2a772323`
 
+## M6 — refusal-first evidence retention (R-06)
+
+`src/core/evidenceRetention/index.ts` is a pure planner that never touches a
+filesystem, mirroring `externalCi.ts`. `bin/evidence-retention.mjs` owns every
+mutation. The split matters because it makes the dangerous decision testable
+without a disk.
+
+The design is inverted from a normal prune, because retention over immutable
+evidence is dangerous in exactly one direction — a wrongly removed artifact is
+unrecoverable, a wrongly kept one costs disk. So the refusal set is computed
+BEFORE the removal set, and an artifact is refused when:
+
+| Refusal | Reason code |
+| --- | --- |
+| its name appears in tracked project state | `REFERENCED_BY_TRACKED_STATE` |
+| it is inside the newest `--keep-recent` set | `WITHIN_RECENT_WORKING_SET` |
+| the reference scan could not complete | `REFERENCE_SCAN_INCOMPLETE` |
+| its size or mtime is unmeasurable | `ENTRY_UNMEASURABLE` |
+| it is not a plain directory, or its name is unsafe | `ENTRY_NOT_A_DIRECTORY_*` / `ENTRY_NAME_UNSAFE` |
+
+Two deliberate asymmetries. Reference matching is containment, not equality,
+because task records cite artifacts inside prose and paths; containment can
+only ever move an entry INTO the refusal set, so it cannot cause a wrongful
+removal. And an entry with no mtime sorts as oldest, which would make it the
+first removal candidate if recency were the only gate — it is refused as
+unprovable instead, and there is a regression for exactly that.
+
+Removal operates on whole directories, revalidates the exact target
+immediately before acting, refuses a path that escapes the artifact root, and
+never rewrites, truncates or replaces a file. The no-replace identity patterns
+the evidence and review stores depend on are untouched.
+
+**18 regressions pass.** The ones that matter are the `--apply` cases,
+asserted on disk rather than in the report: the referenced artifact survives
+byte-identical, the orphan is gone, a symlinked entry is neither followed nor
+removed and its target file survives, and an unusable `--root` returns
+`ROOT_UNUSABLE` instead of silently falling back to the real evidence store.
+`--root` exists only so the removal path is testable against a disposable
+store; an untested removal path would have been worse than a bounded flag.
+
+**Registered, not silently added.** `validation:universe` refused the new
+files until they were classified — `bin/evidence-retention.mjs` into
+`BIN_SYNTAX` (66 → 67) and `tests/unit/evidenceRetention.test.ts` into the
+AUTHORITATIVE gate via `config/synthetic-campaign.v1.json`, because a suite
+guarding a deletion path is safety-load-bearing and does not belong in the 84
+`FULL_REGRESSION` suites that sit outside the gate. The declared inventory
+digest moved from `sha256:063ecd1f416bdcb540aff7a7` to
+`sha256:b20bde104a58e1e4ed5c128a`. `hardening:check` separately refused a
+PLAN whose milestone statuses lagged STATE, and that was repaired rather than
+bypassed.
+
+Commands are documented in `README.md`; `--apply` is deliberately not an
+`npm run` shortcut.
+
 ## Validation receipts
 
 Recorded per milestone as they are produced.

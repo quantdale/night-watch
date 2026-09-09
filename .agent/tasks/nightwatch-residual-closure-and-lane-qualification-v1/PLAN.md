@@ -122,9 +122,9 @@ whose reference status cannot be proven is refused rather than removed.
 - **Acceptance:** the recorded state names this session; a canonical-checkout
   run does not satisfy it.
 - **Validation:** `npm run control-center:ui:browser`.
-- **Status:** IN_PROGRESS — lane executed 4 passed / 0 failed in 3.8 minutes
+- **Status:** COMPLETE — lane executed 4 passed / 0 failed in 3.8 minutes
   inside this session; host Chrome 151.0.7922.173 and bubblewrap 0.9.0;
-  matrix update pending.
+  `docs/HOST-CAPABILITY-MATRIX.md` §4a records the lane as PROVEN.
 
 ### M2 — Record the CI block as classified observation (R-02)
 
@@ -139,8 +139,9 @@ whose reference status cannot be proven is refused rather than removed.
   the real classifier, not from prose.
 - **Validation:** `node bin/phase23-ci.mjs observe --run-id=<id>`,
   `npm run project:check`.
-- **Status:** IN_PROGRESS — classified `NO_STEPS_BILLING_OR_PLATFORM_BLOCK` /
-  `REQUIRED_JOB_STEPS_EMPTY` at `a063416`, `exactHead: true`; fields written.
+- **Status:** COMPLETE — classified `NO_STEPS_BILLING_OR_PLATFORM_BLOCK` /
+  `REQUIRED_JOB_STEPS_EMPTY` at `a063416`, `exactHead: true`;
+  `CI_STATUS: NO_STEPS_EXTERNAL_NON_EVIDENCE` with `CI_EXECUTED_SHA: NONE`.
 
 ### M3 — Reconcile project state (R-03)
 
@@ -154,8 +155,10 @@ whose reference status cannot be proven is refused rather than removed.
   unchanged.
 - **Validation:** `npm run project:check`, `npm run hardening:check`,
   `git diff` review of the archive region.
-- **Status:** IN_PROGRESS — closure section and CI fields written; the
-  local/clean anchors are deliberately deferred to M7.
+- **Status:** COMPLETE — closure section appended in the established shape
+  and the substantive anchor advanced to a real implementation commit. The
+  local/clean anchors are deliberately deferred to M7 rather than inheriting a
+  predecessor receipt for a different SHA.
 
 ### M4 — Document the shipped surface (R-04)
 
@@ -168,7 +171,8 @@ whose reference status cannot be proven is refused rather than removed.
 - **Acceptance:** definition-of-done item 13 holds against the command
   surface.
 - **Validation:** `npm run hardening:check`, `npm run contract:health`.
-- **Status:** IN_PROGRESS — README section and script added.
+- **Status:** COMPLETE — README documents `--enable-local-review`, the review
+  store and the reviewer's four answers; `npm run contract:health` added.
 
 ### M5 — Clear workspace and record residue (R-05)
 
@@ -199,7 +203,12 @@ whose reference status cannot be proven is refused rather than removed.
 - **Acceptance:** referenced artifacts are provably refused; nothing is
   removed without the flag; reclaiming nothing is a valid outcome.
 - **Validation:** the new retention regressions plus `npm test`.
-- **Status:** NOT_STARTED.
+- **Status:** COMPLETE — `src/core/evidenceRetention/index.ts` is a pure
+  refusal-first planner and `bin/evidence-retention.mjs` owns every mutation.
+  18 regressions pass, including the `--apply` path asserted on disk: the
+  referenced artifact survives byte-identical, the orphan is gone, a symlinked
+  entry is never followed, and an unusable `--root` blocks instead of falling
+  back to the real store. Registered in the AUTHORITATIVE gate.
 
 ### M7 — Certify one checkpoint
 

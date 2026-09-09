@@ -44,6 +44,8 @@
     "status:local": "node bin/nightwatch-status.mjs",
     "hygiene:status": "node bin/nightwatch-hygiene.mjs status",
     "hygiene:clean": "node bin/nightwatch-hygiene.mjs clean",
+    "retention:status": "node bin/evidence-retention.mjs status",
+    "retention:plan": "node bin/evidence-retention.mjs plan",
     "nightwatch": "node bin/nightwatch.mjs",
     "agent:status": "node bin/nightwatch-agent.mjs status",
     "agent:test": "node bin/nightwatch-agent.mjs test",

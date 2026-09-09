@@ -33,15 +33,24 @@ local evidence growth a bounded, refusal-first retention policy.
 
 ## Current Milestone
 
-Milestone ID: M6
-Milestone status: NOT_STARTED
-What is being attempted: nothing yet. M1 through M5 are closed and committed.
-M6 is the refusal-first evidence retention capability, and M7 the
-certification checkpoint that also settles the local/clean validated-SHA
-fields against this campaign's own receipts.
+Milestone ID: M7
+Milestone status: IN_PROGRESS
+What is being attempted: certification. R-01 through R-07 are implemented and
+recorded; M7 runs the full offline regression, `gate:local` and the UI lanes,
+resolves every declared lane into exactly one class, and settles
+`LAST_LOCALLY_VALIDATED_SHA` and `LAST_CLEAN_VALIDATED_SHA` against this
+campaign's own receipts.
 
 ## Completed Milestones
 
+- **M6 COMPLETE (R-06)** — refusal-first evidence retention.
+  `src/core/evidenceRetention/index.ts` is a pure planner;
+  `bin/evidence-retention.mjs` owns every mutation. 18 regressions pass,
+  including `--apply` asserted on disk: referenced artifact byte-identical,
+  orphan removed, symlink never followed, unusable `--root` blocked rather
+  than falling back to the real store. Registered into the AUTHORITATIVE gate
+  and `BIN_SYNTAX` (66 → 67); declared inventory digest advanced to
+  `sha256:b20bde104a58e1e4ed5c128a`.
 - **M1 COMPLETE (R-01)** — the browser workflow lane is `PROVEN`. Host
   capability observed directly: Chrome 151.0.7922.173, bubblewrap 0.9.0. The
   lane ran inside this owned session: 4 passed / 0 failed in 3.8 minutes,
@@ -93,8 +102,8 @@ fields against this campaign's own receipts.
 
 ## Work In Progress
 
-Nothing is partial. M0, M0b and M1 through M5 are complete and committed. M6
-and M7 have not started.
+M7 only. R-01 through R-07 are implemented; M6's code and regressions are
+written and passing but not yet committed. Certification has not run.
 
 Historical, for the record — M0. The owned session worktree
 `nightwatch-residual-closure-and--e130f226` is claimed as session
@@ -108,13 +117,12 @@ checkpoint and the terminal predecessor legitimately remains the active task.
 
 ## Exact Next Action
 
-Begin M6: implement refusal-first evidence retention over repository-owned
-generated outputs — reporting by default, removal behind an explicit owner
-flag, the refusal set computed before any removal set, and unprovable
-reference status meaning refused — with regressions for the refusal set, the
-owner-flag boundary and the reclaim-nothing outcome. Then M7 certification,
-which also settles `LAST_LOCALLY_VALIDATED_SHA` and
-`LAST_CLEAN_VALIDATED_SHA`.
+Commit the M6 checkpoint, then run M7 certification: the full offline
+regression, `gate:local`, the UI lanes and root typecheck; resolve every
+declared lane into exactly one of `PROVEN` / `BLOCKED_EXTERNAL` /
+`UNAVAILABLE_CAPABILITY`; then settle `LAST_LOCALLY_VALIDATED_SHA` and
+`LAST_CLEAN_VALIDATED_SHA` against the receipts this campaign produces, or
+leave them and say why.
 
 ## Files Changed
 
@@ -245,6 +253,22 @@ When: 2026-09-09
 Relevant failure/output summary: every discovered test and check still belongs
 to exactly one class; zero unclassified.
 
+Command: `npx playwright test tests/unit/evidenceRetention.test.ts --project=nightwatch --workers=1`
+Result: PASS
+When: 2026-09-09
+Relevant failure/output summary: 18 passed, including four `--apply` cases
+asserted against the filesystem and an `ROOT_UNUSABLE` refusal.
+
+Command: `npm run validation:universe` after adding the retention files
+Result: FAIL then PASS
+When: 2026-09-09
+Relevant failure/output summary: refused both new files as
+`VALIDATION_UNIVERSE_UNCLASSIFIED` plus `VALIDATION_UNIVERSE_DIGEST_DRIFT`
+until they were classified and the declared digest advanced from
+`sha256:063ecd1f416bdcb540aff7a7` to `sha256:b20bde104a58e1e4ed5c128a`. The
+totality rule worked exactly as designed; nothing joined the repository
+silently.
+
 ## Decisions Made During This Task
 
 Decision: classify lanes three ways rather than as available/unavailable.
@@ -296,6 +320,22 @@ Evidence/constraint: the umbrella programme's STATE reads `IN_PROGRESS` with
 "no wave is active"; 16 of 24 session branches are not ancestors of
 `origin/main`, one of them carrying 16 commits over 72 files that its own tip
 commit describes as preserved parked work.
+
+Decision: put the retention suite in the AUTHORITATIVE gate rather than in
+`FULL_REGRESSION`.
+Reason: it guards a deletion path over immutable evidence, which is
+safety-load-bearing, and the 84 `FULL_REGRESSION` suites run outside the
+authoritative gate.
+Evidence/constraint: the predecessor's own residual note says a
+`FULL_REGRESSION` suite should be promoted "when any of them becomes
+safety-load-bearing".
+
+Decision: add a bounded `--root` flag to the retention CLI.
+Reason: without it the removal path could only be exercised against the real
+evidence store, so it would have shipped untested.
+Evidence/constraint: `--root` is validated before enumeration and returns
+`ROOT_UNUSABLE` rather than falling back to the real store, with a regression
+asserting the real store is untouched in that case.
 
 Decision: exclude the real-yield campaign from this scope.
 Reason: it depends on confirmed provider capability, which this campaign does
