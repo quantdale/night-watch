@@ -204,10 +204,12 @@ a structural `LayoutGraph` type so they cannot diverge again.
   regression it reports; reconcile task and project state to the result.
 - **Acceptance:** `gate:local` PASS at the committed checkpoint.
 - **Validation:** `npm run gate:local`.
-- **Status:** IN_PROGRESS — implementation committed at `9b30e27`; the first
+- **Status:** COMPLETE — implementation committed at `9b30e27`. The first
   `gate:local` from this session returned eight groups PASS and
   `SYNTHETIC_CAMPAIGN` TEST_FAILURE on one continuity-coherence assertion
-  about this task's own milestone bookkeeping, now corrected.
+  about this task's own milestone bookkeeping; corrected at `fa5bef0`, where
+  `gate:local` returned all eleven groups PASS with receipt
+  `receipt:sha256:8f5e1452a0a909c6721ce272`.
 
 ## Validation Strategy
 

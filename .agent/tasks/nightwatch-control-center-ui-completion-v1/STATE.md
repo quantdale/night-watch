@@ -4,24 +4,29 @@
 
 Task ID: nightwatch-control-center-ui-completion-v1
 Phase: CONTROL_CENTER_UI_COMPLETION_V1
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: 11c9ea62405c5b9b0eddd011fb7083da83348ee7
-Last validated implementation SHA: 11c9ea62405c5b9b0eddd011fb7083da83348ee7
-Last substantive checkpoint SHA: 11c9ea62405c5b9b0eddd011fb7083da83348ee7
+Last validated implementation SHA: 9b30e27af075ea3a62c463475388933ebe3dca9e
+Last substantive checkpoint SHA: 9b30e27af075ea3a62c463475388933ebe3dca9e
+Last documentation checkpoint SHA: fa5bef068a157df520934b811048e9300f597b81
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-control-center-ui-com-9a04214f
-Last checkpoint: M0 through M7 implemented and locally certified in the owned
-session; the implementation checkpoint is being committed and `gate:local` has
-not yet been run from this session at that checkpoint.
+Last checkpoint: M8 certification COMPLETE at implementation
+`9b30e27af075ea3a62c463475388933ebe3dca9e`; `gate:local` returned all eleven
+groups PASS from this owned session at documentation descendant
+`fa5bef068a157df520934b811048e9300f597b81` with receipt
+`receipt:sha256:8f5e1452a0a909c6721ce272`, and U-01 through U-06 are CLOSED
+with acceptance evidence.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 11c9ea62405c5b9b0eddd011fb7083da83348ee7
-LAST_VALIDATED_IMPLEMENTATION_SHA: 11c9ea62405c5b9b0eddd011fb7083da83348ee7
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 11c9ea62405c5b9b0eddd011fb7083da83348ee7
+LAST_VALIDATED_IMPLEMENTATION_SHA: 9b30e27af075ea3a62c463475388933ebe3dca9e
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 9b30e27af075ea3a62c463475388933ebe3dca9e
+LAST_DOCUMENTATION_CHECKPOINT_SHA: fa5bef068a157df520934b811048e9300f597b81
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
-PHASE_CONTROL_CENTER_UI_COMPLETION_V1_STATUS: IN_PROGRESS
+PHASE_CONTROL_CENTER_UI_COMPLETION_V1_STATUS: COMPLETE
 
 ## Objective
 
@@ -32,11 +37,14 @@ happen.
 
 ## Current Milestone
 
+COMPLETE — M8 closed; the campaign is finished.
 Milestone ID: M8
-Milestone status: IN_PROGRESS
-What is being attempted: commit the implementation checkpoint from this owned
-session, then run `npm run gate:local` at that checkpoint and reconcile task
-and project state to its result.
+Milestone status: COMPLETE
+What is being attempted: NOTHING. The campaign is closed. All six findings
+U-01 through U-06 are CLOSED with acceptance evidence, every contract field
+the UI fetches either renders or is exempt with a stated reason, every
+rendered class has a stylesheet rule, and no client-applied bound is presented
+as completeness.
 
 ## Completed Milestones
 
@@ -86,15 +94,14 @@ and project state to its result.
 
 ## Work In Progress
 
-The implementation and its local certification are done. What is not done is
-the `gate:local` run from this owned session at the committed checkpoint, and
-the state/documentation reconciliation to that result.
+NONE.
 
 ## Exact Next Action
 
-From `/home/dalepalaca/.nightwatch/worktrees/nightwatch-control-center-ui-com-9a04214f`,
-run `npm run gate:local`, then set this file, `.agent/ACTIVE_TASK.md` and
-`.agent/EXECUTION_PROMPT.md` to the outcome it reports.
+STOP. Hold at this checkpoint and report the certified outcome to the owner.
+Integration to `origin main` is an owner decision and has not been performed;
+the certified checkpoint sits on
+`session/nightwatch-control-center-ui-com-9a04214f`.
 
 ## Files Changed
 
@@ -158,14 +165,26 @@ When: 2026-09-09
 Relevant failure/output summary: verdict PASS, all seven workspace invariants
 PASS, canonical clean, this session OWNED_SESSION and live.
 
+Command: `npm run campaign:synthetic`
+Result: PASS
+When: 2026-09-09
+Relevant failure/output summary: 1797 of 1797 passed, 0 failed,
+`deepContainmentLane` PROVEN. The preceding run was 1796/1797: the single
+failure was `tests/unit/nw07ContinuityCoherence.test.ts:80`, which reads
+whichever task `ACTIVE_TASK.md` points at and requires each milestone STATE
+calls COMPLETE to carry a `- **Status:** COMPLETE` line in PLAN. This task's
+records used their own format, so the extraction matched nothing and the
+test's anti-vacuity assertion fired. Corrected at `fa5bef0`.
+
 Command: `npm run gate:local`
-Result: NOT_RUN
-When: pending
-Relevant failure/output summary: to be run from this session at the committed
-implementation checkpoint. Its earlier failures in the canonical checkout were
-`STATIC` (the typecheck error above), then `HARDENING` (the two registration
-errors above), then `HANDOFF_TRUTH` — which is what this task record exists to
-resolve.
+Result: PASS
+When: 2026-09-09
+Relevant failure/output summary: all eleven groups PASS at
+`fa5bef068a157df520934b811048e9300f597b81`, receipt
+`receipt:sha256:8f5e1452a0a909c6721ce272`. Three earlier runs from the
+canonical checkout stopped at `STATIC`, then `HARDENING`, then
+`HANDOFF_TRUTH`; a fourth from this session stopped at `SYNTHETIC_CAMPAIGN`.
+Each failure and its cause is recorded above rather than smoothed over.
 
 ## Decisions Made During This Task
 
@@ -247,13 +266,30 @@ NONE
 
 ## Resume Recipe
 
-1. Read SPEC.
-2. Read PLAN.
-3. Inspect `git status` and the current SHA in this session worktree.
-4. Run `npm --prefix ui/control-center run test` as the smallest relevant
-   validation.
-5. Continue Exact Next Action.
+Task complete. Do not resume; any follow-up starts as a new authorized task.
 
 ## Completion Snapshot
 
-Populate only when complete.
+Final substantive checkpoint: 9b30e27af075ea3a62c463475388933ebe3dca9e
+Final documentation checkpoint: fa5bef068a157df520934b811048e9300f597b81
+Live HEAD: DISCOVER_FROM_GIT
+Tests: `ui/control-center` typecheck PASS and 55 of 55 passed across 4 files,
+up from 41 across 2; `ui/control-center` build PASS at 321,234 bytes; root
+`typecheck` PASS; `hardening:check` PASS; `campaign:synthetic` 1797 of 1797
+passed with `deepContainmentLane` PROVEN; browser workflow lane 4 passed / 0
+failed; `gate:local` all eleven groups PASS with receipt
+`receipt:sha256:8f5e1452a0a909c6721ce272`.
+Artifacts: `ui/control-center/src/{App.tsx,styles.css,App.test.tsx}`,
+`ui/control-center/src/{contractCoverage,styles}.test.ts`,
+`tests/browser/controlCenterBrowser.browser.ts`,
+`config/validation-universe.v1.json`,
+`openspec/changes/nightwatch-control-center-ui-completion-v1/`,
+`.agent/tasks/nightwatch-control-center-ui-completion-v1/`.
+Known issues: both coverage guards are name-level over `App.tsx` and prove a
+field or class reaches the file, not its placement or visual correctness. The
+browser lane's computed-style assertion covers one class. The source graph
+still skips endpoint-less edges silently where the execution graph now
+discloses them. This checkpoint has NOT been pushed; integration to
+`origin main` remains an owner decision.
+Recommended next task: a placement-level coverage check, asserting each
+contract field renders in the view that owns it.

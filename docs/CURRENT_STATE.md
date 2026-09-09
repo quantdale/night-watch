@@ -746,12 +746,12 @@ RELEASE_CERTIFICATION_PROTOCOL_VERSION: nightwatch.release-certification.v1
 PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
 RELEASE_CHECKPOINT_SHA: 2576c5751d33bb40046246e8fcf57c7cc5c30a57
 LIVE_HEAD_SHA: DISCOVER_FROM_GIT
-LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: c18db55970a6497470191c8c9ef58f5012a96c8c
-LAST_LOCALLY_VALIDATED_SHA: c18db55970a6497470191c8c9ef58f5012a96c8c
+LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: 9b30e27af075ea3a62c463475388933ebe3dca9e
+LAST_LOCALLY_VALIDATED_SHA: fa5bef068a157df520934b811048e9300f597b81
 LAST_CLEAN_VALIDATED_SHA: c18db55970a6497470191c8c9ef58f5012a96c8c
-CI_OBSERVED_SHA: c18db55970a6497470191c8c9ef58f5012a96c8c
+CI_OBSERVED_SHA: NONE
 CI_EXECUTED_SHA: NONE
-CI_STATUS: NO_STEPS_EXTERNAL_NON_EVIDENCE
+CI_STATUS: NOT_OBSERVED
 FINAL_DOCUMENTATION_SHA: DISCOVER_FROM_GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 LIVE_HEAD_AUTHORITY: GIT
@@ -806,11 +806,11 @@ informational and are not interpreted as current authority.
 LIVE_STATE_PROTOCOL_VERSION: nightwatch.live-state.v1
 LIVE_TASK_ID: nightwatch-control-center-ui-completion-v1
 LIVE_PHASE: CONTROL_CENTER_UI_COMPLETION_V1
-LIVE_TASK_STATUS: IN_PROGRESS
+LIVE_TASK_STATUS: COMPLETE
 LIVE_PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
 LIVE_PROJECT_VERDICT_EFFECT: PRESERVE
-LIVE_NEXT_ACTION_STATE: CONTINUE
-LIVE_COMPLETION_CLAIM: NONE
+LIVE_NEXT_ACTION_STATE: STOP
+LIVE_COMPLETION_CLAIM: COMPLETE
 ```
 
 ### Exact-head CI state (current live CI state)
@@ -3795,3 +3795,86 @@ not advanced.
 `EXACT_REDISCOVERY` and previously-unknown-defect yield remain 0 across W7
 through W10 while the machinery is ready and the host qualifies. It is gated on
 confirmed provider capability, not on repository work.
+
+## Control Center UI completion
+
+`nightwatch-control-center-ui-completion-v1` is terminal COMPLETE at
+implementation `9b30e27af075ea3a62c463475388933ebe3dca9e`, certified from its
+owned session at documentation descendant
+`fa5bef068a157df520934b811048e9300f597b81` with `gate:local` all eleven groups
+PASS and receipt `receipt:sha256:8f5e1452a0a909c6721ce272`. The checkpoint has
+not been pushed; `origin/main` remains at
+`11c9ea62405c5b9b0eddd011fb7083da83348ee7` and integration is an owner
+decision.
+
+The UI had all nine of its views and showed a subset of what they fetch. Three
+defect classes, all invisible to every existing check:
+
+- **U-01** — `GraphCanvas` sliced nodes to 24 and edges to 48 against adapter
+  bounds of 250/500 default and 1000/2000 maximum, reported the full received
+  edge count, and printed `Complete`. `truncated` answers whether the SERVER
+  reached its bound; it never spoke for a slice the client applied afterwards.
+  This is the same defect C-15b corrected on the source graph, kept in the
+  sibling view.
+- **U-02 through U-04** — nine snapshot contracts were fetched in full and
+  rendered in part: run-detail provenance, censuses, screenshot count and
+  hard-failure codes; `safety.checks` (counted in one Overview metric, never
+  listed, under a hero promising unknown checks stay visible as unknown); most
+  of the readiness contract, including the distinction between deferred and
+  never-measured verification; and `meta`, fetched for one boolean.
+- **U-05** — nine rendered classes had no stylesheet rule, so C-15b's graph
+  toolbar shipped as unstyled browser controls and its evidence filter
+  recomputed `dimmed` on every keystroke and changed no pixel.
+
+All six findings are CLOSED. Every contract field now renders or appears in a
+three-entry exempt list with a stated reason; the execution graph draws
+everything received on the layered layout it now shares with the source graph,
+and discloses server truncation and endpoint-less edges separately; every
+rendered class has a rule, and two dangling modifier classes were removed
+rather than given invented styles.
+
+- **U-06** — the comparisons whose absence let all of this happen.
+  `contractCoverage.test.ts` asserts every contract field reaches the
+  component file; `styles.test.ts` asserts every rendered class has a rule.
+  Each asserts its own extraction is non-vacuous, carries a reasoned exempt
+  list with a staleness check, and states in its own header that it is
+  name-level and does not prove placement. Both were verified to FAIL on a
+  reintroduced defect; `styles.test.ts` failed on real content on its first
+  run. Both are registered in `config/validation-universe.v1.json` UI_LANE
+  with `inventoryDigest` advanced to `sha256:e6ad9456574d63403ba96436`.
+
+Local evidence: UI typecheck PASS and 55 of 55 tests, up from 41; UI build
+PASS; root `typecheck` and `hardening:check` PASS; `campaign:synthetic` 1797
+of 1797 with `deepContainmentLane` PROVEN; browser workflow lane 4 passed,
+including a computed-style assertion proving the toolbar's rule applies in the
+built bundle.
+
+What this campaign does NOT claim: no new route, adapter, authority, contract
+field, server bound or sanitizer; no execution, mutation, product contact,
+publication or network egress; no executed external CI, which remains
+`BLOCKED_EXTERNAL` under the predecessor's classification; and no
+placement-level proof from either coverage guard, both of which are name-level
+over `App.tsx` and say so. The existing `OPERATIONALLY_ACCEPTED` project
+authority is preserved, not advanced.
+
+**Recommended next campaign.** A placement-level contract-coverage check,
+asserting each field renders in the view that owns it rather than merely
+reaching the component file.
+
+### CI evidence at the Control Center UI completion baseline
+
+`CI_STATUS` is `NOT_OBSERVED` with `CI_OBSERVED_SHA: NONE`, because no
+external CI run has been observed at
+`9b30e27af075ea3a62c463475388933ebe3dca9e`. The predecessor's
+`NO_STEPS_EXTERNAL_NON_EVIDENCE` classification, with its run identity and
+payment/spending-limit annotation, described
+`c18db55970a6497470191c8c9ef58f5012a96c8c` and is retained in that campaign's
+own section as history. It is deliberately not carried forward: an observation
+taken before the baseline advanced says nothing about the baseline in force
+now, and leaving it in place would let a stale classification outlive the run
+it described.
+
+The underlying GitHub billing block is unchanged and remains an owner action.
+`LAST_CLEAN_VALIDATED_SHA` also stays at
+`c18db55970a6497470191c8c9ef58f5012a96c8c`: `gate:clean` has not been run at
+this baseline, and an unrun lane is not recorded as a pass.

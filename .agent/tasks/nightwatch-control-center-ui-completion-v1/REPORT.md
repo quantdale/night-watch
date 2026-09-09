@@ -2,7 +2,7 @@
 
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 Task ID: nightwatch-control-center-ui-completion-v1
-Status: IN_PROGRESS
+Status: COMPLETE
 
 Evidence ledger for this campaign. It records what was actually run and
 observed, not what was intended. Receipts are written as they are produced.
@@ -155,7 +155,8 @@ each suite while untracked, then `VALIDATION_UNIVERSE_DIGEST_DRIFT`.
 | `node bin/hardening-check.mjs` | PASS | offline structural invariants hold |
 | `npm run control-center:ui:browser` | PASS | 4 passed / 0 failed |
 | `npm run session:status` | PASS | verdict PASS, seven invariants PASS |
-| `npm run gate:local` | NOT_RUN | pending at the committed checkpoint |
+| `npm run campaign:synthetic` | PASS | 1797/1797, `deepContainmentLane` PROVEN |
+| `npm run gate:local` | PASS | all eleven groups at `fa5bef0`, receipt `receipt:sha256:8f5e1452a0a909c6721ce272` |
 
 Intermediate failures, recorded rather than smoothed over:
 
@@ -190,5 +191,45 @@ already sent.
 - The browser lane's computed-style assertion covers one class,
   `.graph-controls`. It proves that rules apply in the built bundle; it does
   not prove every rule does.
-- `gate:local` has not yet been run at the committed checkpoint from this
-  session. Until it has, nothing in this record should be read as a gate pass.
+- `gate:local` PASS is a LOCAL receipt from this host. External CI remains
+  `BLOCKED_EXTERNAL` under the predecessor's classification and is not claimed
+  green here.
+- This checkpoint has not been pushed. Integration to `origin main` is an
+  owner decision.
+
+## M8 — certification
+
+`gate:local` was run from this owned session at the committed implementation
+checkpoint, twice, and both results are recorded.
+
+At `9b30e27` it returned `TEST_FAILURE`: eight groups PASS —
+`GATE_DEFINITION`, `STATIC`, `HARDENING`, `HANDOFF_TRUTH`, `PROJECT_TRUTH`,
+`AGENT_CONTINUITY`, `SEMANTIC_COMPATIBILITY`, `OWNER_PROVENANCE` — with
+`SYNTHETIC_CAMPAIGN` failing and `PATCH_INTEGRITY` and `WORKSPACE_INTEGRITY`
+therefore `NOT_RUN`. Receipt `receipt:sha256:2c3f7290f0a9e5c67ba1fa4a`.
+
+Running `campaign:synthetic` directly isolated it: 1796 of 1797 passed with
+`deepContainmentLane` PROVEN, and one failure at
+`tests/unit/nw07ContinuityCoherence.test.ts:80`. That test reads whichever
+task `ACTIVE_TASK.md` points at — this one, as of the registration — and
+requires that every milestone STATE reports COMPLETE has a `### M<n>` section
+in PLAN carrying a `- **Status:** COMPLETE` line. This task's records used
+their own format, so the extraction matched nothing and the test's own
+anti-vacuity assertion fired rather than iterating an empty set and passing.
+Both records were rewritten into the predecessor campaign's shape at
+`fa5bef0`, and `campaign:synthetic` then reported 1797 of 1797.
+
+At `fa5bef0` `gate:local` returned `PASS` with all eleven groups PASS and
+receipt `receipt:sha256:8f5e1452a0a909c6721ce272`.
+
+The failure is recorded because it is instructive in both directions: the
+sandbox lane was never implicated, and the guard that caught it was an
+anti-vacuity assertion of exactly the kind M7 added to this campaign's own two
+new checks.
+
+## Integration
+
+NOT PERFORMED. The certified checkpoint `fa5bef0` sits on
+`session/nightwatch-control-center-ui-com-9a04214f` and has not been pushed.
+`origin/main` remains at `11c9ea62405c5b9b0eddd011fb7083da83348ee7`.
+Integration is an owner decision.

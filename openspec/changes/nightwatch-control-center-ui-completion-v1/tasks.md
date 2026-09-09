@@ -71,5 +71,7 @@
 - [x] Root `typecheck` and `hardening:check` PASS
 - [x] Browser workflow lane 4 passed, including built-bundle assertions and a
       computed-style check on the graph toolbar
-- [ ] `gate:local` PASS from this owned session
-- [ ] Checkpoint committed; state and docs reconciled
+- [x] `gate:local` PASS from this owned session — all eleven groups at
+      `fa5bef0`, receipt `receipt:sha256:8f5e1452a0a909c6721ce272`
+- [x] `campaign:synthetic` 1797/1797 with `deepContainmentLane` PROVEN
+- [x] Checkpoint committed; state and docs reconciled

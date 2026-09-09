@@ -3,36 +3,50 @@
 Task ID: nightwatch-control-center-ui-completion-v1
 Phase: CONTROL_CENTER_UI_COMPLETION_V1
 Title: Control Center UI Completion
-Status: IN_PROGRESS
+Status: COMPLETE
 Task directory: .agent/tasks/nightwatch-control-center-ui-completion-v1
 Starting SHA: 11c9ea62405c5b9b0eddd011fb7083da83348ee7
-Last validated implementation SHA: 11c9ea62405c5b9b0eddd011fb7083da83348ee7
-Last checkpoint: M0 through M7 implemented and locally certified in the owned
-session worktree; the implementation checkpoint is being committed and
-`gate:local` has not yet run from this session at that checkpoint.
-Current milestone: M8 — certification
-Next action: From the owned session worktree
-`/home/dalepalaca/.nightwatch/worktrees/nightwatch-control-center-ui-com-9a04214f`,
-run `npm run gate:local`, then reconcile `STATE.md`, this file and
-`.agent/EXECUTION_PROMPT.md` to the outcome it reports.
+Last validated implementation SHA: 9b30e27af075ea3a62c463475388933ebe3dca9e
+Last checkpoint: M8 certification COMPLETE at implementation
+`9b30e27af075ea3a62c463475388933ebe3dca9e`; `gate:local` all eleven groups
+PASS from the owned session at documentation descendant
+`fa5bef068a157df520934b811048e9300f597b81` with receipt
+`receipt:sha256:8f5e1452a0a909c6721ce272`; U-01 through U-06 CLOSED.
+Current milestone: COMPLETE — M0 through M8 are closed
+Next action: STOP. Hold at this checkpoint and report the certified outcome to
+the owner. The checkpoint has NOT been pushed: it sits on
+`session/nightwatch-control-center-ui-com-9a04214f` and integration to
+`origin main` is an owner decision. Do not reopen U-01 through U-06. The
+recommended successor is a placement-level contract-coverage check.
 Authorization class: CONTROL_CENTER_UI_COMPLETION_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 11c9ea62405c5b9b0eddd011fb7083da83348ee7
-LAST_VALIDATED_IMPLEMENTATION_SHA: 11c9ea62405c5b9b0eddd011fb7083da83348ee7
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 11c9ea62405c5b9b0eddd011fb7083da83348ee7
+LAST_VALIDATED_IMPLEMENTATION_SHA: 9b30e27af075ea3a62c463475388933ebe3dca9e
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 9b30e27af075ea3a62c463475388933ebe3dca9e
+LAST_DOCUMENTATION_CHECKPOINT_SHA: fa5bef068a157df520934b811048e9300f597b81
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
-PHASE_CONTROL_CENTER_UI_COMPLETION_V1_STATUS: IN_PROGRESS
+PHASE_CONTROL_CENTER_UI_COMPLETION_V1_STATUS: COMPLETE
 
 ## Outcome
 
-Pending. M0 through M7 are closed with acceptance evidence: U-01 through U-06
-are implemented, the UI package passes typecheck, 55 tests and build, the root
-`typecheck` and `hardening:check` pass, and the browser workflow lane passes 4
-of 4 including a computed-style assertion proving the graph toolbar's rule
-applies in the built bundle. What remains is `gate:local` from this session at
-the committed checkpoint, and the state reconciliation to its result.
+All six findings U-01 through U-06 are CLOSED with acceptance evidence. Every
+field the Control Center UI fetches now reaches the operator or is exempt with
+a stated reason; no client-applied bound is presented as the server's bound or
+as completeness; every rendered class has a stylesheet rule; and two
+mechanical comparisons now hold both defect classes closed.
+
+`gate:local` PASS from this owned session at documentation descendant
+`fa5bef068a157df520934b811048e9300f597b81` of implementation
+`9b30e27af075ea3a62c463475388933ebe3dca9e`, all eleven groups PASS,
+receipt `receipt:sha256:8f5e1452a0a909c6721ce272`. `campaign:synthetic`
+1797 of 1797 with `deepContainmentLane` PROVEN. Browser workflow lane 4
+passed. UI suite 55 of 55, up from 41.
+
+The gate PASS is a local receipt from this host. External CI remains
+`BLOCKED_EXTERNAL` under the predecessor's classification and is not claimed
+green. The checkpoint has not been pushed.
 
 ## Mission
 

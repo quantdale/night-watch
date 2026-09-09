@@ -2926,3 +2926,36 @@ server-restart and stale cycle; scale measured at 1k/5k/10k against
 **Next.** See the campaign REPORT's next recommendation. No externally gated
 step is executed: C-12 live, C-13, C-14, C-08b, C-07 DEV, and any
 Slack/Leslie/Pondr contact all remain unauthorized.
+
+## Control Center UI completion
+
+Complete as `nightwatch-control-center-ui-completion-v1` at implementation
+`9b30e27af075ea3a62c463475388933ebe3dca9e`, certified from its owned session at
+documentation descendant `fa5bef068a157df520934b811048e9300f597b81`.
+
+The UI was not missing screens; it was missing the evidence its screens already
+fetched. The execution-graph canvas drew `nodes.slice(0, 24)` and
+`edges.slice(0, 48)` against a 250/500 default and a 1000/2000 maximum and
+labelled the result `Complete`, because `truncated` reports only on the
+server's bound. Nine contracts were fetched in full and rendered in part, the
+Safety Center never listed a single check by name, and nine rendered classes
+had no stylesheet rule at all — so C-15b's graph toolbar and evidence filter
+computed correct state and changed no pixel.
+
+U-01 through U-06 are closed: every field renders or is exempt with a reason,
+both graph canvases share one deterministic layered layout, server truncation
+and endpoint-less edges are disclosed separately, and every rendered class has
+a rule. Two mechanical comparisons now hold both defect classes closed —
+contract-versus-render and class-versus-stylesheet — each with a non-vacuity
+assertion, a reasoned exempt list and an explicit statement of its own limit.
+
+**Certification.** UI typecheck and 55 of 55 tests, up from 41; UI build;
+root `typecheck`; `hardening:check`; `campaign:synthetic` 1797 of 1797 with
+`deepContainmentLane` PROVEN; browser workflow lane 4 passed including a
+computed-style assertion in the built bundle; `gate:local` all eleven groups
+PASS with receipt `receipt:sha256:8f5e1452a0a909c6721ce272`.
+
+**Next.** A placement-level contract-coverage check. Both new guards are
+name-level over `App.tsx`: they prove a field or class reaches the file, not
+that it renders in the view that owns it. Integration of this checkpoint to
+`origin main` is an owner decision and has not been performed.
