@@ -661,6 +661,71 @@ test.describe('project-state truth checker (nightwatch.project-state.v2)', () =>
     }
   });
 
+  // R-07. READY_FOR_EXECUTION is a planning-only checkpoint: the handoff
+  // protocol REQUIRES the prompt to name the successor campaign while
+  // ACTIVE_TASK still holds the terminal predecessor. Asserting the campaign
+  // binding here made that documented state unreachable — and because
+  // normalizeTaskStatus('READY_FOR_EXECUTION') is null, the status comparison
+  // failed for EVERY planning prompt regardless of identity. The binding that
+  // must hold in this state is the predecessor one, so it is asserted instead.
+  test('1h-1. a planning-only prompt may name the successor campaign', () => {
+    const fixture = makeFixture();
+    try {
+      replaceFile(fixture.root, '.agent/EXECUTION_PROMPT.md', () =>
+        '# Synthetic execution prompt\n'
+        + 'Status: READY_FOR_EXECUTION\n'
+        + 'Campaign ID: successor-campaign\n'
+        + `Predecessor Task ID: ${ACTIVE_TASK_ID}\n`
+        + 'Predecessor Status: COMPLETE\n');
+      git(fixture.root, ['add', '--all']);
+      git(fixture.root, ['commit', '--quiet', '--no-gpg-sign', '-m', 'planning-only handoff checkpoint']);
+      const result = run(fixture.root);
+      expect(result.stderr).not.toContain('PROJECT_STATE_EXECUTION_PROMPT_STATUS_MISMATCH');
+      expect(result.stderr).not.toContain('PROJECT_STATE_EXECUTION_PROMPT_TASK_ID_MISMATCH');
+      expect(result.status).toBe(0);
+    } finally {
+      fixture.cleanup();
+    }
+  });
+
+  test('1h-2. a planning-only prompt naming the wrong predecessor still fails', () => {
+    const fixture = makeFixture();
+    try {
+      replaceFile(fixture.root, '.agent/EXECUTION_PROMPT.md', () =>
+        '# Synthetic execution prompt\n'
+        + 'Status: READY_FOR_EXECUTION\n'
+        + 'Campaign ID: successor-campaign\n'
+        + 'Predecessor Task ID: some-other-task\n'
+        + 'Predecessor Status: COMPLETE\n');
+      git(fixture.root, ['add', '--all']);
+      git(fixture.root, ['commit', '--quiet', '--no-gpg-sign', '-m', 'planning prompt with wrong predecessor']);
+      const result = run(fixture.root);
+      expect(result.status).not.toBe(0);
+      expect(result.stderr).toContain('PROJECT_STATE_EXECUTION_PROMPT_TASK_ID_MISMATCH');
+    } finally {
+      fixture.cleanup();
+    }
+  });
+
+  test('1h-3. a planning-only prompt misreporting the predecessor status still fails', () => {
+    const fixture = makeFixture();
+    try {
+      replaceFile(fixture.root, '.agent/EXECUTION_PROMPT.md', () =>
+        '# Synthetic execution prompt\n'
+        + 'Status: READY_FOR_EXECUTION\n'
+        + 'Campaign ID: successor-campaign\n'
+        + `Predecessor Task ID: ${ACTIVE_TASK_ID}\n`
+        + 'Predecessor Status: IN_PROGRESS\n');
+      git(fixture.root, ['add', '--all']);
+      git(fixture.root, ['commit', '--quiet', '--no-gpg-sign', '-m', 'planning prompt with wrong predecessor status']);
+      const result = run(fixture.root);
+      expect(result.status).not.toBe(0);
+      expect(result.stderr).toContain('PROJECT_STATE_EXECUTION_PROMPT_STATUS_MISMATCH');
+    } finally {
+      fixture.cleanup();
+    }
+  });
+
   test('1i. every live cross-check field is bound to the active state', () => {
     const cases: readonly [keyof BlockOptions, string, string][] = [
       ['liveTaskId', 'another-task', 'PROJECT_STATE_LIVE_TASK_ID_MISMATCH'],

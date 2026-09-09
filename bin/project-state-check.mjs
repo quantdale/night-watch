@@ -41,6 +41,11 @@ import {
   // writes to stdout and would corrupt this checker's JSON receipt.
   isApprovedCheckpointPath,
 } from './agent-continuity-protocol.mjs';
+// The handoff header is owned by the handoff protocol module, so its
+// planning-only status and predecessor fields are read through that module
+// rather than re-derived here. It is a pure parser: no fs, no child
+// process, no network.
+import { HANDOFF_PLANNING_ONLY_STATUS, parseHandoffHeader } from './planner-handoff-protocol.mjs';
 
 const PROJECT_STATE_PROTOCOL_VERSION = 'nightwatch.project-state.v2';
 const BLOCK_SECTION_HEADING = '## Project-state v2 (machine-checked truth block)';
@@ -491,13 +496,33 @@ function main() {
       const executionPrompt = fs.readFileSync(path.join(root, '.agent/EXECUTION_PROMPT.md'), 'utf8');
       const promptParsed = parseKeyValuesWithLocations(executionPrompt);
       const promptStatusValue = fieldValue(promptParsed, 'Status');
-      if (promptStatusValue !== undefined && normalizeTaskStatus(promptStatusValue) !== activeStatus) {
-        fail(errors, 'PROJECT_STATE_EXECUTION_PROMPT_STATUS_MISMATCH');
-      }
-      const promptCampaignId = fieldValue(promptParsed, 'Campaign ID');
       const activeTaskId = activeContinuity.taskId;
-      if (promptCampaignId !== undefined && promptCampaignId !== activeTaskId) {
-        fail(errors, 'PROJECT_STATE_EXECUTION_PROMPT_TASK_ID_MISMATCH');
+      if (promptStatusValue === HANDOFF_PLANNING_ONLY_STATUS) {
+        // READY_FOR_EXECUTION is a planning-only checkpoint, and the handoff
+        // protocol REQUIRES it to name the successor campaign while
+        // ACTIVE_TASK still holds the terminal predecessor. Demanding that its
+        // Status and Campaign ID agree with active-task truth made that
+        // documented state unreachable: the status never normalizes to a task
+        // status, so the mismatch fired for every planning prompt regardless
+        // of identity. The binding that must hold here is the PREDECESSOR
+        // one, so assert exactly that rather than skipping the cross-check.
+        const header = parseHandoffHeader(executionPrompt);
+        const predecessorTaskId = header.fields['Predecessor Task ID'];
+        const predecessorStatus = header.fields['Predecessor Status'];
+        if (predecessorTaskId !== undefined && predecessorTaskId !== activeTaskId) {
+          fail(errors, 'PROJECT_STATE_EXECUTION_PROMPT_TASK_ID_MISMATCH');
+        }
+        if (predecessorStatus !== undefined && normalizeTaskStatus(predecessorStatus) !== activeStatus) {
+          fail(errors, 'PROJECT_STATE_EXECUTION_PROMPT_STATUS_MISMATCH');
+        }
+      } else {
+        if (promptStatusValue !== undefined && normalizeTaskStatus(promptStatusValue) !== activeStatus) {
+          fail(errors, 'PROJECT_STATE_EXECUTION_PROMPT_STATUS_MISMATCH');
+        }
+        const promptCampaignId = fieldValue(promptParsed, 'Campaign ID');
+        if (promptCampaignId !== undefined && promptCampaignId !== activeTaskId) {
+          fail(errors, 'PROJECT_STATE_EXECUTION_PROMPT_TASK_ID_MISMATCH');
+        }
       }
     } catch {
       // A missing prompt is not itself a project-verdict authority failure;

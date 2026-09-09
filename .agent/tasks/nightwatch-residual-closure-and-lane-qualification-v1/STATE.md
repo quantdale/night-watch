@@ -33,20 +33,36 @@ local evidence growth a bounded, refusal-first retention policy.
 
 ## Current Milestone
 
-Milestone ID: M0
+Milestone ID: M0b
 Milestone status: IN_PROGRESS
-What is being attempted: establishing execution truth — the owned session is
-claimed on a current base with workspace verdict PASS, and the task SPEC,
-PLAN, STATE and the OpenSpec route are being committed as the campaign's
-planning checkpoint.
+What is being attempted: R-07 — restoring the planning-only handoff
+checkpoint. The repair and its three regressions are written and validated;
+the milestone closes when the checkpoint is committed and integrated.
 
 ## Completed Milestones
 
-- None yet.
+- **M0 COMPLETE** — execution truth established at planning checkpoint
+  `a180a081d92f32a75fd26909d6e3362459cea990`. Owned session worktree
+  `nightwatch-residual-closure-and--e130f226` claimed as `sess-f4f1d66c73a2`
+  on base `58bbf2d028ce2d59e6c5616ffeeb65ab43eec142`; `session:status`
+  verdict PASS, `owned=true`, `drift=false`, `base=CURRENT`. Independent
+  re-verification at the starting SHA: typecheck, `hardening:check`,
+  `handoff:check`, `workspace:check` PASS; `agent:check` PASS with 4
+  warnings; `validation:universe` 427 discovered / 0 unclassified at digest
+  `sha256:063ecd1f416bdcb540aff7a7`; `git diff --check` clean. Predecessor
+  verified terminal COMPLETE and not reopened. R-01 through R-07 registered;
+  planning artifacts and the OpenSpec route integrated by fast-forward.
 
 ## Work In Progress
 
-M0. The owned session worktree
+M0b. The R-07 repair is written and validated but not yet committed.
+`bin/planner-handoff-protocol.mjs` exports `HANDOFF_PLANNING_ONLY_STATUS`,
+and `bin/project-state-check.mjs` asserts the predecessor binding for a
+`READY_FOR_EXECUTION` prompt while leaving the active-prompt rule untouched.
+Three regressions in `tests/unit/projectState.test.ts` cover the planning
+pass and both wrong-predecessor failures.
+
+Historical, for the record — M0. The owned session worktree
 `nightwatch-residual-closure-and--e130f226` is claimed as session
 `sess-f4f1d66c73a2` on base `58bbf2d028ce2d59e6c5616ffeeb65ab43eec142`, with
 `session:status` reporting verdict PASS, `owned=true`, `drift=false` and
@@ -58,10 +74,9 @@ checkpoint and the terminal predecessor legitimately remains the active task.
 
 ## Exact Next Action
 
-Commit the planning checkpoint on the session branch as documentation only,
-validate it, and integrate by fast-forward to `origin main`. Then bind
-`.agent/ACTIVE_TASK.md` and the handoff header to this campaign so source
-changes become legal, and execute M0b (R-07) before M1.
+Commit the M0b checkpoint and integrate it by fast-forward to `origin main`,
+then begin M1: re-execute the browser workflow lane inside this owned session
+and record its receipt.
 
 ## Files Changed
 
@@ -113,6 +128,35 @@ When: 2026-09-09
 Relevant failure/output summary: 4 passed / 0 failed in 3.8 minutes, run
 from the canonical checkout during the audit and therefore carrying no
 owning session identity. M1 re-executes it inside this session.
+
+Command: `npx playwright test tests/unit/projectState.test.ts --project=nightwatch --workers=1`
+Result: PASS
+When: 2026-09-09
+Relevant failure/output summary: 67 passed, including the three new R-07
+regressions.
+
+Command: mutation proof of the R-07 regressions
+Result: PASS (both directions)
+When: 2026-09-09
+Relevant failure/output summary: with the repair reverted to its committed
+form, `1h-1` fails on
+`PROJECT_STATE_EXECUTION_PROMPT_STATUS_MISMATCH` — so the guard measures the
+defect. With a naive mutant that exempts the planning state from any
+cross-check, `1h-2` and `1h-3` both fail — so the guard also measures
+over-broad exemption. A rule that passes in both mutants would have proven
+nothing.
+
+Command: `npx playwright test tests/unit/plannerHandoff.test.ts --project=nightwatch --workers=1`
+Result: PASS
+When: 2026-09-09
+Relevant failure/output summary: 12 passed after the protocol module gained
+the planning-only status export.
+
+Command: `npm run typecheck` and `npm run hardening:check`
+Result: PASS
+When: 2026-09-09
+Relevant failure/output summary: no diagnostics; offline structural
+invariants hold with the repair in place.
 
 ## Decisions Made During This Task
 

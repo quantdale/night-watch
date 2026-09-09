@@ -2,12 +2,76 @@
 
 Task ID: nightwatch-residual-closure-and-lane-qualification-v1
 
-## Approach
+## Purpose
 
-Order the work so that evidence classes are settled before anything is
-documented, and so that the destructive item comes last and behind a flag.
-Every milestone validates before the next begins, and each records the exact
-command and result rather than a summary adjective.
+Resolve every declared validation lane into an honest class, prove the ones
+this host can prove, close the bookkeeping the predecessor campaign deferred,
+and bound the growth of local evidence — without reopening any closed finding
+and without weakening a gate to produce green output.
+
+## Starting State
+
+- Starting SHA `58bbf2d028ce2d59e6c5616ffeeb65ab43eec142`; planning checkpoint
+  integrated at `a180a081d92f32a75fd26909d6e3362459cea990`.
+- Predecessor `nightwatch-repository-hardening-implementation-v1` is terminal
+  COMPLETE with NW-01 through NW-15 CLOSED.
+- Live audit at the starting SHA is recorded in the OpenSpec `audit.md`:
+  typecheck, hardening, handoff, project, workspace PASS; `agent:check` PASS
+  with 4 warnings; `validation:universe` 427 discovered / 0 unclassified.
+- The browser workflow lane passed 4/0 in 3.8 minutes from the canonical
+  checkout — evidence without an owning session, so not yet a receipt.
+- CI has never executed: all 100 most recent runs failed in about three
+  seconds with a payment/spending-limit annotation and no step started.
+- R-07 was discovered while landing this campaign's own planning checkpoint.
+
+## Scope
+
+R-01 browser lane qualification and receipt. R-02 CI block observation.
+R-03 project-state reconciliation. R-04 shipped-surface documentation.
+R-05 worktree and legacy-record residue. R-06 refusal-first evidence
+retention. R-07 the planning-only handoff checkpoint.
+
+## Non-Goals
+
+- Reopening NW-01 through NW-15 or re-deriving their acceptance evidence.
+- The real-yield campaign, strict `EXACT_REDISCOVERY` and
+  previously-unknown-defect yield.
+- Splitting the five append-heavy archive documents.
+- Promoting the 84 `FULL_REGRESSION` suites into the authoritative gate.
+- Any network egress, including an online dependency-advisory scan.
+- Clearing the GitHub billing block, which is an owner action.
+- DEV, NEXT, production, cloud, datastore, external filing, publication, and
+  the owner-run manual and live-app harnesses.
+
+## Safety Constraints
+
+- LOCAL only; sibling repositories read-only; no credential, auth state or
+  real finding in Git.
+- Implementation in this campaign's owned session worktree; the canonical
+  checkout stays clean while an owned session is live.
+- Retention never rewrites, truncates or replaces an artifact, and refuses
+  anything it cannot prove unreferenced.
+- No stale worktree with a live holder is released, adopted, edited or
+  removed; capacity is never created by removing another owner's session.
+- No gate weakened, no test deleted or skipped for green output.
+- Fast-forward compare-and-swap integration only; never force-push.
+
+## Architecture / Approach
+
+Lane state becomes three-valued — `PROVEN`, `BLOCKED_EXTERNAL`,
+`UNAVAILABLE_CAPABILITY` — because the predecessor's single UNAVAILABLE
+conflated an absent host capability with an authority the campaign did not
+hold. A `PROVEN` lane must carry a receipt from an owning session, so a
+canonical-checkout run never satisfies it.
+
+R-07 is repaired by modelling the binding the planning state actually has
+rather than by relaxing a comparison: a `READY_FOR_EXECUTION` prompt carries
+its predecessor explicitly, so project-state truth asserts that binding and
+leaves the active-prompt rule untouched. No error vocabulary changes.
+
+Retention is refusal-first: the refusal set is computed before any removal
+set, reporting is the default mode, removal is owner-gated, and an artifact
+whose reference status cannot be proven is refused rather than removed.
 
 ## Milestones
 
@@ -58,13 +122,66 @@ command and result rather than a summary adjective.
 - M5's worktree release runs from the canonical checkout, which requires this
   session's tree to be clean at that moment.
 
-## Validation per milestone
+## Validation Strategy
 
 Each milestone runs the smallest sufficient check and records the exact
 result: `workspace:check` and `agent:check` for M0 and M5; the browser lane
 for M1; `project:check` for M2 and M3; `hardening:check` for M4; the new
 retention regressions plus `npm test` for M6; the full certification set for
 M7. A failure inside scope is repaired before the next milestone starts.
+
+## Decision Log
+
+Decision: classify lanes three ways rather than available/unavailable.
+Reason: the predecessor's UNAVAILABLE conflated a missing host capability with
+an authority it did not hold, and one such lane in fact passes here.
+
+Decision: a lane result from the canonical checkout is evidence, never a
+receipt.
+Reason: C-00 makes the canonical checkout a non-implementation worktree.
+
+Decision: repair R-07 by asserting the predecessor binding.
+Reason: the planning state has a real binding to check, so the guard should
+model it rather than be exempted from checking anything.
+
+Decision: land the planning checkpoint as documentation only, before the R-07
+source repair.
+Reason: `STALE_IMPLEMENTATION_BASELINE` correctly refuses source changes while
+a terminal predecessor is still the active task.
+
+Decision: exclude the real-yield campaign.
+Reason: it depends on provider capability this campaign does not establish and
+would make a bounded closure campaign unbounded.
+
+## Discoveries
+
+- The browser workflow lane executes and passes on this host; its UNAVAILABLE
+  record reflected untested host qualification, not a failure.
+- The CI block has an observed, non-code cause and the repository already
+  defines the class for it but records no observed instance.
+- `docs/CURRENT_STATE.md` has no closure section for the predecessor campaign.
+- `README.md` never mentions the shipped `--enable-local-review` capability.
+- `artifacts/` growth is unbounded at 13,367 directories and 915 MB.
+- R-07: the documented planning-only handoff checkpoint cannot land, because
+  two individually correct guards together forbid it.
+
+## Deferred Work
+
+- The real-yield campaign, gated on confirmed provider capability.
+- The online dependency-advisory lane, gated on authorized network egress.
+- Exact-checkpoint CI execution, gated on the owner clearing the billing
+  block.
+- The 12 `MANUAL_OWNER` and 6 `LIVE_APP_SMOKE` lanes, gated on DEV
+  authentication and separate authorization.
+- Splitting the five archive documents and promoting the 84
+  `FULL_REGRESSION` suites, both with the predecessor's recorded reasons.
+
+## Completion Criteria
+
+Every acceptance criterion in `SPEC.md` met with evidence; every declared lane
+in exactly one of the three classes; no absent run recorded as a pass; the
+certification checkpoint integrated by fast-forward with terminal continuity
+and a released session.
 
 ## Rollback
 

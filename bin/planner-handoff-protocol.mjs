@@ -8,6 +8,11 @@
 export const HANDOFF_PROTOCOL_VERSION = 'nightwatch.planner-executor-handoff.v1';
 export const HANDOFF_RECEIPT_SCHEMA = 'nightwatch.planner-handoff-receipt.v1';
 export const HANDOFF_STATUSES = new Set(['READY_FOR_EXECUTION', 'IN_PROGRESS', 'BLOCKED', 'COMPLETE']);
+// The one handoff status that is a planning-only checkpoint: it names the
+// SUCCESSOR campaign while the terminal predecessor legitimately remains the
+// active task. Consumers that cross-check the prompt against active-task
+// truth must special-case it or they forbid a documented protocol state.
+export const HANDOFF_PLANNING_ONLY_STATUS = 'READY_FOR_EXECUTION';
 export const HANDOFF_REQUIRED_FIELDS = Object.freeze([
   'HANDOFF_PROTOCOL_VERSION',
   'Status',
