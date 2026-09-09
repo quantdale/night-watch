@@ -1,7 +1,7 @@
 import { Component, useCallback, useEffect, useRef, useState, type ErrorInfo, type KeyboardEvent, type ReactNode } from 'react';
 import { apiErrorLabel, loadCampaignCoverage, loadCampaignSummary, loadExecutionGraph, loadFindings, loadOverview, loadReviewer, loadRunDetail, loadRuns, loadSourceGraph, loadSourceSurfaces, loadSystemMapLevel, loadSystemMapQuery, loadTimeline, subscribeToControlCenterEvents, readBackReviewDecision,
   submitReviewDecision, REVIEW_DECISIONS, type ReviewDecision } from './api';
-import type { CampaignCoverageSnapshot, CampaignSummarySnapshot, DataLoadState, EpistemicClass, ExecutionGraphSnapshot, FindingsSnapshot, OverviewLoadState, OverviewSnapshot, ReviewerElement, ReviewerFindingSnapshot, ReviewerSnapshot, RunDetailSnapshot, RunListSnapshot, SourceGraphSnapshot, SourceSurfaceSnapshot, SourceSurfacesSnapshot, SystemMapBound, SystemMapLevelSegment, SystemMapNodeView, SystemMapQuerySegment, SystemMapSnapshot, TimelineSnapshot, ViewId } from './types';
+import type { CampaignCoverageSnapshot, CampaignSummarySnapshot, DataLoadState, EpistemicClass, ExecutionGraphSnapshot, FindingsSnapshot, OverviewLoadState, OverviewSnapshot, ReadinessSnapshot, ReviewerElement, ReviewerFindingSnapshot, ReviewerSnapshot, RunDetailSnapshot, RunListSnapshot, SourceGraphSnapshot, SourceSurfaceSnapshot, SourceSurfacesSnapshot, SystemMapBound, SystemMapLevelSegment, SystemMapNodeView, SystemMapQuerySegment, SystemMapSnapshot, TimelineSnapshot, ViewId } from './types';
 import { SYSTEM_MAP_QUERY_SEGMENTS, VIEW_DEFINITIONS } from './types';
 
 /**
@@ -271,6 +271,71 @@ function ErrorState({ onRetry }: { readonly onRetry: () => void }): ReactNode {
   );
 }
 
+/**
+ * The readiness contract in full.
+ *
+ * The Overview summarised readiness in seven rows and dropped the rest of the
+ * contract on the floor: which targets are stale or unavailable, which
+ * campaign keys drifted, whether the analyzer version the run pinned is the
+ * one it observed, which verification dimensions were deferred versus never
+ * measured at all, the detail code on each unresolved blocker, and how the
+ * external CI result is CLASSIFIED rather than merely named. Each of those is
+ * a reason a "READY" badge might not mean what a reader assumes, so each is
+ * shown here rather than summarised away.
+ */
+function ReadinessDetailPanel({ readiness }: { readonly readiness: ReadinessSnapshot }): ReactNode {
+  const currentness = Object.entries(readiness.sourceContracts.currentnessCounts);
+  const analyzer = readiness.analyzer;
+  const verification = readiness.verification;
+  const versionLabel = analyzer.versionConsistent === null ? 'Not determined' : analyzer.versionConsistent ? 'Consistent' : 'Inconsistent';
+  return <article className="panel panel-full">
+    <div className="panel-heading"><div><p className="eyebrow">READINESS DETAIL</p><h2>Everything the readiness contract states</h2></div><StatusPill value={readiness.applies ? readiness.state : 'NOT_APPLICABLE'} label={readiness.applies ? formatCategory(readiness.state) : 'Does not apply'} /></div>
+    <p className="panel-intro">A readiness state is only as strong as what it was measured over. These are the measurements behind it, including the ones that came back unmeasured.</p>
+
+    <div className="timeline-heading"><p className="eyebrow">SOURCE CONTRACT TARGETS</p><span>Approved targets and how many still have an active family.</span></div>
+    <div className="data-grid">
+      <DataRow label="Approved targets" value={String(readiness.sourceContracts.approvedTargets)} />
+      <DataRow label="With active family" value={String(readiness.sourceContracts.targetsWithActiveFamily)} tone={readiness.sourceContracts.targetsWithActiveFamily < readiness.sourceContracts.approvedTargets ? 'warning' : 'neutral'} />
+      {currentness.map(([key, count]) => <DataRow key={key} label={formatCategory(key)} value={String(count)} tone={statusTone(key.toUpperCase())} />)}
+    </div>
+    <CodeChips label="Stale targets" codes={readiness.sourceContracts.staleTargets} tone="warning" />
+    <CodeChips label="Unavailable" codes={readiness.sourceContracts.unavailableTargets} tone="warning" />
+
+    <div className="timeline-heading"><p className="eyebrow">CAMPAIGN KEYS</p><span>Compared against the recorded campaign, and where the two disagree.</span></div>
+    <CodeChips label="Compared" codes={readiness.campaign.comparedKeys} tone="neutral" />
+    <CodeChips label="Drifted" codes={readiness.campaign.driftKeys} tone="blocked" />
+    {readiness.campaign.unmeasured ? <div className="callout callout-warning"><strong>Campaign comparison is unmeasured</strong><span>No drift was found because none was looked for. That is not agreement.</span></div> : null}
+
+    <div className="timeline-heading"><p className="eyebrow">ANALYZER</p><span>The version this readiness was pinned to, against the one actually observed.</span></div>
+    <div className="data-grid">
+      <DataRow label="Availability" value={formatCategory(analyzer.availability)} tone={statusTone(analyzer.availability)} />
+      <DataRow label="Pinned version" value={analyzer.pinnedVersion} />
+      <DataRow label="Observed version" value={analyzer.observedVersion ?? 'Not observed'} tone={analyzer.observedVersion === null ? 'warning' : 'neutral'} />
+      <DataRow label="Version agreement" value={versionLabel} tone={analyzer.versionConsistent === true ? 'ready' : 'warning'} />
+      <DataRow label="Analyzer blocked" value={analyzer.blocked ? 'Yes' : 'No'} tone={analyzer.blocked ? 'blocked' : 'neutral'} />
+    </div>
+
+    <div className="timeline-heading"><p className="eyebrow">VERIFICATION DIMENSIONS</p><span>Deferred is a decision. Not measured is a hole. They are listed separately.</span></div>
+    <CodeChips label="Deferred" codes={verification.deferredDimensions} tone="warning" />
+    <CodeChips label="Not measured" codes={verification.notMeasuredDimensions} tone="blocked" />
+    {verification.allDeferredToHardening ? <div className="callout callout-warning"><strong>Every dimension is deferred to hardening</strong><span>Nothing in this set was verified here. The readiness state above rests on the deferral, not on a measurement.</span></div> : null}
+
+    <div className="timeline-heading"><p className="eyebrow">UNRESOLVED BLOCKERS</p><span>Named with their kind and detail code, not counted.</span></div>
+    {readiness.unresolvedBlockers.length === 0
+      ? <div className="mini-state">No unresolved blockers reported. Absence of blockers is not a proof of pass.</div>
+      : <div className="table-scroll"><table><thead><tr><th scope="col">Code</th><th scope="col">Kind</th><th scope="col">Detail</th></tr></thead><tbody>{readiness.unresolvedBlockers.map((blocker) => <tr key={`${blocker.code}:${blocker.kind}`}><td><strong>{formatCategory(blocker.code)}</strong><small>{blocker.code}</small></td><td>{formatCategory(blocker.kind)}</td><td>{blocker.detailCode === null ? 'No detail code' : formatCategory(blocker.detailCode)}</td></tr>)}</tbody></table></div>}
+
+    <div className="timeline-heading"><p className="eyebrow">EXTERNAL CI AND OWNER SCOPE</p><span>How the external result is classified, and how wide the freeze reaches.</span></div>
+    <div className="data-grid">
+      <DataRow label="External CI" value={formatCategory(readiness.externalCi)} tone={statusTone(readiness.externalCi)} />
+      <DataRow label="CI classification" value={formatCategory(readiness.externalCiClassification)} tone={statusTone(readiness.externalCiClassification)} />
+      <DataRow label="Frozen operations" value={String(readiness.ownerScope.frozenOperationCount)} />
+      <DataRow label="Matches frozen markers" value={readiness.ownerScope.matchesFrozenMarkers ? 'Yes' : 'No'} tone={readiness.ownerScope.matchesFrozenMarkers ? 'ready' : 'warning'} />
+    </div>
+    {readiness.ownerScope.matchesFrozenMarkers ? null : <div className="callout callout-warning"><strong>The frozen markers do not match</strong><span>The owner scope recorded in this snapshot disagrees with the markers it was checked against. Treat the scope boundary as unconfirmed.</span></div>}
+  </article>;
+}
+
 function OverviewView({ data, onRefresh }: { readonly data: OverviewSnapshot; readonly onRefresh: () => void }): ReactNode {
   const readinessTone = statusTone(data.readiness.state);
   const safetyTone = statusTone(data.safety.state);
@@ -284,7 +349,7 @@ function OverviewView({ data, onRefresh }: { readonly data: OverviewSnapshot; re
           <p className="hero-description">A quiet, read-only window into Nightwatch readiness, safety, and campaign evidence. Every value below comes from a bounded local snapshot.</p>
           <div className="hero-actions"><StatusPill value={data.health.scope} label="Loopback only" /><StatusPill value={data.meta.readOnly ? 'READY' : 'BLOCKED'} label={data.meta.readOnly ? 'Read only' : 'Unavailable'} /><button className="button button-quiet" type="button" onClick={onRefresh}><Icon name="refresh" />Refresh</button></div>
         </div>
-        <div className="hero-orbit" aria-hidden="true"><div className="orbit-ring orbit-ring-outer" /><div className="orbit-ring orbit-ring-inner" /><div className="orbit-core"><span>NW</span><small>LOCAL</small></div></div>
+        <div className="hero-orbit" aria-hidden="true"><div className="orbit-ring" /><div className="orbit-ring orbit-ring-inner" /><div className="orbit-core"><span>NW</span><small>LOCAL</small></div></div>
       </section>
 
       <section className="metric-grid" aria-label="Overview metrics">
@@ -327,10 +392,16 @@ function OverviewView({ data, onRefresh }: { readonly data: OverviewSnapshot; re
           <p className="panel-intro">Infrastructure and data-layer operations remain outside this campaign’s authority.</p>
           <div className="scope-list"><span>Product contact</span><strong>Disabled</strong><span>Database / infrastructure</span><strong>Out of scope</strong><span>Findings storage</span><strong>Owner local only</strong></div>
         </article>
+
+        <ReadinessDetailPanel readiness={data.readiness} />
       </section>
     </div>
   );
 }
+
+/** Every execution state the contract defines, as filter options. The list is
+ *  explicit so a state the server can send always has a way to be selected. */
+const EXECUTION_STATE_FILTERS = ['PENDING', 'RUNNING', 'PASSED', 'WARNING', 'FAILED', 'BLOCKED', 'SKIPPED', 'INCOMPLETE'] as const;
 
 function formatTimestamp(value: string | null): string {
   if (value === null) return 'Not recorded';
@@ -350,7 +421,21 @@ function TimelinePanel({ state }: { readonly state: DataLoadState<TimelineSnapsh
   if (state.kind === 'loading') return <div className="mini-state" role="status">Loading timeline…</div>;
   if (state.kind === 'error') return <div className="mini-state mini-state-warning">Timeline unavailable</div>;
   if (state.kind !== 'ready' || state.data.events.length === 0) return <div className="mini-state">No timeline events reported. Empty does not imply pass.</div>;
-  return <ol className="timeline-list">{state.data.events.map((event) => <li key={event.seq} className="timeline-item"><span className="timeline-seq">{event.seq}</span><div><div className="timeline-meta"><StatusPill value={event.severity} label={event.severity} /><span>{formatTimestamp(event.timestamp)}</span><span>{formatCategory(event.eventType)}</span></div><strong>{formatCategory(event.messageCode)}</strong><small>{event.dataCodes.length === 0 ? 'No additional data codes' : `${event.dataCodes.length} bounded data code(s)`}</small></div></li>)}</ol>;
+  return <>
+    <ol className="timeline-list">{state.data.events.map((event) => <li key={event.seq} className="timeline-item"><span className="timeline-seq">{event.seq}</span><div><div className="timeline-meta"><StatusPill value={event.severity} label={event.severity} /><span>{formatTimestamp(event.timestamp)}</span><span>{formatCategory(event.eventType)}</span></div><strong>{formatCategory(event.messageCode)}</strong><small>{event.dataCodes.length === 0 ? 'No additional data codes' : `${event.dataCodes.length} bounded data code(s)`}</small></div></li>)}</ol>
+    {/* The timeline request is a single bounded page. `truncated` says the run
+        has more events than this page holds, and an untold cut reads exactly
+        like a short run — so it is stated. */}
+    {state.data.truncated
+      ? <div className="callout callout-warning"><strong>This timeline is truncated</strong><span>{state.data.events.length} event(s) shown from a bounded page{state.data.nextAfterSeq === null ? '' : `; the run continues after sequence ${state.data.nextAfterSeq}`}. The events not listed are absent from this page, not from the run.</span></div>
+      : <div className="mini-state">{state.data.events.length} event(s); the run reported no further events after this page.</div>}
+  </>;
+}
+
+function CodeChips({ label, codes, tone }: { readonly label: string; readonly codes: readonly string[]; readonly tone: StatusTone }): ReactNode {
+  return <div className="code-chip-row"><span className="code-chip-label">{label}</span>{codes.length === 0
+    ? <span className="code-chip code-chip-empty">None reported</span>
+    : codes.map((code) => <span key={code} className={`code-chip code-chip-${tone}`}>{code}</span>)}</div>;
 }
 
 function RunDetailPanel({ runId, detailState, timelineState, onRetry }: { readonly runId: string | null; readonly detailState: DataLoadState<RunDetailSnapshot>; readonly timelineState: DataLoadState<TimelineSnapshot>; readonly onRetry: () => void }): ReactNode {
@@ -359,7 +444,34 @@ function RunDetailPanel({ runId, detailState, timelineState, onRetry }: { readon
   if (detailState.kind === 'error') return <article className="panel"><DataErrorState title="Run detail unavailable" onRetry={onRetry} /></article>;
   if (detailState.kind !== 'ready') return null;
   const detail = detailState.data;
-  return <article className="panel run-detail-panel"><div className="panel-heading"><div><p className="eyebrow">RUN DETAIL / {runId}</p><h2>{detail.run.scenario ?? 'Unnamed scenario'}</h2></div><StatusPill value={detail.run.status} /></div><div className="data-grid"><DataRow label="Environment" value={formatCategory(detail.run.environment)} /><DataRow label="Product" value={detail.run.product ?? 'Not reported'} /><DataRow label="Started" value={formatTimestamp(detail.run.startedAt)} /><DataRow label="Duration" value={detail.run.durationMs === null ? 'Not recorded' : `${detail.run.durationMs} ms`} /><DataRow label="Events" value={String(detail.run.eventCount)} /><DataRow label="Findings" value={String(detail.run.oracleFindingCount)} tone={detail.run.oracleFindingCount > 0 ? 'warning' : 'neutral'} /></div><div className="timeline-heading"><p className="eyebrow">ORDERED TIMELINE</p><span>Sequence is authoritative; message bodies are never shown.</span></div><TimelinePanel state={timelineState} /></article>;
+  return <article className="panel run-detail-panel">
+    <div className="panel-heading"><div><p className="eyebrow">RUN DETAIL / {runId}</p><h2>{detail.run.scenario ?? 'Unnamed scenario'}</h2></div><StatusPill value={detail.run.status} /></div>
+    <div className="data-grid"><DataRow label="Environment" value={formatCategory(detail.run.environment)} /><DataRow label="Product" value={detail.run.product ?? 'Not reported'} /><DataRow label="Started" value={formatTimestamp(detail.run.startedAt)} /><DataRow label="Ended" value={formatTimestamp(detail.run.endedAt)} /><DataRow label="Duration" value={detail.run.durationMs === null ? 'Not recorded' : `${detail.run.durationMs} ms`} /><DataRow label="Browser" value={detail.run.browser ?? 'Not reported'} /><DataRow label="Hard failures" value={String(detail.run.hardFailureCount)} tone={detail.run.hardFailureCount > 0 ? 'blocked' : 'neutral'} /><DataRow label="Events" value={String(detail.run.eventCount)} /><DataRow label="Findings" value={String(detail.run.oracleFindingCount)} tone={detail.run.oracleFindingCount > 0 ? 'warning' : 'neutral'} /><DataRow label="Screenshots" value={String(detail.screenshotCount)} /><DataRow label="Nightwatch SHA" value={detail.run.nightwatchSha === null ? 'Not reported' : `${detail.run.nightwatchSha.slice(0, 12)}…`} /></div>
+
+    {/* The run-detail contract carries repository provenance, per-type and
+        per-severity event censuses, hard-failure codes and note codes. Every
+        one of them was fetched and then dropped before render, which made the
+        panel quieter than the evidence it was reading. */}
+    <div className="timeline-heading"><p className="eyebrow">CODES</p><span>Bounded categories from the run record. No message body is ever shown.</span></div>
+    <CodeChips label="Hard failures" codes={detail.hardFailureCodes} tone="blocked" />
+    <CodeChips label="Notes" codes={detail.noteCodes} tone="warning" />
+
+    <div className="timeline-heading"><p className="eyebrow">EVENT CENSUS</p><span>Counts only; the timeline below carries the order.</span></div>
+    {detail.countsByEventType.length === 0 && detail.countsBySeverity.length === 0
+      ? <div className="mini-state">No event census reported. Empty does not imply pass.</div>
+      : <div className="census-columns">
+          <div><h3 className="census-heading">By event type</h3>{detail.countsByEventType.length === 0 ? <div className="mini-state">Not reported</div> : <div className="data-grid">{detail.countsByEventType.map((entry) => <DataRow key={entry.eventType} label={formatCategory(entry.eventType)} value={String(entry.count)} />)}</div>}</div>
+          <div><h3 className="census-heading">By severity</h3>{detail.countsBySeverity.length === 0 ? <div className="mini-state">Not reported</div> : <div className="data-grid">{detail.countsBySeverity.map((entry) => <DataRow key={entry.severity} label={formatCategory(entry.severity)} value={String(entry.count)} tone={statusTone(entry.severity.toUpperCase())} />)}</div>}</div>
+        </div>}
+
+    <div className="timeline-heading"><p className="eyebrow">REPOSITORY PROVENANCE</p><span>What the run was measured against. A dirty tree bounds every claim made from it.</span></div>
+    {detail.repositories.length === 0
+      ? <div className="mini-state mini-state-warning">No repository provenance recorded. Without it, this run anchors to no revision.</div>
+      : <div className="table-scroll"><table><thead><tr><th scope="col">Repository</th><th scope="col">Branch</th><th scope="col">Head</th><th scope="col">State</th><th scope="col">Working tree</th></tr></thead><tbody>{detail.repositories.map((repository) => <tr key={repository.repositoryId}><td><strong>{repository.repositoryId}</strong></td><td>{repository.branch ?? 'Not reported'}</td><td>{repository.headSha === null ? 'Not reported' : `${repository.headSha.slice(0, 12)}…`}</td><td><StatusPill value={repository.state} /></td><td>{repository.dirty ? <StatusPill value="WARNING" label={`Dirty · ${repository.dirtyFileCount} file(s)`} /> : <StatusPill value="READY" label="Clean" />}</td></tr>)}</tbody></table></div>}
+
+    <div className="timeline-heading"><p className="eyebrow">ORDERED TIMELINE</p><span>Sequence is authoritative; message bodies are never shown.</span></div>
+    <TimelinePanel state={timelineState} />
+  </article>;
 }
 
 function RunsView({ state, selectedRunId, detailState, timelineState, onSelectRun, onRetry }: { readonly state: DataLoadState<RunListSnapshot>; readonly selectedRunId: string | null; readonly detailState: DataLoadState<RunDetailSnapshot>; readonly timelineState: DataLoadState<TimelineSnapshot>; readonly onSelectRun: (runId: string) => void; readonly onRetry: () => void }): ReactNode {
@@ -367,14 +479,128 @@ function RunsView({ state, selectedRunId, detailState, timelineState, onSelectRu
   if (state.kind === 'error') return <DataErrorState title="Run list unavailable" onRetry={onRetry} />;
   if (state.kind !== 'ready') return null;
   const items = state.data.items;
-  return <div className="view-stack"><section className="page-intro"><div><p className="eyebrow">EVIDENCE / RUNS</p><h1>Inspect what happened, in order.</h1><p>Run records are read-only projections. Statuses distinguish pass, oracle-only, safety failure, blocked, incomplete, and unavailable evidence.</p></div><StatusPill value={items.length === 0 ? 'UNAVAILABLE' : 'READY'} label={items.length === 0 ? 'No runs reported' : `${items.length} run(s)`} /></section><RunStatusSummary items={items} />{items.length === 0 ? <article className="panel empty-table"><div className="empty-mark"><Icon name="runs" /></div><h2>No local runs recorded</h2><p>The local run store returned an empty bounded page. This is not a pass claim.</p></article> : <article className="panel"><div className="panel-heading"><div><p className="eyebrow">RUN INDEX</p><h2>Recent local records</h2></div><span className="table-limit">Limit {state.data.page.limit}</span></div><div className="table-scroll"><table><thead><tr><th scope="col">Scenario</th><th scope="col">Status</th><th scope="col">Environment</th><th scope="col">Started</th><th scope="col">Signals</th><th scope="col"><span className="sr-only">Open</span></th></tr></thead><tbody>{items.map((run) => <tr key={run.runId} className={selectedRunId === run.runId ? 'row-selected' : undefined}><td><strong>{run.scenario ?? 'Unnamed scenario'}</strong><small>{run.runId}</small></td><td><StatusPill value={run.status} /></td><td>{formatCategory(run.environment)}</td><td>{formatTimestamp(run.startedAt)}</td><td><span>{run.eventCount} events</span><small>{run.oracleFindingCount} findings</small></td><td><button className="table-action" type="button" onClick={() => onSelectRun(run.runId)}>Inspect <Icon name="arrow" /></button></td></tr>)}</tbody></table></div></article>}<RunDetailPanel runId={selectedRunId} detailState={detailState} timelineState={timelineState} onRetry={onRetry} /></div>;
+  return <div className="view-stack"><section className="page-intro"><div><p className="eyebrow">EVIDENCE / RUNS</p><h1>Inspect what happened, in order.</h1><p>Run records are read-only projections. Statuses distinguish pass, oracle-only, safety failure, blocked, incomplete, and unavailable evidence.</p></div><StatusPill value={items.length === 0 ? 'UNAVAILABLE' : 'READY'} label={items.length === 0 ? 'No runs reported' : `${items.length} run(s)`} /></section><RunStatusSummary items={items} />{items.length === 0 ? <article className="panel empty-table"><div className="empty-mark"><Icon name="runs" /></div><h2>No local runs recorded</h2><p>The local run store returned an empty bounded page. This is not a pass claim.</p></article> : <article className="panel"><div className="panel-heading"><div><p className="eyebrow">RUN INDEX</p><h2>Recent local records</h2></div><span className="table-limit">Limit {state.data.page.limit}</span></div><div className="table-scroll"><table><thead><tr><th scope="col">Scenario</th><th scope="col">Status</th><th scope="col">Environment</th><th scope="col">Started</th><th scope="col">Signals</th><th scope="col"><span className="sr-only">Open</span></th></tr></thead><tbody>{items.map((run) => <tr key={run.runId} className={selectedRunId === run.runId ? 'row-selected' : undefined}><td><strong>{run.scenario ?? 'Unnamed scenario'}</strong><small>{run.runId} · {run.browser ?? 'browser not reported'}</small></td><td><StatusPill value={run.status} /></td><td>{formatCategory(run.environment)}</td><td>{formatTimestamp(run.startedAt)}</td><td><span>{run.eventCount} events</span><small>{run.oracleFindingCount} findings · {run.hardFailureCount} hard failure(s)</small></td><td><button className="table-action" type="button" onClick={() => onSelectRun(run.runId)}>Inspect <Icon name="arrow" /></button></td></tr>)}</tbody></table></div></article>}<RunDetailPanel runId={selectedRunId} detailState={detailState} timelineState={timelineState} onRetry={onRetry} /></div>;
 }
 
+/**
+ * The execution graph canvas.
+ *
+ * This carries the same correction C-15b made to the source graph. The
+ * previous canvas drew `nodes.slice(0, 24)` and `edges.slice(0, 48)` on a
+ * fixed three-column grid while the execution-graph contract permits 250
+ * nodes and 500 edges by default and 1,000 / 2,000 at the maximum, and its
+ * footer read `{graph.edges.length} edges` and `Complete` — so a projection
+ * the client had cut by an order of magnitude claimed, in the UI, to be whole.
+ * `truncated` answers whether the SERVER reached its bound; it never spoke for
+ * a slice the client applied afterwards.
+ *
+ * What this draws instead: every node and every edge the server sent, on the
+ * same deterministic layered layout the source graph uses, with pan, zoom,
+ * search, an execution-state filter, selection, and disclosure of both server
+ * truncation and any edge whose endpoint is outside the projection. Layer and
+ * within-layer order come from the node identifier, so the same snapshot
+ * always draws the same picture.
+ */
 function GraphCanvas({ graph }: { readonly graph: ExecutionGraphSnapshot }): ReactNode {
-  const nodes = graph.nodes.slice(0, 24);
-  const nodePositions = new Map(nodes.map((node, index) => [node.nodeId, { x: 120 + (index % 3) * 230, y: 58 + Math.floor(index / 3) * 84 }]));
-  const height = Math.max(190, Math.ceil(nodes.length / 3) * 84 + 24);
-  return <div className="graph-frame"><svg className="execution-graph" viewBox={`0 0 820 ${height}`} role="img" aria-label={`Execution graph for run ${graph.runId}`}><defs><marker id="graph-arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0 0 6 3 0 6Z" fill="currentColor" /></marker></defs>{graph.edges.slice(0, 48).map((edge) => { const from = nodePositions.get(edge.fromNodeId); const to = nodePositions.get(edge.toNodeId); if (from === undefined || to === undefined) return null; return <line key={edge.edgeId} x1={from.x + 72} y1={from.y + 18} x2={to.x - 72} y2={to.y + 18} className="graph-edge" markerEnd="url(#graph-arrow)" />; })}{nodes.map((node) => <g key={node.nodeId} transform={`translate(${nodePositions.get(node.nodeId)?.x ?? 0} ${nodePositions.get(node.nodeId)?.y ?? 0})`}><rect className={`graph-node graph-node-${statusTone(node.state)}`} width="144" height="38" rx="7" /><text x="12" y="16" className="graph-node-kind">{formatCategory(node.kind)}</text><text x="12" y="30" className="graph-node-state">{formatCategory(node.state)}</text></g>)}</svg><div className="graph-footer"><span>{nodes.length} of {graph.nodes.length} nodes shown</span><span>{graph.edges.length} edges · limit {graph.edgeLimit}</span>{graph.truncated ? <StatusPill value="WARNING" label="Truncated" /> : <StatusPill value="READY" label="Complete" />}</div></div>;
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [search, setSearch] = useState('');
+  const [stateFilter, setStateFilter] = useState<string>('ALL');
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+
+  // Search is local UI data: bounded, lower-cased, and used only for substring
+  // matching. No regular expression is built from operator input.
+  const needle = search.slice(0, 120).toLowerCase();
+  const matches = (node: ExecutionGraphSnapshot['nodes'][number]): boolean => {
+    if (stateFilter !== 'ALL' && node.state !== stateFilter) return false;
+    if (needle.length === 0) return true;
+    return `${node.label ?? ''} ${node.nodeId} ${node.kind}`.toLowerCase().includes(needle);
+  };
+
+  const layers = layerAssignment(graph);
+  const ordered = [...graph.nodes].sort((left, right) => left.nodeId.localeCompare(right.nodeId));
+  const byLayer = new Map<number, string[]>();
+  for (const node of ordered) {
+    const index = layers.get(node.nodeId) ?? 0;
+    byLayer.set(index, [...(byLayer.get(index) ?? []), node.nodeId]);
+  }
+  const position = new Map<string, { x: number; y: number }>();
+  let widest = 0;
+  for (const [layerIndex, members] of [...byLayer.entries()].sort((left, right) => left[0] - right[0])) {
+    members.forEach((nodeId, order) => {
+      position.set(nodeId, { x: layerIndex * 264, y: order * 64 });
+      widest = Math.max(widest, order * 64);
+    });
+  }
+  const contentWidth = Math.max(820, ([...byLayer.keys()].length) * 264 + 168);
+  const contentHeight = Math.max(190, widest + 64);
+  const visible = graph.nodes.filter(matches);
+  const visibleIds = new Set(visible.map((node) => node.nodeId));
+  const selected = graph.nodes.find((node) => node.nodeId === selectedNodeId) ?? null;
+  // An edge whose endpoint is not in this projection cannot be drawn. That is
+  // a statement about the projection, not about the run, so it is counted and
+  // reported rather than dropped in silence.
+  const undrawnEdges = graph.edges.filter((edge) => !position.has(edge.fromNodeId) || !position.has(edge.toNodeId)).length;
+
+  const viewBox = `${-pan.x} ${-pan.y} ${Math.round(contentWidth / zoom)} ${Math.round(contentHeight / zoom)}`;
+  const step = 80;
+
+  return <div className="graph-frame">
+    <div className="graph-controls">
+      <label className="graph-search">
+        <span className="sr-only">Search execution graph nodes</span>
+        <input type="search" value={search} maxLength={120} placeholder="Search nodes" onChange={(event) => setSearch(event.target.value)} />
+      </label>
+      <label className="graph-filter">
+        <span className="sr-only">Filter by execution state</span>
+        <select value={stateFilter} onChange={(event) => setStateFilter(event.target.value)}>
+          <option value="ALL">All execution states</option>
+          {EXECUTION_STATE_FILTERS.map((value) => <option key={value} value={value}>{value}</option>)}
+        </select>
+      </label>
+      <div className="graph-zoom" role="group" aria-label="Zoom and pan">
+        <button type="button" onClick={() => setZoom((value) => Math.min(4, Number((value * 1.25).toFixed(3))))} aria-label="Zoom in">+</button>
+        <button type="button" onClick={() => setZoom((value) => Math.max(0.25, Number((value / 1.25).toFixed(3))))} aria-label="Zoom out">-</button>
+        <button type="button" onClick={() => setPan((value) => ({ ...value, x: value.x + step }))} aria-label="Pan left">&larr;</button>
+        <button type="button" onClick={() => setPan((value) => ({ ...value, x: value.x - step }))} aria-label="Pan right">&rarr;</button>
+        <button type="button" onClick={() => setPan((value) => ({ ...value, y: value.y + step }))} aria-label="Pan up">&uarr;</button>
+        <button type="button" onClick={() => setPan((value) => ({ ...value, y: value.y - step }))} aria-label="Pan down">&darr;</button>
+        <button type="button" onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }); }}>Reset</button>
+      </div>
+    </div>
+    <svg className="execution-graph" viewBox={viewBox} role="img" aria-label={`Execution graph for run ${graph.runId}`}>
+      <defs><marker id="graph-arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0 0 6 3 0 6Z" fill="currentColor" /></marker></defs>
+      {graph.edges.map((edge) => {
+        const from = position.get(edge.fromNodeId);
+        const to = position.get(edge.toNodeId);
+        if (from === undefined || to === undefined) return null;
+        const dimmed = !visibleIds.has(edge.fromNodeId) || !visibleIds.has(edge.toNodeId);
+        return <line key={edge.edgeId} x1={from.x + 144} y1={from.y + 18} x2={to.x} y2={to.y + 18} className={dimmed ? 'graph-edge graph-edge-dimmed' : 'graph-edge'} markerEnd="url(#graph-arrow)" />;
+      })}
+      {ordered.map((node) => {
+        const at = position.get(node.nodeId) ?? { x: 0, y: 0 };
+        const dimmed = !visibleIds.has(node.nodeId);
+        return <g key={node.nodeId} transform={`translate(${at.x} ${at.y})`} role="button" tabIndex={0}
+          aria-label={`${node.label ?? node.nodeId}, ${node.kind}, ${node.state}`}
+          onClick={() => setSelectedNodeId(node.nodeId)}
+          onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') setSelectedNodeId(node.nodeId); }}>
+          <rect className={`graph-node graph-node-${statusTone(node.state)}${dimmed ? ' graph-node-dimmed' : ''}${selectedNodeId === node.nodeId ? ' graph-node-selected' : ''}`} width="144" height="38" rx="7" />
+          <text x="12" y="16" className="graph-node-kind">{formatCategory(node.kind)}</text>
+          <text x="12" y="30" className="graph-node-state">{formatCategory(node.state)}</text>
+        </g>;
+      })}
+    </svg>
+    <div className="graph-footer">
+      <span>{graph.nodes.length} nodes drawn · {visible.length} match</span>
+      <span>{graph.edges.length - undrawnEdges} of {graph.edges.length} edges drawn · zoom {zoom.toFixed(2)}x</span>
+      {graph.truncated
+        ? <StatusPill value="WARNING" label={`Truncated at ${graph.nodeLimit} nodes / ${graph.edgeLimit} edges`} />
+        : <StatusPill value="READY" label="Complete within bounds" />}
+    </div>
+    {graph.truncated ? <div className="callout callout-warning"><strong>This graph is truncated</strong><span>The projection reached its {graph.nodeLimit}-node / {graph.edgeLimit}-edge bound. What is not drawn is not absent from the run; it is absent from this projection.</span></div> : null}
+    {undrawnEdges > 0 ? <div className="callout callout-warning"><strong>{undrawnEdges} edge(s) reference a node outside this projection</strong><span>They are counted but cannot be drawn. An edge without both endpoints is not evidence that the relationship is absent.</span></div> : null}
+    {selected === null ? null : <div className="callout"><strong>Selected: {selected.label ?? selected.nodeId}</strong><span>{formatCategory(selected.kind)} · state {formatCategory(selected.state)} · event sequence {selected.eventSeq === null ? 'not linked' : String(selected.eventSeq)} · reason {selected.reasonCode === null ? 'not reported' : formatCategory(selected.reasonCode)}</span></div>}
+  </div>;
 }
 
 function ExecutionGraphView({ selectedRunId, state, onRetry }: { readonly selectedRunId: string | null; readonly state: DataLoadState<ExecutionGraphSnapshot>; readonly onRetry: () => void }): ReactNode {
@@ -398,7 +624,16 @@ function ExecutionGraphView({ selectedRunId, state, onRetry }: { readonly select
  * is. Layer and within-layer order come from the node identifier, so the same
  * snapshot always draws the same picture.
  */
-function layerAssignment(graph: SourceGraphSnapshot): Map<string, number> {
+/**
+ * The minimal shape the layered layout needs. Both graph contracts satisfy it,
+ * so one deterministic layout serves both canvases and they cannot drift.
+ */
+interface LayoutGraph {
+  readonly nodes: readonly { readonly nodeId: string }[];
+  readonly edges: readonly { readonly fromNodeId: string; readonly toNodeId: string }[];
+}
+
+function layerAssignment(graph: LayoutGraph): Map<string, number> {
   const known = new Set(graph.nodes.map((node) => node.nodeId));
   const indegree = new Map<string, number>();
   const outgoing = new Map<string, string[]>();
@@ -540,7 +775,7 @@ function SourceView({ summary, surfaceState, graphState, selectedSurfaceId, onSe
   const contentRead = completeness.contentRead;
   const enumerationTotalLabel = enumeration.totalFiles === null ? 'total unknown' : String(enumeration.totalFiles);
   const contentDroppedLabel = String(contentRead.droppedFiles);
-  return <div className="view-stack"><section className="page-intro"><div><p className="eyebrow">PROVENANCE / SOURCE INTELLIGENCE</p><h1>Follow proof, currentness, and capability.</h1><p>Source intelligence exposes bounded descriptors and graph neighborhoods. Raw source, paths, handler symbols, and evidence bodies remain outside the boundary.</p></div><StatusPill value={summary.state} /></section><section className="metric-grid"><MetricCard label="Inventory" value={formatCategory(summary.state)} detail={`${summary.repositoryCount} repositories`} tone={statusTone(summary.state)} /><MetricCard label="Surfaces" value={String(summary.surfaceCount)} detail={`${surfaces.length} rows loaded`} /><MetricCard label="Currentness" value={summary.currentness.length === 0 ? 'Not reported' : formatCategory(summary.currentness[0]?.key ?? 'UNKNOWN')} detail="Rollup from source authority" tone={summary.currentness.length === 0 ? 'warning' : statusTone(summary.currentness[0]?.key ?? 'UNKNOWN')} /><MetricCard label="Graph limits" value="250 / 500" detail="nodes / edges maximum" tone="ready" /></section><article className="panel"><div className="panel-heading"><div><p className="eyebrow">POPULATION COMPLETENESS</p><h2>Operation projection</h2></div><StatusPill value={completeness.state} /></div><div className="data-grid"><DataRow label="State" value={formatCategory(completeness.state)} tone={statusTone(completeness.state)} /><DataRow label="Coverage" value={formatCategory(completeness.coverageState)} tone={statusTone(completeness.coverageState)} /><DataRow label="Population" value={populationLabel} tone={completeness.state === 'COMPLETE' ? 'ready' : 'warning'} /><DataRow label="Examined" value={String(completeness.examined)} /><DataRow label="Limit" value={String(completeness.limit)} /><DataRow label="Dropped" value={String(completeness.dropped)} tone={completeness.dropped > 0 ? 'warning' : 'neutral'} /><DataRow label="Truncated" value={completeness.truncated ? 'Yes' : 'No'} tone={completeness.truncated ? 'warning' : 'neutral'} /><DataRow label="Remaining unknown" value={completeness.remainingUnknown ? 'Yes' : 'No'} tone={completeness.remainingUnknown ? 'warning' : 'neutral'} /></div><div className="panel-heading" style={{ marginTop: '16px' }}><div><p className="eyebrow">ENUMERATION</p><h2>File walk</h2></div><StatusPill value={enumeration.state} /></div><div className="data-grid"><DataRow label="Enumeration state" value={formatCategory(enumeration.state)} tone={statusTone(enumeration.state)} /><DataRow label="Files examined" value={String(enumeration.examinedFiles)} /><DataRow label="Total files" value={enumerationTotalLabel} tone={enumeration.remainingUnknown ? 'warning' : 'neutral'} /><DataRow label="Dropped files" value={enumeration.droppedFiles === null ? 'unknown' : String(enumeration.droppedFiles)} tone={enumeration.droppedFiles !== null && enumeration.droppedFiles > 0 ? 'warning' : enumeration.droppedFiles === null ? 'warning' : 'neutral'} /><DataRow label="Walk limit" value={String(enumeration.limit)} /><DataRow label="Remaining unknown" value={enumeration.remainingUnknown ? 'Yes' : 'No'} tone={enumeration.remainingUnknown ? 'warning' : 'neutral'} /></div><div className="panel-heading" style={{ marginTop: '16px' }}><div><p className="eyebrow">CONTENT READ</p><h2>File bodies</h2></div><StatusPill value={contentRead.state} /></div><div className="data-grid"><DataRow label="Content state" value={formatCategory(contentRead.state)} tone={statusTone(contentRead.state)} /><DataRow label="Candidates" value={String(contentRead.candidateFiles)} /><DataRow label="Read" value={String(contentRead.readFiles)} /><DataRow label="Admitted" value={String(contentRead.admittedFiles)} /><DataRow label="Dropped" value={contentDroppedLabel} tone={contentRead.droppedFiles > 0 ? 'warning' : 'neutral'} /><DataRow label="Unreadable" value={String(contentRead.unreadableFiles)} tone={contentRead.unreadableFiles > 0 ? 'warning' : 'neutral'} /></div>{completeness.state !== 'COMPLETE' ? <div className="callout callout-warning"><strong>{completeness.state === 'TRUNCATED' ? 'Population truncated' : 'Population total unknown'}</strong><span>{completeness.state === 'TRUNCATED' ? `Projected ${completeness.projected} of ${completeness.total ?? 'unknown'} with ${completeness.dropped} dropped.` : `Projected ${completeness.projected}, total unknown; dropped ${completeness.dropped}.`} Coverage is reporting only and never grants admission.</span></div> : <div className="callout"><strong>Population complete</strong><span>Projected {completeness.projected} of {completeness.total ?? completeness.projected} with no drops reported. Coverage remains reporting only.</span></div>}</article>{proofChain === null ? <article className="panel"><div className="panel-heading"><div><p className="eyebrow">PROOF-CHAIN CENSUS</p><h2>Not reported</h2></div><StatusPill value="UNKNOWN" /></div><p className="panel-intro">The source authority did not provide a proof-chain census. No eligibility or pass claim is inferred.</p></article> : <article className="panel panel-wide"><div className="panel-heading"><div><p className="eyebrow">PROOF-CHAIN CENSUS</p><h2>Where qualification stops</h2></div><span className="table-limit">{proofChain.censusDigest === null ? 'Digest unavailable' : 'Authority-bound'}</span></div><div className="metric-inline"><div><strong>{proofChain.totalOperations}</strong><span>operations</span></div><div><strong>{proofChain.phase24Eligible}</strong><span>eligible</span></div><div><strong>{proofChain.runtimeBindings}</strong><span>runtime bound</span></div><div><strong>{proofChain.replayRequirementsProven}</strong><span>replay ready</span></div></div><div className="scope-list"><span>Primary blocker</span><strong>{proofChain.primaryBlockingStages[0] === undefined ? 'None reported' : `${formatCategory(proofChain.primaryBlockingStages[0].key)} · ${proofChain.primaryBlockingStages[0].count}`}</strong><span>Runtime gaps</span><strong>{proofChain.runtimeBindingMissing}</strong><span>Dossier-compatible</span><strong>{proofChain.dossierCompatible}</strong><span>Currentness failures</span><strong>{proofChain.currentnessFailureCount}</strong></div><div className="callout"><strong>Advisory diagnostics only</strong><span>These counts project the source census and existing Phase-24 authority. The Control Center adds no selector or promotion authority.</span></div></article>}<article className="panel"><div className="panel-heading"><div><p className="eyebrow">SOURCE SURFACES</p><h2>Approved bounded descriptors</h2></div><span className="table-limit">Limit {surfaceState.data.page.limit}</span></div>{surfaces.length === 0 ? <div className="mini-state mini-state-warning">No source surfaces available. This is an unavailable/empty inventory, not proof of no routes.</div> : <div className="table-scroll"><table><thead><tr><th scope="col">Surface</th><th scope="col">Currentness</th><th scope="col">Proof</th><th scope="col">Read-only</th><th scope="col">Lifecycle</th><th scope="col"><span className="sr-only">Graph</span></th></tr></thead><tbody>{surfaces.map((surface) => <tr key={surface.surfaceId} className={selectedSurfaceId === surface.surfaceId ? 'row-selected' : undefined}><td><strong>{surface.routeTemplate ?? 'Route template withheld'}</strong><small>{surface.method} · {surface.language} · {surface.surfaceId}</small></td><td><StatusPill value={surface.currentness} /></td><td><StatusPill value={surface.routeProof} /></td><td><StatusPill value={surface.readOnlyClassification} /></td><td>{formatCategory(surface.lifecycle)}</td><td><button className="table-action" type="button" onClick={() => onSelectSurface(surface.surfaceId)}>Graph <Icon name="arrow" /></button></td></tr>)}</tbody></table></div>}</article>{selectedSurfaceId === null ? <article className="panel run-detail-empty"><p className="eyebrow">PROGRESSIVE GRAPH</p><h2>Select a surface to inspect its neighborhood</h2><p className="panel-intro">Depth and node/edge limits are enforced by the source graph contract.</p></article> : graphState.kind === 'loading' ? <LoadingState /> : graphState.kind === 'error' ? <DataErrorState title="Source graph unavailable" onRetry={onRetry} /> : graphState.kind === 'ready' ? <><SourceGraphCanvas graph={graphState.data} /><article className="panel"><div className="panel-heading"><div><p className="eyebrow">GRAPH TABLE FALLBACK</p><h2>Node inventory</h2></div><span className="table-limit">Bounded list</span></div><div className="table-scroll"><table><thead><tr><th scope="col">Node</th><th scope="col">Proof</th><th scope="col">Currentness</th><th scope="col">Capability</th></tr></thead><tbody>{graphState.data.nodes.map((node) => <tr key={node.nodeId}><td>{node.label ?? node.nodeId}</td><td><StatusPill value={node.proof} /></td><td><StatusPill value={node.currentness} /></td><td>{formatCategory(node.capability)}</td></tr>)}</tbody></table></div></article></> : null}</div>;
+  return <div className="view-stack"><section className="page-intro"><div><p className="eyebrow">PROVENANCE / SOURCE INTELLIGENCE</p><h1>Follow proof, currentness, and capability.</h1><p>Source intelligence exposes bounded descriptors and graph neighborhoods. Raw source, paths, handler symbols, and evidence bodies remain outside the boundary.</p></div><StatusPill value={summary.state} /></section><section className="metric-grid"><MetricCard label="Inventory" value={formatCategory(summary.state)} detail={`${summary.repositoryCount} repositories`} tone={statusTone(summary.state)} /><MetricCard label="Surfaces" value={String(summary.surfaceCount)} detail={`${surfaces.length} rows loaded`} /><MetricCard label="Currentness" value={summary.currentness.length === 0 ? 'Not reported' : formatCategory(summary.currentness[0]?.key ?? 'UNKNOWN')} detail="Rollup from source authority" tone={summary.currentness.length === 0 ? 'warning' : statusTone(summary.currentness[0]?.key ?? 'UNKNOWN')} /><MetricCard label="Capabilities" value={summary.capabilities.length === 0 ? 'Not reported' : formatCategory(summary.capabilities[0]?.key ?? 'UNKNOWN')} detail={summary.capabilities.length === 0 ? 'No capability rollup' : `${summary.capabilities[0]?.count ?? 0} of ${summary.capabilities.reduce((total, entry) => total + entry.count, 0)} surfaces`} tone={summary.capabilities.length === 0 ? 'warning' : statusTone(summary.capabilities[0]?.key ?? 'UNKNOWN')} /><MetricCard label="Graph limits" value="250 / 500" detail="nodes / edges maximum" tone="ready" /><MetricCard label="Inventory digest" value={summary.inventoryDigest === null ? 'Absent' : 'Recorded'} detail={summary.inventoryDigest === null ? 'This inventory anchors to nothing' : 'Inventory is digest-anchored'} tone={summary.inventoryDigest === null ? 'warning' : 'ready'} /></section><article className="panel"><div className="panel-heading"><div><p className="eyebrow">POPULATION COMPLETENESS</p><h2>Operation projection</h2></div><StatusPill value={completeness.state} /></div><div className="data-grid"><DataRow label="State" value={formatCategory(completeness.state)} tone={statusTone(completeness.state)} /><DataRow label="Coverage" value={formatCategory(completeness.coverageState)} tone={statusTone(completeness.coverageState)} /><DataRow label="Population" value={populationLabel} tone={completeness.state === 'COMPLETE' ? 'ready' : 'warning'} /><DataRow label="Examined" value={String(completeness.examined)} /><DataRow label="Limit" value={String(completeness.limit)} /><DataRow label="Dropped" value={String(completeness.dropped)} tone={completeness.dropped > 0 ? 'warning' : 'neutral'} /><DataRow label="Truncated" value={completeness.truncated ? 'Yes' : 'No'} tone={completeness.truncated ? 'warning' : 'neutral'} /><DataRow label="Remaining unknown" value={completeness.remainingUnknown ? 'Yes' : 'No'} tone={completeness.remainingUnknown ? 'warning' : 'neutral'} /></div><div className="panel-heading" style={{ marginTop: '16px' }}><div><p className="eyebrow">ENUMERATION</p><h2>File walk</h2></div><StatusPill value={enumeration.state} /></div><div className="data-grid"><DataRow label="Enumeration state" value={formatCategory(enumeration.state)} tone={statusTone(enumeration.state)} /><DataRow label="Files examined" value={String(enumeration.examinedFiles)} /><DataRow label="Total files" value={enumerationTotalLabel} tone={enumeration.remainingUnknown ? 'warning' : 'neutral'} /><DataRow label="Dropped files" value={enumeration.droppedFiles === null ? 'unknown' : String(enumeration.droppedFiles)} tone={enumeration.droppedFiles !== null && enumeration.droppedFiles > 0 ? 'warning' : enumeration.droppedFiles === null ? 'warning' : 'neutral'} /><DataRow label="Walk limit" value={String(enumeration.limit)} /><DataRow label="Remaining unknown" value={enumeration.remainingUnknown ? 'Yes' : 'No'} tone={enumeration.remainingUnknown ? 'warning' : 'neutral'} /></div><div className="panel-heading" style={{ marginTop: '16px' }}><div><p className="eyebrow">CONTENT READ</p><h2>File bodies</h2></div><StatusPill value={contentRead.state} /></div><div className="data-grid"><DataRow label="Content state" value={formatCategory(contentRead.state)} tone={statusTone(contentRead.state)} /><DataRow label="Candidates" value={String(contentRead.candidateFiles)} /><DataRow label="Read" value={String(contentRead.readFiles)} /><DataRow label="Admitted" value={String(contentRead.admittedFiles)} /><DataRow label="Dropped" value={contentDroppedLabel} tone={contentRead.droppedFiles > 0 ? 'warning' : 'neutral'} /><DataRow label="Unreadable" value={String(contentRead.unreadableFiles)} tone={contentRead.unreadableFiles > 0 ? 'warning' : 'neutral'} /></div>{completeness.state !== 'COMPLETE' ? <div className="callout callout-warning"><strong>{completeness.state === 'TRUNCATED' ? 'Population truncated' : 'Population total unknown'}</strong><span>{completeness.state === 'TRUNCATED' ? `Projected ${completeness.projected} of ${completeness.total ?? 'unknown'} with ${completeness.dropped} dropped.` : `Projected ${completeness.projected}, total unknown; dropped ${completeness.dropped}.`} Coverage is reporting only and never grants admission.</span></div> : <div className="callout"><strong>Population complete</strong><span>Projected {completeness.projected} of {completeness.total ?? completeness.projected} with no drops reported. Coverage remains reporting only.</span></div>}</article>{proofChain === null ? <article className="panel"><div className="panel-heading"><div><p className="eyebrow">PROOF-CHAIN CENSUS</p><h2>Not reported</h2></div><StatusPill value="UNKNOWN" /></div><p className="panel-intro">The source authority did not provide a proof-chain census. No eligibility or pass claim is inferred.</p></article> : <article className="panel panel-wide"><div className="panel-heading"><div><p className="eyebrow">PROOF-CHAIN CENSUS</p><h2>Where qualification stops</h2></div><span className="table-limit">{proofChain.censusDigest === null ? 'Digest unavailable' : 'Authority-bound'}</span></div><div className="metric-inline"><div><strong>{proofChain.totalOperations}</strong><span>operations</span></div><div><strong>{proofChain.phase24Eligible}</strong><span>eligible</span></div><div><strong>{proofChain.runtimeBindings}</strong><span>runtime bound</span></div><div><strong>{proofChain.replayRequirementsProven}</strong><span>replay ready</span></div></div><div className="scope-list"><span>Primary blocker</span><strong>{proofChain.primaryBlockingStages[0] === undefined ? 'None reported' : `${formatCategory(proofChain.primaryBlockingStages[0].key)} · ${proofChain.primaryBlockingStages[0].count}`}</strong><span>Runtime gaps</span><strong>{proofChain.runtimeBindingMissing}</strong><span>Dossier-compatible</span><strong>{proofChain.dossierCompatible}</strong><span>Currentness failures</span><strong>{proofChain.currentnessFailureCount}</strong></div><div className="callout"><strong>Advisory diagnostics only</strong><span>These counts project the source census and existing Phase-24 authority. The Control Center adds no selector or promotion authority.</span></div><div className="timeline-heading"><p className="eyebrow">EXCLUSIONS AND STAGE CENSUS</p><span>What Phase 24 excluded, and where each stage stands.</span></div><div className="data-grid"><DataRow label="Phase 24 excluded" value={String(proofChain.phase24Excluded)} tone={proofChain.phase24Excluded > 0 ? 'warning' : 'neutral'} /><DataRow label="Source snapshot" value={proofChain.sourceSnapshotDigest === null ? 'No digest' : 'Digest recorded'} tone={proofChain.sourceSnapshotDigest === null ? 'warning' : 'neutral'} /><DataRow label="Source surfaces" value={proofChain.sourceSurfaceDigest === null ? 'No digest' : 'Digest recorded'} tone={proofChain.sourceSurfaceDigest === null ? 'warning' : 'neutral'} /><DataRow label="Phase 24 portfolio" value={proofChain.phase24PortfolioDigest === null ? 'No digest' : 'Digest recorded'} tone={proofChain.phase24PortfolioDigest === null ? 'warning' : 'neutral'} /></div>{proofChain.stageStatusCounts.length === 0 ? <div className="mini-state">No stage/status census reported.</div> : <div className="table-scroll"><table><thead><tr><th scope="col">Stage</th><th scope="col">Status</th><th scope="col">Count</th></tr></thead><tbody>{proofChain.stageStatusCounts.map((entry) => <tr key={`${entry.stage}:${entry.status}`}><td>{formatCategory(entry.stage)}</td><td><StatusPill value={entry.status} /></td><td>{entry.count}</td></tr>)}</tbody></table></div>}<div className="timeline-heading"><p className="eyebrow">PROOF FAMILIES</p><span>Ranked by the authority, with the gap and fan-out behind each rank. Bug-hunting value is an assessment, never a selection.</span></div>{proofChain.proofFamilies.length === 0 ? <div className="mini-state">No proof families reported. An empty portfolio is not an absence of gaps.</div> : <div className="table-scroll"><table><thead><tr><th scope="col">Rank</th><th scope="col">Family</th><th scope="col">Assessment</th><th scope="col">Gaps</th><th scope="col">Completeness</th><th scope="col">Fan-out</th><th scope="col">Value</th></tr></thead><tbody>{[...proofChain.proofFamilies].sort((left, right) => left.rank - right.rank).map((family) => <tr key={family.family}><td>{family.rank}</td><td><strong>{formatCategory(family.family)}</strong></td><td><StatusPill value={family.assessment} /></td><td><span>{family.gapSurfaceCount} surface(s)</span><small>{family.firstBlockerCount} first blocker(s) · {family.potentiallyUnlockableCount} potentially unlockable</small></td><td><StatusPill value={family.proofCompleteness} /></td><td>{family.dependencyFanOut}</td><td>{formatCategory(family.bugHuntingValue)}</td></tr>)}</tbody></table></div>}</article>}<article className="panel"><div className="panel-heading"><div><p className="eyebrow">SOURCE SURFACES</p><h2>Approved bounded descriptors</h2></div><span className="table-limit">Limit {surfaceState.data.page.limit} · {surfaceState.data.repositoryFilter === null ? 'all repositories' : `repository ${surfaceState.data.repositoryFilter}`}</span></div>{surfaces.length === 0 ? <div className="mini-state mini-state-warning">No source surfaces available. This is an unavailable/empty inventory, not proof of no routes.</div> : <div className="table-scroll"><table><thead><tr><th scope="col">Surface</th><th scope="col">Currentness</th><th scope="col">Proof</th><th scope="col">Read-only</th><th scope="col">Binding</th><th scope="col">Capability</th><th scope="col">Lifecycle</th><th scope="col"><span className="sr-only">Graph</span></th></tr></thead><tbody>{surfaces.map((surface) => <tr key={surface.surfaceId} className={selectedSurfaceId === surface.surfaceId ? 'row-selected' : undefined}><td><strong>{surface.routeTemplate ?? 'Route template withheld'}</strong><small>{surface.method} · {surface.language} · {surface.surfaceId}</small><small>{surface.sourceSha === null ? 'No source anchor' : `source ${surface.sourceSha.slice(0, 12)}…`} · {surface.evidenceDigest === null ? 'no evidence digest' : 'evidence digest recorded'}</small>{surface.exclusionReasons.length === 0 ? null : <small className="row-note-warning">Excluded: {surface.exclusionReasons.map(formatCategory).join(', ')}</small>}</td><td><StatusPill value={surface.currentness} /></td><td><StatusPill value={surface.routeProof} /></td><td><StatusPill value={surface.readOnlyClassification} /></td><td><StatusPill value={surface.runtimeBinding} /><small>handler {formatCategory(surface.handlerState)}</small></td><td><small>Projection {formatCategory(surface.projectionCapability)}</small><small>Replay {formatCategory(surface.replayCapability)}</small><small>Differential {formatCategory(surface.differentialCapability)}</small></td><td>{formatCategory(surface.lifecycle)}</td><td><button className="table-action" type="button" onClick={() => onSelectSurface(surface.surfaceId)}>Graph <Icon name="arrow" /></button></td></tr>)}</tbody></table></div>}</article>{selectedSurfaceId === null ? <article className="panel run-detail-empty"><p className="eyebrow">PROGRESSIVE GRAPH</p><h2>Select a surface to inspect its neighborhood</h2><p className="panel-intro">Depth and node/edge limits are enforced by the source graph contract.</p></article> : graphState.kind === 'loading' ? <LoadingState /> : graphState.kind === 'error' ? <DataErrorState title="Source graph unavailable" onRetry={onRetry} /> : graphState.kind === 'ready' ? <><SourceGraphCanvas graph={graphState.data} /><article className="panel"><div className="panel-heading"><div><p className="eyebrow">GRAPH TABLE FALLBACK</p><h2>Node inventory</h2></div><span className="table-limit">Bounded list</span></div><div className="table-scroll"><table><thead><tr><th scope="col">Node</th><th scope="col">Proof</th><th scope="col">Currentness</th><th scope="col">Capability</th></tr></thead><tbody>{graphState.data.nodes.map((node) => <tr key={node.nodeId}><td>{node.label ?? node.nodeId}</td><td><StatusPill value={node.proof} /></td><td><StatusPill value={node.currentness} /></td><td>{formatCategory(node.capability)}</td></tr>)}</tbody></table></div></article></> : null}</div>;
 }
 
 function FindingsView({ state, onRetry }: { readonly state: DataLoadState<FindingsSnapshot>; readonly onRetry: () => void }): ReactNode {
@@ -550,7 +785,7 @@ function FindingsView({ state, onRetry }: { readonly state: DataLoadState<Findin
   const findings = state.data.items;
   const readyCount = findings.filter((finding) => finding.dossierStatus === 'READY').length;
   const staleCount = findings.filter((finding) => finding.sourceCurrentness !== 'CURRENT').length;
-  return <div className="view-stack"><section className="page-intro"><div><p className="eyebrow">TRIAGE / FINDINGS</p><h1>Keep the signal, lose the raw evidence.</h1><p>Findings are owner-local metadata projections. This view never opens a dossier, shows evidence bodies, or exposes source paths, credentials, traces, or customer values.</p></div><StatusPill value={state.data.state} /></section><section className="metric-grid"><MetricCard label="Findings" value={String(findings.length)} detail={state.data.state === 'AVAILABLE' ? 'Sanitized rows loaded' : 'No finding claim'} tone={findings.length > 0 ? 'warning' : 'neutral'} /><MetricCard label="Dossier readiness" value={String(readyCount)} detail={`${findings.length - readyCount} not ready`} tone={readyCount > 0 ? 'ready' : 'warning'} /><MetricCard label="Source freshness" value={String(staleCount)} detail="Stale or unavailable" tone={staleCount > 0 ? 'warning' : 'ready'} /><MetricCard label="Boundary" value="Metadata only" detail="Owner-local storage" tone="ready" /></section><article className="panel"><div className="panel-heading"><div><p className="eyebrow">SANITIZED FINDINGS</p><h2>Finding index</h2></div><span className="table-limit">Limit {state.data.page.limit}</span></div>{findings.length === 0 ? <div className="mini-state mini-state-warning">{state.data.state === 'UNAVAILABLE' ? 'Owner-local findings are unavailable. No finding or pass claim is made.' : state.data.state === 'UNKNOWN' ? 'Finding state is unknown. No finding or pass claim is made.' : 'No sanitized findings recorded. Empty findings is not proof of no defects.'}</div> : <div className="table-scroll"><table><thead><tr><th scope="col">Signal</th><th scope="col">Severity / confidence</th><th scope="col">Evidence posture</th><th scope="col">Source</th><th scope="col">Dossier</th><th scope="col">Observed</th></tr></thead><tbody>{findings.map((finding) => <tr key={finding.findingId}><td><strong>{finding.title ?? 'Untitled finding'}</strong><small>{finding.findingId}</small><small>{finding.product ?? 'Product withheld'} · {finding.surface ?? 'Surface withheld'}</small></td><td><StatusPill value={finding.severity} /><small>{formatCategory(finding.confidence)} confidence</small></td><td><strong>{formatCategory(finding.evidenceLevel)}</strong><small>{formatCategory(finding.reproduction)} · {finding.reproductionCount} observation(s)</small><small>{finding.minimized ? 'Minimized' : 'Not minimized'}</small></td><td><StatusPill value={finding.sourceCurrentness} /><small>{finding.fingerprint === null ? 'Fingerprint unavailable' : 'Fingerprint recorded'}</small></td><td><StatusPill value={finding.dossierStatus} /><small>{finding.provenanceDigest === null ? 'Provenance unavailable' : 'Provenance recorded'}</small></td><td><small>First {formatTimestamp(finding.firstObservedAt)}</small><small>Last {formatTimestamp(finding.lastObservedAt)}</small></td></tr>)}</tbody></table></div>}</article><div className="callout callout-warning"><strong>Privacy boundary</strong><span>Only sanitized metadata is displayed. Raw evidence, source text, paths, bodies, credentials, authenticated traces, and customer values remain unavailable to this UI.</span></div></div>;
+  return <div className="view-stack"><section className="page-intro"><div><p className="eyebrow">TRIAGE / FINDINGS</p><h1>Keep the signal, lose the raw evidence.</h1><p>Findings are owner-local metadata projections. This view never opens a dossier, shows evidence bodies, or exposes source paths, credentials, traces, or customer values.</p></div><StatusPill value={state.data.state} /></section><section className="metric-grid"><MetricCard label="Findings" value={String(findings.length)} detail={state.data.state === 'AVAILABLE' ? 'Sanitized rows loaded' : 'No finding claim'} tone={findings.length > 0 ? 'warning' : 'neutral'} /><MetricCard label="Dossier readiness" value={String(readyCount)} detail={`${findings.length - readyCount} not ready`} tone={readyCount > 0 ? 'ready' : 'warning'} /><MetricCard label="Source freshness" value={String(staleCount)} detail="Stale or unavailable" tone={staleCount > 0 ? 'warning' : 'ready'} /><MetricCard label="Boundary" value="Metadata only" detail="Owner-local storage" tone="ready" /></section><article className="panel"><div className="panel-heading"><div><p className="eyebrow">SANITIZED FINDINGS</p><h2>Finding index</h2></div><span className="table-limit">Limit {state.data.page.limit}</span></div>{findings.length === 0 ? <div className="mini-state mini-state-warning">{state.data.state === 'UNAVAILABLE' ? 'Owner-local findings are unavailable. No finding or pass claim is made.' : state.data.state === 'UNKNOWN' ? 'Finding state is unknown. No finding or pass claim is made.' : 'No sanitized findings recorded. Empty findings is not proof of no defects.'}</div> : <div className="table-scroll"><table><thead><tr><th scope="col">Signal</th><th scope="col">Severity / confidence</th><th scope="col">Evidence posture</th><th scope="col">Source</th><th scope="col">Dossier</th><th scope="col">Observed</th></tr></thead><tbody>{findings.map((finding) => <tr key={finding.findingId}><td><strong>{finding.title ?? 'Untitled finding'}</strong><small>{finding.findingId}</small><small>{finding.product ?? 'Product withheld'} · {finding.surface ?? 'Surface withheld'}</small><small>{formatCategory(finding.categoryCode)} · {finding.clusterId === null ? 'unclustered' : `cluster ${finding.clusterId}`}</small></td><td><StatusPill value={finding.severity} /><small>{formatCategory(finding.confidence)} confidence</small></td><td><strong>{formatCategory(finding.evidenceLevel)}</strong><small>{formatCategory(finding.reproduction)} · {finding.reproductionCount} observation(s)</small><small>{finding.minimized ? 'Minimized' : 'Not minimized'}</small></td><td><StatusPill value={finding.sourceCurrentness} /><small>{finding.fingerprint === null ? 'Fingerprint unavailable' : 'Fingerprint recorded'}</small></td><td><StatusPill value={finding.dossierStatus} /><small>{finding.provenanceDigest === null ? 'Provenance unavailable' : 'Provenance recorded'}</small></td><td><small>First {formatTimestamp(finding.firstObservedAt)}</small><small>Last {formatTimestamp(finding.lastObservedAt)}</small></td></tr>)}</tbody></table></div>}</article><div className="callout callout-warning"><strong>Privacy boundary</strong><span>Only sanitized metadata is displayed. Raw evidence, source text, paths, bodies, credentials, authenticated traces, and customer values remain unavailable to this UI.</span></div></div>;
 }
 
 // ---------------------------------------------------------------------------
@@ -798,6 +1033,9 @@ function ReviewerView({ state, capability, onRetry }: { readonly state: DataLoad
                     <strong>{formatCategory(value.relationship)}</strong>
                     <small>{formatCategory(value.confidence)}</small>
                     <small>{value.possibleOriginalId === null ? 'No earlier finding pointed to' : `Possibly original: ${value.possibleOriginalId}`}</small>
+                    {/* Evidence AGAINST the proposed relationship. Dropping it
+                        left a suggestion looking better supported than it is. */}
+                    <small className={value.counterevidence.length === 0 ? undefined : 'row-note-warning'}>{value.counterevidence.length === 0 ? 'No counterevidence recorded' : `Counterevidence: ${value.counterevidence.map(formatCategory).join(', ')}`}</small>
                     <small>Final verdict: human organizational</small>
                   </>} />
                   <td>
@@ -806,7 +1044,7 @@ function ReviewerView({ state, capability, onRetry }: { readonly state: DataLoad
                       : <>
                           <EpistemicBadge epistemicClass="RECOMMENDATION" />
                           {item.probableDuplicates.map((duplicate) => (
-                            <small key={duplicate.findingId}>{duplicate.findingId} · {formatCategory(duplicate.relationship)} · {formatCategory(duplicate.confidence)}</small>
+                            <small key={duplicate.findingId}>{duplicate.findingId} · {formatCategory(duplicate.relationship)} · {formatCategory(duplicate.confidence)}{duplicate.basis.length === 0 ? ' · no basis stated' : ` · basis ${duplicate.basis.map(formatCategory).join(', ')}`}</small>
                           ))}
                           <small>Advisory. Not a duplicate verdict.</small>
                         </>}
@@ -817,6 +1055,7 @@ function ReviewerView({ state, capability, onRetry }: { readonly state: DataLoad
                   </>} />
                   <ReviewerElementCell element={item.defectClass} render={(value) => <>
                     <strong>{value.classId}</strong>
+                    <small>Shared invariant: {formatCategory(value.sharedInvariant)}</small>
                     <small>{value.memberFindingIds.length} member(s) · {formatCategory(value.confidence)}</small>
                     <small>{value.counterexampleCount} counterexample(s) · {value.unknownCount} unknown(s)</small>
                   </>} />
@@ -825,7 +1064,8 @@ function ReviewerView({ state, capability, onRetry }: { readonly state: DataLoad
                   <ReviewerElementCell element={item.localReview} render={(value) => <>
                     <strong>{formatCategory(value.state)}</strong>
                     <small>{value.decision === null ? 'No decision recorded' : formatCategory(value.decision)}</small>
-                    <small>Binding {formatCategory(value.bindingCurrentness)}</small>
+                    <small>Binding {formatCategory(value.bindingCurrentness)} · {value.transitionCount} transition(s)</small>
+                    {value.notEquivalentTo.length === 0 ? null : <small className="row-note-warning">Not equivalent to: {value.notEquivalentTo.map(formatCategory).join(', ')}</small>}
                     <small>Local review only. Not Leslie or Pondr sign-off.</small>
                   </>} />
                   <ReviewDecisionCell item={item} capability={capability} onDecided={onRetry} />
@@ -870,6 +1110,9 @@ function CampaignView({ summaryState, coverageState, onRetry }: { readonly summa
 function SafetyView({ data }: { readonly data: OverviewSnapshot }): ReactNode {
   const safety = data.safety;
   const source = data.source;
+  const meta = data.meta;
+  const health = data.health;
+  const featureEntries = Object.entries(meta.features).sort((left, right) => left[0].localeCompare(right[0]));
   const continuityValue = safety.continuity.state === 'CURRENT' ? 'Current' : formatCategory(safety.continuity.state);
   return (
     <div className="view-stack">
@@ -883,7 +1126,7 @@ function SafetyView({ data }: { readonly data: OverviewSnapshot }): ReactNode {
         <div className="safety-seal" aria-hidden="true"><span>SAFE</span><small>POSTURE</small></div>
       </section>
 
-      <section className="content-grid safety-grid">
+      <section className="content-grid">
         <article className="panel panel-wide">
           <div className="panel-heading"><div><p className="eyebrow">OPERATION POLICY</p><h2>What this surface can do</h2></div><StatusPill value="READY" label="Constrained" /></div>
           <p className="panel-intro">The policy is fixed by the local owner scope. No control in this view can execute, mutate, contact a product, or publish a finding.</p>
@@ -900,10 +1143,47 @@ function SafetyView({ data }: { readonly data: OverviewSnapshot }): ReactNode {
           <div className="callout callout-warning"><strong>Owner scope is frozen</strong><span>{formatCategory(safety.ownerScope.reason)}. Unknown safety checks never become PASS by absence.</span></div>
         </article>
 
+        {/* The individual safety checks. The hero above promises that
+            "Unknown checks stay visible as unknown", and until now nothing
+            rendered them: the checks were fetched, counted in one Overview
+            metric, and never listed. A count cannot say WHICH check is
+            unknown, so it cannot keep that promise. */}
+        <article className="panel panel-full">
+          <div className="panel-heading"><div><p className="eyebrow">SAFETY CHECKS</p><h2>Every check, by name</h2></div><StatusPill value={safety.checks.length === 0 ? 'UNKNOWN' : safety.state} label={safety.checks.length === 0 ? 'None reported' : `${safety.checks.length} check(s)`} /></div>
+          {safety.checks.length === 0
+            ? <div className="mini-state mini-state-warning">No safety checks reported. An empty check set is an absence of evidence, never a pass.</div>
+            : <div className="table-scroll"><table><thead><tr><th scope="col">Check</th><th scope="col">State</th><th scope="col">Reason</th></tr></thead><tbody>{safety.checks.map((check) => <tr key={check.checkCode}><td><strong>{formatCategory(check.checkCode)}</strong><small>{check.checkCode}</small></td><td><StatusPill value={check.state} /></td><td>{formatCategory(check.reasonCode)}</td></tr>)}</tbody></table></div>}
+          <div className="timeline-heading"><p className="eyebrow">BLOCKED OPERATION CLASSES</p><span>What this surface refuses outright, named rather than implied by the policy grid.</span></div>
+          <CodeChips label="Refused" codes={safety.blockedOperationClasses} tone="blocked" />
+          <div className="data-grid"><DataRow label="Auth mode" value={formatCategory(safety.authMode)} tone="ready" /><DataRow label="Network posture" value={formatCategory(safety.networkPosture)} tone="ready" /></div>
+        </article>
+
         <article className="panel">
           <div className="panel-heading"><div><p className="eyebrow">CONTINUITY</p><h2>Checkpoint posture</h2></div><StatusPill value={safety.continuity.state} /></div>
           <div className="scope-list"><span>State</span><strong className={`text-${statusTone(safety.continuity.state)}`}>{continuityValue}</strong><span>Branch</span><strong>{safety.continuity.branch ?? 'Not reported'}</strong><span>Head anchor</span><strong>{safety.continuity.headSha === null ? 'Not reported' : `${safety.continuity.headSha.slice(0, 7)}…`}</strong><span>Checkpoint receipt</span><strong>{safety.continuity.checkpointDigest === null ? 'Not reported' : 'Available'}</strong></div>
           <p className="small-note">Continuity is evidence about local state, not permission to expand campaign scope.</p>
+        </article>
+
+        {/* Service identity and the feature set this build actually serves.
+            `meta` was fetched for one boolean (the review-write capability)
+            and otherwise discarded, so the authorization class the server
+            declares, the findings-storage class, and the feature flags that
+            decide which routes exist were never visible anywhere. */}
+        <article className="panel panel-full">
+          <div className="panel-heading"><div><p className="eyebrow">SERVICE AUTHORITY</p><h2>What this build declares about itself</h2></div><StatusPill value={meta.readOnly ? 'READY' : 'BLOCKED'} label={`API ${meta.apiVersion}`} /></div>
+          <div className="data-grid">
+            <DataRow label="Authorization class" value={formatCategory(meta.authorizationClass)} tone="ready" />
+            <DataRow label="External network" value={formatCategory(meta.externalNetwork)} tone="ready" />
+            <DataRow label="Findings storage" value={formatCategory(meta.findingsStorage)} tone="ready" />
+            <DataRow label="Owner scope" value={formatCategory(meta.ownerScopeStatus)} tone="warning" />
+            <DataRow label="Owner scope reason" value={formatCategory(meta.ownerScopeReason)} tone="warning" />
+            <DataRow label="Local review decision" value={formatCategory(meta.localReviewDecision ?? 'DISABLED')} tone={meta.localReviewDecision === 'ENABLED' ? 'ready' : 'neutral'} />
+            <DataRow label="Product readiness" value={formatCategory(health.productReadiness)} tone={statusTone(health.productReadiness)} />
+          </div>
+          <div className="timeline-heading"><p className="eyebrow">FEATURES</p><span>A route that is off is not a route that passed.</span></div>
+          {featureEntries.length === 0
+            ? <div className="mini-state">No feature flags reported by this build.</div>
+            : <div className="data-grid">{featureEntries.map(([name, enabled]) => <DataRow key={name} label={formatCategory(name)} value={enabled ? 'Enabled' : 'Disabled'} tone={enabled ? 'ready' : 'neutral'} />)}</div>}
         </article>
 
         <article className="panel">
@@ -1183,6 +1463,7 @@ function SystemMapView({ refreshKey }: { readonly refreshKey: number }): ReactNo
 
       <footer className="system-map-provenance">
         <span>layout {map.layout.engineId} {map.layout.engineVersion}</span>
+        <span>projection {map.layout.projectionVersion}</span>
         <span>graph {map.layout.graphDigest}</span>
         <span>layout digest {map.layout.layoutDigest}</span>
         <span data-testid="map-authority">execution {map.executionAuthority} · mutation {map.mutationAuthority}</span>

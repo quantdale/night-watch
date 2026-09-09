@@ -717,6 +717,107 @@ tbody tr.row-selected {
   margin-left: auto;
 }
 
+/* Graph toolbar. C-15b gave both graph canvases search, an evidence filter,
+   zoom and pan; the controls shipped without any rule of their own and so
+   rendered as unstyled browser defaults inside a dark panel. These rules give
+   them the same surface language as the rest of the shell. */
+.graph-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-soft);
+  background: var(--surface-soft);
+}
+
+.graph-search {
+  flex: 1 1 180px;
+  min-width: 150px;
+}
+
+.graph-search input,
+.graph-filter select {
+  width: 100%;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: rgba(127, 127, 127, 0.08);
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+}
+
+.graph-filter select {
+  min-width: 170px;
+}
+
+.graph-search input::placeholder {
+  color: var(--faint);
+}
+
+.graph-search input:focus-visible,
+.graph-filter select:focus-visible,
+.graph-zoom button:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 1px;
+}
+
+.graph-zoom {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.graph-zoom button {
+  min-width: 28px;
+  padding: 5px 9px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.graph-zoom button:hover {
+  border-color: var(--blue);
+  color: var(--text);
+}
+
+.graph-node-neutral { stroke: #3b5064; }
+
+/* Selection and filtering must be VISIBLE. Without these two rules the search
+   box and the filter select recompute `dimmed` on every node and then change
+   nothing on screen, so an operator reads an unfiltered picture as a filtered
+   one. A dimmed node is still drawn: filtering hides nothing from the count. */
+.graph-node-dimmed {
+  fill: #101923;
+  stroke: #22303d;
+  opacity: 0.45;
+}
+
+.graph-node-selected {
+  stroke: var(--blue);
+  stroke-width: 2;
+}
+
+.graph-edge-dimmed {
+  color: #24323e;
+  opacity: 0.5;
+}
+
+.empty-state {
+  margin: 0;
+  padding: 18px 4px;
+  color: var(--faint);
+  font-size: 12px;
+  text-align: center;
+}
+
 .sr-only {
   position: absolute;
   width: 1px;
@@ -1006,6 +1107,13 @@ tbody tr.row-selected {
 
 .panel-wide {
   grid-row: span 2;
+}
+
+/* A panel that carries a table or a long census reads badly in half a column.
+   `panel-wide` spans ROWS; this spans the grid, and collapses harmlessly at
+   the single-column breakpoint where `1 / -1` is already the full width. */
+.panel-full {
+  grid-column: 1 / -1;
 }
 
 .panel-heading {
@@ -1500,4 +1608,82 @@ tbody tr.row-selected {
   clip: rect(0 0 0 0);
   white-space: nowrap;
   border: 0;
+}
+
+/* Run-detail code chips and event census. The run-detail contract always
+   carried repository provenance, event censuses, hard-failure codes and note
+   codes; the panel fetched them and rendered none. These are their rules. */
+.code-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.code-chip-label {
+  min-width: 96px;
+  color: var(--faint);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.code-chip {
+  padding: 3px 9px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-soft);
+  color: var(--muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+}
+
+.code-chip-empty {
+  color: var(--faint);
+  font-style: italic;
+  font-family: inherit;
+}
+
+.code-chip-blocked {
+  border-color: rgba(224, 124, 124, 0.5);
+  background: var(--red-soft);
+  color: var(--red);
+}
+
+.code-chip-warning {
+  border-color: rgba(228, 168, 83, 0.5);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.code-chip-ready {
+  border-color: rgba(112, 195, 155, 0.5);
+  background: var(--green-soft);
+  color: var(--green);
+}
+
+.code-chip-neutral {
+  border-color: var(--border);
+}
+
+.census-columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.census-heading {
+  margin: 0 0 6px;
+  color: var(--faint);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* An exclusion reason inside a table row. It is the reason a surface is out of
+   scope, so it must not read like the rest of the row's grey metadata. */
+.row-note-warning {
+  color: var(--accent);
 }

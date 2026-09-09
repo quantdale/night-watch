@@ -228,6 +228,94 @@ describe('Control Center UI shell', () => {
     expect(fetchMock).toHaveBeenCalledTimes(10);
   });
 
+
+  // The Safety Center's own heading promises that "Unknown checks stay visible
+  // as unknown". Until this suite, nothing rendered a check at all: `checks`
+  // was fetched, counted once on the Overview, and never listed.
+  async function openPosture(user: ReturnType<typeof userEvent.setup>, snapshot: OverviewSnapshot, view: 'Safety Center' | 'Overview'): Promise<void> {
+    const responses: Record<string, unknown> = {
+      [CONTROL_CENTER_API_PATHS.health]: snapshot.health,
+      [CONTROL_CENTER_API_PATHS.meta]: snapshot.meta,
+      [CONTROL_CENTER_API_PATHS.readiness]: snapshot.readiness,
+      [CONTROL_CENTER_API_PATHS.safety]: snapshot.safety,
+      [CONTROL_CENTER_API_PATHS.sourceSummary]: snapshot.source,
+    };
+    vi.stubGlobal('fetch', vi.fn((input: RequestInfo | URL) => Promise.resolve(responseFor(responses[String(input)]))));
+    render(<App />);
+    await screen.findByRole('heading', { name: 'Know the posture before the next run.' });
+    if (view === 'Safety Center') {
+      await user.click(within(screen.getByRole('navigation', { name: 'Primary' })).getByRole('link', { name: 'Safety Center' }));
+      await screen.findByRole('heading', { name: 'Safety is a posture, not a green badge.' });
+    }
+  }
+
+  it('lists every safety check by name, and what the surface refuses outright', async () => {
+    const user = userEvent.setup();
+    await openPosture(user, {
+      ...overview,
+      safety: {
+        ...overview.safety,
+        state: 'WARNING',
+        checks: [
+          { checkCode: 'LOOPBACK_BIND', state: 'PASS', reasonCode: 'BOUND_TO_LOOPBACK' },
+          { checkCode: 'EVIDENCE_EXPOSURE', state: 'UNKNOWN', reasonCode: 'NOT_MEASURED' },
+        ],
+        blockedOperationClasses: ['PRODUCT_CONTACT', 'MUTATION'],
+      },
+    }, 'Safety Center');
+
+    expect(screen.getByText('LOOPBACK_BIND')).toBeInTheDocument();
+    expect(screen.getByText('Bound To Loopback')).toBeInTheDocument();
+    // The unknown check is visible AS unknown, which is the promise the
+    // heading above it makes.
+    expect(screen.getByText('EVIDENCE_EXPOSURE')).toBeInTheDocument();
+    expect(screen.getByText('Not Measured')).toBeInTheDocument();
+    expect(screen.getByText('PRODUCT_CONTACT')).toBeInTheDocument();
+    expect(screen.getByText('MUTATION')).toBeInTheDocument();
+    // Meta authority, which was fetched for one boolean and otherwise dropped.
+    expect(screen.getByText('Control Center Local Read Only Ui Only')).toBeInTheDocument();
+    expect(screen.getByText('Owner Local Only')).toBeInTheDocument();
+  });
+
+  it('calls an empty safety check set unknown rather than letting it read as clean', async () => {
+    const user = userEvent.setup();
+    await openPosture(user, overview, 'Safety Center');
+
+    expect(screen.getByText('No safety checks reported. An empty check set is an absence of evidence, never a pass.')).toBeInTheDocument();
+    expect(screen.getAllByText('None reported').length).toBeGreaterThan(0);
+  });
+
+  it('shows the readiness measurements behind the state, including the unmeasured ones', async () => {
+    const user = userEvent.setup();
+    await openPosture(user, {
+      ...overview,
+      readiness: {
+        ...overview.readiness,
+        sourceContracts: { ...overview.readiness.sourceContracts, targetsWithActiveFamily: 6, staleTargets: ['target-alpha'], unavailableTargets: ['target-beta'] },
+        campaign: { category: 'DRIFTED', comparedKeys: ['one'], driftKeys: ['coverage-key'], unmeasured: false },
+        analyzer: { pinnedVersion: '1.2.3', observedVersion: '1.2.4', availability: 'AVAILABLE', versionConsistent: false, blocked: false },
+        verification: { deferredDimensions: ['REPLAY'], notMeasuredDimensions: ['DIFFERENTIAL'], allDeferredToHardening: false },
+        unresolvedBlockers: [{ code: 'CI_BILLING', kind: 'EXTERNAL', detailCode: 'GITHUB_BILLING_BLOCK' }],
+      },
+    }, 'Overview');
+
+    expect(screen.getByText('target-alpha')).toBeInTheDocument();
+    expect(screen.getByText('target-beta')).toBeInTheDocument();
+    expect(screen.getByText('coverage-key')).toBeInTheDocument();
+    // A pinned version that is not the observed version is stated as a
+    // disagreement, not rounded to READY.
+    expect(screen.getByText('1.2.3')).toBeInTheDocument();
+    expect(screen.getByText('1.2.4')).toBeInTheDocument();
+    expect(screen.getByText('Inconsistent')).toBeInTheDocument();
+    // Deferred and never-measured are different facts and stay separate.
+    expect(screen.getByText('REPLAY')).toBeInTheDocument();
+    expect(screen.getByText('DIFFERENTIAL')).toBeInTheDocument();
+    // The blocker is named with its detail code rather than counted.
+    expect(screen.getByText('CI_BILLING')).toBeInTheDocument();
+    expect(screen.getByText('Github Billing Block')).toBeInTheDocument();
+    expect(screen.getByText('Unmeasured Unknown')).toBeInTheDocument();
+  });
+
   it('renders distinct run outcomes, ordered timeline data, and a bounded graph', async () => {
     const user = userEvent.setup();
     const run = {
@@ -271,6 +359,172 @@ describe('Control Center UI shell', () => {
     expect(await screen.findByRole('heading', { name: 'Trace the bounded run shape.' })).toBeVisible();
     expect(screen.getByRole('img', { name: 'Execution graph for run run-01:synthetic' })).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledWith('/api/v1/runs/run-01:synthetic/execution-graph', expect.objectContaining({ method: 'GET' }));
+  });
+
+  // The execution-graph canvas used to draw `nodes.slice(0, 24)` /
+  // `edges.slice(0, 48)` and then label the result "Complete". These fixtures
+  // are deliberately larger than those cuts, so a reintroduced slice fails.
+  const executionRun = {
+    runId: 'run-01:synthetic', environment: 'LOCAL_SYNTHETIC', product: 'ripple', browser: 'chromium', scenario: 'smoke',
+    startedAt: '2026-08-26T10:20:30.000Z', endedAt: '2026-08-26T10:20:31.000Z', durationMs: 1000, status: 'PASSED', passed: true,
+    eventCount: 2, hardFailureCount: 0, oracleFindingCount: 0, nightwatchSha: null,
+  };
+
+  function executionGraphFixture(options: { readonly nodeCount: number; readonly danglingEdges: number; readonly truncated: boolean }): unknown {
+    const nodes = Array.from({ length: options.nodeCount }, (_unused, index) => ({
+      nodeId: `node-${String(index).padStart(2, '0')}`,
+      kind: 'JOURNEY_STEP',
+      state: index % 8 === 3 ? 'FAILED' : 'PASSED',
+      label: `Step ${String(index).padStart(2, '0')}`,
+      eventSeq: index,
+      reasonCode: null,
+    }));
+    const edges: { edgeId: string; fromNodeId: string; toNodeId: string; kind: string; proof: string; eventSeq: number | null }[] = nodes.slice(0, -1).map((node, index) => ({
+      edgeId: `edge-${String(index).padStart(2, '0')}`,
+      fromNodeId: node.nodeId,
+      toNodeId: nodes[index + 1]!.nodeId,
+      kind: 'PRECEDES',
+      proof: 'OBSERVED',
+      eventSeq: index,
+    }));
+    for (let index = 0; index < options.danglingEdges; index += 1) {
+      edges.push({ edgeId: `edge-dangling-${index}`, fromNodeId: nodes[0]!.nodeId, toNodeId: `node-outside-${index}`, kind: 'PRECEDES', proof: 'OBSERVED', eventSeq: null });
+    }
+    return { schemaVersion: 'nightwatch.control-center.execution-graph.v1', runId: executionRun.runId, nodes, edges, nodeLimit: 250, edgeLimit: 500, truncated: options.truncated };
+  }
+
+  async function openExecutionGraph(user: ReturnType<typeof userEvent.setup>, graph: unknown): Promise<void> {
+    const responses: Record<string, unknown> = {
+      [CONTROL_CENTER_API_PATHS.health]: overview.health,
+      [CONTROL_CENTER_API_PATHS.meta]: overview.meta,
+      [CONTROL_CENTER_API_PATHS.readiness]: overview.readiness,
+      [CONTROL_CENTER_API_PATHS.safety]: overview.safety,
+      [CONTROL_CENTER_API_PATHS.sourceSummary]: overview.source,
+      '/api/v1/runs?limit=20': { schemaVersion: 'nightwatch.control-center.run-list.v1', items: [executionRun], page: { limit: 20, nextCursor: null, truncated: false } },
+      '/api/v1/runs/run-01:synthetic': { schemaVersion: 'nightwatch.control-center.run-detail.v1', run: executionRun, repositories: [], countsByEventType: [], countsBySeverity: [], screenshotCount: 0, hardFailureCodes: [], noteCodes: [] },
+      '/api/v1/runs/run-01:synthetic/timeline?afterSeq=0&limit=100': { schemaVersion: 'nightwatch.control-center.timeline.v1', runId: executionRun.runId, afterSeq: 0, events: [], nextAfterSeq: null, truncated: false },
+      '/api/v1/runs/run-01:synthetic/execution-graph': graph,
+    };
+    vi.stubGlobal('fetch', vi.fn((input: RequestInfo | URL) => Promise.resolve(responseFor(responses[String(input)]))));
+    render(<App />);
+    await screen.findByRole('heading', { name: 'Know the posture before the next run.' });
+    const primaryNav = within(screen.getByRole('navigation', { name: 'Primary' }));
+    await user.click(primaryNav.getByRole('link', { name: 'Runs' }));
+    await user.click(await screen.findByRole('button', { name: 'Inspect' }));
+    await user.click(primaryNav.getByRole('link', { name: 'Execution Graph' }));
+    await screen.findByRole('img', { name: 'Execution graph for run run-01:synthetic' });
+  }
+
+  it('draws every execution-graph node the server sent, past the old 24/48 cut', async () => {
+    const user = userEvent.setup();
+    await openExecutionGraph(user, executionGraphFixture({ nodeCount: 40, danglingEdges: 0, truncated: false }));
+
+    // 40 > 24, and 39 edges > the old 48-edge consideration window only in
+    // kind; the decisive assertion is that nothing is dropped silently.
+    expect(screen.getAllByRole('button', { name: /^Step \d\d, JOURNEY_STEP, (?:PASSED|FAILED)$/ })).toHaveLength(40);
+    expect(screen.getByText('40 nodes drawn · 40 match')).toBeInTheDocument();
+    expect(screen.getByText('39 of 39 edges drawn · zoom 1.00x')).toBeInTheDocument();
+    expect(screen.getByText('Complete within bounds')).toBeInTheDocument();
+  });
+
+  it('filters and searches the execution graph without hiding the population size', async () => {
+    const user = userEvent.setup();
+    await openExecutionGraph(user, executionGraphFixture({ nodeCount: 40, danglingEdges: 0, truncated: false }));
+
+    await user.type(screen.getByRole('searchbox', { name: 'Search execution graph nodes' }), 'Step 07');
+    // The denominator never shrinks to the filtered set: 40 were drawn.
+    expect(screen.getByText('40 nodes drawn · 1 match')).toBeInTheDocument();
+
+    await user.clear(screen.getByRole('searchbox', { name: 'Search execution graph nodes' }));
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Filter by execution state' }), 'FAILED');
+    expect(screen.getByText('40 nodes drawn · 5 match')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Step 03, JOURNEY_STEP, FAILED' }));
+    expect(screen.getByText('Selected: Step 03')).toBeInTheDocument();
+  });
+
+  it('discloses execution-graph truncation and edges pointing outside the projection', async () => {
+    const user = userEvent.setup();
+    await openExecutionGraph(user, executionGraphFixture({ nodeCount: 30, danglingEdges: 2, truncated: true }));
+
+    expect(screen.getByText('29 of 31 edges drawn · zoom 1.00x')).toBeInTheDocument();
+    expect(screen.getByText('2 edge(s) reference a node outside this projection')).toBeInTheDocument();
+    // `truncated` is the SERVER's bound. It is reported as such, and never as
+    // a completeness claim.
+    expect(screen.getByText('Truncated at 250 nodes / 500 edges')).toBeInTheDocument();
+    expect(screen.getByText('This graph is truncated')).toBeInTheDocument();
+    expect(screen.queryByText('Complete within bounds')).not.toBeInTheDocument();
+  });
+
+  // The run-detail contract has always carried repository provenance, event
+  // censuses, a screenshot count, hard-failure codes and note codes. The panel
+  // fetched every one of them and rendered none, so a run with a hard failure
+  // code and a dirty working tree read exactly like a clean one.
+  it('renders the run-detail fields it fetches, including provenance and failure codes', async () => {
+    const user = userEvent.setup();
+    const responses: Record<string, unknown> = {
+      [CONTROL_CENTER_API_PATHS.health]: overview.health,
+      [CONTROL_CENTER_API_PATHS.meta]: overview.meta,
+      [CONTROL_CENTER_API_PATHS.readiness]: overview.readiness,
+      [CONTROL_CENTER_API_PATHS.safety]: overview.safety,
+      [CONTROL_CENTER_API_PATHS.sourceSummary]: overview.source,
+      '/api/v1/runs?limit=20': { schemaVersion: 'nightwatch.control-center.run-list.v1', items: [executionRun], page: { limit: 20, nextCursor: null, truncated: false } },
+      '/api/v1/runs/run-01:synthetic': {
+        schemaVersion: 'nightwatch.control-center.run-detail.v1',
+        run: executionRun,
+        repositories: [{ repositoryId: 'nightwatch', branch: 'main', headSha: 'abcdef0123456789', state: 'CURRENT', dirty: true, dirtyFileCount: 3 }],
+        countsByEventType: [{ eventType: 'request', count: 12 }],
+        countsBySeverity: [{ severity: 'critical', count: 1 }],
+        screenshotCount: 4,
+        hardFailureCodes: ['ORACLE_HARD_FAILURE'],
+        noteCodes: ['REPLAY_UNAVAILABLE'],
+      },
+      '/api/v1/runs/run-01:synthetic/timeline?afterSeq=0&limit=100': { schemaVersion: 'nightwatch.control-center.timeline.v1', runId: executionRun.runId, afterSeq: 0, events: [{ seq: 1, timestamp: executionRun.startedAt, eventType: 'start', severity: 'info', messageCode: 'RUN_STARTED', dataCodes: [] }], nextAfterSeq: 42, truncated: true },
+    };
+    vi.stubGlobal('fetch', vi.fn((input: RequestInfo | URL) => Promise.resolve(responseFor(responses[String(input)]))));
+    render(<App />);
+    await screen.findByRole('heading', { name: 'Know the posture before the next run.' });
+    await user.click(within(screen.getByRole('navigation', { name: 'Primary' })).getByRole('link', { name: 'Runs' }));
+    await user.click(await screen.findByRole('button', { name: 'Inspect' }));
+    await screen.findByRole('heading', { name: 'smoke' });
+
+    expect(screen.getByText('ORACLE_HARD_FAILURE')).toBeInTheDocument();
+    expect(screen.getByText('REPLAY_UNAVAILABLE')).toBeInTheDocument();
+    expect(screen.getByText('Screenshots')).toBeInTheDocument();
+    expect(screen.getByText('Request')).toBeInTheDocument();
+    expect(screen.getByText('Critical')).toBeInTheDocument();
+    // Provenance, and the dirty working tree that bounds every claim from it.
+    expect(within(screen.getByRole('row', { name: /nightwatch/ })).getByText('main')).toBeInTheDocument();
+    expect(screen.getByText('Dirty · 3 file(s)')).toBeInTheDocument();
+    expect(screen.getByText('abcdef012345…')).toBeInTheDocument();
+    // A single bounded timeline page that stops early says so.
+    expect(screen.getByText('This timeline is truncated')).toBeInTheDocument();
+    expect(screen.getByText(/the run continues after sequence 42/)).toBeInTheDocument();
+  });
+
+  it('says plainly when a run reports no provenance rather than leaving the row out', async () => {
+    const user = userEvent.setup();
+    const responses: Record<string, unknown> = {
+      [CONTROL_CENTER_API_PATHS.health]: overview.health,
+      [CONTROL_CENTER_API_PATHS.meta]: overview.meta,
+      [CONTROL_CENTER_API_PATHS.readiness]: overview.readiness,
+      [CONTROL_CENTER_API_PATHS.safety]: overview.safety,
+      [CONTROL_CENTER_API_PATHS.sourceSummary]: overview.source,
+      '/api/v1/runs?limit=20': { schemaVersion: 'nightwatch.control-center.run-list.v1', items: [executionRun], page: { limit: 20, nextCursor: null, truncated: false } },
+      '/api/v1/runs/run-01:synthetic': { schemaVersion: 'nightwatch.control-center.run-detail.v1', run: executionRun, repositories: [], countsByEventType: [], countsBySeverity: [], screenshotCount: 0, hardFailureCodes: [], noteCodes: [] },
+      '/api/v1/runs/run-01:synthetic/timeline?afterSeq=0&limit=100': { schemaVersion: 'nightwatch.control-center.timeline.v1', runId: executionRun.runId, afterSeq: 0, events: [{ seq: 1, timestamp: executionRun.startedAt, eventType: 'start', severity: 'info', messageCode: 'RUN_STARTED', dataCodes: [] }], nextAfterSeq: null, truncated: false },
+    };
+    vi.stubGlobal('fetch', vi.fn((input: RequestInfo | URL) => Promise.resolve(responseFor(responses[String(input)]))));
+    render(<App />);
+    await screen.findByRole('heading', { name: 'Know the posture before the next run.' });
+    await user.click(within(screen.getByRole('navigation', { name: 'Primary' })).getByRole('link', { name: 'Runs' }));
+    await user.click(await screen.findByRole('button', { name: 'Inspect' }));
+    await screen.findByRole('heading', { name: 'smoke' });
+
+    expect(screen.getByText('No repository provenance recorded. Without it, this run anchors to no revision.')).toBeInTheDocument();
+    expect(screen.getByText('No event census reported. Empty does not imply pass.')).toBeInTheDocument();
+    expect(screen.getAllByText('None reported')).toHaveLength(2);
+    expect(screen.queryByText('This timeline is truncated')).not.toBeInTheDocument();
   });
 
   it('preserves campaign counts and coverage gaps without inventing a score', async () => {
@@ -805,7 +1059,9 @@ describe('Control Center UI shell', () => {
 
     // The stale decision is visible, and it is labelled UNKNOWN rather than
     // rendered as a live decision.
-    expect(screen.getByText('Binding Stale')).toBeInTheDocument();
+    // The binding line now also carries the transition count the contract
+    // sends; the currentness word it asserts is unchanged.
+    expect(screen.getByText(/^Binding Stale · \d+ transition\(s\)$/)).toBeInTheDocument();
     expect(screen.getByText(/Local review stale/i)).toBeInTheDocument();
     // The current artifacts have not been reviewed, so a decision is offered.
     expect(screen.getByRole('button', { name: 'Accept Evidence' })).toBeInTheDocument();

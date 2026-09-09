@@ -282,9 +282,16 @@ test('qualifies every built Control Center view over one synthetic authority com
     await expect(page.getByRole('heading', { name: 'Know the posture before the next run.' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Local synthetic readiness' })).toBeVisible();
 
+    // The readiness contract's own measurements, not just its verdict.
+    await expect(page.getByRole('heading', { name: 'Everything the readiness contract states' })).toBeVisible();
+
     await page.getByRole('link', { name: 'Safety Center' }).click({ force: true });
     await expect(page.getByRole('heading', { name: 'Safety is a posture, not a green badge.' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'What this surface can do' })).toBeVisible();
+    // The individual safety checks and the service's declared authority. Both
+    // were fetched by every build of this UI and rendered by none of them.
+    await expect(page.getByRole('heading', { name: 'Every check, by name' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'What this build declares about itself' })).toBeVisible();
 
     await page.getByRole('link', { name: 'Runs' }).click({ force: true });
     await expect(page.getByRole('heading', { name: 'Inspect what happened, in order.' })).toBeVisible();
@@ -292,11 +299,26 @@ test('qualifies every built Control Center view over one synthetic authority com
     await clickViewButton(page, 'Inspect');
     await expect(page.getByRole('heading', { name: 'control-center-browser' })).toBeVisible();
     await expect(page.getByText('Event Journey', { exact: true })).toBeVisible();
+    // Repository provenance bounds every claim made from a run, so the built
+    // panel must show it rather than fetch it and drop it.
+    await expect(page.getByText('REPOSITORY PROVENANCE').first()).toBeVisible();
+    await expect(page.getByText('EVENT CENSUS').first()).toBeVisible();
 
     await page.getByRole('link', { name: 'Execution Graph' }).click({ force: true });
     await expect(page.getByRole('heading', { name: 'Trace the bounded run shape.' })).toBeVisible();
     await expect(page.getByRole('img', { name: 'Execution graph for run run-01-synthetic' })).toBeVisible();
     await expect(page.getByRole('cell', { name: 'Journey', exact: true })).toBeVisible();
+    // The canvas is interactive in the BUILT bundle, and its controls carry
+    // real styles rather than unstyled browser defaults.
+    await expect(page.getByRole('searchbox', { name: 'Search execution graph nodes' })).toBeVisible();
+    await expect(page.getByRole('group', { name: 'Zoom and pan' })).toBeVisible();
+    // The root TypeScript program deliberately excludes the DOM lib, so the
+    // one browser-global this needs is named through a local structural type
+    // rather than by widening the whole program.
+    type StyleReader = { getComputedStyle(element: unknown): { backgroundColor: string } };
+    const toolbarBackground = await page.locator('.graph-controls').first().evaluate((element) => (globalThis as unknown as StyleReader).getComputedStyle(element).backgroundColor);
+    // A class with markup but no rule computes to the transparent default.
+    expect(toolbarBackground).not.toBe('rgba(0, 0, 0, 0)');
 
     await page.getByRole('link', { name: 'Campaign Intelligence' }).click({ force: true });
     await expect(page.getByRole('heading', { name: 'See the shape of coverage.' })).toBeVisible();
