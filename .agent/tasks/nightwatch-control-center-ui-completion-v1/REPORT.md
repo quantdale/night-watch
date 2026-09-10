@@ -194,8 +194,11 @@ already sent.
 - `gate:local` PASS is a LOCAL receipt from this host. External CI remains
   `BLOCKED_EXTERNAL` under the predecessor's classification and is not claimed
   green here.
-- This checkpoint has not been pushed. Integration to `origin main` is an
-  owner decision.
+- Under the owner's completion directive, the certified checkpoint
+  `70113ef7f5fb73a48a61f2bf171bf553ed795270` was integrated by fast-forward to
+  `origin/main` and verified; a fresh `gate:local` at that checkpoint
+  re-passed all eleven groups with receipt
+  `receipt:sha256:25e3ad1c24e108328675b48e`.
 
 ## M8 — certification
 
@@ -229,7 +232,10 @@ new checks.
 
 ## Integration
 
-NOT PERFORMED. The certified checkpoint `fa5bef0` sits on
-`session/nightwatch-control-center-ui-com-9a04214f` and has not been pushed.
-`origin/main` remains at `11c9ea62405c5b9b0eddd011fb7083da83348ee7`.
-Integration is an owner decision.
+PERFORMED. A fresh `gate:local` at the certified tip `70113ef` passed all
+eleven required groups with receipt `receipt:sha256:25e3ad1c24e108328675b48e`.
+Under the owner's completion directive, the certified checkpoint
+`70113ef7f5fb73a48a61f2bf171bf553ed795270` was then integrated from
+`session/nightwatch-control-center-ui-com-9a04214f` by fast-forward push to
+`origin/main`, and `HEAD == origin/main` was verified at that SHA
+(`SESSION_INTEGRATED`). No force and no history rewrite.

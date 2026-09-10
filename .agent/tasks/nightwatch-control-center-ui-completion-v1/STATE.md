@@ -98,10 +98,11 @@ NONE.
 
 ## Exact Next Action
 
-STOP. Hold at this checkpoint and report the certified outcome to the owner.
-Integration to `origin main` is an owner decision and has not been performed;
-the certified checkpoint sits on
-`session/nightwatch-control-center-ui-com-9a04214f`.
+STOP. Report the certified outcome to the owner. Under the owner's completion
+directive, the certified checkpoint
+`70113ef7f5fb73a48a61f2bf171bf553ed795270` was integrated by fast-forward
+from `session/nightwatch-control-center-ui-com-9a04214f` to `origin/main` and
+verified at that SHA; live HEAD is discovered from Git.
 
 ## Files Changed
 
@@ -185,6 +186,23 @@ Relevant failure/output summary: all eleven groups PASS at
 canonical checkout stopped at `STATIC`, then `HARDENING`, then
 `HANDOFF_TRUTH`; a fourth from this session stopped at `SYNTHETIC_CAMPAIGN`.
 Each failure and its cause is recorded above rather than smoothed over.
+
+Command: `npm run gate:local` at the certified tip `70113ef`
+Result: PASS
+When: 2026-09-10
+Relevant failure/output summary: all eleven required groups PASS at
+`gitHead 70113ef7f5fb73a48a61f2bf171bf553ed795270`; SEMANTIC_COMPATIBILITY
+2083/2070/13/0, OWNER_PROVENANCE 91, SYNTHETIC_CAMPAIGN 1797/1797/0 with
+`deepContainmentLane: PROVEN`; `finalResult: PASS`; receipt
+`receipt:sha256:25e3ad1c24e108328675b48e`. This is the fresh gate run at the
+exact checkpoint that was integrated.
+
+Command: `node bin/nightwatch-session.mjs integrate`
+Result: PASS
+When: 2026-09-10
+Relevant failure/output summary: `SESSION_INTEGRATED:
+origin/main=70113ef7f5fb73a48a61f2bf171bf553ed795270`; `HEAD == origin/main`
+verified after the push. Fast-forward only; no force, no history rewrite.
 
 ## Decisions Made During This Task
 
@@ -289,7 +307,7 @@ Known issues: both coverage guards are name-level over `App.tsx` and prove a
 field or class reaches the file, not its placement or visual correctness. The
 browser lane's computed-style assertion covers one class. The source graph
 still skips endpoint-less edges silently where the execution graph now
-discloses them. This checkpoint has NOT been pushed; integration to
-`origin main` remains an owner decision.
+discloses them. The certified checkpoint was integrated by fast-forward and
+verified at `70113ef7f5fb73a48a61f2bf171bf553ed795270`.
 Recommended next task: a placement-level coverage check, asserting each
 contract field renders in the view that owns it.

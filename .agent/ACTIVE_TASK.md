@@ -13,11 +13,13 @@ PASS from the owned session at documentation descendant
 `fa5bef068a157df520934b811048e9300f597b81` with receipt
 `receipt:sha256:8f5e1452a0a909c6721ce272`; U-01 through U-06 CLOSED.
 Current milestone: COMPLETE — M0 through M8 are closed
-Next action: STOP. Hold at this checkpoint and report the certified outcome to
-the owner. The checkpoint has NOT been pushed: it sits on
-`session/nightwatch-control-center-ui-com-9a04214f` and integration to
-`origin main` is an owner decision. Do not reopen U-01 through U-06. The
-recommended successor is a placement-level contract-coverage check.
+Next action: STOP. Report the certified outcome to the owner. Under the
+owner's completion directive, the certified checkpoint
+`70113ef7f5fb73a48a61f2bf171bf553ed795270` was integrated by fast-forward
+from `session/nightwatch-control-center-ui-com-9a04214f` to `origin/main` and
+verified at that SHA; live HEAD is discovered from Git. Do not reopen U-01
+through U-06. The recommended successor is a placement-level
+contract-coverage check.
 Authorization class: CONTROL_CENTER_UI_COMPLETION_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
@@ -46,7 +48,7 @@ passed. UI suite 55 of 55, up from 41.
 
 The gate PASS is a local receipt from this host. External CI remains
 `BLOCKED_EXTERNAL` under the predecessor's classification and is not claimed
-green. The checkpoint has not been pushed.
+green. The certified checkpoint was integrated by fast-forward and verified.
 
 ## Mission
 
