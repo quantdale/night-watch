@@ -68,7 +68,28 @@ The matrix passes in 11 seconds; the full UI suite is 61/61.
 
 ## M3 — reviewer, source and system map
 
-_To be filled during execution._
+All sixteen contracts are covered. Two generator defects surfaced here and
+were fixed rather than worked around: generic type arguments were unresolved
+(`ReviewerElement<TValue>.value` became a string where an object was expected,
+crashing the reviewer view), and named type aliases (`EpistemicClass`) were
+unresolved, so enum fields became invalid sentinels. Graph fixtures are now
+internally coherent: edge endpoints name nodes the same snapshot carries.
+
+32 leaf findings closed:
+
+- reviewer: member finding ids, the local-review authority and the per-row
+  verdict authority are now bound to the contract;
+- source: an edge inventory, node `lifecycle` and `nodeId`, the payload
+  `surfaceId` in the canvas footer, all four authority rollups
+  (currentness/lifecycle/proof/capabilities) as a full table, and named source
+  gap reasons in the Safety Center;
+- system map: `level`, `query`, `focusId` and `measurement` in the provenance
+  footer, plus node and edge table fallbacks that render kind, fact category,
+  evidence, coverage and layer.
+
+`layer` is no longer exempt in either guard, because the map now renders it.
+The matrix covers all 16 contracts in 21 seconds; the full UI suite is
+61/61.
 
 ## M4 — view-change focus, title and announcement
 

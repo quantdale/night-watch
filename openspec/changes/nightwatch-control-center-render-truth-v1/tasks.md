@@ -19,10 +19,10 @@
 - [x] Every exposed field rendered or exempted with a reason
 
 ## M3 — reviewer, source and system map (R-01)
-- [ ] Reviewer covered through its navigation flow
-- [ ] Source surfaces and source graph covered
-- [ ] System map covered
-- [ ] No non-exempt leaf unobservable; exempt list small and reasoned
+- [x] Reviewer covered through its navigation flow
+- [x] Source surfaces and source graph covered
+- [x] System map covered
+- [x] No non-exempt leaf unobservable; exempt list small and reasoned
 
 ## M4 — view-change focus, title and announcement (R-02)
 - [ ] Navigation writes the document title per view

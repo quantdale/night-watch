@@ -141,7 +141,7 @@ built bundle fails.
 
 ### M3 — reviewer, source and system map (R-01)
 
-- **Status:** IN_PROGRESS
+- **Status:** COMPLETE
 - Objective: extend the harness to reviewer, source surfaces/graph and the
   system map, and close every remaining exposed field.
 - Files: `ui/control-center/src/contractRender.test.tsx`; `App.tsx` only where
@@ -152,7 +152,7 @@ built bundle fails.
 
 ### M4 — view-change focus, title and announcement (R-02)
 
-- **Status:** NOT_STARTED
+- **Status:** IN_PROGRESS
 - Objective: make a view change announce itself without disturbing initial
   load or background refreshes.
 - Files: `ui/control-center/src/App.tsx`, `ui/control-center/src/App.test.tsx`.
@@ -238,7 +238,11 @@ absent run is recorded as a pass.
 
 ## Discoveries
 
-- To be filled during execution.
+- A fixture generator must resolve generic type arguments and named type
+  aliases, or it produces values the view cannot render (M3 found and fixed
+  both).
+- `SystemMapNodeView.layer` became observable when the map table fallback was
+  added, so its exemption was removed from both guards rather than kept.
 
 ## Deferred Work
 

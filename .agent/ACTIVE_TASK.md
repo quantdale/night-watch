@@ -7,7 +7,9 @@ Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-control-center-render-truth-v1
 Starting SHA: f0180d1f58d4ab1a1e7e8e226554cf0564ad7f16
 Last validated implementation SHA: f0180d1f58d4ab1a1e7e8e226554cf0564ad7f16
-Last checkpoint: M2 harness views COMPLETE — runs, detail, timeline,
+Last checkpoint: M3 harness completes all sixteen contracts — 32 exposed
+fields were rendered, two generator defects were fixed, and `layer` is no
+longer exempt. M2 harness views COMPLETE — runs, detail, timeline,
 execution graph, campaigns and findings are covered; 16 exposed fields were
 rendered or exempted. M1 harness core COMPLETE — the differential render harness
 exists and passes for the Overview/Safety family; it exposed and four unbound
@@ -17,9 +19,9 @@ mutation proof passed. The owned session
 `sess-390d800d5900` on base
 `f0180d1f58d4ab1a1e7e8e226554cf0564ad7f16`, `session:status` verdict PASS,
 and the predecessor is verified terminal COMPLETE and untouched.
-Current milestone: M3 — reviewer, source and system map (R-01)
-Next action: extend the harness to the reviewer, source surfaces/graph and
-system map views, close every field they expose, and record the exact results
+Current milestone: M4 — view-change focus, title and announcement (R-02)
+Next action: make one navigation path own the hash, view, document title and
+main-content focus, regress it in `App.test.tsx`, and record the exact results
 in `STATE.md`.
 Authorization class: CONTROL_CENTER_RENDER_TRUTH_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
