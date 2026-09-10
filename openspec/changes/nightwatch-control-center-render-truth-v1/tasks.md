@@ -43,8 +43,8 @@
 - [x] `validation:universe` PASS
 
 ## M7 — certification
-- [ ] `gate:local` PASS from this owned session
-- [ ] Full offline regression PASS at the certified checkpoint
-- [ ] State, task and project docs reconciled to the receipt
-- [ ] Checkpoint integrated by fast-forward; `HEAD == origin/main` verified
-- [ ] Session released; canonical tree clean
+- [x] `gate:local` PASS from this owned session
+- [x] Full offline regression PASS at the certified checkpoint
+- [x] State, task and project docs reconciled to the receipt
+- [x] Checkpoint integrated by fast-forward; `HEAD == origin/main` verified
+- [x] Session released; canonical tree clean

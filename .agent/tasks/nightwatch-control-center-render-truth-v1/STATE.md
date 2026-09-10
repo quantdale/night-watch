@@ -6,26 +6,26 @@ STATE — nightwatch-control-center-render-truth-v1
 
 Task ID: nightwatch-control-center-render-truth-v1
 Phase: CONTROL_CENTER_RENDER_TRUTH_V1
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: f0180d1f58d4ab1a1e7e8e226554cf0564ad7f16
-Last validated implementation SHA: f0180d1f58d4ab1a1e7e8e226554cf0564ad7f16
-Last substantive checkpoint SHA: f0180d1f58d4ab1a1e7e8e226554cf0564ad7f16
+Last validated implementation SHA: 4aabb7c5367fc3ee357f12617c35590f0faaf6a9
+Last substantive checkpoint SHA: 4aabb7c5367fc3ee357f12617c35590f0faaf6a9
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-control-center-render-287b0e00
-Last checkpoint: M0 execution truth COMPLETE; the owned session
-`nightwatch-control-center-render-287b0e00` is claimed as
-`sess-390d800d5900` on base
-`f0180d1f58d4ab1a1e7e8e226554cf0564ad7f16`, `session:status` verdict PASS,
-and the predecessor is verified terminal COMPLETE and untouched.
+Last checkpoint: M7 certification COMPLETE at implementation
+`4aabb7c5367fc3ee357f12617c35590f0faaf6a9`; `gate:local` all eleven groups
+PASS at that checkpoint with receipt `receipt:sha256:65ff134f69b2fbd0a58aaad0`,
+and a full offline regression passed 4789 / 18 skipped / 0 failed. R-01
+through R-04 are CLOSED with acceptance evidence.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: f0180d1f58d4ab1a1e7e8e226554cf0564ad7f16
-LAST_VALIDATED_IMPLEMENTATION_SHA: f0180d1f58d4ab1a1e7e8e226554cf0564ad7f16
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: f0180d1f58d4ab1a1e7e8e226554cf0564ad7f16
+LAST_VALIDATED_IMPLEMENTATION_SHA: 4aabb7c5367fc3ee357f12617c35590f0faaf6a9
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 4aabb7c5367fc3ee357f12617c35590f0faaf6a9
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
-PHASE_CONTROL_CENTER_RENDER_TRUTH_V1_STATUS: IN_PROGRESS
+PHASE_CONTROL_CENTER_RENDER_TRUTH_V1_STATUS: COMPLETE
 
 ## Objective
 
@@ -36,14 +36,25 @@ operators; and dynamic style classes apply in the built bundle.
 
 ## Current Milestone
 
+COMPLETE — M7 closed; the campaign is finished.
 Milestone ID: M7
-Milestone status: IN_PROGRESS
-What is being attempted: certification — `gate:local` and a full offline
-regression at the implementation checkpoint, documentation reconciliation,
-fast-forward integration and session release.
+Milestone status: COMPLETE
+What is being attempted: NOTHING. The campaign is closed. R-01 through R-04
+are CLOSED with acceptance evidence; `gate:local` returned all eleven groups
+PASS at implementation `4aabb7c` with receipt
+`receipt:sha256:65ff134f69b2fbd0a58aaad0`, and the full offline regression is
+4789 passed / 18 skipped / 0 failed.
 
 ## Completed Milestones
 
+- **M7 COMPLETE** — certification at implementation
+  `4aabb7c5367fc3ee357f12617c35590f0faaf6a9`. `gate:local` all eleven groups
+  PASS with receipt `receipt:sha256:65ff134f69b2fbd0a58aaad0`;
+  SEMANTIC_COMPATIBILITY 2083/2070/13/0, OWNER_PROVENANCE 91,
+  SYNTHETIC_CAMPAIGN 1797/1797/0 with `deepContainmentLane: PROVEN`. Full
+  offline regression 4789 passed / 18 skipped / 0 failed in 13.1 minutes.
+  Browser lane 4/4. Documentation reconciled; the certified checkpoint is
+  integrated by fast-forward from this owned session.
 - **M6 COMPLETE** — `ui/control-center/src/contractRender.test.tsx` is
   registered in `config/validation-universe.v1.json` UI_LANE (5 files) and
   `inventoryDigest` advanced from `sha256:e6ad9456574d63403ba96436` to
@@ -128,16 +139,13 @@ fast-forward integration and session release.
 
 ## Work In Progress
 
-M1. The planning route (SPEC, PLAN, STATE, REPORT, the OpenSpec change and the
-bound `.agent/ACTIVE_TASK.md` / `.agent/EXECUTION_PROMPT.md`) is written and
-about to be committed as the M0/registration checkpoint.
+NONE.
 
 ## Exact Next Action
 
-Implement the harness core in
-`ui/control-center/src/contractRender.test.tsx` for the Overview/Safety
-family, run `npm --prefix ui/control-center run test -- contractRender`, and
-record the measured observability results in this STATE.
+STOP. The campaign is COMPLETE. Report the certified outcome to the owner and
+integrate the certified checkpoint by fast-forward from the owned session,
+verifying `HEAD == origin/main`. Do not reopen R-01 through R-04.
 
 ## Files Changed
 
@@ -276,6 +284,20 @@ When: 2026-09-10
 Relevant failure/output summary: no diagnostics; offline structural
 invariants hold.
 
+Command: `npm run gate:local` at implementation commit `4aabb7c`
+Result: PASS
+When: 2026-09-10
+Relevant failure/output summary: all eleven required groups PASS at
+`gitHead 4aabb7c5367fc3ee357f12617c35590f0faaf6a9`; SEMANTIC_COMPATIBILITY
+2083/2070/13/0, OWNER_PROVENANCE 91, SYNTHETIC_CAMPAIGN 1797/1797/0 with
+`deepContainmentLane: PROVEN`; receipt `receipt:sha256:65ff134f69b2fbd0a58aaad0`.
+
+Command: `npm test` full offline regression at the implementation checkpoint
+Result: PASS
+When: 2026-09-10
+Relevant failure/output summary: 4789 passed / 18 skipped / 0 failed in 13.1
+minutes — identical to the campaign's starting baseline.
+
 ## Decisions Made During This Task
 
 Decision: generate fixtures from the declared TypeScript AST instead of
@@ -329,12 +351,32 @@ NONE
 
 ## Resume Recipe
 
-Read `SPEC.md`, `PLAN.md` and this file; work in the owned worktree
-`nightwatch-control-center-render-287b0e00`; resume at the Exact Next Action,
-run the named focused suites after each change, and record exact results here
-before advancing a milestone.
+Task complete. Do not resume; any follow-up starts as a new authorized task.
 
 ## Completion Snapshot
 
-Pending. The campaign is IN_PROGRESS; the completion snapshot is filled and
-verified at M7 closure against the certified checkpoint's own receipts.
+Final substantive checkpoint: 4aabb7c5367fc3ee357f12617c35590f0faaf6a9
+Live HEAD: DISCOVER_FROM_GIT
+Tests: UI typecheck PASS; UI suite 63 passed across 5 files; UI build PASS at
+3 files / 330,528 bytes with no external references; root `typecheck` PASS;
+`hardening:check` PASS; `validation:universe` PASS with UI_LANE=5 and digest
+`sha256:b735b90cf16c33f71476b1dc`; browser workflow lane 4 passed / 0 failed;
+`gate:local` all eleven groups PASS at `4aabb7c` with receipt
+`receipt:sha256:65ff134f69b2fbd0a58aaad0`; full offline regression 4789
+passed / 18 skipped / 0 failed.
+Artifacts: `ui/control-center/src/contractRender.test.tsx`,
+`ui/control-center/src/{App.tsx,App.test.tsx,contractCoverage.test.ts}`,
+`tests/browser/controlCenterBrowser.browser.ts`,
+`config/validation-universe.v1.json`,
+`.agent/tasks/nightwatch-control-center-render-truth-v1/`,
+`openspec/changes/nightwatch-control-center-render-truth-v1/`.
+Known issues: the harness proves a field's value changes the DOM in the
+maximally revealing generated fixture, not visual correctness, layout, or a
+conditional branch the fixture does not take; `schemaVersion`, `afterSeq`,
+`advisoryOnly`, `passed` and the two loopback scope constants remain reasoned
+exemptions. External CI remains `BLOCKED_EXTERNAL` under the predecessor's
+classification. One browser-lane attempt hit the documented detached-row race
+and was rerun clean; no retry policy was added.
+Recommended next task: none selected; any follow-up requires a new authorized
+task.
+

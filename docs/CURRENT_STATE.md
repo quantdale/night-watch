@@ -746,8 +746,8 @@ RELEASE_CERTIFICATION_PROTOCOL_VERSION: nightwatch.release-certification.v1
 PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
 RELEASE_CHECKPOINT_SHA: 2576c5751d33bb40046246e8fcf57c7cc5c30a57
 LIVE_HEAD_SHA: DISCOVER_FROM_GIT
-LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: 51da8c411dc7ebe0ec2929e456235777e2c009f2
-LAST_LOCALLY_VALIDATED_SHA: 51da8c411dc7ebe0ec2929e456235777e2c009f2
+LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: 4aabb7c5367fc3ee357f12617c35590f0faaf6a9
+LAST_LOCALLY_VALIDATED_SHA: 4aabb7c5367fc3ee357f12617c35590f0faaf6a9
 LAST_CLEAN_VALIDATED_SHA: c18db55970a6497470191c8c9ef58f5012a96c8c
 CI_OBSERVED_SHA: NONE
 CI_EXECUTED_SHA: NONE
@@ -806,11 +806,11 @@ informational and are not interpreted as current authority.
 LIVE_STATE_PROTOCOL_VERSION: nightwatch.live-state.v1
 LIVE_TASK_ID: nightwatch-control-center-render-truth-v1
 LIVE_PHASE: CONTROL_CENTER_RENDER_TRUTH_V1
-LIVE_TASK_STATUS: IN_PROGRESS
+LIVE_TASK_STATUS: COMPLETE
 LIVE_PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
 LIVE_PROJECT_VERDICT_EFFECT: PRESERVE
-LIVE_NEXT_ACTION_STATE: CONTINUE
-LIVE_COMPLETION_CLAIM: NONE
+LIVE_NEXT_ACTION_STATE: STOP
+LIVE_COMPLETION_CLAIM: COMPLETE
 ```
 
 ### Exact-head CI state (current live CI state)
@@ -3907,7 +3907,8 @@ inferring completeness from `nextCursor`. The source graph counts and
 discloses endpoint-less edges like the execution graph. `PlaceholderView` is
 exported and tested, and the Source Intelligence limits card quotes the
 declared `1000 / 2000` maximum instead of the `250 / 500` default. `passed`
-and `layer` remain reasoned exemptions.
+remains a reasoned exemption; `layer` is now rendered by the system map's
+table fallback and was removed from both guards' exempt lists.
 
 Certification: implementation `51da8c411dc7ebe0ec2929e456235777e2c009f2`;
 `gate:local` all eleven groups PASS with receipt
@@ -3917,3 +3918,39 @@ PASS. External CI was not run and is not claimed green. The guard is
 name-scoped inside a carrier and proves a field reaches a component that can
 receive its contract, not that every branch draws it; that limit is stated in
 the guard's own header.
+
+### Control Center render truth (current)
+
+The placement guard proves a field NAME occurs inside a component that can
+receive its contract. It cannot prove the field's value reaches the DOM, so a
+field read only in an unreachable branch, computed into an unused variable, or
+used only as a React key would pass it while rendering nothing.
+
+`nightwatch-control-center-render-truth-v1` added the runtime proof: a
+differential harness (`ui/control-center/src/contractRender.test.tsx`)
+generates maximally revealing fixtures from the declared TypeScript contracts
+(now resolving generic type arguments and named type aliases), flips one leaf
+at a time, and requires the rendered DOM to change. It covers all sixteen
+contracts across every view; a field that changes no view's DOM must be
+rendered or exempted with a reason. The harness found and closed 52 unbound or
+unobservable fields across three milestones — including four constant fields
+bound to no render at all, run-detail and timeline identity echoes, graph edge
+metadata with no inventory, and authority constants asserted only as prose. It
+also exposed the graph-endpoint correlation requirement and two generator
+defects.
+
+The same campaign closed the operator-facing gaps the audit measured: view
+changes now set `document.title` and, when the operator navigated, move focus
+to the main content region, while initial load and background refreshes leave
+focus alone; and the browser lane computes styles for the interpolated tone
+families (`status-*`, `graph-node-*`, `stage-chip`), so a rule that exists in
+source but never applies in the built bundle fails.
+
+Certification: implementation `4aabb7c5367fc3ee357f12617c35590f0faaf6a9`;
+`gate:local` all eleven groups PASS with receipt
+`receipt:sha256:65ff134f69b2fbd0a58aaad0`; UI typecheck, 63 tests and build
+PASS; browser lane 4/4; full offline regression 4789 passed / 18 skipped / 0
+failed, unchanged from the baseline. External CI was not run and is not
+claimed green. The harness proves DOM influence, not visual correctness, and
+`schemaVersion`, `afterSeq`, `advisoryOnly`, `passed` and the two loopback
+scope constants remain reasoned exemptions.

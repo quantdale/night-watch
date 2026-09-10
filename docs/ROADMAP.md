@@ -2997,7 +2997,47 @@ header.
 browser workflow lane 4 passed / 0 failed; `gate:local` all eleven groups PASS
 at `51da8c4`.
 
-**Next.** None selected. A placement-level stylesheet guard and
-conditional-reachability remain the contract guard's stated limits; any
-follow-up requires a new authorized task. External CI remains
-`BLOCKED_EXTERNAL` under the predecessor's classification.
+**Next (executed).** The runtime half of the same limit was taken up as
+`nightwatch-control-center-render-truth-v1` and is closed below. A
+placement-level stylesheet guard remains unproven beyond the dynamic-family
+application assertions; external CI remains `BLOCKED_EXTERNAL` under the
+predecessor's classification.
+
+## Control Center render truth
+
+Complete as `nightwatch-control-center-render-truth-v1` at implementation
+`4aabb7c5367fc3ee357f12617c35590f0faaf6a9`, certified from its owned session
+with `gate:local` receipt `receipt:sha256:65ff134f69b2fbd0a58aaad0` and a
+full offline regression of 4789 passed / 18 skipped / 0 failed.
+
+The placement guard is static: it proves a field name reaches a carrier
+component, not that the field's value reaches the rendered DOM. A differential
+harness now generates maximally revealing fixtures from the declared
+TypeScript contracts, flips one leaf at a time, and requires the DOM to
+change. It covers all sixteen contracts across every view and found 52 unbound
+or unobservable fields, every one closed by rendering (or by a reasoned
+exemption where a single-value constant cannot legally differ): four constant
+fields bound to no render at all; run-detail and timeline identity echoes;
+execution, source and system-map graph edge metadata that had no inventory;
+campaign rollups that showed only the first entry; and authority constants
+asserted only as fixed prose. The generator itself was hardened twice:
+generic type arguments and named type aliases are resolved, and graph fixtures
+correlate edge endpoints with real nodes.
+
+Operator-facing gaps from the same audit are closed too. View navigation sets
+`document.title` and focuses the main content region only for operator
+navigation, so initial load and background refreshes never steal focus. The
+browser lane computes styles for the interpolated tone families
+(`status-*`, `graph-node-*`, `stage-chip`), proving the rules apply in the
+built bundle rather than only existing in source. The system map's table
+fallback renders `layer`, so it is no longer exempt in either guard.
+
+**Certification.** UI typecheck, 63 of 63 tests and build; root `typecheck`;
+`hardening:check`; `validation:universe` PASS with UI_LANE=5; browser lane
+4 passed / 0 failed; `gate:local` all eleven groups PASS at `4aabb7c`; full
+offline regression unchanged from baseline.
+
+**Next.** None selected. The harness proves DOM influence in the revealing
+fixture state, not visual correctness or branches the fixture does not take;
+a placement-level stylesheet guard remains unproven. Any follow-up requires a
+new authorized task.

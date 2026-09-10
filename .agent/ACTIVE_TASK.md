@@ -3,13 +3,14 @@
 Task ID: nightwatch-control-center-render-truth-v1
 Phase: CONTROL_CENTER_RENDER_TRUTH_V1
 Title: Control Center Render Truth
-Status: IN_PROGRESS
+Status: COMPLETE
 Task directory: .agent/tasks/nightwatch-control-center-render-truth-v1
 Starting SHA: f0180d1f58d4ab1a1e7e8e226554cf0564ad7f16
-Last validated implementation SHA: f0180d1f58d4ab1a1e7e8e226554cf0564ad7f16
-Last checkpoint: M6 registration and UI validation COMPLETE — UI_LANE=5,
-digest refreshed, UI 63/63, build PASS, universe PASS. M5 dynamic-class
-proofs COMPLETE — status tones, graph-node
+Last validated implementation SHA: 4aabb7c5367fc3ee357f12617c35590f0faaf6a9
+Last checkpoint: M7 certification COMPLETE at implementation
+`4aabb7c5367fc3ee357f12617c35590f0faaf6a9`; `gate:local` all eleven groups
+PASS with receipt `receipt:sha256:65ff134f69b2fbd0a58aaad0`; full offline
+regression 4789 / 18 skipped / 0 failed; R-01 through R-04 CLOSED. — status tones, graph-node
 strokes and stage chips compute their rules in the built bundle. M4
 view-change announcement COMPLETE — navigation sets the
 document title and focuses main content, with initial load and refresh
@@ -25,19 +26,20 @@ mutation proof passed. The owned session
 `sess-390d800d5900` on base
 `f0180d1f58d4ab1a1e7e8e226554cf0564ad7f16`, `session:status` verdict PASS,
 and the predecessor is verified terminal COMPLETE and untouched.
-Current milestone: M7 — certification
-Next action: commit the implementation checkpoint, run `gate:local` and the
-full offline regression from this owned session, reconcile the documentation
-to the receipts, integrate by fast-forward and release.
+Current milestone: COMPLETE — M0 through M7 are closed
+Next action: STOP. Report the certified outcome to the owner. Integration of
+the certified checkpoint by fast-forward from the owned session is the
+campaign's final act, with `HEAD == origin/main` verified after the push. Do
+not reopen R-01 through R-04.
 Authorization class: CONTROL_CENTER_RENDER_TRUTH_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: f0180d1f58d4ab1a1e7e8e226554cf0564ad7f16
-LAST_VALIDATED_IMPLEMENTATION_SHA: f0180d1f58d4ab1a1e7e8e226554cf0564ad7f16
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: f0180d1f58d4ab1a1e7e8e226554cf0564ad7f16
+LAST_VALIDATED_IMPLEMENTATION_SHA: 4aabb7c5367fc3ee357f12617c35590f0faaf6a9
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 4aabb7c5367fc3ee357f12617c35590f0faaf6a9
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
-PHASE_CONTROL_CENTER_RENDER_TRUTH_V1_STATUS: IN_PROGRESS
+PHASE_CONTROL_CENTER_RENDER_TRUTH_V1_STATUS: COMPLETE
 
 ## Outcome
 

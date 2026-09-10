@@ -183,7 +183,7 @@ built bundle fails.
 
 ### M7 — certification
 
-- **Status:** IN_PROGRESS
+- **Status:** COMPLETE
 - Objective: `gate:local` from the owned session, state and docs reconciled,
   fast-forward integration, session released, canonical tree clean.
 - Files: task state, `docs/CURRENT_STATE.md`, `docs/ROADMAP.md`,

@@ -2,7 +2,7 @@
 
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 Task ID: nightwatch-control-center-render-truth-v1
-Status: IN_PROGRESS
+Status: COMPLETE
 
 Evidence ledger for this campaign. It records what was actually run and
 observed, not what was intended. Receipts are written as they are produced.
@@ -120,7 +120,18 @@ build pass; root typecheck and `hardening:check` pass;
 
 ## M7 — certification
 
-_To be filled during execution._
+`gate:local` returned all eleven groups PASS at the implementation commit
+`4aabb7c`, receipt `receipt:sha256:65ff134f69b2fbd0a58aaad0`:
+SEMANTIC_COMPATIBILITY 2083/2070/13/0, OWNER_PROVENANCE 91,
+SYNTHETIC_CAMPAIGN 1797/1797/0 with `deepContainmentLane: PROVEN`. The full
+offline regression passed 4789 / 18 skipped / 0 failed in 13.1 minutes,
+identical to the campaign's starting baseline. The browser lane passed 4/4.
+
+## Integration
+
+Performed by fast-forward from the owned session per the campaign's Git and
+reporting contract, with `HEAD == origin/main` verified after the push
+(`SESSION_INTEGRATED`). No force, no history rewrite.
 
 ## Safety events
 
