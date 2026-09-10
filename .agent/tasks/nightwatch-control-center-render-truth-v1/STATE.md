@@ -36,14 +36,27 @@ operators; and dynamic style classes apply in the built bundle.
 
 ## Current Milestone
 
-Milestone ID: M2
+Milestone ID: M3
 Milestone status: IN_PROGRESS
-What is being attempted: extend the harness to the runs (list, detail,
-timeline), execution graph, campaigns and findings views, including their
-selection flows, and render or exempt every field it exposes.
+What is being attempted: extend the harness to the reviewer, source
+surfaces/graph and system map views, and close every field they expose.
 
 ## Completed Milestones
 
+- **M2 COMPLETE (R-01 views)** — the harness now covers the runs list
+  (`RunListSnapshot`), run detail (`RunDetailSnapshot`), timeline
+  (`TimelineSnapshot`), execution graph, campaigns (summary and coverage) and
+  findings, with the run-selection flow driving detail and graph. It exposed
+  16 leaf findings and all were closed: the run list now renders `product`,
+  `endedAt`, `durationMs` and `nightwatchSha`; run detail takes its identity
+  from the payload (`detail.run.runId`); the timeline renders event
+  `dataCodes` by value and surfaces a payload/selection identity mismatch;
+  the execution-graph node inventory shows `nodeId` beside the label and a
+  `reasonCode` column; campaigns render `executionOnly`, name `blockerCodes`
+  and `reasonCodes`, show the coverage row `memberId` and render stage
+  `reasonCodes`. `passed` is exempt by suffix as the boolean projection of
+  `status`. UI typecheck PASS; full UI suite 61 passed across 5 files; harness
+  matrix 11 seconds.
 - **M1 COMPLETE (R-01 core)** — the harness exists at
   `ui/control-center/src/contractRender.test.tsx`: a TypeScript-AST fixture
   generator (fails closed on unknown shapes), a differential DOM runner that
@@ -152,6 +165,21 @@ Relevant failure/output summary: before the repairs the harness reported
 and `ReadinessSnapshot.ownerScope.reason` unobservable; each was rendered in
 its owning view. `HealthSnapshot.scope` and `SafetySnapshot.scope` are
 single-value constants asserted by a fixed posture label.
+
+Command: `npm --prefix ui/control-center run test -- src/contractRender.test.tsx` after the M2 views
+Result: FAIL then PASS
+When: 2026-09-10
+Relevant failure/output summary: the extended matrix reported 16 unobservable
+leaves across RunListSnapshot, RunDetailSnapshot, TimelineSnapshot,
+ExecutionGraphSnapshot, CampaignSummarySnapshot, CampaignCoverageSnapshot and
+FindingsSnapshot. Each was rendered or exempted; the matrix then passed 3/3 in
+11 seconds.
+
+Command: `npm --prefix ui/control-center run test`
+Result: PASS
+When: 2026-09-10
+Relevant failure/output summary: 61 passed across 5 files after the M2
+rendering repairs.
 
 ## Decisions Made During This Task
 

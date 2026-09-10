@@ -13,10 +13,10 @@
 - [x] Mutation proof: removing a rendered field's DOM effect fails the harness
 
 ## M2 — list, graph, campaign and finding views (R-01)
-- [ ] Runs list, run detail and timeline covered
-- [ ] Execution graph covered through the run selection flow
-- [ ] Campaigns and Findings covered
-- [ ] Every exposed field rendered or exempted with a reason
+- [x] Runs list, run detail and timeline covered
+- [x] Execution graph covered through the run selection flow
+- [x] Campaigns and Findings covered
+- [x] Every exposed field rendered or exempted with a reason
 
 ## M3 — reviewer, source and system map (R-01)
 - [ ] Reviewer covered through its navigation flow

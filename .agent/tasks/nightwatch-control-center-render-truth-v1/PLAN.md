@@ -130,7 +130,7 @@ built bundle fails.
 
 ### M2 — list, graph, campaign and finding views (R-01)
 
-- **Status:** IN_PROGRESS
+- **Status:** COMPLETE
 - Objective: extend the harness to runs (list, detail, timeline), execution
   graph, campaigns and findings, including their selection flows.
 - Files: `ui/control-center/src/contractRender.test.tsx`; `App.tsx` only where
@@ -141,7 +141,7 @@ built bundle fails.
 
 ### M3 — reviewer, source and system map (R-01)
 
-- **Status:** NOT_STARTED
+- **Status:** IN_PROGRESS
 - Objective: extend the harness to reviewer, source surfaces/graph and the
   system map, and close every remaining exposed field.
 - Files: `ui/control-center/src/contractRender.test.tsx`; `App.tsx` only where

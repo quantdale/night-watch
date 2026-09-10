@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import ts from 'typescript';
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { App } from './App';
 import { CONTROL_CENTER_API_PATHS } from './api';
@@ -293,8 +293,21 @@ const ALL_CONTRACTS = [...OVERVIEW_CONTRACTS, ...REMAINING_CONTRACTS];
 interface ViewCase {
   readonly name: string;
   readonly contracts: readonly string[];
-  readonly marker: string;
-  readonly activate?: () => void;
+  readonly marker: string | RegExp;
+  readonly activate?: () => void | Promise<void>;
+}
+
+const RUN_DETAIL_MARKER = /RUN DETAIL \//;
+
+async function openRunsList(): Promise<void> {
+  window.location.hash = '#runs';
+  await screen.findByText('Inspect what happened, in order.');
+}
+
+async function inspectFirstRun(): Promise<void> {
+  await openRunsList();
+  fireEvent.click(await screen.findByRole('button', { name: 'Inspect' }));
+  await screen.findByText(RUN_DETAIL_MARKER);
 }
 
 const VIEWS: readonly ViewCase[] = [
@@ -304,6 +317,39 @@ const VIEWS: readonly ViewCase[] = [
     contracts: OVERVIEW_CONTRACTS,
     marker: 'Safety is a posture, not a green badge.',
     activate: () => { window.location.hash = '#safety'; },
+  },
+  {
+    name: 'runs',
+    contracts: ['RunListSnapshot'],
+    marker: 'Inspect what happened, in order.',
+    activate: () => { window.location.hash = '#runs'; },
+  },
+  {
+    name: 'run-detail',
+    contracts: ['RunDetailSnapshot', 'TimelineSnapshot'],
+    marker: RUN_DETAIL_MARKER,
+    activate: inspectFirstRun,
+  },
+  {
+    name: 'execution-graph',
+    contracts: ['ExecutionGraphSnapshot'],
+    marker: 'Trace the bounded run shape.',
+    activate: async () => {
+      await inspectFirstRun();
+      window.location.hash = '#execution-graph';
+    },
+  },
+  {
+    name: 'campaigns',
+    contracts: ['CampaignSummarySnapshot', 'CampaignCoverageSnapshot'],
+    marker: 'See the shape of coverage.',
+    activate: () => { window.location.hash = '#campaigns'; },
+  },
+  {
+    name: 'findings',
+    contracts: ['FindingsSnapshot'],
+    marker: 'Keep the signal, lose the raw evidence.',
+    activate: () => { window.location.hash = '#findings'; },
   },
 ];
 
@@ -325,7 +371,7 @@ const NOT_OBSERVABLE: Readonly<Record<string, string>> = Object.freeze({
 });
 
 function isExempt(key: string): boolean {
-  return key in NOT_OBSERVABLE || key.endsWith('.schemaVersion') || key.includes('.advisoryOnly');
+  return key in NOT_OBSERVABLE || key.endsWith('.schemaVersion') || key.includes('.advisoryOnly') || key.endsWith('.passed');
 }
 
 function endpointPayloads(fixtures: Map<string, Record<string, unknown>>): Map<string, unknown> {
@@ -382,7 +428,7 @@ async function mount(view: ViewCase, fixtures: Map<string, Record<string, unknow
   window.location.hash = '';
   const rendered = render(<App />);
   try {
-    view.activate?.();
+    await view.activate?.();
     await screen.findByText(view.marker);
     return { html: rendered.container.ownerDocument.body.innerHTML, requests };
   } finally {
@@ -429,7 +475,19 @@ describe('control center render truth', () => {
     // Contracts whose observability is asserted at this milestone. The
     // source-view-only fields of SourceSummarySnapshot are asserted when the
     // source view is added to VIEWS.
-    const ASSERTED_CONTRACTS = ['HealthSnapshot', 'MetaSnapshot', 'ReadinessSnapshot', 'SafetySnapshot'];
+    const ASSERTED_CONTRACTS = [
+      'HealthSnapshot',
+      'MetaSnapshot',
+      'ReadinessSnapshot',
+      'SafetySnapshot',
+      'RunListSnapshot',
+      'RunDetailSnapshot',
+      'TimelineSnapshot',
+      'ExecutionGraphSnapshot',
+      'CampaignSummarySnapshot',
+      'CampaignCoverageSnapshot',
+      'FindingsSnapshot',
+    ];
     const coveredContracts = [...new Set(VIEWS.flatMap((view) => [...view.contracts]))];
     const covered = leavesFor(ASSERTED_CONTRACTS);
     expect(covered.length).toBeGreaterThan(60);

@@ -47,7 +47,24 @@ restoring passes. Full UI suite 61/61.
 
 ## M2 — list, graph, campaign and finding views
 
-_To be filled during execution._
+The matrix grew to eleven contracts across seven views, driven through the
+real selection flows (inspect a run, then open its detail, timeline and
+execution graph). It reported 16 unobservable leaves; all were closed by
+rendering:
+
+- runs list: `product`, `endedAt`, `durationMs`, `nightwatchSha`;
+- run detail: identity now comes from the payload (`detail.run.runId`) rather
+  than the selection prop;
+- timeline: event `dataCodes` are rendered by value, and a payload/selection
+  identity mismatch is surfaced;
+- execution graph: the node inventory shows `nodeId` beside the label and
+  gained a `reasonCode` column;
+- campaigns: `executionOnly`, named `blockerCodes` and `reasonCodes`, the
+  coverage row `memberId`, and stage `reasonCodes`;
+- `passed` (list and detail) is exempt by suffix as the boolean projection of
+  `status`.
+
+The matrix passes in 11 seconds; the full UI suite is 61/61.
 
 ## M3 — reviewer, source and system map
 
