@@ -285,6 +285,18 @@ test('qualifies every built Control Center view over one synthetic authority com
     // The readiness contract's own measurements, not just its verdict.
     await expect(page.getByRole('heading', { name: 'Everything the readiness contract states' })).toBeVisible();
 
+    // R-03. The stylesheet guard proves a rule EXISTS for every rendered
+    // class; these assertions prove the interpolated tone families APPLY in
+    // the built bundle, so a rule that is overridden or never reaches the
+    // artifact fails. Two distinct tones must compute distinct backgrounds.
+    type StatusToneReader = { getComputedStyle(element: unknown): { backgroundColor: string } };
+    const statusToneBackground = async (selector: string): Promise<string> => page.locator(selector).first().evaluate((element) => (globalThis as unknown as StatusToneReader).getComputedStyle(element).backgroundColor);
+    const readyBackground = await statusToneBackground('.status-ready');
+    const warningBackground = await statusToneBackground('.status-warning');
+    expect(readyBackground).not.toBe('rgba(0, 0, 0, 0)');
+    expect(warningBackground).not.toBe('rgba(0, 0, 0, 0)');
+    expect(readyBackground).not.toBe(warningBackground);
+
     await page.getByRole('link', { name: 'Safety Center' }).click({ force: true });
     await expect(page.getByRole('heading', { name: 'Safety is a posture, not a green badge.' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'What this surface can do' })).toBeVisible();
@@ -320,10 +332,23 @@ test('qualifies every built Control Center view over one synthetic authority com
     // A class with markup but no rule computes to the transparent default.
     expect(toolbarBackground).not.toBe('rgba(0, 0, 0, 0)');
 
+    // The interpolated `graph-node-${tone}` family, computed on the drawn
+    // nodes: SVG default stroke is `none`, so any non-`none` value proves the
+    // tone rule applies to the built class.
+    type GraphNodeReader = { getComputedStyle(element: unknown): { stroke: string } };
+    const nodeStrokes = await page.locator('svg.execution-graph rect.graph-node').evaluateAll((elements) => elements.slice(0, 8).map((element) => (globalThis as unknown as GraphNodeReader).getComputedStyle(element).stroke));
+    expect(nodeStrokes.length).toBeGreaterThan(0);
+    for (const stroke of nodeStrokes) expect(stroke).not.toBe('none');
+
     await page.getByRole('link', { name: 'Campaign Intelligence' }).click({ force: true });
     await expect(page.getByRole('heading', { name: 'See the shape of coverage.' })).toBeVisible();
     await expect(page.getByText('synthetic-product')).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Contract-stage coverage' })).toBeVisible();
+    // The `stage-${tone}` family applies to the coverage chips in the bundle:
+    // without the rule an element computes no border at all.
+    type StageChipReader = { getComputedStyle(element: unknown): { borderTopWidth: string } };
+    const stageBorderWidth = await page.locator('.stage-chip').first().evaluate((element) => (globalThis as unknown as StageChipReader).getComputedStyle(element).borderTopWidth);
+    expect(stageBorderWidth).toBe('1px');
 
     await page.getByRole('link', { name: 'Source Intelligence' }).click({ force: true });
     await expect(page.getByRole('heading', { name: 'Follow proof, currentness, and capability.' })).toBeVisible();

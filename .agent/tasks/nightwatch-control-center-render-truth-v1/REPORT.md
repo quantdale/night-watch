@@ -93,7 +93,12 @@ The matrix covers all 16 contracts in 21 seconds; the full UI suite is
 
 ## M4 — view-change focus, title and announcement
 
-_To be filled during execution._
+`navigate()` and the `hashchange` listener now raise a navigation flag, and a
+single effect on the active view sets
+`document.title = Nightwatch Control Center — <label>` and, only when the flag
+is set, focuses the main content region. Initial load and SSE refreshes do not
+move focus. Two regressions cover both navigation paths, the title, the focus
+move, initial-load focus and refresh preservation. App suite 39/39.
 
 ## M5 — dynamic-class application in the built bundle
 

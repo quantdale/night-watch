@@ -36,14 +36,21 @@ operators; and dynamic style classes apply in the built bundle.
 
 ## Current Milestone
 
-Milestone ID: M4
+Milestone ID: M5
 Milestone status: IN_PROGRESS
-What is being attempted: view-change announcement (R-02) — document title,
-main-content focus on user navigation, and no focus theft on initial load or
-background refresh.
+What is being attempted: dynamic-class application (R-03) — computed-style
+proofs for the interpolated tone families in the built bundle.
 
 ## Completed Milestones
 
+- **M4 COMPLETE (R-02)** — one navigation path now owns the announcement:
+  `navigate()` and the `hashchange` listener raise a navigation flag, and an
+  effect on the active view sets `document.title` to
+  `Nightwatch Control Center — <label>` and, only when the operator
+  navigated, focuses the main content region (`tabIndex={-1}`, `ref`). Initial
+  load and background refreshes leave focus alone. Two regressions cover nav
+  click, hash navigation, title changes, initial-load focus and refresh focus
+  preservation. App suite 39 passed.
 - **M3 COMPLETE (R-01 all views)** — the harness now covers all sixteen
   contracts: reviewer, source summary/surfaces/graph and system map joined
   the matrix. Two generator defects were found and fixed (generic type
@@ -215,6 +222,13 @@ Relevant failure/output summary: 61 passed across 5 files. Three guards fired
 first and were repaired rather than bypassed: the placement guard's `layer`
 exemption became stale once the system map rendered the column, and two App
 assertions named text this milestone changed.
+
+Command: `npm --prefix ui/control-center run test -- src/App.test.tsx`
+Result: PASS
+When: 2026-09-10
+Relevant failure/output summary: 39 passed, including the two new
+announcement regressions (title and main-content focus after a nav click and
+after a hash change; no focus movement on initial load or refresh).
 
 ## Decisions Made During This Task
 

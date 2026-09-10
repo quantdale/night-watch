@@ -175,6 +175,37 @@ describe('Control Center UI shell', () => {
     expect(screen.getByText('Owner-local findings are unavailable. No finding or pass claim is made.')).toBeInTheDocument();
   });
 
+  it('announces a view change through the title and main-content focus', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await screen.findByRole('heading', { name: 'Know the posture before the next run.' });
+    // Initial load does not steal focus.
+    expect(document.activeElement).toBe(document.body);
+    expect(document.title).toBe('Nightwatch Control Center — Overview');
+
+    await user.click(within(screen.getByRole('navigation', { name: 'Primary' })).getByRole('link', { name: 'Safety Center' }));
+    await screen.findByRole('heading', { name: 'Safety is a posture, not a green badge.' });
+    expect(document.title).toBe('Nightwatch Control Center — Safety Center');
+    expect(document.activeElement).toBe(screen.getByRole('main'));
+  });
+
+  it('announces hash navigation and never steals focus on a refresh', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await screen.findByRole('heading', { name: 'Know the posture before the next run.' });
+
+    window.location.hash = '#runs';
+    await screen.findByRole('heading', { name: 'Inspect what happened, in order.' });
+    expect(document.title).toBe('Nightwatch Control Center — Runs');
+    expect(document.activeElement).toBe(screen.getByRole('main'));
+
+    // A background refresh rerenders the data and leaves focus alone.
+    const refresh = screen.getByRole('button', { name: 'Refresh local snapshots' });
+    refresh.focus();
+    fireEvent.click(refresh);
+    expect(document.activeElement).toBe(refresh);
+  });
+
   it('keeps navigation and controls local, typed, and keyboard reachable', async () => {
     render(<App />);
     await screen.findByRole('heading', { name: 'Know the posture before the next run.' });

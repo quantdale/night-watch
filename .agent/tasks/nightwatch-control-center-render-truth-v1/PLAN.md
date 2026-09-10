@@ -152,7 +152,7 @@ built bundle fails.
 
 ### M4 — view-change focus, title and announcement (R-02)
 
-- **Status:** IN_PROGRESS
+- **Status:** COMPLETE
 - Objective: make a view change announce itself without disturbing initial
   load or background refreshes.
 - Files: `ui/control-center/src/App.tsx`, `ui/control-center/src/App.test.tsx`.
@@ -163,7 +163,7 @@ built bundle fails.
 
 ### M5 — dynamic-class application in the built bundle (R-03)
 
-- **Status:** NOT_STARTED
+- **Status:** IN_PROGRESS
 - Objective: prove representative interpolated style classes apply at runtime.
 - Files: `tests/browser/controlCenterBrowser.browser.ts`.
 - Acceptance: computed styles for the dynamic families differ from the

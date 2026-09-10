@@ -1544,6 +1544,10 @@ export function PlaceholderView({ view }: { readonly view: (typeof VIEW_DEFINITI
 
 function DashboardApp(): ReactNode {
   const [activeView, setActiveView] = useState<ViewId>(() => readViewFromHash());
+  const mainRef = useRef<HTMLElement>(null);
+  // Set only by user navigation, so an initial load or a background refresh
+  // never steals focus from an operator who is reading.
+  const announceNavigationRef = useRef(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [loadState, setLoadState] = useState<OverviewLoadState>({ kind: 'loading' });
   const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
@@ -1592,7 +1596,10 @@ function DashboardApp(): ReactNode {
   const refresh = useCallback((): void => setRefreshKey((value) => value + 1), []);
 
   useEffect(() => {
-    const onHashChange = (): void => setActiveView(readViewFromHash());
+    const onHashChange = (): void => {
+      announceNavigationRef.current = true;
+      setActiveView(readViewFromHash());
+    };
     window.addEventListener('hashchange', onHashChange);
     return () => window.removeEventListener('hashchange', onHashChange);
   }, []);
@@ -1690,10 +1697,21 @@ function DashboardApp(): ReactNode {
   }, [activeView, refreshKey, selectedRunId]);
 
   const navigate = useCallback((view: ViewId): void => {
+    announceNavigationRef.current = true;
     window.location.hash = view === 'overview' ? '' : view;
     setActiveView(view);
   }, []);
   const currentView = VIEW_DEFINITIONS.find((view) => view.id === activeView) ?? VIEW_DEFINITIONS[0];
+
+  // A view change names itself in the document title and, when the operator
+  // caused it, moves focus to the main content so assistive technology
+  // announces where they are rather than leaving them on the nav link.
+  useEffect(() => {
+    document.title = `Nightwatch Control Center — ${currentView.label}`;
+    if (!announceNavigationRef.current) return;
+    announceNavigationRef.current = false;
+    mainRef.current?.focus({ preventScroll: true });
+  }, [currentView]);
   const retryRunData = useCallback((): void => setRefreshKey((value) => value + 1), []);
   const selectRun = useCallback((runId: string): void => setSelectedRunId(runId), []);
   const selectSurface = useCallback((surfaceId: string): void => setSelectedSurfaceId(surfaceId), []);
@@ -1752,7 +1770,7 @@ function DashboardApp(): ReactNode {
         </nav>
         <div className="sidebar-footer"><div className="posture-indicator"><span className="pulse-dot" aria-hidden="true" /><div><strong>Local only</strong><span>External egress disabled</span></div></div><span className="version-tag">API v1</span></div>
       </aside>
-      <main id="main-content" className="main-content">
+      <main id="main-content" className="main-content" tabIndex={-1} ref={mainRef}>
         <header className="topbar"><div><p className="topbar-kicker">{currentView.eyebrow}</p><p className="topbar-context">Nightwatch / <strong>{currentView.label}</strong></p></div><div className="topbar-actions"><span className="read-only-tag"><span aria-hidden="true">◉</span> Read-only session</span><button className="icon-button" type="button" onClick={refresh} aria-label="Refresh local snapshots" title="Refresh local snapshots"><Icon name="refresh" /></button></div></header>
         <div className="content-wrap">
           {renderDataView()}

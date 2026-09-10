@@ -25,10 +25,10 @@
 - [x] No non-exempt leaf unobservable; exempt list small and reasoned
 
 ## M4 — view-change focus, title and announcement (R-02)
-- [ ] Navigation writes the document title per view
-- [ ] User navigation focuses the main content region
-- [ ] Initial load and SSE refresh do not move focus
-- [ ] Regressions for nav click, hash change and back/forward
+- [x] Navigation writes the document title per view
+- [x] User navigation focuses the main content region
+- [x] Initial load and SSE refresh do not move focus
+- [x] Regressions for nav click, hash change and back/forward
 
 ## M5 — dynamic-class application in the built bundle (R-03)
 - [ ] Computed-style assertions for `graph-node-*`, `graph-edge-dimmed`
