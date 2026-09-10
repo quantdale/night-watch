@@ -113,7 +113,10 @@ and no retry was added.
 
 ## M6 — registration and UI validation
 
-_To be filled during execution._
+The harness is registered in UI_LANE (five files) and the universe digest
+advanced to `sha256:b735b90cf16c33f71476b1dc`. UI typecheck, 63 tests and
+build pass; root typecheck and `hardening:check` pass;
+`validation:universe` reports every discovered test classified.
 
 ## M7 — certification
 

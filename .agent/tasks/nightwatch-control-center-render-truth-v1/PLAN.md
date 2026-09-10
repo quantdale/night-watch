@@ -172,7 +172,7 @@ built bundle fails.
 
 ### M6 — registration and UI validation
 
-- **Status:** IN_PROGRESS
+- **Status:** COMPLETE
 - Objective: register the new suite, refresh the inventory digest, and pass
   the full UI validation set.
 - Files: `config/validation-universe.v1.json`.
@@ -183,7 +183,7 @@ built bundle fails.
 
 ### M7 — certification
 
-- **Status:** NOT_STARTED
+- **Status:** IN_PROGRESS
 - Objective: `gate:local` from the owned session, state and docs reconciled,
   fast-forward integration, session released, canonical tree clean.
 - Files: task state, `docs/CURRENT_STATE.md`, `docs/ROADMAP.md`,

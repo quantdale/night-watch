@@ -7,7 +7,9 @@ Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-control-center-render-truth-v1
 Starting SHA: f0180d1f58d4ab1a1e7e8e226554cf0564ad7f16
 Last validated implementation SHA: f0180d1f58d4ab1a1e7e8e226554cf0564ad7f16
-Last checkpoint: M5 dynamic-class proofs COMPLETE — status tones, graph-node
+Last checkpoint: M6 registration and UI validation COMPLETE — UI_LANE=5,
+digest refreshed, UI 63/63, build PASS, universe PASS. M5 dynamic-class
+proofs COMPLETE — status tones, graph-node
 strokes and stage chips compute their rules in the built bundle. M4
 view-change announcement COMPLETE — navigation sets the
 document title and focuses main content, with initial load and refresh
@@ -23,10 +25,10 @@ mutation proof passed. The owned session
 `sess-390d800d5900` on base
 `f0180d1f58d4ab1a1e7e8e226554cf0564ad7f16`, `session:status` verdict PASS,
 and the predecessor is verified terminal COMPLETE and untouched.
-Current milestone: M6 — registration and UI validation
-Next action: register the harness in `config/validation-universe.v1.json`
-UI_LANE, refresh `inventoryDigest`, and run the full UI validation set plus
-root typecheck, `hardening:check` and `validation:universe`.
+Current milestone: M7 — certification
+Next action: commit the implementation checkpoint, run `gate:local` and the
+full offline regression from this owned session, reconcile the documentation
+to the receipts, integrate by fast-forward and release.
 Authorization class: CONTROL_CENTER_RENDER_TRUTH_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2

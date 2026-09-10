@@ -36,11 +36,11 @@
 - [x] Each assertion fails against the unstyled default
 
 ## M6 — registration and UI validation
-- [ ] New suite registered in `config/validation-universe.v1.json` UI_LANE
-- [ ] `inventoryDigest` refreshed
-- [ ] UI typecheck, all tests and build PASS
-- [ ] Root `typecheck` and `hardening:check` PASS
-- [ ] `validation:universe` PASS
+- [x] New suite registered in `config/validation-universe.v1.json` UI_LANE
+- [x] `inventoryDigest` refreshed
+- [x] UI typecheck, all tests and build PASS
+- [x] Root `typecheck` and `hardening:check` PASS
+- [x] `validation:universe` PASS
 
 ## M7 — certification
 - [ ] `gate:local` PASS from this owned session

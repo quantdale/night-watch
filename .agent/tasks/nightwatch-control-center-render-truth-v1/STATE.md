@@ -36,14 +36,20 @@ operators; and dynamic style classes apply in the built bundle.
 
 ## Current Milestone
 
-Milestone ID: M6
+Milestone ID: M7
 Milestone status: IN_PROGRESS
-What is being attempted: registration and UI validation — UI_LANE
-registration and inventory digest, UI typecheck/tests/build, root typecheck,
-`hardening:check` and `validation:universe`.
+What is being attempted: certification — `gate:local` and a full offline
+regression at the implementation checkpoint, documentation reconciliation,
+fast-forward integration and session release.
 
 ## Completed Milestones
 
+- **M6 COMPLETE** — `ui/control-center/src/contractRender.test.tsx` is
+  registered in `config/validation-universe.v1.json` UI_LANE (5 files) and
+  `inventoryDigest` advanced from `sha256:e6ad9456574d63403ba96436` to
+  `sha256:b735b90cf16c33f71476b1dc`. UI typecheck PASS; UI suite 63 passed
+  across 5 files; UI build PASS at 3 files / 330,528 bytes; root `typecheck`
+  PASS; `hardening:check` PASS; `validation:universe` PASS.
 - **M5 COMPLETE (R-03)** — the browser lane computes styles for three
   interpolated families in the built bundle: `status-ready` and
   `status-warning` backgrounds are non-transparent and distinct; every drawn
@@ -250,6 +256,25 @@ workflow at finding 8 of 30 with neither a decision nor a refusal; that is the
 detached-row race the suite's own comment documents under SSE reconnect
 pressure. The workflow passed alone in 6.2 minutes and in the repeated full
 lane; no retry was added and no assertion was weakened.
+
+Command: `npm run validation:universe` after registering the harness
+Result: PASS
+When: 2026-09-10
+Relevant failure/output summary: the digest advanced to
+`sha256:b735b90cf16c33f71476b1dc`; UI_LANE=5; every discovered test belongs to
+exactly one class.
+
+Command: `npm --prefix ui/control-center run typecheck`, `run test`, `run build`
+Result: PASS
+When: 2026-09-10
+Relevant failure/output summary: typecheck clean; 63 tests across 5 files
+passed; build at 3 files / 330,528 bytes with no external references.
+
+Command: `npm run typecheck` and `node bin/hardening-check.mjs`
+Result: PASS
+When: 2026-09-10
+Relevant failure/output summary: no diagnostics; offline structural
+invariants hold.
 
 ## Decisions Made During This Task
 
