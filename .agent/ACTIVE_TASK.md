@@ -1,67 +1,53 @@
 # Active Task
 
-Task ID: nightwatch-control-center-ui-completion-v1
-Phase: CONTROL_CENTER_UI_COMPLETION_V1
-Title: Control Center UI Completion
-Status: COMPLETE
-Task directory: .agent/tasks/nightwatch-control-center-ui-completion-v1
-Starting SHA: 11c9ea62405c5b9b0eddd011fb7083da83348ee7
-Last validated implementation SHA: 9b30e27af075ea3a62c463475388933ebe3dca9e
-Last checkpoint: M8 certification COMPLETE at implementation
-`9b30e27af075ea3a62c463475388933ebe3dca9e`; `gate:local` all eleven groups
-PASS from the owned session at documentation descendant
-`fa5bef068a157df520934b811048e9300f597b81` with receipt
-`receipt:sha256:8f5e1452a0a909c6721ce272`; U-01 through U-06 CLOSED.
-Current milestone: COMPLETE — M0 through M8 are closed
-Next action: STOP. Report the certified outcome to the owner. Under the
-owner's completion directive, the certified checkpoint
-`70113ef7f5fb73a48a61f2bf171bf553ed795270` was integrated by fast-forward
-from `session/nightwatch-control-center-ui-com-9a04214f` to `origin/main` and
-verified at that SHA; live HEAD is discovered from Git. Do not reopen U-01
-through U-06. The recommended successor is a placement-level
-contract-coverage check.
-Authorization class: CONTROL_CENTER_UI_COMPLETION_V1
+Task ID: nightwatch-control-center-placement-coverage-v1
+Phase: CONTROL_CENTER_PLACEMENT_COVERAGE_V1
+Title: Control Center Placement Coverage
+Status: IN_PROGRESS
+Task directory: .agent/tasks/nightwatch-control-center-placement-coverage-v1
+Starting SHA: ceb8fe21f9dd90666190c9272030a0dbfabc458f
+Last validated implementation SHA: ceb8fe21f9dd90666190c9272030a0dbfabc458f
+Last checkpoint: M0 execution truth COMPLETE; the owned session
+`nightwatch-control-center-placem-f8abc223` is claimed as
+`sess-36f4ca096045` on base
+`ceb8fe21f9dd90666190c9272030a0dbfabc458f`, `session:status` verdict PASS,
+and the predecessor is verified terminal COMPLETE and untouched.
+Current milestone: M1 — the placement guard (P-01)
+Next action: implement the carrier model in
+`ui/control-center/src/contractCoverage.test.ts`, run
+`npm --prefix ui/control-center run test -- contractCoverage`, and record the
+measured failing set in `STATE.md` before repairing any field.
+Authorization class: CONTROL_CENTER_PLACEMENT_COVERAGE_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
-STARTING_SHA: 11c9ea62405c5b9b0eddd011fb7083da83348ee7
-LAST_VALIDATED_IMPLEMENTATION_SHA: 9b30e27af075ea3a62c463475388933ebe3dca9e
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 9b30e27af075ea3a62c463475388933ebe3dca9e
-LAST_DOCUMENTATION_CHECKPOINT_SHA: fa5bef068a157df520934b811048e9300f597b81
+STARTING_SHA: ceb8fe21f9dd90666190c9272030a0dbfabc458f
+LAST_VALIDATED_IMPLEMENTATION_SHA: ceb8fe21f9dd90666190c9272030a0dbfabc458f
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: ceb8fe21f9dd90666190c9272030a0dbfabc458f
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
-PHASE_CONTROL_CENTER_UI_COMPLETION_V1_STATUS: COMPLETE
+PHASE_CONTROL_CENTER_PLACEMENT_COVERAGE_V1_STATUS: IN_PROGRESS
 
 ## Outcome
 
-All six findings U-01 through U-06 are CLOSED with acceptance evidence. Every
-field the Control Center UI fetches now reaches the operator or is exempt with
-a stated reason; no client-applied bound is presented as the server's bound or
-as completeness; every rendered class has a stylesheet rule; and two
-mechanical comparisons now hold both defect classes closed.
-
-`gate:local` PASS from this owned session at documentation descendant
-`fa5bef068a157df520934b811048e9300f597b81` of implementation
-`9b30e27af075ea3a62c463475388933ebe3dca9e`, all eleven groups PASS,
-receipt `receipt:sha256:8f5e1452a0a909c6721ce272`. `campaign:synthetic`
-1797 of 1797 with `deepContainmentLane` PROVEN. Browser workflow lane 4
-passed. UI suite 55 of 55, up from 41.
-
-The gate PASS is a local receipt from this host. External CI remains
-`BLOCKED_EXTERNAL` under the predecessor's classification and is not claimed
-green. The certified checkpoint was integrated by fast-forward and verified.
+Not yet certified. The measured starting state: the contract guard is
+name-level over `App.tsx`; 16 fields are fetched but rendered in no carrier of
+their contract; 5 fields are deliberately unrendered; the five paged lists
+never render `page.truncated`; the source graph drops endpoint-less edges
+silently; `PlaceholderView` is untested; and a graph-limits card states the
+server's defaults as its maximum.
 
 ## Mission
 
-Complete the local Control Center UI: render every field the client already
-fetches or declare it unrendered with a reason; stop presenting a
-client-applied bound as the server's bound or as completeness; give every
-rendered class a stylesheet rule; and install the two mechanical comparisons
-whose absence let all three happen.
+Make the contract guard prove placement; close the 16 gaps it exposes; render
+the server's paged truncation; give the source graph the execution graph's
+undrawn-edge disclosure; export and test the placeholder fail-safe; and quote
+the declared graph limits. LOCAL only; no server, contract, bound or authority
+changes.
 
 Read in this order:
 
-1. `openspec/changes/nightwatch-control-center-ui-completion-v1/audit.md`
-2. `.agent/tasks/nightwatch-control-center-ui-completion-v1/{SPEC,PLAN,STATE}.md`
+1. `openspec/changes/nightwatch-control-center-placement-coverage-v1/audit.md`
+2. `.agent/tasks/nightwatch-control-center-placement-coverage-v1/{SPEC,PLAN,STATE}.md`
 3. `.agent/EXECUTION_PROMPT.md`
 4. `AGENTS.md`, `.agent/PLANS.md`, applicable instructions
 5. `docs/ARCHITECTURE.md` for the Control Center boundary, then live
@@ -71,36 +57,31 @@ Read in this order:
 
 Do not rebuild unless live recon finds a concrete regression:
 
+- `nightwatch-control-center-ui-completion-v1` is terminal COMPLETE and
+  integrated at `ceb8fe2`. U-01 through U-06 are CLOSED; do not reopen them.
 - `nightwatch-residual-closure-and-lane-qualification-v1` is terminal
-  COMPLETE. R-01 through R-07 are CLOSED with acceptance evidence. Its
-  terminal record stays untouched.
-- The three lanes it left `UNAVAILABLE_CAPABILITY` by authority — the online
-  dependency-advisory scan, the 12 owner-run manual harnesses and the 6
-  live-app smoke lanes — and the `BLOCKED_EXTERNAL` external CI state are
-  unchanged by this campaign.
-- `nightwatch-repository-hardening-implementation-v1` remains terminal
-  COMPLETE with NW-01 through NW-15 closed.
+  COMPLETE; R-01 through R-07 are CLOSED; its three `UNAVAILABLE_CAPABILITY`
+  lanes and the `BLOCKED_EXTERNAL` external CI state are unchanged.
 - The permanent owner scope freeze, L6 containment, immutable evidence and
   review store identities with their no-replace patterns.
-
-Every change in this campaign is additive rendering, styling or test surface.
-No contract, route, adapter, bound or sanitizer is touched, and artifacts
-written by earlier schemas keep reading.
+- Every change is additive rendering, coverage or test surface. No contract,
+  route, adapter, bound or sanitizer is touched, and artifacts written by
+  earlier schemas keep reading.
 
 ## Routing and safety
 
 ```
-CAMPAIGN: nightwatch-control-center-ui-completion-v1
+CAMPAIGN: nightwatch-control-center-placement-coverage-v1
 CHILD TASK: NONE
 WAVE: NONE
-SESSION WORKTREE: session/nightwatch-control-center-ui-com-9a04214f
+SESSION WORKTREE: session/nightwatch-control-center-placem-f8abc223
 
 IMPLEMENTATION AUTHORIZED:
   ui/control-center source/tests/styles,
   tests/browser/controlCenterBrowser.browser.ts,
   config/validation-universe.v1.json UI_LANE registration,
   Nightwatch docs/OpenSpec/task state,
-  the six registered findings U-01 through U-06,
+  the five registered findings P-01 through P-05,
   commits/pushes/integration and local certification from the owned session.
 
 REAL PRODUCTION CONTACT:              NOT AUTHORIZED
@@ -113,7 +94,7 @@ EXTERNAL FILING:                      NOT AUTHORIZED
 CREDENTIALS / DEPLOYMENT:             NOT AUTHORIZED
 SIBLING WRITES:                       NOT AUTHORIZED
 FORCE PUSH / HISTORY REWRITE:         NOT AUTHORIZED
-REOPENING R-01..R-07 OR NW-01..NW-15: NOT AUTHORIZED
+REOPENING U-01..U-06 OR R-01..R-07:   NOT AUTHORIZED
 ```
 
 LOCAL only. Sibling repositories remain read-only. Never retire, prune, adopt
