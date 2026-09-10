@@ -36,13 +36,24 @@ operators; and dynamic style classes apply in the built bundle.
 
 ## Current Milestone
 
-Milestone ID: M5
+Milestone ID: M6
 Milestone status: IN_PROGRESS
-What is being attempted: dynamic-class application (R-03) — computed-style
-proofs for the interpolated tone families in the built bundle.
+What is being attempted: registration and UI validation — UI_LANE
+registration and inventory digest, UI typecheck/tests/build, root typecheck,
+`hardening:check` and `validation:universe`.
 
 ## Completed Milestones
 
+- **M5 COMPLETE (R-03)** — the browser lane computes styles for three
+  interpolated families in the built bundle: `status-ready` and
+  `status-warning` backgrounds are non-transparent and distinct; every drawn
+  `rect.graph-node` carries a non-`none` computed stroke (the SVG default is
+  `none`, so the tone rule applies); and the `stage-chip` border width
+  computes to `1px` (without the rule an element computes no border). The
+  lane passes 4/4, including a run in which one earlier full-suite attempt
+  hit the documented detached-row race in the 30-decision workflow; that
+  workflow passed in isolation (6.2m) and in the repeated full lane (7.3m),
+  and no retry was added.
 - **M4 COMPLETE (R-02)** — one navigation path now owns the announcement:
   `navigate()` and the `hashchange` listener raise a navigation flag, and an
   effect on the active view sets `document.title` to
@@ -229,6 +240,16 @@ When: 2026-09-10
 Relevant failure/output summary: 39 passed, including the two new
 announcement regressions (title and main-content focus after a nav click and
 after a hash change; no focus movement on initial load or refresh).
+
+Command: `npm run control-center:ui:browser`
+Result: PASS (second run; first run hit a documented race)
+When: 2026-09-10
+Relevant failure/output summary: 4 passed in 7.3 minutes with the new
+computed-style assertions. A first run failed the 30-consecutive-decisions
+workflow at finding 8 of 30 with neither a decision nor a refusal; that is the
+detached-row race the suite's own comment documents under SSE reconnect
+pressure. The workflow passed alone in 6.2 minutes and in the repeated full
+lane; no retry was added and no assertion was weakened.
 
 ## Decisions Made During This Task
 

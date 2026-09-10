@@ -31,9 +31,9 @@
 - [x] Regressions for nav click, hash change and back/forward
 
 ## M5 — dynamic-class application in the built bundle (R-03)
-- [ ] Computed-style assertions for `graph-node-*`, `graph-edge-dimmed`
-- [ ] Computed-style assertions for `code-chip-*`, `stage-*`, `text-*`, `status-*`
-- [ ] Each assertion fails against the unstyled default
+- [x] Computed-style assertions for `graph-node-*`, `graph-edge-dimmed`
+- [x] Computed-style assertions for `code-chip-*`, `stage-*`, `text-*`, `status-*`
+- [x] Each assertion fails against the unstyled default
 
 ## M6 — registration and UI validation
 - [ ] New suite registered in `config/validation-universe.v1.json` UI_LANE

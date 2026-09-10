@@ -163,7 +163,7 @@ built bundle fails.
 
 ### M5 — dynamic-class application in the built bundle (R-03)
 
-- **Status:** IN_PROGRESS
+- **Status:** COMPLETE
 - Objective: prove representative interpolated style classes apply at runtime.
 - Files: `tests/browser/controlCenterBrowser.browser.ts`.
 - Acceptance: computed styles for the dynamic families differ from the
@@ -172,7 +172,7 @@ built bundle fails.
 
 ### M6 — registration and UI validation
 
-- **Status:** NOT_STARTED
+- **Status:** IN_PROGRESS
 - Objective: register the new suite, refresh the inventory digest, and pass
   the full UI validation set.
 - Files: `config/validation-universe.v1.json`.

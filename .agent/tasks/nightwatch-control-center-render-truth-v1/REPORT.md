@@ -102,7 +102,14 @@ move, initial-load focus and refresh preservation. App suite 39/39.
 
 ## M5 — dynamic-class application in the built bundle
 
-_To be filled during execution._
+The browser lane gained three computed-style blocks: `status-ready` and
+`status-warning` backgrounds are non-transparent and distinct;
+`rect.graph-node` strokes are never `none` (the SVG default) so the
+interpolated tone class applies; and `stage-chip` border width is `1px`,
+proving the chip rule reaches the artifact. Lane result: 4 passed in 7.3
+minutes. One earlier attempt hit the documented detached-row race in the
+30-decision workflow; it passed in isolation and in the repeated full lane,
+and no retry was added.
 
 ## M6 — registration and UI validation
 
