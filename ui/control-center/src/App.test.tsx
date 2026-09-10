@@ -163,7 +163,7 @@ describe('Control Center UI shell', () => {
     expect(primaryNav.getAllByRole('link')).toHaveLength(9);
     await user.click(primaryNav.getByRole('link', { name: 'Safety Center' }));
     expect(await screen.findByRole('heading', { name: 'Safety is a posture, not a green badge.' })).toBeVisible();
-    expect(screen.getByText('Source inventory unavailable')).toBeInTheDocument();
+    expect(screen.getByText('Source gaps')).toBeInTheDocument();
     await user.click(primaryNav.getByRole('link', { name: 'Campaign Intelligence' }));
     expect(await screen.findByRole('heading', { name: 'See the shape of coverage.' })).toBeVisible();
     expect(screen.getByText('No coverage rows reported. Empty coverage does not prove pass.')).toBeInTheDocument();
@@ -645,7 +645,7 @@ describe('Control Center UI shell', () => {
     // Parity with the execution graph: one edge cannot be drawn because its
     // endpoint is outside the projection, and the footer must not report it
     // as drawn.
-    expect(screen.getByText('1 of 2 edges · depth 2 · zoom 1.00x')).toBeInTheDocument();
+    expect(screen.getByText('1 of 2 edges · depth 2 · surface surface-01 · zoom 1.00x')).toBeInTheDocument();
     expect(screen.getByText('1 edge(s) reference a node outside this projection')).toBeInTheDocument();
     // And the view is now interactive rather than a fixed grid.
     expect(screen.getByRole('searchbox', { name: 'Search graph nodes' })).toBeInTheDocument();

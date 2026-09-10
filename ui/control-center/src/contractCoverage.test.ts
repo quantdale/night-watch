@@ -55,9 +55,6 @@ const NOT_RENDERED: Readonly<Record<string, string>> = {
   // The boolean projection of `status`, which the runs views render. Showing
   // both would state one fact twice and invite them to disagree on screen.
   passed: 'boolean projection of status; the runs views render the status',
-  // The server's layout ordinal. The map draws the node's x/y position, which
-  // is what an operator reads; the ordinal orders placement, not attention.
-  layer: 'server layout ordinal consumed by placement; the map draws x/y',
 };
 
 interface ContractField {

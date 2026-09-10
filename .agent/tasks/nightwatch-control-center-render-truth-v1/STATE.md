@@ -36,13 +36,31 @@ operators; and dynamic style classes apply in the built bundle.
 
 ## Current Milestone
 
-Milestone ID: M3
+Milestone ID: M4
 Milestone status: IN_PROGRESS
-What is being attempted: extend the harness to the reviewer, source
-surfaces/graph and system map views, and close every field they expose.
+What is being attempted: view-change announcement (R-02) — document title,
+main-content focus on user navigation, and no focus theft on initial load or
+background refresh.
 
 ## Completed Milestones
 
+- **M3 COMPLETE (R-01 all views)** — the harness now covers all sixteen
+  contracts: reviewer, source summary/surfaces/graph and system map joined
+  the matrix. Two generator defects were found and fixed (generic type
+  arguments were unresolved, so `ReviewerElement<TValue>` produced invalid
+  strings and crashed the view; named type aliases such as `EpistemicClass`
+  were unresolved) and graph fixtures are now internally coherent (edge
+  endpoints name real nodes). 32 leaf findings were closed by rendering:
+  reviewer member finding ids, local-review authority and per-row verdict
+  authority were bound; the source view gained an edge inventory, node
+  lifecycle and id, the payload surface id, and an authority-rollups table
+  covering every currentness/lifecycle/proof/capability entry; source gap
+  reasons are named in the Safety Center; and the system map gained level,
+  query, focus and measurement metadata, a node table fallback (kind, fact
+  category, evidence, coverage, layer) and an edge inventory. `layer` is no
+  longer exempt in either guard because it now renders. UI typecheck PASS;
+  full UI suite 61 passed across 5 files; the matrix covers all 16 contracts
+  in 21 seconds.
 - **M2 COMPLETE (R-01 views)** — the harness now covers the runs list
   (`RunListSnapshot`), run detail (`RunDetailSnapshot`), timeline
   (`TimelineSnapshot`), execution graph, campaigns (summary and coverage) and
@@ -181,6 +199,23 @@ When: 2026-09-10
 Relevant failure/output summary: 61 passed across 5 files after the M2
 rendering repairs.
 
+Command: `npm --prefix ui/control-center run test -- src/contractRender.test.tsx` with the M3 views
+Result: FAIL then PASS
+When: 2026-09-10
+Relevant failure/output summary: the extended matrix reported 32
+unobservable leaves across ReviewerSnapshot, SourceSummarySnapshot,
+SourceGraphSnapshot and SystemMapSnapshot. All were rendered (or the
+exemption removed where rendering proved it stale); the matrix then passed
+3/3 in 21 seconds covering all 16 contracts.
+
+Command: `npm --prefix ui/control-center run test`
+Result: PASS
+When: 2026-09-10
+Relevant failure/output summary: 61 passed across 5 files. Three guards fired
+first and were repaired rather than bypassed: the placement guard's `layer`
+exemption became stale once the system map rendered the column, and two App
+assertions named text this milestone changed.
+
 ## Decisions Made During This Task
 
 Decision: generate fixtures from the declared TypeScript AST instead of
@@ -206,6 +241,10 @@ Consequence: one small render per leaf; the matrix is bounded.
   were declared, fetched, and bound to no render; their names appeared
   elsewhere in the same carrier components (`readOnly`, `scope`,
   `productContact`, `reason`), so the static guard passed.
+- Generic type arguments and named type aliases must be resolved by a fixture
+  generator or it produces values the view cannot render: unresolved
+  `ReviewerElement<TValue>` produced a string where an object was expected and
+  crashed the reviewer view.
 - `App.tsx` contains no `focus()` call and no `document.title` assignment:
   view changes are silent to assistive technology and the window title is
   stale after navigation.

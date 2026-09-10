@@ -39,6 +39,13 @@ source.forEachChild((node) => {
   if (ts.isInterfaceDeclaration(node)) interfaces.set(node.name.text, node);
 });
 
+const EMPTY_BINDINGS: ReadonlyMap<string, ts.TypeNode> = new Map();
+
+const aliases = new Map<string, ts.TypeNode>();
+source.forEachChild((node) => {
+  if (ts.isTypeAliasDeclaration(node)) aliases.set(node.name.text, node.type);
+});
+
 /** The identity the API layer enforces per snapshot contract. */
 const CONTRACT_VERSIONS: Readonly<Record<string, string>> = Object.freeze({
   HealthSnapshot: 'nightwatch.control-center.health.v1',
@@ -88,51 +95,65 @@ function valueForType(
   leaves: Leaf[],
   contract: string,
   fieldName = '',
+  bindings: ReadonlyMap<string, ts.TypeNode> = EMPTY_BINDINGS,
 ): Generated {
   const leaf = (value: unknown, alternatives: readonly unknown[]): Generated => {
     leaves.push({ contract, path, key: `${contract}.${path.join('.')}`, value, alternatives });
     return { value, alternatives };
   };
-  if (ts.isParenthesizedTypeNode(type)) return valueForType(type.type, path, leaves, contract, fieldName);
-  if (ts.isTypeOperatorNode(type)) return valueForType(type.type, path, leaves, contract, fieldName);
+  if (ts.isParenthesizedTypeNode(type)) return valueForType(type.type, path, leaves, contract, fieldName, bindings);
+  if (ts.isTypeOperatorNode(type)) return valueForType(type.type, path, leaves, contract, fieldName, bindings);
   if (ts.isIntersectionTypeNode(type)) {
     return {
-      value: Object.assign({}, ...type.types.map((entry) => valueForType(entry, path, leaves, contract, fieldName).value)),
+      value: Object.assign({}, ...type.types.map((entry) => valueForType(entry, path, leaves, contract, fieldName, bindings).value)),
       alternatives: [],
     };
   }
   if (ts.isTupleTypeNode(type)) {
     return {
-      value: type.elements.map((entry, index) => valueForType(entry, [...path, index], leaves, contract, fieldName).value),
+      value: type.elements.map((entry, index) => valueForType(entry, [...path, index], leaves, contract, fieldName, bindings).value),
       alternatives: [],
     };
   }
   if (ts.isTypeReferenceNode(type)) {
     const name = type.typeName.getText();
+    if (bindings.has(name)) {
+      return valueForType(bindings.get(name)!, path, leaves, contract, fieldName, bindings);
+    }
+    if (aliases.has(name)) {
+      return valueForType(aliases.get(name)!, path, leaves, contract, fieldName, bindings);
+    }
     if (name === 'Readonly' || name === 'ReadonlyArray' || name === 'Array') {
       const argument = type.typeArguments?.[0];
       if (argument === undefined) return leaf(nextSentinel(path), [`ZZALT${nextSentinel(path)}`]);
       if (ts.isTypeReferenceNode(argument) && argument.typeName.getText() === 'Record') {
-        return recordFor(argument, path, leaves, contract);
+        return recordFor(argument, path, leaves, contract, bindings);
       }
-      return valueForType(argument, path, leaves, contract, fieldName);
+      return valueForType(argument, path, leaves, contract, fieldName, bindings);
     }
-    if (name === 'Record') return recordFor(type, path, leaves, contract);
+    if (name === 'Record') return recordFor(type, path, leaves, contract, bindings);
     if (name === 'Date') return leaf('2026-09-10T00:00:00.000Z', ['2026-09-11T01:02:03.000Z']);
     const declaration = interfaces.get(name);
     if (declaration !== undefined) {
-      return { value: objectForMembers(declaration.members, path, leaves, contract), alternatives: [] };
+      const nextBindings = new Map(bindings);
+      if (declaration.typeParameters !== undefined && type.typeArguments !== undefined) {
+        declaration.typeParameters.forEach((parameter, index) => {
+          const argument = type.typeArguments![index];
+          if (argument !== undefined) nextBindings.set(parameter.name.text, argument);
+        });
+      }
+      return { value: objectForMembers(declaration.members, path, leaves, contract, nextBindings), alternatives: [] };
     }
     return leaf(nextSentinel(path), [`ZZALT${nextSentinel(path)}`]);
   }
   if (ts.isArrayTypeNode(type)) {
-    return { value: [valueForType(type.elementType, [...path, 0], leaves, contract, fieldName).value], alternatives: [] };
+    return { value: [valueForType(type.elementType, [...path, 0], leaves, contract, fieldName, bindings).value], alternatives: [] };
   }
   if (ts.isTypeLiteralNode(type)) {
-    return { value: objectForMembers(type.members, path, leaves, contract), alternatives: [] };
+    return { value: objectForMembers(type.members, path, leaves, contract, bindings), alternatives: [] };
   }
   if (ts.isIndexedAccessTypeNode(type)) {
-    return valueForType(type.indexType, path, leaves, contract, fieldName);
+    return valueForType(type.indexType, path, leaves, contract, fieldName, bindings);
   }
   if (type.kind === ts.SyntaxKind.StringKeyword) {
     if (isDateShaped(fieldName)) return leaf('2026-09-10T00:00:00.000Z', ['2026-09-11T01:02:03.000Z']);
@@ -179,7 +200,7 @@ function valueForType(
       return { value: values[0], alternatives };
     }
     const before = leaves.length;
-    const generated = valueForType(useful[0] ?? type.types[0]!, path, leaves, contract, fieldName);
+    const generated = valueForType(useful[0] ?? type.types[0]!, path, leaves, contract, fieldName, bindings);
     if (nullable && leaves.length > before) {
       const last = leaves[leaves.length - 1]!;
       leaves[leaves.length - 1] = { ...last, alternatives: [...last.alternatives, null] };
@@ -195,6 +216,7 @@ function recordFor(
   path: readonly (string | number)[],
   leaves: Leaf[],
   contract: string,
+  bindings: ReadonlyMap<string, ts.TypeNode>,
 ): Generated {
   const argument = node.typeArguments?.[0];
   const keys: string[] = [];
@@ -210,7 +232,9 @@ function recordFor(
   const valueType = node.typeArguments?.[1];
   const value: Record<string, unknown> = {};
   for (const key of keys) {
-    value[key] = valueType === undefined ? 1 : valueForType(valueType, [...path, key], leaves, contract, key).value;
+    value[key] = valueType === undefined
+      ? 1
+      : valueForType(valueType, [...path, key], leaves, contract, key, bindings).value;
   }
   return { value, alternatives: [] };
 }
@@ -220,6 +244,7 @@ function objectForMembers(
   path: readonly (string | number)[],
   leaves: Leaf[],
   contract: string,
+  bindings: ReadonlyMap<string, ts.TypeNode>,
 ): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   for (const member of members) {
@@ -229,7 +254,7 @@ function objectForMembers(
       out[name] = CONTRACT_VERSIONS[contract] ?? 'nightwatch.control-center.unknown.v1';
       continue;
     }
-    out[name] = valueForType(member.type, [...path, name], leaves, contract, name).value;
+    out[name] = valueForType(member.type, [...path, name], leaves, contract, name, bindings).value;
   }
   return out;
 }
@@ -240,13 +265,30 @@ interface GeneratedContract {
 }
 
 const generatedCache = new Map<string, GeneratedContract>();
+
+/** Make generated graphs internally coherent: an edge endpoint must name a
+ *  node the same snapshot carries, or every edge is filtered out before any
+ *  view can render it. */
+function correlateGraphEndpoints(value: Record<string, unknown>): void {
+  const nodes = value.nodes;
+  const edges = value.edges;
+  if (!Array.isArray(nodes) || !Array.isArray(edges) || nodes.length === 0) return;
+  const first = nodes[0] as Record<string, unknown>;
+  const second = (nodes.length > 1 ? nodes[1] : nodes[0]) as Record<string, unknown>;
+  for (const edge of edges as Record<string, unknown>[]) {
+    if (typeof first.nodeId === 'string' && 'fromNodeId' in edge) edge.fromNodeId = first.nodeId;
+    if (typeof second.nodeId === 'string' && 'toNodeId' in edge) edge.toNodeId = second.nodeId;
+  }
+}
+
 function generatedFor(contract: string): GeneratedContract {
   const cached = generatedCache.get(contract);
   if (cached !== undefined) return cached;
   const declaration = interfaces.get(contract);
   if (declaration === undefined) throw new Error(`CONTRACT_UNKNOWN:${contract}`);
   const leaves: Leaf[] = [];
-  const value = objectForMembers(declaration.members, [], leaves, contract);
+  const value = objectForMembers(declaration.members, [], leaves, contract, EMPTY_BINDINGS);
+  correlateGraphEndpoints(value);
   const generated: GeneratedContract = { value, leaves };
   generatedCache.set(contract, generated);
   return generated;
@@ -351,6 +393,29 @@ const VIEWS: readonly ViewCase[] = [
     marker: 'Keep the signal, lose the raw evidence.',
     activate: () => { window.location.hash = '#findings'; },
   },
+  {
+    name: 'reviewer',
+    contracts: ['ReviewerSnapshot'],
+    marker: 'Separate what was proved from what is suggested.',
+    activate: () => { window.location.hash = '#reviewer'; },
+  },
+  {
+    name: 'source-intelligence',
+    contracts: ['SourceSummarySnapshot', 'SourceSurfacesSnapshot', 'SourceGraphSnapshot'],
+    marker: 'Follow proof, currentness, and capability.',
+    activate: async () => {
+      window.location.hash = '#source-intelligence';
+      await screen.findByText('Follow proof, currentness, and capability.');
+      fireEvent.click(await screen.findByRole('button', { name: 'Graph' }));
+      await screen.findByRole('img', { name: 'Bounded source intelligence graph' });
+    },
+  },
+  {
+    name: 'system-map',
+    contracts: ['SystemMapSnapshot'],
+    marker: 'Company',
+    activate: () => { window.location.hash = '#system-map'; },
+  },
 ];
 
 /**
@@ -362,7 +427,6 @@ const VIEWS: readonly ViewCase[] = [
 const NOT_OBSERVABLE: Readonly<Record<string, string>> = Object.freeze({
   'TimelineSnapshot.afterSeq': 'request echo; the timeline carries position and truncation',
   'RunListItemSnapshot.passed': 'boolean projection of status; the runs views render the status',
-  'SystemMapNodeView.layer': 'server layout ordinal consumed by placement; the map draws x/y',
   // Single-value contract constants. Their legal value cannot differ, so no
   // legal flip exists; the posture pill asserts the meaning in a fixed label
   // and derives its tone from the value.
@@ -404,7 +468,7 @@ function endpointPayloads(fixtures: Map<string, Record<string, unknown>>): Map<s
   if (firstSurface !== undefined) {
     put(`/api/v1/source/graph?depth=2&surface=${String(firstSurface.surfaceId)}`, 'SourceGraphSnapshot');
   }
-  put('/api/v1/system-map/l1', 'SystemMapSnapshot');
+  put('/api/v2/system-map/l1', 'SystemMapSnapshot');
   return payloads;
 }
 
@@ -487,6 +551,11 @@ describe('control center render truth', () => {
       'CampaignSummarySnapshot',
       'CampaignCoverageSnapshot',
       'FindingsSnapshot',
+      'ReviewerSnapshot',
+      'SourceSummarySnapshot',
+      'SourceSurfacesSnapshot',
+      'SourceGraphSnapshot',
+      'SystemMapSnapshot',
     ];
     const coveredContracts = [...new Set(VIEWS.flatMap((view) => [...view.contracts]))];
     const covered = leavesFor(ASSERTED_CONTRACTS);
