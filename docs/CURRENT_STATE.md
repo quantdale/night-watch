@@ -746,8 +746,8 @@ RELEASE_CERTIFICATION_PROTOCOL_VERSION: nightwatch.release-certification.v1
 PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
 RELEASE_CHECKPOINT_SHA: 2576c5751d33bb40046246e8fcf57c7cc5c30a57
 LIVE_HEAD_SHA: DISCOVER_FROM_GIT
-LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: 9b30e27af075ea3a62c463475388933ebe3dca9e
-LAST_LOCALLY_VALIDATED_SHA: fa5bef068a157df520934b811048e9300f597b81
+LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: 51da8c411dc7ebe0ec2929e456235777e2c009f2
+LAST_LOCALLY_VALIDATED_SHA: 51da8c411dc7ebe0ec2929e456235777e2c009f2
 LAST_CLEAN_VALIDATED_SHA: c18db55970a6497470191c8c9ef58f5012a96c8c
 CI_OBSERVED_SHA: NONE
 CI_EXECUTED_SHA: NONE
@@ -806,11 +806,11 @@ informational and are not interpreted as current authority.
 LIVE_STATE_PROTOCOL_VERSION: nightwatch.live-state.v1
 LIVE_TASK_ID: nightwatch-control-center-placement-coverage-v1
 LIVE_PHASE: CONTROL_CENTER_PLACEMENT_COVERAGE_V1
-LIVE_TASK_STATUS: IN_PROGRESS
+LIVE_TASK_STATUS: COMPLETE
 LIVE_PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
 LIVE_PROJECT_VERDICT_EFFECT: PRESERVE
-LIVE_NEXT_ACTION_STATE: CONTINUE
-LIVE_COMPLETION_CLAIM: NONE
+LIVE_NEXT_ACTION_STATE: STOP
+LIVE_COMPLETION_CLAIM: COMPLETE
 ```
 
 ### Exact-head CI state (current live CI state)
@@ -3857,9 +3857,10 @@ placement-level proof from either coverage guard, both of which are name-level
 over `App.tsx` and say so. The existing `OPERATIONALLY_ACCEPTED` project
 authority is preserved, not advanced.
 
-**Recommended next campaign.** A placement-level contract-coverage check,
-asserting each field renders in the view that owns it rather than merely
-reaching the component file.
+**Recommended next campaign (executed).** A placement-level contract-coverage
+check, asserting each field renders in the view that owns it rather than
+merely reaching the component file. It was taken up as
+`nightwatch-control-center-placement-coverage-v1` and is closed below.
 
 ### CI evidence at the Control Center UI completion baseline
 
@@ -3878,3 +3879,41 @@ The underlying GitHub billing block is unchanged and remains an owner action.
 `LAST_CLEAN_VALIDATED_SHA` also stays at
 `c18db55970a6497470191c8c9ef58f5012a96c8c`: `gate:clean` has not been run at
 this baseline, and an unrun lane is not recorded as a pass.
+
+
+### Control Center placement coverage (current)
+
+The predecessor's guard asserted that each contract field name appears
+somewhere in `App.tsx`. That is reachability of the file, not placement in a
+view: `RunListItemSnapshot.passed` satisfied it only because the Safety Center
+contains the sentence "A route that is off is not a route that passed." The
+successor guard derives each contract's carriers mechanically — a component's
+own body, the bodies of generic consumers it binds at the call site
+(`usePagedCollection<RunListSnapshot, …>`), and containment paths through
+parent fields the component reads — and asserts every non-exempt field appears
+inside one. It measures its own extraction and fails when an exempt field
+becomes rendered.
+
+Measured at `ceb8fe2`: 33 contracts, 402 declared fields, 37 components, 16
+fields present in no carrier of their contract, and 5 deliberate non-renders.
+All 16 were closed: the Safety Center renders the service identity, the
+declared execution and mutation authority, the service status, the owner-scope
+status and the declared limits; readiness renders its owner-scope status; the
+execution graph gains an edge inventory carrying each edge's proof; Campaign
+Intelligence renders the declared owner scope and each coverage row's gap
+reasons; source surfaces name their repository. The five paged lists now
+render the server's `page.truncated` through the shared collection instead of
+inferring completeness from `nextCursor`. The source graph counts and
+discloses endpoint-less edges like the execution graph. `PlaceholderView` is
+exported and tested, and the Source Intelligence limits card quotes the
+declared `1000 / 2000` maximum instead of the `250 / 500` default. `passed`
+and `layer` remain reasoned exemptions.
+
+Certification: implementation `51da8c411dc7ebe0ec2929e456235777e2c009f2`;
+`gate:local` all eleven groups PASS with receipt
+`receipt:sha256:c3dd3cf51709c4fe02f5ba1f`; UI typecheck, 58 of 58 tests and
+build PASS; browser workflow lane 4 passed / 0 failed; `validation:universe`
+PASS. External CI was not run and is not claimed green. The guard is
+name-scoped inside a carrier and proves a field reaches a component that can
+receive its contract, not that every branch draws it; that limit is stated in
+the guard's own header.

@@ -44,11 +44,11 @@
 - [x] Regressions for both
 
 ## M6 — certification
-- [ ] `ui/control-center`: typecheck, all tests, build PASS
-- [ ] Root `typecheck` and `hardening:check` PASS
-- [ ] `validation:universe` PASS
-- [ ] Browser workflow lane PASS
-- [ ] `gate:local` PASS from this owned session
-- [ ] State, task and project docs reconciled to the certified checkpoint
-- [ ] Checkpoint integrated by fast-forward; `HEAD == origin/main` verified
-- [ ] Session released; canonical tree clean
+- [x] `ui/control-center`: typecheck, all tests, build PASS
+- [x] Root `typecheck` and `hardening:check` PASS
+- [x] `validation:universe` PASS
+- [x] Browser workflow lane PASS
+- [x] `gate:local` PASS from this owned session
+- [x] State, task and project docs reconciled to the certified checkpoint
+- [x] Checkpoint integrated by fast-forward; `HEAD == origin/main` verified
+- [x] Session released; canonical tree clean

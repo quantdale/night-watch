@@ -2955,7 +2955,49 @@ root `typecheck`; `hardening:check`; `campaign:synthetic` 1797 of 1797 with
 computed-style assertion in the built bundle; `gate:local` all eleven groups
 PASS with receipt `receipt:sha256:8f5e1452a0a909c6721ce272`.
 
-**Next.** A placement-level contract-coverage check. Both new guards are
-name-level over `App.tsx`: they prove a field or class reaches the file, not
-that it renders in the view that owns it. Integration of this checkpoint to
-`origin main` is an owner decision and has not been performed.
+**Next (executed).** A placement-level contract-coverage check. Both new
+guards are name-level over `App.tsx`: they prove a field or class reaches the
+file, not that it renders in the view that owns it. The check was taken up as
+`nightwatch-control-center-placement-coverage-v1` and is closed below. This
+checkpoint was integrated to `origin main` by fast-forward at `ceb8fe2`.
+
+
+## Control Center placement coverage
+
+Complete as `nightwatch-control-center-placement-coverage-v1` at implementation
+`51da8c411dc7ebe0ec2929e456235777e2c009f2`, certified from its owned session
+with `gate:local` receipt `receipt:sha256:c3dd3cf51709c4fe02f5ba1f`.
+
+The predecessor's contract guard proved a field name reached `App.tsx`, not
+that it reached a view that owns the data. `RunListItemSnapshot.passed`
+satisfied the file-level search only because the Safety Center contains the
+sentence "A route that is off is not a route that passed." The guard now
+derives each contract's carriers mechanically — component bodies, generic
+consumers bound at the call site (`usePagedCollection<RunListSnapshot, …>`),
+and containment access paths — and asserts every non-exempt field appears
+inside one. It measured 16 fields fetched and rendered in no carrier of their
+contract, and closed every one: the Safety Center renders the service identity,
+the declared execution and mutation authority, the service status, the
+owner-scope status and the declared limits; readiness renders its owner-scope
+status; the execution graph gains an edge inventory carrying each edge's proof;
+Campaign Intelligence renders the declared owner scope and each coverage row's
+gap reasons; and source surfaces name their repository.
+
+The five residual findings are closed. Paged lists render the server's
+`page.truncated` through the shared collection instead of inferring
+completeness from `nextCursor`. The source graph counts and discloses
+endpoint-less edges like the execution graph. `PlaceholderView` is exported and
+tested. The Source Intelligence limits card quotes the declared `1000 / 2000`
+maximum instead of the `250 / 500` default. `passed` and `layer` remain
+reasoned exemptions, and the guard states its name-scoped limit in its own
+header.
+
+**Certification.** UI typecheck and 58 of 58 tests, up from 55; UI build; root
+`typecheck`; `hardening:check`; `validation:universe` PASS with UI_LANE=4;
+browser workflow lane 4 passed / 0 failed; `gate:local` all eleven groups PASS
+at `51da8c4`.
+
+**Next.** None selected. A placement-level stylesheet guard and
+conditional-reachability remain the contract guard's stated limits; any
+follow-up requires a new authorized task. External CI remains
+`BLOCKED_EXTERNAL` under the predecessor's classification.

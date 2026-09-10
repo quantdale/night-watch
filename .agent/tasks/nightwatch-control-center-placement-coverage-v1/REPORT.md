@@ -2,7 +2,7 @@
 
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 Task ID: nightwatch-control-center-placement-coverage-v1
-Status: IN_PROGRESS
+Status: COMPLETE
 
 Evidence ledger for this campaign. It records what was actually run and
 observed, not what was intended. Receipts are written as they are produced.
@@ -91,7 +91,20 @@ regression asserts `1000 / 2000` from the declared fixture; the hardcoded
 
 ## M6 — certification
 
-_To be filled during execution._
+`gate:local` returned all eleven groups PASS at the implementation commit
+`51da8c411dc7ebe0ec2929e456235777e2c009f2`, receipt
+`receipt:sha256:c3dd3cf51709c4fe02f5ba1f`: SEMANTIC_COMPATIBILITY
+2083/2070/13/0, OWNER_PROVENANCE 91, SYNTHETIC_CAMPAIGN 1797/1797/0 with
+`deepContainmentLane: PROVEN`. UI typecheck, 58 of 58 tests and the build
+passed before the gate; root typecheck, `hardening:check` and
+`validation:universe` passed; the browser workflow lane passed 4/0 in 4.1
+minutes.
+
+## Integration
+
+Performed by fast-forward from the owned session per the campaign's Git and
+reporting contract, with `HEAD == origin/main` verified after the push
+(`SESSION_INTEGRATED`). No force, no history rewrite.
 
 ## Safety events
 

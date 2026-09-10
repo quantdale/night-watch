@@ -3,29 +3,28 @@
 Task ID: nightwatch-control-center-placement-coverage-v1
 Phase: CONTROL_CENTER_PLACEMENT_COVERAGE_V1
 Title: Control Center Placement Coverage
-Status: IN_PROGRESS
+Status: COMPLETE
 Task directory: .agent/tasks/nightwatch-control-center-placement-coverage-v1
 Starting SHA: ceb8fe21f9dd90666190c9272030a0dbfabc458f
-Last validated implementation SHA: ceb8fe21f9dd90666190c9272030a0dbfabc458f
-Last checkpoint: M1 through M5 implemented and locally green in the owned
-session — the placement guard (with two mutation proofs), the 16 rendered
-fields, the paged truncation disclosure, the source-graph undrawn-edge parity,
-the placeholder coverage and the declared-limits card; UI typecheck, 58 tests
-and build PASS; root typecheck and `hardening:check` PASS;
-`validation:universe` PASS; browser lane 4 passed / 0 failed.
-Current milestone: M6 — certification
-Next action: commit the implementation checkpoint from the owned session, run
-`npm run gate:local`, record the exact receipt in `STATE.md`, reconcile the
-documentation, integrate by fast-forward and release the session.
+Last validated implementation SHA: 51da8c411dc7ebe0ec2929e456235777e2c009f2
+Last checkpoint: M6 certification COMPLETE at implementation
+`51da8c411dc7ebe0ec2929e456235777e2c009f2`; `gate:local` all eleven groups
+PASS at that checkpoint with receipt `receipt:sha256:c3dd3cf51709c4fe02f5ba1f`;
+P-01 through P-05 are CLOSED with acceptance evidence.
+Current milestone: COMPLETE — M0 through M6 are closed
+Next action: STOP. Report the certified outcome to the owner. Integration of
+the certified checkpoint by fast-forward from the owned session is the
+campaign's final act, with `HEAD == origin/main` verified after the push. Do
+not reopen P-01 through P-05.
 Authorization class: CONTROL_CENTER_PLACEMENT_COVERAGE_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: ceb8fe21f9dd90666190c9272030a0dbfabc458f
-LAST_VALIDATED_IMPLEMENTATION_SHA: ceb8fe21f9dd90666190c9272030a0dbfabc458f
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: ceb8fe21f9dd90666190c9272030a0dbfabc458f
+LAST_VALIDATED_IMPLEMENTATION_SHA: 51da8c411dc7ebe0ec2929e456235777e2c009f2
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 51da8c411dc7ebe0ec2929e456235777e2c009f2
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
-PHASE_CONTROL_CENTER_PLACEMENT_COVERAGE_V1_STATUS: IN_PROGRESS
+PHASE_CONTROL_CENTER_PLACEMENT_COVERAGE_V1_STATUS: COMPLETE
 
 ## Outcome
 

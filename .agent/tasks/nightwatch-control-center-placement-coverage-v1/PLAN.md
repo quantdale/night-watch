@@ -158,7 +158,7 @@ callout the execution graph already uses.
 
 ### M6 — certification
 
-- **Status:** IN_PROGRESS
+- **Status:** COMPLETE
 - Objective: full validation from the owned session, state and docs reconciled
   to the validated checkpoint, integration by fast-forward, session released.
 - Files: task state, `docs/CURRENT_STATE.md`, `docs/ROADMAP.md`, `.agent/ACTIVE_TASK.md`,

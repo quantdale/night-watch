@@ -6,27 +6,25 @@ STATE — nightwatch-control-center-placement-coverage-v1
 
 Task ID: nightwatch-control-center-placement-coverage-v1
 Phase: CONTROL_CENTER_PLACEMENT_COVERAGE_V1
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: ceb8fe21f9dd90666190c9272030a0dbfabc458f
-Last validated implementation SHA: ceb8fe21f9dd90666190c9272030a0dbfabc458f
-Last substantive checkpoint SHA: ceb8fe21f9dd90666190c9272030a0dbfabc458f
+Last validated implementation SHA: 51da8c411dc7ebe0ec2929e456235777e2c009f2
+Last substantive checkpoint SHA: 51da8c411dc7ebe0ec2929e456235777e2c009f2
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-control-center-placem-f8abc223
-Last checkpoint: M0 execution truth COMPLETE; the owned session
-`nightwatch-control-center-placem-f8abc223` is claimed as
-`sess-36f4ca096045` on base
-`ceb8fe21f9dd90666190c9272030a0dbfabc458f`, `session:status` verdict PASS
-with all seven workspace invariants PASS, and the predecessor is verified
-terminal COMPLETE and untouched.
+Last checkpoint: M6 certification COMPLETE at implementation
+`51da8c411dc7ebe0ec2929e456235777e2c009f2`; `gate:local` all eleven groups
+PASS at that checkpoint with receipt `receipt:sha256:c3dd3cf51709c4fe02f5ba1f`,
+and P-01 through P-05 are CLOSED with acceptance evidence.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: ceb8fe21f9dd90666190c9272030a0dbfabc458f
-LAST_VALIDATED_IMPLEMENTATION_SHA: ceb8fe21f9dd90666190c9272030a0dbfabc458f
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: ceb8fe21f9dd90666190c9272030a0dbfabc458f
+LAST_VALIDATED_IMPLEMENTATION_SHA: 51da8c411dc7ebe0ec2929e456235777e2c009f2
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 51da8c411dc7ebe0ec2929e456235777e2c009f2
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
-PHASE_CONTROL_CENTER_PLACEMENT_COVERAGE_V1_STATUS: IN_PROGRESS
+PHASE_CONTROL_CENTER_PLACEMENT_COVERAGE_V1_STATUS: COMPLETE
 
 ## Objective
 
@@ -37,16 +35,24 @@ undrawn-edge and placeholder-coverage residuals.
 
 ## Current Milestone
 
+COMPLETE — M6 closed; the campaign is finished.
 Milestone ID: M6
-Milestone status: IN_PROGRESS
-What is being attempted: certification. M1 through M5 are implemented and
-locally green — the placement guard, the 16 rendered fields, the paged
-truncation disclosure, the source-graph undrawn-edge parity, the placeholder
-coverage and the declared-limits card. `gate:local` from this owned session at
-the committed implementation checkpoint is the remaining receipt.
+Milestone status: COMPLETE
+What is being attempted: NOTHING. The campaign is closed. P-01 through P-05
+are CLOSED with acceptance evidence, the placement guard passes with five
+reasoned exemptions, and `gate:local` returned all eleven groups PASS from
+this owned session with receipt `receipt:sha256:c3dd3cf51709c4fe02f5ba1f`.
 
 ## Completed Milestones
 
+- **M6 COMPLETE** — certification at implementation
+  `51da8c411dc7ebe0ec2929e456235777e2c009f2`. `gate:local` all eleven groups
+  PASS with receipt `receipt:sha256:c3dd3cf51709c4fe02f5ba1f`;
+  SEMANTIC_COMPATIBILITY 2083/2070/13/0, OWNER_PROVENANCE 91,
+  SYNTHETIC_CAMPAIGN 1797/1797/0 with `deepContainmentLane: PROVEN`. UI
+  typecheck, 58 tests and build PASS; root typecheck and `hardening:check`
+  PASS; `validation:universe` PASS; browser lane 4 passed / 0 failed. The
+  certified checkpoint is integrated by fast-forward from this owned session.
 - **M5 COMPLETE (P-04, P-05)** — `PlaceholderView` is exported and covered by
   a test that renders the fallback and asserts the view it stands in for; the
   Source Intelligence graph-limits card now quotes the declared
@@ -88,15 +94,14 @@ the committed implementation checkpoint is the remaining receipt.
 
 ## Work In Progress
 
-M6 certification. The implementation and its focused regressions are green;
-the implementation checkpoint is committed next, then `gate:local` runs from
-this owned session.
+NONE.
 
 ## Exact Next Action
 
-Commit the implementation checkpoint from this owned session, run
-`npm run gate:local`, and record its exact receipt here before reconciling the
-documentation and integrating.
+STOP. The campaign is COMPLETE. Report the certified outcome to the owner.
+Integration of the certified checkpoint by fast-forward from the owned session
+is the campaign's final act; the post-push verification is `HEAD == origin/main`
+discovered from Git. Do not reopen P-01 through P-05.
 
 ## Files Changed
 
@@ -183,6 +188,15 @@ When: 2026-09-10
 Relevant failure/output summary: every discovered test belongs to exactly one
 class; UI_LANE=4.
 
+Command: `npm run gate:local` at implementation commit `51da8c4`
+Result: PASS
+When: 2026-09-10
+Relevant failure/output summary: all eleven required groups PASS at
+`gitHead 51da8c411dc7ebe0ec2929e456235777e2c009f2`;
+SEMANTIC_COMPATIBILITY 2083/2070/13/0, OWNER_PROVENANCE 91,
+SYNTHETIC_CAMPAIGN 1797/1797/0 with `deepContainmentLane: PROVEN`;
+`finalResult: PASS`; receipt `receipt:sha256:c3dd3cf51709c4fe02f5ba1f`.
+
 Command: `npm run control-center:ui:browser`
 Result: PASS
 When: 2026-09-10
@@ -240,12 +254,25 @@ NONE
 
 ## Resume Recipe
 
-Read `SPEC.md`, `PLAN.md` and this file; work in the owned worktree
-`nightwatch-control-center-placem-f8abc223`; resume at the Exact Next Action,
-run the named focused suites after each change, and record exact results here
-before advancing a milestone.
+Task complete. Do not resume; any follow-up starts as a new authorized task.
 
 ## Completion Snapshot
 
-Pending. The campaign is IN_PROGRESS; the completion snapshot is filled and
-verified at M6 closure against the certified checkpoint's own receipts.
+Final substantive checkpoint: 51da8c411dc7ebe0ec2929e456235777e2c009f2
+Live HEAD: DISCOVER_FROM_GIT
+Tests: `ui/control-center` typecheck PASS, 58 of 58 tests passed across 4
+files (up from 55), build PASS at 3 files / 324,478 bytes with no external
+references; root `typecheck` PASS; `hardening:check` PASS;
+`validation:universe` PASS with UI_LANE=4; browser workflow lane 4 passed / 0
+failed; `gate:local` all eleven groups PASS at `51da8c4` with receipt
+`receipt:sha256:c3dd3cf51709c4fe02f5ba1f`.
+Artifacts: `ui/control-center/src/{App.tsx,App.test.tsx,contractCoverage.test.ts}`,
+`.agent/tasks/nightwatch-control-center-placement-coverage-v1/`,
+`openspec/changes/nightwatch-control-center-placement-coverage-v1/`.
+Known issues: the placement guard is name-scoped inside a carrier and proves
+that a field reaches a component that can receive its contract, not that every
+branch draws it; `passed` and `layer` remain reasoned exemptions; external CI
+remains `BLOCKED_EXTERNAL` under the predecessor's classification. Integration
+of this checkpoint by fast-forward is the campaign's final act.
+Recommended next task: none selected; any follow-up requires a new authorized
+task.
