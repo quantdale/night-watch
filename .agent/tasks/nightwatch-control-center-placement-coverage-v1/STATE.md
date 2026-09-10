@@ -37,14 +37,48 @@ undrawn-edge and placeholder-coverage residuals.
 
 ## Current Milestone
 
-Milestone ID: M1
+Milestone ID: M6
 Milestone status: IN_PROGRESS
-What is being attempted: replace the name-level assertion in
-`ui/control-center/src/contractCoverage.test.ts` with the carrier model
-described in `PLAN.md`, and run it to reproduce the measured 16 gaps.
+What is being attempted: certification. M1 through M5 are implemented and
+locally green — the placement guard, the 16 rendered fields, the paged
+truncation disclosure, the source-graph undrawn-edge parity, the placeholder
+coverage and the declared-limits card. `gate:local` from this owned session at
+the committed implementation checkpoint is the remaining receipt.
 
 ## Completed Milestones
 
+- **M5 COMPLETE (P-04, P-05)** — `PlaceholderView` is exported and covered by
+  a test that renders the fallback and asserts the view it stands in for; the
+  Source Intelligence graph-limits card now quotes the declared
+  `maxGraphNodes` / `maxGraphEdges` (`1000 / 2000` in the fixture) instead of
+  the hardcoded default `250 / 500`. Both regressions pass.
+- **M4 COMPLETE (P-03)** — `SourceGraphCanvas` counts edges whose endpoints are
+  outside the projection, the footer reports `drawn of received`, and the
+  disclosure callout names the count and attributes it to the projection. The
+  source regression now proves `1 of 2 edges` and the disclosure with one
+  endpoint-less edge.
+- **M3 COMPLETE (P-02)** — `PagedSnapshot` and `PagedCollection` carry
+  `truncated`; `usePagedCollection` reads the declared `page.truncated` field;
+  `LoadMoreControl` states the server truncation independently of the cursor.
+  The regression pages a truncated list to its complete end and asserts the
+  statement appears and then disappears.
+- **M2 COMPLETE (P-01 repair)** — all 16 measured gaps are closed: service
+  identity, declared execution/mutation authority, service status, owner-scope
+  status (safety and readiness) and the declared limits render in the Safety
+  Center and readiness detail; the execution graph gains an edge inventory
+  carrying each edge's proof; Campaign Intelligence renders the declared owner
+  scope and each coverage row's gap reasons; source surfaces name their
+  repository; the paged `truncated` fields render through M3. `passed` and
+  `layer` remain exempt with stated reasons. The placement guard passes with
+  exactly those five exemptions.
+- **M1 COMPLETE (P-01)** — the placement guard replaces the name-level
+  assertion. It derives carriers from component bodies, generic consumers bound
+  at the call site and containment access paths; it measures its own extraction
+  (33 contracts, 402 fields, 37 components, one deep containment chain); it
+  reproduced the 16 measured gaps before the repairs; and two mutations fail
+  it — removing `surface.repositoryId` fails on exactly that field, and
+  removing the hook's `page.truncated` consumption fails on exactly the four
+  paged contracts — while both restores pass.
 - **M0 COMPLETE** — execution truth. Owned session
   `nightwatch-control-center-placem-f8abc223` created and claimed as
   `sess-36f4ca096045` on base
@@ -54,16 +88,15 @@ described in `PLAN.md`, and run it to reproduce the measured 16 gaps.
 
 ## Work In Progress
 
-M1. The planning route (SPEC, PLAN, STATE, REPORT, the OpenSpec change and the
-bound `.agent/ACTIVE_TASK.md` / `.agent/EXECUTION_PROMPT.md`) is written and
-about to be committed as the M0/registration checkpoint.
+M6 certification. The implementation and its focused regressions are green;
+the implementation checkpoint is committed next, then `gate:local` runs from
+this owned session.
 
 ## Exact Next Action
 
-Implement the placement guard in
-`ui/control-center/src/contractCoverage.test.ts`, run
-`npm --prefix ui/control-center run test -- contractCoverage`, and record the
-measured failing set in this STATE before repairing any field.
+Commit the implementation checkpoint from this owned session, run
+`npm run gate:local`, and record its exact receipt here before reconciling the
+documentation and integrating.
 
 ## Files Changed
 
@@ -73,6 +106,9 @@ measured failing set in this STATE before repairing any field.
 | `.agent/tasks/nightwatch-control-center-placement-coverage-v1/PLAN.md` | milestone plan | ADDED |
 | `.agent/tasks/nightwatch-control-center-placement-coverage-v1/STATE.md` | continuity v2 execution memory | ADDED |
 | `.agent/tasks/nightwatch-control-center-placement-coverage-v1/REPORT.md` | evidence ledger | ADDED |
+| `ui/control-center/src/contractCoverage.test.ts` | placement guard | MODIFIED |
+| `ui/control-center/src/App.tsx` | 16 fields rendered, paged truncation, source-graph parity, placeholder export, declared limits | MODIFIED |
+| `ui/control-center/src/App.test.tsx` | regressions for P-02..P-05 and the new rows | MODIFIED |
 | `openspec/changes/nightwatch-control-center-placement-coverage-v1/audit.md` | live audit at the starting SHA | ADDED |
 | `.agent/ACTIVE_TASK.md` | bound to this campaign | MODIFIED |
 | `.agent/EXECUTION_PROMPT.md` | campaign handoff at IN_PROGRESS | MODIFIED |
@@ -96,6 +132,63 @@ Command: `git rev-parse HEAD origin/main` at the starting SHA
 Result: PASS
 When: 2026-09-10
 Relevant failure/output summary: both `ceb8fe21f9dd90666190c9272030a0dbfabc458f`.
+
+Command: `npm --prefix ui/control-center run test -- src/contractCoverage.test.ts` before the repairs
+Result: FAIL (expected, the guard measures the defect)
+When: 2026-09-10
+Relevant failure/output summary: exactly the 16 measured gaps, matching the
+audit: CampaignCoverageSnapshot.gapReasons/.truncated,
+CampaignSummarySnapshot.ownerScopeReason/.ownerScopeStatus,
+ExecutionGraphSnapshot.proof, FindingsSnapshot.truncated,
+HealthSnapshot.status, MetaSnapshot.executionAuthority/.limits/
+.mutationAuthority/.service, ReadinessSnapshot.status,
+ReviewerSnapshot.truncated, RunListSnapshot.truncated, SafetySnapshot.status,
+SourceSurfaceSnapshot.repositoryId. Three other assertions passed (extraction,
+exempt honesty, collision scoping).
+
+Command: mutation of `SourceSurfaceSnapshot.repositoryId` carrier occurrence
+Result: FAIL (expected)
+When: 2026-09-10
+Relevant failure/output summary: replacing `{surface.repositoryId}` with
+`{surface.surfaceId}` failed the guard on exactly
+`SourceSurfaceSnapshot.repositoryId`; restoring the file passed 4/4.
+
+Command: mutation removing the hook's `page.truncated` consumption
+Result: FAIL (expected)
+When: 2026-09-10
+Relevant failure/output summary: deleting the `truncated` property from
+`usePagedCollection`'s return failed the guard on exactly
+CampaignCoverageSnapshot, FindingsSnapshot, ReviewerSnapshot and
+RunListSnapshot `truncated`; restoring the file passed 4/4. A weaker mutation
+that kept the word but changed its role passed, which is the guard's stated
+name-level limit.
+
+Command: `npm --prefix ui/control-center run typecheck`, `run test`, `run build`
+Result: PASS
+When: 2026-09-10
+Relevant failure/output summary: typecheck clean; 58 tests across 4 files
+passed (up from 55: the placement guard is 4 assertions and App gained two
+regressions); build PASS at 3 files / 324,478 bytes with no external
+references.
+
+Command: `npm run typecheck` and `node bin/hardening-check.mjs`
+Result: PASS
+When: 2026-09-10
+Relevant failure/output summary: no diagnostics; offline structural invariants
+hold.
+
+Command: `npm run validation:universe`
+Result: PASS
+When: 2026-09-10
+Relevant failure/output summary: every discovered test belongs to exactly one
+class; UI_LANE=4.
+
+Command: `npm run control-center:ui:browser`
+Result: PASS
+When: 2026-09-10
+Relevant failure/output summary: 4 passed / 0 failed in 4.1 minutes, including
+the built-bundle qualification, the 30-consecutive-decision review workflow,
+and the System Map V2 lane.
 
 ## Decisions Made During This Task
 
@@ -123,6 +216,13 @@ Consequence: `PagedSnapshot`, `PagedCollection` and `LoadMoreControl` change.
 - The Source Intelligence metric card states `250 / 500` as the graph
   "nodes / edges maximum"; those are the server's defaults and the declared
   maximums are `1000 / 2000`.
+- The paged list contracts all declare `page.truncated`, and the shared
+  collection read only `page.nextCursor`: a server-truncated page and a
+  complete page rendered the same "All loaded." state.
+- The placement guard is name-scoped inside carriers, by design and by its own
+  header: a mutation that renames a property while keeping the word still
+  passes. It catches a field that stops reaching its carrier, not a field that
+  changes role inside one.
 
 ## Blockers
 

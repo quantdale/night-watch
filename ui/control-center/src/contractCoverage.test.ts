@@ -3,34 +3,43 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 /**
- * Every field the Control Center fetches must reach the screen.
+ * Every field a view fetches must render in the view that owns it.
  *
- * Nine snapshot contracts were being fetched in full and rendered in part. The
- * run-detail panel read repository provenance, per-type and per-severity event
- * censuses, a screenshot count, hard-failure codes and note codes, and drew
- * none of them. The Safety Center counted `checks` in one Overview metric and
- * never listed a single check by name, under a heading promising that unknown
- * checks stay visible. Readiness dropped its stale targets, drift keys,
- * analyzer version agreement, deferred-versus-unmeasured dimensions and
- * blocker detail codes. In a tool whose whole claim is that absence of
- * evidence is not evidence of absence, silently unrendered evidence is the
- * worst available failure: the operator cannot tell a field that said nothing
- * from a field that was never drawn.
+ * The predecessor's check asserted that each contract field NAME appears
+ * somewhere in `App.tsx`. That is reachability of the file, not placement in a
+ * view: `RunListItemSnapshot.passed` satisfied it only because the Safety
+ * Center contains the sentence "A route that is off is not a route that
+ * passed.", while no runs view ever reads the field.
  *
- * SCOPE AND LIMIT OF THIS CHECK. It is a NAME-level check over the component
- * file: it proves a contract field name appears somewhere in `App.tsx`, not
- * that it appears in the right view or is reachable. It catches the failure
- * that actually happened — a field that reaches no render path at all — and
- * it does not certify placement. Anything it cannot prove is listed below with
- * a reason, so the exempt set is small, explicit and auditable rather than
- * implied by silence.
+ * This check scopes the search to the code that can receive the contract. For
+ * each `function` component it builds a carrier text — the component's body,
+ * plus the bodies of functions it invokes with explicit type arguments, so
+ * `usePagedCollection<RunListSnapshot, …>` makes the generic paged collection
+ * part of the view it serves — and it closes carriage transitively over
+ * containment: a component that carries `OverviewSnapshot` and reads `safety`
+ * also carries `SafetySnapshot`. A field passes when a carrier of a contract
+ * that declares it contains the field name.
+ *
+ * SCOPE AND LIMIT OF THIS CHECK. It is a textual, carrier-scoped comparison.
+ * It proves a field name occurs inside a component that can receive its
+ * contract; it does not prove the field is conditionally rendered, reachable
+ * in every branch, or visually correct. Comments are stripped before the
+ * search, because a comment is not a render. Generic callees are resolved one
+ * level of type arguments deep, which is what the paged collection needs.
+ * Anything the check cannot prove is listed below with a reason, so the exempt
+ * set is small, explicit and auditable rather than implied by silence.
  */
 const TYPES = readFileSync(resolve(process.cwd(), 'src/types.ts'), 'utf8');
-const APP = readFileSync(resolve(process.cwd(), 'src/App.tsx'), 'utf8');
+const APP = readFileSync(resolve(process.cwd(), 'src/App.tsx'), 'utf8')
+  // A comment is not a render. Strip block and line comments before any search.
+  .replace(/\/\*[\s\S]*?\*\//g, ' ')
+  .replace(/(^|[^:])\/\/.*$/gm, '$1');
 
 /**
  * Fields that are deliberately never rendered. Each entry states why. A field
- * may only be added here for a reason an operator would accept out loud.
+ * may only be added here for a reason an operator would accept out loud, and
+ * the entry is only valid while the field is absent from every carrier of
+ * every contract that declares it.
  */
 const NOT_RENDERED: Readonly<Record<string, string>> = {
   // Contract identity. It is checked by the API layer on every response and
@@ -43,52 +52,203 @@ const NOT_RENDERED: Readonly<Record<string, string>> = {
   // it applies to ("Advisory. Not a duplicate verdict.") rather than as a
   // boolean row, because the word is what a reviewer needs to read.
   advisoryOnly: 'constant true; rendered as prose on every advisory element',
+  // The boolean projection of `status`, which the runs views render. Showing
+  // both would state one fact twice and invite them to disagree on screen.
+  passed: 'boolean projection of status; the runs views render the status',
+  // The server's layout ordinal. The map draws the node's x/y position, which
+  // is what an operator reads; the ordinal orders placement, not attention.
+  layer: 'server layout ordinal consumed by placement; the map draws x/y',
 };
 
 interface ContractField {
   readonly contract: string;
   readonly field: string;
+  readonly type: string;
 }
 
 function contractFields(): readonly ContractField[] {
   const fields: ContractField[] = [];
   for (const [, contract, body] of TYPES.matchAll(/export interface (\w+) \{(.*?)\n\}/gs)) {
-    for (const [, field] of (body as string).matchAll(/readonly (\w+)\??:/g)) {
-      fields.push({ contract: contract as string, field: field as string });
+    for (const [, field, type] of (body as string).matchAll(/readonly (\w+)\??:\s*([^;\n]+)/g)) {
+      fields.push({ contract: contract as string, field: field as string, type: (type as string).trim() });
     }
   }
   return fields;
 }
 
-function appearsInApp(field: string): boolean {
-  return new RegExp(`\\b${field}\\b`).test(APP);
+const CONTRACT_FIELDS = contractFields();
+const CONTRACT_NAMES = [...new Set(CONTRACT_FIELDS.map((entry) => entry.contract))];
+
+function containsWord(text: string, word: string): boolean {
+  return new RegExp(`\\b${word}\\b`).test(text);
 }
 
-describe('control center contract coverage', () => {
-  it('reads the contract fields out of the type file', () => {
-    // A parser that found nothing would make the assertion below vacuous.
-    const fields = contractFields();
-    expect(fields.length).toBeGreaterThan(150);
-    expect(fields.some((entry) => entry.contract === 'RunDetailSnapshot' && entry.field === 'hardFailureCodes')).toBe(true);
+/**
+ * The body of every `function` declaration in the component file, including
+ * generic declarations such as `usePagedCollection<S extends …>`.
+ */
+function componentBodies(): ReadonlyMap<string, string> {
+  const bodies = new Map<string, string>();
+  const declaration = /\nfunction (\w+)/g;
+  let match: RegExpExecArray | null;
+  while ((match = declaration.exec(APP)) !== null) {
+    const name = match[1] as string;
+    let cursor = match.index + match[0].length;
+    if (APP[cursor] === '<') {
+      // Skip the declaration's own type parameters, e.g. `<S, T>`.
+      let angleDepth = 0;
+      for (; cursor < APP.length; cursor += 1) {
+        if (APP[cursor] === '<') angleDepth += 1;
+        else if (APP[cursor] === '>') {
+          angleDepth -= 1;
+          if (angleDepth === 0) { cursor += 1; break; }
+        }
+      }
+    }
+    if (APP[cursor] !== '(') continue;
+    let parenDepth = 0;
+    let afterParams = -1;
+    for (; cursor < APP.length; cursor += 1) {
+      if (APP[cursor] === '(') parenDepth += 1;
+      else if (APP[cursor] === ')') {
+        parenDepth -= 1;
+        if (parenDepth === 0) { afterParams = cursor; break; }
+      }
+    }
+    if (afterParams === -1) continue;
+    const open = APP.indexOf('{', afterParams);
+    if (open === -1) continue;
+    let braceDepth = 0;
+    let end = -1;
+    for (let index = open; index < APP.length; index += 1) {
+      if (APP[index] === '{') braceDepth += 1;
+      else if (APP[index] === '}') {
+        braceDepth -= 1;
+        if (braceDepth === 0) { end = index; break; }
+      }
+    }
+    if (end === -1) continue;
+    bodies.set(name, APP.slice(match.index, end + 1));
+  }
+  return bodies;
+}
+
+const COMPONENT_BODIES = componentBodies();
+
+/**
+ * A component's carrier text is its own body plus the bodies of functions it
+ * invokes with explicit type arguments. The invocation binds the generic
+ * consumer to the contract, so the consumer's body is part of the view.
+ */
+function carrierTexts(): ReadonlyMap<string, string> {
+  const texts = new Map<string, string>();
+  for (const [name, body] of COMPONENT_BODIES) {
+    const collected: string[] = [body];
+    const seen = new Set<string>([name]);
+    for (let index = 0; index < collected.length; index += 1) {
+      for (const call of (collected[index] as string).matchAll(/\b(\w+)<([^>\n]*)>\s*\(/g)) {
+        const callee = call[1] as string;
+        if (seen.has(callee)) continue;
+        const calleeBody = COMPONENT_BODIES.get(callee);
+        if (calleeBody === undefined) continue;
+        seen.add(callee);
+        collected.push(calleeBody);
+      }
+    }
+    texts.set(name, collected.join('\n'));
+  }
+  return texts;
+}
+
+const CARRIER_TEXTS = carrierTexts();
+
+/**
+ * Contract -> components that can receive it: a direct name mention, a
+ * generic consumer bound at the call site, or a containment path from a
+ * parent contract through the field that holds it, to a fixpoint.
+ */
+function carriersByContract(): ReadonlyMap<string, ReadonlySet<string>> {
+  const result = new Map<string, Set<string>>();
+  for (const [component, text] of CARRIER_TEXTS) {
+    const carried = new Set(CONTRACT_NAMES.filter((contract) => containsWord(text, contract)));
+    let grew = true;
+    while (grew) {
+      grew = false;
+      for (const parent of [...carried]) {
+        for (const entry of CONTRACT_FIELDS) {
+          if (entry.contract !== parent || carried.has(entry.type)) continue;
+          for (const target of CONTRACT_NAMES) {
+            if (carried.has(target) || !containsWord(entry.type, target)) continue;
+            if (containsWord(text, entry.field)) { carried.add(target); grew = true; }
+          }
+        }
+      }
+    }
+    for (const contract of carried) {
+      const carriers = result.get(contract) ?? new Set<string>();
+      carriers.add(component);
+      result.set(contract, carriers);
+    }
+  }
+  return result;
+}
+
+const CARRIERS = carriersByContract();
+
+function renderedInCarrier(contract: string, field: string): boolean {
+  const carriers = CARRIERS.get(contract);
+  if (carriers === undefined) return false;
+  return [...carriers].some((component) => containsWord(CARRIER_TEXTS.get(component) ?? '', field));
+}
+
+describe('control center contract placement coverage', () => {
+  it('extracts contracts, fields, components and each carriage mechanism', () => {
+    // A parser that silently matched nothing would make every assertion below
+    // vacuous, so each extraction is measured first.
+    expect(CONTRACT_NAMES.length).toBeGreaterThan(30);
+    expect(CONTRACT_FIELDS.length).toBeGreaterThan(150);
+    expect(COMPONENT_BODIES.size).toBeGreaterThan(30);
+    // Generic consumer bound at the call site: the paged collection body is
+    // folded into the dashboard that binds it to the concrete list contract.
+    expect(CARRIER_TEXTS.get('DashboardApp')).toContain('snapshot.page.nextCursor');
+    expect(CARRIERS.get('RunListSnapshot')?.has('DashboardApp')).toBe(true);
+    expect(renderedInCarrier('RunListSnapshot', 'nextCursor')).toBe(true);
+    // Containment: `SafetyView` never names `SafetySnapshot`; it receives it
+    // through `OverviewSnapshot.safety`, which it does read.
+    expect(CARRIERS.get('SafetySnapshot')?.has('SafetyView')).toBe(true);
+    expect(renderedInCarrier('SafetySnapshot', 'checks')).toBe(true);
   });
 
-  it('renders every contract field that is not explicitly exempt', () => {
+  it('renders every declared field inside a carrier of its contract', () => {
     const unrendered = [...new Set(
-      contractFields()
+      CONTRACT_FIELDS
         .filter((entry) => !(entry.field in NOT_RENDERED))
-        .filter((entry) => !appearsInApp(entry.field))
+        .filter((entry) => !renderedInCarrier(entry.contract, entry.field))
         .map((entry) => `${entry.contract}.${entry.field}`),
     )].sort();
     expect(unrendered).toEqual([]);
   });
 
-  it('keeps the exempt set honest by requiring each entry to still be unrendered', () => {
-    // An exemption for a field that IS now rendered is stale bookkeeping, and
-    // stale bookkeeping is how an exempt list grows into a blanket.
-    const stale = Object.keys(NOT_RENDERED).filter((field) => {
-      const declared = contractFields().some((entry) => entry.field === field);
-      return !declared;
-    });
-    expect(stale).toEqual([]);
+  it('keeps the exempt set honest in both directions', () => {
+    // An exemption for a field no contract declares is stale bookkeeping, and
+    // an exemption for a field that IS now rendered in one of its carriers is
+    // a claim the code no longer supports. Stale bookkeeping is how an exempt
+    // list grows into a blanket.
+    for (const [field, reason] of Object.entries(NOT_RENDERED)) {
+      expect(reason.length).toBeGreaterThan(20);
+      const declared = CONTRACT_FIELDS.filter((entry) => entry.field === field);
+      expect(declared.length, `exempt field ${field} is declared by no contract`).toBeGreaterThan(0);
+      const renderedSomewhere = declared.some((entry) => renderedInCarrier(entry.contract, entry.field));
+      expect(renderedSomewhere, `exempt field ${field} is now rendered; remove the exemption`).toBe(false);
+    }
+  });
+
+  it('scopes the search to carriers: a colliding word elsewhere does not count', () => {
+    // The field name appears in the file, so the predecessor's file-level
+    // search accepted it, but it appears in no component that can receive
+    // `RunListItemSnapshot`. This is the defect class the placement check
+    // exists to catch, kept as an executable statement of the difference.
+    expect(APP).toContain('passed');
+    expect(renderedInCarrier('RunListItemSnapshot', 'passed')).toBe(false);
   });
 });

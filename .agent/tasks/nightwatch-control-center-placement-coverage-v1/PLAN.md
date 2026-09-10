@@ -105,7 +105,7 @@ callout the execution graph already uses.
 
 ### M1 — the placement guard (P-01)
 
-- **Status:** NOT_STARTED
+- **Status:** COMPLETE
 - Objective: replace the name-level assertion with the carrier model above.
 - Files: `ui/control-center/src/contractCoverage.test.ts`.
 - Acceptance: the guard fails on the measured 16 gaps before the repairs; its
@@ -117,7 +117,7 @@ callout the execution graph already uses.
 
 ### M2 — render the exposed fields
 
-- **Status:** NOT_STARTED
+- **Status:** COMPLETE
 - Objective: close the 16 measured gaps by rendering each field in a carrier
   or exempting it with a reason.
 - Files: `ui/control-center/src/App.tsx`, `ui/control-center/src/App.test.tsx`.
@@ -129,7 +129,7 @@ callout the execution graph already uses.
 
 ### M3 — paged truncation disclosure (P-02)
 
-- **Status:** NOT_STARTED
+- **Status:** COMPLETE
 - Objective: consume and render `page.truncated` for all five paged lists.
 - Files: `ui/control-center/src/App.tsx`, `ui/control-center/src/App.test.tsx`.
 - Acceptance: a page whose `truncated` is true renders a server-truncation
@@ -138,7 +138,7 @@ callout the execution graph already uses.
 
 ### M4 — source-graph undrawn-edge parity (P-03)
 
-- **Status:** NOT_STARTED
+- **Status:** COMPLETE
 - Objective: count, report and disclose endpoint-less edges in the source
   graph, matching the execution graph.
 - Files: `ui/control-center/src/App.tsx`, `ui/control-center/src/App.test.tsx`.
@@ -148,7 +148,7 @@ callout the execution graph already uses.
 
 ### M5 — placeholder coverage and declared limits (P-04, P-05)
 
-- **Status:** NOT_STARTED
+- **Status:** COMPLETE
 - Objective: export and test `PlaceholderView`; quote the declared graph
   maximums instead of the hardcoded default.
 - Files: `ui/control-center/src/App.tsx`, `ui/control-center/src/App.test.tsx`.
@@ -158,7 +158,7 @@ callout the execution graph already uses.
 
 ### M6 — certification
 
-- **Status:** NOT_STARTED
+- **Status:** IN_PROGRESS
 - Objective: full validation from the owned session, state and docs reconciled
   to the validated checkpoint, integration by fast-forward, session released.
 - Files: task state, `docs/CURRENT_STATE.md`, `docs/ROADMAP.md`, `.agent/ACTIVE_TASK.md`,

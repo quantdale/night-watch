@@ -7,16 +7,16 @@ Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-control-center-placement-coverage-v1
 Starting SHA: ceb8fe21f9dd90666190c9272030a0dbfabc458f
 Last validated implementation SHA: ceb8fe21f9dd90666190c9272030a0dbfabc458f
-Last checkpoint: M0 execution truth COMPLETE; the owned session
-`nightwatch-control-center-placem-f8abc223` is claimed as
-`sess-36f4ca096045` on base
-`ceb8fe21f9dd90666190c9272030a0dbfabc458f`, `session:status` verdict PASS,
-and the predecessor is verified terminal COMPLETE and untouched.
-Current milestone: M1 — the placement guard (P-01)
-Next action: implement the carrier model in
-`ui/control-center/src/contractCoverage.test.ts`, run
-`npm --prefix ui/control-center run test -- contractCoverage`, and record the
-measured failing set in `STATE.md` before repairing any field.
+Last checkpoint: M1 through M5 implemented and locally green in the owned
+session — the placement guard (with two mutation proofs), the 16 rendered
+fields, the paged truncation disclosure, the source-graph undrawn-edge parity,
+the placeholder coverage and the declared-limits card; UI typecheck, 58 tests
+and build PASS; root typecheck and `hardening:check` PASS;
+`validation:universe` PASS; browser lane 4 passed / 0 failed.
+Current milestone: M6 — certification
+Next action: commit the implementation checkpoint from the owned session, run
+`npm run gate:local`, record the exact receipt in `STATE.md`, reconcile the
+documentation, integrate by fast-forward and release the session.
 Authorization class: CONTROL_CENTER_PLACEMENT_COVERAGE_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2

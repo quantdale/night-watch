@@ -24,23 +24,70 @@ Planning route written and committed.
 
 ## M1 — the placement guard
 
-_To be filled during execution._
+The name-level assertion in `ui/control-center/src/contractCoverage.test.ts`
+was replaced by the carrier model. For each `function` component the guard
+builds a carrier text: the component body plus the bodies of functions it
+invokes with explicit type arguments, so `usePagedCollection<RunListSnapshot,
+…>` makes the shared collection part of every view that binds it. Carriage
+closes transitively over containment: `SafetyView` never names
+`SafetySnapshot`, but it carries `OverviewSnapshot` and reads `safety`, so it
+carries the nested contract.
+
+Before the repairs the guard failed on exactly the 16 fields the audit
+measured. Two mutations were run and restored:
+
+| Mutation | Result |
+| --- | --- |
+| `{surface.repositoryId}` replaced with `{surface.surfaceId}` | FAIL on exactly `SourceSurfaceSnapshot.repositoryId`; restore passes 4/4 |
+| the `truncated` property removed from the hook's return | FAIL on exactly the four paged `truncated` fields; restore passes 4/4 |
+
+A weaker mutation that kept the word but changed its role still passed: the
+check is name-scoped inside a carrier by design, and its header says so.
 
 ## M2 — render the exposed fields
 
-_To be filled during execution._
+All 16 gaps closed, each in a carrier of its contract:
+
+| Field | Rendered in |
+| --- | --- |
+| `HealthSnapshot.status` | Safety Center service panel (`Service status`) |
+| `MetaSnapshot.service`, `.executionAuthority`, `.mutationAuthority`, `.limits` | Safety Center service panel and the declared-limits grid |
+| `ReadinessSnapshot.status`, `SafetySnapshot.status` | readiness detail and Safety Center owner-scope rows |
+| paged `truncated` (four lists) | M3 |
+| `ExecutionGraphSnapshot` edge `proof` | new execution-graph edge inventory |
+| `CampaignSummarySnapshot.ownerScopeStatus`, `.ownerScopeReason` | Campaign Intelligence owner panel, replacing the hardcoded row |
+| `CampaignCoverageSnapshot` row `gapReasons` | coverage matrix row note |
+| `SourceSurfaceSnapshot.repositoryId` | source surface row |
+
+`passed` and `layer` remain exempt with reasons. The placement guard passes
+with exactly five exemptions, and its exempt assertion fails if any of them
+becomes rendered.
 
 ## M3 — paged truncation disclosure
 
-_To be filled during execution._
+`PagedSnapshot<T>` gained `page.truncated`; `PagedCollection` exposes
+`truncated`; `usePagedCollection` reads the declared field (never infers it
+from `nextCursor`); `LoadMoreControl` states the server truncation beside the
+continuation control. The regression pages a truncated list through to its
+complete end and asserts the statement appears, the control remains, then the
+statement disappears and `All loaded.` is stated by the final page.
 
 ## M4 — source-graph undrawn-edge parity
 
-_To be filled during execution._
+`SourceGraphCanvas` counts edges whose endpoints are outside the projection,
+the footer reports `drawn of received`, and a disclosure callout names the
+count and attributes it to the projection. The source regression now carries
+one endpoint-less edge and asserts `1 of 2 edges · depth 2 · zoom 1.00x` and
+`1 edge(s) reference a node outside this projection`, matching the execution
+graph's wording.
 
 ## M5 — placeholder coverage and declared limits
 
-_To be filled during execution._
+`PlaceholderView` is exported and rendered directly by a test that asserts the
+view it stands in for and `Snapshot not connected`. The Source Intelligence
+limits card reads `meta.limits.maxGraphNodes` / `.maxGraphEdges` and a
+regression asserts `1000 / 2000` from the declared fixture; the hardcoded
+`250 / 500` default-as-maximum is gone.
 
 ## M6 — certification
 

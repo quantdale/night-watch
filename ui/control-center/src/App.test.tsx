@@ -1,8 +1,9 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { App, ControlCenterErrorBoundary } from './App';
+import { App, ControlCenterErrorBoundary, PlaceholderView } from './App';
 import { CONTROL_CENTER_API_PATHS } from './api';
+import { VIEW_DEFINITIONS } from './types';
 import type { OverviewSnapshot } from './types';
 
 const overview: OverviewSnapshot = {
@@ -32,7 +33,7 @@ const overview: OverviewSnapshot = {
     // fixture that exercises the decision workflow must report it. The
     // read-only default is covered by its own case below.
     localReviewDecision: 'ENABLED',
-    limits: { maxPageLimit: 50, maxTimelineLimit: 100, maxGraphDepth: 4 },
+    limits: { maxPageLimit: 50, maxTimelineLimit: 100, maxGraphDepth: 4, maxGraphNodes: 1000, maxGraphEdges: 2000 },
   },
   readiness: {
     schemaVersion: 'nightwatch.control-center.readiness.v1',
@@ -275,6 +276,17 @@ describe('Control Center UI shell', () => {
     // Meta authority, which was fetched for one boolean and otherwise dropped.
     expect(screen.getByText('Control Center Local Read Only Ui Only')).toBeInTheDocument();
     expect(screen.getByText('Owner Local Only')).toBeInTheDocument();
+    // The declared service posture and bounds are the server's own declaration,
+    // not a client constant: the graph maximum is 1000/2000, not the 250/500
+    // default the Source Intelligence card used to state as a maximum.
+    expect(screen.getByText('Service status')).toBeInTheDocument();
+    expect(screen.getByText('Execution authority (declared)')).toBeInTheDocument();
+    expect(screen.getByText('Mutation authority (declared)')).toBeInTheDocument();
+    expect(screen.getByText('DECLARED LIMITS')).toBeInTheDocument();
+    expect(screen.getByText('Max Graph Nodes')).toBeInTheDocument();
+    expect(screen.getByText('1000')).toBeInTheDocument();
+    expect(screen.getByText('Max Graph Edges')).toBeInTheDocument();
+    expect(screen.getByText('2000')).toBeInTheDocument();
   });
 
   it('calls an empty safety check set unknown rather than letting it read as clean', async () => {
@@ -546,6 +558,12 @@ describe('Control Center UI shell', () => {
     expect(screen.getByText('summary · contract-01')).toBeInTheDocument();
     expect(screen.getByText('Gap present')).toBeInTheDocument();
     expect(screen.getByText('Replay · Gap')).toBeInTheDocument();
+    // Row-level gap reasons are fetched and now named rather than implied by
+    // a single stage chip. The owner scope is the declaration the server
+    // sends, not a hardcoded string.
+    expect(screen.getByText('Gaps: Replay Unavailable')).toBeInTheDocument();
+    expect(screen.getByText('Frozen By Owner')).toBeInTheDocument();
+    expect(screen.getByText('Infrastructure And Data Layer Out Of Scope')).toBeInTheDocument();
     expect(screen.queryByText('Score', { exact: true })).not.toBeInTheDocument();
   });
 
@@ -589,7 +607,12 @@ describe('Control Center UI shell', () => {
         { nodeId: 'surface-01', kind: 'SURFACE', label: '/safe/summary', proof: 'PROVEN', currentness: 'SOURCE_STALE', lifecycle: 'MECHANICALLY_PROVEN', capability: 'SUPPORTED' },
         { nodeId: 'request-01', kind: 'REQUEST_CONTRACT', label: 'Request', proof: 'OBSERVED', currentness: 'SOURCE_STALE', lifecycle: null, capability: 'UNPROVEN' },
       ],
-      edges: [{ edgeId: 'edge-01', fromNodeId: 'surface-01', toNodeId: 'request-01', kind: 'JOINS_REQUEST', proof: 'OBSERVED' }],
+      edges: [
+        { edgeId: 'edge-01', fromNodeId: 'surface-01', toNodeId: 'request-01', kind: 'JOINS_REQUEST', proof: 'OBSERVED' },
+        // The endpoint is outside the projection, so the edge cannot be drawn.
+        // It is counted and attributed, never silently dropped.
+        { edgeId: 'edge-02', fromNodeId: 'surface-01', toNodeId: 'request-ghost', kind: 'JOINS_REQUEST', proof: 'OBSERVED' },
+      ],
       nodeLimit: 250, edgeLimit: 500, truncated: false,
     };
     const responses: Record<string, unknown> = {
@@ -610,11 +633,20 @@ describe('Control Center UI shell', () => {
     expect(screen.getByText('/safe/summary')).toBeInTheDocument();
     expect(screen.getAllByText('Source Stale').length).toBeGreaterThan(0);
     expect(screen.getByText('Proven Read Only')).toBeInTheDocument();
+    // The repository the surface belongs to is fetched; the row must carry it.
+    expect(screen.getByText(/repo-01 · GET · PHP · surface-01/)).toBeInTheDocument();
+    // The declared graph maximum is quoted from the server's own declaration.
+    expect(screen.getByText('1000 / 2000')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Graph' }));
     expect(await screen.findByRole('img', { name: 'Bounded source intelligence graph' })).toBeInTheDocument();
     expect(screen.getByText('Request')).toBeInTheDocument();
     // C-15b renamed the pill from "Bounded" to state what bounded MEANS.
     expect(screen.getByText('Complete within bounds')).toBeInTheDocument();
+    // Parity with the execution graph: one edge cannot be drawn because its
+    // endpoint is outside the projection, and the footer must not report it
+    // as drawn.
+    expect(screen.getByText('1 of 2 edges · depth 2 · zoom 1.00x')).toBeInTheDocument();
+    expect(screen.getByText('1 edge(s) reference a node outside this projection')).toBeInTheDocument();
     // And the view is now interactive rather than a fixed grid.
     expect(screen.getByRole('searchbox', { name: 'Search graph nodes' })).toBeInTheDocument();
     expect(screen.getByRole('group', { name: 'Zoom and pan' })).toBeInTheDocument();
@@ -1139,6 +1171,19 @@ describe('Control Center UI shell', () => {
   });
 
   /**
+   * P-04. `PlaceholderView` is the fail-safe for a view id added to
+   * `VIEW_DEFINITIONS` without a render branch. No current id can reach it,
+   * so it is rendered directly; an untested fail-safe is a fail-safe that
+   * fails the first time it is needed.
+   */
+  it('renders the placeholder fail-safe with the view it stands in for', () => {
+    render(<PlaceholderView view={VIEW_DEFINITIONS[0]} />);
+    expect(screen.getByRole('heading', { name: 'Overview' })).toBeInTheDocument();
+    expect(screen.getByText('Readiness and local posture at a glance.')).toBeInTheDocument();
+    expect(screen.getByText('Snapshot not connected')).toBeInTheDocument();
+  });
+
+  /**
    * NW-10. Every list DTO advertised `page.nextCursor` and every loader
    * requested only a limit, so records past the first page were unreachable
    * from the UI. These cases page the reviewer list, which is the one with a
@@ -1167,6 +1212,27 @@ describe('Control Center UI shell', () => {
         return Promise.resolve(responseFor(reviewerResponses(reviewerItem())[url]));
       });
     }
+
+    it('states the server page truncation instead of inferring completeness from the cursor', async () => {
+      const user = userEvent.setup();
+      vi.stubGlobal('fetch', pagedFetch({
+        '/api/v1/reviewer?limit=50': pageOf(['finding-a'], '2'),
+        '/api/v1/reviewer?limit=50&cursor=2': pageOf(['finding-b'], null),
+      }));
+      await openReviewer(user);
+
+      // The first page is truncated at the server's bound; the operator is
+      // told so rather than having to infer it from the presence of a button.
+      expect(screen.getByText('The server reported more reviewer findings than this page returned; the page is truncated at its bound.')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Load more reviewer findings' })).toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: 'Load more reviewer findings' }));
+      await waitFor(() => expect(screen.getByText('2 reviewer findings loaded')).toBeInTheDocument());
+      // The final page is complete: the statement is gone and the end is
+      // stated. The two facts are rendered independently.
+      expect(screen.queryByText(/The server reported more reviewer findings/)).not.toBeInTheDocument();
+      expect(screen.getByText('All loaded.')).toBeInTheDocument();
+    });
 
     it('reaches a record beyond the first page', async () => {
       const user = userEvent.setup();
