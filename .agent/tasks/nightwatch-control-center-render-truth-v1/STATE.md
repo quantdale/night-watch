@@ -8,21 +8,23 @@ Task ID: nightwatch-control-center-render-truth-v1
 Phase: CONTROL_CENTER_RENDER_TRUTH_V1
 Status: COMPLETE
 Starting SHA: f0180d1f58d4ab1a1e7e8e226554cf0564ad7f16
-Last validated implementation SHA: 4aabb7c5367fc3ee357f12617c35590f0faaf6a9
-Last substantive checkpoint SHA: 4aabb7c5367fc3ee357f12617c35590f0faaf6a9
+Last validated implementation SHA: 32e216448761a3d4f86c077e0516929b376f066b
+Last substantive checkpoint SHA: 32e216448761a3d4f86c077e0516929b376f066b
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-control-center-render-287b0e00
-Last checkpoint: M7 certification COMPLETE at implementation
-`4aabb7c5367fc3ee357f12617c35590f0faaf6a9`; `gate:local` all eleven groups
-PASS at that checkpoint with receipt `receipt:sha256:65ff134f69b2fbd0a58aaad0`,
-and a full offline regression passed 4789 / 18 skipped / 0 failed. R-01
-through R-04 are CLOSED with acceptance evidence.
+Last checkpoint: M7 certification COMPLETE, plus a post-certification
+consistency maintenance at implementation
+`32e216448761a3d4f86c077e0516929b376f066b`. `gate:local` passed all eleven
+groups at both `4aabb7c` (`receipt:sha256:65ff134f69b2fbd0a58aaad0`) and
+`32e2164` (`receipt:sha256:f89854b196e4716ba7d0878d`), and a full offline
+regression passed 4789 / 18 skipped / 0 failed at `4aabb7c`. R-01 through R-04
+are CLOSED with acceptance evidence.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: f0180d1f58d4ab1a1e7e8e226554cf0564ad7f16
-LAST_VALIDATED_IMPLEMENTATION_SHA: 4aabb7c5367fc3ee357f12617c35590f0faaf6a9
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 4aabb7c5367fc3ee357f12617c35590f0faaf6a9
+LAST_VALIDATED_IMPLEMENTATION_SHA: 32e216448761a3d4f86c077e0516929b376f066b
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 32e216448761a3d4f86c077e0516929b376f066b
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
 PHASE_CONTROL_CENTER_RENDER_TRUTH_V1_STATUS: COMPLETE
@@ -47,6 +49,15 @@ PASS at implementation `4aabb7c` with receipt
 
 ## Completed Milestones
 
+- **Post-certification consistency maintenance COMPLETE** — the adversarial
+  self-review of the final matrix found a dead `coveredContracts` computation
+  with a `void` suppressor, which weakened the intended non-vacuity check. The
+  maintenance removed the dead code and turned it into an exact assertion that
+  the views' contract lists equal the asserted contract list, so a view cannot
+  be added without asserting its contracts or the reverse. UI typecheck and
+  63/63 tests PASS; `validation:universe` PASS; `gate:local` all eleven groups
+  PASS at `32e216448761a3d4f86c077e0516929b376f066b` with receipt
+  `receipt:sha256:f89854b196e4716ba7d0878d`.
 - **M7 COMPLETE** — certification at implementation
   `4aabb7c5367fc3ee357f12617c35590f0faaf6a9`. `gate:local` all eleven groups
   PASS with receipt `receipt:sha256:65ff134f69b2fbd0a58aaad0`;
@@ -298,6 +309,15 @@ When: 2026-09-10
 Relevant failure/output summary: 4789 passed / 18 skipped / 0 failed in 13.1
 minutes — identical to the campaign's starting baseline.
 
+Command: post-certification consistency maintenance
+Result: PASS
+When: 2026-09-10
+Relevant failure/output summary: removed the voided `coveredContracts`
+computation and asserted exact agreement between the views' contract lists
+and the asserted contract list. UI typecheck PASS, UI suite 63/63,
+`validation:universe` PASS, and `gate:local` all eleven groups PASS at
+`32e2164` with receipt `receipt:sha256:f89854b196e4716ba7d0878d`.
+
 ## Decisions Made During This Task
 
 Decision: generate fixtures from the declared TypeScript AST instead of
@@ -355,15 +375,16 @@ Task complete. Do not resume; any follow-up starts as a new authorized task.
 
 ## Completion Snapshot
 
-Final substantive checkpoint: 4aabb7c5367fc3ee357f12617c35590f0faaf6a9
+Final substantive checkpoint: 32e216448761a3d4f86c077e0516929b376f066b
 Live HEAD: DISCOVER_FROM_GIT
 Tests: UI typecheck PASS; UI suite 63 passed across 5 files; UI build PASS at
 3 files / 330,528 bytes with no external references; root `typecheck` PASS;
 `hardening:check` PASS; `validation:universe` PASS with UI_LANE=5 and digest
 `sha256:b735b90cf16c33f71476b1dc`; browser workflow lane 4 passed / 0 failed;
 `gate:local` all eleven groups PASS at `4aabb7c` with receipt
-`receipt:sha256:65ff134f69b2fbd0a58aaad0`; full offline regression 4789
-passed / 18 skipped / 0 failed.
+`receipt:sha256:65ff134f69b2fbd0a58aaad0` and again at the consistency
+checkpoint `32e2164` with receipt `receipt:sha256:f89854b196e4716ba7d0878d`;
+full offline regression 4789 passed / 18 skipped / 0 failed.
 Artifacts: `ui/control-center/src/contractRender.test.tsx`,
 `ui/control-center/src/{App.tsx,App.test.tsx,contractCoverage.test.ts}`,
 `tests/browser/controlCenterBrowser.browser.ts`,

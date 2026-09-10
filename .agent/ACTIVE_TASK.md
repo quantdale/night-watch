@@ -6,11 +6,12 @@ Title: Control Center Render Truth
 Status: COMPLETE
 Task directory: .agent/tasks/nightwatch-control-center-render-truth-v1
 Starting SHA: f0180d1f58d4ab1a1e7e8e226554cf0564ad7f16
-Last validated implementation SHA: 4aabb7c5367fc3ee357f12617c35590f0faaf6a9
-Last checkpoint: M7 certification COMPLETE at implementation
-`4aabb7c5367fc3ee357f12617c35590f0faaf6a9`; `gate:local` all eleven groups
-PASS with receipt `receipt:sha256:65ff134f69b2fbd0a58aaad0`; full offline
-regression 4789 / 18 skipped / 0 failed; R-01 through R-04 CLOSED. — status tones, graph-node
+Last validated implementation SHA: 32e216448761a3d4f86c077e0516929b376f066b
+Last checkpoint: M7 certification COMPLETE, plus a post-certification
+consistency maintenance at implementation
+`32e216448761a3d4f86c077e0516929b376f066b`; `gate:local` passed all eleven
+groups at both `4aabb7c` and `32e2164`; full offline regression 4789 / 18
+skipped / 0 failed; R-01 through R-04 CLOSED. — status tones, graph-node
 strokes and stage chips compute their rules in the built bundle. M4
 view-change announcement COMPLETE — navigation sets the
 document title and focuses main content, with initial load and refresh
@@ -35,8 +36,8 @@ Authorization class: CONTROL_CENTER_RENDER_TRUTH_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: f0180d1f58d4ab1a1e7e8e226554cf0564ad7f16
-LAST_VALIDATED_IMPLEMENTATION_SHA: 4aabb7c5367fc3ee357f12617c35590f0faaf6a9
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 4aabb7c5367fc3ee357f12617c35590f0faaf6a9
+LAST_VALIDATED_IMPLEMENTATION_SHA: 32e216448761a3d4f86c077e0516929b376f066b
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 32e216448761a3d4f86c077e0516929b376f066b
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PHASE_CONTROL_CENTER_RENDER_TRUTH_V1_STATUS: COMPLETE

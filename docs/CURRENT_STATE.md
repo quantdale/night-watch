@@ -746,8 +746,8 @@ RELEASE_CERTIFICATION_PROTOCOL_VERSION: nightwatch.release-certification.v1
 PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
 RELEASE_CHECKPOINT_SHA: 2576c5751d33bb40046246e8fcf57c7cc5c30a57
 LIVE_HEAD_SHA: DISCOVER_FROM_GIT
-LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: 4aabb7c5367fc3ee357f12617c35590f0faaf6a9
-LAST_LOCALLY_VALIDATED_SHA: 4aabb7c5367fc3ee357f12617c35590f0faaf6a9
+LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: 32e216448761a3d4f86c077e0516929b376f066b
+LAST_LOCALLY_VALIDATED_SHA: 32e216448761a3d4f86c077e0516929b376f066b
 LAST_CLEAN_VALIDATED_SHA: c18db55970a6497470191c8c9ef58f5012a96c8c
 CI_OBSERVED_SHA: NONE
 CI_EXECUTED_SHA: NONE
@@ -3950,7 +3950,11 @@ Certification: implementation `4aabb7c5367fc3ee357f12617c35590f0faaf6a9`;
 `gate:local` all eleven groups PASS with receipt
 `receipt:sha256:65ff134f69b2fbd0a58aaad0`; UI typecheck, 63 tests and build
 PASS; browser lane 4/4; full offline regression 4789 passed / 18 skipped / 0
-failed, unchanged from the baseline. External CI was not run and is not
+failed, unchanged from the baseline. A post-certification adversarial review
+removed dead code in the harness and added an exact matrix/contract-list
+agreement assertion at `32e216448761a3d4f86c077e0516929b376f066b`, which the
+project baseline now names; `gate:local` passed again at that checkpoint with
+receipt `receipt:sha256:f89854b196e4716ba7d0878d`. External CI was not run and is not
 claimed green. The harness proves DOM influence, not visual correctness, and
 `schemaVersion`, `afterSeq`, `advisoryOnly`, `passed` and the two loopback
 scope constants remain reasoned exemptions.
