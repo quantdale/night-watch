@@ -557,10 +557,13 @@ describe('control center render truth', () => {
       'SourceGraphSnapshot',
       'SystemMapSnapshot',
     ];
-    const coveredContracts = [...new Set(VIEWS.flatMap((view) => [...view.contracts]))];
+    const coveredContracts = [...new Set(VIEWS.flatMap((view) => [...view.contracts]))].sort();
+    // The views and the asserted contract list must agree exactly; a view
+    // added without asserting its contracts (or the reverse) would otherwise
+    // leave fields outside the matrix silently.
+    expect(coveredContracts).toEqual([...ASSERTED_CONTRACTS].sort());
     const covered = leavesFor(ASSERTED_CONTRACTS);
     expect(covered.length).toBeGreaterThan(60);
-    void coveredContracts;
     const observable = new Set<string>();
     const baselineLengths: Record<string, number> = {};
     const flips: Record<string, number> = {};
