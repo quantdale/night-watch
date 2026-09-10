@@ -26,7 +26,24 @@ Overview-family leaves, 137 flips all observable in 4.76 seconds.
 
 ## M1 — harness core and the Overview family
 
-_To be filled during execution._
+The harness parses `types.ts` with the TypeScript compiler API and generates a
+maximal fixture per contract; each scalar leaf carries a value and one or two
+alternative values. For a view it renders a baseline, flips one leaf, renders
+again, and requires the DOM to change.
+
+Measured on the Overview/Safety family: 34 interfaces parsed, 16 contracts
+generated, more than 300 leaves, 62 asserted leaves for
+Health/Meta/Readiness/Safety. The three tests (generator non-vacuity,
+deterministic re-render, observability matrix) pass in 5.4 seconds.
+
+Findings: four constant fields were bound to no render and are now rendered —
+`HealthSnapshot.readOnly` (the Overview read-only posture now requires both
+contracts), `MetaSnapshot.scope` and `MetaSnapshot.productContact` (service
+authority rows), and `ReadinessSnapshot.ownerScope.reason` (readiness row).
+`HealthSnapshot.scope` and `SafetySnapshot.scope` are exempt as single-value
+constants asserted by the fixed loopback posture label. Mutation proof:
+removing the readiness owner-scope reason row fails on exactly that key;
+restoring passes. Full UI suite 61/61.
 
 ## M2 — list, graph, campaign and finding views
 

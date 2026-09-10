@@ -353,6 +353,7 @@ function ReadinessDetailPanel({ readiness }: { readonly readiness: ReadinessSnap
       <DataRow label="CI classification" value={formatCategory(readiness.externalCiClassification)} tone={statusTone(readiness.externalCiClassification)} />
       <DataRow label="Frozen operations" value={String(readiness.ownerScope.frozenOperationCount)} />
       <DataRow label="Owner scope status" value={formatCategory(readiness.ownerScope.status)} tone="warning" />
+      <DataRow label="Owner scope reason" value={formatCategory(readiness.ownerScope.reason)} tone="warning" />
       <DataRow label="Matches frozen markers" value={readiness.ownerScope.matchesFrozenMarkers ? 'Yes' : 'No'} tone={readiness.ownerScope.matchesFrozenMarkers ? 'ready' : 'warning'} />
     </div>
     {readiness.ownerScope.matchesFrozenMarkers ? null : <div className="callout callout-warning"><strong>The frozen markers do not match</strong><span>The owner scope recorded in this snapshot disagrees with the markers it was checked against. Treat the scope boundary as unconfirmed.</span></div>}
@@ -370,7 +371,7 @@ function OverviewView({ data, onRefresh }: { readonly data: OverviewSnapshot; re
           <p className="eyebrow">LOCAL INTELLIGENCE / OVERVIEW</p>
           <h1 id="overview-title">Know the posture before the next run.</h1>
           <p className="hero-description">A quiet, read-only window into Nightwatch readiness, safety, and campaign evidence. Every value below comes from a bounded local snapshot.</p>
-          <div className="hero-actions"><StatusPill value={data.health.scope} label="Loopback only" /><StatusPill value={data.meta.readOnly ? 'READY' : 'BLOCKED'} label={data.meta.readOnly ? 'Read only' : 'Unavailable'} /><button className="button button-quiet" type="button" onClick={onRefresh}><Icon name="refresh" />Refresh</button></div>
+          <div className="hero-actions"><StatusPill value={data.health.scope} label="Loopback only" /><StatusPill value={data.health.readOnly && data.meta.readOnly ? 'READY' : 'BLOCKED'} label={data.health.readOnly && data.meta.readOnly ? 'Read only' : 'Unavailable'} /><button className="button button-quiet" type="button" onClick={onRefresh}><Icon name="refresh" />Refresh</button></div>
         </div>
         <div className="hero-orbit" aria-hidden="true"><div className="orbit-ring" /><div className="orbit-ring orbit-ring-inner" /><div className="orbit-core"><span>NW</span><small>LOCAL</small></div></div>
       </section>
@@ -1205,6 +1206,8 @@ function SafetyView({ data }: { readonly data: OverviewSnapshot }): ReactNode {
           <div className="data-grid">
             <DataRow label="Authorization class" value={formatCategory(meta.authorizationClass)} tone="ready" />
             <DataRow label="Service" value={formatCategory(meta.service)} tone="neutral" />
+            <DataRow label="Service scope" value={formatCategory(meta.scope)} tone="ready" />
+            <DataRow label="Product contact (declared)" value={formatCategory(meta.productContact)} tone="ready" />
             <DataRow label="External network" value={formatCategory(meta.externalNetwork)} tone="ready" />
             <DataRow label="Findings storage" value={formatCategory(meta.findingsStorage)} tone="ready" />
             <DataRow label="Owner scope" value={formatCategory(meta.ownerScopeStatus)} tone="warning" />

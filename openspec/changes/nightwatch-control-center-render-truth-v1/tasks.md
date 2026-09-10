@@ -6,11 +6,11 @@
 - [x] Task SPEC/PLAN/STATE/REPORT and OpenSpec route committed
 
 ## M1 — harness core and the Overview family (R-01)
-- [ ] TypeScript-AST fixture generator, failing closed on unknown shapes
-- [ ] Differential DOM runner with a reasoned, staleness-checked exempt list
-- [ ] Overview and Safety family covered
-- [ ] Extraction and rendering measured non-vacuous
-- [ ] Mutation proof: removing a rendered field's DOM effect fails the harness
+- [x] TypeScript-AST fixture generator, failing closed on unknown shapes
+- [x] Differential DOM runner with a reasoned, staleness-checked exempt list
+- [x] Overview and Safety family covered
+- [x] Extraction and rendering measured non-vacuous
+- [x] Mutation proof: removing a rendered field's DOM effect fails the harness
 
 ## M2 — list, graph, campaign and finding views (R-01)
 - [ ] Runs list, run detail and timeline covered

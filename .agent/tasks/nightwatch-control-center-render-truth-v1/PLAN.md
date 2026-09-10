@@ -117,7 +117,7 @@ built bundle fails.
 
 ### M1 — harness core and the Overview family (R-01)
 
-- **Status:** NOT_STARTED
+- **Status:** COMPLETE
 - Objective: the generator, the differential runner, the exempt-list
   machinery, and coverage of the Overview/Safety family.
 - Files: `ui/control-center/src/contractRender.test.tsx`.
@@ -130,7 +130,7 @@ built bundle fails.
 
 ### M2 — list, graph, campaign and finding views (R-01)
 
-- **Status:** NOT_STARTED
+- **Status:** IN_PROGRESS
 - Objective: extend the harness to runs (list, detail, timeline), execution
   graph, campaigns and findings, including their selection flows.
 - Files: `ui/control-center/src/contractRender.test.tsx`; `App.tsx` only where

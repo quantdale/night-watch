@@ -36,15 +36,30 @@ operators; and dynamic style classes apply in the built bundle.
 
 ## Current Milestone
 
-Milestone ID: M1
+Milestone ID: M2
 Milestone status: IN_PROGRESS
-What is being attempted: the harness core in
-`ui/control-center/src/contractRender.test.tsx` — the TypeScript-AST fixture
-generator, the differential DOM runner, the reasoned exempt list, and
-coverage of the Overview/Safety family.
+What is being attempted: extend the harness to the runs (list, detail,
+timeline), execution graph, campaigns and findings views, including their
+selection flows, and render or exempt every field it exposes.
 
 ## Completed Milestones
 
+- **M1 COMPLETE (R-01 core)** — the harness exists at
+  `ui/control-center/src/contractRender.test.tsx`: a TypeScript-AST fixture
+  generator (fails closed on unknown shapes), a differential DOM runner that
+  flips one leaf at a time and compares `document.body.innerHTML`, a reasoned
+  exempt list, and the Overview/Safety views. It measured 34 interfaces, 16
+  covered contracts, and more than 300 generated leaves; the covered
+  assertion runs over 62 Health/Meta/Readiness/Safety leaves. Four genuinely
+  unbound constant fields were exposed and fixed: `HealthSnapshot.readOnly`
+  now bounds the Overview read-only posture (previously only meta's was
+  read), and `MetaSnapshot.scope`, `MetaSnapshot.productContact` and
+  `ReadinessSnapshot.ownerScope.reason` now render in their owning panels.
+  `HealthSnapshot.scope` and `SafetySnapshot.scope` remain exempt as
+  single-value constants asserted by the fixed loopback posture label. The
+  mutation proof passed: removing the readiness owner-scope reason row fails
+  the harness on exactly `ReadinessSnapshot.ownerScope.reason`, and restoring
+  it passes. UI typecheck PASS; full UI suite 61 passed across 5 files.
 - **M0 COMPLETE** — execution truth. Owned session
   `nightwatch-control-center-render-287b0e00` created and claimed as
   `sess-390d800d5900` on base
@@ -109,6 +124,35 @@ When: 2026-09-10
 Relevant failure/output summary: 4789 passed / 18 skipped / 0 failed in 16.4
 minutes.
 
+Command: `npm --prefix ui/control-center run test -- src/contractRender.test.tsx`
+Result: PASS
+When: 2026-09-10
+Relevant failure/output summary: 3 tests passed in 5.4 seconds — generator
+non-vacuity, deterministic re-render (identical fixtures produce identical
+DOM), and the covered observability matrix.
+
+Command: M1 mutation proof
+Result: FAIL then PASS (expected)
+When: 2026-09-10
+Relevant failure/output summary: removing the
+`ReadinessSnapshot.ownerScope.reason` row failed the harness on exactly that
+key; restoring the file passed 3/3.
+
+Command: `npm --prefix ui/control-center run test`
+Result: PASS
+When: 2026-09-10
+Relevant failure/output summary: 61 passed across 5 files (up from 58 across
+4).
+
+Command: M1 field findings from the differential harness
+Result: 4 fields rendered, 2 exempted
+When: 2026-09-10
+Relevant failure/output summary: before the repairs the harness reported
+`HealthSnapshot.readOnly`, `MetaSnapshot.scope`, `MetaSnapshot.productContact`
+and `ReadinessSnapshot.ownerScope.reason` unobservable; each was rendered in
+its owning view. `HealthSnapshot.scope` and `SafetySnapshot.scope` are
+single-value constants asserted by a fixed posture label.
+
 ## Decisions Made During This Task
 
 Decision: generate fixtures from the declared TypeScript AST instead of
@@ -128,6 +172,12 @@ Consequence: one small render per leaf; the matrix is bounded.
 
 ## Discoveries
 
+- The differential harness found four constant fields the placement guard
+  could not distinguish: `HealthSnapshot.readOnly`, `MetaSnapshot.scope`,
+  `MetaSnapshot.productContact` and `ReadinessSnapshot.ownerScope.reason`
+  were declared, fetched, and bound to no render; their names appeared
+  elsewhere in the same carrier components (`readOnly`, `scope`,
+  `productContact`, `reason`), so the static guard passed.
 - `App.tsx` contains no `focus()` call and no `document.title` assignment:
   view changes are silent to assistive technology and the window title is
   stale after navigation.

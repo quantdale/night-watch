@@ -7,17 +7,19 @@ Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-control-center-render-truth-v1
 Starting SHA: f0180d1f58d4ab1a1e7e8e226554cf0564ad7f16
 Last validated implementation SHA: f0180d1f58d4ab1a1e7e8e226554cf0564ad7f16
-Last checkpoint: M0 execution truth COMPLETE; the owned session
+Last checkpoint: M1 harness core COMPLETE — the differential render harness
+exists and passes for the Overview/Safety family; it exposed and four unbound
+constant fields were rendered, two single-value constants exempted, and the
+mutation proof passed. The owned session
 `nightwatch-control-center-render-287b0e00` is claimed as
 `sess-390d800d5900` on base
 `f0180d1f58d4ab1a1e7e8e226554cf0564ad7f16`, `session:status` verdict PASS,
 and the predecessor is verified terminal COMPLETE and untouched.
-Current milestone: M1 — harness core and the Overview family (R-01)
-Next action: implement `ui/control-center/src/contractRender.test.tsx` with
-the TypeScript-AST fixture generator and the differential DOM runner for the
-Overview/Safety family, run
-`npm --prefix ui/control-center run test -- contractRender`, and record the
-measured observability results in `STATE.md`.
+Current milestone: M2 — list, graph, campaign and finding views (R-01)
+Next action: extend the harness in
+`ui/control-center/src/contractRender.test.tsx` to runs (list, detail,
+timeline), the execution graph, campaigns and findings, render or exempt every
+field it exposes, and record the exact results in `STATE.md`.
 Authorization class: CONTROL_CENTER_RENDER_TRUTH_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
