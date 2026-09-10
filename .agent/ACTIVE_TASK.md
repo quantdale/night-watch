@@ -1,52 +1,53 @@
 # Active Task
 
-Task ID: nightwatch-control-center-placement-coverage-v1
-Phase: CONTROL_CENTER_PLACEMENT_COVERAGE_V1
-Title: Control Center Placement Coverage
-Status: COMPLETE
-Task directory: .agent/tasks/nightwatch-control-center-placement-coverage-v1
-Starting SHA: ceb8fe21f9dd90666190c9272030a0dbfabc458f
-Last validated implementation SHA: 51da8c411dc7ebe0ec2929e456235777e2c009f2
-Last checkpoint: M6 certification COMPLETE at implementation
-`51da8c411dc7ebe0ec2929e456235777e2c009f2`; `gate:local` all eleven groups
-PASS at that checkpoint with receipt `receipt:sha256:c3dd3cf51709c4fe02f5ba1f`;
-P-01 through P-05 are CLOSED with acceptance evidence.
-Current milestone: COMPLETE — M0 through M6 are closed
-Next action: STOP. Report the certified outcome to the owner. Integration of
-the certified checkpoint by fast-forward from the owned session is the
-campaign's final act, with `HEAD == origin/main` verified after the push. Do
-not reopen P-01 through P-05.
-Authorization class: CONTROL_CENTER_PLACEMENT_COVERAGE_V1
+Task ID: nightwatch-control-center-render-truth-v1
+Phase: CONTROL_CENTER_RENDER_TRUTH_V1
+Title: Control Center Render Truth
+Status: IN_PROGRESS
+Task directory: .agent/tasks/nightwatch-control-center-render-truth-v1
+Starting SHA: f0180d1f58d4ab1a1e7e8e226554cf0564ad7f16
+Last validated implementation SHA: f0180d1f58d4ab1a1e7e8e226554cf0564ad7f16
+Last checkpoint: M0 execution truth COMPLETE; the owned session
+`nightwatch-control-center-render-287b0e00` is claimed as
+`sess-390d800d5900` on base
+`f0180d1f58d4ab1a1e7e8e226554cf0564ad7f16`, `session:status` verdict PASS,
+and the predecessor is verified terminal COMPLETE and untouched.
+Current milestone: M1 — harness core and the Overview family (R-01)
+Next action: implement `ui/control-center/src/contractRender.test.tsx` with
+the TypeScript-AST fixture generator and the differential DOM runner for the
+Overview/Safety family, run
+`npm --prefix ui/control-center run test -- contractRender`, and record the
+measured observability results in `STATE.md`.
+Authorization class: CONTROL_CENTER_RENDER_TRUTH_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
-STARTING_SHA: ceb8fe21f9dd90666190c9272030a0dbfabc458f
-LAST_VALIDATED_IMPLEMENTATION_SHA: 51da8c411dc7ebe0ec2929e456235777e2c009f2
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 51da8c411dc7ebe0ec2929e456235777e2c009f2
+STARTING_SHA: f0180d1f58d4ab1a1e7e8e226554cf0564ad7f16
+LAST_VALIDATED_IMPLEMENTATION_SHA: f0180d1f58d4ab1a1e7e8e226554cf0564ad7f16
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: f0180d1f58d4ab1a1e7e8e226554cf0564ad7f16
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
-PHASE_CONTROL_CENTER_PLACEMENT_COVERAGE_V1_STATUS: COMPLETE
+PHASE_CONTROL_CENTER_RENDER_TRUTH_V1_STATUS: IN_PROGRESS
 
 ## Outcome
 
-Not yet certified. The measured starting state: the contract guard is
-name-level over `App.tsx`; 16 fields are fetched but rendered in no carrier of
-their contract; 5 fields are deliberately unrendered; the five paged lists
-never render `page.truncated`; the source graph drops endpoint-less edges
-silently; `PlaceholderView` is untested; and a graph-limits card states the
-server's defaults as its maximum.
+Not yet certified. Measured at the starting SHA: the full regression is
+4789/18/0; the placement guard passes with five reasoned exemptions; the UI
+renders every field it fetches in a carrier component, but no check proves any
+field's value reaches the DOM; navigation moves no focus and sets no document
+title; and the browser lane computes a style for exactly one class.
 
 ## Mission
 
-Make the contract guard prove placement; close the 16 gaps it exposes; render
-the server's paged truncation; give the source graph the execution graph's
-undrawn-edge disclosure; export and test the placeholder fail-safe; and quote
-the declared graph limits. LOCAL only; no server, contract, bound or authority
-changes.
+Prove the Control Center's rendered DOM is the contract it claims: a
+differential render harness over generated fixtures, view-change
+announcement for keyboard and assistive-technology operators, and runtime
+application proofs for the interpolated style classes. LOCAL only; no server,
+contract, bound or authority changes.
 
 Read in this order:
 
-1. `openspec/changes/nightwatch-control-center-placement-coverage-v1/audit.md`
-2. `.agent/tasks/nightwatch-control-center-placement-coverage-v1/{SPEC,PLAN,STATE}.md`
+1. `openspec/changes/nightwatch-control-center-render-truth-v1/audit.md`
+2. `.agent/tasks/nightwatch-control-center-render-truth-v1/{SPEC,PLAN,STATE}.md`
 3. `.agent/EXECUTION_PROMPT.md`
 4. `AGENTS.md`, `.agent/PLANS.md`, applicable instructions
 5. `docs/ARCHITECTURE.md` for the Control Center boundary, then live
@@ -56,11 +57,13 @@ Read in this order:
 
 Do not rebuild unless live recon finds a concrete regression:
 
-- `nightwatch-control-center-ui-completion-v1` is terminal COMPLETE and
-  integrated at `ceb8fe2`. U-01 through U-06 are CLOSED; do not reopen them.
+- `nightwatch-control-center-placement-coverage-v1` is terminal COMPLETE and
+  integrated at `f0180d1`. P-01 through P-05 are CLOSED; do not reopen them.
+- `nightwatch-control-center-ui-completion-v1` is terminal COMPLETE; U-01
+  through U-06 are CLOSED.
 - `nightwatch-residual-closure-and-lane-qualification-v1` is terminal
-  COMPLETE; R-01 through R-07 are CLOSED; its three `UNAVAILABLE_CAPABILITY`
-  lanes and the `BLOCKED_EXTERNAL` external CI state are unchanged.
+  COMPLETE; its three `UNAVAILABLE_CAPABILITY` lanes and the
+  `BLOCKED_EXTERNAL` external CI state are unchanged.
 - The permanent owner scope freeze, L6 containment, immutable evidence and
   review store identities with their no-replace patterns.
 - Every change is additive rendering, coverage or test surface. No contract,
@@ -70,17 +73,17 @@ Do not rebuild unless live recon finds a concrete regression:
 ## Routing and safety
 
 ```
-CAMPAIGN: nightwatch-control-center-placement-coverage-v1
+CAMPAIGN: nightwatch-control-center-render-truth-v1
 CHILD TASK: NONE
 WAVE: NONE
-SESSION WORKTREE: session/nightwatch-control-center-placem-f8abc223
+SESSION WORKTREE: session/nightwatch-control-center-render-287b0e00
 
 IMPLEMENTATION AUTHORIZED:
   ui/control-center source/tests/styles,
   tests/browser/controlCenterBrowser.browser.ts,
   config/validation-universe.v1.json UI_LANE registration,
   Nightwatch docs/OpenSpec/task state,
-  the five registered findings P-01 through P-05,
+  the four registered findings R-01 through R-04,
   commits/pushes/integration and local certification from the owned session.
 
 REAL PRODUCTION CONTACT:              NOT AUTHORIZED
@@ -93,7 +96,7 @@ EXTERNAL FILING:                      NOT AUTHORIZED
 CREDENTIALS / DEPLOYMENT:             NOT AUTHORIZED
 SIBLING WRITES:                       NOT AUTHORIZED
 FORCE PUSH / HISTORY REWRITE:         NOT AUTHORIZED
-REOPENING U-01..U-06 OR R-01..R-07:   NOT AUTHORIZED
+REOPENING P-01..P-05 OR U-01..U-06:   NOT AUTHORIZED
 ```
 
 LOCAL only. Sibling repositories remain read-only. Never retire, prune, adopt
