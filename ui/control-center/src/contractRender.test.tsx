@@ -79,6 +79,12 @@ interface Generated {
   readonly alternatives: readonly unknown[];
 }
 
+interface ArrayPath {
+  readonly contract: string;
+  readonly path: readonly (string | number)[];
+  readonly key: string;
+}
+
 let sentinelCounter = 0;
 function nextSentinel(path: readonly (string | number)[]): string {
   sentinelCounter += 1;
@@ -262,6 +268,8 @@ function objectForMembers(
 interface GeneratedContract {
   readonly value: Record<string, unknown>;
   readonly leaves: readonly Leaf[];
+  /** Every array the generated value carries, for the absence pass. */
+  readonly arrays: readonly ArrayPath[];
 }
 
 const generatedCache = new Map<string, GeneratedContract>();
@@ -281,6 +289,18 @@ function correlateGraphEndpoints(value: Record<string, unknown>): void {
   }
 }
 
+/** Every array the generated fixture carries, at every depth. */
+function collectArrayPaths(value: unknown, path: readonly (string | number)[], contract: string, out: ArrayPath[]): void {
+  if (Array.isArray(value)) {
+    out.push({ contract, path, key: `${contract}.${path.join('.')}` });
+    value.forEach((entry, index) => collectArrayPaths(entry, [...path, index], contract, out));
+    return;
+  }
+  if (value !== null && typeof value === 'object') {
+    for (const [name, entry] of Object.entries(value)) collectArrayPaths(entry, [...path, name], contract, out);
+  }
+}
+
 function generatedFor(contract: string): GeneratedContract {
   const cached = generatedCache.get(contract);
   if (cached !== undefined) return cached;
@@ -289,9 +309,15 @@ function generatedFor(contract: string): GeneratedContract {
   const leaves: Leaf[] = [];
   const value = objectForMembers(declaration.members, [], leaves, contract, EMPTY_BINDINGS);
   correlateGraphEndpoints(value);
-  const generated: GeneratedContract = { value, leaves };
+  const arrays: ArrayPath[] = [];
+  collectArrayPaths(value, [], contract, arrays);
+  const generated: GeneratedContract = { value, leaves, arrays };
   generatedCache.set(contract, generated);
   return generated;
+}
+
+function arraysFor(contracts: readonly string[]): readonly ArrayPath[] {
+  return contracts.flatMap((contract) => generatedFor(contract).arrays);
 }
 
 function fixturesFor(contracts: readonly string[]): Map<string, Record<string, unknown>> {
@@ -406,8 +432,13 @@ const VIEWS: readonly ViewCase[] = [
     activate: async () => {
       window.location.hash = '#source-intelligence';
       await screen.findByText('Follow proof, currentness, and capability.');
-      fireEvent.click(await screen.findByRole('button', { name: 'Graph' }));
-      await screen.findByRole('img', { name: 'Bounded source intelligence graph' });
+      // The graph control lives on a surface row; an empty surface page has
+      // none, which is exactly the absence case this matrix must exercise.
+      const graphButton = screen.queryByRole('button', { name: 'Graph' });
+      if (graphButton !== null) {
+        fireEvent.click(graphButton);
+        await screen.findByRole('img', { name: 'Bounded source intelligence graph' });
+      }
     },
   },
   {
@@ -566,10 +597,12 @@ describe('control center render truth', () => {
     expect(covered.length).toBeGreaterThan(60);
     const observable = new Set<string>();
     const baselineLengths: Record<string, number> = {};
+    const baselinesByView = new Map<string, string>();
     const flips: Record<string, number> = {};
     for (const view of VIEWS) {
       const base = await mount(view, fixturesFor(ALL_CONTRACTS));
       baselineLengths[view.name] = base.html.length;
+      baselinesByView.set(view.name, base.html);
       flips[view.name] = 0;
       for (const leaf of leavesFor(view.contracts)) {
         if (observable.has(leaf.key)) continue;
@@ -597,5 +630,30 @@ describe('control center render truth', () => {
     expect(totalFlips).toBeGreaterThan(100);
     expect(baselineLengths.overview).toBeGreaterThan(5_000);
     expect(observable.size).toBeGreaterThanOrEqual(covered.length - exemptKeys.length);
+
+    // A-03. Absence observability: emptying any collection must change the
+    // DOM of a view that can receive it, or state why it cannot. An empty
+    // list that renders like a short one is the defect this pass exists for.
+    const arrays = arraysFor(ASSERTED_CONTRACTS);
+    expect(arrays.length, 'the generator recorded no arrays; the pass would be vacuous').toBeGreaterThan(20);
+    const arrayExemptions: Readonly<Record<string, string>> = {};
+    const observableArrays = new Set<string>();
+    const absentArrays: string[] = [];
+    for (const array of arrays) {
+      const candidateViews = VIEWS.filter((view) => view.contracts.includes(array.contract));
+      let changed = false;
+      for (const view of candidateViews) {
+        const baseline = baselinesByView.get(view.name) ?? (await mount(view, fixturesFor(ALL_CONTRACTS))).html;
+        const fixtures = fixturesFor(ALL_CONTRACTS);
+        setPath(fixtures.get(array.contract), array.path, []);
+        const mutated = await mount(view, fixtures);
+        if (mutated.html !== baseline) { changed = true; break; }
+      }
+      if (changed) observableArrays.add(array.key);
+      else if (!(array.key in arrayExemptions)) absentArrays.push(array.key);
+    }
+    expect(absentArrays, 'collections whose emptiness changes no view DOM').toEqual([]);
+    const staleArrayExemptions = Object.keys(arrayExemptions).filter((key) => observableArrays.has(key));
+    expect(staleArrayExemptions, 'collection exemptions are now observable; remove them').toEqual([]);
   }, 900_000);
 });

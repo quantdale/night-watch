@@ -19,17 +19,17 @@
 - [x] Browser lane 4/4
 
 ## M3 — absence observability (A-03)
-- [ ] Generator records every array field
-- [ ] Emptying each array changes the owning view's DOM or is exempt
-- [ ] Non-vacuous count and staleness checks
-- [ ] Mutation proof: removing an empty-state message fails the pass
+- [x] Generator records every array field
+- [x] Emptying each array changes the owning view's DOM or is exempt
+- [x] Non-vacuous count and staleness checks
+- [x] Mutation proof: removing an empty-state message fails the pass
 
 ## M4 — registration and full UI validation
-- [ ] New suites/files registered in `config/validation-universe.v1.json`
-- [ ] `inventoryDigest` refreshed
-- [ ] UI typecheck, all tests and build PASS
-- [ ] Root `typecheck` and `hardening:check` PASS
-- [ ] `validation:universe` PASS
+- [x] New suites/files registered in `config/validation-universe.v1.json`
+- [x] `inventoryDigest` refreshed
+- [x] UI typecheck, all tests and build PASS
+- [x] Root `typecheck` and `hardening:check` PASS
+- [x] `validation:universe` PASS
 
 ## M5 — certification
 - [ ] `gate:local` PASS from this owned session

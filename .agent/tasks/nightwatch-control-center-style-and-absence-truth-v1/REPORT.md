@@ -55,11 +55,23 @@ the `.mini-state` rule fails the lane with exactly that class.
 
 ## M3 — absence observability
 
-_To be filled during execution._
+The fixture generator records every array its value carries, at every depth.
+After the scalar matrix, the absence pass empties each one and requires a view
+that can receive the contract to render a different DOM. Every recorded
+collection was absence-observable; the exemption list is empty, and its
+staleness check is mutation-proven. Two mutation proofs were run: disabling
+array recording fails the vacuity assertion, and a fake exemption for an
+observable array fails the staleness assertion. The source view's activation
+became tolerant of an empty surface page, because that is the absence case it
+must exercise. Harness 3/3 in 24.8 seconds.
 
 ## M4 — registration and full UI validation
 
-_To be filled during execution._
+UI typecheck, 63 tests and build pass; root typecheck passes;
+`validation:universe` reports UI_LANE=5 with every discovered test classified
+(the new browser helper is not a discovered test); `hardening:check` initially
+failed on the `docs/CURRENT_STATE.md` header date, a real rule, and passed
+after the header was bumped to the day its last change actually landed.
 
 ## M5 — certification
 

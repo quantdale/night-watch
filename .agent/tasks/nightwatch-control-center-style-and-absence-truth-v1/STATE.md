@@ -35,14 +35,29 @@ system map's tone classes and rules that cannot match each other.
 
 ## Current Milestone
 
-Milestone ID: M3
+Milestone ID: M5
 Milestone status: IN_PROGRESS
-What is being attempted: absence observability (A-03) — the fixture generator
-records every array field and the harness proves that emptying each one
-changes the owning view's DOM, or exempts it with a reason.
+What is being attempted: certification — `gate:local` and the full offline
+regression at the implementation checkpoint, documentation reconciliation,
+fast-forward integration and session release.
 
 ## Completed Milestones
 
+- **M4 COMPLETE** — UI typecheck, 63 tests and build PASS; root `typecheck`
+  PASS; `validation:universe` PASS with UI_LANE=5; `hardening:check` PASS
+  after bumping the `docs/CURRENT_STATE.md` header to the day its last change
+  actually landed.
+- **M3 COMPLETE (A-03)** — the fixture generator records every array the
+  generated value carries at every depth, and the absence pass empties each
+  one and requires a view that can receive the contract to render a different
+  DOM. `arrays.length > 20` guards vacuity. Every recorded collection was
+  absence-observable, so the exemption list is empty; the staleness check is
+  still wired and mutation-proven. Two mutation proofs: disabling array
+  recording fails the vacuity assertion ("recorded no arrays"), and a fake
+  exemption for the observable `SourceSummarySnapshot.currentness` fails the
+  staleness assertion. The source-view activation became tolerant of an empty
+  surface page, which is the absence case it must exercise. Harness 3/3 in
+  24.8 seconds.
 - **M2 COMPLETE (A-02)** — `tests/browser/helpers/classEffect.ts` sweeps every
   class the built composition renders and toggles it off its carrying element
   (element plus up to twelve descendants, so descendant-selector anchors are
@@ -147,6 +162,33 @@ When: 2026-09-10
 Relevant failure/output summary: deleting the `.mini-state` rule failed the
 lane with exactly `mini-state` as ineffective; restoring the stylesheet and
 rebuilding passed.
+
+Command: `npm --prefix ui/control-center run test -- src/contractRender.test.tsx` after M3
+Result: PASS
+When: 2026-09-11
+Relevant failure/output summary: 3 tests passed in 24.8 seconds; every
+recorded collection changes its view's DOM when emptied.
+
+Command: M3 mutation proofs
+Result: FAIL then PASS (expected)
+When: 2026-09-11
+Relevant failure/output summary: (1) disabling array recording failed with
+"the generator recorded no arrays; the pass would be vacuous"; (2) a fake
+exemption for `SourceSummarySnapshot.currentness` failed with "collection
+exemptions are now observable; remove them". Both restored.
+
+Command: `npm --prefix ui/control-center run test`, `run build`
+Result: PASS
+When: 2026-09-11
+Relevant failure/output summary: 63 passed across 5 files; build at 3 files /
+330,105 bytes.
+
+Command: `npm run validation:universe`, `npm run typecheck`, `node bin/hardening-check.mjs`
+Result: PASS
+When: 2026-09-11
+Relevant failure/output summary: UI_LANE=5, every discovered test classified;
+root typecheck clean; hardening initially failed on the CURRENT_STATE header
+date (a real rule), repaired by bumping it to 2026-09-11.
 
 ## Decisions Made During This Task
 

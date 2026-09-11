@@ -7,7 +7,10 @@ Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-control-center-style-and-absence-truth-v1
 Starting SHA: d904dc96156f8376c772e6c43a75ce8cde3fad04
 Last validated implementation SHA: d904dc96156f8376c772e6c43a75ce8cde3fad04
-Last checkpoint: M2 runtime class-effect check COMPLETE — every rendered
+Last checkpoint: M3 absence observability COMPLETE (every collection changes
+its view when emptied; two mutation proofs) and M4 validation COMPLETE (UI
+63/63, build, universe, typecheck, hardening). M2 runtime class-effect check
+COMPLETE — every rendered
 class is proven effective or declared base-only, with three real cascade
 defects fixed and the mutation proof recorded. M1 family assertions and map
 divergence COMPLETE — status and
@@ -17,11 +20,10 @@ mutation-proven. The owned session
 `sess-d0b803f0afbe` on base
 `d904dc96156f8376c772e6c43a75ce8cde3fad04`, `session:status` verdict PASS,
 and the predecessor is verified terminal COMPLETE and untouched.
-Current milestone: M3 — absence observability (A-03)
-Next action: record every array field in the fixture generator, add the
-absence pass that empties each one and requires the owning view's DOM to
-change or an exemption with a reason, mutation-prove it, and record exact
-results in `STATE.md`.
+Current milestone: M5 — certification
+Next action: commit the implementation checkpoint, run `gate:local` and the
+full offline regression from this owned session, reconcile the documentation
+to the receipts, integrate by fast-forward and release.
 Authorization class: CONTROL_CENTER_STYLE_AND_ABSENCE_TRUTH_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2

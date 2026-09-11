@@ -122,7 +122,7 @@ invented and no pixel changes.
 
 ### M3 — absence observability (A-03)
 
-- **Status:** IN_PROGRESS
+- **Status:** COMPLETE
 - Objective: emptying every array field changes the DOM, or is exempt with a
   reason.
 - Files: `ui/control-center/src/contractRender.test.tsx`.
@@ -132,7 +132,7 @@ invented and no pixel changes.
 
 ### M4 — registration and full UI validation
 
-- **Status:** NOT_STARTED
+- **Status:** COMPLETE
 - Objective: register any new file, refresh the digest, and pass the UI,
   root, hardening and universe checks.
 - Files: `config/validation-universe.v1.json`.
@@ -142,7 +142,7 @@ invented and no pixel changes.
 
 ### M5 — certification
 
-- **Status:** NOT_STARTED
+- **Status:** IN_PROGRESS
 - Objective: `gate:local` and the full offline regression at the
   implementation checkpoint, documentation reconciliation, fast-forward
   integration, session release.
