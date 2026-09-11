@@ -7,16 +7,17 @@ Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-control-center-style-and-absence-truth-v1
 Starting SHA: d904dc96156f8376c772e6c43a75ce8cde3fad04
 Last validated implementation SHA: d904dc96156f8376c772e6c43a75ce8cde3fad04
-Last checkpoint: M0 execution truth COMPLETE; the owned session
+Last checkpoint: M1 family assertions and map divergence COMPLETE — status and
+stage families asserted, inert map tone classes and dead rules removed,
+mutation-proven. The owned session
 `nightwatch-control-center-style--5e5ddb63` is claimed as
 `sess-d0b803f0afbe` on base
 `d904dc96156f8376c772e6c43a75ce8cde3fad04`, `session:status` verdict PASS,
 and the predecessor is verified terminal COMPLETE and untouched.
-Current milestone: M1 — family assertions and the map divergence (A-01, A-04)
-Next action: assert the `status-*` and `stage-*` concrete families in
-`ui/control-center/src/styles.test.ts` with intentional base-only values
-stated, confirm the map tone divergence in the built composition, and remove
-the inert map tone classes and dead rules; record exact results in `STATE.md`.
+Current milestone: M2 — runtime class effect (A-02)
+Next action: add the toggle-and-compare computed-effect check to the browser
+lane, declare the reasoned base-only list, prove it fails when a live class's
+rule is removed, and record exact results in `STATE.md`.
 Authorization class: CONTROL_CENTER_STYLE_AND_ABSENCE_TRUTH_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2

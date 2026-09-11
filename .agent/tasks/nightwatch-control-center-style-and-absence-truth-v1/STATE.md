@@ -35,15 +35,27 @@ system map's tone classes and rules that cannot match each other.
 
 ## Current Milestone
 
-Milestone ID: M1
+Milestone ID: M2
 Milestone status: IN_PROGRESS
-What is being attempted: family assertions in `styles.test.ts` for the
-`status-*` and `stage-*` families with intentional base-only values stated,
-and confirmation plus removal of the system map's inert
-`node-*`/`edge-*` tone interpolation and dead tone rules.
+What is being attempted: the browser-lane computed-effect check (A-02) — every
+class the synthetic composition renders must change a computed property on an
+element that carries it, with a reasoned base-only list.
 
 ## Completed Milestones
 
+- **M1 COMPLETE (A-01, A-04)** — `styles.test.ts` now asserts the
+  `status-ready/warning/blocked` and `stage-ready/warning/blocked` concrete
+  families and states `status-neutral`/`stage-neutral` as intentionally
+  base-only against `.status-pill`/`.stage-chip`; the fragment set was trimmed
+  to the prefixes still produced (`graph-node-`, `stage-`, `status-`, `text-`,
+  `code-chip-`). The map divergence was confirmed statically: the 13-value
+  core `EvidenceStatus` vocabulary cannot lowercase to `proven`, `unproven`,
+  `unknown` or `refuted`, so the four `.map-node.node-*` tone rules and the
+  `node-${...}`/`edge-${...}` interpolation were removed; `.map-node`,
+  `.map-edge` and `.node-selected` remain, and no pixel changes because the
+  removed rules never matched. Mutation proof: deleting `.stage-warning` fails
+  the family assertion with exactly that class; restoring passes. UI
+  typecheck PASS; UI suite 63/63.
 - **M0 COMPLETE** — execution truth. Owned session
   `nightwatch-control-center-style--5e5ddb63` created and claimed as
   `sess-d0b803f0afbe` on base
@@ -90,6 +102,19 @@ Result: PASS
 When: 2026-09-10
 Relevant failure/output summary: verdict PASS; all seven workspace invariants
 PASS; `class=OWNED_SESSION`, `owned=true`, `drift=false`, `base=CURRENT`.
+
+Command: `npm --prefix ui/control-center run test` after M1
+Result: PASS
+When: 2026-09-10
+Relevant failure/output summary: 63 passed across 5 files with the extended
+family assertions and the inert map classes/rules removed.
+
+Command: M1 mutation proof
+Result: FAIL then PASS (expected)
+When: 2026-09-10
+Relevant failure/output summary: removing the `.stage-warning` rule failed the
+family assertion with exactly `stage-warning`; restoring the stylesheet passed
+3/3.
 
 ## Decisions Made During This Task
 

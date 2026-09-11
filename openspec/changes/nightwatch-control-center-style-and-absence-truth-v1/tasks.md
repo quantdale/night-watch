@@ -6,11 +6,11 @@
 - [x] Task SPEC/PLAN/STATE/REPORT and OpenSpec route committed
 
 ## M1 — family assertions and the map divergence (A-01, A-04)
-- [ ] `status-ready/warning/blocked` asserted; `status-neutral` stated as base-only
-- [ ] `stage-ready/warning/blocked` asserted; `stage-neutral` stated as base-only
-- [ ] Map tone divergence confirmed in the built composition
-- [ ] Inert `node-*`/`edge-*` interpolation and dead tone rules removed
-- [ ] UI suite green
+- [x] `status-ready/warning/blocked` asserted; `status-neutral` stated as base-only
+- [x] `stage-ready/warning/blocked` asserted; `stage-neutral` stated as base-only
+- [x] Map tone divergence confirmed in the built composition
+- [x] Inert `node-*`/`edge-*` interpolation and dead tone rules removed
+- [x] UI suite green
 
 ## M2 — runtime class effect (A-02)
 - [ ] Toggle-and-compare computed-style check over the built composition

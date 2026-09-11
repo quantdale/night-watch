@@ -24,7 +24,16 @@ Planning route written and committed.
 
 ## M1 — family assertions and the map divergence
 
-_To be filled during execution._
+`styles.test.ts` gained `status-*` and `stage-*` concrete-family assertions
+with `status-neutral`/`stage-neutral` stated as intentionally base-only, and
+the fragment set was trimmed to the prefixes still produced. The map
+divergence was confirmed statically (the 13-value core vocabulary cannot
+lowercase to the four styled values) and resolved by removal: the
+`node-${...}`/`edge-${...}` interpolation and the four dead `.map-node.node-*`
+tone rules are gone, while `.map-node`, `.map-edge` and `.node-selected`
+remain. No pixel changes: the removed rules never matched. Mutation proof:
+deleting `.stage-warning` failed the assertion with exactly that class.
+UI suite 63/63.
 
 ## M2 — runtime class effect
 

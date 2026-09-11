@@ -28,7 +28,7 @@ const STYLES = readFileSync(resolve(process.cwd(), 'src/styles.css'), 'utf8');
  * concrete values it can take are asserted explicitly below instead — an
  * interpolated family must never be waved through as "dynamic".
  */
-const INTERPOLATION_FRAGMENTS = new Set(['edge-', 'node-', 'graph-node-', 'stage-', 'status-', 'text-', 'code-chip-']);
+const INTERPOLATION_FRAGMENTS = new Set(['graph-node-', 'stage-', 'status-', 'text-', 'code-chip-']);
 
 function renderedClassNames(): ReadonlySet<string> {
   const found = new Set<string>();
@@ -78,6 +78,13 @@ describe('control center stylesheet coverage', () => {
       'graph-node-dimmed',
       'graph-node-selected',
       'graph-edge-dimmed',
+      // `status-${statusTone(...)}` on every StatusPill. `status-neutral` is
+      // intentionally absent: neutral IS the base `.status-pill` treatment,
+      // and a rule would only restate it.
+      ...tones.filter((tone) => tone !== 'neutral').map((tone) => `status-${tone}`),
+      // `stage-${statusTone(stage.state)}` on coverage chips. `stage-neutral`
+      // is intentionally absent for the same reason against `.stage-chip`.
+      ...tones.filter((tone) => tone !== 'neutral').map((tone) => `stage-${tone}`),
     ].filter((name) => !selected.has(name));
     expect(missing).toEqual([]);
   });

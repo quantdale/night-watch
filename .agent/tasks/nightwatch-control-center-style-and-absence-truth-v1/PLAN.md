@@ -100,7 +100,7 @@ invented and no pixel changes.
 
 ### M1 — family assertions and the map divergence (A-01, A-04)
 
-- **Status:** NOT_STARTED
+- **Status:** COMPLETE
 - Objective: assert the rendered families' concrete values; remove the map's
   inert tone classes and dead rules after confirming the vocabulary
   divergence against the built composition.
@@ -112,7 +112,7 @@ invented and no pixel changes.
 
 ### M2 — runtime class effect (A-02)
 
-- **Status:** NOT_STARTED
+- **Status:** IN_PROGRESS
 - Objective: prove every class the composition renders changes a computed
   style, with a reasoned base-only list.
 - Files: `tests/browser/controlCenterBrowser.browser.ts`.

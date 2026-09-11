@@ -1472,10 +1472,10 @@ function SystemMapView({ refreshKey }: { readonly refreshKey: number }): ReactNo
               const from = visible.find((node) => node.nodeId === edge.fromNodeId);
               const to = visible.find((node) => node.nodeId === edge.toNodeId);
               if (from === undefined || to === undefined) return null;
-              return <line key={edge.edgeId} x1={from.x} y1={from.y} x2={to.x} y2={to.y} className={`map-edge edge-${edge.evidenceStatus.toLowerCase()}`} />;
+              return <line key={edge.edgeId} x1={from.x} y1={from.y} x2={to.x} y2={to.y} className="map-edge" />;
             })}
             {visible.map((node) => (
-              <g key={node.nodeId} className={`map-node node-${node.evidenceStatus.toLowerCase()} ${selectedNodeId === node.nodeId ? 'node-selected' : ''}`}
+              <g key={node.nodeId} className={`map-node${selectedNodeId === node.nodeId ? ' node-selected' : ''}`}
                 transform={`translate(${node.x}, ${node.y})`} role="button" tabIndex={-1}
                 aria-label={`${node.label}, ${node.evidenceStatus}, ${node.factCategory}`}
                 onClick={() => setSelectedNodeId(node.nodeId)} onDoubleClick={() => drillInto(node)}>
