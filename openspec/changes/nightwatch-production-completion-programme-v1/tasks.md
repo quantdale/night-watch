@@ -30,41 +30,41 @@ code-level gaps the second pass found by tracing the implementation
 
 ## 1. Ledger truth and the spec baseline
 
-- [ ] 1.1 Open the campaign task directory, routing block and this OpenSpec
+- [x] 1.1 Open the campaign task directory, routing block and this OpenSpec
       change from live Git truth; record the measured baseline at the starting
       SHA rather than copying `audit.md`
-- [ ] 1.2 Build the change↔task pairing report: for all 57 changes and 148 task
+- [x] 1.2 Build the change↔task pairing report: for all 57 changes and 148 task
       directories, emit change id, task id, task `STATE.md` status, open entry
       count, `DECLARED_NOT_IN_SCOPE` count, and orphan class
-- [ ] 1.3 Reconcile `nightwatch-residual-closure-and-lane-qualification-v1`
+- [x] 1.3 Reconcile `nightwatch-residual-closure-and-lane-qualification-v1`
       (27 entries) from its `STATE.md`/`REPORT.md`
-- [ ] 1.4 Reconcile `nightwatch-repository-hardening-implementation-v1` (19)
-- [ ] 1.5 Reconcile `nightwatch-overnight-reliability-r13-v1` (8) and
+- [x] 1.4 Reconcile `nightwatch-repository-hardening-implementation-v1` (19)
+- [x] 1.5 Reconcile `nightwatch-overnight-reliability-r13-v1` (8) and
       `nightwatch-system-map-v2-transport-c15c-v1` (7)
-- [ ] 1.6 Reconcile the four C-0x/C-15b source-intelligence changes: c02b (12),
+- [x] 1.6 Reconcile the four C-0x/C-15b source-intelligence changes: c02b (12),
       c03 (11), c04 (10), c15b (11)
-- [ ] 1.7 Reconcile c10 (24), c01 (8), `continuous-deep-hardening` (10),
+- [x] 1.7 Reconcile c10 (24), c01 (8), `continuous-deep-hardening` (10),
       `post-acceptance-…` (15), `operational-acceptance` (10)
-- [ ] 1.8 Reconcile `final-assurance-release-readiness-hardening-v1` as
+- [x] 1.8 Reconcile `final-assurance-release-readiness-hardening-v1` as
       terminal BLOCKED with its blocker preserved, not as done
-- [ ] 1.9 Carry every entry that is genuinely undone into this `tasks.md` or
+- [x] 1.9 Carry every entry that is genuinely undone into this `tasks.md` or
       strike it through with a stated reason; tick nothing that was not done
-- [ ] 1.10 Assert the reconciliation diff touches only checkboxes,
+- [x] 1.10 Assert the reconciliation diff touches only checkboxes,
       strikethroughs and added reasons — no receipt, SHA, count or date
-- [ ] 1.11 Implement the ledger agreement check in `bin/agent-state.mjs`:
+- [x] 1.11 Implement the ledger agreement check in `bin/agent-state.mjs`:
       `LEDGER_TERMINAL_TASK_HAS_OPEN_ITEMS`, `LEDGER_CHANGE_WITHOUT_TASK`,
       `LEDGER_TASK_WITHOUT_CHANGE`, `DECLARED_NOT_IN_SCOPE`
-- [ ] 1.12 Run the check in reporting mode over all 148 task directories;
+- [x] 1.12 Run the check in reporting mode over all 148 task directories;
       require zero false positives before registration
-- [ ] 1.13 Register the check in the `AGENT_CONTINUITY` required group of
+- [x] 1.13 Register the check in the `AGENT_CONTINUITY` required group of
       `config/quality-gate.v1.json`; negative-probe it by reopening one box
-- [ ] 1.14 Classify every terminal change as capability-bearing or
+- [x] 1.14 Classify every terminal change as capability-bearing or
       infrastructure/tooling/docs; record the classification and reason
-- [ ] 1.15 Archive oldest-first with `openspec archive`, `--skip-specs` where
+- [x] 1.15 Archive oldest-first with `openspec archive`, `--skip-specs` where
       classified; stop at the first validation failure; never `--no-validate`
-- [ ] 1.16 Verify `openspec/specs/` is non-empty, `openspec list --specs`
+- [x] 1.16 Verify `openspec/specs/` is non-empty, `openspec list --specs`
       returns a set, and `openspec validate --all` exits zero
-- [ ] 1.17 Derive the open-work report in `bin/nightwatch-status.mjs`; assert no
+- [x] 1.17 Derive the open-work report in `bin/nightwatch-status.mjs`; assert no
       field is hand-maintained
 - [ ] 1.18 Root `typecheck`, `hardening:check`, `agent:check`,
       `validation:universe`, `gate:local`; integrate; release the session

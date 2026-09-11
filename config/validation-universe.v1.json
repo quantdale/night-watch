@@ -2,11 +2,11 @@
   "schemaVersion": "nightwatch.validation-universe.v1",
   "definitionName": "Nightwatch validation universe classification (NW-08)",
   "note": "Every discovered executable test or check belongs to exactly one class. AUTHORITATIVE_GATE is DERIVED from what the required gate lanes actually select and is therefore not declarable here; every other discovered file must appear below exactly once, with the reason it is not in the gate and the evidence lane that does cover it. A newly added test that is in no lane and no class fails the gate rather than joining the repository silently.",
-  "inventoryDigest": "sha256:b735b90cf16c33f71476b1dc",
+  "inventoryDigest": "sha256:8ded6331cf5fd618f92abda2",
   "classes": {
     "FULL_REGRESSION": {
       "reason": "Offline, deterministic suites that the full canonical regression executes. They are not in a required gate lane because the authoritative gate is bounded for CI runtime; leaving them unclassified is what made the gap invisible.",
-      "evidenceLane": "npm test \u2014 full canonical regression, run and recorded per checkpoint (not a CI step)",
+      "evidenceLane": "npm test — full canonical regression, run and recorded per checkpoint (not a CI step)",
       "files": [
         "tests/unit/agentAutonomyIntegration.test.ts",
         "tests/unit/agentAutonomyLoop.test.ts",
@@ -66,6 +66,7 @@
         "tests/unit/phase6Data.test.ts",
         "tests/unit/planExplainCoherence.test.ts",
         "tests/unit/preFixSource.test.ts",
+        "tests/unit/productionCompletionOpenWork.test.ts",
         "tests/unit/promotionResult.test.ts",
         "tests/unit/proxyResolvedProtocols.test.ts",
         "tests/unit/realHistoricalProductPathProof.test.ts",
@@ -108,7 +109,7 @@
     },
     "BROWSER_WORKFLOW": {
       "reason": "Drives a real browser against the Control Center, so it needs a system Chrome and a built UI that the offline gate does not provide.",
-      "evidenceLane": "browser workflow lane \u2014 npm run test:browser on a qualified host",
+      "evidenceLane": "browser workflow lane — npm run test:browser on a qualified host",
       "files": [
         "tests/browser/controlCenterBrowser.browser.ts",
         "tests/browser/reviewPersistence.browser.ts",
@@ -135,7 +136,7 @@
     },
     "UI_LANE": {
       "reason": "Belongs to the UI package, which has its own lockfile, runner and typecheck; the root gate would need a second install to execute it.",
-      "evidenceLane": "ui/control-center \u2014 npm run typecheck && npm run test && npm run build",
+      "evidenceLane": "ui/control-center — npm run typecheck && npm run test && npm run build",
       "files": [
         "ui/control-center/src/App.test.tsx",
         "ui/control-center/src/api.test.ts",
@@ -165,6 +166,7 @@
         "bin/hardening-check.mjs",
         "bin/lib/campaign-certification.mjs",
         "bin/lib/gate-receipt.mjs",
+        "bin/lib/openspec-ledger.mjs",
         "bin/lib/programme-state.mjs",
         "bin/lib/typescript-runtime-loader.mjs",
         "bin/lib/validation-universe.mjs",
