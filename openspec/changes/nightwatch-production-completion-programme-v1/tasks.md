@@ -71,18 +71,18 @@ code-level gaps the second pass found by tracing the implementation
 
 ## 2. Validation lane state as data
 
-- [ ] 2.1 Define `nightwatch.validation-lane-state.v1`: lane id, class,
+- [x] 2.1 Define `nightwatch.validation-lane-state.v1`: lane id, class,
       evidence, evidence SHA, unblock/acquisition condition, revisit date
-- [ ] 2.2 Populate all ten declared lanes from the recorded evidence in
+- [x] 2.2 Populate all ten declared lanes from the recorded evidence in
       `docs/CURRENT_STATE.md` and `docs/HOST-CAPABILITY-MATRIX.md` §4a
-- [ ] 2.3 Emit the record from `bin/validation-universe.mjs`
-- [ ] 2.4 `hardening:check`: every class in
+- [x] 2.3 Emit the record from `bin/validation-universe.mjs`
+- [x] 2.4 `hardening:check`: every class in
       `config/validation-universe.v1.json` has exactly one lane-state entry;
       missing, duplicate or condition-less non-PROVEN entries fail
-- [ ] 2.5 Compute `STALE_EVIDENCE` against
+- [x] 2.5 Compute `STALE_EVIDENCE` against
       `LAST_SUBSTANTIVE_IMPLEMENTATION_SHA`; report, never store, the staleness
-- [ ] 2.6 `agent:check` reports an expired revisit date on any lane record
-- [ ] 2.7 Negative probes: a lane with no entry, a duplicate entry, a
+- [x] 2.6 `agent:check` reports an expired revisit date on any lane record
+- [x] 2.7 Negative probes: a lane with no entry, a duplicate entry, a
       non-PROVEN entry with an empty condition, an expired revisit date
 - [ ] 2.8 Register, refresh `inventoryDigest`, `gate:local`, integrate, release
 
