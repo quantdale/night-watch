@@ -1112,7 +1112,7 @@ completion and emitted the authoritative receipt
 `PATCH_INTEGRITY` and `WORKSPACE_INTEGRITY` `NOT_RUN`.
 
 That was a REAL EXECUTED TEST FAILURE, not external non-evidence, and it was
-carried as `CI_STATUS: EXECUTED_PASS` until the repair landed. The earlier
+carried as `CI_STATUS: EXECUTED_PASS` until the repair landed. <!--status:historical run 33572572053 at c3fed38--> The earlier
 zero-step runs (`33446473458`, `33361000650`, `32956612882`) remain true
 historical facts about the runs they describe and are deliberately not
 rewritten; what changed is that the zero-step classification stopped being the
@@ -2620,7 +2620,7 @@ NOT_AUTHORIZED):
   ANOMALY x4; sentinel leaks 0; catalog byte-identical `sha256:bd35b934...`;
   `PHASE_8_STATUS: COMPLETE`; B AVAILABLE_NOT_ADOPTED;
   `NEXT_PROMOTION_AUTHORITY: NONE`.
-- **Phase 9B**: `PHASE_9B_STATUS: DESIGNED_NOT_STARTED_NOT_AUTHORIZED`; the
+- **Phase 9B**: `PHASE_9B_STATUS: DESIGNED_NOT_STARTED_NOT_AUTHORIZED`; <!--status:historical pre-9B checkpoint 62ec804--> the
   future-task spec is design only; acceptance requires
   EXPECTATION RESOLVED + SEMANTIC EVALUATION RECEIPT EXISTS + OUTCOME IS
   EXPLICIT + ZERO PRIVACY/SAFETY FAILURE (zero anomalies is valid healthy

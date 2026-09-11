@@ -23,6 +23,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
+import { normalizeTaskStatus } from './agent-continuity-protocol.mjs';
 
 export const WORKSPACE_INTEGRITY_SCHEMA = 'nightwatch.workspace-integrity-report.v1';
 export const WORKSPACE_SESSION_SCHEMA = 'nightwatch.workspace-session.v1';
@@ -434,7 +435,50 @@ function checkHooks(commonDir, worktreeRoot, policy, errors) {
   };
 }
 
-function checkWorktreeMetadata(worktrees, policy, errors, warnings) {
+// ---------------------------------------------------------------------------
+// claim-task liveness (F-07)
+//
+// The structural guard above proves a claim is well-formed; it never asked
+// whether the task the claim names is still open, so a claim outlived its
+// campaign indefinitely while the verdict stayed PASS. Each valid claim's task
+// id is now resolved against `.agent/tasks/<id>/STATE.md`. The result is
+// reported as ATTENTION, names the owner action, and mutates nothing: a claim
+// held by another agent is never released, adopted, retired or edited here.
+// ---------------------------------------------------------------------------
+
+const TERMINAL_CLAIM_TASK_STATUSES = new Set(['COMPLETE', 'BLOCKED']);
+const CLAIM_TASK_STATE_MAX_BYTES = 512 * 1024;
+
+export function resolveClaimTask(root, taskId) {
+  if (typeof taskId !== 'string' || !/^[a-z0-9][a-z0-9._-]*$/.test(taskId)) {
+    return { state: 'UNKNOWN', status: null, reason: 'the task id is not a safe .agent/tasks directory name' };
+  }
+  const file = path.join(root, '.agent', 'tasks', taskId, 'STATE.md');
+  const found = readTextIfPresent(file, CLAIM_TASK_STATE_MAX_BYTES);
+  if (!found.present || found.regular !== true || found.text === null) {
+    return { state: 'UNKNOWN', status: null, reason: `no readable .agent/tasks/${taskId}/STATE.md` };
+  }
+  const match = /^[ \t]*Status:[ \t]*(.+?)[ \t]*$/m.exec(found.text);
+  const rawStatus = match === null ? undefined : match[1];
+  const status = rawStatus === undefined ? null : normalizeTaskStatus(rawStatus);
+  if (status === null) {
+    return { state: 'UNKNOWN', status: null, reason: `.agent/tasks/${taskId}/STATE.md declares no recognized Status` };
+  }
+  return {
+    state: TERMINAL_CLAIM_TASK_STATUSES.has(status) ? 'TERMINAL' : 'OPEN',
+    status,
+    reason: null,
+  };
+}
+
+function claimTaskOwnerAction(worktree, record) {
+  if (worktree.isMain || record.role === 'MAINTENANCE') {
+    return 'release the canonical maintenance claim or re-point it at the active task through bin/nightwatch-session.mjs; never by deleting a directory or editing a record';
+  }
+  return 'release this session through bin/nightwatch-session.mjs release; never by deleting a directory or editing a record';
+}
+
+function checkWorktreeMetadata(root, worktrees, policy, errors, warnings) {
   const maxWorktrees = policy?.worktreePolicy?.maxWorktrees ?? 8;
   if (worktrees.length > maxWorktrees) {
     errors.push({ code: 'WORKSPACE_WORKTREE_LIMIT_EXCEEDED', detail: `${worktrees.length} registered worktrees exceeds the ${maxWorktrees} bound` });
@@ -458,6 +502,28 @@ function checkWorktreeMetadata(worktrees, policy, errors, warnings) {
       warnings.push({ code: 'WORKSPACE_STALE_SESSION_WORKTREE', detail: `worktree ${worktree.name} claims task ${worktree.record?.taskId ?? 'UNKNOWN'} but its holder is not live; adopt or release explicitly` });
     }
   }
+  const claimTaskFindings = [];
+  for (const worktree of worktrees) {
+    const record = worktree.record;
+    if (record === null) continue;
+    const resolved = resolveClaimTask(root, record.taskId);
+    if (resolved.state === 'OPEN') continue;
+    const terminal = resolved.state === 'TERMINAL';
+    claimTaskFindings.push({
+      code: terminal ? 'CLAIM_TASK_TERMINAL' : 'CLAIM_TASK_UNKNOWN',
+      worktree: worktree.name,
+      worktreeClass: worktree.class,
+      isMain: worktree.isMain,
+      role: record.role,
+      taskId: record.taskId,
+      taskStatus: resolved.status,
+      reason: resolved.reason,
+      ownerAction: claimTaskOwnerAction(worktree, record),
+      detail: terminal
+        ? `worktree ${worktree.name} (class=${worktree.class}) claims task ${record.taskId}, whose STATE.md is ${resolved.status}`
+        : `worktree ${worktree.name} (class=${worktree.class}) claims task ${record.taskId}, which cannot be resolved: ${resolved.reason}`,
+    });
+  }
   const sessionIds = new Map();
   const liveTaskIds = new Map();
   for (const worktree of worktrees) {
@@ -478,12 +544,20 @@ function checkWorktreeMetadata(worktrees, policy, errors, warnings) {
     }
   }
   const hardFailures = errors.filter((error) => error.code.startsWith('WORKSPACE_WORKTREE_') || error.code.startsWith('WORKSPACE_UNOWNED') || error.code.startsWith('WORKSPACE_SESSION_') || error.code.startsWith('WORKSPACE_DUPLICATE_'));
+  // A structurally valid claim naming a terminal or unresolvable task is
+  // ATTENTION: the topology is legal, the campaign behind it is not live. It
+  // is deliberately neither PASS (silence) nor VIOLATED (failure).
+  const status = hardFailures.length > 0 ? 'VIOLATED' : (claimTaskFindings.length > 0 ? 'ATTENTION' : 'PASS');
   return {
     id: 'WORKSPACE_WORKTREE_METADATA',
-    status: hardFailures.length === 0 ? 'PASS' : 'VIOLATED',
+    status,
     registeredWorktrees: worktrees.length,
     liveSessionCount: worktrees.filter((worktree) => worktree.class === 'OWNED_SESSION').length,
     staleSessionCount: worktrees.filter((worktree) => worktree.class === 'STALE_SESSION').length,
+    claimedTaskCount: worktrees.filter((worktree) => worktree.record !== null).length,
+    claimTaskTerminalCount: claimTaskFindings.filter((finding) => finding.code === 'CLAIM_TASK_TERMINAL').length,
+    claimTaskUnknownCount: claimTaskFindings.filter((finding) => finding.code === 'CLAIM_TASK_UNKNOWN').length,
+    claimTaskFindings,
   };
 }
 
@@ -841,7 +915,7 @@ export function inspectWorkspace(options = {}) {
     checkIndexFlags(worktrees, policy, errors),
     checkExclude(commonDir, policy, policySource, errors, warnings),
     checkHooks(commonDir, root, policy, errors),
-    checkWorktreeMetadata(worktrees, policy, errors, warnings),
+    checkWorktreeMetadata(root, worktrees, policy, errors, warnings),
     checkCanonicalProtection(worktrees, policy, errors),
     checkDeclaredDeletions(root, self, policy, errors, warnings),
     checkIntegrationReadiness(root, self, policy, warnings),
@@ -852,9 +926,23 @@ export function inspectWorkspace(options = {}) {
     .some((invariant) => invariant.status === 'VIOLATED');
   const integration = invariants.find((invariant) => invariant.id === 'WORKSPACE_INTEGRATION_READINESS');
   const canonicalInvariant = invariants.find((invariant) => invariant.id === 'WORKSPACE_CANONICAL_PROTECTION');
+  const worktreeInvariant = invariants.find((invariant) => invariant.id === 'WORKSPACE_WORKTREE_METADATA');
+  const claimTaskFindings = worktreeInvariant?.claimTaskFindings ?? [];
+  const claimFindingsByWorktree = new Map();
+  for (const finding of claimTaskFindings) {
+    const existing = claimFindingsByWorktree.get(finding.worktree) ?? [];
+    existing.push(finding);
+    claimFindingsByWorktree.set(finding.worktree, existing);
+  }
   const attention = worktrees
-    .filter((worktree) => ['STALE_SESSION', 'UNOWNED_WORKTREE', 'UNKNOWN'].includes(worktree.class) || worktree.prunable || !worktree.exists)
-    .map((worktree) => ({ name: worktree.name, class: worktree.class, prunable: worktree.prunable, exists: worktree.exists }));
+    .filter((worktree) => ['STALE_SESSION', 'UNOWNED_WORKTREE', 'UNKNOWN'].includes(worktree.class) || worktree.prunable || !worktree.exists || claimFindingsByWorktree.has(worktree.name))
+    .map((worktree) => ({
+      name: worktree.name,
+      class: worktree.class,
+      prunable: worktree.prunable,
+      exists: worktree.exists,
+      claimTaskFindings: claimFindingsByWorktree.get(worktree.name) ?? [],
+    }));
 
   const verdict = errors.length === 0 ? 'PASS' : 'FAIL';
   return {
@@ -910,6 +998,9 @@ export function inspectWorkspace(options = {}) {
       canonicalMainSafe: canonicalInvariant?.status === 'PASS' && !sharedDrift,
       worktreesRequiringOwnerAttention: attention,
     },
+    // F-07 claim-task attention. Non-destructive: these name the owner action
+    // and are never acted on by this read-only module.
+    claimFindings: claimTaskFindings,
     errors,
     warnings,
     policySource,
@@ -939,6 +1030,9 @@ export function renderText(report, worktreePaths = new Map()) {
   const answers = report.bootstrapAnswers;
   if (answers !== null) {
     lines.push(`[workspace] owned=${String(answers.inOwnedImplementationWorktree)} drift=${String(answers.sharedGitStateDrifted)} base=${answers.baseState} mayIntegrate=${String(answers.mayIntegrate)}:${answers.mayIntegrateReason} canonicalSafe=${String(answers.canonicalMainSafe)} attention=${answers.worktreesRequiringOwnerAttention.length}`);
+  }
+  for (const finding of report.claimFindings ?? []) {
+    lines.push(`[workspace] ATTENTION: ${finding.code}: ${finding.detail} — owner action: ${finding.ownerAction}`);
   }
   for (const warning of report.warnings) lines.push(`[workspace] WARNING: ${warning.code}: ${warning.detail}`);
   for (const error of report.errors) lines.push(`[workspace] ERROR: ${error.code}: ${error.detail}`);

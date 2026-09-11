@@ -259,3 +259,4 @@ Validated implementation/substantive anchor:
 `5e7bad758efa7e5d87610c8b7878f6690bb0b821`. Documentation checkpoint before
 this closure: `a603c7db90172967631b8d3b09770761d46ac38e`. Live HEAD remains
 Git-discovered.
+LEGACY_V1_DISPOSITION: PERMANENTLY_HISTORICAL — Phase 7B.3 canary harness record; real canary never ran; retained as history.

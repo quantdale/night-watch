@@ -452,3 +452,4 @@ DEFECT D: PRE-FIX TRUE_POSITIVE (runtime)
   reachable after write + exactly-one-changed-file diff check + postimage
   digest check). Result reported sandboxSourceWrites = 0 despite one write
   having provably happened. cleanupStatus PASS.
+LEGACY_V1_DISPOSITION: PERMANENTLY_HISTORICAL — Phase 8B.0.1 closeout; terminal; historical provenance only.

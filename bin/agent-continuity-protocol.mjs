@@ -902,6 +902,27 @@ export function validateTaskV2(task, opts = {}) {
 }
 
 // ---------------------------------------------------------------------------
+// Legacy (v1) task disposition — declared-historical records.
+//
+// A legacy v1 record that will never be migrated carries a single appended
+// declaration field. Recognition is deliberately narrow: the exact token plus
+// a non-empty one-line reason. An absent, misspelled or reasonless marker is
+// NOT a disposition, so the warning count stays a live signal. Only the
+// disposition field is added; no existing line of a historical record changes.
+// ---------------------------------------------------------------------------
+
+export const LEGACY_DISPOSITION_KEY = 'LEGACY_V1_DISPOSITION';
+export const LEGACY_HISTORICAL_DISPOSITION = 'PERMANENTLY_HISTORICAL';
+
+export function parseLegacyHistoricalDisposition(value) {
+  if (typeof value !== 'string') return null;
+  const match = /^PERMANENTLY_HISTORICAL(?:\s*[—–:-]\s*(.+))?$/.exec(value.trim());
+  if (match === null) return null;
+  const reason = (match[1] ?? '').trim();
+  return reason.length >= 8 ? reason : null;
+}
+
+// ---------------------------------------------------------------------------
 // Legacy (v1) task structural inspection — warnings only.
 // ---------------------------------------------------------------------------
 

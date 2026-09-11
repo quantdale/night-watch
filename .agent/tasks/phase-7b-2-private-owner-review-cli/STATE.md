@@ -177,3 +177,4 @@ ACCEPTANCE_VERDICT: PASS — Phase 7B.2 complete; Phase 8 remains NOT_STARTED
 Read `.agent/ACTIVE_TASK.md`, this task's SPEC.md, PLAN.md, and STATE.md only
 for historical context. Discover live Git state from Git, verify the final
 worktree is clean, and stop. Do not start a local-model canary or Phase 8.
+LEGACY_V1_DISPOSITION: PERMANENTLY_HISTORICAL — Phase 7B.2 review-CLI record; terminal; historical provenance only.

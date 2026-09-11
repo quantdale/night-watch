@@ -447,3 +447,4 @@ planning, and production/mutation verification remain deferred.
 
 Use the exact RESUME_RECIPE above after rereading AGENTS.md, ACTIVE_TASK, SPEC,
 PLAN, REPORT, and STATE. Never reconstruct operation semantics from memory.
+LEGACY_V1_DISPOSITION: PERMANENTLY_HISTORICAL — Phase 5 OOPS/API record; terminal; later phases supersede its scope.

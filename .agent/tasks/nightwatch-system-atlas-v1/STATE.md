@@ -23,3 +23,4 @@ Validation:
   --workers=1` — 17 passed.
 - `node bin/hardening-check.mjs` — 1 pre-existing error in forbidden
   `docs/CURRENT_STATE.md` (base commit bd9be1b); not touched per lane rules.
+LEGACY_V1_DISPOSITION: PERMANENTLY_HISTORICAL — System-atlas record; implementation landed; no live claim or dependent task remains.

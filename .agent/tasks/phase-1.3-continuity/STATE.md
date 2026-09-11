@@ -165,3 +165,4 @@ synthetic tests, and requested project documentation updates.
 Known issues: DNS prefetch/resolver activity remains the established Phase
 1.2 process/network-namespace gap; no Phase 2 work was started.
 Recommended next task: PHASE 2A — FIRST CONTROLLED AUTHENTICATED DEV/NEXT OBSERVATION.
+LEGACY_V1_DISPOSITION: PERMANENTLY_HISTORICAL — Phase 1.3 continuity implementation; terminal pre-v2 record retained for provenance.

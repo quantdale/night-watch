@@ -19,3 +19,4 @@ Key decisions (see SPEC.md):
   manual PATH search. No vendor hard-code. No shell (spawn shell:false only).
 - Retryable: TIMEOUT, HUNG_CHILD, HUNG_GRANDCHILD, CLI_CRASH, NONZERO_EXIT,
   PARTIAL_OUTPUT, PROVIDER_FAILURE.
+LEGACY_V1_DISPOSITION: PERMANENTLY_HISTORICAL — Lane B reasoner-gateway record; CLI implementation landed; historical only.

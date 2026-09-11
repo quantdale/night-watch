@@ -204,3 +204,4 @@ CI continuity: PASS — exact final workflow and synthetic matrix step verified 
 Stable anchors: implementation/substantive `257cc294850344149fd4c5b657beeff07e511c91`; documentation `746a578a2440c2087442819e92eeed77234836ef`.
 Live HEAD authority: GIT; final containing documentation SHA is intentionally not persisted.
 Historical status: Phase 7B.1.1 COMPLETE; Phase 8 NOT_STARTED.
+LEGACY_V1_DISPOSITION: PERMANENTLY_HISTORICAL — Phase 7B.1.2 closeout; terminal; historical provenance only.

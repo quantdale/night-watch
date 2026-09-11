@@ -11,3 +11,4 @@
 - Snapshot: owner-private JSON under ~/.nightwatch/bug-atlas (0600/0700),
   round-trip verified. No vector DB, no SQLite (dependency frozen).
 - No out-of-ownership edits needed; no REPORT-worthy blockers.
+LEGACY_V1_DISPOSITION: PERMANENTLY_HISTORICAL — Lane D bug-atlas record; atlas implementation landed; no live claim or dependent task remains.

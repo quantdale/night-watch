@@ -1670,7 +1670,7 @@ facts agree with mechanically derivable source and authority"):
   (`LIVE_HEAD_AUTHORITY: GIT`, `CURRENT_TASK_AUTHORITY` /
   `VALIDATED_IMPLEMENTATION_AUTHORITY: .agent/ACTIVE_TASK.md`), canonical
   catalog target/count/digest/strategy, current phase statuses
-  (`PHASE_8_STATUS: IN_PROGRESS`,
+  (`PHASE_8_STATUS: IN_PROGRESS`, <!--status:historical 24fc437-->
   `PHASE_8B_1_STATUS: COMPLETE_VIA_SUCCESSFUL_RETRY_R1`),
   `NEXT_PORTFOLIO_MEMBER: AVAILABLE_NOT_ADOPTED`, and
   `NEXT_PROMOTION_AUTHORITY: NONE`. No self-referential live SHA is ever
@@ -1793,7 +1793,7 @@ finding capability). Nightwatch's purpose is Alphaus bug hunting; the next
 investment belongs in the campaign/oracle/triage space, not in more
 self-development promotion machinery. Closure itself requires a separate
 authorized task because `bin/project-state-check.mjs:172-174` hard-pins
-`PHASE_8_STATUS: IN_PROGRESS` and `PHASE_8B_1_STATUS:
+`PHASE_8_STATUS: IN_PROGRESS` and `PHASE_8B_1_STATUS: <!--status:historical 24fc437-->
 COMPLETE_VIA_SUCCESSFUL_RETRY_R1` (a source change), so the design review
 records the design and stops.
 
@@ -1843,7 +1843,7 @@ is closed, and the next bug-hunting investment is selected:
 `PHASE_9_DIRECTION: DETERMINISTIC_ORACLE_DEPTH` — **Phase 9 —
 Deterministic Semantic Oracle Depth** — with an implementation-ready
 future-task spec in `docs/design/PHASE_9_ROADMAP.md`.
-`PHASE_9_STATUS: DESIGNED_NOT_STARTED_NOT_AUTHORIZED`;
+`PHASE_9_STATUS: DESIGNED_NOT_STARTED_NOT_AUTHORIZED`; <!--status:historical 24fc437-->
 `PHASE_9_IMPLEMENTATION_AUTHORITY: NOT_GRANTED`.
 
 **Rationale.** Phase 8's objective — one owner-authorized canonical
@@ -4190,7 +4190,7 @@ code: checkout, Node 20 setup and `npm ci --ignore-scripts` all passed, and
 `receipt:sha256:1a55a1e307541c094dcbfb3f`.
 
 Decision: a run that reaches and executes the gate is EXECUTED CI, and a real
-executed test failure is recorded as `CI_STATUS: EXECUTED_FAIL`. It is not
+executed test failure is recorded as `CI_STATUS: EXECUTED_FAIL`. <!--status:historical run 33572572053 at c3fed38--> It is not
 filed under the zero-step billing/platform classification of D-88.
 
 The older zero-step runs (`33446473458`, `33361000650`, `32956612882`) remain

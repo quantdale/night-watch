@@ -9,6 +9,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
+import crypto from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { buildChildEnvironment } from './child-environment.mjs';
@@ -3292,6 +3293,433 @@ function checkDocumentationFreshness() {
 }
 
 /**
+ * Group 7 / F-08 — documentation roles, current-truth bounds, and relocations.
+ *
+ * §5 of `docs/HOST-CAPABILITY-MATRIX.md` names the documents that answer
+ * "where are we" and distinguishes them from the append-heavy archives. That
+ * mitigation was advisory; nothing prevented a campaign from appending a
+ * current-sounding status to an archive, and nothing detected a document that
+ * no longer has a role at all. This rule makes the classification mechanical:
+ * every top-level `docs/*.md` file has exactly one role, a `CURRENT_TRUTH`
+ * document is bounded, and a moved block is verified byte-identically in the
+ * archive that received it.
+ */
+const DOCUMENT_ROLE_CONFIG = 'config/document-role.v1.json';
+const DOCUMENT_ROLE_VALUES = new Set(['CURRENT_TRUTH', 'APPEND_ONLY_ARCHIVE', 'OPERATOR_REFERENCE']);
+
+function sha256Prefix(text) {
+  return `sha256:${crypto.createHash('sha256').update(text, 'utf8').digest('hex').slice(0, 24)}`;
+}
+
+function readDocumentRoleConfig(rule) {
+  let config;
+  try {
+    config = JSON.parse(readIncludingComments(DOCUMENT_ROLE_CONFIG));
+  } catch (error) {
+    fail(`${rule} cannot read ${DOCUMENT_ROLE_CONFIG}: ${error instanceof Error ? error.message : String(error)}`);
+    return null;
+  }
+  if (config.schemaVersion !== 'nightwatch.document-role.v1') {
+    fail(`${rule} ${DOCUMENT_ROLE_CONFIG} schemaVersion is ${String(config.schemaVersion)}, not nightwatch.document-role.v1`);
+    return null;
+  }
+  if (!Array.isArray(config.documents) || config.documents.length === 0) {
+    fail(`${rule} ${DOCUMENT_ROLE_CONFIG} declares no documents; the declaration is empty, not clean`);
+    return null;
+  }
+  return config;
+}
+
+/** Count lines the way `wc -l` does: a trailing newline is a terminator, not a line. */
+function countDocumentLines(text) {
+  if (text.length === 0) return 0;
+  return text.endsWith('\n') ? text.split('\n').length - 1 : text.split('\n').length;
+}
+
+function checkDocumentRoleCurrency() {
+  const config = readDocumentRoleConfig('DOCUMENT_ROLE');
+  if (config === null) return;
+  const documentsDirectory = path.join(root, 'docs');
+  const actual = fs.readdirSync(documentsDirectory)
+    .filter((entry) => entry.endsWith('.md'))
+    .filter((entry) => fs.statSync(path.join(documentsDirectory, entry)).isFile())
+    .sort()
+    .map((entry) => `docs/${entry}`);
+  const declared = new Map();
+  for (const entry of config.documents) {
+    if (entry === null || typeof entry !== 'object' || typeof entry.path !== 'string') {
+      fail('DOCUMENT_ROLE a declaration entry has no path');
+      continue;
+    }
+    if (!DOCUMENT_ROLE_VALUES.has(entry.role)) {
+      fail(`DOCUMENT_ROLE ${entry.path} declares unknown role ${String(entry.role)}`);
+      continue;
+    }
+    if (declared.has(entry.path)) {
+      fail(`DOCUMENT_ROLE ${entry.path} is declared more than once; a file has exactly one role`);
+      continue;
+    }
+    declared.set(entry.path, entry);
+    if (entry.role === 'CURRENT_TRUTH') {
+      if (!Number.isInteger(entry.maxLines) || entry.maxLines <= 0) {
+        fail(`DOCUMENT_ROLE CURRENT_TRUTH ${entry.path} must declare a positive integer maxLines`);
+      }
+    } else if (entry.maxLines !== undefined) {
+      fail(`DOCUMENT_ROLE ${entry.path} declares maxLines but is ${entry.role}; only a CURRENT_TRUTH document is bounded`);
+    }
+  }
+  for (const file of actual) {
+    if (!declared.has(file)) fail(`DOCUMENT_ROLE ${file} has no role declaration; a new document must be classified, not missed`);
+  }
+  for (const file of declared.keys()) {
+    if (!actual.includes(file)) fail(`DOCUMENT_ROLE ${file} is declared but does not exist`);
+  }
+  // A declaration that classified nothing would pass vacuously.
+  if (declared.size === 0) fail('DOCUMENT_ROLE classified zero documents; the declaration is broken rather than the repository clean');
+
+  // --- current-truth documents are bounded ---
+  for (const [file, entry] of declared) {
+    if (entry.role !== 'CURRENT_TRUTH') continue;
+    const lines = countDocumentLines(readIncludingComments(file));
+    if (Number.isInteger(entry.maxLines) && lines > entry.maxLines) {
+      fail(`DOCUMENT_ROLE ${file} has ${lines} lines and exceeds its declared CURRENT_TRUTH maximum of ${entry.maxLines}; relocate the excess into an APPEND_ONLY_ARCHIVE`);
+    }
+  }
+
+  // --- relocations preserve the moved bytes ---
+  const relocationIds = new Set();
+  for (const relocation of Array.isArray(config.relocations) ? config.relocations : []) {
+    const id = typeof relocation.id === 'string' ? relocation.id : '';
+    if (id.length === 0) { fail('DOCUMENT_ROLE a relocation has no id'); continue; }
+    if (relocationIds.has(id)) { fail(`DOCUMENT_ROLE relocation id ${id} is declared more than once`); continue; }
+    relocationIds.add(id);
+    const from = declared.get(relocation.from);
+    const to = declared.get(relocation.to);
+    if (from === undefined || from.role !== 'CURRENT_TRUTH') {
+      fail(`DOCUMENT_ROLE relocation ${id} does not name a declared CURRENT_TRUTH source`);
+      continue;
+    }
+    if (to === undefined || to.role !== 'APPEND_ONLY_ARCHIVE') {
+      fail(`DOCUMENT_ROLE relocation ${id} does not name a declared APPEND_ONLY_ARCHIVE destination`);
+      continue;
+    }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(relocation.date ?? ''))) {
+      fail(`DOCUMENT_ROLE relocation ${id} has no YYYY-MM-DD date`);
+      continue;
+    }
+    if (!/^sha256:[0-9a-f]{24}$/.test(String(relocation.digest ?? ''))) {
+      fail(`DOCUMENT_ROLE relocation ${id} has no sha256:<24 hex> digest of the moved bytes`);
+      continue;
+    }
+    const archiveLines = readIncludingComments(relocation.to).split(/\r?\n/);
+    const start = archiveLines.indexOf(`<!--relocation:${id}:start-->`);
+    const end = archiveLines.indexOf(`<!--relocation:${id}:end-->`);
+    if (start < 0 || end < 0 || end <= start) {
+      fail(`DOCUMENT_ROLE relocation ${id} has no start/end marker pair in ${relocation.to}`);
+      continue;
+    }
+    const block = archiveLines.slice(start + 1, end).join('\n');
+    const actualDigest = sha256Prefix(block);
+    if (actualDigest !== relocation.digest) {
+      fail(`DOCUMENT_ROLE relocation ${id} archived bytes are ${actualDigest} but ${relocation.digest} was the text removed from ${relocation.from}; a modified relocation loses the receipt it moved`);
+      continue;
+    }
+    const pointer = `<!--relocated:${id} dated ${relocation.date} to ${relocation.to}-->`;
+    const pointerPresent = readIncludingComments(relocation.from).includes(pointer);
+    if (!pointerPresent) {
+      fail(`DOCUMENT_ROLE relocation ${id} is not announced in ${relocation.from} with the dated pointer ${pointer}`);
+    }
+  }
+
+  // --- a correction may only excuse an archive line ---
+  for (const correction of Array.isArray(config.corrections) ? config.corrections : []) {
+    const target = declared.get(correction.path);
+    if (target === undefined || target.role !== 'APPEND_ONLY_ARCHIVE') {
+      fail(`DOCUMENT_ROLE correction ${String(correction.id)} names ${String(correction.path)}, which is not a declared APPEND_ONLY_ARCHIVE`);
+    }
+    if (!/^sha256:[0-9a-f]{24}$/.test(String(correction.oldLineSha256 ?? ''))) {
+      fail(`DOCUMENT_ROLE correction ${String(correction.id)} has no sha256:<24 hex> oldLineSha256`);
+    }
+    if (typeof correction.reason !== 'string' || correction.reason.trim().length < 20) {
+      fail(`DOCUMENT_ROLE correction ${String(correction.id)} states no reason for the correction`);
+    }
+  }
+}
+
+/**
+ * Group 7 / F-08 — archives are append-only in the direction that can be
+ * false: existing lines are never modified or deleted, only appended to.
+ *
+ * The base is the merge-base of HEAD and origin/main when the remote is
+ * available, so a session's committed and uncommitted archive edits are both
+ * measured against the point the branch left main. The rule reads the diff
+ * that the append-only claim is about, so it can only fail for a real
+ * modification, never for prose that merely resembles one. The declared
+ * correction escape is exact: the removed line's digest must be recorded in
+ * `config/document-role.v1.json`.
+ *
+ * One exemption is structural rather than a weakening. `docs/CURRENT_STATE.md`
+ * carries two fenced machine-checked blocks (`nightwatch.project-state.v2` and
+ * `nightwatch.live-state.v1`) whose owner rewrites them as current truth; a
+ * reader of the file can see the machine blocks are not the historical record.
+ * The rule exempts removed lines that fall inside those fenced blocks in the
+ * diff base, and only those lines.
+ */
+const MACHINE_BLOCK_PROTOCOL_MARKERS = [
+  'PROJECT_STATE_PROTOCOL_VERSION: nightwatch.project-state.v2',
+  'LIVE_STATE_PROTOCOL_VERSION: nightwatch.live-state.v1',
+];
+
+function machineBlockLineRanges(text) {
+  const lines = text.split(/\r?\n/);
+  const ranges = [];
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index] ?? '';
+    if (!MACHINE_BLOCK_PROTOCOL_MARKERS.some((marker) => line.includes(marker))) continue;
+    let start = index;
+    while (start > 0 && (lines[start] ?? '').trim() !== '```') start -= 1;
+    let end = index;
+    while (end < lines.length && (lines[end] ?? '').trim() !== '```') end += 1;
+    ranges.push([start + 1, end + 1]);
+  }
+  return ranges;
+}
+
+function gitResult(args) {
+  return spawnSync('git', args, { cwd: root, encoding: 'utf8', env: childEnvironment, timeout: 30_000, maxBuffer: 16 * 1024 * 1024 });
+}
+
+function resolveArchiveDiffBase() {
+  const head = gitResult(['rev-parse', '--verify', 'HEAD']);
+  if (head.status !== 0) return null;
+  const headSha = (head.stdout ?? '').trim();
+  if (!/^[0-9a-f]{40}$/.test(headSha)) return null;
+  const remote = gitResult(['rev-parse', '--verify', '--quiet', 'origin/main']);
+  if (remote.status !== 0) return headSha;
+  const remoteSha = (remote.stdout ?? '').trim();
+  if (!/^[0-9a-f]{40}$/.test(remoteSha)) return headSha;
+  const mergeBase = gitResult(['merge-base', headSha, remoteSha]);
+  const mergeBaseSha = (mergeBase.stdout ?? '').trim();
+  return mergeBase.status === 0 && /^[0-9a-f]{40}$/.test(mergeBaseSha) ? mergeBaseSha : headSha;
+}
+
+function checkAppendOnlyArchives() {
+  const config = readDocumentRoleConfig('APPEND_ONLY');
+  if (config === null) return;
+  const archives = new Set((config.documents ?? [])
+    .filter((entry) => entry !== null && typeof entry === 'object' && entry.role === 'APPEND_ONLY_ARCHIVE')
+    .map((entry) => entry.path));
+  if (archives.size === 0) {
+    fail('APPEND_ONLY no document is declared APPEND_ONLY_ARCHIVE; the append-only rule has nothing to enforce');
+    return;
+  }
+  /** @type {Map<string, Set<string>>} */
+  const corrections = new Map();
+  for (const correction of Array.isArray(config.corrections) ? config.corrections : []) {
+    if (typeof correction.path !== 'string' || typeof correction.oldLineSha256 !== 'string') continue;
+    if (!archives.has(correction.path)) continue;
+    if (!corrections.has(correction.path)) corrections.set(correction.path, new Set());
+    corrections.get(correction.path).add(correction.oldLineSha256);
+  }
+  const base = resolveArchiveDiffBase();
+  if (base === null) {
+    fail('APPEND_ONLY could not resolve a Git diff base; the append-only rule cannot be evaluated fail-closed');
+    return;
+  }
+  // The exempt structure is read from the base revision, so the exemption
+  // cannot be widened by an uncommitted edit to the working file.
+  const currentStateBase = gitResult(['show', `${base}:docs/CURRENT_STATE.md`]);
+  if (currentStateBase.status !== 0) {
+    fail(`APPEND_ONLY could not read docs/CURRENT_STATE.md at ${base}; the machine-block exemption cannot be evaluated`);
+    return;
+  }
+  const exemptRanges = machineBlockLineRanges(currentStateBase.stdout ?? '');
+  const isExempt = (file, oldLine) => file === 'docs/CURRENT_STATE.md'
+    && exemptRanges.some(([start, end]) => oldLine >= start && oldLine <= end);
+
+  const result = gitResult(['diff', '--unified=0', '--no-color', '--no-ext-diff', base, '--', ...archives]);
+  if (result.status !== 0) {
+    fail(`APPEND_ONLY git diff against ${base} failed: ${(result.stderr ?? '').trim()}`);
+    return;
+  }
+  let currentFile = null;
+  let oldLine = 0;
+  for (const line of (result.stdout ?? '').split('\n')) {
+    const header = /^diff --git a\/(.+) b\/(.+)$/.exec(line);
+    if (header !== null) {
+      currentFile = header[2] ?? null;
+      continue;
+    }
+    const hunk = /^@@ -(\d+)(?:,\d+)? \+\d+(?:,\d+)? @@/.exec(line);
+    if (hunk !== null) {
+      oldLine = Number(hunk[1]);
+      continue;
+    }
+    if (line.startsWith('--- ') || line.startsWith('+++ ')) continue;
+    if (line.startsWith('-')) {
+      const removed = line.slice(1);
+      const removedAt = oldLine;
+      oldLine += 1;
+      if (currentFile === null || !archives.has(currentFile)) continue;
+      if (isExempt(currentFile, removedAt)) continue;
+      const digest = sha256Prefix(removed);
+      if (corrections.get(currentFile)?.has(digest) === true) continue;
+      fail(`APPEND_ONLY ${currentFile} modifies or deletes an existing line (${digest}); the archive may only be appended to, or the line must be covered by a declared correction`);
+    }
+  }
+}
+
+/**
+ * Group 7 / F-08 — status words get the same ledger treatment numbers have.
+ *
+ * The ledger is `GOVERNED_STATUS_KEYS` in the census-figure module: declared
+ * keys and their current values. Only declared keys are governed. A document
+ * stating a governed key must state the current value (optionally extended by
+ * a parenthetical state) or sit on a line that names the checkpoint it
+ * describes. The README measured-status block is part of the same authority:
+ * it must state the required keys, including the lanes that have never
+ * executed, rather than omitting them.
+ */
+const README_STATUS_BLOCK_BEGIN = '<!--status-block:begin-->';
+const README_STATUS_BLOCK_END = '<!--status-block:end-->';
+
+function parseGovernedStatusLedger(rule) {
+  const source = readIncludingComments('src/core/source/censusFigureLedger.ts');
+  const block = /export const GOVERNED_STATUS_KEYS[\s\S]*?Object\.freeze\(\[([\s\S]*?)\]\);/m.exec(source);
+  if (block === null) {
+    fail(`${rule} cannot read the GOVERNED_STATUS_KEYS declaration; the status ledger is missing`);
+    return null;
+  }
+  const entries = [...block[1].matchAll(/\{ key: '([A-Z0-9_]+)', currentValue: '([A-Z0-9_]+)'[^}]*\}/g)]
+    .map((match) => ({ key: match[1], currentValue: match[2], requiredInReadme: match[0].includes('requiredInReadme: true') }));
+  if (entries.length < 60) {
+    fail(`${rule} parsed only ${entries.length} governed status keys; the ledger is broken rather than the documents clean`);
+    return null;
+  }
+  const seen = new Set();
+  for (const entry of entries) {
+    if (seen.has(entry.key)) fail(`${rule} governed status key ${entry.key} is declared more than once`);
+    seen.add(entry.key);
+  }
+  return entries;
+}
+
+function checkGovernedStatusWords() {
+  const ledger = parseGovernedStatusLedger('STATUS_WORD');
+  if (ledger === null) return;
+  const config = readDocumentRoleConfig('STATUS_WORD');
+  if (config === null) return;
+  const documents = (config.documents ?? [])
+    .map((entry) => entry.path)
+    .filter((file) => typeof file === 'string')
+    .map((file) => ({ path: file, text: readIncludingComments(file) }));
+  // The README is not under docs/, but §5's current-truth instruction points a
+  // reader at it, so a governed status there is governed here too.
+  documents.push({ path: 'README.md', text: readIncludingComments('README.md') });
+
+  const isHistorical = (line) => (
+    /<!--status:historical[^>]*?(?:\d{4}-\d{2}-\d{2}|[0-9a-f]{7,40})[^>]*?-->/u.test(line)
+    || /\d{4}-\d{2}-\d{2}/.test(line)
+    || /\b[0-9a-f]{7,40}\b/.test(line)
+    || /supersed|previously|at the time|terminal|archiv/i.test(line)
+  );
+  const normalize = (value) => value.toUpperCase().replace(/[^A-Z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+  let statements = 0;
+  for (const document of documents) {
+    const lines = document.text.split(/\r?\n/);
+    for (let index = 0; index < lines.length; index += 1) {
+      const line = lines[index] ?? '';
+      for (const entry of ledger) {
+        const table = new RegExp(`\\|\\s*\`?${entry.key}\`?\\s*\\|\\s*\`([^\`]+)\``).exec(line);
+        const field = new RegExp(`\\b${entry.key}\\b\\s*[:=]\\s*\`?\\s*([A-Za-z0-9_]+)`).exec(line);
+        const statedValues = [];
+        if (table?.[1] !== undefined) statedValues.push(table[1]);
+        if (field?.[1] !== undefined) statedValues.push(field[1]);
+        for (const stated of statedValues) {
+          statements += 1;
+          const value = normalize(stated);
+          if (value === entry.currentValue || value.startsWith(`${entry.currentValue}_`)) continue;
+          if (isHistorical(line)) continue;
+          fail(`STATUS_WORD ${document.path}:${index + 1} states ${entry.key}: ${value} but the ledger's current value is ${entry.currentValue}; state the current value or add an explicit historical-checkpoint qualifier`);
+        }
+      }
+    }
+  }
+  // Non-vacuous: the scan must actually see governed statements.
+  if (statements === 0) fail('STATUS_WORD found zero governed status statements; the scan is broken rather than the documents clean');
+
+  // --- lane-class counts stay tied to the lane-state ledger ---
+  let laneState;
+  try {
+    laneState = JSON.parse(readIncludingComments('config/validation-lane-state.v1.json'));
+  } catch (error) {
+    fail(`STATUS_WORD cannot read config/validation-lane-state.v1.json: ${error instanceof Error ? error.message : String(error)}`);
+    laneState = null;
+  }
+  if (laneState !== null && Array.isArray(laneState.lanes)) {
+    const byClass = new Map();
+    for (const lane of laneState.lanes) byClass.set(lane.class, (byClass.get(lane.class) ?? 0) + 1);
+    const declaredCounts = new Map(ledger.map((entry) => [entry.key, entry.currentValue]));
+    const expectedProven = Number(declaredCounts.get('VALIDATION_LANE_PROVEN_COUNT') ?? '');
+    const expectedStale = Number(declaredCounts.get('VALIDATION_LANE_STALE_EVIDENCE_COUNT') ?? '');
+    const expectedBlocked = Number(declaredCounts.get('VALIDATION_LANE_BLOCKED_EXTERNAL_COUNT') ?? '');
+    const expectedUnavailable = Number(declaredCounts.get('VALIDATION_LANE_UNAVAILABLE_CAPABILITY_COUNT') ?? '');
+    const laneCount = laneState.lanes.length;
+    const provenClass = byClass.get('PROVEN') ?? 0;
+    const blockedClass = byClass.get('BLOCKED_EXTERNAL') ?? 0;
+    const unavailableClass = byClass.get('UNAVAILABLE_CAPABILITY') ?? 0;
+    if (expectedProven + expectedStale !== provenClass) {
+      fail(`STATUS_WORD the ledger declares ${expectedProven} PROVEN + ${expectedStale} STALE lanes but validation-lane-state declares ${provenClass} PROVEN lanes`);
+    }
+    if (expectedBlocked !== blockedClass || expectedUnavailable !== unavailableClass) {
+      fail(`STATUS_WORD the ledger declares BLOCKED_EXTERNAL=${expectedBlocked} UNAVAILABLE_CAPABILITY=${expectedUnavailable} but validation-lane-state declares ${blockedClass} and ${unavailableClass}`);
+    }
+    if (expectedProven + expectedStale + expectedBlocked + expectedUnavailable !== laneCount) {
+      fail(`STATUS_WORD ledger lane-class counts do not cover the ${laneCount} declared lanes`);
+    }
+    // The README's per-lane entries are governed by lane id, not by a prose
+    // paraphrase: a lane whose class changes changes the required README value.
+    const laneById = new Map(laneState.lanes.map((lane) => [lane.laneId, lane]));
+    for (const [ledgerKey, laneId] of [
+      ['EXACT_CHECKPOINT_CI_LANE', 'exact-checkpoint-ci'],
+      ['OWNER_MANUAL_LANE', 'owner-manual'],
+      ['DEPENDENCY_ADVISORY_LANE', 'dependency-advisory'],
+    ]) {
+      const lane = laneById.get(laneId);
+      const declared = declaredCounts.get(ledgerKey);
+      if (lane === undefined) fail(`STATUS_WORD validation-lane-state declares no lane ${laneId} for ${ledgerKey}`);
+      else if (declared !== lane.class) fail(`STATUS_WORD the ledger declares ${ledgerKey}=${String(declared)} but lane ${laneId} is ${String(lane.class)}`);
+    }
+    const liveAppSmoke = declaredCounts.get('LIVE_APP_SMOKE_LANE');
+    const ownerManual = laneById.get('owner-manual');
+    if (ownerManual !== undefined && liveAppSmoke !== ownerManual.class) {
+      fail(`STATUS_WORD the ledger declares LIVE_APP_SMOKE_LANE=${String(liveAppSmoke)} but its lane owner-manual is ${String(ownerManual.class)}`);
+    }
+  }
+
+  // --- the README status block is governed ---
+  const readme = readIncludingComments('README.md');
+  const begin = readme.indexOf(README_STATUS_BLOCK_BEGIN);
+  const end = readme.indexOf(README_STATUS_BLOCK_END);
+  if (begin < 0 || end < 0 || end <= begin) {
+    fail(`STATUS_WORD README.md must carry the ledger-governed measured-status block delimited by ${README_STATUS_BLOCK_BEGIN} and ${README_STATUS_BLOCK_END}`);
+    return;
+  }
+  const blockText = readme.slice(begin, end);
+  const tags = new Map([...blockText.matchAll(/<!--status:([A-Z0-9_]+)=([A-Za-z0-9_]+)-->/g)].map((match) => [match[1], match[2]]));
+  if (tags.size === 0) fail('STATUS_WORD the README measured-status block carries no governed tags; a block that states nothing proves nothing');
+  for (const entry of ledger) {
+    if (entry.requiredInReadme !== true) continue;
+    const stated = tags.get(entry.key);
+    if (stated === undefined) {
+      fail(`STATUS_WORD the README measured-status block omits ${entry.key}; absence must be stated, not omitted`);
+    } else if (stated !== entry.currentValue) {
+      fail(`STATUS_WORD the README measured-status block states ${entry.key}=${stated} but the ledger's current value is ${entry.currentValue}`);
+    }
+  }
+}
+
+/**
  * C-02b protobuf source-intelligence invariants.
  *
  * Four things in this campaign are load-bearing, and each is the kind of thing
@@ -4591,6 +5019,9 @@ const REGISTERED_RULES = [
   { name: 'checkFindingFrontierBoundary', run: checkFindingFrontierBoundary, family: 'fc1-finding-review', quantifier: 'TOTALITY', subject: 'the finding review/intel cones stay advisory-only, local, and occurrence-complete on authority values' },
   { name: 'checkReviewerSurfaceBoundary', run: checkReviewerSurfaceBoundary, family: 'rs1-reviewer-surface', quantifier: 'TOTALITY', subject: 'the reviewer surface stays a pure projection, guards every advisory value, and tracks the AH-1 vocabulary', firstMatch: 'each AH-1 vocabulary declaration is a singleton array literal' },
   { name: 'checkDocumentationFreshness', run: checkDocumentationFreshness, family: 'documentation', quantifier: 'TOTALITY', subject: 'the current-state header date, MA-8 status, GREEN framing, and C-12 readiness never go stale', firstMatch: 'the header date is a singleton line' },
+  { name: 'checkDocumentRoleCurrency', run: checkDocumentRoleCurrency, family: 'documentation-currency', quantifier: 'TOTALITY', subject: 'every top-level docs file has exactly one role, every CURRENT_TRUTH document is under its declared bound, and every relocation is byte-identical' },
+  { name: 'checkAppendOnlyArchives', run: checkAppendOnlyArchives, family: 'documentation-currency', quantifier: 'TOTALITY', subject: 'no APPEND_ONLY_ARCHIVE line is modified or deleted since the diff base without a declared correction', firstMatch: 'the diff header and hunk regexes are applied per line inside a loop over every line of the diff, so every line is evaluated' },
+  { name: 'checkGovernedStatusWords', run: checkGovernedStatusWords, family: 'documentation-currency', quantifier: 'TOTALITY', subject: 'every governed status statement states the ledger current value or names its historical checkpoint, and the README block states every required key', firstMatch: 'the ledger declaration is a singleton block and each per-key regex is applied per line inside loops over every document line and every governed key' },
   { name: 'checkActiveMilestoneProgression', run: checkActiveMilestoneProgression, family: 'agent-continuity', quantifier: 'TOTALITY', subject: 'no PLAN milestone that STATE reports COMPLETE still reads NOT_STARTED or IN_PROGRESS', firstMatch: 'each plan milestone section is a singleton section' },
   { name: 'checkDecisionIdentityUniqueness', run: checkDecisionIdentityUniqueness, family: 'documentation', quantifier: 'TOTALITY', subject: 'every duplicated decision number is recorded in the erratum with every colliding title', firstMatch: 'the exec is applied per line inside a loop over every line of the document, so every heading is evaluated' },
   { name: 'checkHostCapabilityMatrix', run: checkHostCapabilityMatrix, family: 'host-capability', quantifier: 'TOTALITY', subject: 'every declared dependency is assessed and every probed capability token is named in the matrix' },
@@ -4713,6 +5144,17 @@ if (process.argv.includes('--list-rules')) {
   process.exit(0);
 } else if (process.argv.includes('--probe-campaign')) {
   runRuleProbeCampaign();
+} else if (process.argv.includes('--report-documentation-currency')) {
+  // Reporting mode: the same three rules that run blocking in the gate, with
+  // their findings printed instead of failing. Used to migrate documents
+  // without turning the gate red while the repair is in progress.
+  const documentationCurrencyRules = new Set(['checkDocumentRoleCurrency', 'checkAppendOnlyArchives', 'checkGovernedStatusWords']);
+  const before = errors.length;
+  for (const rule of REGISTERED_RULES) if (documentationCurrencyRules.has(rule.name)) rule.run();
+  const found = errors.splice(before);
+  for (const error of found) console.log(`[report] ${error}`);
+  console.log(`[report] documentation-currency: ${found.length} finding${found.length === 1 ? '' : 's'} (reporting mode; nothing failed)`);
+  process.exit(0);
 } else {
   if (onlyRule !== undefined && !REGISTERED_RULES.some((rule) => rule.name === onlyRule)) {
     console.error(`[hardening:check] ERROR: --only names an unregistered rule: ${onlyRule}`);

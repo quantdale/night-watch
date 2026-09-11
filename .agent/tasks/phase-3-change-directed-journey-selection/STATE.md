@@ -298,3 +298,4 @@ correlation remain out of scope.
 ## Completion Snapshot
 
 Complete. M0–M10 are complete; Phase 3 is closed and Phase 4 is not started.
+LEGACY_V1_DISPOSITION: PERMANENTLY_HISTORICAL — Phase 3 record; terminal; later phases supersede its scope.

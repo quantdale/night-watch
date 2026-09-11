@@ -9,3 +9,4 @@
   `.agent/tasks/nightwatch-agent-tool-protocol-v1/**`.
 - Forbidden paths untouched: `src/core/agentProtocol/**`,
   `src/core/aiReview/**`, global docs, other lanes.
+LEGACY_V1_DISPOSITION: PERMANENTLY_HISTORICAL — Lane C agent-tool protocol record; implementation landed and no later task depends on this v1 record.

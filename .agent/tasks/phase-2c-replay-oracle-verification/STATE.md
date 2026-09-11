@@ -498,3 +498,4 @@ semantic-UNKNOWN protocol anomaly; privacy and safety passed; and the final
 Nightwatch worktree is clean. Final implementation remains
 `efc03de2f7396a96baaca485894df300ddcc4ce0`; the closure commit is the clean
 terminal descendant recorded at handoff.
+LEGACY_V1_DISPOSITION: PERMANENTLY_HISTORICAL — Phase 2C replay/oracle record; terminal; later phases supersede its scope.

@@ -83,6 +83,9 @@ test.describe('hardening rule parity', () => {
       'checkFindingFrontierBoundary',
       'checkDeclaredDependencyResolvability',
       'checkRuleEngineSoundness',
+      'checkDocumentRoleCurrency',
+      'checkAppendOnlyArchives',
+      'checkGovernedStatusWords',
     ]) {
       expect(registered.has(rule), `${rule} must be registered`).toBe(true);
     }

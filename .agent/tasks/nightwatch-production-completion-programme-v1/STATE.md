@@ -36,15 +36,19 @@ external dependency with its blocking class and next action.
 
 ## Current Milestone
 
-Milestone ID: G1
+Milestone ID: G6
 Milestone status: IN_PROGRESS
-What is being attempted: G1.1 through G1.17 are implemented and validated.
-G1.18 (root validation, fast-forward integration, session release) is blocked
-by an external condition: the canonical checkout holds an untracked,
-concurrently authored planning artifact (`nightwatch-control-center-design-system-v1`),
-so every workspace/continuity check reports
-`WORKSPACE_CANONICAL_DIRTY_WHILE_SESSION_LIVE` and `gate:local` cannot be
-clean. The artifact is another writer's work and is not touched.
+What is being attempted: workspace and continuity drift closure. G6.1–G6.3 and
+G6.7–G6.9 are implemented and locally validated in session
+`nightwatch-production-completion-3d648499`: claim-task liveness in
+`WORKSPACE_WORKTREE_METADATA`, all 31 legacy v1 records declared
+`PERMANENTLY_HISTORICAL` append-only, and the non-merged branches classified
+from the diff against `origin/main`. G6.4/G6.5 (clearing the canonical
+maintenance claim and the foreign terminal-task session) are owner actions and
+were deliberately not performed; G6.6 is blocked by them; G6.10 is the owner
+deletion decision; G6.11 integration/release remains the session owner's
+action. G1.18 integration is still externally blocked by the canonical
+checkout's concurrent uncommitted artifact.
 
 ## Completed Milestones
 
@@ -75,19 +79,34 @@ clean. The artifact is another writer's work and is not touched.
     of declared entries, blocker and its internal/external class) through
     `src/core/readiness/openWork.ts` and the shared parser.
 
+- **G6.1–G6.3, G6.7–G6.9 COMPLETE (local)** — workspace and continuity drift
+  closure: `WORKSPACE_WORKTREE_METADATA` resolves every claim's task against
+  `.agent/tasks/<id>/STATE.md` and raises `CLAIM_TASK_TERMINAL` /
+  `CLAIM_TASK_UNKNOWN` as attention with a named owner action and no automatic
+  mutation; all 31 legacy v1 records are declared `PERMANENTLY_HISTORICAL`
+  append-only and `agent:check` reaches `legacy_warnings=0`; the 17 current
+  non-merged branches are classified from the actual diff against
+  `origin/main`, citing their unique commits, in the programme `tasks.md`.
+
 ## Work In Progress
 
-G1.18 integration only. All G1 implementation is committed on the session
-branch (`171d0306`); the worktree carries the final G1 state/docs updates.
-No later group has started.
+G6 is implemented and locally validated. The remaining G6 items are owner
+actions, not agent actions: clear the canonical maintenance claim and the
+foreign terminal-task session through the session CLI (G6.4/G6.5), decide
+per-branch deletion (G6.10), then integrate and release (G6.11) from the
+session owner. G1.18 integration remains externally blocked by the canonical
+checkout's concurrent uncommitted artifact.
 
 ## Exact Next Action
 
-Commit the G1 state/docs/tasks reconciliation, then begin G2.1 (define
-`nightwatch.validation-lane-state.v1`) while retrying G1.18 integration
-whenever the canonical checkout is clean: run `npm run gate:local` from this
-owned session, fast-forward push, verify `HEAD == origin/main`, and release
-the session at programme closure.
+Owner actions, in order: (1) release or re-point the canonical
+`CANONICAL_MAINTENANCE` claim naming
+`nightwatch-control-center-render-truth-v1`; (2) the owner of
+`nightwatch-repository-hardening--e7b9be89` releases its terminal-task claim;
+(3) approve per-branch deletion for the five SUPERSEDED branches named in the
+G6 record (none is held by a registered worktree); (4) the session owner
+validates, commits, fast-forward integrates and releases. No agent
+implementation action remains for G6.
 
 ## Files Changed
 
@@ -107,6 +126,13 @@ the session at programme closure.
 | `.agent/tasks/.../STATE.md`, `REPORT.md`, `PLAN.md` | continuity and evidence | MODIFIED |
 | `config/validation-universe.v1.json` | register the new bin/lib and test; digest refresh | MODIFIED |
 | `docs/CURRENT_STATE.md` | live-state v2 block bound to this campaign | MODIFIED |
+| `bin/workspace-integrity.mjs` | G6.1–G6.3 claim-task liveness resolution, attention findings, owner actions | MODIFIED |
+| `bin/agent-continuity-protocol.mjs`, `.d.mts` | G6.7 legacy disposition parser | MODIFIED |
+| `bin/agent-state.mjs` | G6.7–G6.8 legacy disposition accounting, claim warnings, legacy_warnings attribution | MODIFIED |
+| `.agent/tasks/*/STATE.md` (31 legacy records) | append-only `LEGACY_V1_DISPOSITION: PERMANENTLY_HISTORICAL` declarations | MODIFIED |
+| `tests/unit/workspaceIsolation.test.ts` | F-07 claim-task probes and fixture task STATE records | MODIFIED |
+| `tests/unit/agent-state.test.ts` | legacy-disposition warning-count probes | MODIFIED |
+| `openspec/changes/nightwatch-production-completion-programme-v1/tasks.md` | G6 checkboxes and the branch-classification record | MODIFIED |
 
 ## Validation Ledger
 
@@ -153,8 +179,56 @@ Relevant failure/output summary: 59 passed / 0 failed; `openspec list
 Command: `npm run project:check`
 Result: FAIL (external cascade)
 When: 2026-09-12
-Relevant failure/output summary: only `PROJECT_STATE_ACTIVE_TASK_CONTINUITY_FAILED`,
-caused by `agent:check`'s canonical-dirty workspace error.
+Relevant failure/output summary: `PROJECT_STATE_CHECKOUT_DIRTY` (uncommitted
+G6 work) and `PROJECT_STATE_ACTIVE_TASK_CONTINUITY_FAILED`, the latter caused
+by `agent:check`'s canonical-dirty workspace error.
+
+Command: `npx playwright test tests/unit/workspaceIsolation.test.ts --workers=1`
+Result: PASS
+When: 2026-09-12
+Relevant failure/output summary: 54 passed, including the five F-07
+claim-task probes (live IN_PROGRESS pass, COMPLETE and BLOCKED attention,
+unknown task, canonical maintenance owner action, text rendering).
+
+Command: `npx playwright test tests/unit/agent-state.test.ts --workers=1`
+Result: PASS
+When: 2026-09-12
+Relevant failure/output summary: 121 passed, including the three
+legacy-disposition probes (declared excluded, undeclared raises to one,
+reasonless declaration does not suppress).
+
+Command: `npm run agent:check`
+Result: FAIL (external cascade only)
+When: 2026-09-12
+Relevant failure/output summary: `tasks=149 strict_v2=118 legacy_v1=31
+legacy_declared=31 legacy_undeclared=0 strict_errors=0 legacy_warnings=0`;
+both `CLAIM_TASK_TERMINAL` findings are surfaced as warnings; the only error
+remains the pre-existing `WORKSPACE_CANONICAL_DIRTY_WHILE_SESSION_LIVE`.
+
+Command: `npm run hardening:check`
+Result: PASS
+When: 2026-09-12
+Relevant failure/output summary: offline structural invariants hold after the
+workspace/continuity changes.
+
+Command: `npm run validation:universe`
+Result: PASS
+When: 2026-09-12
+Relevant failure/output summary: digest unchanged
+(`sha256:e04d813efa7aa0bbbb1fa219`); discovered=447, unclassified=0.
+
+Command: `npm run typecheck`
+Result: PASS
+When: 2026-09-12
+Relevant failure/output summary: no diagnostics.
+
+Command: `npm run workspace:check` and `npm run session:status`
+Result: FAIL (expected external)
+When: 2026-09-12
+Relevant failure/output summary: `WORKSPACE_WORKTREE_METADATA=ATTENTION`,
+`attention=2` with both `CLAIM_TASK_TERMINAL` findings and their owner actions
+rendered; the only error is the external
+`WORKSPACE_CANONICAL_DIRTY_WHILE_SESSION_LIVE`.
 
 ## Decisions Made During This Task
 
@@ -192,6 +266,17 @@ Consequence: `CF-1`/`CF-2` live in the programme's `tasks.md`.
 - The canonical checkout received an untracked concurrent planning artifact
   (`nightwatch-control-center-design-system-v1`) during this session; it is
   another writer's work and blocks all workspace-dependent checks.
+- The baseline `legacy_warnings=41` was 31 legacy-record warnings plus 10
+  inferred-anchor advisories on v2 records. Only the 31 were legacy warnings;
+  the counter now attributes warnings to their record class, so declaring the
+  31 records historical makes `legacy_warnings` a live signal (0 now, 1 for
+  one new undeclared record).
+- Of the 17 current non-merged branches, five are content-superseded (every
+  changed path is byte-identical on `origin/main`: reproduction-surface-ce18,
+  w7-programme-identity, w8-leakage-proof, w8-memory-proof, w9-current-source)
+  and twelve hold content that differs from `main` and must be kept pending
+  owner review. `session/nightwatch-repository-hardening--e7b9be89` is now
+  merged (`ahead=0`) and is held by a live registered worktree.
 
 ## Blockers
 
@@ -201,6 +286,13 @@ Consequence: `CF-1`/`CF-2` live in the programme's `tasks.md`.
   fails `session:status`, `agent:check`, `handoff:check` and `gate:local`.
   The artifact belongs to another writer and is not touched; the unblock is
   that writer committing or removing it.
+- G6.4/G6.5 are owner actions and remain open: the canonical
+  `CANONICAL_MAINTENANCE` claim naming
+  `nightwatch-control-center-render-truth-v1` (terminal COMPLETE) and the live
+  foreign session `nightwatch-repository-hardening--e7b9be89` (terminal
+  COMPLETE) must be cleared or released through the session CLI by their
+  owners. G6.6 waits on them; G6.10 per-branch deletion is a further owner
+  decision.
 
 ## Safety Events
 

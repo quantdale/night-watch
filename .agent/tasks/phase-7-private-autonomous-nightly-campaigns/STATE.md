@@ -418,3 +418,4 @@ catalogs/policy.
 Manifest/checkpoint/finalization are `EXACTLY_ONCE_LOGICAL`; browser/API
 execution is `AT_LEAST_ONCE_SAFE`; an interrupted `RUNNING` item is explicitly
 `REPLAY_REQUIRED`. The runtime campaign cannot modify Nightwatch code.
+LEGACY_V1_DISPOSITION: PERMANENTLY_HISTORICAL — Phase 7 nightly-campaign record; terminal; later phases supersede its scope.

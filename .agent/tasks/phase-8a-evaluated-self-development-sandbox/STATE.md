@@ -163,3 +163,4 @@ COMPLETE pending only the final external live-head/CI observation recorded in
 the final handoff. Starting SHA, implementation/substantive anchor, and prior
 documentation checkpoint are stable historical roles; live HEAD remains
 discovered from Git and is not serialized self-referentially.
+LEGACY_V1_DISPOSITION: PERMANENTLY_HISTORICAL — Phase 8A sandbox foundation; terminal; historical provenance only.

@@ -260,3 +260,4 @@ Implementation/substantive anchor is `3916594f6e947f7f4665b23751c1d3ec03f5928b`.
 The prior approved documentation descendant is
 `9ff3ba445f8122a2c0d3832d97b49bd69365b9ec`; the containing live
 documentation head remains discovered from Git and is not serialized here.
+LEGACY_V1_DISPOSITION: PERMANENTLY_HISTORICAL — Phase 7B.2.1 closeout; terminal; historical provenance only.

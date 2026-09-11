@@ -508,3 +508,4 @@ original first observation remains an L0 non-reproduced DEV font anomaly; its
 single bounded diagnostic pair passed and no third replay was run. Cross-review
 and final validation are PASS. The documentation-only Nightwatch closure is
 complete; no Phase 2C work is started.
+LEGACY_V1_DISPOSITION: PERMANENTLY_HISTORICAL — Phase 2B journey record; terminal; later phases supersede its scope.

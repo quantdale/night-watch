@@ -4210,3 +4210,4 @@ reload causality, readiness weakening, arbitrary route fallback, hostname
 policy broadening, duplicated safety logic, authenticated trace enablement,
 sensitive persistence, Ripple modification, historical rewrite, meaningless
 tests, stale source assumption, or incomplete resume recipe was found.
+LEGACY_V1_DISPOSITION: PERMANENTLY_HISTORICAL — Phase 2A observation record; terminal; later phases supersede its scope.

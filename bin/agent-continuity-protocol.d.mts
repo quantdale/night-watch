@@ -89,3 +89,8 @@ export function inspectLegacyTask(
   task: { reportText: string | null; stateNextAction: string; statePath?: string },
   status: string | undefined
 ): Array<{ code: string; path: string | null; line: number | null; detail: string }>;
+
+/** The one-line reason of a `PERMANENTLY_HISTORICAL` declaration, or null (F-07). */
+export function parseLegacyHistoricalDisposition(value: string | undefined | null): string | null;
+export const LEGACY_DISPOSITION_KEY: 'LEGACY_V1_DISPOSITION';
+export const LEGACY_HISTORICAL_DISPOSITION: 'PERMANENTLY_HISTORICAL';

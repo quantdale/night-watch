@@ -14,50 +14,10 @@ The highest-priority confirmed defects are prototype-inherited enum acceptance i
 
 The target is a reproducible private local tool whose closed vocabularies are mechanically closed, durable state survives interruption and competing writers, deadlines stop owned work, the dashboard exposes its bounded data and enabled capabilities truthfully, and release claims identify every test and host capability actually exercised. Unknown-bug yield remains an empirical outcome and never a quota that can weaken admission evidence.
 
-## 2. Repository and system overview
-
-### Inventory and method
-
-The fixed baseline contains 2,151 tracked files: 581 source files, 357 tests, 71 bin/tool files, 14 UI files, 112 corpus fixtures, 978 planning/history files, and 38 other configuration/document files. Every tracked path and byte was inventoried and hashed. Repository-wide searches covered process, network, filesystem, timer, incompleteness, and skip surfaces. Deep inspection and bounded synthetic probes focused on trust boundaries and primary execution flows. Inventory coverage is not a claim that every branch ran or that every line received equal manual attention.
-
-The review read only Nightwatch. It did not inspect real sibling source, credentials, owner findings, subscribed-provider state, or live environments. It did not contact DEV, NEXT, production, cloud, data stores, or external services. No full-suite, UI-browser, clean-clone, dependency-advisory, or exact-SHA CI pass is claimed by this planning review.
-
-### Major boundaries and flows
-
-| Area | Main flow | Current authority and state |
-| --- | --- | --- |
-| Environment and policy | `src/core/environment`, `src/core/policy`, `src/core/safety` | Unknown operations fail closed; datastore, infrastructure, and publication remain owner-frozen. |
-| Browser and auth | `src/auth`, `src/browser`, observers, product adapters | External owner storage state, loopback/L5 controls, and authenticated trace restrictions. |
-| Network and process | `src/proxy`, `src/core/oops`, `src/core/process` | Address admission, L6 capability qualification, child allowlists, categorical teardown. |
-| API and data | `src/api/phase5`, `src/data/phase6` | Catalog-resolved read operations; real data execution is quarantined by owner policy. |
-| Source intelligence | `src/core/source`, semantic coverage, change intelligence | Approved read-only roots, bounded inventory, SHA/content provenance, stale-source diagnostics. |
-| Semantic evaluation | `src/oracles/**`, protocol | Bounded projection, mechanically admitted expectation, deterministic receipt; absence is not PASS. |
-| Campaigns | campaign, portfolio, intelligence, phase modules | Frozen manifests, monotone budgets, replay, checkpoints, explicit terminal states. |
-| Private triage | triage, review, finding intelligence, handoff | Exact reproduction identity, immutable review binding, human-only external disposition. |
-| Autonomy | protocol → reasoner → runtime → tools/local investigation | Typed intents, host-owned budgets, untrusted source envelopes, mechanical admission. |
-| Reproduction | owner-local reproduction, benchmarks, efficacy, atlases | W9 current-source Go execution; W10 capability-aware selection is active. |
-| AI/self-development | AI review, self-dev, sandbox, promotion | Advice has no deterministic authority; promotion remains one-shot and separately authorized. |
-| Production prerequisites | privacy, evidence, observe, provenance, C12 | Ordered local prerequisites confer no live authority. |
-| Dashboard | control-center server/contracts/adapters and React UI | Loopback-only reads, bounded DTOs, SSE invalidation, optional injected review authority. |
-| Tooling and continuity | `bin`, `.agent`, workflows, OpenSpec, docs | C-00 ownership, project/handoff checks, manifest-based quality gates. |
-
-The root package is private TypeScript/CommonJS on Node 20 or newer, with Playwright as the root test runner. The React/Vite/Vitest UI has its own lockfile and validation. Root TypeScript excludes that UI and the JavaScript bin tools, so those require separate checks. Persistence is filesystem-based. Established immutable evidence/reviews use stronger staged or no-replace patterns than the newer mutable campaign and Atlas stores; a database is unnecessary for the bounded local target.
-
-### Evidence and limits at review close
-
-| Evidence | Result and meaning |
-| --- | --- |
-| `session:status` | PASS in an owned session at reconciled baseline. An earlier start created a ninth worktree before the integrity checker rejected it; the review removed only its own empty session. |
-| Root `tsc --noEmit --incremental false` | PASS at the fixed baseline; compile evidence only. |
-| All 64 tracked bin `.mjs` files with `node --check` | PASS at the fixed baseline; syntax only. |
-| `hardening:check` | PASS at the fixed baseline; existing structural rules did not detect NW-01–NW-04. |
-| `agent:check` | PASS with historical/stale-baseline warnings at reconciled baseline. The initial W10 routing mismatch was repaired by current `main`. |
-| `handoff:check` | PASS at reconciled baseline. |
-| `project:check` | Requires a clean checkout and is deferred until the documentation commit. |
-| Synthetic probes | Executed confirmation for NW-01, NW-02, NW-03, NW-06, and NW-13 using fake temporary data only. |
-| Full regression, UI runtime, clean gate, current CI | NOT EXECUTED here. Prior checkpoint reports remain historical evidence. |
-
-After reconciliation with W10's next two commits, the live tree contains 329 ordinary root `.test.ts`/`.smoke.ts` files, up from 321 at the fixed baseline because W10 added focused tests. NW-08 deliberately uses the fixed 321-file comparison as reproducible evidence and requires current discovery before implementation.
+> §2 "Repository and system overview" (review-time inventory, boundaries and
+> evidence limits) moved byte-identically to `docs/ARCHITECTURE.md` on
+> 2026-09-12; see the relocation marker there.
+<!--relocated:MASTER-SECTION-2 dated 2026-09-12 to docs/ARCHITECTURE.md-->
 
 ## 3. Current-state assessment
 

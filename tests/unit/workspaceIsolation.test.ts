@@ -58,6 +58,21 @@ function session(cwd: string, args: readonly string[], environment: Readonly<Rec
   return { status: result.status, stdout: result.stdout ?? '', stderr: result.stderr ?? '' };
 }
 
+/** Rewrites one synthetic task's STATE.md status inside the given checkout. */
+function setTaskStatus(cwd: string, taskId: string, status: string): void {
+  const file = path.join(cwd, '.agent', 'tasks', taskId, 'STATE.md');
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, [
+    '# Task State',
+    '',
+    '## Identity',
+    '',
+    `Task ID: ${taskId}`,
+    `Status: ${status}`,
+    '',
+  ].join('\n'));
+}
+
 /** Names of every error code the inspection core reported. */
 function codes(report: Record<string, any>): string[] {
   return (report.errors ?? []).map((error: { code: string }) => error.code);
@@ -82,7 +97,18 @@ function fixture(options: FixtureOptions = {}): { readonly base: string; readonl
   const seed = path.join(base, 'seed');
   fs.mkdirSync(seed, { recursive: true });
   gitOk(seed, ['init', '-b', 'main']);
-  fs.mkdirSync(path.join(seed, '.agent/tasks/synthetic-task'), { recursive: true });
+  for (const taskId of ['synthetic-task', 'synthetic-task-two', 'synthetic-maintenance']) {
+    fs.mkdirSync(path.join(seed, '.agent/tasks', taskId), { recursive: true });
+    fs.writeFileSync(path.join(seed, '.agent/tasks', taskId, 'STATE.md'), [
+      '# Task State',
+      '',
+      '## Identity',
+      '',
+      `Task ID: ${taskId}`,
+      'Status: IN_PROGRESS',
+      '',
+    ].join('\n'));
+  }
   fs.mkdirSync(path.join(seed, 'config'), { recursive: true });
   if (options.maxWorktrees === undefined) {
     fs.copyFileSync(POLICY, path.join(seed, 'config/workspace-integrity.v1.json'));
@@ -786,6 +812,138 @@ test.describe('C-00 adversarial matrix — stale sessions and recovery', () => {
       expect(report.self.ownershipState).toBe('RELEASED');
       expect(session(target, ['claim', '--task', 'synthetic-task']).status).toBe(1);
       expect(session(target, ['claim', '--task', 'synthetic-task', '--adopt']).status).toBe(0);
+    } finally {
+      cleanup(base);
+    }
+  });
+});
+
+/**
+ * F-07 claim-task liveness.
+ *
+ * `WORKSPACE_WORKTREE_METADATA` proved a claim was well-formed but never asked
+ * whether the task it named was still open. These probes drive the exact gap:
+ * a terminal task on a live claim, an unknown task, and the canonical
+ * maintenance claim — plus the live in-progress claim that must still pass.
+ * Attention is deliberately distinct from failure: the exit status stays zero
+ * and nothing is released, adopted, re-pointed or edited automatically.
+ */
+test.describe('C-00 claim-task liveness (F-07)', () => {
+  test('a live in-progress claim passes with no claim finding', () => {
+    const { base, canonical } = fixture();
+    try {
+      const owned = startOwnedSession(canonical, base, 'synthetic-task');
+      const { report, status } = integrityJson(owned.path);
+      expect(status).toBe(0);
+      expect(report.verdict).toBe('PASS');
+      expect(report.claimFindings).toEqual([]);
+      expect(report.bootstrapAnswers.worktreesRequiringOwnerAttention).toEqual([]);
+      const metadata = (report.invariants ?? []).find((entry: { id: string }) => entry.id === 'WORKSPACE_WORKTREE_METADATA');
+      expect(metadata.status).toBe('PASS');
+      expect(metadata.claimTaskTerminalCount).toBe(0);
+      expect(metadata.claimTaskUnknownCount).toBe(0);
+    } finally {
+      cleanup(base);
+    }
+  });
+
+  test('a live claim naming a COMPLETE task is attention, not failure, and modifies nothing', () => {
+    const { base, canonical } = fixture();
+    try {
+      const owned = startOwnedSession(canonical, base, 'synthetic-task');
+      setTaskStatus(owned.path, 'synthetic-task', 'COMPLETE');
+      const recordFile = path.join(canonical, '.git/worktrees', owned.name, 'nightwatch-session.v1.json');
+      const recordBefore = fs.readFileSync(recordFile, 'utf8');
+
+      const { report, status } = integrityJson(owned.path);
+      // Attention is not failure: the claim is surfaced, never auto-released.
+      expect(status).toBe(0);
+      expect(report.verdict).toBe('PASS');
+      expect(codes(report)).not.toContain('CLAIM_TASK_TERMINAL');
+      const finding = (report.claimFindings ?? []).find((entry: { code: string }) => entry.code === 'CLAIM_TASK_TERMINAL');
+      expect(finding).toBeTruthy();
+      expect(finding.worktree).toBe(owned.name);
+      expect(finding.taskId).toBe('synthetic-task');
+      expect(finding.taskStatus).toBe('COMPLETE');
+      expect(finding.ownerAction).toContain('nightwatch-session.mjs');
+      expect(report.bootstrapAnswers.worktreesRequiringOwnerAttention.some((entry: { name: string }) => entry.name === owned.name)).toBe(true);
+      expect(fs.readFileSync(recordFile, 'utf8')).toBe(recordBefore);
+      const metadata = (report.invariants ?? []).find((entry: { id: string }) => entry.id === 'WORKSPACE_WORKTREE_METADATA');
+      expect(metadata.status).toBe('ATTENTION');
+      expect(metadata.claimTaskTerminalCount).toBe(1);
+    } finally {
+      cleanup(base);
+    }
+  });
+
+  test('a BLOCKED task claim is terminal as well', () => {
+    const { base, canonical } = fixture();
+    try {
+      const owned = startOwnedSession(canonical, base, 'synthetic-task');
+      setTaskStatus(owned.path, 'synthetic-task', 'BLOCKED');
+      const { report } = integrityJson(owned.path);
+      const finding = (report.claimFindings ?? []).find((entry: { code: string }) => entry.code === 'CLAIM_TASK_TERMINAL');
+      expect(finding?.taskStatus).toBe('BLOCKED');
+    } finally {
+      cleanup(base);
+    }
+  });
+
+  test('an unknown task claim is surfaced as CLAIM_TASK_UNKNOWN', () => {
+    const { base, canonical } = fixture();
+    try {
+      const owned = startOwnedSession(canonical, base, 'synthetic-task');
+      const recordFile = path.join(canonical, '.git/worktrees', owned.name, 'nightwatch-session.v1.json');
+      const record = JSON.parse(fs.readFileSync(recordFile, 'utf8')) as Record<string, unknown>;
+      fs.writeFileSync(recordFile, JSON.stringify({ ...record, taskId: 'synthetic-ghost' }, null, 2));
+
+      const { report, status } = integrityJson(owned.path);
+      expect(status).toBe(0);
+      expect(report.verdict).toBe('PASS');
+      const finding = (report.claimFindings ?? []).find((entry: { code: string }) => entry.code === 'CLAIM_TASK_UNKNOWN');
+      expect(finding).toBeTruthy();
+      expect(finding.taskId).toBe('synthetic-ghost');
+      expect(finding.taskStatus).toBeNull();
+      expect(finding.ownerAction).toContain('nightwatch-session.mjs');
+      expect(report.bootstrapAnswers.worktreesRequiringOwnerAttention.length).toBeGreaterThan(0);
+      const metadata = (report.invariants ?? []).find((entry: { id: string }) => entry.id === 'WORKSPACE_WORKTREE_METADATA');
+      expect(metadata.status).toBe('ATTENTION');
+      expect(metadata.claimTaskUnknownCount).toBe(1);
+    } finally {
+      cleanup(base);
+    }
+  });
+
+  test('the canonical maintenance claim naming a terminal task names the maintenance owner action', () => {
+    const { base, canonical } = fixture();
+    try {
+      const claimed = session(canonical, ['claim', '--task', 'synthetic-maintenance', '--role', 'MAINTENANCE']);
+      expect(claimed.status, claimed.stderr).toBe(0);
+      setTaskStatus(canonical, 'synthetic-maintenance', 'COMPLETE');
+
+      const { report, status } = integrityJson(canonical);
+      expect(status).toBe(0);
+      expect(report.self.class).toBe('CANONICAL_MAINTENANCE');
+      const finding = (report.claimFindings ?? []).find((entry: { code: string }) => entry.code === 'CLAIM_TASK_TERMINAL');
+      expect(finding).toBeTruthy();
+      expect(finding.isMain).toBe(true);
+      expect(finding.ownerAction).toContain('maintenance');
+      expect(report.bootstrapAnswers.worktreesRequiringOwnerAttention.some((entry: { name: string }) => entry.name === 'canonical')).toBe(true);
+    } finally {
+      cleanup(base);
+    }
+  });
+
+  test('session:status text renders the attention finding and its owner action', () => {
+    const { base, canonical } = fixture();
+    try {
+      const owned = startOwnedSession(canonical, base, 'synthetic-task');
+      setTaskStatus(owned.path, 'synthetic-task', 'COMPLETE');
+      const status = session(owned.path, ['status']);
+      expect(status.status).toBe(0);
+      expect(status.stdout).toContain('ATTENTION: CLAIM_TASK_TERMINAL');
+      expect(status.stdout).toContain('owner action');
+      expect(status.stdout).toContain('attention=1');
     } finally {
       cleanup(base);
     }

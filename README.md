@@ -39,6 +39,38 @@ evidence. An unqualified host reports unsupported capability and never
 inherits a pass. The five central `docs/` documents remain append-heavy
 archives; that matrix's §5 names the short list to read for current truth.
 
+## Measured status
+
+This block is governed by the status-word ledger
+(`src/core/source/censusFigureLedger.ts`, `GOVERNED_STATUS_KEYS`) and by the
+validation-lane state (`config/validation-lane-state.v1.json`);
+`hardening:check` fails when a value here disagrees with either. It describes
+the system as measured, not as intended, and it states a lane that has never
+executed rather than omitting it.
+
+<!--status-block:begin-->
+- Project completion status: `OPERATIONALLY_ACCEPTED` — local/clean certified,
+  exact-head CI never executed. `<!--status:PROJECT_COMPLETION_STATUS=OPERATIONALLY_ACCEPTED-->`
+- Validation lane classes: 7 `PROVEN`, 1 `PROVEN` carrying stale evidence,
+  1 `BLOCKED_EXTERNAL`, 2 `UNAVAILABLE_CAPABILITY`.
+  `<!--status:VALIDATION_LANE_PROVEN_COUNT=7-->` `<!--status:VALIDATION_LANE_STALE_EVIDENCE_COUNT=1-->` `<!--status:VALIDATION_LANE_BLOCKED_EXTERNAL_COUNT=1-->` `<!--status:VALIDATION_LANE_UNAVAILABLE_CAPABILITY_COUNT=2-->`
+- Measured yield: **0** admitted findings and **0** strict `EXACT_REDISCOVERY`
+  across W7–W10. The machinery works; no Alphaus defect has been admitted.
+  `<!--status:MEASURED_YIELD_ADMITTED_FINDINGS=0-->` `<!--status:MEASURED_YIELD_EXACT_REDISCOVERY=0-->`
+- Semantic acceptance class: `COMPLETE_LOCAL_SYNTHETIC`; contained DEV
+  acceptance is `NOT_PROVEN` and requires separate owner authorization.
+  `<!--status:SEMANTIC_ACCEPTANCE_CLASS=COMPLETE_LOCAL_SYNTHETIC-->` `<!--status:SEMANTIC_DEV_RESULT=NOT_PROVEN-->`
+- Production track stage: `EXTERNAL_PREREQUISITE_UNMET` — `POSITIVE_DEPLOYMENT_FACTS`
+  is 0, so C-13 and C-14 are structurally unreachable regardless of
+  authorization. `<!--status:PRODUCTION_TRACK_STAGE=EXTERNAL_PREREQUISITE_UNMET-->`
+- Lanes that have never executed are stated, not omitted: exact-checkpoint CI is
+  `BLOCKED_EXTERNAL` (zero-step billing/platform block; never executed),
+  owner-manual harnesses and live-app smokes are `UNAVAILABLE_CAPABILITY` (need
+  DEV authentication and separate authorization), and the online dependency
+  advisory is `UNAVAILABLE_CAPABILITY` (needs authorized egress).
+  `<!--status:EXACT_CHECKPOINT_CI_LANE=BLOCKED_EXTERNAL-->` `<!--status:OWNER_MANUAL_LANE=UNAVAILABLE_CAPABILITY-->` `<!--status:LIVE_APP_SMOKE_LANE=UNAVAILABLE_CAPABILITY-->` `<!--status:DEPENDENCY_ADVISORY_LANE=UNAVAILABLE_CAPABILITY-->`
+<!--status-block:end-->
+
 ## Quickstart
 
 ```bash

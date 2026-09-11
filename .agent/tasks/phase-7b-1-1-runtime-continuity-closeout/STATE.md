@@ -174,3 +174,4 @@ REPORT and obtain live local/remote HEAD with read-only Git commands.
 - `LIVE_HEAD_AUTHORITY: GIT`; `CURRENT_LOCAL_HEAD` and `CURRENT_REMOTE_HEAD`:
   `DISCOVER_FROM_GIT`.
 - Phase 7B.1 remains historical COMPLETE; Phase 8 remains NOT_STARTED.
+LEGACY_V1_DISPOSITION: PERMANENTLY_HISTORICAL — Phase 7B.1.1 closeout; terminal; historical provenance only.

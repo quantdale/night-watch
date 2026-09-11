@@ -36,9 +36,15 @@ import {
 } from '../../src/core/source/expectedInformationGain';
 import {
   CENSUS_FIGURES,
+  GOVERNED_STATUS_KEYS,
   HISTORICAL_MARKER,
   POLICED_DOCUMENTS,
+  STATUS_LEDGER_VERSION,
   checkCensusFigures,
+  checkGovernedStatusWords,
+  isHistoricalStatusLine,
+  normalizeStatusValue,
+  statusValueIsCurrent,
 } from '../../src/core/source/censusFigureLedger';
 
 const root = path.resolve(__dirname, '..', '..');
@@ -341,5 +347,117 @@ test.describe('C-16 / G-16 — one derived figure source', () => {
     const result = checkCensusFigures([{ path: 'x.md', text: 'prose with the number 1851 in it' }]);
     expect(result.holds).toBe(true);
     expect(result.taggedFiguresFound).toBe(0);
+  });
+});
+
+// F-08 / group 7 — status words get the same narrow ledger treatment numbers
+// have. Only declared keys are governed; a governed key must state the current
+// value (optionally extended with a parenthetical state) or sit on a line that
+// names its historical checkpoint. The README measured-status block is governed
+// by the same ledger.
+test.describe('F-08 — governed status-word ledger', () => {
+  test('the ledger declares unique, well-formed keys with a current value', () => {
+    expect(STATUS_LEDGER_VERSION).toBe('nightwatch.status-word-ledger.v1');
+    expect(GOVERNED_STATUS_KEYS.length).toBeGreaterThanOrEqual(60);
+    const keys = GOVERNED_STATUS_KEYS.map((entry) => entry.key);
+    expect(new Set(keys).size).toBe(keys.length);
+    for (const entry of GOVERNED_STATUS_KEYS) {
+      expect(entry.key).toMatch(/^[A-Z][A-Z0-9_]*$/);
+      expect(entry.currentValue).toMatch(/^[A-Z0-9_]+$/);
+      expect(entry.establishedBy.length).toBeGreaterThan(0);
+    }
+    // The README block's required keys are a non-empty, declared subset.
+    const required = GOVERNED_STATUS_KEYS.filter((entry) => entry.requiredInReadme === true);
+    expect(required.length).toBeGreaterThanOrEqual(10);
+    for (const entry of required) expect(keys).toContain(entry.key);
+  });
+
+  test('a bare stale status fails and the current value passes', () => {
+    const stale = checkGovernedStatusWords([{ path: 'x.md', text: 'PHASE_8_STATUS: IN_PROGRESS' }]);
+    expect(stale.holds).toBe(false);
+    expect(stale.violations[0]).toMatchObject({ key: 'PHASE_8_STATUS', statedValue: 'IN_PROGRESS', currentValue: 'COMPLETE' });
+    const current = checkGovernedStatusWords([{ path: 'x.md', text: 'PHASE_8_STATUS: COMPLETE' }]);
+    expect(current.holds).toBe(true);
+  });
+
+  test('an extended current value is still the current value', () => {
+    expect(statusValueIsCurrent('COMPLETE_HARDENED_LOCAL_SOURCE_SYNTHETIC', 'COMPLETE')).toBe(true);
+    expect(normalizeStatusValue('COMPLETE (HARDENED_LOCAL_SOURCE_SYNTHETIC)')).toBe('COMPLETE_HARDENED_LOCAL_SOURCE_SYNTHETIC');
+    const result = checkGovernedStatusWords([{ path: 'x.md', text: '`PHASE_16C_STATUS: COMPLETE (HARDENED_LOCAL_SOURCE_SYNTHETIC)`' }]);
+    expect(result.holds).toBe(true);
+  });
+
+  test('a historical qualifier names the checkpoint it describes', () => {
+    for (const line of [
+      'PHASE_8_STATUS: IN_PROGRESS <!--status:historical 24fc437-->',
+      'PHASE_8_STATUS: IN_PROGRESS at 2026-08-27',
+      'PHASE_8_STATUS: IN_PROGRESS as recorded at 24fc4378421ac',
+      'The superseded PHASE_8_STATUS: IN_PROGRESS row is preserved',
+    ]) {
+      expect(isHistoricalStatusLine(line), line).toBe(true);
+      expect(checkGovernedStatusWords([{ path: 'x.md', text: line }]).holds, line).toBe(true);
+    }
+    // A form that names no checkpoint is not historical: the word "historical"
+    // alone, or the marker without a checkpoint, does not satisfy the rule.
+    for (const line of [
+      'PHASE_8_STATUS: IN_PROGRESS <!--status:historical-->',
+      'The historical PHASE_8_STATUS: IN_PROGRESS row is preserved',
+    ]) {
+      expect(isHistoricalStatusLine(line), line).toBe(false);
+      expect(checkGovernedStatusWords([{ path: 'x.md', text: line }]).holds, line).toBe(false);
+    }
+  });
+
+  test('the table form is governed the same way', () => {
+    const stale = checkGovernedStatusWords([{ path: 'x.md', text: '| `PHASE_8_STATUS` | `IN_PROGRESS` |' }]);
+    expect(stale.holds).toBe(false);
+    const current = checkGovernedStatusWords([{ path: 'x.md', text: '| `PHASE_8_STATUS` | `COMPLETE` |' }]);
+    expect(current.holds).toBe(true);
+  });
+
+  test('every governed status in the live documents and README is current or historical', () => {
+    const roleConfig = JSON.parse(fs.readFileSync(path.join(root, 'config/document-role.v1.json'), 'utf8')) as {
+      documents: { path: string }[];
+    };
+    const documents = roleConfig.documents.map((entry) => ({ path: entry.path, text: fs.readFileSync(path.join(root, entry.path), 'utf8') }));
+    documents.push({ path: 'README.md', text: fs.readFileSync(path.join(root, 'README.md'), 'utf8') });
+    const result = checkGovernedStatusWords(documents);
+    expect(result.violations).toEqual([]);
+    expect(result.holds).toBe(true);
+    // Non-vacuous: the scan must actually see governed statements.
+    expect(result.governedStatementsFound).toBeGreaterThan(50);
+  });
+
+  test('the lane-class counts are derived from the lane-state ledger', () => {
+    const laneState = JSON.parse(fs.readFileSync(path.join(root, 'config/validation-lane-state.v1.json'), 'utf8')) as {
+      lanes: { class: string }[];
+    };
+    const byClass = new Map<string, number>();
+    for (const lane of laneState.lanes) byClass.set(lane.class, (byClass.get(lane.class) ?? 0) + 1);
+    const declared = new Map(GOVERNED_STATUS_KEYS.map((entry) => [entry.key, Number(entry.currentValue)]));
+    expect(declared.get('VALIDATION_LANE_PROVEN_COUNT')! + declared.get('VALIDATION_LANE_STALE_EVIDENCE_COUNT')!).toBe(byClass.get('PROVEN') ?? 0);
+    expect(declared.get('VALIDATION_LANE_BLOCKED_EXTERNAL_COUNT')).toBe(byClass.get('BLOCKED_EXTERNAL') ?? 0);
+    expect(declared.get('VALIDATION_LANE_UNAVAILABLE_CAPABILITY_COUNT')).toBe(byClass.get('UNAVAILABLE_CAPABILITY') ?? 0);
+  });
+
+  test('every top-level docs file has exactly one role and CURRENT_TRUTH documents are bounded', () => {
+    const roleConfig = JSON.parse(fs.readFileSync(path.join(root, 'config/document-role.v1.json'), 'utf8')) as {
+      schemaVersion: string;
+      documents: { path: string; role: string; maxLines?: number }[];
+    };
+    expect(roleConfig.schemaVersion).toBe('nightwatch.document-role.v1');
+    const actual = fs.readdirSync(path.join(root, 'docs')).filter((file) => file.endsWith('.md')).sort().map((file) => `docs/${file}`);
+    expect(actual.length).toBe(11);
+    const declared = new Map(roleConfig.documents.map((entry) => [entry.path, entry]));
+    expect(declared.size).toBe(roleConfig.documents.length);
+    for (const file of actual) expect(declared.has(file), `${file} has no role`).toBe(true);
+    for (const entry of roleConfig.documents) {
+      expect(['CURRENT_TRUTH', 'APPEND_ONLY_ARCHIVE', 'OPERATOR_REFERENCE']).toContain(entry.role);
+      if (entry.role === 'CURRENT_TRUTH') {
+        expect(entry.maxLines).toBeGreaterThan(0);
+        const lines = fs.readFileSync(path.join(root, entry.path), 'utf8').split('\n').length - (fs.readFileSync(path.join(root, entry.path), 'utf8').endsWith('\n') ? 1 : 0);
+        expect(lines).toBeLessThanOrEqual(entry.maxLines!);
+      }
+    }
   });
 });

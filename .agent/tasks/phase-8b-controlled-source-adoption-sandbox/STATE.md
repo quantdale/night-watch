@@ -463,3 +463,4 @@ final CI's agent-state check and corrected in the same session).
 Recommended next task: Phase 8B.1 — Owner-Gated Canonical Promotion, if and
 when separately authorized by the owner. NOT_STARTED. Do not begin it as
 part of this task.
+LEGACY_V1_DISPOSITION: PERMANENTLY_HISTORICAL — Phase 8B adoption sandbox; terminal; historical provenance only.

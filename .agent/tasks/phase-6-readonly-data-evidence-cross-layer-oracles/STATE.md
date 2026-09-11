@@ -654,3 +654,4 @@ compatibility is retained for the private triage task.
 ## Resume Recipe
 
 Use the exact RESUME_RECIPE above and continue at NEXT_EXACT_ACTION.
+LEGACY_V1_DISPOSITION: PERMANENTLY_HISTORICAL — Phase 6 data-evidence record; owner-frozen pre-real gate; permanently historical.

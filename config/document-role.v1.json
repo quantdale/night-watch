@@ -1,0 +1,73 @@
+{
+  "schemaVersion": "nightwatch.document-role.v1",
+  "definitionName": "Nightwatch documentation roles, current-truth bounds and relocation records",
+  "note": "Every top-level docs/*.md file has exactly one role. CURRENT_TRUTH documents are bounded and must stay readable end to end; APPEND_ONLY_ARCHIVE documents keep the historical record and existing lines may not be modified or deleted, only appended to; OPERATOR_REFERENCE documents are instructions an operator follows at a specific point. hardening:check fails on an undeclared, duplicate-declared or missing file, on a CURRENT_TRUTH document over its declared maximum, and on an archive modification that no declared correction covers. A relocation moves text from a CURRENT_TRUTH document into an APPEND_ONLY_ARCHIVE byte-identically; the recorded digest is the digest of the moved bytes, so editing an archived relocation after the fact fails the correspondence check.",
+  "scope": "docs/*.md",
+  "documents": [
+    { "path": "docs/ALPHAUS-FINDING-HANDOFF-CONTEXT.md", "role": "APPEND_ONLY_ARCHIVE" },
+    { "path": "docs/ARCHITECTURE.md", "role": "APPEND_ONLY_ARCHIVE" },
+    { "path": "docs/C12-OPERATOR-RUNBOOK.md", "role": "OPERATOR_REFERENCE" },
+    { "path": "docs/CI_HARDENING.md", "role": "OPERATOR_REFERENCE" },
+    { "path": "docs/CURRENT_STATE.md", "role": "APPEND_ONLY_ARCHIVE" },
+    { "path": "docs/DECISIONS.md", "role": "APPEND_ONLY_ARCHIVE" },
+    { "path": "docs/HOST-CAPABILITY-MATRIX.md", "role": "CURRENT_TRUTH", "maxLines": 200 },
+    { "path": "docs/KIRO-CREW-INTEGRATION-MASTER-PLAN.md", "role": "APPEND_ONLY_ARCHIVE" },
+    { "path": "docs/MASTER-IMPLEMENTATION-HARDENING-PLAN.md", "role": "CURRENT_TRUTH", "maxLines": 965 },
+    { "path": "docs/ROADMAP.md", "role": "APPEND_ONLY_ARCHIVE" },
+    { "path": "docs/SAFETY_MODEL.md", "role": "APPEND_ONLY_ARCHIVE" }
+  ],
+  "relocations": [
+    {
+      "id": "MASTER-SECTION-2",
+      "from": "docs/MASTER-IMPLEMENTATION-HARDENING-PLAN.md",
+      "to": "docs/ARCHITECTURE.md",
+      "date": "2026-09-12",
+      "digest": "sha256:61a7918d02d7a32e7d96e369",
+      "summary": "The master plan's review-time §2 'Repository and system overview' (inventory and method, major boundaries and flows, evidence and limits at review close) moved byte-identically into the architecture archive to keep the current-truth plan under its declared bound."
+    }
+  ],
+  "corrections": [
+    {
+      "id": "CORR-7-001",
+      "path": "docs/CURRENT_STATE.md",
+      "oldLineSha256": "sha256:71d963556245eb96e3174616",
+      "oldLineExcerpt": "carried as `CI_STATUS: EXECUTED_PASS` until the repair landed. The earlier",
+      "reason": "Group 7 status-ledger repair appended an explicit historical-checkpoint marker naming run 33572572053 at c3fed38; the statement itself is unchanged."
+    },
+    {
+      "id": "CORR-7-002",
+      "path": "docs/CURRENT_STATE.md",
+      "oldLineSha256": "sha256:8d949e20badd269217fc8245",
+      "oldLineExcerpt": "- **Phase 9B**: `PHASE_9B_STATUS: DESIGNED_NOT_STARTED_NOT_AUTHORIZED`",
+      "reason": "Group 7 status-ledger repair appended an explicit historical-checkpoint marker naming the pre-9B checkpoint; the statement itself is unchanged."
+    },
+    {
+      "id": "CORR-7-003",
+      "path": "docs/DECISIONS.md",
+      "oldLineSha256": "sha256:f9516c1cd6ba181d37b8604a",
+      "oldLineExcerpt": "  (`PHASE_8_STATUS: IN_PROGRESS`,",
+      "reason": "Group 7 status-ledger repair appended an explicit historical-checkpoint marker naming the Phase 8B.1-R1 checkpoint 24fc437; the statement itself is unchanged."
+    },
+    {
+      "id": "CORR-7-004",
+      "path": "docs/DECISIONS.md",
+      "oldLineSha256": "sha256:19a2897821102ef0a0759eb1",
+      "oldLineExcerpt": "`PHASE_8_STATUS: IN_PROGRESS` and `PHASE_8B_1_STATUS:",
+      "reason": "Group 7 status-ledger repair appended an explicit historical-checkpoint marker naming the Phase 8B.1-R1 checkpoint 24fc437; the statement itself is unchanged."
+    },
+    {
+      "id": "CORR-7-005",
+      "path": "docs/DECISIONS.md",
+      "oldLineSha256": "sha256:0cf83fdcd02c5d8cf0d02e88",
+      "oldLineExcerpt": "`PHASE_9_STATUS: DESIGNED_NOT_STARTED_NOT_AUTHORIZED`;",
+      "reason": "Group 7 status-ledger repair appended an explicit historical-checkpoint marker naming the Phase 8B.1-R1 checkpoint 24fc437; the statement itself is unchanged."
+    },
+    {
+      "id": "CORR-7-006",
+      "path": "docs/DECISIONS.md",
+      "oldLineSha256": "sha256:e6f3fd1e56828bbec94838f9",
+      "oldLineExcerpt": "executed test failure is recorded as `CI_STATUS: EXECUTED_FAIL`. It is not",
+      "reason": "Group 7 status-ledger repair appended an explicit historical-checkpoint marker naming run 33572572053 at c3fed38; the statement itself is unchanged."
+    }
+  ]
+}

@@ -390,3 +390,4 @@ without execution.
 - Acceptance verdict: PASS. No real DEV, production, database,
   infrastructure, Alphaus-repository, credential, customer-data, or external
   publication activity occurred.
+LEGACY_V1_DISPOSITION: PERMANENTLY_HISTORICAL — Terminal Phase I hardening campaign; superseded by later phases with no open work.

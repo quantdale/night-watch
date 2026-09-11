@@ -166,3 +166,4 @@ were read or persisted.
 Not complete. Final SHA fields, validation results, remote CI, and final
 acceptance verdict will be filled only after the source and documentation
 checkpoints are independently validated and pushed.
+LEGACY_V1_DISPOSITION: PERMANENTLY_HISTORICAL — Terminal I.1 closeout; pre-v2 record, implementation historical, no live claim or dependency.

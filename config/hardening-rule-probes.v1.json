@@ -218,6 +218,15 @@
     "checkC15cSystemMapTransportBoundary": [
       { "id": "HC-072", "ops": [{ "file": "src/controlCenter/adapters/systemMapAdapter.ts", "search": "executionAuthority: 'NONE'", "replace": "executionAuthority: 'PROBE'" }] }
     ],
+    "checkDocumentRoleCurrency": [
+      { "id": "HC-075", "ops": [{ "file": "config/document-role.v1.json", "search": "\"path\": \"docs/CI_HARDENING.md\"", "replace": "\"path\": \"docs/CI_HARDENING.probe.md\"" }] }
+    ],
+    "checkAppendOnlyArchives": [
+      { "id": "HC-076", "ops": [{ "file": "docs/ARCHITECTURE.md", "search": "# Nightwatch Architecture\n", "replace": "# Nightwatch Architecture (probe)\n" }] }
+    ],
+    "checkGovernedStatusWords": [
+      { "id": "HC-077", "ops": [{ "file": "docs/SAFETY_MODEL.md", "append": "\n<!--probe--> PHASE_8_STATUS: IN_PROGRESS\n" }] }
+    ],
     "checkRuleEngineSoundness": [
       { "id": "HC-073", "kind": "SELF_CHECK_PROBE_RAW_ACCESSOR", "ops": [{ "file": "bin/hardening-check.mjs", "search": "function checkChildProcessBoundaries() {", "replace": "function probeRawSourceAccessor() { if (!/zed/.test(readIncludingComments('package.json'))) fail('probe'); }\n\nfunction checkChildProcessBoundaries() {" }] },
       { "id": "HC-074", "kind": "SELF_CHECK_PROBE_TOTALITY_FIRST_MATCH", "ops": [{ "file": "bin/hardening-check.mjs", "search": "function checkTargetPolicy() {\n", "replace": "function checkTargetPolicy() {\n  const probeFirstMatch = /env/.exec('probe'); void probeFirstMatch;\n" }] }

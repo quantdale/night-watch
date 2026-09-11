@@ -219,3 +219,4 @@ runtime Git writes, source writes, or publication.
 Complete at the implementation and documentation anchors recorded above. The
 final live Git SHA and final workflow are discovered from Git/GitHub after
 this metadata-only closure commit; no self-referential current SHA is stored.
+LEGACY_V1_DISPOSITION: PERMANENTLY_HISTORICAL — Phase 8A.1 provenance closeout; terminal; historical provenance only.

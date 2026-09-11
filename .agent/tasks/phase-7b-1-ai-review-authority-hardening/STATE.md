@@ -186,3 +186,4 @@ Last validated implementation SHA: c86cdbb2ae6031c58c15d5b63a354fda9496510c
 Last substantive checkpoint SHA: 40e59ecf6209dac7ef88ac2af0bcef781562a837
 Last documentation checkpoint SHA: 8ca71c7ce2849b1187f6e6989453ae397c2c4ce8
 Last pushed SHA: c86cdbb2ae6031c58c15d5b63a354fda9496510c
+LEGACY_V1_DISPOSITION: PERMANENTLY_HISTORICAL — Phase 7B.1 AI-review hardening; terminal; historical provenance only.

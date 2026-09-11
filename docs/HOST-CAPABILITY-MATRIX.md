@@ -172,6 +172,14 @@ historical records**, each well over ten thousand lines, in which current and
 historical truth are interleaved. They remain the archive and are not
 rewritten: historical receipts, SHAs and decisions stay exactly as recorded.
 
+That distinction is now mechanical rather than advisory. Every `docs/*.md`
+file's role and every current-truth document's length bound are declared in
+`config/document-role.v1.json`; `hardening:check` fails on a document with no
+role, on a current-truth document over its bound, on an edit to an archived
+line that no declared correction covers, and on a governed status word that is
+stated as anything other than its current value or an explicitly historical
+form.
+
 For the current answer, read in this order:
 
 1. `README.md` — what Nightwatch is and how to run it;

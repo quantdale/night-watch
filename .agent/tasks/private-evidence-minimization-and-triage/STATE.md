@@ -115,3 +115,4 @@ Implementation and validation-matrix checkpoint complete at
 Phase 6 remains `FROZEN_BY_OWNER`; no external action is required or
 recommended. Closure checkpoint is `6c5e298c4b2423ce7ffc13715e259be691d71162`;
 terminal documentation sync is a clean child of that checkpoint.
+LEGACY_V1_DISPOSITION: PERMANENTLY_HISTORICAL — Private triage phase record; terminal; later work supersedes its scope.

@@ -17,6 +17,8 @@ import {
   sectionBodyText,
   parseKeyValuesWithLocations,
   normalizeTaskStatus,
+  parseLegacyHistoricalDisposition,
+  LEGACY_DISPOSITION_KEY,
   APPROVED_CHECKPOINT_PATHS,
   isApprovedCheckpointPath,
 } from './agent-continuity-protocol.mjs';
@@ -719,7 +721,7 @@ export function classifySha(root, recordedSha, suppliedHead = null) {
  * Read-only: never writes, never follows symlinks.
  */
 function auditTaskHistory(root, head, auditMode, errors, warnings, skipDirectory) {
-  const stats = { total: 0, strictV2: 0, legacyV1: 0, strictErrors: 0, legacyWarnings: 0 };
+  const stats = { total: 0, strictV2: 0, legacyV1: 0, legacyDeclared: 0, legacyUndeclared: 0, strictErrors: 0, legacyWarnings: 0 };
   const tasksRoot = path.join(root, '.agent', 'tasks');
   let entries = [];
   try {
@@ -765,6 +767,7 @@ function auditTaskHistory(root, head, auditMode, errors, warnings, skipDirectory
     const isV2 = protocol === PROTOCOL_V2;
     const taskErrors = [];
     const taskWarnings = [];
+    const taskNotes = [];
 
     if (isV2 && stateText !== null) {
       stats.strictV2 += 1;
@@ -794,7 +797,18 @@ function auditTaskHistory(root, head, auditMode, errors, warnings, skipDirectory
       if (specText === null) taskWarnings.push(`LEGACY_TASK_MISSING_SPEC: .agent/tasks/${entry.name} (v2 task without SPEC.md)`);
     } else {
       stats.legacyV1 += 1;
-      taskWarnings.push(`LEGACY_TASK_NOT_STRICTLY_VALIDATED: .agent/tasks/${entry.name}`);
+      // F-07: a legacy record that declares itself PERMANENTLY_HISTORICAL with
+      // a reason is excluded from the warning count while staying readable.
+      // Safety-relevant legacy findings below are never suppressed by a
+      // declaration: the disposition covers protocol migration, not evidence.
+      const historicalReason = parseLegacyHistoricalDisposition(stateFields.get(LEGACY_DISPOSITION_KEY));
+      if (historicalReason !== null) {
+        stats.legacyDeclared += 1;
+        taskNotes.push(`LEGACY_TASK_DECLARED_PERMANENTLY_HISTORICAL: .agent/tasks/${entry.name} — ${historicalReason}`);
+      } else {
+        stats.legacyUndeclared += 1;
+        taskWarnings.push(`LEGACY_TASK_NOT_STRICTLY_VALIDATED: .agent/tasks/${entry.name}`);
+      }
       if (stateText !== null) {
         const sections = parseMarkdownSections(stateText).sections;
         const nextAction = sectionBodyText(sections.get('Exact Next Action'));
@@ -832,13 +846,16 @@ function auditTaskHistory(root, head, auditMode, errors, warnings, skipDirectory
     }
 
     stats.strictErrors += taskErrors.length;
-    stats.legacyWarnings += taskWarnings.length;
+    // legacy_warnings counts warnings from LEGACY records only. A v2 record's
+    // inferred-anchor advisory is not a legacy warning and must not inflate it.
+    if (!isV2) stats.legacyWarnings += taskWarnings.length;
     if (auditMode) {
       const protocolLabel = isV2 ? PROTOCOL_V2 : 'LEGACY_V1';
       console.log(
         `[agent-audit] ${entry.name} protocol=${protocolLabel} status=${taskStatus} strict=${isV2 ? 'true' : 'false'} errors=${taskErrors.length} warnings=${taskWarnings.length}`
       );
       for (const taskError of taskErrors) console.log(`[agent-audit]   ERROR: ${taskError}`);
+      for (const taskNote of taskNotes) console.log(`[agent-audit]   HISTORICAL: ${taskNote}`);
       for (const taskWarning of taskWarnings) console.log(`[agent-audit]   WARNING: ${taskWarning}`);
     }
     errors.push(...taskErrors);
@@ -985,11 +1002,11 @@ export function validate(root, auditMode = false) {
   const auditHead = gitHead(root, errors);
   const auditStats = auditTaskHistory(root, auditHead, auditMode, errors, warnings, null);
   console.log(
-    `[agent-audit] tasks=${auditStats.total} strict_v2=${auditStats.strictV2} legacy_v1=${auditStats.legacyV1} strict_errors=${auditStats.strictErrors} legacy_warnings=${auditStats.legacyWarnings}`
+    `[agent-audit] tasks=${auditStats.total} strict_v2=${auditStats.strictV2} legacy_v1=${auditStats.legacyV1} legacy_declared=${auditStats.legacyDeclared} legacy_undeclared=${auditStats.legacyUndeclared} strict_errors=${auditStats.strictErrors} legacy_warnings=${auditStats.legacyWarnings}`
   );
-  if (auditStats.legacyV1 > 0) {
+  if (auditStats.legacyUndeclared > 0) {
     warnings.push(
-      `LEGACY_TASK_NOT_STRICTLY_VALIDATED: ${auditStats.legacyV1} legacy v1 task(s) are historical records; not strict-validated (agent:audit --audit-history for detail)`
+      `LEGACY_TASK_NOT_STRICTLY_VALIDATED: ${auditStats.legacyUndeclared} legacy v1 task(s) are undeclared historical records; declare each PERMANENTLY_HISTORICAL with a reason or migrate it (agent:audit --audit-history for detail)`
     );
   }
 
@@ -1021,6 +1038,11 @@ export function validate(root, auditMode = false) {
   }
   for (const advisory of workspace.warnings) {
     warnings.push(`${advisory.code}: ${advisory.detail}`);
+  }
+  // F-07: a claim naming a terminal or unresolvable task is attention, not
+  // failure. It is surfaced here with its owner action and never acted on.
+  for (const finding of workspace.claimFindings ?? []) {
+    warnings.push(`${finding.code}: ${finding.detail} — owner action: ${finding.ownerAction}`);
   }
 
   return { errors: [...new Set(errors)], warnings };

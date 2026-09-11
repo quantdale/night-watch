@@ -9,3 +9,4 @@ Real historical data: NOT used. Corpus is synthetic fixtures standing in per
 contract; results are fixture replays, never historical claims.
 
 Validation: typecheck clean, 16/16 focused tests pass, hardening:check PASS.
+LEGACY_V1_DISPOSITION: PERMANENTLY_HISTORICAL — Lane F benchmark record; synthetic-fixture benchmark landed; historical only.

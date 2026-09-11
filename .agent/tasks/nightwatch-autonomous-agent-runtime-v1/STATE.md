@@ -12,3 +12,4 @@ Files:
 Behavior: phase-cycling loop with owner-policy gate, protocol re-validation,
 dedupe, no-progress, budget-checkpoint, pause/resume/cancel, secret-free
 checkpoints, idempotent resume, campaign isolation.
+LEGACY_V1_DISPOSITION: PERMANENTLY_HISTORICAL — Lane A agent-runtime record; runtime landed and no live claim or dependent task remains.

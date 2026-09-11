@@ -162,50 +162,191 @@ code-level gaps the second pass found by tracing the implementation
 
 ## 6. Workspace and continuity drift closure
 
-- [ ] 6.1 Extend `WORKSPACE_WORKTREE_METADATA` to resolve each claim's task id
+- [x] 6.1 Extend `WORKSPACE_WORKTREE_METADATA` to resolve each claim's task id
       against `.agent/tasks/<id>/STATE.md`
-- [ ] 6.2 Report `CLAIM_TASK_TERMINAL` and `CLAIM_TASK_UNKNOWN`; raise
+- [x] 6.2 Report `CLAIM_TASK_TERMINAL` and `CLAIM_TASK_UNKNOWN`; raise
       `attention`; name the owner action; modify nothing automatically
-- [ ] 6.3 Negative probes: a terminal-task claim, an unknown-task claim, a
+- [x] 6.3 Negative probes: a terminal-task claim, an unknown-task claim, a
       live in-progress claim that must still pass
 - [ ] 6.4 Clear the canonical `CANONICAL_MAINTENANCE` claim naming
       `nightwatch-control-center-render-truth-v1`, through the session CLI
+      — OWNER ACTION; current state verified, not performed (see record)
 - [ ] 6.5 Release `nightwatch-repository-hardening--e7b9be89` through the
       session CLI, by its owner; never by directory deletion
+      — OTHER-OWNER ACTION; current state verified, not performed (see record)
 - [ ] 6.6 Verify `session:status` reports `attention=0` with no
       `CLAIM_TASK_TERMINAL` and C-00 invariants unchanged
-- [ ] 6.7 Disposition all 31 legacy v1 records: migrated, or
+      — BLOCKED by 6.4/6.5; `attention=2` is the correct current reading
+- [x] 6.7 Disposition all 31 legacy v1 records: migrated, or
       `PERMANENTLY_HISTORICAL` with a one-line reason; alter no existing line
-- [ ] 6.8 Exclude declared-historical records from the warning count; assert
+- [x] 6.8 Exclude declared-historical records from the warning count; assert
       `agent:check` reaches zero legacy warnings and that a new undeclared
       record raises it to one
-- [ ] 6.9 Classify all 16 non-merged branches from the actual diff against
+- [x] 6.9 Classify all 16 non-merged branches from the actual diff against
       `main`, citing unique commits
 - [ ] 6.10 **Owner decision required:** approve per-branch deletion; exclude
       any branch held by a registered worktree
 - [ ] 6.11 Full validation, integrate, release
+      — PARTIAL: validation executed and recorded; integration/release are the
+      session owner's action and were not performed by this local worker
+
+### Group 6 record — executed 2026-09-12 in session `nightwatch-production-completion-3d648499`
+
+6.1–6.3. `WORKSPACE_WORKTREE_METADATA` now resolves every valid claim's task id
+against `.agent/tasks/<id>/STATE.md` (`resolveClaimTask` in
+`bin/workspace-integrity.mjs`). `CLAIM_TASK_TERMINAL` covers STATUS COMPLETE or
+BLOCKED; `CLAIM_TASK_UNKNOWN` covers a missing/unreadable STATE.md or an
+unrecognized Status. Both raise
+`bootstrapAnswers.worktreesRequiringOwnerAttention` and carry the named owner
+action; the core remains read-only. Probes in
+`tests/unit/workspaceIsolation.test.ts`: a live IN_PROGRESS claim passes with
+zero findings, a live COMPLETE claim and a live BLOCKED claim raise attention
+with exit status 0 and a byte-identical ownership record, an unknown task id
+raises `CLAIM_TASK_UNKNOWN`, and the canonical maintenance claim names the
+re-point/release action.
+
+6.4/6.5 owner actions, not performed. Verified current state: the canonical
+checkout holds a `CANONICAL_MAINTENANCE` claim whose task
+`nightwatch-control-center-render-truth-v1` is terminal COMPLETE
+(`live=false`), and `session/nightwatch-repository-hardening--e7b9be89` is a
+live `OWNED_SESSION` whose task
+`nightwatch-repository-hardening-implementation-v1` is terminal COMPLETE.
+`session:status` reports both as ATTENTION with their owner actions.
+
+6.6 is blocked by 6.4/6.5: `attention=2` is the truthful current reading until
+the two claims above are cleared through the session CLI.
+
+6.7/6.8. All 31 legacy v1 records carry an appended, append-only
+`LEGACY_V1_DISPOSITION: PERMANENTLY_HISTORICAL — <one-line reason>`
+declaration; no existing line was changed. `agent:check` now reports
+`legacy_v1=31 legacy_declared=31 legacy_undeclared=0 strict_errors=0
+legacy_warnings=0`; `legacy_warnings` now counts only legacy-record warnings,
+so the 10 inferred-anchor advisories on v2 records no longer inflate it. A new
+undeclared legacy record raises `legacy_warnings` to one, and a reasonless
+`PERMANENTLY_HISTORICAL` line does not suppress the warning; probes in
+`tests/unit/agent-state.test.ts`.
+
+6.9 measured with read-only Git queries against `origin/main` = `fe6226ad`.
+The R-05 set is 16 branches; `session/nightwatch-repository-hardening--e7b9be89`
+is now MERGED (`ahead=0`) and is held by a live worktree, so it is neither
+non-merged nor a deletion candidate. The full current non-merged set is 17
+branches (R-05's 16 plus this programme's live session branch). "Superseded"
+means every changed path is byte-identical to `origin/main`; "KEEP" means at
+least one changed path differs there.
+
+| Branch | Unique commits vs `origin/main` | Content | Classification |
+|---|---|---|---|
+| `session/nightwatch-production-completion-3d648499` | 93291183, 6a4c1602, 359c00ac, 5a687602, e95ec385, 35166687, e51fedb2, 51306911, 0b30953b, 229f64c5, 171d0306, 132152b1, 0be26da9, e5604a5a, 5c574dc5 | 448 paths differ | KEEP — live programme session, held by a registered worktree; never a deletion candidate |
+| `session/nightwatch-reproduction-surface--516a6313` | e09bfef0 | 2 identical, 1 differ (`src/core/agentRuntime/types.ts`) | KEEP — unique content differs from `main`; W10 wave of `nightwatch-autonomous-bug-hunting-programme-v1` |
+| `session/nightwatch-reproduction-surface--ce18f499` | fd8381bf | 3 identical, 0 differ | SUPERSEDED — its content is byte-identical on `main`; W10 wave |
+| `session/nightwatch-review-operations-his-7431812c` | 725c7a0f, 0b15cfb0, ead92485, c9edef90, 6eb2a0b6, 2a05a0d6, 1ea6e240, a60526b9, c0a061bb, d18c68e2, b67c3995, bfc606c7, f51c233b, 52ea2179, 7214d67f, 7c7d4440 | 72 paths differ | KEEP — parked review-operations/history work of `nightwatch-autonomous-bug-hunting-programme-v1`; content differs from `main` |
+| `session/nightwatch-w7-context-providers--6f5b5426` | 26048528 | 3 differ | KEEP — W7 wave content differs from `main` |
+| `session/nightwatch-w7-mechanical-admissi-b7ada8d7` | f0d40777 | 1 identical, 3 differ | KEEP — W7 wave content differs from `main` |
+| `session/nightwatch-w7-programme-identity-91c69c22` | 13313b5e | 3 identical, 0 differ | SUPERSEDED — its content is byte-identical on `main`; W7 wave |
+| `session/nightwatch-w7-replay-parity-v1-1f495e51` | 153cb1d5 | 1 identical, 4 differ | KEEP — W7 wave content differs from `main` |
+| `session/nightwatch-w8-campaign-diversity-f4bd878c` | c33535ae | 1 identical, 1 differ | KEEP — W8 wave content differs from `main` |
+| `session/nightwatch-w8-efficacy-depth-lan-8c27e81c` | e1b3c087 | 4 identical, 2 differ | KEEP — W8 wave content differs from `main` |
+| `session/nightwatch-w8-leakage-proof-lane-ae9ac68a` | 9352bac5 | 1 identical, 0 differ | SUPERSEDED — its content is byte-identical on `main`; W8 wave |
+| `session/nightwatch-w8-memory-proof-lane--e5504c9e` | fe4033fa | 2 identical, 0 differ | SUPERSEDED — its content is byte-identical on `main`; W8 wave |
+| `session/nightwatch-w8-prompt-adapter-lan-340b9c8d` | 20fbd08d | 1 identical, 1 differ | KEEP — W8 wave content differs from `main` |
+| `session/nightwatch-w9-current-source-adm-adc6d9b4` | 228e18ab | 2 identical, 0 differ | SUPERSEDED — its content is byte-identical on `main`; W9 wave |
+| `session/nightwatch-w9-owner-local-provid-ccd56c9f` | 95bf036e | 4 identical, 5 differ | KEEP — W9 wave content differs from `main` |
+| `session/nightwatch-w9-readiness-lane-v1-fae2fcb3` | eb2c5491, 7dd8147a | 2 identical, 4 differ | KEEP — W9 wave content differs from `main` |
+| `session/nightwatch-w9-runtime-semantics--2a772323` | 3d0bce5a | 9 differ | KEEP — W9 wave content differs from `main` |
+
+6.10 remains the owner decision: five SUPERSEDED branches are the only deletion
+candidates and none is held by a registered worktree; the twelve KEEP branches
+hold content that differs from `main` and must not be deleted without owner
+review. `session/nightwatch-repository-hardening--e7b9be89` is already merged
+but is held by a live registered worktree and is excluded from deletion.
 
 ## 7. Documentation currency
 
-- [ ] 7.1 Define `nightwatch.document-role.v1`; assign all 11 `docs/` files
+- [x] 7.1 Define `nightwatch.document-role.v1`; assign all 11 `docs/` files
       exactly one role; `hardening:check` fails on undeclared or duplicate
-- [ ] 7.2 Enforce append-only on `APPEND_ONLY_ARCHIVE`: a diff modifying or
+- [x] 7.2 Enforce append-only on `APPEND_ONLY_ARCHIVE`: a diff modifying or
       deleting an existing line fails, with a declared-correction escape
-- [ ] 7.3 Extend the census ledger from figures to status words: declare the
+- [x] 7.3 Extend the census ledger from figures to status words: declare the
       governed keys and their current values
-- [ ] 7.4 Require every governed key to appear as the current value or with an
+- [x] 7.4 Require every governed key to appear as the current value or with an
       explicit historical qualifier; run in reporting mode over all 11 files
       first
-- [ ] 7.5 Repair every bare stale governed status found in reporting mode by
+- [x] 7.5 Repair every bare stale governed status found in reporting mode by
       adding its checkpoint qualifier, without rewriting the statement
-- [ ] 7.6 Declare a maximum length per `CURRENT_TRUTH` document; relocate the
+- [x] 7.6 Declare a maximum length per `CURRENT_TRUTH` document; relocate the
       excess into archives
-- [ ] 7.7 Assert relocation is byte-identical to the removed text
-- [ ] 7.8 Add the ledger-governed status block to `README.md`: lane classes,
+- [x] 7.7 Assert relocation is byte-identical to the removed text
+- [x] 7.8 Add the ledger-governed status block to `README.md`: lane classes,
       measured yield, semantic acceptance class, production-track stage; state
       absence rather than omitting it
-- [ ] 7.9 Turn the status and role checks blocking; negative-probe each
+- [x] 7.9 Turn the status and role checks blocking; negative-probe each
 - [ ] 7.10 Full validation, integrate, release
+      — PARTIAL: `hardening:check`, `validation:universe`, root `typecheck`,
+      `typecheck:bin` (reporting) and the new tests executed and PASS;
+      `project:check` reports only the environmental dirty-checkout and
+      canonical-dirty blockers; integration/release are the session owner's
+      action and were not performed by this local worker
+
+### Group 7 record — executed 2026-09-12 in session `nightwatch-production-completion-3d648499`
+
+7.1/7.2. `config/document-role.v1.json` (`nightwatch.document-role.v1`) assigns
+exactly one role to each of the 11 top-level `docs/*.md` files: `CURRENT_TRUTH`
+(`HOST-CAPABILITY-MATRIX.md`, `MASTER-IMPLEMENTATION-HARDENING-PLAN.md`, both
+bounded), `APPEND_ONLY_ARCHIVE` (7 files), `OPERATOR_REFERENCE` (2 files).
+`checkDocumentRoleCurrency` fails on an undeclared, duplicate, missing or
+unknown-role file and on a bounded document over its `maxLines`.
+`checkAppendOnlyArchives` diffs the merge-base of HEAD and `origin/main` and
+fails on any removed line in an archive that no declared correction covers; the
+declared-correction escape records the exact `oldLineSha256` plus a reason. The
+two fenced machine-checked blocks in `docs/CURRENT_STATE.md`
+(`project-state.v2`, `live-state.v1`) are structurally exempt because their
+owner rewrites them as current truth.
+
+7.3/7.4. `GOVERNED_STATUS_KEYS` in `src/core/source/censusFigureLedger.ts`
+declares 77 governed keys and their current values (phase/project statuses from
+`docs/CURRENT_STATE.md`, lane classes from `config/validation-lane-state.v1.json`,
+campaign dispositions, and the README keys); `checkGovernedStatusWords` scans
+all 11 documents plus `README.md`. Reporting mode
+(`node bin/hardening-check.mjs --report-documentation-currency`) reported 9
+findings before repair.
+
+7.5. Six bare stale statuses were repaired with checkpoint qualifiers only, no
+statement rewritten: `docs/CURRENT_STATE.md:1115` and `:2623`,
+`docs/DECISIONS.md:1673`, `:1796`, `:1846`, `:4193`, each carrying an explicit
+`<!--status:historical ...-->` marker naming its checkpoint (run 33572572053 at
+`c3fed38`; Phase 8B.1-R1 at `24fc437`; pre-9B at `62ec804`). The 6 archive-line
+modifications are declared as corrections CORR-7-001…006.
+
+7.6/7.7. `docs/MASTER-IMPLEMENTATION-HARDENING-PLAN.md` was 1,002 lines against
+its declared 965; its review-time §2 (44 lines) moved byte-identically to
+`docs/ARCHITECTURE.md` (relocation `MASTER-SECTION-2`, digest
+`sha256:61a7918d02d7a32e7d96e369`), leaving the plan at 962 lines. The check
+extracts the archived bytes between the relocation markers and fails when the
+digest does not match the recorded moved text.
+
+7.8. `README.md` carries the governed `<!--status-block:begin/end-->` block:
+project completion status, lane-class counts, measured yield
+(`MEASURED_YIELD_ADMITTED_FINDINGS=0`, `MEASURED_YIELD_EXACT_REDISCOVERY=0`),
+semantic acceptance class (`COMPLETE_LOCAL_SYNTHETIC`, DEV `NOT_PROVEN`) and
+production-track stage (`EXTERNAL_PREREQUISITE_UNMET`), plus explicit entries
+for the lanes that have never executed (exact-checkpoint CI, owner-manual,
+live-app smoke, dependency advisory).
+
+7.9. All three rules are blocking in `hardening:check`. Negative probes
+HC-075/076/077 all `DETECTED` with `statusUnchanged=true`. Tests added to the
+already-registered `tests/unit/c16ExpectedInformationGain.test.ts` and
+`tests/unit/hardeningRuleParity.test.ts` (no new test files, so
+`inventoryDigest` is untouched).
+
+7.10. Executed: `node bin/hardening-check.mjs` PASS;
+`npm run validation:universe` PASS (447 discovered, 0 unclassified, digest
+unchanged); `npm run typecheck` PASS; `typecheck:bin` reporting PASS
+(16/63 conforming, unchanged mode); `tests/unit/c16ExpectedInformationGain
++ hardeningRuleParity` 51 passed. `npm run project:check` reports only
+`PROJECT_STATE_CHECKOUT_DIRTY` (session work is uncommitted by design) and
+`PROJECT_STATE_ACTIVE_TASK_CONTINUITY_FAILED` (from
+`WORKSPACE_CANONICAL_DIRTY_WHILE_SESSION_LIVE`, a shared-workspace condition
+outside this session). Integration and release are not performed here.
 
 ## 8. Control Center residual truth
 

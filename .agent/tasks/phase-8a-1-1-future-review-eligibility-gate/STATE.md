@@ -194,3 +194,4 @@ is `VERIFIED_EXACT_BASE`/replay `PASS`/`eligible: true`. No adoption, source-
 mutation, Git-write, publication, AI/model, browser/product/API, or database/
 infrastructure authority was added. See `REPORT.md` for the full completion
 report.
+LEGACY_V1_DISPOSITION: PERMANENTLY_HISTORICAL — Phase 8A.1.1 closeout; terminal; historical provenance only.

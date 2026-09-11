@@ -231,6 +231,29 @@ function writeClosedV2Task(root: string, taskId: string, phase: string, sha: str
   });
 }
 
+/** A legacy v1 task directory (no continuity-v2 marker). */
+function writeLegacyTask(root: string, taskId: string, sha: string): void {
+  writeTaskDir(root, taskId, {
+    taskId,
+    phase: '3',
+    status: 'COMPLETE',
+    omitProtocol: true,
+    baselineSha: sha,
+    substantiveSha: sha,
+    startingSha: sha,
+    stateMilestone: 'M5 — DONE',
+    stateWip: 'NONE.',
+    stateNextAction: 'STOP.',
+    stateSnapshot: 'Closed.',
+    reportStatus: 'COMPLETE',
+  });
+}
+
+/** Appends the one declaration line the checker recognizes. */
+function appendLegacyDisposition(root: string, taskId: string, value: string): void {
+  fs.appendFileSync(path.join(root, '.agent', 'tasks', taskId, 'STATE.md'), `LEGACY_V1_DISPOSITION: ${value}\n`);
+}
+
 function setCompleteV2(root: string, options: ProtocolOptions = {}): void {
   writeProtocol(root, {
     status: 'COMPLETE',
@@ -896,6 +919,52 @@ test('legacy and v2 mix audit passes with legacy warnings only', () => {
   expect(result.stdout).toContain('strict_v2=2');
   expect(result.stdout).toContain('legacy_v1=1');
   expect(result.stdout).toContain('strict_errors=0');
+});
+
+// ---------------------------------------------------------------------------
+// F-07 legacy v1 disposition
+// ---------------------------------------------------------------------------
+
+test('a declared permanently-historical legacy record is excluded from the warning count', () => {
+  const { root, sha } = fixture();
+  writeLegacyTask(root, 'phase-legacy-declared', sha);
+  appendLegacyDisposition(root, 'phase-legacy-declared', 'PERMANENTLY_HISTORICAL — terminal pre-v2 record retained for provenance.');
+  const audit = runAudit(root);
+  expect(audit.status).toBe(0);
+  expect(audit.stdout).toContain('strict_v2=1');
+  expect(audit.stdout).toContain('legacy_v1=1');
+  expect(audit.stdout).toContain('legacy_declared=1');
+  expect(audit.stdout).toContain('legacy_undeclared=0');
+  expect(audit.stdout).toContain('legacy_warnings=0');
+  expect(audit.stdout).toContain('HISTORICAL: LEGACY_TASK_DECLARED_PERMANENTLY_HISTORICAL');
+  const check = run(root);
+  expect(check.status).toBe(0);
+  expect(check.stderr).not.toContain('LEGACY_TASK_NOT_STRICTLY_VALIDATED');
+});
+
+test('a new undeclared legacy record raises the warning count to one', () => {
+  const { root, sha } = fixture();
+  writeLegacyTask(root, 'phase-legacy-undeclared', sha);
+  const audit = runAudit(root);
+  expect(audit.status).toBe(0);
+  expect(audit.stdout).toContain('legacy_v1=1');
+  expect(audit.stdout).toContain('legacy_declared=0');
+  expect(audit.stdout).toContain('legacy_undeclared=1');
+  expect(audit.stdout).toContain('legacy_warnings=1');
+  const check = run(root);
+  expect(check.status).toBe(0);
+  expect(check.stderr).toContain('LEGACY_TASK_NOT_STRICTLY_VALIDATED: 1 legacy v1 task(s) are undeclared historical records');
+});
+
+test('a reasonless declaration does not suppress the legacy warning', () => {
+  const { root, sha } = fixture();
+  writeLegacyTask(root, 'phase-legacy-reasonless', sha);
+  appendLegacyDisposition(root, 'phase-legacy-reasonless', 'PERMANENTLY_HISTORICAL');
+  const audit = runAudit(root);
+  expect(audit.status).toBe(0);
+  expect(audit.stdout).toContain('legacy_declared=0');
+  expect(audit.stdout).toContain('legacy_undeclared=1');
+  expect(audit.stdout).toContain('legacy_warnings=1');
 });
 
 // ---------------------------------------------------------------------------

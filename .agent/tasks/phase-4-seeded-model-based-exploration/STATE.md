@@ -446,3 +446,4 @@ write was used for Phase 4 task creation.
 2. Inspect status/current diff and confirm the checkpoint SHA.
 3. Run the narrow shared health audit, then source archaeology.
 4. Update STATE before each new milestone or implementation change.
+LEGACY_V1_DISPOSITION: PERMANENTLY_HISTORICAL — Phase 4 record; terminal; later phases supersede its scope.
