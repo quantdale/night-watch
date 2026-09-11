@@ -4,6 +4,8 @@
 
 ### Requirement: semantics are derived, never asserted
 
+Semantics SHALL be derived, never asserted.
+
 #### Scenario: an operation has only method evidence
 - **WHEN** an operation's read-only classification is method-only, with no effect proof
 - **THEN** its derived classification SHALL be `UNKNOWN`, and SHALL NOT be `KNOWN_READ`
@@ -26,6 +28,8 @@
 
 ### Requirement: generation is not execution
 
+Generation SHALL not constitute execution.
+
 #### Scenario: a target is generated
 - **WHEN** a DEV target is generated
 - **THEN** it SHALL carry no request authority, and eligibility SHALL come only from the existing admission chain
@@ -40,11 +44,15 @@
 
 ### Requirement: the funnel attributes every rejection
 
+The funnel SHALL attribute every rejection.
+
 #### Scenario: the funnel is inspected
 - **WHEN** the funnel is read
 - **THEN** the per-reason counts SHALL sum to the rejected count, and eligible plus rejected SHALL equal considered
 
 ### Requirement: prioritisation cannot promote
+
+Prioritisation SHALL not promote.
 
 #### Scenario: an inadmissible target would score highly
 - **WHEN** an inadmissible target would receive a maximal expected-information-gain score

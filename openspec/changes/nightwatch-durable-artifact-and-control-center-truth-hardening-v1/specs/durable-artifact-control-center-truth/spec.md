@@ -84,6 +84,8 @@ The validator SHALL reject contradictions mechanically derivable from the artifa
 
 ### Requirement: validation errors are privacy-safe and deterministic
 
+Validation errors SHALL be privacy-safe and deterministic.
+
 #### Scenario: malicious/private input is rejected
 
 - WHEN malformed input includes a private sentinel or long attacker-controlled text
@@ -154,6 +156,8 @@ The same source-currentness semantics SHALL not be independently reimplemented i
 
 ### Requirement: malformed artifacts cannot produce valid public finding rows
 
+Malformed artifacts SHALL NOT produce valid public finding rows.
+
 #### Scenario: one corrupt dossier and one valid dossier coexist
 
 - WHEN the owner-local findings authority snapshots the directory
@@ -164,11 +168,15 @@ The same source-currentness semantics SHALL not be independently reimplemented i
 
 ### Requirement: Control Center remains authority-inert
 
+Control Center SHALL remain authority-inert.
+
 #### Scenario: hardening executes
 
 - THEN no selector, campaign eligibility, promotion, execution, mutation, storage-write, browser product, network, auth, DEV/NEXT/production, data, infrastructure, AI, or publication authority SHALL be added to Control Center
 
 ### Requirement: validation identity changes are explicit
+
+Validation identity changes SHALL be explicit.
 
 #### Scenario: facade semantics materially change
 
@@ -179,12 +187,16 @@ The same source-currentness semantics SHALL not be independently reimplemented i
 
 ### Requirement: no test weakening
 
+Test weakening SHALL NOT be permitted.
+
 #### Scenario: old false accept is fixed
 
 - THEN tests SHALL assert the corrected rejection/currentness
 - AND no pre-existing test may be deleted, skipped, loosened, or snapshot-updated without an explicit correctness explanation
 
 ### Requirement: complete local acceptance
+
+The campaign SHALL achieve complete local acceptance.
 
 #### Scenario: campaign completion
 
@@ -197,6 +209,8 @@ The same source-currentness semantics SHALL not be independently reimplemented i
 - AND no DEV/NEXT/production or external mutation SHALL have occurred
 
 ### Requirement: external zero-step CI is non-evidence
+
+External zero-step CI SHALL be classified as non-evidence.
 
 #### Scenario: exact-head Actions executes no job steps
 

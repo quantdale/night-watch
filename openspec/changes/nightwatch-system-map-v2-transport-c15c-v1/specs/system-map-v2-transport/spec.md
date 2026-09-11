@@ -3,6 +3,7 @@
 ## ADDED Requirements
 
 ### Requirement: the transport grants no authority
+Every V2 transport answer SHALL grant no execution authority and no mutation authority.
 
 #### Scenario: any level or query is fetched
 - **WHEN** any V2 level or query answer is produced
@@ -13,6 +14,7 @@
 - **THEN** the request SHALL be rejected
 
 ### Requirement: unknown addresses are rejected, not guessed
+An unknown address SHALL be rejected and SHALL never be guessed or matched to a nearest address.
 
 #### Scenario: an unknown level segment
 - **WHEN** a level outside `l1`..`l4` is requested
@@ -31,6 +33,7 @@
 - **THEN** it SHALL still route to the v1 source graph, unaffected by V2 parsing
 
 ### Requirement: focus discipline
+The transport SHALL enforce focus discipline at every level.
 
 #### Scenario: a focus at the company level
 - **WHEN** L1 is requested with a focus
@@ -41,6 +44,7 @@
 - **THEN** the result SHALL be null
 
 ### Requirement: bounds survive the wire with their unknowns intact
+A transported bound SHALL preserve its unknowns as unknown.
 
 #### Scenario: the population total is unknown
 - **WHEN** the upstream operation population total is null and the projection truncates
@@ -51,12 +55,14 @@
 - **THEN** the UI SHALL display "unknown" and SHALL NOT display `0`
 
 ### Requirement: absence of measurement is not a clean result
+An unmeasured result SHALL be presented as not measured and SHALL never be presented as a clean result.
 
 #### Scenario: an unmeasured query returns nothing
 - **WHEN** a query answer carries `measurement: UNMEASURED` and zero nodes
 - **THEN** the UI SHALL state that the result was not measured, and SHALL NOT present the emptiness as a clean result
 
 ### Requirement: disclosure is progressive at the transport
+Disclosure at the transport SHALL be progressive, one requested level at a time.
 
 #### Scenario: the operator views one level
 - **WHEN** the UI displays a disclosure level

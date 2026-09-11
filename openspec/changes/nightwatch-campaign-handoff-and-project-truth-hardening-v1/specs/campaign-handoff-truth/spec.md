@@ -24,6 +24,8 @@ The repository SHALL define one versioned machine-readable handoff contract for 
 
 ### Requirement: Handoff campaign identity binds exactly one OpenSpec route
 
+The handoff SHALL bind the campaign identity to exactly one OpenSpec route.
+
 #### Scenario: Campaign and OpenSpec agree
 
 - WHEN Campaign ID is X
@@ -36,6 +38,8 @@ The repository SHALL define one versioned machine-readable handoff contract for 
 - AND SHALL NOT silently search for a replacement campaign.
 
 ### Requirement: Planned-From and branch are Git-bound
+
+The handoff SHALL bind Planned-From to a real commit ancestor of live HEAD and the target branch to the permitted branch.
 
 #### Scenario: Valid planning baseline
 
@@ -50,6 +54,8 @@ The repository SHALL define one versioned machine-readable handoff contract for 
 - THEN validation SHALL fail with a bounded diagnostic.
 
 ### Requirement: Planned and active states are distinct
+
+The handoff SHALL keep planned and active states distinct.
 
 #### Scenario: READY handoff before activation
 
@@ -70,6 +76,8 @@ The repository SHALL define one versioned machine-readable handoff contract for 
 
 ### Requirement: Terminal stale prompt is rejected
 
+The handoff SHALL reject a terminal stale prompt.
+
 #### Scenario: Current live defect shape
 
 - GIVEN ACTIVE_TASK is COMPLETE for campaign A
@@ -89,6 +97,8 @@ The handoff protocol SHALL validate route/currentness only. It SHALL NOT replace
 - AND handoff validation SHALL surface the route/state mismatch rather than inventing a merged state.
 
 ### Requirement: Planning checkpoints preserve SHA-role truth
+
+Planning checkpoints SHALL preserve SHA-role truth.
 
 #### Scenario: Docs-only planning commit follows substantive predecessor
 
@@ -121,6 +131,8 @@ The successor project-state protocol SHALL reject fields inside its machine-owne
 
 ### Requirement: Project-state output is faithful to checked semantics
 
+Project-state output SHALL be faithful to the semantics it checks.
+
 #### Scenario: Declared lifecycle/effective authority is SPENT/NONE
 
 - WHEN the protocol represents a consumed promotion authorization
@@ -130,12 +142,16 @@ The successor project-state protocol SHALL reject fields inside its machine-owne
 
 ### Requirement: Project-state remains narrow
 
+The project-state machine block SHALL remain narrow.
+
 #### Scenario: New historical phase information is documented
 
 - THEN it SHALL NOT automatically be added to the machine block
 - AND a new machine key requires an explicit derivation/validation owner and tests.
 
 ### Requirement: Handoff truth is part of authoritative acceptance
+
+Handoff truth SHALL be part of authoritative acceptance.
 
 #### Scenario: Unified gate runs
 
@@ -144,6 +160,8 @@ The successor project-state protocol SHALL reject fields inside its machine-owne
 - AND a handoff failure SHALL make the required gate non-green.
 
 ### Requirement: Handoff/project checkers are read-only and bounded
+
+The handoff and project checkers SHALL be read-only and bounded.
 
 #### Scenario: Checker executes
 
@@ -155,12 +173,16 @@ The successor project-state protocol SHALL reject fields inside its machine-owne
 
 ### Requirement: Full transition matrix has permanent synthetic proof
 
+The full transition matrix SHALL have permanent synthetic proof.
+
 #### Scenario: Protocol changes
 
 - THEN deterministic fixtures SHALL cover planned, active, blocked, complete, stale, non-ancestor, wrong-route, docs-only, substantive-change, malformed, and project-state unknown-field cases
 - AND repeated runs SHALL be byte/structure stable where outputs are specified deterministic.
 
 ### Requirement: External zero-step CI is non-evidence
+
+External zero-step CI SHALL remain non-evidence.
 
 #### Scenario: Exact-head Actions executes zero steps
 

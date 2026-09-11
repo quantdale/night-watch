@@ -1,5 +1,9 @@
 # Requirements — Exact-Head CI Baseline
 
+## ADDED Requirements
+
+### Requirement: Exact-Head CI Baseline
+
 1. A GitHub Actions job that BOOTSTRAPS THE RUNNER AND EXECUTES REPOSITORY CODE
    MUST be classified as executed CI. Its result MUST NOT be recorded under the
    zero-step platform-block classification, and a real executed test failure
@@ -50,3 +54,5 @@
     fail-closed state into a pass, adding retries, inflating a timeout,
     bypassing an invariant on `CI`, ignoring a child exit code, or deleting a
     test MUST NOT be used to obtain a green baseline.
+
+#### Scenario: Exact-Head CI Baseline

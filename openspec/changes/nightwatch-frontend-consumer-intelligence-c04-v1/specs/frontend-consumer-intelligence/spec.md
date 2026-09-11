@@ -28,6 +28,7 @@ The system SHALL treat an identifier as an HTTP client only when it is bound by
 - **THEN** no consumer edge is emitted.
 
 ### Requirement: comments and strings never produce an edge
+The system SHALL never produce an edge from a comment or a string.
 #### Scenario: a call inside a comment
 - **WHEN** a call site appears in a `//` or `/* */` comment
 - **THEN** no edge is emitted.
@@ -41,16 +42,19 @@ The system SHALL strip query and hash before persisting a route.
   is not persisted.
 
 ### Requirement: method is never defaulted
+The system SHALL never default the method.
 #### Scenario: an unreadable verb
 - **WHEN** the call verb cannot be read
 - **THEN** the method is absent, not `GET`.
 
 ### Requirement: the join never upgrades evidence
+The system SHALL never upgrade evidence during a join.
 #### Scenario: a structural path joined to a generated-artifact route
 - **WHEN** a consumer edge joins a backend fact of a weaker class
 - **THEN** the joined edge carries the weaker class.
 
 ### Requirement: no repository admission
+The system SHALL admit no repository.
 #### Scenario: the universe is unchanged
 - **WHEN** the approved repository set is inspected
 - **THEN** it holds the same six repositories.

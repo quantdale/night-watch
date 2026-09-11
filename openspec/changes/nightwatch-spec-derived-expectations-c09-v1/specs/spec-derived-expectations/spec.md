@@ -3,6 +3,7 @@
 ## ADDED Requirements
 
 ### Requirement: every scenario is classified
+Every discovered scenario SHALL receive exactly one classification.
 
 #### Scenario: the corpus is enumerated
 - **WHEN** the scenario corpus is classified
@@ -13,6 +14,7 @@
 - **THEN** it SHALL be classified `OUTSIDE_SCOPE`, and SHALL NOT be classified `NO_OPERATION_BINDING`, because not being a product claim is different from being an unbound one
 
 ### Requirement: expectations are derived, never interpreted
+Expectations SHALL be derived only from structured artifact material and SHALL never be interpreted from prose.
 
 #### Scenario: prose is offered as an assertion
 - **WHEN** an expectation would derive from a `summary`, `description` or any natural-language field
@@ -23,6 +25,7 @@
 - **THEN** no required-key expectation SHALL be claimed, and the absence SHALL be reported with its cause
 
 ### Requirement: the operation join is exact
+An expectation SHALL be joined to an operation only by the document's own exact attachment.
 
 #### Scenario: a response carries no schema reference
 - **WHEN** an operation's responses contain no resolvable `$ref`
@@ -37,6 +40,7 @@
 - **THEN** validation SHALL fail
 
 ### Requirement: provenance and currentness
+Every admitted expectation SHALL carry provenance and SHALL be checked for currentness.
 
 #### Scenario: an expectation lacks provenance
 - **WHEN** an expectation is missing any of repository, source SHA, artifact path, definition name, property path, operation id, extractor version or digest
@@ -47,6 +51,7 @@
 - **THEN** the expectation SHALL become `STALE` and SHALL NOT be rebound to the new revision
 
 ### Requirement: a specification witness alone grants nothing
+A specification witness alone SHALL grant no proof state and no production admission.
 
 #### Scenario: W-SPEC is the only witness held
 - **WHEN** an operation has admitted expectations and no effect witness

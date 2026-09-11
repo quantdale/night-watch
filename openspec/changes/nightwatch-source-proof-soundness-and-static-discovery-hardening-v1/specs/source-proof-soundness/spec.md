@@ -134,7 +134,7 @@ Lexical/control-flow hardening SHALL remain static, deterministic and bounded.
 
 ### Requirement: New proof coverage requires a fresh exact-family admission
 
-After soundness hardening, at most one new static proof family MAY be added in this campaign and only if current source evidence clears the full admission bar.
+After soundness hardening, at most one new static proof family MAY be added in this campaign, and any such family MUST clear the full admission bar against current source evidence.
 
 #### Scenario: No family clears the bar
 
@@ -170,6 +170,8 @@ The campaign SHALL preserve the complete applicable local acceptance cone.
 - AND no test weakening SHALL be used.
 
 ### Requirement: External zero-step CI remains non-evidence
+
+A GitHub Actions run that fails before executing job steps SHALL NOT be treated as repository validation evidence.
 
 #### Scenario: Final Actions run executes no steps
 

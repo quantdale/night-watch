@@ -1,5 +1,9 @@
 # Requirements — Replay Budget and Dossier Closure
 
+## ADDED Requirements
+
+### Requirement: Replay budget and dossier closure
+
 1. The system MUST reproduce the existing three-journey replay-starvation case
    in a deterministic local test before changing budget semantics.
 2. A fresh current DVR-011-admitted candidate MUST be able to reserve replay
@@ -18,3 +22,8 @@
     replay and, if reproduced, minimization and dossier generation.
 12. If real confirmation cannot obtain a fresh candidate, the task MUST close
     with a blocked/starved confirmation result rather than weakening admission.
+
+#### Scenario: replay authority is bounded and fail-closed
+- **WHEN** a campaign requests replay authority under the new model
+- **THEN** a fresh current DVR-011-admitted candidate MUST be able to reserve replay capacity while authorized budget remains and the model MUST retain an explicit finite cap
+- **AND** a campaign with no admitted candidates or with duplicate candidates MUST NOT spend or multiply replay budget, and budget exhaustion MUST remain fail closed

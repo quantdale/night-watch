@@ -4,6 +4,8 @@
 
 ### Requirement: a ranking grants no authority
 
+A ranking SHALL grant no authority.
+
 #### Scenario: a target ranks first
 - **WHEN** a target receives the highest expected-information-gain score
 - **THEN** it SHALL gain no admission, execution, replay, credential or environment authority, and the projection SHALL state that it grants none
@@ -14,6 +16,8 @@
 
 ### Requirement: an unknown factor is safe
 
+An unknown factor SHALL be safe.
+
 #### Scenario: a factor value is unknown
 - **WHEN** a factor cannot be established
 - **THEN** it SHALL take an explicit `UNKNOWN` level strictly between that factor's minimum and maximum, and SHALL NOT take zero or the maximum
@@ -23,6 +27,8 @@
 - **THEN** validation SHALL fail, because a zero eliminates the target entirely
 
 ### Requirement: the ranking is deterministic and total
+
+The ranking SHALL be deterministic and total.
 
 #### Scenario: the same inputs are ranked twice
 - **WHEN** the same targets are ranked in a different input order
@@ -38,11 +44,15 @@
 
 ### Requirement: recency comes from proven change evidence
 
+Recency SHALL come from proven change evidence.
+
 #### Scenario: no change intelligence exists for a target
 - **WHEN** the source-snapshot diff says nothing about a target
 - **THEN** `change_recency` SHALL be `UNKNOWN`, and elapsed wall-clock time SHALL NOT be consulted
 
 ### Requirement: the ranking is explainable and bounded
+
+The ranking SHALL be explainable and bounded.
 
 #### Scenario: an entry is inspected
 - **WHEN** a ranked entry is read
@@ -53,6 +63,8 @@
 - **THEN** the result SHALL report the limit, the dropped count and its truncation, and an incomplete considered set SHALL report an unknown total rather than a number
 
 ### Requirement: one derived figure source
+
+There SHALL be exactly one derived figure source.
 
 #### Scenario: a document states a census figure the ledger does not carry
 - **WHEN** a policed document tags a census figure whose value differs from the ledger

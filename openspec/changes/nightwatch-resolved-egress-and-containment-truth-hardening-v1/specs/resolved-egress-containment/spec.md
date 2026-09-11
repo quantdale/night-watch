@@ -8,7 +8,7 @@ This specification governs the Nightwatch L5 outbound proxy path from an already
 
 It is additive to the existing OutboundPolicy hostname rules. It does not authorize L6 container/network-namespace implementation.
 
-## Requirements
+## ADDED Requirements
 
 ### Requirement: hostname authorization is not socket authorization
 
@@ -106,6 +106,8 @@ The executor SHALL NOT discover or invent Alphaus CIDR allowlists through live D
 
 ### Requirement: mixed resolver answers fail closed
 
+If any resolver answer is disallowed or malformed, the entire destination SHALL fail closed.
+
 #### Scenario: safe and unsafe members coexist
 
 - GIVEN one resolver answer is policy-acceptable
@@ -114,6 +116,8 @@ The executor SHALL NOT discover or invent Alphaus CIDR allowlists through live D
 - AND the proxy SHALL NOT silently discard the unsafe member and dial the safe member.
 
 ### Requirement: exact approved numeric address is the socket destination
+
+The upstream socket SHALL connect to an accepted numeric address rather than let Node perform a second uncontrolled hostname resolution.
 
 #### Scenario: forward HTTP
 
@@ -140,6 +144,8 @@ The executor SHALL NOT discover or invent Alphaus CIDR allowlists through live D
 
 ### Requirement: protocol handlers share one destination-safety authority
 
+Forward HTTP, CONNECT, and WebSocket Upgrade SHALL share one destination-safety authority.
+
 #### Scenario: same target matrix
 
 - GIVEN the same policy, resolver answers, and environment
@@ -148,6 +154,8 @@ The executor SHALL NOT discover or invent Alphaus CIDR allowlists through live D
 - AND protocol-specific framing SHALL NOT create an alternate resolver policy.
 
 ### Requirement: address selection is bounded
+
+Address selection and failover SHALL be bounded and SHALL NOT re-resolve the hostname during a connection attempt.
 
 #### Scenario: multiple accepted addresses
 
@@ -158,6 +166,8 @@ The executor SHALL NOT discover or invent Alphaus CIDR allowlists through live D
 - AND an unbounded retry loop SHALL NOT exist.
 
 ### Requirement: containment failures are hard failures
+
+A resolved-address policy denial SHALL be recorded as a hard containment failure and SHALL NOT be downgraded to a benign request failure.
 
 #### Scenario: resolved-address policy denial
 
@@ -172,6 +182,8 @@ The executor SHALL NOT discover or invent Alphaus CIDR allowlists through live D
 - THEN real-run preflight SHALL fail before authenticated browser creation.
 
 ### Requirement: proxy evidence distinguishes authority from outcome
+
+Durable proxy evidence SHALL distinguish hostname policy authorization from actual upstream connection outcome.
 
 #### Scenario: hostname allowed but resolution fails
 
@@ -193,6 +205,8 @@ The executor SHALL NOT discover or invent Alphaus CIDR allowlists through live D
 
 ### Requirement: proxy evidence remains privacy-safe
 
+Durable evidence SHALL store only bounded safe categories or reason IDs and SHALL NOT persist raw resolver diagnostics.
+
 #### Scenario: resolution failure contains sensitive diagnostic text
 
 - WHEN an OS resolver/socket error contains arbitrary text
@@ -205,6 +219,8 @@ The executor SHALL NOT discover or invent Alphaus CIDR allowlists through live D
 - AND categorical address family/class SHALL be sufficient unless an existing privacy contract explicitly permits stronger metadata.
 
 ### Requirement: containment runtime identity is explicit
+
+Proxy runtime state SHALL identify the current hostname policy and resolved-egress/exact-binding contract.
 
 #### Scenario: new proxy starts
 
@@ -220,6 +236,8 @@ The executor SHALL NOT discover or invent Alphaus CIDR allowlists through live D
 
 ### Requirement: existing browser transport restrictions remain mandatory
 
+The existing mandatory browser transport restrictions SHALL remain in force.
+
 #### Scenario: campaign implementation
 
 - THEN the mandatory proxy configuration SHALL remain
@@ -230,6 +248,8 @@ The executor SHALL NOT discover or invent Alphaus CIDR allowlists through live D
 - AND existing background-networking restrictions SHALL not be weakened.
 
 ### Requirement: browser DNS residual is truthful
+
+Documentation SHALL continue to state BROWSER_DNS_PREFETCH_REMAINS_L6_RESIDUAL while browser-process DNS confinement is unproven.
 
 #### Scenario: no deterministic local proof can close speculative DNS
 
@@ -245,12 +265,16 @@ The executor SHALL NOT discover or invent Alphaus CIDR allowlists through live D
 
 ### Requirement: no L6 authority is implied
 
+This campaign SHALL NOT install or implement Docker, network namespaces, firewall, or root networking authority.
+
 #### Scenario: executor encounters the documented future container plan
 
 - THEN it SHALL NOT install or implement Docker/network namespaces/firewall/root networking in this campaign
 - AND SHALL record that work as separately authorized future L6 scope.
 
 ### Requirement: no real environment DNS/contact is needed
+
+All address answers SHALL come from injected deterministic fixtures or literal local addresses.
 
 #### Scenario: resolver tests
 
@@ -260,11 +284,15 @@ The executor SHALL NOT discover or invent Alphaus CIDR allowlists through live D
 
 ### Requirement: no unrelated authority expansion
 
+Unrelated authority SHALL remain unchanged unless a direct containment schema consumer requires a narrow compatibility update.
+
 #### Scenario: campaign completion
 
 - THEN source-proof, semantic, replay, dossier, campaign, self-development, publication, data, infrastructure, and Control Center command authority SHALL remain unchanged unless a direct containment schema consumer requires a narrow compatibility update.
 
 ### Requirement: full regression acceptance
+
+The full regression acceptance set SHALL pass before implementation is declared complete.
 
 #### Scenario: implementation is declared complete
 
@@ -279,6 +307,8 @@ The executor SHALL NOT discover or invent Alphaus CIDR allowlists through live D
 - AND no DEV/NEXT/production/auth/data/infra/publication/sibling-write/runtime-AI action SHALL have occurred.
 
 ### Requirement: external CI is reported separately
+
+An externally blocked or zero-step CI result SHALL be reported separately and SHALL NOT be called green.
 
 #### Scenario: GitHub Actions exact-head job executes zero steps
 

@@ -1,5 +1,9 @@
 # Requirements — DEV Capture Soak, Replay, and Yield
 
+## ADDED Requirements
+
+### Requirement: DEV Capture Soak, Replay, and Yield
+
 1. The executor MUST validate Git, safety, source identity, and owner-managed
    auth before DEV contact.
 2. Each real invocation MUST be recorded independently; retries MUST NOT erase
@@ -18,3 +22,5 @@
 9. Safety and privacy counters MUST remain explicit and fail closed.
 10. Final reporting MUST quantify capture rate, account-inventory reach,
     candidate/replay/dossier conversion, and remaining limitations.
+
+#### Scenario: DEV Capture Soak, Replay, and Yield

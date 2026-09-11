@@ -76,12 +76,14 @@ repository SHALL be admitted.
 - **THEN** validation SHALL fail
 
 ### Requirement: no eviction
+Admission SHALL never evict a pre-existing operation identity.
 
 #### Scenario: the population grows
 - **WHEN** new repositories are admitted and the operation population grows
 - **THEN** every pre-C-05 operation identity SHALL still be present unless its underlying source actually changed
 
 ### Requirement: completeness stays truthful
+Completeness SHALL stay truthful when enumeration is truncated and the total is unknown.
 
 #### Scenario: enumeration is truncated
 - **WHEN** the enumeration walk is truncated and the total is unknown

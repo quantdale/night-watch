@@ -49,7 +49,7 @@ Any transpile cache SHALL store only compiler-derivative output and SHALL never 
 
 ### Requirement: Source-read reuse is call-scoped and snapshot-bound
 
-Repeated sibling-source reads MAY be reused only inside a bounded source-discovery/integration call and only when exact source identity is established.
+Repeated sibling-source reads MAY be reused only inside a bounded source-discovery/integration call and only when exact source identity is established. Reuse outside such a bounded call or without established exact source identity MUST NOT occur.
 
 #### Scenario: Same exact source is requested repeatedly
 

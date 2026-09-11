@@ -20,11 +20,15 @@ id to that lane's manifest path, and a `campaigns` array whose members carry
 
 ### Requirement: every declared suite exists
 
+Every declared suite SHALL exist.
+
 #### Scenario: a declared suite is deleted from disk
 - **WHEN** a suite named in the registry no longer exists in the working tree
 - **THEN** `hardening:check` SHALL fail naming that suite
 
 ### Requirement: every declared suite is gate-registered in its lane
+
+Every declared suite SHALL be gate-registered in its lane.
 
 #### Scenario: a suite is removed from its lane manifest
 - **WHEN** a registry-declared suite is absent from the manifest its declared lane names
@@ -48,6 +52,8 @@ the campaign-id pattern under `.agent/tasks/`.
 - **THEN** it SHALL also declare a non-empty `reason`, and `hardening:check` SHALL fail if it does not
 
 ### Requirement: registration never overstates execution
+
+Registration SHALL never overstate execution.
 
 #### Scenario: a registered suite skips for a missing prerequisite
 - **WHEN** a registered suite's real-source block skips because the read-only sibling checkouts are absent

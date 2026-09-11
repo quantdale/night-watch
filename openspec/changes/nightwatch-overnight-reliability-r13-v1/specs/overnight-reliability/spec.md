@@ -3,6 +3,7 @@
 ## ADDED Requirements
 
 ### Requirement: determinism across fresh processes
+The system SHALL preserve determinism across fresh processes.
 
 #### Scenario: repeated deterministic projections
 - **WHEN** any compact deterministic projection (source snapshot digest,
@@ -20,6 +21,7 @@
   and identities SHALL match; drift SHALL be filed as a DEFECT
 
 ### Requirement: order and infrastructure robustness
+The system SHALL remain robust under permuted suite orders and infrastructure lifecycle stress.
 
 #### Scenario: permuted suite orders
 - **WHEN** the campaign suites run in at least three different orders
@@ -39,6 +41,7 @@
   `process.pid`
 
 ### Requirement: scale and property invariance
+The system SHALL remain invariant under scale permutations and seeded property generation.
 
 #### Scenario: map scale permutations
 - **WHEN** maximum-permission projections are built from multiple input-order
@@ -53,6 +56,7 @@
 - **THEN** every property SHALL hold on every seed
 
 ### Requirement: topology and regression stability
+The system SHALL remain stable across topologies and repeated regression runs.
 
 #### Scenario: second clean topology
 - **WHEN** validation runs from a fresh clone/worktree in a different parent
@@ -66,6 +70,7 @@
   SHALL be investigated, never averaged away
 
 ### Requirement: UI endurance and evidence durability
+The system SHALL endure repeated UI navigation and preserve evidence durability under injected failure.
 
 #### Scenario: navigation loops
 - **WHEN** 20+ complete L1→L2→L3→L4→query→back loops run against
@@ -80,6 +85,7 @@
   and the tree SHALL be restored afterwards
 
 ### Requirement: guard bite and clean closure
+The system SHALL ensure every guard bites and the closure is clean.
 
 #### Scenario: adversarial mutations
 - **WHEN** each load-bearing rule (manifest registration, admission,

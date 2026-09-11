@@ -14,6 +14,7 @@ C-11 SHALL NOT make production a selectable environment.
 - **AND** the D-4 decision text SHALL be present and unweakened
 
 ### Requirement: `PROD_OBSERVE` is a distinct, consumable authorization class
+`PROD_OBSERVE` SHALL be a distinct, consumable authorization class.
 
 #### Scenario: Not aliased
 
@@ -32,6 +33,7 @@ C-11 SHALL NOT make production a selectable environment.
 - **THEN** admission SHALL deny
 
 ### Requirement: The production decision path is separate from the DEV/NEXT one
+The production decision path SHALL be separate from the DEV/NEXT decision path.
 
 #### Scenario: `realRunGate` gains nothing
 
@@ -52,6 +54,7 @@ C-11 SHALL NOT make production a selectable environment.
 - **THEN** it SHALL throw rather than apply a default
 
 ### Requirement: The production allowlist is independent of the deny table
+The production allowlist SHALL be independent of the deny table.
 
 #### Scenario: Deny table never inverted
 
@@ -64,6 +67,7 @@ C-11 SHALL NOT make production a selectable environment.
 - **THEN** `G_HOST_ADMISSION` SHALL deny, regardless of the deny table
 
 ### Requirement: Production observation configuration is external-only
+Production observation configuration SHALL be external-only.
 
 #### Scenario: Integrity requirements
 
@@ -73,6 +77,7 @@ C-11 SHALL NOT make production a selectable environment.
 - **THEN** `G_CONFIGURATION_INTEGRITY` SHALL deny
 
 ### Requirement: The admission chain is versioned, named and ordered
+The admission chain SHALL be versioned, named and ordered.
 
 #### Scenario: Identity, not count
 
@@ -85,6 +90,7 @@ C-11 SHALL NOT make production a selectable environment.
 - **THEN** qualification SHALL deny with that gate's categorical reason
 
 ### Requirement: No request reaches production unless every gate allows it
+No request SHALL reach production unless every gate allows it.
 
 #### Scenario: Zero contact before dispatch
 
@@ -99,6 +105,7 @@ C-11 SHALL NOT make production a selectable environment.
 - **AND** no cached ALLOW SHALL survive the revocation
 
 ### Requirement: Route authority is mechanically source-bound
+Route authority SHALL be mechanically source-bound.
 
 #### Scenario: Forged capability
 
@@ -107,6 +114,7 @@ C-11 SHALL NOT make production a selectable environment.
 - **THEN** `G_ROUTE_AUTHORITY` SHALL deny
 
 ### Requirement: Concrete parameter values never leave the request builder
+Concrete parameter values SHALL never leave the request builder.
 
 #### Scenario: Sentinel containment
 
@@ -115,6 +123,7 @@ C-11 SHALL NOT make production a selectable environment.
   fingerprint, error, checkpoint or persisted record
 
 ### Requirement: Budgets are reserved before dispatch and never oversubscribed
+Budgets SHALL be reserved before dispatch and never oversubscribed.
 
 #### Scenario: Race safety
 
@@ -127,6 +136,7 @@ C-11 SHALL NOT make production a selectable environment.
 - **THEN** its reservation SHALL NOT be refunded
 
 ### Requirement: Breakers are terminal
+Breakers SHALL be terminal.
 
 #### Scenario: No later request
 
@@ -134,6 +144,7 @@ C-11 SHALL NOT make production a selectable environment.
 - **THEN** every subsequent admission SHALL deny
 
 ### Requirement: Authenticated state is never mutated by a production response
+Authenticated state SHALL never be mutated by a production response.
 
 #### Scenario: `Set-Cookie`
 
@@ -143,6 +154,7 @@ C-11 SHALL NOT make production a selectable environment.
   `context.storageState()` persistence path exists
 
 ### Requirement: Containment state is reported, never assumed
+Containment state SHALL be reported, never assumed.
 
 #### Scenario: CI carve-out stays explicit
 
@@ -151,6 +163,7 @@ C-11 SHALL NOT make production a selectable environment.
   `NOT_EXERCISED_BWRAP_UNAVAILABLE` and SHALL NOT be promoted to `PROVEN`
 
 ### Requirement: Every C-11 certification suite is executed by the authoritative gate
+Every C-11 certification suite SHALL be executed by the authoritative gate.
 
 #### Scenario: Unregistered suite
 
