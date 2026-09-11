@@ -10,10 +10,30 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { buildChildEnvironment } from './child-environment.mjs';
 import { GATE_RECEIPT_PATH_ENV, parseCounts, parseSafeDetails, persistGateReceipt, resolveGateReceiptTarget } from './lib/gate-receipt.mjs';
+import { OPERATOR_CLI_SCHEMA, defineOperatorCli, invokedDirectly } from './lib/operator-cli.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const definitionFile = path.join(root, 'config', 'quality-gate.v1.json');
 const modes = new Set(['local', 'ci', 'clean', 'predev']);
+
+const CLI_METADATA = {
+  schemaVersion: OPERATOR_CLI_SCHEMA,
+  name: 'quality-gate',
+  entry: 'bin/quality-gate.mjs',
+  purpose: 'Run the authoritative Nightwatch quality gate for one environment class.',
+  group: 'validate',
+  usage: 'node bin/quality-gate.mjs <local|ci|clean|predev>',
+  commands: [
+    { name: 'local', summary: 'Run the serial local gate' },
+    { name: 'ci', summary: 'Run the gate under CI authority' },
+    { name: 'clean', summary: 'Run the gate in a disposable clean checkout' },
+    { name: 'predev', summary: 'Run the pre-DEV required subset' },
+  ],
+  commandRequired: true,
+  json: true,
+  authorization: 'LOCAL_ONLY',
+  artifacts: ['artifacts/quality-gate receipts (NIGHTWATCH_GATE_RECEIPT_PATH overrides)'],
+};
 const timeoutMs = { SHORT: 120_000, MEDIUM: 600_000, LONG: 1_200_000 };
 const packageManager = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 const nodeExecutable = process.execPath;
@@ -174,8 +194,8 @@ function emitReceipt(receipt, target, exitCode) {
   process.exitCode = exitCode;
 }
 
-function main() {
-  const mode = process.argv[2];
+function main(cli) {
+  const mode = cli?.command ?? process.argv[2];
   if (!modes.has(mode)) {
     console.error(JSON.stringify({ status: 'CONFIG_INVALID', code: 'QUALITY_GATE_MODE_INVALID' }));
     process.exitCode = 2;
@@ -238,4 +258,7 @@ function main() {
   emitReceipt(receipt, target, finalResult === 'PASS' ? 0 : 1);
 }
 
-main();
+if (invokedDirectly(import.meta.url)) {
+  const cli = defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url });
+  if (!cli.stop) main(cli);
+}

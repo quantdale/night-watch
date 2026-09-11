@@ -26,6 +26,7 @@ import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
 import { loadTypeScriptModule as loadRuntimeTypeScriptModule } from './lib/typescript-runtime-loader.mjs';
 import {
   findDuplicateFields,
@@ -235,7 +236,23 @@ function readActiveContinuity(root) {
   }
 }
 
+const CLI_METADATA = {
+  schemaVersion: OPERATOR_CLI_SCHEMA,
+  name: 'project-state-check',
+  entry: 'bin/project-state-check.mjs',
+  purpose: 'Validate the docs/CURRENT_STATE.md project-state truth block against derived source.',
+  group: 'validate',
+  flags: [
+    { name: '--root', shape: 'path', summary: 'validate a different repository root' },
+  ],
+  json: true,
+  authorization: 'LOCAL_ONLY',
+  artifacts: [],
+};
+
 function main() {
+  const cli = defineOperatorCli(CLI_METADATA);
+  if (cli.stop) return;
   const root = parseArgs(process.argv.slice(2));
   const errors = [];
 

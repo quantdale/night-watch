@@ -160,14 +160,14 @@ For the authoritative local certification, use the unified gate and its
 versioned inventory rather than an ad-hoc Phase-specific command:
 
 ```bash
-npm run typecheck
-npm run hardening:check
-npm run quality-gate:spec
-npm run gate:inventory
-npm run test:semantic-compat
-npm run gate:local
-npm run gate:clean
+npm run nightwatch -- help   # every operator command, grouped by purpose
+npm run gate:local           # authoritative local gate
 ```
+
+The listing is derived from each entry point's own declared metadata, so this
+document does not enumerate the scripts and cannot drift from them. Every
+entry answers `--help` with its usage, flags, exit codes and authorization
+class without executing anything.
 
 ### Local evidence retention
 

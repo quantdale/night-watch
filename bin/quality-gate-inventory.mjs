@@ -8,8 +8,20 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { OPERATOR_CLI_SCHEMA, defineOperatorCli, invokedDirectly } from './lib/operator-cli.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+
+const CLI_METADATA = {
+  schemaVersion: OPERATOR_CLI_SCHEMA,
+  name: 'quality-gate-inventory',
+  entry: 'bin/quality-gate-inventory.mjs',
+  purpose: 'Render the deterministic CI drift and duplication inventory of the gate manifests.',
+  group: 'validate',
+  json: true,
+  authorization: 'LOCAL_ONLY',
+  artifacts: [],
+};
 const workflowFile = path.join(root, '.github', 'workflows', 'hardening.yml');
 const gateFile = path.join(root, 'config', 'quality-gate.v1.json');
 const compatibilityFile = path.join(root, 'config', 'semantic-compatibility.v1.json');
@@ -128,6 +140,8 @@ function countFiles(groups) {
   return counts;
 }
 
+const cli = invokedDirectly(import.meta.url) ? defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url }) : { stop: true };
+if (!cli.stop) {
 try {
   const steps = extractSteps(readLegacyWorkflow());
   const oldCounts = countFiles(steps);
@@ -168,4 +182,5 @@ try {
 } catch (error) {
   console.error(JSON.stringify({ status: 'INVENTORY_INVALID', code: error instanceof Error ? error.message : 'INVENTORY_INVALID' }));
   process.exitCode = 1;
+}
 }

@@ -25,8 +25,21 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { buildChildEnvironment } from './child-environment.mjs';
+import { OPERATOR_CLI_SCHEMA, defineOperatorCli, invokedDirectly } from './lib/operator-cli.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+
+const CLI_METADATA = {
+  schemaVersion: OPERATOR_CLI_SCHEMA,
+  name: 'frontier-determinism',
+  entry: 'bin/frontier-determinism.mjs',
+  purpose: 'Certify one semantic digest across fresh processes of the frontier probe cone.',
+  group: 'validate',
+  usage: 'node bin/frontier-determinism.mjs [runs 1-200]',
+  positionals: { min: 0, max: 1, names: ['runs'] },
+  authorization: 'LOCAL_ONLY',
+  artifacts: ['disposable compile directory under the system temporary directory'],
+};
 
 function compileProbe() {
   const outDir = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-frontier-determinism-'));
@@ -59,7 +72,9 @@ function compileProbe() {
   return { outDir, entry };
 }
 
-const requested = Number.parseInt(process.argv[2] ?? '20', 10);
+const cli = invokedDirectly(import.meta.url) ? defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url }) : { stop: true };
+if (!cli.stop) {
+const requested = Number.parseInt(cli.positionals[0] ?? '20', 10);
 if (!Number.isInteger(requested) || requested < 1 || requested > 200) {
   process.stderr.write('[frontier:determinism] usage: node bin/frontier-determinism.mjs [runs 1-200]\n');
   process.exit(1);
@@ -113,3 +128,4 @@ if (digests.size !== 1) {
   process.exit(1);
 }
 process.stdout.write(`[frontier:determinism] PASS: 1 unique semantic digest across ${requested} fresh processes\n`);
+}

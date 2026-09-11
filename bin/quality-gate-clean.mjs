@@ -12,10 +12,23 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { buildChildEnvironment } from './child-environment.mjs';
 import { GATE_RECEIPT_PATH_ENV, readPersistedGateReceipt } from './lib/gate-receipt.mjs';
+import { OPERATOR_CLI_SCHEMA, defineOperatorCli, invokedDirectly } from './lib/operator-cli.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const timeout = 1_800_000;
 const packageManager = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+
+const CLI_METADATA = {
+  schemaVersion: OPERATOR_CLI_SCHEMA,
+  name: 'quality-gate-clean',
+  entry: 'bin/quality-gate-clean.mjs',
+  purpose: 'Qualify a pristine local clone through npm ci --ignore-scripts and the authoritative gate.',
+  group: 'validate',
+  usage: 'node bin/quality-gate-clean.mjs [--help]',
+  json: true,
+  authorization: 'LOCAL_ONLY',
+  artifacts: ['disposable checkout under the system temporary directory'],
+};
 
 function sha256(value) {
   return crypto.createHash('sha256').update(value, 'utf8').digest('hex');
@@ -69,12 +82,10 @@ function emit(receipt, code = 0) {
   process.exitCode = code;
 }
 
-// `--help` is the bounded, side-effect-free observation surface: it prints
-// usage without probing Git, cloning the checkout, or invoking npm.
-if (process.argv.slice(2).includes('--help') || process.argv.slice(2).includes('-h')) {
-  console.log('Usage: node bin/quality-gate-clean.mjs [--help]');
-  console.log('Qualifies a pristine checkout: local clone, npm ci --ignore-scripts, then the authoritative gate.');
-} else {
+// `--help` is the bounded, side-effect-free observation surface: the shared
+// parser answers it before probing Git, cloning the checkout, or invoking npm.
+const cli = invokedDirectly(import.meta.url) ? defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url }) : { stop: true };
+if (!cli.stop) {
 
 const headResult = git(['rev-parse', 'HEAD'], root);
 const statusResult = git(['status', '--porcelain'], root);

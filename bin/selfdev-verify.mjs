@@ -10,8 +10,25 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadTypeScriptModule as loadRuntimeTypeScriptModule } from './lib/typescript-runtime-loader.mjs';
+import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+
+const CLI_METADATA = {
+  schemaVersion: OPERATOR_CLI_SCHEMA,
+  name: 'selfdev-verify',
+  entry: 'bin/selfdev-verify.mjs',
+  purpose: 'Replay-verify one exact private self-development artifact ID without writing state.',
+  group: 'owner-gated',
+  usage: 'npm run selfdev:verify -- --artifact-id <exact-session-id>',
+  flags: [
+    { name: '--artifact-id', shape: 'string', summary: 'exact private session artifact id' },
+  ],
+  trailing: { summary: 'the bin validates the exact invocation shape itself and refuses non-exact forms' },
+  json: true,
+  authorization: 'OWNER_LOCAL',
+  artifacts: [],
+};
 
 function loadTypeScriptModule(file) {
   return loadRuntimeTypeScriptModule(file, { root });
@@ -45,6 +62,8 @@ function safeFailure(code) {
 }
 
 function main() {
+  const cli = defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url });
+  if (cli.stop) return;
   let parsed;
   try {
     parsed = parseArgs(process.argv.slice(2));

@@ -5,6 +5,19 @@
 // It owns only the machine-readable header in .agent/EXECUTION_PROMPT.md.
 // Filesystem, Git, and task-continuity authority remains in the checker.
 
+import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
+
+const CLI_METADATA = {
+  schemaVersion: OPERATOR_CLI_SCHEMA,
+  name: 'planner-handoff-protocol',
+  entry: 'bin/planner-handoff-protocol.mjs',
+  purpose: 'Parse and validate the planner-to-executor handoff header as a pure protocol layer.',
+  group: 'internal-tooling',
+  json: false,
+  authorization: 'LOCAL_ONLY',
+  artifacts: [],
+};
+
 export const HANDOFF_PROTOCOL_VERSION = 'nightwatch.planner-executor-handoff.v1';
 export const HANDOFF_RECEIPT_SCHEMA = 'nightwatch.planner-handoff-receipt.v1';
 export const HANDOFF_STATUSES = new Set(['READY_FOR_EXECUTION', 'IN_PROGRESS', 'BLOCKED', 'COMPLETE']);
@@ -184,4 +197,8 @@ export function validateHandoffState(parsedOrText, context = {}) {
 
 export function uniqueErrorCodes(errors) {
   return [...new Set((errors ?? []).map((item) => item.code).filter(Boolean))];
+}
+
+if (typeof process.argv[1] === "string" && process.argv[1].endsWith("planner-handoff-protocol.mjs")) {
+  defineOperatorCli(CLI_METADATA);
 }

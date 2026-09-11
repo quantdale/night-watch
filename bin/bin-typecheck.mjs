@@ -21,8 +21,24 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { extractLoaderCallSites, renderLoaderTypeMap } from './lib/cli-implementation-contract.mjs';
+import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const CLI_METADATA = {
+  schemaVersion: OPERATOR_CLI_SCHEMA,
+  name: 'bin-typecheck',
+  entry: 'bin/bin-typecheck.mjs',
+  purpose: 'Check every bin under the root type settings with a conformance count and no weakened gate.',
+  group: 'validate',
+  flags: [
+    { name: '--json', shape: 'boolean', summary: 'emit exactly one JSON document in config-check mode' },
+    { name: '--write', shape: 'boolean', summary: 'regenerate the loader declaration' },
+    { name: '--config-check', shape: 'boolean', summary: 'run the fast self-checks without TypeScript' },
+  ],
+  json: true,
+  authorization: 'LOCAL_ONLY',
+  artifacts: ['bin/lib/typescript-runtime-loader.d.mts with --write'],
+};
 const CONFIG_PATH = path.join(ROOT, 'config', 'bin-typecheck.v1.json');
 const LOADER_DECLARATION_PATH = path.join(ROOT, 'bin', 'lib', 'typescript-runtime-loader.d.mts');
 const TSCONFIG_PATH = path.join(ROOT, 'tsconfig.bin.json');
@@ -156,6 +172,8 @@ function runTsc() {
 }
 
 function main() {
+  const cli = defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url });
+  if (cli.stop) return;
   const args = process.argv.slice(2);
   const json = args.includes('--json');
   const write = args.includes('--write');

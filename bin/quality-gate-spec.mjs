@@ -8,10 +8,22 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
+import { OPERATOR_CLI_SCHEMA, defineOperatorCli, invokedDirectly } from './lib/operator-cli.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const definitionPath = path.join(root, 'config', 'quality-gate.v1.json');
 const compatibilityPath = path.join(root, 'config', 'semantic-compatibility.v1.json');
+
+const CLI_METADATA = {
+  schemaVersion: OPERATOR_CLI_SCHEMA,
+  name: 'quality-gate-spec',
+  entry: 'bin/quality-gate-spec.mjs',
+  purpose: 'Validate the versioned quality-gate and compatibility definitions, then render their digest.',
+  group: 'validate',
+  json: true,
+  authorization: 'LOCAL_ONLY',
+  artifacts: [],
+};
 const commandKeys = new Set([
   'GATE_DEFINITION', 'TYPECHECK', 'HARDENING_CHECK', 'HANDOFF_CHECK', 'PROJECT_CHECK',
   'AGENT_CONTINUITY', 'SEMANTIC_COMPATIBILITY', 'OWNER_PROVENANCE',
@@ -100,6 +112,8 @@ function validateCompatibility(value) {
   return { phases: phases.size, files: files.size };
 }
 
+const cli = invokedDirectly(import.meta.url) ? defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url }) : { stop: true };
+if (!cli.stop) {
 try {
   const definition = validateDefinition(readJson(definitionPath, 'QUALITY_GATE_DEFINITION_UNREADABLE'));
   const compatibility = validateCompatibility(readJson(compatibilityPath, 'SEMANTIC_COMPATIBILITY_UNREADABLE'));
@@ -116,4 +130,5 @@ try {
 } catch (error) {
   console.error(JSON.stringify({ status: 'CONFIG_INVALID', code: error instanceof Error ? error.message : 'QUALITY_GATE_CONFIG_INVALID' }));
   process.exitCode = 1;
+}
 }

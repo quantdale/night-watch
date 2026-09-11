@@ -22,13 +22,30 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadTypeScriptModules as loadRuntimeTypeScriptModules } from './lib/typescript-runtime-loader.mjs';
 import { collectOpenWorkInput } from './lib/openspec-ledger.mjs';
+import { OPERATOR_CLI_SCHEMA, defineOperatorCli, invokedDirectly } from './lib/operator-cli.mjs';
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+
+const CLI_METADATA = {
+  schemaVersion: OPERATOR_CLI_SCHEMA,
+  name: 'nightwatch-status',
+  entry: 'bin/nightwatch-status.mjs',
+  purpose: 'Render the local readiness and derived open-work status without writing anything.',
+  group: 'inspect-intelligence',
+  flags: [
+    { name: '--json', shape: 'boolean', summary: 'emit exactly one JSON document' },
+  ],
+  json: true,
+  authorization: 'LOCAL_ONLY',
+  artifacts: [],
+};
 
 function loadTypeScriptModules(root, files) {
   return loadRuntimeTypeScriptModules(files, { root });
 }
 
+const cli = invokedDirectly(import.meta.url) ? defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url }) : { stop: true };
+if (!cli.stop) {
 try {
   const [repoState, localReadiness, openWork] = loadTypeScriptModules(REPO_ROOT, [
     'src/core/readiness/repoState.ts',
@@ -52,4 +69,5 @@ try {
 } catch {
   console.error('READINESS_CLI_FAILED');
   process.exitCode = 2;
+}
 }

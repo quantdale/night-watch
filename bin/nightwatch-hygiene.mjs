@@ -11,6 +11,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { buildChildEnvironment } from './child-environment.mjs';
+import { OPERATOR_CLI_SCHEMA, defineOperatorCli, invokedDirectly } from './lib/operator-cli.mjs';
 
 const DEFAULT_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SCHEMA_VERSION = 'nightwatch.local-hygiene.v1';
@@ -19,6 +20,27 @@ const MAX_BRANCHES = 512;
 const MAX_WORKTREES = 256;
 const SAFE_BRANCH = /^(?:swarm|swarm2)\//;
 const GENERATED_OUTPUTS = Object.freeze(['artifacts', 'test-results', '.nightwatch', '.tmp-test', 'dist']);
+
+const CLI_METADATA = {
+  schemaVersion: OPERATOR_CLI_SCHEMA,
+  name: 'nightwatch-hygiene',
+  entry: 'bin/nightwatch-hygiene.mjs',
+  purpose: 'Report or clean local generated workspace outputs without touching tracked files.',
+  group: 'manage-evidence',
+  commands: [
+    { name: 'status', summary: 'report the generated outputs and safe targets' },
+    { name: 'clean', summary: 'remove the safe targets, or plan with --apply absent' },
+  ],
+  defaultCommand: 'status',
+  flags: [
+    { name: '--json', shape: 'boolean', summary: 'emit exactly one JSON document' },
+    { name: '--apply', shape: 'boolean', summary: 'apply the clean plan (requires the clean command)' },
+    { name: '--root', shape: 'path', summary: 'inspect a different repository root' },
+  ],
+  json: true,
+  authorization: 'LOCAL_ONLY',
+  artifacts: [],
+};
 
 function parseArgs(argv) {
   let command = 'status';
@@ -309,6 +331,8 @@ function execute(options) {
   return after;
 }
 
+const cli = invokedDirectly(import.meta.url) ? defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url }) : { stop: true };
+if (!cli.stop) {
 const options = (() => {
   try {
     return parseArgs(process.argv.slice(2));
@@ -325,4 +349,5 @@ try {
   if (options.json) process.stdout.write(`${JSON.stringify({ schemaVersion: SCHEMA_VERSION, result: 'BLOCKED', code: 'HYGIENE_EXECUTION_BLOCKED' })}\n`);
   else console.error('HYGIENE_EXECUTION_BLOCKED');
   process.exitCode = 2;
+}
 }

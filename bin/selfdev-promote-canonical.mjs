@@ -16,8 +16,40 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadTypeScriptModule as loadRuntimeTypeScriptModule } from './lib/typescript-runtime-loader.mjs';
+import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+
+const CLI_METADATA = {
+  schemaVersion: OPERATOR_CLI_SCHEMA,
+  name: 'selfdev-promote-canonical',
+  entry: 'bin/selfdev-promote-canonical.mjs',
+  purpose: 'Operate the owner-gated canonical promotion lifecycle with one bounded apply.',
+  group: 'owner-gated',
+  commands: [
+    { name: 'inspect', summary: 'inspect one exact promotion candidate' },
+    { name: 'prepare', summary: 'prepare one exact promotion draft' },
+    { name: 'approve', summary: 'record the owner one-shot approval' },
+    { name: 'apply', summary: 'apply at most one canonical source write' },
+    { name: 'verify', summary: 'verify one applied promotion receipt' },
+    { name: 'status', summary: 'report one promotion lifecycle status' },
+  ],
+  flags: [
+    { name: '--artifact-id', shape: 'string', summary: 'exact private session artifact id' },
+    { name: '--candidate-id', shape: 'string', summary: 'exact candidate id' },
+    { name: '--plan-id', shape: 'string', summary: 'exact adoption plan id' },
+    { name: '--sandbox-result-id', shape: 'string', summary: 'exact sandbox result id' },
+    { name: '--promotion-id', shape: 'string', summary: 'exact promotion id' },
+    { name: '--confirm', shape: 'string', summary: 'fixed confirmation token CANONICAL_ONE_FILE_ONLY for approve' },
+    { name: '--approval-id', shape: 'string', summary: 'exact owner approval id' },
+    { name: '--receipt-id', shape: 'string', summary: 'exact verification receipt id' },
+    { name: '--verification-id', shape: 'string', summary: 'exact verification id' },
+  ],
+  trailing: { summary: 'the bin validates the exact subcommand/flag shape itself and refuses non-exact forms' },
+  json: true,
+  authorization: 'OWNER_DECISION',
+  artifacts: ['$HOME/.nightwatch private promotion stores'],
+};
 
 function loadTypeScriptModule(file) {
   return loadRuntimeTypeScriptModule(file, { root });
@@ -123,6 +155,8 @@ function safeDraftSummary(promotionModule, draft) {
 }
 
 function main() {
+  const cli = defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url });
+  if (cli.stop) return;
   let parsed;
   try {
     parsed = parseArgs(process.argv.slice(2));

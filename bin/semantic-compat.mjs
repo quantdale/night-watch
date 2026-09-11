@@ -9,10 +9,25 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { buildChildEnvironment } from './child-environment.mjs';
+import { OPERATOR_CLI_SCHEMA, defineOperatorCli, invokedDirectly } from './lib/operator-cli.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const manifestPath = path.join(root, 'config', 'semantic-compatibility.v1.json');
 const filePattern = /^tests\/(?:unit|smoke)\/[A-Za-z0-9._/-]+\.test\.ts$/;
+
+const CLI_METADATA = {
+  schemaVersion: OPERATOR_CLI_SCHEMA,
+  name: 'semantic-compat',
+  entry: 'bin/semantic-compat.mjs',
+  purpose: 'Validate the Phase 9-26 compatibility manifest or run the full compatibility cone.',
+  group: 'validate',
+  flags: [
+    { name: '--validate', shape: 'boolean', summary: 'validate the manifest without dispatching a suite' },
+  ],
+  json: true,
+  authorization: 'LOCAL_ONLY',
+  artifacts: [],
+};
 
 function fail(code) {
   throw new Error(code);
@@ -48,6 +63,8 @@ function loadManifest() {
   return { manifest, files };
 }
 
+const cli = invokedDirectly(import.meta.url) ? defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url }) : { stop: true };
+if (!cli.stop) {
 try {
   const { manifest, files } = loadManifest();
   // `--validate` is the bounded, contact-free observation surface: it proves
@@ -107,4 +124,5 @@ try {
 } catch (error) {
   console.error(JSON.stringify({ schemaVersion: 'nightwatch.semantic-compatibility.v1', result: 'CONFIG_INVALID', code: error instanceof Error ? error.message : 'SEMANTIC_COMPATIBILITY_INVALID' }));
   process.exitCode = 2;
+}
 }

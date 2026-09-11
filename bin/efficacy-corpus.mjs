@@ -14,11 +14,29 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadTypeScriptModules } from './lib/typescript-runtime-loader.mjs';
+import { OPERATOR_CLI_SCHEMA, defineOperatorCli, invokedDirectly } from './lib/operator-cli.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const command = process.argv[2] ?? 'compare';
 
-const [efficacy] = loadTypeScriptModules(['src/core/efficacy/index.ts'], { root });
+const CLI_METADATA = {
+  schemaVersion: OPERATOR_CLI_SCHEMA,
+  name: 'efficacy-corpus',
+  entry: 'bin/efficacy-corpus.mjs',
+  purpose: 'Run the deterministic W8 efficacy corpus baseline, candidate or comparison.',
+  group: 'inspect-intelligence',
+  commands: [
+    { name: 'baseline', summary: 'run the W7-projected request surface' },
+    { name: 'candidate', summary: 'run the live request surface' },
+    { name: 'compare', summary: 'run both and render signed deltas' },
+  ],
+  defaultCommand: 'compare',
+  json: true,
+  authorization: 'LOCAL_ONLY',
+  artifacts: [],
+};
+
+const cli = invokedDirectly(import.meta.url) ? defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url }) : { stop: true };
+const command = cli.stop ? 'compare' : (cli.command ?? 'compare');
 
 function fail(message) {
   process.stderr.write(`NIGHTWATCH_EFFICACY: ${message}\n`);
@@ -29,6 +47,9 @@ const MODES = new Map([
   ['baseline', 'W7_BASELINE'],
   ['candidate', 'W8_MEMORY'],
 ]);
+
+if (!cli.stop) {
+const [efficacy] = loadTypeScriptModules(['src/core/efficacy/index.ts'], { root });
 
 try {
   if (command === 'compare') {
@@ -48,4 +69,5 @@ try {
   }
 } catch (error) {
   fail(error instanceof Error ? error.message : 'EFFICACY_RUN_FAILED');
+}
 }

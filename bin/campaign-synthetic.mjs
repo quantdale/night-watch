@@ -25,8 +25,23 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { buildChildEnvironment } from './child-environment.mjs';
 import { loadTypeScriptModules } from './lib/typescript-runtime-loader.mjs';
+import { OPERATOR_CLI_SCHEMA, defineOperatorCli, invokedDirectly } from './lib/operator-cli.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+
+const CLI_METADATA = {
+  schemaVersion: OPERATOR_CLI_SCHEMA,
+  name: 'campaign-synthetic',
+  entry: 'bin/campaign-synthetic.mjs',
+  purpose: 'Run the versioned deterministic synthetic campaign and emit a bounded receipt.',
+  group: 'validate',
+  flags: [
+    { name: '--validate', shape: 'boolean', summary: 'validate the manifest without dispatching Playwright' },
+  ],
+  json: true,
+  authorization: 'LOCAL_ONLY',
+  artifacts: [],
+};
 const manifestPath = path.join(root, 'config', 'synthetic-campaign.v1.json');
 const SCHEMA_VERSION = 'nightwatch.synthetic-campaign.v1';
 const filePattern = /^tests\/(?:unit|smoke)\/[A-Za-z0-9._/-]+\.test\.ts$/;
@@ -72,6 +87,8 @@ function deepContainmentLane() {
   }
 }
 
+const cli = invokedDirectly(import.meta.url) ? defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url }) : { stop: true };
+if (!cli.stop) {
 try {
   const { manifest, files, maxFailedLocations } = loadManifest();
   // `--validate` is the bounded, contact-free observation surface: it proves
@@ -144,4 +161,5 @@ try {
 } catch (error) {
   console.error(JSON.stringify({ schemaVersion: SCHEMA_VERSION, result: 'CONFIG_INVALID', code: error instanceof Error ? error.message : 'SYNTHETIC_CAMPAIGN_INVALID' }));
   process.exitCode = 2;
+}
 }

@@ -11,8 +11,21 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadTypeScriptModule as loadRuntimeTypeScriptModule } from './lib/typescript-runtime-loader.mjs';
+import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+
+const CLI_METADATA = {
+  schemaVersion: OPERATOR_CLI_SCHEMA,
+  name: 'selfdev-synthetic',
+  entry: 'bin/selfdev-synthetic.mjs',
+  purpose: 'Run one bounded synthetic self-development matrix and record only a private sanitized result.',
+  group: 'owner-gated',
+  usage: 'npm run selfdev:synthetic',
+  json: true,
+  authorization: 'OWNER_LOCAL',
+  artifacts: ['$HOME/.nightwatch private self-dev artifact store'],
+};
 
 function loadTypeScriptModule(file) {
   return loadRuntimeTypeScriptModule(file, { root });
@@ -30,6 +43,8 @@ function parseArgs(args) {
 }
 
 function main() {
+  const cli = defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url });
+  if (cli.stop) return;
   let parsed;
   try {
     parsed = parseArgs(process.argv.slice(2));

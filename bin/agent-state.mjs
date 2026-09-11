@@ -8,6 +8,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { buildChildEnvironment } from './child-environment.mjs';
+import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
 import {
   PROTOCOL_V2,
   validateTaskV2,
@@ -1025,7 +1026,23 @@ export function validate(root, auditMode = false) {
   return { errors: [...new Set(errors)], warnings };
 }
 
+const CLI_METADATA = {
+  schemaVersion: OPERATOR_CLI_SCHEMA,
+  name: 'agent-state',
+  entry: 'bin/agent-state.mjs',
+  purpose: 'Validate the active task and history continuity records under the v2 protocol.',
+  group: 'validate',
+  flags: [
+    { name: '--audit-history', shape: 'boolean', summary: 'report the full history inventory' },
+    { name: '--root', shape: 'path', summary: 'validate a different repository root' },
+  ],
+  authorization: 'LOCAL_ONLY',
+  artifacts: [],
+};
+
 function main() {
+  const cli = defineOperatorCli(CLI_METADATA);
+  if (cli.stop) return;
   let root;
   const auditMode = process.argv.includes('--audit-history');
   try {

@@ -13,8 +13,32 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadTypeScriptModule as loadRuntimeTypeScriptModule } from './lib/typescript-runtime-loader.mjs';
+import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+
+const CLI_METADATA = {
+  schemaVersion: OPERATOR_CLI_SCHEMA,
+  name: 'selfdev-adopt-sandbox',
+  entry: 'bin/selfdev-adopt-sandbox.mjs',
+  purpose: 'Inspect, plan or run one contained self-development adoption in the private sandbox.',
+  group: 'owner-gated',
+  commands: [
+    { name: 'inspect', summary: 'inspect one artifact for adoption eligibility' },
+    { name: 'plan', summary: 'write one adoption plan to the private plan store' },
+    { name: 'run', summary: 'run one plan in the disposable source mirror' },
+  ],
+  flags: [
+    { name: '--artifact-id', shape: 'string', summary: 'exact private session artifact id' },
+    { name: '--candidate-id', shape: 'string', summary: 'exact candidate id' },
+    { name: '--plan-id', shape: 'string', summary: 'exact adoption plan id' },
+    { name: '--confirm', shape: 'string', summary: 'fixed confirmation token SANDBOX_ONLY for run' },
+  ],
+  trailing: { summary: 'the bin validates the exact subcommand/flag shape itself and refuses non-exact forms' },
+  json: true,
+  authorization: 'OWNER_LOCAL',
+  artifacts: ['$HOME/.nightwatch private adoption plan store', 'disposable private source mirror'],
+};
 
 function loadTypeScriptModule(file) {
   return loadRuntimeTypeScriptModule(file, { root });
@@ -63,6 +87,8 @@ function parseArgs(args) {
 }
 
 function main() {
+  const cli = defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url });
+  if (cli.stop) return;
   let parsed;
   try {
     parsed = parseArgs(process.argv.slice(2));

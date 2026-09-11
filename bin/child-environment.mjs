@@ -9,6 +9,19 @@
  * privileged local attacker cannot inspect the process.
  */
 
+import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
+
+const CLI_METADATA = {
+  schemaVersion: OPERATOR_CLI_SCHEMA,
+  name: 'child-environment',
+  entry: 'bin/child-environment.mjs',
+  purpose: 'Construct the explicit allowlisted child-process environment boundary.',
+  group: 'internal-tooling',
+  json: false,
+  authorization: 'LOCAL_ONLY',
+  artifacts: [],
+};
+
 const INHERITED_KEYS = Object.freeze([
   'PATH',
   'Path',
@@ -74,4 +87,8 @@ export function emitChildStdio(result) {
   if (result?.stderr !== undefined && result.stderr !== null && result.stderr !== '') {
     process.stderr.write(result.stderr);
   }
+}
+
+if (typeof process.argv[1] === "string" && process.argv[1].endsWith("child-environment.mjs")) {
+  defineOperatorCli(CLI_METADATA);
 }

@@ -16,6 +16,7 @@ import os from 'node:os';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { spawnSync } from 'node:child_process';
+import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
 
 import {
   WORKSPACE_SESSION_SCHEMA,
@@ -487,6 +488,45 @@ function commandRemove(context, options) {
 
 const COMMANDS = new Set(['status', 'check', 'start', 'claim', 'release', 'reconcile', 'integrate', 'remove']);
 
+const CLI_METADATA = {
+  schemaVersion: OPERATOR_CLI_SCHEMA,
+  name: 'nightwatch-session',
+  entry: 'bin/nightwatch-session.mjs',
+  purpose: 'Manage the C-00 session worktree lifecycle and fast-forward integration.',
+  group: 'manage-sessions',
+  commands: [
+    { name: 'status', summary: 'report the workspace and session topology' },
+    { name: 'check', summary: 'report topology and fail closed on an unsafe invariant' },
+    { name: 'start', summary: 'create one owned session worktree and branch' },
+    { name: 'claim', summary: 'claim or adopt an existing session worktree' },
+    { name: 'release', summary: 'release this session ownership record' },
+    { name: 'reconcile', summary: 'reconcile a stale session base' },
+    { name: 'integrate', summary: 'fast-forward push the session to main' },
+    { name: 'remove', summary: 'remove an owned session worktree and branch' },
+  ],
+  defaultCommand: 'status',
+  flags: [
+    { name: '--json', shape: 'boolean', summary: 'emit exactly one JSON document' },
+    { name: '--adopt', shape: 'boolean', summary: 'adopt a stale session worktree deliberately' },
+    { name: '--dry-run', shape: 'boolean', summary: 'report the planned action without mutating' },
+    { name: '--offline', shape: 'boolean', summary: 'resolve remote state without contacting the remote' },
+    { name: '--allow-drift', shape: 'boolean', summary: 'tolerate a pre-existing topology violation' },
+    { name: '--delete-branch', shape: 'boolean', summary: 'delete the session branch on remove' },
+    { name: '--abandon-unmerged', shape: 'boolean', summary: 'remove an unmerged worktree deliberately' },
+    { name: '--task', shape: 'string', summary: 'task id owning the session' },
+    { name: '--campaign', shape: 'string', summary: 'campaign id owning the session' },
+    { name: '--role', shape: 'enum', values: ['IMPLEMENTATION', 'MAINTENANCE'], summary: 'session role' },
+    { name: '--base', shape: 'string', summary: 'explicit base SHA' },
+    { name: '--pid', shape: 'integer', summary: 'anchor process id for liveness' },
+    { name: '--dir', shape: 'path', summary: 'explicit session worktree directory' },
+    { name: '--name', shape: 'string', summary: 'session worktree name' },
+    { name: '--root', shape: 'path', summary: 'repository root' },
+  ],
+  json: true,
+  authorization: 'LOCAL_ONLY',
+  artifacts: ['$HOME/.nightwatch/worktrees/<name> session worktrees'],
+};
+
 function parseArgs(argv) {
   const args = argv.slice(2);
   const options = {
@@ -540,6 +580,8 @@ function parseArgs(argv) {
 }
 
 function main() {
+  const cli = defineOperatorCli(CLI_METADATA);
+  if (cli.stop) return;
   const parsed = parseArgs(process.argv);
   if (parsed.error !== undefined) {
     console.error(`[session] CONFIG_INVALID: ${parsed.error}`);

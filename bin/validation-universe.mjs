@@ -17,6 +17,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { classifyValidationUniverse } from './lib/validation-universe.mjs';
+import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
 import {
   LANE_STATE_SCHEMA,
   loadLaneState,
@@ -26,6 +27,21 @@ import {
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DECLARATION = path.join('config', 'validation-universe.v1.json');
+
+const CLI_METADATA = {
+  schemaVersion: OPERATOR_CLI_SCHEMA,
+  name: 'validation-universe',
+  entry: 'bin/validation-universe.mjs',
+  purpose: 'Classify every discovered test and check into exactly one validation lane.',
+  group: 'validate',
+  flags: [
+    { name: '--json', shape: 'boolean', summary: 'emit exactly one JSON document' },
+    { name: '--digest', shape: 'boolean', summary: 'emit only the computed universe digest' },
+  ],
+  json: true,
+  authorization: 'LOCAL_ONLY',
+  artifacts: [],
+};
 
 const ROOT_TEST_RE = /^(?:tests|scenarios)\/.*\.(?:test|smoke)\.ts$/;
 const UI_TEST_RE = /^ui\/.*\.test\.(?:ts|tsx)$/;
@@ -104,6 +120,8 @@ function isAncestor(left, right) {
 }
 
 function main() {
+  const cli = defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url });
+  if (cli.stop) return;
   const args = process.argv.slice(2);
   const jsonOnly = args.includes('--json');
   const digestOnly = args.includes('--digest');

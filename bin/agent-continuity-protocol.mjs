@@ -12,6 +12,19 @@
 // Protocol: nightwatch.agent-continuity.v2
 // ---------------------------------------------------------------------------
 
+import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
+
+const CLI_METADATA = {
+  schemaVersion: OPERATOR_CLI_SCHEMA,
+  name: 'agent-continuity-protocol',
+  entry: 'bin/agent-continuity-protocol.mjs',
+  purpose: 'Parse and validate the v2 agent continuity state machine as a pure protocol layer.',
+  group: 'internal-tooling',
+  json: false,
+  authorization: 'LOCAL_ONLY',
+  artifacts: [],
+};
+
 export const PROTOCOL_V2 = 'nightwatch.agent-continuity.v2';
 export const PROTOCOL_LEGACY = 'LEGACY_CONTINUITY_V1';
 
@@ -980,4 +993,8 @@ export const APPROVED_CHECKPOINT_PATHS = [
 
 export function isApprovedCheckpointPath(file) {
   return APPROVED_CHECKPOINT_PATHS.some((pattern) => pattern.test(file));
+}
+
+if (typeof process.argv[1] === "string" && process.argv[1].endsWith("agent-continuity-protocol.mjs")) {
+  defineOperatorCli(CLI_METADATA);
 }

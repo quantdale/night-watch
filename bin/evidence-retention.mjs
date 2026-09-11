@@ -15,6 +15,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadTypeScriptModule as loadRuntimeTypeScriptModule } from './lib/typescript-runtime-loader.mjs';
+import { OPERATOR_CLI_SCHEMA, defineOperatorCli, invokedDirectly } from './lib/operator-cli.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SCHEMA_VERSION = 'nightwatch.evidence-retention.v1';
@@ -25,6 +26,28 @@ const MAX_SCAN_BYTES = 32 * 1024 * 1024;
 // Directories whose tracked text can bind an artifact to durable project
 // truth. Anything outside this set cannot make an artifact load-bearing.
 const REFERENCE_SOURCES = Object.freeze(['.agent', 'docs', 'openspec', 'config']);
+
+const CLI_METADATA = {
+  schemaVersion: OPERATOR_CLI_SCHEMA,
+  name: 'evidence-retention',
+  entry: 'bin/evidence-retention.mjs',
+  purpose: 'Plan or apply whole-run evidence retention over repository-owned artifacts only.',
+  group: 'manage-evidence',
+  commands: [
+    { name: 'status', summary: 'report the retention state without removing anything' },
+    { name: 'plan', summary: 'dry-run the same computation and removal set' },
+  ],
+  defaultCommand: 'status',
+  flags: [
+    { name: '--json', shape: 'boolean', summary: 'emit exactly one JSON document' },
+    { name: '--apply', shape: 'boolean', summary: 'execute the removal plan deliberately' },
+    { name: '--keep-recent', shape: 'integer', summary: 'number of recent runs to keep' },
+    { name: '--root', shape: 'path', summary: 'operate on a disposable evidence store' },
+  ],
+  json: true,
+  authorization: 'LOCAL_ONLY',
+  artifacts: [],
+};
 
 function parseArgs(argv) {
   let command = 'status';
@@ -279,6 +302,8 @@ function renderText(report) {
   return `${lines.join('\n')}\n`;
 }
 
+const cli = invokedDirectly(import.meta.url) ? defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url }) : { stop: true };
+if (!cli.stop) {
 const options = (() => {
   try {
     return parseArgs(process.argv.slice(2));
@@ -296,4 +321,5 @@ try {
   if (options.json) process.stdout.write(`${JSON.stringify({ schemaVersion: SCHEMA_VERSION, result: 'BLOCKED', code: 'RETENTION_EXECUTION_BLOCKED' })}\n`);
   else console.error('RETENTION_EXECUTION_BLOCKED');
   process.exitCode = 2;
+}
 }

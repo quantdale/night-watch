@@ -18,6 +18,24 @@
 import fs from "node:fs";
 import path from "node:path";
 import { loadTypeScriptModule as loadRuntimeTypeScriptModule } from "./lib/typescript-runtime-loader.mjs";
+import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from "./lib/operator-cli.mjs";
+
+const CLI_METADATA = {
+  schemaVersion: OPERATOR_CLI_SCHEMA,
+  name: "phase14-contract-health",
+  entry: "bin/phase14-contract-health.mjs",
+  purpose: "Render the local Phase 14A contract-coverage health report from a sanitized inventory or snapshot.",
+  group: "inspect-intelligence",
+  flags: [
+    { name: "--inventory", shape: "path", summary: "pre-built coverage inventory JSON" },
+    { name: "--baseline", shape: "path", summary: "optional baseline inventory for a delta" },
+    { name: "--snapshot", shape: "path", summary: "disposable exact source snapshot directory" },
+    { name: "--sha", shape: "string", summary: "current snapshot SHA for the snapshot build" },
+    { name: "--format", shape: "enum", values: ["json", "text"], summary: "output format" },
+  ],
+  authorization: "LOCAL_ONLY",
+  artifacts: [],
+};
 
 const HELP = `Nightwatch Phase 14A contract coverage health CLI (local/source-only).
 
@@ -109,6 +127,8 @@ function readJsonFile(file) {
 }
 
 function main() {
+  const cli = defineOperatorCli(CLI_METADATA);
+  if (cli.stop) return;
   const args = parseArgs(process.argv.slice(2));
   if (args.help) {
     process.stdout.write(HELP + "\n");

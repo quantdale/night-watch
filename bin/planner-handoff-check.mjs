@@ -16,6 +16,7 @@ import {
 } from './planner-handoff-protocol.mjs';
 import { fieldValue, findDuplicateFields, normalizeTaskStatus, parseKeyValuesWithLocations } from './agent-continuity-protocol.mjs';
 import { inspectWorkspace } from './workspace-integrity.mjs';
+import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
 
 const MAX_READ_BYTES = 512 * 1024;
 const MAX_ROUTE_ENTRIES = 256;
@@ -318,7 +319,23 @@ export function inspectHandoff(root) {
   };
 }
 
+const CLI_METADATA = {
+  schemaVersion: OPERATOR_CLI_SCHEMA,
+  name: 'planner-handoff-check',
+  entry: 'bin/planner-handoff-check.mjs',
+  purpose: 'Validate the planner-to-executor handoff route and currentness without writing anything.',
+  group: 'validate',
+  flags: [
+    { name: '--root', shape: 'path', summary: 'validate a different repository root' },
+  ],
+  json: true,
+  authorization: 'LOCAL_ONLY',
+  artifacts: [],
+};
+
 function main() {
+  const cli = defineOperatorCli(CLI_METADATA);
+  if (cli.stop) return;
   let root;
   try {
     root = parseArgs(process.argv.slice(2));

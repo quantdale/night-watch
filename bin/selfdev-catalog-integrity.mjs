@@ -27,8 +27,20 @@ import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { loadTypeScriptModule as loadRuntimeTypeScriptModule } from './lib/typescript-runtime-loader.mjs';
+import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+
+const CLI_METADATA = {
+  schemaVersion: OPERATOR_CLI_SCHEMA,
+  name: 'selfdev-catalog-integrity',
+  entry: 'bin/selfdev-catalog-integrity.mjs',
+  purpose: 'Prove the canonical adopted-case catalog is clean, canonical and byte-identical.',
+  group: 'validate',
+  json: true,
+  authorization: 'LOCAL_ONLY',
+  artifacts: [],
+};
 const SELFDEV_ADOPTED_CATALOG_TARGET_PATH = 'src/core/selfDev/adoptedCaseCatalog.generated.ts';
 
 function loadTypeScriptModule(file) {
@@ -56,6 +68,8 @@ function runGitStatusPorcelain(repositoryRoot) {
 }
 
 function main() {
+  const cli = defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url });
+  if (cli.stop) return;
   const porcelain = runGitStatusPorcelain(root);
   if (porcelain !== '') fail('SELFDEV_CATALOG_INTEGRITY_CHECKOUT_DIRTY');
 

@@ -9,8 +9,21 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadTypeScriptModule as loadRuntimeTypeScriptModule } from './lib/typescript-runtime-loader.mjs';
+import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+
+const CLI_METADATA = {
+  schemaVersion: OPERATOR_CLI_SCHEMA,
+  name: 'selfdev-provenance',
+  entry: 'bin/selfdev-provenance.mjs',
+  purpose: 'Read fixed local Nightwatch Git and source provenance metadata without mutation.',
+  group: 'owner-gated',
+  usage: 'node bin/selfdev-provenance.mjs',
+  json: true,
+  authorization: 'LOCAL_ONLY',
+  artifacts: [],
+};
 
 function loadTypeScriptModule(file) {
   return loadRuntimeTypeScriptModule(file, { root });
@@ -27,6 +40,8 @@ function usage() {
 }
 
 function main() {
+  const cli = defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url });
+  if (cli.stop) return;
   const args = process.argv.slice(2);
   if (args.length > 0) {
     if (args.length === 1 && (args[0] === '--help' || args[0] === '-h')) {

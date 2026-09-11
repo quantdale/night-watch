@@ -26,8 +26,21 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { buildChildEnvironment } from './child-environment.mjs';
+import { OPERATOR_CLI_SCHEMA, defineOperatorCli, invokedDirectly } from './lib/operator-cli.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+
+const CLI_METADATA = {
+  schemaVersion: OPERATOR_CLI_SCHEMA,
+  name: 'review-persistence-scale',
+  entry: 'bin/review-persistence-scale.mjs',
+  purpose: 'Measure bounded local review-persistence scale cells without making a pass claim.',
+  group: 'inspect-intelligence',
+  positionals: { min: 0, max: 2, names: ['sizes', 'percents'] },
+  json: true,
+  authorization: 'LOCAL_ONLY',
+  artifacts: ['disposable compile directory under the system temporary directory'],
+};
 
 function parseArgs(argv) {
   let sizes = [1000, 5000, 10000];
@@ -84,6 +97,8 @@ function kib(bytes) {
   return `${(bytes / 1024).toFixed(1)} KiB`;
 }
 
+const cli = invokedDirectly(import.meta.url) ? defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url }) : { stop: true };
+if (!cli.stop) {
 let options;
 try {
   options = parseArgs(process.argv.slice(2));
@@ -154,3 +169,4 @@ if (failed || cells.length === 0) {
   process.exit(1);
 }
 process.stdout.write(`[review:scale] OK: ${cells.length} cells measured\n`);
+}

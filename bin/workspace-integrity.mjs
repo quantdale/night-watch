@@ -22,6 +22,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { spawnSync } from 'node:child_process';
+import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
 
 export const WORKSPACE_INTEGRITY_SCHEMA = 'nightwatch.workspace-integrity-report.v1';
 export const WORKSPACE_SESSION_SCHEMA = 'nightwatch.workspace-session.v1';
@@ -963,7 +964,29 @@ function parseCliArgs(argv) {
   return { command, root, json };
 }
 
+const CLI_METADATA = {
+  schemaVersion: OPERATOR_CLI_SCHEMA,
+  name: 'workspace-integrity',
+  entry: 'bin/workspace-integrity.mjs',
+  purpose: 'Inspect the C-00 workspace, worktree ownership and session-safety invariants.',
+  group: 'manage-sessions',
+  commands: [
+    { name: 'check', summary: 'inspect and fail closed on a violated invariant' },
+    { name: 'status', summary: 'inspect and report without failing the exit code' },
+  ],
+  defaultCommand: 'check',
+  flags: [
+    { name: '--json', shape: 'boolean', summary: 'emit exactly one JSON document' },
+    { name: '--root', shape: 'path', summary: 'inspect a different repository root' },
+  ],
+  json: true,
+  authorization: 'LOCAL_ONLY',
+  artifacts: [],
+};
+
 function main() {
+  const cli = defineOperatorCli(CLI_METADATA);
+  if (cli.stop) return;
   const parsed = parseCliArgs(process.argv);
   if (parsed.error !== undefined) {
     console.error(`[workspace] CONFIG_INVALID: ${parsed.error}`);

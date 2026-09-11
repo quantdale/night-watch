@@ -27,8 +27,24 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { buildChildEnvironment } from './child-environment.mjs';
+import { OPERATOR_CLI_SCHEMA, defineOperatorCli, invokedDirectly } from './lib/operator-cli.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+
+const CLI_METADATA = {
+  schemaVersion: OPERATOR_CLI_SCHEMA,
+  name: 'finding-intel-scale',
+  entry: 'bin/finding-intel-scale.mjs',
+  purpose: 'Measure the bounded finding-intelligence hot-path scale without making a pass claim.',
+  group: 'inspect-intelligence',
+  positionals: { min: 0, max: 1, names: ['sizes'] },
+  flags: [
+    { name: '--budget-ms', shape: 'integer', summary: 'per-point wall budget in milliseconds' },
+  ],
+  json: true,
+  authorization: 'LOCAL_ONLY',
+  artifacts: ['disposable compile directory under the system temporary directory'],
+};
 
 function parseArgs(argv) {
   let sizes = [1000, 5000, 10000];
@@ -108,6 +124,8 @@ function growthClass(sizeRatio, timeRatio) {
   return 'WORSE_THAN_QUADRATIC';
 }
 
+const cli = invokedDirectly(import.meta.url) ? defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url }) : { stop: true };
+if (!cli.stop) {
 let options;
 try {
   options = parseArgs(process.argv.slice(2));
@@ -207,3 +225,4 @@ for (const stage of report.stages) {
   }
 }
 process.stdout.write('\n[intel:scale] measurement only; no pass/fail claim is made here\n');
+}
