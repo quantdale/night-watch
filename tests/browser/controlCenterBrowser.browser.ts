@@ -15,6 +15,7 @@ import type { RealSourceSurfaceDescriptor } from '../../src/core/source/surfaceT
 import type { RunEvent, RunSummary } from '../../src/core/evidence/types';
 import type { RunAuthorityInput } from '../../src/controlCenter/adapters/runAdapter';
 import type { FindingsDossierMetadata } from '../../src/controlCenter/authorities/findingsAuthority';
+import { classEffectViolations, sweepClassEffects, type ClassEffectSweep } from './helpers/classEffect';
 
 const UI_ROOT = path.resolve(process.cwd(), 'ui/control-center/dist');
 
@@ -255,6 +256,8 @@ test('qualifies every built Control Center view over one synthetic authority com
 
   const pageErrors: string[] = [];
   const externalRequests: string[] = [];
+  const classSweeps: ClassEffectSweep[] = [];
+  const sweep = async (): Promise<void> => { classSweeps.push(await sweepClassEffects(page)); };
   page.on('pageerror', (error) => pageErrors.push(error.message));
   page.on('console', (message) => {
     if (message.type() === 'error') pageErrors.push(message.text());
@@ -284,6 +287,7 @@ test('qualifies every built Control Center view over one synthetic authority com
 
     // The readiness contract's own measurements, not just its verdict.
     await expect(page.getByRole('heading', { name: 'Everything the readiness contract states' })).toBeVisible();
+    await sweep();
 
     // R-03. The stylesheet guard proves a rule EXISTS for every rendered
     // class; these assertions prove the interpolated tone families APPLY in
@@ -304,6 +308,7 @@ test('qualifies every built Control Center view over one synthetic authority com
     // were fetched by every build of this UI and rendered by none of them.
     await expect(page.getByRole('heading', { name: 'Every check, by name' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'What this build declares about itself' })).toBeVisible();
+    await sweep();
 
     await page.getByRole('link', { name: 'Runs' }).click({ force: true });
     await expect(page.getByRole('heading', { name: 'Inspect what happened, in order.' })).toBeVisible();
@@ -315,6 +320,7 @@ test('qualifies every built Control Center view over one synthetic authority com
     // panel must show it rather than fetch it and drop it.
     await expect(page.getByText('REPOSITORY PROVENANCE').first()).toBeVisible();
     await expect(page.getByText('EVENT CENSUS').first()).toBeVisible();
+    await sweep();
 
     await page.getByRole('link', { name: 'Execution Graph' }).click({ force: true });
     await expect(page.getByRole('heading', { name: 'Trace the bounded run shape.' })).toBeVisible();
@@ -339,6 +345,7 @@ test('qualifies every built Control Center view over one synthetic authority com
     const nodeStrokes = await page.locator('svg.execution-graph rect.graph-node').evaluateAll((elements) => elements.slice(0, 8).map((element) => (globalThis as unknown as GraphNodeReader).getComputedStyle(element).stroke));
     expect(nodeStrokes.length).toBeGreaterThan(0);
     for (const stroke of nodeStrokes) expect(stroke).not.toBe('none');
+    await sweep();
 
     await page.getByRole('link', { name: 'Campaign Intelligence' }).click({ force: true });
     await expect(page.getByRole('heading', { name: 'See the shape of coverage.' })).toBeVisible();
@@ -349,6 +356,7 @@ test('qualifies every built Control Center view over one synthetic authority com
     type StageChipReader = { getComputedStyle(element: unknown): { borderTopWidth: string } };
     const stageBorderWidth = await page.locator('.stage-chip').first().evaluate((element) => (globalThis as unknown as StageChipReader).getComputedStyle(element).borderTopWidth);
     expect(stageBorderWidth).toBe('1px');
+    await sweep();
 
     await page.getByRole('link', { name: 'Source Intelligence' }).click({ force: true });
     await expect(page.getByRole('heading', { name: 'Follow proof, currentness, and capability.' })).toBeVisible();
@@ -360,6 +368,7 @@ test('qualifies every built Control Center view over one synthetic authority com
     // that predated the rename, so run it via control-center:ui:browser, which
     // builds first.
     await expect(page.getByText('Complete within bounds', { exact: true })).toBeVisible();
+    await sweep();
 
     await page.getByRole('link', { name: 'Findings' }).click({ force: true });
     await expect(page.getByRole('heading', { name: 'Keep the signal, lose the raw evidence.' })).toBeVisible();
@@ -367,6 +376,7 @@ test('qualifies every built Control Center view over one synthetic authority com
     await expect(page.getByText('Source Stale', { exact: true })).toBeVisible();
     await expect(page.getByText('Source Unavailable', { exact: true })).toBeVisible();
     await expect(page.getByText('Provenance recorded').first()).toBeVisible();
+    await sweep();
 
     // RS-1 reviewer surface, over the same synthetic findings composition the
     // Findings view just used: the reviewer intelligence is derived from those
@@ -377,6 +387,13 @@ test('qualifies every built Control Center view over one synthetic authority com
     await expect(page.getByText('UNKNOWN', { exact: true }).first()).toBeVisible();
     await expect(page.getByText('Final verdict: human organizational').first()).toBeVisible();
     await expect(page.getByText(/never equivalent to a Leslie genuine\/invalid verdict or a Pondr approval/)).toBeVisible();
+    await sweep();
+
+    // The system map is qualified in its own lane; the class-effect walk needs
+    // it here too because it is the only view that renders the map classes.
+    await page.getByRole('link', { name: 'System Map' }).click({ force: true });
+    await expect(page.getByRole('region', { name: 'System map' })).toBeVisible();
+    await sweep();
 
     await page.getByRole('link', { name: 'Runs' }).click({ force: true });
     await expect(page.getByRole('heading', { name: 'Inspect what happened, in order.' })).toBeVisible();
@@ -405,6 +422,16 @@ test('qualifies every built Control Center view over one synthetic authority com
     const unqualified = [...navigated].filter((href) => !visited.has(href));
     expect(unqualified, `navigable views with no browser qualification: ${unqualified.join(', ')}`).toEqual([]);
     expect(navigated.size).toBe(visited.size);
+
+    // A-02. Every class the composition rendered must change a computed
+    // property on at least one element that carries it, or be declared
+    // base-only with a reason. The sweep is non-vacuous: it observed a large
+    // class population, not an empty DOM.
+    const observedClasses = new Set(classSweeps.flatMap((entry) => entry.observed));
+    expect(observedClasses.size).toBeGreaterThan(100);
+    const violations = classEffectViolations(classSweeps);
+    expect(violations.undeclared, `classes with no computed effect: ${violations.undeclared.join(', ')}`).toEqual([]);
+    expect(violations.stale, `declared base-only classes that now have an effect: ${violations.stale.join(', ')}`).toEqual([]);
 
     expect(externalRequests).toEqual([]);
     expect(pageErrors).toEqual([]);

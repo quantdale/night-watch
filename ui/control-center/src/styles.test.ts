@@ -69,7 +69,9 @@ describe('control center stylesheet coverage', () => {
     // `graph-node-${statusTone(...)}` and `text-${statusTone(...)}`.
     const tones = ['ready', 'warning', 'blocked', 'neutral'];
     const missing = [
-      ...tones.map((tone) => `graph-node-${tone}`),
+      // `graph-node-neutral` is intentionally absent: neutral IS the base
+      // `.graph-node` stroke; the other three carry tone colours.
+      ...tones.filter((tone) => tone !== 'neutral').map((tone) => `graph-node-${tone}`),
       // `code-chip-${tone}` on the run-detail panel.
       ...tones.map((tone) => `code-chip-${tone}`),
       // `text-neutral` is intentionally absent: neutral IS the inherited

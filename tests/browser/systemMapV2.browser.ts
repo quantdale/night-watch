@@ -13,6 +13,7 @@ import { systemMapLevel, systemMapQuery, LEVEL_FOR_SEGMENT, QUERY_FOR_SEGMENT } 
 import type { ControlCenterCollector } from '../../src/controlCenter/server/collector';
 import type { SystemMapLevelSegment, SystemMapQuerySegment } from '../../src/controlCenter/server/router';
 import type { SystemMapInput } from '../../src/core/systemMap/projections';
+import { classEffectViolations, sweepClassEffects } from './helpers/classEffect';
 
 const UI_ROOT = path.resolve(process.cwd(), 'ui/control-center/dist');
 /**
@@ -338,6 +339,14 @@ test('C-15c the operator can navigate the map, and the map never overstates what
     // 11. Arrow keys select and Enter is accepted without an error.
     await canvas.press('ArrowRight');
     await expect(page.locator('.map-node.node-selected')).toHaveCount(1);
+
+    // 11b. A-02. Every class the map renders must change a computed property
+    // on at least one element that carries it, or be declared base-only with
+    // a reason. The map is the only lane that renders the map classes.
+    const classSweeps = [await sweepClassEffects(page)];
+    const classViolations = classEffectViolations(classSweeps);
+    expect(classViolations.undeclared, `classes with no computed effect: ${classViolations.undeclared.join(', ')}`).toEqual([]);
+    expect(classViolations.stale, `declared base-only classes that now have an effect: ${classViolations.stale.join(', ')}`).toEqual([]);
 
     // 12. Nothing left the loopback, and nothing threw.
     expect(externalRequests).toEqual([]);

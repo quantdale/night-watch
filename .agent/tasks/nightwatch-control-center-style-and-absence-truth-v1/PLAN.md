@@ -112,7 +112,7 @@ invented and no pixel changes.
 
 ### M2 — runtime class effect (A-02)
 
-- **Status:** IN_PROGRESS
+- **Status:** COMPLETE
 - Objective: prove every class the composition renders changes a computed
   style, with a reasoned base-only list.
 - Files: `tests/browser/controlCenterBrowser.browser.ts`.
@@ -122,7 +122,7 @@ invented and no pixel changes.
 
 ### M3 — absence observability (A-03)
 
-- **Status:** NOT_STARTED
+- **Status:** IN_PROGRESS
 - Objective: emptying every array field changes the DOM, or is exempt with a
   reason.
 - Files: `ui/control-center/src/contractRender.test.tsx`.

@@ -35,14 +35,33 @@ system map's tone classes and rules that cannot match each other.
 
 ## Current Milestone
 
-Milestone ID: M2
+Milestone ID: M3
 Milestone status: IN_PROGRESS
-What is being attempted: the browser-lane computed-effect check (A-02) — every
-class the synthetic composition renders must change a computed property on an
-element that carries it, with a reasoned base-only list.
+What is being attempted: absence observability (A-03) — the fixture generator
+records every array field and the harness proves that emptying each one
+changes the owning view's DOM, or exempts it with a reason.
 
 ## Completed Milestones
 
+- **M2 COMPLETE (A-02)** — `tests/browser/helpers/classEffect.ts` sweeps every
+  class the built composition renders and toggles it off its carrying element
+  (element plus up to twelve descendants, so descendant-selector anchors are
+  not called inert), comparing the full computed style with and without it.
+  Transitions are disabled through a CSSOM `insertRule` on the app's own
+  stylesheet — the page's `style-src 'self'` CSP blocks injected `<style>`
+  elements, which had silently defeated the earlier guard. Native form
+  controls are excluded with a reason: this browser environment forces their
+  computed colours (a created button with inline colour, border and
+  background computes the theme values). Four classes are declared
+  base-only: `status-neutral`, `stage-neutral`, `text-neutral` and
+  `graph-node-neutral`. Three real defects were found and fixed:
+  `.run-detail-panel` lost the cascade to the later `.panel` rule and now uses
+  `.panel.run-detail-panel`; the redundant `.campaign-metrics` class and rule
+  (identical to `.metric-grid`) were removed; and the redundant
+  `.graph-node-neutral` stroke restatement was removed with the family
+  assertion updated. Both browser lanes run the sweep; the full lane passes
+  4/4 in 4.9 minutes. Mutation proof: deleting the `.mini-state` rule fails
+  the lane with exactly `mini-state`.
 - **M1 COMPLETE (A-01, A-04)** — `styles.test.ts` now asserts the
   `status-ready/warning/blocked` and `stage-ready/warning/blocked` concrete
   families and states `status-neutral`/`stage-neutral` as intentionally
@@ -116,6 +135,19 @@ Relevant failure/output summary: removing the `.stage-warning` rule failed the
 family assertion with exactly `stage-warning`; restoring the stylesheet passed
 3/3.
 
+Command: `npm run control-center:ui:browser` after M2
+Result: PASS
+When: 2026-09-10
+Relevant failure/output summary: 4 passed in 4.9 minutes, including the
+computed-effect sweep in `controlCenterBrowser` and `systemMapV2`.
+
+Command: M2 mutation proof
+Result: FAIL then PASS (expected)
+When: 2026-09-10
+Relevant failure/output summary: deleting the `.mini-state` rule failed the
+lane with exactly `mini-state` as ineffective; restoring the stylesheet and
+rebuilding passed.
+
 ## Decisions Made During This Task
 
 Decision: assert families from their known value sets instead of parsing
@@ -139,6 +171,15 @@ Consequence: the map keeps `.map-node`, `.map-edge` and `.node-selected`.
   vocabulary cannot produce the four values its stylesheet rules match.
 - `status-neutral` and `stage-neutral` are produced but have no rule; they
   ride the base pill and chip classes.
+- The page's CSP (`style-src 'self'`) blocks injected `<style>` elements, so
+  a transition guard must use CSSOM `insertRule` on the app's own sheet.
+- This browser environment forces computed colours on native form controls:
+  a freshly created button with inline `color`, `border` and `background`
+  computes the theme values, so button classes cannot be measured at runtime
+  and are excluded with that reason.
+- `.run-detail-panel`'s intended border colour never applied because the
+  later `.panel` rule won the cascade; the specificity fix changes that
+  border to the intended slate colour.
 
 ## Blockers
 

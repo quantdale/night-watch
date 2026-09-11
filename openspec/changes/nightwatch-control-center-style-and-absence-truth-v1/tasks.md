@@ -13,10 +13,10 @@
 - [x] UI suite green
 
 ## M2 — runtime class effect (A-02)
-- [ ] Toggle-and-compare computed-style check over the built composition
-- [ ] Reasoned base-only list asserted in both directions
-- [ ] Deleting a live class's rule fails the lane
-- [ ] Browser lane 4/4
+- [x] Toggle-and-compare computed-style check over the built composition
+- [x] Reasoned base-only list asserted in both directions
+- [x] Deleting a live class's rule fails the lane
+- [x] Browser lane 4/4
 
 ## M3 — absence observability (A-03)
 - [ ] Generator records every array field

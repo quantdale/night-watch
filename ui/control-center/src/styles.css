@@ -573,7 +573,9 @@ tbody tr.row-selected {
   line-height: 1.6;
 }
 
-.run-detail-panel {
+/* Specificity beats the later `.panel` border: a run detail panel is
+   deliberately differentiated, and the plain class lost the cascade. */
+.panel.run-detail-panel {
   border-color: #314256;
 }
 
@@ -788,7 +790,6 @@ tbody tr.row-selected {
   color: var(--text);
 }
 
-.graph-node-neutral { stroke: #3b5064; }
 
 /* Selection and filtering must be VISIBLE. Without these two rules the search
    box and the filter select recompute `dimmed` on every node and then change
@@ -1055,9 +1056,6 @@ tbody tr.row-selected {
   gap: 12px;
 }
 
-.campaign-metrics {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-}
 
 .metric-card,
 .panel {
