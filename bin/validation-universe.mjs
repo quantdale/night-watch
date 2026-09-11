@@ -17,6 +17,12 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { classifyValidationUniverse } from './lib/validation-universe.mjs';
+import {
+  LANE_STATE_SCHEMA,
+  loadLaneState,
+  reportLaneState,
+  validateLaneState,
+} from './lib/validation-lane-state.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DECLARATION = path.join('config', 'validation-universe.v1.json');
@@ -77,20 +83,64 @@ export function gateSelection({ synthetic, semantic, scripts }) {
   return [...selected];
 }
 
+function readLastSubstantiveSha() {
+  try {
+    const text = fs.readFileSync(path.join(ROOT, '.agent', 'ACTIVE_TASK.md'), 'utf8');
+    const match = /^LAST_SUBSTANTIVE_CHECKPOINT_SHA:\s*([0-9a-f]{40})/m.exec(text)
+      ?? /^Last validated implementation SHA:\s*([0-9a-f]{40})/m.exec(text);
+    return match === null ? null : match[1];
+  } catch {
+    return null;
+  }
+}
+
+function isAncestor(left, right) {
+  return spawnSync('git', ['merge-base', '--is-ancestor', left, right], {
+    cwd: ROOT,
+    encoding: 'utf8',
+    timeout: 15_000,
+    stdio: ['ignore', 'ignore', 'ignore'],
+  }).status === 0;
+}
+
 function main() {
   const args = process.argv.slice(2);
   const jsonOnly = args.includes('--json');
   const digestOnly = args.includes('--digest');
   const tracked = trackedFiles();
-  const judgement = classifyValidationUniverse({
+  const declaration = readJson(DECLARATION);
+  let judgement = classifyValidationUniverse({
     discovered: discoverUniverse(tracked),
     gateSelected: gateSelection({
       synthetic: readJson(path.join('config', 'synthetic-campaign.v1.json')),
       semantic: readJson(path.join('config', 'semantic-compatibility.v1.json')),
       scripts: readJson('package.json').scripts,
     }),
-    declaration: readJson(DECLARATION),
+    declaration,
   });
+
+  // F-02 lane state as data. Every class declared above must resolve to exactly
+  // one lane entry; the fourth report state (STALE_EVIDENCE) is computed here
+  // and never stored.
+  const declaredClasses = Object.keys(declaration.classes ?? {});
+  const laneStateLoad = loadLaneState(ROOT);
+  const laneStateErrors = laneStateLoad.ok
+    ? validateLaneState(laneStateLoad.lanes, declaredClasses)
+    : laneStateLoad.errors;
+  const lastSubstantiveSha = readLastSubstantiveSha();
+  const laneState = laneStateLoad.ok
+    ? {
+        schemaVersion: LANE_STATE_SCHEMA,
+        lastSubstantiveSha,
+        lanes: reportLaneState(laneStateLoad.lanes, lastSubstantiveSha, isAncestor),
+      }
+    : null;
+  judgement = {
+    ...judgement,
+    laneState,
+    errors: [...judgement.errors, ...laneStateErrors],
+    ok: judgement.ok && laneStateErrors.length === 0,
+  };
 
   if (digestOnly) {
     process.stdout.write(`${judgement.digest}\n`);
@@ -104,6 +154,25 @@ function main() {
     process.stdout.write(`[validation-universe] discovered=${c.discovered} authoritativeGate=${c.authoritativeGate} classified=${c.classified} unclassified=${c.unclassified}\n`);
     for (const [name, count] of Object.entries(c.byClass)) {
       process.stdout.write(`[validation-universe] ${name}=${count}\n`);
+    }
+    if (laneState !== null) {
+      const byReported = new Map();
+      for (const lane of laneState.lanes) {
+        byReported.set(lane.reportedClass, (byReported.get(lane.reportedClass) ?? 0) + 1);
+      }
+      process.stdout.write(
+        `[validation-universe] lane-state: lanes=${laneState.lanes.length}` +
+          ` proven=${byReported.get('PROVEN') ?? 0}` +
+          ` stale=${byReported.get('PROVEN (STALE_EVIDENCE)') ?? 0}` +
+          ` blocked-external=${byReported.get('BLOCKED_EXTERNAL') ?? 0}` +
+          ` unavailable=${byReported.get('UNAVAILABLE_CAPABILITY') ?? 0}\n`,
+      );
+      for (const lane of laneState.lanes) {
+        process.stdout.write(
+          `[validation-universe] lane ${lane.laneId} class=${lane.reportedClass}` +
+            `${lane.revisitDate === null ? '' : ` revisit=${lane.revisitDate}`}\n`,
+        );
+      }
     }
     for (const error of judgement.errors.slice(0, 24)) {
       process.stderr.write(`[validation-universe] ERROR: ${error.code}: ${error.detail}\n`);

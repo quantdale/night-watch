@@ -24,6 +24,10 @@ import { validateProgrammeState } from './lib/programme-state.mjs';
 import {
   inspectLedgerAgreement,
 } from './lib/openspec-ledger.mjs';
+import {
+  collectRevisitDue,
+  loadLaneState,
+} from './lib/validation-lane-state.mjs';
 
 const ACTIVE_STATUSES = new Set(['NONE', 'IN_PROGRESS', 'BLOCKED', 'COMPLETE']);
 const REQUIRED_ACTIVE_FIELDS = [
@@ -994,6 +998,16 @@ export function validate(root, auditMode = false) {
   errors.push(...ledger.errors);
   warnings.push(...ledger.warnings);
   for (const line of ledger.info) console.log(`[agent-ledger] ${line}`);
+
+  // F-02 lane state: a lane record whose revisit date has passed is reported
+  // as due; the record itself is never rewritten here.
+  const laneState = loadLaneState(root);
+  if (laneState.ok) {
+    const today = new Date().toISOString().slice(0, 10);
+    for (const due of collectRevisitDue(laneState.lanes, today)) {
+      warnings.push(`VALIDATION_LANE_REVISIT_DUE: ${due.laneId} revisit ${due.revisitDate}`);
+    }
+  }
 
   // C-00 — repository-global workspace/session integrity. Worktrees isolate
   // HEAD/index/checkout, but info/exclude and hooks are shared, so isolation
