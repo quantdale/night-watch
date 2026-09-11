@@ -76,7 +76,7 @@ function parseArgs(argv) {
 }
 
 function loadTypeScriptModule(root, file) {
-  return loadRuntimeTypeScriptModule(path.join(root, file), { root });
+  return loadRuntimeTypeScriptModule(file, { root });
 }
 
 function makeSnapshotReader(snapshotDir) {

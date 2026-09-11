@@ -17,7 +17,7 @@ function loadTypeScriptModule(file) {
 }
 
 export function readCurrentLocalProvenance() {
-  const helper = loadTypeScriptModule(path.join(root, 'src', 'core', 'provenance', 'localGit.ts'));
+  const helper = loadTypeScriptModule('src/core/provenance/localGit.ts');
   return helper.readLocalNightwatchProvenance({ repositoryRoot: root });
 }
 

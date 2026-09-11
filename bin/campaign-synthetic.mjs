@@ -74,6 +74,20 @@ function deepContainmentLane() {
 
 try {
   const { manifest, files, maxFailedLocations } = loadManifest();
+  // `--validate` is the bounded, contact-free observation surface: it proves
+  // the manifest resolves to a complete, existing, uniquely-named file set
+  // without dispatching Playwright. The default invocation remains the
+  // authoritative campaign.
+  if (process.argv.slice(2).includes('--validate')) {
+    console.log(JSON.stringify({
+      schemaVersion: SCHEMA_VERSION,
+      result: 'VALID',
+      fileCount: files.length,
+      project: manifest.execution.project,
+      workers: manifest.execution.workers,
+      retries: manifest.execution.retries,
+    }));
+  } else {
   const environment = buildChildEnvironment(process.env, { NIGHTWATCH_ENV: 'local', NIGHTWATCH_GATE_ENVIRONMENT: 'SYNTHETIC_CAMPAIGN' });
   environment.TZ = 'UTC';
   environment.LC_ALL = 'C';
@@ -126,6 +140,7 @@ try {
   };
   console.log(JSON.stringify(receipt));
   process.exitCode = result.status === 0 ? 0 : 1;
+  }
 } catch (error) {
   console.error(JSON.stringify({ schemaVersion: SCHEMA_VERSION, result: 'CONFIG_INVALID', code: error instanceof Error ? error.message : 'SYNTHETIC_CAMPAIGN_INVALID' }));
   process.exitCode = 2;

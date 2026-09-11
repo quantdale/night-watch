@@ -13,6 +13,10 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { buildChildEnvironment } from './child-environment.mjs';
 import { validateCampaignCertification } from './lib/campaign-certification.mjs';
+import {
+  findBinsWithoutExecutingTest,
+  verifyCliImplementationContract,
+} from './lib/cli-implementation-contract.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const errors = [];
@@ -807,6 +811,80 @@ function checkSyntax() {
   ].join('\n');
   const result = spawnSync(process.execPath, ['--experimental-vm-modules', '-e', batchedCheck, ...files.map((file) => path.join(root, 'bin', file))], { cwd: root, encoding: 'utf8', timeout: 60_000, maxBuffer: 4 * 1024 * 1024, env: childEnvironment });
   if (result.status !== 0) fail(`node --check failed for bin/: ${(result.stderr ?? '').trim()}`);
+}
+
+/**
+ * F-15 — the CLI-to-implementation contract. Every path a bin hands to the
+ * runtime TypeScript loader must be a string literal, must resolve to a real
+ * module, and every symbol the call site reads must be exported by that module.
+ * The loader's typed declaration is generated from the same call sites, so a
+ * renamed export or a moved module fails here, before any bin executes.
+ */
+function checkCliImplementationContract() {
+  const tracked = gitFiles();
+  const binFiles = tracked.filter((file) => /^bin\/.*\.mjs$/.test(file)).sort();
+  const files = binFiles.map((file) => ({ file, source: read(file) }));
+  const judgement = verifyCliImplementationContract({
+    files,
+    access: {
+      readSource: (relativePath) => {
+        try {
+          return fs.readFileSync(path.join(root, relativePath), 'utf8');
+        } catch {
+          return null;
+        }
+      },
+      fileExists: (relativePath) => fs.existsSync(path.join(root, relativePath)),
+    },
+    readLoaderTypeMap: () => {
+      try {
+        return fs.readFileSync(path.join(root, 'bin', 'lib', 'typescript-runtime-loader.d.mts'), 'utf8');
+      } catch {
+        return null;
+      }
+    },
+  });
+  for (const finding of judgement.findings) {
+    fail(`CLI contract ${finding.code}: ${finding.detail}`);
+  }
+  // A lane that extracted nothing would otherwise report success vacuously.
+  if (judgement.stats.callSites === 0) fail('CLI contract resolved zero loader call sites; the extractor is broken rather than clean');
+  if (judgement.stats.distinctPaths === 0) fail('CLI contract resolved zero module paths; the extractor is broken rather than clean');
+  if (judgement.stats.literalPaths === 0) fail('CLI contract literal scan found zero referenced paths; the scan is broken rather than clean');
+}
+
+/**
+ * F-15 — every top-level entry point is executed as a process by at least one
+ * automated test. Discovery is from the working tree so an untracked new bin
+ * cannot hide from the rule before its first commit; a test that only reads the
+ * bin's text does not count, and a newly added bin with no executing test fails
+ * by name.
+ * @param {string} directory
+ * @param {(name: string) => boolean} predicate
+ * @returns {string[]}
+ */
+function walkWorkingTree(directory, predicate) {
+  /** @type {string[]} */
+  const results = [];
+  for (const entry of fs.readdirSync(path.join(root, directory), { withFileTypes: true })) {
+    const relative = `${directory}/${entry.name}`;
+    if (entry.isDirectory()) results.push(...walkWorkingTree(relative, predicate));
+    else if (predicate(entry.name)) results.push(relative);
+  }
+  return results;
+}
+
+function checkBinExecutionCoverage() {
+  const bins = walkWorkingTree('bin', (name) => name.endsWith('.mjs')).filter((file) => !file.slice('bin/'.length).includes('/'));
+  const tests = walkWorkingTree('tests', (name) => name.endsWith('.ts')).map((file) => ({ file, source: read(file) }));
+  const coverage = findBinsWithoutExecutingTest({ bins, tests });
+  if (coverage.bins.length === 0) {
+    fail('BIN_EXECUTION_COVERAGE_VACUOUS: zero tracked bin entry points discovered');
+    return;
+  }
+  for (const bin of coverage.uncovered) {
+    fail(`BIN_EXECUTION_COVERAGE_MISSING: ${bin} has no test that executes it as a process`);
+  }
 }
 
 function checkPhase23QualityGate() {
@@ -4366,6 +4444,8 @@ checkDecisionIdentityUniqueness();
 checkHostCapabilityMatrix();
 checkValidationUniverse();
 checkSyntax();
+checkCliImplementationContract();
+checkBinExecutionCoverage();
 
 if (errors.length > 0) {
   for (const error of errors) console.error(`[hardening:check] ERROR: ${error}`);

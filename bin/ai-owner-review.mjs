@@ -148,9 +148,9 @@ async function main() {
       return;
     }
     if (parsed.command === 'decide' && (!process.stdin.isTTY || !process.stdout.isTTY)) throw fail('AI_OWNER_REVIEW_INTERACTIVE_REQUIRED');
-    const service = loadTypeScriptModule(path.join(root, 'src', 'core', 'aiReview', 'ownerReview.ts'));
-    const decision = loadTypeScriptModule(path.join(root, 'src', 'core', 'aiReview', 'ownerDecision.ts'));
-    const storage = loadTypeScriptModule(path.join(root, 'src', 'core', 'aiReview', 'storage.ts'));
+    const service = loadTypeScriptModule('src/core/aiReview/ownerReview.ts');
+    const decision = loadTypeScriptModule('src/core/aiReview/ownerDecision.ts');
+    const storage = loadTypeScriptModule('src/core/aiReview/storage.ts');
     await run(parsed, { ...service, ...decision, AiReviewArtifactStore: storage.AiReviewArtifactStore });
   } catch (error) {
     const code = typeof error?.code === 'string' ? error.code : 'AI_REVIEW_STATE_INVALID';

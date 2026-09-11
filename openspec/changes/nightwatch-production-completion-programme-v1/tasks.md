@@ -404,30 +404,30 @@ code-level gaps the second pass found by tracing the implementation
 
 ## 15. CLI-to-implementation contract
 
-- [ ] 15.1 Require a string literal for every `loadTypeScriptModule` /
+- [x] 15.1 Require a string literal for every `loadTypeScriptModule` /
       `loadTypeScriptModules` path; fail the structural rule on a computed path
-- [ ] 15.2 Resolve all 198 referenced `src/**/*.ts` paths; fail on any that
+- [x] 15.2 Resolve all 198 referenced `src/**/*.ts` paths; fail on any that
       does not exist
-- [ ] 15.3 Extract the symbols each call site destructures or reads; fail on
+- [x] 15.3 Extract the symbols each call site destructures or reads; fail on
       any the target module does not export
-- [ ] 15.4 Assert a non-zero resolved call-site count before reporting success
-- [ ] 15.5 Add `tsconfig.bin.json` under `checkJs` with root-equivalent
+- [x] 15.4 Assert a non-zero resolved call-site count before reporting success
+- [x] 15.5 Add `tsconfig.bin.json` under `checkJs` with root-equivalent
       `strict` and `noUncheckedIndexedAccess`; run it in reporting mode with a
       conformance count
-- [ ] 15.6 Give the loader a typed returned shape derived from the target
+- [x] 15.6 Give the loader a typed returned shape derived from the target
       module, so a bin's destructuring is checked rather than `any`
 - [ ] 15.7 Annotate bins in batches until all 62 conform; turn the lane
       blocking; exemptions are declared list entries with reasons that fail
       once the bin passes
-- [ ] 15.8 Add an executing test for each of the twelve untested bins —
+- [x] 15.8 Add an executing test for each of the twelve untested bins —
       `efficacy-corpus`, `frontier-determinism`, `phase22-dev`, `phase22-real`,
       `phase23-ci`, `phase23-dev`, `phase23-predev`, `phase2b-real`,
       `phase9b-real`, `review-mutation-campaign`, `selfdev-provenance`,
       `semantic-compat`
-- [ ] 15.9 For each authorization-gated launcher, assert the fail-closed
+- [x] 15.9 For each authorization-gated launcher, assert the fail-closed
       refusal: refusal code, non-zero exit, and no browser context, subprocess,
       socket or file created
-- [ ] 15.10 Add the rule enumerating tracked bins and failing on one with no
+- [x] 15.10 Add the rule enumerating tracked bins and failing on one with no
       executing test; assert the enumeration is non-vacuous
 - [ ] 15.11 Register both lanes, refresh the digest, full validation, integrate
 

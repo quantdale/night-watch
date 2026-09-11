@@ -135,6 +135,12 @@ function observedRepo(repo) {
 let repositoriesRoot = null;
 
 async function main() {
+  // `--help` is the bounded, side-effect-free observation surface: it prints
+  // usage without compiling, reading sibling metadata, or writing a report.
+  if (process.argv.slice(2).includes('--help') || process.argv.slice(2).includes('-h')) {
+    process.stdout.write('Usage: node bin/change-intelligence.mjs [--help]\nCompiles the local change-intelligence core and writes one sanitized shadow selection report.\n');
+    return;
+  }
   compileCore();
   const sourceBoundary = await import(pathToFileURL(path.join(compileRoot, 'core', 'source', 'siblingSource.js')).href);
   repositoriesRoot = process.env.NIGHTWATCH_REPOS_ROOT ?? sourceBoundary.DEFAULT_SIBLING_ROOT;

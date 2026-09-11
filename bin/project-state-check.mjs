@@ -168,7 +168,7 @@ function gitReadOnly(root, args) {
 }
 
 function loadTypeScriptModule(root, file) {
-  return loadRuntimeTypeScriptModule(path.join(root, file), { root });
+  return loadRuntimeTypeScriptModule(file, { root });
 }
 
 function parseKeyValueBlock(text, heading = BLOCK_SECTION_HEADING, ownedFields = OWNED_PROJECT_STATE_FIELDS) {

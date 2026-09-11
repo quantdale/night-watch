@@ -131,7 +131,7 @@ function main() {
       return;
     }
 
-    const promotionModule = loadTypeScriptModule(path.join(root, 'src', 'core', 'selfDevPromotion', 'index.ts'));
+    const promotionModule = loadTypeScriptModule('src/core/selfDevPromotion/index.ts');
 
     if (parsed.command === 'inspect') {
       const draft = promotionModule.computeCanonicalPromotionIntentDraft({
@@ -196,7 +196,7 @@ function main() {
     const verification = verificationStore.readVerification(parsed.verificationId);
     if (verification.promotionId !== parsed.promotionId) throw new Error('SELFDEV_PROMOTION_ID_MISMATCH');
 
-    const provenanceService = loadTypeScriptModule(path.join(root, 'src', 'core', 'provenance', 'localGit.ts'));
+    const provenanceService = loadTypeScriptModule('src/core/provenance/localGit.ts');
     let currentness = 'CANONICAL_PROMOTION_UNCOMMITTED';
     try {
       const current = provenanceService.currentCheckoutState({ repositoryRoot: root });

@@ -342,6 +342,26 @@ function suitesPass(suites) {
 }
 
 function main() {
+  const argv = process.argv.slice(2);
+  // `--plan` is the bounded, side-effect-free observation surface: it prints
+  // the declared mutation inventory without editing a file or starting a
+  // suite. `npm run mutation:review` (no arguments) remains the full campaign.
+  if (argv.includes('--plan')) {
+    console.log(JSON.stringify({
+      schemaVersion: 'nightwatch.review-mutation-campaign-plan.v1',
+      mutationCount: MUTATIONS.length,
+      behavioural: MUTATIONS.filter((mutation) => mutation.kind === undefined).length,
+      equivalentOrControl: MUTATIONS.filter((mutation) => mutation.kind !== undefined).length,
+      mutations: MUTATIONS.map((mutation) => ({
+        id: mutation.id,
+        title: mutation.title,
+        file: mutation.file,
+        kind: mutation.kind ?? 'BEHAVIOURAL',
+        suites: mutation.suites,
+      })),
+    }, null, 2));
+    return;
+  }
   const receipts = [];
   let introduced = 0;
   let detected = 0;

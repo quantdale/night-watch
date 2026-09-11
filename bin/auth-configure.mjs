@@ -68,7 +68,7 @@ async function main() {
   }
   if (args.length > 0) throw new Error('auth:configure accepts no credential or account arguments');
 
-  const provider = loadTypeScriptModule(path.join(root, 'src', 'auth', 'devCredentialProvider.ts'));
+  const provider = loadTypeScriptModule('src/auth/devCredentialProvider.ts');
   console.log('target-environment=dev');
   console.log(`provider=${provider.DEV_CREDENTIAL_PROVIDER_TYPE}`);
   console.log(`account-alias=${provider.DEV_CREDENTIAL_ACCOUNT_ALIAS}`);

@@ -46,7 +46,7 @@ function printUnexpectedFailure(service, modelIdentifier) {
 async function main() {
   let service;
   try {
-    service = loadTypeScriptModule(path.join(root, 'src', 'core', 'aiReview', 'localCanary.ts'));
+    service = loadTypeScriptModule('src/core/aiReview/localCanary.ts');
   } catch {
     console.error('LOCAL_MODEL_CANARY_NOT_RUN');
     console.error('reason=NOT_RUN_RUNTIME_ABSENT');

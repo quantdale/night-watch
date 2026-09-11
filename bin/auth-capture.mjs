@@ -144,8 +144,8 @@ async function main() {
   }
   printStage({ stage: 'PREFLIGHT', status: 'PASS' });
 
-  const environmentModule = loadTypeScriptModule(path.join(root, 'src', 'core', 'environment', 'index.ts'));
-  const runnerModule = loadTypeScriptModule(path.join(root, 'src', 'auth', 'directRunner.ts'));
+  const environmentModule = loadTypeScriptModule('src/core/environment/index.ts');
+  const runnerModule = loadTypeScriptModule('src/auth/directRunner.ts');
   const environment = environmentModule.selectEnvironment(env);
 
   // This is the parent CLI's terminal, not a Playwright worker's stdin.

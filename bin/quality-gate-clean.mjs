@@ -69,6 +69,13 @@ function emit(receipt, code = 0) {
   process.exitCode = code;
 }
 
+// `--help` is the bounded, side-effect-free observation surface: it prints
+// usage without probing Git, cloning the checkout, or invoking npm.
+if (process.argv.slice(2).includes('--help') || process.argv.slice(2).includes('-h')) {
+  console.log('Usage: node bin/quality-gate-clean.mjs [--help]');
+  console.log('Qualifies a pristine checkout: local clone, npm ci --ignore-scripts, then the authoritative gate.');
+} else {
+
 const headResult = git(['rev-parse', 'HEAD'], root);
 const statusResult = git(['status', '--porcelain'], root);
 const head = headResult.status === 0 ? headResult.stdout.trim() : null;
@@ -184,4 +191,6 @@ if (!head || statusResult.status !== 0 || statusResult.stdout.trim() !== '') {
   } finally {
     fs.rmSync(clone, { recursive: true, force: true });
   }
+}
+
 }

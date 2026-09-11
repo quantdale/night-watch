@@ -50,6 +50,18 @@ function loadManifest() {
 
 try {
   const { manifest, files } = loadManifest();
+  // `--validate` is the bounded, contact-free observation surface: it proves
+  // the manifest resolves to a complete 9..26 phase cone without dispatching
+  // Playwright. The default invocation remains the full compatibility lane.
+  if (process.argv.slice(2).includes('--validate')) {
+    console.log(JSON.stringify({
+      schemaVersion: manifest.schemaVersion,
+      result: 'VALID',
+      phaseRange: manifest.requiredPhaseRange,
+      phaseCount: manifest.phaseSuites.length,
+      fileCount: files.length,
+    }));
+  } else {
   const environment = buildChildEnvironment(process.env, { NIGHTWATCH_ENV: 'local', NIGHTWATCH_GATE_ENVIRONMENT: 'COMPATIBILITY' });
   environment.TZ = 'UTC';
   environment.LC_ALL = 'C';
@@ -91,6 +103,7 @@ try {
   };
   console.log(JSON.stringify(receipt));
   process.exitCode = result.status === 0 ? 0 : 1;
+  }
 } catch (error) {
   console.error(JSON.stringify({ schemaVersion: 'nightwatch.semantic-compatibility.v1', result: 'CONFIG_INVALID', code: error instanceof Error ? error.message : 'SEMANTIC_COMPATIBILITY_INVALID' }));
   process.exitCode = 2;

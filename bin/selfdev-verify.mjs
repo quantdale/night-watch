@@ -53,8 +53,8 @@ function main() {
       return;
     }
 
-    const storage = loadTypeScriptModule(path.join(root, 'src', 'core', 'selfDev', 'storage.ts'));
-    const trust = loadTypeScriptModule(path.join(root, 'src', 'core', 'selfDev', 'trust.ts'));
+    const storage = loadTypeScriptModule('src/core/selfDev/storage.ts');
+    const trust = loadTypeScriptModule('src/core/selfDev/trust.ts');
     const stored = new storage.SelfDevPrivateArtifactStore({ readOnly: true }).readSessionArtifact(parsed.artifactId);
     if (stored.kind === 'LEGACY_V1') {
       console.log(JSON.stringify({
@@ -71,7 +71,7 @@ function main() {
       return;
     }
 
-    const provenanceService = loadTypeScriptModule(path.join(root, 'src', 'core', 'provenance', 'localGit.ts'));
+    const provenanceService = loadTypeScriptModule('src/core/provenance/localGit.ts');
     let current;
     try {
       current = provenanceService.currentCheckoutState({ repositoryRoot: root });

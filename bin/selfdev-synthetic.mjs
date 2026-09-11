@@ -37,11 +37,11 @@ function main() {
       usage();
       return;
     }
-    const provenanceService = loadTypeScriptModule(path.join(root, 'src', 'core', 'provenance', 'localGit.ts'));
+    const provenanceService = loadTypeScriptModule('src/core/provenance/localGit.ts');
     const provenance = provenanceService.readLocalNightwatchProvenance({ repositoryRoot: root });
-    const service = loadTypeScriptModule(path.join(root, 'src', 'core', 'selfDev', 'controller.ts'));
+    const service = loadTypeScriptModule('src/core/selfDev/controller.ts');
     const report = service.runSyntheticSelfDevSession({ provenance });
-    const trustService = loadTypeScriptModule(path.join(root, 'src', 'core', 'selfDev', 'trust.ts'));
+    const trustService = loadTypeScriptModule('src/core/selfDev/trust.ts');
     const { privateArtifact: _privateArtifact, ...artifact } = report;
     const assessment = trustService.assessSelfDevArtifactIntegrity(artifact, provenanceService.currentCheckoutState({ repositoryRoot: root }));
     if (assessment.trustStatus !== 'VERIFIED_EXACT_BASE' || assessment.replayStatus !== 'PASS') throw new Error('SELFDEV_TRUST_ASSESSMENT_FAILED');
@@ -50,8 +50,8 @@ function main() {
     const rejectedCount = report.evaluations.length - passCount - duplicateCount;
     // Phase 8B.1.0 diagnostics: re-derive the live portfolio selection with the
     // same live adopted state the controller just used. Purely read-only.
-    const portfolioService = loadTypeScriptModule(path.join(root, 'src', 'core', 'selfDev', 'portfolio.ts'));
-    const adoptedService = loadTypeScriptModule(path.join(root, 'src', 'core', 'selfDev', 'adoptedCases.ts'));
+    const portfolioService = loadTypeScriptModule('src/core/selfDev/portfolio.ts');
+    const adoptedService = loadTypeScriptModule('src/core/selfDev/adoptedCases.ts');
     const selection = portfolioService.selectNextSyntheticProposalVariant({
       adoptedEquivalentFingerprints: adoptedService.selfDevAdoptedEquivalentFingerprints(),
       adoptedCoverageClasses: adoptedService.selfDevAdoptedCoverageClasses(),

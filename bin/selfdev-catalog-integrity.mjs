@@ -81,7 +81,7 @@ function main() {
     fail('SELFDEV_CATALOG_INTEGRITY_ARRAY_LITERAL_MISSING');
   }
 
-  const adoptedCasesModule = loadTypeScriptModule(path.join(root, 'src/core/selfDev/adoptedCases.ts'));
+  const adoptedCasesModule = loadTypeScriptModule('src/core/selfDev/adoptedCases.ts');
   const validated = adoptedCasesModule.validateAdoptedCatalog(adoptedCasesModule.SELFDEV_ADOPTED_CASES);
   const rendered = adoptedCasesModule.renderAdoptedCatalogSource(validated);
   if (bytes !== rendered) fail('SELFDEV_CATALOG_INTEGRITY_RENDERER_MISMATCH');

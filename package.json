@@ -12,6 +12,8 @@
     "test:unit": "NODE_OPTIONS=--expose-gc playwright test tests/unit",
     "test:smoke": "playwright test tests/smoke",
     "typecheck": "tsc --noEmit",
+    "typecheck:bin": "node bin/bin-typecheck.mjs",
+    "typecheck:bin:write": "node bin/bin-typecheck.mjs --write",
     "hardening:check": "node bin/hardening-check.mjs",
     "handoff:check": "node bin/planner-handoff-check.mjs",
     "quality-gate:spec": "node bin/quality-gate-spec.mjs",

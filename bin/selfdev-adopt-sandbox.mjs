@@ -71,8 +71,8 @@ function main() {
       return;
     }
 
-    const provenanceService = loadTypeScriptModule(path.join(root, 'src', 'core', 'provenance', 'localGit.ts'));
-    const sandbox = loadTypeScriptModule(path.join(root, 'src', 'core', 'selfDevSandbox', 'index.ts'));
+    const provenanceService = loadTypeScriptModule('src/core/provenance/localGit.ts');
+    const sandbox = loadTypeScriptModule('src/core/selfDevSandbox/index.ts');
     const current = provenanceService.currentCheckoutState({ repositoryRoot: root });
 
     if (parsed.command === 'inspect') {
