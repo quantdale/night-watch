@@ -12,10 +12,11 @@ Last validated implementation SHA: 88e3c3fb52937ff303b0944cc22cfee624bf807e
 Last substantive checkpoint SHA: 88e3c3fb52937ff303b0944cc22cfee624bf807e
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
-Branch: session/nightwatch-production-completion-programme-v1
-Last checkpoint: planning checkpoint created at `36bd493`; the OpenSpec
-change, this task directory and the READY_FOR_EXECUTION handoff are being
-committed before the owned session starts.
+Branch: session/nightwatch-production-completion-3d648499
+Last checkpoint: planning checkpoint integrated at `fe6226a`; owned session
+`nightwatch-production-completion-3d648499` created from that base and
+claimed as `sess-506a5055dcc2`; `session:status` verdict PASS with
+`class=OWNED_SESSION`.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 36bd4930db978423f97e16f35250c2e66bfa112c
@@ -49,9 +50,11 @@ begin G1.1 baseline recording and the ledger reconciliation.
 
 ## Work In Progress
 
-Planning checkpoint files are authored in the canonical checkout and not yet
-committed: the OpenSpec programme change, this task directory, and the
-rewritten `.agent/EXECUTION_PROMPT.md`. No implementation work has begun.
+G1.1 execution truth is complete: the campaign task directory, routing block
+and handoff exist; the planning checkpoint is integrated at `fe6226a`; and
+the owned session is claimed as `sess-506a5055dcc2` with `session:status`
+verdict PASS. The baseline record (G1.1) and the G1.2 pairing measurement are
+the active work; no implementation change has landed yet.
 
 ## Exact Next Action
 

@@ -1,7 +1,7 @@
 # EXECUTION PROMPT — Nightwatch production completion programme
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
-Status: READY_FOR_EXECUTION
+Status: IN_PROGRESS
 Campaign ID: nightwatch-production-completion-programme-v1
 OpenSpec: openspec/changes/nightwatch-production-completion-programme-v1/
 Planned-From: 36bd4930db978423f97e16f35250c2e66bfa112c
