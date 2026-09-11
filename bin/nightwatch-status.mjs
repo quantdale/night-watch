@@ -21,6 +21,7 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadTypeScriptModules as loadRuntimeTypeScriptModules } from './lib/typescript-runtime-loader.mjs';
+import { collectOpenWorkInput } from './lib/openspec-ledger.mjs';
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -29,16 +30,23 @@ function loadTypeScriptModules(root, files) {
 }
 
 try {
-  const [repoState, localReadiness] = loadTypeScriptModules(REPO_ROOT, [
+  const [repoState, localReadiness, openWork] = loadTypeScriptModules(REPO_ROOT, [
     'src/core/readiness/repoState.ts',
     'src/core/readiness/localReadiness.ts',
+    'src/core/readiness/openWork.ts',
   ]);
   const input = repoState.collectLocalReadinessInputFromRepo();
   const summary = localReadiness.summarizeLocalReadiness(input);
+  // G1: one derived open-work report, net of DECLARED_NOT_IN_SCOPE entries.
+  const openWorkReport = openWork.deriveOpenWorkReport(collectOpenWorkInput(REPO_ROOT));
   const asJson = process.argv.slice(2).includes('--json');
-  process.stdout.write(
-    asJson ? localReadiness.renderLocalReadinessJson(summary) : localReadiness.renderLocalReadinessText(summary),
-  );
+  if (asJson) {
+    process.stdout.write(`${JSON.stringify({ ...summary, openWork: openWorkReport }, null, 2)}\n`);
+  } else {
+    process.stdout.write(
+      `${localReadiness.renderLocalReadinessText(summary)}${openWork.renderOpenWorkText(openWorkReport)}`,
+    );
+  }
   process.exitCode =
     summary.category === 'READY_LOCAL_SYNTHETIC' || summary.category === 'NOT_APPLICABLE' ? 0 : 1;
 } catch {

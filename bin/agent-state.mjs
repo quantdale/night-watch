@@ -21,6 +21,9 @@ import {
 } from './agent-continuity-protocol.mjs';
 import { inspectWorkspace } from './workspace-integrity.mjs';
 import { validateProgrammeState } from './lib/programme-state.mjs';
+import {
+  inspectLedgerAgreement,
+} from './lib/openspec-ledger.mjs';
 
 const ACTIVE_STATUSES = new Set(['NONE', 'IN_PROGRESS', 'BLOCKED', 'COMPLETE']);
 const REQUIRED_ACTIVE_FIELDS = [
@@ -702,156 +705,6 @@ export function classifySha(root, recordedSha, suppliedHead = null) {
 }
 
 /**
- * F-01 completion-ledger truth. Compare each OpenSpec change's checkbox
- * ledger with its continuity-v2 task state in the direction that can be
- * false: a terminal task (COMPLETE/BLOCKED) must not leave unchecked
- * non-strikethrough boxes, and a change without a task or a task without a
- * change is reported rather than silently skipped. Strikethrough entries
- * (`- [ ] ~~…~~`) are deliberately declared out of scope (`DECLARED_NOT_IN_SCOPE`)
- * and never count as open work. Read-only: never rewrites a ledger.
- */
-const LEDGER_TERMINAL_STATUSES = new Set(['COMPLETE', 'BLOCKED']);
-const LEDGER_OPEN_LINE_RE = /^\s*-\s*\[ \]\s*(.*)$/;
-const LEDGER_DONE_LINE_RE = /^\s*-\s*\[[xX]\]/;
-const LEDGER_ARCHIVE_DATE_PREFIX_RE = /^\d{4}-\d{2}-\d{2}-/;
-
-export function parseLedgerTasks(tasksText) {
-  const lines = String(tasksText ?? '').split(/\r?\n/);
-  const open = [];
-  let done = 0;
-  let declaredNotInScope = 0;
-  for (let index = 0; index < lines.length; index += 1) {
-    const line = lines[index];
-    const openMatch = LEDGER_OPEN_LINE_RE.exec(line);
-    if (openMatch) {
-      // A strikethrough entry may wrap across continuation lines; classify the
-      // whole entry, not just its first physical line.
-      let entryText = openMatch[1];
-      let cursor = index + 1;
-      while (
-        cursor < lines.length
-        && /^\s+/.test(lines[cursor])
-        && !/^\s*-\s*\[/.test(lines[cursor])
-        && !/^\s*#/.test(lines[cursor])
-      ) {
-        entryText += `\n${lines[cursor]}`;
-        cursor += 1;
-      }
-      if (/~~[\s\S]*?~~/.test(entryText)) declaredNotInScope += 1;
-      else open.push({ line: index + 1, text: openMatch[1].trim().slice(0, 160) });
-      continue;
-    }
-    if (LEDGER_DONE_LINE_RE.test(line)) done += 1;
-  }
-  return { open, done, declaredNotInScope };
-}
-
-function readLedgerFile(file) {
-  try {
-    const stat = fs.lstatSync(file);
-    if (!stat.isFile()) return null;
-    return fs.readFileSync(file, 'utf8');
-  } catch {
-    return null;
-  }
-}
-
-export function inspectLedgerAgreement(root) {
-  const errors = [];
-  const warnings = [];
-  const info = [];
-  const changesRoot = path.join(root, 'openspec', 'changes');
-  let changeEntries = [];
-  try {
-    changeEntries = fs.readdirSync(changesRoot, { withFileTypes: true });
-  } catch {
-    return { errors, warnings, info };
-  }
-  const changeIds = [];
-  const archivedIds = new Set();
-  for (const entry of changeEntries) {
-    if (!entry.isDirectory()) continue;
-    if (entry.name === 'archive') {
-      let archived = [];
-      try {
-        archived = fs.readdirSync(path.join(changesRoot, 'archive'), { withFileTypes: true });
-      } catch {
-        archived = [];
-      }
-      for (const item of archived) {
-        if (item.isDirectory()) archivedIds.add(item.name.replace(LEDGER_ARCHIVE_DATE_PREFIX_RE, ''));
-      }
-      continue;
-    }
-    if (readLedgerFile(path.join(changesRoot, entry.name, 'tasks.md')) === null) continue;
-    changeIds.push(entry.name);
-  }
-  for (const changeId of changeIds.sort()) {
-    const text = readLedgerFile(path.join(changesRoot, changeId, 'tasks.md')) ?? '';
-    const { open, done, declaredNotInScope } = parseLedgerTasks(text);
-    const stateText = readLedgerFile(path.join(root, '.agent', 'tasks', changeId, 'STATE.md'));
-    if (stateText === null) {
-      warnings.push(
-        `LEDGER_CHANGE_WITHOUT_TASK: change ${changeId} has no .agent/tasks/${changeId}/STATE.md (open=${open.length} declared_not_in_scope=${declaredNotInScope} done=${done})`
-      );
-      continue;
-    }
-    const fields = parseKeyValueFile(stateText);
-    const taskStatus = normalizeTaskStatus(fields.get('Status'));
-    if (fields.get('CONTINUITY_PROTOCOL_VERSION') !== PROTOCOL_V2) {
-      warnings.push(
-        `LEDGER_LEGACY_CHANGE: change ${changeId} pairs with a legacy v1 task record; terminal inference is not applied (open=${open.length})`
-      );
-      continue;
-    }
-    if (LEDGER_TERMINAL_STATUSES.has(taskStatus) && open.length > 0) {
-      const lines = open.map((entry) => entry.line).join(', ');
-      errors.push(
-        `LEDGER_TERMINAL_TASK_HAS_OPEN_ITEMS: change ${changeId} pairs with task ${changeId} (Status: ${taskStatus}) but tasks.md leaves ${open.length} unchecked non-declared entr${open.length === 1 ? 'y' : 'ies'} at line${open.length === 1 ? '' : 's'} ${lines}`
-      );
-    } else if (!LEDGER_TERMINAL_STATUSES.has(taskStatus)) {
-      info.push(
-        `LEDGER_OPEN_ITEMS: change ${changeId} task=${taskStatus ?? 'UNKNOWN'} open=${open.length} declared_not_in_scope=${declaredNotInScope} done=${done}`
-      );
-    }
-  }
-  const tasksRoot = path.join(root, '.agent', 'tasks');
-  let taskEntries = [];
-  try {
-    taskEntries = fs.readdirSync(tasksRoot, { withFileTypes: true });
-  } catch {
-    taskEntries = [];
-  }
-  const changeSet = new Set(changeIds);
-  const orphanV2 = [];
-  let orphanLegacy = 0;
-  for (const entry of taskEntries) {
-    if (!entry.isDirectory()) continue;
-    if (changeSet.has(entry.name) || archivedIds.has(entry.name)) continue;
-    const stateText = readLedgerFile(path.join(tasksRoot, entry.name, 'STATE.md'));
-    if (stateText === null) {
-      orphanLegacy += 1;
-      continue;
-    }
-    const fields = parseKeyValueFile(stateText);
-    if (fields.get('CONTINUITY_PROTOCOL_VERSION') === PROTOCOL_V2) orphanV2.push(entry.name);
-    else orphanLegacy += 1;
-  }
-  for (const id of orphanV2.slice(0, 32)) {
-    warnings.push(`LEDGER_TASK_WITHOUT_CHANGE: task ${id} has no openspec/changes/${id}`);
-  }
-  if (orphanV2.length > 32) {
-    warnings.push(`LEDGER_TASK_WITHOUT_CHANGE: ${orphanV2.length - 32} additional v2 orphan task(s) not listed`);
-  }
-  if (orphanLegacy > 0) {
-    warnings.push(
-      `LEDGER_TASK_WITHOUT_CHANGE: ${orphanLegacy} legacy v1/historical task directories have no matching OpenSpec change`
-    );
-  }
-  return { errors, warnings, info };
-}
-
-/**
  * History audit of every `.agent/tasks/<dir>`.
  * - v2 tasks (STATE declares nightwatch.agent-continuity.v2) are strictly
  *   validated (semantics + Git continuity anchors); any error is fatal.
@@ -1179,4 +1032,4 @@ function main() {
   console.log(`[agent-check] PASS${result.warnings.length > 0 ? ` with ${result.warnings.length} warning${result.warnings.length === 1 ? '' : 's'}` : ''}: ${root}`);
 }
 
-main();
+if (typeof process.argv[1] === 'string' && path.basename(process.argv[1]) === 'agent-state.mjs') main();
