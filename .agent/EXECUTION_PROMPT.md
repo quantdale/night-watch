@@ -1,141 +1,109 @@
-# EXECUTION PROMPT — Control Center Style and Absence Truth
+# EXECUTION PROMPT — Nightwatch production completion programme
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
-Status: COMPLETE
-Campaign ID: nightwatch-control-center-style-and-absence-truth-v1
-OpenSpec: openspec/changes/nightwatch-control-center-style-and-absence-truth-v1/
-Planned-From: d904dc96156f8376c772e6c43a75ce8cde3fad04
+Status: READY_FOR_EXECUTION
+Campaign ID: nightwatch-production-completion-programme-v1
+OpenSpec: openspec/changes/nightwatch-production-completion-programme-v1/
+Planned-From: 36bd4930db978423f97e16f35250c2e66bfa112c
 Target Branch: main
-Predecessor Task ID: nightwatch-control-center-render-truth-v1
+Predecessor Task ID: nightwatch-control-center-style-and-absence-truth-v1
 Predecessor Status: COMPLETE
-
-Task directory: `.agent/tasks/nightwatch-control-center-style-and-absence-truth-v1`
-Live HEAD: discover from Git; never trust a stale SHA in prose.
 
 ## Mission
 
-The render-truth campaign left three verification limits and recon found a
-real divergence behind them. The stylesheet guard excludes seven
-interpolation prefixes and asserts three concrete families, so `status-*` and
-`stage-*` are unasserted. The built composition has no runtime proof that a
-class applies beyond four selectors. The render harness never empties an
-array, so an empty collection can look like a short one. And the system map
-builds tone classes from a 13-value vocabulary that cannot match its four
-stylesheet rules.
-
-Assert the produced families and state base-only values; prove computed
-effect for every class the composition renders; add an absence pass for every
-array field; and remove the map's inert tone classes and dead rules.
-
-This is a bounded, single-package campaign. It adds no route, authority or
-data, and no pixel changes.
+Execute the bounded 21-group programme in
+`openspec/changes/nightwatch-production-completion-programme-v1/tasks.md`.
+The programme closes the record-level gaps F-01 … F-12 and the code-level
+gaps F-13 … F-21 identified in `audit.md`: ledger truth and the spec
+baseline; validation lane state; CI authority; a CLI contract; evidence
+hygiene; workspace drift; documentation currency; Control Center residual
+truth; supply-chain currency; deployment fact acquisition; contained DEV
+semantic acceptance; autonomous yield; a release definition; dead
+architecture; the CLI-to-implementation contract; structural rule soundness;
+schema lifecycle; error taxonomy rendering; configuration contract and UI
+decomposition; accessibility certification; and authenticated capability
+lifecycle.
 
 ## Read first
 
-1. `openspec/changes/nightwatch-control-center-style-and-absence-truth-v1/audit.md`
-2. `.agent/tasks/nightwatch-control-center-style-and-absence-truth-v1/{SPEC,PLAN,STATE}.md`
-3. `.agent/ACTIVE_TASK.md`, `AGENTS.md`, `.agent/PLANS.md`
-4. `docs/ARCHITECTURE.md` for the Control Center boundary, then live
-   Git/workspace/session truth
-
-## Re-establish truth before implementation
-
-The audit's numbers are measurements, not permissions. Before changing
-anything, determine independently: live `HEAD` and `origin/main`; all
-worktrees, session claims and C-00 ownership; and whether each finding still
-holds. Where live evidence contradicts the audit, the live evidence wins;
-record the contradiction and its resolution.
+1. `openspec/changes/nightwatch-production-completion-programme-v1/audit.md`
+2. `openspec/changes/nightwatch-production-completion-programme-v1/tasks.md`
+3. `.agent/tasks/nightwatch-production-completion-programme-v1/{SPEC,PLAN,STATE}.md`
+4. `AGENTS.md`, `.agent/PLANS.md`, `docs/CURRENT_STATE.md`,
+   `docs/SAFETY_MODEL.md`, `docs/DECISIONS.md`, `docs/ROADMAP.md`
+5. Live Git/workspace/session truth before any change.
 
 ## Ordered workstreams
 
-1. **M0 — execution truth.** Owned session on the current base, workspace
-   verdict PASS, predecessor re-verified terminal COMPLETE and untouched,
-   planning route committed.
-2. **M1 — A-01 and A-04.** Assert the `status-*` and `stage-*` concrete
-   families with intentional base-only values stated; confirm the map tone
-   divergence in the built composition; remove the inert interpolation and
-   dead tone rules.
-3. **M2 — A-02.** Browser-lane computed-effect check: toggle each class on
-   its carrying element, compare computed styles, restore; a reasoned
-   base-only list is asserted in both directions.
-4. **M3 — A-03.** Generator records every array; the absence pass empties
-   each one and requires the owning view's DOM to change, with a reasoned
-   exemption list and a mutation proof.
-5. **M4 — registration and validation.** UI_LANE registration if needed,
-   digest refresh, UI typecheck/tests/build, root typecheck,
-   `hardening:check`, `validation:universe`.
-6. **M5 — certification.** `gate:local` and the full offline regression at
-   the implementation checkpoint, docs reconciliation, fast-forward
-   integration, session release.
+1. G1 ledger truth, then G2 validation lane state.
+2. G14 dead architecture, then G15 CLI contract, G16 rule soundness,
+   G17 schema lifecycle — in that order for the stated dependencies.
+3. G3, G4, G5, G6, G7, G9, G20, G21 as independent surfaces.
+4. G19, then G8, then G18 — all three touch the Control Center.
+5. G10, G11, G12 as their owner decisions land.
+6. G13 last by construction.
+
+Each group: implement, register its checks, run its focused validation, tick
+only what has evidence, integrate by fast-forward, continue.
 
 ## Constraints
 
 ```
-CAMPAIGN: nightwatch-control-center-style-and-absence-truth-v1
+CAMPAIGN: nightwatch-production-completion-programme-v1
 CHILD TASK: NONE
 WAVE: NONE
-SESSION WORKTREE: session/nightwatch-control-center-style--5e5ddb63
 
 IMPLEMENTATION AUTHORIZED:
-  ui/control-center source/tests/styles,
-  tests/browser/controlCenterBrowser.browser.ts,
-  config/validation-universe.v1.json UI_LANE registration,
-  Nightwatch docs/OpenSpec/task state,
-  the four registered findings A-01 through A-04,
-  commits and local certification from the owned session.
+  the file surface named by each group in the OpenSpec change.
 
-REAL PRODUCTION CONTACT:            NOT AUTHORIZED
-NEW API ROUTE / ADAPTER / AUTHORITY: NOT AUTHORIZED
-SERVER-SIDE BOUND OR SANITIZER CHANGE: NOT AUTHORIZED
-NEXT / DEV EXECUTION:               NOT AUTHORIZED
-NETWORK EGRESS:                     NOT AUTHORIZED
-SLACK / LESLIE / PONDR / NOTION:    NOT AUTHORIZED
-EXTERNAL FILING:                    NOT AUTHORIZED
-CREDENTIALS / DEPLOYMENT:           NOT AUTHORIZED
-SIBLING WRITES:                     NOT AUTHORIZED
-FORCE PUSH / HISTORY REWRITE:       NOT AUTHORIZED
-REOPENING R-01..R-04:               NOT AUTHORIZED
+REAL PRODUCTION CONTACT:               NOT AUTHORIZED
+NEW API ROUTE / ADAPTER / AUTHORITY:   NOT AUTHORIZED
+NEXT / DEV EXECUTION:                  NOT AUTHORIZED unless a group's own
+                                       owner decision explicitly grants it
+NETWORK EGRESS / ADVISORY SCAN:        NOT AUTHORIZED unless G9's owner
+                                       decision explicitly grants one query
+SLACK / LESLIE / PONDR / NOTION:       NOT AUTHORIZED
+EXTERNAL FILING:                       NOT AUTHORIZED
+CREDENTIALS / DEPLOYMENT:              NOT AUTHORIZED
+SIBLING WRITES:                        NOT AUTHORIZED
+FORCE PUSH / HISTORY REWRITE:          NOT AUTHORIZED
+REOPENING A-01..A-04 OR R-01..R-04:    NOT AUTHORIZED
 ```
 
-LOCAL only. The UI gains no authority it lacked. No pixel changes: A-04
-removes classes and rules that never applied. Owner-local findings, raw
-evidence, source text, paths, credentials and traces stay outside the
-boundary.
-
-C-00 governs all writers: one writing agent == one owned worktree == one
-session identity. The canonical checkout is not an implementation worktree.
+LOCAL only. Sibling repositories remain read-only. The permanent owner scope
+freeze, the fail-closed egress policy, the C-10 privacy firewall, D-4
+production unloadability and the C-00 protocol are unchanged. Never retire,
+prune, adopt or edit another session; the foreign
+`nightwatch-repository-hardening--e7b9be89` session is untouched.
 
 ## Validation
 
-- `npm --prefix ui/control-center run typecheck`
-- `npm --prefix ui/control-center run test`
-- `npm --prefix ui/control-center run build`
-- `npm run typecheck`
-- `node bin/hardening-check.mjs`
-- `npm run validation:universe`
-- `npm run control-center:ui:browser`
-- `npm test` (full offline regression at certification)
-- `npm run gate:local` from the owned session
+- Root: `npm run typecheck`, `node bin/hardening-check.mjs`,
+  `npm run project:check`, `npm run agent:check`,
+  `npm run validation:universe`, `npm run workspace:check`,
+  `npm run handoff:check`, `npm run gate:local`.
+- UI: `npm --prefix ui/control-center run typecheck|test|build`.
+- Browser: `npm run control-center:ui:browser`.
+- Full offline regression: `npm test` at the programme checkpoint.
+- OpenSpec: `openspec validate --all`, `openspec list --specs`.
+- Each group's own new lane as specified in `tasks.md`.
 
 ## Acceptance and completion gates
 
-- Every produced family value is asserted or declared base-only with a
-  reason; deleting a live family rule fails the guard.
-- The runtime check proves computed effect for every rendered class, with a
-  reasoned base-only list that fails in both directions.
-- Emptying every array changes its view's DOM or is exempt with a reason; the
-  pass is non-vacuous and mutation-proven.
-- The map carries no impossible tone class and no tone rule for an impossible
-  value remains.
-- `gate:local` PASS from the owned session, task and project state reconciled
-  to the checkpoint, integrated by fast-forward with `HEAD == origin/main`.
+- Every task box is ticked with evidence or recorded with its exact
+  blocking class, owner action and revisit condition; a terminal change has
+  no open boxes that are actually done.
+- `openspec validate --all` exits zero; `openspec/specs/` is non-empty.
+- Every new check is registered and negative-probed; no test suppression.
+- `gate:local` PASS from the owned session at the programme checkpoint; the
+  full offline regression passes; project and task truth reconcile to the
+  checkpoint; integration is fast-forward with `HEAD == origin/main`.
 
 ## Git and reporting
 
-Commit the implementation checkpoint from the owned session, run `gate:local`
-at that checkpoint, then reconcile `STATE.md`, `.agent/ACTIVE_TASK.md`, this
-prompt and `docs/` to its result in a second checkpoint. Integrate by
-fast-forward push to `origin main` from the session worktree and verify
-`HEAD == origin/main`. A rejected push means stop and reconcile; never
-force-push. Write `REPORT.md` at closure with residual work, owner decisions,
+Commit per group from the owned session worktree, validate, integrate by
+fast-forward push, verify `HEAD == origin/main`, and keep
+`.agent/tasks/nightwatch-production-completion-programme-v1/STATE.md`
+current at every milestone. A rejected push means stop and reconcile; never
+force-push. Fill `REPORT.md` at closure with residual work, owner decisions,
 safety events and honest limits.
