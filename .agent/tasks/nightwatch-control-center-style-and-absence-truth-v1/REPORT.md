@@ -2,7 +2,7 @@
 
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 Task ID: nightwatch-control-center-style-and-absence-truth-v1
-Status: IN_PROGRESS
+Status: COMPLETE
 
 Evidence ledger for this campaign. It records what was actually run and
 observed, not what was intended. Receipts are written as they are produced.
@@ -75,7 +75,18 @@ after the header was bumped to the day its last change actually landed.
 
 ## M5 — certification
 
-_To be filled during execution._
+`gate:local` returned all eleven groups PASS at the implementation commit
+`88e3c3f`, receipt `receipt:sha256:7945d6ad715fab8479e36d2a`:
+SEMANTIC_COMPATIBILITY 2083/2070/13/0, OWNER_PROVENANCE 91,
+SYNTHETIC_CAMPAIGN 1797/1797/0 with `deepContainmentLane: PROVEN`. The full
+offline regression passed 4789 / 18 skipped / 0 failed in 11.8 minutes,
+identical to the campaign's starting baseline.
+
+## Integration
+
+Performed by fast-forward from the owned session per the campaign's Git and
+reporting contract, with `HEAD == origin/main` verified after the push
+(`SESSION_INTEGRATED`). No force, no history rewrite.
 
 ## Safety events
 

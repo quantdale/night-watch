@@ -142,7 +142,7 @@ invented and no pixel changes.
 
 ### M5 — certification
 
-- **Status:** IN_PROGRESS
+- **Status:** COMPLETE
 - Objective: `gate:local` and the full offline regression at the
   implementation checkpoint, documentation reconciliation, fast-forward
   integration, session release.

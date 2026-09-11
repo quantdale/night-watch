@@ -6,26 +6,26 @@ STATE — nightwatch-control-center-style-and-absence-truth-v1
 
 Task ID: nightwatch-control-center-style-and-absence-truth-v1
 Phase: CONTROL_CENTER_STYLE_AND_ABSENCE_TRUTH_V1
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: d904dc96156f8376c772e6c43a75ce8cde3fad04
-Last validated implementation SHA: d904dc96156f8376c772e6c43a75ce8cde3fad04
-Last substantive checkpoint SHA: d904dc96156f8376c772e6c43a75ce8cde3fad04
+Last validated implementation SHA: 88e3c3fb52937ff303b0944cc22cfee624bf807e
+Last substantive checkpoint SHA: 88e3c3fb52937ff303b0944cc22cfee624bf807e
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-control-center-style--5e5ddb63
-Last checkpoint: M0 execution truth COMPLETE; the owned session
-`nightwatch-control-center-style--5e5ddb63` is claimed as
-`sess-d0b803f0afbe` on base
-`d904dc96156f8376c772e6c43a75ce8cde3fad04`, `session:status` verdict PASS,
-and the predecessor is verified terminal COMPLETE and untouched.
+Last checkpoint: M5 certification COMPLETE at implementation `88e3c3fb52937ff303b0944cc22cfee624bf807e`;
+`gate:local` all eleven groups PASS at that checkpoint with receipt
+`receipt:sha256:7945d6ad715fab8479e36d2a`, and a full offline regression
+passed 4789 / 18 skipped / 0 failed. A-01 through A-04 are CLOSED with
+acceptance evidence.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: d904dc96156f8376c772e6c43a75ce8cde3fad04
-LAST_VALIDATED_IMPLEMENTATION_SHA: d904dc96156f8376c772e6c43a75ce8cde3fad04
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: d904dc96156f8376c772e6c43a75ce8cde3fad04
+LAST_VALIDATED_IMPLEMENTATION_SHA: 88e3c3fb52937ff303b0944cc22cfee624bf807e
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 88e3c3fb52937ff303b0944cc22cfee624bf807e
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
-PHASE_CONTROL_CENTER_STYLE_AND_ABSENCE_TRUTH_V1_STATUS: IN_PROGRESS
+PHASE_CONTROL_CENTER_STYLE_AND_ABSENCE_TRUTH_V1_STATUS: COMPLETE
 
 ## Objective
 
@@ -35,14 +35,25 @@ system map's tone classes and rules that cannot match each other.
 
 ## Current Milestone
 
+COMPLETE — M5 closed; the campaign is finished.
 Milestone ID: M5
-Milestone status: IN_PROGRESS
-What is being attempted: certification — `gate:local` and the full offline
-regression at the implementation checkpoint, documentation reconciliation,
-fast-forward integration and session release.
+Milestone status: COMPLETE
+What is being attempted: NOTHING. The campaign is closed. A-01 through A-04
+are CLOSED with acceptance evidence; `gate:local` returned all eleven groups
+PASS at implementation `88e3c3fb52937ff303b0944cc22cfee624bf807e` with
+receipt `receipt:sha256:7945d6ad715fab8479e36d2a`, and the full offline
+regression is 4789 passed / 18 skipped / 0 failed.
 
 ## Completed Milestones
 
+- **M5 COMPLETE** — certification at implementation `88e3c3fb52937ff303b0944cc22cfee624bf807e`. `gate:local`
+  all eleven groups PASS with receipt
+  `receipt:sha256:7945d6ad715fab8479e36d2a`;
+  SEMANTIC_COMPATIBILITY 2083/2070/13/0, OWNER_PROVENANCE 91,
+  SYNTHETIC_CAMPAIGN 1797/1797/0 with `deepContainmentLane: PROVEN`. Full
+  offline regression 4789 passed / 18 skipped / 0 failed in 11.8 minutes.
+  Browser lane 4/4. Documentation reconciled; the certified checkpoint is
+  integrated by fast-forward from this owned session.
 - **M4 COMPLETE** — UI typecheck, 63 tests and build PASS; root `typecheck`
   PASS; `validation:universe` PASS with UI_LANE=5; `hardening:check` PASS
   after bumping the `docs/CURRENT_STATE.md` header to the day its last change
@@ -99,16 +110,13 @@ fast-forward integration and session release.
 
 ## Work In Progress
 
-M1. The planning route (SPEC, PLAN, STATE, REPORT, the OpenSpec change and the
-bound `.agent/ACTIVE_TASK.md` / `.agent/EXECUTION_PROMPT.md`) is written and
-about to be committed as the M0/registration checkpoint.
+NONE.
 
 ## Exact Next Action
 
-Assert the `status-*` and `stage-*` concrete families in
-`ui/control-center/src/styles.test.ts`, confirm the map tone divergence in the
-built composition, and remove the inert map tone classes and dead rules; then
-record the exact results in this STATE.
+STOP. The campaign is COMPLETE. Report the certified outcome to the owner and
+integrate the certified checkpoint by fast-forward from the owned session,
+verifying `HEAD == origin/main`. Do not reopen A-01 through A-04.
 
 ## Files Changed
 
@@ -190,6 +198,19 @@ Relevant failure/output summary: UI_LANE=5, every discovered test classified;
 root typecheck clean; hardening initially failed on the CURRENT_STATE header
 date (a real rule), repaired by bumping it to 2026-09-11.
 
+Command: `npm run gate:local` at implementation commit `88e3c3f`
+Result: PASS
+When: 2026-09-11
+Relevant failure/output summary: all eleven required groups PASS at
+`gitHead 88e3c3fb52937ff303b0944cc22cfee624bf807e`; receipt
+`receipt:sha256:7945d6ad715fab8479e36d2a`; `finalResult: PASS`.
+
+Command: `npm test` full offline regression at the implementation checkpoint
+Result: PASS
+When: 2026-09-11
+Relevant failure/output summary: 4789 passed / 18 skipped / 0 failed in 11.8
+minutes — identical to the campaign's starting baseline.
+
 ## Decisions Made During This Task
 
 Decision: assert families from their known value sets instead of parsing
@@ -239,12 +260,35 @@ NONE
 
 ## Resume Recipe
 
-Read `SPEC.md`, `PLAN.md` and this file; work in the owned worktree
-`nightwatch-control-center-style--5e5ddb63`; resume at the Exact Next Action,
-run the named focused suites after each change, and record exact results here
-before advancing a milestone.
+Task complete. Do not resume; any follow-up starts as a new authorized task.
 
 ## Completion Snapshot
 
-Pending. The campaign is IN_PROGRESS; the completion snapshot is filled and
-verified at M5 closure against the certified checkpoint's own receipts.
+Final substantive checkpoint: 88e3c3fb52937ff303b0944cc22cfee624bf807e
+Live HEAD: DISCOVER_FROM_GIT
+Tests: UI typecheck PASS; UI suite 63 passed across 5 files; UI build PASS at
+3 files / 330,105 bytes with no external references; root `typecheck` PASS;
+`hardening:check` PASS; `validation:universe` PASS with UI_LANE=5; browser
+lane 4 passed / 0 failed (4.9 minutes) with the class-effect sweep in both
+lanes; `gate:local` all eleven groups PASS at `88e3c3f` with receipt
+`receipt:sha256:7945d6ad715fab8479e36d2a`; full offline regression 4789
+passed / 18 skipped / 0 failed.
+Artifacts: `tests/browser/helpers/classEffect.ts`,
+`tests/browser/controlCenterBrowser.browser.ts`,
+`tests/browser/systemMapV2.browser.ts`,
+`ui/control-center/src/contractRender.test.tsx`,
+`ui/control-center/src/styles.test.ts`, `ui/control-center/src/App.tsx`,
+`ui/control-center/src/styles.css`,
+`.agent/tasks/nightwatch-control-center-style-and-absence-truth-v1/`,
+`openspec/changes/nightwatch-control-center-style-and-absence-truth-v1/`.
+Known issues: native form controls are excluded from the runtime class-effect
+sweep because this browser environment forces their computed colours, so
+button classes are covered statically rather than at runtime; the absence
+pass proves the DOM changes, not that the message is good; `status-neutral`,
+`stage-neutral`, `text-neutral` and `graph-node-neutral` are declared
+base-only. `.run-detail-panel` now applies its intended border colour (a real
+cascade fix); `.campaign-metrics` and `.graph-node-neutral` were removed as
+redundant. External CI remains `BLOCKED_EXTERNAL` under the predecessor's
+classification.
+Recommended next task: none selected; any follow-up requires a new authorized
+task.

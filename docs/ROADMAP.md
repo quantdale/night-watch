@@ -3037,7 +3037,48 @@ fallback renders `layer`, so it is no longer exempt in either guard.
 4 passed / 0 failed; `gate:local` all eleven groups PASS at `4aabb7c`; full
 offline regression unchanged from baseline.
 
-**Next.** None selected. The harness proves DOM influence in the revealing
-fixture state, not visual correctness or branches the fixture does not take;
-a placement-level stylesheet guard remains unproven. Any follow-up requires a
+**Next (executed).** The placement-level stylesheet guard and the fixture's
+conditional branches were taken up as
+`nightwatch-control-center-style-and-absence-truth-v1` and are closed below.
+Whole-stylesheet dead-rule detection remains unperformed.
+
+
+## Control Center style and absence truth
+
+Complete as `nightwatch-control-center-style-and-absence-truth-v1` at
+implementation `88e3c3fb52937ff303b0944cc22cfee624bf807e`, certified from its
+owned session with `gate:local` receipt
+`receipt:sha256:7945d6ad715fab8479e36d2a` and a full offline regression of
+4789 passed / 18 skipped / 0 failed.
+
+The source stylesheet guard's blind spot is closed: `status-*` and `stage-*`
+concrete values are asserted with the neutral values stated as intentionally
+base-only. A runtime computed-effect sweep now toggles every class the built
+composition renders and requires a computed property to change, with a
+reasoned base-only list that fails in both directions. It found three real
+cascade defects — the run-detail panel's intended border (fixed by
+specificity), and two declarations that restated their base classes
+(`campaign-metrics`, `graph-node-neutral`), removed rather than kept.
+
+The system map's tone classes and rules could never match: the wire carries a
+13-value evidence vocabulary and the stylesheet matched four historical
+values. The inert interpolation and dead rules were removed, with no pixel
+change; `.map-node`, `.map-edge` and `.node-selected` remain. A colour
+taxonomy for evidence status is recorded as an owner-facing alternative.
+
+The render harness's absence pass records every array the generated fixtures
+carry and empties each one, requiring the DOM of a receiving view to change.
+Every collection was absence-observable; the exemption list is empty and
+mutation-proven in both directions. Native form controls are excluded from the
+runtime sweep because this browser environment forces their computed colours,
+and the page CSP requires CSSOM transition suppression rather than injected
+styles.
+
+**Certification.** UI typecheck, 63 of 63 tests and build; root `typecheck`;
+`hardening:check`; `validation:universe` PASS with UI_LANE=5; browser lane
+4 passed / 0 failed; `gate:local` all eleven groups PASS at `88e3c3f`; full
+offline regression unchanged from baseline.
+
+**Next.** None selected. Native form controls remain statically covered only;
+whole-stylesheet dead-rule detection is unperformed. Any follow-up requires a
 new authorized task.

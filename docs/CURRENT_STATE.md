@@ -746,8 +746,8 @@ RELEASE_CERTIFICATION_PROTOCOL_VERSION: nightwatch.release-certification.v1
 PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
 RELEASE_CHECKPOINT_SHA: 2576c5751d33bb40046246e8fcf57c7cc5c30a57
 LIVE_HEAD_SHA: DISCOVER_FROM_GIT
-LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: 32e216448761a3d4f86c077e0516929b376f066b
-LAST_LOCALLY_VALIDATED_SHA: 32e216448761a3d4f86c077e0516929b376f066b
+LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: 88e3c3fb52937ff303b0944cc22cfee624bf807e
+LAST_LOCALLY_VALIDATED_SHA: 88e3c3fb52937ff303b0944cc22cfee624bf807e
 LAST_CLEAN_VALIDATED_SHA: c18db55970a6497470191c8c9ef58f5012a96c8c
 CI_OBSERVED_SHA: NONE
 CI_EXECUTED_SHA: NONE
@@ -806,11 +806,11 @@ informational and are not interpreted as current authority.
 LIVE_STATE_PROTOCOL_VERSION: nightwatch.live-state.v1
 LIVE_TASK_ID: nightwatch-control-center-style-and-absence-truth-v1
 LIVE_PHASE: CONTROL_CENTER_STYLE_AND_ABSENCE_TRUTH_V1
-LIVE_TASK_STATUS: IN_PROGRESS
+LIVE_TASK_STATUS: COMPLETE
 LIVE_PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
 LIVE_PROJECT_VERDICT_EFFECT: PRESERVE
-LIVE_NEXT_ACTION_STATE: CONTINUE
-LIVE_COMPLETION_CLAIM: NONE
+LIVE_NEXT_ACTION_STATE: STOP
+LIVE_COMPLETION_CLAIM: COMPLETE
 ```
 
 ### Exact-head CI state (current live CI state)
@@ -3958,3 +3958,42 @@ receipt `receipt:sha256:f89854b196e4716ba7d0878d`. External CI was not run and i
 claimed green. The harness proves DOM influence, not visual correctness, and
 `schemaVersion`, `afterSeq`, `advisoryOnly`, `passed` and the two loopback
 scope constants remain reasoned exemptions.
+
+
+### Control Center style and absence truth (current)
+
+Two verification limits from the render-truth campaign and one real divergence
+closed together. The source stylesheet guard excluded seven interpolation
+prefixes and asserted concrete values for only three families, so the
+`status-*` and `stage-*` families it renders were unasserted; those are now
+asserted with `status-neutral` and `stage-neutral` stated as intentionally
+base-only against the base pill and chip. The system map built
+`node-${evidenceStatus}` and `edge-${evidenceStatus}` classes from the
+13-value core evidence vocabulary while the stylesheet matched only four
+historical values, so every map tone rule was dead; the interpolation and the
+dead rules were removed (no pixel change) and `.map-node`, `.map-edge` and
+`.node-selected` remain.
+
+A new runtime computed-effect sweep in the browser lane toggles every class
+the built composition renders off its carrying element and requires a
+computed property to change, with a reasoned base-only list asserted in both
+directions. It found and fixed three real cascade defects:
+`.run-detail-panel` lost its intended border to the later `.panel` rule (now
+`.panel.run-detail-panel`), and `.campaign-metrics` and `.graph-node-neutral`
+were removed as declarations that restated their base classes. Native form
+controls are excluded with a reason: this browser environment forces their
+computed colours, so button classes are covered statically. The page's
+`style-src 'self'` CSP blocks injected styles, so transition suppression uses
+a CSSOM rule on the app's own sheet.
+
+The render harness gained an absence pass: the generator records every array
+at every depth, and emptying each one must change the DOM of a view that can
+receive it. Every recorded collection was absence-observable; the exemption
+list is empty, vacuity-guarded and mutation-proven.
+
+Certification: implementation `88e3c3fb52937ff303b0944cc22cfee624bf807e`;
+`gate:local` all eleven groups PASS with receipt
+`receipt:sha256:7945d6ad715fab8479e36d2a`; UI typecheck, 63 tests and build
+PASS; browser lane 4/4 in 4.9 minutes; full offline regression 4789 passed /
+18 skipped / 0 failed, unchanged from the baseline. External CI was not run
+and is not claimed green.

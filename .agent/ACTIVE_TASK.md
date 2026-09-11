@@ -3,14 +3,14 @@
 Task ID: nightwatch-control-center-style-and-absence-truth-v1
 Phase: CONTROL_CENTER_STYLE_AND_ABSENCE_TRUTH_V1
 Title: Control Center Style and Absence Truth
-Status: IN_PROGRESS
+Status: COMPLETE
 Task directory: .agent/tasks/nightwatch-control-center-style-and-absence-truth-v1
 Starting SHA: d904dc96156f8376c772e6c43a75ce8cde3fad04
-Last validated implementation SHA: d904dc96156f8376c772e6c43a75ce8cde3fad04
-Last checkpoint: M3 absence observability COMPLETE (every collection changes
-its view when emptied; two mutation proofs) and M4 validation COMPLETE (UI
-63/63, build, universe, typecheck, hardening). M2 runtime class-effect check
-COMPLETE — every rendered
+Last validated implementation SHA: 88e3c3fb52937ff303b0944cc22cfee624bf807e
+Last checkpoint: M5 certification COMPLETE at implementation `88e3c3fb52937ff303b0944cc22cfee624bf807e`;
+`gate:local` all eleven groups PASS with receipt
+`receipt:sha256:7945d6ad715fab8479e36d2a`; full offline regression 4789 / 18
+skipped / 0 failed; A-01 through A-04 CLOSED. — every rendered
 class is proven effective or declared base-only, with three real cascade
 defects fixed and the mutation proof recorded. M1 family assertions and map
 divergence COMPLETE — status and
@@ -20,19 +20,20 @@ mutation-proven. The owned session
 `sess-d0b803f0afbe` on base
 `d904dc96156f8376c772e6c43a75ce8cde3fad04`, `session:status` verdict PASS,
 and the predecessor is verified terminal COMPLETE and untouched.
-Current milestone: M5 — certification
-Next action: commit the implementation checkpoint, run `gate:local` and the
-full offline regression from this owned session, reconcile the documentation
-to the receipts, integrate by fast-forward and release.
+Current milestone: COMPLETE — M0 through M5 are closed
+Next action: STOP. Report the certified outcome to the owner. Integration of
+the certified checkpoint by fast-forward from the owned session is the
+campaign's final act, with `HEAD == origin/main` verified after the push. Do
+not reopen A-01 through A-04.
 Authorization class: CONTROL_CENTER_STYLE_AND_ABSENCE_TRUTH_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: d904dc96156f8376c772e6c43a75ce8cde3fad04
-LAST_VALIDATED_IMPLEMENTATION_SHA: d904dc96156f8376c772e6c43a75ce8cde3fad04
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: d904dc96156f8376c772e6c43a75ce8cde3fad04
+LAST_VALIDATED_IMPLEMENTATION_SHA: 88e3c3fb52937ff303b0944cc22cfee624bf807e
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 88e3c3fb52937ff303b0944cc22cfee624bf807e
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
-PHASE_CONTROL_CENTER_STYLE_AND_ABSENCE_TRUTH_V1_STATUS: IN_PROGRESS
+PHASE_CONTROL_CENTER_STYLE_AND_ABSENCE_TRUTH_V1_STATUS: COMPLETE
 
 ## Outcome
 
