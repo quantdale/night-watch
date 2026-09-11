@@ -7,6 +7,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { installBootstrapDiagnosticHooks } from '../../src/browser/observers/bootstrapHooks';
 import { RunRecorder } from '../../src/core/evidence/runRecorder';
+import { resolveScratchPath } from '../../src/core/workspace/ephemeralLayout';
 
 function readEvents(file: string): Array<Record<string, unknown>> {
   return fs.readFileSync(file, 'utf8')
@@ -23,7 +24,7 @@ test('bootstrap hooks capture lifecycle, route, rejection, and CSP categories wi
     product: 'ripple',
     browser: 'chromium',
     scenario: 'synthetic-bootstrap-hooks',
-    artifactsRoot: path.join(process.cwd(), '.tmp-test', 'bootstrap-hooks'),
+    artifactsRoot: path.join(process.cwd(), resolveScratchPath('test', 'bootstrap-hooks')),
     authenticated: true,
   });
   try {
@@ -100,7 +101,7 @@ test('bootstrap hooks select the Vue root replacement, not an earlier injected w
     product: 'ripple',
     browser: 'chromium',
     scenario: 'synthetic-bootstrap-hooks-widget',
-    artifactsRoot: path.join(process.cwd(), '.tmp-test', 'bootstrap-hooks-widget'),
+    artifactsRoot: path.join(process.cwd(), resolveScratchPath('test', 'bootstrap-hooks-widget')),
     authenticated: true,
   });
   try {
@@ -153,7 +154,7 @@ test('bootstrap hooks detect the Vue root when mount inserts-before then removes
     product: 'ripple',
     browser: 'chromium',
     scenario: 'synthetic-bootstrap-hooks-mountseq',
-    artifactsRoot: path.join(process.cwd(), '.tmp-test', 'bootstrap-hooks-mountseq'),
+    artifactsRoot: path.join(process.cwd(), resolveScratchPath('test', 'bootstrap-hooks-mountseq')),
     authenticated: true,
   });
   try {

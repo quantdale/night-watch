@@ -511,7 +511,15 @@ export interface ReviewerLocalReviewValue {
   readonly decision: string | null;
   readonly reviewedAt: string | null;
   readonly transitionCount: number;
-  readonly bindingCurrentness: 'CURRENT' | 'STALE' | 'UNKNOWN';
+  readonly bindingCurrentness: 'CURRENT' | 'STALE' | 'UNKNOWN' | 'VERSION_UNSUPPORTED';
+  /** Found schema versions when VERSION_UNSUPPORTED; empty otherwise. */
+  readonly foundVersions: readonly string[];
+  /** Records affected at an unsupported version; 0 when not applicable. */
+  readonly affectedRecordCount: number;
+  /** Declared disposition for the old version, or null when undecided. */
+  readonly migration: string | null;
+  /** The schema the store currently writes, when VERSION_UNSUPPORTED. */
+  readonly currentSchema: string | null;
   readonly organizationalAuthority: 'NONE_LOCAL_REVIEW_ONLY';
   readonly notEquivalentTo: readonly string[];
 }

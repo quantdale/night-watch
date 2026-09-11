@@ -16,9 +16,17 @@ import {
 } from '../../src/oracles/expectations/admission';
 import { evidenceDigestFor } from '../../src/oracles/expectations/extract/evidence';
 import { createRealSourceResolver } from '../../src/oracles/expectations/resolver';
+import { evaluateSemanticResolution } from '../../src/oracles/semantic/hook';
+import { SEMANTIC_RECEIPT_NON_PASS_OUTCOMES } from '../../src/oracles/semantic/receipts';
+import {
+  DEV_OBSERVATION_CANNOT_ADMIT_EXPECTATION,
+  REAL_SOURCE_EXPECTATION_PROOF_MISSING,
+  assertNoExpectationCreatedFromObservation,
+  assertRealSourceExpectationProof,
+} from '../../src/core/semanticAcceptance';
 import { DEFAULT_PROJECTION_LIMITS } from '../../src/oracles/projections/types';
 import type { SemanticExpectation } from '../../src/oracles/expectations/types';
-import { FIXTURE_REPO_A, FIXTURE_SHA_A, createFixtureSourceState, FIXTURE_RECIPES, exchangeRateFixture } from '../helpers/phase9a1Fixtures';
+import { FIXTURE_REPO_A, FIXTURE_SHA_A, createFixtureSourceState, deriveFixtureExpectations, FIXTURE_RECIPES, exchangeRateFixture } from '../helpers/phase9a1Fixtures';
 
 test.describe('Phase 9A.1 — admission bridge', () => {
   test('all four repo-a recipes derive + admit against the fixture snapshot', () => {
@@ -184,5 +192,67 @@ test.describe('Phase 9A.1 — admission bridge', () => {
     // changes (sorted keys make this a no-op) — pin instead: key SET change
     // changes the digest (already proven by the drift test above).
     expect(evidenceDigestFor).toBeDefined();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Group 11 (F-10, task 11.7). The Phase 9A.1 admission route stays the only
+// route: a DEV observation cannot create an expectation, and a synthetic
+// expectation relabelled with real-source provenance fails with the exact
+// REAL_SOURCE_EXPECTATION_PROOF_MISSING semantics.
+// ---------------------------------------------------------------------------
+
+test.describe('Group 11 — the admission route stays the only route', () => {
+  test('a mechanically proven expectation passes the proof check; a synthetic relabel fails with the exact code', () => {
+    const state = createFixtureSourceState();
+    const { derivedA } = deriveFixtureExpectations(state);
+    const proven = derivedA.find((item) => item.expectationId === 'fixture-a.common-exchange.read.real-source-shape')!;
+    expect(proven.sourceProvenance.evidenceDigest).toMatch(/^ev:sha256:[0-9a-f]{24}$/);
+    expect(() => assertRealSourceExpectationProof(proven)).not.toThrow();
+
+    // A synthetic expectation relabelled with a real-looking repo @ SHA and a
+    // forged evidence digest never gains authority: the provenance label is
+    // not proof.
+    const relabelled: SemanticExpectation = {
+      schemaVersion: 'nightwatch.semantic-expectation.v1',
+      expectationId: 'fixture.entity.read.success-envelope',
+      targetKind: 'API_OPERATION',
+      targetId: 'fixture-a.common-exchange.read',
+      sourceProvenance: {
+        repoId: FIXTURE_REPO_A,
+        sha: FIXTURE_SHA_A,
+        relativePath: 'contracts/entityCatalog.ts',
+        derivationVersion: 'nightwatch.expectation-derivation.v1',
+        evidenceDigest: `ev:sha256:${'0'.repeat(24)}`,
+      },
+      projectionContract: { limits: { ...DEFAULT_PROJECTION_LIMITS } },
+      invariantDefinitions: [{ kind: 'ENVELOPE_CLASS', expected: 'SUCCESS_ENVELOPE', successField: ['data'], errorField: ['error'] }],
+    };
+    expect(() => assertRealSourceExpectationProof(relabelled)).toThrow(REAL_SOURCE_EXPECTATION_PROOF_MISSING);
+    // Without the forged digest the same relabel also fails.
+    const withoutDigest = { ...relabelled, sourceProvenance: { ...relabelled.sourceProvenance, evidenceDigest: undefined } };
+    expect(() => assertRealSourceExpectationProof(withoutDigest)).toThrow(REAL_SOURCE_EXPECTATION_PROOF_MISSING);
+  });
+
+  test('a DEV observation matching no admitted expectation is NO_EXPECTATION and creates no expectation', () => {
+    const state = createFixtureSourceState();
+    const { derivedA } = deriveFixtureExpectations(state);
+    const admittedBefore = derivedA.map((item) => item.expectationId);
+    const result = evaluateSemanticResolution({
+      resolution: { kind: 'NO_EXPECTATION', targetId: 'fixture-a.nonexistent.read' },
+      rawText: JSON.stringify([{ month: '2026-01' }]),
+      targetId: 'fixture-a.nonexistent.read',
+    });
+    expect(result.receipt?.outcome).toBe('NO_EXPECTATION');
+    expect(SEMANTIC_RECEIPT_NON_PASS_OUTCOMES.has('NO_EXPECTATION')).toBe(true);
+    expect(result.receipt?.expectationId).toBeUndefined();
+    expect(result.findings).toHaveLength(0);
+    // The admitted set is byte-identical across the observation.
+    expect(() => assertNoExpectationCreatedFromObservation(derivedA, derivedA)).not.toThrow();
+    const after = derivedA.map((item) => item.expectationId);
+    expect(after).toEqual(admittedBefore);
+    // A change across an observation fails closed.
+    const created = [...derivedA, { ...derivedA[0]!, expectationId: 'fixture-a.created-from-observation' }];
+    expect(() => assertNoExpectationCreatedFromObservation(derivedA, created)).toThrow(DEV_OBSERVATION_CANNOT_ADMIT_EXPECTATION);
   });
 });

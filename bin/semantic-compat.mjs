@@ -13,6 +13,7 @@ import { OPERATOR_CLI_SCHEMA, defineOperatorCli, invokedDirectly } from './lib/o
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const manifestPath = path.join(root, 'config', 'semantic-compatibility.v1.json');
+const acceptanceClassPath = path.join(root, 'config', 'semantic-acceptance-class.v1.json');
 const filePattern = /^tests\/(?:unit|smoke)\/[A-Za-z0-9._/-]+\.test\.ts$/;
 
 const CLI_METADATA = {
@@ -31,6 +32,22 @@ const CLI_METADATA = {
 
 function fail(code) {
   throw new Error(code);
+}
+
+// Group 11 (F-10): the semantic capability's acceptance class is part of any
+// presentation of this lane. It is read from the versioned data file (the
+// same source the TS module validates), so the bin cannot present the
+// capability as DEV-accepted while the class says otherwise.
+function loadSemanticAcceptanceClass() {
+  const value = JSON.parse(fs.readFileSync(acceptanceClassPath, 'utf8'));
+  if (value.schemaVersion !== 'nightwatch.semantic-acceptance-class.v1') fail('SEMANTIC_ACCEPTANCE_CLASS_SCHEMA_UNSUPPORTED');
+  if (typeof value.acceptanceClass !== 'string' || typeof value.devResult !== 'string') fail('SEMANTIC_ACCEPTANCE_CLASS_INCOMPLETE');
+  if (value.blocker !== null && typeof value.blocker !== 'string') fail('SEMANTIC_ACCEPTANCE_CLASS_INCOMPLETE');
+  return {
+    acceptanceClass: value.acceptanceClass,
+    devResult: value.devResult,
+    blocker: value.blocker,
+  };
 }
 
 function loadManifest() {
@@ -77,6 +94,7 @@ try {
       phaseRange: manifest.requiredPhaseRange,
       phaseCount: manifest.phaseSuites.length,
       fileCount: files.length,
+      semanticAcceptance: loadSemanticAcceptanceClass(),
     }));
   } else {
   const environment = buildChildEnvironment(process.env, { NIGHTWATCH_ENV: 'local', NIGHTWATCH_GATE_ENVIRONMENT: 'COMPATIBILITY' });
@@ -111,6 +129,7 @@ try {
     phaseRange: manifest.requiredPhaseRange,
     phaseCount: manifest.phaseSuites.length,
     fileCount: files.length,
+    semanticAcceptance: loadSemanticAcceptanceClass(),
     total,
     passed,
     skipped,

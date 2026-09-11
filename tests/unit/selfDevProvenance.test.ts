@@ -31,7 +31,7 @@ import {
 } from '../../src/core/selfDev';
 import { sha256Digest, sha256LengthPrefixedEntries } from '../../src/core/selfDev/canonical';
 import { SELFDEV_LEGACY_FILE_PREFIX, SELFDEV_V2_FILE_PREFIX, SelfDevPrivateArtifactStore } from '../../src/core/selfDev/storage';
-import { currentCheckoutState, sourceBundleDigest } from '../../src/core/provenance/localGit';
+import { currentCheckoutState, sourceBundleDigest } from '../../src/core/provenance';
 import { createSyntheticSelfDevSourceFixture, type SelfDevSourceFixture } from '../helpers/selfDevSourceFixture';
 import { loadSelfDevStack, type SelfDevStack } from '../helpers/selfDevStack';
 

@@ -1569,3 +1569,47 @@ against both the safe-id pattern and the canonical sentinel set. The
 projection can only drop an identity. No raw dossier, finding or handoff
 content is stored: the binding carries digests, and duplicating the artifacts
 would add a privacy surface for no gain.
+
+## Authenticated capability lifecycle safety boundary (F-21)
+
+Authenticated lanes depend on a Playwright storage-state artefact produced by a
+human-led capture: `npm run auth:capture` opens a headed browser, the human
+performs login and MFA, and Nightwatch never receives credentials. The artefact
+is secret material and remains governed by §12. This section adds a lifecycle
+to the artefact itself; it weakens no secret rule and adds no authority.
+
+**Capture sidecar (non-secret).** Each capture writes
+`<artefact>.auth-lifecycle.json` beside it with exactly: capture instant,
+environment, origin, earliest cookie expiry observed at capture, declared
+validity window (default 12 h; bounded to 1 h–30 days) and a `sha256:<24>`
+digest of the artefact. The record is serialized through the redaction layer,
+which refuses to write bytes it would change, and it carries no cookie value,
+token, header or storage value. It is written atomically, lives outside the
+repository, and is never committed. An artefact with no record is
+`UNKNOWN_AGE`, which is a refusal condition, not a pass.
+
+**Fail-closed pre-flight.** Before an authenticated lane creates a browser
+context, spawns a subprocess, opens a socket or reads any further file, it
+evaluates the artefact to exactly one state: `VALID`, `EXPIRED`,
+`WRONG_ENVIRONMENT`, `UNKNOWN_AGE`, `MISSING` or `UNREADABLE`. Only `VALID`
+proceeds. Every other state refuses with a distinct code and the single
+re-capture remedy. `UNKNOWN_AGE` refuses rather than proceeding optimistically:
+an artefact with no record, or one whose digest no longer matches its record,
+has no established age and is exactly the one most likely to be stale. Expiry
+evaluation reuses the one cookie applicability evaluator in
+`src/browser/fixtures/storageState.ts`; two evaluators for one question could
+disagree, so a structural rule now fails a second implementation.
+
+**No automated renewal.** Renewal stays human-led by design. Automating it
+would require Nightwatch to hold credentials, which this safety model forbids.
+An expired artefact is therefore a normal, expected operator event rather than
+a code failure: the authenticated lanes are `UNAVAILABLE_CAPABILITY` with
+re-capture as the named acquisition condition, and an expired artefact is
+never recorded as a code defect.
+
+**Measured cadence, not assumed.** Renewal cadence is derived only from real
+capture records: `earliestCookieExpiry − captureInstant`, reported as
+min/median/max by `measureAuthCaptureLifetimes`. As of the 2026-09-12
+measurement the owner-local store contains an artefact but no lifecycle record
+(it predates the format), so the state is `UNKNOWN_AGE` and no cadence is
+claimed until a real capture record exists.

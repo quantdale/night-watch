@@ -98,9 +98,19 @@ export interface ControlCenterLocalReviewValueDto {
   /**
    * Whether the recorded decision still binds to the current artifacts.
    * UNKNOWN when currentness was not established; a stale binding is never
-   * silently displayed as a live decision.
+   * silently displayed as a live decision. VERSION_UNSUPPORTED means the
+   * stored record is INTACT but predates the current schema: a migration to
+   * run, not a defect to report.
    */
-  readonly bindingCurrentness: 'CURRENT' | 'STALE' | 'UNKNOWN';
+  readonly bindingCurrentness: 'CURRENT' | 'STALE' | 'UNKNOWN' | 'VERSION_UNSUPPORTED';
+  /** Found schema versions when VERSION_UNSUPPORTED; empty otherwise. */
+  readonly foundVersions: readonly SafeControlCenterId[];
+  /** Records affected at the unsupported version; 0 when not applicable. */
+  readonly affectedRecordCount: number;
+  /** Declared disposition for the old version, or null when undecided. */
+  readonly migration: SafeControlCenterCode | null;
+  /** The schema the store currently writes, when VERSION_UNSUPPORTED. */
+  readonly currentSchema: SafeControlCenterId | null;
   readonly organizationalAuthority: 'NONE_LOCAL_REVIEW_ONLY';
   readonly notEquivalentTo: readonly ['LESLIE_GENUINE', 'LESLIE_INVALID', 'PONDR_APPROVED'];
 }

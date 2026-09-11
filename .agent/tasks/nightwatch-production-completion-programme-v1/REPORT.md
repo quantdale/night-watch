@@ -88,3 +88,107 @@ IN_PROGRESS. G1.1–G1.17 are complete with the receipts above; G1.18
 integration is externally blocked as described. No completion claim is
 made.
 
+## G21 owner-held items — authenticated-capability documentation and the one-evaluator rule
+
+Closed the two owner-held items of group 21 that remain after the
+implementation (F-21). No code in `src/auth/capabilityLifecycle.ts` was
+changed; the work is documentation plus one structural rule.
+
+Documentation (derived from the implementation, not restated intent):
+`README.md` gained an "Authenticated capability and its renewal" section;
+`docs/SAFETY_MODEL.md` gained a closing "Authenticated capability lifecycle
+safety boundary (F-21)" section (append-only, no archived line touched); and
+`docs/HOST-CAPABILITY-MATRIX.md` §2 gained the owner-captured authenticated
+storage-state row with its `UNAVAILABLE_CAPABILITY` acquisition condition.
+All three state the sidecar fields and the no-secret redaction refusal, the
+pre-flight before any browser/subprocess/socket/file, the six lifecycle
+states with the single re-capture remedy, that `UNKNOWN_AGE` refuses, that no
+automated renewal exists or is planned (it would require Nightwatch to hold
+credentials), and the measured-cadence rule: as of the 2026-09-12 measurement
+the owner-local store holds one artefact and no lifecycle record, so the
+state is `UNKNOWN_AGE` and no renewal cadence is claimed.
+
+Structural rule `checkAuthenticatedCapabilitySingleEvaluator` in
+`bin/hardening-check.mjs`: code-only (comments blanked with line numbers
+preserved), flags a second cookie-expiry evaluator in `src/`, `bin/` or
+`tests/` outside `src/browser/fixtures/storageState.ts` with
+`AUTH_CAPABILITY_SECOND_EXPIRY_EVALUATOR <file>:<line>`, asserts the allowed
+evaluator still contains detector forms (non-vacuity), and does not match an
+object-key write (`expires:`). Reversible probe HC-078 appends a read of
+`cookie.expires` as well as a `{ expires: number }` write to
+`src/auth/devCredentialProvider.ts`; the campaign detects it, proving the
+write does not match and the read does.
+
+Receipts: `node bin/hardening-check.mjs` PASS;
+`node bin/hardening-check.mjs --probe-campaign --only=checkAuthenticatedCapabilitySingleEvaluator`
+DETECTED HC-078; documentation-currency reporting mode 0 findings; focused
+suites `storageState`, `authCaptureLauncher`, `authCaptureStages`,
+`nw14HostCapabilityMatrix` and `documentLifecycle` 58 passed.
+
+## G14 — dead architecture closure (14.1–14.5, 14.9–14.11)
+
+The reference graph and both rules live in `bin/hardening-check.mjs`
+(`buildReferenceGraph`, `checkSourceReachability`,
+`checkModuleBarrierEnforcement`) with data-only
+`config/reference-graph.v1.json`; no new `bin/lib` or test file was added, so
+`validation:universe` remains on digest `sha256:e04d813efa7aa0bbbb1fa219`.
+Resolver coverage: static import/export/require/literal dynamic import, the
+bin loader string-literal paths (reusing the F-15 extractor), and
+`require.resolve` specifiers. Non-vacuity: zero edges fails
+`REFERENCE_GRAPH_EMPTY`; fewer than 100 parsed files fails
+`REFERENCE_GRAPH_VACUOUS`. Reachability is forward from executable roots plus
+`src` modules with a cross-directory inbound edge, which is what prevents the
+two false-positive classes: the Control Center server (reached through the
+`bin/nightwatch-control-center.mjs` loader edges) and the self-dev sandbox
+planner/executor (reached through the adopt-sandbox loader list and the test
+mirror); `require.resolve('vue/dist/vue.js')` is a recorded external edge.
+Measured `--report-reachability`: files=1072, parsed=1072, edges=6238,
+findings=0.
+
+Retention fails both directions and is probed: HC-079 removes the
+dtoFramework entry → unlisted dead modules reported; HC-080 appends a
+consumer to a retained module → `REFERENCE_RETENTION_STALE`. Barrel
+resolution: `src/core/provenance/index.ts` ENFORCED (five promotion
+consumers, one test and five bins migrated; loader declaration regenerated;
+HC-081 deep-import probe); nine barrels REMOVED and declared under
+`## Declared Deletions` in the programme `SPEC.md` — `controlCenter`,
+`campaignIntelligence`, `investigationMemory`, `localInvestigation`,
+`ownerLocalReproduction`, `prodProvenance`, `reproductionSurface`,
+`selfDevSandbox`, `systemAtlas`. `selfDevSandbox/index.ts` could not be
+enforced without re-exporting `setSandboxBaseOverrideForTests`, which
+`checkPhase8B01CloseoutIntegrity` forbids; its plan/run entry points remain
+asserted directly and `checkPhase8BSandboxBoundary` still polices every
+reach into the module. `checkC105ProvenanceAuthorityBoundary` no longer reads
+the removed `prodProvenance/index.ts`; its generic TEST-ONLY seam scan
+already covers the replacement surface.
+
+Receipts: `node bin/hardening-check.mjs` PASS; `npm run hardening:rules` PASS
+(79 rules, 81 probes, 81 detected, 0 undetected, status unchanged);
+`npm run typecheck` PASS; `npm run validation:universe` PASS;
+`npm run workspace:check` shows `WORKSPACE_DECLARED_DELETIONS=PASS` and
+`WORKSPACE_INTEGRATION_READINESS=PASS` with only the pre-existing external
+`WORKSPACE_CANONICAL_DIRTY_WHILE_SESSION_LIVE` error; focused suites
+`cliImplementationContract`, `selfDevProvenance`, `selfDevAdoptionSandbox`,
+`selfDevAdoptionPlan`, `selfDevCanonicalPromotionFlow`,
+`selfDevSandboxConfinement`, `projectState` and `nw09ShippedReviewCapability`
+191 passed, 1 skipped. The `checkBinExecutionCoverage` probe HC-021 was
+repaired (two coverage sites, `all:true`) after concurrent group-21 test work
+made its single-file mutation insufficient.
+
+## Owner decision left open — G14.6–G14.8
+
+No adoption or removal of `src/core/dtoFramework/` or
+`src/core/adversarialCorpus/` is claimed. Both remain in the
+reasoned-retention list of `config/reference-graph.v1.json` with
+`reason: G14.6 owner decision OPEN`, so the reachability rule reports them as
+owner-pending rather than deciding. Option A (adopt): migrate the four
+built-in registrations (semantic evaluation receipt, triage replay plan,
+campaign manifest, campaign checkpoint) to the registry and remove each
+hand-rolled validator in the same change; consequence: one validator per
+schema, but a real migration across the schema-lifecycle group. Option B
+(remove): delete both subsystems and declare the deletions under
+`## Declared Deletions`; consequence: less code, but no versioned-DTO
+authority for the schema-lifecycle work. The safe default is to leave the
+decision open, which is what this session did.
+
+

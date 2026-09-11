@@ -58,7 +58,6 @@ export const SELFDEV_AUTHORITATIVE_PATHS = Object.freeze([
   'src/core/selfDev/trust.ts',
   'src/core/selfDev/types.ts',
   'src/core/selfDev/validation.ts',
-  'src/core/selfDevSandbox/index.ts',
   'src/core/selfDevSandbox/planner.ts',
   'src/core/selfDevSandbox/sandboxExecutor.ts',
   'src/core/selfDevSandbox/sandboxLoader.ts',

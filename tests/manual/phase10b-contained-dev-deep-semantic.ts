@@ -82,11 +82,15 @@ import {
 } from '../../src/core/phase9b/summary';
 import {
   assertDeepTypeContract,
-  evaluatePhase10bDeepAcceptance,
   expectedInvariantTotalFor,
   phase10bFreshnessBlockToken,
   PHASE_10B_DEEP_TYPE_CONTRACT,
 } from '../../src/core/phase10b/deepAcceptance';
+import {
+  assertAcceptanceRunsAfterAuthGate,
+  assertRealSourceExpectationProof,
+  evaluateContainedDevDeepAcceptance,
+} from '../../src/core/semanticAcceptance';
 
 const AUTH_CAPTURE_COMMAND = 'npm run auth:capture -- --env=dev --output="$HOME/.nightwatch/auth/ripple-dev-state.json"';
 
@@ -417,6 +421,7 @@ function buildPhase10bOracle(approvedSha: string): {
   // The deep item-level type contract must be present in the resolved
   // expectation — the root-array PASS alone is never deep validation.
   assertDeepTypeContract(expectation, PHASE_10B_DEEP_TYPE_CONTRACT);
+  assertRealSourceExpectationProof(expectation);
   const expectedInvariantTotal = expectedInvariantTotalFor(expectation);
   const resolver = createRealSourceResolver({
     // Expose ONLY the selected target to this acceptance run.
@@ -546,6 +551,7 @@ async function observeOnce(opts: {
     endpointRegistry: buildRippleJourneyEndpointRegistry(opts.env),
     journeyId: opts.definition.journeyId,
     semanticOracle: opts.oracle,
+    semanticAcceptanceClass: 'CONTAINED_DEV',
   });
   let evidence: JourneyEvidence;
   let liveAuth = false;
@@ -756,13 +762,14 @@ test('Phase 10B contained DEV deep-semantic acceptance: common-exchange deep FIR
     runId: `${baseRunId}-first`,
     pass: 'first',
   });
-  const firstDeep = evaluatePhase10bDeepAcceptance(first.summary, {
+  expect(first.evidence.authValid, 'PHASE_10B_BLOCKED_AUTH_EXPIRED_BEFORE_FIRST: FIRST auth not valid').toBe(true);
+  expect(first.evidence.passed, 'FIRST journey evidence failed; replay is prohibited').toBe(true);
+  assertAcceptanceRunsAfterAuthGate({ authGatePassed: first.auth.valid && first.evidence.authValid, acceptanceRequested: true });
+  const firstDeep = evaluateContainedDevDeepAcceptance(first.summary, {
     expectationId: SELECTED_EXPECTATION_ID,
     approvedSha: freshness.approvedSha,
     expectedInvariantTotal,
   });
-  expect(first.evidence.authValid, 'PHASE_10B_BLOCKED_AUTH_EXPIRED_BEFORE_FIRST: FIRST auth not valid').toBe(true);
-  expect(first.evidence.passed, 'FIRST journey evidence failed; replay is prohibited').toBe(true);
   expect(firstDeep.pass, `PHASE_10B_DEV_ACCEPTANCE_NOT_PROVEN: FIRST ${firstDeep.failures.join(', ')}`).toBe(true);
 
   // --- REPLAY (one fresh context; part of the one acceptance execution) ---
@@ -776,13 +783,14 @@ test('Phase 10B contained DEV deep-semantic acceptance: common-exchange deep FIR
     runId: `${baseRunId}-replay`,
     pass: 'replay',
   });
-  const replayDeep = evaluatePhase10bDeepAcceptance(replay.summary, {
+  expect(replay.evidence.authValid, 'PHASE_10B_BLOCKED_AUTH_EXPIRED_BEFORE_REPLAY: REPLAY auth not valid').toBe(true);
+  expect(replay.evidence.passed, 'REPLAY journey evidence failed').toBe(true);
+  assertAcceptanceRunsAfterAuthGate({ authGatePassed: replay.auth.valid && replay.evidence.authValid, acceptanceRequested: true });
+  const replayDeep = evaluateContainedDevDeepAcceptance(replay.summary, {
     expectationId: SELECTED_EXPECTATION_ID,
     approvedSha: freshness.approvedSha,
     expectedInvariantTotal,
   });
-  expect(replay.evidence.authValid, 'PHASE_10B_BLOCKED_AUTH_EXPIRED_BEFORE_REPLAY: REPLAY auth not valid').toBe(true);
-  expect(replay.evidence.passed, 'REPLAY journey evidence failed').toBe(true);
   expect(replayDeep.pass, `PHASE_10B_DEV_ACCEPTANCE_NOT_PROVEN: REPLAY ${replayDeep.failures.join(', ')}`).toBe(true);
 
   // --- Replay determinism (authorization §30, §35) ---
@@ -798,6 +806,7 @@ test('Phase 10B contained DEV deep-semantic acceptance: common-exchange deep FIR
     journeyId: SELECTED_JOURNEY_ID,
     targetId: SELECTED_TARGET_ID,
     expectationId: SELECTED_EXPECTATION_ID,
+    evidenceAcceptanceClass: 'CONTAINED_DEV' as const,
     expectedInvariantTotal,
     deepContract: {
       path: PHASE_10B_DEEP_TYPE_CONTRACT.path,

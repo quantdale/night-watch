@@ -912,6 +912,17 @@ function ReviewDecisionCell({
   const [rationale, setRationale] = useState('');
 
   const value = item.localReview.value;
+  // A stored record at a superseded schema is a migration, not a defect, and
+  // it is not a decision the reviewer can act on. No controls are offered
+  // against bytes this build does not read.
+  if (value !== null && value.bindingCurrentness === 'VERSION_UNSUPPORTED') {
+    return (
+      <td>
+        <small>Decision unavailable: the stored record predates the current schema.</small>
+        <small>Run the declared migration (or record an orphan decision) before deciding again.</small>
+      </td>
+    );
+  }
   const decided = value !== null && value.decision !== null && value.bindingCurrentness === 'CURRENT';
 
   // NW-09. Gate on the capability the SERVER reports, not on the per-finding
@@ -1125,7 +1136,21 @@ function ReviewerView({ state, capability, onRetry }: { readonly state: DataLoad
                   </>} />
                   <ReviewerElementCell element={item.expectationProvenance} render={(value) => <strong>{formatCategory(value)}</strong>} />
                   <ReviewerElementCell element={item.confidence} render={(value) => <strong>{formatCategory(value)}</strong>} />
-                  <ReviewerElementCell element={item.localReview} render={(value) => <>
+                  <ReviewerElementCell element={item.localReview} render={(value) => value.bindingCurrentness === 'VERSION_UNSUPPORTED' ? <>
+                    {/* The owner response differs: a corrupt record is a defect
+                        to report, an unsupported one is a migration to run. */}
+                    <strong>Stored review predates the current schema</strong>
+                    <small>
+                      {value.foundVersions.length === 0 ? 'Version not recorded' : value.foundVersions.map(formatCategory).join(', ')}
+                      {value.affectedRecordCount > 0 ? ` · ${value.affectedRecordCount} affected record(s)` : ''}
+                    </small>
+                    <small className="row-note-warning">
+                      {value.migration === null
+                        ? 'This is a migration, not a defect. No disposition is declared for this version yet; an owner decision is required.'
+                        : `This is a migration, not a defect. Declared disposition: ${formatCategory(value.migration)}.`}
+                    </small>
+                    {value.currentSchema === null ? null : <small>Current schema: {value.currentSchema}</small>}
+                  </> : <>
                     <strong>{formatCategory(value.state)}</strong>
                     <small>{value.decision === null ? 'No decision recorded' : formatCategory(value.decision)}</small>
                     <small>Binding {formatCategory(value.bindingCurrentness)} · {value.transitionCount} transition(s)</small>

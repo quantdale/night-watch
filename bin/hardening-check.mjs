@@ -12,10 +12,14 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import typescript from 'typescript';
 import { buildChildEnvironment } from './child-environment.mjs';
 import { validateCampaignCertification } from './lib/campaign-certification.mjs';
 import {
+  collectExportedNames,
+  extractLoaderCallSites,
   findBinsWithoutExecutingTest,
+  resolveRelativeModule,
   verifyCliImplementationContract,
 } from './lib/cli-implementation-contract.mjs';
 
@@ -75,7 +79,19 @@ function gitFiles() {
     fail(`git ls-files failed: ${(result.stderr ?? '').trim()}`);
     return [];
   }
-  return (result.stdout ?? '').split('\0').filter(Boolean);
+  // The index still lists a file deleted in the working tree until the deletion
+  // is committed. The structural checks evaluate the WORKING TREE, and a
+  // declared deletion is governed by the workspace deletion gate, not by a
+  // reader crashing on a path that no longer exists. Filtering here lets an
+  // in-session deletion be validated before integration instead of failing
+  // every unrelated rule that iterates tracked source.
+  return (result.stdout ?? '').split('\0').filter(Boolean).filter((file) => {
+    try {
+      return fs.statSync(path.join(root, file)).isFile();
+    } catch {
+      return false;
+    }
+  });
 }
 
 function checkChildProcessBoundaries() {
@@ -477,8 +493,11 @@ function checkPhase8BSandboxBoundary() {
   if (!/PrivateArtifactStore/.test(storage) || !/writeImmutableJson/.test(storage)) fail('Phase 8B plan/result storage does not use the hardened immutable private store');
   if (/\.writeJson\s*\(|writeIncomplete\s*\(/.test(storage)) fail('Phase 8B plan/result storage retains a replacement-capable write path');
 
-  const index = readIncludingComments('src/core/selfDevSandbox/index.ts');
-  if (!/runSandboxAdoption/.test(index) || !/planAdoption/.test(index)) fail('Phase 8B public index is missing its plan/run entry points');
+  // G14.9 resolved the Phase 8B public `index.ts` barrel as REMOVED: its
+  // `setSandboxBaseOverrideForTests` test seam must never be re-exported, so a
+  // barrel cannot be the only door. The plan/run entry points are still
+  // asserted directly on `planner.ts` and `sandboxExecutor.ts` above, and the
+  // approved-caller scan below still polices every reach into this module.
 
   const ownerPolicy = readIncludingComments('src/core/policy/ownerScope.ts');
   if (!/SELF_DEVELOPMENT_SANDBOX_ADOPTION/.test(ownerPolicy)) fail('Phase 8B lacks a distinct owner-policy capability');
@@ -1038,8 +1057,9 @@ function checkPhase8B01CloseoutIntegrity() {
   const loader = readIncludingComments('src/core/selfDevSandbox/sandboxLoader.ts');
   if (!/finally\s*\{[\s\S]{0,500}?loadInFlight = false/.test(loader)) fail('8B.0.1: sandbox loader lock is not released on every exit path');
 
-  const index = readIncludingComments('src/core/selfDevSandbox/index.ts');
-  if (/setSandboxBaseOverrideForTests/.test(index)) fail('8B.0.1: the test-only sandbox-base override leaked into the boundary index');
+  // G14.9 removed the Phase 8B boundary `index.ts`; the test-only
+  // `setSandboxBaseOverrideForTests` seam now has no public barrel to leak
+  // into, and the sandbox mirror's own confinement checks below still apply.
 
   const adoptedCases = readIncludingComments('src/core/selfDev/adoptedCases.ts');
   if (!/SelfDevAdoptionStrategyClass/.test(adoptedCases)) fail('8B.0.1: the single strategy class lacks a literal exported type');
@@ -2512,10 +2532,10 @@ function checkC105ProvenanceAuthorityBoundary() {
       fail(`${file} imports the C-10.5 TEST-ONLY vocabulary seam; only tests/** may import it`);
     }
   }
-  const provenanceIndex = read('src/core/prodProvenance/index.ts');
-  if (/testOnlySeam/.test(provenanceIndex)) {
-    fail('C-10.5 the provenance derivation surface must not re-export the TEST-ONLY seam');
-  }
+  // G14.9 removed the `src/core/prodProvenance/index.ts` barrel; the generic
+  // TEST-ONLY seam scan above now covers every `.ts`/`.tsx` file in the module
+  // (including any replacement barrel), so the seam cannot gain a public
+  // surface without failing there.
 
   // The PHP route adapter must stay fail-closed: C-06 admits no production
   // route today, and C-10.5 must not invent completeness to manufacture one.
@@ -4831,6 +4851,430 @@ function checkC15cSystemMapTransportBoundary() {
 }
 
 /**
+ * F-13/F-14. The reference graph over tracked source.
+ *
+ * R-12 made the test universe total: an unclassified test fails the gate. There
+ * was no corresponding rule over SOURCE, so an entire subsystem could typecheck,
+ * ship and be referenced by nothing. Two subsystems reached that state, and
+ * eleven `index.ts` barrels declared public surfaces nothing imported.
+ *
+ * This graph resolves three edge kinds, because omitting any one produces false
+ * positives that would force the rule to be disabled:
+ *
+ *   1. static `import`/`export ... from`, `require` and literal dynamic
+ *      `import()`;
+ *   2. the dynamic `loadTypeScriptModule`/`loadTypeScriptModules` string-literal
+ *      paths in `bin/*.mjs` (F-15) — omitting these wrongly marks the Control
+ *      Center server, the self-dev sandbox planner/executor, and most of
+ *      `src/core` as unreachable;
+ *   3. `require.resolve` specifiers, invisible to import scanners and already
+ *      the cause of one real break (DEF-FC-03, the Vue fixture).
+ *
+ * Reachability is forward from executable roots (`tests/`, `bin/`, `ui/`,
+ * `scenarios/`) plus any `src` module with an inbound edge from outside its own
+ * directory. A dead subsystem cannot bootstrap itself alive through its own
+ * internal imports, while a module that is only imported by a live sibling is
+ * reached through that sibling — which is exactly the sandbox planner/executor
+ * case the naive rule would misreport.
+ *
+ * A module intended to exist without a consumer appears in the declared
+ * reasoned-retention list. The list fails in BOTH directions: an unlisted dead
+ * module fails, and a listed module that gains a consumer is stale and fails.
+ * `config/reference-graph.v1.json` also declares enforced module barriers; a
+ * consumer outside an enforced module must import its barrel, not a deep path.
+ */
+const REFERENCE_GRAPH_CONFIG = 'config/reference-graph.v1.json';
+const REFERENCE_GRAPH_ROOTS = Object.freeze(['src/', 'tests/', 'bin/', 'ui/', 'scenarios/']);
+const REFERENCE_GRAPH_SOURCE_RE = /\.(?:ts|tsx|mts|cts|mjs|js|jsx)$/;
+const REFERENCE_GRAPH_CANDIDATE_RE = /^src\/.*\.(?:ts|tsx)$/;
+
+function readReferenceGraphConfig(rule) {
+  let config;
+  try {
+    config = JSON.parse(readIncludingComments(REFERENCE_GRAPH_CONFIG));
+  } catch (error) {
+    fail(`${rule} cannot read ${REFERENCE_GRAPH_CONFIG}: ${error instanceof Error ? error.message : String(error)}`);
+    return null;
+  }
+  if (config.schemaVersion !== 'nightwatch.reference-graph.v1') {
+    fail(`${rule} ${REFERENCE_GRAPH_CONFIG} schemaVersion is ${String(config.schemaVersion)}, not nightwatch.reference-graph.v1`);
+    return null;
+  }
+  if (!Array.isArray(config.retention)) {
+    fail(`${rule} ${REFERENCE_GRAPH_CONFIG} declares no retention list; an absent list is not an empty one`);
+    return null;
+  }
+  if (!Array.isArray(config.enforcedBarriers)) {
+    fail(`${rule} ${REFERENCE_GRAPH_CONFIG} declares no enforced-barrier list`);
+    return null;
+  }
+  return config;
+}
+
+function referenceGraphFiles() {
+  return gitFiles().filter((file) => (
+    REFERENCE_GRAPH_ROOTS.some((prefix) => file.startsWith(prefix))
+    && REFERENCE_GRAPH_SOURCE_RE.test(file)
+    && !file.endsWith('.d.ts')
+    && !file.endsWith('.d.mts')
+    && !file.endsWith('.d.cts')
+  ));
+}
+
+function referenceModuleDirectory(file) {
+  const slash = file.lastIndexOf('/');
+  return slash < 0 ? '' : file.slice(0, slash);
+}
+
+function pathIsInsideDirectory(directory, file) {
+  return file === directory || file.startsWith(`${directory}/`);
+}
+
+function referenceGraphAccess() {
+  return {
+    /** @param {string} relativePath */
+    readSource(relativePath) {
+      try {
+        return fs.readFileSync(path.join(root, relativePath), 'utf8');
+      } catch {
+        return null;
+      }
+    },
+    /** @param {string} relativePath */
+    fileExists(relativePath) {
+      try {
+        return fs.statSync(path.join(root, relativePath)).isFile();
+      } catch {
+        return false;
+      }
+    },
+  };
+}
+
+/** @type {{ files: string[], fileSet: Set<string>, edges: { from: string, to: string, kind: string, line: number }[], parsed: number } | null} */
+let referenceGraphCache = null;
+
+function buildReferenceGraph() {
+  const files = referenceGraphFiles();
+  const fileSet = new Set(files);
+  const access = referenceGraphAccess();
+  /** @type {{ from: string, to: string, kind: string, line: number }[]} */
+  const edges = [];
+  const edgeKeys = new Set();
+  const addEdge = (from, to, kind, line) => {
+    if (typeof to !== 'string' || to.length === 0) return;
+    const key = `${from}\0${to}\0${kind}\0${line}`;
+    if (edgeKeys.has(key)) return;
+    edgeKeys.add(key);
+    edges.push({ from, to, kind, line });
+  };
+  let parsed = 0;
+  for (const file of files) {
+    const raw = readIncludingComments(file);
+    if (raw.length === 0) continue;
+    const scriptKind = file.endsWith('.tsx') || file.endsWith('.jsx')
+      ? typescript.ScriptKind.TSX
+      : file.endsWith('.ts') || file.endsWith('.mts') || file.endsWith('.cts')
+        ? typescript.ScriptKind.TS
+        : typescript.ScriptKind.JS;
+    const sourceFile = typescript.createSourceFile(file, raw, typescript.ScriptTarget.Latest, true, scriptKind);
+    parsed += 1;
+    const lineOf = (node) => sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile)).line + 1;
+    const resolveLiteral = (literal, line, kind) => {
+      const specifier = literal.text;
+      if (!specifier.startsWith('.')) {
+        addEdge(file, `external:${specifier}`, `${kind}_EXTERNAL`, line);
+        return;
+      }
+      const target = resolveRelativeModule(file, specifier, access.fileExists);
+      if (target === null) {
+        addEdge(file, `unresolved:${specifier}`, `${kind}_UNRESOLVED`, line);
+        return;
+      }
+      addEdge(file, target, kind, line);
+    };
+    /** @param {typescript.Node} node */
+    const visit = (node) => {
+      if (
+        typescript.isImportDeclaration(node)
+        && typescript.isStringLiteralLike(node.moduleSpecifier)
+      ) {
+        resolveLiteral(node.moduleSpecifier, lineOf(node), 'IMPORT');
+      } else if (
+        typescript.isExportDeclaration(node)
+        && node.moduleSpecifier
+        && typescript.isStringLiteralLike(node.moduleSpecifier)
+      ) {
+        resolveLiteral(node.moduleSpecifier, lineOf(node), 'REEXPORT');
+      } else if (typescript.isCallExpression(node)) {
+        const callee = node.expression;
+        if (
+          typescript.isIdentifier(callee)
+          && callee.text === 'require'
+          && typescript.isStringLiteralLike(node.arguments[0])
+        ) {
+          resolveLiteral(node.arguments[0], lineOf(node), 'REQUIRE');
+        } else if (
+          callee.kind === typescript.SyntaxKind.ImportKeyword
+          && typescript.isStringLiteralLike(node.arguments[0])
+        ) {
+          resolveLiteral(node.arguments[0], lineOf(node), 'DYNAMIC_IMPORT');
+        } else if (
+          typescript.isPropertyAccessExpression(callee)
+          && callee.getText(sourceFile) === 'require.resolve'
+          && typescript.isStringLiteralLike(node.arguments[0])
+        ) {
+          resolveLiteral(node.arguments[0], lineOf(node), 'REQUIRE_RESOLVE');
+        }
+      }
+      typescript.forEachChild(node, visit);
+    };
+    visit(sourceFile);
+  }
+  const binSources = files
+    .filter((file) => file.startsWith('bin/') && file.endsWith('.mjs'))
+    .map((file) => ({ file, source: readIncludingComments(file) }));
+  const loader = extractLoaderCallSites(binSources);
+  for (const site of loader.callSites) {
+    for (const binding of site.bindings) addEdge(site.file, binding.path, 'LOADER', site.line);
+  }
+  return { files, fileSet, edges, parsed };
+}
+
+function referenceGraph() {
+  if (referenceGraphCache === null) referenceGraphCache = buildReferenceGraph();
+  return referenceGraphCache;
+}
+
+/** @param {Record<string, unknown>} config @param {string} file */
+function retentionEntryFor(config, file) {
+  for (const entry of /** @type {{ path?: unknown, kind?: unknown }[]} */ (config.retention ?? [])) {
+    if (entry === null || typeof entry !== 'object' || typeof entry.path !== 'string') continue;
+    if (entry.kind === 'DIRECTORY' ? pathIsInsideDirectory(entry.path, file) : entry.path === file) return entry;
+  }
+  return null;
+}
+
+function evaluateReferenceGraph(graph, config) {
+  /** @type {{ code: string, detail: string }[]} */
+  const findings = [];
+  if (graph.edges.length === 0) {
+    return [{ code: 'REFERENCE_GRAPH_EMPTY', detail: 'zero edges resolved; the resolver is broken rather than the repository clean' }];
+  }
+  if (graph.parsed < 100) {
+    return [{ code: 'REFERENCE_GRAPH_VACUOUS', detail: `only ${graph.parsed} tracked source files parsed; discovery is broken` }];
+  }
+  /** @type {Map<string, { from: string }>} */
+  const externalInbound = new Map();
+  for (const edge of graph.edges) {
+    if (!graph.fileSet.has(edge.to)) continue;
+    if (referenceModuleDirectory(edge.from) === referenceModuleDirectory(edge.to)) continue;
+    if (!externalInbound.has(edge.to)) externalInbound.set(edge.to, { from: edge.from });
+  }
+  /** @type {Map<string, string[]>} */
+  const outgoing = new Map();
+  for (const edge of graph.edges) {
+    if (!graph.fileSet.has(edge.to)) continue;
+    const list = outgoing.get(edge.from) ?? [];
+    list.push(edge.to);
+    outgoing.set(edge.from, list);
+  }
+  const alive = new Set();
+  const queue = [];
+  const seed = (file) => {
+    if (graph.fileSet.has(file) && !alive.has(file)) {
+      alive.add(file);
+      queue.push(file);
+    }
+  };
+  for (const file of graph.files) if (!file.startsWith('src/')) seed(file);
+  for (const file of externalInbound.keys()) if (file.startsWith('src/')) seed(file);
+  while (queue.length > 0) {
+    const current = /** @type {string} */ (queue.pop());
+    for (const next of outgoing.get(current) ?? []) seed(next);
+  }
+  const access = referenceGraphAccess();
+  for (const entry of /** @type {Record<string, unknown>[]} */ (config.retention ?? [])) {
+    if (entry === null || typeof entry !== 'object' || typeof entry.path !== 'string') {
+      findings.push({ code: 'REFERENCE_RETENTION_SHAPE', detail: 'a retention entry has no path' });
+      continue;
+    }
+    if (!fs.existsSync(path.join(root, entry.path))) {
+      findings.push({ code: 'REFERENCE_RETENTION_MISSING', detail: `${entry.path} is retained but does not exist; a retention entry for a removed module is stale` });
+    }
+    if (typeof entry.reason !== 'string' || entry.reason.trim().length < 12) {
+      findings.push({ code: 'REFERENCE_RETENTION_REASON', detail: `${entry.path} is retained without a stated reason` });
+    }
+  }
+  for (const file of graph.files) {
+    if (!REFERENCE_GRAPH_CANDIDATE_RE.test(file)) continue;
+    const retained = retentionEntryFor(config, file);
+    if (alive.has(file)) {
+      if (retained !== null) {
+        findings.push({ code: 'REFERENCE_RETENTION_STALE', detail: `${file} is retained by ${retained.path} but is now referenced outside its directory; remove the stale retention entry` });
+      }
+      continue;
+    }
+    if (retained !== null) continue;
+    const exported = collectExportedNames(file, access);
+    findings.push({
+      code: 'REFERENCE_UNREFERENCED_MODULE',
+      detail: `${file} exports=${exported.names.size} has no reference to any export outside its own directory and is not retained; adopt, remove, or declare it in ${REFERENCE_GRAPH_CONFIG}`,
+    });
+  }
+  return findings;
+}
+
+function checkSourceReachability() {
+  const config = readReferenceGraphConfig('SOURCE_REACHABILITY');
+  if (config === null) return;
+  for (const finding of evaluateReferenceGraph(referenceGraph(), config)) {
+    fail(`${finding.code} ${finding.detail}`);
+  }
+}
+
+function checkModuleBarrierEnforcement() {
+  const config = readReferenceGraphConfig('MODULE_BARRIER');
+  if (config === null) return;
+  const barriers = /** @type {{ module?: unknown, barrel?: unknown, reason?: unknown }[]} */ (config.enforcedBarriers ?? []);
+  if (barriers.length === 0) {
+    fail('MODULE_BARRIER no enforced module barrier is declared; the rule would pass vacuously');
+    return;
+  }
+  const graph = referenceGraph();
+  if (graph.edges.length === 0) {
+    fail('MODULE_BARRIER the reference graph resolved zero edges; the barrier rule cannot evaluate fail-closed');
+    return;
+  }
+  for (const barrier of barriers) {
+    if (barrier === null || typeof barrier !== 'object' || typeof barrier.module !== 'string' || typeof barrier.barrel !== 'string' || !barrier.barrel.startsWith(`${barrier.module}/`)) {
+      fail(`MODULE_BARRIER invalid barrier declaration: ${JSON.stringify(barrier)}`);
+      continue;
+    }
+    if (!fs.existsSync(path.join(root, barrier.barrel))) {
+      fail(`MODULE_BARRIER ${barrier.module} declares barrel ${barrier.barrel}, which does not exist`);
+      continue;
+    }
+    if (typeof barrier.reason !== 'string' || barrier.reason.trim().length < 12) {
+      fail(`MODULE_BARRIER ${barrier.barrel} is enforced without a stated reason`);
+    }
+    let inbound = 0;
+    for (const edge of graph.edges) {
+      if (
+        graph.fileSet.has(edge.to)
+        && pathIsInsideDirectory(barrier.module, edge.to)
+        && edge.to !== barrier.barrel
+        && !pathIsInsideDirectory(barrier.module, edge.from)
+      ) {
+        fail(`MODULE_BARRIER_DEEP_IMPORT ${edge.from}:${edge.line} imports deep path ${edge.to}; consumers outside ${barrier.module} must import its barrel ${barrier.barrel}`);
+      }
+      if (edge.to === barrier.barrel && !pathIsInsideDirectory(barrier.module, edge.from)) inbound += 1;
+    }
+    if (inbound === 0) {
+      fail(`MODULE_BARRIER_UNUSED ${barrier.barrel} has no consumer outside ${barrier.module}; an enforced barrel must be the boundary consumers actually use`);
+    }
+  }
+}
+
+/**
+ * F-21. Cookie expiry has exactly ONE evaluator.
+ *
+ * `src/browser/fixtures/storageState.ts` owns the domain/path/expiry arithmetic
+ * (`cookieApplicabilityFacts`) and is the source the authenticated-capability
+ * pre-flight calls. Two evaluators for one question can disagree, and the
+ * disagreement is silent: the pre-flight would report VALID while the browser
+ * sees a cookie the page cannot read, or the reverse. This rule makes the
+ * single-evaluator property structural rather than a code-review convention.
+ *
+ * The detector reads CODE ONLY: comments are blanked with spaces so line
+ * numbers survive. It matches cookie-expiry *evaluation* forms — a property
+ * read (`.expires`), a bracketed read (`['expires']`), a direct comparison, or
+ * one of the evaluator's computed facts (`hasFutureExpiry`,
+ * `numericExpiryEpochSeconds`). It deliberately does NOT match an object key
+ * write (`expires: ...`), because constructing a cookie fixture is not
+ * evaluating an expiry; `tests/unit/storageState.test.ts` is full of such
+ * writes and must stay legal.
+ *
+ * Non-vacuity: the allowed evaluator must still contain matches of the
+ * detector before any file is accused. If a refactor renames those forms, the
+ * detector fails loudly instead of passing because it found nothing anywhere.
+ */
+const AUTH_CAPABILITY_EXPIRY_EVALUATOR_FILE = 'src/browser/fixtures/storageState.ts';
+const AUTH_CAPABILITY_EXPIRY_EVALUATOR_PATTERNS = Object.freeze([
+  { label: 'a cookie `expires` property read', pattern: /\.expires\b/g },
+  { label: 'a bracketed cookie `expires` read', pattern: /\[\s*['"]expires['"]\s*\]/g },
+  { label: 'a direct cookie `expires` comparison', pattern: /\bexpires(?:Raw)?\s*(?:===|!==|<=|>=|<|>)/g },
+  { label: 'a `hasFutureExpiry` computation', pattern: /\bhasFutureExpiry\b/g },
+  { label: 'a `numericExpiryEpochSeconds` computation', pattern: /\bnumericExpiryEpochSeconds\b/g },
+]);
+
+/** Blank comments with spaces so offsets and line numbers are preserved. */
+function codeWithCommentsBlanked(source) {
+  const characters = source.split('');
+  /** @type {'code'|'line'|'block'|'single'|'double'|'template'} */
+  let mode = 'code';
+  let index = 0;
+  while (index < source.length) {
+    const character = source[index];
+    const next = source[index + 1];
+    if (mode === 'code') {
+      if (character === '/' && next === '/') { characters[index] = ' '; characters[index + 1] = ' '; mode = 'line'; index += 2; continue; }
+      if (character === '/' && next === '*') { characters[index] = ' '; characters[index + 1] = ' '; mode = 'block'; index += 2; continue; }
+      if (character === "'") mode = 'single';
+      else if (character === '"') mode = 'double';
+      else if (character === '`') mode = 'template';
+      index += 1;
+      continue;
+    }
+    if (mode === 'line') {
+      if (character === '\n') mode = 'code';
+      else characters[index] = ' ';
+      index += 1;
+      continue;
+    }
+    if (mode === 'block') {
+      if (character === '*' && next === '/') { characters[index] = ' '; characters[index + 1] = ' '; mode = 'code'; index += 2; continue; }
+      if (character !== '\n') characters[index] = ' ';
+      index += 1;
+      continue;
+    }
+    if (character === '\\') { index += 2; continue; }
+    if ((mode === 'template' && character === '`') || (mode === 'single' && character === "'") || (mode === 'double' && character === '"')) mode = 'code';
+    index += 1;
+  }
+  return characters.join('');
+}
+
+function checkAuthenticatedCapabilitySingleEvaluator() {
+  const allowedSource = codeWithCommentsBlanked(readIncludingComments(AUTH_CAPABILITY_EXPIRY_EVALUATOR_FILE));
+  let allowedMatches = 0;
+  for (const { pattern } of AUTH_CAPABILITY_EXPIRY_EVALUATOR_PATTERNS) {
+    allowedMatches += (allowedSource.match(new RegExp(pattern.source, 'g')) ?? []).length;
+  }
+  if (allowedMatches === 0) {
+    fail(`AUTH_CAPABILITY_SINGLE_EVALUATOR_VACUOUS ${AUTH_CAPABILITY_EXPIRY_EVALUATOR_FILE} contains none of the cookie-expiry evaluation forms this rule detects; the detector is broken rather than the repository clean`);
+    return;
+  }
+  let scanned = 0;
+  for (const file of gitFiles().filter((entry) => (
+    (entry.startsWith('src/') || entry.startsWith('bin/') || entry.startsWith('tests/'))
+    && /\.(?:ts|tsx|mjs|js)$/.test(entry)
+    && entry !== AUTH_CAPABILITY_EXPIRY_EVALUATOR_FILE
+    && entry !== 'bin/hardening-check.mjs'
+  ))) {
+    scanned += 1;
+    const source = codeWithCommentsBlanked(readIncludingComments(file));
+    for (const { label, pattern } of AUTH_CAPABILITY_EXPIRY_EVALUATOR_PATTERNS) {
+      for (const match of source.matchAll(new RegExp(pattern.source, 'g'))) {
+        const line = source.slice(0, match.index).split('\n').length;
+        fail(`AUTH_CAPABILITY_SECOND_EXPIRY_EVALUATOR ${file}:${line} contains ${label}; cookie expiry must be evaluated only by ${AUTH_CAPABILITY_EXPIRY_EVALUATOR_FILE}`);
+      }
+    }
+  }
+  if (scanned === 0) fail('AUTH_CAPABILITY_SECOND_EXPIRY_EVALUATOR scanned zero files; the check would pass vacuously');
+}
+
+/**
  * F-16 rule-engine soundness self-check.
  *
  * Two mechanical facts about the checker itself:
@@ -5029,6 +5473,9 @@ const REGISTERED_RULES = [
   { name: 'checkSyntax', run: checkSyntax, family: 'syntax', quantifier: 'TOTALITY', subject: 'every top-level bin parses as an ES module' },
   { name: 'checkCliImplementationContract', run: checkCliImplementationContract, family: 'cli-contract', quantifier: 'TOTALITY', subject: 'every loader call site names a string literal path that resolves and exports what the call site reads' },
   { name: 'checkBinExecutionCoverage', run: checkBinExecutionCoverage, family: 'bin-execution', quantifier: 'TOTALITY', subject: 'every top-level bin entry point is executed as a process by at least one test' },
+  { name: 'checkAuthenticatedCapabilitySingleEvaluator', run: checkAuthenticatedCapabilitySingleEvaluator, family: 'auth-capability', quantifier: 'TOTALITY', subject: 'every cookie-expiry evaluation outside the storage-state fixture reuses the single evaluator or is reported by file and line' },
+  { name: 'checkSourceReachability', run: checkSourceReachability, family: 'dead-architecture', quantifier: 'TOTALITY', subject: 'every tracked src module is referenced outside its own directory or declared in the reasoned-retention list, and the list fails in both directions' },
+  { name: 'checkModuleBarrierEnforcement', run: checkModuleBarrierEnforcement, family: 'dead-architecture', quantifier: 'TOTALITY', subject: 'every enforced module barrier is entered through its barrel and no consumer outside it imports a deep path' },
   { name: 'checkRuleEngineSoundness', run: checkRuleEngineSoundness, family: 'rule-engine', quantifier: 'TOTALITY', subject: 'no fail-if-absent matcher uses the raw accessor and registry/probe/quantifier invariants hold' },
 ];
 
@@ -5144,6 +5591,14 @@ if (process.argv.includes('--list-rules')) {
   process.exit(0);
 } else if (process.argv.includes('--probe-campaign')) {
   runRuleProbeCampaign();
+} else if (process.argv.includes('--report-reachability')) {
+  const config = readReferenceGraphConfig('SOURCE_REACHABILITY');
+  const graph = referenceGraph();
+  const findings = config === null ? [] : evaluateReferenceGraph(graph, config);
+  console.log(`[reachability] files=${graph.files.length} parsed=${graph.parsed} edges=${graph.edges.length}`);
+  for (const finding of findings) console.log(`[reachability] ${finding.code} ${finding.detail}`);
+  console.log(`[reachability] findings=${findings.length} (reporting mode; nothing failed)`);
+  process.exit(0);
 } else if (process.argv.includes('--report-documentation-currency')) {
   // Reporting mode: the same three rules that run blocking in the gate, with
   // their findings printed instead of failing. Used to migrate documents

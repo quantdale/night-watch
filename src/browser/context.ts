@@ -42,6 +42,7 @@ import {
   type NetworkObserver,
   type SemanticResponseOracle,
 } from './observers/networkObserver';
+import type { SemanticEvidenceAcceptanceClass } from '../oracles/semantic/receipts';
 import { createConsoleObserver } from './observers/consoleObserver';
 import {
   classifyBrowserBackgroundConsoleEffect,
@@ -88,6 +89,10 @@ interface NightwatchContextOptions {
    *  admitted real-source resolver; there is no global default and no
    *  environment-variable-created semantic authority. */
   semanticOracle?: SemanticResponseOracle;
+  /** Group 11 (F-10): the acceptance class recorded on semantic receipts.
+   *  Defaults to LOCAL_SYNTHETIC; only the gated contained DEV runner
+   *  declares CONTAINED_DEV. Never derived from an environment variable. */
+  semanticAcceptanceClass?: SemanticEvidenceAcceptanceClass;
 }
 
 export interface NightwatchContext {
@@ -327,6 +332,7 @@ export async function createNightwatchContext(
     targetOrigin: new URL(validated).origin,
     journeyId: opts.journeyId,
     ...(opts.semanticOracle === undefined ? {} : { semanticOracle: opts.semanticOracle }),
+    ...(opts.semanticAcceptanceClass === undefined ? {} : { semanticAcceptanceClass: opts.semanticAcceptanceClass }),
   });
   let proxyPollStopped = false;
   let proxyHealthCheckInFlight = false;

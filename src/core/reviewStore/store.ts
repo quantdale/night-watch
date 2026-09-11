@@ -58,6 +58,7 @@ import {
   type ReviewStoreCorruption,
   type ReviewStoreErrorCode,
   type ReviewStoreReadResult,
+  type ReviewStoreUnsupportedVersion,
   type StoredReviewEnvelope,
 } from './types';
 
@@ -74,6 +75,24 @@ export class ReviewStoreError extends Error {
     super(detail === undefined ? code : `${code}:${detail}`);
     this.name = 'ReviewStoreError';
     this.code = code;
+  }
+}
+
+/**
+ * An intact record at a version this build does not read. Distinct from
+ * CORRUPT so the read result can report VERSION_UNSUPPORTED with the found
+ * version — an owner runs a migration, not a defect report. The field is
+ * carried because `schemaVersion`, `lifecycleVersion` and the receipt's
+ * `schemaVersion` are three independent contracts.
+ */
+export class ReviewStoreVersionUnsupportedError extends ReviewStoreError {
+  readonly field: ReviewStoreUnsupportedVersion['field'];
+  readonly foundVersion: string;
+  constructor(field: ReviewStoreUnsupportedVersion['field'], foundVersion: string) {
+    super('REVIEW_STORE_VERSION_UNSUPPORTED', foundVersion);
+    this.name = 'ReviewStoreVersionUnsupportedError';
+    this.field = field;
+    this.foundVersion = foundVersion;
   }
 }
 
@@ -98,9 +117,11 @@ export function validateStoredReviewEnvelope(value: unknown, fileName: string): 
   if (prototype !== Object.prototype && prototype !== null) corrupt('REVIEW_STORE_CORRUPT', 'prototype');
 
   // Version is checked before shape: an unsupported schema is never parsed
-  // optimistically and can never become CURRENT by resembling this one.
+  // optimistically and can never become CURRENT by resembling this one. The
+  // error carries the versioned field as well as the found value, so the read
+  // path can report VERSION_UNSUPPORTED instead of folding it into CORRUPT.
   if (record.schemaVersion !== REVIEW_STORE_SCHEMA_VERSION) {
-    corrupt('REVIEW_STORE_VERSION_UNSUPPORTED', String(record.schemaVersion));
+    throw new ReviewStoreVersionUnsupportedError('schemaVersion', String(record.schemaVersion));
   }
   const keys = Object.keys(record).sort();
   if (JSON.stringify(keys) !== JSON.stringify(ENVELOPE_KEYS)) corrupt('REVIEW_STORE_CORRUPT', `keys ${keys.join(',')}`);
@@ -127,8 +148,12 @@ export function validateStoredReviewEnvelope(value: unknown, fileName: string): 
     corrupt('REVIEW_STORE_CORRUPT', message);
   }
 
-  if (stored.lifecycleVersion !== FINDING_REVIEW_LIFECYCLE_VERSION) corrupt('REVIEW_STORE_VERSION_UNSUPPORTED', String(stored.lifecycleVersion));
-  if (receipt.schemaVersion !== FINDING_REVIEW_RECEIPT_VERSION) corrupt('REVIEW_STORE_VERSION_UNSUPPORTED', String(receipt.schemaVersion));
+  if (stored.lifecycleVersion !== FINDING_REVIEW_LIFECYCLE_VERSION) {
+    throw new ReviewStoreVersionUnsupportedError('lifecycleVersion', String(stored.lifecycleVersion));
+  }
+  if (receipt.schemaVersion !== FINDING_REVIEW_RECEIPT_VERSION) {
+    throw new ReviewStoreVersionUnsupportedError('receiptSchemaVersion', String(receipt.schemaVersion));
+  }
 
   let storedBinding: FindingReviewBinding;
   try {
@@ -298,12 +323,16 @@ export class ReviewStore {
    * and therefore the file name, so a binding-keyed read would report
    * NO_REVIEW for exactly the case that must report STALE.
    *
-   * Precedence is CURRENT over STALE over CORRUPT. A corrupt generation never
-   * produces CURRENT, and it is reported either way rather than hidden by a
-   * valid sibling generation.
+   * Precedence is CURRENT over STALE over CORRUPT over VERSION_UNSUPPORTED.
+   * A corrupt generation never produces CURRENT, and it is reported either
+   * way rather than hidden by a valid sibling generation; an intact old
+   * generation that is not CURRENT/STALE reports VERSION_UNSUPPORTED with its
+   * found version and count rather than CORRUPT. A genuine defect outranks a
+   * migration notice when both exist, so corruption is never hidden.
    */
   read(findingId: string, current: CurrentReviewArtifacts, listing?: ReviewStoreListing): ReviewStoreReadResult {
     const corruption: ReviewStoreCorruption[] = [];
+    const unsupported: ReviewStoreUnsupportedVersion[] = [];
     const generations: StoredReviewEnvelope[] = [];
     let currentEnvelope: StoredReviewEnvelope | null = null;
     let staleEnvelope: StoredReviewEnvelope | null = null;
@@ -322,6 +351,17 @@ export class ReviewStore {
       try {
         envelope = validateStoredReviewEnvelope(raw, fileName);
       } catch (error) {
+        // An intact record at a superseded version is a migration; damaged
+        // bytes are a defect. They are never the same bucket.
+        if (error instanceof ReviewStoreVersionUnsupportedError) {
+          unsupported.push({
+            fileName,
+            foundVersion: error.foundVersion,
+            field: error.field,
+            detail: error.message,
+          });
+          continue;
+        }
         const code = error instanceof ReviewStoreError ? error.code : 'REVIEW_STORE_CORRUPT';
         corruption.push({ fileName, code, detail: (error as Error).message });
         continue;
@@ -361,6 +401,8 @@ export class ReviewStore {
         envelope: currentEnvelope,
         staleReason: null,
         corruption,
+        unsupported,
+        unsupportedCount: unsupported.length,
         generations,
         organizationalAuthority: 'NONE_LOCAL_REVIEW_ONLY',
       };
@@ -371,15 +413,19 @@ export class ReviewStore {
         envelope: staleEnvelope,
         staleReason,
         corruption,
+        unsupported,
+        unsupportedCount: unsupported.length,
         generations,
         organizationalAuthority: 'NONE_LOCAL_REVIEW_ONLY',
       };
     }
     return {
-      state: corruption.length > 0 ? 'CORRUPT' : 'NO_REVIEW',
+      state: corruption.length > 0 ? 'CORRUPT' : unsupported.length > 0 ? 'VERSION_UNSUPPORTED' : 'NO_REVIEW',
       envelope: null,
       staleReason: null,
       corruption,
+      unsupported,
+      unsupportedCount: unsupported.length,
       generations,
       organizationalAuthority: 'NONE_LOCAL_REVIEW_ONLY',
     };

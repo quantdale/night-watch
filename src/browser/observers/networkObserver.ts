@@ -50,7 +50,7 @@ import {
 import { fingerprintAnomaly } from '../../core/journeys/fingerprint';
 import { semanticFindingFingerprint } from '../../oracles/semantic';
 import { buildInternalErrorReceipt, evaluateSemanticHook, type SemanticHookOracle } from '../../oracles/semantic/hook';
-import type { SemanticEvaluationReceipt } from '../../oracles/semantic/receipts';
+import type { SemanticEvaluationReceipt, SemanticEvidenceAcceptanceClass } from '../../oracles/semantic/receipts';
 import { guardPhase22SemanticHookResult } from '../../oracles/semantic/phase22Firewall';
 import type { Phase22PrivacyReceipt } from '../../core/phase22';
 import type { JourneyCaptureFailureCode } from '../../core/journeys/types';
@@ -225,6 +225,10 @@ export function createNetworkObserver(opts: {
   /** Optional Phase 9 semantic projection hook (additive; never weakens the
    *  protocol oracles). */
   semanticOracle?: SemanticResponseOracle;
+  /** Group 11 (F-10): the acceptance class recorded on every receipt this
+   *  observer produces. Defaults to LOCAL_SYNTHETIC; only the gated contained
+   *  DEV runner declares CONTAINED_DEV. */
+  semanticAcceptanceClass?: SemanticEvidenceAcceptanceClass;
 }): NetworkObserver {
   const { policy, recorder, monitor } = opts;
 
@@ -945,6 +949,7 @@ export function createNetworkObserver(opts: {
             url: rawUrl,
             method,
             targetId: endpointMatch?.ruleId,
+            ...(opts.semanticAcceptanceClass === undefined ? {} : { acceptanceClass: opts.semanticAcceptanceClass }),
             journeyId: opts.journeyId ?? 'unbound',
             stepId: requestIntent?.stepId ?? undefined,
           });
@@ -954,6 +959,7 @@ export function createNetworkObserver(opts: {
           // a silent miss or a crashed run.
           const receipt = buildInternalErrorReceipt({
             targetId: endpointMatch?.ruleId,
+            ...(opts.semanticAcceptanceClass === undefined ? {} : { acceptanceClass: opts.semanticAcceptanceClass }),
             journeyId: opts.journeyId,
             stepId: requestIntent?.stepId ?? undefined,
           });

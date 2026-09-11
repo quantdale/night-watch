@@ -4,9 +4,11 @@
 
 import { defineConfig } from '@playwright/test';
 import baseConfig from './playwright.config';
+import { resolvePlaywrightOutputDir } from './src/core/workspace/ephemeralLayout';
 
 export default defineConfig({
   ...baseConfig,
+  outputDir: resolvePlaywrightOutputDir('phase10b'),
   testMatch: ['**/tests/manual/phase10b-contained-dev-deep-semantic.ts'],
   testIgnore: ['**/fixtures/**', '**/node_modules/**', '**/dist/**', '**/artifacts/**', '**/test-results/**', '**/.tmp-*/**'],
 });

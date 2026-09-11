@@ -230,7 +230,7 @@ function main() {
     const verification = verificationStore.readVerification(parsed.verificationId);
     if (verification.promotionId !== parsed.promotionId) throw new Error('SELFDEV_PROMOTION_ID_MISMATCH');
 
-    const provenanceService = loadTypeScriptModule('src/core/provenance/localGit.ts');
+    const provenanceService = loadTypeScriptModule('src/core/provenance/index.ts');
     let currentness = 'CANONICAL_PROMOTION_UNCOMMITTED';
     try {
       const current = provenanceService.currentCheckoutState({ repositoryRoot: root });

@@ -18,8 +18,19 @@ const SCHEMA_VERSION = 'nightwatch.local-hygiene.v1';
 const MAX_OUTPUT = 512 * 1024;
 const MAX_BRANCHES = 512;
 const MAX_WORKTREES = 256;
+const MAX_OUTPUT_ROOTS = 512;
+const MAX_OUTPUT_FILES = 100_000;
 const SAFE_BRANCH = /^(?:swarm|swarm2)\//;
-const GENERATED_OUTPUTS = Object.freeze(['artifacts', 'test-results', '.nightwatch', '.tmp-test', 'dist']);
+const GENERATED_OUTPUTS = Object.freeze(['artifacts', 'test-results', '.nightwatch', '.tmp-nightwatch', 'dist']);
+// Runner output and scratch. The owned roots are `test-results` (Playwright
+// output, one subdirectory per lane) and `.tmp-nightwatch` (scratch); the
+// `test-results-*` and `.tmp-*` siblings are the pre-F-06 accumulation. The
+// pattern is deliberately root-level and narrow: it cannot reach `artifacts`,
+// `.nightwatch`, `node_modules` or any source tree.
+const OUTPUT_ROOT_PATTERN = /^(?:test-results(?:-[A-Za-z0-9._-]+)?|\.tmp-[A-Za-z0-9._-]+)$/;
+const OWNED_OUTPUT_ROOTS = Object.freeze(['test-results', '.tmp-nightwatch']);
+const OWNED_OUTPUT_ROOT_SET = new Set(OWNED_OUTPUT_ROOTS);
+const PROTECTED_ROOT_NAMES = new Set(['artifacts', '.nightwatch', 'node_modules', '.git', 'dist']);
 
 const CLI_METADATA = {
   schemaVersion: OPERATOR_CLI_SCHEMA,
@@ -205,6 +216,147 @@ function ignoredOutputState(root) {
   return { status: 'OBSERVED_ONLY', ignoredEntryCount };
 }
 
+/** Tracked paths under one root-level name. Failure is unprovable, not empty. */
+function trackedPathsUnder(root, name) {
+  const result = runGit(root, ['ls-files', '-z', '--', name]);
+  if (!result.ok) return { status: 'UNAVAILABLE', files: [], code: result.code };
+  return { status: 'OBSERVED', files: result.stdout.split('\0').filter((line) => line.length > 0), code: null };
+}
+
+/** Bounded, no-follow file count and byte size; null when unmeasurable. */
+function boundedTreeStats(target) {
+  let fileCount = 0;
+  let bytes = 0;
+  const stack = [target];
+  while (stack.length > 0) {
+    const current = stack.pop();
+    let entries;
+    try {
+      entries = fs.readdirSync(current, { withFileTypes: true });
+    } catch {
+      return null;
+    }
+    for (const entry of entries) {
+      if (entry.isSymbolicLink()) continue;
+      const child = path.join(current, entry.name);
+      if (entry.isDirectory()) {
+        stack.push(child);
+        continue;
+      }
+      try {
+        bytes += fs.lstatSync(child).size;
+      } catch {
+        return null;
+      }
+      fileCount += 1;
+      if (fileCount > MAX_OUTPUT_FILES) return null;
+    }
+  }
+  return { fileCount, bytes };
+}
+
+/**
+ * Root-level runner-output and scratch roots, with the exact disposition of
+ * each. Only a directory whose tracked state proves it contains no tracked
+ * file, and that is not a protected root, is a removal target. `artifacts/`
+ * and `.nightwatch/` are outside the pattern by construction and protected by
+ * name as well; neither can be reached from here.
+ */
+function outputRootState(root) {
+  let names;
+  try {
+    names = fs.readdirSync(root, { withFileTypes: true });
+  } catch {
+    return { status: 'UNAVAILABLE', entries: [], unownedRoots: [] };
+  }
+  const entries = [];
+  for (const entry of names) {
+    if (!entry.isDirectory() || entry.isSymbolicLink()) continue;
+    if (!OUTPUT_ROOT_PATTERN.test(entry.name)) continue;
+    if (entries.length >= MAX_OUTPUT_ROOTS) return { status: 'UNAVAILABLE', entries: [], unownedRoots: [] };
+    const target = path.join(root, entry.name);
+    let stat;
+    try {
+      stat = fs.lstatSync(target);
+    } catch {
+      continue;
+    }
+    if (!stat.isDirectory() || stat.isSymbolicLink()) continue;
+    const owned = OWNED_OUTPUT_ROOT_SET.has(entry.name);
+    if (PROTECTED_ROOT_NAMES.has(entry.name)) {
+      entries.push({
+        name: entry.name,
+        owned,
+        trackedFileCount: null,
+        fileCount: null,
+        bytes: null,
+        disposition: 'REFUSED_PROTECTED_ROOT',
+        reasonCode: 'PROTECTED_ROOT_NAME',
+      });
+      continue;
+    }
+    const tracked = trackedPathsUnder(root, entry.name);
+    let disposition = 'REMOVAL_TARGET';
+    let reasonCode = 'RUNNER_OUTPUT_OR_SCRATCH';
+    let stats = null;
+    if (tracked.status !== 'OBSERVED') {
+      disposition = 'REFUSED_UNPROVABLE';
+      reasonCode = tracked.code ?? 'TRACKED_STATE_UNAVAILABLE';
+    } else if (tracked.files.length > 0) {
+      disposition = 'REFUSED_TRACKED_FILES_PRESENT';
+      reasonCode = 'TRACKED_FILES_PRESENT';
+    } else {
+      stats = boundedTreeStats(target);
+      if (stats === null) {
+        disposition = 'REFUSED_UNPROVABLE';
+        reasonCode = 'OUTPUT_TREE_UNMEASURABLE';
+      }
+    }
+    entries.push({
+      name: entry.name,
+      owned,
+      trackedFileCount: tracked.status === 'OBSERVED' ? tracked.files.length : null,
+      fileCount: stats?.fileCount ?? null,
+      bytes: stats?.bytes ?? null,
+      disposition,
+      reasonCode,
+    });
+  }
+  entries.sort((left, right) => left.name.localeCompare(right.name));
+  return { status: 'OBSERVED', entries, unownedRoots: entries.filter((entry) => !entry.owned).map((entry) => entry.name) };
+}
+
+/**
+ * Revalidate and remove exactly one previously planned output root. The exact
+ * target is re-checked for tracked files immediately before removal, so a file
+ * that became tracked between plan and apply is preserved, not deleted.
+ */
+function applyOutputTarget(root, name) {
+  if (!OUTPUT_ROOT_PATTERN.test(name) || PROTECTED_ROOT_NAMES.has(name)) {
+    return { name, result: 'PRESERVED', reasonCode: 'OUTPUT_TARGET_NOT_REMOVABLE' };
+  }
+  const target = path.join(root, name);
+  let stat;
+  try {
+    stat = fs.lstatSync(target);
+  } catch {
+    return { name, result: 'PRESERVED', reasonCode: 'OUTPUT_TARGET_DISAPPEARED' };
+  }
+  if (stat.isSymbolicLink() || !stat.isDirectory()) {
+    return { name, result: 'PRESERVED', reasonCode: 'OUTPUT_TARGET_NOT_A_DIRECTORY' };
+  }
+  const tracked = trackedPathsUnder(root, name);
+  if (tracked.status !== 'OBSERVED' || tracked.files.length > 0) {
+    return { name, result: 'PRESERVED', reasonCode: 'TRACKED_FILES_PRESENT_OR_UNPROVABLE' };
+  }
+  try {
+    fs.rmSync(target, { recursive: true, force: false });
+  } catch {
+    return { name, result: 'PRESERVED', reasonCode: 'OUTPUT_TARGET_REMOVE_FAILED' };
+  }
+  return { name, result: 'REMOVED', reasonCode: 'RUNNER_OUTPUT_OR_SCRATCH_REMOVED' };
+}
+
 function classifyRegistration(root, registration, branchByName, currentBranch, mainReference) {
   const state = worktreeState(registration);
   const base = {
@@ -267,10 +419,14 @@ function inspect(root) {
   const safeTargets = classifiedRegistrations
     .filter((registration) => registration.disposition === 'SAFE_CLEAN_REACHABLE_TARGET')
     .map((registration) => registration.target);
+  const outputState = outputRootState(root);
+  const outputRemovalPlan = outputState.entries
+    .filter((entry) => entry.disposition === 'REMOVAL_TARGET')
+    .map((entry) => entry.name);
   return {
     schemaVersion: SCHEMA_VERSION,
     mode: 'STATUS',
-    result: safeTargets.length === 0 ? 'PRESERVED' : 'SAFE_TARGETS_FOUND',
+    result: safeTargets.length === 0 && outputRemovalPlan.length === 0 ? 'PRESERVED' : 'REMOVAL_TARGETS_FOUND',
     root,
     gitHead,
     currentBranch,
@@ -281,12 +437,17 @@ function inspect(root) {
       forceRemovalAllowed: false,
       broadPruneAllowed: false,
       generatedOutputsAreObservedOnly: true,
+      outputRemovalRequiresNoTrackedFiles: true,
     },
     safeTargets,
     registrations: classifiedRegistrations,
     branches: branchStates,
     generatedOutputs: generatedOutputState(root),
     ignoredOutputs: ignoredOutputState(root),
+    outputRemovalTargets: outputState.entries,
+    outputRemovalPlan,
+    unownedOutputRoots: outputState.unownedRoots,
+    outputStatus: outputState.status,
   };
 }
 
@@ -303,13 +464,22 @@ function applyTarget(root, target) {
 
 function renderText(report) {
   const applied = report.applyResults?.filter((entry) => entry.result === 'APPLIED').length ?? 0;
-  return [
+  const outputsApplied = report.outputRemovalResults?.filter((entry) => entry.result === 'REMOVED').length ?? 0;
+  const lines = [
     `Nightwatch hygiene: ${report.result}`,
     `mode=${report.mode} head=${report.gitHead} main=${report.mainReference ?? 'unavailable'}`,
     `registrations=${report.registrations.length} branches=${report.branches.length} safeTargets=${report.safeTargets.length} applied=${applied}`,
     `generatedOutputsObserved=${report.generatedOutputs.filter((entry) => entry.present).length} ignoredEntries=${report.ignoredOutputs.ignoredEntryCount ?? 'unavailable'}`,
-    ...(report.applyResults ?? []).map((entry) => `${entry.result} ${entry.target.branch} ${entry.reasonCode}`),
-  ].join('\n') + '\n';
+    `outputRoots=${report.outputRemovalTargets?.length ?? 0} unownedOutputRoots=${report.unownedOutputRoots?.length ?? 0} outputRemovalPlan=${report.outputRemovalPlan?.length ?? 0}`,
+  ];
+  for (const name of report.outputRemovalPlan ?? []) lines.push(`would remove ${name}`);
+  for (const entry of report.outputRemovalTargets ?? []) {
+    if (entry.disposition.startsWith('REFUSED')) lines.push(`preserve ${entry.name} ${entry.reasonCode}`);
+  }
+  lines.push(...(report.applyResults ?? []).map((entry) => `${entry.result} ${entry.target.branch} ${entry.reasonCode}`));
+  lines.push(...(report.outputRemovalResults ?? []).map((entry) => `${entry.result} ${entry.name} ${entry.reasonCode}`));
+  if (report.mode === 'APPLY') lines.push(`outputsApplied=${outputsApplied}`);
+  return lines.join('\n') + '\n';
 }
 
 function execute(options) {
@@ -321,13 +491,17 @@ function execute(options) {
   }
   const before = inspect(root);
   const applyResults = before.safeTargets.map((target) => applyTarget(root, target));
+  const outputRemovalResults = before.outputRemovalPlan.map((name) => applyOutputTarget(root, name));
   const after = inspect(root);
   after.mode = 'APPLY';
   after.applyPlan = before.safeTargets;
   after.applyResults = applyResults;
-  after.result = applyResults.some((entry) => entry.result === 'PRESERVED')
-    ? applyResults.some((entry) => entry.result === 'APPLIED') ? 'PARTIAL' : 'PRESERVED'
-    : applyResults.some((entry) => entry.result === 'APPLIED') ? 'APPLIED' : 'PRESERVED';
+  after.outputRemovalResults = outputRemovalResults;
+  const appliedCount = applyResults.filter((entry) => entry.result === 'APPLIED').length
+    + outputRemovalResults.filter((entry) => entry.result === 'REMOVED').length;
+  const preservedCount = applyResults.filter((entry) => entry.result === 'PRESERVED').length
+    + outputRemovalResults.filter((entry) => entry.result === 'PRESERVED').length;
+  after.result = appliedCount > 0 ? (preservedCount > 0 ? 'PARTIAL' : 'APPLIED') : 'PRESERVED';
   return after;
 }
 

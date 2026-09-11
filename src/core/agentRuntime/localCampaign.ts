@@ -72,7 +72,7 @@ import {
   type LocalInvestigationHistory,
 } from '../localInvestigation/types';
 import { createCliReasonerDriver } from '../reasoner/cliReasoner';
-import { AgentCheckpointError, assertCheckpointHasNoSecrets, finalizeCheckpoint, parseCheckpoint } from './checkpoint';
+import { AgentCheckpointError, assertCheckpointHasNoSecrets, boundedFoundVersion, finalizeCheckpoint, parseCheckpoint } from './checkpoint';
 import { AgentRuntime } from './runtime';
 import {
   absorbInvestigationIntoStrategy,
@@ -322,7 +322,10 @@ function parseCampaignProgress(value: unknown, campaignId: string): CampaignProg
   if (value === undefined) return null;
   if (!isRecord(value)) throw new AgentCheckpointError('CORRUPT', 'campaignProgress is not an object');
   if (value.version !== CAMPAIGN_PROGRESS_VERSION) {
-    throw new AgentCheckpointError('CORRUPT', 'campaignProgress has an unknown version');
+    if (typeof value.version === 'string' && value.version.length > 0 && value.version.length <= 200) {
+      throw new AgentCheckpointError('VERSION_UNSUPPORTED', `campaignProgress has an unsupported schema version: ${boundedFoundVersion(value.version)}`);
+    }
+    throw new AgentCheckpointError('CORRUPT', 'campaignProgress has an invalid version');
   }
   if (!isNonNegativeInteger(value.nextInvestigationIndex) || !isNonNegativeInteger(value.completedInvestigations)) {
     throw new AgentCheckpointError('CORRUPT', 'campaignProgress investigation counters are invalid');

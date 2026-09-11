@@ -52,7 +52,7 @@ function main() {
       usage();
       return;
     }
-    const provenanceService = loadTypeScriptModule('src/core/provenance/localGit.ts');
+    const provenanceService = loadTypeScriptModule('src/core/provenance/index.ts');
     const provenance = provenanceService.readLocalNightwatchProvenance({ repositoryRoot: root });
     const service = loadTypeScriptModule('src/core/selfDev/controller.ts');
     const report = service.runSyntheticSelfDevSession({ provenance });

@@ -5,6 +5,7 @@ import {
 } from '../contracts/common';
 import type { ControlCenterLocalReviewCapability, ControlCenterMetaDto } from '../contracts/meta';
 import { CONTROL_CENTER_META_SCHEMA_VERSION } from '../contracts/meta';
+import { semanticAcceptanceStatus } from '../../core/semanticAcceptance';
 
 /**
  * Fixed local posture metadata; it never reports product or environment state.
@@ -17,6 +18,7 @@ import { CONTROL_CENTER_META_SCHEMA_VERSION } from '../contracts/meta';
 export function projectMeta(
   options: { readonly localReviewDecision?: ControlCenterLocalReviewCapability } = {},
 ): ControlCenterMetaDto {
+  const acceptance = semanticAcceptanceStatus();
   return {
     schemaVersion: CONTROL_CENTER_META_SCHEMA_VERSION,
     apiVersion: 'v1',
@@ -31,6 +33,11 @@ export function projectMeta(
     findingsStorage: 'OWNER_LOCAL_ONLY',
     ownerScopeStatus: 'FROZEN_BY_OWNER',
     ownerScopeReason: 'INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE',
+    semanticAcceptance: {
+      acceptanceClass: acceptance.acceptanceClass,
+      devResult: acceptance.devResult,
+      blocker: acceptance.blocker,
+    },
     features: {
       readiness: true,
       safety: true,

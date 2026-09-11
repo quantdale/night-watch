@@ -31,6 +31,51 @@ escapes fail closed; unsupported host layouts remain unavailable rather than
 falling back to an uncontained process. The deterministic proof is in
 `tests/unit/l6Containment.test.ts` and is run by `npm run campaign:synthetic`.
 
+## Authenticated capability and its renewal
+
+Some lanes need a real authenticated session: the owner-manual checks, the
+live-app smokes, `journey:phase2c`, `explore:phase4`, `api:phase5`,
+`campaign:real`, the Phase 9B/10B DEV semantic runs, and C-12 passive
+observation. Authentication is always human-led: `npm run auth:capture` opens a
+headed browser, the operator completes login and MFA, and Nightwatch never sees
+credentials. The Playwright storage-state file is written to an owner-supplied
+absolute path outside the repository.
+
+`auth:capture` writes a **non-secret lifecycle sidecar** beside the artefact
+(`<artefact>.auth-lifecycle.json`) with exactly these fields: capture instant,
+environment, origin, earliest cookie expiry observed at capture, the declared
+validity window (default 12 h; bounded to 1 h–30 days) and a `sha256:<24>`
+digest of the artefact. The sidecar is serialized through the redaction layer,
+which refuses to write it rather than let a secret through, and it never
+contains a cookie value, token, header or storage value. It is written
+atomically, lives outside the repository, and is never committed.
+
+Every authenticated lane pre-flights the artefact **before creating a browser
+context, spawning a subprocess, opening a socket or reading any further file**.
+The pre-flight resolves exactly one state — `VALID`, `EXPIRED`,
+`WRONG_ENVIRONMENT`, `UNKNOWN_AGE`, `MISSING` or `UNREADABLE` — and only
+`VALID` proceeds. Every other state refuses with a distinct code and the single
+remedy `npm run auth:capture -- --env=<env> --output=<path>`.
+`UNKNOWN_AGE` — no lifecycle record, or an artefact whose digest changed since
+its record — refuses rather than proceeding optimistically: an artefact whose
+age cannot be established is exactly the one most likely to be stale.
+`npm run status:local`, `observe:preflight` and `c12:preflight` report each
+environment's state, remaining validity and blocked lanes from metadata only,
+without opening a browser or contacting a host. Expiry is evaluated by the one
+cookie evaluator in `src/browser/fixtures/storageState.ts`; a structural rule
+fails a second implementation.
+
+**There is no automated renewal, and none is planned.** Renewing a session
+automatically would require Nightwatch to hold credentials, which the safety
+model forbids. A capture expires; re-capture is a human action.
+
+**Expected renewal cadence.** Cadence is measured, never assumed: lifetimes are
+`earliestCookieExpiry − captureInstant` over real capture records, reported as
+min/median/max by `measureAuthCaptureLifetimes`. As of the 2026-09-12
+measurement the owner-local store holds one artefact but no lifecycle record
+(it predates the record format), so its state is `UNKNOWN_AGE` and **no renewal
+cadence is claimed until a real capture record exists**.
+
 ## Host requirements and validation lanes
 
 `docs/HOST-CAPABILITY-MATRIX.md` is the current answer to what a host must
@@ -60,6 +105,7 @@ executed rather than omitting it.
 - Semantic acceptance class: `COMPLETE_LOCAL_SYNTHETIC`; contained DEV
   acceptance is `NOT_PROVEN` and requires separate owner authorization.
   `<!--status:SEMANTIC_ACCEPTANCE_CLASS=COMPLETE_LOCAL_SYNTHETIC-->` `<!--status:SEMANTIC_DEV_RESULT=NOT_PROVEN-->`
+  `<!--status:SEMANTIC_DEV_BLOCKER=PHASE_9B_BLOCKED_HUMAN_AUTH_ACTION_REQUIRED-->`
 - Production track stage: `EXTERNAL_PREREQUISITE_UNMET` — `POSITIVE_DEPLOYMENT_FACTS`
   is 0, so C-13 and C-14 are structurally unreachable regardless of
   authorization. `<!--status:PRODUCTION_TRACK_STAGE=EXTERNAL_PREREQUISITE_UNMET-->`

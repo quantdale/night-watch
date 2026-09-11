@@ -119,6 +119,40 @@ the session work is uncommitted by design — integration and release are the
 session owner's action. The earlier G6 owner actions (6.4/6.5/6.10) and G1.18
 integration remain as recorded.
 
+### Delegated closure addendum (G21 owner items, G14.1–14.5, 14.9–14.11)
+
+G21's remaining owner-held items are locally closed: the three documentation
+surfaces state the capture sidecar fields and no-secret redaction rule, the
+pre-flight before any browser/subprocess/socket/file, the six lifecycle states
+with the single re-capture remedy, that `UNKNOWN_AGE` refuses, that no
+automated renewal exists or is planned, and that no renewal cadence is claimed
+as of the 2026-09-12 measurement because the owner-local store has an artefact
+but no lifecycle record. `checkAuthenticatedCapabilitySingleEvaluator` is
+implemented and probe HC-078 detects a second expiry evaluator while a
+`expires:` write does not match.
+
+G14.1–14.5 and 14.9–14.11 are locally closed: `buildReferenceGraph`,
+`checkSourceReachability` and `checkModuleBarrierEnforcement` run against
+`config/reference-graph.v1.json`; measured `--report-reachability` is
+files=1072, edges=6238, findings=0; the retention list is probed in both
+directions (HC-079/HC-080); `src/core/provenance/index.ts` is enforced
+(HC-081); and nine zero-importer barrels are removed with deletions declared
+under `## Declared Deletions` in `SPEC.md`. `selfDevSandbox/index.ts` is
+removed rather than enforced because its test-only base override must not be
+re-exported; `checkPhase8BSandboxBoundary` and `checkPhase8B01CloseoutIntegrity`
+were updated accordingly and `checkC105ProvenanceAuthorityBoundary` no longer
+reads the removed `prodProvenance/index.ts`. G14.12 is partial (rules and
+probes registered; integration/release remain owner actions). G14.6–14.8 stay
+OPEN: `src/core/dtoFramework/` and `src/core/adversarialCorpus/` are retained
+with reason `G14.6 owner decision OPEN` and neither adoption nor removal is
+claimed.
+
+The `checkBinExecutionCoverage` probe HC-021 was repaired to mutate both
+coverage sites (`all:true`) after concurrent group-21 test work made the
+single-site mutation insufficient. Concurrent writers remained active in this
+worktree throughout; one probe-campaign run raced a `.gitignore` write, and a
+clean rerun passed 81/81.
+
 ## Exact Next Action
 
 Owner actions, in order: (1) name the status beyond `OPERATIONALLY_ACCEPTED`
@@ -169,6 +203,25 @@ G13.
 | `tests/unit/projectState.test.ts` | F-12 pure probes and six project:check fixture probes (R1–R6); fixture copies the certification record and module and the agent-state module closure | MODIFIED |
 | `bin/lib/typescript-runtime-loader.d.mts` | regenerated loader declaration for the new literal loader call sites (G15 contract) | MODIFIED |
 | `.agent/tasks/.../PLAN.md`, `STATE.md` | G13 status and evidence | MODIFIED |
+
+### G21 owner items and G14 files
+
+| Path | Reason | Status |
+|---|---|---|
+| `README.md` | authenticated capability, sidecar, pre-flight, no-renewal and measured-cadence documentation | MODIFIED |
+| `docs/SAFETY_MODEL.md` | appended F-21 lifecycle safety boundary (append-only archive) | MODIFIED |
+| `docs/HOST-CAPABILITY-MATRIX.md` | authenticated storage-state host capability row with acquisition condition | MODIFIED |
+| `bin/hardening-check.mjs` | `checkAuthenticatedCapabilitySingleEvaluator`, the reference graph, `checkSourceReachability`, `checkModuleBarrierEnforcement`, `--report-reachability`, worktree-aware `gitFiles` | MODIFIED |
+| `config/hardening-rule-probes.v1.json` | probes HC-078–HC-081; repaired HC-021 | MODIFIED |
+| `config/reference-graph.v1.json` | reasoned-retention list and enforced module barrier | ADDED |
+| `src/core/selfDevPromotion/{verify,prepare,currentness,apply,approve}.ts` | import the enforced provenance barrel | MODIFIED |
+| `tests/unit/selfDevProvenance.test.ts` | import the enforced provenance barrel | MODIFIED |
+| `bin/selfdev-{provenance,synthetic,verify,adopt-sandbox,promote-canonical}.mjs` | load through the provenance barrel; adopt-sandbox loads the sandbox planner/storage/executor modules | MODIFIED |
+| `bin/lib/typescript-runtime-loader.d.mts` | regenerated loader type map | MODIFIED |
+| `src/core/selfDev/provenanceManifest.ts` | removed the deleted sandbox index from the authoritative set | MODIFIED |
+| `src/controlCenter/index.ts`, `src/core/{campaignIntelligence,investigationMemory,localInvestigation,ownerLocalReproduction,prodProvenance,reproductionSurface,selfDevSandbox,systemAtlas}/index.ts` | nine zero-importer barrels resolved REMOVED (declared deletions) | DELETED |
+| `.agent/tasks/.../SPEC.md` | declared the nine deletions | MODIFIED |
+| `openspec/changes/nightwatch-production-completion-programme-v1/tasks.md` | G14 evidence and open owner decision | MODIFIED |
 
 ## Validation Ledger
 
@@ -311,6 +364,65 @@ When: 2026-09-12
 Relevant failure/output summary: regenerated
 `bin/lib/typescript-runtime-loader.d.mts` for the new literal loader call
 sites; the subsequent hardening rule passes.
+
+Command: `node bin/hardening-check.mjs` (G21 owner items + G14)
+Result: PASS
+When: 2026-09-12
+Relevant failure/output summary: offline structural invariants hold after the
+single-evaluator rule, the reference graph, the barrier rule, the nine
+declared barrel deletions and the provenance enforcement.
+
+Command: `npm run hardening:rules` (full probe campaign)
+Result: PASS
+When: 2026-09-12
+Relevant failure/output summary: rules=79 probes=81 detected=81 undetected=0
+restored=75 statusUnchanged=true. The first run raced a concurrent
+`.gitignore` write; the clean rerun passed. HC-021 was repaired for the
+second auth-capture coverage site.
+
+Command: `node bin/hardening-check.mjs --report-reachability`
+Result: PASS (reporting)
+When: 2026-09-12
+Relevant failure/output summary: files=1072 parsed=1072 edges=6238
+findings=0 after resolving provenance ENFORCED, nine barrels REMOVED, and the
+two owner-pending subsystems retained.
+
+Command: `npm run typecheck` (after concurrent writer settled)
+Result: PASS
+When: 2026-09-12
+Relevant failure/output summary: no diagnostics. An earlier run failed only
+on `src/controlCenter/adapters/reviewerAdapter.ts` and
+`src/core/campaign/checkpoint.ts`, files not touched by this work and under
+active concurrent edit; the errors disappeared without a change from this
+session.
+
+Command: `npm run validation:universe`
+Result: PASS
+When: 2026-09-12
+Relevant failure/output summary: discovered=447, unclassified=0, digest
+unchanged (`sha256:e04d813efa7aa0bbbb1fa219`); no discovered file was added,
+so `inventoryDigest` was not touched.
+
+Command: `npm run workspace:check`
+Result: FAIL (external cascade only)
+When: 2026-09-12
+Relevant failure/output summary: `WORKSPACE_DECLARED_DELETIONS=PASS` (the
+nine declared removals are recognized), `WORKSPACE_INTEGRATION_READINESS=PASS`,
+`WORKSPACE_HOOKS_POLICY=PASS`; the only error is the pre-existing external
+`WORKSPACE_CANONICAL_DIRTY_WHILE_SESSION_LIVE` and the two terminal-task
+claim attention findings.
+
+Command: `npx playwright test storageState authCaptureLauncher authCaptureStages nw14HostCapabilityMatrix documentLifecycle --workers=1`
+Result: PASS
+When: 2026-09-12
+Relevant failure/output summary: 58 passed (G21 documentation and storage
+state).
+
+Command: `npx playwright test cliImplementationContract selfDevProvenance selfDevAdoptionSandbox selfDevAdoptionPlan selfDevCanonicalPromotionFlow selfDevSandboxConfinement projectState nw09ShippedReviewCapability --workers=1`
+Result: PASS
+When: 2026-09-12
+Relevant failure/output summary: 191 passed, 1 skipped (G14 graph, provenance
+enforcement, sandbox and project state).
 
 ## Decisions Made During This Task
 

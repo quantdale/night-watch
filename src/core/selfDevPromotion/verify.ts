@@ -15,7 +15,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { assertOwnerPolicyAllows } from '../policy/ownerScope';
-import { currentHeadShaUnchecked, readWorkingTreeStatus, sourceBundleDigest } from '../provenance/localGit';
+import { currentHeadShaUnchecked, readWorkingTreeStatus, sourceBundleDigest } from '../provenance';
 import { sha256Hex } from '../selfDev/canonical';
 import type { SelfDevAdoptedCase } from '../selfDev/adoptedCases';
 import { runMetamorphicProbes } from '../selfDev/metamorphicProbes';

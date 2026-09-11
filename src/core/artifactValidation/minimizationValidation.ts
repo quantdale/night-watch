@@ -66,6 +66,11 @@ function invalid(reason: string): never {
   throw new Error(`ARTIFACT_MINIMIZATION_INVALID:${reason}`);
 }
 
+/** The found version, only when it is a bounded safe identifier. */
+function foundVersion(value: unknown): string {
+  return typeof value === 'string' && /^[A-Za-z0-9_.:-]{1,80}$/.test(value) ? value : 'UNRECOGNISED';
+}
+
 function assertActionIdList(value: unknown, code: string): void {
   const ids = requireRuntimeArray(value, `ARTIFACT_MINIMIZATION_INVALID:${code}`);
   for (const id of ids) {
@@ -82,7 +87,7 @@ export function validateMinimizationResultArtifact(value: unknown): void {
   const result = requireRuntimeRecord(value, 'ARTIFACT_MINIMIZATION_INVALID');
   assertExactKeys(result, RESULT_KEYS, 'ARTIFACT_MINIMIZATION_INVALID', ['minimalReproducingOccurrenceOrdinals']);
   if (result.schemaVersion !== FAILURE_MINIMIZATION_VERSION || result.modelVersion !== FAILURE_MINIMIZATION_VERSION) {
-    invalid('SCHEMA_VERSION_UNSUPPORTED');
+    invalid(`SCHEMA_VERSION_UNSUPPORTED:schema=${foundVersion(result.schemaVersion)}:model=${foundVersion(result.modelVersion)}`);
   }
   if (!(STATUSES as readonly string[]).includes(result.status as string)) invalid('STATUS');
   if (!(FRESH_OUTCOMES as readonly string[]).includes(result.freshExactReplay as string)) invalid('FRESH_EXACT_REPLAY');

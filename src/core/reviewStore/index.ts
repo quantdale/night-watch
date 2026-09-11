@@ -10,6 +10,7 @@ export {
   type ReviewStoreErrorCode,
   type ReviewStoreReadResult,
   type ReviewStoreReadState,
+  type ReviewStoreUnsupportedVersion,
   type StoredReviewEnvelope,
 } from './types';
 export {
@@ -23,6 +24,7 @@ export {
 export {
   ReviewStore,
   ReviewStoreError,
+  ReviewStoreVersionUnsupportedError,
   validateStoredReviewEnvelope,
   type PutReviewDecisionInput,
   type ReviewStoreListing,

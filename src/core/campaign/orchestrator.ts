@@ -51,7 +51,7 @@ import type {
 } from '../triage/types';
 import { buildCampaignMorningBrief, renderCampaignMorningBrief, validateCampaignMorningBrief } from './brief';
 import { CampaignBudgetManager, CampaignTimeBudget, emptyBudgetUsage, isRealScaleBudget } from './budget';
-import { CampaignCheckpointStore, evaluateResumeCompatibility, grantWorkItemAttempt, validateCampaignCheckpoint, type CheckpointResumeRefusal } from './checkpoint';
+import { CampaignCheckpointStore, CampaignResumeRefusedError, CampaignResumeTerminalError, buildCampaignResumeTerminalRecord, evaluateResumeCompatibility, explainCheckpointResume, grantWorkItemAttempt, validateCampaignCheckpoint, type CheckpointResumeRefusal } from './checkpoint';
 import { assertManifestCompatible, stableCampaignJson, validateCampaignManifest } from './identity';
 import { detectFailureStorm, type FailureStorm } from './storm';
 import {
@@ -2299,6 +2299,33 @@ export async function runCampaign(manifest: CampaignManifest, executor: Campaign
 
 export function resumeCampaign(manifest: CampaignManifest, executor: CampaignExecutor, options: Omit<CampaignRunOptions, 'checkpoint'> & { readonly checkpointStore?: CampaignCheckpointStore } = {}): Promise<CampaignRunResult> {
   const store = options.checkpointStore ?? new CampaignCheckpointStore(options.store ?? new PrivateArtifactStore());
-  const checkpoint = store.readCheckpoint(manifest.campaignId, manifest);
+  // A campaign already recorded terminal is never re-evaluated as pending;
+  // its reason is returned verbatim from the recorded marker.
+  const terminal = store.readResumeTerminal(manifest.campaignId);
+  if (terminal !== null) throw new CampaignResumeTerminalError(terminal);
+  let checkpoint: CampaignCheckpoint;
+  try {
+    checkpoint = store.readCheckpoint(manifest.campaignId, manifest);
+  } catch (error) {
+    const raw = store.readRawCheckpoint(manifest.campaignId);
+    if (raw !== null) {
+      const current = options.currentVersions === undefined
+        ? undefined
+        : typeof options.currentVersions === 'function' ? options.currentVersions() : options.currentVersions;
+      const explanation = explainCheckpointResume(raw, manifest, current);
+      if (explanation.terminal) {
+        // The completed ledger cannot be consumed under the current contract:
+        // mark the campaign terminal with the reason rather than leaving it
+        // pending forever. The original checkpoint bytes are never touched.
+        const record = store.writeResumeTerminal(
+          manifest.campaignId,
+          buildCampaignResumeTerminalRecord(explanation, new Date().toISOString()),
+        );
+        throw new CampaignResumeTerminalError(record, explanation, error);
+      }
+      throw new CampaignResumeRefusedError(explanation, error);
+    }
+    throw error;
+  }
   return runCampaign(manifest, executor, { ...options, store: store.store, checkpoint });
 }

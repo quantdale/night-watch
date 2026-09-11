@@ -30,7 +30,7 @@ import {
 } from '../agentProtocol';
 import { normalizeToolMemoryFacts } from './types';
 
-export type AgentCheckpointFailureCode = 'CORRUPT' | 'SECRET_DETECTED' | 'CAMPAIGN_MISMATCH';
+export type AgentCheckpointFailureCode = 'CORRUPT' | 'SECRET_DETECTED' | 'CAMPAIGN_MISMATCH' | 'VERSION_UNSUPPORTED';
 
 export class AgentCheckpointError extends Error {
   readonly code: AgentCheckpointFailureCode;
@@ -40,6 +40,25 @@ export class AgentCheckpointError extends Error {
     this.name = 'AgentCheckpointError';
     this.code = code;
   }
+}
+
+/**
+ * A version string safe to name in an error. A found version that is not a
+ * bounded identifier is reported as UNRECOGNISED rather than echoed, because
+ * the bytes may be attacker-controlled and an error message is not a channel.
+ */
+export function boundedFoundVersion(value: unknown): string {
+  return typeof value === 'string' && /^[A-Za-z0-9_.:-]{1,80}$/.test(value) ? value : 'UNRECOGNISED';
+}
+
+function unsupportedVersion(where: string, value: unknown): never {
+  // A present, string-shaped version is an old/future record: report the
+  // migration signal. A missing or wrong-typed version is a damaged record
+  // and stays CORRUPT, so a malformed object is never promoted to "migration".
+  if (typeof value === 'string' && value.length > 0 && value.length <= 200) {
+    throw new AgentCheckpointError('VERSION_UNSUPPORTED', `${where} has an unsupported schema version: ${boundedFoundVersion(value)}`);
+  }
+  throw new AgentCheckpointError('CORRUPT', `${where} has an invalid schema version`);
 }
 
 /** Resume cursor codec: `<campaignId>:turn:<completedTurns>`. */
@@ -176,7 +195,7 @@ function parseBudgetSnapshot(value: unknown, where: string): AgentCheckpoint['st
     } as unknown as AgentCheckpoint['state']['budget'];
   }
   if (policy.schemaVersion !== AGENT_BUDGET_VERSION) {
-    throw new AgentCheckpointError('CORRUPT', `${where}.budget.policy has an unknown schema version`);
+    unsupportedVersion(`${where}.budget.policy`, policy.schemaVersion);
   }
   for (const key of [
     'wallTimeMs',
@@ -215,7 +234,7 @@ function parseBudgetSnapshot(value: unknown, where: string): AgentCheckpoint['st
 function parseRuntimeState(value: unknown): AgentRuntimeState {
   if (!isRecord(value)) throw new AgentCheckpointError('CORRUPT', 'state is not an object');
   if (value.schemaVersion !== AGENT_RUNTIME_STATE_VERSION) {
-    throw new AgentCheckpointError('CORRUPT', 'state has an unknown schema version');
+    unsupportedVersion('state', value.schemaVersion);
   }
   if (typeof value.campaignId !== 'string' || value.campaignId.length === 0) {
     throw new AgentCheckpointError('CORRUPT', 'state.campaignId is invalid');
@@ -360,7 +379,7 @@ function isV1ByteLedger(value: unknown): value is AgentByteLedger {
 export function parseCheckpoint(value: unknown): AgentCheckpoint {
   if (!isRecord(value)) throw new AgentCheckpointError('CORRUPT', 'checkpoint is not an object');
   if (value.schemaVersion !== AGENT_CHECKPOINT_VERSION) {
-    throw new AgentCheckpointError('CORRUPT', 'checkpoint has an unknown schema version');
+    unsupportedVersion('checkpoint', value.schemaVersion);
   }
   if (typeof value.campaignId !== 'string' || value.campaignId.length === 0) {
     throw new AgentCheckpointError('CORRUPT', 'checkpoint campaignId is invalid');

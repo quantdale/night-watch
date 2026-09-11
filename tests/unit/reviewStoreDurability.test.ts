@@ -206,7 +206,7 @@ test.describe('properties (deterministic seeds)', () => {
     expect(store.read(findingId, currentFor(value)).state).toBe('CURRENT');
   });
 
-  test('an unknown schema version never becomes CURRENT', () => {
+  test('an unknown schema version is a migration, never CORRUPT and never CURRENT', () => {
     const root = tempRoot();
     const store = new ReviewStore({ root });
     const value = artifacts('schema');
@@ -217,8 +217,10 @@ test.describe('properties (deterministic seeds)', () => {
     for (const version of ['nightwatch.review-store.v0', 'nightwatch.review-store.v2', 'nightwatch.review-store.v1 ', 'REVIEW_STORE', '', null, 1]) {
       fs.writeFileSync(filePath, JSON.stringify({ ...parsed, schemaVersion: version }), { mode: 0o600 });
       const read = store.read(findingId, currentFor(value));
-      expect(read.state, String(version)).toBe('CORRUPT');
-      expect(read.corruption[0]?.code).toBe('REVIEW_STORE_VERSION_UNSUPPORTED');
+      expect(read.state, String(version)).toBe('VERSION_UNSUPPORTED');
+      expect(read.corruption, String(version)).toEqual([]);
+      expect(read.unsupported[0]?.field, String(version)).toBe('schemaVersion');
+      expect(read.unsupported[0]?.foundVersion, String(version)).toBe(String(version));
     }
   });
 

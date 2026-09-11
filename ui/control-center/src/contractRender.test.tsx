@@ -458,6 +458,10 @@ const VIEWS: readonly ViewCase[] = [
 const NOT_OBSERVABLE: Readonly<Record<string, string>> = Object.freeze({
   'TimelineSnapshot.afterSeq': 'request echo; the timeline carries position and truncation',
   'RunListItemSnapshot.passed': 'boolean projection of status; the runs views render the status',
+  'ReviewerSnapshot.items.0.localReview.value.affectedRecordCount': 'state-gated to bindingCurrentness VERSION_UNSUPPORTED; the dedicated unsupported-review render test proves the distinction',
+  'ReviewerSnapshot.items.0.localReview.value.currentSchema': 'state-gated to bindingCurrentness VERSION_UNSUPPORTED; the dedicated unsupported-review render test proves the distinction',
+  'ReviewerSnapshot.items.0.localReview.value.foundVersions.0': 'state-gated to bindingCurrentness VERSION_UNSUPPORTED; the dedicated unsupported-review render test proves the distinction',
+  'ReviewerSnapshot.items.0.localReview.value.migration': 'state-gated to bindingCurrentness VERSION_UNSUPPORTED; the dedicated unsupported-review render test proves the distinction',
 });
 
 function isExempt(key: string): boolean {
@@ -631,7 +635,9 @@ describe('control center render truth', () => {
     // list that renders like a short one is the defect this pass exists for.
     const arrays = arraysFor(ASSERTED_CONTRACTS);
     expect(arrays.length, 'the generator recorded no arrays; the pass would be vacuous').toBeGreaterThan(20);
-    const arrayExemptions: Readonly<Record<string, string>> = {};
+    const arrayExemptions: Readonly<Record<string, string>> = {
+      'ReviewerSnapshot.items.0.localReview.value.foundVersions': 'state-gated to bindingCurrentness VERSION_UNSUPPORTED; the dedicated unsupported-review render test proves the distinction',
+    };
     const observableArrays = new Set<string>();
     const absentArrays: string[] = [];
     for (const array of arrays) {

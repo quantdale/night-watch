@@ -1,6 +1,7 @@
 // ---------------------------------------------------------------------------
 // Nightwatch — RunRecorder unit tests.
-// Fixtures live under <nightwatch>/.tmp-test/evidence and are cleaned up.
+// Fixtures live under <nightwatch>/.tmp-nightwatch/test/evidence and are
+// cleaned up.
 // ---------------------------------------------------------------------------
 
 import { test, expect } from '@playwright/test';
@@ -13,8 +14,9 @@ import { appendProxyEvent, ensureEventLog } from '../../src/proxy/events';
 import type { ProxyEvent, ProxyRuntimeState } from '../../src/proxy/types';
 import { EXACT_ADDRESS_BINDING_VERSION, PROXY_CONTAINMENT_VERSION } from '../../src/proxy/identity';
 import { RESOLVED_ADDRESS_POLICY_VERSION } from '../../src/proxy/addressPolicy';
+import { resolveScratchPath } from '../../src/core/workspace/ephemeralLayout';
 
-const TMP_ROOT = path.join(__dirname, '..', '..', '.tmp-test', 'evidence');
+const TMP_ROOT = path.join(__dirname, '..', '..', resolveScratchPath('test', 'evidence'));
 const FIXED = '2026-08-09T02:42:50.000Z';
 const now = () => new Date(FIXED);
 

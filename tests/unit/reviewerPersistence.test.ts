@@ -19,6 +19,7 @@ import type { ControlCenterCollector, ControlCenterListQuery } from '../../src/c
 import { projectReviewer } from '../../src/controlCenter/adapters/reviewerAdapter';
 import { reviewerInputsFromFindings } from '../../src/controlCenter/authorities/reviewerAuthority';
 import { ControlCenterReviewAuthority } from '../../src/controlCenter/authorities/reviewWriteAuthority';
+import { findingDiscoveryKey } from '../../src/core/reviewStore';
 import type { FindingsDossierMetadata } from '../../src/controlCenter/authorities/findingsAuthority';
 import type { ControlCenterReviewerDto } from '../../src/controlCenter/contracts/reviewer';
 import { reviewerCorpus } from '../helpers/reviewerCorpus';
@@ -190,6 +191,30 @@ test.describe('the read path projects real local review state', () => {
         expect(item.unknowns).toContain('NO_LOCAL_REVIEW');
         expect(item.unknowns).not.toContain('NO_LOCAL_REVIEW_STORE');
       }
+    });
+  });
+
+  test('an intact record at a superseded schema is served as VERSION_UNSUPPORTED, not as a defect or a decision', async () => {
+    const root = tempRoot();
+    const dossiers = corpus(1);
+    const target = dossiers[0]!;
+    fs.writeFileSync(
+      path.join(root, `review.${findingDiscoveryKey(target.candidateId)}.${'0'.repeat(24)}.json`),
+      JSON.stringify({ status: 'READY', schemaVersion: 'nightwatch.review-store.v0' }),
+      { mode: 0o600 },
+    );
+    await withServer({ root, dossiers }, async ({ port }) => {
+      const row = rowFor(await reviewerDto(port), target.candidateId);
+      expect(row).toBeDefined();
+      expect(row!.localReview.epistemicClass).toBe('UNKNOWN');
+      expect(row!.localReview.value?.bindingCurrentness).toBe('VERSION_UNSUPPORTED');
+      expect(row!.localReview.value?.foundVersions).toContain('nightwatch.review-store.v0');
+      expect(row!.localReview.value?.affectedRecordCount).toBe(1);
+      expect(row!.localReview.value?.decision).toBeNull();
+      expect(row!.localReview.value?.state).toBe('VERSION_UNSUPPORTED');
+      // No disposition is declared for v0, so the surface is told there is
+      // none rather than being shown an invented migration name.
+      expect(row!.localReview.value?.migration).toBeNull();
     });
   });
 

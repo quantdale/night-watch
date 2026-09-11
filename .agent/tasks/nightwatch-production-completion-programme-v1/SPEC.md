@@ -362,6 +362,23 @@ deletion listed below.
 - `openspec/changes/nightwatch-unused-dep-removal-v1/specs/dep-removal/spec.md`
 - `openspec/changes/nightwatch-unused-dep-removal-v1/tasks.md`
 
+G14 dead-architecture closure (14.9–14.11) removes nine zero-importer `index.ts`
+barrels resolved to `REMOVED`; deep imports are the honest interface. The
+deletions are declared here before validation per the workspace deletion gate.
+`src/core/provenance/index.ts` is resolved `ENFORCED` (migrated, not deleted),
+and `src/core/dtoFramework/` plus `src/core/adversarialCorpus/` remain under the
+open G14.6 owner decision and are declared in the reasoned-retention list:
+
+- `src/controlCenter/index.ts`
+- `src/core/campaignIntelligence/index.ts`
+- `src/core/investigationMemory/index.ts`
+- `src/core/localInvestigation/index.ts`
+- `src/core/ownerLocalReproduction/index.ts`
+- `src/core/prodProvenance/index.ts`
+- `src/core/reproductionSurface/index.ts`
+- `src/core/selfDevSandbox/index.ts`
+- `src/core/systemAtlas/index.ts`
+
 ## Acceptance criteria
 
 - `openspec validate --all` exits zero and `openspec/specs/` is non-empty.

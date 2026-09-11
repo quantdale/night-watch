@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "nightwatch.semantic-acceptance-class.v1",
+  "capability": "PHASE_9_SEMANTIC_ORACLES",
+  "acceptanceClass": "COMPLETE_LOCAL_SYNTHETIC",
+  "devResult": "NOT_PROVEN",
+  "blocker": "PHASE_9B_BLOCKED_HUMAN_AUTH_ACTION_REQUIRED",
+  "blockerSince": "2026-08-16",
+  "syntheticOnly": true,
+  "ownerDecision": {
+    "taskId": "11.3",
+    "state": "PENDING_OWNER_DECISION",
+    "unblockPath": {
+      "label": "UNBLOCK_PHASE_9B_10B",
+      "authArtefact": "external owner-only DEV storage state captured by `npm run auth:capture -- --env=dev --output=$HOME/.nightwatch/auth/ripple-dev-state.json`; never committed, never copied into the repository",
+      "authorizationClass": "ONE_SHOT_OWNER_AUTHORIZATION_FOR_ONE_PHASE_9B_OR_10B_ACCEPTANCE_EXECUTION",
+      "containmentEnvelope": "L6 nightwatch.process-network-containment.v1 for authenticated subprocesses, or the browser harness with its outer loopback proxy; the pre-browser auth gate always runs first",
+      "targetSet": "the bounded approved read-only canary set (currently ripple.common-exchange.read; Phase 10B adds the deep item-level type contract); no selector, no fallback, no third attempt",
+      "acceptanceCriteria": "evaluatePhase9bAcceptance (Phase 9B) or evaluatePhase10bDeepAcceptance (Phase 10B) passes on FIRST and REPLAY with CONTAINED_DEV evidence, deterministic replay, and zero safety/privacy violations",
+      "expectedEvidence": "safe semantic evaluation receipts (nightwatch.semantic-evaluation-receipt.v2), the pass summaries, the replay comparison, and the acceptance summary bound to the approved read-only source SHA; raw values are never persisted"
+    },
+    "permanentClosurePath": {
+      "label": "CLOSE_PHASE_9B_10B_PERMANENTLY",
+      "terminalStatus": "PHASE_9B_10B_TERMINAL_NOT_PURSUED",
+      "reason": "the owner records the reason DEV acceptance will not be pursued",
+      "acceptanceClassAfterClosure": "CLOSED_SYNTHETIC_ONLY",
+      "consequence": "the blocker is retired with a recorded reason, the semantic layer's self-description becomes permanently synthetic-only, and no future status may claim DEV acceptance"
+    },
+    "consequences": [
+      "UNBLOCK_PHASE_9B_10B: one bounded, owner-authorized, post-auth-gate acceptance execution against the approved DEV target; a pass may then move acceptanceClass to DEV_ACCEPTED with CONTAINED_DEV evidence bound to the approved source SHA.",
+      "CLOSE_PHASE_9B_10B_PERMANENTLY: the phase is recorded terminal with a reason; the capability stays synthetic-only permanently and the indefinite BLOCKED state ends."
+    ]
+  }
+}

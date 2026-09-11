@@ -24,6 +24,7 @@ import {
 } from '../../src/browser/fixtures/storageState';
 import { inspectRipplePageAuthReadability } from '../../src/browser/fixtures/pageAuthReadability';
 import { startFixtureServer } from '../../src/browser/fixtures/fixtureServer';
+import { resolveScratchPath } from '../../src/core/workspace/ephemeralLayout';
 
 const NIGHTWATCH_ROOT = path.resolve(__dirname, '..', '..');
 /**
@@ -150,7 +151,7 @@ test.describe('storage-state secret handling', () => {
   });
 
   test('files inside the Nightwatch repo are rejected', () => {
-    const file = path.join(NIGHTWATCH_ROOT, '.tmp-test', 'evil-storage-state.json');
+    const file = path.join(NIGHTWATCH_ROOT, resolveScratchPath('test', 'evil-storage-state.json'));
     fs.mkdirSync(path.dirname(file), { recursive: true });
     fs.writeFileSync(file, JSON.stringify(FAKE_STATE));
     try {

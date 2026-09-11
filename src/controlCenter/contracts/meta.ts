@@ -24,6 +24,19 @@ export const CONTROL_CENTER_META_SCHEMA_VERSION = `${CONTROL_CENTER_CONTRACT_NAM
 export const CONTROL_CENTER_LOCAL_REVIEW_CAPABILITIES = ['ENABLED', 'DISABLED'] as const;
 export type ControlCenterLocalReviewCapability = (typeof CONTROL_CENTER_LOCAL_REVIEW_CAPABILITIES)[number];
 
+/**
+ * Group 11 (F-10). The semantic layer's acceptance class, rendered wherever
+ * the capability is presented. It is capability self-description, not product
+ * or environment state: the Control Center must never present semantic
+ * findings without the reader being able to see that no DEV acceptance has
+ * ever been proven.
+ */
+export interface ControlCenterSemanticAcceptanceDto {
+  readonly acceptanceClass: 'COMPLETE_LOCAL_SYNTHETIC' | 'DEV_ACCEPTED' | 'CLOSED_SYNTHETIC_ONLY';
+  readonly devResult: 'NOT_PROVEN' | 'PROVEN' | 'NOT_PURSUED';
+  readonly blocker: string | null;
+}
+
 export interface ControlCenterMetaDto {
   readonly schemaVersion: typeof CONTROL_CENTER_META_SCHEMA_VERSION;
   readonly apiVersion: 'v1';
@@ -45,6 +58,14 @@ export interface ControlCenterMetaDto {
   readonly findingsStorage: 'OWNER_LOCAL_ONLY';
   readonly ownerScopeStatus: 'FROZEN_BY_OWNER';
   readonly ownerScopeReason: 'INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE';
+  /**
+   * Group 11 (F-10). Capability self-description for the semantic layer:
+   * COMPLETE_LOCAL_SYNTHETIC with contained DEV result NOT_PROVEN and the
+   * blocker, so no surface can present the capability as DEV-accepted. The
+   * owner decision (task 11.3) is pending; the datum is derived from
+   * `config/semantic-acceptance-class.v1.json`.
+   */
+  readonly semanticAcceptance: ControlCenterSemanticAcceptanceDto;
   readonly features: {
     readonly readiness: true;
     readonly safety: true;

@@ -957,6 +957,46 @@ describe('Control Center UI shell', () => {
     expect(screen.queryByRole('button', { name: 'Accept Evidence' })).not.toBeInTheDocument();
   });
 
+  // A record predating the current schema is a migration, not a defect. The
+  // owner's response differs, so the surface must say which one it is and must
+  // not offer a decision against bytes this build cannot read.
+  it('renders an unsupported stored review as a migration, not a defect, with no decision controls', async () => {
+    const user = userEvent.setup();
+    const unsupported = reviewerItem({
+      localReview: {
+        epistemicClass: 'UNKNOWN',
+        value: {
+          state: 'VERSION_UNSUPPORTED',
+          decision: null,
+          reviewedAt: null,
+          transitionCount: 0,
+          bindingCurrentness: 'VERSION_UNSUPPORTED',
+          foundVersions: ['nightwatch.review-store.v0'],
+          affectedRecordCount: 3,
+          migration: 'MIGRATE',
+          currentSchema: 'nightwatch.review-store.v1',
+          organizationalAuthority: 'NONE_LOCAL_REVIEW_ONLY',
+          notEquivalentTo: ['LESLIE_GENUINE', 'LESLIE_INVALID', 'PONDR_APPROVED'],
+        },
+        basis: ['REVIEW_VERSION_UNSUPPORTED', 'MIGRATE'],
+      },
+    });
+    const responses = reviewerResponses(unsupported);
+    vi.stubGlobal('fetch', vi.fn((input: RequestInfo | URL) => Promise.resolve(responseFor(responses[String(input)]))));
+    await openReviewer(user);
+
+    expect(screen.getByText('Stored review predates the current schema')).toBeInTheDocument();
+    expect(screen.getByText(/nightwatch\.review-store\.v0/i)).toBeInTheDocument();
+    expect(screen.getByText(/3 affected record/)).toBeInTheDocument();
+    expect(screen.getByText(/This is a migration, not a defect/)).toBeInTheDocument();
+    expect(screen.getByText(/Declared disposition: Migrate/)).toBeInTheDocument();
+    expect(screen.getByText('Current schema: nightwatch.review-store.v1')).toBeInTheDocument();
+    // The decision cell says why it is unavailable and offers nothing.
+    expect(screen.getByText(/Decision unavailable/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Accept Evidence' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('textbox', { name: /Rationale/ })).not.toBeInTheDocument();
+  });
+
   it('reads back by review identity when the POST outcome is uncertain, and never retries', async () => {
     const user = userEvent.setup();
     const decided = reviewerItem({

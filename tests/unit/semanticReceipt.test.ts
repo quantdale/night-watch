@@ -13,6 +13,7 @@ import { expect, test } from '@playwright/test';
 import {
   buildSemanticEvaluationReceipt,
   SEMANTIC_EVALUATION_RECEIPT_VERSION,
+  SEMANTIC_EVALUATION_RECEIPT_VERSION_V1,
   SEMANTIC_RECEIPT_NON_PASS_OUTCOMES,
   SEMANTIC_RECEIPT_OUTCOMES,
   validateSemanticEvaluationReceipt,
@@ -291,5 +292,37 @@ test.describe('Phase 9A.1 — receipt outcomes 1-9 through the evaluation core',
       expect(serialized).not.toContain('Error');
       expect(serialized).not.toContain('Exception');
     }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Group 11 (F-10) — the receipt records its evidence acceptance class.
+// ---------------------------------------------------------------------------
+
+test.describe('Group 11 — receipt acceptance class', () => {
+  test('builder receipts default to LOCAL_SYNTHETIC and round-trip CONTAINED_DEV', () => {
+    const synthetic = buildSemanticEvaluationReceipt(baseInput());
+    expect(synthetic.acceptanceClass).toBe('LOCAL_SYNTHETIC');
+    validateSemanticEvaluationReceipt(synthetic);
+    const dev = buildSemanticEvaluationReceipt({ ...baseInput(), acceptanceClass: 'CONTAINED_DEV' });
+    expect(dev.acceptanceClass).toBe('CONTAINED_DEV');
+    validateSemanticEvaluationReceipt(dev);
+    // The class participates in the deterministic identity.
+    expect(dev.receiptId).not.toBe(synthetic.receiptId);
+  });
+
+  test('an unknown acceptance class is rejected', () => {
+    expect(() => buildSemanticEvaluationReceipt({ ...baseInput(), acceptanceClass: 'DEV_ACCEPTED' as never })).toThrow(/acceptanceClass/);
+  });
+
+  test('v1 receipts never carry the v2 acceptance class; historical v1 bodies stay valid', () => {
+    const v1WithClass = {
+      ...buildSemanticEvaluationReceipt(baseInput()),
+      schemaVersion: SEMANTIC_EVALUATION_RECEIPT_VERSION_V1,
+    } as unknown as SemanticEvaluationReceipt;
+    expect(() => validateSemanticEvaluationReceipt(v1WithClass)).toThrow('SEMANTIC_RECEIPT_INVALID:v1-acceptance-class');
+    const historical = { ...v1WithClass } as Record<string, unknown>;
+    delete historical.acceptanceClass;
+    expect(() => validateSemanticEvaluationReceipt(historical as unknown as SemanticEvaluationReceipt)).not.toThrow();
   });
 });

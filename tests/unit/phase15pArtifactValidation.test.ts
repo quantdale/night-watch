@@ -504,6 +504,9 @@ test.describe('Phase 15P A11 per-kind accept matrices', () => {
     expect(validateArtifact('semantic-receipt', cloneJson(semanticReceipt())).valid).toBe(true);
     const v1Body = toRecord(semanticReceipt());
     delete v1Body.receiptId;
+    // Group 11 (F-10) added the v2-only acceptanceClass; a historical v1 body
+    // never carried it.
+    delete v1Body.acceptanceClass;
     v1Body.schemaVersion = SEMANTIC_EVALUATION_RECEIPT_VERSION_V1;
     expect(validateArtifact('semantic-receipt', sealReceipt(v1Body)).valid).toBe(true);
     const passing = buildSemanticEvaluationReceipt({ oracleId: 'oracle.journey', outcome: 'PASS', invariantTotal: 1, invariantPassCount: 1, invariantNaCount: 0, invariantViolationCount: 0, findingCount: 0 });

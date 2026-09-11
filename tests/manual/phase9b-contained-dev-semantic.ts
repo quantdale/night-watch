@@ -66,10 +66,14 @@ import { classifySourceFreshness, freshnessBlockToken, type Phase9bFreshnessVerd
 import { assertPhase9bPreflight, evaluatePhase9bPreflight } from '../../src/core/phase9b/preflight';
 import {
   comparePhase9bReplaySummaries,
-  evaluatePhase9bAcceptance,
   summarizePhase9bPass,
   type Phase9bSemanticSummary,
 } from '../../src/core/phase9b/summary';
+import {
+  assertAcceptanceRunsAfterAuthGate,
+  assertRealSourceExpectationProof,
+  evaluateContainedDevAcceptance,
+} from '../../src/core/semanticAcceptance';
 
 const AUTH_CAPTURE_COMMAND = 'npm run auth:capture -- --env=dev --output="$HOME/.nightwatch/auth/ripple-dev-state.json"';
 
@@ -386,6 +390,10 @@ function buildPhase9bOracle(approvedSha: string): { oracle: SemanticHookOracle; 
   if (expectation.sourceProvenance.sha !== approvedSha) {
     throw new Error(`PHASE_9B_BLOCKED_EXPECTATION_NOT_RESOLVED: expectation bound to ${expectation.sourceProvenance.sha} != approved ${approvedSha}`);
   }
+  // Phase 9A.1 is the only admission route: an expectation that cannot prove
+  // its mechanical derivation evidence is refused with
+  // REAL_SOURCE_EXPECTATION_PROOF_MISSING before any browser context exists.
+  assertRealSourceExpectationProof(expectation);
   const resolver = createRealSourceResolver({
     // Expose ONLY the selected target to this acceptance run.
     recipes: REAL_SOURCE_EXPECTATION_RECIPES.filter((recipe) => recipe.targetId === SELECTED_TARGET_ID),
@@ -514,6 +522,7 @@ async function observeOnce(opts: {
     endpointRegistry: buildRippleJourneyEndpointRegistry(opts.env),
     journeyId: opts.definition.journeyId,
     semanticOracle: opts.oracle,
+    semanticAcceptanceClass: 'CONTAINED_DEV',
   });
   let evidence: JourneyEvidence;
   let liveAuth = false;
@@ -724,9 +733,10 @@ test('Phase 9B contained DEV semantic acceptance: common-exchange FIRST + replay
     runId: `${baseRunId}-first`,
     pass: 'first',
   });
-  const firstAcceptance = evaluatePhase9bAcceptance(first.summary, { expectationId: SELECTED_EXPECTATION_ID, approvedSha: freshness.approvedSha });
   expect(first.evidence.authValid, 'PHASE_9B_BLOCKED_AUTH_EXPIRED: FIRST auth not valid').toBe(true);
   expect(first.evidence.passed, 'FIRST journey evidence failed; replay is prohibited').toBe(true);
+  assertAcceptanceRunsAfterAuthGate({ authGatePassed: first.auth.valid && first.evidence.authValid, acceptanceRequested: true });
+  const firstAcceptance = evaluateContainedDevAcceptance(first.summary, { expectationId: SELECTED_EXPECTATION_ID, approvedSha: freshness.approvedSha });
   expect(firstAcceptance.pass, `PHASE_9B_DEV_ACCEPTANCE_NOT_PROVEN: FIRST ${firstAcceptance.failures.join(', ')}`).toBe(true);
 
   // --- REPLAY (one fresh context; part of the one acceptance execution) ---
@@ -740,9 +750,10 @@ test('Phase 9B contained DEV semantic acceptance: common-exchange FIRST + replay
     runId: `${baseRunId}-replay`,
     pass: 'replay',
   });
-  const replayAcceptance = evaluatePhase9bAcceptance(replay.summary, { expectationId: SELECTED_EXPECTATION_ID, approvedSha: freshness.approvedSha });
   expect(replay.evidence.authValid, 'PHASE_9B_BLOCKED_AUTH_EXPIRED: REPLAY auth not valid').toBe(true);
   expect(replay.evidence.passed, 'REPLAY journey evidence failed').toBe(true);
+  assertAcceptanceRunsAfterAuthGate({ authGatePassed: replay.auth.valid && replay.evidence.authValid, acceptanceRequested: true });
+  const replayAcceptance = evaluateContainedDevAcceptance(replay.summary, { expectationId: SELECTED_EXPECTATION_ID, approvedSha: freshness.approvedSha });
   expect(replayAcceptance.pass, `PHASE_9B_DEV_ACCEPTANCE_NOT_PROVEN: REPLAY ${replayAcceptance.failures.join(', ')}`).toBe(true);
 
   // --- Replay determinism (SPEC §28, §29, §36) ---
@@ -758,6 +769,7 @@ test('Phase 9B contained DEV semantic acceptance: common-exchange FIRST + replay
     journeyId: SELECTED_JOURNEY_ID,
     targetId: SELECTED_TARGET_ID,
     expectationId: SELECTED_EXPECTATION_ID,
+    evidenceAcceptanceClass: 'CONTAINED_DEV' as const,
     freshness: {
       remoteApiSha: freshness.remoteApiSha,
       remoteUiSha: freshness.remoteUiSha,

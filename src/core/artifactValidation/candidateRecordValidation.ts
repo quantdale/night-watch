@@ -55,6 +55,11 @@ function invalid(reason: string): never {
   throw new Error(`ARTIFACT_CANDIDATE_RECORD_INVALID:${reason}`);
 }
 
+/** The found version, only when it is a bounded safe identifier. */
+function foundVersion(value: unknown): string {
+  return typeof value === 'string' && /^[A-Za-z0-9_.:-]{1,80}$/.test(value) ? value : 'UNRECOGNISED';
+}
+
 function assertBoundedId(value: unknown, code: string): void {
   if (typeof value !== 'string' || value.length === 0 || value.length > ID_MAX_LENGTH) invalid(code);
 }
@@ -73,7 +78,7 @@ export function validateCampaignCandidateRecordArtifact(
   if (!isRuntimeRecord(value)) invalid('OBJECT_REQUIRED');
   const record = requireRuntimeRecord(value, 'ARTIFACT_CANDIDATE_RECORD_INVALID');
   assertExactKeys(record, CANDIDATE_RECORD_KEYS, 'ARTIFACT_CANDIDATE_RECORD_INVALID');
-  if (record.schemaVersion !== CAMPAIGN_CANDIDATE_RECORD_VERSION) invalid('SCHEMA_VERSION_UNSUPPORTED');
+  if (record.schemaVersion !== CAMPAIGN_CANDIDATE_RECORD_VERSION) invalid(`SCHEMA_VERSION_UNSUPPORTED:${foundVersion(record.schemaVersion)}`);
   assertBoundedId(record.candidateId, 'CANDIDATE_ID');
   if (record.clusterId !== null) assertBoundedId(record.clusterId, 'CLUSTER_ID');
 

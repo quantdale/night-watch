@@ -158,10 +158,28 @@ export interface ReviewerAlphausRecommendationInput {
   readonly teamEvidence: string | null;
 }
 
+/**
+ * A stored review whose bytes are intact but whose schema version this build
+ * does not read. Distinct from corruption: the surface names the version and
+ * the migration, and never presents it as a defect.
+ */
+export interface ReviewerUnsupportedVersionInput {
+  /** Found schema version strings, verbatim and bounded. */
+  readonly foundVersions: readonly string[];
+  readonly affectedRecordCount: number;
+  /** The schema the review store currently writes, e.g. review-store.v1. */
+  readonly currentSchema: string;
+  /** The declared disposition name for the old version, or null when undecided. */
+  readonly migration: string | null;
+}
+
 export interface ReviewerLocalReviewInput {
-  readonly record: FindingReviewRecord;
+  /** null exactly when bindingCurrentness is VERSION_UNSUPPORTED. */
+  readonly record: FindingReviewRecord | null;
   readonly receipt: FindingReviewReceipt | null;
-  readonly bindingCurrentness: 'CURRENT' | 'STALE' | 'UNKNOWN';
+  readonly bindingCurrentness: 'CURRENT' | 'STALE' | 'UNKNOWN' | 'VERSION_UNSUPPORTED';
+  /** Present exactly when bindingCurrentness is VERSION_UNSUPPORTED. */
+  readonly unsupported?: ReviewerUnsupportedVersionInput | null;
 }
 
 export interface ReviewerFindingInput {
@@ -401,6 +419,42 @@ function projectLocalReview(
   if (input === undefined) fail(field);
   if (input === null) return unknownElement();
   if (!isRecord(input)) fail(field);
+  const currentness = input.bindingCurrentness;
+  if (currentness !== 'CURRENT' && currentness !== 'STALE' && currentness !== 'UNKNOWN' && currentness !== 'VERSION_UNSUPPORTED') {
+    fail(`${field}.bindingCurrentness`);
+  }
+  // An intact old record is a migration, not a defect. It projects as a
+  // value-carrying UNKNOWN: there is no decision to show, and the basis names
+  // the version and the disposition so the surface can say exactly that.
+  if (currentness === 'VERSION_UNSUPPORTED') {
+    const unsupported = input.unsupported;
+    if (!isRecord(unsupported)) fail(`${field}.unsupported`);
+    const foundVersions = codeOrIdList(unsupported.foundVersions, `${field}.unsupported.foundVersions`, 8);
+    const affectedRecordCount = boundedCount(unsupported.affectedRecordCount);
+    const migration = unsupported.migration === null
+      ? null
+      : vocabularyCode(unsupported.migration, ['MIGRATE', 'READ_COMPATIBLE', 'ORPHAN'], `${field}.unsupported.migration`);
+    const currentSchema = safeId(unsupported.currentSchema, `${field}.unsupported.currentSchema`);
+    const unsupportedState = vocabularyCode('VERSION_UNSUPPORTED', ['VERSION_UNSUPPORTED'], `${field}.state`);
+    const value: ControlCenterLocalReviewValueDto = {
+      state: unsupportedState,
+      decision: null,
+      reviewedAt: null,
+      transitionCount: 0,
+      bindingCurrentness: 'VERSION_UNSUPPORTED',
+      foundVersions,
+      affectedRecordCount,
+      migration,
+      currentSchema,
+      organizationalAuthority: 'NONE_LOCAL_REVIEW_ONLY',
+      notEquivalentTo: ['LESLIE_GENUINE', 'LESLIE_INVALID', 'PONDR_APPROVED'],
+    };
+    const unsupportedBasis = vocabularyCode('REVIEW_VERSION_UNSUPPORTED', ['REVIEW_VERSION_UNSUPPORTED'], `${field}.basis`);
+    const basis: readonly SafeControlCenterCode[] = migration === null
+      ? [unsupportedBasis]
+      : [unsupportedBasis, migration];
+    return { epistemicClass: 'UNKNOWN', value, basis };
+  }
   const record = input.record;
   if (!isRecord(record)) fail(`${field}.record`);
   const state = vocabularyCode(record.state, FINDING_REVIEW_STATES, `${field}.record.state`);
@@ -411,16 +465,16 @@ function projectLocalReview(
   if (receipt !== null && receipt.organizationalAuthority !== 'NONE_LOCAL_REVIEW_ONLY') {
     fail(`${field}.receipt.organizationalAuthority`);
   }
-  const currentness = input.bindingCurrentness;
-  if (currentness !== 'CURRENT' && currentness !== 'STALE' && currentness !== 'UNKNOWN') {
-    fail(`${field}.bindingCurrentness`);
-  }
   const value: ControlCenterLocalReviewValueDto = {
     state,
     decision: receipt === null ? null : vocabularyCode(receipt.decision, FINDING_REVIEW_DECISIONS, `${field}.receipt.decision`),
     reviewedAt: receipt === null ? null : safeTimestamp(receipt.reviewedAt, `${field}.receipt.reviewedAt`),
     transitionCount: boundedCount(record.transitionCount),
     bindingCurrentness: currentness,
+    foundVersions: [],
+    affectedRecordCount: 0,
+    migration: null,
+    currentSchema: null,
     organizationalAuthority: 'NONE_LOCAL_REVIEW_ONLY',
     notEquivalentTo: ['LESLIE_GENUINE', 'LESLIE_INVALID', 'PONDR_APPROVED'],
   };
@@ -428,6 +482,13 @@ function projectLocalReview(
   // a live decision. It is shown, and it is shown as UNKNOWN.
   if (currentness !== 'CURRENT') return { epistemicClass: 'UNKNOWN', value, basis: [state] };
   return factElement(value, [state]);
+}
+
+/** A list of bounded ids, used for found version strings on the unsupported path. */
+function codeOrIdList(values: unknown, field: string, limit: number): readonly SafeControlCenterId[] {
+  if (!Array.isArray(values)) fail(field);
+  if (values.length > limit) fail(field);
+  return values.map((value, index) => safeId(value, `${field}[${index}]`));
 }
 
 function projectFinding(input: ReviewerFindingInput, index: number): ControlCenterReviewerFindingDto {

@@ -63,7 +63,10 @@
       { "id": "HC-020", "ops": [{ "file": "bin/nightwatch-status.mjs", "search": "'src/core/readiness/openWork.ts'", "replace": "'src/core/readiness/openWorkProbe.ts'" }] }
     ],
     "checkBinExecutionCoverage": [
-      { "id": "HC-021", "ops": [{ "file": "tests/unit/cliImplementationContract.test.ts", "search": "'bin', 'auth-capture.mjs'", "replace": "'bin', 'auth-capture-probe.mjs'" }] }
+      { "id": "HC-021", "ops": [
+        { "file": "tests/unit/cliImplementationContract.test.ts", "search": "'bin', 'auth-capture.mjs'", "replace": "'bin', 'auth-capture-probe.mjs'", "all": true },
+        { "file": "tests/unit/authCaptureLauncher.test.ts", "search": "'bin', 'auth-capture.mjs'", "replace": "'bin', 'auth-capture-probe.mjs'", "all": true }
+      ] }
     ],
     "checkPhase23QualityGate": [
       { "id": "HC-022", "kind": "COMMENT_RELOCATION", "ops": [{ "file": "src/core/qualityGate/externalCi.ts", "search": "['REQUIRED_JOB_STEPS_EMPTY']", "replace": "[/* REQUIRED_JOB_STEPS_EMPTY */]" }] }
@@ -230,6 +233,16 @@
     "checkRuleEngineSoundness": [
       { "id": "HC-073", "kind": "SELF_CHECK_PROBE_RAW_ACCESSOR", "ops": [{ "file": "bin/hardening-check.mjs", "search": "function checkChildProcessBoundaries() {", "replace": "function probeRawSourceAccessor() { if (!/zed/.test(readIncludingComments('package.json'))) fail('probe'); }\n\nfunction checkChildProcessBoundaries() {" }] },
       { "id": "HC-074", "kind": "SELF_CHECK_PROBE_TOTALITY_FIRST_MATCH", "ops": [{ "file": "bin/hardening-check.mjs", "search": "function checkTargetPolicy() {\n", "replace": "function checkTargetPolicy() {\n  const probeFirstMatch = /env/.exec('probe'); void probeFirstMatch;\n" }] }
+    ],
+    "checkAuthenticatedCapabilitySingleEvaluator": [
+      { "id": "HC-078", "ops": [{ "file": "src/auth/devCredentialProvider.ts", "append": "\nexport function probeCookieExpiry(cookie: { expires: number }): boolean {\n  return cookie.expires > Math.floor(Date.now() / 1000);\n}\n" }] }
+    ],
+    "checkSourceReachability": [
+      { "id": "HC-079", "ops": [{ "file": "config/reference-graph.v1.json", "search": "\"path\": \"src/core/dtoFramework\",", "replace": "\"path\": \"src/core/dtoFrameworkProbe\"," }] },
+      { "id": "HC-080", "ops": [{ "file": "src/core/readiness/localReadiness.ts", "append": "\nimport type { DtoVersionProbe } from '../dtoFramework/types';\nvoid (undefined as unknown as DtoVersionProbe);\n" }] }
+    ],
+    "checkModuleBarrierEnforcement": [
+      { "id": "HC-081", "ops": [{ "file": "src/core/readiness/localReadiness.ts", "append": "\nimport { readLocalNightwatchProvenance } from '../provenance/localGit';\nvoid readLocalNightwatchProvenance;\n" }] }
     ]
   }
 }

@@ -341,7 +341,7 @@ test.describe('agentRuntime checkpoints', () => {
     const good = runtime.checkpoint();
 
     expect(() => parseCheckpoint({})).toThrow(/AGENT_CHECKPOINT_CORRUPT/);
-    expect(() => parseCheckpoint({ ...good, schemaVersion: 'bogus' })).toThrow(/AGENT_CHECKPOINT_CORRUPT/);
+    expect(() => parseCheckpoint({ ...good, schemaVersion: 'bogus' })).toThrow(/AGENT_CHECKPOINT_VERSION_UNSUPPORTED: checkpoint has an unsupported schema version: bogus/);
     expect(() => parseCheckpoint({ ...good, resumeCursor: 'not-a-cursor' })).toThrow(/AGENT_CHECKPOINT_CORRUPT/);
     expect(() => parseCheckpoint({ ...good, state: { ...good.state, phase: 'FLY' } })).toThrow(/AGENT_CHECKPOINT_CORRUPT/);
     expect(() => AgentRuntime.resumeFromCheckpoint({ ...good, campaignId: 'other-campaign' }, depsFor('campaign-corrupt', stub.driver, tools))).toThrow(

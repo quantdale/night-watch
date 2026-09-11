@@ -1,8 +1,8 @@
 // ---------------------------------------------------------------------------
 // Nightwatch — snapshotter unit tests.
-// Fixture git repos live under <nightwatch>/.tmp-test/snapshotter and are
-// created/cleaned per test. Git identity comes from -c flags so the global
-// git config is never consulted.
+// Fixture git repos live under <nightwatch>/.tmp-nightwatch/test/snapshotter
+// and are created/cleaned per test. Git identity comes from -c flags so the
+// global git config is never consulted.
 // ---------------------------------------------------------------------------
 
 import { test, expect } from '@playwright/test';
@@ -11,8 +11,9 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { snapshotRepositories, discoverRepositories } from '../../src/core/repositories/snapshotter';
 import type { RepoSnapshotRecord } from '../../src/core/evidence/types';
+import { resolveScratchPath } from '../../src/core/workspace/ephemeralLayout';
 
-const TMP_ROOT = path.join(__dirname, '..', '..', '.tmp-test', 'snapshotter');
+const TMP_ROOT = path.join(__dirname, '..', '..', resolveScratchPath('test', 'snapshotter'));
 const FIXED = '2026-08-09T02:42:50.000Z';
 const fixedNow = () => new Date(FIXED);
 const GIT_FLAGS = ['-c', 'commit.gpgsign=false', '-c', 'user.email=test@test', '-c', 'user.name=test'];

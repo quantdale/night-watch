@@ -163,14 +163,24 @@ test.describe('evidence retention CLI', () => {
     return { root, cleanup: () => fs.rmSync(root, { recursive: true, force: true }) };
   }
 
-  function run(cwd: string, args: readonly string[]) {
+  function run(cwd: string, args: readonly string[], env: NodeJS.ProcessEnv = process.env) {
     return spawnSync(process.execPath, [CLI, ...args], {
       cwd,
       encoding: 'utf8',
       timeout: 120_000,
       maxBuffer: 4 * 1024 * 1024,
       shell: false,
+      env,
     });
+  }
+
+  /** The confirmation token is bound to the plan, so it must come from a plan. */
+  function tokenFor(root: string, keepRecent = 0): string {
+    const plan = run(REPO_ROOT, ['plan', '--json', `--keep-recent=${keepRecent}`, `--root=${root}`]);
+    expect(plan.status).toBe(0);
+    const token = JSON.parse(plan.stdout).confirmationToken as string;
+    expect(token).toMatch(/^sha256:[0-9a-f]{24}$/);
+    return token;
   }
 
   test('status over the real repository store is read-only and removes nothing', () => {
@@ -203,19 +213,119 @@ test.describe('evidence retention CLI', () => {
   test('apply removes only the unreferenced artifact and refuses the referenced one', () => {
     const store = makeStore();
     try {
-      const result = run(REPO_ROOT, ['--json', '--apply', '--keep-recent=0', `--root=${store.root}`]);
+      const token = tokenFor(store.root);
+      const result = run(REPO_ROOT, ['--json', '--apply', `--confirm=${token}`, '--keep-recent=0', `--root=${store.root}`]);
       expect(result.status).toBe(0);
       const report = JSON.parse(result.stdout);
       expect(report.mode).toBe('APPLY');
       expect(report.candidates).toEqual(['run-orphan']);
       expect(report.removedCount).toBe(1);
       expect(report.result).toBe('APPLIED');
+      expect(report.confirmationToken).toBe(token);
+      expect(report.deletedSet).toEqual([{ name: 'run-orphan', bytes: expect.any(Number) }]);
+      expect(report.deletedBytes).toBeGreaterThan(0);
+      expect(report.appliedAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
       // The dangerous direction, asserted on disk rather than in the report.
       expect(fs.existsSync(path.join(store.root, 'artifacts', 'run-referenced'))).toBe(true);
       expect(fs.existsSync(path.join(store.root, 'artifacts', 'run-orphan'))).toBe(false);
       // Removal is whole-directory; the surviving artifact is untouched, not
       // rewritten or truncated.
       expect(fs.readFileSync(path.join(store.root, 'artifacts', 'run-referenced', 'summary.json'), 'utf8')).toBe('{}\n');
+      // Deletion is recorded: which entries, bytes, SHA, refusal set, date.
+      expect(report.recordPath).toMatch(/^\.nightwatch\/retention\/retention-apply-/);
+      const receipt = JSON.parse(fs.readFileSync(path.join(store.root, report.recordPath), 'utf8'));
+      expect(receipt.schemaVersion).toBe('nightwatch.evidence-retention-receipt.v1');
+      expect(receipt.status).toBe('APPLIED');
+      expect(receipt.appliedAt).toBe(report.appliedAt);
+      expect(receipt.refusedCount).toBe(1);
+      expect(receipt.refusedByReason).toEqual({ REFERENCED_BY_TRACKED_STATE: 1 });
+      expect(receipt.refusalSetDigest).toMatch(/^sha256:[0-9a-f]{24}$/);
+      expect(receipt.deletedSet).toEqual(report.deletedSet);
+      expect(receipt.deletedBytes).toBe(report.deletedBytes);
+      expect(receipt.confirmationToken).toBe(token);
+    } finally {
+      store.cleanup();
+    }
+  });
+
+  test('the refusal set is re-derived from current tracked state, not reused', () => {
+    const store = makeStore();
+    try {
+      const first = JSON.parse(run(REPO_ROOT, ['plan', '--json', '--keep-recent=0', `--root=${store.root}`]).stdout);
+      expect(first.candidates).toEqual(['run-orphan']);
+      // A new reference in current tracked state must move the artifact into
+      // the refusal set on the next run, and must invalidate the old token.
+      fs.appendFileSync(path.join(store.root, '.agent', 'STATE.md'), 'now references artifacts/run-orphan/summary.json\n');
+      const second = JSON.parse(run(REPO_ROOT, ['plan', '--json', '--keep-recent=0', `--root=${store.root}`]).stdout);
+      expect(second.candidates).toEqual([]);
+      expect(second.refusedByReason).toEqual({ REFERENCED_BY_TRACKED_STATE: 2 });
+      expect(second.confirmationToken).not.toBe(first.confirmationToken);
+    } finally {
+      store.cleanup();
+    }
+  });
+
+  test('apply without the confirmation token deletes nothing', () => {
+    const store = makeStore();
+    try {
+      const result = run(REPO_ROOT, ['--json', '--apply', '--keep-recent=0', `--root=${store.root}`]);
+      expect(result.status).toBe(2);
+      expect(fs.existsSync(path.join(store.root, 'artifacts', 'run-orphan'))).toBe(true);
+      expect(fs.existsSync(path.join(store.root, 'artifacts', 'run-referenced'))).toBe(true);
+    } finally {
+      store.cleanup();
+    }
+  });
+
+  test('apply with a stale token deletes nothing', () => {
+    const store = makeStore();
+    try {
+      const stale = `sha256:${'0'.repeat(24)}`;
+      const result = run(REPO_ROOT, ['--json', '--apply', `--confirm=${stale}`, '--keep-recent=0', `--root=${store.root}`]);
+      expect(result.status).toBe(2);
+      expect(JSON.parse(result.stdout).code).toBe('CONFIRMATION_TOKEN_MISMATCH');
+      expect(fs.existsSync(path.join(store.root, 'artifacts', 'run-orphan'))).toBe(true);
+    } finally {
+      store.cleanup();
+    }
+  });
+
+  test('unprovable referencing state refuses every artifact and apply removes nothing', () => {
+    // Unprovable means refused. A `.agent` entry that is not a directory makes
+    // the reference scan incomplete, so every artifact is refused and the
+    // returned token authorizes a plan that contains no candidate at all.
+    const store = makeStore();
+    try {
+      fs.rmSync(path.join(store.root, '.agent'), { recursive: true, force: true });
+      fs.writeFileSync(path.join(store.root, '.agent'), 'not a directory\n');
+      const plan = run(REPO_ROOT, ['plan', '--json', '--keep-recent=0', `--root=${store.root}`]);
+      expect(plan.status).toBe(0);
+      const report = JSON.parse(plan.stdout);
+      expect(report.referenceScanComplete).toBe(false);
+      expect(report.candidates).toEqual([]);
+      expect(report.refusedByReason).toEqual({ REFERENCE_SCAN_INCOMPLETE: 2 });
+      const applied = run(REPO_ROOT, ['--json', '--apply', `--confirm=${report.confirmationToken}`, '--keep-recent=0', `--root=${store.root}`]);
+      expect(applied.status).toBe(0);
+      const appliedReport = JSON.parse(applied.stdout);
+      expect(appliedReport.removedCount).toBe(0);
+      expect(appliedReport.result).toBe('PRESERVED');
+      expect(fs.existsSync(path.join(store.root, 'artifacts', 'run-orphan'))).toBe(true);
+      expect(fs.existsSync(path.join(store.root, 'artifacts', 'run-referenced'))).toBe(true);
+    } finally {
+      store.cleanup();
+    }
+  });
+
+  test('apply refuses a non-interactive CI or gate environment even with the token', () => {
+    const store = makeStore();
+    try {
+      const token = tokenFor(store.root);
+      for (const env of [{ CI: '1' }, { NIGHTWATCH_GATE_ACTIVE: '1' }]) {
+        const result = run(REPO_ROOT, ['--json', '--apply', `--confirm=${token}`, '--keep-recent=0', `--root=${store.root}`], { ...process.env, ...env });
+        expect(result.status).toBe(2);
+        expect(JSON.parse(result.stdout).code).toBe('APPLY_REFUSED_NON_INTERACTIVE');
+        expect(fs.existsSync(path.join(store.root, 'artifacts', 'run-orphan'))).toBe(true);
+      }
     } finally {
       store.cleanup();
     }
@@ -243,7 +353,8 @@ test.describe('evidence retention CLI', () => {
       fs.mkdirSync(outside, { recursive: true });
       fs.writeFileSync(path.join(outside, 'keep.txt'), 'keep\n');
       fs.symlinkSync(outside, path.join(store.root, 'artifacts', 'run-link'), 'dir');
-      const result = run(REPO_ROOT, ['--json', '--apply', '--keep-recent=0', `--root=${store.root}`]);
+      const token = tokenFor(store.root);
+      const result = run(REPO_ROOT, ['--json', '--apply', `--confirm=${token}`, '--keep-recent=0', `--root=${store.root}`]);
       expect(result.status).toBe(0);
       const report = JSON.parse(result.stdout);
       expect(report.candidates).not.toContain('run-link');
@@ -256,7 +367,8 @@ test.describe('evidence retention CLI', () => {
 
   test('an unusable root is blocked rather than falling back to the real store', () => {
     const before = fs.readdirSync(path.join(REPO_ROOT, 'artifacts')).length;
-    const result = run(REPO_ROOT, ['--json', '--apply', `--root=${path.join(os.tmpdir(), 'nw-retention-absent')}`]);
+    const token = `sha256:${'0'.repeat(24)}`;
+    const result = run(REPO_ROOT, ['--json', '--apply', `--confirm=${token}`, `--root=${path.join(os.tmpdir(), 'nw-retention-absent')}`]);
     expect(result.status).toBe(2);
     expect(JSON.parse(result.stdout).code).toBe('ROOT_UNUSABLE');
     expect(fs.readdirSync(path.join(REPO_ROOT, 'artifacts')).length).toBe(before);

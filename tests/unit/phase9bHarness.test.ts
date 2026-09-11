@@ -49,6 +49,17 @@ import {
 import { evaluatePhase9bPreflight } from '../../src/core/phase9b/preflight';
 import type { Phase9bFreshnessVerdict } from '../../src/core/phase9b/freshness';
 import {
+  SEMANTIC_ACCEPTANCE_PRESENTATION_SURFACES,
+  assertAcceptanceRunsAfterAuthGate,
+  checkSemanticAcceptanceSurface,
+  evaluateContainedDevAcceptance,
+  renderSemanticAcceptanceClass,
+  semanticAcceptanceStatus,
+  validatePermanentClosurePathRecord,
+  validateUnblockPathRecord,
+} from '../../src/core/semanticAcceptance';
+import { projectMeta } from '../../src/controlCenter/adapters/metaAdapter';
+import {
   FIXTURE_REPO_A,
   FIXTURE_SHA_A,
   FIXTURE_SHA_B,
@@ -128,6 +139,7 @@ function passSummary(overrides: Partial<Phase9bSemanticSummary>): Phase9bSemanti
     findingCount: 0,
     findingFingerprints: [],
     findingCategories: [],
+    evidenceAcceptanceClasses: ['LOCAL_SYNTHETIC'],
     invariantTotal: 2,
     invariantPassCount: 2,
     invariantNaCount: 0,
@@ -208,6 +220,7 @@ test.describe('Phase 9B — context semantic-oracle wiring (SPEC §13, §21.1-2)
       expect(evaluations.length).toBe(1);
       for (const receipt of evaluations) validateSemanticEvaluationReceipt(receipt);
       expect(evaluations[0]?.outcome).toBe('PASS');
+      expect(evaluations[0]?.acceptanceClass).toBe('LOCAL_SYNTHETIC');
     } finally {
       await context.close();
       await server.close();
@@ -552,5 +565,126 @@ test.describe('Phase 9B — replay comparison and raw-value absence (SPEC §21.1
     expect(serialized).not.toContain(SENTINEL_BODY);
     expect(serialized).not.toContain('jpy');
     expect(serialized).not.toContain('apidev.alphaus.cloud/m/ripple');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Group 11 (F-10). Contained DEV semantic acceptance: the acceptance class as
+// data, the local-synthetic/DEV separation, the preserved pre-browser auth
+// gate, and the owner decision left open with both paths recorded.
+// ---------------------------------------------------------------------------
+
+test.describe('Group 11 — contained DEV semantic acceptance (F-10)', () => {
+  test('11.1 — the capability reports its acceptance class as data and every presentation surface renders it', () => {
+    const status = semanticAcceptanceStatus();
+    expect(status.acceptanceClass).toBe('COMPLETE_LOCAL_SYNTHETIC');
+    expect(status.devResult).toBe('NOT_PROVEN');
+    expect(status.blocker).toBe('PHASE_9B_BLOCKED_HUMAN_AUTH_ACTION_REQUIRED');
+    expect(status.syntheticOnly).toBe(true);
+    const rendered = renderSemanticAcceptanceClass(status);
+    expect(rendered).toContain('COMPLETE_LOCAL_SYNTHETIC');
+    expect(rendered).toContain('NOT_PROVEN');
+    expect(rendered).toContain('PHASE_9B_BLOCKED_HUMAN_AUTH_ACTION_REQUIRED');
+    for (const surface of SEMANTIC_ACCEPTANCE_PRESENTATION_SURFACES) {
+      const verdict = checkSemanticAcceptanceSurface(surface, fs.readFileSync(path.join(root, surface), 'utf8'), status);
+      expect(verdict.presentsCapability, surface).toBe(true);
+      expect(verdict.ok, `${surface} missing: ${verdict.missing.join(',')}`).toBe(true);
+    }
+    // The Control Center presents the capability through its meta contract;
+    // the module output carries the same datum (App.tsx rendering is owned by
+    // the UI decomposition campaign).
+    expect(projectMeta().semanticAcceptance).toEqual({
+      acceptanceClass: status.acceptanceClass,
+      devResult: status.devResult,
+      blocker: status.blocker,
+    });
+  });
+
+  test('11.1 negative probe — a surface presenting the capability without the class fails', () => {
+    const verdict = checkSemanticAcceptanceSurface('synthetic-surface', 'The semantic oracle exists and is deterministic.');
+    expect(verdict.presentsCapability).toBe(true);
+    expect(verdict.ok).toBe(false);
+    expect(verdict.missing).toContain('SEMANTIC_ACCEPTANCE_CLASS');
+  });
+
+  test('11.2 — a local synthetic evaluation records LOCAL_SYNTHETIC and never satisfies a DEV acceptance assertion', () => {
+    const state = createFixtureSourceState();
+    const { derivedA } = deriveFixtureExpectations(state);
+    const expectation = derivedA.find((e) => e.expectationId === 'fixture-a.common-exchange.read.real-source-shape')!;
+    const resolution: RealSourceResolution = { kind: 'RESOLVED', expectation, sourceSnapshot: { repoId: FIXTURE_REPO_A, sha: FIXTURE_SHA_A } };
+    const oracle: SemanticHookOracle = { resolve: () => resolution };
+    const hookResult = evaluateSemanticHook({
+      oracle,
+      rawText: JSON.stringify([{ month: '2026-01', exchange_rate: { jpy: 1 } }]),
+      status: 200,
+      contentType: 'application/json',
+      url: 'https://apidev.alphaus.cloud/m/ripple/exchange_rate/global/aws',
+      method: 'GET',
+      targetId: 'fixture-a.common-exchange.read',
+      journeyId: 'ripple-common-exchange-read',
+    });
+    expect(hookResult.receipt?.acceptanceClass).toBe('LOCAL_SYNTHETIC');
+    const summary = summarizePhase9bPass({
+      passId: 'first',
+      receipts: hookResult.receipt === null ? [] : [hookResult.receipt],
+      ledgerReceiptCount: 1,
+      ledgerOverflow: false,
+      findings: [...hookResult.findings],
+      targetId: 'fixture-a.common-exchange.read',
+    });
+    expect(summary.evidenceAcceptanceClasses).toEqual(['LOCAL_SYNTHETIC']);
+    const expected = { expectationId: 'fixture-a.common-exchange.read.real-source-shape', approvedSha: FIXTURE_SHA_A };
+    // The raw mechanics gate passes over the synthetic fixture ...
+    expect(evaluatePhase9bAcceptance(summary, expected).pass).toBe(true);
+    // ... and the DEV acceptance assertion refuses it by construction.
+    const dev = evaluateContainedDevAcceptance(summary, expected);
+    expect(dev.pass).toBe(false);
+    expect(dev.failures.join(' ')).toContain('SEMANTIC_ACCEPTANCE_LOCAL_SYNTHETIC_NEVER_SATISFIES_DEV');
+    // CONTAINED_DEV evidence is the only class the DEV assertion accepts.
+    expect(evaluateContainedDevAcceptance(passSummary({ evidenceAcceptanceClasses: ['CONTAINED_DEV'] }), {
+      expectationId: EXPECTATION_ID,
+      approvedSha: APPROVED_SHA,
+    }).pass).toBe(true);
+  });
+
+  test('11.3 — the owner decision stays open with both paths and their consequences recorded', () => {
+    const status = semanticAcceptanceStatus();
+    expect(status.ownerDecision.taskId).toBe('11.3');
+    expect(status.ownerDecision.state).toBe('PENDING_OWNER_DECISION');
+    expect(validateUnblockPathRecord(status.ownerDecision.unblockPath)).toEqual([]);
+    expect(validatePermanentClosurePathRecord(status.ownerDecision.permanentClosurePath)).toEqual([]);
+    expect(status.ownerDecision.consequences.length).toBeGreaterThanOrEqual(2);
+    // The unblock path fails its own check when any required artefact is
+    // missing (task 11.4).
+    expect(validateUnblockPathRecord({ ...status.ownerDecision.unblockPath, authArtefact: '' })).toContain('authArtefact');
+    expect(validateUnblockPathRecord({ ...status.ownerDecision.unblockPath, containmentEnvelope: '' })).toContain('containmentEnvelope');
+    // A closure record without a reason is not terminal (task 11.6).
+    expect(validatePermanentClosurePathRecord({ ...status.ownerDecision.permanentClosurePath, reason: '' })).toContain('reason');
+  });
+
+  test('11.5 — the pre-browser auth gate is preserved and acceptance runs after it, never around it', () => {
+    const runner = fs.readFileSync(path.join(root, 'tests/manual/phase9b-contained-dev-semantic.ts'), 'utf8');
+    // Gate order in the acceptance test: auth preflight, then observation
+    // (which re-checks auth before any browser context).
+    const authGateIndex = runner.indexOf('assertAuthCapabilityPreflight({');
+    const observeIndex = runner.indexOf('await observeOnce({');
+    expect(authGateIndex).toBeGreaterThan(-1);
+    expect(observeIndex).toBeGreaterThan(authGateIndex);
+    const observeOnceBody = runner.slice(
+      runner.indexOf('async function observeOnce('),
+      runner.indexOf('function assertNoSensitiveArtifacts'),
+    );
+    expect(observeOnceBody.indexOf('PHASE_9B_BLOCKED_HUMAN_AUTH_ACTION_REQUIRED')).toBeLessThan(observeOnceBody.indexOf('runRealRunGate'));
+    expect(observeOnceBody.indexOf('runRealRunGate')).toBeLessThan(observeOnceBody.indexOf('createNightwatchContext'));
+    expect(runner).toContain("semanticAcceptanceClass: 'CONTAINED_DEV'");
+    expect(runner).toContain('assertAcceptanceRunsAfterAuthGate');
+    // The pure stage assertion refuses an acceptance request that skipped the
+    // gate.
+    expect(() => assertAcceptanceRunsAfterAuthGate({ authGatePassed: false, acceptanceRequested: true })).toThrow(
+      'SEMANTIC_ACCEPTANCE_AUTH_GATE_BYPASSED',
+    );
+    expect(() => assertAcceptanceRunsAfterAuthGate({ authGatePassed: true, acceptanceRequested: true })).not.toThrow();
+    // PARTIAL_AUTH_BLOCKED remains the auth-refused campaign result class.
+    expect(fs.readFileSync(path.join(root, 'src/core/campaign/types.ts'), 'utf8')).toContain('PARTIAL_AUTH_BLOCKED');
   });
 });

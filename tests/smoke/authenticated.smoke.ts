@@ -23,6 +23,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { RunRecorder } from '../../src/core/evidence/runRecorder';
+import { resolveScratchPath } from '../../src/core/workspace/ephemeralLayout';
 import { OutboundPolicy } from '../../src/core/safety/outboundPolicy';
 import { runCanary, assertCanary } from '../../src/core/safety/canary';
 import { startFixtureServer } from '../../src/browser/fixtures/fixtureServer';
@@ -243,7 +244,7 @@ test.describe('authenticated storage state is secret material', () => {
     const server = await startFixtureServer('good');
     const tmpMissing = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-state-missing-'));
     const tmpBadShape = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-state-badshape-'));
-    const insideRepo = path.join(__dirname, '..', '..', '.tmp-test', 'evil-state.json');
+    const insideRepo = path.join(__dirname, '..', '..', resolveScratchPath('test', 'evil-state.json'));
     try {
       const env = buildEnv(server);
       const recorder = new RunRecorder({

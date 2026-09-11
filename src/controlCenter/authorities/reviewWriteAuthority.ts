@@ -24,11 +24,28 @@ import {
   type FindingReviewDecision,
 } from '../../core/findingReview';
 import { ReviewStore, ReviewStoreError, reviewIdentity, type ReviewStoreListing, type ReviewStoreReadResult } from '../../core/reviewStore';
+import { REVIEW_STORE_SCHEMA_VERSION } from '../../core/reviewStore';
+import { SCHEMA_FAMILIES } from '../../core/schemaLifecycle';
 import type { ReviewerLocalReviewInput } from '../adapters/reviewerAdapter';
 import { currentReviewArtifacts, reviewBindingFor } from './reviewBinding';
 import type { FindingsDossierMetadata } from './findingsAuthority';
 
 const DECISION_SET: ReadonlySet<string> = new Set<string>(FINDING_REVIEW_DECISIONS);
+
+/**
+ * The declared disposition for one old review-store version, or null when the
+ * version carries none yet. Null is deliberately distinct on the surface: an
+ * unsupported record with no declared migration is an owner decision waiting,
+ * not a defect and not a migration the UI may imply exists.
+ */
+export function reviewStoreMigrationLabel(identifier: string): string | null {
+  const declaration = SCHEMA_FAMILIES.find((family) => family.family === 'nightwatch.review-store');
+  if (declaration === undefined) return null;
+  const disposition = declaration.dispositions.find(
+    (entry) => `nightwatch.review-store.v${entry.fromVersion}` === identifier,
+  );
+  return disposition === undefined ? null : disposition.kind;
+}
 
 /** Bounded well before the lifecycle's own 2000-character limit is reached. */
 export const REVIEW_RATIONALE_MAX = 2000;
@@ -133,6 +150,23 @@ export class ControlCenterReviewAuthority {
         // and it is never allowed to look like "no review" either — the
         // caller sees UNKNOWN, which is what it is.
         return null;
+      }
+      if (state.state === 'VERSION_UNSUPPORTED') {
+        // An intact record at a superseded version is a migration to run, not
+        // a defect. The surface gets the found version, the count, and the
+        // declared disposition when one exists.
+        const foundVersions = [...new Set(state.unsupported.map((entry) => entry.foundVersion))].slice(0, 8);
+        return {
+          record: null,
+          receipt: null,
+          bindingCurrentness: 'VERSION_UNSUPPORTED',
+          unsupported: {
+            foundVersions,
+            affectedRecordCount: state.unsupportedCount,
+            currentSchema: REVIEW_STORE_SCHEMA_VERSION,
+            migration: foundVersions.length === 1 ? reviewStoreMigrationLabel(foundVersions[0] as string) : null,
+          },
+        };
       }
       if (state.state === 'NO_REVIEW' || state.state === 'CORRUPT' || state.envelope === null) return null;
       return {

@@ -9,7 +9,7 @@
 // ---------------------------------------------------------------------------
 
 import { assertOwnerPolicyAllows } from '../policy/ownerScope';
-import { assertRepositoryFullyClean, currentHeadShaUnchecked } from '../provenance/localGit';
+import { assertRepositoryFullyClean, currentHeadShaUnchecked } from '../provenance';
 import { SELFDEV_CANONICAL_PROMOTION_APPROVAL_CONFIRMATION } from './types';
 import { approvalIdFor, validateCanonicalPromotionApproval } from './validation';
 import { SelfDevCanonicalPromotionApprovalStore, SelfDevCanonicalPromotionIntentStore } from './storage';

@@ -292,12 +292,16 @@ test.describe('review store — corruption is categorical and fail-closed', () =
     expect(store.read('finding:1', currentFor(value)).state).toBe('CORRUPT');
   });
 
-  test('an unknown schema version is never read optimistically', () => {
+  test('an unknown schema version is reported as VERSION_UNSUPPORTED, never as a defect', () => {
     const { root, store, fileName, value } = seed();
     rewrite(root, fileName, (parsed) => ({ ...parsed, schemaVersion: 'nightwatch.review-store.v99' }));
     const read = store.read('finding:1', currentFor(value));
-    expect(read.state).toBe('CORRUPT');
-    expect(read.corruption[0]?.code).toBe('REVIEW_STORE_VERSION_UNSUPPORTED');
+    expect(read.state).toBe('VERSION_UNSUPPORTED');
+    expect(read.envelope).toBeNull();
+    expect(read.corruption).toEqual([]);
+    expect(read.unsupportedCount).toBe(1);
+    expect(read.unsupported[0]?.field).toBe('schemaVersion');
+    expect(read.unsupported[0]?.foundVersion).toBe('nightwatch.review-store.v99');
   });
 
   test('a tampered receipt is detected', () => {

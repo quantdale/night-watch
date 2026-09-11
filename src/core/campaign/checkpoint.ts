@@ -614,6 +614,50 @@ export function grantWorkItemAttempt(workItemId: string, current: CampaignWorkIt
 
 export type CheckpointResumeRefusalKind = 'NONE' | 'CHECKPOINT_INCOMPATIBLE' | 'RUNTIME_FINGERPRINT_DRIFT';
 
+/**
+ * Versioned sidecar written beside a checkpoint whose resume is refused and
+ * whose completed ledger cannot be consumed under the current contract. It is
+ * a separate document on purpose: the refused checkpoint may not satisfy the
+ * current validator at all, so marking it in place could destroy the very
+ * evidence the owner needs. The sidecar is bounded, content-safe and
+ * append-only in effect (a second write is refused by the no-replace store).
+ */
+export const CAMPAIGN_RESUME_TERMINAL_VERSION = 'nightwatch.campaign-resume-terminal.v1' as const;
+
+export interface CheckpointDifferingVersion {
+  readonly component: string;
+  readonly found: string | null;
+  readonly expected: string | null;
+}
+
+/**
+ * What a refused resume owes the owner: the checkpoint identity, the versions
+ * that differ, the work items already completed, and whether a restart can
+ * consume the existing ledger or must be terminal.
+ */
+export interface CheckpointResumeExplanation {
+  readonly campaignIdentity: string | null;
+  readonly differingVersions: readonly CheckpointDifferingVersion[];
+  readonly completedWorkItems: readonly string[];
+  readonly completedWorkItemCount: number;
+  readonly remainingWorkItemCount: number;
+  readonly restartConsumable: boolean;
+  readonly restartReason: string;
+  /** True when no restart can consume the ledger; the campaign is terminal. */
+  readonly terminal: boolean;
+}
+
+export interface CampaignResumeTerminalRecord {
+  readonly schemaVersion: typeof CAMPAIGN_RESUME_TERMINAL_VERSION;
+  readonly campaignId: string;
+  readonly reason: string;
+  readonly differingVersions: readonly CheckpointDifferingVersion[];
+  readonly completedWorkItems: readonly string[];
+  readonly completedWorkItemCount: number;
+  readonly restartConsumable: boolean;
+  readonly recordedAt: string;
+}
+
 export interface CheckpointResumeRefusal {
   readonly compatible: boolean;
   readonly kind: CheckpointResumeRefusalKind;
@@ -625,6 +669,100 @@ export interface CheckpointResumeRefusal {
   readonly driftedFingerprintSlots: readonly string[] | null;
   /** True on every refusal: evaluation is pure and precedes any executor callback. */
   readonly refusedBeforeExecutorCallback: boolean;
+  /** Always present: names the identity, the versions, the ledger and the restart path. */
+  readonly explanation: CheckpointResumeExplanation;
+}
+
+function stringArrayOf(value: unknown): readonly string[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((entry): entry is string => typeof entry === 'string');
+}
+
+/**
+ * Total, deterministic and pure: explain exactly what a refused resume
+ * abandons and whether the completed ledger can be consumed. Exposed so a CLI
+ * or a test can ask the question without re-implementing the answer.
+ */
+export function explainCheckpointResume(
+  checkpoint: unknown,
+  manifest: Pick<CampaignManifest, 'campaignId' | 'manifestFingerprint' | 'versions'>,
+  currentVersions?: CampaignVersionFingerprint,
+): CheckpointResumeExplanation {
+  return explanationFor(checkpoint, manifest, currentVersions);
+}
+
+function explanationFor(
+  checkpoint: unknown,
+  manifest: Pick<CampaignManifest, 'campaignId' | 'manifestFingerprint' | 'versions'>,
+  currentVersions: CampaignVersionFingerprint | undefined,
+): CheckpointResumeExplanation {
+  const record = isRuntimeRecord(checkpoint) ? checkpoint : null;
+  const campaignIdentity = record !== null && typeof record.campaignId === 'string' ? record.campaignId : manifest.campaignId;
+  const differing: CheckpointDifferingVersion[] = [];
+  const schemaVersion = record === null ? null : (typeof record.schemaVersion === 'string' ? record.schemaVersion : null);
+  if (schemaVersion !== CAMPAIGN_CHECKPOINT_VERSION) {
+    differing.push({ component: 'schemaVersion', found: schemaVersion, expected: CAMPAIGN_CHECKPOINT_VERSION });
+  }
+  if (record === null || record.campaignId !== manifest.campaignId) {
+    differing.push({ component: 'campaignId', found: record === null ? null : String(record.campaignId ?? ''), expected: manifest.campaignId });
+  }
+  if (record === null || record.manifestFingerprint !== manifest.manifestFingerprint) {
+    differing.push({ component: 'manifestFingerprint', found: record === null ? null : String(record.manifestFingerprint ?? ''), expected: manifest.manifestFingerprint });
+  }
+  const versions = record === null ? undefined : record.runtimeContractVersions;
+  if (versions !== undefined) {
+    if (!isRuntimeRecord(versions)) {
+      differing.push({ component: 'runtimeContractVersions', found: null, expected: null });
+    } else {
+      for (const slot of RESUME_CONTRACT_SLOTS) {
+        const found = typeof versions[slot] === 'string' ? versions[slot] as string : null;
+        const expected = CAMPAIGN_RUNTIME_CONTRACT_VERSIONS_EXPECTED[slot];
+        if (found !== expected) differing.push({ component: slot, found, expected });
+      }
+    }
+  }
+  const lifecycles = record === null ? undefined : record.candidateLifecycles;
+  if (lifecycles !== undefined && isRuntimeRecord(lifecycles)) {
+    for (const [clusterId, value] of Object.entries(lifecycles)) {
+      const found = isRuntimeRecord(value) && typeof value.lifecycleVersion === 'string' ? value.lifecycleVersion : null;
+      const expected = CAMPAIGN_RUNTIME_CONTRACT_VERSIONS_EXPECTED.candidateLifecycle;
+      if (found !== expected) differing.push({ component: `candidateLifecycle:${clusterId}`, found, expected });
+    }
+  }
+  if (currentVersions !== undefined) {
+    for (const slot of classifyVersionFingerprintDrift(currentVersions, manifest.versions)) {
+      const left = currentVersions as unknown as RuntimeRecord;
+      const right = manifest.versions as unknown as RuntimeRecord;
+      differing.push({
+        component: `versionFingerprint:${slot}`,
+        found: typeof left[slot] === 'string' ? left[slot] as string : null,
+        expected: typeof right[slot] === 'string' ? right[slot] as string : null,
+      });
+    }
+  }
+  const completedWorkItems = record === null ? [] : [...stringArrayOf(record.completedWorkItemIds)].sort((left, right) => left.localeCompare(right));
+  const remainingWorkItemIds = record === null ? [] : stringArrayOf(record.remainingWorkItemIds);
+  // The completed ledger is consumable exactly when the current build can
+  // read the checkpoint document and the campaign identity still matches. A
+  // schema or identity mismatch means the ledger cannot be trusted under the
+  // new contract, so the campaign is terminal rather than pending forever.
+  const checkpointReadable = record !== null
+    && record.schemaVersion === CAMPAIGN_CHECKPOINT_VERSION
+    && record.campaignId === manifest.campaignId
+    && record.manifestFingerprint === manifest.manifestFingerprint;
+  const restartReason = checkpointReadable
+    ? 'the checkpoint document is current and identity-bound; a restart can consume the completed ledger'
+    : 'the checkpoint document cannot be read under the current contract; the completed ledger is not consumable and the campaign is terminal';
+  return {
+    campaignIdentity,
+    differingVersions: differing,
+    completedWorkItems,
+    completedWorkItemCount: completedWorkItems.length,
+    remainingWorkItemCount: remainingWorkItemIds.length,
+    restartConsumable: checkpointReadable,
+    restartReason,
+    terminal: !checkpointReadable,
+  };
 }
 
 /**
@@ -642,8 +780,9 @@ export function evaluateResumeCompatibility(input: {
   const checkpointDrift = classifyCheckpointResumeDrift(input.checkpoint, input.manifest);
   const driftedFingerprintSlots = input.currentVersions === undefined ? null : classifyVersionFingerprintDrift(input.currentVersions, input.manifest.versions);
   const fingerprintDrifted = driftedFingerprintSlots !== null && driftedFingerprintSlots.length > 0;
+  const explanation = explanationFor(input.checkpoint, input.manifest, input.currentVersions);
   if (checkpointDrift.compatible && !fingerprintDrifted) {
-    return { compatible: true, kind: 'NONE', code: null, checkpointDrift: null, driftedFingerprintSlots, refusedBeforeExecutorCallback: false };
+    return { compatible: true, kind: 'NONE', code: null, checkpointDrift: null, driftedFingerprintSlots, refusedBeforeExecutorCallback: false, explanation };
   }
   return {
     compatible: false,
@@ -652,7 +791,59 @@ export function evaluateResumeCompatibility(input: {
     checkpointDrift: checkpointDrift.compatible ? null : checkpointDrift,
     driftedFingerprintSlots,
     refusedBeforeExecutorCallback: true,
+    explanation,
   };
+}
+
+/**
+ * Build the terminal record for a refused resume whose ledger is not
+ * consumable. The caller writes it with the no-replace store, so a campaign
+ * cannot be re-terminalized under a different reason.
+ */
+export function buildCampaignResumeTerminalRecord(
+  explanation: CheckpointResumeExplanation,
+  recordedAt: string,
+): CampaignResumeTerminalRecord {
+  if (explanation.campaignIdentity === null || explanation.campaignIdentity === '') {
+    throw new Error('CAMPAIGN_RESUME_TERMINAL_IDENTITY_MISSING');
+  }
+  return {
+    schemaVersion: CAMPAIGN_RESUME_TERMINAL_VERSION,
+    campaignId: explanation.campaignIdentity,
+    reason: explanation.restartReason,
+    differingVersions: explanation.differingVersions,
+    completedWorkItems: explanation.completedWorkItems,
+    completedWorkItemCount: explanation.completedWorkItemCount,
+    restartConsumable: false,
+    recordedAt,
+  };
+}
+
+const RESUME_TERMINAL_KEYS = ['schemaVersion', 'campaignId', 'reason', 'differingVersions', 'completedWorkItems', 'completedWorkItemCount', 'restartConsumable', 'recordedAt'] as const;
+
+export function validateCampaignResumeTerminalRecord(value: unknown): CampaignResumeTerminalRecord {
+  const record = requireRuntimeRecord(value, 'CAMPAIGN_RESUME_TERMINAL');
+  assertExactKeys(record, RESUME_TERMINAL_KEYS, 'CAMPAIGN_RESUME_TERMINAL');
+  if (record.schemaVersion !== CAMPAIGN_RESUME_TERMINAL_VERSION) checkpointIntegrity('RESUME_TERMINAL_SCHEMA_INVALID');
+  assertString(record.campaignId, 'CAMPAIGN_RESUME_TERMINAL_ID');
+  assertString(record.reason, 'CAMPAIGN_RESUME_TERMINAL_REASON');
+  assertBoolean(record.restartConsumable, 'CAMPAIGN_RESUME_TERMINAL_CONSUMABLE');
+  if (record.restartConsumable !== false) checkpointIntegrity('RESUME_TERMINAL_CLAIMS_CONSUMABLE');
+  assertIsoTimestamp(record.recordedAt, 'CAMPAIGN_RESUME_TERMINAL_RECORDED_AT');
+  const differing = requireRuntimeArray(record.differingVersions, 'CAMPAIGN_RESUME_TERMINAL_DIFFERING');
+  for (const entry of differing) {
+    const item = requireRuntimeRecord(entry, 'CAMPAIGN_RESUME_TERMINAL_DIFFERING_ENTRY');
+    assertExactKeys(item, ['component', 'found', 'expected'], 'CAMPAIGN_RESUME_TERMINAL_DIFFERING_ENTRY');
+    assertString(item.component, 'CAMPAIGN_RESUME_TERMINAL_DIFFERING_COMPONENT');
+    if (item.found !== null) assertString(item.found, 'CAMPAIGN_RESUME_TERMINAL_DIFFERING_FOUND');
+    if (item.expected !== null) assertString(item.expected, 'CAMPAIGN_RESUME_TERMINAL_DIFFERING_EXPECTED');
+  }
+  const completed = requireRuntimeArray(record.completedWorkItems, 'CAMPAIGN_RESUME_TERMINAL_COMPLETED');
+  assertUniqueStrings(completed, 'CAMPAIGN_RESUME_TERMINAL_COMPLETED');
+  for (const id of completed) assertString(id, 'CAMPAIGN_RESUME_TERMINAL_COMPLETED_ID');
+  assertNonNegativeInteger(record.completedWorkItemCount, 'CAMPAIGN_RESUME_TERMINAL_COMPLETED_COUNT');
+  if (record.completedWorkItemCount !== completed.length) checkpointIntegrity('RESUME_TERMINAL_COMPLETED_COUNT_MISMATCH');
+  return record as unknown as CampaignResumeTerminalRecord;
 }
 
 export function validateCampaignCheckpoint(value: CampaignCheckpoint | unknown, manifest: CampaignManifest): asserts value is CampaignCheckpoint {
@@ -800,5 +991,82 @@ export class CampaignCheckpointStore {
       manifest: path.join(this.store.root, `${stem}.manifest.json`),
       checkpoint: path.join(this.store.root, `${stem}.checkpoint.json`),
     };
+  }
+
+  /**
+   * The raw persisted checkpoint document, or null when absent/unreadable.
+   * Used only to explain a refused resume; it is never treated as validated
+   * state and nothing downstream consumes it as such.
+   */
+  readRawCheckpoint(campaignId: string): unknown | null {
+    try {
+      return readWrapper<unknown>(path.join(this.store.root, `${fileStem(campaignId)}.checkpoint.json`), 'checkpoint');
+    } catch {
+      return null;
+    }
+  }
+
+  terminalPath(campaignId: string): string {
+    return path.join(this.store.root, `${fileStem(campaignId)}.resume-terminal.json`);
+  }
+
+  /** The recorded terminal-resume marker, or null when none exists. */
+  readResumeTerminal(campaignId: string): CampaignResumeTerminalRecord | null {
+    const file = `${fileStem(campaignId)}.resume-terminal.json`;
+    let raw: unknown;
+    try {
+      raw = this.store.readJson(file);
+    } catch {
+      return null;
+    }
+    if (raw === null) return null;
+    const wrapper = raw as Record<string, unknown>;
+    return validateCampaignResumeTerminalRecord(wrapper.resumeTerminal);
+  }
+
+  /**
+   * Record that a refused resume is terminal. Written with the no-replace
+   * primitive, so a campaign is terminalized at most once and the reason
+   * cannot be rewritten later.
+   */
+  writeResumeTerminal(campaignId: string, record: CampaignResumeTerminalRecord): CampaignResumeTerminalRecord {
+    validateCampaignResumeTerminalRecord(record);
+    const file = `${fileStem(campaignId)}.resume-terminal.json`;
+    try {
+      this.store.writeImmutableJson(file, { resumeTerminal: record });
+    } catch (error) {
+      if ((error as Error).message.includes('PRIVATE_ARTIFACT_IMMUTABLE')) {
+        const existing = this.readResumeTerminal(campaignId);
+        if (existing !== null) return existing;
+      }
+      throw error;
+    }
+    return record;
+  }
+}
+
+/**
+ * A refused resume that explains itself. `explanation` names the differing
+ * versions, the completed work items and whether a restart can consume the
+ * ledger; `cause` preserves the strict validator's message.
+ */
+export class CampaignResumeRefusedError extends Error {
+  readonly explanation: CheckpointResumeExplanation;
+  constructor(explanation: CheckpointResumeExplanation, cause?: unknown) {
+    super(`CAMPAIGN_VERSION_DRIFT:${explanation.restartReason}${cause === undefined ? '' : `:${(cause as Error).message}`}`);
+    this.name = 'CampaignResumeRefusedError';
+    this.explanation = explanation;
+  }
+}
+
+/** A refused resume whose ledger cannot be consumed under the new contract. */
+export class CampaignResumeTerminalError extends Error {
+  readonly terminal: CampaignResumeTerminalRecord;
+  readonly explanation: CheckpointResumeExplanation | null;
+  constructor(terminal: CampaignResumeTerminalRecord, explanation: CheckpointResumeExplanation | null = null, cause?: unknown) {
+    super(`CAMPAIGN_RESUME_TERMINAL:${terminal.campaignId}:${terminal.reason}${cause === undefined ? '' : `:${(cause as Error).message}`}`);
+    this.name = 'CampaignResumeTerminalError';
+    this.terminal = terminal;
+    this.explanation = explanation;
   }
 }

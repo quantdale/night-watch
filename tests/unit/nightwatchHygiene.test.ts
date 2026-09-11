@@ -3,6 +3,12 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { expect, test } from '@playwright/test';
+import {
+  PLAYWRIGHT_OUTPUT_ROOT,
+  SCRATCH_ROOT,
+  resolvePlaywrightOutputDir,
+  resolveScratchPath,
+} from '../../src/core/workspace/ephemeralLayout';
 
 const ROOT = path.resolve(__dirname, '../..');
 const CLI = path.join(ROOT, 'bin/nightwatch-hygiene.mjs');
@@ -26,6 +32,38 @@ function createRepo(): string {
   git(root, ['add', 'fixture.txt']);
   git(root, ['commit', '-m', 'synthetic base']);
   return root;
+}
+
+/** A repository with the real ignore policy for runner output and scratch. */
+function createRepoWithIgnoredOutputs(): string {
+  const root = createRepo();
+  fs.writeFileSync(path.join(root, '.gitignore'), [
+    'artifacts/',
+    '.nightwatch/',
+    'test-results/',
+    'test-results-*/',
+    '.tmp-*/',
+    '',
+  ].join('\n'));
+  git(root, ['add', '.gitignore']);
+  git(root, ['commit', '-m', 'synthetic output ignore policy']);
+  return root;
+}
+
+/** The exact fixture used by both the dry-run and the apply output tests. */
+function seedOutputRoots(root: string): void {
+  for (const name of ['test-results', 'test-results-20260809', '.tmp-narrow-test', '.tmp-nightwatch']) {
+    fs.mkdirSync(path.join(root, name), { recursive: true });
+    fs.writeFileSync(path.join(root, name, 'run.json'), '{}\n');
+  }
+  fs.mkdirSync(path.join(root, 'artifacts'), { recursive: true });
+  fs.writeFileSync(path.join(root, 'artifacts', 'evidence.json'), '{}\n');
+  fs.mkdirSync(path.join(root, '.nightwatch', 'findings'), { recursive: true });
+  fs.writeFileSync(path.join(root, '.nightwatch', 'findings', 'f1.json'), '{}\n');
+  fs.mkdirSync(path.join(root, 'test-results-tracked'), { recursive: true });
+  fs.writeFileSync(path.join(root, 'test-results-tracked', 'keep.txt'), 'tracked\n');
+  git(root, ['add', '-f', 'test-results-tracked/keep.txt']);
+  git(root, ['commit', '-m', 'synthetic tracked output']);
 }
 
 function addWorktree(root: string, branch: string, name: string): string {
@@ -78,7 +116,7 @@ test.describe('local workspace hygiene', () => {
       const result = runHygiene(root, ['clean']);
       expect(result.status).toBe(0);
       expect(result.report.mode).toBe('DRY_RUN');
-      expect(result.report.result).toBe('SAFE_TARGETS_FOUND');
+      expect(result.report.result).toBe('REMOVAL_TARGETS_FOUND');
       expect(result.report.safeTargets).toEqual([{ path: worktree, branch: 'swarm2/dry-run' }]);
       expect(fs.existsSync(worktree)).toBe(true);
       expect(git(root, ['show-ref', '--verify', 'refs/heads/swarm2/dry-run']).status).toBe(0);
@@ -163,5 +201,119 @@ test.describe('local workspace hygiene', () => {
     expect(source).not.toMatch(/\['(?:fetch|pull|push|clone)'/);
     expect(source).toContain("['worktree', 'remove', match.path]");
     expect(source).toContain("['branch', '-d', '--', match.branch]");
+    // The owner-only finding and review stores live outside the repository and
+    // are never read, and the protected in-repo roots are excluded by name.
+    expect(source).not.toMatch(/homedir|\.nightwatch\/findings|\.nightwatch\/reviews/);
+    expect(source).toContain("const PROTECTED_ROOT_NAMES = new Set(['artifacts', '.nightwatch', 'node_modules', '.git', 'dist'])");
+    expect(source).toContain("const OUTPUT_ROOT_PATTERN = /^(?:test-results(?:-[A-Za-z0-9._-]+)?|\\.tmp-[A-Za-z0-9._-]+)$/");
+    expect(source).toContain("trackedPathsUnder");
+  });
+
+  test('clean dry-run lists exactly the removable runner-output and scratch roots', () => {
+    const root = createRepoWithIgnoredOutputs();
+    try {
+      seedOutputRoots(root);
+      const result = runHygiene(root, ['clean']);
+      expect(result.status).toBe(0);
+      expect(result.report.mode).toBe('DRY_RUN');
+      expect(result.report.result).toBe('REMOVAL_TARGETS_FOUND');
+      expect([...result.report.outputRemovalPlan].sort()).toEqual([
+        '.tmp-narrow-test',
+        '.tmp-nightwatch',
+        'test-results',
+        'test-results-20260809',
+      ]);
+      expect(result.report.outputRemovalTargets).toEqual(expect.arrayContaining([
+        expect.objectContaining({ name: 'test-results-tracked', disposition: 'REFUSED_TRACKED_FILES_PRESENT', trackedFileCount: 1 }),
+        expect.objectContaining({ name: 'test-results', owned: true, disposition: 'REMOVAL_TARGET' }),
+        expect.objectContaining({ name: '.tmp-nightwatch', owned: true, disposition: 'REMOVAL_TARGET' }),
+      ]));
+      expect([...result.report.unownedOutputRoots].sort()).toEqual([
+        '.tmp-narrow-test',
+        'test-results-20260809',
+        'test-results-tracked',
+      ]);
+      // The dry run lists exactly what it would remove and removes nothing.
+      for (const name of result.report.outputRemovalPlan) expect(fs.existsSync(path.join(root, name))).toBe(true);
+      expect(fs.existsSync(path.join(root, 'artifacts', 'evidence.json'))).toBe(true);
+      expect(fs.existsSync(path.join(root, '.nightwatch', 'findings', 'f1.json'))).toBe(true);
+    } finally {
+      cleanup(root);
+    }
+  });
+
+  test('clean apply removes runner output and scratch but never artifacts, the owner store or a tracked file', () => {
+    const root = createRepoWithIgnoredOutputs();
+    try {
+      seedOutputRoots(root);
+      const before = git(root, ['status', '--porcelain=v1']).stdout;
+      const dry = runHygiene(root, ['clean']);
+      const plan: string[] = [...dry.report.outputRemovalPlan].sort();
+      const result = runHygiene(root, ['clean', '--apply']);
+      expect(result.status).toBe(0);
+      expect(result.report.mode).toBe('APPLY');
+      expect(result.report.result).toBe('APPLIED');
+      expect(result.report.outputRemovalResults.filter((entry: any) => entry.result === 'REMOVED').map((entry: any) => entry.name).sort()).toEqual(plan);
+      for (const name of plan) expect(fs.existsSync(path.join(root, name))).toBe(false);
+      expect(fs.existsSync(path.join(root, 'test-results-tracked', 'keep.txt'))).toBe(true);
+      expect(fs.existsSync(path.join(root, 'artifacts', 'evidence.json'))).toBe(true);
+      expect(fs.existsSync(path.join(root, '.nightwatch', 'findings', 'f1.json'))).toBe(true);
+      // The tracked file is still tracked, and the working tree reports the
+      // same porcelain state: removal touched no tracked path.
+      expect(git(root, ['ls-files']).stdout).toContain('test-results-tracked/keep.txt');
+      expect(git(root, ['status', '--porcelain=v1']).stdout).toBe(before);
+    } finally {
+      cleanup(root);
+    }
+  });
+
+  test('status reports unowned root output and scratch roots as measured data', () => {
+    const root = createRepoWithIgnoredOutputs();
+    try {
+      fs.mkdirSync(path.join(root, 'test-results-20260809'), { recursive: true });
+      fs.mkdirSync(path.join(root, '.tmp-narrow-test'), { recursive: true });
+      const result = runHygiene(root, ['status']);
+      expect(result.status).toBe(0);
+      expect(result.report.outputStatus).toBe('OBSERVED');
+      expect([...result.report.unownedOutputRoots].sort()).toEqual(['.tmp-narrow-test', 'test-results-20260809']);
+      expect(result.report.outputRemovalPlan).toEqual(['.tmp-narrow-test', 'test-results-20260809']);
+    } finally {
+      cleanup(root);
+    }
+  });
+
+  test.describe('playwright output layout', () => {
+    const CONFIG_PATTERN = /^playwright(?:\.[A-Za-z0-9_-]+)?\.config\.ts$/;
+
+    test('every root playwright config resolves output through the one shared root', () => {
+      const configs = fs.readdirSync(ROOT).filter((name) => CONFIG_PATTERN.test(name)).sort();
+      expect(configs).toContain('playwright.config.ts');
+      expect(configs.length).toBeGreaterThanOrEqual(11);
+      const lanes = new Set<string>();
+      for (const name of configs) {
+        const source = fs.readFileSync(path.join(ROOT, name), 'utf8');
+        expect(source, name).toContain("from './src/core/workspace/ephemeralLayout'");
+        const match = /outputDir: resolvePlaywrightOutputDir\('([a-z0-9-]+)'\)/.exec(source);
+        expect(match, `${name} must resolve output through the shared root`).not.toBeNull();
+        lanes.add(match?.[1] ?? '');
+        // No config may name its own output root or scratch location.
+        expect(source, name).not.toMatch(/outputDir:\s*['"`]/);
+        expect(source, name).not.toMatch(/['"`]test-results-/);
+        expect(source, name).not.toMatch(/['"`]\.tmp-/);
+      }
+      expect(lanes.size).toBe(configs.length);
+      expect(resolvePlaywrightOutputDir('core')).toBe(`${PLAYWRIGHT_OUTPUT_ROOT}/core`);
+    });
+
+    test('scratch resolves under the one ignored root and cannot escape it', () => {
+      expect(resolveScratchPath('test', 'evidence')).toBe(`${SCRATCH_ROOT}/test/evidence`);
+      expect(() => resolveScratchPath()).toThrow('EPHEMERAL_LAYOUT_SEGMENT_MISSING');
+      expect(() => resolveScratchPath('..')).toThrow('EPHEMERAL_LAYOUT_SEGMENT_INVALID');
+      expect(() => resolveScratchPath('/absolute')).toThrow('EPHEMERAL_LAYOUT_SEGMENT_INVALID');
+      expect(() => resolvePlaywrightOutputDir('../escape')).toThrow('EPHEMERAL_LAYOUT_LANE_INVALID');
+      const ignored = fs.readFileSync(path.join(ROOT, '.gitignore'), 'utf8');
+      expect(ignored).toContain('test-results/');
+      expect(ignored).toContain('.tmp-*/');
+    });
   });
 });

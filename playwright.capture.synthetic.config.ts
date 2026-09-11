@@ -5,9 +5,11 @@
 
 import { defineConfig } from '@playwright/test';
 import baseConfig from './playwright.config';
+import { resolvePlaywrightOutputDir } from './src/core/workspace/ephemeralLayout';
 
 export default defineConfig({
   ...baseConfig,
+  outputDir: resolvePlaywrightOutputDir('capture-synthetic'),
   testMatch: ['**/tests/manual/auth-capture.synthetic.ts'],
   testIgnore: ['**/fixtures/**', '**/node_modules/**', '**/dist/**', '**/artifacts/**', '**/test-results/**', '**/.tmp-*/**'],
 });

@@ -343,7 +343,7 @@ test.describe('lane D separated budget dimensions', () => {
           (budget['policy'] as Record<string, unknown>)['schemaVersion'] = 'nightwatch.agent-budget.v99';
         }),
       ),
-    ).toThrow(/AGENT_CHECKPOINT_CORRUPT/);
+    ).toThrow(/AGENT_CHECKPOINT_VERSION_UNSUPPORTED: state.budget.policy has an unsupported schema version: nightwatch.agent-budget.v99/);
     // A v1 schema with an underivable tier cannot migrate honestly either.
     expect(() =>
       parseCheckpoint(

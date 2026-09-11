@@ -153,7 +153,7 @@ const MUTATIONS = [
     id: 'B-14',
     title: 'ignore an unknown store schema version',
     file: 'src/core/reviewStore/store.ts',
-    from: '  if (record.schemaVersion !== REVIEW_STORE_SCHEMA_VERSION) {\n    corrupt(\'REVIEW_STORE_VERSION_UNSUPPORTED\', String(record.schemaVersion));\n  }',
+    from: '  if (record.schemaVersion !== REVIEW_STORE_SCHEMA_VERSION) {\n    throw new ReviewStoreVersionUnsupportedError(\'schemaVersion\', String(record.schemaVersion));\n  }',
     to: '  void record.schemaVersion;',
     suites: STORE_SUITES,
   },

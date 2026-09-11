@@ -4661,3 +4661,64 @@ retried away is worse than no bound at all. It is a deterministic assertion
 that a forty-row page costs exactly ONE directory read, with a control proving
 the same page costs eight without the listing so the assertion cannot pass
 vacuously.
+
+## D-126 — ORPHAN is a recorded owner decision, never a default reached by omission
+
+Every persisted schema version a build no longer reads must carry exactly one
+disposition: `MIGRATE`, `READ_COMPATIBLE` or `ORPHAN`. `ORPHAN` is the only one
+that destroys the owner's ability to read accumulated state, so it is never
+chosen by leaving the disposition out. The structural rule in
+`src/core/schemaLifecycle/` fails when a persisted non-current version has no
+disposition (`SCHEMA_DISPOSITION_MISSING`), and it fails an `ORPHAN`
+disposition whose `decisionRef` does not resolve to a `## D-<n>` heading in
+this file (`SCHEMA_ORPHAN_DECISION_MISSING`). A change that wants to orphan
+owner state therefore has to say so here first, with the reason, and the
+declaration points at this record.
+
+The declaration registry is data (`src/core/schemaLifecycle/declarations.ts`),
+the dispositions are proved per kind (a registered migration for `MIGRATE`, a
+real reader run against a fixture for `READ_COMPATIBLE`, this document for
+`ORPHAN`), and the scanner asserts a non-zero discovered count so a scanner
+that stops matching fails loudly instead of certifying an empty repository.
+
+## D-127 — OPEN OWNER DECISION: the presumed default disposition for a persisted schema bump (17.4)
+
+No default disposition is presumed by this implementation, and the structural
+rule does not supply one. Every persisted version change must declare its own
+disposition; the check fails on omission rather than filling in a default. The
+owner decision that remains open is whether one of the three becomes the
+presumed default for a persisted bump, with these options and consequences:
+
+- `MIGRATE` as the presumed default. Highest owner-state preservation and the
+  highest authoring cost: every persisted bump owes a deterministic transform
+  and its proof, so small shape changes stop being cheap.
+- `READ_COMPATIBLE` as the presumed default. Cheapest when it is true, but it
+  cannot be presumed for a shape change; presuming it would push authors to
+  keep unreadable old shapes alive with compatibility shims.
+- `ORPHAN` as the presumed default (today's de facto behaviour). Cheapest to
+  author and keeps destroying owner state; D-126 makes it explicit, which
+  raises the visibility but not the cost.
+- No presumed default (the current state). Every bump declares its own
+  disposition, and omission is a hard failure. This is the status quo of this
+  change and remains in force until the owner decides otherwise.
+
+Recorded as an open decision, not as a default: neither the checker, the
+declaration registry nor this entry presumes an answer.
+
+## D-128 — persisted readers report VERSION_UNSUPPORTED distinctly from CORRUPT
+
+An intact record at a version this build does not read is a migration to run;
+damaged bytes are a defect to report. Folding them into one `CORRUPT` state
+lost the operator's distinguishing signal, exactly as absent is distinguished
+from failed elsewhere in this project. The review store now reports
+`VERSION_UNSUPPORTED` with the found version and the affected record count,
+separate from `corruption`, and the Control Center reviewer surface renders
+that distinction (a record predating the current schema is named as a
+migration, never presented as a defect). Genuine corruption still outranks the
+migration notice in the aggregate state when both are present, so a defect is
+never hidden by an old record sitting beside it.
+
+The review store is the first persisted reader to make the split; the
+`VERSION_UNSUPPORTED` vocabulary, the found-version/affected-count fields and
+the reviewer rendering are the shape other persisted readers adopt as they are
+touched.

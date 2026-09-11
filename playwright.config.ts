@@ -1,6 +1,7 @@
 import { defineConfig } from '@playwright/test';
 import { proxyServerUrl } from './src/proxy/server';
 import { nightwatchChromiumLaunchOptions } from './src/browser/contract';
+import { resolvePlaywrightOutputDir } from './src/core/workspace/ephemeralLayout';
 
 // ---------------------------------------------------------------------------
 // Nightwatch Playwright configuration (Phase 0/1/1.1/1.2).
@@ -21,13 +22,13 @@ process.env.NIGHTWATCH_ENV ??= 'local';
 export default defineConfig({
   testDir: '.',
   testMatch: ['**/tests/**/*.{test,smoke}.ts', '**/scenarios/**/*.smoke.ts'],
-  testIgnore: ['**/fixtures/**', '**/node_modules/**', '**/dist/**', '**/artifacts/**', '**/.tmp-*/**'],
+  testIgnore: ['**/fixtures/**', '**/node_modules/**', '**/dist/**', '**/artifacts/**', '**/test-results/**', '**/.tmp-*/**'],
   fullyParallel: false,
   workers: 1,
   timeout: 120_000,
   expect: { timeout: 10_000 },
   reporter: [['list']],
-  outputDir: 'test-results',
+  outputDir: resolvePlaywrightOutputDir('core'),
   globalSetup: './tests/globalSetup.ts',
   projects: [
     {

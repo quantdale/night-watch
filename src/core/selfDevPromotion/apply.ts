@@ -13,7 +13,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { randomBytes } from 'node:crypto';
 import { assertOwnerPolicyAllows } from '../policy/ownerScope';
-import { assertRepositoryFullyClean, currentCheckoutState, readWorkingTreeStatus } from '../provenance/localGit';
+import { assertRepositoryFullyClean, currentCheckoutState, readWorkingTreeStatus } from '../provenance';
 import { sha256Hex } from '../selfDev/canonical';
 import { SELFDEV_ADOPTED_CATALOG_TARGET_PATH, type SelfDevAdoptedCase } from '../selfDev/adoptedCases';
 import { loadSandboxModules } from '../selfDevSandbox/sandboxLoader';

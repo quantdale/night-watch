@@ -60,6 +60,7 @@ import {
   phase10bFreshnessBlockToken,
   PHASE_10B_DEEP_TYPE_CONTRACT,
 } from '../../src/core/phase10b/deepAcceptance';
+import { evaluateContainedDevDeepAcceptance } from '../../src/core/semanticAcceptance';
 import {
   createPhase10FixtureState,
   derivePhase10FixtureExpectations,
@@ -155,6 +156,7 @@ function passSummary(overrides: Partial<Phase9bSemanticSummary>): Phase9bSemanti
     findingCount: 0,
     findingFingerprints: [],
     findingCategories: [],
+    evidenceAcceptanceClasses: ['LOCAL_SYNTHETIC'],
     invariantTotal: 4,
     invariantPassCount: 4,
     invariantNaCount: 0,
@@ -561,5 +563,23 @@ test.describe('Phase 10B — observer seam and runner gate', () => {
       await context.close();
       await server.close();
     }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Group 11 (F-10) — the deep gate separates local synthetic from DEV.
+// ---------------------------------------------------------------------------
+
+test.describe('Group 11 — contained DEV deep acceptance', () => {
+  test('a local synthetic deep pass never satisfies the DEV deep acceptance assertion', () => {
+    const expected = deepExpectationArg();
+    // The raw deep mechanics gate passes over the synthetic fixture ...
+    expect(evaluatePhase10bDeepAcceptance(passSummary({}), expected).pass).toBe(true);
+    // ... and the DEV deep assertion refuses it by construction.
+    const dev = evaluateContainedDevDeepAcceptance(passSummary({}), expected);
+    expect(dev.pass).toBe(false);
+    expect(dev.failures.join(' ')).toContain('SEMANTIC_ACCEPTANCE_LOCAL_SYNTHETIC_NEVER_SATISFIES_DEV');
+    // CONTAINED_DEV evidence is the only class it accepts.
+    expect(evaluateContainedDevDeepAcceptance(passSummary({ evidenceAcceptanceClasses: ['CONTAINED_DEV'] }), expected).pass).toBe(true);
   });
 });

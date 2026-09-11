@@ -6,7 +6,7 @@
 // verified promotion" after the development session has committed it.
 // ---------------------------------------------------------------------------
 
-import { changedFilesBetweenCommits, type LocalCheckoutState } from '../provenance/localGit';
+import { changedFilesBetweenCommits, type LocalCheckoutState } from '../provenance';
 import { SELFDEV_AUTHORITATIVE_PATHS } from '../selfDev/provenanceManifest';
 import type { SelfDevCanonicalPromotionCurrentness, SelfDevCanonicalPromotionVerification } from './types';
 

@@ -470,24 +470,121 @@ outside this session). Integration and release are not performed here.
 
 ## 11. Contained DEV semantic acceptance
 
-- [ ] 11.1 Make the semantic layer report its acceptance class as data
+- [x] 11.1 Make the semantic layer report its acceptance class as data
       (`COMPLETE_LOCAL_SYNTHETIC`, DEV result `NOT_PROVEN`, blocker) and render
       it wherever the capability is presented
-- [ ] 11.2 Assert a local synthetic pass never satisfies a DEV acceptance
+- [x] 11.2 Assert a local synthetic pass never satisfies a DEV acceptance
       assertion
 - [ ] 11.3 **Owner decision required:** unblock Phase 9B/10B, or close it
-      permanently with a reason
+      permanently with a reason — PENDING OWNER DECISION, not decided: both
+      paths and their consequences are recorded as data with their own
+      completeness checks; no auth artefact is claimed and no terminal closure
+      is taken
 - [ ] 11.4 If unblocking: record the auth artefact, authorization class,
       containment envelope, bounded approved target set, acceptance criteria
       and expected evidence; a path missing any of these fails its own check
-- [ ] 11.5 Preserve the pre-browser auth gate and `PARTIAL_AUTH_BLOCKED`;
+      — APPLIES ONLY AFTER the 11.3 unblock decision; the complete prospective
+      unblock record exists and `validateUnblockPathRecord` fails any missing
+      artefact
+- [x] 11.5 Preserve the pre-browser auth gate and `PARTIAL_AUTH_BLOCKED`;
       acceptance runs after the gate, never around it
 - [ ] 11.6 If closing: record the phase terminal with its reason and make the
-      acceptance class permanently synthetic-only
-- [ ] 11.7 Assert the Phase 9A.1 admission route stays the only route: a DEV
+      acceptance class permanently synthetic-only — APPLIES ONLY AFTER the
+      11.3 closure decision; the closure record and
+      `validatePermanentClosurePathRecord` exist and the class stays
+      `COMPLETE_LOCAL_SYNTHETIC` until a decision is recorded
+- [x] 11.7 Assert the Phase 9A.1 admission route stays the only route: a DEV
       observation cannot create an expectation; a relabel fails with
       `REAL_SOURCE_EXPECTATION_PROOF_MISSING`
 - [ ] 11.8 Full validation, integrate, release
+      — PARTIAL/BLOCKED: root `typecheck`, `hardening:check`,
+      `validation:universe` (digest unchanged) and the focused semantic suites
+      executed and PASS (results in the group record). Integration cannot
+      complete while the canonical checkout is externally dirty
+      (`WORKSPACE_CANONICAL_DIRTY_WHILE_SESSION_LIVE`, external planning
+      artifact) and the session work is uncommitted by design; integration and
+      release are the session owner's action and were not performed here
+
+### Group 11 record — executed 2026-09-12 in session `nightwatch-production-completion-3d648499`
+
+11.1. `config/semantic-acceptance-class.v1.json`
+(`nightwatch.semantic-acceptance-class.v1`) is the single data source:
+`acceptanceClass: COMPLETE_LOCAL_SYNTHETIC`, `devResult: NOT_PROVEN`, `blocker:
+PHASE_9B_BLOCKED_HUMAN_AUTH_ACTION_REQUIRED` (since 2026-08-16), `syntheticOnly:
+true`, plus the pending owner decision. `src/core/semanticAcceptance/` validates
+it fail-closed at load (`SEMANTIC_ACCEPTANCE_CLASS_INVALID`), freezes it,
+renders it (`renderSemanticAcceptanceClass`) and checks each presentation
+surface (`checkSemanticAcceptanceSurface`: a surface that presents the
+capability must carry the class, the DEV result and the blocker). Rendered in:
+`README.md` (governed status block, blocker tag added),
+`docs/ARCHITECTURE.md` (appended acceptance-status section),
+`bin/semantic-compat.mjs` (`--validate` and full receipt both carry
+`semanticAcceptance`), and the Control Center meta module output
+(`ControlCenterMetaDto.semanticAcceptance`, filled by `projectMeta()`). The
+Control Center `App.tsx` render is intentionally not edited (another owner per
+group 19.11); the server contract is the UI's render input.
+
+11.2. Receipts carry the evidence class (`SemanticEvidenceAcceptanceClass`,
+builder default `LOCAL_SYNTHETIC`; v2-only, v1 receipts never carry it);
+`summarizePhase9bPass` derives `evidenceAcceptanceClasses`; the DEV assertions
+`evaluateContainedDevAcceptance` / `evaluateContainedDevDeepAcceptance` require
+exactly `['CONTAINED_DEV']` in addition to the raw gate, failing with
+`SEMANTIC_ACCEPTANCE_LOCAL_SYNTHETIC_NEVER_SATISFIES_DEV`. The Phase 9B/10B
+runners mark their contexts `semanticAcceptanceClass: 'CONTAINED_DEV'` and use
+the DEV assertions. Probes: synthetic raw gate PASS + DEV assertion FAIL,
+CONTAINED_DEV PASS, deep variant likewise.
+
+11.3. Owner decision left open. The data records both paths with consequences:
+UNBLOCK (one-shot owner authorization, external `auth:capture` artefact, L6/
+browser-harness containment, bounded read-only canary target, Phase 9B/10B
+criteria, receipt/summary evidence) and PERMANENT CLOSURE (terminal status with
+a required reason, `CLOSED_SYNTHETIC_ONLY`). `validateUnblockPathRecord` fails
+on any missing artefact; `validatePermanentClosurePathRecord` fails a closure
+without a reason. No decision, authorization or terminal state is claimed.
+
+11.5. The pre-browser gate is unchanged and asserted by stage: the runner calls
+`assertAuthCapabilityPreflight` before `observeOnce`, `observeOnce` refuses
+with `PHASE_9B_BLOCKED_HUMAN_AUTH_ACTION_REQUIRED` before `runRealRunGate` and
+`createNightwatchContext`, and `assertAcceptanceRunsAfterAuthGate` refuses an
+acceptance request that skipped the gate
+(`SEMANTIC_ACCEPTANCE_AUTH_GATE_BYPASSED`). `PARTIAL_AUTH_BLOCKED` remains the
+campaign auth-refusal class; `SEMANTIC_ACCEPTANCE_AUTH_REFUSAL_RESULT_CLASS`
+pins it.
+
+11.7. `assertRealSourceExpectationProof` refuses an expectation without a
+real-source derivation version and a well-formed `ev:sha256` digest
+(`REAL_SOURCE_EXPECTATION_PROOF_MISSING`); both DEV runners invoke it when
+building the oracle. `assertNoExpectationCreatedFromObservation` fails closed
+when the admitted set changes across an observation. Probes: a relabelled
+synthetic expectation fails with the exact code; a `NO_EXPECTATION` observation
+is non-PASS, carries no expectation id, and creates nothing.
+
+11.8. Executed in the session worktree: `npm run typecheck` PASS;
+`node bin/hardening-check.mjs` PASS (`offline structural invariants hold`);
+`npm run validation:universe` PASS (discovered=447, unclassified=0,
+digest `sha256:e04d813efa7aa0bbbb1fa219` unchanged; no new discovered files, so
+no `config/validation-universe.v1.json` registration was needed); focused
+suites PASS — `semanticReceipt` + `phase9bHarness` + `realSourceAdmission` 55
+passed, `phase10bHarness` 25 passed, plus
+`phase11a1ReceiptCloseout`/`phase11a2`/`phase11a3`/`phase15pArtifactValidation`/
+`phase15pSchemaCoherence`/`observerSemanticLedger`/`semanticIntegration` 158
+passed and `controlCenterAdapters`/`controlCenterServer`/`nw09ShippedReviewCapability`/
+`cliImplementationContract`/`phase23QualityGate`/`syntheticCampaignDiagnostics`
+89 passed. `bin/semantic-compat.mjs --validate` emits
+`acceptanceClass=COMPLETE_LOCAL_SYNTHETIC, devResult=NOT_PROVEN,
+blocker=PHASE_9B_BLOCKED_HUMAN_AUTH_ACTION_REQUIRED`.
+
+Two full-regression failures were observed and are NOT group 11:
+`campaign.test.ts:1598` and `phase15pAdversarialCorpus.test.ts:2612`
+(CHECKPOINT_DRIFT) both fail on the resume-compatibility/version-drift wrapping
+in `src/core/campaign/checkpoint.ts` (the `restartReason` message added there
+during this session by a concurrent writer — mtime 04:50:48 — while group 11
+edited only semantic surfaces); the failing assertions name campaign checkpoint
+internals untouched by group 11. Integration/release are not performed: the
+canonical checkout is externally dirty
+(`WORKSPACE_CANONICAL_DIRTY_WHILE_SESSION_LIVE`) and integration is the session
+owner's action.
+
 
 ## 12. Autonomous yield proof
 
@@ -654,16 +751,16 @@ externally dirty, and integration/release are the session owner's action.
 
 ## 14. Dead architecture closure
 
-- [ ] 14.1 Build the reference graph over `src`, `tests`, `bin`, `ui` and
+- [x] 14.1 Build the reference graph over `src`, `tests`, `bin`, `ui` and
       `scenarios`, resolving static imports, loader string-literal paths and
       `require.resolve` specifiers
-- [ ] 14.2 Assert a non-zero edge count before evaluating reachability; a
+- [x] 14.2 Assert a non-zero edge count before evaluating reachability; a
       resolver that stops finding edges fails the check
-- [ ] 14.3 Verify the graph produces no false positive for the Control Center
+- [x] 14.3 Verify the graph produces no false positive for the Control Center
       server, the self-dev sandbox planner and executor, or the Vue fixture
-- [ ] 14.4 Fail `hardening:check` on a tracked source module whose exports are
+- [x] 14.4 Fail `hardening:check` on a tracked source module whose exports are
       referenced nowhere outside its own directory
-- [ ] 14.5 Add the reasoned-retention list; make it fail in both directions
+- [x] 14.5 Add the reasoned-retention list; make it fail in both directions
 - [ ] 14.6 **Owner decision required:** adopt or remove
       `src/core/dtoFramework/` (519 lines) and `src/core/adversarialCorpus/`
       (385 lines); record the outcome and reason in `docs/DECISIONS.md`
@@ -674,14 +771,64 @@ externally dirty, and integration/release are the session owner's action.
 - [ ] 14.8 If removing: declare the deletions under `## Declared Deletions`;
       verify `workspace:check` passes with no
       `WORKSPACE_UNDECLARED_TRACKED_DELETION`
-- [ ] 14.9 Resolve each of the eleven zero-importer `index.ts` barrels to
+- [x] 14.9 Resolve each of the eleven zero-importer `index.ts` barrels to
       enforced or removed
-- [ ] 14.10 For each enforced barrel, add the rule forbidding a deep import
+- [x] 14.10 For each enforced barrel, add the rule forbidding a deep import
       from outside the module; negative-probe it
-- [ ] 14.11 Resolve `src/controlCenter/index.ts` explicitly: either
+- [x] 14.11 Resolve `src/controlCenter/index.ts` explicitly: either
       `bin/nightwatch-control-center.mjs` loads through it, or it is removed
 - [ ] 14.12 Register the new rule, refresh `inventoryDigest`, full validation,
       integrate, release
+
+14.1–14.5, 14.9–14.11 evidence. The graph and both rules are implemented in
+`bin/hardening-check.mjs` (`buildReferenceGraph`, `checkSourceReachability`,
+`checkModuleBarrierEnforcement`) against the data-only
+`config/reference-graph.v1.json`; no new `bin/lib` or test file was added, so
+the validation-universe digest is unchanged. Reachability is forward from
+executable roots (`tests/`, `bin/`, `ui/`, `scenarios/`) plus any `src` module
+with an inbound edge from outside its own directory, so a dead subsystem cannot
+bootstrap itself alive while a module imported only by a live sibling (the
+sandbox planner/executor) stays reachable. Measured `--report-reachability` at
+this checkpoint: files=1072, parsed=1072, edges=6238, findings=0. An empty edge
+set fails `REFERENCE_GRAPH_EMPTY`; fewer than 100 parsed files fails
+`REFERENCE_GRAPH_VACUOUS`. The retention list fails in both directions and is
+probed: HC-079 removes the dtoFramework entry and the rule reports its modules
+as unlisted-dead, HC-080 appends a consumer to a retained module and the rule
+reports `REFERENCE_RETENTION_STALE`. False-positive checks: the Control Center
+server is reached through the `bin/nightwatch-control-center.mjs` loader edges
+(`server/index.ts`, `server/defaultCollector.ts`,
+`authorities/reviewWriteAuthority.ts`); the self-dev sandbox planner/executor
+are reached through the `bin/selfdev-adopt-sandbox.mjs` loader list and the
+test-only mirror helper; the Vue fixture's `require.resolve('vue/dist/vue.js')`
+is recorded as an external `REQUIRE_RESOLVE_EXTERNAL` edge rather than a
+resolution failure.
+
+Resolutions (11/11). `src/core/provenance/index.ts` is `ENFORCED`: all five
+`selfDevPromotion` consumers, `tests/unit/selfDevProvenance.test.ts` and the
+five bins that loaded `localGit.ts` now load the barrel, the generated loader
+declaration is regenerated, and `checkModuleBarrierEnforcement` (probe HC-081)
+fails any deep import into the module from outside. Nine barrels are `REMOVED`
+with their deletions declared under `## Declared Deletions` in the programme
+`SPEC.md`: `controlCenter`, `campaignIntelligence`, `investigationMemory`,
+`localInvestigation`, `ownerLocalReproduction`, `prodProvenance`,
+`reproductionSurface`, `selfDevSandbox`, `systemAtlas`. `selfDevSandbox` could
+not be enforced without re-exporting `setSandboxBaseOverrideForTests`, which
+`checkPhase8B01CloseoutIntegrity` forbids, so deep imports are the honest
+interface there; its plan/run entry points are still asserted directly on
+`planner.ts`/`sandboxExecutor.ts`, and `checkPhase8BSandboxBoundary` still
+polices every reach into the module. `src/core/controlCenter/index.ts` is
+resolved by removal (14.11), leaving the deep `server/index.ts` loaders as the
+Control Center's public surface. `src/core/dtoFramework/` and
+`src/core/adversarialCorpus/` remain in the reasoned-retention list with reason
+`G14.6 owner decision OPEN`; 14.6–14.8 stay open and no adoption or removal is
+claimed.
+
+14.12 partial. The new rules are registered with probes HC-078–HC-081 and
+`node bin/hardening-check.mjs` passes; `npm run validation:universe` passes with
+the unchanged digest `sha256:e04d813efa7aa0bbbb1fa219`. Integration and release
+remain the session owner's action exactly as recorded for the programme; no
+`inventoryDigest` was edited because no discovered file was added.
+
 
 ## 15. CLI-to-implementation contract
 

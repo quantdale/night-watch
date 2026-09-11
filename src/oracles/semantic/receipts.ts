@@ -29,6 +29,19 @@ export const SEMANTIC_EVALUATION_RECEIPT_VERSION = 'nightwatch.semantic-evaluati
  *  differs; v2 adds optional coverage metadata fields. */
 export const SEMANTIC_EVALUATION_RECEIPT_VERSION_V1 = 'nightwatch.semantic-evaluation-receipt.v1' as const;
 
+/** Group 11 (F-10): the acceptance class of the evidence a receipt records.
+ *  A local synthetic evaluation is LOCAL_SYNTHETIC and can never satisfy a
+ *  DEV acceptance assertion; only a gated contained DEV observation is
+ *  CONTAINED_DEV. The default is the safe, synthetic class. */
+export type SemanticEvidenceAcceptanceClass = 'LOCAL_SYNTHETIC' | 'CONTAINED_DEV';
+
+export const SEMANTIC_EVIDENCE_ACCEPTANCE_CLASSES: readonly SemanticEvidenceAcceptanceClass[] = [
+  'LOCAL_SYNTHETIC',
+  'CONTAINED_DEV',
+];
+
+export const DEFAULT_SEMANTIC_EVIDENCE_ACCEPTANCE_CLASS: SemanticEvidenceAcceptanceClass = 'LOCAL_SYNTHETIC';
+
 export type SemanticReceiptOutcome =
   | 'PASS'
   | 'ANOMALY'
@@ -72,6 +85,10 @@ export interface SemanticEvaluationReceipt {
   readonly receiptId: string;
   readonly oracleId: string;
   readonly outcome: SemanticReceiptOutcome;
+  /** Group 11 (F-10): the acceptance class this receipt's evidence belongs
+   *  to. Builder-produced receipts always carry it; a receipt that predates
+   *  the field is treated as LOCAL_SYNTHETIC, never as DEV evidence. */
+  readonly acceptanceClass?: SemanticEvidenceAcceptanceClass;
   /** Operation/rule/journey-step identity the evaluation targeted. */
   readonly targetId?: string;
   /** Absent for NO_EXPECTATION and pre-resolution failures. */
@@ -101,6 +118,7 @@ export const SEMANTIC_RECEIPT_SAFE_FIELDS: ReadonlySet<string> = new Set([
   'receiptId',
   'oracleId',
   'outcome',
+  'acceptanceClass',
   'targetId',
   'expectationId',
   'sourceProvenance',
@@ -128,6 +146,9 @@ export function validateSemanticEvaluationReceipt(receipt: SemanticEvaluationRec
     if (!SEMANTIC_RECEIPT_SAFE_FIELDS.has(key)) throw new Error(`SEMANTIC_RECEIPT_INVALID:unknown-field:${key}`);
   }
   if (!SEMANTIC_RECEIPT_OUTCOMES.includes(receipt.outcome)) throw new Error('SEMANTIC_RECEIPT_INVALID:outcome');
+  if (receipt.acceptanceClass !== undefined && !SEMANTIC_EVIDENCE_ACCEPTANCE_CLASSES.includes(receipt.acceptanceClass)) {
+    throw new Error('SEMANTIC_RECEIPT_INVALID:acceptanceClass');
+  }
   if (!/^[A-Za-z0-9][A-Za-z0-9._:/-]{0,199}$/.test(receipt.oracleId)) throw new Error('SEMANTIC_RECEIPT_INVALID:oracleId');
   if (!/^receipt:sha256:[0-9a-f]{24}$/.test(receipt.receiptId)) throw new Error('SEMANTIC_RECEIPT_INVALID:receiptId');
   if (receipt.targetId !== undefined && (typeof receipt.targetId !== 'string' || receipt.targetId.length === 0 || receipt.targetId.length > 200)) {
@@ -238,12 +259,20 @@ export function validateSemanticEvaluationReceipt(receipt: SemanticEvaluationRec
     if (receipt.outcome === 'PARTIAL_COVERAGE') {
       throw new Error('SEMANTIC_RECEIPT_INVALID:v1-partial-coverage');
     }
+    // Group 11 (F-10): the acceptance class is a v2 field; a v1 receipt that
+    // never carried it stays structurally valid.
+    if (receipt.acceptanceClass !== undefined) {
+      throw new Error('SEMANTIC_RECEIPT_INVALID:v1-acceptance-class');
+    }
   }
 }
 
 export interface SemanticReceiptInput {
   readonly oracleId: string;
   readonly outcome: SemanticReceiptOutcome;
+  /** Group 11 (F-10): defaults to LOCAL_SYNTHETIC. Only the gated contained
+   *  DEV runner may declare CONTAINED_DEV. */
+  readonly acceptanceClass?: SemanticEvidenceAcceptanceClass;
   readonly targetId?: string;
   readonly expectationId?: string;
   readonly sourceProvenance?: SourceProvenance;
@@ -265,6 +294,7 @@ export interface SemanticReceiptInput {
 const SEMANTIC_RECEIPT_INPUT_FIELDS: ReadonlySet<string> = new Set([
   'oracleId',
   'outcome',
+  'acceptanceClass',
   'targetId',
   'expectationId',
   'sourceProvenance',
@@ -295,6 +325,7 @@ export function buildSemanticEvaluationReceipt(input: SemanticReceiptInput): Sem
     schemaVersion: SEMANTIC_EVALUATION_RECEIPT_VERSION,
     oracleId: input.oracleId,
     outcome: input.outcome,
+    acceptanceClass: input.acceptanceClass ?? DEFAULT_SEMANTIC_EVIDENCE_ACCEPTANCE_CLASS,
     projectionDigests: input.projectionDigests ?? [],
     invariantTotal: input.invariantTotal ?? 0,
     invariantPassCount: input.invariantPassCount ?? 0,

@@ -23,6 +23,7 @@ import { evaluateSemanticResponse } from './runner';
 import {
   buildSemanticEvaluationReceipt,
   type SemanticEvaluationReceipt,
+  type SemanticEvidenceAcceptanceClass,
   type SemanticReceiptOutcome,
 } from './receipts';
 import type { SemanticOracleFinding } from './types';
@@ -42,6 +43,9 @@ export interface SemanticHookInput {
   readonly method: string;
   /** Reviewed endpoint semantic rule identity (never a URL substring). */
   readonly targetId?: string;
+  /** Group 11 (F-10): defaults to LOCAL_SYNTHETIC; only the gated contained
+   *  DEV runner declares CONTAINED_DEV. */
+  readonly acceptanceClass?: SemanticEvidenceAcceptanceClass;
   readonly journeyId?: string;
   readonly stepId?: string;
   readonly operationId?: string;
@@ -116,6 +120,7 @@ export function evaluateSemanticHook(input: SemanticHookInput): SemanticHookResu
     resolution,
     rawText: input.rawText,
     targetId: input.targetId,
+    acceptanceClass: input.acceptanceClass,
     journeyId: input.journeyId,
     stepId: input.stepId,
     operationId: input.operationId,
@@ -128,6 +133,8 @@ export interface SemanticResolutionEvaluationInput {
   /** Transient, in-memory raw response text (bounded by the caller). */
   readonly rawText: string;
   readonly targetId?: string;
+  /** Group 11 (F-10): defaults to LOCAL_SYNTHETIC. */
+  readonly acceptanceClass?: SemanticEvidenceAcceptanceClass;
   readonly journeyId?: string;
   readonly stepId?: string;
   readonly operationId?: string;
@@ -139,6 +146,7 @@ export function evaluateSemanticResolution(input: SemanticResolutionEvaluationIn
   const base = {
     oracleId: 'real-source-semantic-hook',
     targetId: input.targetId,
+    acceptanceClass: input.acceptanceClass,
     journeyId: input.journeyId,
     stepId: input.stepId,
     operationId: input.operationId ?? input.targetId,
@@ -252,6 +260,7 @@ export function evaluateSemanticResolution(input: SemanticResolutionEvaluationIn
 /** Re-exported for the observer's defensive catch path. */
 export function buildInternalErrorReceipt(input: {
   targetId?: string;
+  acceptanceClass?: SemanticEvidenceAcceptanceClass;
   journeyId?: string;
   stepId?: string;
   operationId?: string;
@@ -261,6 +270,7 @@ export function buildInternalErrorReceipt(input: {
   return buildSemanticEvaluationReceipt({
     oracleId: 'real-source-semantic-hook',
     outcome: 'INTERNAL_ERROR',
+    ...(input.acceptanceClass === undefined ? {} : { acceptanceClass: input.acceptanceClass }),
     ...(input.targetId === undefined ? {} : { targetId: input.targetId }),
     ...(input.expectationId === undefined ? {} : { expectationId: input.expectationId }),
     ...(input.sourceProvenance === undefined ? {} : { sourceProvenance: input.sourceProvenance }),

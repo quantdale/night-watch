@@ -18,7 +18,6 @@ artifacts/*
 
 # test fixtures / scratch
 .tmp-*/
-.tmp-test/
 
 # secrets
 .env

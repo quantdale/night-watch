@@ -12,7 +12,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { loadTypeScriptModule as loadRuntimeTypeScriptModule } from './lib/typescript-runtime-loader.mjs';
+import { loadTypeScriptModule as loadRuntimeTypeScriptModule, loadTypeScriptModules as loadRuntimeTypeScriptModules } from './lib/typescript-runtime-loader.mjs';
 import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -42,6 +42,10 @@ const CLI_METADATA = {
 
 function loadTypeScriptModule(file) {
   return loadRuntimeTypeScriptModule(file, { root });
+}
+
+function loadTypeScriptModules(files) {
+  return loadRuntimeTypeScriptModules(files, { root });
 }
 
 function usage() {
@@ -97,24 +101,28 @@ function main() {
       return;
     }
 
-    const provenanceService = loadTypeScriptModule('src/core/provenance/localGit.ts');
-    const sandbox = loadTypeScriptModule('src/core/selfDevSandbox/index.ts');
+    const provenanceService = loadTypeScriptModule('src/core/provenance/index.ts');
+    const [planner, storage, executor] = loadTypeScriptModules([
+      'src/core/selfDevSandbox/planner.ts',
+      'src/core/selfDevSandbox/storage.ts',
+      'src/core/selfDevSandbox/sandboxExecutor.ts',
+    ]);
     const current = provenanceService.currentCheckoutState({ repositoryRoot: root });
 
     if (parsed.command === 'inspect') {
-      const inspection = sandbox.inspectSelfDevAdoption(parsed.artifactId, current);
+      const inspection = planner.inspectSelfDevAdoption(parsed.artifactId, current);
       console.log(JSON.stringify(inspection));
       return;
     }
 
     if (parsed.command === 'plan') {
-      const plan = sandbox.planAdoption({
+      const plan = planner.planAdoption({
         artifactId: parsed.artifactId,
         candidateId: parsed.candidateId,
         current,
         repositoryRoot: root,
       });
-      const planStore = new sandbox.SelfDevAdoptionPlanStore();
+      const planStore = new storage.SelfDevAdoptionPlanStore();
       const disposition = planStore.writePlan(plan);
       console.log(JSON.stringify({
         planId: plan.planId,
@@ -135,15 +143,15 @@ function main() {
     }
 
     // run
-    const planStore = new sandbox.SelfDevAdoptionPlanStore({ readOnly: true });
+    const planStore = new storage.SelfDevAdoptionPlanStore({ readOnly: true });
     const plan = planStore.readPlan(parsed.planId);
-    const result = sandbox.runSandboxAdoption({
+    const result = executor.runSandboxAdoption({
       plan,
       repositoryRoot: root,
       nodeModulesAnchorPath: path.join(root, 'package.json'),
       current,
     });
-    const resultStore = new sandbox.SelfDevAdoptionResultStore();
+    const resultStore = new storage.SelfDevAdoptionResultStore();
     const disposition = resultStore.writeResult(result);
     console.log(JSON.stringify({ ...result, disposition }));
     if (result.sandboxVerificationStatus !== 'PASS') process.exitCode = 1;

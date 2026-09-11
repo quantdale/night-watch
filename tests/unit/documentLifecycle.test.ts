@@ -8,6 +8,7 @@ import path from 'node:path';
 import { installBootstrapDiagnosticHooks } from '../../src/browser/observers/bootstrapHooks';
 import { installDocumentLifecycleObserver } from '../../src/browser/observers/documentLifecycle';
 import { RunRecorder } from '../../src/core/evidence/runRecorder';
+import { resolveScratchPath } from '../../src/core/workspace/ephemeralLayout';
 import { buildRippleLifecycleDiagnostics } from '../../src/products/ripple/lifecycleDiagnostics';
 import type { RunEvent } from '../../src/core/evidence/types';
 
@@ -80,7 +81,7 @@ async function withRecorder<T>(name: string, callback: (recorder: RunRecorder) =
     product: 'ripple',
     browser: 'chromium',
     scenario: name,
-    artifactsRoot: path.join(process.cwd(), '.tmp-test', 'document-lifecycle'),
+    artifactsRoot: path.join(process.cwd(), resolveScratchPath('test', 'document-lifecycle')),
     authenticated: true,
   });
   try {

@@ -2245,3 +2245,23 @@ The root package is private TypeScript/CommonJS on Node 20 or newer, with Playwr
 
 After reconciliation with W10's next two commits, the live tree contains 329 ordinary root `.test.ts`/`.smoke.ts` files, up from 321 at the fixed baseline because W10 added focused tests. NW-08 deliberately uses the fixed 321-file comparison as reproducible evidence and requires current discovery before implementation.
 <!--relocation:MASTER-SECTION-2:end-->
+
+<!--semantic-acceptance-status:begin-->
+## Semantic acceptance status (group 11 record, appended 2026-09-12)
+
+The deterministic semantic oracles described above have never been evaluated
+against a real application. Their acceptance class is
+`COMPLETE_LOCAL_SYNTHETIC` with contained DEV result `NOT_PROVEN` and blocker
+`PHASE_9B_BLOCKED_HUMAN_AUTH_ACTION_REQUIRED`: Phase 9B/10B contained DEV
+acceptance requires a separate one-shot owner authorization, an external
+owner-only DEV storage artefact, and the qualified containment envelope. The
+owner decision (programme task 11.3) between unblocking and permanent closure
+is open, and the class is data
+(`config/semantic-acceptance-class.v1.json`,
+`src/core/semanticAcceptance/`) rendered by every surface that presents the
+capability.
+
+`SEMANTIC_ACCEPTANCE_CLASS: COMPLETE_LOCAL_SYNTHETIC`
+`SEMANTIC_DEV_RESULT: NOT_PROVEN`
+`SEMANTIC_DEV_BLOCKER: PHASE_9B_BLOCKED_HUMAN_AUTH_ACTION_REQUIRED`
+<!--semantic-acceptance-status:end-->

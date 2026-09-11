@@ -21,14 +21,19 @@ export const REVIEW_STORE_SCHEMA_VERSION = 'nightwatch.review-store.v1' as const
 /**
  * What the store knows about one finding's local review.
  *
- * NO_REVIEW — nothing is stored for this finding.
- * CURRENT   — a stored decision still binds to the current artifacts.
- * STALE     — a stored decision exists but its artifacts moved on. It stays
- *             auditable and is never rendered as a live decision.
- * CORRUPT   — bytes exist but did not survive validation. Fail-closed: this
- *             is never silently upgraded to any other state.
+ * NO_REVIEW         — nothing is stored for this finding.
+ * CURRENT           — a stored decision still binds to the current artifacts.
+ * STALE             — a stored decision exists but its artifacts moved on. It
+ *                     stays auditable and is never rendered as a live decision.
+ * VERSION_UNSUPPORTED — intact bytes at a schema version this build does not
+ *                     read. A migration to run, NOT a defect: the state
+ *                     carries the found version and the affected count.
+ * CORRUPT           — bytes exist but did not survive validation. Fail-closed:
+ *                     this is never silently upgraded to any other state, and
+ *                     it takes precedence over VERSION_UNSUPPORTED when both
+ *                     are present because a defect must stay visible.
  */
-export const REVIEW_STORE_READ_STATES = ['NO_REVIEW', 'CURRENT', 'STALE', 'CORRUPT'] as const;
+export const REVIEW_STORE_READ_STATES = ['NO_REVIEW', 'CURRENT', 'STALE', 'VERSION_UNSUPPORTED', 'CORRUPT'] as const;
 export type ReviewStoreReadState = (typeof REVIEW_STORE_READ_STATES)[number];
 
 /**
@@ -89,11 +94,26 @@ export interface ReviewStoreCorruption {
 }
 
 /**
+ * One intact envelope at a version this build does not read. Distinct from
+ * corruption: the bytes are believed whole, and the owner action is a
+ * migration (or an explicit orphan decision), not a defect report.
+ */
+export interface ReviewStoreUnsupportedVersion {
+  readonly fileName: string;
+  /** The version string found in the bytes, verbatim. */
+  readonly foundVersion: string;
+  /** The versioned field that carried it. */
+  readonly field: 'schemaVersion' | 'lifecycleVersion' | 'receiptSchemaVersion';
+  readonly detail: string;
+}
+
+/**
  * The answer for one finding.
  *
- * `corruption` is reported whatever the state: a corrupt generation never
- * yields CURRENT, but neither is it hidden because a different, valid
- * generation exists.
+ * `corruption` and `unsupported` are reported whatever the state: a corrupt
+ * generation never yields CURRENT, but neither is it hidden because a
+ * different, valid generation exists, and an old-but-intact record is named
+ * as a migration rather than folded into corruption.
  */
 export interface ReviewStoreReadResult {
   readonly state: ReviewStoreReadState;
@@ -101,6 +121,10 @@ export interface ReviewStoreReadResult {
   /** Why a stored review is STALE, from verifyReviewCurrent. Null otherwise. */
   readonly staleReason: string | null;
   readonly corruption: readonly ReviewStoreCorruption[];
+  /** Intact records at unsupported versions, named individually. */
+  readonly unsupported: readonly ReviewStoreUnsupportedVersion[];
+  /** Number of records at unsupported versions; the reported affected count. */
+  readonly unsupportedCount: number;
   /** Every envelope that validated, newest generation first by identity order. */
   readonly generations: readonly StoredReviewEnvelope[];
   readonly organizationalAuthority: 'NONE_LOCAL_REVIEW_ONLY';

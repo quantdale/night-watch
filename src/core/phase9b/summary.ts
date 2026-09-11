@@ -21,7 +21,8 @@
 // Phase 15P A15 convergence: evidence-digest validation reuses the canonical helper
 // (byte-equivalent to the retired inline regex incl. null/non-string handling).
 import { isEvidenceDigest } from '../../core/identity/canonicalDigest';
-import type { SemanticEvaluationReceipt, SemanticReceiptOutcome } from '../../oracles/semantic/receipts';
+import type { SemanticEvaluationReceipt, SemanticEvidenceAcceptanceClass, SemanticReceiptOutcome } from '../../oracles/semantic/receipts';
+import { DEFAULT_SEMANTIC_EVIDENCE_ACCEPTANCE_CLASS } from '../../oracles/semantic/receipts';
 import { semanticFindingFingerprint, type SemanticOracleFinding } from '../../oracles/semantic';
 
 // Phase 15P A15 convergence: de-exported (module-private, zero external callers).
@@ -63,6 +64,10 @@ export interface Phase9bSemanticSummary {
   /** Deterministic safe fingerprints of the selected-target findings. */
   readonly findingFingerprints: readonly string[];
   readonly findingCategories: readonly string[];
+  /** Group 11 (F-10): the acceptance classes present among the selected-target
+   *  receipts. A receipt that predates the field counts as LOCAL_SYNTHETIC.
+   *  A DEV acceptance assertion requires exactly ['CONTAINED_DEV']. */
+  readonly evidenceAcceptanceClasses: readonly SemanticEvidenceAcceptanceClass[];
   /** Invariant totals across selected-target receipts (safe counts). */
   readonly invariantTotal: number;
   readonly invariantPassCount: number;
@@ -118,6 +123,9 @@ export function summarizePhase9bPass(input: Phase9bSummaryInput): Phase9bSemanti
   );
   const fingerprints = [...new Set(selectedFindings.map((finding) => semanticFindingFingerprint(finding)))].sort();
   const categories = [...new Set(selectedFindings.map((finding) => finding.category))].sort();
+  const evidenceAcceptanceClasses = [
+    ...new Set(selected.map((receipt) => receipt.acceptanceClass ?? DEFAULT_SEMANTIC_EVIDENCE_ACCEPTANCE_CLASS)),
+  ].sort();
   let invariantTotal = 0;
   let invariantPassCount = 0;
   let invariantNaCount = 0;
@@ -156,6 +164,7 @@ export function summarizePhase9bPass(input: Phase9bSummaryInput): Phase9bSemanti
     findingCount: selectedFindings.length,
     findingFingerprints: fingerprints,
     findingCategories: categories,
+    evidenceAcceptanceClasses,
     invariantTotal,
     invariantPassCount,
     invariantNaCount,
@@ -197,6 +206,7 @@ export function comparePhase9bReplaySummaries(
   compare('invariantNaCount', first.invariantNaCount, replay.invariantNaCount);
   compare('invariantViolationCount', first.invariantViolationCount, replay.invariantViolationCount);
   compare('finding fingerprints', JSON.stringify(first.findingFingerprints), JSON.stringify(replay.findingFingerprints));
+  compare('evidence acceptance classes', JSON.stringify(first.evidenceAcceptanceClasses), JSON.stringify(replay.evidenceAcceptanceClasses));
   return { pass: mismatches.length === 0, mismatches };
 }
 

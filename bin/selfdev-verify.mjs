@@ -90,7 +90,7 @@ function main() {
       return;
     }
 
-    const provenanceService = loadTypeScriptModule('src/core/provenance/localGit.ts');
+    const provenanceService = loadTypeScriptModule('src/core/provenance/index.ts');
     let current;
     try {
       current = provenanceService.currentCheckoutState({ repositoryRoot: root });

@@ -54,14 +54,28 @@ export const CENSUS_FIGURES: readonly CensusFigure[] = Object.freeze([
   { measureId: 'POSITIVE_DEPLOYMENT_FACTS', description: 'positive route to endpoint deployment facts', currentValue: 0, establishedBy: 'C-08' },
   { measureId: 'SPEC_EXPECTATIONS', description: 'admitted spec-derived expectations', currentValue: 2114, establishedBy: 'C-09' },
   { measureId: 'OPENSPEC_SCENARIOS', description: 'OpenSpec scenarios in the corpus', currentValue: 332, establishedBy: 'C-09' },
+  // F-06 / group 5 (evidence lifecycle hygiene) — measured 2026-09-12 in the
+  // canonical checkout. The unit is part of the measure id so a tagged figure
+  // states the unit it means; the values are point-in-time measurements and
+  // must be re-derived, not carried forward silently.
+  { measureId: 'DISK_CHECKOUT_SOURCE_MIB', description: 'working-tree source size at the repository root, excluding .git, node_modules, artifacts and the ephemeral output roots', currentValue: 31, establishedBy: 'F-06 measurement 2026-09-12' },
+  { measureId: 'DISK_CHECKOUT_GIT_MIB', description: 'Git metadata size included in a fresh clone', currentValue: 21, establishedBy: 'F-06 measurement 2026-09-12' },
+  { measureId: 'DISK_NODE_MODULES_MIB', description: 'installed node_modules size after npm ci', currentValue: 48, establishedBy: 'F-06 measurement 2026-09-12' },
+  { measureId: 'DISK_TYPICAL_RUN_KIB', description: 'median allocated size of one stored run artifact directory', currentValue: 20, establishedBy: 'F-06 measurement 2026-09-12 over 13394 run directories' },
+  { measureId: 'DISK_ACCUMULATED_EVIDENCE_MIB', description: 'allocated size of the accumulated artifacts evidence store', currentValue: 921, establishedBy: 'F-06 measurement 2026-09-12' },
+  { measureId: 'DISK_RUNNER_OUTPUT_MIB', description: 'allocated size of the 19 historical test-results roots', currentValue: 19, establishedBy: 'F-06 measurement 2026-09-12' },
+  { measureId: 'DISK_SCRATCH_MIB', description: 'allocated size of the .tmp-* scratch trees', currentValue: 8, establishedBy: 'F-06 measurement 2026-09-12' },
 ]);
 
 /**
  * A durable document that G-16 polices. Deliberately a short explicit list:
  * a wildcard would drag in campaign REPORTs, whose whole purpose is to record
  * the figures that were true at their own checkpoint.
+ *
+ * F-06 adds the host matrix: its §1 disk figures are host requirements a
+ * reader takes as current, exactly like the census counts.
  */
-export const POLICED_DOCUMENTS = Object.freeze(['docs/CURRENT_STATE.md']);
+export const POLICED_DOCUMENTS = Object.freeze(['docs/CURRENT_STATE.md', 'docs/HOST-CAPABILITY-MATRIX.md']);
 
 /**
  * The ONE marker that makes a tagged figure explicitly historical, so a

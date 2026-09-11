@@ -30,7 +30,7 @@ function loadTypeScriptModule(file) {
 }
 
 export function readCurrentLocalProvenance() {
-  const helper = loadTypeScriptModule('src/core/provenance/localGit.ts');
+  const helper = loadTypeScriptModule('src/core/provenance/index.ts');
   return helper.readLocalNightwatchProvenance({ repositoryRoot: root });
 }
 
