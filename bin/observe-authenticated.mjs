@@ -7,9 +7,11 @@
  * landing observation followed by one identical fresh-context replay.
  */
 import { spawnSync } from 'node:child_process';
+import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildObserveAuthenticatedEnvironment, parseObserveAuthenticatedArgs } from './observe-authenticated-config.mjs';
+import { loadTypeScriptModule } from './lib/typescript-runtime-loader.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 let parsed;
@@ -27,6 +29,26 @@ if (parsed.help) {
 }
 const { env, storage, uiUrl } = parsed;
 if (env !== 'dev') throw new Error('observe-authenticated requires --env=dev; NEXT is reserved for human-led auth capture');
+
+try {
+  const { requireValidAuthCapability } = loadTypeScriptModule('src/auth/capabilityLifecycle.ts', { root });
+  const configured = JSON.parse(fs.readFileSync(path.join(root, 'config', 'environments', `${env}.json`), 'utf8'));
+  const capability = requireValidAuthCapability({
+    artefactPath: storage,
+    environment: env,
+    configuredUiBaseUrl: configured.uiBaseUrl,
+    requiredValidityMs: 15 * 60 * 1000,
+  });
+  if (capability.budgetWarning) {
+    console.error(`[observe:authenticated] WARNING ${capability.budgetWarning.code}: remaining validity ${capability.budgetWarning.remainingValidityMs} ms is shorter than the declared run budget ${capability.budgetWarning.requiredValidityMs} ms`);
+  }
+} catch (error) {
+  if (error && typeof error === 'object' && typeof error.code === 'string' && error.code.startsWith('AUTH_CAPABILITY_')) {
+    console.error(`[observe:authenticated] REFUSED ${error.code}: ${error.message}`);
+    process.exit(3);
+  }
+  throw error;
+}
 
 const gate = path.join(root, 'bin', 'observe-gate.mjs');
 const gateArgs = [gate, `--env=${env}`, `--storage-state=${storage}`];

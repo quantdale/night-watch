@@ -47,6 +47,17 @@ import {
 // rather than re-derived here. It is a pure parser: no fs, no child
 // process, no network.
 import { HANDOFF_PLANNING_ONLY_STATUS, parseHandoffHeader } from './planner-handoff-protocol.mjs';
+// F-02's lane record and the operator CLI listing are the checks behind two
+// advance conditions. Both are imported from their own modules rather than
+// re-derived here, so a lane-state or listing change cannot leave the
+// certification judging a stale copy.
+import {
+  collectRevisitDue,
+  loadLaneState,
+  reportLaneState,
+  validateLaneState,
+} from './lib/validation-lane-state.mjs';
+import { operatorCommandListing } from './lib/operator-command-listing.mjs';
 
 const PROJECT_STATE_PROTOCOL_VERSION = 'nightwatch.project-state.v2';
 const BLOCK_SECTION_HEADING = '## Project-state v2 (machine-checked truth block)';
@@ -236,6 +247,250 @@ function readActiveContinuity(root) {
   }
 }
 
+// ---------------------------------------------------------------------------
+// F-12 — release certification (`nightwatch.release-certification.v1`).
+//
+// The definition lives in config/release-certification.v1.json and the pure
+// judgement lives in src/core/releaseCertification/index.ts. This block is the
+// only I/O: it gathers each condition's output from the check that owns it,
+// then binds and evaluates. It performs zero writes and only read-only Git
+// commands.
+// ---------------------------------------------------------------------------
+const RELEASE_DEFINITION_PATH = 'config/release-certification.v1.json';
+const RULE_QUANTIFIERS = new Set(['TOTALITY', 'EXISTENCE']);
+const ZERO_LANE_COUNTS = Object.freeze({ proven: 0, externallyBlocked: 0, neverAttempted: 0, staleEvidence: 0 });
+const HEX40 = /^[0-9a-f]{40}$/i;
+
+function readJsonAt(root, relative) {
+  try {
+    return JSON.parse(fs.readFileSync(path.join(root, relative), 'utf8'));
+  } catch {
+    return null;
+  }
+}
+
+function probeLaneState(root, substantiveSha, isAncestor, today) {
+  const loaded = loadLaneState(root);
+  if (!loaded.ok) {
+    return {
+      output: { state: 'UNAVAILABLE_CAPABILITY', detail: loaded.errors.map((entry) => entry.code).join(',') || 'lane state unreadable' },
+      counts: { ...ZERO_LANE_COUNTS },
+    };
+  }
+  const universe = readJsonAt(root, 'config/validation-universe.v1.json');
+  const classes = universe !== null && universe.classes !== null && typeof universe.classes === 'object'
+    ? Object.keys(universe.classes)
+    : [];
+  const errors = validateLaneState(loaded.lanes, classes);
+  const reported = reportLaneState(loaded.lanes, substantiveSha, isAncestor);
+  const due = collectRevisitDue(loaded.lanes, today);
+  const counts = { proven: 0, externallyBlocked: 0, neverAttempted: 0, staleEvidence: 0 };
+  for (const lane of reported) {
+    if (lane.reportedClass === 'PROVEN') counts.proven += 1;
+    else if (lane.reportedClass === 'PROVEN (STALE_EVIDENCE)') counts.staleEvidence += 1;
+    else if (lane.reportedClass === 'BLOCKED_EXTERNAL') counts.externallyBlocked += 1;
+    else if (lane.reportedClass === 'UNAVAILABLE_CAPABILITY') counts.neverAttempted += 1;
+  }
+  const findings = [
+    ...errors.map((entry) => `${entry.code}:${entry.detail}`),
+    ...due.map((entry) => `REVISIT_DUE:${entry.laneId}@${entry.revisitDate}`),
+    ...reported.filter((lane) => lane.staleEvidence).map((lane) => `STALE_EVIDENCE:${lane.laneId}`),
+  ];
+  return {
+    output: findings.length === 0
+      ? { state: 'MET', detail: `${reported.length} lanes; proven=${counts.proven} stale=${counts.staleEvidence} blocked=${counts.externallyBlocked} never=${counts.neverAttempted}` }
+      : { state: 'UNMET', detail: findings.join('; ') },
+    counts,
+  };
+}
+
+function probeCiBlockRecord(blockFields) {
+  const status = blockFields.get('CI_STATUS');
+  const observed = blockFields.get('CI_OBSERVED_SHA') ?? 'NONE';
+  const executed = blockFields.get('CI_EXECUTED_SHA') ?? 'NONE';
+  const checkpoint = blockFields.get('LAST_SUBSTANTIVE_IMPLEMENTATION_SHA') ?? 'NONE';
+  if (status === 'EXECUTED_PASS' && HEX40.test(executed) && executed === checkpoint) {
+    return { state: 'MET', detail: `exact-head CI executed PASS at ${executed}` };
+  }
+  return {
+    state: 'UNMET',
+    detail: `CI_STATUS=${status ?? 'ABSENT'} CI_OBSERVED_SHA=${observed} CI_EXECUTED_SHA=${executed} at checkpoint ${checkpoint}`,
+  };
+}
+
+function probeLedgerAgreement(agentText) {
+  const audit = /\[agent-audit\]\s+tasks=(\d+)\s+strict_v2=(\d+)\s+legacy_v1=(\d+)\s+legacy_declared=(\d+)\s+legacy_undeclared=(\d+)\s+strict_errors=(\d+)/.exec(agentText);
+  if (audit === null) return { state: 'UNAVAILABLE_CAPABILITY', detail: 'agent-state ledger audit line not found' };
+  const ledgerErrors = [...agentText.matchAll(/\[agent-check\]\s+ERROR:\s+(LEDGER_[A-Z0-9_]+)/g)].map((match) => match[1]);
+  const strictErrors = Number(audit[6]);
+  const legacyUndeclared = Number(audit[5]);
+  if (ledgerErrors.length === 0 && strictErrors === 0 && legacyUndeclared === 0) {
+    return { state: 'MET', detail: `strict_errors=0 legacy_undeclared=0 ledger_errors=0 tasks=${audit[1]}` };
+  }
+  return {
+    state: 'UNMET',
+    detail: `ledger_errors=${ledgerErrors.join(',') || 'none'} strict_errors=${strictErrors} legacy_undeclared=${legacyUndeclared}`,
+  };
+}
+
+function probeOperatorCli(root) {
+  let listing;
+  try {
+    listing = operatorCommandListing(root);
+  } catch {
+    return { state: 'UNAVAILABLE_CAPABILITY', detail: 'operator command listing failed' };
+  }
+  const bins = listing.bins.length;
+  const undeclared = listing.entries.filter((entry) => !entry.declared).length;
+  const declaredBroken = listing.entries.filter((entry) => entry.declared && entry.error !== null).length;
+  const conforming = listing.entries.filter((entry) => entry.metadata !== null && entry.error === null).length;
+  if (bins > 0 && undeclared === 0 && declaredBroken === 0) {
+    return { state: 'MET', detail: `discovered=${bins} conforming=${conforming}` };
+  }
+  return { state: 'UNMET', detail: `discovered=${bins} conforming=${conforming} undeclared=${undeclared} declaredBroken=${declaredBroken}` };
+}
+
+function probeDocumentationCurrency(root, ruleNames) {
+  const required = ['checkDocumentRoleCurrency', 'checkAppendOnlyArchives', 'checkGovernedStatusWords'];
+  if (ruleNames !== null && !required.every((name) => ruleNames.includes(name))) {
+    return { state: 'UNAVAILABLE_CAPABILITY', detail: 'documentation-currency rules are not all registered in hardening:check' };
+  }
+  const result = spawnSync(process.execPath, [path.join('bin', 'hardening-check.mjs'), '--report-documentation-currency'], {
+    cwd: root,
+    env: gitEnv(root),
+    shell: false,
+    encoding: 'utf8',
+    timeout: 60_000,
+    maxBuffer: 1024 * 1024,
+  });
+  if (result.status !== 0 || typeof result.stdout !== 'string' || result.stdout === '') {
+    return { state: 'UNAVAILABLE_CAPABILITY', detail: 'hardening-check documentation-currency report failed to run' };
+  }
+  const findings = /documentation-currency:\s+(\d+)\s+finding/.exec(result.stdout);
+  if (findings === null) return { state: 'UNAVAILABLE_CAPABILITY', detail: 'documentation-currency report produced no finding count' };
+  const count = Number(findings[1]);
+  return count === 0
+    ? { state: 'MET', detail: 'documentation-currency: 0 findings' }
+    : { state: 'UNMET', detail: `documentation-currency: ${count} findings` };
+}
+
+function probeWorkspaceClaims(agentText) {
+  const audit = /legacy_undeclared=(\d+)/.exec(agentText);
+  const claims = [...agentText.matchAll(/\[agent-check\]\s+WARNING:\s+(CLAIM_TASK_[A-Z0-9_]+)/g)].map((match) => match[1]);
+  const legacyUndeclared = audit === null ? null : Number(audit[1]);
+  if (legacyUndeclared === null) return { state: 'UNAVAILABLE_CAPABILITY', detail: 'agent-state audit totals not found' };
+  if (claims.length === 0 && legacyUndeclared === 0) {
+    return { state: 'MET', detail: 'no claim-task attention; legacy_undeclared=0' };
+  }
+  return { state: 'UNMET', detail: `claim_findings=${claims.join(',') || 'none'} legacy_undeclared=${legacyUndeclared}` };
+}
+
+function probeDependencyAdvisory(root, today) {
+  const loaded = loadLaneState(root);
+  if (!loaded.ok) return { state: 'UNAVAILABLE_CAPABILITY', detail: 'lane state unreadable' };
+  const lane = loaded.lanes.find((entry) => entry.laneId === 'dependency-advisory');
+  if (lane === undefined) return { state: 'UNMET', detail: 'no dependency-advisory lane record' };
+  if (lane.class === 'PROVEN') return { state: 'MET', detail: 'dependency advisory executed' };
+  const condition = typeof lane.unblockCondition === 'string' && lane.unblockCondition.trim() !== '';
+  const current = typeof lane.revisitDate === 'string' && lane.revisitDate >= today;
+  if (condition && current) {
+    return { state: 'MET', detail: `recorded unavailable: ${lane.class}; owner action and revisit ${lane.revisitDate}` };
+  }
+  return { state: 'UNMET', detail: `class=${lane.class} condition=${condition} revisit=${lane.revisitDate ?? 'NONE'}` };
+}
+
+function probeCliContract(root) {
+  const config = readJsonAt(root, 'config/bin-typecheck.v1.json');
+  if (config === null) return { state: 'UNAVAILABLE_CAPABILITY', detail: 'config/bin-typecheck.v1.json unreadable' };
+  const mode = config.mode;
+  const exemptions = Array.isArray(config.exemptions) ? config.exemptions : [];
+  if (mode === 'BLOCKING' && exemptions.length === 0) {
+    return { state: 'MET', detail: 'bin type-check lane BLOCKING; loader contract audit in tests/unit/cliImplementationContract.test.ts' };
+  }
+  return { state: 'UNMET', detail: `bin type-check lane mode=${mode ?? 'ABSENT'}; exemptions=${exemptions.length}; full conformance is required before blocking` };
+}
+
+function probeRuleRegistry(root) {
+  const result = spawnSync(process.execPath, [path.join('bin', 'hardening-check.mjs'), '--list-rules'], {
+    cwd: root,
+    env: gitEnv(root),
+    shell: false,
+    encoding: 'utf8',
+    timeout: 60_000,
+    maxBuffer: 4 * 1024 * 1024,
+  });
+  if (result.status !== 0 || typeof result.stdout !== 'string' || result.stdout.trim() === '') {
+    return { output: { state: 'UNAVAILABLE_CAPABILITY', detail: 'hardening-check --list-rules unavailable' }, names: null };
+  }
+  let registry;
+  try {
+    registry = JSON.parse(result.stdout);
+  } catch {
+    return { output: { state: 'UNAVAILABLE_CAPABILITY', detail: 'hardening-check --list-rules produced no JSON registry' }, names: null };
+  }
+  const rules = Array.isArray(registry.rules) ? registry.rules : [];
+  if (rules.length === 0) return { output: { state: 'UNMET', detail: 'rule registry is empty' }, names: [] };
+  const unprobed = rules.filter((rule) => !Number.isInteger(rule.probeCount) || rule.probeCount < 1).map((rule) => rule.name);
+  const badQuantifier = rules.filter((rule) => !RULE_QUANTIFIERS.has(rule.quantifier)).map((rule) => rule.name);
+  if (unprobed.length === 0 && badQuantifier.length === 0) {
+    return {
+      output: { state: 'MET', detail: `${rules.length} rules; every rule has >=1 recorded probe and an explicit quantifier` },
+      names: rules.map((rule) => rule.name),
+    };
+  }
+  return {
+    output: { state: 'UNMET', detail: `rules=${rules.length} unprobed=${unprobed.join(',') || 'none'} bad_quantifier=${badQuantifier.join(',') || 'none'}` },
+    names: rules.map((rule) => rule.name),
+  };
+}
+
+function probeAccessibility(root) {
+  const unit = fs.existsSync(path.join(root, 'tests/unit/accessibilityAudit.test.ts'));
+  const browser = fs.existsSync(path.join(root, 'tests/browser/accessibilityCertification.browser.ts'));
+  if (!unit || !browser) return { state: 'UNMET', detail: `check absent: unit=${unit} browser=${browser}` };
+  return {
+    state: 'UNAVAILABLE_CAPABILITY',
+    detail: 'the accessibility check is registered but no certification result at the certified checkpoint is recorded in machine-readable project state',
+  };
+}
+
+function collectReleaseCheckOutputs(root, blockFields, agentText, substantiveSha, today) {
+  const isAncestor = (ancestor, descendant) => gitReadOnly(root, ['merge-base', '--is-ancestor', ancestor, descendant]) !== null;
+  const lane = probeLaneState(root, substantiveSha, isAncestor, today);
+  const rules = probeRuleRegistry(root);
+  return {
+    laneCounts: lane.counts,
+    outputs: {
+      'validation-lane-state': lane.output,
+      'ci-block-record': probeCiBlockRecord(blockFields),
+      'ledger-agreement': probeLedgerAgreement(agentText),
+      'operator-cli-sweep': probeOperatorCli(root),
+      'documentation-currency-rules': probeDocumentationCurrency(root, rules.names),
+      'workspace-claims': probeWorkspaceClaims(agentText),
+      'dependency-advisory-lane': probeDependencyAdvisory(root, today),
+      'cli-implementation-contract': probeCliContract(root),
+      'structural-rule-registry': rules.output,
+      'accessibility-certification': probeAccessibility(root),
+    },
+  };
+}
+
+function collectExternalTrack(root) {
+  try {
+    const module = loadTypeScriptModule(root, 'src/core/productionTrack/index.ts');
+    const reports = module.evaluateProductionTrack();
+    const byStatus = new Map();
+    for (const report of reports) byStatus.set(report.status, (byStatus.get(report.status) ?? 0) + 1);
+    const aggregate = byStatus.has('EXTERNAL_PREREQUISITE_UNMET') ? 'EXTERNAL_PREREQUISITE_UNMET'
+      : byStatus.has('REPOSITORY_WORK_REMAINING') ? 'REPOSITORY_WORK_REMAINING'
+        : byStatus.has('AWAITING_AUTHORIZATION') ? 'AWAITING_AUTHORIZATION'
+          : 'AUTHORIZED';
+    return { state: aggregate, detail: reports.map((report) => `${report.stage}:${report.status}`).join(' ') };
+  } catch {
+    return { state: 'UNAVAILABLE_CAPABILITY', detail: 'production-track module unavailable at this checkpoint' };
+  }
+}
+
 const CLI_METADATA = {
   schemaVersion: OPERATOR_CLI_SCHEMA,
   name: 'project-state-check',
@@ -255,6 +510,12 @@ function main() {
   if (cli.stop) return;
   const root = parseArgs(process.argv.slice(2));
   const errors = [];
+  // The release certification needs the parsed block and the agent-state
+  // output after section 3, so both are carried out of their local scopes.
+  let blockFields = null;
+  let agentText = '';
+  let releaseVerdict = null;
+  let releaseVerdictText = null;
 
   // 1. Whole-checkout cleanliness (mirrors the catalog-integrity gate).
   const porcelain = gitReadOnly(root, ['status', '--porcelain']);
@@ -277,6 +538,7 @@ function main() {
     fail(errors, parsed.oversized ? 'PROJECT_STATE_BLOCK_OVERSIZED' : 'PROJECT_STATE_BLOCK_MALFORMED');
   } else {
     const fields = parsed.fields;
+    blockFields = fields;
     for (const key of parsed.duplicates ?? []) fail(errors, 'PROJECT_STATE_DUPLICATE_FIELD');
     for (const key of parsed.unknown ?? []) {
       if (FORBIDDEN_IMPLEMENTATION_AUTHORITY_FIELDS.has(key)) {
@@ -578,7 +840,94 @@ function main() {
       timeout: 30_000,
       maxBuffer: 1024 * 1024,
     });
+    agentText = `${agentCheck.stdout ?? ''}\n${agentCheck.stderr ?? ''}`;
     if (agentCheck.status !== 0) fail(errors, 'PROJECT_STATE_ACTIVE_TASK_CONTINUITY_FAILED');
+  }
+
+  // 3b. F-12 release certification. The definition's own validity, the
+  // documentation-only-anchor rule, the count-bearing presentation guard, the
+  // ordered advance conditions, and the excluded external production track
+  // are all evaluated here. Unmet conditions fail the check only when an
+  // advance status is claimed; stale evidence refuses the certification.
+  if (blockFields !== null) {
+    try {
+      const certification = loadTypeScriptModule(root, 'src/core/releaseCertification/index.ts');
+      const definitionRecord = readJsonAt(root, RELEASE_DEFINITION_PATH);
+      if (definitionRecord === null) {
+        fail(errors, 'PROJECT_STATE_RELEASE_DEFINITION_MISSING');
+      } else {
+        const parsedDefinition = certification.parseReleaseCertificationDefinition(definitionRecord);
+        if (!parsedDefinition.ok || parsedDefinition.definition === null) {
+          for (const entry of parsedDefinition.errors) fail(errors, `PROJECT_STATE_${entry.code}`);
+        } else {
+          const definition = parsedDefinition.definition;
+          // 13.7 — a documentation-only commit is a checkpoint advance, never
+          // the implementation anchor.
+          const substantiveSha = blockFields.get('LAST_SUBSTANTIVE_IMPLEMENTATION_SHA');
+          const liveHeadSha = gitReadOnly(root, ['rev-parse', 'HEAD'])?.trim() ?? null;
+          if (HEX40.test(substantiveSha ?? '')) {
+            const changed = gitReadOnly(root, ['diff-tree', '--root', '--no-commit-id', '--name-only', '-r', substantiveSha]);
+            if (changed === null) {
+              fail(errors, 'PROJECT_STATE_IMPLEMENTATION_ANCHOR_UNVERIFIABLE');
+            } else {
+              const files = changed.split('\n').map((line) => line.trim()).filter(Boolean);
+              if (files.length > 0 && files.every((file) => isApprovedCheckpointPath(file))) {
+                fail(errors, 'PROJECT_STATE_IMPLEMENTATION_ANCHOR_DOCUMENTATION_ONLY');
+              }
+            }
+          }
+          // 13.5 — a surface presenting the status alone fails the guard.
+          for (const surface of definition.presentationSurfaces) {
+            let surfaceText = null;
+            try {
+              surfaceText = fs.readFileSync(path.join(root, surface), 'utf8');
+            } catch {
+              surfaceText = null;
+            }
+            if (surfaceText === null) continue;
+            for (const missing of certification.checkVerdictPresentation(surfaceText)) {
+              fail(errors, `PROJECT_STATE_VERDICT_PRESENTED_BARE: ${surface} missing ${missing}`);
+            }
+          }
+          // 13.1/13.2/13.4/13.6 — ordered conditions, each from its check.
+          const today = new Date().toISOString().slice(0, 10);
+          const certifiedCheckpointSha = HEX40.test(substantiveSha ?? '') ? substantiveSha : liveHeadSha;
+          const collected = collectReleaseCheckOutputs(root, blockFields, agentText, certifiedCheckpointSha, today);
+          const external = collectExternalTrack(root);
+          releaseVerdict = certification.evaluateReleaseCertification({
+            definition,
+            checkOutputs: collected.outputs,
+            certifiedCheckpointSha,
+            liveHeadSha,
+            projectCompletionStatus: blockFields.get('PROJECT_COMPLETION_STATUS') ?? 'NONE',
+            laneCounts: collected.laneCounts,
+            externalTrack: {
+              id: definition.externalTrack.id,
+              stages: definition.externalTrack.stages,
+              state: external.state,
+              detail: external.detail,
+            },
+            isAncestor: (ancestor, descendant) => gitReadOnly(root, ['merge-base', '--is-ancestor', ancestor, descendant]) !== null,
+          });
+          releaseVerdictText = certification.renderReleaseVerdictText(releaseVerdict);
+          if (releaseVerdict.advanceRefused) {
+            for (const condition of releaseVerdict.conditions) {
+              if (condition.state !== 'MET') {
+                fail(errors, `PROJECT_STATE_ADVANCE_CONDITION_UNMET: ${condition.id} (${condition.state})`);
+              }
+            }
+          }
+          if (releaseVerdict.advanceClaimed && releaseVerdict.certificationRefused) {
+            for (const id of releaseVerdict.staleEvidenceConditions) {
+              fail(errors, `PROJECT_STATE_STALE_EVIDENCE: ${id}`);
+            }
+          }
+        }
+      }
+    } catch (error) {
+      const code = error instanceof Error ? error.message.split(':')[0] : 'UNKNOWN';
+      fail(errors, `PROJECT_STATE_RELEASE_CERTIFICATION_FAILED: ${code}`);
+    }
   }
 
   // 4. Canonical catalog truth (real validator + deterministic renderer).
@@ -649,6 +998,7 @@ function main() {
 
   if (errors.length > 0) {
     for (const error of errors) console.error(error);
+    if (releaseVerdictText !== null) console.error(releaseVerdictText);
     process.exitCode = 1;
     return;
   }
@@ -690,6 +1040,7 @@ function main() {
     ciStatus: fieldsGet(parsed, 'CI_STATUS'),
     finalDocumentationSha: fieldsGet(parsed, 'FINAL_DOCUMENTATION_SHA'),
     finalCiAuthority: fieldsGet(parsed, 'FINAL_CI_AUTHORITY'),
+    releaseVerdict,
   }, null, 2));
 }
 

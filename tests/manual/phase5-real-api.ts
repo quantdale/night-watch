@@ -29,6 +29,7 @@ import { API_CATALOG_VERSION, OOPS_ADAPTER_VERSION, OOPS_PROFILE_VERSION, SCENAR
 import { inspectOopsSandbox } from '../../src/core/oops/sandbox';
 import { createRunId } from '../../src/core/evidence/runRecorder';
 import { runDevAuthRefresh, inspectDevAuthState, type DevAuthRefreshResult } from '../../src/auth/devAutoLogin';
+import { assertAuthCapabilityPreflight } from '../../src/auth/capabilityLifecycle';
 import { discoverRepositories, snapshotRepositories } from '../../src/core/repositories/snapshotter';
 import { runRealRunGate, assertRealRunGate } from '../../src/core/safety/realRunGate';
 
@@ -213,6 +214,12 @@ test('Phase 5 bounded source-generated DEV API corpus', async ({ browser }) => {
   const stateValue = process.env.NIGHTWATCH_STORAGE_STATE;
   if (stateValue === undefined || stateValue.trim() === '') throw new Error('HUMAN_AUTH_ACTION_REQUIRED: Phase 5 requires external DEV storage state');
   const statePath = validateStorageStateFile(stateValue);
+  assertAuthCapabilityPreflight({
+    artefactPath: statePath,
+    environment: environment.name,
+    targetOrigin: new URL(target).origin,
+    requiredValidityMs: 15 * 60 * 1000,
+  });
   const root = rootDirectory();
   const repository = await repositoryFacts(root);
   if (!repository.snapshotsValid || repository.nightwatchDirtyPaths.length > 0) throw new Error('PHASE_5_PRE_REAL_BLOCK: Nightwatch must be clean and source snapshots valid before the frozen API set');

@@ -21,6 +21,7 @@ import {
   validateStorageStateFile,
 } from '../../src/browser/fixtures/storageState';
 import { AUTHENTICATED_BROWSER_CONTRACT } from '../../src/browser/contract';
+import { assertAuthCapabilityPreflight } from '../../src/auth/capabilityLifecycle';
 import { RunRecorder, createRunId } from '../../src/core/evidence/runRecorder';
 import { assertRealRunGate, runRealRunGate } from '../../src/core/safety/realRunGate';
 import { snapshotRepositories } from '../../src/core/repositories/snapshotter';
@@ -382,6 +383,15 @@ test('Phase 2C six serial fresh-context Ripple canary observations', async ({ br
   const statePath = process.env.NIGHTWATCH_STORAGE_STATE;
   if (statePath === undefined || statePath.trim() === '') throw new Error('fail-closed: Phase 2C real journeys require external storage state');
   const validatedStatePath = validateStorageStateFile(statePath);
+  // Fail-closed lifecycle pre-flight before any context is created for this
+  // lane: an expired or unknown-age artefact refuses with re-capture, rather
+  // than surfacing as a downstream navigation failure.
+  assertAuthCapabilityPreflight({
+    artefactPath: validatedStatePath,
+    environment: envName,
+    targetOrigin: new URL(target).origin,
+    requiredValidityMs: 15 * 60 * 1000,
+  });
   const baseRunId = process.env.NIGHTWATCH_RUN_ID ?? createRunId();
   if (!/^[A-Za-z0-9._-]+$/.test(baseRunId)) throw new Error('fail-closed: NIGHTWATCH_RUN_ID contains unsafe path characters');
   const root = rootDirectory();

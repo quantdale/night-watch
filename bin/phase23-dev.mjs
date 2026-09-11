@@ -207,10 +207,11 @@ function assertAuthReadiness(file) {
   let parsed;
   try { parsed = JSON.parse(fs.readFileSync(authPath, 'utf8')); }
   catch { fail('DEV_AUTH_UNREADABLE'); }
-  const cookies = Array.isArray(parsed?.cookies) ? parsed.cookies : [];
+  // Cookie expiry is evaluated ONLY through the storageState evaluator; a
+  // second expiry implementation is how the two answers start disagreeing.
+  const expiries = storage.inspectStorageStateCookieExpiries(authPath);
   const origins = Array.isArray(parsed?.origins) ? parsed.origins : [];
-  const now = Math.floor(Date.now() / 1000);
-  const unexpiredCookie = cookies.some((cookie) => cookie !== null && typeof cookie === 'object' && (cookie.expires === -1 || (typeof cookie.expires === 'number' && Number.isFinite(cookie.expires) && cookie.expires > now)));
+  const unexpiredCookie = expiries.sessionCookieCount > 0 || expiries.unexpiredTimedCookieCount > 0;
   const structurallyReadable = origins.every((origin) => origin !== null && typeof origin === 'object' && typeof origin.origin === 'string' && Array.isArray(origin.localStorage));
   if (!structurallyReadable || !unexpiredCookie) fail('DEV_AUTH_EXPIRED_OR_MISSING');
   return authPath;

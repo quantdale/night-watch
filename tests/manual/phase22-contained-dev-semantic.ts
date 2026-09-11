@@ -16,6 +16,7 @@ import { assertSupportedEnvironment, loadEnvironmentConfig } from '../../src/cor
 import { createNightwatchContext, validateUiUrl } from '../../src/browser/context';
 import { inspectRipplePageAuthReadability } from '../../src/browser/fixtures/pageAuthReadability';
 import { inspectStorageStateCookiePageReadability, inspectStorageStateKeySemantics, validateStorageStateFile } from '../../src/browser/fixtures/storageState';
+import { assertAuthCapabilityPreflight } from '../../src/auth/capabilityLifecycle';
 import { AUTHENTICATED_BROWSER_CONTRACT } from '../../src/browser/contract';
 import { RunRecorder } from '../../src/core/evidence/runRecorder';
 import { assertRealRunGate, runRealRunGate } from '../../src/core/safety/realRunGate';
@@ -340,6 +341,12 @@ test('Phase 22 one bounded DEV semantic acceptance campaign', async ({ browser }
   const targetUrl = validateUiUrl(environment, environment.uiBaseUrl);
   const statePath = process.env.NIGHTWATCH_STORAGE_STATE;
   if (statePath === undefined) throw new Error('PHASE22_BLOCKED_AUTH_PATH');
+  assertAuthCapabilityPreflight({
+    artefactPath: validateStorageStateFile(statePath),
+    environment: environmentName,
+    targetOrigin: new URL(targetUrl).origin,
+    requiredValidityMs: 15 * 60 * 1000,
+  });
   const auth = authFacts(statePath, targetUrl, environment);
   if (!auth.structural || !auth.pageReadable) throw new Error('PHASE22_BLOCKED_AUTH_NOT_READABLE');
   const source = sourceResolver(manifest);

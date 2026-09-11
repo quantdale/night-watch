@@ -17,6 +17,7 @@ import { inspectRipplePageAuthReadability } from '../../src/browser/fixtures/pag
 import { validateStorageStateFile } from '../../src/browser/fixtures/storageState';
 import { AUTHENTICATED_BROWSER_CONTRACT } from '../../src/browser/contract';
 import { DevAuthFailure, inspectDevAuthState, runDevAuthRefresh } from '../../src/auth/devAutoLogin';
+import { assertAuthCapabilityPreflight } from '../../src/auth/capabilityLifecycle';
 import { RunRecorder } from '../../src/core/evidence/runRecorder';
 import { isProxyViolation, readProxyEvents } from '../../src/proxy/events';
 import { runDeclarativeJourney } from '../../src/core/journeys/engine';
@@ -1142,6 +1143,15 @@ test('Phase 7 bounded private real DEV campaign', async ({ browser }) => {
   const stateValue = process.env.NIGHTWATCH_STORAGE_STATE;
   if (stateValue === undefined || !path.isAbsolute(stateValue) || stateValue.trim() === '') throw new Error('DEV_AUTH_ACTION_REQUIRED');
   const statePath = validateStorageStateFile(stateValue);
+  // The campaign's declared runtime budget is the frozen real profile; an
+  // artefact that expires before the campaign can finish refuses (or warns)
+  // here, before any executor-capable state exists.
+  assertAuthCapabilityPreflight({
+    artefactPath: statePath,
+    environment: environment.name,
+    targetOrigin: new URL(target).origin,
+    requiredValidityMs: INITIAL_REAL_CAMPAIGN_BUDGET.maxRuntimeMs,
+  });
   const privateStore = new PrivateArtifactStore();
   const context = await buildRealContext(root, environment, target, statePath, privateStore);
   const resumeId = (process.env.NIGHTWATCH_PHASE_7_RESUME_CAMPAIGN ?? '').trim();

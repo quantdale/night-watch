@@ -1,6 +1,8 @@
+import os from 'node:os';
 import { prefixedDigest24 } from '../../core/identity/canonicalDigest';
 import { collectLocalReadinessInputFromRepo } from '../../core/readiness/repoState';
 import { summarizeLocalReadiness } from '../../core/readiness/localReadiness';
+import { collectAuthCapabilityReport } from '../../auth/capabilityLifecycle';
 import { projectMeta } from '../adapters/metaAdapter';
 import { projectReadiness } from '../adapters/readinessAdapter';
 import { DEFAULT_CONTROL_CENTER_SAFETY_INPUT, projectSafety } from '../adapters/safetyAdapter';
@@ -343,7 +345,29 @@ export function createControlCenterServices(options: DefaultControlCenterCollect
   const collector: ControlCenterCollector = {
     health,
     meta: () => projectMeta(),
-    readiness: () => projectReadiness(summarizeLocalReadiness(collectLocalReadinessInputFromRepo())),
+    readiness: () => {
+      // Authenticated-capability lifecycle metadata only: the sidecar record
+      // and cookie expiry fields are read, never a cookie value or a browser.
+      const authReport = collectAuthCapabilityReport({
+        homeDirectory: os.homedir(),
+        environmentVariable: process.env.NIGHTWATCH_STORAGE_STATE ?? null,
+        selectedEnvironment: process.env.NIGHTWATCH_ENV ?? null,
+      });
+      return projectReadiness(summarizeLocalReadiness({
+        ...collectLocalReadinessInputFromRepo(),
+        authCapability: {
+          entries: authReport.entries.map((entry) => ({
+            environment: entry.environment,
+            present: entry.present,
+            state: entry.state,
+            captureInstant: entry.captureInstant,
+            remainingValidityMs: entry.remainingValidityMs,
+            refusalCode: entry.refusalCode,
+            blockedLanes: entry.blockedLanes,
+          })),
+        },
+      }));
+    },
     safety: () => projectSafety(DEFAULT_CONTROL_CENTER_SAFETY_INPUT),
     runs: async (query) => {
       const snapshot = await readRunSnapshot();

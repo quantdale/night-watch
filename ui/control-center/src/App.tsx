@@ -357,6 +357,15 @@ function ReadinessDetailPanel({ readiness }: { readonly readiness: ReadinessSnap
     <CodeChips label="Not measured" codes={verification.notMeasuredDimensions} tone="blocked" />
     {verification.allDeferredToHardening ? <div className="callout callout-warning"><strong>Every dimension is deferred to hardening</strong><span>Nothing in this set was verified here. The readiness state above rests on the deferral, not on a measurement.</span></div> : null}
 
+    <div className="timeline-heading"><p className="eyebrow">AUTHENTICATED CAPABILITY</p><span>An artefact that is present and expired is not an absent artefact: one needs a re-capture, the other has never been captured.</span></div>
+    <div className="data-grid">
+      <DataRow label="Aggregate" value={formatCategory(readiness.authCapability.aggregateState)} tone={readiness.authCapability.aggregateState === 'VALID' ? 'ready' : readiness.authCapability.aggregateState === 'ATTENTION' ? 'warning' : 'neutral'} />
+      <DataRow label="Present and expired" value={readiness.authCapability.presentAndExpiredEnvironments.length === 0 ? 'None' : readiness.authCapability.presentAndExpiredEnvironments.map(formatCategory).join(', ')} tone={readiness.authCapability.presentAndExpiredEnvironments.length === 0 ? 'neutral' : 'warning'} />
+    </div>
+    {readiness.authCapability.entries.length === 0
+      ? <div className="mini-state">No environment was evaluated. That is unknown, not valid.</div>
+      : <div className="table-scroll"><table><thead><tr><th scope="col">Environment</th><th scope="col">Present</th><th scope="col">State</th><th scope="col">Epistemic</th><th scope="col">Remaining validity</th><th scope="col">Capture instant</th><th scope="col">Declared valid until</th><th scope="col">Refusal</th><th scope="col">Blocked lanes</th></tr></thead><tbody>{readiness.authCapability.entries.map((entry) => <tr key={entry.environment}><td><strong>{entry.environment}</strong></td><td>{entry.present ? 'Present' : 'Absent'}</td><td><StatusPill value={entry.state} /></td><td><EpistemicBadge epistemicClass={entry.epistemicClass} /></td><td>{formatCategory(entry.remainingValidityBand)}</td><td>{entry.captureInstant === null ? 'Not recorded' : formatTimestamp(entry.captureInstant)}</td><td>{entry.declaredValidUntil === null ? 'Not recorded' : formatTimestamp(entry.declaredValidUntil)}</td><td>{entry.refusalCode === null ? 'No refusal' : formatCategory(entry.refusalCode)}</td><td>{entry.blockedLanes.length === 0 ? 'None' : entry.blockedLanes.map(formatCategory).join(', ')}</td></tr>)}</tbody></table></div>}
+
     <div className="timeline-heading"><p className="eyebrow">UNRESOLVED BLOCKERS</p><span>Named with their kind and detail code, not counted.</span></div>
     {readiness.unresolvedBlockers.length === 0
       ? <div className="mini-state">No unresolved blockers reported. Absence of blockers is not a proof of pass.</div>

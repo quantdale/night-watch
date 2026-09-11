@@ -19,6 +19,7 @@ import { waitForNetworkObservationSettle } from '../../src/browser/observers/sta
 import { inspectRipplePageAuthReadability } from '../../src/browser/fixtures/pageAuthReadability';
 import { inspectStorageStateCookiePageReadability, inspectStorageStateKeySemantics, validateStorageStateFile, validateStorageStateOutputPath } from '../../src/browser/fixtures/storageState';
 import { AUTHENTICATED_BROWSER_CONTRACT } from '../../src/browser/contract';
+import { assertAuthCapabilityPreflight } from '../../src/auth/capabilityLifecycle';
 import { RunRecorder, createRunId } from '../../src/core/evidence/runRecorder';
 import { runRealRunGate, assertRealRunGate } from '../../src/core/safety/realRunGate';
 import { snapshotRepositories } from '../../src/core/repositories/snapshotter';
@@ -415,6 +416,12 @@ test('Phase 4 bounded seeded Ripple DEV exploration', async ({ browser }) => {
   const validatedStatePath = envName === 'dev'
     ? validateStorageStateOutputPath(statePath, { allowExisting: true })
     : validateStorageStateFile(statePath);
+  assertAuthCapabilityPreflight({
+    artefactPath: validatedStatePath,
+    environment: envName,
+    targetOrigin: new URL(target).origin,
+    requiredValidityMs: 15 * 60 * 1000,
+  });
   const baseRunId = process.env.NIGHTWATCH_RUN_ID ?? createRunId();
   if (!/^[A-Za-z0-9._-]+$/.test(baseRunId)) throw new Error('fail-closed: unsafe Phase 4 run ID');
   const root = rootDirectory();

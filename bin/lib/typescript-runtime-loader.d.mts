@@ -16,6 +16,7 @@ export interface TypeScriptRuntimeLoaderModuleMap {
   "corpus/phase20/contracts.ts": typeof import("../../corpus/phase20/contracts");
   "corpus/phase21/adversarialMatrix.ts": typeof import("../../corpus/phase21/adversarialMatrix");
   "corpus/phase21/contracts.ts": typeof import("../../corpus/phase21/contracts");
+  "src/auth/capabilityLifecycle.ts": typeof import("../../src/auth/capabilityLifecycle");
   "src/auth/devCredentialProvider.ts": typeof import("../../src/auth/devCredentialProvider");
   "src/auth/directRunner.ts": typeof import("../../src/auth/directRunner");
   "src/browser/fixtures/storageState.ts": typeof import("../../src/browser/fixtures/storageState");
@@ -40,12 +41,14 @@ export interface TypeScriptRuntimeLoaderModuleMap {
   "src/core/phase22/index.ts": typeof import("../../src/core/phase22/index");
   "src/core/phase23/manifest.ts": typeof import("../../src/core/phase23/manifest");
   "src/core/portfolio/types.ts": typeof import("../../src/core/portfolio/types");
+  "src/core/productionTrack/index.ts": typeof import("../../src/core/productionTrack/index");
   "src/core/provenance/localGit.ts": typeof import("../../src/core/provenance/localGit");
   "src/core/qualityGate/externalCi.ts": typeof import("../../src/core/qualityGate/externalCi");
   "src/core/qualityGate/preDev.ts": typeof import("../../src/core/qualityGate/preDev");
   "src/core/readiness/localReadiness.ts": typeof import("../../src/core/readiness/localReadiness");
   "src/core/readiness/openWork.ts": typeof import("../../src/core/readiness/openWork");
   "src/core/readiness/repoState.ts": typeof import("../../src/core/readiness/repoState");
+  "src/core/releaseCertification/index.ts": typeof import("../../src/core/releaseCertification/index");
   "src/core/selfDev/adoptedCases.ts": typeof import("../../src/core/selfDev/adoptedCases");
   "src/core/selfDev/controller.ts": typeof import("../../src/core/selfDev/controller");
   "src/core/selfDev/portfolio.ts": typeof import("../../src/core/selfDev/portfolio");

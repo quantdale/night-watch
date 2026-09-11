@@ -21,6 +21,7 @@ import {
   inspectStorageStateCookiePageReadability,
   validateStorageStateFile,
 } from '../../src/browser/fixtures/storageState';
+import { assertAuthCapabilityPreflight } from '../../src/auth/capabilityLifecycle';
 import {
   inspectRipplePageAuthReadability,
   unavailableRipplePageAuthReadability,
@@ -858,6 +859,12 @@ test('Phase 2A first controlled authenticated Ripple observation', async ({ brow
   const statePath = process.env.NIGHTWATCH_STORAGE_STATE;
   if (statePath === undefined || statePath.trim() === '') throw new Error('fail-closed: authenticated observation requires external storage state');
   const validatedStatePath = validateStorageStateFile(statePath);
+  assertAuthCapabilityPreflight({
+    artefactPath: validatedStatePath,
+    environment: envName,
+    targetOrigin: new URL(target).origin,
+    requiredValidityMs: 15 * 60 * 1000,
+  });
   const root = path.resolve(__dirname, '..', '..');
   const baseRunId = process.env.NIGHTWATCH_RUN_ID ?? createRunId();
 

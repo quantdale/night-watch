@@ -2,6 +2,7 @@ import type {
   SafeControlCenterCode,
   SafeControlCenterLabel,
   SafeControlCenterId,
+  SafeControlCenterTimestamp,
 } from './common';
 import { CONTROL_CENTER_CONTRACT_NAMESPACE } from './common';
 
@@ -31,6 +32,22 @@ export type ControlCenterReadinessCheckpoint =
 export type ControlCenterReadinessBlockerKind = 'AUTHORITY' | 'SOURCE' | 'VERSION' | 'ANALYZER' | 'EXTERNAL_CI';
 export type ControlCenterReadinessAnalyzerAvailability = 'AVAILABLE' | 'UNAVAILABLE' | 'NOT_EVALUATED';
 export type ControlCenterReadinessVerificationState = 'DEFERRED_TO_HARDENING' | 'NOT_MEASURED';
+export type ControlCenterReadinessAuthState =
+  | 'VALID'
+  | 'EXPIRED'
+  | 'WRONG_ENVIRONMENT'
+  | 'UNKNOWN_AGE'
+  | 'MISSING'
+  | 'UNREADABLE'
+  | 'NOT_EVALUATED';
+export type ControlCenterReadinessAuthEpistemicClass = 'FACT' | 'UNKNOWN';
+export type ControlCenterReadinessAuthValidityBand =
+  | 'NONE'
+  | 'UNDER_1H'
+  | 'UNDER_6H'
+  | 'UNDER_12H'
+  | 'AT_LEAST_12H'
+  | 'UNKNOWN';
 
 export interface ControlCenterReadinessBlockerDto {
   readonly code: SafeControlCenterCode;
@@ -85,6 +102,24 @@ export interface ControlCenterReadinessVerificationDto {
   readonly allDeferredToHardening: boolean;
 }
 
+export interface ControlCenterReadinessAuthCapabilityEntryDto {
+  readonly environment: SafeControlCenterId;
+  readonly present: boolean;
+  readonly state: ControlCenterReadinessAuthState;
+  readonly epistemicClass: ControlCenterReadinessAuthEpistemicClass;
+  readonly captureInstant: SafeControlCenterTimestamp | null;
+  readonly declaredValidUntil: SafeControlCenterTimestamp | null;
+  readonly remainingValidityBand: ControlCenterReadinessAuthValidityBand;
+  readonly refusalCode: SafeControlCenterCode | null;
+  readonly blockedLanes: readonly SafeControlCenterId[];
+}
+
+export interface ControlCenterReadinessAuthCapabilityDto {
+  readonly entries: readonly ControlCenterReadinessAuthCapabilityEntryDto[];
+  readonly presentAndExpiredEnvironments: readonly SafeControlCenterId[];
+  readonly aggregateState: 'VALID' | 'ATTENTION' | 'UNKNOWN';
+}
+
 export interface ControlCenterReadinessOwnerScopeDto {
   readonly status: 'FROZEN_BY_OWNER';
   readonly reason: 'INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE';
@@ -105,6 +140,7 @@ export interface ControlCenterReadinessDto {
   readonly checkpointCompatibility: ControlCenterReadinessCheckpoint;
   readonly analyzer: ControlCenterReadinessAnalyzerDto;
   readonly verification: ControlCenterReadinessVerificationDto;
+  readonly authCapability: ControlCenterReadinessAuthCapabilityDto;
   readonly unresolvedBlockers: readonly ControlCenterReadinessBlockerDto[];
   readonly externalCi: ControlCenterReadinessExternalCi;
   readonly externalCiClassification: ControlCenterReadinessExternalCiClassification;

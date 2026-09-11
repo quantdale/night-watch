@@ -40,6 +40,10 @@ credentials/
 *.token
 *.tokens.json
 
+# authenticated capability lifecycle records (non-secret metadata; never committed)
+*.auth-lifecycle.json
+*.auth-lifecycle.json.*
+
 # misc
 *.log
 .DS_Store

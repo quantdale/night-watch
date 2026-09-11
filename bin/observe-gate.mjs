@@ -7,9 +7,11 @@
  * target DNS/TCP activity. A real target is not opened by this command.
  */
 import { spawnSync } from 'node:child_process';
+import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildChildEnvironment } from './child-environment.mjs';
+import { loadTypeScriptModule } from './lib/typescript-runtime-loader.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
@@ -50,6 +52,30 @@ if (args.includes('--help') || args.includes('-h')) {
 if (!env || !storage) {
   console.error('observe:gate requires exactly one --env=dev|next and --storage-state=/absolute/external/state.json');
   process.exit(2);
+}
+if (env !== 'dev' && env !== 'next') {
+  console.error('observe:gate requires exactly one --env=dev|next');
+  process.exit(2);
+}
+
+try {
+  const { requireValidAuthCapability } = loadTypeScriptModule('src/auth/capabilityLifecycle.ts', { root });
+  const configured = JSON.parse(fs.readFileSync(path.join(root, 'config', 'environments', `${env}.json`), 'utf8'));
+  const capability = requireValidAuthCapability({
+    artefactPath: storage,
+    environment: env,
+    configuredUiBaseUrl: configured.uiBaseUrl,
+    requiredValidityMs: 120_000,
+  });
+  if (capability.budgetWarning) {
+    console.error(`[observe:gate] WARNING ${capability.budgetWarning.code}: remaining validity ${capability.budgetWarning.remainingValidityMs} ms is shorter than the declared run budget ${capability.budgetWarning.requiredValidityMs} ms`);
+  }
+} catch (error) {
+  if (error && typeof error === 'object' && typeof error.code === 'string' && error.code.startsWith('AUTH_CAPABILITY_')) {
+    console.error(`[observe:gate] REFUSED ${error.code}: ${error.message}`);
+    process.exit(3);
+  }
+  throw error;
 }
 
 const pwBin = path.join(root, 'node_modules', '.bin', 'playwright');

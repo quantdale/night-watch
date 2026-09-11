@@ -25,6 +25,19 @@ import {
   deriveAdoptedCase,
   renderAdoptedCatalogSource,
 } from '../../src/core/selfDev';
+import {
+  RELEASE_ADVANCE_CHECKS,
+  RELEASE_CERTIFICATION_VERSION,
+  RELEASE_VERDICT_COUNT_MARKERS,
+  RELEASE_VERDICT_STATUS_MARKER,
+  checkVerdictPresentation,
+  evaluateReleaseCertification,
+  parseReleaseCertificationDefinition,
+} from '../../src/core/releaseCertification';
+import type {
+  ReleaseCertificationDefinition,
+  ReleaseCheckOutput,
+} from '../../src/core/releaseCertification';
 
 const CHECKER = path.join(__dirname, '..', '..', 'bin', 'project-state-check.mjs');
 const R1_TASK_ID = 'phase-8b-1-r1-owner-gated-canonical-promotion-retry';
@@ -406,7 +419,14 @@ function makeFixture(options: FixtureOptions = {}): Fixture {
     fs.mkdirSync(path.dirname(destination), { recursive: true });
     fs.copyFileSync(source, destination);
   }
-  for (const bin of ['bin/agent-state.mjs', 'bin/agent-continuity-protocol.mjs', 'bin/child-environment.mjs', 'bin/project-state-check.mjs', 'bin/workspace-integrity.mjs', 'bin/lib/programme-state.mjs']) {
+  // F-12: the release certification definition and its pure judgement module
+  // are read from the root under test, so a fixture can mutate them.
+  for (const relative of ['src/core/releaseCertification/index.ts', 'config/release-certification.v1.json']) {
+    const destination = path.join(root, relative);
+    fs.mkdirSync(path.dirname(destination), { recursive: true });
+    fs.copyFileSync(path.join(process.cwd(), relative), destination);
+  }
+  for (const bin of ['bin/agent-state.mjs', 'bin/agent-continuity-protocol.mjs', 'bin/child-environment.mjs', 'bin/project-state-check.mjs', 'bin/workspace-integrity.mjs', 'bin/lib/operator-cli.mjs', 'bin/lib/openspec-ledger.mjs', 'bin/lib/programme-state.mjs', 'bin/lib/validation-lane-state.mjs']) {
     const destination = path.join(root, bin);
     fs.mkdirSync(path.dirname(destination), { recursive: true });
     fs.copyFileSync(path.join(process.cwd(), bin), destination);
@@ -1384,7 +1404,9 @@ test.describe('project-state truth checker (nightwatch.project-state.v2)', () =>
   test('29a. CI evidence at the substantive baseline is accepted', () => {
     const fixture = makeFixture();
     try {
-      const baseline = git(fixture.root, ['rev-parse', 'HEAD']);
+      // The fixture's second commit is documentation/continuity only, so the
+      // substantive anchor is the implementation-bearing first commit.
+      const baseline = git(fixture.root, ['rev-parse', 'HEAD~1']);
       rewriteBlock(fixture.root, {
         LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: baseline,
         CI_OBSERVED_SHA: baseline,
@@ -1403,7 +1425,7 @@ test.describe('project-state truth checker (nightwatch.project-state.v2)', () =>
     // The exact state this campaign had to record: CI ran and really failed.
     const fixture = makeFixture({ activeTaskStatus: 'in_progress' });
     try {
-      const baseline = git(fixture.root, ['rev-parse', 'HEAD']);
+      const baseline = git(fixture.root, ['rev-parse', 'HEAD~1']);
       rewriteBlock(fixture.root, {
         LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: baseline,
         CI_OBSERVED_SHA: baseline,
@@ -1664,6 +1686,286 @@ test.describe('C-10.5 A10 — cross-authority baseline invariant', () => {
       // The substituted SHA is genuinely in history — this is not a
       // "not in history" rejection.
       expect(errors.some((code) => code.includes('NOT_IN_HISTORY'))).toBe(false);
+    } finally {
+      fixture.cleanup();
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// F-12 — release definition and verdict (`nightwatch.release-certification.v1`).
+//
+// The ordered advance conditions must each resolve from a registered check; a
+// condition with no backing check fails the definition itself. The verdict
+// carries the three lane counts, binds evidence SHAs (stale evidence refuses
+// the certification), excludes the external production track, and refuses an
+// advance whose conditions are unmet, naming each. A surface presenting the
+// status alone fails the render guard.
+// ---------------------------------------------------------------------------
+
+function liveDefinition(): ReleaseCertificationDefinition {
+  const record = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'config/release-certification.v1.json'), 'utf8'));
+  const parsed = parseReleaseCertificationDefinition(record);
+  expect(parsed.ok).toBe(true);
+  if (parsed.definition === null) throw new Error('LIVE_DEFINITION_INVALID');
+  return parsed.definition;
+}
+
+function allMetOutputs(definition: ReleaseCertificationDefinition, except: string | null = null): Record<string, ReleaseCheckOutput> {
+  const outputs: Record<string, ReleaseCheckOutput> = {};
+  for (const condition of definition.conditions) {
+    outputs[condition.check] = condition.id === except
+      ? { state: 'UNMET', detail: 'forced unmet by the negative probe' }
+      : { state: 'MET', detail: 'synthetic met' };
+  }
+  return outputs;
+}
+
+function evaluationInput(
+  definition: ReleaseCertificationDefinition,
+  overrides: Partial<Parameters<typeof evaluateReleaseCertification>[0]> = {},
+): Parameters<typeof evaluateReleaseCertification>[0] {
+  return {
+    definition,
+    checkOutputs: allMetOutputs(definition),
+    certifiedCheckpointSha: '2'.repeat(40),
+    liveHeadSha: '2'.repeat(40),
+    projectCompletionStatus: 'OPERATIONALLY_ACCEPTED',
+    laneCounts: { proven: 7, externallyBlocked: 1, neverAttempted: 2, staleEvidence: 1 },
+    externalTrack: { id: 'production-path', stages: ['C-12'], state: 'EXTERNAL_PREREQUISITE_UNMET', detail: 'synthetic' },
+    isAncestor: () => false,
+    ...overrides,
+  };
+}
+
+test.describe('F-12 release definition and verdict', () => {
+  test('the live definition is ordered, fully backed and excludes the production track', () => {
+    const definition = liveDefinition();
+    expect(definition.schemaVersion).toBe(RELEASE_CERTIFICATION_VERSION);
+    expect(definition.conditions).toHaveLength(16);
+    expect(definition.conditions.map((condition) => condition.order)).toEqual([...Array(16)].map((_, index) => index + 1));
+    expect(new Set(definition.conditions.map((condition) => condition.id)).size).toBe(16);
+    const registered = new Set(RELEASE_ADVANCE_CHECKS.map((check) => check.id));
+    for (const condition of definition.conditions) {
+      expect(registered.has(condition.check), condition.id).toBe(true);
+    }
+    expect(definition.conditions.some((condition) => definition.externalTrack.checks.includes(condition.check))).toBe(false);
+    expect(definition.conditions.some((condition) => definition.externalTrack.stages.includes(condition.id))).toBe(false);
+    expect(definition.nextStatus.state).toBe('PENDING_OWNER_DECISION');
+    expect(definition.nextStatus.safeDefault).toBe('OPERATIONALLY_ACCEPTED');
+    expect(definition.advanceStatuses).toContain('PROJECT_COMPLETE_AND_CI_CERTIFIED');
+  });
+
+  test('a condition naming no registered check fails the definition itself', () => {
+    const record = JSON.parse(JSON.stringify(liveDefinition()));
+    record.conditions[0].check = 'no-such-check';
+    const parsed = parseReleaseCertificationDefinition(record);
+    expect(parsed.ok).toBe(false);
+    expect(parsed.errors.map((error) => error.code)).toContain('RELEASE_DEFINITION_CHECK_UNBACKED');
+  });
+
+  test('a production-track check can never be an advance condition', () => {
+    const record = JSON.parse(JSON.stringify(liveDefinition()));
+    record.conditions[0].check = 'production-track-status';
+    const parsed = parseReleaseCertificationDefinition(record);
+    expect(parsed.ok).toBe(false);
+    expect(parsed.errors.map((error) => error.code)).toContain('RELEASE_DEFINITION_PRODUCTION_CONDITION');
+  });
+
+  test('the verdict carries the three lane counts and the pending next status', () => {
+    const verdict = evaluateReleaseCertification(evaluationInput(liveDefinition()));
+    expect(verdict.laneCounts).toEqual({ proven: 7, externallyBlocked: 1, neverAttempted: 2, staleEvidence: 1 });
+    expect(verdict.nextStatus.state).toBe('PENDING_OWNER_DECISION');
+    expect(verdict.nextStatus.safeDefault).toBe('OPERATIONALLY_ACCEPTED');
+    expect(verdict.conditionsMet).toBe(16);
+    expect(verdict.advanceClaimed).toBe(false);
+    expect(verdict.advanceRefused).toBe(false);
+  });
+
+  test('an advance with exactly one unmet condition is refused naming only that condition', () => {
+    const definition = liveDefinition();
+    const target = definition.conditions[4];
+    if (target === undefined) throw new Error('CONDITION_FIXTURE_MISSING');
+    const verdict = evaluateReleaseCertification(evaluationInput(definition, {
+      checkOutputs: allMetOutputs(definition, target.id),
+      projectCompletionStatus: 'PROJECT_COMPLETE_AND_CI_CERTIFIED',
+    }));
+    expect(verdict.advanceClaimed).toBe(true);
+    expect(verdict.advanceRefused).toBe(true);
+    expect(verdict.conditionsUnmet).toBe(1);
+    expect(verdict.conditions.filter((condition) => condition.state !== 'MET').map((condition) => condition.id)).toEqual([target.id]);
+  });
+
+  test('evidence preceding the certified checkpoint reports STALE_EVIDENCE and refuses the certification', () => {
+    const ancestor = '1'.repeat(40);
+    const checkpoint = '2'.repeat(40);
+    const record = JSON.parse(JSON.stringify(liveDefinition()));
+    record.conditions[0].evidenceSha = ancestor;
+    const parsed = parseReleaseCertificationDefinition(record);
+    if (parsed.definition === null) throw new Error('DEFINITION_FIXTURE_INVALID');
+    const verdict = evaluateReleaseCertification(evaluationInput(parsed.definition, {
+      projectCompletionStatus: 'PROJECT_COMPLETE_AND_CI_CERTIFIED',
+      isAncestor: (left, right) => left === ancestor && right === checkpoint,
+    }));
+    const stale = verdict.conditions.filter((condition) => condition.staleEvidence);
+    expect(stale).toHaveLength(1);
+    expect(stale[0]?.id).toBe(parsed.definition.conditions[0]?.id);
+    expect(stale[0]?.state).toBe('STALE_EVIDENCE');
+    expect(verdict.certificationRefused).toBe(true);
+    expect(verdict.advanceRefused).toBe(true);
+    expect(verdict.staleEvidenceConditions).toEqual([parsed.definition.conditions[0]?.id]);
+  });
+
+  test('a surface presenting the status alone fails the render guard', () => {
+    const bare = `Project completion status: OPERATIONALLY_ACCEPTED <!--${RELEASE_VERDICT_STATUS_MARKER}OPERATIONALLY_ACCEPTED-->`;
+    expect(checkVerdictPresentation(bare)).toEqual([...RELEASE_VERDICT_COUNT_MARKERS]);
+    const complete = `${bare}\n${RELEASE_VERDICT_COUNT_MARKERS.map((marker) => `<!--${marker}0-->`).join('\n')}`;
+    expect(checkVerdictPresentation(complete)).toEqual([]);
+    expect(checkVerdictPresentation('no status here')).toEqual([]);
+  });
+
+  test('the live presentation surfaces carry the counts with the status', () => {
+    for (const surface of ['README.md', 'docs/RELEASE-ADVANCE-CONDITIONS.md'] as const) {
+      const text = fs.readFileSync(path.join(process.cwd(), surface), 'utf8');
+      expect(text, surface).toContain(RELEASE_VERDICT_STATUS_MARKER);
+      expect(checkVerdictPresentation(text), surface).toEqual([]);
+    }
+  });
+});
+
+test.describe('F-12 project:check release certification', () => {
+  function rewriteCertification(root: string, mutate: (record: Record<string, unknown>) => void): void {
+    const file = path.join(root, 'config/release-certification.v1.json');
+    const record = JSON.parse(fs.readFileSync(file, 'utf8'));
+    mutate(record as Record<string, unknown>);
+    fs.writeFileSync(file, `${JSON.stringify(record, null, 2)}\n`);
+  }
+
+  function rewriteBlockFor(root: string, replacements: Record<string, string>): void {
+    const file = path.join(root, 'docs/CURRENT_STATE.md');
+    let text = fs.readFileSync(file, 'utf8');
+    for (const [key, value] of Object.entries(replacements)) {
+      text = text.replace(new RegExp(`^${key}: .*$`, 'm'), `${key}: ${value}`);
+    }
+    fs.writeFileSync(file, text);
+    git(root, ['add', '--all']);
+    git(root, ['commit', '--quiet', '--no-gpg-sign', '-m', 'rewrite block']);
+  }
+
+  test('R1. a PASS receipt carries the verdict with the lane counts and every condition', () => {
+    const fixture = makeFixture();
+    try {
+      const result = run(fixture.root);
+      expect(result.status).toBe(0);
+      const output = JSON.parse(result.stdout) as {
+        releaseVerdict: {
+          schemaVersion: string;
+          laneCounts: Record<string, number>;
+          conditions: unknown[];
+          nextStatus: { state: string; safeDefault: string };
+          advanceClaimed: boolean;
+          externalTrack: { state: string };
+        };
+      };
+      expect(output.releaseVerdict.schemaVersion).toBe('nightwatch.release-certification.v1');
+      expect(output.releaseVerdict.laneCounts).toEqual({ proven: 0, externallyBlocked: 0, neverAttempted: 0, staleEvidence: 0 });
+      expect(output.releaseVerdict.conditions).toHaveLength(16);
+      expect(output.releaseVerdict.nextStatus.state).toBe('PENDING_OWNER_DECISION');
+      expect(output.releaseVerdict.nextStatus.safeDefault).toBe('OPERATIONALLY_ACCEPTED');
+      expect(output.releaseVerdict.advanceClaimed).toBe(false);
+      expect(output.releaseVerdict.externalTrack.state).toBe('UNAVAILABLE_CAPABILITY');
+    } finally {
+      fixture.cleanup();
+    }
+  });
+
+  test('R2. an advance status with unmet conditions is refused, naming each condition', () => {
+    const fixture = makeFixture({
+      activeTaskStatus: 'in_progress',
+      block: { projectCompletionStatus: 'PROJECT_COMPLETE_AND_CI_CERTIFIED' },
+    });
+    try {
+      const result = run(fixture.root);
+      expect(result.status).not.toBe(0);
+      expect(result.stderr).toContain('PROJECT_STATE_ADVANCE_CONDITION_UNMET: validation-lane-closure');
+      expect(result.stderr).toContain('PROJECT_STATE_ADVANCE_CONDITION_UNMET: exact-head-ci-authority');
+      expect(result.stderr).toContain('PROJECT_STATE_ADVANCE_CONDITION_UNMET: authenticated-capability-lifecycle');
+    } finally {
+      fixture.cleanup();
+    }
+  });
+
+  test('R3. a condition with no backing check fails the definition itself', () => {
+    const fixture = makeFixture({ activeTaskStatus: 'in_progress' });
+    try {
+      rewriteCertification(fixture.root, (record) => {
+        const conditions = record.conditions as Array<{ check: string }>;
+        if (conditions[0] !== undefined) conditions[0].check = 'no-such-check';
+      });
+      git(fixture.root, ['add', '--all']);
+      git(fixture.root, ['commit', '--quiet', '--no-gpg-sign', '-m', 'unbacked condition probe']);
+      const result = run(fixture.root);
+      expect(result.status).not.toBe(0);
+      expect(result.stderr).toContain('PROJECT_STATE_RELEASE_DEFINITION_CHECK_UNBACKED');
+    } finally {
+      fixture.cleanup();
+    }
+  });
+
+  test('R4. stale condition evidence refuses an advance and names the condition', () => {
+    const fixture = makeFixture({
+      activeTaskStatus: 'in_progress',
+      block: { projectCompletionStatus: 'PROJECT_COMPLETE_AND_CI_CERTIFIED' },
+    });
+    try {
+      const ancestor = git(fixture.root, ['rev-parse', 'HEAD~1']);
+      rewriteCertification(fixture.root, (record) => {
+        const conditions = record.conditions as Array<{ id: string; evidenceSha: string | null }>;
+        const target = conditions.find((condition) => condition.id === 'completion-ledger-truth');
+        if (target !== undefined) target.evidenceSha = ancestor;
+      });
+      git(fixture.root, ['add', '--all']);
+      git(fixture.root, ['commit', '--quiet', '--no-gpg-sign', '-m', 'stale evidence probe']);
+      const result = run(fixture.root);
+      expect(result.status).not.toBe(0);
+      expect(result.stderr).toContain('PROJECT_STATE_STALE_EVIDENCE: completion-ledger-truth');
+    } finally {
+      fixture.cleanup();
+    }
+  });
+
+  test('R5. a presentation surface presenting the status alone fails the render guard', () => {
+    const fixture = makeFixture({ activeTaskStatus: 'in_progress' });
+    try {
+      fs.writeFileSync(
+        path.join(fixture.root, 'docs/RELEASE-ADVANCE-CONDITIONS.md'),
+        `Bare status <!--status:PROJECT_COMPLETION_STATUS=OPERATIONALLY_ACCEPTED-->\n`,
+      );
+      git(fixture.root, ['add', '--all']);
+      git(fixture.root, ['commit', '--quiet', '--no-gpg-sign', '-m', 'bare verdict surface probe']);
+      const result = run(fixture.root);
+      expect(result.status).not.toBe(0);
+      expect(result.stderr).toContain('PROJECT_STATE_VERDICT_PRESENTED_BARE');
+    } finally {
+      fixture.cleanup();
+    }
+  });
+
+  test('R6. a documentation-only commit is refused as the implementation anchor', () => {
+    const fixture = makeFixture();
+    try {
+      fs.writeFileSync(path.join(fixture.root, 'docs/ROADMAP.md'), '# Roadmap\n\nsynthetic documentation-only descendant\n');
+      git(fixture.root, ['add', '--all']);
+      git(fixture.root, ['commit', '--quiet', '--no-gpg-sign', '-m', 'documentation-only descendant']);
+      const docsOnly = git(fixture.root, ['rev-parse', 'HEAD']);
+      rewriteBlockFor(fixture.root, {
+        LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: docsOnly,
+        LAST_LOCALLY_VALIDATED_SHA: docsOnly,
+        LAST_CLEAN_VALIDATED_SHA: docsOnly,
+      });
+      const result = run(fixture.root);
+      expect(result.status).not.toBe(0);
+      expect(result.stderr).toContain('PROJECT_STATE_IMPLEMENTATION_ANCHOR_DOCUMENTATION_ONLY');
     } finally {
       fixture.cleanup();
     }

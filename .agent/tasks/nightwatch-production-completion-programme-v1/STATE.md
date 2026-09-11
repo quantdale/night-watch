@@ -36,19 +36,23 @@ external dependency with its blocking class and next action.
 
 ## Current Milestone
 
-Milestone ID: G6
+Milestone ID: G13
 Milestone status: IN_PROGRESS
-What is being attempted: workspace and continuity drift closure. G6.1–G6.3 and
-G6.7–G6.9 are implemented and locally validated in session
-`nightwatch-production-completion-3d648499`: claim-task liveness in
-`WORKSPACE_WORKTREE_METADATA`, all 31 legacy v1 records declared
-`PERMANENTLY_HISTORICAL` append-only, and the non-merged branches classified
-from the diff against `origin/main`. G6.4/G6.5 (clearing the canonical
-maintenance claim and the foreign terminal-task session) are owner actions and
-were deliberately not performed; G6.6 is blocked by them; G6.10 is the owner
-deletion decision; G6.11 integration/release remains the session owner's
-action. G1.18 integration is still externally blocked by the canonical
-checkout's concurrent uncommitted artifact.
+What is being attempted: release definition and verdict (F-12).
+`nightwatch.release-certification.v1` now carries an ordered set of advance
+conditions in `config/release-certification.v1.json`, each backed by a check
+registered in `src/core/releaseCertification/index.ts`; `bin/project-state-check.mjs`
+evaluates them, refuses an advance with unmet conditions naming each, binds
+each condition's evidence SHA (STALE_EVIDENCE refuses the certification),
+carries the three lane counts, excludes the production path as its own
+external track, and refuses a documentation-only commit as the implementation
+anchor. The honest live evaluation is 4 MET / 5 UNMET / 7
+UNAVAILABLE_CAPABILITY, recorded in `docs/RELEASE-ADVANCE-CONDITIONS.md`.
+G13.8 (the status beyond `OPERATIONALLY_ACCEPTED`) is a pending owner decision
+with safe default `OPERATIONALLY_ACCEPTED`; G13.10 integration/`gate:local`
+remain blocked by the externally dirty canonical checkout and are the session
+owner's action. Earlier groups' task boxes remain as recorded in
+`tasks.md`; this record advances the milestone pointer only.
 
 ## Completed Milestones
 
@@ -88,25 +92,44 @@ checkout's concurrent uncommitted artifact.
   non-merged branches are classified from the actual diff against
   `origin/main`, citing their unique commits, in the programme `tasks.md`.
 
+- **G13.1–G13.7, G13.9 COMPLETE (local)** — release definition and verdict:
+  `config/release-certification.v1.json` declares the ordered advance
+  conditions each backed by a registered check; `src/core/releaseCertification/index.ts`
+  validates the definition (an unbacked condition fails the definition
+  itself), evaluates each condition from the output of the check that owns it,
+  carries the three lane counts, binds evidence SHAs and reports
+  `STALE_EVIDENCE`, excludes the production path as an external track with its
+  own status, and renders the verdict only with its counts.
+  `bin/project-state-check.mjs` refuses an advance with unmet conditions
+  naming each, refuses stale evidence, guards the count-bearing presentation,
+  and refuses a documentation-only commit as the implementation anchor. The
+  honest live evaluation at checkpoint `88e3c3f` is 4 MET, 5 UNMET, 7
+  UNAVAILABLE_CAPABILITY, recorded in `docs/RELEASE-ADVANCE-CONDITIONS.md`.
+  G13.8 is a pending owner decision (safe default `OPERATIONALLY_ACCEPTED`);
+  G13.10 is partial/blocked as recorded below.
+
 ## Work In Progress
 
-G6 is implemented and locally validated. The remaining G6 items are owner
-actions, not agent actions: clear the canonical maintenance claim and the
-foreign terminal-task session through the session CLI (G6.4/G6.5), decide
-per-branch deletion (G6.10), then integrate and release (G6.11) from the
-session owner. G1.18 integration remains externally blocked by the canonical
-checkout's concurrent uncommitted artifact.
+G13 is implemented and locally validated. Two items remain and neither is an
+agent implementation action: G13.8 is the owner's decision naming the status
+beyond `OPERATIONALLY_ACCEPTED` (safe default stays `OPERATIONALLY_ACCEPTED`);
+G13.10 is blocked at `gate:local`/full regression/integration because the
+canonical checkout is externally dirty with a concurrent planning artifact and
+the session work is uncommitted by design — integration and release are the
+session owner's action. The earlier G6 owner actions (6.4/6.5/6.10) and G1.18
+integration remain as recorded.
 
 ## Exact Next Action
 
-Owner actions, in order: (1) release or re-point the canonical
-`CANONICAL_MAINTENANCE` claim naming
-`nightwatch-control-center-render-truth-v1`; (2) the owner of
+Owner actions, in order: (1) name the status beyond `OPERATIONALLY_ACCEPTED`
+or explicitly keep the safe default (G13.8); (2) release or re-point the
+canonical `CANONICAL_MAINTENANCE` claim naming
+`nightwatch-control-center-render-truth-v1`; (3) the owner of
 `nightwatch-repository-hardening--e7b9be89` releases its terminal-task claim;
-(3) approve per-branch deletion for the five SUPERSEDED branches named in the
-G6 record (none is held by a registered worktree); (4) the session owner
-validates, commits, fast-forward integrates and releases. No agent
-implementation action remains for G6.
+(4) reconcile the canonical checkout's concurrent planning artifact, then run
+`gate:local`, the full offline regression, the UI/browser lanes, commit,
+fast-forward integrate and release. No agent implementation action remains for
+G13.
 
 ## Files Changed
 
@@ -133,6 +156,19 @@ implementation action remains for G6.
 | `tests/unit/workspaceIsolation.test.ts` | F-07 claim-task probes and fixture task STATE records | MODIFIED |
 | `tests/unit/agent-state.test.ts` | legacy-disposition warning-count probes | MODIFIED |
 | `openspec/changes/nightwatch-production-completion-programme-v1/tasks.md` | G6 checkboxes and the branch-classification record | MODIFIED |
+
+### G13 files
+
+| Path | Reason | Status |
+|---|---|---|
+| `src/core/releaseCertification/index.ts` | ordered advance conditions registry, definition validation, pure verdict evaluation, evidence staleness, render guard | ADDED |
+| `config/release-certification.v1.json` | the certification record: 16 ordered conditions with evidence bindings, advance statuses, pending-owner next status, external track, presentation surfaces | ADDED |
+| `bin/project-state-check.mjs` | gathers each condition's check output, evaluates the certification, refuses an advance with unmet conditions, refuses stale evidence and a documentation-only implementation anchor, guards count-bearing surfaces, emits the verdict in the receipt | MODIFIED |
+| `docs/RELEASE-ADVANCE-CONDITIONS.md` | the verdict surface and honest evaluation record (13.5, 13.9) | ADDED |
+| `config/document-role.v1.json` | declares the new surface `CURRENT_TRUTH` with a length bound | MODIFIED |
+| `tests/unit/projectState.test.ts` | F-12 pure probes and six project:check fixture probes (R1–R6); fixture copies the certification record and module and the agent-state module closure | MODIFIED |
+| `bin/lib/typescript-runtime-loader.d.mts` | regenerated loader declaration for the new literal loader call sites (G15 contract) | MODIFIED |
+| `.agent/tasks/.../PLAN.md`, `STATE.md` | G13 status and evidence | MODIFIED |
 
 ## Validation Ledger
 
@@ -230,6 +266,52 @@ Relevant failure/output summary: `WORKSPACE_WORKTREE_METADATA=ATTENTION`,
 rendered; the only error is the external
 `WORKSPACE_CANONICAL_DIRTY_WHILE_SESSION_LIVE`.
 
+### G13 validation
+
+Command: `npx playwright test tests/unit/projectState.test.ts --workers=1`
+Result: PASS
+When: 2026-09-12
+Relevant failure/output summary: 81 passed, including the F-12 pure probes
+(ordered/backed definition, unbacked condition, production-track exclusion,
+lane counts and pending next status, one-condition advance refusal, stale
+evidence refusal, render guard, live surfaces) and the project:check probes
+R1–R6 (receipt verdict, advance refusal naming each condition, unbacked
+definition, stale evidence, bare surface, documentation-only anchor).
+
+Command: `npm run typecheck`
+Result: PASS
+When: 2026-09-12
+Relevant failure/output summary: no diagnostics.
+
+Command: `node bin/hardening-check.mjs`
+Result: PASS
+When: 2026-09-12
+Relevant failure/output summary: offline structural invariants hold, including
+the regenerated loader declaration and the new document role/status checks.
+
+Command: `npm run validation:universe`
+Result: PASS
+When: 2026-09-12
+Relevant failure/output summary: discovered=447, unclassified=0, digest
+unchanged (`sha256:e04d813efa7aa0bbbb1fa219`); no new test file or bin was
+added, so no inventory registration or digest move was needed.
+
+Command: `node bin/project-state-check.mjs`
+Result: FAIL (external cascade only)
+When: 2026-09-12
+Relevant failure/output summary: `PROJECT_STATE_CHECKOUT_DIRTY` (G13 work
+uncommitted by design) and `PROJECT_STATE_ACTIVE_TASK_CONTINUITY_FAILED`
+(canonical checkout externally dirty with a concurrent planning artifact);
+the release verdict printed with 4/16 conditions MET, 5 UNMET, 7
+UNAVAILABLE_CAPABILITY, advance not claimed, certification not refused.
+
+Command: `node bin/bin-typecheck.mjs --write`
+Result: PASS
+When: 2026-09-12
+Relevant failure/output summary: regenerated
+`bin/lib/typescript-runtime-loader.d.mts` for the new literal loader call
+sites; the subsequent hardening rule passes.
+
 ## Decisions Made During This Task
 
 Decision: implement all 21 groups serially in one owned session.
@@ -293,6 +375,17 @@ Consequence: `CF-1`/`CF-2` live in the programme's `tasks.md`.
   COMPLETE) must be cleared or released through the session CLI by their
   owners. G6.6 waits on them; G6.10 per-branch deletion is a further owner
   decision.
+- G13.8 is a pending owner decision, not a blocker on local work: the status
+  beyond `OPERATIONALLY_ACCEPTED` is unnamed, and the safe default remains
+  `OPERATIONALLY_ACCEPTED`; no code or document invents the name.
+- G13.10 cannot complete until the canonical checkout is clean: `gate:local`,
+  the full regression, the UI/browser lanes, integration and release all
+  traverse `WORKSPACE_CANONICAL_DIRTY_WHILE_SESSION_LIVE`, and the session work
+  is uncommitted by design until the session owner integrates.
+- Concurrent writers are live in this worktree (group 21 files were modified
+  during this session). Validation results above were taken after
+  `node bin/hardening-check.mjs` returned PASS; a re-run at integration time
+  is required if the concurrent surface changes again.
 
 ## Safety Events
 

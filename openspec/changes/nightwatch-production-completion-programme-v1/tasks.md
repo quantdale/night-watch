@@ -520,28 +520,136 @@ outside this session). Integration and release are not performed here.
 
 ## 13. Release definition and verdict
 
-- [ ] 13.1 Extend `nightwatch.release-certification.v1` with the eight ordered
+- [x] 13.1 Extend `nightwatch.release-certification.v1` with the ordered
       advance conditions, each backed by an existing or newly created check
-- [ ] 13.2 Assert every condition resolves from a check's output, not prose; a
+      — `config/release-certification.v1.json` declares all sixteen ordered
+      conditions (the eight record-level conditions 1–8 and the eight
+      code-level conditions 9–16 added by the second pass); the registry and
+      definition validation live in
+      `src/core/releaseCertification/index.ts`; the "eight" in this line was
+      the pre-second-pass count and is superseded by the frozen change spec
+- [x] 13.2 Assert every condition resolves from a check's output, not prose; a
       condition with no backing check fails the definition itself
-- [ ] 13.3 Exclude the production path from the advance conditions; report it
+      — `parseReleaseCertificationDefinition` fails a condition whose `check`
+      is not in `RELEASE_ADVANCE_CHECKS` (`RELEASE_DEFINITION_CHECK_UNBACKED`);
+      `project:check` evaluates each condition from the output of the check
+      that owns it and the verdict records the state and detail; probes in
+      `tests/unit/projectState.test.ts` (pure negative probe and project:check
+      fixture probe R3)
+- [x] 13.3 Exclude the production path from the advance conditions; report it
       as a separate external track with its own status
-- [ ] 13.4 `project:check` refuses an advance with unmet conditions, naming
+      — `externalTrack` declares C-12 → C-14 and P4 and
+      `excludedFromAdvanceConditions: true`; a condition naming a
+      production-track check fails the definition
+      (`RELEASE_DEFINITION_PRODUCTION_CONDITION`); the verdict reports the
+      track's own status from `src/core/productionTrack/`
+      (`EXTERNAL_PREREQUISITE_UNMET` at this checkpoint)
+- [x] 13.4 `project:check` refuses an advance with unmet conditions, naming
       each; negative-probe with one condition forced unmet
-- [ ] 13.5 Carry the three lane counts (proven, externally blocked, never
+      — an advance status with any unmet condition fails with
+      `PROJECT_STATE_ADVANCE_CONDITION_UNMET: <id> (<state>)` per condition;
+      the pure probe forces exactly one condition unmet and asserts only that
+      id is named; fixture probe R2 exercises the refusal end to end
+- [x] 13.5 Carry the three lane counts (proven, externally blocked, never
       attempted) with the status; a surface presenting the status alone fails
       the render guard
-- [ ] 13.6 Bind each condition's evidence SHA; report `STALE_EVIDENCE` when it
+      — the verdict carries `laneCounts` (7 / 1 / 2, plus stale evidence 1 at
+      this checkpoint); `checkVerdictPresentation` fails a surface that
+      carries `status:PROJECT_COMPLETION_STATUS=` without the three count
+      markers (`PROJECT_STATE_VERDICT_PRESENTED_BARE`); README and the new
+      surface both carry them; fixture probe R5
+- [x] 13.6 Bind each condition's evidence SHA; report `STALE_EVIDENCE` when it
       precedes the certified checkpoint and refuse the certification
-- [ ] 13.7 Re-assert that a documentation-only descendant is never the
+      — every condition binds `evidenceSha` (40-hex, `HEAD` or `null`); a
+      bound SHA that is a strict ancestor of the certified checkpoint reports
+      `STALE_EVIDENCE`, is unmet and sets `certificationRefused`; an advance
+      fails with `PROJECT_STATE_STALE_EVIDENCE: <id>`; pure probe and fixture
+      probe R4
+- [x] 13.7 Re-assert that a documentation-only descendant is never the
       implementation anchor
+      — `project:check` classifies the commit at
+      `LAST_SUBSTANTIVE_IMPLEMENTATION_SHA`; a commit touching only approved
+      checkpoint paths fails
+      `PROJECT_STATE_IMPLEMENTATION_ANCHOR_DOCUMENTATION_ONLY`; fixture probe
+      R6; the existing A10 docs-only descendant chain still passes
 - [ ] 13.8 **Owner decision required:** name the status beyond
-      `OPERATIONALLY_ACCEPTED`
-- [ ] 13.9 Evaluate the conditions against the tree as it stands after groups
+      `OPERATIONALLY_ACCEPTED` — PENDING OWNER DECISION, not claimed: the
+      certification record carries
+      `nextStatus.state: PENDING_OWNER_DECISION` with safe default
+      `OPERATIONALLY_ACCEPTED` and owner decision `13.8`; no code or document
+      invents the name, and only `PROJECT_COMPLETE_AND_CI_CERTIFIED` is
+      currently treated as an advance status
+- [x] 13.9 Evaluate the conditions against the tree as it stands after groups
       1–12 and record the honest result, met or unmet
+      — 4 of 16 MET (`completion-ledger-truth`, `documentation-currency`,
+      `dependency-supply-chain-currency`, `structural-rule-soundness`), 5
+      UNMET (`validation-lane-closure`, `exact-head-ci-authority`,
+      `operator-cli-contract`, `workspace-continuity-drift-closure`,
+      `cli-implementation-contract`), 7 UNAVAILABLE because the group that
+      creates the check has not landed (3, 9, 12, 13, 14, 15, 16); recorded in
+      `docs/RELEASE-ADVANCE-CONDITIONS.md` and reproduced by
+      `node bin/project-state-check.mjs`
 - [ ] 13.10 Full offline regression, `gate:local`, `gate:clean`,
       `gate:topology`, UI and browser lanes; reconcile project truth;
       integrate by fast-forward; verify `HEAD == origin/main`; release
+      — PARTIAL/BLOCKED: `project:check`, `typecheck`, `hardening:check`,
+      `validation:universe` and the focused suites executed (results in the
+      group record). `gate:local`/regression/integration cannot complete while
+      the canonical checkout is externally dirty with a concurrent planning
+      artifact and the session work is uncommitted by design; integration and
+      release are the session owner's action and were not performed here
+
+### Group 13 record — executed 2026-09-12 in session `nightwatch-production-completion-3d648499`
+
+13.1/13.2. `config/release-certification.v1.json` carries the ordered
+conditions; each names a `check` id registered in `RELEASE_ADVANCE_CHECKS` in
+`src/core/releaseCertification/index.ts`. The definition validator fails an
+unregistered check (`RELEASE_DEFINITION_CHECK_UNBACKED`), an invalid order, a
+duplicate id, a malformed evidence SHA, a condition naming an excluded
+production-track check, and a missing pending-owner `nextStatus`. The checker
+maps definition errors to `PROJECT_STATE_<code>` and evaluates each condition
+from the output of the check that owns it: lane state (G2), project CI anchors
+(G3), the agent-state ledger/claim diagnostics (G1/G6), the operator command
+listing (G4), the documentation-currency report (G7), the dependency-advisory
+lane record (G9), the bin-typecheck lane mode (G15), the hardening rule
+registry (G16) and the accessibility lane registration (G20). Conditions whose
+group has not landed report UNAVAILABLE_CAPABILITY naming the group.
+
+13.3/13.9. The external production track is excluded from the conditions by
+construction and reported with its own status
+(`EXTERNAL_PREREQUISITE_UNMET`). The live evaluation at checkpoint
+`88e3c3fb52937ff303b0944cc22cfee624bf807e` is recorded in
+`docs/RELEASE-ADVANCE-CONDITIONS.md`: 4 MET, 5 UNMET, 7 UNAVAILABLE; the
+advance is not claimed, so the unmet conditions do not fail `project:check`,
+and setting `PROJECT_COMPLETE_AND_CI_CERTIFIED` today would fail naming every
+unmet condition.
+
+13.5/13.6. The verdict carries proven=7, externally blocked=1 and never
+attempted=2, with stale evidence 1 separately. `checkVerdictPresentation`
+requires the three count tags wherever a surface presents the status; README
+already carried them and the new surface carries them. Evidence bindings at
+`88e3c3f…` (checkpoint), `8bad862e…` (the session head at which the check
+outputs were earned), `36bd493…` (the dependency lane record) and `NONE` for
+uneamed evidence are all current; a stale binding refuses the certification
+and an advance fails with `PROJECT_STATE_STALE_EVIDENCE: <id>`.
+
+13.7. `project:check` refuses a documentation-only commit as
+`LAST_SUBSTANTIVE_IMPLEMENTATION_SHA`
+(`PROJECT_STATE_IMPLEMENTATION_ANCHOR_DOCUMENTATION_ONLY`); the docs-only
+descendant chains in the A10 fixtures still pass because the anchor there is
+an implementation commit.
+
+13.10. Executed in the session worktree: `npm run typecheck` PASS;
+`node bin/hardening-check.mjs` PASS; `npm run validation:universe` PASS
+(discovered=447, unclassified=0, digest unchanged); `npx playwright test
+tests/unit/projectState.test.ts --workers=1` PASS (81 passed, including the
+F-12 probes); `node bin/project-state-check.mjs` FAIL only on
+`PROJECT_STATE_CHECKOUT_DIRTY` (session work uncommitted by design) and
+`PROJECT_STATE_ACTIVE_TASK_CONTINUITY_FAILED` (external canonical dirty with a
+concurrent planning artifact), with the release verdict printed as recorded
+above. `gate:local`, the full regression, UI/browser lanes, integration and
+release are not performed: they cannot pass while the canonical checkout is
+externally dirty, and integration/release are the session owner's action.
 
 
 ## 14. Dead architecture closure
@@ -752,30 +860,35 @@ outside this session). Integration and release are not performed here.
 
 ## 21. Authenticated capability lifecycle
 
-- [ ] 21.1 Define the capture sidecar record: capture instant, environment,
+- [x] 21.1 Define the capture sidecar record: capture instant, environment,
       origin, earliest observed cookie expiry, declared validity window,
       artefact digest — and no cookie value, token or storage value
-- [ ] 21.2 Write it atomically with the capture in `auth:capture`; pass it
+- [x] 21.2 Write it atomically with the capture in `auth:capture`; pass it
       through the redaction layer; extend the secret-file ignore patterns
-- [ ] 21.3 Add the one-time adoption path so an existing artefact gains a
+- [x] 21.3 Add the one-time adoption path so an existing artefact gains a
       record without re-capture
-- [ ] 21.4 Implement the pre-flight resolving `VALID`, `EXPIRED`,
+- [x] 21.4 Implement the pre-flight resolving `VALID`, `EXPIRED`,
       `WRONG_ENVIRONMENT`, `UNKNOWN_AGE`, `MISSING`, `UNREADABLE`
 - [ ] 21.5 Evaluate expiry with the existing `storageState.ts` cookie
       applicability logic; add a rule failing on a second implementation
-- [ ] 21.6 Refuse every non-`VALID` state before any browser context,
+      (single evaluator reused and the one pre-existing second implementation
+      in `bin/phase23-dev.mjs` removed; the registered structural rule itself
+      is owner-blocked: `bin/hardening-check.mjs` belongs to another worker)
+- [x] 21.6 Refuse every non-`VALID` state before any browser context,
       subprocess, socket or file, with a distinct code and the re-capture
       remedy
-- [ ] 21.7 Prove `UNKNOWN_AGE` refuses rather than proceeding optimistically
+- [x] 21.7 Prove `UNKNOWN_AGE` refuses rather than proceeding optimistically
 - [ ] 21.8 Wire the pre-flight into all 18 authorization-gated checks,
       `journey:phase2c`, `explore:phase4`, `api:phase5`, `campaign:real` and
-      the C-12 path
-- [ ] 21.9 Report authentication state from `status:local`,
+      the C-12 path (all named bin launchers and 10 MANUAL_OWNER runners are
+      wired; the LIVE_APP_SMOKE checks that build synthetic local state are
+      not real authenticated lanes and remain unwired)
+- [x] 21.9 Report authentication state from `status:local`,
       `observe:preflight` and `c12:preflight` reading metadata only — no
       browser, no host contact, no cookie value read
-- [ ] 21.10 Warn when remaining validity is shorter than a campaign's declared
+- [x] 21.10 Warn when remaining validity is shorter than a campaign's declared
       budget, naming both durations
-- [ ] 21.11 Surface present-and-expired on the Control Center as an epistemic
+- [x] 21.11 Surface present-and-expired on the Control Center as an epistemic
       class, distinct from absent
 - [ ] 21.12 Document in `README.md` and `docs/SAFETY_MODEL.md` that
       authenticated capability expires, that no automated renewal exists, and

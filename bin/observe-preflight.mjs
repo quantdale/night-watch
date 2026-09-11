@@ -2,13 +2,15 @@
 /**
  * Phase 2A real-target preflight.
  *
- * This command validates configuration only. It never starts a browser,
- * resolves a hostname, opens a socket, loads storage state, or contacts an
- * Alphaus environment.
+ * This command validates configuration and reports authenticated-capability
+ * lifecycle metadata. It never starts a browser, resolves a hostname, opens a
+ * socket, reads a cookie value, or contacts an Alphaus environment.
  */
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { loadTypeScriptModule } from './lib/typescript-runtime-loader.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SUPPORTED_REAL_ENVS = new Set(['dev', 'next']);
@@ -139,6 +141,13 @@ try {
   const env = parsed.env.trim().toLowerCase();
   const config = loadConfig(env);
   const target = validateTarget(env, config, parsed.uiUrl ?? config.uiBaseUrl);
+  const { collectAuthCapabilityReport } = loadTypeScriptModule('src/auth/capabilityLifecycle.ts', { root });
+  const authentication = collectAuthCapabilityReport({
+    homeDirectory: os.homedir(),
+    environmentVariable: process.env.NIGHTWATCH_STORAGE_STATE ?? null,
+    selectedEnvironment: env,
+    configuredOrigin: target.origin,
+  });
   console.log(JSON.stringify({
     status: 'PASS',
     environment: env,
@@ -147,8 +156,26 @@ try {
     apiHosts: config.apiHosts.map(hostFromEntry),
     authHosts: config.authHosts.map(hostFromEntry),
     production: 'explicitly denied',
-    authentication: 'not required for preflight',
-    network: 'no DNS/TCP/browser activity performed',
+    authentication: {
+      schemaVersion: authentication.schemaVersion,
+      checkedAt: authentication.checkedAt,
+      entries: authentication.entries.map((entry) => ({
+        environment: entry.environment,
+        source: entry.source,
+        present: entry.present,
+        state: entry.state,
+        epistemicClass: entry.epistemicClass,
+        remainingValidityMs: entry.remainingValidityMs,
+        refusalCode: entry.refusalCode,
+        remedy: entry.remedy,
+        blockedLanes: entry.blockedLanes,
+      })),
+      // Observed capture lifetimes (`earliestCookieExpiry - captureInstant`)
+      // from real records only; the renewal cadence is documented from this
+      // measurement, never assumed.
+      observedCaptureLifetimes: authentication.observedCaptureLifetimes,
+    },
+    network: 'no DNS/TCP/browser activity performed; lifecycle metadata only, no cookie value read',
   }, null, 2));
 } catch (error) {
   fail(error instanceof Error ? error.message : String(error));

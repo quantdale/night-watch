@@ -215,14 +215,19 @@ integration.
 
 ### G13 — Release definition and verdict
 
-- Objective: `nightwatch.release-certification.v1` extended with eight ordered
+- Objective: `nightwatch.release-certification.v1` extended with the ordered
   advance conditions, each backed by a check; honest verdict.
 - Files/areas: `bin/project-state-check.mjs`, `config/quality-gate.v1.json`,
   docs, task state.
 - Acceptance: conditions resolve from check output; negative probe; lane
   counts carried with status; evidence SHA freshness enforced.
 - Validation commands: `npm run project:check`, `npm run gate:local`.
-- Status: NOT_STARTED
+- Status: COMPLETE_LOCAL (13.1–13.7, 13.9). 13.8 is a pending owner decision
+  with safe default `OPERATIONALLY_ACCEPTED`; 13.10 is blocked at
+  `gate:local`/regression/integration by the externally dirty canonical
+  checkout and is the session owner's action. Recorded in
+  `docs/RELEASE-ADVANCE-CONDITIONS.md` and the group 13 record in
+  `openspec/changes/nightwatch-production-completion-programme-v1/tasks.md`.
 
 ### G14 — Dead architecture closure
 

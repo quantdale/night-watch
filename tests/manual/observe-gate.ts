@@ -13,6 +13,7 @@ import { selectEnvironment } from '../../src/core/environment';
 import { runRealRunGate } from '../../src/core/safety/realRunGate';
 import { AUTHENTICATED_BROWSER_CONTRACT } from '../../src/browser/contract';
 import { NIGHTWATCH_STORAGE_STATE_VAR } from '../../src/browser/fixtures/storageState';
+import { assertAuthCapabilityPreflight } from '../../src/auth/capabilityLifecycle';
 import { discoverRepositories, snapshotRepositories } from '../../src/core/repositories/snapshotter';
 
 function nightwatchDirtyPaths(): string[] {
@@ -45,6 +46,14 @@ test('Phase 2A pre-real-run safety gate', async () => {
   const snapshots = await snapshotRepositories({ reposRoot, repos });
   const authRefreshPreflight = env.name === 'dev' && process.env.NIGHTWATCH_PHASE_4_AUTH_REFRESH === '1';
   const statePath = authRefreshPreflight ? null : process.env[NIGHTWATCH_STORAGE_STATE_VAR] ?? null;
+  if (statePath !== null) {
+    assertAuthCapabilityPreflight({
+      artefactPath: statePath,
+      environment: env.name,
+      targetOrigin: new URL(target).origin,
+      requiredValidityMs: 120_000,
+    });
+  }
   const result = await runRealRunGate({
     environment: env,
     uiUrl: target,

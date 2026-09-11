@@ -15,9 +15,11 @@
  * tests/runners never enable this automatically.
  */
 import { spawnSync } from 'node:child_process';
+import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildChildEnvironment } from './child-environment.mjs';
+import { loadTypeScriptModule } from './lib/typescript-runtime-loader.mjs';
 import { parsePhase10bLauncherArgs, PHASE_10B_LAUNCHER_USAGE } from './phase10b-launcher-args.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -28,6 +30,26 @@ if (parsed.help) {
 }
 if (parsed.env !== 'dev' || parsed.storageState === undefined || parsed.storageState.trim() === '') {
   throw new Error('phase10b-real requires exactly one --env=dev and --storage-state=/absolute/external/state.json; NEXT and production are forbidden');
+}
+
+try {
+  const { requireValidAuthCapability } = loadTypeScriptModule('src/auth/capabilityLifecycle.ts', { root });
+  const configured = JSON.parse(fs.readFileSync(path.join(root, 'config', 'environments', `${parsed.env}.json`), 'utf8'));
+  const capability = requireValidAuthCapability({
+    artefactPath: parsed.storageState,
+    environment: parsed.env,
+    configuredUiBaseUrl: configured.uiBaseUrl,
+    requiredValidityMs: 15 * 60 * 1000,
+  });
+  if (capability.budgetWarning) {
+    console.error(`[phase10b] WARNING ${capability.budgetWarning.code}: remaining validity ${capability.budgetWarning.remainingValidityMs} ms is shorter than the declared run budget ${capability.budgetWarning.requiredValidityMs} ms`);
+  }
+} catch (error) {
+  if (error && typeof error === 'object' && typeof error.code === 'string' && error.code.startsWith('AUTH_CAPABILITY_')) {
+    console.error(`[phase10b] REFUSED ${error.code}: ${error.message}`);
+    process.exit(3);
+  }
+  throw error;
 }
 
 const pwBin = path.join(root, 'node_modules', '.bin', 'playwright');

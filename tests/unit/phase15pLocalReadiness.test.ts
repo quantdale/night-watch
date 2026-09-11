@@ -56,6 +56,7 @@ function baseInput(overrides: {
   ownerScopeStatus?: string;
   ownerScopeReason?: string;
   frozenOperationCount?: number;
+  authCapability?: LocalReadinessInput['authCapability'];
 } = {}): LocalReadinessInput {
   return {
     applies: overrides.applies ?? true,
@@ -73,6 +74,7 @@ function baseInput(overrides: {
     checkpointCompatibility: overrides.checkpointCompatibility ?? 'CURRENT_SCHEMA',
     unresolvedBlockers: overrides.unresolvedBlockers ?? [],
     externalCi: overrides.externalCi ?? 'PASS',
+    ...(overrides.authCapability === undefined ? {} : { authCapability: overrides.authCapability }),
     ownerScope: {
       status: overrides.ownerScopeStatus ?? 'FROZEN_BY_OWNER',
       reason: overrides.ownerScopeReason ?? 'INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE',
@@ -302,6 +304,7 @@ test.describe('phase15p local readiness renderers', () => {
       'analyzer',
       'verification',
       'external-ci',
+      'authenticated-capability',
       'owner-scope',
       'blockers',
       '-',
@@ -327,6 +330,66 @@ test.describe('phase15p local readiness renderers', () => {
     );
     expect(partial.approvedTargetCoverage[0]?.coverage).toBe('PARTIAL');
     expect(renderLocalReadinessText(partial)).toContain('coverage: covered=0 partial=1 missing=0');
+  });
+
+  test('authenticated capability keeps present-and-expired distinct from absent', () => {
+    const summary = summarizeLocalReadiness(baseInput({
+      authCapability: {
+        entries: [
+          { environment: 'dev', present: true, state: 'EXPIRED', remainingValidityMs: 0, refusalCode: 'AUTH_CAPABILITY_EXPIRED', blockedLanes: ['journey:phase2c', 'campaign:real'] },
+          { environment: 'next', present: false, state: 'MISSING', refusalCode: 'AUTH_CAPABILITY_MISSING', blockedLanes: ['auth:capture'] },
+        ],
+      },
+    }));
+    expect(summary.authCapability.aggregateState).toBe('ATTENTION');
+    expect(summary.authCapability.presentAndExpiredEnvironments).toEqual(['dev']);
+    expect(summary.authCapability.entries[0]).toMatchObject({
+      environment: 'dev',
+      present: true,
+      state: 'EXPIRED',
+      epistemicClass: 'FACT',
+      remainingValidityBand: 'NONE',
+    });
+    expect(summary.authCapability.entries[1]).toMatchObject({
+      environment: 'next',
+      present: false,
+      state: 'MISSING',
+      epistemicClass: 'FACT',
+      remainingValidityBand: 'UNKNOWN',
+    });
+    const text = renderLocalReadinessText(summary);
+    expect(text).toContain('present-and-expired=dev');
+    expect(text).toContain('auth dev EXPIRED present=true');
+  });
+
+  test('unknown-age is UNKNOWN, VALID is a FACT, and contradictions fail closed', () => {
+    const unknownAge = summarizeLocalReadiness(baseInput({
+      authCapability: {
+        entries: [{ environment: 'dev', present: true, state: 'UNKNOWN_AGE', refusalCode: 'AUTH_CAPABILITY_UNKNOWN_AGE', blockedLanes: [] }],
+      },
+    }));
+    expect(unknownAge.authCapability.entries[0]?.epistemicClass).toBe('UNKNOWN');
+    expect(unknownAge.authCapability.aggregateState).toBe('ATTENTION');
+
+    const valid = summarizeLocalReadiness(baseInput({
+      authCapability: {
+        entries: [{ environment: 'dev', present: true, state: 'VALID', remainingValidityMs: 6 * 60 * 60 * 1000, refusalCode: null, blockedLanes: [] }],
+      },
+    }));
+    expect(valid.authCapability.aggregateState).toBe('VALID');
+    expect(valid.authCapability.entries[0]?.epistemicClass).toBe('FACT');
+    expect(valid.authCapability.entries[0]?.remainingValidityBand).toBe('UNDER_12H');
+
+    const noInput = summarizeLocalReadiness(baseInput());
+    expect(noInput.authCapability.aggregateState).toBe('UNKNOWN');
+    expect(noInput.authCapability.entries).toEqual([]);
+
+    expect(() => summarizeLocalReadiness(baseInput({
+      authCapability: { entries: [{ environment: 'dev', present: false, state: 'VALID', refusalCode: null }] },
+    }))).toThrow(/READINESS_INVALID_AUTH/);
+    expect(() => summarizeLocalReadiness(baseInput({
+      authCapability: { entries: [{ environment: 'dev', present: true, state: 'VALID', refusalCode: 'AUTH_CAPABILITY_EXPIRED' }] },
+    }))).toThrow(/READINESS_INVALID_AUTH/);
   });
 });
 

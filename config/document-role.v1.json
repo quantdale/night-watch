@@ -13,6 +13,7 @@
     { "path": "docs/HOST-CAPABILITY-MATRIX.md", "role": "CURRENT_TRUTH", "maxLines": 200 },
     { "path": "docs/KIRO-CREW-INTEGRATION-MASTER-PLAN.md", "role": "APPEND_ONLY_ARCHIVE" },
     { "path": "docs/MASTER-IMPLEMENTATION-HARDENING-PLAN.md", "role": "CURRENT_TRUTH", "maxLines": 965 },
+    { "path": "docs/RELEASE-ADVANCE-CONDITIONS.md", "role": "CURRENT_TRUTH", "maxLines": 160 },
     { "path": "docs/ROADMAP.md", "role": "APPEND_ONLY_ARCHIVE" },
     { "path": "docs/SAFETY_MODEL.md", "role": "APPEND_ONLY_ARCHIVE" }
   ],

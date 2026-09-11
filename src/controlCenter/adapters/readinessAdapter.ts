@@ -3,11 +3,13 @@ import {
   asSafeControlCenterCode,
   asSafeControlCenterId,
   asSafeControlCenterLabel,
+  asSafeControlCenterTimestamp,
   readinessStateForCategory,
 } from '../contracts/common';
 import type { SafeControlCenterId, SafeControlCenterLabel } from '../contracts/common';
 import type {
   ControlCenterReadinessAnalyzerDto,
+  ControlCenterReadinessAuthCapabilityDto,
   ControlCenterReadinessBlockerDto,
   ControlCenterReadinessCampaignDto,
   ControlCenterReadinessCategory,
@@ -112,6 +114,28 @@ function verification(summary: LocalReadinessSummary): ControlCenterReadinessVer
   };
 }
 
+function authCapability(summary: LocalReadinessSummary): ControlCenterReadinessAuthCapabilityDto {
+  return {
+    entries: summary.authCapability.entries.map((entry) => ({
+      environment: asSafeControlCenterId(entry.environment) ?? safePublicId(entry.environment, 'cc-auth-env'),
+      present: entry.present,
+      state: entry.state,
+      epistemicClass: entry.epistemicClass,
+      captureInstant: entry.captureInstant === null ? null : asSafeControlCenterTimestamp(entry.captureInstant),
+      declaredValidUntil: entry.declaredValidUntil === null ? null : asSafeControlCenterTimestamp(entry.declaredValidUntil),
+      remainingValidityBand: entry.remainingValidityBand,
+      refusalCode: entry.refusalCode === null ? null : asSafeControlCenterCode(entry.refusalCode),
+      blockedLanes: entry.blockedLanes
+        .map((lane) => asSafeControlCenterId(lane))
+        .filter((lane): lane is SafeControlCenterId => lane !== null),
+    })),
+    presentAndExpiredEnvironments: summary.authCapability.presentAndExpiredEnvironments.map(
+      (environment) => asSafeControlCenterId(environment) ?? safePublicId(environment, 'cc-auth-env'),
+    ),
+    aggregateState: summary.authCapability.aggregateState,
+  };
+}
+
 function blockers(summary: LocalReadinessSummary): readonly ControlCenterReadinessBlockerDto[] {
   return summary.unresolvedBlockers
     .map((blocker) => {
@@ -144,6 +168,7 @@ export function projectReadiness(summary: LocalReadinessSummary): ControlCenterR
     checkpointCompatibility: summary.checkpointCompatibility,
     analyzer: analyzer(summary),
     verification: verification(summary),
+    authCapability: authCapability(summary),
     unresolvedBlockers: blockers(summary),
     externalCi: summary.externalCi,
     externalCiClassification: summary.externalCiClassification,

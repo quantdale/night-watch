@@ -18,6 +18,7 @@
  *   1  any BLOCKED_* category
  *   2  the status surface itself failed (fail-closed)
  */
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadTypeScriptModules as loadRuntimeTypeScriptModules } from './lib/typescript-runtime-loader.mjs';
@@ -47,13 +48,34 @@ function loadTypeScriptModules(root, files) {
 const cli = invokedDirectly(import.meta.url) ? defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url }) : { stop: true };
 if (!cli.stop) {
 try {
-  const [repoState, localReadiness, openWork] = loadTypeScriptModules(REPO_ROOT, [
+  const [repoState, localReadiness, openWork, capabilityLifecycle] = loadTypeScriptModules(REPO_ROOT, [
     'src/core/readiness/repoState.ts',
     'src/core/readiness/localReadiness.ts',
     'src/core/readiness/openWork.ts',
+    'src/auth/capabilityLifecycle.ts',
   ]);
   const input = repoState.collectLocalReadinessInputFromRepo();
-  const summary = localReadiness.summarizeLocalReadiness(input);
+  // Authenticated-capability metadata only: no browser, no host contact, no
+  // cookie value is read to build this section.
+  const authReport = capabilityLifecycle.collectAuthCapabilityReport({
+    homeDirectory: os.homedir(),
+    environmentVariable: process.env.NIGHTWATCH_STORAGE_STATE ?? null,
+    selectedEnvironment: process.env.NIGHTWATCH_ENV ?? null,
+  });
+  const summary = localReadiness.summarizeLocalReadiness({
+    ...input,
+    authCapability: {
+      entries: authReport.entries.map((entry) => ({
+        environment: entry.environment,
+        present: entry.present,
+        state: entry.state,
+        captureInstant: entry.captureInstant,
+        remainingValidityMs: entry.remainingValidityMs,
+        refusalCode: entry.refusalCode,
+        blockedLanes: entry.blockedLanes,
+      })),
+    },
+  });
   // G1: one derived open-work report, net of DECLARED_NOT_IN_SCOPE entries.
   const openWorkReport = openWork.deriveOpenWorkReport(collectOpenWorkInput(REPO_ROOT));
   const asJson = process.argv.slice(2).includes('--json');

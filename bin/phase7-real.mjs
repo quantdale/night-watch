@@ -12,6 +12,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { buildChildEnvironment, emitChildStdio } from './child-environment.mjs';
+import { loadTypeScriptModule } from './lib/typescript-runtime-loader.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
@@ -80,6 +81,28 @@ if (storage === path.join(os.homedir(), '.nightwatch', 'auth', 'ripple-dev-state
   if (stat.isSymbolicLink() || !stat.isFile()) throw new Error('phase7-real refuses an unsafe default DEV storage-state path');
   fs.chmodSync(storage, 0o600);
   fs.chmodSync(path.dirname(storage), 0o700);
+}
+
+try {
+  const { requireValidAuthCapability } = loadTypeScriptModule('src/auth/capabilityLifecycle.ts', { root });
+  const configured = JSON.parse(fs.readFileSync(path.join(root, 'config', 'environments', `${env}.json`), 'utf8'));
+  const capability = requireValidAuthCapability({
+    artefactPath: storage,
+    environment: env,
+    configuredUiBaseUrl: configured.uiBaseUrl,
+    // The real campaign profile declares a fifteen-minute runtime budget; a
+    // shorter remaining validity means the campaign cannot finish unattended.
+    requiredValidityMs: 15 * 60 * 1000,
+  });
+  if (capability.budgetWarning) {
+    console.error(`[phase7] WARNING ${capability.budgetWarning.code}: remaining validity ${capability.budgetWarning.remainingValidityMs} ms is shorter than the declared campaign budget ${capability.budgetWarning.requiredValidityMs} ms`);
+  }
+} catch (error) {
+  if (error && typeof error === 'object' && typeof error.code === 'string' && error.code.startsWith('AUTH_CAPABILITY_')) {
+    console.error(`[phase7] REFUSED ${error.code}: ${error.message}`);
+    process.exit(3);
+  }
+  throw error;
 }
 
 const pwBin = path.join(root, 'node_modules', '.bin', 'playwright');

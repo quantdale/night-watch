@@ -1114,6 +1114,7 @@ test.describe('Durable Artifact + Control Center Truth Hardening M3 facade audit
           mutations: [
             facadeMutation('nested_currentness_count', (value) => { (value.sourceContracts as Record<string, unknown>).currentnessCounts = { CURRENT: 99, STALE: 0, SOURCE_UNAVAILABLE: 0, NOT_EVALUATED: 0 }; }),
             facadeMutation('nested_coverage_currentness', (value) => { (value.approvedTargetCoverage as Array<Record<string, unknown>>)[0]!.currentness = 'STALE'; }),
+            facadeMutation('nested_auth_capability_aggregate', (value) => { (value.authCapability as Record<string, unknown>).aggregateState = 'VALID'; }),
             facadeMutation('sentinel_payload', (value) => { (value.ownerScope as Record<string, unknown>).reason = 'CUSTOMER_SENTINEL'; }),
             facadeMutation('root_unknown_field', (value) => { value.futureField = true; }),
           ],

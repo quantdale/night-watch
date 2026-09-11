@@ -22,6 +22,7 @@ import { createRequire } from 'node:module';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { pathToFileURL, fileURLToPath } from 'node:url';
+import { loadTypeScriptModule } from './lib/typescript-runtime-loader.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -114,7 +115,25 @@ function main() {
     if (entry === undefined) throw new Error('compiled readiness entry not found');
     const cone = requireCone(entry);
     const report = cone.evaluateC12Readiness(descriptor);
-    process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
+    // Authenticated-capability metadata only: the lifecycle report reads the
+    // sidecar record and cookie expiry fields, never a browser or a value.
+    const capabilityLifecycle = loadTypeScriptModule('src/auth/capabilityLifecycle.ts', { root });
+    const authentication = capabilityLifecycle.collectAuthCapabilityReport({
+      homeDirectory: os.homedir(),
+      environmentVariable: process.env.NIGHTWATCH_STORAGE_STATE ?? null,
+      selectedEnvironment: process.env.NIGHTWATCH_ENV ?? null,
+    });
+    process.stdout.write(`${JSON.stringify({
+      ...report,
+      authentication: {
+        schemaVersion: authentication.schemaVersion,
+        checkedAt: authentication.checkedAt,
+        entries: authentication.entries,
+        observedCaptureLifetimes: authentication.observedCaptureLifetimes,
+        network: authentication.network,
+        browser: authentication.browser,
+      },
+    }, null, 2)}\n`);
     process.exitCode = report.status === 'READY' ? 0 : 2;
   } catch (error) {
     fail(error instanceof Error ? error.message : String(error));

@@ -47,6 +47,7 @@ import {
   validateStorageStateFile,
 } from '../../src/browser/fixtures/storageState';
 import { AUTHENTICATED_BROWSER_CONTRACT } from '../../src/browser/contract';
+import { assertAuthCapabilityPreflight } from '../../src/auth/capabilityLifecycle';
 import { RunRecorder, createRunId } from '../../src/core/evidence/runRecorder';
 import { assertRealRunGate, runRealRunGate } from '../../src/core/safety/realRunGate';
 import { snapshotRepositories } from '../../src/core/repositories/snapshotter';
@@ -682,6 +683,12 @@ test('Phase 10B contained DEV deep-semantic acceptance: common-exchange deep FIR
     throw new Error('fail-closed: Phase 10B real acceptance requires external storage state');
   }
   const validatedStatePath = validateStorageStateFile(statePath);
+  assertAuthCapabilityPreflight({
+    artefactPath: validatedStatePath,
+    environment: envName,
+    targetOrigin: new URL(target).origin,
+    requiredValidityMs: 15 * 60 * 1000,
+  });
   const root = rootDirectory();
   const baseRunId = process.env.NIGHTWATCH_RUN_ID ?? createRunId();
   const definition = getRippleJourneyDefinition(SELECTED_JOURNEY_ID);

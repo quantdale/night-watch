@@ -6,6 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildChildEnvironment, emitChildStdio } from './child-environment.mjs';
+import { loadTypeScriptModule } from './lib/typescript-runtime-loader.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
@@ -42,6 +43,27 @@ if (env === 'dev' && storage === path.join(os.homedir(), '.nightwatch', 'auth', 
     fs.chmodSync(storage, 0o600);
   }
 }
+
+try {
+  const { requireValidAuthCapability } = loadTypeScriptModule('src/auth/capabilityLifecycle.ts', { root });
+  const configured = JSON.parse(fs.readFileSync(path.join(root, 'config', 'environments', `${env}.json`), 'utf8'));
+  const capability = requireValidAuthCapability({
+    artefactPath: storage,
+    environment: env,
+    configuredUiBaseUrl: configured.uiBaseUrl,
+    requiredValidityMs: 15 * 60 * 1000,
+  });
+  if (capability.budgetWarning) {
+    console.error(`[phase4] WARNING ${capability.budgetWarning.code}: remaining validity ${capability.budgetWarning.remainingValidityMs} ms is shorter than the declared run budget ${capability.budgetWarning.requiredValidityMs} ms`);
+  }
+} catch (error) {
+  if (error && typeof error === 'object' && typeof error.code === 'string' && error.code.startsWith('AUTH_CAPABILITY_')) {
+    console.error(`[phase4] REFUSED ${error.code}: ${error.message}`);
+    process.exit(3);
+  }
+  throw error;
+}
+
 const pwBin = path.join(root, 'node_modules', '.bin', 'playwright');
 const cmd = process.platform === 'win32' ? `${pwBin}.cmd` : pwBin;
 const commonEnv = buildChildEnvironment(process.env, { NIGHTWATCH_ENV: env, NIGHTWATCH_STORAGE_STATE: storage, NIGHTWATCH_PHASE_4_REAL: '1', NIGHTWATCH_PHASE_4_AUTH_REFRESH: env === 'dev' ? '1' : '0', NIGHTWATCH_TRACE: 'off', NIGHTWATCH_HEADED: process.env.NIGHTWATCH_HEADED === '0' ? '0' : '1', ...(uiUrl === undefined ? {} : { NIGHTWATCH_UI_URL: uiUrl }) });

@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 /** Phase 2C gated, serial six-context real-run launcher. */
 import { spawnSync } from 'node:child_process';
+import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildChildEnvironment, emitChildStdio } from './child-environment.mjs';
+import { loadTypeScriptModule } from './lib/typescript-runtime-loader.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
@@ -27,6 +29,26 @@ for (const arg of args) {
 }
 if (env !== 'dev' || storage === undefined || storage.trim() === '') {
   throw new Error('phase2c-real requires exactly one --env=dev and --storage-state=/absolute/external/state.json; NEXT is reserved for human-led auth capture');
+}
+
+try {
+  const configured = JSON.parse(fs.readFileSync(path.join(root, 'config', 'environments', `${env}.json`), 'utf8'));
+  const { requireValidAuthCapability } = loadTypeScriptModule('src/auth/capabilityLifecycle.ts', { root });
+  const capability = requireValidAuthCapability({
+    artefactPath: storage,
+    environment: env,
+    configuredUiBaseUrl: configured.uiBaseUrl,
+    requiredValidityMs: 15 * 60 * 1000,
+  });
+  if (capability.budgetWarning) {
+    console.error(`[phase2c] WARNING ${capability.budgetWarning.code}: remaining validity ${capability.budgetWarning.remainingValidityMs} ms is shorter than the declared run budget ${capability.budgetWarning.requiredValidityMs} ms`);
+  }
+} catch (error) {
+  if (error && typeof error === 'object' && typeof error.code === 'string' && error.code.startsWith('AUTH_CAPABILITY_')) {
+    console.error(`[phase2c] REFUSED ${error.code}: ${error.message}`);
+    process.exit(3);
+  }
+  throw error;
 }
 
 const pwBin = path.join(root, 'node_modules', '.bin', 'playwright');

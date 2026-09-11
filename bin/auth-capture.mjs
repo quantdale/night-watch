@@ -20,9 +20,11 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SUPPORTED = new Set(['dev', 'next']);
 
 function usage() {
-  console.log('Usage: npm run auth:capture -- --env=dev|next --output=/absolute/user-owned/ripple-state.json [--ui-url=https://verified-host/]');
+  console.log('Usage: npm run auth:capture -- --env=dev|next --output=/absolute/user-owned/ripple-state.json [--ui-url=https://verified-host/] [--validity-window-hours=1..720]');
   console.log('Human login/MFA is performed in the headed browser; Nightwatch never receives credentials.');
   console.log('An existing external state at the requested path is replaced atomically only after fresh capture validation.');
+  console.log('One-time adoption: npm run auth:capture -- --adopt --env=dev|next --output=/absolute/existing/state.json --captured-at=<ISO instant> [--validity-window-hours=1..720] [--replace-existing-record]');
+  console.log('Adoption writes the non-secret lifecycle record only; it never launches a browser and declares the capture instant from operator knowledge.');
 }
 
 function fail(message) {
@@ -87,12 +89,28 @@ async function main() {
   let env;
   let uiUrl;
   let output;
+  let adopt = false;
+  let capturedAt;
+  let replaceExistingRecord = false;
+  let validityWindowHours;
   for (const arg of process.argv.slice(2)) {
     if (arg === '--help' || arg === '-h') {
       usage();
       return;
     }
-    if (arg.startsWith('--env=')) {
+    if (arg === '--adopt') {
+      if (adopt) fail('--adopt may be supplied only once');
+      adopt = true;
+    } else if (arg === '--replace-existing-record') {
+      if (replaceExistingRecord) fail('--replace-existing-record may be supplied only once');
+      replaceExistingRecord = true;
+    } else if (arg.startsWith('--captured-at=')) {
+      if (capturedAt !== undefined) fail('--captured-at may be supplied only once');
+      capturedAt = arg.slice('--captured-at='.length);
+    } else if (arg.startsWith('--validity-window-hours=')) {
+      if (validityWindowHours !== undefined) fail('--validity-window-hours may be supplied only once');
+      validityWindowHours = arg.slice('--validity-window-hours='.length);
+    } else if (arg.startsWith('--env=')) {
       if (env !== undefined) fail('exactly one --env is required');
       env = arg.slice('--env='.length).trim().toLowerCase();
     } else if (arg.startsWith('--ui-url=')) {
@@ -107,6 +125,12 @@ async function main() {
   }
 
   if (!env || !SUPPORTED.has(env)) fail('exactly one supported environment is required: dev or next; production is forbidden');
+  let validityWindowMs;
+  if (validityWindowHours !== undefined) {
+    const hours = Number(validityWindowHours);
+    if (!Number.isInteger(hours) || hours < 1 || hours > 720) fail('--validity-window-hours must be an integer 1..720');
+    validityWindowMs = hours * 60 * 60 * 1000;
+  }
   if (!output || !path.isAbsolute(output)) fail('--output must be an absolute path outside the Nightwatch repository and workspace');
   const outputPath = path.resolve(output);
   const workspaceRoot = path.resolve(root, '..');
@@ -126,6 +150,33 @@ async function main() {
   }
   const mode = fs.statSync(parent).mode;
   if ((mode & 0o002) !== 0 && (mode & 0o1000) === 0) fail('--output parent is world-writable without sticky protection');
+
+  if (adopt) {
+    // One-time adoption path: an artefact captured before lifecycle records
+    // existed gains one from the operator's declared capture instant. It
+    // launches no browser, opens no socket, and reads no cookie value.
+    if (capturedAt === undefined || capturedAt.trim() === '') fail('--adopt requires --captured-at=<ISO instant>; an unknown capture instant stays UNKNOWN_AGE');
+    if (uiUrl !== undefined) fail('--adopt does not accept --ui-url; adoption binds the configured environment origin');
+    if (!fs.existsSync(outputPath)) fail('--adopt requires an existing artefact at --output');
+    const lifecycle = loadTypeScriptModule('src/auth/capabilityLifecycle.ts');
+    let adopted;
+    try {
+      const configured = JSON.parse(fs.readFileSync(path.join(root, 'config', 'environments', `${env}.json`), 'utf8'));
+      adopted = lifecycle.adoptAuthCaptureRecord({
+        artefactPath: outputPath,
+        environment: env,
+        origin: new URL(configured.uiBaseUrl).origin,
+        captureInstant: capturedAt.trim(),
+        ...(validityWindowMs === undefined ? {} : { validityWindowMs }),
+        replaceExisting: replaceExistingRecord,
+      });
+    } catch (error) {
+      fail(`adoption refused: ${error instanceof Error ? error.message : 'unknown reason'}`);
+    }
+    console.log(`[auth:capture] PASS: adopted the existing artefact; the lifecycle record was written beside it (${adopted.recordPath}); no browser was launched and no secret value was printed.`);
+    return;
+  }
+
   if ((process.env.NIGHTWATCH_STORAGE_STATE ?? '').trim() !== '') fail('direct capture refuses an existing NIGHTWATCH_STORAGE_STATE');
 
   printStage({ stage: 'PREFLIGHT', status: 'START' });
@@ -155,6 +206,7 @@ async function main() {
     environment,
     uiUrl: uiUrl ?? environment.uiBaseUrl,
     outputPath,
+    ...(validityWindowMs === undefined ? {} : { authValidityWindowMs: validityWindowMs }),
     nightwatchRoot: root,
     stageReporter: printStage,
     onReady: (location) => {
@@ -167,7 +219,7 @@ async function main() {
     },
     completion: { kind: 'human-parent-cli', wait: waitForHumanEnter },
   });
-  console.log(`[auth:capture] PASS: guarded browser and proxy closed; external storage state was structurally validated and safe capture provenance was recorded for ${result.provenance.environment}. Secret values were not printed.`);
+  console.log(`[auth:capture] PASS: guarded browser and proxy closed; external storage state was structurally validated, its lifecycle record was written beside it, and safe capture provenance was recorded for ${result.provenance.environment}. Secret values were not printed.`);
 }
 
 main().catch((error) => {

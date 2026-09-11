@@ -8,14 +8,23 @@ function run(...args: string[]) {
   return spawnSync(process.execPath, [CLI, ...args], { encoding: 'utf8' });
 }
 
-test('dev preflight uses the verified configured UI URL without auth state', () => {
+test('dev preflight uses the verified configured UI URL and reports auth metadata only', () => {
   const result = run('--env=dev');
   expect(result.status).toBe(0);
   expect(result.stdout).toContain('"environment": "dev"');
   expect(result.stdout).toContain('"target": "https://appdev.alphaus.cloud/ripple/"');
   expect(result.stdout).toContain('"uiHost": "appdev.alphaus.cloud"');
-  expect(result.stdout).toContain('"authentication": "not required for preflight"');
-  expect(result.stdout).not.toContain('storage');
+  const report = JSON.parse(String(result.stdout)) as {
+    authentication: { schemaVersion: string; entries: { environment: string; state: string; epistemicClass: string }[] };
+    network: string;
+  };
+  expect(report.authentication.schemaVersion).toBe('nightwatch.auth-capability-report.v1');
+  expect(report.authentication.entries.map((entry) => entry.environment)).toEqual(['dev', 'next']);
+  expect(['VALID', 'EXPIRED', 'WRONG_ENVIRONMENT', 'UNKNOWN_AGE', 'MISSING', 'UNREADABLE']).toContain(report.authentication.entries[0]?.state);
+  expect(['FACT', 'UNKNOWN']).toContain(report.authentication.entries[0]?.epistemicClass);
+  expect(report.network).toContain('no cookie value read');
+  expect(result.stdout).not.toContain('NIGHTWATCH_STORAGE_STATE');
+  expect(result.stdout).not.toContain('"value"');
 });
 
 test('next preflight accepts only the explicit verified UI host', () => {

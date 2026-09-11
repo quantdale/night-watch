@@ -257,6 +257,96 @@ export interface LocalReadinessVerificationSection {
   readonly allDeferredToHardening: boolean;
 }
 
+// --- authenticated capability lifecycle section (F-21) ----------------------
+//
+// The authenticated lanes depend on an external, human-led capture that
+// expires. This section makes the artefact's lifecycle state visible on the
+// local readiness surface WITHOUT flipping the local-synthetic category:
+// present-and-expired is a different fact from absent, and both differ from
+// unknown, so the state vocabulary keeps them apart. Inputs are normalized
+// facts collected elsewhere; the core stays pure.
+
+export type LocalReadinessAuthCapabilityState =
+  | 'VALID'
+  | 'EXPIRED'
+  | 'WRONG_ENVIRONMENT'
+  | 'UNKNOWN_AGE'
+  | 'MISSING'
+  | 'UNREADABLE'
+  | 'NOT_EVALUATED';
+
+export const LOCAL_READINESS_AUTH_CAPABILITY_STATES: readonly LocalReadinessAuthCapabilityState[] = [
+  'VALID',
+  'EXPIRED',
+  'WRONG_ENVIRONMENT',
+  'UNKNOWN_AGE',
+  'MISSING',
+  'UNREADABLE',
+  'NOT_EVALUATED',
+];
+
+export type LocalReadinessAuthEpistemicClass = 'FACT' | 'UNKNOWN';
+
+/**
+ * Coarse remaining-validity band. Deliberately categorical: a readiness
+ * snapshot is compared byte-for-byte between runs, and an exact millisecond
+ * countdown would make every snapshot different for a reason that carries no
+ * operator information. Exact remaining validity is reported by the
+ * observe:preflight and c12:preflight surfaces.
+ */
+export type LocalReadinessAuthValidityBand =
+  | 'NONE'
+  | 'UNDER_1H'
+  | 'UNDER_6H'
+  | 'UNDER_12H'
+  | 'AT_LEAST_12H'
+  | 'UNKNOWN';
+
+export const LOCAL_READINESS_AUTH_VALIDITY_BANDS: readonly LocalReadinessAuthValidityBand[] = [
+  'NONE',
+  'UNDER_1H',
+  'UNDER_6H',
+  'UNDER_12H',
+  'AT_LEAST_12H',
+  'UNKNOWN',
+];
+
+export interface LocalReadinessAuthCapabilityEntryInput {
+  readonly environment: string;
+  readonly present: boolean;
+  readonly state: LocalReadinessAuthCapabilityState;
+  readonly captureInstant?: string | null;
+  readonly declaredValidUntil?: string | null;
+  readonly remainingValidityMs?: number | null;
+  readonly refusalCode?: string | null;
+  readonly blockedLanes?: readonly string[];
+}
+
+export interface LocalReadinessAuthCapabilityInput {
+  readonly entries: readonly LocalReadinessAuthCapabilityEntryInput[];
+}
+
+export interface LocalReadinessAuthCapabilityEntry {
+  readonly environment: string;
+  readonly present: boolean;
+  readonly state: LocalReadinessAuthCapabilityState;
+  readonly epistemicClass: LocalReadinessAuthEpistemicClass;
+  readonly captureInstant: string | null;
+  readonly declaredValidUntil: string | null;
+  readonly remainingValidityBand: LocalReadinessAuthValidityBand;
+  readonly refusalCode: string | null;
+  readonly blockedLanes: readonly string[];
+}
+
+export interface LocalReadinessAuthCapabilitySection {
+  /** One entry per known environment, sorted by environment. */
+  readonly entries: readonly LocalReadinessAuthCapabilityEntry[];
+  /** Environments whose artefact exists but is EXPIRED (present ≠ absent). */
+  readonly presentAndExpiredEnvironments: readonly string[];
+  /** VALID when every entry is valid; ATTENTION on any non-valid fact; UNKNOWN when no entry was supplied. */
+  readonly aggregateState: 'VALID' | 'ATTENTION' | 'UNKNOWN';
+}
+
 export interface LocalReadinessBlocker {
   /** Categorical code, /^[A-Z][A-Z0-9_]*$/ (no free text). */
   readonly code: string;
@@ -315,6 +405,11 @@ export interface LocalReadinessInput {
    * NOT_MEASURED (never fabricated PASS/FAIL).
    */
   readonly verification?: LocalReadinessVerificationInput;
+  /**
+   * Optional authenticated-capability facts. Absent = no environment was
+   * evaluated (UNKNOWN section), never a fabricated VALID.
+   */
+  readonly authCapability?: LocalReadinessAuthCapabilityInput;
   readonly ownerScope: LocalReadinessOwnerScopeInput;
 }
 
@@ -382,6 +477,13 @@ export interface LocalReadinessSummary {
   readonly analyzer: LocalReadinessAnalyzerSection;
   /** Deferred verification state (categorical; never fabricated PASS/FAIL). */
   readonly verification: LocalReadinessVerificationSection;
+  /**
+   * Authenticated capability lifecycle state per environment. Present-and-
+   * expired is NOT normalized into absent: the epistemic distinction is the
+   * operator's answer to "do I need to re-capture, or is the lane simply
+   * unavailable?".
+   */
+  readonly authCapability: LocalReadinessAuthCapabilitySection;
   /** Normalized blockers, sorted by kind order then code. */
   readonly unresolvedBlockers: readonly LocalReadinessBlocker[];
   readonly externalCi: LocalReadinessExternalCi;

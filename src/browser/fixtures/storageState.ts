@@ -333,6 +333,54 @@ interface CookiePageReadability {
   pageReadable: boolean;
 }
 
+/**
+ * The ONE cookie applicability/expiry evaluator over one parsed cookie row.
+ * Every cookie question in Nightwatch (page readability, authenticated
+ * capability pre-flight) derives its domain/path/expiry facts from here, so
+ * two evaluators for one question cannot disagree.
+ */
+interface CookieApplicabilityFacts {
+  domainApplicable: boolean;
+  pathApplicable: boolean;
+  httpOnly: boolean;
+  secure: boolean;
+  /** expires === -1: unexpired for this session, no absolute instant. */
+  session: boolean;
+  expired: boolean;
+  /** Numeric expiry in epoch seconds, when the row carries one (never -1). */
+  numericExpiryEpochSeconds: number | null;
+}
+
+function cookieApplicabilityFacts(
+  record: Record<string, unknown>,
+  appOrigin: string,
+  appPath: string,
+  atEpochSeconds: number,
+): CookieApplicabilityFacts {
+  // appOrigin like "https://appdev.alphaus.cloud"
+  const appHost: string = (appOrigin.replace(/^https?:\/\//i, '').split('/')[0]) || '';
+  // Strip a leading "." from the cookie domain, then compare: cookie covers
+  // the host if the host is the cookie domain or ends with "." + cookie domain.
+  const cookieDomain = typeof record.domain === 'string' ? record.domain.replace(/^\./, '') : '';
+  const domainApplicable = (cookieDomain === appHost) || (cookieDomain !== '' && appHost.endsWith('.' + cookieDomain));
+  const cookiePath = typeof record.path === 'string' ? record.path : '';
+  const pathApplicable =
+    cookiePath === '' ||
+    cookiePath === '/' ||
+    appPath.replace(/\/+$/, '') + '/' === cookiePath.replace(/\/+$/, '') + '/' ||
+    appPath === cookiePath ||
+    (cookiePath !== '/' && appPath.startsWith(cookiePath.replace(/\/+$/, '') + '/'));
+  const httpOnly = record.httpOnly === true;
+  const secure = record.secure === true;
+  const expiresRaw = record.expires;
+  // expires === -1 (session cookie) counts as unexpired for this session.
+  const session = typeof expiresRaw === 'number' && expiresRaw === -1;
+  const numericExpiryEpochSeconds = typeof expiresRaw === 'number' && expiresRaw > 0 ? expiresRaw : null;
+  const hasFutureExpiry = typeof expiresRaw === 'number' && expiresRaw > atEpochSeconds;
+  const expired = !session && (!hasFutureExpiry);
+  return { domainApplicable, pathApplicable, httpOnly, secure, session, expired, numericExpiryEpochSeconds };
+}
+
 export function inspectStorageStateCookiePageReadability(
   p: string,
   opts: { cookieKey: string; appOrigin: string; appPath: string },
@@ -347,37 +395,103 @@ export function inspectStorageStateCookiePageReadability(
   if (record === undefined) {
     return { present: false, domainApplicable: false, pathApplicable: false, httpOnly: false, secure: false, expired: false, pageReadable: false };
   }
-  // appOrigin like "https://appdev.alphaus.cloud"
-  const appHost: string = (opts.appOrigin.replace(/^https?:\/\//i, '').split('/')[0]) || '';
   const secureTarget = /^https:/i.test(opts.appOrigin);
-  // Strip a leading "." from the cookie domain, then compare: cookie covers
-  // the host if the host is the cookie domain or ends with "." + cookie domain.
-  const cookieDomain = typeof record.domain === 'string' ? record.domain.replace(/^\./, '') : '';
-  const hostMatches = (cookieDomain === appHost) || (cookieDomain !== '' && appHost.endsWith('.' + cookieDomain));
-  const cookiePath = typeof record.path === 'string' ? record.path : '';
-  const pathMatches =
-    cookiePath === '' ||
-    cookiePath === '/' ||
-    opts.appPath.replace(/\/+$/, '') + '/' === cookiePath.replace(/\/+$/, '') + '/' ||
-    opts.appPath === cookiePath ||
-    (cookiePath !== '/' && opts.appPath.startsWith(cookiePath.replace(/\/+$/, '') + '/'));
-  const httpOnly = record.httpOnly === true;
-  const secure = record.secure === true;
-  const expiresRaw = record.expires;
-  // expires === -1 (session cookie) counts as unexpired for this session.
-  const isSession = typeof expiresRaw === 'number' && expiresRaw === -1;
-  const hasFutureExpiry = typeof expiresRaw === 'number' && expiresRaw > atEpochSeconds;
-  const expired = !isSession && (!hasFutureExpiry);
-  const pageReadable = hostMatches && pathMatches && !httpOnly && !expired && (secure ? secureTarget : true);
+  const facts = cookieApplicabilityFacts(record, opts.appOrigin, opts.appPath, atEpochSeconds);
+  const pageReadable =
+    facts.domainApplicable && facts.pathApplicable && !facts.httpOnly && !facts.expired && (facts.secure ? secureTarget : true);
   return {
     present: true,
-    domainApplicable: hostMatches,
-    pathApplicable: pathMatches,
-    httpOnly,
-    secure,
-    expired,
+    domainApplicable: facts.domainApplicable,
+    pathApplicable: facts.pathApplicable,
+    httpOnly: facts.httpOnly,
+    secure: facts.secure,
+    expired: facts.expired,
     pageReadable,
   };
+}
+
+/**
+ * Metadata-only expiry summary of every cookie row in a storage state.
+ * Returns no names, values, or counts that could identify a session; used to
+ * derive the capture record's earliest observed cookie expiry.
+ */
+export interface StorageStateCookieExpirySummary {
+  readonly earliestExpiryEpochSeconds: number | null;
+  readonly timedCookieCount: number;
+  readonly sessionCookieCount: number;
+  /** Timed cookies whose absolute expiry is strictly after `atEpochSeconds`. */
+  readonly unexpiredTimedCookieCount: number;
+}
+
+export function inspectStorageStateCookieExpiries(
+  p: string,
+  atEpochSeconds: number = Math.floor(Date.now() / 1000),
+): StorageStateCookieExpirySummary {
+  const parsed = readStorageStateObject(p);
+  const cookies = Array.isArray(parsed.cookies) ? parsed.cookies : [];
+  let earliest: number | null = null;
+  let timed = 0;
+  let session = 0;
+  let unexpiredTimed = 0;
+  for (const item of cookies) {
+    if (item === null || typeof item !== 'object') continue;
+    const expires = (item as Record<string, unknown>).expires;
+    if (typeof expires !== 'number') continue;
+    if (expires === -1) {
+      session += 1;
+      continue;
+    }
+    if (expires > 0) {
+      timed += 1;
+      if (expires > atEpochSeconds) unexpiredTimed += 1;
+      if (earliest === null || expires < earliest) earliest = expires;
+    }
+  }
+  return {
+    earliestExpiryEpochSeconds: earliest,
+    timedCookieCount: timed,
+    sessionCookieCount: session,
+    unexpiredTimedCookieCount: unexpiredTimed,
+  };
+}
+
+/**
+ * Metadata-only applicability/expiry scan across every cookie row for one
+ * target origin. `applicableExpired` is true when at least one cookie that
+ * applies to the origin (by the SAME domain/path logic as page readability)
+ * is expired at `atEpochSeconds`. Cookie names and values never leave this
+ * function.
+ */
+export interface StorageStateCookieApplicability {
+  readonly cookieCount: number;
+  readonly applicableCount: number;
+  readonly applicableExpired: boolean;
+  readonly earliestApplicableExpiryEpochSeconds: number | null;
+}
+
+export function inspectStorageStateCookieApplicability(
+  p: string,
+  opts: { appOrigin: string; appPath: string },
+  atEpochSeconds: number = Math.floor(Date.now() / 1000),
+): StorageStateCookieApplicability {
+  const parsed = readStorageStateObject(p);
+  const cookies = Array.isArray(parsed.cookies) ? parsed.cookies : [];
+  let cookieCount = 0;
+  let applicableCount = 0;
+  let applicableExpired = false;
+  let earliestApplicableExpiry: number | null = null;
+  for (const item of cookies) {
+    if (item === null || typeof item !== 'object') continue;
+    cookieCount += 1;
+    const facts = cookieApplicabilityFacts(item as Record<string, unknown>, opts.appOrigin, opts.appPath, atEpochSeconds);
+    if (!facts.domainApplicable || !facts.pathApplicable) continue;
+    applicableCount += 1;
+    if (facts.expired) applicableExpired = true;
+    if (facts.numericExpiryEpochSeconds !== null && (earliestApplicableExpiry === null || facts.numericExpiryEpochSeconds < earliestApplicableExpiry)) {
+      earliestApplicableExpiry = facts.numericExpiryEpochSeconds;
+    }
+  }
+  return { cookieCount, applicableCount, applicableExpired, earliestApplicableExpiryEpochSeconds: earliestApplicableExpiry };
 }
 
 /**

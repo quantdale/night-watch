@@ -1,0 +1,156 @@
+{
+  "schemaVersion": "nightwatch.release-certification.v1",
+  "definitionName": "Nightwatch release certification — ordered advance conditions (F-12)",
+  "note": "The certification record for nightwatch.project-state.v2. Each condition names the check whose output decides it; a condition with no registered check fails the definition itself (bin/project-state-check.mjs + src/core/releaseCertification/index.ts). evidenceSha binds the commit at which the condition's evidence was earned: a SHA strictly preceding the certified checkpoint reports STALE_EVIDENCE, does not count as met, and refuses the certification. The production path (C-12 → C-14, P4) is deliberately NOT a condition; it is reported as a separate external track.",
+  "certifiedCheckpointField": "LAST_SUBSTANTIVE_IMPLEMENTATION_SHA",
+  "advanceStatuses": [
+    "PROJECT_COMPLETE_AND_CI_CERTIFIED"
+  ],
+  "nextStatus": {
+    "state": "PENDING_OWNER_DECISION",
+    "safeDefault": "OPERATIONALLY_ACCEPTED",
+    "ownerDecision": "13.8",
+    "statement": "No status beyond OPERATIONALLY_ACCEPTED is named until the owner names one. The safe default, and the only status this programme asserts, remains OPERATIONALLY_ACCEPTED."
+  },
+  "externalTrack": {
+    "id": "production-path",
+    "stages": ["C-12", "C-13", "C-14", "P4"],
+    "excludedFromAdvanceConditions": true,
+    "checks": ["production-track-status"],
+    "statement": "C-12 → C-14 and P4 are externally gated (C-08b mochi access, observer identity). They are reported with their own status and are never counted among the advance conditions."
+  },
+  "presentationSurfaces": [
+    "README.md",
+    "docs/RELEASE-ADVANCE-CONDITIONS.md"
+  ],
+  "conditions": [
+    {
+      "id": "validation-lane-closure",
+      "order": 1,
+      "title": "every declared validation lane resolves PROVEN, or BLOCKED_EXTERNAL / UNAVAILABLE_CAPABILITY with a current unexpired record naming its owner action",
+      "check": "validation-lane-state",
+      "evidenceSha": "88e3c3fb52937ff303b0944cc22cfee624bf807e",
+      "evidence": "config/validation-lane-state.v1.json resolved against config/validation-universe.v1.json"
+    },
+    {
+      "id": "exact-head-ci-authority",
+      "order": 2,
+      "title": "exact-head CI is executed or its block record is current and complete",
+      "check": "ci-block-record",
+      "evidenceSha": null,
+      "evidence": "project-state block CI_OBSERVED_SHA / CI_EXECUTED_SHA / CI_STATUS plus the exact-checkpoint-ci lane record"
+    },
+    {
+      "id": "autonomous-yield-proof",
+      "order": 3,
+      "title": "the autonomous yield campaign has completed with per-case reasons recorded, whatever its yield",
+      "check": "yield-campaign-result",
+      "evidenceSha": null,
+      "evidence": "group-12 yield campaign result"
+    },
+    {
+      "id": "completion-ledger-truth",
+      "order": 4,
+      "title": "the change ledger and the spec baseline agree with task truth",
+      "check": "ledger-agreement",
+      "evidenceSha": "8bad862e3ee29d804103dd6ab1b9c9a2fd0391e6",
+      "evidence": "bin/agent-state.mjs ledger diagnostics (LEDGER_TERMINAL_TASK_HAS_OPEN_ITEMS and the agent-audit totals)"
+    },
+    {
+      "id": "operator-cli-contract",
+      "order": 5,
+      "title": "the CLI contract sweep passes over every entry point",
+      "check": "operator-cli-sweep",
+      "evidenceSha": "8bad862e3ee29d804103dd6ab1b9c9a2fd0391e6",
+      "evidence": "bin/lib/operator-command-listing.mjs static listing (the sweep suite's own inputs)"
+    },
+    {
+      "id": "documentation-currency",
+      "order": 6,
+      "title": "the document-role and status-ledger checks pass",
+      "check": "documentation-currency-rules",
+      "evidenceSha": "8bad862e3ee29d804103dd6ab1b9c9a2fd0391e6",
+      "evidence": "bin/hardening-check.mjs exit status"
+    },
+    {
+      "id": "workspace-continuity-drift-closure",
+      "order": 7,
+      "title": "no workspace claim names a terminal task and no legacy record is undisposed",
+      "check": "workspace-claims",
+      "evidenceSha": "8bad862e3ee29d804103dd6ab1b9c9a2fd0391e6",
+      "evidence": "bin/agent-state.mjs CLAIM_TASK_* diagnostics and legacy_undeclared total"
+    },
+    {
+      "id": "dependency-supply-chain-currency",
+      "order": 8,
+      "title": "the dependency assessment is executed or currently recorded unavailable",
+      "check": "dependency-advisory-lane",
+      "evidenceSha": "36bd4930db978423f97e16f35250c2e66bfa112c",
+      "evidence": "lane dependency-advisory in config/validation-lane-state.v1.json"
+    },
+    {
+      "id": "dead-architecture-closure",
+      "order": 9,
+      "title": "no tracked source module is unreferenced outside a reasoned retention list, and no module barrier is both unimported and unremoved",
+      "check": "dead-architecture-closure-check",
+      "evidenceSha": null,
+      "evidence": "group-14 reachability and reasoned-retention check"
+    },
+    {
+      "id": "cli-implementation-contract",
+      "order": 10,
+      "title": "every dynamic module path and every symbol read from one resolves statically, bin/** type-checks, and every entry point has an executing test",
+      "check": "cli-implementation-contract",
+      "evidenceSha": "8bad862e3ee29d804103dd6ab1b9c9a2fd0391e6",
+      "evidence": "config/bin-typecheck.v1.json mode plus the loader contract audit in bin/lib/cli-implementation-contract.mjs"
+    },
+    {
+      "id": "structural-rule-soundness",
+      "order": 11,
+      "title": "every structural rule is comment-proof where positive, occurrence-complete where total, and has a detected mutation probe",
+      "check": "structural-rule-registry",
+      "evidenceSha": "8bad862e3ee29d804103dd6ab1b9c9a2fd0391e6",
+      "evidence": "bin/hardening-check.mjs --list-rules registry output"
+    },
+    {
+      "id": "schema-version-lifecycle",
+      "order": 12,
+      "title": "every schema identifier is declared persisted or in-memory, and no persisted version change lacks a disposition",
+      "check": "schema-version-lifecycle-check",
+      "evidenceSha": null,
+      "evidence": "group-17 schema lifecycle check"
+    },
+    {
+      "id": "ui-error-taxonomy-rendering",
+      "order": 13,
+      "title": "every member of ApiErrorKind renders distinguishably and the failure path is covered by the render harness",
+      "check": "ui-error-taxonomy-check",
+      "evidenceSha": null,
+      "evidence": "group-18 UI render harness"
+    },
+    {
+      "id": "configuration-contract",
+      "order": 14,
+      "title": "every environment variable the code reads is declared and validated, and every environment file is schema-validated",
+      "check": "configuration-contract-check",
+      "evidenceSha": null,
+      "evidence": "group-19 configuration contract check"
+    },
+    {
+      "id": "accessibility-certification",
+      "order": 15,
+      "title": "no status distinction is colour-only, every rendered contrast pair meets its ratio, and every operator workflow completes by keyboard",
+      "check": "accessibility-certification",
+      "evidenceSha": "8bad862e3ee29d804103dd6ab1b9c9a2fd0391e6",
+      "evidence": "tests/unit/accessibilityAudit.test.ts and tests/browser/accessibilityCertification.browser.ts certification lane"
+    },
+    {
+      "id": "authenticated-capability-lifecycle",
+      "order": 16,
+      "title": "every authenticated lane pre-flights its artefact and refuses an expired, wrong-environment or unknown-age one before any effect",
+      "check": "authenticated-capability-lifecycle-check",
+      "evidenceSha": null,
+      "evidence": "group-21 capture-sidecar pre-flight"
+    }
+  ]
+}

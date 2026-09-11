@@ -23,6 +23,7 @@ import {
   validateStorageStateOutputPath,
 } from '../browser/fixtures/storageState';
 import { inspectRipplePageAuthReadability } from '../browser/fixtures/pageAuthReadability';
+import { DEFAULT_AUTH_VALIDITY_WINDOW_MS, writeAuthCaptureRecord } from './capabilityLifecycle';
 import { createRunId, RunRecorder } from '../core/evidence/runRecorder';
 import type { RunSummary } from '../core/evidence/types';
 import { OutboundPolicy, OUTBOUND_POLICY_VERSION } from '../core/safety/outboundPolicy';
@@ -91,6 +92,10 @@ export interface DirectAuthCaptureOptions {
   proxyProcessAlive?: () => boolean;
   /** Dependency injection used only by local timing tests. */
   proxyPollIntervalMs?: number;
+  /** Declared trust window for the lifecycle record; default 12 hours. */
+  authValidityWindowMs?: number;
+  /** Deterministic capture instant for local synthetic tests only. */
+  authCaptureInstant?: string;
 }
 
 export interface DirectAuthCaptureResult {
@@ -98,6 +103,8 @@ export interface DirectAuthCaptureResult {
   artifactDir: string;
   proxyAddress: string;
   storageStatePath: string;
+  /** Sidecar lifecycle record path; always present after a successful capture. */
+  authLifecycleRecordPath: string;
   provenance: {
     schemaVersion: 'phase-2a-auth-capture-v1';
     mode: 'human-parent-cli' | 'synthetic-test-only';
@@ -353,7 +360,8 @@ export async function runDirectAuthCapture(opts: DirectAuthCaptureOptions): Prom
     opts.targetNavigator !== undefined ||
     opts.proxyHealthCheck !== undefined ||
     opts.proxyProcessAlive !== undefined ||
-    opts.proxyPollIntervalMs !== undefined;
+    opts.proxyPollIntervalMs !== undefined ||
+    opts.authCaptureInstant !== undefined;
   if (hasTestOnlyOverrides && !testOnly) {
     throw new Error('fail-closed: direct capture test overrides are unavailable in real mode');
   }
@@ -399,6 +407,7 @@ export async function runDirectAuthCapture(opts: DirectAuthCaptureOptions): Prom
   let cleanupError: unknown;
   let stateWriteAttempted = false;
   let stateCommitted = false;
+  let authLifecycleRecordPath: string | undefined;
   let summary: RunSummary | undefined;
 
   try {
@@ -530,6 +539,25 @@ export async function runDirectAuthCapture(opts: DirectAuthCaptureOptions): Prom
       // user-owned directory. No state contents enter evidence.
       atomicallyReplaceValidatedStorageState(pendingOutputPath, outputPath, { allowExisting: true });
       stateCommitted = true;
+      // The lifecycle sidecar is written through the redaction layer with the
+      // committed artefact, so a successful capture never leaves an artefact
+      // without a record. It carries metadata only: no cookie value enters it.
+      const lifecycle = writeAuthCaptureRecord({
+        artefactPath: outputPath,
+        environment: opts.environment.name,
+        origin: new URL(target).origin,
+        validityWindowMs: opts.authValidityWindowMs ?? DEFAULT_AUTH_VALIDITY_WINDOW_MS,
+        ...(opts.authCaptureInstant === undefined ? {} : { captureInstant: opts.authCaptureInstant }),
+      });
+      authLifecycleRecordPath = lifecycle.recordPath;
+      recorder.addManifestEntry('authCapabilityRecord', {
+        schemaVersion: lifecycle.record.schemaVersion,
+        environment: lifecycle.record.environment,
+        origin: lifecycle.record.origin,
+        earliestCookieExpiry: lifecycle.record.earliestCookieExpiry,
+        validityWindowMs: lifecycle.record.validityWindowMs,
+        artefactDigest: lifecycle.record.artefactDigest,
+      });
       return outputPath;
     });
   } catch (error) {
@@ -583,11 +611,15 @@ export async function runDirectAuthCapture(opts: DirectAuthCaptureOptions): Prom
   if (captureError !== undefined) throw captureError;
   if (cleanupError !== undefined) throw cleanupError;
   if (summary === undefined || !summary.passed) throw new AuthCaptureStageError({ stage: 'CLEANUP', reason: 'CLEANUP_FAILED' });
+  if (authLifecycleRecordPath === undefined) {
+    throw new AuthCaptureStageError({ stage: 'PROVENANCE_WRITE', reason: 'AUTH_LIFECYCLE_RECORD_MISSING' });
+  }
   return {
     browserLaunched,
     artifactDir: recorder.dir,
     proxyAddress: managed!.state.address,
     storageStatePath: outputPath,
+    authLifecycleRecordPath,
     provenance,
     summary,
   };

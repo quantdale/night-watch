@@ -56,6 +56,14 @@ const overview: OverviewSnapshot = {
     checkpointCompatibility: 'CURRENT_SCHEMA',
     analyzer: { pinnedVersion: 'synthetic', observedVersion: 'synthetic', availability: 'AVAILABLE', versionConsistent: true, blocked: false },
     verification: { deferredDimensions: [], notMeasuredDimensions: [], allDeferredToHardening: false },
+    authCapability: {
+      entries: [
+        { environment: 'dev', present: true, state: 'EXPIRED', epistemicClass: 'FACT', captureInstant: '2026-09-11T00:00:00.000Z', declaredValidUntil: '2026-09-11T12:00:00.000Z', remainingValidityBand: 'NONE', refusalCode: 'AUTH_CAPABILITY_EXPIRED', blockedLanes: ['journey:phase2c'] },
+        { environment: 'next', present: false, state: 'MISSING', epistemicClass: 'FACT', captureInstant: null, declaredValidUntil: null, remainingValidityBand: 'UNKNOWN', refusalCode: 'AUTH_CAPABILITY_MISSING', blockedLanes: ['auth:capture'] },
+      ],
+      presentAndExpiredEnvironments: ['dev'],
+      aggregateState: 'ATTENTION',
+    },
     unresolvedBlockers: [],
     externalCi: 'UNKNOWN',
     externalCiClassification: 'UNMEASURED_UNKNOWN',
@@ -357,6 +365,23 @@ describe('Control Center UI shell', () => {
     expect(screen.getByText('CI_BILLING')).toBeInTheDocument();
     expect(screen.getByText('Github Billing Block')).toBeInTheDocument();
     expect(screen.getByText('Unmeasured Unknown')).toBeInTheDocument();
+  });
+
+  it('shows a present-and-expired capture as expired, never as absent', async () => {
+    const user = userEvent.setup();
+    await openPosture(user, overview, 'Overview');
+
+    // The dev artefact exists and is expired; the next one has never been captured.
+    expect(screen.getByText('Present and expired')).toBeInTheDocument();
+    expect(screen.getByText('Auth Capability Expired')).toBeInTheDocument();
+    expect(screen.getByText('Auth Capability Missing')).toBeInTheDocument();
+    const devRow = screen.getByText('dev').closest('tr');
+    expect(devRow).not.toBeNull();
+    expect(within(devRow as HTMLElement).getByText('Present')).toBeInTheDocument();
+    expect(within(devRow as HTMLElement).getByText('Expired')).toBeInTheDocument();
+    const nextRow = screen.getByText('next').closest('tr');
+    expect(nextRow).not.toBeNull();
+    expect(within(nextRow as HTMLElement).getByText('Absent')).toBeInTheDocument();
   });
 
   it('renders distinct run outcomes, ordered timeline data, and a bounded graph', async () => {

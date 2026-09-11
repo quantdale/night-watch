@@ -36,6 +36,8 @@ import {
   LOCAL_READINESS_CHECKPOINT_COMPATIBILITY_VALUES,
   LOCAL_READINESS_BLOCKER_KINDS,
   LOCAL_READINESS_ANALYZER_AVAILABILITY_VALUES,
+  LOCAL_READINESS_AUTH_CAPABILITY_STATES,
+  LOCAL_READINESS_AUTH_VALIDITY_BANDS,
   LOCAL_READINESS_DEFERRED_VERIFICATION_VALUES,
   LOCAL_READINESS_VERIFICATION_DIMENSIONS,
 } from '../readiness/types';
@@ -62,6 +64,14 @@ const SUMMARY_BASE_KEYS = [
   'checkpointCompatibility', 'unresolvedBlockers', 'externalCi', 'ownerScope',
 ] as const;
 const SUMMARY_ADDITIVE_KEYS = ['analyzer', 'verification', 'externalCiClassification'] as const;
+/**
+ * Optional sections are their own all-or-nothing family: an artifact written
+ * before the section existed stays readable, and the section is validated
+ * exactly when present. This is deliberately NOT folded into
+ * SUMMARY_ADDITIVE_KEYS, which would make every historical artifact
+ * incomplete.
+ */
+const SUMMARY_OPTIONAL_KEYS = ['authCapability'] as const;
 
 const HEALTH_KEYS = [
   'totalFamilies', 'activeFamilies', 'archivedFamilies', 'familiesByKind',
@@ -76,6 +86,13 @@ const CAMPAIGN_KEYS = ['category', 'comparedKeys', 'driftKeys', 'unmeasured'] as
 const OWNER_SCOPE_KEYS = ['status', 'reason', 'frozenOperationCount', 'matchesFrozenMarkers'] as const;
 const ANALYZER_KEYS = ['pinnedVersion', 'observedVersion', 'availability', 'versionConsistent', 'blocked'] as const;
 const VERIFICATION_KEYS = ['statesByDimension', 'deferredDimensions', 'notMeasuredDimensions', 'allDeferredToHardening'] as const;
+const AUTH_SECTION_KEYS = ['entries', 'presentAndExpiredEnvironments', 'aggregateState'] as const;
+const AUTH_ENTRY_KEYS = [
+  'environment', 'present', 'state', 'epistemicClass', 'captureInstant',
+  'declaredValidUntil', 'remainingValidityBand', 'refusalCode', 'blockedLanes',
+] as const;
+const AUTH_EPISTEMIC_CLASSES = ['FACT', 'UNKNOWN'] as const;
+const AUTH_AGGREGATE_STATES = ['VALID', 'ATTENTION', 'UNKNOWN'] as const;
 
 const CATEGORIES = ['READY_LOCAL_SYNTHETIC', 'BLOCKED_SOURCE', 'BLOCKED_VERSION', 'BLOCKED_AUTHORITY', 'BLOCKED_EXTERNAL_CI', 'NOT_APPLICABLE'] as const;
 const COVERAGE_VALUES = ['COVERED', 'PARTIAL', 'MISSING'] as const;
@@ -145,6 +162,64 @@ function validateAdditiveReadinessSections(report: Record<string, unknown>): voi
   if (classification === undefined || report.externalCiClassification !== classification.classification) invalid('EXTERNAL_CI_CLASSIFICATION');
 }
 
+const AUTH_ENVIRONMENT_RE = /^[a-z][a-z0-9-]{0,31}$/;
+const AUTH_BLOCKED_LANE_RE = /^[A-Za-z0-9_.:-]{1,200}$/;
+
+/** Validate the optional authenticated-capability section exactly as produced. */
+function validateAuthCapabilitySection(value: unknown): void {
+  const section = requireRuntimeRecord(value, 'ARTIFACT_PROJECT_HEALTH_INVALID:AUTH');
+  assertExactKeys(section, AUTH_SECTION_KEYS, 'ARTIFACT_PROJECT_HEALTH_INVALID:AUTH');
+  const entries = requireRuntimeArray(section.entries, 'ARTIFACT_PROJECT_HEALTH_INVALID:AUTH_ENTRIES');
+  const presentAndExpired: string[] = [];
+  const states: string[] = [];
+  let previousEnvironment: string | undefined;
+  for (const item of entries) {
+    const entry = requireRuntimeRecord(item, 'ARTIFACT_PROJECT_HEALTH_INVALID:AUTH_ENTRY');
+    assertExactKeys(entry, AUTH_ENTRY_KEYS, 'ARTIFACT_PROJECT_HEALTH_INVALID:AUTH_ENTRY');
+    assertString(entry.environment, 'ARTIFACT_PROJECT_HEALTH_INVALID:AUTH_ENVIRONMENT');
+    const environment = entry.environment as string;
+    if (!AUTH_ENVIRONMENT_RE.test(environment) || containsForbiddenErrorDetail(environment)) invalid('AUTH_ENVIRONMENT_PATTERN');
+    if (previousEnvironment !== undefined && !(previousEnvironment < environment)) invalid('AUTH_ENTRIES_ORDER');
+    previousEnvironment = environment;
+    assertBoolean(entry.present, 'ARTIFACT_PROJECT_HEALTH_INVALID:AUTH_PRESENT');
+    if (!(LOCAL_READINESS_AUTH_CAPABILITY_STATES as readonly string[]).includes(entry.state as string)) invalid('AUTH_STATE');
+    const state = entry.state as string;
+    states.push(state);
+    const absenceState = state === 'MISSING' || state === 'NOT_EVALUATED';
+    if (entry.present === absenceState) invalid('AUTH_PRESENCE_COHERENCE');
+    const expectedEpistemic = state === 'UNKNOWN_AGE' || state === 'UNREADABLE' || state === 'NOT_EVALUATED' ? 'UNKNOWN' : 'FACT';
+    if (entry.epistemicClass !== expectedEpistemic) invalid('AUTH_EPISTEMIC_COHERENCE');
+    for (const instantField of ['captureInstant', 'declaredValidUntil'] as const) {
+      const instant = entry[instantField];
+      if (instant === null) continue;
+      assertString(instant, `ARTIFACT_PROJECT_HEALTH_INVALID:AUTH_${instantField.toUpperCase()}`);
+      if (!Number.isFinite(Date.parse(instant as string))) invalid(`AUTH_${instantField.toUpperCase()}`);
+    }
+    if (!(LOCAL_READINESS_AUTH_VALIDITY_BANDS as readonly string[]).includes(entry.remainingValidityBand as string)) invalid('AUTH_VALIDITY_BAND');
+    if (entry.refusalCode !== null) {
+      assertString(entry.refusalCode, 'ARTIFACT_PROJECT_HEALTH_INVALID:AUTH_REFUSAL_CODE');
+      if (!BLOCKER_CODE_RE.test(entry.refusalCode as string)) invalid('AUTH_REFUSAL_CODE_PATTERN');
+    }
+    const refusalAllowed = !(state === 'VALID' || state === 'NOT_EVALUATED');
+    if (refusalAllowed !== (entry.refusalCode !== null)) invalid('AUTH_REFUSAL_COHERENCE');
+    const blockedLanes = requireRuntimeArray(entry.blockedLanes, 'ARTIFACT_PROJECT_HEALTH_INVALID:AUTH_BLOCKED_LANES');
+    assertSortedUnique(blockedLanes, 'AUTH_BLOCKED_LANES');
+    if (blockedLanes.length > 24) invalid('AUTH_BLOCKED_LANES');
+    for (const lane of blockedLanes) {
+      if (!AUTH_BLOCKED_LANE_RE.test(lane as string) || containsForbiddenErrorDetail(lane as string)) invalid('AUTH_BLOCKED_LANE_PATTERN');
+    }
+    if (entry.present === true && state === 'EXPIRED') presentAndExpired.push(environment);
+  }
+  assertExactSequence(
+    requireRuntimeArray(section.presentAndExpiredEnvironments, 'ARTIFACT_PROJECT_HEALTH_INVALID:AUTH_PRESENT_AND_EXPIRED'),
+    presentAndExpired,
+    'AUTH_PRESENT_AND_EXPIRED',
+  );
+  if (!(AUTH_AGGREGATE_STATES as readonly string[]).includes(section.aggregateState as string)) invalid('AUTH_AGGREGATE');
+  const expectedAggregate = states.length === 0 ? 'UNKNOWN' : states.every((state) => state === 'VALID') ? 'VALID' : 'ATTENTION';
+  if (section.aggregateState !== expectedAggregate) invalid('AUTH_AGGREGATE_COHERENCE');
+}
+
 /**
  * Strict validation of one persisted LocalReadinessSummary. Throws
  * ARTIFACT_PROJECT_HEALTH_INVALID:* on any violation.
@@ -152,9 +227,12 @@ function validateAdditiveReadinessSections(report: Record<string, unknown>): voi
 export function validateProjectHealthReportArtifact(value: unknown): void {
   if (!isRuntimeRecord(value)) invalid('OBJECT_REQUIRED');
   const report = requireRuntimeRecord(value, 'ARTIFACT_PROJECT_HEALTH_INVALID');
-  assertExactKeys(report, SUMMARY_BASE_KEYS, 'ARTIFACT_PROJECT_HEALTH_INVALID', SUMMARY_ADDITIVE_KEYS);
+  assertExactKeys(report, SUMMARY_BASE_KEYS, 'ARTIFACT_PROJECT_HEALTH_INVALID', [...SUMMARY_ADDITIVE_KEYS, ...SUMMARY_OPTIONAL_KEYS]);
   const additivePresence = SUMMARY_ADDITIVE_KEYS.map((key) => Object.prototype.hasOwnProperty.call(report, key));
   if (additivePresence.some((present) => present) && additivePresence.some((present) => !present)) invalid('ADDITIVE_SECTIONS_INCOMPLETE');
+  if (Object.prototype.hasOwnProperty.call(report, 'authCapability')) {
+    validateAuthCapabilitySection(report.authCapability);
+  }
 
   // Fixed identity/scope markers of the ONE readiness model.
   if (report.modelVersion !== LOCAL_READINESS_MODEL_VERSION) invalid('MODEL_VERSION_UNSUPPORTED');

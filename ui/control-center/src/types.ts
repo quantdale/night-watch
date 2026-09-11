@@ -84,6 +84,26 @@ export interface ReadinessSnapshot {
     readonly notMeasuredDimensions: readonly string[];
     readonly allDeferredToHardening: boolean;
   };
+  /**
+   * Authenticated capability lifecycle per environment. `present` true with
+   * `state` EXPIRED is deliberately distinct from `present` false: the first
+   * needs a re-capture, the second needs a first capture.
+   */
+  readonly authCapability: {
+    readonly entries: readonly {
+      readonly environment: string;
+      readonly present: boolean;
+      readonly state: string;
+      readonly epistemicClass: 'FACT' | 'UNKNOWN';
+      readonly captureInstant: string | null;
+      readonly declaredValidUntil: string | null;
+      readonly remainingValidityBand: string;
+      readonly refusalCode: string | null;
+      readonly blockedLanes: readonly string[];
+    }[];
+    readonly presentAndExpiredEnvironments: readonly string[];
+    readonly aggregateState: 'VALID' | 'ATTENTION' | 'UNKNOWN';
+  };
   readonly unresolvedBlockers: readonly { readonly code: string; readonly kind: string; readonly detailCode: string | null }[];
   readonly externalCi: string;
   readonly externalCiClassification: string;

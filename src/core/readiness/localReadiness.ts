@@ -51,10 +51,17 @@ import {
   LOCAL_READINESS_VERIFICATION_DIMENSIONS,
 } from './types';
 import { containsForbiddenErrorDetail, safeErrorDetail } from '../campaign/runtimeValidation';
+import {
+  LOCAL_READINESS_AUTH_CAPABILITY_STATES,
+} from './types';
 import type {
   LocalReadinessAnalyzerAvailability,
   LocalReadinessAnalyzerInput,
   LocalReadinessAnalyzerSection,
+  LocalReadinessAuthCapabilityEntry,
+  LocalReadinessAuthCapabilityInput,
+  LocalReadinessAuthCapabilitySection,
+  LocalReadinessAuthValidityBand,
   LocalReadinessBlocker,
   LocalReadinessCampaignSummary,
   LocalReadinessCategory,
@@ -383,6 +390,92 @@ function summarizeVerification(input: LocalReadinessInput): LocalReadinessVerifi
   };
 }
 
+const AUTH_ENVIRONMENT_PATTERN = /^[a-z][a-z0-9-]{0,31}$/;
+
+function authEpistemicClass(state: LocalReadinessAuthCapabilityEntry['state']): LocalReadinessAuthCapabilityEntry['epistemicClass'] {
+  return state === 'UNKNOWN_AGE' || state === 'UNREADABLE' || state === 'NOT_EVALUATED' ? 'UNKNOWN' : 'FACT';
+}
+
+function authValidityBand(remainingValidityMs: number | null): LocalReadinessAuthValidityBand {
+  if (remainingValidityMs === null) return 'UNKNOWN';
+  if (remainingValidityMs <= 0) return 'NONE';
+  if (remainingValidityMs < 1 * 60 * 60 * 1000) return 'UNDER_1H';
+  if (remainingValidityMs < 6 * 60 * 60 * 1000) return 'UNDER_6H';
+  if (remainingValidityMs < 12 * 60 * 60 * 1000) return 'UNDER_12H';
+  return 'AT_LEAST_12H';
+}
+
+function isoOrNull(value: string | null | undefined, code: string): string | null {
+  if (value === null || value === undefined) return null;
+  if (typeof value !== 'string' || !Number.isFinite(Date.parse(value))) failClosed(code);
+  return value;
+}
+
+/**
+ * Normalize the authenticated-capability facts into the summary section.
+ * Contradictions fail closed: a VALID entry cannot carry a refusal code, and a
+ * refusal state cannot deny that the artefact is present.
+ */
+function summarizeAuthCapability(input: LocalReadinessAuthCapabilityInput | undefined): LocalReadinessAuthCapabilitySection {
+  const rawEntries = input?.entries ?? [];
+  const seen = new Set<string>();
+  const entries: LocalReadinessAuthCapabilityEntry[] = [];
+  for (const [index, entry] of rawEntries.entries()) {
+    if (!AUTH_ENVIRONMENT_PATTERN.test(entry.environment) || containsForbiddenErrorDetail(entry.environment)) {
+      failClosed(`READINESS_PRIVACY_BLOCKED:auth-environment:${index}`);
+    }
+    if (seen.has(entry.environment)) failClosed(`READINESS_INVALID_AUTH:duplicate-environment:${safeErrorDetail(entry.environment)}`);
+    seen.add(entry.environment);
+    if (!LOCAL_READINESS_AUTH_CAPABILITY_STATES.includes(entry.state)) {
+      failClosed(`READINESS_INVALID_AUTH:state:${safeErrorDetail(entry.environment)}`);
+    }
+    const absenceStates = entry.state === 'MISSING' || entry.state === 'NOT_EVALUATED';
+    if (entry.present === absenceStates) {
+      failClosed(`READINESS_INVALID_AUTH:presence:${safeErrorDetail(entry.environment)}`);
+    }
+    const refusalCode = entry.refusalCode ?? null;
+    if (refusalCode !== null && (typeof refusalCode !== 'string' || !BLOCKER_CODE_PATTERN.test(refusalCode))) {
+      failClosed(`READINESS_INVALID_AUTH:refusal-code:${safeErrorDetail(entry.environment)}`);
+    }
+    if ((entry.state === 'VALID' || entry.state === 'NOT_EVALUATED') !== (refusalCode === null)) {
+      failClosed(`READINESS_INVALID_AUTH:refusal-contradiction:${safeErrorDetail(entry.environment)}`);
+    }
+    const remainingValidityMs = entry.remainingValidityMs ?? null;
+    if (remainingValidityMs !== null && (!Number.isFinite(remainingValidityMs) || remainingValidityMs < 0)) {
+      failClosed(`READINESS_INVALID_AUTH:remaining:${safeErrorDetail(entry.environment)}`);
+    }
+    const blockedLanes = sortedUnique(entry.blockedLanes ?? []);
+    if (blockedLanes.length > 24) failClosed(`READINESS_INVALID_AUTH:blocked-lanes:${safeErrorDetail(entry.environment)}`);
+    for (const lane of blockedLanes) {
+      if (!IDENTITY_FIELD_PATTERN.test(lane) || containsForbiddenErrorDetail(lane)) {
+        failClosed(`READINESS_PRIVACY_BLOCKED:auth-blocked-lane:${safeErrorDetail(entry.environment)}`);
+      }
+    }
+    entries.push(Object.freeze({
+      environment: entry.environment,
+      present: entry.present,
+      state: entry.state,
+      epistemicClass: authEpistemicClass(entry.state),
+      captureInstant: isoOrNull(entry.captureInstant, `READINESS_INVALID_AUTH:capture-instant:${safeErrorDetail(entry.environment)}`),
+      declaredValidUntil: isoOrNull(entry.declaredValidUntil, `READINESS_INVALID_AUTH:declared-until:${safeErrorDetail(entry.environment)}`),
+      remainingValidityBand: authValidityBand(remainingValidityMs),
+      refusalCode,
+      blockedLanes: Object.freeze(blockedLanes),
+    }));
+  }
+  entries.sort((left, right) => compareStrings(left.environment, right.environment));
+  const presentAndExpiredEnvironments = entries
+    .filter((entry) => entry.present && entry.state === 'EXPIRED')
+    .map((entry) => entry.environment);
+  const aggregateState: LocalReadinessAuthCapabilitySection['aggregateState'] =
+    entries.length === 0 ? 'UNKNOWN' : entries.every((entry) => entry.state === 'VALID') ? 'VALID' : 'ATTENTION';
+  return Object.freeze({
+    entries: Object.freeze(entries),
+    presentAndExpiredEnvironments: Object.freeze(presentAndExpiredEnvironments),
+    aggregateState,
+  });
+}
+
 function coverageForTarget(activeCount: number, hasCampaignEligibleExpectation: boolean): LocalReadinessTargetCoverage {
   if (activeCount === 0) return 'MISSING';
   return hasCampaignEligibleExpectation ? 'COVERED' : 'PARTIAL';
@@ -432,6 +525,7 @@ export function summarizeLocalReadiness(input: LocalReadinessInput): LocalReadin
   const matchesFrozenMarkers = ownerScopeMatchesMarkers(input);
   const { section: analyzerSection, analyzerBlocked } = summarizeAnalyzer(input);
   const verification = summarizeVerification(input);
+  const authCapability = summarizeAuthCapability(input.authCapability);
   const externalCiClassification = classifyExternalCi(input.externalCi);
 
   // Approved-target coverage entries (structural only), sorted by targetId.
@@ -503,6 +597,7 @@ export function summarizeLocalReadiness(input: LocalReadinessInput): LocalReadin
     checkpointCompatibility: input.checkpointCompatibility,
     analyzer: Object.freeze(analyzerSection),
     verification: Object.freeze(verification),
+    authCapability,
     unresolvedBlockers: Object.freeze(normalizedBlockers.map((blocker) => Object.freeze({ ...blocker }))),
     externalCi: input.externalCi,
     externalCiClassification: externalCiClassification.classification,
@@ -540,9 +635,14 @@ export function renderLocalReadinessText(summary: LocalReadinessSummary): string
     `verification: ${renderVerificationStates(summary)} deferred=${summary.verification.deferredDimensions.length}` +
       ` not-measured=${summary.verification.notMeasuredDimensions.length}`,
     `external-ci: ${summary.externalCi} (classification=${summary.externalCiClassification})`,
+    `authenticated-capability: ${summary.authCapability.aggregateState} entries=${summary.authCapability.entries.length}` +
+      ` present-and-expired=${summary.authCapability.presentAndExpiredEnvironments.length === 0 ? 'none' : summary.authCapability.presentAndExpiredEnvironments.join(',')}`,
     `owner-scope: ${summary.ownerScope.status} / ${summary.ownerScope.reason} (frozen=${summary.ownerScope.frozenOperationCount} markers-match=${summary.ownerScope.matchesFrozenMarkers})`,
     `blockers: ${summary.unresolvedBlockers.length}`,
   ];
+  for (const entry of summary.authCapability.entries) {
+    lines.push(`  - auth ${entry.environment} ${entry.state} present=${entry.present} band=${entry.remainingValidityBand} epistemic=${entry.epistemicClass}`);
+  }
   for (const blocker of summary.unresolvedBlockers) {
     lines.push(`  - ${blocker.kind} ${blocker.code}${blocker.detail === undefined ? '' : ` (${blocker.detail})`}`);
   }
