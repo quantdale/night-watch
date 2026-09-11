@@ -116,14 +116,14 @@ code-level gaps the second pass found by tracing the implementation
 
 ## 4. Operator CLI contract
 
-- [ ] 4.1 Implement the shared parser in `bin/lib/`: declared metadata, help
+- [x] 4.1 Implement the shared parser in `bin/lib/`: declared metadata, help
       rendering, unknown/malformed/conflicting/positional refusal, exit-code and
       `--json` convention
-- [ ] 4.2 Build the exhaustive sweep over every tracked `bin/*.mjs`; assert a
+- [x] 4.2 Build the exhaustive sweep over every tracked `bin/*.mjs`; assert a
       non-zero discovered count before any other assertion
-- [ ] 4.3 Measure side-effect freedom under `--help`: working tree,
+- [x] 4.3 Measure side-effect freedom under `--help`: working tree,
       `artifacts/` and `$HOME/.nightwatch` unchanged; a change fails the case
-- [ ] 4.4 Migrate `bin/quality-gate.mjs` first and prove
+- [x] 4.4 Migrate `bin/quality-gate.mjs` first and prove
       `quality-gate.mjs local --help` prints usage and exits within one second
 - [ ] 4.5 Migrate the remaining 61 entry points in batches; the sweep counts
       conformance in reporting mode throughout
@@ -133,7 +133,7 @@ code-level gaps the second pass found by tracing the implementation
       payload semantics; assert stdout parses as exactly one document
 - [ ] 4.8 Assert no usage or error text carries a credential or an absolute
       path outside the checkout
-- [ ] 4.9 Derive the grouped command listing from declared metadata; point
+- [x] 4.9 Derive the grouped command listing from declared metadata; point
       `README.md` at it instead of enumerating scripts
 - [ ] 4.10 Turn on the structural rule requiring the shared parser once all 62
       conform; negative-probe with a non-conforming bin
@@ -141,18 +141,18 @@ code-level gaps the second pass found by tracing the implementation
 
 ## 5. Evidence lifecycle hygiene
 
-- [ ] 5.1 Re-derive the refusal set from current tracked state; run
+- [x] 5.1 Re-derive the refusal set from current tracked state; run
       `retention:plan` and record the measured candidate and refusal totals
-- [ ] 5.2 Assert unprovable-means-refused with a negative probe
+- [x] 5.2 Assert unprovable-means-refused with a negative probe
 - [ ] 5.3 **Owner decision required:** approve the reclaim and the retention
       window
 - [ ] 5.4 Execute `--apply` behind an explicit confirmation token; record
       deleted set, byte total, SHA, refusal set and date
-- [ ] 5.5 Resolve Playwright output to one configured root across the eleven
+- [x] 5.5 Resolve Playwright output to one configured root across the eleven
       root `playwright.*.config.ts` files; move scratch under one ignored root
-- [ ] 5.6 Extend `hygiene:clean` to the 19 historical `test-results*` roots and
+- [x] 5.6 Extend `hygiene:clean` to the 19 historical `test-results*` roots and
       the 4 `.tmp-*` trees; dry-run lists exactly what it would remove
-- [ ] 5.7 Assert `hygiene:clean` never touches `artifacts/`, the finding store,
+- [x] 5.7 Assert `hygiene:clean` never touches `artifacts/`, the finding store,
       the review store or any tracked file; `git status --porcelain` unchanged
 - [ ] 5.8 Structural rule rejecting a new root-level output or scratch path
 - [ ] 5.9 Measure the steady-state footprint (checkout, `node_modules`, one
@@ -889,32 +889,32 @@ remain the session owner's action exactly as recorded for the programme; no
 
 ## 17. Schema version lifecycle
 
-- [ ] 17.1 Declare all 319 schema identifiers: persisted or in-memory, store
+- [x] 17.1 Declare all 319 schema identifiers: persisted or in-memory, store
       location where persisted, current version, versions still accepted
 - [ ] 17.2 Fail on an undeclared schema literal and on a declaration naming a
       schema that no longer exists; assert a non-zero discovered count
-- [ ] 17.3 Require a migration disposition — `MIGRATE`, `READ_COMPATIBLE` or
+- [x] 17.3 Require a migration disposition — `MIGRATE`, `READ_COMPATIBLE` or
       `ORPHAN` — on every persisted version change; fail when absent
 - [ ] 17.4 **Owner decision required:** whether one disposition is the presumed
       default for a persisted bump
-- [ ] 17.5 Implement `MIGRATE`: validate against the old validator first,
+- [x] 17.5 Implement `MIGRATE`: validate against the old validator first,
       retain the original until the new record is written and re-read, leave
       the original readable on interruption
-- [ ] 17.6 Implement `READ_COMPATIBLE` proof: a fixture read at each accepted
+- [x] 17.6 Implement `READ_COMPATIBLE` proof: a fixture read at each accepted
       version; removing support for one fails the test
-- [ ] 17.7 Make `ORPHAN` a recorded decision in `docs/DECISIONS.md`, never a
+- [x] 17.7 Make `ORPHAN` a recorded decision in `docs/DECISIONS.md`, never a
       default reached by omission
-- [ ] 17.8 Split `VERSION_UNSUPPORTED` out of `CORRUPT` in the review store and
+- [x] 17.8 Split `VERSION_UNSUPPORTED` out of `CORRUPT` in the review store and
       every other persisted reader; carry the found version and affected count
-- [ ] 17.9 Render the distinction on the Control Center reviewer surface: a
+- [x] 17.9 Render the distinction on the Control Center reviewer surface: a
       record predating the current schema is a migration, not a defect
-- [ ] 17.10 Report affected stores and the disposition in campaign output at
+- [x] 17.10 Report affected stores and the disposition in campaign output at
       bump time
-- [ ] 17.11 Build the bounded sanitized export: read-only, through the
+- [x] 17.11 Build the bounded sanitized export: read-only, through the
       redaction layer, written outside the repository, in no gate
-- [ ] 17.12 Make a refused checkpoint resume explain itself — differing
+- [x] 17.12 Make a refused checkpoint resume explain itself — differing
       versions, completed work items, whether a restart can consume the ledger
-- [ ] 17.13 Mark an unrecoverable campaign terminal rather than perpetually
+- [x] 17.13 Mark an unrecoverable campaign terminal rather than perpetually
       pending
 - [ ] 17.14 Register the new suites, full validation, integrate, release
 

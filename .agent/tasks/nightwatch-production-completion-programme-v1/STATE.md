@@ -36,23 +36,17 @@ external dependency with its blocking class and next action.
 
 ## Current Milestone
 
-Milestone ID: G13
+Milestone ID: G4..G21 execution wave
 Milestone status: IN_PROGRESS
-What is being attempted: release definition and verdict (F-12).
-`nightwatch.release-certification.v1` now carries an ordered set of advance
-conditions in `config/release-certification.v1.json`, each backed by a check
-registered in `src/core/releaseCertification/index.ts`; `bin/project-state-check.mjs`
-evaluates them, refuses an advance with unmet conditions naming each, binds
-each condition's evidence SHA (STALE_EVIDENCE refuses the certification),
-carries the three lane counts, excludes the production path as its own
-external track, and refuses a documentation-only commit as the implementation
-anchor. The honest live evaluation is 4 MET / 5 UNMET / 7
-UNAVAILABLE_CAPABILITY, recorded in `docs/RELEASE-ADVANCE-CONDITIONS.md`.
-G13.8 (the status beyond `OPERATIONALLY_ACCEPTED`) is a pending owner decision
-with safe default `OPERATIONALLY_ACCEPTED`; G13.10 integration/`gate:local`
-remain blocked by the externally dirty canonical checkout and are the session
-owner's action. Earlier groups' task boxes remain as recorded in
-`tasks.md`; this record advances the milestone pointer only.
+What is being attempted: the remaining 21-group programme. Implemented and
+locally validated in this session: G1, G2, G6, G7, G11, G13, G14, G15, G16,
+G17, G20, G21 and the local parts of G4, G5, G10. Still open: G3, G8, G9,
+G12, G18, G19 and the remaining parts of G4 (4.5-4.8, 4.10-4.11), G5
+(5.3-5.4, 5.8-5.10), G10 (10.4, 10.6, 10.13-10.14), G14 (14.6-14.8,
+14.12), G15 (15.7, 15.11), G16 (16.5, 16.9-16.12), G17 (17.2 registration,
+17.4, 17.14) and G21 (21.8 live-smoke scope, 21.12-21.15). Full offline
+regression is 5009 passed / 18 skipped / 0 failed; UI lane PASS.
+Integration remains blocked by the externally dirty canonical checkout.
 
 ## Completed Milestones
 
@@ -155,15 +149,14 @@ clean rerun passed 81/81.
 
 ## Exact Next Action
 
-Owner actions, in order: (1) name the status beyond `OPERATIONALLY_ACCEPTED`
-or explicitly keep the safe default (G13.8); (2) release or re-point the
-canonical `CANONICAL_MAINTENANCE` claim naming
-`nightwatch-control-center-render-truth-v1`; (3) the owner of
-`nightwatch-repository-hardening--e7b9be89` releases its terminal-task claim;
-(4) reconcile the canonical checkout's concurrent planning artifact, then run
-`gate:local`, the full offline regression, the UI/browser lanes, commit,
-fast-forward integrate and release. No agent implementation action remains for
-G13.
+Continue the remaining local groups in programme order: G19 → G8 → G18, then
+G3, G4.5-4.8/4.10-4.11, G5.8-5.10, G9, G12, G14.6-14.12, G15.7/15.11,
+G16.5/16.9-16.12, G17.2/17.14, G21.15. Then resolve the owner decisions
+(G3.11 CI route, G5.3 reclaim, G6.4/G6.5/G6.10, G8.7 taxonomy, G9.1 egress,
+G10.6/G10.13, G11.3, G12.3, G13.8, G14.6, G17.4, G21.8 scope), clear the
+canonical checkout's concurrent planning artifact, run `gate:local` and the
+full offline regression from this owned session, fast-forward integrate with
+`HEAD == origin/main`, and release the session.
 
 ## Files Changed
 

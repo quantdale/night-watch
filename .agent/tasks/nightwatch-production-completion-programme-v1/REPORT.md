@@ -191,4 +191,39 @@ schema, but a real migration across the schema-lifecycle group. Option B
 authority for the schema-lifecycle work. The safe default is to leave the
 decision open, which is what this session did.
 
+## Session result — groups implemented, partials, and owner decisions
+
+Executed in one owned session (`sess-506a5055dcc2`) in parallel workstreams.
+Every claim below has its command and result in the group's own tasks.md
+records and the agent reports preceding this section.
+
+| Group | Local result |
+|---|---|
+| G1 ledger truth | COMPLETE except integration (1.18) |
+| G2 lane state as data | COMPLETE except integration (2.8) |
+| G4 operator CLI | partial: parser, sweep, side-effect freedom, quality-gate migration and derived listing done; 31/63 bins migrated; rule off until all conform |
+| G5 evidence hygiene | partial: refusal derivation, negative probe, single Playwright output root, 23-root dry-run and confirmation-token machinery done; reclaim and rule registration owner-held |
+| G6 workspace drift | COMPLETE except owner actions 6.4-6.6/6.10 and 6.11 integration |
+| G7 documentation currency | COMPLETE except 7.10 integration |
+| G10 deployment facts | local guard/reader/track/unloadability/passive proofs done; 10.4 CURRENT_STATE leg, 10.6 access and 10.13 closure owner-held |
+| G11 semantic acceptance | class as data, synthetic-never-DEV, auth gate and 9A.1-only route done; 11.3 owner-held |
+| G13 release definition | 16 conditions, refusal, staleness, lane counts, production track and honesty record done; 13.8 owner-held |
+| G14 dead architecture | reference graph and reachability rules done; 10 barrels resolved; 14.6 adoption/removal owner-held |
+| G15 CLI contract | literal paths, path/symbol resolution, non-vacuity, tsconfig.bin.json and 30 executing tests done; 18/63 annotated, lane reporting not blocking |
+| G16 rule soundness | code-only accessor, five conversions, quantifier audit, 79-rule registry and 81/81 mutation probes done; line-number retrofit and decomposition open |
+| G17 schema lifecycle | 386 identifiers declared across 363 families; dispositions, migration/read-compatible proofs, VERSION_UNSUPPORTED split, export and resume explanation done; hardening registration, 17.4 and integration open |
+| G20 accessibility | status/contrast/keyboard/structural lanes on the built bundle done, 0 colour-only and 0 contrast violations; registration pending |
+| G21 auth lifecycle | sidecar, fail-closed pre-flight, launcher wiring, observable auth state and single-evaluator rule done; live-smoke scope, cadence measurement (no real capture yet) and integration open |
+| G3, G8, G9, G12, G18, G19 | not started this session |
+
+Full offline regression at the session tip: 5009 passed / 18 skipped / 0
+failed. UI typecheck, 65 tests and build PASS. `node bin/hardening-check.mjs`
+PASS; `npm run validation:universe` PASS (discovered=447, unclassified=0);
+`npm run typecheck` PASS. Integration is blocked by
+`WORKSPACE_CANONICAL_DIRTY_WHILE_SESSION_LIVE`: the canonical checkout holds
+an untracked concurrent planning artifact
+(`openspec/changes/nightwatch-control-center-design-system-v1/`) that belongs
+to another writer and was not touched. Owner decisions listed in STATE.md
+remain decisions to be taken, not work an agent may self-authorize.
+
 
