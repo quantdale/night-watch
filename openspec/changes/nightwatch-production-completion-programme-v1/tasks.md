@@ -612,3 +612,13 @@ code-level gaps the second pass found by tracing the implementation
 - [ ] 21.14 Measure and document the renewal cadence from observed capture
       lifetimes with the measurement date
 - [ ] 21.15 Full validation, integrate, release
+
+## Carried forward from prior ledgers
+
+Live work carried verbatim from a terminal campaign's OpenSpec ledger during
+the G1 reconciliation. These entries were genuinely not done and are not
+otherwise covered by the groups above; they remain open work in this
+programme.
+
+- [ ] CF-1 (from `nightwatch-continuous-deep-hardening-v1` 3.2) Fuzz/property ≥20 cases PASS
+- [ ] CF-2 (from `nightwatch-post-acceptance-production-hardening-and-yield-expansion-v1` 5.1) local-model canary conditional.

@@ -45,7 +45,7 @@
       whole-population figure 58 of 223 at same snapshot, discovery digest
       `source-surface-discovery:sha256:21de18a23a387d7b816db3c0`; historical
       rows preserved and annotated, analyzer semantics unchanged
-- [ ] M8 full validation and closure: run `npm run gate:local`, repair any
+- [x] M8 full validation and closure: run `npm run gate:local`, repair any
       failure, run the clean-checkout gate, then close out (`REPORT.md`,
       `ACTIVE_TASK.md`, `nightwatch-session integrate` through the C-00
       fast-forward protocol)

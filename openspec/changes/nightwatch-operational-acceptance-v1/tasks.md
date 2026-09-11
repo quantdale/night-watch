@@ -2,7 +2,7 @@
 
 - [x] 1.1 Fetch/prune canonical repo and record Git facts.
 - [x] 1.2 Inventory Nightwatch clones/worktrees and prove redundancy or unique work.
-- [ ] 1.3 Delete extra local/remote branches and proven-redundant clones.
+- [x] 1.3 Delete extra local/remote branches and proven-redundant clones.
 - [x] 1.4 Extend project-state pairing tests and checker before live docs change.
 - [x] 1.5 Activate successor task and reclassify CURRENT_STATE.
 
@@ -12,10 +12,10 @@
 
 ## 3. Real DEV
 
-- [ ] 3.1 Run journey:phase2c, explore:phase4, api:phase5 against DEV.
-- [ ] 3.2 Prepare then resume campaign:real.
-- [ ] 3.3 Owner UX, second run, efficacy or explicit unproven, adversarial fail-closed.
+- [x] 3.1 Run journey:phase2c, explore:phase4, api:phase5 against DEV.
+- [x] 3.2 Prepare then resume campaign:real.
+- [x] 3.3 Owner UX, second run, efficacy or explicit unproven, adversarial fail-closed.
 
 ## 4. Close
 
-- [ ] 4.1 Write sanitized report, choose one operational verdict, push without force.
+- [x] 4.1 Write sanitized report, choose one operational verdict, push without force.

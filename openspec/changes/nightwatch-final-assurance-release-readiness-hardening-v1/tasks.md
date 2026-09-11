@@ -38,10 +38,17 @@ Exit: every core workflow has one documented authority path and all P0/P1 defect
 ## M3 — Repair P0/P1 defects
 
 - [x] Fix all P0 findings immediately, preserving fail-closed boundaries.
-- [ ] Repair every actionable P1 before unrelated P2 work; a required
+- [ ] ~~Repair every actionable P1 before unrelated P2 work; a required
   process-boundary P1 may remain only as an explicitly represented terminal
   blocker when the task is BLOCKED and the route stays fail-closed (the L6
-  residual is that bounded case).
+  residual is that bounded case).~~ — blocked: `PROJECT_NOT_COMPLETE_BLOCKED`:
+  L6 process/DNS containment is not proven. Bubblewrap namespace creation works
+  locally, but the parent relay is incompatible and browser speculative DNS
+  remains outside L5; direct DNS/TCP/UDP denial and complete child-process
+  lifecycle isolation therefore cannot be certified. Authenticated OOPS remains
+  disabled before workspace creation or child spawn. Unblocking requires fresh
+  owner authorization and a safe rootless proof that does not use privileged
+  networking, system-wide mutation, TLS MITM, or live external probes.
 - [x] Add regression tests for every material defect.
 - [x] Run focused and dependency-cone validation after each repair.
 - [x] Never weaken assertions/proof thresholds/safety/privacy checks to recover green.
