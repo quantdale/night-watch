@@ -60,7 +60,8 @@ export type P1SessionTermination =
   | 'OBSERVATION_WINDOW_EXPIRED'
   | 'KILL_SWITCH_ENGAGED'
   | 'EVENT_BUDGET_EXHAUSTED'
-  | 'POLL_BUDGET_EXHAUSTED';
+  | 'POLL_BUDGET_EXHAUSTED'
+  | 'NIGHTWATCH_ATTRIBUTABLE_REQUEST_ABORT';
 
 export interface P1AttachRequest {
   readonly admission: P1AdmissionOutcome;
@@ -81,6 +82,18 @@ export interface P1SessionResult {
   readonly tally: P1SessionAttributionTally;
   readonly attributed: readonly AttributedRequest[];
   readonly pollsUsed: number;
+  /**
+   * The origin identity of the first Nightwatch-attributable request, present
+   * only when the session aborted because of one. Opaque local accounting id,
+   * never a customer value.
+   */
+  readonly attributionAbortRequestId: string | null;
+  /**
+   * Whether the session's evidence may be used for PASSIVE acceptance. A
+   * Nightwatch-attributable request marks it `INVALID_FOR_ACCEPTANCE` before
+   * any other classification matters.
+   */
+  readonly acceptanceEvidence: 'VALID_FOR_ACCEPTANCE' | 'INVALID_FOR_ACCEPTANCE';
 }
 
 // Module-private. An admission binds exactly one attach; a second attach on
@@ -118,6 +131,7 @@ export function attachP1ObservationSession(request: P1AttachRequest): P1SessionR
   const attributed: AttributedRequest[] = [];
   let pollsUsed = 0;
   let termination: P1SessionTermination | null = null;
+  let attributionAbortRequestId: string | null = null;
 
   for (;;) {
     if (evaluateP1KillSwitch(request.killSwitchProbe) === 'ENGAGED') {
@@ -140,7 +154,18 @@ export function attachP1ObservationSession(request: P1AttachRequest): P1SessionR
         termination = 'EVENT_BUDGET_EXHAUSTED';
         break;
       }
-      attributed.push(classifyObservedRequest(event));
+      const classified = classifyObservedRequest(event);
+      attributed.push(classified);
+      if (classified.attribution === 'NIGHTWATCH_ATTRIBUTABLE') {
+        // The request-accounting proof: the session ABORTS on the first
+        // attributable request, records its origin, and marks its evidence
+        // invalid for acceptance. It does not keep observing and report the
+        // count at the end, because evidence gathered after Nightwatch caused
+        // traffic is no longer passive evidence.
+        attributionAbortRequestId = classified.requestId;
+        termination = 'NIGHTWATCH_ATTRIBUTABLE_REQUEST_ABORT';
+        break;
+      }
     }
     if (termination !== null) break;
     if (poll.sourceEnded) {
@@ -165,6 +190,8 @@ export function attachP1ObservationSession(request: P1AttachRequest): P1SessionR
     tally,
     attributed: frozen,
     pollsUsed,
+    attributionAbortRequestId,
+    acceptanceEvidence: tally.nightwatchAttributable > 0 ? 'INVALID_FOR_ACCEPTANCE' : 'VALID_FOR_ACCEPTANCE',
   };
 }
 

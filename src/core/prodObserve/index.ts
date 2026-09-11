@@ -24,4 +24,5 @@ export * from './killSwitch';
 export * from './budget';
 export * from './breakers';
 export * from './productionRunGate';
+export * from './deploymentFactAdmission';
 export * from './receipt';

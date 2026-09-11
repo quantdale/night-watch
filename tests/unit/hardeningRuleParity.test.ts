@@ -8,11 +8,15 @@
 // checkAlphausHandoffBoundary() invoked twice.
 //
 // A rule that never runs is worse than a missing rule: it advertises coverage
-// the suite does not have. This test reads the checker as text and requires
-// definition/call parity in both directions, plus no duplicate invocation.
+// the suite does not have. The F-16 rule registry is now the enumeration
+// authority (explicit `{ name, run, quantifier, subject }` entries), so this
+// test requires definition/registration parity in both directions, no
+// duplicate registration, and a non-vacuous, fully classified rule set read
+// back from the checker's own `--list-rules` registry dump.
 //
-// Pure text analysis of a tracked file: no execution, no network, no fixture.
+// Pure text analysis plus one bounded local child: no network, no fixture.
 
+import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { test, expect } from '@playwright/test';
@@ -24,37 +28,53 @@ function definitions(): string[] {
   return [...source.matchAll(/^function (check\w+)\(/gm)].map((match) => match[1] ?? '');
 }
 
-function invocations(): string[] {
-  return [...source.matchAll(/^(check\w+)\(\);$/gm)].map((match) => match[1] ?? '');
+function registrations(): string[] {
+  return [...source.matchAll(/\{ name: '(check\w+)', run: /g)].map((match) => match[1] ?? '');
 }
 
 test.describe('hardening rule parity', () => {
   test('the checker defines at least the rules it is known to carry', () => {
     // A floor, not an exact count: new rules are expected, silent loss is not.
-    expect(definitions().length).toBeGreaterThanOrEqual(60);
+    expect(definitions().length).toBeGreaterThanOrEqual(70);
   });
 
-  test('every defined rule is invoked', () => {
-    const called = new Set(invocations());
-    const dead = definitions().filter((name) => !called.has(name));
-    expect(dead, `defined but never called: ${dead.join(', ')}`).toEqual([]);
+  test('every defined rule is registered', () => {
+    const registered = new Set(registrations());
+    const dead = definitions().filter((name) => !registered.has(name));
+    expect(dead, `defined but never registered: ${dead.join(', ')}`).toEqual([]);
   });
 
-  test('every invoked rule is defined', () => {
+  test('every registered rule is defined', () => {
     const defined = new Set(definitions());
-    const missing = invocations().filter((name) => !defined.has(name));
-    expect(missing, `called but never defined: ${missing.join(', ')}`).toEqual([]);
+    const missing = registrations().filter((name) => !defined.has(name));
+    expect(missing, `registered but never defined: ${missing.join(', ')}`).toEqual([]);
   });
 
-  test('no rule is invoked more than once', () => {
+  test('no rule is registered more than once', () => {
     const counts = new Map<string, number>();
-    for (const name of invocations()) counts.set(name, (counts.get(name) ?? 0) + 1);
+    for (const name of registrations()) counts.set(name, (counts.get(name) ?? 0) + 1);
     const duplicated = [...counts.entries()].filter(([, count]) => count > 1).map(([name, count]) => `${name} x${count}`);
-    expect(duplicated, `invoked more than once: ${duplicated.join(', ')}`).toEqual([]);
+    expect(duplicated, `registered more than once: ${duplicated.join(', ')}`).toEqual([]);
+  });
+
+  test('the registry enumerates its rules with a quantifier and a probe', () => {
+    const output = execFileSync('node', ['bin/hardening-check.mjs', '--list-rules'], {
+      cwd: process.cwd(), encoding: 'utf8', timeout: 60_000, maxBuffer: 8 * 1024 * 1024,
+    });
+    const registry = JSON.parse(output);
+    expect(registry.schemaVersion).toBe('nightwatch.hardening-rule-registry.v1');
+    expect(registry.count).toBeGreaterThanOrEqual(70);
+    expect(registry.rules.length).toBe(registry.count);
+    for (const rule of registry.rules) {
+      expect(['EXISTENCE', 'TOTALITY']).toContain(rule.quantifier);
+      expect(typeof rule.family).toBe('string');
+      expect(String(rule.subject ?? '').length).toBeGreaterThanOrEqual(8);
+      expect(rule.probeCount, `${rule.name} must have a recorded probe`).toBeGreaterThanOrEqual(1);
+    }
   });
 
   test('the rules this campaign added are present and live', () => {
-    const called = new Set(invocations());
+    const registered = new Set(registrations());
     for (const rule of [
       'checkC00WorkspaceIntegrity',
       'checkC10ProductionPrivacyBoundary',
@@ -62,8 +82,9 @@ test.describe('hardening rule parity', () => {
       'checkC12RehearsalBoundary',
       'checkFindingFrontierBoundary',
       'checkDeclaredDependencyResolvability',
+      'checkRuleEngineSoundness',
     ]) {
-      expect(called.has(rule), `${rule} must be invoked`).toBe(true);
+      expect(registered.has(rule), `${rule} must be registered`).toBe(true);
     }
   });
 });

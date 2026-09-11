@@ -3082,3 +3082,83 @@ offline regression unchanged from baseline.
 **Next.** None selected. Native form controls remain statically covered only;
 whole-stylesheet dead-rule detection is unperformed. Any follow-up requires a
 new authorized task.
+
+## Production track — deployment fact acquisition (G10) — IN PROGRESS — 2026-09-12
+
+Group 10 of `nightwatch-production-completion-programme-v1` closes the local
+half of F-04. Nothing here contacts production, reads a real manifest, uses a
+credential, or writes a sibling repository; the derivation is exercised only
+against synthetic fixtures.
+
+**C-08b is the critical-path prerequisite for C-13 and C-14, not one row
+among eleven.** It is the only master-plan item whose absence makes two later
+campaigns *structurally impossible* rather than merely unauthorized: with
+`POSITIVE_DEPLOYMENT_FACTS` at 0, no production route can be traced to a
+route → endpoint `DEPLOYMENT_FACT`, so an authorization granted today would
+grant P2 authority from an `INFERENCE` and violate `I-3`. C-13 and C-14 cannot
+be unblocked by a decision alone. **Lead time:** organizationally bounded and
+not measurable from repository evidence; the block has persisted from C-08
+(2026-08) through C-11 and MA-8/F-13 (2026-09). The request is filed now so
+that the organizational clock starts, with a planning assumption of at least
+one review cycle (≥ 4 weeks) and a revisit at the next owner sync.
+
+**The bounded access request (10.5).** Read-only access to `mochi` at exactly
+`services/{env}/{appproxy,serviceproxy}/ingress.yaml`, for the environments
+Nightwatch is permitted to reason about (`dev`, `next`, `prod`). No write
+access, no other path, no credential beyond read, no checkout copy, and no
+manifest obtained by any other route. `src/core/source/deploymentManifestReader.ts`
+enforces the route side of that ask: anything except repository `mochi` and the
+exact bounded path is refused with `MANIFEST_SOURCE_NOT_APPROVED` /
+`MANIFEST_PATH_NOT_ALLOWED`, and no fact is produced.
+
+**The guard makes zero facts a refusal, not an awaiting decision.**
+`src/core/prodObserve/deploymentFactAdmission.ts` refuses at construction any
+production read whose route carries no positive `DEPLOYMENT_FACT`
+(`PRODUCTION_READ_NO_DEPLOYMENT_FACT`), independent of authorization state: an
+authorized campaign against an inferred route still refuses and no request
+object is constructed. The guard's removal was measured as a mutation — five
+of the fourteen `c13ProductionReadGuard` cases failed with the guard commented
+out, and all fourteen pass with it restored (recorded in the campaign ledger).
+The production-read capability reports `UNAVAILABLE_CAPABILITY` with
+`POSITIVE_DEPLOYMENT_FACTS: 0` as its stated reason, and the count (not a
+boolean) gates it.
+
+**The derivation is mechanical and fail-closed (10.7, 10.8).** When access
+exists, `deploymentManifestReader.ts` derives facts with an `ev:sha256:<24>`
+digest over the normalized structure and provenance bound to
+`mochi @ SHA : path`. Ambiguity, multi-match, templated and host-less mappings
+yield explicit unknowns (`SERVICE_BACKEND_AMBIGUOUS`, `HOST_UNSPECIFIED`,
+`HOST_TEMPLATED`, `ROUTE_TEMPLATED`, `PORT_AMBIGUOUS`,
+`SERVICE_BACKEND_MISSING`) and never a fact. U-1 and U-2 remain explicit
+unknowns; a changed manifest is stale and refuses rebinding
+(`DEPLOYMENT_FACT_REBIND_REFUSED`) rather than silently re-binding.
+
+**The production track states each blocker's kind (10.10).**
+`src/core/productionTrack/` records per-stage repository work and the external
+prerequisite for C-12, C-13, C-14 and P4, and reports
+`EXTERNAL_PREREQUISITE_UNMET` distinctly from `AWAITING_AUTHORIZATION`
+(`NOT_AUTHORIZED` is not in the vocabulary). Live: C-12 awaits operator
+prerequisites and authorization; C-13 awaits C-08b and is structurally
+impossible while the count is 0; C-14 has replay work remaining and awaits
+C-13; P4 is outside Nightwatch scope on U-3.
+
+**Production remains structurally unloadable (10.11).** D-4 is unchanged:
+`SUPPORTED_ENVIRONMENTS` is exactly `local, dev, next`,
+`config/environments/production.json` stays documentation, every known
+production host is DENIED by the outbound policy, and the loadability policy
+is `globalLoadability: NEVER` with a future grant per-stage, per-session and
+revoked at session end. No capability added here makes production loadable.
+
+**Passive observation is provably passive (10.12).** A Nightwatch-attributable
+request now aborts the P1 session immediately, records the request's origin,
+and marks the session's evidence `INVALID_FOR_ACCEPTANCE`; an internal error
+emits a safe `INTERNAL_ERROR` receipt whose class is a bounded token and which
+carries no raw value and no value-derived digest.
+
+**Pending owner decisions (unclaimed).** 10.6 — obtain or refuse the read-only
+C-08b access (and refuse any manifest from another route); this is an
+owner/organizational action, and Nightwatch does not attempt, infer, or work
+around it. 10.13 — if access will not be granted, record C-13 and C-14
+terminal and close the production track honestly. Until 10.6 resolves, the
+production track is `EXTERNAL_PREREQUISITE_UNMET`, not awaiting an engineering
+decision.

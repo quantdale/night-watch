@@ -259,40 +259,72 @@ code-level gaps the second pass found by tracing the implementation
 
 ## 10. Deployment fact acquisition and the production track
 
-- [ ] 10.1 Implement `PRODUCTION_READ_NO_DEPLOYMENT_FACT`: refuse at
+- [x] 10.1 Implement `PRODUCTION_READ_NO_DEPLOYMENT_FACT`: refuse at
       construction any production read whose route carries no positive
-      deployment fact, independent of authorization state
-- [ ] 10.2 Prove the guard by removing it and observing the suite fail; record
-      the mutation
-- [ ] 10.3 Report the production-read capability as unavailable with
-      `POSITIVE_DEPLOYMENT_FACTS: 0` as its stated reason
+      deployment fact, independent of authorization state — `src/core/prodObserve/deploymentFactAdmission.ts`;
+      the fact guard runs before the authorization field is inspected and the
+      refusal error carries only the category and established bit
+- [x] 10.2 Prove the guard by removing it and observing the suite fail; record
+      the mutation — mutation measured in the owned session: with the guard
+      line commented out, 5 of 14 cases in
+      `tests/unit/c13ProductionReadGuard.test.ts` failed (all five guard-refusal
+      cases); with the line restored, 14/14 pass
+- [x] 10.3 Report the production-read capability as unavailable with
+      `POSITIVE_DEPLOYMENT_FACTS: 0` as its stated reason —
+      `productionReadCapability(0)` returns `UNAVAILABLE_CAPABILITY`,
+      `available: false`, `reason: 'POSITIVE_DEPLOYMENT_FACTS: 0'`; the count,
+      not a flag, gates the capability
 - [ ] 10.4 Record C-08b as the critical-path prerequisite for C-13 and C-14 in
-      the roadmap, current state and master plan, with its lead time
-- [ ] 10.5 Write the bounded access request: read-only `mochi` at
+      the roadmap, current state and master plan, with its lead time — PARTIAL:
+      recorded in `docs/ROADMAP.md` and `docs/MASTER-IMPLEMENTATION-HARDENING-PLAN.md`
+      (NW-16) with the bounded ask and lead-time assumption; `docs/CURRENT_STATE.md`
+      was deliberately not edited in this session per the owner instruction, so
+      this item remains open on that one document
+- [x] 10.5 Write the bounded access request: read-only `mochi` at
       `services/{env}/{appproxy,serviceproxy}/ingress.yaml`, no write, no other
-      path
+      path — recorded in `docs/ROADMAP.md`; the reader refuses any other
+      repository, path or route
 - [ ] 10.6 **Owner/organizational action required:** obtain or refuse the
-      access; refuse any manifest from another route
-- [ ] 10.7 If granted: bounded manifest reader, `ev:sha256` evidence digest
+      access; refuse any manifest from another route — PENDING OWNER DECISION,
+      unclaimed: no access was requested, inferred, or worked around. The
+      reader-side refusal of any other route is implemented; the organizational
+      action itself is not an agent action
+- [x] 10.7 If granted: bounded manifest reader, `ev:sha256` evidence digest
       over the normalized structure, provenance bound to `repo @ SHA : path`,
       fail-closed on ambiguity; settle U-1 and U-2 or keep them explicit
-      unknowns
-- [ ] 10.8 Ambiguous, multi-match, templated or environment-conditional
+      unknowns — `src/core/source/deploymentManifestReader.ts`; U-1/U-2 remain
+      explicit unknowns and the C-08 typed-unresolved projection is unchanged
+- [x] 10.8 Ambiguous, multi-match, templated or environment-conditional
       mappings yield explicit unknowns; a changed manifest requires fresh
-      derivation, never silent re-binding
-- [ ] 10.9 Update `CENSUS_FIGURES` for `POSITIVE_DEPLOYMENT_FACTS`; re-check
-      every document stating it
-- [ ] 10.10 Record per-stage repository work and external prerequisite for
+      derivation, never silent re-binding — `SERVICE_BACKEND_AMBIGUOUS`,
+      `HOST_UNSPECIFIED`, `HOST_TEMPLATED`, `ROUTE_TEMPLATED`,
+      `PORT_AMBIGUOUS`, `SERVICE_BACKEND_MISSING`; `assertDeploymentFactCurrent`
+      throws `DEPLOYMENT_FACT_REBIND_REFUSED`
+- [x] 10.9 Update `CENSUS_FIGURES` for `POSITIVE_DEPLOYMENT_FACTS`; re-check
+      every document stating it — the count remains 0 because no access was
+      granted, so the ledger value is unchanged and correct; the capability
+      derives from `CENSUS_FIGURES`, and the policed-document census check is
+      asserted in `c13ProductionReadGuard.test.ts`
+- [x] 10.10 Record per-stage repository work and external prerequisite for
       C-12, C-13, C-14 and P4 as data; report
-      `EXTERNAL_PREREQUISITE_UNMET` distinctly from `AWAITING_AUTHORIZATION`
-- [ ] 10.11 Assert production stays structurally unloadable by default and that
+      `EXTERNAL_PREREQUISITE_UNMET` distinctly from `AWAITING_AUTHORIZATION` —
+      `src/core/productionTrack/`; `NOT_AUTHORIZED` is absent from the status
+      vocabulary by construction and by assertion
+- [x] 10.11 Assert production stays structurally unloadable by default and that
       any future loadability is per-stage, per-session and revoked at session
-      end
-- [ ] 10.12 Prove passive observation is passive: a Nightwatch-attributable
+      end — D-4 asserted (`SUPPORTED_ENVIRONMENTS`, config file, outbound
+      policy); loadability policy `globalLoadability: NEVER`,
+      `grantScope: PER_STAGE_PER_SESSION`, `revokeAtSessionEnd: true`
+- [x] 10.12 Prove passive observation is passive: a Nightwatch-attributable
       request aborts the session; an internal error emits a safe receipt with
-      no raw value or value-derived digest
+      no raw value or value-derived digest — P1 session now aborts with
+      `NIGHTWATCH_ATTRIBUTABLE_REQUEST_ABORT` and marks evidence
+      `INVALID_FOR_ACCEPTANCE`; `safeReceipt.ts` emits a bounded-class
+      `INTERNAL_ERROR` receipt
 - [ ] 10.13 **Owner decision required:** if access will not be granted, record
-      C-13 and C-14 terminal and close the production track honestly
+      C-13 and C-14 terminal and close the production track honestly — PENDING
+      OWNER DECISION, unclaimed: the track currently reports
+      `EXTERNAL_PREREQUISITE_UNMET`; no terminal closure is taken
 - [ ] 10.14 Full validation, integrate, release
 
 ## 11. Contained DEV semantic acceptance
@@ -433,21 +465,21 @@ code-level gaps the second pass found by tracing the implementation
 
 ## 16. Structural rule soundness
 
-- [ ] 16.1 Replace the `read`/`withoutComments` pair with one code-only
+- [x] 16.1 Replace the `read`/`withoutComments` pair with one code-only
       accessor plus an explicitly named raw accessor
-- [ ] 16.2 Convert the five fail-if-absent raw-source assertions — lines 108,
+- [x] 16.2 Convert the five fail-if-absent raw-source assertions — lines 108,
       184, 863, 1868, 3697 — to the code-only accessor
-- [ ] 16.3 Prove each conversion: moving the matched literal into a comment in
+- [x] 16.3 Prove each conversion: moving the matched literal into a comment in
       the target file makes the rule fail; record the five mutations
-- [ ] 16.4 Add the self-check failing a fail-if-absent matcher over the raw
+- [x] 16.4 Add the self-check failing a fail-if-absent matcher over the raw
       accessor
 - [ ] 16.5 Audit every rule's quantifier; make totality rules evaluate all
       occurrences and report each failing line
-- [ ] 16.6 Make existence rules explicitly named as such; fail a totality rule
+- [x] 16.6 Make existence rules explicitly named as such; fail a totality rule
       implemented with a first-match test
-- [ ] 16.7 Give every rule a recorded, reversible negative probe against real
+- [x] 16.7 Give every rule a recorded, reversible negative probe against real
       guarded source
-- [ ] 16.8 Build the rule mutation campaign; require all 70 rules to report a
+- [x] 16.8 Build the rule mutation campaign; require all 70 rules to report a
       detected mutation; assert a non-zero rule count and an unchanged
       `git status --porcelain` afterwards
 - [ ] 16.9 Decompose `bin/hardening-check.mjs` into one module per invariant
@@ -553,26 +585,26 @@ code-level gaps the second pass found by tracing the implementation
 
 ## 20. Accessibility certification
 
-- [ ] 20.1 Enumerate every status distinction the built composition renders
-- [ ] 20.2 Require each pair to differ in accessible text or a non-colour
+- [x] 20.1 Enumerate every status distinction the built composition renders
+- [x] 20.2 Require each pair to differ in accessible text or a non-colour
       computed property; a colour-only difference fails naming both values
-- [ ] 20.3 Run the check on the built bundle via the existing runtime
+- [x] 20.3 Run the check on the built bundle via the existing runtime
       computed-style sweep
-- [ ] 20.4 Enumerate rendered foreground/background pairs from the DOM, not the
+- [x] 20.4 Enumerate rendered foreground/background pairs from the DOM, not the
       stylesheet; assert a non-zero pair count
-- [ ] 20.5 Measure contrast against WCAG 2.2 AA for each pair's computed size
+- [x] 20.5 Measure contrast against WCAG 2.2 AA for each pair's computed size
       and weight; 3:1 for non-text status boundaries
-- [ ] 20.6 Add the reasoned contrast exemption list; fail in both directions
-- [ ] 20.7 Drive every operator workflow by keyboard in the browser lane:
+- [x] 20.6 Add the reasoned contrast exemption list; fail in both directions
+- [x] 20.7 Drive every operator workflow by keyboard in the browser lane:
       navigation, paging, run selection, graph drill-down, filtering, review
       decision
-- [ ] 20.8 Assert visible focus at every step, reading-order focus, no
+- [x] 20.8 Assert visible focus at every step, reading-order focus, no
       pointer-only control, no unintended focus trap
-- [ ] 20.9 Assert the existing navigation behaviour survives: title set and
+- [x] 20.9 Assert the existing navigation behaviour survives: title set and
       main content focused only for operator navigation
-- [ ] 20.10 Add automated structural auditing per view with a reasoned
+- [x] 20.10 Add automated structural auditing per view with a reasoned
       both-directions violation-exemption list
-- [ ] 20.11 State the audit's own limit in its output: structural subset, not
+- [x] 20.11 State the audit's own limit in its output: structural subset, not
       certification
 - [ ] 20.12 Register the new suites, refresh `inventoryDigest`, UI and browser
       lanes, integrate

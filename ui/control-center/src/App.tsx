@@ -246,8 +246,23 @@ function statusTone(value: string): StatusTone {
   return 'neutral';
 }
 
+/**
+ * The status-annotation protocol read by the accessibility lane.
+ *
+ * A status is not the tone class; it is the value the component decided to
+ * render. The tone is only how that value looks. The accessibility sweep needs
+ * both, so every tone carrier states its family and its value in the DOM and
+ * the sweep pairs values within a family to prove they differ beyond colour.
+ * `tests/browser/helpers/accessibility.ts` consumes these attributes and
+ * `accessibilityCertification.browser.ts` asserts every tone carrier is
+ * annotated, so a new status cannot quietly escape the check.
+ */
+function statusAnnotation(family: string, value: string): Record<string, string> {
+  return { 'data-status-family': family, 'data-status-value': value };
+}
+
 function StatusPill({ value, label = formatCategory(value) }: { readonly value: string; readonly label?: string }): ReactNode {
-  return <span className={`status-pill status-${statusTone(value)}`}><span className="status-dot" aria-hidden="true" />{label}</span>;
+  return <span className={`status-pill status-${statusTone(value)}`} {...statusAnnotation('status-pill', value)}><span className="status-dot" aria-hidden="true" />{label}</span>;
 }
 
 function Icon({ name }: { readonly name: ViewId | 'refresh' | 'arrow' }): ReactNode {
@@ -268,7 +283,7 @@ function Icon({ name }: { readonly name: ViewId | 'refresh' | 'arrow' }): ReactN
 
 function MetricCard({ label, value, detail, tone = 'neutral' }: { readonly label: string; readonly value: string; readonly detail: string; readonly tone?: StatusTone }): ReactNode {
   return (
-    <article className="metric-card">
+    <article className="metric-card" {...statusAnnotation('metric-card-tone', tone)}>
       <div className="metric-label">{label}</div>
       <div className={`metric-value text-${tone}`}>{value}</div>
       <div className="metric-detail">{detail}</div>
@@ -277,7 +292,7 @@ function MetricCard({ label, value, detail, tone = 'neutral' }: { readonly label
 }
 
 function DataRow({ label, value, tone }: { readonly label: string; readonly value: string; readonly tone?: StatusTone }): ReactNode {
-  return <div className="data-row"><span>{label}</span><strong className={tone ? `text-${tone}` : undefined}>{value}</strong></div>;
+  return <div className="data-row" {...(tone ? statusAnnotation('data-row-tone', tone) : {})}><span>{label}</span><strong className={tone ? `text-${tone}` : undefined}>{value}</strong></div>;
 }
 
 function LoadingState(): ReactNode {
@@ -459,8 +474,8 @@ function TimelinePanel({ runId, state }: { readonly runId: string | null; readon
 
 function CodeChips({ label, codes, tone }: { readonly label: string; readonly codes: readonly string[]; readonly tone: StatusTone }): ReactNode {
   return <div className="code-chip-row"><span className="code-chip-label">{label}</span>{codes.length === 0
-    ? <span className="code-chip code-chip-empty">None reported</span>
-    : codes.map((code) => <span key={code} className={`code-chip code-chip-${tone}`}>{code}</span>)}</div>;
+    ? <span className="code-chip code-chip-empty" {...statusAnnotation('code-chip', 'empty')}>None reported</span>
+    : codes.map((code) => <span key={code} className={`code-chip code-chip-${tone}`} {...statusAnnotation('code-chip', tone)}>{code}</span>)}</div>;
 }
 
 function RunDetailPanel({ runId, detailState, timelineState, onRetry }: { readonly runId: string | null; readonly detailState: DataLoadState<RunDetailSnapshot>; readonly timelineState: DataLoadState<TimelineSnapshot>; readonly onRetry: () => void }): ReactNode {
@@ -607,6 +622,7 @@ function GraphCanvas({ graph }: { readonly graph: ExecutionGraphSnapshot }): Rea
         const dimmed = !visibleIds.has(node.nodeId);
         return <g key={node.nodeId} transform={`translate(${at.x} ${at.y})`} role="button" tabIndex={0}
           aria-label={`${node.label ?? node.nodeId}, ${node.kind}, ${node.state}`}
+          {...statusAnnotation('graph-node', node.state)}
           onClick={() => setSelectedNodeId(node.nodeId)}
           onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') setSelectedNodeId(node.nodeId); }}>
           <rect className={`graph-node graph-node-${statusTone(node.state)}${dimmed ? ' graph-node-dimmed' : ''}${selectedNodeId === node.nodeId ? ' graph-node-selected' : ''}`} width="144" height="38" rx="7" />
@@ -771,6 +787,8 @@ function SourceGraphCanvas({ graph }: { readonly graph: SourceGraphSnapshot }): 
         const at = position.get(node.nodeId) ?? { x: 0, y: 0 };
         const dimmed = !visibleIds.has(node.nodeId);
         return <g key={node.nodeId} transform={`translate(${at.x} ${at.y})`} onClick={() => setSelectedNodeId(node.nodeId)} role="button" tabIndex={0}
+          aria-label={`${node.label ?? node.nodeId}, ${node.kind}, proof ${node.proof}, currentness ${node.currentness}`}
+          {...statusAnnotation('graph-node', node.currentness)}
           onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') setSelectedNodeId(node.nodeId); }}>
           <rect className={`graph-node graph-node-${statusTone(node.currentness)}${dimmed ? ' graph-node-dimmed' : ''}${selectedNodeId === node.nodeId ? ' graph-node-selected' : ''}`} width="144" height="38" rx="7" />
           <text x="12" y="16" className="graph-node-kind">{formatCategory(node.kind)}</text>
@@ -844,7 +862,7 @@ const EPISTEMIC_COPY: Record<EpistemicClass, { readonly label: string; readonly 
 
 function EpistemicBadge({ epistemicClass }: { readonly epistemicClass: EpistemicClass }): ReactNode {
   const copy = EPISTEMIC_COPY[epistemicClass];
-  return <span className={`status-pill status-${copy.tone}`} title={copy.meaning}><span className="status-dot" aria-hidden="true" />{copy.label}</span>;
+  return <span className={`status-pill status-${copy.tone}`} title={copy.meaning} {...statusAnnotation('status-pill', epistemicClass)}><span className="status-dot" aria-hidden="true" />{copy.label}</span>;
 }
 
 function ReviewerElementCell<T>({ element, render }: {
@@ -1141,7 +1159,7 @@ function CampaignView({ summaryState, coverageState, onRetry }: { readonly summa
   const summary = summaryState.data;
   const coverage = coverageState.data;
   const counts = summary.counts;
-  return <div className="view-stack"><section className="page-intro"><div><p className="eyebrow">CAMPAIGNS / INTELLIGENCE</p><h1>See the shape of coverage.</h1><p>Campaign values are projections of the existing plan and coverage models. The Control Center adds no selector, score, or promotion authority.</p></div><StatusPill value={summary.planState} /></section><section className="metric-grid"><MetricCard label="Plan state" value={formatCategory(summary.planState)} detail={formatCategory(summary.sourceCurrentness)} tone={statusTone(summary.planState)} /><MetricCard label="Candidates" value={String(counts.candidates)} detail={`${counts.selected} selected / ${counts.excluded} excluded`} /><MetricCard label="Covered contracts" value={String(counts.coveredContracts)} detail={`${coverage.fullyCoveredContractCount} fully covered rows`} tone={counts.coveredContracts > 0 ? 'ready' : 'warning'} /><MetricCard label="Findings" value={String(counts.findings)} detail={`${counts.oracleOnly} oracle-only`} tone={counts.findings > 0 ? 'warning' : 'neutral'} /></section><section className="content-grid"><article className="panel panel-wide"><div className="panel-heading"><div><p className="eyebrow">COVERAGE MATRIX</p><h2>Contract-stage coverage</h2></div><span className="table-limit">Limit {coverage.page.limit}</span></div>{coverage.items.length === 0 ? <div className="mini-state mini-state-warning">No coverage rows reported. Empty coverage does not prove pass.</div> : <div className="table-scroll"><table><thead><tr><th scope="col">Member / contract</th><th scope="col">Source</th><th scope="col">Stages</th><th scope="col">Result</th></tr></thead><tbody>{coverage.items.map((row) => <tr key={row.memberId}><td><strong>{row.product ?? 'Unlabelled product'}</strong><small>{row.surface ?? 'Unlabelled surface'} · {row.contractId}</small><small>{row.memberId}</small>{row.gapReasons.length === 0 ? null : <small className="row-note-warning">Gaps: {row.gapReasons.map(formatCategory).join(', ')}</small>}</td><td><StatusPill value={row.sourceCurrentness} /></td><td><div className="stage-list">{row.stages.map((stage) => <span key={stage.stageCode} className={`stage-chip stage-${statusTone(stage.state)}`}>{formatCategory(stage.stageCode)} · {formatCategory(stage.state)}{stage.reasonCodes.length === 0 ? null : <small>{stage.reasonCodes.map(formatCategory).join(', ')}</small>}</span>)}</div></td><td><StatusPill value={row.fullyCovered ? 'READY' : 'WARNING'} label={row.fullyCovered ? 'Fully covered' : 'Gap present'} /></td></tr>)}</tbody></table></div>}</article><article className="panel"><div className="panel-heading"><div><p className="eyebrow">GAPS / BLOCKERS</p><h2>What remains unresolved</h2></div><StatusPill value={summary.blockerCodes.length === 0 ? 'READY' : 'WARNING'} label={`${summary.blockerCodes.length} blocker(s)`} /></div><div className="scope-list"><span>Replay gaps</span><strong className={counts.replayGaps > 0 ? 'text-warning' : undefined}>{counts.replayGaps}</strong><span>Minimization gaps</span><strong className={counts.minimizationGaps > 0 ? 'text-warning' : undefined}>{counts.minimizationGaps}</strong><span>Stale source gaps</span><strong className={counts.staleSourceGaps > 0 ? 'text-warning' : undefined}>{counts.staleSourceGaps}</strong><span>Semantic authority gaps</span><strong className={counts.semanticAuthorityGaps > 0 ? 'text-warning' : undefined}>{counts.semanticAuthorityGaps}</strong><span>Execution only</span><strong className={counts.executionOnly > 0 ? 'text-warning' : undefined}>{counts.executionOnly}</strong></div><CodeChips label="Blockers" codes={summary.blockerCodes} tone="blocked" /><CodeChips label="Reasons" codes={summary.reasonCodes} tone="warning" /></article><article className="panel"><div className="panel-heading"><div><p className="eyebrow">OWNER AUTHORITY</p><h2>Promotion remains separate</h2></div><span className="scope-lock">FROZEN</span></div><p className="panel-intro">Campaign availability is not promotion authority. This view cannot select, execute, approve, or promote a candidate.</p><div className="scope-list"><span>Plan digest</span><strong>{summary.planDigest === null ? 'Not available' : 'Available'}</strong><span>Coverage digest</span><strong>{summary.coverageDigest === null ? 'Not available' : 'Available'}</strong><span>Owner scope</span><strong>{formatCategory(summary.ownerScopeStatus)}</strong><span>Owner scope reason</span><strong>{formatCategory(summary.ownerScopeReason)}</strong></div></article></section></div>;
+  return <div className="view-stack"><section className="page-intro"><div><p className="eyebrow">CAMPAIGNS / INTELLIGENCE</p><h1>See the shape of coverage.</h1><p>Campaign values are projections of the existing plan and coverage models. The Control Center adds no selector, score, or promotion authority.</p></div><StatusPill value={summary.planState} /></section><section className="metric-grid"><MetricCard label="Plan state" value={formatCategory(summary.planState)} detail={formatCategory(summary.sourceCurrentness)} tone={statusTone(summary.planState)} /><MetricCard label="Candidates" value={String(counts.candidates)} detail={`${counts.selected} selected / ${counts.excluded} excluded`} /><MetricCard label="Covered contracts" value={String(counts.coveredContracts)} detail={`${coverage.fullyCoveredContractCount} fully covered rows`} tone={counts.coveredContracts > 0 ? 'ready' : 'warning'} /><MetricCard label="Findings" value={String(counts.findings)} detail={`${counts.oracleOnly} oracle-only`} tone={counts.findings > 0 ? 'warning' : 'neutral'} /></section><section className="content-grid"><article className="panel panel-wide"><div className="panel-heading"><div><p className="eyebrow">COVERAGE MATRIX</p><h2>Contract-stage coverage</h2></div><span className="table-limit">Limit {coverage.page.limit}</span></div>{coverage.items.length === 0 ? <div className="mini-state mini-state-warning">No coverage rows reported. Empty coverage does not prove pass.</div> : <div className="table-scroll"><table><thead><tr><th scope="col">Member / contract</th><th scope="col">Source</th><th scope="col">Stages</th><th scope="col">Result</th></tr></thead><tbody>{coverage.items.map((row) => <tr key={row.memberId}><td><strong>{row.product ?? 'Unlabelled product'}</strong><small>{row.surface ?? 'Unlabelled surface'} · {row.contractId}</small><small>{row.memberId}</small>{row.gapReasons.length === 0 ? null : <small className="row-note-warning">Gaps: {row.gapReasons.map(formatCategory).join(', ')}</small>}</td><td><StatusPill value={row.sourceCurrentness} /></td><td><div className="stage-list">{row.stages.map((stage) => <span key={stage.stageCode} className={`stage-chip stage-${statusTone(stage.state)}`} {...statusAnnotation('stage-chip', stage.state)}>{formatCategory(stage.stageCode)} · {formatCategory(stage.state)}{stage.reasonCodes.length === 0 ? null : <small>{stage.reasonCodes.map(formatCategory).join(', ')}</small>}</span>)}</div></td><td><StatusPill value={row.fullyCovered ? 'READY' : 'WARNING'} label={row.fullyCovered ? 'Fully covered' : 'Gap present'} /></td></tr>)}</tbody></table></div>}</article><article className="panel"><div className="panel-heading"><div><p className="eyebrow">GAPS / BLOCKERS</p><h2>What remains unresolved</h2></div><StatusPill value={summary.blockerCodes.length === 0 ? 'READY' : 'WARNING'} label={`${summary.blockerCodes.length} blocker(s)`} /></div><div className="scope-list"><span>Replay gaps</span><strong className={counts.replayGaps > 0 ? 'text-warning' : undefined} {...statusAnnotation('campaign-gap-count', counts.replayGaps > 0 ? 'warning' : 'neutral')}>{counts.replayGaps}</strong><span>Minimization gaps</span><strong className={counts.minimizationGaps > 0 ? 'text-warning' : undefined} {...statusAnnotation('campaign-gap-count', counts.minimizationGaps > 0 ? 'warning' : 'neutral')}>{counts.minimizationGaps}</strong><span>Stale source gaps</span><strong className={counts.staleSourceGaps > 0 ? 'text-warning' : undefined} {...statusAnnotation('campaign-gap-count', counts.staleSourceGaps > 0 ? 'warning' : 'neutral')}>{counts.staleSourceGaps}</strong><span>Semantic authority gaps</span><strong className={counts.semanticAuthorityGaps > 0 ? 'text-warning' : undefined} {...statusAnnotation('campaign-gap-count', counts.semanticAuthorityGaps > 0 ? 'warning' : 'neutral')}>{counts.semanticAuthorityGaps}</strong><span>Execution only</span><strong className={counts.executionOnly > 0 ? 'text-warning' : undefined} {...statusAnnotation('campaign-gap-count', counts.executionOnly > 0 ? 'warning' : 'neutral')}>{counts.executionOnly}</strong></div><CodeChips label="Blockers" codes={summary.blockerCodes} tone="blocked" /><CodeChips label="Reasons" codes={summary.reasonCodes} tone="warning" /></article><article className="panel"><div className="panel-heading"><div><p className="eyebrow">OWNER AUTHORITY</p><h2>Promotion remains separate</h2></div><span className="scope-lock">FROZEN</span></div><p className="panel-intro">Campaign availability is not promotion authority. This view cannot select, execute, approve, or promote a candidate.</p><div className="scope-list"><span>Plan digest</span><strong>{summary.planDigest === null ? 'Not available' : 'Available'}</strong><span>Coverage digest</span><strong>{summary.coverageDigest === null ? 'Not available' : 'Available'}</strong><span>Owner scope</span><strong>{formatCategory(summary.ownerScopeStatus)}</strong><span>Owner scope reason</span><strong>{formatCategory(summary.ownerScopeReason)}</strong></div></article></section></div>;
 }
 
 function SafetyView({ data }: { readonly data: OverviewSnapshot }): ReactNode {
@@ -1199,7 +1217,7 @@ function SafetyView({ data }: { readonly data: OverviewSnapshot }): ReactNode {
 
         <article className="panel">
           <div className="panel-heading"><div><p className="eyebrow">CONTINUITY</p><h2>Checkpoint posture</h2></div><StatusPill value={safety.continuity.state} /></div>
-          <div className="scope-list"><span>State</span><strong className={`text-${statusTone(safety.continuity.state)}`}>{continuityValue}</strong><span>Branch</span><strong>{safety.continuity.branch ?? 'Not reported'}</strong><span>Head anchor</span><strong>{safety.continuity.headSha === null ? 'Not reported' : `${safety.continuity.headSha.slice(0, 7)}…`}</strong><span>Checkpoint receipt</span><strong>{safety.continuity.checkpointDigest === null ? 'Not reported' : 'Available'}</strong></div>
+          <div className="scope-list"><span>State</span><strong className={`text-${statusTone(safety.continuity.state)}`} {...statusAnnotation('continuity-tone', statusTone(safety.continuity.state))}>{continuityValue}</strong><span>Branch</span><strong>{safety.continuity.branch ?? 'Not reported'}</strong><span>Head anchor</span><strong>{safety.continuity.headSha === null ? 'Not reported' : `${safety.continuity.headSha.slice(0, 7)}…`}</strong><span>Checkpoint receipt</span><strong>{safety.continuity.checkpointDigest === null ? 'Not reported' : 'Available'}</strong></div>
           <p className="small-note">Continuity is evidence about local state, not permission to expand campaign scope.</p>
         </article>
 
@@ -1248,7 +1266,7 @@ function SafetyView({ data }: { readonly data: OverviewSnapshot }): ReactNode {
 
 function Guardrail({ label, value }: { readonly label: string; readonly value: string }): ReactNode {
   const tone = value === 'NONE' || value === 'DISABLED' || value === 'READ_ONLY' || value === 'LOOPBACK_ONLY_EXTERNAL_EGRESS_DISABLED' ? 'ready' : 'neutral';
-  return <div className="guardrail-row"><span className="guardrail-check" aria-hidden="true">✓</span><span>{label}</span><strong className={`text-${tone}`}>{formatCategory(value)}</strong></div>;
+  return <div className="guardrail-row"><span className="guardrail-check" aria-hidden="true">✓</span><span>{label}</span><strong className={`text-${tone}`} {...statusAnnotation('guardrail-tone', tone)}>{formatCategory(value)}</strong></div>;
 }
 
 const LEVEL_ORDER = ['l1', 'l2', 'l3', 'l4'] as const;
@@ -1399,6 +1417,7 @@ function SystemMapView({ refreshKey }: { readonly refreshKey: number }): ReactNo
 
   return (
     <section className="panel system-map-panel" aria-label="System map">
+      <h1 className="sr-only">System map</h1>
       <nav className="system-map-breadcrumb" aria-label="Disclosure level">
         {trail.map((entry, index) => (
           <span key={`${entry.level}:${entry.focusId ?? 'root'}`}>
@@ -1493,7 +1512,7 @@ function SystemMapView({ refreshKey }: { readonly refreshKey: number }): ReactNo
 
       {selected !== null ? (
         <div className="system-map-detail" aria-live="polite">
-          <h3>{selected.label}</h3>
+          <h2>{selected.label}</h2>
           <dl>
             <div><dt>Node</dt><dd>{selected.nodeId}</dd></div>
             <div><dt>Kind</dt><dd>{selected.kind}</dd></div>

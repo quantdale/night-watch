@@ -26,6 +26,11 @@ import {
   attachP1ObservationSession,
   type P1ObservationEventSource,
 } from '../../src/core/prodObserveP1/session';
+import {
+  classifyP1InternalError,
+  internalErrorReceipt,
+  runP1ObservationSessionGuarded,
+} from '../../src/core/prodObserveP1/safeReceipt';
 import { evaluateP1ObservationScope } from '../../src/core/prodObserveP1/observer';
 import { clearP1ObserveGrantRegistryForTest } from '../../src/core/prodObserveP1/authorization';
 import { loadP1ScopeConfig } from '../../src/core/prodObserveP1/scopeConfig';
@@ -414,5 +419,131 @@ test.describe('passive session lifecycle', () => {
         }),
       ).toThrow('P1_SESSION_BOUNDS_INVALID');
     }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// C-12 acceptance hardening — the abort and the safe error receipt.
+//
+// Passive observation is proved passive by the request-accounting path, not
+// asserted by the scenario: a Nightwatch-attributable request ABORTS the
+// session immediately, records its origin, and marks the evidence invalid for
+// acceptance. An internal error emits a safe `INTERNAL_ERROR` receipt that
+// carries no raw value and no digest derived from one.
+// ---------------------------------------------------------------------------
+
+test.describe('passive observation abort and the safe receipt', () => {
+  const BOUNDS = { maxEvents: 100, maxPolls: 100 };
+
+  function scriptedSource(script: { events: ObservedRequestEvidence[]; sourceEnded: boolean }[]): P1ObservationEventSource {
+    let index = 0;
+    return {
+      poll: () => script[Math.min(index++, script.length - 1)] ?? { events: [], sourceEnded: true },
+    };
+  }
+
+  test('a Nightwatch-attributable request aborts, records its origin, and invalidates evidence', () => {
+    const admission = admit();
+    const result = attachP1ObservationSession({
+      admission,
+      subjectNonce: admission.admittedSubjectNonce ?? '',
+      source: {
+        poll: () => ({
+          events: [
+            evidence({ requestId: 'nw-origin', nightwatchCausalLink: true, initiator: 'fetch' }),
+            // A second event is waiting. The abort must mean it is never
+            // classified: evidence gathered after Nightwatch caused traffic is
+            // no longer passive evidence.
+            evidence({ requestId: 'after-abort', initiator: 'polling' }),
+          ],
+          sourceEnded: false,
+        }),
+      },
+      bounds: BOUNDS,
+      killSwitchProbe: () => false,
+      clock: { nowMs: () => P1_T0 + 2_000 },
+    });
+    expect(result.termination).toBe('NIGHTWATCH_ATTRIBUTABLE_REQUEST_ABORT');
+    expect(result.attributionAbortRequestId).toBe('nw-origin');
+    expect(result.acceptanceEvidence).toBe('INVALID_FOR_ACCEPTANCE');
+    expect(result.verdict).toBe('NIGHTWATCH_TRAFFIC_DETECTED');
+    expect(result.completedCleanly).toBe(false);
+    expect(result.attributed.map((request) => request.requestId)).toEqual(['nw-origin']);
+    expect(result.pollsUsed).toBe(1);
+  });
+
+  test('clean traffic keeps evidence valid for acceptance', () => {
+    const admission = admit();
+    const result = attachP1ObservationSession({
+      admission,
+      subjectNonce: admission.admittedSubjectNonce ?? '',
+      source: scriptedSource([{ events: [evidence({ requestId: 'app', initiator: 'polling' })], sourceEnded: true }]),
+      bounds: BOUNDS,
+      killSwitchProbe: () => false,
+      clock: { nowMs: () => P1_T0 + 2_000 },
+    });
+    expect(result.acceptanceEvidence).toBe('VALID_FOR_ACCEPTANCE');
+    expect(result.attributionAbortRequestId).toBeNull();
+  });
+
+  test('an internal error emits a safe INTERNAL_ERROR receipt with no raw value or value-derived digest', () => {
+    const sentinel = 'NWSENT0012-raw-customer-value';
+    const admission = admit();
+    const guarded = runP1ObservationSessionGuarded(
+      {
+        admission,
+        subjectNonce: admission.admittedSubjectNonce ?? '',
+        source: {
+          poll: () => {
+            throw new Error(`P1_SESSION_ADMISSION_DENIED: leaked ${sentinel}`);
+          },
+        },
+        bounds: BOUNDS,
+        killSwitchProbe: () => false,
+        clock: { nowMs: () => P1_T0 + 2_000 },
+      },
+      p1Digest,
+    );
+    expect(guarded.ok).toBe(false);
+    if (guarded.ok) throw new Error('unreachable');
+    const receipt = guarded.receipt;
+    expect(receipt.outcome).toBe('INTERNAL_ERROR');
+    // The class is bounded: the allowlisted token survives, the message does not.
+    expect(receipt.errorClass).toBe('P1_SESSION_ADMISSION_DENIED');
+    const serialized = JSON.stringify(receipt);
+    expect(serialized).not.toContain(sentinel);
+    expect(serialized).not.toContain('leaked');
+    // No value-derived digest either: nothing hashes the error text.
+    expect(receipt.receiptDigest).not.toBe(`p1receipt:${p1Digest(sentinel)}`);
+    expect(serialized).not.toContain(p1Digest(sentinel));
+  });
+
+  test('an unrecognized error text reduces to an unclassified bounded class', () => {
+    expect(classifyP1InternalError(new Error('exploded with NWSENT0012'))).toBe('P1_INTERNAL_ERROR_UNCLASSIFIED');
+    expect(classifyP1InternalError(new Error('P1_NOT_A_REAL_CODE: x'))).toBe('P1_INTERNAL_ERROR_UNCLASSIFIED');
+    expect(classifyP1InternalError('a raw string error')).toBe('P1_INTERNAL_ERROR_UNCLASSIFIED');
+    const receipt = internalErrorReceipt(new Error('anything at all'), p1Digest);
+    expect(receipt.outcome).toBe('INTERNAL_ERROR');
+    expect(receipt.acceptanceEvidence).toBe('NOT_APPLICABLE');
+    expect(receipt.requestCounts.total).toBe(0);
+  });
+
+  test('a session-level refusal still produces a safe receipt through the guarded runner', () => {
+    const admission = admit();
+    const guarded = runP1ObservationSessionGuarded(
+      {
+        admission,
+        subjectNonce: admission.admittedSubjectNonce ?? '',
+        source: scriptedSource([{ events: [], sourceEnded: true }]),
+        bounds: { maxEvents: 0, maxPolls: 1 },
+        killSwitchProbe: () => false,
+        clock: { nowMs: () => P1_T0 + 2_000 },
+      },
+      p1Digest,
+    );
+    expect(guarded.ok).toBe(false);
+    if (guarded.ok) throw new Error('unreachable');
+    expect(guarded.receipt.outcome).toBe('INTERNAL_ERROR');
+    expect(guarded.receipt.errorClass).toBe('P1_SESSION_BOUNDS_INVALID');
   });
 });

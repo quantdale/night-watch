@@ -19,6 +19,7 @@ import {
 } from './lib/cli-implementation-contract.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const PROBE_REGISTRY_PATH = 'config/hardening-rule-probes.v1.json';
 const errors = [];
 const childEnvironment = buildChildEnvironment(process.env);
 
@@ -33,14 +34,38 @@ function withoutComments(source) {
   return source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
 }
 
-/** @param {string} file */
-function read(file) {
+/**
+ * Read RAW text INCLUDING comments.
+ *
+ * This is the explicit opt-in raw accessor. It exists for three cases only:
+ *   1. negative (`fail-if-present`) rules, where a forbidden token in a
+ *      comment is still a forbidden reference;
+ *   2. data files (JSON, Markdown, workflow YAML) where comment syntax is
+ *      not comment syntax at all;
+ *   3. rules genuinely about comment text.
+ *
+ * A positive (`fail-if-absent`) assertion MUST NOT use this accessor: a
+ * comment containing the required literal would satisfy it. The rule-engine
+ * self-check (`checkRuleEngineSoundness`) fails such a use.
+ * @param {string} file
+ */
+function readIncludingComments(file) {
   try {
     return fs.readFileSync(path.join(root, file), 'utf8');
   } catch (error) {
     fail(`cannot read ${file}: ${error instanceof Error ? error.message : String(error)}`);
     return '';
   }
+}
+
+/**
+ * Read CODE ONLY. This is the default structural accessor: comments are
+ * stripped, so a positive assertion cannot be satisfied by prose. Raw text is
+ * available only through the explicitly named `readIncludingComments`.
+ * @param {string} file
+ */
+function read(file) {
+  return withoutComments(readIncludingComments(file));
 }
 
 function gitFiles() {
@@ -73,7 +98,7 @@ function checkChildProcessBoundaries() {
     'bin/phase23-dev.mjs',
   ];
   for (const file of launchers) {
-    const source = read(file);
+    const source = readIncludingComments(file);
     if (/\.\.\.process\.env/.test(source)) fail(`${file} spreads the parent process environment`);
     if (/shell\s*:\s*true/.test(source)) fail(`${file} enables shell execution`);
     if (!/timeout\s*:/.test(source)) fail(`${file} has no bounded child-process timeout`);
@@ -83,7 +108,7 @@ function checkChildProcessBoundaries() {
   const productionSources = gitFiles()
     .filter((file) => (file.startsWith('src/') || file.startsWith('bin/')) && /\.(?:ts|mjs)$/.test(file))
     .filter((file) => file !== 'bin/hardening-check.mjs')
-    .map((file) => [file, read(file)]);
+    .map((file) => [file, readIncludingComments(file)]);
   for (const [file, source] of productionSources) {
     if (/import\s*\{[^}]*\bexec(?:File)?\b[^}]*\}\s*from\s*['"]node:child_process['"]/.test(source)) fail(`${file} imports shell-capable child_process exec`);
     if (/child_process\.exec(?:File)?\s*\(/.test(source)) fail(`${file} calls child_process.exec/execFile through a dynamic namespace`);
@@ -91,8 +116,8 @@ function checkChildProcessBoundaries() {
 }
 
 function checkL6ProcessNetworkBoundary() {
-  const l6 = read('src/core/oops/l6.ts');
-  const process = read('src/core/oops/process.ts');
+  const l6 = readIncludingComments('src/core/oops/l6.ts');
+  const process = readIncludingComments('src/core/oops/process.ts');
   if (!/nightwatch\.process-network-containment\.v1/.test(l6)) fail('L6 capability is missing its versioned identity');
   for (const option of ['--unshare-user', '--unshare-net', '--unshare-pid', '--as-pid-1', '--die-with-parent', '--new-session', '--clearenv']) {
     if (!l6.includes(option)) fail(`L6 launcher is missing required rootless option ${option}`);
@@ -103,7 +128,7 @@ function checkL6ProcessNetworkBoundary() {
   if (!/process\.kill\(-child\.pid/.test(l6) || !/--die-with-parent/.test(l6)) fail('L6 process-group/parent-death cleanup is incomplete');
   if (!/qualifyL6RuntimeCapability/.test(process) || !/assertL6RuntimeCapability/.test(process) || !/runL6ContainedOops/.test(process)) fail('authenticated OOPS is not bound to the L6 readiness gate');
   if (!/requiredHostClass === 'DEV_API'/.test(process) || !/RELAY_EPHEMERAL_DEV_SESSION/.test(process)) fail('authenticated OOPS host/auth classes are not L6-gated');
-  const capability = read('src/core/oops/sandbox.ts');
+  const capability = readIncludingComments('src/core/oops/sandbox.ts');
   if (!/qualifyL6RuntimeCapability/.test(capability)) fail('legacy OOPS sandbox status does not expose the current L6 qualifier');
 }
 
@@ -111,17 +136,17 @@ function checkTargetPolicy() {
   for (const file of ['bin/phase7-real.mjs', 'bin/phase5-real.mjs', 'bin/phase4-real.mjs', 'bin/phase2b-real.mjs', 'bin/phase2c-real.mjs', 'bin/observe-authenticated.mjs']) {
     if (!/env\s*!==\s*['"]dev['"]/.test(read(file))) fail(`${file} does not enforce DEV-only automated credential execution`);
   }
-  const capture = read('bin/auth-capture.mjs');
+  const capture = readIncludingComments('bin/auth-capture.mjs');
   if (!/new Set\(\['dev', 'next'\]\)/.test(capture) || !/human-led|human login/i.test(capture)) fail('auth:capture NEXT exception is not visibly human-led and explicit');
   for (const file of gitFiles().filter((item) => item.startsWith('bin/') && item !== 'bin/hardening-check.mjs')) {
-    if (/MULTI_HOUR_CAMPAIGN_BUDGET/.test(read(file))) fail(`${file} references the unauthorized multi-hour budget profile`);
+    if (/MULTI_HOUR_CAMPAIGN_BUDGET/.test(readIncludingComments(file))) fail(`${file} references the unauthorized multi-hour budget profile`);
   }
 }
 
 function checkTypecheckCoverage() {
   let config;
   try {
-    config = JSON.parse(read('tsconfig.json'));
+    config = JSON.parse(readIncludingComments('tsconfig.json'));
   } catch {
     fail('tsconfig.json is not valid JSON');
     return;
@@ -139,11 +164,11 @@ function checkPrivateSurface() {
     if (/(?:^|\/)(?:storage[-_]?state|auth[-_]?state|credentials?|secrets?)(?:[._-]|\/|$)/i.test(file) && !/\.(?:ts|mjs|js)$/.test(file)) fail(`credential-like tracked path: ${file}`);
     if (/(?:\.storage-state|\.cookies\.json|\.token(?:s)?\.json|\.trace\.zip|\.har)$/i.test(file)) fail(`private runtime file is tracked: ${file}`);
   }
-  const ignore = read('.gitignore');
+  const ignore = readIncludingComments('.gitignore');
   for (const required of ['artifacts/*', '.nightwatch/', 'storageState*.json', '*credentials*.json']) {
     if (!ignore.includes(required)) fail(`.gitignore is missing private-runtime rule: ${required}`);
   }
-  const adapters = read('src/data/phase6/adapters.ts');
+  const adapters = readIncludingComments('src/data/phase6/adapters.ts');
   if (!adapters.includes('assertOwnerPolicyAllows(`${_request.datastore}_DATA_ORACLE`)')) fail('Phase 6 real datastore adapter is missing the owner gate');
 }
 
@@ -156,8 +181,8 @@ function checkAiReviewBoundary() {
     fail('Phase 7B AI review source is missing');
     return;
   }
-  const aiSources = aiFiles.map((file) => [file, read(file)]);
-  const packageJson = read('package.json');
+  const aiSources = aiFiles.map((file) => [file, readIncludingComments(file)]);
+  const packageJson = readIncludingComments('package.json');
   if (/(?:"|')?(?:openai|@anthropic-ai|@google\/generative-ai|@aws-sdk\/client-bedrock|langchain|llamaindex)(?:"|')?/i.test(packageJson)) {
     fail('Phase 7B must not add a cloud AI SDK or agent framework');
   }
@@ -169,28 +194,28 @@ function checkAiReviewBoundary() {
     if (/\b(?:tools|functions)\s*:/.test(source)) fail(`${file} exposes model tool/function fields`);
     if (/(?:OPENAI|ANTHROPIC|GEMINI|BEDROCK).*KEY|API_KEY|AUTHORIZATION\s*:|https?:\/\//i.test(source)) fail(`${file} contains cloud endpoint or credential configuration`);
   }
-  const loopback = read('src/core/aiReview/loopbackProvider.ts');
+  const loopback = readIncludingComments('src/core/aiReview/loopbackProvider.ts');
   if (!/validateLoopbackEndpoint/.test(loopback) || !/LOOPBACK_HOSTS/.test(loopback) || !/agent:\s*false/.test(loopback) || !/statusCode !== 200/.test(loopback)) fail('loopback provider containment is incomplete');
   if (!/context\.signal\.aborted/.test(loopback) || !/signal\.addEventListener\(['"]abort['"]/.test(loopback) || !/destroyRequest/.test(loopback)) fail('loopback provider does not actively consume the session AbortSignal');
-  const synthetic = read('src/core/aiReview/syntheticProvider.ts');
+  const synthetic = readIncludingComments('src/core/aiReview/syntheticProvider.ts');
   if (!/pendingCount/.test(synthetic) || !/signal\.addEventListener\(['"]abort['"]/.test(synthetic)) fail('synthetic PENDING provider does not clean up on AbortSignal');
-  const pipeline = read('src/core/aiReview/pipeline.ts');
+  const pipeline = readIncludingComments('src/core/aiReview/pipeline.ts');
   if (!/assertOwnerPolicyAllows\('AI_REVIEW_LOCAL'\)/.test(pipeline) || !/assertOwnerPolicyAllows\('AI_ORACLE_SUGGESTION_LOCAL'\)/.test(pipeline) || !/AI_PROVIDER_NOT_LOCAL/.test(pipeline)) fail('AI pipeline is missing explicit owner/local provider gates');
   if (!/performance\.now\(\)/.test(pipeline) || /options\.clock\s*\?\?\s*\(\)\s*=>\s*Date\.now\(\)/.test(pipeline)) fail('AI runtime budget must use a monotonic default clock');
   if (!/signal:\s*AbortSignal/.test(pipeline) || !/timeoutMs:\s*number/.test(pipeline) || !/controller\.abort\(\)/.test(pipeline) || !/remainingRuntimeMs/.test(pipeline)) fail('AI provider boundary is missing monotonic deadline cancellation context');
-  const storage = read('src/core/aiReview/storage.ts');
+  const storage = readIncludingComments('src/core/aiReview/storage.ts');
   if (!/PrivateArtifactStore/.test(storage) || !/writeImmutableJson/.test(storage)) fail('AI artifacts are not routed through immutable private storage');
   if (/writeIncomplete\s*\(|\.writeJson\s*\(/.test(storage)) fail('AI immutable artifacts retain a replacement-capable write path');
-  if (/aiReview|AI_REVIEW/i.test(read('bin/phase7-real.mjs'))) fail('Phase 7 real launcher must not invoke AI review');
+  if (/aiReview|AI_REVIEW/i.test(readIncludingComments('bin/phase7-real.mjs'))) fail('Phase 7 real launcher must not invoke AI review');
   for (const file of gitFiles().filter((item) => item.startsWith('src/core/campaign/') || item.startsWith('src/oracles/'))) {
-    if (/aiReview|AI_REVIEW/i.test(read(file))) fail(`${file} imports or references AI review authority`);
+    if (/aiReview|AI_REVIEW/i.test(readIncludingComments(file))) fail(`${file} imports or references AI review authority`);
   }
   if (!/SYNTHETIC_LOCAL.*LOOPBACK_LOCAL/.test(read('src/core/aiReview/types.ts').replace(/\s+/g, ' '))) fail('AI provider class allowlist is not local-only');
 }
 
 function checkLocalCanaryBoundary() {
-  const controller = read('src/core/aiReview/localCanary.ts');
-  const cli = read('bin/ai-local-canary.mjs');
+  const controller = readIncludingComments('src/core/aiReview/localCanary.ts');
+  const cli = readIncludingComments('bin/ai-local-canary.mjs');
   if (!controller || !cli) return;
   const reviewCalls = controller.match(/\bsession\.reviewBugCandidate\s*\(/g) ?? [];
   if (reviewCalls.length !== 1) fail(`local canary has ${reviewCalls.length} review calls; expected exactly one`);
@@ -249,7 +274,7 @@ function checkSelfDevTrustRootClosure() {
   // the entries — yielding zero TypeScript paths and a rule that passes
   // vacuously. That is exactly how the first version of this rule proved
   // nothing.
-  const source = withoutComments(read(manifest));
+  const source = read(manifest);
   const block = /SELFDEV_AUTHORITATIVE_PATHS\s*=\s*Object\.freeze\(\[([\s\S]*?)\]\s*as const\)/.exec(source);
   if (block === null) {
     fail(`${manifest} does not declare SELFDEV_AUTHORITATIVE_PATHS as a frozen literal list`);
@@ -299,20 +324,20 @@ function checkSelfDevelopmentBoundary() {
     fail('Phase 8A self-development source is missing');
     return;
   }
-  const sources = files.map((file) => [file, read(file)]);
+  const sources = files.map((file) => [file, readIncludingComments(file)]);
   const combined = sources.map(([, source]) => source).join('\n');
-  const provenanceManifest = read('src/core/selfDev/provenanceManifest.ts');
+  const provenanceManifest = readIncludingComments('src/core/selfDev/provenanceManifest.ts');
   for (const file of files) {
     if (!provenanceManifest.includes(`'${file}'`)) fail(`authoritative provenance manifest omits tracked selfDev source ${file}`);
   }
-  const provenance = read('src/core/provenance/localGit.ts');
+  const provenance = readIncludingComments('src/core/provenance/localGit.ts');
   if (!/spawnSync\('git', \[\.\.\.args\]/.test(provenance) || !/shell:\s*false/.test(provenance) || !/timeout:\s*5_000/.test(provenance) || !/maxBuffer:\s*512 \* 1024/.test(provenance)) {
     fail('read-only local Git provenance boundary is not fixed-argv, no-shell, and bounded');
   }
   if (!/GIT_OPTIONAL_LOCKS:\s*'0'/.test(provenance)) fail('read-only local Git provenance does not disable optional Git locks');
   if (/\['(?:add|commit|push|pull|fetch|checkout|switch|reset|clean|stash|merge|rebase|cherry-pick|apply|am|tag|branch|config)'/.test(provenance)) fail('local Git provenance contains a forbidden mutation or remote verb');
   for (const file of gitFiles().filter((item) => item.startsWith('src/core/provenance/') && item.endsWith('.ts'))) {
-    if (file !== 'src/core/provenance/localGit.ts' && /node:child_process/.test(read(file))) fail(`${file} is an unapproved Git child-process boundary`);
+    if (file !== 'src/core/provenance/localGit.ts' && /node:child_process/.test(readIncludingComments(file))) fail(`${file} is an unapproved Git child-process boundary`);
   }
   for (const [file, source] of sources) {
     if (/from\s+['"][^'"]*(?:aiReview|campaign|oracles?|browser|products?|phase6|oops|database|infrastructure|auth|network|git)[^'"]*['"]/i.test(source)) {
@@ -324,49 +349,49 @@ function checkSelfDevelopmentBoundary() {
     if (/\b(?:AiReviewSession|LoopbackAiReviewProvider|SyntheticAiReviewProvider|reviewBugCandidate|suggestOracle|registerAiReviewProvider)\b/.test(source)) fail(`${file} enters Phase 7B AI review authority`);
     if (/register[^\n]*(?:oracle|assertion)|(?:oracle|assertion)[^\n]*register/i.test(source)) fail(`${file} registers executable oracle/assertion authority`);
   }
-  const candidateSource = read('src/core/selfDev/validation.ts');
+  const candidateSource = readIncludingComments('src/core/selfDev/validation.ts');
   const keyStart = candidateSource.indexOf('const CANDIDATE_KEYS');
   const keyEnd = candidateSource.indexOf('const CANDIDATE_OPTIONAL_KEYS');
   const keyBlock = keyStart >= 0 && keyEnd > keyStart ? candidateSource.slice(keyStart, keyEnd) : '';
   for (const field of ['code', 'source', 'sourceCode', 'patch', 'diff', 'command', 'shell', 'script', 'url', 'endpoint', 'prompt', 'model', 'tools', 'functions', 'git', 'pathTraversal', 'outputPath']) {
     if (new RegExp(`['"]${field}['"]`).test(keyBlock)) fail(`Phase 8A candidate schema contains forbidden field ${field}`);
   }
-  const proposer = read('src/core/selfDev/proposer.ts');
+  const proposer = readIncludingComments('src/core/selfDev/proposer.ts');
   if (!/class\s+SyntheticDeterministicProposer/.test(proposer)) fail('Phase 8A does not have the sole synthetic deterministic proposer');
   if (/class\s+(?:Local|Cloud|Remote|Agent)[A-Za-z]*Proposer/.test(combined)) fail('Phase 8A contains an unauthorized proposer class');
-  const registry = read('src/core/selfDev/registry.ts');
+  const registry = readIncludingComments('src/core/selfDev/registry.ts');
   if (!/SELFDEV_ACTIONS/.test(registry) || !/SELFDEV_ASSERTIONS/.test(registry) || !/resolveSelfDevAction/.test(registry) || !/resolveSelfDevAssertion/.test(registry)) fail('Phase 8A action/assertion allowlists are missing');
   if (/\b(?:callback|executable\s*:\s*true|new\s+Function)\b/i.test(registry)) fail('Phase 8A registry exposes executable candidate behavior');
-  const controller = read('src/core/selfDev/controller.ts');
-  const storage = read('src/core/selfDev/storage.ts');
+  const controller = readIncludingComments('src/core/selfDev/controller.ts');
+  const storage = readIncludingComments('src/core/selfDev/storage.ts');
   if (!/SELF_DEVELOPMENT_SYNTHETIC_EVALUATION|SELFDEV_SYNTHETIC_BASE_NIGHTWATCH_SHA/.test(controller)) fail('Phase 8A controller lacks its narrow owner/synthetic boundary');
   if (!/PrivateArtifactStore/.test(storage) || !/writeImmutableJson/.test(storage)) fail('Phase 8A private results do not use the hardened immutable private store');
   if (!/validateSessionArtifact/.test(storage) || !/replaySession/.test(storage) || !/readBack/.test(storage)) fail('Phase 8A.1 persistence is missing strict pre-write or read-back replay gates');
   if (!/SELFDEV_PROVENANCE_REQUIRED/.test(controller) || !/provenance/.test(controller)) fail('Phase 8A.1 persistent controller does not require injected provenance');
-  const validation = read('src/core/selfDev/validation.ts');
+  const validation = readIncludingComments('src/core/selfDev/validation.ts');
   if (!/sessionArtifactIdFor/.test(validation) || !/assertEvaluationStateInvariant/.test(validation) || !/SELFDEV_SESSION_ARTIFACT_SCHEMA_VERSION/.test(validation)) fail('Phase 8A.1 validation lacks v2 content identity or semantic state invariants');
-  const replay = read('src/core/selfDev/replay.ts');
+  const replay = readIncludingComments('src/core/selfDev/replay.ts');
   if (!/canonicalJson\(actual\)/.test(replay) || !/proposals\[index\]/.test(replay) || !/DeterministicReplayClock/.test(replay)) fail('Phase 8A.1 replay is not ordered, exact, and clock-controlled');
-  const trust = read('src/core/selfDev/trust.ts');
+  const trust = readIncludingComments('src/core/selfDev/trust.ts');
   if (!/VERIFIED_EXACT_BASE/.test(trust) || !/VERIFIED_SOURCE_EQUIVALENT_DESCENDANT/.test(trust) || !/LEGACY_UNVERIFIED_NOT_ELIGIBLE/.test(trust)) fail('Phase 8A.1 trust assessment is missing currentness or legacy quarantine');
   if (!/assessFutureReviewEligibility/.test(trust)) fail('Phase 8A.1.1 canonical future-review eligibility gate is missing');
   if (!/Number\.isInteger/.test(trust)) fail('Phase 8A.1.1 eligibility prerequisite does not validate pass-count shape at runtime');
   if (!/current:\s*CurrentSelfDevSourceView/.test(trust)) fail('Phase 8A.1.1 eligibility gate does not require a current-source view parameter');
   if (!/SELFDEV_PRIVATE_NAMESPACE/.test(storage) || !/self-development/.test(storage)) fail('Phase 8A private results lack a separate namespace');
   if (!/NOT_AUTHORIZED_PHASE_8A/.test(combined) || !/EVALUATED_PASS_NOT_ADOPTED/.test(combined) || !/PROHIBITED/.test(combined)) fail('Phase 8A result lacks explicit no-adoption/publication authority');
-  const cli = read('bin/selfdev-synthetic.mjs');
+  const cli = readIncludingComments('bin/selfdev-synthetic.mjs');
   if (!/parseArgs/.test(cli) || !/runSyntheticSelfDevSession/.test(cli)) fail('Phase 8A CLI is not a thin synthetic controller wrapper');
   if (/\b(?:child_process|fetch\s*\(|http\.request|https\.request|net\.connect|WebSocket|git\s+(?:add|commit|push|apply)|AiReview|owner-review|database|production|NIGHTWATCH_STORAGE_STATE)\b/i.test(cli)) fail('Phase 8A CLI exposes a prohibited capability');
   if (/fs\.(?:write|append|rename|unlink|rm|copy|mkdir|link)/i.test(cli)) fail('Phase 8A CLI contains a filesystem-write path');
   if (!/readLocalNightwatchProvenance/.test(cli)) fail('Phase 8A synthetic CLI does not derive local Git/source provenance');
-  const verifyCli = read('bin/selfdev-verify.mjs');
+  const verifyCli = readIncludingComments('bin/selfdev-verify.mjs');
   if (!/--artifact-id/.test(verifyCli) || !/readOnly:\s*true/.test(verifyCli) || !/assessSelfDevArtifactIntegrity/.test(verifyCli)) fail('Phase 8A.1 verifier CLI lacks exact-ID read-only assessment');
   if (/(?:--latest|--all|--list|--root|--output|--patch|--adopt|--apply|--commit|--push|--model|--prompt|--url|--repo|--force)/.test(verifyCli) && !/SELFDEV_VERIFY_USAGE_INVALID/.test(verifyCli)) fail('Phase 8A.1 verifier CLI does not reject broad selection or mutation options');
-  const provenanceCli = read('bin/selfdev-provenance.mjs');
+  const provenanceCli = readIncludingComments('bin/selfdev-provenance.mjs');
   if (!/readLocalNightwatchProvenance/.test(provenanceCli) || /node:child_process|fs\.(?:write|append|rename|unlink|rm|copy|mkdir|link)/i.test(provenanceCli)) fail('read-only provenance CLI boundary is incomplete');
-  const index = read('src/core/selfDev/index.ts');
+  const index = readIncludingComments('src/core/selfDev/index.ts');
   if (/export\s+\*\s+from\s+['"]\.\/storage['"]/.test(index) || /createSessionArtifact/.test(index)) fail('selfDev public index exposes a raw artifact constructor or storage wildcard');
-  const ownerPolicy = read('src/core/policy/ownerScope.ts');
+  const ownerPolicy = readIncludingComments('src/core/policy/ownerScope.ts');
   if (!/SELF_DEVELOPMENT_SYNTHETIC_EVALUATION/.test(ownerPolicy)) fail('Phase 8A lacks a distinct owner-policy capability');
 }
 
@@ -385,9 +410,9 @@ function checkPhase8BSandboxBoundary() {
     fail('Phase 8B sandbox adoption source is missing');
     return;
   }
-  const sources = files.map((file) => [file, read(file)]);
+  const sources = files.map((file) => [file, readIncludingComments(file)]);
   const combined = sources.map(([, source]) => source).join('\n');
-  const provenanceManifest = read('src/core/selfDev/provenanceManifest.ts');
+  const provenanceManifest = readIncludingComments('src/core/selfDev/provenanceManifest.ts');
   for (const file of files) {
     if (!provenanceManifest.includes(`'${file}'`)) fail(`authoritative provenance manifest omits tracked selfDevSandbox source ${file}`);
   }
@@ -406,7 +431,7 @@ function checkPhase8BSandboxBoundary() {
     if (/\b(?:AiReviewSession|LoopbackAiReviewProvider|SyntheticAiReviewProvider|reviewBugCandidate|suggestOracle)\b/.test(source)) fail(`${file} enters Phase 7B AI review authority`);
   }
   // The loader may require exactly one bare npm specifier: the already-installed local TypeScript compiler.
-  const loader = read('src/core/selfDevSandbox/sandboxLoader.ts');
+  const loader = readIncludingComments('src/core/selfDevSandbox/sandboxLoader.ts');
   const bareRequires = loader.match(/requireFn\(\s*'([^./][^']*)'\s*\)/g) ?? [];
   for (const occurrence of bareRequires) {
     if (!/'typescript'/.test(occurrence)) fail(`sandbox loader requires an unapproved bare module: ${occurrence}`);
@@ -415,13 +440,13 @@ function checkPhase8BSandboxBoundary() {
   if (!/resolvedSandboxRoot/.test(loader) || !/SELFDEV_SANDBOX_LOADER_PATH_ESCAPE/.test(loader)) fail('sandbox loader is missing its path-confinement check');
   if (!/delete requireFn\.cache/.test(loader)) fail('sandbox loader does not clear its module cache');
 
-  const mirror = read('src/core/selfDevSandbox/sandboxMirror.ts');
+  const mirror = readIncludingComments('src/core/selfDevSandbox/sandboxMirror.ts');
   if (!/SELFDEV_AUTHORITATIVE_PATHS/.test(mirror)) fail('sandbox mirror does not copy the fixed authoritative source set');
   if (!/isSymbolicLink/.test(mirror)) fail('sandbox mirror is missing symlink rejection');
   if (!/mode:\s*0o700/.test(mirror) || !/mode:\s*0o600/.test(mirror)) fail('sandbox mirror does not use owner-only directory/file permissions');
   if (!/resolvedBase\s*\+\s*path\.sep/.test(mirror)) fail('sandbox cleanup does not confine deletion to the fixed sandbox base');
 
-  const planner = read('src/core/selfDevSandbox/planner.ts');
+  const planner = readIncludingComments('src/core/selfDevSandbox/planner.ts');
   if (!/assessFutureReviewEligibility/.test(planner)) fail('Phase 8B planner does not consume the canonical future-review eligibility gate');
   if (!/SELF_DEVELOPMENT_SANDBOX_ADOPTION/.test(planner)) fail('Phase 8B planner is missing its owner-policy gate');
   if (!/ALREADY_ADOPTED/.test(planner) || !/CATALOG_FULL/.test(planner) || !/CATALOG_NONCANONICAL/.test(planner)) fail('Phase 8B planner is missing a required fail-closed gate');
@@ -429,7 +454,7 @@ function checkPhase8BSandboxBoundary() {
     fail('Phase 8B planner is missing TOCTOU source-bundle revalidation');
   }
 
-  const executor = read('src/core/selfDevSandbox/sandboxExecutor.ts');
+  const executor = readIncludingComments('src/core/selfDevSandbox/sandboxExecutor.ts');
   if (!/SELF_DEVELOPMENT_SANDBOX_ADOPTION/.test(executor)) fail('Phase 8B sandbox executor is missing its owner-policy gate');
   if (!/revalidatePlan/.test(executor)) fail('Phase 8B sandbox executor does not revalidate the plan before mutation');
   if (!/diffSandboxAgainstCanonical/.test(executor) || !/changedFiles\.length\s*!==\s*1/.test(executor)) fail('Phase 8B sandbox executor does not enforce exactly one changed file');
@@ -438,7 +463,7 @@ function checkPhase8BSandboxBoundary() {
   // src/core/selfDev/metamorphicProbes.ts implementation (Phase 8B.1 extracted
   // it so canonical verification can reuse the same proof logic); the
   // executor must still be the one invoking it.
-  const metamorphicProbes = read('src/core/selfDev/metamorphicProbes.ts');
+  const metamorphicProbes = readIncludingComments('src/core/selfDev/metamorphicProbes.ts');
   if (!/runMetamorphicProbes/.test(executor)) fail('Phase 8B sandbox executor does not invoke the shared metamorphic proof implementation');
   if (!/REJECTED_DUPLICATE/.test(metamorphicProbes) || !/EVALUATED_PASS_NOT_ADOPTED/.test(metamorphicProbes) || !/REJECTED_SAFETY/.test(metamorphicProbes)) {
     fail('shared metamorphic proof implementation is missing a required probe verdict');
@@ -447,17 +472,17 @@ function checkPhase8BSandboxBoundary() {
     fail('Phase 8B sandbox result lacks explicit non-canonical/no-publication authority');
   }
 
-  const storage = read('src/core/selfDevSandbox/storage.ts');
+  const storage = readIncludingComments('src/core/selfDevSandbox/storage.ts');
   if (!/PrivateArtifactStore/.test(storage) || !/writeImmutableJson/.test(storage)) fail('Phase 8B plan/result storage does not use the hardened immutable private store');
   if (/\.writeJson\s*\(|writeIncomplete\s*\(/.test(storage)) fail('Phase 8B plan/result storage retains a replacement-capable write path');
 
-  const index = read('src/core/selfDevSandbox/index.ts');
+  const index = readIncludingComments('src/core/selfDevSandbox/index.ts');
   if (!/runSandboxAdoption/.test(index) || !/planAdoption/.test(index)) fail('Phase 8B public index is missing its plan/run entry points');
 
-  const ownerPolicy = read('src/core/policy/ownerScope.ts');
+  const ownerPolicy = readIncludingComments('src/core/policy/ownerScope.ts');
   if (!/SELF_DEVELOPMENT_SANDBOX_ADOPTION/.test(ownerPolicy)) fail('Phase 8B lacks a distinct owner-policy capability');
 
-  const cli = read('bin/selfdev-adopt-sandbox.mjs');
+  const cli = readIncludingComments('bin/selfdev-adopt-sandbox.mjs');
   if (!/inspectSelfDevAdoption/.test(cli) || !/planAdoption/.test(cli) || !/runSandboxAdoption/.test(cli)) fail('Phase 8B CLI is not a thin wrapper over inspect/plan/run');
   if (!/SANDBOX_ONLY/.test(cli)) fail('Phase 8B CLI is missing its fixed confirmation token');
   const forbiddenCliOptions = [
@@ -491,7 +516,7 @@ function checkPhase8BSandboxBoundary() {
     .filter((file) => (file.startsWith('src/') || file.startsWith('bin/')) && /\.(?:ts|mjs|js)$/.test(file))
     .filter((file) => !approvedCallers.has(file) && file !== 'bin/hardening-check.mjs' && !file.startsWith('tests/'));
   for (const file of otherSources) {
-    const source = read(file);
+    const source = readIncludingComments(file);
     if (/\brunSandboxAdoption\s*\(|\bplanAdoption\s*\(/.test(source)) {
       fail(`${file} reaches Phase 8B sandbox-write/plan authority outside the approved boundary`);
     }
@@ -505,7 +530,7 @@ function checkPhase8BSandboxBoundary() {
 }
 
 function checkImmutablePrivatePublication() {
-  const source = read('src/core/policy/privateArtifacts.ts');
+  const source = readIncludingComments('src/core/policy/privateArtifacts.ts');
   const start = source.indexOf('  writeImmutableJson(');
   const end = source.indexOf('\n  /** Always throws', start);
   const method = start >= 0 && end > start ? source.slice(start, end) : '';
@@ -520,18 +545,18 @@ function checkImmutablePrivatePublication() {
   if (!/fs\.unlinkSync\(temporary\)/.test(method)) fail('immutable publication does not clean its temporary name');
   if (!/fsyncDirectory\(\)/.test(method) || !/fs\.fsyncSync\(descriptor\)/.test(source)) fail('immutable publication does not fsync the containing directory');
   if (!/PRIVATE_ARTIFACT_NO_REPLACE_UNSUPPORTED/.test(method)) fail('immutable publication lacks a precise unsupported no-replace failure');
-  const storage = read('src/core/aiReview/storage.ts');
+  const storage = readIncludingComments('src/core/aiReview/storage.ts');
   if (!/writeBugDraft[\s\S]*writeImmutableJson/.test(storage) || !/writeOracleSuggestion[\s\S]*writeImmutableJson/.test(storage) || !/writeHumanReview[\s\S]*writeImmutableJson/.test(storage)) fail('AI bug/oracle/review writes do not all use immutable publication');
   if (/writeIncomplete\s*\(|\.writeJson\s*\(/.test(storage)) fail('AI immutable storage uses replacement-capable writeJson/writeIncomplete');
 }
 
 function checkOwnerDecisionAuthority() {
-  const index = read('src/core/aiReview/index.ts');
+  const index = readIncludingComments('src/core/aiReview/index.ts');
   if (/export\s+\*\s+from\s+['"]\.\/ownerReview['"]/.test(index)) fail('AI public index wildcard-exports owner review authority');
   if (/ownerDecision|recordOwnerDecision|recordConfirmedOwnerDecision|createHumanReviewRecord/.test(index)) fail('AI public index exposes owner-decision write authority');
 
   const internal = 'src/core/aiReview/ownerDecision.ts';
-  const internalSource = read(internal);
+  const internalSource = readIncludingComments(internal);
   if (!/function\s+recordOwnerDecision\s*\(/.test(internalSource) || /export\s+function\s+recordOwnerDecision\s*\(/.test(internalSource)) fail('raw unconfirmed owner decision helper is not private');
   if (!/export\s+function\s+recordConfirmedOwnerDecision\s*\(/.test(internalSource) || !/confirmationMatches\(/.test(internalSource) || !/expectedArtifactDigest/.test(internalSource)) fail('internal owner decision boundary is missing confirmation/digest requirements');
 
@@ -539,10 +564,10 @@ function checkOwnerDecisionAuthority() {
     .filter((file) => (file.startsWith('src/') || file.startsWith('bin/')) && /\.(?:ts|mjs|js)$/.test(file))
     .filter((file) => file !== 'bin/hardening-check.mjs' && file !== internal && file !== 'src/core/aiReview/review.ts');
   for (const file of sourceFiles) {
-    const source = read(file);
+    const source = readIncludingComments(file);
     if (file !== 'bin/ai-owner-review.mjs' && /[\'\"]ownerDecision\.ts[\'\"]|recordConfirmedOwnerDecision|\bcreateHumanReviewRecord\s*\(|\.writeHumanReview\s*\(/.test(source)) fail(`${file} reaches owner-decision write authority outside the approved boundary`);
   }
-  const cli = read('bin/ai-owner-review.mjs');
+  const cli = readIncludingComments('bin/ai-owner-review.mjs');
   if (!/ownerDecision\.ts/.test(cli) || !/recordConfirmedOwnerDecision/.test(cli)) fail('owner-review CLI is not the sole internal owner-decision loader');
   if (!/process\.stdin\.isTTY/.test(cli) || !/process\.stdout\.isTTY/.test(cli)) fail('owner-review CLI is missing its TTY boundary');
   if (!/A = approve draft, R = reject, S = supersede, Q = cancel/.test(cli)) fail('owner-review CLI fixed decision menu is missing');
@@ -550,8 +575,8 @@ function checkOwnerDecisionAuthority() {
 }
 
 function checkAiInvocationAuthority() {
-  const pipeline = read('src/core/aiReview/pipeline.ts');
-  const index = read('src/core/aiReview/index.ts');
+  const pipeline = readIncludingComments('src/core/aiReview/pipeline.ts');
+  const index = readIncludingComments('src/core/aiReview/index.ts');
   if (/export\s+(?:async\s+)?function\s+(?:reviewBugCandidate|suggestOracle)\b/.test(pipeline)) fail('AI pipeline exports an unbudgeted provider execution function');
   if (/export\s+\*\s+from\s+['"]\.\/pipeline['"]/.test(index) || /export\s*\{[^}]*\b(?:reviewBugCandidate|suggestOracle)\b[^}]*\}/s.test(index)) fail('AI public index exposes a raw provider execution function');
   if (!/export\s*\{\s*AiReviewSession\s*\}\s*from\s+['"]\.\/pipeline['"]/.test(index)) fail('AiReviewSession is not the explicit public provider execution boundary');
@@ -561,19 +586,19 @@ function checkAiInvocationAuthority() {
     .filter((file) => (file.startsWith('src/') || file.startsWith('bin/')) && /\.(?:ts|mjs|js)$/.test(file))
     .filter((file) => file !== 'bin/hardening-check.mjs');
   for (const file of sourceFiles) {
-    const source = read(file);
+    const source = readIncludingComments(file);
     if (file !== 'src/core/aiReview/pipeline.ts' && file !== 'src/core/aiReview/localCanary.ts' && /\.\s*(?:reviewBugCandidate|suggestOracle)\s*\(/.test(source)) fail(`${file} directly invokes a raw AI provider operation`);
     if (file !== 'src/core/aiReview/pipeline.ts' && /\binvokeRegisteredProvider\s*\(/.test(source)) fail(`${file} imports or invokes the private AI provider boundary`);
     if (!file.startsWith('src/core/aiReview/') && /\b(?:AiReviewSession|registerAiReviewProvider|invokeRegisteredProvider|reviewBugCandidate|suggestOracle)\b/.test(source)) fail(`${file} imports or invokes AI review execution outside the AI subsystem`);
   }
   const boundaryOccurrences = pipeline.match(/\binvokeRegisteredProvider\s*\(/g) ?? [];
   if (boundaryOccurrences.length !== 2) fail(`AI provider boundary has ${boundaryOccurrences.length} references; expected one definition and one canonical call`);
-  if (/new\s+AiReviewSession\s*\(/.test(sourceFiles.filter((file) => !file.startsWith('src/core/aiReview/')).map((file) => read(file)).join('\n'))) fail('runtime source creates automatic AI review sessions outside the AI subsystem');
+  if (/new\s+AiReviewSession\s*\(/.test(sourceFiles.filter((file) => !file.startsWith('src/core/aiReview/')).map((file) => readIncludingComments(file)).join('\n'))) fail('runtime source creates automatic AI review sessions outside the AI subsystem');
 }
 
 function checkOwnerReviewCliBoundary() {
   const file = 'bin/ai-owner-review.mjs';
-  const source = read(file);
+  const source = readIncludingComments(file);
   if (!source) return;
   if (!source.includes('ownerReview.ts')) fail(`${file} does not load the provider-free owner-review service`);
   const forbidden = [
@@ -664,12 +689,12 @@ function checkOwnerReviewCliBoundary() {
  *     narrative section mentions it.
  */
 function checkActiveMilestoneProgression() {
-  const activeText = read('.agent/ACTIVE_TASK.md');
+  const activeText = readIncludingComments('.agent/ACTIVE_TASK.md');
   if (activeText.length === 0) return;
   const directory = /^Task directory:\s*(\S+)\s*$/m.exec(activeText)?.[1];
   if (directory === undefined || !directory.startsWith('.agent/tasks/')) return;
-  const stateText = read(`${directory}/STATE.md`);
-  const planText = read(`${directory}/PLAN.md`);
+  const stateText = readIncludingComments(`${directory}/STATE.md`);
+  const planText = readIncludingComments(`${directory}/PLAN.md`);
   if (stateText.length === 0 || planText.length === 0) return;
   // Only the versioned live schema.
   if (!stateText.includes('nightwatch.agent-continuity.v2')) return;
@@ -695,7 +720,7 @@ function checkActiveMilestoneProgression() {
 
 function checkDecisionIdentityUniqueness() {
   const file = 'docs/DECISIONS.md';
-  const text = read(file);
+  const text = readIncludingComments(file);
   if (text.length === 0) {
     fail(`${file} is missing`);
     return;
@@ -728,12 +753,12 @@ function checkDecisionIdentityUniqueness() {
 
 function checkHostCapabilityMatrix() {
   const matrixFile = 'docs/HOST-CAPABILITY-MATRIX.md';
-  const matrix = read(matrixFile);
+  const matrix = readIncludingComments(matrixFile);
   if (matrix.length === 0) {
     fail(`${matrixFile} is missing; the qualified-host requirements must be documented`);
     return;
   }
-  const manifest = JSON.parse(read('package.json'));
+  const manifest = JSON.parse(readIncludingComments('package.json'));
   for (const name of Object.keys({ ...(manifest.dependencies ?? {}), ...(manifest.devDependencies ?? {}) })) {
     if (!matrix.includes(`\`${name}\``)) {
       fail(`${matrixFile} does not assess the declared dependency '${name}'; a dependency without an assessment is an unevidenced claim`);
@@ -823,7 +848,7 @@ function checkSyntax() {
 function checkCliImplementationContract() {
   const tracked = gitFiles();
   const binFiles = tracked.filter((file) => /^bin\/.*\.mjs$/.test(file)).sort();
-  const files = binFiles.map((file) => ({ file, source: read(file) }));
+  const files = binFiles.map((file) => ({ file, source: readIncludingComments(file) }));
   const judgement = verifyCliImplementationContract({
     files,
     access: {
@@ -876,7 +901,7 @@ function walkWorkingTree(directory, predicate) {
 
 function checkBinExecutionCoverage() {
   const bins = walkWorkingTree('bin', (name) => name.endsWith('.mjs')).filter((file) => !file.slice('bin/'.length).includes('/'));
-  const tests = walkWorkingTree('tests', (name) => name.endsWith('.ts')).map((file) => ({ file, source: read(file) }));
+  const tests = walkWorkingTree('tests', (name) => name.endsWith('.ts')).map((file) => ({ file, source: readIncludingComments(file) }));
   const coverage = findBinsWithoutExecutingTest({ bins, tests });
   if (coverage.bins.length === 0) {
     fail('BIN_EXECUTION_COVERAGE_VACUOUS: zero tracked bin entry points discovered');
@@ -888,17 +913,17 @@ function checkBinExecutionCoverage() {
 }
 
 function checkPhase23QualityGate() {
-  const workflow = read('.github/workflows/hardening.yml');
-  const packageJson = read('package.json');
-  const runner = read('bin/quality-gate.mjs');
-  const spec = read('bin/quality-gate-spec.mjs');
-  const semantic = read('bin/semantic-compat.mjs');
-  const clean = read('bin/quality-gate-clean.mjs');
+  const workflow = readIncludingComments('.github/workflows/hardening.yml');
+  const packageJson = readIncludingComments('package.json');
+  const runner = readIncludingComments('bin/quality-gate.mjs');
+  const spec = readIncludingComments('bin/quality-gate-spec.mjs');
+  const semantic = readIncludingComments('bin/semantic-compat.mjs');
+  const clean = readIncludingComments('bin/quality-gate-clean.mjs');
   let gate;
   let compatibility;
   try {
-    gate = JSON.parse(read('config/quality-gate.v1.json'));
-    compatibility = JSON.parse(read('config/semantic-compatibility.v1.json'));
+    gate = JSON.parse(readIncludingComments('config/quality-gate.v1.json'));
+    compatibility = JSON.parse(readIncludingComments('config/semantic-compatibility.v1.json'));
   } catch {
     fail('Phase 23 quality-gate definitions must be valid JSON');
     return;
@@ -932,10 +957,10 @@ function checkPhase23QualityGate() {
     ['ci:phase23:observe', /"ci:phase23:observe"\s*:\s*"node bin\/phase23-ci\.mjs observe"/],
   ]) if (!pattern.test(packageJson)) fail(`package.json must expose the fixed Phase 23 operator entry point: ${script}`);
 
-  const phase23Operator = read('bin/phase23-dev.mjs');
-  const phase23Manifest = read('src/core/phase23/manifest.ts');
-  const phase23Observer = read('bin/phase23-ci.mjs');
-  const phase23Predev = read('bin/phase23-predev.mjs');
+  const phase23Operator = readIncludingComments('bin/phase23-dev.mjs');
+  const phase23Manifest = readIncludingComments('src/core/phase23/manifest.ts');
+  const phase23Observer = readIncludingComments('bin/phase23-ci.mjs');
+  const phase23Predev = readIncludingComments('bin/phase23-predev.mjs');
   if (!/nightwatch\.dev-semantic-acceptance-manifest\.v2/.test(phase23Manifest) || !/DYNAMIC_TARGET_DISCOVERY_FORBIDDEN/.test(phase23Operator) || !/launcherInvocations:\s*1/.test(phase23Operator)) fail('Phase 23 DEV operator lacks the fresh v2 manifest, discovery block, or single-invocation bound');
   if (!/args\.env !== 'dev'/.test(phase23Operator) || !/phase22-real\.mjs/.test(phase23Operator) || !/maxBuffer:/.test(phase23Operator)) fail('Phase 23 DEV operator does not retain the guarded DEV-only Phase 22 execution path');
   if (!/requiredStepsUnavailable/.test(phase23Observer) || !/['"]run['"],\s*['"]view/.test(phase23Observer) || !/REQUIRED_JOB_STEPS_EMPTY/.test(read('src/core/qualityGate/externalCi.ts'))) fail('Phase 23 CI observer does not preserve the empty-step external-block rule');
@@ -965,7 +990,7 @@ function checkPhase23QualityGate() {
  * structural assertions guard the same invariants at source level.
  */
 function checkPhase8B01CloseoutIntegrity() {
-  const mirror = read('src/core/selfDevSandbox/sandboxMirror.ts');
+  const mirror = readIncludingComments('src/core/selfDevSandbox/sandboxMirror.ts');
   if (!/ensurePrivateSandboxBase/.test(mirror)) fail('8B.0.1: sandbox mirror lacks the validated base-establishment routine');
   if (!/firstMissingPathnameComponent/.test(mirror)) fail('8B.0.1: sandbox mirror lacks component-wise pathname-chain validation');
   if (!/SELFDEV_SANDBOX_BASE_SYMLINK/.test(mirror) || !/SELFDEV_SANDBOX_BASE_NOT_DIRECTORY/.test(mirror) || !/SELFDEV_SANDBOX_BASE_ANCESTOR_MISSING/.test(mirror)) {
@@ -992,30 +1017,30 @@ function checkPhase8B01CloseoutIntegrity() {
     fail('8B.0.1: cleanup does not require strict containment beneath the validated base');
   }
 
-  const validation = read('src/core/selfDevSandbox/validation.ts');
+  const validation = readIncludingComments('src/core/selfDevSandbox/validation.ts');
   if (!/SELFDEV_ADOPTION_STRATEGY_CLASS/.test(validation)) fail('8B.0.1: plan/result validation does not bind the single strategy constant');
   if (!/PLAN_STRATEGY_MISMATCH/.test(validation)) fail('8B.0.1: plan/adopted-case strategy cross-binding is missing');
   if (!/result\.nonOverreachResult !== 'PASS'/.test(validation)) fail('8B.0.1: verified-result invariant does not require the non-overreach proof PASS');
   if (!/result\.sandboxSourceWrites > 1/.test(validation)) fail('8B.0.1: sandbox write count is not bounded to at most one');
   if (!/NON_OVERREACH_PROBE_UNAVAILABLE/.test(validation)) fail('8B.0.1: NON_OVERREACH_PROBE_UNAVAILABLE is not a valid failure class');
 
-  const executor = read('src/core/selfDevSandbox/sandboxExecutor.ts');
+  const executor = readIncludingComments('src/core/selfDevSandbox/sandboxExecutor.ts');
   if (!/let sandboxSourceWrites = 0/.test(executor) || !/sandboxSourceWrites = 1/.test(executor)) fail('8B.0.1: executor does not track actual sandbox writes');
   if (/sandboxSourceWrites:\s*[01],/.test(executor)) fail('8B.0.1: executor hardcodes the sandbox write count instead of the tracked value');
   if (!/probes\.nonOverreachResult === 'NOT_RUN'/.test(executor) || !/NON_OVERREACH_PROBE_UNAVAILABLE/.test(executor)) fail('8B.0.1: executor does not fail closed when the non-overreach probe is unavailable');
   if (!/probes\.nonOverreachResult === 'FAIL'/.test(executor) || !/NON_OVERREACH_REGRESSION/.test(executor)) fail('8B.0.1: executor does not distinguish a failed non-overreach probe');
 
-  const types = read('src/core/selfDevSandbox/types.ts');
+  const types = readIncludingComments('src/core/selfDevSandbox/types.ts');
   if (!/NON_OVERREACH_PROBE_UNAVAILABLE/.test(types)) fail('8B.0.1: failure-class union lacks NON_OVERREACH_PROBE_UNAVAILABLE');
   if (!/SelfDevAdoptionStrategyClass/.test(types)) fail('8B.0.1: plan/result strategyClass is not the literal single-strategy type');
 
-  const loader = read('src/core/selfDevSandbox/sandboxLoader.ts');
+  const loader = readIncludingComments('src/core/selfDevSandbox/sandboxLoader.ts');
   if (!/finally\s*\{[\s\S]{0,500}?loadInFlight = false/.test(loader)) fail('8B.0.1: sandbox loader lock is not released on every exit path');
 
-  const index = read('src/core/selfDevSandbox/index.ts');
+  const index = readIncludingComments('src/core/selfDevSandbox/index.ts');
   if (/setSandboxBaseOverrideForTests/.test(index)) fail('8B.0.1: the test-only sandbox-base override leaked into the boundary index');
 
-  const adoptedCases = read('src/core/selfDev/adoptedCases.ts');
+  const adoptedCases = readIncludingComments('src/core/selfDev/adoptedCases.ts');
   if (!/SelfDevAdoptionStrategyClass/.test(adoptedCases)) fail('8B.0.1: the single strategy class lacks a literal exported type');
 }
 
@@ -1034,15 +1059,15 @@ function checkPhase8B1CanonicalPromotionBoundary() {
     fail('Phase 8B.1 canonical promotion source is missing');
     return;
   }
-  const sources = files.map((file) => [file, read(file)]);
+  const sources = files.map((file) => [file, readIncludingComments(file)]);
   const combined = sources.map(([, source]) => source).join('\n');
-  const provenanceManifest = read('src/core/selfDev/provenanceManifest.ts');
+  const provenanceManifest = readIncludingComments('src/core/selfDev/provenanceManifest.ts');
   for (const file of files) {
     if (!provenanceManifest.includes(`'${file}'`)) fail(`authoritative provenance manifest omits tracked selfDevPromotion source ${file}`);
   }
   if (!provenanceManifest.includes("'bin/selfdev-promote-canonical.mjs'")) fail('authoritative provenance manifest omits the Phase 8B.1 CLI');
 
-  const ownerPolicy = read('src/core/policy/ownerScope.ts');
+  const ownerPolicy = readIncludingComments('src/core/policy/ownerScope.ts');
   if (!/SELF_DEVELOPMENT_CANONICAL_ADOPTION/.test(ownerPolicy)) fail('Phase 8B.1 lacks a distinct owner-policy capability');
   if (!/owner-scope-policy\.v2/.test(ownerPolicy)) fail('Phase 8B.1 does not deliberately advance the owner-scope policy version');
 
@@ -1063,19 +1088,19 @@ function checkPhase8B1CanonicalPromotionBoundary() {
     if (/\brunSandboxAdoption\s*\(|\bplanAdoption\s*\(/.test(source)) fail(`${file} directly invokes Phase 8B sandbox-write/plan authority instead of only its read-only stores`);
   }
 
-  const prepare = read('src/core/selfDevPromotion/prepare.ts');
+  const prepare = readIncludingComments('src/core/selfDevPromotion/prepare.ts');
   if (!/SELF_DEVELOPMENT_CANONICAL_ADOPTION/.test(prepare)) fail('Phase 8B.1 prepare is missing its owner-policy gate');
   if (!/assertRepositoryFullyClean/.test(prepare)) fail('Phase 8B.1 prepare does not require whole-repository cleanliness');
   if (!/assessFutureReviewEligibility/.test(prepare)) fail('Phase 8B.1 prepare does not consume the canonical future-review eligibility gate');
   if (!/ALREADY_ADOPTED/.test(prepare)) fail('Phase 8B.1 prepare is missing its already-adopted fail-closed gate');
 
-  const approve = read('src/core/selfDevPromotion/approve.ts');
+  const approve = readIncludingComments('src/core/selfDevPromotion/approve.ts');
   if (!/SELF_DEVELOPMENT_CANONICAL_ADOPTION/.test(approve)) fail('Phase 8B.1 approve is missing its owner-policy gate');
   if (!/SELFDEV_CANONICAL_PROMOTION_APPROVAL_CONFIRMATION/.test(approve)) fail('Phase 8B.1 approve does not require the fixed confirmation token');
   if (!/assertRepositoryFullyClean/.test(approve)) fail('Phase 8B.1 approve does not require whole-repository cleanliness');
   if (!/PROMOTION_SOURCE_ADVANCED/.test(approve)) fail('Phase 8B.1 approve does not fail closed when source has advanced');
 
-  const apply = read('src/core/selfDevPromotion/apply.ts');
+  const apply = readIncludingComments('src/core/selfDevPromotion/apply.ts');
   if (!/SELF_DEVELOPMENT_CANONICAL_ADOPTION/.test(apply)) fail('Phase 8B.1 apply is missing its owner-policy gate');
   if (!/claimApprovalConsumption/.test(apply)) fail('Phase 8B.1 apply is missing one-shot approval consumption');
   // The FIRST claim call must precede the LAST invocation of the write
@@ -1092,7 +1117,7 @@ function checkPhase8B1CanonicalPromotionBoundary() {
   if (!/CHANGESET_INVALID/.test(apply)) fail('Phase 8B.1 apply does not verify the post-write changeset');
   if (!/APPLIED_RECEIPT_PERSIST_FAILED/.test(apply)) fail('Phase 8B.1 apply does not surface a truthful receipt-persistence failure');
 
-  const verify = read('src/core/selfDevPromotion/verify.ts');
+  const verify = readIncludingComments('src/core/selfDevPromotion/verify.ts');
   if (!/SELF_DEVELOPMENT_CANONICAL_ADOPTION/.test(verify)) fail('Phase 8B.1 verify is missing its owner-policy gate');
   if (!/HEAD_ADVANCED/.test(verify)) fail('Phase 8B.1 verify does not require the exact pre-commit HEAD');
   if (!/UNEXPECTED_CHANGESET/.test(verify) || !/UNEXPECTED_STAGED_CHANGE/.test(verify) || !/UNEXPECTED_UNTRACKED_FILE/.test(verify)) {
@@ -1104,17 +1129,17 @@ function checkPhase8B1CanonicalPromotionBoundary() {
     fail('Phase 8B.1 canonical promotion lacks explicit uncommitted/no-runtime-Git authority markers');
   }
 
-  const storage = read('src/core/selfDevPromotion/storage.ts');
+  const storage = readIncludingComments('src/core/selfDevPromotion/storage.ts');
   if (!/PrivateArtifactStore/.test(storage) || !/writeImmutableJson/.test(storage)) fail('Phase 8B.1 promotion storage does not use the hardened immutable private store');
   if (/\.writeJson\s*\(|writeIncomplete\s*\(/.test(storage)) fail('Phase 8B.1 promotion storage retains a replacement-capable write path');
   if (!/claimApprovalConsumption/.test(storage)) fail('Phase 8B.1 storage is missing the approval one-shot consumption primitive');
 
-  const index = read('src/core/selfDevPromotion/index.ts');
+  const index = readIncludingComments('src/core/selfDevPromotion/index.ts');
   if (!/applyPromotion/.test(index) || !/preparePromotion/.test(index) || !/approvePromotion/.test(index) || !/verifyCanonicalPromotion/.test(index)) {
     fail('Phase 8B.1 public index is missing a required entry point');
   }
 
-  const cli = read('bin/selfdev-promote-canonical.mjs');
+  const cli = readIncludingComments('bin/selfdev-promote-canonical.mjs');
   if (!/preparePromotion/.test(cli) || !/approvePromotion/.test(cli) || !/applyPromotion/.test(cli) || !/verifyCanonicalPromotion/.test(cli)) {
     fail('Phase 8B.1 CLI is not a thin wrapper over prepare/approve/apply/verify');
   }
@@ -1134,7 +1159,7 @@ function checkPhase8B1CanonicalPromotionBoundary() {
     .filter((file) => (file.startsWith('src/') || file.startsWith('bin/')) && /\.(?:ts|mjs|js)$/.test(file))
     .filter((file) => !approvedCallers.has(file) && file !== 'bin/hardening-check.mjs' && !file.startsWith('tests/'));
   for (const file of otherSources) {
-    const source = read(file);
+    const source = readIncludingComments(file);
     if (/\bapplyPromotion\s*\(|\bSelfDevCanonicalApplyReceiptStore\b|\bSelfDevCanonicalPromotionApprovalStore\b/.test(source)) {
       fail(`${file} reaches Phase 8B.1 canonical-promotion authority outside the approved boundary`);
     }
@@ -1145,7 +1170,7 @@ function checkPhase8B1CanonicalPromotionBoundary() {
 
 function checkPhase8B10PortfolioIntegrity() {
   // Phase 8B.1.0 — bounded deterministic proposal portfolio.
-  const portfolio = read('src/core/selfDev/portfolio.ts');
+  const portfolio = readIncludingComments('src/core/selfDev/portfolio.ts');
   if (!/SELFDEV_SYNTHETIC_PORTFOLIO_VERSION/.test(portfolio) || !/SELFDEV_SELECTION_ALGORITHM_VERSION/.test(portfolio)) {
     fail('Phase 8B.1.0 portfolio version or selection-algorithm version is missing');
   }
@@ -1158,8 +1183,8 @@ function checkPhase8B10PortfolioIntegrity() {
   }
   if (!/Object\.freeze/.test(portfolio)) fail('Phase 8B.1.0 portfolio is not frozen declarative data');
 
-  const proposer = read('src/core/selfDev/proposer.ts');
-  const types = read('src/core/selfDev/types.ts');
+  const proposer = readIncludingComments('src/core/selfDev/proposer.ts');
+  const types = readIncludingComments('src/core/selfDev/types.ts');
   if (!/VALID_MATRIX_EXPAND/.test(proposer) || !/VALID_MATRIX_EXPAND_COLLAPSE/.test(proposer)) {
     fail('Phase 8B.1.0 proposer lacks the concrete portfolio matrix fixtures');
   }
@@ -1167,11 +1192,11 @@ function checkPhase8B10PortfolioIntegrity() {
     fail('Phase 8B.1.0 replay-fixture enum lacks the concrete portfolio fixtures');
   }
 
-  const controller = read('src/core/selfDev/controller.ts');
+  const controller = readIncludingComments('src/core/selfDev/controller.ts');
   if (!/selectNextSyntheticProposalVariant/.test(controller)) fail('Phase 8B.1.0 controller does not consume the deterministic portfolio selector');
   if (!/VALID_MATRIX_EXPAND_COLLAPSE/.test(controller)) fail('Phase 8B.1.0 controller does not resolve the default alias to a concrete portfolio fixture');
 
-  const contract = read('src/core/selfDev/contract.ts');
+  const contract = readIncludingComments('src/core/selfDev/contract.ts');
   if (!/syntheticPortfolioVersion/.test(contract) || !/syntheticSelectionAlgorithmVersion/.test(contract) || !/syntheticProposalPortfolio/.test(contract)) {
     fail('Phase 8B.1.0 contract manifest does not bind the portfolio/selection semantics');
   }
@@ -1179,7 +1204,7 @@ function checkPhase8B10PortfolioIntegrity() {
 
   // Production CLIs must never reach the test-only baseline helpers.
   for (const cli of ['bin/selfdev-synthetic.mjs', 'bin/selfdev-verify.mjs', 'bin/selfdev-adopt-sandbox.mjs', 'bin/selfdev-promote-canonical.mjs']) {
-    if (/tests\/helpers/.test(read(cli))) fail(`${cli} reaches the test-only source-fixture baseline helpers`);
+    if (/tests\/helpers/.test(readIncludingComments(cli))) fail(`${cli} reaches the test-only source-fixture baseline helpers`);
   }
 
   // Phase 8B.1-R1 — the real canonical adopted-case catalog may legitimately
@@ -1190,7 +1215,7 @@ function checkPhase8B10PortfolioIntegrity() {
   // check reuses the real validator/renderer (never a cardinality-locked
   // regex), and CI executes it. Runtime schema/byte-roundtrip validation
   // happens in bin/selfdev-catalog-integrity.mjs.
-  const catalog = read('src/core/selfDev/adoptedCaseCatalog.generated.ts');
+  const catalog = readIncludingComments('src/core/selfDev/adoptedCaseCatalog.generated.ts');
   if (!/^\/\/ GENERATED FILE/.test(catalog)) fail('the real canonical adopted-case catalog lost its generated-file header');
   const catalogCode = catalog.split('\n').filter((line) => !line.trim().startsWith('//'));
   if (/^\s*(?:import|require)\b|function\s+|=>|eval\s*\(|process\.|new\s+Function\s*\(/.test(catalogCode.join('\n'))) {
@@ -1199,12 +1224,12 @@ function checkPhase8B10PortfolioIntegrity() {
   if (!/export const SELFDEV_ADOPTED_CASES = (?:\[\]|\[)/.test(catalog)) {
     fail('the real canonical adopted-case catalog does not declare the pure-data SELFDEV_ADOPTED_CASES array literal');
   }
-  const integrityBin = read('bin/selfdev-catalog-integrity.mjs');
+  const integrityBin = readIncludingComments('bin/selfdev-catalog-integrity.mjs');
   if (!/validateAdoptedCatalog/.test(integrityBin) || !/renderAdoptedCatalogSource/.test(integrityBin)) {
     fail('bin/selfdev-catalog-integrity.mjs must reuse validateAdoptedCatalog/renderAdoptedCatalogSource');
   }
-  const workflow = read('.github/workflows/hardening.yml');
-  const gateDefinition = read('config/quality-gate.v1.json');
+  const workflow = readIncludingComments('.github/workflows/hardening.yml');
+  const gateDefinition = readIncludingComments('config/quality-gate.v1.json');
   if (!(/Phase 8B\.1 catalog integrity \/ checkout cleanliness/.test(workflow) && /selfdev-catalog-integrity\.mjs/.test(workflow)) && !(/npm run gate:ci/.test(workflow) && /PATCH_INTEGRITY/.test(gateDefinition))) {
     fail('the authoritative quality gate must retain catalog/checkout integrity through PATCH_INTEGRITY');
   }
@@ -1216,23 +1241,23 @@ function checkAgentContinuityIntegrity() {
   // module, no network.
   const mutationRe = /(?:fs|node:fs)[\s\S]{0,80}?\b(?:writeFile|writeFileSync|appendFile|appendFileSync|rename|renameSync|chmod|chmodSync|mkdir|mkdirSync|rm|rmSync|unlink|unlinkSync|createWriteStream)\b/;
   for (const file of ['bin/agent-state.mjs', 'bin/agent-continuity-protocol.mjs', 'bin/project-state-check.mjs']) {
-    const source = read(file);
+    const source = readIncludingComments(file);
     if (mutationRe.test(source)) {
       fail(`${file} contains a filesystem mutation call (continuity checker must be read-only)`);
     }
   }
-  const protocolModule = read('bin/agent-continuity-protocol.mjs');
+  const protocolModule = readIncludingComments('bin/agent-continuity-protocol.mjs');
   if (/\b(?:spawnSync|execSync|child_process|fetch\(|https?\.request|net\.)/.test(protocolModule)) {
     fail('bin/agent-continuity-protocol.mjs must stay a pure parsing module (no child processes, no network)');
   }
   if (!/nightwatch\.agent-continuity\.v2/.test(protocolModule)) {
     fail('bin/agent-continuity-protocol.mjs must define the v2 protocol version constant');
   }
-  const pkg = read('package.json');
+  const pkg = readIncludingComments('package.json');
   if (!/"agent:audit"\s*:\s*"node bin\/agent-state\.mjs --audit-history"/.test(pkg)) {
     fail('package.json agent:audit must invoke the local checker with --audit-history');
   }
-  const workflow = read('.github/workflows/hardening.yml');
+  const workflow = readIncludingComments('.github/workflows/hardening.yml');
   if (!(/Completed-task continuity audit/.test(workflow) && /npm run agent:audit/.test(workflow)) && !/npm run gate:ci/.test(workflow)) {
     fail('.github/workflows/hardening.yml must run the Completed-task continuity audit (npm run agent:audit)');
   }
@@ -1263,7 +1288,7 @@ function checkProjectStateIntegrity() {
   // The project-state checker must stay a deterministic read-only tool: no
   // filesystem writes, no network, no model, no DB/infrastructure, and the
   // canonical catalog target stays code-defined (no user-supplied path).
-  const checker = read('bin/project-state-check.mjs');
+  const checker = readIncludingComments('bin/project-state-check.mjs');
   for (const field of ['RELEASE_CERTIFICATION_PROTOCOL_VERSION', 'PROJECT_COMPLETION_STATUS', 'RELEASE_CHECKPOINT_SHA', 'LIVE_HEAD_SHA', 'LAST_SUBSTANTIVE_IMPLEMENTATION_SHA', 'LAST_LOCALLY_VALIDATED_SHA', 'LAST_CLEAN_VALIDATED_SHA', 'CI_OBSERVED_SHA', 'CI_EXECUTED_SHA', 'CI_STATUS', 'FINAL_DOCUMENTATION_SHA', 'FINAL_CI_AUTHORITY']) {
     if (!checker.includes(field)) fail(`project-state checker is missing release-truth field ${field}`);
   }
@@ -1313,11 +1338,11 @@ function checkProjectStateIntegrity() {
   if (/writeFileSync|appendFileSync|createWriteStream|rmSync|unlinkSync|mkdirSync/.test(checker)) {
     fail('bin/project-state-check.mjs contains a filesystem write path');
   }
-  const pkg = read('package.json');
+  const pkg = readIncludingComments('package.json');
   if (!/"project:check"\s*:\s*"node bin\/project-state-check\.mjs"/.test(pkg)) {
     fail('package.json project:check must invoke the local project-state checker');
   }
-  const workflow = read('.github/workflows/hardening.yml');
+  const workflow = readIncludingComments('.github/workflows/hardening.yml');
   if (!(/Project-memory truth check/.test(workflow) && /npm run project:check/.test(workflow)) && !/npm run gate:ci/.test(workflow)) {
     fail('.github/workflows/hardening.yml must run the Project-memory truth check (npm run project:check)');
   }
@@ -1328,8 +1353,8 @@ function checkProjectStateIntegrity() {
   // runtime-write absolute (R1.1.1: the canonical-promotion executor IS a
   // runtime authority, so "runtime code never writes canonical source" is a
   // contradiction).
-  const renderer = read('src/core/selfDev/adoptedCases.ts');
-  const catalog = read('src/core/selfDev/adoptedCaseCatalog.generated.ts');
+  const renderer = readIncludingComments('src/core/selfDev/adoptedCases.ts');
+  const catalog = readIncludingComments('src/core/selfDev/adoptedCaseCatalog.generated.ts');
   if (/never in this canonical/.test(renderer) || /never in this canonical/.test(catalog)) {
     fail('live renderer/generated catalog must not reintroduce the obsolete sandbox-only authority sentence');
   }
@@ -1380,9 +1405,9 @@ function checkProjectStateIntegrity() {
 function checkPlannerHandoffIntegrity() {
   // The handoff boundary owns only prompt route/currentness. Keep the parser
   // pure and the Git-aware checker local, read-only, bounded, and categorical.
-  const protocol = read('bin/planner-handoff-protocol.mjs');
-  const checker = read('bin/planner-handoff-check.mjs');
-  const prompt = read('.agent/EXECUTION_PROMPT.md');
+  const protocol = readIncludingComments('bin/planner-handoff-protocol.mjs');
+  const checker = readIncludingComments('bin/planner-handoff-check.mjs');
+  const prompt = readIncludingComments('.agent/EXECUTION_PROMPT.md');
   if (!/nightwatch\.planner-executor-handoff\.v1/.test(protocol) || !/HANDOFF_REQUIRED_FIELDS/.test(protocol) || !/validateHandoffState/.test(protocol)) {
     fail('planner handoff protocol must define the versioned required-field/state contract');
   }
@@ -1405,7 +1430,7 @@ function checkPlannerHandoffIntegrity() {
   if (/process\.env/.test(checker) || /shell\s*:\s*true/.test(checker) || /stdio\s*:\s*['"]inherit['"]/.test(checker)) {
     fail('planner handoff checker must not inherit ambient credentials or shell/output authority');
   }
-  const packageJson = read('package.json');
+  const packageJson = readIncludingComments('package.json');
   if (!/"handoff:check"\s*:\s*"node bin\/planner-handoff-check\.mjs"/.test(packageJson)) {
     fail('package.json must expose the planner handoff checker');
   }
@@ -1421,10 +1446,10 @@ function checkPlannerHandoffIntegrity() {
  * re-run after docs commits and ROADMAP/CURRENT_STATE narratives had no gate).
  */
 function checkDocumentationTruth() {
-  const currentState = read('docs/CURRENT_STATE.md');
-  const roadmap = read('docs/ROADMAP.md');
-  const activeTask = read('.agent/ACTIVE_TASK.md');
-  const executionPrompt = read('.agent/EXECUTION_PROMPT.md');
+  const currentState = readIncludingComments('docs/CURRENT_STATE.md');
+  const roadmap = readIncludingComments('docs/ROADMAP.md');
+  const activeTask = readIncludingComments('.agent/ACTIVE_TASK.md');
+  const executionPrompt = readIncludingComments('.agent/EXECUTION_PROMPT.md');
   const blockMatch = /PROJECT_COMPLETION_STATUS:\s*(\S+)/.exec(currentState);
   const machineStatus = blockMatch ? blockMatch[1].trim() : undefined;
   if (machineStatus === 'OPERATIONALLY_ACCEPTED') {
@@ -1484,7 +1509,7 @@ function checkPhase9SemanticCorePurity() {
   }
   if (files.length < 8) fail('Phase 9 semantic core source files are missing');
   for (const file of files) {
-    const source = read(file);
+    const source = readIncludingComments(file);
     // Phase 13H: campaignTargetMapping is a fixed mapping bridge that type-imports
     // the bundle type; this is pure and does not grant runtime campaign authority.
     const isCampaignTargetMapping = file === 'src/oracles/semantic/campaignTargetMapping.ts';
@@ -1506,19 +1531,19 @@ function checkPhase9SemanticCorePurity() {
  * campaign dossier evidence, without weakening the protocol oracles.
  */
 function checkPhase9IntegrationSeams() {
-  const observer = read('src/browser/observers/networkObserver.ts');
+  const observer = readIncludingComments('src/browser/observers/networkObserver.ts');
   if (!/semanticOracle\?:/.test(observer) || !/evaluateSemanticHook/.test(observer) || !/semanticFindings\(\)/.test(observer)) {
     fail('network observer is missing the Phase 9 semantic hook or findings ledger');
   }
   if (!/checkUnexpectedStatus/.test(observer)) fail('network observer lost the protocol oracle wiring');
-  const phase5Semantic = read('src/api/phase5/semantic.ts');
+  const phase5Semantic = readIncludingComments('src/api/phase5/semantic.ts');
   if (!/evaluateApiResponseSemantic/.test(phase5Semantic) || !/evaluateApiResponse\(/.test(phase5Semantic)) {
     fail('Phase 5 semantic stage must compose the existing protocol oracle');
   }
   if (!/ORACLE_PASS/.test(phase5Semantic)) fail('Phase 5 semantic stage must gate on protocol ORACLE_PASS');
-  const orchestrator = read('src/core/campaign/orchestrator.ts');
+  const orchestrator = readIncludingComments('src/core/campaign/orchestrator.ts');
   if (!/toSemanticDossierEvidence/.test(orchestrator)) fail('campaign orchestrator must attach semantic dossier evidence');
-  const dossier = read('src/core/triage/dossier.ts');
+  const dossier = readIncludingComments('src/core/triage/dossier.ts');
   if (!/semanticEvidence/.test(dossier) || !/validateSemanticDossierEvidence/.test(dossier)) {
     fail('dossier must carry strictly validated sanitized semantic evidence');
   }
@@ -1552,7 +1577,7 @@ function checkPhase9A1RealSourceCorePurity() {
   }
   if (files.length < 6) fail('Phase 9A.1 real-source core source files are missing');
   for (const file of files) {
-    const source = read(file);
+    const source = readIncludingComments(file);
     if (/import\s+[^;]*from\s+['"][^'"]*(?:aiReview|selfDev|selfDevPromotion|selfDevSandbox|phase6|database|infrastructure|dynamo|bigquery|spanner|kubectl|gcloud|aws|child_process|node:http|node:https|node:net|node:dns|node:fs|node:fetch|undici|WebSocket|playwright|campaign|products?|oops|runRecorder|storage|dossier|artifacts)[^'"]*['"]/i.test(source)) {
       fail(`${file} imports a forbidden AI/selfDev/Phase6/infra/transport/persistence/authority module`);
     }
@@ -1568,7 +1593,7 @@ function checkPhase9A1RealSourceCorePurity() {
  * the network. Write primitives are structurally forbidden.
  */
 function checkPhase9A1SourceReaderBoundary() {
-  const reader = read('src/core/source/siblingSource.ts');
+  const reader = readIncludingComments('src/core/source/siblingSource.ts');
   if (!/createSiblingSourceAccess/.test(reader) || !/resolveGitHead/.test(reader)) {
     fail('sibling source access module is missing its factory/HEAD resolver');
   }
@@ -1592,7 +1617,7 @@ function checkPhase9A1SourceReaderBoundary() {
   // source authority. No sibling-source filesystem import may appear in a
   // coordinator, DTO, or analyzer module.
   for (const file of gitFiles().filter((item) => item.startsWith('src/core/source/') && item.endsWith('.ts') && item !== 'src/core/source/siblingSource.ts')) {
-    const source = read(file);
+    const source = readIncludingComments(file);
     if (/from\s+['"]node:fs['"]|from\s+['"]node:child_process['"]|from\s+['"]node:(?:net|http|https|dns)['"]/.test(source)) fail(`${file} bypasses the confined sibling source authority`);
     // `(?<!\.)` before `exec` is load-bearing, and its absence was a latent
     // false positive: `RegExp.prototype.exec` is not process execution, and
@@ -1604,8 +1629,8 @@ function checkPhase9A1SourceReaderBoundary() {
     // added to the alternation so tightening `exec` cannot weaken the rule.
     if (/\b(?:writeFile|appendFile|renameSync|unlinkSync|rmSync|mkdirSync|chmodSync|child_process|spawn|(?<!\.)exec(?:File)?|fetch)\s*\(/.test(source)) fail(`${file} exposes source write/process/network authority`);
   }
-  const scan = read('src/core/source/scan.ts');
-  const scanTypes = read('src/core/source/scanTypes.ts');
+  const scan = readIncludingComments('src/core/source/scan.ts');
+  const scanTypes = readIncludingComments('src/core/source/scanTypes.ts');
   if (!/enumerateFiles/.test(reader) || !/scanSource/.test(scan) || !/configDigest/.test(scanTypes)) fail('Phase 25 source inventory is not wired through the confined reader and versioned config');
   if (/readonly\s+(?:sourceText|rawSource|sourceCode)\s*[:?]/.test(scanTypes)) fail('Phase 25 persisted source DTOs contain raw source text fields');
 }
@@ -1616,7 +1641,7 @@ function checkPhase9A1SourceReaderBoundary() {
  * composed stage exposes receipt outcomes.
  */
 function checkPhase9A1IntegrationSeams() {
-  const observer = read('src/browser/observers/networkObserver.ts');
+  const observer = readIncludingComments('src/browser/observers/networkObserver.ts');
   if (!/semanticEvaluations\(\)/.test(observer) || !/semanticEvaluationLedgerOverflow\(\)/.test(observer)) {
     fail('network observer is missing the Phase 9A.1 evaluation ledger or its explicit overflow flag');
   }
@@ -1624,16 +1649,16 @@ function checkPhase9A1IntegrationSeams() {
   if (!/privacyViolation/.test(observer) || !/semantic-privacy-contract-violation/.test(observer)) {
     fail('network observer is missing the privacy-contract violation escalation');
   }
-  const hook = read('src/oracles/semantic/hook.ts');
+  const hook = readIncludingComments('src/oracles/semantic/hook.ts');
   if (!/evaluateSemanticResolution/.test(hook) || !/receipt: SemanticEvaluationReceipt \| null/.test(hook)) {
     fail('semantic hook must return a safe evaluation receipt');
   }
   if (!/NO_EXPECTATION/.test(hook)) fail('semantic hook lost the NO_EXPECTATION outcome');
-  const phase5Semantic = read('src/api/phase5/semantic.ts');
+  const phase5Semantic = readIncludingComments('src/api/phase5/semantic.ts');
   if (!/receipt: SemanticEvaluationReceipt \| null/.test(phase5Semantic)) {
     fail('Phase 5 semantic stage must expose the evaluation receipt');
   }
-  const resolver = read('src/oracles/expectations/resolver.ts');
+  const resolver = readIncludingComments('src/oracles/expectations/resolver.ts');
   if (!/RESOLVED/.test(resolver) || !/SOURCE_STALE/.test(resolver) || !/SOURCE_UNAVAILABLE/.test(resolver)) {
     fail('real-source resolver lost the fail-closed resolution vocabulary');
   }
@@ -1653,7 +1678,7 @@ function checkPhase9bCorePurity() {
     'src/core/phase9b/summary.ts',
   ];
   for (const file of files) {
-    const source = read(file);
+    const source = readIncludingComments(file);
     if (/import\s+[^;]*from\s+['"][^'"]*(?:node:fs|node:http|node:https|node:net|node:dns|node:fetch|undici|WebSocket|child_process|aiReview|selfDev|selfDevPromotion|selfDevSandbox|phase6|database|infrastructure|dynamo|bigquery|spanner|kubectl|gcloud|playwright|runRecorder|storage|dossier|artifacts)[^'"]*['"]/i.test(source)) {
       fail(`${file} imports a forbidden fs/network/process/AI/selfDev/Phase6/persistence/authority module`);
     }
@@ -1669,14 +1694,14 @@ function checkPhase9bCorePurity() {
  * gated by the one-shot launcher flag and fixes the common-exchange journey.
  */
 function checkPhase9bIntegrationSeams() {
-  const context = read('src/browser/context.ts');
+  const context = readIncludingComments('src/browser/context.ts');
   if (!/semanticOracle\?: SemanticResponseOracle/.test(context)) {
     fail('context is missing the optional Phase 9B semanticOracle option');
   }
   if (!/semanticOracle: opts\.semanticOracle/.test(context)) {
     fail('context does not pass the semantic oracle to the network observer');
   }
-  const runner = read('tests/manual/phase9b-contained-dev-semantic.ts');
+  const runner = readIncludingComments('tests/manual/phase9b-contained-dev-semantic.ts');
   if (!/NIGHTWATCH_PHASE_9B_REAL/.test(runner)) {
     fail('Phase 9B runner is missing the one-shot real-run gate');
   }
@@ -1689,7 +1714,7 @@ function checkPhase9bIntegrationSeams() {
   if (!/NIGHTWATCH_UI_URL is not accepted/.test(runner)) {
     fail('Phase 9B runner must reject any UI URL override');
   }
-  const launcher = read('bin/phase9b-launcher-args.mjs');
+  const launcher = readIncludingComments('bin/phase9b-launcher-args.mjs');
   if (!/no journey selector/.test(launcher) || !/--ui-url/.test(launcher)) {
     fail('Phase 9B launcher must reject journey/URL selectors');
   }
@@ -1717,7 +1742,7 @@ function checkPhase10DeeperContractPurity() {
     'src/oracles/semantic/oracle.ts',
   ];
   for (const file of files) {
-    const source = read(file);
+    const source = readIncludingComments(file);
     if (/import\s+[^;]*from\s+['"][^'"]*(?:aiReview|selfDev|selfDevPromotion|selfDevSandbox|phase6|database|infrastructure|dynamo|bigquery|spanner|kubectl|gcloud|aws|child_process|node:http|node:https|node:net|node:dns|node:fs|node:fetch|undici|WebSocket|playwright|campaign|products?|oops|runRecorder|storage|dossier|artifacts|triage)[^'"]*['"]/i.test(source)) {
       fail(`${file} imports a forbidden AI/selfDev/Phase6/infra/transport/persistence/authority module`);
     }
@@ -1734,38 +1759,38 @@ function checkPhase10DeeperContractPurity() {
  * digest binding are all wired.
  */
 function checkPhase10IntegrationSeams() {
-  const registry = read('src/oracles/expectations/recipes/registry.ts');
+  const registry = readIncludingComments('src/oracles/expectations/recipes/registry.ts');
   if (!/nightwatch\.real-source-expectation-recipe\.v2/.test(registry)) {
     fail('recipe registry is missing the v2 schema constant');
   }
-  const extractor = read('src/oracles/expectations/extract/php.ts');
+  const extractor = readIncludingComments('src/oracles/expectations/extract/php.ts');
   if (!/PHP_ITEM_FIELD_TYPE_FLOW/.test(extractor) || !/extractPhpItemFieldTypeFlow/.test(extractor)) {
     fail('type-flow extractor is missing from the PHP extractor module');
   }
   if (!/EMPTY_CAST_OBJECT/.test(extractor) || !/EMPTY_ARRAY_OR_STRING_KEYS/.test(extractor)) {
     fail('type-flow extractor lost a fixed pattern');
   }
-  const expectationTypes = read('src/oracles/expectations/types.ts');
+  const expectationTypes = readIncludingComments('src/oracles/expectations/types.ts');
   if (!/TYPE_IN_SET/.test(expectationTypes)) fail('TYPE_IN_SET is missing from the invariant vocabulary');
-  const invariantEval = read('src/oracles/invariants/evaluate.ts');
+  const invariantEval = readIncludingComments('src/oracles/invariants/evaluate.ts');
   if (!/case 'TYPE_IN_SET'/.test(invariantEval)) fail('TYPE_IN_SET evaluation case is missing');
-  const oracle = read('src/oracles/semantic/oracle.ts');
+  const oracle = readIncludingComments('src/oracles/semantic/oracle.ts');
   if (!/case 'TYPE_IN_SET':\n\s+case 'TYPE_MATCH':/.test(oracle) && !/TYPE_IN_SET[\s\S]{0,200}TYPE_CONTRADICTED/.test(oracle)) {
     fail('semantic oracle lost the TYPE_IN_SET -> TYPE_CONTRADICTED class mapping');
   }
-  const evidence = read('src/oracles/expectations/extract/evidence.ts');
+  const evidence = readIncludingComments('src/oracles/expectations/extract/evidence.ts');
   if (!/PHP_ITEM_FIELD_TYPE_FLOW/.test(evidence) || !/unsupported-extraction-kind/.test(evidence)) {
     fail('evidence digest must bind the type-flow extraction and fail closed on unknown kinds');
   }
-  const admission = read('src/oracles/expectations/admission.ts');
+  const admission = readIncludingComments('src/oracles/expectations/admission.ts');
   if (!/TYPE_FLOW_AMBIGUOUS/.test(admission) || !/TYPE_FLOW_CONTRACT_MISMATCH/.test(admission)) {
     fail('admission lost the type-flow fail-closed vocabulary');
   }
-  const resolver = read('src/oracles/expectations/resolver.ts');
+  const resolver = readIncludingComments('src/oracles/expectations/resolver.ts');
   if (!/PHP_ITEM_FIELD_TYPE_FLOW/.test(resolver)) fail('resolver must re-extract the type-flow evidence');
-  const corpus = read('corpus/phase10/source-fixture/phase10Fixtures.ts');
+  const corpus = readIncludingComments('corpus/phase10/source-fixture/phase10Fixtures.ts');
   if (!/real-source-expectation-recipe\.v2/.test(corpus)) fail('Phase 10 fixture corpus is missing v2 fixture recipes');
-  const historical = read('corpus/phase10/historical/archivedV1Recipes.ts');
+  const historical = readIncludingComments('corpus/phase10/historical/archivedV1Recipes.ts');
   if (!/real-source-shape/.test(historical)) fail('archived v1 recipes are missing the historical shape identities');
 }
 
@@ -1778,7 +1803,7 @@ function checkPhase10IntegrationSeams() {
 function checkPhase10bCorePurity() {
   const files = ['src/core/phase10b/deepAcceptance.ts'];
   for (const file of files) {
-    const source = read(file);
+    const source = readIncludingComments(file);
     if (/import\s+[^;]*from\s+['"][^'"]*(?:node:fs|node:http|node:https|node:net|node:dns|node:fetch|undici|WebSocket|child_process|aiReview|selfDev|selfDevPromotion|selfDevSandbox|phase6|database|infrastructure|dynamo|bigquery|spanner|kubectl|gcloud|playwright|runRecorder|storage|dossier|artifacts|campaign)[^'"]*['"]/i.test(source)) {
       fail(`${file} imports a forbidden fs/network/process/AI/selfDev/Phase6/persistence/authority module`);
     }
@@ -1850,7 +1875,7 @@ function checkPhase12PureCoreBoundaries() {
   }
   if (candidates.length === 0) return;
   for (const file of candidates.sort()) {
-    const source = read(file);
+    const source = readIncludingComments(file);
     if (!source) continue;
     if (/from\s+['"]node:(?:fs|child_process|net|http|https|dns|tls|worker_threads)['"]/i.test(source)) {
       fail(`${file} imports a prohibited fs/process/network runtime capability (Phase 12 pure-core boundary)`);
@@ -1889,7 +1914,7 @@ function checkPhase18PureCoreSeams() {
     'src/oracles/expectations/currentness.ts',
   ];
   for (const file of files) {
-    const source = read(file);
+    const source = readIncludingComments(file);
     if (!source) continue;
     if (/from\s+['"][^'"]*(?:node:fs|node:http|node:https|node:net|node:dns|node:fetch|undici|WebSocket|child_process|playwright|browser|database|dynamo|bigquery|spanner|gcloud|kubectl|aws|cloud|infrastructure|aiReview|selfDev|selfDevPromotion|selfDevSandbox|phase6|storage|campaign\/orchestrator|products?)[^'"]*['"]/i.test(source)) {
       fail(`${file} imports a forbidden Phase 18 authority or transport`);
@@ -1898,15 +1923,15 @@ function checkPhase18PureCoreSeams() {
       fail(`${file} exposes a Phase 18 process, network, persistence, or code-execution capability`);
     }
   }
-  const replay = read('src/core/triage/semanticReplay.ts');
+  const replay = readIncludingComments('src/core/triage/semanticReplay.ts');
   if (replay && (!/SEMANTIC_REPLAY_FIDELITY_VERSION/.test(replay) || !/AMBIGUOUS_OCCURRENCE/.test(replay) || !/validateSemanticReplayFidelityReceipt/.test(replay))) {
     fail('Phase 18 replay core is missing versioned ambiguity/fidelity validation');
   }
-  const coverage = read('src/core/portfolio/semanticCoverage.ts');
+  const coverage = readIncludingComments('src/core/portfolio/semanticCoverage.ts');
   if (coverage && (!/SEMANTIC_COVERAGE_VERSION/.test(coverage) || !/SOURCE_EVIDENCE_UNRESOLVED/.test(coverage) || !/deterministicDigest/.test(coverage))) {
     fail('Phase 18 coverage core is missing bounded currentness/explanation accounting');
   }
-  const currentness = read('src/oracles/expectations/currentness.ts');
+  const currentness = readIncludingComments('src/oracles/expectations/currentness.ts');
   if (currentness && (!/SourceCurrentnessState/.test(currentness) || !/SYNTHETIC_ONLY/.test(currentness) || !/STALE/.test(currentness))) {
     fail('Phase 18 currentness core is missing explicit fail-closed states');
   }
@@ -1920,10 +1945,10 @@ function checkPhase18PureCoreSeams() {
  * blocker.
  */
 function checkPhase12AuthoritySetsUnchanged() {
-  const approved = read('src/oracles/expectations/recipes/registry.ts');
-  const catalog = read('src/api/phase5/catalog.ts');
-  const ownerScope = read('src/core/policy/ownerScope.ts');
-  const selfDevCatalog = read('src/core/selfDev/adoptedCaseCatalog.generated.ts');
+  const approved = readIncludingComments('src/oracles/expectations/recipes/registry.ts');
+  const catalog = readIncludingComments('src/api/phase5/catalog.ts');
+  const ownerScope = readIncludingComments('src/core/policy/ownerScope.ts');
+  const selfDevCatalog = readIncludingComments('src/core/selfDev/adoptedCaseCatalog.generated.ts');
   // Approved read-only target IDs — 6 entries, byte-stable order.
   const approvedIds = ['ripple.payer-exchange.read', 'ripple.common-exchange.read', 'ripple.account-inventory.read', 'ripple.billing-groups.read', 'ripple.billing-groups-legacy.read', 'ripple.billing-group-exchange.read'];
   for (const id of approvedIds) {
@@ -1969,7 +1994,7 @@ function checkPhase12AuthoritySetsUnchanged() {
  * (Phase 10B never rewrites Phase 9B semantics).
  */
 function checkPhase10bIntegrationSeams() {
-  const runner = read('tests/manual/phase10b-contained-dev-deep-semantic.ts');
+  const runner = readIncludingComments('tests/manual/phase10b-contained-dev-deep-semantic.ts');
   if (!/NIGHTWATCH_PHASE_10B_REAL/.test(runner)) {
     fail('Phase 10B runner is missing the one-shot real-run gate');
   }
@@ -1988,11 +2013,11 @@ function checkPhase10bIntegrationSeams() {
   if (!/NIGHTWATCH_UI_URL is not accepted/.test(runner)) {
     fail('Phase 10B runner must reject any UI URL override');
   }
-  const launcher = read('bin/phase10b-launcher-args.mjs');
+  const launcher = readIncludingComments('bin/phase10b-launcher-args.mjs');
   if (!/no journey selector/.test(launcher) || !/no expectation selector/.test(launcher) || !/no target selector/.test(launcher) || !/--ui-url/.test(launcher)) {
     fail('Phase 10B launcher must reject journey/expectation/target/URL selectors');
   }
-  const core = read('src/core/phase10b/deepAcceptance.ts');
+  const core = readIncludingComments('src/core/phase10b/deepAcceptance.ts');
   if (!/PHASE_10B_BLOCKED_DEEP_INVARIANT_NOT_OBSERVED/.test(core)) {
     fail('Phase 10B deep acceptance must fail closed when the deep invariant is N/A (root-only PASS is not deep validation)');
   }
@@ -2002,7 +2027,7 @@ function checkPhase10bIntegrationSeams() {
   if (!/expectedInvariantTotalFor/.test(core)) {
     fail('Phase 10B must derive the expected invariant total from the resolved expectation');
   }
-  const phase9bRunner = read('tests/manual/phase9b-contained-dev-semantic.ts');
+  const phase9bRunner = readIncludingComments('tests/manual/phase9b-contained-dev-semantic.ts');
   if (!/const SELECTED_EXPECTATION_ID = 'ripple\.common-exchange\.read\.real-source-shape'/.test(phase9bRunner)) {
     fail('historical Phase 9B runner must still fix the historical shape expectation');
   }
@@ -2021,7 +2046,7 @@ function checkPhase12TriageCorePurity() {
   ];
   for (const file of files) {
     if (!fs.existsSync(path.join(root, file))) continue;
-    const source = read(file);
+    const source = readIncludingComments(file);
     if (/import\s+[^;]*from\s+['"][^'"]*(?:node:fs|node:http|node:https|node:net|node:dns|node:fetch|undici|WebSocket|child_process|aiReview|selfDev|selfDevPromotion|selfDevSandbox|phase6|database|infrastructure|dynamo|bigquery|spanner|kubectl|gcloud|playwright|runRecorder|storage)[^'"]*['"]/i.test(source)) {
       fail(`${file} imports a forbidden fs/network/process/AI/selfDev/Phase6/persistence/authority module`);
     }
@@ -2032,25 +2057,25 @@ function checkPhase12TriageCorePurity() {
 }
 
 function checkPhase12TriageIntegrationSeams() {
-  const evidence = read('src/core/triage/semanticTriageEvidence.ts');
+  const evidence = readIncludingComments('src/core/triage/semanticTriageEvidence.ts');
   if (!/nightwatch\.semantic-triage-evidence\.v1/.test(evidence)) fail('semantic triage evidence missing version');
   if (!/MISSING_EVIDENCE_VOCABULARY/.test(evidence)) fail('semantic triage evidence missing vocabulary');
-  const confidence = read('src/core/triage/semanticConfidence.ts');
+  const confidence = readIncludingComments('src/core/triage/semanticConfidence.ts');
   if (!/rankSemanticConfidence/.test(confidence)) fail('semantic confidence missing rank function');
   if (!/SAFETY_NONZERO/.test(confidence) || !/PRIVACY_FAILURE/.test(confidence) || !/KNOWN_FALSE_POSITIVE/.test(confidence)) fail('semantic confidence missing mandatory blockers');
-  const v2 = read('src/core/triage/dossierV2.ts');
+  const v2 = readIncludingComments('src/core/triage/dossierV2.ts');
   if (!/nightwatch\.bug-dossier\.private\.v2/.test(v2)) fail('dossier v2 missing version');
   if (!/isReadySemanticDossier/.test(v2)) fail('dossier v2 missing READY predicate');
   if (!/humanReproductionRecipe/.test(v2)) fail('dossier v2 missing human recipe');
   // v1 must remain readable: dossier.ts still exports createBugDossier/validateBugDossier
-  const dossier = read('src/core/triage/dossier.ts');
+  const dossier = readIncludingComments('src/core/triage/dossier.ts');
   if (!/DOSSIER_VERSION/.test(dossier) || !/validateBugDossier/.test(dossier)) fail('dossier v1 compatibility lost');
-  const coverage = read('src/oracles/expectations/coverageInventory.ts');
+  const coverage = readIncludingComments('src/oracles/expectations/coverageInventory.ts');
   if (!/buildCoverageInventory/.test(coverage)) fail('coverage inventory missing builder');
   if (!/APPROVED_AND_ADMITTED_COLLECTION/.test(coverage) || !/APPROVED_NOT_ADMITTED_AMBIGUOUS/.test(coverage) || !/APPROVED_NOT_OBSERVABLE/.test(coverage)) fail('coverage inventory missing disposition vocabulary');
   if (!/TYPE_FLOW_AMBIGUOUS/.test(coverage)) fail('coverage inventory missing depth-uplift blocker');
   if (!/snapshotMatchesRemote/.test(coverage)) fail('coverage inventory missing remote/snapshot match flag');
-  const cluster = read('src/oracles/semantic/cluster.ts');
+  const cluster = readIncludingComments('src/oracles/semantic/cluster.ts');
   if (fs.existsSync(path.join(root, 'src/oracles/semantic/cluster.ts'))) {
     if (!/semanticCluster/.test(cluster)) fail('semantic cluster missing identity');
   }
@@ -2074,32 +2099,32 @@ function checkPhase22CorePurity() {
     'src/core/phase22/dryRun.ts',
   ];
   for (const file of pureFiles) {
-    const source = read(file);
+    const source = readIncludingComments(file);
     if (/from\s+['"][^'"]*(?:node:fs|node:child_process|node:net|node:http|node:https|node:dns|undici|playwright|browser|runRecorder|storageState|database|dynamo|bigquery|spanner|kubernetes|gcloud|aws|selfDev|persistence)[^'"]*['"]/i.test(source)) fail(`${file} imports an authority or external capability`);
     if (/\b(?:process\.env|fetch\s*\(|WebSocket\s*\(|child_process|spawn\s*\(|exec(?:File)?\s*\(|writeFile|appendFile|createWriteStream|mkdirSync|rmSync|unlinkSync|renameSync|Date\.now\s*\(|Math\.random\s*\(|eval\s*\(|new\s+Function\s*\()\b/i.test(source)) fail(`${file} exposes runtime, process, network, clock, randomness, or persistence authority`);
   }
-  const firewall = read('src/oracles/semantic/phase22Firewall.ts');
+  const firewall = readIncludingComments('src/oracles/semantic/phase22Firewall.ts');
   if (!/guardPhase22SafeObservation/.test(firewall) || !/createPhase22PrivacyReceipt/.test(firewall) || /rawText|rawBody|responseBody/.test(firewall)) fail('Phase 22 runtime privacy firewall is missing or accepts raw payload fields');
 }
 
 function checkPhase22IntegrationSeams() {
-  const types = read('src/core/phase22/types.ts');
+  const types = readIncludingComments('src/core/phase22/types.ts');
   if (!/nightwatch\.dev-semantic-acceptance-manifest\.v1/.test(types) || !/maxTargets: 6/.test(types) || !/maxObservationContexts: 12/.test(types)) fail('Phase 22 manifest bounds/version are missing');
   if (!/PHASE22_REQUIRED_PREFLIGHT_CHECKS/.test(types) || !/l0_cdp_guard_active/.test(types) || !/l5_loopback_proxy_active/.test(types)) fail('Phase 22 preflight V2 check vocabulary is incomplete');
-  const manifest = read('src/core/phase22/manifest.ts');
+  const manifest = readIncludingComments('src/core/phase22/manifest.ts');
   if (!/selectEligible/.test(manifest) || !/TARGET_BOUND_OR_MATERIAL_DIVERSITY/.test(manifest) || !/frozen: true/.test(manifest)) fail('Phase 22 manifest is not deterministic/frozen/bounded');
-  const replay = read('src/core/phase22/replay.ts');
+  const replay = readIncludingComments('src/core/phase22/replay.ts');
   if (!/replayObservationCount > budget\.firstObservationCount/.test(replay) || !/retryCount !== 0/.test(replay) || !/REAL_MINIMIZATION_NOT_AUTHORIZED/.test(replay)) fail('Phase 22 replay/minimization bounds are incomplete');
-  const confidence = read('src/core/phase22/calibration.ts');
+  const confidence = readIncludingComments('src/core/phase22/calibration.ts');
   if (!/REAL_SOURCE_NOT_CURRENT/.test(confidence) || !/REAL_EXPECTATION_NOT_RESOLVED/.test(confidence) || !/realGatePassed/.test(confidence)) fail('Phase 22 real confidence gate is incomplete');
-  const network = read('src/browser/observers/networkObserver.ts');
+  const network = readIncludingComments('src/browser/observers/networkObserver.ts');
   if (!/guardPhase22SemanticHookResult/.test(network) || !/phase22PrivacyReceiptLedger/.test(network) || !/phase22PrivacyReceipts/.test(network)) fail('Phase 22 privacy firewall is not attached to the network observer');
-  const launcher = read('bin/phase22-real.mjs');
+  const launcher = readIncludingComments('bin/phase22-real.mjs');
   if (/\.\.\.process\.env/.test(launcher) || /stdio:\s*['"]inherit['"]/.test(launcher) || !/NIGHTWATCH_PHASE_22_REAL/.test(launcher) || !/args\.env !== 'dev'/.test(launcher) || !/EXACT_GREEN_CI_RUN_ID_REQUIRED/.test(launcher)) fail('Phase 22 launcher boundary is incomplete');
   if (!/maxBuffer\s*:/.test(launcher) || !/timeout\s*:/.test(launcher) || !/--config=playwright\.phase22\.config\.ts/.test(launcher)) fail('Phase 22 launcher lacks bounded child execution');
-  const cli = read('bin/phase22-dev.mjs');
+  const cli = readIncludingComments('bin/phase22-dev.mjs');
   if (!/DYNAMIC_ALL_FORBIDDEN/.test(cli) || !/simulatePhase22DevAcceptance/.test(cli) || !/EXPLICIT_EXECUTE_REQUIRED/.test(cli)) fail('Phase 22 local operator surface is missing dry-run/explicit-execute guards');
-  const packageJson = read('package.json');
+  const packageJson = readIncludingComments('package.json');
   for (const script of ['dev-preflight', 'dev-manifest', 'dev-acceptance', 'dev-results', 'dev-explain']) if (!packageJson.includes(`"${script}"`)) fail(`Phase 22 operator script missing: ${script}`);
 }
 
@@ -2107,7 +2132,7 @@ function checkC00WorkspaceIntegrity() {
   // C-00 concurrency and workspace hardening. The inspection core stays
   // read-only and importable by the continuity checker; every mutation lives
   // in the session CLI; the session CLI never rewrites shared history.
-  const core = read('bin/workspace-integrity.mjs');
+  const core = readIncludingComments('bin/workspace-integrity.mjs');
   const mutationRe = /(?:fs|node:fs)[\s\S]{0,80}?\b(?:writeFile|writeFileSync|appendFile|appendFileSync|rename|renameSync|chmod|chmodSync|mkdir|mkdirSync|rm|rmSync|unlink|unlinkSync|createWriteStream)\b/;
   if (mutationRe.test(core)) fail('bin/workspace-integrity.mjs must stay read-only (no filesystem mutation)');
   if (/from 'node:(?:net|http|https|dns|tls)'/.test(core) || /\bfetch\s*\(/.test(core)) fail('bin/workspace-integrity.mjs must not open a network surface');
@@ -2117,17 +2142,17 @@ function checkC00WorkspaceIntegrity() {
     if (!core.includes(invariant)) fail(`C-00 hygiene invariant missing from the inspection core: ${invariant}`);
   }
   if (!/skipWorktreeTags/.test(core) || !/ASSUME_UNCHANGED/.test(core)) fail('C-00 index-flag invariant must reject skip-worktree and assume-unchanged explicitly');
-  const session = read('bin/nightwatch-session.mjs');
+  const session = readIncludingComments('bin/nightwatch-session.mjs');
   if (/--force|--force-with-lease|push\s+--force|'rebase'|'--hard'|clean',\s*'-fd|'stash'/.test(session)) fail('bin/nightwatch-session.mjs must never force-push, rebase, hard-reset, clean, or stash');
   if (!/HEAD:refs\/heads\//.test(session)) fail('bin/nightwatch-session.mjs must integrate by pushing the session branch, never by checking out the canonical branch');
   if (!/SESSION_ALREADY_OWNED/.test(session) || !/SESSION_OWNER_STALE/.test(session) || !/flag: 'wx'/.test(session)) fail('bin/nightwatch-session.mjs must claim ownership with an exclusive create and distinguish live from stale owners');
   if (!/SESSION_REMOVE_REFUSED_LIVE_HOLDER/.test(session) || !/SESSION_REMOVE_REFUSED_UNMERGED/.test(session)) fail("bin/nightwatch-session.mjs must refuse to delete another session's live or unmerged work");
   if (!/SESSION_RECONCILE_CONFLICT/.test(session) || !/merge', '--abort/.test(session)) fail('bin/nightwatch-session.mjs must abort rather than silently resolve a reconcile conflict');
-  const checker = read('bin/agent-state.mjs');
+  const checker = readIncludingComments('bin/agent-state.mjs');
   if (!/from '\.\/workspace-integrity\.mjs'/.test(checker)) fail('bin/agent-state.mjs must consume the C-00 workspace inspection core');
   let policy;
   try {
-    policy = JSON.parse(read('config/workspace-integrity.v1.json'));
+    policy = JSON.parse(readIncludingComments('config/workspace-integrity.v1.json'));
   } catch {
     fail('config/workspace-integrity.v1.json must be valid JSON');
     return;
@@ -2136,7 +2161,7 @@ function checkC00WorkspaceIntegrity() {
   if (!Array.isArray(policy.excludePolicy?.allowedEffectivePatterns) || policy.excludePolicy.allowedEffectivePatterns.length !== 0) fail('C-00 shared exclude policy must allow zero effective patterns');
   if (policy.hookPolicy?.allowedSuffix !== '.sample' || policy.hookPolicy?.requireUnsetHooksPath !== true) fail('C-00 hook policy must permit only samples and require core.hooksPath to be unset');
   if (policy.canonical?.mayHostImplementationSession !== false || policy.canonical?.requireCleanWhenSessionLive !== true) fail('C-00 canonical protection policy is weakened');
-  const packageJson = read('package.json');
+  const packageJson = readIncludingComments('package.json');
   for (const script of ['workspace:check', 'workspace:status', 'session:status', 'session:check']) {
     if (!packageJson.includes(`"${script}"`)) fail(`C-00 operator script missing: ${script}`);
   }
@@ -2146,7 +2171,7 @@ function checkC00WorkspaceIntegrity() {
   // MEMBERSHIP of the C-00 matrix, not merely that the string appears
   // somewhere: dropping the adversarial matrix out of the required campaign is
   // exactly the regression this guard exists to catch.
-  const syntheticManifest = JSON.parse(read('config/synthetic-campaign.v1.json'));
+  const syntheticManifest = JSON.parse(readIncludingComments('config/synthetic-campaign.v1.json'));
   if (syntheticManifest?.schemaVersion !== 'nightwatch.synthetic-campaign.v1') fail('the synthetic campaign manifest schema is unsupported');
   const syntheticCampaignFiles = Array.isArray(syntheticManifest.files) ? syntheticManifest.files : [];
   if (!syntheticCampaignFiles.includes('tests/unit/workspaceIsolation.test.ts')) fail('the C-00 adversarial matrix must run inside the required synthetic campaign');
@@ -2155,7 +2180,7 @@ function checkC00WorkspaceIntegrity() {
     fail('the synthetic campaign must stay serial with zero retries');
   }
   if (!/"campaign:synthetic"\s*:\s*"node bin\/campaign-synthetic\.mjs"/.test(packageJson)) fail('package.json must expose the fixed synthetic campaign launcher entry point');
-  const agents = read('AGENTS.md');
+  const agents = readIncludingComments('AGENTS.md');
   if (!/ONE_WRITING_AGENT == ONE_WORKTREE == ONE_SESSION_IDENTITY/.test(agents)) fail('AGENTS.md must state the C-00 session/worktree invariant');
   // C-00 consequence: `.gitignore`'s `node_modules/` rule does not match a
   // `node_modules` SYMLINK, so sharing an install between worktrees can be
@@ -2168,7 +2193,7 @@ function checkC00WorkspaceIntegrity() {
   // the checkout's own parent. In an out-of-tree session worktree that parent
   // is the session-worktree root, and stray directories there corrupt the
   // worktree inventory an operator reads.
-  const storageStateTest = read('tests/unit/storageState.test.ts');
+  const storageStateTest = readIncludingComments('tests/unit/storageState.test.ts');
   if (/(?:mkdirSync|writeFileSync)\([^)]*\bWORKSPACE_ROOT\b|path\.join\(WORKSPACE_ROOT,/.test(storageStateTest)) {
     fail('tests/unit/storageState.test.ts must not write into the real workspace root; use a disposable synthetic root');
   }
@@ -2182,7 +2207,7 @@ function checkC00WorkspaceIntegrity() {
   // ENOENT and `npm run change:shadow` could not run there at all. No gate
   // group executes that script, so nothing reported it.
   for (const file of ['tests/unit/changeIntelligenceBacktest.test.ts', 'scenarios/ripple/local.smoke.ts', 'bin/change-intelligence.mjs']) {
-    const source = read(file);
+    const source = readIncludingComments(file);
     if (!/DEFAULT_SIBLING_ROOT/.test(source)) fail(`${file} must resolve the repositories root through DEFAULT_SIBLING_ROOT`);
     if (/__dirname,\s*'\.\.\/\.\.\/\.\.'|__dirname,\s*'\.\.',\s*'\.\.',\s*'\.\.'/.test(source)) {
       fail(`${file} must not derive the repositories root from its own checkout location`);
@@ -2195,7 +2220,7 @@ function checkC00WorkspaceIntegrity() {
   // ACCEPTED from a C-00 session worktree. The judgement now belongs to one
   // authority; these surfaces must consume it and must not recompute it.
   const topologyAuthority = 'src/core/policy/sourceTopology.ts';
-  const topologySource = withoutComments(read(topologyAuthority));
+  const topologySource = read(topologyAuthority);
   if (!/DEFAULT_SIBLING_ROOT/.test(topologySource)) {
     fail(`${topologyAuthority} must resolve the repositories root through DEFAULT_SIBLING_ROOT`);
   }
@@ -2208,7 +2233,7 @@ function checkC00WorkspaceIntegrity() {
     ['src/core/policy/privateArtifacts.ts', 'PRIVATE_ARTIFACT_ROOT_INSIDE_REPOSITORY'],
     ['src/core/prodEvidence/productionFindingsStore.ts', 'PRODUCTION_ARTIFACT_ROOT_INSIDE_REPOSITORY'],
   ]) {
-    const source = withoutComments(read(file));
+    const source = read(file);
     const call = new RegExp(`assertOutsideSourceTopology\\(\\s*root\\s*,\\s*'${errorCode}'`);
     if (!call.test(source)) {
       fail(`${file} must refuse a private root through assertOutsideSourceTopology(root, '${errorCode}', ...)`);
@@ -2242,7 +2267,7 @@ function checkC10ProductionPrivacyBoundary() {
   if (coneFiles.length < 7) fail('C-10 production privacy cone source files are missing');
 
   for (const file of coneFiles) {
-    const source = read(file);
+    const source = readIncludingComments(file);
     // No filesystem, transport, process, publication or output-destination import.
     if (/import\s+[^;]*from\s+['"][^'"]*(?:node:fs|node:http|node:https|node:net|node:dgram|node:dns|node:tls|node:child_process|child_process|undici|node-fetch|axios|playwright|@playwright|aiReview|selfDev|phase6|privateArtifacts|prodEvidence|runRecorder|controlCenter|proxy\/)[^'"]*['"]/i.test(source)) {
       fail(`${file} imports a forbidden filesystem/network/process/publication module (C-10 boundary isolation)`);
@@ -2264,11 +2289,11 @@ function checkC10ProductionPrivacyBoundary() {
   }
 
   // Raw bytes enter through exactly one bounded, call-scoped reader.
-  const types = read('src/core/prodPrivacy/types.ts');
+  const types = readIncludingComments('src/core/prodPrivacy/types.ts');
   if (!/class RawEphemeralSource/.test(types) || !/toJSON\(\): never/.test(types)) {
     fail('C-10 raw bytes must enter through the single call-scoped RawEphemeralSource, which must refuse serialization');
   }
-  const projector = read('src/core/prodPrivacy/projector.ts');
+  const projector = readIncludingComments('src/core/prodPrivacy/projector.ts');
   if (!/source instanceof RawEphemeralSource/.test(projector)) {
     fail('C-10 projector must accept raw bytes only through RawEphemeralSource');
   }
@@ -2278,25 +2303,25 @@ function checkC10ProductionPrivacyBoundary() {
 
   // F-15: the two digest families must stay distinct and the structural family
   // must never ingest a value or an unproven key literal.
-  const serializer = read('src/core/prodPrivacy/serializer.ts');
+  const serializer = readIncludingComments('src/core/prodPrivacy/serializer.ts');
   if (!/PRODUCTION_STRUCTURAL_DIGEST_PREFIX/.test(serializer)) {
     fail('C-10 structural digest must use the distinct prodstruct: family (F-15)');
   }
   if (/encounterToken|numericEncounterRef/.test(serializer.replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, ''))) {
     fail('C-10 canonical serializer must never write an ephemeral correlation label (F-15)');
   }
-  const policy = read('src/core/prodPrivacy/policy.ts');
+  const policy = readIncludingComments('src/core/prodPrivacy/policy.ts');
   if (!/durableValueDigest: 'ABSENT'/.test(policy)) {
     fail('C-10 production policy must record that no durable value digest exists (F-15)');
   }
 
   // Workstream F: the persistence firewall must be an independent re-validation
   // at the durable write, and the store must run it.
-  const firewall = read('src/core/prodEvidence/firewall.ts');
+  const firewall = readIncludingComments('src/core/prodEvidence/firewall.ts');
   for (const required of ['ENCOUNTER_TOKEN_PRESENT', 'DYNAMIC_KEY_LITERAL_PRESENT', 'DIGEST_MISMATCH', 'UNKNOWN_SCHEMA_VERSION']) {
     if (!firewall.includes(required)) fail(`C-10 persistence firewall must reject ${required}`);
   }
-  const store = read('src/core/prodEvidence/productionFindingsStore.ts');
+  const store = readIncludingComments('src/core/prodEvidence/productionFindingsStore.ts');
   if (!/assertPersistableProductionEvidence/.test(store)) {
     fail('C-10 production store must re-validate through the persistence firewall at the durable write');
   }
@@ -2312,14 +2337,14 @@ function checkC10ProductionPrivacyBoundary() {
   // admits any `[A-Za-z0-9._~-]+` segment, so it cannot tell `accounts` from
   // `481516234299`; relying on it let concrete customer identifiers reach
   // persisted evidence through the route field.
-  const routeVocabulary = read('src/core/prodPrivacy/routeVocabulary.ts');
+  const routeVocabulary = readIncludingComments('src/core/prodPrivacy/routeVocabulary.ts');
   if (!/isSourceProvenRoute/.test(routeVocabulary) || !/NO_PROVEN_ROUTE_VOCABULARY/.test(routeVocabulary)) {
     fail('C-10 route identity must be decided by a source-proven route vocabulary (DEF-C10-5)');
   }
   if (!/templates\.has\(/.test(routeVocabulary)) {
     fail('C-10 route provenance must be exact-set membership, not a syntactic judgement (DEF-C10-5)');
   }
-  const evidenceModule = read('src/core/prodPrivacy/evidence.ts');
+  const evidenceModule = readIncludingComments('src/core/prodPrivacy/evidence.ts');
   if (!/assertSourceProvenRoute\(\s*request\.routeVocabulary/.test(evidenceModule)) {
     fail('C-10 evidence construction must assert source-proven route provenance (DEF-C10-5)');
   }
@@ -2332,18 +2357,18 @@ function checkC10ProductionPrivacyBoundary() {
   if (!/ROUTE_PROVENANCE_MISSING/.test(firewall)) {
     fail('C-10 persistence firewall must reject evidence lacking route provenance (DEF-C10-5)');
   }
-  const parameterProvenance = read('src/core/prodPrivacy/parameterProvenance.ts');
+  const parameterProvenance = readIncludingComments('src/core/prodPrivacy/parameterProvenance.ts');
   if (!/assertSourceProvenRoute\(\s*routeVocabulary/.test(parameterProvenance)) {
     fail('C-10 assertRouteTemplateOnly must require route provenance, not shape alone (DEF-C10-5)');
   }
-  const audit = read('src/core/prodEvidence/persistenceAudit.ts');
+  const audit = readIncludingComments('src/core/prodEvidence/persistenceAudit.ts');
   if (!/provenRouteTemplates/.test(audit)) {
     fail('C-10 persistence audit must flag a persisted route outside the proven set (DEF-C10-5)');
   }
 
   // F-18: the Control Center findings authority must be structurally excluded
   // from the production store, on EVERY construction route including the seam.
-  const authority = read('src/controlCenter/authorities/findingsAuthority.ts');
+  const authority = readIncludingComments('src/controlCenter/authorities/findingsAuthority.ts');
   if (!/assertNotProductionFindingsRoot/.test(authority)) {
     fail('Control Center findings authority must assert the C-10 production exclusion (F-18)');
   }
@@ -2351,7 +2376,7 @@ function checkC10ProductionPrivacyBoundary() {
   if (!/assertDevFindingsRoot/.test(seam)) {
     fail('the Control Center test-only findings seam must also refuse the production root (F-18)');
   }
-  const exclusion = read('src/core/prodEvidence/controlCenterExclusion.ts');
+  const exclusion = readIncludingComments('src/core/prodEvidence/controlCenterExclusion.ts');
   if (!/realpathSync/.test(exclusion)) {
     fail('C-10 Control Center exclusion must use resolved-path equivalence, not string comparison (F-18)');
   }
@@ -2368,7 +2393,7 @@ function checkC10ProductionPrivacyBoundary() {
  * not a convention.
  */
 function checkC105ProvenanceAuthorityBoundary() {
-  const authority = read('src/core/prodPrivacy/vocabularyAuthority.ts');
+  const authority = readIncludingComments('src/core/prodPrivacy/vocabularyAuthority.ts');
 
   // The runtime brand must be a module-private WeakSet. If it were exported in
   // any form, arbitrary code could register a forged object and the A6
@@ -2411,8 +2436,8 @@ function checkC105ProvenanceAuthorityBoundary() {
   }
 
   // Consumption must require the brand, not the shape.
-  const routeVocabulary = read('src/core/prodPrivacy/routeVocabulary.ts');
-  const keyVocabulary = read('src/core/prodPrivacy/keyVocabulary.ts');
+  const routeVocabulary = readIncludingComments('src/core/prodPrivacy/routeVocabulary.ts');
+  const keyVocabulary = readIncludingComments('src/core/prodPrivacy/keyVocabulary.ts');
   if (!/if \(!isMintedCapability\(source\)\) return false;/.test(routeVocabulary)) {
     fail('C-10.5 route provenance must require a minted capability, not a matching shape');
   }
@@ -2429,7 +2454,7 @@ function checkC105ProvenanceAuthorityBoundary() {
   if (!/assertProductionKeyVocabularyAuthority\(source: KeyVocabularySource\)/.test(keyVocabulary)) {
     fail('C-10.5 the key vocabulary must expose a production authority guard');
   }
-  const evidenceAuthority = read('src/core/prodPrivacy/evidence.ts');
+  const evidenceAuthority = readIncludingComments('src/core/prodPrivacy/evidence.ts');
   if (!/assertProductionKeyVocabularyAuthority\(vocabulary\)/.test(evidenceAuthority)) {
     fail('C-10.5 evidence construction must require PRODUCTION key vocabulary authority (dead-guard regression)');
   }
@@ -2440,7 +2465,7 @@ function checkC105ProvenanceAuthorityBoundary() {
   // The cone's public surface must NOT re-export the mint. A wildcard
   // re-export of the vocabulary modules would put a `'PRODUCTION'` marker
   // argument within reach of every importer of the cone.
-  const coneIndex = withoutComments(read('src/core/prodPrivacy/index.ts'));
+  const coneIndex = read('src/core/prodPrivacy/index.ts');
   for (const wildcard of ["export * from './keyVocabulary'", "export * from './routeVocabulary'", "export * from './vocabularyAuthority'"]) {
     if (coneIndex.includes(wildcard)) {
       fail(`C-10.5 the cone public surface must not wildcard-re-export the mint (${wildcard})`);
@@ -2463,7 +2488,7 @@ function checkC105ProvenanceAuthorityBoundary() {
   for (const file of gitFiles()) {
     if (!file.endsWith('.ts') && !file.endsWith('.tsx')) continue;
     if (ALLOWED_MINT_IMPORTERS.test(file)) continue;
-    const source = withoutComments(read(file));
+    const source = read(file);
     for (const name of MINT_NAMES) {
       // An IMPORT of the mint, not a mere mention (tests may name it in prose).
       if (new RegExp(`import[^;]*\\b${name}\\b[^;]*from`).test(source)) {
@@ -2474,26 +2499,26 @@ function checkC105ProvenanceAuthorityBoundary() {
 
   // The TEST-ONLY seam must be reachable from tests only.
   const seamPath = 'src/core/prodProvenance/testOnlySeam.ts';
-  const seamSource = read(seamPath);
+  const seamSource = readIncludingComments(seamPath);
   if (!/TEST ONLY\. NOT A PRODUCTION AUTHORITY PATH\./.test(seamSource)) {
     fail('C-10.5 the test-only vocabulary seam must be explicitly branded TEST ONLY');
   }
   for (const file of gitFiles()) {
     if ((!file.endsWith('.ts') && !file.endsWith('.tsx')) || file === seamPath) continue;
     if (file.startsWith('tests/')) continue;
-    const source = withoutComments(read(file));
+    const source = read(file);
     if (/from\s+['"][^'"]*prodProvenance\/testOnlySeam['"]/.test(source)) {
       fail(`${file} imports the C-10.5 TEST-ONLY vocabulary seam; only tests/** may import it`);
     }
   }
-  const provenanceIndex = withoutComments(read('src/core/prodProvenance/index.ts'));
+  const provenanceIndex = read('src/core/prodProvenance/index.ts');
   if (/testOnlySeam/.test(provenanceIndex)) {
     fail('C-10.5 the provenance derivation surface must not re-export the TEST-ONLY seam');
   }
 
   // The PHP route adapter must stay fail-closed: C-06 admits no production
   // route today, and C-10.5 must not invent completeness to manufacture one.
-  const routeDerivation = read('src/core/prodProvenance/routeVocabularyDerivation.ts');
+  const routeDerivation = readIncludingComments('src/core/prodProvenance/routeVocabularyDerivation.ts');
   if (!/PHP_ROUTE_PROOF_UNAVAILABLE/.test(routeDerivation)) {
     fail('C-10.5 PHP route derivation must fail closed while C-06 admits no production route');
   }
@@ -2515,7 +2540,7 @@ function checkC105ProvenanceAuthorityBoundary() {
  * merely happens to match.
  */
 function checkR11ProxyGateReliability() {
-  const lease = read('src/proxy/portLease.ts');
+  const lease = readIncludingComments('src/proxy/portLease.ts');
   const leaseSource = withoutComments(lease);
 
   // The production entry must bind the REAL probe, and must not take an
@@ -2549,7 +2574,7 @@ function checkR11ProxyGateReliability() {
   for (const file of gitFiles()) {
     if (!file.endsWith('.ts') && !file.endsWith('.tsx')) continue;
     if (file === 'src/proxy/portLease.ts' || file.startsWith('tests/')) continue;
-    if (new RegExp(seamName).test(withoutComments(read(file)))) {
+    if (new RegExp(seamName).test(read(file))) {
       fail(`${file} references the R-11 TEST-ONLY availability seam; only tests/** may use it`);
     }
   }
@@ -2558,7 +2583,7 @@ function checkR11ProxyGateReliability() {
   // exact defect OBS-C105-1 was: a PID-derived port asserted as a guarantee.
   for (const file of gitFiles()) {
     if (!/^tests\/unit\/(?:phase2[34].*|proxy).*\.test\.ts$/i.test(file)) continue;
-    const source = withoutComments(read(file));
+    const source = read(file);
     for (const [pattern, message] of [
       [/\bMath\.random\(\)/, 'Math.random()'],
       [/\bDate\.now\(\)\s*[%+*]/, 'a Date.now()-derived port'],
@@ -2569,9 +2594,9 @@ function checkR11ProxyGateReliability() {
   }
 
   // Durable gate receipts.
-  const receiptLib = read('bin/lib/gate-receipt.mjs');
-  const runner = read('bin/quality-gate.mjs');
-  const clean = read('bin/quality-gate-clean.mjs');
+  const receiptLib = readIncludingComments('bin/lib/gate-receipt.mjs');
+  const runner = readIncludingComments('bin/quality-gate.mjs');
+  const clean = readIncludingComments('bin/quality-gate-clean.mjs');
 
   for (const code of [
     'GATE_RECEIPT_PATH_NOT_ABSOLUTE', 'GATE_RECEIPT_PATH_TRAVERSAL', 'GATE_RECEIPT_PATH_INSIDE_REPOSITORY',
@@ -2662,7 +2687,7 @@ function checkC11ProdObserveBoundary() {
     [/from\s+['"][^'"]*campaign\//, 'the campaign execution path'],
   ];
   for (const file of coneFiles) {
-    const source = withoutComments(read(file));
+    const source = read(file);
     for (const [pattern, description] of forbiddenInProductionCone) {
       if (pattern.test(source)) fail(`${file} imports ${description}; the C-11 production cone must stay import-isolated from it`);
     }
@@ -2680,14 +2705,14 @@ function checkC11ProdObserveBoundary() {
   // --- F-12, the other direction: the DEV/NEXT cone may not import production policy ---
   for (const file of gitFiles()) {
     if (!file.endsWith('.ts') || file.startsWith('tests/') || file.startsWith(`${coneDirectory}/`)) continue;
-    const source = withoutComments(read(file));
+    const source = read(file);
     if (/from\s+['"][^'"]*core\/prodObserve/.test(source)) {
       fail(`${file} imports the C-11 production authorization machinery; only the production cone and tests/** may reach it`);
     }
   }
 
   // --- F-11: realRunGate gains no production branch and no mode parameter ---
-  const realRunGate = withoutComments(read('src/core/safety/realRunGate.ts'));
+  const realRunGate = read('src/core/safety/realRunGate.ts');
   // Anchored to the DECLARATION and the guarded call site. The bare name
   // appears in both, so matching it alone stayed true when the declaration was
   // renamed away — the DEF-R11-1 vacuity class.
@@ -2703,7 +2728,7 @@ function checkC11ProdObserveBoundary() {
   }
 
   // --- the chain is a named identity, not a count ---
-  const types = read(`${coneDirectory}/types.ts`);
+  const types = readIncludingComments(`${coneDirectory}/types.ts`);
   if (!/PRODUCTION_ADMISSION_CHAIN_VERSION = 'nightwatch\.production-admission-chain\.v1'/.test(types)) {
     fail('C-11 the admission chain must be versioned');
   }
@@ -2731,7 +2756,7 @@ function checkC11ProdObserveBoundary() {
   }
 
   // --- the kill switch is evaluated twice, and the second time is pre-dispatch ---
-  const gate = withoutComments(read(`${coneDirectory}/productionRunGate.ts`));
+  const gate = read(`${coneDirectory}/productionRunGate.ts`);
   if ((gate.match(/evaluateKillSwitch\(/g) ?? []).length < 2) {
     fail('C-11 the kill switch must be evaluated at qualification entry AND immediately before dispatch');
   }
@@ -2749,7 +2774,7 @@ function checkC11ProdObserveBoundary() {
   }
 
   // --- F-09: the observation config is external-only and never in-repo ---
-  const config = withoutComments(read(`${coneDirectory}/observationConfig.ts`));
+  const config = read(`${coneDirectory}/observationConfig.ts`);
   for (const code of ['CONFIG_PATH_NOT_ABSOLUTE', 'CONFIG_INSIDE_REPOSITORY', 'CONFIG_INSIDE_WORKSPACE', 'CONFIG_SYMLINK', 'CONFIG_MODE_NOT_OWNER_ONLY']) {
     if (!config.includes(code)) fail(`C-11 the external observation config loader must retain the fail-closed code ${code}`);
   }
@@ -2760,11 +2785,11 @@ function checkC11ProdObserveBoundary() {
   }
 
   // --- D-4 stands ---
-  const environment = withoutComments(read('src/core/environment/index.ts'));
+  const environment = read('src/core/environment/index.ts');
   if (!/SUPPORTED_ENVIRONMENTS: readonly EnvironmentName\[\] = \['local', 'dev', 'next'\]/.test(environment)) {
     fail('D-4: SUPPORTED_ENVIRONMENTS must remain exactly local, dev, next');
   }
-  const decisions = read('docs/DECISIONS.md');
+  const decisions = readIncludingComments('docs/DECISIONS.md');
   if (!decisions.includes('## D-4 — Allowlist-only environments; `production.json` documents the rejected surface')
     || !decisions.includes('Only `local`, `dev`, `next` are selectable.')) {
     fail('D-4: the decision text must remain intact');
@@ -2801,7 +2826,7 @@ function checkP1ObservationScopeBoundary() {
     [/from\s+['"][^'"]*campaign\//, 'the campaign execution path'],
   ];
   for (const file of coneFiles) {
-    const source = withoutComments(read(file));
+    const source = read(file);
     for (const [pattern, description] of forbiddenInP1Cone) {
       if (pattern.test(source)) fail(`${file} imports ${description}; the P1 cone must stay import-isolated from it`);
     }
@@ -2827,7 +2852,7 @@ function checkP1ObservationScopeBoundary() {
   // checkC12RehearsalBoundary below. ---
   for (const file of gitFiles()) {
     if (!file.endsWith('.ts') || file.startsWith('tests/') || file.startsWith(`${coneDirectory}/`) || file.startsWith('src/core/c12Rehearsal/')) continue;
-    const source = withoutComments(read(file));
+    const source = read(file);
     if (/from\s+['"][^'"]*core\/prodObserveP1/.test(source)) {
       fail(`${file} imports the P1 observation-scope machinery; only the P1 cone, src/core/c12Rehearsal/, and tests/** may reach it`);
     }
@@ -2836,14 +2861,14 @@ function checkP1ObservationScopeBoundary() {
   // --- the C-11 cone must not reach back into P1: no coupling either way ---
   for (const file of gitFiles()) {
     if (!file.endsWith('.ts') || !file.startsWith('src/core/prodObserve/')) continue;
-    const source = withoutComments(read(file));
+    const source = read(file);
     if (/from\s+['"][^'"]*prodObserveP1/.test(source)) {
       fail(`${file} imports the P1 cone; C-11 stays decoupled from P1`);
     }
   }
 
   // --- the chain is a named identity, not a count ---
-  const types = read(`${coneDirectory}/types.ts`);
+  const types = readIncludingComments(`${coneDirectory}/types.ts`);
   if (!/P1_OBSERVATION_SCOPE_CHAIN_VERSION = 'nightwatch\.p1-observation-scope\.v1'/.test(types)) {
     fail('MA-8 the P1 observation-scope chain must be versioned');
   }
@@ -2873,11 +2898,11 @@ function checkP1ObservationScopeBoundary() {
   }
 
   // --- the kill switch is evaluated at entry, before attach, AND while attached ---
-  const observer = withoutComments(read(`${coneDirectory}/observer.ts`));
+  const observer = read(`${coneDirectory}/observer.ts`);
   if ((observer.match(/evaluateP1KillSwitch\(/g) ?? []).length < 2) {
     fail('MA-8 the kill switch must be evaluated at P1 admission entry AND immediately before attach');
   }
-  const session = withoutComments(read(`${coneDirectory}/session.ts`));
+  const session = read(`${coneDirectory}/session.ts`);
   if ((session.match(/evaluateP1KillSwitch\(/g) ?? []).length < 2) {
     fail('MA-8 the kill switch must be evaluated at attach AND on every observation poll');
   }
@@ -2888,13 +2913,13 @@ function checkP1ObservationScopeBoundary() {
   }
 
   // --- attribution fails closed: UNKNOWN and Nightwatch-attributable traffic never pass ---
-  const attribution = withoutComments(read(`${coneDirectory}/attribution.ts`));
+  const attribution = read(`${coneDirectory}/attribution.ts`);
   for (const token of ['NIGHTWATCH_ATTRIBUTABLE', 'ATTRIBUTION_UNKNOWN', 'NIGHTWATCH_TRAFFIC_DETECTED', 'PASSIVE_OBSERVATION_COMPLETE', 'isP1SessionPass']) {
     if (!attribution.includes(token)) fail(`MA-8 the attribution model must retain ${token}`);
   }
 
   // --- F-09 for P1: the scope config is external-only and never in-repo ---
-  const scopeConfig = withoutComments(read(`${coneDirectory}/scopeConfig.ts`));
+  const scopeConfig = read(`${coneDirectory}/scopeConfig.ts`);
   for (const code of ['P1_CONFIG_PATH_NOT_ABSOLUTE', 'P1_CONFIG_INSIDE_REPOSITORY', 'P1_CONFIG_INSIDE_WORKSPACE', 'P1_CONFIG_SYMLINK', 'P1_CONFIG_MODE_NOT_OWNER_ONLY', 'P1_CONFIG_HOST_INVALID', 'P1_CONFIG_DESTINATION_INVALID']) {
     if (!scopeConfig.includes(code)) fail(`MA-8 the external P1 scope config loader must retain the fail-closed code ${code}`);
   }
@@ -2920,7 +2945,7 @@ function checkAlphausHandoffBoundary() {
       return;
     }
     for (const file of coneFiles) {
-      const source = withoutComments(read(file));
+      const source = read(file);
       for (const [pattern, description] of [
         [/from\s+['"]node:(?:net|http|https|dns|child_process|fs|os|path|url|util|events|stream|worker_threads)[^'"]*['"]/, 'a network/process/filesystem runtime import (any subpath)'],
         [/from\s+['"]child_process[^'"]*['"]/, 'a bare child_process import (no node: prefix)'],
@@ -2940,8 +2965,8 @@ function checkAlphausHandoffBoundary() {
       ]) if (pattern.test(source)) fail(`${file} contains ${description}; the AH-1 cones must stay isolated from it`);
     }
   }
-  const handoffTypes = withoutComments(read('src/core/alphausHandoff/types.ts'));
-  const handoff = withoutComments(read('src/core/alphausHandoff/handoff.ts'));
+  const handoffTypes = read('src/core/alphausHandoff/types.ts');
+  const handoff = read('src/core/alphausHandoff/handoff.ts');
   if (!handoff.includes('BugDossier')) fail('AH-1 the handoff must project the canonical BugDossier, not a parallel finding model');
   for (const token of ['nightwatch.alphaus-finding-handoff.v1']) {
     if (!handoff.includes(token) && !handoffTypes.includes(token)) fail(`AH-1 the handoff cone must retain ${token}`);
@@ -2951,8 +2976,8 @@ function checkAlphausHandoffBoundary() {
   for (const literal of ['humanReviewRequired: true', 'executable: false', "externalPublication: 'PROHIBITED'", 'autoFile: false', 'autoApprove: false']) {
     if (!handoff.includes(literal)) fail(`AH-1 the handoff authority block must retain the literal ${literal}`);
   }
-  const preflightTypes = withoutComments(read('src/core/c12Readiness/types.ts'));
-  const preflight = withoutComments(read('src/core/c12Readiness/preflight.ts'));
+  const preflightTypes = read('src/core/c12Readiness/types.ts');
+  const preflight = read('src/core/c12Readiness/preflight.ts');
   for (const token of ['BLOCKED_DEPLOYMENT_FACT', 'BLOCKED_OPERATOR_SUBJECT', 'nightwatch.c12-readiness.v1']) {
     if (!preflight.includes(token) && !preflightTypes.includes(token)) fail(`AH-1 the preflight cone must retain ${token}`);
   }
@@ -2961,7 +2986,7 @@ function checkAlphausHandoffBoundary() {
   }
   for (const file of gitFiles()) {
     if (!file.endsWith('.ts') || file.startsWith('tests/') || file.startsWith('src/core/alphausHandoff/') || file.startsWith('src/core/c12Readiness/')) continue;
-    const source = withoutComments(read(file));
+    const source = read(file);
     if (/from\s+['"][^'"]*core\/(alphausHandoff|c12Readiness)/.test(source)) {
       fail(`${file} imports AH-1 machinery; only the AH-1 cones and tests/** may reach it`);
     }
@@ -2991,7 +3016,7 @@ function checkAlphausHandoffBoundary() {
  * dependency. A dependency a test resolves is by definition used.
  */
 function checkDeclaredDependencyResolvability() {
-  const manifest = JSON.parse(read('package.json'));
+  const manifest = JSON.parse(readIncludingComments('package.json'));
   const declared = new Set([
     ...Object.keys(manifest.dependencies ?? {}),
     ...Object.keys(manifest.devDependencies ?? {}),
@@ -3001,7 +3026,7 @@ function checkDeclaredDependencyResolvability() {
     if (!file.endsWith('.ts') && !file.endsWith('.mjs')) continue;
     // ui/** is a separate workspace with its own manifest.
     if (file.startsWith('ui/')) continue;
-    const source = withoutComments(read(file));
+    const source = read(file);
     for (const match of source.matchAll(specifierPattern)) {
       const specifier = match[1];
       if (specifier.startsWith('.') || specifier.startsWith('/') || specifier.startsWith('node:')) continue;
@@ -3025,7 +3050,7 @@ function checkC12RehearsalBoundary() {
     return;
   }
   for (const file of coneFiles) {
-    const source = withoutComments(read(file));
+    const source = read(file);
     for (const [pattern, description] of [
       [/from\s+['"]node:(?:net|http|https|dns|child_process|fs|os|path|url|util|events|stream|worker_threads)[^'"]*['"]/, 'a network/process/filesystem runtime import (any subpath)'],
       [/from\s+['"]child_process[^'"]*['"]/, 'a bare child_process import (no node: prefix)'],
@@ -3043,23 +3068,23 @@ function checkC12RehearsalBoundary() {
       [/expectedPoints|estimatedReward|rewardTier|bountyPoints|bountyScore|calculateBounty|bountyCalculator/i, 'a bounty-scoring surface'],
     ]) if (pattern.test(source)) fail(`${file} contains ${description}; the rehearsal cone must stay local-only`);
   }
-  const rehearsal = withoutComments(read(`${coneDirectory}/rehearsal.ts`));
+  const rehearsal = read(`${coneDirectory}/rehearsal.ts`);
   // Occurrence-complete, not merely present: a surviving safe literal on one
   // return path must not license an unsafe one on another (mutation M13).
-  for (const [file, source] of [['rehearsal.ts', rehearsal], ['types.ts', withoutComments(read(`${coneDirectory}/types.ts`))]]) {
+  for (const [file, source] of [['rehearsal.ts', rehearsal], ['types.ts', read(`${coneDirectory}/types.ts`)]]) {
     for (const assignment of source.match(/liveAuthorization\s*:\s*'[^']*'/g) ?? []) {
       if (!assignment.endsWith("'NOT_CONFERRED_SYNTHETIC_ONLY'")) {
         fail(`${coneDirectory}/${file} assigns ${assignment}; every rehearsal live-authorization value must be NOT_CONFERRED_SYNTHETIC_ONLY`);
       }
     }
   }
-  const mockSubject = withoutComments(read(`${coneDirectory}/mockSubject.ts`));
+  const mockSubject = read(`${coneDirectory}/mockSubject.ts`);
   for (const literal of ['C12_REHEARSAL_REFUSES_NON_SYNTHETIC_HOST', "'NOT_CONFERRED_SYNTHETIC_ONLY'", "'LOCAL_REHEARSAL_PASS'", 'c12LiveReadiness', 'chainDefinitionDigest']) {
     if (!rehearsal.includes(literal)) fail(`FC-1 the rehearsal runner must retain ${literal}`);
   }
   if (!mockSubject.includes('.invalid')) fail('FC-1 the mock subject must stay pinned to the synthetic .invalid host namespace');
   // The readiness-version duplicate must track the AH-1 cone literally.
-  const readinessTypes = withoutComments(read('src/core/c12Readiness/types.ts'));
+  const readinessTypes = read('src/core/c12Readiness/types.ts');
   const bound = /C12_READINESS_VERSION_BOUND = '([^']+)'/.exec(rehearsal);
   if (bound === null || !readinessTypes.includes(`C12_READINESS_VERSION = '${bound[1]}'`)) {
     fail('FC-1 the rehearsal readiness-version duplicate has drifted from C12_READINESS_VERSION');
@@ -3089,7 +3114,7 @@ function checkFindingFrontierBoundary() {
       return;
     }
     for (const file of coneFiles) {
-      const source = withoutComments(read(file));
+      const source = read(file);
       for (const [pattern, description] of [
         [/from\s+['"]node:(?:net|http|https|dns|child_process|fs|os|path|url|util|events|stream|worker_threads)[^'"]*['"]/, 'a network/process/filesystem runtime import (any subpath)'],
         [/\brequire\s*\(\s*['"]/, 'a require() call'],
@@ -3101,7 +3126,7 @@ function checkFindingFrontierBoundary() {
       ]) if (pattern.test(source)) fail(`${file} contains ${description}; the finding-frontier cones must stay local-only`);
     }
   }
-  const lifecycle = withoutComments(read('src/core/findingReview/lifecycle.ts'));
+  const lifecycle = read('src/core/findingReview/lifecycle.ts');
   // Stale-review rejection and the non-equivalence guard are the load-bearing
   // properties: a weakened binding must fail this check, not just tests.
   for (const literal of ['FINDING_REVIEW_STALE', "'NONE_LOCAL_REVIEW_ONLY'"]) {
@@ -3111,14 +3136,14 @@ function checkFindingFrontierBoundary() {
   // comparison must BOTH be the local-only literal. A safe occurrence
   // elsewhere in the file must not satisfy this rule (mutation M12).
   for (const file of ['src/core/findingReview/lifecycle.ts', 'src/core/findingReview/types.ts']) {
-    const source = withoutComments(read(file));
+    const source = read(file);
     for (const assignment of source.match(/organizationalAuthority\s*(?::|!==|===)\s*'[^']*'/g) ?? []) {
       if (!assignment.endsWith("'NONE_LOCAL_REVIEW_ONLY'")) {
         fail(`${file} carries ${assignment}; local review authority must always be NONE_LOCAL_REVIEW_ONLY`);
       }
     }
   }
-  const relationships = withoutComments(read('src/core/findingIntel/relationships.ts'));
+  const relationships = read('src/core/findingIntel/relationships.ts');
   for (const literal of ['advisoryOnly: true', "finalVerdictAuthority: 'HUMAN_ORGANIZATIONAL'", 'REGRESSION_CANDIDATE']) {
     if (!relationships.includes(literal)) fail(`FC-1 the relationship classifier must retain ${literal}`);
   }
@@ -3133,9 +3158,9 @@ function checkFindingFrontierBoundary() {
  * the AH-1 vocabulary it is forbidden to import.
  */
 function checkReviewerSurfaceBoundary() {
-  const adapter = withoutComments(read('src/controlCenter/adapters/reviewerAdapter.ts'));
-  const contract = withoutComments(read('src/controlCenter/contracts/reviewer.ts'));
-  const authority = withoutComments(read('src/controlCenter/authorities/reviewerAuthority.ts'));
+  const adapter = read('src/controlCenter/adapters/reviewerAdapter.ts');
+  const contract = read('src/controlCenter/contracts/reviewer.ts');
+  const authority = read('src/controlCenter/authorities/reviewerAuthority.ts');
 
   // --- the projection stays pure ---
   for (const [file, source] of [
@@ -3196,7 +3221,7 @@ function checkReviewerSurfaceBoundary() {
   // --- the scale probe measures; it never writes ---
   // A benchmark that can touch the finding store is a benchmark that can
   // corrupt the thing it measures. Synthetic corpora stay in memory.
-  const probe = withoutComments(read('tests/unit/findingIntelScaleProbe.ts'));
+  const probe = read('tests/unit/findingIntelScaleProbe.ts');
   for (const [pattern, description] of [
     [/from\s+['"]node:(?:fs|net|http|https|dns|child_process)[^'"]*['"]/, 'a filesystem/network/process import'],
     [/writeFile|appendFile|mkdirSync|createWriteStream|PrivateArtifactStore|ProductionFindingsStore/, 'a persistence capability'],
@@ -3205,7 +3230,7 @@ function checkReviewerSurfaceBoundary() {
   ]) if (pattern.test(probe)) fail(`RS-1 the finding-intel scale probe contains ${description}`);
 
   // --- the pinned literal duplicate cannot drift from AH-1 ---
-  const ah1 = read('src/core/alphausHandoff/types.ts');
+  const ah1 = readIncludingComments('src/core/alphausHandoff/types.ts');
   for (const [ah1Name, localName] of [
     ['ALPHAUS_SEVERITY_VALUES', 'ALPHAUS_SEVERITY_LITERALS'],
     ['ALPHAUS_CATCH_STAGE_VALUES', 'ALPHAUS_CATCH_STAGE_LITERALS'],
@@ -3228,7 +3253,7 @@ function checkReviewerSurfaceBoundary() {
  */
 function checkDocumentationFreshness() {
   const doc = 'docs/CURRENT_STATE.md';
-  const text = read(doc);
+  const text = readIncludingComments(doc);
   const lines = text.split('\n');
   // --- the header date must cover the document's own last change ---
   const headerDate = /Last updated: \*\*(\d{4}-\d{2}-\d{2})\*\*/.exec(lines.slice(0, 10).join('\n'));
@@ -3286,7 +3311,7 @@ function checkC02bProtobufBoundary() {
   for (const file of protoModules) {
     let source;
     try {
-      source = read(file);
+      source = readIncludingComments(file);
     } catch {
       fail(`C-02b the protobuf module ${file} is missing`);
       return;
@@ -3313,7 +3338,7 @@ function checkC02bProtobufBoundary() {
   // never inspect it again. If it grows a regex or an `indexOf` over the raw
   // text, comment and string handling has escaped the one module that owns it
   // and a fact could be derived from a comment.
-  const declarations = read('src/core/source/protoDeclarations.ts');
+  const declarations = readIncludingComments('src/core/source/protoDeclarations.ts');
   const rawSourceUses = (declarations.match(/sourceText/g) ?? []).length;
   if (rawSourceUses !== 2) {
     fail('C-02b protoDeclarations.ts must touch raw source exactly twice — its parameter and the lexProto call; comment and string syntax belongs to the lexer alone');
@@ -3321,7 +3346,7 @@ function checkC02bProtobufBoundary() {
   if (!/lexProto\(sourceText/.test(declarations)) {
     fail('C-02b protoDeclarations.ts must obtain its tokens from lexProto');
   }
-  const lexer = read('src/core/source/protoLexer.ts');
+  const lexer = readIncludingComments('src/core/source/protoLexer.ts');
   for (const [pattern, description] of [
     [/UNTERMINATED_COMMENT/, 'an unterminated block comment must fail closed'],
     [/UNTERMINATED_STRING/, 'an unterminated string must fail closed'],
@@ -3330,18 +3355,18 @@ function checkC02bProtobufBoundary() {
   ]) if (!pattern.test(lexer)) fail(`C-02b protoLexer.ts lost a bounding state: ${description}`);
 
   // --- A-4: currency may not be upgraded by a count ---
-  const corroboration = read('src/core/source/protoCorroboration.ts');
+  const corroboration = readIncludingComments('src/core/source/protoCorroboration.ts');
   if (!/state\s*!==\s*'CORROBORATED_EXACT'\)\s*return null/.test(corroboration)) {
     fail("C-02b toProtoSurfaceCorroboration must return null unless the per-operation comparison is CORROBORATED_EXACT; without that guard a count alone reaches evaluateGenerationCurrency");
   }
-  const generated = read('src/core/source/generatedArtifact.ts');
+  const generated = readIncludingComments('src/core/source/generatedArtifact.ts');
   const corroborationLiteral = /PROTO_SURFACE_CORROBORATIONS[^=]*=\s*Object\.freeze\(\[\s*\]\)/.test(generated);
   if (!corroborationLiteral) {
     fail('C-02b PROTO_SURFACE_CORROBORATIONS must stay an empty literal; a hand-written corroboration would assert currency without comparing an operation');
   }
 
   // --- DEF-C02B-1: ambiguity stays scoped to the evidence class ---
-  const surfaces = read('src/core/source/surfaces.ts');
+  const surfaces = readIncludingComments('src/core/source/surfaces.ts');
   const duplicateKeys = surfaces.match(/const (?:parsedKeys|duplicate)Key[^\n]*|const key = `\$\{entry\.file\.repoId\}[^\n]*/g) ?? [];
   const ambiguityKeyLines = surfaces.split('\n').filter((line) => /\$\{(?:entry\.file|file)\.repoId\}/.test(line) && /route\.(?:method|routeTemplate)|entry\.route\./.test(line));
   if (ambiguityKeyLines.length !== 2) {
@@ -3369,7 +3394,7 @@ function checkC02bProtobufBoundary() {
   // of that prohibition; all three are replaced by one totality rule over the
   // authority in `checkC05UniverseAdmissionBoundary`, which forbids a NINTH
   // repository from any campaign rather than two repositories from three.
-  const approved = read('src/core/source/universe.ts');
+  const approved = readIncludingComments('src/core/source/universe.ts');
   if (!/'billing'/.test(approved) || !/'openapiv2'/.test(approved)) {
     fail('C-02b requires the blueapi billing and openapiv2 roots to stay admitted');
   }
@@ -3389,7 +3414,7 @@ function checkC03GrpcTopologyBoundary() {
   for (const file of modules) {
     let source;
     try {
-      source = read(file);
+      source = readIncludingComments(file);
     } catch {
       fail(`C-03 the topology module ${file} is missing`);
       return;
@@ -3405,8 +3430,8 @@ function checkC03GrpcTopologyBoundary() {
     }
   }
 
-  const registration = read('src/core/source/goRegistration.ts');
-  const topology = read('src/core/source/grpcTopology.ts');
+  const registration = readIncludingComments('src/core/source/goRegistration.ts');
+  const topology = readIncludingComments('src/core/source/grpcTopology.ts');
 
   // --- test files may never become topology facts ---
   if (!/_test\.go/.test(registration) || !/export function isTopologyEligibleGoPath/.test(registration)) {
@@ -3450,8 +3475,8 @@ function checkC03GrpcTopologyBoundary() {
   // --- the contract ceilings are unchanged ---
   // The repository-admission half of this rule moved to
   // `checkC05UniverseAdmissionBoundary`; see the note in the C-02b rule.
-  const approved = read('src/core/source/approvedScan.ts');
-  const sibling = read('src/core/source/siblingSource.ts');
+  const approved = readIncludingComments('src/core/source/approvedScan.ts');
+  const sibling = readIncludingComments('src/core/source/siblingSource.ts');
   if (!/MAX_SIBLING_SOURCE_SCAN_FILES = 4096/.test(sibling) || !/MAX_SIBLING_SOURCE_SCAN_BYTES = 64_000_000/.test(sibling)) {
     fail('C-03 must not change the sibling scan contract ceilings; raising them is a separate authorized change');
   }
@@ -3473,7 +3498,7 @@ function checkC04FrontendConsumerBoundary() {
   for (const file of modules) {
     let source;
     try {
-      source = read(file);
+      source = readIncludingComments(file);
     } catch {
       fail(`C-04 the frontend module ${file} is missing`);
       return;
@@ -3489,8 +3514,8 @@ function checkC04FrontendConsumerBoundary() {
     }
   }
 
-  const consumer = read('src/core/source/frontendConsumer.ts');
-  const join = read('src/core/source/frontendJoin.ts');
+  const consumer = readIncludingComments('src/core/source/frontendConsumer.ts');
+  const join = readIncludingComments('src/core/source/frontendJoin.ts');
 
   // --- no SOURCE_FACT from a non-literal path ---
   if (!/if \(pathClass === 'LITERAL' \|\| pathClass === 'STRUCTURAL'\) return 'SOURCE_FACT';/.test(consumer)) {
@@ -3528,7 +3553,7 @@ function checkC04FrontendConsumerBoundary() {
 
 
   // --- the shared tokenizer default is unchanged ---
-  const lexical = read('src/core/source/lexical.ts');
+  const lexical = readIncludingComments('src/core/source/lexical.ts');
   if (!/options\.preserveTemplates === true \? sourceText\.slice/.test(lexical)) {
     fail('C-04 template preservation must stay opt-in; every existing caller must lex byte-identically');
   }
@@ -3548,7 +3573,7 @@ function checkC15bSystemMapBoundary() {
   for (const file of modules) {
     let source;
     try {
-      source = read(file);
+      source = readIncludingComments(file);
     } catch {
       fail(`C-15b the system map module ${file} is missing`);
       return;
@@ -3564,9 +3589,9 @@ function checkC15bSystemMapBoundary() {
     }
   }
 
-  const model = read('src/core/systemMap/model.ts');
-  const projections = read('src/core/systemMap/projections.ts');
-  const layout = read('src/core/systemMap/layout.ts');
+  const model = readIncludingComments('src/core/systemMap/model.ts');
+  const projections = readIncludingComments('src/core/systemMap/projections.ts');
+  const layout = readIncludingComments('src/core/systemMap/layout.ts');
 
   // --- evidence is never upgraded ---
   if (!/CATEGORY_RANK\[left\] <= CATEGORY_RANK\[right\] \? left : right/.test(model)) {
@@ -3609,12 +3634,12 @@ function checkC15bSystemMapBoundary() {
   }
 
   // --- the Control Center gains no authority ---
-  const meta = read('src/controlCenter/adapters/metaAdapter.ts');
+  const meta = readIncludingComments('src/controlCenter/adapters/metaAdapter.ts');
   if (!/executionAuthority: 'NONE'/.test(meta) || !/mutationAuthority: 'NONE'/.test(meta)) {
     fail('C-15b the Control Center must keep executionAuthority and mutationAuthority NONE');
   }
   for (const file of modules) {
-    if (/prod-findings/.test(read(file))) fail(`${file} names the production findings store; C-10's exclusion is absolute`);
+    if (/prod-findings/.test(readIncludingComments(file))) fail(`${file} names the production findings store; C-10's exclusion is absolute`);
   }
 
 }
@@ -3638,7 +3663,7 @@ function checkC15bSystemMapBoundary() {
 function checkCampaignCertificationRegistry() {
   const parse = (file) => {
     try {
-      return JSON.parse(read(file));
+      return JSON.parse(readIncludingComments(file));
     } catch {
       return undefined;
     }
@@ -3691,8 +3716,8 @@ function checkCampaignCertificationRegistry() {
  * repositories, and the admitted set is a literal that a reviewer can read.
  */
 function checkC05UniverseAdmissionBoundary() {
-  const universe = read('src/core/source/universe.ts');
-  const scan = read('src/core/source/approvedScan.ts');
+  const universe = readIncludingComments('src/core/source/universe.ts');
+  const scan = readIncludingComments('src/core/source/approvedScan.ts');
 
   // --- the admitted set is EXACTLY these eight ---
   const expected = [
@@ -3737,7 +3762,7 @@ function checkC05UniverseAdmissionBoundary() {
   }
 
   // --- no current mutable Git state is persisted ---
-  const types = read('src/core/changeIntelligence/types.ts');
+  const types = readIncludingComments('src/core/changeIntelligence/types.ts');
   const definition = /export interface RepoDefinition \{([\s\S]*?)\n\}/.exec(types);
   if (definition === null) {
     fail('C-05 could not read the RepoDefinition declaration');
@@ -3755,14 +3780,14 @@ function checkC05UniverseAdmissionBoundary() {
       }
     }
   }
-  const map = read('src/core/changeIntelligence/map.ts');
+  const map = readIncludingComments('src/core/changeIntelligence/map.ts');
   for (const field of ['branch', 'trackingSha', 'ahead', 'behind', 'dirty']) {
     if (new RegExp(`(^|\\n)\\s{4}${field}:`).test(map)) {
       fail(`src/core/changeIntelligence/map.ts must not persist ${field}; it is current mutable Git state`);
     }
   }
   // --- the unapproved-read guarantee is measured at the CALL ---
-  const boundary = read('src/core/source/siblingSource.ts');
+  const boundary = readIncludingComments('src/core/source/siblingSource.ts');
   for (const member of ['readLedger', 'admissionRefusals', 'contentReads', 'admissionRefused']) {
     if (!boundary.includes(member)) {
       fail(`src/core/source/siblingSource.ts must keep the C-05 read ledger (${member}); an output-only guarantee cannot distinguish reading nothing from deriving nothing`);
@@ -3778,7 +3803,7 @@ function checkC05UniverseAdmissionBoundary() {
   }
 
   // The one consumer must OBSERVE rather than republish the persisted values.
-  const shadow = read('bin/change-intelligence.mjs');
+  const shadow = readIncludingComments('bin/change-intelligence.mjs');
   for (const republished of ['behind: repo.behind', 'ahead: repo.ahead', 'trackingSha: repo.trackingSha', 'branch: repo.branch']) {
     if (shadow.includes(republished)) {
       fail(`bin/change-intelligence.mjs must observe Git state live, not republish the persisted field (${republished})`);
@@ -3798,8 +3823,8 @@ function checkC05UniverseAdmissionBoundary() {
  * configuration may produce a DEPLOYMENT_FACT.
  */
 function checkC08DeploymentBindingBoundary() {
-  const binding = read('src/core/source/deploymentBinding.ts');
-  const evidence = read('src/core/source/deploymentEvidence.ts');
+  const binding = readIncludingComments('src/core/source/deploymentBinding.ts');
+  const evidence = readIncludingComments('src/core/source/deploymentEvidence.ts');
 
   // --- the forbidden bases are DECLARED, including the one that arises here ---
   // Read the DECLARATION, not the file. `CLIENT_CONFIGURATION` is also named in
@@ -3861,20 +3886,20 @@ function checkC08DeploymentBindingBoundary() {
 
   // --- the binding modules stay data-only, and grant no authority ---
   for (const file of ['src/core/source/deploymentBinding.ts', 'src/core/source/deploymentEvidence.ts']) {
-    const source = read(file);
+    const source = readIncludingComments(file);
     for (const forbidden of ['node:fs', 'node:child_process', 'node:net', 'node:https', 'node:http']) {
       if (source.includes(`from '${forbidden}'`)) fail(`${file} must stay data-only policy (imports ${forbidden})`);
     }
   }
   // Knowing where something runs is not permission to call it.
   for (const file of ['src/core/safety/realRunGate.ts', 'src/core/policy/ownerScope.ts']) {
-    if (/deploymentBinding|deploymentEvidence/.test(read(file))) {
+    if (/deploymentBinding|deploymentEvidence/.test(readIncludingComments(file))) {
       fail(`${file} must not consult the deployment binding; a deployment fact grants no request authority`);
     }
   }
   // The cluster config is never read.
   for (const file of ['src/core/source/deploymentBinding.ts', 'src/core/source/deploymentEvidence.ts', 'bin/nightwatch-intelligence.mjs']) {
-    if (/kubeconf|kubectl/i.test(withoutComments(read(file)))) {
+    if (/kubeconf|kubectl/i.test(read(file))) {
       fail(`${file} must not reference cluster configuration; C-08 reads no cluster`);
     }
   }
@@ -3890,9 +3915,9 @@ function checkC08DeploymentBindingBoundary() {
  * provenance chain is decoration.
  */
 function checkC09SpecExpectationBoundary() {
-  const expectations = read('src/core/source/specExpectations.ts');
-  const inventory = read('src/core/source/specScenarioInventory.ts');
-  const proof = read('src/core/source/readOnlyProof.ts');
+  const expectations = readIncludingComments('src/core/source/specExpectations.ts');
+  const inventory = readIncludingComments('src/core/source/specScenarioInventory.ts');
+  const proof = readIncludingComments('src/core/source/readOnlyProof.ts');
 
   // --- W-SPEC stays DOCUMENTARY ---
   if (!/'W-SPEC':\s*'DOCUMENTARY'/.test(proof)) {
@@ -3950,7 +3975,7 @@ function checkC09SpecExpectationBoundary() {
 
   // --- both modules stay data-only ---
   for (const file of ['src/core/source/specExpectations.ts', 'src/core/source/specScenarioInventory.ts']) {
-    const source = read(file);
+    const source = readIncludingComments(file);
     for (const forbidden of ['node:fs', 'node:child_process', 'node:net', 'node:https', 'node:http']) {
       if (source.includes(`from '${forbidden}'`)) fail(`${file} must stay data-only policy (imports ${forbidden})`);
     }
@@ -3966,8 +3991,8 @@ function checkC09SpecExpectationBoundary() {
  * it, so "we do not know" must sit strictly between.
  */
 function checkC16EigBoundary() {
-  const eig = read('src/core/source/expectedInformationGain.ts');
-  const ledger = read('src/core/source/censusFigureLedger.ts');
+  const eig = readIncludingComments('src/core/source/expectedInformationGain.ts');
+  const ledger = readIncludingComments('src/core/source/censusFigureLedger.ts');
   const code = withoutComments(eig);
 
   // --- a ranking grants nothing ---
@@ -3975,7 +4000,7 @@ function checkC16EigBoundary() {
     fail('C-16 the EIG projection must state grantsAuthority false as data, not only in prose');
   }
   for (const file of ['src/core/safety/realRunGate.ts', 'src/core/policy/ownerScope.ts', 'src/core/source/universe.ts']) {
-    if (/expectedInformationGain/.test(read(file))) {
+    if (/expectedInformationGain/.test(readIncludingComments(file))) {
       fail(`${file} must not consult the EIG ranking; a high score is not execution authority`);
     }
   }
@@ -4045,8 +4070,8 @@ function checkC16EigBoundary() {
  * campaign disproving.
  */
 function checkC07DerivedSemanticsBoundary() {
-  const derived = read('src/core/source/derivedEndpointSemantics.ts');
-  const legacy = read('src/core/safety/endpointSemantics.ts');
+  const derived = readIncludingComments('src/core/source/derivedEndpointSemantics.ts');
+  const legacy = readIncludingComments('src/core/safety/endpointSemantics.ts');
   const code = withoutComments(derived);
 
   // --- method-only never becomes a read contract ---
@@ -4101,7 +4126,7 @@ function checkAgentProtocolBoundary() {
     return;
   }
   for (const file of coneFiles) {
-    const source = withoutComments(read(file));
+    const source = read(file);
     for (const [pattern, description] of [
       [/from\s+['"]node:(?:net|http|https|dns|child_process|fs|os|path|url|events|stream|worker_threads)[^'"]*['"]/, 'a network/process/filesystem runtime import'],
       [/from\s+['"]child_process[^'"]*['"]/, 'a bare child_process import'],
@@ -4113,26 +4138,26 @@ function checkAgentProtocolBoundary() {
       [/(Slack|Leslie|Pondr)(Client|Webhook|Api)|postTo(Slack|Leslie|Pondr)/, 'an external submission connector'],
     ]) if (pattern.test(source)) fail(`${file} contains ${description}; agentProtocol must stay pure`);
   }
-  const validate = withoutComments(read('src/core/agentProtocol/validate.ts'));
+  const validate = read('src/core/agentProtocol/validate.ts');
   for (const token of ['UNKNOWN_TOOL', 'UNSAFE_INTENT', 'UNAUTHORIZED_ENVIRONMENT', 'SECRET_ECHO', 'MALFORMED_OUTPUT']) {
     if (!validate.includes(token)) fail(`agentProtocol validator is missing ${token}`);
   }
-  const owner = read('src/core/policy/ownerScope.ts');
+  const owner = readIncludingComments('src/core/policy/ownerScope.ts');
   if (!/AUTONOMOUS_AGENT_LOCAL/.test(owner)) fail('owner scope is missing AUTONOMOUS_AGENT_LOCAL');
-  const finding = withoutComments(read('src/core/agentProtocol/finding.ts'));
+  const finding = read('src/core/agentProtocol/finding.ts');
   for (const literal of ["humanReviewRequired: true", "externalPublication: 'PROHIBITED'", 'autoLeslie: false']) {
     if (!finding.includes(literal)) fail(`autonomous finding authority is missing ${literal}`);
   }
 }
 
 function checkReviewStoreBoundary() {
-  const types = read('src/core/reviewStore/types.ts');
-  const identity = read('src/core/reviewStore/identity.ts');
-  const store = read('src/core/reviewStore/store.ts');
-  const writeAuthority = read('src/controlCenter/authorities/reviewWriteAuthority.ts');
-  const binding = read('src/controlCenter/authorities/reviewBinding.ts');
-  const reviewerAuthority = read('src/controlCenter/authorities/reviewerAuthority.ts');
-  const policy = read('src/core/policy/privateArtifacts.ts');
+  const types = readIncludingComments('src/core/reviewStore/types.ts');
+  const identity = readIncludingComments('src/core/reviewStore/identity.ts');
+  const store = readIncludingComments('src/core/reviewStore/store.ts');
+  const writeAuthority = readIncludingComments('src/controlCenter/authorities/reviewWriteAuthority.ts');
+  const binding = readIncludingComments('src/controlCenter/authorities/reviewBinding.ts');
+  const reviewerAuthority = readIncludingComments('src/controlCenter/authorities/reviewerAuthority.ts');
+  const policy = readIncludingComments('src/core/policy/privateArtifacts.ts');
   const storeCode = withoutComments(store);
   const identityCode = withoutComments(identity);
 
@@ -4140,7 +4165,7 @@ function checkReviewStoreBoundary() {
   // Every byte goes through PrivateArtifactStore. A store that could also
   // open a file would have a second, unaudited publication path.
   for (const file of ['src/core/reviewStore/types.ts', 'src/core/reviewStore/identity.ts', 'src/core/reviewStore/store.ts', 'src/core/reviewStore/index.ts']) {
-    const source = withoutComments(read(file));
+    const source = read(file);
     for (const forbidden of ['node:fs', 'node:child_process', 'node:net', 'node:http', 'node:https', 'node:dgram', 'node:worker_threads']) {
       if (source.includes(`'${forbidden}'`)) fail(`${file} must not hold ${forbidden} authority`);
     }
@@ -4282,7 +4307,7 @@ function checkReviewStoreBoundary() {
 
   // --- the binding builder is shared, not duplicated ---
   if (!/reviewBindingFor/.test(writeCode)) fail('review write authority does not use the shared binding builder');
-  const collector = withoutComments(read('src/controlCenter/server/defaultCollector.ts'));
+  const collector = read('src/controlCenter/server/defaultCollector.ts');
   // Both the CALL and the IMPORT are refused. An unused import derives
   // nothing on its own, but it is the visible precursor to a second
   // derivation, and forbidding only the call leaves the boundary one line
@@ -4291,40 +4316,16 @@ function checkReviewStoreBoundary() {
   if (/reviewBindingFor\s*\(|currentReviewArtifacts\s*\(/.test(collector)) fail('the collector derives a review binding of its own');
 }
 
-checkChildProcessBoundaries();
-checkReviewStoreBoundary();
-checkAgentProtocolBoundary();
-checkL6ProcessNetworkBoundary();
-checkTargetPolicy();
-checkTypecheckCoverage();
-checkPrivateSurface();
-checkAiReviewBoundary();
-checkLocalCanaryBoundary();
-checkAiInvocationAuthority();
-checkOwnerReviewCliBoundary();
-checkImmutablePrivatePublication();
-checkOwnerDecisionAuthority();
-checkSelfDevelopmentBoundary();
-checkSelfDevTrustRootClosure();
-checkPhase8BSandboxBoundary();
-checkPhase8B01CloseoutIntegrity();
-checkPhase8B10PortfolioIntegrity();
-checkPhase8B1CanonicalPromotionBoundary();
-checkC02bProtobufBoundary();
-checkC03GrpcTopologyBoundary();
-checkC04FrontendConsumerBoundary();
-checkC15bSystemMapBoundary();
-checkC05UniverseAdmissionBoundary();
-checkC08DeploymentBindingBoundary();
-checkC09SpecExpectationBoundary();
-checkC16EigBoundary();
+// Rule invocations live in the registered runner at the bottom of this file.
+// The registry is the enumeration authority: definition/registration parity
+// and per-rule probe coverage are enforced by checkRuleEngineSoundness.
 function checkC15cSystemMapTransportBoundary() {
-  const contract = read('src/controlCenter/contracts/systemMap.ts');
-  const adapter = read('src/controlCenter/adapters/systemMapAdapter.ts');
-  const router = read('src/controlCenter/server/router.ts');
-  const server = read('src/controlCenter/server/server.ts');
-  const ui = read('ui/control-center/src/App.tsx');
-  const apiClient = read('ui/control-center/src/api.ts');
+  const contract = readIncludingComments('src/controlCenter/contracts/systemMap.ts');
+  const adapter = readIncludingComments('src/controlCenter/adapters/systemMapAdapter.ts');
+  const router = readIncludingComments('src/controlCenter/server/router.ts');
+  const server = readIncludingComments('src/controlCenter/server/server.ts');
+  const ui = readIncludingComments('ui/control-center/src/App.tsx');
+  const apiClient = readIncludingComments('ui/control-center/src/api.ts');
   const adapterCode = withoutComments(adapter);
   const uiCode = withoutComments(ui);
 
@@ -4401,56 +4402,333 @@ function checkC15cSystemMapTransportBoundary() {
   }
 }
 
-checkC07DerivedSemanticsBoundary();
-checkC15cSystemMapTransportBoundary();
-checkCampaignCertificationRegistry();
-checkPlannerHandoffIntegrity();
-checkDocumentationTruth();
-checkAgentContinuityIntegrity();
-checkProjectStateIntegrity();
-checkPhase9SemanticCorePurity();
-checkPhase9IntegrationSeams();
-checkPhase9A1RealSourceCorePurity();
-checkPhase9A1SourceReaderBoundary();
-checkPhase9A1IntegrationSeams();
-checkPhase9bCorePurity();
-checkPhase9bIntegrationSeams();
-checkPhase10DeeperContractPurity();
-checkPhase10IntegrationSeams();
-checkPhase10bCorePurity();
-checkPhase10bIntegrationSeams();
-checkPhase12PureCoreBoundaries();
-checkPhase18PureCoreSeams();
-checkPhase12AuthoritySetsUnchanged();
-checkPhase12TriageCorePurity();
-checkPhase12TriageIntegrationSeams();
-checkPhase22CorePurity();
-checkPhase22IntegrationSeams();
-checkPhase23QualityGate();
-checkC00WorkspaceIntegrity();
-checkC10ProductionPrivacyBoundary();
-checkC12RehearsalBoundary();
-checkFindingFrontierBoundary();
-checkReviewerSurfaceBoundary();
-checkDeclaredDependencyResolvability();
-checkC105ProvenanceAuthorityBoundary();
-checkR11ProxyGateReliability();
-checkC11ProdObserveBoundary();
-checkP1ObservationScopeBoundary();
-checkAlphausHandoffBoundary();
-checkDocumentationFreshness();
-checkActiveMilestoneProgression();
-checkDecisionIdentityUniqueness();
-checkHostCapabilityMatrix();
-checkValidationUniverse();
-checkSyntax();
-checkCliImplementationContract();
-checkBinExecutionCoverage();
+/**
+ * F-16 rule-engine soundness self-check.
+ *
+ * Two mechanical facts about the checker itself:
+ *
+ *   1. A fail-if-absent matcher MUST NOT be applied directly to the raw
+ *      accessor. `readIncludingComments` exists for negative (fail-if-present)
+ *      rules and data files; a positive assertion satisfied by a literal that
+ *      lives only in a comment is not an assertion at all. Reported per line.
+ *      Scope: the scan covers matchers that name the accessor directly. It
+ *      does not yet follow a local variable bound from the raw accessor; the
+ *      five named conversion sites and every direct form are enforced here,
+ *      and the alias population is recorded as remaining work rather than
+ *      silently certified.
+ *
+ *   2. The rule registry is the enumeration authority. Every `check*`
+ *      definition is registered exactly once, every registration names a real
+ *      definition, every rule carries an explicit quantifier, a rule whose
+ *      meaning is TOTALITY may not be implemented with a direct first-match
+ *      extraction unless that singleton is recorded and justified, and every
+ *      rule carries at least one recorded probe in the mutation registry.
+ */
+function checkRuleEngineSoundness() {
+  const sourcePath = 'bin/hardening-check.mjs';
+  let selfSource = '';
+  try {
+    selfSource = fs.readFileSync(path.join(root, sourcePath), 'utf8');
+  } catch (error) {
+    fail(`rule-engine self-check cannot read ${sourcePath}: ${error instanceof Error ? error.message : String(error)}`);
+    return;
+  }
+  const code = withoutComments(selfSource);
+
+  // --- 1. fail-if-absent matcher over the raw accessor -------------------
+  const patterns = [
+    // !/re/.test(readIncludingComments(...)) or !x.test(readIncludingComments(...))
+    { re: /!\s*(?:\/(?:\\.|[^/\\\n])*\/[a-z]*|new\s+RegExp\([^)\n]*\)|[A-Za-z_$][\w$.]*)\.(?:test|includes)\s*\(\s*readIncludingComments\s*\(/g, label: 'negated matcher over raw accessor' },
+    // !readIncludingComments(...).includes(x) / .test(x)
+    { re: /!\s*readIncludingComments\s*\([^)\n]*\)\.(?:test|includes)\s*\(/g, label: 'negated receiver over raw accessor' },
+  ];
+  for (const { re, label } of patterns) {
+    for (const match of code.matchAll(re)) {
+      const line = code.slice(0, match.index).split('\n').length;
+      fail(`${sourcePath}:${line} applies a ${label}; a fail-if-absent assertion must call read() (code-only), never readIncludingComments()`);
+    }
+  }
+
+  // --- 2. registry / definition parity ----------------------------------
+  const definitions = [...selfSource.matchAll(/^function (check\w+)\(/gm)].map((match) => match[1]);
+  const registered = REGISTERED_RULES.map((rule) => rule.name);
+  const definedSet = new Set(definitions);
+  const registeredSet = new Set(registered);
+  if (definitions.length !== definedSet.size) fail('rule registry parity: a check function is defined more than once');
+  if (REGISTERED_RULES.length === 0) {
+    fail('rule registry is empty; the runner would report success vacuously');
+    return;
+  }
+  for (const name of definitions) if (!registeredSet.has(name)) fail(`rule ${name} is defined but not registered; the registry is the enumeration authority`);
+  for (const name of registered) if (!definedSet.has(name)) fail(`rule ${name} is registered but not defined`);
+  if (REGISTERED_RULES.length < 70) fail(`rule registry carries only ${REGISTERED_RULES.length} rules; the registry is broken rather than the repository clean`);
+
+  // --- 3. quantifier completeness and totality honesty ------------------
+  const quantifiers = new Set(['EXISTENCE', 'TOTALITY']);
+  const REGEX_LITERAL = String.raw`\/(?:\\.|\[(?:\\.|[^\]\\\n])*\]|[^/\\\n])*\/[a-z]*`;
+  const firstMatchRe = new RegExp(`((?:${REGEX_LITERAL})|(?:new\\s+RegExp\\([^)\\n]*\\)))\\s*\\.(exec|match)\\s*\\(`, 'g');
+  const stringMatchRe = new RegExp(`[A-Za-z_$][\\w$.]*\\.match\\(\\s*(${REGEX_LITERAL})`, 'g');
+  const regexFlags = (/** @type {string} */ literal) => {
+    if (!literal.startsWith('/')) return literal.includes("'g'") ? 'g' : '';
+    let inClass = false;
+    for (let index = 1; index < literal.length; index += 1) {
+      const character = literal[index];
+      if (character === '\\') { index += 1; continue; }
+      if (character === '[') { inClass = true; continue; }
+      if (character === ']') { inClass = false; continue; }
+      if (character === '/' && !inClass) return literal.slice(index + 1);
+    }
+    return '';
+  };
+  for (const rule of REGISTERED_RULES) {
+    if (!quantifiers.has(rule.quantifier)) fail(`rule ${rule.name} does not declare a quantifier (EXISTENCE or TOTALITY)`);
+    if (typeof rule.subject !== 'string' || rule.subject.trim().length < 8) fail(`rule ${rule.name} has no recorded subject`);
+    const start = selfSource.indexOf(`function ${rule.name}(`);
+    const end = start < 0 ? -1 : selfSource.indexOf('\nfunction ', start + 1);
+    const body = start < 0 ? '' : withoutComments(selfSource.slice(start, end < 0 ? selfSource.length : end));
+    for (const match of body.matchAll(firstMatchRe)) {
+      if (regexFlags(match[1]).includes('g')) continue;
+      if (rule.quantifier !== 'TOTALITY') continue;
+      if (typeof rule.firstMatch === 'string' && rule.firstMatch.length > 0) continue;
+      fail(`rule ${rule.name} is TOTALITY but uses a direct first-match .${match[2]}(...) with no recorded singleton justification (rule-engine :${code.slice(0, start + (match.index ?? 0)).split('\n').length})`);
+    }
+    for (const match of body.matchAll(stringMatchRe)) {
+      if (regexFlags(match[1]).includes('g')) continue;
+      if (rule.quantifier !== 'TOTALITY') continue;
+      if (typeof rule.firstMatch === 'string' && rule.firstMatch.length > 0) continue;
+      fail(`rule ${rule.name} is TOTALITY but uses a direct first-match String.match(...) with no recorded singleton justification`);
+    }
+  }
+
+  // --- 4. every rule has a recorded probe -------------------------------
+  let probeRegistry;
+  try {
+    probeRegistry = JSON.parse(fs.readFileSync(path.join(root, PROBE_REGISTRY_PATH), 'utf8'));
+  } catch (error) {
+    fail(`rule probe registry ${PROBE_REGISTRY_PATH} is unreadable: ${error instanceof Error ? error.message : String(error)}`);
+    return;
+  }
+  if (probeRegistry.schemaVersion !== 'nightwatch.hardening-rule-probes.v1') fail('rule probe registry schema/version is unsupported');
+  const probes = probeRegistry.probes ?? {};
+  for (const rule of REGISTERED_RULES) {
+    const entry = probes[rule.name];
+    if (!Array.isArray(entry) || entry.length === 0) fail(`rule ${rule.name} has no recorded negative probe`);
+  }
+  for (const name of Object.keys(probes)) {
+    if (!registeredSet.has(name)) fail(`rule probe registry names an unregistered rule: ${name}`);
+  }
+}
+
+/**
+ * The rule registry: name, invariant family, quantifier, subject, and (only
+ * where a first-match extraction is deliberately singleton) the recorded
+ * justification. Order is the historical invocation order, so a plain run
+ * emits failures in the same sequence it always has.
+ */
+const REGISTERED_RULES = [
+  { name: 'checkChildProcessBoundaries', run: checkChildProcessBoundaries, family: 'process-boundaries', quantifier: 'TOTALITY', subject: 'every launcher bounds child execution and production source cannot reach shell-capable execution' },
+  { name: 'checkReviewStoreBoundary', run: checkReviewStoreBoundary, family: 'review-store', quantifier: 'TOTALITY', subject: 'every private-store call, validator invocation, and error code in the review cone is allowlisted', firstMatch: 'the review file-name pattern declaration is a singleton constant' },
+  { name: 'checkAgentProtocolBoundary', run: checkAgentProtocolBoundary, family: 'agent-protocol', quantifier: 'EXISTENCE', subject: 'the agent-protocol cone retains its purity and required validator/authority tokens' },
+  { name: 'checkL6ProcessNetworkBoundary', run: checkL6ProcessNetworkBoundary, family: 'l6-containment', quantifier: 'EXISTENCE', subject: 'the L6 containment descriptor, AF_UNIX control protocol, and OOPS readiness gate remain present' },
+  { name: 'checkTargetPolicy', run: checkTargetPolicy, family: 'target-policy', quantifier: 'TOTALITY', subject: 'every credentialed launcher enforces DEV-only execution and no bin references the unauthorized budget profile' },
+  { name: 'checkTypecheckCoverage', run: checkTypecheckCoverage, family: 'typecheck-coverage', quantifier: 'EXISTENCE', subject: 'the root TypeScript configuration covers every Playwright root config' },
+  { name: 'checkPrivateSurface', run: checkPrivateSurface, family: 'private-surface', quantifier: 'TOTALITY', subject: 'no tracked path can hold private runtime state and the ignore rules remain complete' },
+  { name: 'checkAiReviewBoundary', run: checkAiReviewBoundary, family: 'ai-review', quantifier: 'TOTALITY', subject: 'every AI review module stays local, loopback-contained, and free of cloud/process/persistence authority' },
+  { name: 'checkLocalCanaryBoundary', run: checkLocalCanaryBoundary, family: 'ai-review', quantifier: 'EXISTENCE', subject: 'the local canary controller and CLI keep their fixed fixture, counters, and thin-wrapper shape' },
+  { name: 'checkAiInvocationAuthority', run: checkAiInvocationAuthority, family: 'ai-review', quantifier: 'TOTALITY', subject: 'every raw provider execution leaves through the budgeted AiReviewSession boundary' },
+  { name: 'checkOwnerReviewCliBoundary', run: checkOwnerReviewCliBoundary, family: 'ai-review', quantifier: 'EXISTENCE', subject: 'the owner-review CLI stays TTY-confirmed, provider-free, and routes writes through the review service' },
+  { name: 'checkImmutablePrivatePublication', run: checkImmutablePrivatePublication, family: 'private-artifacts', quantifier: 'EXISTENCE', subject: 'immutable publication uses atomic linkSync create-if-absent and every AI artifact write routes through it' },
+  { name: 'checkOwnerDecisionAuthority', run: checkOwnerDecisionAuthority, family: 'owner-decision', quantifier: 'TOTALITY', subject: 'owner-decision write authority is reachable only through the confirmed internal helper and its CLI' },
+  { name: 'checkSelfDevelopmentBoundary', run: checkSelfDevelopmentBoundary, family: 'self-dev', quantifier: 'TOTALITY', subject: 'every selfDev source stays inside the synthetic, provenance-bound, non-adopting boundary' },
+  { name: 'checkSelfDevTrustRootClosure', run: checkSelfDevTrustRootClosure, family: 'self-dev', quantifier: 'TOTALITY', subject: 'every relative import of every SELFDEV_AUTHORITATIVE_PATHS member is itself listed', firstMatch: 'the authoritative path list is a singleton frozen declaration' },
+  { name: 'checkPhase8BSandboxBoundary', run: checkPhase8BSandboxBoundary, family: 'self-dev-sandbox', quantifier: 'TOTALITY', subject: 'every sandbox module honors the owner gate, one-file changed bound, mirror confinement, and no-publication authority' },
+  { name: 'checkPhase8B01CloseoutIntegrity', run: checkPhase8B01CloseoutIntegrity, family: 'self-dev-sandbox', quantifier: 'EXISTENCE', subject: 'sandbox-base validation ordering, single-strategy binding, and write accounting remain intact' },
+  { name: 'checkPhase8B10PortfolioIntegrity', run: checkPhase8B10PortfolioIntegrity, family: 'self-dev-portfolio', quantifier: 'EXISTENCE', subject: 'the deterministic portfolio/contract versions and generated catalog shape remain intact' },
+  { name: 'checkPhase8B1CanonicalPromotionBoundary', run: checkPhase8B1CanonicalPromotionBoundary, family: 'self-dev-promotion', quantifier: 'TOTALITY', subject: 'every promotion stage keeps the owner gate, one-shot approval, exact HEAD, and no-runtime-Git authority' },
+  { name: 'checkC02bProtobufBoundary', run: checkC02bProtobufBoundary, family: 'c02b-protobuf', quantifier: 'TOTALITY', subject: 'every protobuf module is data-in/data-out, only the lexer sees raw source, and currency requires per-operation corroboration', firstMatch: 'the surface-corroboration declaration is a singleton literal' },
+  { name: 'checkC03GrpcTopologyBoundary', run: checkC03GrpcTopologyBoundary, family: 'c03-grpc', quantifier: 'EXISTENCE', subject: 'the Go/gRPC topology classifies evidence as fact only when proven and never claims completeness from truncation' },
+  { name: 'checkC04FrontendConsumerBoundary', run: checkC04FrontendConsumerBoundary, family: 'c04-frontend', quantifier: 'EXISTENCE', subject: 'frontend consumer modules are data-only and only literal/structural paths can be SOURCE_FACT' },
+  { name: 'checkC15bSystemMapBoundary', run: checkC15bSystemMapBoundary, family: 'c15b-system-map', quantifier: 'TOTALITY', subject: 'the system map is deterministic, never upgrades evidence, reports exact drops, and grants no authority' },
+  { name: 'checkC05UniverseAdmissionBoundary', run: checkC05UniverseAdmissionBoundary, family: 'c05-universe', quantifier: 'TOTALITY', subject: 'the owner-approved repository universe is exactly the declared set and admission has one authority', firstMatch: 'the OWNER_APPROVED_UNIVERSE declaration is a singleton object literal' },
+  { name: 'checkC08DeploymentBindingBoundary', run: checkC08DeploymentBindingBoundary, family: 'c08-deployment', quantifier: 'TOTALITY', subject: 'every deployment-fact basis is declared forbidden, host matrix stays SOURCE_FACT, and no cluster is consulted', firstMatch: 'the forbidden-bases and binding-state declarations are singleton literals' },
+  { name: 'checkC09SpecExpectationBoundary', run: checkC09SpecExpectationBoundary, family: 'c09-spec', quantifier: 'TOTALITY', subject: 'spec witnesses stay DOCUMENTARY, no prose becomes an assertion, and the classification vocabulary is complete', firstMatch: 'the expectation-class and scenario-classification declarations are singleton literals' },
+  { name: 'checkC16EigBoundary', run: checkC16EigBoundary, family: 'c16-eig', quantifier: 'TOTALITY', subject: 'every EIG factor keeps UNKNOWN strictly mid-scale and the ranking grants no authority', firstMatch: 'each factor declaration is a singleton frozen object' },
+  { name: 'checkC07DerivedSemanticsBoundary', run: checkC07DerivedSemanticsBoundary, family: 'c07-derived', quantifier: 'EXISTENCE', subject: 'method-only derivations stay UNKNOWN, conditional mutations stay mutations, and the hand-authored registry stays empty', firstMatch: 'each source classification case is a singleton switch arm' },
+  { name: 'checkC15cSystemMapTransportBoundary', run: checkC15cSystemMapTransportBoundary, family: 'c15c-transport', quantifier: 'TOTALITY', subject: 'the transport is GET/HEAD only, bounds can say unknown, and no authority beyond NONE crosses the wire', firstMatch: 'the projection-bound DTO is a singleton interface declaration' },
+  { name: 'checkCampaignCertificationRegistry', run: checkCampaignCertificationRegistry, family: 'campaign-certification', quantifier: 'TOTALITY', subject: 'every campaign in the task ledger is declared, exists, and is selected by a required gate lane' },
+  { name: 'checkPlannerHandoffIntegrity', run: checkPlannerHandoffIntegrity, family: 'planner-handoff', quantifier: 'EXISTENCE', subject: 'the handoff protocol stays versioned, read-only, bounded, and package-exposed' },
+  { name: 'checkDocumentationTruth', run: checkDocumentationTruth, family: 'documentation', quantifier: 'EXISTENCE', subject: 'live narratives do not contradict the machine-checked completion status', firstMatch: 'the project-completion status key is a singleton machine block' },
+  { name: 'checkAgentContinuityIntegrity', run: checkAgentContinuityIntegrity, family: 'agent-continuity', quantifier: 'EXISTENCE', subject: 'the continuity checker stays read-only and the v2 protocol module stays pure' },
+  { name: 'checkProjectStateIntegrity', run: checkProjectStateIntegrity, family: 'project-state', quantifier: 'EXISTENCE', subject: 'the project-state checker stays read-only and enforces the strict completion/CI/promotion schema' },
+  { name: 'checkPhase9SemanticCorePurity', run: checkPhase9SemanticCorePurity, family: 'phase9-semantic', quantifier: 'TOTALITY', subject: 'every semantic core module is deterministic and free of AI/selfDev/Phase6/transport/persistence authority' },
+  { name: 'checkPhase9IntegrationSeams', run: checkPhase9IntegrationSeams, family: 'phase9-semantic', quantifier: 'EXISTENCE', subject: 'the semantic hook, Phase 5 stage, dossier evidence, and protocol oracle wiring remain present' },
+  { name: 'checkPhase9A1RealSourceCorePurity', run: checkPhase9A1RealSourceCorePurity, family: 'phase9a1-admission', quantifier: 'TOTALITY', subject: 'every recipe/extractor/admission/resolver/receipt core stays free of execution and I/O authority' },
+  { name: 'checkPhase9A1SourceReaderBoundary', run: checkPhase9A1SourceReaderBoundary, family: 'phase9a1-admission', quantifier: 'TOTALITY', subject: 'the sibling source reader is the only fs-touching module and every coordinator stays beneath it' },
+  { name: 'checkPhase9A1IntegrationSeams', run: checkPhase9A1IntegrationSeams, family: 'phase9a1-admission', quantifier: 'EXISTENCE', subject: 'the evaluation ledger, safe INTERNAL_ERROR receipt, and privacy escalation remain wired' },
+  { name: 'checkPhase9bCorePurity', run: checkPhase9bCorePurity, family: 'phase9b', quantifier: 'TOTALITY', subject: 'the freshness/preflight/summary core performs no I/O or execution' },
+  { name: 'checkPhase9bIntegrationSeams', run: checkPhase9bIntegrationSeams, family: 'phase9b', quantifier: 'EXISTENCE', subject: 'the Phase 9B runner keeps its one-shot gate, fixed journey, and selector refusals' },
+  { name: 'checkPhase10DeeperContractPurity', run: checkPhase10DeeperContractPurity, family: 'phase10', quantifier: 'TOTALITY', subject: 'every deeper-contract core stays free of execution and I/O authority' },
+  { name: 'checkPhase10IntegrationSeams', run: checkPhase10IntegrationSeams, family: 'phase10', quantifier: 'EXISTENCE', subject: 'the v2 recipe schema, type-flow extractor, invariant vocabulary, and historical archives remain wired' },
+  { name: 'checkPhase10bCorePurity', run: checkPhase10bCorePurity, family: 'phase10b', quantifier: 'TOTALITY', subject: 'the deep-acceptance mechanics module stays pure' },
+  { name: 'checkPhase10bIntegrationSeams', run: checkPhase10bIntegrationSeams, family: 'phase10b', quantifier: 'EXISTENCE', subject: 'the Phase 10B runner keeps its one-shot gate, fixed deep expectation, and historical Phase 9B shape' },
+  { name: 'checkPhase12PureCoreBoundaries', run: checkPhase12PureCoreBoundaries, family: 'phase12', quantifier: 'TOTALITY', subject: 'every Phase 12 pure-core candidate is free of browser/network/process/DB/AI authority' },
+  { name: 'checkPhase18PureCoreSeams', run: checkPhase18PureCoreSeams, family: 'phase18', quantifier: 'TOTALITY', subject: 'semantic replay/coverage/currentness cores stay pure and retain their bounded vocabulary' },
+  { name: 'checkPhase12AuthoritySetsUnchanged', run: checkPhase12AuthoritySetsUnchanged, family: 'phase12', quantifier: 'TOTALITY', subject: 'approved/DEV-reachable target ids, the safe-action catalog version, and the canonical catalog count stay frozen', firstMatch: 'the DEV_REACHABLE_RECIPE_TARGET_IDS block is a singleton declaration; every membership and count assertion uses a global match over the whole file' },
+  { name: 'checkPhase12TriageCorePurity', run: checkPhase12TriageCorePurity, family: 'phase12', quantifier: 'TOTALITY', subject: 'semantic triage/confidence/dossier/coverage/cluster cores stay pure' },
+  { name: 'checkPhase12TriageIntegrationSeams', run: checkPhase12TriageIntegrationSeams, family: 'phase12', quantifier: 'EXISTENCE', subject: 'triage evidence, confidence blockers, dossier v2, and coverage dispositions remain wired' },
+  { name: 'checkPhase22CorePurity', run: checkPhase22CorePurity, family: 'phase22', quantifier: 'TOTALITY', subject: 'every Phase 22 DTO/oracle module is deterministic and authority-free' },
+  { name: 'checkPhase22IntegrationSeams', run: checkPhase22IntegrationSeams, family: 'phase22', quantifier: 'EXISTENCE', subject: 'the Phase 22 manifest bounds, preflight vocabulary, launcher gate, and operator scripts remain wired' },
+  { name: 'checkPhase23QualityGate', run: checkPhase23QualityGate, family: 'phase23-quality-gate', quantifier: 'EXISTENCE', subject: 'the required gate groups, fixed entry points, workflow bounds, and empty-step rule remain intact', firstMatch: 'the workflow timeout declaration is a singleton' },
+  { name: 'checkC00WorkspaceIntegrity', run: checkC00WorkspaceIntegrity, family: 'c00-workspace', quantifier: 'TOTALITY', subject: 'every session/worktree hygiene invariant is enforced and the canonical protection policy is not weakened' },
+  { name: 'checkC10ProductionPrivacyBoundary', run: checkC10ProductionPrivacyBoundary, family: 'c10-privacy', quantifier: 'TOTALITY', subject: 'every production privacy cone module is authority-free and the persistence firewall/route provenance remain wired' },
+  { name: 'checkC105ProvenanceAuthorityBoundary', run: checkC105ProvenanceAuthorityBoundary, family: 'c105-provenance', quantifier: 'TOTALITY', subject: 'only the trusted adapter can mint production vocabulary authority and the test-only seam stays test-only' },
+  { name: 'checkR11ProxyGateReliability', run: checkR11ProxyGateReliability, family: 'r11-proxy-gate', quantifier: 'TOTALITY', subject: 'the proxy allocator keeps the real probe and the gate persists one confined atomic receipt' },
+  { name: 'checkC11ProdObserveBoundary', run: checkC11ProdObserveBoundary, family: 'c11-prod-observe', quantifier: 'TOTALITY', subject: 'the production cone is import-isolated from DEV/NEXT paths and the admission chain retains every gate', firstMatch: 'the ordered admission-gate list is a singleton const array' },
+  { name: 'checkP1ObservationScopeBoundary', run: checkP1ObservationScopeBoundary, family: 'p1-scope', quantifier: 'TOTALITY', subject: 'the P1 cone stays isolated, triply bounded, and attribution fails closed', firstMatch: 'the ordered P1 gate list is a singleton const array' },
+  { name: 'checkAlphausHandoffBoundary', run: checkAlphausHandoffBoundary, family: 'ah1-handoff', quantifier: 'TOTALITY', subject: 'every handoff/readiness cone stays isolated, transport-free, and non-publishing' },
+  { name: 'checkDeclaredDependencyResolvability', run: checkDeclaredDependencyResolvability, family: 'declared-dependencies', quantifier: 'TOTALITY', subject: 'every bare module specifier from tracked source is a declared dependency' },
+  { name: 'checkC12RehearsalBoundary', run: checkC12RehearsalBoundary, family: 'c12-rehearsal', quantifier: 'TOTALITY', subject: 'the rehearsal cone stays local-only, synthetic-pinned, and occurrence-complete on live-authorization values', firstMatch: 'the readiness-version bound is a singleton constant' },
+  { name: 'checkFindingFrontierBoundary', run: checkFindingFrontierBoundary, family: 'fc1-finding-review', quantifier: 'TOTALITY', subject: 'the finding review/intel cones stay advisory-only, local, and occurrence-complete on authority values' },
+  { name: 'checkReviewerSurfaceBoundary', run: checkReviewerSurfaceBoundary, family: 'rs1-reviewer-surface', quantifier: 'TOTALITY', subject: 'the reviewer surface stays a pure projection, guards every advisory value, and tracks the AH-1 vocabulary', firstMatch: 'each AH-1 vocabulary declaration is a singleton array literal' },
+  { name: 'checkDocumentationFreshness', run: checkDocumentationFreshness, family: 'documentation', quantifier: 'TOTALITY', subject: 'the current-state header date, MA-8 status, GREEN framing, and C-12 readiness never go stale', firstMatch: 'the header date is a singleton line' },
+  { name: 'checkActiveMilestoneProgression', run: checkActiveMilestoneProgression, family: 'agent-continuity', quantifier: 'TOTALITY', subject: 'no PLAN milestone that STATE reports COMPLETE still reads NOT_STARTED or IN_PROGRESS', firstMatch: 'each plan milestone section is a singleton section' },
+  { name: 'checkDecisionIdentityUniqueness', run: checkDecisionIdentityUniqueness, family: 'documentation', quantifier: 'TOTALITY', subject: 'every duplicated decision number is recorded in the erratum with every colliding title', firstMatch: 'the exec is applied per line inside a loop over every line of the document, so every heading is evaluated' },
+  { name: 'checkHostCapabilityMatrix', run: checkHostCapabilityMatrix, family: 'host-capability', quantifier: 'TOTALITY', subject: 'every declared dependency is assessed and every probed capability token is named in the matrix' },
+  { name: 'checkValidationUniverse', run: checkValidationUniverse, family: 'validation-universe', quantifier: 'TOTALITY', subject: 'every discovered executable test or check is classified exactly once and the digest does not drift' },
+  { name: 'checkSyntax', run: checkSyntax, family: 'syntax', quantifier: 'TOTALITY', subject: 'every top-level bin parses as an ES module' },
+  { name: 'checkCliImplementationContract', run: checkCliImplementationContract, family: 'cli-contract', quantifier: 'TOTALITY', subject: 'every loader call site names a string literal path that resolves and exports what the call site reads' },
+  { name: 'checkBinExecutionCoverage', run: checkBinExecutionCoverage, family: 'bin-execution', quantifier: 'TOTALITY', subject: 'every top-level bin entry point is executed as a process by at least one test' },
+  { name: 'checkRuleEngineSoundness', run: checkRuleEngineSoundness, family: 'rule-engine', quantifier: 'TOTALITY', subject: 'no fail-if-absent matcher uses the raw accessor and registry/probe/quantifier invariants hold' },
+];
+
+/**
+ * The rule mutation campaign: apply each recorded probe to real guarded
+ * source, run only the probed rule, and require a detected failure. Bytes are
+ * restored in a finally and verified afterwards; `git status --porcelain` must
+ * be unchanged from before the run.
+ */
+function runRuleProbeCampaign() {
+  let registry;
+  try {
+    registry = JSON.parse(fs.readFileSync(path.join(root, PROBE_REGISTRY_PATH), 'utf8'));
+  } catch (error) {
+    console.error(`[probe] cannot read ${PROBE_REGISTRY_PATH}: ${error instanceof Error ? error.message : String(error)}`);
+    process.exitCode = 1;
+    return;
+  }
+  const probes = registry.probes ?? {};
+  const statusBefore = spawnSync('git', ['status', '--porcelain'], { cwd: root, encoding: 'utf8', env: childEnvironment, timeout: 30_000, maxBuffer: 8 * 1024 * 1024 });
+  /** @type {Map<string, Buffer>} */
+  const originals = new Map();
+  let detectedCount = 0;
+  let failureCount = 0;
+  let probeCount = 0;
+  const campaignRules = onlyRule === undefined ? REGISTERED_RULES : REGISTERED_RULES.filter((rule) => rule.name === onlyRule);
+  for (const rule of campaignRules) {
+    const entries = probes[rule.name];
+    if (!Array.isArray(entries) || entries.length === 0) {
+      console.log(`[probe] ${rule.name} UNPROVEN (no recorded probe)`);
+      failureCount += 1;
+      continue;
+    }
+    let detected = false;
+    let usedId = '';
+    for (const probe of entries) {
+      probeCount += 1;
+      const touched = [];
+      detected = false;
+      usedId = probe.id ?? '(unnamed)';
+      try {
+        for (const op of Array.isArray(probe.ops) ? probe.ops : []) {
+          const absolute = path.join(root, op.file);
+          if (!originals.has(absolute)) originals.set(absolute, fs.readFileSync(absolute));
+          let text = fs.readFileSync(absolute, 'utf8');
+          if (typeof op.search === 'string') {
+            const occurrences = text.split(op.search).length - 1;
+            if (occurrences < 1) throw new Error(`search literal found ${occurrences} times in ${op.file}`);
+            if (occurrences !== 1 && op.all !== true) throw new Error(`search literal occurs ${occurrences} times in ${op.file}; set all:true to probe every occurrence`);
+            text = op.all === true ? text.split(op.search).join(op.replace ?? '') : text.replace(op.search, op.replace ?? '');
+          } else if (typeof op.append === 'string') {
+            text += op.append;
+          } else if (typeof op.prepend === 'string') {
+            text = op.prepend + text;
+          } else {
+            throw new Error('unknown probe operation (expected search/replace, append or prepend)');
+          }
+          fs.writeFileSync(absolute, text);
+          touched.push(absolute);
+        }
+        const result = spawnSync(process.execPath, [fileURLToPath(import.meta.url), `--only=${rule.name}`], {
+          cwd: root, encoding: 'utf8', env: childEnvironment, timeout: 120_000, maxBuffer: 16 * 1024 * 1024,
+        });
+        if (result.status !== 0) {
+          detected = true;
+          usedId = probe.id ?? '(unnamed)';
+        }
+      } catch (error) {
+        console.log(`[probe] ${rule.name} PROBE_ERROR ${probe.id ?? '(unnamed)'}: ${error instanceof Error ? error.message : String(error)}`);
+      } finally {
+        for (const absolute of touched) fs.writeFileSync(absolute, /** @type {Buffer} */ (originals.get(absolute)));
+      }
+      if (detected) {
+        detectedCount += 1;
+        console.log(`[probe] ${rule.name} DETECTED ${usedId}`);
+      } else {
+        failureCount += 1;
+        console.log(`[probe] ${rule.name} UNDETECTED ${usedId}`);
+      }
+    }
+  }
+  let restoreFailures = 0;
+  for (const [absolute, bytes] of originals) {
+    if (!fs.readFileSync(absolute).equals(bytes)) {
+      restoreFailures += 1;
+      console.error(`[probe] RESTORE_FAILED ${path.relative(root, absolute)}`);
+    }
+  }
+  const statusAfter = spawnSync('git', ['status', '--porcelain'], { cwd: root, encoding: 'utf8', env: childEnvironment, timeout: 30_000, maxBuffer: 8 * 1024 * 1024 });
+  const statusUnchanged = (statusAfter.stdout ?? '') === (statusBefore.stdout ?? '');
+  if (!statusUnchanged) {
+    const beforeLines = new Set((statusBefore.stdout ?? '').split('\n'));
+    const afterLines = new Set((statusAfter.stdout ?? '').split('\n'));
+    for (const line of beforeLines) if (line && !afterLines.has(line)) console.error(`[probe] STATUS_BEFORE_ONLY ${line}`);
+    for (const line of afterLines) if (line && !beforeLines.has(line)) console.error(`[probe] STATUS_AFTER_ONLY ${line}`);
+  }
+  console.log(`[probe] rules=${campaignRules.length} probes=${probeCount} detected=${detectedCount} undetected=${failureCount} restored=${originals.size} statusUnchanged=${statusUnchanged}`);
+  process.exitCode = campaignRules.length === 0 || failureCount > 0 || restoreFailures > 0 || !statusUnchanged ? 1 : 0;
+}
+
+const onlyArgument = process.argv.find((argument) => argument.startsWith('--only='));
+const onlyRule = onlyArgument?.slice('--only='.length);
+if (process.argv.includes('--list-rules')) {
+  const probeRegistry = JSON.parse(fs.readFileSync(path.join(root, PROBE_REGISTRY_PATH), 'utf8'));
+  console.log(JSON.stringify({
+    schemaVersion: 'nightwatch.hardening-rule-registry.v1',
+    count: REGISTERED_RULES.length,
+    rules: REGISTERED_RULES.map((rule) => ({
+      name: rule.name, family: rule.family, quantifier: rule.quantifier, subject: rule.subject,
+      probeCount: (probeRegistry.probes?.[rule.name] ?? []).length,
+    })),
+  }, null, 2));
+  process.exit(0);
+} else if (process.argv.includes('--probe-campaign')) {
+  runRuleProbeCampaign();
+} else {
+  if (onlyRule !== undefined && !REGISTERED_RULES.some((rule) => rule.name === onlyRule)) {
+    console.error(`[hardening:check] ERROR: --only names an unregistered rule: ${onlyRule}`);
+    process.exitCode = 2;
+  } else {
+    for (const rule of REGISTERED_RULES) {
+      if (onlyRule !== undefined && rule.name !== onlyRule) continue;
+      rule.run();
+    }
+  }
+}
 
 if (errors.length > 0) {
   for (const error of errors) console.error(`[hardening:check] ERROR: ${error}`);
   console.error(`[hardening:check] FAIL (${errors.length} error${errors.length === 1 ? '' : 's'})`);
-  process.exitCode = 1;
-} else {
+  process.exitCode = process.exitCode === 2 ? 2 : 1;
+} else if (process.exitCode === undefined) {
   console.log('[hardening:check] PASS: offline structural invariants hold');
 }

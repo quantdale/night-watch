@@ -15,6 +15,7 @@
     "typecheck:bin": "node bin/bin-typecheck.mjs",
     "typecheck:bin:write": "node bin/bin-typecheck.mjs --write",
     "hardening:check": "node bin/hardening-check.mjs",
+    "hardening:rules": "node bin/hardening-check.mjs --probe-campaign",
     "handoff:check": "node bin/planner-handoff-check.mjs",
     "quality-gate:spec": "node bin/quality-gate-spec.mjs",
     "gate:local": "node bin/quality-gate.mjs local",

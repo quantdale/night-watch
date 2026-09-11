@@ -543,9 +543,9 @@ tbody tr.row-selected {
   text-transform: uppercase;
 }
 
-.stage-ready { border-color: rgba(112, 195, 155, 0.3); color: var(--green); background: var(--green-soft); }
-.stage-warning { border-color: rgba(228, 168, 83, 0.3); color: var(--accent); background: var(--accent-soft); }
-.stage-blocked { border-color: rgba(224, 124, 124, 0.3); color: var(--red); background: var(--red-soft); }
+.stage-ready { border-color: rgba(112, 195, 155, 0.55); color: var(--green); background: var(--green-soft); }
+.stage-warning { border-color: rgba(228, 168, 83, 0.55); color: var(--accent); background: var(--accent-soft); }
+.stage-blocked { border-color: rgba(224, 124, 124, 0.6); color: var(--red); background: var(--red-soft); }
 
 .empty-table {
   min-height: 260px;
@@ -683,13 +683,22 @@ tbody tr.row-selected {
 
 .graph-node {
   fill: #162331;
-  stroke: #3b5064;
+  stroke: #526980;
   stroke-width: 1;
 }
 
 .graph-node-ready { stroke: rgba(112, 195, 155, 0.72); }
 .graph-node-warning { stroke: rgba(228, 168, 83, 0.72); }
 .graph-node-blocked { stroke: rgba(224, 124, 124, 0.72); }
+
+/* Keyboard focus on a graph node must be visible without relying on the
+   browser's default ring, which SVG does not paint reliably. Focus and
+   selection are distinct: focus changes stroke colour and width, selection
+   keeps its own class. */
+.execution-graph [role="button"]:focus-visible .graph-node {
+  stroke: var(--blue);
+  stroke-width: 3;
+}
 
 .graph-node-kind,
 .graph-node-state {
@@ -1039,15 +1048,15 @@ tbody tr.row-selected {
 }
 
 .status-ready {
-  border-color: rgba(112, 195, 155, 0.25);
+  border-color: rgba(112, 195, 155, 0.55);
   color: var(--green);
   background: var(--green-soft);
 }
 
 .status-ready .status-dot { background: var(--green); }
-.status-warning { border-color: rgba(228, 168, 83, 0.25); color: var(--accent); background: var(--accent-soft); }
+.status-warning { border-color: rgba(228, 168, 83, 0.55); color: var(--accent); background: var(--accent-soft); }
 .status-warning .status-dot { background: var(--accent); }
-.status-blocked { border-color: rgba(224, 124, 124, 0.28); color: var(--red); background: var(--red-soft); }
+.status-blocked { border-color: rgba(224, 124, 124, 0.6); color: var(--red); background: var(--red-soft); }
 .status-blocked .status-dot { background: var(--red); }
 
 .metric-grid {
@@ -1497,7 +1506,7 @@ tbody tr.row-selected {
   border-radius: 999px; padding: 4px 11px; font-size: 12px; cursor: pointer;
 }
 .chip:hover:not(:disabled) { border-color: var(--accent, #6ea8fe); }
-.chip:disabled { opacity: 0.45; cursor: default; }
+.chip:disabled { opacity: 0.55; cursor: default; }
 .chip-active { background: var(--accent, #6ea8fe); border-color: var(--accent, #6ea8fe); color: #0b1020; font-weight: 600; }
 
 .system-map-controls { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; }
@@ -1506,7 +1515,7 @@ tbody tr.row-selected {
   background: rgba(127, 127, 127, 0.08); color: inherit; font: inherit; font-size: 13px;
   border: 1px solid rgba(127, 127, 127, 0.35); border-radius: 6px; padding: 4px 8px;
 }
-.system-map-controls .hint { font-size: 11px; opacity: 0.6; margin-left: auto; }
+.system-map-controls .hint { font-size: 11px; opacity: 0.85; margin-left: auto; }
 
 .banner { border-radius: 8px; padding: 8px 12px; font-size: 13px; margin: 0; }
 .banner-warn { border: 1px solid #d9a441; background: rgba(217, 164, 65, 0.12); }
@@ -1531,13 +1540,13 @@ tbody tr.row-selected {
 .map-node.node-selected circle:not(.map-node-hit) { stroke: var(--accent, #6ea8fe); stroke-width: 3; }
 
 .system-map-detail { border: 1px solid rgba(127, 127, 127, 0.25); border-radius: 10px; padding: 10px 14px; }
-.system-map-detail h3 { margin: 0 0 6px; font-size: 14px; }
+.system-map-detail h2 { margin: 0 0 6px; font-size: 14px; }
 .system-map-detail dl { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 6px 16px; margin: 0 0 8px; }
-.system-map-detail dt { font-size: 11px; opacity: 0.65; }
+.system-map-detail dt { font-size: 11px; opacity: 0.85; }
 .system-map-detail dd { margin: 0; font-size: 13px; word-break: break-all; }
 
 .blocking-chain { font-size: 12px; margin: 0; padding-left: 20px; }
-.system-map-provenance { display: flex; flex-wrap: wrap; gap: 14px; font-size: 11px; opacity: 0.7; }
+.system-map-provenance { display: flex; flex-wrap: wrap; gap: 14px; font-size: 11px; opacity: 0.85; }
 
 /* Owner-local review decision controls. Deliberately plain: a decision
    control that looks like an approval button invites being read as one. */
@@ -1580,8 +1589,8 @@ tbody tr.row-selected {
   padding: 0.2rem 0.45rem;
   border-radius: 4px;
   border: 1px solid var(--border, #d0d4da);
-  background: var(--surface-muted, #f4f5f7);
-  color: inherit;
+  background: var(--surface-raised, #172331);
+  color: var(--text, #e7edf4);
   cursor: pointer;
 }
 
@@ -1590,8 +1599,8 @@ tbody tr.row-selected {
   cursor: progress;
 }
 
-.review-outcome-ok { color: var(--ready, #1d7a4c); }
-.review-outcome-warn { color: var(--warning, #a2621a); }
+.review-outcome-ok { color: var(--green, #70c39b); }
+.review-outcome-warn { color: var(--accent, #e4a853); }
 
 .visually-hidden {
   position: absolute;
@@ -1641,7 +1650,7 @@ tbody tr.row-selected {
 }
 
 .code-chip-blocked {
-  border-color: rgba(224, 124, 124, 0.5);
+  border-color: rgba(224, 124, 124, 0.6);
   background: var(--red-soft);
   color: var(--red);
 }

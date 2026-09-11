@@ -102,3 +102,20 @@ export {
   type P1SessionResult,
   type P1SessionTermination,
 } from './session';
+export {
+  P1_RECEIPT_ACCEPTANCE_EVIDENCE,
+  P1_RECEIPT_ERROR_CLASSES,
+  P1_RECEIPT_OUTCOMES,
+  P1_SAFE_OBSERVATION_RECEIPT_VERSION,
+  classifyP1InternalError,
+  internalErrorReceipt,
+  receiptForP1SessionResult,
+  runP1ObservationSessionGuarded,
+  sealP1SafeObservationReceipt,
+  type P1GuardedSessionResult,
+  type P1ReceiptAcceptanceEvidence,
+  type P1ReceiptErrorClass,
+  type P1ReceiptOutcome,
+  type P1SafeObservationReceipt,
+  type P1SafeObservationReceiptDraft,
+} from './safeReceipt';

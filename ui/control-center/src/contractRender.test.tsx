@@ -458,11 +458,6 @@ const VIEWS: readonly ViewCase[] = [
 const NOT_OBSERVABLE: Readonly<Record<string, string>> = Object.freeze({
   'TimelineSnapshot.afterSeq': 'request echo; the timeline carries position and truncation',
   'RunListItemSnapshot.passed': 'boolean projection of status; the runs views render the status',
-  // Single-value contract constants. Their legal value cannot differ, so no
-  // legal flip exists; the posture pill asserts the meaning in a fixed label
-  // and derives its tone from the value.
-  'HealthSnapshot.scope': 'single-value contract constant asserted by the loopback posture label',
-  'SafetySnapshot.scope': 'single-value contract constant asserted by the loopback posture label',
 });
 
 function isExempt(key: string): boolean {

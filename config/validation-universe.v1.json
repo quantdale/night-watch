@@ -8,6 +8,7 @@
       "reason": "Offline, deterministic suites that the full canonical regression executes. They are not in a required gate lane because the authoritative gate is bounded for CI runtime; leaving them unclassified is what made the gap invisible.",
       "evidenceLane": "npm test — full canonical regression, run and recorded per checkpoint (not a CI step)",
       "files": [
+        "tests/unit/accessibilityAudit.test.ts",
         "tests/unit/agentAutonomyIntegration.test.ts",
         "tests/unit/agentAutonomyLoop.test.ts",
         "tests/unit/agentBudgetDimensions.test.ts",
@@ -19,7 +20,9 @@
         "tests/unit/benchmark.test.ts",
         "tests/unit/bootstrapHooks.test.ts",
         "tests/unit/byteAccounting.test.ts",
+        "tests/unit/c08bDeploymentManifestReader.test.ts",
         "tests/unit/c12LocalRehearsal.test.ts",
+        "tests/unit/c13ProductionReadGuard.test.ts",
         "tests/unit/campaignEndurance.test.ts",
         "tests/unit/campaignStrategyMemory.test.ts",
         "tests/unit/candidateLifecycle.test.ts",
@@ -69,6 +72,7 @@
         "tests/unit/preFixSource.test.ts",
         "tests/unit/productionCompletionLaneState.test.ts",
         "tests/unit/productionCompletionOpenWork.test.ts",
+        "tests/unit/productionTrackReadiness.test.ts",
         "tests/unit/promotionResult.test.ts",
         "tests/unit/proxyResolvedProtocols.test.ts",
         "tests/unit/realHistoricalProductPathProof.test.ts",
@@ -113,6 +117,7 @@
       "reason": "Drives a real browser against the Control Center, so it needs a system Chrome and a built UI that the offline gate does not provide.",
       "evidenceLane": "browser workflow lane — npm run test:browser on a qualified host",
       "files": [
+        "tests/browser/accessibilityCertification.browser.ts",
         "tests/browser/controlCenterBrowser.browser.ts",
         "tests/browser/reviewPersistence.browser.ts",
         "tests/browser/systemMapV2.browser.ts"
