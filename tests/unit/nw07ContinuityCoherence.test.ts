@@ -83,18 +83,20 @@ test.describe('NW-07 — a live PLAN agrees with its own STATE', () => {
     const plan = read(`${directory}/PLAN.md`);
     expect(state).toContain('nightwatch.agent-continuity.v2');
 
-    const complete = new Set<string>();
-    for (const match of state.matchAll(/\*\*(M\d+)\b[^*]*\bCOMPLETE/g)) complete.add(match[1] as string);
+    const complete = new Map<string, string>();
+    for (const match of state.matchAll(/\*\*((?:M|G)\d+)\b[^*]*?\b(COMPLETE(?:_LOCAL)?)\b/g)) {
+      complete.set(match[1] as string, match[2] as string);
+    }
     // The active campaign has completed milestones; a rule over an empty set
     // would pass while proving nothing.
     expect(complete.size).toBeGreaterThan(0);
 
-    for (const milestone of [...complete].sort()) {
+    for (const [milestone, expected] of [...complete].sort()) {
       const section = new RegExp(`^### ${milestone} —[\\s\\S]*?(?=^### |\\n## )`, 'm').exec(plan);
       expect(section, `${directory}/PLAN.md has no ### ${milestone} section`).not.toBeNull();
       const status = /^- \*\*Status:\*\*\s*(\S+)/m.exec((section as RegExpExecArray)[0])?.[1];
       expect(status, `${milestone} has no Status line`).toBeDefined();
-      expect(status, `${milestone} is COMPLETE in STATE but ${String(status)} in PLAN`).toBe('COMPLETE');
+      expect(status, `${milestone} is ${expected} in STATE but ${String(status)} in PLAN`).toBe(expected);
     }
   });
 

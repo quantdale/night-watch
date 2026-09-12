@@ -447,7 +447,9 @@ test.describe('F-08 — governed status-word ledger', () => {
     };
     expect(roleConfig.schemaVersion).toBe('nightwatch.document-role.v1');
     const actual = fs.readdirSync(path.join(root, 'docs')).filter((file) => file.endsWith('.md')).sort().map((file) => `docs/${file}`);
-    expect(actual.length).toBe(11);
+    // The registry is the authority: every top-level docs file must be
+    // declared exactly once, so the count equals the declared set.
+    expect(actual.length).toBe(roleConfig.documents.length);
     const declared = new Map(roleConfig.documents.map((entry) => [entry.path, entry]));
     expect(declared.size).toBe(roleConfig.documents.length);
     for (const file of actual) expect(declared.has(file), `${file} has no role`).toBe(true);

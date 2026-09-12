@@ -78,6 +78,8 @@ export interface ScenarioInventory {
 /** A Nightwatch campaign record, established from the path, not the prose. */
 export function isNightwatchOwnSpecification(specPath: string): boolean {
   return /^openspec\/changes\/[^/]+\/specs\/[^/]+\/spec\.md$/.test(specPath)
+    || /^openspec\/changes\/archive\/[^/]+\/specs\/[^/]+\/spec\.md$/.test(specPath)
+    || /^openspec\/specs\/[^/]+\/spec\.md$/.test(specPath)
     || /^openspec\/changes\/[^/]+\/[^/]+\.md$/.test(specPath);
 }
 

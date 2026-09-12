@@ -50,7 +50,7 @@ Integration remains blocked by the externally dirty canonical checkout.
 
 ## Completed Milestones
 
-- **G1.1–G1.17 COMPLETE** — ledger truth and the spec baseline:
+- **G1 COMPLETE_LOCAL** — ledger truth and the spec baseline:
   - 57 changes paired with 149 task directories; 16 divergent ledgers
     reconciled from task truth (119 boxes ticked with cited evidence, 12
     declared out-of-scope strikethroughs, 2 genuinely undone items carried
@@ -77,7 +77,7 @@ Integration remains blocked by the externally dirty canonical checkout.
     of declared entries, blocker and its internal/external class) through
     `src/core/readiness/openWork.ts` and the shared parser.
 
-- **G6.1–G6.3, G6.7–G6.9 COMPLETE (local)** — workspace and continuity drift
+- **G6 COMPLETE_LOCAL** — workspace and continuity drift
   closure: `WORKSPACE_WORKTREE_METADATA` resolves every claim's task against
   `.agent/tasks/<id>/STATE.md` and raises `CLAIM_TASK_TERMINAL` /
   `CLAIM_TASK_UNKNOWN` as attention with a named owner action and no automatic
@@ -86,7 +86,7 @@ Integration remains blocked by the externally dirty canonical checkout.
   non-merged branches are classified from the actual diff against
   `origin/main`, citing their unique commits, in the programme `tasks.md`.
 
-- **G13.1–G13.7, G13.9 COMPLETE (local)** — release definition and verdict:
+- **G13 COMPLETE_LOCAL** — release definition and verdict:
   `config/release-certification.v1.json` declares the ordered advance
   conditions each backed by a registered check; `src/core/releaseCertification/index.ts`
   validates the definition (an unbacked condition fails the definition

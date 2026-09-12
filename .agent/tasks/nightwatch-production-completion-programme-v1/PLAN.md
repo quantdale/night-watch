@@ -77,7 +77,7 @@ integration.
   agreement check is registered and negative-probed.
 - Validation commands: `openspec validate --all`, `npm run agent:check`,
   `npm run typecheck`, `npm run hardening:check`.
-- Status: IN_PROGRESS
+- **Status:** COMPLETE_LOCAL
 
 ### G2 — Validation lane state as data
 
@@ -90,7 +90,7 @@ integration.
   probes pass.
 - Validation commands: `npm run validation:universe`,
   `node bin/hardening-check.mjs`, `npm run agent:check`.
-- Status: NOT_STARTED
+- **Status:** COMPLETE_LOCAL
 
 ### G3 — CI-topology clean gate and exact-head CI authority
 
@@ -104,7 +104,7 @@ integration.
   fail closed; owner decision recorded.
 - Validation commands: `npm run gate:topology`, `npm run project:check`,
   `npm run agent:check`.
-- Status: NOT_STARTED
+- **Status:** NOT_STARTED
 
 ### G4 — Operator CLI contract
 
@@ -116,7 +116,7 @@ integration.
   exit codes 0/1/2/3/4; one JSON document on stdout; structural rule on.
 - Validation commands: `npm run cli:contract` (new lane), `npm run typecheck`,
   `npm run hardening:check`.
-- Status: NOT_STARTED
+- **Status:** IN_PROGRESS
 
 ### G5 — Evidence lifecycle hygiene
 
@@ -128,7 +128,7 @@ integration.
   set; tracked files and artifact stores untouched; footprint measured.
 - Validation commands: `npm run retention:plan`, `npm run hygiene:clean` dry
   run, `git status --porcelain`.
-- Status: NOT_STARTED
+- **Status:** IN_PROGRESS
 
 ### G6 — Workspace and continuity drift closure
 
@@ -141,7 +141,7 @@ integration.
   legacy warnings declared historical.
 - Validation commands: `npm run workspace:check`, `npm run agent:check`,
   `npm run session:status`.
-- Status: NOT_STARTED
+- **Status:** COMPLETE_LOCAL
 
 ### G7 — Documentation currency
 
@@ -152,7 +152,7 @@ integration.
 - Acceptance: every doc has exactly one declared role; append-only enforced;
   bare stale statuses repaired by qualifier; negative probes pass.
 - Validation commands: `npm run hardening:check`, `npm run project:check`.
-- Status: NOT_STARTED
+- **Status:** COMPLETE_LOCAL
 
 ### G8 — Control Center residual truth
 
@@ -165,7 +165,7 @@ integration.
   pass.
 - Validation commands: `npm --prefix ui/control-center run test`,
   `npm run control-center:ui:browser`, `npm run validation:universe`.
-- Status: NOT_STARTED
+- **Status:** NOT_STARTED
 
 ### G9 — Dependency and supply-chain currency
 
@@ -177,7 +177,7 @@ integration.
 - Acceptance: lane reflects reality (never implied clean without execution);
   review date with interval; unqualified runtime reports unqualified.
 - Validation commands: `npm run validation:universe`, `npm run agent:check`.
-- Status: NOT_STARTED
+- **Status:** NOT_STARTED
 
 ### G10 — Deployment fact acquisition and the production track
 
@@ -190,7 +190,7 @@ integration.
   `POSITIVE_DEPLOYMENT_FACTS: 0`; passive observation proven passive.
 - Validation commands: `npm run typecheck`, `npm test` (focused suites),
   `npm run hardening:check`.
-- Status: NOT_STARTED
+- **Status:** IN_PROGRESS
 
 ### G11 — Contained DEV semantic acceptance
 
@@ -200,7 +200,7 @@ integration.
 - Acceptance: acceptance class rendered wherever capability is presented;
   Phase 9A.1 remains the only admission route; owner decision recorded.
 - Validation commands: focused semantic suites, `npm run agent:check`.
-- Status: NOT_STARTED
+- **Status:** COMPLETE_LOCAL
 
 ### G12 — Autonomous yield proof
 
@@ -211,7 +211,7 @@ integration.
 - Acceptance: pre-flight threshold enforced; false positives reported; zero
   yield stated as a result, never as an omission; leakage aborts.
 - Validation commands: `npm run campaign:synthetic`, focused yield suites.
-- Status: NOT_STARTED
+- **Status:** NOT_STARTED
 
 ### G13 — Release definition and verdict
 
@@ -222,7 +222,7 @@ integration.
 - Acceptance: conditions resolve from check output; negative probe; lane
   counts carried with status; evidence SHA freshness enforced.
 - Validation commands: `npm run project:check`, `npm run gate:local`.
-- Status: COMPLETE_LOCAL (13.1–13.7, 13.9). 13.8 is a pending owner decision
+- **Status:** COMPLETE_LOCAL
   with safe default `OPERATIONALLY_ACCEPTED`; 13.10 is blocked at
   `gate:local`/regression/integration by the externally dirty canonical
   checkout and is the session owner's action. Recorded in
@@ -238,7 +238,7 @@ integration.
 - Acceptance: reachability rule fails on an unreferenced module; retention
   list fails both directions; owner decision recorded.
 - Validation commands: `npm run hardening:check`, `npm run typecheck`.
-- Status: NOT_STARTED
+- **Status:** IN_PROGRESS
 
 ### G15 — CLI-to-implementation contract
 
@@ -250,7 +250,7 @@ integration.
   fail-closed refusal asserted for gated launchers.
 - Validation commands: `npx tsc -p tsconfig.bin.json`, new lane,
   `npm run validation:universe`.
-- Status: NOT_STARTED
+- **Status:** IN_PROGRESS
 
 ### G16 — Structural rule soundness
 
@@ -263,7 +263,7 @@ integration.
   decomposition.
 - Validation commands: `node bin/hardening-check.mjs`,
   `npm run rule-mutation` (new).
-- Status: NOT_STARTED
+- **Status:** IN_PROGRESS
 
 ### G17 — Schema version lifecycle
 
@@ -276,7 +276,7 @@ integration.
   `READ_COMPATIBLE` fixture per version; `ORPHAN` only from `docs/DECISIONS.md`.
 - Validation commands: new schema-lifecycle lane, `npm run typecheck`,
   focused review-store suites.
-- Status: NOT_STARTED
+- **Status:** IN_PROGRESS
 
 ### G18 — UI error taxonomy rendering
 
@@ -286,7 +286,7 @@ integration.
 - Acceptance: kind-driven coverage assertion (a sixth kind fails); no
   server-supplied text; mutation proof; partial-failure proof.
 - Validation commands: UI tests, browser lane.
-- Status: NOT_STARTED
+- **Status:** NOT_STARTED
 
 ### G19 — Configuration contract and UI decomposition
 
@@ -298,7 +298,7 @@ integration.
 - Acceptance: undeclared read fails; malformed value refused before any
   effect; DOM-identical decomposition; per-view contract carriers.
 - Validation commands: UI tests, root typecheck, `npm run hardening:check`.
-- Status: NOT_STARTED
+- **Status:** NOT_STARTED
 
 ### G20 — Accessibility certification
 
@@ -309,7 +309,7 @@ integration.
 - Acceptance: colour-only distinction fails; non-zero pair count; keyboard
   steps with visible focus; both-direction exemption list.
 - Validation commands: browser lane, UI tests.
-- Status: NOT_STARTED
+- **Status:** COMPLETE_LOCAL
 
 ### G21 — Authenticated capability lifecycle
 
@@ -320,7 +320,7 @@ integration.
 - Acceptance: every non-VALID state refuses before any effect; metadata only
   (no cookie values); expired renders as an epistemic class.
 - Validation commands: focused auth suites, `npm run status:local`.
-- Status: NOT_STARTED
+- **Status:** COMPLETE_LOCAL
 
 ## Validation Strategy
 
