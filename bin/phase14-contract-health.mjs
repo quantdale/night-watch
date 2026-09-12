@@ -20,25 +20,13 @@ import path from "node:path";
 import { loadTypeScriptModule as loadRuntimeTypeScriptModule } from "./lib/typescript-runtime-loader.mjs";
 import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from "./lib/operator-cli.mjs";
 
-const HELP = `Nightwatch Phase 14A contract coverage health CLI (local/source-only).
-
-  --inventory=<file.json>   Pre-built coverage inventory JSON (sanitized before use).
-  --baseline=<file.json>    Optional baseline inventory for an additions/strengthenings delta.
-  --snapshot=<dir>          Disposable exact source snapshot directory (read-only fs read).
-  --sha=<sha>               Current snapshot SHA for the --snapshot build.
-  --format=json|text        Output format (default: json).
-  --help                    Show this message.
-
-Reads only. Performs no writes to sibling repositories, no network, no campaign.
-`;
-
 const CLI_METADATA = {
   schemaVersion: OPERATOR_CLI_SCHEMA,
   name: "phase14-contract-health",
   entry: "bin/phase14-contract-health.mjs",
   purpose: "Render the local Phase 14A contract-coverage health report from a sanitized inventory or snapshot.",
   group: "inspect-intelligence",
-  usage: HELP,
+  usage: "Nightwatch Phase 14A contract coverage health CLI (local/source-only). Flags: --inventory=<file.json>, --baseline=<file.json>, --snapshot=<dir>, --sha=<sha>, --format=json|text, --help. Reads only; no sibling writes, no network, no campaign.",
   flags: [
     { name: "--inventory", shape: "path", summary: "pre-built coverage inventory JSON" },
     { name: "--baseline", shape: "path", summary: "optional baseline inventory for a delta" },
@@ -131,10 +119,6 @@ function main() {
   const cli = defineOperatorCli(CLI_METADATA);
   if (cli.stop) return;
   const args = parseArgs(process.argv.slice(2));
-  if (args.help) {
-    process.stdout.write(HELP + "\n");
-    return;
-  }
   const root = process.cwd();
   const reportModule = loadTypeScriptModule(
     root,
