@@ -273,6 +273,7 @@ function makeFixture(options: FixtureOptions = {}): Fixture {
     'bin/lib/programme-state.mjs',
     'bin/lib/openspec-ledger.mjs',
     'bin/lib/operator-cli.mjs',
+    'bin/lib/typescript-runtime-loader.mjs',
     'bin/lib/validation-lane-state.mjs',
   ]) {
     fs.mkdirSync(path.dirname(path.join(root, relativePath)), { recursive: true });

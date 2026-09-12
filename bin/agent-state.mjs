@@ -31,7 +31,6 @@ import {
   collectRevisitDue,
   loadLaneState,
 } from './lib/validation-lane-state.mjs';
-import { loadTypeScriptModule } from './lib/typescript-runtime-loader.mjs';
 
 const ACTIVE_STATUSES = new Set(['NONE', 'IN_PROGRESS', 'BLOCKED', 'COMPLETE']);
 const REQUIRED_ACTIVE_FIELDS = [
@@ -1029,14 +1028,24 @@ export function validate(root, auditMode = false) {
   }
 
   // F-11 dependency review dates: a review whose interval has elapsed is
-  // reported as due; the record itself is never rewritten here.
+  // reported as due; the record itself is never rewritten here. The pure
+  // evaluator in src/core/dependencyCurrency is the project:check authority;
+  // this surface reads the same record's dates without loading TypeScript, so
+  // `agent:check` stays dependency-light.
   try {
-    const raw = JSON.parse(fs.readFileSync(path.join(root, 'config', 'dependency-currency.v1.json'), 'utf8'));
-    const { collectDependencyReviewDueFromRecord } = loadTypeScriptModule('src/core/dependencyCurrency/index.ts', { root });
+    const record = JSON.parse(fs.readFileSync(path.join(root, 'config', 'dependency-currency.v1.json'), 'utf8'));
     const today = new Date().toISOString().slice(0, 10);
-    for (const due of collectDependencyReviewDueFromRecord(raw, today)) {
-      warnings.push(`DEPENDENCY_REVIEW_DUE: ${due.id} due ${due.dueDate} (reviewed ${due.reviewDate} + ${due.intervalDays}d); ${due.condition}`);
-    }
+    const reportDue = (id, reviewDate, intervalDays, condition) => {
+      if (typeof reviewDate !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(reviewDate) || !Number.isInteger(intervalDays)) return;
+      const due = new Date(Date.UTC(...reviewDate.split('-').map((part) => Number(part))));
+      due.setUTCDate(due.getUTCDate() + intervalDays);
+      const dueIso = due.toISOString().slice(0, 10);
+      if (dueIso < today) {
+        warnings.push(`DEPENDENCY_REVIEW_DUE: ${id} due ${dueIso} (reviewed ${reviewDate} + ${intervalDays}d); ${condition}`);
+      }
+    };
+    reportDue('vue-review', record.vueReview?.reviewDate, record.vueReview?.reviewIntervalDays, 'Vue 2.6.12 fixture review conditions');
+    reportDue('lockfile-verification', record.lockfileVerification?.date, record.lockfileVerification?.intervalDays, 'disposable npm ci --offline lockfile verification');
   } catch {
     // A missing or malformed record fails project:check; agent:check reports
     // only what it can read.

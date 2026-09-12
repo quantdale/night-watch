@@ -914,9 +914,7 @@
     {
       "name": "NIGHTWATCH_TOPOLOGY_EXPECTED_HOME",
       "purpose": "Test-only fresh-HOME assertion for the CI-topology gate: names the synthetic HOME the gate created so the child can assert it is running under that absence. Never carries a secret.",
-      "requiredIn": [
-        "test"
-      ],
+      "requiredIn": [],
       "shape": {
         "kind": "string"
       },
