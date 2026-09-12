@@ -15,7 +15,9 @@
     },
     {
       "laneId": "bin-parse",
-      "classes": ["BIN_SYNTAX"],
+      "classes": [
+        "BIN_SYNTAX"
+      ],
       "class": "PROVEN",
       "command": "node --check over every tracked bin/*.mjs",
       "evidence": "every tracked bin entry point parses; the BIN_SYNTAX class of the validation universe",
@@ -45,7 +47,9 @@
     },
     {
       "laneId": "full-regression",
-      "classes": ["FULL_REGRESSION"],
+      "classes": [
+        "FULL_REGRESSION"
+      ],
       "class": "PROVEN",
       "command": "npm test",
       "evidence": "full offline regression 4789 passed / 18 skipped / 0 failed at the certified implementation",
@@ -65,7 +69,9 @@
     },
     {
       "laneId": "ui",
-      "classes": ["UI_LANE"],
+      "classes": [
+        "UI_LANE"
+      ],
       "class": "PROVEN",
       "command": "npm --prefix ui/control-center run typecheck && npm --prefix ui/control-center run test && npm --prefix ui/control-center run build",
       "evidence": "UI typecheck PASS, 63 tests passed, build PASS at the certified implementation",
@@ -75,7 +81,9 @@
     },
     {
       "laneId": "browser-workflow",
-      "classes": ["BROWSER_WORKFLOW"],
+      "classes": [
+        "BROWSER_WORKFLOW"
+      ],
       "class": "PROVEN",
       "command": "npm run control-center:ui:browser",
       "evidence": "browser workflow lane 4 passed / 0 failed on the qualified host at the certified implementation",
@@ -85,7 +93,10 @@
     },
     {
       "laneId": "owner-manual",
-      "classes": ["MANUAL_OWNER", "LIVE_APP_SMOKE"],
+      "classes": [
+        "MANUAL_OWNER",
+        "LIVE_APP_SMOKE"
+      ],
       "class": "UNAVAILABLE_CAPABILITY",
       "command": "npm run lanes:manual -- --plan / --execute under one-shot owner authorization",
       "evidence": "the 12 manual-owner harnesses and 6 live-app smokes are declared, classified and have never executed",
@@ -96,12 +107,12 @@
     {
       "laneId": "exact-checkpoint-ci",
       "classes": [],
-      "class": "BLOCKED_EXTERNAL",
+      "class": "PROVEN",
       "command": "GitHub Actions on the candidate SHA",
-      "evidence": "run 34304312294 job 102317699005 at c18db55970a6497470191c8c9ef58f5012a96c8c completed with zero executed steps (NO_STEPS_BILLING_OR_PLATFORM_BLOCK)",
-      "evidenceSha": "c18db55970a6497470191c8c9ef58f5012a96c8c",
-      "unblockCondition": "restore GitHub Actions execution (billing or an alternative runner) or record an owner-selected route; never project execution from a local workflow parse",
-      "revisitDate": "2026-10-11"
+      "evidence": "GitHub Actions run 34705274649 conclusion=success at 66df26b7 (11m25s, environmentClass=CI), the exact-head execution of npm run gate:ci",
+      "evidenceSha": "66df26b700bc4bff94d9fb2a3b99200b0e73f1ff",
+      "unblockCondition": null,
+      "revisitDate": null
     },
     {
       "laneId": "dependency-advisory",

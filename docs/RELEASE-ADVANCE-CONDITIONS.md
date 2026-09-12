@@ -14,9 +14,9 @@ Project completion status: `OPERATIONALLY_ACCEPTED`.
 
 The three counts that give the status meaning are carried with it:
 
-- lanes proven: **8** `<!--status:VALIDATION_LANE_PROVEN_COUNT=8-->`
-- lanes externally blocked with a current record: **1**
-  `<!--status:VALIDATION_LANE_BLOCKED_EXTERNAL_COUNT=1-->`
+- lanes proven: **9** `<!--status:VALIDATION_LANE_PROVEN_COUNT=9-->`
+- lanes externally blocked with a current record: **0**
+  `<!--status:VALIDATION_LANE_BLOCKED_EXTERNAL_COUNT=0-->`
 - lanes never attempted: **1**
   `<!--status:VALIDATION_LANE_UNAVAILABLE_CAPABILITY_COUNT=1-->`
 - separately, proven lanes carrying stale evidence: **1**
@@ -50,7 +50,7 @@ evaluation at the certified checkpoint
 | # | Condition | Backing check | State at this checkpoint |
 |---|---|---|---|
 | 1 | `validation-lane-closure` | `validation-lane-state` | UNMET — `clean-checkout` and `exact-checkpoint-ci` carry evidence older than the baseline |
-| 2 | `exact-head-ci-authority` | `ci-block-record` | UNMET — `CI_STATUS: NOT_OBSERVED`, no executed SHA |
+| 2 | `exact-head-ci-authority` | `ci-block-record` | MET — `CI_STATUS: EXECUTED_PASS`, run 34705274649 executed at 66df26b7 |
 | 3 | `autonomous-yield-proof` | `yield-campaign-result` | UNAVAILABLE — check created by group 12, not present |
 | 4 | `completion-ledger-truth` | `ledger-agreement` | MET — `strict_errors=0 legacy_undeclared=0 ledger_errors=0` |
 | 5 | `operator-cli-contract` | `operator-cli-sweep` | UNMET — 63 discovered, 31 conforming, 32 undeclared |

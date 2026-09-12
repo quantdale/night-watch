@@ -8,8 +8,8 @@ Task ID: nightwatch-production-completion-programme-v1
 Phase: PRODUCTION_COMPLETION_PROGRAMME_V1
 Status: IN_PROGRESS
 Starting SHA: 36bd4930db978423f97e16f35250c2e66bfa112c
-Last validated implementation SHA: 88e3c3fb52937ff303b0944cc22cfee624bf807e
-Last substantive checkpoint SHA: 88e3c3fb52937ff303b0944cc22cfee624bf807e
+Last validated implementation SHA: 66df26b700bc4bff94d9fb2a3b99200b0e73f1ff
+Last substantive checkpoint SHA: 66df26b700bc4bff94d9fb2a3b99200b0e73f1ff
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-production-completion-3d648499
@@ -25,8 +25,8 @@ session was reconciled over it.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 36bd4930db978423f97e16f35250c2e66bfa112c
-LAST_VALIDATED_IMPLEMENTATION_SHA: 88e3c3fb52937ff303b0944cc22cfee624bf807e
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 88e3c3fb52937ff303b0944cc22cfee624bf807e
+LAST_VALIDATED_IMPLEMENTATION_SHA: 66df26b700bc4bff94d9fb2a3b99200b0e73f1ff
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 66df26b700bc4bff94d9fb2a3b99200b0e73f1ff
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
 PHASE_PRODUCTION_COMPLETION_PROGRAMME_V1_STATUS: IN_PROGRESS

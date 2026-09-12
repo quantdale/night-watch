@@ -6,7 +6,7 @@ Title: Nightwatch production completion programme
 Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-production-completion-programme-v1
 Starting SHA: 36bd4930db978423f97e16f35250c2e66bfa112c
-Last validated implementation SHA: 88e3c3fb52937ff303b0944cc22cfee624bf807e
+Last validated implementation SHA: 66df26b700bc4bff94d9fb2a3b99200b0e73f1ff
 Last checkpoint: planning checkpoint integrated to `main` at `fe6226a`; the
 owned session `nightwatch-production-completion-3d648499` was created from
 that base (session `sess-506a5055dcc2`) and G1.1 is the current action.
@@ -18,8 +18,8 @@ Authorization class: PRODUCTION_COMPLETION_PROGRAMME_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 36bd4930db978423f97e16f35250c2e66bfa112c
-LAST_VALIDATED_IMPLEMENTATION_SHA: 88e3c3fb52937ff303b0944cc22cfee624bf807e
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 88e3c3fb52937ff303b0944cc22cfee624bf807e
+LAST_VALIDATED_IMPLEMENTATION_SHA: 66df26b700bc4bff94d9fb2a3b99200b0e73f1ff
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 66df26b700bc4bff94d9fb2a3b99200b0e73f1ff
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PHASE_PRODUCTION_COMPLETION_PROGRAMME_V1_STATUS: IN_PROGRESS
