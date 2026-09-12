@@ -124,10 +124,21 @@ export class LocalCampaignError extends Error {
   }
 }
 
+/**
+ * The resolved reasoner identity the caller validated before the engine
+ * spawned anything. Recording it in the campaign progress envelope is what
+ * makes a run's reasoner attributable after the fact.
+ */
+export interface LocalCampaignReasonerIdentity {
+  readonly path: string;
+  readonly digest: string;
+}
+
 export interface LocalCampaignInput {
   readonly campaignId: string;
   readonly ceilingName: AgentBudgetCeilingName;
   readonly executable: string;
+  readonly reasonerIdentity?: LocalCampaignReasonerIdentity;
   readonly args?: readonly string[];
   readonly provider?: string;
   readonly model?: string;
@@ -156,6 +167,8 @@ export type CampaignTerminationCounts = Record<AgentTerminationReason, number>;
 export interface LocalCampaignResult {
   readonly schemaVersion: typeof LOCAL_CAMPAIGN_VERSION;
   readonly campaignId: string;
+  /** Resolved reasoner path and digest for this run, when the caller recorded one. */
+  readonly reasonerIdentity: LocalCampaignReasonerIdentity | null;
   readonly terminationReason: AgentTerminationReason;
   readonly candidateIds: readonly string[];
   readonly actionCount: number;
@@ -225,6 +238,8 @@ interface CampaignProgress {
    * pre-W10 envelopes and on unscoped campaigns.
    */
   readonly investigationScope: readonly string[] | null;
+  /** Resolved reasoner identity this campaign ran under; absent on pre-F-19 envelopes. */
+  readonly reasonerIdentity: LocalCampaignReasonerIdentity | null;
   /** Present only when the campaign paused mid-investigation. */
   readonly pausedInvestigation: AgentCheckpoint | null;
 }
@@ -370,6 +385,20 @@ function parseCampaignProgress(value: unknown, campaignId: string): CampaignProg
     }
     investigationScope = Object.freeze([...(value.investigationScope as string[])]);
   }
+  let reasonerIdentity: LocalCampaignReasonerIdentity | null = null;
+  if (value.reasonerIdentity !== undefined && value.reasonerIdentity !== null) {
+    const identity = value.reasonerIdentity;
+    if (
+      !isRecord(identity) ||
+      typeof identity.path !== 'string' ||
+      !path.isAbsolute(identity.path) ||
+      typeof identity.digest !== 'string' ||
+      !/^sha256:[0-9a-f]{64}$/.test(identity.digest)
+    ) {
+      throw new AgentCheckpointError('CORRUPT', 'campaignProgress.reasonerIdentity is invalid');
+    }
+    reasonerIdentity = { path: identity.path, digest: identity.digest };
+  }
   return {
     version: CAMPAIGN_PROGRESS_VERSION,
     nextInvestigationIndex: value.nextInvestigationIndex,
@@ -378,6 +407,7 @@ function parseCampaignProgress(value: unknown, campaignId: string): CampaignProg
     terminationCounts: counts,
     strategy,
     investigationScope,
+    reasonerIdentity,
     pausedInvestigation,
   };
 }
@@ -479,12 +509,15 @@ function driverAndPolicy(input: LocalCampaignInput) {
   }
   const extraEnv: Record<string, string> = {};
   const allowedEnvKeys: string[] = [];
-  for (const key of ['NIGHTWATCH_PRINT_CLI', 'NIGHTWATCH_PRINT_ARGS']) {
-    const value = process.env[key];
-    if (typeof value === 'string' && value.length > 0) {
-      extraEnv[key] = value;
-      allowedEnvKeys.push(key);
-    }
+  // Literal reads, never assembled names: the environment surface is
+  // statically enumerable (config/environment-surface.v1.json).
+  if (typeof process.env.NIGHTWATCH_PRINT_CLI === 'string' && process.env.NIGHTWATCH_PRINT_CLI.length > 0) {
+    extraEnv.NIGHTWATCH_PRINT_CLI = process.env.NIGHTWATCH_PRINT_CLI;
+    allowedEnvKeys.push('NIGHTWATCH_PRINT_CLI');
+  }
+  if (typeof process.env.NIGHTWATCH_PRINT_ARGS === 'string' && process.env.NIGHTWATCH_PRINT_ARGS.length > 0) {
+    extraEnv.NIGHTWATCH_PRINT_ARGS = process.env.NIGHTWATCH_PRINT_ARGS;
+    allowedEnvKeys.push('NIGHTWATCH_PRINT_ARGS');
   }
   return {
     reasoner: createCliReasonerDriver({
@@ -784,6 +817,7 @@ function buildCampaignCheckpoint(
       engine.input.investigationScope === undefined || engine.input.investigationScope.length === 0
         ? null
         : [...engine.input.investigationScope],
+    reasonerIdentity: engine.input.reasonerIdentity ?? null,
     pausedInvestigation,
   };
   const document: Record<string, unknown> = { ...checkpoint, campaignProgress: { ...progress } };
@@ -828,6 +862,7 @@ function resultOf(
   return {
     schemaVersion: LOCAL_CAMPAIGN_VERSION,
     campaignId: engine.input.campaignId,
+    reasonerIdentity: engine.input.reasonerIdentity ?? null,
     terminationReason,
     candidateIds,
     actionCount: engine.acc.actionLog.length,

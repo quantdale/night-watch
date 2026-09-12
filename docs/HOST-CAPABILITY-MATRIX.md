@@ -15,12 +15,18 @@ document.
 
 ## 1. Runtime and platform
 
-| Requirement | Declared | Qualified on | If absent |
+| Requirement | Declared range | Qualified points | If absent |
 | --- | --- | --- | --- |
-| Node.js | `engines.node >= 20` | 20.x and 22.22.1 | `npm ci` refuses; `gate:clean` qualifies a disposable Node 20 checkout explicitly |
+| Node.js | `engines.node >=20` | 20.x and 22.22.1 | `npm ci` refuses; `gate:clean` qualifies a disposable Node 20 checkout explicitly |
 | Operating system | not constrained in the manifest | Linux (x86_64, WSL2 kernel 6.6) | process, namespace and filesystem-identity lanes report unsupported rather than passing |
-| Package manager | `npm ci` against the committed `package-lock.json` | npm 10.x; verified 2026-09-09 by a disposable `npm ci --offline`, 7 packages, lockfile byte-identical afterwards | a resolution that does not match the lockfile is a reproducibility failure, not a warning |
+| Package manager | `npm ci` against the committed `package-lock.json` | npm 10.x; verified 2026-09-12 by a disposable `npm ci --offline`, 7 packages, lockfile byte-identical afterwards | a resolution that does not match the lockfile is a reproducibility failure, not a warning |
 | Shell | none — no Nightwatch surface passes a runtime string to a shell | n/a | n/a |
+
+The declaration is a range; the evidence is two points. A lane on Node 21, or
+on a host outside Linux x86_64 under a WSL2 kernel, reports its runtime as
+`UNQUALIFIED` and never inherits the declared-range pass;
+`config/dependency-currency.v1.json` separates the range from the qualified
+points and `bin/project-state-check.mjs` enforces the distinction.
 
 Nightwatch is a **private local tool**. There is no supported deployment
 target, so "portability" here means: which lanes can a given host honestly
@@ -117,7 +123,7 @@ non-fixture input; an advisory is published whose reachable path does not
 depend on template compilation; or the fixture's single call site grows a
 second consumer.
 
-**Review date.** 2026-09-09.
+**Review date.** 2026-09-09; revisit interval 30 days (due 2026-10-09, carried and enforced from `config/dependency-currency.v1.json`).
 
 **What is NOT claimed.** No current online advisory scan was performed. This
 campaign's safety boundary prohibits network dependency fetching, so

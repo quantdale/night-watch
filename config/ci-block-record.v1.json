@@ -1,0 +1,81 @@
+{
+  "schemaVersion": "nightwatch.ci-block-record.v1",
+  "definitionName": "Nightwatch exact-head CI block record (F-02)",
+  "note": "The external block is data, not prose: run identity, job identity, block class, the date observed, the named owner action that would clear it, the condition under which it is re-observed, and a revisit date after which agent:check reports CI_BLOCK_RECORD_STALE. Candidate routes are recorded with their trade-offs; route selection is an OWNER DECISION (task 3.11) and no substitute route may set CI_EXECUTED_SHA.",
+  "runId": "34304312294",
+  "jobId": "102317699005",
+  "observedSha": "c18db55970a6497470191c8c9ef58f5012a96c8c",
+  "blockClass": "NO_STEPS_BILLING_OR_PLATFORM_BLOCK",
+  "observedDate": "2026-09-04",
+  "ownerAction": "Restore GitHub Actions execution (billing or spending-limit change on the GitHub account) or authorize one of the recorded candidate routes; the owner selects the route under task 3.11.",
+  "revisitCondition": "Re-observe an exact-head run after the owner action lands, or at the revisit date, whichever comes first, and record the new run and job identity; never project execution from a local workflow parse.",
+  "revisitDate": "2026-10-11",
+  "observedStepCount": 0,
+  "history": [
+    {
+      "runId": "33572572053",
+      "jobId": "100069494765",
+      "observedSha": "c3fed38abd281e8648c039ac3befe8034c13e868",
+      "observedDate": "2026-08-25",
+      "classification": "EXECUTED_TEST_FAILURE",
+      "defectClasses": [
+        {
+          "class": "ABSOLUTE_EXTERNAL_PATH_DEPENDENCE",
+          "suite": "tests/unit/eligibilityCensus.test.ts",
+          "detail": "asserted census CONTENT without asserting the census POPULATION; DEFAULT_SIBLING_ROOT cannot exist on a runner, so every repository was correctly SOURCE_UNAVAILABLE and no census was emitted"
+        },
+        {
+          "class": "UNDECLARED_BINARY_INVOCATION",
+          "suite": "tests/unit/l6Containment.test.ts",
+          "detail": "asserted rootless L6 containment is always available; the ubuntu-24.04 image ships no Bubblewrap binary, so qualification correctly failed closed with BWRAP_UNAVAILABLE"
+        }
+      ]
+    }
+  ],
+  "routeSelection": {
+    "state": "OWNER_DECISION_REQUIRED",
+    "ownerDecision": "3.11",
+    "selectedRouteId": null
+  },
+  "candidateRoutes": [
+    {
+      "routeId": "self-hosted-runner",
+      "summary": "Run the existing hardening workflow on a self-hosted GitHub Actions runner under the standing safety boundary.",
+      "command": "GitHub Actions workflow Nightwatch hardening on a self-hosted runner at the exact candidate SHA",
+      "source": "GITHUB_ACTIONS",
+      "provesGitHubExecution": true,
+      "canSetCiExecutedSha": true,
+      "tradeOffs": [
+        "Genuinely executes GitHub Actions at the exact head, so it is the only route that can satisfy exact-head CI authority",
+        "Requires provisioning and maintaining a persistent runner host with its own patching, isolation and credential posture",
+        "Runner identity and exact-head provenance must be bound and recorded, or the execution is not trustworthy evidence"
+      ]
+    },
+    {
+      "routeId": "scheduled-local-gate-ci",
+      "summary": "Execute gate:ci on a schedule from a disposable Node 20 checkout, with the same receipt discipline as CI, explicitly classified LOCAL_NOT_CI.",
+      "command": "npm run gate:ci (Node 20, disposable checkout, scheduled)",
+      "source": "LOCAL_GATE_CI",
+      "provesGitHubExecution": false,
+      "canSetCiExecutedSha": false,
+      "tradeOffs": [
+        "Executable today with no external dependency and no credential surface",
+        "Does not prove GitHub execution, billing unblocked, or runner topology; it is a local substitute and is classified as one",
+        "Depends on the owner host being available; a missed schedule produces no evidence rather than a false pass"
+      ]
+    },
+    {
+      "routeId": "gate-topology-substitute",
+      "summary": "Accept the gate:topology lane as coverage of the runner-topology class specifically, with an explicit statement that it does not prove GitHub execution.",
+      "command": "npm run gate:topology",
+      "source": "GATE_TOPOLOGY",
+      "provesGitHubExecution": false,
+      "canSetCiExecutedSha": false,
+      "tradeOffs": [
+        "Closes the two known host-topology defect classes locally and in any CI that executes",
+        "Does not execute on GitHub and cannot satisfy exact-head CI authority; CI_EXECUTED_SHA stays NONE",
+        "The block remains current, so the revisit condition and owner action stay load-bearing rather than being retired"
+      ]
+    }
+  ]
+}

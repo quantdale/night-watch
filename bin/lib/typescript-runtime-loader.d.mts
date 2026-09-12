@@ -33,6 +33,9 @@ export interface TypeScriptRuntimeLoaderModuleMap {
   "src/core/campaignIntelligence/impact.ts": typeof import("../../src/core/campaignIntelligence/impact");
   "src/core/campaignIntelligence/planner.ts": typeof import("../../src/core/campaignIntelligence/planner");
   "src/core/campaignIntelligence/yield.ts": typeof import("../../src/core/campaignIntelligence/yield");
+  "src/core/config/environmentSurface.ts": typeof import("../../src/core/config/environmentSurface");
+  "src/core/config/reasonerExecutable.ts": typeof import("../../src/core/config/reasonerExecutable");
+  "src/core/dependencyCurrency/index.ts": typeof import("../../src/core/dependencyCurrency/index");
   "src/core/efficacy/index.ts": typeof import("../../src/core/efficacy/index");
   "src/core/environment/index.ts": typeof import("../../src/core/environment/index");
   "src/core/evidenceRetention/index.ts": typeof import("../../src/core/evidenceRetention/index");

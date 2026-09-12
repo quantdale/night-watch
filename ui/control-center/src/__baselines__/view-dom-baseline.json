@@ -1,0 +1,42 @@
+{
+  "overview": {
+    "sha256": "aa5d609481f4ce5c8ce361bd1282f88e064d14fe2f5f945ea00dd8b2a6f6b697",
+    "length": 18135
+  },
+  "safety": {
+    "sha256": "0984ba724109bf572d40cd30d5c1a8a4d1a23e06d99979841271d1e2228cfd75",
+    "length": 13846
+  },
+  "runs": {
+    "sha256": "f9650cd7217612b2be717790fded58707dc429b0903315f79432dfe1fbfc5b5b",
+    "length": 8297
+  },
+  "run-detail": {
+    "sha256": "5447854f11beb626dfbd7f6f08c5783be399df43929a657cfcf3f6f5e53f1074",
+    "length": 12697
+  },
+  "execution-graph": {
+    "sha256": "a57954f8ac6322e4281f72cd95d0898a4b5646f015854703734dece87277f8bb",
+    "length": 8908
+  },
+  "campaigns": {
+    "sha256": "f7110817c8ee604a14d4c9c428ba5a73a3562f414eb5d8255eba0b26781c1c75",
+    "length": 9581
+  },
+  "findings": {
+    "sha256": "ebe9b4d5af8c6aa9f2b8a69e5cade938e46a24fba926401450383623a4a7b7be",
+    "length": 7970
+  },
+  "reviewer": {
+    "sha256": "7eb4007d7e986e727c6640958b8bde3a35a7edf8c5f9f2890f71e59c37fe8d93",
+    "length": 13166
+  },
+  "source-intelligence": {
+    "sha256": "856c9e953d19069494a0c3acc4920f0dd0ec375c008ba781eb9e56eced4b71e3",
+    "length": 21046
+  },
+  "system-map": {
+    "sha256": "f5c19f60db58b54067074e2e9e871eff17ecece9a103b1bb143c3969f49ff294",
+    "length": 9548
+  }
+}

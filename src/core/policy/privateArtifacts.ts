@@ -30,11 +30,6 @@ export const PRIVATE_ARTIFACT_DEFAULT_RELATIVE_ROOT = path.join('.nightwatch', '
 export const PRIVATE_ARTIFACT_SUBTREES = ['findings', 'reviews'] as const;
 export type PrivateArtifactSubtree = (typeof PRIVATE_ARTIFACT_SUBTREES)[number];
 
-const SUBTREE_ROOT_ENV: Readonly<Record<PrivateArtifactSubtree, string>> = Object.freeze({
-  findings: PRIVATE_ARTIFACT_ROOT_ENV,
-  reviews: REVIEW_STORE_ROOT_ENV,
-});
-
 const SUBTREE_RELATIVE_ROOT: Readonly<Record<PrivateArtifactSubtree, string>> = Object.freeze({
   findings: PRIVATE_ARTIFACT_DEFAULT_RELATIVE_ROOT,
   reviews: path.join('.nightwatch', 'reviews'),
@@ -97,7 +92,12 @@ function assertKnownSubtree(subtree: PrivateArtifactSubtree): PrivateArtifactSub
 }
 
 function defaultRoot(subtree: PrivateArtifactSubtree = 'findings'): string {
-  const configured = process.env[SUBTREE_ROOT_ENV[assertKnownSubtree(subtree)]];
+  assertKnownSubtree(subtree);
+  // Literal reads, never an assembled env name: the surface is declared in
+  // config/environment-surface.v1.json and statically enumerable.
+  const configured = subtree === 'findings'
+    ? process.env.NIGHTWATCH_PRIVATE_STATE_DIR
+    : process.env.NIGHTWATCH_REVIEW_STORE_DIR;
   return configured === undefined || configured.trim() === ''
     ? path.join(os.homedir(), SUBTREE_RELATIVE_ROOT[subtree])
     : configured;

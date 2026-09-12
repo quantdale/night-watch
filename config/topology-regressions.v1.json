@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "nightwatch.topology-regressions.v1",
+  "definitionName": "Nightwatch topology regression declarations",
+  "note": "A gate suite that depends on an absolute path outside the checkout, or invokes a binary with no capability probe, is rejected by gate:topology unless it is declared here with a reason. These entries record the pre-existing host-path suites that predate D-109's two-branch invariant; they are a visible debt ledger, not an endorsement. A new dependency must either carry a capability discriminant or add a declared entry here, which is what makes the categorical rule enforceable without asserting against one specific path.",
+  "externalPathDeclarations": [
+    {
+      "file": "tests/unit/c07DerivedSemantics.test.ts",
+      "literal": "/home/dalepalaca/go/src/alphaus-main/REPOSITORIES",
+      "capability": "LEGACY_HOST_PATH_SKIP",
+      "reason": "C-07 real-population suite skips via fs.existsSync of the sibling checkout; the D-109 system-reported discriminator is a follow-up repair, declared rather than silently tolerated."
+    },
+    {
+      "file": "tests/unit/c08DeploymentBinding.test.ts",
+      "literal": "/home/dalepalaca/go/src/alphaus-main/REPOSITORIES",
+      "capability": "LEGACY_HOST_PATH_SKIP",
+      "reason": "C-08 real-artifact extraction suite skips via fs.existsSync of the sibling checkout; follow-up repair owed."
+    },
+    {
+      "file": "tests/unit/c09SpecExpectations.test.ts",
+      "literal": "/home/dalepalaca/go/src/alphaus-main/REPOSITORIES",
+      "capability": "LEGACY_HOST_PATH_SKIP",
+      "reason": "C-09 sibling-source derivation suite reads the real checkout only when present; follow-up repair owed."
+    },
+    {
+      "file": "tests/unit/oracleExpectationRealSource.test.ts",
+      "literal": "/home/dalepalaca/go/src/alphaus-main/REPOSITORIES",
+      "capability": "LEGACY_HOST_PATH_SKIP",
+      "reason": "Real-source expectation proof suite probes the sibling root directly; follow-up repair owed."
+    },
+    {
+      "file": "tests/unit/phase12CoverageInventory.test.ts",
+      "literal": "/home/dalepalaca/go/src/alphaus-main/REPOSITORIES/mobingilabs/ripple-api/.git/HEAD",
+      "capability": "LEGACY_HOST_PATH_SKIP",
+      "reason": "Phase 12 inventory suite converts the sibling HEAD path when present; follow-up repair owed."
+    },
+    {
+      "file": "tests/unit/syntheticCampaignDiagnostics.test.ts",
+      "literal": "/home/someone/secret/path.test.ts",
+      "capability": "NONE_INPUT_FIXTURE",
+      "reason": "Synthetic fixture input to the receipt allowlist parser; the path is opaque data and is never resolved or read."
+    }
+  ],
+  "binaryDeclarations": [],
+  "routeDeferrals": [
+    {
+      "subject": "CI route selection (task 3.11)",
+      "ownerDecision": "3.11",
+      "reason": "Owner decision required: clearing the GitHub block, a self-hosted runner, or accepting gate:topology plus a current block record. Recorded with trade-offs in config/ci-block-record.v1.json; not selected by any agent."
+    }
+  ]
+}

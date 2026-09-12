@@ -31,6 +31,36 @@ function fail(code, message) {
   process.exitCode = code;
 }
 
+/**
+ * F-19 startup validation: the declared environment surface is validated
+ * before any child process is created. Unknown NIGHTWATCH_* names are
+ * reported with their closest declared neighbour; a malformed declared value
+ * refuses the command.
+ */
+function assertStartupEnvironment() {
+  const [surfaceMod] = loadTypeScriptModules(['src/core/config/environmentSurface.ts'], { root });
+  const surface = surfaceMod.loadEnvironmentSurface();
+  const fileEnvironment = surfaceMod.loadDotEnvLayer(root);
+  const merged = surfaceMod.mergeDotEnvLayer(process.env, fileEnvironment, surface);
+  for (const line of surfaceMod.reportUnknownEnvironmentVariables(merged, surface)) {
+    console.error(`NIGHTWATCH_AGENT: ${line}`);
+  }
+  surfaceMod.assertEnvironmentSurface(merged, surface, { mode: 'startup' });
+}
+
+/**
+ * Resolve the reasoner executable to the exact canonical file that will be
+ * spawned, record its identity, and never pass the configured value through a
+ * shell. `process.execPath` is the safe default when no host value is set.
+ */
+function resolveReasonerIdentity(reasonerMod, configured) {
+  const identity = reasonerMod.resolveReasonerExecutable(configured ?? process.execPath);
+  return {
+    executable: identity.path,
+    reasonerIdentity: { path: identity.path, digest: identity.digest },
+  };
+}
+
 if (command === 'status') {
   console.log(JSON.stringify({
     schemaVersion: 'nightwatch.agent-protocol.v1',
@@ -41,6 +71,14 @@ if (command === 'status') {
     filing: { humanReviewRequired: true, externalPublication: 'PROHIBITED', autoLeslie: false, autoSlack: false },
   }, null, 2));
 } else if (command === 'test') {
+  try {
+    assertStartupEnvironment();
+  } catch (error) {
+    fail(3, error instanceof Error ? error.message : 'ENVIRONMENT_VALUE_MALFORMED');
+  }
+  if (process.exitCode === 3) {
+    // Fail closed before the subprocess; the branch below must not run.
+  } else {
   const pwBin = path.join(root, 'node_modules', '.bin', process.platform === 'win32' ? 'playwright.cmd' : 'playwright');
   const suites = [
     'tests/unit/agentProtocol.test.ts',
@@ -68,6 +106,7 @@ if (command === 'status') {
   });
   emitChildStdio(result);
   process.exitCode = result.status ?? 1;
+  }
 } else if (command === 'campaign') {
   const sub = args[1] ?? 'help';
   const flags = Object.fromEntries(args.slice(2).filter((item) => item.startsWith('--')).map((item) => {
@@ -85,13 +124,22 @@ if (command === 'status') {
     } else if (!process.env.NIGHTWATCH_REASONER_CLI && !process.env.NIGHTWATCH_PRINT_CLI) {
       fail(2, 'REASONER_CLI_NOT_CONFIGURED — set NIGHTWATCH_REASONER_CLI or NIGHTWATCH_PRINT_CLI; refusing to start');
     } else {
+      let startupOk = true;
+      try {
+        assertStartupEnvironment();
+      } catch (error) {
+        fail(3, error instanceof Error ? error.message : 'ENVIRONMENT_VALUE_MALFORMED');
+        startupOk = false;
+      }
       const maxTurnsRaw = flags['max-turns'];
       const maxTurns = maxTurnsRaw === undefined ? undefined : Number(maxTurnsRaw);
-      if (maxTurns !== undefined && (!Number.isInteger(maxTurns) || maxTurns < 1 || maxTurns > 50)) {
+      if (!startupOk) {
+        // Refused before any child process is created.
+      } else if (maxTurns !== undefined && (!Number.isInteger(maxTurns) || maxTurns < 1 || maxTurns > 50)) {
         fail(2, 'campaign run --max-turns must be an integer 1..50');
       } else {
-        const [mod, contextMod] = loadTypeScriptModules(
-          ['src/core/agentRuntime/localCampaign.ts', 'src/core/localInvestigation/ownerLocal.ts'],
+        const [mod, contextMod, reasonerMod] = loadTypeScriptModules(
+          ['src/core/agentRuntime/localCampaign.ts', 'src/core/localInvestigation/ownerLocal.ts', 'src/core/config/reasonerExecutable.ts'],
           { root },
         );
         const extraArgs = [];
@@ -101,10 +149,12 @@ if (command === 'status') {
           extraArgs.push(path.join(root, 'bin/nightwatch-reasoner-print.mjs'));
         }
         try {
+          const { executable, reasonerIdentity } = resolveReasonerIdentity(reasonerMod, process.env.NIGHTWATCH_REASONER_CLI);
           const result = await mod.runLocalCliCampaign({
             campaignId: typeof flags.id === 'string' && flags.id.length > 0 ? flags.id : `local-${Date.now()}`,
             ceilingName: DURATIONS.get(flags.duration),
-            executable: process.env.NIGHTWATCH_REASONER_CLI || process.execPath,
+            executable,
+            reasonerIdentity,
             args: extraArgs,
             provider: process.env.NIGHTWATCH_REASONER_PROVIDER ?? 'configured',
             model: process.env.NIGHTWATCH_REASONER_MODEL ?? 'configured',
@@ -144,8 +194,15 @@ if (command === 'status') {
     } else if (typeof flags.id !== 'string' || flags.id.length === 0) {
       fail(2, 'campaign resume requires --id=<campaignId>');
     } else {
-      const [mod, contextMod] = loadTypeScriptModules(
-        ['src/core/agentRuntime/localCampaign.ts', 'src/core/localInvestigation/ownerLocal.ts'],
+      let resumeStartupOk = true;
+      try {
+        assertStartupEnvironment();
+      } catch (error) {
+        fail(3, error instanceof Error ? error.message : 'ENVIRONMENT_VALUE_MALFORMED');
+        resumeStartupOk = false;
+      }
+      const [mod, contextMod, reasonerMod] = loadTypeScriptModules(
+        ['src/core/agentRuntime/localCampaign.ts', 'src/core/localInvestigation/ownerLocal.ts', 'src/core/config/reasonerExecutable.ts'],
         { root },
       );
       const extraArgs = [];
@@ -157,6 +214,8 @@ if (command === 'status') {
       const maxTurnsRaw = flags['max-turns'];
       const maxTurns = maxTurnsRaw === undefined ? undefined : Number(maxTurnsRaw);
       try {
+        if (!resumeStartupOk) throw new Error('ENVIRONMENT_VALUE_MALFORMED');
+        const { executable, reasonerIdentity } = resolveReasonerIdentity(reasonerMod, process.env.NIGHTWATCH_REASONER_CLI);
         // ceilingName is required input but resume runs under the checkpoint's
         // own stored budget policy; the multi-investigation progress (next
         // investigation index, stagnation count, termination counts) resumes
@@ -164,7 +223,8 @@ if (command === 'status') {
         const result = await mod.resumeLocalCliCampaign({
           campaignId: flags.id,
           ceilingName: 'HOUR_1',
-          executable: process.env.NIGHTWATCH_REASONER_CLI || process.execPath,
+          executable,
+          reasonerIdentity,
           args: extraArgs,
           provider: process.env.NIGHTWATCH_REASONER_PROVIDER ?? 'configured',
           model: process.env.NIGHTWATCH_REASONER_MODEL ?? 'configured',

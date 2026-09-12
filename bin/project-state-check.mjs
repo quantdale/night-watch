@@ -22,8 +22,10 @@
  * reads files and runs read-only Git commands.
  */
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
+import { createRequire } from 'node:module';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
@@ -385,16 +387,132 @@ function probeWorkspaceClaims(agentText) {
   return { state: 'UNMET', detail: `claim_findings=${claims.join(',') || 'none'} legacy_undeclared=${legacyUndeclared}` };
 }
 
+// Group 9 (F-11): the dependency-currency record is evaluated through its
+// pure module. The lane class decides only whether the online advisory
+// assessment ran; the Vue review conditions, the runtime qualification, the
+// lockfile verification and the clean-claim guard are mechanized here.
+const DEPENDENCY_CURRENCY_RECORD_PATH = 'config/dependency-currency.v1.json';
+const DEPENDENCY_SOURCE_RE = /\.(?:ts|mjs)$/;
+
+function readTrackedSources(root) {
+  const listed = gitReadOnly(root, ['ls-files']);
+  if (listed === null) return [];
+  const sources = [];
+  for (const line of listed.split('\n')) {
+    const file = line.trim();
+    if (!DEPENDENCY_SOURCE_RE.test(file)) continue;
+    if (file.startsWith('ui/') || file.endsWith('.d.ts') || file.endsWith('.d.mts')) continue;
+    try {
+      sources.push({ path: file, text: fs.readFileSync(path.join(root, file), 'utf8') });
+    } catch {
+      // An unreadable tracked source is omitted; the call-site scan is
+      // non-vacuous because a vanished fixture call site is itself a finding.
+    }
+  }
+  return sources;
+}
+
+function readGovernedDocuments(root) {
+  // The clean-claim guard judges CURRENT-TRUTH surfaces: README.md and every
+  // document whose declared role is CURRENT_TRUTH. APPEND_ONLY_ARCHIVE
+  // documents keep historical records verbatim — including quotes of claims
+  // later shown wrong — and are not rewritten or judged as current truth.
+  const paths = ['README.md'];
+  const roles = readJsonAt(root, 'config/document-role.v1.json');
+  if (roles !== null && Array.isArray(roles.documents)) {
+    for (const entry of roles.documents) {
+      if (entry !== null && typeof entry === 'object' && entry.role === 'CURRENT_TRUTH' && typeof entry.path === 'string') paths.push(entry.path);
+    }
+  }
+  const documents = [];
+  for (const file of paths) {
+    try {
+      documents.push({ path: file, text: fs.readFileSync(path.join(root, file), 'utf8') });
+    } catch {
+      // A missing governed document is reported by the documentation-currency
+      // rule; the clean-claim scan records the documents it could read.
+    }
+  }
+  return documents;
+}
+
+function safeErrorLabel(error) {
+  const message = error instanceof Error ? error.message : '';
+  return /^[A-Z][A-Z0-9_]*$/.test(message) ? message : 'DEPENDENCY_CURRENCY_EVALUATION_FAILED';
+}
+
+function probeDependencyCurrency(root, lane, today) {
+  const { evaluateDependencyCurrency } = loadTypeScriptModule(root, 'src/core/dependencyCurrency/index.ts');
+  const record = readJsonAt(root, DEPENDENCY_CURRENCY_RECORD_PATH);
+  const packageJson = readJsonAt(root, 'package.json');
+  if (record === null || packageJson === null) {
+    return { state: 'UNAVAILABLE_CAPABILITY', detail: 'dependency-currency record or package.json unreadable' };
+  }
+  let matrix = '';
+  try {
+    matrix = fs.readFileSync(path.join(root, 'docs/HOST-CAPABILITY-MATRIX.md'), 'utf8');
+  } catch {
+    matrix = '';
+  }
+  let observedLockfileSha256 = null;
+  try {
+    observedLockfileSha256 = `sha256:${createHash('sha256').update(fs.readFileSync(path.join(root, 'package-lock.json'))).digest('hex')}`;
+  } catch {
+    observedLockfileSha256 = null;
+  }
+  const rootRequire = createRequire(path.join(root, 'package.json'));
+  return evaluateDependencyCurrency({
+    record,
+    today,
+    packageJson,
+    sources: readTrackedSources(root),
+    documents: readGovernedDocuments(root),
+    matrixText: matrix,
+    observed: {
+      nodeVersion: process.version,
+      platform: process.platform,
+      arch: process.arch,
+      kernelRelease: os.release(),
+    },
+    observedLockfileSha256,
+    advisoryLaneClass: lane.class,
+    resolveSpecifier: (specifier) => {
+      try {
+        rootRequire.resolve(specifier);
+        return true;
+      } catch {
+        return false;
+      }
+    },
+  });
+}
+
 function probeDependencyAdvisory(root, today) {
   const loaded = loadLaneState(root);
   if (!loaded.ok) return { state: 'UNAVAILABLE_CAPABILITY', detail: 'lane state unreadable' };
   const lane = loaded.lanes.find((entry) => entry.laneId === 'dependency-advisory');
   if (lane === undefined) return { state: 'UNMET', detail: 'no dependency-advisory lane record' };
-  if (lane.class === 'PROVEN') return { state: 'MET', detail: 'dependency advisory executed' };
+
+  let currency;
+  try {
+    currency = probeDependencyCurrency(root, lane, today);
+  } catch (error) {
+    return { state: 'UNAVAILABLE_CAPABILITY', detail: `dependency-currency evaluation unavailable: ${safeErrorLabel(error)}` };
+  }
+  if (!currency.ok) {
+    const findings = currency.findings.slice(0, 6).map((finding) => `${finding.code}: ${finding.detail}`);
+    const remaining = currency.findings.length - findings.length;
+    if (remaining > 0) findings.push(`${remaining} further finding(s)`);
+    return { state: 'UNMET', detail: findings.join('; ') };
+  }
+
+  const runtime = currency.runtimeQualification === null ? 'runtime unresolved' : `runtime ${currency.runtimeQualification.state}`;
+  const due = `vueReviewDue=${currency.vueReviewDueDate ?? 'NONE'} lockfileVerificationDue=${currency.lockfileVerificationDueDate ?? 'NONE'}`;
+  if (lane.class === 'PROVEN') return { state: 'MET', detail: `dependency advisory executed; ${runtime}; ${due}` };
   const condition = typeof lane.unblockCondition === 'string' && lane.unblockCondition.trim() !== '';
   const current = typeof lane.revisitDate === 'string' && lane.revisitDate >= today;
   if (condition && current) {
-    return { state: 'MET', detail: `recorded unavailable: ${lane.class}; owner action and revisit ${lane.revisitDate}` };
+    return { state: 'MET', detail: `recorded unavailable: ${lane.class}; owner action and revisit ${lane.revisitDate}; ${runtime}; ${due}` };
   }
   return { state: 'UNMET', detail: `class=${lane.class} condition=${condition} revisit=${lane.revisitDate ?? 'NONE'}` };
 }

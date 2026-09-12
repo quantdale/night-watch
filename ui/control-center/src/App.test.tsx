@@ -1,7 +1,9 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { App, ControlCenterErrorBoundary, PlaceholderView } from './App';
+import { App } from './App';
+import { ControlCenterErrorBoundary } from './shared';
+import { PlaceholderView } from './views/PlaceholderView';
 import { CONTROL_CENTER_API_PATHS } from './api';
 import { VIEW_DEFINITIONS } from './types';
 import type { OverviewSnapshot } from './types';

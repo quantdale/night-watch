@@ -35,6 +35,7 @@ import {
   defaultAgentBudgetPolicy,
 } from '../../src/core/agentProtocol/runtime';
 import { deriveInvestigationMemory } from '../../src/core/investigationMemory/derive';
+import { resolveReasonerExecutable } from '../../src/core/config/reasonerExecutable';
 
 const NODE = process.execPath;
 const RESPONSE_VERSION = REASONER_TURN_RESPONSE_VERSION;
@@ -551,6 +552,27 @@ test('executable resolution rejects unsafe or unknown binaries', () => {
   })).toThrow();
   const resolved = resolveCliReasoner({ ...valid, executable: NODE });
   expect(resolved.executableBasename).toBe(path.basename(NODE));
+});
+
+test('NIGHTWATCH_REASONER_CLI surface resolves an absolute executable identity', () => {
+  const dir = scratchDir();
+  expect(() => resolveReasonerExecutable('relative/reasoner')).toThrow(/absolute/);
+  expect(() => resolveReasonerExecutable(path.join(dir, 'missing-reasoner'))).toThrow(/does not exist/);
+  expect(() => resolveReasonerExecutable(dir)).toThrow(/regular file/);
+  const plain = path.join(dir, 'not-executable.txt');
+  fs.writeFileSync(plain, 'synthetic', { mode: 0o600 });
+  expect(() => resolveReasonerExecutable(plain)).toThrow(/execute bit/);
+  const identity = resolveReasonerExecutable(NODE);
+  expect(identity.path).toBe(fs.realpathSync(NODE));
+  expect(path.isAbsolute(identity.path)).toBe(true);
+  expect(identity.digest).toMatch(/^sha256:[0-9a-f]{64}$/);
+  expect(identity.sizeBytes).toBeGreaterThan(0);
+  // A different file gets a different digest: identity is content-bound.
+  const script = path.join(dir, 'reasoner-probe');
+  fs.writeFileSync(script, '#!/bin/sh\nexit 0\n', { mode: 0o755 });
+  const scriptIdentity = resolveReasonerExecutable(script);
+  expect(scriptIdentity.digest).toMatch(/^sha256:[0-9a-f]{64}$/);
+  expect(scriptIdentity.digest).not.toBe(identity.digest);
 });
 
 test('allowlisted PATH basenames resolve without a shell', () => {

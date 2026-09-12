@@ -1,0 +1,91 @@
+{
+  "schemaVersion": "nightwatch.dependency-currency.v1",
+  "definitionName": "Dependency and supply-chain currency (F-11, programme group 9)",
+  "note": "LOCAL ONLY. This record carries the machine-checkable half of the dependency assessment: the declared engines.node range separated from the qualified points, the EOL Vue fixture's review date and interval with its mechanized review conditions, the disposable npm ci --offline lockfile verification, and the recorded negative probes. It never records an online advisory result: the dependency-advisory lane stays UNAVAILABLE_CAPABILITY until one bounded registry query is authorized. bin/project-state-check.mjs evaluates this record through src/core/dependencyCurrency/index.ts and reports the result as release condition 8; an unqualified runtime, an elapsed review, a stale lockfile date, lockfile drift or any clean-result claim made while the lane is unavailable fails that condition.",
+  "advisoryLaneId": "dependency-advisory",
+  "runtime": {
+    "declaredRange": ">=20",
+    "qualifiedNode": ["20.x", "22.22.1"],
+    "qualifiedOs": {
+      "platform": "linux",
+      "arch": "x64",
+      "kernelMarker": "microsoft-standard-WSL2"
+    }
+  },
+  "vueReview": {
+    "dependency": "vue",
+    "version": "2.6.12",
+    "fixturePath": "tests/unit/rippleReadiness.test.ts",
+    "specifier": "vue/dist/vue.js",
+    "reviewDate": "2026-09-09",
+    "reviewIntervalDays": 30,
+    "conditions": [
+      "the Ripple product moves off Vue 2",
+      "the fixture begins compiling a template from non-fixture input",
+      "an advisory is published whose reachable path does not depend on template compilation",
+      "the fixture's single call site grows a second consumer"
+    ],
+    "mechanizedConditions": [
+      "call-site count: exactly one tracked source reaches the fixture through the declared specifier",
+      "literal-only template content: every Vue template/compile input is a string literal",
+      "require.resolve declared-dependency resolvability: every require.resolve specifier is a declared, on-disk-resolvable dependency"
+    ]
+  },
+  "lockfileVerification": {
+    "command": "npm ci --offline --no-audit --no-fund in a disposable directory containing only package.json and package-lock.json (npm cache only; no network)",
+    "date": "2026-09-12",
+    "intervalDays": 30,
+    "result": "PASS — added 7 packages; package-lock.json byte-identical before and after (sha256 compared); one expected warning: vue@2.6.12 END OF LIFE",
+    "lockfileSha256": "sha256:e87bf7337541d2ce03bb701deb09fc14853b5711c45688fcf8b647d04ebfe45c"
+  },
+  "probes": [
+    {
+      "id": "DC-001",
+      "target": "vue-call-site",
+      "description": "add a second tracked source that reaches the fixture through the declared specifier",
+      "expectedFinding": "DEPENDENCY_VUE_SECOND_CALL_SITE"
+    },
+    {
+      "id": "DC-002",
+      "target": "vue-template",
+      "description": "pass a variable to the Vue template option instead of a literal",
+      "expectedFinding": "DEPENDENCY_VUE_TEMPLATE_NON_LITERAL"
+    },
+    {
+      "id": "DC-003",
+      "target": "require-resolve-declaration",
+      "description": "remove vue from the declared dependencies while the fixture still resolves it",
+      "expectedFinding": "DEPENDENCY_VUE_UNDECLARED"
+    },
+    {
+      "id": "DC-004",
+      "target": "advisory-clean-claim",
+      "description": "insert a clean advisory-scan claim in a governed document while the lane is UNAVAILABLE",
+      "expectedFinding": "DEPENDENCY_ADVISORY_CLEAN_CLAIM_WHILE_UNAVAILABLE"
+    },
+    {
+      "id": "DC-005",
+      "target": "lockfile-staleness",
+      "description": "advance the clock beyond lockfileVerification.date + intervalDays",
+      "expectedFinding": "DEPENDENCY_LOCKFILE_VERIFICATION_STALE"
+    },
+    {
+      "id": "DC-006",
+      "target": "runtime-qualification",
+      "description": "observe Node 21 on the qualified OS",
+      "expectedFinding": "DEPENDENCY_RUNTIME_UNQUALIFIED_RUNTIME"
+    },
+    {
+      "id": "DC-007",
+      "target": "review-due",
+      "description": "advance the clock beyond vueReview.reviewDate + reviewIntervalDays",
+      "expectedFinding": "DEPENDENCY_REVIEW_DUE"
+    },
+    {
+      "id": "DC-008",
+      "target": "lockfile-drift",
+      "description": "change package-lock.json after the recorded verification digest",
+      "expectedFinding": "DEPENDENCY_LOCKFILE_DRIFT"
+    }
+  ]
+}

@@ -624,7 +624,7 @@ export function atomicallyReplaceValidatedStorageState(
 
 /** Resolve the storage-state path from the environment; null when unset. */
 export function resolveStorageStatePath(opts?: StorageStateOptions): string | null {
-  const raw = process.env[NIGHTWATCH_STORAGE_STATE_VAR];
+  const raw = process.env.NIGHTWATCH_STORAGE_STATE;
   if (raw === undefined || raw.trim() === '') return null;
   return validateStorageStateFile(raw.trim(), opts);
 }

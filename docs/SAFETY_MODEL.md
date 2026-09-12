@@ -1613,3 +1613,44 @@ min/median/max by `measureAuthCaptureLifetimes`. As of the 2026-09-12
 measurement the owner-local store contains an artefact but no lifecycle record
 (it predates the format), so the state is `UNKNOWN_AGE` and no cadence is
 claimed until a real capture record exists.
+
+## Reasoner executable surface (F-19, group 19)
+
+`bin/nightwatch-agent.mjs campaign run|resume` is the one place where a
+host-supplied string selects a program to run. The variable is
+`NIGHTWATCH_REASONER_CLI`; when it is unset the launcher never invents a
+capability and refuses (`REASONER_CLI_NOT_CONFIGURED`) unless
+`NIGHTWATCH_PRINT_CLI` names the deterministic print reasoner, in which case
+the invoking Node runtime (`process.execPath`) is the executable.
+
+The value is validated before use by `src/core/config/reasonerExecutable.ts`:
+it must be an absolute path to an existing, executable regular file. The path
+is canonicalized (symlinks resolved), refusal codes are categorical
+(`REASONER_EXECUTABLE_MISSING`, `REASONER_EXECUTABLE_NOT_ABSOLUTE`,
+`REASONER_EXECUTABLE_NOT_A_FILE`, `REASONER_EXECUTABLE_NOT_EXECUTABLE`,
+`REASONER_EXECUTABLE_UNREADABLE`, `REASONER_EXECUTABLE_TOO_LARGE`), and a
+`sha256:<64 hex>` digest of the exact bytes is computed with a bounded,
+streamed read. The resolved path and digest are recorded as the campaign's
+`reasonerIdentity` in the run result and in the campaign progress envelope, so
+a campaign's reasoner identity is attributable after the fact.
+
+**Never a shell.** The value is never passed to a shell and no component of it
+is ever interpreted as command syntax: `src/core/reasoner/cliReasoner.ts`
+spawns the canonical path with a literal argv array and `shell: false`, with
+its own byte budgets, deadline, and process-tree termination. The reasoner may
+read its request on stdin, write a response on stdout, and nothing else: it
+holds no Nightwatch authority, receives no credentials, and its output is
+validated as a typed protocol response before any effect. The child-process
+boundary rule in `bin/hardening-check.mjs` asserts this call site specifically
+(`shell:false`, resolved-path spawn, launcher validation through the shared
+resolver), so a future edit that enables a shell fails `hardening:check`
+rather than becoming a silent capability.
+
+**Declared, not ambient.** `NIGHTWATCH_REASONER_CLI` is part of
+`config/environment-surface.v1.json`, the single declaration of every
+NIGHTWATCH_* variable (purpose, shape, default, secret-bearing, consumers).
+`hardening:check` fails when a tracked source reads a NIGHTWATCH_* name with
+no declaration, startup validation refuses a malformed declared value before
+any browser, subprocess or socket, and `npm run nightwatch -- config` prints
+the effective configuration with per-variable source and secret-bearing values
+redacted to presence only.

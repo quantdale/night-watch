@@ -88,31 +88,129 @@ code-level gaps the second pass found by tracing the implementation
 
 ## 3. CI-topology clean gate and exact-head CI authority
 
-- [ ] 3.1 Build `gate:topology`: run the authoritative gate under independently
+- [x] 3.1 Build `gate:topology`: run the authoritative gate under independently
       togglable absences — sibling root unreadable, `bwrap` unreachable, Chrome
       unreachable, fresh `$HOME`
-- [ ] 3.2 Create the sibling-absent condition by making the real
+- [x] 3.2 Create the sibling-absent condition by making the real
       `DEFAULT_SIBLING_ROOT` path unreadable, never by editing the constant
-- [ ] 3.3 Prove the fail-closed path under each absence: capability reported
+- [x] 3.3 Prove the fail-closed path under each absence: capability reported
       UNSUPPORTED with a blocker code; no lane passes by inheritance
-- [ ] 3.4 Assert the inverse: a lane reporting PASS while its capability is
+- [x] 3.4 Assert the inverse: a lane reporting PASS while its capability is
       absent fails the topology gate, naming the lane and the active absence
-- [ ] 3.5 Reproduce the two known run-`33572572053` defect classes and add
+- [x] 3.5 Reproduce the two known run-`33572572053` defect classes and add
       permanent categorical regressions — no test may depend on an absolute
       path outside the checkout, or invoke a binary with no capability probe
-- [ ] 3.6 Register `gate:topology` in `config/validation-universe.v1.json` and
+- [x] 3.6 Register `gate:topology` in `config/validation-universe.v1.json` and
       the gate manifest; assert membership; refresh `inventoryDigest`
-- [ ] 3.7 Extend the CI block record with run identity, job identity, block
+      — registration and membership assertions landed; `inventoryDigest` is NOT
+      refreshed in this session by owner instruction (the owner refreshes it at
+      integration after staging the new files)
+- [x] 3.7 Extend the CI block record with run identity, job identity, block
       class, observation date, named owner action and revisit condition
 - [ ] 3.8 `project:check` fails `CI_BLOCK_RECORD_INCOMPLETE`; `agent:check`
       reports `CI_BLOCK_RECORD_STALE` on an expired record
+      — PARTIAL: `bin/lib/ci-block-record.mjs` implements both judgements and
+      `gate:topology` static mode enforces them against the live record;
+      `bin/agent-state.mjs` and `bin/project-state-check.mjs` are owned by
+      another session and are not edited (see the group record for the exact
+      two integration lines)
 - [ ] 3.9 `project:check` refuses a certification whose `CI_OBSERVED_SHA` does
       not match the certified checkpoint
-- [ ] 3.10 Record the three candidate CI routes with trade-offs; assert no
+      — PARTIAL: `evaluateCiCertification` refuses `CI_OBSERVED_SHA_MISMATCH`
+      naming both SHAs, is enforced by `gate:topology` static mode and
+      negative-probed; the `project:check` call site is owner-blocked
+- [x] 3.10 Record the three candidate CI routes with trade-offs; assert no
       substitute receipt can set `CI_EXECUTED_SHA`; classify a local `gate:ci`
       execution `LOCAL_NOT_CI`
 - [ ] 3.11 **Owner decision required:** select the CI route
 - [ ] 3.12 Full validation, integrate, release
+      — PARTIAL: `gate:topology`, `typecheck`, the focused suites and
+      `typecheck:bin` executed and PASS; `hardening:check`/`validation:universe`
+      fail only on the not-yet-staged universe entries and the
+      owner-refreshed digest; integration/release are the session owner's act
+
+### Group 3 record — executed 2026-09-12 in session `nightwatch-production-completion-3d648499`
+
+3.1/3.2. `bin/gate-topology.mjs` runs each absence inside a rootless Bubblewrap
+envelope with only that transformation applied: the real parsed
+`DEFAULT_SIBLING_ROOT` is masked with a tmpfs (the constant is never edited; the
+path is read from `src/core/source/siblingRoot.ts`), each bwrap candidate is
+masked with `/dev/null`, Chrome candidates and the Playwright browser bundle are
+masked, and `$HOME` is a fresh 0700 directory bound and exported. Each absence
+is independently selectable (`--absence=<id>`), so a failure names it. The
+default lane is the focused authoritative capability suites
+(`eligibilityCensus.test.ts`, `l6Containment.test.ts`); `--lane=campaign` runs
+`campaign:synthetic` and `--lane=full` runs `gate:local` and reads the persisted
+gate receipt.
+
+3.3/3.4. `npm run gate:topology` PASS in 57s: baseline + four absences all
+constructed with blocker codes (`SOURCE_REPOSITORY_UNAVAILABLE`,
+`BWRAP_UNAVAILABLE`, `CHROME_UNAVAILABLE`, fresh home) and every dependent lane
+green in its fail-closed branch; no lane claimed a PROVEN capability under
+absence. The inverse is enforced by `evaluateAbsence`/
+`detectInheritanceClaim` and exercised live on every run by an inverse
+self-test canary (must detect `deepContainmentLane: PROVEN` under bwrap absence,
+must not fire for the fail-closed classification). `bin/lib/topology-gate.mjs`
+passes a `--die-with-parent` envelope; the gate never contacts GitHub and never
+sets a CI field.
+
+3.5. `scanExternalAbsolutePathDependence` rejects any gate suite that resolves
+an absolute path outside the checkout without a declaration, and
+`scanUndeclaredBinaryInvocation` rejects any literal binary invocation with no
+capability discriminant (toolchain commands excepted). Historical shapes are
+reproduced as fixtures; six pre-existing host-path suites (`c07`, `c08`, `c09`,
+`oracleExpectationRealSource`, `phase12CoverageInventory`,
+`syntheticCampaignDiagnostics`) are declared in
+`config/topology-regressions.v1.json` as visible `LEGACY_HOST_PATH_SKIP` debt.
+The live scan over all 257 gate-selected suites is clean. The spec's
+`hardening:check` home for these two rules is owner-blocked; the rules and
+declarations are ready to call from `checkValidationUniverse`'s module.
+
+3.6. `gate:topology` is `package.json` `gate:topology`, `bin/gate-topology.mjs`
+is declared in `config/validation-universe.v1.json` `BIN_SYNTAX`, and both new
+suites are selected by `config/synthetic-campaign.v1.json`, so they run in the
+required `SYNTHETIC_CAMPAIGN` group. `AUTHORITATIVE_GATE` is derived, never
+declarable, so the suites are registered where they actually run rather than in
+a declarable exclusion class that the universe check would reject as a
+contradiction. Membership is asserted in `gateTopology.test.ts` and by
+`gate:topology static`. `inventoryDigest` is deliberately untouched; the
+computed digest is `sha256:df18f04bd666eb49455e78a2`.
+
+3.7/3.10. `config/ci-block-record.v1.json` (`nightwatch.ci-block-record.v1`)
+carries run `34304312294`, job `102317699005`, block class
+`NO_STEPS_BILLING_OR_PLATFORM_BLOCK`, observation date, named owner action, the
+revisit condition and date, the 33572572053 history with both defect classes,
+and the three candidate routes with their trade-offs. Route selection is
+`OWNER_DECISION_REQUIRED` (3.11) and no agent selected one.
+`applyCiExecutionEvidence` refuses `CI_EXECUTED_SHA` to `LOCAL_GATE_CI`
+(`LOCAL_NOT_CI`), `GATE_TOPOLOGY` (`RUNNER_TOPOLOGY_ONLY_NOT_CI`) and any
+zero-step GitHub run (`CI_EXECUTED_FROM_ZERO_STEP_REFUSED`); only an exact-head
+GitHub Actions run with executed steps may set it. `gate:topology static`
+asserts both refusals live.
+
+3.8/3.9 (owner-blocked integration). `validateCiBlockRecord`,
+`collectCiBlockStale` and `evaluateCiCertification` are the checks. Exact call
+sites for the owning sessions: in `bin/project-state-check.mjs`,
+`probeCiBlockRecord` (line ~307) should parse
+`config/ci-block-record.v1.json`, map failures to `CI_BLOCK_RECORD_INCOMPLETE`,
+and route `PROJECT_COMPLETION_STATUS`/`RELEASE_CHECKPOINT_SHA`/
+`CI_OBSERVED_SHA`/`CI_EXECUTED_SHA`/`CI_STATUS` through
+`evaluateCiCertification` to fail `CI_OBSERVED_SHA_MISMATCH`; in
+`bin/agent-state.mjs` the lane-revisit block (lines ~1020-1027) should call
+`collectCiBlockStale(record, today)` and push `CI_BLOCK_RECORD_STALE` with the
+record's owner action. Neither file was edited here.
+
+3.12 (validation evidence). Executed in the session worktree: `npm run gate:topology` PASS
+(exit 0, 5 entries, 0 findings, self-test true); `npm run typecheck` PASS;
+`npx playwright test tests/unit/gateTopology.test.ts
+tests/unit/ciBlockRecord.test.ts` 39 passed; `bin/bin-typecheck.mjs` reporting
+PASS with both new bins type-clean; `node bin/hardening-check.mjs` and
+`npm run validation:universe` FAIL only on the five not-yet-staged universe
+entries (`gateTopology.test.ts`, `ciBlockRecord.test.ts`, `gate-topology.mjs`,
+`bin/lib/topology-gate.mjs`, `bin/lib/ci-block-record.mjs`)
+and the owner-refreshed `inventoryDigest` (declared `sha256:6e20cf12931e570a28d883af`
+→ desired `sha256:df18f04bd666eb49455e78a2`); Git is out of bounds in this session, so
+staging is the owner's action. Integration/release are the session owner's act.
 
 ## 4. Operator CLI contract
 
@@ -380,23 +478,116 @@ outside this session). Integration and release are not performed here.
 ## 9. Dependency and supply-chain currency
 
 - [ ] 9.1 **Owner decision required:** authorize one bounded registry query
+      — AUTHORIZATION WITHHELD in this session: no network egress is
+      authorized, so the lane stays `UNAVAILABLE_CAPABILITY` and 9.2/9.3 stay
+      open
 - [ ] 9.2 Execute the read-only advisory assessment over the four declared
       dependencies and their lockfile closure; record date, registry, exact
       versions and per-advisory result
+      — BLOCKED by 9.1; no query was attempted and none is implied
 - [ ] 9.3 Assess each found advisory for reachability with its call path or the
       reason it is unreachable; a severity alone is not a disposition
-- [ ] 9.4 If authorization is withheld, keep the lane
+      — BLOCKED by 9.2
+- [x] 9.4 If authorization is withheld, keep the lane
       `UNAVAILABLE_CAPABILITY` with its acquisition condition and revisit date;
       assert no document implies a clean result
-- [ ] 9.5 Mechanize three of the four Vue review conditions: call-site count,
+- [x] 9.5 Mechanize three of the four Vue review conditions: call-site count,
       literal-only template content, `require.resolve` declared-dependency
       resolvability
 - [ ] 9.6 Carry the review date with an interval; `agent:check` reports it due
-- [ ] 9.7 Separate the declared `engines.node` range from the qualified points
+      — PARTIAL: the date and interval are carried in
+      `config/dependency-currency.v1.json` and the due state is computed and
+      reported by `project:check`; the `bin/agent-state.mjs` display line is
+      stated for its owner (file held by another owner per this session's
+      instruction), not applied here
+- [x] 9.7 Separate the declared `engines.node` range from the qualified points
       in the matrix; a lane on an unqualified runtime reports unqualified
-- [ ] 9.8 Re-run and re-date the disposable `npm ci --offline` lockfile
+- [x] 9.8 Re-run and re-date the disposable `npm ci --offline` lockfile
       verification; a stale date fails certification
 - [ ] 9.9 Full validation, integrate, release
+      — PARTIAL: local validation executed and recorded below; integration and
+      release are the session owner's action and were not performed by this
+      local worker
+
+### Group 9 record — executed 2026-09-12 in session `nightwatch-production-completion-3d648499`
+
+9.4. The lane is untouched: `dependency-advisory` in
+`config/validation-lane-state.v1.json` remains `UNAVAILABLE_CAPABILITY` with
+its acquisition condition and revisit `2026-10-11`. The no-clean-claim guard is
+mechanized in the new pure module: `config/dependency-currency.v1.json`
+(`nightwatch.dependency-currency.v1`) carries the record and
+`evaluateAdvisoryCleanClaims` fails
+`DEPENDENCY_ADVISORY_CLEAN_CLAIM_WHILE_UNAVAILABLE` on any clean-claim line in
+a current-answer document (README.md and every `CURRENT_TRUTH` document) while
+the lane is not `PROVEN`. Append-only archives keep historical records
+verbatim and are not judged as current truth, so the quoted past claim in
+`docs/DECISIONS.md` D-118 is not a finding. Negative probe DC-004 in
+`tests/unit/nw14HostCapabilityMatrix.test.ts`; the honest
+"UNAVAILABLE, not clean" form is asserted not to fail.
+
+9.5. All three conditions are mechanized in
+`src/core/dependencyCurrency/index.ts` and evaluated as part of release
+condition 8 through `bin/project-state-check.mjs`
+(`probeDependencyCurrency`): call-site count (exactly one tracked source may
+reach the fixture; zero fails `DEPENDENCY_VUE_CALL_SITE_MISSING`, more than one
+fails `DEPENDENCY_VUE_SECOND_CALL_SITE` naming every site and the review
+condition); literal-only template content (every `template:` value and
+`Vue.compile` argument must be a single string literal;
+`DEPENDENCY_VUE_TEMPLATE_NON_LITERAL` otherwise); and `require.resolve`
+declared-dependency resolvability (`DEPENDENCY_VUE_UNDECLARED` /
+`DEPENDENCY_REQUIRE_RESOLVE_UNRESOLVABLE`; the existing
+`checkDeclaredDependencyResolvability` hardening rule remains registered and
+unchanged). Probes DC-001/DC-002/DC-003 are registered in the record and
+exercised by dedicated cases.
+
+9.6. `config/dependency-currency.v1.json` carries `reviewDate: 2026-09-09` with
+`reviewIntervalDays: 30` (due `2026-10-09`). `collectDependencyReviewDue`
+computes the due state, `project:check` reports it as `DEPENDENCY_REVIEW_DUE`
+when elapsed and always carries `vueReviewDue=2026-10-09` in the condition
+detail. The `bin/agent-state.mjs` display line is stated for its owner (see the
+campaign handoff): after the F-02 lane-state block, load
+`config/dependency-currency.v1.json` and call
+`collectDependencyReviewDueFromRecord(raw, today)`, pushing
+`DEPENDENCY_REVIEW_DUE: <id> due <dueDate> (reviewed <reviewDate> +
+<intervalDays>d); <condition>` into `warnings`.
+
+9.7. `docs/HOST-CAPABILITY-MATRIX.md` §1 now carries separate `Declared range`
+and `Qualified points` columns (`engines.node >=20` vs `20.x and 22.22.1` plus
+Linux x86_64 WSL2 kernel) and states that a lane on Node 21 or on another OS
+reports `UNQUALIFIED` and never inherits the declared-range pass.
+`qualifyRuntime` derives `QUALIFIED` / `UNQUALIFIED_RUNTIME` /
+`UNQUALIFIED_OS` from the record, condition 8 is UNMET when unqualified, and
+DC-006 exercises Node 21 and a non-WSL2 OS.
+
+9.8. Re-run and re-dated `2026-09-12`: `npm ci --offline --no-audit --no-fund`
+in a disposable directory containing only `package.json` and
+`package-lock.json` added 7 packages in 987 ms and left the lockfile
+byte-identical (`sha256:e87bf7337541d2ce03bb701deb09fc14853b5711c45688fcf8b647d04ebfe45c`);
+the expected `vue@2.6.12` EOL warning was observed. The date (`intervalDays:
+30`) and the lockfile digest are recorded; a stale date or drift returns the
+condition UNMET. A reversible probe confirmed end to end that the stale-date
+path turns `dependency-supply-chain-currency` UNMET with
+`DEPENDENCY_LOCKFILE_VERIFICATION_STALE`, and the record was restored
+byte-identically. DC-005/DC-008 exercise both failures.
+
+9.9. Executed in the session worktree: `npm run typecheck` PASS for every
+group-9 file (a later run reports only the concurrent writer's in-flight
+`tests/unit/gateTopology.test.ts` / `tests/unit/ciBlockRecord.test.ts` errors);
+`node bin/hardening-check.mjs` PASS after
+`node bin/bin-typecheck.mjs --write` regenerated the typed loader map (a later
+run is non-green only on the concurrent writer's untracked in-flight files and
+two C-15c UI assertions); `npm run validation:universe` PASS with the unchanged
+digest `sha256:6e20cf12931e570a28d883af` before the concurrent writer's
+discovered files landed — group 9 added no discovered file (the module is
+`src/**`, the record `config/**`), so `inventoryDigest` was not touched;
+`tests/unit/nw14HostCapabilityMatrix.test.ts` 18 passed (11 new group-9 cases);
+`tests/unit/projectState.test.ts` + `tests/unit/nw08ValidationUniverse.test.ts`
+93 passed; `node bin/project-state-check.mjs` reports condition 8 `MET` with
+`recorded unavailable: UNAVAILABLE_CAPABILITY; owner action and revisit
+2026-10-11; runtime QUALIFIED; vueReviewDue=2026-10-09
+lockfileVerificationDue=2026-10-12`, with only
+`PROJECT_STATE_CHECKOUT_DIRTY` (session work uncommitted by design).
+Integration and release are the session owner's action.
 
 ## 10. Deployment fact acquisition and the production track
 
@@ -948,36 +1139,117 @@ remain the session owner's action exactly as recorded for the programme; no
 
 ## 19. Configuration contract and UI decomposition
 
-- [ ] 19.1 Declare every environment variable the code reads: name, purpose,
+- [x] 19.1 Declare every environment variable the code reads: name, purpose,
       required-in-which-mode, value shape, default, secret-bearing, consumers
-- [ ] 19.2 Replace runtime-assembled variable names with literals, or enumerate
+- [x] 19.2 Replace runtime-assembled variable names with literals, or enumerate
       their construction in the declaration
-- [ ] 19.3 Validate at startup; fail closed on a malformed value before any
+- [x] 19.3 Validate at startup; fail closed on a malformed value before any
       browser, subprocess or socket
-- [ ] 19.4 Report an unknown `NIGHTWATCH_*` variable with its closest declared
+- [x] 19.4 Report an unknown `NIGHTWATCH_*` variable with its closest declared
       name
-- [ ] 19.5 Add the printable effective configuration with per-variable source;
+- [x] 19.5 Add the printable effective configuration with per-variable source;
       redact secret-bearing values to presence only
-- [ ] 19.6 Fail `hardening:check` on a variable read with no declaration
-- [ ] 19.7 Schema-validate `config/environments/*.json`: required keys, no
+- [x] 19.6 Fail `hardening:check` on a variable read with no declaration
+- [x] 19.7 Schema-validate `config/environments/*.json`: required keys, no
       unknown keys, well-formed host patterns, no known production host in any
       allowlist, `local.json` loopback-only, `production.json` still
       structurally unloadable
-- [ ] 19.8 Assert a disallowed `--ui-url` / `NIGHTWATCH_UI_URL` override
+- [x] 19.8 Assert a disallowed `--ui-url` / `NIGHTWATCH_UI_URL` override
       refuses before a browser context exists
-- [ ] 19.9 Validate `NIGHTWATCH_REASONER_CLI` as an absolute, existing,
+- [x] 19.9 Validate `NIGHTWATCH_REASONER_CLI` as an absolute, existing,
       executable regular file resolved without shell interpretation; record the
       resolved path and digest in run evidence
-- [ ] 19.10 Document the reasoner surface in `docs/SAFETY_MODEL.md`; extend the
+- [x] 19.10 Document the reasoner surface in `docs/SAFETY_MODEL.md`; extend the
       child-process boundary rule to assert no-shell at that call site
-- [ ] 19.11 Decompose `App.tsx` into one module per view plus a shared
+- [x] 19.11 Decompose `App.tsx` into one module per view plus a shared
       component module; re-point the existing guards
-- [ ] 19.12 Prove decomposition changes nothing: identical rendered DOM for
+- [x] 19.12 Prove decomposition changes nothing: identical rendered DOM for
       every view under the existing fixture matrix, and every exemption list
       unchanged or shorter
-- [ ] 19.13 Make contract-coverage carriers per-view so a field rendered in a
+- [x] 19.13 Make contract-coverage carriers per-view so a field rendered in a
       non-owning view fails
 - [ ] 19.14 Full validation, integrate, release
+      — PARTIAL: root/UI typecheck, UI tests (67), UI build, full probe
+      campaign (82/82) and every focused suite PASS; `hardening:check` and
+      `validation:universe` are blocked by THREE UNTRACKED concurrent-writer
+      files (`bin/gate-topology.mjs`, `tests/unit/gateTopology.test.ts`,
+      `tests/unit/ciBlockRecord.test.ts`) that a required gate manifest selects
+      but `git ls-files` does not yet list, plus the concurrent
+      `inventoryDigest` update; integration/release are the session owner's
+      action and were not performed here
+
+### Group 19 record — executed 2026-09-12 in session `nightwatch-production-completion-3d648499`
+
+19.1–19.6. `config/environment-surface.v1.json`
+(`nightwatch.environment-surface.v1`) is the single declaration: every
+NIGHTWATCH_* variable with purpose, required modes, shape, default,
+secret-bearing flag and consumers, plus the three assembled-name reads
+(`P1_SCOPE_CONFIG_ENV`, `PROD_OBSERVE_CONFIG_ENV`, `BUG_ATLAS_STATE_DIR`).
+`src/core/config/environmentSurface.ts` strictly parses it, validates a process
+environment (`ENVIRONMENT_VALUE_MALFORMED`), reports an unknown NIGHTWATCH_*
+name with its closest declared neighbour by Levenshtein distance, renders the
+effective configuration with `PROCESS_ENVIRONMENT` / `ENV_FILE` /
+`DECLARATION_DEFAULT` sources and secret values presence-only, and parses the
+optional repository `.env` layer. Runtime-assembled reads were replaced with
+literals in `localCampaign.ts`, `privateArtifacts.ts`,
+`productionFindingsStore.ts`, `controlCenterExclusion.ts`, `storageState.ts`,
+`portLease.ts`, `server.ts` and `environment/index.ts`. Startup validation
+(`assertEnvironmentSurface`) runs in `selectEnvironmentFromProcessEnv`,
+`bin/nightwatch.mjs` (all paths), `bin/nightwatch-agent.mjs` (test/run/resume)
+and `bin/nightwatch-control-center.mjs` before any subprocess or socket.
+`npm run nightwatch -- config` (and `--json`) prints the declaration with
+per-variable source; `bin/nightwatch.mjs` now declares a `config` command.
+
+19.6/19.9/19.10. `checkEnvironmentSurfaceDeclaration` reads the declaration and
+every tracked `src`/`bin` source, failing on a read with no declaration and on
+an unenumerated `process.env[ident]`; probe HC-082 appends an undeclared read
+and is DETECTED. `src/core/config/reasonerExecutable.ts` resolves
+`NIGHTWATCH_REASONER_CLI` (absolute, canonicalized, existing, executable
+regular file, bounded streamed SHA-256) with categorical refusals and no shell
+interpretation; `bin/nightwatch-agent.mjs` records the resolved path and digest
+as `reasonerIdentity` on the run result and in the campaign progress envelope.
+`checkChildProcessBoundaries` now asserts `shell:false`, the resolved-path
+argv-array spawn and the launcher's use of the shared resolver at
+`src/core/reasoner/cliReasoner.ts` / `bin/nightwatch-agent.mjs`.
+`docs/SAFETY_MODEL.md` documents the surface (append-only).
+
+19.7/19.8. `validateEnvironmentConfig` now refuses unknown keys, requires the
+core keys, validates every host list as a hostname/IPv4/bracketed-IPv6/leading
+single-label wildcard pattern, refuses any entry naming or wildcard-covering a
+`KNOWN_PRODUCTION_HOSTS` member, keeps `local.json` `allowedHosts`/`apiHosts`/
+`authHosts`/`uiBaseUrl` loopback-only, and leaves `production.json`
+structurally unloadable. `contextUrlHardening.test.ts` asserts a disallowed
+`NIGHTWATCH_UI_URL`/`--ui-url` value throws and that the context factory's
+`validateUiUrl` call precedes `browser.newContext`.
+
+19.11–19.13. `App.tsx` (1,839 lines) became a 303-line shell; extraction was
+verbatim and byte-preserving into `shared.tsx` (393 lines) plus ten
+`views/*View.tsx` modules (Overview, Runs, ExecutionGraph, Source, Findings,
+Reviewer, Campaign, Safety, SystemMap, Placeholder). `styles.test.ts` and
+`contractCoverage.test.ts` now read every component module; the latter
+attributes each component to its module and requires every view contract to
+have a carrier in the owning view module. A DOM baseline was generated from
+the pre-decomposition `App.tsx` (recovered from the session's own read record)
+under the existing fixture matrix and is committed as
+`ui/control-center/src/__baselines__/view-dom-baseline.json`; the new
+`preserves the rendered DOM of every view across the decomposition` case
+compares all ten views byte-for-byte (`sha256` + length) and every exemption
+list (`NOT_RENDERED`, `NOT_OBSERVABLE`, `INTERPOLATION_FRAGMENTS`,
+`arrayExemptions`) is unchanged. `checkC15cSystemMapTransportBoundary` now
+reads all UI component modules instead of only `App.tsx`.
+
+19.14 evidence. `npm run typecheck` PASS; `npm --prefix ui/control-center run
+typecheck` PASS; `npm --prefix ui/control-center run test` PASS (67/67);
+`npm --prefix ui/control-center run build` PASS (334,303 bytes, no external
+references); `npm run hardening:rules` PASS (rules=80 probes=82 detected=82
+undetected=0 restored=76 statusUnchanged=true); focused
+`tests/unit/{safety,reasonerCli,localCampaign,contextUrlHardening,hardeningRuleParity}.test.ts`
+PASS (78). `node bin/hardening-check.mjs` reports exactly 4 errors, all from
+the untracked concurrent-writer files (`gate-topology.mjs` and the two tests)
+and the concurrent `inventoryDigest` update; `npm run validation:universe`
+reports the same 4. This session created no newly discovered file, so
+`config/validation-universe.v1.json` needed no registration and
+`inventoryDigest` was not touched.
 
 ## 20. Accessibility certification
 

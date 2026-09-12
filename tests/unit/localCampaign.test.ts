@@ -122,10 +122,12 @@ process.stdin.on('data', (d) => chunks.push(d)).on('end', () => {
 
 test('paused campaign writes a checkpoint that status lists and resume can finish', async () => {
   const dir = scratchDir();
+  const reasonerIdentity = { path: fs.realpathSync(NODE), digest: `sha256:${'c'.repeat(64)}` };
   const paused = await runLocalCliCampaign({
     campaignId: 'camp-pause-resume',
     ceilingName: 'HOUR_1',
     executable: NODE,
+    reasonerIdentity,
     args: [pauseScript(dir)],
     provider: 'test-provider',
     model: 'fake-1',
@@ -134,6 +136,13 @@ test('paused campaign writes a checkpoint that status lists and resume can finis
   });
   expect(paused.terminationReason).toBe('PAUSED');
   expect(paused.checkpointFile).toBeTruthy();
+  // F-19: the resolved reasoner identity is run evidence, persisted with the
+  // campaign progress envelope and returned on the result.
+  expect(paused.reasonerIdentity).toEqual(reasonerIdentity);
+  const stored = JSON.parse(fs.readFileSync(paused.checkpointFile as string, 'utf8')) as {
+    readonly campaignProgress?: { readonly reasonerIdentity?: unknown };
+  };
+  expect(stored.campaignProgress?.reasonerIdentity).toEqual(reasonerIdentity);
   // The paused investigation counts as started but not completed.
   expect(paused.investigationsStarted).toBe(1);
   expect(paused.investigationsCompleted).toBe(0);

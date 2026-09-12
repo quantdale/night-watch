@@ -1,0 +1,609 @@
+{
+  "schemaVersion": "nightwatch.environment-surface.v1",
+  "purpose": "The single declaration of every NIGHTWATCH_* environment variable the local Nightwatch surface reads, forwards or owns. hardening:check fails when a tracked production source reads a NIGHTWATCH_* variable that is absent here, and startup validation fails closed on a malformed declared value before any browser, subprocess or socket exists. Secret-bearing variables are rendered presence-only by the config view.",
+  "modes": ["startup", "scenario", "campaign", "control-center", "owner-manual"],
+  "variables": [
+    {
+      "name": "NIGHTWATCH_ENV",
+      "purpose": "Fail-closed environment selection; one of local | dev | next. production is never loadable.",
+      "requiredIn": ["scenario"],
+      "shape": { "kind": "enum", "values": ["local", "dev", "next"] },
+      "default": null,
+      "secretBearing": false,
+      "consumers": ["src/core/environment/index.ts", "src/controlCenter/server/defaultCollector.ts", "bin/nightwatch.mjs", "bin/observe-preflight.mjs", "bin/c12-preflight.mjs", "bin/nightwatch-status.mjs"]
+    },
+    {
+      "name": "NIGHTWATCH_UI_URL",
+      "purpose": "Optional absolute UI origin override. Must pass the selected environment allowlist and exact-origin validation before a browser context exists.",
+      "requiredIn": [],
+      "shape": { "kind": "url" },
+      "default": null,
+      "secretBearing": false,
+      "consumers": ["src/browser/context.ts", "bin/nightwatch.mjs", "bin/observe-preflight.mjs", "tests/manual/*"]
+    },
+    {
+      "name": "NIGHTWATCH_STORAGE_STATE",
+      "purpose": "Absolute path to an owner-captured Playwright storageState file. A path is a secret-bearing reference even though its bytes never enter this declaration.",
+      "requiredIn": [],
+      "shape": { "kind": "path" },
+      "default": null,
+      "secretBearing": true,
+      "consumers": ["src/auth/directRunner.ts", "src/browser/fixtures/storageState.ts", "src/controlCenter/server/defaultCollector.ts", "bin/auth-capture.mjs", "bin/c12-preflight.mjs", "bin/nightwatch-status.mjs", "bin/observe-preflight.mjs"]
+    },
+    {
+      "name": "NIGHTWATCH_REPOS_ROOT",
+      "purpose": "Root of the read-only sibling Alphaus repositories snapshot scope.",
+      "requiredIn": [],
+      "shape": { "kind": "path" },
+      "default": "DEFAULT_SIBLING_ROOT",
+      "secretBearing": false,
+      "consumers": ["src/core/bugAtlas/miner.ts", "src/core/localInvestigation/ownerLocal.ts", "src/core/ownerLocalReproduction/provider.ts", "bin/change-intelligence.mjs"]
+    },
+    {
+      "name": "NIGHTWATCH_TRACKED_REPOS",
+      "purpose": "Comma-separated relative repository paths to track; unset means every repository under the approved roots.",
+      "requiredIn": [],
+      "shape": { "kind": "string-list" },
+      "default": null,
+      "secretBearing": false,
+      "consumers": ["src/core/repositories/snapshotter.ts", ".env.example"]
+    },
+    {
+      "name": "NIGHTWATCH_RUN_ID",
+      "purpose": "Deterministic run identifier override used for reproducible evidence paths.",
+      "requiredIn": [],
+      "shape": { "kind": "string" },
+      "default": "playwright-suite",
+      "secretBearing": false,
+      "consumers": ["src/proxy/server.ts"]
+    },
+    {
+      "name": "NIGHTWATCH_TRACE",
+      "purpose": "Trace control: on | off. Forwarded by launchers; traces are always disabled when authenticated state is loaded.",
+      "requiredIn": [],
+      "shape": { "kind": "enum", "values": ["on", "off"] },
+      "default": "on",
+      "secretBearing": false,
+      "consumers": ["bin/phase2b-real.mjs", "bin/phase2c-real.mjs", "bin/phase4-real.mjs", "bin/phase5-real.mjs", "bin/phase7-real.mjs", "bin/phase9b-real.mjs", "bin/phase10b-real.mjs", "bin/phase22-real.mjs", "bin/observe-gate.mjs", "bin/observe-canary.mjs", "bin/observe-authenticated.mjs"]
+    },
+    {
+      "name": "NIGHTWATCH_HEADED",
+      "purpose": "Browser headed/headless control: 1 headed, 0 headless.",
+      "requiredIn": [],
+      "shape": { "kind": "enum", "values": ["0", "1"] },
+      "default": "0",
+      "secretBearing": false,
+      "consumers": ["bin/phase4-real.mjs", "bin/phase5-real.mjs", "bin/phase7-real.mjs"]
+    },
+    {
+      "name": "NIGHTWATCH_PRODUCT",
+      "purpose": "Product fixture selector forwarded to a scenario run.",
+      "requiredIn": [],
+      "shape": { "kind": "string" },
+      "default": "ripple",
+      "secretBearing": false,
+      "consumers": ["bin/nightwatch.mjs"]
+    },
+    {
+      "name": "NIGHTWATCH_OPERATOR_SCOPE",
+      "purpose": "Operator scope class forwarded to local operator and agent children.",
+      "requiredIn": [],
+      "shape": { "kind": "enum", "values": ["LOCAL_SYNTHETIC_ONLY"] },
+      "default": "LOCAL_SYNTHETIC_ONLY",
+      "secretBearing": false,
+      "consumers": ["bin/nightwatch.mjs"]
+    },
+    {
+      "name": "NIGHTWATCH_GATE_ACTIVE",
+      "purpose": "Marks a quality-gate-owned child so evidence retention refuses to judge an in-progress gate run.",
+      "requiredIn": [],
+      "shape": { "kind": "enum", "values": ["1"] },
+      "default": null,
+      "secretBearing": false,
+      "consumers": ["bin/evidence-retention.mjs"]
+    },
+    {
+      "name": "NIGHTWATCH_GATE_RECEIPT_PATH",
+      "purpose": "Explicit quality-gate receipt destination; honoured only after full path validation.",
+      "requiredIn": [],
+      "shape": { "kind": "path" },
+      "default": null,
+      "secretBearing": false,
+      "consumers": ["bin/lib/gate-receipt.mjs"]
+    },
+    {
+      "name": "NIGHTWATCH_PROXY_PORT",
+      "purpose": "Loopback L5 proxy port published by the port lease owner and consumed by the proxy server and lease.",
+      "requiredIn": [],
+      "shape": { "kind": "integer", "min": 1, "max": 65535 },
+      "default": "DEFAULT_PROXY_PORT",
+      "secretBearing": false,
+      "consumers": ["src/proxy/server.ts", "src/proxy/portLease.ts"]
+    },
+    {
+      "name": "NIGHTWATCH_PROXY_LEASE_TOKEN",
+      "purpose": "Port-lease ownership token minted by the lease owner; presence-only in the config view.",
+      "requiredIn": [],
+      "shape": { "kind": "string" },
+      "default": null,
+      "secretBearing": true,
+      "consumers": ["src/proxy/server.ts", "src/proxy/portLease.ts"]
+    },
+    {
+      "name": "NIGHTWATCH_PROXY_LEASE_PATH",
+      "purpose": "Port-lease file path published by the lease owner.",
+      "requiredIn": [],
+      "shape": { "kind": "path" },
+      "default": "leaseFile(root, port)",
+      "secretBearing": false,
+      "consumers": ["src/proxy/portLease.ts"]
+    },
+    {
+      "name": "NIGHTWATCH_PROXY_LEASE_OWNER_PID",
+      "purpose": "PID of the process that owns the current port lease.",
+      "requiredIn": [],
+      "shape": { "kind": "integer", "min": 1 },
+      "default": null,
+      "secretBearing": false,
+      "consumers": ["src/proxy/portLease.ts", "src/proxy/server.ts"]
+    },
+    {
+      "name": "NIGHTWATCH_L6_SOCKET",
+      "purpose": "AF_UNIX control-channel socket path for the L6 process/network containment capability.",
+      "requiredIn": [],
+      "shape": { "kind": "path" },
+      "default": null,
+      "secretBearing": false,
+      "consumers": ["src/core/oops/l6.ts"]
+    },
+    {
+      "name": "NIGHTWATCH_L6_LAUNCH",
+      "purpose": "Absolute launcher path inside the L6 containment envelope.",
+      "requiredIn": [],
+      "shape": { "kind": "path" },
+      "default": null,
+      "secretBearing": false,
+      "consumers": ["src/core/oops/l6.ts"]
+    },
+    {
+      "name": "NIGHTWATCH_L6_MODE",
+      "purpose": "L6 runtime classification string echoed by the capability descriptor.",
+      "requiredIn": [],
+      "shape": { "kind": "string" },
+      "default": null,
+      "secretBearing": false,
+      "consumers": ["src/core/oops/l6.ts"]
+    },
+    {
+      "name": "NIGHTWATCH_L6_PROXY_PORT",
+      "purpose": "Namespace-local L6 HTTP/upgrade proxy port created inside the containment namespace.",
+      "requiredIn": [],
+      "shape": { "kind": "integer", "min": 1, "max": 65535 },
+      "default": null,
+      "secretBearing": false,
+      "consumers": ["src/core/oops/l6.ts"]
+    },
+    {
+      "name": "NIGHTWATCH_REASONER_CLI",
+      "purpose": "Absolute path to the owner-supplied reasoner executable. Validated pre-spawn as an absolute, existing, executable regular file resolved without shell interpretation; the resolved path and file digest are recorded in run evidence.",
+      "requiredIn": [],
+      "shape": { "kind": "absolute-executable" },
+      "default": "process.execPath",
+      "secretBearing": false,
+      "consumers": ["bin/nightwatch-agent.mjs", "bin/nightwatch.mjs", "src/core/agentRuntime/localCampaign.ts"]
+    },
+    {
+      "name": "NIGHTWATCH_REASONER_SCRIPT",
+      "purpose": "Optional script argument passed to the configured reasoner executable.",
+      "requiredIn": [],
+      "shape": { "kind": "path" },
+      "default": null,
+      "secretBearing": false,
+      "consumers": ["bin/nightwatch-agent.mjs", "bin/nightwatch.mjs"]
+    },
+    {
+      "name": "NIGHTWATCH_REASONER_PROVIDER",
+      "purpose": "Declared reasoner provider label recorded in provenance; never inferred.",
+      "requiredIn": [],
+      "shape": { "kind": "string" },
+      "default": "configured",
+      "secretBearing": false,
+      "consumers": ["bin/nightwatch-agent.mjs", "bin/nightwatch.mjs"]
+    },
+    {
+      "name": "NIGHTWATCH_REASONER_MODEL",
+      "purpose": "Declared reasoner model label recorded in provenance; never inferred.",
+      "requiredIn": [],
+      "shape": { "kind": "string" },
+      "default": "configured",
+      "secretBearing": false,
+      "consumers": ["bin/nightwatch-agent.mjs", "bin/nightwatch.mjs"]
+    },
+    {
+      "name": "NIGHTWATCH_PRINT_CLI",
+      "purpose": "Path to the deterministic print reasoner used by the synthetic campaign lane.",
+      "requiredIn": [],
+      "shape": { "kind": "absolute-executable" },
+      "default": null,
+      "secretBearing": false,
+      "consumers": ["bin/nightwatch-agent.mjs", "bin/nightwatch-reasoner-print.mjs", "bin/nightwatch.mjs", "src/core/agentRuntime/localCampaign.ts"]
+    },
+    {
+      "name": "NIGHTWATCH_PRINT_ARGS",
+      "purpose": "JSON argv template consumed by the print reasoner.",
+      "requiredIn": [],
+      "shape": { "kind": "json" },
+      "default": null,
+      "secretBearing": false,
+      "consumers": ["bin/nightwatch-reasoner-print.mjs", "src/core/agentRuntime/localCampaign.ts"]
+    },
+    {
+      "name": "NIGHTWATCH_PRINT_DEBUG",
+      "purpose": "Optional debug dump path for the print reasoner.",
+      "requiredIn": [],
+      "shape": { "kind": "path" },
+      "default": null,
+      "secretBearing": false,
+      "consumers": ["bin/nightwatch-reasoner-print.mjs"]
+    },
+    {
+      "name": "NIGHTWATCH_PRIVATE_STATE_DIR",
+      "purpose": "Explicit owner-private findings-store root outside the repository.",
+      "requiredIn": [],
+      "shape": { "kind": "path" },
+      "default": "$HOME/.nightwatch/findings",
+      "secretBearing": false,
+      "consumers": ["src/core/policy/privateArtifacts.ts"]
+    },
+    {
+      "name": "NIGHTWATCH_REVIEW_STORE_DIR",
+      "purpose": "Explicit owner-private review-store root outside the repository.",
+      "requiredIn": [],
+      "shape": { "kind": "path" },
+      "default": "$HOME/.nightwatch/reviews",
+      "secretBearing": false,
+      "consumers": ["src/core/policy/privateArtifacts.ts"]
+    },
+    {
+      "name": "NIGHTWATCH_PRODUCTION_STATE_DIR",
+      "purpose": "Explicit production findings store root; structural only, never contacted by default.",
+      "requiredIn": [],
+      "shape": { "kind": "path" },
+      "default": "$HOME/.nightwatch/prod-findings",
+      "secretBearing": false,
+      "consumers": ["src/core/prodEvidence/productionFindingsStore.ts", "src/core/prodEvidence/controlCenterExclusion.ts"]
+    },
+    {
+      "name": "NIGHTWATCH_PROD_OBSERVE_CONFIG",
+      "purpose": "Path to the production observation configuration record; admitted only through the owner gate.",
+      "requiredIn": [],
+      "shape": { "kind": "path" },
+      "default": null,
+      "secretBearing": false,
+      "consumers": ["src/core/prodObserve/observationConfig.ts"]
+    },
+    {
+      "name": "NIGHTWATCH_P1_SCOPE_CONFIG",
+      "purpose": "Path to the P1 passive-observation scope configuration record.",
+      "requiredIn": [],
+      "shape": { "kind": "path" },
+      "default": null,
+      "secretBearing": false,
+      "consumers": ["src/core/prodObserveP1/scopeConfig.ts"]
+    },
+    {
+      "name": "NIGHTWATCH_BUG_ATLAS_STATE_DIR",
+      "purpose": "Explicit bug-atlas snapshot state directory.",
+      "requiredIn": [],
+      "shape": { "kind": "path" },
+      "default": "$HOME/.nightwatch/bug-atlas",
+      "secretBearing": false,
+      "consumers": ["src/core/bugAtlas/snapshot.ts", "src/core/bugAtlas/types.ts", "src/core/localInvestigation/ownerLocal.ts"]
+    },
+    {
+      "name": "NIGHTWATCH_PHASE_9B_CI_RUN_ID",
+      "purpose": "Exact CI run identity recorded with Phase 9B evidence.",
+      "requiredIn": [],
+      "shape": { "kind": "string" },
+      "default": null,
+      "secretBearing": false,
+      "consumers": ["bin/phase9b-real.mjs"]
+    },
+    {
+      "name": "NIGHTWATCH_PHASE_10B_CI_RUN_ID",
+      "purpose": "Exact CI run identity recorded with Phase 10B evidence.",
+      "requiredIn": [],
+      "shape": { "kind": "string" },
+      "default": null,
+      "secretBearing": false,
+      "consumers": ["bin/phase10b-real.mjs"]
+    },
+    {
+      "name": "NIGHTWATCH_PHASE_22_CI_RUN_ID",
+      "purpose": "Exact CI run identity recorded with Phase 22 evidence.",
+      "requiredIn": [],
+      "shape": { "kind": "string" },
+      "default": null,
+      "secretBearing": false,
+      "consumers": ["bin/phase22-real.mjs"]
+    },
+    {
+      "name": "NIGHTWATCH_PHASE_4_AUTH_REFRESH",
+      "purpose": "Phase 4 DEV refresh toggle: 1 enabled, 0 disabled.",
+      "requiredIn": [],
+      "shape": { "kind": "enum", "values": ["0", "1"] },
+      "default": "1",
+      "secretBearing": false,
+      "consumers": ["bin/phase4-real.mjs", "tests/manual/phase4-real-exploration.ts"]
+    },
+    {
+      "name": "NIGHTWATCH_PHASE_5_AUTH_REFRESH",
+      "purpose": "Phase 5 DEV refresh toggle: 1 enabled, 0 disabled.",
+      "requiredIn": [],
+      "shape": { "kind": "enum", "values": ["0", "1"] },
+      "default": "1",
+      "secretBearing": false,
+      "consumers": ["bin/phase5-real.mjs"]
+    },
+    {
+      "name": "NIGHTWATCH_PHASE_7_AUTH_REFRESH",
+      "purpose": "Phase 7 DEV refresh toggle: 1 enabled, 0 disabled.",
+      "requiredIn": [],
+      "shape": { "kind": "enum", "values": ["0", "1"] },
+      "default": "1",
+      "secretBearing": false,
+      "consumers": ["bin/phase7-real.mjs"]
+    },
+    {
+      "name": "NIGHTWATCH_AUTH_FILE",
+      "purpose": "Legacy alias for an authentication artefact path. Never inherited by a child; stripped by the quality gate and refused by capture.",
+      "requiredIn": [],
+      "shape": { "kind": "path" },
+      "default": null,
+      "secretBearing": true,
+      "consumers": ["bin/quality-gate.mjs"]
+    },
+    {
+      "name": "NIGHTWATCH_OWNER_FINDINGS",
+      "purpose": "Legacy owner-findings path variable. Never inherited by a child; stripped by the quality gate.",
+      "requiredIn": [],
+      "shape": { "kind": "path" },
+      "default": null,
+      "secretBearing": true,
+      "consumers": ["bin/quality-gate.mjs"]
+    },
+    {
+      "name": "NIGHTWATCH_PHASE_2B_REAL",
+      "purpose": "Owner-manual Phase 2B real-journey mode marker forwarded to the harness.",
+      "requiredIn": [],
+      "shape": { "kind": "enum", "values": ["1"] },
+      "default": null,
+      "secretBearing": false,
+      "consumers": ["tests/manual/phase2b-real-journeys.ts"]
+    },
+    {
+      "name": "NIGHTWATCH_PHASE_2B_JOURNEY_ID",
+      "purpose": "Owner-manual Phase 2B journey selector.",
+      "requiredIn": [],
+      "shape": { "kind": "string" },
+      "default": null,
+      "secretBearing": false,
+      "consumers": ["tests/manual/phase2b-real-journeys.ts"]
+    },
+    {
+      "name": "NIGHTWATCH_PHASE_2C_REAL",
+      "purpose": "Owner-manual Phase 2C real-journey mode marker forwarded to the harness.",
+      "requiredIn": [],
+      "shape": { "kind": "enum", "values": ["1"] },
+      "default": null,
+      "secretBearing": false,
+      "consumers": ["tests/manual/phase2c-real-journeys.ts"]
+    },
+    {
+      "name": "NIGHTWATCH_PHASE_2C_MATRIX_VERSION",
+      "purpose": "Owner-manual Phase 2C oracle-matrix version selector.",
+      "requiredIn": [],
+      "shape": { "kind": "string" },
+      "default": null,
+      "secretBearing": false,
+      "consumers": ["tests/manual/phase2c-real-journeys.ts"]
+    },
+    {
+      "name": "NIGHTWATCH_PHASE_2C_DIAGNOSTIC_JOURNEY",
+      "purpose": "Owner-manual Phase 2C diagnostic journey selector.",
+      "requiredIn": [],
+      "shape": { "kind": "string" },
+      "default": null,
+      "secretBearing": false,
+      "consumers": ["tests/manual/phase2c-real-journeys.ts"]
+    },
+    {
+      "name": "NIGHTWATCH_PHASE_4_REAL",
+      "purpose": "Owner-manual Phase 4 real-exploration mode marker.",
+      "requiredIn": [],
+      "shape": { "kind": "enum", "values": ["1"] },
+      "default": null,
+      "secretBearing": false,
+      "consumers": ["tests/manual/phase4-real-exploration.ts"]
+    },
+    {
+      "name": "NIGHTWATCH_PHASE_5_REAL",
+      "purpose": "Owner-manual Phase 5 real-API mode marker.",
+      "requiredIn": [],
+      "shape": { "kind": "enum", "values": ["1"] },
+      "default": null,
+      "secretBearing": false,
+      "consumers": ["tests/manual/phase5-real-api.ts"]
+    },
+    {
+      "name": "NIGHTWATCH_PHASE_5_OOPS_REAL",
+      "purpose": "Owner-manual Phase 5 OOPS transport mode marker.",
+      "requiredIn": [],
+      "shape": { "kind": "enum", "values": ["1"] },
+      "default": null,
+      "secretBearing": false,
+      "consumers": ["tests/manual/phase5-real-api.ts"]
+    },
+    {
+      "name": "NIGHTWATCH_PHASE_5_RUN_ID",
+      "purpose": "Owner-manual Phase 5 run identity selector.",
+      "requiredIn": [],
+      "shape": { "kind": "string" },
+      "default": null,
+      "secretBearing": false,
+      "consumers": ["tests/manual/phase5-real-api.ts"]
+    },
+    {
+      "name": "NIGHTWATCH_PHASE_7_REAL",
+      "purpose": "Owner-manual Phase 7 campaign mode marker.",
+      "requiredIn": [],
+      "shape": { "kind": "enum", "values": ["1"] },
+      "default": null,
+      "secretBearing": false,
+      "consumers": ["tests/manual/phase7-real-campaign.ts"]
+    },
+    {
+      "name": "NIGHTWATCH_PHASE_7_PREPARE_ONLY",
+      "purpose": "Owner-manual Phase 7 prepare-only toggle.",
+      "requiredIn": [],
+      "shape": { "kind": "enum", "values": ["1"] },
+      "default": null,
+      "secretBearing": false,
+      "consumers": ["tests/manual/phase7-real-campaign.ts"]
+    },
+    {
+      "name": "NIGHTWATCH_PHASE_7_RESUME_CAMPAIGN",
+      "purpose": "Owner-manual Phase 7 resume campaign identity.",
+      "requiredIn": [],
+      "shape": { "kind": "string" },
+      "default": null,
+      "secretBearing": false,
+      "consumers": ["tests/manual/phase7-real-campaign.ts"]
+    },
+    {
+      "name": "NIGHTWATCH_PHASE_7_PORTFOLIO_PLAN",
+      "purpose": "Owner-manual Phase 7 portfolio plan path.",
+      "requiredIn": [],
+      "shape": { "kind": "path" },
+      "default": null,
+      "secretBearing": false,
+      "consumers": ["tests/manual/phase7-real-campaign.ts"]
+    },
+    {
+      "name": "NIGHTWATCH_PHASE_7_PORTFOLIO_AUTHORIZATION",
+      "purpose": "Owner-manual Phase 7 portfolio authorization path.",
+      "requiredIn": [],
+      "shape": { "kind": "path" },
+      "default": null,
+      "secretBearing": false,
+      "consumers": ["tests/manual/phase7-real-campaign.ts"]
+    },
+    {
+      "name": "NIGHTWATCH_PHASE_9B_REAL",
+      "purpose": "Owner-manual Phase 9B real-observation mode marker.",
+      "requiredIn": [],
+      "shape": { "kind": "enum", "values": ["1"] },
+      "default": null,
+      "secretBearing": false,
+      "consumers": ["tests/manual/phase9b-contained-dev-semantic.ts"]
+    },
+    {
+      "name": "NIGHTWATCH_PHASE_9B_DISPOSABLE_ROOT",
+      "purpose": "Owner-manual Phase 9B disposable evidence root.",
+      "requiredIn": [],
+      "shape": { "kind": "path" },
+      "default": null,
+      "secretBearing": false,
+      "consumers": ["tests/manual/phase9b-contained-dev-semantic.ts"]
+    },
+    {
+      "name": "NIGHTWATCH_PHASE_10B_REAL",
+      "purpose": "Owner-manual Phase 10B real-observation mode marker.",
+      "requiredIn": [],
+      "shape": { "kind": "enum", "values": ["1"] },
+      "default": null,
+      "secretBearing": false,
+      "consumers": ["tests/manual/phase10b-contained-dev-deep-semantic.ts"]
+    },
+    {
+      "name": "NIGHTWATCH_PHASE_10B_DISPOSABLE_ROOT",
+      "purpose": "Owner-manual Phase 10B disposable evidence root.",
+      "requiredIn": [],
+      "shape": { "kind": "path" },
+      "default": null,
+      "secretBearing": false,
+      "consumers": ["tests/manual/phase10b-contained-dev-deep-semantic.ts"]
+    },
+    {
+      "name": "NIGHTWATCH_PHASE_22_REAL",
+      "purpose": "Owner-manual Phase 22 DEV acceptance mode marker.",
+      "requiredIn": [],
+      "shape": { "kind": "enum", "values": ["1"] },
+      "default": null,
+      "secretBearing": false,
+      "consumers": ["bin/phase22-dev.mjs"]
+    },
+    {
+      "name": "NIGHTWATCH_PHASE_22_ARTIFACT_ROOT",
+      "purpose": "Owner-manual Phase 22 artifact root.",
+      "requiredIn": [],
+      "shape": { "kind": "path" },
+      "default": null,
+      "secretBearing": false,
+      "consumers": ["bin/phase22-dev.mjs"]
+    },
+    {
+      "name": "NIGHTWATCH_PHASE_22_MANIFEST",
+      "purpose": "Owner-manual Phase 22 manifest path.",
+      "requiredIn": [],
+      "shape": { "kind": "path" },
+      "default": null,
+      "secretBearing": false,
+      "consumers": ["bin/phase22-dev.mjs"]
+    },
+    {
+      "name": "NIGHTWATCH_PHASE_22_RESULTS",
+      "purpose": "Owner-manual Phase 22 results path.",
+      "requiredIn": [],
+      "shape": { "kind": "path" },
+      "default": null,
+      "secretBearing": false,
+      "consumers": ["bin/phase22-dev.mjs"]
+    },
+    {
+      "name": "NIGHTWATCH_PHASE_22_SOURCE_SNAPSHOT",
+      "purpose": "Owner-manual Phase 22 source-snapshot path.",
+      "requiredIn": [],
+      "shape": { "kind": "path" },
+      "default": null,
+      "secretBearing": false,
+      "consumers": ["bin/phase22-dev.mjs"]
+    },
+    {
+      "name": "NIGHTWATCH_REASONER_PRINT",
+      "purpose": "Legacy print-reasoner selector forwarded to the agent surface.",
+      "requiredIn": [],
+      "shape": { "kind": "string" },
+      "default": null,
+      "secretBearing": false,
+      "consumers": ["bin/nightwatch-agent.mjs"]
+    }
+  ],
+  "assembledReads": [
+    {
+      "name": "NIGHTWATCH_P1_SCOPE_CONFIG",
+      "construction": "environment[P1_SCOPE_CONFIG_ENV]",
+      "consumer": "src/core/prodObserveP1/scopeConfig.ts"
+    },
+    {
+      "name": "NIGHTWATCH_PROD_OBSERVE_CONFIG",
+      "construction": "environment[PROD_OBSERVE_CONFIG_ENV]",
+      "consumer": "src/core/prodObserve/observationConfig.ts"
+    },
+    {
+      "name": "NIGHTWATCH_BUG_ATLAS_STATE_DIR",
+      "construction": "environment['NIGHTWATCH_BUG_ATLAS_STATE_DIR']",
+      "consumer": "src/core/bugAtlas/snapshot.ts"
+    }
+  ]
+}

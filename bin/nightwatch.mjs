@@ -16,8 +16,9 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { buildChildEnvironment, emitChildStdio } from './child-environment.mjs';
-import { OPERATOR_CLI_SCHEMA, defineOperatorCli, invokedDirectly } from './lib/operator-cli.mjs';
+import { OPERATOR_CLI_SCHEMA, defineOperatorCli, invokedDirectly, refuseOperatorCli } from './lib/operator-cli.mjs';
 import { operatorCommandListing } from './lib/operator-command-listing.mjs';
+import { loadTypeScriptModules } from './lib/typescript-runtime-loader.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const operatorCommands = new Set(['status', 'plan', 'coverage', 'campaign', 'contracts', 'gaps', 'differential', 'replay-coverage', 'minimization-coverage', 'mutation-score', 'findings', 'explain']);
@@ -32,6 +33,7 @@ const CLI_METADATA = {
   commands: [
     { name: 'scenario', summary: 'Run one Playwright scenario with fail-closed environment selection' },
     { name: 'agent', summary: 'Dispatch to the local agent surface' },
+    { name: 'config', summary: 'Print the declared environment surface with each variable effective source' },
     { name: 'status', summary: 'Show the local operator status' },
     { name: 'plan', summary: 'Show the campaign plan' },
     { name: 'coverage', summary: 'Show campaign coverage' },
@@ -66,8 +68,55 @@ function main() {
     console.log(operatorCommandListing(root).text);
     return;
   }
+  if (args[0] === 'config') {
+    const [surfaceMod] = loadTypeScriptModules(['src/core/config/environmentSurface.ts'], { root });
+    const surface = surfaceMod.loadEnvironmentSurface();
+    const fileEnvironment = surfaceMod.loadDotEnvLayer(root);
+    const merged = surfaceMod.mergeDotEnvLayer(process.env, fileEnvironment, surface);
+    const verdict = surfaceMod.validateEnvironmentValues(merged, surface);
+    const rows = surfaceMod.effectiveConfiguration(merged, surface, fileEnvironment);
+    for (const refusal of verdict.refusals) {
+      console.error(`NIGHTWATCH: ENVIRONMENT_VALUE_MALFORMED: ${refusal.name} — ${refusal.detail}`);
+    }
+    for (const line of surfaceMod.reportUnknownEnvironmentVariables(merged, surface)) {
+      console.error(`NIGHTWATCH: ${line}`);
+    }
+    if (args.includes('--json')) {
+      console.log(JSON.stringify({
+        schemaVersion: 'nightwatch.effective-configuration.v1',
+        variables: surface.variables,
+        effective: rows,
+        refusals: verdict.refusals,
+        unknown: verdict.unknown,
+      }));
+    } else {
+      console.log(surfaceMod.renderEffectiveConfiguration(rows));
+      console.log('The .env layer is shown where it supplies a value; launchers forward only the variables they name.');
+    }
+    return;
+  }
+
   const cli = defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url });
   if (cli.stop) return;
+
+  // F-19 startup validation: fail closed on a malformed declared value and
+  // report every undeclared NIGHTWATCH_* name with its closest declared
+  // neighbour, before any browser, subprocess or socket is created.
+  {
+    const [surfaceMod] = loadTypeScriptModules(['src/core/config/environmentSurface.ts'], { root });
+    const surface = surfaceMod.loadEnvironmentSurface();
+    const fileEnvironment = surfaceMod.loadDotEnvLayer(root);
+    const merged = surfaceMod.mergeDotEnvLayer(process.env, fileEnvironment, surface);
+    for (const line of surfaceMod.reportUnknownEnvironmentVariables(merged, surface)) {
+      console.error(`NIGHTWATCH: ${line}`);
+    }
+    try {
+      surfaceMod.assertEnvironmentSurface(merged, surface, { mode: 'startup' });
+    } catch (error) {
+      refuseOperatorCli('nightwatch', 'ENVIRONMENT_VALUE_MALFORMED', error instanceof Error ? error.message : 'environment validation refused');
+      return;
+    }
+  }
 
   if (args[0] === 'agent') {
     const result = spawnSync(process.execPath, [path.join(root, 'bin', 'nightwatch-agent.mjs'), ...args.slice(1)], {

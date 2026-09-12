@@ -114,6 +114,8 @@
     "tests/unit/nw08ValidationUniverse.test.ts",
     "tests/unit/nw14HostCapabilityMatrix.test.ts",
     "tests/unit/nw07ContinuityCoherence.test.ts",
-    "tests/unit/evidenceRetention.test.ts"
+    "tests/unit/evidenceRetention.test.ts",
+    "tests/unit/gateTopology.test.ts",
+    "tests/unit/ciBlockRecord.test.ts"
   ]
 }

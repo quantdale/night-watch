@@ -1,5 +1,5 @@
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { readFileSync, readdirSync } from 'node:fs';
+import { join, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 /**
@@ -30,10 +30,26 @@ import { describe, expect, it } from 'vitest';
  * set is small, explicit and auditable rather than implied by silence.
  */
 const TYPES = readFileSync(resolve(process.cwd(), 'src/types.ts'), 'utf8');
-const APP = readFileSync(resolve(process.cwd(), 'src/App.tsx'), 'utf8')
-  // A comment is not a render. Strip block and line comments before any search.
-  .replace(/\/\*[\s\S]*?\*\//g, ' ')
-  .replace(/(^|[^:])\/\/.*$/gm, '$1');
+
+/**
+ * Group 19.13. The guard reads one module per view plus the shared module and
+ * the shell, and attributes every component to the module that defines it, so
+ * a field can be carried only by a component inside the view it belongs to.
+ */
+const SRC = resolve(process.cwd(), 'src');
+const COMPONENT_MODULES: ReadonlyArray<readonly [string, string]> = [
+  ['App.tsx', readFileSync(join(SRC, 'App.tsx'), 'utf8')],
+  ['shared.tsx', readFileSync(join(SRC, 'shared.tsx'), 'utf8')],
+  ...readdirSync(join(SRC, 'views'))
+    .filter((file) => file.endsWith('.tsx'))
+    .sort()
+    .map((file) => [`views/${file}`, readFileSync(join(SRC, 'views', file), 'utf8')] as const),
+];
+/** A comment is not a render. Strip block and line comments before any search. */
+const stripComments = (text: string): string =>
+  text.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/(^|[^:])\/\/.*$/gm, '$1');
+const APP = COMPONENT_MODULES.map(([, text]) => stripComments(text)).join('\n');
+const COMPONENT_MODULE = new Map<string, string>();
 
 /**
  * Fields that are deliberately never rendered. Each entry states why. A field
@@ -86,46 +102,50 @@ function containsWord(text: string, word: string): boolean {
  */
 function componentBodies(): ReadonlyMap<string, string> {
   const bodies = new Map<string, string>();
-  const declaration = /\nfunction (\w+)/g;
-  let match: RegExpExecArray | null;
-  while ((match = declaration.exec(APP)) !== null) {
-    const name = match[1] as string;
-    let cursor = match.index + match[0].length;
-    if (APP[cursor] === '<') {
-      // Skip the declaration's own type parameters, e.g. `<S, T>`.
-      let angleDepth = 0;
-      for (; cursor < APP.length; cursor += 1) {
-        if (APP[cursor] === '<') angleDepth += 1;
-        else if (APP[cursor] === '>') {
-          angleDepth -= 1;
-          if (angleDepth === 0) { cursor += 1; break; }
+  for (const [module, rawText] of COMPONENT_MODULES) {
+    const text = stripComments(rawText);
+    const declaration = /\n(?:export )?function (\w+)/g;
+    let match: RegExpExecArray | null;
+    while ((match = declaration.exec(text)) !== null) {
+      const name = match[1] as string;
+      let cursor = match.index + match[0].length;
+      if (text[cursor] === '<') {
+        // Skip the declaration's own type parameters, e.g. `<S, T>`.
+        let angleDepth = 0;
+        for (; cursor < text.length; cursor += 1) {
+          if (text[cursor] === '<') angleDepth += 1;
+          else if (text[cursor] === '>') {
+            angleDepth -= 1;
+            if (angleDepth === 0) { cursor += 1; break; }
+          }
         }
       }
-    }
-    if (APP[cursor] !== '(') continue;
-    let parenDepth = 0;
-    let afterParams = -1;
-    for (; cursor < APP.length; cursor += 1) {
-      if (APP[cursor] === '(') parenDepth += 1;
-      else if (APP[cursor] === ')') {
-        parenDepth -= 1;
-        if (parenDepth === 0) { afterParams = cursor; break; }
+      if (text[cursor] !== '(') continue;
+      let parenDepth = 0;
+      let afterParams = -1;
+      for (; cursor < text.length; cursor += 1) {
+        if (text[cursor] === '(') parenDepth += 1;
+        else if (text[cursor] === ')') {
+          parenDepth -= 1;
+          if (parenDepth === 0) { afterParams = cursor; break; }
+        }
       }
-    }
-    if (afterParams === -1) continue;
-    const open = APP.indexOf('{', afterParams);
-    if (open === -1) continue;
-    let braceDepth = 0;
-    let end = -1;
-    for (let index = open; index < APP.length; index += 1) {
-      if (APP[index] === '{') braceDepth += 1;
-      else if (APP[index] === '}') {
-        braceDepth -= 1;
-        if (braceDepth === 0) { end = index; break; }
+      if (afterParams === -1) continue;
+      const open = text.indexOf('{', afterParams);
+      if (open === -1) continue;
+      let braceDepth = 0;
+      let end = -1;
+      for (let index = open; index < text.length; index += 1) {
+        if (text[index] === '{') braceDepth += 1;
+        else if (text[index] === '}') {
+          braceDepth -= 1;
+          if (braceDepth === 0) { end = index; break; }
+        }
       }
+      if (end === -1) continue;
+      bodies.set(name, text.slice(match.index, end + 1));
+      if (!COMPONENT_MODULE.has(name)) COMPONENT_MODULE.set(name, module);
     }
-    if (end === -1) continue;
-    bodies.set(name, APP.slice(match.index, end + 1));
   }
   return bodies;
 }
@@ -246,6 +266,29 @@ describe('control center contract placement coverage', () => {
     // `RunListItemSnapshot`. This is the defect class the placement check
     // exists to catch, kept as an executable statement of the difference.
     expect(APP).toContain('passed');
-    expect(renderedInCarrier('RunListItemSnapshot', 'passed')).toBe(false);
+    expect(renderedInCarrier('RunListSnapshot', 'passed')).toBe(false);
+  });
+
+  it('carries every view contract inside the owning view module', () => {
+    // Group 19.13. The decomposition gives each view its own module, so the
+    // carrier of a contract must live in the module that owns the view. A
+    // field rendered only in a non-owning view cannot satisfy its owner.
+    const VIEW_MODULE_CONTRACTS: Readonly<Record<string, readonly string[]>> = {
+      'views/OverviewView.tsx': ['OverviewSnapshot', 'ReadinessSnapshot'],
+      'views/RunsView.tsx': ['RunListSnapshot', 'RunDetailSnapshot', 'TimelineSnapshot'],
+      'views/ExecutionGraphView.tsx': ['ExecutionGraphSnapshot'],
+      'views/SourceView.tsx': ['SourceSurfacesSnapshot', 'SourceGraphSnapshot'],
+      'views/FindingsView.tsx': ['FindingsSnapshot'],
+      'views/ReviewerView.tsx': ['ReviewerSnapshot'],
+      'views/CampaignView.tsx': ['CampaignSummarySnapshot', 'CampaignCoverageSnapshot'],
+      'views/SafetyView.tsx': ['SafetySnapshot'],
+      'views/SystemMapView.tsx': ['SystemMapSnapshot'],
+    };
+    for (const [module, contracts] of Object.entries(VIEW_MODULE_CONTRACTS)) {
+      for (const contract of contracts) {
+        const owners = [...(CARRIERS.get(contract) ?? [])].filter((component) => COMPONENT_MODULE.get(component) === module);
+        expect(owners.length, `${contract} has no carrier in ${module}; it is rendered in a non-owning view`).toBeGreaterThan(0);
+      }
+    }
   });
 });

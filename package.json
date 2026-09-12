@@ -22,6 +22,7 @@
     "gate:ci": "node bin/quality-gate.mjs ci",
     "gate:clean": "node bin/quality-gate-clean.mjs",
     "gate:clean-exec": "node bin/quality-gate.mjs clean",
+    "gate:topology": "node bin/gate-topology.mjs",
     "gate:predev": "node bin/quality-gate.mjs predev",
     "gate:inventory": "node bin/quality-gate-inventory.mjs",
     "validation:universe": "node bin/validation-universe.mjs",

@@ -14,6 +14,13 @@ import os from 'node:os';
 import path from 'node:path';
 import type { EnvironmentConfig } from '../../src/core/environment/types';
 import { loadEnvironmentConfig, selectEnvironment, validateEnvironmentConfig } from '../../src/core/environment/index';
+import {
+  assertEnvironmentSurface,
+  effectiveConfiguration,
+  loadEnvironmentSurface,
+  renderEffectiveConfiguration,
+  validateEnvironmentValues,
+} from '../../src/core/config/environmentSurface';
 import { KNOWN_PRODUCTION_HOSTS } from '../../src/core/safety/hosts';
 import { OutboundPolicy } from '../../src/core/safety/outboundPolicy';
 import { runCanary, assertCanary, CanaryFailureError } from '../../src/core/safety/canary';
@@ -441,5 +448,108 @@ test.describe('WebSocket policy (ws/wss network schemes)', () => {
     expect(isNetworkUrl('data:text/plain,hi')).toBe(false);
     expect(isNetworkUrl('blob:https://x/y')).toBe(false);
     expect(isNetworkUrl('not a url')).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// F-19 — configuration contract: the declared environment surface and the
+// schema-validated environment configs.
+// ---------------------------------------------------------------------------
+
+test.describe('environment surface declaration', () => {
+  const surface = loadEnvironmentSurface();
+
+  test('declares the safety-relevant variables with secret-bearing flags', () => {
+    const byName = new Map(surface.variables.map((entry) => [entry.name, entry]));
+    for (const name of [
+      'NIGHTWATCH_ENV',
+      'NIGHTWATCH_UI_URL',
+      'NIGHTWATCH_STORAGE_STATE',
+      'NIGHTWATCH_REASONER_CLI',
+      'NIGHTWATCH_PROXY_PORT',
+      'NIGHTWATCH_PROXY_LEASE_TOKEN',
+      'NIGHTWATCH_PROXY_LEASE_PATH',
+      'NIGHTWATCH_HEADED',
+      'NIGHTWATCH_PRINT_CLI',
+      'NIGHTWATCH_PRINT_ARGS',
+    ]) {
+      expect(byName.has(name), `${name} must be declared`).toBe(true);
+      expect(byName.get(name)?.purpose.length).toBeGreaterThan(12);
+      expect(byName.get(name)?.consumers.length).toBeGreaterThan(0);
+    }
+    expect(byName.get('NIGHTWATCH_STORAGE_STATE')?.secretBearing).toBe(true);
+    expect(byName.get('NIGHTWATCH_PROXY_LEASE_TOKEN')?.secretBearing).toBe(true);
+    expect(byName.get('NIGHTWATCH_REASONER_CLI')?.shape.kind).toBe('absolute-executable');
+    expect(byName.get('NIGHTWATCH_ENV')?.shape).toEqual({ kind: 'enum', values: ['local', 'dev', 'next'] });
+  });
+
+  test('a malformed value fails closed and an unknown name reports its closest declaration', () => {
+    expect(() => assertEnvironmentSurface({ NIGHTWATCH_HEADED: 'maybe' }, surface)).toThrow(/NIGHTWATCH_HEADED/);
+    expect(() => assertEnvironmentSurface({ NIGHTWATCH_ENV: 'production' }, surface)).toThrow(/NIGHTWATCH_ENV/);
+    expect(() => assertEnvironmentSurface({ NIGHTWATCH_PROXY_PORT: '0' }, surface)).toThrow(/NIGHTWATCH_PROXY_PORT/);
+    const verdict = validateEnvironmentValues({ NIGHTWATCH_REASONER_CLI_PATH: '/synthetic/reasoner' }, surface);
+    expect(verdict.ok).toBe(true);
+    expect(verdict.unknown).toHaveLength(1);
+    expect(verdict.unknown[0]?.name).toBe('NIGHTWATCH_REASONER_CLI_PATH');
+    expect(verdict.unknown[0]?.closest).toBe('NIGHTWATCH_REASONER_CLI');
+    expect(verdict.unknown[0]?.distance).toBeGreaterThan(0);
+    expect(() => assertEnvironmentSurface({ NIGHTWATCH_REASONER_CLI_PATH: '/x' }, surface)).not.toThrow();
+  });
+
+  test('the effective configuration is printed with per-variable source and redaction', () => {
+    const rows = effectiveConfiguration(
+      { NIGHTWATCH_ENV: 'local', NIGHTWATCH_STORAGE_STATE: '/synthetic/owner/state.json' },
+      surface,
+    );
+    const envRow = rows.find((row) => row.name === 'NIGHTWATCH_ENV');
+    expect(envRow?.source).toBe('PROCESS_ENVIRONMENT');
+    expect(envRow?.value).toBe('local');
+    const secretRow = rows.find((row) => row.name === 'NIGHTWATCH_STORAGE_STATE');
+    expect(secretRow?.source).toBe('PROCESS_ENVIRONMENT');
+    expect(secretRow?.secretBearing).toBe(true);
+    expect(secretRow?.value).toBeNull();
+    const rendered = renderEffectiveConfiguration(rows);
+    expect(rendered).not.toContain('/synthetic/owner/state.json');
+    expect(rendered).toContain('NIGHTWATCH_STORAGE_STATE = <set>  [PROCESS_ENVIRONMENT] [SECRET]');
+    const defaultRow = rows.find((row) => row.name === 'NIGHTWATCH_HEADED');
+    expect(defaultRow?.source).toBe('DECLARATION_DEFAULT');
+  });
+});
+
+test.describe('environment config schema validation', () => {
+  test('an unknown key fails the load', () => {
+    const base = loadEnvironmentConfig('local');
+    expect(() => validateEnvironmentConfig('local', { ...base, alloweHosts: [] })).toThrow(/unknown key "alloweHosts"/);
+  });
+
+  test('a malformed host entry fails naming the file, key and entry', () => {
+    const base = loadEnvironmentConfig('dev');
+    expect(() => validateEnvironmentConfig('dev', { ...base, allowedHosts: ['not a host!'] }, 'config/environments/dev.json'))
+      .toThrow(/config\/environments\/dev\.json.*allowedHosts.*not a host!/);
+    expect(() => validateEnvironmentConfig('dev', { ...base, telemetryHosts: ['*.*.sentry.io'] }))
+      .toThrow(/telemetryHosts/);
+  });
+
+  test('a known production host in any allowlist is refused', () => {
+    const base = loadEnvironmentConfig('dev');
+    for (const host of KNOWN_PRODUCTION_HOSTS) {
+      expect(() => validateEnvironmentConfig('dev', { ...base, allowedHosts: [...base.allowedHosts, host] })).toThrow(/production host/);
+    }
+    expect(() => validateEnvironmentConfig('dev', { ...base, staticAssetHosts: ['*.alphaus.cloud'] }))
+      .toThrow(/production host "/);
+  });
+
+  test('local stays loopback-only', () => {
+    const local = loadEnvironmentConfig('local');
+    expect(() => validateEnvironmentConfig('local', { ...local, allowedHosts: ['example.invalid'] }))
+      .toThrow(/loopback-only/);
+    expect(() => validateEnvironmentConfig('local', { ...local, uiBaseUrl: 'https://example.invalid/' }))
+      .toThrow(/loopback-only/);
+  });
+
+  test('production.json remains structurally unloadable', () => {
+    expect(() => selectEnvironment('production')).toThrow();
+    const raw = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'config', 'environments', 'production.json'), 'utf8')) as unknown;
+    expect(() => validateEnvironmentConfig('production' as EnvName, raw, 'config/environments/production.json')).toThrow();
   });
 });

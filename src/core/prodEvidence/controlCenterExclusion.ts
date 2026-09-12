@@ -25,10 +25,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import {
-  PRODUCTION_ARTIFACT_DEFAULT_RELATIVE_ROOT,
-  PRODUCTION_ARTIFACT_ROOT_ENV,
-} from './productionFindingsStore';
+import { PRODUCTION_ARTIFACT_DEFAULT_RELATIVE_ROOT } from './productionFindingsStore';
 
 export const CONTROL_CENTER_PRODUCTION_EXCLUSION_CODE = 'FINDINGS_ROOT_PRODUCTION_EXCLUDED' as const;
 
@@ -70,7 +67,7 @@ function isInsideOrEqual(directory: string, candidate: string): boolean {
  */
 export function productionExcludedRoots(): readonly string[] {
   const roots = [path.join(os.homedir(), PRODUCTION_ARTIFACT_DEFAULT_RELATIVE_ROOT)];
-  const configured = process.env[PRODUCTION_ARTIFACT_ROOT_ENV];
+  const configured = process.env.NIGHTWATCH_PRODUCTION_STATE_DIR;
   if (configured !== undefined && configured.trim() !== '') roots.push(configured);
   return roots.map(resolveAsFarAsPossible);
 }

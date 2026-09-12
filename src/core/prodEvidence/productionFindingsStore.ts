@@ -88,7 +88,7 @@ function assertOwnerOnly(stat: fs.Stats, errorCode: string): void {
 }
 
 function defaultRoot(): string {
-  const configured = process.env[PRODUCTION_ARTIFACT_ROOT_ENV];
+  const configured = process.env.NIGHTWATCH_PRODUCTION_STATE_DIR;
   return configured === undefined || configured.trim() === ''
     ? path.join(os.homedir(), PRODUCTION_ARTIFACT_DEFAULT_RELATIVE_ROOT)
     : configured;

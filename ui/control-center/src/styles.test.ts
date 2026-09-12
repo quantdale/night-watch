@@ -1,5 +1,5 @@
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { readFileSync, readdirSync } from 'node:fs';
+import { join, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 /**
@@ -19,7 +19,20 @@ import { describe, expect, it } from 'vitest';
 // The suite runs under jsdom, where `import.meta.url` is an http URL rather
 // than a file one. Vitest roots the process at the UI package, so the sources
 // are addressed from there.
-const APP = readFileSync(resolve(process.cwd(), 'src/App.tsx'), 'utf8');
+//
+// Group 19.11 split App.tsx into one module per view plus a shared module.
+// The guard reads EVERY component module, not only the shell, so the class
+// coverage proof survived the decomposition unchanged.
+const SRC = resolve(process.cwd(), 'src');
+const COMPONENT_MODULES = [
+  'App.tsx',
+  'shared.tsx',
+  ...readdirSync(join(SRC, 'views'))
+    .filter((file) => file.endsWith('.tsx'))
+    .sort()
+    .map((file) => `views/${file}`),
+];
+const APP = COMPONENT_MODULES.map((file) => readFileSync(join(SRC, file), 'utf8')).join('\n');
 const STYLES = readFileSync(resolve(process.cwd(), 'src/styles.css'), 'utf8');
 
 /**

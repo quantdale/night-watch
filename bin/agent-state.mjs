@@ -31,6 +31,7 @@ import {
   collectRevisitDue,
   loadLaneState,
 } from './lib/validation-lane-state.mjs';
+import { loadTypeScriptModule } from './lib/typescript-runtime-loader.mjs';
 
 const ACTIVE_STATUSES = new Set(['NONE', 'IN_PROGRESS', 'BLOCKED', 'COMPLETE']);
 const REQUIRED_ACTIVE_FIELDS = [
@@ -1025,6 +1026,20 @@ export function validate(root, auditMode = false) {
     for (const due of collectRevisitDue(laneState.lanes, today)) {
       warnings.push(`VALIDATION_LANE_REVISIT_DUE: ${due.laneId} revisit ${due.revisitDate}`);
     }
+  }
+
+  // F-11 dependency review dates: a review whose interval has elapsed is
+  // reported as due; the record itself is never rewritten here.
+  try {
+    const raw = JSON.parse(fs.readFileSync(path.join(root, 'config', 'dependency-currency.v1.json'), 'utf8'));
+    const { collectDependencyReviewDueFromRecord } = loadTypeScriptModule('src/core/dependencyCurrency/index.ts', { root });
+    const today = new Date().toISOString().slice(0, 10);
+    for (const due of collectDependencyReviewDueFromRecord(raw, today)) {
+      warnings.push(`DEPENDENCY_REVIEW_DUE: ${due.id} due ${due.dueDate} (reviewed ${due.reviewDate} + ${due.intervalDays}d); ${due.condition}`);
+    }
+  } catch {
+    // A missing or malformed record fails project:check; agent:check reports
+    // only what it can read.
   }
 
   // C-00 — repository-global workspace/session integrity. Worktrees isolate

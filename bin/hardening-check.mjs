@@ -130,6 +130,100 @@ function checkChildProcessBoundaries() {
     if (/import\s*\{[^}]*\bexec(?:File)?\b[^}]*\}\s*from\s*['"]node:child_process['"]/.test(source)) fail(`${file} imports shell-capable child_process exec`);
     if (/child_process\.exec(?:File)?\s*\(/.test(source)) fail(`${file} calls child_process.exec/execFile through a dynamic namespace`);
   }
+
+  // F-19. The reasoner call site is the one place a host-supplied string
+  // selects a program to run. It must spawn the RESOLVED canonical path with
+  // a literal argv array and shell:false, and the launcher must validate the
+  // configured value through the shared resolver before handing it over.
+  const reasoner = read('src/core/reasoner/cliReasoner.ts');
+  if (!/shell\s*:\s*false/.test(reasoner)) {
+    fail('src/core/reasoner/cliReasoner.ts must spawn the reasoner with shell:false');
+  }
+  if (!/spawn\(resolved\.executablePath,\s*\[\.\.\.resolved\.argv\]/.test(reasoner)) {
+    fail('src/core/reasoner/cliReasoner.ts must spawn the resolved executable path with a literal argv array');
+  }
+  if (/shell\s*:\s*(?:true|process\.env)/.test(reasoner)) {
+    fail('src/core/reasoner/cliReasoner.ts must never derive shell execution from configuration');
+  }
+  const agentLauncher = read('bin/nightwatch-agent.mjs');
+  if (!/resolveReasonerExecutable/.test(agentLauncher)) {
+    fail('bin/nightwatch-agent.mjs must validate NIGHTWATCH_REASONER_CLI through the shared resolver before spawning');
+  }
+}
+
+/**
+ * F-19. Every NIGHTWATCH_* variable a production source reads must be declared
+ * in `config/environment-surface.v1.json`, and a runtime-assembled name must
+ * be enumerated there rather than invented at the read site.
+ */
+function checkEnvironmentSurfaceDeclaration() {
+  let declaration;
+  try {
+    declaration = JSON.parse(readIncludingComments('config/environment-surface.v1.json'));
+  } catch (error) {
+    fail(`environment surface declaration is unreadable: ${error instanceof Error ? error.message : String(error)}`);
+    return;
+  }
+  if (declaration === null || typeof declaration !== 'object' || declaration.schemaVersion !== 'nightwatch.environment-surface.v1') {
+    fail(`env/environment surface declaration schemaVersion is not nightwatch.environment-surface.v1`);
+    return;
+  }
+  if (!Array.isArray(declaration.variables) || declaration.variables.length === 0) {
+    fail('environment surface declaration carries no variables; an empty declaration is not a surface');
+    return;
+  }
+  const declared = new Set();
+  for (const entry of declaration.variables) {
+    if (entry === null || typeof entry !== 'object' || typeof entry.name !== 'string' || !/^NIGHTWATCH_[A-Z0-9_]+$/.test(entry.name)) {
+      fail('environment surface declaration carries an invalid variable entry');
+      continue;
+    }
+    if (typeof entry.secretBearing !== 'boolean' || typeof entry.purpose !== 'string' || entry.purpose.trim().length < 12) {
+      fail(`environment surface declaration entry ${entry.name} lacks purpose/secretBearing`);
+      continue;
+    }
+    declared.add(entry.name);
+  }
+  const assembledEntries = Array.isArray(declaration.assembledReads) ? declaration.assembledReads : [];
+  const assembled = new Set(
+    assembledEntries
+      .filter((entry) => entry !== null && typeof entry === 'object' && typeof entry.construction === 'string')
+      .map((entry) => entry.construction),
+  );
+  for (const entry of assembledEntries) {
+    if (entry === null || typeof entry !== 'object' || typeof entry.name !== 'string' || !declared.has(entry.name)) {
+      fail('environment surface declaration names an assembled read whose variable is not declared');
+    }
+  }
+  const sources = gitFiles()
+    .filter((file) => (file.startsWith('src/') || file.startsWith('bin/')) && /\.(?:ts|mjs)$/.test(file))
+    .filter((file) => file !== 'bin/hardening-check.mjs');
+  let discovered = 0;
+  for (const file of sources) {
+    const code = read(file);
+    const reads = new Set();
+    for (const match of code.matchAll(/process\.env\.(NIGHTWATCH_[A-Z0-9_]+)/g)) reads.add(match[1]);
+    for (const match of code.matchAll(/process\.env\[\s*'NIGHTWATCH_([A-Z0-9_]+)'\s*\]/g)) reads.add(`NIGHTWATCH_${match[1]}`);
+    for (const match of code.matchAll(/(?:environment|env)\[\s*'NIGHTWATCH_([A-Z0-9_]+)'\s*\]/g)) reads.add(`NIGHTWATCH_${match[1]}`);
+    for (const name of reads) {
+      discovered += 1;
+      if (!declared.has(name)) {
+        fail(`environment surface: ${file} reads ${name} with no declaration in config/environment-surface.v1.json`);
+      }
+    }
+    const dynamicNames = new Set(
+      [...code.matchAll(/process\.env\[\s*([A-Za-z_$][A-Za-z0-9_$]*)\s*\]/g)].map((match) => match[1]),
+    );
+    for (const identifier of dynamicNames) {
+      const enumerated = [...assembled].some((construction) => construction.includes(`[${identifier}]`));
+      if (!enumerated) {
+        fail(`environment surface: ${file} reads process.env[${identifier}] with a runtime-assembled name that is not enumerated in assembledReads`);
+      }
+    }
+  }
+  if (discovered === 0) {
+    fail('environment surface: no NIGHTWATCH_* read was discovered; the scanner is broken rather than the surface clean');
+  }
 }
 
 function checkL6ProcessNetworkBoundary() {
@@ -4772,7 +4866,23 @@ function checkC15cSystemMapTransportBoundary() {
   const adapter = readIncludingComments('src/controlCenter/adapters/systemMapAdapter.ts');
   const router = readIncludingComments('src/controlCenter/server/router.ts');
   const server = readIncludingComments('src/controlCenter/server/server.ts');
-  const ui = readIncludingComments('ui/control-center/src/App.tsx');
+  // Group 19 split App.tsx into one module per view plus a shared module; the
+  // transport-boundary assertions read every component module so the split
+  // cannot hide a coercion or an evidence downgrade from this rule.
+  const ui = [
+    'ui/control-center/src/App.tsx',
+    'ui/control-center/src/shared.tsx',
+    'ui/control-center/src/views/OverviewView.tsx',
+    'ui/control-center/src/views/RunsView.tsx',
+    'ui/control-center/src/views/ExecutionGraphView.tsx',
+    'ui/control-center/src/views/SourceView.tsx',
+    'ui/control-center/src/views/FindingsView.tsx',
+    'ui/control-center/src/views/ReviewerView.tsx',
+    'ui/control-center/src/views/CampaignView.tsx',
+    'ui/control-center/src/views/SafetyView.tsx',
+    'ui/control-center/src/views/SystemMapView.tsx',
+    'ui/control-center/src/views/PlaceholderView.tsx',
+  ].map(readIncludingComments).join('\n');
   const apiClient = readIncludingComments('ui/control-center/src/api.ts');
   const adapterCode = withoutComments(adapter);
   const uiCode = withoutComments(ui);
@@ -5470,6 +5580,7 @@ const REGISTERED_RULES = [
   { name: 'checkDecisionIdentityUniqueness', run: checkDecisionIdentityUniqueness, family: 'documentation', quantifier: 'TOTALITY', subject: 'every duplicated decision number is recorded in the erratum with every colliding title', firstMatch: 'the exec is applied per line inside a loop over every line of the document, so every heading is evaluated' },
   { name: 'checkHostCapabilityMatrix', run: checkHostCapabilityMatrix, family: 'host-capability', quantifier: 'TOTALITY', subject: 'every declared dependency is assessed and every probed capability token is named in the matrix' },
   { name: 'checkValidationUniverse', run: checkValidationUniverse, family: 'validation-universe', quantifier: 'TOTALITY', subject: 'every discovered executable test or check is classified exactly once and the digest does not drift' },
+  { name: 'checkEnvironmentSurfaceDeclaration', run: checkEnvironmentSurfaceDeclaration, family: 'environment-surface', quantifier: 'TOTALITY', subject: 'every NIGHTWATCH_* variable read by production source is declared, and assembled read names are enumerated' },
   { name: 'checkSyntax', run: checkSyntax, family: 'syntax', quantifier: 'TOTALITY', subject: 'every top-level bin parses as an ES module' },
   { name: 'checkCliImplementationContract', run: checkCliImplementationContract, family: 'cli-contract', quantifier: 'TOTALITY', subject: 'every loader call site names a string literal path that resolves and exports what the call site reads' },
   { name: 'checkBinExecutionCoverage', run: checkBinExecutionCoverage, family: 'bin-execution', quantifier: 'TOTALITY', subject: 'every top-level bin entry point is executed as a process by at least one test' },

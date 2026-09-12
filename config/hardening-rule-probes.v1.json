@@ -243,6 +243,9 @@
     ],
     "checkModuleBarrierEnforcement": [
       { "id": "HC-081", "ops": [{ "file": "src/core/readiness/localReadiness.ts", "append": "\nimport { readLocalNightwatchProvenance } from '../provenance/localGit';\nvoid readLocalNightwatchProvenance;\n" }] }
+    ],
+    "checkEnvironmentSurfaceDeclaration": [
+      { "id": "HC-082", "ops": [{ "file": "src/core/environment/index.ts", "append": "\nvoid process.env.NIGHTWATCH_UNDECLARED_PROBE;\n" }] }
     ]
   }
 }

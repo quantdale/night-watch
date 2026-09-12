@@ -94,6 +94,21 @@ function buildLocalReviewAuthority() {
 let handle;
 try {
   const { port, uiRoot, enableLocalReview } = parseArgs(process.argv.slice(2));
+  // F-19: validate the declared environment surface and report undeclared
+  // NIGHTWATCH_* names before the loopback socket exists.
+  {
+    const surfaceModule = loadTypeScriptModule('src/core/config/environmentSurface.ts');
+    const surface = surfaceModule.loadEnvironmentSurface();
+    const merged = surfaceModule.mergeDotEnvLayer(process.env, surfaceModule.loadDotEnvLayer(ROOT), surface);
+    for (const line of surfaceModule.reportUnknownEnvironmentVariables(merged, surface)) {
+      process.stderr.write(`NIGHTWATCH_CONTROL_CENTER: ${line}\n`);
+    }
+    try {
+      surfaceModule.assertEnvironmentSurface(merged, surface, { mode: 'startup' });
+    } catch {
+      throw new Error('CONTROL_CENTER_ENVIRONMENT_CONFIGURATION_REFUSED');
+    }
+  }
   const serverModule = loadTypeScriptModule('src/controlCenter/server/index.ts');
   const collectorModule = loadTypeScriptModule('src/controlCenter/server/defaultCollector.ts');
   // Both halves from ONE factory when review is enabled, so the collector and

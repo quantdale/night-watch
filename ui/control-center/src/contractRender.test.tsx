@@ -1,5 +1,6 @@
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { createHash } from 'node:crypto';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
 import ts from 'typescript';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
@@ -656,5 +657,39 @@ describe('control center render truth', () => {
     expect(absentArrays, 'collections whose emptiness changes no view DOM').toEqual([]);
     const staleArrayExemptions = Object.keys(arrayExemptions).filter((key) => observableArrays.has(key));
     expect(staleArrayExemptions, 'collection exemptions are now observable; remove them').toEqual([]);
+  }, 900_000);
+
+  /**
+   * Group 19.12. The App.tsx decomposition into one module per view plus a
+   * shared module must change nothing an operator sees. The baseline below was
+   * generated from the pre-decomposition App.tsx under this same fixture
+   * matrix, and every view's rendered DOM is compared byte-for-byte against
+   * it. Regenerate only when an intended DOM change is made, and record why in
+   * the task STATE.md.
+   */
+  const VIEW_DOM_BASELINE = resolve(process.cwd(), 'src', '__baselines__', 'view-dom-baseline.json');
+
+  it('preserves the rendered DOM of every view across the decomposition', async () => {
+    const contracts = [...OVERVIEW_CONTRACTS, ...REMAINING_CONTRACTS];
+    const observed: Record<string, { readonly sha256: string; readonly length: number }> = {};
+    for (const view of VIEWS) {
+      const mounted = await mount(view, fixturesFor(contracts));
+      observed[view.name] = {
+        sha256: createHash('sha256').update(mounted.html).digest('hex'),
+        length: mounted.html.length,
+      };
+    }
+    if (process.env.NIGHTWATCH_UPDATE_VIEW_DOM_BASELINE === '1') {
+      mkdirSync(dirname(VIEW_DOM_BASELINE), { recursive: true });
+      writeFileSync(VIEW_DOM_BASELINE, `${JSON.stringify(observed, null, 2)}\n`);
+      return;
+    }
+    const baseline = JSON.parse(readFileSync(VIEW_DOM_BASELINE, 'utf8')) as typeof observed;
+    // A view missing from either side fails: a removed view must not silently
+    // shrink the proof, and a new view must not escape it.
+    expect(Object.keys(observed).sort()).toEqual(Object.keys(baseline).sort());
+    for (const view of VIEWS) {
+      expect(observed[view.name], `${view.name} DOM drifted from the pre-decomposition baseline`).toEqual(baseline[view.name]);
+    }
   }, 900_000);
 });

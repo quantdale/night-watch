@@ -16,7 +16,7 @@ import type { AddressInfo } from 'node:net';
 import type { Server as HttpServer, IncomingMessage, ServerResponse } from 'node:http';
 import { OutboundPolicy } from '../core/safety/outboundPolicy';
 import { appendProxyEvent, ensureEventLog } from './events';
-import { ensureProxyPortLease, proxyLeaseRuntimeSuffix, PROXY_PORT_LEASE_OWNER_ENV, releaseProxyPortLease } from './portLease';
+import { ensureProxyPortLease, proxyLeaseRuntimeSuffix, releaseProxyPortLease } from './portLease';
 import { classifyForwardRequest, classifyProxyConnect, classifyProxyUrl, type ProxyClassification, type ProxyTarget } from './policyAdapter';
 import { createSystemProxyResolver, resolveAndAdmitTarget, PROXY_RESOLUTION_TIMEOUT_MS, type ProxyResolver, type ProxyResolution } from './resolver';
 import { EXACT_ADDRESS_BINDING_VERSION } from './identity';
@@ -162,12 +162,12 @@ export async function startOutboundProxy(opts: OutboundProxyOptions): Promise<Ou
     throw new Error(`Nightwatch proxy requires an unprivileged TCP port, got ${String(port)}`);
   }
   const eventLogPath = opts.eventLogPath ?? DEFAULT_PROXY_EVENT_LOG;
-  const leaseOwner = Number(process.env[PROXY_PORT_LEASE_OWNER_ENV]);
+  const leaseOwner = Number(process.env.NIGHTWATCH_PROXY_LEASE_OWNER_PID);
   const releaseLeaseOnClose = port !== 0
     && Number(process.env.NIGHTWATCH_PROXY_PORT) === port
     && typeof process.env.NIGHTWATCH_PROXY_LEASE_TOKEN === 'string'
     && (!Number.isInteger(leaseOwner) || leaseOwner === process.pid);
-  if (releaseLeaseOnClose) process.env[PROXY_PORT_LEASE_OWNER_ENV] = String(process.pid);
+  if (releaseLeaseOnClose) process.env.NIGHTWATCH_PROXY_LEASE_OWNER_PID = String(process.pid);
   ensureEventLog(eventLogPath);
   let eventSeq = 0;
   const requestedRunId = opts.runId ?? process.env.NIGHTWATCH_RUN_ID ?? 'playwright-suite';

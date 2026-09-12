@@ -240,12 +240,12 @@ export function releaseProxyPortLease(root = DEFAULT_LEASE_ROOT): void {
   const token = process.env.NIGHTWATCH_PROXY_LEASE_TOKEN;
   const port = Number(process.env.NIGHTWATCH_PROXY_PORT);
   if (typeof token !== 'string' || !TOKEN_RE.test(token) || !validPort(port)) return;
-  const ownerPid = Number(process.env[PROXY_PORT_LEASE_OWNER_ENV]);
+  const ownerPid = Number(process.env.NIGHTWATCH_PROXY_LEASE_OWNER_PID);
   if (ownerPid !== process.pid) return;
   releaseLease(process.env.NIGHTWATCH_PROXY_LEASE_PATH ?? leaseFile(root, port), token, true);
   delete process.env.NIGHTWATCH_PROXY_LEASE_TOKEN;
   delete process.env.NIGHTWATCH_PROXY_LEASE_PATH;
-  delete process.env[PROXY_PORT_LEASE_OWNER_ENV];
+  delete process.env.NIGHTWATCH_PROXY_LEASE_OWNER_PID;
 }
 
 export function proxyLeaseRuntimeSuffix(): string {

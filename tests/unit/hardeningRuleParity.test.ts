@@ -78,6 +78,7 @@ test.describe('hardening rule parity', () => {
     for (const rule of [
       'checkC00WorkspaceIntegrity',
       'checkC10ProductionPrivacyBoundary',
+      'checkEnvironmentSurfaceDeclaration',
       'checkAlphausHandoffBoundary',
       'checkC12RehearsalBoundary',
       'checkFindingFrontierBoundary',
