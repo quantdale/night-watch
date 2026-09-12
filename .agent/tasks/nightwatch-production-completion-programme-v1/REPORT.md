@@ -270,3 +270,21 @@ explicit disposition with no default. G8 and G18 are implemented and green.
 Final certification at implementation `880810ea`: `gate:local` all eleven
 groups PASS with receipt `receipt:sha256:da8efb8334bad9b6e4d79931`; full
 offline regression 5085 passed / 18 skipped / 0 failed.
+
+## Exact-head CI and final closure
+
+GitHub Actions executed the full gate at `66df26b7`: run `34705274649`,
+conclusion `success`, environmentClass `CI`, all eleven groups PASS,
+SEMANTIC_COMPATIBILITY 2107 passed, SYNTHETIC_CAMPAIGN green with
+`deepContainmentLane: NOT_EXERCISED_BWRAP_UNAVAILABLE` (the runner lacks
+bwrap; the lane is recorded, never projected as PROVEN). `CI_OBSERVED_SHA`
+and `CI_EXECUTED_SHA` now name `66df26b7`, `CI_STATUS: EXECUTED_PASS`, and
+release condition 2 (`exact-head-ci-authority`) is MET. The advisory lane is
+PROVEN by the owner-authorized 2026-09-12 query; condition 1
+(`validation-lane-closure`) remains UNMET because the clean-checkout lane's
+evidence predates the certified implementation.
+
+Final local gate at `ea3b4a5e`: all eleven groups PASS with receipt
+`receipt:sha256:177b90fd4da55a8950813100`. Session and worktree cleanup:
+canonical maintenance claim released, foreign terminal session released and
+removed with its branch, attention=0.
