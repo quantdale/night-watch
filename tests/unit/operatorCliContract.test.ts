@@ -269,7 +269,10 @@ test.describe('derived operator command listing', () => {
 // ---------------------------------------------------------------------------
 
 const SWEEP_TIMEOUT_MS = 300_000;
-const REPO_WALK_SKIP = new Set(['.git', 'node_modules', 'test-results', 'dist', 'playwright-report']);
+// `.tmp-nightwatch` is G5's single ignored scratch root: a bin may create its
+// proxy event log there by design, and that is not an operator-visible side
+// effect on any authoritative path. Every other repository path is measured.
+const REPO_WALK_SKIP = new Set(['.git', 'node_modules', 'test-results', 'dist', 'playwright-report', '.tmp-nightwatch']);
 
 function treeSignature(root: string, relative = ''): Map<string, string> {
   const signature = new Map<string, string>();
