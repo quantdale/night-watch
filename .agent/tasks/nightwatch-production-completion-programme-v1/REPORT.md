@@ -227,3 +227,27 @@ to another writer and was not touched. Owner decisions listed in STATE.md
 remain decisions to be taken, not work an agent may self-authorize.
 
 
+
+## Final certification and integration
+
+At implementation `c24594e8` the authoritative gate passed all eleven
+required groups with receipt `receipt:sha256:df2f1f8aa374b45007206e08`, and
+the full offline regression passed 5083 / 18 skipped / 0 failed. Groups added
+after the first integration: G3 CI-topology clean gate (`gate:topology`,
+four independently togglable absences, categorical regressions for the two
+run-33572572053 defect classes, CI block record), G9 dependency currency
+(advisory lane kept UNAVAILABLE_CAPABILITY with a clean-claim guard, three
+Vue review conditions mechanized, declared engines range separated from
+qualified points, `npm ci --offline` re-dated), G19 configuration contract
+(environment surface declaration and startup validation, unknown-variable
+report, printable effective config with redaction, environment-file schema
+validation, reasoner CLI validation with no-shell, `App.tsx` decomposed
+1,839 → 303 lines with a byte-identical rendered-DOM baseline and each view
+module), and G17/G4 follow-through (schema families declared for the new
+records; one operator CLI contract continues to report conformance).
+
+Still not executed at closure: **G8** (Control Center residual truth), **G12**
+(autonomous yield proof), **G18** (UI error taxonomy rendering), and the
+remaining partial tails of G4 (31/63 bins), G5, G10, G14, G15, G16, G17,
+G20, G21. Every owner decision named in STATE.md remains open. Integration is
+by fast-forward from the owned session with `HEAD == origin/main` verified.
