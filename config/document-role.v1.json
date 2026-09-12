@@ -4,18 +4,57 @@
   "note": "Every top-level docs/*.md file has exactly one role. CURRENT_TRUTH documents are bounded and must stay readable end to end; APPEND_ONLY_ARCHIVE documents keep the historical record and existing lines may not be modified or deleted, only appended to; OPERATOR_REFERENCE documents are instructions an operator follows at a specific point. hardening:check fails on an undeclared, duplicate-declared or missing file, on a CURRENT_TRUTH document over its declared maximum, and on an archive modification that no declared correction covers. A relocation moves text from a CURRENT_TRUTH document into an APPEND_ONLY_ARCHIVE byte-identically; the recorded digest is the digest of the moved bytes, so editing an archived relocation after the fact fails the correspondence check.",
   "scope": "docs/*.md",
   "documents": [
-    { "path": "docs/ALPHAUS-FINDING-HANDOFF-CONTEXT.md", "role": "APPEND_ONLY_ARCHIVE" },
-    { "path": "docs/ARCHITECTURE.md", "role": "APPEND_ONLY_ARCHIVE" },
-    { "path": "docs/C12-OPERATOR-RUNBOOK.md", "role": "OPERATOR_REFERENCE" },
-    { "path": "docs/CI_HARDENING.md", "role": "OPERATOR_REFERENCE" },
-    { "path": "docs/CURRENT_STATE.md", "role": "APPEND_ONLY_ARCHIVE" },
-    { "path": "docs/DECISIONS.md", "role": "APPEND_ONLY_ARCHIVE" },
-    { "path": "docs/HOST-CAPABILITY-MATRIX.md", "role": "CURRENT_TRUTH", "maxLines": 200 },
-    { "path": "docs/KIRO-CREW-INTEGRATION-MASTER-PLAN.md", "role": "APPEND_ONLY_ARCHIVE" },
-    { "path": "docs/MASTER-IMPLEMENTATION-HARDENING-PLAN.md", "role": "CURRENT_TRUTH", "maxLines": 965 },
-    { "path": "docs/RELEASE-ADVANCE-CONDITIONS.md", "role": "CURRENT_TRUTH", "maxLines": 160 },
-    { "path": "docs/ROADMAP.md", "role": "APPEND_ONLY_ARCHIVE" },
-    { "path": "docs/SAFETY_MODEL.md", "role": "APPEND_ONLY_ARCHIVE" }
+    {
+      "path": "docs/ALPHAUS-FINDING-HANDOFF-CONTEXT.md",
+      "role": "APPEND_ONLY_ARCHIVE"
+    },
+    {
+      "path": "docs/ARCHITECTURE.md",
+      "role": "APPEND_ONLY_ARCHIVE"
+    },
+    {
+      "path": "docs/C12-OPERATOR-RUNBOOK.md",
+      "role": "OPERATOR_REFERENCE"
+    },
+    {
+      "path": "docs/CI_HARDENING.md",
+      "role": "OPERATOR_REFERENCE"
+    },
+    {
+      "path": "docs/CURRENT_STATE.md",
+      "role": "APPEND_ONLY_ARCHIVE"
+    },
+    {
+      "path": "docs/DECISIONS.md",
+      "role": "APPEND_ONLY_ARCHIVE"
+    },
+    {
+      "path": "docs/HOST-CAPABILITY-MATRIX.md",
+      "role": "CURRENT_TRUTH",
+      "maxLines": 200
+    },
+    {
+      "path": "docs/KIRO-CREW-INTEGRATION-MASTER-PLAN.md",
+      "role": "APPEND_ONLY_ARCHIVE"
+    },
+    {
+      "path": "docs/MASTER-IMPLEMENTATION-HARDENING-PLAN.md",
+      "role": "CURRENT_TRUTH",
+      "maxLines": 965
+    },
+    {
+      "path": "docs/RELEASE-ADVANCE-CONDITIONS.md",
+      "role": "CURRENT_TRUTH",
+      "maxLines": 160
+    },
+    {
+      "path": "docs/ROADMAP.md",
+      "role": "APPEND_ONLY_ARCHIVE"
+    },
+    {
+      "path": "docs/SAFETY_MODEL.md",
+      "role": "APPEND_ONLY_ARCHIVE"
+    }
   ],
   "relocations": [
     {
@@ -69,6 +108,13 @@
       "oldLineSha256": "sha256:e6f3fd1e56828bbec94838f9",
       "oldLineExcerpt": "executed test failure is recorded as `CI_STATUS: EXECUTED_FAIL`. It is not",
       "reason": "Group 7 status-ledger repair appended an explicit historical-checkpoint marker naming run 33572572053 at c3fed38; the statement itself is unchanged."
+    },
+    {
+      "id": "CORR-PC-001",
+      "path": "docs/CURRENT_STATE.md",
+      "oldLineSha256": "sha256:7d18d1c30fd63995e4a483ee",
+      "oldLineExcerpt": "> Durable memory for the next agent/session. Last updated: **2026-09-11**",
+      "reason": "Closure reconciliation bumped the header date to the day its last change actually landed (2026-09-12); the statement is unchanged."
     }
   ]
 }
