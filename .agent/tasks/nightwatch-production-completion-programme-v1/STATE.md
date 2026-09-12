@@ -13,10 +13,10 @@ Last substantive checkpoint SHA: 88e3c3fb52937ff303b0944cc22cfee624bf807e
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-production-completion-3d648499
-Last checkpoint: final certification at implementation `c24594e8`:
+Last checkpoint: final certification at implementation `880810ea`:
 `gate:local` all eleven required groups PASS with receipt
-`receipt:sha256:df2f1f8aa374b45007206e08`, and the full offline regression
-5083 passed / 18 skipped / 0 failed. The earlier certified point
+`receipt:sha256:da8efb8334bad9b6e4d79931`, and the full offline regression
+5085 passed / 18 skipped / 0 failed. The earlier certified point
 `98315e24` (receipt `receipt:sha256:5919f65e36e7dd1a4def75d4`, 5024
 passed) passed the same gate before the group 3/9/19 work landed. The
 canonical checkout was made clean by preserving the concurrent design-system
@@ -222,18 +222,18 @@ full offline regression from this owned session, fast-forward integrate with
 
 ## Validation Ledger
 
-Command: `npm run gate:local` at implementation `c24594e8`
+Command: `npm run gate:local` at implementation `880810ea`
 Result: PASS (all eleven required groups)
 When: 2026-09-12
 Relevant failure/output summary: receipt
-`receipt:sha256:df2f1f8aa374b45007206e08`; SEMANTIC_COMPATIBILITY and
+`receipt:sha256:da8efb8334bad9b6e4d79931`; SEMANTIC_COMPATIBILITY and
 SYNTHETIC_CAMPAIGN green; the group 3 topology gate, group 9 dependency
 currency and group 19 configuration contract are included.
 
-Command: `npm test` at implementation `c24594e8`
+Command: `npm test` at implementation `880810ea`
 Result: PASS
 When: 2026-09-12
-Relevant failure/output summary: full offline regression 5083 passed / 18
+Relevant failure/output summary: full offline regression 5085 passed / 18
 skipped / 0 failed.
 
 Command: `npm run gate:local` at implementation `98315e24`

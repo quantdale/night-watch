@@ -251,3 +251,22 @@ Still not executed at closure: **G8** (Control Center residual truth), **G12**
 remaining partial tails of G4 (31/63 bins), G5, G10, G14, G15, G16, G17,
 G20, G21. Every owner decision named in STATE.md remains open. Integration is
 by fast-forward from the owned session with `HEAD == origin/main` verified.
+
+## Owner decisions applied and final closure wave
+
+Owner decisions executed: session/worktree cleanup (canonical maintenance claim
+released, foreign terminal session released and removed, attention=0); evidence
+reclaim applied (13,239 reclaimable run directories, 708,851,047 bytes) and 23
+historical runner-output/scratch roots cleaned; G14.6 adopted `dtoFramework`
+and removed `adversarialCorpus` on zero live consumers; G8.7 taxonomy adopted
+with a 13/13 explicit mapping and no fallback bucket; G9.1 one bounded registry
+advisory query executed 2026-09-12 (one low `vue` 2.6.12 GHSA-5j4c-8p2g-v4jx,
+unreachable fixture path) making the advisory lane PROVEN; G10.6 `mochi` access
+is unavailable so C-13/C-14 are terminally closed; G11.3 synthetic-only state
+preserved; G12 preflight records `EXTERNAL_PREREQUISITE_UNMET` and the yield
+wave stays closed; G13.8 stays `OPERATIONALLY_ACCEPTED`; G17.4 requires an
+explicit disposition with no default. G8 and G18 are implemented and green.
+
+Final certification at implementation `880810ea`: `gate:local` all eleven
+groups PASS with receipt `receipt:sha256:da8efb8334bad9b6e4d79931`; full
+offline regression 5085 passed / 18 skipped / 0 failed.
