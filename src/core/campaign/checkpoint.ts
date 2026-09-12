@@ -1053,7 +1053,11 @@ export class CampaignCheckpointStore {
 export class CampaignResumeRefusedError extends Error {
   readonly explanation: CheckpointResumeExplanation;
   constructor(explanation: CheckpointResumeExplanation, cause?: unknown) {
-    super(`CAMPAIGN_VERSION_DRIFT:${explanation.restartReason}${cause === undefined ? '' : `:${(cause as Error).message}`}`);
+    // Preserve the strict validator's message and classification exactly when
+    // a cause exists; the explanation stays available on `.explanation`. Only
+    // a cause-less refusal is labelled with the version-drift code.
+    const causeMessage = cause instanceof Error ? cause.message : cause === undefined ? null : String(cause);
+    super(causeMessage === null ? `CAMPAIGN_VERSION_DRIFT:${explanation.restartReason}` : causeMessage);
     this.name = 'CampaignResumeRefusedError';
     this.explanation = explanation;
   }

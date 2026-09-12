@@ -451,7 +451,7 @@ test.describe('Phase 8B.1.0 replay descriptor compatibility', () => {
 });
 
 test.describe('Phase 8B.1.0 production CLI under explicit catalog states', () => {
-  function runCli(repository: string): { readonly status: number; readonly stdout: string } {
+  function runCli(repository: string): { readonly status: number; readonly stdout: string; readonly stderr: string } {
     const privateRoot = fs.mkdtempSync(path.join(os.homedir(), 'nightwatch-8b1p0-cli-'));
     try {
       const result = spawnSync(process.execPath, ['bin/selfdev-synthetic.mjs'], {
@@ -460,7 +460,7 @@ test.describe('Phase 8B.1.0 production CLI under explicit catalog states', () =>
         encoding: 'utf8',
         timeout: 30_000,
       });
-      return { status: result.status ?? -1, stdout: result.stdout ?? '' };
+      return { status: result.status ?? -1, stdout: result.stdout ?? '', stderr: result.stderr ?? '' };
     } finally {
       fs.rmSync(privateRoot, { recursive: true, force: true });
     }
@@ -469,8 +469,8 @@ test.describe('Phase 8B.1.0 production CLI under explicit catalog states', () =>
   test('one-entry checkout: the actual CLI succeeds, selects EXPAND_THEN_COLLAPSE, replay PASS, pass count 1', () => {
     const { fixture } = makeFixture('EXPAND_ONLY');
     try {
-      const { status, stdout } = runCli(fixture.root);
-      expect(status).toBe(0);
+      const { status, stdout, stderr } = runCli(fixture.root);
+      expect(status, stderr).toBe(0);
       const parsed = JSON.parse(stdout);
       expect(parsed.SESSION).toBe('PASS');
       expect(parsed.passCount).toBe(1);

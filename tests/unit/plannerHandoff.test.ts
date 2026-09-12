@@ -271,6 +271,9 @@ function makeFixture(options: FixtureOptions = {}): Fixture {
     'bin/planner-handoff-check.mjs',
     'bin/workspace-integrity.mjs',
     'bin/lib/programme-state.mjs',
+    'bin/lib/openspec-ledger.mjs',
+    'bin/lib/operator-cli.mjs',
+    'bin/lib/validation-lane-state.mjs',
   ]) {
     fs.mkdirSync(path.dirname(path.join(root, relativePath)), { recursive: true });
     fs.copyFileSync(path.join(ROOT, relativePath), path.join(root, relativePath));
@@ -388,7 +391,7 @@ test.describe('planner -> executor handoff protocol', () => {
       const fixture = makeFixture({ status });
       try {
         const result = runChecker(fixture.root);
-        expect(result.status, status).toBe(0);
+        expect(result.status, checkerText(result)).toBe(0);
         const receipt = JSON.parse(String(result.stdout));
         expect(receipt.status).toBe('PASS');
         expect(receipt.handoffStatus).toBe(status);

@@ -20,23 +20,6 @@ import path from "node:path";
 import { loadTypeScriptModule as loadRuntimeTypeScriptModule } from "./lib/typescript-runtime-loader.mjs";
 import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from "./lib/operator-cli.mjs";
 
-const CLI_METADATA = {
-  schemaVersion: OPERATOR_CLI_SCHEMA,
-  name: "phase14-contract-health",
-  entry: "bin/phase14-contract-health.mjs",
-  purpose: "Render the local Phase 14A contract-coverage health report from a sanitized inventory or snapshot.",
-  group: "inspect-intelligence",
-  flags: [
-    { name: "--inventory", shape: "path", summary: "pre-built coverage inventory JSON" },
-    { name: "--baseline", shape: "path", summary: "optional baseline inventory for a delta" },
-    { name: "--snapshot", shape: "path", summary: "disposable exact source snapshot directory" },
-    { name: "--sha", shape: "string", summary: "current snapshot SHA for the snapshot build" },
-    { name: "--format", shape: "enum", values: ["json", "text"], summary: "output format" },
-  ],
-  authorization: "LOCAL_ONLY",
-  artifacts: [],
-};
-
 const HELP = `Nightwatch Phase 14A contract coverage health CLI (local/source-only).
 
   --inventory=<file.json>   Pre-built coverage inventory JSON (sanitized before use).
@@ -48,6 +31,24 @@ const HELP = `Nightwatch Phase 14A contract coverage health CLI (local/source-on
 
 Reads only. Performs no writes to sibling repositories, no network, no campaign.
 `;
+
+const CLI_METADATA = {
+  schemaVersion: OPERATOR_CLI_SCHEMA,
+  name: "phase14-contract-health",
+  entry: "bin/phase14-contract-health.mjs",
+  purpose: "Render the local Phase 14A contract-coverage health report from a sanitized inventory or snapshot.",
+  group: "inspect-intelligence",
+  usage: HELP,
+  flags: [
+    { name: "--inventory", shape: "path", summary: "pre-built coverage inventory JSON" },
+    { name: "--baseline", shape: "path", summary: "optional baseline inventory for a delta" },
+    { name: "--snapshot", shape: "path", summary: "disposable exact source snapshot directory" },
+    { name: "--sha", shape: "string", summary: "current snapshot SHA for the snapshot build" },
+    { name: "--format", shape: "enum", values: ["json", "text"], summary: "output format" },
+  ],
+  authorization: "LOCAL_ONLY",
+  artifacts: [],
+};
 
 function assign(out, key, value) {
   if (key === "--inventory") out.inventory = value;

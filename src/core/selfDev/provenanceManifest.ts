@@ -11,6 +11,7 @@ export const SELFDEV_SOURCE_BUNDLE_MANIFEST_VERSION = 'nightwatch.selfdev-source
 export const SELFDEV_SOURCE_BUNDLE_ALGORITHM = 'sha256:length-prefixed-relative-path-and-bytes.v1' as const;
 
 export const SELFDEV_AUTHORITATIVE_PATHS = Object.freeze([
+  'bin/lib/operator-cli.mjs',
   'bin/lib/typescript-runtime-loader.mjs',
   'bin/selfdev-adopt-sandbox.mjs',
   'bin/selfdev-catalog-integrity.mjs',
