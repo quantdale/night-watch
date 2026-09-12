@@ -293,7 +293,9 @@ test.describe('group 9 — dependency and supply-chain currency (F-11)', () => {
     const honest = { path: 'docs/SYNTHETIC.md', text: 'npm audit and any registry-backed advisory query are UNAVAILABLE, not clean.\n' };
     expect(evaluateAdvisoryCleanClaims({ documents: [honest], advisoryLaneClass: lane?.class ?? 'UNKNOWN' })).toEqual([]);
     const tainted = { path: 'docs/SYNTHETIC.md', text: 'Dependency scan: clean, 0 vulnerabilities.\n' };
-    const findings = evaluateAdvisoryCleanClaims({ documents: [tainted], advisoryLaneClass: lane?.class ?? 'UNKNOWN' });
+    // The guard is exercised on the unavailable branch explicitly; the live
+    // lane is PROVEN by the owner-authorized executed query.
+    const findings = evaluateAdvisoryCleanClaims({ documents: [tainted], advisoryLaneClass: 'UNAVAILABLE_CAPABILITY' });
     expect(findings.map((finding) => finding.code)).toContain('DEPENDENCY_ADVISORY_CLEAN_CLAIM_WHILE_UNAVAILABLE');
     expect(findings[0]?.detail).toContain('never a passing scan');
     // A proven lane is allowed to state its result.
