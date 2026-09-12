@@ -13,11 +13,13 @@ Last substantive checkpoint SHA: 88e3c3fb52937ff303b0944cc22cfee624bf807e
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-production-completion-3d648499
-Last checkpoint: G1 ledger truth implemented through
-`171d0306` (open-work report and shared ledger parser) on top of
-`132152b1` (archive and baseline) and `0be26da9`/`e5604a5a` (ledger
-reconciliation and agreement check); G1.18 integration is externally blocked
-by a concurrent untracked planning artifact in the canonical checkout.
+Last checkpoint: certification at implementation `98315e24`:
+`gate:local` all eleven groups PASS with receipt
+`receipt:sha256:5919f65e36e7dd1a4def75d4` and the full offline regression
+5024 passed / 18 skipped / 0 failed. The canonical checkout was made clean
+by preserving the concurrent design-system planning artifact as a committed
+planning checkpoint (`c7a2c091`), and the session was reconciled over it;
+integration is the remaining act.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 36bd4930db978423f97e16f35250c2e66bfa112c
@@ -217,6 +219,20 @@ full offline regression from this owned session, fast-forward integrate with
 | `openspec/changes/nightwatch-production-completion-programme-v1/tasks.md` | G14 evidence and open owner decision | MODIFIED |
 
 ## Validation Ledger
+
+Command: `npm run gate:local` at implementation `98315e24`
+Result: PASS (all eleven required groups)
+When: 2026-09-12
+Relevant failure/output summary: receipt
+`receipt:sha256:5919f65e36e7dd1a4def75d4`; SEMANTIC_COMPATIBILITY 2105
+passed / 13 skipped / 0 failed; SYNTHETIC_CAMPAIGN 1820 passed / 0 failed
+with `deepContainmentLane: PROVEN`; OWNER_PROVENANCE 91.
+
+Command: `npm test` at implementation `98315e24`
+Result: PASS
+When: 2026-09-12
+Relevant failure/output summary: full offline regression 5024 passed / 18
+skipped / 0 failed.
 
 Command: `node bin/agent-state.mjs --root .`
 Result: PASS for every ledger/task/workspace check except the external
