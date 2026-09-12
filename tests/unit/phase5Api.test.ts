@@ -10,7 +10,7 @@ import { apiFingerprint, evaluateApiResponse } from '../../src/api/phase5/oracle
 import { API_CATALOG_VERSION, OOPS_ADAPTER_VERSION, OOPS_PROFILE_VERSION, SCENARIO_GENERATOR_VERSION, type ApiCatalog, type ApiOperation } from '../../src/api/phase5/types';
 import { executeNativePhase5Operation, startPhase5Relay } from '../../src/api/phase5/relay';
 import { buildOOPSAllowlistedEnvironment, runRestrictedOops, sha256Executable, validateRestrictedOopsInvocationArgs } from '../../src/core/oops/process';
-import { assertL6RuntimeCapability, inspectOopsSandbox } from '../../src/core/oops/sandbox';
+import { assertL6RuntimeCapability, inspectOopsSandbox, qualifyL6RuntimeCapability } from '../../src/core/oops/sandbox';
 import { createEphemeralRippleApiAuthProvider } from '../../src/api/phase5/auth';
 import { loadEnvironmentConfig } from '../../src/core/environment';
 
@@ -212,6 +212,15 @@ test('Phase 5 keeps the legacy namespace observation distinct from executable L6
 });
 
 test('authenticated OOPS uses the proven L6 envelope before creating its temporary workspace', async () => {
+  // Topology honesty (G3.5): the capability is probed, never assumed. Where
+  // the runner cannot provide the L6 envelope, the required outcome is the
+  // fail-closed refusal, proven here rather than skipped.
+  const sandbox = inspectOopsSandbox();
+  if (sandbox.networkNamespaceProbe !== 'PASS') {
+    await expect(qualifyL6RuntimeCapability().then((capability) => assertL6RuntimeCapability(capability)))
+      .rejects.toThrow('L6_RUNTIME_CAPABILITY_REQUIRED');
+    return;
+  }
   const selected = selectOopsBinary();
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-oops-l6-block-'));
   const binary = selected.path;
