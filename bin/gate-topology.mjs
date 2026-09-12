@@ -80,7 +80,7 @@ const CLI_METADATA = {
   ],
   defaultCommand: 'run',
   flags: [
-    { name: '--absence', shape: 'enum', values: [...TOPOLOGY_ABSENCES.map((absence) => absence.id), 'all'], summary: 'restrict the proof to one absence (default all)' },
+    { name: '--absence', shape: 'enum', values: ['sibling-root', 'bwrap', 'chrome', 'fresh-home', 'all'], summary: 'restrict the proof to one absence (default all)' },
     { name: '--lane', shape: 'enum', values: ['capability', 'campaign', 'full'], summary: 'which authoritative lane runs under each absence (default capability)' },
     { name: '--mode', shape: 'enum', values: ['all', 'static', 'dynamic'], summary: 'static, dynamic, or both (default all)' },
     { name: '--no-receipt', shape: 'boolean', summary: 'do not persist the receipt under artifacts/topology-receipts' },
