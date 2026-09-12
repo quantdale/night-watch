@@ -506,6 +506,9 @@ function checkWorktreeMetadata(root, worktrees, policy, errors, warnings) {
   for (const worktree of worktrees) {
     const record = worktree.record;
     if (record === null) continue;
+    // A released record is not a held claim: there is no task to release or
+    // re-point, so it is never reported as a terminal-task claim finding.
+    if (record.ownershipState !== 'OWNED') continue;
     const resolved = resolveClaimTask(root, record.taskId);
     if (resolved.state === 'OPEN') continue;
     const terminal = resolved.state === 'TERMINAL';
@@ -862,7 +865,8 @@ export function inspectWorkspace(options = {}) {
       else if (!recordState.valid) {
         worktreeClass = 'UNKNOWN';
         classReason = `canonical session record invalid: ${recordState.problems.join(',')}`;
-      } else if (recordState.record.role === 'MAINTENANCE') worktreeClass = 'CANONICAL_MAINTENANCE';
+      } else if (recordState.record.role === 'MAINTENANCE' && recordState.record.ownershipState === 'OWNED') worktreeClass = 'CANONICAL_MAINTENANCE';
+      else if (recordState.record.role === 'MAINTENANCE') worktreeClass = 'CANONICAL_MAIN';
       else {
         worktreeClass = 'UNKNOWN';
         classReason = 'canonical checkout carries a non-maintenance session record';
