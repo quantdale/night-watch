@@ -217,8 +217,11 @@ test('authenticated OOPS uses the proven L6 envelope before creating its tempora
   // fail-closed refusal, proven here rather than skipped.
   const sandbox = inspectOopsSandbox();
   if (sandbox.networkNamespaceProbe !== 'PASS') {
-    await expect(qualifyL6RuntimeCapability().then((capability) => assertL6RuntimeCapability(capability)))
-      .rejects.toThrow('L6_RUNTIME_CAPABILITY_REQUIRED');
+    const capability = await qualifyL6RuntimeCapability();
+    expect(capability.status).not.toBe('PROVEN');
+    expect(capability.readiness).not.toBe('READY');
+    expect(capability.blockerCode).not.toBeNull();
+    expect(() => assertL6RuntimeCapability(sandbox.l6)).toThrow('L6_RUNTIME_CAPABILITY_REQUIRED');
     return;
   }
   const selected = selectOopsBinary();
