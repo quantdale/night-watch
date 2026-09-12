@@ -14,21 +14,27 @@ Project completion status: `OPERATIONALLY_ACCEPTED`.
 
 The three counts that give the status meaning are carried with it:
 
-- lanes proven: **7** `<!--status:VALIDATION_LANE_PROVEN_COUNT=7-->`
+- lanes proven: **8** `<!--status:VALIDATION_LANE_PROVEN_COUNT=8-->`
 - lanes externally blocked with a current record: **1**
   `<!--status:VALIDATION_LANE_BLOCKED_EXTERNAL_COUNT=1-->`
-- lanes never attempted: **2**
-  `<!--status:VALIDATION_LANE_UNAVAILABLE_CAPABILITY_COUNT=2-->`
+- lanes never attempted: **1**
+  `<!--status:VALIDATION_LANE_UNAVAILABLE_CAPABILITY_COUNT=1-->`
 - separately, proven lanes carrying stale evidence: **1**
   `<!--status:VALIDATION_LANE_STALE_EVIDENCE_COUNT=1-->`
 
 A surface that presents `PROJECT_COMPLETION_STATUS` without those counts fails
 the render guard in `project:check`
-(`PROJECT_STATE_VERDICT_PRESENTED_BARE`).
+(`PROJECT_STATE_VERDICT_PRESENTED_BARE`). The count values above are the
+governed ledger's current values (`GOVERNED_STATUS_KEYS`), reconciled after the
+2026-09-12 group-9 lane flip (D-133).
 
-Next status: `PENDING_OWNER_DECISION`; safe default
-`OPERATIONALLY_ACCEPTED`; owner decision `13.8`. No status beyond
-`OPERATIONALLY_ACCEPTED` is named or claimed until the owner names one.
+Owner decision 13.8 is TAKEN (2026-09-12): `PROJECT_COMPLETION_STATUS` stays
+`OPERATIONALLY_ACCEPTED` until all sixteen advance conditions are MET and
+exact-head CI is green at the certified checkpoint; the only advance status is
+`PROJECT_COMPLETE_AND_CI_CERTIFIED`, and it is not claimed (D-129). The
+certification record keeps `nextStatus.state: PENDING_OWNER_DECISION` as its
+structural safe-default encoding until its owner reconciles it; it no longer
+represents an open decision.
 
 External production track: `EXTERNAL_PREREQUISITE_UNMET`. It has its own
 status and is never counted among the advance conditions.
@@ -50,7 +56,7 @@ evaluation at the certified checkpoint
 | 5 | `operator-cli-contract` | `operator-cli-sweep` | UNMET — 63 discovered, 31 conforming, 32 undeclared |
 | 6 | `documentation-currency` | `documentation-currency-rules` | MET — 0 findings |
 | 7 | `workspace-continuity-drift-closure` | `workspace-claims` | UNMET — two `CLAIM_TASK_TERMINAL` findings; owner release actions 6.4/6.5 |
-| 8 | `dependency-supply-chain-currency` | `dependency-advisory-lane` | MET — lane recorded `UNAVAILABLE_CAPABILITY` with owner action and revisit `2026-10-11` |
+| 8 | `dependency-supply-chain-currency` | `dependency-advisory-lane` | MET — lane `dependency-advisory` is PROVEN from the executed 2026-09-12 bounded registry query: one low advisory (`vue@2.6.12`, GHSA-5j4c-8p2g-v4jx, CWE-1333) with an unreachable disposition, recorded in `config/dependency-currency.v1.json` (D-133) |
 | 9 | `dead-architecture-closure` | `dead-architecture-closure-check` | UNAVAILABLE — check created by group 14 |
 | 10 | `cli-implementation-contract` | `cli-implementation-contract` | UNMET — `bin-typecheck` lane still `REPORTING` |
 | 11 | `structural-rule-soundness` | `structural-rule-registry` | MET — 76 rules, every rule has a recorded probe and an explicit quantifier |
@@ -75,6 +81,15 @@ They are reported with their own status (`EXTERNAL_PREREQUISITE_UNMET` while
 `mochi` access or observer identity cannot make the project permanently
 incompletable while remaining visible.
 
+The G10.6/G10.13 path is now taken (2026-09-12): the authorized read-only
+`mochi` access is unavailable — no `mochi` checkout and no
+`services/{env}/{appproxy,serviceproxy}/ingress.yaml` exists under the sibling
+root — so C-13 and C-14 are recorded terminal in `docs/ROADMAP.md` and here,
+with that reason (D-134). No deployment fact is claimed:
+`POSITIVE_DEPLOYMENT_FACTS` stays 0 and the machine external track continues to
+report `EXTERNAL_PREREQUISITE_UNMET` for the remaining stages, not
+`AWAITING_AUTHORIZATION`.
+
 ## Evidence binding and `STALE_EVIDENCE`
 
 Every condition binds the SHA at which its evidence was earned. Evidence that
@@ -98,11 +113,12 @@ checkpoint paths (`PROJECT_STATE_IMPLEMENTATION_ANCHOR_DOCUMENTATION_ONLY`).
 
 ## Owner decision (13.8)
 
-The status beyond `OPERATIONALLY_ACCEPTED` is not named by this programme.
-Until the owner names it, the safe default stays `OPERATIONALLY_ACCEPTED` and
-only `PROJECT_COMPLETE_AND_CI_CERTIFIED` is treated as an advance status by
-the gate; adding a newly named status to `advanceStatuses` is a one-line
-certification-record change.
+Taken 2026-09-12 (D-129). The status stays `OPERATIONALLY_ACCEPTED` until all
+sixteen ordered conditions are MET and exact-head CI is green at the certified
+checkpoint; `PROJECT_COMPLETE_AND_CI_CERTIFIED` remains the only advance status
+and is not claimed. No new status name was added and none is needed: the
+owner's decision applies the existing advance status under a stricter
+precondition, so the gate and the certified condition set are unchanged.
 
 ## Integration and gate status (13.10)
 

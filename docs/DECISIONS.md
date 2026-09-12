@@ -4722,3 +4722,159 @@ The review store is the first persisted reader to make the split; the
 `VERSION_UNSUPPORTED` vocabulary, the found-version/affected-count fields and
 the reviewer rendering are the shape other persisted readers adopt as they are
 touched.
+
+## D-129 — the completion status advances only when every release condition is MET and exact-head CI is green (13.8)
+
+Owner decision of 2026-09-12 (programme group 13.8). `PROJECT_COMPLETION_STATUS`
+stays `OPERATIONALLY_ACCEPTED` until all sixteen ordered release advance
+conditions are MET and exact-head CI is green at the certified checkpoint; the
+only advance status is `PROJECT_COMPLETE_AND_CI_CERTIFIED`, and until then it is
+not claimed. No new status name is invented: the decision applies the existing
+advance status under a stricter precondition rather than adding vocabulary.
+
+Reason: advancing while any condition is unmet or stale is the failure the
+ordered conditions exist to prevent. Evidence:
+`config/release-certification.v1.json` and `docs/RELEASE-ADVANCE-CONDITIONS.md`
+record the ordered conditions and the live evaluation. The certification
+record's structural `nextStatus.state: PENDING_OWNER_DECISION` safe-default
+encoding is retained until its owner reconciles it and is not an open decision
+after this record. Consequence: `project:check` continues to refuse an advance
+with any unmet condition or stale evidence, and no surface may present the
+completion status without its lane counts.
+
+## D-130 — no migration disposition is presumed, and omission fails closed (17.4)
+
+Owner decision of 2026-09-12 (programme group 17.4). Every persisted schema
+version change must declare its own disposition — `MIGRATE`, `READ_COMPATIBLE`
+or `ORPHAN` — and none of the three is a presumed default: omission fails closed
+with `SCHEMA_DISPOSITION_MISSING`, and `ORPHAN` additionally requires a recorded
+decision reference (D-126). The structural rule in `src/core/schemaLifecycle/`
+already enforces exactly this, and its declaration note and the registry note in
+`src/core/schemaLifecycle/declarations.ts` state that ORPHAN is never a default.
+Nothing in the current declaration, checker or registry implies a default, so no
+implementation change follows from the decision.
+
+Reason: a default chosen by omission is not a decision, and for `ORPHAN` it
+silently destroys the owner's ability to read accumulated state. Consequence: a
+future persisted bump that omits its disposition fails the schema-lifecycle
+check until its author declares the disposition and supplies the registered
+proof for `MIGRATE` (a registered migration) or `READ_COMPATIBLE` (a real reader
+run against a fixture).
+
+## D-131 — adopt `dtoFramework`; `adversarialCorpus` is removable on the measured graph and is pending removal (14.6)
+
+Owner decision of 2026-09-12 (programme group 14.6). `src/core/dtoFramework`
+(519 lines) is ADOPTED: its four already-registered kinds — semantic evaluation
+receipt, triage replay plan, campaign manifest, campaign checkpoint — are the
+migration targets and their hand-rolled validation is removed by the same change
+(task 14.7). The code migration is another worker's; this record is the decision
+and its rationale only.
+
+`src/core/adversarialCorpus` (385 lines) is removable under the owner's stated
+test, and removal is the disposition. The current reference graph proves zero
+live consumers: the module is retained only because its reasoned-retention entry
+exists, `node bin/hardening-check.mjs` passes with the retention list failing in
+both directions (HC-079/HC-080: a retained module that gains a consumer makes
+the entry stale and fails), and no tracked source imports the module. No unique
+required capability depends on it: the synthetic adversarial matrix is
+implemented independently in `corpus/phase15p/adversarialScenarioCatalog.ts`
+with its own fixtures and executors, no published capability spec names the
+module, and the module exports a pure scenario catalog and coverage summary
+only. Consequence: the deletion, the removal of its retention entry and the
+removal of its schema-lifecycle declaration are performed by the G14
+code-migration worker; until that lands the module stays in the reasoned-
+retention list, whose "G14.6 owner decision is OPEN" reason is superseded by
+this decision and must be replaced when the removal commit is prepared (task
+14.8 declares the deletions under `## Declared Deletions`).
+
+## D-132 — the system-map evidence-status taxonomy is ADOPTED (8.7)
+
+Owner decision of 2026-09-12 (programme group 8.7). The Control Center system
+map adopts an evidence-status taxonomy over the 13-value core evidence
+vocabulary instead of stating flatness. The adopted taxonomy maps all 13 core
+evidence values with no default bucket; a fourteenth value fails the
+completeness assertion; and at least one non-colour computed property must
+differ between statuses, so the encoding is never colour-only. Implementation is
+group 8.8 UI work on the Control Center surface and is not performed by this
+record.
+
+Reason: the 13-value core vocabulary already exists and the map currently
+renders it flat; a total, non-colour taxonomy makes the existing evidence
+classes visible without inventing new ones or weakening the absence rules.
+
+## D-133 — the bounded registry advisory query was executed; one low, unreachable Vue advisory (9.1–9.3)
+
+Owner decision of 2026-09-12 (programme group 9.1) authorized one bounded
+read-only advisory query, and it was executed that day against the npm registry
+(`registry.npmjs.org`) over the four declared dependencies and their
+`package-lock.json` closure. Result: exactly one advisory, `vue` 2.6.12, low
+severity, `GHSA-5j4c-8p2g-v4jx` — "ReDoS vulnerability in vue package that is
+exploitable through inefficient regex evaluation in the parseHTML function",
+`CWE-1333`, vulnerable range `>=2.0.0-alpha.1 <3.0.0-alpha.0`. The only fix is
+the semver-major `vue` 3.5.42, and no package update is authorized.
+
+Reachability disposition (9.3): `UNREACHABLE_IN_NIGHTWATCH`. Vue never executes
+in any Nightwatch runtime path; it is a dev fixture loaded only in
+`tests/unit/rippleReadiness.test.ts`, inside a browser page with literal fixture
+content, reached through `require.resolve`. The advisory's exploitable path is
+template compilation over attacker-controlled input; no untrusted string reaches
+a template here, so that ReDoS path is unreachable.
+
+Recorded in `config/dependency-currency.v1.json` (`advisoryScan`) and the
+`dependency-advisory` lane in `config/validation-lane-state.v1.json` is PROVEN
+on this evidence; the scan is not a clean result. The governed lane-count
+ledger (`GOVERNED_STATUS_KEYS`: proven 8 / unavailable 1) and the README status
+block were reconciled to the flip in the same change, so
+documentation-currency and the lane-state cross-check agree.
+
+## D-134 — the `mochi` ingress access is unavailable and C-13/C-14 take the terminal-closure path (10.6/10.13)
+
+Owner refusal recorded 2026-09-12 (programme groups 10.6 and 10.13). The
+authorized read-only `mochi` ingress access is UNAVAILABLE: no `mochi`
+repository exists under the sibling root (`DEFAULT_SIBLING_ROOT`), so
+`services/{env}/{appproxy,serviceproxy}/ingress.yaml` cannot be read and no
+manifest was obtained by any route. No deployment fact is claimed:
+`POSITIVE_DEPLOYMENT_FACTS` stays 0 and production reads remain refused at
+construction (`PRODUCTION_READ_NO_DEPLOYMENT_FACT`).
+
+Per the documented 10.13 path, C-13 and C-14 are recorded terminal, with this
+reason, in `docs/ROADMAP.md`, `docs/RELEASE-ADVANCE-CONDITIONS.md` and
+`docs/MASTER-IMPLEMENTATION-HARDENING-PLAN.md` NW-16. The machine production
+track keeps its own status vocabulary and continues to report
+`EXTERNAL_PREREQUISITE_UNMET`; terminal closure is the programme's record that
+the access will not be granted, not a claim that any deployment fact changed.
+
+## D-135 — the Phase 9B/10B unblock prerequisites are unavailable; acceptance stays synthetic-only (11.3)
+
+Owner decision recorded 2026-09-12 (programme group 11.3). The bounded one-shot
+DEV authorization, the external owner-only auth artefact, the containment
+envelope, the approved target set, the acceptance criteria and the expected
+evidence are not available; the prerequisites for `UNBLOCK_PHASE_9B_10B` cannot
+be satisfied now. The safe synthetic-only state is therefore preserved: no DEV
+acceptance is executed, none is fabricated, and the semantic acceptance class
+remains `COMPLETE_LOCAL_SYNTHETIC` with `SEMANTIC_DEV_RESULT: NOT_PROVEN`
+(`config/semantic-acceptance-class.v1.json` is unchanged).
+
+No permanent-closure decision is taken either: the 11.3 paths remain recorded as
+data, and the class may only move to `DEV_ACCEPTED` through the one bounded,
+owner-authorized, post-auth-gate execution the unblock path describes.
+
+## D-136 — the yield preflight is recorded as EXTERNAL_PREREQUISITE_UNMET and the wave is not opened (12.1–12.3)
+
+Owner decision recorded 2026-09-12 (programme groups 12.1–12.3). The provider
+prerequisite cannot be confirmed locally: the campaign's reasoner provider is
+the owner-configured CLI reasoner (`NIGHTWATCH_REASONER_PROVIDER` /
+`NIGHTWATCH_REASONER_MODEL`, declared default `configured`, recorded in
+provenance and never inferred), and no provider executable identity is
+confirmable in this environment. The preregistered preflight is therefore
+`EXTERNAL_PREREQUISITE_UNMET` and the successor yield wave is NOT opened: no
+strict `EXACT_REDISCOVERY` and no previously-unknown-defect yield is claimed
+(both remain 0), and no per-case diagnosis exists, so no measured yield is
+published.
+
+The complete preflight record — provider, capability, toolchain versions, the
+eight admitted repositories, confirming probe and refusal threshold — is stated
+honestly in `docs/ROADMAP.md`, including the parts that remain unknown.
+Consequence: zero yield is stated as a non-result rather than omitted, and
+opening the wave still requires a separately confirmed provider capability plus
+the G12.3 owner authorization.

@@ -189,7 +189,7 @@ function ReviewDecisionCell({
 
 export function ReviewerView({ state, capability, onRetry }: { readonly state: DataLoadState<ReviewerSnapshot>; readonly capability: 'ENABLED' | 'DISABLED' | 'UNKNOWN'; readonly onRetry: () => void }): ReactNode {
   if (state.kind === 'loading' || state.kind === 'idle') return <LoadingState />;
-  if (state.kind === 'error') return <DataErrorState title="Reviewer intelligence unavailable" onRetry={onRetry} />;
+  if (state.kind === 'error') return <DataErrorState title="Reviewer intelligence unavailable" error={state.error} onRetry={onRetry} />;
   const items = state.data.items;
   const factCount = items.filter((item) => item.confidence.epistemicClass === 'FACT').length;
   const duplicateCount = items.filter((item) => item.probableDuplicates.length > 0).length;

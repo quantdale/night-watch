@@ -1,11 +1,10 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import {
-  apiErrorLabel,
   loadCampaignCoverage,
   loadCampaignSummary,
   loadExecutionGraph,
   loadFindings,
-  loadOverview,
+  loadOverviewSources,
   loadReviewer,
   loadRunDetail,
   loadRuns,
@@ -13,14 +12,19 @@ import {
   loadSourceSurfaces,
   loadTimeline,
   subscribeToControlCenterEvents,
+  toApiErrorInfo,
+  UNCLASSIFIED_API_ERROR,
 } from './api';
 import type {
+  ApiErrorInfo,
   CampaignCoverageSnapshot,
   CampaignSummarySnapshot,
   DataLoadState,
   ExecutionGraphSnapshot,
   FindingsSnapshot,
   OverviewLoadState,
+  OverviewSnapshot,
+  OverviewSourceStates,
   ReviewerFindingSnapshot,
   ReviewerSnapshot,
   RunDetailSnapshot,
@@ -33,7 +37,7 @@ import type {
 } from './types';
 import { VIEW_DEFINITIONS } from './types';
 import { ControlCenterErrorBoundary, ErrorState, Icon, LoadMoreControl, LoadingState, usePagedCollection } from './shared';
-import { OverviewView } from './views/OverviewView';
+import { OverviewView, OverviewPartialView } from './views/OverviewView';
 import { RunsView } from './views/RunsView';
 import { ExecutionGraphView } from './views/ExecutionGraphView';
 import { SourceView } from './views/SourceView';
@@ -49,6 +53,37 @@ function readViewFromHash(): ViewId {
   if (typeof window === 'undefined') return 'overview';
   const candidate = window.location.hash.slice(1);
   return VIEW_DEFINITIONS.some((view) => view.id === candidate) ? (candidate as ViewId) : 'overview';
+}
+
+/**
+ * F-18. The first failure a whole-view error panel can name. An ABORTED
+ * source is normal navigation, so it is skipped unless it is the only class
+ * of failure available.
+ */
+function firstFailure(states: readonly DataLoadState<unknown>[]): ApiErrorInfo {
+  let aborted: ApiErrorInfo = UNCLASSIFIED_API_ERROR;
+  for (const state of states) {
+    if (state.kind !== 'error') continue;
+    const info = state.error ?? UNCLASSIFIED_API_ERROR;
+    if (info.kind !== 'ABORTED') return info;
+    aborted = info;
+  }
+  return aborted;
+}
+
+function sourceStates(sources: OverviewSourceStates): readonly DataLoadState<unknown>[] {
+  return [sources.health, sources.meta, sources.readiness, sources.safety, sources.source];
+}
+
+function overviewSnapshot(sources: OverviewSourceStates): OverviewSnapshot | null {
+  if (sources.health.kind !== 'ready' || sources.meta.kind !== 'ready' || sources.readiness.kind !== 'ready' || sources.safety.kind !== 'ready' || sources.source.kind !== 'ready') return null;
+  return {
+    health: sources.health.data,
+    meta: sources.meta.data,
+    readiness: sources.readiness.data,
+    safety: sources.safety.data,
+    source: sources.source.data,
+  };
 }
 
 
@@ -118,13 +153,19 @@ function DashboardApp(): ReactNode {
     let cancelled = false;
     const controller = new AbortController();
     setLoadState({ kind: 'loading' });
-    loadOverview(controller.signal).then((data) => {
-      if (!cancelled) setLoadState({ kind: 'ready', data });
-    }).catch((error: unknown) => {
-      if (!cancelled) {
-        void apiErrorLabel(error);
-        setLoadState({ kind: 'error' });
+    // F-18. The five sources settle independently: a partial failure renders
+    // what answered and names what did not, and only total failure is a
+    // whole-view error state.
+    loadOverviewSources(controller.signal).then((sources) => {
+      if (cancelled) return;
+      const data = overviewSnapshot(sources);
+      if (data !== null) {
+        setLoadState({ kind: 'ready', data });
+        return;
       }
+      const states = sourceStates(sources);
+      if (states.every((state) => state.kind === 'error')) setLoadState({ kind: 'error', error: firstFailure(states) });
+      else setLoadState({ kind: 'partial', sources });
     });
     return () => {
       cancelled = true;
@@ -143,8 +184,9 @@ function DashboardApp(): ReactNode {
       if (!cancelled) setSourceGraphState({ kind: 'ready', data });
     }).catch((error: unknown) => {
       if (!cancelled) {
-        void apiErrorLabel(error);
-        setSourceGraphState({ kind: 'error' });
+        const info = toApiErrorInfo(error);
+        if (info.kind === 'ABORTED') return;
+        setSourceGraphState({ kind: 'error', error: info });
       }
     });
     return () => { cancelled = true; controller.abort(); };
@@ -166,9 +208,10 @@ function DashboardApp(): ReactNode {
       }
     }).catch((error: unknown) => {
       if (!cancelled) {
-        void apiErrorLabel(error);
-        setDetailState({ kind: 'error' });
-        setTimelineState({ kind: 'error' });
+        const info = toApiErrorInfo(error);
+        if (info.kind === 'ABORTED') return;
+        setDetailState({ kind: 'error', error: info });
+        setTimelineState({ kind: 'error', error: info });
       }
     });
     return () => { cancelled = true; controller.abort(); };
@@ -183,8 +226,9 @@ function DashboardApp(): ReactNode {
       if (!cancelled) setCampaignSummaryState({ kind: 'ready', data: summary });
     }).catch((error: unknown) => {
       if (!cancelled) {
-        void apiErrorLabel(error);
-        setCampaignSummaryState({ kind: 'error' });
+        const info = toApiErrorInfo(error);
+        if (info.kind === 'ABORTED') return;
+        setCampaignSummaryState({ kind: 'error', error: info });
       }
     });
     return () => { cancelled = true; controller.abort(); };
@@ -199,8 +243,9 @@ function DashboardApp(): ReactNode {
       if (!cancelled) setGraphState({ kind: 'ready', data });
     }).catch((error: unknown) => {
       if (!cancelled) {
-        void apiErrorLabel(error);
-        setGraphState({ kind: 'error' });
+        const info = toApiErrorInfo(error);
+        if (info.kind === 'ABORTED') return;
+        setGraphState({ kind: 'error', error: info });
       }
     });
     return () => { cancelled = true; controller.abort(); };
@@ -255,14 +300,22 @@ function DashboardApp(): ReactNode {
     if (activeView === 'system-map') return <SystemMapView refreshKey={refreshKey} />;
     if (activeView === 'source-intelligence') {
       if (loadState.kind === 'loading') return <LoadingState />;
-      if (loadState.kind === 'error') return <ErrorState onRetry={refresh} />;
+      // The source view needs the source summary and the declared limits, so
+      // a partial overview that lost either is a whole-view error here for
+      // now; the failed kind and action are still named by the panel.
+      if (loadState.kind === 'partial') return <ErrorState error={firstFailure(sourceStates(loadState.sources))} onRetry={refresh} />;
+      if (loadState.kind === 'error') return <ErrorState error={loadState.error} onRetry={refresh} />;
       return <>
         <SourceView summary={loadState.data.source} surfaceState={sourceSurfaceState} graphState={sourceGraphState} selectedSurfaceId={selectedSurfaceId} onSelectSurface={selectSurface} onRetry={retryRunData} limits={loadState.data.meta.limits} />
         <LoadMoreControl label="source surfaces" loaded={sourceSurfaceState.kind === 'ready' ? sourceSurfaceState.data.items.length : 0} paged={surfacesPaged} />
       </>;
     }
     if (loadState.kind === 'loading') return <LoadingState />;
-    if (loadState.kind === 'error') return <ErrorState onRetry={refresh} />;
+    if (loadState.kind === 'partial') {
+      if (activeView === 'overview') return <OverviewPartialView sources={loadState.sources} onRefresh={refresh} />;
+      return <ErrorState error={firstFailure(sourceStates(loadState.sources))} onRetry={refresh} />;
+    }
+    if (loadState.kind === 'error') return <ErrorState error={loadState.error} onRetry={refresh} />;
     if (activeView === 'overview') return <OverviewView data={loadState.data} onRefresh={refresh} />;
     if (activeView === 'safety') return <SafetyView data={loadState.data} />;
     return <PlaceholderView view={currentView} />;

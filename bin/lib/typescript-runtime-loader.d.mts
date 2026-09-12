@@ -54,6 +54,7 @@ export interface TypeScriptRuntimeLoaderModuleMap {
   "src/core/readiness/repoState.ts": typeof import("../../src/core/readiness/repoState");
   "src/core/releaseCertification/index.ts": typeof import("../../src/core/releaseCertification/index");
   "src/core/safety/redaction.ts": typeof import("../../src/core/safety/redaction");
+  "src/core/schemaLifecycle/check.ts": typeof import("../../src/core/schemaLifecycle/check");
   "src/core/schemaLifecycle/index.ts": typeof import("../../src/core/schemaLifecycle/index");
   "src/core/selfDev/adoptedCases.ts": typeof import("../../src/core/selfDev/adoptedCases");
   "src/core/selfDev/controller.ts": typeof import("../../src/core/selfDev/controller");
@@ -72,6 +73,7 @@ export interface TypeScriptRuntimeLoaderModuleMap {
   "src/core/source/siblingSource.ts": typeof import("../../src/core/source/siblingSource");
   "src/core/source/surfaces.ts": typeof import("../../src/core/source/surfaces");
   "src/core/source/universe.ts": typeof import("../../src/core/source/universe");
+  "src/core/workspace/ephemeralLayout.ts": typeof import("../../src/core/workspace/ephemeralLayout");
   "src/oracles/expectations/admission.ts": typeof import("../../src/oracles/expectations/admission");
   "src/oracles/expectations/collectionAdmission.ts": typeof import("../../src/oracles/expectations/collectionAdmission");
   "src/oracles/expectations/coverageInventory.ts": typeof import("../../src/oracles/expectations/coverageInventory");

@@ -23,44 +23,29 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import { loadTypeScriptModule } from './lib/typescript-runtime-loader.mjs';
+import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
-function usage() {
-  console.log('Usage: node bin/c12-preflight.mjs --input <EXTERNAL_DESCRIPTOR_PATH>');
-  console.log('Evaluates C-12 readiness locally. No browser, DNS, HTTP, or credential is used.');
-}
+/** @type {import('./lib/operator-cli.mjs').OperatorCliMetadata} */
+const CLI_METADATA = {
+  schemaVersion: OPERATOR_CLI_SCHEMA,
+  name: 'c12-preflight',
+  entry: 'bin/c12-preflight.mjs',
+  purpose: 'Evaluate an operator-owned C-12 readiness descriptor locally and print only the readiness report.',
+  group: 'validate',
+  flags: [
+    { name: '--input', shape: 'path', summary: 'external readiness descriptor path (at most 64 KiB)' },
+  ],
+  json: true,
+  authorization: 'LOCAL_ONLY',
+  artifacts: [],
+};
 
+/** @param {string} message */
 function fail(message) {
   console.error(`[c12-preflight] FAIL: ${message}`);
   process.exitCode = 1;
-}
-
-function parseArgs(argv) {
-  let input;
-  for (let index = 0; index < argv.length; index += 1) {
-    const arg = argv[index];
-    if (arg === '--help' || arg === '-h') {
-      usage();
-      process.exit(0);
-    }
-    if (arg.startsWith('--input=')) {
-      if (input !== undefined) throw new Error('--input may be supplied only once');
-      input = arg.slice('--input='.length);
-      continue;
-    }
-    if (arg === '--input') {
-      if (input !== undefined) throw new Error('--input may be supplied only once');
-      const next = argv[index + 1];
-      if (next === undefined) throw new Error('--input requires a path');
-      input = next;
-      index += 1;
-      continue;
-    }
-    throw new Error(`unknown option ${arg}`);
-  }
-  if (input === undefined) throw new Error('--input <EXTERNAL_DESCRIPTOR_PATH> is required');
-  return input;
 }
 
 function compileCone() {
@@ -87,13 +72,19 @@ function compileCone() {
 }
 
 function main() {
-  let inputPath;
-  try {
-    inputPath = parseArgs(process.argv.slice(2));
-  } catch (error) {
-    fail(error instanceof Error ? error.message : String(error));
+  const cli = defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url });
+  if (cli.stop) return;
+  if (!cli.ok) {
+    process.exitCode = 2;
     return;
   }
+  const inputFlag = cli.flags['--input'];
+  if (typeof inputFlag !== 'string' || inputFlag.trim() === '') {
+    process.stderr.write('CLI_ARGUMENT_MISSING: --input <EXTERNAL_DESCRIPTOR_PATH> is required\n');
+    process.exitCode = 2;
+    return;
+  }
+  const inputPath = inputFlag;
   let descriptor;
   try {
     const stat = fs.statSync(inputPath);

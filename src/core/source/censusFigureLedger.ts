@@ -289,10 +289,10 @@ export const GOVERNED_STATUS_KEYS: readonly GovernedStatusKey[] = Object.freeze(
   { key: 'LIVE_TASK_STATUS', currentValue: 'IN_PROGRESS', kind: 'LIVE_STATE', establishedBy: 'docs/CURRENT_STATE.md nightwatch.live-state.v1' },
   { key: 'LIVE_PROJECT_COMPLETION_STATUS', currentValue: 'OPERATIONALLY_ACCEPTED', kind: 'LIVE_STATE', establishedBy: 'docs/CURRENT_STATE.md nightwatch.live-state.v1' },
   { key: 'LIVE_PROJECT_VERDICT_EFFECT', currentValue: 'PRESERVE', kind: 'LIVE_STATE', establishedBy: 'docs/CURRENT_STATE.md nightwatch.live-state.v1' },
-  { key: 'VALIDATION_LANE_PROVEN_COUNT', currentValue: '7', kind: 'LANE_CLASS', establishedBy: 'config/validation-lane-state.v1.json', requiredInReadme: true },
+  { key: 'VALIDATION_LANE_PROVEN_COUNT', currentValue: '8', kind: 'LANE_CLASS', establishedBy: 'config/validation-lane-state.v1.json', requiredInReadme: true },
   { key: 'VALIDATION_LANE_STALE_EVIDENCE_COUNT', currentValue: '1', kind: 'LANE_CLASS', establishedBy: 'config/validation-lane-state.v1.json', requiredInReadme: true },
   { key: 'VALIDATION_LANE_BLOCKED_EXTERNAL_COUNT', currentValue: '1', kind: 'LANE_CLASS', establishedBy: 'config/validation-lane-state.v1.json', requiredInReadme: true },
-  { key: 'VALIDATION_LANE_UNAVAILABLE_CAPABILITY_COUNT', currentValue: '2', kind: 'LANE_CLASS', establishedBy: 'config/validation-lane-state.v1.json', requiredInReadme: true },
+  { key: 'VALIDATION_LANE_UNAVAILABLE_CAPABILITY_COUNT', currentValue: '1', kind: 'LANE_CLASS', establishedBy: 'config/validation-lane-state.v1.json', requiredInReadme: true },
   { key: 'MEASURED_YIELD_ADMITTED_FINDINGS', currentValue: '0', kind: 'PROJECT', establishedBy: 'F-03 audit measurement (no admission ever recorded)', requiredInReadme: true },
   { key: 'MEASURED_YIELD_EXACT_REDISCOVERY', currentValue: '0', kind: 'PROJECT', establishedBy: 'F-03 audit measurement (strict EXACT_REDISCOVERY is 0)', requiredInReadme: true },
   { key: 'SEMANTIC_ACCEPTANCE_CLASS', currentValue: 'COMPLETE_LOCAL_SYNTHETIC', kind: 'PROJECT', establishedBy: 'D-54 / D-59 (no DEV acceptance; Phase 9B/10B require separate authorization)', requiredInReadme: true },
@@ -301,7 +301,7 @@ export const GOVERNED_STATUS_KEYS: readonly GovernedStatusKey[] = Object.freeze(
   { key: 'EXACT_CHECKPOINT_CI_LANE', currentValue: 'BLOCKED_EXTERNAL', kind: 'LANE_CLASS', establishedBy: 'config/validation-lane-state.v1.json (never executed)', requiredInReadme: true },
   { key: 'OWNER_MANUAL_LANE', currentValue: 'UNAVAILABLE_CAPABILITY', kind: 'LANE_CLASS', establishedBy: 'config/validation-lane-state.v1.json (never executed)', requiredInReadme: true },
   { key: 'LIVE_APP_SMOKE_LANE', currentValue: 'UNAVAILABLE_CAPABILITY', kind: 'LANE_CLASS', establishedBy: 'config/validation-lane-state.v1.json (never executed)', requiredInReadme: true },
-  { key: 'DEPENDENCY_ADVISORY_LANE', currentValue: 'UNAVAILABLE_CAPABILITY', kind: 'LANE_CLASS', establishedBy: 'config/validation-lane-state.v1.json (never executed)', requiredInReadme: true },
+  { key: 'DEPENDENCY_ADVISORY_LANE', currentValue: 'PROVEN', kind: 'LANE_CLASS', establishedBy: 'config/validation-lane-state.v1.json (executed 2026-09-12; one low, unreachable vue advisory)', requiredInReadme: true },
 ]);
 
 /** The explicit form that makes a status line historical, with its checkpoint. */

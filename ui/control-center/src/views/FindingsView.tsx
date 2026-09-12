@@ -6,7 +6,7 @@ import { DataErrorState, LoadingState, MetricCard, StatusPill, formatCategory, f
 
 export function FindingsView({ state, onRetry }: { readonly state: DataLoadState<FindingsSnapshot>; readonly onRetry: () => void }): ReactNode {
   if (state.kind === 'loading') return <LoadingState />;
-  if (state.kind === 'error') return <DataErrorState title="Findings unavailable" onRetry={onRetry} />;
+  if (state.kind === 'error') return <DataErrorState title="Findings unavailable" error={state.error} onRetry={onRetry} />;
   if (state.kind !== 'ready') return null;
   const findings = state.data.items;
   const readyCount = findings.filter((finding) => finding.dossierStatus === 'READY').length;

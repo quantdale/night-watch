@@ -1,8 +1,10 @@
 import type {
+  ApiErrorInfo,
   ApiErrorKind,
+  DataLoadState,
   HealthSnapshot,
   MetaSnapshot,
-  OverviewSnapshot,
+  OverviewSourceStates,
   ReadinessSnapshot,
   ExecutionGraphSnapshot,
   CampaignCoverageSnapshot,
@@ -41,12 +43,159 @@ export const CONTROL_CENTER_API_PATHS = Object.freeze({
 export class ControlCenterApiError extends Error {
   readonly kind: ApiErrorKind;
   readonly status: number | null;
+  /**
+   * F-18. For INVALID_RESPONSE, the exact contract the payload failed. The
+   * message is the client's own classification; the server's text never
+   * enters this object, so it can never reach the DOM through it.
+   */
+  readonly contract: string | null;
 
-  constructor(kind: ApiErrorKind, status: number | null = null) {
+  constructor(kind: ApiErrorKind, status: number | null = null, contract: string | null = null) {
     super(`CONTROL_CENTER_${kind}_ERROR`);
     this.name = 'ControlCenterApiError';
     this.kind = kind;
     this.status = status;
+    this.contract = contract;
+  }
+}
+
+/** The failure the client cannot classify. Never claims a taxonomy member. */
+export const UNCLASSIFIED_API_ERROR: ApiErrorInfo = Object.freeze({ kind: null, status: null, contract: null });
+
+/**
+ * F-18. Normalise whatever a catch caught into the client's own error
+ * classification. A non-API exception is NOT relabelled as a network failure:
+ * its kind is null, which the render layer presents as an unclassified
+ * failure with no retry affordance, because the client cannot say what
+ * retrying would change.
+ */
+export function toApiErrorInfo(error: unknown): ApiErrorInfo {
+  if (error instanceof ControlCenterApiError) {
+    return { kind: error.kind, status: error.status, contract: error.contract };
+  }
+  return UNCLASSIFIED_API_ERROR;
+}
+
+/** ABORTED is normal navigation, never an error surface. */
+export function isAbortedError(error: unknown): boolean {
+  return error instanceof ControlCenterApiError && error.kind === 'ABORTED';
+}
+
+/**
+ * F-18. The operator action is DERIVED from the kind, not chosen per site.
+ * Retry is offered only where a retry can resolve the failure: NETWORK,
+ * TIMEOUT, HTTP 408 and HTTP 429. INVALID_RESPONSE and every other 4xx state
+ * that retrying will not help and name what will.
+ */
+export interface ErrorPresentation {
+  readonly kind: ApiErrorKind | null;
+  readonly kindLabel: string;
+  readonly status: number | null;
+  readonly contract: string | null;
+  readonly summary: string;
+  readonly action: string;
+  readonly retryable: boolean;
+  readonly aborted: boolean;
+}
+
+export function describeApiError(error: ApiErrorInfo): ErrorPresentation {
+  const base = {
+    kind: error.kind,
+    status: error.status,
+    contract: error.contract,
+    aborted: false,
+  } as const;
+  switch (error.kind) {
+    case 'NETWORK':
+      return {
+        ...base,
+        kindLabel: 'Network',
+        summary: 'The transport to the local service failed.',
+        action: 'Check that the local Control Center service is running, then retry.',
+        retryable: true,
+      };
+    case 'TIMEOUT':
+      return {
+        ...base,
+        kindLabel: 'Timeout',
+        summary: 'The request did not complete within the client deadline.',
+        action: 'Retry. If this persists, the snapshot is too expensive for the deadline.',
+        retryable: true,
+      };
+    case 'ABORTED':
+      return {
+        ...base,
+        kindLabel: 'Aborted',
+        summary: 'The request was cancelled by navigation or a superseding refresh.',
+        action: 'Nothing. This is normal navigation.',
+        retryable: false,
+        aborted: true,
+      };
+    case 'INVALID_RESPONSE':
+      return {
+        ...base,
+        kindLabel: 'Invalid response',
+        summary: error.contract === null
+          ? 'The server response did not match the contract this client requires.'
+          : `The server's payload did not match the contract this client requires: ${error.contract}.`,
+        action: 'This is a server/client contract mismatch, a defect to report. Retrying cannot succeed.',
+        retryable: false,
+      };
+    case 'HTTP': {
+      if (error.status === 404) {
+        return {
+          ...base,
+          kindLabel: 'HTTP 404',
+          summary: 'This capability is not enabled on the local service.',
+          action: 'Enable the capability in the local Control Center service configuration and restart the service; retrying will not change it.',
+          retryable: false,
+        };
+      }
+      if (error.status === 408) {
+        return {
+          ...base,
+          kindLabel: 'HTTP 408',
+          summary: 'The service reported that the request deadline elapsed.',
+          action: 'Retry. If this persists, the snapshot is too expensive for the deadline.',
+          retryable: true,
+        };
+      }
+      if (error.status === 429) {
+        return {
+          ...base,
+          kindLabel: 'HTTP 429',
+          summary: 'The local service is refusing requests because its request limit was reached.',
+          action: 'Retry after the limit clears.',
+          retryable: true,
+        };
+      }
+      if (error.status !== null && error.status >= 500) {
+        return {
+          ...base,
+          kindLabel: `HTTP ${error.status}`,
+          summary: `The local service failed while serving this request (${error.status}); this is a server defect.`,
+          action: 'Report the defect. Retrying will not resolve it.',
+          retryable: false,
+        };
+      }
+      return {
+        ...base,
+        kindLabel: error.status === null ? 'HTTP' : `HTTP ${error.status}`,
+        summary: error.status === null
+          ? 'The local service refused this request without a status the client can read.'
+          : `The local service refused this request (${error.status}); this is a client defect.`,
+        action: 'Report the defect. Retrying will not help.',
+        retryable: false,
+      };
+    }
+    default:
+      return {
+        ...base,
+        kindLabel: 'Unclassified',
+        summary: 'The failure was not reported as one of the client error kinds.',
+        action: 'No retry is offered because the client cannot tell what retrying would change.',
+        retryable: false,
+      };
   }
 }
 
@@ -165,9 +314,9 @@ async function fetchSnapshot<T>(
     } catch {
       if (timedOut) throw new ControlCenterApiError('TIMEOUT');
       if (controller.signal.aborted) throw new ControlCenterApiError('ABORTED');
-      throw new ControlCenterApiError('INVALID_RESPONSE');
+      throw new ControlCenterApiError('INVALID_RESPONSE', null, expected.schemaVersion);
     }
-    if (!validateSnapshot(payload, expected)) throw new ControlCenterApiError('INVALID_RESPONSE');
+    if (!validateSnapshot(payload, expected)) throw new ControlCenterApiError('INVALID_RESPONSE', null, expected.schemaVersion);
     return payload as T;
   } finally {
     clearTimeout(timer);
@@ -230,14 +379,14 @@ export async function submitReviewDecision(input: {
   try {
     payload = await response.json();
   } catch {
-    throw new ControlCenterApiError('INVALID_RESPONSE');
+    throw new ControlCenterApiError('INVALID_RESPONSE', null, 'nightwatch.control-center.review-decision.v1');
   }
-  if (payload === null || typeof payload !== 'object') throw new ControlCenterApiError('INVALID_RESPONSE');
+  if (payload === null || typeof payload !== 'object') throw new ControlCenterApiError('INVALID_RESPONSE', null, 'nightwatch.control-center.review-decision.v1');
   const body = payload as Record<string, unknown>;
-  if (typeof body.result !== 'string') throw new ControlCenterApiError('INVALID_RESPONSE');
+  if (typeof body.result !== 'string') throw new ControlCenterApiError('INVALID_RESPONSE', null, 'nightwatch.control-center.review-decision.v1');
   // A local decision that came back claiming organizational authority is a
   // breach, not a success. It is refused at the client too.
-  if (body.organizationalAuthority !== 'NONE_LOCAL_REVIEW_ONLY') throw new ControlCenterApiError('INVALID_RESPONSE');
+  if (body.organizationalAuthority !== 'NONE_LOCAL_REVIEW_ONLY') throw new ControlCenterApiError('INVALID_RESPONSE', null, 'nightwatch.control-center.review-decision.v1');
   return {
     result: body.result,
     reviewIdentity: typeof body.reviewIdentity === 'string' ? body.reviewIdentity : null,
@@ -285,19 +434,31 @@ export async function readBackReviewDecision(input: {
   return { state: 'RECORDED', decision: value.decision };
 }
 
-export function loadOverview(signal?: AbortSignal): Promise<OverviewSnapshot> {
+function settledState<T>(result: PromiseSettledResult<T>): DataLoadState<T> {
+  if (result.status === 'fulfilled') return { kind: 'ready', data: result.value };
+  return { kind: 'error', error: toApiErrorInfo(result.reason) };
+}
+
+/**
+ * F-18. The five overview requests are independent, so they settle
+ * independently: one unavailable source no longer discards the four that
+ * answered. The caller decides whether the composition is ready, partial or
+ * wholly failed.
+ */
+export function loadOverviewSources(signal?: AbortSignal): Promise<OverviewSourceStates> {
   const C = CONTROL_CENTER_SNAPSHOT_CONTRACTS;
-  const health = fetchSnapshot<HealthSnapshot>(CONTROL_CENTER_API_PATHS.health, C.health, signal);
-  const meta = fetchSnapshot<MetaSnapshot>(CONTROL_CENTER_API_PATHS.meta, C.meta, signal);
-  const readiness = fetchSnapshot<ReadinessSnapshot>(CONTROL_CENTER_API_PATHS.readiness, C.readiness, signal);
-  const safety = fetchSnapshot<SafetySnapshot>(CONTROL_CENTER_API_PATHS.safety, C.safety, signal);
-  const source = fetchSnapshot<SourceSummarySnapshot>(CONTROL_CENTER_API_PATHS.sourceSummary, C.sourceSummary, signal);
-  return Promise.all([health, meta, readiness, safety, source]).then(([healthSnapshot, metaSnapshot, readinessSnapshot, safetySnapshot, sourceSnapshot]) => ({
-    health: healthSnapshot,
-    meta: metaSnapshot,
-    readiness: readinessSnapshot,
-    safety: safetySnapshot,
-    source: sourceSnapshot,
+  return Promise.allSettled([
+    fetchSnapshot<HealthSnapshot>(CONTROL_CENTER_API_PATHS.health, C.health, signal),
+    fetchSnapshot<MetaSnapshot>(CONTROL_CENTER_API_PATHS.meta, C.meta, signal),
+    fetchSnapshot<ReadinessSnapshot>(CONTROL_CENTER_API_PATHS.readiness, C.readiness, signal),
+    fetchSnapshot<SafetySnapshot>(CONTROL_CENTER_API_PATHS.safety, C.safety, signal),
+    fetchSnapshot<SourceSummarySnapshot>(CONTROL_CENTER_API_PATHS.sourceSummary, C.sourceSummary, signal),
+  ]).then(([health, meta, readiness, safety, source]) => ({
+    health: settledState(health),
+    meta: settledState(meta),
+    readiness: settledState(readiness),
+    safety: settledState(safety),
+    source: settledState(source),
   }));
 }
 

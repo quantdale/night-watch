@@ -3,6 +3,7 @@ import { apiErrorLabel, loadSystemMapLevel, loadSystemMapQuery } from '../api';
 import type { DataLoadState, SystemMapBound, SystemMapLevelSegment, SystemMapNodeView, SystemMapQuerySegment, SystemMapSnapshot } from '../types';
 import { SYSTEM_MAP_QUERY_SEGMENTS } from '../types';
 import { ErrorState, LoadingState, StatusPill, formatCategory } from '../shared';
+import { evidenceTreatmentFor } from '../systemMapEvidence';
 
 /** System map view: bounded progressive disclosure over the frozen transport. */
 
@@ -230,22 +231,28 @@ export function SystemMapView({ refreshKey }: { readonly refreshKey: number }): 
               if (from === undefined || to === undefined) return null;
               return <line key={edge.edgeId} x1={from.x} y1={from.y} x2={to.x} y2={to.y} className="map-edge" />;
             })}
-            {visible.map((node) => (
-              <g key={node.nodeId} className={`map-node${selectedNodeId === node.nodeId ? ' node-selected' : ''}`}
-                transform={`translate(${node.x}, ${node.y})`} role="button" tabIndex={-1}
-                aria-label={`${node.label}, ${node.evidenceStatus}, ${node.factCategory}`}
-                onClick={() => setSelectedNodeId(node.nodeId)} onDoubleClick={() => drillInto(node)}>
-                {/* A 7px dot is too small to hit, and the group's centre can
-                    land on the label, which takes no pointer events. This
-                    transparent disc is the actual target. */}
-                <circle className="map-node-hit" r={16} />
-                <circle r={7} />
-                <text x={11} y={4}>{node.label}</text>
-              </g>
-            ))}
+            {visible.map((node) => {
+              const treatment = evidenceTreatmentFor(node.evidenceStatus);
+              return (
+                <g key={node.nodeId} className={`map-node${treatment === null ? '' : ` ${treatment.className}`}${selectedNodeId === node.nodeId ? ' node-selected' : ''}`}
+                  data-evidence-status={node.evidenceStatus}
+                  transform={`translate(${node.x}, ${node.y})`} role="button" tabIndex={-1}
+                  aria-label={`${node.label}, ${node.evidenceStatus}, ${node.factCategory}`}
+                  onClick={() => setSelectedNodeId(node.nodeId)} onDoubleClick={() => drillInto(node)}>
+                  {/* A 7px dot is too small to hit, and the group's centre can
+                      land on the label, which takes no pointer events. This
+                      transparent disc is the actual target. */}
+                  <circle className="map-node-hit" r={16} />
+                  <circle r={7} />
+                  <text x={11} y={4}>{node.label}</text>
+                </g>
+              );
+            })}
           </svg>
         )}
       </div>
+
+      <p className="small-note">Node stroke width and dash pattern encode the evidence status; the map table below names every status by value.</p>
 
       {selected !== null ? (
         <div className="system-map-detail" aria-live="polite">

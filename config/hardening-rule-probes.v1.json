@@ -238,14 +238,23 @@
       { "id": "HC-078", "ops": [{ "file": "src/auth/devCredentialProvider.ts", "append": "\nexport function probeCookieExpiry(cookie: { expires: number }): boolean {\n  return cookie.expires > Math.floor(Date.now() / 1000);\n}\n" }] }
     ],
     "checkSourceReachability": [
-      { "id": "HC-079", "ops": [{ "file": "config/reference-graph.v1.json", "search": "\"path\": \"src/core/dtoFramework\",", "replace": "\"path\": \"src/core/dtoFrameworkProbe\"," }] },
-      { "id": "HC-080", "ops": [{ "file": "src/core/readiness/localReadiness.ts", "append": "\nimport type { DtoVersionProbe } from '../dtoFramework/types';\nvoid (undefined as unknown as DtoVersionProbe);\n" }] }
+      { "id": "HC-079", "ops": [{ "file": "config/reference-graph.v1.json", "search": "\"retention\": [],", "replace": "\"retention\": [{ \"path\": \"src/core/probe-missing\", \"kind\": \"DIRECTORY\", \"reason\": \"probe retention entry for a path that does not exist\" }]," }] }
     ],
     "checkModuleBarrierEnforcement": [
+      { "id": "HC-080", "ops": [{ "file": "src/core/readiness/localReadiness.ts", "append": "\nimport type { DtoVersionProbe } from '../dtoFramework/types';\nvoid (undefined as unknown as DtoVersionProbe);\n" }] },
       { "id": "HC-081", "ops": [{ "file": "src/core/readiness/localReadiness.ts", "append": "\nimport { readLocalNightwatchProvenance } from '../provenance/localGit';\nvoid readLocalNightwatchProvenance;\n" }] }
     ],
     "checkEnvironmentSurfaceDeclaration": [
       { "id": "HC-082", "ops": [{ "file": "src/core/environment/index.ts", "append": "\nvoid process.env.NIGHTWATCH_UNDECLARED_PROBE;\n" }] }
+    ],
+    "checkSchemaLifecycle": [
+      { "id": "HC-083", "ops": [{ "file": "src/core/schemaLifecycle/scanner.ts", "append": "\n// schema-lifecycle probe literal: nightwatch.schema-lifecycle-probe.v99\n" }] }
+    ],
+    "checkRootOutputRootOwnership": [
+      { "id": "HC-084", "ops": [{ "file": ".gitignore", "search": "test-results-*/", "replace": "test-results-pinned/", "all": true }] }
+    ],
+    "checkRootOutputConfigLiteral": [
+      { "id": "HC-085", "ops": [{ "file": "playwright.canary.config.ts", "search": "outputDir: resolvePlaywrightOutputDir('canary'),", "replace": "outputDir: 'test-results-canary'," }] }
     ]
   }
 }

@@ -106,12 +106,12 @@
     {
       "laneId": "dependency-advisory",
       "classes": [],
-      "class": "UNAVAILABLE_CAPABILITY",
+      "class": "PROVEN",
       "command": "one read-only registry advisory query under authorized egress",
-      "evidence": "no online advisory scan has been performed; an absent scan is never a passing scan",
-      "evidenceSha": "36bd4930db978423f97e16f35250c2e66bfa112c",
-      "unblockCondition": "authorized outbound egress for one read-only advisory query over the four declared dependencies and their lockfile closure",
-      "revisitDate": "2026-10-11"
+      "evidence": "executed 2026-09-12 against the npm registry over the four declared dependencies and their lockfile closure: exactly one advisory, vue 2.6.12, low, GHSA-5j4c-8p2g-v4jx, CWE-1333, reachability disposition UNREACHABLE_IN_NIGHTWATCH (dev fixture, literal template content, no Nightwatch runtime path); recorded in config/dependency-currency.v1.json advisoryScan",
+      "evidenceSha": "88e3c3fb52937ff303b0944cc22cfee624bf807e",
+      "unblockCondition": null,
+      "revisitDate": null
     }
   ]
 }

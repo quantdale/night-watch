@@ -3162,3 +3162,66 @@ around it. 10.13 — if access will not be granted, record C-13 and C-14
 terminal and close the production track honestly. Until 10.6 resolves, the
 production track is `EXTERNAL_PREREQUISITE_UNMET`, not awaiting an engineering
 decision.
+
+## Production track — refusal and terminal closure (G10.6/G10.13) — 2026-09-12
+
+The authorized read-only `mochi` ingress access is UNAVAILABLE. The sibling
+root `DEFAULT_SIBLING_ROOT` contains no `mochi` repository (checked read-only
+on 2026-09-12), so `services/{env}/{appproxy,serviceproxy}/ingress.yaml`
+cannot be read and no manifest was obtained by any route. Nightwatch did not
+request a substitute, infer one, or work around the refusal. No deployment fact
+is claimed: `POSITIVE_DEPLOYMENT_FACTS` remains 0 and
+`PRODUCTION_READ_NO_DEPLOYMENT_FACT` continues to refuse production reads at
+construction.
+
+Per the documented G10.13 path, C-13 and C-14 are recorded terminal with this
+reason on this roadmap, in `docs/RELEASE-ADVANCE-CONDITIONS.md` and in
+`docs/MASTER-IMPLEMENTATION-HARDENING-PLAN.md` NW-16. The machine production
+track continues to report `EXTERNAL_PREREQUISITE_UNMET`; terminal closure is
+the programme record that the access will not be granted, not a change to any
+deployment fact. Decision record: D-134.
+
+## Autonomous yield preflight — EXTERNAL_PREREQUISITE_UNMET; wave not opened (G12.1–G12.3) — 2026-09-12
+
+Group 12's provider/toolchain/repository-set preflight, recorded as data with
+its unknowns explicit:
+
+- **Provider prerequisite.** The owner-configured CLI reasoner
+  (`NIGHTWATCH_REASONER_PROVIDER` / `NIGHTWATCH_REASONER_MODEL`; declared
+  default `configured`; recorded in reasoner provenance and never inferred).
+  No provider executable identity is confirmable in this environment, so the
+  prerequisite is `EXTERNAL_PREREQUISITE_UNMET`.
+- **Capability.** A confirmed owner-local reasoner provider able to drive the
+  bug-hunting campaign; absent, so no campaign wave is reachable.
+- **Toolchain versions.** Node 22.22.1 (a qualified point of `engines.node
+  >=20`), npm 10.x against the committed `package-lock.json`,
+  `@playwright/test` 1.62.1; the owner-local reproduction provider resolves an
+  allowlisted cached Go toolchain and never downloads one.
+- **Repository set.** The eight owner-approved repositories in
+  `OWNER_APPROVED_UNIVERSE`: `mobingilabs/ripple-ui`, `mobingilabs/ripple-api`,
+  `mobingilabs/ouchan`, `alphauslabs/grpc-chunk-parser`, `alphauslabs/blueapi`,
+  `alphauslabs/blue-sdk-go`, `alphauslabs/blueinternal`,
+  `mobingilabs/wave-api`.
+- **Confirming probe.** The campaign preflight refused to open the wave
+  because the provider prerequisite is unmet; the preflight was not run
+  against a live provider and no investigation, call, action, hypothesis,
+  attempt, candidate or admission was produced.
+- **Reachability threshold.** Not evaluated: the threshold exists to refuse a
+  wave below confirmed provider capability, and it refused at the prerequisite
+  stage. No threshold value is invented here.
+- **Non-result.** The G12.3 successor wave is NOT opened. Strict
+  `EXACT_REDISCOVERY` and previously-unknown-defect yield remain 0; because no
+  per-case diagnosis exists, no measured yield is published. Zero yield is
+  stated as a non-result, never omitted. Decision record: D-136.
+
+## Owner decisions applied — 2026-09-12
+
+The programme's owner-decision checkpoint was taken, and the decisions are
+recorded in `docs/DECISIONS.md`: G8.7 taxonomy ADOPTED (D-132); G9.1–9.3
+bounded advisory query executed with one low, unreachable Vue advisory (D-133);
+G10.6/G10.13 refusal and terminal closure above (D-134); G11.3 DEV
+prerequisites unavailable with acceptance staying `COMPLETE_LOCAL_SYNTHETIC` /
+`NOT_PROVEN` (D-135); G12.1–12.3 preflight above (D-136); G13.8 completion
+status held at `OPERATIONALLY_ACCEPTED` until all conditions and exact-head CI
+(D-129); G14.6 `dtoFramework` ADOPTED and `adversarialCorpus` removable on the
+measured graph (D-131); and G17.4 no presumed migration disposition (D-130).

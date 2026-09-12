@@ -2,27 +2,17 @@
   "schemaVersion": "nightwatch.reference-graph.v1",
   "definitionName": "Nightwatch source reference graph, reasoned retention and enforced module barriers (F-13/F-14)",
   "note": "The reference graph over src/tests/bin/ui/scenarios resolves static imports, the bin loader string-literal paths and require.resolve. A tracked src module with no reference to any export outside its own directory fails hardening:check unless it appears in retention. The list fails in both directions: an unlisted dead module fails, and a listed module that gains a consumer is stale and fails. enforcedBarriers names modules whose public surface is their index.ts: a consumer outside the module must import the barrel, and a deep import fails. A retention entry is temporary owner-pending state, never an adoption or a removal.",
-  "retention": [
-    {
-      "path": "src/core/dtoFramework",
-      "kind": "DIRECTORY",
-      "reason": "G14.6 owner decision is OPEN: adopt the versioned-DTO registry (migrating the four registered kinds and removing their hand-rolled validation) or remove the subsystem with the deletion declared. Retained so reachability reports the pending decision instead of silently passing or silently deciding.",
-      "ownerDecision": "nightwatch-production-completion-programme-v1#14.6",
-      "reviewDate": "2026-09-12"
-    },
-    {
-      "path": "src/core/adversarialCorpus",
-      "kind": "DIRECTORY",
-      "reason": "G14.6 owner decision is OPEN: adopt the adversarial corpus in the campaign machinery that already reports corpus sizes or remove the subsystem with the deletion declared. Retained so reachability reports the pending decision rather than deciding it.",
-      "ownerDecision": "nightwatch-production-completion-programme-v1#14.6",
-      "reviewDate": "2026-09-12"
-    }
-  ],
+  "retention": [],
   "enforcedBarriers": [
     {
       "module": "src/core/provenance",
       "barrel": "src/core/provenance/index.ts",
       "reason": "Narrow read-only local Git provenance boundary. Consumers outside the module import the barrel; reaching into localGit.ts directly is a violation of the declared surface."
+    },
+    {
+      "module": "src/core/dtoFramework",
+      "barrel": "src/core/dtoFramework/index.ts",
+      "reason": "G14.6 adopted versioned-DTO dispatch boundary. Consumers import the barrel; reaching into types.ts/registry.ts/builtinRegistrations.ts directly forks the dispatch surface."
     }
   ]
 }

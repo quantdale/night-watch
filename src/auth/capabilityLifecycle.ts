@@ -74,6 +74,18 @@ export function authCapabilityRemedy(environment: string, artefactPath: string):
 }
 
 /**
+ * Lanes explicitly exempt from the authenticated-capability pre-flight.
+ *
+ * The six LIVE_APP_SMOKE checks build their own synthetic local state against
+ * loopback fixtures; they never read the real owner capture artefact, so no
+ * real-artefact pre-flight applies and an absent/expired capture must not
+ * report them as blocked lanes (G21.8 reasoned exemption).
+ */
+export const AUTH_CAPABILITY_PREFLIGHT_EXEMPT_LANES: readonly string[] = Object.freeze([
+  'LIVE_APP_SMOKE_6_CHECKS',
+]);
+
+/**
  * Lanes that cannot run without a currently-valid artefact for the named
  * environment. Kept as data so the refusal and the report agree.
  */
@@ -89,7 +101,6 @@ export const AUTHENTICATED_LANE_DEPENDENCIES: Readonly<Record<string, readonly s
     'observe:authenticated',
     'C12_PASSIVE_OBSERVATION',
     'MANUAL_OWNER_12_CHECKS',
-    'LIVE_APP_SMOKE_6_CHECKS',
   ]),
   next: Object.freeze(['auth:capture']),
   local: Object.freeze([]),

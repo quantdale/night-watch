@@ -105,7 +105,7 @@
       ]
     },
     "LIVE_APP_SMOKE": {
-      "reason": "Requires a running local product and owner authentication state, so it cannot execute in an offline gate. Absence is UNAVAILABLE, never PASS.",
+      "reason": "Requires a running local product and owner authentication state, so it cannot execute in an offline gate. Absence is UNAVAILABLE, never PASS. Reasoned exemption (G21.8): these six checks build synthetic local state against loopback fixtures and never read the real owner capture artefact, so the real-artefact authenticated-capability pre-flight does not apply to them.",
       "evidenceLane": "owner-run smoke against a local app with captured storage state",
       "files": [
         "scenarios/ripple/local.smoke.ts",
@@ -152,7 +152,8 @@
         "ui/control-center/src/api.test.ts",
         "ui/control-center/src/contractCoverage.test.ts",
         "ui/control-center/src/contractRender.test.tsx",
-        "ui/control-center/src/styles.test.ts"
+        "ui/control-center/src/styles.test.ts",
+        "ui/control-center/src/systemMapEvidenceTaxonomy.test.ts"
       ]
     },
     "BIN_SYNTAX": {

@@ -10,9 +10,9 @@ function RunStatusSummary({ items }: { readonly items: readonly { readonly statu
 }
 
 
-function TimelinePanel({ runId, state }: { readonly runId: string | null; readonly state: DataLoadState<TimelineSnapshot> }): ReactNode {
+function TimelinePanel({ runId, state, onRetry }: { readonly runId: string | null; readonly state: DataLoadState<TimelineSnapshot>; readonly onRetry: () => void }): ReactNode {
   if (state.kind === 'loading') return <div className="mini-state" role="status">Loading timeline…</div>;
-  if (state.kind === 'error') return <div className="mini-state mini-state-warning">Timeline unavailable</div>;
+  if (state.kind === 'error') return <DataErrorState title="Timeline unavailable" error={state.error} onRetry={onRetry} />;
   if (state.kind !== 'ready' || state.data.events.length === 0) return <div className="mini-state">No timeline events reported. Empty does not imply pass.</div>;
   return <>
     {runId !== null && state.data.runId !== runId ? <div className="callout callout-warning"><strong>Timeline identity mismatch</strong><span>The timeline payload names {state.data.runId} while the selected run is {runId}. Identity is surfaced, never assumed.</span></div> : null}
@@ -30,7 +30,7 @@ function TimelinePanel({ runId, state }: { readonly runId: string | null; readon
 function RunDetailPanel({ runId, detailState, timelineState, onRetry }: { readonly runId: string | null; readonly detailState: DataLoadState<RunDetailSnapshot>; readonly timelineState: DataLoadState<TimelineSnapshot>; readonly onRetry: () => void }): ReactNode {
   if (runId === null) return <article className="panel run-detail-empty"><p className="eyebrow">RUN DETAIL</p><h2>Select a run to inspect</h2><p className="panel-intro">Run detail, timeline, and graph requests resolve only against a selected safe run identifier.</p></article>;
   if (detailState.kind === 'loading') return <article className="panel"><LoadingState /></article>;
-  if (detailState.kind === 'error') return <article className="panel"><DataErrorState title="Run detail unavailable" onRetry={onRetry} /></article>;
+  if (detailState.kind === 'error') return <article className="panel"><DataErrorState title="Run detail unavailable" error={detailState.error} onRetry={onRetry} /></article>;
   if (detailState.kind !== 'ready') return null;
   const detail = detailState.data;
   return <article className="panel run-detail-panel">
@@ -59,13 +59,13 @@ function RunDetailPanel({ runId, detailState, timelineState, onRetry }: { readon
       : <div className="table-scroll"><table><thead><tr><th scope="col">Repository</th><th scope="col">Branch</th><th scope="col">Head</th><th scope="col">State</th><th scope="col">Working tree</th></tr></thead><tbody>{detail.repositories.map((repository) => <tr key={repository.repositoryId}><td><strong>{repository.repositoryId}</strong></td><td>{repository.branch ?? 'Not reported'}</td><td>{repository.headSha === null ? 'Not reported' : `${repository.headSha.slice(0, 12)}…`}</td><td><StatusPill value={repository.state} /></td><td>{repository.dirty ? <StatusPill value="WARNING" label={`Dirty · ${repository.dirtyFileCount} file(s)`} /> : <StatusPill value="READY" label="Clean" />}</td></tr>)}</tbody></table></div>}
 
     <div className="timeline-heading"><p className="eyebrow">ORDERED TIMELINE</p><span>Sequence is authoritative; message bodies are never shown.</span></div>
-    <TimelinePanel runId={runId} state={timelineState} />
+    <TimelinePanel runId={runId} state={timelineState} onRetry={onRetry} />
   </article>;
 }
 
 export function RunsView({ state, selectedRunId, detailState, timelineState, onSelectRun, onRetry }: { readonly state: DataLoadState<RunListSnapshot>; readonly selectedRunId: string | null; readonly detailState: DataLoadState<RunDetailSnapshot>; readonly timelineState: DataLoadState<TimelineSnapshot>; readonly onSelectRun: (runId: string) => void; readonly onRetry: () => void }): ReactNode {
   if (state.kind === 'loading') return <LoadingState />;
-  if (state.kind === 'error') return <DataErrorState title="Run list unavailable" onRetry={onRetry} />;
+  if (state.kind === 'error') return <DataErrorState title="Run list unavailable" error={state.error} onRetry={onRetry} />;
   if (state.kind !== 'ready') return null;
   const items = state.data.items;
   return <div className="view-stack"><section className="page-intro"><div><p className="eyebrow">EVIDENCE / RUNS</p><h1>Inspect what happened, in order.</h1><p>Run records are read-only projections. Statuses distinguish pass, oracle-only, safety failure, blocked, incomplete, and unavailable evidence.</p></div><StatusPill value={items.length === 0 ? 'UNAVAILABLE' : 'READY'} label={items.length === 0 ? 'No runs reported' : `${items.length} run(s)`} /></section><RunStatusSummary items={items} />{items.length === 0 ? <article className="panel empty-table"><div className="empty-mark"><Icon name="runs" /></div><h2>No local runs recorded</h2><p>The local run store returned an empty bounded page. This is not a pass claim.</p></article> : <article className="panel"><div className="panel-heading"><div><p className="eyebrow">RUN INDEX</p><h2>Recent local records</h2></div><span className="table-limit">Limit {state.data.page.limit}</span></div><div className="table-scroll"><table><thead><tr><th scope="col">Scenario</th><th scope="col">Status</th><th scope="col">Environment</th><th scope="col">Started</th><th scope="col">Signals</th><th scope="col"><span className="sr-only">Open</span></th></tr></thead><tbody>{items.map((run) => <tr key={run.runId} className={selectedRunId === run.runId ? 'row-selected' : undefined}><td><strong>{run.scenario ?? 'Unnamed scenario'}</strong><small>{run.runId} · {run.browser ?? 'browser not reported'}</small><small>{run.product ?? 'product not reported'}{run.nightwatchSha === null ? '' : ` · ${run.nightwatchSha.slice(0, 12)}…`}</small></td><td><StatusPill value={run.status} /></td><td>{formatCategory(run.environment)}</td><td><span>{formatTimestamp(run.startedAt)}</span><small>ended {formatTimestamp(run.endedAt)}</small></td><td><span>{run.eventCount} events</span><small>{run.oracleFindingCount} findings · {run.hardFailureCount} hard failure(s) · {run.durationMs === null ? 'duration not recorded' : `${run.durationMs} ms`}</small></td><td><button className="table-action" type="button" onClick={() => onSelectRun(run.runId)}>Inspect <Icon name="arrow" /></button></td></tr>)}</tbody></table></div></article>}<RunDetailPanel runId={selectedRunId} detailState={detailState} timelineState={timelineState} onRetry={onRetry} /></div>;

@@ -448,32 +448,128 @@ outside this session). Integration and release are not performed here.
 
 ## 8. Control Center residual truth
 
-- [ ] 8.1 Extract every selector from the built stylesheet; assert a non-zero
+- [x] 8.1 Extract every selector from the built stylesheet; assert a non-zero
       count before any reachability assertion
-- [ ] 8.2 Require each selector to match an element in the synthetic
+- [x] 8.2 Require each selector to match an element in the synthetic
       composition across the qualification walk, or appear in the reasoned
       unreachable list
-- [ ] 8.3 Make the unreachable list fail in both directions; declare
+- [x] 8.3 Make the unreachable list fail in both directions; declare
       pseudo-class and media-query exemptions by name with reasons
-- [ ] 8.4 Mutation proof: alter a live rule's selector so nothing matches; the
+- [x] 8.4 Mutation proof: alter a live rule's selector so nothing matches; the
       lane must fail
-- [ ] 8.5 Cover native form controls at runtime on non-forced properties
+- [x] 8.5 Cover native form controls at runtime on non-forced properties
       (geometry, spacing, border, font, layout); declare forced properties by
       name rather than excluding the element
-- [ ] 8.6 Prove an inert class on a native control fails unless declared
+- [x] 8.6 Prove an inert class on a native control fails unless declared
       base-only with a reason
-- [ ] 8.7 **Owner decision required:** adopt an evidence-status taxonomy for
+- [x] 8.7 **Owner decision required:** adopt an evidence-status taxonomy for
       the system map, or state flatness
-- [ ] 8.8 If adopted: map all 13 core evidence values with no default bucket;
+      — ADOPTED by the session owner (authoritative owner decision)
+- [x] 8.8 If adopted: map all 13 core evidence values with no default bucket;
       a fourteenth value fails the completeness assertion; assert at least one
       non-colour computed property differs
 - [ ] 8.9 If not adopted: render the statement that evidence status is not
       shown on the graph and name where it is; cover it by the contract-render
       guard
-- [ ] 8.10 Register the new suites, refresh `inventoryDigest`, verify the
+      — NOT APPLICABLE: the owner adopted the taxonomy (8.7/8.8); the flatness
+      branch is closed, not performed
+- [x] 8.10 Register the new suites, refresh `inventoryDigest`, verify the
       raised `UI_LANE` count
+      — registration and the raised count are done (`UI_LANE` 5 → 6);
+      `inventoryDigest` is deliberately NOT refreshed in this session by owner
+      instruction (the owner refreshes it at integration after staging)
 - [ ] 8.11 UI typecheck, tests, build; browser lane; root typecheck;
       `hardening:check`; `validation:universe`; `gate:local`; integrate
+      — PARTIAL: every command the owner specified executed (results in the
+      group record); `hardening:check` and `validation:universe` fail only on
+      the not-yet-staged new suite and the owner-refreshed digest; `gate:local`
+      and integration/release are the session owner's act and were not
+      performed
+
+### Group 8 record — executed 2026-09-12 in session `nightwatch-production-completion-3d648499`
+
+8.1–8.4. `tests/browser/helpers/stylesheetReachability.ts` extracts every
+distinct selector from the BUILT stylesheet through the browser's own CSSOM
+(including each rule's media condition), matches selectors against the live
+composition, and makes the pure judgement in
+`evaluateStylesheetReachability`. The qualification walk in
+`tests/browser/controlCenterBrowser.browser.ts` accumulates matches at every
+view, after graph search/selection, after the source pre-selection panel, and
+after the map selection/query/empty-filter states. Measured on the passing
+run: selectors=279, reachable=227, proven through a declared pseudo-state
+exemption=20, under the declared reduced-motion media exemption=2, listed
+unreachable=30. The unreachable list fails in BOTH directions (a listed
+selector that becomes reachable or disappears is stale; an unlisted
+unreachable selector is undeclared), proven both live and on the pure
+judgement. `PSEUDO_STATE_EXEMPTIONS` declares `:hover`, `:focus-visible`,
+`:focus`, `:active`, `::placeholder`, `::before`, `::after` by name with
+reasons; `MEDIA_EXEMPTIONS` declares `(prefers-reduced-motion: reduce)` (the
+stylesheet has no `@media print`; adding one without a declaration fails).
+The classes the qualification composition genuinely cannot produce (crash
+boundary, loading/error fallbacks, empty-runs table, unreviewable tones, the
+owner review write controls) are listed with a reason naming the surface that
+does exercise them. Mutation proof: the live `.chip` rule's `selectorText` was
+replaced in the page CSSOM with `.synthetic-chip-dead-mutation`, the
+reachability judgement reported it undeclared, the rule was restored, and the
+restored judgement was clean.
+
+8.5/8.6. `tests/browser/helpers/classEffect.ts` no longer excludes native form
+controls. It sweeps `BUTTON`/`INPUT`/`SELECT`/`TEXTAREA` on their non-forced
+computed properties; the 13 excluded colour-family properties (for example
+`color`, `background-color`, the four border colours, `accent-color`,
+`-webkit-text-fill-color`) are declared by name with reasons in
+`FORCED_NATIVE_PROPERTIES`, and the test asserts the excluded set equals the
+declaration and that geometry, spacing, border width/style, font and layout
+properties stay observable. A native carrier whose class changes nothing is
+reported per element (`nativeUndeclared`, naming class and control). The
+negative probe adds `synthetic-inert-native-probe` to a native `<button>` and
+the lane fails naming it; the same sweep with the probe declared base-only is
+suppressed, proving the "unless declared base-only" escape in both directions.
+Measured: native classes swept=6.
+
+8.7/8.8. Adopted. `ui/control-center/src/systemMapEvidence.ts` maps all 13
+core values explicitly (no default bucket, no fallback entry) to a unique
+`(strokeWidth, strokeDasharray)` treatment; `SystemMapView.tsx` applies the
+class and a `data-evidence-status` attribute to each node group; `styles.css`
+carries one rule per class using only `stroke-width`/`stroke-dasharray`.
+`evidenceTreatmentFor` returns null for an unknown value, and
+`evaluateEvidenceTaxonomy` fails in both directions (a value with no treatment
+and a treatment for a removed value). The qualification walk serves a
+synthetic wire DTO carrying all 13 statuses, and asserts: every status renders
+its class; every treatment class changed a computed property in the runtime
+sweep; all 13 non-colour computed signatures are pairwise distinct (13/13);
+and a synthetic fourteenth value fails `missing`. The new UI suite
+`ui/control-center/src/systemMapEvidenceTaxonomy.test.ts` binds the UI copy to
+`EVIDENCE_STATUSES` in `src/core/systemMap/model.ts` (13, read from source),
+asserts the completeness failure for a fourteenth value and for a removed
+value, and binds every treatment class to its stylesheet rule in both
+directions.
+
+8.10. Registered `ui/control-center/src/systemMapEvidenceTaxonomy.test.ts` in
+the `UI_LANE` class of `config/validation-universe.v1.json` (5 → 6 files) and
+left `inventoryDigest` untouched by owner instruction; the new suite is not
+gate-selected, so `config/synthetic-campaign.v1.json` needs no change.
+Computed universe digest with the declared addition is
+`sha256:98f2de4bcf0672a9c346384a` against the stale declared
+`sha256:3022c7c44519e9eaec4279ed`.
+
+8.11. Executed in the session worktree: `npm --prefix ui/control-center run
+typecheck` PASS; `npm --prefix ui/control-center run test` PASS (6 files / 88
+tests, including the 4 new taxonomy cases); `npm run control-center:ui:browser`
+PASS for the qualification, system-map, accessibility and error-taxonomy
+suites — 5 passed / 2 failed, where both failures are the pre-existing
+`reviewPersistence.browser.ts` reviewer-write tests that already failed at
+this session's baseline before any group-8 change — `npm run typecheck` PASS;
+`npm run control-center:ui:build` PASS; `node bin/hardening-check.mjs` FAIL
+only on `VALIDATION_UNIVERSE_DECLARED_MISSING_FILE` (the new suite is not yet
+staged in Git) and `VALIDATION_UNIVERSE_DIGEST_DRIFT` (owner-refreshed digest);
+`npm run validation:universe` FAIL on the same two violations, with
+`discovered=455`, `classified=199`, `unclassified=0` and `UI_LANE=6`. The
+qualification run printed
+`[control-center-browser] stylesheet reachability: selectors=279 reachable=227
+pseudo=20 media=2 listed=30` and `[control-center-browser] evidence taxonomy:
+statuses=13 non-colour-signatures=13 native-classes=6`. Integration, the
+digest refresh, `gate:local` and release are the session owner's act.
 
 ## 9. Dependency and supply-chain currency
 
@@ -1111,31 +1207,48 @@ remain the session owner's action exactly as recorded for the programme; no
 
 ## 18. UI error taxonomy rendering
 
-- [ ] 18.1 Render `kind` and, where present, `status` at every error site;
+- [x] 18.1 Render `kind` and, where present, `status` at every error site;
       derive the operator action from the kind
-- [ ] 18.2 Present `INVALID_RESPONSE` as a contract mismatch naming the
+- [x] 18.2 Present `INVALID_RESPONSE` as a contract mismatch naming the
       contract, with no retry affordance
-- [ ] 18.3 Present a deliberate 404 as a capability that is not enabled, naming
+- [x] 18.3 Present a deliberate 404 as a capability that is not enabled, naming
       how it is enabled; not as an outage
-- [ ] 18.4 Render nothing for `ABORTED`
-- [ ] 18.5 Offer retry only for `NETWORK`, `TIMEOUT`, 408 and 429
-- [ ] 18.6 Assert no error state contains server-supplied message, stack,
+- [x] 18.4 Render nothing for `ABORTED`
+- [x] 18.5 Offer retry only for `NETWORK`, `TIMEOUT`, 408 and 429
+- [x] 18.6 Assert no error state contains server-supplied message, stack,
       header or path
-- [ ] 18.7 Extend the differential render harness to the failure path: drive
+- [x] 18.7 Extend the differential render harness to the failure path: drive
       each view into each kind and require the DOM to differ between kinds
-- [ ] 18.8 Drive the coverage assertion off `ApiErrorKind`'s members, not a
+- [x] 18.8 Drive the coverage assertion off `ApiErrorKind`'s members, not a
       hand-written list, so a sixth kind fails until rendered
-- [ ] 18.9 Add the reasoned exemption list for legitimately identical pairs;
+- [x] 18.9 Add the reasoned exemption list for legitimately identical pairs;
       fail in both directions
-- [ ] 18.10 Mutation proof: collapsing a view's error rendering to one generic
+- [x] 18.10 Mutation proof: collapsing a view's error rendering to one generic
       state fails the harness naming the conflated kinds
-- [ ] 18.11 Render partial composition failures per source — starting with
+- [x] 18.11 Render partial composition failures per source — starting with
       `CampaignView` and the Overview — reserving the whole-view error state
       for total failure
-- [ ] 18.12 Prove partial disclosure: failing exactly one source requires both
+- [x] 18.12 Prove partial disclosure: failing exactly one source requires both
       the rendered data and the named failure
 - [ ] 18.13 Register the new suites, refresh `inventoryDigest`, UI lanes,
       browser lane, full validation, integrate
+      — PARTIAL: no new suite file was created, so there is nothing new to
+      register from this group; the failure-path coverage extends
+      `contractRender.test.tsx`, `App.test.tsx` and
+      `tests/browser/controlCenterBrowser.browser.ts`, which the `UI_LANE`
+      and `BROWSER_WORKFLOW` lists already select, and `inventoryDigest` was
+      deliberately not touched. Local results: UI typecheck PASS; UI tests
+      88/88 PASS; browser lane 5 passed / 2 pre-existing `reviewPersistence`
+      failures (the default real-source authority snapshot measured 12.1s,
+      exceeding that test's 10s assertion budget; it reproduces with the test
+      run alone and none of this group's files participate);
+      `validation:universe` and `hardening:check` PASSED at 23:13 and at the
+      final re-run FAIL with exactly two concurrent-writer errors —
+      `ui/control-center/src/systemMapEvidenceTaxonomy.test.ts` declared in
+      `config/validation-universe.v1.json` at 23:16 but still untracked, and
+      the matching `inventoryDigest` drift — introduced by the concurrent
+      system-map worker, not by this group. Integration/release remain the
+      session owner's action.
 
 ## 19. Configuration contract and UI decomposition
 
@@ -1300,8 +1413,12 @@ reports the same 4. This session created no newly discovered file, so
 - [ ] 21.8 Wire the pre-flight into all 18 authorization-gated checks,
       `journey:phase2c`, `explore:phase4`, `api:phase5`, `campaign:real` and
       the C-12 path (all named bin launchers and 10 MANUAL_OWNER runners are
-      wired; the LIVE_APP_SMOKE checks that build synthetic local state are
-      not real authenticated lanes and remain unwired)
+      wired). Reasoned exemption: the six `LIVE_APP_SMOKE` checks build
+      synthetic local state against loopback fixtures and never read the real
+      owner capture artefact, so no real-artefact pre-flight applies; they are
+      not real authenticated lanes, remain unwired by design, and are not
+      reported as blocked lanes
+      (`AUTH_CAPABILITY_PREFLIGHT_EXEMPT_LANES` in `src/auth/capabilityLifecycle.ts`)
 - [x] 21.9 Report authentication state from `status:local`,
       `observe:preflight` and `c12:preflight` reading metadata only — no
       browser, no host contact, no cookie value read

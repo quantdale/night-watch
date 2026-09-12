@@ -12,6 +12,7 @@ import { loadTypeScriptModule as loadRuntimeTypeScriptModule } from './lib/types
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
+/** @param {string} file */
 function loadTypeScriptModule(file) {
   return loadRuntimeTypeScriptModule(file, { root });
 }
@@ -21,6 +22,7 @@ function usage() {
   console.log('Configures the designated DEV test account using hidden terminal prompts.');
 }
 
+/** @param {string} prompt @returns {Promise<string>} */
 function readHidden(prompt) {
   if (!process.stdin.isTTY || typeof process.stdin.setRawMode !== 'function') {
     throw new Error('interactive terminal required');
@@ -31,6 +33,7 @@ function readHidden(prompt) {
   process.stdin.resume();
   return new Promise((resolve, reject) => {
     let value = '';
+    /** @param {string} chunk */
     const onData = (chunk) => {
       for (const character of String(chunk)) {
         if (character === '\u0003') {
@@ -68,7 +71,8 @@ async function main() {
   }
   if (args.length > 0) throw new Error('auth:configure accepts no credential or account arguments');
 
-  const provider = loadTypeScriptModule('src/auth/devCredentialProvider.ts');
+  /** @type {typeof import('../src/auth/devCredentialProvider')} */
+  const provider = loadRuntimeTypeScriptModule('src/auth/devCredentialProvider.ts', { root });
   console.log('target-environment=dev');
   console.log(`provider=${provider.DEV_CREDENTIAL_PROVIDER_TYPE}`);
   console.log(`account-alias=${provider.DEV_CREDENTIAL_ACCOUNT_ALIAS}`);

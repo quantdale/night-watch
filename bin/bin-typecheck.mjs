@@ -24,6 +24,7 @@ import { extractLoaderCallSites, renderLoaderTypeMap } from './lib/cli-implement
 import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+/** @type {import('./lib/operator-cli.mjs').OperatorCliMetadata} */
 const CLI_METADATA = {
   schemaVersion: OPERATOR_CLI_SCHEMA,
   name: 'bin-typecheck',

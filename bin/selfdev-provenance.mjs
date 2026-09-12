@@ -25,12 +25,13 @@ const CLI_METADATA = {
   artifacts: [],
 };
 
+/** @param {string} file */
 function loadTypeScriptModule(file) {
   return loadRuntimeTypeScriptModule(file, { root });
 }
 
 export function readCurrentLocalProvenance() {
-  const helper = loadTypeScriptModule('src/core/provenance/index.ts');
+  const helper = loadRuntimeTypeScriptModule('src/core/provenance/index.ts', { root });
   return helper.readLocalNightwatchProvenance({ repositoryRoot: root });
 }
 

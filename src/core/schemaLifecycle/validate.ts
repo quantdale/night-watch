@@ -45,7 +45,11 @@ export function decisionsCarry(decisionsText: string, decisionRef: string): bool
 function coveredRoleForKind(kind: SchemaVersionDisposition['kind']): string {
   if (kind === 'MIGRATE') return 'MIGRATED';
   if (kind === 'READ_COMPATIBLE') return 'READ_COMPATIBLE';
-  return 'ORPHANED';
+  if (kind === 'ORPHAN') return 'ORPHANED';
+  // 17.4: there is no presumed default disposition. An unknown runtime kind
+  // must fail the role comparison, never fall through to ORPHANED (which a
+  // matching ORPHANED role would then silently accept).
+  return 'UNKNOWN_DISPOSITION_KIND';
 }
 
 export interface ValidateSchemaLifecycleInput {

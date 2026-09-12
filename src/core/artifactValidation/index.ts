@@ -46,10 +46,7 @@
 // but no storage API is reachable through this facade.
 // ---------------------------------------------------------------------------
 
-import { validateCampaignCheckpoint } from '../campaign/checkpoint';
 import { validateCampaignMorningBrief } from '../campaign/brief';
-import { validateSemanticEvaluationReceipt, SEMANTIC_EVALUATION_RECEIPT_VERSION, SEMANTIC_EVALUATION_RECEIPT_VERSION_V1 } from '../../oracles/semantic/receipts';
-import { TRIAGE_REPLAY_PLAN_VERSION, TRIAGE_REPLAY_PLAN_V2_VERSION, validateTriageReplayPlan, validateTriageReplayPlanV2 } from '../triage/replayPlan';
 import { validateSemanticCampaignBundle } from '../source/semanticCampaignBundle';
 import { createHash } from 'node:crypto';
 import {
@@ -60,6 +57,14 @@ import {
   type ArtifactValidationResult,
 } from './types';
 import { safeErrorDetail } from '../campaign/runtimeValidation';
+import {
+  CAMPAIGN_CHECKPOINT_CONTEXT_SLOT,
+  CAMPAIGN_CHECKPOINT_DTO_KIND,
+  SEMANTIC_EVALUATION_RECEIPT_DTO_KIND,
+  TRIAGE_REPLAY_PLAN_DTO_KIND,
+  registerCoreDurableDtoKinds,
+  validateVersionedDto,
+} from '../dtoFramework';
 import { validateAnomalyClusterArtifact, validateAnomalyObservationArtifact } from './observationClusterValidation';
 import { validateReproductionRecordArtifact } from './reproductionValidation';
 import { validateCoverageReportArtifact } from './coverageReportValidation';
@@ -125,41 +130,68 @@ function receiptIdMatches(receipt: Record<string, unknown>): boolean {
 
 type KindValidator = (value: unknown, context: ArtifactValidationContext) => void;
 
+/**
+ * G14.6 (14.7). The versioned-DTO framework owns readable-version dispatch for
+ * the kinds it registers. The facade keeps its stable `ARTIFACT_*` reason
+ * vocabulary by translating the framework's structural code back to it: a
+ * shape failure is the owning module validator's own message, and an unknown,
+ * missing or invalid discriminator is the legacy version refusal.
+ */
+function translateDtoFailure(layer: 'receipt' | 'replay-plan' | 'checkpoint', code: string): string {
+  const layerPrefix = layer === 'receipt'
+    ? 'ARTIFACT_RECEIPT_INVALID'
+    : layer === 'replay-plan'
+      ? 'ARTIFACT_REPLAY_PLAN_INVALID'
+      : 'CAMPAIGN_CHECKPOINT_INTEGRITY_INVALID';
+  if (code === 'DTO_PAYLOAD_NOT_RECORD') {
+    return layer === 'checkpoint' ? 'CAMPAIGN_CHECKPOINT_INTEGRITY_INVALID:OBJECT_REQUIRED' : `${layerPrefix}:OBJECT_REQUIRED`;
+  }
+  if (code.startsWith('DTO_CONTEXT_REQUIRED:')) return 'ARTIFACT_CONTEXT_MISSING:campaign-checkpoint:manifest';
+  if (code.startsWith('DTO_VERSION_DISCRIMINATOR_MISSING:')) {
+    return layer === 'checkpoint' ? 'CAMPAIGN_CHECKPOINT_INTEGRITY_INVALID:SCHEMA_INVALID' : `${layerPrefix}:SCHEMA_VERSION_UNSUPPORTED:undefined`;
+  }
+  if (code.startsWith('DTO_VERSION_DISCRIMINATOR_INVALID:')) {
+    return layer === 'checkpoint'
+      ? 'CAMPAIGN_CHECKPOINT_INTEGRITY_INVALID:SCHEMA_INVALID'
+      : `${layerPrefix}:SCHEMA_VERSION_UNSUPPORTED:${safeErrorDetail(code.slice('DTO_VERSION_DISCRIMINATOR_INVALID:'.length))}`;
+  }
+  if (code.startsWith('DTO_VERSION_UNKNOWN:')) {
+    return layer === 'checkpoint' ? 'CAMPAIGN_CHECKPOINT_INTEGRITY_INVALID:SCHEMA_INVALID' : `${layerPrefix}:SCHEMA_VERSION_UNSUPPORTED:${code.slice('DTO_VERSION_UNKNOWN:'.length)}`;
+  }
+  if (code.startsWith('DTO_SHAPE_INVALID:')) {
+    const inner = code.slice('DTO_SHAPE_INVALID:'.length);
+    return layer === 'replay-plan' ? `${layerPrefix}:${inner}` : inner;
+  }
+  return `${layerPrefix}:${code}`;
+}
+
+// G14.6 (14.7): one idempotent bootstrap of the framework's built-in durable
+// kinds, so the facade never dispatches a kind that is registered but not yet
+// loaded.
+registerCoreDurableDtoKinds();
+
 const KIND_VALIDATORS: Readonly<Record<ArtifactKind, KindValidator>> = Object.freeze({
   'campaign-checkpoint': (value, context) => {
     // The module validator is manifest-bound by design; a missing manifest is
     // a caller error and must fail closed rather than skip validation.
     if (context.manifest === undefined) throw new Error('ARTIFACT_CONTEXT_MISSING:campaign-checkpoint:manifest');
-    validateCampaignCheckpoint(value, context.manifest);
+    const result = validateVersionedDto(CAMPAIGN_CHECKPOINT_DTO_KIND, value, { [CAMPAIGN_CHECKPOINT_CONTEXT_SLOT]: context.manifest });
+    if (!result.valid) throw new Error(translateDtoFailure('checkpoint', result.code));
   },
   'observation': (value) => {
     validateAnomalyObservationArtifact(value);
   },
   'semantic-receipt': (value) => {
-    // Pre-guard so null/primitive inputs produce a stable reason instead of a
-    // TypeError inside the typed module validator.
+    // The framework owns version dispatch; the raw validator message and the
+    // facade's receipt-id recomposition remain the leaf checks.
+    const result = validateVersionedDto(SEMANTIC_EVALUATION_RECEIPT_DTO_KIND, value);
+    if (!result.valid) throw new Error(translateDtoFailure('receipt', result.code));
     if (!isRecord(value)) throw new Error('ARTIFACT_RECEIPT_INVALID:OBJECT_REQUIRED');
-    const version = value.schemaVersion;
-    if (version !== SEMANTIC_EVALUATION_RECEIPT_VERSION && version !== SEMANTIC_EVALUATION_RECEIPT_VERSION_V1) {
-      throw new Error(`ARTIFACT_RECEIPT_INVALID:SCHEMA_VERSION_UNSUPPORTED:${safeErrorDetail(version)}`);
-    }
-    validateSemanticEvaluationReceipt(value as never);
     if (!receiptIdMatches(value)) throw new Error('ARTIFACT_RECEIPT_INVALID:RECEIPT_ID_MISMATCH');
   },
   'replay-plan': (value) => {
-    if (!isRecord(value)) throw new Error('ARTIFACT_REPLAY_PLAN_INVALID:OBJECT_REQUIRED');
-    const version = value.schemaVersion;
-    if (version === TRIAGE_REPLAY_PLAN_VERSION) {
-      const result = validateTriageReplayPlan(value);
-      if (!result.valid) throw new Error(`ARTIFACT_REPLAY_PLAN_INVALID:${result.reason}`);
-      return;
-    }
-    if (version === TRIAGE_REPLAY_PLAN_V2_VERSION) {
-      const result = validateTriageReplayPlanV2(value);
-      if (!result.valid) throw new Error(`ARTIFACT_REPLAY_PLAN_INVALID:${result.reason}`);
-      return;
-    }
-    throw new Error(`ARTIFACT_REPLAY_PLAN_INVALID:SCHEMA_VERSION_UNSUPPORTED:${safeErrorDetail(version)}`);
+    const result = validateVersionedDto(TRIAGE_REPLAY_PLAN_DTO_KIND, value);
+    if (!result.valid) throw new Error(translateDtoFailure('replay-plan', result.code));
   },
   'cluster': (value) => {
     validateAnomalyClusterArtifact(value);

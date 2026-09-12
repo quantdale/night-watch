@@ -19,7 +19,8 @@
 // Companion modules:
 //   corpus/phase15p/adversarialFixtures.ts        (reused fixture builders)
 //   corpus/phase15p/adversarialScenarioCatalog.ts (wave scenario classes)
-//   src/core/adversarialCorpus/registry.ts         (cross-phase definitions)
+//   (the former src/core/adversarialCorpus registry was removed by the G14.6
+//    owner decision; the phase15p catalog above is the live definition set)
 // ---------------------------------------------------------------------------
 
 import {

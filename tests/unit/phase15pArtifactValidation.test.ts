@@ -59,6 +59,16 @@ import {
   type CampaignVersionFingerprint,
 } from '../../src/core/campaign';
 import { PrivateArtifactStore } from '../../src/core/policy';
+import {
+  CAMPAIGN_CHECKPOINT_CONTEXT_SLOT,
+  CAMPAIGN_CHECKPOINT_DTO_KIND,
+  CAMPAIGN_MANIFEST_DTO_KIND,
+  SEMANTIC_EVALUATION_RECEIPT_DTO_KIND,
+  TRIAGE_REPLAY_PLAN_DTO_KIND,
+  getRegisteredDtoKinds,
+  validateVersionedDto,
+} from '../../src/core/dtoFramework';
+import { validateCampaignManifest } from '../../src/core/campaign/identity';
 import { createSemanticCampaignBundle } from '../../src/core/source/semanticCampaignBundle';
 import { buildContractCoverageReport } from '../../src/oracles/expectations/extract/contractCoverageReport';
 import { API_CATALOG_VERSION, SCENARIO_GENERATOR_VERSION } from '../../src/api/phase5/types';
@@ -668,6 +678,50 @@ test.describe('Phase 15P A11 malformed-input rejection matrices', () => {
     const tamperedKey = toRecord(sanitizeAnomalyObservation(observation() as never));
     tamperedKey.clusterKey = 'cluster-key:sha256:aaaaaaaaaaaaaaaaaaaaaaaa';
     expectRejected('observation', tamperedKey, 'CLUSTER_KEY_MISMATCH');
+  });
+
+  test('G14.6: the versioned-DTO framework dispatches the four registered kinds with the owner validators', () => {
+    // The framework owns readable-version dispatch for exactly the four kinds
+    // the adoption migrated; the owner validators stay the leaf authorities.
+    for (const kind of [
+      SEMANTIC_EVALUATION_RECEIPT_DTO_KIND,
+      TRIAGE_REPLAY_PLAN_DTO_KIND,
+      CAMPAIGN_MANIFEST_DTO_KIND,
+      CAMPAIGN_CHECKPOINT_DTO_KIND,
+    ]) {
+      expect(getRegisteredDtoKinds(), kind).toContain(kind);
+    }
+    // Semantic receipt: the framework accepts the same v2 body the facade does.
+    expect(validateVersionedDto(SEMANTIC_EVALUATION_RECEIPT_DTO_KIND, cloneJson(semanticReceipt())).valid).toBe(true);
+    // Replay plan: the framework reaches the same leaf rejection.
+    const validPlan = cloneJson(createTriageReplayPlan(replayPlanBase()));
+    expect(validateVersionedDto(TRIAGE_REPLAY_PLAN_DTO_KIND, validPlan).valid).toBe(true);
+    const notSubsequence = toRecord(validPlan);
+    notSubsequence.retainedActionIds = ['a2', 'a1'];
+    const rejectedPlan = validateVersionedDto(TRIAGE_REPLAY_PLAN_DTO_KIND, notSubsequence);
+    expect(rejectedPlan.valid).toBe(false);
+    if (!rejectedPlan.valid) expect(rejectedPlan.code).toContain('REPLAY_PLAN_NOT_SUBSEQUENCE');
+
+    const { root, manifest, checkpoint } = preparedFixture();
+    try {
+      // Campaign manifest: owner validator and framework binding agree on the
+      // produced manifest, and both reject a drifted version discriminant.
+      expect(() => validateCampaignManifest(manifest)).not.toThrow();
+      expect(validateVersionedDto(CAMPAIGN_MANIFEST_DTO_KIND, cloneJson(manifest)).valid).toBe(true);
+      const driftedManifest = cloneJson(manifest) as unknown as Record<string, unknown>;
+      driftedManifest.schemaVersion = 'nightwatch.campaign-manifest.private.v9';
+      expect(() => validateCampaignManifest(driftedManifest as never)).toThrow();
+      const rejectedManifest = validateVersionedDto(CAMPAIGN_MANIFEST_DTO_KIND, driftedManifest);
+      expect(rejectedManifest.valid).toBe(false);
+      if (!rejectedManifest.valid) expect(rejectedManifest.code).toContain('DTO_VERSION_UNKNOWN');
+      // Campaign checkpoint: manifest-bound context is required by both routes.
+      expect(validateVersionedDto(CAMPAIGN_CHECKPOINT_DTO_KIND, cloneJson(checkpoint), { [CAMPAIGN_CHECKPOINT_CONTEXT_SLOT]: manifest }).valid).toBe(true);
+      const missingContext = validateVersionedDto(CAMPAIGN_CHECKPOINT_DTO_KIND, cloneJson(checkpoint));
+      expect(missingContext.valid).toBe(false);
+      if (!missingContext.valid) expect(missingContext.code).toContain('DTO_CONTEXT_REQUIRED');
+    } finally {
+      cleanup(root);
+    }
   });
 
   test('semantic receipts: coherence rules and id recomposition', () => {

@@ -13,6 +13,7 @@ import { loadTypeScriptModule as loadRuntimeTypeScriptModule } from './lib/types
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
+/** @param {string} file */
 function loadTypeScriptModule(file) {
   return loadRuntimeTypeScriptModule(file, { root });
 }
@@ -22,6 +23,7 @@ function usage() {
   console.log('The command performs one fixed synthetic L2 BUG_CANDIDATE review and never accepts prompt or input text.');
 }
 
+/** @param {typeof import('../src/core/aiReview/localCanary')} service @param {string | undefined} modelIdentifier */
 function printUnexpectedFailure(service, modelIdentifier) {
   console.error('CANARY=FAIL');
   console.error('failureClass=FAIL_SCHEMA');
@@ -44,9 +46,10 @@ function printUnexpectedFailure(service, modelIdentifier) {
 }
 
 async function main() {
+  /** @type {typeof import('../src/core/aiReview/localCanary')} */
   let service;
   try {
-    service = loadTypeScriptModule('src/core/aiReview/localCanary.ts');
+    service = loadRuntimeTypeScriptModule('src/core/aiReview/localCanary.ts', { root });
   } catch {
     console.error('LOCAL_MODEL_CANARY_NOT_RUN');
     console.error('reason=NOT_RUN_RUNTIME_ABSENT');

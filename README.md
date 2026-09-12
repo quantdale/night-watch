@@ -96,9 +96,9 @@ executed rather than omitting it.
 <!--status-block:begin-->
 - Project completion status: `OPERATIONALLY_ACCEPTED` — local/clean certified,
   exact-head CI never executed. `<!--status:PROJECT_COMPLETION_STATUS=OPERATIONALLY_ACCEPTED-->`
-- Validation lane classes: 7 `PROVEN`, 1 `PROVEN` carrying stale evidence,
-  1 `BLOCKED_EXTERNAL`, 2 `UNAVAILABLE_CAPABILITY`.
-  `<!--status:VALIDATION_LANE_PROVEN_COUNT=7-->` `<!--status:VALIDATION_LANE_STALE_EVIDENCE_COUNT=1-->` `<!--status:VALIDATION_LANE_BLOCKED_EXTERNAL_COUNT=1-->` `<!--status:VALIDATION_LANE_UNAVAILABLE_CAPABILITY_COUNT=2-->`
+- Validation lane classes: 8 `PROVEN`, 1 `PROVEN` carrying stale evidence,
+  1 `BLOCKED_EXTERNAL`, 1 `UNAVAILABLE_CAPABILITY`.
+  `<!--status:VALIDATION_LANE_PROVEN_COUNT=8-->` `<!--status:VALIDATION_LANE_STALE_EVIDENCE_COUNT=1-->` `<!--status:VALIDATION_LANE_BLOCKED_EXTERNAL_COUNT=1-->` `<!--status:VALIDATION_LANE_UNAVAILABLE_CAPABILITY_COUNT=1-->`
 - Measured yield: **0** admitted findings and **0** strict `EXACT_REDISCOVERY`
   across W7–W10. The machinery works; no Alphaus defect has been admitted.
   `<!--status:MEASURED_YIELD_ADMITTED_FINDINGS=0-->` `<!--status:MEASURED_YIELD_EXACT_REDISCOVERY=0-->`
@@ -110,11 +110,13 @@ executed rather than omitting it.
   is 0, so C-13 and C-14 are structurally unreachable regardless of
   authorization. `<!--status:PRODUCTION_TRACK_STAGE=EXTERNAL_PREREQUISITE_UNMET-->`
 - Lanes that have never executed are stated, not omitted: exact-checkpoint CI is
-  `BLOCKED_EXTERNAL` (zero-step billing/platform block; never executed),
+  `BLOCKED_EXTERNAL` (zero-step billing/platform block; never executed), and the
   owner-manual harnesses and live-app smokes are `UNAVAILABLE_CAPABILITY` (need
-  DEV authentication and separate authorization), and the online dependency
-  advisory is `UNAVAILABLE_CAPABILITY` (needs authorized egress).
-  `<!--status:EXACT_CHECKPOINT_CI_LANE=BLOCKED_EXTERNAL-->` `<!--status:OWNER_MANUAL_LANE=UNAVAILABLE_CAPABILITY-->` `<!--status:LIVE_APP_SMOKE_LANE=UNAVAILABLE_CAPABILITY-->` `<!--status:DEPENDENCY_ADVISORY_LANE=UNAVAILABLE_CAPABILITY-->`
+  DEV authentication and separate authorization).
+  `<!--status:EXACT_CHECKPOINT_CI_LANE=BLOCKED_EXTERNAL-->` `<!--status:OWNER_MANUAL_LANE=UNAVAILABLE_CAPABILITY-->` `<!--status:LIVE_APP_SMOKE_LANE=UNAVAILABLE_CAPABILITY-->`
+- The dependency-advisory lane executed its one authorized bounded registry
+  query on 2026-09-12: exactly one low, unreachable `vue@2.6.12` advisory.
+  `<!--status:DEPENDENCY_ADVISORY_LANE=PROVEN-->`
 <!--status-block:end-->
 
 ## Quickstart

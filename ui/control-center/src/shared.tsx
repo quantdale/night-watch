@@ -1,6 +1,6 @@
 import { Component, useCallback, useEffect, useRef, useState, type ErrorInfo, type ReactNode } from 'react';
-import { apiErrorLabel } from './api';
-import type { DataLoadState, EpistemicClass, ViewId } from './types';
+import { describeApiError, toApiErrorInfo, UNCLASSIFIED_API_ERROR } from './api';
+import type { ApiErrorInfo, DataLoadState, EpistemicClass, ViewId } from './types';
 
 /**
  * Shared Control Center components and derivations.
@@ -32,7 +32,12 @@ export interface PagedCollection<S> {
   readonly state: DataLoadState<S>;
   readonly loadMore: () => void;
   readonly loadingMore: boolean;
-  readonly pageError: boolean;
+  /**
+   * F-18. A failed continuation carries the same client classification as a
+   * failed first page, so the inline notice names the kind instead of
+   * reducing every continuation failure to one sentence.
+   */
+  readonly pageError: ApiErrorInfo | null;
   readonly atEnd: boolean;
   /**
    * The SERVER's answer about its own bound for the last page. `atEnd` and
@@ -61,7 +66,7 @@ export function usePagedCollection<S extends PagedSnapshot<T>, T>(options: {
   const [state, setState] = useState<DataLoadState<S>>({ kind: 'idle' });
   const [cursor, setCursor] = useState<string | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [pageError, setPageError] = useState(false);
+  const [pageError, setPageError] = useState<ApiErrorInfo | null>(null);
   const [pagesLoaded, setPagesLoaded] = useState(0);
   const accumulated = useRef<T[]>([]);
   const seen = useRef<Set<string>>(new Set<string>());
@@ -76,7 +81,7 @@ export function usePagedCollection<S extends PagedSnapshot<T>, T>(options: {
     generationSeen.current = null;
     nextCursor.current = null;
     setPagesLoaded(0);
-    setPageError(false);
+    setPageError(null);
     setCursor(null);
   }, [active, refreshKey]);
 
@@ -109,16 +114,19 @@ export function usePagedCollection<S extends PagedSnapshot<T>, T>(options: {
         }
         nextCursor.current = snapshot.page.nextCursor;
         setPagesLoaded((value) => value + 1);
-        setPageError(false);
+        setPageError(null);
         setState({ kind: 'ready', data: { ...snapshot, items: [...accumulated.current] } });
       })
       .catch((error: unknown) => {
         if (cancelled) return;
-        void apiErrorLabel(error);
+        // F-18. An aborted request is normal navigation and is never shown as
+        // a failure; the collection keeps whatever it already had.
+        const info = toApiErrorInfo(error);
+        if (info.kind === 'ABORTED') return;
         // A failed CONTINUATION keeps what was already loaded and reports the
         // failure; only a failed FIRST page is a view-level error.
-        if (cursor === null) setState({ kind: 'error' });
-        else setPageError(true);
+        if (cursor === null) setState({ kind: 'error', error: info });
+        else setPageError(info);
       })
       .finally(() => {
         if (!cancelled) setLoadingMore(false);
@@ -177,9 +185,9 @@ export function LoadMoreControl({
           The server reported more {label} than this page returned; the page is truncated at its bound.
         </small>
       ) : null}
-      {paged.pageError ? (
-        <small className="review-outcome-warn" role="status">
-          The next page could not be loaded. Everything above is still what the server returned.
+      {paged.pageError !== null ? (
+        <small className="review-outcome-warn" role="status" data-error-kind={paged.pageError.kind ?? 'UNCLASSIFIED'} data-error-status={paged.pageError.status === null ? undefined : String(paged.pageError.status)}>
+          The next page could not be loaded ({describeApiError(paged.pageError).kindLabel}). Everything above is still what the server returned.
         </small>
       ) : null}
     </div>
@@ -300,13 +308,8 @@ export function LoadingState(): ReactNode {
   return <div className="state-panel" role="status" aria-live="polite"><span className="loader" aria-hidden="true" /><div><strong>Loading local snapshots</strong><p>Reading bounded Control Center contracts from the loopback service.</p></div></div>;
 }
 
-export function ErrorState({ onRetry }: { readonly onRetry: () => void }): ReactNode {
-  return (
-    <div className="state-panel state-panel-error" role="alert">
-      <div className="state-icon" aria-hidden="true">!</div>
-      <div><strong>Snapshot unavailable</strong><p>The overview could not be refreshed. No raw service error is displayed.</p><button className="button button-secondary" type="button" onClick={onRetry}>Try again</button></div>
-    </div>
-  );
+export function ErrorState({ error, onRetry }: { readonly error?: ApiErrorInfo; readonly onRetry: () => void }): ReactNode {
+  return <DataErrorState title="Snapshot unavailable" error={error ?? UNCLASSIFIED_API_ERROR} onRetry={onRetry} />;
 }
 
 /**
@@ -376,8 +379,42 @@ export function formatTimestamp(value: string | null): string {
 }
 
 
-export function DataErrorState({ title, onRetry }: { readonly title: string; readonly onRetry: () => void }): ReactNode {
-  return <div className="state-panel state-panel-error" role="alert"><div className="state-icon" aria-hidden="true">!</div><div><strong>{title}</strong><p>No raw service error is displayed. Retry performs another bounded GET snapshot.</p><button className="button button-secondary" type="button" onClick={onRetry}>Try again</button></div></div>;
+/**
+ * F-18. The one error surface every view uses.
+ *
+ * The kind and, where one exists, the HTTP status are rendered, and the
+ * operator action is derived from the kind. A retry affordance appears only
+ * for NETWORK, TIMEOUT, HTTP 408 and HTTP 429. INVALID_RESPONSE names the
+ * contract the payload failed and states that retrying cannot succeed.
+ * ABORTED renders nothing at all: a caller-cancelled request is normal
+ * navigation, and showing it as an error trains the operator to ignore the
+ * error state.
+ *
+ * The panel renders only the client's own classification. No server message,
+ * stack, header or path is ever passed to it in the first place.
+ */
+export function DataErrorState({ title, error, onRetry }: { readonly title: string; readonly error?: ApiErrorInfo; readonly onRetry?: () => void }): ReactNode {
+  const presentation = describeApiError(error ?? UNCLASSIFIED_API_ERROR);
+  if (presentation.aborted) return null;
+  return (
+    <div
+      className="state-panel state-panel-error"
+      role="alert"
+      data-error-kind={presentation.kind ?? 'UNCLASSIFIED'}
+      data-error-status={presentation.status === null ? undefined : String(presentation.status)}
+      data-error-contract={presentation.contract ?? undefined}
+    >
+      <div className="state-icon" aria-hidden="true">!</div>
+      <div>
+        <strong>{title}</strong>
+        <p>Failure class: {presentation.kindLabel}</p>
+        <p>{presentation.summary}</p>
+        <p>{presentation.action}</p>
+        <p>No raw service error, stack, header or path is displayed.</p>
+        {presentation.retryable && onRetry !== undefined ? <button className="button button-secondary" type="button" onClick={onRetry}>Try again</button> : null}
+      </div>
+    </div>
+  );
 }
 
 

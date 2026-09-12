@@ -424,11 +424,41 @@ export const SYSTEM_MAP_QUERY_SEGMENTS = [
 ] as const;
 export type SystemMapQuerySegment = (typeof SYSTEM_MAP_QUERY_SEGMENTS)[number];
 
+/**
+ * F-18. The union type IS the enumeration.
+ *
+ * The failure-path harness drives every view into every member of this list,
+ * and the coverage assertion iterates the list rather than a hand-written
+ * copy. Adding a sixth member here therefore reaches the harness immediately
+ * and fails until a view renders it distinguishably, which is the whole point:
+ * a five-value taxonomy cannot silently collapse back into one state.
+ */
+export const API_ERROR_KINDS = ['NETWORK', 'HTTP', 'INVALID_RESPONSE', 'TIMEOUT', 'ABORTED'] as const;
+export type ApiErrorKind = (typeof API_ERROR_KINDS)[number];
+
+/**
+ * F-18. The client's own classification of a failed request, carried into the
+ * render layer so the operator can be told WHICH failure occurred, not merely
+ * that one did. `kind: null` is a failure the client could not classify; it
+ * never claims a taxonomy member it cannot prove.
+ */
+export type ApiErrorInfo = {
+  readonly kind: ApiErrorKind | null;
+  readonly status: number | null;
+  readonly contract: string | null;
+};
+
 export type DataLoadState<T> =
   | { readonly kind: 'idle' }
   | { readonly kind: 'loading' }
   | { readonly kind: 'ready'; readonly data: T }
-  | { readonly kind: 'error' };
+  /**
+   * F-18. Every error state SHOULD carry the client's classification. It is
+   * optional so a site that has not yet been converted still compiles; the
+   * render layer then presents it as an unclassified failure with no retry
+   * rather than inventing a kind.
+   */
+  | { readonly kind: 'error'; readonly error?: ApiErrorInfo };
 
 export interface OverviewSnapshot {
   readonly health: HealthSnapshot;
@@ -438,10 +468,24 @@ export interface OverviewSnapshot {
   readonly source: SourceSummarySnapshot;
 }
 
+/**
+ * F-18. The Overview composes five independent bounded requests. Keeping each
+ * one's own load state is what lets a partial failure render the sources that
+ * answered while disclosing, by name and kind, the ones that did not.
+ */
+export type OverviewSourceStates = {
+  readonly health: DataLoadState<HealthSnapshot>;
+  readonly meta: DataLoadState<MetaSnapshot>;
+  readonly readiness: DataLoadState<ReadinessSnapshot>;
+  readonly safety: DataLoadState<SafetySnapshot>;
+  readonly source: DataLoadState<SourceSummarySnapshot>;
+};
+
 export type OverviewLoadState =
   | { readonly kind: 'loading' }
   | { readonly kind: 'ready'; readonly data: OverviewSnapshot }
-  | { readonly kind: 'error' };
+  | { readonly kind: 'partial'; readonly sources: OverviewSourceStates }
+  | { readonly kind: 'error'; readonly error: ApiErrorInfo };
 
 /**
  * NW-11. TIMEOUT and ABORTED are distinct from NETWORK on purpose: an
@@ -449,7 +493,6 @@ export type OverviewLoadState =
  * not be reached, and reporting them as one would send the operator looking
  * for the wrong problem.
  */
-export type ApiErrorKind = 'NETWORK' | 'HTTP' | 'INVALID_RESPONSE' | 'TIMEOUT' | 'ABORTED';
 
 // ---------------------------------------------------------------------------
 // RS-1 reviewer surface.

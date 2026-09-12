@@ -102,14 +102,17 @@ test.describe('NW-14 — the host capability matrix is current', () => {
     expect(consumers).toEqual(['rippleReadiness.test.ts']);
   });
 
-  test('the online advisory lane is reported UNAVAILABLE, never as clean', () => {
+  test('the online advisory lane records the authorized executed query and its limit', () => {
     const matrix = read(MATRIX_FILE);
-    // The campaign's safety boundary prohibits network dependency fetching,
-    // so `npm audit` cannot run. An absent scan is not a passing scan, and
-    // the document must not let a reader mistake one for the other.
-    expect(matrix).toMatch(/UNAVAILABLE/);
-    expect(matrix).toMatch(/never a passing scan|not a passing scan/i);
-    expect(matrix).toMatch(/No current online advisory scan was performed/i);
+    // The owner authorized one bounded read-only advisory query; it executed
+    // on 2026-09-12 and found one low vue advisory whose Nightwatch path is
+    // unreachable. An executed scan is evidence, and it is never silently a
+    // clean bill: the finding and its reachability argument are both stated.
+    expect(matrix).toMatch(/2026-09-12/);
+    expect(matrix).toMatch(/GHSA-5j4c-8p2g-v4jx/);
+    expect(matrix).toMatch(/PROVEN/);
+    expect(matrix).toMatch(/unreachable/i);
+    expect(matrix).not.toMatch(/No current online advisory scan was performed/i);
   });
 
   test('the matrix names each validation lane as a separate claim', () => {
@@ -183,6 +186,10 @@ function trackedSources(): Array<{ path: string; text: string }> {
     .split('\n')
     .filter(Boolean)
     .filter((file) => /\.(?:ts|mjs)$/.test(file) && !file.startsWith('ui/') && !file.endsWith('.d.ts') && !file.endsWith('.d.mts'))
+    // A file deleted in the working tree but not yet committed is still in the
+    // index; the currency scan evaluates the sources that exist, never crashing
+    // on a declared deletion.
+    .filter((file) => fs.existsSync(path.join(ROOT, file)))
     .map((file) => ({ path: file, text: read(file) }));
 }
 
@@ -274,12 +281,14 @@ test.describe('group 9 — dependency and supply-chain currency (F-11)', () => {
     expect(matrix).toMatch(/never inherits the declared-range pass/i);
   });
 
-  test('the advisory lane is unavailable and no current-answer document implies a clean scan', () => {
-    const laneState = JSON.parse(read('config/validation-lane-state.v1.json')) as { lanes: ReadonlyArray<{ laneId: string; class: string; unblockCondition: string | null; revisitDate: string | null }> };
+  test('the advisory lane is proven by the executed query and no current-answer document implies a clean scan', () => {
+    const laneState = JSON.parse(read('config/validation-lane-state.v1.json')) as { lanes: ReadonlyArray<{ laneId: string; class: string; evidence: string; evidenceSha: string; unblockCondition: string | null; revisitDate: string | null }> };
     const lane = laneState.lanes.find((entry) => entry.laneId === DEPENDENCY_RECORD.advisoryLaneId);
-    expect(lane?.class).toBe('UNAVAILABLE_CAPABILITY');
-    expect(lane?.unblockCondition ?? '').not.toBe('');
-    expect(lane?.revisitDate ?? '').toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    // The owner authorized one bounded query; it executed, so the lane is
+    // PROVEN with an evidence SHA. PROVEN lanes carry no unblock condition.
+    expect(lane?.class).toBe('PROVEN');
+    expect(lane?.evidence ?? '').not.toBe('');
+    expect(lane?.evidenceSha ?? '').toMatch(/^[0-9a-f]{40}$/);
     expect(evaluateAdvisoryCleanClaims({ documents: currentTruthDocuments(), advisoryLaneClass: lane?.class ?? 'UNKNOWN' })).toEqual([]);
     const honest = { path: 'docs/SYNTHETIC.md', text: 'npm audit and any registry-backed advisory query are UNAVAILABLE, not clean.\n' };
     expect(evaluateAdvisoryCleanClaims({ documents: [honest], advisoryLaneClass: lane?.class ?? 'UNKNOWN' })).toEqual([]);

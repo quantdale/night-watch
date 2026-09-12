@@ -256,6 +256,22 @@ test.describe('schema version lifecycle — dispositions', () => {
     expect(result.findings.map((finding) => finding.code)).toContain('SCHEMA_MEMORY_DISPOSITION_PRESENT');
   });
 
+  test('an unknown runtime disposition kind fails closed rather than defaulting to ORPHAN', () => {
+    // 17.4: no disposition is the presumed default. A declaration carrying a
+    // kind outside the closed vocabulary must mismatch its version role, not
+    // silently cover an ORPHANED version.
+    const result = judgement({
+      discovered: BUMP_DISCOVERED,
+      declarations: [
+        bumpDeclaration({
+          versions: { 1: 'ORPHANED', 2: 'CURRENT' },
+          dispositions: [{ fromVersion: 1, toVersion: 2, kind: 'DEFAULT' as never, reason: 'an out-of-vocabulary kind must not cover an ORPHANED role' }],
+        }),
+      ],
+    });
+    expect(result.findings.map((finding) => finding.code)).toContain('SCHEMA_DISPOSITION_ROLE_MISMATCH');
+  });
+
   test('ORPHAN without a recorded decision fails; with the D-126 heading it passes', () => {
     const orphan = bumpDeclaration({
       versions: { 1: 'ORPHANED', 2: 'CURRENT' },

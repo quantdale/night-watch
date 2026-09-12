@@ -14,6 +14,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import typescript from 'typescript';
 import { buildChildEnvironment } from './child-environment.mjs';
+import { loadTypeScriptModule } from './lib/typescript-runtime-loader.mjs';
 import { validateCampaignCertification } from './lib/campaign-certification.mjs';
 import {
   collectExportedNames,
@@ -73,6 +74,33 @@ function read(file) {
   return withoutComments(readIncludingComments(file));
 }
 
+/**
+ * 1-based line of the first occurrence of `needle`, or 0 when it is absent.
+ * Totality-rule failures name the failing line wherever the failure is tied to
+ * an occurrence in a file; a return of 0 is only used by callers whose failure
+ * is an absence rather than a location.
+ * @param {string} source
+ * @param {string} needle
+ */
+function lineOfText(source, needle) {
+  const index = source.indexOf(needle);
+  return index < 0 ? 0 : source.slice(0, index).split('\n').length;
+}
+
+/**
+ * 1-based line of the first match of a GLOBAL regex, or 0 when it never
+ * matches. The caller supplies the `g` flag; a non-global pattern would throw
+ * from matchAll rather than silently take an ungoverned first match.
+ * @param {string} source
+ * @param {RegExp} pattern
+ */
+function lineOfMatch(source, pattern) {
+  for (const match of source.matchAll(pattern)) {
+    return source.slice(0, match.index ?? 0).split('\n').length;
+  }
+  return 0;
+}
+
 function gitFiles() {
   const result = spawnSync('git', ['ls-files', '-z'], { cwd: root, encoding: 'utf8', env: childEnvironment, timeout: 10_000, maxBuffer: 2 * 1024 * 1024 });
   if (result.status !== 0) {
@@ -116,10 +144,13 @@ function checkChildProcessBoundaries() {
   ];
   for (const file of launchers) {
     const source = readIncludingComments(file);
-    if (/\.\.\.process\.env/.test(source)) fail(`${file} spreads the parent process environment`);
-    if (/shell\s*:\s*true/.test(source)) fail(`${file} enables shell execution`);
+    const spreadLine = lineOfMatch(source, /\.\.\.process\.env/g);
+    if (spreadLine > 0) fail(`${file}:${spreadLine} spreads the parent process environment`);
+    const shellLine = lineOfMatch(source, /shell\s*:\s*true/g);
+    if (shellLine > 0) fail(`${file}:${shellLine} enables shell execution`);
     if (!/timeout\s*:/.test(source)) fail(`${file} has no bounded child-process timeout`);
-    if (/stdio\s*:\s*['"]inherit['"]/.test(source)) fail(`${file} exposes unbounded child output`);
+    const inheritLine = lineOfMatch(source, /stdio\s*:\s*['"]inherit['"]/g);
+    if (inheritLine > 0) fail(`${file}:${inheritLine} exposes unbounded child output`);
     if (!/maxBuffer\s*:/.test(source)) fail(`${file} has no bounded child output buffer`);
   }
   const productionSources = gitFiles()
@@ -200,24 +231,30 @@ function checkEnvironmentSurfaceDeclaration() {
     .filter((file) => file !== 'bin/hardening-check.mjs');
   let discovered = 0;
   for (const file of sources) {
-    const code = read(file);
-    const reads = new Set();
-    for (const match of code.matchAll(/process\.env\.(NIGHTWATCH_[A-Z0-9_]+)/g)) reads.add(match[1]);
-    for (const match of code.matchAll(/process\.env\[\s*'NIGHTWATCH_([A-Z0-9_]+)'\s*\]/g)) reads.add(`NIGHTWATCH_${match[1]}`);
-    for (const match of code.matchAll(/(?:environment|env)\[\s*'NIGHTWATCH_([A-Z0-9_]+)'\s*\]/g)) reads.add(`NIGHTWATCH_${match[1]}`);
-    for (const name of reads) {
+    // Comments are blanked (not removed) so every reported line is the real
+    // line a reviewer opens, while a comment can never declare a variable.
+    const code = codeWithCommentsBlanked(readIncludingComments(file));
+    /** @type {Map<string, number>} */
+    const reads = new Map();
+    const addRead = (name, match) => {
+      const line = code.slice(0, match.index ?? 0).split('\n').length;
+      if (!reads.has(name)) reads.set(name, line);
+    };
+    for (const match of code.matchAll(/process\.env\.(NIGHTWATCH_[A-Z0-9_]+)/g)) addRead(match[1], match);
+    for (const match of code.matchAll(/process\.env\[\s*'NIGHTWATCH_([A-Z0-9_]+)'\s*\]/g)) addRead(`NIGHTWATCH_${match[1]}`, match);
+    for (const match of code.matchAll(/(?:environment|env)\[\s*'NIGHTWATCH_([A-Z0-9_]+)'\s*\]/g)) addRead(`NIGHTWATCH_${match[1]}`, match);
+    for (const [name, line] of reads) {
       discovered += 1;
       if (!declared.has(name)) {
-        fail(`environment surface: ${file} reads ${name} with no declaration in config/environment-surface.v1.json`);
+        fail(`environment surface: ${file}:${line} reads ${name} with no declaration in config/environment-surface.v1.json`);
       }
     }
-    const dynamicNames = new Set(
-      [...code.matchAll(/process\.env\[\s*([A-Za-z_$][A-Za-z0-9_$]*)\s*\]/g)].map((match) => match[1]),
-    );
-    for (const identifier of dynamicNames) {
+    for (const match of code.matchAll(/process\.env\[\s*([A-Za-z_$][A-Za-z0-9_$]*)\s*\]/g)) {
+      const identifier = match[1];
       const enumerated = [...assembled].some((construction) => construction.includes(`[${identifier}]`));
       if (!enumerated) {
-        fail(`environment surface: ${file} reads process.env[${identifier}] with a runtime-assembled name that is not enumerated in assembledReads`);
+        const line = code.slice(0, match.index ?? 0).split('\n').length;
+        fail(`environment surface: ${file}:${line} reads process.env[${identifier}] with a runtime-assembled name that is not enumerated in assembledReads`);
       }
     }
   }
@@ -250,7 +287,9 @@ function checkTargetPolicy() {
   const capture = readIncludingComments('bin/auth-capture.mjs');
   if (!/new Set\(\['dev', 'next'\]\)/.test(capture) || !/human-led|human login/i.test(capture)) fail('auth:capture NEXT exception is not visibly human-led and explicit');
   for (const file of gitFiles().filter((item) => item.startsWith('bin/') && item !== 'bin/hardening-check.mjs')) {
-    if (/MULTI_HOUR_CAMPAIGN_BUDGET/.test(readIncludingComments(file))) fail(`${file} references the unauthorized multi-hour budget profile`);
+    const source = readIncludingComments(file);
+    const line = lineOfText(source, 'MULTI_HOUR_CAMPAIGN_BUDGET');
+    if (line > 0) fail(`${file}:${line} references the unauthorized multi-hour budget profile`);
   }
 }
 
@@ -3678,7 +3717,7 @@ function checkAppendOnlyArchives() {
       if (isExempt(currentFile, removedAt)) continue;
       const digest = sha256Prefix(removed);
       if (corrections.get(currentFile)?.has(digest) === true) continue;
-      fail(`APPEND_ONLY ${currentFile} modifies or deletes an existing line (${digest}); the archive may only be appended to, or the line must be covered by a declared correction`);
+      fail(`APPEND_ONLY ${currentFile}:${removedAt} modifies or deletes an existing line (${digest}); the archive may only be appended to, or the line must be covered by a declared correction`);
     }
   }
 }
@@ -4914,9 +4953,11 @@ function checkC15cSystemMapTransportBoundary() {
   }
 
   // --- the UI may not render an unknown as a number ---
+  const uiSource = codeWithCommentsBlanked(ui);
   for (const coercion of ['total ?? 0', 'dropped ?? 0', 'total || 0', 'dropped || 0', 'Number(bound.total)', 'Number(bound.dropped)']) {
-    if (uiCode.includes(coercion)) {
-      fail(`C-15c the UI must not coerce an unknown bound to a number (found ${coercion}); a zero tells the operator they have seen everything`);
+    const line = lineOfText(uiSource, coercion);
+    if (line > 0) {
+      fail(`C-15c ui/control-center/src:${line} the UI must not coerce an unknown bound to a number (found ${coercion}); a zero tells the operator they have seen everything`);
     }
   }
   if (!/bound\.total === null \? 'unknown'/.test(uiCode) || !/bound\.dropped === null \? 'unknown'/.test(uiCode)) {
@@ -5287,6 +5328,170 @@ function checkModuleBarrierEnforcement() {
 }
 
 /**
+ * F-17. Every `nightwatch.<name>.v<n>` schema identifier under `src/` must be
+ * declared at its exact version, and every declaration must still resolve to
+ * discovered bytes. The pure scanner/declaration rule lives in
+ * `src/core/schemaLifecycle/check.ts` and is loaded through the bounded
+ * runtime loader; this rule fails on each judgement finding with its code and
+ * guards the zero-discovered scan so a scanner that stops matching can never
+ * present as a clean repository.
+ */
+function checkSchemaLifecycle() {
+  let lifecycle;
+  try {
+    lifecycle = loadTypeScriptModule('src/core/schemaLifecycle/check.ts', { root });
+  } catch (error) {
+    fail(`SCHEMA_LIFECYCLE_LOAD_FAILED src/core/schemaLifecycle/check.ts could not be loaded: ${error instanceof Error ? error.message : String(error)}`);
+    return;
+  }
+  const result = lifecycle.runSchemaLifecycleCheck({ root });
+  const judgement = result?.judgement;
+  const discovered = result?.discovered;
+  if (!judgement || !Array.isArray(judgement.findings) || !Array.isArray(discovered)) {
+    fail('SCHEMA_LIFECYCLE_JUDGEMENT_MALFORMED the schema-lifecycle check returned no usable judgement');
+    return;
+  }
+  if (discovered.length === 0) {
+    fail('SCHEMA_SCAN_EMPTY the schema scanner discovered zero identifiers under src/; the scan is broken rather than the repository clean');
+    return;
+  }
+  for (const finding of judgement.findings) {
+    fail(`${finding.code} ${finding.detail}`);
+  }
+}
+
+/**
+ * F-06 (G5.8). Root output/scratch ownership.
+ *
+ * The repository root must not accumulate a new unowned output or scratch
+ * path. `src/core/workspace/ephemeralLayout.ts` declares the two owned roots
+ * (`test-results`, `.tmp-nightwatch`), the historical sibling pattern, and the
+ * ownership classifier. This rule fails in BOTH directions between that
+ * declaration and the tracked `.gitignore` vocabulary (a declared historical
+ * pattern absent from `.gitignore`, and an ephemeral ignore line outside the
+ * declared vocabulary), verifies the module's classification of
+ * owned/historical/protected names, and rejects any tracked path living under
+ * a root output/scratch name.
+ */
+const ROOT_OUTPUT_DECLARED_PATTERNS = Object.freeze(['test-results/', 'test-results-*/', '.tmp-*/']);
+
+function checkRootOutputRootOwnership() {
+  let layout;
+  try {
+    layout = loadTypeScriptModule('src/core/workspace/ephemeralLayout.ts', { root });
+  } catch (error) {
+    fail(`ROOT_OUTPUT_ROOT_UNOWNED src/core/workspace/ephemeralLayout.ts could not be loaded: ${error instanceof Error ? error.message : String(error)}`);
+    return;
+  }
+  const ownedRoots = [layout.PLAYWRIGHT_OUTPUT_ROOT, layout.SCRATCH_ROOT];
+  if (ownedRoots[0] !== 'test-results' || ownedRoots[1] !== '.tmp-nightwatch') {
+    fail(`ROOT_OUTPUT_ROOT_UNOWNED the laid-out owned roots are ${JSON.stringify(ownedRoots)}, not ["test-results",".tmp-nightwatch"]; a different root is an unowned location`);
+  }
+  const pattern = layout.EPHEMERAL_ROOT_PATTERN;
+  const classify = layout.isOwnedEphemeralRoot;
+  if (!(pattern instanceof RegExp) || typeof classify !== 'function') {
+    fail('ROOT_OUTPUT_ROOT_UNOWNED the layout module no longer exports the ephemeral root pattern and the ownership classifier');
+    return;
+  }
+  // Both directions of the ownership classification: owned names match and
+  // classify owned; historical siblings match and classify unowned; protected
+  // and ordinary names match neither.
+  for (const name of ownedRoots) {
+    if (typeof name !== 'string' || !pattern.test(name) || classify(name) !== true) {
+      fail(`ROOT_OUTPUT_ROOT_UNOWNED owned root ${String(name)} is not matched and classified owned by the layout module`);
+    }
+  }
+  for (const name of ['test-results-20260809', '.tmp-narrow-test']) {
+    if (!pattern.test(name) || classify(name) !== false) {
+      fail(`ROOT_OUTPUT_ROOT_UNOWNED historical sibling ${name} is not matched and classified unowned by the layout module`);
+    }
+  }
+  for (const name of ['artifacts', '.nightwatch', 'node_modules', 'dist', 'src', 'bin', 'test-results-', '.tmp']) {
+    if (pattern.test(name) || classify(name) === true) {
+      fail(`ROOT_OUTPUT_ROOT_UNOWNED non-ephemeral name ${name} is matched or classified owned; the root pattern is too broad`);
+    }
+  }
+  // Direction 1: every declared historical pattern must actually ignore. A
+  // declaration that .gitignore does not carry is stale.
+  const ignored = new Set();
+  for (const line of readIncludingComments('.gitignore').split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (trimmed === '' || trimmed.startsWith('#')) continue;
+    if (/^test-results\b/.test(trimmed) || /^\.tmp-/.test(trimmed) || /^\*\.tmp-/.test(trimmed)) ignored.add(trimmed);
+  }
+  for (const declared of ROOT_OUTPUT_DECLARED_PATTERNS) {
+    if (!ignored.has(declared)) {
+      fail(`ROOT_OUTPUT_ROOT_UNOWNED the declared root-output pattern ${declared} is not present in .gitignore; a root that matches it would not be ignored`);
+    }
+  }
+  // Direction 2: every ephemeral ignore line must be in the declared
+  // vocabulary. An undeclared instance or a broader pattern is drift.
+  const declaredSet = new Set(ROOT_OUTPUT_DECLARED_PATTERNS);
+  for (const line of ignored) {
+    if (!declaredSet.has(line)) {
+      fail(`ROOT_OUTPUT_ROOT_UNOWNED .gitignore declares ${line}, which is outside the declared root-output pattern vocabulary ${ROOT_OUTPUT_DECLARED_PATTERNS.join(', ')}`);
+    }
+  }
+  // No tracked path may live under a root output/scratch name: the roots are
+  // ephemeral by declaration and are never durable repository content.
+  for (const file of gitFiles()) {
+    const slash = file.indexOf('/');
+    if (slash < 0) continue;
+    const first = file.slice(0, slash);
+    if (pattern.test(first)) {
+      fail(`ROOT_OUTPUT_ROOT_UNOWNED ${file} is tracked under the root output/scratch name ${first}; runner output and scratch are never tracked`);
+    }
+  }
+}
+
+const ROOT_PLAYWRIGHT_CONFIG_RE = /^playwright(?:\.[A-Za-z0-9_-]+)?\.config\.ts$/;
+
+/**
+ * F-06 (G5.8). Root Playwright output literals.
+ *
+ * Every root `playwright*.config.ts` either declares no `outputDir` (the
+ * Playwright default applies) or resolves one through
+ * `resolvePlaywrightOutputDir('<lane>')` from the owned layout module. A
+ * literal output root, a derived value, or a reused lane fails with its file
+ * and line: scattered roots are exactly the accumulation F-06 measured.
+ */
+function checkRootOutputConfigLiteral() {
+  const configs = gitFiles().filter((file) => ROOT_PLAYWRIGHT_CONFIG_RE.test(file)).sort();
+  if (configs.length < 11) {
+    fail(`ROOT_OUTPUT_CONFIG_LITERAL discovered ${configs.length} root playwright config(s); a sweep below eleven would pass vacuously`);
+  }
+  let resolved = 0;
+  /** @type {Map<string, string>} */
+  const lanes = new Map();
+  for (const file of configs) {
+    const source = read(file);
+    const lines = source.split('\n');
+    for (const outputMatch of source.matchAll(/outputDir\s*:/g)) {
+      const line = source.slice(0, outputMatch.index).split('\n').length;
+      const lineText = lines[line - 1] ?? '';
+      const laneMatches = [...lineText.matchAll(/outputDir\s*:\s*resolvePlaywrightOutputDir\(\s*'([a-z0-9][a-z0-9-]{0,31})'\s*\)/g)];
+      if (laneMatches.length !== 1) {
+        fail(`ROOT_OUTPUT_CONFIG_LITERAL ${file}:${line} declares outputDir without resolvePlaywrightOutputDir('<lane>'); root output is owned by the layout module, never a literal`);
+        continue;
+      }
+      if (!source.includes("from './src/core/workspace/ephemeralLayout'")) {
+        fail(`ROOT_OUTPUT_CONFIG_LITERAL ${file}:${line} calls resolvePlaywrightOutputDir without importing the owned layout module`);
+      }
+      const lane = laneMatches[0]?.[1] ?? '';
+      resolved += 1;
+      if (lanes.has(lane)) {
+        fail(`ROOT_OUTPUT_CONFIG_LITERAL ${file}:${line} reuses lane '${lane}' already declared by ${lanes.get(lane)}; two lanes would clobber one output directory`);
+      } else {
+        lanes.set(lane, file);
+      }
+    }
+  }
+  if (configs.length > 0 && resolved === 0) {
+    fail('ROOT_OUTPUT_CONFIG_LITERAL no root playwright config resolves output through resolvePlaywrightOutputDir; the detector is broken rather than the layout clean');
+  }
+}
+
+/**
  * F-21. Cookie expiry has exactly ONE evaluator.
  *
  * `src/browser/fixtures/storageState.ts` owns the domain/path/expiry arithmetic
@@ -5587,6 +5792,9 @@ const REGISTERED_RULES = [
   { name: 'checkAuthenticatedCapabilitySingleEvaluator', run: checkAuthenticatedCapabilitySingleEvaluator, family: 'auth-capability', quantifier: 'TOTALITY', subject: 'every cookie-expiry evaluation outside the storage-state fixture reuses the single evaluator or is reported by file and line' },
   { name: 'checkSourceReachability', run: checkSourceReachability, family: 'dead-architecture', quantifier: 'TOTALITY', subject: 'every tracked src module is referenced outside its own directory or declared in the reasoned-retention list, and the list fails in both directions' },
   { name: 'checkModuleBarrierEnforcement', run: checkModuleBarrierEnforcement, family: 'dead-architecture', quantifier: 'TOTALITY', subject: 'every enforced module barrier is entered through its barrel and no consumer outside it imports a deep path' },
+  { name: 'checkSchemaLifecycle', run: checkSchemaLifecycle, family: 'schema-lifecycle', quantifier: 'TOTALITY', subject: 'every discovered schema identifier is declared at its exact version and every declaration resolves to discovered bytes, with a non-vacuous scan' },
+  { name: 'checkRootOutputRootOwnership', run: checkRootOutputRootOwnership, family: 'ephemeral-layout', quantifier: 'TOTALITY', subject: 'every root output/scratch name is owned or declared historical in both directions and no tracked path lives under one' },
+  { name: 'checkRootOutputConfigLiteral', run: checkRootOutputConfigLiteral, family: 'ephemeral-layout', quantifier: 'TOTALITY', subject: 'every root playwright config declares no outputDir or resolves it through the owned layout module with a unique lane' },
   { name: 'checkRuleEngineSoundness', run: checkRuleEngineSoundness, family: 'rule-engine', quantifier: 'TOTALITY', subject: 'no fail-if-absent matcher uses the raw accessor and registry/probe/quantifier invariants hold' },
 ];
 

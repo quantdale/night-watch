@@ -3,9 +3,27 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import ts from 'typescript';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import type { ReactElement } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { App } from './App';
-import { CONTROL_CENTER_API_PATHS } from './api';
+import { CONTROL_CENTER_API_PATHS, ControlCenterApiError, describeApiError } from './api';
+import { ErrorState } from './shared';
+import { API_ERROR_KINDS } from './types';
+import type {
+  ApiErrorKind,
+  CampaignCoverageSnapshot,
+  CampaignSummarySnapshot,
+  DataLoadState,
+  HealthSnapshot,
+  OverviewSourceStates,
+  RunListSnapshot,
+} from './types';
+import { CampaignView } from './views/CampaignView';
+import { ExecutionGraphView } from './views/ExecutionGraphView';
+import { FindingsView } from './views/FindingsView';
+import { OverviewPartialView } from './views/OverviewView';
+import { ReviewerView } from './views/ReviewerView';
+import { RunsView } from './views/RunsView';
 
 /**
  * Every field the Control Center fetches must change what the operator sees.
@@ -692,4 +710,302 @@ describe('control center render truth', () => {
       expect(observed[view.name], `${view.name} DOM drifted from the pre-decomposition baseline`).toEqual(baseline[view.name]);
     }
   }, 900_000);
+});
+
+/**
+ * F-18. The failure path, held to the same differential standard as the
+ * success path.
+ *
+ * The four success-path campaigns never produced an error kind: `ApiErrorKind`
+ * exists only on the failure path, so a five-value taxonomy could be rendered
+ * as one state while every guard stayed green. This harness drives each view
+ * into each member of `ApiErrorKind` and requires the DOM to differ between
+ * kinds. Two kinds that legitimately render identically must be declared in
+ * `ERROR_KIND_EXEMPTIONS` with a reason, and the list fails in BOTH
+ * directions: an unexempted identical pair fails, and an exemption for a pair
+ * that now renders differently fails as stale.
+ *
+ * The member list is `API_ERROR_KINDS`, and a source assertion below proves
+ * `ApiErrorKind` is DERIVED from it, so the assertion cannot drift from the
+ * type: adding a sixth kind reaches the harness and fails until a view renders
+ * it distinguishably.
+ */
+const ERROR_KIND_EXEMPTIONS: Readonly<Record<string, string>> = Object.freeze({});
+
+/**
+ * The list above is EMPTY today, and that is the assertion rather than an
+ * omission: every member carries its own kind label, status and derived
+ * operator action, so all ten pairs per view render differently. A pair that
+ * legitimately renders identically belongs in the list with its reason; the
+ * comparator fails BOTH ways — an unexempted identical pair is a silent
+ * conflation, and an exemption whose pair now renders differently is stale
+ * bookkeeping.
+ *
+ * The system map view is owned by the concurrent system-map/styles worker and
+ * has not yet been converted to carry the taxonomy into its error state. Its
+ * exclusion is honest in both directions: the check at the end of this block
+ * fails the moment its source starts consuming the taxonomy, so the exclusion
+ * cannot outlive its reason.
+ */
+const HARNESS_VIEW_EXCLUSIONS: Readonly<Record<string, string>> = Object.freeze({
+  'system-map': 'owned by the concurrent system-map/styles worker; its error state still renders one generic panel. The staleness check fails when that changes.',
+});
+
+interface FailureView {
+  readonly name: string;
+  readonly render: (error: ControlCenterApiError) => string;
+}
+
+function htmlOf(element: ReactElement): string {
+  const rendered = render(element);
+  try {
+    return rendered.container.innerHTML;
+  } finally {
+    cleanup();
+  }
+}
+
+function noop(): void {
+  // The harness asserts the affordance, not the navigation.
+}
+
+/** The representative error per kind: HTTP is driven at 404, the capability case. */
+function kindCase(kind: ApiErrorKind): ControlCenterApiError {
+  if (kind === 'HTTP') return new ControlCenterApiError('HTTP', 404);
+  if (kind === 'INVALID_RESPONSE') return new ControlCenterApiError('INVALID_RESPONSE', null, 'nightwatch.control-center.failure-harness.v1');
+  return new ControlCenterApiError(kind);
+}
+
+/**
+ * Generated LAZILY. The fixture generator numbers sentinels from a shared
+ * counter, so generating one here at module load would shift every sentinel
+ * generated afterwards and break the frozen DOM baseline. The baseline test
+ * itself determines the canonical generation order.
+ */
+function readyRunList(): RunListSnapshot {
+  return generatedFor('RunListSnapshot').value as unknown as RunListSnapshot;
+}
+
+const FAILURE_VIEWS: readonly FailureView[] = [
+  // The Overview, Safety and Source Intelligence whole-view error is the
+  // App-level decision when every source they need has failed; the shared
+  // panel is exactly what the shell renders there.
+  { name: 'overview', render: (error) => htmlOf(<ErrorState error={error} onRetry={noop} />) },
+  { name: 'safety', render: (error) => htmlOf(<ErrorState error={error} onRetry={noop} />) },
+  { name: 'source-intelligence', render: (error) => htmlOf(<ErrorState error={error} onRetry={noop} />) },
+  {
+    name: 'runs',
+    render: (error) => htmlOf(<RunsView state={{ kind: 'error', error }} selectedRunId={null} detailState={{ kind: 'idle' }} timelineState={{ kind: 'idle' }} onSelectRun={noop} onRetry={noop} />),
+  },
+  {
+    name: 'run-detail',
+    render: (error) => htmlOf(<RunsView state={{ kind: 'ready', data: readyRunList() }} selectedRunId="run-1" detailState={{ kind: 'error', error }} timelineState={{ kind: 'error', error }} onSelectRun={noop} onRetry={noop} />),
+  },
+  {
+    name: 'execution-graph',
+    render: (error) => htmlOf(<ExecutionGraphView selectedRunId="run-1" state={{ kind: 'error', error }} onRetry={noop} />),
+  },
+  {
+    name: 'campaigns',
+    render: (error) => htmlOf(<CampaignView summaryState={{ kind: 'error', error }} coverageState={{ kind: 'error', error }} onRetry={noop} />),
+  },
+  { name: 'findings', render: (error) => htmlOf(<FindingsView state={{ kind: 'error', error }} onRetry={noop} />) },
+  { name: 'reviewer', render: (error) => htmlOf(<ReviewerView state={{ kind: 'error', error }} capability="UNKNOWN" onRetry={noop} />) },
+];
+
+function pairKey(left: string, right: string): string {
+  return [left, right].sort().join('|');
+}
+
+/**
+ * The differential judgement itself, pure so the mutation proof can feed it a
+ * deliberately collapsed rendering set and require the failure to name the
+ * view and the kinds it conflated.
+ */
+function differentialViolations(
+  view: string,
+  renderings: ReadonlyMap<string, string>,
+  exemptions: Readonly<Record<string, string>>,
+): readonly string[] {
+  const violations: string[] = [];
+  const kinds = [...renderings.keys()].sort();
+  for (let i = 0; i < kinds.length; i += 1) {
+    for (let j = i + 1; j < kinds.length; j += 1) {
+      const left = kinds[i] as string;
+      const right = kinds[j] as string;
+      const key = pairKey(left, right);
+      const exempted = Object.prototype.hasOwnProperty.call(exemptions, key);
+      const identical = renderings.get(left) === renderings.get(right);
+      if (identical && !exempted) {
+        violations.push(`${view}: ${left} and ${right} render identically and no exemption declares why`);
+      }
+      if (!identical && exempted) {
+        violations.push(`${view}: exemption ${key} is stale; ${left} and ${right} now render differently`);
+      }
+    }
+  }
+  return violations;
+}
+
+describe('F-18 failure-path differential render harness', () => {
+  it('drives every view through every ApiErrorKind member and requires distinct renderings', () => {
+    const allViolations: string[] = [];
+    for (const view of FAILURE_VIEWS) {
+      const renderings = new Map<string, string>();
+      for (const kind of API_ERROR_KINDS) renderings.set(kind, view.render(kindCase(kind)));
+      // ABORTED is normal navigation: no error state at all.
+      expect(renderings.get('ABORTED'), `${view.name} rendered an error state for ABORTED`).not.toContain('data-error-kind');
+      expect(renderings.get('ABORTED'), `${view.name} rendered an alert for ABORTED`).not.toContain('role="alert"');
+      for (const kind of API_ERROR_KINDS) {
+        if (kind === 'ABORTED') continue;
+        expect(renderings.get(kind), `${view.name} did not render kind ${kind}`).toContain(`data-error-kind="${kind}"`);
+      }
+      allViolations.push(...differentialViolations(view.name, renderings, ERROR_KIND_EXEMPTIONS));
+    }
+    expect(allViolations).toEqual([]);
+  });
+
+  it('derives the coverage assertion from the members of ApiErrorKind, with no fallback', () => {
+    // The type is DERIVED from the runtime list, so the two cannot drift: a
+    // sixth member added to the list reaches the matrix above immediately.
+    expect(TYPES).toMatch(/export const API_ERROR_KINDS = \[[^\]]+\] as const;/);
+    expect(TYPES).toMatch(/export type ApiErrorKind = \(typeof API_ERROR_KINDS\)\[number\];/);
+    for (const kind of API_ERROR_KINDS) {
+      const status = kind === 'HTTP' ? 404 : null;
+      const presentation = describeApiError({ kind, status, contract: null });
+      // A kind with no explicit presentation falls through to the
+      // unclassified default, which is how a sixth kind would silently
+      // render as "some failure" instead of failing this harness.
+      expect(presentation.kindLabel, `${kind} has no explicit operator presentation`).not.toBe('Unclassified');
+      if (kind === 'ABORTED') continue;
+      const html = htmlOf(<ErrorState error={{ kind, status, contract: null }} onRetry={noop} />);
+      expect(html, `${kind} did not reach the DOM with its own kind`).toContain(`data-error-kind="${kind}"`);
+    }
+  });
+
+  it('offers retry only for NETWORK, TIMEOUT, 408 and 429', () => {
+    const retryable: ReadonlyArray<readonly [string, ControlCenterApiError]> = [
+      ['NETWORK', new ControlCenterApiError('NETWORK')],
+      ['TIMEOUT', new ControlCenterApiError('TIMEOUT')],
+      ['HTTP 408', new ControlCenterApiError('HTTP', 408)],
+      ['HTTP 429', new ControlCenterApiError('HTTP', 429)],
+    ];
+    const notRetryable: ReadonlyArray<readonly [string, ControlCenterApiError]> = [
+      ['INVALID_RESPONSE', new ControlCenterApiError('INVALID_RESPONSE', null, 'nightwatch.control-center.failure-harness.v1')],
+      ['HTTP 404', new ControlCenterApiError('HTTP', 404)],
+      ['HTTP 400', new ControlCenterApiError('HTTP', 400)],
+      ['HTTP 500', new ControlCenterApiError('HTTP', 500)],
+    ];
+    for (const [label, error] of retryable) {
+      expect(htmlOf(<ErrorState error={error} onRetry={noop} />), label).toContain('Try again');
+    }
+    for (const [label, error] of notRetryable) {
+      expect(htmlOf(<ErrorState error={error} onRetry={noop} />), label).not.toContain('Try again');
+    }
+    // A failure the client cannot classify never claims a retry can help.
+    const unclassified = htmlOf(<ErrorState error={{ kind: null, status: null, contract: null }} onRetry={noop} />);
+    expect(unclassified).toContain('Failure class: Unclassified');
+    expect(unclassified).not.toContain('Try again');
+  });
+
+  it('presents INVALID_RESPONSE as a contract mismatch naming the contract, with no retry', () => {
+    const html = htmlOf(<ErrorState error={new ControlCenterApiError('INVALID_RESPONSE', null, 'nightwatch.control-center.campaign.v1')} onRetry={noop} />);
+    expect(html).toContain('nightwatch.control-center.campaign.v1');
+    expect(html).toContain('contract mismatch');
+    expect(html).toContain('Retrying cannot succeed');
+    expect(html).not.toContain('Try again');
+  });
+
+  it('presents a deliberate 404 as a capability that is not enabled, not an outage', () => {
+    const html = htmlOf(<ErrorState error={new ControlCenterApiError('HTTP', 404)} onRetry={noop} />);
+    expect(html).toContain('not enabled');
+    expect(html).toContain('configuration');
+    expect(html).toContain('data-error-status="404"');
+    expect(html).not.toContain('Try again');
+  });
+
+  it('renders no server-supplied message, stack, header or path in any failure state', () => {
+    const sentinels = ['SENTINEL_SERVER_MESSAGE', 'SENTINEL_STACK', 'x-nightwatch-error', '/etc/nightwatch/secret-path.php'];
+    for (const view of FAILURE_VIEWS) {
+      for (const kind of API_ERROR_KINDS) {
+        const html = view.render(kindCase(kind));
+        for (const sentinel of sentinels) {
+          expect(html, `${view.name}/${kind} rendered ${sentinel}`).not.toContain(sentinel);
+        }
+        expect(html, `${view.name}/${kind} rendered a URL`).not.toMatch(/https?:\/\//);
+      }
+    }
+  });
+
+  it('renders the successful source and names the failed one in a partial composition', () => {
+    const summary = generatedFor('CampaignSummarySnapshot').value as unknown as CampaignSummarySnapshot;
+    const coverage = generatedFor('CampaignCoverageSnapshot').value as unknown as CampaignCoverageSnapshot;
+    const coverageFailure = new ControlCenterApiError('INVALID_RESPONSE', null, 'nightwatch.control-center.campaign-coverage.v1');
+    const summaryHtml = htmlOf(<CampaignView summaryState={{ kind: 'ready', data: summary }} coverageState={{ kind: 'error', error: coverageFailure }} onRetry={noop} />);
+    expect(summaryHtml).toContain('Campaign coverage unavailable');
+    expect(summaryHtml).toContain('nightwatch.control-center.campaign-coverage.v1');
+    expect(summaryHtml).toContain(`data-status-value="${summary.planState}"`);
+    expect(summaryHtml).not.toContain('Contract-stage coverage');
+
+    const summaryFailure = new ControlCenterApiError('TIMEOUT');
+    const coverageHtml = htmlOf(<CampaignView summaryState={{ kind: 'error', error: summaryFailure }} coverageState={{ kind: 'ready', data: coverage }} onRetry={noop} />);
+    expect(coverageHtml).toContain('Campaign summary unavailable');
+    expect(coverageHtml).toContain('Failure class: Timeout');
+    expect(coverageHtml).toContain('Try again');
+    expect(coverageHtml).toContain('Contract-stage coverage');
+  });
+
+  it('reserves the Campaign whole-view error for the case where nothing answered', () => {
+    const error = new ControlCenterApiError('TIMEOUT');
+    const total = htmlOf(<CampaignView summaryState={{ kind: 'error', error }} coverageState={{ kind: 'error', error }} onRetry={noop} />);
+    expect(total).toContain('Campaign intelligence unavailable');
+    expect(total).toContain('data-error-kind="TIMEOUT"');
+    expect(total).not.toContain('Campaign summary unavailable');
+    expect(total).not.toContain('Campaign coverage unavailable');
+  });
+
+  it('renders the successful Overview sources and names each failed source', () => {
+    const health = generatedFor('HealthSnapshot').value as unknown as HealthSnapshot;
+    const sources: OverviewSourceStates = {
+      health: { kind: 'ready', data: health },
+      meta: { kind: 'error', error: new ControlCenterApiError('TIMEOUT') },
+      readiness: { kind: 'error', error: new ControlCenterApiError('INVALID_RESPONSE', null, 'nightwatch.control-center.readiness.v1') },
+      safety: { kind: 'idle' },
+      source: { kind: 'idle' },
+    };
+    const html = htmlOf(<OverviewPartialView sources={sources} onRefresh={noop} />);
+    expect(html).toContain('Partial snapshot');
+    expect(html).toContain('Service meta unavailable');
+    expect(html).toContain('Readiness unavailable');
+    expect(html).toContain('nightwatch.control-center.readiness.v1');
+    // The successful health source still renders its data.
+    expect(html).toContain(`data-status-value="${health.status}"`);
+  });
+
+  it('mutation proof: a collapsed generic error state fails naming the view and the conflated kinds', () => {
+    const collapsed = new Map(API_ERROR_KINDS.map((kind) => [kind, '<div class="state-panel state-panel-error" role="alert"></div>']));
+    const violations = differentialViolations('campaigns', collapsed, ERROR_KIND_EXEMPTIONS).join('\n');
+    expect(violations).toContain('campaigns');
+    for (const kind of API_ERROR_KINDS) expect(violations, `the conflation does not name ${kind}`).toContain(kind);
+    // Ten pairs among five kinds, each reported.
+    expect(differentialViolations('campaigns', collapsed, ERROR_KIND_EXEMPTIONS)).toHaveLength(10);
+  });
+
+  it('mutation proof: an exemption for a pair that renders differently fails as stale', () => {
+    const different = new Map<string, string>([['NETWORK', '<div>network</div>'], ['TIMEOUT', '<div>timeout</div>']]);
+    const stale = differentialViolations('runs', different, { 'NETWORK|TIMEOUT': 'claimed to render identically' });
+    expect(stale).toHaveLength(1);
+    expect(stale[0]).toContain('runs');
+    expect(stale[0]).toContain('NETWORK|TIMEOUT');
+    expect(stale[0]).toContain('stale');
+  });
+
+  it('keeps the system-map harness exclusion honest in both directions', () => {
+    const systemMap = readFileSync(resolve(process.cwd(), 'src/views/SystemMapView.tsx'), 'utf8');
+    // If the concurrent system-map change lands the taxonomy in its error
+    // state, this exclusion is stale and must be removed, not left to shrink
+    // the failure matrix silently.
+    expect(systemMap, 'system-map now carries the error taxonomy; remove HARNESS_VIEW_EXCLUSIONS and add the view to FAILURE_VIEWS').not.toMatch(/data-error-kind|describeApiError|toApiErrorInfo/);
+    expect(HARNESS_VIEW_EXCLUSIONS['system-map']?.length ?? 0).toBeGreaterThan(20);
+  });
 });

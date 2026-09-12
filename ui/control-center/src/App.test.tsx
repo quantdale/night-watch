@@ -1412,4 +1412,138 @@ describe('Control Center UI shell', () => {
       expect(screen.queryByRole('button', { name: 'Load more reviewer findings' })).not.toBeInTheDocument();
     });
   });
+
+  /**
+   * F-18. The taxonomy must reach the DOM from the transport boundary, not
+   * only from a view rendered directly with an error prop. These cases drive
+   * the real App through the real loaders.
+   */
+  describe('F-18 error taxonomy end to end', () => {
+    const overviewResponses = (): Record<string, unknown> => ({
+      [CONTROL_CENTER_API_PATHS.health]: overview.health,
+      [CONTROL_CENTER_API_PATHS.meta]: overview.meta,
+      [CONTROL_CENTER_API_PATHS.readiness]: overview.readiness,
+      [CONTROL_CENTER_API_PATHS.safety]: overview.safety,
+      [CONTROL_CENTER_API_PATHS.sourceSummary]: overview.source,
+    });
+
+    it('renders the HTTP status and the derived action for a server refusal, with no retry', async () => {
+      vi.stubGlobal('fetch', vi.fn((input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url.startsWith('/api/v1/runs?')) {
+          return Promise.resolve({ ok: false, status: 500, json: async () => ({ message: 'SENTINEL_SERVER_MESSAGE' }) } as unknown as Response);
+        }
+        return Promise.resolve(responseFor(overviewResponses()[url]));
+      }));
+      window.location.hash = '#runs';
+      render(<App />);
+
+      const alert = await screen.findByRole('alert');
+      expect(alert).toHaveTextContent('Run list unavailable');
+      expect(alert).toHaveTextContent('Failure class: HTTP 500');
+      expect(alert).toHaveTextContent('server defect');
+      // A 5xx is not in the retryable set: only NETWORK, TIMEOUT, 408 and 429 are.
+      expect(within(alert).queryByRole('button', { name: 'Try again' })).not.toBeInTheDocument();
+      expect(document.body).not.toHaveTextContent('SENTINEL_SERVER_MESSAGE');
+    });
+
+    it('names the failed contract and never echoes server text, stack or path', async () => {
+      vi.stubGlobal('fetch', vi.fn((input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url.startsWith('/api/v1/runs?')) {
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            json: async () => ({
+              schemaVersion: 'nightwatch.control-center.run-list.v0',
+              message: 'SENTINEL_SERVER_MESSAGE',
+              stack: 'SENTINEL_STACK_FRAME',
+              path: 'SENTINEL_SERVER_PATH',
+              header: 'SENTINEL_HEADER',
+            }),
+          } as unknown as Response);
+        }
+        return Promise.resolve(responseFor(overviewResponses()[url]));
+      }));
+      window.location.hash = '#runs';
+      render(<App />);
+
+      const alert = await screen.findByRole('alert');
+      expect(alert).toHaveTextContent('Failure class: Invalid response');
+      expect(alert).toHaveTextContent('nightwatch.control-center.run-list.v1');
+      expect(alert).toHaveTextContent('Retrying cannot succeed');
+      expect(within(alert).queryByRole('button', { name: 'Try again' })).not.toBeInTheDocument();
+      for (const sentinel of ['SENTINEL_SERVER_MESSAGE', 'SENTINEL_STACK_FRAME', 'SENTINEL_SERVER_PATH', 'SENTINEL_HEADER']) {
+        expect(document.body).not.toHaveTextContent(sentinel);
+      }
+    });
+
+    it('presents a deliberate 404 as a capability that is not enabled, without retry', async () => {
+      vi.stubGlobal('fetch', vi.fn((input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url.startsWith('/api/v1/findings?')) {
+          return Promise.resolve({ ok: false, status: 404, json: async () => ({}) } as unknown as Response);
+        }
+        return Promise.resolve(responseFor(overviewResponses()[url]));
+      }));
+      window.location.hash = '#findings';
+      render(<App />);
+
+      const alert = await screen.findByRole('alert');
+      expect(alert).toHaveTextContent('Findings unavailable');
+      expect(alert).toHaveTextContent('Failure class: HTTP 404');
+      expect(alert).toHaveTextContent('not enabled');
+      expect(alert).toHaveTextContent('configuration');
+      expect(within(alert).queryByRole('button', { name: 'Try again' })).not.toBeInTheDocument();
+    });
+
+    it('renders the answered overview sources and names the failed one', async () => {
+      vi.stubGlobal('fetch', vi.fn((input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url === CONTROL_CENTER_API_PATHS.readiness) {
+          return Promise.resolve({ ok: false, status: 404, json: async () => ({}) } as unknown as Response);
+        }
+        return Promise.resolve(responseFor(overviewResponses()[url]));
+      }));
+      render(<App />);
+
+      expect(await screen.findByText('Partial snapshot. What answered is shown.')).toBeVisible();
+      // The failure is disclosed by source name, with its kind.
+      expect(screen.getByText('Readiness unavailable')).toBeInTheDocument();
+      expect(screen.getByText('Failure class: HTTP 404')).toBeInTheDocument();
+      // The sources that answered still render.
+      expect(screen.getByText('Local service health')).toBeInTheDocument();
+      expect(screen.queryByRole('heading', { name: 'Know the posture before the next run.' })).not.toBeInTheDocument();
+    });
+
+    it('renders the Campaign success half when only one campaign source fails', async () => {
+      vi.stubGlobal('fetch', vi.fn((input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url.startsWith('/api/v1/campaign/coverage?')) {
+          return Promise.resolve({ ok: true, status: 200, json: async () => ({ schemaVersion: 'nightwatch.control-center.campaign-coverage.v9', items: [] }) } as unknown as Response);
+        }
+        const responses: Record<string, unknown> = {
+          ...overviewResponses(),
+          [CONTROL_CENTER_API_PATHS.campaignSummary]: {
+            schemaVersion: 'nightwatch.control-center.campaign.v1',
+            planState: 'READY', sourceCurrentness: 'CURRENT', ownerScopeStatus: 'FROZEN_BY_OWNER', ownerScopeReason: 'INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE',
+            planDigest: null, coverageDigest: null,
+            counts: { candidates: 3, selected: 1, excluded: 2, coveredContracts: 2, executionOnly: 0, oracleOnly: 0, replayGaps: 0, minimizationGaps: 0, staleSourceGaps: 0, semanticAuthorityGaps: 0, findings: 0 },
+            blockerCodes: [], reasonCodes: [],
+          },
+        };
+        return Promise.resolve(responseFor(responses[url]));
+      }));
+      window.location.hash = '#campaigns';
+      render(<App />);
+
+      expect(await screen.findByText('Campaign coverage unavailable')).toBeVisible();
+      // The summary that answered still renders, and the failed source names
+      // the contract it violated.
+      expect(screen.getByText('Candidates')).toBeInTheDocument();
+      expect(screen.getByText('What remains unresolved')).toBeInTheDocument();
+      expect(screen.getByText(/nightwatch\.control-center\.campaign-coverage\.v1/)).toBeInTheDocument();
+      expect(screen.queryByRole('heading', { name: 'Contract-stage coverage' })).not.toBeInTheDocument();
+    });
+  });
 });

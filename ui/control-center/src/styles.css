@@ -1537,6 +1537,26 @@ tbody tr.row-selected {
 .map-node-hit { fill: transparent; stroke: none; cursor: pointer; }
 .map-node circle:not(.map-node-hit) { fill: #6c757d; stroke: rgba(0, 0, 0, 0.35); stroke-width: 1; cursor: pointer; }
 .map-node text { font-size: 10px; fill: currentColor; pointer-events: none; }
+/* Group 8.7/8.8 — the evidence-status taxonomy.
+   The wire carries thirteen core evidence values and the map previously
+   rendered them flat. Each value now has an explicit treatment, and the
+   distinction is carried by stroke width and dash pattern, never colour
+   alone, so it survives a colour-blind reader and a monochrome print. The
+   class list is total over the vocabulary (no default bucket); a fourteenth
+   value fails the completeness assertion rather than inheriting a treatment. */
+.map-node-evidence-mechanically-proven circle:not(.map-node-hit) { stroke-width: 2; stroke-dasharray: none; }
+.map-node-evidence-read-only-proven circle:not(.map-node-hit) { stroke-width: 2; stroke-dasharray: 10 2; }
+.map-node-evidence-replay-proven circle:not(.map-node-hit) { stroke-width: 2; stroke-dasharray: 10 3; }
+.map-node-evidence-runtime-observed circle:not(.map-node-hit) { stroke-width: 2; stroke-dasharray: 8 2; }
+.map-node-evidence-production-observed circle:not(.map-node-hit) { stroke-width: 2; stroke-dasharray: 8 3; }
+.map-node-evidence-source-only circle:not(.map-node-hit) { stroke-width: 2; stroke-dasharray: 6 2; }
+.map-node-evidence-partial circle:not(.map-node-hit) { stroke-width: 2; stroke-dasharray: 6 3; }
+.map-node-evidence-inferred circle:not(.map-node-hit) { stroke-width: 2; stroke-dasharray: 4 2; }
+.map-node-evidence-stale circle:not(.map-node-hit) { stroke-width: 2; stroke-dasharray: 4 3; }
+.map-node-evidence-unavailable circle:not(.map-node-hit) { stroke-width: 2; stroke-dasharray: 2 2; }
+.map-node-evidence-mutation-capable circle:not(.map-node-hit) { stroke-width: 2; stroke-dasharray: 2 3; }
+.map-node-evidence-finding-present circle:not(.map-node-hit) { stroke-width: 3; stroke-dasharray: none; }
+.map-node-evidence-truncated circle:not(.map-node-hit) { stroke-width: 3; stroke-dasharray: 4 2; }
 .map-node.node-selected circle:not(.map-node-hit) { stroke: var(--accent, #6ea8fe); stroke-width: 3; }
 
 .system-map-detail { border: 1px solid rgba(127, 127, 127, 0.25); border-radius: 10px; padding: 10px 14px; }

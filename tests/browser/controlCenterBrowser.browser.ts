@@ -15,7 +15,35 @@ import type { RealSourceSurfaceDescriptor } from '../../src/core/source/surfaceT
 import type { RunEvent, RunSummary } from '../../src/core/evidence/types';
 import type { RunAuthorityInput } from '../../src/controlCenter/adapters/runAdapter';
 import type { FindingsDossierMetadata } from '../../src/controlCenter/authorities/findingsAuthority';
-import { classEffectViolations, sweepClassEffects, type ClassEffectSweep } from './helpers/classEffect';
+import type { ControlCenterCollector } from '../../src/controlCenter/server/collector';
+import { EVIDENCE_STATUSES } from '../../src/core/systemMap/model';
+import {
+  CONTROL_CENTER_SYSTEM_MAP_SCHEMA_VERSION,
+  type ControlCenterSystemMapDto,
+  type ControlCenterSystemMapQueryDto,
+} from '../../src/controlCenter/contracts/systemMap';
+import {
+  EVIDENCE_STATUS_TREATMENTS,
+  evaluateEvidenceTaxonomy,
+  evidenceTreatmentFor,
+} from '../../ui/control-center/src/systemMapEvidence';
+import {
+  BASE_ONLY_CLASSES,
+  FORCED_NATIVE_PROPERTIES,
+  classEffectViolations,
+  sweepClassEffects,
+  type ClassEffectSweep,
+} from './helpers/classEffect';
+import {
+  MEDIA_EXEMPTIONS,
+  PSEUDO_STATE_EXEMPTIONS,
+  UNREACHABLE_SELECTORS,
+  collectStylesheetSelectors,
+  evaluateStylesheetReachability,
+  matchStylesheetSelectors,
+  replaceStylesheetSelector,
+  type StylesheetSelector,
+} from './helpers/stylesheetReachability';
 
 const UI_ROOT = path.resolve(process.cwd(), 'ui/control-center/dist');
 
@@ -178,9 +206,9 @@ function runInput(): RunAuthorityInput {
     endedAt: END_TIMESTAMP,
     durationMs: 1_000,
     passed: true,
-    eventCount: 3,
-    counts: { start: 1, journey: 1, end: 1 },
-    severityCounts: { info: 3 },
+    eventCount: 5,
+    counts: { start: 1, journey: 1, policy: 1, oracle: 1, end: 1 },
+    severityCounts: { info: 3, warn: 2 },
     hardFailures: [],
     screenshots: [],
     nightwatchSha: null,
@@ -188,7 +216,11 @@ function runInput(): RunAuthorityInput {
   const events: readonly RunEvent[] = [
     { seq: 1, ts: TIMESTAMP, type: 'start', severity: 'info', message: 'SENTINEL_EVENT_MESSAGE' },
     { seq: 2, ts: TIMESTAMP, type: 'journey', severity: 'info', message: 'SENTINEL_RAW_EVENT', data: { ROUTE_CLASS: 'SYNTHETIC_ROUTE' } },
-    { seq: 3, ts: END_TIMESTAMP, type: 'end', severity: 'info', message: 'SENTINEL_EVENT_END' },
+    // The qualification walk renders the graph warning and blocked tones: a
+    // policy event is BLOCKED by contract, a non-policy warn event WARNING.
+    { seq: 3, ts: TIMESTAMP, type: 'policy', severity: 'warn', message: 'SENTINEL_POLICY' },
+    { seq: 4, ts: TIMESTAMP, type: 'oracle', severity: 'warn', message: 'SENTINEL_ORACLE' },
+    { seq: 5, ts: END_TIMESTAMP, type: 'end', severity: 'info', message: 'SENTINEL_EVENT_END' },
   ];
   return { summary, events };
 }
@@ -250,6 +282,68 @@ function findingsSnapshot(): FindingsAuthoritySnapshot {
   };
 }
 
+/**
+ * Group 8.7/8.8 — a synthetic map answer that carries every core evidence
+ * status. The approved projections cannot yet produce seven of the thirteen
+ * values (no producer exists until C-12 and beyond); the rendering taxonomy
+ * must still be proven over the whole vocabulary, so the composition is
+ * injected at the collector seam as a synthetic wire DTO.
+ */
+function syntheticEvidenceMap(): ControlCenterSystemMapDto {
+  const nodes = EVIDENCE_STATUSES.map((status, index) => ({
+    nodeId: `evidence:${status.toLowerCase()}`,
+    kind: 'HTTP_OPERATION',
+    label: status,
+    factCategory: 'SOURCE_FACT' as const,
+    evidenceStatus: status,
+    coverageState: 'PROVEN' as const,
+    x: (index % 5) * 150,
+    y: Math.floor(index / 5) * 96,
+    layer: index % 5,
+  }));
+  const edges = nodes.slice(1).map((node, index) => ({
+    edgeId: `evidence-edge-${index}`,
+    fromNodeId: nodes[0]?.nodeId ?? 'evidence:mechanically_proven',
+    toNodeId: node.nodeId,
+    kind: 'EXPOSES',
+    factCategory: 'SOURCE_FACT' as const,
+    evidenceStatus: node.evidenceStatus,
+  }));
+  return {
+    schemaVersion: CONTROL_CENTER_SYSTEM_MAP_SCHEMA_VERSION,
+    level: 'L1_COMPANY',
+    focusId: null,
+    nodes,
+    edges,
+    nodeBound: { limit: 64, total: nodes.length + 1, projected: nodes.length, dropped: 1, truncated: true, remainingUnknown: false },
+    edgeBound: { limit: 128, total: edges.length, projected: edges.length, dropped: 0, truncated: false, remainingUnknown: false },
+    layout: {
+      engineId: 'synthetic-evidence-layout',
+      engineVersion: 'v1',
+      graphDigest: 'synthetic:evidence:graph',
+      layoutDigest: 'synthetic:evidence:layout',
+      projectionVersion: 'synthetic:evidence:projection',
+    },
+    executionAuthority: 'NONE',
+    mutationAuthority: 'NONE',
+  };
+}
+
+function syntheticEvidenceQuery(): ControlCenterSystemMapQueryDto {
+  return {
+    ...syntheticEvidenceMap(),
+    query: 'MUTATION_CAPABLE_ROUTES',
+    measurement: 'UNMEASURED',
+    blockingChain: [{ stage: 'EFFECT_PROOF', reason: 'NO_EFFECT_CLOSURE' }],
+  };
+}
+
+/** The non-colour computed properties the taxonomy proof compares. */
+const EVIDENCE_NON_COLOUR_PROPERTIES = Object.freeze([
+  'stroke-dasharray', 'stroke-dashoffset', 'stroke-width', 'stroke-linecap',
+  'stroke-linejoin', 'stroke-opacity', 'fill-opacity', 'opacity', 'shape-rendering',
+]);
+
 test('qualifies every built Control Center view over one synthetic authority composition', async ({ page }) => {
   test.setTimeout(120_000);
   expect(fs.existsSync(path.join(UI_ROOT, 'index.html'))).toBe(true);
@@ -257,7 +351,25 @@ test('qualifies every built Control Center view over one synthetic authority com
   const pageErrors: string[] = [];
   const externalRequests: string[] = [];
   const classSweeps: ClassEffectSweep[] = [];
-  const sweep = async (): Promise<void> => { classSweeps.push(await sweepClassEffects(page)); };
+  const matchedSelectors = new Set<string>();
+  const strippedSelectors = new Set<string>();
+  const selectorErrors: string[] = [];
+  let stylesheetSelectors: readonly StylesheetSelector[] = [];
+  const captureStylesheetMatches = async (): Promise<void> => {
+    if (stylesheetSelectors.length === 0) return;
+    const result = await matchStylesheetSelectors(
+      page,
+      stylesheetSelectors.map((entry) => entry.selector),
+      Object.keys(PSEUDO_STATE_EXEMPTIONS),
+    );
+    for (const selector of result.matched) matchedSelectors.add(selector);
+    for (const selector of Object.keys(result.strippedMatched)) strippedSelectors.add(selector);
+    for (const error of result.errors) selectorErrors.push(error);
+  };
+  const sweep = async (): Promise<void> => {
+    classSweeps.push(await sweepClassEffects(page));
+    await captureStylesheetMatches();
+  };
   page.on('pageerror', (error) => pageErrors.push(error.message));
   page.on('console', (message) => {
     if (message.type() === 'error') pageErrors.push(message.text());
@@ -268,7 +380,7 @@ test('qualifies every built Control Center view over one synthetic authority com
 
   const sourceAuthority = createSourceAuthorityForTests(sourceSnapshot());
   const campaignAuthority = createCampaignAuthority({ sourceAuthority });
-  const collector = createDefaultControlCenterCollector({
+  const baseCollector = createDefaultControlCenterCollector({
     runReader: runReader(runInput()),
     sourceAuthority,
     campaignAuthority,
@@ -276,6 +388,17 @@ test('qualifies every built Control Center view over one synthetic authority com
     runSnapshotTtlMs: 10_000,
     sourceSnapshotTtlMs: 10_000,
   });
+  // The map is served from the synthetic evidence DTO so the qualification
+  // walk renders every taxonomy value, the truncated bound, an UNMEASURED
+  // measurement and a blocking chain. Everything else comes from the real
+  // synthetic authority composition above.
+  const evidenceMap = syntheticEvidenceMap();
+  const evidenceQuery = syntheticEvidenceQuery();
+  const collector: ControlCenterCollector = {
+    ...baseCollector,
+    systemMapLevel: () => evidenceMap,
+    systemMapQuery: () => evidenceQuery,
+  };
   const handle = createControlCenterServer({ collector, port: 0, uiRoot: UI_ROOT });
   const address = await handle.start();
   const origin = `http://127.0.0.1:${address.port}`;
@@ -284,6 +407,12 @@ test('qualifies every built Control Center view over one synthetic authority com
     await page.goto(`${origin}/`, { waitUntil: 'domcontentloaded' });
     await expect(page.getByRole('heading', { name: 'Know the posture before the next run.' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Local synthetic readiness' })).toBeVisible();
+
+    // Group 8.1. Every selector in the BUILT stylesheet, extracted through the
+    // browser's own CSSOM. The count is asserted before any reachability
+    // claim, so an extractor that silently stops finding rules fails first.
+    stylesheetSelectors = await collectStylesheetSelectors(page);
+    expect(stylesheetSelectors.length, 'the built stylesheet yielded no selectors').toBeGreaterThan(100);
 
     // The readiness contract's own measurements, not just its verdict.
     await expect(page.getByRole('heading', { name: 'Everything the readiness contract states' })).toBeVisible();
@@ -309,6 +438,13 @@ test('qualifies every built Control Center view over one synthetic authority com
     await expect(page.getByRole('heading', { name: 'Every check, by name' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'What this build declares about itself' })).toBeVisible();
     await sweep();
+
+    // Group 8.1 reachability: before a run is selected, the Execution Graph
+    // renders its empty view. Capturing it here reaches the empty-view family
+    // on the built composition rather than listing it as unreachable.
+    await page.getByRole('link', { name: 'Execution Graph' }).click({ force: true });
+    await expect(page.getByRole('heading', { name: 'Select a run first.' })).toBeVisible();
+    await captureStylesheetMatches();
 
     await page.getByRole('link', { name: 'Runs' }).click({ force: true });
     await expect(page.getByRole('heading', { name: 'Inspect what happened, in order.' })).toBeVisible();
@@ -347,6 +483,19 @@ test('qualifies every built Control Center view over one synthetic authority com
     for (const stroke of nodeStrokes) expect(stroke).not.toBe('none');
     await sweep();
 
+    // Group 8.1 reachability: the graph's search dims non-matching nodes and
+    // edges, and a node click selects. Both states are part of the
+    // qualification walk, so the dimmed/selected rules are proven reachable
+    // rather than listed as unreachable.
+    await page.getByRole('searchbox', { name: 'Search execution graph nodes' }).fill('no-node-matches-this-search');
+    await expect(page.locator('rect.graph-node-dimmed').first()).toBeVisible();
+    await captureStylesheetMatches();
+    await page.locator('svg.execution-graph g[role="button"]').first().dispatchEvent('click');
+    await expect(page.locator('rect.graph-node-selected')).toHaveCount(1);
+    await captureStylesheetMatches();
+    await page.getByRole('searchbox', { name: 'Search execution graph nodes' }).fill('');
+    await captureStylesheetMatches();
+
     await page.getByRole('link', { name: 'Campaign Intelligence' }).click({ force: true });
     await expect(page.getByRole('heading', { name: 'See the shape of coverage.' })).toBeVisible();
     await expect(page.getByText('synthetic-product')).toBeVisible();
@@ -361,6 +510,9 @@ test('qualifies every built Control Center view over one synthetic authority com
     await page.getByRole('link', { name: 'Source Intelligence' }).click({ force: true });
     await expect(page.getByRole('heading', { name: 'Follow proof, currentness, and capability.' })).toBeVisible();
     await expect(page.getByText('/synthetic/read')).toBeVisible();
+    // The pre-selection empty panel is a real composition state; capture it
+    // before the Graph click replaces it.
+    await captureStylesheetMatches();
     await page.getByRole('button', { name: 'Graph' }).click({ force: true });
     await expect(page.getByRole('img', { name: 'Bounded source intelligence graph' })).toBeVisible();
     // C-15b renamed this label to 'Complete within bounds'. The old assertion
@@ -391,9 +543,62 @@ test('qualifies every built Control Center view over one synthetic authority com
 
     // The system map is qualified in its own lane; the class-effect walk needs
     // it here too because it is the only view that renders the map classes.
+    // The synthetic evidence DTO carries all thirteen statuses, the truncated
+    // bound, an UNMEASURED query and a blocking chain, so every map state the
+    // taxonomy and reachability checks need is produced by this walk.
     await page.getByRole('link', { name: 'System Map' }).click({ force: true });
     await expect(page.getByRole('region', { name: 'System map' })).toBeVisible();
+    await expect(page.locator('g[data-evidence-status]')).toHaveCount(EVIDENCE_STATUSES.length);
+    await expect(page.locator('.bound-truncated')).toBeVisible();
     await sweep();
+    await page.getByRole('application').press('ArrowRight');
+    await expect(page.locator('g.map-node.node-selected')).toHaveCount(1);
+    await captureStylesheetMatches();
+    await page.getByRole('button', { name: 'Mutation-capable routes', exact: true }).dispatchEvent('click');
+    await expect(page.getByTestId('measurement-banner')).toBeVisible();
+    await expect(page.getByRole('list', { name: 'Blocking chain' })).toBeVisible();
+    await expect(page.locator('button.chip-active')).toHaveCount(1);
+    await captureStylesheetMatches();
+    await page.getByRole('searchbox', { name: 'Search nodes' }).fill('no-node-matches-this-search');
+    await expect(page.locator('.empty-state')).toBeVisible();
+    await captureStylesheetMatches();
+    await page.getByRole('searchbox', { name: 'Search nodes' }).fill('');
+    await captureStylesheetMatches();
+
+    // Group 8.7/8.8. The evidence-status taxonomy is total over the core
+    // vocabulary, has no default bucket, and every status differs in a
+    // NON-colour computed property. A fourteenth value fails the
+    // completeness assertion and the lookup refuses it. The assertions run
+    // while the synthetic map is mounted.
+    const taxonomy = evaluateEvidenceTaxonomy(EVIDENCE_STATUSES, EVIDENCE_STATUS_TREATMENTS);
+    expect(taxonomy.missing).toEqual([]);
+    expect(taxonomy.unexpected).toEqual([]);
+    expect(taxonomy.duplicateSignatures).toEqual([]);
+    expect(EVIDENCE_STATUSES).toHaveLength(13);
+    expect(evidenceTreatmentFor('SYNTHETIC_FOURTEENTH_STATUS')).toBeNull();
+    expect(evaluateEvidenceTaxonomy([...EVIDENCE_STATUSES, 'SYNTHETIC_FOURTEENTH_STATUS']).missing).toEqual(['SYNTHETIC_FOURTEENTH_STATUS']);
+    for (const status of EVIDENCE_STATUSES) {
+      const treatment = evidenceTreatmentFor(status);
+      expect(treatment).not.toBeNull();
+      if (treatment === null) continue;
+      const carrier = page.locator(`g[data-evidence-status="${status}"]`);
+      await expect(carrier, `${status} was not rendered by the synthetic map`).toHaveCount(1);
+      expect((await carrier.getAttribute('class'))?.split(/\s+/)).toContain(treatment.className);
+    }
+    type SvgStyleReader = { getComputedStyle(element: unknown): { getPropertyValue(property: string): string } };
+    const statusSignatures = await page.locator('g[data-evidence-status]').evaluateAll((groups, properties) => groups.map((group) => {
+      const circle = group.querySelector('circle:not(.map-node-hit)');
+      if (circle === null) return { status: group.getAttribute('data-evidence-status'), signature: 'NO_CIRCLE' };
+      const computed = (globalThis as unknown as SvgStyleReader).getComputedStyle(circle);
+      return {
+        status: group.getAttribute('data-evidence-status'),
+        signature: (properties as readonly string[]).map((property) => `${property}:${computed.getPropertyValue(property)}`).join(';'),
+      };
+    }), [...EVIDENCE_NON_COLOUR_PROPERTIES]);
+    expect(statusSignatures).toHaveLength(EVIDENCE_STATUSES.length);
+    const signatures = statusSignatures.map((entry) => entry.signature);
+    expect(signatures).not.toContain('NO_CIRCLE');
+    expect(new Set(signatures).size, `statuses share a non-colour computed signature: ${JSON.stringify(statusSignatures)}`).toBe(EVIDENCE_STATUSES.length);
 
     await page.getByRole('link', { name: 'Runs' }).click({ force: true });
     await expect(page.getByRole('heading', { name: 'Inspect what happened, in order.' })).toBeVisible();
@@ -432,11 +637,220 @@ test('qualifies every built Control Center view over one synthetic authority com
     const violations = classEffectViolations(classSweeps);
     expect(violations.undeclared, `classes with no computed effect: ${violations.undeclared.join(', ')}`).toEqual([]);
     expect(violations.stale, `declared base-only classes that now have an effect: ${violations.stale.join(', ')}`).toEqual([]);
+    // Group 8.5. Native form controls are covered at runtime, on their
+    // non-forced properties; an inert class on a control is named with the
+    // element that carries it.
+    expect(violations.nativeUndeclared, `classes inert on a native form control: ${violations.nativeUndeclared.map((entry) => `${entry.class}@${entry.element}`).join(', ')}`).toEqual([]);
+    const nativeObservedClasses = new Set(classSweeps.flatMap((entry) => entry.nativeObserved));
+    expect(nativeObservedClasses.size, 'no native form control was swept; the property-set coverage would be vacuous').toBeGreaterThan(0);
+    expect(Object.keys(FORCED_NATIVE_PROPERTIES).length).toBeGreaterThan(0);
+    expect(Object.keys(FORCED_NATIVE_PROPERTIES)).toContain('color');
+    expect(Object.keys(FORCED_NATIVE_PROPERTIES)).toContain('background-color');
+    for (const [property, reason] of Object.entries(FORCED_NATIVE_PROPERTIES)) {
+      expect(reason.length, `forced property ${property} is excluded without a reason`).toBeGreaterThan(10);
+    }
+    // The exclusion is narrow: geometry, spacing, border width/style, font and
+    // layout stay observable on native controls. Only colour-family
+    // properties the form theme forces may be excluded.
+    const excludedProperties = new Set(classSweeps.flatMap((entry) => entry.forcedProperties));
+    expect([...excludedProperties].sort()).toEqual(Object.keys(FORCED_NATIVE_PROPERTIES).sort());
+    for (const observable of ['padding-top', 'margin-top', 'font-size', 'border-top-width', 'border-top-style', 'display', 'gap']) {
+      expect([...excludedProperties], `${observable} must stay observable on native controls`).not.toContain(observable);
+    }
+
+    // Group 8.6. An inert class added to a native control must fail unless it
+    // is declared base-only. The probe proves the native coverage is not
+    // vacuous: before this check existed the whole element was excluded.
+    await page.evaluate(() => {
+      const dom = globalThis as unknown as { document: { querySelector(selector: string): { classList: { add(name: string): void } } | null } };
+      const control = dom.document.querySelector('button');
+      if (control === null) throw new Error('NO_NATIVE_CONTROL');
+      control.classList.add('synthetic-inert-native-probe');
+    });
+    const nativeProbeSweep = await sweepClassEffects(page);
+    const nativeProbe = classEffectViolations([nativeProbeSweep]);
+    expect(nativeProbe.nativeUndeclared.map((entry) => entry.class), 'an inert class on a native control escaped detection').toContain('synthetic-inert-native-probe');
+    // The other direction of the rule: declared base-only with a reason, the
+    // same inert class is suppressed, which is what "unless declared" means.
+    const declaredProbe = classEffectViolations([nativeProbeSweep], {
+      ...BASE_ONLY_CLASSES,
+      'synthetic-inert-native-probe': 'negative probe: declared base-only with a reason so the suppression path is proven',
+    });
+    expect(declaredProbe.nativeUndeclared.map((entry) => entry.class)).not.toContain('synthetic-inert-native-probe');
+    expect(declaredProbe.undeclared).toEqual([]);
+    await page.evaluate(() => {
+      const dom = globalThis as unknown as { document: { querySelector(selector: string): { classList: { remove(name: string): void } } | null } };
+      dom.document.querySelector('.synthetic-inert-native-probe')?.classList.remove('synthetic-inert-native-probe');
+    });
+
+    // Group 8.7/8.8. The taxonomy's completeness and non-colour signatures
+    // were asserted while the synthetic map was mounted; every treatment class
+    // must also have changed a computed property in the accumulated sweeps.
+    const observedEvidenceClasses = new Set(classSweeps.flatMap((entry) => entry.observed));
+    for (const status of EVIDENCE_STATUSES) {
+      const treatment = evidenceTreatmentFor(status);
+      expect(treatment).not.toBeNull();
+      if (treatment === null) continue;
+      expect(observedEvidenceClasses.has(treatment.className), `${treatment.className} changed no computed property`).toBe(true);
+    }
+
+    // Group 8.1-8.4. Every selector in the built stylesheet is reachable in
+    // the qualification composition, covered by a declared state/media
+    // exemption, or listed as unreachable with its reason. The list fails in
+    // both directions; the exemptions are declared by name.
+    expect(selectorErrors, `selector extraction/matching errors: ${selectorErrors.join('; ')}`).toEqual([]);
+    const reachability = evaluateStylesheetReachability({
+      selectors: stylesheetSelectors,
+      matched: [...matchedSelectors],
+      strippedMatched: [...strippedSelectors],
+      pseudoDeclarations: PSEUDO_STATE_EXEMPTIONS,
+      mediaDeclarations: MEDIA_EXEMPTIONS,
+      unreachable: UNREACHABLE_SELECTORS,
+    });
+    expect(reachability.selectorCount).toBeGreaterThan(0);
+    expect(reachability.undeclared, `dead stylesheet selectors: ${reachability.undeclared.join(', ')}`).toEqual([]);
+    expect(reachability.staleListings, `unreachable-list entries that are stale: ${reachability.staleListings.join(', ')}`).toEqual([]);
+    expect(reachability.undeclaredPseudo, `undeclared state exemption: ${reachability.undeclaredPseudo.join(', ')}`).toEqual([]);
+    expect(reachability.undeclaredMedia, `undeclared media exemption: ${reachability.undeclaredMedia.join(', ')}`).toEqual([]);
+    expect(reachability.staleDeclarations, `exemptions declared but not present: ${reachability.staleDeclarations.join(', ')}`).toEqual([]);
+    expect(reachability.reachable).toBeGreaterThan(0);
+    expect(reachability.joinedByPseudo, 'no stateful pseudo selector was proven through its declaration').toBeGreaterThan(0);
+    process.stdout.write(
+      `[control-center-browser] stylesheet reachability: selectors=${reachability.selectorCount}` +
+        ` reachable=${reachability.reachable} pseudo=${reachability.joinedByPseudo}` +
+        ` media=${reachability.joinedByMedia} listed=${reachability.listedUnreachable}\n`,
+    );
+    process.stdout.write(
+      `[control-center-browser] evidence taxonomy: statuses=${EVIDENCE_STATUSES.length}` +
+        ` non-colour-signatures=${new Set(statusSignatures.map((entry) => entry.signature)).size}` +
+        ` native-classes=${nativeObservedClasses.size}\n`,
+    );
+
+    // The both-directions rule, proved on the pure judgement: an unlisted
+    // dead selector fails, and a listed selector that becomes reachable fails
+    // as stale.
+    const probeSelectors = [{ selector: '.reachable-probe', media: [] }, { selector: '.unreachable-probe', media: [] }];
+    const cleanProbe = evaluateStylesheetReachability({
+      selectors: probeSelectors,
+      matched: ['.reachable-probe'],
+      strippedMatched: [],
+      pseudoDeclarations: {},
+      mediaDeclarations: {},
+      unreachable: { '.unreachable-probe': 'no producer in the synthetic composition' },
+    });
+    expect(cleanProbe.undeclared).toEqual([]);
+    expect(cleanProbe.staleListings).toEqual([]);
+    expect(evaluateStylesheetReachability({
+      selectors: probeSelectors,
+      matched: ['.reachable-probe'],
+      strippedMatched: [],
+      pseudoDeclarations: {},
+      mediaDeclarations: {},
+      unreachable: {},
+    }).undeclared).toEqual(['.unreachable-probe']);
+    expect(evaluateStylesheetReachability({
+      selectors: probeSelectors,
+      matched: ['.reachable-probe', '.unreachable-probe'],
+      strippedMatched: [],
+      pseudoDeclarations: {},
+      mediaDeclarations: {},
+      unreachable: { '.unreachable-probe': 'no producer in the synthetic composition' },
+    }).staleListings).toEqual(['.unreachable-probe']);
+
+    // Group 8.4 mutation proof: a live rule's selector is altered so nothing
+    // can match it, and the lane's own judgement must fail naming it. The
+    // rule is restored immediately; the restored judgement is clean.
+    expect(await replaceStylesheetSelector(page, '.chip', '.synthetic-chip-dead-mutation'), 'the live .chip rule could not be located').toBe(true);
+    const mutatedReport = evaluateStylesheetReachability({
+      selectors: await collectStylesheetSelectors(page),
+      matched: [...matchedSelectors],
+      strippedMatched: [...strippedSelectors],
+      pseudoDeclarations: PSEUDO_STATE_EXEMPTIONS,
+      mediaDeclarations: MEDIA_EXEMPTIONS,
+      unreachable: UNREACHABLE_SELECTORS,
+    });
+    expect(mutatedReport.undeclared, 'a mutated live selector that matches nothing was not detected').toContain('.synthetic-chip-dead-mutation');
+    expect(await replaceStylesheetSelector(page, '.synthetic-chip-dead-mutation', '.chip')).toBe(true);
+    const restoredReport = evaluateStylesheetReachability({
+      selectors: await collectStylesheetSelectors(page),
+      matched: [...matchedSelectors],
+      strippedMatched: [...strippedSelectors],
+      pseudoDeclarations: PSEUDO_STATE_EXEMPTIONS,
+      mediaDeclarations: MEDIA_EXEMPTIONS,
+      unreachable: UNREACHABLE_SELECTORS,
+    });
+    expect(restoredReport.undeclared).toEqual([]);
 
     expect(externalRequests).toEqual([]);
     expect(pageErrors).toEqual([]);
     const bodyText = await page.locator('body').innerText();
     expect(bodyText).not.toContain('SENTINEL_');
+  } finally {
+    await handle.close();
+  }
+});
+
+/**
+ * F-18. The failure path in the BUILT bundle.
+ *
+ * The success-path test above proves the composed views; this one proves the
+ * taxonomy survives bundling and reaches the operator: a server refusal names
+ * its HTTP status and action with no retry, a deliberate 404 is a disabled
+ * capability rather than an outage, and a partial composition renders the
+ * source that answered while naming the source whose payload failed its
+ * contract. No server-supplied message reaches the DOM.
+ */
+test('renders the error taxonomy and partial composition in the built bundle', async ({ page }) => {
+  test.setTimeout(120_000);
+  expect(fs.existsSync(path.join(UI_ROOT, 'index.html'))).toBe(true);
+
+  const sourceAuthority = createSourceAuthorityForTests(sourceSnapshot());
+  const campaignAuthority = createCampaignAuthority({ sourceAuthority });
+  const collector = createDefaultControlCenterCollector({
+    runReader: runReader(runInput()),
+    sourceAuthority,
+    campaignAuthority,
+    findingsAuthority: { snapshot: findingsSnapshot },
+    runSnapshotTtlMs: 10_000,
+    sourceSnapshotTtlMs: 10_000,
+  });
+  const handle = createControlCenterServer({ collector, port: 0, uiRoot: UI_ROOT });
+  const address = await handle.start();
+  const origin = `http://127.0.0.1:${address.port}`;
+
+  try {
+    // 1. A server refusal on the runs list: kind, status and action, no retry.
+    await page.route('**/api/v1/runs?*', (route) => route.fulfill({ status: 500, contentType: 'application/json', body: JSON.stringify({ message: 'SENTINEL_SERVER_MESSAGE' }) }));
+    await page.goto(`${origin}/#runs`, { waitUntil: 'domcontentloaded' });
+    const runAlert = page.locator('[data-error-kind="HTTP"][data-error-status="500"]');
+    await expect(runAlert).toBeVisible();
+    await expect(runAlert).toContainText('Failure class: HTTP 500');
+    await expect(runAlert).toContainText('server defect');
+    await expect(runAlert.getByRole('button', { name: 'Try again' })).toHaveCount(0);
+    await expect(page.locator('body')).not.toContainText('SENTINEL_SERVER_MESSAGE');
+    await page.unroute('**/api/v1/runs?*');
+
+    // 2. A deliberate 404 on findings: the capability is off, not broken.
+    await page.route('**/api/v1/findings?*', (route) => route.fulfill({ status: 404, contentType: 'application/json', body: '{}' }));
+    await page.getByRole('link', { name: 'Findings' }).click({ force: true });
+    const findingsAlert = page.locator('[data-error-kind="HTTP"][data-error-status="404"]');
+    await expect(findingsAlert).toBeVisible();
+    await expect(findingsAlert).toContainText('not enabled');
+    await expect(findingsAlert).toContainText('configuration');
+    await expect(findingsAlert.getByRole('button', { name: 'Try again' })).toHaveCount(0);
+    await page.unroute('**/api/v1/findings?*');
+
+    // 3. Partial campaign composition: the summary answers and its data
+    //    renders, while the coverage payload fails its contract by name.
+    await page.route('**/api/v1/campaign/coverage?*', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ schemaVersion: 'nightwatch.control-center.campaign-coverage.v9', items: [] }) }));
+    await page.getByRole('link', { name: 'Campaign Intelligence' }).click({ force: true });
+    const coverageAlert = page.locator('[data-error-kind="INVALID_RESPONSE"]');
+    await expect(coverageAlert).toBeVisible();
+    await expect(coverageAlert).toContainText('nightwatch.control-center.campaign-coverage.v1');
+    await expect(coverageAlert).toContainText('Retrying cannot succeed');
+    await expect(page.getByText('What remains unresolved')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Contract-stage coverage' })).toHaveCount(0);
+    await page.unroute('**/api/v1/campaign/coverage?*');
   } finally {
     await handle.close();
   }

@@ -379,6 +379,8 @@ open G14.6 owner decision and are declared in the reasoned-retention list:
 - `src/core/selfDevSandbox/index.ts`
 - `src/core/systemAtlas/index.ts`
 
+- `src/core/adversarialCorpus/registry.ts`
+- `src/core/adversarialCorpus/types.ts`
 ## Acceptance criteria
 
 - `openspec validate --all` exits zero and `openspec/specs/` is non-empty.

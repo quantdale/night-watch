@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
-import type { OverviewSnapshot, ReadinessSnapshot } from '../types';
-import { CodeChips, DataRow, EpistemicBadge, Guardrail, Icon, MetricCard, StatusPill, formatCategory, formatTimestamp, statusTone } from '../shared';
+import type { ApiErrorInfo, DataLoadState, OverviewSnapshot, OverviewSourceStates, ReadinessSnapshot } from '../types';
+import { UNCLASSIFIED_API_ERROR } from '../api';
+import { CodeChips, DataErrorState, DataRow, EpistemicBadge, Guardrail, Icon, MetricCard, StatusPill, formatCategory, formatTimestamp, statusTone } from '../shared';
 
 /** Overview view: the local posture snapshot and every readiness detail. */
 
@@ -133,3 +134,54 @@ export function OverviewView({ data, onRefresh }: { readonly data: OverviewSnaps
 
 /** Every execution state the contract defines, as filter options. The list is
  *  explicit so a state the server can send always has a way to be selected. */
+
+const OVERVIEW_SOURCE_LABELS: Record<keyof OverviewSourceStates, string> = {
+  health: 'Health',
+  meta: 'Service meta',
+  readiness: 'Readiness',
+  safety: 'Safety',
+  source: 'Source summary',
+};
+
+/**
+ * F-18. A partial Overview renders the sources that answered and discloses
+ * every source that did not, by name and kind. It exists so a failed
+ * readiness request cannot discard a working safety or source snapshot; the
+ * whole-view error state is only for the case where nothing answered.
+ */
+export function OverviewPartialView({ sources, onRefresh }: { readonly sources: OverviewSourceStates; readonly onRefresh: () => void }): ReactNode {
+  const entries: ReadonlyArray<readonly [keyof OverviewSourceStates, DataLoadState<unknown>]> = [
+    ['health', sources.health],
+    ['meta', sources.meta],
+    ['readiness', sources.readiness],
+    ['safety', sources.safety],
+    ['source', sources.source],
+  ];
+  const failures: Array<readonly [keyof OverviewSourceStates, ApiErrorInfo]> = [];
+  for (const [name, state] of entries) {
+    // ABORTED is normal navigation and is never rendered as a failure.
+    if (state.kind !== 'error') continue;
+    const info = state.error ?? UNCLASSIFIED_API_ERROR;
+    if (info.kind !== 'ABORTED') failures.push([name, info]);
+  }
+  return (
+    <div className="view-stack">
+      <section className="page-intro">
+        <div>
+          <p className="eyebrow">LOCAL INTELLIGENCE / OVERVIEW</p>
+          <h1>Partial snapshot. What answered is shown.</h1>
+          <p>One or more bounded local snapshots failed. The sections below render only what the service returned, and each failed source is named with its failure class and operator action.</p>
+        </div>
+      </section>
+      {failures.map(([name, error]) => <DataErrorState key={name} title={`${OVERVIEW_SOURCE_LABELS[name]} unavailable`} error={error} onRetry={onRefresh} />)}
+      <section className="content-grid">
+        {sources.health.kind === 'ready' ? <article className="panel"><div className="panel-heading"><div><p className="eyebrow">HEALTH SNAPSHOT</p><h2>Local service health</h2></div><StatusPill value={sources.health.data.status} /></div><div className="data-grid"><DataRow label="Status" value={formatCategory(sources.health.data.status)} tone={statusTone(sources.health.data.status)} /><DataRow label="Scope" value={formatCategory(sources.health.data.scope)} /><DataRow label="Read only" value={sources.health.data.readOnly ? 'Yes' : 'No'} /><DataRow label="Product readiness" value={formatCategory(sources.health.data.productReadiness)} tone={statusTone(sources.health.data.productReadiness)} /></div></article> : null}
+        {sources.meta.kind === 'ready' ? <article className="panel"><div className="panel-heading"><div><p className="eyebrow">SERVICE SNAPSHOT</p><h2>What the service declares</h2></div><StatusPill value={sources.meta.data.readOnly ? 'READY' : 'BLOCKED'} label="Read only" /></div><div className="data-grid"><DataRow label="API version" value={sources.meta.data.apiVersion} /><DataRow label="Service" value={formatCategory(sources.meta.data.service)} /><DataRow label="Scope" value={formatCategory(sources.meta.data.scope)} /><DataRow label="Local review decision" value={formatCategory(sources.meta.data.localReviewDecision ?? 'DISABLED')} tone={sources.meta.data.localReviewDecision === 'ENABLED' ? 'ready' : 'neutral'} /></div></article> : null}
+        {sources.readiness.kind === 'ready' ? <article className="panel"><div className="panel-heading"><div><p className="eyebrow">READINESS SNAPSHOT</p><h2>Local synthetic readiness</h2></div><StatusPill value={sources.readiness.data.applies ? sources.readiness.data.state : 'NOT_APPLICABLE'} /></div><div className="data-grid"><DataRow label="State" value={formatCategory(sources.readiness.data.state)} tone={statusTone(sources.readiness.data.state)} /><DataRow label="Category" value={formatCategory(sources.readiness.data.category)} /><DataRow label="Unresolved blockers" value={String(sources.readiness.data.unresolvedBlockers.length)} tone={sources.readiness.data.unresolvedBlockers.length > 0 ? 'warning' : 'neutral'} /></div></article> : null}
+        {sources.safety.kind === 'ready' ? <article className="panel"><div className="panel-heading"><div><p className="eyebrow">SAFETY SNAPSHOT</p><h2>Local safety posture</h2></div><StatusPill value={sources.safety.data.state} /></div><div className="data-grid"><DataRow label="State" value={formatCategory(sources.safety.data.state)} tone={statusTone(sources.safety.data.state)} /><DataRow label="Auth mode" value={formatCategory(sources.safety.data.authMode)} /><DataRow label="Network posture" value={formatCategory(sources.safety.data.networkPosture)} /><DataRow label="Checks" value={String(sources.safety.data.checks.length)} /></div></article> : null}
+        {sources.source.kind === 'ready' ? <article className="panel"><div className="panel-heading"><div><p className="eyebrow">SOURCE SNAPSHOT</p><h2>Source inventory</h2></div><StatusPill value={sources.source.data.state} /></div><div className="data-grid"><DataRow label="State" value={formatCategory(sources.source.data.state)} tone={statusTone(sources.source.data.state)} /><DataRow label="Repositories" value={String(sources.source.data.repositoryCount)} /><DataRow label="Surfaces" value={String(sources.source.data.surfaceCount)} /><DataRow label="Inventory digest" value={sources.source.data.inventoryDigest === null ? 'Absent' : 'Recorded'} tone={sources.source.data.inventoryDigest === null ? 'warning' : 'neutral'} /></div></article> : null}
+        {sources.readiness.kind === 'ready' ? <ReadinessDetailPanel readiness={sources.readiness.data} /> : null}
+      </section>
+    </div>
+  );
+}

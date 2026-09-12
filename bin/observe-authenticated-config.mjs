@@ -8,6 +8,7 @@ import { buildChildEnvironment } from './child-environment.mjs';
  * option was omitted, because the canonical selected-environment target is
  * the safe default.
  */
+/** @param {string[]} args */
 export function parseObserveAuthenticatedArgs(args) {
   let env;
   let storage;
@@ -39,6 +40,10 @@ export function parseObserveAuthenticatedArgs(args) {
   return { help: false, env, storage, uiUrl };
 }
 
+/**
+ * @param {Record<string, string | undefined>} parentEnvironment
+ * @param {{ env: string | undefined, storage: string | undefined, uiUrl: string | undefined }} options
+ */
 export function buildObserveAuthenticatedEnvironment(parentEnvironment, options) {
   const { NIGHTWATCH_UI_URL: _ambientUiUrl, ...inheritedEnvironment } = parentEnvironment;
   return buildChildEnvironment(inheritedEnvironment, {

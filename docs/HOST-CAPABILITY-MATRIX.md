@@ -43,7 +43,7 @@ execute, and which must it report as unavailable.
 | IPv6 loopback | address policy and proxy admission | proxy and egress lanes | the affected cases report the unsupported address family rather than asserting an IPv4-only result |
 | Parent-death / process-tree teardown | `src/core/process` teardown paths | cancellation and timeout cleanup proofs | categorical teardown is asserted where the host supports it; elsewhere the lane is unavailable |
 | Sibling `REPOSITORIES` checkouts | `src/core/source/siblingSource.ts` (`DEFAULT_SIBLING_ROOT`, `NIGHTWATCH_REPOS_ROOT`) | real-source, historical and reproduction proofs | the source universe is UNAVAILABLE and the dependent proofs report that, rather than reporting an empty universe as a clean one |
-| Network egress | deliberately absent from every gate lane | the public dependency-advisory assessment only | see §4: the advisory lane is UNAVAILABLE under this campaign's safety boundary |
+| Network egress | deliberately absent from every gate lane | one bounded read-only advisory query, authorized and executed 2026-09-12 only | see §4: the query is one-shot evidence, never a lane input; an unavailable query is recorded, never treated as clean |
 
 `DEFAULT_SIBLING_ROOT` is a hardcoded absolute path, so siblings stay visible
 even to `gate:clean` on the owner's machine. A sibling-absent topology is
@@ -125,12 +125,12 @@ second consumer.
 
 **Review date.** 2026-09-09; revisit interval 30 days (due 2026-10-09, carried and enforced from `config/dependency-currency.v1.json`).
 
-**What is NOT claimed.** No current online advisory scan was performed. This
-campaign's safety boundary prohibits network dependency fetching, so
-`npm audit` and any registry-backed advisory query are **UNAVAILABLE**, not
-clean. That lane needs its own evidence: a read-only advisory query under
-permitted network access, recorded with its query date. An absent scan is
-never a passing scan.
+**What is claimed, and its limit.** The authorized bounded read-only advisory query ran on 2026-09-12
+against the npm registry over the four declared dependencies and their lockfile closure: exactly one
+advisory, `vue@2.6.12`, low, `GHSA-5j4c-8p2g-v4jx` (CWE-1333 template-compilation ReDoS, range
+`>=2.0.0-alpha.1 <3.0.0-alpha.0`, fix only as the unauthorized semver-major `vue@3.5.42`), unreachable
+in Nightwatch — only the literal `rippleReadiness` fixture runs Vue via `require.resolve`. This is not
+a clean result, and it says nothing outside the declared dependency set and lockfile closure.
 
 ## 4a. Browser workflow lane — PROVEN on the qualified host
 

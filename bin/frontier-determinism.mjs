@@ -74,7 +74,7 @@ function compileProbe() {
 
 const cli = invokedDirectly(import.meta.url) ? defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url }) : { stop: true };
 if (!cli.stop) {
-const requested = Number.parseInt(cli.positionals[0] ?? '20', 10);
+const requested = Number.parseInt(('positionals' in cli ? cli.positionals[0] : undefined) ?? '20', 10);
 if (!Number.isInteger(requested) || requested < 1 || requested > 200) {
   process.stderr.write('[frontier:determinism] usage: node bin/frontier-determinism.mjs [runs 1-200]\n');
   process.exit(1);
