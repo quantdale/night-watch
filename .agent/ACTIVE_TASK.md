@@ -1,52 +1,52 @@
 # Active Task
 
-Task ID: nightwatch-production-completion-programme-v1
-Phase: PRODUCTION_COMPLETION_PROGRAMME_V1
-Title: Nightwatch production completion programme
+Task ID: nightwatch-open-spec-truth-closure-v1
+Phase: OPEN_SPEC_TRUTH_CLOSURE_V1
+Title: OpenSpec truth-surface closure
 Status: IN_PROGRESS
-Task directory: .agent/tasks/nightwatch-production-completion-programme-v1
-Starting SHA: 36bd4930db978423f97e16f35250c2e66bfa112c
-Last validated implementation SHA: 66df26b700bc4bff94d9fb2a3b99200b0e73f1ff
-Last checkpoint: planning checkpoint integrated to `main` at `fe6226a`; the
-owned session `nightwatch-production-completion-3d648499` was created from
-that base (session `sess-506a5055dcc2`) and G1.1 is the current action.
-Current milestone: G1 — ledger truth and the spec baseline
-Next action: run the G1.2 change↔task pairing measurement over 57 changes and
-149 task directories, record the measured baseline, and execute the G1.3–G1.9
-entry-by-entry reconciliation before implementing the agreement check.
-Authorization class: PRODUCTION_COMPLETION_PROGRAMME_V1
+Task directory: .agent/tasks/nightwatch-open-spec-truth-closure-v1
+Starting SHA: ebe26ce6b2a946fe0fd55fde3a5022e792a792d0
+Last validated implementation SHA: ebe26ce6b2a946fe0fd55fde3a5022e792a792d0
+Last checkpoint: the campaign task topology is being written and committed from
+the owned session before the continuity change enables its new error; this
+file and the task records are the checkpoint.
+Current milestone: M1 — task topology and active-waypoint reconciliation
+Next action: finish M1 by writing the remaining continuity-v2 task records,
+reconciling this file, committing the planning checkpoint, and verifying
+`npm run agent:check` passes; then implement
+`nightwatch-continuity-live-waypoint-binding-v1` (M2).
+Authorization class: OPEN_SPEC_TRUTH_CLOSURE_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
-STARTING_SHA: 36bd4930db978423f97e16f35250c2e66bfa112c
-LAST_VALIDATED_IMPLEMENTATION_SHA: 66df26b700bc4bff94d9fb2a3b99200b0e73f1ff
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 66df26b700bc4bff94d9fb2a3b99200b0e73f1ff
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
-PHASE_PRODUCTION_COMPLETION_PROGRAMME_V1_STATUS: IN_PROGRESS
+PHASE_OPEN_SPEC_TRUTH_CLOSURE_V1_STATUS: IN_PROGRESS
 
 ## Outcome
 
-Not yet certified. The programme executes the 21 task groups of
-`openspec/changes/nightwatch-production-completion-programme-v1/tasks.md`,
-starting with ledger truth so that every later estimate is checkable. The
-baseline, findings F-01 … F-21 and their measured evidence are in that
-change's `audit.md`.
+Not yet certified. The campaign applies, validates and integrates the three
+sibling OpenSpec changes planned at `ebe26ce`:
+
+1. `openspec/changes/nightwatch-continuity-live-waypoint-binding-v1/`
+2. `openspec/changes/nightwatch-published-spec-baseline-integrity-v1/`
+3. `openspec/changes/nightwatch-validation-classification-and-skip-truth-v1/`
+
+It also creates the continuity-v2 task records every active change requires
+before the change↔task integrity check becomes an error.
 
 ## Mission
 
-Close every locally closable gap the programme names, with evidence; record
-every owner or external dependency as a blocking class with a named owner
-action and revisit condition; never weaken a gate to make a lane executable.
-LOCAL only; sibling repositories remain read-only; the permanent owner scope
-freeze, C-00, C-10, D-4 and the fail-closed egress policy are unchanged.
+Close every locally closable box of the three changes with evidence; park the
+two ownerless active changes explicitly BLOCKED rather than executing them;
+never weaken a gate to make a tree green. LOCAL only; sibling repositories
+remain read-only; the permanent owner scope freeze, C-00, C-10, D-4 and the
+fail-closed egress policy are unchanged.
 
 Read in this order:
 
-1. `openspec/changes/nightwatch-production-completion-programme-v1/audit.md`
-2. `openspec/changes/nightwatch-production-completion-programme-v1/tasks.md`
-3. `.agent/tasks/nightwatch-production-completion-programme-v1/{SPEC,PLAN,STATE}.md`
-4. `.agent/EXECUTION_PROMPT.md`
-5. `AGENTS.md`, `.agent/PLANS.md`, `docs/CURRENT_STATE.md`,
+1. `.agent/tasks/nightwatch-open-spec-truth-closure-v1/{SPEC,PLAN,STATE}.md`
+2. the three changes' `proposal.md`, `design.md`, specs and `tasks.md`
+3. `AGENTS.md`, `.agent/EXECUTION_PROMPT.md`, `docs/CURRENT_STATE.md`,
    `docs/SAFETY_MODEL.md`, `docs/DECISIONS.md`, `docs/ROADMAP.md`, then live
    Git/workspace/session truth.
 
@@ -54,36 +54,33 @@ Read in this order:
 
 Do not rebuild unless live recon finds a concrete regression:
 
-- `nightwatch-control-center-style-and-absence-truth-v1` is terminal COMPLETE
-  and integrated at `36bd493`. A-01 through A-04 are CLOSED; do not reopen
-  them.
-- `nightwatch-control-center-render-truth-v1`,
-  `nightwatch-control-center-placement-coverage-v1`,
-  `nightwatch-control-center-ui-completion-v1` and
-  `nightwatch-residual-closure-and-lane-qualification-v1` are terminal
-  COMPLETE.
+- `nightwatch-production-completion-programme-v1` is IN_PROGRESS and its
+  integrated work (G1, G2 local, G4, G5, G6, G7, G9–G21 local) stands. Do not
+  tick its implementation boxes from this campaign; only the two spec files
+  its task 2.6 amends change here.
+- `nightwatch-control-center-design-system-v1` and
+  `nightwatch-production-observability-system-map-master-plan-v1` are parked
+  BLOCKED by this campaign and are not executed.
 - The permanent owner scope freeze, L6 containment, and immutable evidence
   and review store identities are unchanged.
 
 ## Routing and safety
 
 ```
-CAMPAIGN: nightwatch-production-completion-programme-v1
+CAMPAIGN: nightwatch-open-spec-truth-closure-v1
 CHILD TASK: NONE
 WAVE: NONE
-SESSION WORKTREE: session/nightwatch-production-completion-3d648499
+SESSION WORKTREE: session/nightwatch-open-spec-truth-closu-7138ca21
 
 IMPLEMENTATION AUTHORIZED:
-  the file surface each task group names in the OpenSpec change,
+  the file surface each of the three changes names in its own tasks.md,
   this task directory, Nightwatch docs/OpenSpec state,
   commits/pushes/integration and local certification from the owned session.
 
 REAL PRODUCTION CONTACT:               NOT AUTHORIZED
 NEW API ROUTE / ADAPTER / AUTHORITY:   NOT AUTHORIZED
-NEXT / DEV EXECUTION:                  NOT AUTHORIZED except where a group's
-                                       own owner decision explicitly grants it
-NETWORK EGRESS / ADVISORY SCAN:        NOT AUTHORIZED except where G9's owner
-                                       decision explicitly grants one query
+NEXT / DEV EXECUTION:                  NOT AUTHORIZED
+NETWORK EGRESS / ADVISORY SCAN:        NOT AUTHORIZED
 SLACK / LESLIE / PONDR / NOTION:       NOT AUTHORIZED
 EXTERNAL FILING:                       NOT AUTHORIZED
 CREDENTIALS / DEPLOYMENT:              NOT AUTHORIZED
