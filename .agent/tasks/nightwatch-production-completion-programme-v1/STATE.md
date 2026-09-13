@@ -12,16 +12,15 @@ Last validated implementation SHA: 66df26b700bc4bff94d9fb2a3b99200b0e73f1ff
 Last substantive checkpoint SHA: 66df26b700bc4bff94d9fb2a3b99200b0e73f1ff
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
-Branch: session/nightwatch-production-completion-3d648499
-Last checkpoint: final certification at implementation `880810ea`:
-`gate:local` all eleven required groups PASS with receipt
+Branch: session/nightwatch-open-spec-truth-closu-7138ca21
+Last checkpoint: W1 opened at `cda59632`: the three sibling audit changes are
+in the rebind session with continuity-v2 task records for every active
+change; this task's Branch and live waypoint now bind to the owned session
+`nightwatch-open-spec-truth-closu-7138ca21` (`sess-aa97662ab47e`). The
+previous checkpoint remains the integrated certification at implementation
+`880810ea`: `gate:local` all eleven required groups PASS with receipt
 `receipt:sha256:da8efb8334bad9b6e4d79931`, and the full offline regression
-5085 passed / 18 skipped / 0 failed. The earlier certified point
-`98315e24` (receipt `receipt:sha256:5919f65e36e7dd1a4def75d4`, 5024
-passed) passed the same gate before the group 3/9/19 work landed. The
-canonical checkout was made clean by preserving the concurrent design-system
-planning artifact as a committed planning checkpoint (`c7a2c091`), and the
-session was reconciled over it.
+5085 passed / 18 skipped / 0 failed.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 36bd4930db978423f97e16f35250c2e66bfa112c
@@ -40,17 +39,21 @@ external dependency with its blocking class and next action.
 
 ## Current Milestone
 
-Milestone ID: G4..G21 execution wave
+Milestone ID: W1 — truth-surface audit wave (three sibling OpenSpec changes)
 Milestone status: IN_PROGRESS
-What is being attempted: the remaining 21-group programme. Implemented and
-locally validated in this session: G1, G2, G6, G7, G11, G13, G14, G15, G16,
-G17, G20, G21 and the local parts of G4, G5, G10. Still open: G3, G8, G9,
-G12, G18, G19 and the remaining parts of G4 (4.5-4.8, 4.10-4.11), G5
-(5.3-5.4, 5.8-5.10), G10 (10.4, 10.6, 10.13-10.14), G14 (14.6-14.8,
-14.12), G15 (15.7, 15.11), G16 (16.5, 16.9-16.12), G17 (17.2 registration,
-17.4, 17.14) and G21 (21.8 live-smoke scope, 21.12-21.15). Full offline
-regression is 5009 passed / 18 skipped / 0 failed; UI lane PASS.
-Integration remains blocked by the externally dirty canonical checkout.
+What is being attempted: apply
+`nightwatch-continuity-live-waypoint-binding-v1`,
+`nightwatch-published-spec-baseline-integrity-v1` and
+`nightwatch-validation-classification-and-skip-truth-v1` — the three sibling
+audit changes planned at `ebe26ce` — then resume the programme's remaining
+groups. W1 requires a continuity-v2 task record for every active change
+before the change↔task integrity error is enabled; that topology is open at
+`cda59632`. Implemented and locally validated in the earlier wave: G1, G2,
+G6, G7, G11, G13, G14, G15, G16, G17, G20, G21 and the local parts of G4,
+G5, G10. Still open after W1: G3, G8, G9, G12, G18, G19 and the remaining
+parts of G4, G5, G10, G14, G15, G16, G17, G21, most owner-gated. Full
+offline regression at the last certification was 5085 passed / 18 skipped /
+0 failed; UI lane PASS.
 
 ## Completed Milestones
 
@@ -108,14 +111,15 @@ Integration remains blocked by the externally dirty canonical checkout.
 
 ## Work In Progress
 
-G13 is implemented and locally validated. Two items remain and neither is an
-agent implementation action: G13.8 is the owner's decision naming the status
-beyond `OPERATIONALLY_ACCEPTED` (safe default stays `OPERATIONALLY_ACCEPTED`);
-G13.10 is blocked at `gate:local`/full regression/integration because the
-canonical checkout is externally dirty with a concurrent planning artifact and
-the session work is uncommitted by design — integration and release are the
-session owner's action. The earlier G6 owner actions (6.4/6.5/6.10) and G1.18
-integration remain as recorded.
+W1 is active. The three sibling audit changes are present in the owned
+session and each has a continuity-v2 task record; design-system and
+observability are parked IN_PROGRESS with named owner blockers. The W1
+implementation (continuity checks, archive-index/Purpose integrity,
+validation classification and skip identity) starts from `cda59632` and is
+validated change by change before integration. The programme's own owner
+decisions (G3.11 CI route, G5.3 reclaim, G6.4/G6.5/G6.10, G8.7 taxonomy,
+G9.1 egress, G10.6/G10.13, G11.3, G12.3, G13.8, G14.6, G17.4, G21.8 scope)
+remain open and unchanged.
 
 ### Delegated closure addendum (G21 owner items, G14.1–14.5, 14.9–14.11)
 
@@ -153,14 +157,17 @@ clean rerun passed 81/81.
 
 ## Exact Next Action
 
-Continue the remaining local groups in programme order: G19 → G8 → G18, then
-G3, G4.5-4.8/4.10-4.11, G5.8-5.10, G9, G12, G14.6-14.12, G15.7/15.11,
-G16.5/16.9-16.12, G17.2/17.14, G21.15. Then resolve the owner decisions
-(G3.11 CI route, G5.3 reclaim, G6.4/G6.5/G6.10, G8.7 taxonomy, G9.1 egress,
-G10.6/G10.13, G11.3, G12.3, G13.8, G14.6, G17.4, G21.8 scope), clear the
-canonical checkout's concurrent planning artifact, run `gate:local` and the
-full offline regression from this owned session, fast-forward integrate with
-`HEAD == origin/main`, and release the session.
+Apply the three sibling audit changes in the order their proposals suggest:
+first `nightwatch-continuity-live-waypoint-binding-v1` (tasks 1.1–1.6,
+2.1–2.3, 3.1–3.3, 4.1–4.2), then
+`nightwatch-published-spec-baseline-integrity-v1` (1.1–1.5, 2.1–2.4,
+3.1–3.3), then
+`nightwatch-validation-classification-and-skip-truth-v1` (1.1–1.4, 2.1–2.6,
+3.1–3.4, 4.1–4.4), ticking each box with cited evidence and running each
+change's focused validation. Then run the programme validation stack from
+this owned session, fast-forward integrate with `HEAD == origin/main`,
+verify and sync the canonical checkout, and release the session. After W1,
+resume the remaining programme groups under their own owner gates.
 
 ## Files Changed
 
