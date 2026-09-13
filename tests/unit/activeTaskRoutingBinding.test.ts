@@ -41,6 +41,14 @@ function field(text: string, name: string): string {
   return match[1] ?? '';
 }
 
+function liveWorktreeBranches(): string[] {
+  const porcelain = execFileSync('git', ['worktree', 'list', '--porcelain'], { encoding: 'utf8' });
+  return porcelain
+    .split(/\r?\n/)
+    .filter((line) => line.startsWith('branch refs/heads/'))
+    .map((line) => line.slice('branch refs/heads/'.length));
+}
+
 test.describe('active-task routing binding (DEF-FC-04)', () => {
   test('the real drifted document is rejected by the occurrence scan', () => {
     // Everything below is read from the commit itself. The two directives the
@@ -60,7 +68,7 @@ test.describe('active-task routing binding (DEF-FC-04)', () => {
       '## Routing and safety\n\n```\n',
       `## Routing and safety\n\n\`\`\`\nCAMPAIGN: ${taskId}\nSESSION WORKTREE: ${branch}\n`
     );
-    const result = inspectActiveTaskRouting(declared, taskId, branch);
+    const result = inspectActiveTaskRouting(declared, taskId, branch, []);
 
     expect(result.errors.join('\n')).toContain('ACTIVE_TASK_ROUTING_FOREIGN_WORKTREE_REFERENCE');
     expect(result.errors.join('\n')).toContain(RETIRED_WORKTREE);
@@ -95,7 +103,7 @@ test.describe('active-task routing binding (DEF-FC-04)', () => {
       '```',
       '',
     ].join('\n');
-    const result = inspectActiveTaskRouting(text, 'campaign-b', 'session/b-0000');
+    const result = inspectActiveTaskRouting(text, 'campaign-b', 'session/b-0000', ['session/b-0000']);
     expect(result.errors.join('\n')).toContain(
       'ACTIVE_TASK_ROUTING_CAMPAIGN_DRIFT: routing block declares CAMPAIGN campaign-a but the active task is campaign-b'
     );
@@ -111,7 +119,7 @@ test.describe('active-task routing binding (DEF-FC-04)', () => {
       '```',
       '',
     ].join('\n');
-    const result = inspectActiveTaskRouting(text, 'campaign-b', 'session/b-9999');
+    const result = inspectActiveTaskRouting(text, 'campaign-b', 'session/b-9999', ['session/b-0000']);
     expect(result.errors.join('\n')).toContain('ACTIVE_TASK_ROUTING_SESSION_WORKTREE_DRIFT');
   });
 
@@ -133,7 +141,7 @@ test.describe('active-task routing binding (DEF-FC-04)', () => {
       '```',
       '',
     ].join('\n');
-    const result = inspectActiveTaskRouting(text, 'campaign-b', 'session/b-0000');
+    const result = inspectActiveTaskRouting(text, 'campaign-b', 'session/b-0000', ['session/b-0000']);
     expect(result.errors.join('\n')).toContain('ACTIVE_TASK_ROUTING_DUPLICATE_DIRECTIVE: CAMPAIGN declared 2 times');
   });
 
@@ -144,7 +152,7 @@ test.describe('active-task routing binding (DEF-FC-04)', () => {
     const active = fs.readFileSync(path.join(process.cwd(), '.agent/ACTIVE_TASK.md'), 'utf8');
     const taskId = field(active, 'Task ID');
     const state = fs.readFileSync(path.join(process.cwd(), '.agent/tasks', taskId, 'STATE.md'), 'utf8');
-    const result = inspectActiveTaskRouting(active, taskId, field(state, 'Branch'));
+    const result = inspectActiveTaskRouting(active, taskId, field(state, 'Branch'), liveWorktreeBranches());
     expect(result.errors).toEqual([]);
   });
 });

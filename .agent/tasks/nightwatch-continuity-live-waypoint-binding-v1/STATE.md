@@ -27,18 +27,32 @@ Milestone ID: M1 — inspectors and error codes (tasks 1.1–1.6)
 
 ## Completed Milestones
 
-None yet.
+- M1 — inspectors and error codes (tasks 1.1–1.6): implemented in
+  `bin/agent-continuity-protocol.mjs` (milestone identity extraction,
+  `ACTIVE_TASK_MILESTONE_DRIFT`, `ACTIVE_TASK_NEXT_ACTION_STALE`),
+  `bin/agent-state.mjs` (`SESSION WORKTREE: NONE`, live worktree resolution),
+  `bin/workspace-integrity.mjs` (`listWorktreeBranches`) and
+  `bin/lib/openspec-ledger.mjs` (active change without task is an error).
+- M2 — synthetic-fixture tests (tasks 2.1–2.3): `tests/unit/continuityLiveWaypoint.test.ts`
+  added; `tests/unit/productionCompletionOpenWork.test.ts` and
+  `tests/unit/activeTaskRoutingBinding.test.ts` updated.
+- M3 — landing reconciliation and gate validation (tasks 3.1–3.3): every
+  active change now has a continuity-v2 task record; ACTIVE_TASK is bound to
+  the programme task and the live session; `agent:check` and `typecheck` PASS.
+- M4 — closeout (tasks 4.1–4.2): strict OpenSpec validation PASS; no
+  production-completion implementation box was ticked.
 
 ## Work In Progress
 
-The task record exists so the change↔task error can be enabled; the
-implementation starts after the campaign's M1 topology commit.
+All 14 boxes are ticked with the evidence below; the change awaits the
+programme integration checkpoint and closure, which updates this record's
+anchors and marks it COMPLETE.
 
 ## Exact Next Action
 
-Implement tasks 1.1–1.6 in `bin/agent-continuity-protocol.mjs`,
-`bin/agent-state.mjs` and `bin/lib/openspec-ledger.mjs`, then the 2.x
-fixtures.
+Record the closure evidence and mark this task COMPLETE at the programme
+integration checkpoint, then continue with
+`nightwatch-published-spec-baseline-integrity-v1`.
 
 ## Files Changed
 
@@ -50,7 +64,22 @@ branch helper), `tests/unit/agentContinuityProtocol.test.ts`,
 
 ## Validation Ledger
 
-- Pending implementation.
+- `npx playwright test tests/unit/continuityLiveWaypoint.test.ts
+  tests/unit/activeTaskRoutingBinding.test.ts
+  tests/unit/productionCompletionOpenWork.test.ts --workers=1` — PASS, 34
+  tests. The new suite covers milestone extraction (G1-vs-G4 measured case,
+  matching prose-different identities, one-sided missing token), drift, the
+  stale next action, the COMPLETE exemption, live/missing/unreadable worktree
+  resolution, canonical-only NONE, the measured `ebe26ce` shape read from Git,
+  and the active-change/task pairing.
+- `npm run agent:check` — PASS with 35 warnings, `strict_errors=0`; the
+  `LEDGER_CHANGE_WITHOUT_TASK` error is enabled and no active change lacks a
+  task record (recorded 2026-09-14).
+- `npm run typecheck` — PASS.
+- `node bin/hardening-check.mjs` — PASS.
+- `npm run validation:universe` — PASS, every discovered test/check classified.
+- `openspec validate nightwatch-continuity-live-waypoint-binding-v1 --strict`
+  — PASS.
 
 ## Decisions Made During This Task
 

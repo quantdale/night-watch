@@ -22,7 +22,7 @@ import {
   APPROVED_CHECKPOINT_PATHS,
   isApprovedCheckpointPath,
 } from './agent-continuity-protocol.mjs';
-import { inspectWorkspace } from './workspace-integrity.mjs';
+import { inspectWorkspace, listWorktreeBranches } from './workspace-integrity.mjs';
 import { validateProgrammeState } from './lib/programme-state.mjs';
 import {
   inspectLedgerAgreement,
@@ -90,7 +90,14 @@ const REQUIRED_STATE_HEADINGS = [
 // accepts the document because one correct `session/...` mention exists would
 // pass while another line still names a retired worktree — the exact shape
 // that let this defect survive a whole campaign.
-export function inspectActiveTaskRouting(activeText, taskId, stateBranch) {
+//
+// `liveWorktreeBranches` is the live `git worktree list` branch set from the
+// shared porcelain parser: an array when known, and `null` (the default) when
+// the caller cannot supply it, which fails closed rather than assuming
+// absence. A declared session worktree resolves only against the live set;
+// `NONE` is legal and means canonical-only work, which requires STATE.md
+// `Branch: main`.
+export function inspectActiveTaskRouting(activeText, taskId, stateBranch, liveWorktreeBranches = null) {
   const errors = [];
   // Deliberately not parseMarkdownSections: that helper drops fenced lines,
   // and the routing directives belong inside the authority fence they govern.
@@ -113,17 +120,34 @@ export function inspectActiveTaskRouting(activeText, taskId, stateBranch) {
 
   if (declaredWorktree === undefined) {
     errors.push('ACTIVE_TASK_ROUTING_SESSION_WORKTREE_MISSING: routing block declares no SESSION WORKTREE');
-  } else if (stateBranch && declaredWorktree !== stateBranch) {
-    errors.push(
-      `ACTIVE_TASK_ROUTING_SESSION_WORKTREE_DRIFT: routing block declares SESSION WORKTREE ${declaredWorktree} but STATE.md records branch ${stateBranch}`
-    );
+  } else if (declaredWorktree === 'NONE') {
+    if (stateBranch !== undefined && stateBranch !== '' && stateBranch !== 'main') {
+      errors.push(
+        `ACTIVE_TASK_ROUTING_SESSION_WORKTREE_DRIFT: routing block declares SESSION WORKTREE NONE (canonical-only) but STATE.md records branch ${stateBranch}`
+      );
+    }
+  } else {
+    if (stateBranch && declaredWorktree !== stateBranch) {
+      errors.push(
+        `ACTIVE_TASK_ROUTING_SESSION_WORKTREE_DRIFT: routing block declares SESSION WORKTREE ${declaredWorktree} but STATE.md records branch ${stateBranch}`
+      );
+    }
+    if (liveWorktreeBranches === null) {
+      errors.push(
+        `ACTIVE_TASK_SESSION_WORKTREE_UNKNOWN: declared ${declaredWorktree} cannot be resolved because the live worktree list is unreadable`
+      );
+    } else if (Array.isArray(liveWorktreeBranches) && !liveWorktreeBranches.includes(declaredWorktree)) {
+      errors.push(
+        `ACTIVE_TASK_SESSION_WORKTREE_MISSING: declared ${declaredWorktree} is not a registered live worktree on that branch`
+      );
+    }
   }
 
   if (declaredWorktree !== undefined) {
     const seen = new Set();
     for (const match of activeText.matchAll(/session\/[A-Za-z0-9._\/-]+/g)) {
       const occurrence = match[0].replace(/[.`,;:)]+$/, '');
-      if (occurrence !== declaredWorktree) seen.add(occurrence);
+      if (declaredWorktree === 'NONE' || occurrence !== declaredWorktree) seen.add(occurrence);
     }
     for (const stray of [...seen].sort()) {
       errors.push(
@@ -917,7 +941,8 @@ export function validate(root, auditMode = false) {
     if (state !== undefined) requireHeadings(state, REQUIRED_STATE_HEADINGS, 'STATE.md', errors);
 
     const stateFields = state ? parseKeyValueFile(state) : new Map();
-    for (const routingError of inspectActiveTaskRouting(activeText, taskId, stateFields.get('Branch')).errors) {
+    const liveWorktreeBranches = listWorktreeBranches(root);
+    for (const routingError of inspectActiveTaskRouting(activeText, taskId, stateFields.get('Branch'), liveWorktreeBranches).errors) {
       errors.push(routingError);
     }
     if (state && stateFields.get('Task ID') !== taskId) {

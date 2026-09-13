@@ -258,6 +258,21 @@ function parseWorktreePorcelain(text) {
   return entries;
 }
 
+/**
+ * Live registered worktree branch names, read through the same porcelain
+ * parser the workspace checks use. Returns `null` when git topology is
+ * unreadable so callers can fail closed instead of assuming absence.
+ */
+export function listWorktreeBranches(root) {
+  const result = git(root, ['worktree', 'list', '--porcelain']);
+  if (!result.ok) return null;
+  const branches = new Set();
+  for (const entry of parseWorktreePorcelain(result.stdout)) {
+    if (typeof entry.branch === 'string' && entry.branch !== '') branches.add(entry.branch);
+  }
+  return [...branches].sort();
+}
+
 function linkedWorktreeNames(commonDir) {
   const directory = path.join(commonDir, 'worktrees');
   let names;

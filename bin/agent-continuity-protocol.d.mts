@@ -47,6 +47,22 @@ export function normalizeText(value: string): string;
 export function normalizeTaskStatus(value: string): 'NONE' | 'IN_PROGRESS' | 'BLOCKED' | 'COMPLETE' | null;
 export function phaseToken(phase: string): string;
 export function derivePhaseStatusKey(phase: string): string | null;
+
+/** Milestone identity token set from a milestone field/section value (live-waypoint binding). */
+export function parseMilestoneIdentities(text: string | null | undefined): Set<string>;
+export function milestoneIdentitiesAgree(
+  activeText: string | null | undefined,
+  stateText: string | null | undefined
+): { agree: boolean; active: Set<string>; state: Set<string>; reason: 'NONE_ON_EITHER_SIDE' | 'MISSING_ON_ONE_SIDE' | 'OVERLAP' | 'DISJOINT' };
+export function stateMilestoneIdentityText(
+  sections: Map<string, { start: number; end: number; lines: Array<{ lineNumber: number; text: string }> }> | undefined
+): string;
+export function findStaleNextActionMilestone(
+  nextActionText: string | null | undefined,
+  completedText: string | null | undefined,
+  currentText: string | null | undefined
+): { token: string; reason: 'RECORDED_COMPLETE' | 'BELOW_CURRENT' } | null;
+
 export function isTerminalMilestoneText(value: string): boolean;
 export function isTerminalWorkInProgressText(value: string): boolean;
 export function isTerminalNextActionText(value: string): boolean;

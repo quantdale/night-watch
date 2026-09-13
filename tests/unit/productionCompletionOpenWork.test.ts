@@ -113,13 +113,24 @@ test.describe('completion ledger agreement', () => {
     expect(result.info.join(' ')).toContain('LEDGER_OPEN_ITEMS');
   });
 
-  test('orphans on both sides are named', () => {
+  test('an active change without a task is an error; a task without a change stays a warning', () => {
     const root = fixtureRoot();
     writeChange(root, 'c-change-only', '- [ ] open');
     writeTask(root, 'c-task-only', 'IN_PROGRESS');
     const result = inspectLedgerAgreement(root);
-    expect(result.warnings.join(' ')).toContain('LEDGER_CHANGE_WITHOUT_TASK: change c-change-only');
+    expect(result.errors.join(' ')).toContain('LEDGER_CHANGE_WITHOUT_TASK: change c-change-only');
     expect(result.warnings.join(' ')).toContain('LEDGER_TASK_WITHOUT_CHANGE: task c-task-only');
+    expect(result.warnings.join(' ')).not.toContain('LEDGER_CHANGE_WITHOUT_TASK');
+  });
+
+  test('a historical orphan task without a change is only a warning', () => {
+    const root = fixtureRoot();
+    writeTask(root, 'phase-16a-campaign-yield-portfolio-optimization', 'COMPLETE');
+    const result = inspectLedgerAgreement(root);
+    expect(result.errors).toEqual([]);
+    expect(result.warnings.join(' ')).toContain(
+      'LEDGER_TASK_WITHOUT_CHANGE: task phase-16a-campaign-yield-portfolio-optimization'
+    );
   });
 
   test('a legacy task never infers terminal agreement', () => {

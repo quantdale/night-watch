@@ -163,10 +163,11 @@ export function collectOpenWorkInput(root) {
 
 /**
  * F-01 completion-ledger agreement. A terminal continuity-v2 task
- * (COMPLETE/BLOCKED) must not leave unchecked non-declared boxes; a change
- * without a task or a task without a change is reported rather than silently
- * skipped; a legacy v1 pairing is reported as legacy and never inferred
- * terminal. Read-only: never rewrites a ledger.
+ * (COMPLETE/BLOCKED) must not leave unchecked non-declared boxes; an active
+ * OpenSpec change without a continuity-v2 task is an error (a task without a
+ * change stays a warning, because historical task directories are append-only
+ * records rather than missing campaigns); a legacy v1 pairing is reported as
+ * legacy and never inferred terminal. Read-only: never rewrites a ledger.
  */
 export function inspectLedgerAgreement(root) {
   const errors = [];
@@ -179,7 +180,7 @@ export function inspectLedgerAgreement(root) {
     const { open, done, declaredNotInScope } = parseLedgerTasks(text);
     const stateText = readFileIfPresent(path.join(root, '.agent', 'tasks', changeId, 'STATE.md'));
     if (stateText === null) {
-      warnings.push(
+      errors.push(
         `LEDGER_CHANGE_WITHOUT_TASK: change ${changeId} has no .agent/tasks/${changeId}/STATE.md (open=${open.length} declared_not_in_scope=${declaredNotInScope} done=${done})`,
       );
       continue;

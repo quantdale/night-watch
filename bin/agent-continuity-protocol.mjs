@@ -288,6 +288,95 @@ export function isCompleteSnapshotText(snapshotText) {
 }
 
 // ---------------------------------------------------------------------------
+// Milestone identity (live-waypoint binding).
+//
+// The operational waypoint is a token such as `G1`, `W2` or `M3`, optionally
+// written as a range (`G4..G21`). Identity comparison is token-set overlap,
+// never prose equality: two documents may describe the same milestone in
+// different words.
+// ---------------------------------------------------------------------------
+
+const MAX_MILESTONE_RANGE = 64;
+
+/**
+ * Milestone identity tokens in a milestone field/section value. Ranges such
+ * as `G4..G21` expand into their token set (bounded); a standalone token is
+ * itself. Deterministic and order-independent.
+ */
+export function parseMilestoneIdentities(text) {
+  const source = String(text ?? '');
+  const tokens = new Set();
+  for (const match of source.matchAll(/\b([GWM])(\d+)\.\.([GWM])(\d+)\b/g)) {
+    if (match[1] !== match[3]) continue;
+    const from = Number(match[2]);
+    const to = Number(match[4]);
+    const low = Math.min(from, to);
+    const high = Math.max(from, to);
+    if (high - low > MAX_MILESTONE_RANGE) {
+      tokens.add(`${match[1]}${low}`);
+      tokens.add(`${match[1]}${high}`);
+      continue;
+    }
+    for (let value = low; value <= high; value += 1) tokens.add(`${match[1]}${value}`);
+  }
+  for (const match of source.matchAll(/\b([GWM])(\d+)\b/g)) {
+    tokens.add(`${match[1]}${match[2]}`);
+  }
+  return tokens;
+}
+
+/**
+ * True when two milestone-bearing texts name the same identity. No token on
+ * either side is agreement (nothing to bind); a token on exactly one side, or
+ * disjoint token sets, is disagreement.
+ */
+export function milestoneIdentitiesAgree(activeText, stateText) {
+  const active = parseMilestoneIdentities(activeText);
+  const state = parseMilestoneIdentities(stateText);
+  const activeMissing = active.size === 0;
+  const stateMissing = state.size === 0;
+  if (activeMissing && stateMissing) return { agree: true, active, state, reason: 'NONE_ON_EITHER_SIDE' };
+  if (activeMissing || stateMissing) return { agree: false, active, state, reason: 'MISSING_ON_ONE_SIDE' };
+  const overlap = [...active].filter((token) => state.has(token));
+  return { agree: overlap.length > 0, active, state, reason: overlap.length > 0 ? 'OVERLAP' : 'DISJOINT' };
+}
+
+/**
+ * The STATE.md current-milestone identity text: the `Milestone ID:` line of
+ * `## Current Milestone` when present, otherwise the section's first
+ * non-empty line. Empty string when the section is absent.
+ */
+export function stateMilestoneIdentityText(sections) {
+  const section = sections?.get?.('Current Milestone');
+  const body = sectionBodyText(section ?? { lines: [] });
+  const match = /^[ \t]*Milestone ID:[ \t]*(.+)$/m.exec(body);
+  if (match !== null) return match[1].trim();
+  return body.split(/\r?\n/).map((line) => line.trim()).find((line) => line !== '') ?? '';
+}
+
+/**
+ * A milestone identity named by the ACTIVE next action that STATE.md records
+ * as completed, or that is strictly below the current milestone in the same
+ * letter family. Returns `{ token, reason }` or null.
+ */
+export function findStaleNextActionMilestone(nextActionText, completedText, currentText) {
+  const referenced = parseMilestoneIdentities(nextActionText);
+  if (referenced.size === 0) return null;
+  const completed = parseMilestoneIdentities(completedText);
+  const current = parseMilestoneIdentities(currentText);
+  const ordered = [...referenced].sort();
+  for (const token of ordered) {
+    if (completed.has(token)) return { token, reason: 'RECORDED_COMPLETE' };
+  }
+  for (const token of ordered) {
+    const number = Number(token.slice(1));
+    const sameFamily = [...current].filter((candidate) => candidate[0] === token[0]).map((candidate) => Number(candidate.slice(1)));
+    if (sameFamily.length > 0 && number < Math.min(...sameFamily)) return { token, reason: 'BELOW_CURRENT' };
+  }
+  return null;
+}
+
+// ---------------------------------------------------------------------------
 // Closure placeholder sentinels.
 // ---------------------------------------------------------------------------
 
@@ -888,6 +977,35 @@ export function validateTaskV2(task, opts = {}) {
         errors.push(makeError('IN_PROGRESS_NEXT_ACTION_MISSING', task.activePath, null, 'IN_PROGRESS task has no ACTIVE Next action'));
       } else if (isTerminalNextActionText(activeNextAction)) {
         errors.push(makeError('IN_PROGRESS_NEXT_ACTION_TERMINAL', task.activePath, null, 'IN_PROGRESS task ACTIVE next action is terminal (STOP)'));
+      }
+    }
+    if (bindActive && activeMilestone !== undefined) {
+      const stateMilestoneIdentity = stateMilestoneIdentityText(stateSections);
+      const agreement = milestoneIdentitiesAgree(activeMilestone, stateMilestoneIdentity);
+      if (!agreement.agree) {
+        errors.push(
+          makeError(
+            'ACTIVE_TASK_MILESTONE_DRIFT',
+            task.activePath,
+            null,
+            `ACTIVE Current milestone "${activeMilestone}" (${[...agreement.active].sort().join(',') || 'none'}) is disjoint from STATE current milestone "${stateMilestoneIdentity}" (${[...agreement.state].sort().join(',') || 'none'})`
+          )
+        );
+      }
+      const stale = findStaleNextActionMilestone(
+        activeNextAction ?? '',
+        sectionBodyText(stateSections.get('Completed Milestones')),
+        stateMilestoneIdentity
+      );
+      if (stale !== null) {
+        errors.push(
+          makeError(
+            'ACTIVE_TASK_NEXT_ACTION_STALE',
+            task.activePath,
+            null,
+            `ACTIVE Next action names milestone ${stale.token}, which STATE records as ${stale.reason === 'RECORDED_COMPLETE' ? 'completed' : 'strictly below the current milestone'}`
+          )
+        );
       }
     }
     if (reportStatusNormalized === 'COMPLETE') {
