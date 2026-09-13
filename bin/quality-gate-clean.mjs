@@ -15,7 +15,21 @@ import { GATE_RECEIPT_PATH_ENV, readPersistedGateReceipt } from './lib/gate-rece
 import { OPERATOR_CLI_SCHEMA, defineOperatorCli, invokedDirectly } from './lib/operator-cli.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const timeout = 1_800_000;
+// Budgets are bounded and independently overridable. The install and the
+// gate have different cold-start profiles, so one shared constant made a
+// cold checkout that reached ten groups report TIMEOUT instead of a
+// verdict. A malformed override fails closed (ENVIRONMENT_MISMATCH).
+const DEFAULT_CLEAN_INSTALL_TIMEOUT_MS = 600_000;
+const DEFAULT_CLEAN_GATE_TIMEOUT_MS = 3_600_000;
+const MIN_CLEAN_TIMEOUT_MS = 60_000;
+const MAX_CLEAN_TIMEOUT_MS = 7_200_000;
+export function resolveCleanTimeout(name, fallback, environment = process.env) {
+  const raw = environment[name];
+  if (raw === undefined || raw === '') return fallback;
+  const value = Number(raw);
+  if (!Number.isInteger(value) || value < MIN_CLEAN_TIMEOUT_MS || value > MAX_CLEAN_TIMEOUT_MS) return null;
+  return value;
+}
 const packageManager = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 
 const CLI_METADATA = {
@@ -90,7 +104,9 @@ if (!cli.stop) {
 const headResult = git(['rev-parse', 'HEAD'], root);
 const statusResult = git(['status', '--porcelain'], root);
 const head = headResult.status === 0 ? headResult.stdout.trim() : null;
-if (!head || statusResult.status !== 0 || statusResult.stdout.trim() !== '') {
+const installTimeout = resolveCleanTimeout('NIGHTWATCH_CLEAN_INSTALL_TIMEOUT_MS', DEFAULT_CLEAN_INSTALL_TIMEOUT_MS);
+const gateTimeout = resolveCleanTimeout('NIGHTWATCH_CLEAN_GATE_TIMEOUT_MS', DEFAULT_CLEAN_GATE_TIMEOUT_MS);
+if (!head || statusResult.status !== 0 || statusResult.stdout.trim() !== '' || installTimeout === null || gateTimeout === null) {
   emit({ schemaVersion: 'nightwatch.clean-checkout-receipt.v1', sourceHead: head, nodeMajor: Number(process.versions.node.split('.')[0]), installResult: 'NOT_RUN', gateResult: 'NOT_RUN', finalResult: 'ENVIRONMENT_MISMATCH' }, 1);
 } else {
   const clone = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-quality-gate-clean-'));
@@ -114,7 +130,7 @@ if (!head || statusResult.status !== 0 || statusResult.stdout.trim() !== '') {
           emit({ schemaVersion: 'nightwatch.clean-checkout-receipt.v1', sourceHead: head, nodeMajor: null, installResult: 'ENVIRONMENT_MISMATCH', gateResult: 'NOT_RUN', finalResult: 'ENVIRONMENT_MISMATCH' }, 1);
         } else {
           const { environment } = toolchain;
-          const install = spawnSync(packageManager, ['ci', '--ignore-scripts'], { cwd: clone, env: environment, encoding: 'utf8', timeout, maxBuffer: 16 * 1024 * 1024, stdio: ['ignore', 'pipe', 'pipe'] });
+          const install = spawnSync(packageManager, ['ci', '--ignore-scripts'], { cwd: clone, env: environment, encoding: 'utf8', timeout: installTimeout, maxBuffer: 16 * 1024 * 1024, stdio: ['ignore', 'pipe', 'pipe'] });
           if (install.status !== 0 || install.error) {
             emit({ schemaVersion: 'nightwatch.clean-checkout-receipt.v1', sourceHead: head, nodeMajor: toolchain.nodeMajor, installResult: install.error?.code === 'ETIMEDOUT' ? 'TIMEOUT' : 'INSTALL_FAILURE', gateResult: 'NOT_RUN', finalResult: install.error?.code === 'ETIMEDOUT' ? 'TIMEOUT' : 'INSTALL_FAILURE' }, 1);
           } else {
@@ -134,7 +150,7 @@ if (!head || statusResult.status !== 0 || statusResult.stdout.trim() !== '') {
             let cleanAfter = null;
             let gateTimedOut = false;
             try {
-              const gate = spawnSync(packageManager, ['run', 'gate:clean-exec'], { cwd: clone, env: { ...environment, CI: 'true', [GATE_RECEIPT_PATH_ENV]: receiptFile }, encoding: 'utf8', timeout, maxBuffer: 32 * 1024 * 1024, stdio: ['ignore', 'pipe', 'pipe'] });
+              const gate = spawnSync(packageManager, ['run', 'gate:clean-exec'], { cwd: clone, env: { ...environment, CI: 'true', [GATE_RECEIPT_PATH_ENV]: receiptFile }, encoding: 'utf8', timeout: gateTimeout, maxBuffer: 32 * 1024 * 1024, stdio: ['ignore', 'pipe', 'pipe'] });
               const output = `${gate.stdout ?? ''}\n${gate.stderr ?? ''}`;
               cleanAfter = git(['status', '--porcelain'], clone);
 
