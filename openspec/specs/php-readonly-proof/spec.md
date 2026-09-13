@@ -1,7 +1,9 @@
 # php-readonly-proof Specification
 
 ## Purpose
-TBD - created by archiving change nightwatch-php-readonly-proof-c06-v1. Update Purpose after archive.
+
+Nightwatch's read-only authority for `mobingilabs/ripple-api` was an eleven-row hand-authored operation catalog. `surfaces.ts:186` reduced the whole question "may Nightwatch call this route?" to "is the verb GET and does `PHASE5_API_CATALOG` call it `KNOWN_READ`?". That is a human judgement wearing a mechanical label, and D-79 already proved it is the failure mode that actually occurs: two of those rows were reproduced as false-positive admissions.
+
 ## Requirements
 ### Requirement: Catalog membership is not a read-only witness
 

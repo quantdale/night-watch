@@ -1,7 +1,9 @@
 # dev-soak-replay-yield Specification
 
 ## Purpose
-TBD - created by archiving change nightwatch-dev-soak-replay-yield-v1. Update Purpose after archive.
+
+Nightwatch SHALL measure real-DEV capture stability and admitted yield over a bounded soak, then use that evidence to exercise replay and dossier closure without weakening admission, privacy, or effect boundaries.
+
 ## Requirements
 ### Requirement: DEV Capture Soak, Replay, and Yield
 

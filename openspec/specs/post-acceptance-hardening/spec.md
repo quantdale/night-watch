@@ -1,7 +1,9 @@
 # post-acceptance-hardening Specification
 
 ## Purpose
-TBD - created by archiving change nightwatch-post-acceptance-production-hardening-and-yield-expansion-v1. Update Purpose after archive.
+
+Nightwatch has earned real DEV operational acceptance, but synthetic validation hides reliability, yield, source-intelligence, and lifecycle weaknesses. The next challenge is repeated, autonomous, safe, efficient, accurate discovery over long runs — not re-proving yesterday's single campaign.
+
 ## Requirements
 ### Requirement: reconciled operational acceptance truth
 

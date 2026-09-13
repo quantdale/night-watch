@@ -1,7 +1,9 @@
 # expected-information-gain Specification
 
 ## Purpose
-TBD - created by archiving change nightwatch-eig-prioritization-c16-v1. Update Purpose after archive.
+
+Nightwatch SHALL prioritize campaigns by expected information gain computed from the gap matrix, so the highest-value unknown is addressed next and no gap is left without an owner.
+
 ## Requirements
 ### Requirement: a ranking grants no authority
 

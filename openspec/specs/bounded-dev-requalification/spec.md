@@ -1,7 +1,9 @@
 # bounded-dev-requalification Specification
 
 ## Purpose
-TBD - created by archiving change nightwatch-dev-requalification-v1. Update Purpose after archive.
+
+Nightwatch SHALL requalify its real-DEV evidence through the existing guarded launchers in a bounded, serial, read-only campaign whenever the owner-managed authentication state is refreshed, closing the stale evidence gap without widening authority.
+
 ## Requirements
 ### Requirement: Bounded serial DEV requalification
 

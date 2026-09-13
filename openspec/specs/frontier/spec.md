@@ -1,7 +1,9 @@
 # frontier Specification
 
 ## Purpose
-TBD - created by archiving change nightwatch-frontier-completion-reliability-v1. Update Purpose after archive.
+
+The frontier review lifecycle SHALL bind each decision immutably to the exact reviewed artifact — finding, dossier and handoff digests, source SHA, campaign id, handoff version, and privacy-projection version — and remain advisory-only.
+
 ## Requirements
 ### Requirement: local review binds to the exact reviewed artifact
 A review decision SHALL bind to the finding, dossier and handoff digests,

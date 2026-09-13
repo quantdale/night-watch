@@ -1,7 +1,9 @@
 # production-privacy-firewall Specification
 
 ## Purpose
-TBD - created by archiving change nightwatch-production-privacy-firewall-c10-v1. Update Purpose after archive.
+
+Nightwatch's privacy boundary today is a **denylist**: `RedactionLayer` scrubs known-sensitive headers, query parameters and registered secret values after observation (D-6), and `assertPrivatePayload` sentinel-screens at the store boundary. That shape is adequate for DEV fixtures and demonstrably sufficient for the fake-secret suites. It is the wrong shape for production, where the sensitive material is *ordinary-looking business values*: an account id, an invoice number, a cost figure, a company name. A denylist cannot enumerate those.
+
 ## Requirements
 ### Requirement: Raw production bytes never cross into persistent evidence
 

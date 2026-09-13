@@ -1,7 +1,9 @@
 # p1-observation-scope Specification
 
 ## Purpose
-TBD - created by archiving change nightwatch-p1-observation-scope-ma8-v1. Update Purpose after archive.
+
+The P1 observer SHALL admit an observation session only through the versioned named chain `nightwatch.p1-observation-scope.v1`, evaluating every gate in order over explicitly injected facts, stopping at the first denial with later gates `NOT_EVALUATED`, and emitting only gate-owned categorical denial codes.
+
 ## Requirements
 ### Requirement: observation-scope admission
 

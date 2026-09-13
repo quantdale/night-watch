@@ -1,7 +1,9 @@
 # proxy-gate-reliability Specification
 
 ## Purpose
-TBD - created by archiving change nightwatch-proxy-gate-reliability-r11-v1. Update Purpose after archive.
+
+Proxy port allocation SHALL return an owned lease for a currently admissible candidate within a bounded search space, and SHALL NOT be required to return the preferred port.
+
 ## Requirements
 ### Requirement: Preferred proxy ports are a preference, not a guarantee
 

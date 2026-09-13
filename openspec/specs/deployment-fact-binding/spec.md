@@ -1,7 +1,9 @@
 # deployment-fact-binding Specification
 
 ## Purpose
-TBD - created by archiving change nightwatch-deployment-fact-binding-c08-v1. Update Purpose after archive.
+
+Nightwatch knows 1,851 operations and, for almost all of them, has no recorded answer to "where does this run". The absence is not marked as an absence: the field simply is not there, so nothing distinguishes an operation whose deployment was investigated and found unknowable from one nobody looked at.
+
 ## Requirements
 ### Requirement: every operation carries a binding record
 

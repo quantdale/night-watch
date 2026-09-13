@@ -1,7 +1,9 @@
 # durable-artifact-control-center-truth Specification
 
 ## Purpose
-TBD - created by archiving change nightwatch-durable-artifact-and-control-center-truth-hardening-v1. Update Purpose after archive.
+
+Nightwatch SHALL keep durable artifacts, the Control Center, and the harness that proves them consistent: every fetched field is rendered or declared absent with a reason, and tracked-file truth is established before implementation.
+
 ## Requirements
 ### Requirement: fresh exhaustive tracked-file audit
 

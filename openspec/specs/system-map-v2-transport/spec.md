@@ -1,7 +1,9 @@
 # system-map-v2-transport Specification
 
 ## Purpose
-TBD - created by archiving change nightwatch-system-map-v2-transport-c15c-v1. Update Purpose after archive.
+
+Every System Map V2 transport answer SHALL grant no execution authority and no mutation authority, exposing the model to operators without widening the safety kernel.
+
 ## Requirements
 ### Requirement: the transport grants no authority
 Every V2 transport answer SHALL grant no execution authority and no mutation authority.

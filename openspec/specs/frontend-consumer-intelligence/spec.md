@@ -1,7 +1,9 @@
 # frontend-consumer-intelligence Specification
 
 ## Purpose
-TBD - created by archiving change nightwatch-frontend-consumer-intelligence-c04-v1. Update Purpose after archive.
+
+Nightwatch describes 1,745 backend operations and cannot say which UI code calls any of them. That edge is what turns a route list into a map: it answers "what breaks if this changes", and it is the input C-15b's second operator query is defined against.
+
 ## Requirements
 ### Requirement: no fact from a non-literal path
 The system SHALL classify every resolved path expression, and SHALL NOT emit a

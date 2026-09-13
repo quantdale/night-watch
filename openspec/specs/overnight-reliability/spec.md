@@ -1,7 +1,9 @@
 # overnight-reliability Specification
 
 ## Purpose
-TBD - created by archiving change nightwatch-overnight-reliability-r13-v1. Update Purpose after archive.
+
+Nightwatch SHALL preserve determinism across fresh processes, with repeated overnight runs producing bounded resource growth and no leaked processes, ports, file descriptors, or temporary directories.
+
 ## Requirements
 ### Requirement: determinism across fresh processes
 The system SHALL preserve determinism across fresh processes.

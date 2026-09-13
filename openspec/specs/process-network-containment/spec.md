@@ -1,7 +1,9 @@
 # process-network-containment Specification
 
 ## Purpose
-TBD - created by archiving change nightwatch-final-completion-and-l6-containment-v1. Update Purpose after archive.
+
+Authenticated and non-browser subprocess execution SHALL run inside the versioned L6 process/network containment envelope, with direct and descendant egress denied, or fail closed before any child is created.
+
 ## Requirements
 ### Requirement: versioned categorical L6 capability
 Nightwatch SHALL expose a versioned process/network containment capability

@@ -1,7 +1,9 @@
 # final-release-certification Specification
 
 ## Purpose
-TBD - created by archiving change nightwatch-final-completion-and-l6-containment-v1. Update Purpose after archive.
+
+Nightwatch SHALL certify release readiness only from complete, machine-checked advance conditions, and SHALL remain production-blocked until every condition is met with current evidence.
+
 ## Requirements
 ### Requirement: whole-repository release audit
 The campaign SHALL enumerate tracked paths with a NUL-safe Git manifest,

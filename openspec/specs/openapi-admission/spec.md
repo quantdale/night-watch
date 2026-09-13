@@ -1,7 +1,9 @@
 # openapi-admission Specification
 
 ## Purpose
-TBD - created by archiving change nightwatch-openapi-admission-c02a-v1. Update Purpose after archive.
+
+`parseOpenApiRoutes` was written, tested, and unreachable. The only thing stopping Nightwatch from reading all 591 `alphauslabs/blueapi` HTTP operations was `APPROVED_ROOTS['alphauslabs/blueapi'] = ['billing']`, which does not include `openapiv2`. The scan visited the repository, found one candidate file, and rejected it as `SOURCE_LANGUAGE_UNSUPPORTED`; `admittedFileCount` was 0 and every blueapi operation was invisible.
+
 ## Requirements
 ### Requirement: approved blueapi roots
 

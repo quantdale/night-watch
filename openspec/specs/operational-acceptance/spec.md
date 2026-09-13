@@ -1,7 +1,9 @@
 # operational-acceptance Specification
 
 ## Purpose
-TBD - created by archiving change nightwatch-operational-acceptance-v1. Update Purpose after archive.
+
+Historical `PROJECT_COMPLETE_LOCAL_CLEAN_CERTIFIED` SHALL remain a valid COMPLETE-only local/synthetic/clean record. An IN_PROGRESS operational- acceptance task SHALL NOT project that token as current project completion.
+
 ## Requirements
 ### Requirement: local-clean certification is not operational acceptance
 Historical `PROJECT_COMPLETE_LOCAL_CLEAN_CERTIFIED` SHALL remain a valid

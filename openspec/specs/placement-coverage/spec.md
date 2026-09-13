@@ -1,7 +1,9 @@
 # placement-coverage Specification
 
 ## Purpose
-TBD - created by archiving change nightwatch-control-center-placement-coverage-v1. Update Purpose after archive.
+
+The Control Center contract-coverage guard SHALL assert that every declared contract field appears inside a component that can receive its contract, or that its absence is a reasoned, staleness-checked exemption; and every field the UI fetches SHALL reach the view that owns it, or be declared unrendered with a reason an operator would accept.
+
 ## Requirements
 ### Requirement: Control Center placement coverage
 

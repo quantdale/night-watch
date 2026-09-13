@@ -1,7 +1,9 @@
 # residual-closure Specification
 
 ## Purpose
-TBD - created by archiving change nightwatch-residual-closure-and-lane-qualification-v1. Update Purpose after archive.
+
+The repository hardening campaign closed all fifteen master-plan findings and left four lanes recorded UNAVAILABLE. Auditing those four against the live host shows they are not equivalent: one of them already executes and passes here, one has an observed external cause that project state does not record, and two genuinely need an owner capability this campaign will not claim.
+
 ## Requirements
 ### Requirement: Residual closure and lane qualification
 

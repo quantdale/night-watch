@@ -1,7 +1,9 @@
 # reproducibility Specification
 
 ## Purpose
-TBD - created by archiving change nightwatch-final-reproducibility-polish-v1. Update Purpose after archive.
+
+Nightwatch SHALL prove clean-machine reproducibility and topology parity: a fresh Node 20 checkout reproduces the same receipts at the same HEAD, and isolated execution matches the canonical result.
+
 ## Requirements
 ### Requirement: clean-machine reproducibility
 

@@ -23,22 +23,40 @@ substantive.
 
 ## Current Milestone
 
-Milestone ID: M1 — parser and diagnostics (tasks 1.1–1.2)
+Milestone ID: M4 — closeout (tasks 3.1–3.3); M1–M3 are complete.
 
 ## Completed Milestones
 
-None yet.
+- M1 — parser and diagnostics (tasks 1.1–1.2): `bin/lib/openspec-archive-index.mjs`
+  parses the index with a strict four-column grammar and the
+  `ARCHIVE_INDEX_SCHEMA_MISMATCH` / `ARCHIVE_INDEX_MALFORMED_ROW` /
+  `ARCHIVE_INDEX_DUPLICATE_ROW` / `ARCHIVE_INDEX_ROW_WITHOUT_DIRECTORY` /
+  `ARCHIVE_INDEX_DIRECTORY_WITHOUT_ROW` / `ARCHIVE_INDEX_PUBLISHED_SPEC_MISSING` /
+  `ARCHIVE_INDEX_BLOCKED_ROW_PUBLISHES` diagnostics.
+- M2 — tests and the garbage-row repair (tasks 1.3–1.5): the trailing
+  `| 54 | undefined | … |` row is deleted; `tests/unit/openspecArchiveIndex.test.ts`
+  reproduces it as a failing fixture and the live tree as a passing one; the
+  parser is called from `bin/agent-state.mjs`.
+- M3 — Purpose rule and the 56 fills (tasks 2.1–2.4):
+  `PUBLISHED_SPEC_PURPOSE_STUB` enforces non-stub, 40–800-character Purposes;
+  all 56 are filled from the archived proposal/spec with 23 curated
+  capability statements; heading-diff before/after is zero; `openspec
+  validate --specs --strict` is 56 passed / 0 failed.
+- M4 — closeout (tasks 3.1–3.3): `agent:check` PASS with the parser wired;
+  the change's strict OpenSpec validation PASS; no re-archive and no
+  requirement-body rewrite.
 
 ## Work In Progress
 
-The task record exists so the change↔task error can be enabled; the
-implementation follows the campaign's M2.
+All 12 boxes are ticked with the evidence below; the change awaits the
+programme integration checkpoint and closure, which updates this record's
+anchors and marks it COMPLETE.
 
 ## Exact Next Action
 
-Add `bin/lib/openspec-archive-index.mjs` with the strict four-column row
-grammar and the `ARCHIVE_INDEX_*` diagnostics, then wire it into
-`bin/agent-state.mjs`.
+Record the closure evidence and mark this task COMPLETE at the programme
+integration checkpoint, then continue with
+`nightwatch-validation-classification-and-skip-truth-v1`.
 
 ## Files Changed
 
@@ -50,7 +68,22 @@ Pending: `bin/lib/openspec-archive-index.mjs`,
 
 ## Validation Ledger
 
-- Pending implementation.
+- `npx playwright test tests/unit/openspecArchiveIndex.test.ts --workers=1` —
+  PASS, 12 tests: the trailing garbage row fails with its line number, bare
+  integer/undefined Change cells fail, missing directory, directory without
+  row, missing published spec, BLOCKED_NOT_PUBLISHED with `published:`, a
+  well-formed 1:1 index, stub/empty/short/long Purposes, the live index and
+  the 56 live Purposes.
+- `inspectArchiveIndex(root).errors` = 0 and
+  `inspectPublishedSpecPurposes(root)` = 0 errors / 56 capabilities on the
+  live tree (recorded 2026-09-14).
+- Heading diff (all `### Requirement:` and `#### Scenario:` lines,
+  `HEAD` vs working tree) — zero.
+- `npm run agent:check` — PASS.
+- `npm run typecheck` — PASS.
+- `openspec validate --specs --strict` — 56 passed / 0 failed.
+- `openspec validate nightwatch-published-spec-baseline-integrity-v1 --strict`
+  — PASS.
 
 ## Decisions Made During This Task
 

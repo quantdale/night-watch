@@ -1,7 +1,9 @@
 # render-truth Specification
 
 ## Purpose
-TBD - created by archiving change nightwatch-control-center-render-truth-v1. Update Purpose after archive.
+
+The Control Center SHALL prove at runtime that every contract field it declares observably affects the rendered DOM of the view that owns it, or declare that it does not with a stated reason; SHALL announce a view change to assistive technology without disturbing initial load or background refreshes; and SHALL prove that the interpolated style classes it renders apply at runtime.
+
 ## Requirements
 ### Requirement: Control Center render truth
 

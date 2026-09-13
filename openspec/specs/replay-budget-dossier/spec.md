@@ -1,7 +1,9 @@
 # replay-budget-dossier Specification
 
 ## Purpose
-TBD - created by archiving change nightwatch-replay-budget-and-dossier-closure-v1. Update Purpose after archive.
+
+Replay and dossier closure SHALL quantify and, where evidence supports it, lift the bounded reproduction-queue budget without weakening admission, so fresh strict candidates can reach replay and dossier output.
+
 ## Requirements
 ### Requirement: Replay budget and dossier closure
 

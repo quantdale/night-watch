@@ -1,7 +1,9 @@
 # control-center-ui-completion Specification
 
 ## Purpose
-TBD - created by archiving change nightwatch-control-center-ui-completion-v1. Update Purpose after archive.
+
+The Control Center has all nine of its views. What it does not have is the evidence those views already fetch. Nine snapshot contracts arrive in full and reach the screen in part; the execution graph draws a twenty-fourth of what the server sends and labels the result complete; and a toolbar shipped with correct markup, correct state and no stylesheet rule, so its filter changes no pixel.
+
 ## Requirements
 ### Requirement: Control Center UI completion
 

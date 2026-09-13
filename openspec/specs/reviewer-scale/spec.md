@@ -1,7 +1,9 @@
 # reviewer-scale Specification
 
 ## Purpose
-TBD - created by archiving change nightwatch-reviewer-surface-and-intel-scale-v1. Update Purpose after archive.
+
+The reviewer surface SHALL present the whole projected evidence at scale, with every element's epistemic class declared, the privacy boundary preserved, and local review state never mistaken for organizational sign-off.
+
 ## Requirements
 ### Requirement: the active-task routing block binds to the active campaign
 The `## Routing and safety` block of `.agent/ACTIVE_TASK.md` SHALL declare

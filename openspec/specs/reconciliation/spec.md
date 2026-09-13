@@ -1,7 +1,9 @@
 # reconciliation Specification
 
 ## Purpose
-TBD - created by archiving change nightwatch-dep-docs-reconciliation-v1. Update Purpose after archive.
+
+The dependency and documentation record SHALL be internally consistent: superseded decisions state their superseding fact, and the removal of an unused dependency is reflected wherever the project records it.
+
 ## Requirements
 ### Requirement: The D-87 consequences sentence must read truthfully
 

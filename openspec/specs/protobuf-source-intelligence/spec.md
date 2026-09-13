@@ -1,7 +1,9 @@
 # protobuf-source-intelligence Specification
 
 ## Purpose
-TBD - created by archiving change nightwatch-protobuf-source-intelligence-c02b-v1. Update Purpose after archive.
+
+The system SHALL tokenize `.proto` source with explicit ceilings on tokens and nesting depth, and SHALL discard comments and string bodies before any declaration rule observes the stream.
+
 ## Requirements
 ### Requirement: bounded protobuf lexing
 The system SHALL tokenize `.proto` source with explicit ceilings on tokens and

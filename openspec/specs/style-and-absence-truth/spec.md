@@ -1,7 +1,9 @@
 # style-and-absence-truth Specification
 
 ## Purpose
-TBD - created by archiving change nightwatch-control-center-style-and-absence-truth-v1. Update Purpose after archive.
+
+The render-truth campaign closed the gap between "a field reaches a component file" and "a field's value reaches the DOM", and proved four representative dynamic classes in the built bundle. Three limits remained, and recon found one real divergence behind them.
+
 ## Requirements
 ### Requirement: Control Center style and absence truth
 

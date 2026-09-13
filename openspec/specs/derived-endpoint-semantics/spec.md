@@ -1,7 +1,9 @@
 # derived-endpoint-semantics Specification
 
 ## Purpose
-TBD - created by archiving change nightwatch-derived-semantics-dev-targets-c07-v1. Update Purpose after archive.
+
+`RIPPLE_ENDPOINT_SEMANTIC_REGISTRY` is `[]`, and its header explains why: "HTTP method is not a read/write contract. Only source-backed, exact rules may classify an API endpoint as KNOWN_READ or KNOWN_MUTATION." The registry is empty because nothing had earned an entry.
+
 ## Requirements
 ### Requirement: semantics are derived, never asserted
 

@@ -1,7 +1,9 @@
 # go-grpc-topology-binding Specification
 
 ## Purpose
-TBD - created by archiving change nightwatch-go-grpc-topology-binding-c03-v1. Update Purpose after archive.
+
+Nightwatch can now read 590 protobuf RPCs and it admits 2,300 Go files, and it cannot say which Go process serves which proto service. The System Map needs that edge, C-06 wants a Go effect witness, and C-15b cannot draw a service without it.
+
 ## Requirements
 ### Requirement: mechanically proven service binding
 The system SHALL bind a proto service to a Go registration as `SOURCE_FACT`

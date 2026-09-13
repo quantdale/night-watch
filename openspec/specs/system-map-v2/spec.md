@@ -1,7 +1,9 @@
 # system-map-v2 Specification
 
 ## Purpose
-TBD - created by archiving change nightwatch-system-map-v2-c15b-v1. Update Purpose after archive.
+
+Nightwatch's graph contract permits 1,000 nodes and 2,000 edges. Its view draws 24 and 48, on a fixed three-column grid, with no pan, no zoom, no search and no drill-down. After C-02b, C-03 and C-04 there are 1,745 operations, 12 proven service bindings and 382 consumer edges to show, and the operator can see a fortieth of it.
+
 ## Requirements
 ### Requirement: one fact category per element
 Every node and edge SHALL carry exactly one fact category and SHALL NOT be

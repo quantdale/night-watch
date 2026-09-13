@@ -1,7 +1,9 @@
 # id-tolerance Specification
 
 ## Purpose
-TBD - created by archiving change nightwatch-explain-id-flag-v1. Update Purpose after archive.
+
+The `explain` command SHALL tolerate flag tokens in the id slot: `explain --json`, `explain <member-id> --json`, and bare `explain` behave identically except that flags no longer occupy the id slot.
+
 ## Requirements
 ### Requirement: Flag-first orders must resolve
 

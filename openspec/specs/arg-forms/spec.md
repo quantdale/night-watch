@@ -1,7 +1,9 @@
 # arg-forms Specification
 
 ## Purpose
-TBD - created by archiving change nightwatch-explain-surface-flag-v1. Update Purpose after archive.
+
+The CLI SHALL accept every documented argument form for its surfaces — flag-form and positional ids alike — resolving the same target under the same enforcement, so operator intent is never guessed from flag order.
+
 ## Requirements
 ### Requirement: Both documented orders must work
 

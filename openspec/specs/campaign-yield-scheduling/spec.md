@@ -1,7 +1,9 @@
 # campaign-yield-scheduling Specification
 
 ## Purpose
-TBD - created by archiving change nightwatch-reliability-yield-and-state-protocol-v1. Update Purpose after archive.
+
+The campaign planner SHALL compute a versioned deterministic score only from bounded source/proof/currentness, semantic-contract, relation, change, history, replay, cost, redundancy, and diversity metadata. Hard safety, owner, freshness, and eligibility gates SHALL run before scoring.
+
 ## Requirements
 ### Requirement: Campaign prioritization uses explainable mechanical inputs
 

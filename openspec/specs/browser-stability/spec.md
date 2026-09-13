@@ -1,7 +1,9 @@
 # browser-stability Specification
 
 ## Purpose
-TBD - created by archiving change nightwatch-systemmap-browser-stability-v1. Update Purpose after archive.
+
+The System Map browser workflow SHALL keep keyboard navigation honest: each navigation step acts only after its target member is observably rendered, and the browser suite proves the gates against the live view.
+
 ## Requirements
 ### Requirement: 6d: L2 arrows require L2 members
 

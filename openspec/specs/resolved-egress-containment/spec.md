@@ -1,7 +1,9 @@
 # resolved-egress-containment Specification
 
 ## Purpose
-TBD - created by archiving change nightwatch-resolved-egress-and-containment-truth-hardening-v1. Update Purpose after archive.
+
+An OutboundPolicy allow verdict SHALL be necessary but SHALL NOT by itself authorize a TCP destination.
+
 ## Requirements
 ### Requirement: hostname authorization is not socket authorization
 

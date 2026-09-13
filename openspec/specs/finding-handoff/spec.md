@@ -1,7 +1,9 @@
 # finding-handoff Specification
 
 ## Purpose
-TBD - created by archiving change nightwatch-alphaus-finding-handoff-c12-readiness-v1. Update Purpose after archive.
+
+The handoff SHALL project the canonical `BugDossier` (and optional AI bug draft), never a parallel finding model. Dossier identity SHALL be `candidateId`. Facts SHALL pass closed vocabularies and bounded shapes; free-text drafts SHALL be sentinel-scanned in full before projection.
+
 ## Requirements
 ### Requirement: canonical-dossier projection
 

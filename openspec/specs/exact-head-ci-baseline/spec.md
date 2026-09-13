@@ -1,7 +1,9 @@
 # exact-head-ci-baseline Specification
 
 ## Purpose
-TBD - created by archiving change nightwatch-exact-head-ci-baseline-repair-v1. Update Purpose after archive.
+
+For a long run of Nightwatch checkpoints, GitHub Actions was truthfully classified as external non-evidence: exact-head jobs completed with `steps=[]`, `runner_id=0`, and no log. Local and clean-Node-20 gates carried release certification instead.
+
 ## Requirements
 ### Requirement: Exact-Head CI Baseline
 

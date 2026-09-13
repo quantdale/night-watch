@@ -1,7 +1,9 @@
 # continuous-hardening Specification
 
 ## Purpose
-TBD - created by archiving change nightwatch-continuous-deep-hardening-v1. Update Purpose after archive.
+
+Synthetic campaign repeated 3× SHALL show bounded artifact/cache growth and no leaked processes, ports, file descriptors, or tmp dirs.
+
 ## Requirements
 ### Requirement: soak resource lifecycle bounded
 

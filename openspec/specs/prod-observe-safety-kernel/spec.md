@@ -1,7 +1,9 @@
 # prod-observe-safety-kernel Specification
 
 ## Purpose
-TBD - created by archiving change nightwatch-prod-observe-safety-kernel-c11-v1. Update Purpose after archive.
+
+Every earlier production-observability campaign built a component. C-11 builds the thing that decides. Its whole value is that Nightwatch becomes **incapable** of issuing a production request unless every required machine authority grants it — and that the incapability is demonstrated rather than asserted.
+
 ## Requirements
 ### Requirement: Production remains non-loadable through ordinary environment selection
 

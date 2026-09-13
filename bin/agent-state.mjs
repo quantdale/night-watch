@@ -28,6 +28,10 @@ import {
   inspectLedgerAgreement,
 } from './lib/openspec-ledger.mjs';
 import {
+  inspectArchiveIndex,
+  inspectPublishedSpecPurposes,
+} from './lib/openspec-archive-index.mjs';
+import {
   collectRevisitDue,
   loadLaneState,
 } from './lib/validation-lane-state.mjs';
@@ -1041,6 +1045,15 @@ export function validate(root, auditMode = false) {
   errors.push(...ledger.errors);
   warnings.push(...ledger.warnings);
   for (const line of ledger.info) console.log(`[agent-ledger] ${line}`);
+
+  // G1 published-baseline integrity: the archive index is parsed as data
+  // (strict 1:1 rows, published names must exist) and every published
+  // capability Purpose must state the capability rather than carry the
+  // archive CLI's stub.
+  const archiveIndex = inspectArchiveIndex(root);
+  errors.push(...archiveIndex.errors);
+  const purposes = inspectPublishedSpecPurposes(root);
+  errors.push(...purposes.errors);
 
   // F-02 lane state: a lane record whose revisit date has passed is reported
   // as due; the record itself is never rewritten here.

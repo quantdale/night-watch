@@ -1,7 +1,9 @@
 # campaign-certification-registry Specification
 
 ## Purpose
-TBD - created by archiving change nightwatch-certification-truth-r12-v1. Update Purpose after archive.
+
+Nightwatch SHALL keep an authoritative certification registry: every required quality-gate group is registered with the suites it runs, and a certification claims only what those manifests mechanically prove.
+
 ## Requirements
 ### Requirement: one declarative registration authority
 

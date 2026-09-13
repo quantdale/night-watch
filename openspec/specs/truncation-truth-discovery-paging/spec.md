@@ -1,7 +1,9 @@
 # truncation-truth-discovery-paging Specification
 
 ## Purpose
-TBD - created by archiving change nightwatch-truncation-truth-discovery-paging-c01-v1. Update Purpose after archive.
+
+The discovery pipeline SHALL NOT silently bound its populations: truncation is detected and reported as truncation, and every bounded population names what was dropped and why.
+
 ## Requirements
 ### Requirement: Operation projection has no silent bound
 

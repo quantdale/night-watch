@@ -1,7 +1,9 @@
 # production-provenance-authority Specification
 
 ## Purpose
-TBD - created by archiving change nightwatch-c10-provenance-truth-closure-v1. Update Purpose after archive.
+
+A production-safe vocabulary MUST NOT be obtainable by asserting a provenance label. Authority MUST be derived through a mechanically validated evidence capability whose identity binds the vocabulary contents to a specific source-evidence result. A generic unbranded record of the form `{ provenanceClass, digest, values }` MUST NOT be sufficient authority.
+
 ## Requirements
 ### Requirement: production-safe vocabulary authority
 

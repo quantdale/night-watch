@@ -1,7 +1,9 @@
 # spec-derived-expectations Specification
 
 ## Purpose
-TBD - created by archiving change nightwatch-spec-derived-expectations-c09-v1. Update Purpose after archive.
+
+A spec sentence is not a machine expectation. Nightwatch has a large specification corpus and a large product-specification corpus, and neither has yet produced a single checkable, provenance-bound expectation about the product.
+
 ## Requirements
 ### Requirement: every scenario is classified
 Every discovered scenario SHALL receive exactly one classification.

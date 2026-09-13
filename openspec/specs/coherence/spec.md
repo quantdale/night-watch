@@ -1,7 +1,9 @@
 # coherence Specification
 
 ## Purpose
-TBD - created by archiving change nightwatch-plan-explain-coherence-v1. Update Purpose after archive.
+
+The planning and explanation surfaces SHALL be coherent: every member id emitted by `plan --json` resolves in `explain <member-id> --json` with identical identity, priority components, and gates.
+
 ## Requirements
 ### Requirement: Plan-emitted ids must explain
 

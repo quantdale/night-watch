@@ -1,7 +1,9 @@
 # universe-admission-hygiene Specification
 
 ## Purpose
-TBD - created by archiving change nightwatch-universe-admission-hygiene-c05-v1. Update Purpose after archive.
+
+Discovery SHALL enumerate repository identity metadata under the sibling root without reading source content, and SHALL classify each repository as `ADMITTED` or `DISCOVERED_NOT_ADMITTED`.
+
 ## Requirements
 ### Requirement: discovery is admission-free
 

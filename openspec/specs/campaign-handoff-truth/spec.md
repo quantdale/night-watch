@@ -1,7 +1,9 @@
 # campaign-handoff-truth Specification
 
 ## Purpose
-TBD - created by archiving change nightwatch-campaign-handoff-and-project-truth-hardening-v1. Update Purpose after archive.
+
+The repository SHALL define one versioned machine-readable handoff contract for .agent/EXECUTION_PROMPT.md.
+
 ## Requirements
 ### Requirement: Canonical execution handoff is versioned and machine-checkable
 

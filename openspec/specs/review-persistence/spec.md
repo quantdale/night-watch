@@ -1,7 +1,9 @@
 # review-persistence Specification
 
 ## Purpose
-TBD - created by archiving change nightwatch-owner-local-review-persistence-v1. Update Purpose after archive.
+
+Owner-local review state SHALL persist outside the repository, immutably, keyed by its binding rather than a finding id, and every read SHALL validate before it answers; a campaign may never hold contradictory safety-event answers.
+
 ## Requirements
 ### Requirement: terminal safety accounting cannot contradict itself
 A campaign task whose `STATE.md` records one or more entries under

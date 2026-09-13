@@ -1,7 +1,9 @@
 # repository-hardening Specification
 
 ## Purpose
-TBD - created by archiving change nightwatch-repository-hardening-implementation-v1. Update Purpose after archive.
+
+Nightwatch's established semantic, provenance, source-safety, containment and owner-policy foundations are strong. Its newer autonomous, filesystem persistence, release accounting and dashboard paths carry confirmed defects and incomplete workflows. The repository needs selective repair, not a rewrite, and the master hardening plan already specifies that repair.
+
 ## Requirements
 ### Requirement: Repository hardening checks are mechanically enforced
 

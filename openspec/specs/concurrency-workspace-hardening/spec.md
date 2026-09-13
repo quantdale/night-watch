@@ -1,7 +1,9 @@
 # concurrency-workspace-hardening Specification
 
 ## Purpose
-TBD - created by archiving change nightwatch-concurrency-workspace-hardening-c00-v1. Update Purpose after archive.
+
+Two Nightwatch agents shared one working tree and one index during the production-observability planning campaign and corrupted repository-global Git state, destroying in-progress evidence (`T-48`, OBSERVED). The independent review classified the missing response as `MA-13` and required campaign `C-00 — concurrency and workspace hardening` before any substantial parallel implementation of the master roadmap.
+
 ## Requirements
 ### Requirement: one writing agent per worktree and session branch
 

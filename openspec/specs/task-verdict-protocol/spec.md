@@ -1,7 +1,9 @@
 # task-verdict-protocol Specification
 
 ## Purpose
-TBD - created by archiving change nightwatch-reliability-yield-and-state-protocol-v1. Update Purpose after archive.
+
+Every active continuity-v2 task SHALL declare exactly one bounded `PROJECT_VERDICT_EFFECT` value: `PRESERVE`, `REEVALUATE`, or `SUPERSEDE`. The checker SHALL reject missing, duplicate, malformed, or free-form values.
+
 ## Requirements
 ### Requirement: Active tasks declare an explicit project-verdict effect
 

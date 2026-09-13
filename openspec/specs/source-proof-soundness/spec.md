@@ -1,7 +1,9 @@
 # source-proof-soundness Specification
 
 ## Purpose
-TBD - created by archiving change nightwatch-source-proof-soundness-and-static-discovery-hardening-v1. Update Purpose after archive.
+
+Source-proof soundness SHALL rest on a live tracked-file manifest: every tracked path is accounted for before implementation, and static discovery reports what it can and cannot prove rather than inferring reachability.
+
 ## Requirements
 ### Requirement: Exhaustive tracked-file execution audit
 

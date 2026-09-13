@@ -1,7 +1,9 @@
 # click-robustness Specification
 
 ## Purpose
-TBD - created by archiving change nightwatch-control-center-click-robustness-v1. Update Purpose after archive.
+
+Control Center browser interactions SHALL act only on painted, visible controls and SHALL dispatch by visibility-gated, box-independent means, so no click lands on a stale or covered element.
+
 ## Requirements
 ### Requirement: Inspect clicks require painted buttons, then dispatch
 

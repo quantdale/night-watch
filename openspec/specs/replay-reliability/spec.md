@@ -1,7 +1,9 @@
 # replay-reliability Specification
 
 ## Purpose
-TBD - created by archiving change nightwatch-reliability-yield-and-state-protocol-v1. Update Purpose after archive.
+
+The replay subsystem SHALL classify every non-identical observation as one and only one bounded outcome, including deterministic replay mismatch, expected product-state drift, timing-only observation difference, environment divergence, authentication divergence, benign telemetry variation, framework capture defect, or unknown divergence.
+
 ## Requirements
 ### Requirement: Replay comparisons have explicit categorical outcomes
 

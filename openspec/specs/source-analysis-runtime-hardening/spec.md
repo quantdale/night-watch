@@ -1,7 +1,9 @@
 # source-analysis-runtime-hardening Specification
 
 ## Purpose
-TBD - created by archiving change nightwatch-source-analysis-runtime-hardening-v1. Update Purpose after archive.
+
+The source-analysis runtime SHALL remain correct and bounded under hardening: a tracked-file execution audit precedes implementation, and measured analysis-loop hotspots are improved without crossing source-evidence identity boundaries.
+
 ## Requirements
 ### Requirement: Exhaustive tracked-file audit coverage
 
