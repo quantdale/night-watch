@@ -39,11 +39,11 @@ locations and compares them to the canonical identity list.
 
 ## Milestones
 
-- [ ] M1 — Skip-identity enforcement (tasks 1.1–1.4).
-- [ ] M2 — Universe class vs default runner and spec supersession (tasks
+- [x] M1 — Skip-identity enforcement (tasks 1.1–1.4).
+- [x] M2 — Universe class vs default runner and spec supersession (tasks
   2.1–2.6).
-- [ ] M3 — Playwright config bind and fixture loaders (tasks 3.1–3.4).
-- [ ] M4 — Digest and closeout (tasks 4.1–4.4).
+- [x] M3 — Playwright config bind and fixture loaders (tasks 3.1–3.4).
+- [x] M4 — Digest and closeout (tasks 4.1–4.4).
 
 ## Validation Strategy
 

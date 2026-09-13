@@ -37,10 +37,10 @@ for active changes whose STATE.md is absent.
 
 ## Milestones
 
-- [ ] M1 — Inspectors and error codes (tasks 1.1–1.6).
-- [ ] M2 — Synthetic-fixture tests (tasks 2.1–2.3).
-- [ ] M3 — Landing reconciliation and gate validation (tasks 3.1–3.3).
-- [ ] M4 — Closeout (tasks 4.1–4.2).
+- [x] M1 — Inspectors and error codes (tasks 1.1–1.6).
+- [x] M2 — Synthetic-fixture tests (tasks 2.1–2.3).
+- [x] M3 — Landing reconciliation and gate validation (tasks 3.1–3.3).
+- [x] M4 — Closeout (tasks 4.1–4.2).
 
 ## Validation Strategy
 

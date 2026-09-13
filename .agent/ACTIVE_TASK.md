@@ -6,24 +6,22 @@ Title: Nightwatch production completion programme
 Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-production-completion-programme-v1
 Starting SHA: 36bd4930db978423f97e16f35250c2e66bfa112c
-Last validated implementation SHA: 66df26b700bc4bff94d9fb2a3b99200b0e73f1ff
-Last checkpoint: W1 opened at `cda59632`: continuity-v2 task records exist for
-every active OpenSpec change and the two ownerless campaigns are parked with
-named blockers. The owned session
-`nightwatch-open-spec-truth-closu-7138ca21` (`sess-aa97662ab47e`) is rebound
-to this programme task and W1 implementation is the current action.
-Current milestone: W1 — truth-surface audit wave (three sibling OpenSpec changes) before the remaining G4..G21 groups
-Next action: apply the three sibling audit changes in order — first
-`nightwatch-continuity-live-waypoint-binding-v1`, then
-`nightwatch-published-spec-baseline-integrity-v1`, then
-`nightwatch-validation-classification-and-skip-truth-v1` — ticking each box
-with cited evidence, then resume the remaining programme groups.
+Last validated implementation SHA: 53152cffe568312f70544ed758128a16fe5ff5f1
+Last checkpoint: W1 closed at `53152cff`; `gate:local` PASS at `6bc70522`
+(all eleven groups, receipt `receipt:sha256:204417295a4935d7857cb6b2`) and
+the full offline regression is 5127 passed / 18 skipped / 0 failed.
+Current milestone: G3..G21 — remaining owner-gated programme groups
+Next action: resolve the named owner decisions (G3.11 CI route, G5.3
+reclaim, G6.4/G6.5/G6.10, G8.7 taxonomy, G9.1 egress, G10.6/G10.13, G11.3,
+G12.3, G13.8, G14.6, G17.4, G21.8 scope) and continue the remaining groups
+G8, G9, G12, G18, G19, G21 and the open tails of G4, G5, G10, G14, G15,
+G16, G17 under their own authorizations.
 Authorization class: PRODUCTION_COMPLETION_PROGRAMME_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 36bd4930db978423f97e16f35250c2e66bfa112c
-LAST_VALIDATED_IMPLEMENTATION_SHA: 66df26b700bc4bff94d9fb2a3b99200b0e73f1ff
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 66df26b700bc4bff94d9fb2a3b99200b0e73f1ff
+LAST_VALIDATED_IMPLEMENTATION_SHA: 53152cffe568312f70544ed758128a16fe5ff5f1
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 53152cffe568312f70544ed758128a16fe5ff5f1
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PHASE_PRODUCTION_COMPLETION_PROGRAMME_V1_STATUS: IN_PROGRESS
@@ -36,11 +34,12 @@ starting with ledger truth so that every later estimate is checkable. The
 baseline, findings F-01 … F-21 and their measured evidence are in that
 change's `audit.md`.
 
-W1 adds the three sibling audit changes planned at `ebe26ce` that repair the
-truth surfaces the first wave left behind: the continuity live-waypoint
-binding, the published-spec baseline integrity, and the validation
-classification / skip-identity truth. Their ledgers are the W1 work; the
-programme's own remaining boxes stay open until their owner gates clear.
+W1 is complete and integrated: the three sibling audit changes planned at
+`ebe26ce` repair the truth surfaces the first wave left behind — the
+continuity live-waypoint binding, the published-spec baseline integrity, and
+the validation classification / skip-identity truth. Their ledgers are fully
+ticked; the programme's own remaining boxes stay open until their owner gates
+clear.
 
 ## Mission
 

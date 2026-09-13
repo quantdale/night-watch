@@ -746,12 +746,12 @@ RELEASE_CERTIFICATION_PROTOCOL_VERSION: nightwatch.release-certification.v1
 PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
 RELEASE_CHECKPOINT_SHA: 2576c5751d33bb40046246e8fcf57c7cc5c30a57
 LIVE_HEAD_SHA: DISCOVER_FROM_GIT
-LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: 66df26b700bc4bff94d9fb2a3b99200b0e73f1ff
-LAST_LOCALLY_VALIDATED_SHA: 66df26b700bc4bff94d9fb2a3b99200b0e73f1ff
+LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: 53152cffe568312f70544ed758128a16fe5ff5f1
+LAST_LOCALLY_VALIDATED_SHA: 53152cffe568312f70544ed758128a16fe5ff5f1
 LAST_CLEAN_VALIDATED_SHA: c18db55970a6497470191c8c9ef58f5012a96c8c
-CI_OBSERVED_SHA: 66df26b700bc4bff94d9fb2a3b99200b0e73f1ff
-CI_EXECUTED_SHA: 66df26b700bc4bff94d9fb2a3b99200b0e73f1ff
-CI_STATUS: EXECUTED_PASS
+CI_OBSERVED_SHA: NONE
+CI_EXECUTED_SHA: NONE
+CI_STATUS: NOT_OBSERVED
 FINAL_DOCUMENTATION_SHA: DISCOVER_FROM_GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 LIVE_HEAD_AUTHORITY: GIT
@@ -815,8 +815,15 @@ LIVE_COMPLETION_CLAIM: NONE
 
 ### Exact-head CI state (current live CI state)
 
-At the substantive baseline `c18db55` CI is
-`NO_STEPS_EXTERNAL_NON_EVIDENCE`: a run WAS inspected at this exact SHA and
+At the W1 substantive baseline `53152cff` no CI run has been observed:
+`CI_STATUS` is `NOT_OBSERVED` with `CI_OBSERVED_SHA` and `CI_EXECUTED_SHA`
+both `NONE`. The last executed exact-head run was at `66df26b7` and PASSED
+(all eleven required groups, recorded in its own checkpoint); that
+observation no longer describes the current baseline and is preserved as
+history rather than carried forward.
+
+Historical: at the earlier substantive baseline `c18db55` CI was
+`NO_STEPS_EXTERNAL_NON_EVIDENCE`: a run WAS inspected at that exact SHA and
 it never started. This is a recorded external block, not an uninspected lane
 and not a failing gate.
 

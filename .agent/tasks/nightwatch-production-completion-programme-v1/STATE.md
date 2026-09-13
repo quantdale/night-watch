@@ -8,24 +8,23 @@ Task ID: nightwatch-production-completion-programme-v1
 Phase: PRODUCTION_COMPLETION_PROGRAMME_V1
 Status: IN_PROGRESS
 Starting SHA: 36bd4930db978423f97e16f35250c2e66bfa112c
-Last validated implementation SHA: 66df26b700bc4bff94d9fb2a3b99200b0e73f1ff
-Last substantive checkpoint SHA: 66df26b700bc4bff94d9fb2a3b99200b0e73f1ff
+Last validated implementation SHA: 53152cffe568312f70544ed758128a16fe5ff5f1
+Last substantive checkpoint SHA: 53152cffe568312f70544ed758128a16fe5ff5f1
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-open-spec-truth-closu-7138ca21
-Last checkpoint: W1 opened at `cda59632`: the three sibling audit changes are
-in the rebind session with continuity-v2 task records for every active
-change; this task's Branch and live waypoint now bind to the owned session
-`nightwatch-open-spec-truth-closu-7138ca21` (`sess-aa97662ab47e`). The
-previous checkpoint remains the integrated certification at implementation
-`880810ea`: `gate:local` all eleven required groups PASS with receipt
-`receipt:sha256:da8efb8334bad9b6e4d79931`, and the full offline regression
-5085 passed / 18 skipped / 0 failed.
+Last checkpoint: W1 closed at implementation `53152cff`: all 44 boxes of the
+three sibling audit changes are ticked with evidence, `gate:local` PASS at
+`6bc70522` (all eleven groups, receipt
+`receipt:sha256:204417295a4935d7857cb6b2`) and the full offline regression is
+5127 passed / 18 skipped / 0 failed. The earlier certification at `880810ea`
+remains the pre-wave record (gate receipt
+`receipt:sha256:da8efb8334bad9b6e4d79931`, 5085 passed).
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 36bd4930db978423f97e16f35250c2e66bfa112c
-LAST_VALIDATED_IMPLEMENTATION_SHA: 66df26b700bc4bff94d9fb2a3b99200b0e73f1ff
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 66df26b700bc4bff94d9fb2a3b99200b0e73f1ff
+LAST_VALIDATED_IMPLEMENTATION_SHA: 53152cffe568312f70544ed758128a16fe5ff5f1
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 53152cffe568312f70544ed758128a16fe5ff5f1
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
 PHASE_PRODUCTION_COMPLETION_PROGRAMME_V1_STATUS: IN_PROGRESS
@@ -39,24 +38,33 @@ external dependency with its blocking class and next action.
 
 ## Current Milestone
 
-Milestone ID: W1 — truth-surface audit wave (three sibling OpenSpec changes)
+Milestone ID: G3..G21 — remaining owner-gated programme groups
 Milestone status: IN_PROGRESS
-What is being attempted: apply
-`nightwatch-continuity-live-waypoint-binding-v1`,
-`nightwatch-published-spec-baseline-integrity-v1` and
-`nightwatch-validation-classification-and-skip-truth-v1` — the three sibling
-audit changes planned at `ebe26ce` — then resume the programme's remaining
-groups. W1 requires a continuity-v2 task record for every active change
-before the change↔task integrity error is enabled; that topology is open at
-`cda59632`. Implemented and locally validated in the earlier wave: G1, G2,
-G6, G7, G11, G13, G14, G15, G16, G17, G20, G21 and the local parts of G4,
-G5, G10. Still open after W1: G3, G8, G9, G12, G18, G19 and the remaining
-parts of G4, G5, G10, G14, G15, G16, G17, G21, most owner-gated. Full
-offline regression at the last certification was 5085 passed / 18 skipped /
-0 failed; UI lane PASS.
+What is being attempted: the programme's remaining groups after the W1
+truth-surface wave. W1 is closed: the three sibling audit changes
+(`nightwatch-continuity-live-waypoint-binding-v1`,
+`nightwatch-published-spec-baseline-integrity-v1`,
+`nightwatch-validation-classification-and-skip-truth-v1`) are applied,
+validated and recorded, and the minimum programme validation is green.
+Still open: G3, G8, G9, G12, G18, G19 and the remaining parts of G4, G5,
+G10, G14, G15, G16, G17, G21, most owner-gated. Full offline regression at
+the W1 checkpoint is 5127 passed / 18 skipped / 0 failed; UI lane PASS.
 
 ## Completed Milestones
 
+- **W1 COMPLETE_LOCAL** — truth-surface audit wave: the three sibling changes
+  were applied, validated and integrated. The continuity wave binds ACTIVE
+  waypoints and the session worktree to live truth; the baseline wave makes
+  the archive index a strict 1:1 table and fills all 56 published Purposes;
+  the validation wave enforces skip identities, reclassifies the six fixture
+  smokes, binds every Playwright config by script or default runner, and
+  corrects the programme's own 18→12 spec count. Every active change carries
+  a continuity-v2 task record; design-system and observability are parked
+  IN_PROGRESS with named owner blockers. Evidence: `gate:local` PASS at
+  `6bc70522` (receipt `receipt:sha256:204417295a4935d7857cb6b2`, all eleven
+  groups; SEMANTIC_COMPATIBILITY 2120/2107/13/0 with `skipPolicy.declared=13
+  undeclared=0`), full regression 5127 passed / 18 skipped / 0 failed, three
+  strict OpenSpec validations PASS, and `openspec validate --all` 63/0.
 - **G1 COMPLETE_LOCAL** — ledger truth and the spec baseline:
   - 57 changes paired with 149 task directories; 16 divergent ledgers
     reconciled from task truth (119 boxes ticked with cited evidence, 12
@@ -111,15 +119,13 @@ offline regression at the last certification was 5085 passed / 18 skipped /
 
 ## Work In Progress
 
-W1 is active. The three sibling audit changes are present in the owned
-session and each has a continuity-v2 task record; design-system and
-observability are parked IN_PROGRESS with named owner blockers. The W1
-implementation (continuity checks, archive-index/Purpose integrity,
-validation classification and skip identity) starts from `cda59632` and is
-validated change by change before integration. The programme's own owner
-decisions (G3.11 CI route, G5.3 reclaim, G6.4/G6.5/G6.10, G8.7 taxonomy,
-G9.1 egress, G10.6/G10.13, G11.3, G12.3, G13.8, G14.6, G17.4, G21.8 scope)
-remain open and unchanged.
+W1 is closed. The three sibling audit changes are applied, their 44 boxes
+are ticked with cited evidence, the new checks are negative-probed, and the
+W1 validation stack is green (gate receipt
+`receipt:sha256:204417295a4935d7857cb6b2`, full regression 5127 passed / 18
+skipped / 0 failed). The programme's own owner decisions (G3.11 CI route,
+G5.3 reclaim, G6.4/G6.5/G6.10, G8.7 taxonomy, G9.1 egress, G10.6/G10.13,
+G11.3, G12.3, G13.8, G14.6, G17.4, G21.8 scope) remain open and unchanged.
 
 ### Delegated closure addendum (G21 owner items, G14.1–14.5, 14.9–14.11)
 
@@ -157,17 +163,12 @@ clean rerun passed 81/81.
 
 ## Exact Next Action
 
-Apply the three sibling audit changes in the order their proposals suggest:
-first `nightwatch-continuity-live-waypoint-binding-v1` (tasks 1.1–1.6,
-2.1–2.3, 3.1–3.3, 4.1–4.2), then
-`nightwatch-published-spec-baseline-integrity-v1` (1.1–1.5, 2.1–2.4,
-3.1–3.3), then
-`nightwatch-validation-classification-and-skip-truth-v1` (1.1–1.4, 2.1–2.6,
-3.1–3.4, 4.1–4.4), ticking each box with cited evidence and running each
-change's focused validation. Then run the programme validation stack from
-this owned session, fast-forward integrate with `HEAD == origin/main`,
-verify and sync the canonical checkout, and release the session. After W1,
-resume the remaining programme groups under their own owner gates.
+Resolve the programme's owner decisions (G3.11 CI route, G5.3 reclaim,
+G6.4/G6.5/G6.10, G8.7 taxonomy, G9.1 egress, G10.6/G10.13, G11.3, G12.3,
+G13.8, G14.6, G17.4, G21.8 scope) and then continue the remaining groups
+G8, G9, G12, G18, G19, G21 and the open tails of G4, G5, G10, G14, G15, G16,
+G17 under their own authorizations. Each group still runs its own focused
+validation and integrates by fast-forward before the next.
 
 ## Files Changed
 
@@ -227,7 +228,65 @@ resume the remaining programme groups under their own owner gates.
 | `.agent/tasks/.../SPEC.md` | declared the nine deletions | MODIFIED |
 | `openspec/changes/nightwatch-production-completion-programme-v1/tasks.md` | G14 evidence and open owner decision | MODIFIED |
 
+### W1 files (truth-surface audit wave)
+
+| Path | Reason | Status |
+|---|---|---|
+| `bin/agent-continuity-protocol.mjs` (+ `.d.mts`) | milestone drift, stale next action | MODIFIED |
+| `bin/agent-state.mjs` (+ `.d.mts`) | live worktree resolution, archive/purpose checks | MODIFIED |
+| `bin/workspace-integrity.mjs` | `listWorktreeBranches` shared helper | MODIFIED |
+| `bin/lib/openspec-ledger.mjs` | active change without task is an error | MODIFIED |
+| `bin/lib/openspec-archive-index.mjs` (+ `.d.mts`) | strict index parser and Purpose rule | ADDED |
+| `bin/lib/validation-classification.mjs` (+ `.d.mts`) | four classification-truth rules | ADDED |
+| `bin/lib/semantic-skip-policy.mjs` (+ `.d.mts`) | skip-identity policy evaluator | ADDED |
+| `bin/hardening-check.mjs` | classification rules at the universe call site | MODIFIED |
+| `bin/semantic-compat.mjs` | JSON skip report + policy enforcement | MODIFIED |
+| `bin/lib/validation-universe.mjs` | `LOCAL_FIXTURE_SMOKE` class vocabulary | MODIFIED |
+| `config/{validation-universe,validation-lane-state,semantic-compatibility}.v1.json` | reclassification, script fixes, skip allowlist, digest | MODIFIED |
+| `config/reference-graph.v1.json` | (unchanged; retention consulted by the bind rule) | UNCHANGED |
+| `package.json` | `auth:capture-synthetic` bind | MODIFIED |
+| `tests/fixtures/*-race-child.mjs` | shared TypeScript loader | MODIFIED |
+| `tests/unit/{continuityLiveWaypoint,openspecArchiveIndex,validationClassification,semanticSkipIdentity}.test.ts` | W1 probes | ADDED |
+| `tests/unit/{agent-state,plannerHandoff,projectState,activeTaskRoutingBinding,productionCompletionOpenWork}.test.ts` | stricter-contract fixtures | MODIFIED |
+| `openspec/changes/archive/ARCHIVE-INDEX.md` | garbage row removed | MODIFIED |
+| `openspec/specs/*/spec.md` | 56 Purpose fills only | MODIFIED |
+| `openspec/changes/nightwatch-production-completion-programme-v1/specs/{validation-lane-closure,authenticated-capability-lifecycle}/spec.md`, `proposal.md` | 18→12 supersession | MODIFIED |
+| `.agent/tasks/*` | W1 continuity records and closures | MODIFIED |
+
 ## Validation Ledger
+
+Command: `npm run gate:local` at implementation `6bc70522`
+Result: PASS (all eleven required groups)
+When: 2026-09-14
+Relevant failure/output summary: W1 checkpoint receipt
+`receipt:sha256:204417295a4935d7857cb6b2`; SEMANTIC_COMPATIBILITY 2120 /
+2107 passed / 13 skipped / 0 failed with `skipPolicy.declared=13
+undeclared=0`; SYNTHETIC_CAMPAIGN 1880 / 1880 with `deepContainmentLane:
+PROVEN`; OWNER_PROVENANCE 91.
+
+Command: `npm test` at implementation `6bc70522`
+Result: PASS
+When: 2026-09-14
+Relevant failure/output summary: full offline regression 5127 passed / 18
+skipped / 0 failed (5145 enumerated) after the W1 changes.
+
+Command: `openspec validate --all` at implementation `6bc70522`
+Result: PASS
+When: 2026-09-14
+Relevant failure/output summary: 63 items passed / 0 failed; the three W1
+changes validate strictly and `openspec/specs/` holds 56 published
+capabilities.
+
+Command: `npm run agent:check`, `npm run typecheck`, `node
+bin/hardening-check.mjs`, `npm run validation:universe`,
+`npm run project:check`, `npm run handoff:check`, `npm run workspace:check`
+at implementation `6bc70522`
+Result: PASS
+When: 2026-09-14
+Relevant failure/output summary: `strict_errors=0`, no unclassified
+validation-universe file, handoff and project truth bound to the active
+programme task, and the workspace reports
+`mayIntegrate=true:FAST_FORWARD_AVAILABLE` with zero attention findings.
 
 Command: `npm run gate:local` at implementation `880810ea`
 Result: PASS (all eleven required groups)
@@ -503,33 +562,34 @@ Consequence: `CF-1`/`CF-2` live in the programme's `tasks.md`.
   and twelve hold content that differs from `main` and must be kept pending
   owner review. `session/nightwatch-repository-hardening--e7b9be89` is now
   merged (`ahead=0`) and is held by a live registered worktree.
+- W1: the first enforced semantic-compat cone exposed 73 fixture failures
+  caused by the stricter checks (archive index on fixture roots, the
+  change↔task error on a READY successor change, copied module closures, and
+  an ACTIVE/STATE milestone mismatch). The fixture trees were brought to the
+  stricter contract; no check was weakened.
+- W1: Playwright's JSON reporter is the reliable skip-identity source when
+  directed to a file with `PLAYWRIGHT_JSON_OUTPUT_NAME` while the list
+  reporter keeps the human counts on stdout.
+- W1: `LEDGER_TERMINAL_TASK_HAS_OPEN_ITEMS` treats BLOCKED as terminal, so an
+  ownerless active change with open boxes is parked IN_PROGRESS with a named
+  blocker rather than BLOCKED.
 
 ## Blockers
 
-- G1.18 integration is externally blocked: the canonical checkout is dirty
-  with the untracked design-system planning artifact while two owned session
-  worktrees are live, so `WORKSPACE_CANONICAL_DIRTY_WHILE_SESSION_LIVE`
-  fails `session:status`, `agent:check`, `handoff:check` and `gate:local`.
-  The artifact belongs to another writer and is not touched; the unblock is
-  that writer committing or removing it.
-- G6.4/G6.5 are owner actions and remain open: the canonical
-  `CANONICAL_MAINTENANCE` claim naming
-  `nightwatch-control-center-render-truth-v1` (terminal COMPLETE) and the live
-  foreign session `nightwatch-repository-hardening--e7b9be89` (terminal
-  COMPLETE) must be cleared or released through the session CLI by their
-  owners. G6.6 waits on them; G6.10 per-branch deletion is a further owner
-  decision.
-- G13.8 is a pending owner decision, not a blocker on local work: the status
-  beyond `OPERATIONALLY_ACCEPTED` is unnamed, and the safe default remains
-  `OPERATIONALLY_ACCEPTED`; no code or document invents the name.
-- G13.10 cannot complete until the canonical checkout is clean: `gate:local`,
-  the full regression, the UI/browser lanes, integration and release all
-  traverse `WORKSPACE_CANONICAL_DIRTY_WHILE_SESSION_LIVE`, and the session work
-  is uncommitted by design until the session owner integrates.
-- Concurrent writers are live in this worktree (group 21 files were modified
-  during this session). Validation results above were taken after
-  `node bin/hardening-check.mjs` returned PASS; a re-run at integration time
-  is required if the concurrent surface changes again.
+- The remaining programme work is owner-gated: G3.11 (CI route), G5.3
+  (evidence reclaim), G6.4/G6.5/G6.10 (terminal claim and branch
+  dispositions), G8.7 (error taxonomy), G9.1 (egress for the advisory
+  query), G10.6/G10.13, G11.3, G12.3, G13.8 (status beyond
+  `OPERATIONALLY_ACCEPTED`), G14.6 (retained subsystems), G17.4 and G21.8
+  (live-smoke scope). Each needs a named owner action before its group can
+  execute; none is self-authorized.
+- G6.4/G6.5 remain open: the canonical RELEASED maintenance record naming
+  `nightwatch-control-center-render-truth-v1` and the live foreign session
+  `nightwatch-repository-hardening--e7b9be89` are cleared or released only by
+  their owners through the session CLI.
+- G2/F-02 `lanes:manual` for the 12 `MANUAL_OWNER` harnesses is not
+  delivered; the W1 validation change corrected the count to 12 without
+  implementing the route.
 
 ## Safety Events
 
@@ -539,23 +599,26 @@ NONE
 
 - Owner/organizational decisions named by the programme remain open; each is
   implemented as a record or gate, never self-authorized.
-- `nightwatch-production-observability-system-map-master-plan-v1` has open
-  boxes and no continuity-v2 task record; reported as
-  `LEDGER_CHANGE_WITHOUT_TASK`.
+- `nightwatch-production-observability-system-map-master-plan-v1` and
+  `nightwatch-control-center-design-system-v1` are parked IN_PROGRESS with
+  named owner blockers and continuity-v2 records.
 - `nightwatch-autonomous-bug-hunting-programme-v1` remains IN_PROGRESS and
   parked, as recorded by its predecessor campaigns.
+- `lanes:manual` (G2/F-02) remains the executable route for the 12
+  `MANUAL_OWNER` harnesses under one-shot owner authorization.
 
 ## Resume Recipe
 
-1. Read `SPEC.md`.
-2. Read `PLAN.md`.
-3. Inspect `git status`, `git log`, and `npm run session:status`.
-4. If `WORKSPACE_CANONICAL_DIRTY_WHILE_SESSION_LIVE` persists, continue the
-   next group's implementation; retry integration when the canonical is
-   clean.
-5. Continue from the first incomplete task group.
+1. Read `SPEC.md` and `PLAN.md`.
+2. Inspect `git status`, `git log`, and `npm run session:status`; the W1
+   session is released and removed, so start a fresh owned session when an
+   owner decision lands.
+3. Resolve the named owner decisions, then continue from the first open
+   group with its own focused validation and fast-forward integration.
+4. Never weaken a gate to make a group executable.
 
 ## Completion Snapshot
 
-The task is IN_PROGRESS; no completion snapshot exists yet. Nothing in this
-record claims completion, and no live HEAD or CI value is stored here.
+The task is IN_PROGRESS; W1 is complete and recorded, and the remaining
+groups await owner decisions. Nothing in this record claims task completion,
+and no live HEAD or CI value is stored here.

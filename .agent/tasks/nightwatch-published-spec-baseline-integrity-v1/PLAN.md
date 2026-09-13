@@ -36,10 +36,10 @@ markdown table; call-site in `bin/agent-state.mjs` so a malformed index fails
 
 ## Milestones
 
-- [ ] M1 — Parser and diagnostics (tasks 1.1–1.2).
-- [ ] M2 — Tests and the garbage-row repair (tasks 1.3–1.5).
-- [ ] M3 — Purpose rule and the 56 fills (tasks 2.1–2.4).
-- [ ] M4 — Closeout (tasks 3.1–3.3).
+- [x] M1 — Parser and diagnostics (tasks 1.1–1.2).
+- [x] M2 — Tests and the garbage-row repair (tasks 1.3–1.5).
+- [x] M3 — Purpose rule and the 56 fills (tasks 2.1–2.4).
+- [x] M4 — Closeout (tasks 3.1–3.3).
 
 ## Validation Strategy
 
