@@ -6,7 +6,7 @@ Title: Nightwatch production completion programme
 Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-production-completion-programme-v1
 Starting SHA: 36bd4930db978423f97e16f35250c2e66bfa112c
-Last validated implementation SHA: 53152cffe568312f70544ed758128a16fe5ff5f1
+Last validated implementation SHA: b1f1aa684fa1543b588f6af9095ad5393bbcb152
 Last checkpoint: W1 closed at `53152cff`; `gate:local` PASS at `6bc70522`
 (all eleven groups, receipt `receipt:sha256:204417295a4935d7857cb6b2`) and
 the full offline regression is 5127 passed / 18 skipped / 0 failed.
@@ -20,8 +20,8 @@ Authorization class: PRODUCTION_COMPLETION_PROGRAMME_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 36bd4930db978423f97e16f35250c2e66bfa112c
-LAST_VALIDATED_IMPLEMENTATION_SHA: 53152cffe568312f70544ed758128a16fe5ff5f1
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 53152cffe568312f70544ed758128a16fe5ff5f1
+LAST_VALIDATED_IMPLEMENTATION_SHA: b1f1aa684fa1543b588f6af9095ad5393bbcb152
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: b1f1aa684fa1543b588f6af9095ad5393bbcb152
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PHASE_PRODUCTION_COMPLETION_PROGRAMME_V1_STATUS: IN_PROGRESS
