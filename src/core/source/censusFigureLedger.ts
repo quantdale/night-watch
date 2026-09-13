@@ -278,7 +278,7 @@ export const GOVERNED_STATUS_KEYS: readonly GovernedStatusKey[] = Object.freeze(
   { key: 'FC_1_STATUS', currentValue: 'COMPLETE', kind: 'PROJECT', establishedBy: 'docs/CURRENT_STATE.md current status table' },
   { key: 'ENVIRONMENTAL_LANE_STATUS', currentValue: 'NO_RESIDUAL_FLAKE_REPRODUCED', kind: 'LANE_CLASS', establishedBy: 'docs/CURRENT_STATE.md current status table' },
   { key: 'PROJECT_COMPLETION_STATUS', currentValue: 'OPERATIONALLY_ACCEPTED', kind: 'PROJECT', establishedBy: 'docs/CURRENT_STATE.md current status table / nightwatch.project-state.v2', requiredInReadme: true },
-  { key: 'CI_STATUS', currentValue: 'EXECUTED_PASS', kind: 'PROJECT', establishedBy: 'docs/CURRENT_STATE.md current status table / nightwatch.project-state.v2' },
+  { key: 'CI_STATUS', currentValue: 'NOT_OBSERVED', kind: 'PROJECT', establishedBy: 'docs/CURRENT_STATE.md current status table / nightwatch.project-state.v2' },
   { key: 'AUTH_STATUS', currentValue: 'VALID', kind: 'PROJECT', establishedBy: 'docs/CURRENT_STATE.md current status table' },
   { key: 'REMOTE_CI_STATUS', currentValue: 'CONFIRMED_PASS_AT_HARDENING_CLOSURE', kind: 'PROJECT', establishedBy: 'docs/CURRENT_STATE.md current status table' },
   { key: 'PROJECT_VERDICT_EFFECT', currentValue: 'PRESERVE', kind: 'CAMPAIGN_DISPOSITION', establishedBy: 'docs/CURRENT_STATE.md current status table' },

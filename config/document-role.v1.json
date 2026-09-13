@@ -115,6 +115,27 @@
       "oldLineSha256": "sha256:7d18d1c30fd63995e4a483ee",
       "oldLineExcerpt": "> Durable memory for the next agent/session. Last updated: **2026-09-11**",
       "reason": "Closure reconciliation bumped the header date to the day its last change actually landed (2026-09-12); the statement is unchanged."
+    },
+    {
+      "id": "CORR-W1-001",
+      "path": "docs/CURRENT_STATE.md",
+      "oldLineSha256": "sha256:161de12adcc5046388ff8a4e",
+      "oldLineExcerpt": "> Durable memory for the next agent/session. Last updated: **2026-09-12**",
+      "reason": "W1 closure bumped the header date to the day its last change actually landed (2026-09-14); the statement is unchanged."
+    },
+    {
+      "id": "CORR-W1-002",
+      "path": "docs/CURRENT_STATE.md",
+      "oldLineSha256": "sha256:8be0ec4c0232fa9c865c88ca",
+      "oldLineExcerpt": "At the substantive baseline `c18db55` CI is",
+      "reason": "W1 advanced the substantive baseline and restated the CI narrative's current-state sentence; the historical c18db55 account itself is preserved byte-identically."
+    },
+    {
+      "id": "CORR-W1-003",
+      "path": "docs/CURRENT_STATE.md",
+      "oldLineSha256": "sha256:c59f56338a69524ebb0049f9",
+      "oldLineExcerpt": "`NO_STEPS_EXTERNAL_NON_EVIDENCE`: a run WAS inspected at this exact SHA and",
+      "reason": "W1 restated the CI narrative's current-state sentence as a historical checkpoint statement; the account itself is preserved."
     }
   ]
 }
