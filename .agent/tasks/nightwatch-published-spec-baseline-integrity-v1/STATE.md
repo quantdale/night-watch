@@ -84,6 +84,11 @@ Pending: `bin/lib/openspec-archive-index.mjs`,
 - `openspec validate --specs --strict` — 56 passed / 0 failed.
 - `openspec validate nightwatch-published-spec-baseline-integrity-v1 --strict`
   — PASS.
+- `npm run validation:universe` — PASS after registering
+  `bin/lib/openspec-archive-index.mjs` (BIN_SYNTAX) and the two new suites
+  (FULL_REGRESSION); stored `inventoryDigest` refreshed to the computed
+  `sha256:075a9b1397c5e7cf043c4cb9` under the existing G2/G3 convention.
+- `node bin/hardening-check.mjs` — PASS.
 
 ## Decisions Made During This Task
 
