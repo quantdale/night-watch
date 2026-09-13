@@ -288,3 +288,26 @@ Final local gate at `ea3b4a5e`: all eleven groups PASS with receipt
 `receipt:sha256:177b90fd4da55a8950813100`. Session and worktree cleanup:
 canonical maintenance claim released, foreign terminal session released and
 removed with its branch, attention=0.
+
+## Clean-checkout lane: executed evidence and narrowed defect
+
+`npm run gate:clean` was re-executed at `100eccb8` with the default budget and
+again at `02cdf1d2` with independently overridable budgets
+(`NIGHTWATCH_CLEAN_INSTALL_TIMEOUT_MS=1200000`,
+`NIGHTWATCH_CLEAN_GATE_TIMEOUT_MS=7200000`). Both runs: disposable Node 20
+install PASS, eight groups PASS (GATE_DEFINITION, STATIC, HARDENING,
+HANDOFF_TRUTH, PROJECT_TRUTH, AGENT_CONTINUITY, SEMANTIC_COMPATIBILITY,
+OWNER_PROVENANCE), then `SYNTHETIC_CAMPAIGN: TIMEOUT` with
+PATCH_INTEGRITY/WORKSPACE_INTEGRITY NOT_RUN. Second receipt
+`clean-receipt:sha256:b5d04c802a60a55e5decc4f7`. Raising the gate budget to two
+hours did not change the outcome, so the budget was not the only cause: the
+synthetic campaign completes in ~11 minutes under `gate:local` and on GitHub
+Actions at the same commit family, but hangs in the `CI=true` /
+`NIGHTWATCH_GATE_ENVIRONMENT=CLEAN_CHECKOUT` disposable clone. The clean lane
+therefore remains non-PROVEN and release condition 1 stays UNMET. The budget
+change is integrated at `02cdf1d2` with a live negative probe
+(`NIGHTWATCH_CLEAN_GATE_TIMEOUT_MS=1` yields a fail-closed
+`ENVIRONMENT_MISMATCH` receipt). Exact next action: run the synthetic campaign
+directly inside a disposable clone with per-test output to identify the
+hanging suite or environment assumption, fix it, then re-run `gate:clean` and
+reconcile the lane, condition 1, lane counts, README and the census ledger.
