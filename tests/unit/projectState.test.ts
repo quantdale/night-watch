@@ -426,7 +426,7 @@ function makeFixture(options: FixtureOptions = {}): Fixture {
     fs.mkdirSync(path.dirname(destination), { recursive: true });
     fs.copyFileSync(path.join(process.cwd(), relative), destination);
   }
-  for (const bin of ['bin/agent-state.mjs', 'bin/agent-continuity-protocol.mjs', 'bin/child-environment.mjs', 'bin/project-state-check.mjs', 'bin/workspace-integrity.mjs', 'bin/lib/operator-cli.mjs', 'bin/lib/openspec-ledger.mjs', 'bin/lib/programme-state.mjs', 'bin/lib/typescript-runtime-loader.mjs', 'bin/lib/validation-lane-state.mjs']) {
+  for (const bin of ['bin/agent-state.mjs', 'bin/agent-continuity-protocol.mjs', 'bin/child-environment.mjs', 'bin/project-state-check.mjs', 'bin/workspace-integrity.mjs', 'bin/lib/operator-cli.mjs', 'bin/lib/openspec-ledger.mjs', 'bin/lib/openspec-archive-index.mjs', 'bin/lib/programme-state.mjs', 'bin/lib/typescript-runtime-loader.mjs', 'bin/lib/validation-lane-state.mjs']) {
     const destination = path.join(root, bin);
     fs.mkdirSync(path.dirname(destination), { recursive: true });
     fs.copyFileSync(path.join(process.cwd(), bin), destination);

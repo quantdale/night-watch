@@ -272,6 +272,7 @@ function makeFixture(options: FixtureOptions = {}): Fixture {
     'bin/workspace-integrity.mjs',
     'bin/lib/programme-state.mjs',
     'bin/lib/openspec-ledger.mjs',
+    'bin/lib/openspec-archive-index.mjs',
     'bin/lib/operator-cli.mjs',
     'bin/lib/typescript-runtime-loader.mjs',
     'bin/lib/validation-lane-state.mjs',
@@ -294,6 +295,9 @@ function makeFixture(options: FixtureOptions = {}): Fixture {
     writeFile(root, `${route}/${file}`, `# Synthetic ${file}\n`);
   }
   writeFile(root, `${route}/specs/campaign-handoff/spec.md`, '# Synthetic handoff specification\n');
+  // Every active change needs a continuity record under the W1 change<->task
+  // error; a READY successor may still be a legacy placeholder record.
+  writeFile(root, `.agent/tasks/${routeCampaignId}/STATE.md`, `Task ID: ${routeCampaignId}\nStatus: IN_PROGRESS\n`);
   writeFile(root, 'AGENTS.md', '# Synthetic agent contract\n');
   writeFile(root, '.agent/EXECUTION_PROMPT.md', handoffHeader({
     status,

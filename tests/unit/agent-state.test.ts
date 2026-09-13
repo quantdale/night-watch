@@ -79,7 +79,7 @@ function protocolStrings(taskId: string, options: ProtocolOptions): { active: st
   const verdictEffectLine = options.verdictEffect === null ? '' : `PROJECT_VERDICT_EFFECT: ${options.verdictEffect ?? 'PRESERVE'}\n`;
   const activeMilestone = options.activeMilestone ?? 'M1';
   const activeNextAction = options.activeNextAction ?? 'run the synthetic validator test';
-  const stateMilestone = options.stateMilestone ?? 'synthetic';
+  const stateMilestone = options.stateMilestone ?? `Milestone ID: ${activeMilestone} — synthetic fixture`;
   const stateWip = options.stateWip ?? 'synthetic';
   const stateNextAction = options.stateNextAction ?? 'run the synthetic validator test';
   const stateBlockers = options.stateBlockers ?? 'None.';

@@ -8,7 +8,21 @@
     "project": "nightwatch",
     "workers": 1,
     "serial": true,
-    "expectedSkipPolicy": "only canonical skip identities may skip"
+    "expectedSkipPolicy": "only canonical skip identities may skip",
+    "canonicalSkipIdentities": [
+      {
+        "file": "tests/unit/phase14ContractReport.test.ts",
+        "reasonToken": "disposable snapshot not present in this environment"
+      },
+      {
+        "file": "tests/unit/phase14FreshSourceAdmission.test.ts",
+        "reasonToken": "requires disposable exact snapshot"
+      },
+      {
+        "file": "tests/unit/selfDevSandboxConfinement.test.ts",
+        "reasonToken": "uid semantics"
+      }
+    ]
   },
   "phaseSuites": [
     {

@@ -2,7 +2,7 @@
   "schemaVersion": "nightwatch.validation-universe.v1",
   "definitionName": "Nightwatch validation universe classification (NW-08)",
   "note": "Every discovered executable test or check belongs to exactly one class. AUTHORITATIVE_GATE is DERIVED from what the required gate lanes actually select and is therefore not declarable here; every other discovered file must appear below exactly once, with the reason it is not in the gate and the evidence lane that does cover it. A newly added test that is in no lane and no class fails the gate rather than joining the repository silently.",
-  "inventoryDigest": "sha256:075a9b1397c5e7cf043c4cb9",
+  "inventoryDigest": "sha256:af1792e06ac143fa4adf57ec",
   "classes": {
     "FULL_REGRESSION": {
       "reason": "Offline, deterministic suites that the full canonical regression executes. They are not in a required gate lane because the authoritative gate is bounded for CI runtime; leaving them unclassified is what made the gap invisible.",
@@ -95,10 +95,12 @@
         "tests/unit/rippleResourceReloadCausality.test.ts",
         "tests/unit/schemaVersionLifecycle.test.ts",
         "tests/unit/schemaVersionMigration.test.ts",
+        "tests/unit/semanticSkipIdentity.test.ts",
         "tests/unit/snapshotter.test.ts",
         "tests/unit/sourceAnalysisParity.test.ts",
         "tests/unit/syntheticFindingCampaign.test.ts",
         "tests/unit/target-preflight.test.ts",
+        "tests/unit/validationClassification.test.ts",
         "tests/unit/w10CampaignCapabilityCarry.test.ts",
         "tests/unit/w10CampaignYieldMetrics.test.ts",
         "tests/unit/w10LongRunResilience.test.ts",
@@ -106,9 +108,9 @@
         "tests/unit/w10YieldBenchmark.test.ts"
       ]
     },
-    "LIVE_APP_SMOKE": {
-      "reason": "Requires a running local product and owner authentication state, so it cannot execute in an offline gate. Absence is UNAVAILABLE, never PASS. Reasoned exemption (G21.8): these six checks build synthetic local state against loopback fixtures and never read the real owner capture artefact, so the real-artefact authenticated-capability pre-flight does not apply to them.",
-      "evidenceLane": "owner-run smoke against a local app with captured storage state",
+    "LOCAL_FIXTURE_SMOKE": {
+      "reason": "Local fixture smokes that the default Playwright testMatch and `npm test` execute. The G21.8 synthetic-state reason is preserved: these six checks build synthetic local state against loopback fixtures and never read the real owner capture artefact, so the real-artefact authenticated-capability pre-flight does not apply to them. They are not MANUAL_OWNER and they are not UNAVAILABLE: carrying them as never-executed was a classification defect.",
+      "evidenceLane": "npm test — the default canonical regression executes these fixture smokes",
       "files": [
         "scenarios/ripple/local.smoke.ts",
         "tests/smoke/authenticated.smoke.ts",
@@ -120,7 +122,7 @@
     },
     "BROWSER_WORKFLOW": {
       "reason": "Drives a real browser against the Control Center, so it needs a system Chrome and a built UI that the offline gate does not provide.",
-      "evidenceLane": "browser workflow lane — npm run test:browser on a qualified host",
+      "evidenceLane": "browser workflow lane — npm run control-center:ui:browser on a qualified host",
       "files": [
         "tests/browser/accessibilityCertification.browser.ts",
         "tests/browser/controlCenterBrowser.browser.ts",
@@ -148,7 +150,7 @@
     },
     "UI_LANE": {
       "reason": "Belongs to the UI package, which has its own lockfile, runner and typecheck; the root gate would need a second install to execute it.",
-      "evidenceLane": "ui/control-center — npm run typecheck && npm run test && npm run build",
+      "evidenceLane": "npm --prefix ui/control-center run typecheck && npm --prefix ui/control-center run test && npm --prefix ui/control-center run build",
       "files": [
         "ui/control-center/src/App.test.tsx",
         "ui/control-center/src/api.test.ts",
@@ -188,8 +190,10 @@
         "bin/lib/operator-cli.mjs",
         "bin/lib/operator-command-listing.mjs",
         "bin/lib/programme-state.mjs",
+        "bin/lib/semantic-skip-policy.mjs",
         "bin/lib/topology-gate.mjs",
         "bin/lib/typescript-runtime-loader.mjs",
+        "bin/lib/validation-classification.mjs",
         "bin/lib/validation-lane-state.mjs",
         "bin/lib/validation-universe.mjs",
         "bin/nightwatch-agent.mjs",

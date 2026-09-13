@@ -17,6 +17,10 @@ import { buildChildEnvironment } from './child-environment.mjs';
 import { loadTypeScriptModule } from './lib/typescript-runtime-loader.mjs';
 import { validateCampaignCertification } from './lib/campaign-certification.mjs';
 import {
+  classifyValidationTruth,
+  extractTestMatchGlobs,
+} from './lib/validation-classification.mjs';
+import {
   collectExportedNames,
   extractLoaderCallSites,
   findBinsWithoutExecutingTest,
@@ -968,6 +972,45 @@ function checkValidationUniverse() {
   if ((judgement.counts?.discovered ?? 0) < 100) {
     fail('validation universe discovered implausibly few tests; discovery is broken rather than clean');
   }
+  // Classification truth: the stored lane/class declarations, the default
+  // runner, package.json and the tracked Playwright configs must agree with
+  // each other, and a fixture may not fork the TypeScript loader.
+  let universeDeclaration;
+  let laneStateDeclaration;
+  let packageManifest;
+  let playwrightConfigSource;
+  let referenceGraph;
+  try {
+    universeDeclaration = JSON.parse(read('config/validation-universe.v1.json'));
+    laneStateDeclaration = JSON.parse(read('config/validation-lane-state.v1.json'));
+    packageManifest = JSON.parse(read('package.json'));
+    playwrightConfigSource = read('playwright.config.ts');
+    referenceGraph = JSON.parse(read('config/reference-graph.v1.json'));
+  } catch (error) {
+    fail(`validation classification inputs unreadable: ${String(error?.message ?? error).slice(0, 120)}`);
+    return;
+  }
+  const tracked = gitFiles();
+  const classification = classifyValidationTruth({
+    universe: universeDeclaration,
+    laneState: laneStateDeclaration,
+    packageScripts: packageManifest.scripts ?? {},
+    testMatchGlobs: extractTestMatchGlobs(playwrightConfigSource),
+    trackedPlaywrightConfigs: tracked.filter((file) => /^playwright[^/]*\.config\.ts$/.test(file)).sort(),
+    packageScriptValues: Object.values(packageManifest.scripts ?? {}),
+    binSources: tracked
+      .filter((file) => /^bin\/.*\.mjs$/.test(file))
+      .map((file) => ({ file, source: readIncludingComments(file) })),
+    retentionEvidence: JSON.stringify(referenceGraph.retention ?? []),
+    fixtureSources: tracked
+      .filter((file) => /^tests\/fixtures\/.*\.mjs$/.test(file))
+      .map((file) => ({ file, source: read(file) })),
+  });
+  for (const violation of classification.errors.slice(0, 12)) {
+    fail(`validation classification: ${violation.code}: ${violation.detail}`);
+  }
+  const remainingClassification = classification.errors.length - 12;
+  if (remainingClassification > 0) fail(`validation classification: ${remainingClassification} further violation(s)`);
 }
 
 function checkSyntax() {

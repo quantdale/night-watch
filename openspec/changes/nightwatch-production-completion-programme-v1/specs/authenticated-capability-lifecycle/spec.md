@@ -11,10 +11,14 @@ cookies unexpired for the session); `src/auth/directRunner.ts` and
 capture time, validity window, pre-flight staleness check or expiry signal
 exists for the artefact itself.
 
-Every authenticated capability depends on it: the 12 `MANUAL_OWNER` checks, the
-6 `LIVE_APP_SMOKE` checks, Phase 9B/10B DEV semantic acceptance,
+Every authenticated capability depends on it: the 12 `MANUAL_OWNER` checks,
+Phase 9B/10B DEV semantic acceptance,
 `journey:phase2c`, `explore:phase4`, `api:phase5`, `campaign:real`, and C-12
-passive observation.
+passive observation. The six fixture smokes formerly classified
+`LIVE_APP_SMOKE` are reclassified `LOCAL_FIXTURE_SMOKE` by
+`nightwatch-validation-classification-and-skip-truth-v1`: they build synthetic
+loopback state, never read the owner capture artefact (G21.8), and are not
+authenticated dependents.
 
 ## ADDED Requirements
 

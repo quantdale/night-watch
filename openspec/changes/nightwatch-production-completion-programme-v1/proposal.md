@@ -145,8 +145,8 @@ self-authorize.
   continuity-v2 task state.
 - `validation-lane-closure`: every declared lane resolves to `PROVEN`,
   `BLOCKED_EXTERNAL` or `UNAVAILABLE_CAPABILITY` with live evidence, including
-  the CI-topology clean gate and an executable route for the 18 never-run
-  checks.
+  the CI-topology clean gate and an executable route for the 12 never-run
+  `MANUAL_OWNER` checks.
 - `exact-head-ci-authority`: an executed exact-head CI run, or a recorded
   external block carrying its run identity, block class, owner action and
   revisit condition — never an uninspected lane and never a projected pass.
@@ -233,7 +233,7 @@ changes.
 **External and organizational dependencies, none of which an agent may
 self-authorize.** GitHub Actions billing or an alternative runner (F-02);
 authorized outbound network egress for one advisory query (F-11); DEV
-authentication for 18 checks (F-02) and for Phase 9B/10B (F-10); read-only
+authentication for 12 checks (F-02) and for Phase 9B/10B (F-10); read-only
 `mochi` repository access (F-04); a provider capability confirmation for the
 yield campaign (F-03); and owner decisions on evidence reclaim, 16 branches and
 the legacy task records (F-06, F-07).

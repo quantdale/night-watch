@@ -5,11 +5,13 @@
 // cannot become commands, flags, paths outside tests, or selectors.
 
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { buildChildEnvironment } from './child-environment.mjs';
 import { OPERATOR_CLI_SCHEMA, defineOperatorCli, invokedDirectly } from './lib/operator-cli.mjs';
+import { evaluateSemanticSkipPolicy } from './lib/semantic-skip-policy.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const manifestPath = path.join(root, 'config', 'semantic-compatibility.v1.json');
@@ -104,8 +106,13 @@ try {
   environment.NO_COLOR = '1';
   environment.NIGHTWATCH_HEADED = '0';
   for (const key of ['NIGHTWATCH_PROXY_PORT', 'NIGHTWATCH_PROXY_LEASE_TOKEN', 'NIGHTWATCH_PROXY_LEASE_PATH', 'NIGHTWATCH_PROXY_LEASE_OWNER_PID']) delete environment[key];
+  // The list reporter keeps the existing human counts; the JSON reporter
+  // (directed to a bounded temporary file, never stdout) carries the skip
+  // identities the policy compares.
+  const skipReportPath = path.join(os.tmpdir(), `nightwatch-semantic-compat-${process.pid}.json`);
+  environment.PLAYWRIGHT_JSON_OUTPUT_NAME = skipReportPath;
   const npx = process.platform === 'win32' ? 'npx.cmd' : 'npx';
-  const result = spawnSync(npx, ['playwright', 'test', ...files, '--project=nightwatch', '--workers=1'], {
+  const result = spawnSync(npx, ['playwright', 'test', ...files, '--project=nightwatch', '--workers=1', '--reporter=list', '--reporter=json'], {
     cwd: root,
     env: environment,
     encoding: 'utf8',
@@ -124,6 +131,37 @@ try {
   const failedLocations = [...output.matchAll(/^\s*\d+\)\s+\[[^\]]+\]\s+›\s+(tests\/(?:unit|smoke)\/[A-Za-z0-9._/-]+\.test\.ts):(\d+)(?::\d+)?\s+›/gm)]
     .slice(0, 16)
     .map((match) => `${match[1]}:${match[2]}`);
+
+  let skipReport = null;
+  try {
+    skipReport = JSON.parse(fs.readFileSync(skipReportPath, 'utf8'));
+  } catch {
+    skipReport = null;
+  }
+  try {
+    fs.rmSync(skipReportPath, { force: true });
+  } catch {
+    // A leftover temporary report is not evidence; removal is best-effort.
+  }
+  const skipPolicy = evaluateSemanticSkipPolicy({
+    report: skipReport,
+    canonicalSkipIdentities: manifest.execution?.canonicalSkipIdentities,
+    expectedSkipPolicy: manifest.execution?.expectedSkipPolicy,
+  });
+  const undeclaredSkips = skipPolicy.undeclared.slice(0, 16).map((identity) => `${identity.file}:${identity.line ?? '?'}`);
+  let outcome = result.status === 0 ? 'PASS' : result.error?.code === 'ETIMEDOUT' ? 'TIMEOUT' : 'TEST_FAILURE';
+  let exitCode = result.status === 0 ? 0 : 1;
+  if (skipPolicy.result === 'SKIP_POLICY_UNCONFIGURED') {
+    outcome = 'SKIP_POLICY_UNCONFIGURED';
+    exitCode = 1;
+  } else if (skipPolicy.result === 'UNDECLARED_SKIP') {
+    outcome = 'UNDECLARED_SKIP';
+    exitCode = 1;
+  } else if (skipReport === null) {
+    // Exit 0 without a readable report cannot be trusted as a pass.
+    outcome = 'SEMANTIC_COMPATIBILITY_REPORT_UNREADABLE';
+    exitCode = 1;
+  }
   const receipt = {
     schemaVersion: manifest.schemaVersion,
     phaseRange: manifest.requiredPhaseRange,
@@ -135,10 +173,16 @@ try {
     skipped,
     failed,
     failedLocations,
-    result: result.status === 0 ? 'PASS' : result.error?.code === 'ETIMEDOUT' ? 'TIMEOUT' : 'TEST_FAILURE',
+    skipPolicy: {
+      result: skipPolicy.result,
+      declared: skipPolicy.declared ?? 0,
+      undeclared: skipPolicy.undeclared.length,
+      undeclaredSkips,
+    },
+    result: outcome,
   };
   console.log(JSON.stringify(receipt));
-  process.exitCode = result.status === 0 ? 0 : 1;
+  process.exitCode = exitCode;
   }
 } catch (error) {
   console.error(JSON.stringify({ schemaVersion: 'nightwatch.semantic-compatibility.v1', result: 'CONFIG_INVALID', code: error instanceof Error ? error.message : 'SEMANTIC_COMPATIBILITY_INVALID' }));

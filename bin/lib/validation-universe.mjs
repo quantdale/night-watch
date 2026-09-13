@@ -31,6 +31,7 @@ export const VALIDATION_UNIVERSE_SCHEMA = 'nightwatch.validation-universe.v1';
  */
 export const VALIDATION_EXCLUSION_CLASSES = Object.freeze([
   'FULL_REGRESSION',
+  'LOCAL_FIXTURE_SMOKE',
   'LIVE_APP_SMOKE',
   'BROWSER_WORKFLOW',
   'MANUAL_OWNER',

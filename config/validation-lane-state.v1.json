@@ -48,11 +48,12 @@
     {
       "laneId": "full-regression",
       "classes": [
-        "FULL_REGRESSION"
+        "FULL_REGRESSION",
+        "LOCAL_FIXTURE_SMOKE"
       ],
       "class": "PROVEN",
       "command": "npm test",
-      "evidence": "full offline regression 4789 passed / 18 skipped / 0 failed at the certified implementation",
+      "evidence": "full offline regression executes the FULL_REGRESSION class and the six LOCAL_FIXTURE_SMOKE fixture smokes in the default canonical runner",
       "evidenceSha": "88e3c3fb52937ff303b0944cc22cfee624bf807e",
       "unblockCondition": null,
       "revisitDate": null
@@ -94,12 +95,11 @@
     {
       "laneId": "owner-manual",
       "classes": [
-        "MANUAL_OWNER",
-        "LIVE_APP_SMOKE"
+        "MANUAL_OWNER"
       ],
       "class": "UNAVAILABLE_CAPABILITY",
-      "command": "npm run lanes:manual -- --plan / --execute under one-shot owner authorization",
-      "evidence": "the 12 manual-owner harnesses and 6 live-app smokes are declared, classified and have never executed",
+      "command": "owner-authorized manual harness execution under one-shot authorization (the executable lanes:manual route remains production-completion G2/F-02 work and is not present)",
+      "evidence": "the 12 MANUAL_OWNER harnesses are declared and remain UNAVAILABLE_CAPABILITY until the owner-authorized executable route runs",
       "evidenceSha": "36bd4930db978423f97e16f35250c2e66bfa112c",
       "unblockCondition": "DEV authentication plus a separate one-shot owner authorization for the named checks (lanes:manual)",
       "revisitDate": "2026-10-11"

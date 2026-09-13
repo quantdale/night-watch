@@ -115,6 +115,11 @@ export function archivedChangeDirectories(root) {
  */
 export function inspectArchiveIndex(root) {
   const errors = [];
+  const archiveRoot = path.join(root, 'openspec', 'changes', 'archive');
+  if (!fs.existsSync(archiveRoot)) {
+    // A repository with no archive has no index to be wrong about.
+    return { errors: [], rows: [] };
+  }
   const file = path.join(root, ARCHIVE_INDEX_RELATIVE_PATH);
   let text;
   try {

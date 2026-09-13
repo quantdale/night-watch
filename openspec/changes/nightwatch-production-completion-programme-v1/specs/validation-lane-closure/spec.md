@@ -104,15 +104,22 @@ the totality rule R-12 established.
 - **THEN** the topology gate's suites are classified
 - **AND** `hardening:check` fails if any of them is unclassified
 
-### Requirement: The 18 authorization-gated checks SHALL have an executable route
+### Requirement: The 12 authorization-gated checks SHALL have an executable route
 
-`MANUAL_OWNER=12` and `LIVE_APP_SMOKE=6` are declared, classified, counted and
+**SUPERSEDED COUNT.** `nightwatch-validation-classification-and-skip-truth-v1`
+corrected this inventory: the never-run authorization-gated set is the **12**
+`MANUAL_OWNER` harnesses only. The six files formerly classified
+`LIVE_APP_SMOKE` execute under the default Playwright runner and are not
+authorization-gated; they are reclassified `LOCAL_FIXTURE_SMOKE` in the
+`full-regression` lane.
+
+`MANUAL_OWNER=12` are declared, classified, counted and
 have never run. Their blocker is DEV authentication plus a separate
 authorization, not a host capability, so they are correctly
 `UNAVAILABLE_CAPABILITY` today and incorrectly indistinguishable from work that
 can never be done.
 
-Each of the 18 SHALL carry, as data: the exact authorization class it requires,
+Each of the 12 SHALL carry, as data: the exact authorization class it requires,
 the exact credential or capability it needs, the command that would run it, the
 evidence it would produce, and the safety boundary it operates under. A single
 `npm run lanes:manual -- --plan` SHALL print that inventory without executing
@@ -125,15 +132,15 @@ read only by the existing owner-only auth path; no new credential surface is
 created, nothing is written to `artifacts/` or `.agent/` unredacted, and the
 existing redaction layer applies to every produced record.
 
-After an authorized execution each of the 18 SHALL resolve to `PROVEN` or to a
+After an authorized execution each of the 12 SHALL resolve to `PROVEN` or to a
 recorded failure with its evidence. A skipped check SHALL be recorded as
 skipped and SHALL NOT count toward any pass total, consistent with the existing
 `partialHostDependency` treatment in `config/campaign-certification.v1.json`.
 
 #### Scenario: the plan is printable without credentials
 - **WHEN** `npm run lanes:manual -- --plan` runs with no auth state present
-- **THEN** all 18 checks are listed with their authorization class, command and
-  expected evidence
+- **THEN** all 12 `MANUAL_OWNER` checks are listed with their authorization
+  class, command and expected evidence
 - **AND** no credential file is opened
 
 #### Scenario: execution without authorization fails closed

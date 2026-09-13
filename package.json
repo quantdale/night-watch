@@ -99,6 +99,7 @@
     "ai:local-canary": "node bin/ai-local-canary.mjs",
     "ai:owner-review": "node bin/ai-owner-review.mjs",
     "auth:capture": "node bin/auth-capture.mjs",
+    "auth:capture-synthetic": "playwright test --config=playwright.capture.synthetic.config.ts",
     "auth:configure": "node bin/auth-configure.mjs",
     "scenario": "node bin/nightwatch.mjs",
     "mutation:review": "node bin/review-mutation-campaign.mjs",
