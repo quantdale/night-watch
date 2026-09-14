@@ -10,12 +10,11 @@ Last validated implementation SHA: b1f1aa684fa1543b588f6af9095ad5393bbcb152
 Last checkpoint: W1 closed at `b1f1aa68`; `gate:local` PASS at `5b624a49`
 (all eleven groups, receipt `receipt:sha256:0fd9204ef3821e5acf597a1f`) and
 the full offline regression is 5127 passed / 18 skipped / 0 failed.
-Current milestone: G3..G21 — remaining owner-gated programme groups
-Next action: resolve the named owner decisions (G3.11 CI route, G5.3
-reclaim, G6.4/G6.5/G6.10, G8.7 taxonomy, G9.1 egress, G10.6/G10.13, G11.3,
-G12.3, G13.8, G14.6, G17.4, G21.8 scope) and continue the remaining groups
-G8, G9, G12, G18, G19, G21 and the open tails of G4, G5, G10, G14, G15,
-G16, G17 under their own authorizations.
+Current milestone: G21 local closeout (8.9 / 6.6 / 21.5 / 21.8 / 21.12–21.14)
+Next action: validate the G21 local closeout, then continue remaining
+agent-closable tails (G4 CLI migration, G5.8/G5.9, G8.11, G18, G19, G16,
+G17.2). Owner decisions stay OPEN (G3.11, G5.3, G6.4/G6.5/G6.10, G9.1,
+G10.6/G10.13, G11.3, G12.3, G13.8, G14.6, G17.4); none is self-authorized.
 Authorization class: PRODUCTION_COMPLETION_PROGRAMME_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
@@ -83,14 +82,15 @@ Do not rebuild unless live recon finds a concrete regression:
 ```
 CAMPAIGN: nightwatch-production-completion-programme-v1
 CHILD TASK: NONE
-WAVE: W1
-SESSION WORKTREE: NONE
+WAVE: G21_LOCAL_CLOSEOUT
+SESSION WORKTREE: session/nightwatch-production-completion-262d9dad
 
 IMPLEMENTATION AUTHORIZED:
-  the file surface each W1 change names in its own tasks.md, the programme
-  change's two spec files amended by W1 task 2.6, this task directory,
-  Nightwatch docs/OpenSpec state, commits/pushes/integration and local
-  certification from the owned session.
+  G21.8 pre-flight wiring and exemptions, G8.9 N/A ledger close, G6.6 live
+  attention verification, G21.5/21.12–21.14 evidence ticks, authenticated
+  capability docs dependents-list correction, this task directory, the
+  programme change ledger, Nightwatch docs/OpenSpec state, commits/pushes/
+  integration and local certification from the owned session.
 
 REAL PRODUCTION CONTACT:               NOT AUTHORIZED
 NEW API ROUTE / ADAPTER / AUTHORITY:   NOT AUTHORIZED

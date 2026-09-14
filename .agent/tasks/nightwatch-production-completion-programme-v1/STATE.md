@@ -12,14 +12,14 @@ Last validated implementation SHA: b1f1aa684fa1543b588f6af9095ad5393bbcb152
 Last substantive checkpoint SHA: b1f1aa684fa1543b588f6af9095ad5393bbcb152
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
-Branch: main
+Branch: session/nightwatch-production-completion-262d9dad
 Last checkpoint: W1 closed at implementation `b1f1aa68`: all 44 boxes of the
 three sibling audit changes are ticked with evidence, `gate:local` PASS at
 `5b624a49` (all eleven groups, receipt
 `receipt:sha256:0fd9204ef3821e5acf597a1f`) and the full offline regression is
-5127 passed / 18 skipped / 0 failed. The W1 session is released and the
-routing block declares canonical-only work (`SESSION WORKTREE: NONE`,
-`Branch: main`). The earlier certification at `880810ea` remains the
+5127 passed / 18 skipped / 0 failed. Session
+`nightwatch-production-completion-262d9dad` opened from that base for the
+G21 local closeout. The earlier certification at `880810ea` remains the
 pre-wave record (gate receipt `receipt:sha256:da8efb8334bad9b6e4d79931`,
 5085 passed).
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
@@ -40,17 +40,15 @@ external dependency with its blocking class and next action.
 
 ## Current Milestone
 
-Milestone ID: G3..G21 — remaining owner-gated programme groups
+Milestone ID: G21 local closeout (8.9 / 6.6 / 21.5 / 21.8 / 21.12–21.14)
 Milestone status: IN_PROGRESS
-What is being attempted: the programme's remaining groups after the W1
-truth-surface wave. W1 is closed: the three sibling audit changes
-(`nightwatch-continuity-live-waypoint-binding-v1`,
-`nightwatch-published-spec-baseline-integrity-v1`,
-`nightwatch-validation-classification-and-skip-truth-v1`) are applied,
-validated and recorded, and the minimum programme validation is green.
-Still open: G3, G8, G9, G12, G18, G19 and the remaining parts of G4, G5,
-G10, G14, G15, G16, G17, G21, most owner-gated. Full offline regression at
-the W1 checkpoint is 5127 passed / 18 skipped / 0 failed; UI lane PASS.
+What is being attempted: close the locally closable remainder of the
+owner-gate list without self-authorizing any owner decision. G8.9 is N/A
+(taxonomy adopted). G6.6 is live-verified (`attention=0`). G21.8 is restated
+against 12 MANUAL_OWNER checks with the last two runners handled as a
+synthetic write-path assertion and an unauthenticated exemption. G21.5 and
+G21.12–21.14 are ticked from existing evidence plus the dependents-list
+correction. Owner decisions remain OPEN.
 
 ## Completed Milestones
 
@@ -121,13 +119,13 @@ the W1 checkpoint is 5127 passed / 18 skipped / 0 failed; UI lane PASS.
 
 ## Work In Progress
 
-W1 is closed. The three sibling audit changes are applied, their 44 boxes
-are ticked with cited evidence, the new checks are negative-probed, and the
-W1 validation stack is green (gate receipt
-`receipt:sha256:204417295a4935d7857cb6b2`, full regression 5127 passed / 18
-skipped / 0 failed). The programme's own owner decisions (G3.11 CI route,
-G5.3 reclaim, G6.4/G6.5/G6.10, G8.7 taxonomy, G9.1 egress, G10.6/G10.13,
-G11.3, G12.3, G13.8, G14.6, G17.4, G21.8 scope) remain open and unchanged.
+W1 is closed. The G21 local closeout is in progress in session
+`nightwatch-production-completion-262d9dad`. Owner decisions remain OPEN
+and are not faked as taken: G3.11 CI route, G5.3 reclaim, G6.4/G6.5/G6.10,
+G9.1 egress, G10.6/G10.13, G11.3, G12.3, G13.8, G14.6, G17.4. G8.7 was
+already adopted; G8.9 is N/A; G21.8 is implemented locally; G6.6 is
+live-verified. `lanes:manual` (G2/F-02) stays unauthorized. Parked
+campaigns stay parked.
 
 ### Delegated closure addendum (G21 owner items, G14.1–14.5, 14.9–14.11)
 
@@ -165,12 +163,11 @@ clean rerun passed 81/81.
 
 ## Exact Next Action
 
-Resolve the programme's owner decisions (G3.11 CI route, G5.3 reclaim,
-G6.4/G6.5/G6.10, G8.7 taxonomy, G9.1 egress, G10.6/G10.13, G11.3, G12.3,
-G13.8, G14.6, G17.4, G21.8 scope) and then continue the remaining groups
-G8, G9, G12, G18, G19, G21 and the open tails of G4, G5, G10, G14, G15, G16,
-G17 under their own authorizations. Each group still runs its own focused
-validation and integrates by fast-forward before the next.
+Validate the G21 local closeout (focused auth suites, typecheck,
+hardening:check, agent:check, workspace:check), then integrate by
+fast-forward. Do not self-authorize remaining owner decisions. Next
+agent-closable work after this checkpoint: G4 remaining CLI migration,
+G5.8/G5.9, G8.11, G18, G19, G16, G17.2.
 
 ## Files Changed
 
@@ -255,7 +252,29 @@ validation and integrates by fast-forward before the next.
 | `openspec/changes/nightwatch-production-completion-programme-v1/specs/{validation-lane-closure,authenticated-capability-lifecycle}/spec.md`, `proposal.md` | 18→12 supersession | MODIFIED |
 | `.agent/tasks/*` | W1 continuity records and closures | MODIFIED |
 
+### G21 local closeout files
+
+| Path | Reason | Status |
+|---|---|---|
+| `src/auth/capabilityLifecycle.ts` | G21.8: exempt two non-consumer MANUAL_OWNER files; blocked lanes name the ten authenticated consumers | MODIFIED |
+| `tests/manual/auth-capture.synthetic.ts` | G21.8 write-path: assert lifecycle sidecar and VALID local preflight of the written artefact | MODIFIED |
+| `tests/manual/phase2a-canary.ts` | G21.8: unauthenticated exemption; refuses inherited storage state | MODIFIED |
+| `tests/unit/authCaptureLauncher.test.ts` | G21.8 12/10/2 wiring-or-exemption probe | MODIFIED |
+| `README.md`, `docs/HOST-CAPABILITY-MATRIX.md` | G21.12/21.13 dependents list: fixture smokes, synthetic capture, canary are not authenticated lanes | MODIFIED |
+| `openspec/changes/nightwatch-production-completion-programme-v1/tasks.md` | 6.6, 8.9, 21.5, 21.8, 21.12–21.14 ticked with evidence | MODIFIED |
+| `.agent/ACTIVE_TASK.md`, `STATE.md`, `PLAN.md`, `EXECUTION_PROMPT.md` | session routing and closeout waypoint | MODIFIED |
+
 ## Validation Ledger
+
+Command: `npx playwright test tests/unit/authCaptureLauncher.test.ts --workers=1` in session `nightwatch-production-completion-262d9dad`
+Result: PASS
+When: 2026-09-14
+Relevant failure/output summary: 10 passed, including G21.8 12/10/2 MANUAL_OWNER wiring-or-exemption probe.
+
+Command: `npm run typecheck`, `node bin/hardening-check.mjs`, `npm run agent:check`, `npm run workspace:check`, `npm run session:status`, `npm run handoff:check`, `npx playwright test tests/unit/nw14HostCapabilityMatrix.test.ts tests/unit/activeTaskRoutingBinding.test.ts --workers=1` in session `nightwatch-production-completion-262d9dad`
+Result: PASS
+When: 2026-09-14
+Relevant failure/output summary: hardening PASS; agent:check `strict_errors=0` with expected STALE_IMPLEMENTATION_BASELINE warning on uncommitted G21 files; workspace/session attention=0; handoff PASS; 25 matrix/routing tests passed. Programme ledger open count 77 → 70.
 
 Command: `npm run gate:local` at implementation `5b624a49`
 Result: PASS (all eleven required groups)
@@ -532,6 +551,11 @@ enforcement, sandbox and project state).
 
 ## Decisions Made During This Task
 
+Decision: 2026-09-14 — close only the locally evidenced remainder of the owner-gate list; leave owner decisions OPEN.
+Reason: the owner declined the decision form; self-authorizing CI, reclaim, branch deletion, egress, mochi access, 9B/10B, yield wave, status naming, dtoFramework, or schema-default policy is forbidden.
+Evidence/constraint: SPEC non-goals; live `session:status` attention=0; G8.7 already adopted; G21.8 10/12 consumers wired and 2 named exemptions.
+Consequence: 6.6, 8.9, 21.5, 21.8, 21.12–21.14 ticked; ledger open 77 → 70; remaining owner gates stay PENDING_OWNER_DECISION.
+
 Decision: implement all 21 groups serially in one owned session.
 Reason: the programme was untracked and unplanned; C-00 forbids canonical
 implementation, and each group is validated and integrated as a checkpoint.
@@ -593,15 +617,16 @@ Consequence: `CF-1`/`CF-2` live in the programme's `tasks.md`.
 
 - The remaining programme work is owner-gated: G3.11 (CI route), G5.3
   (evidence reclaim), G6.4/G6.5/G6.10 (terminal claim and branch
-  dispositions), G8.7 (error taxonomy), G9.1 (egress for the advisory
-  query), G10.6/G10.13, G11.3, G12.3, G13.8 (status beyond
-  `OPERATIONALLY_ACCEPTED`), G14.6 (retained subsystems), G17.4 and G21.8
-  (live-smoke scope). Each needs a named owner action before its group can
-  execute; none is self-authorized.
-- G6.4/G6.5 remain open: the canonical RELEASED maintenance record naming
-  `nightwatch-control-center-render-truth-v1` and the live foreign session
-  `nightwatch-repository-hardening--e7b9be89` are cleared or released only by
-  their owners through the session CLI.
+  dispositions), G9.1 (egress for the advisory query), G10.6/G10.13,
+  G11.3, G12.3, G13.8 (status beyond `OPERATIONALLY_ACCEPTED`), G14.6
+  (retained subsystems) and G17.4. Each needs a named owner action; none
+  is self-authorized. G8.7 is adopted; G8.9 is N/A; G21.8 is locally
+  closed; G6.6 is live-verified (`attention=0`).
+- G6.4 remains open: the canonical RELEASED maintenance record naming
+  `nightwatch-control-center-render-truth-v1` is cleared only by its owner
+  through the session CLI. G6.5 remains other-owner: the foreign
+  `nightwatch-repository-hardening--e7b9be89` worktree is no longer
+  registered on this host and was not released or deleted here.
 - G2/F-02 `lanes:manual` for the 12 `MANUAL_OWNER` harnesses is not
   delivered; the W1 validation change corrected the count to 12 without
   implementing the route.
@@ -625,12 +650,15 @@ NONE
 ## Resume Recipe
 
 1. Read `SPEC.md` and `PLAN.md`.
-2. Inspect `git status`, `git log`, and `npm run session:status`; the W1
-   session is released, so start a fresh owned session when an owner decision
-   lands.
-3. Resolve the named owner decisions, then continue from the first open
-   group with its own focused validation and fast-forward integration.
-4. Never weaken a gate to make a group executable.
+2. Inspect `git status`, `git log`, and `npm run session:status`; this
+   session is `nightwatch-production-completion-262d9dad`. Adopt it if
+   stale (`claim --task nightwatch-production-completion-programme-v1 --adopt`).
+3. If the G21 local closeout is uncommitted, finish its validation and
+   integrate. Then continue agent-closable tails. Owner decisions stay OPEN
+   unless the owner states a choice.
+4. Never weaken a gate to make a group executable. Never self-authorize
+   CI, reclaim, branch deletion, egress, mochi access, 9B/10B, yield wave,
+   status naming, dtoFramework, or schema-default policy.
 
 ## Completion Snapshot
 

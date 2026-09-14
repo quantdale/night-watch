@@ -13,6 +13,8 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import {
+  AUTHENTICATED_LANE_DEPENDENCIES,
+  AUTH_CAPABILITY_PREFLIGHT_EXEMPT_MANUAL_OWNER_FILES,
   AUTH_CAPABILITY_RECORD_SCHEMA,
   AUTH_CAPABILITY_RECORD_SUFFIX,
   adoptAuthCaptureRecord,
@@ -349,5 +351,34 @@ test.describe('authenticated capability lifecycle', () => {
     } finally {
       fs.rmSync(directory, { recursive: true, force: true });
     }
+  });
+
+  test('G21.8 — all 12 MANUAL_OWNER files are wired consumers or named exemptions', () => {
+    const universe = JSON.parse(fs.readFileSync(path.join(root, 'config/validation-universe.v1.json'), 'utf8')) as {
+      classes: { MANUAL_OWNER: { files: string[] } };
+    };
+    const manual = universe.classes.MANUAL_OWNER.files;
+    expect(manual).toHaveLength(12);
+    const exempt = AUTH_CAPABILITY_PREFLIGHT_EXEMPT_MANUAL_OWNER_FILES;
+    expect(exempt).toHaveLength(2);
+    for (const file of exempt) {
+      expect(manual, file).toContain(file);
+      const source = fs.readFileSync(path.join(root, file), 'utf8');
+      expect(source, `${file} must not consume owner-capture preflight`).not.toContain('assertAuthCapabilityPreflight(');
+      expect(source, `${file} must not consume owner-capture preflight`).not.toContain('requireValidAuthCapability(');
+    }
+    const wired = manual.filter((file) => !exempt.includes(file));
+    expect(wired).toHaveLength(10);
+    for (const file of wired) {
+      const source = fs.readFileSync(path.join(root, file), 'utf8');
+      expect(source, `${file} must call assertAuthCapabilityPreflight`).toContain('assertAuthCapabilityPreflight(');
+    }
+    const synthetic = fs.readFileSync(path.join(root, 'tests/manual/auth-capture.synthetic.ts'), 'utf8');
+    expect(synthetic).toContain('evaluateAuthCapabilityPreflight');
+    expect(synthetic).toContain('AUTH_CAPABILITY_RECORD_SUFFIX');
+    const canary = fs.readFileSync(path.join(root, 'tests/manual/phase2a-canary.ts'), 'utf8');
+    expect(canary).toContain('canary refuses inherited storage state');
+    expect(AUTHENTICATED_LANE_DEPENDENCIES.dev).toContain('MANUAL_OWNER_AUTHENTICATED_10_CHECKS');
+    expect(AUTHENTICATED_LANE_DEPENDENCIES.dev).not.toContain('MANUAL_OWNER_12_CHECKS');
   });
 });

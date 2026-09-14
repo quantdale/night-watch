@@ -4,6 +4,10 @@
 // Invoked only by bin/observe-canary.mjs after no-network preflight. It makes
 // one direct navigation and basic structural observation; it never loads
 // storage state, follows links, or clicks.
+//
+// G21.8: this is an unauthenticated canary, not an authenticated consumer.
+// The launcher blanks NIGHTWATCH_STORAGE_STATE; the test refuses inherited
+// storage state and never consumes owner-capture pre-flight.
 // ---------------------------------------------------------------------------
 
 import { test, expect } from '@playwright/test';

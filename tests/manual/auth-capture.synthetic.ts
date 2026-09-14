@@ -12,6 +12,10 @@ import { validateStorageStateFile } from '../../src/browser/fixtures/storageStat
 import { selectEnvironment } from '../../src/core/environment';
 import { OutboundPolicy } from '../../src/core/safety/outboundPolicy';
 import { runDirectAuthCapture } from '../../src/auth/directRunner';
+import {
+  AUTH_CAPABILITY_RECORD_SUFFIX,
+  evaluateAuthCapabilityPreflight,
+} from '../../src/auth/capabilityLifecycle';
 
 function readTextFiles(dir: string): string {
   return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
@@ -141,6 +145,14 @@ test('synthetic direct runner launches guarded browser and writes external state
     });
     expect(validateStorageStateFile(output)).toBe(output);
     expect(fs.existsSync(output)).toBe(true);
+    expect(result.authLifecycleRecordPath).toBe(`${output}${AUTH_CAPABILITY_RECORD_SUFFIX}`);
+    expect(fs.existsSync(result.authLifecycleRecordPath)).toBe(true);
+    const writtenPreflight = evaluateAuthCapabilityPreflight({
+      artefactPath: output,
+      environment: 'local',
+      targetOrigin: new URL(server.origin).origin,
+    });
+    expect(writtenPreflight.state).toBe('VALID');
     expect(result.summary.passed, JSON.stringify({ notes: result.summary.notes, proxy: result.summary.proxy })).toBe(true);
     expect(result.summary.proxy?.allowed).toBeGreaterThan(0);
     expect(result.summary.proxy?.violations).toBe(0);

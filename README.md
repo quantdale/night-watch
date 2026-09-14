@@ -33,10 +33,11 @@ falling back to an uncontained process. The deterministic proof is in
 
 ## Authenticated capability and its renewal
 
-Some lanes need a real authenticated session: the owner-manual checks, the
-live-app smokes, `journey:phase2c`, `explore:phase4`, `api:phase5`,
+Some lanes need a real authenticated session: the ten authenticated
+owner-manual harnesses, `journey:phase2c`, `explore:phase4`, `api:phase5`,
 `campaign:real`, the Phase 9B/10B DEV semantic runs, and C-12 passive
-observation. Authentication is always human-led: `npm run auth:capture` opens a
+observation. The six local fixture smokes, the synthetic capture harness, and
+the unauthenticated Phase 2A canary never read the owner capture artefact. Authentication is always human-led: `npm run auth:capture` opens a
 headed browser, the operator completes login and MFA, and Nightwatch never sees
 credentials. The Playwright storage-state file is written to an owner-supplied
 absolute path outside the repository.

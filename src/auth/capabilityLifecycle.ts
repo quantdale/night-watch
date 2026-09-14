@@ -74,20 +74,38 @@ export function authCapabilityRemedy(environment: string, artefactPath: string):
 }
 
 /**
+ * MANUAL_OWNER files that never consume the owner capture artefact.
+ *
+ * `auth-capture.synthetic.ts` writes a synthetic loopback artefact (the
+ * capture path already writes the lifecycle sidecar). `phase2a-canary.ts` is
+ * the unauthenticated connectivity canary and refuses inherited storage
+ * state. Neither is an authenticated consumer, so an absent/expired owner
+ * capture must not report them as blocked lanes (G21.8).
+ */
+export const AUTH_CAPABILITY_PREFLIGHT_EXEMPT_MANUAL_OWNER_FILES: readonly string[] = Object.freeze([
+  'tests/manual/auth-capture.synthetic.ts',
+  'tests/manual/phase2a-canary.ts',
+]);
+
+/**
  * Lanes explicitly exempt from the authenticated-capability pre-flight.
  *
- * The six LIVE_APP_SMOKE checks build their own synthetic local state against
- * loopback fixtures; they never read the real owner capture artefact, so no
- * real-artefact pre-flight applies and an absent/expired capture must not
- * report them as blocked lanes (G21.8 reasoned exemption).
+ * The six LOCAL_FIXTURE_SMOKE checks (historically LIVE_APP_SMOKE) build
+ * their own synthetic local state against loopback fixtures; they never
+ * read the real owner capture artefact. Combined with the two MANUAL_OWNER
+ * files above, an absent/expired capture must not report them as blocked
+ * lanes (G21.8 reasoned exemption).
  */
 export const AUTH_CAPABILITY_PREFLIGHT_EXEMPT_LANES: readonly string[] = Object.freeze([
   'LIVE_APP_SMOKE_6_CHECKS',
+  ...AUTH_CAPABILITY_PREFLIGHT_EXEMPT_MANUAL_OWNER_FILES,
 ]);
 
 /**
  * Lanes that cannot run without a currently-valid artefact for the named
- * environment. Kept as data so the refusal and the report agree.
+ * environment. Kept as data so the refusal and the report agree. The twelve
+ * MANUAL_OWNER files are ten authenticated consumers plus the two exemptions
+ * above; only the ten belong here.
  */
 export const AUTHENTICATED_LANE_DEPENDENCIES: Readonly<Record<string, readonly string[]>> = Object.freeze({
   dev: Object.freeze([
@@ -100,7 +118,7 @@ export const AUTHENTICATED_LANE_DEPENDENCIES: Readonly<Record<string, readonly s
     'phase10b:real',
     'observe:authenticated',
     'C12_PASSIVE_OBSERVATION',
-    'MANUAL_OWNER_12_CHECKS',
+    'MANUAL_OWNER_AUTHENTICATED_10_CHECKS',
   ]),
   next: Object.freeze(['auth:capture']),
   local: Object.freeze([]),

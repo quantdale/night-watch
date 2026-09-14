@@ -165,7 +165,7 @@ integration.
   pass.
 - Validation commands: `npm --prefix ui/control-center run test`,
   `npm run control-center:ui:browser`, `npm run validation:universe`.
-- **Status:** NOT_STARTED
+- **Status:** IN_PROGRESS
 
 ### G9 — Dependency and supply-chain currency
 

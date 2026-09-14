@@ -272,9 +272,14 @@ staging is the owner's action. Integration/release are the session owner's act.
 - [ ] 6.5 Release `nightwatch-repository-hardening--e7b9be89` through the
       session CLI, by its owner; never by directory deletion
       — OTHER-OWNER ACTION; current state verified, not performed (see record)
-- [ ] 6.6 Verify `session:status` reports `attention=0` with no
+- [x] 6.6 Verify `session:status` reports `attention=0` with no
       `CLAIM_TASK_TERMINAL` and C-00 invariants unchanged
-      — BLOCKED by 6.4/6.5; `attention=2` is the correct current reading
+      — verified 2026-09-14 in owned session
+      `nightwatch-production-completion-262d9dad`: `attention=0`,
+      `CLAIM_TASK_TERMINAL` absent, C-00 invariants PASS. The canonical
+      RELEASED render-truth record remains (6.4 still owner) and does not
+      raise attention after `100eccb8`. 6.5's foreign worktree is no longer
+      registered on this host.
 - [x] 6.7 Disposition all 31 legacy v1 records: migrated, or
       `PERMANENTLY_HISTORICAL` with a one-line reason; alter no existing line
 - [x] 6.8 Exclude declared-historical records from the warning count; assert
@@ -313,6 +318,14 @@ live `OWNED_SESSION` whose task
 
 6.6 is blocked by 6.4/6.5: `attention=2` is the truthful current reading until
 the two claims above are cleared through the session CLI.
+
+Addendum 2026-09-14 (session `nightwatch-production-completion-262d9dad`):
+live `session:status` reports `attention=0` with no `CLAIM_TASK_TERMINAL`.
+The canonical checkout still holds a RELEASED maintenance record naming
+`nightwatch-control-center-render-truth-v1` (6.4 remains owner action).
+The foreign `nightwatch-repository-hardening--e7b9be89` worktree is no
+longer registered on this host (6.5 remains other-owner; nothing was
+released or deleted by this session). 6.6 is therefore verified.
 
 6.7/6.8. All 31 legacy v1 records carry an appended, append-only
 `LEGACY_V1_DISPOSITION: PERMANENTLY_HISTORICAL — <one-line reason>`
@@ -468,7 +481,7 @@ outside this session). Integration and release are not performed here.
 - [x] 8.8 If adopted: map all 13 core evidence values with no default bucket;
       a fourteenth value fails the completeness assertion; assert at least one
       non-colour computed property differs
-- [ ] 8.9 If not adopted: render the statement that evidence status is not
+- [x] 8.9 If not adopted: render the statement that evidence status is not
       shown on the graph and name where it is; cover it by the contract-render
       guard
       — NOT APPLICABLE: the owner adopted the taxonomy (8.7/8.8); the flatness
@@ -1401,24 +1414,29 @@ reports the same 4. This session created no newly discovered file, so
       record without re-capture
 - [x] 21.4 Implement the pre-flight resolving `VALID`, `EXPIRED`,
       `WRONG_ENVIRONMENT`, `UNKNOWN_AGE`, `MISSING`, `UNREADABLE`
-- [ ] 21.5 Evaluate expiry with the existing `storageState.ts` cookie
+- [x] 21.5 Evaluate expiry with the existing `storageState.ts` cookie
       applicability logic; add a rule failing on a second implementation
-      (single evaluator reused and the one pre-existing second implementation
-      in `bin/phase23-dev.mjs` removed; the registered structural rule itself
-      is owner-blocked: `bin/hardening-check.mjs` belongs to another worker)
+      — `checkAuthenticatedCapabilitySingleEvaluator` in
+      `bin/hardening-check.mjs`; probe HC-078 detects a second `expires:`
+      evaluator while a non-matching `expires:` write does not. The earlier
+      owner-blocked registration is landed.
 - [x] 21.6 Refuse every non-`VALID` state before any browser context,
       subprocess, socket or file, with a distinct code and the re-capture
       remedy
 - [x] 21.7 Prove `UNKNOWN_AGE` refuses rather than proceeding optimistically
-- [ ] 21.8 Wire the pre-flight into all 18 authorization-gated checks,
+- [x] 21.8 Wire the pre-flight into all 12 `MANUAL_OWNER` checks,
       `journey:phase2c`, `explore:phase4`, `api:phase5`, `campaign:real` and
-      the C-12 path (all named bin launchers and 10 MANUAL_OWNER runners are
-      wired). Reasoned exemption: the six `LIVE_APP_SMOKE` checks build
-      synthetic local state against loopback fixtures and never read the real
-      owner capture artefact, so no real-artefact pre-flight applies; they are
-      not real authenticated lanes, remain unwired by design, and are not
-      reported as blocked lanes
-      (`AUTH_CAPABILITY_PREFLIGHT_EXEMPT_LANES` in `src/auth/capabilityLifecycle.ts`)
+      the C-12 path (all named bin launchers and 10 authenticated MANUAL_OWNER
+      runners are wired as consumers). W1 superseded the original "18
+      authorization-gated checks" count. Reasoned exemptions: the six
+      `LOCAL_FIXTURE_SMOKE` checks; `tests/manual/auth-capture.synthetic.ts`
+      (writes a synthetic artefact and asserts its lifecycle sidecar);
+      `tests/manual/phase2a-canary.ts` (unauthenticated; refuses inherited
+      storage state). They never read the owner capture artefact, remain
+      unwired as consumers, and are not reported as blocked lanes
+      (`AUTH_CAPABILITY_PREFLIGHT_EXEMPT_LANES` /
+      `MANUAL_OWNER_AUTHENTICATED_10_CHECKS` in
+      `src/auth/capabilityLifecycle.ts`)
 - [x] 21.9 Report authentication state from `status:local`,
       `observe:preflight` and `c12:preflight` reading metadata only — no
       browser, no host contact, no cookie value read
@@ -1426,13 +1444,23 @@ reports the same 4. This session created no newly discovered file, so
       budget, naming both durations
 - [x] 21.11 Surface present-and-expired on the Control Center as an epistemic
       class, distinct from absent
-- [ ] 21.12 Document in `README.md` and `docs/SAFETY_MODEL.md` that
+- [x] 21.12 Document in `README.md` and `docs/SAFETY_MODEL.md` that
       authenticated capability expires, that no automated renewal exists, and
-      why
-- [ ] 21.13 Record the dependency in `docs/HOST-CAPABILITY-MATRIX.md` so an
-      expired artefact yields `UNAVAILABLE_CAPABILITY`, not a failure
-- [ ] 21.14 Measure and document the renewal cadence from observed capture
-      lifetimes with the measurement date
+      why — README §Authenticated capability and SAFETY_MODEL F-21 boundary
+      state no automated renewal (credentials forbidden) and the re-capture
+      remedy. Dependents list corrected 2026-09-14: fixture smokes, synthetic
+      capture, and the unauthenticated canary are not authenticated lanes.
+- [x] 21.13 Record the dependency in `docs/HOST-CAPABILITY-MATRIX.md` so an
+      expired artefact yields `UNAVAILABLE_CAPABILITY`, not a failure —
+      matrix row names the ten authenticated owner-manual harnesses and the
+      exempt paths; expired/missing/unreadable/unknown-age/wrong-environment
+      are UNAVAILABLE_CAPABILITY with re-capture as the acquisition condition.
+- [x] 21.14 Measure and document the renewal cadence from observed capture
+      lifetimes with the measurement date — README and SAFETY_MODEL record
+      the 2026-09-12 measurement: owner-local store holds an artefact but no
+      lifecycle record (`UNKNOWN_AGE`); no cadence is claimed until a real
+      capture record exists. `measureAuthCaptureLifetimes` is the measurement
+      function.
 - [ ] 21.15 Full validation, integrate, release
 
 ## Carried forward from prior ledgers
