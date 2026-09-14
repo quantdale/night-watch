@@ -12,14 +12,16 @@ Last validated implementation SHA: b1f1aa684fa1543b588f6af9095ad5393bbcb152
 Last substantive checkpoint SHA: b1f1aa684fa1543b588f6af9095ad5393bbcb152
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
-Branch: session/nightwatch-open-spec-truth-closu-7138ca21
+Branch: main
 Last checkpoint: W1 closed at implementation `b1f1aa68`: all 44 boxes of the
 three sibling audit changes are ticked with evidence, `gate:local` PASS at
 `5b624a49` (all eleven groups, receipt
 `receipt:sha256:0fd9204ef3821e5acf597a1f`) and the full offline regression is
-5127 passed / 18 skipped / 0 failed. The earlier certification at `880810ea`
-remains the pre-wave record (gate receipt
-`receipt:sha256:da8efb8334bad9b6e4d79931`, 5085 passed).
+5127 passed / 18 skipped / 0 failed. The W1 session is released and the
+routing block declares canonical-only work (`SESSION WORKTREE: NONE`,
+`Branch: main`). The earlier certification at `880810ea` remains the
+pre-wave record (gate receipt `receipt:sha256:da8efb8334bad9b6e4d79931`,
+5085 passed).
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 36bd4930db978423f97e16f35250c2e66bfa112c
@@ -624,8 +626,8 @@ NONE
 
 1. Read `SPEC.md` and `PLAN.md`.
 2. Inspect `git status`, `git log`, and `npm run session:status`; the W1
-   session is released and removed, so start a fresh owned session when an
-   owner decision lands.
+   session is released, so start a fresh owned session when an owner decision
+   lands.
 3. Resolve the named owner decisions, then continue from the first open
    group with its own focused validation and fast-forward integration.
 4. Never weaken a gate to make a group executable.

@@ -84,7 +84,7 @@ Do not rebuild unless live recon finds a concrete regression:
 CAMPAIGN: nightwatch-production-completion-programme-v1
 CHILD TASK: NONE
 WAVE: W1
-SESSION WORKTREE: session/nightwatch-open-spec-truth-closu-7138ca21
+SESSION WORKTREE: NONE
 
 IMPLEMENTATION AUTHORIZED:
   the file surface each W1 change names in its own tasks.md, the programme
