@@ -285,8 +285,10 @@ staging is the owner's action. Integration/release are the session owner's act.
       `claim --task nightwatch-production-completion-programme-v1 --role
       MAINTENANCE --adopt` re-pointed the released canonical record to the
       active programme task (`sess-36dedce34085`, base `b14f9d74`); the
-      terminal-task name is gone and `session:status` reports the canonical
-      checkout `CANONICAL_MAINTENANCE` with `attention=0`.
+      record was released again after integration, so the canonical checkout
+      now carries a RELEASED maintenance record naming the active programme
+      task, the terminal-task name is gone, and `session:status` reports
+      `attention=0`.
 - [ ] 6.5 Release `nightwatch-repository-hardening--e7b9be89` through the
       session CLI, by its owner; never by directory deletion
       — OTHER-OWNER ACTION; current state verified, not performed (see record)

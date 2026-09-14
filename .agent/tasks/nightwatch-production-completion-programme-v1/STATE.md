@@ -297,6 +297,32 @@ G18.13 and G19.14 items. Owner decisions stay OPEN unless explicitly granted.
 
 ## Validation Ledger
 
+Command: `npm run gate:local` at consolidation documentation checkpoint
+`264ed74b`
+Result: PASS (all eleven required groups)
+When: 2026-09-14
+Relevant failure/output summary: receipt
+`receipt:sha256:b68ef740dad5bb6594d0fdea`; SEMANTIC_COMPATIBILITY 2120 / 2107
+passed / 13 skipped / 0 failed; SYNTHETIC_CAMPAIGN 1880 / 1880 with
+`deepContainmentLane: PROVEN`; OWNER_PROVENANCE 91; STATIC, HARDENING,
+HANDOFF_TRUTH, PROJECT_TRUTH, AGENT_CONTINUITY, PATCH_INTEGRITY and
+WORKSPACE_INTEGRITY PASS. Tree `3f8a1b3b`, byte-identical to the integrated
+`b14f9d74` checkpoint.
+
+Command: `npm run session:check`, `npm run workspace:check`,
+`npm run agent:check`, `npm run project:check`, `npm run handoff:check`,
+`openspec validate --all` at consolidation documentation checkpoint `264ed74b`
+Result: PASS
+When: 2026-09-14
+Relevant failure/output summary: workspace verdict PASS with `attention=0`
+and no `CLAIM_TASK_TERMINAL`; agent:check `strict_errors=0
+legacy_warnings=0` with the 35 pre-existing ledger warnings; project:check
+PASS; handoff PASS; OpenSpec 63/63. Integration verified:
+`git push origin main` advanced `b14f9d74..264ed74b`,
+`HEAD == origin/main`, and `git ls-remote --heads origin` reports only
+`refs/heads/main`. The canonical maintenance claim was released after
+integration.
+
 Command: focused G4/G5/G17 suites in session `nightwatch-production-completion-262d9dad`
 Result: PASS
 When: 2026-09-14
