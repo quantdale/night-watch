@@ -13,10 +13,10 @@ Last substantive checkpoint SHA: b1f1aa684fa1543b588f6af9095ad5393bbcb152
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-open-spec-truth-closu-7138ca21
-Last checkpoint: W1 closed at implementation `53152cff`: all 44 boxes of the
+Last checkpoint: W1 closed at implementation `b1f1aa68`: all 44 boxes of the
 three sibling audit changes are ticked with evidence, `gate:local` PASS at
-`6bc70522` (all eleven groups, receipt
-`receipt:sha256:204417295a4935d7857cb6b2`) and the full offline regression is
+`5b624a49` (all eleven groups, receipt
+`receipt:sha256:0fd9204ef3821e5acf597a1f`) and the full offline regression is
 5127 passed / 18 skipped / 0 failed. The earlier certification at `880810ea`
 remains the pre-wave record (gate receipt
 `receipt:sha256:da8efb8334bad9b6e4d79931`, 5085 passed).
@@ -254,6 +254,19 @@ validation and integrates by fast-forward before the next.
 | `.agent/tasks/*` | W1 continuity records and closures | MODIFIED |
 
 ## Validation Ledger
+
+Command: `npm run gate:local` at implementation `5b624a49`
+Result: PASS (all eleven required groups)
+When: 2026-09-14
+Relevant failure/output summary: final W1 checkpoint receipt
+`receipt:sha256:0fd9204ef3821e5acf597a1f`; SEMANTIC_COMPATIBILITY and
+SYNTHETIC_CAMPAIGN green with `skipPolicy` declared=13 undeclared=0.
+
+Command: `npm test` at implementation `5b624a49`
+Result: PASS
+When: 2026-09-14
+Relevant failure/output summary: full offline regression 5127 passed / 18
+skipped / 0 failed (5145 enumerated).
 
 Command: `npm run gate:local` at implementation `6bc70522`
 Result: PASS (all eleven required groups)

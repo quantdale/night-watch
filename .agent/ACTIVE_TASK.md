@@ -7,8 +7,8 @@ Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-production-completion-programme-v1
 Starting SHA: 36bd4930db978423f97e16f35250c2e66bfa112c
 Last validated implementation SHA: b1f1aa684fa1543b588f6af9095ad5393bbcb152
-Last checkpoint: W1 closed at `53152cff`; `gate:local` PASS at `6bc70522`
-(all eleven groups, receipt `receipt:sha256:204417295a4935d7857cb6b2`) and
+Last checkpoint: W1 closed at `b1f1aa68`; `gate:local` PASS at `5b624a49`
+(all eleven groups, receipt `receipt:sha256:0fd9204ef3821e5acf597a1f`) and
 the full offline regression is 5127 passed / 18 skipped / 0 failed.
 Current milestone: G3..G21 — remaining owner-gated programme groups
 Next action: resolve the named owner decisions (G3.11 CI route, G5.3
