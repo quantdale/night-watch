@@ -12,16 +12,21 @@ Last validated implementation SHA: b1f1aa684fa1543b588f6af9095ad5393bbcb152
 Last substantive checkpoint SHA: b1f1aa684fa1543b588f6af9095ad5393bbcb152
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
-Branch: session/nightwatch-production-completion-262d9dad
-Last checkpoint: W1 closed at implementation `b1f1aa68`: all 44 boxes of the
-three sibling audit changes are ticked with evidence, `gate:local` PASS at
-`5b624a49` (all eleven groups, receipt
-`receipt:sha256:0fd9204ef3821e5acf597a1f`) and the full offline regression is
-5127 passed / 18 skipped / 0 failed. Session
-`nightwatch-production-completion-262d9dad` opened from that base for the
-G21 local closeout. The earlier certification at `880810ea` remains the
-pre-wave record (gate receipt `receipt:sha256:da8efb8334bad9b6e4d79931`,
-5085 passed).
+Branch: main
+Last checkpoint: G6.10/G6.11 owner-approved single-branch consolidation at
+`f3a31ed9` (tree byte-identical to the integrated `b14f9d74` checkpoint,
+`3f8a1b3b`): local `main` was fast-forwarded to `b14f9d74`; every session
+branch and stale checkpoint ref was ancestry-merged into `main` and deleted;
+the live session worktree was released and removed through the session CLI;
+the retired isolated clone's stale swarm refs and unreachable WIP commits
+were preserved by ancestry; the stale canonical maintenance claim was
+re-pointed. Only `main` remains locally and on `origin`. The earlier W1
+record: implementation `b1f1aa68`, all 44 boxes of the three sibling audit
+changes ticked with evidence, `gate:local` PASS at `5b624a49` (all eleven
+groups, receipt `receipt:sha256:0fd9204ef3821e5acf597a1f`) and the full
+offline regression 5127 passed / 18 skipped / 0 failed. The `880810ea`
+certification remains the pre-wave record (gate receipt
+`receipt:sha256:da8efb8334bad9b6e4d79931`, 5085 passed).
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 36bd4930db978423f97e16f35250c2e66bfa112c
@@ -40,11 +45,14 @@ external dependency with its blocking class and next action.
 
 ## Current Milestone
 
-Milestone ID: G4/G5/G17 local closeout
-Milestone status: IN_PROGRESS
-What is being attempted: close locally evidenced G5.8/G5.9/G17.2 and migrate
-the observe-* launchers onto the shared operator CLI. Owner decisions remain
-OPEN. G4.5 stays partial (38/65 bins conforming).
+Milestone ID: G6.10/G6.11 owner-approved single-branch consolidation
+Milestone status: COMPLETE_LOCAL
+What is being attempted: nothing further in this milestone. The owner directed
+that everything be merged into `main`, that only `main` remain locally and
+remotely, and that nothing be lost; the consolidation is integrated and the
+repository is single-branch. Continuation returns to the remaining
+owner-gated programme groups (G16 tails, G8, G9, G12, G18, G19, G21). The
+preceding local closeout wave remains integrated at `b14f9d74`.
 
 ## Completed Milestones
 
@@ -97,6 +105,21 @@ OPEN. G4.5 stays partial (38/65 bins conforming).
   non-merged branches are classified from the actual diff against
   `origin/main`, citing their unique commits, in the programme `tasks.md`.
 
+- **G6.10/G6.11 COMPLETE_LOCAL** — owner-approved single-branch consolidation
+  (2026-09-14): the owner directed that everything be merged into `main` and
+  that only `main` remain locally and remotely with nothing lost. Executed:
+  local `main` fast-forwarded to `b14f9d74`; 17 session branches (the live
+  session branch, already contained, plus 16 with unique commits) and 2 stale
+  cline checkpoint refs ancestry-merged (`git merge --no-ff -s ours`,
+  tree-neutral); every branch and checkpoint ref deleted; the live session
+  worktree released and removed through the session CLI (`contained=true`);
+  the retired isolated clone's 36 stale remote-tracking swarm refs and 22
+  unreachable WIP commits preserved by a recorded ancestry merge; the stale
+  canonical maintenance claim re-pointed to this task. Every retired tip is
+  an ancestor of `main` and the tree is byte-identical before and after
+  (`3f8a1b3b`). Evidence: programme `tasks.md` G6 addendum 2026-09-14,
+  `session:status`/`workspace:check` PASS with `attention=0`.
+
 - **G13 COMPLETE_LOCAL** — release definition and verdict:
   `config/release-certification.v1.json` declares the ordered advance
   conditions each backed by a registered check; `src/core/releaseCertification/index.ts`
@@ -121,6 +144,13 @@ the census ledger and matrix §1, and migrates observe-canary,
 observe-preflight, observe-gate and observe-authenticated onto
 `defineOperatorCli` (sweep 38 conforming / 27 undeclared). Owner decisions
 remain OPEN. `lanes:manual` stays unauthorized. Parked campaigns stay parked.
+
+The owner-approved single-branch consolidation is integrated at `f3a31ed9`
+(tree `3f8a1b3b`, identical to `b14f9d74`). All session branches, the live
+session worktree, the stale checkpoint refs and the retired isolated clone
+are consolidated into `main` with every retired commit an ancestor; the
+canonical maintenance claim is re-pointed. See the G6.10/G6.11 milestone
+above and the programme `tasks.md` 2026-09-14 addendum.
 
 ### Delegated closure addendum (G21 owner items, G14.1–14.5, 14.9–14.11)
 
@@ -158,9 +188,9 @@ clean rerun passed 81/81.
 
 ## Exact Next Action
 
-Validate this G4/G5/G17 wave, commit and integrate. Next agent-closable
-work: remaining G4 bins (27 undeclared), G16.5/16.9–16.11, G8.11, G18.13,
-G19.14. Owner decisions stay OPEN.
+The single-branch consolidation is integrated; only `main` exists locally and
+on `origin`. Next agent-closable work: the G16 tails, the remaining G8.11,
+G18.13 and G19.14 items. Owner decisions stay OPEN unless explicitly granted.
 
 ## Files Changed
 
@@ -256,6 +286,14 @@ G19.14. Owner decisions stay OPEN.
 | `README.md`, `docs/HOST-CAPABILITY-MATRIX.md` | G21.12/21.13 dependents list: fixture smokes, synthetic capture, canary are not authenticated lanes | MODIFIED |
 | `openspec/changes/nightwatch-production-completion-programme-v1/tasks.md` | 6.6, 8.9, 21.5, 21.8, 21.12–21.14 ticked with evidence | MODIFIED |
 | `.agent/ACTIVE_TASK.md`, `STATE.md`, `PLAN.md`, `EXECUTION_PROMPT.md` | session routing and closeout waypoint | MODIFIED |
+
+### G6.10/G6.11 consolidation files (2026-09-14)
+
+| Path | Reason | Status |
+|---|---|---|
+| `.agent/ACTIVE_TASK.md` | canonical-only routing (`SESSION WORKTREE: NONE`, `WAVE: G6_BRANCH_CONSOLIDATION`) and the consolidation waypoint | MODIFIED |
+| `.agent/tasks/nightwatch-production-completion-programme-v1/STATE.md` | consolidation milestone, `Branch: main`, checkpoint and validation ledger | MODIFIED |
+| `openspec/changes/nightwatch-production-completion-programme-v1/tasks.md` | 6.4/6.10/6.11 ticked with evidence plus the 2026-09-14 addendum | MODIFIED |
 
 ## Validation Ledger
 

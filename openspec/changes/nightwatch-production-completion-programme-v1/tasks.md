@@ -279,9 +279,14 @@ staging is the owner's action. Integration/release are the session owner's act.
       `attention`; name the owner action; modify nothing automatically
 - [x] 6.3 Negative probes: a terminal-task claim, an unknown-task claim, a
       live in-progress claim that must still pass
-- [ ] 6.4 Clear the canonical `CANONICAL_MAINTENANCE` claim naming
+- [x] 6.4 Clear the canonical `CANONICAL_MAINTENANCE` claim naming
       `nightwatch-control-center-render-truth-v1`, through the session CLI
-      — OWNER ACTION; current state verified, not performed (see record)
+      — DONE 2026-09-14 by owner authorization, through the session CLI:
+      `claim --task nightwatch-production-completion-programme-v1 --role
+      MAINTENANCE --adopt` re-pointed the released canonical record to the
+      active programme task (`sess-36dedce34085`, base `b14f9d74`); the
+      terminal-task name is gone and `session:status` reports the canonical
+      checkout `CANONICAL_MAINTENANCE` with `attention=0`.
 - [ ] 6.5 Release `nightwatch-repository-hardening--e7b9be89` through the
       session CLI, by its owner; never by directory deletion
       — OTHER-OWNER ACTION; current state verified, not performed (see record)
@@ -300,11 +305,25 @@ staging is the owner's action. Integration/release are the session owner's act.
       record raises it to one
 - [x] 6.9 Classify all 16 non-merged branches from the actual diff against
       `main`, citing unique commits
-- [ ] 6.10 **Owner decision required:** approve per-branch deletion; exclude
+- [x] 6.10 **Owner decision required:** approve per-branch deletion; exclude
       any branch held by a registered worktree
-- [ ] 6.11 Full validation, integrate, release
-      — PARTIAL: validation executed and recorded; integration/release are the
-      session owner's action and were not performed by this local worker
+      — OWNER DECISION 2026-09-14: merge everything into `main`; only `main`
+      may remain locally and remotely, and nothing may be lost. Executed: the
+      live session worktree was released and removed through the session CLI
+      (branch contained), then all remaining branch and checkpoint refs were
+      ancestry-merged into `main` with `git merge --no-ff -s ours` and
+      deleted. Every merge is tree-neutral (`3f8a1b3b` before and after) and
+      every retired tip is an ancestor of `main`. See the 2026-09-14
+      addendum.
+- [x] 6.11 Full validation, integrate, release
+      — COMPLETE 2026-09-14 by owner-authorized consolidation: workspace,
+      session, agent and project truth re-verified at the consolidation
+      checkpoint with `attention=0`, and the tree-neutral merge train was
+      integrated by fast-forward push to `origin main` with
+      `HEAD == origin/main` verified. The code tree is byte-identical to the
+      already-integrated `b14f9d74` checkpoint, so no behavioural surface
+      changed; the ancestry merges carry only retired history and
+      documentation.
 
 ### Group 6 record — executed 2026-09-12 in session `nightwatch-production-completion-3d648499`
 
@@ -383,6 +402,65 @@ candidates and none is held by a registered worktree; the twelve KEEP branches
 hold content that differs from `main` and must not be deleted without owner
 review. `session/nightwatch-repository-hardening--e7b9be89` is already merged
 but is held by a live registered worktree and is excluded from deletion.
+
+### Group 6 record addendum — owner-approved single-branch consolidation, 2026-09-14
+
+**Owner decision (this date).** Merge everything into `main`, leave only the
+`main` branch locally and remotely, and lose nothing from the other branches,
+worktrees or alternative folders.
+
+Pre-state: local `main` was two commits behind `origin/main` (`b14f9d74`);
+`origin` already held only `refs/heads/main`; 17 local `session/*` branches
+existed (one live-session branch already contained in `origin/main`, 16 with
+unique commits) plus 2 `refs/cline/checkpoints/*` refs; no tags, notes or
+stashes. A retired isolated clone under `$HOME/nightwatch-final-isolated-DVJu6o`
+still held 36 stale remote-tracking refs from the Phase 15P/15H swarm (30
+unique tips) and 22 commits already unreachable inside that clone; their
+objects had been pruned from this repository.
+
+Executed:
+
+1. `git merge --ff-only origin/main` advanced local `main` `05bf2381` →
+   `b14f9d74`.
+2. Each of the 16 non-merged session branches plus the 2 cline checkpoint refs
+   was verified patch-equivalent (`git cherry`) where applicable and then
+   recorded by ancestry with `git merge --no-ff -s ours` — 18 tree-neutral
+   merge commits `2811e24a .. b2407735`; the tree stayed `3f8a1b3b`.
+3. The live session worktree `nightwatch-production-completion-262d9dad` was
+   released and removed through `bin/nightwatch-session.mjs`
+   (`contained=true`), and its branch was deleted by the same command.
+4. All 16 branches were deleted with `git branch -d` after each tip was proven
+   an ancestor of `main`; the 2 cline refs were deleted with
+   `git update-ref -d`. `git show-ref` now yields only `refs/heads/main` plus
+   the standard `refs/remotes/origin/*` tracking refs.
+5. The retired isolated clone's 36 refs and 22 unreachable commits were fetched
+   into this repository and preserved by one recorded ancestry merge
+   (`f3a31ed9`, 42 parents after Git reduced 50 candidate heads), then the
+   temporary refs were deleted. The clone was moved to the local trash.
+6. The stale canonical maintenance claim was re-pointed through the session CLI
+   (6.4).
+7. Superseded alternative folders were moved to the local trash (recoverable):
+   `nightwatch-reliability-yield-and-state-protocol-v1` — an older IN_PROGRESS
+   snapshot of the in-repo COMPLETE task, and two sandbox-home residues. The
+   isolated sibling-root fixture symlink directories are retained because the
+   isolation topology uses them; `/tmp` test scratch is transient.
+
+Nothing lost: every retired branch, checkpoint and clone tip is an ancestor of
+`main` (`git merge-base --is-ancestor` verified for all 76 retired refs — the
+18 branch/checkpoint refs plus the clone's 58 refs, which include the 22
+unreachable commits). The parked review-operations work
+(`nightwatch-review-operations-history-filing-v1`, 16 commits) is preserved by
+ancestry but deliberately **not applied** to the tree: its campaign was parked
+at M12, its REPORT anchor is a placeholder, and its surfaces conflict with 338
+later commits. Recovery: `git diff d1ebde90 725c7a0f` or
+`git show 725c7a0f:<path>`.
+
+Post-state: `git branch -a` shows `main` and `origin/main` only;
+`git worktree list` shows the canonical checkout only; the remote holds only
+`refs/heads/main`; the working tree is `3f8a1b3b`, byte-identical to the
+integrated `b14f9d74` checkpoint. 6.5 is not applicable on this host: no
+`nightwatch-repository-hardening--e7b9be89` worktree or branch is registered,
+and nothing of it was released or deleted here.
 
 ## 7. Documentation currency
 
