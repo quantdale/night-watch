@@ -225,6 +225,9 @@ staging is the owner's action. Integration/release are the session owner's act.
       `quality-gate.mjs local --help` prints usage and exits within one second
 - [ ] 4.5 Migrate the remaining 61 entry points in batches; the sweep counts
       conformance in reporting mode throughout
+      — PARTIAL 2026-09-14: observe-canary, observe-preflight, observe-gate
+      and observe-authenticated now declare `defineOperatorCli`. Remaining
+      top-level bins stay undeclared; the sweep stays in reporting mode.
 - [ ] 4.6 Apply the exit-code convention: 0 success, 1 failure, 2 usage,
       3 fail-closed refusal, 4 external block
 - [ ] 4.7 Bring existing JSON emitters to the convention without changing their
@@ -252,10 +255,20 @@ staging is the owner's action. Integration/release are the session owner's act.
       the 4 `.tmp-*` trees; dry-run lists exactly what it would remove
 - [x] 5.7 Assert `hygiene:clean` never touches `artifacts/`, the finding store,
       the review store or any tracked file; `git status --porcelain` unchanged
-- [ ] 5.8 Structural rule rejecting a new root-level output or scratch path
-- [ ] 5.9 Measure the steady-state footprint (checkout, `node_modules`, one
+- [x] 5.8 Structural rule rejecting a new root-level output or scratch path
+      — `checkRootOutputRootOwnership` and `checkRootOutputConfigLiteral` in
+      `bin/hardening-check.mjs`; probes HC for both directions of the owned
+      roots (`test-results`, `.tmp-nightwatch`) vs historical siblings vs
+      `.gitignore` vocabulary; no tracked path may live under an ephemeral
+      root. Live `hardening:check` PASS.
+- [x] 5.9 Measure the steady-state footprint (checkout, `node_modules`, one
       run's artifacts, accumulated evidence); record it in
       `docs/HOST-CAPABILITY-MATRIX.md` §1 under the census-figure ledger
+      — re-measured 2026-09-14 in the canonical checkout (`du -sm`): source
+      34 MiB, git 27 MiB, root node_modules 48 MiB, typical run 32 KiB
+      (median of 143 run dirs), accumulated evidence 42 MiB, runner output
+      1 MiB, scratch 1 MiB. Figures are `CENSUS_FIGURES` DISK_* measures and
+      tagged in matrix §1.
 - [ ] 5.10 Full validation, integrate, release
 
 ## 6. Workspace and continuity drift closure
@@ -1191,8 +1204,13 @@ remain the session owner's action exactly as recorded for the programme; no
 
 - [x] 17.1 Declare all 319 schema identifiers: persisted or in-memory, store
       location where persisted, current version, versions still accepted
-- [ ] 17.2 Fail on an undeclared schema literal and on a declaration naming a
+- [x] 17.2 Fail on an undeclared schema literal and on a declaration naming a
       schema that no longer exists; assert a non-zero discovered count
+      — `checkSchemaLifecycle` loads `src/core/schemaLifecycle/check.ts`;
+      empty scan fails `SCHEMA_SCAN_EMPTY`; undeclared identifiers and
+      stale declarations fail by finding code. Probe HC-083. Live
+      `node bin/schema-lifecycle.mjs check` PASS 2026-09-14:
+      discovered=388 families=365 persisted=98.
 - [x] 17.3 Require a migration disposition — `MIGRATE`, `READ_COMPATIBLE` or
       `ORPHAN` — on every persisted version change; fail when absent
 - [ ] 17.4 **Owner decision required:** whether one disposition is the presumed

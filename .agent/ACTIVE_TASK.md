@@ -10,11 +10,10 @@ Last validated implementation SHA: b1f1aa684fa1543b588f6af9095ad5393bbcb152
 Last checkpoint: W1 closed at `b1f1aa68`; `gate:local` PASS at `5b624a49`
 (all eleven groups, receipt `receipt:sha256:0fd9204ef3821e5acf597a1f`) and
 the full offline regression is 5127 passed / 18 skipped / 0 failed.
-Current milestone: G21 local closeout (8.9 / 6.6 / 21.5 / 21.8 / 21.12–21.14)
-Next action: validate the G21 local closeout, then continue remaining
-agent-closable tails (G4 CLI migration, G5.8/G5.9, G8.11, G18, G19, G16,
-G17.2). Owner decisions stay OPEN (G3.11, G5.3, G6.4/G6.5/G6.10, G9.1,
-G10.6/G10.13, G11.3, G12.3, G13.8, G14.6, G17.4); none is self-authorized.
+Current milestone: G4/G5/G17 local closeout
+Next action: validate this wave (operator-cli sweep, schema:check,
+hardening, matrix census), then continue remaining G4 bins and G16.
+Owner decisions stay OPEN; none is self-authorized.
 Authorization class: PRODUCTION_COMPLETION_PROGRAMME_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
@@ -82,15 +81,15 @@ Do not rebuild unless live recon finds a concrete regression:
 ```
 CAMPAIGN: nightwatch-production-completion-programme-v1
 CHILD TASK: NONE
-WAVE: G21_LOCAL_CLOSEOUT
+WAVE: G4_G5_G17_LOCAL
 SESSION WORKTREE: session/nightwatch-production-completion-262d9dad
 
 IMPLEMENTATION AUTHORIZED:
-  G21.8 pre-flight wiring and exemptions, G8.9 N/A ledger close, G6.6 live
-  attention verification, G21.5/21.12–21.14 evidence ticks, authenticated
-  capability docs dependents-list correction, this task directory, the
-  programme change ledger, Nightwatch docs/OpenSpec state, commits/pushes/
-  integration and local certification from the owned session.
+  G4 observe-* CLI contract migration, G5.8/G5.9 evidence-hygiene closeout,
+  G17.2 schema-lifecycle evidence tick, census DISK_* re-measurement, this
+  task directory, the programme change ledger, Nightwatch docs/OpenSpec
+  state, commits/pushes/integration and local certification from the owned
+  session.
 
 REAL PRODUCTION CONTACT:               NOT AUTHORIZED
 NEW API ROUTE / ADAPTER / AUTHORITY:   NOT AUTHORIZED

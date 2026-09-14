@@ -40,15 +40,11 @@ external dependency with its blocking class and next action.
 
 ## Current Milestone
 
-Milestone ID: G21 local closeout (8.9 / 6.6 / 21.5 / 21.8 / 21.12–21.14)
+Milestone ID: G4/G5/G17 local closeout
 Milestone status: IN_PROGRESS
-What is being attempted: close the locally closable remainder of the
-owner-gate list without self-authorizing any owner decision. G8.9 is N/A
-(taxonomy adopted). G6.6 is live-verified (`attention=0`). G21.8 is restated
-against 12 MANUAL_OWNER checks with the last two runners handled as a
-synthetic write-path assertion and an unauthenticated exemption. G21.5 and
-G21.12–21.14 are ticked from existing evidence plus the dependents-list
-correction. Owner decisions remain OPEN.
+What is being attempted: close locally evidenced G5.8/G5.9/G17.2 and migrate
+the observe-* launchers onto the shared operator CLI. Owner decisions remain
+OPEN. G4.5 stays partial (38/65 bins conforming).
 
 ## Completed Milestones
 
@@ -119,13 +115,12 @@ correction. Owner decisions remain OPEN.
 
 ## Work In Progress
 
-W1 is closed. The G21 local closeout is in progress in session
-`nightwatch-production-completion-262d9dad`. Owner decisions remain OPEN
-and are not faked as taken: G3.11 CI route, G5.3 reclaim, G6.4/G6.5/G6.10,
-G9.1 egress, G10.6/G10.13, G11.3, G12.3, G13.8, G14.6, G17.4. G8.7 was
-already adopted; G8.9 is N/A; G21.8 is implemented locally; G6.6 is
-live-verified. `lanes:manual` (G2/F-02) stays unauthorized. Parked
-campaigns stay parked.
+G21 local closeout is integrated at `4de61d41`. This wave ticks G5.8, G5.9
+and G17.2 from live evidence, records the 2026-09-14 disk re-measurement in
+the census ledger and matrix §1, and migrates observe-canary,
+observe-preflight, observe-gate and observe-authenticated onto
+`defineOperatorCli` (sweep 38 conforming / 27 undeclared). Owner decisions
+remain OPEN. `lanes:manual` stays unauthorized. Parked campaigns stay parked.
 
 ### Delegated closure addendum (G21 owner items, G14.1–14.5, 14.9–14.11)
 
@@ -163,11 +158,9 @@ clean rerun passed 81/81.
 
 ## Exact Next Action
 
-Validate the G21 local closeout (focused auth suites, typecheck,
-hardening:check, agent:check, workspace:check), then integrate by
-fast-forward. Do not self-authorize remaining owner decisions. Next
-agent-closable work after this checkpoint: G4 remaining CLI migration,
-G5.8/G5.9, G8.11, G18, G19, G16, G17.2.
+Validate this G4/G5/G17 wave, commit and integrate. Next agent-closable
+work: remaining G4 bins (27 undeclared), G16.5/16.9–16.11, G8.11, G18.13,
+G19.14. Owner decisions stay OPEN.
 
 ## Files Changed
 
@@ -265,6 +258,11 @@ G5.8/G5.9, G8.11, G18, G19, G16, G17.2.
 | `.agent/ACTIVE_TASK.md`, `STATE.md`, `PLAN.md`, `EXECUTION_PROMPT.md` | session routing and closeout waypoint | MODIFIED |
 
 ## Validation Ledger
+
+Command: focused G4/G5/G17 suites in session `nightwatch-production-completion-262d9dad`
+Result: PASS
+When: 2026-09-14
+Relevant failure/output summary: operatorCliContract + observeAuthenticatedRunner + target-preflight + phase9b/10b + nw14 matrix 95 passed; operator-cli-sweep discovered=65 conforming=38 undeclared=27; schema:check PASS discovered=388; typecheck PASS; hardening:check PASS; agent:check strict_errors=0; ledger open 70 → 67.
 
 Command: `npx playwright test tests/unit/authCaptureLauncher.test.ts --workers=1` in session `nightwatch-production-completion-262d9dad`
 Result: PASS

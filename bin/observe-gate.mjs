@@ -12,49 +12,36 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildChildEnvironment } from './child-environment.mjs';
 import { loadTypeScriptModule } from './lib/typescript-runtime-loader.mjs';
+import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const args = process.argv.slice(2);
-let env;
-let uiUrl;
-let storage;
-for (const arg of args) {
-  if (arg.startsWith('--env=')) {
-    if (env !== undefined) {
-      console.error('observe:gate accepts exactly one --env selection');
-      process.exit(2);
-    }
-    env = arg.slice('--env='.length);
-  } else if (arg.startsWith('--ui-url=')) {
-    if (uiUrl !== undefined) {
-      console.error('observe:gate accepts --ui-url only once');
-      process.exit(2);
-    }
-    uiUrl = arg.slice('--ui-url='.length);
-  } else if (arg.startsWith('--storage-state=')) {
-    if (storage !== undefined) {
-      console.error('observe:gate accepts --storage-state only once');
-      process.exit(2);
-    }
-    storage = arg.slice('--storage-state='.length);
-  }
-}
 
-if (args.some((arg) => !arg.startsWith('--env=') && !arg.startsWith('--ui-url=') && !arg.startsWith('--storage-state=') && arg !== '--help' && arg !== '-h')) {
-  console.error('Usage: npm run observe:gate -- --env=dev|next --storage-state=/absolute/external/state.json [--ui-url=https://verified-host/]');
-  process.exit(2);
-}
-if (args.includes('--help') || args.includes('-h')) {
-  console.log('Usage: npm run observe:gate -- --env=dev|next --storage-state=/absolute/external/state.json [--ui-url=https://verified-host/]');
-  console.log('Runs the local safety gate only; it does not create a browser context or contact the selected target.');
-  process.exit(0);
-}
+/** @type {import('./lib/operator-cli.mjs').OperatorCliMetadata} */
+const CLI_METADATA = {
+  schemaVersion: OPERATOR_CLI_SCHEMA,
+  name: 'observe-gate',
+  entry: 'bin/observe-gate.mjs',
+  purpose: 'Run the local Phase 2A pre-real-run safety gate without opening a target.',
+  group: 'owner-gated',
+  flags: [
+    { name: '--env', shape: 'enum', values: ['dev', 'next'], summary: 'target environment; production is forbidden' },
+    { name: '--storage-state', shape: 'path', summary: 'absolute external storage-state path' },
+    { name: '--ui-url', shape: 'string', summary: 'verified HTTPS UI URL override' },
+  ],
+  json: false,
+  authorization: 'OWNER_GATED',
+  artifacts: [],
+};
+
+const cli = defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url });
+if (cli.stop) {
+  // --help / --print-metadata / usage already emitted.
+} else {
+const env = typeof cli.flags['--env'] === 'string' ? cli.flags['--env'] : undefined;
+const storage = typeof cli.flags['--storage-state'] === 'string' ? cli.flags['--storage-state'] : undefined;
+const uiUrl = typeof cli.flags['--ui-url'] === 'string' ? cli.flags['--ui-url'] : undefined;
 if (!env || !storage) {
-  console.error('observe:gate requires exactly one --env=dev|next and --storage-state=/absolute/external/state.json');
-  process.exit(2);
-}
-if (env !== 'dev' && env !== 'next') {
-  console.error('observe:gate requires exactly one --env=dev|next');
+  console.error('[observe-gate] CLI_ARGUMENT_MISSING: --env=dev|next and --storage-state=/absolute/external/state.json are required');
   process.exit(2);
 }
 
@@ -94,3 +81,4 @@ const result = spawnSync(cmd, ['test', '--config=playwright.gate.config.ts', '--
   maxBuffer: 2 * 1024 * 1024,
 });
 process.exit(result.status ?? 1);
+}

@@ -41,7 +41,7 @@ test('production and multiple environment selections fail closed', () => {
 
   const both = run('--env=dev', '--env=next');
   expect(both.status).toBe(2);
-  expect(both.stderr).toContain('exactly one --env selection');
+  expect(both.stderr).toMatch(/CLI_ARGUMENT_CONFLICT|--env was given twice/);
 });
 
 test('production UI host, unknown host, and sensitive URL forms fail closed', () => {

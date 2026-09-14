@@ -54,17 +54,18 @@ export const CENSUS_FIGURES: readonly CensusFigure[] = Object.freeze([
   { measureId: 'POSITIVE_DEPLOYMENT_FACTS', description: 'positive route to endpoint deployment facts', currentValue: 0, establishedBy: 'C-08' },
   { measureId: 'SPEC_EXPECTATIONS', description: 'admitted spec-derived expectations', currentValue: 2114, establishedBy: 'C-09' },
   { measureId: 'OPENSPEC_SCENARIOS', description: 'OpenSpec scenarios in the corpus', currentValue: 332, establishedBy: 'C-09' },
-  // F-06 / group 5 (evidence lifecycle hygiene) — measured 2026-09-12 in the
-  // canonical checkout. The unit is part of the measure id so a tagged figure
-  // states the unit it means; the values are point-in-time measurements and
-  // must be re-derived, not carried forward silently.
-  { measureId: 'DISK_CHECKOUT_SOURCE_MIB', description: 'working-tree source size at the repository root, excluding .git, node_modules, artifacts and the ephemeral output roots', currentValue: 31, establishedBy: 'F-06 measurement 2026-09-12' },
-  { measureId: 'DISK_CHECKOUT_GIT_MIB', description: 'Git metadata size included in a fresh clone', currentValue: 21, establishedBy: 'F-06 measurement 2026-09-12' },
-  { measureId: 'DISK_NODE_MODULES_MIB', description: 'installed node_modules size after npm ci', currentValue: 48, establishedBy: 'F-06 measurement 2026-09-12' },
-  { measureId: 'DISK_TYPICAL_RUN_KIB', description: 'median allocated size of one stored run artifact directory', currentValue: 20, establishedBy: 'F-06 measurement 2026-09-12 over 13394 run directories' },
-  { measureId: 'DISK_ACCUMULATED_EVIDENCE_MIB', description: 'allocated size of the accumulated artifacts evidence store', currentValue: 921, establishedBy: 'F-06 measurement 2026-09-12' },
-  { measureId: 'DISK_RUNNER_OUTPUT_MIB', description: 'allocated size of the 19 historical test-results roots', currentValue: 19, establishedBy: 'F-06 measurement 2026-09-12' },
-  { measureId: 'DISK_SCRATCH_MIB', description: 'allocated size of the .tmp-* scratch trees', currentValue: 8, establishedBy: 'F-06 measurement 2026-09-12' },
+  // F-06 / group 5 (evidence lifecycle hygiene). Re-measured 2026-09-14 in
+  // the canonical checkout (`du -sm` allocated sizes). The unit is part of
+  // the measure id so a tagged figure states the unit it means; the values
+  // are point-in-time measurements and must be re-derived, not carried
+  // forward silently.
+  { measureId: 'DISK_CHECKOUT_SOURCE_MIB', description: 'working-tree source size at the repository root, excluding .git, node_modules, artifacts and the ephemeral output roots', currentValue: 34, establishedBy: 'F-06 re-measurement 2026-09-14' },
+  { measureId: 'DISK_CHECKOUT_GIT_MIB', description: 'Git metadata size included in a fresh clone', currentValue: 27, establishedBy: 'F-06 re-measurement 2026-09-14' },
+  { measureId: 'DISK_NODE_MODULES_MIB', description: 'installed node_modules size after npm ci', currentValue: 48, establishedBy: 'F-06 re-measurement 2026-09-14' },
+  { measureId: 'DISK_TYPICAL_RUN_KIB', description: 'median allocated size of one stored run artifact directory', currentValue: 32, establishedBy: 'F-06 re-measurement 2026-09-14 over 143 run directories' },
+  { measureId: 'DISK_ACCUMULATED_EVIDENCE_MIB', description: 'allocated size of the accumulated artifacts evidence store', currentValue: 42, establishedBy: 'F-06 re-measurement 2026-09-14' },
+  { measureId: 'DISK_RUNNER_OUTPUT_MIB', description: 'allocated size of the historical test-results roots', currentValue: 1, establishedBy: 'F-06 re-measurement 2026-09-14' },
+  { measureId: 'DISK_SCRATCH_MIB', description: 'allocated size of the .tmp-* scratch trees', currentValue: 1, establishedBy: 'F-06 re-measurement 2026-09-14' },
 ]);
 
 /**

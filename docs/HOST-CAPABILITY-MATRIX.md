@@ -21,6 +21,7 @@ document.
 | Operating system | not constrained in the manifest | Linux (x86_64, WSL2 kernel 6.6) | process, namespace and filesystem-identity lanes report unsupported rather than passing |
 | Package manager | `npm ci` against the committed `package-lock.json` | npm 10.x; verified 2026-09-12 by a disposable `npm ci --offline`, 7 packages, lockfile byte-identical afterwards | a resolution that does not match the lockfile is a reproducibility failure, not a warning |
 | Shell | none — no Nightwatch surface passes a runtime string to a shell | n/a | n/a |
+| Working-copy disk | measured 2026-09-14 (`du -sm`, allocated) | checkout source 34 MiB <!--census:DISK_CHECKOUT_SOURCE_MIB=34-->, git 27 MiB <!--census:DISK_CHECKOUT_GIT_MIB=27-->, root `node_modules` 48 MiB <!--census:DISK_NODE_MODULES_MIB=48-->, typical run 32 KiB <!--census:DISK_TYPICAL_RUN_KIB=32-->, accumulated evidence 42 MiB <!--census:DISK_ACCUMULATED_EVIDENCE_MIB=42-->, runner output 1 MiB <!--census:DISK_RUNNER_OUTPUT_MIB=1-->, scratch 1 MiB <!--census:DISK_SCRATCH_MIB=1-->; UI package `node_modules` is additional and not a census figure | a host without that headroom reports unsupported rather than inheriting a pass |
 
 The declaration is a range; the evidence is two points. A lane on Node 21, or
 on a host outside Linux x86_64 under a WSL2 kernel, reports its runtime as

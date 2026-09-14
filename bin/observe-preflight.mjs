@@ -11,42 +11,31 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadTypeScriptModule } from './lib/typescript-runtime-loader.mjs';
+import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SUPPORTED_REAL_ENVS = new Set(['dev', 'next']);
 const PROD_SUFFIXES = ['.run.app'];
 
-function usage() {
-  console.log('Usage: npm run observe:preflight -- --env=dev|next [--ui-url=https://explicit-host/]');
-  console.log('No browser, authentication state, DNS, or network connection is used.');
-}
+/** @type {import('./lib/operator-cli.mjs').OperatorCliMetadata} */
+const CLI_METADATA = {
+  schemaVersion: OPERATOR_CLI_SCHEMA,
+  name: 'observe-preflight',
+  entry: 'bin/observe-preflight.mjs',
+  purpose: 'Validate real-target configuration and report auth-capability metadata with no network.',
+  group: 'owner-gated',
+  flags: [
+    { name: '--env', shape: 'string', summary: 'target environment (dev or next; production is forbidden)' },
+    { name: '--ui-url', shape: 'string', summary: 'explicit HTTPS UI URL override' },
+  ],
+  json: true,
+  authorization: 'OWNER_GATED',
+  artifacts: [],
+};
 
 function fail(message) {
   console.error(`[observe:preflight] FAIL: ${message}`);
   process.exitCode = 2;
-}
-
-function parseArgs(argv) {
-  let env;
-  let uiUrl;
-  for (const arg of argv) {
-    if (arg === '--help' || arg === '-h') {
-      usage();
-      process.exit(0);
-    }
-    if (arg.startsWith('--env=')) {
-      if (env !== undefined) throw new Error('exactly one --env selection is required');
-      env = arg.slice('--env='.length);
-      continue;
-    }
-    if (arg.startsWith('--ui-url=')) {
-      if (uiUrl !== undefined) throw new Error('--ui-url may be supplied only once');
-      uiUrl = arg.slice('--ui-url='.length);
-      continue;
-    }
-    throw new Error(`unknown option ${arg}`);
-  }
-  return { env: env ?? process.env.NIGHTWATCH_ENV, uiUrl: uiUrl ?? process.env.NIGHTWATCH_UI_URL };
 }
 
 function loadConfig(env) {
@@ -133,14 +122,18 @@ function validateTarget(env, config, candidate) {
   return target;
 }
 
-try {
-  const parsed = parseArgs(process.argv.slice(2));
-  if (!parsed.env || !SUPPORTED_REAL_ENVS.has(parsed.env.trim().toLowerCase())) {
+const cli = defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url });
+if (cli.stop) {
+  // --help / --print-metadata / usage already emitted.
+} else try {
+  const envFlag = typeof cli.flags['--env'] === 'string' ? cli.flags['--env'] : process.env.NIGHTWATCH_ENV;
+  const uiUrlFlag = typeof cli.flags['--ui-url'] === 'string' ? cli.flags['--ui-url'] : process.env.NIGHTWATCH_UI_URL;
+  if (!envFlag || !SUPPORTED_REAL_ENVS.has(envFlag.trim().toLowerCase())) {
     throw new Error('exactly one supported real environment is required: dev or next; production is forbidden');
   }
-  const env = parsed.env.trim().toLowerCase();
+  const env = envFlag.trim().toLowerCase();
   const config = loadConfig(env);
-  const target = validateTarget(env, config, parsed.uiUrl ?? config.uiBaseUrl);
+  const target = validateTarget(env, config, uiUrlFlag ?? config.uiBaseUrl);
   const { collectAuthCapabilityReport } = loadTypeScriptModule('src/auth/capabilityLifecycle.ts', { root });
   const authentication = collectAuthCapabilityReport({
     homeDirectory: os.homedir(),

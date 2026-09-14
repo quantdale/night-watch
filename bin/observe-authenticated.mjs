@@ -10,25 +10,44 @@ import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { buildObserveAuthenticatedEnvironment, parseObserveAuthenticatedArgs } from './observe-authenticated-config.mjs';
+import { buildObserveAuthenticatedEnvironment } from './observe-authenticated-config.mjs';
 import { loadTypeScriptModule } from './lib/typescript-runtime-loader.mjs';
+import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-let parsed;
-try {
-  parsed = parseObserveAuthenticatedArgs(process.argv.slice(2));
-} catch (error) {
-  console.error(error instanceof Error ? error.message : String(error));
+
+/** @type {import('./lib/operator-cli.mjs').OperatorCliMetadata} */
+const CLI_METADATA = {
+  schemaVersion: OPERATOR_CLI_SCHEMA,
+  name: 'observe-authenticated',
+  entry: 'bin/observe-authenticated.mjs',
+  purpose: 'Run the safety gate, one authenticated landing observation, and one fresh-context replay.',
+  group: 'owner-gated',
+  flags: [
+    { name: '--env', shape: 'enum', values: ['dev'], summary: 'DEV only; NEXT is reserved for human-led auth capture' },
+    { name: '--storage-state', shape: 'path', summary: 'absolute external storage-state path' },
+    { name: '--ui-url', shape: 'string', summary: 'verified HTTPS UI URL override' },
+  ],
+  json: false,
+  authorization: 'OWNER_GATED',
+  artifacts: [],
+};
+
+const cli = defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url });
+if (cli.stop) {
+  // --help / --print-metadata / usage already emitted.
+} else {
+const env = typeof cli.flags['--env'] === 'string' ? cli.flags['--env'] : undefined;
+const storage = typeof cli.flags['--storage-state'] === 'string' ? cli.flags['--storage-state'] : undefined;
+const uiUrl = typeof cli.flags['--ui-url'] === 'string' ? cli.flags['--ui-url'] : undefined;
+if (env !== 'dev' || !storage) {
+  console.error('[observe-authenticated] CLI_ARGUMENT_MISSING: --env=dev and --storage-state=/absolute/external/state.json are required; NEXT is reserved for human-led auth capture');
   process.exit(2);
 }
-
-if (parsed.help) {
-  console.log('Usage: npm run observe:authenticated -- --env=dev|next --storage-state=/absolute/external/state.json [--ui-url=https://verified-host/]');
-  console.log('Runs the safety gate, one direct authenticated landing observation, and one fresh-context replay.');
-  process.exit(0);
+if (uiUrl !== undefined && uiUrl.trim() === '') {
+  console.error('[observe-authenticated] CLI_ARGUMENT_INVALID: observe:authenticated rejects an explicit blank --ui-url; omit it to use the canonical environment target');
+  process.exit(2);
 }
-const { env, storage, uiUrl } = parsed;
-if (env !== 'dev') throw new Error('observe-authenticated requires --env=dev; NEXT is reserved for human-led auth capture');
 
 try {
   const { requireValidAuthCapability } = loadTypeScriptModule('src/auth/capabilityLifecycle.ts', { root });
@@ -76,3 +95,4 @@ const result = spawnSync(cmd, ['test', '--config=playwright.authenticated.config
   maxBuffer: 2 * 1024 * 1024,
 });
 process.exit(result.status ?? 1);
+}

@@ -51,7 +51,7 @@ only what has evidence, integrate by fast-forward, continue.
 ```
 CAMPAIGN: nightwatch-production-completion-programme-v1
 CHILD TASK: NONE
-WAVE: G21_LOCAL_CLOSEOUT
+WAVE: G4_G5_G17_LOCAL
 
 IMPLEMENTATION AUTHORIZED:
   the file surface named by each group in the OpenSpec change.
