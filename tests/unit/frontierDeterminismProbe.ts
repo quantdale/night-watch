@@ -21,6 +21,7 @@ import { extractRecordIdentityFacts } from '../../src/core/source/recordIdentity
 import { runRecordIdentitySequences } from '../../src/core/source/recordIdentitySequences';
 import { runRecordIdentityContracts } from '../../src/core/source/recordIdentity';
 import { classifyPhpTestFile } from '../../src/core/source/testOracleQuality';
+import { runSilentZeroOutput } from '../../src/core/source/silentZeroOutput';
 
 function descriptor(
   findingId: string,
@@ -202,5 +203,18 @@ parts.push(JSON.stringify(classifyPhpTestFile(
   ['<?php', 'class ProbeTest extends TestCase', '{', '  public function testMirrors()', '  {', '    $this->assertTrue($this->helper());', '  }', '  private function helper(): bool', '  {', '    return true;', '  }', '}', ''].join('\n'),
   { path: 'tests/src/App/Handler/ProbeTest.php', declaredProductionSymbols: ['generateInvoice'], declaredSkips: [] },
 )));
+
+
+// NW-PROJ-003 Wave 2: the static silent-zero-output precursor must not depend on process state.
+const probeSzoSource = ['<?php', 'class Fixture', '{', '  private function generate(string $id): void', '  {', '    if (empty($this->rows[$id])) {', '      return;', '    }', '    $this->insertTotal($id);', '  }', '}', ''].join('\n');
+const probeSzoHandler = {
+  handlerId: 'probe-handler', repoId: 'mobingilabs/ripple-api', sha: 'a'.repeat(40), roots: ['src'], paths: ['src/App/Handler/Fixture.php'], functions: ['generate'],
+  requiredInputRoles: [{ role: 'rows', guardTokens: ['rows'] }, { role: 'fees', guardTokens: ['applied'] }], outputTokens: ['insertTotal'], legitimateSkipConditions: [],
+};
+parts.push(JSON.stringify(runSilentZeroOutput({
+  config: { schemaVersion: 'nightwatch.silent-zero-output-contracts.v1', handlers: [probeSzoHandler] },
+  reader: { readFile: (repoId, relativePath) => (repoId === 'mobingilabs/ripple-api' && relativePath === 'src/App/Handler/Fixture.php' ? probeSzoSource : null) },
+  currentness: { currentSnapshot: (repoId) => (repoId === 'mobingilabs/ripple-api' ? { repoId, sha: 'a'.repeat(40) } : null) },
+})));
 
 process.stdout.write(`${crypto.createHash('sha256').update(parts.join(' ')).digest('hex')}\n`);

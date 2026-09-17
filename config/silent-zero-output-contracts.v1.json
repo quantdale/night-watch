@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "nightwatch.silent-zero-output-contracts.v1",
+  "handlers": [
+    {
+      "handlerId": "ripple-invoices-vendor-skip",
+      "repoId": "mobingilabs/ripple-api",
+      "sha": "4e3e200db3bda7b58bc250feb7f76997d95ae2cc",
+      "roots": ["src"],
+      "paths": ["src/App/Handler/Invoices.php"],
+      "functions": ["generateInvoice"],
+      "requiredInputRoles": [
+        { "role": "accounts", "guardTokens": ["chk_bg"] },
+        { "role": "applied_fees", "guardTokens": ["applied"] },
+        { "role": "custom_services", "guardTokens": ["custom_service_ids"] },
+        { "role": "additional_items", "guardTokens": ["additional_items"] }
+      ],
+      "outputTokens": ["insertTotal", "insertServiceInvoiceReport", "insertAccountServiceTotal"],
+      "legitimateSkipConditions": ["no_accounts_and_no_vendor_fee_data"]
+    }
+  ]
+}

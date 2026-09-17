@@ -99,6 +99,7 @@
         "tests/unit/schemaVersionLifecycle.test.ts",
         "tests/unit/schemaVersionMigration.test.ts",
         "tests/unit/semanticSkipIdentity.test.ts",
+        "tests/unit/silentZeroOutput.test.ts",
         "tests/unit/snapshotter.test.ts",
         "tests/unit/sourceAnalysisParity.test.ts",
         "tests/unit/syntheticFindingCampaign.test.ts",
@@ -249,6 +250,7 @@
         "bin/selfdev-synthetic.mjs",
         "bin/selfdev-verify.mjs",
         "bin/semantic-compat.mjs",
+        "bin/silent-zero-output.mjs",
         "bin/test-oracle-quality.mjs",
         "bin/validation-universe.mjs",
         "bin/workspace-integrity.mjs"
