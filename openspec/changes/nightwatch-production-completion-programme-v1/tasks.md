@@ -1262,6 +1262,31 @@ remain the session owner's action exactly as recorded for the programme; no
       the target file makes the rule fail; record the five mutations
 - [x] 16.4 Add the self-check failing a fail-if-absent matcher over the raw
       accessor
+- [x] 16.4a Close the alias gap 16.1–16.4 disclosed but left open: follow a
+      local variable bound from `readIncludingComments` within the rule that
+      binds it, and fail every fail-if-absent use, reporting each line. The two
+      legitimate raw cases are now named rather than inferred —
+      `readCommentText()` (the subject IS comment text: a generated-file
+      header, a TEST-ONLY brand) and `readDataFile()` (JSON/YAML/Markdown,
+      where comment-stripping would corrupt rather than clarify)
+- [x] 16.4b Convert the alias-borne population: 162 bindings moved to the
+      code-only accessor and 125 mixed bindings given a code-only companion, so
+      their fail-if-present halves keep reading raw. Audited afterwards — zero
+      converted binding sits in a rule that binds the same alias twice, the one
+      shape whole-rule analysis cannot scope. The single ambiguous rule
+      (`checkC00WorkspaceIntegrity`, two loops both naming `source`) was split
+      into distinct names by hand
+- [x] 16.4c One real hole closed, not a reporting defect:
+      `validateSemanticDossierEvidence` was required of
+      `src/core/triage/dossier.ts`, where it appears ONLY inside a comment.
+      The validation really lives in `dossierRuntimeValidation.ts`, so the rule
+      now asserts both halves against code — the delegation in the core and the
+      call in the owner
+- [x] 16.4d Report the real line: the self-check scanned `withoutComments`,
+      which DELETES comment text, so every position it printed was short by the
+      comment lines above it. It now scans an offset-preserving,
+      regex-literal-aware blanking (`blankComments`), so reported lines are
+      exact — verified line by line against the file
 - [ ] 16.5 Audit every rule's quantifier; make totality rules evaluate all
       occurrences and report each failing line
 - [x] 16.6 Make existence rules explicitly named as such; fail a totality rule

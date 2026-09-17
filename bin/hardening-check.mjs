@@ -45,6 +45,74 @@ function withoutComments(source) {
 }
 
 /**
+ * Comment-blanked source with EVERY OFFSET AND LINE PRESERVED: comment bodies
+ * become spaces, newlines survive. `withoutComments` deletes comment text, so
+ * an index into its output no longer addresses the same character of the file
+ * and any line number derived from it is wrong by however many comment lines
+ * preceded it. Rules that only ask "is this token present in code?" may use
+ * either; anything that REPORTS A POSITION must scan this one. Strings and
+ * escapes are respected so a `//` inside a string literal is not a comment.
+ *
+ * @param {string} source
+ */
+const REGEX_ALLOWED_BEFORE = /[(,=:[!&|?{};+\-*%~^<>]|^$/;
+
+function blankComments(source) {
+  const out = source.split('');
+  let index = 0;
+  let state = 'code';
+  let previousSignificant = '';
+  while (index < source.length) {
+    const character = source[index];
+    const next = source[index + 1];
+    if (state === 'code') {
+      if (character === '\\') { index += 2; continue; }
+      if (character === '/' && next === '/') { out[index] = out[index + 1] = ' '; state = 'line'; index += 2; continue; }
+      if (character === '/' && next === '*') { out[index] = out[index + 1] = ' '; state = 'block'; index += 2; continue; }
+      if (character === '"' || character === "'" || character === '`') { state = character; index += 1; continue; }
+      // A regex literal must be consumed whole: this file is full of patterns
+      // containing quote characters, and treating one as a string start would
+      // swallow the following comments and corrupt every later position.
+      if (character === '/' && REGEX_ALLOWED_BEFORE.test(previousSignificant)) {
+        index += 1;
+        let inClass = false;
+        while (index < source.length) {
+          const inner = source[index];
+          if (inner === '\\') { index += 2; continue; }
+          if (inner === '\n') break;
+          if (inner === '[') { inClass = true; index += 1; continue; }
+          if (inner === ']') { inClass = false; index += 1; continue; }
+          if (inner === '/' && !inClass) { index += 1; break; }
+          index += 1;
+        }
+        previousSignificant = '/';
+        continue;
+      }
+      if (!/\s/.test(character)) previousSignificant = character;
+      index += 1;
+      continue;
+    }
+    if (state === 'line') {
+      if (character === '\n') { state = 'code'; index += 1; continue; }
+      out[index] = ' ';
+      index += 1;
+      continue;
+    }
+    if (state === 'block') {
+      if (character === '*' && next === '/') { out[index] = out[index + 1] = ' '; state = 'code'; index += 2; continue; }
+      if (character !== '\n') out[index] = ' ';
+      index += 1;
+      continue;
+    }
+    if (character === '\\') { index += 2; continue; }
+    // A closed string is a value, so a `/` after it is division, not a regex.
+    if (character === state) { state = 'code'; previousSignificant = character; index += 1; continue; }
+    index += 1;
+  }
+  return out.join('');
+}
+
+/**
  * Read RAW text INCLUDING comments.
  *
  * This is the explicit opt-in raw accessor. It exists for three cases only:
@@ -76,6 +144,35 @@ function readIncludingComments(file) {
  */
 function read(file) {
   return withoutComments(readIncludingComments(file));
+}
+
+/**
+ * Source for an assertion whose SUBJECT IS COMMENT TEXT — a generated-file
+ * header, a TEST-ONLY brand, a licence banner. This is the only legitimate
+ * fail-if-absent read over comment-bearing source: the required literal is
+ * supposed to live in a comment, so `read()` (code-only) would be wrong, while
+ * a bare `readIncludingComments()` is indistinguishable from the defect the
+ * rule-engine self-check hunts. The distinct name declares the intent, and
+ * `checkRuleEngineSoundness` admits it for positive assertions.
+ *
+ * @param {string} file
+ */
+function readCommentText(file) {
+  return readIncludingComments(file);
+}
+
+/**
+ * Source for an assertion over a DATA OR PROSE file — JSON, YAML, Markdown,
+ * `.gitignore`, a workflow. These have no code/comment distinction to make, and
+ * `withoutComments()` would actively corrupt them (a `//` inside a JSON string
+ * such as a URL is not a comment). Raw is the correct and only reading, so the
+ * name records that the raw read is a property of the file class rather than an
+ * unexamined fail-if-absent over comment-bearing code.
+ *
+ * @param {string} file
+ */
+function readDataFile(file) {
+  return readIncludingComments(file);
 }
 
 /**
@@ -148,14 +245,15 @@ function checkChildProcessBoundaries() {
   ];
   for (const file of launchers) {
     const source = readIncludingComments(file);
+    const sourceCode = read(file);
     const spreadLine = lineOfMatch(source, /\.\.\.process\.env/g);
     if (spreadLine > 0) fail(`${file}:${spreadLine} spreads the parent process environment`);
     const shellLine = lineOfMatch(source, /shell\s*:\s*true/g);
     if (shellLine > 0) fail(`${file}:${shellLine} enables shell execution`);
-    if (!/timeout\s*:/.test(source)) fail(`${file} has no bounded child-process timeout`);
+    if (!/timeout\s*:/.test(sourceCode)) fail(`${file} has no bounded child-process timeout`);
     const inheritLine = lineOfMatch(source, /stdio\s*:\s*['"]inherit['"]/g);
     if (inheritLine > 0) fail(`${file}:${inheritLine} exposes unbounded child output`);
-    if (!/maxBuffer\s*:/.test(source)) fail(`${file} has no bounded child output buffer`);
+    if (!/maxBuffer\s*:/.test(sourceCode)) fail(`${file} has no bounded child output buffer`);
   }
   const productionSources = gitFiles()
     .filter((file) => (file.startsWith('src/') || file.startsWith('bin/')) && /\.(?:ts|mjs)$/.test(file))
@@ -194,7 +292,7 @@ function checkChildProcessBoundaries() {
 function checkEnvironmentSurfaceDeclaration() {
   let declaration;
   try {
-    declaration = JSON.parse(readIncludingComments('config/environment-surface.v1.json'));
+    declaration = JSON.parse(readDataFile('config/environment-surface.v1.json'));
   } catch (error) {
     fail(`environment surface declaration is unreadable: ${error instanceof Error ? error.message : String(error)}`);
     return;
@@ -269,19 +367,22 @@ function checkEnvironmentSurfaceDeclaration() {
 
 function checkL6ProcessNetworkBoundary() {
   const l6 = readIncludingComments('src/core/oops/l6.ts');
+  const l6Code = read("src/core/oops/l6.ts");
   const process = readIncludingComments('src/core/oops/process.ts');
-  if (!/nightwatch\.process-network-containment\.v1/.test(l6)) fail('L6 capability is missing its versioned identity');
+  const processCode = read("src/core/oops/process.ts");
+  if (!/nightwatch\.process-network-containment\.v1/.test(l6Code)) fail('L6 capability is missing its versioned identity');
   for (const option of ['--unshare-user', '--unshare-net', '--unshare-pid', '--as-pid-1', '--die-with-parent', '--new-session', '--clearenv']) {
-    if (!l6.includes(option)) fail(`L6 launcher is missing required rootless option ${option}`);
+    if (!l6Code.includes(option)) fail(`L6 launcher is missing required rootless option ${option}`);
   }
-  if (!/--ro-bind/.test(l6) || /['"]\/['"]\s*,\s*['"]\/['"]/.test(l6)) fail('L6 root view is missing or exposes the host root broadly');
-  if (!/INHERITED_AF_UNIX_ONLY/.test(l6) || !/websocketRelayFlow/.test(l6) || !/L6_CONTROL_PROTOCOL_VERSION/.test(l6) || !/MAX_FRAME_BYTES/.test(l6)) fail('L6 AF_UNIX control protocol is not versioned/bounded');
+  if (!/--ro-bind/.test(l6Code) || /['"]\/['"]\s*,\s*['"]\/['"]/.test(l6)) fail('L6 root view is missing or exposes the host root broadly');
+  if (!/INHERITED_AF_UNIX_ONLY/.test(l6Code) || !/websocketRelayFlow/.test(l6Code) || !/L6_CONTROL_PROTOCOL_VERSION/.test(l6Code) || !/MAX_FRAME_BYTES/.test(l6Code)) fail('L6 AF_UNIX control protocol is not versioned/bounded');
   if (/shell\s*:\s*true/.test(l6) || /--privileged|iptables|nftables|sudo\b|tls\s*mitm/i.test(l6)) fail('L6 introduces privileged or shell/network-administration authority');
-  if (!/process\.kill\(-child\.pid/.test(l6) || !/--die-with-parent/.test(l6)) fail('L6 process-group/parent-death cleanup is incomplete');
-  if (!/qualifyL6RuntimeCapability/.test(process) || !/assertL6RuntimeCapability/.test(process) || !/runL6ContainedOops/.test(process)) fail('authenticated OOPS is not bound to the L6 readiness gate');
-  if (!/requiredHostClass === 'DEV_API'/.test(process) || !/RELAY_EPHEMERAL_DEV_SESSION/.test(process)) fail('authenticated OOPS host/auth classes are not L6-gated');
+  if (!/process\.kill\(-child\.pid/.test(l6Code) || !/--die-with-parent/.test(l6Code)) fail('L6 process-group/parent-death cleanup is incomplete');
+  if (!/qualifyL6RuntimeCapability/.test(processCode) || !/assertL6RuntimeCapability/.test(processCode) || !/runL6ContainedOops/.test(processCode)) fail('authenticated OOPS is not bound to the L6 readiness gate');
+  if (!/requiredHostClass === 'DEV_API'/.test(processCode) || !/RELAY_EPHEMERAL_DEV_SESSION/.test(processCode)) fail('authenticated OOPS host/auth classes are not L6-gated');
   const capability = readIncludingComments('src/core/oops/sandbox.ts');
-  if (!/qualifyL6RuntimeCapability/.test(capability)) fail('legacy OOPS sandbox status does not expose the current L6 qualifier');
+  const capabilityCode = read("src/core/oops/sandbox.ts");
+  if (!/qualifyL6RuntimeCapability/.test(capabilityCode)) fail('legacy OOPS sandbox status does not expose the current L6 qualifier');
 }
 
 function checkTargetPolicy() {
@@ -289,7 +390,8 @@ function checkTargetPolicy() {
     if (!/env\s*!==\s*['"]dev['"]/.test(read(file))) fail(`${file} does not enforce DEV-only automated credential execution`);
   }
   const capture = readIncludingComments('bin/auth-capture.mjs');
-  if (!/new Set\(\['dev', 'next'\]\)/.test(capture) || !/human-led|human login/i.test(capture)) fail('auth:capture NEXT exception is not visibly human-led and explicit');
+  const captureCode = read("bin/auth-capture.mjs");
+  if (!/new Set\(\['dev', 'next'\]\)/.test(captureCode) || !/human-led|human login/i.test(captureCode)) fail('auth:capture NEXT exception is not visibly human-led and explicit');
   for (const file of gitFiles().filter((item) => item.startsWith('bin/') && item !== 'bin/hardening-check.mjs')) {
     const source = readIncludingComments(file);
     const line = lineOfText(source, 'MULTI_HOUR_CAMPAIGN_BUDGET');
@@ -300,7 +402,7 @@ function checkTargetPolicy() {
 function checkTypecheckCoverage() {
   let config;
   try {
-    config = JSON.parse(readIncludingComments('tsconfig.json'));
+    config = JSON.parse(readDataFile('tsconfig.json'));
   } catch {
     fail('tsconfig.json is not valid JSON');
     return;
@@ -318,11 +420,11 @@ function checkPrivateSurface() {
     if (/(?:^|\/)(?:storage[-_]?state|auth[-_]?state|credentials?|secrets?)(?:[._-]|\/|$)/i.test(file) && !/\.(?:ts|mjs|js)$/.test(file)) fail(`credential-like tracked path: ${file}`);
     if (/(?:\.storage-state|\.cookies\.json|\.token(?:s)?\.json|\.trace\.zip|\.har)$/i.test(file)) fail(`private runtime file is tracked: ${file}`);
   }
-  const ignore = readIncludingComments('.gitignore');
+  const ignore = readDataFile('.gitignore');
   for (const required of ['artifacts/*', '.nightwatch/', 'storageState*.json', '*credentials*.json']) {
     if (!ignore.includes(required)) fail(`.gitignore is missing private-runtime rule: ${required}`);
   }
-  const adapters = readIncludingComments('src/data/phase6/adapters.ts');
+  const adapters = read('src/data/phase6/adapters.ts');
   if (!adapters.includes('assertOwnerPolicyAllows(`${_request.datastore}_DATA_ORACLE`)')) fail('Phase 6 real datastore adapter is missing the owner gate');
 }
 
@@ -336,7 +438,7 @@ function checkAiReviewBoundary() {
     return;
   }
   const aiSources = aiFiles.map((file) => [file, readIncludingComments(file)]);
-  const packageJson = readIncludingComments('package.json');
+  const packageJson = readDataFile('package.json');
   if (/(?:"|')?(?:openai|@anthropic-ai|@google\/generative-ai|@aws-sdk\/client-bedrock|langchain|llamaindex)(?:"|')?/i.test(packageJson)) {
     fail('Phase 7B must not add a cloud AI SDK or agent framework');
   }
@@ -349,16 +451,20 @@ function checkAiReviewBoundary() {
     if (/(?:OPENAI|ANTHROPIC|GEMINI|BEDROCK).*KEY|API_KEY|AUTHORIZATION\s*:|https?:\/\//i.test(source)) fail(`${file} contains cloud endpoint or credential configuration`);
   }
   const loopback = readIncludingComments('src/core/aiReview/loopbackProvider.ts');
-  if (!/validateLoopbackEndpoint/.test(loopback) || !/LOOPBACK_HOSTS/.test(loopback) || !/agent:\s*false/.test(loopback) || !/statusCode !== 200/.test(loopback)) fail('loopback provider containment is incomplete');
-  if (!/context\.signal\.aborted/.test(loopback) || !/signal\.addEventListener\(['"]abort['"]/.test(loopback) || !/destroyRequest/.test(loopback)) fail('loopback provider does not actively consume the session AbortSignal');
+  const loopbackCode = read('src/core/aiReview/loopbackProvider.ts');
+  if (!/validateLoopbackEndpoint/.test(loopbackCode) || !/LOOPBACK_HOSTS/.test(loopbackCode) || !/agent:\s*false/.test(loopbackCode) || !/statusCode !== 200/.test(loopbackCode)) fail('loopback provider containment is incomplete');
+  if (!/context\.signal\.aborted/.test(loopbackCode) || !/signal\.addEventListener\(['"]abort['"]/.test(loopbackCode) || !/destroyRequest/.test(loopbackCode)) fail('loopback provider does not actively consume the session AbortSignal');
   const synthetic = readIncludingComments('src/core/aiReview/syntheticProvider.ts');
-  if (!/pendingCount/.test(synthetic) || !/signal\.addEventListener\(['"]abort['"]/.test(synthetic)) fail('synthetic PENDING provider does not clean up on AbortSignal');
+  const syntheticCode = read('src/core/aiReview/syntheticProvider.ts');
+  if (!/pendingCount/.test(syntheticCode) || !/signal\.addEventListener\(['"]abort['"]/.test(syntheticCode)) fail('synthetic PENDING provider does not clean up on AbortSignal');
   const pipeline = readIncludingComments('src/core/aiReview/pipeline.ts');
-  if (!/assertOwnerPolicyAllows\('AI_REVIEW_LOCAL'\)/.test(pipeline) || !/assertOwnerPolicyAllows\('AI_ORACLE_SUGGESTION_LOCAL'\)/.test(pipeline) || !/AI_PROVIDER_NOT_LOCAL/.test(pipeline)) fail('AI pipeline is missing explicit owner/local provider gates');
-  if (!/performance\.now\(\)/.test(pipeline) || /options\.clock\s*\?\?\s*\(\)\s*=>\s*Date\.now\(\)/.test(pipeline)) fail('AI runtime budget must use a monotonic default clock');
-  if (!/signal:\s*AbortSignal/.test(pipeline) || !/timeoutMs:\s*number/.test(pipeline) || !/controller\.abort\(\)/.test(pipeline) || !/remainingRuntimeMs/.test(pipeline)) fail('AI provider boundary is missing monotonic deadline cancellation context');
+  const pipelineCode = read('src/core/aiReview/pipeline.ts');
+  if (!/assertOwnerPolicyAllows\('AI_REVIEW_LOCAL'\)/.test(pipelineCode) || !/assertOwnerPolicyAllows\('AI_ORACLE_SUGGESTION_LOCAL'\)/.test(pipelineCode) || !/AI_PROVIDER_NOT_LOCAL/.test(pipelineCode)) fail('AI pipeline is missing explicit owner/local provider gates');
+  if (!/performance\.now\(\)/.test(pipelineCode) || /options\.clock\s*\?\?\s*\(\)\s*=>\s*Date\.now\(\)/.test(pipeline)) fail('AI runtime budget must use a monotonic default clock');
+  if (!/signal:\s*AbortSignal/.test(pipelineCode) || !/timeoutMs:\s*number/.test(pipelineCode) || !/controller\.abort\(\)/.test(pipelineCode) || !/remainingRuntimeMs/.test(pipelineCode)) fail('AI provider boundary is missing monotonic deadline cancellation context');
   const storage = readIncludingComments('src/core/aiReview/storage.ts');
-  if (!/PrivateArtifactStore/.test(storage) || !/writeImmutableJson/.test(storage)) fail('AI artifacts are not routed through immutable private storage');
+  const storageCode = read('src/core/aiReview/storage.ts');
+  if (!/PrivateArtifactStore/.test(storageCode) || !/writeImmutableJson/.test(storageCode)) fail('AI artifacts are not routed through immutable private storage');
   if (/writeIncomplete\s*\(|\.writeJson\s*\(/.test(storage)) fail('AI immutable artifacts retain a replacement-capable write path');
   if (/aiReview|AI_REVIEW/i.test(readIncludingComments('bin/phase7-real.mjs'))) fail('Phase 7 real launcher must not invoke AI review');
   for (const file of gitFiles().filter((item) => item.startsWith('src/core/campaign/') || item.startsWith('src/oracles/'))) {
@@ -369,23 +475,25 @@ function checkAiReviewBoundary() {
 
 function checkLocalCanaryBoundary() {
   const controller = readIncludingComments('src/core/aiReview/localCanary.ts');
+  const controllerCode = read('src/core/aiReview/localCanary.ts');
   const cli = readIncludingComments('bin/ai-local-canary.mjs');
+  const cliCode = read('bin/ai-local-canary.mjs');
   if (!controller || !cli) return;
   const reviewCalls = controller.match(/\bsession\.reviewBugCandidate\s*\(/g) ?? [];
   if (reviewCalls.length !== 1) fail(`local canary has ${reviewCalls.length} review calls; expected exactly one`);
   if (/\bsuggestOracle\s*\(|new\s+AiReviewArtifactStore|AiReviewArtifactStore|\bstore\s*:/.test(controller)) fail('local canary exposes oracle or artifact-store authority');
   if (/from\s+['"][^'"]*(?:campaign|browser|auth|product|finding|database|data\/phase6|git)[^'"]*['"]/i.test(controller)) fail('local canary imports a product or authority path');
   if (/\b(?:fetch|http\.request|https\.request|net\.connect|WebSocket|child_process|spawn|exec(?:File)?|process\.env|readDir|readdir)\b/i.test(controller)) fail('local canary controller contains an unapproved transport, process, or filesystem capability');
-  if (!/fixedSyntheticCanaryInput/.test(controller) || !/LOCAL_CANARY_INPUT_VERSION/.test(controller) || !/LOCAL_CANARY_OPERATION/.test(controller)) fail('local canary fixed fixture identity is missing');
-  if (!/new\s+LoopbackAiReviewProvider/.test(controller) || !/new\s+AiReviewSession/.test(controller)) fail('local canary does not construct the hardened loopback/session path');
-  if (!/candidateReviewAttempts\s*!==\s*0/.test(controller) || !/oracleSuggestionAttempts\s*!==\s*0/.test(controller) || !/providerCalls\s*!==\s*0/.test(controller)) fail('local canary is missing the pre-call counter invariant');
-  if (!/candidateReviewAttempts\s*!==\s*1/.test(controller) || !/oracleSuggestionAttempts\s*!==\s*0/.test(controller) || !/providerCalls\s*!==\s*1/.test(controller)) fail('local canary is missing the post-call counter invariant');
-  if (!/artifactPath:\s*null/.test(controller) || !/rawModelOutputPersisted:\s*0/.test(controller)) fail('local canary does not enforce in-memory/no-persistence result metadata');
+  if (!/fixedSyntheticCanaryInput/.test(controllerCode) || !/LOCAL_CANARY_INPUT_VERSION/.test(controllerCode) || !/LOCAL_CANARY_OPERATION/.test(controllerCode)) fail('local canary fixed fixture identity is missing');
+  if (!/new\s+LoopbackAiReviewProvider/.test(controllerCode) || !/new\s+AiReviewSession/.test(controllerCode)) fail('local canary does not construct the hardened loopback/session path');
+  if (!/candidateReviewAttempts\s*!==\s*0/.test(controllerCode) || !/oracleSuggestionAttempts\s*!==\s*0/.test(controllerCode) || !/providerCalls\s*!==\s*0/.test(controllerCode)) fail('local canary is missing the pre-call counter invariant');
+  if (!/candidateReviewAttempts\s*!==\s*1/.test(controllerCode) || !/oracleSuggestionAttempts\s*!==\s*0/.test(controllerCode) || !/providerCalls\s*!==\s*1/.test(controllerCode)) fail('local canary is missing the post-call counter invariant');
+  if (!/artifactPath:\s*null/.test(controllerCode) || !/rawModelOutputPersisted:\s*0/.test(controllerCode)) fail('local canary does not enforce in-memory/no-persistence result metadata');
   for (const forbidden of ['--prompt', '--file', '--input-json', '--artifact-id', '--finding-id', '--customer-data', '--system-prompt', '--temperature', '--tools', '--functions', '--stream', '--output', '--publish', '--git', '--browser', '--campaign', '--auth']) {
     if (cli.includes(forbidden)) fail(`local canary CLI exposes forbidden option ${forbidden}`);
   }
   if (/\b(?:fetch|http\.request|https\.request|net\.connect|WebSocket|child_process|spawn|exec(?:File)?|process\.env|readDir|readdir)\b/i.test(cli)) fail('local canary CLI contains an unapproved transport, process, or filesystem capability');
-  if (!/parseLocalCanaryArgs/.test(cli) || !/runSingleLocalCanary/.test(cli) || !/formatLocalCanaryPass/.test(cli)) fail('local canary CLI is not a thin controller wrapper');
+  if (!/parseLocalCanaryArgs/.test(cliCode) || !/runSingleLocalCanary/.test(cliCode) || !/formatLocalCanaryPass/.test(cliCode)) fail('local canary CLI is not a thin controller wrapper');
 }
 
 function selfDevelopmentSourceFiles() {
@@ -480,15 +588,16 @@ function checkSelfDevelopmentBoundary() {
   }
   const sources = files.map((file) => [file, readIncludingComments(file)]);
   const combined = sources.map(([, source]) => source).join('\n');
-  const provenanceManifest = readIncludingComments('src/core/selfDev/provenanceManifest.ts');
+  const provenanceManifest = read('src/core/selfDev/provenanceManifest.ts');
   for (const file of files) {
     if (!provenanceManifest.includes(`'${file}'`)) fail(`authoritative provenance manifest omits tracked selfDev source ${file}`);
   }
   const provenance = readIncludingComments('src/core/provenance/localGit.ts');
-  if (!/spawnSync\('git', \[\.\.\.args\]/.test(provenance) || !/shell:\s*false/.test(provenance) || !/timeout:\s*5_000/.test(provenance) || !/maxBuffer:\s*512 \* 1024/.test(provenance)) {
+  const provenanceCode = read("src/core/provenance/localGit.ts");
+  if (!/spawnSync\('git', \[\.\.\.args\]/.test(provenanceCode) || !/shell:\s*false/.test(provenanceCode) || !/timeout:\s*5_000/.test(provenanceCode) || !/maxBuffer:\s*512 \* 1024/.test(provenanceCode)) {
     fail('read-only local Git provenance boundary is not fixed-argv, no-shell, and bounded');
   }
-  if (!/GIT_OPTIONAL_LOCKS:\s*'0'/.test(provenance)) fail('read-only local Git provenance does not disable optional Git locks');
+  if (!/GIT_OPTIONAL_LOCKS:\s*'0'/.test(provenanceCode)) fail('read-only local Git provenance does not disable optional Git locks');
   if (/\['(?:add|commit|push|pull|fetch|checkout|switch|reset|clean|stash|merge|rebase|cherry-pick|apply|am|tag|branch|config)'/.test(provenance)) fail('local Git provenance contains a forbidden mutation or remote verb');
   for (const file of gitFiles().filter((item) => item.startsWith('src/core/provenance/') && item.endsWith('.ts'))) {
     if (file !== 'src/core/provenance/localGit.ts' && /node:child_process/.test(readIncludingComments(file))) fail(`${file} is an unapproved Git child-process boundary`);
@@ -511,41 +620,51 @@ function checkSelfDevelopmentBoundary() {
     if (new RegExp(`['"]${field}['"]`).test(keyBlock)) fail(`Phase 8A candidate schema contains forbidden field ${field}`);
   }
   const proposer = readIncludingComments('src/core/selfDev/proposer.ts');
-  if (!/class\s+SyntheticDeterministicProposer/.test(proposer)) fail('Phase 8A does not have the sole synthetic deterministic proposer');
+  const proposerCode = read("src/core/selfDev/proposer.ts");
+  if (!/class\s+SyntheticDeterministicProposer/.test(proposerCode)) fail('Phase 8A does not have the sole synthetic deterministic proposer');
   if (/class\s+(?:Local|Cloud|Remote|Agent)[A-Za-z]*Proposer/.test(combined)) fail('Phase 8A contains an unauthorized proposer class');
   const registry = readIncludingComments('src/core/selfDev/registry.ts');
-  if (!/SELFDEV_ACTIONS/.test(registry) || !/SELFDEV_ASSERTIONS/.test(registry) || !/resolveSelfDevAction/.test(registry) || !/resolveSelfDevAssertion/.test(registry)) fail('Phase 8A action/assertion allowlists are missing');
+  const registryCode = read("src/core/selfDev/registry.ts");
+  if (!/SELFDEV_ACTIONS/.test(registryCode) || !/SELFDEV_ASSERTIONS/.test(registryCode) || !/resolveSelfDevAction/.test(registryCode) || !/resolveSelfDevAssertion/.test(registryCode)) fail('Phase 8A action/assertion allowlists are missing');
   if (/\b(?:callback|executable\s*:\s*true|new\s+Function)\b/i.test(registry)) fail('Phase 8A registry exposes executable candidate behavior');
   const controller = readIncludingComments('src/core/selfDev/controller.ts');
+  const controllerCode = read("src/core/selfDev/controller.ts");
   const storage = readIncludingComments('src/core/selfDev/storage.ts');
-  if (!/SELF_DEVELOPMENT_SYNTHETIC_EVALUATION|SELFDEV_SYNTHETIC_BASE_NIGHTWATCH_SHA/.test(controller)) fail('Phase 8A controller lacks its narrow owner/synthetic boundary');
-  if (!/PrivateArtifactStore/.test(storage) || !/writeImmutableJson/.test(storage)) fail('Phase 8A private results do not use the hardened immutable private store');
-  if (!/validateSessionArtifact/.test(storage) || !/replaySession/.test(storage) || !/readBack/.test(storage)) fail('Phase 8A.1 persistence is missing strict pre-write or read-back replay gates');
-  if (!/SELFDEV_PROVENANCE_REQUIRED/.test(controller) || !/provenance/.test(controller)) fail('Phase 8A.1 persistent controller does not require injected provenance');
+  const storageCode = read("src/core/selfDev/storage.ts");
+  if (!/SELF_DEVELOPMENT_SYNTHETIC_EVALUATION|SELFDEV_SYNTHETIC_BASE_NIGHTWATCH_SHA/.test(controllerCode)) fail('Phase 8A controller lacks its narrow owner/synthetic boundary');
+  if (!/PrivateArtifactStore/.test(storageCode) || !/writeImmutableJson/.test(storageCode)) fail('Phase 8A private results do not use the hardened immutable private store');
+  if (!/validateSessionArtifact/.test(storageCode) || !/replaySession/.test(storageCode) || !/readBack/.test(storageCode)) fail('Phase 8A.1 persistence is missing strict pre-write or read-back replay gates');
+  if (!/SELFDEV_PROVENANCE_REQUIRED/.test(controllerCode) || !/provenance/.test(controllerCode)) fail('Phase 8A.1 persistent controller does not require injected provenance');
   const validation = readIncludingComments('src/core/selfDev/validation.ts');
-  if (!/sessionArtifactIdFor/.test(validation) || !/assertEvaluationStateInvariant/.test(validation) || !/SELFDEV_SESSION_ARTIFACT_SCHEMA_VERSION/.test(validation)) fail('Phase 8A.1 validation lacks v2 content identity or semantic state invariants');
+  const validationCode = read("src/core/selfDev/validation.ts");
+  if (!/sessionArtifactIdFor/.test(validationCode) || !/assertEvaluationStateInvariant/.test(validationCode) || !/SELFDEV_SESSION_ARTIFACT_SCHEMA_VERSION/.test(validationCode)) fail('Phase 8A.1 validation lacks v2 content identity or semantic state invariants');
   const replay = readIncludingComments('src/core/selfDev/replay.ts');
-  if (!/canonicalJson\(actual\)/.test(replay) || !/proposals\[index\]/.test(replay) || !/DeterministicReplayClock/.test(replay)) fail('Phase 8A.1 replay is not ordered, exact, and clock-controlled');
+  const replayCode = read("src/core/selfDev/replay.ts");
+  if (!/canonicalJson\(actual\)/.test(replayCode) || !/proposals\[index\]/.test(replayCode) || !/DeterministicReplayClock/.test(replayCode)) fail('Phase 8A.1 replay is not ordered, exact, and clock-controlled');
   const trust = readIncludingComments('src/core/selfDev/trust.ts');
-  if (!/VERIFIED_EXACT_BASE/.test(trust) || !/VERIFIED_SOURCE_EQUIVALENT_DESCENDANT/.test(trust) || !/LEGACY_UNVERIFIED_NOT_ELIGIBLE/.test(trust)) fail('Phase 8A.1 trust assessment is missing currentness or legacy quarantine');
-  if (!/assessFutureReviewEligibility/.test(trust)) fail('Phase 8A.1.1 canonical future-review eligibility gate is missing');
-  if (!/Number\.isInteger/.test(trust)) fail('Phase 8A.1.1 eligibility prerequisite does not validate pass-count shape at runtime');
-  if (!/current:\s*CurrentSelfDevSourceView/.test(trust)) fail('Phase 8A.1.1 eligibility gate does not require a current-source view parameter');
-  if (!/SELFDEV_PRIVATE_NAMESPACE/.test(storage) || !/self-development/.test(storage)) fail('Phase 8A private results lack a separate namespace');
+  const trustCode = read("src/core/selfDev/trust.ts");
+  if (!/VERIFIED_EXACT_BASE/.test(trustCode) || !/VERIFIED_SOURCE_EQUIVALENT_DESCENDANT/.test(trustCode) || !/LEGACY_UNVERIFIED_NOT_ELIGIBLE/.test(trustCode)) fail('Phase 8A.1 trust assessment is missing currentness or legacy quarantine');
+  if (!/assessFutureReviewEligibility/.test(trustCode)) fail('Phase 8A.1.1 canonical future-review eligibility gate is missing');
+  if (!/Number\.isInteger/.test(trustCode)) fail('Phase 8A.1.1 eligibility prerequisite does not validate pass-count shape at runtime');
+  if (!/current:\s*CurrentSelfDevSourceView/.test(trustCode)) fail('Phase 8A.1.1 eligibility gate does not require a current-source view parameter');
+  if (!/SELFDEV_PRIVATE_NAMESPACE/.test(storageCode) || !/self-development/.test(storageCode)) fail('Phase 8A private results lack a separate namespace');
   if (!/NOT_AUTHORIZED_PHASE_8A/.test(combined) || !/EVALUATED_PASS_NOT_ADOPTED/.test(combined) || !/PROHIBITED/.test(combined)) fail('Phase 8A result lacks explicit no-adoption/publication authority');
   const cli = readIncludingComments('bin/selfdev-synthetic.mjs');
-  if (!/parseArgs/.test(cli) || !/runSyntheticSelfDevSession/.test(cli)) fail('Phase 8A CLI is not a thin synthetic controller wrapper');
+  const cliCode = read("bin/selfdev-synthetic.mjs");
+  if (!/parseArgs/.test(cliCode) || !/runSyntheticSelfDevSession/.test(cliCode)) fail('Phase 8A CLI is not a thin synthetic controller wrapper');
   if (/\b(?:child_process|fetch\s*\(|http\.request|https\.request|net\.connect|WebSocket|git\s+(?:add|commit|push|apply)|AiReview|owner-review|database|production|NIGHTWATCH_STORAGE_STATE)\b/i.test(cli)) fail('Phase 8A CLI exposes a prohibited capability');
   if (/fs\.(?:write|append|rename|unlink|rm|copy|mkdir|link)/i.test(cli)) fail('Phase 8A CLI contains a filesystem-write path');
-  if (!/readLocalNightwatchProvenance/.test(cli)) fail('Phase 8A synthetic CLI does not derive local Git/source provenance');
+  if (!/readLocalNightwatchProvenance/.test(cliCode)) fail('Phase 8A synthetic CLI does not derive local Git/source provenance');
   const verifyCli = readIncludingComments('bin/selfdev-verify.mjs');
-  if (!/--artifact-id/.test(verifyCli) || !/readOnly:\s*true/.test(verifyCli) || !/assessSelfDevArtifactIntegrity/.test(verifyCli)) fail('Phase 8A.1 verifier CLI lacks exact-ID read-only assessment');
-  if (/(?:--latest|--all|--list|--root|--output|--patch|--adopt|--apply|--commit|--push|--model|--prompt|--url|--repo|--force)/.test(verifyCli) && !/SELFDEV_VERIFY_USAGE_INVALID/.test(verifyCli)) fail('Phase 8A.1 verifier CLI does not reject broad selection or mutation options');
+  const verifyCliCode = read("bin/selfdev-verify.mjs");
+  if (!/--artifact-id/.test(verifyCliCode) || !/readOnly:\s*true/.test(verifyCliCode) || !/assessSelfDevArtifactIntegrity/.test(verifyCliCode)) fail('Phase 8A.1 verifier CLI lacks exact-ID read-only assessment');
+  if (/(?:--latest|--all|--list|--root|--output|--patch|--adopt|--apply|--commit|--push|--model|--prompt|--url|--repo|--force)/.test(verifyCli) && !/SELFDEV_VERIFY_USAGE_INVALID/.test(verifyCliCode)) fail('Phase 8A.1 verifier CLI does not reject broad selection or mutation options');
   const provenanceCli = readIncludingComments('bin/selfdev-provenance.mjs');
-  if (!/readLocalNightwatchProvenance/.test(provenanceCli) || /node:child_process|fs\.(?:write|append|rename|unlink|rm|copy|mkdir|link)/i.test(provenanceCli)) fail('read-only provenance CLI boundary is incomplete');
+  const provenanceCliCode = read("bin/selfdev-provenance.mjs");
+  if (!/readLocalNightwatchProvenance/.test(provenanceCliCode) || /node:child_process|fs\.(?:write|append|rename|unlink|rm|copy|mkdir|link)/i.test(provenanceCli)) fail('read-only provenance CLI boundary is incomplete');
   const index = readIncludingComments('src/core/selfDev/index.ts');
   if (/export\s+\*\s+from\s+['"]\.\/storage['"]/.test(index) || /createSessionArtifact/.test(index)) fail('selfDev public index exposes a raw artifact constructor or storage wildcard');
-  const ownerPolicy = readIncludingComments('src/core/policy/ownerScope.ts');
+  const ownerPolicy = read('src/core/policy/ownerScope.ts');
   if (!/SELF_DEVELOPMENT_SYNTHETIC_EVALUATION/.test(ownerPolicy)) fail('Phase 8A lacks a distinct owner-policy capability');
 }
 
@@ -566,7 +685,7 @@ function checkPhase8BSandboxBoundary() {
   }
   const sources = files.map((file) => [file, readIncludingComments(file)]);
   const combined = sources.map(([, source]) => source).join('\n');
-  const provenanceManifest = readIncludingComments('src/core/selfDev/provenanceManifest.ts');
+  const provenanceManifest = read('src/core/selfDev/provenanceManifest.ts');
   for (const file of files) {
     if (!provenanceManifest.includes(`'${file}'`)) fail(`authoritative provenance manifest omits tracked selfDevSandbox source ${file}`);
   }
@@ -586,40 +705,45 @@ function checkPhase8BSandboxBoundary() {
   }
   // The loader may require exactly one bare npm specifier: the already-installed local TypeScript compiler.
   const loader = readIncludingComments('src/core/selfDevSandbox/sandboxLoader.ts');
+  const loaderCode = read("src/core/selfDevSandbox/sandboxLoader.ts");
   const bareRequires = loader.match(/requireFn\(\s*'([^./][^']*)'\s*\)/g) ?? [];
   for (const occurrence of bareRequires) {
     if (!/'typescript'/.test(occurrence)) fail(`sandbox loader requires an unapproved bare module: ${occurrence}`);
   }
-  if (!/loadInFlight/.test(loader) || !/SELFDEV_SANDBOX_LOADER_BUSY/.test(loader)) fail('sandbox loader is missing its serial-execution lock');
-  if (!/resolvedSandboxRoot/.test(loader) || !/SELFDEV_SANDBOX_LOADER_PATH_ESCAPE/.test(loader)) fail('sandbox loader is missing its path-confinement check');
-  if (!/delete requireFn\.cache/.test(loader)) fail('sandbox loader does not clear its module cache');
+  if (!/loadInFlight/.test(loaderCode) || !/SELFDEV_SANDBOX_LOADER_BUSY/.test(loaderCode)) fail('sandbox loader is missing its serial-execution lock');
+  if (!/resolvedSandboxRoot/.test(loaderCode) || !/SELFDEV_SANDBOX_LOADER_PATH_ESCAPE/.test(loaderCode)) fail('sandbox loader is missing its path-confinement check');
+  if (!/delete requireFn\.cache/.test(loaderCode)) fail('sandbox loader does not clear its module cache');
 
   const mirror = readIncludingComments('src/core/selfDevSandbox/sandboxMirror.ts');
-  if (!/SELFDEV_AUTHORITATIVE_PATHS/.test(mirror)) fail('sandbox mirror does not copy the fixed authoritative source set');
-  if (!/isSymbolicLink/.test(mirror)) fail('sandbox mirror is missing symlink rejection');
-  if (!/mode:\s*0o700/.test(mirror) || !/mode:\s*0o600/.test(mirror)) fail('sandbox mirror does not use owner-only directory/file permissions');
-  if (!/resolvedBase\s*\+\s*path\.sep/.test(mirror)) fail('sandbox cleanup does not confine deletion to the fixed sandbox base');
+  const mirrorCode = read("src/core/selfDevSandbox/sandboxMirror.ts");
+  if (!/SELFDEV_AUTHORITATIVE_PATHS/.test(mirrorCode)) fail('sandbox mirror does not copy the fixed authoritative source set');
+  if (!/isSymbolicLink/.test(mirrorCode)) fail('sandbox mirror is missing symlink rejection');
+  if (!/mode:\s*0o700/.test(mirrorCode) || !/mode:\s*0o600/.test(mirrorCode)) fail('sandbox mirror does not use owner-only directory/file permissions');
+  if (!/resolvedBase\s*\+\s*path\.sep/.test(mirrorCode)) fail('sandbox cleanup does not confine deletion to the fixed sandbox base');
 
   const planner = readIncludingComments('src/core/selfDevSandbox/planner.ts');
-  if (!/assessFutureReviewEligibility/.test(planner)) fail('Phase 8B planner does not consume the canonical future-review eligibility gate');
-  if (!/SELF_DEVELOPMENT_SANDBOX_ADOPTION/.test(planner)) fail('Phase 8B planner is missing its owner-policy gate');
-  if (!/ALREADY_ADOPTED/.test(planner) || !/CATALOG_FULL/.test(planner) || !/CATALOG_NONCANONICAL/.test(planner)) fail('Phase 8B planner is missing a required fail-closed gate');
-  if (!/sourceBundleDigestBefore\s*!==\s*plan\.sourceBundleDigestBefore/.test(planner) && !/current\.sourceBundleDigest\s*!==\s*plan\.sourceBundleDigestBefore/.test(planner)) {
+  const plannerCode = read("src/core/selfDevSandbox/planner.ts");
+  if (!/assessFutureReviewEligibility/.test(plannerCode)) fail('Phase 8B planner does not consume the canonical future-review eligibility gate');
+  if (!/SELF_DEVELOPMENT_SANDBOX_ADOPTION/.test(plannerCode)) fail('Phase 8B planner is missing its owner-policy gate');
+  if (!/ALREADY_ADOPTED/.test(plannerCode) || !/CATALOG_FULL/.test(plannerCode) || !/CATALOG_NONCANONICAL/.test(plannerCode)) fail('Phase 8B planner is missing a required fail-closed gate');
+  if (!/sourceBundleDigestBefore\s*!==\s*plan\.sourceBundleDigestBefore/.test(plannerCode) && !/current\.sourceBundleDigest\s*!==\s*plan\.sourceBundleDigestBefore/.test(plannerCode)) {
     fail('Phase 8B planner is missing TOCTOU source-bundle revalidation');
   }
 
   const executor = readIncludingComments('src/core/selfDevSandbox/sandboxExecutor.ts');
-  if (!/SELF_DEVELOPMENT_SANDBOX_ADOPTION/.test(executor)) fail('Phase 8B sandbox executor is missing its owner-policy gate');
-  if (!/revalidatePlan/.test(executor)) fail('Phase 8B sandbox executor does not revalidate the plan before mutation');
-  if (!/diffSandboxAgainstCanonical/.test(executor) || !/changedFiles\.length\s*!==\s*1/.test(executor)) fail('Phase 8B sandbox executor does not enforce exactly one changed file');
-  if (!/cleanupSandboxMirror/.test(executor)) fail('Phase 8B sandbox executor does not clean up its sandbox mirror');
+  const executorCode = read("src/core/selfDevSandbox/sandboxExecutor.ts");
+  if (!/SELF_DEVELOPMENT_SANDBOX_ADOPTION/.test(executorCode)) fail('Phase 8B sandbox executor is missing its owner-policy gate');
+  if (!/revalidatePlan/.test(executorCode)) fail('Phase 8B sandbox executor does not revalidate the plan before mutation');
+  if (!/diffSandboxAgainstCanonical/.test(executorCode) || !/changedFiles\.length\s*!==\s*1/.test(executorCode)) fail('Phase 8B sandbox executor does not enforce exactly one changed file');
+  if (!/cleanupSandboxMirror/.test(executorCode)) fail('Phase 8B sandbox executor does not clean up its sandbox mirror');
   // The four metamorphic-probe verdicts are proved by the shared pure
   // src/core/selfDev/metamorphicProbes.ts implementation (Phase 8B.1 extracted
   // it so canonical verification can reuse the same proof logic); the
   // executor must still be the one invoking it.
   const metamorphicProbes = readIncludingComments('src/core/selfDev/metamorphicProbes.ts');
-  if (!/runMetamorphicProbes/.test(executor)) fail('Phase 8B sandbox executor does not invoke the shared metamorphic proof implementation');
-  if (!/REJECTED_DUPLICATE/.test(metamorphicProbes) || !/EVALUATED_PASS_NOT_ADOPTED/.test(metamorphicProbes) || !/REJECTED_SAFETY/.test(metamorphicProbes)) {
+  const metamorphicProbesCode = read("src/core/selfDev/metamorphicProbes.ts");
+  if (!/runMetamorphicProbes/.test(executorCode)) fail('Phase 8B sandbox executor does not invoke the shared metamorphic proof implementation');
+  if (!/REJECTED_DUPLICATE/.test(metamorphicProbesCode) || !/EVALUATED_PASS_NOT_ADOPTED/.test(metamorphicProbesCode) || !/REJECTED_SAFETY/.test(metamorphicProbesCode)) {
     fail('shared metamorphic proof implementation is missing a required probe verdict');
   }
   if (!/SANDBOX_VERIFIED_NOT_CANONICALLY_APPLIED/.test(combined) || !/canonicalApply:\s*'PROHIBITED'/.test(combined) || !/publication:\s*'PROHIBITED'/.test(combined)) {
@@ -627,7 +751,8 @@ function checkPhase8BSandboxBoundary() {
   }
 
   const storage = readIncludingComments('src/core/selfDevSandbox/storage.ts');
-  if (!/PrivateArtifactStore/.test(storage) || !/writeImmutableJson/.test(storage)) fail('Phase 8B plan/result storage does not use the hardened immutable private store');
+  const storageCode = read("src/core/selfDevSandbox/storage.ts");
+  if (!/PrivateArtifactStore/.test(storageCode) || !/writeImmutableJson/.test(storageCode)) fail('Phase 8B plan/result storage does not use the hardened immutable private store');
   if (/\.writeJson\s*\(|writeIncomplete\s*\(/.test(storage)) fail('Phase 8B plan/result storage retains a replacement-capable write path');
 
   // G14.9 resolved the Phase 8B public `index.ts` barrel as REMOVED: its
@@ -636,12 +761,13 @@ function checkPhase8BSandboxBoundary() {
   // asserted directly on `planner.ts` and `sandboxExecutor.ts` above, and the
   // approved-caller scan below still polices every reach into this module.
 
-  const ownerPolicy = readIncludingComments('src/core/policy/ownerScope.ts');
+  const ownerPolicy = read('src/core/policy/ownerScope.ts');
   if (!/SELF_DEVELOPMENT_SANDBOX_ADOPTION/.test(ownerPolicy)) fail('Phase 8B lacks a distinct owner-policy capability');
 
   const cli = readIncludingComments('bin/selfdev-adopt-sandbox.mjs');
-  if (!/inspectSelfDevAdoption/.test(cli) || !/planAdoption/.test(cli) || !/runSandboxAdoption/.test(cli)) fail('Phase 8B CLI is not a thin wrapper over inspect/plan/run');
-  if (!/SANDBOX_ONLY/.test(cli)) fail('Phase 8B CLI is missing its fixed confirmation token');
+  const cliCode = read("bin/selfdev-adopt-sandbox.mjs");
+  if (!/inspectSelfDevAdoption/.test(cliCode) || !/planAdoption/.test(cliCode) || !/runSandboxAdoption/.test(cliCode)) fail('Phase 8B CLI is not a thin wrapper over inspect/plan/run');
+  if (!/SANDBOX_ONLY/.test(cliCode)) fail('Phase 8B CLI is missing its fixed confirmation token');
   const forbiddenCliOptions = [
     '--path', '--file', '--source', '--code', '--patch', '--diff', '--repo', '--root',
     '--sandbox-root', '--target', '--command', '--shell', '--model', '--prompt', '--url',
@@ -688,6 +814,7 @@ function checkPhase8BSandboxBoundary() {
 
 function checkImmutablePrivatePublication() {
   const source = readIncludingComments('src/core/policy/privateArtifacts.ts');
+  const sourceCode = read('src/core/policy/privateArtifacts.ts');
   const start = source.indexOf('  writeImmutableJson(');
   const end = source.indexOf('\n  /** Always throws', start);
   const method = start >= 0 && end > start ? source.slice(start, end) : '';
@@ -697,13 +824,14 @@ function checkImmutablePrivatePublication() {
   }
   if (!/fs\.linkSync\(temporary, destination\)/.test(method)) fail('immutable publication does not use atomic linkSync create-if-absent');
   if (/renameSync|\.writeJson\s*\(|\.readJson\s*\(|unlinkSync\(destination\)|copyFileSync|writeFileSync\(destination/.test(method)) fail('immutable publication contains a replacement-capable or unsafe fallback');
-  if (!/openSync\(temporary, ['"]wx['"], 0o600\)/.test(source) || !/fs\.fsyncSync\(descriptor\)/.test(source)) fail('private temporary publication is not wx/0600 and file-fsynced');
-  if (!/randomBytes\(/.test(source) || !/\.tmp/.test(source)) fail('private temporary names are not process-collision-resistant hidden files');
+  if (!/openSync\(temporary, ['"]wx['"], 0o600\)/.test(sourceCode) || !/fs\.fsyncSync\(descriptor\)/.test(sourceCode)) fail('private temporary publication is not wx/0600 and file-fsynced');
+  if (!/randomBytes\(/.test(sourceCode) || !/\.tmp/.test(sourceCode)) fail('private temporary names are not process-collision-resistant hidden files');
   if (!/fs\.unlinkSync\(temporary\)/.test(method)) fail('immutable publication does not clean its temporary name');
-  if (!/fsyncDirectory\(\)/.test(method) || !/fs\.fsyncSync\(descriptor\)/.test(source)) fail('immutable publication does not fsync the containing directory');
+  if (!/fsyncDirectory\(\)/.test(method) || !/fs\.fsyncSync\(descriptor\)/.test(sourceCode)) fail('immutable publication does not fsync the containing directory');
   if (!/PRIVATE_ARTIFACT_NO_REPLACE_UNSUPPORTED/.test(method)) fail('immutable publication lacks a precise unsupported no-replace failure');
   const storage = readIncludingComments('src/core/aiReview/storage.ts');
-  if (!/writeBugDraft[\s\S]*writeImmutableJson/.test(storage) || !/writeOracleSuggestion[\s\S]*writeImmutableJson/.test(storage) || !/writeHumanReview[\s\S]*writeImmutableJson/.test(storage)) fail('AI bug/oracle/review writes do not all use immutable publication');
+  const storageCode = read('src/core/aiReview/storage.ts');
+  if (!/writeBugDraft[\s\S]*writeImmutableJson/.test(storageCode) || !/writeOracleSuggestion[\s\S]*writeImmutableJson/.test(storageCode) || !/writeHumanReview[\s\S]*writeImmutableJson/.test(storageCode)) fail('AI bug/oracle/review writes do not all use immutable publication');
   if (/writeIncomplete\s*\(|\.writeJson\s*\(/.test(storage)) fail('AI immutable storage uses replacement-capable writeJson/writeIncomplete');
 }
 
@@ -714,8 +842,9 @@ function checkOwnerDecisionAuthority() {
 
   const internal = 'src/core/aiReview/ownerDecision.ts';
   const internalSource = readIncludingComments(internal);
-  if (!/function\s+recordOwnerDecision\s*\(/.test(internalSource) || /export\s+function\s+recordOwnerDecision\s*\(/.test(internalSource)) fail('raw unconfirmed owner decision helper is not private');
-  if (!/export\s+function\s+recordConfirmedOwnerDecision\s*\(/.test(internalSource) || !/confirmationMatches\(/.test(internalSource) || !/expectedArtifactDigest/.test(internalSource)) fail('internal owner decision boundary is missing confirmation/digest requirements');
+  const internalSourceCode = read(internal);
+  if (!/function\s+recordOwnerDecision\s*\(/.test(internalSourceCode) || /export\s+function\s+recordOwnerDecision\s*\(/.test(internalSource)) fail('raw unconfirmed owner decision helper is not private');
+  if (!/export\s+function\s+recordConfirmedOwnerDecision\s*\(/.test(internalSourceCode) || !/confirmationMatches\(/.test(internalSourceCode) || !/expectedArtifactDigest/.test(internalSourceCode)) fail('internal owner decision boundary is missing confirmation/digest requirements');
 
   const sourceFiles = gitFiles()
     .filter((file) => (file.startsWith('src/') || file.startsWith('bin/')) && /\.(?:ts|mjs|js)$/.test(file))
@@ -724,7 +853,7 @@ function checkOwnerDecisionAuthority() {
     const source = readIncludingComments(file);
     if (file !== 'bin/ai-owner-review.mjs' && /[\'\"]ownerDecision\.ts[\'\"]|recordConfirmedOwnerDecision|\bcreateHumanReviewRecord\s*\(|\.writeHumanReview\s*\(/.test(source)) fail(`${file} reaches owner-decision write authority outside the approved boundary`);
   }
-  const cli = readIncludingComments('bin/ai-owner-review.mjs');
+  const cli = read('bin/ai-owner-review.mjs');
   if (!/ownerDecision\.ts/.test(cli) || !/recordConfirmedOwnerDecision/.test(cli)) fail('owner-review CLI is not the sole internal owner-decision loader');
   if (!/process\.stdin\.isTTY/.test(cli) || !/process\.stdout\.isTTY/.test(cli)) fail('owner-review CLI is missing its TTY boundary');
   if (!/A = approve draft, R = reject, S = supersede, Q = cancel/.test(cli)) fail('owner-review CLI fixed decision menu is missing');
@@ -733,11 +862,13 @@ function checkOwnerDecisionAuthority() {
 
 function checkAiInvocationAuthority() {
   const pipeline = readIncludingComments('src/core/aiReview/pipeline.ts');
+  const pipelineCode = read('src/core/aiReview/pipeline.ts');
   const index = readIncludingComments('src/core/aiReview/index.ts');
+  const indexCode = read('src/core/aiReview/index.ts');
   if (/export\s+(?:async\s+)?function\s+(?:reviewBugCandidate|suggestOracle)\b/.test(pipeline)) fail('AI pipeline exports an unbudgeted provider execution function');
   if (/export\s+\*\s+from\s+['"]\.\/pipeline['"]/.test(index) || /export\s*\{[^}]*\b(?:reviewBugCandidate|suggestOracle)\b[^}]*\}/s.test(index)) fail('AI public index exposes a raw provider execution function');
-  if (!/export\s*\{\s*AiReviewSession\s*\}\s*from\s+['"]\.\/pipeline['"]/.test(index)) fail('AiReviewSession is not the explicit public provider execution boundary');
-  if (!/class\s+AiReviewSession/.test(pipeline) || !/private\s+reserveProviderCall/.test(pipeline) || !/this\.providerCalls\s*\+=\s*1/.test(pipeline)) fail('AI session does not contain the canonical synchronous provider reservation');
+  if (!/export\s*\{\s*AiReviewSession\s*\}\s*from\s+['"]\.\/pipeline['"]/.test(indexCode)) fail('AiReviewSession is not the explicit public provider execution boundary');
+  if (!/class\s+AiReviewSession/.test(pipelineCode) || !/private\s+reserveProviderCall/.test(pipelineCode) || !/this\.providerCalls\s*\+=\s*1/.test(pipelineCode)) fail('AI session does not contain the canonical synchronous provider reservation');
 
   const sourceFiles = gitFiles()
     .filter((file) => (file.startsWith('src/') || file.startsWith('bin/')) && /\.(?:ts|mjs|js)$/.test(file))
@@ -756,8 +887,9 @@ function checkAiInvocationAuthority() {
 function checkOwnerReviewCliBoundary() {
   const file = 'bin/ai-owner-review.mjs';
   const source = readIncludingComments(file);
+  const sourceCode = read(file);
   if (!source) return;
-  if (!source.includes('ownerReview.ts')) fail(`${file} does not load the provider-free owner-review service`);
+  if (!sourceCode.includes('ownerReview.ts')) fail(`${file} does not load the provider-free owner-review service`);
   const forbidden = [
     /\bAiReviewSession\b/,
     /\bSyntheticAiReviewProvider\b/,
@@ -777,7 +909,7 @@ function checkOwnerReviewCliBoundary() {
   if (/--(?:approve|reject|supersede|decision(?:=|\b)|yes|force|non-interactive)\b/i.test(source)) fail(`${file} contains a decision argument shortcut`);
   if (/from\s+['"][^'"]*aiReview(?:['"]|\/index)/i.test(source) || /from\s+['"][^'"]*(?:pipeline|syntheticProvider|loopbackProvider)[^'"]*['"]/i.test(source)) fail(`${file} imports an AI execution path rather than the owner-review service`);
   if (/\bwrite(?:Json|File|ImmutableJson|Incomplete)\s*\(/.test(source)) fail(`${file} writes private state directly instead of routing through the owner-review service`);
-  if (!/record(?:Confirmed)?OwnerDecision/.test(source) || !/AiReviewArtifactStore/.test(source)) fail(`${file} does not route its sole write through owner-review service/storage`);
+  if (!/record(?:Confirmed)?OwnerDecision/.test(sourceCode) || !/AiReviewArtifactStore/.test(sourceCode)) fail(`${file} does not route its sole write through owner-review service/storage`);
 }
 
 /**
@@ -846,11 +978,11 @@ function checkOwnerReviewCliBoundary() {
  *     narrative section mentions it.
  */
 function checkActiveMilestoneProgression() {
-  const activeText = readIncludingComments('.agent/ACTIVE_TASK.md');
+  const activeText = readDataFile('.agent/ACTIVE_TASK.md');
   if (activeText.length === 0) return;
   const directory = /^Task directory:\s*(\S+)\s*$/m.exec(activeText)?.[1];
   if (directory === undefined || !directory.startsWith('.agent/tasks/')) return;
-  const stateText = readIncludingComments(`${directory}/STATE.md`);
+  const stateText = readDataFile(`${directory}/STATE.md`);
   const planText = readIncludingComments(`${directory}/PLAN.md`);
   if (stateText.length === 0 || planText.length === 0) return;
   // Only the versioned live schema.
@@ -910,12 +1042,12 @@ function checkDecisionIdentityUniqueness() {
 
 function checkHostCapabilityMatrix() {
   const matrixFile = 'docs/HOST-CAPABILITY-MATRIX.md';
-  const matrix = readIncludingComments(matrixFile);
+  const matrix = readDataFile(matrixFile);
   if (matrix.length === 0) {
     fail(`${matrixFile} is missing; the qualified-host requirements must be documented`);
     return;
   }
-  const manifest = JSON.parse(readIncludingComments('package.json'));
+  const manifest = JSON.parse(readDataFile('package.json'));
   for (const name of Object.keys({ ...(manifest.dependencies ?? {}), ...(manifest.devDependencies ?? {}) })) {
     if (!matrix.includes(`\`${name}\``)) {
       fail(`${matrixFile} does not assess the declared dependency '${name}'; a dependency without an assessment is an unevidenced claim`);
@@ -1109,17 +1241,21 @@ function checkBinExecutionCoverage() {
 }
 
 function checkPhase23QualityGate() {
-  const workflow = readIncludingComments('.github/workflows/hardening.yml');
-  const packageJson = readIncludingComments('package.json');
+  const workflow = readDataFile('.github/workflows/hardening.yml');
+  const packageJson = readDataFile('package.json');
   const runner = readIncludingComments('bin/quality-gate.mjs');
+  const runnerCode = read("bin/quality-gate.mjs");
   const spec = readIncludingComments('bin/quality-gate-spec.mjs');
+  const specCode = read("bin/quality-gate-spec.mjs");
   const semantic = readIncludingComments('bin/semantic-compat.mjs');
+  const semanticCode = read("bin/semantic-compat.mjs");
   const clean = readIncludingComments('bin/quality-gate-clean.mjs');
+  const cleanCode = read("bin/quality-gate-clean.mjs");
   let gate;
   let compatibility;
   try {
-    gate = JSON.parse(readIncludingComments('config/quality-gate.v1.json'));
-    compatibility = JSON.parse(readIncludingComments('config/semantic-compatibility.v1.json'));
+    gate = JSON.parse(readDataFile('config/quality-gate.v1.json'));
+    compatibility = JSON.parse(readDataFile('config/semantic-compatibility.v1.json'));
   } catch {
     fail('Phase 23 quality-gate definitions must be valid JSON');
     return;
@@ -1137,13 +1273,13 @@ function checkPhase23QualityGate() {
   if (!/"gate:ci"\s*:\s*"node bin\/quality-gate\.mjs ci"/.test(packageJson)) fail('package.json must expose the fixed gate:ci entry point');
   if (!/"handoff:check"\s*:\s*"node bin\/planner-handoff-check\.mjs"/.test(packageJson)) fail('package.json must expose the fixed handoff checker entry point');
   if (!/"test:semantic-compat"\s*:\s*"node bin\/semantic-compat\.mjs"/.test(packageJson)) fail('package.json must expose the fixed semantic compatibility entry point');
-  if (!/modes\s*=\s*new Set\(\['local', 'ci', 'clean', 'predev'\]\)/.test(runner)) fail('quality-gate runner must use a fixed mode allowlist');
-  if (!/commandKey === 'HANDOFF_CHECK'/.test(runner) || !/planner-handoff-check\.mjs/.test(runner)) fail('quality-gate runner must own exactly one fixed handoff checker command');
+  if (!/modes\s*=\s*new Set\(\['local', 'ci', 'clean', 'predev'\]\)/.test(runnerCode)) fail('quality-gate runner must use a fixed mode allowlist');
+  if (!/commandKey === 'HANDOFF_CHECK'/.test(runnerCode) || !/planner-handoff-check\.mjs/.test(runnerCode)) fail('quality-gate runner must own exactly one fixed handoff checker command');
   if (/shell\s*:\s*true|stdio\s*:\s*['"]inherit['"]|(?<!\.)\bexec(?:File)?\s*\(/.test(runner)) fail('quality-gate runner exposes shell-capable or unbounded child execution');
-  if (!/NIGHTWATCH_STORAGE_STATE/.test(runner) || !/GITHUB_TOKEN/.test(runner) || !/environment\.TZ\s*=\s*['"]UTC['"]/.test(runner)) fail('quality-gate runner does not sanitize credentials and host behavior');
-  if (!/filePattern/.test(spec) || !/QUALITY_GATE_UNKNOWN_COMMAND/.test(spec) || !/QUALITY_GATE_DEPENDENCY_ORDER_INVALID/.test(spec)) fail('quality-gate spec validator lacks fixed command/dependency fail-closed checks');
-  if (!/shell=false|shell=false|spawnSync/.test(semantic) || !/SEMANTIC_COMPATIBILITY_PHASE_OMITTED/.test(semantic)) fail('semantic compatibility runner lacks bounded argv/phase omission checks');
-  if (!clean || !/\['ci',\s*'--ignore-scripts'\]/.test(clean) || !/status['\"],\s*['\"]--porcelain/.test(clean)) fail('clean-checkout runner must use npm ci --ignore-scripts and verify Git cleanliness');
+  if (!/NIGHTWATCH_STORAGE_STATE/.test(runnerCode) || !/GITHUB_TOKEN/.test(runnerCode) || !/environment\.TZ\s*=\s*['"]UTC['"]/.test(runnerCode)) fail('quality-gate runner does not sanitize credentials and host behavior');
+  if (!/filePattern/.test(specCode) || !/QUALITY_GATE_UNKNOWN_COMMAND/.test(specCode) || !/QUALITY_GATE_DEPENDENCY_ORDER_INVALID/.test(specCode)) fail('quality-gate spec validator lacks fixed command/dependency fail-closed checks');
+  if (!/shell=false|shell=false|spawnSync/.test(semanticCode) || !/SEMANTIC_COMPATIBILITY_PHASE_OMITTED/.test(semanticCode)) fail('semantic compatibility runner lacks bounded argv/phase omission checks');
+  if (!clean || !/\['ci',\s*'--ignore-scripts'\]/.test(cleanCode) || !/status['\"],\s*['\"]--porcelain/.test(cleanCode)) fail('clean-checkout runner must use npm ci --ignore-scripts and verify Git cleanliness');
 
   for (const [script, pattern] of [
     ['dev:phase23:manifest', /"dev:phase23:manifest"\s*:\s*"node bin\/phase23-dev\.mjs manifest"/],
@@ -1153,10 +1289,10 @@ function checkPhase23QualityGate() {
     ['ci:phase23:observe', /"ci:phase23:observe"\s*:\s*"node bin\/phase23-ci\.mjs observe"/],
   ]) if (!pattern.test(packageJson)) fail(`package.json must expose the fixed Phase 23 operator entry point: ${script}`);
 
-  const phase23Operator = readIncludingComments('bin/phase23-dev.mjs');
-  const phase23Manifest = readIncludingComments('src/core/phase23/manifest.ts');
-  const phase23Observer = readIncludingComments('bin/phase23-ci.mjs');
-  const phase23Predev = readIncludingComments('bin/phase23-predev.mjs');
+  const phase23Operator = read('bin/phase23-dev.mjs');
+  const phase23Manifest = read('src/core/phase23/manifest.ts');
+  const phase23Observer = read('bin/phase23-ci.mjs');
+  const phase23Predev = read('bin/phase23-predev.mjs');
   if (!/nightwatch\.dev-semantic-acceptance-manifest\.v2/.test(phase23Manifest) || !/DYNAMIC_TARGET_DISCOVERY_FORBIDDEN/.test(phase23Operator) || !/launcherInvocations:\s*1/.test(phase23Operator)) fail('Phase 23 DEV operator lacks the fresh v2 manifest, discovery block, or single-invocation bound');
   if (!/args\.env !== 'dev'/.test(phase23Operator) || !/phase22-real\.mjs/.test(phase23Operator) || !/maxBuffer:/.test(phase23Operator)) fail('Phase 23 DEV operator does not retain the guarded DEV-only Phase 22 execution path');
   if (!/requiredStepsUnavailable/.test(phase23Observer) || !/['"]run['"],\s*['"]view/.test(phase23Observer) || !/REQUIRED_JOB_STEPS_EMPTY/.test(read('src/core/qualityGate/externalCi.ts'))) fail('Phase 23 CI observer does not preserve the empty-step external-block rule');
@@ -1187,21 +1323,22 @@ function checkPhase23QualityGate() {
  */
 function checkPhase8B01CloseoutIntegrity() {
   const mirror = readIncludingComments('src/core/selfDevSandbox/sandboxMirror.ts');
-  if (!/ensurePrivateSandboxBase/.test(mirror)) fail('8B.0.1: sandbox mirror lacks the validated base-establishment routine');
-  if (!/firstMissingPathnameComponent/.test(mirror)) fail('8B.0.1: sandbox mirror lacks component-wise pathname-chain validation');
-  if (!/SELFDEV_SANDBOX_BASE_SYMLINK/.test(mirror) || !/SELFDEV_SANDBOX_BASE_NOT_DIRECTORY/.test(mirror) || !/SELFDEV_SANDBOX_BASE_ANCESTOR_MISSING/.test(mirror)) {
+  const mirrorCode = read("src/core/selfDevSandbox/sandboxMirror.ts");
+  if (!/ensurePrivateSandboxBase/.test(mirrorCode)) fail('8B.0.1: sandbox mirror lacks the validated base-establishment routine');
+  if (!/firstMissingPathnameComponent/.test(mirrorCode)) fail('8B.0.1: sandbox mirror lacks component-wise pathname-chain validation');
+  if (!/SELFDEV_SANDBOX_BASE_SYMLINK/.test(mirrorCode) || !/SELFDEV_SANDBOX_BASE_NOT_DIRECTORY/.test(mirrorCode) || !/SELFDEV_SANDBOX_BASE_ANCESTOR_MISSING/.test(mirrorCode)) {
     fail('8B.0.1: sandbox mirror lacks fail-closed chain validation codes');
   }
-  if (!/_PERMISSIONS_UNSAFE/.test(mirror) || !/_OWNER/.test(mirror)) {
+  if (!/_PERMISSIONS_UNSAFE/.test(mirrorCode) || !/_OWNER/.test(mirrorCode)) {
     fail('8B.0.1: sandbox mirror lacks owner/permission fail-closed validation');
   }
   // The validated base MUST be established before any instance mutation.
-  if (!/function createSandboxMirror[\s\S]{0,200}?ensurePrivateSandboxBase\(\);[\s\S]{0,200}?mkdtempSync/.test(mirror)) {
+  if (!/function createSandboxMirror[\s\S]{0,200}?ensurePrivateSandboxBase\(\);[\s\S]{0,200}?mkdtempSync/.test(mirrorCode)) {
     fail('8B.0.1: createSandboxMirror does not validate the base chain before mkdtemp');
   }
   // Parent mode tightening (established convention) may only chmod a path
   // already proven to be a non-symlink owner-matched directory.
-  if (!/function ensureOwnerPrivateDirectory[\s\S]*?assertNoSymlink[\s\S]*?chmodSync/.test(mirror)) {
+  if (!/function ensureOwnerPrivateDirectory[\s\S]*?assertNoSymlink[\s\S]*?chmodSync/.test(mirrorCode)) {
     fail('8B.0.1: parent repair chmod may precede symlink/owner validation');
   }
   // The base itself must never be chmodded by the establishment routine.
@@ -1209,35 +1346,38 @@ function checkPhase8B01CloseoutIntegrity() {
     fail('8B.0.1: ensurePrivateSandboxBase chmods a pathname');
   }
   // Cleanup stays confined to the validated base (mirror root strict child).
-  if (!/resolvedRoot === resolvedBase \|\| !resolvedRoot\.startsWith\(resolvedBase \+ path\.sep\)/.test(mirror)) {
+  if (!/resolvedRoot === resolvedBase \|\| !resolvedRoot\.startsWith\(resolvedBase \+ path\.sep\)/.test(mirrorCode)) {
     fail('8B.0.1: cleanup does not require strict containment beneath the validated base');
   }
 
   const validation = readIncludingComments('src/core/selfDevSandbox/validation.ts');
-  if (!/SELFDEV_ADOPTION_STRATEGY_CLASS/.test(validation)) fail('8B.0.1: plan/result validation does not bind the single strategy constant');
-  if (!/PLAN_STRATEGY_MISMATCH/.test(validation)) fail('8B.0.1: plan/adopted-case strategy cross-binding is missing');
-  if (!/result\.nonOverreachResult !== 'PASS'/.test(validation)) fail('8B.0.1: verified-result invariant does not require the non-overreach proof PASS');
-  if (!/result\.sandboxSourceWrites > 1/.test(validation)) fail('8B.0.1: sandbox write count is not bounded to at most one');
-  if (!/NON_OVERREACH_PROBE_UNAVAILABLE/.test(validation)) fail('8B.0.1: NON_OVERREACH_PROBE_UNAVAILABLE is not a valid failure class');
+  const validationCode = read("src/core/selfDevSandbox/validation.ts");
+  if (!/SELFDEV_ADOPTION_STRATEGY_CLASS/.test(validationCode)) fail('8B.0.1: plan/result validation does not bind the single strategy constant');
+  if (!/PLAN_STRATEGY_MISMATCH/.test(validationCode)) fail('8B.0.1: plan/adopted-case strategy cross-binding is missing');
+  if (!/result\.nonOverreachResult !== 'PASS'/.test(validationCode)) fail('8B.0.1: verified-result invariant does not require the non-overreach proof PASS');
+  if (!/result\.sandboxSourceWrites > 1/.test(validationCode)) fail('8B.0.1: sandbox write count is not bounded to at most one');
+  if (!/NON_OVERREACH_PROBE_UNAVAILABLE/.test(validationCode)) fail('8B.0.1: NON_OVERREACH_PROBE_UNAVAILABLE is not a valid failure class');
 
   const executor = readIncludingComments('src/core/selfDevSandbox/sandboxExecutor.ts');
-  if (!/let sandboxSourceWrites = 0/.test(executor) || !/sandboxSourceWrites = 1/.test(executor)) fail('8B.0.1: executor does not track actual sandbox writes');
+  const executorCode = read("src/core/selfDevSandbox/sandboxExecutor.ts");
+  if (!/let sandboxSourceWrites = 0/.test(executorCode) || !/sandboxSourceWrites = 1/.test(executorCode)) fail('8B.0.1: executor does not track actual sandbox writes');
   if (/sandboxSourceWrites:\s*[01],/.test(executor)) fail('8B.0.1: executor hardcodes the sandbox write count instead of the tracked value');
-  if (!/probes\.nonOverreachResult === 'NOT_RUN'/.test(executor) || !/NON_OVERREACH_PROBE_UNAVAILABLE/.test(executor)) fail('8B.0.1: executor does not fail closed when the non-overreach probe is unavailable');
-  if (!/probes\.nonOverreachResult === 'FAIL'/.test(executor) || !/NON_OVERREACH_REGRESSION/.test(executor)) fail('8B.0.1: executor does not distinguish a failed non-overreach probe');
+  if (!/probes\.nonOverreachResult === 'NOT_RUN'/.test(executorCode) || !/NON_OVERREACH_PROBE_UNAVAILABLE/.test(executorCode)) fail('8B.0.1: executor does not fail closed when the non-overreach probe is unavailable');
+  if (!/probes\.nonOverreachResult === 'FAIL'/.test(executorCode) || !/NON_OVERREACH_REGRESSION/.test(executorCode)) fail('8B.0.1: executor does not distinguish a failed non-overreach probe');
 
-  const types = readIncludingComments('src/core/selfDevSandbox/types.ts');
+  const types = read('src/core/selfDevSandbox/types.ts');
   if (!/NON_OVERREACH_PROBE_UNAVAILABLE/.test(types)) fail('8B.0.1: failure-class union lacks NON_OVERREACH_PROBE_UNAVAILABLE');
   if (!/SelfDevAdoptionStrategyClass/.test(types)) fail('8B.0.1: plan/result strategyClass is not the literal single-strategy type');
 
   const loader = readIncludingComments('src/core/selfDevSandbox/sandboxLoader.ts');
-  if (!/finally\s*\{[\s\S]{0,500}?loadInFlight = false/.test(loader)) fail('8B.0.1: sandbox loader lock is not released on every exit path');
+  const loaderCode = read("src/core/selfDevSandbox/sandboxLoader.ts");
+  if (!/finally\s*\{[\s\S]{0,500}?loadInFlight = false/.test(loaderCode)) fail('8B.0.1: sandbox loader lock is not released on every exit path');
 
   // G14.9 removed the Phase 8B boundary `index.ts`; the test-only
   // `setSandboxBaseOverrideForTests` seam now has no public barrel to leak
   // into, and the sandbox mirror's own confinement checks below still apply.
 
-  const adoptedCases = readIncludingComments('src/core/selfDev/adoptedCases.ts');
+  const adoptedCases = read('src/core/selfDev/adoptedCases.ts');
   if (!/SelfDevAdoptionStrategyClass/.test(adoptedCases)) fail('8B.0.1: the single strategy class lacks a literal exported type');
 }
 
@@ -1258,13 +1398,13 @@ function checkPhase8B1CanonicalPromotionBoundary() {
   }
   const sources = files.map((file) => [file, readIncludingComments(file)]);
   const combined = sources.map(([, source]) => source).join('\n');
-  const provenanceManifest = readIncludingComments('src/core/selfDev/provenanceManifest.ts');
+  const provenanceManifest = read('src/core/selfDev/provenanceManifest.ts');
   for (const file of files) {
     if (!provenanceManifest.includes(`'${file}'`)) fail(`authoritative provenance manifest omits tracked selfDevPromotion source ${file}`);
   }
   if (!provenanceManifest.includes("'bin/selfdev-promote-canonical.mjs'")) fail('authoritative provenance manifest omits the Phase 8B.1 CLI');
 
-  const ownerPolicy = readIncludingComments('src/core/policy/ownerScope.ts');
+  const ownerPolicy = read('src/core/policy/ownerScope.ts');
   if (!/SELF_DEVELOPMENT_CANONICAL_ADOPTION/.test(ownerPolicy)) fail('Phase 8B.1 lacks a distinct owner-policy capability');
   if (!/owner-scope-policy\.v2/.test(ownerPolicy)) fail('Phase 8B.1 does not deliberately advance the owner-scope policy version');
 
@@ -1286,61 +1426,68 @@ function checkPhase8B1CanonicalPromotionBoundary() {
   }
 
   const prepare = readIncludingComments('src/core/selfDevPromotion/prepare.ts');
-  if (!/SELF_DEVELOPMENT_CANONICAL_ADOPTION/.test(prepare)) fail('Phase 8B.1 prepare is missing its owner-policy gate');
-  if (!/assertRepositoryFullyClean/.test(prepare)) fail('Phase 8B.1 prepare does not require whole-repository cleanliness');
-  if (!/assessFutureReviewEligibility/.test(prepare)) fail('Phase 8B.1 prepare does not consume the canonical future-review eligibility gate');
-  if (!/ALREADY_ADOPTED/.test(prepare)) fail('Phase 8B.1 prepare is missing its already-adopted fail-closed gate');
+  const prepareCode = read("src/core/selfDevPromotion/prepare.ts");
+  if (!/SELF_DEVELOPMENT_CANONICAL_ADOPTION/.test(prepareCode)) fail('Phase 8B.1 prepare is missing its owner-policy gate');
+  if (!/assertRepositoryFullyClean/.test(prepareCode)) fail('Phase 8B.1 prepare does not require whole-repository cleanliness');
+  if (!/assessFutureReviewEligibility/.test(prepareCode)) fail('Phase 8B.1 prepare does not consume the canonical future-review eligibility gate');
+  if (!/ALREADY_ADOPTED/.test(prepareCode)) fail('Phase 8B.1 prepare is missing its already-adopted fail-closed gate');
 
   const approve = readIncludingComments('src/core/selfDevPromotion/approve.ts');
-  if (!/SELF_DEVELOPMENT_CANONICAL_ADOPTION/.test(approve)) fail('Phase 8B.1 approve is missing its owner-policy gate');
-  if (!/SELFDEV_CANONICAL_PROMOTION_APPROVAL_CONFIRMATION/.test(approve)) fail('Phase 8B.1 approve does not require the fixed confirmation token');
-  if (!/assertRepositoryFullyClean/.test(approve)) fail('Phase 8B.1 approve does not require whole-repository cleanliness');
-  if (!/PROMOTION_SOURCE_ADVANCED/.test(approve)) fail('Phase 8B.1 approve does not fail closed when source has advanced');
+  const approveCode = read("src/core/selfDevPromotion/approve.ts");
+  if (!/SELF_DEVELOPMENT_CANONICAL_ADOPTION/.test(approveCode)) fail('Phase 8B.1 approve is missing its owner-policy gate');
+  if (!/SELFDEV_CANONICAL_PROMOTION_APPROVAL_CONFIRMATION/.test(approveCode)) fail('Phase 8B.1 approve does not require the fixed confirmation token');
+  if (!/assertRepositoryFullyClean/.test(approveCode)) fail('Phase 8B.1 approve does not require whole-repository cleanliness');
+  if (!/PROMOTION_SOURCE_ADVANCED/.test(approveCode)) fail('Phase 8B.1 approve does not fail closed when source has advanced');
 
   const apply = readIncludingComments('src/core/selfDevPromotion/apply.ts');
-  if (!/SELF_DEVELOPMENT_CANONICAL_ADOPTION/.test(apply)) fail('Phase 8B.1 apply is missing its owner-policy gate');
-  if (!/claimApprovalConsumption/.test(apply)) fail('Phase 8B.1 apply is missing one-shot approval consumption');
+  const applyCode = read("src/core/selfDevPromotion/apply.ts");
+  if (!/SELF_DEVELOPMENT_CANONICAL_ADOPTION/.test(applyCode)) fail('Phase 8B.1 apply is missing its owner-policy gate');
+  if (!/claimApprovalConsumption/.test(applyCode)) fail('Phase 8B.1 apply is missing one-shot approval consumption');
   // The FIRST claim call must precede the LAST invocation of the write
   // helper, so consumption is always claimed strictly before the canonical
   // write is attempted.
   const claimIndex = apply.indexOf('claimApprovalConsumption(');
   const writeIndex = apply.lastIndexOf('atomicWriteTarget(');
   if (claimIndex < 0 || writeIndex < 0 || claimIndex > writeIndex) fail('Phase 8B.1 apply does not consume the approval before the canonical write');
-  if (!/isSymbolicLink/.test(apply)) fail('Phase 8B.1 apply is missing symlink rejection on the canonical target');
-  if (!/originalMode/.test(apply) || !/chmodSync\(temporary, mode\)/.test(apply)) fail('Phase 8B.1 apply does not preserve the target file mode');
-  if (!/TARGET_PATH_ESCAPE/.test(apply)) fail('Phase 8B.1 apply is missing parent-path containment');
-  if (!/PROMOTION_SOURCE_ADVANCED/.test(apply)) fail('Phase 8B.1 apply does not require the exact prepared HEAD');
-  if (!/ALREADY_ADOPTED/.test(apply)) fail('Phase 8B.1 apply is missing its already-adopted fail-closed gate');
-  if (!/CHANGESET_INVALID/.test(apply)) fail('Phase 8B.1 apply does not verify the post-write changeset');
-  if (!/APPLIED_RECEIPT_PERSIST_FAILED/.test(apply)) fail('Phase 8B.1 apply does not surface a truthful receipt-persistence failure');
+  if (!/isSymbolicLink/.test(applyCode)) fail('Phase 8B.1 apply is missing symlink rejection on the canonical target');
+  if (!/originalMode/.test(applyCode) || !/chmodSync\(temporary, mode\)/.test(applyCode)) fail('Phase 8B.1 apply does not preserve the target file mode');
+  if (!/TARGET_PATH_ESCAPE/.test(applyCode)) fail('Phase 8B.1 apply is missing parent-path containment');
+  if (!/PROMOTION_SOURCE_ADVANCED/.test(applyCode)) fail('Phase 8B.1 apply does not require the exact prepared HEAD');
+  if (!/ALREADY_ADOPTED/.test(applyCode)) fail('Phase 8B.1 apply is missing its already-adopted fail-closed gate');
+  if (!/CHANGESET_INVALID/.test(applyCode)) fail('Phase 8B.1 apply does not verify the post-write changeset');
+  if (!/APPLIED_RECEIPT_PERSIST_FAILED/.test(applyCode)) fail('Phase 8B.1 apply does not surface a truthful receipt-persistence failure');
 
   const verify = readIncludingComments('src/core/selfDevPromotion/verify.ts');
-  if (!/SELF_DEVELOPMENT_CANONICAL_ADOPTION/.test(verify)) fail('Phase 8B.1 verify is missing its owner-policy gate');
-  if (!/HEAD_ADVANCED/.test(verify)) fail('Phase 8B.1 verify does not require the exact pre-commit HEAD');
-  if (!/UNEXPECTED_CHANGESET/.test(verify) || !/UNEXPECTED_STAGED_CHANGE/.test(verify) || !/UNEXPECTED_UNTRACKED_FILE/.test(verify)) {
+  const verifyCode = read("src/core/selfDevPromotion/verify.ts");
+  if (!/SELF_DEVELOPMENT_CANONICAL_ADOPTION/.test(verifyCode)) fail('Phase 8B.1 verify is missing its owner-policy gate');
+  if (!/HEAD_ADVANCED/.test(verifyCode)) fail('Phase 8B.1 verify does not require the exact pre-commit HEAD');
+  if (!/UNEXPECTED_CHANGESET/.test(verifyCode) || !/UNEXPECTED_STAGED_CHANGE/.test(verifyCode) || !/UNEXPECTED_UNTRACKED_FILE/.test(verifyCode)) {
     fail('Phase 8B.1 verify does not require exactly one dirty tracked file');
   }
-  if (!/runMetamorphicProbes/.test(verify)) fail('Phase 8B.1 verify does not reuse the shared metamorphic proof implementation');
+  if (!/runMetamorphicProbes/.test(verifyCode)) fail('Phase 8B.1 verify does not reuse the shared metamorphic proof implementation');
 
   if (!/CANONICAL_APPLIED_VERIFIED_UNCOMMITTED/.test(combined) || !/NOT_PERFORMED_BY_RUNTIME/.test(combined) || !/NOT_AUTHORIZED/.test(combined)) {
     fail('Phase 8B.1 canonical promotion lacks explicit uncommitted/no-runtime-Git authority markers');
   }
 
   const storage = readIncludingComments('src/core/selfDevPromotion/storage.ts');
-  if (!/PrivateArtifactStore/.test(storage) || !/writeImmutableJson/.test(storage)) fail('Phase 8B.1 promotion storage does not use the hardened immutable private store');
+  const storageCode = read("src/core/selfDevPromotion/storage.ts");
+  if (!/PrivateArtifactStore/.test(storageCode) || !/writeImmutableJson/.test(storageCode)) fail('Phase 8B.1 promotion storage does not use the hardened immutable private store');
   if (/\.writeJson\s*\(|writeIncomplete\s*\(/.test(storage)) fail('Phase 8B.1 promotion storage retains a replacement-capable write path');
-  if (!/claimApprovalConsumption/.test(storage)) fail('Phase 8B.1 storage is missing the approval one-shot consumption primitive');
+  if (!/claimApprovalConsumption/.test(storageCode)) fail('Phase 8B.1 storage is missing the approval one-shot consumption primitive');
 
   const index = readIncludingComments('src/core/selfDevPromotion/index.ts');
-  if (!/applyPromotion/.test(index) || !/preparePromotion/.test(index) || !/approvePromotion/.test(index) || !/verifyCanonicalPromotion/.test(index)) {
+  const indexCode = read("src/core/selfDevPromotion/index.ts");
+  if (!/applyPromotion/.test(indexCode) || !/preparePromotion/.test(indexCode) || !/approvePromotion/.test(indexCode) || !/verifyCanonicalPromotion/.test(indexCode)) {
     fail('Phase 8B.1 public index is missing a required entry point');
   }
 
   const cli = readIncludingComments('bin/selfdev-promote-canonical.mjs');
-  if (!/preparePromotion/.test(cli) || !/approvePromotion/.test(cli) || !/applyPromotion/.test(cli) || !/verifyCanonicalPromotion/.test(cli)) {
+  const cliCode = read("bin/selfdev-promote-canonical.mjs");
+  if (!/preparePromotion/.test(cliCode) || !/approvePromotion/.test(cliCode) || !/applyPromotion/.test(cliCode) || !/verifyCanonicalPromotion/.test(cliCode)) {
     fail('Phase 8B.1 CLI is not a thin wrapper over prepare/approve/apply/verify');
   }
-  if (!/CANONICAL_ONE_FILE_ONLY/.test(cli)) fail('Phase 8B.1 CLI is missing its fixed approval confirmation token');
+  if (!/CANONICAL_ONE_FILE_ONLY/.test(cliCode)) fail('Phase 8B.1 CLI is missing its fixed approval confirmation token');
   const forbiddenCliOptions = [
     '--path', '--file', '--source', '--code', '--patch', '--diff', '--repo', '--root',
     '--target', '--command', '--shell', '--model', '--prompt', '--url',
@@ -1368,21 +1515,23 @@ function checkPhase8B1CanonicalPromotionBoundary() {
 function checkPhase8B10PortfolioIntegrity() {
   // Phase 8B.1.0 — bounded deterministic proposal portfolio.
   const portfolio = readIncludingComments('src/core/selfDev/portfolio.ts');
-  if (!/SELFDEV_SYNTHETIC_PORTFOLIO_VERSION/.test(portfolio) || !/SELFDEV_SELECTION_ALGORITHM_VERSION/.test(portfolio)) {
+  const portfolioCode = read("src/core/selfDev/portfolio.ts");
+  if (!/SELFDEV_SYNTHETIC_PORTFOLIO_VERSION/.test(portfolioCode) || !/SELFDEV_SELECTION_ALGORITHM_VERSION/.test(portfolioCode)) {
     fail('Phase 8B.1.0 portfolio version or selection-algorithm version is missing');
   }
-  if (!/deriveAdoptedCaseCoverage/.test(portfolio) || !/selfDevEquivalentFingerprint/.test(portfolio)) {
+  if (!/deriveAdoptedCaseCoverage/.test(portfolioCode) || !/selfDevEquivalentFingerprint/.test(portfolioCode)) {
     fail('Phase 8B.1.0 portfolio must derive coverage/fingerprints from the trusted registry/validation, never free data');
   }
-  if (!/SELFDEV_BASELINE_COVERAGE/.test(portfolio)) fail('Phase 8B.1.0 selection must consider the built-in baseline coverage');
+  if (!/SELFDEV_BASELINE_COVERAGE/.test(portfolioCode)) fail('Phase 8B.1.0 selection must consider the built-in baseline coverage');
   if (/(?:new\s+Function|eval\s*\(|process\.env|Date\.now|Math\.random|performance\.now|node:(?:child_process|fs|net|http|https|dns|tls)|fetch\s*\()/i.test(portfolio)) {
     fail('Phase 8B.1.0 portfolio contains an executable/random/time/network capability');
   }
-  if (!/Object\.freeze/.test(portfolio)) fail('Phase 8B.1.0 portfolio is not frozen declarative data');
+  if (!/Object\.freeze/.test(portfolioCode)) fail('Phase 8B.1.0 portfolio is not frozen declarative data');
 
   const proposer = readIncludingComments('src/core/selfDev/proposer.ts');
-  const types = readIncludingComments('src/core/selfDev/types.ts');
-  if (!/VALID_MATRIX_EXPAND/.test(proposer) || !/VALID_MATRIX_EXPAND_COLLAPSE/.test(proposer)) {
+  const proposerCode = read("src/core/selfDev/proposer.ts");
+  const types = read('src/core/selfDev/types.ts');
+  if (!/VALID_MATRIX_EXPAND/.test(proposerCode) || !/VALID_MATRIX_EXPAND_COLLAPSE/.test(proposerCode)) {
     fail('Phase 8B.1.0 proposer lacks the concrete portfolio matrix fixtures');
   }
   if (!/VALID_MATRIX_EXPAND/.test(types) || !/VALID_MATRIX_EXPAND_COLLAPSE/.test(types)) {
@@ -1390,14 +1539,16 @@ function checkPhase8B10PortfolioIntegrity() {
   }
 
   const controller = readIncludingComments('src/core/selfDev/controller.ts');
-  if (!/selectNextSyntheticProposalVariant/.test(controller)) fail('Phase 8B.1.0 controller does not consume the deterministic portfolio selector');
-  if (!/VALID_MATRIX_EXPAND_COLLAPSE/.test(controller)) fail('Phase 8B.1.0 controller does not resolve the default alias to a concrete portfolio fixture');
+  const controllerCode = read("src/core/selfDev/controller.ts");
+  if (!/selectNextSyntheticProposalVariant/.test(controllerCode)) fail('Phase 8B.1.0 controller does not consume the deterministic portfolio selector');
+  if (!/VALID_MATRIX_EXPAND_COLLAPSE/.test(controllerCode)) fail('Phase 8B.1.0 controller does not resolve the default alias to a concrete portfolio fixture');
 
   const contract = readIncludingComments('src/core/selfDev/contract.ts');
-  if (!/syntheticPortfolioVersion/.test(contract) || !/syntheticSelectionAlgorithmVersion/.test(contract) || !/syntheticProposalPortfolio/.test(contract)) {
+  const contractCode = read("src/core/selfDev/contract.ts");
+  if (!/syntheticPortfolioVersion/.test(contractCode) || !/syntheticSelectionAlgorithmVersion/.test(contractCode) || !/syntheticProposalPortfolio/.test(contractCode)) {
     fail('Phase 8B.1.0 contract manifest does not bind the portfolio/selection semantics');
   }
-  if (!/nightwatch\.selfdev-contract\.private\.v2/.test(contract)) fail('Phase 8B.1.0 contract manifest version was not deliberately advanced to v2');
+  if (!/nightwatch\.selfdev-contract\.private\.v2/.test(contractCode)) fail('Phase 8B.1.0 contract manifest version was not deliberately advanced to v2');
 
   // Production CLIs must never reach the test-only baseline helpers.
   for (const cli of ['bin/selfdev-synthetic.mjs', 'bin/selfdev-verify.mjs', 'bin/selfdev-adopt-sandbox.mjs', 'bin/selfdev-promote-canonical.mjs']) {
@@ -1413,20 +1564,22 @@ function checkPhase8B10PortfolioIntegrity() {
   // regex), and CI executes it. Runtime schema/byte-roundtrip validation
   // happens in bin/selfdev-catalog-integrity.mjs.
   const catalog = readIncludingComments('src/core/selfDev/adoptedCaseCatalog.generated.ts');
-  if (!/^\/\/ GENERATED FILE/.test(catalog)) fail('the real canonical adopted-case catalog lost its generated-file header');
+  const catalogCodeOnly = read("src/core/selfDev/adoptedCaseCatalog.generated.ts");
+  // Comment-text subject: the required literal IS the generated-file header.
+  if (!/^\/\/ GENERATED FILE/.test(readCommentText('src/core/selfDev/adoptedCaseCatalog.generated.ts'))) fail('the real canonical adopted-case catalog lost its generated-file header');
   const catalogCode = catalog.split('\n').filter((line) => !line.trim().startsWith('//'));
   if (/^\s*(?:import|require)\b|function\s+|=>|eval\s*\(|process\.|new\s+Function\s*\(/.test(catalogCode.join('\n'))) {
     fail('the real canonical adopted-case catalog contains executable code');
   }
-  if (!/export const SELFDEV_ADOPTED_CASES = (?:\[\]|\[)/.test(catalog)) {
+  if (!/export const SELFDEV_ADOPTED_CASES = (?:\[\]|\[)/.test(catalogCodeOnly)) {
     fail('the real canonical adopted-case catalog does not declare the pure-data SELFDEV_ADOPTED_CASES array literal');
   }
-  const integrityBin = readIncludingComments('bin/selfdev-catalog-integrity.mjs');
+  const integrityBin = read('bin/selfdev-catalog-integrity.mjs');
   if (!/validateAdoptedCatalog/.test(integrityBin) || !/renderAdoptedCatalogSource/.test(integrityBin)) {
     fail('bin/selfdev-catalog-integrity.mjs must reuse validateAdoptedCatalog/renderAdoptedCatalogSource');
   }
-  const workflow = readIncludingComments('.github/workflows/hardening.yml');
-  const gateDefinition = readIncludingComments('config/quality-gate.v1.json');
+  const workflow = readDataFile('.github/workflows/hardening.yml');
+  const gateDefinition = readDataFile('config/quality-gate.v1.json');
   if (!(/Phase 8B\.1 catalog integrity \/ checkout cleanliness/.test(workflow) && /selfdev-catalog-integrity\.mjs/.test(workflow)) && !(/npm run gate:ci/.test(workflow) && /PATCH_INTEGRITY/.test(gateDefinition))) {
     fail('the authoritative quality gate must retain catalog/checkout integrity through PATCH_INTEGRITY');
   }
@@ -1444,17 +1597,18 @@ function checkAgentContinuityIntegrity() {
     }
   }
   const protocolModule = readIncludingComments('bin/agent-continuity-protocol.mjs');
+  const protocolModuleCode = read("bin/agent-continuity-protocol.mjs");
   if (/\b(?:spawnSync|execSync|child_process|fetch\(|https?\.request|net\.)/.test(protocolModule)) {
     fail('bin/agent-continuity-protocol.mjs must stay a pure parsing module (no child processes, no network)');
   }
-  if (!/nightwatch\.agent-continuity\.v2/.test(protocolModule)) {
+  if (!/nightwatch\.agent-continuity\.v2/.test(protocolModuleCode)) {
     fail('bin/agent-continuity-protocol.mjs must define the v2 protocol version constant');
   }
-  const pkg = readIncludingComments('package.json');
+  const pkg = readDataFile('package.json');
   if (!/"agent:audit"\s*:\s*"node bin\/agent-state\.mjs --audit-history"/.test(pkg)) {
     fail('package.json agent:audit must invoke the local checker with --audit-history');
   }
-  const workflow = readIncludingComments('.github/workflows/hardening.yml');
+  const workflow = readDataFile('.github/workflows/hardening.yml');
   if (!(/Completed-task continuity audit/.test(workflow) && /npm run agent:audit/.test(workflow)) && !/npm run gate:ci/.test(workflow)) {
     fail('.github/workflows/hardening.yml must run the Completed-task continuity audit (npm run agent:audit)');
   }
@@ -1486,60 +1640,61 @@ function checkProjectStateIntegrity() {
   // filesystem writes, no network, no model, no DB/infrastructure, and the
   // canonical catalog target stays code-defined (no user-supplied path).
   const checker = readIncludingComments('bin/project-state-check.mjs');
+  const checkerCode = read("bin/project-state-check.mjs");
   for (const field of ['RELEASE_CERTIFICATION_PROTOCOL_VERSION', 'PROJECT_COMPLETION_STATUS', 'RELEASE_CHECKPOINT_SHA', 'LIVE_HEAD_SHA', 'LAST_SUBSTANTIVE_IMPLEMENTATION_SHA', 'LAST_LOCALLY_VALIDATED_SHA', 'LAST_CLEAN_VALIDATED_SHA', 'CI_OBSERVED_SHA', 'CI_EXECUTED_SHA', 'CI_STATUS', 'FINAL_DOCUMENTATION_SHA', 'FINAL_CI_AUTHORITY']) {
-    if (!checker.includes(field)) fail(`project-state checker is missing release-truth field ${field}`);
+    if (!checkerCode.includes(field)) fail(`project-state checker is missing release-truth field ${field}`);
   }
-  if (!/PROJECT_STATE_COMPLETION_STATUS_MISMATCH/.test(checker) || !/PROJECT_STATE_CI_NON_EVIDENCE_MISMATCH/.test(checker) || !/PROJECT_STATE_CI_COMPLETE_WITHOUT_EXECUTION/.test(checker)) {
+  if (!/PROJECT_STATE_COMPLETION_STATUS_MISMATCH/.test(checkerCode) || !/PROJECT_STATE_CI_NON_EVIDENCE_MISMATCH/.test(checkerCode) || !/PROJECT_STATE_CI_COMPLETE_WITHOUT_EXECUTION/.test(checkerCode)) {
     fail('project-state checker does not enforce blocked/completion and CI execution semantics');
   }
-  if (!/IMPLEMENTATION_COMPLETE_OPERATIONAL_ACCEPTANCE_PENDING/.test(checker)
-    || !/OPERATIONALLY_ACCEPTED/.test(checker)
-    || !/REAL_SYSTEM_EXECUTION_VERIFIED_EFFICACY_UNPROVEN/.test(checker)
-    || !/OPERATIONAL_ACCEPTANCE_BLOCKED/.test(checker)
-    || !/OPERATIONAL_ACCEPTANCE_FAILED/.test(checker)
-    || !/PROJECT_COMPLETE_LOCAL_CLEAN_CERTIFIED/.test(checker)
-    || !/COMPLETION_BY_ACTIVE_STATUS/.test(checker)) {
+  if (!/IMPLEMENTATION_COMPLETE_OPERATIONAL_ACCEPTANCE_PENDING/.test(checkerCode)
+    || !/OPERATIONALLY_ACCEPTED/.test(checkerCode)
+    || !/REAL_SYSTEM_EXECUTION_VERIFIED_EFFICACY_UNPROVEN/.test(checkerCode)
+    || !/OPERATIONAL_ACCEPTANCE_BLOCKED/.test(checkerCode)
+    || !/OPERATIONAL_ACCEPTANCE_FAILED/.test(checkerCode)
+    || !/PROJECT_COMPLETE_LOCAL_CLEAN_CERTIFIED/.test(checkerCode)
+    || !/COMPLETION_BY_ACTIVE_STATUS/.test(checkerCode)) {
     fail('project-state checker must keep historical local-clean complete distinct from operational-acceptance statuses');
   }
   if (/\b(?:fetch\(|https?\.request|net\.|dns\.|WebSocket|child_process\.[a-z]+exec|execSync|spawnSync\([^)]*['"]git['"]\s*,\s*\[[^\]]*(?:add|commit|push|checkout|reset|clean|stash|merge|rebase|cherry-pick|apply|am|tag|branch|config))/i.test(checker)) {
     fail('bin/project-state-check.mjs must stay a read-only local checker (no network, no Git mutation verbs)');
   }
-  if (!/SELFDEV_ADOPTED_CATALOG_TARGET_PATH/.test(checker)) fail('bin/project-state-check.mjs must derive the catalog target from the code-defined constant');
-  if (!/validateAdoptedCatalog/.test(checker) || !/renderAdoptedCatalogSource/.test(checker)) {
+  if (!/SELFDEV_ADOPTED_CATALOG_TARGET_PATH/.test(checkerCode)) fail('bin/project-state-check.mjs must derive the catalog target from the code-defined constant');
+  if (!/validateAdoptedCatalog/.test(checkerCode) || !/renderAdoptedCatalogSource/.test(checkerCode)) {
     fail('bin/project-state-check.mjs must reuse the real validator/renderer (never regex/source-parsing truth)');
   }
-  if (!/selectNextSyntheticProposalVariant/.test(checker)) {
+  if (!/selectNextSyntheticProposalVariant/.test(checkerCode)) {
     fail('bin/project-state-check.mjs must derive the next portfolio member from the real selector');
   }
-  if (!/agent-state\.mjs/.test(checker)) fail('bin/project-state-check.mjs must verify active-task continuity v2 through agent-state');
-  if (!/nightwatch\.project-state\.v2/.test(checker)) fail('bin/project-state-check.mjs must define the project-state v2 protocol version');
-  if (!/OWNED_PROJECT_STATE_FIELDS/.test(checker) || !/PROJECT_STATE_UNKNOWN_FIELD/.test(checker) || !/PROJECT_STATE_REQUIRED_FIELD_MISSING/.test(checker) || !/PROJECT_STATE_DUPLICATE_FIELD/.test(checker)) {
+  if (!/agent-state\.mjs/.test(checkerCode)) fail('bin/project-state-check.mjs must verify active-task continuity v2 through agent-state');
+  if (!/nightwatch\.project-state\.v2/.test(checkerCode)) fail('bin/project-state-check.mjs must define the project-state v2 protocol version');
+  if (!/OWNED_PROJECT_STATE_FIELDS/.test(checkerCode) || !/PROJECT_STATE_UNKNOWN_FIELD/.test(checkerCode) || !/PROJECT_STATE_REQUIRED_FIELD_MISSING/.test(checkerCode) || !/PROJECT_STATE_DUPLICATE_FIELD/.test(checkerCode)) {
     fail('bin/project-state-check.mjs must enforce an explicit strict owned-key schema');
   }
-  if (!/PROJECT_STATE_DUPLICATE_IMPLEMENTATION_AUTHORITY/.test(checker)) {
+  if (!/PROJECT_STATE_DUPLICATE_IMPLEMENTATION_AUTHORITY/.test(checkerCode)) {
     fail('bin/project-state-check.mjs must reject competing generic live implementation anchors');
   }
-  if (!/PROMOTION_AUTHORIZATION_LIFECYCLE/.test(checker) || !/EFFECTIVE_NEXT_PROMOTION_AUTHORITY/.test(checker) || !/PROJECT_STATE_PROMOTION_LIFECYCLE_INVALID/.test(checker) || !/PROJECT_STATE_EFFECTIVE_PROMOTION_AUTHORITY_INVALID/.test(checker)) {
+  if (!/PROMOTION_AUTHORIZATION_LIFECYCLE/.test(checkerCode) || !/EFFECTIVE_NEXT_PROMOTION_AUTHORITY/.test(checkerCode) || !/PROJECT_STATE_PROMOTION_LIFECYCLE_INVALID/.test(checkerCode) || !/PROJECT_STATE_EFFECTIVE_PROMOTION_AUTHORITY_INVALID/.test(checkerCode)) {
     fail('bin/project-state-check.mjs must separate and validate promotion lifecycle/effective authority');
   }
   // Phase 8 final closure: the checker must now REQUIRE the terminal
   // PHASE_8_STATUS COMPLETE (the pre-closure IN_PROGRESS pin is gone), while
   // the effective-promotion-authority NONE requirement above stays — closing
   // the research phase never grants standing promotion authority.
-  if (!/PROJECT_STATE_PHASE_8_STATUS_MISMATCH/.test(checker)) {
+  if (!/PROJECT_STATE_PHASE_8_STATUS_MISMATCH/.test(checkerCode)) {
     fail('bin/project-state-check.mjs must enforce PHASE_8_STATUS exactly');
   }
-  if (!/PHASE_8_STATUS'\) !== 'COMPLETE'/.test(checker)) {
+  if (!/PHASE_8_STATUS'\) !== 'COMPLETE'/.test(checkerCode)) {
     fail('bin/project-state-check.mjs must pin PHASE_8_STATUS to COMPLETE (Phase 8 closed)');
   }
   if (/writeFileSync|appendFileSync|createWriteStream|rmSync|unlinkSync|mkdirSync/.test(checker)) {
     fail('bin/project-state-check.mjs contains a filesystem write path');
   }
-  const pkg = readIncludingComments('package.json');
+  const pkg = readDataFile('package.json');
   if (!/"project:check"\s*:\s*"node bin\/project-state-check\.mjs"/.test(pkg)) {
     fail('package.json project:check must invoke the local project-state checker');
   }
-  const workflow = readIncludingComments('.github/workflows/hardening.yml');
+  const workflow = readDataFile('.github/workflows/hardening.yml');
   if (!(/Project-memory truth check/.test(workflow) && /npm run project:check/.test(workflow)) && !/npm run gate:ci/.test(workflow)) {
     fail('.github/workflows/hardening.yml must run the Project-memory truth check (npm run project:check)');
   }
@@ -1603,19 +1758,21 @@ function checkPlannerHandoffIntegrity() {
   // The handoff boundary owns only prompt route/currentness. Keep the parser
   // pure and the Git-aware checker local, read-only, bounded, and categorical.
   const protocol = readIncludingComments('bin/planner-handoff-protocol.mjs');
+  const protocolCodeOnly = read("bin/planner-handoff-protocol.mjs");
   const checker = readIncludingComments('bin/planner-handoff-check.mjs');
-  const prompt = readIncludingComments('.agent/EXECUTION_PROMPT.md');
-  if (!/nightwatch\.planner-executor-handoff\.v1/.test(protocol) || !/HANDOFF_REQUIRED_FIELDS/.test(protocol) || !/validateHandoffState/.test(protocol)) {
+  const checkerCode = read("bin/planner-handoff-check.mjs");
+  const prompt = readDataFile('.agent/EXECUTION_PROMPT.md');
+  if (!/nightwatch\.planner-executor-handoff\.v1/.test(protocolCodeOnly) || !/HANDOFF_REQUIRED_FIELDS/.test(protocolCodeOnly) || !/validateHandoffState/.test(protocolCodeOnly)) {
     fail('planner handoff protocol must define the versioned required-field/state contract');
   }
   if (!/nightwatch\.planner-executor-handoff\.v1/.test(prompt)) fail('.agent/EXECUTION_PROMPT.md must carry the versioned handoff header');
-  if (!/HANDOFF_RECEIPT_SCHEMA/.test(checker) || !/HANDOFF_OPENSPEC_FILE_UNTRACKED/.test(checker) || !/HANDOFF_OPENSPEC_NONCANONICAL_FILE/.test(checker)) {
+  if (!/HANDOFF_RECEIPT_SCHEMA/.test(checkerCode) || !/HANDOFF_OPENSPEC_FILE_UNTRACKED/.test(checkerCode) || !/HANDOFF_OPENSPEC_NONCANONICAL_FILE/.test(checkerCode)) {
     fail('planner handoff checker must own bounded OpenSpec route integrity');
   }
-  if (!/SAFE_RELATIVE_PATH_RE/.test(checker) || !/isSymbolicLink/.test(checker) || !/merge-base/.test(checker)) {
+  if (!/SAFE_RELATIVE_PATH_RE/.test(checkerCode) || !/isSymbolicLink/.test(checkerCode) || !/merge-base/.test(checkerCode)) {
     fail('planner handoff checker must enforce safe paths, regular files, and Git ancestry');
   }
-  if (!/shell\s*:\s*false/.test(checker) || !/timeout\s*:\s*10_000/.test(checker) || !/maxBuffer\s*:/.test(checker) || !/GIT_OPTIONAL_LOCKS/.test(checker)) {
+  if (!/shell\s*:\s*false/.test(checkerCode) || !/timeout\s*:\s*10_000/.test(checkerCode) || !/maxBuffer\s*:/.test(checkerCode) || !/GIT_OPTIONAL_LOCKS/.test(checkerCode)) {
     fail('planner handoff checker child processes must be fixed, shell-disabled, and bounded');
   }
   if (/writeFileSync|appendFileSync|createWriteStream|renameSync|unlinkSync|rmSync|mkdirSync/.test(checker)) {
@@ -1627,7 +1784,7 @@ function checkPlannerHandoffIntegrity() {
   if (/process\.env/.test(checker) || /shell\s*:\s*true/.test(checker) || /stdio\s*:\s*['"]inherit['"]/.test(checker)) {
     fail('planner handoff checker must not inherit ambient credentials or shell/output authority');
   }
-  const packageJson = readIncludingComments('package.json');
+  const packageJson = readDataFile('package.json');
   if (!/"handoff:check"\s*:\s*"node bin\/planner-handoff-check\.mjs"/.test(packageJson)) {
     fail('package.json must expose the planner handoff checker');
   }
@@ -1643,10 +1800,10 @@ function checkPlannerHandoffIntegrity() {
  * re-run after docs commits and ROADMAP/CURRENT_STATE narratives had no gate).
  */
 function checkDocumentationTruth() {
-  const currentState = readIncludingComments('docs/CURRENT_STATE.md');
-  const roadmap = readIncludingComments('docs/ROADMAP.md');
-  const activeTask = readIncludingComments('.agent/ACTIVE_TASK.md');
-  const executionPrompt = readIncludingComments('.agent/EXECUTION_PROMPT.md');
+  const currentState = readDataFile('docs/CURRENT_STATE.md');
+  const roadmap = readDataFile('docs/ROADMAP.md');
+  const activeTask = readDataFile('.agent/ACTIVE_TASK.md');
+  const executionPrompt = readDataFile('.agent/EXECUTION_PROMPT.md');
   const blockMatch = /PROJECT_COMPLETION_STATUS:\s*(\S+)/.exec(currentState);
   const machineStatus = blockMatch ? blockMatch[1].trim() : undefined;
   if (machineStatus === 'OPERATIONALLY_ACCEPTED') {
@@ -1729,20 +1886,33 @@ function checkPhase9SemanticCorePurity() {
  */
 function checkPhase9IntegrationSeams() {
   const observer = readIncludingComments('src/browser/observers/networkObserver.ts');
-  if (!/semanticOracle\?:/.test(observer) || !/evaluateSemanticHook/.test(observer) || !/semanticFindings\(\)/.test(observer)) {
+  const observerCode = read("src/browser/observers/networkObserver.ts");
+  if (!/semanticOracle\?:/.test(observerCode) || !/evaluateSemanticHook/.test(observerCode) || !/semanticFindings\(\)/.test(observerCode)) {
     fail('network observer is missing the Phase 9 semantic hook or findings ledger');
   }
-  if (!/checkUnexpectedStatus/.test(observer)) fail('network observer lost the protocol oracle wiring');
-  const phase5Semantic = readIncludingComments('src/api/phase5/semantic.ts');
+  if (!/checkUnexpectedStatus/.test(observerCode)) fail('network observer lost the protocol oracle wiring');
+  const phase5Semantic = read('src/api/phase5/semantic.ts');
   if (!/evaluateApiResponseSemantic/.test(phase5Semantic) || !/evaluateApiResponse\(/.test(phase5Semantic)) {
     fail('Phase 5 semantic stage must compose the existing protocol oracle');
   }
   if (!/ORACLE_PASS/.test(phase5Semantic)) fail('Phase 5 semantic stage must gate on protocol ORACLE_PASS');
   const orchestrator = readIncludingComments('src/core/campaign/orchestrator.ts');
-  if (!/toSemanticDossierEvidence/.test(orchestrator)) fail('campaign orchestrator must attach semantic dossier evidence');
+  const orchestratorCode = read("src/core/campaign/orchestrator.ts");
+  if (!/toSemanticDossierEvidence/.test(orchestratorCode)) fail('campaign orchestrator must attach semantic dossier evidence');
   const dossier = readIncludingComments('src/core/triage/dossier.ts');
-  if (!/semanticEvidence/.test(dossier) || !/validateSemanticDossierEvidence/.test(dossier)) {
-    fail('dossier must carry strictly validated sanitized semantic evidence');
+  const dossierCode = read("src/core/triage/dossier.ts");
+  // The dossier core carries the sanitized evidence and delegates its
+  // validation to the runtime-validation module, which owns the semantic
+  // contract. Assert BOTH halves against code, never against prose: requiring
+  // `validateSemanticDossierEvidence` inside dossier.ts was satisfied only by a
+  // comment naming the symbol, so the delegation could have been deleted
+  // without the rule noticing.
+  if (!/semanticEvidence/.test(dossierCode) || !/validateDossierRuntime/.test(dossierCode)) {
+    fail('dossier must carry sanitized semantic evidence and delegate to the runtime validator');
+  }
+  const dossierRuntimeCode = read('src/core/triage/dossierRuntimeValidation.ts');
+  if (!/validateSemanticDossierEvidence/.test(dossierRuntimeCode) || !/DOSSIER_SEMANTIC_EVIDENCE/.test(dossierRuntimeCode)) {
+    fail('dossier runtime validation must strictly validate sanitized semantic evidence');
   }
 }
 
@@ -1791,10 +1961,11 @@ function checkPhase9A1RealSourceCorePurity() {
  */
 function checkPhase9A1SourceReaderBoundary() {
   const reader = readIncludingComments('src/core/source/siblingSource.ts');
-  if (!/createSiblingSourceAccess/.test(reader) || !/resolveGitHead/.test(reader)) {
+  const readerCode = read("src/core/source/siblingSource.ts");
+  if (!/createSiblingSourceAccess/.test(readerCode) || !/resolveGitHead/.test(readerCode)) {
     fail('sibling source access module is missing its factory/HEAD resolver');
   }
-  if (!/readFileSync|existsSync/.test(reader)) fail('sibling source reader must be fs read-only');
+  if (!/readFileSync|existsSync/.test(readerCode)) fail('sibling source reader must be fs read-only');
   if (/\b(?:writeFileSync|appendFileSync|createWriteStream|mkdirSync|renameSync|unlinkSync|rmSync|copyFileSync|chmodSync|chownSync)\b/.test(reader)) {
     fail('sibling source reader exposes a write capability');
   }
@@ -1807,8 +1978,8 @@ function checkPhase9A1SourceReaderBoundary() {
   // and regular files are opened with O_NOFOLLOW. Keep this guard focused on
   // those authority properties rather than matching one implementation's
   // string spelling.
-  if (!/isPathInside\(candidate,\s*resolvedRoot\)/.test(reader) || !/isPathInside\(file,\s*repoRoot\)/.test(reader)) fail('sibling source reader must confine paths to the configured root');
-  if (!/hasNoSymlinkPath\(file\)/.test(reader) || !/O_NOFOLLOW/.test(reader) || !/lstatSync/.test(reader)) fail('sibling source reader must reject symlink paths before opening files');
+  if (!/isPathInside\(candidate,\s*resolvedRoot\)/.test(readerCode) || !/isPathInside\(file,\s*repoRoot\)/.test(readerCode)) fail('sibling source reader must confine paths to the configured root');
+  if (!/hasNoSymlinkPath\(file\)/.test(readerCode) || !/O_NOFOLLOW/.test(readerCode) || !/lstatSync/.test(readerCode)) fail('sibling source reader must reject symlink paths before opening files');
 
   // Phase 25 keeps enumeration and scan coordination subordinate to the same
   // source authority. No sibling-source filesystem import may appear in a
@@ -1826,9 +1997,10 @@ function checkPhase9A1SourceReaderBoundary() {
     // added to the alternation so tightening `exec` cannot weaken the rule.
     if (/\b(?:writeFile|appendFile|renameSync|unlinkSync|rmSync|mkdirSync|chmodSync|child_process|spawn|(?<!\.)exec(?:File)?|fetch)\s*\(/.test(source)) fail(`${file} exposes source write/process/network authority`);
   }
-  const scan = readIncludingComments('src/core/source/scan.ts');
+  const scan = read('src/core/source/scan.ts');
   const scanTypes = readIncludingComments('src/core/source/scanTypes.ts');
-  if (!/enumerateFiles/.test(reader) || !/scanSource/.test(scan) || !/configDigest/.test(scanTypes)) fail('Phase 25 source inventory is not wired through the confined reader and versioned config');
+  const scanTypesCode = read("src/core/source/scanTypes.ts");
+  if (!/enumerateFiles/.test(readerCode) || !/scanSource/.test(scan) || !/configDigest/.test(scanTypesCode)) fail('Phase 25 source inventory is not wired through the confined reader and versioned config');
   if (/readonly\s+(?:sourceText|rawSource|sourceCode)\s*[:?]/.test(scanTypes)) fail('Phase 25 persisted source DTOs contain raw source text fields');
 }
 
@@ -1839,24 +2011,27 @@ function checkPhase9A1SourceReaderBoundary() {
  */
 function checkPhase9A1IntegrationSeams() {
   const observer = readIncludingComments('src/browser/observers/networkObserver.ts');
-  if (!/semanticEvaluations\(\)/.test(observer) || !/semanticEvaluationLedgerOverflow\(\)/.test(observer)) {
+  const observerCode = read("src/browser/observers/networkObserver.ts");
+  if (!/semanticEvaluations\(\)/.test(observerCode) || !/semanticEvaluationLedgerOverflow\(\)/.test(observerCode)) {
     fail('network observer is missing the Phase 9A.1 evaluation ledger or its explicit overflow flag');
   }
-  if (!/buildInternalErrorReceipt/.test(observer)) fail('network observer is missing the safe INTERNAL_ERROR receipt fallback');
-  if (!/privacyViolation/.test(observer) || !/semantic-privacy-contract-violation/.test(observer)) {
+  if (!/buildInternalErrorReceipt/.test(observerCode)) fail('network observer is missing the safe INTERNAL_ERROR receipt fallback');
+  if (!/privacyViolation/.test(observerCode) || !/semantic-privacy-contract-violation/.test(observerCode)) {
     fail('network observer is missing the privacy-contract violation escalation');
   }
   const hook = readIncludingComments('src/oracles/semantic/hook.ts');
-  if (!/evaluateSemanticResolution/.test(hook) || !/receipt: SemanticEvaluationReceipt \| null/.test(hook)) {
+  const hookCode = read("src/oracles/semantic/hook.ts");
+  if (!/evaluateSemanticResolution/.test(hookCode) || !/receipt: SemanticEvaluationReceipt \| null/.test(hookCode)) {
     fail('semantic hook must return a safe evaluation receipt');
   }
-  if (!/NO_EXPECTATION/.test(hook)) fail('semantic hook lost the NO_EXPECTATION outcome');
-  const phase5Semantic = readIncludingComments('src/api/phase5/semantic.ts');
+  if (!/NO_EXPECTATION/.test(hookCode)) fail('semantic hook lost the NO_EXPECTATION outcome');
+  const phase5Semantic = read('src/api/phase5/semantic.ts');
   if (!/receipt: SemanticEvaluationReceipt \| null/.test(phase5Semantic)) {
     fail('Phase 5 semantic stage must expose the evaluation receipt');
   }
   const resolver = readIncludingComments('src/oracles/expectations/resolver.ts');
-  if (!/RESOLVED/.test(resolver) || !/SOURCE_STALE/.test(resolver) || !/SOURCE_UNAVAILABLE/.test(resolver)) {
+  const resolverCode = read("src/oracles/expectations/resolver.ts");
+  if (!/RESOLVED/.test(resolverCode) || !/SOURCE_STALE/.test(resolverCode) || !/SOURCE_UNAVAILABLE/.test(resolverCode)) {
     fail('real-source resolver lost the fail-closed resolution vocabulary');
   }
 }
@@ -1892,27 +2067,30 @@ function checkPhase9bCorePurity() {
  */
 function checkPhase9bIntegrationSeams() {
   const context = readIncludingComments('src/browser/context.ts');
-  if (!/semanticOracle\?: SemanticResponseOracle/.test(context)) {
+  const contextCode = read("src/browser/context.ts");
+  if (!/semanticOracle\?: SemanticResponseOracle/.test(contextCode)) {
     fail('context is missing the optional Phase 9B semanticOracle option');
   }
-  if (!/semanticOracle: opts\.semanticOracle/.test(context)) {
+  if (!/semanticOracle: opts\.semanticOracle/.test(contextCode)) {
     fail('context does not pass the semantic oracle to the network observer');
   }
   const runner = readIncludingComments('tests/manual/phase9b-contained-dev-semantic.ts');
-  if (!/NIGHTWATCH_PHASE_9B_REAL/.test(runner)) {
+  const runnerCode = read("tests/manual/phase9b-contained-dev-semantic.ts");
+  if (!/NIGHTWATCH_PHASE_9B_REAL/.test(runnerCode)) {
     fail('Phase 9B runner is missing the one-shot real-run gate');
   }
-  if (!/const SELECTED_JOURNEY_ID = 'ripple-common-exchange-read'/.test(runner)) {
+  if (!/const SELECTED_JOURNEY_ID = 'ripple-common-exchange-read'/.test(runnerCode)) {
     fail('Phase 9B runner lost its fixed common-exchange journey');
   }
   if (/NIGHTWATCH_PHASE_2B_JOURNEY_ID/.test(runner)) {
     fail('Phase 9B runner must not accept journey selection');
   }
-  if (!/NIGHTWATCH_UI_URL is not accepted/.test(runner)) {
+  if (!/NIGHTWATCH_UI_URL is not accepted/.test(runnerCode)) {
     fail('Phase 9B runner must reject any UI URL override');
   }
   const launcher = readIncludingComments('bin/phase9b-launcher-args.mjs');
-  if (!/no journey selector/.test(launcher) || !/--ui-url/.test(launcher)) {
+  const launcherCode = read("bin/phase9b-launcher-args.mjs");
+  if (!/no journey selector/.test(launcherCode) || !/--ui-url/.test(launcherCode)) {
     fail('Phase 9B launcher must reject journey/URL selectors');
   }
 }
@@ -1957,38 +2135,46 @@ function checkPhase10DeeperContractPurity() {
  */
 function checkPhase10IntegrationSeams() {
   const registry = readIncludingComments('src/oracles/expectations/recipes/registry.ts');
-  if (!/nightwatch\.real-source-expectation-recipe\.v2/.test(registry)) {
+  const registryCode = read("src/oracles/expectations/recipes/registry.ts");
+  if (!/nightwatch\.real-source-expectation-recipe\.v2/.test(registryCode)) {
     fail('recipe registry is missing the v2 schema constant');
   }
   const extractor = readIncludingComments('src/oracles/expectations/extract/php.ts');
-  if (!/PHP_ITEM_FIELD_TYPE_FLOW/.test(extractor) || !/extractPhpItemFieldTypeFlow/.test(extractor)) {
+  const extractorCode = read("src/oracles/expectations/extract/php.ts");
+  if (!/PHP_ITEM_FIELD_TYPE_FLOW/.test(extractorCode) || !/extractPhpItemFieldTypeFlow/.test(extractorCode)) {
     fail('type-flow extractor is missing from the PHP extractor module');
   }
-  if (!/EMPTY_CAST_OBJECT/.test(extractor) || !/EMPTY_ARRAY_OR_STRING_KEYS/.test(extractor)) {
+  if (!/EMPTY_CAST_OBJECT/.test(extractorCode) || !/EMPTY_ARRAY_OR_STRING_KEYS/.test(extractorCode)) {
     fail('type-flow extractor lost a fixed pattern');
   }
-  const expectationTypes = readIncludingComments('src/oracles/expectations/types.ts');
+  const expectationTypes = read('src/oracles/expectations/types.ts');
   if (!/TYPE_IN_SET/.test(expectationTypes)) fail('TYPE_IN_SET is missing from the invariant vocabulary');
-  const invariantEval = readIncludingComments('src/oracles/invariants/evaluate.ts');
+  const invariantEval = read('src/oracles/invariants/evaluate.ts');
   if (!/case 'TYPE_IN_SET'/.test(invariantEval)) fail('TYPE_IN_SET evaluation case is missing');
   const oracle = readIncludingComments('src/oracles/semantic/oracle.ts');
-  if (!/case 'TYPE_IN_SET':\n\s+case 'TYPE_MATCH':/.test(oracle) && !/TYPE_IN_SET[\s\S]{0,200}TYPE_CONTRADICTED/.test(oracle)) {
+  const oracleCode = read("src/oracles/semantic/oracle.ts");
+  if (!/case 'TYPE_IN_SET':\n\s+case 'TYPE_MATCH':/.test(oracleCode) && !/TYPE_IN_SET[\s\S]{0,200}TYPE_CONTRADICTED/.test(oracleCode)) {
     fail('semantic oracle lost the TYPE_IN_SET -> TYPE_CONTRADICTED class mapping');
   }
   const evidence = readIncludingComments('src/oracles/expectations/extract/evidence.ts');
-  if (!/PHP_ITEM_FIELD_TYPE_FLOW/.test(evidence) || !/unsupported-extraction-kind/.test(evidence)) {
+  const evidenceCode = read("src/oracles/expectations/extract/evidence.ts");
+  if (!/PHP_ITEM_FIELD_TYPE_FLOW/.test(evidenceCode) || !/unsupported-extraction-kind/.test(evidenceCode)) {
     fail('evidence digest must bind the type-flow extraction and fail closed on unknown kinds');
   }
   const admission = readIncludingComments('src/oracles/expectations/admission.ts');
-  if (!/TYPE_FLOW_AMBIGUOUS/.test(admission) || !/TYPE_FLOW_CONTRACT_MISMATCH/.test(admission)) {
+  const admissionCode = read("src/oracles/expectations/admission.ts");
+  if (!/TYPE_FLOW_AMBIGUOUS/.test(admissionCode) || !/TYPE_FLOW_CONTRACT_MISMATCH/.test(admissionCode)) {
     fail('admission lost the type-flow fail-closed vocabulary');
   }
   const resolver = readIncludingComments('src/oracles/expectations/resolver.ts');
-  if (!/PHP_ITEM_FIELD_TYPE_FLOW/.test(resolver)) fail('resolver must re-extract the type-flow evidence');
+  const resolverCode = read("src/oracles/expectations/resolver.ts");
+  if (!/PHP_ITEM_FIELD_TYPE_FLOW/.test(resolverCode)) fail('resolver must re-extract the type-flow evidence');
   const corpus = readIncludingComments('corpus/phase10/source-fixture/phase10Fixtures.ts');
-  if (!/real-source-expectation-recipe\.v2/.test(corpus)) fail('Phase 10 fixture corpus is missing v2 fixture recipes');
+  const corpusCode = read("corpus/phase10/source-fixture/phase10Fixtures.ts");
+  if (!/real-source-expectation-recipe\.v2/.test(corpusCode)) fail('Phase 10 fixture corpus is missing v2 fixture recipes');
   const historical = readIncludingComments('corpus/phase10/historical/archivedV1Recipes.ts');
-  if (!/real-source-shape/.test(historical)) fail('archived v1 recipes are missing the historical shape identities');
+  const historicalCode = read("corpus/phase10/historical/archivedV1Recipes.ts");
+  if (!/real-source-shape/.test(historicalCode)) fail('archived v1 recipes are missing the historical shape identities');
 }
 
 /**
@@ -2121,15 +2307,18 @@ function checkPhase18PureCoreSeams() {
     }
   }
   const replay = readIncludingComments('src/core/triage/semanticReplay.ts');
-  if (replay && (!/SEMANTIC_REPLAY_FIDELITY_VERSION/.test(replay) || !/AMBIGUOUS_OCCURRENCE/.test(replay) || !/validateSemanticReplayFidelityReceipt/.test(replay))) {
+  const replayCode = read("src/core/triage/semanticReplay.ts");
+  if (replay && (!/SEMANTIC_REPLAY_FIDELITY_VERSION/.test(replayCode) || !/AMBIGUOUS_OCCURRENCE/.test(replayCode) || !/validateSemanticReplayFidelityReceipt/.test(replayCode))) {
     fail('Phase 18 replay core is missing versioned ambiguity/fidelity validation');
   }
   const coverage = readIncludingComments('src/core/portfolio/semanticCoverage.ts');
-  if (coverage && (!/SEMANTIC_COVERAGE_VERSION/.test(coverage) || !/SOURCE_EVIDENCE_UNRESOLVED/.test(coverage) || !/deterministicDigest/.test(coverage))) {
+  const coverageCode = read("src/core/portfolio/semanticCoverage.ts");
+  if (coverage && (!/SEMANTIC_COVERAGE_VERSION/.test(coverageCode) || !/SOURCE_EVIDENCE_UNRESOLVED/.test(coverageCode) || !/deterministicDigest/.test(coverageCode))) {
     fail('Phase 18 coverage core is missing bounded currentness/explanation accounting');
   }
   const currentness = readIncludingComments('src/oracles/expectations/currentness.ts');
-  if (currentness && (!/SourceCurrentnessState/.test(currentness) || !/SYNTHETIC_ONLY/.test(currentness) || !/STALE/.test(currentness))) {
+  const currentnessCode = read("src/oracles/expectations/currentness.ts");
+  if (currentness && (!/SourceCurrentnessState/.test(currentnessCode) || !/SYNTHETIC_ONLY/.test(currentnessCode) || !/STALE/.test(currentnessCode))) {
     fail('Phase 18 currentness core is missing explicit fail-closed states');
   }
 }
@@ -2143,13 +2332,15 @@ function checkPhase18PureCoreSeams() {
  */
 function checkPhase12AuthoritySetsUnchanged() {
   const approved = readIncludingComments('src/oracles/expectations/recipes/registry.ts');
+  const approvedCode = read("src/oracles/expectations/recipes/registry.ts");
   const catalog = readIncludingComments('src/api/phase5/catalog.ts');
-  const ownerScope = readIncludingComments('src/core/policy/ownerScope.ts');
+  const catalogCodeOnly = read("src/api/phase5/catalog.ts");
+  const ownerScope = read('src/core/policy/ownerScope.ts');
   const selfDevCatalog = readIncludingComments('src/core/selfDev/adoptedCaseCatalog.generated.ts');
   // Approved read-only target IDs — 6 entries, byte-stable order.
   const approvedIds = ['ripple.payer-exchange.read', 'ripple.common-exchange.read', 'ripple.account-inventory.read', 'ripple.billing-groups.read', 'ripple.billing-groups-legacy.read', 'ripple.billing-group-exchange.read'];
   for (const id of approvedIds) {
-    if (!approved.includes(`'${id}'`)) fail(`Phase 12 approved read-only target missing: ${id}`);
+    if (!approvedCode.includes(`'${id}'`)) fail(`Phase 12 approved read-only target missing: ${id}`);
   }
   if ((approved.match(/'ripple\.[^']+\.read'/g) ?? []).length !== approvedIds.length) {
     // Count only the APPROVED_READ_ONLY_TARGET_IDS block (first occurrences).
@@ -2159,7 +2350,7 @@ function checkPhase12AuthoritySetsUnchanged() {
   }
   const devReachable = ['ripple.payer-exchange.read', 'ripple.common-exchange.read', 'ripple.account-inventory.read'];
   for (const id of devReachable) {
-    if (!approved.includes(`'${id}'`)) fail(`Phase 12 DEV-reachable target missing: ${id}`);
+    if (!approvedCode.includes(`'${id}'`)) fail(`Phase 12 DEV-reachable target missing: ${id}`);
   }
   const devBlockMatch = approved.match(/DEV_REACHABLE_RECIPE_TARGET_IDS[\s\S]*?Object\.freeze\(\[([\s\S]*?)\]\)/);
   const devTargetCount = devBlockMatch ? (devBlockMatch[1].match(/'ripple\.[^']+\.read'/g) ?? []).length : 0;
@@ -2172,7 +2363,7 @@ function checkPhase12AuthoritySetsUnchanged() {
   const knownReads = (catalog.match(/operationId:\s*'ripple\.[^']+'/g) ?? []).length;
   // The catalog contains 11 operations total (6 KNOWN_READ + 4 KNOWN_MUTATION + 1 UNKNOWN); we verify the read set specifically.
   const readOps = ['ripple.payer-exchange.read', 'ripple.common-exchange.read', 'ripple.account-inventory.read', 'ripple.billing-groups.read', 'ripple.billing-groups-legacy.read', 'ripple.billing-group-exchange.read'];
-  for (const op of readOps) if (!catalog.includes(`operationId: '${op}'`)) fail(`Phase 12 Phase-5 operation missing: ${op}`);
+  for (const op of readOps) if (!catalogCodeOnly.includes(`operationId: '${op}'`)) fail(`Phase 12 Phase-5 operation missing: ${op}`);
   // Owner scope must remain frozen.
   if (!/FROZEN_BY_OWNER/.test(ownerScope) || !/INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE/.test(ownerScope)) {
     fail('Phase 12 owner-scope freeze marker missing');
@@ -2192,29 +2383,31 @@ function checkPhase12AuthoritySetsUnchanged() {
  */
 function checkPhase10bIntegrationSeams() {
   const runner = readIncludingComments('tests/manual/phase10b-contained-dev-deep-semantic.ts');
-  if (!/NIGHTWATCH_PHASE_10B_REAL/.test(runner)) {
+  const runnerCode = read("tests/manual/phase10b-contained-dev-deep-semantic.ts");
+  if (!/NIGHTWATCH_PHASE_10B_REAL/.test(runnerCode)) {
     fail('Phase 10B runner is missing the one-shot real-run gate');
   }
-  if (!/const SELECTED_JOURNEY_ID = 'ripple-common-exchange-read'/.test(runner)) {
+  if (!/const SELECTED_JOURNEY_ID = 'ripple-common-exchange-read'/.test(runnerCode)) {
     fail('Phase 10B runner lost its fixed common-exchange journey');
   }
-  if (!/const SELECTED_TARGET_ID = 'ripple\.common-exchange\.read'/.test(runner)) {
+  if (!/const SELECTED_TARGET_ID = 'ripple\.common-exchange\.read'/.test(runnerCode)) {
     fail('Phase 10B runner lost its fixed target');
   }
-  if (!/const SELECTED_EXPECTATION_ID = 'ripple\.common-exchange\.read\.real-source-deep'/.test(runner)) {
+  if (!/const SELECTED_EXPECTATION_ID = 'ripple\.common-exchange\.read\.real-source-deep'/.test(runnerCode)) {
     fail('Phase 10B runner lost its fixed deep expectation identity');
   }
   if (/NIGHTWATCH_PHASE_2B_JOURNEY_ID/.test(runner)) {
     fail('Phase 10B runner must not accept journey selection');
   }
-  if (!/NIGHTWATCH_UI_URL is not accepted/.test(runner)) {
+  if (!/NIGHTWATCH_UI_URL is not accepted/.test(runnerCode)) {
     fail('Phase 10B runner must reject any UI URL override');
   }
   const launcher = readIncludingComments('bin/phase10b-launcher-args.mjs');
-  if (!/no journey selector/.test(launcher) || !/no expectation selector/.test(launcher) || !/no target selector/.test(launcher) || !/--ui-url/.test(launcher)) {
+  const launcherCode = read("bin/phase10b-launcher-args.mjs");
+  if (!/no journey selector/.test(launcherCode) || !/no expectation selector/.test(launcherCode) || !/no target selector/.test(launcherCode) || !/--ui-url/.test(launcherCode)) {
     fail('Phase 10B launcher must reject journey/expectation/target/URL selectors');
   }
-  const core = readIncludingComments('src/core/phase10b/deepAcceptance.ts');
+  const core = read('src/core/phase10b/deepAcceptance.ts');
   if (!/PHASE_10B_BLOCKED_DEEP_INVARIANT_NOT_OBSERVED/.test(core)) {
     fail('Phase 10B deep acceptance must fail closed when the deep invariant is N/A (root-only PASS is not deep validation)');
   }
@@ -2224,7 +2417,7 @@ function checkPhase10bIntegrationSeams() {
   if (!/expectedInvariantTotalFor/.test(core)) {
     fail('Phase 10B must derive the expected invariant total from the resolved expectation');
   }
-  const phase9bRunner = readIncludingComments('tests/manual/phase9b-contained-dev-semantic.ts');
+  const phase9bRunner = read('tests/manual/phase9b-contained-dev-semantic.ts');
   if (!/const SELECTED_EXPECTATION_ID = 'ripple\.common-exchange\.read\.real-source-shape'/.test(phase9bRunner)) {
     fail('historical Phase 9B runner must still fix the historical shape expectation');
   }
@@ -2255,26 +2448,32 @@ function checkPhase12TriageCorePurity() {
 
 function checkPhase12TriageIntegrationSeams() {
   const evidence = readIncludingComments('src/core/triage/semanticTriageEvidence.ts');
-  if (!/nightwatch\.semantic-triage-evidence\.v1/.test(evidence)) fail('semantic triage evidence missing version');
-  if (!/MISSING_EVIDENCE_VOCABULARY/.test(evidence)) fail('semantic triage evidence missing vocabulary');
+  const evidenceCode = read("src/core/triage/semanticTriageEvidence.ts");
+  if (!/nightwatch\.semantic-triage-evidence\.v1/.test(evidenceCode)) fail('semantic triage evidence missing version');
+  if (!/MISSING_EVIDENCE_VOCABULARY/.test(evidenceCode)) fail('semantic triage evidence missing vocabulary');
   const confidence = readIncludingComments('src/core/triage/semanticConfidence.ts');
-  if (!/rankSemanticConfidence/.test(confidence)) fail('semantic confidence missing rank function');
-  if (!/SAFETY_NONZERO/.test(confidence) || !/PRIVACY_FAILURE/.test(confidence) || !/KNOWN_FALSE_POSITIVE/.test(confidence)) fail('semantic confidence missing mandatory blockers');
+  const confidenceCode = read("src/core/triage/semanticConfidence.ts");
+  if (!/rankSemanticConfidence/.test(confidenceCode)) fail('semantic confidence missing rank function');
+  if (!/SAFETY_NONZERO/.test(confidenceCode) || !/PRIVACY_FAILURE/.test(confidenceCode) || !/KNOWN_FALSE_POSITIVE/.test(confidenceCode)) fail('semantic confidence missing mandatory blockers');
   const v2 = readIncludingComments('src/core/triage/dossierV2.ts');
-  if (!/nightwatch\.bug-dossier\.private\.v2/.test(v2)) fail('dossier v2 missing version');
-  if (!/isReadySemanticDossier/.test(v2)) fail('dossier v2 missing READY predicate');
-  if (!/humanReproductionRecipe/.test(v2)) fail('dossier v2 missing human recipe');
+  const v2Code = read("src/core/triage/dossierV2.ts");
+  if (!/nightwatch\.bug-dossier\.private\.v2/.test(v2Code)) fail('dossier v2 missing version');
+  if (!/isReadySemanticDossier/.test(v2Code)) fail('dossier v2 missing READY predicate');
+  if (!/humanReproductionRecipe/.test(v2Code)) fail('dossier v2 missing human recipe');
   // v1 must remain readable: dossier.ts still exports createBugDossier/validateBugDossier
   const dossier = readIncludingComments('src/core/triage/dossier.ts');
-  if (!/DOSSIER_VERSION/.test(dossier) || !/validateBugDossier/.test(dossier)) fail('dossier v1 compatibility lost');
+  const dossierCode = read("src/core/triage/dossier.ts");
+  if (!/DOSSIER_VERSION/.test(dossierCode) || !/validateBugDossier/.test(dossierCode)) fail('dossier v1 compatibility lost');
   const coverage = readIncludingComments('src/oracles/expectations/coverageInventory.ts');
-  if (!/buildCoverageInventory/.test(coverage)) fail('coverage inventory missing builder');
-  if (!/APPROVED_AND_ADMITTED_COLLECTION/.test(coverage) || !/APPROVED_NOT_ADMITTED_AMBIGUOUS/.test(coverage) || !/APPROVED_NOT_OBSERVABLE/.test(coverage)) fail('coverage inventory missing disposition vocabulary');
-  if (!/TYPE_FLOW_AMBIGUOUS/.test(coverage)) fail('coverage inventory missing depth-uplift blocker');
-  if (!/snapshotMatchesRemote/.test(coverage)) fail('coverage inventory missing remote/snapshot match flag');
+  const coverageCode = read("src/oracles/expectations/coverageInventory.ts");
+  if (!/buildCoverageInventory/.test(coverageCode)) fail('coverage inventory missing builder');
+  if (!/APPROVED_AND_ADMITTED_COLLECTION/.test(coverageCode) || !/APPROVED_NOT_ADMITTED_AMBIGUOUS/.test(coverageCode) || !/APPROVED_NOT_OBSERVABLE/.test(coverageCode)) fail('coverage inventory missing disposition vocabulary');
+  if (!/TYPE_FLOW_AMBIGUOUS/.test(coverageCode)) fail('coverage inventory missing depth-uplift blocker');
+  if (!/snapshotMatchesRemote/.test(coverageCode)) fail('coverage inventory missing remote/snapshot match flag');
   const cluster = readIncludingComments('src/oracles/semantic/cluster.ts');
+  const clusterCode = read("src/oracles/semantic/cluster.ts");
   if (fs.existsSync(path.join(root, 'src/oracles/semantic/cluster.ts'))) {
-    if (!/semanticCluster/.test(cluster)) fail('semantic cluster missing identity');
+    if (!/semanticCluster/.test(clusterCode)) fail('semantic cluster missing identity');
   }
 }
 
@@ -2301,27 +2500,33 @@ function checkPhase22CorePurity() {
     if (/\b(?:process\.env|fetch\s*\(|WebSocket\s*\(|child_process|spawn\s*\(|exec(?:File)?\s*\(|writeFile|appendFile|createWriteStream|mkdirSync|rmSync|unlinkSync|renameSync|Date\.now\s*\(|Math\.random\s*\(|eval\s*\(|new\s+Function\s*\()\b/i.test(source)) fail(`${file} exposes runtime, process, network, clock, randomness, or persistence authority`);
   }
   const firewall = readIncludingComments('src/oracles/semantic/phase22Firewall.ts');
-  if (!/guardPhase22SafeObservation/.test(firewall) || !/createPhase22PrivacyReceipt/.test(firewall) || /rawText|rawBody|responseBody/.test(firewall)) fail('Phase 22 runtime privacy firewall is missing or accepts raw payload fields');
+  const firewallCode = read("src/oracles/semantic/phase22Firewall.ts");
+  if (!/guardPhase22SafeObservation/.test(firewallCode) || !/createPhase22PrivacyReceipt/.test(firewallCode) || /rawText|rawBody|responseBody/.test(firewall)) fail('Phase 22 runtime privacy firewall is missing or accepts raw payload fields');
 }
 
 function checkPhase22IntegrationSeams() {
-  const types = readIncludingComments('src/core/phase22/types.ts');
+  const types = read('src/core/phase22/types.ts');
   if (!/nightwatch\.dev-semantic-acceptance-manifest\.v1/.test(types) || !/maxTargets: 6/.test(types) || !/maxObservationContexts: 12/.test(types)) fail('Phase 22 manifest bounds/version are missing');
   if (!/PHASE22_REQUIRED_PREFLIGHT_CHECKS/.test(types) || !/l0_cdp_guard_active/.test(types) || !/l5_loopback_proxy_active/.test(types)) fail('Phase 22 preflight V2 check vocabulary is incomplete');
   const manifest = readIncludingComments('src/core/phase22/manifest.ts');
-  if (!/selectEligible/.test(manifest) || !/TARGET_BOUND_OR_MATERIAL_DIVERSITY/.test(manifest) || !/frozen: true/.test(manifest)) fail('Phase 22 manifest is not deterministic/frozen/bounded');
+  const manifestCode = read("src/core/phase22/manifest.ts");
+  if (!/selectEligible/.test(manifestCode) || !/TARGET_BOUND_OR_MATERIAL_DIVERSITY/.test(manifestCode) || !/frozen: true/.test(manifestCode)) fail('Phase 22 manifest is not deterministic/frozen/bounded');
   const replay = readIncludingComments('src/core/phase22/replay.ts');
-  if (!/replayObservationCount > budget\.firstObservationCount/.test(replay) || !/retryCount !== 0/.test(replay) || !/REAL_MINIMIZATION_NOT_AUTHORIZED/.test(replay)) fail('Phase 22 replay/minimization bounds are incomplete');
+  const replayCode = read("src/core/phase22/replay.ts");
+  if (!/replayObservationCount > budget\.firstObservationCount/.test(replayCode) || !/retryCount !== 0/.test(replayCode) || !/REAL_MINIMIZATION_NOT_AUTHORIZED/.test(replayCode)) fail('Phase 22 replay/minimization bounds are incomplete');
   const confidence = readIncludingComments('src/core/phase22/calibration.ts');
-  if (!/REAL_SOURCE_NOT_CURRENT/.test(confidence) || !/REAL_EXPECTATION_NOT_RESOLVED/.test(confidence) || !/realGatePassed/.test(confidence)) fail('Phase 22 real confidence gate is incomplete');
+  const confidenceCode = read("src/core/phase22/calibration.ts");
+  if (!/REAL_SOURCE_NOT_CURRENT/.test(confidenceCode) || !/REAL_EXPECTATION_NOT_RESOLVED/.test(confidenceCode) || !/realGatePassed/.test(confidenceCode)) fail('Phase 22 real confidence gate is incomplete');
   const network = readIncludingComments('src/browser/observers/networkObserver.ts');
-  if (!/guardPhase22SemanticHookResult/.test(network) || !/phase22PrivacyReceiptLedger/.test(network) || !/phase22PrivacyReceipts/.test(network)) fail('Phase 22 privacy firewall is not attached to the network observer');
+  const networkCode = read("src/browser/observers/networkObserver.ts");
+  if (!/guardPhase22SemanticHookResult/.test(networkCode) || !/phase22PrivacyReceiptLedger/.test(networkCode) || !/phase22PrivacyReceipts/.test(networkCode)) fail('Phase 22 privacy firewall is not attached to the network observer');
   const launcher = readIncludingComments('bin/phase22-real.mjs');
-  if (/\.\.\.process\.env/.test(launcher) || /stdio:\s*['"]inherit['"]/.test(launcher) || !/NIGHTWATCH_PHASE_22_REAL/.test(launcher) || !/args\.env !== 'dev'/.test(launcher) || !/EXACT_GREEN_CI_RUN_ID_REQUIRED/.test(launcher)) fail('Phase 22 launcher boundary is incomplete');
-  if (!/maxBuffer\s*:/.test(launcher) || !/timeout\s*:/.test(launcher) || !/--config=playwright\.phase22\.config\.ts/.test(launcher)) fail('Phase 22 launcher lacks bounded child execution');
-  const cli = readIncludingComments('bin/phase22-dev.mjs');
+  const launcherCode = read("bin/phase22-real.mjs");
+  if (/\.\.\.process\.env/.test(launcher) || /stdio:\s*['"]inherit['"]/.test(launcher) || !/NIGHTWATCH_PHASE_22_REAL/.test(launcherCode) || !/args\.env !== 'dev'/.test(launcherCode) || !/EXACT_GREEN_CI_RUN_ID_REQUIRED/.test(launcherCode)) fail('Phase 22 launcher boundary is incomplete');
+  if (!/maxBuffer\s*:/.test(launcherCode) || !/timeout\s*:/.test(launcherCode) || !/--config=playwright\.phase22\.config\.ts/.test(launcherCode)) fail('Phase 22 launcher lacks bounded child execution');
+  const cli = read('bin/phase22-dev.mjs');
   if (!/DYNAMIC_ALL_FORBIDDEN/.test(cli) || !/simulatePhase22DevAcceptance/.test(cli) || !/EXPLICIT_EXECUTE_REQUIRED/.test(cli)) fail('Phase 22 local operator surface is missing dry-run/explicit-execute guards');
-  const packageJson = readIncludingComments('package.json');
+  const packageJson = readDataFile('package.json');
   for (const script of ['dev-preflight', 'dev-manifest', 'dev-acceptance', 'dev-results', 'dev-explain']) if (!packageJson.includes(`"${script}"`)) fail(`Phase 22 operator script missing: ${script}`);
 }
 
@@ -2330,26 +2535,30 @@ function checkC00WorkspaceIntegrity() {
   // read-only and importable by the continuity checker; every mutation lives
   // in the session CLI; the session CLI never rewrites shared history.
   const core = readIncludingComments('bin/workspace-integrity.mjs');
+  const coreCode = read("bin/workspace-integrity.mjs");
   const mutationRe = /(?:fs|node:fs)[\s\S]{0,80}?\b(?:writeFile|writeFileSync|appendFile|appendFileSync|rename|renameSync|chmod|chmodSync|mkdir|mkdirSync|rm|rmSync|unlink|unlinkSync|createWriteStream)\b/;
   if (mutationRe.test(core)) fail('bin/workspace-integrity.mjs must stay read-only (no filesystem mutation)');
   if (/from 'node:(?:net|http|https|dns|tls)'/.test(core) || /\bfetch\s*\(/.test(core)) fail('bin/workspace-integrity.mjs must not open a network surface');
   if (/shell\s*:\s*true|stdio\s*:\s*['"]inherit['"]|(?<!\.)\bexec(?:File)?\s*\(/.test(core)) fail('bin/workspace-integrity.mjs exposes shell-capable or unbounded child execution');
-  if (!/timeout:/.test(core) || !/maxBuffer:/.test(core)) fail('bin/workspace-integrity.mjs lacks bounded child execution');
+  if (!/timeout:/.test(coreCode) || !/maxBuffer:/.test(coreCode)) fail('bin/workspace-integrity.mjs lacks bounded child execution');
   for (const invariant of ['WORKSPACE_FORBIDDEN_INDEX_FLAG', 'WORKSPACE_EXCLUDE_DRIFT', 'WORKSPACE_UNEXPECTED_HOOK', 'WORKSPACE_UNOWNED_SESSION_WORKTREE', 'WORKSPACE_UNDECLARED_TRACKED_DELETION', 'WORKSPACE_CANONICAL_DIRTY_WHILE_SESSION_LIVE']) {
-    if (!core.includes(invariant)) fail(`C-00 hygiene invariant missing from the inspection core: ${invariant}`);
+    if (!coreCode.includes(invariant)) fail(`C-00 hygiene invariant missing from the inspection core: ${invariant}`);
   }
-  if (!/skipWorktreeTags/.test(core) || !/ASSUME_UNCHANGED/.test(core)) fail('C-00 index-flag invariant must reject skip-worktree and assume-unchanged explicitly');
+  if (!/skipWorktreeTags/.test(coreCode) || !/ASSUME_UNCHANGED/.test(coreCode)) fail('C-00 index-flag invariant must reject skip-worktree and assume-unchanged explicitly');
   const session = readIncludingComments('bin/nightwatch-session.mjs');
+  const sessionCodeOnly = read('bin/nightwatch-session.mjs');
+  const sessionCode = read("bin/nightwatch-session.mjs");
   if (/--force|--force-with-lease|push\s+--force|'rebase'|'--hard'|clean',\s*'-fd|'stash'/.test(session)) fail('bin/nightwatch-session.mjs must never force-push, rebase, hard-reset, clean, or stash');
-  if (!/HEAD:refs\/heads\//.test(session)) fail('bin/nightwatch-session.mjs must integrate by pushing the session branch, never by checking out the canonical branch');
-  if (!/SESSION_ALREADY_OWNED/.test(session) || !/SESSION_OWNER_STALE/.test(session) || !/flag: 'wx'/.test(session)) fail('bin/nightwatch-session.mjs must claim ownership with an exclusive create and distinguish live from stale owners');
-  if (!/SESSION_REMOVE_REFUSED_LIVE_HOLDER/.test(session) || !/SESSION_REMOVE_REFUSED_UNMERGED/.test(session)) fail("bin/nightwatch-session.mjs must refuse to delete another session's live or unmerged work");
-  if (!/SESSION_RECONCILE_CONFLICT/.test(session) || !/merge', '--abort/.test(session)) fail('bin/nightwatch-session.mjs must abort rather than silently resolve a reconcile conflict');
+  if (!/HEAD:refs\/heads\//.test(sessionCodeOnly)) fail('bin/nightwatch-session.mjs must integrate by pushing the session branch, never by checking out the canonical branch');
+  if (!/SESSION_ALREADY_OWNED/.test(sessionCode) || !/SESSION_OWNER_STALE/.test(sessionCode) || !/flag: 'wx'/.test(sessionCode)) fail('bin/nightwatch-session.mjs must claim ownership with an exclusive create and distinguish live from stale owners');
+  if (!/SESSION_REMOVE_REFUSED_LIVE_HOLDER/.test(sessionCode) || !/SESSION_REMOVE_REFUSED_UNMERGED/.test(sessionCode)) fail("bin/nightwatch-session.mjs must refuse to delete another session's live or unmerged work");
+  if (!/SESSION_RECONCILE_CONFLICT/.test(sessionCode) || !/merge', '--abort/.test(sessionCode)) fail('bin/nightwatch-session.mjs must abort rather than silently resolve a reconcile conflict');
   const checker = readIncludingComments('bin/agent-state.mjs');
-  if (!/from '\.\/workspace-integrity\.mjs'/.test(checker)) fail('bin/agent-state.mjs must consume the C-00 workspace inspection core');
+  const checkerCode = read("bin/agent-state.mjs");
+  if (!/from '\.\/workspace-integrity\.mjs'/.test(checkerCode)) fail('bin/agent-state.mjs must consume the C-00 workspace inspection core');
   let policy;
   try {
-    policy = JSON.parse(readIncludingComments('config/workspace-integrity.v1.json'));
+    policy = JSON.parse(readDataFile('config/workspace-integrity.v1.json'));
   } catch {
     fail('config/workspace-integrity.v1.json must be valid JSON');
     return;
@@ -2358,7 +2567,7 @@ function checkC00WorkspaceIntegrity() {
   if (!Array.isArray(policy.excludePolicy?.allowedEffectivePatterns) || policy.excludePolicy.allowedEffectivePatterns.length !== 0) fail('C-00 shared exclude policy must allow zero effective patterns');
   if (policy.hookPolicy?.allowedSuffix !== '.sample' || policy.hookPolicy?.requireUnsetHooksPath !== true) fail('C-00 hook policy must permit only samples and require core.hooksPath to be unset');
   if (policy.canonical?.mayHostImplementationSession !== false || policy.canonical?.requireCleanWhenSessionLive !== true) fail('C-00 canonical protection policy is weakened');
-  const packageJson = readIncludingComments('package.json');
+  const packageJson = readDataFile('package.json');
   for (const script of ['workspace:check', 'workspace:status', 'session:status', 'session:check']) {
     if (!packageJson.includes(`"${script}"`)) fail(`C-00 operator script missing: ${script}`);
   }
@@ -2368,7 +2577,7 @@ function checkC00WorkspaceIntegrity() {
   // MEMBERSHIP of the C-00 matrix, not merely that the string appears
   // somewhere: dropping the adversarial matrix out of the required campaign is
   // exactly the regression this guard exists to catch.
-  const syntheticManifest = JSON.parse(readIncludingComments('config/synthetic-campaign.v1.json'));
+  const syntheticManifest = JSON.parse(readDataFile('config/synthetic-campaign.v1.json'));
   if (syntheticManifest?.schemaVersion !== 'nightwatch.synthetic-campaign.v1') fail('the synthetic campaign manifest schema is unsupported');
   const syntheticCampaignFiles = Array.isArray(syntheticManifest.files) ? syntheticManifest.files : [];
   if (!syntheticCampaignFiles.includes('tests/unit/workspaceIsolation.test.ts')) fail('the C-00 adversarial matrix must run inside the required synthetic campaign');
@@ -2377,7 +2586,7 @@ function checkC00WorkspaceIntegrity() {
     fail('the synthetic campaign must stay serial with zero retries');
   }
   if (!/"campaign:synthetic"\s*:\s*"node bin\/campaign-synthetic\.mjs"/.test(packageJson)) fail('package.json must expose the fixed synthetic campaign launcher entry point');
-  const agents = readIncludingComments('AGENTS.md');
+  const agents = readDataFile('AGENTS.md');
   if (!/ONE_WRITING_AGENT == ONE_WORKTREE == ONE_SESSION_IDENTITY/.test(agents)) fail('AGENTS.md must state the C-00 session/worktree invariant');
   // C-00 consequence: `.gitignore`'s `node_modules/` rule does not match a
   // `node_modules` SYMLINK, so sharing an install between worktrees can be
@@ -2404,9 +2613,12 @@ function checkC00WorkspaceIntegrity() {
   // ENOENT and `npm run change:shadow` could not run there at all. No gate
   // group executes that script, so nothing reported it.
   for (const file of ['tests/unit/changeIntelligenceBacktest.test.ts', 'scenarios/ripple/local.smoke.ts', 'bin/change-intelligence.mjs']) {
-    const source = readIncludingComments(file);
-    if (!/DEFAULT_SIBLING_ROOT/.test(source)) fail(`${file} must resolve the repositories root through DEFAULT_SIBLING_ROOT`);
-    if (/__dirname,\s*'\.\.\/\.\.\/\.\.'|__dirname,\s*'\.\.',\s*'\.\.',\s*'\.\.'/.test(source)) {
+    // Distinct names: this rule binds a second `source` in the loop below, and
+    // one name for two scopes is exactly what defeats the alias analysis.
+    const rootResolverSource = readIncludingComments(file);
+    const rootResolverCode = read(file);
+    if (!/DEFAULT_SIBLING_ROOT/.test(rootResolverCode)) fail(`${file} must resolve the repositories root through DEFAULT_SIBLING_ROOT`);
+    if (/__dirname,\s*'\.\.\/\.\.\/\.\.'|__dirname,\s*'\.\.',\s*'\.\.',\s*'\.\.'/.test(rootResolverSource)) {
       fail(`${file} must not derive the repositories root from its own checkout location`);
     }
   }
@@ -2486,43 +2698,48 @@ function checkC10ProductionPrivacyBoundary() {
   }
 
   // Raw bytes enter through exactly one bounded, call-scoped reader.
-  const types = readIncludingComments('src/core/prodPrivacy/types.ts');
+  const types = read('src/core/prodPrivacy/types.ts');
   if (!/class RawEphemeralSource/.test(types) || !/toJSON\(\): never/.test(types)) {
     fail('C-10 raw bytes must enter through the single call-scoped RawEphemeralSource, which must refuse serialization');
   }
   const projector = readIncludingComments('src/core/prodPrivacy/projector.ts');
-  if (!/source instanceof RawEphemeralSource/.test(projector)) {
+  const projectorCode = read("src/core/prodPrivacy/projector.ts");
+  if (!/source instanceof RawEphemeralSource/.test(projectorCode)) {
     fail('C-10 projector must accept raw bytes only through RawEphemeralSource');
   }
-  if (!/keyProvenanceRequirement/.test(projector) || !/isSourceProvenKey/.test(projector)) {
+  if (!/keyProvenanceRequirement/.test(projectorCode) || !/isSourceProvenKey/.test(projectorCode)) {
     fail('C-10 projector must decide key provenance through the source-proven vocabulary (F-14)');
   }
 
   // F-15: the two digest families must stay distinct and the structural family
   // must never ingest a value or an unproven key literal.
   const serializer = readIncludingComments('src/core/prodPrivacy/serializer.ts');
-  if (!/PRODUCTION_STRUCTURAL_DIGEST_PREFIX/.test(serializer)) {
+  const serializerCode = read("src/core/prodPrivacy/serializer.ts");
+  if (!/PRODUCTION_STRUCTURAL_DIGEST_PREFIX/.test(serializerCode)) {
     fail('C-10 structural digest must use the distinct prodstruct: family (F-15)');
   }
   if (/encounterToken|numericEncounterRef/.test(serializer.replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, ''))) {
     fail('C-10 canonical serializer must never write an ephemeral correlation label (F-15)');
   }
   const policy = readIncludingComments('src/core/prodPrivacy/policy.ts');
-  if (!/durableValueDigest: 'ABSENT'/.test(policy)) {
+  const policyCode = read("src/core/prodPrivacy/policy.ts");
+  if (!/durableValueDigest: 'ABSENT'/.test(policyCode)) {
     fail('C-10 production policy must record that no durable value digest exists (F-15)');
   }
 
   // Workstream F: the persistence firewall must be an independent re-validation
   // at the durable write, and the store must run it.
   const firewall = readIncludingComments('src/core/prodEvidence/firewall.ts');
+  const firewallCode = read("src/core/prodEvidence/firewall.ts");
   for (const required of ['ENCOUNTER_TOKEN_PRESENT', 'DYNAMIC_KEY_LITERAL_PRESENT', 'DIGEST_MISMATCH', 'UNKNOWN_SCHEMA_VERSION']) {
-    if (!firewall.includes(required)) fail(`C-10 persistence firewall must reject ${required}`);
+    if (!firewallCode.includes(required)) fail(`C-10 persistence firewall must reject ${required}`);
   }
   const store = readIncludingComments('src/core/prodEvidence/productionFindingsStore.ts');
-  if (!/assertPersistableProductionEvidence/.test(store)) {
+  const storeCodeOnly = read("src/core/prodEvidence/productionFindingsStore.ts");
+  if (!/assertPersistableProductionEvidence/.test(storeCodeOnly)) {
     fail('C-10 production store must re-validate through the persistence firewall at the durable write');
   }
-  if (!/prod-findings/.test(store)) {
+  if (!/prod-findings/.test(storeCodeOnly)) {
     fail('C-10 production store must use its own prod-findings namespace, never the DEV findings root');
   }
   if (/'\.nightwatch',\s*'findings'/.test(store)) {
@@ -2535,38 +2752,41 @@ function checkC10ProductionPrivacyBoundary() {
   // `481516234299`; relying on it let concrete customer identifiers reach
   // persisted evidence through the route field.
   const routeVocabulary = readIncludingComments('src/core/prodPrivacy/routeVocabulary.ts');
-  if (!/isSourceProvenRoute/.test(routeVocabulary) || !/NO_PROVEN_ROUTE_VOCABULARY/.test(routeVocabulary)) {
+  const routeVocabularyCode = read("src/core/prodPrivacy/routeVocabulary.ts");
+  if (!/isSourceProvenRoute/.test(routeVocabularyCode) || !/NO_PROVEN_ROUTE_VOCABULARY/.test(routeVocabularyCode)) {
     fail('C-10 route identity must be decided by a source-proven route vocabulary (DEF-C10-5)');
   }
-  if (!/templates\.has\(/.test(routeVocabulary)) {
+  if (!/templates\.has\(/.test(routeVocabularyCode)) {
     fail('C-10 route provenance must be exact-set membership, not a syntactic judgement (DEF-C10-5)');
   }
-  const evidenceModule = readIncludingComments('src/core/prodPrivacy/evidence.ts');
+  const evidenceModule = read('src/core/prodPrivacy/evidence.ts');
   if (!/assertSourceProvenRoute\(\s*request\.routeVocabulary/.test(evidenceModule)) {
     fail('C-10 evidence construction must assert source-proven route provenance (DEF-C10-5)');
   }
   if (!/routeProvenanceDigest/.test(evidenceModule)) {
     fail('C-10 persisted evidence must record route provenance (DEF-C10-5)');
   }
-  if (!/assertSourceProvenRoute\(\s*this\.routeVocabulary/.test(store)) {
+  if (!/assertSourceProvenRoute\(\s*this\.routeVocabulary/.test(storeCodeOnly)) {
     fail('C-10 production store must re-check route membership at the durable write (DEF-C10-5)');
   }
-  if (!/ROUTE_PROVENANCE_MISSING/.test(firewall)) {
+  if (!/ROUTE_PROVENANCE_MISSING/.test(firewallCode)) {
     fail('C-10 persistence firewall must reject evidence lacking route provenance (DEF-C10-5)');
   }
-  const parameterProvenance = readIncludingComments('src/core/prodPrivacy/parameterProvenance.ts');
+  const parameterProvenance = read('src/core/prodPrivacy/parameterProvenance.ts');
   if (!/assertSourceProvenRoute\(\s*routeVocabulary/.test(parameterProvenance)) {
     fail('C-10 assertRouteTemplateOnly must require route provenance, not shape alone (DEF-C10-5)');
   }
   const audit = readIncludingComments('src/core/prodEvidence/persistenceAudit.ts');
-  if (!/provenRouteTemplates/.test(audit)) {
+  const auditCode = read("src/core/prodEvidence/persistenceAudit.ts");
+  if (!/provenRouteTemplates/.test(auditCode)) {
     fail('C-10 persistence audit must flag a persisted route outside the proven set (DEF-C10-5)');
   }
 
   // F-18: the Control Center findings authority must be structurally excluded
   // from the production store, on EVERY construction route including the seam.
   const authority = readIncludingComments('src/controlCenter/authorities/findingsAuthority.ts');
-  if (!/assertNotProductionFindingsRoot/.test(authority)) {
+  const authorityCode = read("src/controlCenter/authorities/findingsAuthority.ts");
+  if (!/assertNotProductionFindingsRoot/.test(authorityCode)) {
     fail('Control Center findings authority must assert the C-10 production exclusion (F-18)');
   }
   const seam = authority.slice(authority.indexOf('export function createFindingsAuthorityForTests'));
@@ -2574,7 +2794,8 @@ function checkC10ProductionPrivacyBoundary() {
     fail('the Control Center test-only findings seam must also refuse the production root (F-18)');
   }
   const exclusion = readIncludingComments('src/core/prodEvidence/controlCenterExclusion.ts');
-  if (!/realpathSync/.test(exclusion)) {
+  const exclusionCode = read("src/core/prodEvidence/controlCenterExclusion.ts");
+  if (!/realpathSync/.test(exclusionCode)) {
     fail('C-10 Control Center exclusion must use resolved-path equivalence, not string comparison (F-18)');
   }
 }
@@ -2591,11 +2812,12 @@ function checkC10ProductionPrivacyBoundary() {
  */
 function checkC105ProvenanceAuthorityBoundary() {
   const authority = readIncludingComments('src/core/prodPrivacy/vocabularyAuthority.ts');
+  const authorityCode = read("src/core/prodPrivacy/vocabularyAuthority.ts");
 
   // The runtime brand must be a module-private WeakSet. If it were exported in
   // any form, arbitrary code could register a forged object and the A6
   // JSON-revival refusal would collapse.
-  if (!/const MINTED = new WeakSet<object>\(\)/.test(authority)) {
+  if (!/const MINTED = new WeakSet<object>\(\)/.test(authorityCode)) {
     fail('C-10.5 vocabulary authority must brand capabilities with a module-private WeakSet');
   }
   if (/export\s+(?:const\s+MINTED|function\s+mintedRegistry|\{[^}]*\bMINTED\b)/.test(authority)) {
@@ -2604,7 +2826,7 @@ function checkC105ProvenanceAuthorityBoundary() {
 
   // Identity must be COMPUTED. A digest parameter anywhere in the mint would
   // restore the forgery the campaign closed.
-  if (!/function computeProvenanceDigest\(evidence: ValidatedSourceEvidence\): string/.test(authority)) {
+  if (!/function computeProvenanceDigest\(evidence: ValidatedSourceEvidence\): string/.test(authorityCode)) {
     fail('C-10.5 provenance identity must be computed from validated evidence');
   }
   if (/provenanceDigest\s*:\s*string;?\s*(?:\/\/[^\n]*)?\n[^}]*\}\s*\)\s*:\s*MintedProvenance/.test(authority)) {
@@ -2619,39 +2841,41 @@ function checkC105ProvenanceAuthorityBoundary() {
     'CAPABILITY_NOT_MINTED',
     'CAPABILITY_TEST_ONLY',
   ]) {
-    if (!authority.includes(required)) {
+    if (!authorityCode.includes(required)) {
       fail(`C-10.5 vocabulary authority must fail closed with ${required}`);
     }
   }
   // Only a COMPLETE inventory may grant authority.
-  if (!/evidence\.inventoryState !== 'COMPLETE'/.test(authority)) {
+  if (!/evidence\.inventoryState !== 'COMPLETE'/.test(authorityCode)) {
     fail('C-10.5 an incomplete source inventory must deny authority');
   }
   // A generated artifact must be provably CURRENT.
-  if (!/qualifier === 'GENERATED_ARTIFACT' && evidence\.currencyState !== 'CURRENT'/.test(authority)) {
+  if (!/qualifier === 'GENERATED_ARTIFACT' && evidence\.currencyState !== 'CURRENT'/.test(authorityCode)) {
     fail('C-10.5 stale or unknown generated evidence must deny authority');
   }
 
   // Consumption must require the brand, not the shape.
   const routeVocabulary = readIncludingComments('src/core/prodPrivacy/routeVocabulary.ts');
+  const routeVocabularyCode = read("src/core/prodPrivacy/routeVocabulary.ts");
   const keyVocabulary = readIncludingComments('src/core/prodPrivacy/keyVocabulary.ts');
-  if (!/if \(!isMintedCapability\(source\)\) return false;/.test(routeVocabulary)) {
+  const keyVocabularyCode = read("src/core/prodPrivacy/keyVocabulary.ts");
+  if (!/if \(!isMintedCapability\(source\)\) return false;/.test(routeVocabularyCode)) {
     fail('C-10.5 route provenance must require a minted capability, not a matching shape');
   }
-  if (!/if \(!isMintedCapability\(source\)\) return false;/.test(keyVocabulary)) {
+  if (!/if \(!isMintedCapability\(source\)\) return false;/.test(keyVocabularyCode)) {
     fail('C-10.5 key provenance must require a minted capability, not a matching shape');
   }
-  if (!/assertProductionVocabularyAuthority\(source\)/.test(routeVocabulary)) {
+  if (!/assertProductionVocabularyAuthority\(source\)/.test(routeVocabularyCode)) {
     fail('C-10.5 production route authority must refuse an unminted or TEST_ONLY capability');
   }
   // The KEY side must be guarded SYMMETRICALLY at the persistence boundary.
   // The guard existed but had no call site, so a TEST_ONLY key vocabulary —
   // genuinely minted, hence a member for `isSourceProvenKey` — carried an
   // arbitrary key literal into persisted evidence through provenFields[].name.
-  if (!/assertProductionKeyVocabularyAuthority\(source: KeyVocabularySource\)/.test(keyVocabulary)) {
+  if (!/assertProductionKeyVocabularyAuthority\(source: KeyVocabularySource\)/.test(keyVocabularyCode)) {
     fail('C-10.5 the key vocabulary must expose a production authority guard');
   }
-  const evidenceAuthority = readIncludingComments('src/core/prodPrivacy/evidence.ts');
+  const evidenceAuthority = read('src/core/prodPrivacy/evidence.ts');
   if (!/assertProductionKeyVocabularyAuthority\(vocabulary\)/.test(evidenceAuthority)) {
     fail('C-10.5 evidence construction must require PRODUCTION key vocabulary authority (dead-guard regression)');
   }
@@ -2696,7 +2920,8 @@ function checkC105ProvenanceAuthorityBoundary() {
 
   // The TEST-ONLY seam must be reachable from tests only.
   const seamPath = 'src/core/prodProvenance/testOnlySeam.ts';
-  const seamSource = readIncludingComments(seamPath);
+  // Comment-text subject: the brand is a comment banner, not an identifier.
+  const seamSource = readCommentText(seamPath);
   if (!/TEST ONLY\. NOT A PRODUCTION AUTHORITY PATH\./.test(seamSource)) {
     fail('C-10.5 the test-only vocabulary seam must be explicitly branded TEST ONLY');
   }
@@ -2715,7 +2940,7 @@ function checkC105ProvenanceAuthorityBoundary() {
 
   // The PHP route adapter must stay fail-closed: C-06 admits no production
   // route today, and C-10.5 must not invent completeness to manufacture one.
-  const routeDerivation = readIncludingComments('src/core/prodProvenance/routeVocabularyDerivation.ts');
+  const routeDerivation = read('src/core/prodProvenance/routeVocabularyDerivation.ts');
   if (!/PHP_ROUTE_PROOF_UNAVAILABLE/.test(routeDerivation)) {
     fail('C-10.5 PHP route derivation must fail closed while C-06 admits no production route');
   }
@@ -2738,6 +2963,7 @@ function checkC105ProvenanceAuthorityBoundary() {
  */
 function checkR11ProxyGateReliability() {
   const lease = readIncludingComments('src/proxy/portLease.ts');
+  const leaseCode = read("src/proxy/portLease.ts");
   const leaseSource = withoutComments(lease);
 
   // The production entry must bind the REAL probe, and must not take an
@@ -2764,7 +2990,8 @@ function checkR11ProxyGateReliability() {
 
   // The TEST-ONLY availability seam must be branded and unreachable from
   // anything but tests/**.
-  if (!/TEST ONLY\. NOT A PRODUCTION AUTHORITY PATH\./.test(lease)) {
+  // Comment-text subject: the brand is a comment banner, not an identifier.
+  if (!/TEST ONLY\. NOT A PRODUCTION AUTHORITY PATH\./.test(readCommentText('src/proxy/portLease.ts'))) {
     fail('R-11 the injectable availability seam must be explicitly branded TEST ONLY');
   }
   const seamName = 'reserveProxyPortLeaseWithAvailabilityForTest';
@@ -2791,9 +3018,11 @@ function checkR11ProxyGateReliability() {
   }
 
   // Durable gate receipts.
-  const receiptLib = readIncludingComments('bin/lib/gate-receipt.mjs');
+  const receiptLib = read('bin/lib/gate-receipt.mjs');
   const runner = readIncludingComments('bin/quality-gate.mjs');
+  const runnerCode = read("bin/quality-gate.mjs");
   const clean = readIncludingComments('bin/quality-gate-clean.mjs');
+  const cleanCode = read("bin/quality-gate-clean.mjs");
 
   for (const code of [
     'GATE_RECEIPT_PATH_NOT_ABSOLUTE', 'GATE_RECEIPT_PATH_TRAVERSAL', 'GATE_RECEIPT_PATH_INSIDE_REPOSITORY',
@@ -2811,7 +3040,7 @@ function checkR11ProxyGateReliability() {
     fail('R-11 receipt persistence must be an exclusive-create, fsync, atomic-rename write');
   }
 
-  if (!/resolveGateReceiptTarget\(\{\s*repositoryRoot: root/.test(runner)) {
+  if (!/resolveGateReceiptTarget\(\{\s*repositoryRoot: root/.test(runnerCode)) {
     fail('R-11 the quality gate must resolve and validate its receipt destination against the repository root');
   }
   // Validation must precede execution, so an unsafe path costs no test time and
@@ -2820,7 +3049,7 @@ function checkR11ProxyGateReliability() {
     fail('R-11 the quality gate must validate its receipt destination BEFORE running any group');
   }
   // One canonical string reaches both destinations, so stdout and file cannot drift.
-  if (!/function emitReceipt\(/.test(runner) || !/const canonicalBytes = JSON\.stringify\(receipt\);/.test(runner) || !/console\.log\(canonicalBytes\)/.test(runner) || !/persistGateReceipt\(target\.file, canonicalBytes\)/.test(runner)) {
+  if (!/function emitReceipt\(/.test(runnerCode) || !/const canonicalBytes = JSON\.stringify\(receipt\);/.test(runnerCode) || !/console\.log\(canonicalBytes\)/.test(runnerCode) || !/persistGateReceipt\(target\.file, canonicalBytes\)/.test(runnerCode)) {
     fail('R-11 the quality gate must emit ONE canonical receipt string to both stdout and the persisted file');
   }
   if ((runner.match(/console\.log\(/g) ?? []).length !== 1) {
@@ -2828,22 +3057,22 @@ function checkR11ProxyGateReliability() {
   }
   // Anchored to the list, not the bare name: the identifier also appears in the
   // import statement, so an unanchored match stays true with the entry deleted.
-  if (!/FORBIDDEN_ENVIRONMENT_KEYS = Object\.freeze\(\[[\s\S]{0,800}?GATE_RECEIPT_PATH_ENV,[\s\S]{0,200}?\]\);/.test(runner) || !/for \(const key of FORBIDDEN_ENVIRONMENT_KEYS\) delete environment\[key\];/.test(runner)) {
+  if (!/FORBIDDEN_ENVIRONMENT_KEYS = Object\.freeze\(\[[\s\S]{0,800}?GATE_RECEIPT_PATH_ENV,[\s\S]{0,200}?\]\);/.test(runnerCode) || !/for \(const key of FORBIDDEN_ENVIRONMENT_KEYS\) delete environment\[key\];/.test(runnerCode)) {
     fail('R-11 the quality gate must strip the receipt-path variable from child environments so a child cannot overwrite the run receipt');
   }
-  if (!/RECEIPT_PERSISTENCE_FAILED/.test(runner)) {
+  if (!/RECEIPT_PERSISTENCE_FAILED/.test(runnerCode)) {
     fail('R-11 a receipt that cannot be persisted must fail the gate rather than pass quietly');
   }
 
-  if (!/readPersistedGateReceipt\(receiptFile/.test(clean)) {
+  if (!/readPersistedGateReceipt\(receiptFile/.test(cleanCode)) {
     fail('R-11 the clean-checkout gate must consume the structured receipt file rather than scraping stdout');
   }
-  if (!/GATE_RECEIPT_DIGEST_MISMATCH/.test(clean)) {
+  if (!/GATE_RECEIPT_DIGEST_MISMATCH/.test(cleanCode)) {
     fail('R-11 the clean-checkout gate must fail closed when the file and stdout receipts disagree');
   }
   // The destination must live outside the disposable clone, or writing it would
   // dirty the very checkout the clean gate measures.
-  if (!/mkdtempSync\(path\.join\(os\.tmpdir\(\), 'nightwatch-clean-gate-receipt-'\)\)/.test(clean)) {
+  if (!/mkdtempSync\(path\.join\(os\.tmpdir\(\), 'nightwatch-clean-gate-receipt-'\)\)/.test(cleanCode)) {
     fail('R-11 the clean-checkout gate must place its inner receipt outside the disposable clone');
   }
 }
@@ -2926,12 +3155,13 @@ function checkC11ProdObserveBoundary() {
 
   // --- the chain is a named identity, not a count ---
   const types = readIncludingComments(`${coneDirectory}/types.ts`);
-  if (!/PRODUCTION_ADMISSION_CHAIN_VERSION = 'nightwatch\.production-admission-chain\.v1'/.test(types)) {
+  const typesCode = read(`${coneDirectory}/types.ts`);
+  if (!/PRODUCTION_ADMISSION_CHAIN_VERSION = 'nightwatch\.production-admission-chain\.v1'/.test(typesCode)) {
     fail('C-11 the admission chain must be versioned');
   }
   // Anchored to the export, because the bare identifier is a prefix of any
   // renamed variant such as `HISTORICAL_GATE_MAPPING_REMOVED`.
-  if (!/export const HISTORICAL_GATE_MAPPING:/.test(types)) {
+  if (!/export const HISTORICAL_GATE_MAPPING:/.test(typesCode)) {
     fail('C-11 the mapping from the historical G0-G11 identifiers must stay machine-checkable in source');
   }
   const gateBlock = /PRODUCTION_ADMISSION_GATES = \[([\s\S]*?)\] as const;/.exec(types);
@@ -2986,7 +3216,7 @@ function checkC11ProdObserveBoundary() {
   if (!/SUPPORTED_ENVIRONMENTS: readonly EnvironmentName\[\] = \['local', 'dev', 'next'\]/.test(environment)) {
     fail('D-4: SUPPORTED_ENVIRONMENTS must remain exactly local, dev, next');
   }
-  const decisions = readIncludingComments('docs/DECISIONS.md');
+  const decisions = readDataFile('docs/DECISIONS.md');
   if (!decisions.includes('## D-4 — Allowlist-only environments; `production.json` documents the rejected surface')
     || !decisions.includes('Only `local`, `dev`, `next` are selectable.')) {
     fail('D-4: the decision text must remain intact');
@@ -3066,7 +3296,8 @@ function checkP1ObservationScopeBoundary() {
 
   // --- the chain is a named identity, not a count ---
   const types = readIncludingComments(`${coneDirectory}/types.ts`);
-  if (!/P1_OBSERVATION_SCOPE_CHAIN_VERSION = 'nightwatch\.p1-observation-scope\.v1'/.test(types)) {
+  const typesCode = read(`${coneDirectory}/types.ts`);
+  if (!/P1_OBSERVATION_SCOPE_CHAIN_VERSION = 'nightwatch\.p1-observation-scope\.v1'/.test(typesCode)) {
     fail('MA-8 the P1 observation-scope chain must be versioned');
   }
   const gateBlock = /P1_OBSERVATION_SCOPE_GATES = \[([\s\S]*?)\] as const;/.exec(types);
@@ -3090,7 +3321,7 @@ function checkP1ObservationScopeBoundary() {
     }
   }
   // Per-gate denial codes stay confined: the map must cover every gate.
-  if (!/export const P1_GATE_DENIAL_CODES: Readonly<\s*Record<P1ObservationScopeGate, readonly P1ObservationDenialCode\[\]>\s*>/.test(types)) {
+  if (!/export const P1_GATE_DENIAL_CODES: Readonly<\s*Record<P1ObservationScopeGate, readonly P1ObservationDenialCode\[\]>\s*>/.test(typesCode)) {
     fail('MA-8 the P1 per-gate denial-code map must stay a total Record over the gate union');
   }
 
@@ -3213,7 +3444,7 @@ function checkAlphausHandoffBoundary() {
  * dependency. A dependency a test resolves is by definition used.
  */
 function checkDeclaredDependencyResolvability() {
-  const manifest = JSON.parse(readIncludingComments('package.json'));
+  const manifest = JSON.parse(readDataFile('package.json'));
   const declared = new Set([
     ...Object.keys(manifest.dependencies ?? {}),
     ...Object.keys(manifest.devDependencies ?? {}),
@@ -3811,7 +4042,7 @@ function checkGovernedStatusWords() {
     .map((file) => ({ path: file, text: readIncludingComments(file) }));
   // The README is not under docs/, but §5's current-truth instruction points a
   // reader at it, so a governed status there is governed here too.
-  documents.push({ path: 'README.md', text: readIncludingComments('README.md') });
+  documents.push({ path: 'README.md', text: readDataFile('README.md') });
 
   const isHistorical = (line) => (
     /<!--status:historical[^>]*?(?:\d{4}-\d{2}-\d{2}|[0-9a-f]{7,40})[^>]*?-->/u.test(line)
@@ -3847,7 +4078,7 @@ function checkGovernedStatusWords() {
   // --- lane-class counts stay tied to the lane-state ledger ---
   let laneState;
   try {
-    laneState = JSON.parse(readIncludingComments('config/validation-lane-state.v1.json'));
+    laneState = JSON.parse(readDataFile('config/validation-lane-state.v1.json'));
   } catch (error) {
     fail(`STATUS_WORD cannot read config/validation-lane-state.v1.json: ${error instanceof Error ? error.message : String(error)}`);
     laneState = null;
@@ -3894,7 +4125,7 @@ function checkGovernedStatusWords() {
   }
 
   // --- the README status block is governed ---
-  const readme = readIncludingComments('README.md');
+  const readme = readDataFile('README.md');
   const begin = readme.indexOf(README_STATUS_BLOCK_BEGIN);
   const end = readme.indexOf(README_STATUS_BLOCK_END);
   if (begin < 0 || end < 0 || end <= begin) {
@@ -3963,24 +4194,27 @@ function checkC02bProtobufBoundary() {
   // text, comment and string handling has escaped the one module that owns it
   // and a fact could be derived from a comment.
   const declarations = readIncludingComments('src/core/source/protoDeclarations.ts');
+  const declarationsCode = read("src/core/source/protoDeclarations.ts");
   const rawSourceUses = (declarations.match(/sourceText/g) ?? []).length;
   if (rawSourceUses !== 2) {
     fail('C-02b protoDeclarations.ts must touch raw source exactly twice — its parameter and the lexProto call; comment and string syntax belongs to the lexer alone');
   }
-  if (!/lexProto\(sourceText/.test(declarations)) {
+  if (!/lexProto\(sourceText/.test(declarationsCode)) {
     fail('C-02b protoDeclarations.ts must obtain its tokens from lexProto');
   }
   const lexer = readIncludingComments('src/core/source/protoLexer.ts');
+  const lexerCode = read("src/core/source/protoLexer.ts");
   for (const [pattern, description] of [
     [/UNTERMINATED_COMMENT/, 'an unterminated block comment must fail closed'],
     [/UNTERMINATED_STRING/, 'an unterminated string must fail closed'],
     [/TOKEN_BUDGET_EXHAUSTED/, 'the token ceiling must be categorical'],
     [/DEPTH_EXCEEDED/, 'the nesting ceiling must be categorical'],
-  ]) if (!pattern.test(lexer)) fail(`C-02b protoLexer.ts lost a bounding state: ${description}`);
+  ]) if (!pattern.test(lexerCode)) fail(`C-02b protoLexer.ts lost a bounding state: ${description}`);
 
   // --- A-4: currency may not be upgraded by a count ---
   const corroboration = readIncludingComments('src/core/source/protoCorroboration.ts');
-  if (!/state\s*!==\s*'CORROBORATED_EXACT'\)\s*return null/.test(corroboration)) {
+  const corroborationCode = read("src/core/source/protoCorroboration.ts");
+  if (!/state\s*!==\s*'CORROBORATED_EXACT'\)\s*return null/.test(corroborationCode)) {
     fail("C-02b toProtoSurfaceCorroboration must return null unless the per-operation comparison is CORROBORATED_EXACT; without that guard a count alone reaches evaluateGenerationCurrency");
   }
   const generated = readIncludingComments('src/core/source/generatedArtifact.ts');
@@ -4018,7 +4252,7 @@ function checkC02bProtobufBoundary() {
   // of that prohibition; all three are replaced by one totality rule over the
   // authority in `checkC05UniverseAdmissionBoundary`, which forbids a NINTH
   // repository from any campaign rather than two repositories from three.
-  const approved = readIncludingComments('src/core/source/universe.ts');
+  const approved = read('src/core/source/universe.ts');
   if (!/'billing'/.test(approved) || !/'openapiv2'/.test(approved)) {
     fail('C-02b requires the blueapi billing and openapiv2 roots to stay admitted');
   }
@@ -4055,20 +4289,22 @@ function checkC03GrpcTopologyBoundary() {
   }
 
   const registration = readIncludingComments('src/core/source/goRegistration.ts');
+  const registrationCode = read("src/core/source/goRegistration.ts");
   const topology = readIncludingComments('src/core/source/grpcTopology.ts');
+  const topologyCode = read("src/core/source/grpcTopology.ts");
 
   // --- test files may never become topology facts ---
-  if (!/_test\.go/.test(registration) || !/export function isTopologyEligibleGoPath/.test(registration)) {
+  if (!/_test\.go/.test(registrationCode) || !/export function isTopologyEligibleGoPath/.test(registrationCode)) {
     fail('C-03 the `_test.go` topology exclusion must exist in goRegistration.ts');
   }
   // The CALL SITE, not the identifier. A rule satisfied by the import line
   // stays green while the filter it names is deleted — presence is not proof.
-  if (!/goFiles\.filter\(\(file\) => isTopologyEligibleGoPath\(file\.relativePath\)\)/.test(topology)) {
+  if (!/goFiles\.filter\(\(file\) => isTopologyEligibleGoPath\(file\.relativePath\)\)/.test(topologyCode)) {
     fail('C-03 the topology builder must apply the `_test.go` exclusion to its file set; two real registrations in pkg/exportcostfilters would otherwise become Cost implementations');
   }
 
   // --- a binding is a fact only when it is PROVEN ---
-  if (!/state === 'PROVEN'[\s\S]{0,200}?SOURCE_FACT|evidenceClass: 'SOURCE_FACT'/.test(topology)) {
+  if (!/state === 'PROVEN'[\s\S]{0,200}?SOURCE_FACT|evidenceClass: 'SOURCE_FACT'/.test(topologyCode)) {
     fail('C-03 the topology must classify evidence explicitly');
   }
   // Count ASSIGNMENTS, not the type declaration `'SOURCE_FACT' | 'NOT_A_FACT'`.
@@ -4081,15 +4317,15 @@ function checkC03GrpcTopologyBoundary() {
   // The derived ASSIGNMENT, not the token. The first version of this rule
   // matched the word inside the comment that explains it, so deleting the
   // behaviour left the guard green.
-  if (!/absenceReason: enumerationState === 'COMPLETE' \? 'NO_OBSERVED_REGISTRATION' : 'TRUNCATED_ENUMERATION'/.test(topology)) {
+  if (!/absenceReason: enumerationState === 'COMPLETE' \? 'NO_OBSERVED_REGISTRATION' : 'TRUNCATED_ENUMERATION'/.test(topologyCode)) {
     fail('C-03 an unobserved registration must be reported TRUNCATED_ENUMERATION rather than MISSING, derived from the measured enumeration state');
   }
-  if (!/repositoryCompleteProof: enumerationState === 'COMPLETE'/.test(topology)) {
+  if (!/repositoryCompleteProof: enumerationState === 'COMPLETE'/.test(topologyCode)) {
     fail('C-03 repositoryCompleteProof must be derived from the measured enumeration state, never asserted');
   }
 
   // --- W-EFFECT_RPC stays unsupported, and the method prototype says so ---
-  if (!/completenessClaim: 'NONE'/.test(topology) || /completenessClaim: '(?!NONE)/.test(topology)) {
+  if (!/completenessClaim: 'NONE'/.test(topologyCode) || /completenessClaim: '(?!NONE)/.test(topology)) {
     fail("C-03 the method-level prototype must carry completenessClaim NONE; an unobserved handler is not an absent one");
   }
   if (/W_EFFECT_RPC|WRITE_EFFECT_CLOSURE/.test(topology)) {
@@ -4099,9 +4335,10 @@ function checkC03GrpcTopologyBoundary() {
   // --- the contract ceilings are unchanged ---
   // The repository-admission half of this rule moved to
   // `checkC05UniverseAdmissionBoundary`; see the note in the C-02b rule.
-  const approved = readIncludingComments('src/core/source/approvedScan.ts');
+  const approved = read('src/core/source/approvedScan.ts');
   const sibling = readIncludingComments('src/core/source/siblingSource.ts');
-  if (!/MAX_SIBLING_SOURCE_SCAN_FILES = 4096/.test(sibling) || !/MAX_SIBLING_SOURCE_SCAN_BYTES = 64_000_000/.test(sibling)) {
+  const siblingCode = read("src/core/source/siblingSource.ts");
+  if (!/MAX_SIBLING_SOURCE_SCAN_FILES = 4096/.test(siblingCode) || !/MAX_SIBLING_SOURCE_SCAN_BYTES = 64_000_000/.test(siblingCode)) {
     fail('C-03 must not change the sibling scan contract ceilings; raising them is a separate authorized change');
   }
   if (!/'mobingilabs\/ouchan': 4096/.test(approved)) {
@@ -4139,26 +4376,28 @@ function checkC04FrontendConsumerBoundary() {
   }
 
   const consumer = readIncludingComments('src/core/source/frontendConsumer.ts');
+  const consumerCode = read("src/core/source/frontendConsumer.ts");
   const join = readIncludingComments('src/core/source/frontendJoin.ts');
+  const joinCode = read("src/core/source/frontendJoin.ts");
 
   // --- no SOURCE_FACT from a non-literal path ---
-  if (!/if \(pathClass === 'LITERAL' \|\| pathClass === 'STRUCTURAL'\) return 'SOURCE_FACT';/.test(consumer)) {
+  if (!/if \(pathClass === 'LITERAL' \|\| pathClass === 'STRUCTURAL'\) return 'SOURCE_FACT';/.test(consumerCode)) {
     fail("C-04 only LITERAL and STRUCTURAL paths may yield SOURCE_FACT; the classifier must state that exactly");
   }
   if ((consumer.match(/return 'SOURCE_FACT';/g) ?? []).length !== 1) {
     fail('C-04 exactly one construction may return SOURCE_FACT from the path classifier');
   }
-  if (!/pathClass: 'PARTIAL_SEGMENT'/.test(consumer) || !/pathClass: 'DYNAMIC'/.test(consumer)) {
+  if (!/pathClass: 'PARTIAL_SEGMENT'/.test(consumerCode) || !/pathClass: 'DYNAMIC'/.test(consumerCode)) {
     fail('C-04 the non-literal path classes must remain distinguishable');
   }
 
   // --- query and hash never persisted ---
-  if (!/const hashIndex = raw\.indexOf\('#'\);/.test(consumer) || !/const queryIndex = withoutHash\.indexOf\('\?'\);/.test(consumer)) {
+  if (!/const hashIndex = raw\.indexOf\('#'\);/.test(consumerCode) || !/const queryIndex = withoutHash\.indexOf\('\?'\);/.test(consumerCode)) {
     fail('C-04 query and hash must be stripped before classification, so a runtime value can never be persisted');
   }
 
   // --- the join never upgrades ---
-  if (!/EVIDENCE_RANK\[left\] <= EVIDENCE_RANK\[right\] \? left : right/.test(join)) {
+  if (!/EVIDENCE_RANK\[left\] <= EVIDENCE_RANK\[right\] \? left : right/.test(joinCode)) {
     fail('C-04 the join must take the WEAKER evidence class of its two inputs');
   }
   if (/joinedEvidenceClass: 'SOURCE_FACT'/.test(join)) {
@@ -4171,13 +4410,13 @@ function checkC04FrontendConsumerBoundary() {
   }
 
   // --- only declared clients are clients ---
-  if (!/tokens\[index \+ 2\]\?\.value !== 'axios'/.test(consumer) || !/tokens\[index \+ 4\]\?\.value !== 'create'/.test(consumer)) {
+  if (!/tokens\[index \+ 2\]\?\.value !== 'axios'/.test(consumerCode) || !/tokens\[index \+ 4\]\?\.value !== 'create'/.test(consumerCode)) {
     fail('C-04 an HTTP client must be recognised from axios.create; otherwise Cookies.get becomes an HTTP GET');
   }
 
 
   // --- the shared tokenizer default is unchanged ---
-  const lexical = readIncludingComments('src/core/source/lexical.ts');
+  const lexical = read('src/core/source/lexical.ts');
   if (!/options\.preserveTemplates === true \? sourceText\.slice/.test(lexical)) {
     fail('C-04 template preservation must stay opt-in; every existing caller must lex byte-identically');
   }
@@ -4214,11 +4453,14 @@ function checkC15bSystemMapBoundary() {
   }
 
   const model = readIncludingComments('src/core/systemMap/model.ts');
+  const modelCode = read("src/core/systemMap/model.ts");
   const projections = readIncludingComments('src/core/systemMap/projections.ts');
+  const projectionsCode = read("src/core/systemMap/projections.ts");
   const layout = readIncludingComments('src/core/systemMap/layout.ts');
+  const layoutCode = read("src/core/systemMap/layout.ts");
 
   // --- evidence is never upgraded ---
-  if (!/CATEGORY_RANK\[left\] <= CATEGORY_RANK\[right\] \? left : right/.test(model)) {
+  if (!/CATEGORY_RANK\[left\] <= CATEGORY_RANK\[right\] \? left : right/.test(modelCode)) {
     fail('C-15b weakerFactCategory must return the WEAKER category; a join may never strengthen its inputs');
   }
   if (/export function strongerFactCategory/.test(model)) {
@@ -4229,10 +4471,10 @@ function checkC15bSystemMapBoundary() {
   for (const field of ['limit', 'total', 'projected', 'dropped', 'truncated', 'remainingUnknown']) {
     if (!new RegExp(`readonly ${field}:`).test(model)) fail(`C-15b ProjectionBound must carry ${field}; a bare truncated flag cannot say how much was dropped`);
   }
-  if (!/const dropped = Math\.max\(0, input\.total - input\.projected\);/.test(model)) {
+  if (!/const dropped = Math\.max\(0, input\.total - input\.projected\);/.test(modelCode)) {
     fail('C-15b the drop count must be derived from the measured total, never asserted');
   }
-  if (!/Math\.max\(0, Math\.trunc\(input\.nodeLimit\)\)/.test(projections)) {
+  if (!/Math\.max\(0, Math\.trunc\(input\.nodeLimit\)\)/.test(projectionsCode)) {
     fail('C-15b projection limits must be clamped before slicing; a negative limit would WIDEN the projection');
   }
 
@@ -4240,15 +4482,15 @@ function checkC15bSystemMapBoundary() {
   for (const bound of ['graphDigest', 'engineId', 'engineVersion', 'projectionVersion', 'options']) {
     if (!new RegExp(`${bound}[,:]`).test(layout)) fail(`C-15b the layout identity must bind ${bound}`);
   }
-  if (!/layoutDigest: prefixedDigest24\('systemmaplayout', \{[\s\S]{0,400}?engineVersion: LAYOUT_ENGINE_VERSION/.test(layout)) {
+  if (!/layoutDigest: prefixedDigest24\('systemmaplayout', \{[\s\S]{0,400}?engineVersion: LAYOUT_ENGINE_VERSION/.test(layoutCode)) {
     fail('C-15b the layout digest must include the engine version; a different engine must never collide with this identity');
   }
 
   // --- empty is not unmeasured ---
-  if (!/measurement: 'UNMEASURED'/.test(projections)) {
+  if (!/measurement: 'UNMEASURED'/.test(projectionsCode)) {
     fail('C-15b the observed-production-paths query must report UNMEASURED; C-12 has not run and empty must never imply it did');
   }
-  if (!/MEASUREMENT_STATES = \['MEASURED', 'UNMEASURED'\]/.test(projections)) {
+  if (!/MEASUREMENT_STATES = \['MEASURED', 'UNMEASURED'\]/.test(projectionsCode)) {
     fail('C-15b a measured zero and an unmeasured zero must remain distinguishable');
   }
 
@@ -4258,7 +4500,7 @@ function checkC15bSystemMapBoundary() {
   }
 
   // --- the Control Center gains no authority ---
-  const meta = readIncludingComments('src/controlCenter/adapters/metaAdapter.ts');
+  const meta = read('src/controlCenter/adapters/metaAdapter.ts');
   if (!/executionAuthority: 'NONE'/.test(meta) || !/mutationAuthority: 'NONE'/.test(meta)) {
     fail('C-15b the Control Center must keep executionAuthority and mutationAuthority NONE');
   }
@@ -4341,7 +4583,9 @@ function checkCampaignCertificationRegistry() {
  */
 function checkC05UniverseAdmissionBoundary() {
   const universe = readIncludingComments('src/core/source/universe.ts');
+  const universeCode = read("src/core/source/universe.ts");
   const scan = readIncludingComments('src/core/source/approvedScan.ts');
+  const scanCode = read("src/core/source/approvedScan.ts");
 
   // --- the admitted set is EXACTLY these eight ---
   const expected = [
@@ -4368,17 +4612,17 @@ function checkC05UniverseAdmissionBoundary() {
   if (/const APPROVED_ROOTS\b/.test(withoutComments(scan))) {
     fail('src/core/source/approvedScan.ts must not declare its own repository allowlist; universe.ts is the single admission authority');
   }
-  if (!/from '\.\/universe'/.test(scan)) {
+  if (!/from '\.\/universe'/.test(scanCode)) {
     fail('src/core/source/approvedScan.ts must project the admitted set from universe.ts');
   }
   // --- and a disagreement is DECLARED, in both directions ---
   for (const code of ['REAL_SOURCE_SCAN_UNIVERSE_NOT_IN_DEPENDENCY_MAP', 'REAL_SOURCE_SCAN_DEPENDENCY_MAP_NOT_IN_UNIVERSE']) {
-    if (!scan.includes(code)) fail(`src/core/source/approvedScan.ts must fail closed on universe/dependency-map disagreement (${code})`);
+    if (!scanCode.includes(code)) fail(`src/core/source/approvedScan.ts must fail closed on universe/dependency-map disagreement (${code})`);
   }
 
   // --- discovery cannot promote ---
   for (const property of ['CONTAINS_OPENAPI_DOCUMENT', 'FILESYSTEM_ADJACENT_TO_ADMITTED_REPOSITORY', 'ORGANIZATION_DIRECTORY_MATCHES']) {
-    if (!universe.includes(property)) fail(`C-05 must state ${property} as a non-admission property`);
+    if (!universeCode.includes(property)) fail(`C-05 must state ${property} as a non-admission property`);
   }
   // The authority is data-only: the boundary performs every read.
   for (const forbidden of ['node:fs', 'node:child_process', 'node:net', 'node:https']) {
@@ -4412,8 +4656,9 @@ function checkC05UniverseAdmissionBoundary() {
   }
   // --- the unapproved-read guarantee is measured at the CALL ---
   const boundary = readIncludingComments('src/core/source/siblingSource.ts');
+  const boundaryCode = read("src/core/source/siblingSource.ts");
   for (const member of ['readLedger', 'admissionRefusals', 'contentReads', 'admissionRefused']) {
-    if (!boundary.includes(member)) {
+    if (!boundaryCode.includes(member)) {
       fail(`src/core/source/siblingSource.ts must keep the C-05 read ledger (${member}); an output-only guarantee cannot distinguish reading nothing from deriving nothing`);
     }
   }
@@ -4448,6 +4693,7 @@ function checkC05UniverseAdmissionBoundary() {
  */
 function checkC08DeploymentBindingBoundary() {
   const binding = readIncludingComments('src/core/source/deploymentBinding.ts');
+  const bindingCode = read("src/core/source/deploymentBinding.ts");
   const evidence = readIncludingComments('src/core/source/deploymentEvidence.ts');
 
   // --- the forbidden bases are DECLARED, including the one that arises here ---
@@ -4482,16 +4728,16 @@ function checkC08DeploymentBindingBoundary() {
   }
 
   // --- U-1 and U-2 stay unresolved while the manifests are unavailable ---
-  if (!/u1: Object\.freeze\(\{ resolved: false as const/.test(binding)
-    || !/u2: Object\.freeze\(\{ resolved: false as const/.test(binding)) {
+  if (!/u1: Object\.freeze\(\{ resolved: false as const/.test(bindingCode)
+    || !/u2: Object\.freeze\(\{ resolved: false as const/.test(bindingCode)) {
     fail('C-08 U-1 and U-2 must be typed unresolved; resolving them requires the mochi manifests, not a boolean');
   }
-  if (!binding.includes('C08B_BLOCKED_BY_ORGANIZATIONAL_ACCESS')) {
+  if (!bindingCode.includes('C08B_BLOCKED_BY_ORGANIZATIONAL_ACCESS')) {
     fail('C-08 must record C08B_BLOCKED_BY_ORGANIZATIONAL_ACCESS as the reason U-1 and U-2 are unknown');
   }
 
   // --- totality is structural ---
-  if (!/totalityHolds: operations\.length === bindings\.length/.test(binding)) {
+  if (!/totalityHolds: operations\.length === bindings\.length/.test(bindingCode)) {
     fail('C-08 must assert binding totality against the operation population');
   }
 
@@ -4540,15 +4786,17 @@ function checkC08DeploymentBindingBoundary() {
  */
 function checkC09SpecExpectationBoundary() {
   const expectations = readIncludingComments('src/core/source/specExpectations.ts');
-  const inventory = readIncludingComments('src/core/source/specScenarioInventory.ts');
+  const expectationsCode = read("src/core/source/specExpectations.ts");
+  const inventory = read('src/core/source/specScenarioInventory.ts');
   const proof = readIncludingComments('src/core/source/readOnlyProof.ts');
+  const proofCode = read("src/core/source/readOnlyProof.ts");
 
   // --- W-SPEC stays DOCUMENTARY ---
-  if (!/'W-SPEC':\s*'DOCUMENTARY'/.test(proof)) {
+  if (!/'W-SPEC':\s*'DOCUMENTARY'/.test(proofCode)) {
     fail("C-09 W-SPEC must remain witness class DOCUMENTARY; that class is why a spec witness cannot reach READ_ONLY_PROVEN");
   }
   // --- and the proof still requires a declaration AND an effect witness ---
-  if (!/declarationHeld/.test(proof) || !/effectHeld/.test(proof)) {
+  if (!/declarationHeld/.test(proofCode) || !/effectHeld/.test(proofCode)) {
     fail('C-09 the read-only proof must keep requiring both a DECLARATION and an EFFECT witness');
   }
 
@@ -4562,7 +4810,7 @@ function checkC09SpecExpectationBoundary() {
   }
   // Anchored on the EXPORT, not the bare name: `XPROSE_FIELDS` contains
   // `PROSE_FIELDS`, so an unanchored test passes on a renamed symbol.
-  if (!/export const PROSE_FIELDS\s*=/.test(expectations)) {
+  if (!/export const PROSE_FIELDS\s*=/.test(expectationsCode)) {
     fail('C-09 must name the prose fields it refuses, as data rather than as a comment');
   }
 
@@ -4616,11 +4864,13 @@ function checkC09SpecExpectationBoundary() {
  */
 function checkC16EigBoundary() {
   const eig = readIncludingComments('src/core/source/expectedInformationGain.ts');
+  const eigCode = read("src/core/source/expectedInformationGain.ts");
   const ledger = readIncludingComments('src/core/source/censusFigureLedger.ts');
+  const ledgerCode = read("src/core/source/censusFigureLedger.ts");
   const code = withoutComments(eig);
 
   // --- a ranking grants nothing ---
-  if (!/grantsAuthority: false as const/.test(eig)) {
+  if (!/grantsAuthority: false as const/.test(eigCode)) {
     fail('C-16 the EIG projection must state grantsAuthority false as data, not only in prose');
   }
   for (const file of ['src/core/safety/realRunGate.ts', 'src/core/policy/ownerScope.ts', 'src/core/source/universe.ts']) {
@@ -4660,18 +4910,18 @@ function checkC16EigBoundary() {
   }
 
   // --- ordering is exact integer arithmetic, and ties are total ---
-  if (!/left\.numerator \* right\.denominator - right\.numerator \* left\.denominator/.test(eig)) {
+  if (!/left\.numerator \* right\.denominator - right\.numerator \* left\.denominator/.test(eigCode)) {
     fail('C-16 score ordering must cross-multiply integers rather than divide; a float order depends on rounding');
   }
-  if (!/left\.target\.targetId < right\.target\.targetId/.test(eig)) {
+  if (!/left\.target\.targetId < right\.target\.targetId/.test(eigCode)) {
     fail('C-16 the ranking must break ties on a stable key so the order is total and reproducible');
   }
 
   // --- G-16: one derived figure source ---
-  if (!/export const CENSUS_FIGURES/.test(ledger)) {
+  if (!/export const CENSUS_FIGURES/.test(ledgerCode)) {
     fail('G-16 requires one derived figure source; CENSUS_FIGURES must declare the census measures');
   }
-  if (!/export const HISTORICAL_MARKER\s*=/.test(ledger)) {
+  if (!/export const HISTORICAL_MARKER\s*=/.test(ledgerCode)) {
     fail('G-16 must provide an explicit historical marker so a superseded narrative is retired rather than deleted');
   }
   // The exemption must be a single explicit marker, not a word list. A first
@@ -4679,7 +4929,7 @@ function checkC16EigBoundary() {
   if (/HISTORICAL_MARKERS\s*=/.test(ledger)) {
     fail('G-16 the historical exemption must be one explicit marker, not a list of words that can fire by accident');
   }
-  if (!/POLICED_DOCUMENTS/.test(ledger)) {
+  if (!/POLICED_DOCUMENTS/.test(ledgerCode)) {
     fail('G-16 must name the durable documents it polices');
   }
 }
@@ -4695,7 +4945,9 @@ function checkC16EigBoundary() {
  */
 function checkC07DerivedSemanticsBoundary() {
   const derived = readIncludingComments('src/core/source/derivedEndpointSemantics.ts');
+  const derivedCode = read("src/core/source/derivedEndpointSemantics.ts");
   const legacy = readIncludingComments('src/core/safety/endpointSemantics.ts');
+  const legacyCode = read("src/core/safety/endpointSemantics.ts");
   const code = withoutComments(derived);
 
   // --- method-only never becomes a read contract ---
@@ -4715,18 +4967,18 @@ function checkC07DerivedSemanticsBoundary() {
     fail('C-07 must taint the classification when route identity is unproven; unknown subject means unusable evidence');
   }
   // --- an unrecognised classification fails closed ---
-  if (!/default:/.test(code) || !/CONFLICTING_EVIDENCE/.test(derived)) {
+  if (!/default:/.test(code) || !/CONFLICTING_EVIDENCE/.test(derivedCode)) {
     fail('C-07 must fail closed on an unrecognised source classification rather than falling through to a usable value');
   }
 
   // --- the legacy hand-authored registry stays empty ---
-  if (!/RIPPLE_ENDPOINT_SEMANTIC_REGISTRY: readonly EndpointSemanticRule\[\] = \[\]/.test(legacy)) {
+  if (!/RIPPLE_ENDPOINT_SEMANTIC_REGISTRY: readonly EndpointSemanticRule\[\] = \[\]/.test(legacyCode)) {
     fail('C-07 the hand-authored endpoint semantic registry must stay empty; semantics are derived, and the retired catalog is never safety authority');
   }
 
   // --- generation is not execution ---
   for (const marker of ['grantsRequestAuthority: false as const']) {
-    if (!derived.includes(marker)) fail(`C-07 must state ${marker} as data; a classification is information, not permission`);
+    if (!derivedCode.includes(marker)) fail(`C-07 must state ${marker} as data; a classification is information, not permission`);
   }
   // The existing admission chain has the final word, consulted last.
   if (!/input\.admittedOperationIds\.has/.test(code)) {
@@ -4767,7 +5019,8 @@ function checkAgentProtocolBoundary() {
     if (!validate.includes(token)) fail(`agentProtocol validator is missing ${token}`);
   }
   const owner = readIncludingComments('src/core/policy/ownerScope.ts');
-  if (!/AUTONOMOUS_AGENT_LOCAL/.test(owner)) fail('owner scope is missing AUTONOMOUS_AGENT_LOCAL');
+  const ownerCode = read("src/core/policy/ownerScope.ts");
+  if (!/AUTONOMOUS_AGENT_LOCAL/.test(ownerCode)) fail('owner scope is missing AUTONOMOUS_AGENT_LOCAL');
   const finding = read('src/core/agentProtocol/finding.ts');
   for (const literal of ["humanReviewRequired: true", "externalPublication: 'PROHIBITED'", 'autoLeslie: false']) {
     if (!finding.includes(literal)) fail(`autonomous finding authority is missing ${literal}`);
@@ -4781,7 +5034,7 @@ function checkReviewStoreBoundary() {
   const writeAuthority = readIncludingComments('src/controlCenter/authorities/reviewWriteAuthority.ts');
   const binding = readIncludingComments('src/controlCenter/authorities/reviewBinding.ts');
   const reviewerAuthority = readIncludingComments('src/controlCenter/authorities/reviewerAuthority.ts');
-  const policy = readIncludingComments('src/core/policy/privateArtifacts.ts');
+  const policy = read('src/core/policy/privateArtifacts.ts');
   const storeCode = withoutComments(store);
   const identityCode = withoutComments(identity);
 
@@ -4947,6 +5200,7 @@ function checkC15cSystemMapTransportBoundary() {
   const contract = readIncludingComments('src/controlCenter/contracts/systemMap.ts');
   const adapter = readIncludingComments('src/controlCenter/adapters/systemMapAdapter.ts');
   const router = readIncludingComments('src/controlCenter/server/router.ts');
+  const routerCode = read("src/controlCenter/server/router.ts");
   const server = readIncludingComments('src/controlCenter/server/server.ts');
   // Group 19 split App.tsx into one module per view plus a shared module; the
   // transport-boundary assertions read every component module so the split
@@ -5013,7 +5267,7 @@ function checkC15cSystemMapTransportBoundary() {
   }
 
   // --- unknown addresses are rejected, never guessed ---
-  if (!/SYSTEM_MAP_LEVEL_SEGMENTS/.test(router) || !/SYSTEM_MAP_QUERY_SEGMENTS/.test(router)) {
+  if (!/SYSTEM_MAP_LEVEL_SEGMENTS/.test(routerCode) || !/SYSTEM_MAP_QUERY_SEGMENTS/.test(routerCode)) {
     fail('C-15c the router must resolve system map segments against a closed enum, never by pattern');
   }
   if (/startsWith\('\/api\/v2\/system-map/.test(withoutComments(router))) {
@@ -5457,7 +5711,7 @@ function checkRootOutputRootOwnership() {
   // Direction 1: every declared historical pattern must actually ignore. A
   // declaration that .gitignore does not carry is stale.
   const ignored = new Set();
-  for (const line of readIncludingComments('.gitignore').split(/\r?\n/)) {
+  for (const line of readDataFile('.gitignore').split(/\r?\n/)) {
     const trimmed = line.trim();
     if (trimmed === '' || trimmed.startsWith('#')) continue;
     if (/^test-results\b/.test(trimmed) || /^\.tmp-/.test(trimmed) || /^\*\.tmp-/.test(trimmed)) ignored.add(trimmed);
@@ -5641,11 +5895,11 @@ function checkAuthenticatedCapabilitySingleEvaluator() {
  *      accessor. `readIncludingComments` exists for negative (fail-if-present)
  *      rules and data files; a positive assertion satisfied by a literal that
  *      lives only in a comment is not an assertion at all. Reported per line.
- *      Scope: the scan covers matchers that name the accessor directly. It
- *      does not yet follow a local variable bound from the raw accessor; the
- *      five named conversion sites and every direct form are enforced here,
- *      and the alias population is recorded as remaining work rather than
- *      silently certified.
+ *      Scope: the scan covers BOTH the direct form and a local variable bound
+ *      from the raw accessor inside the same rule, which was the larger
+ *      population by far. An assertion whose subject genuinely IS comment text
+ *      (a generated-file header, a TEST-ONLY brand) declares that by reading
+ *      through `readCommentText()`, which is admitted here by name.
  *
  *   2. The rule registry is the enumeration authority. Every `check*`
  *      definition is registered exactly once, every registration names a real
@@ -5663,7 +5917,8 @@ function checkRuleEngineSoundness() {
     fail(`rule-engine self-check cannot read ${sourcePath}: ${error instanceof Error ? error.message : String(error)}`);
     return;
   }
-  const code = withoutComments(selfSource);
+  // Offset-preserving, so every line this self-check reports is the real line.
+  const code = blankComments(selfSource);
 
   // --- 1. fail-if-absent matcher over the raw accessor -------------------
   const patterns = [
@@ -5676,6 +5931,41 @@ function checkRuleEngineSoundness() {
     for (const match of code.matchAll(re)) {
       const line = code.slice(0, match.index).split('\n').length;
       fail(`${sourcePath}:${line} applies a ${label}; a fail-if-absent assertion must call read() (code-only), never readIncludingComments()`);
+    }
+  }
+
+  // --- 1b. fail-if-absent matcher over a RAW-ACCESSOR ALIAS --------------
+  // A binding `const x = readIncludingComments(p)` followed by `!/lit/.test(x)`
+  // is the same defect as the direct form: a literal that exists only inside a
+  // comment satisfies the assertion. This follows the alias within the rule
+  // that declares it and reports every offending line. `readCommentText()` is
+  // the declared escape for assertions whose subject really is comment text.
+  {
+    const ruleBodies = [...selfSource.matchAll(/^function (check\w+)\(/gm)].map((match, index, all) => ({
+      name: match[1],
+      start: match.index ?? 0,
+      end: index + 1 < all.length ? (all[index + 1].index ?? selfSource.length) : selfSource.length,
+    }));
+    const RX = String.raw`\/(?:\\.|\[(?:\\.|[^\]\\\n])*\]|[^/\\\n])*\/[a-z]*`;
+    for (const rule of ruleBodies) {
+      const body = code.slice(rule.start, rule.end);
+      const aliases = new Set();
+      for (const binding of body.matchAll(/(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*readIncludingComments\s*\(/g)) {
+        aliases.add(binding[1]);
+      }
+      for (const alias of aliases) {
+        const guarded = alias.replace(/[$]/g, '\\$');
+        const forms = [
+          new RegExp(`!\\s*(?:${RX}|[A-Za-z_$][\\w$.]*)\\s*\\.(?:test|includes)\\s*\\(\\s*${guarded}\\s*[,)]`, 'g'),
+          new RegExp(`!\\s*${guarded}\\s*\\.(?:includes|match|test|startsWith|endsWith)\\s*\\(`, 'g'),
+        ];
+        for (const form of forms) {
+          for (const hit of body.matchAll(form)) {
+            const line = code.slice(0, rule.start + (hit.index ?? 0)).split('\n').length;
+            fail(`${sourcePath}:${line} applies a fail-if-absent matcher to '${alias}', bound from readIncludingComments() in ${rule.name}; use read() for a code subject or readCommentText() when the subject is comment text`);
+          }
+        }
+      }
     }
   }
 
@@ -5715,7 +6005,7 @@ function checkRuleEngineSoundness() {
     if (typeof rule.subject !== 'string' || rule.subject.trim().length < 8) fail(`rule ${rule.name} has no recorded subject`);
     const start = selfSource.indexOf(`function ${rule.name}(`);
     const end = start < 0 ? -1 : selfSource.indexOf('\nfunction ', start + 1);
-    const body = start < 0 ? '' : withoutComments(selfSource.slice(start, end < 0 ? selfSource.length : end));
+    const body = start < 0 ? '' : code.slice(start, end < 0 ? code.length : end);
     for (const match of body.matchAll(firstMatchRe)) {
       if (regexFlags(match[1]).includes('g')) continue;
       if (rule.quantifier !== 'TOTALITY') continue;
