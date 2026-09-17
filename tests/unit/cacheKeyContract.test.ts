@@ -315,7 +315,7 @@ test.describe('C4 orchestration', () => {
     const base = declaration();
     const invalid = [
       { ...base, consumer: { ...base.consumer, repoId: 'mobingilabs/secret-repo' } },
-      { ...base, consumer: { ...base.consumer, roots: ['tests'], paths: ['tests/App/Cache.php'] } },
+      { ...base, consumer: { ...base.consumer, roots: ['vendor'], paths: ['vendor/App/Cache.php'] } },
       { ...base, consumer: { ...base.consumer, paths: ['src/../etc/passwd'] } },
       { ...base, consumer: { ...base.consumer, functions: [] } },
       { ...base, envMap: { producerEnvToken: null, pairs: [] } },

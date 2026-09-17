@@ -25,9 +25,8 @@
 // ---------------------------------------------------------------------------
 
 import { prefixedDigest24 } from '../identity/canonicalDigest';
+import { RECORD_IDENTITY_EXTRACTION_IDENTITY } from './recordIdentityContract';
 import { tokenizeStaticSource, type StaticLexicalToken } from './lexical';
-
-export const RECORD_IDENTITY_GRAMMAR_VERSION = 'nightwatch.record-identity-extraction.v1' as const;
 
 export const MAX_RECORD_IDENTITY_SOURCE_CHARS = 400_000;
 export const MAX_RECORD_IDENTITY_ATOMS = 24;
@@ -75,7 +74,7 @@ export interface RecordIdentityExtraction {
 
 function shapeDigestValue(shape: RecordKeyShape): unknown {
   return {
-    grammar: RECORD_IDENTITY_GRAMMAR_VERSION,
+    grammar: RECORD_IDENTITY_EXTRACTION_IDENTITY,
     delimiter: shape.delimiter,
     atoms: shape.atoms.map((atom) => (atom.kind === 'LITERAL' ? { kind: atom.kind, text: atom.text } : { kind: atom.kind })),
   };
