@@ -44,73 +44,6 @@ function withoutComments(source) {
   return source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
 }
 
-/**
- * Comment-blanked source with EVERY OFFSET AND LINE PRESERVED: comment bodies
- * become spaces, newlines survive. `withoutComments` deletes comment text, so
- * an index into its output no longer addresses the same character of the file
- * and any line number derived from it is wrong by however many comment lines
- * preceded it. Rules that only ask "is this token present in code?" may use
- * either; anything that REPORTS A POSITION must scan this one. Strings and
- * escapes are respected so a `//` inside a string literal is not a comment.
- *
- * @param {string} source
- */
-const REGEX_ALLOWED_BEFORE = /[(,=:[!&|?{};+\-*%~^<>]|^$/;
-
-function blankComments(source) {
-  const out = source.split('');
-  let index = 0;
-  let state = 'code';
-  let previousSignificant = '';
-  while (index < source.length) {
-    const character = source[index];
-    const next = source[index + 1];
-    if (state === 'code') {
-      if (character === '\\') { index += 2; continue; }
-      if (character === '/' && next === '/') { out[index] = out[index + 1] = ' '; state = 'line'; index += 2; continue; }
-      if (character === '/' && next === '*') { out[index] = out[index + 1] = ' '; state = 'block'; index += 2; continue; }
-      if (character === '"' || character === "'" || character === '`') { state = character; index += 1; continue; }
-      // A regex literal must be consumed whole: this file is full of patterns
-      // containing quote characters, and treating one as a string start would
-      // swallow the following comments and corrupt every later position.
-      if (character === '/' && REGEX_ALLOWED_BEFORE.test(previousSignificant)) {
-        index += 1;
-        let inClass = false;
-        while (index < source.length) {
-          const inner = source[index];
-          if (inner === '\\') { index += 2; continue; }
-          if (inner === '\n') break;
-          if (inner === '[') { inClass = true; index += 1; continue; }
-          if (inner === ']') { inClass = false; index += 1; continue; }
-          if (inner === '/' && !inClass) { index += 1; break; }
-          index += 1;
-        }
-        previousSignificant = '/';
-        continue;
-      }
-      if (!/\s/.test(character)) previousSignificant = character;
-      index += 1;
-      continue;
-    }
-    if (state === 'line') {
-      if (character === '\n') { state = 'code'; index += 1; continue; }
-      out[index] = ' ';
-      index += 1;
-      continue;
-    }
-    if (state === 'block') {
-      if (character === '*' && next === '/') { out[index] = out[index + 1] = ' '; state = 'code'; index += 2; continue; }
-      if (character !== '\n') out[index] = ' ';
-      index += 1;
-      continue;
-    }
-    if (character === '\\') { index += 2; continue; }
-    // A closed string is a value, so a `/` after it is division, not a regex.
-    if (character === state) { state = 'code'; previousSignificant = character; index += 1; continue; }
-    index += 1;
-  }
-  return out.join('');
-}
 
 /**
  * Read RAW text INCLUDING comments.
@@ -5820,21 +5753,58 @@ const AUTH_CAPABILITY_EXPIRY_EVALUATOR_PATTERNS = Object.freeze([
   { label: 'a `numericExpiryEpochSeconds` computation', pattern: /\bnumericExpiryEpochSeconds\b/g },
 ]);
 
-/** Blank comments with spaces so offsets and line numbers are preserved. */
+/**
+ * Tokens a `/` may legally follow when it opens a REGEX literal rather than
+ * acting as division. Anything else — an identifier, a digit, a closing paren
+ * or bracket, a closed string — makes the `/` division.
+ */
+const REGEX_ALLOWED_BEFORE = /[(,=:[!&|?{};+\-*%~^<>]|^$/;
+
+/**
+ * Blank comments with spaces so offsets and line numbers are preserved.
+ *
+ * Offset preservation is the point: `withoutComments` DELETES comment text, so
+ * an index into its output no longer addresses the same character of the file,
+ * and a line number derived from it is short by however many comment lines came
+ * before. Anything that REPORTS A POSITION must scan this instead. Strings,
+ * escapes and regex literals are all respected.
+ */
 function codeWithCommentsBlanked(source) {
   const characters = source.split('');
   /** @type {'code'|'line'|'block'|'single'|'double'|'template'} */
   let mode = 'code';
   let index = 0;
+  let previousSignificant = '';
   while (index < source.length) {
     const character = source[index];
     const next = source[index + 1];
     if (mode === 'code') {
+      if (character === '\\') { index += 2; continue; }
       if (character === '/' && next === '/') { characters[index] = ' '; characters[index + 1] = ' '; mode = 'line'; index += 2; continue; }
       if (character === '/' && next === '*') { characters[index] = ' '; characters[index + 1] = ' '; mode = 'block'; index += 2; continue; }
-      if (character === "'") mode = 'single';
-      else if (character === '"') mode = 'double';
-      else if (character === '`') mode = 'template';
+      if (character === "'") { mode = 'single'; index += 1; continue; }
+      if (character === '"') { mode = 'double'; index += 1; continue; }
+      if (character === '`') { mode = 'template'; index += 1; continue; }
+      // A regex literal is consumed whole. Without this, a pattern carrying a
+      // quote — `/['"]run['"]/`, and this repository is full of them — reads as
+      // a string start, and everything after it, comments included, is blanked
+      // or preserved wrongly. Offsets stay right either way; CONTENT does not.
+      if (character === '/' && REGEX_ALLOWED_BEFORE.test(previousSignificant)) {
+        index += 1;
+        let inClass = false;
+        while (index < source.length) {
+          const inner = source[index];
+          if (inner === '\\') { index += 2; continue; }
+          if (inner === '\n') break;
+          if (inner === '[') { inClass = true; index += 1; continue; }
+          if (inner === ']') { inClass = false; index += 1; continue; }
+          if (inner === '/' && !inClass) { index += 1; break; }
+          index += 1;
+        }
+        previousSignificant = '/';
+        continue;
+      }
+      if (!/\s/.test(character)) previousSignificant = character;
       index += 1;
       continue;
     }
@@ -5851,7 +5821,8 @@ function codeWithCommentsBlanked(source) {
       continue;
     }
     if (character === '\\') { index += 2; continue; }
-    if ((mode === 'template' && character === '`') || (mode === 'single' && character === "'") || (mode === 'double' && character === '"')) mode = 'code';
+    // A closed string is a value, so a `/` after it is division, not a regex.
+    if ((mode === 'template' && character === '`') || (mode === 'single' && character === "'") || (mode === 'double' && character === '"')) { mode = 'code'; previousSignificant = character; }
     index += 1;
   }
   return characters.join('');
@@ -5918,7 +5889,7 @@ function checkRuleEngineSoundness() {
     return;
   }
   // Offset-preserving, so every line this self-check reports is the real line.
-  const code = blankComments(selfSource);
+  const code = codeWithCommentsBlanked(selfSource);
 
   // --- 1. fail-if-absent matcher over the raw accessor -------------------
   const patterns = [
