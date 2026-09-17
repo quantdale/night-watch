@@ -71,6 +71,7 @@ export interface TypeScriptRuntimeLoaderModuleMap {
   "src/core/source/cacheKeyContract.ts": typeof import("../../src/core/source/cacheKeyContract");
   "src/core/source/populationCompleteness.ts": typeof import("../../src/core/source/populationCompleteness");
   "src/core/source/readonlyCandidateCensus.ts": typeof import("../../src/core/source/readonlyCandidateCensus");
+  "src/core/source/recordIdentity.ts": typeof import("../../src/core/source/recordIdentity");
   "src/core/source/review.ts": typeof import("../../src/core/source/review");
   "src/core/source/siblingRoot.ts": typeof import("../../src/core/source/siblingRoot");
   "src/core/source/siblingSource.ts": typeof import("../../src/core/source/siblingSource");

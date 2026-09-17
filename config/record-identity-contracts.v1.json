@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "nightwatch.record-identity-contracts.v1",
+  "contracts": [
+    {
+      "contractId": "billingd-derived-record-cleanup",
+      "repoId": "mobingilabs/ouchan",
+      "sha": "565f00a87fb7616cc23c45d4ffeabee38a41c65f",
+      "roots": ["services"],
+      "paths": ["services/billingd/services/billingsvc/billingsvc.go"],
+      "functions": ["DeleteBillinGroup"],
+      "logicalIdentitySegments": ["company_id"],
+      "consistencyModel": "DELETE_CASCADE_EXPECTED",
+      "expectedLifecycle": "CREATE_UPDATE_DELETE_RECREATE",
+      "failureSemantics": "BEST_EFFORT_WARNING",
+      "derivedRecordCount": 2,
+      "exclusions": []
+    },
+    {
+      "contractId": "azure-marketplace-dual-identity",
+      "repoId": "mobingilabs/ouchan",
+      "sha": "5b3649db7147c1ee32d0e61b6515fe865065b4b3",
+      "roots": ["services", "pkg"],
+      "paths": [
+        "services/azurecustomerd/batch/unattached.go",
+        "pkg/azuredb/ripplecustomer.go"
+      ],
+      "functions": ["CreateMarketplaceCustomers", "NewRippleCustomer"],
+      "logicalIdentitySegments": ["company_id", "customer_id", "account_id"],
+      "consistencyModel": "EVENTUAL_READ_THEN_UNCONDITIONAL_WRITE",
+      "expectedLifecycle": "CREATE_ONCE_THEN_IDENTITY_STABLE",
+      "failureSemantics": "NONE",
+      "derivedRecordCount": 0,
+      "exclusions": []
+    }
+  ]
+}
