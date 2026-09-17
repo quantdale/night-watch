@@ -5,6 +5,7 @@ Phase: HISTORICAL_WAVE1_V1
 Session branch: session/nightwatch-historical-wave1-v1-15ad976d
 Base revision: aaf093420ab503039256ec283226f2d09185e152
 Authorization: owner-approved Wave 1 (C6 first, then C4 Phase 1a report-only)
+Status: COMPLETE
 
 ## Scope executed
 
@@ -101,8 +102,25 @@ Authorization: owner-approved Wave 1 (C6 first, then C4 Phase 1a report-only)
   `--snapshot=<dir> --sha=<sha>`; no such inventory/snapshot exists in this
   session, so it reports its usage error and is recorded as not applicable
   rather than satisfied by a fabricated input.
-- `npm run gate:local` — see the final receipt below (run at the committed
-  checkpoint; this file is updated by the documentation-descendant commit).
+- `npm run gate:local` — PASS, 11/11 required groups (GATE_DEFINITION, STATIC,
+  HARDENING, HANDOFF_TRUTH, PROJECT_TRUTH, AGENT_CONTINUITY,
+  SEMANTIC_COMPATIBILITY, OWNER_PROVENANCE, SYNTHETIC_CAMPAIGN,
+  PATCH_INTEGRITY, WORKSPACE_INTEGRITY) at
+  `0fb23a1aa6a172a55070e98e7882cd3e954af38d`; receipt
+  `receipt:sha256:38b46ece948a41528805f50a`. SEMANTIC_COMPATIBILITY counts:
+  2120 total / 2107 passed / 13 skipped / 0 failed. SYNTHETIC_CAMPAIGN:
+  1880/1880, deep containment lane PROVEN. OWNER_PROVENANCE: 91 passed.
+- Environmental note: the first full gate attempt failed only because the local
+  `mobingilabs/ripple-api` checkout had advanced to `4e3e200d` while the suite
+  pins `27bb007a`. Under the owner's explicit decision, the checkout was
+  temporarily detached at the pin (no fetch), the three affected suites
+  re-passed 33/33, the full gate passed, and the sibling was restored to
+  `master` at `4e3e200d` with its pre-existing untracked `AGENTS.md` preserved.
+  No Nightwatch expectation was weakened and no source pin was advanced.
+- Classification: `WAVE1_GATE_STATUS: PASS`; `REQUIRED_SIBLING_PIN:
+  27bb007ad0c798800b6bd3b29760c966422966e7`; `ENVIRONMENTAL_BLOCKER:
+  RESOLVED_BY_TEMPORARY_OWNER_PIN_ALIGNMENT`; `NIGHTWATCH_PIN_ADVANCE:
+  NOT_PERFORMED`; `RIPPLE_API_SOURCE_MODIFIED: NO`.
 
 ## Phase 1b
 

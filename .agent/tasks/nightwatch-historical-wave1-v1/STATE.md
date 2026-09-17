@@ -4,16 +4,16 @@
 
 Task ID: nightwatch-historical-wave1-v1
 Phase: HISTORICAL_WAVE1_V1
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: aaf093420ab503039256ec283226f2d09185e152
 Branch: session/nightwatch-historical-wave1-v1-15ad976d
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: aaf093420ab503039256ec283226f2d09185e152
-LAST_VALIDATED_IMPLEMENTATION_SHA: aaf093420ab503039256ec283226f2d09185e152
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: aaf093420ab503039256ec283226f2d09185e152
+LAST_VALIDATED_IMPLEMENTATION_SHA: 0fb23a1aa6a172a55070e98e7882cd3e954af38d
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 0fb23a1aa6a172a55070e98e7882cd3e954af38d
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
-PHASE_HISTORICAL_WAVE1_V1_STATUS: IN_PROGRESS
+PHASE_HISTORICAL_WAVE1_V1_STATUS: COMPLETE
 
 ## Objective
 
@@ -34,11 +34,14 @@ NOT performed in this session.
 
 ## Current Milestone
 
+COMPLETE — Wave 1 gate closure and session checkpoint.
 Milestone ID: Wave 1 gate closure and session checkpoint
-Milestone status: IN_PROGRESS
-What is being attempted: commit the Wave 1 checkpoint on the session branch,
-run the authoritative `gate:local` at that committed head, and record the
-receipt in the documentation-descendant commit for owner review.
+Milestone status: COMPLETE
+What was completed: the Wave 1 checkpoint was committed on the session branch
+and the authoritative `gate:local` passed 11/11 required groups at
+`0fb23a1aa6a172a55070e98e7882cd3e954af38d` (receipt
+`receipt:sha256:38b46ece948a41528805f50a`); the receipt and classification are
+recorded in this documentation-descendant commit for owner review.
 
 ## Completed Milestones
 
@@ -55,22 +58,25 @@ receipt in the documentation-descendant commit for owner review.
   `nightwatch.release-freshness-report`; validation-universe class entries for
   the suite and the bin; universe digest advanced to
   `sha256:3dd05486e8e79031f5f941f7`.
+- Wave 1 gate closure: `npm run gate:local` 11/11 PASS at `0fb23a1a` after the
+  owner-authorized temporary sibling-pin alignment; append-only header
+  correction `CORR-H1-001` declared; acceptance receipt recorded.
 
 ## Work In Progress
 
-Both detectors are implemented and focused-green; the C4 real pair is
-`UNRESOLVED_EXACT_SYMBOLS` (no real contract declared, real-pair execution
-disabled). The pre-existing launcher-contract expectation drift was repaired so
-the full unit suite is green. Remaining: the committed-head `gate:local` run
-and its receipt.
+None. Both detectors are implemented, registered, and focused-green; the C4
+real pair remains `UNRESOLVED_EXACT_SYMBOLS` (no real contract declared,
+real-pair execution disabled); the pre-existing launcher-contract drift was
+repaired; the full `gate:local` battery passed 11/11. Owner review is the only
+remaining step.
 
 ## Exact Next Action
 
-Run `npm run gate:local` at the committed session-branch checkpoint; if any
-required group fails, repair, commit the repair, and re-run. Then update this
-STATE.md and REPORT.md with the receipt and make the documentation-descendant
-commit. Do not integrate or push; leave the branch and worktree for owner
-review.
+Task complete. Owner review of the completed Wave 1 implementation and the
+sanitized C4/C6 reports may follow. Do not integrate or push this branch, and
+do not begin C4 Phase 1b or Wave 2 without fresh owner authorization; a
+ripple-api `PHASE5_SOURCE_SHAS` advance is a separate future task with its own
+source-diff review and expectation re-derivation.
 
 ## Files Changed
 
@@ -98,7 +104,20 @@ review.
 - `npm run test:unit`: 5130 passed / 18 skipped / 2 failed before the repair;
   focused re-run of the repaired suite green.
 - `npm run gate:inventory`: PASS (report emitted).
-- `npm run gate:local`: pending the committed-head run.
+- `npm run gate:local`: PASS — 11/11 required groups at
+  `0fb23a1aa6a172a55070e98e7882cd3e954af38d` (receipt
+  `receipt:sha256:38b46ece948a41528805f50a`).
+- Focused re-run of the three sibling-pin suites after the temporary alignment:
+  33 passed / 0 failed (`realSourceCanary`, `oracleExpectationRealSource`,
+  `phase12CoverageInventory`).
+- WAVE1_GATE_STATUS: PASS
+- REQUIRED_SIBLING_PIN: 27bb007ad0c798800b6bd3b29760c966422966e7
+- ENVIRONMENTAL_BLOCKER: RESOLVED_BY_TEMPORARY_OWNER_PIN_ALIGNMENT
+- NIGHTWATCH_PIN_ADVANCE: NOT_PERFORMED
+- NIGHTWATCH_IMPLEMENTATION_DIFF_CHANGED_FOR_BLOCKER: NO
+- RIPPLE_API_SOURCE_MODIFIED: NO
+- RIPPLE_API_TEMPORARILY_CHECKED_OUT: YES
+- RIPPLE_API_FINAL_STATE_RESTORED: YES
 - C6_IMPLEMENTATION_STATUS: COMPLETE
 - C6_TEST_STATUS: FOCUSED_GREEN
 - C6_HARDENING_STATUS: PASS
@@ -131,11 +150,30 @@ review.
 - The frontier probe file contains a literal NUL byte (`parts.join('\0')`),
   which is why byte-oriented tooling detects it as binary; edits must preserve
   it exactly.
+- The earlier SEMANTIC_COMPATIBILITY failure was caused by the sibling
+  `mobingilabs/ripple-api` checkout resolving to `4e3e200d` while Nightwatch
+  pins `27bb007a`; the ripple-api reflog shows the owner-side merge that
+  advanced it on 2026-09-17. It was not corrected by weakening or advancing
+  Nightwatch's source expectations.
 
 ## Blockers
 
 None. If the real inventory cannot be safely resolved, the row is reported as
 it is observed; no environment repair is attempted.
+
+## Resume Recipe
+
+Task complete; do not resume this task. A future task requires fresh owner
+authorization before any C4 Phase 1b, Wave 2, or source-pin advance.
+
+## Completion Snapshot
+
+Complete. Wave 1 is closed at the session-branch checkpoint `0fb23a1a` with an
+11/11 local quality-gate receipt (`receipt:sha256:38b46ece948a41528805f50a`);
+both detectors are implemented and registered, the C4 real pair remains
+`UNRESOLVED_EXACT_SYMBOLS` with real-pair execution disabled, and no product,
+network, cloud, database, sibling-write, integration, or push operation was
+performed or authorized. Owner review is pending.
 
 ## Deferred / Follow-Up
 

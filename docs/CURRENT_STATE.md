@@ -729,6 +729,17 @@ the observe-CLI migration at `b14f9d74`) was reproduced and repaired so the
 full unit suite is green; the repair changes only the expected refusal codes,
 never the refusal-before-side-effects assertions.
 
+Acceptance: `npm run gate:local` passes 11/11 required groups at
+`0fb23a1aa6a172a55070e98e7882cd3e954af38d` (receipt
+`receipt:sha256:38b46ece948a41528805f50a`). The first gate attempt failed only
+because the local `mobingilabs/ripple-api` checkout had advanced to `4e3e200d`
+while the suite pins `27bb007a`; the owner authorized a temporary detached
+checkout of the pin (no fetch), the affected suites re-passed, the complete
+gate passed, and the sibling was restored to `master` at `4e3e200d` (its
+pre-existing untracked `AGENTS.md` preserved). No Nightwatch source pin was
+advanced and no expectation was weakened. Owner review is pending before any
+Phase 1b or Wave 2 work.
+
 ### Project-state v2 (machine-checked truth block)
 
 Each anchor claims a DIFFERENT kind of evidence. They may coincide, but they
