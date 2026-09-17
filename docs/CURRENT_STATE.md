@@ -740,6 +740,60 @@ pre-existing untracked `AGENTS.md` preserved). No Nightwatch source pin was
 advanced and no expectation was weakened. Owner review is pending before any
 Phase 1b or Wave 2 work.
 
+## Historical Wave 2 — C5 record identity, C8 test-oracle quality, C1 static precursor
+
+Owner-authorized Wave 2 (`nightwatch-historical-wave2-v1`, fresh C-00 session on
+the accepted Wave 1 descendant `60603bca`) implemented the three remaining
+architecturally supportable historical-intelligence lanes. All are
+report/assurance only; no finding, no product execution, no datastore, no
+network, and no source pin change.
+
+**C5 NW-HIST-004 RECORD IDENTITY / IDEMPOTENCY (bounded pilot).**
+`config/record-identity-contracts.v1.json` declares two exact families
+(R-03 azure marketplace dual identity; R-15 billingd derived-record cleanup).
+The lane adds a strict validator, bounded Go extraction (Sprintf key shapes,
+closed operation-role vocabulary, conditional-guard and best-effort-warning
+presence), a minimal deterministic synthetic keyed store, and four
+declared-model sequences: dual-shape duplicate, cascade completeness,
+best-effort orphan, and the eventual read-dedup interleaving. Every
+reproduction is synthetic (`productionStateClaim: NONE`). Real results:
+R-15 `DeleteBillinGroup` at the current snapshot reproduces
+`DERIVED_RECORD_ORPHAN_REPRODUCED` under the declared best-effort failure
+semantics (`rid:sha256:055babe92f073e8067e9a3d9`); R-03's write family exists
+only after the current checkout (declared `5b3649db`) and reports
+`SOURCE_STALE` honestly.
+
+**C8 NW-PROJ-010 TEST-ORACLE QUALITY (stage 1 static).**
+OQ-5 admitted the bounded `tests/` roots for `mobingilabs/ripple-api` and
+`mobingilabs/wave-api` only (read-only static classification; every other
+root unchanged). The classifier answers one question — real oracle vs
+assurance-shaped surface — with a closed vocabulary and declaration-driven
+production-symbol linkage; comments cannot masquerade as invocations because
+the PHP tokenizer drops them. Historical pilot:
+`ripple-api/tests/src/App/Handler/InvoicesVendorSkipGuardTest.php` classifies
+`MIRROR_ONLY` (all five methods mirror `shouldSkipAndCleanUp`; the declared
+symbol `generateInvoice` never appears as a token), matching the unified
+case's executed-but-not-oracle classification (`tqa:sha256:6f694c1f1e2becabdc85bce1`).
+Output is an assurance-gap artifact, never a finding (OQ-6).
+
+**C1 NW-PROJ-003 SILENT ZERO-OUTPUT (static precursor only).**
+`config/silent-zero-output-contracts.v1.json` declares the invoice handler's
+required input roles and output tokens. The oracle flags a skip `return`
+before the declared output operations whose pre-return window consults only a
+subset of the declared roles; consultation deliberately over-approximates so
+a complete guard is never accused. Real result:
+`Invoices::generateInvoice` at `4e3e200d` is `NO_PRECURSOR`
+(`GUARD_CONSULTS_ALL_REQUIRED_ROLES`, `szo:sha256:df27ef2fa2ba29c67ed45e43`),
+mechanically confirming the corrected guard; the pre-#1376 fixture shape
+reproduces the precursor. `runtimeFailureClaim: NONE` is carried in the
+report.
+
+All three lanes are fixture-proven (40 focused tests across the three new
+suites), registered in the schema lifecycle and validation universe, and
+extended into the fresh-process `frontier:determinism` probe. C4 remains
+closed (`FRAMEWORK_COMPLETE_REAL_PAIR_UNRESOLVED`; Phase 1b not implemented)
+and C6 remains non-deployment (`DEPLOYMENT_CLAIM: NONE`).
+
 ### Project-state v2 (machine-checked truth block)
 
 Each anchor claims a DIFFERENT kind of evidence. They may coincide, but they
