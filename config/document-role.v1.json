@@ -136,6 +136,13 @@
       "oldLineSha256": "sha256:c59f56338a69524ebb0049f9",
       "oldLineExcerpt": "`NO_STEPS_EXTERNAL_NON_EVIDENCE`: a run WAS inspected at this exact SHA and",
       "reason": "W1 restated the CI narrative's current-state sentence as a historical checkpoint statement; the account itself is preserved."
+    },
+    {
+      "id": "CORR-H1-001",
+      "path": "docs/CURRENT_STATE.md",
+      "oldLineSha256": "sha256:28521378f876fb455491f7e0",
+      "oldLineExcerpt": "> Durable memory for the next agent/session. Last updated: **2026-09-14**",
+      "reason": "Wave 1 historical implementation bumped the header date to the day its last change actually landed (2026-09-17); the statement is unchanged."
     }
   ]
 }
