@@ -65,6 +65,10 @@ export function runRecordIdentitySequences(
         stateDigest: syntheticStoreDigest(store),
       });
     } else if (distinctShapes.length >= 2 && contract.consistencyModel === 'CONDITIONAL_CREATE') {
+      // Declared model: identity is enforced by a canonical key with a
+      // conditional write. The simulation models exactly that assumption and
+      // reports it; physical-shape distinctness is NOT evaluated under this
+      // model (that evaluation belongs to the eventual/unconditional model).
       const store = createSyntheticStore();
       store.put('canonical', 'record-1');
       const second = store.put('canonical', 'record-2', { conditionalCreate: true });
@@ -74,7 +78,7 @@ export function runRecordIdentitySequences(
         reasonCodes: second ? ['DUAL_PHYSICAL_SHAPES', 'UNCONDITIONAL_WRITE_MODEL'] : [],
         detail: second
           ? 'declared conditional-create model accepted a second write to the canonical key'
-          : 'declared conditional-create model refuses the second write to the canonical key',
+          : 'declared conditional-create model: the canonical-key conditional write refuses the second create (declared assumption, not an extracted guard)',
         stateDigest: syntheticStoreDigest(store),
       });
     } else {
@@ -116,11 +120,12 @@ export function runRecordIdentitySequences(
       for (let index = 0; index < derived; index += 1) store.put(`derived-${index}`, 'derived');
       store.delete('parent');
       for (let index = 0; index < Math.max(0, totalDeletes - 1); index += 1) store.delete(`derived-${index}`);
+      const survived = store.size();
       results.push({
         sequenceId: 'B1',
-        outcome: 'DERIVED_RECORD_ORPHAN_REPRODUCED',
-        reasonCodes: ['DERIVED_CLEANUP_INCOMPLETE'],
-        detail: `declared ${derived} derived record(s) but only ${totalDeletes} delete operation(s) extracted: ${store.size()} record(s) survive the parent deletion`,
+        outcome: survived === 0 ? 'PRESERVED' : 'DERIVED_RECORD_ORPHAN_REPRODUCED',
+        reasonCodes: survived === 0 ? [] : ['DERIVED_CLEANUP_INCOMPLETE'],
+        detail: `declared ${derived} derived record(s) but only ${totalDeletes} delete operation(s) extracted: ${survived} record(s) survive the parent deletion`,
         stateDigest: syntheticStoreDigest(store),
       });
     } else {

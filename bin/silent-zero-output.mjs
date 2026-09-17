@@ -86,8 +86,12 @@ function main() {
     return fail('REPORT_WRITE_FAILED', String(error?.code ?? 'UNKNOWN'));
   }
 
-  for (const handler of report.handlers) process.stdout.write(`[silent-zero-output] ${handler.handlerId} ${handler.verdict}\n`);
-  process.stdout.write(`[silent-zero-output] digest=${report.reportDigest} handlers=${report.handlers.length}\n`);
+  if (cli.flags['--json'] === true) {
+    process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
+  } else {
+    for (const handler of report.handlers) process.stdout.write(`[silent-zero-output] ${handler.handlerId} ${handler.verdict}\n`);
+    process.stdout.write(`[silent-zero-output] digest=${report.reportDigest} handlers=${report.handlers.length}\n`);
+  }
   const precursor = report.handlers.some((handler) => handler.verdict === 'STATIC_ZERO_OUTPUT_PRECURSOR');
   const invalid = report.handlers.some((handler) => handler.verdict === 'DECLARATION_INVALID');
   process.exitCode = invalid ? 2 : precursor ? 1 : 0;

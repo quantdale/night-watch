@@ -89,9 +89,14 @@ function main() {
     return fail('REPORT_WRITE_FAILED', String(error?.code ?? 'UNKNOWN'));
   }
 
-  const verdicts = report.contracts.map((contract) => `${contract.contractId} ${contract.verdict}`);
-  for (const verdict of verdicts) process.stdout.write(`[record-identity] ${verdict}\n`);
-  process.stdout.write(`[record-identity] digest=${report.reportDigest} contracts=${report.contracts.length}\n`);
+  if (cli.flags['--json'] === true) {
+    process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
+  } else {
+    for (const contract of report.contracts) {
+      process.stdout.write(`[record-identity] ${contract.contractId} ${contract.verdict}\n`);
+    }
+    process.stdout.write(`[record-identity] digest=${report.reportDigest} contracts=${report.contracts.length}\n`);
+  }
   const reproduced = report.contracts.some((contract) => contract.verdict === 'DUPLICATE_IDENTITY_REPRODUCED' || contract.verdict === 'DERIVED_RECORD_ORPHAN_REPRODUCED');
   const invalid = report.contracts.some((contract) => contract.verdict === 'DECLARATION_INVALID');
   process.exitCode = invalid ? 2 : reproduced ? 1 : 0;

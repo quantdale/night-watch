@@ -9,10 +9,14 @@
 // mutated, no live infrastructure is contacted. The output is an
 // ASSURANCE-GAP ARTIFACT, never a defect finding.
 //
-// Linkage rule: the production symbol must be DECLARED (owner declaration);
-// method-name similarity, comments, and shared literals are never evidence.
-// The PHP tokenizer drops comments, so a symbol named only in documentation
-// cannot be mistaken for an invocation.
+// Linkage rule: the production symbol must be DECLARED (owner declaration).
+// Method-name similarity, comments, and shared literals are never evidence:
+// the PHP tokenizer drops comments, and matching requires an exact token-name
+// equality inside the method body — a test that only mirrors the condition
+// never references the production symbol. The linkage is deliberately lexical
+// and receiver-blind: an exact-name token on any receiver counts, so the
+// owner declaration is the authority that the symbol identity is correct
+// (a same-named method on a mock would be accepted as the declared symbol).
 // ---------------------------------------------------------------------------
 
 import { prefixedDigest24 } from '../identity/canonicalDigest';
@@ -57,6 +61,7 @@ export const TEST_ORACLE_REASON_CODES = [
 ] as const;
 export type TestOracleReasonCode = (typeof TEST_ORACLE_REASON_CODES)[number];
 
+const C8_TARGET_REPOS = ['mobingilabs/ripple-api', 'mobingilabs/wave-api'] as const;
 const REPO_PATH_RE = /^[A-Za-z0-9_-]+(?:\/[A-Za-z0-9_.-]+)*$/;
 const SYMBOL_RE = /^[A-Za-z_][A-Za-z0-9_]{0,127}$/;
 const SHA_RE = /^[0-9a-f]{40}$/;
@@ -137,23 +142,26 @@ function isStringArray(value: unknown, max: number): value is readonly string[] 
   return Array.isArray(value) && value.length <= max && value.every((entry) => typeof entry === 'string') && new Set(value).size === value.length;
 }
 
-function pathUnderApprovedRoot(path: string): boolean {
+function pathUnderRootOf(repoId: string, path: string): boolean {
+  const roots = approvedRootsFor(repoId);
+  if (roots === null) return false;
   const separator = path.indexOf('/');
   const root = separator === -1 ? path : path.slice(0, separator);
-  for (const repoId of ['mobingilabs/ripple-api', 'mobingilabs/wave-api']) {
-    const roots = approvedRootsFor(repoId);
-    if (roots !== null && roots.includes(root)) return true;
-  }
-  return false;
+  return roots.includes(root);
+}
+
+/** Skip paths carry no repoId; they must sit under one of the two C8 repos. */
+function pathUnderAnyC8Root(path: string): boolean {
+  return C8_TARGET_REPOS.some((repoId) => pathUnderRootOf(repoId, path));
 }
 
 function validateTarget(value: unknown): value is TestOracleTarget {
   if (!isRecord(value) || !hasExactKeys(value, ['repoId', 'sha', 'path', 'declaredProductionSymbols'])) return false;
-  if (typeof value.repoId !== 'string' || approvedRootsFor(value.repoId) === null) return false;
+  if (typeof value.repoId !== 'string' || !(C8_TARGET_REPOS as readonly string[]).includes(value.repoId)) return false;
   if (typeof value.sha !== 'string' || !SHA_RE.test(value.sha)) return false;
   if (typeof value.path !== 'string' || value.path.length > 240 || !REPO_PATH_RE.test(value.path)) return false;
   if (!value.path.split('/').every((segment) => segment !== '.' && segment !== '..')) return false;
-  if (!pathUnderApprovedRoot(value.path)) return false;
+  if (!pathUnderRootOf(value.repoId, value.path)) return false;
   const symbols = value.declaredProductionSymbols;
   if (!isStringArray(symbols, 8)) return false;
   return symbols.every((symbol) => SYMBOL_RE.test(symbol));
@@ -161,7 +169,7 @@ function validateTarget(value: unknown): value is TestOracleTarget {
 
 function validateSkip(value: unknown): value is TestOracleDeclaredSkip {
   if (!isRecord(value) || !hasExactKeys(value, ['path', 'symbol', 'reason'])) return false;
-  if (typeof value.path !== 'string' || value.path.length > 240 || !REPO_PATH_RE.test(value.path) || !pathUnderApprovedRoot(value.path)) return false;
+  if (typeof value.path !== 'string' || value.path.length > 240 || !REPO_PATH_RE.test(value.path) || !pathUnderAnyC8Root(value.path)) return false;
   if (typeof value.symbol !== 'string' || !SYMBOL_RE.test(value.symbol)) return false;
   return typeof value.reason === 'string' && value.reason.length > 0 && value.reason.length <= 200;
 }
@@ -310,7 +318,7 @@ export function classifyPhpTestFile(
     let reasonCodes: TestOracleReasonCode[];
     if (declaredSkip) {
       classification = 'DECLARED_SKIP';
-      reasonCodes = ['SKIP_MARKER_DECLARED'];
+      reasonCodes = signals.skipMarker ? ['SKIP_MARKER_DECLARED'] : [];
     } else if (signals.skipMarker) {
       classification = 'UNDECLARED_SKIP';
       reasonCodes = ['SKIP_MARKER_UNDECLARED'];
@@ -336,7 +344,7 @@ export function classifyPhpTestFile(
       }
     } else {
       classification = 'EXECUTING_BUT_ORACLE_UNPROVEN';
-      reasonCodes = ['PRODUCTION_SYMBOL_INVOKED'];
+      reasonCodes = [];
     }
     rows.push({ symbol: method.symbol, classification, reasonCodes });
   }

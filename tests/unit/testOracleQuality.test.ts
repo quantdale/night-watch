@@ -226,6 +226,46 @@ test.describe('C8 test-oracle quality — static classifier', () => {
     expect(serialized).toContain('generateInvoice');
   });
 
+  test('near misses: comments and string literals cannot stand in for an invocation', () => {
+    const commentBody = php('CommentBodyTest', [
+      '    public function testMentions()',
+      '    {',
+      '        /* Invoices::generateInvoice() would go here */',
+      '        $this->assertTrue(true);',
+      '    }',
+    ]);
+    const stringBody = php('StringBodyTest', [
+      '    public function testMentions()',
+      '    {',
+      '        $name = "generateInvoice";',
+      '        $this->assertSame("generateInvoice", $name);',
+      '    }',
+    ]);
+    expect(run({ [FILE]: commentBody }).targets[0]!.verdict).toBe('MIRROR_ONLY');
+    expect(run({ [FILE]: stringBody }).targets[0]!.verdict).toBe('MIRROR_ONLY');
+  });
+
+  test('a target without declared symbols does not carry an unearned linkage reason', () => {
+    const report = run({ [FILE]: NO_ASSERTION_TEST.replace('$invoice = 1;\n        $invoice += 1;', '$this->assertTrue(true);') }, { declaredProductionSymbols: [] });
+    const row = report.targets[0]!;
+    expect(row.verdict).toBe('EXECUTING_BUT_ORACLE_UNPROVEN');
+    expect(row.methods[0]!.reasonCodes).toEqual([]);
+  });
+
+  test('a target repository outside the two C8 families and a cross-repo root are refused', () => {
+    const wrongRepo = runTestOracleQuality({
+      config: { schemaVersion: TEST_ORACLE_QUALITY_SCHEMA, targets: [{ repoId: 'mobingilabs/ouchan', sha: SHA, path: 'tests/App/Foo.php', declaredProductionSymbols: [] }], declaredSkips: [] },
+      ...accessFor({}),
+    });
+    expect(wrongRepo.targets[0]!.verdict).toBe('DECLARATION_INVALID');
+    // ripple-api target may not use ouchan's approved roots either.
+    const crossRoot = runTestOracleQuality({
+      config: { schemaVersion: TEST_ORACLE_QUALITY_SCHEMA, targets: [{ repoId: REPO, sha: SHA, path: 'services/App/Foo.php', declaredProductionSymbols: [] }], declaredSkips: [] },
+      ...accessFor({}),
+    });
+    expect(crossRoot.targets[0]!.verdict).toBe('DECLARATION_INVALID');
+  });
+
   test('classification is deterministic', () => {
     const first = run({ [FILE]: MIRROR_TEST });
     const second = run({ [FILE]: MIRROR_TEST });

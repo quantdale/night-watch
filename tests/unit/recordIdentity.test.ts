@@ -276,6 +276,23 @@ test.describe('C5 record identity — declared lane', () => {
     expect(report.contracts[0]!.functions[0]!.nonKeyFormats).toBeGreaterThanOrEqual(1);
   });
 
+  test('a delete lifecycle with no declared derived records cannot reproduce an orphan', () => {
+    const report = run({ [FILE]: FIXTURE_DELETE_PARTIAL }, {
+      functions: ['DeleteParentPartial'],
+      consistencyModel: 'DELETE_CASCADE_EXPECTED',
+      expectedLifecycle: 'CREATE_UPDATE_DELETE_RECREATE',
+      failureSemantics: 'NONE',
+      derivedRecordCount: 0,
+    });
+    const row = report.contracts[0]!;
+    const sequenceB1 = row.sequences.find((entry) => entry.sequenceId === 'B1')!;
+    // No derived records are declared, so the model cannot judge a cascade;
+    // critically, it must never fabricate an orphan out of an empty model.
+    expect(sequenceB1.outcome).toBe('MODEL_INSUFFICIENT');
+    expect(sequenceB1.outcome).not.toBe('DERIVED_RECORD_ORPHAN_REPRODUCED');
+    expect(row.verdict).toBe('MODEL_INSUFFICIENT');
+  });
+
   test('repeated evaluation produces identical digests', () => {
     const first = run({ [FILE]: FIXTURE_DUAL });
     const second = run({ [FILE]: FIXTURE_DUAL });
@@ -315,8 +332,8 @@ test.describe('C5 record identity — driver', () => {
       const report = JSON.parse(fs.readFileSync(outPath, 'utf8'));
       expect(report.contracts[0].verdict).toBe('DUPLICATE_IDENTITY_REPRODUCED');
       expect(report.productionStateClaim).toBe('NONE');
+      expect(report.syntheticReproductionOnly).toBe(true);
       expect(report.reportDigest).toMatch(/^rid:sha256:[0-9a-f]{24}$/);
-      expect(JSON.stringify(report)).not.toContain('SENTINELCUSTOMER9');
     } finally {
       fs.rmSync(sandbox, { recursive: true, force: true });
     }

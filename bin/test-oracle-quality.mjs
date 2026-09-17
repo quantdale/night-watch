@@ -97,10 +97,14 @@ function main() {
     return fail('REPORT_WRITE_FAILED', String(error?.code ?? 'UNKNOWN'));
   }
 
-  for (const target of report.targets) {
-    process.stdout.write(`[test-oracle-quality] ${target.path} ${target.verdict}\n`);
+  if (cli.flags['--json'] === true) {
+    process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
+  } else {
+    for (const target of report.targets) {
+      process.stdout.write(`[test-oracle-quality] ${target.path} ${target.verdict}\n`);
+    }
+    process.stdout.write(`[test-oracle-quality] digest=${report.reportDigest} targets=${report.targets.length}\n`);
   }
-  process.stdout.write(`[test-oracle-quality] digest=${report.reportDigest} targets=${report.targets.length}\n`);
   if (report.targets.length === 1 && report.targets[0].verdict === 'DECLARATION_INVALID') process.exitCode = 2;
   else if (report.targets.some((target) => CONCERN_VERDICTS.has(target.verdict))) process.exitCode = 1;
   else process.exitCode = 0;
