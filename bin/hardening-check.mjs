@@ -13,8 +13,27 @@ import crypto from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import typescript from 'typescript';
-import { buildChildEnvironment } from './child-environment.mjs';
 import { loadTypeScriptModule } from './lib/typescript-runtime-loader.mjs';
+import {
+  root,
+  childEnvironment,
+  errors,
+  REGEX_ALLOWED_BEFORE,
+  fail,
+  withoutComments,
+  readIncludingComments,
+  read,
+  readCommentText,
+  readDataFile,
+  lineOfText,
+  lineOfMatch,
+  gitFiles,
+  walkWorkingTree,
+  sha256Prefix,
+  gitResult,
+  pathIsInsideDirectory,
+  codeWithCommentsBlanked,
+} from './lib/hardening/kernel.mjs';
 import { validateCampaignCertification } from './lib/campaign-certification.mjs';
 import {
   classifyValidationTruth,
@@ -28,133 +47,8 @@ import {
   verifyCliImplementationContract,
 } from './lib/cli-implementation-contract.mjs';
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PROBE_REGISTRY_PATH = 'config/hardening-rule-probes.v1.json';
-const errors = [];
-const childEnvironment = buildChildEnvironment(process.env);
 
-/** @param {string} message */
-function fail(message) {
-  errors.push(message);
-}
-
-/** Strip line and block comments so a structural check reads CODE, not prose. */
-/** @param {string} source */
-function withoutComments(source) {
-  return source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
-}
-
-
-/**
- * Read RAW text INCLUDING comments.
- *
- * This is the explicit opt-in raw accessor. It exists for three cases only:
- *   1. negative (`fail-if-present`) rules, where a forbidden token in a
- *      comment is still a forbidden reference;
- *   2. data files (JSON, Markdown, workflow YAML) where comment syntax is
- *      not comment syntax at all;
- *   3. rules genuinely about comment text.
- *
- * A positive (`fail-if-absent`) assertion MUST NOT use this accessor: a
- * comment containing the required literal would satisfy it. The rule-engine
- * self-check (`checkRuleEngineSoundness`) fails such a use.
- * @param {string} file
- */
-function readIncludingComments(file) {
-  try {
-    return fs.readFileSync(path.join(root, file), 'utf8');
-  } catch (error) {
-    fail(`cannot read ${file}: ${error instanceof Error ? error.message : String(error)}`);
-    return '';
-  }
-}
-
-/**
- * Read CODE ONLY. This is the default structural accessor: comments are
- * stripped, so a positive assertion cannot be satisfied by prose. Raw text is
- * available only through the explicitly named `readIncludingComments`.
- * @param {string} file
- */
-function read(file) {
-  return withoutComments(readIncludingComments(file));
-}
-
-/**
- * Source for an assertion whose SUBJECT IS COMMENT TEXT — a generated-file
- * header, a TEST-ONLY brand, a licence banner. This is the only legitimate
- * fail-if-absent read over comment-bearing source: the required literal is
- * supposed to live in a comment, so `read()` (code-only) would be wrong, while
- * a bare `readIncludingComments()` is indistinguishable from the defect the
- * rule-engine self-check hunts. The distinct name declares the intent, and
- * `checkRuleEngineSoundness` admits it for positive assertions.
- *
- * @param {string} file
- */
-function readCommentText(file) {
-  return readIncludingComments(file);
-}
-
-/**
- * Source for an assertion over a DATA OR PROSE file — JSON, YAML, Markdown,
- * `.gitignore`, a workflow. These have no code/comment distinction to make, and
- * `withoutComments()` would actively corrupt them (a `//` inside a JSON string
- * such as a URL is not a comment). Raw is the correct and only reading, so the
- * name records that the raw read is a property of the file class rather than an
- * unexamined fail-if-absent over comment-bearing code.
- *
- * @param {string} file
- */
-function readDataFile(file) {
-  return readIncludingComments(file);
-}
-
-/**
- * 1-based line of the first occurrence of `needle`, or 0 when it is absent.
- * Totality-rule failures name the failing line wherever the failure is tied to
- * an occurrence in a file; a return of 0 is only used by callers whose failure
- * is an absence rather than a location.
- * @param {string} source
- * @param {string} needle
- */
-function lineOfText(source, needle) {
-  const index = source.indexOf(needle);
-  return index < 0 ? 0 : source.slice(0, index).split('\n').length;
-}
-
-/**
- * 1-based line of the first match of a GLOBAL regex, or 0 when it never
- * matches. The caller supplies the `g` flag; a non-global pattern would throw
- * from matchAll rather than silently take an ungoverned first match.
- * @param {string} source
- * @param {RegExp} pattern
- */
-function lineOfMatch(source, pattern) {
-  for (const match of source.matchAll(pattern)) {
-    return source.slice(0, match.index ?? 0).split('\n').length;
-  }
-  return 0;
-}
-
-function gitFiles() {
-  const result = spawnSync('git', ['ls-files', '-z'], { cwd: root, encoding: 'utf8', env: childEnvironment, timeout: 10_000, maxBuffer: 2 * 1024 * 1024 });
-  if (result.status !== 0) {
-    fail(`git ls-files failed: ${(result.stderr ?? '').trim()}`);
-    return [];
-  }
-  // The index still lists a file deleted in the working tree until the deletion
-  // is committed. The structural checks evaluate the WORKING TREE, and a
-  // declared deletion is governed by the workspace deletion gate, not by a
-  // reader crashing on a path that no longer exists. Filtering here lets an
-  // in-session deletion be validated before integration instead of failing
-  // every unrelated rule that iterates tracked source.
-  return (result.stdout ?? '').split('\0').filter(Boolean).filter((file) => {
-    try {
-      return fs.statSync(path.join(root, file)).isFile();
-    } catch {
-      return false;
-    }
-  });
-}
 
 function checkChildProcessBoundaries() {
   const launchers = [
@@ -1139,26 +1033,6 @@ function checkCliImplementationContract() {
   if (judgement.stats.literalPaths === 0) fail('CLI contract literal scan found zero referenced paths; the scan is broken rather than clean');
 }
 
-/**
- * F-15 — every top-level entry point is executed as a process by at least one
- * automated test. Discovery is from the working tree so an untracked new bin
- * cannot hide from the rule before its first commit; a test that only reads the
- * bin's text does not count, and a newly added bin with no executing test fails
- * by name.
- * @param {string} directory
- * @param {(name: string) => boolean} predicate
- * @returns {string[]}
- */
-function walkWorkingTree(directory, predicate) {
-  /** @type {string[]} */
-  const results = [];
-  for (const entry of fs.readdirSync(path.join(root, directory), { withFileTypes: true })) {
-    const relative = `${directory}/${entry.name}`;
-    if (entry.isDirectory()) results.push(...walkWorkingTree(relative, predicate));
-    else if (predicate(entry.name)) results.push(relative);
-  }
-  return results;
-}
 
 function checkBinExecutionCoverage() {
   const bins = walkWorkingTree('bin', (name) => name.endsWith('.mjs')).filter((file) => !file.slice('bin/'.length).includes('/'));
@@ -3667,9 +3541,6 @@ function checkDocumentationFreshness() {
 const DOCUMENT_ROLE_CONFIG = 'config/document-role.v1.json';
 const DOCUMENT_ROLE_VALUES = new Set(['CURRENT_TRUTH', 'APPEND_ONLY_ARCHIVE', 'OPERATOR_REFERENCE']);
 
-function sha256Prefix(text) {
-  return `sha256:${crypto.createHash('sha256').update(text, 'utf8').digest('hex').slice(0, 24)}`;
-}
 
 function readDocumentRoleConfig(rule) {
   let config;
@@ -3845,9 +3716,6 @@ function machineBlockLineRanges(text) {
   return ranges;
 }
 
-function gitResult(args) {
-  return spawnSync('git', args, { cwd: root, encoding: 'utf8', env: childEnvironment, timeout: 30_000, maxBuffer: 16 * 1024 * 1024 });
-}
 
 function resolveArchiveDiffBase() {
   const head = gitResult(['rev-parse', '--verify', 'HEAD']);
@@ -5307,9 +5175,6 @@ function referenceModuleDirectory(file) {
   return slash < 0 ? '' : file.slice(0, slash);
 }
 
-function pathIsInsideDirectory(directory, file) {
-  return file === directory || file.startsWith(`${directory}/`);
-}
 
 function referenceGraphAccess() {
   return {
@@ -5753,80 +5618,6 @@ const AUTH_CAPABILITY_EXPIRY_EVALUATOR_PATTERNS = Object.freeze([
   { label: 'a `numericExpiryEpochSeconds` computation', pattern: /\bnumericExpiryEpochSeconds\b/g },
 ]);
 
-/**
- * Tokens a `/` may legally follow when it opens a REGEX literal rather than
- * acting as division. Anything else — an identifier, a digit, a closing paren
- * or bracket, a closed string — makes the `/` division.
- */
-const REGEX_ALLOWED_BEFORE = /[(,=:[!&|?{};+\-*%~^<>]|^$/;
-
-/**
- * Blank comments with spaces so offsets and line numbers are preserved.
- *
- * Offset preservation is the point: `withoutComments` DELETES comment text, so
- * an index into its output no longer addresses the same character of the file,
- * and a line number derived from it is short by however many comment lines came
- * before. Anything that REPORTS A POSITION must scan this instead. Strings,
- * escapes and regex literals are all respected.
- */
-function codeWithCommentsBlanked(source) {
-  const characters = source.split('');
-  /** @type {'code'|'line'|'block'|'single'|'double'|'template'} */
-  let mode = 'code';
-  let index = 0;
-  let previousSignificant = '';
-  while (index < source.length) {
-    const character = source[index];
-    const next = source[index + 1];
-    if (mode === 'code') {
-      if (character === '\\') { index += 2; continue; }
-      if (character === '/' && next === '/') { characters[index] = ' '; characters[index + 1] = ' '; mode = 'line'; index += 2; continue; }
-      if (character === '/' && next === '*') { characters[index] = ' '; characters[index + 1] = ' '; mode = 'block'; index += 2; continue; }
-      if (character === "'") { mode = 'single'; index += 1; continue; }
-      if (character === '"') { mode = 'double'; index += 1; continue; }
-      if (character === '`') { mode = 'template'; index += 1; continue; }
-      // A regex literal is consumed whole. Without this, a pattern carrying a
-      // quote — `/['"]run['"]/`, and this repository is full of them — reads as
-      // a string start, and everything after it, comments included, is blanked
-      // or preserved wrongly. Offsets stay right either way; CONTENT does not.
-      if (character === '/' && REGEX_ALLOWED_BEFORE.test(previousSignificant)) {
-        index += 1;
-        let inClass = false;
-        while (index < source.length) {
-          const inner = source[index];
-          if (inner === '\\') { index += 2; continue; }
-          if (inner === '\n') break;
-          if (inner === '[') { inClass = true; index += 1; continue; }
-          if (inner === ']') { inClass = false; index += 1; continue; }
-          if (inner === '/' && !inClass) { index += 1; break; }
-          index += 1;
-        }
-        previousSignificant = '/';
-        continue;
-      }
-      if (!/\s/.test(character)) previousSignificant = character;
-      index += 1;
-      continue;
-    }
-    if (mode === 'line') {
-      if (character === '\n') mode = 'code';
-      else characters[index] = ' ';
-      index += 1;
-      continue;
-    }
-    if (mode === 'block') {
-      if (character === '*' && next === '/') { characters[index] = ' '; characters[index + 1] = ' '; mode = 'code'; index += 2; continue; }
-      if (character !== '\n') characters[index] = ' ';
-      index += 1;
-      continue;
-    }
-    if (character === '\\') { index += 2; continue; }
-    // A closed string is a value, so a `/` after it is division, not a regex.
-    if ((mode === 'template' && character === '`') || (mode === 'single' && character === "'") || (mode === 'double' && character === '"')) { mode = 'code'; previousSignificant = character; }
-    index += 1;
-  }
-  return characters.join('');
-}
 
 function checkAuthenticatedCapabilitySingleEvaluator() {
   const allowedSource = codeWithCommentsBlanked(readIncludingComments(AUTH_CAPABILITY_EXPIRY_EVALUATOR_FILE));
