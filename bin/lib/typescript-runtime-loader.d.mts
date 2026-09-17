@@ -33,6 +33,7 @@ export interface TypeScriptRuntimeLoaderModuleMap {
   "src/core/campaignIntelligence/impact.ts": typeof import("../../src/core/campaignIntelligence/impact");
   "src/core/campaignIntelligence/planner.ts": typeof import("../../src/core/campaignIntelligence/planner");
   "src/core/campaignIntelligence/yield.ts": typeof import("../../src/core/campaignIntelligence/yield");
+  "src/core/changeIntelligence/releaseFreshness.ts": typeof import("../../src/core/changeIntelligence/releaseFreshness");
   "src/core/config/environmentSurface.ts": typeof import("../../src/core/config/environmentSurface");
   "src/core/config/reasonerExecutable.ts": typeof import("../../src/core/config/reasonerExecutable");
   "src/core/dependencyCurrency/index.ts": typeof import("../../src/core/dependencyCurrency/index");
@@ -67,9 +68,11 @@ export interface TypeScriptRuntimeLoaderModuleMap {
   "src/core/selfDevSandbox/storage.ts": typeof import("../../src/core/selfDevSandbox/storage");
   "src/core/semanticCoverage/index.ts": typeof import("../../src/core/semanticCoverage/index");
   "src/core/source/approvedScan.ts": typeof import("../../src/core/source/approvedScan");
+  "src/core/source/cacheKeyContract.ts": typeof import("../../src/core/source/cacheKeyContract");
   "src/core/source/populationCompleteness.ts": typeof import("../../src/core/source/populationCompleteness");
   "src/core/source/readonlyCandidateCensus.ts": typeof import("../../src/core/source/readonlyCandidateCensus");
   "src/core/source/review.ts": typeof import("../../src/core/source/review");
+  "src/core/source/siblingRoot.ts": typeof import("../../src/core/source/siblingRoot");
   "src/core/source/siblingSource.ts": typeof import("../../src/core/source/siblingSource");
   "src/core/source/surfaces.ts": typeof import("../../src/core/source/surfaces");
   "src/core/source/universe.ts": typeof import("../../src/core/source/universe");

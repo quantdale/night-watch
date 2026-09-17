@@ -279,13 +279,13 @@ test.describe('gated launchers refuse before any browser, subprocess or file', (
   test('observe-canary refuses without an explicit environment', () => {
     const sandbox = makeSandbox();
     const result = spawnSync(process.execPath, [path.join(ROOT, 'bin', 'observe-canary.mjs')], spawnOptions(sandbox));
-    expectRefusal(result, /observe:canary requires exactly one --env=dev\|next/, sandbox);
+    expectRefusal(result, /\[observe-canary\] CLI_ARGUMENT_MISSING: --env=dev\|next is required/, sandbox);
   });
 
   test('observe-gate refuses without an explicit environment and storage state', () => {
     const sandbox = makeSandbox();
     const result = spawnSync(process.execPath, [path.join(ROOT, 'bin', 'observe-gate.mjs')], spawnOptions(sandbox));
-    expectRefusal(result, /observe:gate requires exactly one --env=dev\|next/, sandbox);
+    expectRefusal(result, /\[observe-gate\] CLI_ARGUMENT_MISSING: --env=dev\|next and --storage-state=/, sandbox);
   });
 
   test('phase10b-real refuses an unguarded environment', () => {

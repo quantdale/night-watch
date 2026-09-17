@@ -1,0 +1,19 @@
+{
+  "schemaVersion": "nightwatch.release-refs.v1",
+  "rows": [
+    {
+      "rowId": "sapphired-split-fee-fallback",
+      "repoId": "mobingilabs/ouchan",
+      "fixSha": "9bcfe9c0b4cdf7c294c7fcf36c45e57810deb0cc",
+      "integrationRef": "refs/remotes/origin/master",
+      "releaseRefs": ["refs/remotes/origin/next", "refs/remotes/origin/production"],
+      "servicePaths": [
+        "services/sapphired/trueunblended/fees.go",
+        "services/sapphired/trueunblended/fees_test.go"
+      ],
+      "exclusions": [],
+      "deployFromIntegration": false,
+      "cherryPickModel": false
+    }
+  ]
+}

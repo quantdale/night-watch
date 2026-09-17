@@ -676,6 +676,59 @@ regression 3,579 / 3,566 / 13 skipped / 0 failed. `gate:local`, `gate:clean`
 (siblingWrites 0) and `gate:predev` all PASS at `f03dd21`. 7 negative probes
 detected. CI skips 39 → 40, exactly the one sibling-gated case.
 
+## Historical Wave 1 — release-branch freshness (C6) and cache-key contract Phase 1a (C4)
+
+Owner-authorized Wave 1 (`nightwatch-historical-wave1-v1`, C-00 session worktree,
+local session-branch commit only) implements two historical-intelligence
+detectors against the frozen planning corpus, with fixture-first acceptance and
+no product contact.
+
+**NW-HIST-008 RELEASE_BRANCH_FRESHNESS (C6).** `config/release-refs.v1.json`
+(owner-declared, strictly validated inventory) + the pure injected-oracle
+classifier (`src/core/changeIntelligence/releaseFreshness.ts`,
+`releaseFreshnessInventory.ts`) + the read-only fixed-argv driver
+(`bin/release-freshness.mjs`: `rev-parse --verify`, `cat-file -e`,
+`merge-base --is-ancestor` only; no fetch, checkout, reset, or remote query).
+Verdicts are branch/ref containment only — `RELEASE_BRANCH_FRESH`,
+`RELEASE_BRANCH_STALE`, `REF_UNAVAILABLE`, `PIN_UNAVAILABLE`,
+`FIX_NOT_ON_INTEGRATION`, `NOT_APPLICABLE_DECLARED`, `INVENTORY_INVALID`,
+`GIT_ERROR`, `SERVICE_PATH_MISSING` — and every report carries
+`freshness: LOCAL_TRACKING_REF_ONLY` with `deploymentClaim: NONE`. A policy test
+asserts the executable vocabulary cannot express deployment assurance. The one
+real inventory row (the historically affected service family, exact fix paths
+proven from pinned local history) reports `REF_UNAVAILABLE` on the current
+clone: the local tracking ref of the integration branch contains the fix, and
+the release refs are not locally observable. Nightwatch never repairs the
+environment, and a missing ref is never transformed into "stale".
+
+**NW-HIST-005 CACHE_KEY_CONTRACT — Phase 1a report only (C4).** The closed key
+shape grammar, bounded PHP/Go extraction, canonical `cks:`/`ckp:` digests and
+the deterministic coverage matcher live in
+`src/core/source/cacheKeyShapes.ts`; the strict declaration validator
+(`nightwatch.cache-key-contracts.v1`), the injected-reader orchestration, and
+the report-only driver (`bin/cache-key-contract.mjs`) complete the lane. A
+`NOT_COVERED` row is a report observation only: Phase 1a emits no finding, no
+new finding category, and no semantic-pipeline change. The bounded
+exact-symbol resolution could not mechanically tie the historical
+consumer-side key builder to its `/user` namespace inside the approved
+extraction forms (the literal namespace binding lives at call sites outside
+the declared function), so `C4_REAL_PAIR_STATUS: UNRESOLVED_EXACT_SYMBOLS`:
+the shipped registry (`config/cache-key-contracts.v1.json`) declares no real
+contract and real-pair execution stays disabled pending owner review. The
+fixture matrix (positive delimiter/env divergence, negative declared coverage,
+near-miss wildcard position, declaration-bound exclusion, ambiguity,
+stale/unavailable, invalid declaration, privacy sentinel) runs against
+synthetic fixture repositories only.
+
+Both cores are covered by `tests/unit/releaseFreshness.test.ts` and
+`tests/unit/cacheKeyContract.test.ts`, are registered in the validation
+universe and schema lifecycle, and participate in the fresh-process
+`frontier:determinism` probe. A pre-existing test/message drift (two stale
+expectations in `tests/unit/cliImplementationContract.test.ts` left behind by
+the observe-CLI migration at `b14f9d74`) was reproduced and repaired so the
+full unit suite is green; the repair changes only the expected refusal codes,
+never the refusal-before-side-effects assertions.
+
 ### Project-state v2 (machine-checked truth block)
 
 Each anchor claims a DIFFERENT kind of evidence. They may coincide, but they
