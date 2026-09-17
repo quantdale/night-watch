@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "nightwatch.test-oracle-quality.v1",
+  "targets": [
+    {
+      "repoId": "mobingilabs/ripple-api",
+      "sha": "4e3e200db3bda7b58bc250feb7f76997d95ae2cc",
+      "path": "tests/src/App/Handler/InvoicesVendorSkipGuardTest.php",
+      "declaredProductionSymbols": ["generateInvoice"]
+    }
+  ],
+  "declaredSkips": []
+}

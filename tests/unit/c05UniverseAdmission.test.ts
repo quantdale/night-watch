@@ -164,15 +164,18 @@ test.describe('C-05 — the two owner-named admissions, and no third', () => {
     expect([...approvedRootsFor('alphauslabs/blueinternal')!]).toEqual(['openapiv2']);
   });
 
-  test('wave-api is admitted for src only, and by its real identity', () => {
-    expect([...approvedRootsFor('mobingilabs/wave-api')!]).toEqual(['src']);
+  test('wave-api is admitted for src and the Wave 2 tests root, by its real identity', () => {
+    // Wave 2 / OQ-5 admitted `tests` for bounded static test-oracle
+    // classification; no other root was added.
+    expect([...approvedRootsFor('mobingilabs/wave-api')!]).toEqual(['src', 'tests']);
     // The authorization said "wave-api"; workspace truth says the identity is
     // `mobingilabs/wave-api`. A top-level `wave-api` does not exist.
     expect(isOwnerApproved('wave-api')).toBe(false);
   });
 
-  test('the pre-C-05 root sets are unchanged', () => {
-    expect([...approvedRootsFor('mobingilabs/ripple-api')!]).toEqual(['src']);
+  test('the pre-C-05 root sets are unchanged apart from the Wave 2 tests admission', () => {
+    // Wave 2 / OQ-5: `tests` only; `src` remains the product root.
+    expect([...approvedRootsFor('mobingilabs/ripple-api')!]).toEqual(['src', 'tests']);
     expect([...approvedRootsFor('mobingilabs/ouchan')!]).toEqual(['services', 'pkg']);
     expect(approvedRootsFor('alphauslabs/blueapi')!).toContain('openapiv2');
     expect(approvedRootsFor('alphauslabs/blueapi')!).toContain('billing');

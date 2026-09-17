@@ -39,7 +39,10 @@ const SERVICE_ROOTS = Object.freeze([
 export const OWNER_APPROVED_UNIVERSE: Readonly<Record<string, readonly string[]>> = Object.freeze({
   // Phase 25 initial universe.
   'mobingilabs/ripple-ui': Object.freeze(['src']),
-  'mobingilabs/ripple-api': Object.freeze(['src']),
+  // Wave 2 / OQ-5: `tests` admitted ONLY for the two PHP product families that
+  // carry the historically evidenced static test-oracle material. Read-only
+  // static classification; no product test executes and no other root is added.
+  'mobingilabs/ripple-api': Object.freeze(['src', 'tests']),
   'mobingilabs/ouchan': Object.freeze(['services', 'pkg']),
   'alphauslabs/grpc-chunk-parser': Object.freeze(['src']),
   // Phase 25, plus `openapiv2` per C-02a and the proto service roots per C-03 —
@@ -58,7 +61,9 @@ export const OWNER_APPROVED_UNIVERSE: Readonly<Record<string, readonly string[]>
   // the same `src/App/Route/Config/Routing.yaml`, the same
   // `Handler`/`Middleware`/`Route/Providor` layout, and the same quoted
   // `"verb:/path":` route-key form the existing YAML parser already consumes.
-  'mobingilabs/wave-api': Object.freeze(['src']),
+  // Wave 2 / OQ-5: `tests` admitted only for bounded static test-oracle
+  // classification, exactly like the sibling entry above.
+  'mobingilabs/wave-api': Object.freeze(['src', 'tests']),
 });
 
 /**

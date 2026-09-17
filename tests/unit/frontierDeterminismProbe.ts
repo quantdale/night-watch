@@ -20,6 +20,7 @@ import { evaluateKeyCoverage, extractConsumerKeyShapes, extractProducerPatterns 
 import { extractRecordIdentityFacts } from '../../src/core/source/recordIdentityShapes';
 import { runRecordIdentitySequences } from '../../src/core/source/recordIdentitySequences';
 import { runRecordIdentityContracts } from '../../src/core/source/recordIdentity';
+import { classifyPhpTestFile } from '../../src/core/source/testOracleQuality';
 
 function descriptor(
   findingId: string,
@@ -194,5 +195,12 @@ const probeRiReport = runRecordIdentityContracts({
   currentness: { currentSnapshot: (repoId) => (repoId === 'mobingilabs/ouchan' ? { repoId, sha: 'a'.repeat(40) } : null) },
 });
 parts.push(probeRiReport.reportDigest);
+
+
+// NW-PROJ-010 Wave 2: the static test-oracle classifier must not depend on process state.
+parts.push(JSON.stringify(classifyPhpTestFile(
+  ['<?php', 'class ProbeTest extends TestCase', '{', '  public function testMirrors()', '  {', '    $this->assertTrue($this->helper());', '  }', '  private function helper(): bool', '  {', '    return true;', '  }', '}', ''].join('\n'),
+  { path: 'tests/src/App/Handler/ProbeTest.php', declaredProductionSymbols: ['generateInvoice'], declaredSkips: [] },
+)));
 
 process.stdout.write(`${crypto.createHash('sha256').update(parts.join(' ')).digest('hex')}\n`);

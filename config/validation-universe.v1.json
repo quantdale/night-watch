@@ -103,6 +103,7 @@
         "tests/unit/sourceAnalysisParity.test.ts",
         "tests/unit/syntheticFindingCampaign.test.ts",
         "tests/unit/target-preflight.test.ts",
+        "tests/unit/testOracleQuality.test.ts",
         "tests/unit/validationClassification.test.ts",
         "tests/unit/w10CampaignCapabilityCarry.test.ts",
         "tests/unit/w10CampaignYieldMetrics.test.ts",
@@ -248,6 +249,7 @@
         "bin/selfdev-synthetic.mjs",
         "bin/selfdev-verify.mjs",
         "bin/semantic-compat.mjs",
+        "bin/test-oracle-quality.mjs",
         "bin/validation-universe.mjs",
         "bin/workspace-integrity.mjs"
       ]
