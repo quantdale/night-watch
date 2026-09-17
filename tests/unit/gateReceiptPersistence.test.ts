@@ -417,9 +417,10 @@ test.describe('R-11 the gate itself persists its receipt', () => {
     for (const file of ['quality-gate.mjs', 'quality-gate-spec.mjs', 'child-environment.mjs']) {
       fs.copyFileSync(path.join(ROOT, 'bin', file), path.join(directory, 'bin', file));
     }
-    for (const file of fs.readdirSync(path.join(ROOT, 'bin', 'lib'))) {
-      fs.copyFileSync(path.join(ROOT, 'bin', 'lib', file), path.join(directory, 'bin', 'lib', file));
-    }
+    // Mirror bin/lib whole. A flat copyFileSync loop threw EISDIR the moment
+    // bin/lib gained its first subdirectory, which is a property of the fixture
+    // rather than of the gate it is meant to exercise.
+    fs.cpSync(path.join(ROOT, 'bin', 'lib'), path.join(directory, 'bin', 'lib'), { recursive: true });
     fs.copyFileSync(path.join(ROOT, 'config', 'quality-gate.v1.json'), path.join(directory, 'config', 'quality-gate.v1.json'));
     return directory;
   }
