@@ -855,3 +855,249 @@ test('renders the error taxonomy and partial composition in the built bundle', a
     await handle.close();
   }
 });
+
+/**
+ * The declared viewport matrix: every view at every declared width.
+ *
+ * Before this, the three breakpoints in the stylesheet shipped UNRENDERED —
+ * `playwright.config.ts` sets no viewport, so every browser lane measured
+ * Playwright's 1280x720 default and nothing ever laid the console out at 820px
+ * or 380px. A media query that no test renders is an assertion nobody checked.
+ *
+ * Four properties are asserted at every cell of the matrix, and each one is a
+ * defect this campaign actually hit:
+ *
+ *   NO HORIZONTAL PAGE SCROLL. `1fr` is `minmax(auto, 1fr)`, so a grid column
+ *   cannot shrink below its content and a wide panel pushes the whole page
+ *   sideways. The raised type floor made that latent bug reachable.
+ *
+ *   POSTURE VISIBLE. Read-only and loopback-only are product posture, not fine
+ *   print, and two media queries used to remove them to tidy narrow layouts.
+ *   Matched on ACCESSIBLE TEXT, never on a class name, so restyling the
+ *   carrier cannot silently satisfy it.
+ *
+ *   NO CLIPPED CONTROL. An interactive control whose box leaves the viewport
+ *   is unreachable by pointer even when it is technically in the DOM.
+ *
+ *   THE TYPE FLOOR HOLDS, measured on COMPUTED font-size rather than on the
+ *   declaration, so an inherited or breakpoint-overridden size cannot duck
+ *   under it. The floor is read from the token block, not hard-coded here.
+ */
+/**
+ * Minimal structural shapes for the matrix probe. The root TypeScript program
+ * deliberately carries no `dom` lib, so browser globals are described here
+ * rather than imported — the same approach `helpers/accessibility.ts` takes.
+ */
+interface MatrixRect { readonly left: number; readonly right: number; readonly width: number; readonly height: number }
+interface MatrixStyle { readonly display: string; readonly visibility: string; readonly fontSize: string; readonly position: string; readonly overflowX: string; readonly overflowY: string }
+interface MatrixNode { readonly nodeType: number; readonly textContent: string | null }
+interface MatrixElement {
+  readonly tagName: string;
+  readonly className: unknown;
+  readonly parentElement: MatrixElement | null;
+  readonly childNodes: ArrayLike<MatrixNode>;
+  readonly scrollWidth: number;
+  readonly clientWidth: number;
+  scrollLeft: number;
+  closest(selector: string): MatrixElement | null;
+  getBoundingClientRect(): MatrixRect;
+}
+interface MatrixDocument {
+  readonly documentElement: MatrixElement;
+  readonly body: MatrixElement & { readonly innerText: string };
+  querySelectorAll(selector: string): ArrayLike<MatrixElement>;
+}
+interface MatrixWindow {
+  readonly document: MatrixDocument;
+  getComputedStyle(element: MatrixElement): MatrixStyle;
+}
+
+const DECLARED_VIEWPORTS = [1440, 1080, 820, 560, 380] as const;
+const MATRIX_VIEWS = [
+  'Overview', 'Safety Center', 'Runs', 'Execution Graph', 'Campaign Intelligence',
+  'Source Intelligence', 'Findings', 'Reviewer', 'System Map',
+] as const;
+
+test('every view lays out and keeps its posture at every declared viewport width', async ({ page }) => {
+  test.setTimeout(240_000);
+
+  const typeFloor = Number(
+    /--text-floor-px:\s*(\d+)/.exec(fs.readFileSync(path.resolve(process.cwd(), 'ui/control-center/src/styles.css'), 'utf8'))?.[1] ?? '0',
+  );
+  expect(typeFloor, 'the token block must declare --text-floor-px').toBeGreaterThanOrEqual(12);
+
+  const sourceAuthority = createSourceAuthorityForTests(sourceSnapshot());
+  const campaignAuthority = createCampaignAuthority({ sourceAuthority });
+  const baseCollector = createDefaultControlCenterCollector({
+    runReader: runReader(runInput()),
+    sourceAuthority,
+    campaignAuthority,
+    findingsAuthority: { snapshot: findingsSnapshot },
+    runSnapshotTtlMs: 10_000,
+    sourceSnapshotTtlMs: 10_000,
+  });
+  const collector: ControlCenterCollector = {
+    ...baseCollector,
+    systemMapLevel: () => syntheticEvidenceMap(),
+    systemMapQuery: () => syntheticEvidenceQuery(),
+  };
+  const handle = createControlCenterServer({ collector, port: 0, uiRoot: UI_ROOT });
+  const address = await handle.start();
+  const origin = `http://127.0.0.1:${address.port}`;
+
+  const failures: string[] = [];
+  let cellsMeasured = 0;
+  let textNodesMeasured = 0;
+
+  try {
+    for (const width of DECLARED_VIEWPORTS) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto(`${origin}/`, { waitUntil: 'domcontentloaded' });
+      await expect(page.getByRole('heading', { name: 'Know the posture before the next run.' })).toBeVisible();
+
+      for (const view of MATRIX_VIEWS) {
+        // The primary navigation is a list of LINKS, not buttons, so this uses
+        // the link role rather than `clickViewButton` (which serves the
+        // in-view action buttons like Inspect).
+        if (view !== 'Overview') {
+          const link = page.getByRole('link', { name: view, exact: true });
+          await expect(link, `${view}@${width}: navigation link must be reachable`).toBeVisible();
+          await link.click();
+        }
+        // Settle fonts and the layout they force before measuring anything.
+        await page.evaluate(async () => {
+          const host = globalThis as unknown as {
+            document: { fonts: { ready: Promise<unknown> } };
+            requestAnimationFrame(callback: () => void): number;
+          };
+          await host.document.fonts.ready;
+          await new Promise<void>((resolve) => {
+            host.requestAnimationFrame(() => { host.requestAnimationFrame(() => resolve()); });
+          });
+        });
+
+        const report = await page.evaluate((floor: number) => {
+          const view$ = globalThis as unknown as MatrixWindow;
+          const root = view$.document.documentElement;
+          const clientWidth = root.clientWidth;
+
+          // A control inside a bounded scroll or pan surface — the evidence
+          // tables, the System Map canvas — is REACHABLE by scrolling that
+          // surface, and requiring it to sit inside the viewport would forbid
+          // dense tables entirely. What must never happen is the PAGE itself
+          // scrolling, which is asserted separately below. So the clip check
+          // skips anything with a scrollable ancestor and holds every other
+          // control to the viewport.
+          const insideScroller = (element: MatrixElement): boolean => {
+            let node: MatrixElement | null = element.parentElement;
+            while (node !== null && node !== view$.document.body) {
+              const style = view$.getComputedStyle(node);
+              // Only `auto`/`scroll` make hidden content REACHABLE. `hidden`
+              // clips it away for good, so it must not excuse an overflow.
+              if (/auto|scroll/.test(`${style.overflowX} ${style.overflowY}`)) return true;
+              node = node.parentElement;
+            }
+            return false;
+          };
+          const clipped: string[] = [];
+          const focusable = view$.document.querySelectorAll('a[href], button, input, select, textarea, [tabindex]');
+          for (const element of Array.from(focusable)) {
+            const style = view$.getComputedStyle(element);
+            if (style.display === 'none' || style.visibility === 'hidden') continue;
+            const box = element.getBoundingClientRect();
+            if (box.width <= 0.5 || box.height <= 0.5) continue;
+            if (insideScroller(element)) continue;
+            // The System Map paints its nodes into a bounded, PANNABLE SVG
+            // viewport. A node outside the current view is reached by panning,
+            // exactly as a row outside a scroll port is reached by scrolling.
+            // The canvas itself is the control that must fit, and it is
+            // covered by the page-overflow assertion.
+            if (element.closest('svg') !== null) continue;
+            if (box.left < -1 || box.right > clientWidth + 1) {
+              clipped.push(`${element.tagName.toLowerCase()}.${String(element.className).split(' ')[0]} [${Math.round(box.left)}..${Math.round(box.right)}]`);
+            }
+          }
+
+          // Posture is matched on rendered TEXT, never on a class name.
+          const text = (view$.document.body.innerText ?? '').toLowerCase();
+          const readOnly = text.includes('read-only') || text.includes('read only');
+          const contained = text.includes('loopback') || text.includes('no external network') || text.includes('external egress');
+
+          const small: string[] = [];
+          let measured = 0;
+          for (const element of Array.from(view$.document.querySelectorAll('*'))) {
+            const own = Array.from(element.childNodes).some(
+              (node) => node.nodeType === 3 && (node.textContent ?? '').trim().length > 0,
+            );
+            if (!own) continue;
+            const style = view$.getComputedStyle(element);
+            if (style.display === 'none' || style.visibility === 'hidden') continue;
+            const box = element.getBoundingClientRect();
+            if (box.width <= 0.5 || box.height <= 0.5) continue;
+            measured += 1;
+            const size = Number.parseFloat(style.fontSize);
+            if (Number.isFinite(size) && size < floor - 0.01) {
+              small.push(`${element.tagName.toLowerCase()}.${String(element.className).split(' ')[0]}=${size}px`);
+            }
+          }
+
+          // Name the element that is actually forcing the page wide; an
+          // overflow number alone sends the reader hunting.
+          // When the page does move, name what is sticking out. An overflow
+          // number on its own sends the reader hunting, and the culprit is
+          // often NOT the widest element — a 1px absolutely-positioned
+          // screen-reader span escaping a scroll port set the document width
+          // here while the 1097px table beside it was clipped correctly.
+          const ranked: { label: string; right: number }[] = [];
+          for (const element of Array.from(view$.document.querySelectorAll('*'))) {
+            const box = element.getBoundingClientRect();
+            if (box.width <= 0.5 || box.right <= clientWidth + 1) continue;
+            const style = view$.getComputedStyle(element);
+            ranked.push({
+              label: `${element.tagName.toLowerCase()}.${String(element.className).split(' ')[0]}(w=${Math.round(box.width)},right=${Math.round(box.right)},pos=${style.position})`,
+              right: box.right,
+            });
+          }
+          ranked.sort((a, b) => b.right - a.right);
+
+          // The property that matters is whether the OPERATOR can scroll the
+          // page sideways, not whether some descendant's unclipped layout box
+          // extends past the fold. A table inside a bounded `overflow-x: auto`
+          // port legitimately does the latter — that is what a scroll port is
+          // for — while the document itself must not move. So this attempts a
+          // real horizontal scroll and reports how far the page actually went.
+          const before = root.scrollLeft;
+          root.scrollLeft = 10_000;
+          const reached = root.scrollLeft;
+          root.scrollLeft = before;
+
+          return {
+            offenders: ranked.filter((entry) => entry.right <= root.scrollWidth + 1).slice(0, 4).map((entry) => entry.label),
+            overflow: reached,
+            clipped: clipped.slice(0, 5),
+            readOnly, contained,
+            small: Array.from(new Set(small)).slice(0, 5),
+            measured,
+          };
+        }, typeFloor);
+
+        cellsMeasured += 1;
+        textNodesMeasured += report.measured;
+        const cell = `${view}@${width}`;
+        if (report.overflow > 1) failures.push(`${cell}: the PAGE scrolls horizontally by ${report.overflow}px — ${report.offenders.join('; ') || 'no offender found'}`);
+        if (report.clipped.length > 0) failures.push(`${cell}: control clipped outside the viewport — ${report.clipped.join('; ')}`);
+        if (!report.readOnly) failures.push(`${cell}: no read-only posture statement in the rendered text`);
+        if (!report.contained) failures.push(`${cell}: no loopback/no-external-network posture statement in the rendered text`);
+        if (report.small.length > 0) failures.push(`${cell}: rendered text below the ${typeFloor}px floor — ${report.small.join(', ')}`);
+        expect(report.measured, `${cell}: measured zero text-bearing elements; the probe is broken rather than the view clean`).toBeGreaterThan(5);
+      }
+    }
+  } finally {
+    await handle.close();
+  }
+
+  // Non-vacuity before the verdict: an empty matrix satisfies "no failures".
+  expect(cellsMeasured, 'the matrix must measure every view at every width').toBe(DECLARED_VIEWPORTS.length * MATRIX_VIEWS.length);
+  expect(textNodesMeasured, 'the type-floor probe must measure real text').toBeGreaterThan(500);
+  expect(failures, `viewport matrix failures:\n  ${failures.join('\n  ')}`).toEqual([]);
+});

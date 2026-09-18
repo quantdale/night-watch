@@ -594,11 +594,37 @@ a:focus-visible {
 
 .table-scroll {
   overflow-x: auto;
+  /*
+   * A scroll port only clips descendants it CONTAINS. Left static, it does not
+   * establish a containing block, so an absolutely-positioned child — every
+   * `.sr-only` caption inside these tables — was laid out against an ancestor
+   * further up and escaped the clip entirely. A 1px screen-reader span sitting
+   * at the far right of a 1097px table then set the document's scrollable
+   * width and slid the whole page sideways, while the table it belonged to was
+   * clipped correctly. That is why the overflow never matched the table's own
+   * right edge.
+   */
+  position: relative;
+  /*
+   * `overflow-x: auto` only scrolls if the box itself is BOUNDED. As a grid or
+   * flex item it defaults to `min-width: auto`, so it grew to its 690px-min
+   * table and pushed the page sideways instead of scrolling — the table was
+   * inside a scroller that was never narrower than the table. These two
+   * declarations are what make the scroll port actually a port.
+   */
+  min-width: 0;
+  max-width: 100%;
 }
 
 table {
   width: 100%;
   border-collapse: collapse;
+  /*
+   * The floor is what keeps columns legible while there is room for them. It
+   * is lifted at the narrow breakpoints below, where the table ADAPTS instead:
+   * a 690px minimum inside a 160px column does not become a usable scroll
+   * port, it becomes a page that slides sideways under the operator.
+   */
   min-width: 690px;
 }
 
@@ -1276,8 +1302,22 @@ tbody tr.row-selected {
   gap: var(--space-3);
 }
 
+.content-grid > *,
+.view-stack > * {
+  min-width: 0;
+}
+
 .panel {
   padding: var(--panel-padding);
+  /*
+   * A grid or flex item defaults to `min-width: auto`, which means it can
+   * never be narrower than its content. A panel carrying a 690px-min table
+   * therefore widened its column, its grid and finally the PAGE, so the
+   * bounded `.table-scroll` inside it never got the chance to scroll — the
+   * whole document scrolled instead. `min-width: 0` lets the panel shrink so
+   * the overflow lands where it was designed to land.
+   */
+  min-width: 0;
 }
 
 .panel-wide {
@@ -1619,7 +1659,19 @@ tbody tr.row-selected {
   .hero-orbit { display: none; }
   .safety-seal { display: none; }
   .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .content-grid { grid-template-columns: 1fr; }
+  /* `1fr` is `minmax(auto, 1fr)`, so the column can never shrink below its
+     content's min-content width and a wide panel pushes the PAGE sideways.
+     `minmax(0, 1fr)` lets the column shrink and the content wrap inside it.
+     The raised type floor made this latent bug reachable: the same panels used
+     to fit by a few pixels. */
+  .content-grid { grid-template-columns: minmax(0, 1fr); }
+  /* Below this width the evidence tables adapt rather than scroll: the
+     columns compress and long technical values wrap. */
+  table { min-width: 0; }
+  th, td { overflow-wrap: anywhere; }
+  /* Two label/value columns stop being readable long before this width, and
+     their long technical values are what forced the panel wide. */
+  .data-grid { grid-template-columns: minmax(0, 1fr); }
   .panel-wide { grid-row: auto; }
   .run-status-summary { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .page-intro { align-items: flex-start; flex-direction: column; }
@@ -1635,7 +1687,7 @@ tbody tr.row-selected {
   .metric-grid { gap: var(--space-2); }
   .metric-card { min-height: 112px; padding: var(--space-3); }
   .metric-value { font-size: var(--text-metric); }
-  .data-grid { grid-template-columns: 1fr; }
+  .data-grid { grid-template-columns: minmax(0, 1fr); }
   .panel { padding: var(--space-4) var(--space-4); }
   .run-status-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .run-status-item .status-pill { max-width: 100%; overflow: hidden; }
