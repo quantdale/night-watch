@@ -1,61 +1,48 @@
 # Active Task
 
-Task ID: nightwatch-certification-closure-and-validation-integrity-v1
-Phase: CERTIFICATION_CLOSURE_AND_VALIDATION_INTEGRITY_V1
-Title: Certification closure and validation integrity
-Status: COMPLETE
-Task directory: .agent/tasks/nightwatch-certification-closure-and-validation-integrity-v1
-Starting SHA: 521210f706b9383e20dd08d1bfd2f3c47b34687d
-Last validated implementation SHA: a7a0853c627ef6773e9bd2f5ffa7f12042cde23a
-Last checkpoint: Milestones M1-M6 COMPLETE_LOCAL and certification GREEN at
-b34da5f6: gate:local PASS over 12 required groups, full regression 5249 passed
-/ 0 failed / 18 skipped, OpenSpec 64/64. The focus matrix found and
-fixed 32 real defects: three control kinds matched no authored :focus-visible
-rule and fell back to Chrome UA near-black at 1.08:1. The ripple-api
-admitted snapshot moved to `4e3e200d` on derivation evidence: identical
-invariants and identical ev:sha256 digests at both SHAs. The session `--dry-run`
-contract is truthful, and `hardening:rules` is now executed by the
-authoritative gate as the required `HARDENING_PROBES` group (11 required groups
-became 12). The campaign was dead code AND already red — HC-015 UNDETECTED —
-which is the blind spot in one line; it now reports 83 rules / 92 probes / 92
-detected, exit 0.
-
-Earlier detail: `--dry-run` was a global boolean that exactly one command read, so
-`start` created a branch, a worktree and an ownership record while reporting a
-plan. A declared `DRY_RUN_SUPPORT` table now covers every dispatchable command
-and is enforced at dispatch; five mutating commands gained zero-mutation plan
-reports, `integrate`'s guard moved above its fetch, and the two read-only
-commands refuse the flag instead of ignoring it. Two further defects surfaced
-while proving it: an unverified explicit `--base`, now failing closed before
-the first mutation, and a `withoutComments()` line-comment defect in the
-hardening kernel that silently deletes real code from every `read()`-based
-rule's view, carried into milestone M3.
-Current milestone: COMPLETE — all seven milestones closed and integrated
-Next action: TASK COMPLETE. The owner-gated production-completion items stay
-OPEN with the named owner action each requires; none is self-authorized here.
-`gate:clean` and CI lanes were not run and are not claimed.
-Owner decisions stay OPEN; none is self-authorized.
-Authorization class: CERTIFICATION_CLOSURE_AND_VALIDATION_INTEGRITY_V1
+Task ID: nightwatch-autonomous-yield-proof-w11-v1
+Phase: AUTONOMOUS_YIELD_PROOF_W11_V1
+Title: W11 — Autonomous yield proof (strict rediscovery + owner-local yield)
+Status: IN_PROGRESS
+Task directory: .agent/tasks/nightwatch-autonomous-yield-proof-w11-v1
+Starting SHA: 158a97b8feceb6abf4ea4ccbacab1f20cc46bc35
+Last validated implementation SHA: 158a97b8feceb6abf4ea4ccbacab1f20cc46bc35
+Last checkpoint: M0 preflight COMPLETE and measured. Provider
+`opencode-go/glm-5.3` frozen by a rule declared before probing (the historical
+`opencode-go/omen-alpha` is confirmed absent); 8/8 admitted repositories CURRENT
+with matching SHAs; 4,124 eligible / 1,120 executable source files and 152
+distinct executable targets, reproducing the W10 M0 figure; historical corpus is
+9 fixture cases (1 negative control) plus 5 strict-EXACT-eligible mined cases.
+No evaluation has been run and no yield figure exists.
+Current milestone: M1 — freeze the evaluation definition at a committed SHA
+before the first provider evaluation
+Next action: create the W11 OpenSpec change, write the frozen
+evaluation-definition artefact, and commit that freeze BEFORE running the first
+historical evaluation.
+Authorization class: AUTONOMOUS_YIELD_PROOF_W11_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
-STARTING_SHA: 521210f706b9383e20dd08d1bfd2f3c47b34687d
-LAST_VALIDATED_IMPLEMENTATION_SHA: a7a0853c627ef6773e9bd2f5ffa7f12042cde23a
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: a7a0853c627ef6773e9bd2f5ffa7f12042cde23a
+STARTING_SHA: 158a97b8feceb6abf4ea4ccbacab1f20cc46bc35
+LAST_VALIDATED_IMPLEMENTATION_SHA: 158a97b8feceb6abf4ea4ccbacab1f20cc46bc35
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 158a97b8feceb6abf4ea4ccbacab1f20cc46bc35
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
-PHASE_CERTIFICATION_CLOSURE_AND_VALIDATION_INTEGRITY_V1_STATUS: COMPLETE
+PHASE_AUTONOMOUS_YIELD_PROOF_W11_V1_STATUS: IN_PROGRESS
 
 ## Mission
 
-Remove the concrete blockers and validation blind spots that remain after the
-G16.9 hardening-rule-engine decomposition and the Control Center design-system
-campaign, then obtain a truthful green local certification if the repository
-actually qualifies for one.
+Use the mature W7-W10 Nightwatch stack to answer two questions with evidence:
+can Nightwatch achieve strict historical `EXACT_REDISCOVERY` under leak-free
+conditions, and can it discover and mechanically admit a previously unknown
+defect from the current owner-local source universe without fabrication?
+
+A zero-yield answer is acceptable. A fabricated defect is not.
 
 Read in this order:
 
-1. `.agent/tasks/nightwatch-certification-closure-and-validation-integrity-v1/{SPEC,PLAN,STATE}.md`
-2. `openspec/changes/nightwatch-certification-closure-and-validation-integrity-v1/{proposal,tasks}.md`
+1. `.agent/tasks/nightwatch-autonomous-yield-proof-w11-v1/{SPEC,PLAN,STATE}.md`
+2. `openspec/changes/nightwatch-production-completion-programme-v1/tasks.md`
+   section "12. Autonomous yield proof"
 3. `AGENTS.md`, `docs/CURRENT_STATE.md`, `docs/SAFETY_MODEL.md`,
    `docs/DECISIONS.md`, then live Git/workspace/session truth.
 
@@ -63,54 +50,57 @@ Read in this order:
 
 Do not rebuild unless live recon finds a concrete regression:
 
-- `nightwatch-control-center-design-system-v1` is terminal COMPLETE and
-  integrated at `2f45cfc4`. Its carried task 6.4 (focus-ring contrast at every
-  declared width) is executed HERE under this campaign's authorization; nothing
-  else in that campaign is reopened.
-- `nightwatch-production-completion-programme-v1` remains IN_PROGRESS. Its
-  G16.9/16.10/16.11 decomposition is integrated. Its G16.5 and G16.12 tails are
-  executed here; its owner-gated items stay OPEN.
-- The permanent owner scope freeze, L6 containment, and the immutable evidence
-  and review store identities are unchanged.
+- W7 real owner-local sensing, System Map / Bug Atlas / System Atlas substrate,
+  deterministic reproduction provider and mechanical admission.
+- W8 bounded investigation memory, cross-investigation strategy, grounded
+  hypotheses and the mechanical SUPPORTED / DISPROVED lifecycle.
+- W9 `GO_VENDORED_PACKAGE_TEST`, disposable materialization under
+  `bwrap --unshare-net`, `CURRENT_SOURCE_REPEATED_TEST_FAILURE`, host-owned
+  retry disposition and separated transport/tool-payload byte accounting.
+- W10 capability projection, diverse source index, cross-investigation
+  capability carry, current-failure triage and host-owned `--repository` scope.
+
+W11 EXERCISES this system. It repairs it only where execution proves a concrete
+defect.
 
 ## Routing and safety
 
 ```
-CAMPAIGN: nightwatch-certification-closure-and-validation-integrity-v1
+CAMPAIGN: nightwatch-autonomous-yield-proof-w11-v1
 CHILD TASK: NONE
-WAVE: COMPLETE
-SESSION WORKTREE: NONE
+WAVE: W11
+SESSION WORKTREE: session/nightwatch-autonomous-yield-proo-72d452ea
 
 IMPLEMENTATION AUTHORIZED:
-  `bin/nightwatch-session.mjs`, `bin/lib/hardening/**`, `bin/quality-gate*.mjs`,
-  `config/quality-gate.v1.json`, `config/hardening-rule-probes.v1.json`,
-  `config/validation-universe.v1.json`, `src/core/qualityGate/definition.ts`,
-  the real-source expectation and provenance surfaces required by one
-  owner-authorized `ripple-api` re-derivation and re-admission pass, the
-  Control Center browser qualification lane, this change's OpenSpec artefacts,
-  this task directory, Nightwatch docs, and commits/pushes/integration from one
+  this task directory, its OpenSpec change, the W11 evaluation/measurement
+  harnesses, repository-local implementation needed to truthfully execute and
+  measure Group 12, the Group 12 ledger, Nightwatch docs and governed
+  README/current-state yield surfaces, and commits/pushes/integration from one
   owned C-00 session worktree.
 
-REAL PRODUCTION CONTACT:               NOT AUTHORIZED
-NEW API ROUTE / ADAPTER / AUTHORITY:   NOT AUTHORIZED
-NEW RUNTIME DEPENDENCY:                NOT AUTHORIZED
-NEXT / DEV EXECUTION:                  NOT AUTHORIZED
-NETWORK EGRESS / ADVISORY SCAN:        NOT AUTHORIZED
+ALPHAUS DEV CONTACT:                   NOT AUTHORIZED
+ALPHAUS NEXT CONTACT:                  NOT AUTHORIZED
+PRODUCTION CONTACT:                    NOT AUTHORIZED
+AUTHENTICATED ALPHAUS RUNTIME:         NOT AUTHORIZED
+DATABASE / DATA-PLANE ACCESS:          NOT AUTHORIZED
 SLACK / LESLIE / PONDR / NOTION:       NOT AUTHORIZED
-EXTERNAL FILING:                       NOT AUTHORIZED
-CREDENTIALS / DEPLOYMENT:              NOT AUTHORIZED
-SIBLING WRITES:                        NOT AUTHORIZED
+ISSUE / PR CREATION:                   NOT AUTHORIZED
+EXTERNAL PUBLICATION:                  NOT AUTHORIZED
+SIBLING REPOSITORY MUTATION:           NOT AUTHORIZED
+SIBLING DEPENDENCY INSTALLATION:       NOT AUTHORIZED
 FORCE PUSH / HISTORY REWRITE:          NOT AUTHORIZED
-REOPENING TERMINAL FINDINGS:           NOT AUTHORIZED
-WEAKENING A GATE OR GROWING AN
-  EXEMPTION LIST TO PASS:              NOT AUTHORIZED
-SIBLING READ (ripple-api, read-only):  AUTHORIZED, one re-derivation pass
+WEAKENING ADMISSION CRITERIA:          NOT AUTHORIZED
+LEAKING HIDDEN GROUND TRUTH:           NOT AUTHORIZED
+PROVIDER EGRESS VIA REASONER CLI:      AUTHORIZED
+SIBLING READ (all 8 admitted, r/o):    AUTHORIZED
+CONTAINED LOCAL REPRODUCTION:          AUTHORIZED, already-admitted classes only
 ```
 
-LOCAL only. The sibling `mobingilabs/ripple-api` checkout is READ ONLY: no
-checkout, reset, rebase, fetch or file edit, no execution of its application
-code, no dependency installation inside it. Never retire, prune, adopt or edit
-another session, and never create worktree capacity by removing one.
+LOCAL / OWNER-LOCAL only. Provider network access is allowed ONLY through the
+existing configured reasoner CLI path; that is not authorization for Nightwatch
+or product traffic to any Alphaus environment. Sibling repositories are READ
+ONLY, with identity checked before and after reproduction. Hidden historical
+ground truth must never reach the reasoner; leakage aborts yield publication.
 
 C-00 governs all writers: one writing agent == one owned worktree == one
 session identity. The canonical checkout is not an implementation worktree.

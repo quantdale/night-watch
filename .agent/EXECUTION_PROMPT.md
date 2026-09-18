@@ -1,102 +1,112 @@
-# EXECUTION PROMPT — Certification closure and validation integrity
+# EXECUTION PROMPT — W11 autonomous yield proof
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
-Status: COMPLETE
-Campaign ID: nightwatch-certification-closure-and-validation-integrity-v1
-OpenSpec: openspec/changes/nightwatch-certification-closure-and-validation-integrity-v1/
-Planned-From: 521210f706b9383e20dd08d1bfd2f3c47b34687d
+Status: IN_PROGRESS
+Campaign ID: nightwatch-autonomous-yield-proof-w11-v1
+OpenSpec: openspec/changes/nightwatch-autonomous-yield-proof-w11-v1/
+Planned-From: 158a97b8feceb6abf4ea4ccbacab1f20cc46bc35
 Target Branch: main
-Predecessor Task ID: nightwatch-control-center-design-system-v1
+Predecessor Task ID: nightwatch-certification-closure-and-validation-integrity-v1
 Predecessor Status: COMPLETE
 
 ## Mission
 
-Remove the concrete blockers and validation blind spots that remain after the
-G16.9 hardening-rule-engine decomposition and the Control Center design-system
-campaign, then obtain a truthful green local certification if the repository
-actually qualifies for one.
+Use the mature W7-W10 Nightwatch stack to answer two questions with evidence,
+and to close Production Completion Group 12:
 
-Every objective here is the same defect in a different place: a mechanism that
-reports more than it proves. A `--dry-run` that mutates, a probe campaign that
-nothing runs, a TOTALITY rule that stops at the first failure, a "code-only"
-source view with real code missing from it, a focus ring nobody can see, and a
-currentness pin that names a snapshot the sibling no longer has.
+1. Can Nightwatch achieve strict historical `EXACT_REDISCOVERY` under leak-free
+   conditions?
+2. Can Nightwatch discover and mechanically admit a previously unknown defect
+   from the current owner-local source universe without fabrication?
+
+A zero-yield answer is acceptable. A fabricated defect is not. This is an
+execution and measurement wave: it exercises the system and repairs it only
+where execution proves a concrete defect.
 
 ## Scope
 
-`bin/nightwatch-session.mjs`, `bin/lib/hardening/**`, `bin/quality-gate*.mjs`,
-`config/quality-gate.v1.json`, `config/hardening-rule-probes.v1.json`,
-`config/validation-universe.v1.json`, `src/core/qualityGate/definition.ts`, the
-real-source expectation and provenance surfaces required by one owner-authorized
-`ripple-api` re-derivation pass, `ui/control-center/src/styles.css`, the Control
-Center browser qualification lane, this change's OpenSpec artefacts,
-`.agent/tasks/nightwatch-certification-closure-and-validation-integrity-v1/`,
-and Nightwatch docs.
-
-No UI redesign. No new feature group, route, adapter, authority or dependency.
-No sibling write. No gate weakened and no exemption list lengthened to pass.
+`.agent/tasks/nightwatch-autonomous-yield-proof-w11-v1/**`,
+`openspec/changes/nightwatch-autonomous-yield-proof-w11-v1/**`, the W11
+evaluation and measurement harnesses, repository-local implementation needed to
+truthfully execute and measure Group 12, the Group 12 ledger in
+`openspec/changes/nightwatch-production-completion-programme-v1/tasks.md`,
+Nightwatch docs, the governed `README.md` and `docs/CURRENT_STATE.md` yield
+surfaces, and commits/pushes/integration from one owned C-00 session worktree.
 
 ## Ordered workstreams
 
-1. **M1 — session `--dry-run` contract.** Audit the whole flag surface, declare
-   the contract once, enforce it at dispatch, prove zero mutation with a full
-   before/after topology snapshot, and negative-probe the regression.
-2. **M2 — `hardening:rules` becomes gate-authoritative.** Repair the rotted
-   probe and the rot CLASS behind it; add a REQUIRED `HARDENING_PROBES` group
-   through the gate-definition machinery; prove restore-cleanliness and vacuity
-   failure.
-3. **M3 — G16.5 quantifier audit.** Classify all 83 rules, make TOTALITY rules
-   report every failing occurrence, and extend the engine self-check to the
-   shape that actually shipped.
-4. **M4 — `ripple-api` re-derivation.** Measure live source read-only, classify
-   every occurrence of the old SHA, re-derive at both snapshots and compare, and
-   re-admit on evidence rather than by substitution.
-5. **M5 — focus-ring qualification.** Carried task 6.4 only: contrast at every
-   declared width, from computed styles, across all nine views.
-6. **M6 — tail closure.** Close only production-completion items whose exact
-   remaining requirement is validation, integration or release evidence.
-7. **M7 — certification.** Full validation at one SHA, fast-forward
-   integration, session release, worktree removal, clean canonical checkout.
+1. M0 preflight — provider, toolchain, repository and corpus census; freeze a
+   non-vacuous reachability threshold. COMPLETE except the recorded verdict.
+2. M1 — commit the frozen historical evaluation definition BEFORE the first
+   provider evaluation; prove a widened resume fails closed.
+3. M2 — run the strict historical `EXACT_REDISCOVERY` arm; record per-case
+   disposition, reason and hidden-target distance; include negative controls;
+   classify `ENVIRONMENT_BLOCKED` and exclude it from both sides of every rate.
+4. M3 — classify misses into bounded categories; separate model-efficacy
+   results from harness defects without overfitting.
+5. M4 — freeze the unknown-defect campaign definition at a committed SHA.
+6. M5 — execute the owner-local unknown-yield campaign through the ordinary
+   `nightwatch-agent campaign run` path under host-owned `--repository` scope.
+7. M6 — derive yield accounting mechanically; state every denominator.
+8. M7 — leakage and anti-cheating audit, proven live with canaries.
+9. M8 — adversarial and resilience checks of the W7-W10 invariants.
+10. M9 — repair only evidence-found Nightwatch defects.
+11. M10 — close Group 12, publish the measured yield, validate, integrate,
+    release.
 
 ## Constraints
 
-REAL PRODUCTION CONTACT, DEV/NEXT EXECUTION, SIBLING WRITES, CLOUD/DATASTORE
-OPERATIONS, EXTERNAL PUBLICATION, FORCE PUSH, HISTORY REWRITE and CREDENTIAL
-STORAGE are all NOT AUTHORIZED. The sibling `mobingilabs/ripple-api` checkout is
-READ ONLY; read access is owner-authorized for one re-derivation pass and is
-limited to `rev-parse`, `cat-file`, `archive`, `diff`, `status` and `log`
-against committed objects.
+LOCAL / OWNER-LOCAL only. No Alphaus DEV, NEXT or production contact; no
+authenticated runtime use; no database or data-plane access; no browser
+journeys against real environments. Sibling repositories are READ ONLY with
+identity checked before and after reproduction; no sibling dependency
+installation. Provider network egress ONLY through the existing configured
+reasoner CLI — that is not authorization for Nightwatch or product traffic to
+any Alphaus environment. No Slack / Leslie / Pondr / Notion writes, no issue or
+PR creation, no external publication, no force push, no history rewrite, no
+weakening of admission criteria, no growing an exemption list to pass. Hidden
+historical ground truth must never reach the reasoner; leakage aborts yield
+publication. Do not rewrite W7-W10 architecture for aesthetic reasons.
 
-C-00 governs: one writing agent, one owned worktree, one session identity.
-Never adopt, edit or remove another session, and never create worktree capacity
-by removing one.
+C-00 governs all writers: one writing agent == one owned worktree == one
+session identity.
 
 ## Validation
 
-`session:status`, `session:check`, `workspace:check`, `typecheck`,
-`typecheck:bin`, `hardening:check`, `hardening:rules`, `validation:universe`,
-`agent:check`, `handoff:check`, `project:check`, the Control Center UI lanes and
-browser lane, `gate:local`, full `npm test`, and strict OpenSpec validation.
-
-Every new guard is negative-probed: it is shown to FAIL against a deliberately
-broken input before it is trusted to pass.
+`npm run typecheck`, `npm run typecheck:bin`, `npm run hardening:check`,
+`npm run hardening:rules`, `npm run agent:check`, `npm run handoff:check`,
+`npm run project:check`, `npm run workspace:check`, `npm run session:check`,
+`npm run validation:universe`, focused autonomous/runtime/memory/reproduction/
+admission suites, historical efficacy and rediscovery suites, current-source
+reproduction suites, campaign resume/budget/scope suites, leakage suites,
+`npm run gate:local`, `npm test`, `npm run gate:clean` if available, and strict
+OpenSpec validation of this change.
 
 ## Acceptance and completion gates
 
-A milestone is COMPLETE_LOCAL only when its defect is fixed, its guard is
-negative-probed, and its evidence is recorded in `STATE.md`. The campaign is
-COMPLETE only when the full validation list is green at ONE SHA, the work is
-integrated by fast-forward with `HEAD == origin/main`, the session is released,
-the owned worktree is removed and the canonical checkout is clean.
+W11 is COMPLETE when: preflight is frozen and passed; each arm's definition was
+committed before it ran; the strict historical EXACT run completed with
+per-case dispositions; leakage is 0 and proven live; false-positive accounting
+is explicit; `ENVIRONMENT_BLOCKED` is handled correctly; the unknown-yield
+campaign was frozen before execution and executed broadly; mechanical
+reproduction and admission are unchanged; yield metrics are mechanically
+derived with stated denominators; current-source findings including zero are
+stated truthfully; any previously-unknown claim is evidence-bounded; Group 12
+12.1-12.12 truthfully close; `gate:local` and `npm test` PASS; required
+OpenSpec validation PASSES; the clean gate passes or is honestly recorded as
+unavailable; the work is integrated with `HEAD == origin/main`; and the session
+is released and removed with no sibling writes, no DEV/NEXT/production contact,
+no leakage and no fabricated finding.
 
-A green `gate:local` after this campaign is materially stronger than the one
-before it: the gate now executes the rule probe campaign rather than merely
-knowing the command exists. The changed group count and definition digest are
-recorded truthfully.
+At least one bug is NOT a condition of success. A campaign that searches
+correctly and finds zero defects is COMPLETE; one that manufactures a defect is
+not.
 
 ## Git and reporting
 
-Durable checkpoints only, pushed to `origin main` by fast-forward from the owned
-session worktree. Never force-push, never rewrite history, never discard a newer
-`origin/main`. Owner-gated programme items stay OPEN with the named owner action
-each requires.
+Integrate through the Nightwatch session lifecycle from the owned worktree by
+fast-forward push. Inspect status, diff and untracked files before every push;
+ensure no campaign temp artifacts are tracked, no hidden corpus truth enters
+reasoner-visible runtime data, siblings are unchanged and no credentials
+appear. If `origin/main` advances, stop and reconcile through the session CLI;
+never force push.

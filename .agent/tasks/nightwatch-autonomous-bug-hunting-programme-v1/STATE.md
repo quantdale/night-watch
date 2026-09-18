@@ -10,8 +10,8 @@ Last validated implementation SHA: 62d23e2622ab0a282584c5cf27d92b6b603f9192
 Last substantive checkpoint SHA: 62d23e2622ab0a282584c5cf27d92b6b603f9192
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
-Branch: session/nightwatch-reproduction-surface--0a9096be
-Last checkpoint: W10 reproduction-surface coverage and autonomous yield COMPLETE and certified at implementation `62d23e2` / documentation `ec3eacf`; no wave is active
+Branch: session/nightwatch-autonomous-yield-proo-72d452ea
+Last checkpoint: W10 COMPLETE and certified at implementation `62d23e2` / documentation `ec3eacf`. W11 (autonomous yield proof) is OPEN under owner authorization and is the active wave; live main has advanced to `158a97b8` and W11 opens from there, not from the W10 anchor.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: d1ebde90c1454b31d6b93d9df503a4c5f196d7c8
@@ -27,17 +27,28 @@ Deliver a locally executable autonomous bug-hunting programme above the existing
 
 ## Current Milestone
 
-Milestone ID: W10
-Milestone status: COMPLETE
-Child task: `nightwatch-reproduction-surface-coverage-autonomous-yield-v1`
-Child directory: `.agent/tasks/nightwatch-reproduction-surface-coverage-autonomous-yield-v1`
+Milestone ID: W11
+Milestone status: IN_PROGRESS
+Child task: `nightwatch-autonomous-yield-proof-w11-v1`
+Child directory: `.agent/tasks/nightwatch-autonomous-yield-proof-w11-v1`
 
-W9 is frozen terminal at `bb28480c6a6969a06744c75c4c947851d5bece7c`. W10 is now
+W9 is frozen terminal at `bb28480c6a6969a06744c75c4c947851d5bece7c`. W10 is
 frozen terminal at implementation `62d23e2622ab0a282584c5cf27d92b6b603f9192`
 with certified documentation head `ec3eacf61c1b5bd3557eaf90594aecb2cd633b4f`.
+Neither is reopened.
 
-No implementation wave is active. DEV/NEXT remain unauthorized; strict EXACT
-and previously-unknown-defect status remain unproven.
+W11 is the active wave, opened from live main `158a97b8` under explicit owner
+authorization, and executes Production Completion Group 12. It measures strict
+historical `EXACT_REDISCOVERY` and previously-unknown owner-local yield; both
+remain unproven until it closes. A zero-yield outcome is an acceptable result.
+DEV/NEXT remain unauthorized.
+
+W11 M0 preflight is measured: the W9/W10 provider `opencode-go/omen-alpha` is
+absent from the current model list and `opencode-go/glm-5.3` was frozen as the
+primary by a preference rule declared before probing; all 8 admitted
+repositories are CURRENT with matching SHAs; 1,120 of 4,124 eligible source
+files are executable across 152 distinct targets, all of them in
+`mobingilabs/ouchan`; and the strict-EXACT-eligible mined corpus is 5 cases.
 
 ## Completed Milestones
 
@@ -55,15 +66,16 @@ and previously-unknown-defect status remain unproven.
 
 ## Work In Progress
 
-None. No wave is active.
+W11 is active at M1: the evaluation definition is being frozen and committed
+before the first provider evaluation runs. No evaluation has executed and no
+W11 yield figure exists.
 
 ## Exact Next Action
 
-Hold the programme at W10 and report the certified outcome to the owner. The
-next concrete step, once the owner authorizes a successor wave (strict EXACT
-rediscovery, previously-unknown-defect yield, or DEV/NEXT work), is to open
-that wave's own task directory under `.agent/tasks/` from live Git truth and
-record it here. Do not reopen W0-W10.
+Continue W11 from its own `STATE.md` `Exact Next Action`: commit the frozen
+historical-arm evaluation definition, then execute the strict historical
+`EXACT_REDISCOVERY` arm before defining the unknown-yield arm. Do not reopen
+W0-W10.
 
 ## Files Changed
 

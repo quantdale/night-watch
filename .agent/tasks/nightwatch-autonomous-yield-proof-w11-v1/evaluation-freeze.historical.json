@@ -1,0 +1,125 @@
+{
+  "schemaVersion": "nightwatch.w11-evaluation-freeze.v1",
+  "arm": "HISTORICAL_EXACT_REDISCOVERY",
+  "frozenAtSha": "158a97b8feceb6abf4ea4ccbacab1f20cc46bc35",
+  "campaignIdPrefix": "w11-hist",
+  "provider": {
+    "harness": "opencode-cli",
+    "cliPath": "/home/dalepalaca/.opencode/bin/opencode",
+    "cliVersion": "1.18.31",
+    "providerId": "opencode-go",
+    "model": "opencode-go/glm-5.3",
+    "invocationMode": "print",
+    "argvTemplate": ["run", "--model", "opencode-go/glm-5.3", "__PROMPT__"],
+    "adapter": "bin/nightwatch-reasoner-print.mjs",
+    "selectionRule": "FIRST_PASS_OF_PREFERENCE_LIST_DECLARED_BEFORE_PROBING",
+    "preferenceList": [
+      "opencode-go/omen-alpha",
+      "opencode-go/glm-5.3",
+      "opencode-go/kimi-k3",
+      "opencode-go/qwen3.8-max",
+      "opencode-go/minimax-m3"
+    ],
+    "preferenceOutcomes": {
+      "opencode-go/omen-alpha": "ABSENT_FROM_CURRENT_MODEL_LIST",
+      "opencode-go/glm-5.3": "PROBE_PASS",
+      "opencode-go/kimi-k3": "NOT_PROBED",
+      "opencode-go/qwen3.8-max": "NOT_PROBED",
+      "opencode-go/minimax-m3": "NOT_PROBED"
+    }
+  },
+  "corpus": {
+    "fixtureCases": [
+      "bench-billing-rounding-001",
+      "bench-api-pagination-002",
+      "bench-backend-retry-003",
+      "bench-frontend-cache-004",
+      "bench-data-timezone-005",
+      "bench-integration-webhook-006",
+      "bench-regression-redirect-007",
+      "bench-state-transition-008"
+    ],
+    "fixtureNegativeControls": ["bench-negative-quiet-000"],
+    "minedCases": [
+      "mined-bugatlas-git-mobingilabs-ouchan-5985281b43cd",
+      "mined-bugatlas-git-mobingilabs-ouchan-2f3b1c34290f",
+      "mined-bugatlas-git-mobingilabs-ouchan-1668e68a1190",
+      "mined-bugatlas-git-mobingilabs-ouchan-bc7eb9ce69fb",
+      "mined-bugatlas-git-mobingilabs-ripple-ui-6cb471e1c1cc"
+    ],
+    "minedSource": "mineLocalGitHistory over the 8 admitted repositories; the owner-private Bug Atlas snapshot does not exist on this host",
+    "substantiveCaseCount": 13,
+    "negativeControlCount": 1,
+    "totalCaseCount": 14
+  },
+  "repositorySnapshot": {
+    "alphauslabs/blue-sdk-go": "8883ee3d3a073352626c8c35e20e9fc5ed765373",
+    "alphauslabs/blueapi": "CURRENT_MATCHES_EXPECTED",
+    "alphauslabs/blueinternal": "CURRENT_MATCHES_EXPECTED",
+    "alphauslabs/grpc-chunk-parser": "CURRENT_MATCHES_EXPECTED",
+    "mobingilabs/ouchan": "CURRENT_MATCHES_EXPECTED",
+    "mobingilabs/ripple-api": "CURRENT_MATCHES_EXPECTED",
+    "mobingilabs/ripple-ui": "CURRENT_MATCHES_EXPECTED",
+    "mobingilabs/wave-api": "CURRENT_MATCHES_EXPECTED"
+  },
+  "budget": {
+    "ceilingName": "HOUR_1",
+    "maxTurnsPerCase": 12,
+    "perCaseWallClockMs": 900000,
+    "armWallClockMs": 14400000,
+    "stoppingCondition": "every frozen case reaches a terminal disposition, or the arm wall-clock ceiling is reached; whichever comes first"
+  },
+  "scoring": {
+    "engine": "src/core/benchmark/score.ts scoreBenchmarkCandidate",
+    "exactRequires": [
+      "candidate text contains hidden.knownFailingTest",
+      "fileRecall >= 0.5 (BENCHMARK_EXACT_MIN_FILE_RECALL)",
+      "keywordRecall >= 0.5 (BENCHMARK_EXACT_MIN_KEYWORD_RECALL)"
+    ],
+    "nearMatchDistance": "the tuple (testMatch, fileRecall, keywordRecall) recorded verbatim per case; a case failing any EXACT condition records which condition(s) it failed and by how much, and never promotes",
+    "tiersBelowExact": ["PARTIAL_REDISCOVERY", "SAME_ROOT_CAUSE_ALTERNATE", "MISS"],
+    "thresholdsMayBeTuned": false
+  },
+  "reproductionRequirement": {
+    "admissionRequiresReproduction": true,
+    "refusalWhenAbsent": "MISSING_REPRODUCTION",
+    "permittedClasses": ["GO_VENDORED_PACKAGE_TEST", "CURRENT_SOURCE_REPEATED_TEST_FAILURE", "MINED_TEST_REPLAY"],
+    "newProofClassesPermitted": false
+  },
+  "leakageRule": {
+    "forbiddenInReasonerVisibleRequests": [
+      "hidden.fixCommit",
+      "hidden.fixDiff",
+      "hidden.issueTitle",
+      "hidden.bugDescription",
+      "hidden.knownFailingTest",
+      "hidden.explanation",
+      "scoring labels"
+    ],
+    "canaryProven": true,
+    "onDetection": "LEAKAGE_DETECTED; abort yield publication; rerun the arm from a clean frozen fingerprint after repair"
+  },
+  "admissionRule": {
+    "path": "existing mechanical admission only",
+    "manualDossierInsertion": false,
+    "syntheticEvidenceRefs": false,
+    "reproductionCountReduction": false
+  },
+  "environmentBlockedRule": {
+    "definition": "the case's required contained reproduction cannot execute because this host lacks the required already-admitted substrate",
+    "excludedFromNumerator": true,
+    "excludedFromDenominator": true,
+    "reportedSeparately": true
+  },
+  "reachabilityThreshold": {
+    "providerStructuredProbePasses": true,
+    "repositoryCensusNonZero": true,
+    "minRepositoriesVisibleToInvestigation": 2,
+    "minDeterministicReproductionCapableTargets": 1,
+    "historicalCorpusAvailable": true,
+    "mechanicalAdmissionPathAvailable": true,
+    "leakageGuardGreen": true,
+    "hardeningAndGateBaselineGreen": true,
+    "mayBeLoweredAfterResults": false
+  }
+}
