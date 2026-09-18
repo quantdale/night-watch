@@ -35,16 +35,32 @@ Close Production Completion Group 12.
 
 ## Current Milestone
 
-Milestone ID: M1
+Milestone ID: M2
 Milestone status: IN_PROGRESS
-What is being attempted: commit the frozen evaluation definition — provider,
-corpus membership, negative controls, repository set, budgets, scoring,
-near-match distance, reproduction requirement, leakage rule, admission rule and
-the `ENVIRONMENT_BLOCKED` denominator rule — at a committed SHA BEFORE the
-first provider evaluation runs.
+What is being attempted: executing the frozen historical arm over the 14-case
+corpus with the real configured reasoner, recording per-case disposition,
+hidden-target distance and leakage.
 
 ## Completed Milestones
 
+- M1 evaluation freeze COMPLETE and committed at `eeceec8e`, BEFORE the first
+  provider evaluation. `evaluation-freeze.historical.json` fixes provider,
+  corpus membership, negative controls, budgets, the unchanged EXACT
+  definition, near-match distance, the reproduction requirement, the leakage
+  rule, the admission rule and the `ENVIRONMENT_BLOCKED` denominator rule;
+  fingerprint `sha256:824deef9922975feab5af69f`.
+- M7 leakage-checker canary proof COMPLETE at `92862aca`: all six hidden fields
+  are caught when deliberately planted, a multi-field leak reports all six, the
+  same blobs without the plant are clean, real fixture visible contexts carry
+  none of their own hidden truth, and an empty hidden field manufactures
+  neither a false clean nor a false leak. 5 tests PASS.
+- M8 (partial) freeze-integrity and arm-refusal proofs COMPLETE at `92862aca`:
+  the freeze fingerprint is pinned, the frozen EXACT thresholds are asserted
+  equal to the live scoring constants, the case counts must add up, the
+  provider selection shape is asserted first-pass (earlier entries ABSENT,
+  later entries NOT_PROBED), and the arm runner refuses both an unfrozen model
+  and an unconfigured provider with exit 2 before any provider call. 9 tests
+  PASS.
 - M0 provider/toolchain/repository preflight COMPLETE. Toolchain: Node
   v22.22.1, Go 1.25.3, Git 2.43.0, bubblewrap 0.9.0, opencode CLI 1.18.31.
   Provider selection rule declared before probing; `opencode-go/omen-alpha`
@@ -59,14 +75,15 @@ first provider evaluation runs.
 
 ## Work In Progress
 
-The W11 task directory and its OpenSpec change are being created. No evaluation
-has been executed and no yield figure exists yet.
+The frozen historical arm is executing. Two cases have completed so far, both
+`PARTIAL_REDISCOVERY` with zero leakage, so strict EXACT is still 0 at this
+point. No aggregate figure is claimed until the arm terminates.
 
 ## Exact Next Action
 
-Create the OpenSpec change for W11, write the frozen evaluation-definition
-artefact (M1), route `.agent/ACTIVE_TASK.md` to this campaign, and commit that
-freeze BEFORE running the first historical evaluation.
+Wait for the frozen historical arm to finish all 14 cases, then record its
+per-case dispositions and aggregate totals here and in REPORT.md, classify the
+misses (M3), and only then define and freeze the unknown-yield campaign (M4).
 
 ## Files Changed
 
