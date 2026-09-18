@@ -68,16 +68,45 @@
 
 ## C. G16.5 rule-quantifier audit
 
-- [ ] C.1 Classify all 83 rules and verify the declared quantifier against the
+- [x] C.1 Classify all 83 rules and verify the declared quantifier against the
       implementation; record every classification
-- [ ] C.2 Make every TOTALITY rule evaluate all occurrences and report each
+      — 60 TOTALITY, 23 EXISTENCE, 21 carrying a recorded `firstMatch`
+      singleton justification. Full table in this change's `audit.md`,
+      generated from the live registry rather than transcribed. The two-value
+      vocabulary is the minimum that describes the live set; UNIQUENESS,
+      CARDINALITY and ABSENCE were considered and rejected with reasons.
+- [x] C.2 Make every TOTALITY rule evaluate all occurrences and report each
       failing line in deterministic order
-- [ ] C.3 Extend the engine self-check to the existence-masquerading-as-
+      — four rules abandoned their own scan with `fail(...); return;` inside the
+      subject loop: `checkAlphausHandoffBoundary`, `checkFindingFrontierBoundary`,
+      `checkC15bSystemMapBoundary`, `checkC02bProtobufBoundary`. The first two
+      reached that path for real. Every TOTALITY rule now iterates (0 with no
+      iteration construct) and no rule is incapable of failing.
+- [x] C.3 Extend the engine self-check to the existence-masquerading-as-
       totality patterns it cannot currently see
-- [ ] C.4 Repair the `withoutComments()` line-comment defect and probe it
-- [ ] C.5 Adversarial multi-failure proof: first occurrence valid, two later
+      — `checkRuleEngineSoundness` now fails a TOTALITY rule that returns
+      immediately after failing inside a loop, naming the loop line AND the
+      return line. Nesting is computed by indentation, not brace matching: the
+      blanked view still contains strings and regex literals, and the first
+      brace-matching form reported a `return` sitting in a top-level
+      try/catch. Probed by HC-093.
+- [x] C.4 Repair the `withoutComments()` line-comment defect and probe it
+      — it stripped block comments with a regex BEFORE line comments, so a `//`
+      comment containing a block-comment opener deleted the real code up to the
+      next closer from the view every `read()`-based rule sees. 27 tracked
+      files contain such a comment. `withoutComments` and
+      `codeWithCommentsBlanked` now share one `commentMask` scanner. Guarded
+      behaviourally by `RULE_ENGINE_CODE_VIEW_DELETES_CODE` and probed by
+      HC-092, verified to raise its own error code.
+- [x] C.5 Adversarial multi-failure proof: first occurrence valid, two later
       occurrences invalid, both reported
-- [ ] C.6 Preserve the completed 16.6 work rather than replacing it
+      — `tests/unit/hardeningRuleQuantifiers.test.ts`, 6 cases running the REAL
+      rules against disposable repositories with deliberately absent cones.
+      Negative-probed: restoring the early exit fails the multi-failure case.
+- [x] C.6 Preserve the completed 16.6 work rather than replacing it
+      — the `quantifier`/`subject`/`firstMatch` metadata and the existing
+      first-match `.exec()`/`.match()` check are unchanged; C.3 adds a new
+      section beside them.
 
 ## D. `ripple-api` re-derivation and re-admission
 

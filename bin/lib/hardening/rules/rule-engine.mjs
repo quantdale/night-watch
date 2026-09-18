@@ -17,6 +17,7 @@ import {
   fail,
   readDataFile,
   codeWithCommentsBlanked,
+  withoutComments,
   PROBE_REGISTRY_PATH,
   RULE_ENGINE_ENTRY,
   RULE_ENGINE_SOURCE_DIRECTORY,
@@ -279,6 +280,64 @@ export function checkRuleEngineSoundness(registry) {
     }
   }
 
+  // --- 6b. a TOTALITY rule may not ABANDON its own scan ------------------
+  // `for (const subject of subjects) { if (bad) { fail(...); return; } }`
+  // reports the FIRST failing subject and then abandons the remaining
+  // subjects AND every assertion below the loop. The rule still passes its own
+  // probe -- one mutation, one detected failure -- while a source carrying
+  // three violations reports one. Four rules shipped exactly this shape.
+  //
+  // Nesting is determined by INDENTATION rather than by brace matching. The
+  // blanked view still contains strings, templates and regex literals, and a
+  // brace inside one of those makes a matcher run past the real loop body --
+  // which is how the first form of this check reported a `return` that sits in
+  // a top-level try/catch.
+  //
+  // An EXISTENCE rule may legitimately stop at its first witness, so the check
+  // is scoped to TOTALITY; a totality rule that genuinely must abort records
+  // that through `firstMatch`, the same field a singleton extraction uses.
+  for (const rule of registry) {
+    if (rule.quantifier !== 'TOTALITY') continue;
+    if (typeof rule.firstMatch === 'string' && rule.firstMatch.length > 0) continue;
+    const where = definitions.get(rule.name);
+    if (where === undefined) continue;
+    const loaded = sources.get(where.file);
+    if (loaded === undefined) continue;
+    const start = loaded.raw.search(new RegExp(`^(?:export )?function ${rule.name}\\(`, 'm'));
+    if (start < 0) continue;
+    const nextIndex = loaded.raw.slice(start + 1).search(/^(?:export )?function \w+\(/m);
+    const end = nextIndex < 0 ? loaded.code.length : start + 1 + nextIndex;
+    const firstLine = loaded.code.slice(0, start).split('\n').length;
+    const lines = loaded.code.slice(start, end).split('\n');
+    const indentOf = (/** @type {string} */ line) => line.length - line.trimStart().length;
+    for (let index = 0; index < lines.length; index += 1) {
+      if (!/^\s*return\b/.test(lines[index])) continue;
+      // The statement immediately above must be the tail of a fail(...) call.
+      let above = index - 1;
+      while (above >= 0 && lines[above].trim().length === 0) above -= 1;
+      if (above < 0 || !/\bfail\s*\(|^\s*\)?\s*;?\s*$/.test(lines[above])) continue;
+      let failLine = above;
+      while (failLine >= 0 && !/\bfail\s*\(/.test(lines[failLine])) {
+        if (indentOf(lines[failLine]) < indentOf(lines[index])) break;
+        failLine -= 1;
+      }
+      if (failLine < 0 || !/\bfail\s*\(/.test(lines[failLine])) continue;
+      // Walk outward by indentation: is any enclosing block a loop?
+      let depth = indentOf(lines[index]);
+      let enclosingLoop = -1;
+      for (let cursor = index - 1; cursor >= 0 && depth > 0; cursor -= 1) {
+        const line = lines[cursor];
+        if (line.trim().length === 0) continue;
+        const indent = indentOf(line);
+        if (indent >= depth) continue;
+        depth = indent;
+        if (/^\s*(?:for|while)\s*\(/.test(line)) { enclosingLoop = cursor; break; }
+      }
+      if (enclosingLoop < 0) continue;
+      fail(`rule ${rule.name} is TOTALITY but returns immediately after failing inside the loop at ${where.file}:${firstLine + enclosingLoop} (${where.file}:${firstLine + index}); use continue so every failing occurrence is reported, or record a singleton justification`);
+    }
+  }
+
   // --- 7. engine self-exclusion uses the single-owner predicate ---------
   // A scan that excludes the engine's own source must say so through
   // isRuleEngineSource(); an open-coded path silently stops covering the
@@ -307,5 +366,35 @@ export function checkRuleEngineSoundness(registry) {
   }
   for (const name of Object.keys(probes)) {
     if (!registeredSet.has(name)) fail(`rule probe registry names an unregistered rule: ${name}`);
+  }
+
+  // --- 9. the code-only view must not DELETE code -----------------------
+  // `withoutComments()` once stripped block comments with a regex before line
+  // comments, so a `//` comment whose text contained a block-comment opener
+  // ran to the next closer and removed the real code in between. Every
+  // read()-based rule then analysed a source view with a hole in it: a
+  // fail-if-absent rule fails loudly, but a fail-if-PRESENT rule goes silently
+  // vacuous over the deleted span, which is a rule that proves nothing while
+  // reporting success.
+  //
+  // This is asserted BEHAVIOURALLY against a fixed sample rather than by
+  // inspecting the implementation's shape, because the property that matters
+  // is what the accessor returns, not how it is written.
+  const opener = `${'/'}*`;
+  const hazard = [
+    'const before = 1;',
+    `// a line comment containing ${opener} an opener`,
+    "const AFTER_THE_HAZARD = 'survives';",
+    `${opener} a genuine block comment ${'*'}${'/'}`,
+    'const tail = 2;',
+  ].join('\n');
+  const stripped = withoutComments(hazard);
+  for (const required of ['const before = 1;', 'AFTER_THE_HAZARD', 'const tail = 2;']) {
+    if (!stripped.includes(required)) {
+      fail(`RULE_ENGINE_CODE_VIEW_DELETES_CODE withoutComments() dropped ${required}; a line comment containing a block-comment opener must not hide the code that follows it from every read()-based rule`);
+    }
+  }
+  if (stripped.includes('a line comment containing') || stripped.includes('a genuine block comment')) {
+    fail('RULE_ENGINE_CODE_VIEW_KEEPS_COMMENTS withoutComments() left comment text in the code-only view; a fail-if-absent assertion would be satisfiable by a comment');
   }
 }

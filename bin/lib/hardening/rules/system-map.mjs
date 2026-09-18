@@ -34,8 +34,12 @@ export function checkC15bSystemMapBoundary() {
     try {
       source = readIncludingComments(file);
     } catch {
+      // TOTALITY: a missing module is a finding about THAT module. Returning
+      // here abandoned the remaining modules and every later assertion in this
+      // rule, so a reviewer repairing the first one discovered the second only
+      // on the next run.
       fail(`C-15b the system map module ${file} is missing`);
-      return;
+      continue;
     }
     for (const [pattern, description] of [
       [/from\s+['"]node:fs['"]|require\(['"](?:node:)?fs['"]\)/, 'filesystem authority'],

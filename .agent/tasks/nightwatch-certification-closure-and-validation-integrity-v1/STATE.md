@@ -24,11 +24,11 @@ Control Center design-system campaign, then certify truthfully. Full intent in
 
 ## Current Milestone
 
-Milestone ID: C — G16.5 rule-quantifier audit
+Milestone ID: D — `ripple-api` re-derivation and re-admission
 Milestone status: IN_PROGRESS
-What is being attempted: classify all 83 rules, verify each declared
-quantifier against its implementation, make TOTALITY rules report every failing
-line, and repair the `withoutComments()` line-comment defect found in A.
+What is being attempted: classify every `27bb007a` occurrence, re-derive the
+four admitted recipes against the current sibling snapshot, and re-admit on
+evidence.
 
 ## Completed Milestones
 
@@ -110,6 +110,48 @@ line, and repair the `withoutComments()` line-comment defect found in A.
   restored=81 statusUnchanged=true`, exit 0. Gate definition digest at this
   checkpoint: `sha256:c85f42c58db95b81865b011600086eb6db854886ca652dd57d572a7475ad101e`.
 
+- **C COMPLETE_LOCAL — G16.5 rule-quantifier audit.** All 83 rules classified
+  and mechanically verified: 60 TOTALITY, 23 EXISTENCE, 21 carrying a recorded
+  `firstMatch` singleton justification. The full table is generated from the
+  live registry into the change's `audit.md`. The two-value vocabulary is the
+  minimum that describes the live set; UNIQUENESS/EXACTLY_ONE, CARDINALITY and
+  ABSENCE were each considered and rejected with a reason rather than added for
+  symmetry.
+
+  Four TOTALITY rules abandoned their own scan: `fail(...); return;` inside the
+  subject loop reported the FIRST failing subject and then skipped the
+  remaining subjects AND every assertion below the loop
+  (`checkAlphausHandoffBoundary`, `checkFindingFrontierBoundary`,
+  `checkC15bSystemMapBoundary`, `checkC02bProtobufBoundary`). Each still passed
+  its own probe, because one mutation produces one detected failure — which is
+  exactly how the shape survived. The first two reached the abandon path for
+  real, their cone lists coming from `gitFiles().filter(...)`, which returns an
+  empty array without throwing; the other two read through
+  `readIncludingComments`, which catches ENOENT itself, so their `catch`
+  branches were dead. All four now `continue`.
+
+  The class is closed permanently: `checkRuleEngineSoundness` fails a TOTALITY
+  rule that returns immediately after failing inside a loop, naming the loop
+  line and the return line. Nesting is computed by INDENTATION, not brace
+  matching — the blanked view still contains strings and regex literals, and
+  the first brace-matching form false-positived on a `return` in a top-level
+  try/catch.
+
+  The `withoutComments()` defect carried from milestone A is repaired: it
+  stripped block comments with a regex BEFORE line comments, so a `//` comment
+  containing a block-comment opener deleted real code up to the next closer
+  from the view every `read()`-based rule sees. 27 tracked files contain such a
+  comment. Both code views now share one `commentMask` scanner, and the
+  property is asserted behaviourally rather than by inspecting the
+  implementation's shape.
+
+  Proof: `tests/unit/hardeningRuleQuantifiers.test.ts`, 6 cases running the
+  REAL rules against disposable repositories with deliberately absent cones,
+  including the exact G16.5 case — occurrence 1 valid, occurrences 2 and 3
+  invalid, both reported. Negative-probed: restoring the early exit fails the
+  multi-failure case. New probes HC-092 and HC-093, each verified to raise its
+  OWN error code rather than merely a non-zero exit.
+
 ## Measured Baseline
 
 Recorded at `521210f7` before any change (see `PLAN.md` for the full list):
@@ -137,9 +179,10 @@ Recorded at `521210f7` before any change (see `PLAN.md` for the full list):
 
 ## Exact Next Action
 
-Audit all 83 rules' quantifiers (G16.5): verify each declared quantifier
-against its implementation, make TOTALITY rules report every failing line, and
-repair the `withoutComments()` line-comment defect with a recorded probe.
+Classify every `27bb007a` occurrence in the repository, re-derive the four
+admitted `ripple-api` recipes against the current sibling snapshot
+`4e3e200db3bda7b58bc250feb7f76997d95ae2cc`, and re-admit on derivation
+evidence. Never make freshness green by editing only the SHA.
 
 ## Resume Recipe
 
@@ -153,7 +196,7 @@ repair the `withoutComments()` line-comment defect with a recorded probe.
 
 ## Work In Progress
 
-Milestone C: the G16.5 rule-quantifier audit.
+Milestone D: the owner-authorized `ripple-api` re-derivation and re-admission.
 
 ## Files Changed
 
@@ -177,7 +220,10 @@ Milestone C: the G16.5 rule-quantifier audit.
 - `tests/unit/hardeningProbeCampaign.test.ts` — 9/9 PASS.
 - `tests/unit/phase23QualityGate.test.ts` — 14/14 PASS.
 - `node bin/quality-gate-spec.mjs` — PASS, 12 required groups.
-- `npm run validation:universe` — PASS.
+- `npm run validation:universe` — PASS (489 discovered, 0 unclassified).
+- `tests/unit/hardeningRuleQuantifiers.test.ts` — 6/6 PASS.
+- `npm run hardening:rules` after milestone C — `rules=83 probes=94
+  detected=94 undetected=0 restored=83 statusUnchanged=true`, exit 0.
 
 ## Decisions Made During This Task
 
@@ -221,6 +267,48 @@ Milestone C: the G16.5 rule-quantifier audit.
   `hardening:rules` now: `rules=83 probes=92 detected=92 undetected=0
   restored=81 statusUnchanged=true`, exit 0. Gate definition digest at this
   checkpoint: `sha256:c85f42c58db95b81865b011600086eb6db854886ca652dd57d572a7475ad101e`.
+
+- **C COMPLETE_LOCAL — G16.5 rule-quantifier audit.** All 83 rules classified
+  and mechanically verified: 60 TOTALITY, 23 EXISTENCE, 21 carrying a recorded
+  `firstMatch` singleton justification. The full table is generated from the
+  live registry into the change's `audit.md`. The two-value vocabulary is the
+  minimum that describes the live set; UNIQUENESS/EXACTLY_ONE, CARDINALITY and
+  ABSENCE were each considered and rejected with a reason rather than added for
+  symmetry.
+
+  Four TOTALITY rules abandoned their own scan: `fail(...); return;` inside the
+  subject loop reported the FIRST failing subject and then skipped the
+  remaining subjects AND every assertion below the loop
+  (`checkAlphausHandoffBoundary`, `checkFindingFrontierBoundary`,
+  `checkC15bSystemMapBoundary`, `checkC02bProtobufBoundary`). Each still passed
+  its own probe, because one mutation produces one detected failure — which is
+  exactly how the shape survived. The first two reached the abandon path for
+  real, their cone lists coming from `gitFiles().filter(...)`, which returns an
+  empty array without throwing; the other two read through
+  `readIncludingComments`, which catches ENOENT itself, so their `catch`
+  branches were dead. All four now `continue`.
+
+  The class is closed permanently: `checkRuleEngineSoundness` fails a TOTALITY
+  rule that returns immediately after failing inside a loop, naming the loop
+  line and the return line. Nesting is computed by INDENTATION, not brace
+  matching — the blanked view still contains strings and regex literals, and
+  the first brace-matching form false-positived on a `return` in a top-level
+  try/catch.
+
+  The `withoutComments()` defect carried from milestone A is repaired: it
+  stripped block comments with a regex BEFORE line comments, so a `//` comment
+  containing a block-comment opener deleted real code up to the next closer
+  from the view every `read()`-based rule sees. 27 tracked files contain such a
+  comment. Both code views now share one `commentMask` scanner, and the
+  property is asserted behaviourally rather than by inspecting the
+  implementation's shape.
+
+  Proof: `tests/unit/hardeningRuleQuantifiers.test.ts`, 6 cases running the
+  REAL rules against disposable repositories with deliberately absent cones,
+  including the exact G16.5 case — occurrence 1 valid, occurrences 2 and 3
+  invalid, both reported. Negative-probed: restoring the early exit fails the
+  multi-failure case. New probes HC-092 and HC-093, each verified to raise its
+  OWN error code rather than merely a non-zero exit.
 
 ## Measured Baseline` above and in `PLAN.md ## Discoveries`.
 

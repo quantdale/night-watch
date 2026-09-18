@@ -32,8 +32,9 @@ export function checkAlphausHandoffBoundary() {
   for (const coneDirectory of cones) {
     const coneFiles = gitFiles().filter((file) => file.startsWith(`${coneDirectory}/`) && file.endsWith('.ts'));
     if (coneFiles.length === 0) {
+      // TOTALITY: report every missing cone, not only the first.
       fail(`AH-1 the ${coneDirectory} cone is missing`);
-      return;
+      continue;
     }
     for (const file of coneFiles) {
       const source = read(file);
@@ -160,8 +161,9 @@ export function checkC02bProtobufBoundary() {
     try {
       source = readIncludingComments(file);
     } catch {
+      // TOTALITY: report every missing module, not only the first.
       fail(`C-02b the protobuf module ${file} is missing`);
-      return;
+      continue;
     }
     for (const [pattern, description] of [
       [/from\s+['"]node:fs['"]|require\(['"](?:node:)?fs['"]\)/, 'filesystem authority'],

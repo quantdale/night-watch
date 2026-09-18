@@ -367,8 +367,9 @@ export function checkFindingFrontierBoundary() {
   for (const coneDirectory of cones) {
     const coneFiles = gitFiles().filter((file) => file.startsWith(`${coneDirectory}/`) && file.endsWith('.ts'));
     if (coneFiles.length === 0) {
+      // TOTALITY: report every missing cone, not only the first.
       fail(`FC-1 the ${coneDirectory} cone is missing`);
-      return;
+      continue;
     }
     for (const file of coneFiles) {
       const source = read(file);

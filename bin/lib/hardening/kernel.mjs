@@ -77,12 +77,6 @@ export function fail(message) {
   errors.push(message);
 }
 
-/** Strip line and block comments so a structural check reads CODE, not prose. */
-/** @param {string} source */
-export function withoutComments(source) {
-  return source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
-}
-
 /**
  * Read RAW text INCLUDING comments.
  *
@@ -236,8 +230,8 @@ export function pathIsInsideDirectory(directory, file) {
  * before. Anything that REPORTS A POSITION must scan this instead. Strings,
  * escapes and regex literals are all respected.
  */
-export function codeWithCommentsBlanked(source) {
-  const characters = source.split('');
+function commentMask(source) {
+  const mask = new Uint8Array(source.length);
   /** @type {'code'|'line'|'block'|'single'|'double'|'template'} */
   let mode = 'code';
   let index = 0;
@@ -247,8 +241,8 @@ export function codeWithCommentsBlanked(source) {
     const next = source[index + 1];
     if (mode === 'code') {
       if (character === '\\') { index += 2; continue; }
-      if (character === '/' && next === '/') { characters[index] = ' '; characters[index + 1] = ' '; mode = 'line'; index += 2; continue; }
-      if (character === '/' && next === '*') { characters[index] = ' '; characters[index + 1] = ' '; mode = 'block'; index += 2; continue; }
+      if (character === '/' && next === '/') { mask[index] = 1; mask[index + 1] = 1; mode = 'line'; index += 2; continue; }
+      if (character === '/' && next === '*') { mask[index] = 1; mask[index + 1] = 1; mode = 'block'; index += 2; continue; }
       if (character === "'") { mode = 'single'; index += 1; continue; }
       if (character === '"') { mode = 'double'; index += 1; continue; }
       if (character === '`') { mode = 'template'; index += 1; continue; }
@@ -276,14 +270,16 @@ export function codeWithCommentsBlanked(source) {
       continue;
     }
     if (mode === 'line') {
+      // The newline ENDS a line comment and is not part of it, which is what
+      // keeps a deleted line comment from joining two code lines together.
       if (character === '\n') mode = 'code';
-      else characters[index] = ' ';
+      else mask[index] = 1;
       index += 1;
       continue;
     }
     if (mode === 'block') {
-      if (character === '*' && next === '/') { characters[index] = ' '; characters[index + 1] = ' '; mode = 'code'; index += 2; continue; }
-      if (character !== '\n') characters[index] = ' ';
+      if (character === '*' && next === '/') { mask[index] = 1; mask[index + 1] = 1; mode = 'code'; index += 2; continue; }
+      mask[index] = 1;
       index += 1;
       continue;
     }
@@ -292,5 +288,45 @@ export function codeWithCommentsBlanked(source) {
     if ((mode === 'template' && character === '`') || (mode === 'single' && character === "'") || (mode === 'double' && character === '"')) { mode = 'code'; previousSignificant = character; }
     index += 1;
   }
+  return mask;
+}
+
+/**
+ * Code-only view with comments BLANKED, preserving every offset and line
+ * number, so a position reported against it is the position a reviewer opens.
+ * @param {string} source
+ */
+export function codeWithCommentsBlanked(source) {
+  const mask = commentMask(source);
+  const characters = source.split('');
+  for (let index = 0; index < characters.length; index += 1) {
+    // Newlines survive even inside a block comment: blanking is about hiding
+    // comment TEXT, not about moving the code that follows it.
+    if (mask[index] === 1 && characters[index] !== '\n') characters[index] = ' ';
+  }
   return characters.join('');
+}
+
+/**
+ * Code-only view with comments REMOVED.
+ *
+ * This shares `commentMask` with the blanking view rather than re-deriving
+ * comment spans, because the two MUST agree about what a comment is. It
+ * previously did not: the old implementation stripped block comments first
+ * with `/\*[\s\S]*?\*\//g` and line comments second, so a `//` comment whose
+ * text contained `/*` opened a phantom block comment that ran to the next
+ * `*\/` and DELETED the real code in between. Every `read()`-based rule then
+ * analysed a source view with a hole in it. A fail-if-absent rule fails loudly
+ * on that, which is how it was found; a fail-if-present rule goes SILENTLY
+ * vacuous over the deleted span, which means forbidden code could hide behind
+ * an ordinary-looking line comment.
+ * @param {string} source
+ */
+export function withoutComments(source) {
+  const mask = commentMask(source);
+  let out = '';
+  for (let index = 0; index < source.length; index += 1) {
+    if (mask[index] !== 1) out += source[index];
+  }
+  return out;
 }

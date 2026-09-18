@@ -69,7 +69,7 @@ one owned session worktree, fast-forward integration, never force-push.
 
 ### C — G16.5 rule-quantifier audit
 
-- **Status:** IN_PROGRESS
+- **Status:** COMPLETE_LOCAL
 - Classify all 83 rules; verify declared quantifier against implementation;
   make TOTALITY rules report every failing line; extend the engine self-check
   so an existence-style implementation cannot masquerade as totality; repair
@@ -78,7 +78,7 @@ one owned session worktree, fast-forward integration, never force-push.
 
 ### D — `ripple-api` re-derivation and re-admission
 
-- **Status:** NOT_STARTED
+- **Status:** IN_PROGRESS
 - Measure live source read-only; classify every `27bb007a` occurrence;
   re-derive the four admitted recipes; re-admit on evidence; keep historical
   records historical; negative-probe currentness.

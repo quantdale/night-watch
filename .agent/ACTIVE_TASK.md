@@ -7,7 +7,7 @@ Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-certification-closure-and-validation-integrity-v1
 Starting SHA: 521210f706b9383e20dd08d1bfd2f3c47b34687d
 Last validated implementation SHA: a02b6315c089baeb74ccc5c526a556c9764be46a
-Last checkpoint: Milestones A and B COMPLETE_LOCAL. The session `--dry-run`
+Last checkpoint: Milestones A, B and C COMPLETE_LOCAL. The session `--dry-run`
 contract is truthful, and `hardening:rules` is now executed by the
 authoritative gate as the required `HARDENING_PROBES` group (11 required groups
 became 12). The campaign was dead code AND already red — HC-015 UNDETECTED —
@@ -24,10 +24,10 @@ while proving it: an unverified explicit `--base`, now failing closed before
 the first mutation, and a `withoutComments()` line-comment defect in the
 hardening kernel that silently deletes real code from every `read()`-based
 rule's view, carried into milestone C.
-Current milestone: C — G16.5 rule-quantifier audit
-Next action: audit all 83 rules' quantifiers, verify each declared quantifier
-against its implementation, make TOTALITY rules report every failing line, and
-repair the `withoutComments()` line-comment defect with a recorded probe.
+Current milestone: D — `ripple-api` re-derivation and re-admission
+Next action: classify every `27bb007a` occurrence, re-derive the four admitted
+recipes against the current sibling snapshot, and re-admit on derivation
+evidence. Never make freshness green by editing only the SHA.
 Owner decisions stay OPEN; none is self-authorized.
 Authorization class: CERTIFICATION_CLOSURE_AND_VALIDATION_INTEGRITY_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
@@ -72,7 +72,7 @@ Do not rebuild unless live recon finds a concrete regression:
 ```
 CAMPAIGN: nightwatch-certification-closure-and-validation-integrity-v1
 CHILD TASK: NONE
-WAVE: C_RULE_QUANTIFIER_AUDIT
+WAVE: D_RIPPLE_API_READMISSION
 SESSION WORKTREE: session/nightwatch-certification-closure-1f9ce403
 
 IMPLEMENTATION AUTHORIZED:
