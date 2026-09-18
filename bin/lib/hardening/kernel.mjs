@@ -33,6 +33,31 @@ import { buildChildEnvironment } from '../../child-environment.mjs';
 /** Repository root, resolved from this module's own location: bin/lib/hardening. */
 export const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 
+/**
+ * The rule engine's own source: the entry point plus every module under
+ * `bin/lib/hardening/`.
+ *
+ * Many rules scan all of `src/` and `bin/` for a forbidden literal, and the
+ * detector for such a literal necessarily CONTAINS it. Before the G16.9
+ * decomposition every one of those scans excluded the single file
+ * `bin/hardening-check.mjs` by name; the rule bodies now live in family modules
+ * beside this kernel, so the exclusion has to name the engine rather than one
+ * of its files. This is the ONLY widening the decomposition makes to any rule's
+ * subject, it is exactly the set of files that were previously one file, and
+ * `checkRuleEngineSoundness` requires every scan that excludes the engine to
+ * use this predicate rather than an open-coded path.
+ */
+export const RULE_ENGINE_ENTRY = 'bin/hardening-check.mjs';
+export const RULE_ENGINE_SOURCE_DIRECTORY = 'bin/lib/hardening';
+
+/** @param {string} file */
+export function isRuleEngineSource(file) {
+  return file === RULE_ENGINE_ENTRY || file.startsWith(`${RULE_ENGINE_SOURCE_DIRECTORY}/`);
+}
+
+/** The recorded negative probe for every registered rule. */
+export const PROBE_REGISTRY_PATH = 'config/hardening-rule-probes.v1.json';
+
 /** @type {string[]} Findings accumulated by every rule in this process. */
 export const errors = [];
 

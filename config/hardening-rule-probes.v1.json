@@ -1,6 +1,6 @@
 {
   "schemaVersion": "nightwatch.hardening-rule-probes.v1",
-  "purpose": "One recorded, reversible negative probe per registered structural rule. The campaign in bin/hardening-check.mjs --probe-campaign applies each probe to real guarded source, runs only the probed rule, requires a detected failure, restores the bytes in a finally, and verifies git status --porcelain is unchanged. A probe op replaces a unique search literal (or every occurrence with all:true), appends, or prepends text.",
+  "purpose": "One recorded, reversible negative probe per registered structural rule. The campaign in bin/hardening-check.mjs --probe-campaign applies each probe to real guarded source, runs only the probed rule, requires a detected failure, restores the bytes in a finally, and verifies git status --porcelain is unchanged. A probe op replaces a unique search literal (or every occurrence with all:true), appends, prepends, or creates a file that must not already exist and is removed again on restore.",
   "probes": {
     "checkChildProcessBoundaries": [
       { "id": "HC-001", "ops": [{ "file": "bin/phase7-real.mjs", "search": "  timeout: 15 * 60 * 1000,", "replace": "  timeoutProbe: 15 * 60 * 1000," }] }
@@ -180,7 +180,7 @@
       { "id": "HC-058", "ops": [{ "file": "src/controlCenter/adapters/reviewerAdapter.ts", "search": "CUSTOMER_SENTINEL", "replace": "PROBE_CUSTOMER_MARKER", "all": true }] }
     ],
     "checkDocumentationFreshness": [
-      { "id": "HC-059", "ops": [{ "file": "docs/CURRENT_STATE.md", "search": "Last updated: **2026-09-11**", "replace": "Last updated: **2000-01-01**" }] }
+      { "id": "HC-059", "ops": [{ "file": "docs/CURRENT_STATE.md", "search": "Last updated: **20", "replace": "Last updated: **19" }] }
     ],
     "checkC02bProtobufBoundary": [
       { "id": "HC-060", "ops": [{ "file": "src/core/source/protoLexer.ts", "search": "UNTERMINATED_COMMENT", "replace": "PROBE_UNTERMINATED_STATE", "all": true }] }
@@ -231,8 +231,13 @@
       { "id": "HC-077", "ops": [{ "file": "docs/SAFETY_MODEL.md", "append": "\n<!--probe--> PHASE_8_STATUS: IN_PROGRESS\n" }] }
     ],
     "checkRuleEngineSoundness": [
-      { "id": "HC-073", "kind": "SELF_CHECK_PROBE_RAW_ACCESSOR", "ops": [{ "file": "bin/hardening-check.mjs", "search": "function checkChildProcessBoundaries() {", "replace": "function probeRawSourceAccessor() { if (!/zed/.test(readIncludingComments('package.json'))) fail('probe'); }\n\nfunction checkChildProcessBoundaries() {" }] },
-      { "id": "HC-074", "kind": "SELF_CHECK_PROBE_TOTALITY_FIRST_MATCH", "ops": [{ "file": "bin/hardening-check.mjs", "search": "function checkTargetPolicy() {\n", "replace": "function checkTargetPolicy() {\n  const probeFirstMatch = /env/.exec('probe'); void probeFirstMatch;\n" }] }
+      { "id": "HC-073", "kind": "SELF_CHECK_PROBE_RAW_ACCESSOR", "ops": [{ "file": "bin/lib/hardening/rules/process-and-network.mjs", "search": "export function checkChildProcessBoundaries() {", "replace": "export function probeRawSourceAccessor() { if (!/zed/.test(readIncludingComments('package.json'))) fail('probe'); }\n\nexport function checkChildProcessBoundaries() {" }] },
+      { "id": "HC-074", "kind": "SELF_CHECK_PROBE_TOTALITY_FIRST_MATCH", "ops": [{ "file": "bin/lib/hardening/rules/process-and-network.mjs", "search": "export function checkTargetPolicy() {\n", "replace": "export function checkTargetPolicy() {\n  const probeFirstMatch = /env/.exec('probe'); void probeFirstMatch;\n" }] },
+      { "id": "HC-085", "kind": "SELF_CHECK_PROBE_UNREGISTERED_RULE_MODULE", "ops": [{ "file": "bin/lib/hardening/rules/probe-unregistered-family.mjs", "create": "// @ts-check\nimport { fail } from '../kernel.mjs';\nexport function checkProbeUnregisteredFamily() { fail('probe'); }\n" }] },
+      { "id": "HC-086", "kind": "SELF_CHECK_PROBE_DUPLICATE_RULE_IDENTITY", "ops": [{ "file": "bin/lib/hardening/registry.mjs", "search": "  { name: 'checkSyntax', module: 'source-integrity',", "replace": "  { name: 'checkSyntax', module: 'source-integrity', family: 'syntax', quantifier: 'TOTALITY', subject: 'duplicate identity probe' },\n  { name: 'checkSyntax', module: 'source-integrity'," }] },
+      { "id": "HC-087", "kind": "SELF_CHECK_PROBE_REGISTRY_ENTRY_WITHOUT_IMPLEMENTATION", "ops": [{ "file": "bin/lib/hardening/registry.mjs", "search": "{ name: 'checkSyntax', module: 'source-integrity'", "replace": "{ name: 'checkSyntaxProbeMissing', module: 'source-integrity'" }] },
+      { "id": "HC-088", "kind": "SELF_CHECK_PROBE_DEFINED_BUT_UNREGISTERED_RULE", "ops": [{ "file": "bin/lib/hardening/rules/system-map.mjs", "search": "export function checkC15bSystemMapBoundary() {", "replace": "export function checkProbeUnregisteredRule() { fail('probe'); }\n\nexport function checkC15bSystemMapBoundary() {" }] },
+      { "id": "HC-089", "kind": "SELF_CHECK_PROBE_OPEN_CODED_SELF_EXCLUSION", "ops": [{ "file": "bin/lib/hardening/rules/process-and-network.mjs", "search": ".filter((file) => !isRuleEngineSource(file))", "replace": ".filter((file) => file !== 'bin/hardening-check.mjs')" }] }
     ],
     "checkAuthenticatedCapabilitySingleEvaluator": [
       { "id": "HC-078", "ops": [{ "file": "src/auth/devCredentialProvider.ts", "append": "\nexport function probeCookieExpiry(cookie: { expires: number }): boolean {\n  return cookie.expires > Math.floor(Date.now() / 1000);\n}\n" }] }
