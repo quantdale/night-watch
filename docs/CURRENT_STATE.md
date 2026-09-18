@@ -1,6 +1,6 @@
 # Nightwatch — CURRENT STATE
 
-> Durable memory for the next agent/session. Last updated: **2026-09-17**
+> Durable memory for the next agent/session. Last updated: **2026-09-18**
 > during the autonomous bug-hunting programme (Wave 0 protocol freeze and
 > Wave 1 lanes A–E integrated). RS-1 close-out remains
 > COMPLETE: DEF-FC-04 continuity repair, the Control Center reviewer
@@ -4122,3 +4122,63 @@ Certification: implementation `88e3c3fb52937ff303b0944cc22cfee624bf807e`;
 PASS; browser lane 4/4 in 4.9 minutes; full offline regression 4789 passed /
 18 skipped / 0 failed, unchanged from the baseline. External CI was not run
 and is not claimed green.
+
+## Control Center design system (appended 2026-09-18)
+
+The Control Center has ONE design system, and its integrity is mechanically
+enforced rather than reviewed.
+
+`ui/control-center/src/styles.css` declares 53 tokens covering colour (with an
+alpha ladder per hue), typography, spacing, radius, elevation and motion. It was
+18 tokens — 17 colours and a shadow — with everything else written as a literal.
+Measured before and after:
+
+| Dimension | Before | After |
+|---|---|---|
+| `font-size` declarations | 84 across 19 values, 49 below 12px, smallest 7px | 7 scale steps, floor 12px |
+| `border-radius` | 37 across 12 values | 4 roles + 2 declared structural shapes |
+| spacing values | 85 distinct across 174 occurrences | 7 steps + 3 role aliases |
+| colour literals outside `:root` | 54 distinct across 69 occurrences | 0 |
+| `var()` fallbacks | 14, of which 10 divergent | 0 |
+
+The divergent fallbacks mattered more than their count suggests: they were
+INERT, because every token happened to be defined. A rendered-contrast check
+measured the correct amber and reported success while the sheet carried a
+complete second light theme — `var(--accent, #6ea8fe)` blue, `var(--surface,
+#fff)` white — one rename away from shipping. That is why the guard reads
+DECLARED values and lives in the unit lane, not the browser lane.
+
+Four guards, each negative-probed against real source and restored:
+
+- token integrity — every referenced property defined, every fallback equal to
+  its token, non-vacuity asserted first;
+- literal freedom — a 5-entry structural exemption list that fails in BOTH
+  directions, so a stale exemption is removed rather than accumulating;
+- the rendered 12px type floor, measured on computed `font-size` with the floor
+  read from `--text-floor-px`;
+- the viewport matrix — nine views at 1440/1080/820/560/380, asserting no
+  horizontal PAGE scroll, no clipped control, posture visible by accessible
+  text, and 3:1 for controls whose outline is their sole affordance.
+
+The three breakpoints had shipped UNRENDERED: no config set a viewport, so
+every lane measured 1280x720 and nothing ever laid the console out at 820px or
+380px. Rendering them found four real layout defects, all fixed — `1fr` grid
+columns that could not shrink below their content, unbounded scroll ports,
+tables that needed to adapt rather than scroll below 820px, and a scroll port
+left `position: static` so every absolutely-positioned `.sr-only` caption
+escaped its clip and slid the whole page sideways.
+
+Both D-04 posture removals are repaired: `.sidebar-footer` no longer becomes
+`display: none` below 820px, and `.read-only-tag` is no longer clamped to 34px
+— which truncated a posture statement to the two characters "RE".
+
+`--border` stays deliberately quiet at 1.27-1.51:1 because it is a STRUCTURAL
+divider; the new `--border-interactive` (3.81:1 on `--bg`) is for controls whose
+outline is their only affordance. Making every divider 3:1 would turn a dark
+forensic console into a wireframe. The browser probe found three such controls
+the manual pass had missed.
+
+Design direction is Axiom's discipline with Linear's density, refreshed through
+Refero at this checkpoint. Nightwatch's own identity is preserved: the
+blue-black `#0b1118` base and the amber `#e4a853` accent are unchanged, and
+Axiom's black canvas and orange accent were deliberately NOT adopted.

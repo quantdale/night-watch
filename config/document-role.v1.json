@@ -143,6 +143,13 @@
       "oldLineSha256": "sha256:28521378f876fb455491f7e0",
       "oldLineExcerpt": "> Durable memory for the next agent/session. Last updated: **2026-09-14**",
       "reason": "Wave 1 historical implementation bumped the header date to the day its last change actually landed (2026-09-17); the statement is unchanged."
+    },
+    {
+      "id": "CORR-DS-001",
+      "path": "docs/CURRENT_STATE.md",
+      "oldLineSha256": "sha256:55d26be1958be4f4714d7344",
+      "oldLineExcerpt": "> Durable memory for the next agent/session. Last updated: **2026-09-17**",
+      "reason": "The header date and the append-only rule are in genuine tension: checkDocumentationFreshness requires the date to cover the document's own last change, and any append IS a change, so appending to this archive necessarily edits line 3. The statement is unchanged; only the date it carries advances to 2026-09-18 for the Control Center design-system campaign."
     }
   ]
 }
