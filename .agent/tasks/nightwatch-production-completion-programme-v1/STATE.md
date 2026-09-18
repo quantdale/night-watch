@@ -351,6 +351,53 @@ unless explicitly granted.
 
 ## Validation Ledger
 
+### G16.9/16.10/16.11 decomposition — measured 2026-09-18
+
+Implementation `f4e70721`, documentation `26054b76`, base `9fc763b3`.
+
+| Check | Result |
+|---|---|
+| `npm run typecheck` | PASS |
+| `npm run typecheck:bin` | PASS (conformance 14/70, mode REPORTING, unchanged) |
+| `node bin/hardening-check.mjs` | PASS, byte-identical to base |
+| `node bin/hardening-check.mjs --list-rules` | PASS, BYTE-IDENTICAL to base (83 rules) |
+| `--report-documentation-currency` | PASS, byte-identical to base (0 findings) |
+| `--report-reachability` | PASS, files 1142 -> 1155, edges 6607 -> 6655, findings 0 both |
+| `npm run hardening:rules` | 83 rules / 90 probes / 90 detected / 0 undetected / statusUnchanged=true |
+| `npm run validation:universe` | PASS |
+| `npm run agent:check` | PASS (39 warnings, all pre-existing stale-worktree notices) |
+| `npm run project:check` | PASS |
+| `npm run workspace:check` | PASS |
+| `openspec validate … --strict` | valid |
+| `tests/unit/hardeningRuleParity.test.ts` | 10/10 PASS (was 6 tests; 4 added) |
+
+Behaviour preservation, measured not asserted: 104 of 113 moved declarations
+byte-identical; the 9 differences are the 8 one-line `isRuleEngineSource()`
+substitutions and the deliberately rewritten self-check. Probe verdicts are
+identical rule-by-rule except `checkDocumentationFreshness`, which goes
+UNDETECTED -> DETECTED because its stale probe was repaired.
+
+Gate and regression, base versus this checkpoint:
+
+| | base `9fc763b3` | this checkpoint |
+|---|---|---|
+| `gate:local` finalResult | TEST_FAILURE | TEST_FAILURE |
+| `gate:local` group statuses | 6 PASS, SEMANTIC_COMPATIBILITY fail, 4 NOT_RUN | IDENTICAL |
+| `gate:local` SEMANTIC counts | 2120 / 2104 passed / 13 skipped / 3 failed | IDENTICAL |
+| `gate:local` failed locations | 3 | IDENTICAL 3 |
+| `gateDefinitionDigest` | `sha256:4e676246…` | IDENTICAL |
+| `npm test` | 5198 passed / 12 failed / 18 skipped | 5202 passed / 12 failed / 18 skipped |
+| `npm test` failure set | 12 | IDENTICAL 12 |
+| `campaign:synthetic` | 1880 total / 6 failed | 1884 total / 6 failed (IDENTICAL set) |
+
+The `+4` passed and `+4` total are exactly the four rule-parity tests this work
+added. ZERO regression: no test that passes at base fails here, and every one
+of the 12 failures was reproduced at base on an unmodified tree BEFORE any
+change. All 12 trace to one cause — the sibling `ripple-api` checkout has
+advanced past the Phase 5 pinned SHA — recorded under `## Blockers` as an owner
+re-admission action. The gate was NOT weakened to clear it.
+
+
 Command: `npm run gate:local` at consolidation documentation checkpoint
 `264ed74b`
 Result: PASS (all eleven required groups)
