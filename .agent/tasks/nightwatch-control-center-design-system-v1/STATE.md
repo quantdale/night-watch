@@ -23,12 +23,11 @@ return. Full intent in `SPEC.md`; execution order in `PLAN.md`.
 
 ## Current Milestone
 
-Milestone ID: G1 — rebaseline and activation
-Milestone status: COMPLETE_LOCAL
-What is being attempted: the parked change is activated under explicit owner
-authorization, an owned C-00 session is claimed at `efd1dc5c`, and every figure
-in the historical audit has been re-measured at the live SHA with the
-contradictions recorded rather than copied.
+Milestone ID: G8 — certification
+Milestone status: IN_PROGRESS
+What is being attempted: differential certification against the base failure
+set, strict OpenSpec validation, documentation reconciliation, integration by
+fast-forward push, the report, and session release. G1 through G7 are closed.
 
 ## Completed Milestones
 
@@ -36,38 +35,57 @@ contradictions recorded rather than copied.
   2026-09-14 with the unblock condition "a fresh owner authorization opens its
   own campaign task and session"; that authorization was given 2026-09-18 and
   this task and session are it. Session
-  `nightwatch-control-center-design-5eb78e61` claimed at `efd1dc5c`,
-  `session:status` verdict PASS, canonical checkout is not the implementation
-  worktree. UI baseline at the starting SHA: typecheck PASS, 88 tests PASS,
-  build PASS (323,180 js / 28,262 css).
+  `nightwatch-control-center-design-5eb78e61` claimed at `efd1dc5c`. One
+  finding is DEAD: D-01's three undefined tokens are neither defined nor
+  referenced, so the 1.08:1 defect is NOT reproducible and is not claimed as
+  fixed here. `App.tsx` is decomposed, so the audit's line references are stale.
+  D-02/D-03/D-04/D-05 all still present and re-measured exactly.
 
-  The audit was re-measured and one finding is genuinely DEAD: D-01's three
-  undefined tokens (`--surface-muted`, `--ready`, `--warning`) are neither
-  defined nor referenced, so the 1.08:1 `.review-action` defect is NOT
-  reproducible here and this change must not claim to fix it. What survives is
-  the missing GUARD. A structural change the audit predates: `App.tsx` is 351
-  lines with nine views in `src/views/`, so every `App.tsx:NNNN` reference in
-  the audit is stale, and the change's own precondition (group 19.11
-  integrated) is satisfied.
+- **G2 COMPLETE_LOCAL — token block and integrity guard.** 18 tokens -> 53
+  across colour, an alpha ladder per hue, typography, spacing, radius, one
+  overlay shadow and motion. All 14 `var()` fallbacks removed, including the 4
+  that agreed with their token. `--border-interactive: #5d7286` at 3.81 / 3.52 /
+  3.19 / 3.59 against the four surfaces. Probes UI-P1..UI-P3 DETECTED.
 
-  D-02, D-03, D-04 and D-05 are all STILL PRESENT and were re-measured
-  exactly; two figures moved upward (36 distinct hex literals, was "~25"; 50
-  `rgba()` occurrences, was 47).
+- **G3 COMPLETE_LOCAL — literal-free stylesheet.** 54 distinct colour literals
+  across 69 occurrences -> 0. 84 font-sizes -> 7 steps. 37 radii across 12
+  values -> 4 roles. 85 distinct spacing values -> 7 steps. 5 structural
+  exemptions, each with a reason, failing in BOTH directions. The C-15c System
+  Map block folded into the system. `--weight-normal` DELETED rather than given
+  a contrived use. Probes UI-P4..UI-P9 DETECTED.
+
+- **G4 COMPLETE_LOCAL — type floor.** All 49 declarations below 12px retired;
+  the 7px graph label and 8px breakpoint pill are gone. Micro labels resolved to
+  uppercase + 0.08em. The floor is measured on COMPUTED font-size in the browser
+  lane with the value read from `--text-floor-px`. The raised floor broke real
+  layouts and they were reworked, not reverted.
+
+- **G5 COMPLETE_LOCAL — responsive truth.** 9 views x 5 widths = 45 cells. Four
+  real layout defects found and fixed, including a scroll port left
+  `position: static` whose absolutely-positioned `.sr-only` captions escaped the
+  clip and slid the page sideways. Both D-04 posture removals repaired. The
+  declared removal list guards in both directions and forbids a posture carrier
+  ever appearing on the removal side. Probes MX-P1..MX-P3, RM-P1..RM-P3 DETECTED.
+
+- **G6 COMPLETE_LOCAL — interactive boundary contrast.** Sole-affordance
+  controls enumerated from the rendered DOM, measured against the first opaque
+  backdrop, required to clear 3:1. Found three the manual pass missed
+  (`.icon-button`, `.button-quiet`, `.button-secondary`, all 1.51:1) now at
+  3.81:1. Structural dividers deliberately keep the quiet `--border`.
+
+- **G7 COMPLETE_LOCAL — registration and validation.** `designSystem.test.ts`
+  registered in `UI_LANE`, digest refreshed, and every pre-existing UI guard
+  green with NO exemption list longer than before.
 
 ## Work In Progress
 
-Group 2 — the token block and its integrity guard — is next.
+G8 certification: the differential evidence is captured below; integration,
+report and release remain.
 
 ## Exact Next Action
 
-Declare the complete token block in `ui/control-center/src/styles.css`
-(colour, typography, spacing, radius, elevation, motion), add
-`--border-interactive: #5d7286` (measured 3.81 / 3.52 / 3.19 / 3.59 against
-`--bg` / `--surface` / `--surface-raised` / `--surface-soft`, every pair over
-3:1), then write the token-integrity guard that fails an undefined referenced
-property and a `var()` fallback whose literal differs from its token's defined
-value — asserting a non-zero reference count before any other assertion — and
-negative-probe it in both directions.
+Integrate by fast-forward push through the session CLI, verify
+`HEAD == origin/main`, then release and remove the session.
 
 ## Files Changed
 

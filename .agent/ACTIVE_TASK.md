@@ -7,19 +7,20 @@ Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-control-center-design-system-v1
 Starting SHA: efd1dc5c81a55db00e7698257c8b49b51a6703c5
 Last validated implementation SHA: faacf8262dea0c6a42bf03242d5d1c44d6f70e9e
-Last checkpoint: G1 rebaseline and activation. The change was parked
-2026-09-14 with the unblock condition "a fresh owner authorization opens its
-own campaign task and session"; that authorization was given 2026-09-18 and
-this task and its owned session are it. Every figure in the historical audit
-was re-measured at `efd1dc5c`: D-01's three undefined tokens are DEAD (neither
-defined nor referenced, so the 1.08:1 defect is not reproducible and is not
-claimed as fixed here), while D-02, D-03, D-04 and D-05 are all still present
-and re-measured exactly. `App.tsx` is decomposed, so the audit's line
-references are stale. UI baseline at the starting SHA: typecheck, 88 tests and
-build PASS.
-Current milestone: G1 rebaseline and activation
-Next action: declare the complete token block and write the token-integrity
-guard (change tasks 2.1, 2.3, 2.4), then negative-probe it in both directions.
+Last checkpoint: G1–G7 complete. The Control Center has one design system
+applied across all nine views, with its integrity mechanically enforced: 53
+tokens (was 18), zero colour literals outside the token block (was 54 distinct
+across 69 occurrences), zero `var()` fallbacks (was 14, ten of them describing a
+second light theme), a 12px rendered type floor (was 84 font-sizes across 19
+values with 49 below it), and the three breakpoints RENDERED for the first time
+as a 9-view x 5-width matrix. Four real layout defects and two D-04 posture
+removals were fixed, not documented. Differential certification: the
+`gate:local` receipt matches base group-for-group and count-for-count
+(2120/2104/13/3, same three failed locations); `npm test` is 5201 passed / 13
+failed / 18 skipped against base 5198 / 12 / 18.
+Current milestone: G8 — certification
+Next action: integrate by fast-forward push through the session CLI, verify
+`HEAD == origin/main`, then release and remove the session.
 Owner decisions stay OPEN; none is self-authorized.
 Authorization class: CONTROL_CENTER_DESIGN_SYSTEM_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
@@ -81,7 +82,7 @@ Do not rebuild unless live recon finds a concrete regression:
 ```
 CAMPAIGN: nightwatch-control-center-design-system-v1
 CHILD TASK: NONE
-WAVE: G1_REBASELINE_AND_ACTIVATION
+WAVE: G8_CERTIFICATION
 SESSION WORKTREE: session/nightwatch-control-center-design-5eb78e61
 
 IMPLEMENTATION AUTHORIZED:

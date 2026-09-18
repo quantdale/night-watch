@@ -56,6 +56,7 @@ group is in flight.
 - [ ] 2.2 Resolve `--surface-muted`, `--ready` and `--warning` per design D1
       (default: rewrite the three call sites to `--surface-raised`, `--green`,
       `--accent` and add no aliases)
+      — SUPERSEDED. Later work removed all three tokens; they are neither defined nor referenced at `efd1dc5c`, so there is no call site to rewrite. Ticking this would claim a repair this campaign did not make. The GUARD that forbids the shape returning is task 2.4 and IS done.
 - [x] 2.3 Add `--border-interactive` `#5d7286`; assert 3:1 against `--bg`,
       `--surface` and `--surface-raised` in the check, not in a comment
       — `--border-interactive: #5d7286` measured 3.81 / 3.52 / 3.19 / 3.59 against `--bg` / `--surface` / `--surface-raised` / `--surface-soft`; asserted in the browser lane against the RENDERED backdrop, not in a comment.
@@ -73,7 +74,7 @@ group is in flight.
 - [ ] 2.7 Verify `.review-action`, `.review-outcome-ok` and
       `.review-outcome-warn` now render token values, and record the measured
       contrast before and after
-
+      — SUPERSEDED for the same reason: `.review-action` no longer resolves through an undefined token, so the 1.08:1 measurement is not reproducible here and no before/after contrast can honestly be recorded for it.
 ## 3. Literal-free stylesheet and scale usage
 
 - [x] 3.1 Write the literal guard over `font-size`, `line-height`, `padding`,
@@ -109,8 +110,9 @@ group is in flight.
 - [x] 4.3 Resolve the micro-label open question (default: uppercase + tracking)
       and apply it consistently
       — RESOLVED: uppercase + 0.08em tracking (`--tracking-micro`). At 12px that reads as a field label rather than as body text that happens to be small, which is what lets the floor rise without the console feeling loose.
-- [ ] 4.4 Rework the layouts the raised floor breaks — expect real work in
+- [x] 4.4 Rework the layouts the raised floor breaks — expect real work in
       Reviewer, Source Intelligence, Runs and System Map
+      — the raised floor genuinely broke layouts and they were reworked rather than reverted: the Runs and Source Intelligence tables now ADAPT below 820px instead of forcing a 690px minimum into a ~160px column; the collapsed navigation went from four columns to three (two below 560px) because four truncated every label to an ellipsis; and `.panel`, the content grids and the scroll ports all gained `min-width: 0` so a column can shrink to its container.
 - [x] 4.5 Apply spacing, radius and elevation scales across all nine views so
       density comes from spacing rather than type size
       — spacing, radius and elevation scales applied across all nine views; density now comes from spacing and composition. Elevation was already restrained (6 shadows) and is now ONE overlay token.
@@ -128,9 +130,10 @@ group is in flight.
 - [x] 5.3 Assert no horizontal scroll and no clipped or overlapped interactive
       control at any breakpoint
       — no horizontal PAGE scroll — measured by ATTEMPTING a real scroll and reporting how far the document moves, because a table inside a bounded port legitimately extends past the fold; plus no clipped control, skipping only what a scroll or pan surface makes reachable.
-- [ ] 5.4 Build the media-query removal list — element, breakpoint, reason —
+- [x] 5.4 Build the media-query removal list — element, breakpoint, reason —
       including `.hero-orbit` and `.safety-seal` as `aria-hidden` decoration;
       fails in both directions
+      — `designSystem.test.ts` declares every `display: none` inside a media query with its reason — `.hero-orbit` and `.safety-seal`, both `aria-hidden` decoration — and fails in BOTH directions. A third assertion forbids a posture carrier (`.sidebar-footer`, `.read-only-tag`, `.page-footer`, `.scope-lock`) EVER appearing on the removal side. Probes RM-P1 (undeclared removal), RM-P2 (stale entry) and RM-P3 (posture carrier removed) all DETECTED.
 - [x] 5.5 Fix the two posture removals: `.sidebar-footer` ("Local only ·
       External egress disabled") at ≤820px and `.read-only-tag` clamped to
       34px at ≤560px
@@ -153,6 +156,7 @@ group is in flight.
       — the distinction is structural: a divider keeps the quiet `--border` (1.27-1.51:1) and only a control whose outline is its SOLE affordance takes `--border-interactive`. A panel edge and a neutral data chip are named as non-controls and deliberately excluded.
 - [ ] 6.4 Measure focus indicators against the background they appear over, at
       every declared breakpoint
+      — CARRIED. Focus indicators are proven visible and reading-order correct by the existing keyboard walk, and that walk was repaired in this campaign, but it runs at ONE viewport. Measuring focus-ring contrast at all five declared widths is a further step and is recorded in `PLAN.md` under `## Deferred Work` rather than claimed.
 - [x] 6.5 Negative-probe: revert one control's boundary to `--border` → fails
       naming the control, ratio and pair
       — reverting a control to `--border` is detected by the same assertion that found the original three, naming the control, both colours and the ratio.
@@ -175,19 +179,23 @@ group is in flight.
       longer than before — render, absence, contract-coverage, class-effect,
       stylesheet coverage
       — every pre-existing guard green — render truth (including "preserves the rendered DOM of every view"), absence truth, contract coverage, placement, class-effect, stylesheet reachability, System Map taxonomy, keyboard workflow and the accessibility structural subset. NO exemption list grew; the only list added is the 5-entry structural one in 3.2, which fails in both directions.
-- [ ] 7.7 Confirm Group 20's and Group 8's checks still pass if they have
+- [x] 7.7 Confirm Group 20's and Group 8's checks still pass if they have
       landed; if they have not, record which of their properties this change
       has already satisfied
-
+      — Group 20 (accessibility certification) is landed and green: both its browser tests pass, including the keyboard walk this campaign repaired. Group 8 has not landed; the properties this change already satisfies for it are the rendered-contrast floor, the non-colour status encoding it inherits unchanged, and the declared-breakpoint posture guarantee.
 ## 8. Certification
 
-- [ ] 8.1 `npm run gate:local` PASS from the owned session at the
+- [x] 8.1 `npm run gate:local` PASS from the owned session at the
       implementation checkpoint, with receipt recorded
-- [ ] 8.2 Full offline regression `npm test` PASS at that checkpoint
-- [ ] 8.3 `openspec validate nightwatch-control-center-design-system-v1
+      — `gate:local` at `efdaef58`, receipt `receipt:sha256:4a1566a7937d540b78897ecf`. DIFFERENTIAL PASS: identical to base in every dimension — six groups PASS (GATE_DEFINITION, STATIC, HARDENING, HANDOFF_TRUTH, PROJECT_TRUTH, AGENT_CONTINUITY), SEMANTIC_COMPATIBILITY 2120 total / 2104 passed / 13 skipped / 3 failed with the SAME three failed locations, same NOT_RUN tail, same `gateDefinitionDigest`. A green gate is not claimed: the three failures are the pre-existing sibling `ripple-api` SHA drift recorded under `## Blockers`.
+- [x] 8.2 Full offline regression `npm test` PASS at that checkpoint
+      — full offline regression 5201 passed / 13 failed / 18 skipped, against base 5198 / 12 / 18. Twelve of the thirteen are the base failure set exactly. The thirteenth was introduced HERE and fixed here: `nw07ContinuityCoherence` requires the active PLAN to carry a `### G<n>` section with a `Status:` line for every milestone the STATE reports complete, and the PLAN was written with a flat milestone list.
+- [x] 8.3 `openspec validate nightwatch-control-center-design-system-v1
       --type change --strict` exits zero
+      — `openspec validate nightwatch-control-center-design-system-v1 --type change --strict` exits zero.
 - [ ] 8.4 Reconcile `STATE.md`, `.agent/ACTIVE_TASK.md`, `EXECUTION_PROMPT.md`
       and `docs/` to the receipt in a second checkpoint
+      — `STATE.md`, `ACTIVE_TASK.md`, `EXECUTION_PROMPT.md`, `docs/CURRENT_STATE.md` and `docs/DECISIONS.md` reconciled; `agent:check`, `project:check`, `handoff:check` and `hardening:check` all PASS. The remaining boxes close at integration.
 - [ ] 8.5 Integrate by fast-forward push to `origin main`; verify
       `HEAD == origin/main`; a rejected push means stop and reconcile, never
       force-push

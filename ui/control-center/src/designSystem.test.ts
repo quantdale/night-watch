@@ -225,3 +225,87 @@ describe('design system — literal freedom', () => {
     expect(stale, `exemptions that are no longer needed and must be removed: ${stale.join(', ')}`).toEqual([]);
   });
 });
+
+/**
+ * The declared media-query removal list.
+ *
+ * Hiding an element at a breakpoint is a product decision, not a layout tidy.
+ * Two of them used to remove POSTURE — `.sidebar-footer` carried "Local only"
+ * and "External egress disabled", and `.read-only-tag` was clamped until it
+ * read "RE" — which is how a safety statement disappears without anyone
+ * deciding it should.
+ *
+ * So every `display: none` inside a media query must be declared here with its
+ * reason, and the list fails in BOTH directions: an undeclared removal fails,
+ * and a declared entry whose rule no longer exists fails as stale. The second
+ * direction is what stops the list from becoming a graveyard that silently
+ * permits whatever was once added to it.
+ */
+describe('design system — declared breakpoint removals', () => {
+  const DECLARED_REMOVALS: ReadonlyArray<{ selector: string; query: string; reason: string }> = [
+    {
+      selector: '.hero-orbit',
+      query: '(max-width: 820px)',
+      reason: 'aria-hidden decorative orbit; it carries no text and no control, and the hero states the same posture in chips beside it',
+    },
+    {
+      selector: '.safety-seal',
+      query: '(max-width: 820px)',
+      reason: 'aria-hidden decorative seal; the Safety Center states every guardrail as text in the panel below it',
+    },
+  ];
+
+  /** Every `display: none` rule inside a media query, with its query. */
+  function breakpointRemovals(): { selector: string; query: string }[] {
+    const found: { selector: string; query: string }[] = [];
+    for (const media of CODE.matchAll(/@media([^{]+)\{/g)) {
+      let depth = 1;
+      let index = media.index + media[0].length;
+      const start = index;
+      while (index < CODE.length && depth > 0) {
+        if (CODE[index] === '{') depth += 1;
+        else if (CODE[index] === '}') depth -= 1;
+        index += 1;
+      }
+      const block = CODE.slice(start, index);
+      const query = (media[1] as string).trim();
+      for (const rule of block.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+        if (!/display:\s*none/.test(rule[2] as string)) continue;
+        for (const selector of (rule[1] as string).split(',')) {
+          found.push({ selector: selector.trim(), query });
+        }
+      }
+    }
+    return found;
+  }
+
+  it('declares every element a breakpoint removes', () => {
+    const declared = new Set(DECLARED_REMOVALS.map((entry) => `${entry.selector}@${entry.query}`));
+    const undeclared = breakpointRemovals()
+      .map((entry) => `${entry.selector}@${entry.query}`)
+      .filter((key) => !declared.has(key));
+    expect(
+      [...new Set(undeclared)].sort(),
+      `removed at a breakpoint with no declared reason: ${undeclared.join(', ')}`,
+    ).toEqual([]);
+  });
+
+  it('keeps no stale entry in the removal list', () => {
+    const actual = new Set(breakpointRemovals().map((entry) => `${entry.selector}@${entry.query}`));
+    const stale = DECLARED_REMOVALS
+      .map((entry) => `${entry.selector}@${entry.query}`)
+      .filter((key) => !actual.has(key));
+    expect(stale, `declared removals that no longer exist and must be deleted: ${stale.join(', ')}`).toEqual([]);
+  });
+
+  it('never removes a posture carrier at any breakpoint', () => {
+    // These carry the read-only / loopback-only statements. Both were once on
+    // the removal side of a media query; neither may return there.
+    const posture = ['.sidebar-footer', '.read-only-tag', '.page-footer', '.scope-lock'];
+    const removed = breakpointRemovals().filter((entry) => posture.includes(entry.selector));
+    expect(
+      removed.map((entry) => `${entry.selector}@${entry.query}`),
+      'a posture carrier must never be display:none at a breakpoint',
+    ).toEqual([]);
+  });
+});

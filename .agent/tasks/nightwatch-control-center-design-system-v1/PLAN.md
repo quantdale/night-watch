@@ -71,16 +71,62 @@ and the type floor is invisible to a structural one.
 
 ## Milestones
 
-1. **G1 rebaseline and activation** (change tasks 1.1–1.5) — COMPLETE_LOCAL.
-2. **G2 token block and integrity guard** (2.1–2.7).
-3. **G3 literal-free stylesheet and scale usage** (3.1–3.6).
-4. **G4 type floor and the restyle it forces** (4.1–4.6).
-5. **G5 responsive truth** (5.1–5.7).
-6. **G6 interactive boundary contrast** (6.1–6.5).
-7. **G7 registration and validation** (7.1–7.7).
-8. **G8 certification** (8.1–8.7).
+### G1 — rebaseline and activation
 
-Sequencing constraints, which are not arbitrary:
+- **Status:** COMPLETE_LOCAL
+- Change tasks 1.1–1.5. Re-measure every audit figure at the live SHA, record
+  the contradictions rather than copying them, activate the task and claim the
+  owned session.
+
+### G2 — token block and integrity guard
+
+- **Status:** COMPLETE_LOCAL
+- Change tasks 2.1, 2.3–2.6. Declare colour, typography, spacing, radius,
+  elevation and motion; add `--border-interactive`; guard defined-ness and
+  fallback agreement; negative-probe. 2.2 and 2.7 are superseded — see
+  `## Decision Log`.
+
+### G3 — literal-free stylesheet and scale usage
+
+- **Status:** COMPLETE_LOCAL
+- Change tasks 3.1–3.6. The literal guard, a both-directions structural
+  exemption list, the unused-token check, the full conversion, and folding the
+  System Map block into the system.
+
+### G4 — type floor and the restyle it forces
+
+- **Status:** COMPLETE_LOCAL
+- Change tasks 4.1–4.6. The rendered floor guard in the browser lane, the type
+  scale applied, the micro-label default resolved, and the layouts the raised
+  floor broke reworked.
+
+### G5 — responsive truth
+
+- **Status:** COMPLETE_LOCAL
+- Change tasks 5.1–5.7. The declared breakpoint set, the viewport matrix over
+  every view, no-scroll and no-clip assertions, the declared removal list, and
+  the two posture repairs.
+
+### G6 — interactive boundary contrast
+
+- **Status:** COMPLETE_LOCAL
+- Change tasks 6.1–6.3, 6.5. Sole-affordance controls enumerated from the
+  rendered DOM and required to clear 3:1 against their real backdrop. 6.4
+  (focus indicators at every breakpoint) is carried — see `## Deferred Work`.
+
+### G7 — registration and validation
+
+- **Status:** COMPLETE_LOCAL
+- Change tasks 7.1–7.6. Suite registration, digest refresh, and the UI, root
+  and browser lanes green with no exemption list longer than before.
+
+### G8 — certification
+
+- **Status:** IN_PROGRESS
+- Change tasks 8.1–8.7. Differential gate and regression evidence, strict
+  OpenSpec validation, docs reconciled, integration, report and release.
+
+## Sequencing constraints
 
 - G4 must follow G3, or the restyle reintroduces literals G3 would reject.
 - G5 must follow G4, because the raised floor is what breaks the narrow
@@ -125,8 +171,15 @@ neither claimed nor engineered.
 
 ## Deferred Work
 
-- Tasks 2.2 and 2.7 are moot at this SHA and will be recorded as superseded
-  rather than ticked.
+- Tasks 2.2 and 2.7 are moot at this SHA and are recorded as superseded rather
+  than ticked: later work removed the three undefined tokens, so the repair
+  they describe is already made and claiming it would be false.
+- Task 6.4 — focus-ring contrast measured at every declared breakpoint — is
+  CARRIED. Focus is proven visible and reading-order correct by the keyboard
+  walk (repaired in this campaign), but that walk runs at one viewport.
+- Information architecture was not rebuilt. This campaign applied one system
+  across the existing composition and fixed the layout defects that surfaced;
+  it did not restructure Overview into a different cockpit or re-rank panels.
 
 ## Completion Criteria
 
