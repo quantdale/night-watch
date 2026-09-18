@@ -3,10 +3,10 @@
 Task ID: nightwatch-certification-closure-and-validation-integrity-v1
 Phase: CERTIFICATION_CLOSURE_AND_VALIDATION_INTEGRITY_V1
 Title: Certification closure and validation integrity
-Status: IN_PROGRESS
+Status: COMPLETE
 Task directory: .agent/tasks/nightwatch-certification-closure-and-validation-integrity-v1
 Starting SHA: 521210f706b9383e20dd08d1bfd2f3c47b34687d
-Last validated implementation SHA: a02b6315c089baeb74ccc5c526a556c9764be46a
+Last validated implementation SHA: b34da5f63395dce53f139665dd823711739381ef
 Last checkpoint: Milestones M1-M6 COMPLETE_LOCAL and certification GREEN at
 b34da5f6: gate:local PASS over 12 required groups, full regression 5249 passed
 / 0 failed / 18 skipped, OpenSpec 64/64. The focus matrix found and
@@ -30,19 +30,20 @@ while proving it: an unverified explicit `--base`, now failing closed before
 the first mutation, and a `withoutComments()` line-comment defect in the
 hardening kernel that silently deletes real code from every `read()`-based
 rule's view, carried into milestone M3.
-Current milestone: M7 — certification
-Next action: integrate by fast-forward, verify HEAD == origin/main, release the
-session, remove the owned worktree, and leave the canonical checkout clean.
+Current milestone: COMPLETE — all seven milestones closed and integrated
+Next action: TASK COMPLETE. The owner-gated production-completion items stay
+OPEN with the named owner action each requires; none is self-authorized here.
+`gate:clean` and CI lanes were not run and are not claimed.
 Owner decisions stay OPEN; none is self-authorized.
 Authorization class: CERTIFICATION_CLOSURE_AND_VALIDATION_INTEGRITY_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 521210f706b9383e20dd08d1bfd2f3c47b34687d
-LAST_VALIDATED_IMPLEMENTATION_SHA: a02b6315c089baeb74ccc5c526a556c9764be46a
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: a02b6315c089baeb74ccc5c526a556c9764be46a
+LAST_VALIDATED_IMPLEMENTATION_SHA: b34da5f63395dce53f139665dd823711739381ef
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: b34da5f63395dce53f139665dd823711739381ef
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
-PHASE_CERTIFICATION_CLOSURE_AND_VALIDATION_INTEGRITY_V1_STATUS: IN_PROGRESS
+PHASE_CERTIFICATION_CLOSURE_AND_VALIDATION_INTEGRITY_V1_STATUS: COMPLETE
 
 ## Mission
 
@@ -77,8 +78,8 @@ Do not rebuild unless live recon finds a concrete regression:
 ```
 CAMPAIGN: nightwatch-certification-closure-and-validation-integrity-v1
 CHILD TASK: NONE
-WAVE: G_CERTIFICATION
-SESSION WORKTREE: session/nightwatch-certification-closure-1f9ce403
+WAVE: COMPLETE
+SESSION WORKTREE: NONE
 
 IMPLEMENTATION AUTHORIZED:
   `bin/nightwatch-session.mjs`, `bin/lib/hardening/**`, `bin/quality-gate*.mjs`,

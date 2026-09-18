@@ -98,7 +98,7 @@ one owned session worktree, fast-forward integration, never force-push.
 
 ### M7 — certification
 
-- **Status:** IN_PROGRESS
+- **Status:** COMPLETE_LOCAL
 - Full validation at the campaign SHA; integrate by fast-forward; release the
   session; remove the worktree; leave the canonical checkout clean.
 

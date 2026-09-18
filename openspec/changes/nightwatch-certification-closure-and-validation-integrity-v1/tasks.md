@@ -211,5 +211,11 @@
       gate receipt `receipt:sha256:1348f070e0f09eec5aad8af6`, persisted outside
       the repository. The digest is computed from the definition at run time
       and was never transcribed, and no past receipt was edited.
-- [ ] G.3 Integrate by fast-forward, release the session, remove the worktree,
+- [x] G.3 Integrate by fast-forward, release the session, remove the worktree,
       leave the canonical checkout clean
+      — integrated by fast-forward at `789bddeb` with `HEAD == origin/main`
+      verified by the session CLI; `origin/main` never advanced during the
+      campaign, so no reconcile was needed. The session is released and its
+      worktree removed through the session CLI, and the canonical checkout is
+      clean. No other owner's session was adopted, edited or removed, and no
+      worktree capacity was created by removing one.

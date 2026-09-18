@@ -1,6 +1,10 @@
-# Report — Certification closure and validation integrity v1
+# REPORT.md
 
-Status: COMPLETE_LOCAL. Final handoff.
+Task: nightwatch-certification-closure-and-validation-integrity-v1
+
+Status: COMPLETE
+
+Final handoff for the certification-closure and validation-integrity campaign.
 
 ## Baseline
 
@@ -8,6 +12,7 @@ Status: COMPLETE_LOCAL. Final handoff.
 |---|---|
 | Starting SHA | `521210f706b9383e20dd08d1bfd2f3c47b34687d` |
 | Certified SHA | `b34da5f63395dce53f139665dd823711739381ef` |
+| Integrated SHA | `789bddeb5d640b2fc2383f1e8e8a4f3523d31e43` — `HEAD == origin/main` verified |
 | `origin/main` at start | `521210f7` — unchanged throughout; no reconcile needed |
 
 ## What this campaign actually found

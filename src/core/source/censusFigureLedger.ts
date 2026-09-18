@@ -287,7 +287,7 @@ export const GOVERNED_STATUS_KEYS: readonly GovernedStatusKey[] = Object.freeze(
   { key: 'POST_PHASE_9_ARCHITECTURE_DESIGN_STATUS', currentValue: 'COMPLETE', kind: 'PROJECT', establishedBy: 'docs/CURRENT_STATE.md current status table' },
   { key: 'NEXT_PHASE_STATUS', currentValue: 'DESIGNED_NOT_STARTED_NOT_AUTHORIZED', kind: 'PROJECT', establishedBy: 'docs/CURRENT_STATE.md current status table' },
   { key: 'POST_PHASE_10_ARCHITECTURE_DESIGN_STATUS', currentValue: 'COMPLETE', kind: 'PROJECT', establishedBy: 'docs/CURRENT_STATE.md current status table' },
-  { key: 'LIVE_TASK_STATUS', currentValue: 'IN_PROGRESS', kind: 'LIVE_STATE', establishedBy: 'docs/CURRENT_STATE.md nightwatch.live-state.v1' },
+  { key: 'LIVE_TASK_STATUS', currentValue: 'COMPLETE', kind: 'LIVE_STATE', establishedBy: 'docs/CURRENT_STATE.md nightwatch.live-state.v1' },
   { key: 'LIVE_PROJECT_COMPLETION_STATUS', currentValue: 'OPERATIONALLY_ACCEPTED', kind: 'LIVE_STATE', establishedBy: 'docs/CURRENT_STATE.md nightwatch.live-state.v1' },
   { key: 'LIVE_PROJECT_VERDICT_EFFECT', currentValue: 'PRESERVE', kind: 'LIVE_STATE', establishedBy: 'docs/CURRENT_STATE.md nightwatch.live-state.v1' },
   { key: 'VALIDATION_LANE_PROVEN_COUNT', currentValue: '9', kind: 'LANE_CLASS', establishedBy: 'config/validation-lane-state.v1.json', requiredInReadme: true },

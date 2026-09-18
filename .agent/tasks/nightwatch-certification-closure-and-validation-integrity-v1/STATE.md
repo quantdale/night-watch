@@ -4,17 +4,17 @@
 
 Task ID: nightwatch-certification-closure-and-validation-integrity-v1
 Phase: CERTIFICATION_CLOSURE_AND_VALIDATION_INTEGRITY_V1
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: 521210f706b9383e20dd08d1bfd2f3c47b34687d
-Branch: session/nightwatch-certification-closure-1f9ce403
-Last validated implementation SHA: a02b6315c089baeb74ccc5c526a556c9764be46a
+Branch: main
+Last validated implementation SHA: b34da5f63395dce53f139665dd823711739381ef
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 521210f706b9383e20dd08d1bfd2f3c47b34687d
-LAST_VALIDATED_IMPLEMENTATION_SHA: a02b6315c089baeb74ccc5c526a556c9764be46a
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: a02b6315c089baeb74ccc5c526a556c9764be46a
+LAST_VALIDATED_IMPLEMENTATION_SHA: b34da5f63395dce53f139665dd823711739381ef
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: b34da5f63395dce53f139665dd823711739381ef
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
-PHASE_CERTIFICATION_CLOSURE_AND_VALIDATION_INTEGRITY_V1_STATUS: IN_PROGRESS
+PHASE_CERTIFICATION_CLOSURE_AND_VALIDATION_INTEGRITY_V1_STATUS: COMPLETE
 
 ## Objective
 
@@ -24,10 +24,12 @@ Control Center design-system campaign, then certify truthfully. Full intent in
 
 ## Current Milestone
 
+COMPLETE — all seven milestones are closed and the work is integrated.
+
 Milestone ID: M7 — certification
-Milestone status: IN_PROGRESS
-What is being attempted: integrate by fast-forward, release the session, remove
-the owned worktree and leave the canonical checkout clean.
+Milestone status: COMPLETE
+What is being attempted: nothing further. The work is integrated at
+`789bddeb` with `HEAD == origin/main` verified.
 
 ## Completed Milestones
 
@@ -291,23 +293,22 @@ Recorded at `521210f7` before any change (see `PLAN.md` for the full list):
 
 ## Exact Next Action
 
-Integrate by fast-forward through the session flow, verify `HEAD ==
-origin/main`, release the session, remove the owned worktree from the canonical
-checkout, and confirm the canonical checkout is clean.
+TASK COMPLETE. No further action. The owner-gated production-completion items
+stay OPEN with the named owner action each requires, listed in `REPORT.md`;
+none is self-authorized here. `gate:clean` and CI lanes were not run and are
+not claimed.
 
 ## Resume Recipe
 
-1. Read `SPEC.md`, then `PLAN.md`, then this file.
-2. `npm run session:status`; this session is
-   `nightwatch-certification-closure-1f9ce403`. Adopt it if stale
-   (`claim --task nightwatch-certification-closure-and-validation-integrity-v1 --adopt`).
-3. Commit before running `hardening:rules`: the probe campaign restores files
-   from disk and would discard uncommitted work, including a guard under test.
-4. Continue the Exact Next Action. Owner-gated programme items stay OPEN.
+Task complete. Do not resume this campaign. The production-completion items it
+did not close are owner-gated and each is listed in `REPORT.md` with the named
+owner action it still requires; those are owner decisions, not a continuation
+of this work. `gate:clean` and the CI lanes were not run here and are not
+claimed.
 
 ## Work In Progress
 
-Milestone M7: integration, session release and worktree removal.
+NONE. The task is COMPLETE.
 
 ## Files Changed
 
@@ -370,4 +371,36 @@ section name inside this very section matching a scripted edit anchor.
 
 ## Completion Snapshot
 
-Not yet complete. Filled at closure.
+COMPLETE and integrated at `789bddeb`, with `HEAD == origin/main` verified and
+the session released through the session CLI.
+
+All seven milestones are closed. Certification is GREEN and real, not
+differential: `gate:local` PASS over all 12 required groups at `b34da5f6`, full
+offline regression 5249 passed / 0 failed / 18 skipped, strict OpenSpec 64
+passed / 0 failed. The campaign base carried 3 `SEMANTIC_COMPATIBILITY` and 6
+`campaign:synthetic` failures; both lanes are now zero.
+
+The green is also STRONGER than the gate could previously produce. The
+definition carries 12 required groups where it carried 11, and the added group
+executes the rule mutation campaign — so a green gate now means the 83
+hardening rules DETECT their violations, not merely that they ran.
+
+Delivered: a truthful `--dry-run` contract across all eight session commands,
+proven by a 13-case topology-snapshot suite; `hardening:rules` made
+gate-authoritative with the rot CLASS behind HC-015 closed by shared
+indirection; all 83 rule quantifiers audited with four TOTALITY rules repaired
+and the abandon-shape permanently detectable; the `ripple-api` admission moved
+to `4e3e200d` on derivation evidence rather than SHA substitution; and
+focus-ring contrast qualified across 9 views x 5 widths, which found 32 real
+defects invisible to every existing guard.
+
+Six defects were found that nothing was looking for: an unverified `--base`, a
+`withoutComments()` scanner deleting real code from every rule's view across 27
+files, a cross-guard contradiction that made `COMPLETE_LOCAL` unsatisfiable, a
+milestone rule that had silently skipped every `G<n>` campaign, and the two
+focus classes above.
+
+Seven guards added or repaired, every one negative-probed against real source
+and restored. Six production-completion tails closed against their exact
+recorded requirements; 55 items left open, each owner-gated and each listed
+with its named owner action.
