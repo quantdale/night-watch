@@ -209,7 +209,41 @@ routed wave. 12.4-12.12 remain open.
 
 ## Validation
 
-M0 only: `session:status` PASS.
+| Check | Result |
+|---|---|
+| `npm run typecheck` / `typecheck:bin` | PASS |
+| `npm run hardening:check` | PASS |
+| `npm run hardening:rules` | 83 rules / 94 probes / 94 detected / 0 undetected |
+| `npm run agent:check` | PASS |
+| `npm run handoff:check` | PASS |
+| `npm run project:check` | PASS |
+| `npm run workspace:check` / `session:check` | PASS |
+| `npm run validation:universe` | PASS |
+| **`npm run gate:local`** | **PASS — all 12 required groups**, `receipt:sha256:8c67ffb13a7920f44cfbd870` |
+| **`npm test`** | **5263 passed / 0 failed / 18 skipped** (15.0 min) |
+| OpenSpec strict validation | PASS for both changed changes |
+| `npm run gate:clean` | see below |
+
+Two gate failures occurred before the green run and both were diagnosed rather
+than retried blindly. `semanticCompatibility` and `synthetic-campaign` each
+failed by exactly one test that passed in isolation; killing the stale
+`opencode` processes left over from the provider probes made both suites green
+across repeated runs, so they were host contention. The third,
+`nw07ContinuityCoherence`, was a REAL defect in this campaign's own documents
+and is fixed — see below.
+
+### `gate:clean` — structurally unavailable while a session is live
+
+The clean lane fails at `HANDOFF_TRUTH` with
+`ACTIVE_TASK_SESSION_WORKTREE_MISSING`: `.agent/ACTIVE_TASK.md` declares the live
+session worktree, and a pristine clone has no worktree registrations at all, so
+the declaration can never be satisfied inside the clone. Reproduced directly
+with the clean gate's exact clone shape (`git clone --local --no-hardlinks`
+into `/tmp`, checked out `-B main <head>`).
+
+This is the documented closeout order, not a defect: the clean lane belongs
+AFTER integration and release, run from the canonical checkout once no session
+worktree is declared. It is recorded here rather than claimed.
 
 ## Safety
 
