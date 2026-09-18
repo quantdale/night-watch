@@ -6,7 +6,7 @@ Title: Nightwatch Control Center design system
 Status: COMPLETE
 Task directory: .agent/tasks/nightwatch-control-center-design-system-v1
 Starting SHA: efd1dc5c81a55db00e7698257c8b49b51a6703c5
-Last validated implementation SHA: 2f45cfc4d74139d4f291b043d27942d66c4d8b38
+Last validated implementation SHA: 1fc8eb6d4cd2cde22d6c65647538123d0457af26
 Last checkpoint: G1–G7 complete. The Control Center has one design system
 applied across all nine views, with its integrity mechanically enforced: 53
 tokens (was 18), zero colour literals outside the token block (was 54 distinct
@@ -27,8 +27,8 @@ Authorization class: CONTROL_CENTER_DESIGN_SYSTEM_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: efd1dc5c81a55db00e7698257c8b49b51a6703c5
-LAST_VALIDATED_IMPLEMENTATION_SHA: 2f45cfc4d74139d4f291b043d27942d66c4d8b38
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 2f45cfc4d74139d4f291b043d27942d66c4d8b38
+LAST_VALIDATED_IMPLEMENTATION_SHA: 1fc8eb6d4cd2cde22d6c65647538123d0457af26
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 1fc8eb6d4cd2cde22d6c65647538123d0457af26
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PHASE_CONTROL_CENTER_DESIGN_SYSTEM_V1_STATUS: COMPLETE
