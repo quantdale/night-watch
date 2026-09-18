@@ -43,7 +43,14 @@ condition — at a committed SHA before any unknown-arm execution begins.
 
 ## Completed Milestones
 
-- M2 strict historical `EXACT_REDISCOVERY` arm COMPLETE under frozen definition
+- **M4 COMPLETE** — unknown-yield campaign definition frozen at `46d32d3e`,
+  fingerprint `sha256:6145bd666dd08369ec38b018`, after the historical arm closed
+  and before any unknown-arm execution. Binds all eight repository SHAs, four
+  runs, HOUR_1 budgets, the stopping condition, permitted reproduction classes,
+  the unchanged admission rule and the previously-unknown classification
+  vocabulary.
+
+- **M2 COMPLETE** — strict historical `EXACT_REDISCOVERY` arm under frozen definition
   `sha256:824deef9922975feab5af69f`. 14/14 cases attempted and evaluated in 66.8
   min over 78 reasoner calls; 0 `ENVIRONMENT_BLOCKED`; 13 substantive scored, 1
   negative control. **EXACT = 0, exact rate 0/13 = 0.00.** 10 near matches, 4
@@ -51,7 +58,7 @@ condition — at a committed SHA before any unknown-arm execution begins.
   `MISSING_REPRODUCTION`, 0 false positives, 0 leakage events across 78 audited
   request blobs. Per-case dispositions are in REPORT.md and
   `evidence/historical-arm-result.json`.
-- M3 miss analysis COMPLETE. `testMatch` is false in 13/13 substantive cases and
+- **M3 COMPLETE** — miss analysis. `testMatch` is false in 13/13 substantive cases and
   is the only universally failing condition: 9 cases reached file recall 1.00
   and 5 cleared both recall thresholds, failing EXACT solely on the unnamed
   hidden test. Mechanically established: the hidden `knownFailingTest` appears
@@ -64,25 +71,25 @@ condition — at a committed SHA before any unknown-arm execution begins.
   enforces. Recorded as a measured limit; EXACT was NOT weakened and no near
   match was promoted. Classified as a benchmark-reachability result, not a
   Nightwatch framework defect, and not a model-efficacy repair target.
-- M1 evaluation freeze COMPLETE and committed at `eeceec8e`, BEFORE the first
+- **M1 COMPLETE** — evaluation freeze committed at `eeceec8e`, BEFORE the first
   provider evaluation. `evaluation-freeze.historical.json` fixes provider,
   corpus membership, negative controls, budgets, the unchanged EXACT
   definition, near-match distance, the reproduction requirement, the leakage
   rule, the admission rule and the `ENVIRONMENT_BLOCKED` denominator rule;
   fingerprint `sha256:824deef9922975feab5af69f`.
-- M7 leakage-checker canary proof COMPLETE at `92862aca`: all six hidden fields
+- **M7 COMPLETE** — leakage-checker canary proof at `92862aca`: all six hidden fields
   are caught when deliberately planted, a multi-field leak reports all six, the
   same blobs without the plant are clean, real fixture visible contexts carry
   none of their own hidden truth, and an empty hidden field manufactures
   neither a false clean nor a false leak. 5 tests PASS.
-- M8 (partial) freeze-integrity and arm-refusal proofs COMPLETE at `92862aca`:
+- **M8 PARTIAL** — freeze-integrity and arm-refusal proofs at `92862aca`:
   the freeze fingerprint is pinned, the frozen EXACT thresholds are asserted
   equal to the live scoring constants, the case counts must add up, the
   provider selection shape is asserted first-pass (earlier entries ABSENT,
   later entries NOT_PROBED), and the arm runner refuses both an unfrozen model
   and an unconfigured provider with exit 2 before any provider call. 9 tests
   PASS.
-- M0 provider/toolchain/repository preflight COMPLETE. Toolchain: Node
+- **M0 COMPLETE** — provider/toolchain/repository preflight. Toolchain: Node
   v22.22.1, Go 1.25.3, Git 2.43.0, bubblewrap 0.9.0, opencode CLI 1.18.31.
   Provider selection rule declared before probing; `opencode-go/omen-alpha`
   confirmed ABSENT from the current 341-entry model list; `opencode-go/glm-5.3`

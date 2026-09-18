@@ -60,10 +60,7 @@ investigation completes. The unknown arm runs the ordinary
   reproduction-capable target; historical corpus available; mechanical
   admission path available; leakage guard green; hardening/gate baseline green.
 - Validation: census script, structured reasoner probe, `session:status`.
-- Status: COMPLETE — recorded in SPEC.md. Provider `opencode-go/glm-5.3`
-  selected by a rule declared before probing; 8/8 repositories CURRENT; 1,120
-  executable files / 152 distinct targets; historical corpus 9 fixture cases
-  (1 negative control) + 5 EXACT-eligible mined cases.
+- **Status:** COMPLETE
 
 ### M1 — Freeze the evaluation before running it
 
@@ -74,7 +71,7 @@ investigation completes. The unknown arm runs the ordinary
   requirement, leakage rule, admission rule and `ENVIRONMENT_BLOCKED`
   denominator rule are all committed; the campaign fingerprint binds them; a
   widened resume fails closed.
-- Status: NOT_STARTED
+- **Status:** COMPLETE
 
 ### M2 — Strict historical EXACT_REDISCOVERY
 
@@ -83,7 +80,7 @@ investigation completes. The unknown arm runs the ordinary
 - Acceptance criteria: EXACT definition unweakened; near matches record
   distance and never promote; negative controls included; per-case
   `ENVIRONMENT_BLOCKED` recorded and excluded from numerator and denominator.
-- Status: NOT_STARTED
+- **Status:** COMPLETE
 
 ### M3 — Analyze without overfitting
 
@@ -91,13 +88,13 @@ investigation completes. The unknown arm runs the ordinary
   results from Nightwatch harness defects.
 - Acceptance criteria: no prompt/model tuning to lift EXACT; any harness repair
   reruns the full frozen arm and reports BEFORE and AFTER.
-- Status: NOT_STARTED
+- **Status:** COMPLETE
 
 ### M4 — Freeze the previously-unknown-defect campaign
 
 - Objective: commit repository set, SHAs, budgets, stopping condition before
   execution.
-- Status: NOT_STARTED
+- **Status:** COMPLETE
 
 ### M5 — Run the owner-local unknown-yield campaign
 
@@ -105,38 +102,38 @@ investigation completes. The unknown arm runs the ordinary
   under host-owned `--repository` scope, across a materially wider slice.
 - Acceptance criteria: mechanical admission only; `MISSING_REPRODUCTION`
   preserved; no new proof class; no synthesized evidence refs.
-- Status: NOT_STARTED
+- **Status:** BLOCKED
 
 ### M6 — Yield accounting
 
 - Objective: derive all metrics mechanically; state every denominator.
-- Status: NOT_STARTED
+- **Status:** NOT_STARTED
 
 ### M7 — Leakage and anti-cheating audit
 
 - Objective: inspect every reasoner-visible request blob for historical runs;
   prove the leakage checker live with canaries.
 - Acceptance criteria: leakage 0, or `LEAKAGE_DETECTED` and no yield published.
-- Status: NOT_STARTED
+- **Status:** COMPLETE
 
 ### M8 — Adversarial / resilience checks
 
 - Objective: prove widened-resume, changed-budget, changed-provider,
   changed-corpus, missing-reproduction, forged-evidence, fabricated-count,
   unsupported-scope, malformed-output and timeout behaviours all fail closed.
-- Status: NOT_STARTED
+- **Status:** PARTIAL
 
 ### M9 — Repair only evidence-found Nightwatch defects
 
 - Objective: preserve evidence, reproduce in a focused regression, fix
   minimally, rerun focused proof and any affected arm.
-- Status: NOT_STARTED
+- **Status:** NOT_STARTED
 
 ### M10 — Group 12 closure, validation, integration, release
 
 - Objective: close 12.1-12.12 against live wording; update governed surfaces;
   full validation; integrate; release.
-- Status: NOT_STARTED
+- **Status:** NOT_STARTED
 
 ## Validation Strategy
 
