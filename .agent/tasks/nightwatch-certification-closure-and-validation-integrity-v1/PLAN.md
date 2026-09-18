@@ -51,14 +51,14 @@ one owned session worktree, fast-forward integration, never force-push.
 
 ## Milestones
 
-### A — session `--dry-run` contract
+### M1 — session `--dry-run` contract
 
 - **Status:** COMPLETE_LOCAL
 - Audit every command that can receive `--dry-run`; classify each; make the
   public contract truthful; prove zero mutation adversarially with a
   before/after topology snapshot; negative-probe the regression.
 
-### B — `hardening:rules` becomes gate-authoritative
+### M2 — `hardening:rules` becomes gate-authoritative
 
 - **Status:** COMPLETE_LOCAL
 - Repair the rotted HC-015 probe and the rot CLASS behind it. Add a required
@@ -67,7 +67,7 @@ one owned session worktree, fast-forward integration, never force-push.
   validation-universe classification, receipts, and the gate-definition
   completeness tests. Prove restore-cleanliness and vacuity failure.
 
-### C — G16.5 rule-quantifier audit
+### M3 — G16.5 rule-quantifier audit
 
 - **Status:** COMPLETE_LOCAL
 - Classify all 83 rules; verify declared quantifier against implementation;
@@ -76,27 +76,27 @@ one owned session worktree, fast-forward integration, never force-push.
   the `withoutComments` line-comment defect found in A; adversarial
   multi-failure proof.
 
-### D — `ripple-api` re-derivation and re-admission
+### M4 — `ripple-api` re-derivation and re-admission
 
-- **Status:** IN_PROGRESS
+- **Status:** COMPLETE_LOCAL
 - Measure live source read-only; classify every `27bb007a` occurrence;
   re-derive the four admitted recipes; re-admit on evidence; keep historical
   records historical; negative-probe currentness.
 
-### E — Control Center focus-ring qualification
+### M5 — Control Center focus-ring qualification
 
-- **Status:** NOT_STARTED
+- **Status:** IN_PROGRESS
 - Carried task 6.4 only. Focus-ring contrast at every declared width across all
   nine views or a mechanically proven carrier set; computed styles, not source
   constants; negative-probe the token.
 
-### F — production-completion tail closure
+### M6 — production-completion tail closure
 
 - **Status:** NOT_STARTED
 - Close only items whose exact remaining requirement is validation,
   integration or release evidence, each with its own evidence.
 
-### G — certification
+### M7 — certification
 
 - **Status:** NOT_STARTED
 - Full validation at the campaign SHA; integrate by fast-forward; release the

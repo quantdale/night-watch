@@ -110,18 +110,43 @@
 
 ## D. `ripple-api` re-derivation and re-admission
 
-- [ ] D.1 Measure the live sibling SHA read-only; record dirty state without
+- [x] D.1 Measure the live sibling SHA read-only; record dirty state without
       altering it
-- [ ] D.2 Classify every `27bb007a` occurrence as CURRENT_SOURCE_AUTHORITY,
+      — HEAD `4e3e200db3bda7b58bc250feb7f76997d95ae2cc` on `master`, 31 commits
+      after the admitted `27bb007a`, which is a clean ancestor. One
+      pre-existing untracked file (`AGENTS.md`), not ours, observed and left
+      exactly as found. Only `rev-parse`, `cat-file`, `archive`, `diff`,
+      `status` and `log` were used.
+- [x] D.2 Classify every `27bb007a` occurrence as CURRENT_SOURCE_AUTHORITY,
       HISTORICAL_RECORD, SYNTHETIC_FIXTURE_PROVENANCE, STALE_CURRENT_REFERENCE
       or OTHER; never global-search-replace the SHA
-- [ ] D.3 Re-derive each admitted expectation from current source with the
+      — 4 CURRENT_SOURCE_AUTHORITY moved forward; 2 STALE_CURRENT_REFERENCE
+      rebound to the authority instead of re-pinned; everything else left
+      historical or synthetic. Full table in `audit.md`.
+- [x] D.3 Re-derive each admitted expectation from current source with the
       existing machinery and compare mechanically
-- [ ] D.4 Re-admit on evidence, or retire through the existing lifecycle, or
+      — `deriveRealSourceExpectations` run at BOTH snapshots (the old one from
+      a disposable `git archive` extraction, content-verified byte-for-byte
+      against the sibling's old tree). 4 derived / 0 failures at each,
+      identical invariant definitions, and IDENTICAL `ev:sha256` evidence
+      digests. Verdict SEMANTICALLY_STABLE.
+- [x] D.4 Re-admit on evidence, or retire through the existing lifecycle, or
       stop with a precise blocker if ambiguous
-- [ ] D.5 Reproduce the base failing set, then prove it resolved for the right
+      — re-admitted. No expectation changed, was removed, or was ambiguous, so
+      no retirement was needed. The recipe registry header records the
+      re-admission ADDITIVELY beside the original and Phase 10A entries.
+- [x] D.5 Reproduce the base failing set, then prove it resolved for the right
       reason; negative-probe currentness
-- [ ] D.6 Confirm the sibling repository is unchanged
+      — reproduced exactly: 3 SEMANTIC_COMPATIBILITY failures
+      (`oracleExpectationRealSource:63`, `phase12CoverageInventory:344`,
+      `realSourceCanary:86`) plus the C-0x set. All now pass; the
+      SEMANTIC_COMPATIBILITY lane is 2127 total / 2114 passed / 13 skipped /
+      0 failed. Negative probe: restoring the old SHA fails exactly those
+      three again, so the currentness checks still fail closed.
+- [x] D.6 Confirm the sibling repository is unchanged
+      — HEAD, branch and `git status` identical before and after. The reflog's
+      most recent entry is the owner's own earlier checkout from `27bb007a` to
+      `master`, which is the drift this campaign was authorized to admit.
 
 ## E. Control Center focus-ring qualification (carried task 6.4)
 

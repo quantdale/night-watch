@@ -20,8 +20,16 @@ import { createSiblingSourceAccess } from '../../src/core/source/siblingSource';
 import { createRealSourceScanConfig } from '../../src/core/source/scan';
 import { analyzeSourceSurfacesIntoPhase24, discoverSourceSurfaces } from '../../src/core/source/surfaces';
 import { PIPELINE_DEFAULT_CONFIG_LINES, installReadOnlyPipeline } from '../helpers/phpPipelineFixture';
+import { PHASE5_SOURCE_SHAS } from '../../src/api/phase5/catalog';
 
-const SOURCE_SHA = '27bb007ad0c798800b6bd3b29760c966422966e7';
+/**
+ * The fixture repository stands in for source AT THE CURRENTLY ADMITTED
+ * snapshot, so its SHA comes from the one current-source authority. As a
+ * literal it was a second authority: when the admitted snapshot moved, the
+ * runtime binding reported SOURCE_VERSION_MISMATCH for drift that did not
+ * exist, and every derived candidate became ineligible.
+ */
+const SOURCE_SHA = PHASE5_SOURCE_SHAS.rippleApi;
 
 function setup(): string {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-phase25-campaign-'));

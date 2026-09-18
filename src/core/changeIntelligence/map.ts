@@ -21,9 +21,9 @@ export const RIPPLE_REPOSITORIES: readonly RepoDefinition[] = [
     repoId: 'mobingilabs/ripple-api',
     productRole: 'Legacy Ripple HTTP API',
     scope: 'IN_SCOPE',
-    checkedOutSha: '27bb007ad0c798800b6bd3b29760c966422966e7',
+    checkedOutSha: '4e3e200db3bda7b58bc250feb7f76997d95ae2cc',
     trackingRef: 'origin/master',
-    sourceMapSha: '27bb007ad0c798800b6bd3b29760c966422966e7',
+    sourceMapSha: '4e3e200db3bda7b58bc250feb7f76997d95ae2cc',
     readOnlyOnly: true,
   },
   {

@@ -6,7 +6,7 @@ import {
 
 export const PHASE5_SOURCE_SHAS = Object.freeze({
   rippleUi: 'd80b161b684d9153c7e5acaa65ae1752d93d8ba9',
-  rippleApi: '27bb007ad0c798800b6bd3b29760c966422966e7',
+  rippleApi: '4e3e200db3bda7b58bc250feb7f76997d95ae2cc',
   ouchan: '565f00a87fb7616cc23c45d4ffeabee38a41c65f',
   blueapi: '691422e5dc81afd263d064986fb50fcb3ea432a9',
   blueSdkGo: '8883ee3d3a073352626c8c35e20e9fc5ed765373',

@@ -143,3 +143,56 @@ encodes the wrong quantifier is how the class returns.
 | `checkRootOutputRootOwnership` | `workspace-and-layout` | ephemeral-layout | TOTALITY | — |
 | `checkRootOutputConfigLiteral` | `workspace-and-layout` | ephemeral-layout | TOTALITY | — |
 | `checkRuleEngineSoundness` | `rule-engine` | rule-engine | TOTALITY | — |
+
+# `ripple-api` re-admission — occurrence classification
+
+Admitted before: `27bb007ad0c798800b6bd3b29760c966422966e7`
+Admitted now:    `4e3e200db3bda7b58bc250feb7f76997d95ae2cc`
+Measured live at campaign start; `27bb007a` is a clean ancestor, 31 commits back.
+
+## Why this is a re-derivation and not a SHA substitution
+
+All four admitted recipes were derived through `deriveRealSourceExpectations`
+at BOTH snapshots and compared. The old snapshot came from a disposable
+`git archive` extraction whose four recipe source files were verified
+byte-for-byte against the sibling's old tree; the sibling itself was never
+checked out, reset or written.
+
+| | old `27bb007a` | new `4e3e200d` |
+|---|---|---|
+| recipes | 4 | 4 |
+| derived | 4 | 4 |
+| failures | 0 | 0 |
+
+Every derived expectation is identical across the move — same expectation id,
+same invariant definitions, and the **same `ev:sha256` evidence digest**, which
+binds the normalized source structure used to derive. Independently:
+`ExchangeRate.php` (`636415c3`), `Account.php` (`357b1403`) and
+`BillingGroup.php` (`27df7526`) are byte-identical across the two SHAs, and the
+only changed recipe input, `Routing.yaml`, gained exactly seven lines — a
+`checkpassword: true` on the `password` anchor and a `validate:` block on the
+`updateUserPassword` route. Neither touches any of the four admitted routes.
+
+Verdict: **SEMANTICALLY_STABLE**.
+
+## Classification
+
+| Occurrence | Class | Action |
+|---|---|---|
+| `src/api/phase5/catalog.ts` `PHASE5_SOURCE_SHAS.rippleApi` | CURRENT_SOURCE_AUTHORITY | moved forward — the single authority every other live surface derives from |
+| `src/core/changeIntelligence/map.ts` `checkedOutSha` / `sourceMapSha` | CURRENT_SOURCE_AUTHORITY | moved forward WITH the catalog; `evaluateApiLineage` compares the two, so moving one alone would manufacture a staleness that does not exist |
+| `src/products/ripple/explorationCatalog.ts` `RIPPLE_EXPLORATION_API_SOURCE_SHA` | CURRENT_SOURCE_AUTHORITY | moved forward |
+| `src/data/phase6/catalog.ts` provenance | CURRENT_SOURCE_AUTHORITY | already derives from `PHASE5_SOURCE_SHAS`; moved automatically |
+| `tests/unit/phase12CoverageInventory.test.ts` `checkCanonicalUnchanged()` | STALE_CURRENT_REFERENCE | rebound to `PHASE5_SOURCE_SHAS.rippleApi` rather than re-pinned, and its hard-coded absolute sibling path replaced by the standard root resolution |
+| `tests/unit/phase25SurfaceDiscovery.test.ts` `RIPPLE_API_SHA` | STALE_CURRENT_REFERENCE | rebound to the authority; the fixture represents source AT the admitted snapshot, and the literal made the runtime binding report `SOURCE_VERSION_MISMATCH` for drift that did not exist |
+| `src/oracles/expectations/recipes/registry.ts` header | HISTORICAL_RECORD | left intact; the re-admission is recorded ADDITIVELY beside the original and Phase 10A entries |
+| `src/products/ripple/journeyContracts.ts` `sourceEvidence` labels (6) | HISTORICAL_RECORD | unchanged. The evidence genuinely was gathered at `27bb007`, and the two files it names are byte-identical at the new snapshot, so the record stays true without being rewritten |
+| `tests/unit/phase12CoverageInventory.test.ts` G01 `historicalPin` | HISTORICAL_RECORD | unchanged ON PURPOSE — the assertion is ABOUT the historical value, so binding it to the live authority would make it vacuous |
+| `corpus/phase6/*.json` `sourceSHA` / `sourceProvenance` | HISTORICAL_RECORD | unchanged; read only for structural assertions, never as a currentness authority |
+| `corpus/phase9a1/source/repo-a/**` | SYNTHETIC_FIXTURE_PROVENANCE | unchanged; these declare themselves structural mirrors, and a synthetic fixture never carries real-source authority |
+| `tests/helpers/sourceParity.ts` `SOURCE_PARITY_SHA` | SYNTHETIC_FIXTURE_PROVENANCE | unchanged; declared in-source as a synthetic identity |
+| `tests/unit/phase25*`, `phase26*`, `sourceInventory*`, `sourceOperation*`, `c06PhpReadOnlyProof`, `nw05RelayDeadline`, `phase5Api` synthetic operation | SYNTHETIC_FIXTURE_PROVENANCE | unchanged; self-contained fixtures with no runtime-binding coupling, each verified still passing |
+| `docs/**`, `.agent/tasks/**`, `openspec/changes/archive/**` | HISTORICAL_RECORD | unchanged. Current-source truth moves forward; historical evidence stays historical |
+
+No occurrence was changed by a global search and replace. Each was traced to
+what reads it before being moved or left.

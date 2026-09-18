@@ -21,6 +21,8 @@ import {
 } from '../../src/oracles/expectations/recipes/registry';
 import type { RealSourceCurrentness, RealSourceReader } from '../../src/oracles/expectations/recipes/types';
 import { createRealSourceSyntheticState } from '../helpers/phase11a3Fixtures';
+import { PHASE5_SOURCE_SHAS } from '../../src/api/phase5/catalog';
+import { DEFAULT_SIBLING_ROOT } from '../../src/core/source/siblingSource';
 
 const DISPOSABLE_SNAPSHOT_SHA = 'e026c85522d201724033f024456da3efa17fe07a';
 const DISPOSABLE_ROOT = '/tmp/nightwatch-ripple-snapshot-e026c855';
@@ -91,18 +93,30 @@ function tryLiveInventory(): ReturnType<typeof buildCoverageInventory> | null {
   });
 }
 
+/**
+ * Is the canonical sibling checkout still at the ADMITTED snapshot?
+ *
+ * The expected SHA is read from `PHASE5_SOURCE_SHAS.rippleApi`, the one
+ * current-source authority, rather than repeated as a literal. The literal
+ * form was a second, independent authority: when the sibling advanced and the
+ * admission moved forward with it, this copy stayed behind and reported a
+ * mutation that had not happened.
+ *
+ * The sibling root is resolved the way every other sibling-reading test
+ * resolves it, so no machine-specific absolute path is embedded here.
+ */
 function checkCanonicalUnchanged(): boolean | null {
-  // Check canonical sibling HEAD unchanged (should be 27bb007a per Phase 5 pin)
-  const sibHeadPath = '/home/dalepalaca/go/src/alphaus-main/REPOSITORIES/mobingilabs/ripple-api/.git/HEAD';
+  const root = process.env['NIGHTWATCH_SIBLING_ROOT']?.trim() || DEFAULT_SIBLING_ROOT;
+  const sibHeadPath = path.join(root, 'mobingilabs/ripple-api/.git/HEAD');
   try {
     const head = fs.readFileSync(sibHeadPath, 'utf8').trim();
     if (head.startsWith('ref:')) {
       const ref = head.replace(/^ref:\s*/, '');
       const sibGitDir = path.join(path.dirname(sibHeadPath), ref);
       const sha = fs.readFileSync(sibGitDir, 'utf8').trim();
-      return sha === '27bb007ad0c798800b6bd3b29760c966422966e7';
+      return sha === PHASE5_SOURCE_SHAS.rippleApi;
     }
-    return head === '27bb007ad0c798800b6bd3b29760c966422966e7';
+    return head === PHASE5_SOURCE_SHAS.rippleApi;
   } catch {
     return null;
   }
@@ -323,7 +337,9 @@ test.describe('Phase 12 WORKSTREAM_D: fresh source (owner-local)', () => {
     // SHA. In CI where network is unavailable, fall back to synthetic proof.
     const expectedRemote = KNOWN_REMOTE_MASTER_SHA;
     expect(expectedRemote).toMatch(/^[0-9a-f]{40}$/);
-    // Historical pin must not be labeled current
+    // The historical Phase 5 pin must never be labeled as the current remote.
+    // It stays a literal ON PURPOSE: this assertion is ABOUT the historical
+    // value, so binding it to the live authority would make it vacuous.
     const historicalPin = '27bb007ad0c798800b6bd3b29760c966422966e7';
     expect(expectedRemote).not.toBe(historicalPin);
   });

@@ -37,10 +37,18 @@ import { buildReadOnlyProof, readOnlyClassificationFromProof } from '../../src/c
 import { createRealSourceScanConfig } from '../../src/core/source/scan';
 import { createSiblingSourceAccess } from '../../src/core/source/siblingSource';
 import { discoverSourceSurfaces, type SourceSurfaceDiscovery } from '../../src/core/source/surfaces';
+import { PHASE5_SOURCE_SHAS } from '../../src/api/phase5/catalog';
 import { pureReadClosure, resolvedEmptyPipeline } from '../helpers/readOnlyProofFixtures';
 
 /** The catalog SHA the historical eleven-row admissions were recorded at. */
-const RIPPLE_SHA = '27bb007ad0c798800b6bd3b29760c966422966e7';
+/**
+ * The fixture repository stands in for source AT THE CURRENTLY ADMITTED
+ * snapshot, so its SHA comes from the one current-source authority. As a
+ * literal it was a second authority: when the admitted snapshot moved, the
+ * runtime binding reported SOURCE_VERSION_MISMATCH for drift that did not
+ * exist, and every derived candidate became ineligible.
+ */
+const RIPPLE_SHA = PHASE5_SOURCE_SHAS.rippleApi;
 
 // ---------------------------------------------------------------------------
 // Synthetic repository fixture

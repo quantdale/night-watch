@@ -10,8 +10,18 @@ import { createRealSourceScanConfig } from '../../src/core/source/scan';
 import { analyzeSourceSurfacesIntoPhase24, discoverSourceSurfaces, toPhase24CandidateInput } from '../../src/core/source/surfaces';
 import { buildSourceReviewQueue, explainSourceSurface } from '../../src/core/source/review';
 import { PIPELINE_DEFAULT_CONFIG_LINES, installReadOnlyPipeline } from '../helpers/phpPipelineFixture';
+import { PHASE5_SOURCE_SHAS } from '../../src/api/phase5/catalog';
 
-const RIPPLE_API_SHA = '27bb007ad0c798800b6bd3b29760c966422966e7';
+/**
+ * The fixture repository stands in for source AT THE CURRENTLY ADMITTED
+ * snapshot, so its SHA is read from the one current-source authority rather
+ * than repeated as a literal. The literal form was a second authority: when
+ * the admitted snapshot moved forward, this copy stayed behind and the
+ * runtime binding became SOURCE_VERSION_MISMATCH for a drift that did not
+ * exist. The deliberate-drift case below pins its own distinct SHA and is
+ * unaffected.
+ */
+const RIPPLE_API_SHA = PHASE5_SOURCE_SHAS.rippleApi;
 
 function tempRoot(): string {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-phase25-surfaces-'));

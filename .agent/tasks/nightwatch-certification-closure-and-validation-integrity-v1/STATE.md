@@ -24,15 +24,14 @@ Control Center design-system campaign, then certify truthfully. Full intent in
 
 ## Current Milestone
 
-Milestone ID: D — `ripple-api` re-derivation and re-admission
+Milestone ID: M5 — Control Center focus-ring qualification
 Milestone status: IN_PROGRESS
-What is being attempted: classify every `27bb007a` occurrence, re-derive the
-four admitted recipes against the current sibling snapshot, and re-admit on
-evidence.
+What is being attempted: carried task 6.4 only — focus-ring contrast at every
+declared width, measured from computed styles.
 
 ## Completed Milestones
 
-- **A COMPLETE_LOCAL — session `--dry-run` contract.** Root cause: `--dry-run`
+- **M1 COMPLETE_LOCAL — session `--dry-run` contract.** Root cause: `--dry-run`
   is a single global boolean (`parseArgs`, default at `:544`, set at `:559`)
   that exactly ONE command read — `commandIntegrate` at `:422`. `start`,
   `claim`, `release`, `reconcile` and `remove` all mutate and silently ignored
@@ -75,7 +74,7 @@ evidence.
   and `hardening:check` PASS. No session artefact leaked: the tests run against
   disposable fixtures under the test's own temporary directory.
 
-- **B COMPLETE_LOCAL — `hardening:rules` is gate-authoritative.** The campaign
+- **M2 COMPLETE_LOCAL — `hardening:rules` is gate-authoritative.** The campaign
   was dead code: a declared npm script no gate group, lane, validation-universe
   class or CI workflow selected. It was also already RED — HC-015 UNDETECTED —
   and nothing noticed, which is the whole blind spot in one line.
@@ -110,7 +109,7 @@ evidence.
   restored=81 statusUnchanged=true`, exit 0. Gate definition digest at this
   checkpoint: `sha256:c85f42c58db95b81865b011600086eb6db854886ca652dd57d572a7475ad101e`.
 
-- **C COMPLETE_LOCAL — G16.5 rule-quantifier audit.** All 83 rules classified
+- **M3 COMPLETE_LOCAL — G16.5 rule-quantifier audit.** All 83 rules classified
   and mechanically verified: 60 TOTALITY, 23 EXISTENCE, 21 carrying a recorded
   `firstMatch` singleton justification. The full table is generated from the
   live registry into the change's `audit.md`. The two-value vocabulary is the
@@ -137,7 +136,7 @@ evidence.
   the first brace-matching form false-positived on a `return` in a top-level
   try/catch.
 
-  The `withoutComments()` defect carried from milestone A is repaired: it
+  The `withoutComments()` defect carried from milestone M1 is repaired: it
   stripped block comments with a regex BEFORE line comments, so a `//` comment
   containing a block-comment opener deleted real code up to the next closer
   from the view every `read()`-based rule sees. 27 tracked files contain such a
@@ -151,6 +150,42 @@ evidence.
   invalid, both reported. Negative-probed: restoring the early exit fails the
   multi-failure case. New probes HC-092 and HC-093, each verified to raise its
   OWN error code rather than merely a non-zero exit.
+
+- **M4 COMPLETE_LOCAL — `ripple-api` re-derivation and re-admission.** The
+  admitted snapshot moves from `27bb007a` to
+  `4e3e200db3bda7b58bc250feb7f76997d95ae2cc`, 31 commits later, on evidence.
+
+  This was a fresh derivation, not a SHA rebinding. All four recipes were
+  derived through `deriveRealSourceExpectations` at BOTH snapshots and
+  compared: 4 derived / 0 failures at each, identical invariant definitions,
+  and IDENTICAL `ev:sha256` evidence digests — the digest binds the normalized
+  source structure used to derive, so equality is a statement about the source,
+  not about the label. The old snapshot came from a disposable `git archive`
+  extraction whose four recipe source files were verified byte-for-byte against
+  the sibling's old tree. Independently, `ExchangeRate.php`, `Account.php` and
+  `BillingGroup.php` are byte-identical across the move, and `Routing.yaml`
+  gained exactly seven lines, on the `password` anchor and the
+  `updateUserPassword` route — none of the four admitted routes. Verdict
+  SEMANTICALLY_STABLE.
+
+  Every `27bb007a` occurrence was traced to what reads it before being moved or
+  left; nothing was global-search-replaced. Four CURRENT_SOURCE_AUTHORITY
+  surfaces moved forward together — `catalog.ts` and
+  `changeIntelligence/map.ts` MUST move together, because
+  `evaluateApiLineage` compares one against the other and moving one alone
+  manufactures a staleness that does not exist. Two STALE_CURRENT_REFERENCES
+  were REBOUND to the authority rather than re-pinned, so they cannot go stale
+  independently again: `checkCanonicalUnchanged()` (which also carried a
+  hard-coded absolute sibling path) and the `phase25SurfaceDiscovery` fixture
+  SHA. Historical records, synthetic fixtures and the journey `sourceEvidence`
+  labels stay as they are.
+
+  Result: the recorded 9-test failing set is gone for the right reason. The
+  SEMANTIC_COMPATIBILITY lane is 2127 total / 2114 passed / 13 skipped / 0
+  failed, was 3 failed. Negative probe: restoring the old SHA fails exactly the
+  three currentness tests again. The sibling repository is untouched — HEAD,
+  branch and `git status` identical before and after, and the reflog's newest
+  entry is the owner's own earlier checkout.
 
 ## Measured Baseline
 
@@ -179,10 +214,10 @@ Recorded at `521210f7` before any change (see `PLAN.md` for the full list):
 
 ## Exact Next Action
 
-Classify every `27bb007a` occurrence in the repository, re-derive the four
-admitted `ripple-api` recipes against the current sibling snapshot
-`4e3e200db3bda7b58bc250feb7f76997d95ae2cc`, and re-admit on derivation
-evidence. Never make freshness green by editing only the SHA.
+Qualify Control Center focus-ring contrast at every declared width (carried
+task 6.4): traverse keyboard-reachable controls, measure the focus indicator
+against the computed adjacent background, cover all nine views or prove a
+carrier set, and negative-probe the token. No redesign.
 
 ## Resume Recipe
 
@@ -196,7 +231,7 @@ evidence. Never make freshness green by editing only the SHA.
 
 ## Work In Progress
 
-Milestone D: the owner-authorized `ripple-api` re-derivation and re-admission.
+Milestone M5: Control Center focus-ring qualification (carried task 6.4).
 
 ## Files Changed
 
@@ -222,8 +257,13 @@ Milestone D: the owner-authorized `ripple-api` re-derivation and re-admission.
 - `node bin/quality-gate-spec.mjs` — PASS, 12 required groups.
 - `npm run validation:universe` — PASS (489 discovered, 0 unclassified).
 - `tests/unit/hardeningRuleQuantifiers.test.ts` — 6/6 PASS.
-- `npm run hardening:rules` after milestone C — `rules=83 probes=94
+- `npm run hardening:rules` after milestone M3 — `rules=83 probes=94
   detected=94 undetected=0 restored=83 statusUnchanged=true`, exit 0.
+- `npm run test:semantic-compat` after milestone M4 — PASS, 2127 total / 2114
+  passed / 13 skipped / 0 failed (was 3 failed at base).
+- Focused re-admission suites — `realSourceCanary`, `oracleExpectationRealSource`,
+  `phase12CoverageInventory`, `phase5Api`, `phase25SurfaceDiscovery`, and the
+  104 C-0x cases: all PASS.
 
 ## Decisions Made During This Task
 
@@ -233,84 +273,9 @@ Milestone D: the owner-authorized `ripple-api` re-derivation and re-admission.
 
 ## Discoveries
 
-- Recorded in `- **B COMPLETE_LOCAL — `hardening:rules` is gate-authoritative.** The campaign
-  was dead code: a declared npm script no gate group, lane, validation-universe
-  class or CI workflow selected. It was also already RED — HC-015 UNDETECTED —
-  and nothing noticed, which is the whole blind spot in one line.
-
-  HC-015 rotted structurally, not by neglect.
-  `checkActiveMilestoneProgression` resolves its subject INDIRECTLY through
-  `.agent/ACTIVE_TASK.md` -> `Task directory:` -> that task's `STATE.md`; the
-  probe named a fixed task directory. When the active task changed, the probe
-  began mutating a file the rule no longer opens and reported UNDETECTED while
-  the rule worked perfectly. Probes may now write `<ACTIVE_TASK_DIR>`, which
-  the campaign resolves exactly as the rule does, so probe and rule cannot
-  disagree about what is under test; an unresolvable placeholder THROWS rather
-  than falling back to a literal path and probing the wrong file.
-
-  The gate gained a required `HARDENING_PROBES` group between `HARDENING` and
-  `HANDOFF_TRUTH`: 11 required groups became 12, wired through the command-key
-  union, the offline spec validator, the runtime dispatch and the rule that
-  asserts the required-group list. Vacuity is now explicit — a campaign that
-  selects no rule, or executes no probe, reports `VACUOUS_CAMPAIGN` and exits
-  non-zero instead of being inferred from a zero rule count.
-
-  Proof: `tests/unit/hardeningProbeCampaign.test.ts` (9 cases) runs the REAL
-  campaign against a disposable repository holding a synthetic two-rule engine,
-  so an undetected probe, an unproven rule, both vacuity modes, a probe error,
-  created-file debris and the placeholder resolution are each exercised for
-  real. `tests/unit/phase23QualityGate.test.ts` gained 7 cases including
-  command-mapping TOTALITY over the shipped runner. Recorded probes HC-090 and
-  HC-091 prove the gate cannot LOSE the group or DOWNGRADE it to optional
-  without `hardening:check` going red — both DETECTED.
-
-  `hardening:rules` now: `rules=83 probes=92 detected=92 undetected=0
-  restored=81 statusUnchanged=true`, exit 0. Gate definition digest at this
-  checkpoint: `sha256:c85f42c58db95b81865b011600086eb6db854886ca652dd57d572a7475ad101e`.
-
-- **C COMPLETE_LOCAL — G16.5 rule-quantifier audit.** All 83 rules classified
-  and mechanically verified: 60 TOTALITY, 23 EXISTENCE, 21 carrying a recorded
-  `firstMatch` singleton justification. The full table is generated from the
-  live registry into the change's `audit.md`. The two-value vocabulary is the
-  minimum that describes the live set; UNIQUENESS/EXACTLY_ONE, CARDINALITY and
-  ABSENCE were each considered and rejected with a reason rather than added for
-  symmetry.
-
-  Four TOTALITY rules abandoned their own scan: `fail(...); return;` inside the
-  subject loop reported the FIRST failing subject and then skipped the
-  remaining subjects AND every assertion below the loop
-  (`checkAlphausHandoffBoundary`, `checkFindingFrontierBoundary`,
-  `checkC15bSystemMapBoundary`, `checkC02bProtobufBoundary`). Each still passed
-  its own probe, because one mutation produces one detected failure — which is
-  exactly how the shape survived. The first two reached the abandon path for
-  real, their cone lists coming from `gitFiles().filter(...)`, which returns an
-  empty array without throwing; the other two read through
-  `readIncludingComments`, which catches ENOENT itself, so their `catch`
-  branches were dead. All four now `continue`.
-
-  The class is closed permanently: `checkRuleEngineSoundness` fails a TOTALITY
-  rule that returns immediately after failing inside a loop, naming the loop
-  line and the return line. Nesting is computed by INDENTATION, not brace
-  matching — the blanked view still contains strings and regex literals, and
-  the first brace-matching form false-positived on a `return` in a top-level
-  try/catch.
-
-  The `withoutComments()` defect carried from milestone A is repaired: it
-  stripped block comments with a regex BEFORE line comments, so a `//` comment
-  containing a block-comment opener deleted real code up to the next closer
-  from the view every `read()`-based rule sees. 27 tracked files contain such a
-  comment. Both code views now share one `commentMask` scanner, and the
-  property is asserted behaviourally rather than by inspecting the
-  implementation's shape.
-
-  Proof: `tests/unit/hardeningRuleQuantifiers.test.ts`, 6 cases running the
-  REAL rules against disposable repositories with deliberately absent cones,
-  including the exact G16.5 case — occurrence 1 valid, occurrences 2 and 3
-  invalid, both reported. Negative-probed: restoring the early exit fails the
-  multi-failure case. New probes HC-092 and HC-093, each verified to raise its
-  OWN error code rather than merely a non-zero exit.
-
-## Measured Baseline` above and in `PLAN.md ## Discoveries`.
+Recorded under the measured-baseline section above and under Discoveries in
+`PLAN.md`. The duplication that briefly appeared here came from a literal
+section name inside this very section matching a scripted edit anchor.
 
 ## Deferred / Follow-Up
 

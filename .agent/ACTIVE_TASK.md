@@ -7,7 +7,9 @@ Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-certification-closure-and-validation-integrity-v1
 Starting SHA: 521210f706b9383e20dd08d1bfd2f3c47b34687d
 Last validated implementation SHA: a02b6315c089baeb74ccc5c526a556c9764be46a
-Last checkpoint: Milestones A, B and C COMPLETE_LOCAL. The session `--dry-run`
+Last checkpoint: Milestones M1, M2, M3 and M4 COMPLETE_LOCAL. The ripple-api
+admitted snapshot moved to `4e3e200d` on derivation evidence: identical
+invariants and identical ev:sha256 digests at both SHAs. The session `--dry-run`
 contract is truthful, and `hardening:rules` is now executed by the
 authoritative gate as the required `HARDENING_PROBES` group (11 required groups
 became 12). The campaign was dead code AND already red — HC-015 UNDETECTED —
@@ -23,11 +25,11 @@ commands refuse the flag instead of ignoring it. Two further defects surfaced
 while proving it: an unverified explicit `--base`, now failing closed before
 the first mutation, and a `withoutComments()` line-comment defect in the
 hardening kernel that silently deletes real code from every `read()`-based
-rule's view, carried into milestone C.
-Current milestone: D — `ripple-api` re-derivation and re-admission
-Next action: classify every `27bb007a` occurrence, re-derive the four admitted
-recipes against the current sibling snapshot, and re-admit on derivation
-evidence. Never make freshness green by editing only the SHA.
+rule's view, carried into milestone M3.
+Current milestone: M5 — Control Center focus-ring qualification
+Next action: qualify focus-ring contrast at every declared width (carried task
+6.4), measured from computed styles, covering all nine views or a mechanically
+proven carrier set. No redesign.
 Owner decisions stay OPEN; none is self-authorized.
 Authorization class: CERTIFICATION_CLOSURE_AND_VALIDATION_INTEGRITY_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
@@ -72,7 +74,7 @@ Do not rebuild unless live recon finds a concrete regression:
 ```
 CAMPAIGN: nightwatch-certification-closure-and-validation-integrity-v1
 CHILD TASK: NONE
-WAVE: D_RIPPLE_API_READMISSION
+WAVE: E_FOCUS_RING_QUALIFICATION
 SESSION WORKTREE: session/nightwatch-certification-closure-1f9ce403
 
 IMPLEMENTATION AUTHORIZED:

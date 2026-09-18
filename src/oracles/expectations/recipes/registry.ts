@@ -10,6 +10,19 @@
 // Routing.yaml byte-identical across the two SHAs; evidence: Phase 10A
 // task records).
 //
+// RE-ADMITTED 2026-09-18 against mobingilabs/ripple-api @
+// 4e3e200db3bda7b58bc250feb7f76997d95ae2cc, 31 commits after the original
+// admission, under an explicit owner authorization. This was a fresh
+// derivation, not a SHA rebinding: all four recipes were derived at BOTH
+// snapshots through `deriveRealSourceExpectations` and compared. The result
+// is SEMANTICALLY_STABLE — 4 derived / 0 failures at each, identical
+// invariant definitions, and IDENTICAL `ev:sha256` evidence digests, which
+// bind the normalized source structure used to derive. Independently:
+// ExchangeRate.php, Account.php and BillingGroup.php are byte-identical
+// across the move, and the only changed source path, Routing.yaml, gained
+// exactly seven lines on the `password` anchor and the `updateUserPassword`
+// route — none of the four admitted routes.
+//
 //   targetId                     route                              handler
 //   ripple.common-exchange.read  /exchange_rate/global/{vendor}     ExchangeRate::getCommonExchangeRate   (v2, L3)
 //   ripple.payer-exchange.read   /v2/payer/exchange_rate/{month}    ExchangeRate::getAccountExchangeForMonth (v2, L3)

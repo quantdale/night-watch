@@ -3,7 +3,7 @@ import { BUDGET_POLICY_VERSION } from '../../core/exploration/types';
 
 export const RIPPLE_EXPLORATION_UI_SOURCE_SHA = 'd80b161b684d9153c7e5acaa65ae1752d93d8ba9';
 export const RIPPLE_EXPLORATION_UI_TRACKING_SHA = 'f6b2d2f6d580ce52227596b4f822d983bbda533b';
-export const RIPPLE_EXPLORATION_API_SOURCE_SHA = '27bb007ad0c798800b6bd3b29760c966422966e7';
+export const RIPPLE_EXPLORATION_API_SOURCE_SHA = '4e3e200db3bda7b58bc250feb7f76997d95ae2cc';
 export const RIPPLE_EXPLORATION_BLUE_API_SOURCE_SHA = '691422e5dc81afd263d064986fb50fcb3ea432a9';
 
 const ui = (file: string, symbol: string): SourceProvenance => ({
