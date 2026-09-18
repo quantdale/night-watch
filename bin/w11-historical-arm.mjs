@@ -210,6 +210,31 @@ for (const item of corpus) {
     continue;
   }
   const envDisposition = environmentDisposition(definedCase, huntResult);
+  // 12.8 requires hypothesis/target/action figures. Derive them with the
+  // repository's own metrics engine so they are mechanical, never hand-counted.
+  let efficacy = null;
+  try {
+    efficacy = metricsMod.deriveEfficacyCaseMetrics({
+      caseId: definedCase.caseId,
+      mode: 'W8_MEMORY',
+      state: huntResult.runtimeState,
+      terminationReason: huntResult.terminationReason,
+      history: huntResult.investigationHistory,
+      negativeControl: item.negativeControl,
+      outcome: huntResult.outcome,
+      verifiedTier: score.classifyVerifiedBenchmarkTier({
+        admitted: huntResult.admitted,
+        score: huntResult.score,
+        mechanicalReproductionCount: huntResult.reproductionCount,
+        leakage: huntResult.leaked,
+      }),
+      exactRediscovery: huntResult.outcome === 'EXACT_REDISCOVERY',
+      leaked: huntResult.leaked,
+    });
+  } catch {
+    // A metrics-derivation failure must not silently become a zero.
+    efficacy = null;
+  }
   const verifiedTier = score.classifyVerifiedBenchmarkTier({
     admitted: huntResult.admitted,
     score: huntResult.score,
@@ -248,6 +273,17 @@ for (const item of corpus) {
     leaked: huntResult.leaked,
     reasonerCalls: huntResult.reasonerCalls,
     requestBlobCount: huntResult.requestBlobs.length,
+    efficacy: efficacy === null ? 'METRICS_DERIVATION_FAILED' : {
+      toolActions: efficacy.toolActions,
+      uniqueSourceTargets: efficacy.uniqueSourceTargets,
+      hypothesesFormed: efficacy.hypothesesFormed,
+      groundedHypotheses: efficacy.groundedHypotheses,
+      verificationReadyHypotheses: efficacy.verificationReadyHypotheses,
+      disprovedHypotheses: efficacy.disprovedHypotheses,
+      reproductionAttempts: efficacy.reproductionAttempts,
+      refusedReproductionAttempts: efficacy.refusedReproductionAttempts,
+      mechanicalReproductions: efficacy.mechanicalReproductions,
+    },
     elapsedMs: Date.now() - caseStarted,
   });
   // Stream progress: a long arm must be observable while it runs.
@@ -273,6 +309,18 @@ const falsePositives = negativeControls.filter(
   (item) => item.outcome === 'FALSE_POSITIVE' || item.candidateIds.length > 0,
 );
 const leakageEvents = results.flatMap((item) => item.leaked ?? []);
+
+/** Sum one mechanically derived efficacy field; null when any case lacks it. */
+function sumEfficacy(rows, field) {
+  let total = 0;
+  for (const row of rows) {
+    if (row.efficacy === null || typeof row.efficacy !== 'object') return null;
+    const value = row.efficacy[field];
+    if (typeof value !== 'number') return null;
+    total += value;
+  }
+  return total;
+}
 
 const report = {
   schemaVersion: 'nightwatch.w11-historical-arm.v1',
@@ -314,6 +362,11 @@ const report = {
     falsePositives: falsePositives.length,
     environmentBlocked: environmentBlocked.length,
     leakageEvents: leakageEvents.length,
+    toolActions: sumEfficacy(scored, 'toolActions'),
+    uniqueSourceTargets: sumEfficacy(scored, 'uniqueSourceTargets'),
+    groundedHypotheses: sumEfficacy(scored, 'groundedHypotheses'),
+    verificationReadyHypotheses: sumEfficacy(scored, 'verificationReadyHypotheses'),
+    disprovedHypotheses: sumEfficacy(scored, 'disprovedHypotheses'),
   },
   cases: results,
 };

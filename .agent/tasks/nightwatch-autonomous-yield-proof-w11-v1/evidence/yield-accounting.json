@@ -1,0 +1,81 @@
+{
+  "schemaVersion": "nightwatch.w11-yield-accounting.v1",
+  "generatedFrom": "mechanically derived from the two preserved arm result documents; no figure is hand-counted from logs",
+  "historicalArm": {
+    "freezeFingerprint": "sha256:824deef9922975feab5af69f",
+    "provider": "opencode-go/glm-5.3",
+    "wallTimeMs": 4007948,
+    "investigationsStarted": 14,
+    "investigationsCompleted": 14,
+    "reasonerCalls": 78,
+    "providerFailures": 0,
+    "retries": 0,
+    "uniqueRepositoriesTouched": 8,
+    "reproductionAttempts": 5,
+    "reproductionExecutions": 4,
+    "notAvailable": 0,
+    "environmentBlocked": 0,
+    "replayNeverRequested": 3,
+    "candidatesProposed": 7,
+    "mechanicalAdmissions": 3,
+    "admissionRefusalsByReason": {
+      "MISSING_REPRODUCTION": 4
+    },
+    "dossiers": 3,
+    "falsePositives": 0,
+    "exactHistoricalRediscoveries": 0,
+    "nearHistoricalMatches": 10,
+    "requestBlobsAudited": 78,
+    "leakageEvents": 0,
+    "notCaptured": [
+      "groundedHypotheses",
+      "hypothesesDisproved",
+      "verificationReadyHypotheses",
+      "toolActions",
+      "uniqueSourceTargets",
+      "uniqueExecutableTargets"
+    ],
+    "notCapturedReason": "the W11 arm runner recorded per-case scoring, reproduction, admission and leakage but did not persist runtimeState, so these are NOT derivable from the preserved evidence. They are reported as NOT_CAPTURED rather than hand-counted or estimated. Re-deriving them requires re-running the arm, which the provider outage currently prevents."
+  },
+  "unknownArm": {
+    "status": "INVALID_PROVIDER_OUTAGE",
+    "wallTimeMs": 748216,
+    "investigationsStarted": 1,
+    "investigationsCompleted": 1,
+    "reasonerCalls": 6,
+    "providerFailures": 6,
+    "toolActions": 6,
+    "uniqueRepositoriesTouched": 0,
+    "uniqueSourceTargets": 0,
+    "uniqueExecutableTargets": 0,
+    "reproductionAttempts": 0,
+    "reproductionExecutions": 0,
+    "notAvailable": 0,
+    "environmentBlocked": 0,
+    "qualifyingReproductions": 0,
+    "candidates": 0,
+    "mechanicalAdmissions": 0,
+    "dossierStatus": "NONE",
+    "providerTransportBytes": 0,
+    "toolPayloadBytes": 0,
+    "note": "these are provider-availability figures, NOT yield figures. Every reasoner call timed out with zero provider response bytes, so the run measures nothing about the source universe and is excluded from every yield denominator."
+  },
+  "safety": {
+    "devContacts": 0,
+    "nextContacts": 0,
+    "productionContacts": 0,
+    "siblingWrites": 0,
+    "leakageEvents": 0,
+    "credentialsExposed": 0,
+    "externalPublications": 0,
+    "forcePushes": 0,
+    "destructiveOperations": 0,
+    "safetyViolations": 0
+  },
+  "denominators": {
+    "exactRate": "exact historical rediscoveries / substantive scored historical cases = 0/13; ENVIRONMENT_BLOCKED excluded from both sides (0 on this host); negative controls excluded",
+    "falsePositiveRate": "negative controls producing a candidate / scored negative controls = 0/1",
+    "mechanicalAdmissionRate": "dossiers / substantive scored historical cases = 3/13",
+    "unknownArmYield": "UNDEFINED — the only unknown-arm run is invalid on provider grounds and contributes to no denominator"
+  }
+}
