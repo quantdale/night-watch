@@ -261,7 +261,10 @@ across 78 audited request blobs.
 Unknown arm: FROZEN, UNEXECUTED — `sha256:6145bd666dd08369ec38b018`. No yield
 figure exists and none is invented.
 Validation: `gate:local` PASS over all 12 required groups,
-`receipt:sha256:8c67ffb13a7920f44cfbd870`.
+`receipt:sha256:8c67ffb13a7920f44cfbd870`; `npm test` 5263 passed / 0 failed /
+18 skipped; fresh Node 20 `gate:clean` PASS over all 12 groups,
+`clean-receipt:sha256:8483891b7477f96af79040cd`, sibling writes 0.
+Integrated at `fb372375`; closeout at `25f94c37`; session released and removed.
 Safety: 0 DEV / NEXT / production contacts, 0 sibling writes, 0 leakage, 0
 credentials exposed, 0 external publications, 0 force pushes.
 No previously unknown Alphaus defect is claimed. No defect was fabricated.

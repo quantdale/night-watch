@@ -803,7 +803,7 @@ when its OWN evidence exists.
 
 | Field | Claims | Current value | Why |
 | --- | --- | --- | --- |
-| `LAST_SUBSTANTIVE_IMPLEMENTATION_SHA` | the last commit that changed implementation AND was validated | `ae06d4d` | W11 autonomous yield proof: the frozen historical-arm runner, the leakage-canary and evaluation-freeze-integrity suites, their validation-universe registration and the live-state ledger value. `gate:local` PASS over all 12 required groups (`receipt:sha256:8c67ffb13a7920f44cfbd870`); full regression 5263 passed / 0 failed / 18 skipped. The clean lane is NOT claimed at this anchor: it fails at `HANDOFF_TRUTH` while a session worktree is declared and belongs after release |
+| `LAST_SUBSTANTIVE_IMPLEMENTATION_SHA` | the last commit that changed implementation AND was validated | `ae06d4d` | W11 autonomous yield proof: the frozen historical-arm runner, the leakage-canary and evaluation-freeze-integrity suites, their validation-universe registration and the live-state ledger value. `gate:local` PASS over all 12 required groups (`receipt:sha256:8c67ffb13a7920f44cfbd870`); full regression 5263 passed / 0 failed / 18 skipped. The fresh Node 20 clean lane PASSED after release at `25f94c37` over all 12 groups, `clean-receipt:sha256:8483891b7477f96af79040cd`, sibling writes 0 |
 | `LAST_LOCALLY_VALIDATED_SHA` | the last commit where the local quality gate passed | `c18db55` | `gate:local` FULL PASS, all eleven required groups, receipt `receipt:sha256:5a261509b2f2b89819a5bc23` (SEMANTIC 2083/2070/13/0, OWNER 91, SYNTHETIC 1797/1797/0, deep containment lane PROVEN) |
 | `LAST_CLEAN_VALIDATED_SHA` | the last commit where the clean Node 20 gate passed | `c18db55` | `gate:clean` PASS, `nodeMajor` 20, install PASS, clean before/after, `nodeModulesReused` false, no auth or owner-finding state, sibling writes 0, inner gate receipt `receipt:sha256:b6ae47a38d8c653d245fe3bf`, clean receipt `clean-receipt:sha256:f1f125526bb37b67a0377dfb` |
 | `CI_OBSERVED_SHA` | the commit whose CI result was observed | `27bfe44` | run `33864698218` (2026-09-04): zero steps under the external runner block (`runner_id = 0`), recorded as `NO_STEPS_EXTERNAL_NON_EVIDENCE`; a docs-descendant head covering the `4642c16` implementation |
@@ -867,7 +867,7 @@ RELEASE_CHECKPOINT_SHA: 2576c5751d33bb40046246e8fcf57c7cc5c30a57
 LIVE_HEAD_SHA: DISCOVER_FROM_GIT
 LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: ae06d4d675d878f67b93234a21100ef94d9fed25
 LAST_LOCALLY_VALIDATED_SHA: 8f35834a73a4b168af3389b2f3efe02a9522dead
-LAST_CLEAN_VALIDATED_SHA: c18db55970a6497470191c8c9ef58f5012a96c8c
+LAST_CLEAN_VALIDATED_SHA: 25f94c3721285f7e54a104e4363c212f87af02ce
 CI_OBSERVED_SHA: NONE
 CI_EXECUTED_SHA: NONE
 CI_STATUS: NOT_OBSERVED

@@ -222,7 +222,7 @@ routed wave. 12.4-12.12 remain open.
 | **`npm run gate:local`** | **PASS — all 12 required groups**, `receipt:sha256:8c67ffb13a7920f44cfbd870` |
 | **`npm test`** | **5263 passed / 0 failed / 18 skipped** (15.0 min) |
 | OpenSpec strict validation | PASS for both changed changes |
-| `npm run gate:clean` | see below |
+| **`npm run gate:clean`** | **PASS — all 12 groups, fresh Node 20**, `clean-receipt:sha256:8483891b7477f96af79040cd`, sibling writes 0 |
 
 Two gate failures occurred before the green run and both were diagnosed rather
 than retried blindly. `semanticCompatibility` and `synthetic-campaign` each
@@ -232,7 +232,18 @@ across repeated runs, so they were host contention. The third,
 `nw07ContinuityCoherence`, was a REAL defect in this campaign's own documents
 and is fixed — see below.
 
-### `gate:clean` — structurally unavailable while a session is live
+### `gate:clean` — PASS, after release
+
+Run from the canonical checkout once the session was released and the routing
+block declared `SESSION WORKTREE: NONE`: fresh Node 20 clone, `npm ci
+--ignore-scripts`, **all 12 required groups PASS**,
+`clean-receipt:sha256:8483891b7477f96af79040cd` at source head `25f94c37`,
+`cleanBefore`/`cleanAfter` true, **sibling writes 0**.
+
+This confirms the diagnosis below rather than working around it: the lane was
+never broken, it was being run at the wrong point in the lifecycle.
+
+### Why `gate:clean` could not pass while the session was live
 
 The clean lane fails at `HANDOFF_TRUTH` with
 `ACTIVE_TASK_SESSION_WORKTREE_MISSING`: `.agent/ACTIVE_TASK.md` declares the live
