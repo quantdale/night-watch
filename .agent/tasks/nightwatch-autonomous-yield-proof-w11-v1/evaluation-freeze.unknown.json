@@ -1,0 +1,93 @@
+{
+  "schemaVersion": "nightwatch.w11-evaluation-freeze.v1",
+  "arm": "PREVIOUSLY_UNKNOWN_DEFECT_OWNER_LOCAL",
+  "frozenAtSha": "ead2d32a",
+  "frozenAfter": "the historical arm closed, so historical results cannot bias this arm's scope",
+  "provider": {
+    "harness": "opencode-cli",
+    "cliPath": "/home/dalepalaca/.opencode/bin/opencode",
+    "cliVersion": "1.18.31",
+    "providerId": "opencode-go",
+    "model": "opencode-go/glm-5.3",
+    "invocationMode": "print",
+    "argvTemplate": ["run", "--model", "opencode-go/glm-5.3", "__PROMPT__"],
+    "adapter": "bin/nightwatch-reasoner-print.mjs",
+    "selectionRule": "INHERITED_FROM_HISTORICAL_FREEZE_UNCHANGED",
+    "note": "the same provider the historical arm used; changing it here would make the two arms incomparable and would re-open the selection decision after results were seen"
+  },
+  "executionPath": {
+    "command": "node bin/nightwatch-agent.mjs campaign run --reasoner=cli",
+    "ordinaryProductPath": true,
+    "specialEvaluatorBypass": false,
+    "note": "the ordinary product path, not a bespoke evaluator; production-path mechanics (budget, checkpointing, admission, scope) all apply"
+  },
+  "repositorySet": {
+    "alphauslabs/blue-sdk-go": "8883ee3d3a073352626c8c35e20e9fc5ed765373",
+    "alphauslabs/blueapi": "691422e5dc81afd263d064986fb50fcb3ea432a9",
+    "alphauslabs/blueinternal": "bc629fa8adc9f5407a2b957bd1b2aecdc8b0d623",
+    "alphauslabs/grpc-chunk-parser": "66802f281698dfcf0903f0a117d4637fce3fd945",
+    "mobingilabs/ouchan": "565f00a87fb7616cc23c45d4ffeabee38a41c65f",
+    "mobingilabs/ripple-api": "4e3e200db3bda7b58bc250feb7f76997d95ae2cc",
+    "mobingilabs/ripple-ui": "d80b161b684d9153c7e5acaa65ae1752d93d8ba9",
+    "mobingilabs/wave-api": "46790c25ddea02c7d3ae65f6e6db766a9089a59f"
+  },
+  "repositorySelectionRationale": "the full admitted eight-repository universe, taken as a whole rather than chosen for suspected defect content. No repository was selected because a defect is believed to be there; no current-source ground truth was seeded from the historical corpus, issue trackers, PR titles or fix commits.",
+  "runs": [
+    {
+      "id": "w11-unknown-broad-1",
+      "kind": "BROAD_MULTI_REPOSITORY_ENDURANCE",
+      "repositoryScope": null,
+      "ceiling": "HOUR_1",
+      "maxTurns": 12,
+      "purpose": "measure unknown-source yield across the whole admitted universe"
+    },
+    {
+      "id": "w11-unknown-ouchan-2",
+      "kind": "REPOSITORY_SCOPED",
+      "repositoryScope": "mobingilabs/ouchan",
+      "ceiling": "HOUR_1",
+      "maxTurns": 12,
+      "purpose": "concentrate budget on the ONLY repository with deterministic reproduction capability (1,120 executable files / 152 targets), so a reproducible current-source failure has its best measured chance of being found"
+    },
+    {
+      "id": "w11-unknown-ouchan-2:resume-widened",
+      "kind": "ADVERSARIAL_RESUME_MUST_FAIL_CLOSED",
+      "repositoryScope": null,
+      "expectedOutcome": "CAMPAIGN_SCOPE_MISMATCH",
+      "purpose": "prove a widened resume of a scoped campaign fails closed rather than silently investigating more than it was frozen to"
+    },
+    {
+      "id": "w11-unknown-ouchan-2:resume-identical",
+      "kind": "RESUME_IDENTITY",
+      "repositoryScope": "mobingilabs/ouchan",
+      "purpose": "prove a resume under the identical frozen scope continues under the checkpoint's own stored budget policy"
+    }
+  ],
+  "budget": {
+    "ceilingName": "HOUR_1",
+    "maxTurnsPerInvestigation": 12,
+    "armWallClockCeilingMs": 9000000,
+    "stoppingCondition": "each run ends on its own HOUR_1 budget ceiling or terminal campaign state; the arm ends when the frozen runs above have each reached a terminal state. The arm is NOT extended to chase a non-zero result."
+  },
+  "reproductionClasses": {
+    "permitted": ["GO_VENDORED_PACKAGE_TEST", "CURRENT_SOURCE_REPEATED_TEST_FAILURE"],
+    "newClassesPermitted": false,
+    "executionBreadthLimit": "deterministic reproduction is available in mobingilabs/ouchan only; the other seven repositories are investigable but have zero executable targets"
+  },
+  "admissionRule": {
+    "path": "existing mechanical admission only",
+    "refusalWhenReproductionAbsent": "MISSING_REPRODUCTION",
+    "manualDossierInsertion": false,
+    "syntheticEvidenceRefs": false,
+    "reproductionCountReduction": false
+  },
+  "leakageRule": {
+    "historicalGroundTruthToReasoner": "PROHIBITED",
+    "currentSourceGroundTruthSeeding": "PROHIBITED — no seeding from historical corpus, issue tracker, PR titles or fix commits"
+  },
+  "previouslyUnknownClassification": {
+    "permittedValues": ["NEW_TO_NIGHTWATCH", "ALREADY_IN_HISTORICAL_CORPUS", "CANNOT_DETERMINE"],
+    "strongerClaimRequiresSeparateEvidence": "PREVIOUSLY_UNKNOWN_ALPHAUS_BUG is not claimed on the strength of a mechanical admission alone"
+  },
+  "zeroIsAValidResult": true
+}

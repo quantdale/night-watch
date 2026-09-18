@@ -68,8 +68,14 @@
 
 ## M4. Freeze the unknown-defect campaign
 
-- [ ] M4.1 Commit repository set, SHAs, scopes, budgets and stopping condition
-      before execution.
+- [x] M4.1 Commit repository set, SHAs, scopes, budgets and stopping condition
+      before execution — `evaluation-freeze.unknown.json`, fingerprint
+      `sha256:6145bd666dd08369ec38b018`, frozen AFTER the historical arm closed
+      so historical results cannot bias this arm's scope, and BEFORE any
+      unknown-arm execution. Binds all eight repository SHAs, four frozen runs,
+      HOUR_1 budgets, the stopping condition, permitted reproduction classes,
+      the unchanged admission rule and the previously-unknown classification
+      vocabulary.
 
 ## M5. Run the owner-local unknown-yield campaign
 
