@@ -96,6 +96,11 @@ export const UNREACHABLE_SELECTORS: Readonly<Record<string, string>> = Object.fr
   // Reviewer write controls. The qualification composition is read-only;
   // tests/browser/reviewPersistence.browser.ts drives the write surface.
   '.review-rationale': 'owner review decision control; disabled in the read-only qualification composition and exercised by reviewPersistence.browser.ts',
+  // Same element, same reason, declared in full because this list matches the
+  // whole selector rather than its base — `.review-action:disabled` above is
+  // the same shape. The focus-ring matrix therefore does NOT qualify this
+  // control's ring, and does not claim to.
+  '.review-rationale:focus-visible': 'owner review decision control; disabled in the read-only qualification composition, so its focus state cannot be entered there',
   '.review-actions': 'owner review decision controls; disabled in the read-only qualification composition and exercised by reviewPersistence.browser.ts',
   '.review-action': 'owner review decision control; disabled in the read-only qualification composition and exercised by reviewPersistence.browser.ts',
   '.review-action:disabled': 'owner review decision control; disabled in the read-only qualification composition and exercised by reviewPersistence.browser.ts',

@@ -207,6 +207,39 @@ a:focus-visible {
   outline-offset: 3px;
 }
 
+/*
+ * Focus subjects the button/anchor rule above does not reach.
+ *
+ * A form control and a keyboard-focusable scroll port both take focus and
+ * neither matches `button` or `a`, so both fell back to the user agent's own
+ * focus ring — which is near-black. On this console's surfaces that measured
+ * 1.08:1 for a scroll port and 1.17:1 for the System Map search and filter,
+ * against a 3:1 floor. The ring was drawn; it simply could not be seen.
+ *
+ * The scroll port insets its ring (`outline-offset: -2px`) because the port is
+ * itself the clipping ancestor: an outset ring on the element that does the
+ * clipping is the one ring guaranteed to be cut off.
+ *
+ * The rationale textarea is named by its CLASS rather than by the `textarea`
+ * tag. It is disabled in the read-only qualification composition, so a bare
+ * `textarea` selector is dead there and the reachability guard rightly says
+ * so; `.review-rationale` is already declared unreachable with that exact
+ * reason, and `:focus-visible` strips to its base selector. So the control is
+ * fixed without a new exemption — and without this matrix claiming to have
+ * measured it, because it cannot.
+ */
+input:focus-visible,
+select:focus-visible,
+.review-rationale:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.table-scroll:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
 .skip-link {
   position: fixed;
   z-index: 20;

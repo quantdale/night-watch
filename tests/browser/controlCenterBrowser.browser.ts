@@ -1165,3 +1165,345 @@ test('every view lays out and keeps its posture at every declared viewport width
   expect(boundariesMeasured, 'the boundary-contrast probe must find controls identified by their outline').toBeGreaterThan(20);
   expect(failures, `viewport matrix failures:\n  ${failures.join('\n  ')}`).toEqual([]);
 });
+
+/**
+ * The declared floor for a focus indicator.
+ *
+ * WCAG 2.2 1.4.11 (non-text contrast) governs focus indicators, and the
+ * accessibility helpers already name that threshold
+ * (`NON_TEXT_STATUS_CONTRAST`). It is restated here as a named constant rather
+ * than inlined so a future change to the floor is a visible edit rather than a
+ * changed digit inside a comparison.
+ */
+const FOCUS_CONTRAST_FLOOR = 3;
+
+/**
+ * Everything that can take keyboard focus here, including the two subjects a
+ * `button, a, input` sweep misses: an overflowing container (Chrome makes it a
+ * tab stop) and an explicitly focusable surface such as the System Map canvas.
+ */
+const FOCUSABLE_SELECTOR = 'a[href], button, input, select, textarea, [tabindex]:not([tabindex="-1"])';
+
+/**
+ * Carried task 6.4 — focus-ring qualification at every declared width.
+ *
+ * The keyboard walk in `accessibilityCertification` already proves that every
+ * reachable control takes focus, in reading order, with a computed style that
+ * CHANGES when focused. What it does not prove is that the change is
+ * PERCEIVABLE: it runs at one viewport, and "the style differs" is satisfied by
+ * a ring nobody can see. WCAG 2.2 1.4.11 asks for 3:1 against what the
+ * indicator is drawn over, and the console declares five widths whose
+ * compositions differ — a sidebar that collapses, a table that becomes a
+ * scroll port, a toolbar that wraps.
+ *
+ * So this walks the real tab order at every declared width, in every view, and
+ * for each stop measures the focus indicator against the background actually
+ * behind it, from COMPUTED styles rather than from the token block. A
+ * stylesheet rule is not evidence that a composition renders it: the ring can
+ * be clipped by a scroll port it sits inside, or drawn over a different
+ * backdrop than the one the token was chosen against.
+ */
+test('every keyboard-reachable control shows a focus indicator meeting the contrast floor at every declared width', async ({ page }) => {
+  test.setTimeout(600_000);
+
+  const sourceAuthority = createSourceAuthorityForTests(sourceSnapshot());
+  const campaignAuthority = createCampaignAuthority({ sourceAuthority });
+  const baseCollector = createDefaultControlCenterCollector({
+    runReader: runReader(runInput()),
+    sourceAuthority,
+    campaignAuthority,
+    findingsAuthority: { snapshot: findingsSnapshot },
+    runSnapshotTtlMs: 10_000,
+    sourceSnapshotTtlMs: 10_000,
+  });
+  const collector: ControlCenterCollector = {
+    ...baseCollector,
+    systemMapLevel: () => syntheticEvidenceMap(),
+    systemMapQuery: () => syntheticEvidenceQuery(),
+  };
+  const handle = createControlCenterServer({ collector, port: 0, uiRoot: UI_ROOT });
+  const address = await handle.start();
+  const origin = `http://127.0.0.1:${address.port}`;
+
+  const failures: string[] = [];
+  const treatments = new Set<string>();
+  const distinctControls = new Set<string>();
+  let cellsMeasured = 0;
+  let controlsMeasured = 0;
+
+  try {
+    for (const width of DECLARED_VIEWPORTS) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto(`${origin}/`, { waitUntil: 'domcontentloaded' });
+      await expect(page.getByRole('heading', { name: 'Know the posture before the next run.' })).toBeVisible();
+
+      for (const view of MATRIX_VIEWS) {
+        if (view !== 'Overview') {
+          const link = page.getByRole('link', { name: view, exact: true });
+          await expect(link, `${view}@${width}: navigation link must be reachable`).toBeVisible();
+          await link.click();
+        }
+        // Fonts change text metrics, metrics change whether a table overflows,
+        // and an overflowing container is itself a keyboard-focusable scroller
+        // in Chrome. Measuring before that settles measures a different page.
+        await page.evaluate(async () => {
+          const host = globalThis as unknown as {
+            document: { fonts: { ready: Promise<unknown> } };
+            requestAnimationFrame(callback: () => void): number;
+          };
+          await host.document.fonts.ready;
+          await new Promise<void>((resolve) => {
+            host.requestAnimationFrame(() => { host.requestAnimationFrame(() => resolve()); });
+          });
+        });
+
+        // Start the walk from the document, so the first Tab lands on the
+        // first tab stop rather than continuing from wherever a click left it.
+        await page.evaluate(() => {
+          const host = globalThis as unknown as { document: { body: { focus(): void } } };
+          host.document.body.focus();
+        });
+
+        // The UNFOCUSED signature of every focusable, captured before the walk
+        // and keyed by position in the same list the walk resolves against.
+        // Without it a control's static border reads as a focus indicator, and
+        // a control whose ring is clipped would be excused by a cue that never
+        // changed.
+        const unfocused = await page.evaluate((selector: string) => {
+          const host = globalThis as unknown as {
+            document: { querySelectorAll(query: string): ArrayLike<unknown> };
+            getComputedStyle(element: unknown): Record<string, string>;
+          };
+          const nodes = Array.from(host.document.querySelectorAll(selector));
+          return nodes.map((node) => {
+            const style = host.getComputedStyle(node);
+            return `${style.outlineStyle}|${style.outlineColor}|${style.outlineWidth}|${style.borderTopColor}|${style.borderTopWidth}|${style.backgroundColor}`;
+          });
+        }, FOCUSABLE_SELECTOR);
+
+        const seen = new Set<string>();
+        let cellControls = 0;
+        for (let step = 0; step < 80; step += 1) {
+          await page.keyboard.press('Tab');
+          const measured = await page.evaluate((input: { readonly floor: number; readonly unfocused: readonly string[]; readonly selector: string }) => {
+            const { floor } = input;
+            const host = globalThis as unknown as {
+              document: {
+                activeElement: FocusElement | null;
+                body: FocusElement;
+                documentElement: FocusElement;
+                querySelectorAll(query: string): ArrayLike<unknown>;
+              };
+              getComputedStyle(element: unknown): FocusStyle;
+              innerWidth: number;
+              innerHeight: number;
+            };
+            interface FocusRect { readonly top: number; readonly left: number; readonly right: number; readonly bottom: number; readonly width: number; readonly height: number }
+            interface FocusStyle {
+              readonly outlineStyle: string; readonly outlineColor: string; readonly outlineWidth: string; readonly outlineOffset: string;
+              readonly borderTopStyle: string; readonly borderTopColor: string; readonly borderTopWidth: string;
+              readonly backgroundColor: string; readonly display: string; readonly visibility: string; readonly overflow: string;
+              readonly boxShadow: string;
+            }
+            interface FocusElement {
+              readonly tagName: string; readonly className: unknown; readonly parentElement: FocusElement | null;
+              getBoundingClientRect(): FocusRect;
+              getAttribute(name: string): string | null;
+              readonly textContent: string | null;
+            }
+
+            const element = host.document.activeElement;
+            if (element === null) return { kind: 'ESCAPED' as const };
+            const tag = element.tagName.toLowerCase();
+            if (tag === 'body' || tag === 'html') return { kind: 'ESCAPED' as const };
+
+            const classes = String(element.className ?? '').split(' ').filter(Boolean);
+            const descriptor = `${tag}${classes.map((name) => `.${name}`).join('')}`.slice(0, 80);
+            const label = (element.getAttribute('aria-label') ?? element.textContent ?? '').trim().replace(/\s+/g, ' ').slice(0, 40);
+            const style = host.getComputedStyle(element);
+            if (style.display === 'none' || style.visibility === 'hidden') {
+              return { kind: 'MEASURED' as const, descriptor, label, treatment: 'HIDDEN', ok: false, detail: 'focused but not rendered', ratio: 0 };
+            }
+            const box = element.getBoundingClientRect();
+            if (box.width <= 0.5 || box.height <= 0.5) {
+              return { kind: 'MEASURED' as const, descriptor, label, treatment: 'ZERO_BOX', ok: false, detail: 'focused with a zero-area box', ratio: 0 };
+            }
+
+            const parse = (value: string): readonly number[] | null => {
+              const parts = /rgba?\(([^)]+)\)/.exec(value);
+              if (parts === null) return null;
+              const channels = (parts[1] as string).split(',').map((entry) => Number.parseFloat(entry));
+              if (channels.length < 3 || channels.some((entry) => !Number.isFinite(entry))) return null;
+              return channels;
+            };
+            const luminance = (channels: readonly number[]): number => {
+              const linear = channels.slice(0, 3).map((value) => {
+                const channel = value / 255;
+                return channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+              });
+              return 0.2126 * (linear[0] as number) + 0.7152 * (linear[1] as number) + 0.0722 * (linear[2] as number);
+            };
+            const over = (front: readonly number[], back: readonly number[]): readonly number[] => {
+              const alpha = front.length > 3 ? (front[3] as number) : 1;
+              return [0, 1, 2].map((index) => (front[index] as number) * alpha + (back[index] as number) * (1 - alpha));
+            };
+            /** First opaque background at or above `node`. */
+            const backdropOf = (node: FocusElement | null): readonly number[] | null => {
+              let cursor = node;
+              const stack: (readonly number[])[] = [];
+              while (cursor !== null) {
+                const fill = parse(host.getComputedStyle(cursor).backgroundColor);
+                if (fill !== null) {
+                  const alpha = fill.length > 3 ? (fill[3] as number) : 1;
+                  if (alpha >= 0.999) {
+                    let resolved = fill;
+                    for (let index = stack.length - 1; index >= 0; index -= 1) resolved = over(stack[index] as readonly number[], resolved);
+                    return resolved;
+                  }
+                  if (alpha > 0) stack.push(fill);
+                }
+                cursor = cursor.parentElement;
+              }
+              return null;
+            };
+
+            // What IS the indicator? An outline when one is drawn; otherwise
+            // the border the focus rule recolours; otherwise the fill. Each is
+            // a real treatment in this stylesheet, and each is measured
+            // against what it is drawn over rather than against a token.
+            const outlineWidth = Number.parseFloat(style.outlineWidth);
+            const hasOutline = style.outlineStyle !== 'none' && Number.isFinite(outlineWidth) && outlineWidth >= 1;
+            const borderWidth = Number.parseFloat(style.borderTopWidth);
+            const hasBorder = style.borderTopStyle !== 'none' && Number.isFinite(borderWidth) && borderWidth >= 1;
+
+            // Which CUES actually changed when this control took focus? A
+            // static border is not a focus indicator, and counting one would
+            // excuse a control whose real ring is clipped or invisible.
+            const nodes = Array.from(host.document.querySelectorAll(input.selector));
+            const position = nodes.indexOf(element as unknown);
+            const before = position >= 0 && position < input.unfocused.length ? (input.unfocused[position] as string) : null;
+            const priorParts = before === null ? null : before.split('|');
+            const changed = (index: number, now: string): boolean => priorParts === null || priorParts[index] !== now;
+
+            /** Is a box clipped away by an ancestor that hides overflow? */
+            const clipperOf = (grow: number): string | null => {
+              const ring = { top: box.top - grow, left: box.left - grow, right: box.right + grow, bottom: box.bottom + grow };
+              for (let ancestor = element.parentElement; ancestor !== null; ancestor = ancestor.parentElement) {
+                if (host.getComputedStyle(ancestor).overflow === 'visible') continue;
+                const port = ancestor.getBoundingClientRect();
+                if (port.width <= 0.5 || port.height <= 0.5) continue;
+                if (ring.top < port.top - 0.5 || ring.bottom > port.bottom + 0.5 || ring.left < port.left - 0.5 || ring.right > port.right + 0.5) {
+                  return `${ancestor.tagName.toLowerCase()}.${String(ancestor.className ?? '').split(' ')[0]}`;
+                }
+              }
+              return null;
+            };
+            const offscreenAt = (grow: number): boolean =>
+              box.bottom + grow < 0 || box.top - grow > host.innerHeight || box.right + grow < 0 || box.left - grow > host.innerWidth;
+
+            interface Candidate { readonly treatment: string; readonly colour: string; readonly ratio: number; readonly clippedBy: string | null; readonly offscreen: boolean }
+            const candidates: Candidate[] = [];
+            const evaluate = (treatment: string, colour: string, againstNode: FocusElement | null, grow: number): void => {
+              const indicator = parse(colour);
+              const against = backdropOf(againstNode);
+              if (indicator === null || against === null) return;
+              const resolved = over(indicator, against);
+              const light = luminance(resolved);
+              const dark = luminance(against);
+              candidates.push({
+                treatment,
+                colour,
+                ratio: (Math.max(light, dark) + 0.05) / (Math.min(light, dark) + 0.05),
+                clippedBy: clipperOf(grow),
+                offscreen: offscreenAt(grow),
+              });
+            };
+
+            const offset = Number.isFinite(Number.parseFloat(style.outlineOffset)) ? Number.parseFloat(style.outlineOffset) : 0;
+            if (hasOutline && changed(0, style.outlineStyle) === false && changed(1, style.outlineColor) === false && changed(2, style.outlineWidth) === false) {
+              // An outline identical to the unfocused one is not a focus cue.
+            } else if (hasOutline) {
+              // A positively offset outline is drawn OUTSIDE the element, over
+              // whatever the ancestors paint — not over the element's own fill.
+              evaluate('OUTLINE', style.outlineColor, offset > 0 ? element.parentElement : element, offset + outlineWidth);
+            }
+            if (hasBorder && changed(3, style.borderTopColor)) {
+              evaluate('BORDER', style.borderTopColor, element.parentElement, 0);
+            }
+            if (changed(5, style.backgroundColor)) {
+              evaluate('FILL', style.backgroundColor, element.parentElement, 0);
+            }
+
+            if (candidates.length === 0) {
+              return { kind: 'MEASURED' as const, descriptor, label, treatment: 'NONE', ok: false, ratio: 0, detail: 'no focus cue changed, or none could be resolved against a backdrop' };
+            }
+            // A control is qualified when AT LEAST ONE of its focus cues is
+            // adequately contrasted, unclipped and on screen. `.table-action`
+            // is the case that makes this necessary: its outline is clipped by
+            // the scroll port it sits in, which is precisely why the
+            // stylesheet also recolours its border and fill.
+            const qualifying = candidates.find((candidate) => candidate.ratio >= floor && candidate.clippedBy === null && !candidate.offscreen);
+            const best = qualifying ?? candidates.slice().sort((left, right) => right.ratio - left.ratio)[0] as Candidate;
+            return {
+              kind: 'MEASURED' as const,
+              descriptor,
+              label,
+              treatment: best.treatment,
+              ratio: best.ratio,
+              ok: qualifying !== undefined,
+              detail: qualifying !== undefined ? '' : candidates
+                .map((candidate) => `${candidate.treatment} ${candidate.colour} = ${candidate.ratio.toFixed(2)}:1${candidate.clippedBy === null ? '' : ` (clipped by ${candidate.clippedBy})`}${candidate.offscreen ? ' (offscreen)' : ''}`)
+                .join('; ') + ` — no cue meets the ${floor}:1 floor unclipped`,
+            };
+          }, { floor: FOCUS_CONTRAST_FLOOR, unfocused, selector: FOCUSABLE_SELECTOR });
+
+          if (measured.kind === 'ESCAPED') break;
+          const key = `${measured.descriptor}|${measured.label}`;
+          if (seen.has(key)) continue;
+          seen.add(key);
+          cellControls += 1;
+          controlsMeasured += 1;
+          treatments.add(measured.treatment);
+          distinctControls.add(measured.descriptor);
+          if (!measured.ok) {
+            failures.push(`${view}@${width}: ${measured.descriptor}${measured.label === '' ? '' : ` "${measured.label}"`} — ${measured.detail}`);
+          }
+        }
+
+        expect(cellControls, `${view}@${width}: the walk must reach at least one control`).toBeGreaterThan(0);
+        cellsMeasured += 1;
+      }
+    }
+  } finally {
+    await handle.close();
+  }
+
+  // Non-vacuity, in three directions: every declared cell was visited, real
+  // controls were measured in each, and every distinct focus TREATMENT the
+  // stylesheet defines was actually exercised. A matrix that silently measured
+  // only outlined buttons would pass while the table-action fill treatment and
+  // the graph stroke treatment went unchecked.
+  expect(cellsMeasured, 'the focus matrix must measure every view at every declared width')
+    .toBe(DECLARED_VIEWPORTS.length * MATRIX_VIEWS.length);
+  expect(controlsMeasured, 'the focus matrix must measure real controls').toBeGreaterThan(100);
+  // Variety, not just volume: measuring the same nav link forty-five times
+  // would satisfy a bare count while leaving every in-view control unchecked.
+  // Named kinds rather than a magic number, so the claim is checkable — each
+  // of these is a structurally different focus subject, and the last two are
+  // the ones a naive walk misses. `div.table-scroll` is a tab stop only
+  // because Chrome makes an overflowing container keyboard-focusable, and
+  // `div.system-map-canvas` is a focusable non-control surface; both would go
+  // unmeasured by a sweep restricted to `button, a, input`.
+  const reached = [...distinctControls].sort();
+  for (const kind of ['a.nav-item', 'button.table-action', 'div.system-map-canvas', 'div.table-scroll', 'input', 'select']) {
+    expect(reached, `the matrix must reach ${kind}; it reached ${reached.join(', ')}`).toContain(kind);
+  }
+  expect(reached.length, `distinct controls reached: ${reached.join(', ')}`).toBeGreaterThanOrEqual(8);
+  // The observed indicator treatments, recorded rather than constrained: the
+  // console's primary indicator is the shared `:focus-visible` outline, and a
+  // control that adds a border or fill cue on top of it is still measured by
+  // its outline. Requiring a second treatment would assert a fact about the
+  // stylesheet that is not true.
+  expect([...treatments].sort(), `observed focus treatments: ${[...treatments].sort().join(', ')}`).toContain('OUTLINE');
+  expect(failures, `focus-ring qualification failures:\n  ${failures.join('\n  ')}`).toEqual([]);
+});

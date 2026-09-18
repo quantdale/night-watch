@@ -24,10 +24,10 @@ Control Center design-system campaign, then certify truthfully. Full intent in
 
 ## Current Milestone
 
-Milestone ID: M5 — Control Center focus-ring qualification
+Milestone ID: M6 — production-completion tail closure
 Milestone status: IN_PROGRESS
-What is being attempted: carried task 6.4 only — focus-ring contrast at every
-declared width, measured from computed styles.
+What is being attempted: close the validation-only tails (8.11, 16.5, 16.12,
+18.13, 19.14, 21.15) against their exact recorded requirements, then certify.
 
 ## Completed Milestones
 
@@ -187,6 +187,54 @@ declared width, measured from computed styles.
   branch and `git status` identical before and after, and the reflog's newest
   entry is the owner's own earlier checkout.
 
+- **M5 COMPLETE_LOCAL — Control Center focus-ring qualification (carried 6.4).**
+  The keyboard walk already proved every control takes focus in reading order
+  with a style that CHANGES; it ran at one viewport, and "the style differs" is
+  satisfied by a ring nobody can see. The new matrix walks the real tab order
+  in all nine views at all five declared widths — 45 cells — and measures the
+  indicator from COMPUTED styles against the first opaque ancestor backdrop.
+
+  It found 32 real defects. `div.table-scroll`, `input` and `select` matched no
+  authored `:focus-visible` rule at all, so they fell back to Chrome's
+  near-black user-agent ring: 1.08:1 for a scroll port and 1.17:1 for the
+  System Map search and filter, against a 3:1 floor. The ring was drawn; it
+  could not be seen. This is the same shape as the design-system campaign's
+  D-01 finding, reached by a different route: there an undefined token rendered
+  its light-theme fallback, here no rule matched at all.
+
+  Three rules were added, all using the existing `--accent` token. The scroll
+  port insets its ring, because the port is itself the clipping ancestor and an
+  outset ring on the clipping element is the one ring guaranteed to be cut off.
+
+  Two measurement corrections were needed, and both are recorded rather than
+  papered over. `button.table-action` reported a clipped outline, but the
+  stylesheet had already anticipated exactly that and adds border and fill cues
+  — so the matrix now evaluates EVERY cue that changed on focus and qualifies a
+  control when at least one is adequate, unclipped and on screen. To make that
+  honest the unfocused signature is snapshotted before each walk, so a static
+  border can never be counted as a focus indicator. Separately, an initial
+  "more than one treatment" assertion was false: the shared outline is the
+  primary indicator everywhere, so non-vacuity is now expressed as named
+  control kinds the walk must reach.
+
+  The rationale textarea is fixed by class rather than tag and is explicitly
+  NOT claimed as qualified: it is disabled in the read-only qualification
+  composition, its base selector was already declared unreachable for that
+  reason, and the full selector is now declared the same way.
+
+  Negative probe: degrading the focus token to `--surface` fails the lane
+  naming the view, the width, the control, the treatment, the colour and the
+  ratio. Browser lane 9/9 PASS; UI typecheck PASS; UI tests 101/101 PASS.
+
+  One cross-guard contradiction surfaced and was repaired.
+  `checkActiveMilestoneProgression` required the PLAN to read exactly
+  `COMPLETE`, while its sibling `nw07ContinuityCoherence` required the PLAN to
+  MATCH whatever the STATE says. A campaign whose milestones are
+  `COMPLETE_LOCAL` could satisfy one or the other, never both. The rule also
+  scanned only `M<n>`, so every `G<n>`-numbered campaign escaped it entirely.
+  It now captures the STATE token and asserts the real binding — the PLAN
+  agrees with the STATE — over both identifier forms.
+
 ## Measured Baseline
 
 Recorded at `521210f7` before any change (see `PLAN.md` for the full list):
@@ -214,10 +262,10 @@ Recorded at `521210f7` before any change (see `PLAN.md` for the full list):
 
 ## Exact Next Action
 
-Qualify Control Center focus-ring contrast at every declared width (carried
-task 6.4): traverse keyboard-reachable controls, measure the focus indicator
-against the computed adjacent background, cover all nine views or prove a
-carrier set, and negative-probe the token. No redesign.
+Close the production-completion tails whose only remaining requirement is
+validation, integration or release evidence — 8.11, 16.5, 16.12, 18.13, 19.14,
+21.15 — each against its exact recorded requirement, then run the full
+certification at one SHA and integrate by fast-forward.
 
 ## Resume Recipe
 
@@ -231,7 +279,7 @@ carrier set, and negative-probe the token. No redesign.
 
 ## Work In Progress
 
-Milestone M5: Control Center focus-ring qualification (carried task 6.4).
+Milestone M6: production-completion tail closure, then certification.
 
 ## Files Changed
 
@@ -264,6 +312,12 @@ Milestone M5: Control Center focus-ring qualification (carried task 6.4).
 - Focused re-admission suites — `realSourceCanary`, `oracleExpectationRealSource`,
   `phase12CoverageInventory`, `phase5Api`, `phase25SurfaceDiscovery`, and the
   104 C-0x cases: all PASS.
+- `npm run control-center:ui:typecheck` PASS; `control-center:ui:test` 101/101
+  PASS; `control-center:ui:build` PASS.
+- `npm run control-center:ui:browser` — 9/9 PASS including the focus matrix
+  (45 cells, every declared width x every view).
+- Focus-matrix negative probe — degrading the token fails the lane naming the
+  view, width, control, treatment, colour and ratio.
 
 ## Decisions Made During This Task
 

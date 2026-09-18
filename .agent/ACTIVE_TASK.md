@@ -7,7 +7,9 @@ Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-certification-closure-and-validation-integrity-v1
 Starting SHA: 521210f706b9383e20dd08d1bfd2f3c47b34687d
 Last validated implementation SHA: a02b6315c089baeb74ccc5c526a556c9764be46a
-Last checkpoint: Milestones M1, M2, M3 and M4 COMPLETE_LOCAL. The ripple-api
+Last checkpoint: Milestones M1-M5 COMPLETE_LOCAL. The focus matrix found and
+fixed 32 real defects: three control kinds matched no authored :focus-visible
+rule and fell back to Chrome UA near-black at 1.08:1. The ripple-api
 admitted snapshot moved to `4e3e200d` on derivation evidence: identical
 invariants and identical ev:sha256 digests at both SHAs. The session `--dry-run`
 contract is truthful, and `hardening:rules` is now executed by the
@@ -26,10 +28,10 @@ while proving it: an unverified explicit `--base`, now failing closed before
 the first mutation, and a `withoutComments()` line-comment defect in the
 hardening kernel that silently deletes real code from every `read()`-based
 rule's view, carried into milestone M3.
-Current milestone: M5 — Control Center focus-ring qualification
-Next action: qualify focus-ring contrast at every declared width (carried task
-6.4), measured from computed styles, covering all nine views or a mechanically
-proven carrier set. No redesign.
+Current milestone: M6 — production-completion tail closure
+Next action: close the validation-only tails (8.11, 16.5, 16.12, 18.13, 19.14,
+21.15) against their exact recorded requirements, then run the full
+certification at one SHA and integrate by fast-forward.
 Owner decisions stay OPEN; none is self-authorized.
 Authorization class: CERTIFICATION_CLOSURE_AND_VALIDATION_INTEGRITY_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
@@ -74,7 +76,7 @@ Do not rebuild unless live recon finds a concrete regression:
 ```
 CAMPAIGN: nightwatch-certification-closure-and-validation-integrity-v1
 CHILD TASK: NONE
-WAVE: E_FOCUS_RING_QUALIFICATION
+WAVE: F_TAIL_CLOSURE_AND_CERTIFICATION
 SESSION WORKTREE: session/nightwatch-certification-closure-1f9ce403
 
 IMPLEMENTATION AUTHORIZED:

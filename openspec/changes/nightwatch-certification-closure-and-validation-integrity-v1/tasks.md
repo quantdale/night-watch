@@ -150,15 +150,38 @@
 
 ## E. Control Center focus-ring qualification (carried task 6.4)
 
-- [ ] E.1 Re-measure the declared widths and the declared contrast floor from
+- [x] E.1 Re-measure the declared widths and the declared contrast floor from
       live task truth
-- [ ] E.2 Traverse keyboard-reachable controls at every declared width;
+      — `DECLARED_VIEWPORTS = [1440, 1080, 820, 560, 380]` read from the live
+      browser lane, not from the prompt. The floor is WCAG 2.2 1.4.11 non-text
+      contrast, 3:1, which the accessibility helpers already name as
+      `NON_TEXT_STATUS_CONTRAST`.
+- [x] E.2 Traverse keyboard-reachable controls at every declared width;
       measure computed focus-indicator contrast against the computed adjacent
       background
-- [ ] E.3 Cover all nine views, or prove mechanically why a smaller carrier set
+      — a real Tab walk per cell, measuring from computed styles. Every focus
+      CUE that actually changed on focus is evaluated (outline, border, fill)
+      against the first opaque ancestor backdrop, with alpha composited; a
+      control qualifies when at least one cue is >= 3:1, unclipped and on
+      screen. The unfocused signature is snapshotted before the walk, so a
+      static border can never be mistaken for a focus indicator.
+- [x] E.3 Cover all nine views, or prove mechanically why a smaller carrier set
       covers every distinct focus treatment
-- [ ] E.4 Negative-probe the focus token; fix minimally if a style genuinely
+      — all nine views at all five widths, directly: 45 cells asserted, no
+      carrier-set argument needed. Non-vacuity is named rather than counted —
+      the walk must reach `a.nav-item`, `button.table-action`,
+      `div.system-map-canvas`, `div.table-scroll`, `input` and `select`. The
+      last two kinds are the ones a `button, a, input` sweep misses.
+- [x] E.4 Negative-probe the focus token; fix minimally if a style genuinely
       fails; no redesign
+      — 32 real defects found and fixed. `div.table-scroll`, `input` and
+      `select` matched NO authored `:focus-visible` rule, so they fell back to
+      Chrome's near-black UA ring: 1.08:1 and 1.17:1 against a 3:1 floor. Three
+      rules added, all using the existing `--accent` token; the scroll port
+      insets its ring because it is itself the clipping ancestor. Negative
+      probe: degrading the token to `--surface` fails the lane naming the view,
+      width, control, treatment, colour and ratio. No information-architecture
+      or visual redesign.
 
 ## F. Production-completion tail closure
 

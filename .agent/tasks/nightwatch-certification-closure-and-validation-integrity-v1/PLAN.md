@@ -85,14 +85,14 @@ one owned session worktree, fast-forward integration, never force-push.
 
 ### M5 — Control Center focus-ring qualification
 
-- **Status:** IN_PROGRESS
+- **Status:** COMPLETE_LOCAL
 - Carried task 6.4 only. Focus-ring contrast at every declared width across all
   nine views or a mechanically proven carrier set; computed styles, not source
   constants; negative-probe the token.
 
 ### M6 — production-completion tail closure
 
-- **Status:** NOT_STARTED
+- **Status:** IN_PROGRESS
 - Close only items whose exact remaining requirement is validation,
   integration or release evidence, each with its own evidence.
 

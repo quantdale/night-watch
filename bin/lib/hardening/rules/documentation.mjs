@@ -101,21 +101,34 @@ export function checkActiveMilestoneProgression() {
   // Only the versioned live schema.
   if (!stateText.includes('nightwatch.agent-continuity.v2')) return;
 
-  const complete = new Set();
-  for (const match of stateText.matchAll(/\*\*(M\d+)\b[^*]*\bCOMPLETE/g)) complete.add(match[1]);
-  for (const milestone of [...complete].sort()) {
+  // The milestone identifier form is `M<n>` or `G<n>`. Scanning only `M<n>`
+  // silently exempted every campaign that numbered its milestones `G1..Gn` —
+  // a rule that never ran over most of the live corpus.
+  //
+  // The completion TOKEN is captured rather than assumed. The rule previously
+  // required the PLAN to read exactly `COMPLETE`, while the sibling
+  // `nw07ContinuityCoherence` suite requires the PLAN to MATCH whatever the
+  // STATE says. A campaign whose milestones are `COMPLETE_LOCAL` — the normal
+  // case for work validated locally but not yet CI-verified — could satisfy
+  // one guard or the other but never both. The binding that both express is
+  // "the PLAN agrees with the STATE", so that is what is asserted here.
+  const complete = new Map();
+  for (const match of stateText.matchAll(/\*\*((?:M|G)\d+)\b[^*]*?\b(COMPLETE(?:_LOCAL)?)\b/g)) {
+    complete.set(match[1], match[2]);
+  }
+  for (const [milestone, reported] of [...complete].sort()) {
     const section = new RegExp(`^### ${milestone} —[\\s\\S]*?(?=^### |\\n## )`, 'm').exec(planText);
     if (section === null) {
-      fail(`${directory}/PLAN.md has no '### ${milestone}' section although STATE.md reports it COMPLETE`);
+      fail(`${directory}/PLAN.md has no '### ${milestone}' section although STATE.md reports it ${reported}`);
       continue;
     }
     const status = /^- \*\*Status:\*\*\s*(\S+)/m.exec(section[0])?.[1];
     if (status === undefined) {
-      fail(`${directory}/PLAN.md milestone ${milestone} has no Status line although STATE.md reports it COMPLETE`);
+      fail(`${directory}/PLAN.md milestone ${milestone} has no Status line although STATE.md reports it ${reported}`);
       continue;
     }
-    if (status !== 'COMPLETE') {
-      fail(`${directory}/PLAN.md milestone ${milestone} reads ${status} but STATE.md reports it COMPLETE; a reader following the PLAN would redo shipped work`);
+    if (status !== reported) {
+      fail(`${directory}/PLAN.md milestone ${milestone} reads ${status} but STATE.md reports it ${reported}; a reader following the PLAN would redo shipped work`);
     }
   }
 }
