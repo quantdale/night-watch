@@ -7,7 +7,8 @@ Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-autonomous-yield-proof-w11-v1
 Starting SHA: 158a97b8feceb6abf4ea4ccbacab1f20cc46bc35
 Last validated implementation SHA: 158a97b8feceb6abf4ea4ccbacab1f20cc46bc35
-Last checkpoint: M0-M3, M7 and part of M8 COMPLETE. The frozen historical arm
+Last checkpoint: VERDICT PARTIAL — BLOCKED. M0-M4, M7 and M8 COMPLETE; M5
+blocked externally. The frozen historical arm
 (`sha256:824deef9922975feab5af69f`, provider `opencode-go/glm-5.3`) evaluated
 14/14 cases in 66.8 min: **EXACT = 0, exact rate 0/13**, 10 near matches, 4
 reproductions, 7 candidates, 3 mechanical admissions, 4 refused
@@ -17,12 +18,14 @@ across 78 audited request blobs. M3 established mechanically WHY EXACT is 0:
 hidden failing test is absent from the whole visible context for every fixture
 and is a fix-ADDED file for mined cases, so it is not derivable under leak-free
 conditions. EXACT was not weakened and no near match was promoted.
-Current milestone: M4 — freeze the unknown-yield campaign definition at a
-committed SHA before execution
-Next action: commit the frozen unknown-yield campaign definition (repository
-set, SHAs, host-owned scopes, budgets, stopping condition), then execute the
-owner-local unknown-yield campaigns through the ordinary
-`nightwatch-agent campaign run --reasoner=cli` path.
+Current milestone: M5 — BLOCKED on an external subscribed-provider outage
+Next action: finish the remaining non-provider validation and integrate, then
+STOP on the unknown arm until `opencode-go/glm-5.3` answers a structured probe within
+the frozen timeout, then run the four frozen runs in
+`evaluation-freeze.unknown.json` (`sha256:6145bd666dd08369ec38b018`) unchanged.
+Do NOT substitute a provider to get past the blocker: choosing one after results
+are visible is the contamination the freeze prevents, and it would require a new
+fingerprint and a full rerun of both arms. That is an owner decision.
 Authorization class: AUTONOMOUS_YIELD_PROOF_W11_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2

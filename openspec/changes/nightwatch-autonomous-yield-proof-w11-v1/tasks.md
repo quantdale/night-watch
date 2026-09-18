@@ -79,47 +79,83 @@
 
 ## M5. Run the owner-local unknown-yield campaign
 
-- [ ] M5.1 Execute through the ordinary `nightwatch-agent campaign run` path.
-- [ ] M5.2 Execute across a materially wider slice under host-owned
-      `--repository` scope.
-- [ ] M5.3 Resume one checkpoint to prove scope and budget identity.
+- [ ] ~~M5.1 Execute through the ordinary `nightwatch-agent campaign run` path~~
+      — BLOCKED. The path was exercised and is correct; the run is invalid
+      because all 6 reasoner calls returned `REASONER_TIMEOUT` with zero
+      provider response bytes. The `opencode-go` subscribed namespace is
+      degraded or quota-exhausted.
+- [ ] ~~M5.2 Execute across a materially wider slice under host-owned
+      `--repository` scope~~ — BLOCKED by the same outage. Standing ceiling
+      recorded regardless: reproduction capability exists in
+      `mobingilabs/ouchan` alone, so investigation breadth is 8 and execution
+      breadth is 1.
+- [x] M5.3 Resume one checkpoint to prove scope and budget identity — proven on
+      the real checkpoint: a changed resume scope fails closed with
+      `CAMPAIGN_SCOPE_MISMATCH` (exit 2) and an unapproved id with
+      `REAL_SOURCE_SCAN_APPROVED_UNIVERSE`, both before any provider call.
 
 ## M6. Yield accounting
 
-- [ ] M6.1 Derive all metrics mechanically; state every denominator.
+- [x] M6.1 Derive all metrics mechanically; state every denominator —
+      `evidence/yield-accounting.json`, generated from the preserved arm
+      documents rather than hand-counted. Every denominator is named, and six
+      figures the first arm run did not persist are reported as NOT_CAPTURED
+      with the reason instead of being estimated; the runner now derives them
+      through `deriveEfficacyCaseMetrics` for future runs. The unknown arm
+      contributes to no denominator.
 
 ## M7. Leakage and anti-cheating audit
 
 - [x] M7.1 Inspect every reasoner-visible historical request blob — 78 blobs
-      across 14 cases scanned against all six hidden fields; **0 leakage
-      events**. The hunt asserts and throws on leakage, so a leak would have
-      aborted the case rather than being reported beside a yield.
+      across 14 cases, **0 leakage events**. The hunt asserts and throws on
+      leakage, so a leak aborts the case rather than being published beside a
+      yield.
 - [x] M7.2 Prove the leakage checker live with canaries —
-      `tests/unit/w11LeakageCanary.test.ts`, 5 tests: each hidden field is
-      caught when planted, a six-field leak reports all six, clean blobs stay
-      clean, real fixture contexts carry none of their own hidden truth, and an
-      empty field manufactures neither a false clean nor a false leak.
+      `tests/unit/w11LeakageCanary.test.ts`, 5 tests.
 
 ## M8. Adversarial and resilience checks
 
-- [ ] M8.1 Prove widened-resume, changed-budget, changed-provider and
-      changed-corpus all fail closed.
-- [ ] M8.2 Prove candidate-without-reproduction, forged evidence ref,
+- [x] M8.1 Prove widened-resume, changed-budget, changed-provider and
+      changed-corpus all fail closed — `CAMPAIGN_SCOPE_MISMATCH`; resume runs
+      under the checkpoint's stored policy; the arm refuses an unfrozen model
+      with exit 2 before any call; the freeze fingerprint and EXACT thresholds
+      are pinned to the live constants by test.
+- [x] M8.2 Prove candidate-without-reproduction, forged evidence ref,
       fabricated `reproductionCount` and unsupported repository scope all
-      refuse.
-- [ ] M8.3 Prove malformed provider output and provider timeout fail closed
-      without manufacturing progress.
-- [ ] M8.4 Prove sibling identity is unchanged across reproduction.
+      refuse — 4 live `MISSING_REPRODUCTION` refusals; unapproved scope refused
+      `REAL_SOURCE_SCAN_APPROVED_UNIVERSE`; the dossier gate returns null below
+      `reproductionCount` 1; forged-ref and fabricated-count refusals remain
+      covered by `autonomousFinding` / `currentSourceFindingAdmission`.
+- [x] M8.3 Prove malformed provider output and provider timeout fail closed
+      without manufacturing progress — malformed output covered by
+      `reasonerCli`; the timeout half was proven on live traffic by the outage
+      itself: 6 timeouts produced 0 actions, 0 targets, 0 candidates, 0
+      reproductions and `dossierStatus: NONE`.
+- [x] M8.4 Prove sibling identity is unchanged across reproduction — all 8
+      HEADs equal their frozen SHAs; newest sibling content mtime across all
+      eight is ~18 h BEFORE W11 began. Sibling writes: 0.
 
 ## M9. Repair only evidence-found defects
 
-- [ ] M9.1 For each Nightwatch defect exposed: preserve evidence, reproduce in
-      a focused regression, fix minimally, rerun the focused proof and any
-      affected arm.
+- [x] M9.1 For each defect exposed: preserve evidence, reproduce in a focused
+      regression, fix minimally, rerun the focused proof — **no Nightwatch
+      framework defect was exposed.** Two defects were found in W11's own work
+      and fixed: the arm aggregation mislabelled proposed candidates as
+      admissions (corrected by re-derivation from preserved evidence, no
+      re-run), and the active PLAN/STATE used shapes the coherence guard does
+      not recognise (corrected; guard now passes). The unnamed hidden test is
+      deliberately NOT treated as a defect: it is a benchmark-reachability
+      limit, and the model missing an inference is an efficacy result.
 
 ## M10. Group 12 closure
 
-- [ ] M10.1 Close Group 12 tasks 12.1-12.12 against their live wording.
-- [ ] M10.2 Publish the measured yield into the governed README and
-      current-state blocks.
-- [ ] M10.3 Full validation, integrate, release.
+- [x] M10.1 Close Group 12 tasks 12.1-12.12 against their live wording — closed
+      truthfully: 12.1-12.6, 12.9 and 12.10 met; 12.7 BLOCKED; 12.8, 12.11 and
+      12.12 PARTIAL. No box was ticked "close enough".
+- [x] M10.2 Publish the measured yield into the governed README and
+      current-state blocks — published. The governed figures stay 0/0 because
+      both remain true, with the explanation and the unexecuted-arm status
+      recorded beside them.
+- [ ] ~~M10.3 Full validation, integrate, release~~ — PARTIAL. `gate:local`
+      PASS over all 12 required groups; full regression and clean gate recorded
+      in STATE. Release is not claimed while 12.7 is blocked.

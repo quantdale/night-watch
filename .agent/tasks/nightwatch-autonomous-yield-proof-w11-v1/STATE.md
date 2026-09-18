@@ -35,11 +35,12 @@ Close Production Completion Group 12.
 
 ## Current Milestone
 
-Milestone ID: M4
-Milestone status: IN_PROGRESS
-What is being attempted: freezing the previously-unknown-defect campaign
-definition — repository set, SHAs, host-owned scopes, budgets and stopping
-condition — at a committed SHA before any unknown-arm execution begins.
+Milestone ID: M5
+Milestone status: BLOCKED
+What is being attempted: executing the frozen owner-local unknown-yield
+campaigns. Blocked: the `opencode-go` subscribed provider namespace is degraded
+or quota-exhausted, so no valid campaign can run. The frozen provider is NOT
+swapped and the frozen threshold is NOT lowered.
 
 ## Completed Milestones
 
@@ -103,16 +104,23 @@ condition — at a committed SHA before any unknown-arm execution begins.
 
 ## Work In Progress
 
-The unknown-yield arm has not been defined or executed. Its definition is being
-frozen now, after the historical arm closed, so historical results cannot bias
-its scope.
+Remaining non-provider validation (full regression, clean gate) is executing. Every milestone not dependent on the subscribed provider
+is closed. The unknown-yield arm is frozen and ready but cannot execute until
+the provider recovers.
 
 ## Exact Next Action
 
-Commit the frozen unknown-yield campaign definition (repository set, SHAs,
-host-owned `--repository` scopes, budgets, stopping condition), then execute the
-owner-local unknown-yield campaigns through the ordinary
-`nightwatch-agent campaign run --reasoner=cli` path (M5).
+Finish the remaining non-provider validation and integrate the completed work,
+then STOP on the unknown arm until the unblock condition is met: the `opencode-go` subscribed provider
+answers a structured probe within the frozen timeout. When it does, run the four
+frozen runs in `evaluation-freeze.unknown.json` unchanged
+(`sha256:6145bd666dd08369ec38b018`) through
+`nightwatch-agent campaign run --reasoner=cli`, then close M6 and M10.
+
+Do NOT substitute a different provider to get past this. Selecting a provider
+after results are visible is the contamination the freeze exists to prevent, and
+a substitution would require a new fingerprint and a full rerun of BOTH arms for
+comparability. That is an owner decision, not a self-authorized one.
 
 ## Files Changed
 
@@ -203,7 +211,20 @@ Evidence/constraint: W11 execution prompt M2 ordering.
 
 ## Blockers
 
-None.
+**EXTERNAL — subscribed provider unavailable.** The `opencode-go` namespace is
+degraded or quota-exhausted. The frozen primary `opencode-go/glm-5.3` answered
+in 13.6 s at M0 preflight and served all 78 historical-arm calls with zero
+failures; it now times out at 125-208 s on a trivial prompt, as does
+`opencode-go/glm-5.3-flash` in the same namespace, while
+`opencode/nemotron-3.5-lightning-free` answers in 14.2 s and the CLI and local
+stack are healthy. Evidence: `evidence/provider-degradation-probe.json`.
+
+Unblock condition: `opencode-go/glm-5.3` returns a valid
+`nightwatch.reasoner-turn-response.v1` within the frozen timeout.
+
+This blocks M5 (unknown-arm execution), and therefore Group 12 tasks 12.7 and
+the unknown-arm half of 12.8, 12.11 and 12.12. It does not affect the historical
+arm, which is complete and certified.
 
 ## Safety Events
 
@@ -223,5 +244,25 @@ NONE
 
 ## Completion Snapshot
 
-Not complete. W11 is at M1; no evaluation has been run and no yield figure
-exists. Do not populate completion evidence until M1-M10 close truthfully.
+W11 is BLOCKED, not complete. Recorded for the owner:
+
+Wave verdict: PARTIAL — BLOCKED (the wave's outcome; the task record stays
+IN_PROGRESS with PROJECT_VERDICT_EFFECT PRESERVE, because a BLOCKED task status
+would force the project completion status to PROJECT_NOT_COMPLETE_BLOCKED and
+thereby retract an operational acceptance that predates W11 and that this
+provider outage does not invalidate).
+Historical arm: COMPLETE. Frozen `sha256:824deef9922975feab5af69f`,
+`opencode-go/glm-5.3`, 14/14 cases, strict EXACT 0 (rate 0/13), 10 near
+matches, 4 reproductions, 7 candidates, 3 mechanical admissions, 4 refused
+`MISSING_REPRODUCTION`, 0 false positives, 0 `ENVIRONMENT_BLOCKED`, 0 leakage
+across 78 audited request blobs.
+Unknown arm: FROZEN, UNEXECUTED — `sha256:6145bd666dd08369ec38b018`. No yield
+figure exists and none is invented.
+Validation: `gate:local` PASS over all 12 required groups,
+`receipt:sha256:8c67ffb13a7920f44cfbd870`.
+Safety: 0 DEV / NEXT / production contacts, 0 sibling writes, 0 leakage, 0
+credentials exposed, 0 external publications, 0 force pushes.
+No previously unknown Alphaus defect is claimed. No defect was fabricated.
+Recommended next task: resume M5 under the unchanged frozen definition once the
+subscribed provider recovers, or obtain an owner decision on re-freezing both
+arms under a different provider.
