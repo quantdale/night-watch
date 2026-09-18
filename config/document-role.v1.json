@@ -150,6 +150,13 @@
       "oldLineSha256": "sha256:55d26be1958be4f4714d7344",
       "oldLineExcerpt": "> Durable memory for the next agent/session. Last updated: **2026-09-17**",
       "reason": "The header date and the append-only rule are in genuine tension: checkDocumentationFreshness requires the date to cover the document's own last change, and any append IS a change, so appending to this archive necessarily edits line 3. The statement is unchanged; only the date it carries advances to 2026-09-18 for the Control Center design-system campaign."
+    },
+    {
+      "id": "CORR-W11-001",
+      "path": "docs/CURRENT_STATE.md",
+      "oldLineSha256": "sha256:b4f1175984c70a972abfb55f",
+      "oldLineExcerpt": "| `LAST_SUBSTANTIVE_IMPLEMENTATION_SHA` | the last commit that changed implementation AND was validated | `62d23e2` |",
+      "reason": "The prose cell still named the W10 anchor 62d23e2 while the machine-checked block had already moved on, which is exactly the R-11/R-12 drift this table records. W11 landed implementation (the historical-arm runner, two guard suites, their validation-universe registration), so project:check required the substantive baseline to advance to ae06d4d; the prose cell is corrected to match rather than left contradicting the block below it."
     }
   ]
 }
