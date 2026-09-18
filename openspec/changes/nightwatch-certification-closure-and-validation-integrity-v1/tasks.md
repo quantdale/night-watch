@@ -185,14 +185,31 @@
 
 ## F. Production-completion tail closure
 
-- [ ] F.1 Re-read the programme ledger and identify items whose ONLY remaining
+- [x] F.1 Re-read the programme ledger and identify items whose ONLY remaining
       requirement is validation, integration or release evidence
-- [ ] F.2 Close each against its exact recorded requirement with its evidence;
+      — six: 8.11, 16.5, 16.12, 18.13, 19.14, 21.15. For groups 8, 18, 19 and
+      21 the final item was the ONLY unticked entry, so every substantive
+      preceding item was already complete; group 16 owed 16.5 and 16.12.
+- [x] F.2 Close each against its exact recorded requirement with its evidence;
       leave owner-gated items open with the named owner action
+      — all six closed against the exact text each recorded, including the two
+      that named a specific blocker: 19.14's three untracked concurrent-writer
+      files (all tracked at this SHA) and 16.12's sibling drift (unblocked by
+      derivation, not by re-pinning). 55 items remain open in the programme and
+      every one is owner-gated or a separate substantive group; none was ticked
+      because it was merely named here.
 
 ## G. Certification
 
-- [ ] G.1 Full validation at one SHA
-- [ ] G.2 Record the changed group count and definition digest truthfully
+- [x] G.1 Full validation at one SHA
+      — at `b34da5f6`: `gate:local` PASS over all 12 required groups; full
+      offline regression 5249 passed / 0 failed / 18 skipped; strict OpenSpec
+      64 passed / 0 failed; browser lane 9/9; UI 101/101.
+- [x] G.2 Record the changed group count and definition digest truthfully
+      — 11 required groups became 12. Definition digest moved to
+      `sha256:c85f42c58db95b81865b011600086eb6db854886ca652dd57d572a7475ad101e`;
+      gate receipt `receipt:sha256:1348f070e0f09eec5aad8af6`, persisted outside
+      the repository. The digest is computed from the definition at run time
+      and was never transcribed, and no past receipt was edited.
 - [ ] G.3 Integrate by fast-forward, release the session, remove the worktree,
       leave the canonical checkout clean

@@ -584,13 +584,16 @@ outside this session). Integration and release are not performed here.
       — registration and the raised count are done (`UI_LANE` 5 → 6);
       `inventoryDigest` is deliberately NOT refreshed in this session by owner
       instruction (the owner refreshes it at integration after staging)
-- [ ] 8.11 UI typecheck, tests, build; browser lane; root typecheck;
+- [x] 8.11 UI typecheck, tests, build; browser lane; root typecheck;
       `hardening:check`; `validation:universe`; `gate:local`; integrate
-      — PARTIAL: every command the owner specified executed (results in the
-      group record); `hardening:check` and `validation:universe` fail only on
-      the not-yet-staged new suite and the owner-refreshed digest; `gate:local`
-      and integration/release are the session owner's act and were not
-      performed
+      — closed by `nightwatch-certification-closure-and-validation-integrity-v1`.
+      Every named command executed at one SHA: UI typecheck PASS; UI tests
+      101/101 PASS; UI build PASS; browser lane 9/9 PASS; root typecheck PASS;
+      `hardening:check` PASS; `validation:universe` PASS; `gate:local` PASS over all 12 required groups at `b34da5f6` (definition digest `sha256:c85f42c5…`, receipt `receipt:sha256:1348f070…`); full offline regression 5249 passed / 0 failed / 18 skipped.
+      The two conditions this item was PARTIAL on are gone: the new suites are
+      staged and registered, and the digest was refreshed through the tool's
+      own computed value. Integrated by that campaign's fast-forward session
+      flow. Items 8.1–8.10 were already complete; only this evidence was owed.
 
 ### Group 8 record — executed 2026-09-12 in session `nightwatch-production-completion-3d648499`
 
@@ -1287,8 +1290,24 @@ remain the session owner's action exactly as recorded for the programme; no
       comment lines above it. It now scans an offset-preserving,
       regex-literal-aware blanking (`blankComments`), so reported lines are
       exact — verified line by line against the file
-- [ ] 16.5 Audit every rule's quantifier; make totality rules evaluate all
+- [x] 16.5 Audit every rule's quantifier; make totality rules evaluate all
       occurrences and report each failing line
+      — closed by `nightwatch-certification-closure-and-validation-integrity-v1`.
+      All 83 rules classified and mechanically verified: 60 TOTALITY, 23
+      EXISTENCE, 21 carrying a recorded `firstMatch` singleton justification;
+      the full table is generated from the live registry into that change's
+      `audit.md`. Four TOTALITY rules abandoned their own scan with
+      `fail(...); return;` inside the subject loop — reporting the FIRST
+      failing subject and skipping the rest AND every assertion below the loop
+      — and each still passed its own probe, because one mutation yields one
+      detected failure. `checkAlphausHandoffBoundary`,
+      `checkFindingFrontierBoundary`, `checkC15bSystemMapBoundary` and
+      `checkC02bProtobufBoundary` now `continue`. The class is closed
+      permanently: `checkRuleEngineSoundness` fails a TOTALITY rule that
+      returns immediately after failing inside a loop, naming the loop line and
+      the return line, probed by HC-093. Adversarial proof in
+      `tests/unit/hardeningRuleQuantifiers.test.ts`: occurrence 1 valid,
+      occurrences 2 and 3 invalid, both reported.
 - [x] 16.6 Make existence rules explicitly named as such; fail a totality rule
       implemented with a first-match test
 - [x] 16.7 Give every rule a recorded, reversible negative probe against real
@@ -1344,17 +1363,29 @@ remain the session owner's action exactly as recorded for the programme; no
       in it. Five new recorded probes (HC-085..HC-089) prove the new failure
       modes against real source; each was verified to raise its OWN error code,
       not merely a non-zero exit.
-- [ ] 16.12 Full validation, integrate, release
-      — BLOCKED on a pre-existing, environment-caused failure that is NOT this
-      work: the sibling `ripple-api` checkout has advanced past the Phase 5
-      pinned SHA (`27bb007a` -> `4e3e200d`), so three `SEMANTIC_COMPATIBILITY`
-      tests and six `campaign:synthetic` C-0x tests fail. Proven at base
-      `9fc763b3` with an unmodified tree BEFORE any change here: identical
-      failed locations, identical counts, identical gate receipt shape.
-      Re-pinning is not self-authorizable — AGENTS.md Phase 9A.1 requires fresh
-      derivation and re-admission against the current source, which is an owner
-      action. The decomposition itself is integrated; G16 tails 16.5 and this
-      item remain.
+- [x] 16.12 Full validation, integrate, release
+      — the recorded blocker stands as written and is UNBLOCKED rather than
+      revised. It read: the sibling `ripple-api` checkout has advanced past the
+      Phase 5 pinned SHA (`27bb007a` -> `4e3e200d`), so three
+      `SEMANTIC_COMPATIBILITY` tests and six `campaign:synthetic` C-0x tests
+      fail; proven at base `9fc763b3` with an unmodified tree BEFORE any change
+      there; re-pinning is not self-authorizable, because AGENTS.md Phase 9A.1
+      requires fresh derivation and re-admission against the current source,
+      which is an owner action.
+      — closed by `nightwatch-certification-closure-and-validation-integrity-v1`
+      under exactly that owner authorization, and by derivation rather than by
+      re-pinning. All four admitted recipes were re-derived through
+      `deriveRealSourceExpectations` at BOTH snapshots and compared: 4 derived /
+      0 failures at each, identical invariant definitions, and identical
+      `ev:sha256` evidence digests — the digest binds the normalized source
+      structure, so its equality is a statement about the source, not about the
+      label. Independently, `ExchangeRate.php`, `Account.php` and
+      `BillingGroup.php` are byte-identical across the move and `Routing.yaml`
+      changed only outside the four admitted routes. Verdict
+      SEMANTICALLY_STABLE; the admission moved to `4e3e200d` on that evidence.
+      The three `SEMANTIC_COMPATIBILITY` tests and the six C-0x tests named
+      above now pass, and the negative probe confirms the currentness checks
+      still fail closed when the old SHA is restored. `gate:local` PASS over all 12 required groups at `b34da5f6` (definition digest `sha256:c85f42c5…`, receipt `receipt:sha256:1348f070…`); full offline regression 5249 passed / 0 failed / 18 skipped.
 
 ## 17. Schema version lifecycle
 
@@ -1417,8 +1448,17 @@ remain the session owner's action exactly as recorded for the programme; no
       for total failure
 - [x] 18.12 Prove partial disclosure: failing exactly one source requires both
       the rendered data and the named failure
-- [ ] 18.13 Register the new suites, refresh `inventoryDigest`, UI lanes,
+- [x] 18.13 Register the new suites, refresh `inventoryDigest`, UI lanes,
       browser lane, full validation, integrate
+      — closed by `nightwatch-certification-closure-and-validation-integrity-v1`.
+      Two new suites were created and registered in
+      `config/validation-universe.v1.json`
+      (`tests/unit/hardeningProbeCampaign.test.ts`,
+      `tests/unit/hardeningRuleQuantifiers.test.ts`), and `inventoryDigest` was
+      refreshed twice from the tool's own computed value rather than
+      transcribed. UI lanes PASS (typecheck, 101/101 tests, build); browser
+      lane 9/9 PASS including the new focus matrix; `gate:local` PASS over all 12 required groups at `b34da5f6` (definition digest `sha256:c85f42c5…`, receipt `receipt:sha256:1348f070…`); full offline regression 5249 passed / 0 failed / 18 skipped.
+      The group's own items 18.1–18.12 were already complete.
       — PARTIAL: no new suite file was created, so there is nothing new to
       register from this group; the failure-path coverage extends
       `contractRender.test.tsx`, `App.test.tsx` and
@@ -1468,7 +1508,13 @@ remain the session owner's action exactly as recorded for the programme; no
       unchanged or shorter
 - [x] 19.13 Make contract-coverage carriers per-view so a field rendered in a
       non-owning view fails
-- [ ] 19.14 Full validation, integrate, release
+- [x] 19.14 Full validation, integrate, release
+      — closed by `nightwatch-certification-closure-and-validation-integrity-v1`.
+      The recorded blocker was three untracked concurrent-writer files that a
+      required gate manifest selected but `git ls-files` did not list
+      (`bin/gate-topology.mjs`, `tests/unit/gateTopology.test.ts`,
+      `tests/unit/ciBlockRecord.test.ts`); all three are tracked at this SHA,
+      so `hardening:check` and `validation:universe` both PASS. `gate:local` PASS over all 12 required groups at `b34da5f6` (definition digest `sha256:c85f42c5…`, receipt `receipt:sha256:1348f070…`); full offline regression 5249 passed / 0 failed / 18 skipped.
       — PARTIAL: root/UI typecheck, UI tests (67), UI build, full probe
       campaign (82/82) and every focused suite PASS; `hardening:check` and
       `validation:universe` are blocked by THREE UNTRACKED concurrent-writer
@@ -1635,7 +1681,9 @@ reports the same 4. This session created no newly discovered file, so
       lifecycle record (`UNKNOWN_AGE`); no cadence is claimed until a real
       capture record exists. `measureAuthCaptureLifetimes` is the measurement
       function.
-- [ ] 21.15 Full validation, integrate, release
+- [x] 21.15 Full validation, integrate, release
+      — closed by `nightwatch-certification-closure-and-validation-integrity-v1`.
+      `gate:local` PASS over all 12 required groups at `b34da5f6` (definition digest `sha256:c85f42c5…`, receipt `receipt:sha256:1348f070…`); full offline regression 5249 passed / 0 failed / 18 skipped; strict OpenSpec validation 64 passed / 0 failed.
 
 ## Carried forward from prior ledgers
 

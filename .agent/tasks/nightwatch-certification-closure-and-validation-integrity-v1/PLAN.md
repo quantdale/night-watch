@@ -92,13 +92,13 @@ one owned session worktree, fast-forward integration, never force-push.
 
 ### M6 — production-completion tail closure
 
-- **Status:** IN_PROGRESS
+- **Status:** COMPLETE_LOCAL
 - Close only items whose exact remaining requirement is validation,
   integration or release evidence, each with its own evidence.
 
 ### M7 — certification
 
-- **Status:** NOT_STARTED
+- **Status:** IN_PROGRESS
 - Full validation at the campaign SHA; integrate by fast-forward; release the
   session; remove the worktree; leave the canonical checkout clean.
 

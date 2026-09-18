@@ -24,10 +24,10 @@ Control Center design-system campaign, then certify truthfully. Full intent in
 
 ## Current Milestone
 
-Milestone ID: M6 — production-completion tail closure
+Milestone ID: M7 — certification
 Milestone status: IN_PROGRESS
-What is being attempted: close the validation-only tails (8.11, 16.5, 16.12,
-18.13, 19.14, 21.15) against their exact recorded requirements, then certify.
+What is being attempted: integrate by fast-forward, release the session, remove
+the owned worktree and leave the canonical checkout clean.
 
 ## Completed Milestones
 
@@ -235,6 +235,35 @@ What is being attempted: close the validation-only tails (8.11, 16.5, 16.12,
   It now captures the STATE token and asserts the real binding — the PLAN
   agrees with the STATE — over both identifier forms.
 
+- **M6 COMPLETE_LOCAL — production-completion tail closure.** Six items closed,
+  each against the exact text it recorded: 8.11, 16.5, 16.12, 18.13, 19.14 and
+  21.15. For groups 8, 18, 19 and 21 the final item was the ONLY unticked
+  entry, so every substantive preceding item was already complete. Two named a
+  specific blocker and both are genuinely gone rather than waived: 19.14's
+  three untracked concurrent-writer files are all tracked at this SHA, and
+  16.12's sibling drift was removed by derivation rather than by re-pinning —
+  its recorded blocker text is preserved verbatim and marked UNBLOCKED beside
+  the evidence. 55 programme items remain open; every one is owner-gated or a
+  separate substantive group, and none was ticked merely because this campaign
+  named it.
+
+- **CERTIFICATION — GREEN at `b34da5f6`.** `gate:local` PASS over all 12
+  required groups, definition digest
+  `sha256:c85f42c58db95b81865b011600086eb6db854886ca652dd57d572a7475ad101e`,
+  receipt `receipt:sha256:1348f070e0f09eec5aad8af6`. `SEMANTIC_COMPATIBILITY`
+  2127 total / 2114 passed / 13 skipped / 0 failed, against 3 failed at the
+  campaign base; `SYNTHETIC_CAMPAIGN` 1897 / 1897 / 0 failed, against 6 failed.
+  Full offline regression 5249 passed / 0 failed / 18 skipped. Strict OpenSpec
+  64 passed / 0 failed.
+
+  This is a real green, not a differential one, and it is a STRONGER green than
+  the gate could previously produce: the definition carries 12 required groups
+  rather than 11, and the added one executes the rule mutation campaign. Before
+  this campaign a green gate meant the hardening rules RAN; it now means they
+  DETECT — 83 rules, 94 probes, each mutation required to be caught, every file
+  restored byte-for-byte and `git status` verified unchanged. The working tree
+  was clean after both the gate and the full regression.
+
 ## Measured Baseline
 
 Recorded at `521210f7` before any change (see `PLAN.md` for the full list):
@@ -262,10 +291,9 @@ Recorded at `521210f7` before any change (see `PLAN.md` for the full list):
 
 ## Exact Next Action
 
-Close the production-completion tails whose only remaining requirement is
-validation, integration or release evidence — 8.11, 16.5, 16.12, 18.13, 19.14,
-21.15 — each against its exact recorded requirement, then run the full
-certification at one SHA and integrate by fast-forward.
+Integrate by fast-forward through the session flow, verify `HEAD ==
+origin/main`, release the session, remove the owned worktree from the canonical
+checkout, and confirm the canonical checkout is clean.
 
 ## Resume Recipe
 
@@ -279,7 +307,7 @@ certification at one SHA and integrate by fast-forward.
 
 ## Work In Progress
 
-Milestone M6: production-completion tail closure, then certification.
+Milestone M7: integration, session release and worktree removal.
 
 ## Files Changed
 
@@ -318,6 +346,11 @@ Milestone M6: production-completion tail closure, then certification.
   (45 cells, every declared width x every view).
 - Focus-matrix negative probe — degrading the token fails the lane naming the
   view, width, control, treatment, colour and ratio.
+- `npm run handoff:check` PASS; `npm run project:check` PASS;
+  `npm run workspace:check` PASS; `npm run agent:check` PASS.
+- `npx openspec validate --all --strict` — 64 passed / 0 failed.
+- `npm run gate:local` at `b34da5f6` — PASS, 12/12 required groups.
+- `npm test` at `b34da5f6` — 5249 passed / 0 failed / 18 skipped, exit 0.
 
 ## Decisions Made During This Task
 
