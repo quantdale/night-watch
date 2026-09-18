@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "nightwatch.w11-provider-degradation-probe.v1",
+  "observedAt": "after the historical arm completed 78 successful calls and during w11-unknown-broad-1",
+  "baseline": {
+    "m0PreflightLatencyMs": 13592,
+    "historicalArmCalls": 78,
+    "historicalArmProviderFailures": 0
+  },
+  "probes": [
+    { "model": "opencode-go/glm-5.3", "result": "TIMEOUT", "elapsedSeconds": 207.79, "note": "the frozen primary provider" },
+    { "model": "opencode-go/glm-5.3", "result": "TIMEOUT", "elapsedSeconds": 208.25, "note": "repeat" },
+    { "model": "opencode-go/glm-5.3-flash", "result": "TIMEOUT", "elapsedSeconds": 125.32, "note": "same subscribed namespace" },
+    { "model": "opencode/nemotron-3.5-lightning-free", "result": "PROBE_OK", "elapsedSeconds": 14.18, "note": "different namespace, free tier — healthy" }
+  ],
+  "conclusion": "the opencode-go subscribed namespace is degraded or quota-exhausted; the opencode free namespace, the CLI and the local stack are healthy. External condition, not a Nightwatch or W11 defect.",
+  "actionsNotTaken": [
+    "provider/account configuration was NOT modified to force availability",
+    "the frozen provider was NOT swapped for an available one, because selecting a provider after seeing results would re-open the selection decision the freeze exists to prevent"
+  ]
+}

@@ -1,0 +1,83 @@
+{
+  "schemaVersion": "nightwatch.local-cli-campaign.v1",
+  "campaignId": "w11-unknown-broad-1",
+  "reasonerIdentity": {
+    "path": "/home/dalepalaca/.nvm/versions/node/v22.22.1/bin/node",
+    "digest": "sha256:243fd8938011479f41b3de101842150fa990f33fbbb3f7aabd330857f2d79e1d"
+  },
+  "terminationReason": "BUDGET_EXHAUSTED",
+  "candidateIds": [],
+  "actionCount": 6,
+  "checkpointFile": "/home/dalepalaca/.nightwatch/campaigns/w11-unknown-broad-1.checkpoint.json",
+  "environment": "LOCAL",
+  "dossierStatus": "NONE",
+  "findingAdmissions": [],
+  "reproductionCount": 0,
+  "investigationsStarted": 1,
+  "investigationsCompleted": 1,
+  "terminationCounts": {
+    "COMPLETE_WITH_FINDING": 0,
+    "COMPLETE_NO_FINDING": 0,
+    "BUDGET_EXHAUSTED": 1,
+    "CANCELLED": 0,
+    "PAUSED": 0,
+    "SAFETY_BLOCKED": 0,
+    "NO_PROGRESS": 0,
+    "REASONER_FAILURE": 0
+  },
+  "reasonerCalls": 6,
+  "providerFailures": 6,
+  "wallTimeMs": 748216,
+  "byteLedger": {
+    "schemaVersion": "nightwatch.agent-byte-ledger.v1",
+    "legacyInputBytes": 0,
+    "legacyOutputBytes": 0,
+    "legacyToolPayloadBytes": 0,
+    "renderedInputBytes": 15679,
+    "requestMemoryBytes": 8666,
+    "requestUntrustedBytes": 12,
+    "providerResponseBytes": 0,
+    "providerStderrBytes": 0,
+    "reasonerOutputBytes": 0,
+    "toolResultBytes": 0,
+    "toolEnvelopeBytes": 0,
+    "checkpointBytes": 4832
+  },
+  "campaignStrategy": {
+    "schemaVersion": "nightwatch.campaign-strategy-state.v2",
+    "campaignId": "w11-unknown-broad-1",
+    "investigationsCompleted": 1,
+    "inspectedTargets": [],
+    "unproductiveTargets": [],
+    "reproducedTargets": [],
+    "unsupportedTargets": [],
+    "candidateIds": [],
+    "stagnantInvestigations": 1,
+    "priorOutcomes": [
+      {
+        "investigationId": "w11-unknown-broad-1:inv:0",
+        "terminationReason": "BUDGET_EXHAUSTED",
+        "newEvidence": 0,
+        "newCandidates": 0
+      }
+    ]
+  },
+  "yieldMetrics": {
+    "schemaVersion": "nightwatch.w10-campaign-yield.v1",
+    "visibleSources": 0,
+    "visibleExecutableSources": 0,
+    "visibleExecutableTargets": 0,
+    "visibleRepositories": 0,
+    "reproductionAttempts": 0,
+    "executedAttempts": 0,
+    "notAvailableAttempts": 0,
+    "environmentBlockedAttempts": 0,
+    "erroredAttempts": 0,
+    "qualifyingReproductions": 0,
+    "repeatedUnsupportedAttempts": 0,
+    "distinctAttemptedTargets": 0,
+    "distinctExecutedTargets": 0,
+    "attemptsToFirstExecutedReproduction": null,
+    "actionsToFirstExecutedReproduction": null
+  }
+}

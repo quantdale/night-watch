@@ -94,9 +94,66 @@ about the metric's reachability, not about investigation quality.**
 This is reported as a measured limit. The EXACT definition was NOT weakened,
 no threshold was tuned, and no near match was promoted.
 
-## Current unknown-yield arm
+## Current unknown-yield arm (M4/M5) — BLOCKED by an external provider outage
 
-Not yet run.
+Definition frozen at `46d32d3e`, fingerprint `sha256:6145bd666dd08369ec38b018`,
+after the historical arm closed and before any unknown-arm execution.
+
+### Run `w11-unknown-broad-1` — INVALID, preserved not overwritten
+
+Launched through the ordinary product path
+(`nightwatch-agent campaign run --reasoner=cli --duration=1h --max-turns=12`).
+
+| Metric | Value |
+|---|---:|
+| wall time | 748,216 ms |
+| investigations started / completed | 1 / 1 |
+| reasoner calls | 6 |
+| **provider failures** | **6 (all `REASONER_TIMEOUT`)** |
+| provider response bytes | 0 |
+| tool actions of value | 0 |
+| unique targets / candidates / admissions | 0 / 0 / 0 |
+| reproduction attempts | 0 |
+| dossier status | NONE |
+| termination | `BUDGET_EXHAUSTED` |
+
+Every provider call timed out and the provider returned zero bytes. This run
+measures provider availability, not yield, and it is NOT reported as a
+zero-yield result. It is preserved at
+`evidence/unknown-broad-1-FAILED-provider-timeout.json`.
+
+### Root cause: external, and outside Nightwatch
+
+Measured directly after the failure:
+
+| Probe | Result | Elapsed |
+|---|---|---:|
+| `opencode-go/glm-5.3` (frozen primary) | TIMEOUT | 207.8 s |
+| `opencode-go/glm-5.3` (repeat) | TIMEOUT | 208.3 s |
+| `opencode-go/glm-5.3-flash` (same namespace) | TIMEOUT | 125.3 s |
+| `opencode/nemotron-3.5-lightning-free` (other namespace) | **PROBE_OK** | 14.2 s |
+
+The same provider answered in 13.6 s at M0 preflight and served all 78
+historical-arm calls with zero failures. The `opencode-go` SUBSCRIBED namespace
+is degraded or quota-exhausted; the free namespace, the CLI and the whole local
+stack are healthy. Evidence: `evidence/provider-degradation-probe.json`.
+
+### What was deliberately not done
+
+- Provider and account configuration were NOT modified to force availability.
+- The frozen provider was NOT swapped for an available one. Choosing a provider
+  after seeing results is exactly what the freeze exists to prevent, and a
+  substitution would require a new fingerprint and a full rerun of BOTH arms
+  for comparability.
+- The frozen reachability threshold was NOT lowered. It requires a passing
+  provider structured probe, and that probe currently fails.
+
+### Unintended M8 proof
+
+The failure demonstrated, on live traffic rather than in a fixture, that a
+provider timeout does not manufacture progress: 6 timeouts produced 0 actions,
+0 targets, 0 hypotheses, 0 candidates, 0 reproductions and `dossierStatus:
+NONE`, and the campaign terminated on its budget instead of inventing a result.
 
 ## Defects exposed
 
