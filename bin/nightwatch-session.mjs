@@ -61,6 +61,24 @@ function emit(code, detail) {
   console.log(detail === undefined ? `[session] ${code}` : `[session] ${code}: ${detail}`);
 }
 
+/**
+ * Report one step of a dry-run plan.
+ *
+ * A plan line is deliberately distinguishable from a real outcome line: a
+ * reader (or a test) must never mistake `SESSION_START_PLAN` for
+ * `SESSION_WORKTREE_CREATED`. Every dry run ends with exactly one
+ * `SESSION_DRY_RUN_NO_MUTATION` line naming the command, which is the
+ * machine-checkable claim that nothing was written.
+ */
+function plan(code, detail) {
+  console.log(detail === undefined ? `[session] PLAN ${code}` : `[session] PLAN ${code}: ${detail}`);
+}
+
+function dryRunComplete(command, nextCommand) {
+  if (nextCommand !== undefined) plan('SESSION_NEXT_COMMAND', nextCommand);
+  emit('SESSION_DRY_RUN_NO_MUTATION', command);
+}
+
 function slug(value) {
   return String(value).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 32);
 }
@@ -241,6 +259,12 @@ function commandClaim(context, options) {
     }
   }
   const record = buildRecord({ taskId: options.taskId, campaignId: options.campaignId, role: options.role, branch, baseSha, anchorPid: options.anchorPid });
+  if (options.dryRun) {
+    plan('SESSION_CLAIM_PLAN', `task=${record.taskId} role=${record.role} branch=${branch} base=${baseSha}`);
+    plan('SESSION_CLAIM_RECORD', `${existing === null ? 'CREATE' : 'REPLACE'} ${file}${existing === null ? '' : ` (adopting stale claim for task ${existing.taskId})`}`);
+    dryRunComplete('claim');
+    return { claimed: false, dryRun: true, record };
+  }
   try {
     if (existing === null) writeRecordExclusive(file, record);
     else writeRecordReplace(file, record);
@@ -270,6 +294,14 @@ function commandStart(context, options) {
     ?? gitValue(context.root, ['rev-parse', '--verify', '--quiet', `refs/remotes/${remote}/${canonicalBranch}`])
     ?? gitValue(context.root, ['rev-parse', 'HEAD']);
   if (baseSha === null) return fail('SESSION_BASE_UNRESOLVED');
+  // An EXPLICIT --base was previously taken on trust and only discovered to be
+  // bogus when `git worktree add` failed -- after the parent directory had
+  // been created. Verifying it here makes the real start fail before its first
+  // mutation, and makes a dry run's "this start could proceed" answer true
+  // rather than merely untested.
+  if (gitValue(context.root, ['rev-parse', '--verify', '--quiet', `${baseSha}^{commit}`]) === null) {
+    return fail('SESSION_BASE_INVALID', `${baseSha} does not resolve to a commit in this repository`);
+  }
   const prefix = context.policy?.canonical?.sessionBranchPrefix ?? 'session/';
   const name = `${slug(options.taskId)}-${crypto.randomBytes(4).toString('hex')}`;
   const branch = `${prefix}${name}`;
@@ -292,6 +324,22 @@ function commandStart(context, options) {
   // this invocation did not create.
   if (gitValue(context.root, ['rev-parse', '--verify', '--quiet', `refs/heads/${branch}`]) !== null) {
     return fail('SESSION_BRANCH_ALREADY_EXISTS', branch);
+  }
+  // The last instruction boundary at which this invocation has mutated
+  // NOTHING, and the first at which the whole plan is known. Every refusal
+  // above -- unsafe workspace, unresolved base, capacity, occupied path,
+  // existing branch, invalid fault token -- has already been evaluated, so a
+  // dry run answers "could the real start proceed?" without creating the
+  // directory, the branch, the worktree or the ownership record.
+  if (options.dryRun) {
+    plan('SESSION_START_PLAN', `task=${options.taskId} base=${baseSha} parent=${parent}`);
+    // The candidate name carries 4 random bytes, so a later real start will
+    // choose a DIFFERENT name. Saying so keeps the report honest rather than
+    // implying a reservation this command did not make.
+    plan('SESSION_START_CANDIDATE', `candidateName=${name} candidateBranch=${branch} candidatePath=${target} (candidate only; a real start draws a fresh suffix)`);
+    plan('SESSION_START_CAPACITY', `registered=${admission.registeredCount} prospective=${admission.prospectiveCount} max=${admission.maxWorktrees} admitted=true`);
+    dryRunComplete('start', `node bin/nightwatch-session.mjs start --task ${options.taskId}`);
+    return { created: false, dryRun: true, baseSha, candidateName: name, candidateBranch: branch, candidatePath: target };
   }
   fs.mkdirSync(parent, { recursive: true });
   const added = git(context.root, ['worktree', 'add', '-b', branch, target, baseSha]);
@@ -347,11 +395,17 @@ function commandStart(context, options) {
   return record;
 }
 
-function commandRelease(context) {
+function commandRelease(context, options) {
   const file = sessionRecordPath(context.commonDir, context.worktreeName, context.policy);
   const existing = readRecordRaw(file);
   if (existing === null) return fail('SESSION_RECORD_ABSENT');
   const updated = { ...existing, ownershipState: 'RELEASED', holder: null };
+  if (options.dryRun) {
+    plan('SESSION_RELEASE_PLAN', `task=${existing.taskId} session=${existing.sessionId} ownershipState=${existing.ownershipState} -> RELEASED`);
+    plan('SESSION_RELEASE_RECORD', `REPLACE ${file}`);
+    dryRunComplete('release');
+    return { released: false, dryRun: true, record: updated };
+  }
   try {
     writeRecordReplace(file, updated);
   } catch (error) {
@@ -367,6 +421,23 @@ function commandReconcile(context, options) {
   if (report.self.clean === false) return fail('SESSION_WORKTREE_DIRTY', 'commit or set aside your own changes before reconciling');
   const remote = context.policy?.canonical?.remote ?? 'origin';
   const canonicalBranch = context.policy?.canonical?.branch ?? 'main';
+  // A fetch WRITES the remote-tracking refs, so it is a mutation and a dry
+  // run must not perform one. The plan is therefore computed against the
+  // remote-tracking ref as it stands, and says so: a real reconcile may see a
+  // newer tip.
+  if (options.dryRun) {
+    const localRemoteMain = gitValue(context.root, ['rev-parse', '--verify', '--quiet', `refs/remotes/${remote}/${canonicalBranch}`]);
+    if (localRemoteMain === null) return fail('SESSION_REMOTE_MAIN_UNKNOWN');
+    const head = gitValue(context.root, ['rev-parse', 'HEAD']);
+    const contains = git(context.root, ['merge-base', '--is-ancestor', localRemoteMain, 'HEAD']).ok;
+    plan('SESSION_RECONCILE_PLAN', `head=${head ?? 'UNKNOWN'} ${remote}/${canonicalBranch}=${localRemoteMain} (local tracking ref; no fetch performed)`);
+    plan(contains ? 'SESSION_RECONCILE_NOT_REQUIRED' : 'SESSION_RECONCILE_WOULD_MERGE', contains
+      ? 'HEAD already contains the canonical tip'
+      : `merge --no-ff ${remote}/${canonicalBranch} into HEAD, then re-run the full validation`);
+    if (!options.offline) plan('SESSION_RECONCILE_WOULD_FETCH', `${remote} ${canonicalBranch}`);
+    dryRunComplete('reconcile');
+    return { merged: false, dryRun: true };
+  }
   if (!options.offline) {
     const fetched = git(context.root, ['fetch', remote, canonicalBranch], { network: true });
     if (!fetched.ok) return fail('SESSION_FETCH_FAILED', fetched.stderr.trim().split('\n').pop() ?? '');
@@ -405,6 +476,24 @@ function commandIntegrate(context, options) {
   if (report.self.clean === false) return fail('SESSION_WORKTREE_DIRTY');
   const remote = context.policy?.canonical?.remote ?? 'origin';
   const canonicalBranch = context.policy?.canonical?.branch ?? 'main';
+  // The dry run sits ABOVE the fetch. The previous guard sat below it, so
+  // `integrate --dry-run` still wrote the remote-tracking refs and was not the
+  // zero-mutation report the flag promises.
+  if (options.dryRun) {
+    const localRemoteMain = gitValue(context.root, ['rev-parse', '--verify', '--quiet', `refs/remotes/${remote}/${canonicalBranch}`]);
+    const localHead = gitValue(context.root, ['rev-parse', 'HEAD']);
+    if (localRemoteMain === null || localHead === null) return fail('SESSION_REMOTE_MAIN_UNKNOWN');
+    plan('SESSION_INTEGRATE_PLAN', `head=${localHead} ${remote}/${canonicalBranch}=${localRemoteMain} (local tracking ref; no fetch performed)`);
+    if (localRemoteMain === localHead) {
+      plan('SESSION_ALREADY_INTEGRATED', localHead);
+    } else if (!git(context.root, ['merge-base', '--is-ancestor', localRemoteMain, 'HEAD']).ok) {
+      plan('SESSION_INTEGRATION_NOT_FAST_FORWARD', `${remote}/${canonicalBranch}=${localRemoteMain} is not contained in HEAD; reconcile and revalidate first`);
+    } else {
+      plan('SESSION_INTEGRATION_READY', `fast-forward ${localRemoteMain} -> ${localHead}`);
+    }
+    dryRunComplete('integrate');
+    return { pushed: false, dryRun: true, head: localHead };
+  }
   if (!options.offline) {
     const fetched = git(context.root, ['fetch', remote, canonicalBranch], { network: true });
     if (!fetched.ok) return fail('SESSION_FETCH_FAILED', fetched.stderr.trim().split('\n').pop() ?? '');
@@ -418,10 +507,6 @@ function commandIntegrate(context, options) {
   }
   if (!git(context.root, ['merge-base', '--is-ancestor', remoteMain, 'HEAD']).ok) {
     return fail('SESSION_INTEGRATION_NOT_FAST_FORWARD', `${remote}/${canonicalBranch}=${remoteMain} is not contained in HEAD; run reconcile, revalidate, then integrate — never force-push`);
-  }
-  if (options.dryRun) {
-    emit('SESSION_INTEGRATION_READY', `fast-forward ${remoteMain} -> ${head}`);
-    return { pushed: false, head };
   }
   // Serialized by the remote ref compare-and-swap. No force, no lease.
   const pushed = git(context.root, ['push', remote, `HEAD:refs/heads/${canonicalBranch}`], { network: true });
@@ -471,6 +556,17 @@ function commandRemove(context, options) {
   if (!contained && !options.abandonUnmerged) {
     return fail('SESSION_REMOVE_REFUSED_UNMERGED', `${options.name} holds commits not contained in ${remote}/${canonicalBranch}; integrate first or pass --abandon-unmerged deliberately`);
   }
+  if (options.dryRun) {
+    plan('SESSION_REMOVE_PLAN', `name=${options.name} path=${target} branch=${typeof branch === 'string' ? branch : 'UNKNOWN'} contained=${String(contained)}`);
+    plan('SESSION_REMOVE_WOULD_REMOVE_WORKTREE', target);
+    if (options.deleteBranch && typeof branch === 'string' && branch !== canonicalBranch) {
+      plan('SESSION_REMOVE_WOULD_DELETE_BRANCH', `${branch} (${contained ? '-d' : '-D'})`);
+    } else {
+      plan('SESSION_REMOVE_WOULD_RETAIN_BRANCH', typeof branch === 'string' ? branch : 'UNKNOWN');
+    }
+    dryRunComplete('remove');
+    return { removed: false, dryRun: true };
+  }
   const removed = git(context.root, ['worktree', 'remove', target]);
   if (!removed.ok) return fail('SESSION_WORKTREE_REMOVE_FAILED', removed.stderr.trim().split('\n').pop() ?? '');
   if (options.deleteBranch && typeof branch === 'string' && branch !== canonicalBranch) {
@@ -487,6 +583,34 @@ function commandRemove(context, options) {
 // ---------------------------------------------------------------------------
 
 const COMMANDS = new Set(['status', 'check', 'start', 'claim', 'release', 'reconcile', 'integrate', 'remove']);
+
+/**
+ * The `--dry-run` contract, declared once and enforced at dispatch.
+ *
+ * `SUPPORTED` means the command computes and reports its whole plan and then
+ * returns having mutated NOTHING -- no ref, no branch, no worktree, no
+ * ownership record, no file, no remote-tracking ref.
+ *
+ * `NOT_APPLICABLE` means the command never mutates, so "report the planned
+ * action without mutating" says nothing the command does not already do.
+ * Those commands REFUSE the flag rather than accepting it as a no-op: a flag
+ * that is silently ignored is exactly how `start --dry-run` came to create a
+ * worktree while reporting a plan.
+ *
+ * Every command in COMMANDS must appear here; `checkC00WorkspaceIntegrity`
+ * fails a command that does not.
+ * @type {Readonly<Record<string, 'SUPPORTED' | 'NOT_APPLICABLE'>>}
+ */
+const DRY_RUN_SUPPORT = Object.freeze({
+  status: 'NOT_APPLICABLE',
+  check: 'NOT_APPLICABLE',
+  start: 'SUPPORTED',
+  claim: 'SUPPORTED',
+  release: 'SUPPORTED',
+  reconcile: 'SUPPORTED',
+  integrate: 'SUPPORTED',
+  remove: 'SUPPORTED',
+});
 
 const CLI_METADATA = {
   schemaVersion: OPERATOR_CLI_SCHEMA,
@@ -508,7 +632,7 @@ const CLI_METADATA = {
   flags: [
     { name: '--json', shape: 'boolean', summary: 'emit exactly one JSON document' },
     { name: '--adopt', shape: 'boolean', summary: 'adopt a stale session worktree deliberately' },
-    { name: '--dry-run', shape: 'boolean', summary: 'report the planned action without mutating' },
+    { name: '--dry-run', shape: 'boolean', summary: 'report the planned action and mutate nothing (start, claim, release, reconcile, integrate, remove; refused for status/check)' },
     { name: '--offline', shape: 'boolean', summary: 'resolve remote state without contacting the remote' },
     { name: '--allow-drift', shape: 'boolean', summary: 'tolerate a pre-existing topology violation' },
     { name: '--delete-branch', shape: 'boolean', summary: 'delete the session branch on remove' },
@@ -595,10 +719,15 @@ function main() {
     process.exitCode = 1;
     return;
   }
+  if (options.dryRun && DRY_RUN_SUPPORT[options.command] !== 'SUPPORTED') {
+    console.error(`[session] ERROR: SESSION_DRY_RUN_NOT_APPLICABLE: ${options.command} never mutates, so --dry-run has no supported meaning for it`);
+    process.exitCode = 2;
+    return;
+  }
   if (options.command === 'status' || options.command === 'check') commandStatus(context, options);
   else if (options.command === 'start') commandStart(context, options);
   else if (options.command === 'claim') commandClaim(context, options);
-  else if (options.command === 'release') commandRelease(context);
+  else if (options.command === 'release') commandRelease(context, options);
   else if (options.command === 'reconcile') commandReconcile(context, options);
   else if (options.command === 'integrate') commandIntegrate(context, options);
   else if (options.command === 'remove') commandRemove(context, options);

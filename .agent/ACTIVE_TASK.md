@@ -1,97 +1,80 @@
 # Active Task
 
-Task ID: nightwatch-control-center-design-system-v1
-Phase: CONTROL_CENTER_DESIGN_SYSTEM_V1
-Title: Nightwatch Control Center design system
-Status: COMPLETE
-Task directory: .agent/tasks/nightwatch-control-center-design-system-v1
-Starting SHA: efd1dc5c81a55db00e7698257c8b49b51a6703c5
-Last validated implementation SHA: 1fc8eb6d4cd2cde22d6c65647538123d0457af26
-Last checkpoint: G1–G7 complete. The Control Center has one design system
-applied across all nine views, with its integrity mechanically enforced: 53
-tokens (was 18), zero colour literals outside the token block (was 54 distinct
-across 69 occurrences), zero `var()` fallbacks (was 14, ten of them describing a
-second light theme), a 12px rendered type floor (was 84 font-sizes across 19
-values with 49 below it), and the three breakpoints RENDERED for the first time
-as a 9-view x 5-width matrix. Four real layout defects and two D-04 posture
-removals were fixed, not documented. Differential certification: the
-`gate:local` receipt matches base group-for-group and count-for-count
-(2120/2104/13/3, same three failed locations); `npm test` is 5201 passed / 13
-failed / 18 skipped against base 5198 / 12 / 18.
-Current milestone: COMPLETE — G8 certification closed; all eight groups closed
-Next action: TASK COMPLETE. Task 6.4 (focus-ring contrast at every declared
-width) is CARRIED and needs its own authorization; the sibling `ripple-api`
-re-admission is an owner action.
+Task ID: nightwatch-certification-closure-and-validation-integrity-v1
+Phase: CERTIFICATION_CLOSURE_AND_VALIDATION_INTEGRITY_V1
+Title: Certification closure and validation integrity
+Status: IN_PROGRESS
+Task directory: .agent/tasks/nightwatch-certification-closure-and-validation-integrity-v1
+Starting SHA: 521210f706b9383e20dd08d1bfd2f3c47b34687d
+Last checkpoint: Milestone A COMPLETE_LOCAL — the session `--dry-run` contract
+is truthful. `--dry-run` was a global boolean that exactly one command read, so
+`start` created a branch, a worktree and an ownership record while reporting a
+plan. A declared `DRY_RUN_SUPPORT` table now covers every dispatchable command
+and is enforced at dispatch; five mutating commands gained zero-mutation plan
+reports, `integrate`'s guard moved above its fetch, and the two read-only
+commands refuse the flag instead of ignoring it. Two further defects surfaced
+while proving it: an unverified explicit `--base`, now failing closed before
+the first mutation, and a `withoutComments()` line-comment defect in the
+hardening kernel that silently deletes real code from every `read()`-based
+rule's view, carried into milestone C.
+Current milestone: B — make `hardening:rules` gate-authoritative
+Next action: repair probe HC-015 and the active-task indirection class behind
+it, then add a required `HARDENING_PROBES` gate group between `HARDENING` and
+`HANDOFF_TRUTH` through the gate-definition machinery.
 Owner decisions stay OPEN; none is self-authorized.
-Authorization class: CONTROL_CENTER_DESIGN_SYSTEM_V1
+Authorization class: CERTIFICATION_CLOSURE_AND_VALIDATION_INTEGRITY_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
-STARTING_SHA: efd1dc5c81a55db00e7698257c8b49b51a6703c5
-LAST_VALIDATED_IMPLEMENTATION_SHA: 1fc8eb6d4cd2cde22d6c65647538123d0457af26
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 1fc8eb6d4cd2cde22d6c65647538123d0457af26
+STARTING_SHA: 521210f706b9383e20dd08d1bfd2f3c47b34687d
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
-PHASE_CONTROL_CENTER_DESIGN_SYSTEM_V1_STATUS: COMPLETE
-
-## Outcome
-
-COMPLETE and integrated at `2f45cfc4`. The campaign executed the 8 task groups of
-`openspec/changes/nightwatch-control-center-design-system-v1/tasks.md`:
-token block and integrity guard, literal-free stylesheet, type floor and the
-restyle it forces, responsive truth, boundary contrast, registration and
-validation, certification.
+PHASE_CERTIFICATION_CLOSURE_AND_VALIDATION_INTEGRITY_V1_STATUS: IN_PROGRESS
 
 ## Mission
 
-Give the Control Center ONE design system across all nine views, and make its
-integrity mechanical so the measured drift cannot silently return. Preserve
-every existing UI truth guard — render, absence, contract coverage, placement,
-class-effect, stylesheet coverage, System Map taxonomy, keyboard and
-accessibility. Never weaken a gate or lengthen an exemption list to pass.
+Remove the concrete blockers and validation blind spots that remain after the
+G16.9 hardening-rule-engine decomposition and the Control Center design-system
+campaign, then obtain a truthful green local certification if the repository
+actually qualifies for one.
 
 Read in this order:
 
-1. `openspec/changes/nightwatch-control-center-design-system-v1/audit.md`
-   (including the `# Rebaseline — measured at efd1dc5c` section, which wins
-   over the historical audit wherever they disagree)
-2. `openspec/changes/nightwatch-control-center-design-system-v1/{proposal,design,tasks}.md`
-3. `.agent/tasks/nightwatch-control-center-design-system-v1/{SPEC,PLAN,STATE}.md`
-4. `AGENTS.md`, `docs/CURRENT_STATE.md`, `docs/SAFETY_MODEL.md`,
+1. `.agent/tasks/nightwatch-certification-closure-and-validation-integrity-v1/{SPEC,PLAN,STATE}.md`
+2. `openspec/changes/nightwatch-certification-closure-and-validation-integrity-v1/{proposal,tasks}.md`
+3. `AGENTS.md`, `docs/CURRENT_STATE.md`, `docs/SAFETY_MODEL.md`,
    `docs/DECISIONS.md`, then live Git/workspace/session truth.
 
 ## Frozen predecessor outcomes
 
 Do not rebuild unless live recon finds a concrete regression:
 
-- `nightwatch-control-center-style-and-absence-truth-v1` is terminal COMPLETE
-  and integrated at `36bd493`. A-01 through A-04 are CLOSED; do not reopen
-  them.
-- `nightwatch-control-center-render-truth-v1`,
-  `nightwatch-control-center-placement-coverage-v1`,
-  `nightwatch-control-center-ui-completion-v1` and
-  `nightwatch-residual-closure-and-lane-qualification-v1` are terminal
-  COMPLETE.
+- `nightwatch-control-center-design-system-v1` is terminal COMPLETE and
+  integrated at `2f45cfc4`. Its carried task 6.4 (focus-ring contrast at every
+  declared width) is executed HERE under this campaign's authorization; nothing
+  else in that campaign is reopened.
 - `nightwatch-production-completion-programme-v1` remains IN_PROGRESS. Its
-  G16.9/16.10/16.11 decomposition is integrated at `efd1dc5c`; its G16.12,
-  G16.5, G8, G9, G12, G18 and G19.14 tails stay open under their own
-  authorizations and are NOT executed here.
-- The permanent owner scope freeze, L6 containment, and immutable evidence
+  G16.9/16.10/16.11 decomposition is integrated. Its G16.5 and G16.12 tails are
+  executed here; its owner-gated items stay OPEN.
+- The permanent owner scope freeze, L6 containment, and the immutable evidence
   and review store identities are unchanged.
 
 ## Routing and safety
 
 ```
-CAMPAIGN: nightwatch-control-center-design-system-v1
+CAMPAIGN: nightwatch-certification-closure-and-validation-integrity-v1
 CHILD TASK: NONE
-WAVE: G8_CERTIFICATION
-SESSION WORKTREE: NONE
+WAVE: B_GATE_AUTHORITATIVE_PROBES
+SESSION WORKTREE: session/nightwatch-certification-closure-1f9ce403
 
 IMPLEMENTATION AUTHORIZED:
-  The Control Center design system across `ui/control-center/**`, the browser
-  qualification lane `tests/browser/controlCenterBrowser.browser.ts` and its
-  viewport matrix, `config/validation-universe.v1.json` lane registration,
-  this change's OpenSpec artefacts, this task directory, Nightwatch docs, and
-  commits/pushes/integration from one owned C-00 session worktree.
+  `bin/nightwatch-session.mjs`, `bin/lib/hardening/**`, `bin/quality-gate*.mjs`,
+  `config/quality-gate.v1.json`, `config/hardening-rule-probes.v1.json`,
+  `config/validation-universe.v1.json`, `src/core/qualityGate/definition.ts`,
+  the real-source expectation and provenance surfaces required by one
+  owner-authorized `ripple-api` re-derivation and re-admission pass, the
+  Control Center browser qualification lane, this change's OpenSpec artefacts,
+  this task directory, Nightwatch docs, and commits/pushes/integration from one
+  owned C-00 session worktree.
 
 REAL PRODUCTION CONTACT:               NOT AUTHORIZED
 NEW API ROUTE / ADAPTER / AUTHORITY:   NOT AUTHORIZED
@@ -106,10 +89,13 @@ FORCE PUSH / HISTORY REWRITE:          NOT AUTHORIZED
 REOPENING TERMINAL FINDINGS:           NOT AUTHORIZED
 WEAKENING A GATE OR GROWING AN
   EXEMPTION LIST TO PASS:              NOT AUTHORIZED
+SIBLING READ (ripple-api, read-only):  AUTHORIZED, one re-derivation pass
 ```
 
-LOCAL only. Sibling repositories remain read-only. Never retire, prune, adopt
-or edit another session, and never create worktree capacity by removing one.
+LOCAL only. The sibling `mobingilabs/ripple-api` checkout is READ ONLY: no
+checkout, reset, rebase, fetch or file edit, no execution of its application
+code, no dependency installation inside it. Never retire, prune, adopt or edit
+another session, and never create worktree capacity by removing one.
 
 C-00 governs all writers: one writing agent == one owned worktree == one
 session identity. The canonical checkout is not an implementation worktree.

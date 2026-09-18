@@ -1,0 +1,98 @@
+# Tasks — Certification closure and validation integrity
+
+## A. Session `--dry-run` contract
+
+- [x] A.1 Audit every command that accepts `--dry-run`; classify each as
+      MUTATING + SUPPORTED, MUTATING + REJECTED or READ_ONLY/NOT_APPLICABLE
+      — eight commands. `--dry-run` is one global boolean (`parseArgs`, default
+      `:544`, set `:559`) read by `commandIntegrate` alone (`:422`). `start`,
+      `claim`, `release`, `reconcile`, `remove` mutate and ignored it;
+      `release` was not even passed `options`. `status`/`check` never mutate.
+- [x] A.2 Declare the contract once and enforce it at dispatch
+      — `DRY_RUN_SUPPORT`, checked before any command runs;
+      `SESSION_DRY_RUN_NOT_APPLICABLE` (exit 2) for `status`/`check`.
+- [x] A.3 Give `start` a zero-mutation plan that still fails closed
+      — returns after every refusal and after the whole plan is computed,
+      immediately before the first `fs.mkdirSync`.
+- [x] A.4 Extend the same semantics to `claim`, `release`, `reconcile`,
+      `remove`, and move `integrate`'s guard ABOVE its fetch
+- [x] A.5 Verify an explicit `--base` before the first mutation
+      — `SESSION_BASE_INVALID`; previously an invalid base was discovered only
+      when `git worktree add` failed, after the parent directory existed.
+- [x] A.6 Make the help text state the real per-command contract
+- [x] A.7 Adversarial tests with a full before/after topology snapshot
+      — NW-07, 13 cases, against disposable fixtures.
+- [x] A.8 Negative-probe the regression
+      — reintroducing the defect fails 5 of 13, including the capacity case.
+
+## B. `hardening:rules` becomes gate-authoritative
+
+- [ ] B.1 Repair probe HC-015 and the active-task indirection class behind it
+- [ ] B.2 Prove probe-campaign safety: deterministic restore, restore after
+      failure, byte-identical `git status`, no untracked debris, non-zero rule
+      and probe counts, mechanically verified `statusUnchanged`
+- [ ] B.3 Add the required `HARDENING_PROBES` group between `HARDENING` and
+      `HANDOFF_TRUTH` through the gate-definition machinery
+- [ ] B.4 Update the command-key union, the spec validator allowlist, the
+      runtime dispatch and the timeout class
+- [ ] B.5 Register the executable in the validation universe and lane state
+- [ ] B.6 Gate integrity tests: deleting the group fails definition truth,
+      an unknown command key fails, the mapping is total, the receipt carries
+      the group, dependency order stays deterministic, a failed probe makes the
+      gate non-green, vacuity fails, dirty-state leakage fails
+- [ ] B.7 Refresh the gate-definition and inventory digests through their
+      canonical mechanisms; never hand-copy a digest or edit a past receipt
+
+## C. G16.5 rule-quantifier audit
+
+- [ ] C.1 Classify all 83 rules and verify the declared quantifier against the
+      implementation; record every classification
+- [ ] C.2 Make every TOTALITY rule evaluate all occurrences and report each
+      failing line in deterministic order
+- [ ] C.3 Extend the engine self-check to the existence-masquerading-as-
+      totality patterns it cannot currently see
+- [ ] C.4 Repair the `withoutComments()` line-comment defect and probe it
+- [ ] C.5 Adversarial multi-failure proof: first occurrence valid, two later
+      occurrences invalid, both reported
+- [ ] C.6 Preserve the completed 16.6 work rather than replacing it
+
+## D. `ripple-api` re-derivation and re-admission
+
+- [ ] D.1 Measure the live sibling SHA read-only; record dirty state without
+      altering it
+- [ ] D.2 Classify every `27bb007a` occurrence as CURRENT_SOURCE_AUTHORITY,
+      HISTORICAL_RECORD, SYNTHETIC_FIXTURE_PROVENANCE, STALE_CURRENT_REFERENCE
+      or OTHER; never global-search-replace the SHA
+- [ ] D.3 Re-derive each admitted expectation from current source with the
+      existing machinery and compare mechanically
+- [ ] D.4 Re-admit on evidence, or retire through the existing lifecycle, or
+      stop with a precise blocker if ambiguous
+- [ ] D.5 Reproduce the base failing set, then prove it resolved for the right
+      reason; negative-probe currentness
+- [ ] D.6 Confirm the sibling repository is unchanged
+
+## E. Control Center focus-ring qualification (carried task 6.4)
+
+- [ ] E.1 Re-measure the declared widths and the declared contrast floor from
+      live task truth
+- [ ] E.2 Traverse keyboard-reachable controls at every declared width;
+      measure computed focus-indicator contrast against the computed adjacent
+      background
+- [ ] E.3 Cover all nine views, or prove mechanically why a smaller carrier set
+      covers every distinct focus treatment
+- [ ] E.4 Negative-probe the focus token; fix minimally if a style genuinely
+      fails; no redesign
+
+## F. Production-completion tail closure
+
+- [ ] F.1 Re-read the programme ledger and identify items whose ONLY remaining
+      requirement is validation, integration or release evidence
+- [ ] F.2 Close each against its exact recorded requirement with its evidence;
+      leave owner-gated items open with the named owner action
+
+## G. Certification
+
+- [ ] G.1 Full validation at one SHA
+- [ ] G.2 Record the changed group count and definition digest truthfully
+- [ ] G.3 Integrate by fast-forward, release the session, remove the worktree,
+      leave the canonical checkout clean

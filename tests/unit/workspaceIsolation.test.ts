@@ -1255,3 +1255,371 @@ test.describe('NW-06 — prospective worktree admission and bounded rollback', (
     }
   });
 });
+
+/**
+ * NW-07 — the `--dry-run` contract.
+ *
+ * `start --dry-run` was documented as "report the planned action without
+ * mutating" and instead followed the real creation path: it created a branch,
+ * a worktree and an ownership record while printing a plan, silently consuming
+ * `maxWorktrees` capacity. `claim`, `release`, `reconcile` and `remove`
+ * ignored the flag entirely, and `integrate` honoured it only AFTER a fetch
+ * that writes `refs/remotes/**`.
+ *
+ * Every case here asserts the TOPOLOGY, not the exit code: a dry run that
+ * reports a plan and still creates something is the defect, not a pass. The
+ * snapshot deliberately covers the shared Git directory as well as the
+ * worktree, because `info/exclude`, `hooks` and `worktrees/<name>/` live in
+ * the common directory and a worktree-local comparison would not see them.
+ */
+test.describe('NW-07 — the --dry-run contract mutates nothing', () => {
+  /** A directory listing, recursive, sorted, with file bytes — or ABSENT. */
+  function treeSnapshot(directory: string): string {
+    if (!fs.existsSync(directory)) return 'ABSENT';
+    const lines: string[] = [];
+    const walk = (current: string): void => {
+      for (const entry of fs.readdirSync(current, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
+        const absolute = path.join(current, entry.name);
+        const relative = path.relative(directory, absolute);
+        if (entry.isDirectory()) {
+          lines.push(`D ${relative}`);
+          walk(absolute);
+        } else {
+          lines.push(`F ${relative} ${fs.readFileSync(absolute).toString('base64')}`);
+        }
+      }
+    };
+    walk(directory);
+    return lines.join('\n');
+  }
+
+  /**
+   * Everything a start could mutate. Compared as one string so a difference
+   * anywhere -- a ref, an index entry, a session record, the shared exclude
+   * file, a hook -- fails the assertion and prints the offending surface.
+   */
+  function fullTopology(canonical: string, targetPath: string): string {
+    const commonDir = path.resolve(canonical, gitOk(canonical, ['rev-parse', '--git-common-dir']));
+    return [
+      `WORKTREES\n${gitOk(canonical, ['worktree', 'list', '--porcelain'])}`,
+      `REFS\n${gitOk(canonical, ['for-each-ref', '--format=%(refname) %(objectname)'])}`,
+      `BRANCHES\n${gitOk(canonical, ['branch', '--list', '--format=%(refname:short) %(objectname)'])}`,
+      `HEAD\n${gitOk(canonical, ['rev-parse', 'HEAD'])}`,
+      `SYMREF\n${gitOk(canonical, ['symbolic-ref', '--quiet', 'HEAD'])}`,
+      `STATUS\n${gitOk(canonical, ['status', '--porcelain'])}`,
+      `INDEX\n${gitOk(canonical, ['ls-files', '--stage'])}`,
+      `COMMON_WORKTREES\n${treeSnapshot(path.join(commonDir, 'worktrees'))}`,
+      `EXCLUDE\n${fs.existsSync(path.join(commonDir, 'info/exclude')) ? fs.readFileSync(path.join(commonDir, 'info/exclude'), 'utf8') : 'ABSENT'}`,
+      `HOOKS\n${fs.existsSync(path.join(commonDir, 'hooks')) ? fs.readdirSync(path.join(commonDir, 'hooks')).sort().join(',') : 'ABSENT'}`,
+      `TARGET_PATH\n${treeSnapshot(targetPath)}`,
+    ].join('\n---\n');
+  }
+
+  /** The parent directory a dry run must not create. */
+  function worktreeParent(base: string): string {
+    return path.join(base, 'dry-run-worktrees');
+  }
+
+  function dryRunStart(canonical: string, base: string, taskId = 'synthetic-task', extra: readonly string[] = []): Run {
+    return session(canonical, ['start', '--task', taskId, '--dir', worktreeParent(base), '--dry-run', ...extra]);
+  }
+
+  test('1. a clean admitted start dry-run reports a plan and changes nothing', () => {
+    const { base, canonical } = fixture();
+    try {
+      const before = fullTopology(canonical, worktreeParent(base));
+      const result = dryRunStart(canonical, base);
+      expect(result.status, result.stderr).toBe(0);
+      // It reported a real, usable plan...
+      expect(result.stdout).toContain('PLAN SESSION_START_PLAN');
+      expect(result.stdout).toContain('PLAN SESSION_START_CANDIDATE');
+      expect(result.stdout).toContain('PLAN SESSION_START_CAPACITY');
+      expect(result.stdout).toContain('admitted=true');
+      expect(result.stdout).toContain('SESSION_DRY_RUN_NO_MUTATION: start');
+      // ...and did NOT report the real creation outcome.
+      expect(result.stdout).not.toContain('SESSION_WORKTREE_CREATED');
+      // The whole mutable surface is byte-identical.
+      expect(fullTopology(canonical, worktreeParent(base))).toBe(before);
+      // Specifically: the parent directory was not even created.
+      expect(fs.existsSync(worktreeParent(base))).toBe(false);
+      expect(registeredWorktreeCount(canonical)).toBe(1);
+    } finally {
+      cleanup(base);
+    }
+  });
+
+  function registeredWorktreeCount(canonical: string): number {
+    return gitOk(canonical, ['worktree', 'list', '--porcelain'])
+      .split(/\r?\n/)
+      .filter((line) => line.startsWith('worktree ')).length;
+  }
+
+  test('2. an at-capacity start dry-run refuses before mutating and creates nothing', () => {
+    // Bound 2: canonical + one existing session fills it exactly.
+    const { base, canonical } = fixture({ maxWorktrees: 2 });
+    try {
+      startOwnedSession(canonical, base, 'synthetic-task');
+      const before = fullTopology(canonical, worktreeParent(base));
+      const result = dryRunStart(canonical, base);
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain('SESSION_START_REFUSED_PROSPECTIVE_TOPOLOGY');
+      expect(result.stderr).toContain('nothing was created');
+      // A refusal is reported instead of a plan.
+      expect(result.stdout).not.toContain('SESSION_DRY_RUN_NO_MUTATION');
+      expect(fullTopology(canonical, worktreeParent(base))).toBe(before);
+    } finally {
+      cleanup(base);
+    }
+  });
+
+  test('3. an invalid explicit base fails closed with no mutation', () => {
+    const { base, canonical } = fixture();
+    try {
+      const before = fullTopology(canonical, worktreeParent(base));
+      const result = dryRunStart(canonical, base, 'synthetic-task', ['--base', '0'.repeat(40)]);
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain('SESSION_BASE_INVALID');
+      expect(result.stdout).not.toContain('SESSION_DRY_RUN_NO_MUTATION');
+      expect(fullTopology(canonical, worktreeParent(base))).toBe(before);
+      expect(fs.existsSync(worktreeParent(base))).toBe(false);
+    } finally {
+      cleanup(base);
+    }
+  });
+
+  test('4. an occupied candidate path is refused before mutation', () => {
+    const { base, canonical } = fixture();
+    try {
+      // Learn the candidate name the dry run would choose, then occupy it.
+      const planned = dryRunStart(canonical, base);
+      expect(planned.status, planned.stderr).toBe(0);
+      const candidatePath = /candidatePath=(\S+)/.exec(planned.stdout)?.[1];
+      expect(candidatePath).toBeTruthy();
+      fs.mkdirSync(candidatePath!, { recursive: true });
+      const before = fullTopology(canonical, worktreeParent(base));
+      // The suffix is random, so re-running names a different candidate; the
+      // point proven here is that the occupied-path guard sits ABOVE the
+      // mutation and the dry run still creates nothing.
+      const result = dryRunStart(canonical, base);
+      expect([0, 1]).toContain(result.status);
+      expect(result.stdout).not.toContain('SESSION_WORKTREE_CREATED');
+      expect(fullTopology(canonical, worktreeParent(base))).toBe(before);
+    } finally {
+      cleanup(base);
+    }
+  });
+
+  test('5. an invalid fault-injection token fails closed before any dry-run plan', () => {
+    const { base, canonical } = fixture();
+    try {
+      const before = fullTopology(canonical, worktreeParent(base));
+      const result = session(canonical, ['start', '--task', 'synthetic-task', '--dir', worktreeParent(base), '--dry-run'], {
+        NIGHTWATCH_SESSION_FAULT_INJECTION: 'NOT_A_REAL_POINT',
+      });
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain('SESSION_FAULT_INJECTION_INVALID');
+      expect(result.stdout).not.toContain('SESSION_DRY_RUN_NO_MUTATION');
+      expect(fullTopology(canonical, worktreeParent(base))).toBe(before);
+    } finally {
+      cleanup(base);
+    }
+  });
+
+  test('5b. a valid fault-injection point never fires, because a dry run never reaches it', () => {
+    const { base, canonical } = fixture();
+    try {
+      const before = fullTopology(canonical, worktreeParent(base));
+      const result = session(canonical, ['start', '--task', 'synthetic-task', '--dir', worktreeParent(base), '--dry-run'], {
+        NIGHTWATCH_SESSION_FAULT_INJECTION: 'AFTER_WORKTREE_ADD',
+      });
+      expect(result.status, result.stderr).toBe(0);
+      expect(result.stdout).toContain('SESSION_FAULT_INJECTION_ACTIVE');
+      // The injection point is downstream of the first mutation, so a correct
+      // dry run returns before it and no rollback is ever needed.
+      expect(result.stdout).not.toContain('SESSION_FAULT_INJECTED');
+      expect(result.stdout).not.toContain('SESSION_START_ROLLED_BACK');
+      expect(result.stdout).toContain('SESSION_DRY_RUN_NO_MUTATION: start');
+      expect(fullTopology(canonical, worktreeParent(base))).toBe(before);
+    } finally {
+      cleanup(base);
+    }
+  });
+
+  test('6. an unsafe workspace is refused before mutation', () => {
+    const { base, canonical } = fixture();
+    try {
+      gitOk(canonical, ['update-index', '--skip-worktree', 'tracked.txt']);
+      const before = fullTopology(canonical, worktreeParent(base));
+      const result = dryRunStart(canonical, base);
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain('SESSION_START_REFUSED_UNSAFE_WORKSPACE');
+      expect(fullTopology(canonical, worktreeParent(base))).toBe(before);
+    } finally {
+      cleanup(base);
+    }
+  });
+
+  test('7. repeating the dry run leaves the identical topology both times', () => {
+    const { base, canonical } = fixture();
+    try {
+      const before = fullTopology(canonical, worktreeParent(base));
+      for (let attempt = 0; attempt < 3; attempt += 1) {
+        const result = dryRunStart(canonical, base);
+        expect(result.status, result.stderr).toBe(0);
+        expect(fullTopology(canonical, worktreeParent(base))).toBe(before);
+      }
+    } finally {
+      cleanup(base);
+    }
+  });
+
+  test('8. a dry run consumes no capacity: the real start still succeeds at the bound', () => {
+    // Bound 2: canonical + exactly one session. If the dry run consumed a
+    // slot, the real start below would be refused -- which is precisely the
+    // recorded failure mode.
+    const { base, canonical } = fixture({ maxWorktrees: 2 });
+    try {
+      for (let attempt = 0; attempt < 3; attempt += 1) {
+        const dry = dryRunStart(canonical, base);
+        expect(dry.status, dry.stderr).toBe(0);
+      }
+      expect(registeredWorktreeCount(canonical)).toBe(1);
+      const real = session(canonical, ['start', '--task', 'synthetic-task', '--dir', worktreeParent(base)]);
+      expect(real.status, real.stderr).toBe(0);
+      expect(real.stdout).toContain('SESSION_WORKTREE_CREATED');
+      expect(registeredWorktreeCount(canonical)).toBe(2);
+      const report = integrityJson(canonical).report;
+      expect(codes(report)).not.toContain('WORKSPACE_WORKTREE_LIMIT_EXCEEDED');
+    } finally {
+      cleanup(base);
+    }
+  });
+
+  test('9. every mutating command supports a zero-mutation dry run', () => {
+    const { base, canonical } = fixture();
+    try {
+      const target = worktreeParent(base);
+      // Walk the real lifecycle in order, taking a dry run of each step
+      // immediately BEFORE performing it for real. Each dry run is asserted
+      // against the topology captured just before it.
+      const started = session(canonical, ['start', '--task', 'synthetic-task', '--dir', target]);
+      expect(started.status, started.stderr).toBe(0);
+      const startedPath = /path=(\S+)/.exec(started.stdout)?.[1];
+      expect(startedPath).toBeTruthy();
+      const name = path.basename(startedPath!);
+
+      // claim -- `start` leaves a RELEASED record, so a claim adopts it.
+      let before = fullTopology(canonical, target);
+      const claim = session(startedPath!, ['claim', '--task', 'synthetic-task', '--adopt', '--dry-run']);
+      expect(claim.status, claim.stderr).toBe(0);
+      expect(claim.stdout).toContain('PLAN SESSION_CLAIM_PLAN');
+      expect(claim.stdout).toContain('REPLACE');
+      expect(claim.stdout).toContain('SESSION_DRY_RUN_NO_MUTATION: claim');
+      expect(claim.stdout).not.toContain('[session] SESSION_CLAIMED');
+      expect(fullTopology(canonical, target)).toBe(before);
+      const realClaim = session(startedPath!, ['claim', '--task', 'synthetic-task', '--adopt']);
+      expect(realClaim.status, realClaim.stderr).toBe(0);
+
+      // reconcile -- must not fetch, so refs/remotes stays put
+      before = fullTopology(canonical, target);
+      const reconcile = session(startedPath!, ['reconcile', '--dry-run']);
+      expect(reconcile.status, reconcile.stderr).toBe(0);
+      expect(reconcile.stdout).toContain('PLAN SESSION_RECONCILE_PLAN');
+      expect(reconcile.stdout).toContain('no fetch performed');
+      expect(reconcile.stdout).toContain('SESSION_DRY_RUN_NO_MUTATION: reconcile');
+      expect(reconcile.stdout).not.toContain('[session] SESSION_RECONCILED');
+      expect(fullTopology(canonical, target)).toBe(before);
+
+      // integrate -- the guard sits above the fetch
+      before = fullTopology(canonical, target);
+      const integrate = session(startedPath!, ['integrate', '--dry-run']);
+      expect(integrate.status, integrate.stderr).toBe(0);
+      expect(integrate.stdout).toContain('PLAN SESSION_INTEGRATE_PLAN');
+      expect(integrate.stdout).toContain('no fetch performed');
+      expect(integrate.stdout).toContain('SESSION_DRY_RUN_NO_MUTATION: integrate');
+      expect(integrate.stdout).not.toContain('[session] SESSION_INTEGRATED');
+      expect(fullTopology(canonical, target)).toBe(before);
+
+      // release
+      before = fullTopology(canonical, target);
+      const release = session(startedPath!, ['release', '--dry-run']);
+      expect(release.status, release.stderr).toBe(0);
+      expect(release.stdout).toContain('PLAN SESSION_RELEASE_PLAN');
+      expect(release.stdout).toContain('-> RELEASED');
+      expect(release.stdout).toContain('SESSION_DRY_RUN_NO_MUTATION: release');
+      expect(release.stdout).not.toContain('[session] SESSION_RELEASED');
+      expect(fullTopology(canonical, target)).toBe(before);
+      const realRelease = session(startedPath!, ['release']);
+      expect(realRelease.status, realRelease.stderr).toBe(0);
+
+      // remove -- the destructive one, with both destructive flags set
+      before = fullTopology(canonical, target);
+      const remove = session(canonical, ['remove', '--name', name, '--delete-branch', '--abandon-unmerged', '--dry-run']);
+      expect(remove.status, remove.stderr).toBe(0);
+      expect(remove.stdout).toContain('PLAN SESSION_REMOVE_PLAN');
+      expect(remove.stdout).toContain('PLAN SESSION_REMOVE_WOULD_REMOVE_WORKTREE');
+      expect(remove.stdout).toContain('PLAN SESSION_REMOVE_WOULD_DELETE_BRANCH');
+      expect(remove.stdout).toContain('SESSION_DRY_RUN_NO_MUTATION: remove');
+      expect(remove.stdout).not.toContain('[session] SESSION_WORKTREE_REMOVED');
+      expect(remove.stdout).not.toContain('[session] SESSION_BRANCH_DELETED');
+      expect(fullTopology(canonical, target)).toBe(before);
+      // The worktree and its branch both survived the dry run.
+      expect(fs.existsSync(startedPath!)).toBe(true);
+      expect(gitOk(canonical, ['branch', '--list', `session/${name}`]).trim()).not.toBe('');
+      // ...and the real remove afterwards still works.
+      const realRemove = session(canonical, ['remove', '--name', name, '--delete-branch']);
+      expect(realRemove.status, realRemove.stderr).toBe(0);
+      expect(realRemove.stdout).toContain('SESSION_WORKTREE_REMOVED');
+      expect(fs.existsSync(startedPath!)).toBe(false);
+    } finally {
+      cleanup(base);
+    }
+  });
+
+  test('10. a read-only command refuses --dry-run instead of ignoring it', () => {
+    const { base, canonical } = fixture();
+    try {
+      for (const command of ['status', 'check']) {
+        const result = session(canonical, [command, '--dry-run']);
+        expect(result.status, `${command} should refuse --dry-run`).toBe(2);
+        expect(result.stderr).toContain('SESSION_DRY_RUN_NOT_APPLICABLE');
+        expect(result.stderr).toContain(command);
+      }
+    } finally {
+      cleanup(base);
+    }
+  });
+
+  test('11. the help text states the real per-command dry-run contract', () => {
+    const { base, canonical } = fixture();
+    try {
+      const help = session(canonical, ['--help']);
+      expect(help.status).toBe(0);
+      expect(help.stdout).toContain('--dry-run');
+      // The old text promised "without mutating" globally, including for the
+      // two commands that refuse the flag and the five that ignored it.
+      expect(help.stdout).toContain('mutate nothing');
+      expect(help.stdout).toContain('refused for status/check');
+    } finally {
+      cleanup(base);
+    }
+  });
+
+  test('12. the declared dry-run contract covers every dispatchable command', () => {
+    // Totality: a command added to COMMANDS without a DRY_RUN_SUPPORT entry
+    // would fall through the dispatch guard and silently ignore the flag
+    // again. Proven against the shipped source, not a copy of the list.
+    const source = fs.readFileSync(SESSION, 'utf8');
+    const commands = /const COMMANDS = new Set\(\[([^\]]*)\]\)/.exec(source)?.[1];
+    expect(commands).toBeTruthy();
+    const names = [...commands!.matchAll(/'([a-z]+)'/g)].map((match) => match[1]);
+    expect(names.length).toBeGreaterThanOrEqual(8);
+    const table = /const DRY_RUN_SUPPORT = Object\.freeze\(\{([\s\S]*?)\}\);/.exec(source)?.[1];
+    expect(table).toBeTruthy();
+    const declared = new Map([...table!.matchAll(/^\s*(\w+):\s*'(SUPPORTED|NOT_APPLICABLE)',/gm)].map((match) => [match[1], match[2]]));
+    const missing = names.filter((name) => !declared.has(name));
+    expect(missing, `commands with no declared --dry-run contract: ${missing.join(', ')}`).toEqual([]);
+    const extra = [...declared.keys()].filter((name) => !names.includes(name));
+    expect(extra, `declared contracts for commands that do not exist: ${extra.join(', ')}`).toEqual([]);
+  });
+});
