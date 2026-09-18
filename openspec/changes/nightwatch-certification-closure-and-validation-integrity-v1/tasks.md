@@ -27,21 +27,44 @@
 
 ## B. `hardening:rules` becomes gate-authoritative
 
-- [ ] B.1 Repair probe HC-015 and the active-task indirection class behind it
-- [ ] B.2 Prove probe-campaign safety: deterministic restore, restore after
+- [x] B.1 Repair probe HC-015 and the active-task indirection class behind it
+      — the rule resolves its subject through `.agent/ACTIVE_TASK.md`; the probe
+      named a fixed task directory, so it stopped mutating the file the rule
+      reads the moment the active task changed. Probes may now use
+      `<ACTIVE_TASK_DIR>`, resolved by the campaign the same way the rule
+      resolves it; an unresolvable placeholder throws rather than probing the
+      wrong file.
+- [x] B.2 Prove probe-campaign safety: deterministic restore, restore after
       failure, byte-identical `git status`, no untracked debris, non-zero rule
       and probe counts, mechanically verified `statusUnchanged`
-- [ ] B.3 Add the required `HARDENING_PROBES` group between `HARDENING` and
+      — `tests/unit/hardeningProbeCampaign.test.ts`, 9 cases against a
+      disposable repository carrying the REAL campaign and a synthetic two-rule
+      engine. Vacuity is now stated explicitly (`VACUOUS_CAMPAIGN`) instead of
+      inferred from a zero rule count.
+- [x] B.3 Add the required `HARDENING_PROBES` group between `HARDENING` and
       `HANDOFF_TRUTH` through the gate-definition machinery
-- [ ] B.4 Update the command-key union, the spec validator allowlist, the
+      — 11 required groups became 12; `HANDOFF_TRUTH` now depends on
+      `HARDENING_PROBES`.
+- [x] B.4 Update the command-key union, the spec validator allowlist, the
       runtime dispatch and the timeout class
-- [ ] B.5 Register the executable in the validation universe and lane state
-- [ ] B.6 Gate integrity tests: deleting the group fails definition truth,
+      — `QUALITY_GATE_COMMAND_KEYS`, `bin/quality-gate-spec.mjs`,
+      `bin/quality-gate.mjs` (`npm run hardening:rules`), MEDIUM.
+- [x] B.5 Register the executable in the validation universe and lane state
+      — `bin/lib/hardening/probe-campaign.mjs` and `bin/hardening-check.mjs`
+      were already classified; `validation:universe` PASS.
+- [x] B.6 Gate integrity tests: deleting the group fails definition truth,
       an unknown command key fails, the mapping is total, the receipt carries
       the group, dependency order stays deterministic, a failed probe makes the
       gate non-green, vacuity fails, dirty-state leakage fails
-- [ ] B.7 Refresh the gate-definition and inventory digests through their
+      — 7 cases in `tests/unit/phase23QualityGate.test.ts` plus recorded probes
+      HC-090 (group removed) and HC-091 (group downgraded to optional), both
+      DETECTED, so the gate cannot lose the group OR hide it behind an optional
+      flag without `hardening:check` going red.
+- [x] B.7 Refresh the gate-definition and inventory digests through their
       canonical mechanisms; never hand-copy a digest or edit a past receipt
+      — the digest is computed from the definition at run time, never stored:
+      `quality-gate-spec` renders `sha256:c85f42c58db95b81865b011600086eb6db854886ca652dd57d572a7475ad101e`
+      at this checkpoint. No receipt was edited.
 
 ## C. G16.5 rule-quantifier audit
 

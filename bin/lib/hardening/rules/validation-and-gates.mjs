@@ -187,7 +187,7 @@ export function checkPhase23QualityGate() {
     return;
   }
   if (gate.schemaVersion !== 'nightwatch.quality-gate.v1' || !Array.isArray(gate.groups)) fail('Phase 23 quality-gate schema/version is invalid');
-  const requiredGroups = ['GATE_DEFINITION', 'STATIC', 'HARDENING', 'HANDOFF_TRUTH', 'PROJECT_TRUTH', 'AGENT_CONTINUITY', 'SEMANTIC_COMPATIBILITY', 'OWNER_PROVENANCE', 'SYNTHETIC_CAMPAIGN', 'PATCH_INTEGRITY', 'WORKSPACE_INTEGRITY'];
+  const requiredGroups = ['GATE_DEFINITION', 'STATIC', 'HARDENING', 'HARDENING_PROBES', 'HANDOFF_TRUTH', 'PROJECT_TRUTH', 'AGENT_CONTINUITY', 'SEMANTIC_COMPATIBILITY', 'OWNER_PROVENANCE', 'SYNTHETIC_CAMPAIGN', 'PATCH_INTEGRITY', 'WORKSPACE_INTEGRITY'];
   for (const id of requiredGroups) {
     const group = gate.groups.find((candidate) => candidate.id === id);
     if (!group || group.required !== true) fail(`Phase 23 required quality-gate group missing or optional: ${id}`);

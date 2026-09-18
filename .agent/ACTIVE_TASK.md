@@ -6,8 +6,15 @@ Title: Certification closure and validation integrity
 Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-certification-closure-and-validation-integrity-v1
 Starting SHA: 521210f706b9383e20dd08d1bfd2f3c47b34687d
-Last checkpoint: Milestone A COMPLETE_LOCAL — the session `--dry-run` contract
-is truthful. `--dry-run` was a global boolean that exactly one command read, so
+Last validated implementation SHA: a02b6315c089baeb74ccc5c526a556c9764be46a
+Last checkpoint: Milestones A and B COMPLETE_LOCAL. The session `--dry-run`
+contract is truthful, and `hardening:rules` is now executed by the
+authoritative gate as the required `HARDENING_PROBES` group (11 required groups
+became 12). The campaign was dead code AND already red — HC-015 UNDETECTED —
+which is the blind spot in one line; it now reports 83 rules / 92 probes / 92
+detected, exit 0.
+
+Earlier detail: `--dry-run` was a global boolean that exactly one command read, so
 `start` created a branch, a worktree and an ownership record while reporting a
 plan. A declared `DRY_RUN_SUPPORT` table now covers every dispatchable command
 and is enforced at dispatch; five mutating commands gained zero-mutation plan
@@ -17,15 +24,17 @@ while proving it: an unverified explicit `--base`, now failing closed before
 the first mutation, and a `withoutComments()` line-comment defect in the
 hardening kernel that silently deletes real code from every `read()`-based
 rule's view, carried into milestone C.
-Current milestone: B — make `hardening:rules` gate-authoritative
-Next action: repair probe HC-015 and the active-task indirection class behind
-it, then add a required `HARDENING_PROBES` gate group between `HARDENING` and
-`HANDOFF_TRUTH` through the gate-definition machinery.
+Current milestone: C — G16.5 rule-quantifier audit
+Next action: audit all 83 rules' quantifiers, verify each declared quantifier
+against its implementation, make TOTALITY rules report every failing line, and
+repair the `withoutComments()` line-comment defect with a recorded probe.
 Owner decisions stay OPEN; none is self-authorized.
 Authorization class: CERTIFICATION_CLOSURE_AND_VALIDATION_INTEGRITY_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 521210f706b9383e20dd08d1bfd2f3c47b34687d
+LAST_VALIDATED_IMPLEMENTATION_SHA: a02b6315c089baeb74ccc5c526a556c9764be46a
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: a02b6315c089baeb74ccc5c526a556c9764be46a
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PHASE_CERTIFICATION_CLOSURE_AND_VALIDATION_INTEGRITY_V1_STATUS: IN_PROGRESS
@@ -63,7 +72,7 @@ Do not rebuild unless live recon finds a concrete regression:
 ```
 CAMPAIGN: nightwatch-certification-closure-and-validation-integrity-v1
 CHILD TASK: NONE
-WAVE: B_GATE_AUTHORITATIVE_PROBES
+WAVE: C_RULE_QUANTIFIER_AUDIT
 SESSION WORKTREE: session/nightwatch-certification-closure-1f9ce403
 
 IMPLEMENTATION AUTHORIZED:

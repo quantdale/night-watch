@@ -42,12 +42,25 @@
       "expectedFailClosedBehavior": "policy drift or forbidden authority fails before tests"
     },
     {
+      "id": "HARDENING_PROBES",
+      "commandKey": "HARDENING_PROBES",
+      "required": true,
+      "environmentRequirements": ["NODE20_PLUS", "OFFLINE"],
+      "timeoutClass": "MEDIUM",
+      "dependsOn": ["HARDENING"],
+      "ciCapable": true,
+      "cleanCheckoutCapable": true,
+      "requiresSiblingTopology": false,
+      "preDevRelevant": true,
+      "expectedFailClosedBehavior": "a rule that no longer detects its own recorded violation, a vacuous campaign, or a probe that fails to restore stops required-gate evaluation"
+    },
+    {
       "id": "HANDOFF_TRUTH",
       "commandKey": "HANDOFF_CHECK",
       "required": true,
       "environmentRequirements": ["NODE20_PLUS", "OFFLINE", "FULL_GIT_HISTORY"],
       "timeoutClass": "SHORT",
-      "dependsOn": ["HARDENING"],
+      "dependsOn": ["HARDENING_PROBES"],
       "ciCapable": true,
       "cleanCheckoutCapable": true,
       "requiresSiblingTopology": false,

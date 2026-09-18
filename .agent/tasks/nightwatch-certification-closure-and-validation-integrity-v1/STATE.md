@@ -7,8 +7,11 @@ Phase: CERTIFICATION_CLOSURE_AND_VALIDATION_INTEGRITY_V1
 Status: IN_PROGRESS
 Starting SHA: 521210f706b9383e20dd08d1bfd2f3c47b34687d
 Branch: session/nightwatch-certification-closure-1f9ce403
+Last validated implementation SHA: a02b6315c089baeb74ccc5c526a556c9764be46a
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 521210f706b9383e20dd08d1bfd2f3c47b34687d
+LAST_VALIDATED_IMPLEMENTATION_SHA: a02b6315c089baeb74ccc5c526a556c9764be46a
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: a02b6315c089baeb74ccc5c526a556c9764be46a
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
 PHASE_CERTIFICATION_CLOSURE_AND_VALIDATION_INTEGRITY_V1_STATUS: IN_PROGRESS
@@ -21,11 +24,11 @@ Control Center design-system campaign, then certify truthfully. Full intent in
 
 ## Current Milestone
 
-Milestone ID: B — `hardening:rules` becomes gate-authoritative
+Milestone ID: C — G16.5 rule-quantifier audit
 Milestone status: IN_PROGRESS
-What is being attempted: repair the rotted HC-015 probe and the rot class
-behind it, then add a required `HARDENING_PROBES` gate group between
-`HARDENING` and `HANDOFF_TRUTH` through the gate-definition machinery.
+What is being attempted: classify all 83 rules, verify each declared
+quantifier against its implementation, make TOTALITY rules report every failing
+line, and repair the `withoutComments()` line-comment defect found in A.
 
 ## Completed Milestones
 
@@ -72,6 +75,41 @@ behind it, then add a required `HARDENING_PROBES` gate group between
   and `hardening:check` PASS. No session artefact leaked: the tests run against
   disposable fixtures under the test's own temporary directory.
 
+- **B COMPLETE_LOCAL — `hardening:rules` is gate-authoritative.** The campaign
+  was dead code: a declared npm script no gate group, lane, validation-universe
+  class or CI workflow selected. It was also already RED — HC-015 UNDETECTED —
+  and nothing noticed, which is the whole blind spot in one line.
+
+  HC-015 rotted structurally, not by neglect.
+  `checkActiveMilestoneProgression` resolves its subject INDIRECTLY through
+  `.agent/ACTIVE_TASK.md` -> `Task directory:` -> that task's `STATE.md`; the
+  probe named a fixed task directory. When the active task changed, the probe
+  began mutating a file the rule no longer opens and reported UNDETECTED while
+  the rule worked perfectly. Probes may now write `<ACTIVE_TASK_DIR>`, which
+  the campaign resolves exactly as the rule does, so probe and rule cannot
+  disagree about what is under test; an unresolvable placeholder THROWS rather
+  than falling back to a literal path and probing the wrong file.
+
+  The gate gained a required `HARDENING_PROBES` group between `HARDENING` and
+  `HANDOFF_TRUTH`: 11 required groups became 12, wired through the command-key
+  union, the offline spec validator, the runtime dispatch and the rule that
+  asserts the required-group list. Vacuity is now explicit — a campaign that
+  selects no rule, or executes no probe, reports `VACUOUS_CAMPAIGN` and exits
+  non-zero instead of being inferred from a zero rule count.
+
+  Proof: `tests/unit/hardeningProbeCampaign.test.ts` (9 cases) runs the REAL
+  campaign against a disposable repository holding a synthetic two-rule engine,
+  so an undetected probe, an unproven rule, both vacuity modes, a probe error,
+  created-file debris and the placeholder resolution are each exercised for
+  real. `tests/unit/phase23QualityGate.test.ts` gained 7 cases including
+  command-mapping TOTALITY over the shipped runner. Recorded probes HC-090 and
+  HC-091 prove the gate cannot LOSE the group or DOWNGRADE it to optional
+  without `hardening:check` going red — both DETECTED.
+
+  `hardening:rules` now: `rules=83 probes=92 detected=92 undetected=0
+  restored=81 statusUnchanged=true`, exit 0. Gate definition digest at this
+  checkpoint: `sha256:c85f42c58db95b81865b011600086eb6db854886ca652dd57d572a7475ad101e`.
+
 ## Measured Baseline
 
 Recorded at `521210f7` before any change (see `PLAN.md` for the full list):
@@ -99,9 +137,9 @@ Recorded at `521210f7` before any change (see `PLAN.md` for the full list):
 
 ## Exact Next Action
 
-Repair probe HC-015 and the active-task indirection class behind it, then wire
-`hardening:rules` into the authoritative gate as a required `HARDENING_PROBES`
-group between `HARDENING` and `HANDOFF_TRUTH`.
+Audit all 83 rules' quantifiers (G16.5): verify each declared quantifier
+against its implementation, make TOTALITY rules report every failing line, and
+repair the `withoutComments()` line-comment defect with a recorded probe.
 
 ## Resume Recipe
 
@@ -115,8 +153,7 @@ group between `HARDENING` and `HANDOFF_TRUTH`.
 
 ## Work In Progress
 
-Milestone B: repairing probe HC-015 and the active-task indirection class
-behind it, then adding the required `HARDENING_PROBES` gate group.
+Milestone C: the G16.5 rule-quantifier audit.
 
 ## Files Changed
 
@@ -134,7 +171,13 @@ behind it, then adding the required `HARDENING_PROBES` gate group.
 - `npm run typecheck` — PASS.
 - `npm run typecheck:bin` — PASS (conformance 14/70, REPORTING mode).
 - `npm run hardening:check` — PASS, 83 rules.
-- `npm run hardening:rules` — RED at base (HC-015 UNDETECTED); milestone B.
+- `npm run hardening:rules` — RED at base (HC-015 UNDETECTED); GREEN after
+  milestone B: `rules=83 probes=92 detected=92 undetected=0 restored=81
+  statusUnchanged=true`, exit 0.
+- `tests/unit/hardeningProbeCampaign.test.ts` — 9/9 PASS.
+- `tests/unit/phase23QualityGate.test.ts` — 14/14 PASS.
+- `node bin/quality-gate-spec.mjs` — PASS, 12 required groups.
+- `npm run validation:universe` — PASS.
 
 ## Decisions Made During This Task
 
@@ -144,7 +187,42 @@ behind it, then adding the required `HARDENING_PROBES` gate group.
 
 ## Discoveries
 
-- Recorded in `## Measured Baseline` above and in `PLAN.md ## Discoveries`.
+- Recorded in `- **B COMPLETE_LOCAL — `hardening:rules` is gate-authoritative.** The campaign
+  was dead code: a declared npm script no gate group, lane, validation-universe
+  class or CI workflow selected. It was also already RED — HC-015 UNDETECTED —
+  and nothing noticed, which is the whole blind spot in one line.
+
+  HC-015 rotted structurally, not by neglect.
+  `checkActiveMilestoneProgression` resolves its subject INDIRECTLY through
+  `.agent/ACTIVE_TASK.md` -> `Task directory:` -> that task's `STATE.md`; the
+  probe named a fixed task directory. When the active task changed, the probe
+  began mutating a file the rule no longer opens and reported UNDETECTED while
+  the rule worked perfectly. Probes may now write `<ACTIVE_TASK_DIR>`, which
+  the campaign resolves exactly as the rule does, so probe and rule cannot
+  disagree about what is under test; an unresolvable placeholder THROWS rather
+  than falling back to a literal path and probing the wrong file.
+
+  The gate gained a required `HARDENING_PROBES` group between `HARDENING` and
+  `HANDOFF_TRUTH`: 11 required groups became 12, wired through the command-key
+  union, the offline spec validator, the runtime dispatch and the rule that
+  asserts the required-group list. Vacuity is now explicit — a campaign that
+  selects no rule, or executes no probe, reports `VACUOUS_CAMPAIGN` and exits
+  non-zero instead of being inferred from a zero rule count.
+
+  Proof: `tests/unit/hardeningProbeCampaign.test.ts` (9 cases) runs the REAL
+  campaign against a disposable repository holding a synthetic two-rule engine,
+  so an undetected probe, an unproven rule, both vacuity modes, a probe error,
+  created-file debris and the placeholder resolution are each exercised for
+  real. `tests/unit/phase23QualityGate.test.ts` gained 7 cases including
+  command-mapping TOTALITY over the shipped runner. Recorded probes HC-090 and
+  HC-091 prove the gate cannot LOSE the group or DOWNGRADE it to optional
+  without `hardening:check` going red — both DETECTED.
+
+  `hardening:rules` now: `rules=83 probes=92 detected=92 undetected=0
+  restored=81 statusUnchanged=true`, exit 0. Gate definition digest at this
+  checkpoint: `sha256:c85f42c58db95b81865b011600086eb6db854886ca652dd57d572a7475ad101e`.
+
+## Measured Baseline` above and in `PLAN.md ## Discoveries`.
 
 ## Deferred / Follow-Up
 

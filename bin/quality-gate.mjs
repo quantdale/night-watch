@@ -93,6 +93,13 @@ function runFixedCommand(commandKey, mode, timeoutClass) {
   } else if (commandKey === 'HARDENING_CHECK') {
     command = packageManager;
     args = ['run', 'hardening:check'];
+  } else if (commandKey === 'HARDENING_PROBES') {
+    // The rule mutation campaign. It edits real guarded source and restores it
+    // in a finally, so it is required to leave `git status --porcelain`
+    // byte-identical; the campaign asserts that itself and exits non-zero
+    // otherwise, which is what makes it safe to run as a gate group.
+    command = packageManager;
+    args = ['run', 'hardening:rules'];
   } else if (commandKey === 'HANDOFF_CHECK') {
     command = nodeExecutable;
     args = [path.join(root, 'bin', 'planner-handoff-check.mjs')];

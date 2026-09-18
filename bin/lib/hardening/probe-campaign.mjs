@@ -15,6 +15,49 @@ import { spawnSync } from 'node:child_process';
 import { root, childEnvironment, PROBE_REGISTRY_PATH } from './kernel.mjs';
 
 /**
+ * The active task directory, read the way the rules read it.
+ *
+ * `checkActiveMilestoneProgression` resolves its subject INDIRECTLY: it reads
+ * `.agent/ACTIVE_TASK.md`, follows `Task directory:` and opens that task's
+ * `STATE.md`. Probe HC-015 named a fixed task directory instead, so the moment
+ * the active task changed the probe began mutating a file the rule no longer
+ * opens -- and reported UNDETECTED while the rule was working perfectly.
+ *
+ * A probe whose rule resolves its subject indirectly must resolve it the SAME
+ * way, or probe and rule silently disagree about what is under test. That is
+ * the HC-059 rot class, and it stays closed only if the indirection is shared
+ * rather than copied.
+ */
+function activeTaskDirectory() {
+  try {
+    const active = fs.readFileSync(path.join(root, '.agent/ACTIVE_TASK.md'), 'utf8');
+    const directory = /^Task directory:\s*(\S+)\s*$/m.exec(active)?.[1];
+    if (typeof directory === 'string' && directory.startsWith('.agent/tasks/')) return directory;
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/** Placeholders a probe may use to follow a rule's own indirection. */
+const PROBE_PATH_PLACEHOLDER = '<ACTIVE_TASK_DIR>';
+
+/**
+ * Resolve a probe's declared path. An unresolvable placeholder THROWS rather
+ * than falling back to a literal: a probe that cannot find its subject must
+ * fail the campaign, never quietly probe the wrong file.
+ * @param {string} file
+ */
+function resolveProbePath(file) {
+  if (!file.includes(PROBE_PATH_PLACEHOLDER)) return file;
+  const directory = activeTaskDirectory();
+  if (directory === null) {
+    throw new Error(`${PROBE_PATH_PLACEHOLDER} is unresolvable: .agent/ACTIVE_TASK.md names no task directory`);
+  }
+  return file.replace(PROBE_PATH_PLACEHOLDER, directory);
+}
+
+/**
  * The rule mutation campaign: apply each recorded probe to real guarded
  * source, run only the probed rule, and require a detected failure. Bytes are
  * restored in a finally and verified afterwards; `git status --porcelain` must
@@ -60,7 +103,7 @@ export function runRuleProbeCampaign(registeredRules, onlyRule, entryPoint) {
       usedId = probe.id ?? '(unnamed)';
       try {
         for (const op of Array.isArray(probe.ops) ? probe.ops : []) {
-          const absolute = path.join(root, op.file);
+          const absolute = path.join(root, resolveProbePath(op.file));
           // `create` proves a guard whose subject is a file's EXISTENCE — an
           // unregistered rule module is the case that motivated it, and no
           // byte-level edit of an existing file can express it. The file must
@@ -130,6 +173,15 @@ export function runRuleProbeCampaign(registeredRules, onlyRule, entryPoint) {
     for (const line of beforeLines) if (line && !afterLines.has(line)) console.error(`[probe] STATUS_BEFORE_ONLY ${line}`);
     for (const line of afterLines) if (line && !beforeLines.has(line)) console.error(`[probe] STATUS_AFTER_ONLY ${line}`);
   }
+  // Vacuity is stated explicitly rather than inferred. A campaign that ran no
+  // rules, or ran rules but executed no probe, proves nothing -- and a gate
+  // that treats "no failures" as PASS would report the strongest possible
+  // result for the weakest possible run. Both are named so the reason a
+  // release-authoritative gate went red is legible in the receipt.
+  const vacuousRules = campaignRules.length === 0;
+  const vacuousProbes = probeCount === 0;
+  if (vacuousRules) console.error('[probe] VACUOUS_CAMPAIGN no rules were selected; the registry or the filter is broken rather than the repository clean');
+  if (vacuousProbes) console.error('[probe] VACUOUS_CAMPAIGN no probe was executed; a campaign that mutates nothing detects nothing');
   console.log(`[probe] rules=${campaignRules.length} probes=${probeCount} detected=${detectedCount} undetected=${failureCount} restored=${originals.size} statusUnchanged=${statusUnchanged}`);
-  process.exitCode = campaignRules.length === 0 || failureCount > 0 || restoreFailures > 0 || !statusUnchanged ? 1 : 0;
+  process.exitCode = vacuousRules || vacuousProbes || failureCount > 0 || restoreFailures > 0 || !statusUnchanged ? 1 : 0;
 }

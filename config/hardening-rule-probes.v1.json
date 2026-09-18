@@ -45,7 +45,7 @@
       { "id": "HC-014", "ops": [{ "file": "bin/ai-owner-review.mjs", "search": "ownerReview.ts", "replace": "ownerReviewProbe.ts", "all": true }] }
     ],
     "checkActiveMilestoneProgression": [
-      { "id": "HC-015", "ops": [{ "file": ".agent/tasks/nightwatch-production-completion-programme-v1/STATE.md", "append": "\n**M99 — PROBE COMPLETE**\n" }] }
+      { "id": "HC-015", "ops": [{ "file": "<ACTIVE_TASK_DIR>/STATE.md", "append": "\n**M99 — PROBE COMPLETE**\n" }] }
     ],
     "checkDecisionIdentityUniqueness": [
       { "id": "HC-016", "ops": [{ "file": "docs/DECISIONS.md", "append": "\n## D-98 — probe duplicate title\n## D-98 — probe duplicate title\n" }] }
@@ -69,7 +69,9 @@
       ] }
     ],
     "checkPhase23QualityGate": [
-      { "id": "HC-022", "kind": "COMMENT_RELOCATION", "ops": [{ "file": "src/core/qualityGate/externalCi.ts", "search": "['REQUIRED_JOB_STEPS_EMPTY']", "replace": "[/* REQUIRED_JOB_STEPS_EMPTY */]" }] }
+      { "id": "HC-022", "kind": "COMMENT_RELOCATION", "ops": [{ "file": "src/core/qualityGate/externalCi.ts", "search": "['REQUIRED_JOB_STEPS_EMPTY']", "replace": "[/* REQUIRED_JOB_STEPS_EMPTY */]" }] },
+      { "id": "HC-090", "ops": [{ "file": "config/quality-gate.v1.json", "search": "      \"id\": \"HARDENING_PROBES\",", "replace": "      \"id\": \"HARDENING_PROBES_REMOVED\"," }] },
+      { "id": "HC-091", "ops": [{ "file": "config/quality-gate.v1.json", "search": "      \"id\": \"HARDENING_PROBES\",\n      \"commandKey\": \"HARDENING_PROBES\",\n      \"required\": true,", "replace": "      \"id\": \"HARDENING_PROBES\",\n      \"commandKey\": \"HARDENING_PROBES\",\n      \"required\": false," }] }
     ],
     "checkPhase8B01CloseoutIntegrity": [
       { "id": "HC-023", "ops": [{ "file": "src/core/selfDevSandbox/validation.ts", "search": "PLAN_STRATEGY_MISMATCH", "replace": "STRATEGY_BINDING_PROBE" }] }

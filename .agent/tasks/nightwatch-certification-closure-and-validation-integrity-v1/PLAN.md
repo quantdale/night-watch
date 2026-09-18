@@ -60,7 +60,7 @@ one owned session worktree, fast-forward integration, never force-push.
 
 ### B — `hardening:rules` becomes gate-authoritative
 
-- **Status:** NOT_STARTED
+- **Status:** COMPLETE_LOCAL
 - Repair the rotted HC-015 probe and the rot CLASS behind it. Add a required
   `HARDENING_PROBES` group between `HARDENING` and `HANDOFF_TRUTH` through the
   gate-definition machinery: command key, dispatch, spec validator,
@@ -69,7 +69,7 @@ one owned session worktree, fast-forward integration, never force-push.
 
 ### C — G16.5 rule-quantifier audit
 
-- **Status:** NOT_STARTED
+- **Status:** IN_PROGRESS
 - Classify all 83 rules; verify declared quantifier against implementation;
   make TOTALITY rules report every failing line; extend the engine self-check
   so an existence-style implementation cannot masquerade as totality; repair
