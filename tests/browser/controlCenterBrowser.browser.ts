@@ -889,7 +889,12 @@ test('renders the error taxonomy and partial composition in the built bundle', a
  * rather than imported — the same approach `helpers/accessibility.ts` takes.
  */
 interface MatrixRect { readonly left: number; readonly right: number; readonly width: number; readonly height: number }
-interface MatrixStyle { readonly display: string; readonly visibility: string; readonly fontSize: string; readonly position: string; readonly overflowX: string; readonly overflowY: string }
+interface MatrixStyle {
+  readonly display: string; readonly visibility: string; readonly fontSize: string;
+  readonly position: string; readonly overflowX: string; readonly overflowY: string;
+  readonly backgroundColor: string; readonly borderTopStyle: string;
+  readonly borderTopWidth: string; readonly borderTopColor: string;
+}
 interface MatrixNode { readonly nodeType: number; readonly textContent: string | null }
 interface MatrixElement {
   readonly tagName: string;
@@ -948,6 +953,7 @@ test('every view lays out and keeps its posture at every declared viewport width
   const failures: string[] = [];
   let cellsMeasured = 0;
   let textNodesMeasured = 0;
+  let boundariesMeasured = 0;
 
   try {
     for (const width of DECLARED_VIEWPORTS) {
@@ -1060,6 +1066,59 @@ test('every view lays out and keeps its posture at every declared viewport width
           }
           ranked.sort((a, b) => b.right - a.right);
 
+          // WCAG 2.2 1.4.11: a control whose visible BOUNDARY is its only
+          // affordance needs 3:1 against what sits behind it. A structural
+          // divider is a different thing and is deliberately quieter — making
+          // every border 3:1 would turn a dark console into a wireframe — so
+          // this measures only controls with no fill of their own.
+          const luminance = (colour: string): number | null => {
+            const parts = /rgba?\(([^)]+)\)/.exec(colour);
+            if (parts === null) return null;
+            const channels = (parts[1] as string).split(',').map((value) => Number.parseFloat(value));
+            if (channels.length < 3 || channels.some((value) => !Number.isFinite(value))) return null;
+            if (channels.length > 3 && (channels[3] as number) < 0.95) return null;
+            const linear = channels.slice(0, 3).map((value) => {
+              const channel = value / 255;
+              return channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+            });
+            return 0.2126 * (linear[0] as number) + 0.7152 * (linear[1] as number) + 0.0722 * (linear[2] as number);
+          };
+          const backdropOf = (element: MatrixElement): string | null => {
+            let node: MatrixElement | null = element.parentElement;
+            while (node !== null) {
+              const fill = view$.getComputedStyle(node).backgroundColor;
+              const parsed = /rgba?\(([^)]+)\)/.exec(fill);
+              const alpha = parsed === null ? 0 : Number.parseFloat((parsed[1] as string).split(',')[3] ?? '1');
+              if (parsed !== null && alpha > 0.95) return fill;
+              node = node.parentElement;
+            }
+            return null;
+          };
+          const weakBoundaries: string[] = [];
+          let boundariesMeasured = 0;
+          for (const element of Array.from(view$.document.querySelectorAll('button, a[href], input, select, textarea'))) {
+            const style = view$.getComputedStyle(element);
+            if (style.display === 'none' || style.visibility === 'hidden') continue;
+            const box = element.getBoundingClientRect();
+            if (box.width <= 0.5 || box.height <= 0.5) continue;
+            if (style.borderTopStyle === 'none' || Number.parseFloat(style.borderTopWidth) < 0.5) continue;
+            // Only a control with NO fill of its own is identified by its
+            // boundary alone; a filled control is identified by the fill.
+            const own = /rgba?\(([^)]+)\)/.exec(style.backgroundColor);
+            const ownAlpha = own === null ? 0 : Number.parseFloat((own[1] as string).split(',')[3] ?? '1');
+            if (ownAlpha > 0.12) continue;
+            const behind = backdropOf(element);
+            if (behind === null) continue;
+            const edge = luminance(style.borderTopColor);
+            const back = luminance(behind);
+            if (edge === null || back === null) continue;
+            boundariesMeasured += 1;
+            const ratio = (Math.max(edge, back) + 0.05) / (Math.min(edge, back) + 0.05);
+            if (ratio < 3) {
+              weakBoundaries.push(`${element.tagName.toLowerCase()}.${String(element.className).split(' ')[0]} ${style.borderTopColor} on ${behind} = ${ratio.toFixed(2)}:1`);
+            }
+          }
+
           // The property that matters is whether the OPERATOR can scroll the
           // page sideways, not whether some descendant's unclipped layout box
           // extends past the fold. A table inside a bounded `overflow-x: auto`
@@ -1072,6 +1131,8 @@ test('every view lays out and keeps its posture at every declared viewport width
           root.scrollLeft = before;
 
           return {
+            weakBoundaries: Array.from(new Set(weakBoundaries)).slice(0, 5),
+            boundariesMeasured,
             offenders: ranked.filter((entry) => entry.right <= root.scrollWidth + 1).slice(0, 4).map((entry) => entry.label),
             overflow: reached,
             clipped: clipped.slice(0, 5),
@@ -1089,6 +1150,8 @@ test('every view lays out and keeps its posture at every declared viewport width
         if (!report.readOnly) failures.push(`${cell}: no read-only posture statement in the rendered text`);
         if (!report.contained) failures.push(`${cell}: no loopback/no-external-network posture statement in the rendered text`);
         if (report.small.length > 0) failures.push(`${cell}: rendered text below the ${typeFloor}px floor — ${report.small.join(', ')}`);
+        if (report.weakBoundaries.length > 0) failures.push(`${cell}: control boundary below 3:1 — ${report.weakBoundaries.join('; ')}`);
+        boundariesMeasured += report.boundariesMeasured;
         expect(report.measured, `${cell}: measured zero text-bearing elements; the probe is broken rather than the view clean`).toBeGreaterThan(5);
       }
     }
@@ -1099,5 +1162,6 @@ test('every view lays out and keeps its posture at every declared viewport width
   // Non-vacuity before the verdict: an empty matrix satisfies "no failures".
   expect(cellsMeasured, 'the matrix must measure every view at every width').toBe(DECLARED_VIEWPORTS.length * MATRIX_VIEWS.length);
   expect(textNodesMeasured, 'the type-floor probe must measure real text').toBeGreaterThan(500);
+  expect(boundariesMeasured, 'the boundary-contrast probe must find controls identified by their outline').toBeGreaterThan(20);
   expect(failures, `viewport matrix failures:\n  ${failures.join('\n  ')}`).toEqual([]);
 });

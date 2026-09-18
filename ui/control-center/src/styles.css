@@ -403,7 +403,7 @@ a:focus-visible {
 
 .version-tag {
   padding: var(--space-1) var(--space-1);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-interactive);
   border-radius: var(--radius-control);
   color: var(--faint);
   font-family: var(--font-mono);
@@ -478,7 +478,10 @@ a:focus-visible {
 .icon-button {
   width: 34px;
   height: 34px;
-  border-color: var(--border);
+  /* An icon-only control with no fill: its outline is the ONLY thing that says
+     it is a control, so it takes the interactive border rather than the quiet
+     structural one. Measured 1.51:1 before, 3.81:1 against `--bg` now. */
+  border-color: var(--border-interactive);
   color: var(--muted);
 }
 
@@ -508,13 +511,13 @@ a:focus-visible {
 
 .button-secondary {
   margin-top: var(--space-3);
-  border-color: var(--border);
+  border-color: var(--border-interactive);
   color: var(--text);
   background: var(--surface-raised);
 }
 
 .button-quiet {
-  border-color: var(--border);
+  border-color: var(--border-interactive);
   color: var(--muted);
 }
 
@@ -687,7 +690,7 @@ tbody tr.row-selected {
   align-items: center;
   gap: var(--space-1);
   padding: var(--space-1) var(--space-2);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-interactive);
   border-radius: var(--radius-control);
   color: var(--accent);
   background: transparent;
@@ -945,7 +948,7 @@ tbody tr.row-selected {
 .graph-filter select {
   width: 100%;
   padding: var(--space-1) var(--space-2);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-interactive);
   border-radius: var(--radius-control);
   background: var(--wash-subtle);
   color: var(--text);
@@ -978,7 +981,7 @@ tbody tr.row-selected {
 .graph-zoom button {
   min-width: 28px;
   padding: var(--space-1) var(--space-2);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-interactive);
   border-radius: var(--radius-control);
   background: transparent;
   color: var(--muted);
@@ -1649,11 +1652,25 @@ tbody tr.row-selected {
     border-bottom: 1px solid var(--border-soft);
   }
   .sidebar-rule { margin: var(--space-4) 0 var(--space-3); }
-  .primary-nav { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-1); }
+  .primary-nav { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-1); }
   .nav-label { grid-column: 1 / -1; padding: 0 var(--space-1) var(--space-1); }
   .nav-item { min-height: 36px; padding: 0 var(--space-2); font-size: var(--text-body); }
   .nav-item span:not(.nav-active-bar) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .sidebar-footer { display: none; }
+  /*
+   * D-04: this used to be `display: none`, which removed "Local only" and
+   * "External egress disabled" — the two statements that say what this console
+   * is allowed to do — to tidy the collapsed sidebar. Posture is product
+   * truth, not chrome, so it now lays out horizontally instead of vanishing.
+   */
+  .sidebar-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    margin-top: var(--space-3);
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--border-soft);
+  }
   .topbar { min-height: 70px; padding: 0 var(--space-6); }
   .content-wrap { padding-top: var(--space-6); }
   .hero-orbit { display: none; }
@@ -1678,9 +1695,16 @@ tbody tr.row-selected {
 }
 
 @media (max-width: 560px) {
+  .primary-nav { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .topbar { align-items: flex-start; padding-top: var(--space-4); padding-bottom: var(--space-4); }
   .topbar-actions { gap: var(--space-1); }
-  .read-only-tag { max-width: 34px; overflow: hidden; padding: var(--space-2); white-space: nowrap; }
+  /*
+   * D-04: clamping this to 34px did not abbreviate the label, it truncated it
+   * to "RE" — a posture statement reduced to two characters. The tag now keeps
+   * its whole accessible text and the top bar wraps instead.
+   */
+  .read-only-tag { padding: var(--space-1) var(--space-2); }
+  .topbar-actions { flex-wrap: wrap; }
   .content-wrap { padding: var(--space-5) var(--space-3) var(--space-6); }
   .hero-card { min-height: 0; padding: var(--space-6) var(--space-5); }
   .hero-copy h1 { font-size: var(--text-hero); }
@@ -1722,7 +1746,7 @@ tbody tr.row-selected {
 
 .system-map-queries { display: flex; flex-wrap: wrap; gap: var(--space-1); }
 .chip {
-  border: 1px solid var(--border); background: transparent; color: inherit;
+  border: 1px solid var(--border-interactive); background: transparent; color: inherit;
   border-radius: var(--radius-pill); padding: var(--space-1) var(--space-3); font-size: var(--text-body); cursor: pointer;
 }
 .chip:hover:not(:disabled) { border-color: var(--accent); }
@@ -1733,7 +1757,7 @@ tbody tr.row-selected {
 .system-map-controls .field { display: flex; flex-direction: column; gap: var(--space-1); font-size: var(--text-body); }
 .system-map-controls input, .system-map-controls select {
   background: var(--wash-subtle); color: inherit; font: inherit; font-size: var(--text-body);
-  border: 1px solid var(--border); border-radius: var(--radius-control); padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--border-interactive); border-radius: var(--radius-control); padding: var(--space-1) var(--space-2);
 }
 .system-map-controls .hint { font-size: var(--text-micro); opacity: 0.85; margin-left: auto; }
 
@@ -1797,7 +1821,7 @@ tbody tr.row-selected {
   font-size: var(--text-body);
   padding: 0.35rem 0.45rem;
   border-radius: var(--radius-control);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-interactive);
   background: var(--surface);
   color: inherit;
   resize: vertical;
@@ -1828,7 +1852,7 @@ tbody tr.row-selected {
   font-size: var(--text-body);
   padding: 0.2rem 0.45rem;
   border-radius: var(--radius-control);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-interactive);
   background: var(--surface-raised);
   color: var(--text);
   cursor: pointer;
