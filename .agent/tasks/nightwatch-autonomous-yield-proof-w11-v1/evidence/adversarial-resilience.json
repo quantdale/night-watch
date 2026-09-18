@@ -1,0 +1,71 @@
+{
+  "schemaVersion": "nightwatch.w11-adversarial-resilience.v1",
+  "checks": [
+    {
+      "id": "WIDENED_OR_CHANGED_RESUME_SCOPE",
+      "method": "campaign resume --id=w11-unknown-broad-1 --repository=mobingilabs/ouchan against a campaign frozen to the full approved universe",
+      "result": "FAIL_CLOSED",
+      "evidence": "CAMPAIGN_SCOPE_MISMATCH: campaign w11-unknown-broad-1 was scoped to the full approved universe; resume requested mobingilabs/ouchan (exit 2)",
+      "beforeAnyProviderCall": true
+    },
+    {
+      "id": "UNSUPPORTED_REPOSITORY_SCOPE",
+      "method": "campaign resume --repository=attacker/not-approved",
+      "result": "FAIL_CLOSED",
+      "evidence": "REAL_SOURCE_SCAN_APPROVED_UNIVERSE",
+      "beforeAnyProviderCall": true
+    },
+    {
+      "id": "CHANGED_PROVIDER_IDENTITY",
+      "method": "bin/w11-historical-arm.mjs with NIGHTWATCH_PRINT_ARGS naming a model the freeze does not name",
+      "result": "FAIL_CLOSED",
+      "evidence": "exit 2, 'configured NIGHTWATCH_PRINT_ARGS does not name the frozen model opencode-go/glm-5.3', empty stdout",
+      "beforeAnyProviderCall": true,
+      "regressionTest": "tests/unit/w11EvaluationFreezeIntegrity.test.ts"
+    },
+    {
+      "id": "UNCONFIGURED_PROVIDER",
+      "method": "bin/w11-historical-arm.mjs with NIGHTWATCH_PRINT_CLI/ARGS unset",
+      "result": "FAIL_CLOSED",
+      "evidence": "exit 2, 'refusing to start', empty stdout",
+      "regressionTest": "tests/unit/w11EvaluationFreezeIntegrity.test.ts"
+    },
+    {
+      "id": "CHANGED_CORPUS_OR_SCORING_FINGERPRINT",
+      "method": "freeze fingerprint pinned and frozen EXACT thresholds asserted equal to the live scoring constants",
+      "result": "GUARDED",
+      "evidence": "tests/unit/w11EvaluationFreezeIntegrity.test.ts — editing the freeze or lowering BENCHMARK_EXACT_MIN_* breaks a test",
+      "regressionTest": "tests/unit/w11EvaluationFreezeIntegrity.test.ts"
+    },
+    {
+      "id": "CANDIDATE_WITHOUT_REPRODUCTION_REFUSES",
+      "method": "live historical arm",
+      "result": "REFUSED",
+      "evidence": "4 of 7 candidates produced no dossier: bench-api-pagination-002, bench-backend-retry-003, bench-data-timezone-005, bench-state-transition-008, each with reproductionCount 0. tryBuild*Dossier returns null below reproductionCount 1."
+    },
+    {
+      "id": "PROVIDER_TIMEOUT_DOES_NOT_MANUFACTURE_PROGRESS",
+      "method": "live, unintended — w11-unknown-broad-1 during the provider outage",
+      "result": "PROVEN_LIVE",
+      "evidence": "6/6 reasoner calls REASONER_TIMEOUT, 0 provider response bytes, 0 tool actions of value, 0 targets, 0 candidates, 0 reproductions, dossierStatus NONE, terminated BUDGET_EXHAUSTED"
+    },
+    {
+      "id": "NEGATIVE_CONTROL_REMAINS_CANDIDATE_FREE",
+      "method": "live historical arm",
+      "result": "PASS",
+      "evidence": "bench-negative-quiet-000 outcome MISS, 0 candidates, 0 false positives"
+    },
+    {
+      "id": "LEAKAGE_CHECKER_IS_LIVE",
+      "method": "canaries planted in each of the six hidden fields",
+      "result": "PASS",
+      "evidence": "tests/unit/w11LeakageCanary.test.ts — all six caught; clean blobs stay clean; an empty field manufactures neither a false clean nor a false leak"
+    },
+    {
+      "id": "SIBLING_IDENTITY_UNCHANGED",
+      "method": "HEAD comparison against the frozen SHAs plus mtime census across all eight admitted repositories",
+      "result": "PASS",
+      "evidence": "all 8 HEADs equal their frozen SHAs; W11 began 2026-09-19 00:24 and the newest sibling content mtime across all eight is 2026-09-18 06:49 (mobingilabs/ripple-api, from the predecessor campaign's re-derivation), ~18h before W11 started. Pre-existing owner-local modifications date to 2026-08-06/08. Zero sibling writes by W11."
+    }
+  ]
+}

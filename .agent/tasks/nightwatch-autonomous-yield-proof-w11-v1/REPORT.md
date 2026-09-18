@@ -155,6 +155,31 @@ provider timeout does not manufacture progress: 6 timeouts produced 0 actions,
 0 targets, 0 hypotheses, 0 candidates, 0 reproductions and `dossierStatus:
 NONE`, and the campaign terminated on its budget instead of inventing a result.
 
+## Adversarial and resilience checks (M8)
+
+Evidence: `evidence/adversarial-resilience.json`.
+
+| Check | Result | Evidence |
+|---|---|---|
+| Changed resume scope | FAIL_CLOSED | `CAMPAIGN_SCOPE_MISMATCH`, exit 2, before any provider call |
+| Unsupported repository scope | FAIL_CLOSED | `REAL_SOURCE_SCAN_APPROVED_UNIVERSE` |
+| Changed provider identity | FAIL_CLOSED | exit 2, "does not name the frozen model", empty stdout |
+| Unconfigured provider | FAIL_CLOSED | exit 2, "refusing to start", empty stdout |
+| Changed corpus/scoring fingerprint | GUARDED | freeze fingerprint pinned; frozen EXACT thresholds asserted equal to live constants |
+| Candidate without reproduction | REFUSED | 4 of 7 live candidates produced no dossier |
+| Provider timeout manufacturing progress | PROVEN_LIVE | 6 timeouts → 0 actions, 0 candidates, `dossierStatus: NONE` |
+| Negative control candidate-free | PASS | MISS, 0 candidates, 0 false positives |
+| Leakage checker live | PASS | all six hidden fields caught when planted |
+| Sibling identity unchanged | PASS | see below |
+
+**Sibling writes: 0, mechanically verified.** All eight admitted repositories
+still have `HEAD` equal to their frozen SHAs. W11 began `2026-09-19 00:24`; the
+newest sibling content mtime across all eight is `2026-09-18 06:49`
+(`mobingilabs/ripple-api`, from the predecessor campaign's authorized
+re-derivation), roughly 18 hours BEFORE W11 started. The remaining
+uncommitted sibling state dates to 2026-08-06/08 and is pre-existing
+owner-local modification, not W11's.
+
 ## Defects exposed
 
 One, in W11's own harness, found by reading the arm's own output.
