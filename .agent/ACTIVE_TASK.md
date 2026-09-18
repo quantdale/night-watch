@@ -84,7 +84,7 @@ Do not rebuild unless live recon finds a concrete regression:
 CAMPAIGN: nightwatch-control-center-design-system-v1
 CHILD TASK: NONE
 WAVE: G8_CERTIFICATION
-SESSION WORKTREE: session/nightwatch-control-center-design-5eb78e61
+SESSION WORKTREE: NONE
 
 IMPLEMENTATION AUTHORIZED:
   The Control Center design system across `ui/control-center/**`, the browser

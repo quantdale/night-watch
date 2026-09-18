@@ -6,7 +6,7 @@ Task ID: nightwatch-control-center-design-system-v1
 Phase: CONTROL_CENTER_DESIGN_SYSTEM_V1
 Status: COMPLETE
 Starting SHA: efd1dc5c81a55db00e7698257c8b49b51a6703c5
-Branch: session/nightwatch-control-center-design-5eb78e61
+Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: efd1dc5c81a55db00e7698257c8b49b51a6703c5
 LAST_VALIDATED_IMPLEMENTATION_SHA: 1fc8eb6d4cd2cde22d6c65647538123d0457af26
