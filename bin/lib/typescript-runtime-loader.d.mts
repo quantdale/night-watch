@@ -23,11 +23,17 @@ export interface TypeScriptRuntimeLoaderModuleMap {
   "src/controlCenter/authorities/reviewWriteAuthority.ts": typeof import("../../src/controlCenter/authorities/reviewWriteAuthority");
   "src/controlCenter/server/defaultCollector.ts": typeof import("../../src/controlCenter/server/defaultCollector");
   "src/controlCenter/server/index.ts": typeof import("../../src/controlCenter/server/index");
+  "src/core/agentProtocol/tools.ts": typeof import("../../src/core/agentProtocol/tools");
   "src/core/agentRuntime/localCampaign.ts": typeof import("../../src/core/agentRuntime/localCampaign");
   "src/core/aiReview/localCanary.ts": typeof import("../../src/core/aiReview/localCanary");
   "src/core/aiReview/ownerDecision.ts": typeof import("../../src/core/aiReview/ownerDecision");
   "src/core/aiReview/ownerReview.ts": typeof import("../../src/core/aiReview/ownerReview");
   "src/core/aiReview/storage.ts": typeof import("../../src/core/aiReview/storage");
+  "src/core/benchmark/fixtures.ts": typeof import("../../src/core/benchmark/fixtures");
+  "src/core/benchmark/hunt.ts": typeof import("../../src/core/benchmark/hunt");
+  "src/core/benchmark/minedCases.ts": typeof import("../../src/core/benchmark/minedCases");
+  "src/core/benchmark/score.ts": typeof import("../../src/core/benchmark/score");
+  "src/core/bugAtlas/miner.ts": typeof import("../../src/core/bugAtlas/miner");
   "src/core/campaign/runtimeProfile.ts": typeof import("../../src/core/campaign/runtimeProfile");
   "src/core/campaignIntelligence/coverage.ts": typeof import("../../src/core/campaignIntelligence/coverage");
   "src/core/campaignIntelligence/impact.ts": typeof import("../../src/core/campaignIntelligence/impact");
@@ -38,6 +44,7 @@ export interface TypeScriptRuntimeLoaderModuleMap {
   "src/core/config/reasonerExecutable.ts": typeof import("../../src/core/config/reasonerExecutable");
   "src/core/dependencyCurrency/index.ts": typeof import("../../src/core/dependencyCurrency/index");
   "src/core/efficacy/index.ts": typeof import("../../src/core/efficacy/index");
+  "src/core/efficacy/metrics.ts": typeof import("../../src/core/efficacy/metrics");
   "src/core/environment/index.ts": typeof import("../../src/core/environment/index");
   "src/core/evidenceRetention/index.ts": typeof import("../../src/core/evidenceRetention/index");
   "src/core/localInvestigation/ownerLocal.ts": typeof import("../../src/core/localInvestigation/ownerLocal");
@@ -53,6 +60,7 @@ export interface TypeScriptRuntimeLoaderModuleMap {
   "src/core/readiness/localReadiness.ts": typeof import("../../src/core/readiness/localReadiness");
   "src/core/readiness/openWork.ts": typeof import("../../src/core/readiness/openWork");
   "src/core/readiness/repoState.ts": typeof import("../../src/core/readiness/repoState");
+  "src/core/reasoner/cliReasoner.ts": typeof import("../../src/core/reasoner/cliReasoner");
   "src/core/releaseCertification/index.ts": typeof import("../../src/core/releaseCertification/index");
   "src/core/safety/redaction.ts": typeof import("../../src/core/safety/redaction");
   "src/core/schemaLifecycle/check.ts": typeof import("../../src/core/schemaLifecycle/check");
