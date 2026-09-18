@@ -6,7 +6,7 @@ Title: Certification closure and validation integrity
 Status: COMPLETE
 Task directory: .agent/tasks/nightwatch-certification-closure-and-validation-integrity-v1
 Starting SHA: 521210f706b9383e20dd08d1bfd2f3c47b34687d
-Last validated implementation SHA: b34da5f63395dce53f139665dd823711739381ef
+Last validated implementation SHA: a7a0853c627ef6773e9bd2f5ffa7f12042cde23a
 Last checkpoint: Milestones M1-M6 COMPLETE_LOCAL and certification GREEN at
 b34da5f6: gate:local PASS over 12 required groups, full regression 5249 passed
 / 0 failed / 18 skipped, OpenSpec 64/64. The focus matrix found and
@@ -39,8 +39,8 @@ Authorization class: CERTIFICATION_CLOSURE_AND_VALIDATION_INTEGRITY_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 521210f706b9383e20dd08d1bfd2f3c47b34687d
-LAST_VALIDATED_IMPLEMENTATION_SHA: b34da5f63395dce53f139665dd823711739381ef
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: b34da5f63395dce53f139665dd823711739381ef
+LAST_VALIDATED_IMPLEMENTATION_SHA: a7a0853c627ef6773e9bd2f5ffa7f12042cde23a
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: a7a0853c627ef6773e9bd2f5ffa7f12042cde23a
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PHASE_CERTIFICATION_CLOSURE_AND_VALIDATION_INTEGRITY_V1_STATUS: COMPLETE

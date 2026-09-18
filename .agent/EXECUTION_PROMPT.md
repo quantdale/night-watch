@@ -1,7 +1,7 @@
 # EXECUTION PROMPT — Certification closure and validation integrity
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
-Status: IN_PROGRESS
+Status: COMPLETE
 Campaign ID: nightwatch-certification-closure-and-validation-integrity-v1
 OpenSpec: openspec/changes/nightwatch-certification-closure-and-validation-integrity-v1/
 Planned-From: 521210f706b9383e20dd08d1bfd2f3c47b34687d
