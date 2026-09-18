@@ -6,11 +6,11 @@ Task ID: nightwatch-autonomous-yield-proof-w11-v1
 Phase: AUTONOMOUS_YIELD_PROOF_W11_V1
 Status: IN_PROGRESS
 Starting SHA: 158a97b8feceb6abf4ea4ccbacab1f20cc46bc35
-Last validated implementation SHA: 158a97b8feceb6abf4ea4ccbacab1f20cc46bc35
-Last substantive checkpoint SHA: 158a97b8feceb6abf4ea4ccbacab1f20cc46bc35
+Last validated implementation SHA: ae06d4d675d878f67b93234a21100ef94d9fed25
+Last substantive checkpoint SHA: ae06d4d675d878f67b93234a21100ef94d9fed25
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
-Branch: session/nightwatch-autonomous-yield-proo-72d452ea
+Branch: main
 Last checkpoint: M0 preflight COMPLETE and measured. Provider
 `opencode-go/glm-5.3` frozen by a rule declared before probing; 8/8 admitted
 repositories CURRENT with matching SHAs; 4,124 eligible / 1,120 executable
@@ -20,8 +20,9 @@ No evaluation has been run.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 158a97b8feceb6abf4ea4ccbacab1f20cc46bc35
-LAST_VALIDATED_IMPLEMENTATION_SHA: 158a97b8feceb6abf4ea4ccbacab1f20cc46bc35
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 158a97b8feceb6abf4ea4ccbacab1f20cc46bc35
+LAST_VALIDATED_IMPLEMENTATION_SHA: ae06d4d675d878f67b93234a21100ef94d9fed25
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: ae06d4d675d878f67b93234a21100ef94d9fed25
+LAST_DOCUMENTATION_CHECKPOINT_SHA: fb372375922143babf9d93b7bc4f32cc08c1d671
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
 PHASE_AUTONOMOUS_YIELD_PROOF_W11_V1_STATUS: IN_PROGRESS
@@ -110,8 +111,9 @@ the provider recovers.
 
 ## Exact Next Action
 
-Finish the remaining non-provider validation and integrate the completed work,
-then STOP on the unknown arm until the unblock condition is met: the `opencode-go` subscribed provider
+Re-probe `opencode-go/glm-5.3` for recovery. The completed work is integrated at
+`fb372375` and the session is released and removed, so nothing else is pending
+while the probe keeps timing out. The unblock condition is: the `opencode-go` subscribed provider
 answers a structured probe within the frozen timeout. When it does, run the four
 frozen runs in `evaluation-freeze.unknown.json` unchanged
 (`sha256:6145bd666dd08369ec38b018`) through

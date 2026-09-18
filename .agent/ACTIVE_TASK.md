@@ -6,7 +6,7 @@ Title: W11 — Autonomous yield proof (strict rediscovery + owner-local yield)
 Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-autonomous-yield-proof-w11-v1
 Starting SHA: 158a97b8feceb6abf4ea4ccbacab1f20cc46bc35
-Last validated implementation SHA: 158a97b8feceb6abf4ea4ccbacab1f20cc46bc35
+Last validated implementation SHA: ae06d4d675d878f67b93234a21100ef94d9fed25
 Last checkpoint: VERDICT PARTIAL — BLOCKED. M0-M4, M7 and M8 COMPLETE; M5
 blocked externally. The frozen historical arm
 (`sha256:824deef9922975feab5af69f`, provider `opencode-go/glm-5.3`) evaluated
@@ -19,10 +19,14 @@ hidden failing test is absent from the whole visible context for every fixture
 and is a fix-ADDED file for mined cases, so it is not derivable under leak-free
 conditions. EXACT was not weakened and no near match was promoted.
 Current milestone: M5 — BLOCKED on an external subscribed-provider outage
-Next action: finish the remaining non-provider validation and integrate, then
-STOP on the unknown arm until `opencode-go/glm-5.3` answers a structured probe within
-the frozen timeout, then run the four frozen runs in
-`evaluation-freeze.unknown.json` (`sha256:6145bd666dd08369ec38b018`) unchanged.
+Next action: re-probe `opencode-go/glm-5.3` for recovery; while it still times
+out, the unknown arm stays unexecuted and nothing else is pending. When it
+answers within the frozen timeout, open a fresh C-00 session and run the four
+frozen runs in `evaluation-freeze.unknown.json`
+(`sha256:6145bd666dd08369ec38b018`) unchanged, then close M6 and M10. Do NOT
+substitute a provider to get past the blocker: choosing one after results are
+visible is the contamination the freeze prevents, and it would require a new
+fingerprint and a full rerun of both arms. That is an owner decision.
 Do NOT substitute a provider to get past the blocker: choosing one after results
 are visible is the contamination the freeze prevents, and it would require a new
 fingerprint and a full rerun of both arms. That is an owner decision.
@@ -30,8 +34,9 @@ Authorization class: AUTONOMOUS_YIELD_PROOF_W11_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 158a97b8feceb6abf4ea4ccbacab1f20cc46bc35
-LAST_VALIDATED_IMPLEMENTATION_SHA: 158a97b8feceb6abf4ea4ccbacab1f20cc46bc35
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 158a97b8feceb6abf4ea4ccbacab1f20cc46bc35
+LAST_VALIDATED_IMPLEMENTATION_SHA: ae06d4d675d878f67b93234a21100ef94d9fed25
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: ae06d4d675d878f67b93234a21100ef94d9fed25
+LAST_DOCUMENTATION_CHECKPOINT_SHA: fb372375922143babf9d93b7bc4f32cc08c1d671
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PHASE_AUTONOMOUS_YIELD_PROOF_W11_V1_STATUS: IN_PROGRESS
@@ -76,7 +81,7 @@ defect.
 CAMPAIGN: nightwatch-autonomous-yield-proof-w11-v1
 CHILD TASK: NONE
 WAVE: W11
-SESSION WORKTREE: session/nightwatch-autonomous-yield-proo-72d452ea
+SESSION WORKTREE: NONE
 
 IMPLEMENTATION AUTHORIZED:
   this task directory, its OpenSpec change, the W11 evaluation/measurement
