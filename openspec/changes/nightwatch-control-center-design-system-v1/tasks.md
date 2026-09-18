@@ -15,17 +15,37 @@ group is in flight.
 
 ## 1. Execution truth
 
-- [ ] 1.1 Claim an owned session worktree on the current base; `session:status`
+- [x] 1.1 Claim an owned session worktree on the current base; `session:status`
       verdict PASS; canonical checkout is not the implementation worktree
-- [ ] 1.2 Re-verify the four predecessor Control Center campaigns terminal
+      — `nightwatch-control-center-design-5eb78e61` claimed at `efd1dc5c`;
+      verdict PASS, class `OWNED_SESSION`, base CURRENT, canonicalSafe=true
+- [x] 1.2 Re-verify the four predecessor Control Center campaigns terminal
       COMPLETE and untouched; A-01…A-04 and R-01…R-04 stay closed
-- [ ] 1.3 Confirm Group 19's decomposition state and record which layout this
+      — render-truth, placement-coverage, ui-completion and
+      style-and-absence-truth remain terminal COMPLETE in
+      `.agent/ACTIVE_TASK.md` "Frozen predecessor outcomes"; none reopened
+- [x] 1.3 Confirm Group 19's decomposition state and record which layout this
       change is implemented against
-- [ ] 1.4 Re-measure every figure in `proposal.md` and this change's spec
+      — 19.11 and 19.12 are ticked and integrated. `App.tsx` is 351 lines
+      (was 1,786) with the nine views in `src/views/*.tsx` and `shared.tsx`
+      at 430. This change is implemented against the DECOMPOSED layout, so
+      every `App.tsx:NNNN` reference in `audit.md` is stale
+- [x] 1.4 Re-measure every figure in `proposal.md` and this change's spec
       preamble at the live starting SHA; where live evidence contradicts the
       audit, record the contradiction and its resolution — the audit's numbers
       are measurements, not permissions
-- [ ] 1.5 Commit the planning route and task SPEC/PLAN/STATE
+      — recorded in `audit.md` under `# Rebaseline — measured at efd1dc5c`.
+      D-01 is DEAD (the three tokens are neither defined nor referenced; the
+      1.08:1 defect is not reproducible and is NOT claimed as fixed here) —
+      only its guard is still owed. D-02/D-03/D-04/D-05 STILL PRESENT and
+      re-measured exactly: 10 divergent fallbacks, 84 font-sizes over 19
+      values with 49 below 12px, 3 unrendered breakpoints, `--border` at
+      1.27–1.51:1. Two figures moved upward: 36 distinct hex (was "~25") and
+      50 `rgba()` occurrences (was 47)
+- [x] 1.5 Commit the planning route and task SPEC/PLAN/STATE
+      — the park record is replaced by the activated campaign record; the
+      park's own unblock condition ("a fresh owner authorization opens its own
+      campaign task and session") is satisfied and cited in `SPEC.md`
 
 ## 2. Token block and integrity guard
 

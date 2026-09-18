@@ -185,3 +185,142 @@ genuine intersection: Group 20's rendered-pair contrast requirement would
 independently report `.review-action` at 1.08:1 *if the reviewer capability is
 enabled in the composition it sweeps*. It reports the symptom; D-01's guard
 removes the cause and forbids the class. Neither replaces the other.
+
+---
+
+# Rebaseline — measured at `efd1dc5c`, 2026-09-18
+
+Task 1.4 requires every figure above to be re-established at the live starting
+SHA before anything changes, and the contradictions recorded. The audit above
+was measured at `36bd493`. It is preserved verbatim as the historical record;
+this section is what is TRUE NOW. Where the two disagree, this section wins.
+
+## Structural change the audit predates
+
+`App.tsx` was decomposed by programme group 19.11 after the audit was written:
+
+| Surface | At `36bd493` | At `efd1dc5c` |
+|---|---|---|
+| `src/App.tsx` | 1,786 lines, nine views inline | **351 lines**, shell only |
+| `src/views/*.tsx` | did not exist | **10 modules** (nine views + `PlaceholderView`) |
+| `src/shared.tsx` | — | 430 lines |
+| `src/styles.css` | 1,684 lines | 1,713 lines |
+| `src/styles.test.ts` | 93 lines | 106 lines |
+
+**Every `App.tsx:NNNN` line reference in the audit above is therefore stale.**
+The audit's precondition ("Group 19 is integrated, or this change is re-planned
+against the undecomposed file") is SATISFIED: 19.11 and 19.12 are ticked, and
+this change is implemented against the decomposed layout.
+
+## Finding-by-finding
+
+| Finding | Verdict now | Evidence at `efd1dc5c` |
+|---|---|---|
+| D-01 three undefined tokens | **FIXED BY LATER WORK** | `--surface-muted`, `--ready`, `--warning` are each defined 0 times AND referenced 0 times. The 1.08:1 `.review-action` defect no longer exists. |
+| D-02 divergent `var()` fallbacks | **STILL PRESENT** | 14 fallbacks, **10 divergent** across 3 forms |
+| D-03 no scale but colour | **STILL PRESENT, exactly** | 84 `font-size` declarations, 19 distinct values, 49 below 12px, smallest 7px |
+| D-04 breakpoints unrendered, posture removed | **STILL PRESENT** | 3 breakpoints, zero viewport anywhere in the browser lane |
+| D-05 boundaries below 3:1 | **STILL PRESENT** | tokens unchanged; `--border` 1.27–1.51:1 |
+
+### D-01 — CLOSED, and this is the one genuine correction
+
+The three tokens the audit found referenced-but-undefined are gone from both
+sides: no definition and no reference. The reviewer controls were rewritten
+after the audit. **The 1.08:1 rendered-contrast defect is not reproducible at
+this SHA and this change must not claim to fix it.** What survives from D-01 is
+the GUARD, not the repair: nothing in the repository still forbids the shape,
+so a reintroduced undefined token would render its fallback exactly as before.
+Task 2.4 remains fully in scope; task 2.2 and task 2.7 are now moot and are
+recorded as such rather than ticked.
+
+### D-02 — still present; the audit's own count was right
+
+`var(--accent, #6ea8fe)` appears 7 times, as the audit said.
+
+| Count | Form | Token's defined value | Verdict |
+|---|---|---|---|
+| 7 | `var(--accent, #6ea8fe)` | `#e4a853` | **DIVERGES** — blue vs amber |
+| 2 | `var(--border, #d0d4da)` | `#263545` | **DIVERGES** — light vs dark |
+| 1 | `var(--surface, #fff)` | `#111a24` | **DIVERGES** — white vs dark |
+| 1 | `var(--accent, #e4a853)` | `#e4a853` | agrees |
+| 1 | `var(--surface-raised, #172331)` | `#172331` | agrees |
+| 1 | `var(--text, #e7edf4)` | `#e7edf4` | agrees |
+| 1 | `var(--green, #70c39b)` | `#70c39b` | agrees |
+
+These 10 are INERT TODAY — every token is defined, so no fallback renders. That
+is precisely why a structural guard is needed rather than a rendered check: a
+rendered-contrast pass measures the amber and reports success, while the sheet
+carries a complete second light theme one rename away from shipping. The
+divergence is latent, not cosmetic.
+
+### D-03 — measured again, unchanged
+
+84 `font-size` declarations, 19 distinct values. Below the 12px floor: one 7px,
+six 8px, eleven 9px, fifteen 10px, sixteen 11px — **49 declarations**.
+
+Two figures moved, both upward:
+
+| Audit at `36bd493` | Now at `efd1dc5c` |
+|---|---|
+| "~25 distinct hex literals" | **36 distinct** (53 occurrences) |
+| "47 `rgba()` literals" | **50 occurrences** (37 distinct) |
+
+Token block: 18 custom properties, 17 colour plus `--shadow`, 192 `var()` uses.
+Zero referenced-but-undefined, zero defined-but-unused. Radius: 37 declarations
+across 12 distinct values (`50%`, `4px`, `5px`, `7px`, `8px`, `10px`, `12px`,
+`14px`, `999px`, `11px`, `6px`, `3px 0 0 3px`). `box-shadow`: 6 declarations —
+already restrained; elevation is NOT a problem here and will not be treated as
+one.
+
+### D-04 — still present, line numbers moved
+
+`@media (max-width: 1080px)`, `820px`, `560px`, plus
+`prefers-reduced-motion: reduce`. No `viewport` or `setViewportSize` occurs in
+`tests/browser/controlCenterBrowser.browser.ts`,
+`playwright.control-center.config.ts` or `playwright.config.ts` — confirmed by
+grep at this SHA. All three breakpoints still ship unrendered.
+
+The two posture removals survive at new lines: `.sidebar-footer { display: none }`
+at `styles.css:1448` (audit said 1444) and `.read-only-tag { max-width: 34px … }`
+at `styles.css:1463` (audit said 1455).
+
+### D-05 — still present, recomputed
+
+| Pair | Ratio |
+|---|---|
+| `--border` `#263545` on `--bg` | 1.51:1 |
+| `--border` on `--surface` | 1.40:1 |
+| `--border` on `--surface-raised` | **1.27:1** |
+| `--border-soft` `#1d2a38` on `--surface-raised` | **1.09:1** |
+
+The audit's proposed `--border-interactive` `#5d7286` is CONFIRMED adequate:
+3.81 / 3.52 / 3.19 / 3.59 against `--bg` / `--surface` / `--surface-raised` /
+`--surface-soft` — every pair clears 3:1, the worst on `--surface-raised`.
+
+## Certification reality this campaign inherits
+
+Tasks 8.1 and 8.2 require `gate:local` and `npm test` PASS. **Neither can pass
+at this SHA, for a reason outside this campaign.** The sibling `ripple-api`
+checkout has advanced past the Phase 5 pinned SHA (`27bb007a` -> `4e3e200d`),
+so 12 tests fail: 3 in `SEMANTIC_COMPATIBILITY`, 6 `campaign:synthetic` C-0x,
+and 3 in `explainSurfaceArgForms`. Proven at `9fc763b3` on an unmodified tree
+during the G16.9 work, and recorded as an owner re-admission action under the
+production-completion task's `## Blockers`.
+
+This change therefore certifies against a DIFFERENTIAL: the failure set must be
+identical to the base failure set, and the UI lanes must be green. It does not
+claim a green `gate:local`, and the gate must not be weakened to produce one.
+
+## Design references re-retrieved 2026-09-18
+
+Refero MCP was available and the reference lock was refreshed:
+
+| Reference | Id | Taken |
+|---|---|---|
+| Axiom (style) | `6e9baa82-2f2f-4e77-8b0d-566325635dbe` | layered dark surfaces over shadows; ONE accent, never decorative; precise small radii; mono for technical data |
+| Linear Changelog (style) | `11d3e58a-87d7-4a9a-bbf5-720f4fd3ffc6` | 24px section gap / 16px card padding / 8px element gap; 8px card radius; tonal depth + 1px borders; restrained heading weight (500–590, not 700) |
+| Factory session settings (screen) | `00018f10-0cef-422d-82cc-cb19f334324a` | developer-console density; compact table with subtle row striping; uppercase spaced section labels; two-column row over a full-width dense data section |
+
+Axiom's own palette is deliberately NOT adopted: its `#000000` canvas and
+`#DA5C2C` orange would rebrand Nightwatch. The blue-black `#0b1118` base and the
+amber `#e4a853` accent are kept; what is borrowed is the DISCIPLINE.

@@ -4,19 +4,21 @@ Task: nightwatch-control-center-design-system-v1
 
 Status: IN_PROGRESS
 
-Starting SHA: `ebe26ce6b2a946fe0fd55fde3a5022e792a792d0`
+Starting SHA: `efd1dc5c81a55db00e7698257c8b49b51a6703c5`
 
 ## Summary
 
-Park record only. The design-system change is active but not authorized for
-execution in the `nightwatch-open-spec-truth-closure-v1` campaign; this record
-exists so the change↔task integrity check has a continuity-v2 task to bind.
+IN PROGRESS. The change was parked 2026-09-14 and ACTIVATED 2026-09-18 under
+explicit owner authorization, satisfying the park record's own unblock
+condition. G1 (rebaseline and activation) is closed; groups 2–8 are in flight.
+The final summary is written at certification.
 
 ## Safety
 
-No implementation. Safety events: NONE, supported by the STATE
+No production, DEV or NEXT contact; no network egress; no credentials; no
+sibling writes. Safety events: NONE, supported by the STATE
 `## Safety Events` section.
 
 ## Evidence
 
-No execution evidence; none is claimed.
+G1 evidence is in the STATE `## Validation Ledger`. No completion is claimed.
