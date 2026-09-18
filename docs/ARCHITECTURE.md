@@ -2265,3 +2265,61 @@ capability.
 `SEMANTIC_DEV_RESULT: NOT_PROVEN`
 `SEMANTIC_DEV_BLOCKER: PHASE_9B_BLOCKED_HUMAN_AUTH_ACTION_REQUIRED`
 <!--semantic-acceptance-status:end-->
+
+## Hardening rule engine — invariant-family decomposition (G16.9, appended 2026-09-18)
+
+`bin/hardening-check.mjs` held 83 rules, the rule registry, the mutation
+campaign and the entry point in one 6045-line file. It is now 85 lines of
+orchestration — argument parsing, mode dispatch, reporting — over four layers:
+
+| Module | Owns |
+| --- | --- |
+| `bin/lib/hardening/kernel.mjs` | source accessors, the shared `errors` sink, path/line helpers |
+| `bin/lib/hardening/rules/*.mjs` | the 83 rules, grouped into 11 invariant families |
+| `bin/lib/hardening/registry.mjs` | the enumeration authority: module map, ordered rule table, resolution |
+| `bin/lib/hardening/probe-campaign.mjs` | the recorded-probe mutation campaign |
+
+**One module per DECLARED family was rejected.** The 83 rules carry 61 distinct
+`family` values, so a file each would have fragmented the engine past reading.
+The rule-level `family` metadata is unchanged and still what `--list-rules`
+reports; the 11 modules group those families by domain (process and network,
+privacy and evidence, AI and self-development, semantic contracts, Alphaus
+surface, system map, workspace and layout, documentation, validation and
+gates, source integrity, rule engine).
+
+**The module graph is acyclic by construction.** `registry.mjs` imports every
+family module; no family module imports `registry.mjs`. The one rule that
+needs the registry — `checkRuleEngineSoundness`, which checks it — RECEIVES it.
+The table marks that entry `injectRegistry`, and every entry keeps both
+`implementation` (the raw module export, so the identity check is exact) and
+`run` (what the runner invokes). This is why no rule had to grow a context
+parameter and why there is no lazy-import or mutable-binding trick anywhere.
+
+**The registry is mechanically authoritative, not conventionally so.** Modules
+are discovered from disk by sorted `readdir` — never by import side effect —
+and the self-check fails on a module on disk no registered rule names, a
+registry entry naming a module with no file, a rule a module defines and the
+registry omits, a rule registered against the wrong module, a duplicate
+identity, a duplicate definition, an empty or collapsed registry, a rule
+defined in the entry point, and a probe naming an unregistered rule. A registry
+entry that resolves to no implementation throws at load rather than producing a
+registry with a hole in it, because a hole is indistinguishable from a rule
+that passed.
+
+**The engine's self-exclusion is single-owner.** A rule that scans `src/` and
+`bin/` for a forbidden literal necessarily CONTAINS that literal, so eight
+rules each excluded `bin/hardening-check.mjs` by name. With the bodies beside
+the kernel the exclusion has to name the ENGINE rather than one of its files:
+`isRuleEngineSource()` is the only definition, and
+`RULE_ENGINE_OPEN_CODED_SELF_EXCLUSION` fails a re-introduced path literal so
+the exclusion cannot go stale the next time the engine gains a module. This
+widening — from one file to `bin/hardening-check.mjs` plus
+`bin/lib/hardening/**` — is the only change the decomposition makes to any
+rule's subject.
+
+**A probe may now CREATE a file.** A guard whose subject is a file's existence
+(an unregistered rule module is the motivating case) cannot be expressed as a
+byte edit of an existing file. The `create` op refuses a target that already
+exists, so a probe can never silently overwrite real source, and it restores by
+deletion; the campaign's `git status --porcelain` equality check covers the
+rest.

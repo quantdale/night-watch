@@ -7,17 +7,22 @@ Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-production-completion-programme-v1
 Starting SHA: 36bd4930db978423f97e16f35250c2e66bfa112c
 Last validated implementation SHA: b1f1aa684fa1543b588f6af9095ad5393bbcb152
-Last checkpoint: G6.10/G6.11 owner-approved single-branch consolidation at
-`f3a31ed9`: everything is merged into `main` and only `main` remains locally
-and on `origin`, with every retired branch/ref commit an ancestor of `main`
-and the tree byte-identical to the integrated `b14f9d74` checkpoint
-(`3f8a1b3b`). The live session worktree was released and removed through the
-session CLI. Earlier W1 record: `gate:local` PASS at `5b624a49` (all eleven
-groups, receipt `receipt:sha256:0fd9204ef3821e5acf597a1f`), full offline
-regression 5127 passed / 18 skipped / 0 failed.
-Current milestone: G6.10/G6.11 owner-approved single-branch consolidation
-Next action: continue the remaining owner-gated programme groups (G16 tails,
-G8, G9, G12, G18, G19, G21) under their own authorizations.
+Last checkpoint: G16.9/G16.10/G16.11 hardening rule-engine decomposition.
+`bin/hardening-check.mjs` goes from 6045 lines to 85 of orchestration over
+`bin/lib/hardening/` — 83 rules in 11 invariant-family modules, a
+mechanically authoritative registry, and the mutation campaign as its own
+module. Behaviour preservation is measured against `9fc763b3`, not asserted:
+`--list-rules`, the plain run and the documentation-currency report are
+byte-identical and every exit code matches; the base and decomposed
+`gate:local` receipts agree on group status, counts and failed locations under
+one `gateDefinitionDigest`. Probe campaign 83 rules / 90 probes / 90 detected,
+`statusUnchanged=true`. The preceding G6.10/G6.11 consolidation remains
+integrated at `f3a31ed9`.
+Current milestone: G16.9/G16.10/G16.11 hardening rule-engine decomposition
+Next action: G16.12 is BLOCKED on pre-existing sibling `ripple-api` source
+drift proven at base `9fc763b3` and needing an owner re-admission; continue
+the remaining owner-gated programme groups (G16.5, G8, G9, G12, G18, G19,
+G21) under their own authorizations.
 Owner decisions stay OPEN; none is self-authorized.
 Authorization class: PRODUCTION_COMPLETION_PROGRAMME_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
@@ -86,15 +91,15 @@ Do not rebuild unless live recon finds a concrete regression:
 ```
 CAMPAIGN: nightwatch-production-completion-programme-v1
 CHILD TASK: NONE
-WAVE: G6_BRANCH_CONSOLIDATION
+WAVE: G16_RULE_ENGINE_DECOMPOSITION
 SESSION WORKTREE: NONE
 
 IMPLEMENTATION AUTHORIZED:
-  G6.10/G6.11 owner-approved single-branch consolidation (ancestry merges,
-  session-worktree release/removal, branch and ref deletion, retired
-  alternative-folder intake), this task directory, the programme change
-  ledger, Nightwatch docs/OpenSpec state, commits/pushes/integration and
-  local certification from the canonical MAINTENANCE claim.
+  G16.9/G16.10/G16.11 hardening rule-engine decomposition (the engine entry
+  point, `bin/lib/hardening/**`, the rule probe registry, the validation
+  universe registration and the rule parity suite), this task directory, the
+  programme change ledger, Nightwatch docs/OpenSpec state, and
+  commits/pushes/integration from one owned C-00 session worktree.
 
 REAL PRODUCTION CONTACT:               NOT AUTHORIZED
 NEW API ROUTE / ADAPTER / AUTHORITY:   NOT AUTHORIZED

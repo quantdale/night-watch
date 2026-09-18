@@ -45,14 +45,16 @@ external dependency with its blocking class and next action.
 
 ## Current Milestone
 
-Milestone ID: G6.10/G6.11 owner-approved single-branch consolidation
+Milestone ID: G16.9/G16.10/G16.11 hardening rule-engine decomposition
 Milestone status: COMPLETE_LOCAL
-What is being attempted: nothing further in this milestone. The owner directed
-that everything be merged into `main`, that only `main` remain locally and
-remotely, and that nothing be lost; the consolidation is integrated and the
-repository is single-branch. Continuation returns to the remaining
-owner-gated programme groups (G16 tails, G8, G9, G12, G18, G19, G21). The
-preceding local closeout wave remains integrated at `b14f9d74`.
+What is being attempted: nothing further in this milestone. The rule engine is
+decomposed into 11 invariant-family modules plus a mechanically authoritative
+registry; behaviour preservation is measured against `9fc763b3`, not asserted;
+and the new enumeration failure modes each carry a recorded probe verified to
+raise its own error code. G16.12 stays OPEN behind a pre-existing
+environment-caused block (see `## Blockers`). Continuation returns to the
+remaining owner-gated programme groups (G16.5, G8, G9, G12, G18, G19, G21).
+The preceding consolidation remains integrated at `f3a31ed9`.
 
 ## Completed Milestones
 
@@ -152,6 +154,55 @@ are consolidated into `main` with every retired commit an ancestor; the
 canonical maintenance claim is re-pointed. See the G6.10/G6.11 milestone
 above and the programme `tasks.md` 2026-09-14 addendum.
 
+### G16.9/G16.10/G16.11 hardening rule-engine decomposition
+
+`bin/hardening-check.mjs` held 83 rules, the registry, the probe campaign and
+the entry point in 6045 lines. It is now 85 lines of orchestration over
+`bin/lib/hardening/`: `kernel.mjs` (accessors, findings, helpers),
+`rules/*.mjs` (83 rules in 11 invariant-family modules), `registry.mjs` (the
+enumeration authority) and `probe-campaign.mjs`.
+
+Decisions taken here, with their reasons:
+
+- ONE MODULE PER DECLARED FAMILY WAS REJECTED. The 83 rules carry 61 distinct
+  `family` values; a file each would have fragmented the engine past reading.
+  The rule-level `family` metadata is untouched and still what `--list-rules`
+  reports — the modules group those families by domain.
+- THE GRAPH IS ACYCLIC BY CONSTRUCTION. `registry.mjs` imports every family
+  module and no family module imports it. `checkRuleEngineSoundness` needs the
+  registry to check it, so it RECEIVES it: `injectRegistry` marks that one
+  entry and `implementation` keeps the raw module export addressable, so the
+  identity check stays exact for every rule including that one.
+- THE ENGINE SELF-EXCLUSION HAD TO WIDEN, AND THAT IS THE ONLY SUBJECT CHANGE.
+  A rule that scans `src/` and `bin/` for a forbidden literal necessarily
+  CONTAINS that literal, so eight rules each excluded `bin/hardening-check.mjs`
+  by name. The bodies now live beside the kernel, so the exclusion has to name
+  the engine rather than one of its files. `isRuleEngineSource()` is the single
+  owner, and `RULE_ENGINE_OPEN_CODED_SELF_EXCLUSION` fails a path literal so
+  the exclusion cannot go stale the next time the engine gains a module.
+
+Behaviour preservation was MEASURED against `9fc763b3`, not asserted:
+`--list-rules` byte-identical, plain run byte-identical, documentation-currency
+report byte-identical, exit codes identical; 104 of 113 moved declarations
+byte-identical with the 9 differences individually accounted for; reachability
+1142 -> 1155 files and 6607 -> 6655 edges, which is exactly the 13 new modules,
+findings=0 both. Base and decomposed `gate:local` receipts match in group
+status, counts and failed locations under the same `gateDefinitionDigest`.
+
+Probe campaign: 83 rules, 90 probes, 90 detected, 0 undetected,
+`statusUnchanged=true`. HC-073/HC-074 were retargeted to where the code now
+lives; HC-085..HC-089 are new and each was verified to raise its OWN error code
+rather than merely a non-zero exit. A `create` op was added to the probe
+vocabulary because a guard whose subject is a file's EXISTENCE cannot be
+expressed as a byte edit; it refuses an existing target and restores by
+deletion.
+
+Repaired en route: probe HC-059 was anchored to the literal calendar date in
+the `CURRENT_STATE` header, so it went stale the moment the document was
+updated, and the campaign had been failing at head (84/85) unnoticed because
+NO gate lane runs `hardening:rules`. It now anchors to the century. The
+unwired campaign is recorded under `## Deferred / Follow-Up`.
+
 ### Delegated closure addendum (G21 owner items, G14.1–14.5, 14.9–14.11)
 
 G21's remaining owner-held items are locally closed: the three documentation
@@ -188,9 +239,12 @@ clean rerun passed 81/81.
 
 ## Exact Next Action
 
-The single-branch consolidation is integrated; only `main` exists locally and
-on `origin`. Next agent-closable work: the G16 tails, the remaining G8.11,
-G18.13 and G19.14 items. Owner decisions stay OPEN unless explicitly granted.
+The G16.9/16.10/16.11 decomposition is integrated. G16.12 stays OPEN behind
+the pre-existing sibling-source drift recorded under `## Blockers`; it is an
+owner re-admission action, not agent-closable, and the gate must not be
+weakened to clear it. Next agent-closable work: G16.5 (rule quantifier audit),
+and the remaining G8.11, G18.13 and G19.14 items. Owner decisions stay OPEN
+unless explicitly granted.
 
 ## Files Changed
 
@@ -677,6 +731,23 @@ Consequence: `CF-1`/`CF-2` live in the programme's `tasks.md`.
 
 ## Blockers
 
+- **G16.12 / sibling source drift (BLOCKING, PRE-EXISTING, NOT CAUSED HERE).**
+  The sibling `ripple-api` checkout has advanced past the Phase 5 pinned SHA
+  (`27bb007a` -> live `4e3e200d`), so three `SEMANTIC_COMPATIBILITY` tests
+  (`oracleExpectationRealSource.test.ts:63`,
+  `phase12CoverageInventory.test.ts:344`, `realSourceCanary.test.ts:86`) and
+  six `campaign:synthetic` C-0x tests (`c02aOpenApiAdmission.test.ts:377,403`,
+  `c02bProtoSurface.test.ts:235`, `c03GrpcTopology.test.ts:372`,
+  `c04FrontendGraph.test.ts:196`, `c07DerivedSemantics.test.ts:246`) fail.
+  PROVEN at base `9fc763b3` with an unmodified tree before any G16.9 change:
+  identical failed locations, identical counts (2120/2104/13/3), identical
+  `gateDefinitionDigest`, and a base `gate:local` receipt whose group statuses
+  match the decomposed checkpoint exactly. Owner action: re-derive and
+  re-admit the affected real-source expectations against the current sibling
+  SHA. This is NOT self-authorizable — AGENTS.md Phase 9A.1 requires fresh
+  derivation evidence and re-admission, and expectations are never silently
+  re-bound to a new SHA. Revisit condition: owner authorizes a re-admission
+  pass, or pins the sibling checkout back to `27bb007a`.
 - The remaining programme work is owner-gated: G3.11 (CI route), G5.3
   (evidence reclaim), G6.4/G6.5/G6.10 (terminal claim and branch
   dispositions), G9.1 (egress for the advisory query), G10.6/G10.13,
@@ -708,6 +779,25 @@ NONE
   parked, as recorded by its predecessor campaigns.
 - `lanes:manual` (G2/F-02) remains the executable route for the 12
   `MANUAL_OWNER` harnesses under one-shot owner authorization.
+- **The rule mutation campaign is wired to no gate.** `hardening:rules` is a
+  declared npm script that no gate group, lane, validation-universe class or
+  CI workflow selects, so nothing ever runs it. That is exactly why probe
+  HC-059 could rot against a changed document and stay invisible: `gate:local`
+  runs `hardening:check`, never `--probe-campaign`. Registering it as a gate
+  group costs about 37 s and closes the whole dead-probe class, but it adds a
+  required group to the authoritative gate definition and therefore belongs in
+  its own scoped change with its own receipt, not appended to a decomposition.
+  Discovered and proven 2026-09-18 at `9fc763b3`.
+- **`nightwatch-session.mjs start --dry-run` mutates.** `--dry-run` is
+  documented as "report the planned action without mutating" and is honoured in
+  `integrate`, but `start` has no dry-run branch: it created a real worktree,
+  branch and ownership record (`nightwatch-production-completion-ca1a8b00`)
+  while reporting a plan. The stray registration was removed through the
+  session CLI and the topology verified back to its prior shape, but the defect
+  is live and it sits in the C-00 tooling the whole campaign depends on. A
+  `--dry-run` that mutates can silently consume `maxWorktrees` capacity and
+  trip `SESSION_START_REFUSED_PROSPECTIVE_TOPOLOGY` for the next real start.
+  Discovered 2026-09-18.
 
 ## Resume Recipe
 

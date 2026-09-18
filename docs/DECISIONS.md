@@ -4878,3 +4878,63 @@ honestly in `docs/ROADMAP.md`, including the parts that remain unknown.
 Consequence: zero yield is stated as a non-result rather than omitted, and
 opening the wave still requires a separately confirmed provider capability plus
 the G12.3 owner authorization.
+
+## D-137 — the hardening rule registry is the enumeration authority, and the engine's own source is a single-owner exclusion (16.9–16.11)
+
+Recorded 2026-09-18 (programme group 16, tasks 16.9–16.11).
+
+`bin/hardening-check.mjs` had grown to 6045 lines holding 83 rules, the
+registry, the mutation campaign and the entry point. Three decisions were taken
+in decomposing it, and each rejected a more obvious alternative.
+
+**One module per invariant FAMILY, not per declared `family` value.** The 83
+rules carry 61 distinct `family` strings. A file per declared value, or the
+literal reading "one module per rule", would have produced dozens of near-empty
+files and destroyed the comprehensibility the decomposition exists to buy. The
+rule-level `family` metadata is deliberately left untouched — it is what
+`--list-rules` reports and what the ledger's taxonomy refers to — and the 11
+modules group those families by domain. Consequence: the rule taxonomy and the
+file layout are separate concerns that can change independently.
+
+**The self-check RECEIVES the registry; it does not import it.** The registry
+must import every family module to build the enumeration, and
+`checkRuleEngineSoundness` lives in a family module, so importing the registry
+back would make the graph cyclic. Node ESM tolerates that cycle in practice —
+the access happens at call time, after evaluation — which is exactly why it was
+rejected: a cycle that happens to work is a latent ordering dependency, not an
+architecture. The registry table marks the one entry `injectRegistry`, and each
+entry carries `implementation` (the raw export, so the identity check stays
+exact) alongside `run` (what the runner invokes). Consequence: no rule needed a
+context parameter, and the acyclicity is a property of the import graph rather
+than a convention.
+
+**A registry hole is a load-time throw, not a finding.** An entry naming a
+module or an export that does not exist aborts at import. A `fail()` would have
+produced a report in which one rule silently never ran, which is
+indistinguishable from that rule passing — the DEF-FC-02 failure mode. Fail
+closed and loudly instead.
+
+**The engine's self-exclusion names the ENGINE, not a file.** A rule that scans
+`src/` and `bin/` for a forbidden literal necessarily contains that literal, so
+eight rules excluded `bin/hardening-check.mjs` by name. Once the bodies moved
+beside the kernel, every one of those exclusions had to widen to
+`bin/lib/hardening/**` or the engine would accuse itself. That widening is the
+ONLY change the decomposition makes to any rule's subject, so it is confined to
+one definition, `isRuleEngineSource()`, and
+`RULE_ENGINE_OPEN_CODED_SELF_EXCLUSION` fails a re-introduced path literal.
+Consequence: the exclusion cannot go stale the next time the engine gains a
+module — the failure mode that would otherwise be invisible, because a rule
+that stops covering one file still passes.
+
+Behaviour preservation was measured against `9fc763b3` rather than asserted:
+byte-identical `--list-rules`, plain-run and documentation-currency output,
+identical exit codes, 104 of 113 moved declarations byte-identical with the 9
+differences individually accounted for, and base-versus-decomposed `gate:local`
+receipts agreeing on group status, counts and failed locations under one
+`gateDefinitionDigest`.
+
+A defect the work exposed is recorded rather than quietly fixed: `hardening:rules`
+is wired to NO gate lane, which is why probe HC-059 could rot against an updated
+document and keep the campaign red at head without anyone seeing it. Registering
+the campaign as a gate group changes the authoritative gate definition and
+belongs in its own scoped change with its own receipt.

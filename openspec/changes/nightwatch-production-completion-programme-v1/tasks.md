@@ -1296,14 +1296,65 @@ remain the session owner's action exactly as recorded for the programme; no
 - [x] 16.8 Build the rule mutation campaign; require all 70 rules to report a
       detected mutation; assert a non-zero rule count and an unchanged
       `git status --porcelain` afterwards
-- [ ] 16.9 Decompose `bin/hardening-check.mjs` into one module per invariant
+- [x] 16.9 Decompose `bin/hardening-check.mjs` into one module per invariant
       family plus a rule registry; reduce the entry point to running the
       registry
-- [ ] 16.10 Prove decomposition is behaviour-preserving: byte-identical output
+      — 83 rules across 11 invariant-family modules under
+      `bin/lib/hardening/rules/`, `registry.mjs` as the enumeration authority,
+      `probe-campaign.mjs` for the mutation campaign, and the entry point cut
+      from 6045 lines to 85 of argument parsing, mode dispatch and reporting.
+      One module per DECLARED family was rejected: the 83 rules carry 61
+      `family` values, so a file each would have fragmented the engine past
+      comprehension. The rule-level `family` metadata is unchanged and still
+      what `--list-rules` reports; the modules group those families by domain.
+      The graph is acyclic — `registry.mjs` imports every family module and no
+      family module imports it; the self-check RECEIVES the registry
+      (`injectRegistry`) rather than importing it.
+- [x] 16.10 Prove decomposition is behaviour-preserving: byte-identical output
       on the tree at the starting SHA
-- [ ] 16.11 Make the registry the enumeration authority; fail on an
+      — against `9fc763b3`: `--list-rules` byte-identical (83 rules, same
+      order, family, quantifier, subject, probeCount), plain run byte-identical
+      (`PASS: offline structural invariants hold`), `--report-documentation-
+      currency` byte-identical, every exit code identical. 104 of 113 moved
+      declarations are byte-identical; the 9 that differ are the 8 one-line
+      engine-self-exclusion substitutions and the deliberately rewritten
+      self-check. `--report-reachability` moves files 1142 -> 1155 and edges
+      6607 -> 6655 — exactly the 13 new modules entering the graph, findings=0
+      before and after. Probe campaign: every one of the 83 rules keeps its
+      baseline verdict, with `checkDocumentationFreshness` going UNDETECTED ->
+      DETECTED because its stale probe was repaired. `gate:local` receipts at
+      base and at the decomposed checkpoint are identical in group status,
+      counts (2120/2104/13/3) and failed locations, with the same
+      `gateDefinitionDigest`.
+- [x] 16.11 Make the registry the enumeration authority; fail on an
       unregistered rule module
+      — `checkRuleEngineSoundness` discovers modules from disk (sorted
+      `readdir`, never an import side effect) and fails on: a module on disk no
+      registered rule names (`RULE_ENGINE_UNREGISTERED_RULE_MODULE`), a
+      registry entry naming a module with no file
+      (`RULE_ENGINE_MISSING_RULE_MODULE`), a rule a module defines and the
+      registry omits (`RULE_ENGINE_UNREGISTERED_RULE`), a rule registered
+      against the wrong module (`RULE_ENGINE_RULE_MODULE_MISMATCH`), a
+      duplicate identity (`RULE_ENGINE_DUPLICATE_RULE_IDENTITY`), a duplicate
+      definition, an empty or collapsed registry, a rule defined in the entry
+      point (`RULE_ENGINE_RULE_IN_ENTRY_POINT`), an open-coded engine
+      self-exclusion (`RULE_ENGINE_OPEN_CODED_SELF_EXCLUSION`) and a probe
+      naming an unregistered rule. A registry entry that resolves to no
+      implementation throws at load rather than yielding a registry with a hole
+      in it. Five new recorded probes (HC-085..HC-089) prove the new failure
+      modes against real source; each was verified to raise its OWN error code,
+      not merely a non-zero exit.
 - [ ] 16.12 Full validation, integrate, release
+      — BLOCKED on a pre-existing, environment-caused failure that is NOT this
+      work: the sibling `ripple-api` checkout has advanced past the Phase 5
+      pinned SHA (`27bb007a` -> `4e3e200d`), so three `SEMANTIC_COMPATIBILITY`
+      tests and six `campaign:synthetic` C-0x tests fail. Proven at base
+      `9fc763b3` with an unmodified tree BEFORE any change here: identical
+      failed locations, identical counts, identical gate receipt shape.
+      Re-pinning is not self-authorizable — AGENTS.md Phase 9A.1 requires fresh
+      derivation and re-admission against the current source, which is an owner
+      action. The decomposition itself is integrated; G16 tails 16.5 and this
+      item remain.
 
 ## 17. Schema version lifecycle
 
