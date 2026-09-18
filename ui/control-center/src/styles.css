@@ -602,9 +602,18 @@ table {
   min-width: 690px;
 }
 
+/*
+ * Horizontal cell padding is one step tighter than the vertical. The type floor
+ * widened every column, and the evidence table sat at EXACTLY its container
+ * width (866px of 866px) once the web font loaded — no headroom at all, so a
+ * sub-pixel metric change tipped it into horizontal overflow. An overflowing
+ * scroll container becomes a keyboard-focusable scroller in Chrome, which
+ * inserted an unstable extra tab stop that appeared and disappeared with the
+ * font swap. Row rhythm still comes from the 12px vertical padding.
+ */
 th,
 td {
-  padding: var(--space-3) var(--space-2);
+  padding: var(--space-3) var(--space-1);
   border-bottom: 1px solid var(--border-soft);
   color: var(--muted);
   font-size: var(--text-body);
@@ -663,6 +672,19 @@ tbody tr.row-selected {
 .table-action:hover {
   border-color: var(--accent);
   background: var(--accent-soft);
+}
+
+/*
+ * A ghost button whose only focus cue is an offset outline is the weakest
+ * affordance in the console, and it sits inside a scrollable table where the
+ * outline can be clipped by the scroll port. Focus therefore changes the
+ * BOUNDARY and the FILL as well, so the control is unmistakably focused
+ * whether or not the outline is fully visible.
+ */
+.table-action:focus-visible {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-hover);
 }
 
 .table-action .icon {

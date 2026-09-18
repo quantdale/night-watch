@@ -1085,6 +1085,28 @@ export async function driveTabWalk(page: Page, options: TabWalkOptions = {}): Pr
   const direction = options.direction ?? 'forward';
   const step = direction === 'forward' ? 1 : -1;
   const key = direction === 'forward' ? 'Tab' : 'Shift+Tab';
+  // The focus inventory is a SNAPSHOT of the tab order, so it must be taken
+  // against settled layout.
+  //
+  // Web fonts change text metrics; text metrics change whether a bounded table
+  // overflows; and an overflowing scroll container is a KEYBOARD-FOCUSABLE
+  // SCROLLER in Chrome. A font swap can therefore add a tab stop after the
+  // snapshot, and every index the walk measures afterwards is compared against
+  // the wrong list — which surfaces as a spurious order divergence or a
+  // "no visible focus indicator" on whichever control the shift lands on.
+  //
+  // Waiting for `fonts.ready` alone is not enough: the promise resolves before
+  // the re-layout it triggers has been flushed. Two animation frames after it
+  // put the snapshot on the far side of that flush. This adds no assertion and
+  // removes none — it only ensures the walk measures a settled page.
+  await page.evaluate(async () => {
+    const view = globalThis as unknown as {
+      document: { fonts: { ready: Promise<unknown> } };
+      requestAnimationFrame(callback: () => void): number;
+    };
+    await view.document.fonts.ready;
+    await new Promise<void>((resolve) => { view.requestAnimationFrame(() => { view.requestAnimationFrame(() => resolve()); }); });
+  });
   const inventory = await focusInventory(page);
   const steps: TabStep[] = [];
   const focusFailures: string[] = [];
