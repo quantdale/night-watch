@@ -35,14 +35,35 @@ Close Production Completion Group 12.
 
 ## Current Milestone
 
-Milestone ID: M2
+Milestone ID: M4
 Milestone status: IN_PROGRESS
-What is being attempted: executing the frozen historical arm over the 14-case
-corpus with the real configured reasoner, recording per-case disposition,
-hidden-target distance and leakage.
+What is being attempted: freezing the previously-unknown-defect campaign
+definition — repository set, SHAs, host-owned scopes, budgets and stopping
+condition — at a committed SHA before any unknown-arm execution begins.
 
 ## Completed Milestones
 
+- M2 strict historical `EXACT_REDISCOVERY` arm COMPLETE under frozen definition
+  `sha256:824deef9922975feab5af69f`. 14/14 cases attempted and evaluated in 66.8
+  min over 78 reasoner calls; 0 `ENVIRONMENT_BLOCKED`; 13 substantive scored, 1
+  negative control. **EXACT = 0, exact rate 0/13 = 0.00.** 10 near matches, 4
+  reproductions, 7 candidates proposed, 3 mechanical admissions, 4 refused
+  `MISSING_REPRODUCTION`, 0 false positives, 0 leakage events across 78 audited
+  request blobs. Per-case dispositions are in REPORT.md and
+  `evidence/historical-arm-result.json`.
+- M3 miss analysis COMPLETE. `testMatch` is false in 13/13 substantive cases and
+  is the only universally failing condition: 9 cases reached file recall 1.00
+  and 5 cleared both recall thresholds, failing EXACT solely on the unnamed
+  hidden test. Mechanically established: the hidden `knownFailingTest` appears
+  nowhere in the reasoner-visible context for all 8 fixtures (neither name nor
+  stem), and for mined cases it is a test ADDED by the fix commit — `git
+  diff-tree` shows status `A` for `childbillinggroup_test.go` at `5985281b` and
+  `date_test.go` at `2f3b1c34`, so neither exists in the pre-fix tree the
+  reasoner inspects. Strict EXACT therefore requires a filename that is not
+  derivable from observable evidence under the leak-free conditions the arm
+  enforces. Recorded as a measured limit; EXACT was NOT weakened and no near
+  match was promoted. Classified as a benchmark-reachability result, not a
+  Nightwatch framework defect, and not a model-efficacy repair target.
 - M1 evaluation freeze COMPLETE and committed at `eeceec8e`, BEFORE the first
   provider evaluation. `evaluation-freeze.historical.json` fixes provider,
   corpus membership, negative controls, budgets, the unchanged EXACT
@@ -75,15 +96,16 @@ hidden-target distance and leakage.
 
 ## Work In Progress
 
-The frozen historical arm is executing. Two cases have completed so far, both
-`PARTIAL_REDISCOVERY` with zero leakage, so strict EXACT is still 0 at this
-point. No aggregate figure is claimed until the arm terminates.
+The unknown-yield arm has not been defined or executed. Its definition is being
+frozen now, after the historical arm closed, so historical results cannot bias
+its scope.
 
 ## Exact Next Action
 
-Wait for the frozen historical arm to finish all 14 cases, then record its
-per-case dispositions and aggregate totals here and in REPORT.md, classify the
-misses (M3), and only then define and freeze the unknown-yield campaign (M4).
+Commit the frozen unknown-yield campaign definition (repository set, SHAs,
+host-owned `--repository` scopes, budgets, stopping condition), then execute the
+owner-local unknown-yield campaigns through the ordinary
+`nightwatch-agent campaign run --reasoner=cli` path (M5).
 
 ## Files Changed
 
@@ -95,6 +117,26 @@ misses (M3), and only then define and freeze the unknown-yield campaign (M4).
 | `openspec/changes/nightwatch-autonomous-yield-proof-w11-v1/**` | W11 OpenSpec change | PENDING |
 
 ## Validation Ledger
+
+Command: `node bin/w11-historical-arm.mjs` (frozen historical arm)
+Result: COMPLETE — 14/14 evaluated, EXACT 0/13, leakage 0, false positives 0
+When: W11 M2
+Relevant failure/output summary: no harness failure; one W11 aggregation
+labelling defect found and corrected by re-derivation from preserved per-case
+evidence.
+
+Command: `npx playwright test tests/unit/w11LeakageCanary.test.ts tests/unit/w11EvaluationFreezeIntegrity.test.ts`
+Result: PASS (5 + 9 tests)
+When: W11 M7/M8
+Relevant failure/output summary: leakage checker proven to fire on all six
+hidden fields; freeze bound to live scoring constants; arm refuses an unfrozen
+model and an unconfigured provider with exit 2 before any provider call.
+
+Command: `npm run hardening:check` / `npm run hardening:rules` / `npm run validation:universe`
+Result: PASS / 83 rules 94 probes 94 detected 0 undetected / PASS
+When: W11 M8
+Relevant failure/output summary: new suites and bin registered in the
+validation universe with the inventory digest advanced.
 
 Command: `npm run session:status`
 Result: PASS
@@ -130,6 +172,18 @@ Evidence/constraint: W11 execution prompt M2 ordering.
 
 ## Discoveries
 
+- **Strict `EXACT_REDISCOVERY` is structurally unreachable under leak-free
+  conditions on this corpus.** EXACT requires naming the hidden failing test;
+  that filename is absent from the entire reasoner-visible context in all 8
+  fixture cases, and for mined cases it is a file the fix commit ADDED, so it
+  does not exist at the revision the reasoner inspects. The investigation
+  located the right code — file recall 1.00 in 9 of 14 cases — and still could
+  not clear EXACT. The metric and the leakage guard are in tension by
+  construction.
+- W11's own arm aggregation mislabelled proposed candidates as admissions
+  (`admitted` on a hunt result means `candidateIds.length > 0`). Corrected
+  before publication; the underlying Nightwatch gate was right all along, since
+  all 4 candidates lacking reproduction produced no dossier.
 - Deterministic reproduction capability is concentrated in exactly ONE of the
   eight admitted repositories (`mobingilabs/ouchan`, 1,120 executable files /
   152 targets). The other seven contribute 0. Investigation breadth is 8

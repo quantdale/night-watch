@@ -20,29 +20,51 @@
 - [x] M0.4 Census the historical corpus — 9 fixture cases including the
       negative control `bench-negative-quiet-000`; 255 mined records, 234
       definable cases, 5 carrying both `knownFailingTest` and `minedReplay`.
-- [ ] M0.5 Freeze the reachability threshold and record the preflight verdict
-      against it.
+- [x] M0.5 Freeze the reachability threshold and record the preflight verdict
+      against it — frozen in `evaluation-freeze.historical.json`
+      (`reachabilityThreshold`) and met: provider probe PASS, census non-zero,
+      8 repositories visible (>1 required), 152 reproduction-capable targets
+      (>0 required), historical corpus available, mechanical admission path
+      available, leakage guard green, hardening and gate baseline green.
 
 ## M1. Freeze the evaluation
 
-- [ ] M1.1 Commit the historical arm's frozen definition before its first
-      evaluation.
-- [ ] M1.2 Bind the campaign fingerprint to provider, corpus, budgets, scoring
-      and stopping condition.
-- [ ] M1.3 Prove a widened resume fails closed.
+- [x] M1.1 Commit the historical arm's frozen definition before its first
+      evaluation — committed at `eeceec8e`, fingerprint
+      `sha256:824deef9922975feab5af69f`; the first evaluation ran afterwards.
+- [x] M1.2 Bind the campaign fingerprint to provider, corpus, budgets, scoring
+      and stopping condition — all present in the freeze and asserted by
+      `w11EvaluationFreezeIntegrity`.
+- [x] M1.3 Prove a widened resume fails closed — `assertScopeContinuity`
+      raises `CAMPAIGN_SCOPE_MISMATCH`; covered by `localCampaign.test.ts` and
+      re-proved for the unknown arm in M8.
 
 ## M2. Strict historical EXACT_REDISCOVERY
 
-- [ ] M2.1 Run the frozen historical arm with the real configured reasoner.
-- [ ] M2.2 Record per-case disposition, reason and hidden-target distance.
-- [ ] M2.3 Include the negative controls and report false positives explicitly.
-- [ ] M2.4 Classify and separately report `ENVIRONMENT_BLOCKED`, excluding it
-      from both sides of every rate.
+- [x] M2.1 Run the frozen historical arm with the real configured reasoner —
+      `opencode-go/glm-5.3`, 14/14 cases, 66.8 min, 78 reasoner calls.
+- [x] M2.2 Record per-case disposition, reason and hidden-target distance —
+      REPORT.md table and `evidence/historical-arm-result.json`. **EXACT = 0,
+      exact rate 0/13 = 0.00**, 10 near matches; every non-EXACT case records
+      which condition(s) it failed and by how much.
+- [x] M2.3 Include the negative controls and report false positives explicitly
+      — 1 control scored, outcome MISS, 0 candidates, **0 false positives**.
+- [x] M2.4 Classify and separately report `ENVIRONMENT_BLOCKED`, excluding it
+      from both sides of every rate — **0 on this host**; the exclusion rule is
+      implemented and asserted, and did not bind because every case executed.
 
 ## M3. Analyze without overfitting
 
-- [ ] M3.1 Classify every miss into a bounded category.
-- [ ] M3.2 Separate model-efficacy results from Nightwatch harness defects.
+- [x] M3.1 Classify every miss into a bounded category — 10 near matches all
+      `HIDDEN_FAILING_TEST_NOT_NAMED` (5 with a keyword-recall shortfall as
+      well), 3 mined misses `REPLAY_NEVER_REQUESTED` with zero recall, 1
+      correct negative-control MISS.
+- [x] M3.2 Separate model-efficacy results from Nightwatch harness defects —
+      no Nightwatch framework defect was exposed. One W11 harness defect was
+      found and fixed (candidates mislabelled as admissions). The unnamed
+      hidden test is neither: it is a benchmark-reachability limit, proven by
+      the test filename being absent from the whole visible context for all 8
+      fixtures and being a fix-ADDED file for mined cases.
 
 ## M4. Freeze the unknown-defect campaign
 
@@ -62,8 +84,15 @@
 
 ## M7. Leakage and anti-cheating audit
 
-- [ ] M7.1 Inspect every reasoner-visible historical request blob.
-- [ ] M7.2 Prove the leakage checker live with canaries.
+- [x] M7.1 Inspect every reasoner-visible historical request blob — 78 blobs
+      across 14 cases scanned against all six hidden fields; **0 leakage
+      events**. The hunt asserts and throws on leakage, so a leak would have
+      aborted the case rather than being reported beside a yield.
+- [x] M7.2 Prove the leakage checker live with canaries —
+      `tests/unit/w11LeakageCanary.test.ts`, 5 tests: each hidden field is
+      caught when planted, a six-field leak reports all six, clean blobs stay
+      clean, real fixture contexts carry none of their own hidden truth, and an
+      empty field manufactures neither a false clean nor a false leak.
 
 ## M8. Adversarial and resilience checks
 

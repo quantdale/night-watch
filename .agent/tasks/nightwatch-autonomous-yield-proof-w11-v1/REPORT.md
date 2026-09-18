@@ -16,17 +16,109 @@ Recorded in SPEC.md. All 8 admitted repositories CURRENT; 4,124 eligible source
 files, 1,120 executable, 152 distinct executable targets; provider structured
 probe PASS.
 
-## Historical EXACT arm
+## Historical EXACT arm (M2) — COMPLETE
 
-Not yet run.
+Frozen definition `sha256:824deef9922975feab5af69f` at `158a97b8`. Provider
+`opencode-go/glm-5.3` via opencode CLI 1.18.31. Wall time 66.8 min, 78 reasoner
+calls, 78 reasoner-visible request blobs audited.
+
+| Figure | Value |
+|---|---:|
+| Frozen corpus | 14 |
+| Attempted / evaluated | 14 / 14 |
+| `ENVIRONMENT_BLOCKED` | 0 |
+| Substantive scored | 13 |
+| Negative controls scored | 1 |
+| **`EXACT_REDISCOVERY`** | **0** |
+| **Exact rate** | **0 / 13 = 0.00** |
+| Near matches | 10 |
+| Reproductions | 4 |
+| Candidates proposed | 7 |
+| Mechanical admissions (dossiers) | 3 |
+| Refused `MISSING_REPRODUCTION` | 4 |
+| False positives | 0 |
+| Leakage events | 0 |
+
+Denominators. The exact rate is exact rediscoveries / substantive scored cases;
+negative controls are excluded, and `ENVIRONMENT_BLOCKED` would be excluded
+from both sides (there were none, so the rule did not bind on this host).
+Mechanical admissions are dossiers built through the existing path; a proposed
+candidate with no reproduction is refused `MISSING_REPRODUCTION` and is not an
+admission. 7 candidates = 3 admitted + 4 refused.
+
+### Per-case disposition
+
+| Case | Outcome | testMatch | fileRecall | kwRecall | repro | cand | adm | env |
+|---|---|---|---:|---:|---:|---:|---|---|
+| `bench-billing-rounding-001` | PARTIAL | false | 1.00 | 0.77 | 1 | 1 | yes | n/a |
+| `bench-api-pagination-002` | PARTIAL | false | 1.00 | 0.42 | 0 | 1 | refused | n/a |
+| `bench-backend-retry-003` | PARTIAL | false | 1.00 | 0.54 | 0 | 1 | refused | n/a |
+| `bench-frontend-cache-004` | PARTIAL | false | 1.00 | 0.47 | 1 | 1 | yes | n/a |
+| `bench-data-timezone-005` | PARTIAL | false | 1.00 | 0.40 | 0 | 1 | refused | n/a |
+| `bench-integration-webhook-006` | PARTIAL | false | 1.00 | 0.54 | 0 | 0 | no | n/a |
+| `bench-regression-redirect-007` | PARTIAL | false | 1.00 | 0.50 | 1 | 1 | yes | n/a |
+| `bench-state-transition-008` | PARTIAL | false | 1.00 | 0.44 | 0 | 1 | refused | n/a |
+| `bench-negative-quiet-000` (control) | MISS | false | 0.00 | 0.00 | 0 | 0 | no | n/a |
+| `mined-...-ouchan-5985281b43cd` | PARTIAL | false | 0.50 | 0.39 | 1 | 0 | no | EXECUTED |
+| `mined-...-ouchan-2f3b1c34290f` | PARTIAL | false | 1.00 | 0.78 | 0 | 0 | no | EXECUTED |
+| `mined-...-ouchan-1668e68a1190` | MISS | false | 0.00 | 0.00 | 0 | 0 | no | REPLAY_NEVER_REQUESTED |
+| `mined-...-ouchan-bc7eb9ce69fb` | MISS | false | 0.00 | 0.00 | 0 | 0 | no | REPLAY_NEVER_REQUESTED |
+| `mined-...-ripple-ui-6cb471e1c1cc` | MISS | false | 0.00 | 0.00 | 0 | 0 | no | REPLAY_NEVER_REQUESTED |
+
+Full evidence: `evidence/historical-arm-result.json`.
+
+### The reason EXACT is 0, established mechanically
+
+`testMatch` is false in 13 of 13 substantive cases — every one. It is the only
+condition that failed universally: 9 cases reached file recall 1.00, and 5
+cleared BOTH recall thresholds and failed EXACT solely because the hidden
+failing test was not named.
+
+The hidden failing test is not derivable from anything the reasoner is shown:
+
+- In all 8 fixture cases the hidden `knownFailingTest` filename appears nowhere
+  in the reasoner-visible context — neither the full name nor its stem.
+- For mined cases the hidden test is `testsAdded[0]`, a test ADDED by the fix
+  commit. `git diff-tree` confirms status `A` for
+  `childbillinggroup_test.go` at `5985281b` and `date_test.go` at `2f3b1c34`:
+  neither file exists in the pre-fix tree the reasoner inspects.
+
+So strict EXACT requires emitting a filename that does not exist in the
+observable evidence and whose exact spelling was chosen by the human who later
+wrote the fix. Under the leak-free conditions this arm enforces — and the
+leakage guard exists precisely to enforce them — that string cannot be
+recovered by investigation. **Strict `EXACT_REDISCOVERY` and zero leakage are
+in tension by construction, and `EXACT = 0` is therefore primarily a statement
+about the metric's reachability, not about investigation quality.**
+
+This is reported as a measured limit. The EXACT definition was NOT weakened,
+no threshold was tuned, and no near match was promoted.
 
 ## Current unknown-yield arm
 
 Not yet run.
 
-## Nightwatch defects exposed
+## Defects exposed
 
-None yet.
+One, in W11's own harness, found by reading the arm's own output.
+
+**W11 arm aggregation mislabelled candidates as admissions.** The first
+aggregate reported `admissions: 7` against `reproductions: 4`, which is
+impossible if admission requires reproduction. The hunt result's `admitted`
+field is `candidateIds.length > 0` — a candidate was PROPOSED. The mechanically
+admitted artefact is the dossier, and `tryBuildVisibleHuntDossier` /
+`tryBuildMinedReplayDossier` both return null below `reproductionCount` 1. The
+runner now reports `candidatesProposed`, `mechanicalAdmissions` and
+`candidatesRefusedMissingReproduction` separately, and records the
+`MISSING_REPRODUCTION` refusal per case. The aggregate was re-derived from the
+same preserved per-case evidence; no case was re-run and no provider quota was
+re-spent, because only the labelling was wrong, not the observations.
+
+Had it gone unnoticed it would have overstated admitted historical yield by
+more than 2x. Nightwatch's own gate behaved correctly throughout: the 4
+candidates with no reproduction produced no dossier.
+
+No Nightwatch framework defect was exposed by this arm.
 
 ## Group 12
 

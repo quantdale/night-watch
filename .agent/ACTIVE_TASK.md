@@ -7,18 +7,22 @@ Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-autonomous-yield-proof-w11-v1
 Starting SHA: 158a97b8feceb6abf4ea4ccbacab1f20cc46bc35
 Last validated implementation SHA: 158a97b8feceb6abf4ea4ccbacab1f20cc46bc35
-Last checkpoint: M0 preflight COMPLETE and measured. Provider
-`opencode-go/glm-5.3` frozen by a rule declared before probing (the historical
-`opencode-go/omen-alpha` is confirmed absent); 8/8 admitted repositories CURRENT
-with matching SHAs; 4,124 eligible / 1,120 executable source files and 152
-distinct executable targets, reproducing the W10 M0 figure; historical corpus is
-9 fixture cases (1 negative control) plus 5 strict-EXACT-eligible mined cases.
-No evaluation has been run and no yield figure exists.
-Current milestone: M1 — freeze the evaluation definition at a committed SHA
-before the first provider evaluation
-Next action: create the W11 OpenSpec change, write the frozen
-evaluation-definition artefact, and commit that freeze BEFORE running the first
-historical evaluation.
+Last checkpoint: M0-M3, M7 and part of M8 COMPLETE. The frozen historical arm
+(`sha256:824deef9922975feab5af69f`, provider `opencode-go/glm-5.3`) evaluated
+14/14 cases in 66.8 min: **EXACT = 0, exact rate 0/13**, 10 near matches, 4
+reproductions, 7 candidates, 3 mechanical admissions, 4 refused
+`MISSING_REPRODUCTION`, 0 false positives, 0 `ENVIRONMENT_BLOCKED`, 0 leakage
+across 78 audited request blobs. M3 established mechanically WHY EXACT is 0:
+`testMatch` failed in 13/13 while file recall reached 1.00 in 9 cases, and the
+hidden failing test is absent from the whole visible context for every fixture
+and is a fix-ADDED file for mined cases, so it is not derivable under leak-free
+conditions. EXACT was not weakened and no near match was promoted.
+Current milestone: M4 — freeze the unknown-yield campaign definition at a
+committed SHA before execution
+Next action: commit the frozen unknown-yield campaign definition (repository
+set, SHAs, host-owned scopes, budgets, stopping condition), then execute the
+owner-local unknown-yield campaigns through the ordinary
+`nightwatch-agent campaign run --reasoner=cli` path.
 Authorization class: AUTONOMOUS_YIELD_PROOF_W11_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2

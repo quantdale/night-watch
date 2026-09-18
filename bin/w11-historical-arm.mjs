@@ -237,7 +237,12 @@ for (const item of corpus) {
     reproductionVerdict: huntResult.reproductionCount > 0 ? 'REPRODUCED' : 'NOT_REPRODUCED',
     reproductionCount: huntResult.reproductionCount,
     candidateIds: huntResult.candidateIds,
-    admitted: huntResult.admitted,
+    candidatesProposed: huntResult.admitted,
+    mechanicallyAdmitted: huntResult.dossier !== null && huntResult.dossier !== undefined,
+    admissionRefusal:
+      huntResult.admitted && (huntResult.dossier === null || huntResult.dossier === undefined)
+        ? 'MISSING_REPRODUCTION'
+        : null,
     dossier: huntResult.dossier !== null && huntResult.dossier !== undefined,
     environmentDisposition: envDisposition,
     leaked: huntResult.leaked,
@@ -287,6 +292,7 @@ const report = {
   denominators: {
     exactRate: 'exact rediscoveries / substantive scored cases (ENVIRONMENT_BLOCKED excluded from both sides; negative controls excluded)',
     falsePositiveRate: 'negative controls producing a candidate / scored negative controls',
+    mechanicalAdmissions: 'dossiers built through the existing mechanical path / substantive scored cases; a proposed candidate with no reproduction is refused MISSING_REPRODUCTION and is NOT an admission',
   },
   totals: {
     substantiveScored: substantive.length,
@@ -294,7 +300,15 @@ const report = {
     exactRate: substantive.length === 0 ? null : exact.length / substantive.length,
     nearMatches: near.length,
     reproductions: scored.filter((item) => item.reproductionCount > 0).length,
-    admissions: scored.filter((item) => item.admitted).length,
+    // `admitted` on a hunt result means candidateIds.length > 0 — a candidate
+    // was PROPOSED. It is not an admission. The mechanically admitted artefact
+    // is the dossier, and `tryBuild*Dossier` returns null below
+    // reproductionCount 1, so proposing without reproducing admits nothing.
+    candidatesProposed: scored.filter((item) => item.candidatesProposed).length,
+    mechanicalAdmissions: scored.filter((item) => item.dossier).length,
+    candidatesRefusedMissingReproduction: scored.filter(
+      (item) => item.candidatesProposed && !item.dossier,
+    ).length,
     dossiers: scored.filter((item) => item.dossier).length,
     negativeControlsScored: negativeControls.length,
     falsePositives: falsePositives.length,
