@@ -984,32 +984,88 @@ owner's action.
 
 ## 12. Autonomous yield proof
 
-- [ ] 12.1 Record the provider prerequisite concretely: provider, capability,
+Executed by W11 (`nightwatch-autonomous-yield-proof-w11-v1`). Historical arm
+COMPLETE; unknown-yield arm BLOCKED by an external provider outage. Zero
+findings is an acceptable outcome here; an unexecutable arm is not the same
+thing as a zero-yield arm, and the two are not merged below.
+
+- [x] 12.1 Record the provider prerequisite concretely: provider, capability,
       toolchain versions, repository set, confirming probe, reachability
-      threshold
-- [ ] 12.2 Run the pre-flight across the intended repository set; refuse to open
-      the wave below the recorded threshold
-- [ ] 12.3 **Owner authorization required:** open the successor wave
-- [ ] 12.4 Strict `EXACT_REDISCOVERY` against the historical corpus; per-case
+      threshold — `evaluation-freeze.historical.json`. Provider
+      `opencode-go/glm-5.3` via opencode CLI 1.18.31; Node v22.22.1, Go 1.25.3,
+      Git 2.43.0, bwrap 0.9.0; all eight repositories with SHAs; structured
+      probe exit 0 / 16,281 ms / valid `nightwatch.reasoner-turn-response.v1`;
+      threshold frozen with `mayBeLoweredAfterResults: false`. The historical
+      `opencode-go/omen-alpha` was confirmed ABSENT and the replacement was
+      chosen by a preference list written down BEFORE probing, first pass wins,
+      later entries never probed.
+- [x] 12.2 Run the pre-flight across the intended repository set; refuse to open
+      the wave below the recorded threshold — 8/8 repositories CURRENT with
+      matching SHAs, 4,124 eligible / 1,120 executable files, 152 distinct
+      executable targets. The threshold was met when the wave opened, and its
+      refusal behaviour was later demonstrated for real: once the provider
+      failed, the threshold's provider-probe condition stopped being satisfied
+      and the unknown arm was NOT re-run under a substitute.
+- [x] 12.3 **Owner authorization required:** open the successor wave — the W11
+      execution prompt, plus the wave actually created and routed at `eeceec8e`
+      with `.agent/ACTIVE_TASK.md` bound to it.
+- [x] 12.4 Strict `EXACT_REDISCOVERY` against the historical corpus; per-case
       disposition and reason; a near match records its distance and never
-      promotes
-- [ ] 12.5 Exclude `ENVIRONMENT_BLOCKED` cases from both numerator and
-      denominator of any yield rate
-- [ ] 12.6 Fix the previously-unknown-defect campaign's repository set, budget
+      promotes — 14/14 cases, **EXACT 0, rate 0/13**, 10 near matches. Every
+      case records `testMatch`, file recall, keyword recall and the exact
+      condition(s) it failed. No threshold was tuned and no near match promoted.
+- [x] 12.5 Exclude `ENVIRONMENT_BLOCKED` cases from both numerator and
+      denominator of any yield rate — implemented, asserted by
+      `w11EvaluationFreezeIntegrity`, and reported separately. Stated honestly:
+      the count was **0 on this host**, so the rule did not bind in practice;
+      every historical case executed or terminated without needing an
+      unavailable substrate.
+- [x] 12.6 Fix the previously-unknown-defect campaign's repository set, budget
       and stopping condition at a committed SHA before execution; a widened
-      resume fails closed
+      resume fails closed — `evaluation-freeze.unknown.json` committed at
+      `46d32d3e` before any unknown-arm run. A changed resume scope fails closed
+      with `CAMPAIGN_SCOPE_MISMATCH` (exit 2) and an unapproved id with
+      `REAL_SOURCE_SCAN_APPROVED_UNIVERSE`, both before any provider call.
 - [ ] 12.7 Execute across a materially wider slice of the eight admitted
-      repositories under the host-owned `--repository` scope
+      repositories under the host-owned `--repository` scope — **BLOCKED.** The
+      broad run made 6 reasoner calls and all 6 returned `REASONER_TIMEOUT` with
+      zero provider response bytes. The `opencode-go` subscribed namespace is
+      degraded or quota-exhausted (frozen model 208 s timeout, sibling model in
+      the same namespace 125 s, a free-namespace model healthy at 14 s), while
+      the CLI and local stack are fine. The frozen provider was NOT swapped, the
+      threshold NOT lowered and configuration NOT changed to force availability.
+      Also note the standing ceiling: deterministic reproduction exists in
+      `mobingilabs/ouchan` alone, so investigation breadth (8) and execution
+      breadth (1) are different numbers regardless of provider health.
 - [ ] 12.8 Report investigations, calls, actions, unique targets, hypotheses,
       attempts, executions, candidates, admissions, false positives, leakage;
-      abort on any leakage rather than publishing a yield beside it
-- [ ] 12.9 Admit only through the existing mechanical path; refuse an admission
-      with no reproduction as `MISSING_REPRODUCTION`
-- [ ] 12.10 State the campaign's limit: an unfound defect is not an absent one;
-      an admission is a Nightwatch admission, not an Alphaus-confirmed bug
+      abort on any leakage rather than publishing a yield beside it —
+      **PARTIAL.** `evidence/yield-accounting.json` reports the historical arm
+      mechanically with every denominator named. Leakage is 0 across 78 audited
+      request blobs so no abort was required, and the checker is proven live by
+      canaries. Two gaps are stated rather than papered over: six figures
+      (hypotheses formed/grounded/verification-ready/disproved, tool actions,
+      unique source targets) were NOT_CAPTURED by the first arm run and are not
+      estimated; the runner now derives them mechanically for future runs. The
+      unknown arm contributes no figures at all.
+- [x] 12.9 Admit only through the existing mechanical path; refuse an admission
+      with no reproduction as `MISSING_REPRODUCTION` — proven on live traffic:
+      of 7 proposed candidates, 3 became dossiers (each with
+      `reproductionCount` >= 1) and **4 were refused `MISSING_REPRODUCTION`**.
+      No `reproductionCount` requirement was reduced, no evidence ref
+      synthesized, no dossier inserted by hand, no new proof class added.
+- [x] 12.10 State the campaign's limit: an unfound defect is not an absent one;
+      an admission is a Nightwatch admission, not an Alphaus-confirmed bug —
+      stated in W11 REPORT.md, together with two further measured limits: strict
+      EXACT is structurally unreachable under leak-free conditions on this
+      corpus, and reproduction capability exists in one of eight repositories.
 - [ ] 12.11 Publish the measured yield into the ledger-governed `README.md` and
-      current-state blocks
-- [ ] 12.12 Full validation, integrate, release
+      current-state blocks — **PARTIAL.** The historical figure is publishable
+      and published; no unknown-arm yield exists to publish, and none is
+      invented.
+- [ ] 12.12 Full validation, integrate, release — `gate:local` PASS over all 12
+      required groups. Remaining validation and the release decision depend on
+      the blocked items above.
 
 ## 13. Release definition and verdict
 

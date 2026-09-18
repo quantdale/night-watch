@@ -101,7 +101,17 @@ executed rather than omitting it.
   0 `BLOCKED_EXTERNAL`, 1 `UNAVAILABLE_CAPABILITY`.
   `<!--status:VALIDATION_LANE_PROVEN_COUNT=9-->` `<!--status:VALIDATION_LANE_STALE_EVIDENCE_COUNT=1-->` `<!--status:VALIDATION_LANE_BLOCKED_EXTERNAL_COUNT=0-->` `<!--status:VALIDATION_LANE_UNAVAILABLE_CAPABILITY_COUNT=1-->`
 - Measured yield: **0** admitted findings and **0** strict `EXACT_REDISCOVERY`
-  across W7–W10. The machinery works; no Alphaus defect has been admitted.
+  across W7–W11. The machinery works; no Alphaus defect has been admitted.
+  W11 measured the historical arm directly — 14 leak-isolated cases,
+  `opencode-go/glm-5.3`, 0 leakage, 0 false positives — and found strict EXACT
+  0/13 for a reason worth recording: the metric requires naming the hidden
+  failing test, and that filename is absent from the whole reasoner-visible
+  context and is a file the fix commit CREATED, so it is not derivable under the
+  leak-free conditions the benchmark enforces. Investigation quality was not the
+  binding constraint (file recall reached 1.00 in 9 of 14 cases). W11's
+  previously-unknown-defect arm is frozen but UNEXECUTED: the subscribed
+  provider tier went down mid-wave, and an unexecutable arm is not reported as a
+  zero-yield arm.
   `<!--status:MEASURED_YIELD_ADMITTED_FINDINGS=0-->` `<!--status:MEASURED_YIELD_EXACT_REDISCOVERY=0-->`
 - Semantic acceptance class: `COMPLETE_LOCAL_SYNTHETIC`; contained DEV
   acceptance is `NOT_PROVEN` and requires separate owner authorization.
