@@ -3,10 +3,10 @@
 Task ID: nightwatch-control-center-design-system-v1
 Phase: CONTROL_CENTER_DESIGN_SYSTEM_V1
 Title: Nightwatch Control Center design system
-Status: IN_PROGRESS
+Status: COMPLETE
 Task directory: .agent/tasks/nightwatch-control-center-design-system-v1
 Starting SHA: efd1dc5c81a55db00e7698257c8b49b51a6703c5
-Last validated implementation SHA: faacf8262dea0c6a42bf03242d5d1c44d6f70e9e
+Last validated implementation SHA: 2f45cfc4d74139d4f291b043d27942d66c4d8b38
 Last checkpoint: G1–G7 complete. The Control Center has one design system
 applied across all nine views, with its integrity mechanically enforced: 53
 tokens (was 18), zero colour literals outside the token block (was 54 distinct
@@ -18,23 +18,24 @@ removals were fixed, not documented. Differential certification: the
 `gate:local` receipt matches base group-for-group and count-for-count
 (2120/2104/13/3, same three failed locations); `npm test` is 5201 passed / 13
 failed / 18 skipped against base 5198 / 12 / 18.
-Current milestone: G8 — certification
-Next action: integrate by fast-forward push through the session CLI, verify
-`HEAD == origin/main`, then release and remove the session.
+Current milestone: COMPLETE — G8 certification closed; all eight groups closed
+Next action: TASK COMPLETE. Task 6.4 (focus-ring contrast at every declared
+width) is CARRIED and needs its own authorization; the sibling `ripple-api`
+re-admission is an owner action.
 Owner decisions stay OPEN; none is self-authorized.
 Authorization class: CONTROL_CENTER_DESIGN_SYSTEM_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: efd1dc5c81a55db00e7698257c8b49b51a6703c5
-LAST_VALIDATED_IMPLEMENTATION_SHA: faacf8262dea0c6a42bf03242d5d1c44d6f70e9e
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: faacf8262dea0c6a42bf03242d5d1c44d6f70e9e
+LAST_VALIDATED_IMPLEMENTATION_SHA: 2f45cfc4d74139d4f291b043d27942d66c4d8b38
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 2f45cfc4d74139d4f291b043d27942d66c4d8b38
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
-PHASE_CONTROL_CENTER_DESIGN_SYSTEM_V1_STATUS: IN_PROGRESS
+PHASE_CONTROL_CENTER_DESIGN_SYSTEM_V1_STATUS: COMPLETE
 
 ## Outcome
 
-Not yet certified. The campaign executes the 8 task groups of
+COMPLETE and integrated at `2f45cfc4`. The campaign executed the 8 task groups of
 `openspec/changes/nightwatch-control-center-design-system-v1/tasks.md`:
 token block and integrity guard, literal-free stylesheet, type floor and the
 restyle it forces, responsive truth, boundary contrast, registration and

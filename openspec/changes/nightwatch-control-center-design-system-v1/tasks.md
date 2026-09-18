@@ -53,9 +53,9 @@ group is in flight.
       radius, elevation, motion — each step named, with its reason recorded
       alongside the declared 12px type floor
       — the token block declares colour, an alpha ladder per hue, typography (7 steps + leading/tracking/weight), spacing (7 steps + 3 role aliases), radius (4 roles), one shadow and motion — 53 tokens, up from 18. The 12px floor is declared as `--text-floor-px` so the browser lane reads it rather than hard-coding it.
-- [ ] 2.2 Resolve `--surface-muted`, `--ready` and `--warning` per design D1
+- [ ] 2.2 ~~Resolve `--surface-muted`, `--ready` and `--warning` per design D1
       (default: rewrite the three call sites to `--surface-raised`, `--green`,
-      `--accent` and add no aliases)
+      `--accent` and add no aliases)~~
       — SUPERSEDED. Later work removed all three tokens; they are neither defined nor referenced at `efd1dc5c`, so there is no call site to rewrite. Ticking this would claim a repair this campaign did not make. The GUARD that forbids the shape returning is task 2.4 and IS done.
 - [x] 2.3 Add `--border-interactive` `#5d7286`; assert 3:1 against `--bg`,
       `--surface` and `--surface-raised` in the check, not in a comment
@@ -71,9 +71,9 @@ group is in flight.
       set a fallback literal away from its token → fails; stub the extractor to
       return nothing → fails on the non-vacuity assertion
       — UI-P1 delete a live definition, UI-P2 point a fallback away from its token, UI-P3 add an orphan token — all DETECTED against the real stylesheet and restored.
-- [ ] 2.7 Verify `.review-action`, `.review-outcome-ok` and
+- [ ] 2.7 ~~Verify `.review-action`, `.review-outcome-ok` and
       `.review-outcome-warn` now render token values, and record the measured
-      contrast before and after
+      contrast before and after~~
       — SUPERSEDED for the same reason: `.review-action` no longer resolves through an undefined token, so the 1.08:1 measurement is not reproducible here and no before/after contrast can honestly be recorded for it.
 ## 3. Literal-free stylesheet and scale usage
 
@@ -154,8 +154,8 @@ group is in flight.
 - [x] 6.3 Build the alternative-affordance list (fill, label, or named icon)
       with each control's reason; fails in both directions
       — the distinction is structural: a divider keeps the quiet `--border` (1.27-1.51:1) and only a control whose outline is its SOLE affordance takes `--border-interactive`. A panel edge and a neutral data chip are named as non-controls and deliberately excluded.
-- [ ] 6.4 Measure focus indicators against the background they appear over, at
-      every declared breakpoint
+- [ ] 6.4 ~~Measure focus indicators against the background they appear over, at
+      every declared breakpoint~~
       — CARRIED. Focus indicators are proven visible and reading-order correct by the existing keyboard walk, and that walk was repaired in this campaign, but it runs at ONE viewport. Measuring focus-ring contrast at all five declared widths is a further step and is recorded in `PLAN.md` under `## Deferred Work` rather than claimed.
 - [x] 6.5 Negative-probe: revert one control's boundary to `--border` → fails
       naming the control, ratio and pair
@@ -193,13 +193,16 @@ group is in flight.
 - [x] 8.3 `openspec validate nightwatch-control-center-design-system-v1
       --type change --strict` exits zero
       — `openspec validate nightwatch-control-center-design-system-v1 --type change --strict` exits zero.
-- [ ] 8.4 Reconcile `STATE.md`, `.agent/ACTIVE_TASK.md`, `EXECUTION_PROMPT.md`
+- [x] 8.4 Reconcile `STATE.md`, `.agent/ACTIVE_TASK.md`, `EXECUTION_PROMPT.md`
       and `docs/` to the receipt in a second checkpoint
       — `STATE.md`, `ACTIVE_TASK.md`, `EXECUTION_PROMPT.md`, `docs/CURRENT_STATE.md` and `docs/DECISIONS.md` reconciled; `agent:check`, `project:check`, `handoff:check` and `hardening:check` all PASS. The remaining boxes close at integration.
-- [ ] 8.5 Integrate by fast-forward push to `origin main`; verify
+- [x] 8.5 Integrate by fast-forward push to `origin main`; verify
       `HEAD == origin/main`; a rejected push means stop and reconcile, never
       force-push
-- [ ] 8.6 Write `REPORT.md`: residual work, owner decisions taken by default,
+      — integrated by fast-forward push to `origin main` at `2f45cfc4`; `HEAD == origin/main` verified. No force-push, no rebase, no history rewrite.
+- [x] 8.6 Write `REPORT.md`: residual work, owner decisions taken by default,
       safety events, and honest limits — including that this change proves the
       system is applied and does not prove the result is well designed
-- [ ] 8.7 Release the session; canonical tree clean
+      — `REPORT.md` records the measured before/after, the defaults resolved, the stale audit facts corrected, and the honest limits — chiefly that this proves the system is APPLIED and not that the result is well designed, and that certification is differential rather than green.
+- [x] 8.7 Release the session; canonical tree clean
+      — session released and removed through the session CLI; canonical tree clean.

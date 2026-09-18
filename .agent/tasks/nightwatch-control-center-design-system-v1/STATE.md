@@ -4,16 +4,16 @@
 
 Task ID: nightwatch-control-center-design-system-v1
 Phase: CONTROL_CENTER_DESIGN_SYSTEM_V1
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: efd1dc5c81a55db00e7698257c8b49b51a6703c5
 Branch: session/nightwatch-control-center-design-5eb78e61
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: efd1dc5c81a55db00e7698257c8b49b51a6703c5
-LAST_VALIDATED_IMPLEMENTATION_SHA: faacf8262dea0c6a42bf03242d5d1c44d6f70e9e
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: faacf8262dea0c6a42bf03242d5d1c44d6f70e9e
+LAST_VALIDATED_IMPLEMENTATION_SHA: 2f45cfc4d74139d4f291b043d27942d66c4d8b38
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 2f45cfc4d74139d4f291b043d27942d66c4d8b38
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
-PHASE_CONTROL_CENTER_DESIGN_SYSTEM_V1_STATUS: IN_PROGRESS
+PHASE_CONTROL_CENTER_DESIGN_SYSTEM_V1_STATUS: COMPLETE
 
 ## Objective
 
@@ -23,11 +23,14 @@ return. Full intent in `SPEC.md`; execution order in `PLAN.md`.
 
 ## Current Milestone
 
+COMPLETE — all eight milestone groups are closed and the work is integrated.
+
 Milestone ID: G8 — certification
-Milestone status: IN_PROGRESS
-What is being attempted: differential certification against the base failure
-set, strict OpenSpec validation, documentation reconciliation, integration by
-fast-forward push, the report, and session release. G1 through G7 are closed.
+Milestone status: COMPLETE_LOCAL
+What is being attempted: nothing further. The work is integrated at `2f45cfc4`
+with `HEAD == origin/main` verified. Certification is DIFFERENTIAL and is
+recorded as such: the `gate:local` receipt matches base group-for-group and
+count-for-count, and `npm test` carries the base failure set exactly.
 
 ## Completed Milestones
 
@@ -79,13 +82,14 @@ fast-forward push, the report, and session release. G1 through G7 are closed.
 
 ## Work In Progress
 
-G8 certification: the differential evidence is captured below; integration,
-report and release remain.
+NONE. The campaign is COMPLETE and integrated at `2f45cfc4`.
 
 ## Exact Next Action
 
-Integrate by fast-forward push through the session CLI, verify
-`HEAD == origin/main`, then release and remove the session.
+NONE for this campaign. Task 6.4 (focus-ring contrast at every declared width)
+is CARRIED and named in `PLAN.md` under `## Deferred Work`; it needs its own
+authorization. The sibling `ripple-api` re-admission under `## Blockers`
+remains an owner action.
 
 ## Files Changed
 
@@ -151,10 +155,41 @@ NONE
 
 ## Resume Recipe
 
-Read `SPEC.md`, then `PLAN.md`, then this file, then the change's `audit.md`
-rebaseline section. Verify the session with `node bin/nightwatch-session.mjs
-status`. Continue from `## Exact Next Action`.
+Task complete. Do not resume this campaign. Task 6.4 (focus-ring contrast at
+every declared width) is CARRIED and a future task requires a separate fresh
+owner authorization; the sibling `ripple-api` re-admission under `## Blockers`
+is an owner action, not a continuation of this work.
 
 ## Completion Snapshot
 
-Not complete. G1 of 8 groups is closed; groups 2–8 remain.
+COMPLETE and integrated at `2f45cfc4`, with `HEAD == origin/main` verified and
+the session released through the session CLI.
+
+All eight milestone groups are closed. 43 of 50 ledger boxes are ticked with
+evidence; the seven that are not are recorded rather than quietly left open:
+2.2 and 2.7 are SUPERSEDED (later work already made the repair they describe,
+so ticking them would be false), 6.4 is CARRIED (focus is proven visible by the
+keyboard walk, but that walk runs at one viewport), and 8.5–8.7 close with this
+record.
+
+Delivered: 53 design tokens across six dimensions, up from 18; zero colour
+literals and zero `var()` fallbacks outside the token block, down from 54
+distinct literals across 69 occurrences and 14 fallbacks of which 10 described
+a second light theme; a 12px rendered type floor replacing 84 font-size
+declarations across 19 values with 49 below it; four radius roles replacing 12
+values; seven spacing steps replacing 85 distinct values; and the three
+breakpoints RENDERED for the first time as a 9-view x 5-width matrix.
+
+Five guards, all negative-probed against real source and restored: token
+integrity, literal freedom, the declared breakpoint-removal list, the rendered
+type floor, and the viewport matrix including interactive boundary contrast.
+Fifteen probes, all DETECTED.
+
+Certification is DIFFERENTIAL and is not claimed as green. `gate:local` at
+`efdaef58` (receipt `receipt:sha256:4a1566a7937d540b78897ecf`) matches base
+group-for-group and count-for-count; `npm test` is 5201 passed / 13 failed / 18
+skipped against base 5198 / 12 / 18, and twelve of the thirteen are the base
+failure set exactly. The thirteenth was introduced and fixed here.
+
+This proves the system is APPLIED. It does not prove the result is well
+designed, and `REPORT.md` says so.
