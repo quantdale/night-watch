@@ -6,7 +6,7 @@ Title: Nightwatch Control Center design system
 Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-control-center-design-system-v1
 Starting SHA: efd1dc5c81a55db00e7698257c8b49b51a6703c5
-Last validated implementation SHA: efd1dc5c81a55db00e7698257c8b49b51a6703c5
+Last validated implementation SHA: faacf8262dea0c6a42bf03242d5d1c44d6f70e9e
 Last checkpoint: G1 rebaseline and activation. The change was parked
 2026-09-14 with the unblock condition "a fresh owner authorization opens its
 own campaign task and session"; that authorization was given 2026-09-18 and
@@ -25,8 +25,8 @@ Authorization class: CONTROL_CENTER_DESIGN_SYSTEM_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: efd1dc5c81a55db00e7698257c8b49b51a6703c5
-LAST_VALIDATED_IMPLEMENTATION_SHA: efd1dc5c81a55db00e7698257c8b49b51a6703c5
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: efd1dc5c81a55db00e7698257c8b49b51a6703c5
+LAST_VALIDATED_IMPLEMENTATION_SHA: faacf8262dea0c6a42bf03242d5d1c44d6f70e9e
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: faacf8262dea0c6a42bf03242d5d1c44d6f70e9e
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PHASE_CONTROL_CENTER_DESIGN_SYSTEM_V1_STATUS: IN_PROGRESS
