@@ -219,7 +219,8 @@ routed wave. 12.4-12.12 remain open.
 | `npm run project:check` | PASS |
 | `npm run workspace:check` / `session:check` | PASS |
 | `npm run validation:universe` | PASS |
-| **`npm run gate:local`** | **PASS — all 12 required groups**, `receipt:sha256:8c67ffb13a7920f44cfbd870` |
+| **`npm run gate:local`** | **PASS — all 12 required groups**, `receipt:sha256:8c67ffb13a7920f44cfbd870` (session head `8f35834a`) |
+| **`npm run gate:local`** (final, canonical main) | **PASS — all 12 required groups**, `receipt:sha256:98bb91712699efbf96f91b1f` at the released head `c6f2db2d` |
 | **`npm test`** | **5263 passed / 0 failed / 18 skipped** (15.0 min) |
 | OpenSpec strict validation | PASS for both changed changes |
 | **`npm run gate:clean`** | **PASS — all 12 groups, fresh Node 20**, `clean-receipt:sha256:8483891b7477f96af79040cd`, sibling writes 0 |
@@ -256,8 +257,36 @@ This is the documented closeout order, not a defect: the clean lane belongs
 AFTER integration and release, run from the canonical checkout once no session
 worktree is declared. It is recorded here rather than claimed.
 
+## Final verdict
+
+**PARTIAL — BLOCKED.**
+
+- Historical arm: COMPLETE. Strict `EXACT_REDISCOVERY` **0 / 13**, leakage 0,
+  false positives 0, `ENVIRONMENT_BLOCKED` 0, with the reason for the zero
+  established mechanically rather than assumed.
+- Unknown-yield arm: FROZEN but UNEXECUTED, blocked by an external
+  subscribed-provider outage that persisted for the rest of the wave. No yield
+  figure exists and none is invented.
+- Group 12: 12.1-12.6, 12.9, 12.10 CLOSED; 12.7 BLOCKED; 12.8, 12.11, 12.12
+  PARTIAL.
+- No previously unknown Alphaus defect is claimed. No defect was fabricated.
+- No Nightwatch framework defect was exposed. Two defects in W11's own work were
+  found and fixed.
+
+Unblock condition: `opencode-go/glm-5.3` answers a structured probe within the
+frozen timeout. Then run the four frozen runs in `evaluation-freeze.unknown.json`
+(`sha256:6145bd666dd08369ec38b018`) unchanged.
+
+Owner decision, not self-authorized: whether to re-freeze BOTH arms under a
+different provider. The free `opencode` namespace is healthy and would unblock
+execution today, but selecting a provider after results are visible is the
+contamination the freeze exists to prevent, and it would invalidate the
+comparability of the completed historical arm.
+
 ## Safety
 
-DEV contacts 0, NEXT contacts 0, production contacts 0, sibling writes 0,
-leakage 0 (no evaluation run yet), credentials 0, external publications 0,
-force pushes 0, destructive operations 0.
+DEV contacts 0, NEXT contacts 0, production contacts 0, sibling writes 0
+(verified by HEAD comparison and mtime census), leakage 0 across 78 audited
+reasoner-visible request blobs, credentials 0, external publications 0, issue
+or PR creation 0, force pushes 0, history rewrites 0, destructive operations 0,
+safety violations 0.

@@ -261,7 +261,7 @@ across 78 audited request blobs.
 Unknown arm: FROZEN, UNEXECUTED — `sha256:6145bd666dd08369ec38b018`. No yield
 figure exists and none is invented.
 Validation: `gate:local` PASS over all 12 required groups,
-`receipt:sha256:8c67ffb13a7920f44cfbd870`; `npm test` 5263 passed / 0 failed /
+`receipt:sha256:8c67ffb13a7920f44cfbd870`, and again at the released head `c6f2db2d` `receipt:sha256:98bb91712699efbf96f91b1f`; `npm test` 5263 passed / 0 failed /
 18 skipped; fresh Node 20 `gate:clean` PASS over all 12 groups,
 `clean-receipt:sha256:8483891b7477f96af79040cd`, sibling writes 0.
 Integrated at `fb372375`; closeout at `25f94c37`; session released and removed.
