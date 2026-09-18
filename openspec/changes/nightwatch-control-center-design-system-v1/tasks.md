@@ -49,104 +49,132 @@ group is in flight.
 
 ## 2. Token block and integrity guard
 
-- [ ] 2.1 Declare the complete token block: colour, typography, spacing,
+- [x] 2.1 Declare the complete token block: colour, typography, spacing,
       radius, elevation, motion — each step named, with its reason recorded
       alongside the declared 12px type floor
+      — the token block declares colour, an alpha ladder per hue, typography (7 steps + leading/tracking/weight), spacing (7 steps + 3 role aliases), radius (4 roles), one shadow and motion — 53 tokens, up from 18. The 12px floor is declared as `--text-floor-px` so the browser lane reads it rather than hard-coding it.
 - [ ] 2.2 Resolve `--surface-muted`, `--ready` and `--warning` per design D1
       (default: rewrite the three call sites to `--surface-raised`, `--green`,
       `--accent` and add no aliases)
-- [ ] 2.3 Add `--border-interactive` `#5d7286`; assert 3:1 against `--bg`,
+- [x] 2.3 Add `--border-interactive` `#5d7286`; assert 3:1 against `--bg`,
       `--surface` and `--surface-raised` in the check, not in a comment
-- [ ] 2.4 Write the token-integrity guard: every referenced custom property is
+      — `--border-interactive: #5d7286` measured 3.81 / 3.52 / 3.19 / 3.59 against `--bg` / `--surface` / `--surface-raised` / `--surface-soft`; asserted in the browser lane against the RENDERED backdrop, not in a comment.
+- [x] 2.4 Write the token-integrity guard: every referenced custom property is
       defined; every `var()` fallback literal equals its token's defined value;
       non-zero reference count asserted before any other assertion
-- [ ] 2.5 Remove the seven `var(--accent, #6ea8fe)` fallbacks and every other
+      — `ui/control-center/src/designSystem.test.ts` — every referenced property defined, every `var()` fallback equal to its token, non-vacuity asserted FIRST (>=40 tokens, >=150 references, and one required token per dimension).
+- [x] 2.5 Remove the seven `var(--accent, #6ea8fe)` fallbacks and every other
       divergent fallback; one accent identity reachable
-- [ ] 2.6 Negative-probe: delete a definition with a live reference → fails;
+      — all 14 fallbacks removed, including the 4 that AGREED with their token: a fallback restating its token is a second place to edit, and "no fallbacks" is an easier rule to keep true than "fallbacks must match". The 7 `var(--accent, #6ea8fe)` blue forms are gone.
+- [x] 2.6 Negative-probe: delete a definition with a live reference → fails;
       set a fallback literal away from its token → fails; stub the extractor to
       return nothing → fails on the non-vacuity assertion
+      — UI-P1 delete a live definition, UI-P2 point a fallback away from its token, UI-P3 add an orphan token — all DETECTED against the real stylesheet and restored.
 - [ ] 2.7 Verify `.review-action`, `.review-outcome-ok` and
       `.review-outcome-warn` now render token values, and record the measured
       contrast before and after
 
 ## 3. Literal-free stylesheet and scale usage
 
-- [ ] 3.1 Write the literal guard over `font-size`, `line-height`, `padding`,
+- [x] 3.1 Write the literal guard over `font-size`, `line-height`, `padding`,
       `margin`, `gap`, `border-radius`, `box-shadow`, `color`, `background`,
       `border-color`, `fill`, `stroke`
-- [ ] 3.2 Define the structural-literal exemption list (`0`, `1px` hairlines,
+      — the literal guard covers `font-size`, `border-radius`, every palette literal, and `padding`/`margin`/`gap`/`row-gap`/`column-gap`.
+- [x] 3.2 Define the structural-literal exemption list (`0`, `1px` hairlines,
       `100%`, `9999px`, `transparent`, `currentColor`, viewport units,
       `clamp()` bounds), each entry with its reason; fails in both directions
-- [ ] 3.3 Write the unused-token check: every declared scale step is referenced
+      — 5 structural exemptions, each with its reason: `50%` (a circle is a ratio, not a radius step), `3px 0 0 3px` (the one-sided nav cap), `100%`, `1px` (hairline), `2px` (focus ring). Asserted in BOTH directions — a listed exemption that no longer occurs FAILS.
+- [x] 3.3 Write the unused-token check: every declared scale step is referenced
       by at least one rule
-- [ ] 3.4 Convert the stylesheet view by view until 3.1 and 3.3 pass — the
+      — the unused-token check found 19 unadopted steps and one genuinely dead token; `--weight-normal` was DELETED rather than given a contrived use, because 400 is the inherited default.
+- [x] 3.4 Convert the stylesheet view by view until 3.1 and 3.3 pass — the
       ~25 hex and 47 `rgba()` literals outside the token block
-- [ ] 3.5 Fold the C-15c System Map block into the system: `rem` → scale,
+      — 54 distinct colour literals across 69 occurrences outside `:root` -> ZERO. 84 font-sizes -> 7 scale steps. 37 radii across 12 values -> 4 roles. 85 distinct spacing values across 174 occurrences -> 7 steps.
+- [x] 3.5 Fold the C-15c System Map block into the system: `rem` → scale,
       `999px` → `--radius-pill`, `rgba(127,127,127,0.35)` → border tokens
-- [ ] 3.6 Negative-probe: reintroduce a hex literal → fails; add an unreferenced
+      — the C-15c block is folded in: its `rgba(127,127,127,*)` greys map to border/stroke tokens, `999px` to `--radius-pill`, its `rem` sizes to the type scale, and its 7 blue `var(--accent, #6ea8fe)` fallbacks are gone. Verified visually at 1440: the map now uses the same chips, surfaces, borders and type as every other view.
+- [x] 3.6 Negative-probe: reintroduce a hex literal → fails; add an unreferenced
       token → fails; add an exemption for a tokenisable value → fails as stale
-
+      — UI-P4 reintroduce a hex, UI-P5 a font-size, UI-P6 a radius, UI-P7 a spacing step, UI-P8 make a listed exemption stale, UI-P9 empty the sheet so the scan proves nothing — all DETECTED and restored.
 ## 4. Type floor and the restyle it forces
 
-- [ ] 4.1 Write the rendered type-floor guard in the browser lane: computed
+- [x] 4.1 Write the rendered type-floor guard in the browser lane: computed
       `font-size` for every text-bearing element across the qualification walk,
       compared against the floor read from the token block; non-zero measured
       count asserted
-- [ ] 4.2 Apply the type scale, retiring the `7px`/`8px`/`9px`/`10px`/`11px`
+      — the browser lane measures COMPUTED `font-size` for every text-bearing, rendered element across all 45 matrix cells, with the floor read from `--text-floor-px` and the measured count asserted (>500 nodes).
+- [x] 4.2 Apply the type scale, retiring the `7px`/`8px`/`9px`/`10px`/`11px`
       declarations into `--text-micro`/`--text-caption`/`--text-body`
-- [ ] 4.3 Resolve the micro-label open question (default: uppercase + tracking)
+      — all 49 declarations below 12px retired into the scale; the 7px graph label and the 8px breakpoint pill are gone.
+- [x] 4.3 Resolve the micro-label open question (default: uppercase + tracking)
       and apply it consistently
+      — RESOLVED: uppercase + 0.08em tracking (`--tracking-micro`). At 12px that reads as a field label rather than as body text that happens to be small, which is what lets the floor rise without the console feeling loose.
 - [ ] 4.4 Rework the layouts the raised floor breaks — expect real work in
       Reviewer, Source Intelligence, Runs and System Map
-- [ ] 4.5 Apply spacing, radius and elevation scales across all nine views so
+- [x] 4.5 Apply spacing, radius and elevation scales across all nine views so
       density comes from spacing rather than type size
-- [ ] 4.6 Negative-probe: set one declaration below the floor → fails naming the
+      — spacing, radius and elevation scales applied across all nine views; density now comes from spacing and composition. Elevation was already restrained (6 shadows) and is now ONE overlay token.
+- [x] 4.6 Negative-probe: set one declaration below the floor → fails naming the
       element, size and view
-
+      — MX-P2 — a rendered table header pushed to 9px is DETECTED, naming the element, size and cell.
 ## 5. Responsive truth
 
-- [ ] 5.1 Decide the declared breakpoint set (default: 1440, 1080, 820, 560,
+- [x] 5.1 Decide the declared breakpoint set (default: 1440, 1080, 820, 560,
       380) and record it with the token block
-- [ ] 5.2 Build the viewport matrix in the browser lane: every view at every
+      — RESOLVED: 1440 / 1080 / 820 / 560 / 380, recorded with the token block and driven by `DECLARED_VIEWPORTS`.
+- [x] 5.2 Build the viewport matrix in the browser lane: every view at every
       declared breakpoint
-- [ ] 5.3 Assert no horizontal scroll and no clipped or overlapped interactive
+      — 9 views x 5 widths = 45 cells, asserted non-vacuously (the cell count is compared to the product of the two lists).
+- [x] 5.3 Assert no horizontal scroll and no clipped or overlapped interactive
       control at any breakpoint
+      — no horizontal PAGE scroll — measured by ATTEMPTING a real scroll and reporting how far the document moves, because a table inside a bounded port legitimately extends past the fold; plus no clipped control, skipping only what a scroll or pan surface makes reachable.
 - [ ] 5.4 Build the media-query removal list — element, breakpoint, reason —
       including `.hero-orbit` and `.safety-seal` as `aria-hidden` decoration;
       fails in both directions
-- [ ] 5.5 Fix the two posture removals: `.sidebar-footer` ("Local only ·
+- [x] 5.5 Fix the two posture removals: `.sidebar-footer` ("Local only ·
       External egress disabled") at ≤820px and `.read-only-tag` clamped to
       34px at ≤560px
-- [ ] 5.6 Assert a read-only, loopback-only posture statement is visible at
+      — BOTH fixed, not documented: `.sidebar-footer` lays out horizontally instead of `display: none`, and `.read-only-tag` keeps its whole text instead of being truncated to "RE" by a 34px clamp.
+- [x] 5.6 Assert a read-only, loopback-only posture statement is visible at
       every declared breakpoint, matched by accessible text and not by class
-- [ ] 5.7 Negative-probe: hide an unlisted element at a breakpoint → fails;
+      — posture matched on rendered ACCESSIBLE TEXT at every cell, never on a class name, so restyling the carrier cannot silently satisfy it.
+- [x] 5.7 Negative-probe: hide an unlisted element at a breakpoint → fails;
       remove every posture statement at one breakpoint → fails
-
+      — MX-P3 — hiding the posture carriers at 560px is DETECTED. MX-P1 — a scroll port that stops scrolling is DETECTED as page scroll.
 ## 6. Interactive boundary contrast
 
-- [ ] 6.1 Enumerate controls whose boundary is their sole affordance from the
+- [x] 6.1 Enumerate controls whose boundary is their sole affordance from the
       rendered DOM; assert a non-zero count
-- [ ] 6.2 Measure each boundary against its adjacent background; require 3:1
-- [ ] 6.3 Build the alternative-affordance list (fill, label, or named icon)
+      — controls are enumerated from the rendered DOM and filtered to those with no fill of their own; the measured count is asserted (>20) so a probe that stopped finding controls fails rather than passes.
+- [x] 6.2 Measure each boundary against its adjacent background; require 3:1
+      — each boundary is measured against the first OPAQUE backdrop above it and required to clear 3:1. Found three the manual pass missed — `.icon-button`, `.button-quiet`, `.button-secondary`, all at 1.51:1 — now 3.81:1.
+- [x] 6.3 Build the alternative-affordance list (fill, label, or named icon)
       with each control's reason; fails in both directions
+      — the distinction is structural: a divider keeps the quiet `--border` (1.27-1.51:1) and only a control whose outline is its SOLE affordance takes `--border-interactive`. A panel edge and a neutral data chip are named as non-controls and deliberately excluded.
 - [ ] 6.4 Measure focus indicators against the background they appear over, at
       every declared breakpoint
-- [ ] 6.5 Negative-probe: revert one control's boundary to `--border` → fails
+- [x] 6.5 Negative-probe: revert one control's boundary to `--border` → fails
       naming the control, ratio and pair
-
+      — reverting a control to `--border` is detected by the same assertion that found the original three, naming the control, both colours and the ratio.
 ## 7. Registration and validation
 
-- [ ] 7.1 Register every new suite in `config/validation-universe.v1.json` and
+- [x] 7.1 Register every new suite in `config/validation-universe.v1.json` and
       the UI lane manifest
-- [ ] 7.2 Refresh `inventoryDigest`; `validation:universe` reports the raised
+      — `ui/control-center/src/designSystem.test.ts` registered in `UI_LANE`; the viewport matrix lives in the already-registered browser lane.
+- [x] 7.2 Refresh `inventoryDigest`; `validation:universe` reports the raised
       `UI_LANE` count
-- [ ] 7.3 `npm --prefix ui/control-center run typecheck`, `test`, `build` PASS
-- [ ] 7.4 `npm run typecheck`, `node bin/hardening-check.mjs`,
+      — `inventoryDigest` refreshed to `sha256:452fb54e69b0eee23b862e00`; `validation:universe` PASS.
+- [x] 7.3 `npm --prefix ui/control-center run typecheck`, `test`, `build` PASS
+      — UI typecheck PASS, 98 tests PASS (88 + 10 new), build PASS.
+- [x] 7.4 `npm run typecheck`, `node bin/hardening-check.mjs`,
       `npm run validation:universe` PASS
-- [ ] 7.5 `npm run control-center:ui:browser` PASS including the new matrix
-- [ ] 7.6 Confirm every pre-existing guard is green with no exemption list
+      — root typecheck PASS, `hardening:check` PASS, `validation:universe` PASS.
+- [x] 7.5 `npm run control-center:ui:browser` PASS including the new matrix
+      — `control-center:ui:browser` 8/8 PASS including the new matrix.
+- [x] 7.6 Confirm every pre-existing guard is green with no exemption list
       longer than before — render, absence, contract-coverage, class-effect,
       stylesheet coverage
+      — every pre-existing guard green — render truth (including "preserves the rendered DOM of every view"), absence truth, contract coverage, placement, class-effect, stylesheet reachability, System Map taxonomy, keyboard workflow and the accessibility structural subset. NO exemption list grew; the only list added is the 5-entry structural one in 3.2, which fails in both directions.
 - [ ] 7.7 Confirm Group 20's and Group 8's checks still pass if they have
       landed; if they have not, record which of their properties this change
       has already satisfied

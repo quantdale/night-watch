@@ -1,109 +1,84 @@
-# EXECUTION PROMPT — Nightwatch production completion programme
+# EXECUTION PROMPT — Nightwatch Control Center design system
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
 Status: IN_PROGRESS
-Campaign ID: nightwatch-production-completion-programme-v1
-OpenSpec: openspec/changes/nightwatch-production-completion-programme-v1/
-Planned-From: 36bd4930db978423f97e16f35250c2e66bfa112c
+Campaign ID: nightwatch-control-center-design-system-v1
+OpenSpec: openspec/changes/nightwatch-control-center-design-system-v1/
+Planned-From: efd1dc5c81a55db00e7698257c8b49b51a6703c5
 Target Branch: main
 Predecessor Task ID: nightwatch-control-center-style-and-absence-truth-v1
 Predecessor Status: COMPLETE
 
 ## Mission
 
-Execute the bounded 21-group programme in
-`openspec/changes/nightwatch-production-completion-programme-v1/tasks.md`.
-The programme closes the record-level gaps F-01 … F-12 and the code-level
-gaps F-13 … F-21 identified in `audit.md`: ledger truth and the spec
-baseline; validation lane state; CI authority; a CLI contract; evidence
-hygiene; workspace drift; documentation currency; Control Center residual
-truth; supply-chain currency; deployment fact acquisition; contained DEV
-semantic acceptance; autonomous yield; a release definition; dead
-architecture; the CLI-to-implementation contract; structural rule soundness;
-schema lifecycle; error taxonomy rendering; configuration contract and UI
-decomposition; accessibility certification; and authenticated capability
-lifecycle.
+Give the Control Center ONE design system, applied across all nine views, and
+make the system's integrity mechanically enforced so it cannot decay back into
+the drift the audit measured.
 
-## Read first
+The change was parked 2026-09-14 with an explicit unblock condition — "a fresh
+owner authorization opens its own campaign task and session for this change" —
+and was ACTIVATED 2026-09-18 when that authorization was given.
 
-1. `openspec/changes/nightwatch-production-completion-programme-v1/audit.md`
-2. `openspec/changes/nightwatch-production-completion-programme-v1/tasks.md`
-3. `.agent/tasks/nightwatch-production-completion-programme-v1/{SPEC,PLAN,STATE}.md`
-4. `AGENTS.md`, `.agent/PLANS.md`, `docs/CURRENT_STATE.md`,
-   `docs/SAFETY_MODEL.md`, `docs/DECISIONS.md`, `docs/ROADMAP.md`
-5. Live Git/workspace/session truth before any change.
+## Scope
+
+`ui/control-center/**`, `tests/browser/controlCenterBrowser.browser.ts` and its
+viewport matrix, `tests/browser/helpers/accessibility.ts`,
+`config/validation-universe.v1.json` lane registration, this change's OpenSpec
+artefacts, `.agent/tasks/nightwatch-control-center-design-system-v1/` and
+Nightwatch docs.
+
+No route, adapter, contract, bound, sanitizer, authority or dependency change.
+No new runtime dependency, CSS framework, icon set, chart library or light
+theme. No rebrand: the blue-black `#0b1118` base and amber `#e4a853` accent are
+Nightwatch's identity and are preserved.
 
 ## Ordered workstreams
 
-1. G1 ledger truth, then G2 validation lane state.
-2. G14 dead architecture, then G15 CLI contract, G16 rule soundness,
-   G17 schema lifecycle — in that order for the stated dependencies.
-3. G3, G4, G5, G6, G7, G9, G20, G21 as independent surfaces.
-4. G19, then G8, then G18 — all three touch the Control Center.
-5. G10, G11, G12 as their owner decisions land.
-6. G13 last by construction.
-
-Each group: implement, register its checks, run its focused validation, tick
-only what has evidence, integrate by fast-forward, continue.
+1. Rebaseline and activation — re-measure every audit figure at the live SHA
+   and record the contradictions rather than copying them.
+2. Token block and integrity guard — colour, typography, spacing, radius,
+   elevation, motion; every referenced property defined; every `var()` fallback
+   equal to its token.
+3. Literal-free stylesheet — no palette, size, radius or spacing literal
+   outside the token block except a declared structural exemption that fails in
+   BOTH directions.
+4. Type floor and the restyle it forces — a 12px rendered floor, measured on
+   computed `font-size` in the browser lane.
+5. Responsive truth — nine views at 1440 / 1080 / 820 / 560 / 380; no
+   horizontal page scroll, no clipped control, posture visible at every width.
+6. Interactive boundary contrast — 3:1 for controls whose outline is their sole
+   affordance, measured against the rendered backdrop.
+7. Registration and validation.
+8. Certification, integration and release.
 
 ## Constraints
 
-```
-CAMPAIGN: nightwatch-production-completion-programme-v1
-CHILD TASK: NONE
-WAVE: G4_G5_G17_LOCAL
-
-IMPLEMENTATION AUTHORIZED:
-  the file surface named by each group in the OpenSpec change.
-
-REAL PRODUCTION CONTACT:               NOT AUTHORIZED
-NEW API ROUTE / ADAPTER / AUTHORITY:   NOT AUTHORIZED
-NEXT / DEV EXECUTION:                  NOT AUTHORIZED unless a group's own
-                                       owner decision explicitly grants it
-NETWORK EGRESS / ADVISORY SCAN:        NOT AUTHORIZED unless G9's owner
-                                       decision explicitly grants one query
-SLACK / LESLIE / PONDR / NOTION:       NOT AUTHORIZED
-EXTERNAL FILING:                       NOT AUTHORIZED
-CREDENTIALS / DEPLOYMENT:              NOT AUTHORIZED
-SIBLING WRITES:                        NOT AUTHORIZED
-FORCE PUSH / HISTORY REWRITE:          NOT AUTHORIZED
-REOPENING A-01..A-04 OR R-01..R-04:    NOT AUTHORIZED
-```
-
-LOCAL only. Sibling repositories remain read-only. The permanent owner scope
-freeze, the fail-closed egress policy, the C-10 privacy firewall, D-4
-production unloadability and the C-00 protocol are unchanged. Never retire,
-prune, adopt or edit another session; the foreign
-`nightwatch-repository-hardening--e7b9be89` session is untouched.
+LOCAL only. Sibling repositories remain read-only. No production, DEV or NEXT
+contact; no network egress; no credentials; no sibling writes. C-00 governs:
+one owned session worktree, fast-forward integration, never force-push. No
+quality gate is weakened and no exemption list grows without a written reason —
+the target is a shorter list, not a longer one.
 
 ## Validation
 
-- Root: `npm run typecheck`, `node bin/hardening-check.mjs`,
-  `npm run project:check`, `npm run agent:check`,
-  `npm run validation:universe`, `npm run workspace:check`,
-  `npm run handoff:check`, `npm run gate:local`.
-- UI: `npm --prefix ui/control-center run typecheck|test|build`.
-- Browser: `npm run control-center:ui:browser`.
-- Full offline regression: `npm test` at the programme checkpoint.
-- OpenSpec: `openspec validate --all`, `openspec list --specs`.
-- Each group's own new lane as specified in `tasks.md`.
+`npm --prefix ui/control-center run typecheck|test|build`; `npm run typecheck`;
+`node bin/hardening-check.mjs`; `npm run validation:universe`;
+`npm run control-center:ui:browser` including the viewport matrix; every new
+guard negative-probed and restored; `npm run gate:local`; `npm test`; and
+`openspec validate nightwatch-control-center-design-system-v1 --type change
+--strict`.
 
 ## Acceptance and completion gates
 
-- Every task box is ticked with evidence or recorded with its exact
-  blocking class, owner action and revisit condition; a terminal change has
-  no open boxes that are actually done.
-- `openspec validate --all` exits zero; `openspec/specs/` is non-empty.
-- Every new check is registered and negative-probed; no test suppression.
-- `gate:local` PASS from the owned session at the programme checkpoint; the
-  full offline regression passes; project and task truth reconcile to the
-  checkpoint; integration is fast-forward with `HEAD == origin/main`.
+Certification is DIFFERENTIAL. `gate:local` and `npm test` are red at the base
+checkpoint for a reason outside this campaign — the sibling `ripple-api`
+checkout has advanced past the Phase 5 pinned SHA — so the requirement is an
+IDENTICAL failure set to base plus green UI and browser lanes. A green gate is
+neither claimed nor engineered, and the gate is not weakened to produce one.
 
 ## Git and reporting
 
-Commit per group from the owned session worktree, validate, integrate by
-fast-forward push, verify `HEAD == origin/main`, and keep
-`.agent/tasks/nightwatch-production-completion-programme-v1/STATE.md`
-current at every milestone. A rejected push means stop and reconcile; never
-force-push. Fill `REPORT.md` at closure with residual work, owner decisions,
-safety events and honest limits.
+Commit logically per workstream with evidence in the message; integrate by
+fast-forward push to `origin main` through the session CLI; verify
+`HEAD == origin/main`; write `REPORT.md` with residual work, defaults taken and
+honest limits; release the session and leave the canonical tree clean.
