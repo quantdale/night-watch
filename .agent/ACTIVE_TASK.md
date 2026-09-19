@@ -7,9 +7,9 @@ Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-exhaustive-repository-audit-proposals-v1
 Starting SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
 Last validated implementation SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
-Last checkpoint: The owned session is valid; the umbrella OpenSpec change is 4/4 complete and strict-valid; the 2,593-path starting-tree coverage denominator is frozen in `audit.md`.
+Last checkpoint: Umbrella change and 2,593-path denominator are strict-valid; AGENTS, Safety Model, and Architecture are fully read; Current State is partially read with exact progress recorded in `audit.md`.
 Current milestone: M0 — governed activation and audit coverage model
-Next action: Read the required durable architecture/safety documents completely, finish the existing-planning authority index, and begin M1 repository topology/tooling inspection.
+Next action: Finish CURRENT_STATE, DECISIONS, and ROADMAP; complete the existing-planning authority index; then begin M1 repository topology/tooling inspection.
 Authorization class: EXHAUSTIVE_REPOSITORY_AUDIT_PROPOSALS_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2

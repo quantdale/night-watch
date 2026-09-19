@@ -11,7 +11,7 @@ Last substantive checkpoint SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-exhaustive-repository-ef157f7a
-Last checkpoint: 2026-09-19T22:15:31+08:00 — session/continuity pass, umbrella change strict-valid and apply-ready, and exact 2,593-path coverage denominator frozen.
+Last checkpoint: 2026-09-19 — Safety Model and Architecture fully read; Current State machine-truth/current campaign sections partially read; durable document coverage recorded in the audit ledger.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
@@ -39,11 +39,11 @@ What is being attempted: finish required durable-context reading and existing-pl
 
 ## Work In Progress
 
-Required durable documents are being read before the first subsystem audit wave; no finding has been admitted.
+Required durable documents are being read before the first subsystem audit wave. `AGENTS.md`, `SAFETY_MODEL.md`, and `ARCHITECTURE.md` are complete; `CURRENT_STATE.md` is in progress; DECISIONS and ROADMAP remain. No finding has been admitted.
 
 ## Exact Next Action
 
-Read `docs/CURRENT_STATE.md`, `docs/SAFETY_MODEL.md`, `docs/DECISIONS.md`, `docs/ROADMAP.md`, and `docs/ARCHITECTURE.md` completely; finish the existing-change/spec authority index; then start M1 manifest/config/tooling inspection.
+Continue `docs/CURRENT_STATE.md` from the unread campaign/history sections, then read `docs/DECISIONS.md` and `docs/ROADMAP.md`; finish the existing-change/spec authority index before starting M1 manifest/config/tooling inspection.
 
 ## Files Changed
 
@@ -76,6 +76,8 @@ Evidence/constraint: C-00 one-writer/one-worktree invariant and the user's reque
 - Registered topology has room for this worktree under the repository's maximum of eight.
 - Existing OpenSpec inventory includes several in-progress historical/parent changes that must be cross-referenced during deduplication.
 - The starting tree contains 2,593 tracked paths: 781 `.agent`, 626 `src`, 417 `openspec`, 410 `tests`, 118 `bin`, 113 `corpus`, 40 `docs`, 32 `ui`, 26 `config`, and 30 root/integration paths.
+- `docs/ARCHITECTURE.md` contains a relocated historical inventory of 2,151 files; it is explicitly frozen baseline evidence and must not be compared to the current 2,593-path denominator as drift.
+- Several durable sections preserve superseded phase states intentionally; current machine blocks and live implementation/test evidence outrank those historical statements.
 
 ## Blockers
 

@@ -94,6 +94,19 @@ The starting tree contains 50 published capability specs and 10 non-archived Ope
 
 An existing change counts as duplicate coverage only when its normative requirements and tasks close the exact observed failure mode. Status labels and title similarity are insufficient.
 
+## Durable document read ledger
+
+| Document | Coverage | Audit-relevant authority extracted | Status |
+|---|---|---|---|
+| `AGENTS.md` | complete | C-00 ownership, source precedence, owner scope freeze, task/continuity/project-state protocols, destructive/deletion policy | COMPLETE |
+| `docs/SAFETY_MODEL.md` | complete (1–1,656) | fail-closed host/action/redaction rules; L0–L6 boundaries; auth/private-store/reasoner constraints; semantic/source and self-development authority partitions; historical versus current acceptance evidence | COMPLETE |
+| `docs/ARCHITECTURE.md` | complete (1–2,325) | module map and run lifecycle; authority/data-flow boundaries; source/semantic/campaign/Control Center architectures; current L6 and reviewer/review-store designs; relocated inventory explicitly historical | COMPLETE |
+| `docs/CURRENT_STATE.md` | machine truth, live-state, exact-head CI, current C-05/C-06/C-08/C-09/R-12 records read; remaining historical/current campaign sections pending | `OPERATIONALLY_ACCEPTED`; current project-state and live-task blocks are mechanically owned; CI non-evidence is distinct from local validation; historical counts and anchors cannot be treated as live facts | IN_PROGRESS |
+| `docs/DECISIONS.md` | pending | — | PENDING |
+| `docs/ROADMAP.md` | pending | — | PENDING |
+
+No documentation inconsistency is admitted as a finding merely because historical prose differs from current machine truth. A candidate requires evidence that a current consumer trusts the stale statement or that required durable truth is internally contradictory.
+
 ## Finding ledger
 
 No finding has been admitted yet. The empty ledger is not evidence of zero issues; subsystem inspection has not begun.
