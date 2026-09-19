@@ -1,0 +1,118 @@
+{
+  "schemaVersion": "nightwatch.w13-run-receipt.v1",
+  "runId": "w13-repository-01",
+  "kind": "REPOSITORY_SCOPED",
+  "repositoryScope": "alphauslabs/blue-sdk-go",
+  "wallClockCeilingMs": 1800000,
+  "policyFingerprint": "sha256:a4865dbb6aea4114bfa8bdc9",
+  "freezeFingerprint": "sha256:a520d9630a20a3f67321fbb8",
+  "selectedProvider": "opencode-go/glm-5.3",
+  "startedAt": "2026-09-19T16:49:26.313Z",
+  "wallTimeMs": 794979,
+  "validProviderResult": true,
+  "terminationReason": "BUDGET_EXHAUSTED",
+  "terminationClass": "VALID_PROVIDER_RUN",
+  "executionFailure": null,
+  "investigationsStarted": 2,
+  "investigationsCompleted": 2,
+  "reasonerCalls": 8,
+  "providerFailures": 6,
+  "candidateIds": [],
+  "candidateCount": 0,
+  "findingAdmissions": 0,
+  "reproductionCount": 0,
+  "dossierStatus": "NONE",
+  "actionLogEntries": 8,
+  "toolActions": 2,
+  "uniqueInspectedSourcePaths": 1,
+  "reproductionAttemptsTool": 0,
+  "hypothesesFormed": 0,
+  "providerResponseBytes": 371,
+  "providerStderrBytes": 432,
+  "renderedInputBytes": 57067,
+  "toolPayloadBytes": null,
+  "yieldMetrics": {
+    "schemaVersion": "nightwatch.w10-campaign-yield.v1",
+    "visibleSources": 32,
+    "visibleExecutableSources": 0,
+    "visibleExecutableTargets": 0,
+    "visibleRepositories": 1,
+    "reproductionAttempts": 0,
+    "executedAttempts": 0,
+    "notAvailableAttempts": 0,
+    "environmentBlockedAttempts": 0,
+    "erroredAttempts": 0,
+    "qualifyingReproductions": 0,
+    "repeatedUnsupportedAttempts": 0,
+    "distinctAttemptedTargets": 0,
+    "distinctExecutedTargets": 0,
+    "attemptsToFirstExecutedReproduction": null,
+    "actionsToFirstExecutedReproduction": null
+  },
+  "sourceOpportunity": "AVAILABLE",
+  "providerHealth": {
+    "activeProvider": "opencode-go/qwen3.8-max",
+    "degradedProviders": [
+      "opencode-go/glm-5.3",
+      "opencode-go/kimi-k3"
+    ],
+    "transitions": [
+      {
+        "sequence": 1,
+        "from": "opencode-go/glm-5.3",
+        "to": "opencode-go/kimi-k3",
+        "triggerClass": "PROVIDER_RUNTIME_TIMEOUT",
+        "at": "2026-09-19T16:56:23.147Z"
+      },
+      {
+        "sequence": 2,
+        "from": "opencode-go/kimi-k3",
+        "to": "opencode-go/qwen3.8-max",
+        "triggerClass": "PROVIDER_RUNTIME_TIMEOUT",
+        "at": "2026-09-19T17:02:41.274Z"
+      }
+    ],
+    "exhausted": false
+  },
+  "providers": [
+    {
+      "provider": "opencode-go/glm-5.3",
+      "calls": 5,
+      "validResponses": 2,
+      "validResponseBytes": 371,
+      "stdoutBytes": 371,
+      "stderrBytes": 0,
+      "wallTimeMs": 414651,
+      "failuresByClass": {
+        "PROVIDER_RUNTIME_TIMEOUT": 3
+      },
+      "retries": 3,
+      "transitionsIn": [],
+      "transitionsOut": [
+        "opencode-go/kimi-k3"
+      ]
+    },
+    {
+      "provider": "opencode-go/kimi-k3",
+      "calls": 3,
+      "validResponses": 0,
+      "validResponseBytes": 0,
+      "stdoutBytes": 0,
+      "stderrBytes": 0,
+      "wallTimeMs": 377013,
+      "failuresByClass": {
+        "PROVIDER_RUNTIME_TIMEOUT": 3
+      },
+      "retries": 3,
+      "transitionsIn": [
+        "opencode-go/glm-5.3"
+      ],
+      "transitionsOut": [
+        "opencode-go/qwen3.8-max"
+      ]
+    }
+  ],
+  "terminationSafety": "NO_SAFETY_BLOCK",
+  "novelty": "NOT_APPLICABLE_NO_ADMISSION",
+  "ownerLocalRawCheckpoint": "/home/dalepalaca/.nightwatch/campaigns/w13-repository-01.checkpoint.json"
+}
