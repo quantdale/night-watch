@@ -51,12 +51,12 @@ The following top-level classes are exhaustive and mutually exclusive for the st
 | `src/` | 626 | all runtime subsystems and trust boundaries | PENDING | — | — |
 | `openspec/` | 417 | published specs, active changes, archive/deduplication, schema validity | PENDING | — | — |
 | `tests/` | 410 | unit/browser/smoke/manual/helpers/fixtures, assertion strength and gaps | PENDING | — | — |
-| `bin/` | 118 | CLI, gates, validators, generators, session/workspace/release tooling | PENDING | — | — |
+| `bin/` | 118 | CLI, gates, validators, generators, session/workspace/release tooling | IN_PROGRESS | NW-AUD-001 | Phase 23 workflow guard inspected; remaining bin surfaces pending |
 | `corpus/` | 113 | fixture/corpus integrity, authority separation, generated/historical boundaries | PENDING | — | — |
 | `docs/` | 40 | architecture, safety, decisions, roadmap, current-state and design truth | IN_PROGRESS | — | — |
 | `ui/` | 32 | Control Center static UI, accessibility, responsive and interaction behavior | PENDING | — | — |
-| `config/` | 26 | environment, workspace, gates, policies, registries and bounds | PENDING | — | — |
-| Root and integration files | 30 | manifests, lockfile, TypeScript/Playwright configs, CI, env example, scenarios and agent integrations | PENDING | — | — |
+| `config/` | 26 | environment, workspace, gates, policies, registries and bounds | IN_PROGRESS | NW-AUD-002 | gate/universe/lane/dependency records inspected; remaining configuration pending |
+| Root and integration files | 30 | manifests, lockfile, TypeScript/Playwright configs, CI, env example, scenarios and agent integrations | IN_PROGRESS | NW-AUD-001, NW-AUD-002, NW-AUD-003 | package, TypeScript, Playwright, CI workflow and validation topology inspected; remaining root surfaces pending |
 
 ### `src/` subsystem denominator
 
@@ -101,19 +101,31 @@ An existing change counts as duplicate coverage only when its normative requirem
 | `AGENTS.md` | complete | C-00 ownership, source precedence, owner scope freeze, task/continuity/project-state protocols, destructive/deletion policy | COMPLETE |
 | `docs/SAFETY_MODEL.md` | complete (1–1,656) | fail-closed host/action/redaction rules; L0–L6 boundaries; auth/private-store/reasoner constraints; semantic/source and self-development authority partitions; historical versus current acceptance evidence | COMPLETE |
 | `docs/ARCHITECTURE.md` | complete (1–2,325) | module map and run lifecycle; authority/data-flow boundaries; source/semantic/campaign/Control Center architectures; current L6 and reviewer/review-store designs; relocated inventory explicitly historical | COMPLETE |
-| `docs/CURRENT_STATE.md` | machine truth, live-state, exact-head CI, current C-05/C-06/C-08/C-09/R-12 records read; remaining historical/current campaign sections pending | `OPERATIONALLY_ACCEPTED`; current project-state and live-task blocks are mechanically owned; CI non-evidence is distinct from local validation; historical counts and anchors cannot be treated as live facts | IN_PROGRESS |
-| `docs/DECISIONS.md` | pending | — | PENDING |
-| `docs/ROADMAP.md` | pending | — | PENDING |
+| `docs/CURRENT_STATE.md` | complete through line 4,186 | `OPERATIONALLY_ACCEPTED`; current project-state and live-task blocks are mechanically owned; CI non-evidence is distinct from local validation; historical counts and anchors cannot be treated as live facts; NW-01–NW-14 and later Control Center closures prevent duplicate proposals | COMPLETE |
+| `docs/DECISIONS.md` | complete decision-title inventory; foundational decisions and current D-101–D-138 authority bodies inspected, with older phase decisions cross-checked through Safety/Architecture/Current State | C-00, exact-head CI, validation, dependency, privacy, owner-scope, and current yield decisions constrain remediation; historical duplicated IDs use E-1 aliases | COMPLETE |
+| `docs/ROADMAP.md` | complete phase/current-section inventory; current production/yield/Control Center sections inspected and historical phase authority cross-checked through Current State | current open work is explicitly separated from completed historical phases; W12 is partial/provider-blocked; configuration/bin-typecheck/release items already belong to the production-completion programme | COMPLETE |
 
 No documentation inconsistency is admitted as a finding merely because historical prose differs from current machine truth. A candidate requires evidence that a current consumer trusts the stale statement or that required durable truth is internally contradictory.
 
 ## Finding ledger
 
-No finding has been admitted yet. The empty ledger is not evidence of zero issues; subsystem inspection has not begun.
-
 | ID | State | Severity | Confidence | Subsystem | Summary | Evidence | Existing-plan relation | Owning change |
 |---|---|---|---|---|---|---|---|---|
-| — | — | — | — | — | — | — | — | — |
+| NW-AUD-001 | PROPOSED | Medium | High | CI / supply chain / hardening | Authoritative CI executes two mutable `@v4` action refs, while the enforcing rule accepts an unanchored substring and can admit lookalike owners or suffixed refs | `.github/workflows/hardening.yml:22,26`; `bin/lib/hardening/rules/validation-and-gates.mjs:239-240`; probe registry has no action-identity mutation | No existing published requirement or active change pins third-party actions; exact-head CI spec is extended rather than duplicated | `nightwatch-ci-action-supply-chain-integrity-v1` |
+
+## M1 candidate dispositions
+
+| ID | State | Summary | Decisive evidence | Disposition |
+|---|---|---|---|---|
+| NW-AUD-001 | PROPOSED | Mutable CI action identity plus substring-allowlist false negative | Current workflow uses `actions/checkout@v4` and `actions/setup-node@v4`; current regex `/actions\/(?:checkout|setup-node)@v4/` is unanchored, so `evil/actions/checkout@v4` and `actions/checkout@v4-suffix` match; action code runs before repository-owned gate | MATERIAL → dedicated strictly-valid OpenSpec change |
+| NW-AUD-002 | DUPLICATE | `bin/**` is parse-checked but its strict typecheck lane remains reporting-only | `config/bin-typecheck.v1.json` is `REPORTING`; authoritative gate `STATIC` runs root `typecheck` only; production-completion tasks 15.7 and 15.11 explicitly require full conformance and blocking registration | Exact failure mode already owned by `nightwatch-production-completion-programme-v1`; no duplicate change |
+| NW-AUD-003 | NOT_AN_ISSUE | Historical concern that tests/checks could sit outside authoritative manifests | `npm run validation:universe` discovers 494 checks: 257 authoritative + 237 explicitly classified + 0 unclassified; digest `sha256:039d60d15518fc56c463d66b` | Current NW-08 mechanism closes the historical R-12 lead |
+
+NW-AUD-001 severity is Medium rather than High: compromise or malicious
+movement of an upstream action identity is an external precondition, and the
+workflow grants only `contents: read`. Impact is nevertheless material because
+the action can read private source and alter the workspace/conditions observed
+by the later authoritative gate.
 
 ## Validation ledger
 
@@ -124,6 +136,12 @@ No finding has been admitted yet. The empty ledger is not evidence of zero issue
 | `openspec status --change nightwatch-exhaustive-repository-audit-proposals-v1` | 4/4 complete | Umbrella change is apply-ready |
 | `openspec validate nightwatch-exhaustive-repository-audit-proposals-v1 --strict` | PASS | Umbrella schema/requirements validity |
 | `git ls-files` inventory | 2,593 paths; top-level counts reconcile | Frozen coverage denominator |
+| `npm run validation:universe` | PASS; 494 discovered / 257 authoritative / 237 classified / 0 unclassified | Close historical manifest-coverage lead |
+| `npm run quality-gate:spec` | PASS; 12 required groups / 149 compatibility files | Confirm current gate definition |
+| `npm run gate:inventory` | PASS; authoritative workflow command count 1 / 257 unique test files / 0 duplicate executions | Confirm current gate topology |
+| `npm run typecheck:bin` | ENVIRONMENT UNAVAILABLE in owned worktree: no `node_modules/typescript`; no dependency install authorized | Not a product failure; static configuration and existing recorded ownership used |
+| `npm run schema:check`, `npm run hardening:check`, `npm run project:check` | ENVIRONMENT UNAVAILABLE for the same absent local TypeScript toolchain | Deferred to a dependency-equipped validation checkpoint; `workspace:check` remained PASS |
+| `openspec validate nightwatch-ci-action-supply-chain-integrity-v1 --strict` | PASS; 4/4 artifacts complete | NW-AUD-001 remediation is apply-ready |
 
 ## Completion audit
 

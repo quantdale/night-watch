@@ -1,10 +1,10 @@
 ## 1. Freeze the audit universe and evidence model
 
 - [x] 1.1 Record the starting Git SHA, deterministic tracked-file inventory, subsystem classification rules, and exact count reconciliation for all tracked paths.
-- [ ] 1.2 Define the coverage-row schema for path classes, trust boundaries, inspection methods, source/test counts, evidence references, candidate IDs, existing-change references, and final disposition.
-- [ ] 1.3 Define the candidate lifecycle and evidence schema for stable ID, failure mode, reachability, consequence, mitigation, evidence, confidence, severity dimensions, ownership, and disposition.
-- [ ] 1.4 Build an index of published specs, active/complete changes, continuity tasks, relevant decisions, and current tests for deduplication.
-- [ ] 1.5 Add non-vacuity checks proving every tracked path is classified and no coverage class, evidence set, or candidate/proposal denominator can be silently empty.
+- [x] 1.2 Define the coverage-row schema for path classes, trust boundaries, inspection methods, source/test counts, evidence references, candidate IDs, existing-change references, and final disposition.
+- [x] 1.3 Define the candidate lifecycle and evidence schema for stable ID, failure mode, reachability, consequence, mitigation, evidence, confidence, severity dimensions, ownership, and disposition.
+- [x] 1.4 Build an index of published specs, active/complete changes, continuity tasks, relevant decisions, and current tests for deduplication.
+- [x] 1.5 Add non-vacuity checks proving every tracked path is classified and no coverage class, evidence set, or candidate/proposal denominator can be silently empty.
 
 ## 2. Audit repository topology, dependencies, configuration, and tooling
 

@@ -7,9 +7,9 @@ Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-exhaustive-repository-audit-proposals-v1
 Starting SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
 Last validated implementation SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
-Last checkpoint: Umbrella change and 2,593-path denominator are strict-valid; AGENTS, Safety Model, and Architecture are fully read; Current State is partially read with exact progress recorded in `audit.md`.
-Current milestone: M0 — governed activation and audit coverage model
-Next action: Finish CURRENT_STATE, DECISIONS, and ROADMAP; complete the existing-planning authority index; then begin M1 repository topology/tooling inspection.
+Last checkpoint: M0 is complete; M1 admitted NW-AUD-001 and created the strict-valid `nightwatch-ci-action-supply-chain-integrity-v1` remediation change; validation-universe and bin-typecheck leads were dispositioned.
+Current milestone: M1 — repository topology, dependencies, configuration, and build/tooling
+Next action: Inventory and inspect remaining bin, config, generator, session, release, and checkpoint seams, prioritizing mutating and authority-bearing paths, and record decisive dispositions in `audit.md`.
 Authorization class: EXHAUSTIVE_REPOSITORY_AUDIT_PROPOSALS_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2

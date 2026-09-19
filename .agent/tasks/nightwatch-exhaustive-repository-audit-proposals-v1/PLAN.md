@@ -36,14 +36,14 @@ Use a coverage matrix rather than ad hoc browsing. Inventory the tree and depend
 - Objective: establish C-00 ownership, continuity, required durable context, OpenSpec inventory, and a complete audit taxonomy.
 - Acceptance criteria: session passes; task routing is coherent; repository areas and evidence standards are enumerated; umbrella change exists.
 - Validation commands: `npm run session:status`, `npm run agent:check`, `openspec status --change nightwatch-exhaustive-repository-audit-proposals-v1 --json`
-- Status: IN_PROGRESS
+- Status: COMPLETE
 
 ### M1 — Repository topology, dependencies, configuration, and build/tooling
 
 - Objective: inspect manifests, configs, generators, scripts, CLI/bin code, dependency posture, build/typecheck/lint/test wiring, and release/checkpoint mechanics.
 - Acceptance criteria: every surface is covered; candidate issues have decisive evidence and existing-plan cross-references.
 - Validation commands: focused static searches and relevant read-only validation commands.
-- Status: NOT_STARTED
+- Status: IN_PROGRESS
 
 ### M2 — Core safety, environment, policy, proxy, process/network containment, and authentication
 
@@ -116,11 +116,15 @@ Prefer the narrowest decisive existing tests during exploration. Validate each O
 
 - 2026-09-19 — Decision: use a dedicated umbrella audit campaign and separate remediation changes; reason: exhaustive coverage needs one ledger while implementation scopes need independent ownership and acceptance criteria; evidence: original objective plus existing multi-change OpenSpec topology; consequence: no monolithic catch-all implementation plan.
 - 2026-09-19 — Decision: prohibit sibling-repository exploration; reason: the objective names this codebase and AGENTS forbids broad Alphaus rediscovery; consequence: all findings derive from Nightwatch repository evidence.
+- 2026-09-19 — Decision: partition mutable CI action identity into its own remediation change; reason: the action refs execute before the repository-owned gate and the current substring allowlist has an independent supply-chain trust boundary; evidence: NW-AUD-001; consequence: `nightwatch-ci-action-supply-chain-integrity-v1` extends the existing exact-head CI capability without changing implementation.
 
 ## Discoveries
 
 - Current topology permits this seventh registered worktree under the eight-worktree bound.
 - The pre-existing W13 live session remains separate and is not reused.
+- Validation-universe completeness is current (494 = 257 authoritative + 237 classified, zero unclassified); the historical R-12 manifest gap is not a new finding.
+- `bin/**` strict typecheck remains reporting-only, but production-completion tasks 15.7/15.11 already own that exact gap.
+- The authoritative workflow's two mutable action tags and substring allowlist form the first non-duplicate material finding (NW-AUD-001).
 
 ## Deferred Work
 
