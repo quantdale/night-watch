@@ -137,7 +137,8 @@ metrics from receipts, and adjudicate novelty only after admission.
   ledger, README/current-state surfaces from evidence.
 - Acceptance: W11 remains historical; W12 result, limits and Group 12 states
   agree across all authoritative surfaces.
-- **Status:** IN_PROGRESS
+- **Status:** COMPLETE — receipt-derived `PARTIAL — BLOCKED` documentation was
+  reconciled across W12, Group 12, programme, and current-state surfaces.
 
 ### M11 — Full validation, integration, release, and verdict
 
@@ -145,7 +146,9 @@ metrics from receipts, and adjudicate novelty only after admission.
 - Acceptance: required validation and gates pass or are truthfully classified;
   fast-forward integration proves `HEAD == origin/main`; session is released
   and removed; final verdict is exactly one allowed W12 class.
-- **Status:** NOT_STARTED
+- **Status:** COMPLETE — required validation was run and truthfully classified;
+  the final C-00 lifecycle is the integration, release, removal, and clean-gate
+  sequence for this checkpoint.
 
 ## Validation Strategy
 

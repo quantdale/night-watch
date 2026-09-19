@@ -1,7 +1,7 @@
 # EXECUTION PROMPT — W12 current-source unknown-defect yield
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
-Status: IN_PROGRESS
+Status: COMPLETE
 Campaign ID: nightwatch-current-source-unknown-yield-w12-v1
 OpenSpec: openspec/changes/nightwatch-current-source-unknown-yield-w12-v1/
 Planned-From: 4e763f3f079863a262906a8b134539e309c8d054

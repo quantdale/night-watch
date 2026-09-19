@@ -164,6 +164,13 @@
       "oldLineSha256": "sha256:62d6fc1e4f602c5c3cf6e221",
       "oldLineExcerpt": "> Durable memory for the next agent/session. Last updated: **2026-09-18**",
       "reason": "W12 appended the current-source yield checkpoint and advanced the header date to the day its last change actually landed (2026-09-19); the historical statement is unchanged."
+    },
+    {
+      "id": "CORR-W12-002",
+      "path": "docs/CURRENT_STATE.md",
+      "oldLineSha256": "sha256:d1f8d0c9b3da032837374e74",
+      "oldLineExcerpt": "| `LAST_SUBSTANTIVE_IMPLEMENTATION_SHA` | the last commit that changed implementation AND was validated | `ae06d4d` |",
+      "reason": "W12 advanced the substantive implementation anchor to the validated measurement-integrity and validation-universe checkpoint; the superseded W11 table cell remains represented by this declared correction."
     }
   ]
 }

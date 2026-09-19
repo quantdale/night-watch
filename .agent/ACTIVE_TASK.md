@@ -3,39 +3,29 @@
 Task ID: nightwatch-current-source-unknown-yield-w12-v1
 Phase: CURRENT_SOURCE_UNKNOWN_YIELD_W12_V1
 Title: W12 — Current-source unknown-defect yield
-Status: IN_PROGRESS
+Status: COMPLETE
 Task directory: .agent/tasks/nightwatch-current-source-unknown-yield-w12-v1
 Starting SHA: 4e763f3f079863a262906a8b134539e309c8d054
-Last validated implementation SHA: ae06d4d675d878f67b93234a21100ef94d9fed25
-Last checkpoint: the frozen broad run completed with a valid provider result;
-its sanitized receipt records 3 investigations, 35 reasoner calls, 8 provider
-failures, 2 candidates, 0 qualifying reproductions, and 2
-`MISSING_REPRODUCTION` refusals. Scoped runs 01–03 then provider-blocked
-`alphauslabs/blue-sdk-go`, `alphauslabs/blueapi`, and
-`alphauslabs/blueinternal` after 6 runtime timeouts each with zero response
-bytes. Scoped runs 04–07 (`grpc-chunk-parser`, `ouchan`, `ripple-api`,
-`ripple-ui`, and `wave-api`) ended after 6 nonzero exits each with 276 stderr
-bytes and zero response bytes; raw checkpoints and unchanged sibling identities
-are preserved.
-W11 is preserved as `PARTIAL — BLOCKED`: its historical arm measured strict
-EXACT `0/13` with zero leakage, while its unknown arm was invalid on provider
-timeout and produced no yield. W12 is a distinct owner-authorized successor;
-its provider is frozen at `opencode-go/glm-5.3`, and W12 remains in the fixed
-scoped matrix.
-Current milestone: M10 — documentation and Group 12 reconciliation
-Next action: reconcile this report, the parent Group 12 successor ledger,
-programme state, and governed current-state documentation to the measured
-`PARTIAL — BLOCKED` result without rewriting W11.
+Last validated implementation SHA: 6ac0b546d1542cea745eb86c282f8a47855cf645
+Last checkpoint: W12 evidence, governed documentation, validation, and the
+receipt-derived `PARTIAL — BLOCKED` verdict are closed. The valid broad run
+reached all eight repositories, produced 2 candidates and 0 admissions, and
+all eight scoped runs remain provider-blocked before source actions. W11 is
+preserved unchanged as the blocked predecessor. The final C-00 lifecycle
+operations are the terminal integration, release, removal, and clean-gate
+checks for this checkpoint.
+Current milestone: COMPLETE — M11 validation, integration, release, and verdict
+Next action: STOP — W12 is complete; any retry requires fresh owner authorization.
 Authorization class: CURRENT_SOURCE_UNKNOWN_YIELD_W12_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 4e763f3f079863a262906a8b134539e309c8d054
-LAST_VALIDATED_IMPLEMENTATION_SHA: ae06d4d675d878f67b93234a21100ef94d9fed25
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: ae06d4d675d878f67b93234a21100ef94d9fed25
-LAST_DOCUMENTATION_CHECKPOINT_SHA: 4e763f3f079863a262906a8b134539e309c8d054
+LAST_VALIDATED_IMPLEMENTATION_SHA: 6ac0b546d1542cea745eb86c282f8a47855cf645
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 6ac0b546d1542cea745eb86c282f8a47855cf645
+LAST_DOCUMENTATION_CHECKPOINT_SHA: 2088689098a65ffeccc05656ba56b289efd2009b
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
-PHASE_CURRENT_SOURCE_UNKNOWN_YIELD_W12_V1_STATUS: IN_PROGRESS
+PHASE_CURRENT_SOURCE_UNKNOWN_YIELD_W12_V1_STATUS: COMPLETE
 
 ## Mission
 
@@ -66,7 +56,7 @@ alter W11's measured result.
 CAMPAIGN: nightwatch-current-source-unknown-yield-w12-v1
 CHILD TASK: NONE
 WAVE: W12
-SESSION WORKTREE: session/nightwatch-current-source-unknow-75aee275
+SESSION WORKTREE: NONE
 
 IMPLEMENTATION AUTHORIZED:
   this task directory, its OpenSpec change, W12 evaluation/measurement

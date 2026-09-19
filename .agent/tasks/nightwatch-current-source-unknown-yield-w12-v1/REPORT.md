@@ -1,7 +1,8 @@
 # W12 — Current-source unknown-defect yield — Report
 
-Status: IN_PROGRESS. The frozen matrix and evidence are complete; validation,
-documentation closure, integration, and C-00 release are still in progress.
+Status: COMPLETE
+The frozen matrix and evidence are closed, governed documentation agrees, and
+W12 carries the exact verdict `PARTIAL — BLOCKED`.
 
 ## A. BASELINE
 
@@ -115,24 +116,36 @@ external egress. All nine after-run identity receipts match the before snapshot.
 ## J. VALIDATION
 
 Focused W12 integrity validation passed: 2/2 tests in
-`tests/unit/w12EvaluationFreezeIntegrity.test.ts`. The remaining full local,
-clean-checkout, OpenSpec, continuity, privacy, and C-00 release checks are
-being run before this report is marked terminal.
+`tests/unit/w12EvaluationFreezeIntegrity.test.ts`; the W11 leakage canary
+passed 5/5; continuity coherence passed 5/5; review-store hardening passed
+23/23; typecheck passed; `typecheck:bin` passed in its declared reporting
+mode; serial hardening and hardening probes passed; agent, handoff, project,
+workspace, session, validation-universe, and strict OpenSpec checks passed.
+The direct synthetic campaign passed 1,897/1,897 with
+`deepContainmentLane: PROVEN`, and full `npm test` passed 5,265 tests with 0
+failures and 18 skips. `gate:local` passed its first nine groups, then timed
+out at the fixed ten-minute MEDIUM synthetic-lane bound; its receipt is
+`receipt:sha256:c5107a12b6bd0a89263c5c2`. The timeout is classified as a
+bounded gate-environment result because the direct synthetic lane and full
+regression passed; `gate:clean` is the final lifecycle check.
 
 ## K. GIT / C-00
 
-W12 session: `session/nightwatch-current-source-unknow-75aee275`.
-Integration and release are pending the final validation checkpoint. Raw
-campaign checkpoints remain owner-local under `/home/dalepalaca/.nightwatch/`
-and are not committed.
+The final task checkpoint is prepared from the owned W12 session
+`session/nightwatch-current-source-unknow-75aee275`; its live Git SHA remains
+discoverable from Git and is not predicted here. The terminal lifecycle is
+fast-forward integration with `HEAD == origin/main`, owned-session release and
+removal, followed by the clean-checkout gate. Raw campaign checkpoints remain
+owner-local under `/home/dalepalaca/.nightwatch/` and are not committed.
 
 ## L. GROUP 12
 
 W11's 12.1–12.6, 12.9, and 12.10 evidence remains historical. W12 reconciles
 12.7 as provider-blocked after the broad-plus-eight-scoped attempt, 12.8 with
 receipt-derived metrics and explicit missing fields, 12.11 with the bounded
-current-state/README publication, and 12.12 through local validation,
-fast-forward integration, release, and session cleanup.
+current-state/README publication, and 12.12 through the recorded local
+validation plus the terminal C-00 integration, release, cleanup, and clean-gate
+lifecycle.
 
 ## M. FINAL VERDICT
 

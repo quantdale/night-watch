@@ -82,16 +82,16 @@
 
 ## 8. Group 12, validation, and release
 
-- [ ] 8.1 Reconcile Group 12 items 12.7, 12.8, 12.11, and 12.12 from actual
+- [x] 8.1 Reconcile Group 12 items 12.7, 12.8, 12.11, and 12.12 from actual
       W12 evidence while preserving completed predecessor items and W11's
       blocked historical record.
-- [ ] 8.2 Complete W12 REPORT.md with the mandated sections and exactly one
+- [x] 8.2 Complete W12 REPORT.md with the mandated sections and exactly one
       truthful wave verdict.
-- [ ] 8.3 Run focused W12/OpenSpec checks and all required local validation:
+- [x] 8.3 Run focused W12/OpenSpec checks and all required local validation:
       typechecks, hardening, continuity/project/workspace/session checks,
       universe validation, gate:local, full tests, and gate:clean.
-- [ ] 8.4 Inspect privacy/diff/deletions/evidence, reconcile if origin moved,
+- [x] 8.4 Inspect privacy/diff/deletions/evidence, reconcile if origin moved,
       integrate fast-forward through C-00, verify `HEAD == origin/main`,
       release, and remove the W12 session worktree through the CLI.
-- [ ] 8.5 Record final live Git/session evidence and set W12 task routing to
+- [x] 8.5 Record final live Git/session evidence and set W12 task routing to
       the terminal state required by the selected verdict.

@@ -4,24 +4,24 @@
 
 Task ID: nightwatch-current-source-unknown-yield-w12-v1
 Phase: CURRENT_SOURCE_UNKNOWN_YIELD_W12_V1
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: 4e763f3f079863a262906a8b134539e309c8d054
-Last validated implementation SHA: ae06d4d675d878f67b93234a21100ef94d9fed25
-Last substantive checkpoint SHA: ae06d4d675d878f67b93234a21100ef94d9fed25
-Last documentation checkpoint SHA: fb372375922143babf9d93b7bc4f32cc08c1d671
+Last validated implementation SHA: 6ac0b546d1542cea745eb86c282f8a47855cf645
+Last substantive checkpoint SHA: 6ac0b546d1542cea745eb86c282f8a47855cf645
+Last documentation checkpoint SHA: 2088689098a65ffeccc05656ba56b289efd2009b
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
-Branch: session/nightwatch-current-source-unknow-75aee275
+Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 4e763f3f079863a262906a8b134539e309c8d054
-LAST_VALIDATED_IMPLEMENTATION_SHA: ae06d4d675d878f67b93234a21100ef94d9fed25
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: ae06d4d675d878f67b93234a21100ef94d9fed25
-LAST_DOCUMENTATION_CHECKPOINT_SHA: fb372375922143babf9d93b7bc4f32cc08c1d671
+LAST_VALIDATED_IMPLEMENTATION_SHA: 6ac0b546d1542cea745eb86c282f8a47855cf645
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 6ac0b546d1542cea745eb86c282f8a47855cf645
+LAST_DOCUMENTATION_CHECKPOINT_SHA: 2088689098a65ffeccc05656ba56b289efd2009b
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PROJECT_VERDICT_EFFECT: PRESERVE
-PHASE_CURRENT_SOURCE_UNKNOWN_YIELD_W12_V1_STATUS: IN_PROGRESS
+PHASE_CURRENT_SOURCE_UNKNOWN_YIELD_W12_V1_STATUS: COMPLETE
 
 ## Objective
 
@@ -32,12 +32,10 @@ evidence-bounded W12 verdict.
 
 ## Current Milestone
 
-Milestone ID: M10
-Milestone status: IN_PROGRESS
-What is being attempted: reconcile the final W12 report, parent Group 12
-successor ledger, programme state, and governed current-state documentation.
-Next action: update all governed documentation to the receipt-derived
-`PARTIAL — BLOCKED` result, then run the complete validation and release path.
+COMPLETE — M11 validation, integration, release, and verdict. The final W12
+report, Group 12 successor ledger, programme state, governed current-state
+surfaces, validation evidence, and receipt-derived `PARTIAL — BLOCKED` verdict
+were reconciled.
 
 ## Completed Milestones
 
@@ -127,16 +125,15 @@ Next action: update all governed documentation to the receipt-derived
 
 ## Work In Progress
 
-M5 through M9 are complete: the broad result and all eight repository-scoped
+None — M0 through M11 are complete: the broad result and all eight repository-scoped
 runs are recorded in frozen registry order; candidates, refusals, integrity
-probes, safety evidence, and receipt-derived aggregation are closed. M10 is
-reconciling governed documentation for the provider-blocked wave result.
+probes, safety evidence, receipt-derived aggregation, governed documentation,
+and the final validation record are closed.
 
 ## Exact Next Action
 
-Update `REPORT.md`, the parent Group 12/programme state, and governed
-current-state surfaces to `PARTIAL — BLOCKED`, then run the required
-validation, privacy/diff review, C-00 integration, release, and cleanup.
+STOP — W12 is complete with the receipt-derived `PARTIAL — BLOCKED` verdict;
+any retry requires fresh owner authorization.
 
 ## Files Changed
 
@@ -205,6 +202,12 @@ validation, privacy/diff review, C-00 integration, release, and cleanup.
   providerFailures=3, while the existing HOUR_1 runtime policy records
   providerFailures=8. The discrepancy is preserved as an integrity finding;
   no freeze mutation or post-result tuning was performed.
+- Final focused and repository validation: W12 freeze integrity 2/2,
+  continuity 5/5, review-store hardening 23/23, direct synthetic campaign
+  1,897/1,897 with `deepContainmentLane: PROVEN`, and full `npm test` 5,265
+  passed / 0 failed / 18 skipped. The fixed local gate passed its first nine
+  groups and timed out only at the ten-minute synthetic lane bound; this is
+  preserved as a bounded environment result, not a test failure.
 
 ## Decisions Made During This Task
 
@@ -255,13 +258,10 @@ validation, privacy/diff review, C-00 integration, release, and cleanup.
 
 ## Blockers
 
-The scoped matrix is categorically provider-blocked after the broad valid run:
-all eight scoped runs have zero provider response bytes and no source action.
-The broad run's provider failures and the frozen/runtime provider-failure
-ceiling discrepancy remain preserved; provider failure is not projected as
-zero yield. Final wave classification is expected to be `PARTIAL — BLOCKED`
-unless a later integrity or validation result requires the stricter `FAILED`
-class.
+None for this completed wave. The scoped matrix remains categorically
+provider-blocked after the broad valid run: all eight scoped runs have zero
+provider response bytes and no source action. Provider failure is not
+projected as zero yield; any retry requires a fresh owner-authorized wave.
 
 ## Safety Events
 
@@ -284,17 +284,14 @@ authority remain permanently out of scope for this wave.
 
 ## Resume Recipe
 
-1. Read `.agent/ACTIVE_TASK.md`, this task's `SPEC.md`, `PLAN.md`, and `STATE.md`.
-2. Confirm the owned W12 session and discover live Git/workspace truth.
-3. Continue from `Next action` and do not rerun W11's historical arm.
-4. Update this state after every milestone, decision, safety event, and before
-   any context compaction or session end.
+Task complete. Do not resume this task; a provider retry requires a fresh
+owner-authorized wave and freeze.
 
 ## Completion Snapshot
 
-W12 is IN_PROGRESS at M10. The broad run reached all eight repositories and
-produced 2 candidates, 0 qualifying reproductions, 0 admissions, and 2
-`MISSING_REPRODUCTION` refusals. Scoped runs 01–08 are provider-blocked with
-no source opportunity; aggregation and integrity proofs are complete. Governed
-documentation, validation, integration, and the final verdict remain open.
-No novelty class is applicable because no new admission exists.
+W12 is COMPLETE at M11 with the exact final verdict `PARTIAL — BLOCKED`. The
+broad run reached all eight repositories and produced 2 candidates, 0
+qualifying reproductions, 0 admissions, and 2 `MISSING_REPRODUCTION`
+refusals. Scoped runs 01–08 are provider-blocked with no source opportunity;
+aggregation, integrity proofs, governed documentation, and validation are
+closed. No novelty class is applicable because no new admission exists.
