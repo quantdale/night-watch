@@ -10,17 +10,18 @@ Last validated implementation SHA: ae06d4d675d878f67b93234a21100ef94d9fed25
 Last checkpoint: the frozen broad run completed with a valid provider result;
 its sanitized receipt records 3 investigations, 35 reasoner calls, 8 provider
 failures, 2 candidates, 0 qualifying reproductions, and 2
-`MISSING_REPRODUCTION` refusals. The owner-local raw checkpoint is preserved;
-the required post-run sibling identity is unchanged.
+`MISSING_REPRODUCTION` refusals. Scoped run 01 then provider-blocked
+`alphauslabs/blue-sdk-go` after 6 runtime timeouts with zero response bytes;
+its owner-local raw checkpoint and unchanged sibling identity are preserved.
 W11 is preserved as `PARTIAL — BLOCKED`: its historical arm measured strict
 EXACT `0/13` with zero leakage, while its unknown arm was invalid on provider
 timeout and produced no yield. W12 is a distinct owner-authorized successor;
 its provider is frozen at `opencode-go/glm-5.3`, and W12 remains in the fixed
 scoped matrix.
 Current milestone: M5 — repository-scoped campaign matrix
-Next action: run `w12-repository-01` for `alphauslabs/blue-sdk-go` with the
-same provider and `--max-turns=6` under the declared 30-minute outer ceiling;
-record its machine receipt and after-run sibling identity before repository 02.
+Next action: run `w12-repository-02` for `alphauslabs/blueapi` with the same
+provider and `--max-turns=6` under the declared 30-minute outer ceiling;
+record its machine receipt and after-run sibling identity before repository 03.
 Authorization class: CURRENT_SOURCE_UNKNOWN_YIELD_W12_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2

@@ -36,10 +36,10 @@ Milestone ID: M5
 Milestone status: IN_PROGRESS
 What is being attempted: execute the eight frozen repository-scoped campaigns
 in registry order with the same provider and unchanged policy.
-Next action: run `w12-repository-01` for `alphauslabs/blue-sdk-go` through the
+Next action: run `w12-repository-02` for `alphauslabs/blueapi` through the
 ordinary bounded local campaign path with `--duration=1h` and an external
 30-minute wall ceiling, then capture its result and after-run sibling identity
-before repository 02.
+before repository 03.
 
 ## Completed Milestones
 
@@ -63,6 +63,11 @@ before repository 02.
   provider result, and terminated at the existing runtime budget boundary.
   Its sanitized receipt is `evidence/broad-run-result.json`; its owner-local
   raw checkpoint remains outside Git at the recorded path.
+- Scoped 01 complete: `w12-repository-01` for `alphauslabs/blue-sdk-go` was
+  provider-blocked after 6 `REASONER_TIMEOUT` failures, with zero response
+  bytes, zero source actions, zero candidates, and no yield denominator. Its
+  sanitized receipt is `evidence/scoped-01-run-result.json` and its after-run
+  identity receipt is `evidence/sibling-identity-after-scoped-01.json`.
 
 ## Work In Progress
 
@@ -121,6 +126,10 @@ receipt; do not reselect the provider or tune the matrix.
   `sha256:8ea18e4fe5e9315271dd55df`.
 - Freeze checkpoint commit: `dce063d6f52faf2ce87b028afb8702a65e4de422`;
   `frozenAtSha` remains the pre-freeze parent `05caa0671d95f7a29ea56fb470ec14dfce01fece`.
+- `w12-repository-01`: provider-blocked `BUDGET_EXHAUSTED` after 777,439 ms;
+  1 investigation, 6 reasoner calls, 6 runtime timeouts, 0 response bytes,
+  0 source actions, 0 candidates, and 0 admissions. Receipt:
+  `evidence/scoped-01-run-result.json`.
 - Broad run `w12-broad-all-repositories-1`: PASS as a valid provider run;
   terminal `BUDGET_EXHAUSTED` after 2,432,425 ms, 3 investigations, 35 calls,
   28 tool actions, 8 provider failures, 2 candidates, 2 reproduction
@@ -203,5 +212,6 @@ authority remain permanently out of scope for this wave.
 
 W12 is IN_PROGRESS at M5. The broad run reached all eight repositories and
 produced 2 candidates, 0 qualifying reproductions, 0 admissions, and 2
-`MISSING_REPRODUCTION` refusals; no scoped run, novelty class, or completion
-verdict exists yet.
+`MISSING_REPRODUCTION` refusals. Scoped run 01 is provider-blocked with no
+source opportunity; scoped runs 02–08, novelty, aggregation, and the final
+verdict remain open.
