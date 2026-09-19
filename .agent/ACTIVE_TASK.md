@@ -1,96 +1,58 @@
 # Active Task
 
-Task ID: nightwatch-current-source-unknown-yield-w12-v1
-Phase: CURRENT_SOURCE_UNKNOWN_YIELD_W12_V1
-Title: W12 — Current-source unknown-defect yield
-Status: COMPLETE
-Task directory: .agent/tasks/nightwatch-current-source-unknown-yield-w12-v1
-Starting SHA: 4e763f3f079863a262906a8b134539e309c8d054
-Last validated implementation SHA: 68d834b9bf5befb7225332c2563aa261f4374794
-Last checkpoint: W12 evidence, governed documentation, validation, and the
-receipt-derived `PARTIAL — BLOCKED` verdict are closed. The valid broad run
-reached all eight repositories, produced 2 candidates and 0 admissions, and
-all eight scoped runs remain provider-blocked before source actions. W11 is
-preserved unchanged as the blocked predecessor. The final C-00 lifecycle
-operations are the terminal integration, release, removal, and clean-gate
-checks for this checkpoint.
-Current milestone: COMPLETE — M11 validation, integration, release, and verdict
-Next action: STOP — W12 is complete; any retry requires fresh owner authorization.
-Authorization class: CURRENT_SOURCE_UNKNOWN_YIELD_W12_V1
+Task ID: nightwatch-exhaustive-repository-audit-proposals-v1
+Phase: EXHAUSTIVE_REPOSITORY_AUDIT_PROPOSALS_V1
+Title: Exhaustive repository audit and OpenSpec proposals
+Status: IN_PROGRESS
+Task directory: .agent/tasks/nightwatch-exhaustive-repository-audit-proposals-v1
+Starting SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
+Last validated implementation SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
+Last checkpoint: The owned session is valid; the umbrella OpenSpec change is 4/4 complete and strict-valid; the 2,593-path starting-tree coverage denominator is frozen in `audit.md`.
+Current milestone: M0 — governed activation and audit coverage model
+Next action: Read the required durable architecture/safety documents completely, finish the existing-planning authority index, and begin M1 repository topology/tooling inspection.
+Authorization class: EXHAUSTIVE_REPOSITORY_AUDIT_PROPOSALS_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
-STARTING_SHA: 4e763f3f079863a262906a8b134539e309c8d054
-LAST_VALIDATED_IMPLEMENTATION_SHA: 68d834b9bf5befb7225332c2563aa261f4374794
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 68d834b9bf5befb7225332c2563aa261f4374794
-LAST_DOCUMENTATION_CHECKPOINT_SHA: 2b6a5f19a44654c7f798114a91e0442bb3aec57a
+STARTING_SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
+LAST_VALIDATED_IMPLEMENTATION_SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
-PHASE_CURRENT_SOURCE_UNKNOWN_YIELD_W12_V1_STATUS: COMPLETE
+PHASE_EXHAUSTIVE_REPOSITORY_AUDIT_PROPOSALS_V1_STATUS: IN_PROGRESS
 
 ## Mission
 
-Measure current-source investigation breadth and mechanically admitted defect
-yield across the owner-authorized eight-repository universe. Preserve W11 as
-frozen predecessor evidence, keep provider failure distinct from zero yield,
-keep candidates distinct from admissions, and finish with a truthful W12
-verdict or an evidenced `PARTIAL — BLOCKED` outcome.
+Inspect the complete Nightwatch repository using read-only evidence, identify and prioritize every material correctness, security, safety, reliability, performance, architecture, maintainability, validation, and test gap, and capture each coherent remediation scope in detailed OpenSpec proposal artifacts. Do not implement product changes.
 
 ## Read order
 
-1. `.agent/tasks/nightwatch-current-source-unknown-yield-w12-v1/{SPEC,PLAN,STATE}.md`
-2. `openspec/changes/nightwatch-current-source-unknown-yield-w12-v1/`
-3. W11 task/evidence and Production Completion Group 12 predecessor record
-4. `AGENTS.md`, durable safety/current-state/decision/roadmap documents, then
-   live Git/workspace/session truth.
-
-## Frozen predecessor boundary
-
-W11's historical EXACT arm, hidden corpus, provider-blocked unknown run, and
-its preserved evidence are read-only predecessor inputs. W12 MUST NOT expose
-W11 hidden truth to the investigative reasoner, re-run the historical arm, or
-alter W11's measured result.
+1. `.agent/tasks/nightwatch-exhaustive-repository-audit-proposals-v1/{SPEC,PLAN,STATE}.md`
+2. `AGENTS.md`, `docs/CURRENT_STATE.md`, `docs/SAFETY_MODEL.md`, `docs/DECISIONS.md`, `docs/ROADMAP.md`, and `docs/ARCHITECTURE.md`
+3. Existing active and archived OpenSpec changes, tests, source, configuration, tooling, Git history, and validation evidence needed to distinguish new issues from already-planned work
 
 ## Routing and safety
 
 ```
-CAMPAIGN: nightwatch-current-source-unknown-yield-w12-v1
+CAMPAIGN: nightwatch-exhaustive-repository-audit-proposals-v1
 CHILD TASK: NONE
-WAVE: W12
-SESSION WORKTREE: NONE
+WAVE: AUDIT-PROPOSALS-V1
+SESSION WORKTREE: session/nightwatch-exhaustive-repository-ef157f7a
 
 IMPLEMENTATION AUTHORIZED:
-  this task directory, its OpenSpec change, W12 evaluation/measurement
-  harnesses, repository-local implementation needed to truthfully execute and
-  measure current-source yield, the Group 12 successor ledger, parent
-  autonomous-programme state, Nightwatch docs and governed README/current-
-  state yield surfaces, and commits/pushes/integration from this owned C-00
-  session worktree.
+  task continuity files, OpenSpec audit/proposal/design/spec/task artifacts,
+  validation of those planning artifacts, and durable planning checkpoints.
 
-ALPHAUS DEV CONTACT:                   NOT AUTHORIZED
-ALPHAUS NEXT CONTACT:                  NOT AUTHORIZED
-PRODUCTION CONTACT:                    NOT AUTHORIZED
-AUTHENTICATED ALPHAUS RUNTIME:         NOT AUTHORIZED
-DATABASE / DATA-PLANE ACCESS:          NOT AUTHORIZED
-GCP / GKE / KUBERNETES / AWS:          NOT AUTHORIZED
-SLACK / LESLIE / PONDR / NOTION:       NOT AUTHORIZED
-ISSUE / PR CREATION:                   NOT AUTHORIZED
-EXTERNAL PUBLICATION:                  NOT AUTHORIZED
-SIBLING REPOSITORY MUTATION:           NOT AUTHORIZED
-SIBLING DEPENDENCY INSTALLATION:       NOT AUTHORIZED
-FORCE PUSH / HISTORY REWRITE:          NOT AUTHORIZED
-WEAKENING ADMISSION CRITERIA:          NOT AUTHORIZED
-LEAKING HIDDEN GROUND TRUTH:           NOT AUTHORIZED
-PROVIDER EGRESS VIA REASONER CLI:      AUTHORIZED
-SIBLING READ (all 8 admitted, r/o):    AUTHORIZED
-CONTAINED LOCAL REPRODUCTION:          AUTHORIZED, already-admitted classes only
-NOVELTY ADJUDICATION:                  AUTHORIZED, post-admission/read-only only
+PRODUCT SOURCE IMPLEMENTATION:             NOT AUTHORIZED
+ALPHAUS DEV / NEXT / PRODUCTION CONTACT:   NOT AUTHORIZED
+AUTHENTICATED ALPHAUS RUNTIME:             NOT AUTHORIZED
+DATABASE / DATA-PLANE ACCESS:              NOT AUTHORIZED
+CLOUD / INFRASTRUCTURE OPERATIONS:         NOT AUTHORIZED
+SIBLING REPOSITORY MUTATION:               NOT AUTHORIZED
+EXTERNAL PUBLICATION / ISSUE / PR:         NOT AUTHORIZED
+FORCE PUSH / HISTORY REWRITE:              NOT AUTHORIZED
+SIBLING READ:                              NOT REQUIRED; NIGHTWATCH REPO ONLY
+LOCAL READ-ONLY COMMANDS AND TESTS:         AUTHORIZED
+OPENSPEC ARTIFACT WRITES:                   AUTHORIZED
 ```
 
-LOCAL / OWNER-LOCAL only. Provider network access is allowed ONLY through the
-existing configured reasoner CLI path; that is not authorization for Nightwatch
-or product traffic to any Alphaus environment. Sibling repositories are read
-only, with identity checked before and after reproduction. Hidden historical
-ground truth must never reach the reasoner; leakage aborts yield publication.
-
-C-00 governs all writers: one writing agent == one owned worktree == one
-session identity. The canonical checkout is not an implementation worktree.
+This is a planning-only campaign. Findings must be grounded in current code, tests, configuration, docs, and deterministic local evidence. Existing proposals must be deduplicated rather than restated as new defects. No implementation task may be checked off as performed.
