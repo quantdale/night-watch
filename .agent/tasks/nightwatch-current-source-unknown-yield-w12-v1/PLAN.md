@@ -54,7 +54,7 @@ metrics from receipts, and adjudicate novelty only after admission.
   preserve W11, and reconcile live Git/session truth.
 - Acceptance: active routing points to W12; C-00 owned session is live; task
   files and predecessor references are coherent; W11 evidence is unchanged.
-- Status: COMPLETE
+- **Status:** COMPLETE
 
 ### M1 — Provider-selection policy and provider freeze
 
@@ -62,7 +62,7 @@ metrics from receipts, and adjudicate novelty only after admission.
   provider before any W12 investigative result.
 - Acceptance: policy and sanitized probes are committed; provider identity,
   CLI/toolchain and result classification are fixed, or W12 is blocked.
-- Status: COMPLETE
+- **Status:** COMPLETE
 
 ### M2 — Current-universe census and contamination firewall
 
@@ -70,7 +70,7 @@ metrics from receipts, and adjudicate novelty only after admission.
   hidden-truth boundaries.
 - Acceptance: exact eight-repository census is current/non-vacuous; before
   snapshots exist; firewall canaries catch planted forbidden data.
-- Status: COMPLETE
+- **Status:** COMPLETE
 
 ### M3 — W12 evaluation freeze and integrity guards
 
@@ -78,14 +78,14 @@ metrics from receipts, and adjudicate novelty only after admission.
   dimensions fingerprinted and fail-closed.
 - Acceptance: freeze fingerprint is recorded before investigation; negative
   probes detect provider/scope/budget/stopping/admission/repository changes.
-- Status: COMPLETE
+- **Status:** COMPLETE
 
 ### M4 — Broad all-repository campaign
 
 - Objective: run the frozen broad campaign through the ordinary bounded path.
 - Acceptance: valid receipt or truthful provider/currentness/safety blocker;
   every repository receives source investigation opportunity when available.
-- Status: COMPLETE — valid receipt; provider failures and early budget
+- **Status:** COMPLETE — valid receipt; provider failures and early budget
   termination preserved separately from yield.
 
 ### M5 — Eight repository-scoped campaigns
@@ -93,7 +93,7 @@ metrics from receipts, and adjudicate novelty only after admission.
 - Objective: execute each frozen repository-scoped run in registry order.
 - Acceptance: all eight are attempted or categorized by a declared blocker;
   Ouchan's only extended budget is unchanged; no result-driven tuning.
-- Status: COMPLETE — all eight scoped runs recorded; runs 01–08 were
+- **Status:** COMPLETE — all eight scoped runs recorded; runs 01–08 were
   provider-blocked before source actions.
 
 ### M6 — Mechanical reproduction and admission closeout
@@ -101,7 +101,7 @@ metrics from receipts, and adjudicate novelty only after admission.
 - Objective: route candidates through existing reproduction/dossier gates.
 - Acceptance: reproductions, `NOT_AVAILABLE`, `NOT_REPRODUCED`, admissions,
   and refusal reasons are receipt-derived; no weaker proof is added.
-- Status: COMPLETE — both broad candidates reached the existing reproduction
+- **Status:** COMPLETE — both broad candidates reached the existing reproduction
   path, were not reproduced, and were refused as `MISSING_REPRODUCTION`;
   scoped runs were provider-blocked with no candidates.
 
@@ -111,7 +111,7 @@ metrics from receipts, and adjudicate novelty only after admission.
   sources only after investigation/admission completes.
 - Acceptance: every admission gets one bounded novelty class and a safe
   comparison receipt; no organizational novelty is inferred from absence.
-- Status: COMPLETE — no mechanical admission existed, so novelty was recorded
+- **Status:** COMPLETE — no mechanical admission existed, so novelty was recorded
   as `NOT_APPLICABLE_NO_ADMISSION` and no organizational claim was made.
 
 ### M8 — Adversarial, leakage, sibling-write, and anti-gaming proofs
@@ -119,7 +119,7 @@ metrics from receipts, and adjudicate novelty only after admission.
 - Objective: prove the W12 integrity and safety boundaries live.
 - Acceptance: mutation probes fail closed; leakage canaries are positive;
   sibling identities and safety counters are zero/unchanged.
-- Status: COMPLETE — freeze mutations, widened resume refusal, leakage canary,
+- **Status:** COMPLETE — freeze mutations, widened resume refusal, leakage canary,
   sibling identity, and safety proofs pass.
 
 ### M9 — Mechanical yield aggregation
@@ -128,7 +128,7 @@ metrics from receipts, and adjudicate novelty only after admission.
   denominators.
 - Acceptance: candidates/admissions/refusals are distinct; provider-invalid
   data never becomes a zero; missing fields remain `NOT_CAPTURED`.
-- Status: COMPLETE — receipt-derived global, per-run, per-repository, and
+- **Status:** COMPLETE — receipt-derived global, per-run, per-repository, and
   denominator-qualified aggregation is recorded.
 
 ### M10 — Documentation and Group 12 reconciliation
@@ -137,7 +137,7 @@ metrics from receipts, and adjudicate novelty only after admission.
   ledger, README/current-state surfaces from evidence.
 - Acceptance: W11 remains historical; W12 result, limits and Group 12 states
   agree across all authoritative surfaces.
-- Status: IN_PROGRESS
+- **Status:** IN_PROGRESS
 
 ### M11 — Full validation, integration, release, and verdict
 
@@ -145,7 +145,7 @@ metrics from receipts, and adjudicate novelty only after admission.
 - Acceptance: required validation and gates pass or are truthfully classified;
   fast-forward integration proves `HEAD == origin/main`; session is released
   and removed; final verdict is exactly one allowed W12 class.
-- Status: NOT_STARTED
+- **Status:** NOT_STARTED
 
 ## Validation Strategy
 

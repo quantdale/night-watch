@@ -41,23 +41,23 @@ Next action: update all governed documentation to the receipt-derived
 
 ## Completed Milestones
 
-- M0 COMPLETE at activation checkpoint `5c011f08fe5e65d3d7f16d73259b8e9558154192`:
+- **M0 COMPLETE** at activation checkpoint `5c011f08fe5e65d3d7f16d73259b8e9558154192`:
   C-00 ownership, W12 continuity/OpenSpec routing, W11 preservation, project
   live-task alignment, and the pre-probe provider policy were committed before
   any provider call.
-- M1 COMPLETE: the committed first-pass policy selected
+- **M1 COMPLETE**: the committed first-pass policy selected
   `opencode-go/glm-5.3` after one valid structured probe; later candidates were
   not probed.
-- M2 COMPLETE: all eight repositories were CURRENT at the exact rebaselined
+- **M2 COMPLETE**: all eight repositories were CURRENT at the exact rebaselined
   SHAs; the source inventory admitted 4,124 files and the reproduction census
   found 1,120 executable files / 152 targets, all executable coverage in
   `mobingilabs/ouchan`; before-run identities and the contamination firewall
   are recorded.
-- M3 COMPLETE at freeze checkpoint `dce063d6f52faf2ce87b028afb8702a65e4de422`:
+- **M3 COMPLETE** at freeze checkpoint `dce063d6f52faf2ce87b028afb8702a65e4de422`:
   the broad-plus-eight-scoped matrix and all mutable policy dimensions are
   frozen at `sha256:8ea18e4fe5e9315271dd55df` before any investigative
   campaign call.
-- M4 COMPLETE: the broad run reached all eight repositories, produced a valid
+- **M4 COMPLETE**: the broad run reached all eight repositories, produced a valid
   provider result, and terminated at the existing runtime budget boundary.
   Its sanitized receipt is `evidence/broad-run-result.json`; its owner-local
   raw checkpoint remains outside Git at the recorded path.
@@ -106,18 +106,21 @@ Next action: update all governed documentation to the receipt-derived
   yield denominator. Its sanitized receipt is `evidence/scoped-08-run-result.json`
   and its after-run identity receipt is
   `evidence/sibling-identity-after-scoped-08.json`.
-- M6 COMPLETE: the two broad candidates each reached the existing contained
+- **M5 COMPLETE**: all eight fixed scoped runs were attempted in registry
+  order and ended in the recorded provider-blocked class without source
+  actions or result-driven scope changes.
+- **M6 COMPLETE**: the two broad candidates each reached the existing contained
   reproduction path, were not reproduced, and were refused as
   `MISSING_REPRODUCTION`; the eight provider-blocked scoped runs produced no
   candidates. No dossier or admission was synthesized.
-- M7 COMPLETE: no mechanical admission existed, so the separate novelty
+- **M7 COMPLETE**: no mechanical admission existed, so the separate novelty
   receipt is `NOT_APPLICABLE_NO_ADMISSION`; no local absence became an
   organizational novelty claim.
-- M8 COMPLETE: the committed freeze fingerprint recomputed, all six mutation
+- **M8 COMPLETE**: the committed freeze fingerprint recomputed, all six mutation
   classes changed it, widened resume failed with `CAMPAIGN_SCOPE_MISMATCH`,
   the contamination canary passed, and all nine after-run identity receipts
   match the before snapshot.
-- M9 COMPLETE: `evidence/global-yield-aggregation.json` derives the 9-run
+- **M9 COMPLETE**: `evidence/global-yield-aggregation.json` derives the 9-run
   matrix, 1 valid/8 blocked runs, 11 investigations, 83 calls, 56 provider
   failures, 2 candidates, 2 non-reproductions, 0 admissions, and explicit
   denominators from the preserved receipts.
@@ -236,6 +239,19 @@ validation, privacy/diff review, C-00 integration, release, and cleanup.
   source paths; only Ouchan supplied executable targets in the visible
   reproduction surface, while the run's two candidates were both refused for
   missing qualifying reproduction.
+- `npm run gate:local` at `6ac0b546` passed GATE_DEFINITION, STATIC,
+  HARDENING, HARDENING_PROBES, HANDOFF_TRUTH, PROJECT_TRUTH,
+  AGENT_CONTINUITY, SEMANTIC_COMPATIBILITY (2,127 total / 2,114 passed / 13
+  skipped), and OWNER_PROVENANCE (91 passed), then timed out in the fixed
+  SYNTHETIC_CAMPAIGN lane at its 10-minute MEDIUM bound; receipt
+  `receipt:sha256:c5107a12b6bd0a89263c5c2` is retained as a non-final
+  validation result.
+- The timeout interrupted a mutation-window cleanup in the synthetic lane;
+  the injected collector import was restored byte-for-byte before further
+  validation. `nw07ContinuityCoherence.test.ts` then passed 5/5,
+  `reviewStoreHardening.test.ts` passed 23/23 with exact cleanup, and the
+  direct synthetic campaign passed 1,897/1,897 with zero failures and
+  `deepContainmentLane: PROVEN`.
 
 ## Blockers
 
