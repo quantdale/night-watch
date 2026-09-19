@@ -62,3 +62,4 @@ capability spec stays readable after archiving.
 | nightwatch-control-center-placement-coverage-v1 | COMPLETE | CAPABILITY_BEARING | archived with specs; published: placement-coverage |
 | nightwatch-control-center-render-truth-v1 | COMPLETE | CAPABILITY_BEARING | archived with specs; published: render-truth |
 | nightwatch-control-center-style-and-absence-truth-v1 | COMPLETE | CAPABILITY_BEARING | archived with specs; published: style-and-absence-truth |
+| nightwatch-current-source-unknown-yield-w12-v1 | COMPLETE | CAPABILITY_BEARING | archived with specs; published: current-source-yield-measurement |

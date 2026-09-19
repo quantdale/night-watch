@@ -1,7 +1,15 @@
 # current-source-yield-measurement Specification
 
 ## Purpose
-TBD - created by archiving change nightwatch-current-source-unknown-yield-w12-v1. Update Purpose after archive.
+Define the current-source unknown-defect yield measurement capability introduced
+by W12 and carried forward by W13: preserve frozen predecessor evidence, declare
+provider selection before probing, prove the eight-repository current census and
+contamination firewall, freeze the complete run matrix before investigation,
+execute broad and repository-scoped campaigns under unchanged policy, keep
+mechanical reproduction and admission distinct from model text, treat provider
+failure as a measurement condition rather than zero yield, derive every metric
+from machine receipts with named denominators, and close with one truthful,
+evidence-bounded wave verdict.
 ## Requirements
 ### Requirement: W12 SHALL preserve W11 as a frozen predecessor
 
