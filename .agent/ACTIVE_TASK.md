@@ -6,7 +6,7 @@ Title: W12 — Current-source unknown-defect yield
 Status: COMPLETE
 Task directory: .agent/tasks/nightwatch-current-source-unknown-yield-w12-v1
 Starting SHA: 4e763f3f079863a262906a8b134539e309c8d054
-Last validated implementation SHA: 6ac0b546d1542cea745eb86c282f8a47855cf645
+Last validated implementation SHA: 68d834b9bf5befb7225332c2563aa261f4374794
 Last checkpoint: W12 evidence, governed documentation, validation, and the
 receipt-derived `PARTIAL — BLOCKED` verdict are closed. The valid broad run
 reached all eight repositories, produced 2 candidates and 0 admissions, and
@@ -20,8 +20,8 @@ Authorization class: CURRENT_SOURCE_UNKNOWN_YIELD_W12_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 4e763f3f079863a262906a8b134539e309c8d054
-LAST_VALIDATED_IMPLEMENTATION_SHA: 6ac0b546d1542cea745eb86c282f8a47855cf645
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 6ac0b546d1542cea745eb86c282f8a47855cf645
+LAST_VALIDATED_IMPLEMENTATION_SHA: 68d834b9bf5befb7225332c2563aa261f4374794
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 68d834b9bf5befb7225332c2563aa261f4374794
 LAST_DOCUMENTATION_CHECKPOINT_SHA: 2088689098a65ffeccc05656ba56b289efd2009b
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
