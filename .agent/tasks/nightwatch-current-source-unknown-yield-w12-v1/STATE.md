@@ -36,10 +36,10 @@ Milestone ID: M5
 Milestone status: IN_PROGRESS
 What is being attempted: execute the eight frozen repository-scoped campaigns
 in registry order with the same provider and unchanged policy.
-Next action: run `w12-repository-02` for `alphauslabs/blueapi` through the
+Next action: run `w12-repository-03` for `alphauslabs/blueinternal` through the
 ordinary bounded local campaign path with `--duration=1h` and an external
 30-minute wall ceiling, then capture its result and after-run sibling identity
-before repository 03.
+before repository 04.
 
 ## Completed Milestones
 
@@ -68,6 +68,11 @@ before repository 03.
   bytes, zero source actions, zero candidates, and no yield denominator. Its
   sanitized receipt is `evidence/scoped-01-run-result.json` and its after-run
   identity receipt is `evidence/sibling-identity-after-scoped-01.json`.
+- Scoped 02 complete: `w12-repository-02` for `alphauslabs/blueapi` was
+  provider-blocked after 6 `REASONER_TIMEOUT` failures, with zero response
+  bytes, zero source actions, zero candidates, and no yield denominator. Its
+  sanitized receipt is `evidence/scoped-02-run-result.json` and its after-run
+  identity receipt is `evidence/sibling-identity-after-scoped-02.json`.
 
 ## Work In Progress
 
@@ -213,5 +218,5 @@ authority remain permanently out of scope for this wave.
 W12 is IN_PROGRESS at M5. The broad run reached all eight repositories and
 produced 2 candidates, 0 qualifying reproductions, 0 admissions, and 2
 `MISSING_REPRODUCTION` refusals. Scoped run 01 is provider-blocked with no
-source opportunity; scoped runs 02–08, novelty, aggregation, and the final
-verdict remain open.
+source opportunity, and scoped run 02 has the same provider-blocked result;
+scoped runs 03–08, novelty, aggregation, and the final verdict remain open.
