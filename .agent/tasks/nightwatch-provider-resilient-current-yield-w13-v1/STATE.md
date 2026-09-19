@@ -33,35 +33,38 @@ policy exhaustion before sufficient investigation is `PROVIDER_BLOCKED`.
 
 ## Current Milestone
 
-Milestone ID: M0
+Milestone ID: M1
 Milestone status: IN_PROGRESS
-What is being attempted: governed W13 activation, C-00 ownership, OpenSpec
-route, W12 baseline archive/sync, and continuity/task artifact creation from
-the live W12 predecessor.
-Next action: validate the W13 task/OpenSpec surfaces and commit the activation
-checkpoint; then build and commit the Phase A residual register before fixing
-any entry.
+What is being attempted: build the Phase A residual register from W11, W12,
+Group 12, the parent programme, quality-gate definitions, provider/runtime
+budget policy, measurement/aggregation, provider failure handling, continuity,
+validation-universe, and documentation surfaces, and classify every entry with
+its Phase B blocking flag before fixing any entry.
+Next action: write and commit the residual register, then execute the register
+in order starting with the provider-failure budget mismatch.
 
 ## Completed Milestones
 
-- None. W11 and W12 predecessor evidence is frozen and preserved, not
-  reopened.
+- **M0 COMPLETE** at activation checkpoint `a95004a0` (follow-up `bdb781d4`):
+  C-00 session `session/nightwatch-provider-resilient-cu-623c6535` created and
+  claimed; W12 OpenSpec change archived into the specs baseline
+  (`openspec/specs/current-source-yield-measurement/`); W13 task/OpenSpec/
+  audit surfaces created; `.agent/ACTIVE_TASK.md` and
+  `.agent/EXECUTION_PROMPT.md` routed to W13; governed current-state snapshot
+  updated; all activation checks pass.
 
 ## Work In Progress
 
-M0 is validating the W13 task/OpenSpec surfaces, active routing, the archived
-W12 capability baseline, and the live-session binding before the activation
-checkpoint commit.
+M1 is assembling the residual register; no register entry has been fixed yet.
 
 ## Exact Next Action
 
-Run the focused activation validation (`npm run agent:check`,
-`npm run handoff:check`, `npm run project:check`, `npm run workspace:check`,
-`npm run session:check`, `openspec validate --strict`), inspect the diff and
-privacy surface, and commit the W13 activation checkpoint. Then execute
-`.agent/tasks/nightwatch-provider-resilient-current-yield-w13-v1` task section
-2 (Phase A residual register) and commit the register before fixing any entry.
-Do not probe any provider before the Phase B policy freeze.
+Build `.agent/tasks/nightwatch-provider-resilient-current-yield-w13-v1/residual-register.json`
+(or equivalent machine-readable register) covering every locally closable W12
+residual named in SPEC.md plus any additional locally closable gap found by
+inspection; classify each entry with exactly one `residual-closure` taxonomy
+class and a Phase B blocking flag; commit the register before fixing any
+entry. Do not probe any provider before the Phase B policy freeze.
 
 ## Files Changed
 
@@ -76,10 +79,24 @@ Do not probe any provider before the Phase B policy freeze.
 
 ## Validation Ledger
 
-- `npm run session:status`: PASS for the owned W13 session; the four
-  pre-existing stale worktrees remain warnings and are untouched.
-- Activation validation is pending the activation commit so the new OpenSpec
-  files become tracked (`handoff:check` requires tracked OpenSpec surfaces).
+- `npm run session:status`: PASS for the owned W13 session
+  (`session/nightwatch-provider-resilient-cu-623c6535`, base `34517c9b`); the
+  four pre-existing stale worktrees remain warnings and are untouched.
+- `npm ci --ignore-scripts`: PASS in the fresh worktree.
+- `openspec validate nightwatch-provider-resilient-current-yield-w13-v1 --strict`:
+  PASS; `openspec validate --all --strict`: 67 passed / 0 failed.
+- `openspec archive nightwatch-current-source-unknown-yield-w12-v1 -y`: PASS;
+  archived as `2026-09-19-nightwatch-current-source-unknown-yield-w12-v1`
+  with 12 requirements published to `openspec/specs/current-source-yield-measurement/`.
+- `npm run agent:check`: PASS at activation with pre-existing warnings
+  (stale-baseline/orphan tasks and the four stale worktrees); W13 strict
+  continuity errors: 0.
+- `npm run handoff:check`: PASS at activation; the prompt binds active task
+  W13 IN_PROGRESS, Campaign ID, tracked OpenSpec route, and Planned-From
+  `34517c9b`.
+- `npm run project:check`: PASS at clean activation commit `bdb781d4`.
+- `npm run workspace:check` and `npm run session:check`: PASS; owned session
+  valid, base CURRENT, canonical safe.
 
 ## Decisions Made During This Task
 

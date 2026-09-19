@@ -1,25 +1,25 @@
 ## 1. Prerequisites and C-00 activation
 
-- [ ] 1.1 Archive/sync `nightwatch-current-source-unknown-yield-w12-v1` into
+- [x] 1.1 Archive/sync `nightwatch-current-source-unknown-yield-w12-v1` into
       the `openspec/specs/` baseline so `current-source-yield-measurement`
       exists as an archived capability before this change's MODIFIED delta
       against it is itself archived. Touch only OpenSpec lifecycle files;
       do not alter W12's task state, evidence, or verdict.
-- [ ] 1.2 Re-verify live state: `npm run session:status`, `git status`/
+- [x] 1.2 Re-verify live state: `npm run session:status`, `git status`/
       branch/HEAD/origin/main/worktrees, `AGENTS.md`,
       `.agent/ACTIVE_TASK.md`, `.agent/EXECUTION_PROMPT.md`, W11 and W12
       SPEC/PLAN/STATE/REPORT, the parent autonomous programme, Production
       Completion Group 12, `docs/CURRENT_STATE.md`, `docs/SAFETY_MODEL.md`,
       `docs/DECISIONS.md`. Do not assume any SHA in this proposal is still
       live.
-- [ ] 1.3 Claim a fresh owned C-00 session/worktree via
+- [x] 1.3 Claim a fresh owned C-00 session/worktree via
       `bin/nightwatch-session.mjs`; route `.agent/ACTIVE_TASK.md` and
       `.agent/EXECUTION_PROMPT.md` to this task. Do not adopt, release, or
       modify the four pre-existing unrelated stale worktrees
       (`nightwatch-c4-real-pair-activation-v1`,
       `nightwatch-historical-wave1-v1`, `nightwatch-historical-wave2-v1`,
       `nightwatch-production-completion-programme-v1`).
-- [ ] 1.4 Create `.agent/tasks/nightwatch-provider-resilient-current-yield-w13-v1/{SPEC,PLAN,STATE}.md`
+- [x] 1.4 Create `.agent/tasks/nightwatch-provider-resilient-current-yield-w13-v1/{SPEC,PLAN,STATE}.md`
       and commit the activation checkpoint before any Phase A fix.
 
 ## 2. Phase A — Residual register

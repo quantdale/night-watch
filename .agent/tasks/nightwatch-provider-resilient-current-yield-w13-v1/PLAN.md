@@ -70,7 +70,8 @@ from receipts, and adjudicates novelty only after admission.
 - Acceptance: active routing points to W13; C-00 owned session is live; task
   files, OpenSpec change, and predecessor references are coherent; W11/W12
   evidence is unchanged.
-- **Status:** IN_PROGRESS
+- **Status:** COMPLETE — activation checkpoint `a95004a0` plus the W12
+  archive-index/purpose follow-up `bdb781d4`; all activation checks pass.
 
 ### M1 — Residual register
 

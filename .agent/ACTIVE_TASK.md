@@ -7,16 +7,17 @@ Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-provider-resilient-current-yield-w13-v1
 Starting SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
 Last validated implementation SHA: 68d834b9bf5befb7225332c2563aa261f4374794
-Last checkpoint: W13 activation is in progress from live main
-`34517c9b`. W12 is preserved as `PARTIAL — BLOCKED`: one valid broad run with
+Last checkpoint: W13 activation is COMPLETE at `a95004a0` (follow-up
+`bdb781d4`) from live main `34517c9b`. W12 is preserved as
+`PARTIAL — BLOCKED`: one valid broad run with
 2 candidates and 0 admissions, and eight scoped runs provider-blocked on the
 single frozen provider. W13 is a distinct owner-authorized successor whose
 Phase A must close every locally closable W12 residual before Phase B freezes
 a provider-resilience policy and executes the fixed broad-plus-eight-scoped
 matrix.
-Current milestone: M0 — governed activation and live rebaseline
-Next action: validate and commit the W13 activation checkpoint, then build and
-commit the Phase A residual register before fixing any entry. Do not probe any
+Current milestone: M1 — Phase A residual register
+Next action: build and commit the Phase A residual register with a taxonomy
+class and blocking flag per entry before fixing any entry. Do not probe any
 provider before the Phase B provider-resilience policy freeze is committed.
 Authorization class: PROVIDER_RESILIENT_CURRENT_YIELD_W13_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
