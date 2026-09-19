@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "nightwatch.w12-contamination-firewall-receipt.v1",
+  "capturedBeforeInvestigativeCall": true,
+  "requestBoundary": {
+    "hiddenHistoricalGroundTruthLoaded": false,
+    "currentSourceGroundTruthSeeded": false,
+    "knownFixMaterialLoaded": false,
+    "credentialsLoaded": false,
+    "customerValuesLoaded": false,
+    "rawAuthenticatedEvidenceLoaded": false,
+    "providerProbeRequestClass": "minimal-structured-terminate"
+  },
+  "canary": {
+    "method": "synthetic six-field leakage canary; no W11 values used",
+    "hiddenFieldsPlanted": 6,
+    "hiddenFieldsDetected": 6,
+    "multiFieldDetection": "PASS",
+    "unplantedRequestClean": "PASS",
+    "emptyFieldFalsePositiveGuard": "PASS"
+  },
+  "classification": "FIREWALL_READY_PRE_INVESTIGATION"
+}

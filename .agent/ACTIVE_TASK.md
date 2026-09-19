@@ -7,16 +7,18 @@ Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-current-source-unknown-yield-w12-v1
 Starting SHA: 4e763f3f079863a262906a8b134539e309c8d054
 Last validated implementation SHA: ae06d4d675d878f67b93234a21100ef94d9fed25
-Last checkpoint: W12 activation and pre-probe provider policy are committed at
-`5c011f08fe5e65d3d7f16d73259b8e9558154192`, from live main `4e763f3f`.
+Last checkpoint: W12 provider selection, current-source census, contamination
+firewall, and evaluation freeze are committed in the current freeze checkpoint
+from the W12 session; no investigative campaign call has started.
 W11 is preserved as `PARTIAL — BLOCKED`: its historical arm measured strict
 EXACT `0/13` with zero leakage, while its unknown arm was invalid on provider
 timeout and produced no yield. W12 is a distinct owner-authorized successor;
-it has not yet probed a provider or run an investigation.
-Current milestone: M1 — provider-selection policy and provider freeze
-Next action: probe the five declared candidates in ordinal order through the
-existing CLI, freeze the first valid structured provider or record
-`PARTIAL — BLOCKED`, then rebaseline the exact eight-repository universe.
+its provider is frozen at `opencode-go/glm-5.3`, and no investigative campaign
+call has started.
+Current milestone: M4 — broad all-repository campaign
+Next action: run `w12-broad-all-repositories-1` against all eight frozen
+repositories with the frozen provider, 60-minute wall ceiling, and unchanged
+bounded runtime policy; record a machine receipt before any scoped run.
 Authorization class: CURRENT_SOURCE_UNKNOWN_YIELD_W12_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2

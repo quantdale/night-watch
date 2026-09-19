@@ -1,0 +1,87 @@
+{
+  "schemaVersion": "nightwatch.w12-provider-selection-receipt.v1",
+  "campaignId": "nightwatch-current-source-unknown-yield-w12-v1",
+  "policyPath": ".agent/tasks/nightwatch-current-source-unknown-yield-w12-v1/provider-selection-policy.json",
+  "policyCommittedAtSha": "5c011f08fe5e65d3d7f16d73259b8e9558154192",
+  "declaredBeforeProbe": true,
+  "probeContract": {
+    "timeoutMs": 30000,
+    "maxAttemptsPerCandidate": 1,
+    "maxTotalProbes": 5,
+    "requestClass": "minimal-structured-terminate",
+    "adapter": "bin/nightwatch-reasoner-print.mjs",
+    "successRequirements": [
+      "exitCode=0",
+      "response schema is nightwatch.reasoner-turn-response.v1",
+      "bounded TERMINATE intent is present",
+      "response bytes > 0"
+    ]
+  },
+  "modelRegistry": {
+    "command": "opencode models",
+    "cliPath": "/home/dalepalaca/.opencode/bin/opencode",
+    "cliVersion": "1.18.31",
+    "observedExitCode": 124,
+    "observedOutcome": "PARTIAL_TIMEOUT_AFTER_DECLARED_CANDIDATES_ENUMERATED",
+    "rawOutputPersisted": false,
+    "candidatePresence": {
+      "opencode-go/glm-5.3": true,
+      "opencode-go/kimi-k3": true,
+      "opencode-go/qwen3.8-max": true,
+      "opencode-go/minimax-m3": true,
+      "opencode/nemotron-3.5-lightning-free": true
+    }
+  },
+  "probes": [
+    {
+      "ordinal": 1,
+      "provider": "opencode-go/glm-5.3",
+      "attempts": 1,
+      "outcome": "VALID_PROVIDER_RUN",
+      "exitCode": 0,
+      "responseSchema": "nightwatch.reasoner-turn-response.v1",
+      "intentKinds": ["TERMINATE"],
+      "terminationReason": "COMPLETE_NO_FINDING",
+      "responseBytes": 121,
+      "stderrBytes": 0,
+      "elapsedMs": "NOT_CAPTURED",
+      "rawResponsePersisted": false
+    },
+    {
+      "ordinal": 2,
+      "provider": "opencode-go/kimi-k3",
+      "attempts": 0,
+      "outcome": "NOT_PROBED_AFTER_FIRST_PASS"
+    },
+    {
+      "ordinal": 3,
+      "provider": "opencode-go/qwen3.8-max",
+      "attempts": 0,
+      "outcome": "NOT_PROBED_AFTER_FIRST_PASS"
+    },
+    {
+      "ordinal": 4,
+      "provider": "opencode-go/minimax-m3",
+      "attempts": 0,
+      "outcome": "NOT_PROBED_AFTER_FIRST_PASS"
+    },
+    {
+      "ordinal": 5,
+      "provider": "opencode/nemotron-3.5-lightning-free",
+      "attempts": 0,
+      "outcome": "NOT_PROBED_AFTER_FIRST_PASS"
+    }
+  ],
+  "selectedProvider": {
+    "provider": "opencode-go/glm-5.3",
+    "providerId": "opencode-go",
+    "model": "opencode-go/glm-5.3",
+    "invocationMode": "print",
+    "argvTemplate": ["run", "--model", "opencode-go/glm-5.3", "__PROMPT__"],
+    "adapter": "bin/nightwatch-reasoner-print.mjs",
+    "selectionRule": "FIRST_PASS_OF_DECLARED_PREFERENCE_ORDER",
+    "frozenForW12": true
+  },
+  "selectionStatus": "FROZEN_FIRST_VALID_PROVIDER",
+  "investigationStarted": false
+}

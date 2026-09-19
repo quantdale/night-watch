@@ -62,7 +62,7 @@ metrics from receipts, and adjudicate novelty only after admission.
   provider before any W12 investigative result.
 - Acceptance: policy and sanitized probes are committed; provider identity,
   CLI/toolchain and result classification are fixed, or W12 is blocked.
-- Status: IN_PROGRESS
+- Status: COMPLETE
 
 ### M2 — Current-universe census and contamination firewall
 
@@ -70,7 +70,7 @@ metrics from receipts, and adjudicate novelty only after admission.
   hidden-truth boundaries.
 - Acceptance: exact eight-repository census is current/non-vacuous; before
   snapshots exist; firewall canaries catch planted forbidden data.
-- Status: NOT_STARTED
+- Status: COMPLETE
 
 ### M3 — W12 evaluation freeze and integrity guards
 
@@ -78,14 +78,14 @@ metrics from receipts, and adjudicate novelty only after admission.
   dimensions fingerprinted and fail-closed.
 - Acceptance: freeze fingerprint is recorded before investigation; negative
   probes detect provider/scope/budget/stopping/admission/repository changes.
-- Status: NOT_STARTED
+- Status: COMPLETE
 
 ### M4 — Broad all-repository campaign
 
 - Objective: run the frozen broad campaign through the ordinary bounded path.
 - Acceptance: valid receipt or truthful provider/currentness/safety blocker;
   every repository receives source investigation opportunity when available.
-- Status: NOT_STARTED
+- Status: IN_PROGRESS
 
 ### M5 — Eight repository-scoped campaigns
 

@@ -14,28 +14,28 @@
 - [x] 2.1 Record the W12 provider-selection policy before any probe, including
       preference order, compatibility, budgets, retry/absence semantics,
       first-pass rule, and all-fail behavior.
-- [ ] 2.2 Execute the declared probes through the existing CLI, freeze the
+- [x] 2.2 Execute the declared probes through the existing CLI, freeze the
       first valid provider, and preserve sanitized probe evidence.
-- [ ] 2.3 Rebaseline exactly the eight admitted repositories, including live
+- [x] 2.3 Rebaseline exactly the eight admitted repositories, including live
       SHAs, eligibility, language/source counts, reproduction capabilities and
       refusal reasons.
-- [ ] 2.4 Capture before-run sibling identity snapshots and prove every source
+- [x] 2.4 Capture before-run sibling identity snapshots and prove every source
       checkout is current without modifying or installing in siblings.
-- [ ] 2.5 Build and verify the contamination firewall: no W11 hidden truth,
+- [x] 2.5 Build and verify the contamination firewall: no W11 hidden truth,
       fix material, credentials, customer data, or post-fix evidence reaches
       W12 investigative requests.
 
 ## 3. Machine-readable evaluation freeze
 
-- [ ] 3.1 Implement or reuse a versioned W12 freeze schema binding provider,
+- [x] 3.1 Implement or reuse a versioned W12 freeze schema binding provider,
       toolchain, universe, run order, budgets, scope, stopping, admission,
       leakage, novelty, safety, and denominator definitions.
-- [ ] 3.2 Freeze the broad plus eight repository-scoped run matrix with the
+- [x] 3.2 Freeze the broad plus eight repository-scoped run matrix with the
       declared Ouchan time exception before the first investigation.
 - [ ] 3.3 Add integrity and negative-probe coverage proving provider, scope,
       budget, stopping, admission, and repository mutations change/refuse the
       fingerprint and widened resume fails closed.
-- [ ] 3.4 Commit the W12 freeze and record its exact fingerprint in task state
+- [x] 3.4 Commit the W12 freeze and record its exact fingerprint in task state
       before any investigative model call.
 
 ## 4. Broad current-source campaign

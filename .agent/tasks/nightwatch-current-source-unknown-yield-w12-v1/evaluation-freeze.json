@@ -1,0 +1,205 @@
+{
+  "schemaVersion": "nightwatch.w12-evaluation-freeze.v1",
+  "campaignId": "nightwatch-current-source-unknown-yield-w12-v1",
+  "wave": "W12",
+  "frozenAtSha": "05caa0671d95f7a29ea56fb470ec14dfce01fece",
+  "frozenBeforeInvestigativeCall": true,
+  "provider": {
+    "providerId": "opencode-go",
+    "model": "opencode-go/glm-5.3",
+    "cliPath": "/home/dalepalaca/.opencode/bin/opencode",
+    "cliVersion": "1.18.31",
+    "invocationMode": "print",
+    "argvTemplate": ["run", "--model", "opencode-go/glm-5.3", "__PROMPT__"],
+    "adapter": "bin/nightwatch-reasoner-print.mjs",
+    "selectionRule": "FIRST_PASS_OF_DECLARED_PREFERENCE_ORDER",
+    "selectionReceipt": "evidence/provider-selection.json",
+    "policy": "provider-selection-policy.json"
+  },
+  "toolchain": {
+    "node": "v22.22.1",
+    "go": "go1.25.3 linux/amd64",
+    "git": "2.43.0",
+    "bubblewrap": "0.9.0"
+  },
+  "universe": {
+    "censusReceipt": "evidence/current-source-census.json",
+    "beforeIdentityReceipt": "evidence/sibling-identity-before.json",
+    "repositoryOrder": [
+      "alphauslabs/blue-sdk-go",
+      "alphauslabs/blueapi",
+      "alphauslabs/blueinternal",
+      "alphauslabs/grpc-chunk-parser",
+      "mobingilabs/ouchan",
+      "mobingilabs/ripple-api",
+      "mobingilabs/ripple-ui",
+      "mobingilabs/wave-api"
+    ],
+    "repositoryShas": {
+      "alphauslabs/blue-sdk-go": "8883ee3d3a073352626c8c35e20e9fc5ed765373",
+      "alphauslabs/blueapi": "691422e5dc81afd263d064986fb50fcb3ea432a9",
+      "alphauslabs/blueinternal": "bc629fa8adc9f5407a2b957bd1b2aecdc8b0d623",
+      "alphauslabs/grpc-chunk-parser": "66802f281698dfcf0903f0a117d4637fce3fd945",
+      "mobingilabs/ouchan": "565f00a87fb7616cc23c45d4ffeabee38a41c65f",
+      "mobingilabs/ripple-api": "4e3e200db3bda7b58bc250feb7f76997d95ae2cc",
+      "mobingilabs/ripple-ui": "d80b161b684d9153c7e5acaa65ae1752d93d8ba9",
+      "mobingilabs/wave-api": "46790c25ddea02c7d3ae65f6e6db766a9089a59f"
+    },
+    "currentnessRequired": "all eight status CURRENT and live SHA equal to frozen SHA",
+    "eligibleSourceFiles": 4124,
+    "executableSourceFiles": 1120,
+    "distinctExecutableTargets": 152,
+    "reproductionCoverageRepository": "mobingilabs/ouchan"
+  },
+  "matrix": [
+    {
+      "runId": "w12-broad-all-repositories-1",
+      "kind": "BROAD_ALL_REPOSITORIES",
+      "repositoryScope": null,
+      "scopeRepositories": "all eight in universe.repositoryOrder",
+      "wallClockCeilingMs": 3600000,
+      "maxTurnsPerInvestigation": 12,
+      "budgetException": "NONE"
+    },
+    {
+      "runId": "w12-repository-01",
+      "kind": "REPOSITORY_SCOPED",
+      "repositoryScope": "alphauslabs/blue-sdk-go",
+      "wallClockCeilingMs": 1800000,
+      "maxTurnsPerInvestigation": 6,
+      "budgetException": "NONE"
+    },
+    {
+      "runId": "w12-repository-02",
+      "kind": "REPOSITORY_SCOPED",
+      "repositoryScope": "alphauslabs/blueapi",
+      "wallClockCeilingMs": 1800000,
+      "maxTurnsPerInvestigation": 6,
+      "budgetException": "NONE"
+    },
+    {
+      "runId": "w12-repository-03",
+      "kind": "REPOSITORY_SCOPED",
+      "repositoryScope": "alphauslabs/blueinternal",
+      "wallClockCeilingMs": 1800000,
+      "maxTurnsPerInvestigation": 6,
+      "budgetException": "NONE"
+    },
+    {
+      "runId": "w12-repository-04",
+      "kind": "REPOSITORY_SCOPED",
+      "repositoryScope": "alphauslabs/grpc-chunk-parser",
+      "wallClockCeilingMs": 1800000,
+      "maxTurnsPerInvestigation": 6,
+      "budgetException": "NONE"
+    },
+    {
+      "runId": "w12-repository-05",
+      "kind": "REPOSITORY_SCOPED",
+      "repositoryScope": "mobingilabs/ouchan",
+      "wallClockCeilingMs": 3600000,
+      "maxTurnsPerInvestigation": 12,
+      "budgetException": "ONLY_EXECUTION_COVERAGE_EXCEPTION"
+    },
+    {
+      "runId": "w12-repository-06",
+      "kind": "REPOSITORY_SCOPED",
+      "repositoryScope": "mobingilabs/ripple-api",
+      "wallClockCeilingMs": 1800000,
+      "maxTurnsPerInvestigation": 6,
+      "budgetException": "NONE"
+    },
+    {
+      "runId": "w12-repository-07",
+      "kind": "REPOSITORY_SCOPED",
+      "repositoryScope": "mobingilabs/ripple-ui",
+      "wallClockCeilingMs": 1800000,
+      "maxTurnsPerInvestigation": 6,
+      "budgetException": "NONE"
+    },
+    {
+      "runId": "w12-repository-08",
+      "kind": "REPOSITORY_SCOPED",
+      "repositoryScope": "mobingilabs/wave-api",
+      "wallClockCeilingMs": 1800000,
+      "maxTurnsPerInvestigation": 6,
+      "budgetException": "NONE"
+    }
+  ],
+  "runtimeBudgetEnvelope": {
+    "ceilingName": "HOUR_1",
+    "reasonerCalls": 200,
+    "toolActions": 400,
+    "inputBytes": 5000000,
+    "outputBytes": 160000,
+    "toolPayloadBytes": 64000000,
+    "retries": 8,
+    "consecutiveFailures": 3,
+    "providerFailures": 3,
+    "wallClockIsTheOnlyRunSpecificCeiling": true
+  },
+  "investigationOrder": "broad first, then repository-scoped runs in universe.repositoryOrder",
+  "sourceAndReproduction": {
+    "sourceClass": "CURRENT_SOURCE_ONLY",
+    "permittedReproductionClasses": ["GO_VENDORED_PACKAGE_TEST", "CURRENT_SOURCE_REPEATED_TEST_FAILURE"],
+    "newReproductionClassesPermitted": false,
+    "reproductionUnavailableIsNotZeroYield": true
+  },
+  "admission": {
+    "authority": "existing mechanical reproduction/dossier admission only",
+    "candidateAndAdmissionDistinct": true,
+    "missingReproductionRefusal": "MISSING_REPRODUCTION",
+    "manualDossierInsertion": false,
+    "syntheticEvidenceRefs": false,
+    "forgedReproductionCounts": false
+  },
+  "novelty": {
+    "phase": "POST_ADMISSION_ONLY",
+    "classes": ["MATCHES_EXISTING_NIGHTWATCH_KNOWN_DEFECT", "NEW_TO_FROZEN_NIGHTWATCH_CORPUS", "NOVELTY_AMBIGUOUS"],
+    "alphausConfirmedRequiresIndependentEvidence": true,
+    "readOnly": true
+  },
+  "contaminationFirewall": {
+    "receipt": "evidence/contamination-firewall.json",
+    "historicalGroundTruthToReasoner": "PROHIBITED",
+    "currentSourceGroundTruthSeeding": "PROHIBITED",
+    "credentialsCustomerValuesAuthenticatedEvidence": "PROHIBITED"
+  },
+  "metricDenominators": {
+    "plannedRuns": 9,
+    "plannedInvestigations": "NOT_CAPTURED_BEFORE_RUN",
+    "plannedReasonerCalls": "NOT_CAPTURED_BEFORE_RUN",
+    "candidates": "all mechanically proposed candidate identities",
+    "reproductions": "all contained executor receipts",
+    "admissions": "all mechanical dossier/admission receipts",
+    "providerFailures": "provider failure receipts only; never folded into zero-yield denominator",
+    "missingFields": "NOT_CAPTURED, never zero"
+  },
+  "stoppingAndRetry": {
+    "runStops": "terminal campaign state or its frozen wall-clock ceiling",
+    "reasonerRetryAuthority": "host-owned existing runtime policy",
+    "providerRetryPolicy": "no provider reselection after first valid provider; no unplanned retry",
+    "budgetExtension": "forbidden",
+    "scopeExtension": "forbidden",
+    "resultDrivenTuning": "forbidden"
+  },
+  "safety": {
+    "devNextProduction": "NOT_AUTHORIZED",
+    "databaseDataPlaneCloudInfrastructure": "NOT_AUTHORIZED",
+    "siblingWritesAndInstalls": "forbidden",
+    "externalPublicationIssuePrCreation": "forbidden",
+    "forcePushHistoryRewrite": "forbidden",
+    "postRunIdentityReceiptRequired": true
+  },
+  "integrity": {
+    "providerMutation": "must change fingerprint or fail closed",
+    "scopeMutation": "must change fingerprint and widened resume must fail closed",
+    "budgetMutation": "must change fingerprint",
+    "stoppingMutation": "must change fingerprint",
+    "admissionMutation": "must change fingerprint",
+    "repositoryMutation": "must change fingerprint",
+    "freezeMustBeCommittedBeforeInvestigation": true
+  },
+  "freezeFingerprint": "sha256:8ea18e4fe5e9315271dd55df",
+  "status": "FROZEN_PRE_INVESTIGATION"
+}

@@ -32,14 +32,15 @@ evidence-bounded W12 verdict.
 
 ## Current Milestone
 
-Milestone ID: M1
+Milestone ID: M4
 Milestone status: IN_PROGRESS
-What is being attempted: execute the predeclared provider probes through the
-existing reasoner CLI and freeze the first valid structured provider before
-any W12 investigative call.
-Next action: probe the five declared candidates in ordinal order, recording
-one bounded sanitized outcome per candidate and stopping at the first valid
-provider; if all fail, preserve W12 as provider-blocked rather than zero-yield.
+What is being attempted: execute the frozen broad all-repository campaign with
+the selected provider and preserve its raw machine result, safety counters,
+and per-repository investigation opportunity.
+Next action: run `w12-broad-all-repositories-1` through the ordinary bounded
+local campaign path with all eight frozen repository identities, then capture
+the campaign result and post-run sibling identity snapshot before any scoped
+run.
 
 ## Completed Milestones
 
@@ -47,18 +48,29 @@ provider; if all fail, preserve W12 as provider-blocked rather than zero-yield.
   C-00 ownership, W12 continuity/OpenSpec routing, W11 preservation, project
   live-task alignment, and the pre-probe provider policy were committed before
   any provider call.
+- M1 COMPLETE: the committed first-pass policy selected
+  `opencode-go/glm-5.3` after one valid structured probe; later candidates were
+  not probed.
+- M2 COMPLETE: all eight repositories were CURRENT at the exact rebaselined
+  SHAs; the source inventory admitted 4,124 files and the reproduction census
+  found 1,120 executable files / 152 targets, all executable coverage in
+  `mobingilabs/ouchan`; before-run identities and the contamination firewall
+  are recorded.
+- M3 COMPLETE: the broad-plus-eight-scoped matrix and all mutable policy
+  dimensions are frozen at `sha256:8ea18e4fe5e9315271dd55df` before any
+  investigative campaign call.
 
 ## Work In Progress
 
-M1 is executing only the committed provider-selection policy. No W12
-investigative result or provider freeze exists yet.
+M4 is executing the first broad all-repository run. No W12 campaign result,
+candidate, reproduction, admission, or novelty class exists yet.
 
 ## Exact Next Action
 
-Run the five declared bounded provider probes in order through the existing
-CLI, classify each result mechanically, freeze the first valid provider or
-record `PARTIAL — BLOCKED` if all candidates fail, then rebaseline the exact
-eight-repository current-source universe. Do not re-run W11's historical arm.
+Run `w12-broad-all-repositories-1` with the frozen `opencode-go/glm-5.3`
+provider, all eight repositories, `--duration=1h`, and `--max-turns=12` under
+the 60-minute wall ceiling. Preserve the machine result and post-run identity
+receipt; do not reselect the provider or tune the matrix.
 
 ## Files Changed
 
@@ -70,6 +82,8 @@ eight-repository current-source universe. Do not re-run W11's historical arm.
 - `docs/CURRENT_STATE.md` — W12 live-state cross-check and successor snapshot.
 - `openspec/changes/nightwatch-current-source-unknown-yield-w12-v1/**` —
   governed W12 proposal, design, spec, tasks and audit.
+- `.agent/tasks/nightwatch-current-source-unknown-yield-w12-v1/evaluation-freeze.json`
+  and `evidence/**` — provider, census, firewall, identity, and freeze receipts.
 
 ## Validation Ledger
 
@@ -89,6 +103,18 @@ eight-repository current-source universe. Do not re-run W11's historical arm.
 - `npm run project:check`: PASS at clean activation commit `5c011f08`.
 - `npm run typecheck:bin`: PASS in reporting mode (`14/71` conforming,
   `1342` existing non-conformance diagnostics, `0` exemptions).
+- Provider probe: PASS for `opencode-go/glm-5.3`; exit 0, valid structured
+  response, bounded TERMINATE, one attempt; later declared candidates were not
+  probed after first pass.
+- Current-source rebaseline: PASS for 8/8 CURRENT repositories with exact
+  expected/live SHA equality; source inventory is truthfully TRUNCATED at the
+  Ouchan source-file-count bound, with 4,124 admitted files captured.
+- Reproduction census: PASS; 4,124 eligible / 1,120 executable / 152 targets,
+  with all executable coverage in Ouchan and refusal classes preserved.
+- `npx playwright test tests/unit/w11LeakageCanary.test.ts --project=nightwatch
+  --workers=1`: PASS, 5 tests.
+- W12 freeze JSON parse and fingerprint recomputation: PASS,
+  `sha256:8ea18e4fe5e9315271dd55df`.
 
 ## Decisions Made During This Task
 
@@ -101,6 +127,9 @@ eight-repository current-source universe. Do not re-run W11's historical arm.
   candidates are not explored after the first valid pass.
 - Activation and provider policy are checkpointed at `5c011f08` before any
   provider probe.
+- The W12 provider, exact eight-repository census, contamination boundary,
+  fixed matrix, budgets, metric denominators, safety rules, and novelty timing
+  are frozen before the broad run.
 
 ## Discoveries
 
@@ -110,6 +139,9 @@ eight-repository current-source universe. Do not re-run W11's historical arm.
   historical EXACT `0/13`, no unknown-arm yield, and no fabricated finding.
 - Existing topology has four stale owner-attention worktrees. W12 does not
   adopt or modify them.
+- The live source inventory remains TRUNCATED because Ouchan exceeded the
+  source-file-count enumeration bound; this is recorded as an uncertainty,
+  never projected as complete source population.
 
 ## Blockers
 
@@ -137,6 +169,6 @@ authority remain permanently out of scope for this wave.
 
 ## Completion Snapshot
 
-W12 is IN_PROGRESS at M1. The provider policy is committed, but no provider
-probe, W12 investigation result, current-source yield, novelty class, or
-completion verdict exists yet.
+W12 is IN_PROGRESS at M4. The provider, census, firewall, and freeze are
+committed. No broad/scoped campaign result, candidate, reproduction,
+admission, novelty class, or completion verdict exists yet.
