@@ -137,7 +137,9 @@ from receipts, and adjudicates novelty only after admission.
   failed provider call mints no progress.
 - Acceptance: dedicated negative probes pass; provider failure remains
   provider-blocked, never zero yield.
-- **Status:** NOT_STARTED
+- **Status:** COMPLETE — R-07/R-08 `PROVEN`: the admission invariant rejects
+  a self-declared admission, and the fake-failing-provider regression proves
+  zero progress and `PROVIDER_BLOCKED` (5/5 tests).
 
 ### M8 — Group 12 and continuity reconciliation
 

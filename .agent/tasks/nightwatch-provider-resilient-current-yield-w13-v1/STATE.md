@@ -33,21 +33,25 @@ policy exhaustion before sufficient investigation is `PROVIDER_BLOCKED`.
 
 ## Current Milestone
 
-Milestone ID: M7
+Milestone ID: M8
 Milestone status: IN_PROGRESS
-What is being attempted: close R-07 and R-08 by adding the fixture-based
-candidate/admission invariant negative probe (`admitted: true` with no
-reproduction receipt, evidence reference, or dossier identity must be rejected
-by aggregation) and the regression proving a failed provider call mints no
-source action, inspected target, hypothesis, candidate, admission, or dossier,
-and that repeated provider failure produces a provider-blocked result rather
-than a valid zero-yield result.
-Next action: implement the admission-invariant validator and the
-fake-progress regression against the existing runtime path, then update R-07
-and R-08.
+What is being attempted: close R-09/R-10/R-11 (Group 12 items 12.7, 12.8,
+12.11, 12.12 re-annotation; parent `PROGRAMME.json` reconciliation to W12
+COMPLETE and W13 routing; governed current-state/README yield figures) without
+deleting or rewriting predecessor annotations.
+Next action: update the Group 12 annotations and `PROGRAMME.json` from Phase A
+evidence, reconcile governed documentation, and update register entries R-09,
+R-10, and R-11.
 
 ## Completed Milestones
 
+- **M7 COMPLETE**: R-07 and R-08 `PROVEN`. The aggregation rejects a
+  self-declared admission without a reproduction receipt, evidence refs, and
+  dossier identity; the fake-failing-provider regression proves zero response
+  bytes, zero tool actions, zero hypotheses/candidates/admissions/dossiers,
+  and `PROVIDER_BLOCKED` rather than a valid zero-yield result. Receipts:
+  `evidence/r07-admission-invariant-receipt.json`,
+  `evidence/r08-fake-progress-guard-receipt.json`.
 - **M6 COMPLETE**: R-04 and R-06 `PROVEN`. The W13 measurement contract
   enforces 30 required global metrics (missing metric / unknown metric /
   NOT_CAPTURED-without-reason all fail closed) and per-provider attribution
@@ -96,19 +100,18 @@ and R-08.
 
 ## Work In Progress
 
-M7 is implementing the admission invariant and fake-progress guards; no
-validator or regression is committed yet.
+M8 is reconciling Group 12, the parent programme, and governed documentation;
+no annotation is committed yet.
 
 ## Exact Next Action
 
-Implement the mechanical admission-invariant check over the W13 aggregate
-(a fixture with `admitted: true` and no reproduction receipt, evidence
-reference, or dossier identity must be rejected), and the fake-progress
-regression over the existing runtime path with a fake failing provider
-(no source action, target, hypothesis, candidate, admission, or dossier from a
-failed call; repeated failure yields provider-blocked, never valid zero
-yield); update register entries R-07 and R-08 to `PROVEN` with receipts. Do
-not probe any provider before the Phase B policy freeze.
+Re-annotate Production Completion Group 12 items 12.7, 12.8, 12.11, and 12.12
+as far as Phase A evidence supports while preserving predecessor text; update
+`.agent/tasks/nightwatch-autonomous-bug-hunting-programme-v1/PROGRAMME.json`
+(`currentWave`, `exactNextAction`, `resumeRecipe`, `YIELD_W12.status`); and
+reconcile the governed current-state/README surfaces. Then update register
+entries R-09, R-10, and R-11. Do not probe any provider before the Phase B
+policy freeze.
 
 ## Files Changed
 

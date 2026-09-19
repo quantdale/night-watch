@@ -55,13 +55,13 @@ test.describe('W13 aggregate completeness contract', () => {
   });
 
   test('a complete aggregate passes, and NOT_CAPTURED is only legal with a reason', () => {
-    const complete = { schemaVersion: YIELD_AGGREGATE_SCHEMA_VERSION, metrics: completeMetrics() };
+    const complete = { schemaVersion: YIELD_AGGREGATE_SCHEMA_VERSION, metrics: completeMetrics(), admissionRecords: [] };
     expect(validateAggregateCompleteness(complete).ok).toBe(true);
 
     const withoutReason = completeMetrics();
     delete (withoutReason as Record<string, unknown>).providerRetries;
     (withoutReason as Record<string, MetricValue>).providerRetries = { kind: 'NOT_CAPTURED', reason: '' };
-    const checked = validateAggregateCompleteness({ schemaVersion: YIELD_AGGREGATE_SCHEMA_VERSION, metrics: withoutReason });
+    const checked = validateAggregateCompleteness({ schemaVersion: YIELD_AGGREGATE_SCHEMA_VERSION, metrics: withoutReason, admissionRecords: [] });
     expect(checked.ok).toBe(false);
     if (!checked.ok) {
       expect(checked.violations.map((violation) => violation.code)).toContain('YIELD_METRIC_NOT_CAPTURED_WITHOUT_REASON');
@@ -69,12 +69,12 @@ test.describe('W13 aggregate completeness contract', () => {
 
     const withReason = completeMetrics();
     withReason.providerRetries = notCaptured('provider CLI does not expose a retry counter for this transport');
-    expect(validateAggregateCompleteness({ schemaVersion: YIELD_AGGREGATE_SCHEMA_VERSION, metrics: withReason }).ok).toBe(true);
+    expect(validateAggregateCompleteness({ schemaVersion: YIELD_AGGREGATE_SCHEMA_VERSION, metrics: withReason, admissionRecords: [] }).ok).toBe(true);
   });
 
   test('an aggregate cannot smuggle in an unknown metric', () => {
     const metrics = { ...completeMetrics(), inventedMetric: measured(1) };
-    const checked = validateAggregateCompleteness({ schemaVersion: YIELD_AGGREGATE_SCHEMA_VERSION, metrics });
+    const checked = validateAggregateCompleteness({ schemaVersion: YIELD_AGGREGATE_SCHEMA_VERSION, metrics, admissionRecords: [] });
     expect(checked.ok).toBe(false);
     if (!checked.ok) {
       expect(checked.violations.map((violation) => violation.code)).toContain('YIELD_METRIC_UNKNOWN');

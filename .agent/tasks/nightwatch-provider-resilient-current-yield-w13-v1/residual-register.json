@@ -144,8 +144,11 @@
       ],
       "evidence": "No fixture proves that a record declaring `admitted: true` with no reproduction receipt, evidence reference, or dossier identity is rejected by aggregation; the invariant held only because such a record did not occur.",
       "whyItMatters": "An aggregation that trusts a self-declared admission flag would let model text mint an admission.",
-      "nextAction": "Add a fixture-based negative probe that aggregation fails closed on an inconsistent admission record, and wire the validation into the aggregation path.",
-      "closure": { "state": "OPEN", "receipt": null }
+      "nextAction": "Closed: admissionRecords is a required aggregate array and admitted=true requires reproductionReceipt, evidenceRefs, and dossierIdentity; the fixture negative probe rejects a self-declared admission.",
+      "closure": {
+        "state": "PROVEN",
+        "receipt": ".agent/tasks/nightwatch-provider-resilient-current-yield-w13-v1/evidence/r07-admission-invariant-receipt.json"
+      }
     },
     {
       "id": "R-08",
@@ -159,8 +162,11 @@
       ],
       "evidence": "W12 scoped receipts show zero source actions after six provider failures, but no regression asserts that a failed provider call cannot mint a source action, inspected target, hypothesis, candidate, admission, or dossier, nor that repeated failure yields a provider-blocked result rather than a valid zero-yield result.",
       "whyItMatters": "Provider failure must remain categorically distinct from a valid zero-yield measurement.",
-      "nextAction": "Add the failed-provider fake-progress regression over the existing runtime path with a fake failing provider.",
-      "closure": { "state": "OPEN", "receipt": null }
+      "nextAction": "Closed: the fake-failing-provider regression proves zero response bytes, zero tool actions, zero hypotheses, candidates, admissions, and dossiers; the checkpoint action log is reasoner-failures only, and classifyRunProviderOutcome reports PROVIDER_BLOCKED rather than a valid zero-yield result.",
+      "closure": {
+        "state": "PROVEN",
+        "receipt": ".agent/tasks/nightwatch-provider-resilient-current-yield-w13-v1/evidence/r08-fake-progress-guard-receipt.json"
+      }
     },
     {
       "id": "R-09",

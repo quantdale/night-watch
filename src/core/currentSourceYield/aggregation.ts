@@ -77,9 +77,22 @@ export const REQUIRED_GLOBAL_METRICS = Object.freeze([
 
 export type RequiredGlobalMetric = (typeof REQUIRED_GLOBAL_METRICS)[number];
 
+/** One candidate lifecycle record consumed by the aggregate. A record may
+ * only claim an admission when a qualifying reproduction receipt, at least
+ * one evidence reference, and a dossier identity all exist. */
+export interface CandidateAdmissionRecord {
+  readonly candidateId: string;
+  readonly admitted: boolean;
+  readonly reproductionReceipt?: string | null;
+  readonly evidenceRefs?: readonly string[];
+  readonly dossierIdentity?: string | null;
+}
+
 export interface YieldAggregateRecord {
   readonly schemaVersion: typeof YIELD_AGGREGATE_SCHEMA_VERSION;
   readonly metrics: Readonly<Record<string, MetricValue>>;
+  /** Required, even when empty: an admission cannot be hidden by omission. */
+  readonly admissionRecords: readonly CandidateAdmissionRecord[];
 }
 
 export interface AggregateViolation {
@@ -133,15 +146,47 @@ function validateMetricValue(metricId: string, value: unknown, violations: Aggre
 }
 
 /**
- * Mechanical completeness: every required metric is present and well formed.
- * A required metric that is genuinely impossible to capture must say so with
- * a reason; it can never simply be missing.
+ * The candidate/admission invariant (R-07). `admitted: true` requires all
+ * three mechanical artifacts; a self-declared flag alone is refused.
+ */
+export function validateAdmissionRecords(records: unknown): { readonly ok: true } | { readonly ok: false; readonly violations: readonly AggregateViolation[] } {
+  const violations: AggregateViolation[] = [];
+  if (!Array.isArray(records)) {
+    return { ok: false, violations: [{ code: 'YIELD_ADMISSION_RECORDS_MISSING', metricId: 'admissionRecords', detail: 'aggregate has no admissionRecords array' }] };
+  }
+  for (const record of records) {
+    if (!isRecord(record) || typeof record.candidateId !== 'string' || record.candidateId.length === 0 || typeof record.admitted !== 'boolean') {
+      violations.push({ code: 'YIELD_ADMISSION_RECORD_MALFORMED', metricId: 'admissionRecords', detail: 'record needs candidateId and admitted' });
+      continue;
+    }
+    if (!record.admitted) continue;
+    const hasReceipt = typeof record.reproductionReceipt === 'string' && record.reproductionReceipt.trim().length > 0;
+    const hasEvidence = Array.isArray(record.evidenceRefs) && record.evidenceRefs.length > 0 && record.evidenceRefs.every((item) => typeof item === 'string' && item.length > 0);
+    const hasDossier = typeof record.dossierIdentity === 'string' && record.dossierIdentity.trim().length > 0;
+    if (!hasReceipt || !hasEvidence || !hasDossier) {
+      violations.push({
+        code: 'YIELD_ADMISSION_WITHOUT_REPRODUCTION_RECEIPT',
+        metricId: record.candidateId,
+        detail: `admitted record lacks ${[!hasReceipt ? 'reproductionReceipt' : null, !hasEvidence ? 'evidenceRefs' : null, !hasDossier ? 'dossierIdentity' : null].filter(Boolean).join(', ')}`,
+      });
+    }
+  }
+  return violations.length === 0 ? { ok: true } : { ok: false, violations };
+}
+
+/**
+ * Mechanical completeness: every required metric is present and well formed,
+ * and the admission records satisfy the mechanical admission invariant. A
+ * required metric that is genuinely impossible to capture must say so with a
+ * reason; it can never simply be missing.
  */
 export function validateAggregateCompleteness(record: unknown): { readonly ok: true } | { readonly ok: false; readonly violations: readonly AggregateViolation[] } {
   const violations: AggregateViolation[] = [];
   if (!isRecord(record) || record.schemaVersion !== YIELD_AGGREGATE_SCHEMA_VERSION) {
     return { ok: false, violations: [{ code: 'YIELD_AGGREGATE_SCHEMA_UNSUPPORTED', metricId: '', detail: `schemaVersion must be ${YIELD_AGGREGATE_SCHEMA_VERSION}` }] };
   }
+  const admissionCheck = validateAdmissionRecords(record.admissionRecords);
+  if (!admissionCheck.ok) violations.push(...admissionCheck.violations);
   const metrics = isRecord(record.metrics) ? record.metrics : null;
   if (metrics === null) {
     return { ok: false, violations: [{ code: 'YIELD_AGGREGATE_METRICS_MISSING', metricId: '', detail: 'aggregate has no metrics object' }] };
@@ -174,6 +219,23 @@ export interface ProviderAttribution {
 }
 
 const ATTRIBUTION_NUMBER_FIELDS = ['calls', 'validResponses', 'failuresByClass', 'retries', 'responseBytes', 'stderrBytes', 'wallTimeMs'] as const;
+
+/**
+ * R-08: a run is a VALID provider run only when at least one provider
+ * returned positive response bytes AND the run performed positive source
+ * activity. Repeated provider failure with zero responses is
+ * PROVIDER_BLOCKED, never a valid zero-yield result. (Whether the frozen
+ * policy is exhausted is decided by the Phase B policy, not here.)
+ */
+export function classifyRunProviderOutcome(input: {
+  readonly validProviderResponses: number;
+  readonly providerResponseBytes: number;
+  readonly sourceActions: number;
+}): 'VALID_PROVIDER_RUN' | 'PROVIDER_BLOCKED' {
+  return input.validProviderResponses > 0 && input.providerResponseBytes > 0 && input.sourceActions > 0
+    ? 'VALID_PROVIDER_RUN'
+    : 'PROVIDER_BLOCKED';
+}
 
 /**
  * Per-provider attribution contract (R-04). A receipt that reports provider

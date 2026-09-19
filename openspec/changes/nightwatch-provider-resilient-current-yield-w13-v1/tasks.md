@@ -105,10 +105,10 @@
 
 ## 8. Phase A — Candidate/admission invariant and provider fake-progress guards
 
-- [ ] 8.1 Add a fixture-based negative probe: a record with
+- [x] 8.1 Add a fixture-based negative probe: a record with
       `admitted: true` and no reproduction receipt, evidence reference, or
       dossier identity must be rejected by aggregation.
-- [ ] 8.2 Add a regression proving a failed provider call cannot mint a
+- [x] 8.2 Add a regression proving a failed provider call cannot mint a
       source action, inspected target, hypothesis, candidate, admission, or
       dossier; repeated provider failure must produce a provider-blocked
       result, never a valid zero-yield result.
