@@ -32,15 +32,14 @@ evidence-bounded W12 verdict.
 
 ## Current Milestone
 
-Milestone ID: M4
+Milestone ID: M5
 Milestone status: IN_PROGRESS
-What is being attempted: execute the frozen broad all-repository campaign with
-the selected provider and preserve its raw machine result, safety counters,
-and per-repository investigation opportunity.
-Next action: run `w12-broad-all-repositories-1` through the ordinary bounded
-local campaign path with all eight frozen repository identities, then capture
-the campaign result and post-run sibling identity snapshot before any scoped
-run.
+What is being attempted: execute the eight frozen repository-scoped campaigns
+in registry order with the same provider and unchanged policy.
+Next action: run `w12-repository-01` for `alphauslabs/blue-sdk-go` through the
+ordinary bounded local campaign path with `--duration=1h` and an external
+30-minute wall ceiling, then capture its result and after-run sibling identity
+before repository 02.
 
 ## Completed Milestones
 
@@ -60,6 +59,10 @@ run.
   the broad-plus-eight-scoped matrix and all mutable policy dimensions are
   frozen at `sha256:8ea18e4fe5e9315271dd55df` before any investigative
   campaign call.
+- M4 COMPLETE: the broad run reached all eight repositories, produced a valid
+  provider result, and terminated at the existing runtime budget boundary.
+  Its sanitized receipt is `evidence/broad-run-result.json`; its owner-local
+  raw checkpoint remains outside Git at the recorded path.
 
 ## Work In Progress
 
@@ -118,6 +121,18 @@ receipt; do not reselect the provider or tune the matrix.
   `sha256:8ea18e4fe5e9315271dd55df`.
 - Freeze checkpoint commit: `dce063d6f52faf2ce87b028afb8702a65e4de422`;
   `frozenAtSha` remains the pre-freeze parent `05caa0671d95f7a29ea56fb470ec14dfce01fece`.
+- Broad run `w12-broad-all-repositories-1`: PASS as a valid provider run;
+  terminal `BUDGET_EXHAUSTED` after 2,432,425 ms, 3 investigations, 35 calls,
+  28 tool actions, 8 provider failures, 2 candidates, 2 reproduction
+  attempts, 0 qualifying reproductions, 0 admissions, and 2
+  `MISSING_REPRODUCTION` refusals. Sanitized receipt:
+  `evidence/broad-run-result.json`; raw checkpoint remains owner-local.
+- Broad after-run sibling identity: PASS; all eight heads and status digests
+  equal the before-run snapshot, with no sibling mutation detected.
+- `git` runtime budget comparison: the frozen supplemental envelope records
+  providerFailures=3, while the existing HOUR_1 runtime policy records
+  providerFailures=8. The discrepancy is preserved as an integrity finding;
+  no freeze mutation or post-result tuning was performed.
 
 ## Decisions Made During This Task
 
@@ -133,6 +148,9 @@ receipt; do not reselect the provider or tune the matrix.
 - The W12 provider, exact eight-repository census, contamination boundary,
   fixed matrix, budgets, metric denominators, safety rules, and novelty timing
   are frozen before the broad run and committed at `dce063d6f52faf2ce87b028afb8702a65e4de422`.
+- The broad result is valid because provider response bytes were non-zero and
+  structured, but its 8 provider failures remain a separate provider-failure
+  metric and are never treated as zero-yield evidence.
 
 ## Discoveries
 
@@ -145,16 +163,27 @@ receipt; do not reselect the provider or tune the matrix.
 - The live source inventory remains TRUNCATED because Ouchan exceeded the
   source-file-count enumeration bound; this is recorded as an uncertainty,
   never projected as complete source population.
+- Broad investigation reached all eight repositories and inspected 18 unique
+  source paths; only Ouchan supplied executable targets in the visible
+  reproduction surface, while the run's two candidates were both refused for
+  missing qualifying reproduction.
 
 ## Blockers
 
-None at activation. Provider availability and source currentness remain
-measured prerequisites; if either fails, W12 records a categorical block and
-does not publish zero yield.
+No categorical W12 blocker has been declared yet. The broad run's provider
+failures and the frozen/runtime provider-failure ceiling discrepancy are
+preserved for scoped-run and final-verdict reconciliation; provider failure is
+not projected as zero yield.
 
 ## Safety Events
 
-NONE.
+- Broad before/after identity receipts prove zero sibling HEAD or status-digest
+  drift. No DEV/NEXT/production/data-plane contact, sibling write/install,
+  publication, credential commit, hidden-truth leak, force-push, or history
+  rewrite was observed.
+- `RUNTIME_POLICY_MISMATCH_RECORDED`: the existing HOUR_1 policy exposed an
+  8-failure provider ceiling despite the W12 supplemental freeze field of 3;
+  no attempt was made to rewrite the committed freeze after execution.
 
 ## Deferred / Follow-Up
 
@@ -172,6 +201,7 @@ authority remain permanently out of scope for this wave.
 
 ## Completion Snapshot
 
-W12 is IN_PROGRESS at M4. The provider, census, firewall, and freeze are
-committed at `dce063d6f52faf2ce87b028afb8702a65e4de422`. No broad/scoped campaign result, candidate, reproduction,
-admission, novelty class, or completion verdict exists yet.
+W12 is IN_PROGRESS at M5. The broad run reached all eight repositories and
+produced 2 candidates, 0 qualifying reproductions, 0 admissions, and 2
+`MISSING_REPRODUCTION` refusals; no scoped run, novelty class, or completion
+verdict exists yet.

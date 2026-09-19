@@ -7,19 +7,20 @@ Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-current-source-unknown-yield-w12-v1
 Starting SHA: 4e763f3f079863a262906a8b134539e309c8d054
 Last validated implementation SHA: ae06d4d675d878f67b93234a21100ef94d9fed25
-Last checkpoint: W12 provider selection, current-source census, contamination
-firewall, and evaluation freeze were committed at `dce063d6f52faf2ce87b028afb8702a65e4de422`
-before any investigative campaign call; no investigative campaign call has
-started.
+Last checkpoint: the frozen broad run completed with a valid provider result;
+its sanitized receipt records 3 investigations, 35 reasoner calls, 8 provider
+failures, 2 candidates, 0 qualifying reproductions, and 2
+`MISSING_REPRODUCTION` refusals. The owner-local raw checkpoint is preserved;
+the required post-run sibling identity is unchanged.
 W11 is preserved as `PARTIAL — BLOCKED`: its historical arm measured strict
 EXACT `0/13` with zero leakage, while its unknown arm was invalid on provider
 timeout and produced no yield. W12 is a distinct owner-authorized successor;
-its provider is frozen at `opencode-go/glm-5.3`, and no investigative campaign
-call has started.
-Current milestone: M4 — broad all-repository campaign
-Next action: run `w12-broad-all-repositories-1` against all eight frozen
-repositories with the frozen provider, 60-minute wall ceiling, and unchanged
-bounded runtime policy; record a machine receipt before any scoped run.
+its provider is frozen at `opencode-go/glm-5.3`, and W12 remains in the fixed
+scoped matrix.
+Current milestone: M5 — repository-scoped campaign matrix
+Next action: run `w12-repository-01` for `alphauslabs/blue-sdk-go` with the
+same provider and `--max-turns=6` under the declared 30-minute outer ceiling;
+record its machine receipt and after-run sibling identity before repository 02.
 Authorization class: CURRENT_SOURCE_UNKNOWN_YIELD_W12_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2

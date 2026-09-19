@@ -40,11 +40,11 @@
 
 ## 4. Broad current-source campaign
 
-- [ ] 4.1 Run the frozen all-eight broad campaign through the ordinary bounded
+- [x] 4.1 Run the frozen all-eight broad campaign through the ordinary bounded
       Nightwatch product path with the frozen provider and evidence receipts.
-- [ ] 4.2 Preserve provider failures, retries, tool/payload byte accounting,
+- [x] 4.2 Preserve provider failures, retries, tool/payload byte accounting,
       source activity, investigation lifecycle, and exact termination reasons.
-- [ ] 4.3 Verify the broad run reaches every repository or records a mechanical
+- [x] 4.3 Verify the broad run reaches every repository or records a mechanical
       unavailability/blocker before continuing.
 
 ## 5. Repository-scoped campaign matrix

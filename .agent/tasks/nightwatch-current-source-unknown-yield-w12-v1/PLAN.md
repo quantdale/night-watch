@@ -85,14 +85,15 @@ metrics from receipts, and adjudicate novelty only after admission.
 - Objective: run the frozen broad campaign through the ordinary bounded path.
 - Acceptance: valid receipt or truthful provider/currentness/safety blocker;
   every repository receives source investigation opportunity when available.
-- Status: IN_PROGRESS
+- Status: COMPLETE — valid receipt; provider failures and early budget
+  termination preserved separately from yield.
 
 ### M5 — Eight repository-scoped campaigns
 
 - Objective: execute each frozen repository-scoped run in registry order.
 - Acceptance: all eight are attempted or categorized by a declared blocker;
   Ouchan's only extended budget is unchanged; no result-driven tuning.
-- Status: NOT_STARTED
+- Status: IN_PROGRESS
 
 ### M6 — Mechanical reproduction and admission closeout
 

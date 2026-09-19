@@ -1,0 +1,67 @@
+{
+  "schemaVersion": "nightwatch.w12-run-result.v1",
+  "campaignId": "w12-broad-all-repositories-1",
+  "kind": "BROAD_ALL_REPOSITORIES",
+  "scope": "all eight frozen repositories",
+  "validProviderResult": true,
+  "provider": "opencode-go/glm-5.3",
+  "ownerLocalRawCheckpoint": "/home/dalepalaca/.nightwatch/campaigns/w12-broad-all-repositories-1.checkpoint.json",
+  "terminationReason": "BUDGET_EXHAUSTED",
+  "wallTimeMs": 2432425,
+  "investigationsStarted": 3,
+  "investigationsCompleted": 3,
+  "reasonerCalls": 35,
+  "providerFailures": 8,
+  "providerRetries": "NOT_CAPTURED",
+  "runtimeRetries": 8,
+  "toolActions": 28,
+  "actionLogEntries": 46,
+  "providerResponseBytes": 16564,
+  "providerStderrBytes": 205,
+  "providerFailureClasses": {
+    "PROVIDER_RUNTIME_TIMEOUT": 5,
+    "PROVIDER_NONZERO_EXIT": 3
+  },
+  "renderedInputBytes": 515230,
+  "toolPayloadBytes": 521381,
+  "candidates": ["c1", "c2"],
+  "candidateCount": 2,
+  "reproductionAttempts": 2,
+  "reproductionExecutions": 2,
+  "reproductionNotAvailable": 0,
+  "reproductionNotReproduced": 2,
+  "qualifyingReproductions": 0,
+  "admissions": 0,
+  "refusalCounts": {
+    "MISSING_REPRODUCTION": 2
+  },
+  "dossierStatus": "REFUSED_NO_REPRODUCTION",
+  "hypothesesFormed": 4,
+  "hypothesisStatusCounts": {
+    "DISPROVED": 1,
+    "OPEN": 3
+  },
+  "investigationTerminationCounts": {
+    "COMPLETE_WITH_FINDING": 1,
+    "COMPLETE_NO_FINDING": 0,
+    "BUDGET_EXHAUSTED": 1,
+    "CANCELLED": 0,
+    "PAUSED": 0,
+    "SAFETY_BLOCKED": 0,
+    "NO_PROGRESS": 1,
+    "REASONER_FAILURE": 0
+  },
+  "repositoriesReached": 8,
+  "uniqueInspectedSourcePaths": 18,
+  "visibleSourceEntries": 32,
+  "visibleExecutableSources": 5,
+  "visibleExecutableTargets": 5,
+  "terminationSafety": "NO_SAFETY_BLOCK",
+  "novelty": "NOT_APPLICABLE_NO_ADMISSION",
+  "frozenBudgetComparison": {
+    "frozenProviderFailureCeiling": 3,
+    "observedRuntimeProviderFailureCeiling": 8,
+    "classification": "RUNTIME_POLICY_MISMATCH_RECORDED",
+    "note": "The existing HOUR_1 runtime policy exposed providerFailures=8 while the committed W12 envelope recorded 3. No freeze mutation or post-result tuning was performed; this discrepancy remains a W12 integrity finding."
+  }
+}
