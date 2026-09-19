@@ -1,0 +1,100 @@
+{
+  "schemaVersion": "nightwatch.w13-run-receipt.v1",
+  "runId": "w13-broad-all-repositories-1",
+  "kind": "BROAD_ALL_REPOSITORIES",
+  "repositoryScope": null,
+  "wallClockCeilingMs": 3600000,
+  "policyFingerprint": "sha256:a4865dbb6aea4114bfa8bdc9",
+  "freezeFingerprint": "sha256:a520d9630a20a3f67321fbb8",
+  "selectedProvider": "opencode-go/glm-5.3",
+  "startedAt": "2026-09-19T15:51:53.177Z",
+  "wallTimeMs": 2706882,
+  "validProviderResult": true,
+  "terminationReason": "BUDGET_EXHAUSTED",
+  "terminationClass": "VALID_PROVIDER_RUN",
+  "executionFailure": null,
+  "investigationsStarted": 8,
+  "investigationsCompleted": 8,
+  "reasonerCalls": 45,
+  "providerFailures": 8,
+  "candidateIds": [],
+  "candidateCount": 0,
+  "findingAdmissions": 0,
+  "reproductionCount": 0,
+  "dossierStatus": "NONE",
+  "actionLogEntries": 57,
+  "toolActions": 35,
+  "uniqueInspectedSourcePaths": 21,
+  "providerResponseBytes": 22810,
+  "providerStderrBytes": 447,
+  "renderedInputBytes": 687231,
+  "toolPayloadBytes": null,
+  "yieldMetrics": {
+    "schemaVersion": "nightwatch.w10-campaign-yield.v1",
+    "visibleSources": 32,
+    "visibleExecutableSources": 5,
+    "visibleExecutableTargets": 5,
+    "visibleRepositories": 8,
+    "reproductionAttempts": 4,
+    "executedAttempts": 4,
+    "notAvailableAttempts": 0,
+    "environmentBlockedAttempts": 0,
+    "erroredAttempts": 0,
+    "qualifyingReproductions": 0,
+    "repeatedUnsupportedAttempts": 0,
+    "distinctAttemptedTargets": 3,
+    "distinctExecutedTargets": 3,
+    "attemptsToFirstExecutedReproduction": 1,
+    "actionsToFirstExecutedReproduction": 5
+  },
+  "sourceOpportunity": "AVAILABLE",
+  "providerHealth": {
+    "activeProvider": "opencode-go/glm-5.3",
+    "degradedProviders": [],
+    "transitions": [],
+    "exhausted": false
+  },
+  "providers": [
+    {
+      "provider": "opencode-go/glm-5.3",
+      "calls": 45,
+      "validResponses": 37,
+      "validResponseBytes": 22810,
+      "stdoutBytes": 22810,
+      "stderrBytes": 138,
+      "wallTimeMs": 2507463,
+      "failuresByClass": {
+        "PROVIDER_NONZERO_EXIT": 3,
+        "PROVIDER_RUNTIME_TIMEOUT": 5
+      },
+      "retries": 8,
+      "transitionsIn": [],
+      "transitionsOut": []
+    }
+  ],
+  "terminationSafety": "NO_SAFETY_BLOCK",
+  "novelty": "NOT_APPLICABLE_NO_ADMISSION",
+  "ownerLocalRawCheckpoint": "/home/dalepalaca/.nightwatch/campaigns/w13-broad-all-repositories-1.checkpoint.json",
+  "reproductionAttemptsTool": 4,
+  "hypothesesFormed": 3,
+  "measurementCorrections": [
+    {
+      "field": "uniqueInspectedSourcePaths",
+      "from": 0,
+      "to": 21,
+      "reason": "the first harness revision read a non-existent arguments.path field; the checkpoint action log records the inspected target in `target` (SOURCE_FILE entries). Recomputed mechanically from the same owner-local checkpoint."
+    },
+    {
+      "field": "reproductionAttemptsTool",
+      "from": 0,
+      "to": 4,
+      "reason": "RERUN_SAFE_REPRODUCTION CALL_TOOL entries in the same checkpoint action log"
+    },
+    {
+      "field": "hypothesesFormed",
+      "from": 0,
+      "to": 3,
+      "reason": "checkpoint.state.hypotheses length"
+    }
+  ]
+}

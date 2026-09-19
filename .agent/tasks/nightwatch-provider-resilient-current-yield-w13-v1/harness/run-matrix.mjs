@@ -111,10 +111,19 @@ function summarizeActionLog(checkpoint) {
   const toolActions = actionLog.filter((record) => record.intentKind === 'CALL_TOOL');
   const inspected = new Set();
   for (const record of toolActions) {
-    const relative = record.arguments?.path;
-    if (typeof relative === 'string' && relative.length > 0) inspected.add(relative);
+    if (record.toolId !== 'INSPECT_SOURCE_SURFACE') continue;
+    const target = record.target;
+    if (typeof target === 'string' && target.length > 0) inspected.add(target);
   }
-  return { actionLogEntries: actionLog.length, toolActions: toolActions.length, uniqueInspectedSourcePaths: inspected.size };
+  const reproductionAttempts = toolActions.filter((record) => record.toolId === 'RERUN_SAFE_REPRODUCTION').length;
+  const hypotheses = Array.isArray(checkpoint?.state?.hypotheses) ? checkpoint.state.hypotheses.length : 0;
+  return {
+    actionLogEntries: actionLog.length,
+    toolActions: toolActions.length,
+    uniqueInspectedSourcePaths: inspected.size,
+    reproductionAttempts,
+    hypothesesFormed: hypotheses,
+  };
 }
 
 async function runOne(entry) {
@@ -202,6 +211,8 @@ async function runOne(entry) {
     actionLogEntries: actionSummary.actionLogEntries,
     toolActions: actionSummary.toolActions,
     uniqueInspectedSourcePaths: actionSummary.uniqueInspectedSourcePaths,
+    reproductionAttemptsTool: actionSummary.reproductionAttempts,
+    hypothesesFormed: actionSummary.hypothesesFormed,
     providerResponseBytes,
     providerStderrBytes: resultOrCheckpoint?.byteLedger?.providerStderrBytes ?? 0,
     renderedInputBytes: resultOrCheckpoint?.byteLedger?.renderedInputBytes ?? 0,
