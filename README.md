@@ -113,6 +113,13 @@ executed rather than omitting it.
   provider tier went down mid-wave, and an unexecutable arm is not reported as a
   zero-yield arm.
   `<!--status:MEASURED_YIELD_ADMITTED_FINDINGS=0-->` `<!--status:MEASURED_YIELD_EXACT_REDISCOVERY=0-->`
+- W12's owner-authorized current-source successor is **PARTIAL — BLOCKED**:
+  its valid broad run reached all eight repositories and produced 2 candidates,
+  2 non-reproductions, 2 `MISSING_REPRODUCTION` refusals, and 0 admissions;
+  all eight required scoped runs were provider-blocked before source actions.
+  Provider failure is not a zero-yield denominator, and W12 makes no claim
+  that the repositories contain no defects or that any candidate is an Alphaus
+  organizationally novel bug.
 - Semantic acceptance class: `COMPLETE_LOCAL_SYNTHETIC`; contained DEV
   acceptance is `NOT_PROVEN` and requires separate owner authorization.
   `<!--status:SEMANTIC_ACCEPTANCE_CLASS=COMPLETE_LOCAL_SYNTHETIC-->` `<!--status:SEMANTIC_DEV_RESULT=NOT_PROVEN-->`

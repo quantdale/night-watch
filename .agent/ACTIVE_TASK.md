@@ -23,7 +23,7 @@ timeout and produced no yield. W12 is a distinct owner-authorized successor;
 its provider is frozen at `opencode-go/glm-5.3`, and W12 remains in the fixed
 scoped matrix.
 Current milestone: M10 — documentation and Group 12 reconciliation
-Next action: reconcile the W12 report, parent Group 12 successor ledger,
+Next action: reconcile this report, the parent Group 12 successor ledger,
 programme state, and governed current-state documentation to the measured
 `PARTIAL — BLOCKED` result without rewriting W11.
 Authorization class: CURRENT_SOURCE_UNKNOWN_YIELD_W12_V1

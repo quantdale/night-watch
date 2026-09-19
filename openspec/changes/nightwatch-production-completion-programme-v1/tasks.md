@@ -1036,27 +1036,23 @@ investigative call.
       with `CAMPAIGN_SCOPE_MISMATCH` (exit 2) and an unapproved id with
       `REAL_SOURCE_SCAN_APPROVED_UNIVERSE`, both before any provider call.
 - [ ] 12.7 Execute across a materially wider slice of the eight admitted
-      repositories under the host-owned `--repository` scope — **BLOCKED.** The
-      broad run made 6 reasoner calls and all 6 returned `REASONER_TIMEOUT` with
-      zero provider response bytes. The `opencode-go` subscribed namespace is
-      degraded or quota-exhausted (frozen model 208 s timeout, sibling model in
-      the same namespace 125 s, a free-namespace model healthy at 14 s), while
-      the CLI and local stack are fine. The frozen provider was NOT swapped, the
-      threshold NOT lowered and configuration NOT changed to force availability.
-      Also note the standing ceiling: deterministic reproduction exists in
-      `mobingilabs/ouchan` alone, so investigation breadth (8) and execution
-      breadth (1) are different numbers regardless of provider health.
+      repositories under the host-owned `--repository` scope — **W11 BLOCKED;
+      W12 PARTIAL — BLOCKED.** W12 attempted one broad all-eight run followed
+      by all eight frozen scoped runs. The broad run reached all eight
+      repositories with a valid provider result; all eight scoped runs ended
+      before source actions (runs 01–03 runtime timeouts; runs 04–08 nonzero
+      exits). The frozen provider was not swapped, the threshold not lowered,
+      and scope/budget was not tuned. Evidence:
+      `.agent/tasks/nightwatch-current-source-unknown-yield-w12-v1/evidence/global-yield-aggregation.json`.
 - [ ] 12.8 Report investigations, calls, actions, unique targets, hypotheses,
       attempts, executions, candidates, admissions, false positives, leakage;
       abort on any leakage rather than publishing a yield beside it —
-      **PARTIAL.** `evidence/yield-accounting.json` reports the historical arm
-      mechanically with every denominator named. Leakage is 0 across 78 audited
-      request blobs so no abort was required, and the checker is proven live by
-      canaries. Two gaps are stated rather than papered over: six figures
-      (hypotheses formed/grounded/verification-ready/disproved, tool actions,
-      unique source targets) were NOT_CAPTURED by the first arm run and are not
-      estimated; the runner now derives them mechanically for future runs. The
-      unknown arm contributes no figures at all.
+      **W11 PARTIAL; W12 PARTIAL — BLOCKED.** W12 reports 11 investigations,
+      83 calls, 28 broad tool actions, 18 broad unique inspected source paths,
+      2 candidates, 2 reproduction attempts/executions, 2
+      `MISSING_REPRODUCTION` refusals, 0 admissions, provider failures 56,
+      leakage 0, and explicit `NOT_CAPTURED` fields in the receipt-derived
+      aggregation. Provider-blocked runs are not a zero-yield denominator.
 - [x] 12.9 Admit only through the existing mechanical path; refuse an admission
       with no reproduction as `MISSING_REPRODUCTION` — proven on live traffic:
       of 7 proposed candidates, 3 became dossiers (each with
@@ -1069,12 +1065,14 @@ investigative call.
       EXACT is structurally unreachable under leak-free conditions on this
       corpus, and reproduction capability exists in one of eight repositories.
 - [ ] 12.11 Publish the measured yield into the ledger-governed `README.md` and
-      current-state blocks — **PARTIAL.** The historical figure is publishable
-      and published; no unknown-arm yield exists to publish, and none is
-      invented.
-- [ ] 12.12 Full validation, integrate, release — `gate:local` PASS over all 12
-      required groups. Remaining validation and the release decision depend on
-      the blocked items above.
+      current-state blocks — **W12 PARTIAL — BLOCKED publication.** The W12
+      current-source result is published with its broad/scoped distinction,
+      provider blocker, candidate/refusal/admission separation, and no claim
+      of zero defects. W11's historical figure remains unchanged.
+- [ ] 12.12 Full validation, integrate, release — **W12 release path required;
+      wave verdict remains PARTIAL — BLOCKED.** Local/clean validation,
+      fast-forward integration, `HEAD == origin/main`, session release and
+      removal are recorded in the W12 report when complete.
 
 ## 13. Release definition and verdict
 

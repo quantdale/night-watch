@@ -1,72 +1,147 @@
 # W12 — Current-source unknown-defect yield — Report
 
-Status: IN_PROGRESS. This report is a living handoff and makes no completion
-claim until the frozen matrix, mechanical aggregation, safety certification,
-validation, integration, and C-00 release are complete.
+Status: IN_PROGRESS. The frozen matrix and evidence are complete; validation,
+documentation closure, integration, and C-00 release are still in progress.
 
 ## A. BASELINE
 
 - Starting SHA: `4e763f3f079863a262906a8b134539e309c8d054`
 - Predecessor: W11 `nightwatch-autonomous-yield-proof-w11-v1`,
   `PARTIAL — BLOCKED`; historical freeze and evidence remain immutable.
-- W12 provider/toolchain/census: not yet measured.
+- Provider/model: `opencode-go/glm-5.3` through opencode CLI `1.18.31`.
+- Toolchain: Node `v22.22.1`, Go `go1.25.3`, Git `2.43.0`, bubblewrap `0.9.0`.
+- Exact frozen universe: eight CURRENT repositories at the SHAs in
+  `evidence/current-source-census.json`; 4,124 eligible source files, 1,120
+  executable files, and 152 executable targets. Census completeness is
+  explicitly `TRUNCATED` at the Ouchan source-file bound.
+- W11 remains a separate immutable predecessor: historical EXACT `0/13`,
+  three mechanical admissions, four `MISSING_REPRODUCTION` refusals, and an
+  invalid provider-blocked unknown arm.
 
 ## B. EXPERIMENT FREEZE
 
-Not yet frozen. The provider-selection policy MUST be committed before probe;
-the evaluation freeze MUST be committed before the first investigative call.
+The predeclared first-pass policy selected `opencode-go/glm-5.3` after one
+valid structured probe; later preference entries were not probed. The complete
+W12 freeze was committed before investigation at
+`dce063d6f52faf2ce87b028afb8702a65e4de422`, with frozen pre-investigation SHA
+`05caa0671d95f7a29ea56fb470ec14dfce01fece` and fingerprint
+`sha256:8ea18e4fe5e9315271dd55df`. It binds the broad run, all eight scoped
+runs, exact repository SHAs, budgets, admission, stopping, safety, leakage,
+novelty, and denominator rules.
 
 ## C. COVERAGE
 
-Not yet executed. The intended matrix is one broad all-eight run plus eight
-stable repository-scoped runs. Investigation breadth and reproduction breadth
-will be reported separately.
+The fixed matrix was attempted in order: one broad all-eight run followed by
+eight repository-scoped runs. The broad run reached all eight repositories and
+produced valid source activity. Scoped runs 01–08 all ended provider-blocked
+before source actions; no provider or scope substitution occurred.
+
+| Run class | Planned | Attempted | Valid provider | Provider-blocked |
+|---|---:|---:|---:|---:|
+| Broad all-eight | 1 | 1 | 1 | 0 |
+| Repository-scoped | 8 | 8 | 0 | 8 |
+| **Total** | **9** | **9** | **1** | **8** |
+
+The broad run reached 8/8 repositories, inspected 18 unique source paths, and
+exposed 32 source entries / 5 executable sources. Scoped source opportunity was
+0/8 because the frozen provider failed before source actions.
 
 ## D. YIELD
 
-No W12 yield exists yet. Provider-invalid runs will not contribute zero-yield
-denominators; missing machine evidence will remain `NOT_CAPTURED`.
+All figures below are derived from the preserved machine receipts in
+`evidence/global-yield-aggregation.json`; provider-invalid runs are not
+converted into zero-yield observations.
+
+| Metric | W12 value | Denominator / interpretation |
+|---|---:|---|
+| Investigations started / completed | 11 / 11 | all attempted runs |
+| Reasoner calls | 83 | all attempted runs |
+| Tool actions | 28 | broad receipt; scoped runs had none |
+| Provider failures | 56 | failure receipts only; 23 timeouts, 33 nonzero exits |
+| Broad unique inspected source paths | 18 | valid broad run |
+| Candidates proposed | 2 (`c1`, `c2`) | candidate population |
+| Reproduction attempts / executions | 2 / 2 | candidate reproduction denominator |
+| Reproductions qualifying | 0 | 2 attempts, both not reproduced |
+| `MISSING_REPRODUCTION` refusals | 2 | candidate population |
+| Mechanical admissions | 0 | no dossier/admission synthesized |
+| Novelty adjudications | 0 | post-admission only; not applicable |
+| Leakage events | 0 | firewall and canary evidence |
+| Sibling identity changes | 0 | 9 after-run snapshots unchanged |
+
+Provider response bytes were 16,564 in the valid broad run. Scoped provider
+response bytes were 0. Fields not captured by scoped sanitized receipts remain
+`NOT_CAPTURED`; they are not silently treated as zero.
 
 ## E. FINDINGS
 
-None proposed or admitted at activation.
+Two broad candidates were mechanically proposed. Both reached the existing
+contained reproduction path, both were `NOT_REPRODUCED`, and both were refused
+as `MISSING_REPRODUCTION`. No candidate was promoted to a Nightwatch finding,
+and no Alphaus organizational novelty claim was made.
 
 ## F. ZERO-YIELD INTERPRETATION
 
-No zero-yield conclusion is available. If the valid frozen matrix produces zero
-admissions, that will mean no mechanically admitted defect was found within
-this campaign, not that the repositories contain no defects.
+The valid broad run contains zero admissions, but the complete current-source
+yield question is not certified as a zero-admission result because all eight
+required scoped runs were provider-blocked before source activity. Provider
+failure is a measurement condition, not a zero-yield denominator; W12 does not
+claim that the repositories contain no defects.
 
 ## G. DEFECTS FOUND IN NIGHTWATCH ITSELF
 
-None at activation. W11's harness correction remains predecessor evidence.
+No Nightwatch framework defect was exposed by W12 evidence. The W12 freeze
+guard received a focused regression test covering all six mutation classes and
+widened resume refusal. The committed freeze/runtime provider-failure ceiling
+mismatch (`3` frozen supplemental versus `8` existing HOUR_1 runtime) is
+preserved as an integrity warning; it was not tuned after results.
 
 ## H. PROVIDER HEALTH
 
-No W12 probe has run. The provider-selection policy and all outcomes will be
-recorded before investigation.
+The first valid probe selected `opencode-go/glm-5.3`. The broad run returned a
+valid structured response but encountered 8 provider failures and terminated at
+the existing budget boundary. Every scoped run then failed before a valid
+response: runs 01–03 had six runtime timeouts each; runs 04–08 had six nonzero
+exits each. The provider remained frozen and no later candidate was selected.
 
 ## I. SAFETY
 
-Activation safety events: none. DEV/NEXT/production/data-plane contact,
-sibling writes, leakage, credentials, publication, force pushes, and history
-rewrites are all required to remain zero.
+`evidence/final-safety-proof.json` records zero DEV/NEXT/production or
+database/data-plane contacts, zero authenticated browser runs, zero sibling
+writes/installs/fetches, zero credentials/customer values, zero hidden-truth
+leaks, zero issue/PR/publication events, and zero force-push/history-rewrite
+events. Provider CLI egress is reported separately and was the only authorized
+external egress. All nine after-run identity receipts match the before snapshot.
 
 ## J. VALIDATION
 
-Activation validation is pending. Required focused and full lanes are listed in
-PLAN.md and will be recorded with exact results.
+Focused W12 integrity validation passed: 2/2 tests in
+`tests/unit/w12EvaluationFreezeIntegrity.test.ts`. The remaining full local,
+clean-checkout, OpenSpec, continuity, privacy, and C-00 release checks are
+being run before this report is marked terminal.
 
 ## K. GIT / C-00
 
 W12 session: `session/nightwatch-current-source-unknow-75aee275`.
-Integration and release have not occurred.
+Integration and release are pending the final validation checkpoint. Raw
+campaign checkpoints remain owner-local under `/home/dalepalaca/.nightwatch/`
+and are not committed.
 
 ## L. GROUP 12
 
-W11's 12.1–12.6, 12.9, and 12.10 evidence remains historical. W12 will
-reconcile 12.7, 12.8, 12.11, and 12.12 from its own evidence.
+W11's 12.1–12.6, 12.9, and 12.10 evidence remains historical. W12 reconciles
+12.7 as provider-blocked after the broad-plus-eight-scoped attempt, 12.8 with
+receipt-derived metrics and explicit missing fields, 12.11 with the bounded
+current-state/README publication, and 12.12 through local validation,
+fast-forward integration, release, and session cleanup.
 
 ## M. FINAL VERDICT
 
-Not yet determined.
+`PARTIAL — BLOCKED`
+
+The broad run produced a valid measurement, but the eight scoped runs required
+for sufficient current-source coverage were provider-blocked before source
+actions. The exact unblock condition is a valid structured result from the
+frozen `opencode-go/glm-5.3` provider under the already committed policy; a
+future retry requires a fresh owner-authorized wave and freeze. This verdict is
+not a claim of zero defects, zero current-source yield, or organizational
+novelty.

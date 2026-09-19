@@ -112,13 +112,18 @@
       "freezeFingerprints": ["sha256:824deef9922975feab5af69f", "sha256:6145bd666dd08369ec38b018"]
     },
     "YIELD_W12": {
-      "status": "active",
+      "status": "blocked",
       "taskId": "nightwatch-current-source-unknown-yield-w12-v1",
       "role": "W12_CURRENT_SOURCE_UNKNOWN_YIELD",
       "baseSha": "4e763f3f079863a262906a8b134539e309c8d054",
-      "waveVerdict": "IN_PROGRESS",
+      "waveVerdict": "PARTIAL — BLOCKED",
       "objective": "Measure current-source investigation breadth and mechanically admitted defect yield across all eight approved repositories without reopening W11, leaking hidden truth, weakening admission, or tuning the experiment after results.",
-      "freezeFingerprint": "sha256:8ea18e4fe5e9315271dd55df"
+      "freezeFingerprint": "sha256:8ea18e4fe5e9315271dd55df",
+      "resultReceipt": ".agent/tasks/nightwatch-current-source-unknown-yield-w12-v1/evidence/global-yield-aggregation.json",
+      "matrix": "9 attempted; 1 valid broad; 8 provider-blocked scoped before source action",
+      "yieldSummary": "2 candidates; 2 mechanical reproduction attempts; 0 qualifying reproductions; 2 MISSING_REPRODUCTION refusals; 0 admissions; novelty not applicable",
+      "safetySummary": "leakage 0; sibling identity drift 0; prohibited contacts/writes/publication 0",
+      "blocker": "frozen opencode-go/glm-5.3 provider failed all eight scoped runs; a future retry requires fresh owner authorization and freeze"
     }
   },
   "proof": {

@@ -4938,3 +4938,31 @@ is wired to NO gate lane, which is why probe HC-059 could rot against an updated
 document and keep the campaign red at head without anyone seeing it. Registering
 the campaign as a gate group changes the authoritative gate definition and
 belongs in its own scoped change with its own receipt.
+
+## D-138 — W12 current-source yield remains provider-blocked after a valid broad run
+
+Recorded 2026-09-19 (W12 successor wave, `nightwatch-current-source-unknown-yield-w12-v1`).
+
+The owner-authorized successor froze a separate provider policy, exact eight-
+repository current-source census, broad-plus-eight-scoped matrix, mechanical
+admission rules, safety boundaries, and denominator definitions before its first
+investigative call. The first valid provider remained frozen at
+`opencode-go/glm-5.3`; result-driven reselection, scope widening, budget
+extension, and admission weakening were not permitted.
+
+The broad run is valid and reached all eight repositories. It proposed two
+candidates, executed two contained reproduction attempts, observed two
+`NOT_REPRODUCED` outcomes, and recorded two `MISSING_REPRODUCTION` refusals;
+there were zero mechanical admissions. All eight required scoped runs then
+failed before source actions, with 23 runtime timeouts and 33 nonzero exits.
+Those failures are provider measurements, not zero-yield observations, so the
+wave verdict is `PARTIAL — BLOCKED`, not a complete zero-admission claim. A
+future retry requires a new owner-authorized wave and a fresh pre-investigation
+freeze after the frozen provider returns a valid structured result.
+
+The runtime exposed a mismatch between the W12 supplemental provider-failure
+field (`3`) and the existing HOUR_1 runtime ceiling (`8`). The discrepancy is
+preserved in the W12 evidence and was not changed after results. Leakage,
+sibling identity drift, prohibited environment contact, sibling mutation, and
+external publication remained zero. No Alphaus organizational novelty claim was
+made.

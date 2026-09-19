@@ -15,8 +15,9 @@ Last checkpoint: W11 is preserved as `PARTIAL — BLOCKED`: its historical arm
 completed with strict EXACT `0/13`, leakage 0, and three mechanical
 admissions, while its unknown-source arm was invalidated by six provider
 timeouts and has no yield result. W12 is the fresh owner-authorized successor
-opened from live main `4e763f3f`; its provider policy and investigation have
-not yet run.
+opened from live main `4e763f3f`; its frozen matrix is complete and its
+receipt-derived verdict is `PARTIAL — BLOCKED` because all eight scoped runs
+failed before source actions after one valid broad run.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: d1ebde90c1454b31d6b93d9df503a4c5f196d7c8
@@ -72,15 +73,19 @@ reuse them.
 
 ## Work In Progress
 
-W12 is active at M0: its fresh task/OpenSpec surfaces and successor routing
-are being validated in an owned C-00 worktree. No W12 provider probe,
-investigative call, or yield figure exists.
+W12 has completed its fixed matrix, mechanical closeout, integrity proofs,
+safety evidence, and receipt-derived aggregation in the owned C-00 worktree.
+The broad run reached all eight repositories with 2 candidates and 0
+admissions; all eight scoped runs were provider-blocked before source actions.
+Governed documentation and final validation/release are the remaining closeout
+steps.
 
 ## Exact Next Action
 
-Continue W12 from its own `STATE.md`: validate and commit the activation
-checkpoint, then commit the provider-selection policy before any probe. Do not
-reopen W11's historical arm or substitute its blocked provider after results.
+Continue W12 from its own `STATE.md`: complete the governed documentation,
+run the full local/clean validation, integrate fast-forward, verify
+`HEAD == origin/main`, and release/remove the W12 session. Do not reopen W11's
+historical arm or substitute the frozen provider after results.
 
 ## Files Changed
 
@@ -137,7 +142,10 @@ Accepted starting fact to re-verify at M0: W9 target discovery supports `.go` so
 
 No repository-owned W10 blocker known at activation.
 
-Potential external blocker: subscribed-provider quota/auth for the required long live campaign series. Deterministic/local work must continue if provider access temporarily blocks.
+Potential external blocker: the frozen `opencode-go/glm-5.3` provider failed all
+eight scoped W12 runs after the valid broad run. A future retry requires fresh
+owner authorization and a new freeze; the current wave does not switch
+providers or claim zero yield.
 
 Parent-level blockers remain:
 
@@ -147,7 +155,10 @@ Parent-level blockers remain:
 
 ## Safety Events
 
-NONE in W10 at activation.
+W12 recorded zero leakage, zero sibling identity drift, zero sibling writes or
+installs, zero DEV/NEXT/production/data-plane contact, zero credentials or
+publication, and zero force-push/history-rewrite events. The runtime/freeze
+provider-failure ceiling mismatch is preserved as an integrity warning.
 
 Historical W8 safety events remain in W8 records; W9 reported zero safety-boundary violations. Do not relabel predecessor events.
 
@@ -170,6 +181,6 @@ Historical W8 safety events remain in W8 records; W9 reported zero safety-bounda
 
 Parent programme remains IN_PROGRESS / PARTIAL.
 W11 is frozen predecessor `PARTIAL — BLOCKED`; do not rewrite its evidence.
-W12 is active and not yet validated. Do not populate W12 completion evidence
-until its fixed matrix, safety proofs, Group 12 reconciliation and full
-certification close truthfully.
+W12's fixed matrix, safety proofs, Group 12 reconciliation inputs, and
+receipt-derived verdict are complete; final validation, integration, release,
+and session cleanup remain before the child task becomes terminal.

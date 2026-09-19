@@ -211,10 +211,11 @@ integration.
 - Acceptance: pre-flight threshold enforced; false positives reported; zero
   yield stated as a result, never as an omission; leakage aborts.
 - Validation commands: `npm run campaign:synthetic`, focused yield suites.
-- **Status:** IN_PROGRESS — W12 successor
-  `nightwatch-current-source-unknown-yield-w12-v1` is the active owner-
-  authorized current-source campaign. W11 remains frozen predecessor evidence;
-  its blocked unknown arm is not projected as zero yield.
+- **Status:** PARTIAL — BLOCKED — W12 successor
+  `nightwatch-current-source-unknown-yield-w12-v1` completed its frozen broad
+  plus eight scoped attempt. The broad run was valid; all eight scoped runs
+  were provider-blocked before source actions. W11 remains frozen predecessor
+  evidence; neither blocked arm is projected as zero yield.
 
 ### G13 — Release definition and verdict
 

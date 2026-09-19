@@ -3214,6 +3214,26 @@ its unknowns explicit:
   per-case diagnosis exists, no measured yield is published. Zero yield is
   stated as a non-result, never omitted. Decision record: D-136.
 
+## W12 current-source unknown yield — PARTIAL — BLOCKED — 2026-09-19
+
+The owner-authorized W12 successor wave preserved W11 and froze a distinct
+current-source experiment before investigation: one broad all-eight run plus
+eight repository-scoped runs, with `opencode-go/glm-5.3` selected by the
+predeclared first-pass policy and freeze fingerprint
+`sha256:8ea18e4fe5e9315271dd55df`. The fresh census found 4,124 eligible source
+files, 1,120 executable files, and 152 targets, with completeness explicitly
+truncated at the Ouchan enumeration bound.
+
+The broad run was valid and reached all eight repositories, producing 2
+candidates. Both reached the existing reproduction path, were not reproduced,
+and were refused `MISSING_REPRODUCTION`; mechanical admissions remained 0.
+The eight scoped runs were attempted in registry order but provider-blocked
+before source actions: 23 runtime timeouts and 33 nonzero exits across 56
+provider failures. Invalid provider runs remain separate from zero-yield
+denominators, no provider reselection or result-driven tuning occurred, and no
+organizational novelty claim was made. Leakage and sibling identity drift were
+0. Full evidence is in the W12 task's sanitized aggregation and safety receipts.
+
 ## Owner decisions applied — 2026-09-12
 
 The programme's owner-decision checkpoint was taken, and the decisions are
