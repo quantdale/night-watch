@@ -51,7 +51,7 @@ The following top-level classes are exhaustive and mutually exclusive for the st
 | `src/` | 626 | all runtime subsystems and trust boundaries | PENDING | — | — |
 | `openspec/` | 417 | published specs, active changes, archive/deduplication, schema validity | PENDING | — | — |
 | `tests/` | 410 | unit/browser/smoke/manual/helpers/fixtures, assertion strength and gaps | PENDING | — | — |
-| `bin/` | 118 | CLI, gates, validators, generators, session/workspace/release tooling | IN_PROGRESS | NW-AUD-001, NW-AUD-004 | Phase 23 workflow guard and clean-checkout toolchain/receipt path inspected; remaining bin surfaces pending |
+| `bin/` | 118 | CLI, gates, validators, generators, session/workspace/release tooling | IN_PROGRESS | NW-AUD-001, NW-AUD-004, NW-AUD-005 | Phase 23 workflow guard, clean-checkout toolchain/receipt path, and evidence-retention apply/receipt path inspected; remaining bin surfaces pending |
 | `corpus/` | 113 | fixture/corpus integrity, authority separation, generated/historical boundaries | PENDING | — | — |
 | `docs/` | 40 | architecture, safety, decisions, roadmap, current-state and design truth | IN_PROGRESS | — | — |
 | `ui/` | 32 | Control Center static UI, accessibility, responsive and interaction behavior | PENDING | — | — |
@@ -113,6 +113,7 @@ No documentation inconsistency is admitted as a finding merely because historica
 |---|---|---|---|---|---|---|---|---|
 | NW-AUD-001 | PROPOSED | Medium | High | CI / supply chain / hardening | Authoritative CI executes two mutable `@v4` action refs, while the enforcing rule accepts an unanchored substring and can admit lookalike owners or suffixed refs | `.github/workflows/hardening.yml:22,26`; `bin/lib/hardening/rules/validation-and-gates.mjs:239-240`; probe registry has no action-identity mutation | No existing published requirement or active change pins third-party actions; exact-head CI spec is extended rather than duplicated | `nightwatch-ci-action-supply-chain-integrity-v1` |
 | NW-AUD-004 | PROPOSED | Medium | High | clean/CI certification / toolchain supply chain / reproducibility | CI selects the moving major `20`; clean certification may execute unlocked `node@20` before the gate; receipts record only `nodeMajor`, so different Node/npm identities can produce indistinguishable certification evidence | `.github/workflows/hardening.yml:28`; `bin/quality-gate-clean.mjs:65-90,128-135,192-213`; `tests/unit/gateReceiptPersistence.test.ts:500-508`; `rg --fixed-strings node@20` finds no lock/manifest owner | Existing specs require a fresh supported Node 20 checkout but do not bind an exact version, payload integrity, pre-install admission, or receipt parity; CI action pinning is a prerequisite, not duplicate coverage | `nightwatch-exact-runtime-toolchain-identity-v1` |
+| NW-AUD-005 | PROPOSED | Medium | High | evidence retention / irreversible mutation / audit receipts | Apply durably records only an empty `STARTED` deleted set before removing every candidate, then best-effort overwrites the same receipt; a crash loses per-target truth and final-write failure can still return `APPLIED` with exit zero | `bin/evidence-retention.mjs:304-315,392-422,453-460`; `tests/unit/evidenceRetention.test.ts:153-264`; production-completion `evidence-lifecycle-hygiene/spec.md:32-44` | Existing retention ownership requires deletion recording and normal-path tests, but no active/published requirement owns crash-consistent per-target outcomes, exclusive apply, incomplete-operation recovery, or non-success on finalization failure | `nightwatch-retention-crash-consistent-receipts-v1` |
 
 ## M1 candidate dispositions
 
@@ -122,6 +123,7 @@ No documentation inconsistency is admitted as a finding merely because historica
 | NW-AUD-002 | DUPLICATE | `bin/**` is parse-checked but its strict typecheck lane remains reporting-only | `config/bin-typecheck.v1.json` is `REPORTING`; authoritative gate `STATIC` runs root `typecheck` only; production-completion tasks 15.7 and 15.11 explicitly require full conformance and blocking registration | Exact failure mode already owned by `nightwatch-production-completion-programme-v1`; no duplicate change |
 | NW-AUD-003 | NOT_AN_ISSUE | Historical concern that tests/checks could sit outside authoritative manifests | `npm run validation:universe` discovers 494 checks: 257 authoritative + 237 explicitly classified + 0 unclassified; digest `sha256:039d60d15518fc56c463d66b` | Current NW-08 mechanism closes the historical R-12 lead |
 | NW-AUD-004 | PROPOSED | Major-only runtime selection plus an unlocked pre-gate clean resolver and major-only receipts | CI uses `node-version: 20`; clean fallback invokes `npm exec --yes --package=node@20`, which is absent from `package-lock.json`; it accepts any Node 20 patch and returns only `nodeMajor`; the outer PASS receipt has `nodeRequirement: '20'` and no Node/npm version or payload identity; existing receipt test checks transport/digest disagreement only | MATERIAL → dedicated strictly-valid OpenSpec change |
+| NW-AUD-005 | PROPOSED | Irreversible retention deletion is not transactionally bound to durable per-target/terminal truth | The initial receipt records `status: STARTED` and `deletedSet: []`; all candidates are then removed before one final overwrite; `writeReceipt` catches every error and returns null; the returned result remains `APPLIED`/`PARTIAL` with `receiptFinalized: false`, while the CLI exits non-zero only for `BLOCKED`; current tests cover only the successful path | MATERIAL → dedicated strictly-valid OpenSpec change |
 
 NW-AUD-001 severity is Medium rather than High: compromise or malicious
 movement of an upstream action identity is an external precondition, and the
@@ -137,6 +139,16 @@ the moving executable is selected before the repository gate, is outside the
 project lockfile, and exact runtime disagreement is absent from authoritative
 receipts. The proposal intentionally separates this selected-toolchain identity
 from NW-AUD-001's setup-action code identity and requires both controls.
+
+NW-AUD-005 severity is Medium rather than High: apply is an explicit,
+non-interactive-refused owner operation over candidates already proven
+unreferenced, so the defect does not broaden deletion eligibility or bypass an
+external trust boundary. It is nevertheless material because deletion is
+irreversible, the failure can deterministically report process success without
+the required final record, and interruption can leave the only durable receipt
+claiming an empty deleted set. The remediation preserves uncertainty across
+the unavoidable post-delete/pre-outcome crash window rather than fabricating
+atomicity.
 
 ## Validation ledger
 
@@ -154,11 +166,12 @@ from NW-AUD-001's setup-action code identity and requires both controls.
 | `npm run schema:check`, `npm run hardening:check`, `npm run project:check` | ENVIRONMENT UNAVAILABLE for the same absent local TypeScript toolchain | Deferred to a dependency-equipped validation checkpoint; `workspace:check` remained PASS |
 | `openspec validate nightwatch-ci-action-supply-chain-integrity-v1 --strict` | PASS; 4/4 artifacts complete | NW-AUD-001 remediation is apply-ready |
 | `openspec validate nightwatch-exact-runtime-toolchain-identity-v1 --strict` | PASS; 4/4 artifact classes complete | NW-AUD-004 remediation is apply-ready |
+| `openspec validate nightwatch-retention-crash-consistent-receipts-v1 --strict` | PASS; 4/4 artifact classes complete | NW-AUD-005 remediation is apply-ready |
 
 ## Completion audit
 
 Not yet eligible. Most coverage rows remain pending, M1 still has uninspected
 bin/config/generator/release/session surfaces, and later runtime/UI/test waves
-have not started. Two material findings currently map one-to-one to two
+have not started. Three material findings currently map one-to-one to three
 strict-valid issue-specific remediation changes; that partial portfolio is not
 evidence of whole-repository completeness.
