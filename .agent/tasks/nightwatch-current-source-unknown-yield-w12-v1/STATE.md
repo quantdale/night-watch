@@ -96,11 +96,17 @@ before repository 08.
   yield denominator. Its sanitized receipt is `evidence/scoped-06-run-result.json`
   and its after-run identity receipt is
   `evidence/sibling-identity-after-scoped-06.json`.
+- Scoped 07 complete: `w12-repository-07` for `mobingilabs/ripple-ui` was
+  provider-blocked after 6 `REASONER_NONZERO_EXIT` failures, with 276 stderr
+  bytes, zero response bytes, zero source actions, zero candidates, and no
+  yield denominator. Its sanitized receipt is `evidence/scoped-07-run-result.json`
+  and its after-run identity receipt is
+  `evidence/sibling-identity-after-scoped-07.json`.
 
 ## Work In Progress
 
 M5 is executing the repository-scoped matrix in frozen registry order. The
-broad result and scoped runs 01–06 are recorded; no scoped run has produced a
+broad result and scoped runs 01–07 are recorded; no scoped run has produced a
 qualifying reproduction or admission, and no novelty class exists yet.
 
 ## Exact Next Action
@@ -241,6 +247,6 @@ authority remain permanently out of scope for this wave.
 
 W12 is IN_PROGRESS at M5. The broad run reached all eight repositories and
 produced 2 candidates, 0 qualifying reproductions, 0 admissions, and 2
-`MISSING_REPRODUCTION` refusals. Scoped runs 01–06 are provider-blocked with
-no source opportunity; scoped runs 07–08, novelty, aggregation, and the final
-verdict remain open.
+`MISSING_REPRODUCTION` refusals. Scoped runs 01–07 are provider-blocked with
+no source opportunity; scoped run 08, aggregation, and the final verdict
+remain open, with no novelty class applicable because no new admission exists.
