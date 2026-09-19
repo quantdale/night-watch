@@ -1,0 +1,10 @@
+== post-gate 2026-09-19T22:56:32+08:00 duration_s=77 exit=1 ==
+ 22:56:32 up 1 day, 26 min,  0 user,  load average: 4.47, 4.59, 4.44
+%CPU     PID COMMAND
+82.1 1027457 opencode
+63.4 1029745 codex
+59.3    2543 codex
+58.8    2544 codex
+47.0 1030119 node
+45.4  112498 node
+44.8    4052 node
