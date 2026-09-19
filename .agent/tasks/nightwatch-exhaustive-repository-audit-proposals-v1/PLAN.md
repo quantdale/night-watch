@@ -120,6 +120,7 @@ Prefer the narrowest decisive existing tests during exploration. Validate each O
 - 2026-09-20 — Decision: partition exact runtime-toolchain identity into its own remediation change; reason: immutable setup-action code does not bind the Node/npm executable it selects, and the clean gate has a separate unlocked `node@20` bootstrap plus receipt-parity gap; evidence: NW-AUD-004; consequence: `nightwatch-exact-runtime-toolchain-identity-v1` introduces the toolchain-integrity capability and strengthens reproducibility without implementing it.
 - 2026-09-20 — Decision: partition evidence-retention transaction auditability into its own remediation change; reason: irreversible deletion occurs between a nonterminal empty receipt and a best-effort final overwrite, so crashes and final-write failures can destroy or misreport required audit truth; evidence: NW-AUD-005; consequence: `nightwatch-retention-crash-consistent-receipts-v1` specifies append-only prepared/outcome/terminal records, exclusive apply, honest recovery, and non-success without terminal truth.
 - 2026-09-20 — Decision: partition C-00 session mutation authority into its own remediation change; reason: arbitrary-root mutators authorize the selected record rather than the invoking checkout, reaching both live-owner release and foreign integration; evidence: NW-AUD-006 and zero-mutation canonical-to-session dry runs; consequence: `nightwatch-session-mutation-authority-binding-v1` strengthens the published concurrency/workspace capability without claiming hostile same-user isolation.
+- 2026-09-20 — Decision: partition change-shadow offline compiler bootstrap into its own remediation change; reason: the intentionally separate full-program compiler path invokes remote-capable `npx` and mutates a fixed derivative root before compiler admission, while completed loader and certification changes do not own arbitrary developer-command bootstrap; evidence: NW-AUD-007; consequence: `nightwatch-change-shadow-offline-runtime-integrity-v1` strengthens source-analysis runtime hardening without duplicating generic CLI contracts.
 
 ## Discoveries
 
@@ -138,6 +139,11 @@ Prefer the narrowest decisive existing tests during exploration. Validate each O
   runs reached both ownership-record replacement and a ready fast-forward
   integration plan. Current target classification does not bind caller intent.
   This is the fourth non-duplicate material finding (NW-AUD-006).
+- The offline `change:shadow` path invokes `npx tsc` twice after mutating one
+  fixed compile directory; local TypeScript is absent in this worktree and its
+  only process test uses the pre-compile help path. This is the fifth
+  non-duplicate material finding (NW-AUD-007). Generic argument/path output
+  defects on the same command are duplicate NW-AUD-008.
 
 ## Deferred Work
 

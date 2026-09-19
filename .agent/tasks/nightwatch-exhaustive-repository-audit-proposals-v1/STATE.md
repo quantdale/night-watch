@@ -11,7 +11,7 @@ Last substantive checkpoint SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-exhaustive-repository-ef157f7a
-Last checkpoint: 2026-09-20 — M0 complete; M1 admitted NW-AUD-001, NW-AUD-004, NW-AUD-005, and NW-AUD-006 and produced strict-valid dedicated CI action-integrity, exact runtime-toolchain, crash-consistent retention-receipt, and session-mutation-authority proposals.
+Last checkpoint: 2026-09-20 — M0 complete; M1 admitted NW-AUD-001, NW-AUD-004, NW-AUD-005, NW-AUD-006, and NW-AUD-007 and produced five strict-valid issue-specific remediation proposals.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
@@ -41,15 +41,16 @@ What is being attempted: complete repository topology, dependency, configuration
 - NW-AUD-004: PROPOSED (Medium/High-confidence); dedicated change `nightwatch-exact-runtime-toolchain-identity-v1` is 4/4 complete and strict-valid.
 - NW-AUD-005: PROPOSED (Medium/High-confidence); dedicated change `nightwatch-retention-crash-consistent-receipts-v1` is 4/4 complete and strict-valid.
 - NW-AUD-006: PROPOSED (High/High-confidence); dedicated change `nightwatch-session-mutation-authority-binding-v1` is 4/4 complete and strict-valid.
-- NW-AUD-002: DUPLICATE of production-completion tasks 15.7/15.11; NW-AUD-003: NOT_AN_ISSUE after validation-universe PASS with zero unclassified checks.
+- NW-AUD-007: PROPOSED (Medium/High-confidence); dedicated change `nightwatch-change-shadow-offline-runtime-integrity-v1` is 4/4 complete and strict-valid.
+- NW-AUD-002: DUPLICATE of production-completion tasks 15.7/15.11; NW-AUD-003: NOT_AN_ISSUE after validation-universe PASS with zero unclassified checks; NW-AUD-008: DUPLICATE of the production-completion operator CLI contract.
 
 ## Work In Progress
 
-M1 has covered package/lock/config topology, root TypeScript/Playwright configuration, the executable quality gate, validation-universe classification, dependency/lane records, the GitHub workflow/hardening seam, the clean-checkout toolchain/receipt path, the evidence-retention apply/receipt path, and C-00 session mutator authority. Remaining M1 work is the rest of `bin/`, generators, environment configuration, release/checkpoint mechanics, and cross-file config schema ownership.
+M1 has covered package/lock/config topology, root TypeScript/Playwright configuration, the executable quality gate, validation-universe classification, dependency/lane records, the GitHub workflow/hardening seam, the clean-checkout toolchain/receipt path, the evidence-retention apply/receipt path, C-00 session mutator authority, and the change-shadow compiler/bootstrap path. Remaining M1 work is the rest of `bin/`, report/generator publication, environment configuration, release/checkpoint mechanics, and cross-file config schema ownership.
 
 ## Exact Next Action
 
-Continue M1 with a bounded inventory of remaining `bin/` entry points and library ownership, environment-variable/config readers, generator/write surfaces, and release/checkpoint commands; inspect highest-authority/mutating seams first and record each candidate or clean disposition in `audit.md`.
+Continue M1 with the remaining report/generator publication, release/checkpoint, and schema-renderer surfaces; inspect path/symlink confinement, atomicity, stale authority, and false-success behavior first and record each candidate or clean disposition in `audit.md`.
 
 ## Files Changed
 
@@ -62,6 +63,7 @@ Continue M1 with a bounded inventory of remaining `bin/` entry points and librar
 | `openspec/changes/nightwatch-exact-runtime-toolchain-identity-v1/` | NW-AUD-004 implementation-ready remediation proposal | complete planning artifact |
 | `openspec/changes/nightwatch-retention-crash-consistent-receipts-v1/` | NW-AUD-005 implementation-ready remediation proposal | complete planning artifact |
 | `openspec/changes/nightwatch-session-mutation-authority-binding-v1/` | NW-AUD-006 implementation-ready remediation proposal | complete planning artifact |
+| `openspec/changes/nightwatch-change-shadow-offline-runtime-integrity-v1/` | NW-AUD-007 implementation-ready remediation proposal | complete planning artifact |
 
 ## Validation Ledger
 
@@ -104,6 +106,16 @@ Command: `openspec validate nightwatch-session-mutation-authority-binding-v1 --s
 Result: PASS
 When: 2026-09-20
 Relevant failure/output summary: proposal, design, concurrency-workspace-hardening delta spec, and tasks are 4/4 complete/apply-ready.
+
+Command: static inspection of `bin/change-intelligence.mjs`, the lockfile, shared loader, current tests, and existing change ownership
+Result: SUBSTANTIATED WITHOUT EXECUTING THE UNSAFE PATH
+When: 2026-09-20
+Relevant failure/output summary: the offline normal path calls bare `npx tsc` twice after deleting/recreating a fixed compile root; local TypeScript is absent; the only process test exits through help before compilation.
+
+Command: `openspec validate nightwatch-change-shadow-offline-runtime-integrity-v1 --strict`
+Result: PASS
+When: 2026-09-20
+Relevant failure/output summary: proposal, design, source-analysis-runtime-hardening delta spec, and tasks are 4/4 complete/apply-ready.
 
 Command: `npm run agent:check`
 Result: PASS with 41 pre-existing/expected warnings and zero strict-v2 errors
@@ -150,6 +162,15 @@ Evidence/constraint: session parser/dispatcher and release/integrate paths,
 plus canonical-CWD zero-mutation dry runs against this live session; the plan
 uses public freshness/intent binding and does not invent a local secret.
 
+Decision: admit NW-AUD-007 at Medium severity and create a dedicated change.
+Reason: an explicitly offline operator path may resolve and execute moving
+package code and mutates a shared derivative root before compiler admission;
+explicit invocation and local-only ordinary impact keep it below High.
+Evidence/constraint: change-shadow compiler code, exact lockfile entry, absent
+local TypeScript, help-only process coverage, and explicit non-ownership in
+existing loader/certification changes; the plan preserves full-program `tsc`
+semantics and does not duplicate generic CLI work.
+
 ## Discoveries
 
 - Registered topology has room for this worktree under the repository's maximum of eight.
@@ -166,6 +187,11 @@ uses public freshness/intent binding and does not invent a local secret.
 - Session lifecycle mutators authorize an arbitrary selected root, not the
   invoking checkout/session; safe dry runs proved foreign release and
   integration reachability. This is NW-AUD-006.
+- The offline change-shadow entrypoint deletes/recreates one fixed compile root
+  and invokes bare `npx tsc` twice; missing local dependencies can therefore
+  reach automatic package resolution before source/report work. This is
+  NW-AUD-007. Its ignored absolute output-path and ungoverned argument behavior
+  are NW-AUD-008, already owned by the production-completion CLI contract.
 
 ## Blockers
 
@@ -189,6 +215,6 @@ NONE
 
 ## Completion Snapshot
 
-Not complete; M1 is active. Four issue-specific changes are strict-valid, but
+Not complete; M1 is active. Five issue-specific changes are strict-valid, but
 remaining M1 surfaces and milestones M2-M10 are still required before any
 exhaustive conclusion.

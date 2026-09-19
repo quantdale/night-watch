@@ -51,7 +51,7 @@ The following top-level classes are exhaustive and mutually exclusive for the st
 | `src/` | 626 | all runtime subsystems and trust boundaries | PENDING | — | — |
 | `openspec/` | 417 | published specs, active changes, archive/deduplication, schema validity | PENDING | — | — |
 | `tests/` | 410 | unit/browser/smoke/manual/helpers/fixtures, assertion strength and gaps | PENDING | — | — |
-| `bin/` | 118 | CLI, gates, validators, generators, session/workspace/release tooling | IN_PROGRESS | NW-AUD-001, NW-AUD-004, NW-AUD-005, NW-AUD-006 | Phase 23 workflow guard, clean-checkout toolchain/receipt path, evidence-retention apply/receipt path, and C-00 session mutator authority inspected; remaining bin surfaces pending |
+| `bin/` | 118 | CLI, gates, validators, generators, session/workspace/release tooling | IN_PROGRESS | NW-AUD-001, NW-AUD-004, NW-AUD-005, NW-AUD-006, NW-AUD-007, NW-AUD-008 | Phase 23 workflow guard, clean-checkout toolchain/receipt path, evidence-retention apply/receipt path, C-00 session mutator authority, and change-shadow compiler/bootstrap path inspected; remaining bin surfaces pending |
 | `corpus/` | 113 | fixture/corpus integrity, authority separation, generated/historical boundaries | PENDING | — | — |
 | `docs/` | 40 | architecture, safety, decisions, roadmap, current-state and design truth | IN_PROGRESS | — | — |
 | `ui/` | 32 | Control Center static UI, accessibility, responsive and interaction behavior | PENDING | — | — |
@@ -115,6 +115,7 @@ No documentation inconsistency is admitted as a finding merely because historica
 | NW-AUD-004 | PROPOSED | Medium | High | clean/CI certification / toolchain supply chain / reproducibility | CI selects the moving major `20`; clean certification may execute unlocked `node@20` before the gate; receipts record only `nodeMajor`, so different Node/npm identities can produce indistinguishable certification evidence | `.github/workflows/hardening.yml:28`; `bin/quality-gate-clean.mjs:65-90,128-135,192-213`; `tests/unit/gateReceiptPersistence.test.ts:500-508`; `rg --fixed-strings node@20` finds no lock/manifest owner | Existing specs require a fresh supported Node 20 checkout but do not bind an exact version, payload integrity, pre-install admission, or receipt parity; CI action pinning is a prerequisite, not duplicate coverage | `nightwatch-exact-runtime-toolchain-identity-v1` |
 | NW-AUD-005 | PROPOSED | Medium | High | evidence retention / irreversible mutation / audit receipts | Apply durably records only an empty `STARTED` deleted set before removing every candidate, then best-effort overwrites the same receipt; a crash loses per-target truth and final-write failure can still return `APPLIED` with exit zero | `bin/evidence-retention.mjs:304-315,392-422,453-460`; `tests/unit/evidenceRetention.test.ts:153-264`; production-completion `evidence-lifecycle-hygiene/spec.md:32-44` | Existing retention ownership requires deletion recording and normal-path tests, but no active/published requirement owns crash-consistent per-target outcomes, exclusive apply, incomplete-operation recovery, or non-success on finalization failure | `nightwatch-retention-crash-consistent-receipts-v1` |
 | NW-AUD-006 | PROPOSED | High | High | C-00 session/worktree ownership / integration | Every lifecycle command accepts arbitrary `--root`; release rewrites the selected live record without caller binding, and integrate treats the selected target's `OWNED_SESSION` class as sufficient to reach its fetch/push path | `bin/nightwatch-session.mjs:86-134,398-416,469-531,654-735`; canonical-CWD dry runs against the live audit session planned both record replacement and fast-forward integration; current `workspaceIsolation.test.ts` proves direct second-claim refusal but has no foreign-release/integrate matrix | Published C-00 requires one writer/session and owner-only lifecycle actions, but no active change binds mutation invocation to current checkout/session or serializes record revisions | `nightwatch-session-mutation-authority-binding-v1` |
+| NW-AUD-007 | PROPOSED | Medium | High | change intelligence / offline compiler bootstrap / derivative lifecycle | The offline `change:shadow` path invokes `npx tsc` twice, so missing local dependencies can trigger remote moving-package resolution; it deletes a fixed shared compile root before compiler admission, allowing refusal-time mutation and concurrent-run interference | `bin/change-intelligence.mjs:20-62,132-136`; `package-lock.json` exact `node_modules/typescript` 5.9.3 entry; worktree has no local TypeScript; `tests/unit/cliImplementationContract.test.ts:423-430` exercises help only | Completed source-runtime hardening preserved different compiler semantics but did not authorize package resolution; exact certification toolchain explicitly excludes arbitrary developer commands; generic CLI output/argument work is separate | `nightwatch-change-shadow-offline-runtime-integrity-v1` |
 
 ## M1 candidate dispositions
 
@@ -126,6 +127,8 @@ No documentation inconsistency is admitted as a finding merely because historica
 | NW-AUD-004 | PROPOSED | Major-only runtime selection plus an unlocked pre-gate clean resolver and major-only receipts | CI uses `node-version: 20`; clean fallback invokes `npm exec --yes --package=node@20`, which is absent from `package-lock.json`; it accepts any Node 20 patch and returns only `nodeMajor`; the outer PASS receipt has `nodeRequirement: '20'` and no Node/npm version or payload identity; existing receipt test checks transport/digest disagreement only | MATERIAL → dedicated strictly-valid OpenSpec change |
 | NW-AUD-005 | PROPOSED | Irreversible retention deletion is not transactionally bound to durable per-target/terminal truth | The initial receipt records `status: STARTED` and `deletedSet: []`; all candidates are then removed before one final overwrite; `writeReceipt` catches every error and returns null; the returned result remains `APPLIED`/`PARTIAL` with `receiptFinalized: false`, while the CLI exits non-zero only for `BLOCKED`; current tests cover only the successful path | MATERIAL → dedicated strictly-valid OpenSpec change |
 | NW-AUD-006 | PROPOSED | C-00 mutators authorize a selected target record rather than the invoking session | `parseArgs` admits `--root` for all commands and `main` resolves it before dispatch; `release` replaces that record without checking `OWNED_SESSION` or caller context; `integrate` checks only the selected target's class and can fetch/push it; from canonical, zero-mutation dry runs against the live audit session emitted `SESSION_RELEASE_RECORD REPLACE ...` and `SESSION_INTEGRATION_READY` | MATERIAL → dedicated strictly-valid OpenSpec change |
+| NW-AUD-007 | PROPOSED | An offline operator command can acquire/execute an ungoverned compiler and mutates a shared derivative root before admission | `compileCore()` first recursively removes and recreates `.tmp-nightwatch/change-intelligence`, then invokes bare `npx tsc` twice; the exact locked TypeScript package is not installed in this worktree, and the existing process test exits through `--help` before compilation | MATERIAL → dedicated strictly-valid OpenSpec change |
+| NW-AUD-008 | DUPLICATE | `change:shadow` accepts no governed shared CLI parser and prints its machine-specific absolute `outputPath` | The entrypoint checks only whether `--help`/`-h` occurs anywhere, ignores every other argument, and serializes absolute `outputPath`; production-completion `operator-cli-contract` already requires every `bin/*.mjs` to share parsing, reject unknown arguments before effects, and omit machine-specific paths | Exact failure class already owned by `nightwatch-production-completion-programme-v1`; no duplicate change |
 
 NW-AUD-001 severity is Medium rather than High: compromise or malicious
 movement of an upstream action identity is an external precondition, and the
@@ -161,6 +164,16 @@ enable adoption, or invoke that session's fast-forward integration path. That
 undermines the primary C-00 isolation and release checkpoint, can publish
 unreviewed committed work, and is absent from the current adversarial suite.
 
+NW-AUD-007 severity is Medium rather than High: an operator must explicitly
+run the shadow command in a dependency-missing or resolution-divergent
+checkout, and the ordinary consequence is ungoverned local code execution or
+an unavailable/corrupted local report rather than direct product authority.
+It remains material because the command's documented offline boundary is
+false at its first compiler action, the selected package is not constrained by
+the lockfile on that path, and a fixed derivative root is mutated before the
+compiler is admitted. The proposal preserves full-program compilation rather
+than silently weakening the command to per-file transpilation.
+
 ## Validation ledger
 
 | Command/evidence | Result | Purpose |
@@ -181,11 +194,13 @@ unreviewed committed work, and is absent from the current adversarial suite.
 | canonical-CWD `release --root <live-session> --dry-run` | REPRODUCED; planned live ownership-record replacement; zero mutation | Establish NW-AUD-006 reachability safely |
 | canonical-CWD `integrate --root <live-session> --dry-run` | REPRODUCED; planned foreign session fast-forward; zero fetch/push | Establish NW-AUD-006 integration reachability safely |
 | `openspec validate nightwatch-session-mutation-authority-binding-v1 --strict` | PASS; 4/4 artifact classes complete | NW-AUD-006 remediation is apply-ready |
+| static `change:shadow` compiler/lock/test ownership inspection | SUBSTANTIATED WITHOUT EXECUTION; normal path calls `npx tsc` twice, local TypeScript absent, full process coverage help-only | Establish NW-AUD-007 while avoiding the remote-capable path |
+| `openspec validate nightwatch-change-shadow-offline-runtime-integrity-v1 --strict` | PASS; 4/4 artifact classes complete | NW-AUD-007 remediation is apply-ready |
 
 ## Completion audit
 
 Not yet eligible. Most coverage rows remain pending, M1 still has uninspected
 bin/config/generator/release/checkpoint surfaces, and later runtime/UI/test waves
-have not started. Four material findings currently map one-to-one to four
+have not started. Five material findings currently map one-to-one to five
 strict-valid issue-specific remediation changes; that partial portfolio is not
 evidence of whole-repository completeness.
