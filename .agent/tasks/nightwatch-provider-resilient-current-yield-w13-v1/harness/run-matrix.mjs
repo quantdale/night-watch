@@ -225,9 +225,33 @@ async function runOne(entry) {
     novelty: 'NOT_APPLICABLE_NO_ADMISSION',
     ownerLocalRawCheckpoint: path.join(CAMPAIGN_STATE, `${entry.runId}.checkpoint.json`),
   };
+  // Owner-local dossier persistence: an admission dossier is never committed,
+  // but it must survive the campaign so a later novelty adjudication can cite
+  // its identity. Written under the run's owner-local state directory.
+  const admissions = Array.isArray(resultOrCheckpoint?.findingAdmissions) ? resultOrCheckpoint.findingAdmissions : [];
+  const dossierDir = path.join(SUPERVISOR_STATE, entry.runId, 'dossiers');
+  const persistedDossiers = [];
+  for (const admission of admissions) {
+    const candidateId = typeof admission?.candidateId === 'string' && admission.candidateId.length > 0 ? admission.candidateId : null;
+    if (candidateId === null) continue;
+    try {
+      fs.mkdirSync(dossierDir, { recursive: true, mode: 0o700 });
+      const dossierPath = path.join(dossierDir, `${candidateId}.json`);
+      fs.writeFileSync(dossierPath, `${JSON.stringify(admission, null, 2)}\n`, { mode: 0o600 });
+      persistedDossiers.push({
+        candidateId,
+        ownerLocalDossier: dossierPath,
+        dossierIdentity: typeof admission?.dossier?.dossierId === 'string' ? admission.dossier.dossierId : null,
+        reproductionCount: typeof admission?.reproductionCount === 'number' ? admission.reproductionCount : null,
+      });
+    } catch (error) {
+      persistedDossiers.push({ candidateId, ownerLocalDossier: null, persistenceError: error instanceof Error ? error.message : String(error) });
+    }
+  }
+  receipt.admissions = persistedDossiers;
   fs.mkdirSync(EVIDENCE_RUNS, { recursive: true });
   fs.writeFileSync(receiptPath, `${JSON.stringify(receipt, null, 2)}\n`);
-  process.stdout.write(`[w13] ${entry.runId} ${receipt.terminationClass} valid=${validProviderResult} responseBytes=${providerResponseBytes} toolActions=${sourceActivity} wallMs=${wallTimeMs}\n`);
+  process.stdout.write(`[w13] ${entry.runId} ${receipt.terminationClass} valid=${validProviderResult} responseBytes=${providerResponseBytes} toolActions=${sourceActivity} admissions=${persistedDossiers.length} wallMs=${wallTimeMs}\n`);
 }
 
 async function main() {
