@@ -84,18 +84,25 @@ before repository 06.
   bytes, zero source actions, zero candidates, and no yield denominator. Its
   sanitized receipt is `evidence/scoped-04-run-result.json` and its after-run
   identity receipt is `evidence/sibling-identity-after-scoped-04.json`.
+- Scoped 05 complete: `w12-repository-05` for `mobingilabs/ouchan` was
+  provider-blocked after 6 `REASONER_NONZERO_EXIT` failures, with 276 stderr
+  bytes, zero response bytes, zero source actions, zero candidates, and no
+  yield denominator despite its predeclared execution-coverage exception. Its
+  sanitized receipt is `evidence/scoped-05-run-result.json` and its after-run
+  identity receipt is `evidence/sibling-identity-after-scoped-05.json`.
 
 ## Work In Progress
 
-M4 is executing the first broad all-repository run. No W12 campaign result,
-candidate, reproduction, admission, or novelty class exists yet.
+M5 is executing the repository-scoped matrix in frozen registry order. The
+broad result and scoped runs 01–05 are recorded; no scoped run has produced a
+qualifying reproduction or admission, and no novelty class exists yet.
 
 ## Exact Next Action
 
-Run `w12-broad-all-repositories-1` with the frozen `opencode-go/glm-5.3`
-provider, all eight repositories, `--duration=1h`, and `--max-turns=12` under
-the 60-minute wall ceiling. Preserve the machine result and post-run identity
-receipt; do not reselect the provider or tune the matrix.
+Run `w12-repository-06` with the frozen `opencode-go/glm-5.3` provider for
+`mobingilabs/ripple-api`, `--duration=1h`, and `--max-turns=6` under the
+declared 30-minute outer ceiling. Preserve the machine result and post-run
+identity receipt; do not reselect the provider or tune the matrix.
 
 ## Files Changed
 
@@ -228,6 +235,6 @@ authority remain permanently out of scope for this wave.
 
 W12 is IN_PROGRESS at M5. The broad run reached all eight repositories and
 produced 2 candidates, 0 qualifying reproductions, 0 admissions, and 2
-`MISSING_REPRODUCTION` refusals. Scoped run 01 is provider-blocked with no
-source opportunity, and scoped run 02 has the same provider-blocked result;
-scoped runs 05–08, novelty, aggregation, and the final verdict remain open.
+`MISSING_REPRODUCTION` refusals. Scoped runs 01–05 are provider-blocked with
+no source opportunity; scoped runs 06–08, novelty, aggregation, and the final
+verdict remain open.
