@@ -15,12 +15,11 @@ single frozen provider. W13 is a distinct owner-authorized successor whose
 Phase A must close every locally closable W12 residual before Phase B freezes
 a provider-resilience policy and executes the fixed broad-plus-eight-scoped
 matrix.
-Current milestone: M3 — gate:local synthetic-lane timeout classification (R-02)
-Next action: measure the direct synthetic campaign and the gate-dispatched
-lane on an idle host with load/process evidence and a manifest file-count
-diff, classify the timeout as exactly one measured cause, and write the R-02
-lane receipt without raising the timeout bound. Do not probe any provider
-before the Phase B provider-resilience policy freeze is committed.
+Current milestone: M4 — provider failure taxonomy (R-03)
+Next action: implement the ten-member provider failure taxonomy with sanitized
+retention and per-transition regressions, then update register entry R-03 to
+PROVEN with its receipt. Do not probe any provider before the Phase B
+provider-resilience policy freeze is committed.
 Authorization class: PROVIDER_RESILIENT_CURRENT_YIELD_W13_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2

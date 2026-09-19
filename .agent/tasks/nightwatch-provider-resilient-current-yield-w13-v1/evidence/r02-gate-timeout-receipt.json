@@ -1,0 +1,82 @@
+{
+  "schemaVersion": "nightwatch.w13-lane-receipt.v1",
+  "laneId": "R-02",
+  "title": "gate:local SYNTHETIC_CAMPAIGN timeout classified as EXPECTED_ENVIRONMENT_VARIANCE",
+  "resolution": "PROVEN",
+  "owner": "session/nightwatch-provider-resilient-cu-623c6535",
+  "taskId": "nightwatch-provider-resilient-current-yield-w13-v1",
+  "classification": "EXPECTED_ENVIRONMENT_VARIANCE",
+  "classificationMeaning": "The lane's wall time varies materially run-to-run on this host around a tight fixed bound; the W12 timeout falls inside the measured pass-time spread, no tree/manifest/work difference exists, and no defect is reproducible.",
+  "predecessorReceipt": "receipt:sha256:c5107a12b6bd0a89263c5c2 (W12 gate:local TIMEOUT at the 600 s MEDIUM synthetic-lane bound)",
+  "bound": {
+    "gateLane": "SYNTHETIC_CAMPAIGN",
+    "timeoutClass": "MEDIUM",
+    "timeoutMs": 600000,
+    "directLaneBound": "none (direct invocation is unbounded)",
+    "boundChanged": false,
+    "boundChangeAuthority": "owner decision only (design D6)"
+  },
+  "measurements": [
+    {
+      "kind": "DIRECT",
+      "treeState": "R-01 repairs applied (pre-commit dirty tree)",
+      "result": "PASS 1897/1897",
+      "wallTimeMs": 668000,
+      "note": "invalid for classification: this run executed 4 genuinely failing tests later repaired in the same session; retained as historical"
+    },
+    {
+      "kind": "DIRECT",
+      "treeState": "clean",
+      "result": "PASS 1897/1897",
+      "wallTimeMs": 643000,
+      "note": "passed above the gate's 600 s bound, showing the bound has negative headroom on a loaded run"
+    },
+    {
+      "kind": "GATE_DISPATCHED",
+      "treeState": "clean c483f963",
+      "result": "PASS; all 12 gate groups PASS; synthetic lane within its 600 s bound",
+      "gateWallTimeMs": 818000,
+      "gateReceipt": "receipt:sha256:1fdfbdad9607ea8997aa46d1",
+      "gitHead": "c483f963359fc74a53624e3603ea8e7622012932"
+    },
+    {
+      "kind": "DIRECT",
+      "treeState": "clean",
+      "result": "PASS 1897/1897",
+      "wallTimeMs": 422940,
+      "userCpuSeconds": 457.26,
+      "systemCpuSeconds": 62.52,
+      "cpuPercent": 122,
+      "note": "same tree as the 643 s pass; 220 s (52%) spread across passing runs"
+    }
+  ],
+  "manifestComparison": {
+    "baseSha": "6ac0b546",
+    "baseFileCount": 105,
+    "currentFileCount": 105,
+    "addedFiles": 0,
+    "removedFiles": 0,
+    "baseExecution": { "project": "nightwatch", "workers": 1, "retries": 0, "serial": true },
+    "currentExecution": { "project": "nightwatch", "workers": 1, "retries": 0, "serial": true },
+    "testTotalBase": 1897,
+    "testTotalCurrent": 1897,
+    "duplicateWork": "NONE — each file runs once, serially, with zero retries"
+  },
+  "hostEvidence": {
+    "cores": 20,
+    "loadAverageAtMeasurements": [3.73, 4.68, 4.11, 3.86, 4.02],
+    "competingProcesses": "opencode, codex, and node processes owned by other live sessions (measured in every snapshot)",
+    "interpretation": "Concurrent multi-agent load is a plausible contributor and is measured, but W12 captured no load state; the decisive observation is the 423 s - 643 s pass-time spread on one unchanged tree, so the classification is run-to-run variance rather than a proven contention event or a tree defect."
+  },
+  "excludedCauses": {
+    "REAL_GATE_TIMEOUT_DEFECT": "excluded: the gate-dispatched lane passes all 12 groups on a clean tree at the same population",
+    "STALE_BOUND": "excluded: the manifest file count, test total, project, workers, and retry policy are identical to the W12 base; nothing grew",
+    "DUPLICATE_WORK": "excluded: serial workers=1, retries=0, unique 105-file dispatch",
+    "OTHER_MEASURED_CAUSE": "not needed: measured variance explains the observation"
+  },
+  "commands": [
+    { "command": "npm run campaign:synthetic", "result": "PASS 1897/1897 at 643 s and again at 422.94 s" },
+    { "command": "npm run gate:local", "result": "PASS all 12 groups; receipt:sha256:1fdfbdad9607ea8997aa46d1" }
+  ],
+  "privacy": { "secrets": "NONE", "customerValues": "NONE", "rawProviderText": false }
+}

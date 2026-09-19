@@ -98,7 +98,9 @@ from receipts, and adjudicates novelty only after admission.
   and classify the timeout as exactly one measured cause with a lane receipt.
 - Acceptance: load/process evidence and manifest-count comparison recorded;
   the timeout bound is never raised.
-- **Status:** IN_PROGRESS
+- **Status:** COMPLETE — R-02 `PROVEN` as `EXPECTED_ENVIRONMENT_VARIANCE`
+  (423 s - 643 s pass-time spread on one unchanged 105-file/1,897-test
+  manifest; gate-dispatched lane PASS all 12 groups; bound unchanged).
 
 ### M4 — Provider failure taxonomy
 

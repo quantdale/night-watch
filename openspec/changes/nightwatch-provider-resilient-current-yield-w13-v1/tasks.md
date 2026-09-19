@@ -51,19 +51,19 @@
 
 ## 4. Phase A — `gate:local` `SYNTHETIC_CAMPAIGN` timeout
 
-- [ ] 4.1 Re-run the direct synthetic campaign and the gate-dispatched
+- [x] 4.1 Re-run the direct synthetic campaign and the gate-dispatched
       `SYNTHETIC_CAMPAIGN` lane back-to-back on an otherwise idle host,
       capturing `uptime` and `ps --sort=-pcpu` snapshots for both runs.
-- [ ] 4.2 Diff the synthetic manifest file count against the base SHA W12
+- [x] 4.2 Diff the synthetic manifest file count against the base SHA W12
       measured against.
-- [ ] 4.3 Classify the result as exactly one of `REAL_GATE_TIMEOUT_DEFECT`,
+- [x] 4.3 Classify the result as exactly one of `REAL_GATE_TIMEOUT_DEFECT`,
       `STALE_BOUND`, `HOST_CONTENTION`, `EXPECTED_ENVIRONMENT_VARIANCE`,
       `DUPLICATE_WORK`, or `OTHER_MEASURED_CAUSE`. If
       `REAL_GATE_TIMEOUT_DEFECT` or `DUPLICATE_WORK`, run
       reproduce → regression → fix → negative-probe → validate → record. If
       `HOST_CONTENTION` or `EXPECTED_ENVIRONMENT_VARIANCE`, record the
       classification and its evidence without changing the timeout bound.
-- [ ] 4.4 Record the classification as a `residual-closure` lane receipt.
+- [x] 4.4 Record the classification as a `residual-closure` lane receipt.
 
 ## 5. Phase A — Provider failure taxonomy
 

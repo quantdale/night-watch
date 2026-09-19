@@ -52,8 +52,12 @@
       ],
       "evidence": "W12 `gate:local` passed nine groups and timed out in the serial synthetic lane at its 600 s MEDIUM bound; the direct lane passed 1,897/1,897 afterwards on the same tree.",
       "whyItMatters": "An unclassified gate timeout is an equivocal validation lane; Phase A must resolve it to exactly one measured cause before closure, without raising the bound.",
-      "nextAction": "Re-run the direct and gate-dispatched lanes back-to-back on an idle host with uptime/process snapshots, diff the synthetic manifest file count against the base SHA, and classify as exactly one of the six causes; reclassify to LOCAL_FIX_REQUIRED and mark blocking if the cause is REAL_GATE_TIMEOUT_DEFECT or DUPLICATE_WORK.",
-      "closure": { "state": "OPEN", "receipt": null }
+      "nextAction": "Closed: both lanes re-measured with load/process snapshots and a manifest diff against base 6ac0b546; classification is EXPECTED_ENVIRONMENT_VARIANCE (423 s - 643 s pass-time spread on one unchanged tree; gate-dispatched lane PASS all 12 groups); the timeout bound was not changed.",
+      "measuredCause": "EXPECTED_ENVIRONMENT_VARIANCE",
+      "closure": {
+        "state": "PROVEN",
+        "receipt": ".agent/tasks/nightwatch-provider-resilient-current-yield-w13-v1/evidence/r02-gate-timeout-receipt.json"
+      }
     },
     {
       "id": "R-03",

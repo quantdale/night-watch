@@ -33,19 +33,28 @@ policy exhaustion before sufficient investigation is `PROVIDER_BLOCKED`.
 
 ## Current Milestone
 
-Milestone ID: M3
+Milestone ID: M4
 Milestone status: IN_PROGRESS
-What is being attempted: close R-02 by re-measuring the `gate:local`
-`SYNTHETIC_CAMPAIGN` timeout on an otherwise idle host, directly and
-gate-dispatched, with load/process evidence and a synthetic manifest
-file-count comparison against the base SHA, then classifying it as exactly one
-measured cause without raising the timeout bound.
-Next action: capture host/process snapshots, run the direct synthetic campaign
-and the gate-dispatched lane back-to-back, diff the manifest file count, and
-write the R-02 lane receipt.
+What is being attempted: close R-03, the provider failure taxonomy, by
+implementing the ten-member classification (PROVIDER_ABSENT,
+PROVIDER_PROBE_TIMEOUT, PROVIDER_RUNTIME_TIMEOUT, PROVIDER_NONZERO_EXIT,
+PROVIDER_INVALID_STRUCTURED_RESPONSE,
+PROVIDER_NAMESPACE_OR_QUOTA_UNAVAILABLE, PROVIDER_AUTH_FAILURE,
+LOCAL_CLI_FAILURE, VALID_PROVIDER_RESPONSE, UNKNOWN_EXTERNAL_PROVIDER_FAILURE)
+with sanitized retention and per-class regressions.
+Next action: implement the taxonomy module and its sanitization contract,
+cover each classified transition with a regression, and update register entry
+R-03.
 
 ## Completed Milestones
 
+- **M3 COMPLETE**: R-02 `PROVEN` as `EXPECTED_ENVIRONMENT_VARIANCE`. The
+  direct synthetic lane passed 1,897/1,897 at 643 s and again at 422.94 s
+  (122% CPU) on the same clean tree; the gate-dispatched lane passed all 12
+  groups (receipt `receipt:sha256:1fdfbdad9607ea8997aa46d1`); the manifest is
+  byte-identical to base `6ac0b546` at 105 files / 1,897 tests; the timeout
+  bound was not changed. Receipt:
+  `evidence/r02-gate-timeout-receipt.json`.
 - **M2 COMPLETE**: R-01 `PROVEN`. `defaultAgentBudgetPolicy` is the single
   runtime-ceiling authority; declared wave envelopes are derived and validated
   field-by-field with fail-closed `RUNTIME_BUDGET_ENVELOPE_MISMATCH` /
@@ -66,17 +75,16 @@ write the R-02 lane receipt.
 
 ## Work In Progress
 
-M3 is measuring the synthetic-lane timeout; no conclusion is recorded yet.
+M4 is implementing the provider failure taxonomy; no classification code has
+been committed yet.
 
 ## Exact Next Action
 
-Capture `uptime` and `ps --sort=-pcpu` snapshots and the synthetic manifest
-file count at the current base; run the direct `npm run campaign:synthetic`
-and the gate-dispatched `SYNTHETIC_CAMPAIGN` lane back-to-back on an otherwise
-idle host; classify the outcome as exactly one of `REAL_GATE_TIMEOUT_DEFECT`,
-`STALE_BOUND`, `HOST_CONTENTION`, `EXPECTED_ENVIRONMENT_VARIANCE`,
-`DUPLICATE_WORK`, or `OTHER_MEASURED_CAUSE`; write the R-02 lane receipt and
-update the register. Never raise the timeout bound.
+Implement the ten-member provider failure taxonomy with sanitized retention
+(exit code, duration, byte counts only; never raw credential-bearing text),
+cover each raw CLI outcome transition including the unknown fallback with
+regressions, and update register entry R-03 to `PROVEN` with its receipt. Do
+not probe any provider before the Phase B policy freeze.
 
 ## Files Changed
 
