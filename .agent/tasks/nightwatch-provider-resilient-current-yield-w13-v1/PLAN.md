@@ -146,7 +146,9 @@ from receipts, and adjudicates novelty only after admission.
 - Objective: re-annotate Group 12 items 12.7, 12.8, 12.11, 12.12 and
   reconcile `PROGRAMME.json`, current-state, and README figures.
 - Acceptance: predecessor text preserved; W12 recorded COMPLETE; W13 routed.
-- **Status:** NOT_STARTED
+- **Status:** COMPLETE — R-09/R-10/R-11 `PROVEN`: Group 12 re-annotated with
+  predecessor text preserved; `PROGRAMME.json` routes W13 and records W12
+  complete; current-state/README/ledger surfaces reconciled.
 
 ### M9 — Phase A closure checkpoint
 

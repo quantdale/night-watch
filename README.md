@@ -120,6 +120,16 @@ executed rather than omitting it.
   Provider failure is not a zero-yield denominator, and W12 makes no claim
   that the repositories contain no defects or that any candidate is an Alphaus
   organizationally novel bug.
+- W13's provider-resilient successor is IN_PROGRESS: Phase A closed the W12
+  provider-failure budget mismatch (D-139), classified the `gate:local`
+  synthetic-lane timeout as environment variance, extended provider failure
+  classification to the complete ten-member taxonomy with sanitized evidence,
+  closed census truncation with floor-only denominator semantics, enforced
+  aggregate measurement completeness and per-provider attribution, and added
+  the candidate/admission and failed-provider-progress guards. The
+  provider-resilience policy and evaluation freeze are committed before any
+  Phase B probe. No W13 yield is claimed yet, and provider failure remains
+  distinct from zero yield.
 - Semantic acceptance class: `COMPLETE_LOCAL_SYNTHETIC`; contained DEV
   acceptance is `NOT_PROVEN` and requires separate owner authorization.
   `<!--status:SEMANTIC_ACCEPTANCE_CLASS=COMPLETE_LOCAL_SYNTHETIC-->` `<!--status:SEMANTIC_DEV_RESULT=NOT_PROVEN-->`

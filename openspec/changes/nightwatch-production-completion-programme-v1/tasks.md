@@ -1044,6 +1044,13 @@ investigative call.
       exits). The frozen provider was not swapped, the threshold not lowered,
       and scope/budget was not tuned. Evidence:
       `.agent/tasks/nightwatch-current-source-unknown-yield-w12-v1/evidence/global-yield-aggregation.json`.
+      **W13 (Phase A in progress):** W12's provider-blocked scoped matrix is
+      queued for a re-run under a predeclared deterministic provider-failover
+      policy; Phase A has closed the budget-mismatch, two-value-taxonomy,
+      census-floor, aggregate-completeness, per-provider-attribution, and
+      admission/fake-progress gaps (register:
+      `.agent/tasks/nightwatch-provider-resilient-current-yield-w13-v1/residual-register.json`).
+      Phase B execution is not yet claimed.
 - [ ] 12.8 Report investigations, calls, actions, unique targets, hypotheses,
       attempts, executions, candidates, admissions, false positives, leakage;
       abort on any leakage rather than publishing a yield beside it —
@@ -1053,6 +1060,13 @@ investigative call.
       `MISSING_REPRODUCTION` refusals, 0 admissions, provider failures 56,
       leakage 0, and explicit `NOT_CAPTURED` fields in the receipt-derived
       aggregation. Provider-blocked runs are not a zero-yield denominator.
+      **W13 (Phase A in progress):** the W13 aggregate enforces 30 required
+      metrics (missing metric, unknown metric, and NOT_CAPTURED without a
+      reason all fail closed), per-provider attribution (calls, valid
+      responses, failures by class, retries, bytes, wall time, transitions),
+      and provider failures are classified into the full ten-member taxonomy
+      with raw provider text never retained. Phase B metrics are not yet
+      measured.
 - [x] 12.9 Admit only through the existing mechanical path; refuse an admission
       with no reproduction as `MISSING_REPRODUCTION` — proven on live traffic:
       of 7 proposed candidates, 3 became dossiers (each with
@@ -1069,10 +1083,16 @@ investigative call.
       current-source result is published with its broad/scoped distinction,
       provider blocker, candidate/refusal/admission separation, and no claim
       of zero defects. W11's historical figure remains unchanged.
+      **W13 (Phase A in progress):** W12's published figures remain unchanged;
+      W13 yield figures will be reconciled from Phase B receipts before any
+      publication claim.
 - [ ] 12.12 Full validation, integrate, release — **W12 release path required;
       wave verdict remains PARTIAL — BLOCKED.** Local/clean validation,
       fast-forward integration, `HEAD == origin/main`, session release and
       removal are recorded in the W12 report when complete.
+      **W13 (Phase A in progress):** Phase A closure validation is the next
+      gate; integration, release, and clean-gate checks follow the owned C-00
+      session and are not yet claimed.
 
 ## 13. Release definition and verdict
 

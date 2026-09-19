@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "nightwatch.w13-lane-receipt.v1",
+  "laneId": "R-09",
+  "title": "Production Completion Group 12 items 12.7, 12.8, 12.11, 12.12 re-annotated with Phase A evidence",
+  "resolution": "PROVEN",
+  "owner": "session/nightwatch-provider-resilient-cu-623c6535",
+  "taskId": "nightwatch-provider-resilient-current-yield-w13-v1",
+  "classification": "LOCAL_DOCUMENTATION_DRIFT",
+  "artifact": "openspec/changes/nightwatch-production-completion-programme-v1/tasks.md",
+  "method": "In-place annotation appended to each item; all predecessor W11/W12 text preserved byte-for-byte; checkboxes remain unchecked because Phase B execution/publication is not yet claimed.",
+  "annotations": {
+    "12.7": "W13 Phase A in progress: provider-blocked scoped matrix queued for re-run under a predeclared deterministic failover policy; Phase A gaps closed; no execution claim.",
+    "12.8": "W13 Phase A in progress: 30-metric aggregate completeness, per-provider attribution, ten-member taxonomy with sanitized evidence; Phase B metrics not yet measured.",
+    "12.11": "W13 Phase A in progress: W12 published figures unchanged; W13 figures reconciled after Phase B receipts.",
+    "12.12": "W13 Phase A in progress: Phase A closure validation is the next gate; integration/release not yet claimed."
+  },
+  "commands": [
+    { "command": "grep -n 'W13 (Phase A in progress)' openspec/changes/nightwatch-production-completion-programme-v1/tasks.md", "result": "4 annotations present (lines 1047, 1063, 1086, 1093)" }
+  ],
+  "privacy": { "secrets": "NONE", "customerValues": "NONE" }
+}

@@ -115,14 +115,14 @@
 
 ## 9. Phase A — Group 12 and continuity reconciliation
 
-- [ ] 9.1 Re-annotate Production Completion Group 12 items 12.7, 12.8,
+- [x] 9.1 Re-annotate Production Completion Group 12 items 12.7, 12.8,
       12.11, and 12.12 only as far as Phase A evidence truthfully supports;
       preserve existing text rather than deleting predecessor history.
-- [ ] 9.2 Update `.agent/tasks/nightwatch-autonomous-bug-hunting-programme-v1/PROGRAMME.json`
+- [x] 9.2 Update `.agent/tasks/nightwatch-autonomous-bug-hunting-programme-v1/PROGRAMME.json`
       (`currentWave`, `exactNextAction`, `resumeRecipe`, and `YIELD_W12`'s
       status if still stale) to reflect W12's actual COMPLETE state and
       route to W13.
-- [ ] 9.3 Update `docs/CURRENT_STATE.md`'s W12/W13 rows and README-governed
+- [x] 9.3 Update `docs/CURRENT_STATE.md`'s W12/W13 rows and README-governed
       yield figures for consistency with the reconciled state.
 
 ## 10. Phase A closure checkpoint

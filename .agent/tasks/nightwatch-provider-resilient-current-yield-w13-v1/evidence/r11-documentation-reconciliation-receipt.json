@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "nightwatch.w13-lane-receipt.v1",
+  "laneId": "R-11",
+  "title": "Governed current-state and README yield surfaces reconciled with the active wave",
+  "resolution": "PROVEN",
+  "owner": "session/nightwatch-provider-resilient-cu-623c6535",
+  "taskId": "nightwatch-provider-resilient-current-yield-w13-v1",
+  "classification": "LOCAL_DOCUMENTATION_DRIFT",
+  "artifacts": ["docs/CURRENT_STATE.md", "README.md", "src/core/source/censusFigureLedger.ts"],
+  "changes": {
+    "CURRENT_STATE.liveState": "LIVE_TASK_ID/LIVE_PHASE/LIVE_TASK_STATUS route to W13 IN_PROGRESS; NEXT_ACTION CONTINUE; COMPLETION_CLAIM NONE",
+    "CURRENT_STATE.rows": "W12 row remains PARTIAL_BLOCKED_EXTERNAL_PROVIDER; W13 row added as IN_PROGRESS",
+    "censusFigureLedger.LIVE_TASK_STATUS": "COMPLETE -> IN_PROGRESS",
+    "README.statusBlock": "W13 IN_PROGRESS paragraph added after the preserved W12 PARTIAL — BLOCKED paragraph; no yield claimed"
+  },
+  "commands": [
+    { "command": "npm run project:check", "result": "PASS at clean activation checkpoint" },
+    { "command": "npm run hardening:check", "result": "PASS (STATUS_WORD governed ledger consistent)" }
+  ],
+  "privacy": { "secrets": "NONE", "customerValues": "NONE" }
+}

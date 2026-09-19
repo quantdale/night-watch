@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "nightwatch.w13-lane-receipt.v1",
+  "laneId": "R-10",
+  "title": "Parent programme JSON reconciled to the predecessor's terminal state and the current routing",
+  "resolution": "PROVEN",
+  "owner": "session/nightwatch-provider-resilient-cu-623c6535",
+  "taskId": "nightwatch-provider-resilient-current-yield-w13-v1",
+  "classification": "LOCAL_DOCUMENTATION_DRIFT",
+  "artifact": ".agent/tasks/nightwatch-autonomous-bug-hunting-programme-v1/PROGRAMME.json",
+  "changes": {
+    "currentWave": "W12 -> W13",
+    "lanes.YIELD_W12.status": "blocked -> complete (waveVerdict remains PARTIAL — BLOCKED)",
+    "exactNextAction": "W12 resume text -> W13 Phase A/B routing with the pre-probe policy-freeze requirement",
+    "resumeRecipe": "W12 task files -> W13 task files, W11/W12 treated as frozen predecessors",
+    "realWorld.LIVE_CLI_REASONER": "W12_PROVIDER_SELECTION_PENDING -> W13_PROVIDER_RESILIENCE_POLICY_PENDING",
+    "blockers[1]": "W12-in-progress text -> W12 closed PARTIAL — BLOCKED with the W13 successor in progress"
+  },
+  "commands": [
+    { "command": "node -e \"JSON.parse(PROGRAMME.json)\"", "result": "PASS" },
+    { "command": "npm run agent:check", "result": "PASS (programme-state validator)" }
+  ],
+  "privacy": { "secrets": "NONE", "customerValues": "NONE" }
+}

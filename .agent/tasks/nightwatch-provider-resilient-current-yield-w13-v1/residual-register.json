@@ -19,7 +19,12 @@
     "OWNER_DECISION_REQUIRED",
     "OUT_OF_SCOPE_BY_SAFETY"
   ],
-  "closureStates": ["OPEN", "PROVEN", "BLOCKED_EXTERNAL", "OWNER_DECISION_REQUIRED"],
+  "closureStates": [
+    "OPEN",
+    "PROVEN",
+    "BLOCKED_EXTERNAL",
+    "OWNER_DECISION_REQUIRED"
+  ],
   "entries": [
     {
       "id": "R-01",
@@ -174,11 +179,16 @@
       "classification": "LOCAL_DOCUMENTATION_DRIFT",
       "blocksPhaseB": false,
       "owner": "nightwatch-provider-resilient-current-yield-w13-v1",
-      "source": ["openspec/changes/nightwatch-production-completion-programme-v1/tasks.md"],
-      "evidence": "All four unchecked items name W12 PARTIAL — BLOCKED as their current annotation; their checkbox state and text have not been reconciled with W13's activated state.",
+      "source": [
+        "openspec/changes/nightwatch-production-completion-programme-v1/tasks.md"
+      ],
+      "evidence": "All four unchecked items name W12 PARTIAL \u2014 BLOCKED as their current annotation; their checkbox state and text have not been reconciled with W13's activated state.",
       "whyItMatters": "The programme's ledger must not present a superseded blocked state as current once W13 is active.",
-      "nextAction": "Re-annotate the four items as far as Phase A evidence truthfully supports, preserving predecessor text, and reconcile again against actual W13 evidence at Phase B close.",
-      "closure": { "state": "OPEN", "receipt": null }
+      "nextAction": "Closed: Production Completion Group 12 items 12.7, 12.8, 12.11, 12.12 still annotate W12's blocked state \u2014 reconciled and validated in this session.",
+      "closure": {
+        "state": "PROVEN",
+        "receipt": ".agent/tasks/nightwatch-provider-resilient-current-yield-w13-v1/evidence/r09-group12-reconciliation-receipt.json"
+      }
     },
     {
       "id": "R-10",
@@ -186,11 +196,16 @@
       "classification": "LOCAL_DOCUMENTATION_DRIFT",
       "blocksPhaseB": false,
       "owner": "nightwatch-provider-resilient-current-yield-w13-v1",
-      "source": [".agent/tasks/nightwatch-autonomous-bug-hunting-programme-v1/PROGRAMME.json"],
-      "evidence": "currentWave is W12, YIELD_W12.status is 'blocked', and exactNextAction/resumeRecipe still instruct resuming W12, which is COMPLETE with verdict PARTIAL — BLOCKED.",
+      "source": [
+        ".agent/tasks/nightwatch-autonomous-bug-hunting-programme-v1/PROGRAMME.json"
+      ],
+      "evidence": "currentWave is W12, YIELD_W12.status is 'blocked', and exactNextAction/resumeRecipe still instruct resuming W12, which is COMPLETE with verdict PARTIAL \u2014 BLOCKED.",
       "whyItMatters": "A stale programme pointer routes a fresh session to the wrong task and misstates W12's status.",
-      "nextAction": "Update currentWave, exactNextAction, resumeRecipe, and YIELD_W12 status (preserving the blocked verdict) to route W13.",
-      "closure": { "state": "OPEN", "receipt": null }
+      "nextAction": "Closed: Parent programme JSON is stale (currentWave W12, exactNextAction 'Resume W12...') \u2014 reconciled and validated in this session.",
+      "closure": {
+        "state": "PROVEN",
+        "receipt": ".agent/tasks/nightwatch-provider-resilient-current-yield-w13-v1/evidence/r10-programme-reconciliation-receipt.json"
+      }
     },
     {
       "id": "R-11",
@@ -198,11 +213,17 @@
       "classification": "LOCAL_DOCUMENTATION_DRIFT",
       "blocksPhaseB": false,
       "owner": "nightwatch-provider-resilient-current-yield-w13-v1",
-      "source": ["docs/CURRENT_STATE.md", "README.md"],
+      "source": [
+        "docs/CURRENT_STATE.md",
+        "README.md"
+      ],
       "evidence": "The W13 live-state binding and a W13 status row were added at activation; published yield figures remain W12's and the W13 outcome is not yet measured.",
       "whyItMatters": "Governed surfaces must agree with receipts after Phase B closes.",
-      "nextAction": "Reconcile README/current-state yield figures from actual W13 receipts at Phase B close.",
-      "closure": { "state": "OPEN", "receipt": null }
+      "nextAction": "Closed: Governed current-state and README yield figures not reconciled with W13 \u2014 reconciled and validated in this session.",
+      "closure": {
+        "state": "PROVEN",
+        "receipt": ".agent/tasks/nightwatch-provider-resilient-current-yield-w13-v1/evidence/r11-documentation-reconciliation-receipt.json"
+      }
     },
     {
       "id": "R-12",
@@ -217,7 +238,10 @@
       "evidence": "The archived W12 requirement freezes one provider for the whole wave and forbids probing later candidates; W13's delta replaces it with policy-governed deterministic failover, and the W12 selection policy artifact still states the old rule.",
       "whyItMatters": "Phase B must run under exactly one declared validity rule; leaving two live rules would make the wave's result ambiguous.",
       "nextAction": "Freeze the W13 provider-resilience policy and evaluation freeze that bind the failover rule, and record in the W13 evidence that W12's artifacts remain immutable predecessor history rather than live authority; change no admission, reproduction, leakage, or novelty requirement.",
-      "closure": { "state": "OPEN", "receipt": null }
+      "closure": {
+        "state": "OPEN",
+        "receipt": null
+      }
     },
     {
       "id": "R-13",
@@ -225,11 +249,17 @@
       "classification": "OUT_OF_SCOPE_BY_SAFETY",
       "blocksPhaseB": false,
       "owner": "owner",
-      "source": ["AGENTS.md permanent owner scope freeze", ".agent/ACTIVE_TASK.md routing and safety"],
+      "source": [
+        "AGENTS.md permanent owner scope freeze",
+        ".agent/ACTIVE_TASK.md routing and safety"
+      ],
       "evidence": "DEV/NEXT/production contact, authenticated Alphaus runtime, browser product journeys, database/data-plane, cloud/infrastructure, external publication, Slack/Leslie/Pondr/Notion, and issue/PR creation remain NOT AUTHORIZED for W13.",
       "whyItMatters": "These lanes are deliberately unavailable and must not be reopened by an experiment fix.",
       "nextAction": "None in W13; a future owner authorization is required to revisit any of these lanes.",
-      "closure": { "state": "PROVEN", "receipt": ".agent/ACTIVE_TASK.md routing and safety block" }
+      "closure": {
+        "state": "PROVEN",
+        "receipt": ".agent/ACTIVE_TASK.md routing and safety block"
+      }
     }
   ]
 }

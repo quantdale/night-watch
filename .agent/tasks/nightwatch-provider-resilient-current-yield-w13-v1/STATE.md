@@ -33,17 +33,29 @@ policy exhaustion before sufficient investigation is `PROVIDER_BLOCKED`.
 
 ## Current Milestone
 
-Milestone ID: M8
+Milestone ID: M9
 Milestone status: IN_PROGRESS
-What is being attempted: close R-09/R-10/R-11 (Group 12 items 12.7, 12.8,
-12.11, 12.12 re-annotation; parent `PROGRAMME.json` reconciliation to W12
-COMPLETE and W13 routing; governed current-state/README yield figures) without
-deleting or rewriting predecessor annotations.
-Next action: update the Group 12 annotations and `PROGRAMME.json` from Phase A
-evidence, reconcile governed documentation, and update register entries R-09,
-R-10, and R-11.
+What is being attempted: Phase A closure — run the focused Phase A
+regressions/negative probes plus `npm run typecheck`, `npm run typecheck:bin`,
+`npm run hardening:check`, `npm run hardening:rules`, `npm run agent:check`,
+`npm run handoff:check`, `npm run project:check`, `npm run workspace:check`,
+`npm run session:check`, and `npm run validation:universe`; then verify every
+residual-register entry resolves to `PROVEN`, `BLOCKED_EXTERNAL`, or an
+explicit `OWNER_DECISION_REQUIRED` and commit the Phase A closure checkpoint,
+or stop with `PARTIAL — BLOCKED` if a blocking entry remains.
+Next action: run the Phase A closure validation suite and the register
+resolution check, then commit the closure checkpoint.
 
 ## Completed Milestones
+
+- **M8 COMPLETE**: R-09/R-10/R-11 `PROVEN`. Group 12 items 12.7/12.8/12.11/
+  12.12 carry appended W13 Phase A annotations with predecessor text
+  preserved; `PROGRAMME.json` routes W13 and records W12 `complete` with its
+  `PARTIAL — BLOCKED` verdict intact; governed current-state/README/ledger
+  surfaces are reconciled. Receipts:
+  `evidence/r09-group12-reconciliation-receipt.json`,
+  `evidence/r10-programme-reconciliation-receipt.json`,
+  `evidence/r11-documentation-reconciliation-receipt.json`.
 
 - **M7 COMPLETE**: R-07 and R-08 `PROVEN`. The aggregation rejects a
   self-declared admission without a reproduction receipt, evidence refs, and
@@ -100,18 +112,19 @@ R-10, and R-11.
 
 ## Work In Progress
 
-M8 is reconciling Group 12, the parent programme, and governed documentation;
-no annotation is committed yet.
+M9 is running the Phase A closure validation; no closure checkpoint is
+committed yet.
 
 ## Exact Next Action
 
-Re-annotate Production Completion Group 12 items 12.7, 12.8, 12.11, and 12.12
-as far as Phase A evidence supports while preserving predecessor text; update
-`.agent/tasks/nightwatch-autonomous-bug-hunting-programme-v1/PROGRAMME.json`
-(`currentWave`, `exactNextAction`, `resumeRecipe`, `YIELD_W12.status`); and
-reconcile the governed current-state/README surfaces. Then update register
-entries R-09, R-10, and R-11. Do not probe any provider before the Phase B
-policy freeze.
+Run the Phase A closure suite: the focused W13 residual suites plus
+`npm run typecheck`, `npm run typecheck:bin`, `npm run hardening:check`,
+`npm run hardening:rules`, `npm run agent:check`, `npm run handoff:check`,
+`npm run project:check`, `npm run workspace:check`, `npm run session:check`,
+and `npm run validation:universe`; verify every register entry resolves to
+`PROVEN`, `BLOCKED_EXTERNAL`, or `OWNER_DECISION_REQUIRED`; commit the Phase A
+closure checkpoint. Do not probe any provider before the Phase B policy
+freeze.
 
 ## Files Changed
 

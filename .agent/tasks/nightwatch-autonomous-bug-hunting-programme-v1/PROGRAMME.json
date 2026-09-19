@@ -2,7 +2,7 @@
   "schemaVersion": "nightwatch.autonomous-programme-state.v1",
   "programmeId": "nightwatch-autonomous-bug-hunting-programme-v1",
   "programmeStatus": "IN_PROGRESS",
-  "currentWave": "W12",
+  "currentWave": "W13",
   "startingSha": "d1ebde90c1454b31d6b93d9df503a4c5f196d7c8",
   "wave0Sha": "bd9be1b2a93107388b868cf2febc87bc84a8a428",
   "programmeIntegrationHead": "DISCOVER_FROM_GIT",
@@ -112,7 +112,7 @@
       "freezeFingerprints": ["sha256:824deef9922975feab5af69f", "sha256:6145bd666dd08369ec38b018"]
     },
     "YIELD_W12": {
-      "status": "blocked",
+      "status": "complete",
       "taskId": "nightwatch-current-source-unknown-yield-w12-v1",
       "role": "W12_CURRENT_SOURCE_UNKNOWN_YIELD",
       "baseSha": "4e763f3f079863a262906a8b134539e309c8d054",
@@ -150,15 +150,15 @@
     "REPRODUCTION_SURFACE_COVERAGE": "PROVEN_BOUNDED_LOCAL_CAPABILITY_AWARE_SELECTION",
     "REAL_DEV_NEXT_HUNT": "NOT_AUTHORIZED",
     "PREVIOUSLY_UNKNOWN_ALPHAUS_BUG": "NOT_YET_PROVEN",
-    "LIVE_CLI_REASONER": "W12_PROVIDER_SELECTION_PENDING"
+    "LIVE_CLI_REASONER": "W13_PROVIDER_RESILIENCE_POLICY_PENDING"
   },
   "blockers": [
     "DEV/NEXT execution not authorized (external)",
-    "W12 current-source yield is in progress and requires a frozen provider and valid matrix execution",
+    "W12 current-source yield closed PARTIAL — BLOCKED; the W13 provider-resilient successor is in progress under a to-be-frozen deterministic failover policy",
     "strict EXACT remains the frozen W11 metric and is not re-run by W12",
     "previously unknown Alphaus bug yield remains unproven until W12 admission plus independent evidence",
     "external CI remains unobserved for this programme's heads"
   ],
-  "exactNextAction": "Resume W12 from .agent/ACTIVE_TASK.md and its STATE.md. Validate the governed activation checkpoint, then declare the provider-selection policy before probing. W0-W11 predecessor evidence remains frozen; do not reopen W11's historical arm.",
-  "resumeRecipe": "Read .agent/ACTIVE_TASK.md and .agent/EXECUTION_PROMPT.md, then .agent/tasks/nightwatch-current-source-unknown-yield-w12-v1/SPEC.md, PLAN.md and STATE.md. Re-discover live Git/workspace/session truth. Read W11 only as frozen predecessor evidence and continue W12's exact next action."
+  "exactNextAction": "Resume W13 from .agent/ACTIVE_TASK.md and its STATE.md. Phase A residual closure is in progress; freeze the provider-resilience policy and evaluation freeze before any Phase B probe. W0-W12 predecessor evidence remains frozen; do not reopen W11's historical arm or W12's measured runs.",
+  "resumeRecipe": "Read .agent/ACTIVE_TASK.md and .agent/EXECUTION_PROMPT.md, then .agent/tasks/nightwatch-provider-resilient-current-yield-w13-v1/SPEC.md, PLAN.md and STATE.md. Re-discover live Git/workspace/session truth. Treat W11 and W12 as frozen predecessor evidence and continue W13's exact next action."
 }
