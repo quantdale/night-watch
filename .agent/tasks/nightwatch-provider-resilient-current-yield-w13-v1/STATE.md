@@ -33,18 +33,23 @@ policy exhaustion before sufficient investigation is `PROVIDER_BLOCKED`.
 
 ## Current Milestone
 
-Milestone ID: M1
+Milestone ID: M2
 Milestone status: IN_PROGRESS
-What is being attempted: build the Phase A residual register from W11, W12,
-Group 12, the parent programme, quality-gate definitions, provider/runtime
-budget policy, measurement/aggregation, provider failure handling, continuity,
-validation-universe, and documentation surfaces, and classify every entry with
-its Phase B blocking flag before fixing any entry.
-Next action: write and commit the residual register, then execute the register
-in order starting with the provider-failure budget mismatch.
+What is being attempted: close R-01, the provider-failure budget mismatch
+(frozen supplemental 3 versus runtime HOUR_1 ceiling 8), under the
+single-authority decision: the engine `defaultAgentBudgetPolicy` is the sole
+authority, any declared envelope must be derived from it, and a divergence
+fails closed before any provider call.
+Next action: implement the derived-envelope guard and its regression plus
+fail-closed negative probe, record the decision succeeding D-138, and update
+the register entry.
 
 ## Completed Milestones
 
+- **M1 COMPLETE**: the 13-entry Phase A residual register was written and
+  committed (`residual-register.json`, `createdAtSha` `e1651121`) before any
+  entry was fixed; every entry carries exactly one taxonomy class and a
+  Phase B blocking flag.
 - **M0 COMPLETE** at activation checkpoint `a95004a0` (follow-up `bdb781d4`):
   C-00 session `session/nightwatch-provider-resilient-cu-623c6535` created and
   claimed; W12 OpenSpec change archived into the specs baseline
@@ -55,16 +60,18 @@ in order starting with the provider-failure budget mismatch.
 
 ## Work In Progress
 
-M1 is assembling the residual register; no register entry has been fixed yet.
+M2 is implementing the R-01 single-authority guard: `defaultAgentBudgetPolicy`
+is the sole runtime ceiling authority and a declared runtime envelope is
+either derived from it or rejected field-by-field before a provider call.
 
 ## Exact Next Action
 
-Build `.agent/tasks/nightwatch-provider-resilient-current-yield-w13-v1/residual-register.json`
-(or equivalent machine-readable register) covering every locally closable W12
-residual named in SPEC.md plus any additional locally closable gap found by
-inspection; classify each entry with exactly one `residual-closure` taxonomy
-class and a Phase B blocking flag; commit the register before fixing any
-entry. Do not probe any provider before the Phase B policy freeze.
+Implement the derived runtime-budget-envelope guard (derivation plus
+field-level validation wired into the campaign run/resume path), add the
+regression and the fail-closed divergence negative probe, record the new
+decision succeeding D-138, and update R-01 in `residual-register.json` to
+`PROVEN` with its receipt. Do not probe any provider before the Phase B policy
+freeze.
 
 ## Files Changed
 

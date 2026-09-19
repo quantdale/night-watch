@@ -15,10 +15,11 @@ single frozen provider. W13 is a distinct owner-authorized successor whose
 Phase A must close every locally closable W12 residual before Phase B freezes
 a provider-resilience policy and executes the fixed broad-plus-eight-scoped
 matrix.
-Current milestone: M1 — Phase A residual register
-Next action: build and commit the Phase A residual register with a taxonomy
-class and blocking flag per entry before fixing any entry. Do not probe any
-provider before the Phase B provider-resilience policy freeze is committed.
+Current milestone: M2 — provider-failure budget mismatch (R-01)
+Next action: implement the derived runtime-budget-envelope guard with its
+regression and fail-closed divergence probe, record the decision succeeding
+D-138, and update register entry R-01 to PROVEN. Do not probe any provider
+before the Phase B provider-resilience policy freeze is committed.
 Authorization class: PROVIDER_RESILIENT_CURRENT_YIELD_W13_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2

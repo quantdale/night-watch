@@ -78,7 +78,8 @@ from receipts, and adjudicates novelty only after admission.
 - Objective: build and commit the residual register before fixing any entry.
 - Acceptance: every entry names source/evidence/rationale/owner/next action,
   carries exactly one taxonomy class, and records its Phase B blocking flag.
-- **Status:** NOT_STARTED
+- **Status:** COMPLETE — 13-entry register committed before any fix
+  (`residual-register.json`).
 
 ### M2 — Provider-failure budget mismatch
 
@@ -87,7 +88,7 @@ from receipts, and adjudicates novelty only after admission.
   decision succeeding D-138.
 - Acceptance: no silent divergence is possible; the divergence probe fails
   closed.
-- **Status:** NOT_STARTED
+- **Status:** IN_PROGRESS
 
 ### M3 — `gate:local` synthetic-lane timeout classification
 

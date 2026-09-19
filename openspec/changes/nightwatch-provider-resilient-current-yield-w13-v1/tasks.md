@@ -24,14 +24,14 @@
 
 ## 2. Phase A — Residual register
 
-- [ ] 2.1 Build the residual register against W11, W12, Production
+- [x] 2.1 Build the residual register against W11, W12, Production
       Completion Group 12, the parent autonomous programme, quality-gate
       definitions, provider/runtime budget policy, measurement/aggregation,
       provider failure handling, task continuity, the validation universe,
       release/clean/local gate behavior, yield documentation, source census
       completeness, provider model discovery, current reproduction
       capability, and existing deferred/follow-up sections.
-- [ ] 2.2 Classify every entry per the `residual-closure` capability's
+- [x] 2.2 Classify every entry per the `residual-closure` capability's
       register taxonomy (`LOCAL_FIX_REQUIRED` … `OUT_OF_SCOPE_BY_SAFETY`)
       and mark whether it blocks Phase B. Commit the register before fixing
       any entry.
