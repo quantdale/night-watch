@@ -11,7 +11,7 @@ Last substantive checkpoint SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-exhaustive-repository-ef157f7a
-Last checkpoint: 2026-09-19 — M0 complete; M1 live manifest/config/gate inspection admitted NW-AUD-001 and produced a strict-valid dedicated CI action-integrity proposal.
+Last checkpoint: 2026-09-20 — M0 complete; M1 admitted NW-AUD-001 and NW-AUD-004 and produced strict-valid dedicated CI action-integrity and exact runtime-toolchain proposals.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
@@ -38,11 +38,12 @@ What is being attempted: complete repository topology, dependency, configuration
 - Starting-tree coverage: 2,593 tracked paths classified by exhaustive top-level denominator; tree `9b6c1982251e2afa70877745b7787284e9f96a52`, inventory digest `939fe42065e7923e9dfd56eb46bfda38c8a2bb2e40127accc8efed75ab6a77f6`.
 - M0 governed activation and coverage model: COMPLETE; durable authority and existing-planning indexes are recorded in `audit.md`.
 - NW-AUD-001: PROPOSED (Medium/High-confidence); dedicated change `nightwatch-ci-action-supply-chain-integrity-v1` is 4/4 complete and strict-valid.
+- NW-AUD-004: PROPOSED (Medium/High-confidence); dedicated change `nightwatch-exact-runtime-toolchain-identity-v1` is 4/4 complete and strict-valid.
 - NW-AUD-002: DUPLICATE of production-completion tasks 15.7/15.11; NW-AUD-003: NOT_AN_ISSUE after validation-universe PASS with zero unclassified checks.
 
 ## Work In Progress
 
-M1 has covered package/lock/config topology, root TypeScript/Playwright configuration, the executable quality gate, validation-universe classification, dependency/lane records, and the GitHub workflow/hardening seam. Remaining M1 work is the rest of `bin/`, generators, environment configuration, session/release/checkpoint mechanics, and cross-file config schema ownership.
+M1 has covered package/lock/config topology, root TypeScript/Playwright configuration, the executable quality gate, validation-universe classification, dependency/lane records, the GitHub workflow/hardening seam, and the clean-checkout toolchain/receipt path. Remaining M1 work is the rest of `bin/`, generators, environment configuration, session/release/checkpoint mechanics, and cross-file config schema ownership.
 
 ## Exact Next Action
 
@@ -56,6 +57,7 @@ Continue M1 with a bounded inventory of all `bin/` entry points and library owne
 | `.agent/tasks/nightwatch-exhaustive-repository-audit-proposals-v1/` | durable task continuity | in progress |
 | `openspec/changes/nightwatch-exhaustive-repository-audit-proposals-v1/` | umbrella audit proposal, contracts, tasks, and evidence ledger | in progress |
 | `openspec/changes/nightwatch-ci-action-supply-chain-integrity-v1/` | NW-AUD-001 implementation-ready remediation proposal | complete planning artifact |
+| `openspec/changes/nightwatch-exact-runtime-toolchain-identity-v1/` | NW-AUD-004 implementation-ready remediation proposal | complete planning artifact |
 
 ## Validation Ledger
 
@@ -79,6 +81,21 @@ Result: PASS
 When: 2026-09-19
 Relevant failure/output summary: proposal, design, exact-head-ci-baseline delta spec, and tasks are 4/4 complete/apply-ready.
 
+Command: `openspec validate nightwatch-exact-runtime-toolchain-identity-v1 --strict`
+Result: PASS
+When: 2026-09-20
+Relevant failure/output summary: proposal, design, runtime-toolchain-integrity spec, reproducibility delta spec, and tasks are 4/4 complete/apply-ready.
+
+Command: `npm run agent:check`
+Result: PASS with 41 pre-existing/expected warnings and zero strict-v2 errors
+When: 2026-09-20
+Relevant failure/output summary: new completed planning child task is coherent; open implementation tasks are declared not in scope; unrelated historical/orphan/stale-session warnings remain untouched.
+
+Command: `npm run workspace:check`
+Result: PASS
+When: 2026-09-20
+Relevant failure/output summary: owned session and declared-deletion policy pass; dirty status is the expected current planning checkpoint before commit.
+
 Command: `npm run typecheck:bin`; `npm run schema:check`; `npm run hardening:check`; `npm run project:check`
 Result: ENVIRONMENT UNAVAILABLE
 When: 2026-09-19
@@ -94,6 +111,10 @@ Decision: admit NW-AUD-001 at Medium severity and create a dedicated change.
 Reason: current mutable action refs execute before repository-owned validation, while exploitation requires an external upstream/tag compromise and permissions are read-only.
 Evidence/constraint: current workflow lines 22/26, current unanchored hardening regex lines 239/240, no existing exact pinning requirement or probe.
 
+Decision: admit NW-AUD-004 at Medium severity and create a dedicated change.
+Reason: the unlocked clean runtime resolver executes before certification and exact runtime disagreement cannot be detected from receipts, while ordinary impact is certification integrity/reproducibility rather than direct product access.
+Evidence/constraint: workflow line 28, clean wrapper lines 65-90 and 192-213, no lock/manifest ownership for `node@20`, and no existing exact Node/npm receipt contract.
+
 ## Discoveries
 
 - Registered topology has room for this worktree under the repository's maximum of eight.
@@ -103,6 +124,7 @@ Evidence/constraint: current workflow lines 22/26, current unanchored hardening 
 - Several durable sections preserve superseded phase states intentionally; current machine blocks and live implementation/test evidence outrank those historical statements.
 - GitHub workflow action identity is not immutable and its allowlist is substring-based; this is NW-AUD-001.
 - The bin typecheck gap is already owned by production-completion; validation-universe coverage is current and complete.
+- The clean gate dynamically resolves `node@20` outside `package-lock.json`, CI requests only major 20, and both clean receipt authority and current focused tests omit exact Node/npm identity; this is NW-AUD-004.
 
 ## Blockers
 
@@ -126,4 +148,6 @@ NONE
 
 ## Completion Snapshot
 
-Not complete; M0 is active and no audit conclusions have been claimed.
+Not complete; M1 is active. Two issue-specific changes are strict-valid, but
+remaining M1 surfaces and milestones M2-M10 are still required before any
+exhaustive conclusion.

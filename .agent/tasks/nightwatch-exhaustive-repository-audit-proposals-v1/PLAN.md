@@ -117,6 +117,7 @@ Prefer the narrowest decisive existing tests during exploration. Validate each O
 - 2026-09-19 — Decision: use a dedicated umbrella audit campaign and separate remediation changes; reason: exhaustive coverage needs one ledger while implementation scopes need independent ownership and acceptance criteria; evidence: original objective plus existing multi-change OpenSpec topology; consequence: no monolithic catch-all implementation plan.
 - 2026-09-19 — Decision: prohibit sibling-repository exploration; reason: the objective names this codebase and AGENTS forbids broad Alphaus rediscovery; consequence: all findings derive from Nightwatch repository evidence.
 - 2026-09-19 — Decision: partition mutable CI action identity into its own remediation change; reason: the action refs execute before the repository-owned gate and the current substring allowlist has an independent supply-chain trust boundary; evidence: NW-AUD-001; consequence: `nightwatch-ci-action-supply-chain-integrity-v1` extends the existing exact-head CI capability without changing implementation.
+- 2026-09-20 — Decision: partition exact runtime-toolchain identity into its own remediation change; reason: immutable setup-action code does not bind the Node/npm executable it selects, and the clean gate has a separate unlocked `node@20` bootstrap plus receipt-parity gap; evidence: NW-AUD-004; consequence: `nightwatch-exact-runtime-toolchain-identity-v1` introduces the toolchain-integrity capability and strengthens reproducibility without implementing it.
 
 ## Discoveries
 
@@ -125,6 +126,7 @@ Prefer the narrowest decisive existing tests during exploration. Validate each O
 - Validation-universe completeness is current (494 = 257 authoritative + 237 classified, zero unclassified); the historical R-12 manifest gap is not a new finding.
 - `bin/**` strict typecheck remains reporting-only, but production-completion tasks 15.7/15.11 already own that exact gap.
 - The authoritative workflow's two mutable action tags and substring allowlist form the first non-duplicate material finding (NW-AUD-001).
+- CI and clean certification bind only Node major 20; the clean wrapper can execute unlocked `node@20` before validation and receipts omit exact Node/npm identity. This is the second non-duplicate material finding (NW-AUD-004).
 
 ## Deferred Work
 

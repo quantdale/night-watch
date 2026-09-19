@@ -51,12 +51,12 @@ The following top-level classes are exhaustive and mutually exclusive for the st
 | `src/` | 626 | all runtime subsystems and trust boundaries | PENDING | — | — |
 | `openspec/` | 417 | published specs, active changes, archive/deduplication, schema validity | PENDING | — | — |
 | `tests/` | 410 | unit/browser/smoke/manual/helpers/fixtures, assertion strength and gaps | PENDING | — | — |
-| `bin/` | 118 | CLI, gates, validators, generators, session/workspace/release tooling | IN_PROGRESS | NW-AUD-001 | Phase 23 workflow guard inspected; remaining bin surfaces pending |
+| `bin/` | 118 | CLI, gates, validators, generators, session/workspace/release tooling | IN_PROGRESS | NW-AUD-001, NW-AUD-004 | Phase 23 workflow guard and clean-checkout toolchain/receipt path inspected; remaining bin surfaces pending |
 | `corpus/` | 113 | fixture/corpus integrity, authority separation, generated/historical boundaries | PENDING | — | — |
 | `docs/` | 40 | architecture, safety, decisions, roadmap, current-state and design truth | IN_PROGRESS | — | — |
 | `ui/` | 32 | Control Center static UI, accessibility, responsive and interaction behavior | PENDING | — | — |
-| `config/` | 26 | environment, workspace, gates, policies, registries and bounds | IN_PROGRESS | NW-AUD-002 | gate/universe/lane/dependency records inspected; remaining configuration pending |
-| Root and integration files | 30 | manifests, lockfile, TypeScript/Playwright configs, CI, env example, scenarios and agent integrations | IN_PROGRESS | NW-AUD-001, NW-AUD-002, NW-AUD-003 | package, TypeScript, Playwright, CI workflow and validation topology inspected; remaining root surfaces pending |
+| `config/` | 26 | environment, workspace, gates, policies, registries and bounds | IN_PROGRESS | NW-AUD-002, NW-AUD-004 | gate/universe/lane/dependency records inspected; exact runtime identity is absent; remaining configuration pending |
+| Root and integration files | 30 | manifests, lockfile, TypeScript/Playwright configs, CI, env example, scenarios and agent integrations | IN_PROGRESS | NW-AUD-001, NW-AUD-002, NW-AUD-003, NW-AUD-004 | package, TypeScript, Playwright, CI workflow, runtime selector, and validation topology inspected; remaining root surfaces pending |
 
 ### `src/` subsystem denominator
 
@@ -112,6 +112,7 @@ No documentation inconsistency is admitted as a finding merely because historica
 | ID | State | Severity | Confidence | Subsystem | Summary | Evidence | Existing-plan relation | Owning change |
 |---|---|---|---|---|---|---|---|---|
 | NW-AUD-001 | PROPOSED | Medium | High | CI / supply chain / hardening | Authoritative CI executes two mutable `@v4` action refs, while the enforcing rule accepts an unanchored substring and can admit lookalike owners or suffixed refs | `.github/workflows/hardening.yml:22,26`; `bin/lib/hardening/rules/validation-and-gates.mjs:239-240`; probe registry has no action-identity mutation | No existing published requirement or active change pins third-party actions; exact-head CI spec is extended rather than duplicated | `nightwatch-ci-action-supply-chain-integrity-v1` |
+| NW-AUD-004 | PROPOSED | Medium | High | clean/CI certification / toolchain supply chain / reproducibility | CI selects the moving major `20`; clean certification may execute unlocked `node@20` before the gate; receipts record only `nodeMajor`, so different Node/npm identities can produce indistinguishable certification evidence | `.github/workflows/hardening.yml:28`; `bin/quality-gate-clean.mjs:65-90,128-135,192-213`; `tests/unit/gateReceiptPersistence.test.ts:500-508`; `rg --fixed-strings node@20` finds no lock/manifest owner | Existing specs require a fresh supported Node 20 checkout but do not bind an exact version, payload integrity, pre-install admission, or receipt parity; CI action pinning is a prerequisite, not duplicate coverage | `nightwatch-exact-runtime-toolchain-identity-v1` |
 
 ## M1 candidate dispositions
 
@@ -120,12 +121,22 @@ No documentation inconsistency is admitted as a finding merely because historica
 | NW-AUD-001 | PROPOSED | Mutable CI action identity plus substring-allowlist false negative | Current workflow uses `actions/checkout@v4` and `actions/setup-node@v4`; current regex `/actions\/(?:checkout|setup-node)@v4/` is unanchored, so `evil/actions/checkout@v4` and `actions/checkout@v4-suffix` match; action code runs before repository-owned gate | MATERIAL → dedicated strictly-valid OpenSpec change |
 | NW-AUD-002 | DUPLICATE | `bin/**` is parse-checked but its strict typecheck lane remains reporting-only | `config/bin-typecheck.v1.json` is `REPORTING`; authoritative gate `STATIC` runs root `typecheck` only; production-completion tasks 15.7 and 15.11 explicitly require full conformance and blocking registration | Exact failure mode already owned by `nightwatch-production-completion-programme-v1`; no duplicate change |
 | NW-AUD-003 | NOT_AN_ISSUE | Historical concern that tests/checks could sit outside authoritative manifests | `npm run validation:universe` discovers 494 checks: 257 authoritative + 237 explicitly classified + 0 unclassified; digest `sha256:039d60d15518fc56c463d66b` | Current NW-08 mechanism closes the historical R-12 lead |
+| NW-AUD-004 | PROPOSED | Major-only runtime selection plus an unlocked pre-gate clean resolver and major-only receipts | CI uses `node-version: 20`; clean fallback invokes `npm exec --yes --package=node@20`, which is absent from `package-lock.json`; it accepts any Node 20 patch and returns only `nodeMajor`; the outer PASS receipt has `nodeRequirement: '20'` and no Node/npm version or payload identity; existing receipt test checks transport/digest disagreement only | MATERIAL → dedicated strictly-valid OpenSpec change |
 
 NW-AUD-001 severity is Medium rather than High: compromise or malicious
 movement of an upstream action identity is an external precondition, and the
 workflow grants only `contents: read`. Impact is nevertheless material because
 the action can read private source and alter the workspace/conditions observed
 by the later authoritative gate.
+
+NW-AUD-004 severity is Medium rather than High: the ordinary consequence is
+unreproducible or disagreeing certification rather than direct owner-policy
+bypass, and exploitation of the clean bootstrap requires upstream/cache
+compromise or operator execution on a non-20 host. It remains material because
+the moving executable is selected before the repository gate, is outside the
+project lockfile, and exact runtime disagreement is absent from authoritative
+receipts. The proposal intentionally separates this selected-toolchain identity
+from NW-AUD-001's setup-action code identity and requires both controls.
 
 ## Validation ledger
 
@@ -142,7 +153,12 @@ by the later authoritative gate.
 | `npm run typecheck:bin` | ENVIRONMENT UNAVAILABLE in owned worktree: no `node_modules/typescript`; no dependency install authorized | Not a product failure; static configuration and existing recorded ownership used |
 | `npm run schema:check`, `npm run hardening:check`, `npm run project:check` | ENVIRONMENT UNAVAILABLE for the same absent local TypeScript toolchain | Deferred to a dependency-equipped validation checkpoint; `workspace:check` remained PASS |
 | `openspec validate nightwatch-ci-action-supply-chain-integrity-v1 --strict` | PASS; 4/4 artifacts complete | NW-AUD-001 remediation is apply-ready |
+| `openspec validate nightwatch-exact-runtime-toolchain-identity-v1 --strict` | PASS; 4/4 artifact classes complete | NW-AUD-004 remediation is apply-ready |
 
 ## Completion audit
 
-Not yet eligible. All coverage rows except durable-context bootstrap remain PENDING, the finding ledger has not been populated, and no issue-specific remediation change exists.
+Not yet eligible. Most coverage rows remain pending, M1 still has uninspected
+bin/config/generator/release/session surfaces, and later runtime/UI/test waves
+have not started. Two material findings currently map one-to-one to two
+strict-valid issue-specific remediation changes; that partial portfolio is not
+evidence of whole-repository completeness.
