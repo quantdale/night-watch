@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "nightwatch.w13-lane-receipt.v1",
+  "laneId": "R-06",
+  "title": "Aggregate measurement completeness is schema-guaranteed with explicit NOT_CAPTURED reasons",
+  "resolution": "PROVEN",
+  "owner": "session/nightwatch-provider-resilient-cu-623c6535",
+  "taskId": "nightwatch-provider-resilient-current-yield-w13-v1",
+  "classification": "OBSERVABILITY_GAP",
+  "artifacts": [
+    "src/core/currentSourceYield/aggregation.ts",
+    "tests/unit/w13AggregateCompleteness.test.ts"
+  ],
+  "requiredGlobalMetrics": [
+    "plannedRuns", "attemptedRuns", "validRuns", "providerBlockedRuns",
+    "investigationsStarted", "investigationsCompleted", "reasonerCalls",
+    "providerFailuresByClass", "providerRetries", "providerTransitions",
+    "toolActions", "uniqueRepositories", "uniqueInspectedSourcePaths",
+    "visibleExecutableTargets", "hypothesesFormed", "reproductionAttempts",
+    "reproductionExecutions", "qualifyingReproductions", "reproductionNotAvailable",
+    "candidatesProposed", "refusalsByReason", "mechanicalAdmissions",
+    "noveltyClasses", "leakageEvents", "providerResponseBytes", "providerStderrBytes",
+    "renderedInputBytes", "toolPayloadBytes", "wallTimeMs", "terminationReasons"
+  ],
+  "crossCheckAgainstW12": {
+    "artifact": ".agent/tasks/nightwatch-current-source-unknown-yield-w12-v1/evidence/global-yield-aggregation.json",
+    "findings": [
+      "W12's aggregate is prose-shaped by section (matrix/provider/investigation/...) with no required-metric schema, so a missing metric is invisible.",
+      "providerFailuresByClass: W12 recorded only a partial two-class breakdown inside its provider section, not a contract-bound taxonomy distribution.",
+      "providerRetries: recorded as the string \"NOT_CAPTURED\" without a schema field or a sanctioned reason.",
+      "providerTransitions: absent entirely because only one provider was frozen.",
+      "transport/tool byte accounting and termination distributions were present but not enforceably required."
+    ]
+  },
+  "violationCodes": [
+    "YIELD_AGGREGATE_SCHEMA_UNSUPPORTED",
+    "YIELD_AGGREGATE_METRICS_MISSING",
+    "YIELD_METRIC_REQUIRED_MISSING",
+    "YIELD_METRIC_NOT_CAPTURED_WITHOUT_REASON",
+    "YIELD_METRIC_MALFORMED",
+    "YIELD_METRIC_UNKNOWN"
+  ],
+  "floorIntegration": "A truncated source population composes with R-05: a metric whose population is TRUNCATED must be FLOOR, and the R-06 test proves an EXACT denominator over the truncated population is rejected.",
+  "commands": [
+    { "command": "npx playwright test tests/unit/w13AggregateCompleteness.test.ts --project=nightwatch --workers=1", "result": "5 passed / 0 failed" },
+    { "command": "npm run typecheck", "result": "PASS" },
+    { "command": "node bin/schema-lifecycle.mjs check", "result": "PASS" },
+    { "command": "node bin/validation-universe.mjs", "result": "PASS" }
+  ],
+  "privacy": { "secrets": "NONE", "customerValues": "NONE" }
+}

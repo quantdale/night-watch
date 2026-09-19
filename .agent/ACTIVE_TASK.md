@@ -15,12 +15,11 @@ single frozen provider. W13 is a distinct owner-authorized successor whose
 Phase A must close every locally closable W12 residual before Phase B freezes
 a provider-resilience policy and executes the fixed broad-plus-eight-scoped
 matrix.
-Current milestone: M6 — measurement completeness and per-provider attribution (R-04, R-06)
-Next action: define and implement the run-receipt and aggregate completeness
-contract with per-provider attribution and explicit NOT_CAPTURED fields, add
-the required-metric regression, and update register entries R-04 and R-06 to
-PROVEN with receipts. Do not probe any provider before the Phase B
-provider-resilience policy freeze is committed.
+Current milestone: M7 — admission invariant and fake-progress guards (R-07, R-08)
+Next action: implement the candidate/admission invariant negative probe and
+the failed-provider fake-progress regression, then update register entries
+R-07 and R-08 to PROVEN with receipts. Do not probe any provider before the
+Phase B provider-resilience policy freeze is committed.
 Authorization class: PROVIDER_RESILIENT_CURRENT_YIELD_W13_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2

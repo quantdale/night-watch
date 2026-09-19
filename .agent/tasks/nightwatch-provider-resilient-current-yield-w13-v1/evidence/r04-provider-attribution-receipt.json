@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "nightwatch.w13-lane-receipt.v1",
+  "laneId": "R-04",
+  "title": "Per-provider attribution schema defined and mechanically validated",
+  "resolution": "PROVEN",
+  "owner": "session/nightwatch-provider-resilient-cu-623c6535",
+  "taskId": "nightwatch-provider-resilient-current-yield-w13-v1",
+  "classification": "OBSERVABILITY_GAP",
+  "artifacts": [
+    "src/core/currentSourceYield/aggregation.ts (validateProviderAttribution)",
+    "tests/unit/w13AggregateCompleteness.test.ts"
+  ],
+  "requiredPerProviderFields": [
+    "provider",
+    "calls",
+    "validResponses",
+    "failuresByClass",
+    "retries",
+    "responseBytes",
+    "stderrBytes",
+    "wallTimeMs",
+    "transitionsIn",
+    "transitionsOut"
+  ],
+  "predecessorGap": {
+    "artifact": ".agent/tasks/nightwatch-current-source-unknown-yield-w12-v1/evidence/broad-run-result.json",
+    "observed": "single `provider` string, `providerRetries: \"NOT_CAPTURED\"`, no per-provider calls/bytes/wall-time breakdown, no transitions"
+  },
+  "contract": {
+    "blendRefused": "an empty provider list is YIELD_PROVIDER_ATTRIBUTION_MISSING",
+    "duplicatesRefused": "the same provider identity twice is YIELD_PROVIDER_ATTRIBUTION_DUPLICATE",
+    "fieldwise": "each numeric field is a MEASURED number/attribution or NOT_CAPTURED with a reason; a missing field is YIELD_PROVIDER_ATTRIBUTION_FIELD_MISSING",
+    "transitions": "transitionsIn/transitionsOut must be string arrays so a multi-provider run records its deterministic transition path"
+  },
+  "commands": [
+    { "command": "npx playwright test tests/unit/w13AggregateCompleteness.test.ts --project=nightwatch --workers=1", "result": "5 passed / 0 failed (4 attribution cases)" },
+    { "command": "npm run typecheck", "result": "PASS" }
+  ],
+  "privacy": { "secrets": "NONE", "customerValues": "NONE" }
+}

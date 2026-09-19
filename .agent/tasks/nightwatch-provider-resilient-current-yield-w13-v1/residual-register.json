@@ -89,8 +89,11 @@
       ],
       "evidence": "W12 receipts carry a single provider field, `providerRetries: \"NOT_CAPTURED\"`, and no per-provider call/failure/byte/transition breakdown.",
       "whyItMatters": "A multi-provider W13 run cannot report per-provider attribution unless the receipt schema captures it; merging providers would hide which provider failed and why.",
-      "nextAction": "Define and regress the W13 run-receipt schema with per-provider calls, valid responses, failures by class, retries, bytes, wall time, and transitions; machine-capture every field.",
-      "closure": { "state": "OPEN", "receipt": null }
+      "nextAction": "Closed: validateProviderAttribution enforces provider identity, calls, valid responses, failures by class, retries, response/stderr bytes, wall time, and transitions per provider; attribution-free blends and duplicate identities are refused; Phase B receipts must satisfy the contract.",
+      "closure": {
+        "state": "PROVEN",
+        "receipt": ".agent/tasks/nightwatch-provider-resilient-current-yield-w13-v1/evidence/r04-provider-attribution-receipt.json"
+      }
     },
     {
       "id": "R-05",
@@ -123,8 +126,11 @@
       ],
       "evidence": "W12's aggregate is a task artifact without a required-metric schema or a check that every required metric is machine-derived; several fields are simply absent and only some are marked NOT_CAPTURED.",
       "whyItMatters": "A required metric that is silently absent can inflate or erase a denominator without any validator noticing.",
-      "nextAction": "Cross-check the required global-metric list against the aggregation schema; wire real machine capture or add explicit NOT_CAPTURED fields with reasons; regress that no required metric is silently absent.",
-      "closure": { "state": "OPEN", "receipt": null }
+      "nextAction": "Closed: the 30-metric required list is enforced by validateAggregateCompleteness; a missing metric, an unknown metric, and NOT_CAPTURED without a reason all fail closed; the W12-style section-shaped aggregate is rejected as a fixture.",
+      "closure": {
+        "state": "PROVEN",
+        "receipt": ".agent/tasks/nightwatch-provider-resilient-current-yield-w13-v1/evidence/r06-measurement-completeness-receipt.json"
+      }
     },
     {
       "id": "R-07",

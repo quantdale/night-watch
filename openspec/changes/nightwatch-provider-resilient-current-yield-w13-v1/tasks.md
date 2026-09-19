@@ -96,11 +96,11 @@
 
 ## 7. Phase A — Measurement completeness
 
-- [ ] 7.1 Cross-check the required global-metric list against
+- [x] 7.1 Cross-check the required global-metric list against
       `global-yield-aggregation.json`'s actual schema and W12's evidence.
-- [ ] 7.2 For each missing metric, either wire real machine capture or add
+- [x] 7.2 For each missing metric, either wire real machine capture or add
       an explicit `NOT_CAPTURED` schema field with its reason.
-- [ ] 7.3 Add a regression asserting no required metric is silently absent
+- [x] 7.3 Add a regression asserting no required metric is silently absent
       from the schema.
 
 ## 8. Phase A — Candidate/admission invariant and provider fake-progress guards

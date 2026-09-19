@@ -33,20 +33,28 @@ policy exhaustion before sufficient investigation is `PROVIDER_BLOCKED`.
 
 ## Current Milestone
 
-Milestone ID: M6
+Milestone ID: M7
 Milestone status: IN_PROGRESS
-What is being attempted: close R-04 and R-06 (measurement completeness and
-per-provider attribution) by defining the W13 run-receipt and aggregate
-schemas so every required metric is machine-derived or explicitly
-`NOT_CAPTURED` with a reason, and every provider's calls, valid responses,
-failures by taxonomy class, retries, bytes, wall time, and transitions are
-captured per provider; regress that no required metric is silently absent.
-Next action: cross-check the required global-metric list against the W12
-aggregation schema and the new taxonomy/floor vocabulary, define the W13
-receipt/aggregate contract, and implement the completeness regression.
+What is being attempted: close R-07 and R-08 by adding the fixture-based
+candidate/admission invariant negative probe (`admitted: true` with no
+reproduction receipt, evidence reference, or dossier identity must be rejected
+by aggregation) and the regression proving a failed provider call mints no
+source action, inspected target, hypothesis, candidate, admission, or dossier,
+and that repeated provider failure produces a provider-blocked result rather
+than a valid zero-yield result.
+Next action: implement the admission-invariant validator and the
+fake-progress regression against the existing runtime path, then update R-07
+and R-08.
 
 ## Completed Milestones
 
+- **M6 COMPLETE**: R-04 and R-06 `PROVEN`. The W13 measurement contract
+  enforces 30 required global metrics (missing metric / unknown metric /
+  NOT_CAPTURED-without-reason all fail closed) and per-provider attribution
+  (calls, valid responses, failures by class, retries, response/stderr bytes,
+  wall time, transitions; blends and duplicates refused). Receipts:
+  `evidence/r06-measurement-completeness-receipt.json`,
+  `evidence/r04-provider-attribution-receipt.json`.
 - **M5 COMPLETE**: R-05 `PROVEN`. `MAX_SIBLING_SOURCE_SCAN_FILES = 4096` is
   the hard per-repository contract ceiling; Ouchan is already pinned to it and
   still truncates; the walk has no resumable cursor, so raising/paginating is
@@ -88,18 +96,19 @@ receipt/aggregate contract, and implement the completeness regression.
 
 ## Work In Progress
 
-M6 is defining the W13 measurement/receipt contract; no schema or regression
-is committed yet.
+M7 is implementing the admission invariant and fake-progress guards; no
+validator or regression is committed yet.
 
 ## Exact Next Action
 
-Cross-check the required global-metric list against W12's
-`global-yield-aggregation.json` and the R-03/R-05 vocabulary; define and
-implement the W13 run-receipt (per-provider attribution) and aggregate
-completeness contract so every required metric is machine-derived or an
-explicit `NOT_CAPTURED` with a reason; add the regression that no required
-metric is silently absent; update register entries R-04 and R-06 to `PROVEN`
-with receipts. Do not probe any provider before the Phase B policy freeze.
+Implement the mechanical admission-invariant check over the W13 aggregate
+(a fixture with `admitted: true` and no reproduction receipt, evidence
+reference, or dossier identity must be rejected), and the fake-progress
+regression over the existing runtime path with a fake failing provider
+(no source action, target, hypothesis, candidate, admission, or dossier from a
+failed call; repeated failure yields provider-blocked, never valid zero
+yield); update register entries R-07 and R-08 to `PROVEN` with receipts. Do
+not probe any provider before the Phase B policy freeze.
 
 ## Files Changed
 

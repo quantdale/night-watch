@@ -127,7 +127,9 @@ from receipts, and adjudicates novelty only after admission.
 - Objective: guarantee every required aggregate metric is machine-derived or
   explicitly `NOT_CAPTURED` with a reason.
 - Acceptance: schema regression proves no required metric is silently absent.
-- **Status:** NOT_STARTED
+- **Status:** COMPLETE — R-04/R-06 `PROVEN`: 30 required metrics enforced,
+  per-provider attribution enforced, NOT_CAPTURED requires a reason, and the
+  W12-style section-shaped aggregate is rejected as a fixture (5/5 tests).
 
 ### M7 — Candidate/admission invariant and fake-progress guards
 
