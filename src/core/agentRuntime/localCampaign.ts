@@ -72,6 +72,11 @@ import {
   type LocalInvestigationHistory,
 } from '../localInvestigation/types';
 import { createCliReasonerDriver } from '../reasoner/cliReasoner';
+import {
+  checkRuntimeBudgetEnvelope,
+  envelopeFromBudgetPolicy,
+  type RuntimeBudgetEnvelope,
+} from './runtimeBudgetEnvelope';
 import { AgentCheckpointError, assertCheckpointHasNoSecrets, boundedFoundVersion, finalizeCheckpoint, parseCheckpoint } from './checkpoint';
 import { AgentRuntime } from './runtime';
 import {
@@ -157,6 +162,12 @@ export interface LocalCampaignInput {
    * authority that validates the ids against the approved universe.
    */
   readonly investigationScope?: readonly string[];
+  /**
+   * Optional wave-declared runtime envelope from an evaluation freeze. When
+   * present it is validated field-by-field against the engine's own policy
+   * before any provider call; it is a derived copy, never an authority.
+   */
+  readonly declaredBudgetEnvelope?: RuntimeBudgetEnvelope;
   /** Clock seam for deterministic tests. Defaults to Date.now. */
   readonly now?: () => number;
 }
@@ -1055,6 +1066,7 @@ function seedFromCheckpointState(engine: CampaignEngine, state: AgentRuntimeStat
 
 export async function runLocalCliCampaign(input: LocalCampaignInput): Promise<LocalCampaignResult> {
   const { reasoner, budgetPolicy } = driverAndPolicy(input);
+  assertDeclaredBudgetEnvelope(input.declaredBudgetEnvelope, envelopeFromBudgetPolicy(budgetPolicy), input.campaignId);
   const now = input.now ?? Date.now;
   const directory = defaultCampaignStateDirectory(input.stateDirectory);
   // A fresh run supersedes any stored checkpoint for this id; otherwise a
@@ -1072,6 +1084,29 @@ export async function runLocalCliCampaign(input: LocalCampaignInput): Promise<Lo
     acc: freshAccumulators(input.campaignId),
   };
   return runCampaignLoop(engine);
+}
+
+/**
+ * D-138 closure: the engine policy is the single ceiling authority. A wave's
+ * declared runtime envelope must equal the policy the run actually executes
+ * under; any divergence (including the historical W12 supplemental 3 versus
+ * HOUR_1's 8) fails closed here, before the reasoner driver can be used.
+ */
+function assertDeclaredBudgetEnvelope(
+  declared: RuntimeBudgetEnvelope | undefined,
+  derived: RuntimeBudgetEnvelope,
+  campaignId: string,
+): void {
+  if (declared === undefined) return;
+  const checked = checkRuntimeBudgetEnvelope(declared, derived);
+  if (checked.ok) return;
+  if (checked.code === 'RUNTIME_BUDGET_ENVELOPE_MALFORMED') {
+    throw new LocalCampaignError('RUNTIME_BUDGET_ENVELOPE_MALFORMED', `campaign ${campaignId}: ${checked.detail}`);
+  }
+  const fields = checked.mismatches
+    .map((mismatch) => `${mismatch.field} declared=${JSON.stringify(mismatch.declared)} derived=${JSON.stringify(mismatch.derived)}`)
+    .join('; ');
+  throw new LocalCampaignError('RUNTIME_BUDGET_ENVELOPE_MISMATCH', `campaign ${campaignId} declared runtime envelope disagrees with the engine policy: ${fields}`);
 }
 
 function policyFromCheckpoint(checkpoint: AgentCheckpoint, campaignId: string): AgentBudgetPolicy {
@@ -1119,6 +1154,7 @@ export async function resumeLocalCliCampaign(input: LocalCampaignInput): Promise
   // The campaign resumes under its own stored policy (the ceiling it started
   // with), not the caller's ceilingName.
   const policy = policyFromCheckpoint(checkpoint, input.campaignId);
+  assertDeclaredBudgetEnvelope(input.declaredBudgetEnvelope, envelopeFromBudgetPolicy(policy), input.campaignId);
   const progress = parseCampaignProgress((raw as Record<string, unknown>).campaignProgress, input.campaignId);
   assertScopeContinuity(progress, input);
 

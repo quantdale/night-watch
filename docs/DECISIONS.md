@@ -4966,3 +4966,36 @@ preserved in the W12 evidence and was not changed after results. Leakage,
 sibling identity drift, prohibited environment contact, sibling mutation, and
 external publication remained zero. No Alphaus organizational novelty claim was
 made.
+
+## D-139 — the engine budget policy is the single runtime-envelope authority; a wave envelope is a derived copy that fails closed on divergence
+
+Recorded 2026-09-19 (W13 Phase A residual R-01, succeeding D-138).
+
+D-138 preserved a mismatch between the W12 supplemental runtime envelope
+(`providerFailures: 3`, `consecutiveFailures: 3`) and the engine's HOUR_1
+policy (`providerFailures: 8`, `consecutiveFailures: 6`) without investigating
+it. Source inspection and W12's own receipts show the engine values were the
+ones enforced: the valid broad run recorded 8 provider failures before budget
+exhaustion, and each scoped run stopped after 6 consecutive failures.
+
+Decision: there is ONE runtime-ceiling concept and ONE authority for it —
+`defaultAgentBudgetPolicy(ceilingName)` in `src/core/agentProtocol/runtime.ts`.
+A wave's machine-readable freeze may declare a runtime envelope, but that
+declaration is a DERIVED copy (`deriveRuntimeBudgetEnvelope` /
+`envelopeFromBudgetPolicy` in `src/core/agentRuntime/runtimeBudgetEnvelope.ts`)
+and is validated field-by-field against the policy the run actually executes
+under; the campaign run and resume paths reject any divergence with
+`RUNTIME_BUDGET_ENVELOPE_MISMATCH`, naming each disagreeing field with both
+values, before any provider call. Unknown fields, missing fields, non-integer
+values, and a different schema version fail closed as
+`RUNTIME_BUDGET_ENVELOPE_MALFORMED`. The historical W12 values (3/3) are
+preserved as a permanent negative probe rather than reconciled by rewriting
+W12's immutable evidence.
+
+The alternative — declaring the two values two distinctly named concepts
+(soft wave budget versus hard engine ceiling) — was rejected because the
+supplemental field was labeled as the runtime envelope for `HOUR_1`; it named
+the same enforced concept, and renaming would have preserved two authorities
+for one stopping behaviour. W12's freeze artifact, task state, and verdict
+remain byte-for-byte historical evidence; only W13 and later freezes are bound
+by this decision.

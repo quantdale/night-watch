@@ -34,8 +34,11 @@
       ],
       "evidence": "The W12 freeze records providerFailures=3 and consecutiveFailures=3 for HOUR_1, while the live engine policy records providerFailures=8 and consecutiveFailures=6; W12's broad receipt observed 8 provider failures and its scoped receipts stopped after 6 consecutive failures, proving the engine values were the ones applied.",
       "whyItMatters": "A declared experiment envelope that disagrees with the enforced runtime ceiling makes the frozen budget untrustworthy and can silently change stopping behaviour between waves.",
-      "nextAction": "Locate both origins, decide one authority (engine policy) with any declared envelope derived from it, implement the guard, add a regression, add a negative probe that diverges the values on a resume attempt and proves fail-closed, and record a new decision succeeding D-138.",
-      "closure": { "state": "OPEN", "receipt": null }
+      "nextAction": "Closed: engine policy is the sole authority, declared envelopes are derived and validated field-by-field, the historical 3/3 values are a permanent negative probe, and D-139 succeeds D-138 without rewriting it.",
+      "closure": {
+        "state": "PROVEN",
+        "receipt": ".agent/tasks/nightwatch-provider-resilient-current-yield-w13-v1/evidence/r01-budget-envelope-receipt.json"
+      }
     },
     {
       "id": "R-02",

@@ -88,7 +88,9 @@ from receipts, and adjudicates novelty only after admission.
   decision succeeding D-138.
 - Acceptance: no silent divergence is possible; the divergence probe fails
   closed.
-- **Status:** IN_PROGRESS
+- **Status:** COMPLETE — engine policy is the single authority; derived-envelope
+  guard, field-level mismatch reporting, regression, and W12-value negative
+  probe are live; D-139 recorded (R-01 `PROVEN`).
 
 ### M3 — `gate:local` synthetic-lane timeout classification
 
@@ -96,7 +98,7 @@ from receipts, and adjudicates novelty only after admission.
   and classify the timeout as exactly one measured cause with a lane receipt.
 - Acceptance: load/process evidence and manifest-count comparison recorded;
   the timeout bound is never raised.
-- **Status:** NOT_STARTED
+- **Status:** IN_PROGRESS
 
 ### M4 — Provider failure taxonomy
 

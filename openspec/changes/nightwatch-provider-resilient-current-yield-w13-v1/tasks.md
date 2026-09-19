@@ -38,15 +38,15 @@
 
 ## 3. Phase A — Provider-failure budget mismatch
 
-- [ ] 3.1 Locate the source of the frozen supplemental `providerFailures: 3`
+- [x] 3.1 Locate the source of the frozen supplemental `providerFailures: 3`
       field and the `HOUR_1` runtime `providerFailures: 8` ceiling.
-- [ ] 3.2 Decide single-authority vs. two-distinct-concepts and implement
+- [x] 3.2 Decide single-authority vs. two-distinct-concepts and implement
       the decision (rename, remove, or derive one from the other).
-- [ ] 3.3 Add a regression asserting the decided semantics hold at runtime.
-- [ ] 3.4 Add a negative probe that deliberately diverges the two values on
+- [x] 3.3 Add a regression asserting the decided semantics hold at runtime.
+- [x] 3.4 Add a negative probe that deliberately diverges the two values on
       a resume attempt and proves the guard fails closed rather than
       silently picking one.
-- [ ] 3.5 Record the resolution in `docs/DECISIONS.md` as a new entry
+- [x] 3.5 Record the resolution in `docs/DECISIONS.md` as a new entry
       succeeding D-138; do not rewrite D-138 itself.
 
 ## 4. Phase A — `gate:local` `SYNTHETIC_CAMPAIGN` timeout

@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "nightwatch.w13-lane-receipt.v1",
+  "laneId": "R-01",
+  "title": "Provider-failure budget mismatch: engine policy is the single runtime-envelope authority",
+  "resolution": "PROVEN",
+  "owner": "session/nightwatch-provider-resilient-cu-623c6535",
+  "taskId": "nightwatch-provider-resilient-current-yield-w13-v1",
+  "classification": "LOCAL_FIX_REQUIRED",
+  "artifacts": [
+    "src/core/agentRuntime/runtimeBudgetEnvelope.ts",
+    "src/core/agentRuntime/localCampaign.ts",
+    "tests/unit/w13RuntimeBudgetEnvelope.test.ts",
+    "docs/DECISIONS.md D-139"
+  ],
+  "decidedAuthority": "defaultAgentBudgetPolicy(ceilingName) in src/core/agentProtocol/runtime.ts",
+  "engineHour1Values": {
+    "reasonerCalls": 200,
+    "toolActions": 400,
+    "inputBytes": 5000000,
+    "outputBytes": 160000,
+    "toolPayloadBytes": 64000000,
+    "retries": 8,
+    "consecutiveFailures": 6,
+    "providerFailures": 8
+  },
+  "historicalMismatchPreserved": {
+    "source": ".agent/tasks/nightwatch-current-source-unknown-yield-w12-v1/evaluation-freeze.json runtimeBudgetEnvelope",
+    "declaredProviderFailures": 3,
+    "declaredConsecutiveFailures": 3,
+    "observedRuntimeProviderFailures": 8,
+    "observedScopedConsecutiveFailures": 6,
+    "disposition": "immutable predecessor evidence; now a permanent negative probe, not rewritten"
+  },
+  "commands": [
+    {
+      "command": "npx playwright test tests/unit/w13RuntimeBudgetEnvelope.test.ts --project=nightwatch --workers=1",
+      "result": "7 passed / 0 failed"
+    },
+    {
+      "command": "npm run typecheck",
+      "result": "PASS"
+    }
+  ],
+  "negativeProbe": {
+    "case": "declared envelope with providerFailures=3 / consecutiveFailures=3 (the W12 supplemental values)",
+    "expected": "RUNTIME_BUDGET_ENVELOPE_MISMATCH naming consecutiveFailures and providerFailures",
+    "observed": "rejected on both a fresh run and a resume attempt; the provider executable was never spawned (marker file absent)"
+  },
+  "privacy": {
+    "rawProviderTextRetained": false,
+    "secrets": "NONE",
+    "customerValues": "NONE"
+  }
+}

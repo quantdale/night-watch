@@ -15,10 +15,11 @@ single frozen provider. W13 is a distinct owner-authorized successor whose
 Phase A must close every locally closable W12 residual before Phase B freezes
 a provider-resilience policy and executes the fixed broad-plus-eight-scoped
 matrix.
-Current milestone: M2 — provider-failure budget mismatch (R-01)
-Next action: implement the derived runtime-budget-envelope guard with its
-regression and fail-closed divergence probe, record the decision succeeding
-D-138, and update register entry R-01 to PROVEN. Do not probe any provider
+Current milestone: M3 — gate:local synthetic-lane timeout classification (R-02)
+Next action: measure the direct synthetic campaign and the gate-dispatched
+lane on an idle host with load/process evidence and a manifest file-count
+diff, classify the timeout as exactly one measured cause, and write the R-02
+lane receipt without raising the timeout bound. Do not probe any provider
 before the Phase B provider-resilience policy freeze is committed.
 Authorization class: PROVIDER_RESILIENT_CURRENT_YIELD_W13_V1
 PROJECT_VERDICT_EFFECT: PRESERVE

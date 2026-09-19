@@ -33,19 +33,25 @@ policy exhaustion before sufficient investigation is `PROVIDER_BLOCKED`.
 
 ## Current Milestone
 
-Milestone ID: M2
+Milestone ID: M3
 Milestone status: IN_PROGRESS
-What is being attempted: close R-01, the provider-failure budget mismatch
-(frozen supplemental 3 versus runtime HOUR_1 ceiling 8), under the
-single-authority decision: the engine `defaultAgentBudgetPolicy` is the sole
-authority, any declared envelope must be derived from it, and a divergence
-fails closed before any provider call.
-Next action: implement the derived-envelope guard and its regression plus
-fail-closed negative probe, record the decision succeeding D-138, and update
-the register entry.
+What is being attempted: close R-02 by re-measuring the `gate:local`
+`SYNTHETIC_CAMPAIGN` timeout on an otherwise idle host, directly and
+gate-dispatched, with load/process evidence and a synthetic manifest
+file-count comparison against the base SHA, then classifying it as exactly one
+measured cause without raising the timeout bound.
+Next action: capture host/process snapshots, run the direct synthetic campaign
+and the gate-dispatched lane back-to-back, diff the manifest file count, and
+write the R-02 lane receipt.
 
 ## Completed Milestones
 
+- **M2 COMPLETE**: R-01 `PROVEN`. `defaultAgentBudgetPolicy` is the single
+  runtime-ceiling authority; declared wave envelopes are derived and validated
+  field-by-field with fail-closed `RUNTIME_BUDGET_ENVELOPE_MISMATCH` /
+  `RUNTIME_BUDGET_ENVELOPE_MALFORMED` errors before any provider call; 7/7
+  new regression/negative-probe tests pass; `npm run typecheck` passes; D-139
+  recorded. Receipt: `evidence/r01-budget-envelope-receipt.json`.
 - **M1 COMPLETE**: the 13-entry Phase A residual register was written and
   committed (`residual-register.json`, `createdAtSha` `e1651121`) before any
   entry was fixed; every entry carries exactly one taxonomy class and a
@@ -60,18 +66,17 @@ the register entry.
 
 ## Work In Progress
 
-M2 is implementing the R-01 single-authority guard: `defaultAgentBudgetPolicy`
-is the sole runtime ceiling authority and a declared runtime envelope is
-either derived from it or rejected field-by-field before a provider call.
+M3 is measuring the synthetic-lane timeout; no conclusion is recorded yet.
 
 ## Exact Next Action
 
-Implement the derived runtime-budget-envelope guard (derivation plus
-field-level validation wired into the campaign run/resume path), add the
-regression and the fail-closed divergence negative probe, record the new
-decision succeeding D-138, and update R-01 in `residual-register.json` to
-`PROVEN` with its receipt. Do not probe any provider before the Phase B policy
-freeze.
+Capture `uptime` and `ps --sort=-pcpu` snapshots and the synthetic manifest
+file count at the current base; run the direct `npm run campaign:synthetic`
+and the gate-dispatched `SYNTHETIC_CAMPAIGN` lane back-to-back on an otherwise
+idle host; classify the outcome as exactly one of `REAL_GATE_TIMEOUT_DEFECT`,
+`STALE_BOUND`, `HOST_CONTENTION`, `EXPECTED_ENVIRONMENT_VARIANCE`,
+`DUPLICATE_WORK`, or `OTHER_MEASURED_CAUSE`; write the R-02 lane receipt and
+update the register. Never raise the timeout bound.
 
 ## Files Changed
 
