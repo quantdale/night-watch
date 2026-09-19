@@ -118,7 +118,9 @@ from receipts, and adjudicates novelty only after admission.
   that `TRUNCATED` populations are treated as floors in every denominator.
 - Acceptance: the chosen closure has a regression and reuses existing
   completeness vocabulary.
-- **Status:** NOT_STARTED
+- **Status:** COMPLETE — R-05 `PROVEN`: the 4096 hard ceiling is not raised or
+  paginated; floor-only denominator semantics reject a TRUNCATED population
+  presented as an exhaustive total (5/5 regressions).
 
 ### M6 — Measurement completeness
 

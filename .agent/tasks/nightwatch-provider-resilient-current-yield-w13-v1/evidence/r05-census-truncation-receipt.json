@@ -1,0 +1,58 @@
+{
+  "schemaVersion": "nightwatch.w13-lane-receipt.v1",
+  "laneId": "R-05",
+  "title": "Census truncation closed by floor-only denominator semantics; the enumeration bound is not raised or paginated",
+  "resolution": "PROVEN",
+  "owner": "session/nightwatch-provider-resilient-cu-623c6535",
+  "taskId": "nightwatch-provider-resilient-current-yield-w13-v1",
+  "classification": "LOCAL_FIX_REQUIRED",
+  "decision": {
+    "raiseBoundPossible": false,
+    "paginationPossible": false,
+    "rationale": [
+      "MAX_SIBLING_SOURCE_SCAN_FILES = 4096 is the hard per-repository contract ceiling enforced on every enumeration limit.",
+      "The approved scan config already pins mobingilabs/ouchan to that ceiling (4096 files / 48,000,000 bytes under the 64,000,000 byte ceiling) and Ouchan still truncates.",
+      "enumerateFiles aborts at the cap (truncated=true, truncationReason=SOURCE_FILE_COUNT_EXCEEDED) and returns no cursor or resumable state, so pagination would require a new resource contract rather than an existing one.",
+      "The walk charges every considered directory entry, so a larger cap is not a bounded guarantee either."
+    ],
+    "chosenClosure": "floor-only denominator semantics for every yield metric consuming the source inventory, reusing src/core/source/completeness.ts vocabulary"
+  },
+  "predecessorEvidence": {
+    "w12Census": ".agent/tasks/nightwatch-current-source-unknown-yield-w12-v1/evidence/current-source-census.json",
+    "filesConsidered": 4730,
+    "filesAdmitted": 4124,
+    "enumerationBudgetRejections": 1,
+    "completeness": "TRUNCATED",
+    "truncationReason": "SOURCE_FILE_COUNT_EXCEEDED",
+    "truncatedRepository": "mobingilabs/ouchan"
+  },
+  "artifacts": [
+    "src/core/currentSourceYield/truncationFloor.ts",
+    "tests/unit/w13TruncationFloor.test.ts"
+  ],
+  "semantics": {
+    "COMPLETE": "EXACT denominator; exhaustive allowed",
+    "TRUNCATED": "FLOOR denominator; exhaustive prohibited",
+    "UNKNOWN": "FLOOR denominator; exhaustive prohibited",
+    "violationCode": "YIELD_DENOMINATOR_TRUNCATED_AS_TOTAL"
+  },
+  "commands": [
+    {
+      "command": "npx playwright test tests/unit/w13TruncationFloor.test.ts --project=nightwatch --workers=1",
+      "result": "5 passed / 0 failed"
+    },
+    {
+      "command": "npm run typecheck",
+      "result": "PASS"
+    },
+    {
+      "command": "node bin/schema-lifecycle.mjs check",
+      "result": "PASS"
+    },
+    {
+      "command": "node bin/validation-universe.mjs",
+      "result": "PASS"
+    }
+  ],
+  "privacy": { "secrets": "NONE", "customerValues": "NONE" }
+}

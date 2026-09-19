@@ -105,8 +105,11 @@
       ],
       "evidence": "The W12 census admitted 4,124 files but recorded `sourceInventory.completeness: TRUNCATED` because Ouchan exceeded its enumeration bound, so the headline count is a floor, not a population.",
       "whyItMatters": "Any W13 denominator derived from a truncated population must be reported as a floor and never as an exhaustive count.",
-      "nextAction": "Determine whether the enumeration bound can be safely raised or paginated within the existing resource contract; if yes implement and re-run the census; if no add a mechanical check that every metric consuming the inventory treats TRUNCATED as a floor, reusing truncation-truth-discovery-paging vocabulary, with a regression.",
-      "closure": { "state": "OPEN", "receipt": null }
+      "nextAction": "Closed: 4096 is the hard per-repository contract ceiling and the walk has no resumable cursor, so raising/paginating is outside the existing contract; floor-only denominator semantics are implemented in src/core/currentSourceYield/truncationFloor.ts on the shared completeness vocabulary, with a regression that rejects a TRUNCATED population presented as an exhaustive total.",
+      "closure": {
+        "state": "PROVEN",
+        "receipt": ".agent/tasks/nightwatch-provider-resilient-current-yield-w13-v1/evidence/r05-census-truncation-receipt.json"
+      }
     },
     {
       "id": "R-06",

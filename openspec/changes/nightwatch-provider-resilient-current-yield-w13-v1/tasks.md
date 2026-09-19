@@ -83,16 +83,16 @@
 
 ## 6. Phase A — Census truncation
 
-- [ ] 6.1 Determine whether the Ouchan file-count enumeration bound can be
+- [x] 6.1 Determine whether the Ouchan file-count enumeration bound can be
       safely raised or paginated within the existing resource contract.
-- [ ] 6.2 If yes, implement the actually-exhaustive bounded/paginated
+- [x] 6.2 If yes, implement the actually-exhaustive bounded/paginated
       census and re-run it. If no, add a mechanical check that every
       yield-metric denominator consuming the source inventory treats a
       `TRUNCATED` completeness state (`sourceInventory.completeness`) as a
       floor, never a total, reusing the existing
       `truncation-truth-discovery-paging` population/completeness
       vocabulary rather than inventing a parallel one.
-- [ ] 6.3 Add a regression proving the chosen closure.
+- [x] 6.3 Add a regression proving the chosen closure.
 
 ## 7. Phase A — Measurement completeness
 

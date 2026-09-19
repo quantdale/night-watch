@@ -33,22 +33,28 @@ policy exhaustion before sufficient investigation is `PROVIDER_BLOCKED`.
 
 ## Current Milestone
 
-Milestone ID: M5
+Milestone ID: M6
 Milestone status: IN_PROGRESS
-What is being attempted: close R-05, the current-source census truncation, by
-determining whether the Ouchan file-count enumeration bound
-(`MAX_SIBLING_SOURCE_SCAN_FILES=4096`) can be safely raised or paginated
-within the existing resource contract; if yes, implement and re-run an
-exhaustive bounded census; if no, add a mechanical check that every
-yield-metric denominator consuming the source inventory treats
-`sourceInventory.completeness: TRUNCATED` as a floor, reusing
-`truncation-truth-discovery-paging` vocabulary, with a regression.
-Next action: inspect the enumeration/scan contract and the paging vocabulary,
-decide raise/paginate versus floor-only, implement the chosen closure, and
-update register entry R-05.
+What is being attempted: close R-04 and R-06 (measurement completeness and
+per-provider attribution) by defining the W13 run-receipt and aggregate
+schemas so every required metric is machine-derived or explicitly
+`NOT_CAPTURED` with a reason, and every provider's calls, valid responses,
+failures by taxonomy class, retries, bytes, wall time, and transitions are
+captured per provider; regress that no required metric is silently absent.
+Next action: cross-check the required global-metric list against the W12
+aggregation schema and the new taxonomy/floor vocabulary, define the W13
+receipt/aggregate contract, and implement the completeness regression.
 
 ## Completed Milestones
 
+- **M5 COMPLETE**: R-05 `PROVEN`. `MAX_SIBLING_SOURCE_SCAN_FILES = 4096` is
+  the hard per-repository contract ceiling; Ouchan is already pinned to it and
+  still truncates; the walk has no resumable cursor, so raising/paginating is
+  outside the existing resource contract. Floor-only denominator semantics
+  (`src/core/currentSourceYield/truncationFloor.ts`) reuse the shared
+  completeness vocabulary and reject a TRUNCATED population presented as an
+  exhaustive total (5/5 regressions). Receipt:
+  `evidence/r05-census-truncation-receipt.json`.
 - **M4 COMPLETE**: R-03 `PROVEN`. The ten-member provider failure taxonomy
   (`nightwatch.provider-failure-classification.v1`) is implemented, wired
   into the CLI driver with PROBE/RUNTIME phase distinction and bounded
@@ -82,17 +88,18 @@ update register entry R-05.
 
 ## Work In Progress
 
-M5 is inspecting the census enumeration contract and the existing paging /
-completeness vocabulary; no closure decision is recorded yet.
+M6 is defining the W13 measurement/receipt contract; no schema or regression
+is committed yet.
 
 ## Exact Next Action
 
-Inspect `src/core/source/siblingSource.ts` and `src/core/source/scan.ts`
-limits plus the `truncation-truth-discovery-paging` vocabulary, decide
-whether the Ouchan file-count bound can be raised or paginated safely within
-the resource contract, implement the chosen closure with a regression, re-run
-the census if the bound changes, and update register entry R-05 to `PROVEN`
-with its receipt. Do not probe any provider before the Phase B policy freeze.
+Cross-check the required global-metric list against W12's
+`global-yield-aggregation.json` and the R-03/R-05 vocabulary; define and
+implement the W13 run-receipt (per-provider attribution) and aggregate
+completeness contract so every required metric is machine-derived or an
+explicit `NOT_CAPTURED` with a reason; add the regression that no required
+metric is silently absent; update register entries R-04 and R-06 to `PROVEN`
+with receipts. Do not probe any provider before the Phase B policy freeze.
 
 ## Files Changed
 

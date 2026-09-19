@@ -400,5 +400,6 @@ export const SCHEMA_FAMILIES: readonly SchemaFamilyDeclaration[] = [
   { family: 'nightwatch.untrusted-envelope', persisted: false, store: 'IN_MEMORY', currentVersion: 1, versions: { 1: 'CURRENT' }, dispositions: [], note: "" },
   { family: 'nightwatch.vue-sfc-extract', persisted: false, store: 'IN_MEMORY', currentVersion: 1, versions: { 1: 'CURRENT' }, dispositions: [], note: "" },
   { family: 'nightwatch.w10-campaign-yield', persisted: false, store: 'IN_MEMORY', currentVersion: 1, versions: { 1: 'CURRENT' }, dispositions: [], note: "" },
+  { family: 'nightwatch.yield-denominator-semantics', persisted: false, store: 'IN_MEMORY', currentVersion: 1, versions: { 1: 'CURRENT' }, dispositions: [], note: "W13 R-05 truncation floor projection; data-only, no authority" },
   { family: 'nightwatch.w10-yield-metrics', persisted: false, store: 'IN_MEMORY', currentVersion: 1, versions: { 1: 'CURRENT' }, dispositions: [], note: "" },
 ];
