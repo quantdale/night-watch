@@ -15,11 +15,11 @@ single frozen provider. W13 is a distinct owner-authorized successor whose
 Phase A must close every locally closable W12 residual before Phase B freezes
 a provider-resilience policy and executes the fixed broad-plus-eight-scoped
 matrix.
-Current milestone: M4 — provider failure taxonomy (R-03)
-Next action: implement the ten-member provider failure taxonomy with sanitized
-retention and per-transition regressions, then update register entry R-03 to
-PROVEN with its receipt. Do not probe any provider before the Phase B
-provider-resilience policy freeze is committed.
+Current milestone: M5 — current-source census truncation (R-05)
+Next action: decide raise/paginate versus floor-only closure for the Ouchan
+file-count enumeration bound, implement the chosen closure with a regression,
+and update register entry R-05 to PROVEN with its receipt. Do not probe any
+provider before the Phase B provider-resilience policy freeze is committed.
 Authorization class: PROVIDER_RESILIENT_CURRENT_YIELD_W13_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2

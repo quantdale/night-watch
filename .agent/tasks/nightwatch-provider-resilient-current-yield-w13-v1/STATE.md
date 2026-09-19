@@ -33,21 +33,28 @@ policy exhaustion before sufficient investigation is `PROVIDER_BLOCKED`.
 
 ## Current Milestone
 
-Milestone ID: M4
+Milestone ID: M5
 Milestone status: IN_PROGRESS
-What is being attempted: close R-03, the provider failure taxonomy, by
-implementing the ten-member classification (PROVIDER_ABSENT,
-PROVIDER_PROBE_TIMEOUT, PROVIDER_RUNTIME_TIMEOUT, PROVIDER_NONZERO_EXIT,
-PROVIDER_INVALID_STRUCTURED_RESPONSE,
-PROVIDER_NAMESPACE_OR_QUOTA_UNAVAILABLE, PROVIDER_AUTH_FAILURE,
-LOCAL_CLI_FAILURE, VALID_PROVIDER_RESPONSE, UNKNOWN_EXTERNAL_PROVIDER_FAILURE)
-with sanitized retention and per-class regressions.
-Next action: implement the taxonomy module and its sanitization contract,
-cover each classified transition with a regression, and update register entry
-R-03.
+What is being attempted: close R-05, the current-source census truncation, by
+determining whether the Ouchan file-count enumeration bound
+(`MAX_SIBLING_SOURCE_SCAN_FILES=4096`) can be safely raised or paginated
+within the existing resource contract; if yes, implement and re-run an
+exhaustive bounded census; if no, add a mechanical check that every
+yield-metric denominator consuming the source inventory treats
+`sourceInventory.completeness: TRUNCATED` as a floor, reusing
+`truncation-truth-discovery-paging` vocabulary, with a regression.
+Next action: inspect the enumeration/scan contract and the paging vocabulary,
+decide raise/paginate versus floor-only, implement the chosen closure, and
+update register entry R-05.
 
 ## Completed Milestones
 
+- **M4 COMPLETE**: R-03 `PROVEN`. The ten-member provider failure taxonomy
+  (`nightwatch.provider-failure-classification.v1`) is implemented, wired
+  into the CLI driver with PROBE/RUNTIME phase distinction and bounded
+  enumerated text signals, never retains raw provider text, and is covered by
+  5 regressions plus 120/120 focused compatibility tests. Receipt:
+  `evidence/r03-provider-taxonomy-receipt.json`.
 - **M3 COMPLETE**: R-02 `PROVEN` as `EXPECTED_ENVIRONMENT_VARIANCE`. The
   direct synthetic lane passed 1,897/1,897 at 643 s and again at 422.94 s
   (122% CPU) on the same clean tree; the gate-dispatched lane passed all 12
@@ -75,16 +82,17 @@ R-03.
 
 ## Work In Progress
 
-M4 is implementing the provider failure taxonomy; no classification code has
-been committed yet.
+M5 is inspecting the census enumeration contract and the existing paging /
+completeness vocabulary; no closure decision is recorded yet.
 
 ## Exact Next Action
 
-Implement the ten-member provider failure taxonomy with sanitized retention
-(exit code, duration, byte counts only; never raw credential-bearing text),
-cover each raw CLI outcome transition including the unknown fallback with
-regressions, and update register entry R-03 to `PROVEN` with its receipt. Do
-not probe any provider before the Phase B policy freeze.
+Inspect `src/core/source/siblingSource.ts` and `src/core/source/scan.ts`
+limits plus the `truncation-truth-discovery-paging` vocabulary, decide
+whether the Ouchan file-count bound can be raised or paginated safely within
+the resource contract, implement the chosen closure with a regression, re-run
+the census if the bound changes, and update register entry R-05 to `PROVEN`
+with its receipt. Do not probe any provider before the Phase B policy freeze.
 
 ## Files Changed
 

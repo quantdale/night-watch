@@ -5,6 +5,7 @@
 
 import type { InvestigationMemory } from '../investigationMemory/types';
 import type { AgentIntent, AgentIntentKind } from './intents';
+import type { ProviderCallPhase, ProviderFailureEvidence } from './providerFailure';
 import type { AgentBudgetSnapshot, AgentPhase } from './runtime';
 import type { UntrustedEnvelope } from './untrusted';
 import {
@@ -97,6 +98,11 @@ export interface ReasonerCallOptions {
   readonly stdoutByteCap: number;
   readonly stderrByteCap: number;
   readonly signal: AbortSignal;
+  /**
+   * W13 R-03: probe-phase calls classify timeouts as PROVIDER_PROBE_TIMEOUT,
+   * runtime-loop calls as PROVIDER_RUNTIME_TIMEOUT. Defaults to RUNTIME.
+   */
+  readonly callPhase?: ProviderCallPhase;
 }
 
 export type ReasonerCallResult =
@@ -113,6 +119,12 @@ export type ReasonerCallResult =
       readonly provenance: ReasonerProvenance | null;
       readonly stdoutBytes: number;
       readonly stderrBytes: number;
+      /**
+       * W13 R-03 complete taxonomy for this failure. Evidence only: classes,
+       * enumerated signals, exit code, duration, and byte counts; raw provider
+       * text is scanned and never retained.
+       */
+      readonly providerFailure?: ProviderFailureEvidence;
     };
 
 export interface ReasonerDriver {

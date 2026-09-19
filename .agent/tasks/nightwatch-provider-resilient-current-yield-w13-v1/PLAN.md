@@ -108,7 +108,9 @@ from receipts, and adjudicates novelty only after admission.
   retention of provider outcomes.
 - Acceptance: each raw CLI outcome maps to exactly one taxonomy member,
   covered by regressions including the unknown fallback.
-- **Status:** NOT_STARTED
+- **Status:** COMPLETE — R-03 `PROVEN`: ten-member taxonomy, sanitized
+  evidence, PROBE/RUNTIME phase distinction, and 5 regressions (120/120
+  focused tests, typecheck, schema check).
 
 ### M5 — Census truncation closure
 

@@ -71,8 +71,11 @@
       ],
       "evidence": "W12 receipts can only name REASONER_TIMEOUT and REASONER_NONZERO_EXIT, so absence, probe timeout, invalid structured response, quota/namespace unavailability, auth failure, and local CLI failure are indistinguishable.",
       "whyItMatters": "W13 failover eligibility depends on the failure class; an incomplete taxonomy would make transitions either unsafe or impossible to justify.",
-      "nextAction": "Implement the ten-member provider taxonomy with sanitized retention (exit code, duration, byte counts only), and cover each classified transition plus the unknown fallback with regressions.",
-      "closure": { "state": "OPEN", "receipt": null }
+      "nextAction": "Closed: the ten-member taxonomy is implemented in src/core/agentProtocol/providerFailure.ts, wired into the CLI driver for both PROBE and RUNTIME phases, and covered by five regressions including live auth-failure and probe-timeout cases.",
+      "closure": {
+        "state": "PROVEN",
+        "receipt": ".agent/tasks/nightwatch-provider-resilient-current-yield-w13-v1/evidence/r03-provider-taxonomy-receipt.json"
+      }
     },
     {
       "id": "R-04",

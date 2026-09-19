@@ -67,17 +67,17 @@
 
 ## 5. Phase A — Provider failure taxonomy
 
-- [ ] 5.1 Extend failure classification to the full taxonomy:
+- [x] 5.1 Extend failure classification to the full taxonomy:
       `PROVIDER_ABSENT`, `PROVIDER_PROBE_TIMEOUT`,
       `PROVIDER_RUNTIME_TIMEOUT`, `PROVIDER_NONZERO_EXIT`,
       `PROVIDER_INVALID_STRUCTURED_RESPONSE`,
       `PROVIDER_NAMESPACE_OR_QUOTA_UNAVAILABLE`, `PROVIDER_AUTH_FAILURE`,
       `LOCAL_CLI_FAILURE`, `VALID_PROVIDER_RESPONSE`, and the
       `UNKNOWN_EXTERNAL_PROVIDER_FAILURE` fallback.
-- [ ] 5.2 Sanitize raw provider text before retaining it: keep exit code,
+- [x] 5.2 Sanitize raw provider text before retaining it: keep exit code,
       duration, and byte counts where safe; never commit credentials or
       tokens.
-- [ ] 5.3 Add regression tests covering each classified transition from a
+- [x] 5.3 Add regression tests covering each classified transition from a
       raw CLI outcome to its taxonomy member, including the `UNKNOWN`
       fallback when the exact cause cannot be determined.
 

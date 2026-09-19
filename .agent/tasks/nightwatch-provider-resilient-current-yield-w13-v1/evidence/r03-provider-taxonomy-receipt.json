@@ -1,0 +1,62 @@
+{
+  "schemaVersion": "nightwatch.w13-lane-receipt.v1",
+  "laneId": "R-03",
+  "title": "Provider failure taxonomy extended from two classes to the complete ten-member vocabulary",
+  "resolution": "PROVEN",
+  "owner": "session/nightwatch-provider-resilient-cu-623c6535",
+  "taskId": "nightwatch-provider-resilient-current-yield-w13-v1",
+  "classification": "LOCAL_FIX_REQUIRED",
+  "artifacts": [
+    "src/core/agentProtocol/providerFailure.ts",
+    "src/core/agentProtocol/reasoner.ts",
+    "src/core/agentProtocol/index.ts",
+    "src/core/reasoner/cliReasoner.ts",
+    "tests/unit/w13ProviderFailureTaxonomy.test.ts"
+  ],
+  "taxonomy": [
+    "PROVIDER_ABSENT",
+    "PROVIDER_PROBE_TIMEOUT",
+    "PROVIDER_RUNTIME_TIMEOUT",
+    "PROVIDER_NONZERO_EXIT",
+    "PROVIDER_INVALID_STRUCTURED_RESPONSE",
+    "PROVIDER_NAMESPACE_OR_QUOTA_UNAVAILABLE",
+    "PROVIDER_AUTH_FAILURE",
+    "LOCAL_CLI_FAILURE",
+    "VALID_PROVIDER_RESPONSE",
+    "UNKNOWN_EXTERNAL_PROVIDER_FAILURE"
+  ],
+  "mapping": {
+    "providerAbsent": "providerPresent=false or spawn ENOENT",
+    "phaseTimeouts": "TIMEOUT/HUNG_CHILD/HUNG_GRANDCHILD -> PROBE or RUNTIME timeout by callPhase",
+    "localCli": "spawn error other than ENOENT, CLI_CRASH, CANCELLED",
+    "nonzero": "NONZERO_EXIT without auth/quota signal",
+    "invalidResponse": "MALFORMED_OUTPUT, GARBAGE_OUTPUT, OVERSIZE_OUTPUT, PARTIAL_OUTPUT, SECRET_ECHO, UNKNOWN_INTENT, UNSAFE_INTENT, UNKNOWN_TOOL, UNAUTHORIZED_ENVIRONMENT",
+    "authQuota": "NONZERO_EXIT or PROVIDER_FAILURE plus bounded enumerated text signal (auth wins over quota)",
+    "unknown": "no class, no timeout, or PROVIDER_FAILURE without a signal"
+  },
+  "sanitization": {
+    "rawProviderTextRetained": false,
+    "scanBoundChars": 16384,
+    "retainedFields": ["class", "phase", "reasonerClass", "providerSignal", "exitCode", "durationMs", "stdoutBytes", "stderrBytes"],
+    "secretEchoPath": "SECRET_ECHO never scans the echoed body"
+  },
+  "commands": [
+    {
+      "command": "npx playwright test tests/unit/w13ProviderFailureTaxonomy.test.ts --project=nightwatch --workers=1",
+      "result": "5 passed / 0 failed"
+    },
+    {
+      "command": "npx playwright test reasonerCli, reasonerPrint, reasonerPrintW9, agentProtocol, agentRuntime, agentRuntimeW9, localCampaign, localCampaignByteAccounting, w13 suites",
+      "result": "120 passed / 0 failed"
+    },
+    {
+      "command": "npm run typecheck",
+      "result": "PASS"
+    },
+    {
+      "command": "node bin/schema-lifecycle.mjs check",
+      "result": "PASS (402 families / 379 declared)"
+    }
+  ],
+  "privacy": { "secrets": "NONE", "customerValues": "NONE", "rawProviderText": false }
+}
