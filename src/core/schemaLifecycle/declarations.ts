@@ -317,6 +317,7 @@ export const SCHEMA_FAMILIES: readonly SchemaFamilyDeclaration[] = [
   { family: 'nightwatch.reproduction-capability-census', persisted: false, store: 'IN_MEMORY', currentVersion: 1, versions: { 1: 'CURRENT' }, dispositions: [], note: "" },
   { family: 'nightwatch.reproduction-surface-map', persisted: false, store: 'IN_MEMORY', currentVersion: 1, versions: { 1: 'CURRENT' }, dispositions: [], note: "" },
   { family: 'nightwatch.provider-failure-classification', persisted: false, store: 'IN_MEMORY', currentVersion: 1, versions: { 1: 'CURRENT' }, dispositions: [], note: "W13 R-03 provider failure taxonomy evidence; classes, signals, and counters only" },
+  { family: 'nightwatch.provider-resilience-policy', persisted: false, store: 'IN_MEMORY', currentVersion: 1, versions: { 1: 'CURRENT' }, dispositions: [], note: "W13 Phase B predeclared failover policy and fingerprint; data-only, no authority" },
   { family: 'nightwatch.request-parameter-provenance', persisted: false, store: 'IN_MEMORY', currentVersion: 1, versions: { 1: 'CURRENT' }, dispositions: [], note: "" },
   { family: 'nightwatch.review-store', persisted: true, store: 'REVIEW_STORE', currentVersion: 1, versions: { 1: 'CURRENT' }, dispositions: [], note: "" },
   { family: 'nightwatch.ripple-dependency-map', persisted: false, store: 'IN_MEMORY', currentVersion: 1, versions: { 1: 'CURRENT' }, dispositions: [], note: "" },

@@ -1,0 +1,129 @@
+{
+  "schemaVersion": "nightwatch.provider-resilience-policy.v1",
+  "campaignId": "nightwatch-provider-resilient-current-yield-w13-v1",
+  "declaredBeforeProbe": true,
+  "orderingCriteria": [
+    "already configured in the live opencode CLI model registry",
+    "compatible with the production print adapter and typed turn protocol",
+    "owner-approved subscribed provider family",
+    "sufficient context for bounded current-source requests",
+    "predecessor continuity (the W11/W12 subscribed model remains first) without using any predecessor result quality"
+  ],
+  "qualityBasedSelection": false,
+  "cli": {
+    "mode": "existing-configured-reasoner-cli",
+    "adapter": "bin/nightwatch-reasoner-print.mjs",
+    "shell": false,
+    "structuredResponseSchema": "nightwatch.reasoner-turn-response.v1"
+  },
+  "timing": {
+    "probeTimeoutMs": 30000,
+    "runtimeTimeoutMs": 120000
+  },
+  "retryPolicy": {
+    "attemptsPerCall": 1,
+    "note": "a failed call is classified and feeds the frozen consecutive-failure threshold instead of being retried in place; failover replaces blind retry"
+  },
+  "failover": {
+    "eligibleClasses": [
+      "PROVIDER_ABSENT",
+      "PROVIDER_PROBE_TIMEOUT",
+      "PROVIDER_RUNTIME_TIMEOUT",
+      "PROVIDER_NONZERO_EXIT",
+      "PROVIDER_INVALID_STRUCTURED_RESPONSE",
+      "PROVIDER_NAMESPACE_OR_QUOTA_UNAVAILABLE",
+      "PROVIDER_AUTH_FAILURE",
+      "UNKNOWN_EXTERNAL_PROVIDER_FAILURE"
+    ],
+    "ineligibleClasses": [
+      "LOCAL_CLI_FAILURE"
+    ],
+    "maxConsecutiveFailuresByClass": {
+      "DEFAULT": 3,
+      "PROVIDER_ABSENT": 1,
+      "PROVIDER_PROBE_TIMEOUT": 1,
+      "PROVIDER_AUTH_FAILURE": 1,
+      "PROVIDER_NAMESPACE_OR_QUOTA_UNAVAILABLE": 1
+    },
+    "maxTransitions": 4,
+    "recovery": {
+      "permitted": false
+    },
+    "exhaustionBehavior": "PROVIDER_BLOCKED"
+  },
+  "budgetEnvelope": {
+    "schemaVersion": "nightwatch.runtime-budget-envelope.v1",
+    "ceilingName": "HOUR_1",
+    "reasonerCalls": 200,
+    "toolActions": 400,
+    "inputBytes": 5000000,
+    "outputBytes": 160000,
+    "toolPayloadBytes": 64000000,
+    "retries": 8,
+    "consecutiveFailures": 6,
+    "providerFailures": 8
+  },
+  "candidates": [
+    {
+      "ordinal": 1,
+      "provider": "opencode-go/glm-5.3",
+      "model": "opencode-go/glm-5.3",
+      "argvTemplate": [
+        "run",
+        "--model",
+        "opencode-go/glm-5.3",
+        "__PROMPT__"
+      ],
+      "reason": "predecessor subscribed-family continuity; selected before probing, never because of a result"
+    },
+    {
+      "ordinal": 2,
+      "provider": "opencode-go/kimi-k3",
+      "model": "opencode-go/kimi-k3",
+      "argvTemplate": [
+        "run",
+        "--model",
+        "opencode-go/kimi-k3",
+        "__PROMPT__"
+      ],
+      "reason": "predeclared subscribed-family compatibility and context fit"
+    },
+    {
+      "ordinal": 3,
+      "provider": "opencode-go/qwen3.8-max",
+      "model": "opencode-go/qwen3.8-max",
+      "argvTemplate": [
+        "run",
+        "--model",
+        "opencode-go/qwen3.8-max",
+        "__PROMPT__"
+      ],
+      "reason": "predeclared subscribed-family compatibility and context fit"
+    },
+    {
+      "ordinal": 4,
+      "provider": "opencode-go/minimax-m3",
+      "model": "opencode-go/minimax-m3",
+      "argvTemplate": [
+        "run",
+        "--model",
+        "opencode-go/minimax-m3",
+        "__PROMPT__"
+      ],
+      "reason": "predeclared subscribed-family compatibility and context fit"
+    },
+    {
+      "ordinal": 5,
+      "provider": "opencode/nemotron-3.5-lightning-free",
+      "model": "opencode/nemotron-3.5-lightning-free",
+      "argvTemplate": [
+        "run",
+        "--model",
+        "opencode/nemotron-3.5-lightning-free",
+        "__PROMPT__"
+      ],
+      "reason": "predeclared configured fallback namespace for protocol availability only"
+    }
+  ],
+  "fingerprint": "sha256:a4865dbb6aea4114bfa8bdc9"
+}

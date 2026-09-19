@@ -142,14 +142,14 @@
 
 ## 11. Phase B — Provider-resilience policy freeze
 
-- [ ] 11.1 Author the provider-resilience policy document (ordered
+- [x] 11.1 Author the provider-resilience policy document (ordered
       candidate list, CLI/schema requirements, probe/runtime timeouts,
       retry counts, failover-eligible failure classes, maximum consecutive
       failures, maximum transitions, recovery permission, exhaustion
       behavior) before any Phase B probe.
-- [ ] 11.2 Implement the canonical fingerprint over every bound field, plus
+- [x] 11.2 Implement the canonical fingerprint over every bound field, plus
       mutation-detection and fail-closed resume.
-- [ ] 11.3 Add negative probes: fixed failure-sequence replay determinism;
+- [x] 11.3 Add negative probes: fixed failure-sequence replay determinism;
       a single-field mutation changes the fingerprint; a mutated-policy
       resume fails closed before any provider call.
 - [ ] 11.4 Probe candidates in frozen order; freeze the first that
