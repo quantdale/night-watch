@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "nightwatch.w13-final-safety-proof.v1",
+  "campaignId": "nightwatch-provider-resilient-current-yield-w13-v1",
+  "capturedAfterRuns": true,
+  "runsObserved": 9,
+  "prohibitedOperations": {
+    "devNextProductionContacts": 0,
+    "authenticatedAlphausRuntimeRuns": 0,
+    "databaseOrDataPlaneOperations": 0,
+    "cloudOrInfrastructureOperations": 0,
+    "browserProductJourneys": 0,
+    "siblingWrites": 0,
+    "siblingDependencyInstalls": 0,
+    "siblingFetchOrCheckout": 0,
+    "credentialAcquisitions": 0,
+    "credentialsCommitted": 0,
+    "issueOrPrCreations": 0,
+    "externalPublications": 0,
+    "forcePushesOrHistoryRewrites": 0,
+    "hiddenGroundTruthLeaks": 0
+  },
+  "siblingIdentity": {
+    "allEightMatchFrozen": true,
+    "receipt": ".agent/tasks/nightwatch-provider-resilient-current-yield-w13-v1/evidence/sibling-identity-after.json"
+  },
+  "leakage": {
+    "canarySuite": "tests/unit/w11LeakageCanary.test.ts",
+    "firewallReceipt": ".agent/tasks/nightwatch-provider-resilient-current-yield-w13-v1/evidence/w13-contamination-firewall.json",
+    "eventsObserved": 0
+  },
+  "providerEgress": {
+    "authority": "existing configured reasoner CLI under the frozen provider-resilience policy",
+    "reportSeparatelyFromAlphausTraffic": true
+  },
+  "evidence": "every counter above is derived from the run receipts, the after-run identity snapshot, and the canary suite; no counter is asserted from prose"
+}

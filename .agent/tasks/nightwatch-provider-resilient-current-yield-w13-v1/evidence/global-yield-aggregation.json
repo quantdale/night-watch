@@ -1,0 +1,645 @@
+{
+  "schemaVersion": "nightwatch.w13-current-source-yield-aggregation.v1",
+  "campaignId": "nightwatch-provider-resilient-current-yield-w13-v1",
+  "wave": "W13",
+  "derivedFrom": {
+    "runReceipts": [
+      ".agent/tasks/nightwatch-provider-resilient-current-yield-w13-v1/evidence/runs/w13-broad-all-repositories-1.json",
+      ".agent/tasks/nightwatch-provider-resilient-current-yield-w13-v1/evidence/runs/w13-repository-01.json",
+      ".agent/tasks/nightwatch-provider-resilient-current-yield-w13-v1/evidence/runs/w13-repository-02.json",
+      ".agent/tasks/nightwatch-provider-resilient-current-yield-w13-v1/evidence/runs/w13-repository-03.json",
+      ".agent/tasks/nightwatch-provider-resilient-current-yield-w13-v1/evidence/runs/w13-repository-04.json",
+      ".agent/tasks/nightwatch-provider-resilient-current-yield-w13-v1/evidence/runs/w13-repository-05.json",
+      ".agent/tasks/nightwatch-provider-resilient-current-yield-w13-v1/evidence/runs/w13-repository-06.json",
+      ".agent/tasks/nightwatch-provider-resilient-current-yield-w13-v1/evidence/runs/w13-repository-07.json",
+      ".agent/tasks/nightwatch-provider-resilient-current-yield-w13-v1/evidence/runs/w13-repository-08.json"
+    ],
+    "freezeFingerprint": "sha256:10299c668795e69904f4600b",
+    "policyFingerprint": "sha256:1efa45195fc018aa22677336",
+    "selectedProvider": "opencode-go/muse-spark-1.3-contributor"
+  },
+  "sourcePopulation": {
+    "schemaVersion": "nightwatch.yield-denominator-semantics.v1",
+    "populationId": "sourceInventory.filesAdmitted",
+    "statedCount": 4124,
+    "semantics": "FLOOR",
+    "exhaustive": false,
+    "completeness": "TRUNCATED"
+  },
+  "perRepository": [
+    {
+      "runId": "w13-broad-all-repositories-1",
+      "repositoryScope": null,
+      "kind": "BROAD_ALL_REPOSITORIES",
+      "terminationClass": "VALID_PROVIDER_RUN",
+      "terminationReason": "BUDGET_EXHAUSTED",
+      "validProviderResult": true,
+      "providerResponseBytes": 22810,
+      "toolActions": 35,
+      "uniqueInspectedSourcePaths": 21,
+      "candidateCount": 0,
+      "admissions": 0,
+      "admissionPathResults": 0,
+      "refusalReasons": [],
+      "wallTimeMs": 2706882,
+      "providers": [
+        "opencode-go/glm-5.3"
+      ]
+    },
+    {
+      "runId": "w13-repository-01",
+      "repositoryScope": "alphauslabs/blue-sdk-go",
+      "kind": "REPOSITORY_SCOPED",
+      "terminationClass": "VALID_PROVIDER_RUN",
+      "terminationReason": "BUDGET_EXHAUSTED",
+      "validProviderResult": true,
+      "providerResponseBytes": 371,
+      "toolActions": 2,
+      "uniqueInspectedSourcePaths": 1,
+      "candidateCount": 0,
+      "admissions": 0,
+      "admissionPathResults": 0,
+      "refusalReasons": [],
+      "wallTimeMs": 794979,
+      "providers": [
+        "opencode-go/glm-5.3",
+        "opencode-go/kimi-k3"
+      ]
+    },
+    {
+      "runId": "w13-repository-02",
+      "repositoryScope": "alphauslabs/blueapi",
+      "kind": "REPOSITORY_SCOPED",
+      "terminationClass": "PROVIDER_BLOCKED_BEFORE_SOURCE_ACTION",
+      "terminationReason": "BUDGET_EXHAUSTED",
+      "validProviderResult": false,
+      "providerResponseBytes": 0,
+      "toolActions": 0,
+      "uniqueInspectedSourcePaths": 0,
+      "candidateCount": 0,
+      "admissions": 0,
+      "admissionPathResults": 0,
+      "refusalReasons": [],
+      "wallTimeMs": 757263,
+      "providers": [
+        "opencode-go/glm-5.3",
+        "opencode-go/kimi-k3"
+      ]
+    },
+    {
+      "runId": "w13-repository-03",
+      "repositoryScope": "alphauslabs/blueinternal",
+      "kind": "REPOSITORY_SCOPED",
+      "terminationClass": "PROVIDER_BLOCKED_BEFORE_SOURCE_ACTION",
+      "terminationReason": "BUDGET_EXHAUSTED",
+      "validProviderResult": false,
+      "providerResponseBytes": 0,
+      "toolActions": 0,
+      "uniqueInspectedSourcePaths": 0,
+      "candidateCount": 0,
+      "admissions": 0,
+      "admissionPathResults": 0,
+      "refusalReasons": [],
+      "wallTimeMs": 758446,
+      "providers": [
+        "opencode-go/glm-5.3",
+        "opencode-go/kimi-k3"
+      ]
+    },
+    {
+      "runId": "w13-repository-04",
+      "repositoryScope": "alphauslabs/grpc-chunk-parser",
+      "kind": "REPOSITORY_SCOPED",
+      "terminationClass": "PROVIDER_VALID_SOURCE_ACTIVITY_UNOBSERVED",
+      "terminationReason": "NO_PROGRESS",
+      "validProviderResult": false,
+      "providerResponseBytes": 8110,
+      "toolActions": 0,
+      "uniqueInspectedSourcePaths": 0,
+      "candidateCount": 1,
+      "admissions": 0,
+      "admissionPathResults": 1,
+      "refusalReasons": [
+        "REFUSED_NO_REPRODUCTION"
+      ],
+      "wallTimeMs": 688045,
+      "providers": [
+        "opencode-go/muse-spark-1.3-contributor"
+      ]
+    },
+    {
+      "runId": "w13-repository-05",
+      "repositoryScope": "mobingilabs/ouchan",
+      "kind": "REPOSITORY_SCOPED",
+      "terminationClass": "VALID_PROVIDER_RUN",
+      "terminationReason": "NO_PROGRESS",
+      "validProviderResult": true,
+      "providerResponseBytes": 22000,
+      "toolActions": 0,
+      "uniqueInspectedSourcePaths": 0,
+      "candidateCount": 1,
+      "admissions": 1,
+      "admissionPathResults": 1,
+      "refusalReasons": [],
+      "wallTimeMs": 2525260,
+      "providers": [
+        "opencode-go/muse-spark-1.3-contributor"
+      ]
+    },
+    {
+      "runId": "w13-repository-06",
+      "repositoryScope": "mobingilabs/ripple-api",
+      "kind": "REPOSITORY_SCOPED",
+      "terminationClass": "VALID_PROVIDER_RUN",
+      "terminationReason": "BUDGET_EXHAUSTED",
+      "validProviderResult": true,
+      "providerResponseBytes": 20631,
+      "toolActions": 45,
+      "uniqueInspectedSourcePaths": 24,
+      "candidateCount": 1,
+      "admissions": 0,
+      "admissionPathResults": 1,
+      "refusalReasons": [
+        "REFUSED_NO_REPRODUCTION"
+      ],
+      "wallTimeMs": 1829226,
+      "providers": [
+        "opencode-go/muse-spark-1.3-contributor"
+      ]
+    },
+    {
+      "runId": "w13-repository-07",
+      "repositoryScope": "mobingilabs/ripple-ui",
+      "kind": "REPOSITORY_SCOPED",
+      "terminationClass": "VALID_PROVIDER_RUN",
+      "terminationReason": "BUDGET_EXHAUSTED",
+      "validProviderResult": true,
+      "providerResponseBytes": 22903,
+      "toolActions": 44,
+      "uniqueInspectedSourcePaths": 23,
+      "candidateCount": 1,
+      "admissions": 0,
+      "admissionPathResults": 1,
+      "refusalReasons": [
+        "REFUSED_NO_REPRODUCTION"
+      ],
+      "wallTimeMs": 1844606,
+      "providers": [
+        "opencode-go/muse-spark-1.3-contributor"
+      ]
+    },
+    {
+      "runId": "w13-repository-08",
+      "repositoryScope": "mobingilabs/wave-api",
+      "kind": "REPOSITORY_SCOPED",
+      "terminationClass": "VALID_PROVIDER_RUN",
+      "terminationReason": "BUDGET_EXHAUSTED",
+      "validProviderResult": true,
+      "providerResponseBytes": 20903,
+      "toolActions": 41,
+      "uniqueInspectedSourcePaths": 23,
+      "candidateCount": 1,
+      "admissions": 0,
+      "admissionPathResults": 1,
+      "refusalReasons": [
+        "REFUSED_NO_REPRODUCTION"
+      ],
+      "wallTimeMs": 1819915,
+      "providers": [
+        "opencode-go/muse-spark-1.3-contributor"
+      ]
+    }
+  ],
+  "metrics": {
+    "plannedRuns": {
+      "kind": "MEASURED",
+      "semantics": "EXACT",
+      "value": 9
+    },
+    "attemptedRuns": {
+      "kind": "MEASURED",
+      "semantics": "EXACT",
+      "value": 9
+    },
+    "validRuns": {
+      "kind": "MEASURED",
+      "semantics": "EXACT",
+      "value": 6
+    },
+    "providerBlockedRuns": {
+      "kind": "MEASURED",
+      "semantics": "EXACT",
+      "value": 2
+    },
+    "investigationsStarted": {
+      "kind": "MEASURED",
+      "semantics": "EXACT",
+      "value": 57
+    },
+    "investigationsCompleted": {
+      "kind": "MEASURED",
+      "semantics": "EXACT",
+      "value": 57
+    },
+    "reasonerCalls": {
+      "kind": "MEASURED",
+      "semantics": "EXACT",
+      "value": 332
+    },
+    "providerFailuresByClass": {
+      "kind": "MEASURED_DISTRIBUTION",
+      "semantics": "EXACT",
+      "value": {
+        "PROVIDER_NONZERO_EXIT": 6,
+        "PROVIDER_RUNTIME_TIMEOUT": 24
+      }
+    },
+    "providerRetries": {
+      "kind": "MEASURED",
+      "semantics": "EXACT",
+      "value": 30,
+      "denominator": "failed calls are the retry count under the host-owned policy"
+    },
+    "providerTransitions": {
+      "kind": "MEASURED",
+      "semantics": "EXACT",
+      "value": 2
+    },
+    "toolActions": {
+      "kind": "MEASURED",
+      "semantics": "FLOOR",
+      "value": 167,
+      "denominator": "sum of observable run action logs; observable in 7/9 runs, unobserved runs are not zero"
+    },
+    "uniqueRepositories": {
+      "kind": "MEASURED",
+      "semantics": "EXACT",
+      "value": 8,
+      "denominator": "broad all-eight scope"
+    },
+    "uniqueInspectedSourcePaths": {
+      "kind": "MEASURED",
+      "semantics": "FLOOR",
+      "value": 92,
+      "denominator": "sum of per-run distinct inspected paths; observable in 7/9 runs, unobserved runs are not zero"
+    },
+    "visibleExecutableTargets": {
+      "kind": "MEASURED",
+      "semantics": "EXACT",
+      "value": 5,
+      "denominator": "broad run capability summary"
+    },
+    "hypothesesFormed": {
+      "kind": "MEASURED",
+      "semantics": "FLOOR",
+      "value": 15,
+      "denominator": "sum of per-run hypotheses at termination; observable in 7/9 runs, unobserved runs are not zero"
+    },
+    "reproductionAttempts": {
+      "kind": "MEASURED",
+      "semantics": "EXACT",
+      "value": 15
+    },
+    "reproductionExecutions": {
+      "kind": "MEASURED",
+      "semantics": "EXACT",
+      "value": 15
+    },
+    "qualifyingReproductions": {
+      "kind": "MEASURED",
+      "semantics": "EXACT",
+      "value": 1
+    },
+    "reproductionNotAvailable": {
+      "kind": "MEASURED",
+      "semantics": "EXACT",
+      "value": 0
+    },
+    "candidatesProposed": {
+      "kind": "MEASURED",
+      "semantics": "EXACT",
+      "value": 5
+    },
+    "refusalsByReason": {
+      "kind": "MEASURED_DISTRIBUTION",
+      "semantics": "EXACT",
+      "value": {
+        "REFUSED_NO_REPRODUCTION": 4
+      }
+    },
+    "mechanicalAdmissions": {
+      "kind": "MEASURED",
+      "semantics": "EXACT",
+      "value": 1
+    },
+    "noveltyClasses": {
+      "kind": "MEASURED_DISTRIBUTION",
+      "semantics": "EXACT",
+      "value": {
+        "NOVELTY_AMBIGUOUS": 1
+      }
+    },
+    "leakageEvents": {
+      "kind": "MEASURED",
+      "semantics": "EXACT",
+      "value": 0,
+      "denominator": "leakage canary and request-blob audit"
+    },
+    "providerResponseBytes": {
+      "kind": "MEASURED",
+      "semantics": "EXACT",
+      "value": 117728
+    },
+    "providerStderrBytes": {
+      "kind": "MEASURED",
+      "semantics": "EXACT",
+      "value": 1962
+    },
+    "renderedInputBytes": {
+      "kind": "MEASURED",
+      "semantics": "EXACT",
+      "value": 4042364
+    },
+    "toolPayloadBytes": {
+      "kind": "NOT_CAPTURED",
+      "reason": "a run receipt did not capture tool payload bytes"
+    },
+    "wallTimeMs": {
+      "kind": "MEASURED",
+      "semantics": "EXACT",
+      "value": 13724622
+    },
+    "terminationReasons": {
+      "kind": "MEASURED_DISTRIBUTION",
+      "semantics": "EXACT",
+      "value": {
+        "BUDGET_EXHAUSTED": 7,
+        "NO_PROGRESS": 2
+      }
+    }
+  },
+  "providerAttribution": [
+    {
+      "provider": "opencode-go/glm-5.3",
+      "calls": {
+        "kind": "MEASURED",
+        "semantics": "EXACT",
+        "value": 56
+      },
+      "validResponses": {
+        "kind": "MEASURED",
+        "semantics": "EXACT",
+        "value": 39
+      },
+      "failuresByClass": {
+        "kind": "MEASURED_DISTRIBUTION",
+        "semantics": "EXACT",
+        "value": {
+          "PROVIDER_NONZERO_EXIT": 3,
+          "PROVIDER_RUNTIME_TIMEOUT": 14
+        }
+      },
+      "retries": {
+        "kind": "MEASURED",
+        "semantics": "EXACT",
+        "value": 17
+      },
+      "responseBytes": {
+        "kind": "MEASURED",
+        "semantics": "EXACT",
+        "value": 23181
+      },
+      "stderrBytes": {
+        "kind": "MEASURED",
+        "semantics": "EXACT",
+        "value": 138
+      },
+      "wallTimeMs": {
+        "kind": "MEASURED",
+        "semantics": "EXACT",
+        "value": 3677118
+      },
+      "transitionsIn": [],
+      "transitionsOut": [
+        "opencode-go/kimi-k3"
+      ]
+    },
+    {
+      "provider": "opencode-go/kimi-k3",
+      "calls": {
+        "kind": "MEASURED",
+        "semantics": "EXACT",
+        "value": 9
+      },
+      "validResponses": {
+        "kind": "MEASURED",
+        "semantics": "EXACT",
+        "value": 0
+      },
+      "failuresByClass": {
+        "kind": "MEASURED_DISTRIBUTION",
+        "semantics": "EXACT",
+        "value": {
+          "PROVIDER_RUNTIME_TIMEOUT": 9
+        }
+      },
+      "retries": {
+        "kind": "MEASURED",
+        "semantics": "EXACT",
+        "value": 9
+      },
+      "responseBytes": {
+        "kind": "MEASURED",
+        "semantics": "EXACT",
+        "value": 0
+      },
+      "stderrBytes": {
+        "kind": "MEASURED",
+        "semantics": "EXACT",
+        "value": 0
+      },
+      "wallTimeMs": {
+        "kind": "MEASURED",
+        "semantics": "EXACT",
+        "value": 1133134
+      },
+      "transitionsIn": [
+        "opencode-go/glm-5.3"
+      ],
+      "transitionsOut": [
+        "opencode-go/qwen3.8-max"
+      ]
+    },
+    {
+      "provider": "opencode-go/muse-spark-1.3-contributor",
+      "calls": {
+        "kind": "MEASURED",
+        "semantics": "EXACT",
+        "value": 267
+      },
+      "validResponses": {
+        "kind": "MEASURED",
+        "semantics": "EXACT",
+        "value": 263
+      },
+      "failuresByClass": {
+        "kind": "MEASURED_DISTRIBUTION",
+        "semantics": "EXACT",
+        "value": {
+          "PROVIDER_NONZERO_EXIT": 3,
+          "PROVIDER_RUNTIME_TIMEOUT": 1
+        }
+      },
+      "retries": {
+        "kind": "MEASURED",
+        "semantics": "EXACT",
+        "value": 4
+      },
+      "responseBytes": {
+        "kind": "MEASURED",
+        "semantics": "EXACT",
+        "value": 94547
+      },
+      "stderrBytes": {
+        "kind": "MEASURED",
+        "semantics": "EXACT",
+        "value": 332
+      },
+      "wallTimeMs": {
+        "kind": "MEASURED",
+        "semantics": "EXACT",
+        "value": 7836639
+      },
+      "transitionsIn": [],
+      "transitionsOut": []
+    }
+  ],
+  "admissionRecords": [],
+  "admissionPathResults": 5,
+  "unpreservedAdmissions": [
+    {
+      "runId": "w13-repository-05",
+      "candidateId": "c1",
+      "reason": "W13-DEF-01: the harness revision in use did not persist the dossier; the owner-local checkpoint was deleted on NO_PROGRESS",
+      "noveltyClass": "NOVELTY_AMBIGUOUS"
+    }
+  ],
+  "policyHealth": [
+    {
+      "runId": "w13-broad-all-repositories-1",
+      "activeProvider": "opencode-go/glm-5.3",
+      "transitions": [],
+      "exhausted": false
+    },
+    {
+      "runId": "w13-repository-01",
+      "activeProvider": "opencode-go/qwen3.8-max",
+      "transitions": [
+        {
+          "sequence": 1,
+          "from": "opencode-go/glm-5.3",
+          "to": "opencode-go/kimi-k3",
+          "triggerClass": "PROVIDER_RUNTIME_TIMEOUT",
+          "at": "2026-09-19T16:56:23.147Z"
+        },
+        {
+          "sequence": 2,
+          "from": "opencode-go/kimi-k3",
+          "to": "opencode-go/qwen3.8-max",
+          "triggerClass": "PROVIDER_RUNTIME_TIMEOUT",
+          "at": "2026-09-19T17:02:41.274Z"
+        }
+      ],
+      "exhausted": false
+    },
+    {
+      "runId": "w13-repository-02",
+      "activeProvider": "opencode-go/qwen3.8-max",
+      "transitions": [
+        {
+          "sequence": 1,
+          "from": "opencode-go/glm-5.3",
+          "to": "opencode-go/kimi-k3",
+          "triggerClass": "PROVIDER_RUNTIME_TIMEOUT",
+          "at": "2026-09-19T17:08:58.575Z"
+        },
+        {
+          "sequence": 2,
+          "from": "opencode-go/kimi-k3",
+          "to": "opencode-go/qwen3.8-max",
+          "triggerClass": "PROVIDER_RUNTIME_TIMEOUT",
+          "at": "2026-09-19T17:15:18.536Z"
+        }
+      ],
+      "exhausted": false
+    },
+    {
+      "runId": "w13-repository-03",
+      "activeProvider": "opencode-go/qwen3.8-max",
+      "transitions": [
+        {
+          "sequence": 1,
+          "from": "opencode-go/glm-5.3",
+          "to": "opencode-go/kimi-k3",
+          "triggerClass": "PROVIDER_RUNTIME_TIMEOUT",
+          "at": "2026-09-19T17:21:38.548Z"
+        },
+        {
+          "sequence": 2,
+          "from": "opencode-go/kimi-k3",
+          "to": "opencode-go/qwen3.8-max",
+          "triggerClass": "PROVIDER_RUNTIME_TIMEOUT",
+          "at": "2026-09-19T17:27:56.983Z"
+        }
+      ],
+      "exhausted": false
+    },
+    {
+      "runId": "w13-repository-04",
+      "activeProvider": "opencode-go/muse-spark-1.3-contributor",
+      "transitions": [],
+      "exhausted": false
+    },
+    {
+      "runId": "w13-repository-05",
+      "activeProvider": "opencode-go/muse-spark-1.3-contributor",
+      "transitions": [],
+      "exhausted": false
+    },
+    {
+      "runId": "w13-repository-06",
+      "activeProvider": "opencode-go/muse-spark-1.3-contributor",
+      "transitions": [],
+      "exhausted": false
+    },
+    {
+      "runId": "w13-repository-07",
+      "activeProvider": "opencode-go/muse-spark-1.3-contributor",
+      "transitions": [],
+      "exhausted": false
+    },
+    {
+      "runId": "w13-repository-08",
+      "activeProvider": "opencode-go/muse-spark-1.3-contributor",
+      "transitions": [],
+      "exhausted": false
+    }
+  ],
+  "verdict": {
+    "plannedRuns": 9,
+    "attemptedRuns": 9,
+    "validRuns": 6,
+    "providerBlockedRuns": 2,
+    "sourceActivityUnobservedRuns": 1,
+    "executionFailures": 0,
+    "validMatrixComplete": false,
+    "mechanicalAdmissions": 1
+  },
+  "validation": {
+    "completeness": "PASS",
+    "completenessViolations": [],
+    "providerAttribution": "PASS",
+    "providerAttributionViolations": []
+  },
+  "aggregationDigest": "sha256:77bab9f443edd206d9aa548a"
+}

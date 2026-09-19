@@ -11,7 +11,7 @@
   "wallTimeMs": 688045,
   "validProviderResult": false,
   "terminationReason": "NO_PROGRESS",
-  "terminationClass": "VALID_PROVIDER_RUN",
+  "terminationClass": "PROVIDER_VALID_SOURCE_ACTIVITY_UNOBSERVED",
   "executionFailure": null,
   "investigationsStarted": 4,
   "investigationsCompleted": 4,
@@ -21,14 +21,14 @@
     "c1"
   ],
   "candidateCount": 1,
-  "findingAdmissions": 1,
+  "findingAdmissions": 0,
   "reproductionCount": 0,
   "dossierStatus": "REFUSED_NO_REPRODUCTION",
-  "actionLogEntries": 0,
-  "toolActions": 0,
-  "uniqueInspectedSourcePaths": 0,
-  "reproductionAttemptsTool": 0,
-  "hypothesesFormed": 0,
+  "actionLogEntries": "NOT_CAPTURED",
+  "toolActions": "NOT_CAPTURED",
+  "uniqueInspectedSourcePaths": "NOT_CAPTURED",
+  "reproductionAttemptsTool": "NOT_CAPTURED",
+  "hypothesesFormed": "NOT_CAPTURED",
   "providerResponseBytes": 8110,
   "providerStderrBytes": 0,
   "renderedInputBytes": 117524,
@@ -75,5 +75,66 @@
   ],
   "terminationSafety": "NO_SAFETY_BLOCK",
   "novelty": "NOT_APPLICABLE_NO_ADMISSION",
-  "ownerLocalRawCheckpoint": "/home/dalepalaca/.nightwatch/campaigns/w13-repository-04.checkpoint.json"
+  "ownerLocalRawCheckpoint": "/home/dalepalaca/.nightwatch/campaigns/w13-repository-04.checkpoint.json",
+  "checkpointAvailable": false,
+  "measurementCorrections": [
+    {
+      "checkpointDeletedOnNoProgress": true,
+      "fields": {
+        "actionLogEntries": {
+          "from": 0,
+          "to": "NOT_CAPTURED",
+          "reason": "the campaign deleted its owner-local checkpoint on NO_PROGRESS; the action log was not observable after termination"
+        },
+        "toolActions": {
+          "from": 0,
+          "to": "NOT_CAPTURED",
+          "reason": "the campaign deleted its owner-local checkpoint on NO_PROGRESS; the action log was not observable after termination"
+        },
+        "uniqueInspectedSourcePaths": {
+          "from": 0,
+          "to": "NOT_CAPTURED",
+          "reason": "the campaign deleted its owner-local checkpoint on NO_PROGRESS; the action log was not observable after termination"
+        },
+        "hypothesesFormed": {
+          "from": 0,
+          "to": "NOT_CAPTURED",
+          "reason": "the campaign deleted its owner-local checkpoint on NO_PROGRESS; the action log was not observable after termination"
+        },
+        "reproductionAttemptsTool": {
+          "from": 0,
+          "to": "NOT_CAPTURED",
+          "reason": "the campaign deleted its owner-local checkpoint on NO_PROGRESS; the action log was not observable after termination"
+        }
+      }
+    },
+    {
+      "field": "terminationClass",
+      "from": "VALID_PROVIDER_RUN",
+      "to": "PROVIDER_VALID_SOURCE_ACTIVITY_UNOBSERVED",
+      "reason": "provider responses were valid but positive source activity is unobserved; the run does not satisfy the W13 validity rule and is not a provider block either."
+    },
+    {
+      "field": "findingAdmissions/mechanicalAdmissions",
+      "from": 1,
+      "to": 0,
+      "reason": "the first harness revision counted every admission-path result (including refusals); the receipt now separates admissionPathResults, mechanicalAdmissions, and refusalResults. Derived from the preserved dossierStatus."
+    }
+  ],
+  "sourceActivityEvidence": {
+    "basis": "nightwatch.campaign-yield.v1 metrics derived by the engine from the run action log",
+    "reproductionAttempts": 0,
+    "distinctAttemptedTargets": 0,
+    "qualifyingReproductions": 0,
+    "mechanicalAdmissions": 0,
+    "note": "no reproduction activity; inspection activity is unobservable because the campaign deleted its owner-local checkpoint on NO_PROGRESS"
+  },
+  "admissionPathResults": 1,
+  "mechanicalAdmissions": 0,
+  "refusalResults": [
+    {
+      "candidateId": null,
+      "reason": "REFUSED_NO_REPRODUCTION"
+    }
+  ]
 }

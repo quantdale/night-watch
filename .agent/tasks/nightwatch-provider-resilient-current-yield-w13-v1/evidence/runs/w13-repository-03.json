@@ -114,5 +114,16 @@
   ],
   "terminationSafety": "NO_SAFETY_BLOCK",
   "novelty": "NOT_APPLICABLE_NO_ADMISSION",
-  "ownerLocalRawCheckpoint": "/home/dalepalaca/.nightwatch/campaigns/w13-repository-03.checkpoint.json"
+  "ownerLocalRawCheckpoint": "/home/dalepalaca/.nightwatch/campaigns/w13-repository-03.checkpoint.json",
+  "admissionPathResults": 0,
+  "mechanicalAdmissions": 0,
+  "refusalResults": [],
+  "measurementCorrections": [
+    {
+      "field": "findingAdmissions/mechanicalAdmissions",
+      "from": 0,
+      "to": 0,
+      "reason": "the first harness revision counted every admission-path result (including refusals); the receipt now separates admissionPathResults, mechanicalAdmissions, and refusalResults. Derived from the preserved dossierStatus."
+    }
+  ]
 }

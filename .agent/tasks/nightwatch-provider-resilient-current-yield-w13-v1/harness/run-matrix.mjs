@@ -178,7 +178,11 @@ async function runOne(entry) {
   const resultOrCheckpoint = result;
   const providerResponseBytes = resultOrCheckpoint?.byteLedger?.providerResponseBytes ?? 0;
   const sourceActivity = actionSummary.toolActions;
-  const validProviderResult = providerResponseBytes > 0 && sourceActivity > 0;
+  const yieldEvidence = resultOrCheckpoint?.yieldMetrics ?? null;
+  const reproductionActivity = Number.isFinite(yieldEvidence?.reproductionAttempts) && yieldEvidence.reproductionAttempts > 0;
+  const sourceActivityObserved = sourceActivity !== 'NOT_CAPTURED';
+  const sourceActivityProven = (sourceActivityObserved && sourceActivity > 0) || reproductionActivity || admissions.length > 0;
+  const validProviderResult = providerResponseBytes > 0 && sourceActivityProven;
   const terminationReason = resultOrCheckpoint?.terminationReason ?? 'EXECUTION_FAILURE';
   const receipt = {
     schemaVersion: 'nightwatch.w13-run-receipt.v1',
@@ -195,9 +199,11 @@ async function runOne(entry) {
     terminationReason,
     terminationClass: failure !== null
       ? 'EXECUTION_FAILURE'
-      : providerResponseBytes === 0 && sourceActivity === 0
+      : providerResponseBytes === 0 && !sourceActivityProven
         ? 'PROVIDER_BLOCKED_BEFORE_SOURCE_ACTION'
-        : 'VALID_PROVIDER_RUN',
+        : validProviderResult
+          ? 'VALID_PROVIDER_RUN'
+          : 'PROVIDER_VALID_SOURCE_ACTIVITY_UNOBSERVED',
     executionFailure: failure,
     investigationsStarted: resultOrCheckpoint?.investigationsStarted ?? null,
     investigationsCompleted: resultOrCheckpoint?.investigationsCompleted ?? null,
@@ -205,7 +211,10 @@ async function runOne(entry) {
     providerFailures: resultOrCheckpoint?.providerFailures ?? null,
     candidateIds: resultOrCheckpoint?.candidateIds ?? [],
     candidateCount: (resultOrCheckpoint?.candidateIds ?? []).length,
-    findingAdmissions: (resultOrCheckpoint?.findingAdmissions ?? []).length,
+    admissionPathResults: admissionResults.length,
+    findingAdmissions: admissions.length,
+    mechanicalAdmissions: admissions.length,
+    refusalResults: refusals,
     reproductionCount: resultOrCheckpoint?.reproductionCount ?? 0,
     dossierStatus: resultOrCheckpoint?.dossierStatus ?? 'NONE',
     actionLogEntries: actionSummary.actionLogEntries,
@@ -228,7 +237,12 @@ async function runOne(entry) {
   // Owner-local dossier persistence: an admission dossier is never committed,
   // but it must survive the campaign so a later novelty adjudication can cite
   // its identity. Written under the run's owner-local state directory.
-  const admissions = Array.isArray(resultOrCheckpoint?.findingAdmissions) ? resultOrCheckpoint.findingAdmissions : [];
+  const admissionResults = Array.isArray(resultOrCheckpoint?.findingAdmissions) ? resultOrCheckpoint.findingAdmissions : [];
+  const admissions = admissionResults.filter((entry) => entry?.admitted === true);
+  const refusals = admissionResults.filter((entry) => entry?.admitted === false).map((entry) => ({
+    candidateId: typeof entry?.candidateId === 'string' ? entry.candidateId : null,
+    reason: typeof entry?.reason === 'string' ? entry.reason : 'REFUSED_NO_REPRODUCTION',
+  }));
   const dossierDir = path.join(SUPERVISOR_STATE, entry.runId, 'dossiers');
   const persistedDossiers = [];
   for (const admission of admissions) {

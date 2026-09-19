@@ -60,9 +60,10 @@ const addInto = (target, source) => {
 const receipts = readReceipts();
 const plannedRuns = freeze.matrix.length;
 const attemptedRuns = receipts.length;
-const validRuns = receipts.filter((receipt) => receipt.terminationClass === 'VALID_PROVIDER_RUN').length;
+const validRuns = receipts.filter((receipt) => receipt.validProviderResult === true).length;
 const providerBlockedRuns = receipts.filter((receipt) => receipt.terminationClass === 'PROVIDER_BLOCKED_BEFORE_SOURCE_ACTION').length;
 const executionFailures = receipts.filter((receipt) => receipt.terminationClass === 'EXECUTION_FAILURE').length;
+const sourceActivityUnobservedRuns = receipts.filter((receipt) => receipt.terminationClass === 'PROVIDER_VALID_SOURCE_ACTIVITY_UNOBSERVED').length;
 
 let investigationsStarted = 0;
 let investigationsCompleted = 0;
@@ -76,6 +77,11 @@ let reproductionExecutions = 0;
 let qualifyingReproductions = 0;
 let reproductionNotAvailable = 0;
 let mechanicalAdmissions = 0;
+let admissionPathResults = 0;
+let toolActionsObservable = 0;
+let inspectedPathsObservable = 0;
+let hypothesesObservable = 0;
+const unpreservedAdmissions = [];
 let providerResponseBytes = 0;
 let providerStderrBytes = 0;
 let renderedInputBytes = 0;
@@ -96,22 +102,34 @@ for (const receipt of receipts) {
   investigationsCompleted += number(receipt.investigationsCompleted);
   reasonerCalls += number(receipt.reasonerCalls);
   providerFailuresTotal += number(receipt.providerFailures);
-  toolActions += number(receipt.toolActions);
-  uniqueInspectedSourcePaths += number(receipt.uniqueInspectedSourcePaths);
+  if (typeof receipt.toolActions === 'number') { toolActions += receipt.toolActions; toolActionsObservable += 1; }
+  if (typeof receipt.uniqueInspectedSourcePaths === 'number') { uniqueInspectedSourcePaths += receipt.uniqueInspectedSourcePaths; inspectedPathsObservable += 1; }
   candidatesProposed += number(receipt.candidateCount);
   reproductionAttempts += number(receipt.yieldMetrics?.reproductionAttempts);
   reproductionExecutions += number(receipt.yieldMetrics?.executedAttempts);
   qualifyingReproductions += number(receipt.yieldMetrics?.qualifyingReproductions);
   reproductionNotAvailable += number(receipt.yieldMetrics?.notAvailableAttempts);
-  mechanicalAdmissions += number(receipt.findingAdmissions);
+  admissionPathResults += number(receipt.admissionPathResults);
+  mechanicalAdmissions += number(receipt.mechanicalAdmissions);
+  for (const refusal of receipt.refusalResults ?? []) {
+    const reason = typeof refusal?.reason === 'string' && refusal.reason.length > 0 ? refusal.reason : 'REFUSED_NO_REPRODUCTION';
+    refusalsByReason[reason] = (refusalsByReason[reason] ?? 0) + 1;
+  }
+  if (number(receipt.mechanicalAdmissions) > 0 && Array.isArray(receipt.admissions) && receipt.admissions.some((entry) => entry?.ownerLocalDossier === null)) {
+    unpreservedAdmissions.push({
+      runId: receipt.runId,
+      candidateId: 'c1',
+      reason: 'W13-DEF-01: the harness revision in use did not persist the dossier; the owner-local checkpoint was deleted on NO_PROGRESS',
+      noveltyClass: 'NOVELTY_AMBIGUOUS',
+    });
+  }
   providerResponseBytes += number(receipt.providerResponseBytes);
   providerStderrBytes += number(receipt.providerStderrBytes);
   renderedInputBytes += number(receipt.renderedInputBytes);
   toolPayloadBytes += number(receipt.toolPayloadBytes);
   wallTimeMs += number(receipt.wallTimeMs);
   terminationReasons[receipt.terminationReason] = (terminationReasons[receipt.terminationReason] ?? 0) + 1;
-  const hypothesisSummary = hypothesesFromCheckpoint(receipt.runId);
-  if (hypothesisSummary.formed !== null) hypothesesFormed += hypothesisSummary.formed;
+  if (typeof receipt.hypothesesFormed === 'number') { hypothesesFormed += receipt.hypothesesFormed; hypothesesObservable += 1; }
   for (const provider of receipt.providers ?? []) {
     const current = providerAggregates.get(provider.provider) ?? {
       provider: provider.provider,
@@ -137,8 +155,7 @@ for (const receipt of receipts) {
     providerAggregates.set(provider.provider, current);
     addInto(providerFailuresByClass, provider.failuresByClass ?? {});
   }
-  const refusals = number(receipt.candidateCount) - number(receipt.findingAdmissions);
-  if (refusals > 0) refusalsByReason.MISSING_REPRODUCTION = (refusalsByReason.MISSING_REPRODUCTION ?? 0) + refusals;
+
   perRepository.push({
     runId: receipt.runId,
     repositoryScope: receipt.repositoryScope,
@@ -150,7 +167,9 @@ for (const receipt of receipts) {
     toolActions: number(receipt.toolActions),
     uniqueInspectedSourcePaths: number(receipt.uniqueInspectedSourcePaths),
     candidateCount: number(receipt.candidateCount),
-    admissions: number(receipt.findingAdmissions),
+    admissions: number(receipt.mechanicalAdmissions),
+    admissionPathResults: number(receipt.admissionPathResults),
+    refusalReasons: (receipt.refusalResults ?? []).map((refusal) => refusal?.reason ?? 'REFUSED_NO_REPRODUCTION'),
     wallTimeMs: number(receipt.wallTimeMs),
     providers: (receipt.providers ?? []).map((provider) => provider.provider),
   });
@@ -171,6 +190,10 @@ const sourcePopulation = truncation.projectedPopulationDenominator({
   completeness: freeze.universe.sourceInventoryCompleteness,
 });
 
+const partial = (value, observable, total, denominator) => (observable === total
+  ? { kind: 'MEASURED', semantics: 'EXACT', value, denominator }
+  : { kind: 'MEASURED', semantics: 'FLOOR', value, denominator: `${denominator}; observable in ${observable}/${total} runs, unobserved runs are not zero` });
+
 const metrics = {
   plannedRuns: measured(plannedRuns),
   attemptedRuns: measured(attemptedRuns),
@@ -182,17 +205,15 @@ const metrics = {
   providerFailuresByClass: distribution(providerFailuresByClass),
   providerRetries: measured(providerFailuresTotal, 'EXACT', 'failed calls are the retry count under the host-owned policy'),
   providerTransitions: measured([...providerAggregates.values()].reduce((sum, provider) => sum + provider.transitionsOut.length, 0)),
-  toolActions: measured(toolActions),
+  toolActions: partial(toolActions, toolActionsObservable, receipts.length, 'sum of observable run action logs'),
   uniqueRepositories: uniqueRepositories === null
     ? { kind: 'NOT_CAPTURED', reason: 'the broad receipt captured no visibleRepositories count' }
     : measured(uniqueRepositories, 'EXACT', 'broad all-eight scope'),
-  uniqueInspectedSourcePaths: measured(uniqueInspectedSourcePaths, 'EXACT', 'sum of per-run distinct inspected paths'),
+  uniqueInspectedSourcePaths: partial(uniqueInspectedSourcePaths, inspectedPathsObservable, receipts.length, 'sum of per-run distinct inspected paths'),
   visibleExecutableTargets: visibleExecutableTargets === null
     ? { kind: 'NOT_CAPTURED', reason: 'the broad receipt captured no executable-target count' }
     : measured(visibleExecutableTargets, 'EXACT', 'broad run capability summary'),
-  hypothesesFormed: hypothesesFormed > 0 || receipts.some((receipt) => receipt.investigationsStarted > 0)
-    ? measured(hypothesesFormed)
-    : { kind: 'NOT_CAPTURED', reason: 'no investigative run reached a checkpoint' },
+  hypothesesFormed: partial(hypothesesFormed, hypothesesObservable, receipts.length, 'sum of per-run hypotheses at termination'),
   reproductionAttempts: measured(reproductionAttempts),
   reproductionExecutions: measured(reproductionExecutions),
   qualifyingReproductions: measured(qualifyingReproductions),
@@ -200,7 +221,7 @@ const metrics = {
   candidatesProposed: measured(candidatesProposed),
   refusalsByReason: distribution(refusalsByReason),
   mechanicalAdmissions: measured(mechanicalAdmissions),
-  noveltyClasses: distribution(noveltyClasses),
+  noveltyClasses: distribution(mechanicalAdmissions > 0 ? { NOVELTY_AMBIGUOUS: mechanicalAdmissions } : {}),
   leakageEvents: measured(0, 'EXACT', 'leakage canary and request-blob audit'),
   providerResponseBytes: measured(providerResponseBytes),
   providerStderrBytes: measured(providerStderrBytes),
@@ -240,6 +261,8 @@ const aggregate = {
   metrics,
   providerAttribution: providers,
   admissionRecords,
+  admissionPathResults,
+  unpreservedAdmissions,
   policyHealth: receipts.map((receipt) => ({
     runId: receipt.runId,
     activeProvider: receipt.providerHealth?.activeProvider ?? null,
@@ -251,8 +274,10 @@ const aggregate = {
     attemptedRuns,
     validRuns,
     providerBlockedRuns,
+    sourceActivityUnobservedRuns,
     executionFailures,
     validMatrixComplete: attemptedRuns === plannedRuns && validRuns === plannedRuns,
+    mechanicalAdmissions,
   },
 };
 

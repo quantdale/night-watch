@@ -9,7 +9,7 @@
   "selectedProvider": "opencode-go/muse-spark-1.3-contributor",
   "startedAt": "2026-09-19T18:06:15.479Z",
   "wallTimeMs": 2525260,
-  "validProviderResult": false,
+  "validProviderResult": true,
   "terminationReason": "NO_PROGRESS",
   "terminationClass": "VALID_PROVIDER_RUN",
   "executionFailure": null,
@@ -24,11 +24,11 @@
   "findingAdmissions": 1,
   "reproductionCount": 1,
   "dossierStatus": "VERIFIED_REPRODUCTION",
-  "actionLogEntries": 0,
-  "toolActions": 0,
-  "uniqueInspectedSourcePaths": 0,
-  "reproductionAttemptsTool": 0,
-  "hypothesesFormed": 0,
+  "actionLogEntries": "NOT_CAPTURED",
+  "toolActions": "NOT_CAPTURED",
+  "uniqueInspectedSourcePaths": "NOT_CAPTURED",
+  "reproductionAttemptsTool": "NOT_CAPTURED",
+  "hypothesesFormed": "NOT_CAPTURED",
   "providerResponseBytes": 22000,
   "providerStderrBytes": 0,
   "renderedInputBytes": 807657,
@@ -84,5 +84,60 @@
       "reproductionCount": 1,
       "persistenceNote": "NOT_PERSISTED_BY_HARNESS_REVISION_IN_USE (W13-DEF-01)"
     }
-  ]
+  ],
+  "checkpointAvailable": false,
+  "measurementCorrections": [
+    {
+      "checkpointDeletedOnNoProgress": true,
+      "fields": {
+        "actionLogEntries": {
+          "from": 0,
+          "to": "NOT_CAPTURED",
+          "reason": "the campaign deleted its owner-local checkpoint on NO_PROGRESS; the action log was not observable after termination"
+        },
+        "toolActions": {
+          "from": 0,
+          "to": "NOT_CAPTURED",
+          "reason": "the campaign deleted its owner-local checkpoint on NO_PROGRESS; the action log was not observable after termination"
+        },
+        "uniqueInspectedSourcePaths": {
+          "from": 0,
+          "to": "NOT_CAPTURED",
+          "reason": "the campaign deleted its owner-local checkpoint on NO_PROGRESS; the action log was not observable after termination"
+        },
+        "hypothesesFormed": {
+          "from": 0,
+          "to": "NOT_CAPTURED",
+          "reason": "the campaign deleted its owner-local checkpoint on NO_PROGRESS; the action log was not observable after termination"
+        },
+        "reproductionAttemptsTool": {
+          "from": 0,
+          "to": "NOT_CAPTURED",
+          "reason": "the campaign deleted its owner-local checkpoint on NO_PROGRESS; the action log was not observable after termination"
+        }
+      }
+    },
+    {
+      "field": "validProviderResult",
+      "from": false,
+      "to": true,
+      "reason": "the in-process engine yield metrics prove positive source activity (11 reproduction attempts, 8 distinct targets, 1 qualifying reproduction) even though the campaign deleted its owner-local checkpoint on NO_PROGRESS; source activity is not inferred from the missing action log."
+    },
+    {
+      "field": "findingAdmissions/mechanicalAdmissions",
+      "from": 1,
+      "to": 1,
+      "reason": "the first harness revision counted every admission-path result (including refusals); the receipt now separates admissionPathResults, mechanicalAdmissions, and refusalResults. Derived from the preserved dossierStatus."
+    }
+  ],
+  "sourceActivityEvidence": {
+    "basis": "nightwatch.campaign-yield.v1 metrics derived by the engine from the run action log",
+    "reproductionAttempts": 11,
+    "distinctAttemptedTargets": 8,
+    "qualifyingReproductions": 1,
+    "mechanicalAdmissions": 1
+  },
+  "admissionPathResults": 1,
+  "mechanicalAdmissions": 1,
+  "refusalResults": []
 }
