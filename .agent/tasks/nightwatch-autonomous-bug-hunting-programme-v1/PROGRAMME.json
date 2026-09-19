@@ -118,7 +118,7 @@
       "baseSha": "4e763f3f079863a262906a8b134539e309c8d054",
       "waveVerdict": "IN_PROGRESS",
       "objective": "Measure current-source investigation breadth and mechanically admitted defect yield across all eight approved repositories without reopening W11, leaking hidden truth, weakening admission, or tuning the experiment after results.",
-      "freezeFingerprint": "PENDING_BEFORE_INVESTIGATION"
+      "freezeFingerprint": "sha256:8ea18e4fe5e9315271dd55df"
     }
   },
   "proof": {

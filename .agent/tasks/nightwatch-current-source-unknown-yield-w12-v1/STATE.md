@@ -56,9 +56,10 @@ run.
   found 1,120 executable files / 152 targets, all executable coverage in
   `mobingilabs/ouchan`; before-run identities and the contamination firewall
   are recorded.
-- M3 COMPLETE: the broad-plus-eight-scoped matrix and all mutable policy
-  dimensions are frozen at `sha256:8ea18e4fe5e9315271dd55df` before any
-  investigative campaign call.
+- M3 COMPLETE at freeze checkpoint `dce063d6f52faf2ce87b028afb8702a65e4de422`:
+  the broad-plus-eight-scoped matrix and all mutable policy dimensions are
+  frozen at `sha256:8ea18e4fe5e9315271dd55df` before any investigative
+  campaign call.
 
 ## Work In Progress
 
@@ -115,6 +116,8 @@ receipt; do not reselect the provider or tune the matrix.
   --workers=1`: PASS, 5 tests.
 - W12 freeze JSON parse and fingerprint recomputation: PASS,
   `sha256:8ea18e4fe5e9315271dd55df`.
+- Freeze checkpoint commit: `dce063d6f52faf2ce87b028afb8702a65e4de422`;
+  `frozenAtSha` remains the pre-freeze parent `05caa0671d95f7a29ea56fb470ec14dfce01fece`.
 
 ## Decisions Made During This Task
 
@@ -129,7 +132,7 @@ receipt; do not reselect the provider or tune the matrix.
   provider probe.
 - The W12 provider, exact eight-repository census, contamination boundary,
   fixed matrix, budgets, metric denominators, safety rules, and novelty timing
-  are frozen before the broad run.
+  are frozen before the broad run and committed at `dce063d6f52faf2ce87b028afb8702a65e4de422`.
 
 ## Discoveries
 
@@ -170,5 +173,5 @@ authority remain permanently out of scope for this wave.
 ## Completion Snapshot
 
 W12 is IN_PROGRESS at M4. The provider, census, firewall, and freeze are
-committed. No broad/scoped campaign result, candidate, reproduction,
+committed at `dce063d6f52faf2ce87b028afb8702a65e4de422`. No broad/scoped campaign result, candidate, reproduction,
 admission, novelty class, or completion verdict exists yet.

@@ -8,8 +8,9 @@ Task directory: .agent/tasks/nightwatch-current-source-unknown-yield-w12-v1
 Starting SHA: 4e763f3f079863a262906a8b134539e309c8d054
 Last validated implementation SHA: ae06d4d675d878f67b93234a21100ef94d9fed25
 Last checkpoint: W12 provider selection, current-source census, contamination
-firewall, and evaluation freeze are committed in the current freeze checkpoint
-from the W12 session; no investigative campaign call has started.
+firewall, and evaluation freeze were committed at `dce063d6f52faf2ce87b028afb8702a65e4de422`
+before any investigative campaign call; no investigative campaign call has
+started.
 W11 is preserved as `PARTIAL — BLOCKED`: its historical arm measured strict
 EXACT `0/13` with zero leakage, while its unknown arm was invalid on provider
 timeout and produced no yield. W12 is a distinct owner-authorized successor;
