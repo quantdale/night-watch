@@ -32,28 +32,33 @@ evidence-bounded W12 verdict.
 
 ## Current Milestone
 
-Milestone ID: M0
+Milestone ID: M1
 Milestone status: IN_PROGRESS
-What is being attempted: governed W12 activation, C-00 ownership, continuity
-routing, and OpenSpec/task artifact creation from the live W11 predecessor.
-Next action: validate the W12 task/OpenSpec surfaces and commit the activation
-checkpoint before declaring or executing provider probes.
+What is being attempted: execute the predeclared provider probes through the
+existing reasoner CLI and freeze the first valid structured provider before
+any W12 investigative call.
+Next action: probe the five declared candidates in ordinal order, recording
+one bounded sanitized outcome per candidate and stopping at the first valid
+provider; if all fail, preserve W12 as provider-blocked rather than zero-yield.
 
 ## Completed Milestones
 
-- None. W11 predecessor evidence is frozen and preserved, not reopened.
+- M0 COMPLETE at activation checkpoint `5c011f08fe5e65d3d7f16d73259b8e9558154192`:
+  C-00 ownership, W12 continuity/OpenSpec routing, W11 preservation, project
+  live-task alignment, and the pre-probe provider policy were committed before
+  any provider call.
 
 ## Work In Progress
 
-M0 is validating the W12 task/OpenSpec surfaces, active routing, parent
-programme successor state, and the pre-probe provider-policy checkpoint.
+M1 is executing only the committed provider-selection policy. No W12
+investigative result or provider freeze exists yet.
 
 ## Exact Next Action
 
-Run the focused activation validation, inspect the diff/privacy surface, commit
-the W12 activation and provider-policy checkpoint, then probe the declared
-provider candidates in order. Do not probe before that checkpoint and do not
-re-run W11's historical arm.
+Run the five declared bounded provider probes in order through the existing
+CLI, classify each result mechanically, freeze the first valid provider or
+record `PARTIAL — BLOCKED` if all candidates fail, then rebaseline the exact
+eight-repository current-source universe. Do not re-run W11's historical arm.
 
 ## Files Changed
 
@@ -62,6 +67,7 @@ re-run W11's historical arm.
   continuity, policy, and report surfaces.
 - `.agent/tasks/nightwatch-autonomous-bug-hunting-programme-v1/**` — parent
   successor state and programme JSON.
+- `docs/CURRENT_STATE.md` — W12 live-state cross-check and successor snapshot.
 - `openspec/changes/nightwatch-current-source-unknown-yield-w12-v1/**` —
   governed W12 proposal, design, spec, tasks and audit.
 
@@ -73,12 +79,16 @@ re-run W11's historical arm.
 - `npm run agent:check`: PASS with pre-existing stale-baseline/orphan-task and
   stale-worktree warnings; W12 strict continuity errors: 0.
 - `npm run workspace:check` and `npm run session:check`: PASS; the owned
-  worktree is valid and dirty only from the activation edits.
-- `npm run handoff:check`: pending the activation commit so the new OpenSpec
-  files become tracked; the prompt route is otherwise corrected to the live
-  blocked predecessor vocabulary.
-- `npm run project:check`: blocked locally because this fresh worktree has no
-  installed Nightwatch `typescript` dependency; no source failure inferred.
+  worktree is valid and clean at activation commit `5c011f08`.
+- `npm ci --ignore-scripts`: PASS; 7 packages installed, 1 low dev advisory
+  reported by npm audit.
+- `npm run handoff:check`: PASS at activation commit `5c011f08`; the W12
+  OpenSpec route and blocked W11 predecessor vocabulary are coherent.
+- `openspec validate nightwatch-current-source-unknown-yield-w12-v1 --strict`:
+  PASS.
+- `npm run project:check`: PASS at clean activation commit `5c011f08`.
+- `npm run typecheck:bin`: PASS in reporting mode (`14/71` conforming,
+  `1342` existing non-conformance diagnostics, `0` exemptions).
 
 ## Decisions Made During This Task
 
@@ -89,6 +99,8 @@ re-run W11's historical arm.
   by measured reproduction coverage.
 - Provider selection is first-pass from a predeclared preference list; later
   candidates are not explored after the first valid pass.
+- Activation and provider policy are checkpointed at `5c011f08` before any
+  provider probe.
 
 ## Discoveries
 
@@ -125,5 +137,6 @@ authority remain permanently out of scope for this wave.
 
 ## Completion Snapshot
 
-W12 is IN_PROGRESS. No provider probe, W12 investigation result, current-source
-yield, novelty class, or completion verdict exists yet.
+W12 is IN_PROGRESS at M1. The provider policy is committed, but no provider
+probe, W12 investigation result, current-source yield, novelty class, or
+completion verdict exists yet.

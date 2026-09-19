@@ -1,17 +1,17 @@
 ## 1. Governed activation and predecessor preservation
 
-- [ ] 1.1 Create the W12 `SPEC.md`, `PLAN.md`, `STATE.md`, and `REPORT.md`
+- [x] 1.1 Create the W12 `SPEC.md`, `PLAN.md`, `STATE.md`, and `REPORT.md`
       surfaces with continuity v2 identity, declared deletions, C-00 routing,
       and W11 predecessor references.
-- [ ] 1.2 Route `.agent/ACTIVE_TASK.md` from W11 to W12 using the live task
+- [x] 1.2 Route `.agent/ACTIVE_TASK.md` from W11 to W12 using the live task
       vocabulary, preserving W11 as `PARTIAL — BLOCKED` evidence and recording
       the W12 owner authorization.
-- [ ] 1.3 Reconcile the parent autonomous programme and Production Completion
+- [x] 1.3 Reconcile the parent autonomous programme and Production Completion
       Group 12 successor ledger without rewriting W11 figures.
 
 ## 2. Provider freeze and current-source rebaseline
 
-- [ ] 2.1 Record the W12 provider-selection policy before any probe, including
+- [x] 2.1 Record the W12 provider-selection policy before any probe, including
       preference order, compatibility, budgets, retry/absence semantics,
       first-pass rule, and all-fail behavior.
 - [ ] 2.2 Execute the declared probes through the existing CLI, freeze the

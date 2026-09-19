@@ -54,7 +54,7 @@ metrics from receipts, and adjudicate novelty only after admission.
   preserve W11, and reconcile live Git/session truth.
 - Acceptance: active routing points to W12; C-00 owned session is live; task
   files and predecessor references are coherent; W11 evidence is unchanged.
-- Status: IN_PROGRESS
+- Status: COMPLETE
 
 ### M1 — Provider-selection policy and provider freeze
 
@@ -62,7 +62,7 @@ metrics from receipts, and adjudicate novelty only after admission.
   provider before any W12 investigative result.
 - Acceptance: policy and sanitized probes are committed; provider identity,
   CLI/toolchain and result classification are fixed, or W12 is blocked.
-- Status: NOT_STARTED
+- Status: IN_PROGRESS
 
 ### M2 — Current-universe census and contamination firewall
 
