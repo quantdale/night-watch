@@ -48,8 +48,9 @@ test.describe('W13 evaluation freeze integrity', () => {
     expect(provider.selectionRule).toBe('OWNER_DIRECTED_REPLACEMENT_PROBED_BEFORE_FREEZE');
     expect(provider.failoverRemainsDeclared).toBe(true);
     expect(provider.policyGeneration).toBe(2);
-    expect(policy.candidates[0]).toMatchObject({ provider: 'opencode-go/muse-spark-1.3-contributor' });
-    expect(policy.candidates.map((candidate) => candidate.provider)).not.toContain('opencode-go/glm-5.3');
+    const candidates = policy.candidates as { provider: string }[];
+    expect(candidates[0]).toMatchObject({ provider: 'opencode-go/muse-spark-1.3-contributor' });
+    expect(candidates.map((candidate) => candidate.provider)).not.toContain('opencode-go/glm-5.3');
   });
 
   test('a mutation to any bound freeze dimension changes the fingerprint and is named', () => {
