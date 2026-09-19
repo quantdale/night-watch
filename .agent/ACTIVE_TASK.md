@@ -12,18 +12,18 @@ its sanitized receipt records 3 investigations, 35 reasoner calls, 8 provider
 failures, 2 candidates, 0 qualifying reproductions, and 2
 `MISSING_REPRODUCTION` refusals. Scoped runs 01 and 02 then provider-blocked
 `alphauslabs/blue-sdk-go`, `alphauslabs/blueapi`, and `alphauslabs/blueinternal`
-after 6 runtime timeouts each with zero response bytes; raw checkpoints and
-unchanged sibling identities are preserved.
+after 6 runtime timeouts each with zero response bytes, while
+`grpc-chunk-parser` ended after 6 nonzero exits with 276 stderr bytes and zero
+response bytes; raw checkpoints and unchanged sibling identities are preserved.
 W11 is preserved as `PARTIAL — BLOCKED`: its historical arm measured strict
 EXACT `0/13` with zero leakage, while its unknown arm was invalid on provider
 timeout and produced no yield. W12 is a distinct owner-authorized successor;
 its provider is frozen at `opencode-go/glm-5.3`, and W12 remains in the fixed
 scoped matrix.
 Current milestone: M5 — repository-scoped campaign matrix
-Next action: run `w12-repository-04` for `alphauslabs/grpc-chunk-parser` with
-the same provider and `--max-turns=6` under the declared 30-minute outer
-ceiling; record its machine receipt and after-run sibling identity before
-repository 05.
+Next action: run `w12-repository-05` for `mobingilabs/ouchan` with the same
+provider and `--max-turns=12` under the predeclared 60-minute outer ceiling;
+record its machine receipt and after-run sibling identity before repository 06.
 Authorization class: CURRENT_SOURCE_UNKNOWN_YIELD_W12_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2

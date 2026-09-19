@@ -36,10 +36,10 @@ Milestone ID: M5
 Milestone status: IN_PROGRESS
 What is being attempted: execute the eight frozen repository-scoped campaigns
 in registry order with the same provider and unchanged policy.
-Next action: run `w12-repository-04` for `alphauslabs/grpc-chunk-parser` through
-the ordinary bounded local campaign path with `--duration=1h` and an external
-30-minute wall ceiling, then capture its result and after-run sibling identity
-before repository 05.
+Next action: run `w12-repository-05` for `mobingilabs/ouchan` through the
+ordinary bounded local campaign path with `--duration=1h` and the predeclared
+60-minute wall ceiling, then capture its result and after-run sibling identity
+before repository 06.
 
 ## Completed Milestones
 
@@ -78,6 +78,12 @@ before repository 05.
   bytes, zero source actions, zero candidates, and no yield denominator. Its
   sanitized receipt is `evidence/scoped-03-run-result.json` and its after-run
   identity receipt is `evidence/sibling-identity-after-scoped-03.json`.
+- Scoped 04 complete: `w12-repository-04` for
+  `alphauslabs/grpc-chunk-parser` was provider-blocked after 6
+  `REASONER_NONZERO_EXIT` failures, with 276 stderr bytes, zero response
+  bytes, zero source actions, zero candidates, and no yield denominator. Its
+  sanitized receipt is `evidence/scoped-04-run-result.json` and its after-run
+  identity receipt is `evidence/sibling-identity-after-scoped-04.json`.
 
 ## Work In Progress
 
@@ -224,4 +230,4 @@ W12 is IN_PROGRESS at M5. The broad run reached all eight repositories and
 produced 2 candidates, 0 qualifying reproductions, 0 admissions, and 2
 `MISSING_REPRODUCTION` refusals. Scoped run 01 is provider-blocked with no
 source opportunity, and scoped run 02 has the same provider-blocked result;
-scoped runs 04–08, novelty, aggregation, and the final verdict remain open.
+scoped runs 05–08, novelty, aggregation, and the final verdict remain open.
