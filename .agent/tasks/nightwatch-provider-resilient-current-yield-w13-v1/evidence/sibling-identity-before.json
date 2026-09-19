@@ -1,0 +1,19 @@
+{
+  "schemaVersion": "nightwatch.w13-sibling-identity.v1",
+  "campaignId": "nightwatch-provider-resilient-current-yield-w13-v1",
+  "phase": "BEFORE",
+  "capturedBeforeInvestigativeCall": true,
+  "method": "git rev-parse HEAD per approved repository (read-only, no fetch, no checkout) plus the census currentness record",
+  "repositories": [
+    { "repository": "alphauslabs/blue-sdk-go", "sha": "8883ee3d3a073352626c8c35e20e9fc5ed765373", "status": "CURRENT" },
+    { "repository": "alphauslabs/blueapi", "sha": "691422e5dc81afd263d064986fb50fcb3ea432a9", "status": "CURRENT" },
+    { "repository": "alphauslabs/blueinternal", "sha": "bc629fa8adc9f5407a2b957bd1b2aecdc8b0d623", "status": "CURRENT" },
+    { "repository": "alphauslabs/grpc-chunk-parser", "sha": "66802f281698dfcf0903f0a117d4637fce3fd945", "status": "CURRENT" },
+    { "repository": "mobingilabs/ouchan", "sha": "565f00a87fb7616cc23c45d4ffeabee38a41c65f", "status": "CURRENT" },
+    { "repository": "mobingilabs/ripple-api", "sha": "4e3e200db3bda7b58bc250feb7f76997d95ae2cc", "status": "CURRENT" },
+    { "repository": "mobingilabs/ripple-ui", "sha": "d80b161b684d9153c7e5acaa65ae1752d93d8ba9", "status": "CURRENT" },
+    { "repository": "mobingilabs/wave-api", "sha": "46790c25ddea02c7d3ae65f6e6db766a9089a59f", "status": "CURRENT" }
+  ],
+  "expectedEquality": "every live SHA equals the frozen evaluation-freeze SHA",
+  "writeOperations": "NONE"
+}
