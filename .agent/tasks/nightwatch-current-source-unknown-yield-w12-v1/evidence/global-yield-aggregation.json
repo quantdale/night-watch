@@ -1,0 +1,171 @@
+{
+  "schemaVersion": "nightwatch.w12-yield-aggregation.v1",
+  "wave": "W12",
+  "derivedFrom": [
+    "evidence/broad-run-result.json",
+    "evidence/scoped-01-run-result.json",
+    "evidence/scoped-02-run-result.json",
+    "evidence/scoped-03-run-result.json",
+    "evidence/scoped-04-run-result.json",
+    "evidence/scoped-05-run-result.json",
+    "evidence/scoped-06-run-result.json",
+    "evidence/scoped-07-run-result.json",
+    "evidence/scoped-08-run-result.json",
+    "evidence/current-source-census.json",
+    "evidence/integrity-negative-probes.json"
+  ],
+  "matrix": {
+    "plannedRuns": 9,
+    "attemptedRuns": 9,
+    "validProviderRuns": 1,
+    "providerBlockedRuns": 8,
+    "providerBlockedRunIds": [
+      "w12-repository-01",
+      "w12-repository-02",
+      "w12-repository-03",
+      "w12-repository-04",
+      "w12-repository-05",
+      "w12-repository-06",
+      "w12-repository-07",
+      "w12-repository-08"
+    ],
+    "validRunIds": ["w12-broad-all-repositories-1"],
+    "terminationCounts": {"BUDGET_EXHAUSTED": 9},
+    "wallTimeMs": 5011634
+  },
+  "provider": {
+    "frozenProvider": "opencode-go/glm-5.3",
+    "providerFailureCount": 56,
+    "providerFailureClasses": {
+      "PROVIDER_RUNTIME_TIMEOUT": 23,
+      "PROVIDER_NONZERO_EXIT": 33
+    },
+    "providerRetries": "NOT_CAPTURED",
+    "providerFailuresExcludedFromZeroYieldDenominator": true,
+    "noPostValidProviderReselection": true
+  },
+  "investigation": {
+    "investigationsStarted": 11,
+    "investigationsCompleted": 11,
+    "reasonerCalls": 83,
+    "toolActions": 28,
+    "broadRepositoriesReached": 8,
+    "scopedRepositoriesWithSourceOpportunity": 0,
+    "scopedRepositoriesProviderBlockedBeforeSourceAction": 8,
+    "broadUniqueInspectedSourcePaths": 18,
+    "scopedUniqueInspectedSourcePaths": 0,
+    "hypotheses": {
+      "broadObserved": 4,
+      "scopedObserved": "NOT_CAPTURED",
+      "globalDistinct": "NOT_CAPTURED"
+    }
+  },
+  "sourceAndReproduction": {
+    "censusEligibleSourceFiles": 4124,
+    "censusExecutableSourceFiles": 1120,
+    "censusDistinctExecutableTargets": 152,
+    "censusCompleteness": "TRUNCATED_AT_OUCHAN_SOURCE_FILE_BOUND",
+    "broadVisibleSourceEntries": 32,
+    "broadVisibleExecutableSources": 5,
+    "broadVisibleExecutableTargets": 5,
+    "scopedVisibleSourceEntries": 0,
+    "scopedVisibleExecutableSources": 0,
+    "scopedVisibleExecutableTargets": 0,
+    "reproductionAttempts": 2,
+    "reproductionExecutions": 2,
+    "reproductionNotAvailable": 0,
+    "reproductionNotReproduced": 2,
+    "qualifyingReproductions": 0,
+    "reproductionAttemptDenominator": 2,
+    "providerBlockedRunsExcludedFromReproductionDenominator": 8
+  },
+  "candidateAdmission": {
+    "candidateIds": ["c1", "c2"],
+    "candidateCount": 2,
+    "candidateToAdmissionDenominator": 2,
+    "mechanicalAdmissions": 0,
+    "refusalCounts": {"MISSING_REPRODUCTION": 2},
+    "dossierStatus": "REFUSED_NO_REPRODUCTION",
+    "candidateRepositoryAttribution": "NOT_CAPTURED",
+    "manualDossierInsertion": false,
+    "syntheticEvidenceReferences": false,
+    "forgedReproductionCounts": false
+  },
+  "novelty": {
+    "status": "NOT_APPLICABLE_NO_ADMISSION",
+    "admissionsConsidered": 0,
+    "checkedSources": [],
+    "organizationalNoveltyClaims": 0
+  },
+  "bytes": {
+    "providerResponseBytes": 16564,
+    "providerResponseBytesCapture": "ALL_RUN_RECEIPTS",
+    "providerStderrBytesKnownMinimum": 1585,
+    "providerStderrBytesCapture": "TIMEOUT_RUN_ZERO_BYTES_NOT_CAPTURED_SEPARATELY",
+    "renderedInputBytes": 515230,
+    "renderedInputBytesCapture": "BROAD_RECEIPT_ONLY",
+    "toolPayloadBytes": 521381,
+    "toolPayloadBytesCapture": "BROAD_RECEIPT_ONLY",
+    "scopedRenderedInputBytes": "NOT_CAPTURED",
+    "scopedToolPayloadBytes": "NOT_CAPTURED"
+  },
+  "perRepository": [
+    {
+      "repository": "alphauslabs/blue-sdk-go",
+      "broad": {"reached": true, "uniqueInspectedSourcePaths": 1, "sourceActionEntries": 1, "visibleSourceEntries": 5, "executableSourceEntries": 0},
+      "scoped": {"runId": "w12-repository-01", "validProviderResult": false, "providerFailureClassification": "PROVIDER_RUNTIME_TIMEOUT", "sourceOpportunity": "PROVIDER_BLOCKED_BEFORE_SOURCE_ACTION", "sourceActionEntries": 0, "candidates": 0, "admissions": 0}
+    },
+    {
+      "repository": "alphauslabs/blueapi",
+      "broad": {"reached": true, "uniqueInspectedSourcePaths": 3, "sourceActionEntries": 3, "visibleSourceEntries": 5, "executableSourceEntries": 0},
+      "scoped": {"runId": "w12-repository-02", "validProviderResult": false, "providerFailureClassification": "PROVIDER_RUNTIME_TIMEOUT", "sourceOpportunity": "PROVIDER_BLOCKED_BEFORE_SOURCE_ACTION", "sourceActionEntries": 0, "candidates": 0, "admissions": 0}
+    },
+    {
+      "repository": "alphauslabs/blueinternal",
+      "broad": {"reached": true, "uniqueInspectedSourcePaths": 1, "sourceActionEntries": 1, "visibleSourceEntries": 1, "executableSourceEntries": 0},
+      "scoped": {"runId": "w12-repository-03", "validProviderResult": false, "providerFailureClassification": "PROVIDER_RUNTIME_TIMEOUT", "sourceOpportunity": "PROVIDER_BLOCKED_BEFORE_SOURCE_ACTION", "sourceActionEntries": 0, "candidates": 0, "admissions": 0}
+    },
+    {
+      "repository": "alphauslabs/grpc-chunk-parser",
+      "broad": {"reached": true, "uniqueInspectedSourcePaths": 1, "sourceActionEntries": 1, "visibleSourceEntries": 1, "executableSourceEntries": 0},
+      "scoped": {"runId": "w12-repository-04", "validProviderResult": false, "providerFailureClassification": "PROVIDER_NONZERO_EXIT", "sourceOpportunity": "PROVIDER_BLOCKED_BEFORE_SOURCE_ACTION", "sourceActionEntries": 0, "candidates": 0, "admissions": 0}
+    },
+    {
+      "repository": "mobingilabs/ouchan",
+      "broad": {"reached": true, "uniqueInspectedSourcePaths": 3, "sourceActionEntries": 6, "visibleSourceEntries": 5, "executableSourceEntries": 5},
+      "scoped": {"runId": "w12-repository-05", "validProviderResult": false, "providerFailureClassification": "PROVIDER_NONZERO_EXIT", "sourceOpportunity": "PROVIDER_BLOCKED_BEFORE_SOURCE_ACTION", "sourceActionEntries": 0, "candidates": 0, "admissions": 0}
+    },
+    {
+      "repository": "mobingilabs/ripple-api",
+      "broad": {"reached": true, "uniqueInspectedSourcePaths": 3, "sourceActionEntries": 3, "visibleSourceEntries": 5, "executableSourceEntries": 0},
+      "scoped": {"runId": "w12-repository-06", "validProviderResult": false, "providerFailureClassification": "PROVIDER_NONZERO_EXIT", "sourceOpportunity": "PROVIDER_BLOCKED_BEFORE_SOURCE_ACTION", "sourceActionEntries": 0, "candidates": 0, "admissions": 0}
+    },
+    {
+      "repository": "mobingilabs/ripple-ui",
+      "broad": {"reached": true, "uniqueInspectedSourcePaths": 3, "sourceActionEntries": 4, "visibleSourceEntries": 5, "executableSourceEntries": 0},
+      "scoped": {"runId": "w12-repository-07", "validProviderResult": false, "providerFailureClassification": "PROVIDER_NONZERO_EXIT", "sourceOpportunity": "PROVIDER_BLOCKED_BEFORE_SOURCE_ACTION", "sourceActionEntries": 0, "candidates": 0, "admissions": 0}
+    },
+    {
+      "repository": "mobingilabs/wave-api",
+      "broad": {"reached": true, "uniqueInspectedSourcePaths": 3, "sourceActionEntries": 3, "visibleSourceEntries": 5, "executableSourceEntries": 0},
+      "scoped": {"runId": "w12-repository-08", "validProviderResult": false, "providerFailureClassification": "PROVIDER_NONZERO_EXIT", "sourceOpportunity": "PROVIDER_BLOCKED_BEFORE_SOURCE_ACTION", "sourceActionEntries": 0, "candidates": 0, "admissions": 0}
+    }
+  ],
+  "yieldDenominators": {
+    "validProviderRuns": 1,
+    "validProviderRunsWithPositiveSourceActivity": 1,
+    "validMechanicalReproductionAttempts": 2,
+    "candidatePopulation": 2,
+    "providerBlockedRuns": 8,
+    "zeroYieldDenominatorExcludesProviderFailures": true,
+    "unknownDefectAbsenceClaim": false
+  },
+  "verdict": "PARTIAL — BLOCKED",
+  "verdictReason": "The broad run yielded a valid provider measurement, but all eight required scoped runs were provider-blocked before current-source actions; W12 cannot certify a complete current-source yield measurement or a complete zero-admission result.",
+  "limitations": [
+    "The current-source census is truncated at the Ouchan source-file enumeration bound.",
+    "The committed supplemental provider-failure ceiling is 3 while the existing HOUR_1 runtime policy observed 8; the mismatch is preserved and not tuned after results.",
+    "Per-run scoped rendered-input and tool-payload byte fields were not captured by the sanitized receipts and remain NOT_CAPTURED.",
+    "No organizational novelty claim is made without a mechanical admission and independent evidence."
+  ]
+}

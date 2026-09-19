@@ -101,7 +101,9 @@ metrics from receipts, and adjudicate novelty only after admission.
 - Objective: route candidates through existing reproduction/dossier gates.
 - Acceptance: reproductions, `NOT_AVAILABLE`, `NOT_REPRODUCED`, admissions,
   and refusal reasons are receipt-derived; no weaker proof is added.
-- Status: NOT_STARTED
+- Status: COMPLETE — both broad candidates reached the existing reproduction
+  path, were not reproduced, and were refused as `MISSING_REPRODUCTION`;
+  scoped runs were provider-blocked with no candidates.
 
 ### M7 — Post-admission novelty adjudication
 
@@ -109,14 +111,16 @@ metrics from receipts, and adjudicate novelty only after admission.
   sources only after investigation/admission completes.
 - Acceptance: every admission gets one bounded novelty class and a safe
   comparison receipt; no organizational novelty is inferred from absence.
-- Status: NOT_STARTED
+- Status: COMPLETE — no mechanical admission existed, so novelty was recorded
+  as `NOT_APPLICABLE_NO_ADMISSION` and no organizational claim was made.
 
 ### M8 — Adversarial, leakage, sibling-write, and anti-gaming proofs
 
 - Objective: prove the W12 integrity and safety boundaries live.
 - Acceptance: mutation probes fail closed; leakage canaries are positive;
   sibling identities and safety counters are zero/unchanged.
-- Status: NOT_STARTED
+- Status: COMPLETE — freeze mutations, widened resume refusal, leakage canary,
+  sibling identity, and safety proofs pass.
 
 ### M9 — Mechanical yield aggregation
 
@@ -124,7 +128,8 @@ metrics from receipts, and adjudicate novelty only after admission.
   denominators.
 - Acceptance: candidates/admissions/refusals are distinct; provider-invalid
   data never becomes a zero; missing fields remain `NOT_CAPTURED`.
-- Status: NOT_STARTED
+- Status: COMPLETE — receipt-derived global, per-run, per-repository, and
+  denominator-qualified aggregation is recorded.
 
 ### M10 — Documentation and Group 12 reconciliation
 
@@ -132,7 +137,7 @@ metrics from receipts, and adjudicate novelty only after admission.
   ledger, README/current-state surfaces from evidence.
 - Acceptance: W11 remains historical; W12 result, limits and Group 12 states
   agree across all authoritative surfaces.
-- Status: NOT_STARTED
+- Status: IN_PROGRESS
 
 ### M11 — Full validation, integration, release, and verdict
 

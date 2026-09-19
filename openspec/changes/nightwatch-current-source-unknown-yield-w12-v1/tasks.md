@@ -32,7 +32,7 @@
       leakage, novelty, safety, and denominator definitions.
 - [x] 3.2 Freeze the broad plus eight repository-scoped run matrix with the
       declared Ouchan time exception before the first investigation.
-- [ ] 3.3 Add integrity and negative-probe coverage proving provider, scope,
+- [x] 3.3 Add integrity and negative-probe coverage proving provider, scope,
       budget, stopping, admission, and repository mutations change/refuse the
       fingerprint and widened resume fails closed.
 - [x] 3.4 Commit the W12 freeze and record its exact fingerprint in task state
@@ -60,24 +60,24 @@
 
 ## 6. Mechanical reproduction and admission closeout
 
-- [ ] 6.1 Route every candidate through the existing reproduction providers,
+- [x] 6.1 Route every candidate through the existing reproduction providers,
       bounded containment, repeated-failure proof, and dossier gates.
-- [ ] 6.2 Prove candidates and mechanical admissions are separate derived
+- [x] 6.2 Prove candidates and mechanical admissions are separate derived
       populations; retain `MISSING_REPRODUCTION` and all other refusals.
-- [ ] 6.3 Perform read-only novelty adjudication only for admitted candidates,
+- [x] 6.3 Perform read-only novelty adjudication only for admitted candidates,
       recording checked sources, matches, confidence, and ambiguity.
 
 ## 7. Mechanical yield and safety certification
 
-- [ ] 7.1 Derive per-run, per-repository, and global metrics from raw machine
+- [x] 7.1 Derive per-run, per-repository, and global metrics from raw machine
       evidence with explicit denominators and `NOT_CAPTURED` semantics.
-- [ ] 7.2 Verify non-vacuity and anti-gaming probes: valid calls/bytes/source
+- [x] 7.2 Verify non-vacuity and anti-gaming probes: valid calls/bytes/source
       actions, independent candidate/admission identities, live leakage canary,
       and mutation detection.
-- [ ] 7.3 Certify zero DEV/NEXT/production/data-plane contact, zero sibling
+- [x] 7.3 Certify zero DEV/NEXT/production/data-plane contact, zero sibling
       writes/dependency installs, zero leakage/credentials/publication, and
       zero force-push/history-rewrite events.
-- [ ] 7.4 Record Nightwatch defects only when reproduced by W12 evidence, add
+- [x] 7.4 Record Nightwatch defects only when reproduced by W12 evidence, add
       focused regressions and minimal fixes, and rerun affected validation.
 
 ## 8. Group 12, validation, and release

@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "nightwatch.w12-integrity-negative-probes.v1",
+  "freeze": "evaluation-freeze.json",
+  "frozenFingerprint": "sha256:8ea18e4fe5e9315271dd55df",
+  "recomputedFingerprintExcludingSelf": "sha256:8ea18e4fe5e9315271dd55df",
+  "baseFingerprintMatches": true,
+  "mutationProbes": {
+    "provider": {
+      "mutatedFingerprint": "sha256:8eda7af2b55481e6d2a19415",
+      "changed": true
+    },
+    "scope": {
+      "mutatedFingerprint": "sha256:ad01a81c38b990db3e5f7c13",
+      "changed": true
+    },
+    "budget": {
+      "mutatedFingerprint": "sha256:e059ef5ee0367074e959ee95",
+      "changed": true
+    },
+    "stopping": {
+      "mutatedFingerprint": "sha256:99bb9d6aa4d76854002c5a0e",
+      "changed": true
+    },
+    "admission": {
+      "mutatedFingerprint": "sha256:4a3d66cff3e4f3c2e7a9c4e1",
+      "changed": true
+    },
+    "repository": {
+      "mutatedFingerprint": "sha256:4cbbfa52dbc66dfdec07e4a7",
+      "changed": true
+    }
+  },
+  "widenedResumeProbe": {
+    "campaignId": "w12-repository-08",
+    "requestedScope": "FULL_APPROVED_UNIVERSE",
+    "storedScope": "mobingilabs/wave-api",
+    "providerInvoked": false,
+    "exitCode": 2,
+    "errorCode": "CAMPAIGN_SCOPE_MISMATCH",
+    "refused": true
+  },
+  "result": "PASS"
+}

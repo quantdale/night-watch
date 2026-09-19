@@ -32,13 +32,12 @@ evidence-bounded W12 verdict.
 
 ## Current Milestone
 
-Milestone ID: M6
+Milestone ID: M10
 Milestone status: IN_PROGRESS
-What is being attempted: close the candidate, reproduction, refusal, and
-admission populations from the broad and all eight scoped receipts.
-Next action: derive the aggregate candidate/admission populations, preserve
-provider-blocked runs outside the zero-yield denominator, and record the
-post-admission novelty result.
+What is being attempted: reconcile the final W12 report, parent Group 12
+successor ledger, programme state, and governed current-state documentation.
+Next action: update all governed documentation to the receipt-derived
+`PARTIAL — BLOCKED` result, then run the complete validation and release path.
 
 ## Completed Milestones
 
@@ -107,19 +106,34 @@ post-admission novelty result.
   yield denominator. Its sanitized receipt is `evidence/scoped-08-run-result.json`
   and its after-run identity receipt is
   `evidence/sibling-identity-after-scoped-08.json`.
+- M6 COMPLETE: the two broad candidates each reached the existing contained
+  reproduction path, were not reproduced, and were refused as
+  `MISSING_REPRODUCTION`; the eight provider-blocked scoped runs produced no
+  candidates. No dossier or admission was synthesized.
+- M7 COMPLETE: no mechanical admission existed, so the separate novelty
+  receipt is `NOT_APPLICABLE_NO_ADMISSION`; no local absence became an
+  organizational novelty claim.
+- M8 COMPLETE: the committed freeze fingerprint recomputed, all six mutation
+  classes changed it, widened resume failed with `CAMPAIGN_SCOPE_MISMATCH`,
+  the contamination canary passed, and all nine after-run identity receipts
+  match the before snapshot.
+- M9 COMPLETE: `evidence/global-yield-aggregation.json` derives the 9-run
+  matrix, 1 valid/8 blocked runs, 11 investigations, 83 calls, 56 provider
+  failures, 2 candidates, 2 non-reproductions, 0 admissions, and explicit
+  denominators from the preserved receipts.
 
 ## Work In Progress
 
-M5 is complete: the broad result and all eight repository-scoped runs are
-recorded in frozen registry order. The broad run is the only valid provider
-run; scoped runs 01–08 are provider-blocked before source actions. No scoped
-run has produced a qualifying reproduction or admission.
+M5 through M9 are complete: the broad result and all eight repository-scoped
+runs are recorded in frozen registry order; candidates, refusals, integrity
+probes, safety evidence, and receipt-derived aggregation are closed. M10 is
+reconciling governed documentation for the provider-blocked wave result.
 
 ## Exact Next Action
 
-Derive the M6/M7 closeout from the broad and scoped receipts, preserving
-provider failure as a measurement condition rather than zero yield; then run
-the required freeze-mutation and widened-resume integrity probes.
+Update `REPORT.md`, the parent Group 12/programme state, and governed
+current-state surfaces to `PARTIAL — BLOCKED`, then run the required
+validation, privacy/diff review, C-00 integration, release, and cleanup.
 
 ## Files Changed
 
@@ -176,6 +190,12 @@ the required freeze-mutation and widened-resume integrity probes.
   attempts, 0 qualifying reproductions, 0 admissions, and 2
   `MISSING_REPRODUCTION` refusals. Sanitized receipt:
   `evidence/broad-run-result.json`; raw checkpoint remains owner-local.
+- W12 integrity test: PASS, 2 tests in
+  `tests/unit/w12EvaluationFreezeIntegrity.test.ts`; mutation fingerprints and
+  scoped widened-resume refusal are covered offline.
+- Receipt aggregation and novelty closeout JSON parse: PASS; global verdict is
+  `PARTIAL — BLOCKED`, with provider-blocked scoped runs excluded from the
+  zero-yield denominator.
 - Broad after-run sibling identity: PASS; all eight heads and status digests
   equal the before-run snapshot, with no sibling mutation detected.
 - `git` runtime budget comparison: the frozen supplemental envelope records
@@ -236,6 +256,9 @@ class.
 - `RUNTIME_POLICY_MISMATCH_RECORDED`: the existing HOUR_1 policy exposed an
   8-failure provider ceiling despite the W12 supplemental freeze field of 3;
   no attempt was made to rewrite the committed freeze after execution.
+- `SCOPED_MATRIX_PROVIDER_BLOCKED`: all eight scoped runs failed before source
+  actions; this prevents a complete current-source yield or zero-admission
+  certification and is preserved as the wave blocker.
 
 ## Deferred / Follow-Up
 
@@ -253,9 +276,9 @@ authority remain permanently out of scope for this wave.
 
 ## Completion Snapshot
 
-W12 is IN_PROGRESS at M6. The broad run reached all eight repositories and
+W12 is IN_PROGRESS at M10. The broad run reached all eight repositories and
 produced 2 candidates, 0 qualifying reproductions, 0 admissions, and 2
 `MISSING_REPRODUCTION` refusals. Scoped runs 01–08 are provider-blocked with
-no source opportunity; aggregation, integrity proofs, governed documentation,
-validation, and the final verdict remain open. No novelty class is applicable
-because no new admission exists.
+no source opportunity; aggregation and integrity proofs are complete. Governed
+documentation, validation, integration, and the final verdict remain open.
+No novelty class is applicable because no new admission exists.

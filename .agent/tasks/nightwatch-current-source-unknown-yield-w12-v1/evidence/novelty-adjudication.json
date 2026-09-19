@@ -1,0 +1,10 @@
+{
+  "schemaVersion": "nightwatch.w12-novelty-adjudication.v1",
+  "phase": "POST_ADMISSION_ONLY",
+  "admissions": 0,
+  "status": "NOT_APPLICABLE_NO_ADMISSION",
+  "checkedSources": [],
+  "noveltyClasses": [],
+  "alphausConfirmedPreviouslyUnknown": 0,
+  "reason": "No candidate reached mechanical admission; no novelty comparison or organizational absence claim was performed."
+}

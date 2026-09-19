@@ -22,10 +22,10 @@ EXACT `0/13` with zero leakage, while its unknown arm was invalid on provider
 timeout and produced no yield. W12 is a distinct owner-authorized successor;
 its provider is frozen at `opencode-go/glm-5.3`, and W12 remains in the fixed
 scoped matrix.
-Current milestone: M6 — mechanical reproduction and admission closeout
-Next action: derive the candidate, reproduction, refusal, and admission
-populations from the broad and eight scoped receipts, then record that no
-post-admission novelty adjudication is applicable.
+Current milestone: M10 — documentation and Group 12 reconciliation
+Next action: reconcile the W12 report, parent Group 12 successor ledger,
+programme state, and governed current-state documentation to the measured
+`PARTIAL — BLOCKED` result without rewriting W11.
 Authorization class: CURRENT_SOURCE_UNKNOWN_YIELD_W12_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
