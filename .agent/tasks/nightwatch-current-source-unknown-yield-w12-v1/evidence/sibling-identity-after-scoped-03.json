@@ -1,0 +1,65 @@
+{
+  "schemaVersion": "nightwatch.w12-sibling-identity-snapshot.v1",
+  "snapshot": "AFTER_SCOPED_03",
+  "capturedAfterCampaignId": "w12-repository-03",
+  "siblingRootClass": "DEFAULT_SIBLING_ROOT",
+  "repositories": [
+    {
+      "repository": "alphauslabs/blue-sdk-go",
+      "headSha": "8883ee3d3a073352626c8c35e20e9fc5ed765373",
+      "worktreeClean": false,
+      "statusEntryCount": 1,
+      "statusDigest": "sha256:b5a510b51f59eedc90c512bc"
+    },
+    {
+      "repository": "alphauslabs/blueapi",
+      "headSha": "691422e5dc81afd263d064986fb50fcb3ea432a9",
+      "worktreeClean": false,
+      "statusEntryCount": 1,
+      "statusDigest": "sha256:b5a510b51f59eedc90c512bc"
+    },
+    {
+      "repository": "alphauslabs/blueinternal",
+      "headSha": "bc629fa8adc9f5407a2b957bd1b2aecdc8b0d623",
+      "worktreeClean": false,
+      "statusEntryCount": 1,
+      "statusDigest": "sha256:b5a510b51f59eedc90c512bc"
+    },
+    {
+      "repository": "alphauslabs/grpc-chunk-parser",
+      "headSha": "66802f281698dfcf0903f0a117d4637fce3fd945",
+      "worktreeClean": true,
+      "statusEntryCount": 0,
+      "statusDigest": "sha256:e3b0c44298fc1c149afbf4c8"
+    },
+    {
+      "repository": "mobingilabs/ouchan",
+      "headSha": "565f00a87fb7616cc23c45d4ffeabee38a41c65f",
+      "worktreeClean": false,
+      "statusEntryCount": 1,
+      "statusDigest": "sha256:d447b7d5981d64ba95b7dedc"
+    },
+    {
+      "repository": "mobingilabs/ripple-api",
+      "headSha": "4e3e200db3bda7b58bc250feb7f76997d95ae2cc",
+      "worktreeClean": false,
+      "statusEntryCount": 1,
+      "statusDigest": "sha256:b5a510b51f59eedc90c512bc"
+    },
+    {
+      "repository": "mobingilabs/ripple-ui",
+      "headSha": "d80b161b684d9153c7e5acaa65ae1752d93d8ba9",
+      "worktreeClean": false,
+      "statusEntryCount": 1,
+      "statusDigest": "sha256:2224bf2a9a52e6c4b1ff5e78"
+    },
+    {
+      "repository": "mobingilabs/wave-api",
+      "headSha": "46790c25ddea02c7d3ae65f6e6db766a9089a59f",
+      "worktreeClean": false,
+      "statusEntryCount": 1,
+      "statusDigest": "sha256:b5a510b51f59eedc90c512bc"
+    }
+  ],
+  "comparisonToBefore": "HEADS_AND_STATUS_DIGESTS_UNCHANGED"
+}
