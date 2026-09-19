@@ -163,6 +163,12 @@ export interface LocalCampaignInput {
    */
   readonly investigationScope?: readonly string[];
   /**
+   * Optional per-run wall-clock ceiling from an evaluation freeze. It may only
+   * NARROW the engine ceiling (never widen it), and it is applied to the run's
+   * policy before the first provider call. Resume inherits the stored value.
+   */
+  readonly wallClockCeilingOverrideMs?: number;
+  /**
    * Optional wave-declared runtime envelope from an evaluation freeze. When
    * present it is validated field-by-field against the engine's own policy
    * before any provider call; it is a derived copy, never an authority.
@@ -518,6 +524,13 @@ function driverAndPolicy(input: LocalCampaignInput) {
   if (input.maxTurns !== undefined && (!Number.isInteger(input.maxTurns) || input.maxTurns < 1 || input.maxTurns > 50)) {
     throw new LocalCampaignError('MALFORMED_MAX_TURNS', 'maxTurns must be an integer 1..50');
   }
+  const enginePolicy = defaultAgentBudgetPolicy(input.ceilingName);
+  if (input.wallClockCeilingOverrideMs !== undefined) {
+    if (!Number.isInteger(input.wallClockCeilingOverrideMs) || input.wallClockCeilingOverrideMs < 1
+      || input.wallClockCeilingOverrideMs > enginePolicy.wallTimeMs) {
+      throw new LocalCampaignError('WALL_CLOCK_OVERRIDE_INVALID', `wallClockCeilingOverrideMs must narrow the ${input.ceilingName} ceiling (1..${enginePolicy.wallTimeMs})`);
+    }
+  }
   const extraEnv: Record<string, string> = {};
   const allowedEnvKeys: string[] = [];
   // Literal reads, never assembled names: the environment surface is
@@ -540,7 +553,9 @@ function driverAndPolicy(input: LocalCampaignInput) {
       allowedEnvKeys,
       validationContext: { authorizedEnvironments: ['LOCAL'] as const },
     }),
-    budgetPolicy: defaultAgentBudgetPolicy(input.ceilingName),
+    budgetPolicy: input.wallClockCeilingOverrideMs === undefined
+      ? enginePolicy
+      : { ...enginePolicy, wallTimeMs: input.wallClockCeilingOverrideMs },
   };
 }
 

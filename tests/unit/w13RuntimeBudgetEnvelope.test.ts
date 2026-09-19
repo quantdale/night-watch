@@ -163,6 +163,50 @@ test.describe('W13 runtime budget envelope single authority', () => {
     }
   });
 
+  test('a per-run wall-clock override may narrow but never widen the engine ceiling', async () => {
+    const dir = scratchDir();
+    try {
+      const narrowed = await runLocalCliCampaign({
+        campaignId: 'w13-envelope-narrowed-clock',
+        ceilingName: 'HOUR_1',
+        executable: process.execPath,
+        args: [writeReasoner(dir, 'terminate.mjs', terminateResponse)],
+        provider: 'test-provider',
+        model: 'test-model',
+        maxTurns: 1,
+        stateDirectory: dir,
+        wallClockCeilingOverrideMs: 1_800_000,
+      });
+      expect(narrowed.investigationsCompleted).toBeGreaterThan(0);
+
+      await expect(runLocalCliCampaign({
+        campaignId: 'w13-envelope-widened-clock',
+        ceilingName: 'HOUR_1',
+        executable: process.execPath,
+        args: [writeReasoner(dir, 'terminate.mjs', terminateResponse)],
+        provider: 'test-provider',
+        model: 'test-model',
+        maxTurns: 1,
+        stateDirectory: dir,
+        wallClockCeilingOverrideMs: 3_600_001,
+      })).rejects.toThrow(/WALL_CLOCK_OVERRIDE_INVALID/);
+
+      await expect(runLocalCliCampaign({
+        campaignId: 'w13-envelope-zero-clock',
+        ceilingName: 'HOUR_1',
+        executable: process.execPath,
+        args: [writeReasoner(dir, 'terminate.mjs', terminateResponse)],
+        provider: 'test-provider',
+        model: 'test-model',
+        maxTurns: 1,
+        stateDirectory: dir,
+        wallClockCeilingOverrideMs: 0,
+      })).rejects.toThrow(/WALL_CLOCK_OVERRIDE_INVALID/);
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
   test('a malformed or unknown-field envelope fails closed as malformed', () => {
     const derived = deriveRuntimeBudgetEnvelope('HOUR_1');
     expect(checkRuntimeBudgetEnvelope({ ...derived, extra: 1 }, derived)).toMatchObject({
