@@ -15,12 +15,11 @@ single frozen provider. W13 is a distinct owner-authorized successor whose
 Phase A must close every locally closable W12 residual before Phase B freezes
 a provider-resilience policy and executes the fixed broad-plus-eight-scoped
 matrix.
-Current milestone: M10 — provider-resilience policy freeze
-Next action: author the policy document and module (fingerprint, mutation
-diff, fail-closed resume, deterministic failover replay), run the negative
-probes, then probe the declared candidates in frozen order and commit the
-freeze checkpoint before any investigative call. Do not tune, reorder, or
-widen the experiment after results appear.
+Current milestone: M12 — run matrix execution
+Next action: build the frozen-matrix run harness with policy-governed
+failover and per-provider receipts, then execute the broad run followed by the
+eight scoped runs in registry order. Do not tune, reorder, or widen the
+experiment after results appear.
 Authorization class: PROVIDER_RESILIENT_CURRENT_YIELD_W13_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2

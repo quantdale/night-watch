@@ -165,14 +165,20 @@ from receipts, and adjudicates novelty only after admission.
   policy before any investigative call.
 - Acceptance: mutation/replay/resume negative probes pass; the first healthy
   candidate in frozen order is frozen with a sanitized receipt.
-- **Status:** NOT_STARTED
+- **Status:** COMPLETE — policy committed before probing at fingerprint
+  `sha256:a4865dbb6aea4114bfa8bdc9`; 8/8 negative-probe/replay tests pass;
+  candidate 1 `opencode-go/glm-5.3` returned a valid structured TERMINATE
+  probe (16.3 s, 137 bytes); later candidates not probed.
 
 ### M11 — W13 evaluation freeze
 
 - Objective: commit the full machine-readable run matrix and policy before
   the first investigative call.
 - Acceptance: freeze fingerprint and mutation/widened-resume guards are live.
-- **Status:** NOT_STARTED
+- **Status:** COMPLETE — freeze committed at fingerprint
+  `sha256:a520d9630a20a3f67321fbb8`; census digest
+  `sha256:4b2e68390d8a3f393e67809b`; 5/5 integrity tests (14 mutation
+  classes, widened/unknown resume refusal, envelope agreement).
 
 ### M12 — Run matrix execution
 

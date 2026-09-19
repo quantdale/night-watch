@@ -1,0 +1,369 @@
+{
+  "schemaVersion": "nightwatch.w13-current-source-census.v1",
+  "capturedBeforeInvestigativeCall": true,
+  "approvedRepositoryIds": [
+    "alphauslabs/blue-sdk-go",
+    "alphauslabs/blueapi",
+    "alphauslabs/blueinternal",
+    "alphauslabs/grpc-chunk-parser",
+    "mobingilabs/ouchan",
+    "mobingilabs/ripple-api",
+    "mobingilabs/ripple-ui",
+    "mobingilabs/wave-api"
+  ],
+  "repositoryOrder": [
+    "alphauslabs/blue-sdk-go",
+    "alphauslabs/blueapi",
+    "alphauslabs/blueinternal",
+    "alphauslabs/grpc-chunk-parser",
+    "mobingilabs/ouchan",
+    "mobingilabs/ripple-api",
+    "mobingilabs/ripple-ui",
+    "mobingilabs/wave-api"
+  ],
+  "sourceInventory": {
+    "configDigest": "srcconfig:sha256:367a9e7004b017ca8889c1d6",
+    "extractorVersion": "nightwatch.real-source-scan-extractor.v1",
+    "snapshotDigest": "srcsnapshot:sha256:e66c01d81ce6a53fc2e6e8eb",
+    "repositoriesConsidered": 8,
+    "repositoriesInspected": 8,
+    "filesConsidered": 4730,
+    "filesRead": 4159,
+    "filesAdmitted": 4124,
+    "filesRejected": 606,
+    "bytesRead": 45206183,
+    "symlinkRejections": 0,
+    "pathRejections": 1,
+    "enumerationBudgetRejections": 1,
+    "contentBudgetRejections": 0,
+    "completeness": "TRUNCATED",
+    "truncationReason": "SOURCE_FILE_COUNT_EXCEEDED",
+    "truncatedRepositories": [
+      "mobingilabs/ouchan"
+    ]
+  },
+  "eligibleLanguageCounts": {
+    "GO": 2504,
+    "PROTOBUF": 16,
+    "OPENAPI": 34,
+    "TYPESCRIPT": 1,
+    "YAML": 159,
+    "JAVASCRIPT": 387,
+    "PHP": 164,
+    "VUE": 859
+  },
+  "repositories": [
+    {
+      "repository": "alphauslabs/blue-sdk-go",
+      "expectedSourceSha": "8883ee3d3a073352626c8c35e20e9fc5ed765373",
+      "liveSourceSha": "8883ee3d3a073352626c8c35e20e9fc5ed765373",
+      "status": "CURRENT",
+      "fileCount": 57,
+      "admittedFileCount": 57,
+      "rejectedFileCount": 0,
+      "bytesInspected": 8040183,
+      "sourceRefusalCounts": {
+        "SOURCE_ROOT_UNAPPROVED": 0,
+        "SOURCE_PATH_ESCAPE": 0,
+        "SOURCE_SYMLINK_REJECTED": 0,
+        "SOURCE_FILE_NOT_REGULAR": 0,
+        "SOURCE_FILE_TOO_LARGE": 0,
+        "SOURCE_FILE_COUNT_EXCEEDED": 0,
+        "SOURCE_TOTAL_BUDGET_EXCEEDED": 0,
+        "SOURCE_LANGUAGE_UNSUPPORTED": 0,
+        "SOURCE_PATH_EXCLUDED": 0,
+        "SOURCE_REPOSITORY_UNAVAILABLE": 0,
+        "SOURCE_HEAD_UNAVAILABLE": 0,
+        "SOURCE_STALE": 0,
+        "SOURCE_READ_FAILED": 0,
+        "SOURCE_CONFIG_INVALID": 0,
+        "SOURCE_PRIVACY_REJECTED": 0
+      }
+    },
+    {
+      "repository": "alphauslabs/blueapi",
+      "expectedSourceSha": "691422e5dc81afd263d064986fb50fcb3ea432a9",
+      "liveSourceSha": "691422e5dc81afd263d064986fb50fcb3ea432a9",
+      "status": "CURRENT",
+      "fileCount": 16,
+      "admittedFileCount": 16,
+      "rejectedFileCount": 0,
+      "bytesInspected": 1971909,
+      "sourceRefusalCounts": {
+        "SOURCE_ROOT_UNAPPROVED": 0,
+        "SOURCE_PATH_ESCAPE": 0,
+        "SOURCE_SYMLINK_REJECTED": 0,
+        "SOURCE_FILE_NOT_REGULAR": 0,
+        "SOURCE_FILE_TOO_LARGE": 0,
+        "SOURCE_FILE_COUNT_EXCEEDED": 0,
+        "SOURCE_TOTAL_BUDGET_EXCEEDED": 0,
+        "SOURCE_LANGUAGE_UNSUPPORTED": 0,
+        "SOURCE_PATH_EXCLUDED": 0,
+        "SOURCE_REPOSITORY_UNAVAILABLE": 0,
+        "SOURCE_HEAD_UNAVAILABLE": 0,
+        "SOURCE_STALE": 0,
+        "SOURCE_READ_FAILED": 0,
+        "SOURCE_CONFIG_INVALID": 0,
+        "SOURCE_PRIVACY_REJECTED": 0
+      }
+    },
+    {
+      "repository": "alphauslabs/blueinternal",
+      "expectedSourceSha": "bc629fa8adc9f5407a2b957bd1b2aecdc8b0d623",
+      "liveSourceSha": "bc629fa8adc9f5407a2b957bd1b2aecdc8b0d623",
+      "status": "CURRENT",
+      "fileCount": 1,
+      "admittedFileCount": 1,
+      "rejectedFileCount": 0,
+      "bytesInspected": 111416,
+      "sourceRefusalCounts": {
+        "SOURCE_ROOT_UNAPPROVED": 0,
+        "SOURCE_PATH_ESCAPE": 0,
+        "SOURCE_SYMLINK_REJECTED": 0,
+        "SOURCE_FILE_NOT_REGULAR": 0,
+        "SOURCE_FILE_TOO_LARGE": 0,
+        "SOURCE_FILE_COUNT_EXCEEDED": 0,
+        "SOURCE_TOTAL_BUDGET_EXCEEDED": 0,
+        "SOURCE_LANGUAGE_UNSUPPORTED": 0,
+        "SOURCE_PATH_EXCLUDED": 0,
+        "SOURCE_REPOSITORY_UNAVAILABLE": 0,
+        "SOURCE_HEAD_UNAVAILABLE": 0,
+        "SOURCE_STALE": 0,
+        "SOURCE_READ_FAILED": 0,
+        "SOURCE_CONFIG_INVALID": 0,
+        "SOURCE_PRIVACY_REJECTED": 0
+      }
+    },
+    {
+      "repository": "alphauslabs/grpc-chunk-parser",
+      "expectedSourceSha": "66802f281698dfcf0903f0a117d4637fce3fd945",
+      "liveSourceSha": "66802f281698dfcf0903f0a117d4637fce3fd945",
+      "status": "CURRENT",
+      "fileCount": 1,
+      "admittedFileCount": 1,
+      "rejectedFileCount": 0,
+      "bytesInspected": 5741,
+      "sourceRefusalCounts": {
+        "SOURCE_ROOT_UNAPPROVED": 0,
+        "SOURCE_PATH_ESCAPE": 0,
+        "SOURCE_SYMLINK_REJECTED": 0,
+        "SOURCE_FILE_NOT_REGULAR": 0,
+        "SOURCE_FILE_TOO_LARGE": 0,
+        "SOURCE_FILE_COUNT_EXCEEDED": 0,
+        "SOURCE_TOTAL_BUDGET_EXCEEDED": 0,
+        "SOURCE_LANGUAGE_UNSUPPORTED": 0,
+        "SOURCE_PATH_EXCLUDED": 0,
+        "SOURCE_REPOSITORY_UNAVAILABLE": 0,
+        "SOURCE_HEAD_UNAVAILABLE": 0,
+        "SOURCE_STALE": 0,
+        "SOURCE_READ_FAILED": 0,
+        "SOURCE_CONFIG_INVALID": 0,
+        "SOURCE_PRIVACY_REJECTED": 0
+      }
+    },
+    {
+      "repository": "mobingilabs/ouchan",
+      "expectedSourceSha": "565f00a87fb7616cc23c45d4ffeabee38a41c65f",
+      "liveSourceSha": "565f00a87fb7616cc23c45d4ffeabee38a41c65f",
+      "status": "CURRENT",
+      "fileCount": 3157,
+      "admittedFileCount": 2638,
+      "rejectedFileCount": 519,
+      "bytesInspected": 27319308,
+      "sourceRefusalCounts": {
+        "SOURCE_ROOT_UNAPPROVED": 0,
+        "SOURCE_PATH_ESCAPE": 0,
+        "SOURCE_SYMLINK_REJECTED": 0,
+        "SOURCE_FILE_NOT_REGULAR": 0,
+        "SOURCE_FILE_TOO_LARGE": 0,
+        "SOURCE_FILE_COUNT_EXCEEDED": 1,
+        "SOURCE_TOTAL_BUDGET_EXCEEDED": 0,
+        "SOURCE_LANGUAGE_UNSUPPORTED": 485,
+        "SOURCE_PATH_EXCLUDED": 1,
+        "SOURCE_REPOSITORY_UNAVAILABLE": 0,
+        "SOURCE_HEAD_UNAVAILABLE": 0,
+        "SOURCE_STALE": 0,
+        "SOURCE_READ_FAILED": 0,
+        "SOURCE_CONFIG_INVALID": 0,
+        "SOURCE_PRIVACY_REJECTED": 33
+      }
+    },
+    {
+      "repository": "mobingilabs/ripple-api",
+      "expectedSourceSha": "4e3e200db3bda7b58bc250feb7f76997d95ae2cc",
+      "liveSourceSha": "4e3e200db3bda7b58bc250feb7f76997d95ae2cc",
+      "status": "CURRENT",
+      "fileCount": 112,
+      "admittedFileCount": 110,
+      "rejectedFileCount": 2,
+      "bytesInspected": 1830016,
+      "sourceRefusalCounts": {
+        "SOURCE_ROOT_UNAPPROVED": 0,
+        "SOURCE_PATH_ESCAPE": 0,
+        "SOURCE_SYMLINK_REJECTED": 0,
+        "SOURCE_FILE_NOT_REGULAR": 0,
+        "SOURCE_FILE_TOO_LARGE": 0,
+        "SOURCE_FILE_COUNT_EXCEEDED": 0,
+        "SOURCE_TOTAL_BUDGET_EXCEEDED": 0,
+        "SOURCE_LANGUAGE_UNSUPPORTED": 1,
+        "SOURCE_PATH_EXCLUDED": 0,
+        "SOURCE_REPOSITORY_UNAVAILABLE": 0,
+        "SOURCE_HEAD_UNAVAILABLE": 0,
+        "SOURCE_STALE": 0,
+        "SOURCE_READ_FAILED": 0,
+        "SOURCE_CONFIG_INVALID": 0,
+        "SOURCE_PRIVACY_REJECTED": 1
+      }
+    },
+    {
+      "repository": "mobingilabs/ripple-ui",
+      "expectedSourceSha": "d80b161b684d9153c7e5acaa65ae1752d93d8ba9",
+      "liveSourceSha": "d80b161b684d9153c7e5acaa65ae1752d93d8ba9",
+      "status": "CURRENT",
+      "fileCount": 1329,
+      "admittedFileCount": 1245,
+      "rejectedFileCount": 84,
+      "bytesInspected": 5057541,
+      "sourceRefusalCounts": {
+        "SOURCE_ROOT_UNAPPROVED": 0,
+        "SOURCE_PATH_ESCAPE": 0,
+        "SOURCE_SYMLINK_REJECTED": 0,
+        "SOURCE_FILE_NOT_REGULAR": 0,
+        "SOURCE_FILE_TOO_LARGE": 0,
+        "SOURCE_FILE_COUNT_EXCEEDED": 0,
+        "SOURCE_TOTAL_BUDGET_EXCEEDED": 0,
+        "SOURCE_LANGUAGE_UNSUPPORTED": 83,
+        "SOURCE_PATH_EXCLUDED": 0,
+        "SOURCE_REPOSITORY_UNAVAILABLE": 0,
+        "SOURCE_HEAD_UNAVAILABLE": 0,
+        "SOURCE_STALE": 0,
+        "SOURCE_READ_FAILED": 0,
+        "SOURCE_CONFIG_INVALID": 0,
+        "SOURCE_PRIVACY_REJECTED": 1
+      }
+    },
+    {
+      "repository": "mobingilabs/wave-api",
+      "expectedSourceSha": "46790c25ddea02c7d3ae65f6e6db766a9089a59f",
+      "liveSourceSha": "46790c25ddea02c7d3ae65f6e6db766a9089a59f",
+      "status": "CURRENT",
+      "fileCount": 57,
+      "admittedFileCount": 56,
+      "rejectedFileCount": 1,
+      "bytesInspected": 398413,
+      "sourceRefusalCounts": {
+        "SOURCE_ROOT_UNAPPROVED": 0,
+        "SOURCE_PATH_ESCAPE": 0,
+        "SOURCE_SYMLINK_REJECTED": 0,
+        "SOURCE_FILE_NOT_REGULAR": 0,
+        "SOURCE_FILE_TOO_LARGE": 0,
+        "SOURCE_FILE_COUNT_EXCEEDED": 0,
+        "SOURCE_TOTAL_BUDGET_EXCEEDED": 0,
+        "SOURCE_LANGUAGE_UNSUPPORTED": 1,
+        "SOURCE_PATH_EXCLUDED": 0,
+        "SOURCE_REPOSITORY_UNAVAILABLE": 0,
+        "SOURCE_HEAD_UNAVAILABLE": 0,
+        "SOURCE_STALE": 0,
+        "SOURCE_READ_FAILED": 0,
+        "SOURCE_CONFIG_INVALID": 0,
+        "SOURCE_PRIVACY_REJECTED": 0
+      }
+    }
+  ],
+  "reproductionCapability": {
+    "schemaVersion": "nightwatch.reproduction-capability-census.v1",
+    "eligibleSourceFiles": 4124,
+    "executableSourceFiles": 1120,
+    "distinctExecutableTargets": 152,
+    "refusalDistribution": {
+      "NO_SUPPORTED_EXECUTOR": 1620,
+      "PACKAGE_TEST_FILES_ABSENT": 1327,
+      "VENDOR_DIRECTORY_ABSENT": 57
+    },
+    "repositories": [
+      {
+        "repository": "alphauslabs/blue-sdk-go",
+        "eligibleSourceFiles": 57,
+        "executableSourceFiles": 0,
+        "distinctExecutableTargets": 0,
+        "refusalDistribution": {
+          "VENDOR_DIRECTORY_ABSENT": 57
+        },
+        "enumerationTruncated": false
+      },
+      {
+        "repository": "alphauslabs/blueapi",
+        "eligibleSourceFiles": 16,
+        "executableSourceFiles": 0,
+        "distinctExecutableTargets": 0,
+        "refusalDistribution": {
+          "NO_SUPPORTED_EXECUTOR": 16
+        },
+        "enumerationTruncated": false
+      },
+      {
+        "repository": "alphauslabs/blueinternal",
+        "eligibleSourceFiles": 1,
+        "executableSourceFiles": 0,
+        "distinctExecutableTargets": 0,
+        "refusalDistribution": {
+          "NO_SUPPORTED_EXECUTOR": 1
+        },
+        "enumerationTruncated": false
+      },
+      {
+        "repository": "alphauslabs/grpc-chunk-parser",
+        "eligibleSourceFiles": 1,
+        "executableSourceFiles": 0,
+        "distinctExecutableTargets": 0,
+        "refusalDistribution": {
+          "NO_SUPPORTED_EXECUTOR": 1
+        },
+        "enumerationTruncated": false
+      },
+      {
+        "repository": "mobingilabs/ouchan",
+        "eligibleSourceFiles": 2638,
+        "executableSourceFiles": 1120,
+        "distinctExecutableTargets": 152,
+        "refusalDistribution": {
+          "NO_SUPPORTED_EXECUTOR": 191,
+          "PACKAGE_TEST_FILES_ABSENT": 1327
+        },
+        "enumerationTruncated": true
+      },
+      {
+        "repository": "mobingilabs/ripple-api",
+        "eligibleSourceFiles": 110,
+        "executableSourceFiles": 0,
+        "distinctExecutableTargets": 0,
+        "refusalDistribution": {
+          "NO_SUPPORTED_EXECUTOR": 110
+        },
+        "enumerationTruncated": false
+      },
+      {
+        "repository": "mobingilabs/ripple-ui",
+        "eligibleSourceFiles": 1245,
+        "executableSourceFiles": 0,
+        "distinctExecutableTargets": 0,
+        "refusalDistribution": {
+          "NO_SUPPORTED_EXECUTOR": 1245
+        },
+        "enumerationTruncated": false
+      },
+      {
+        "repository": "mobingilabs/wave-api",
+        "eligibleSourceFiles": 56,
+        "executableSourceFiles": 0,
+        "distinctExecutableTargets": 0,
+        "refusalDistribution": {
+          "NO_SUPPORTED_EXECUTOR": 56
+        },
+        "enumerationTruncated": false
+      }
+    ],
+    "truncated": true
+  },
+  "censusDigest": "sha256:4b2e68390d8a3f393e67809b"
+}

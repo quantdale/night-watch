@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "nightwatch.w13-contamination-firewall.v1",
+  "campaignId": "nightwatch-provider-resilient-current-yield-w13-v1",
+  "capturedBeforeInvestigativeCall": true,
+  "canary": {
+    "suite": "tests/unit/w11LeakageCanary.test.ts",
+    "result": "5 passed / 0 failed",
+    "meaning": "the leakage checker detects planted hidden truth and does not manufacture false clean or false leak verdicts"
+  },
+  "rules": {
+    "historicalGroundTruthToReasoner": "PROHIBITED",
+    "currentSourceGroundTruthSeeding": "PROHIBITED",
+    "credentialsCustomerValuesAuthenticatedEvidence": "PROHIBITED",
+    "hiddenCorpusPaths": "never embedded in a request; the leakage checker gates every request blob"
+  },
+  "censusSafety": {
+    "rawSourceTextInCensus": false,
+    "censusCarries": "counts, statuses, digests, language tallies, and refusal distributions only"
+  },
+  "w11AndW12Isolation": "W11 hidden truth and W12 measured evidence remain outside the W13 request surface and are not re-run by this wave",
+  "receipt": ".agent/tasks/nightwatch-provider-resilient-current-yield-w13-v1/evidence/w13-current-source-census.json"
+}

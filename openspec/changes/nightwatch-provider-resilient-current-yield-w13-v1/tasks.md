@@ -152,20 +152,20 @@
 - [x] 11.3 Add negative probes: fixed failure-sequence replay determinism;
       a single-field mutation changes the fingerprint; a mutated-policy
       resume fails closed before any provider call.
-- [ ] 11.4 Probe candidates in frozen order; freeze the first that
+- [x] 11.4 Probe candidates in frozen order; freeze the first that
       satisfies the declared health contract; commit the freeze checkpoint
       before the first investigative call.
 
 ## 12. Phase B — W13 evaluation freeze
 
-- [ ] 12.1 Commit the full machine-readable W13 evaluation freeze: repo
+- [x] 12.1 Commit the full machine-readable W13 evaluation freeze: repo
       IDs/SHAs, source census digest, provider-policy fingerprint, campaign
       matrix, run order, budgets, target-selection policy, scope,
       reproduction classes, admission rules, novelty rules, metrics,
       denominator semantics, stopping rules, leakage rules, sibling-write
       rules, zero-yield acceptability, and provider-exhaustion behavior —
       before the first investigative call.
-- [ ] 12.2 Add mutation/widened-resume guard tests mirroring W12's
+- [x] 12.2 Add mutation/widened-resume guard tests mirroring W12's
       evaluation-freeze integrity pattern.
 
 ## 13. Phase B — Run matrix execution

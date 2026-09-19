@@ -33,21 +33,35 @@ policy exhaustion before sufficient investigation is `PROVIDER_BLOCKED`.
 
 ## Current Milestone
 
-Milestone ID: M10
+Milestone ID: M12
 Milestone status: IN_PROGRESS
-What is being attempted: author the machine-readable provider-resilience
-policy (ordered candidates, CLI/schema requirements, probe/runtime timeouts,
-retry counts, failover-eligible classes, consecutive-failure thresholds,
-maximum transitions, recovery permission, exhaustion behavior, derived budget
-envelope), implement the canonical fingerprint, mutation detection, and
-fail-closed resume, prove replay determinism and single-field mutation
-detection with negative probes, then probe the candidates in frozen order and
-freeze the first healthy one.
-Next action: write the policy document and its module/tests, run the negative
-probes, then probe the declared candidates in order and commit the freeze
-checkpoint before any investigative call.
+What is being attempted: execute the frozen run matrix — the broad
+all-eight-repository run first, then the eight repository-scoped runs in
+registry order — under the frozen provider-resilience policy and evaluation
+freeze, recording per-provider attribution, transitions, source investigation
+breadth, candidates, reproduction attempts, and termination classes for every
+run.
+Next action: build the run harness that drives the frozen matrix with policy
+governed failover and per-run receipts, then execute the broad run, then the
+scoped runs in registry order. No result-driven provider reselection, scope
+widening, or budget tuning is permitted.
 
 ## Completed Milestones
+
+- **M11 COMPLETE**: the W13 evaluation freeze is committed before any
+  investigative call at fingerprint `sha256:a520d9630a20a3f67321fbb8`;
+  census digest `sha256:4b2e68390d8a3f393e67809b` with all eight repositories
+  CURRENT, 4,124 admitted files (TRUNCATED floor at Ouchan), 1,120 executable
+  files / 152 targets; the 9-run matrix, budgets, admission/novelty rules,
+  contamination firewall, metric contract, and exhaustion behavior are bound;
+  5/5 integrity tests cover 14 mutation classes and widened/unknown resume
+  refusal.
+- **M10 COMPLETE**: the provider-resilience policy was declared and committed
+  at fingerprint `sha256:a4865dbb6aea4114bfa8bdc9` before any probe; 8/8
+  fingerprint/mutation/replay tests pass; the live probe froze candidate 1
+  `opencode-go/glm-5.3` (valid structured TERMINATE, 16.3 s, 137 bytes) and
+  did not probe later candidates. Receipt:
+  `evidence/provider-selection-receipt.json`.
 
 - **M9 COMPLETE**: Phase A closure. All 13 residual-register entries are
   `PROVEN` with no blocking entry unresolved; the full Phase A validation
@@ -120,18 +134,18 @@ checkpoint before any investigative call.
 
 ## Work In Progress
 
-M10 is authoring the provider-resilience policy and its fingerprint/probe
-machinery; no candidate has been probed yet.
+M12 is building the run harness and preparing the broad run; no investigative
+call has been made yet.
 
 ## Exact Next Action
 
-Author `provider-resilience-policy.json` and the policy module (canonical
-fingerprint, structural validation, field-level mutation diff, fail-closed
-resume, deterministic failover replay); add the negative probes (fixed
-failure-sequence replay determinism, single-field mutation, mutated-policy
-resume refusal); then probe the candidates strictly in the frozen order with
-`callPhase: PROBE` and commit the freeze checkpoint before the first
-investigative call.
+Build the run harness under the task `harness/` directory that drives each
+frozen matrix run with `runLocalCliCampaign` under the frozen policy,
+classifies provider failures with the ten-member taxonomy, applies the
+deterministic failover replay, enforces the frozen wall-clock ceiling, and
+emits a sanitized run receipt with per-provider attribution; then execute the
+broad run, then the eight scoped runs in registry order. Do not tune scope,
+budgets, providers, or stopping rules after results appear.
 
 ## Files Changed
 

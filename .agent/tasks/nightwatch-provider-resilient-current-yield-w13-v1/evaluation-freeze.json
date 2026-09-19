@@ -1,0 +1,185 @@
+{
+  "schemaVersion": "nightwatch.w13-evaluation-freeze.v1",
+  "campaignId": "nightwatch-provider-resilient-current-yield-w13-v1",
+  "wave": "W13",
+  "frozenBeforeInvestigativeCall": true,
+  "provider": {
+    "policyPath": ".agent/tasks/nightwatch-provider-resilient-current-yield-w13-v1/provider-resilience-policy.json",
+    "policyFingerprint": "sha256:a4865dbb6aea4114bfa8bdc9",
+    "selectionReceipt": ".agent/tasks/nightwatch-provider-resilient-current-yield-w13-v1/evidence/provider-selection-receipt.json",
+    "selectedProvider": "opencode-go/glm-5.3",
+    "selectionRule": "FIRST_PASS_OF_FROZEN_ORDER",
+    "failoverRemainsDeclared": true
+  },
+  "runtimeBudgetEnvelope": {
+    "schemaVersion": "nightwatch.runtime-budget-envelope.v1",
+    "ceilingName": "HOUR_1",
+    "reasonerCalls": 200,
+    "toolActions": 400,
+    "inputBytes": 5000000,
+    "outputBytes": 160000,
+    "toolPayloadBytes": 64000000,
+    "retries": 8,
+    "consecutiveFailures": 6,
+    "providerFailures": 8
+  },
+  "providerExhaustionBehavior": "PROVIDER_BLOCKED",
+  "universe": {
+    "censusReceipt": ".agent/tasks/nightwatch-provider-resilient-current-yield-w13-v1/evidence/w13-current-source-census.json",
+    "censusDigest": "sha256:4b2e68390d8a3f393e67809b",
+    "snapshotDigest": "srcsnapshot:sha256:e66c01d81ce6a53fc2e6e8eb",
+    "repositoryOrder": [
+      "alphauslabs/blue-sdk-go",
+      "alphauslabs/blueapi",
+      "alphauslabs/blueinternal",
+      "alphauslabs/grpc-chunk-parser",
+      "mobingilabs/ouchan",
+      "mobingilabs/ripple-api",
+      "mobingilabs/ripple-ui",
+      "mobingilabs/wave-api"
+    ],
+    "repositoryShas": {
+      "alphauslabs/blue-sdk-go": "8883ee3d3a073352626c8c35e20e9fc5ed765373",
+      "alphauslabs/blueapi": "691422e5dc81afd263d064986fb50fcb3ea432a9",
+      "alphauslabs/blueinternal": "bc629fa8adc9f5407a2b957bd1b2aecdc8b0d623",
+      "alphauslabs/grpc-chunk-parser": "66802f281698dfcf0903f0a117d4637fce3fd945",
+      "mobingilabs/ouchan": "565f00a87fb7616cc23c45d4ffeabee38a41c65f",
+      "mobingilabs/ripple-api": "4e3e200db3bda7b58bc250feb7f76997d95ae2cc",
+      "mobingilabs/ripple-ui": "d80b161b684d9153c7e5acaa65ae1752d93d8ba9",
+      "mobingilabs/wave-api": "46790c25ddea02c7d3ae65f6e6db766a9089a59f"
+    },
+    "currentnessRequired": "all eight status CURRENT and live SHA equal to frozen SHA",
+    "sourceInventoryCompleteness": "TRUNCATED",
+    "truncatedRepositories": [
+      "mobingilabs/ouchan"
+    ],
+    "truncatedCountsAreFloors": true,
+    "eligibleSourceFiles": 4124,
+    "executableSourceFiles": 1120,
+    "distinctExecutableTargets": 152,
+    "reproductionCoverageRepository": "mobingilabs/ouchan"
+  },
+  "matrix": [
+    {
+      "runId": "w13-broad-all-repositories-1",
+      "kind": "BROAD_ALL_REPOSITORIES",
+      "repositoryScope": null,
+      "scopeRepositories": "all eight in universe.repositoryOrder",
+      "wallClockCeilingMs": 3600000,
+      "maxTurnsPerInvestigation": 6,
+      "budgetException": "NONE"
+    },
+    {
+      "runId": "w13-repository-01",
+      "kind": "REPOSITORY_SCOPED",
+      "repositoryScope": "alphauslabs/blue-sdk-go",
+      "wallClockCeilingMs": 1800000,
+      "maxTurnsPerInvestigation": 6,
+      "budgetException": "NONE"
+    },
+    {
+      "runId": "w13-repository-02",
+      "kind": "REPOSITORY_SCOPED",
+      "repositoryScope": "alphauslabs/blueapi",
+      "wallClockCeilingMs": 1800000,
+      "maxTurnsPerInvestigation": 6,
+      "budgetException": "NONE"
+    },
+    {
+      "runId": "w13-repository-03",
+      "kind": "REPOSITORY_SCOPED",
+      "repositoryScope": "alphauslabs/blueinternal",
+      "wallClockCeilingMs": 1800000,
+      "maxTurnsPerInvestigation": 6,
+      "budgetException": "NONE"
+    },
+    {
+      "runId": "w13-repository-04",
+      "kind": "REPOSITORY_SCOPED",
+      "repositoryScope": "alphauslabs/grpc-chunk-parser",
+      "wallClockCeilingMs": 1800000,
+      "maxTurnsPerInvestigation": 6,
+      "budgetException": "NONE"
+    },
+    {
+      "runId": "w13-repository-05",
+      "kind": "REPOSITORY_SCOPED",
+      "repositoryScope": "mobingilabs/ouchan",
+      "wallClockCeilingMs": 3600000,
+      "maxTurnsPerInvestigation": 6,
+      "budgetException": "SOLE_DETERMINISTIC_REPRODUCTION_REPOSITORY_PER_CENSUS"
+    },
+    {
+      "runId": "w13-repository-06",
+      "kind": "REPOSITORY_SCOPED",
+      "repositoryScope": "mobingilabs/ripple-api",
+      "wallClockCeilingMs": 1800000,
+      "maxTurnsPerInvestigation": 6,
+      "budgetException": "NONE"
+    },
+    {
+      "runId": "w13-repository-07",
+      "kind": "REPOSITORY_SCOPED",
+      "repositoryScope": "mobingilabs/ripple-ui",
+      "wallClockCeilingMs": 1800000,
+      "maxTurnsPerInvestigation": 6,
+      "budgetException": "NONE"
+    },
+    {
+      "runId": "w13-repository-08",
+      "kind": "REPOSITORY_SCOPED",
+      "repositoryScope": "mobingilabs/wave-api",
+      "wallClockCeilingMs": 1800000,
+      "maxTurnsPerInvestigation": 6,
+      "budgetException": "NONE"
+    }
+  ],
+  "investigationOrder": "broad first, then repository-scoped runs in universe.repositoryOrder",
+  "sourceAndReproduction": {
+    "sourceClass": "CURRENT_SOURCE_ONLY",
+    "permittedReproductionClasses": [
+      "GO_VENDORED_PACKAGE_TEST",
+      "CURRENT_SOURCE_REPEATED_TEST_FAILURE"
+    ],
+    "newReproductionClassesPermitted": false,
+    "reproductionUnavailableIsNotZeroYield": true,
+    "siblingRepositoriesReadOnly": true,
+    "siblingIdentityCheckedBeforeAndAfter": true
+  },
+  "admission": {
+    "authority": "existing mechanical reproduction/dossier admission only",
+    "candidateAndAdmissionDistinct": true,
+    "missingReproductionRefusal": "MISSING_REPRODUCTION",
+    "manualDossierInsertion": false,
+    "syntheticEvidenceRefs": false,
+    "forgedReproductionCounts": false,
+    "aggregateAdmissionRecordsRequired": true
+  },
+  "novelty": {
+    "phase": "POST_ADMISSION_ONLY",
+    "readOnly": true,
+    "alphausConfirmedRequiresIndependentEvidence": true
+  },
+  "contaminationFirewall": {
+    "receipt": ".agent/tasks/nightwatch-provider-resilient-current-yield-w13-v1/evidence/w13-contamination-firewall.json",
+    "historicalGroundTruthToReasoner": "PROHIBITED",
+    "hiddenPredecessorTruthReRun": "PROHIBITED",
+    "credentialsCustomerValuesAuthenticatedEvidence": "PROHIBITED"
+  },
+  "metrics": {
+    "contract": "src/core/currentSourceYield/aggregation.ts",
+    "requiredGlobalMetrics": "the 30-metric W13 required list; missing or NOT_CAPTURED-without-reason fails closed",
+    "perProviderAttributionRequired": true,
+    "truncatedPopulationsAreFloors": true,
+    "providerFailureIsNeverAZeroYieldDenominator": true
+  },
+  "stoppingAndRetry": {
+    "runStops": "terminal campaign state or its frozen wall-clock ceiling",
+    "providerFailover": "deterministic per the provider-resilience policy; no result-driven reselection",
+    "reasonerRetryAuthority": "host-owned engine runtime policy (HOUR_1 envelope above)",
+    "providerExhaustion": "PROVIDER_BLOCKED, excluded from zero-yield denominators"
+  },
+  "zeroYieldAcceptability": "a completed valid matrix with zero mechanical admissions is COMPLETE — CURRENT-SOURCE YIELD MEASURED, ZERO MECHANICAL ADMISSIONS; provider exhaustion before sufficient execution is PARTIAL — BLOCKED",
+  "widenedResumeGuard": "a resume whose runId is unknown or whose repository scope differs from the frozen entry fails closed (EVALUATION_FREEZE_UNKNOWN_RUN / EVALUATION_FREEZE_WIDENED_RESUME)",
+  "freezeFingerprint": "sha256:a520d9630a20a3f67321fbb8"
+}

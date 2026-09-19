@@ -403,6 +403,7 @@ export const SCHEMA_FAMILIES: readonly SchemaFamilyDeclaration[] = [
   { family: 'nightwatch.w10-campaign-yield', persisted: false, store: 'IN_MEMORY', currentVersion: 1, versions: { 1: 'CURRENT' }, dispositions: [], note: "" },
   { family: 'nightwatch.yield-denominator-semantics', persisted: false, store: 'IN_MEMORY', currentVersion: 1, versions: { 1: 'CURRENT' }, dispositions: [], note: "W13 R-05 truncation floor projection; data-only, no authority" },
   { family: 'nightwatch.w10-yield-metrics', persisted: false, store: 'IN_MEMORY', currentVersion: 1, versions: { 1: 'CURRENT' }, dispositions: [], note: "" },
+  { family: 'nightwatch.w13-evaluation-freeze', persisted: false, store: 'IN_MEMORY', currentVersion: 1, versions: { 1: 'CURRENT' }, dispositions: [], note: "W13 Phase B evaluation freeze and widened-resume guard; validation only" },
   { family: 'nightwatch.w13-current-source-yield-aggregation', persisted: false, store: 'IN_MEMORY', currentVersion: 1, versions: { 1: 'CURRENT' }, dispositions: [], note: "W13 R-06 required-metric completeness contract; validation only" },
   { family: 'nightwatch.w13-run-receipt', persisted: false, store: 'IN_MEMORY', currentVersion: 1, versions: { 1: 'CURRENT' }, dispositions: [], note: "W13 R-04 per-provider attribution contract; validation only" },
 ];
