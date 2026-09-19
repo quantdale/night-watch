@@ -984,10 +984,19 @@ owner's action.
 
 ## 12. Autonomous yield proof
 
-Executed by W11 (`nightwatch-autonomous-yield-proof-w11-v1`). Historical arm
-COMPLETE; unknown-yield arm BLOCKED by an external provider outage. Zero
-findings is an acceptable outcome here; an unexecutable arm is not the same
-thing as a zero-yield arm, and the two are not merged below.
+Executed first by W11 (`nightwatch-autonomous-yield-proof-w11-v1`) and now
+continued by the owner-authorized successor W12
+(`nightwatch-current-source-unknown-yield-w12-v1`). W11's historical arm is
+COMPLETE; its unknown-yield arm is BLOCKED by an external provider outage and
+remains frozen evidence. W12 is a new current-source campaign and MUST NOT
+rewrite W11's result or re-run its historical arm. Zero findings is an
+acceptable outcome here; an unexecutable arm is not the same thing as a
+zero-yield arm, and the two are not merged below.
+
+W12 activation is in progress from live main `4e763f3f079863a262906a8b134539e309c8d054`.
+Its provider policy, fresh eight-repository census, fixed broad/scoped matrix,
+and machine-readable evaluation freeze must be committed before any W12
+investigative call.
 
 - [x] 12.1 Record the provider prerequisite concretely: provider, capability,
       toolchain versions, repository set, confirming probe, reachability

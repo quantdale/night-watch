@@ -1,100 +1,77 @@
 # Active Task
 
-Task ID: nightwatch-autonomous-yield-proof-w11-v1
-Phase: AUTONOMOUS_YIELD_PROOF_W11_V1
-Title: W11 — Autonomous yield proof (strict rediscovery + owner-local yield)
+Task ID: nightwatch-current-source-unknown-yield-w12-v1
+Phase: CURRENT_SOURCE_UNKNOWN_YIELD_W12_V1
+Title: W12 — Current-source unknown-defect yield
 Status: IN_PROGRESS
-Task directory: .agent/tasks/nightwatch-autonomous-yield-proof-w11-v1
-Starting SHA: 158a97b8feceb6abf4ea4ccbacab1f20cc46bc35
+Task directory: .agent/tasks/nightwatch-current-source-unknown-yield-w12-v1
+Starting SHA: 4e763f3f079863a262906a8b134539e309c8d054
 Last validated implementation SHA: ae06d4d675d878f67b93234a21100ef94d9fed25
-Last checkpoint: VERDICT PARTIAL — BLOCKED. M0-M4, M7 and M8 COMPLETE; M5
-blocked externally. The frozen historical arm
-(`sha256:824deef9922975feab5af69f`, provider `opencode-go/glm-5.3`) evaluated
-14/14 cases in 66.8 min: **EXACT = 0, exact rate 0/13**, 10 near matches, 4
-reproductions, 7 candidates, 3 mechanical admissions, 4 refused
-`MISSING_REPRODUCTION`, 0 false positives, 0 `ENVIRONMENT_BLOCKED`, 0 leakage
-across 78 audited request blobs. M3 established mechanically WHY EXACT is 0:
-`testMatch` failed in 13/13 while file recall reached 1.00 in 9 cases, and the
-hidden failing test is absent from the whole visible context for every fixture
-and is a fix-ADDED file for mined cases, so it is not derivable under leak-free
-conditions. EXACT was not weakened and no near match was promoted.
-Current milestone: M5 — BLOCKED on an external subscribed-provider outage
-Next action: re-probe `opencode-go/glm-5.3` for recovery; while it still times
-out, the unknown arm stays unexecuted and nothing else is pending. When it
-answers within the frozen timeout, open a fresh C-00 session and run the four
-frozen runs in `evaluation-freeze.unknown.json`
-(`sha256:6145bd666dd08369ec38b018`) unchanged, then close M6 and M10. Do NOT
-substitute a provider to get past the blocker: choosing one after results are
-visible is the contamination the freeze prevents, and it would require a new
-fingerprint and a full rerun of both arms. That is an owner decision.
-Do NOT substitute a provider to get past the blocker: choosing one after results
-are visible is the contamination the freeze prevents, and it would require a new
-fingerprint and a full rerun of both arms. That is an owner decision.
-Authorization class: AUTONOMOUS_YIELD_PROOF_W11_V1
+Last checkpoint: W12 activation is in progress from live main `4e763f3f`.
+W11 is preserved as `PARTIAL — BLOCKED`: its historical arm measured strict
+EXACT `0/13` with zero leakage, while its unknown arm was invalid on provider
+timeout and produced no yield. W12 is a distinct owner-authorized successor;
+it has not yet probed a provider or run an investigation.
+Current milestone: M0 — governed activation and live rebaseline
+Next action: validate and commit the W12 task/OpenSpec routing checkpoint;
+then declare the provider policy before probing and freeze the first passing
+provider before any W12 investigative result.
+Authorization class: CURRENT_SOURCE_UNKNOWN_YIELD_W12_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
-STARTING_SHA: 158a97b8feceb6abf4ea4ccbacab1f20cc46bc35
+STARTING_SHA: 4e763f3f079863a262906a8b134539e309c8d054
 LAST_VALIDATED_IMPLEMENTATION_SHA: ae06d4d675d878f67b93234a21100ef94d9fed25
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: ae06d4d675d878f67b93234a21100ef94d9fed25
-LAST_DOCUMENTATION_CHECKPOINT_SHA: fb372375922143babf9d93b7bc4f32cc08c1d671
+LAST_DOCUMENTATION_CHECKPOINT_SHA: 4e763f3f079863a262906a8b134539e309c8d054
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
-PHASE_AUTONOMOUS_YIELD_PROOF_W11_V1_STATUS: IN_PROGRESS
+PHASE_CURRENT_SOURCE_UNKNOWN_YIELD_W12_V1_STATUS: IN_PROGRESS
 
 ## Mission
 
-Use the mature W7-W10 Nightwatch stack to answer two questions with evidence:
-can Nightwatch achieve strict historical `EXACT_REDISCOVERY` under leak-free
-conditions, and can it discover and mechanically admit a previously unknown
-defect from the current owner-local source universe without fabrication?
+Measure current-source investigation breadth and mechanically admitted defect
+yield across the owner-authorized eight-repository universe. Preserve W11 as
+frozen predecessor evidence, keep provider failure distinct from zero yield,
+keep candidates distinct from admissions, and finish with a truthful W12
+verdict or an evidenced `PARTIAL — BLOCKED` outcome.
 
-A zero-yield answer is acceptable. A fabricated defect is not.
+## Read order
 
-Read in this order:
+1. `.agent/tasks/nightwatch-current-source-unknown-yield-w12-v1/{SPEC,PLAN,STATE}.md`
+2. `openspec/changes/nightwatch-current-source-unknown-yield-w12-v1/`
+3. W11 task/evidence and Production Completion Group 12 predecessor record
+4. `AGENTS.md`, durable safety/current-state/decision/roadmap documents, then
+   live Git/workspace/session truth.
 
-1. `.agent/tasks/nightwatch-autonomous-yield-proof-w11-v1/{SPEC,PLAN,STATE}.md`
-2. `openspec/changes/nightwatch-production-completion-programme-v1/tasks.md`
-   section "12. Autonomous yield proof"
-3. `AGENTS.md`, `docs/CURRENT_STATE.md`, `docs/SAFETY_MODEL.md`,
-   `docs/DECISIONS.md`, then live Git/workspace/session truth.
+## Frozen predecessor boundary
 
-## Frozen predecessor outcomes
-
-Do not rebuild unless live recon finds a concrete regression:
-
-- W7 real owner-local sensing, System Map / Bug Atlas / System Atlas substrate,
-  deterministic reproduction provider and mechanical admission.
-- W8 bounded investigation memory, cross-investigation strategy, grounded
-  hypotheses and the mechanical SUPPORTED / DISPROVED lifecycle.
-- W9 `GO_VENDORED_PACKAGE_TEST`, disposable materialization under
-  `bwrap --unshare-net`, `CURRENT_SOURCE_REPEATED_TEST_FAILURE`, host-owned
-  retry disposition and separated transport/tool-payload byte accounting.
-- W10 capability projection, diverse source index, cross-investigation
-  capability carry, current-failure triage and host-owned `--repository` scope.
-
-W11 EXERCISES this system. It repairs it only where execution proves a concrete
-defect.
+W11's historical EXACT arm, hidden corpus, provider-blocked unknown run, and
+its preserved evidence are read-only predecessor inputs. W12 MUST NOT expose
+W11 hidden truth to the investigative reasoner, re-run the historical arm, or
+alter W11's measured result.
 
 ## Routing and safety
 
 ```
-CAMPAIGN: nightwatch-autonomous-yield-proof-w11-v1
+CAMPAIGN: nightwatch-current-source-unknown-yield-w12-v1
 CHILD TASK: NONE
-WAVE: W11
-SESSION WORKTREE: NONE
+WAVE: W12
+SESSION WORKTREE: session/nightwatch-current-source-unknow-75aee275
 
 IMPLEMENTATION AUTHORIZED:
-  this task directory, its OpenSpec change, the W11 evaluation/measurement
+  this task directory, its OpenSpec change, W12 evaluation/measurement
   harnesses, repository-local implementation needed to truthfully execute and
-  measure Group 12, the Group 12 ledger, Nightwatch docs and governed
-  README/current-state yield surfaces, and commits/pushes/integration from one
-  owned C-00 session worktree.
+  measure current-source yield, the Group 12 successor ledger, parent
+  autonomous-programme state, Nightwatch docs and governed README/current-
+  state yield surfaces, and commits/pushes/integration from this owned C-00
+  session worktree.
 
 ALPHAUS DEV CONTACT:                   NOT AUTHORIZED
 ALPHAUS NEXT CONTACT:                  NOT AUTHORIZED
 PRODUCTION CONTACT:                    NOT AUTHORIZED
 AUTHENTICATED ALPHAUS RUNTIME:         NOT AUTHORIZED
 DATABASE / DATA-PLANE ACCESS:          NOT AUTHORIZED
+GCP / GKE / KUBERNETES / AWS:          NOT AUTHORIZED
 SLACK / LESLIE / PONDR / NOTION:       NOT AUTHORIZED
 ISSUE / PR CREATION:                   NOT AUTHORIZED
 EXTERNAL PUBLICATION:                  NOT AUTHORIZED
@@ -106,12 +83,13 @@ LEAKING HIDDEN GROUND TRUTH:           NOT AUTHORIZED
 PROVIDER EGRESS VIA REASONER CLI:      AUTHORIZED
 SIBLING READ (all 8 admitted, r/o):    AUTHORIZED
 CONTAINED LOCAL REPRODUCTION:          AUTHORIZED, already-admitted classes only
+NOVELTY ADJUDICATION:                  AUTHORIZED, post-admission/read-only only
 ```
 
 LOCAL / OWNER-LOCAL only. Provider network access is allowed ONLY through the
 existing configured reasoner CLI path; that is not authorization for Nightwatch
-or product traffic to any Alphaus environment. Sibling repositories are READ
-ONLY, with identity checked before and after reproduction. Hidden historical
+or product traffic to any Alphaus environment. Sibling repositories are read
+only, with identity checked before and after reproduction. Hidden historical
 ground truth must never reach the reasoner; leakage aborts yield publication.
 
 C-00 governs all writers: one writing agent == one owned worktree == one

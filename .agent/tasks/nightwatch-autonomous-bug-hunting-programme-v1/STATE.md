@@ -10,8 +10,13 @@ Last validated implementation SHA: 62d23e2622ab0a282584c5cf27d92b6b603f9192
 Last substantive checkpoint SHA: 62d23e2622ab0a282584c5cf27d92b6b603f9192
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
-Branch: session/nightwatch-autonomous-yield-proo-72d452ea
-Last checkpoint: W10 COMPLETE and certified at implementation `62d23e2` / documentation `ec3eacf`. W11 (autonomous yield proof) is OPEN under owner authorization and is the active wave; live main has advanced to `158a97b8` and W11 opens from there, not from the W10 anchor.
+Branch: session/nightwatch-current-source-unknow-75aee275
+Last checkpoint: W11 is preserved as `PARTIAL — BLOCKED`: its historical arm
+completed with strict EXACT `0/13`, leakage 0, and three mechanical
+admissions, while its unknown-source arm was invalidated by six provider
+timeouts and has no yield result. W12 is the fresh owner-authorized successor
+opened from live main `4e763f3f`; its provider policy and investigation have
+not yet run.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: d1ebde90c1454b31d6b93d9df503a4c5f196d7c8
@@ -27,28 +32,29 @@ Deliver a locally executable autonomous bug-hunting programme above the existing
 
 ## Current Milestone
 
-Milestone ID: W11
+Milestone ID: W12
 Milestone status: IN_PROGRESS
-Child task: `nightwatch-autonomous-yield-proof-w11-v1`
-Child directory: `.agent/tasks/nightwatch-autonomous-yield-proof-w11-v1`
+Child task: `nightwatch-current-source-unknown-yield-w12-v1`
+Child directory: `.agent/tasks/nightwatch-current-source-unknown-yield-w12-v1`
 
 W9 is frozen terminal at `bb28480c6a6969a06744c75c4c947851d5bece7c`. W10 is
 frozen terminal at implementation `62d23e2622ab0a282584c5cf27d92b6b603f9192`
 with certified documentation head `ec3eacf61c1b5bd3557eaf90594aecb2cd633b4f`.
 Neither is reopened.
 
-W11 is the active wave, opened from live main `158a97b8` under explicit owner
-authorization, and executes Production Completion Group 12. It measures strict
-historical `EXACT_REDISCOVERY` and previously-unknown owner-local yield; both
-remain unproven until it closes. A zero-yield outcome is an acceptable result.
+W11 is frozen predecessor evidence, opened from live main `158a97b8` under its
+own owner authorization. Its historical arm is complete and its unknown arm
+is provider-blocked; W12 must not re-run the historical arm or rewrite either
+result. W12 is the active owner-authorized successor, opened from live main
+`4e763f3f`, and executes the current-source half of Group 12 with a new
+provider-selection policy, fresh eight-repository census, fixed broad/scoped
+matrix, mechanical yield accounting and evidence-bounded novelty.
 DEV/NEXT remain unauthorized.
 
-W11 M0 preflight is measured: the W9/W10 provider `opencode-go/omen-alpha` is
-absent from the current model list and `opencode-go/glm-5.3` was frozen as the
-primary by a preference rule declared before probing; all 8 admitted
-repositories are CURRENT with matching SHAs; 1,120 of 4,124 eligible source
-files are executable across 152 distinct targets, all of them in
-`mobingilabs/ouchan`; and the strict-EXACT-eligible mined corpus is 5 cases.
+W11 measured the predecessor census at 8 current repositories, 4,124 eligible
+files, 1,120 executable files and 152 targets, all executable coverage in
+`mobingilabs/ouchan`; W12 must rebaseline those facts rather than silently
+reuse them.
 
 ## Completed Milestones
 
@@ -66,16 +72,15 @@ files are executable across 152 distinct targets, all of them in
 
 ## Work In Progress
 
-W11 is active at M1: the evaluation definition is being frozen and committed
-before the first provider evaluation runs. No evaluation has executed and no
-W11 yield figure exists.
+W12 is active at M0: its fresh task/OpenSpec surfaces and successor routing
+are being validated in an owned C-00 worktree. No W12 provider probe,
+investigative call, or yield figure exists.
 
 ## Exact Next Action
 
-Continue W11 from its own `STATE.md` `Exact Next Action`: commit the frozen
-historical-arm evaluation definition, then execute the strict historical
-`EXACT_REDISCOVERY` arm before defining the unknown-yield arm. Do not reopen
-W0-W10.
+Continue W12 from its own `STATE.md`: validate and commit the activation
+checkpoint, then commit the provider-selection policy before any probe. Do not
+reopen W11's historical arm or substitute its blocked provider after results.
 
 ## Files Changed
 
@@ -164,5 +169,7 @@ Historical W8 safety events remain in W8 records; W9 reported zero safety-bounda
 ## Completion Snapshot
 
 Parent programme remains IN_PROGRESS / PARTIAL.
-W10 is active and not yet validated.
-Do not populate W10 completion evidence until M0-M12 and full certification close truthfully.
+W11 is frozen predecessor `PARTIAL — BLOCKED`; do not rewrite its evidence.
+W12 is active and not yet validated. Do not populate W12 completion evidence
+until its fixed matrix, safety proofs, Group 12 reconciliation and full
+certification close truthfully.

@@ -1,0 +1,75 @@
+{
+  "schemaVersion": "nightwatch.w12-provider-selection-policy.v1",
+  "campaignId": "nightwatch-current-source-unknown-yield-w12-v1",
+  "declaredBeforeProbe": true,
+  "selectionQuestion": "Which already-configured reasoner provider can serve the fixed W12 protocol within the declared bounded probe contract?",
+  "orderingCriteria": [
+    "availability in the existing configured CLI model registry",
+    "compatibility with the production print adapter and typed turn protocol",
+    "owner-approved subscribed-provider cost policy",
+    "sufficient context for bounded current-source requests"
+  ],
+  "qualityBasedSelection": false,
+  "cli": {
+    "mode": "existing-configured-reasoner-cli",
+    "adapter": "bin/nightwatch-reasoner-print.mjs",
+    "shell": false,
+    "structuredResponseSchema": "nightwatch.reasoner-turn-response.v1"
+  },
+  "probe": {
+    "requestClass": "minimal-structured-terminate",
+    "timeoutMs": 30000,
+    "maxAttemptsPerCandidate": 1,
+    "maxTotalProbes": 5,
+    "retryPolicy": "no-retry; each candidate receives at most one bounded probe",
+    "responseRequired": true,
+    "successRequires": [
+      "process exit code 0",
+      "response parses as nightwatch.reasoner-turn-response.v1",
+      "response contains a valid bounded TERMINATE intent",
+      "response bytes are greater than zero"
+    ]
+  },
+  "candidates": [
+    {
+      "ordinal": 1,
+      "provider": "opencode-go/glm-5.3",
+      "reason": "retained subscribed-family compatibility and context fit from the predecessor, without using W12 quality"
+    },
+    {
+      "ordinal": 2,
+      "provider": "opencode-go/kimi-k3",
+      "reason": "predeclared subscribed-family compatibility and context fit"
+    },
+    {
+      "ordinal": 3,
+      "provider": "opencode-go/qwen3.8-max",
+      "reason": "predeclared subscribed-family compatibility and context fit"
+    },
+    {
+      "ordinal": 4,
+      "provider": "opencode-go/minimax-m3",
+      "reason": "predeclared subscribed-family compatibility and context fit"
+    },
+    {
+      "ordinal": 5,
+      "provider": "opencode/nemotron-3.5-lightning-free",
+      "reason": "predeclared configured fallback namespace for protocol availability only"
+    }
+  ],
+  "classification": {
+    "ABSENT": "provider is not present in the live CLI registry before invocation",
+    "PROVIDER_PROBE_TIMEOUT": "probe exceeds timeoutMs without a valid response",
+    "PROVIDER_NONZERO_EXIT": "CLI exits non-zero before a valid response",
+    "PROVIDER_INVALID_RESPONSE": "CLI exits zero but output is not a valid typed response",
+    "PROVIDER_QUOTA_OR_NAMESPACE_UNAVAILABLE": "sanitized provider/account/namespace refusal is observed",
+    "VALID_PROVIDER_RUN": "all successRequires conditions pass",
+    "UNAVAILABLE": "any non-success probe classification; it is not a valid W12 result"
+  },
+  "firstPassingCandidateRule": "freeze the first candidate in ordinal order classified VALID_PROVIDER_RUN; do not probe later candidates",
+  "allCandidatesFailRule": "record every declared probe outcome and stop W12 before investigation as PARTIAL — BLOCKED; never report zero yield",
+  "postFreezeRule": "after the first valid W12 investigative result, provider identity, model, probe policy, and CLI configuration are immutable for this wave",
+  "preResultFailureRule": "if the selected provider fails before any valid W12 investigative result, a transition is allowed only by owner decision under a regenerated complete W12 freeze before investigation; no transition is performed implicitly",
+  "selectedProvider": null,
+  "selectionStatus": "POLICY_DECLARED_PENDING_PROBES"
+}

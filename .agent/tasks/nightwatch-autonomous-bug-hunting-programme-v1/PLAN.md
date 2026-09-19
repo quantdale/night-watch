@@ -93,7 +93,7 @@ narrative is rewritten.
 - Objective: bounded local campaigns, gates, clean clone, final report.
 - Status: COMPLETE
 
-### W6-W10 — successor waves, each with its own task directory
+### W6-W12 — successor waves, each with its own task directory
 
 - Objective: the waves opened after this PLAN was written. Each has its own
   SPEC/PLAN/STATE/REPORT and its own certification; this row exists so the
@@ -101,7 +101,13 @@ narrative is rewritten.
 - Terminal wave: `nightwatch-reproduction-surface-coverage-autonomous-yield-v1`
   (W10), COMPLETE at implementation `62d23e2622ab0a282584c5cf27d92b6b603f9192`
   and documentation `ec3eacf61c1b5bd3557eaf90594aecb2cd633b4f`.
-- Status: COMPLETE
+- W11 predecessor: `nightwatch-autonomous-yield-proof-w11-v1`, historical arm
+  COMPLETE and unknown-source arm `PARTIAL — BLOCKED` on the frozen provider;
+  its fingerprints and evidence are frozen, not reopened.
+- W12 active successor: `nightwatch-current-source-unknown-yield-w12-v1`,
+  opened from live main `4e763f3f079863a262906a8b134539e309c8d054` under the
+  owner-authorized current-source unknown-yield prompt.
+- Status: IN_PROGRESS (W12)
 
 ## Validation Strategy
 
