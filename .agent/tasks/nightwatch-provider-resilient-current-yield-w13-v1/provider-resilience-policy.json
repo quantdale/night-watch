@@ -3,11 +3,11 @@
   "campaignId": "nightwatch-provider-resilient-current-yield-w13-v1",
   "declaredBeforeProbe": true,
   "orderingCriteria": [
+    "owner-directed provider selection recorded before the first generation-2 probe",
     "already configured in the live opencode CLI model registry",
     "compatible with the production print adapter and typed turn protocol",
     "owner-approved subscribed provider family",
-    "sufficient context for bounded current-source requests",
-    "predecessor continuity (the W11/W12 subscribed model remains first) without using any predecessor result quality"
+    "sufficient context for bounded current-source requests"
   ],
   "qualityBasedSelection": false,
   "cli": {
@@ -66,15 +66,17 @@
   "candidates": [
     {
       "ordinal": 1,
-      "provider": "opencode-go/glm-5.3",
-      "model": "opencode-go/glm-5.3",
+      "provider": "opencode-go/muse-spark-1.3-contributor",
+      "model": "opencode-go/muse-spark-1.3-contributor",
       "argvTemplate": [
         "run",
         "--model",
-        "opencode-go/glm-5.3",
+        "opencode-go/muse-spark-1.3-contributor",
+        "--variant",
+        "xhigh",
         "__PROMPT__"
       ],
-      "reason": "predecessor subscribed-family continuity; selected before probing, never because of a result"
+      "reason": "owner-directed replacement of the degraded predecessor provider, declared before the first generation-2 probe; XHIGH reasoning effort as owner-specified"
     },
     {
       "ordinal": 2,
@@ -125,5 +127,7 @@
       "reason": "predeclared configured fallback namespace for protocol availability only"
     }
   ],
-  "fingerprint": "sha256:a4865dbb6aea4114bfa8bdc9"
+  "fingerprint": "sha256:1efa45195fc018aa22677336",
+  "policyGeneration": 2,
+  "ownerDirective": "D-140"
 }

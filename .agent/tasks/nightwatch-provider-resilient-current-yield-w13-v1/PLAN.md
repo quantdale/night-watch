@@ -186,7 +186,12 @@ from receipts, and adjudicates novelty only after admission.
   policy with per-provider attribution.
 - Acceptance: every run is valid, or categorically provider-blocked after
   policy exhaustion; no result-driven provider reselection.
-- **Status:** NOT_STARTED
+- **Status:** IN_PROGRESS — generation 1 (owner-amended mid-wave, D-140):
+  broad run VALID (45 calls, 22,810 response bytes, 35 tool actions, 8
+  provider failures, 0 candidates); scoped 01-03 recorded with deterministic
+  failover transitions. Generation 2 (owner-directed
+  `opencode-go/muse-spark-1.3-contributor`, XHIGH) is committed for runs
+  04-08; generation-1 receipts are preserved and never rewritten.
 
 ### M13 — Reproduction, admission, novelty, and safety proofs
 

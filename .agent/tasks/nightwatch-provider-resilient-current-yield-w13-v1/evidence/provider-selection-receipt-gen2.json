@@ -1,0 +1,68 @@
+{
+  "schemaVersion": "nightwatch.w13-provider-selection-receipt.v1",
+  "campaignId": "nightwatch-provider-resilient-current-yield-w13-v1",
+  "generation": 2,
+  "ownerDirective": "D-140 — owner directed halting the degraded opencode-go/glm-5.3 calls and replacing the provider with Muse Spark 1.3 Contributor at XHIGH reasoning effort",
+  "policyPath": ".agent/tasks/nightwatch-provider-resilient-current-yield-w13-v1/provider-resilience-policy.json",
+  "policyFingerprint": "sha256:1efa45195fc018aa22677336",
+  "previousPolicyFingerprint": "sha256:a4865dbb6aea4114bfa8bdc9",
+  "declaredBeforeProbe": true,
+  "probeContract": {
+    "phase": "PROBE",
+    "requestClass": "minimal-structured-terminate",
+    "adapter": "bin/nightwatch-reasoner-print.mjs",
+    "timeoutMs": 30000,
+    "maxAttemptsPerCandidate": 1,
+    "argvTemplate": ["run", "--model", "opencode-go/muse-spark-1.3-contributor", "--variant", "xhigh", "__PROMPT__"],
+    "successRequirements": [
+      "exitCode=0",
+      "response schema is nightwatch.reasoner-turn-response.v1",
+      "at least one salvageable intent with a bounded TERMINATE",
+      "response bytes > 0"
+    ]
+  },
+  "probes": [
+    {
+      "ordinal": 1,
+      "provider": "opencode-go/muse-spark-1.3-contributor",
+      "attempts": 1,
+      "outcome": "VALID_PROVIDER_RESPONSE",
+      "exitCode": 0,
+      "elapsedMs": 26000,
+      "responseBytes": 137,
+      "stderrBytes": 0,
+      "intentKinds": ["TERMINATE"],
+      "terminationReason": "COMPLETE_NO_FINDING",
+      "providerSignal": null,
+      "rawResponsePersisted": false
+    },
+    { "ordinal": 2, "provider": "opencode-go/kimi-k3", "attempts": 0, "outcome": "NOT_PROBED_AFTER_FIRST_PASS" },
+    { "ordinal": 3, "provider": "opencode-go/qwen3.8-max", "attempts": 0, "outcome": "NOT_PROBED_AFTER_FIRST_PASS" },
+    { "ordinal": 4, "provider": "opencode-go/minimax-m3", "attempts": 0, "outcome": "NOT_PROBED_AFTER_FIRST_PASS" },
+    { "ordinal": 5, "provider": "opencode/nemotron-3.5-lightning-free", "attempts": 0, "outcome": "NOT_PROBED_AFTER_FIRST_PASS" }
+  ],
+  "selectedProvider": {
+    "provider": "opencode-go/muse-spark-1.3-contributor",
+    "model": "opencode-go/muse-spark-1.3-contributor",
+    "invocationMode": "print",
+    "argvTemplate": ["run", "--model", "opencode-go/muse-spark-1.3-contributor", "--variant", "xhigh", "__PROMPT__"],
+    "adapter": "bin/nightwatch-reasoner-print.mjs",
+    "selectionRule": "OWNER_DIRECTED_REPLACEMENT_PROBED_BEFORE_FREEZE",
+    "frozenForW13Generation2": true,
+    "failoverPolicyRemainsDeclared": true
+  },
+  "selectionStatus": "FROZEN_GENERATION_2_FIRST_VALID_PROVIDER",
+  "generation1Preserved": {
+    "policyFingerprint": "sha256:a4865dbb6aea4114bfa8bdc9",
+    "selectedProvider": "opencode-go/glm-5.3",
+    "receipt": ".agent/tasks/nightwatch-provider-resilient-current-yield-w13-v1/evidence/provider-selection-receipt.json",
+    "runsExecuted": [
+      "w13-broad-all-repositories-1",
+      "w13-repository-01",
+      "w13-repository-02",
+      "w13-repository-03"
+    ],
+    "disposition": "preserved historical evidence; no generation-1 run is re-run or rewritten"
+  },
+  "investigationStarted": false
+}

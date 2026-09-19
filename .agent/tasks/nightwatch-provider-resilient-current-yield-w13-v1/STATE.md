@@ -35,16 +35,16 @@ policy exhaustion before sufficient investigation is `PROVIDER_BLOCKED`.
 
 Milestone ID: M12
 Milestone status: IN_PROGRESS
-What is being attempted: execute the frozen run matrix — the broad
-all-eight-repository run first, then the eight repository-scoped runs in
-registry order — under the frozen provider-resilience policy and evaluation
-freeze, recording per-provider attribution, transitions, source investigation
-breadth, candidates, reproduction attempts, and termination classes for every
-run.
-Next action: build the run harness that drives the frozen matrix with policy
-governed failover and per-run receipts, then execute the broad run, then the
-scoped runs in registry order. No result-driven provider reselection, scope
-widening, or budget tuning is permitted.
+What is being attempted: execute the remaining frozen scoped runs
+(repository-04 through repository-08) under the OWNER-DIRECTED generation-2
+provider-resilience policy (D-140): first candidate
+`opencode-go/muse-spark-1.3-contributor` at XHIGH effort, generation-1
+receipts preserved and never re-run. The broad run and scoped runs 01-03
+remain generation-1 historical evidence.
+Next action: commit the generation-2 amendment checkpoint, then execute
+repository-04 through repository-08 in registry order with the frozen
+wall-clock ceilings, then reassess whether generation-1 scoped runs 01-03
+warrant a generation-2 re-run for matrix coherence.
 
 ## Completed Milestones
 
@@ -134,18 +134,17 @@ widening, or budget tuning is permitted.
 
 ## Work In Progress
 
-M12 is building the run harness and preparing the broad run; no investigative
-call has been made yet.
+Generation-1 runs are preserved (broad valid at 45 calls; scoped 01-03 with
+recorded failover transitions). The owner-directed generation-2 policy and
+re-freeze are committed; runs 04-08 are next.
 
 ## Exact Next Action
 
-Build the run harness under the task `harness/` directory that drives each
-frozen matrix run with `runLocalCliCampaign` under the frozen policy,
-classifies provider failures with the ten-member taxonomy, applies the
-deterministic failover replay, enforces the frozen wall-clock ceiling, and
-emits a sanitized run receipt with per-provider attribution; then execute the
-broad run, then the eight scoped runs in registry order. Do not tune scope,
-budgets, providers, or stopping rules after results appear.
+Commit the generation-2 amendment checkpoint (policy fingerprint
+`sha256:1efa45195fc018aa22677336`, freeze fingerprint
+`sha256:10299c668795e69904f4600b`), then execute repository-04 through
+repository-08 with the run harness, then run the aggregation/safety/doc/
+validation close-out. Generation-1 receipts are never modified.
 
 ## Files Changed
 

@@ -4999,3 +4999,32 @@ the same enforced concept, and renaming would have preserved two authorities
 for one stopping behaviour. W12's freeze artifact, task state, and verdict
 remain byte-for-byte historical evidence; only W13 and later freezes are bound
 by this decision.
+
+## D-140 — owner-directed mid-wave provider replacement (W13 generation 2)
+
+Recorded 2026-09-20 (W13 Phase B, `nightwatch-provider-resilient-current-yield-w13-v1`).
+
+The W13 generation-1 provider order was frozen before probing at fingerprint
+`sha256:a4865dbb6aea4114bfa8bdc9` with `opencode-go/glm-5.3` first. Its first
+four runs then exposed two measured facts: the `opencode-go` namespace
+degraded mid-wave (the broad run held 37 of 45 calls valid with 8 provider
+failures; scoped runs 01–03 failed over glm-5.3 → kimi-k3 → qwen3.8-max), and
+the engine's shared consecutive-failure ceiling (`HOUR_1`:
+`consecutiveFailures: 6`) truncates a frozen policy whose runtime-class
+threshold is 3 after exactly two providers, so the declared five-candidate
+order cannot be fully exercised in a dead-namespace run. Both facts are
+preserved as generation-1 evidence; neither was tuned after the fact.
+
+The owner then directed an immediate halt of the `opencode-go/glm-5.3` calls
+and their replacement with `opencode-go/muse-spark-1.3-contributor` at XHIGH
+reasoning effort. Decision: a generation-2 provider-resilience policy replaces
+the first candidate with the owner-directed model and removes glm-5.3 from the
+failover order entirely (no further calls), keeps the remaining declared
+candidates in their frozen relative order, and is fingerprinted at
+`sha256:1efa45195fc018aa22677336` after one valid structured probe. The W13
+evaluation freeze is re-committed at `sha256:10299c668795e69904f4600b` binding
+generation 2 to runs 04–08. Generation-1 receipts
+(`w13-broad-all-repositories-1`, `w13-repository-01..03`) remain preserved and
+are never re-run or rewritten. No scope, budget, admission, leakage, novelty,
+or reproduction dimension changed: the amendment is provider identity only,
+per the owner's explicit instruction.

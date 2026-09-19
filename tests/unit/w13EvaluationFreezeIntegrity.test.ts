@@ -44,9 +44,12 @@ test.describe('W13 evaluation freeze integrity', () => {
     const policy = JSON.parse(fs.readFileSync(POLICY_PATH, 'utf8')) as Record<string, unknown>;
     const provider = freeze.provider as Record<string, unknown>;
     expect(provider.policyFingerprint).toBe(computeProviderResilienceFingerprint(policy));
-    expect(provider.selectedProvider).toBe('opencode-go/glm-5.3');
-    expect(provider.selectionRule).toBe('FIRST_PASS_OF_FROZEN_ORDER');
+    expect(provider.selectedProvider).toBe('opencode-go/muse-spark-1.3-contributor');
+    expect(provider.selectionRule).toBe('OWNER_DIRECTED_REPLACEMENT_PROBED_BEFORE_FREEZE');
     expect(provider.failoverRemainsDeclared).toBe(true);
+    expect(provider.policyGeneration).toBe(2);
+    expect(policy.candidates[0]).toMatchObject({ provider: 'opencode-go/muse-spark-1.3-contributor' });
+    expect(policy.candidates.map((candidate) => candidate.provider)).not.toContain('opencode-go/glm-5.3');
   });
 
   test('a mutation to any bound freeze dimension changes the fingerprint and is named', () => {

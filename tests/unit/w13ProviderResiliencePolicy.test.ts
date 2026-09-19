@@ -109,7 +109,7 @@ test.describe('W13 provider-resilience policy', () => {
     const second = replayProviderFailures(policy, events);
     expect(JSON.stringify(first)).toBe(JSON.stringify(second));
     expect(first.transitions.map((transition) => transition.from)).toEqual([
-      'opencode-go/glm-5.3',
+      'opencode-go/muse-spark-1.3-contributor',
       'opencode-go/kimi-k3',
       'opencode-go/qwen3.8-max',
       'opencode-go/minimax-m3',
@@ -124,14 +124,14 @@ test.describe('W13 provider-resilience policy', () => {
     const replay = replayProviderFailures(policy, Array.from({ length: 6 }, (_, index) => ({ class: 'LOCAL_CLI_FAILURE' as const, atEvent: index + 1 })));
     expect(replay.transitions).toEqual([]);
     expect(replay.exhausted).toBe(false);
-    expect(replay.activeProvider).toBe('opencode-go/glm-5.3');
+    expect(replay.activeProvider).toBe('opencode-go/muse-spark-1.3-contributor');
   });
 
   test('recovery happens only when the policy explicitly permits it', () => {
     const policy = clone(committedPolicy());
     (policy.failover as unknown as { recovery: { permitted: boolean; providers?: string[]; condition?: string } }).recovery = {
       permitted: true,
-      providers: ['opencode-go/glm-5.3'],
+      providers: ['opencode-go/muse-spark-1.3-contributor'],
       condition: 'explicit test-only recovery clause',
     };
     (policy.failover as unknown as { maxTransitions: number }).maxTransitions = 3;
@@ -145,7 +145,7 @@ test.describe('W13 provider-resilience policy', () => {
     const replay = replayProviderFailures(policy, events);
     const recovery = replay.transitions.find((transition) => transition.reason === 'RECOVERY_EXPLICIT_POLICY');
     expect(recovery).toBeDefined();
-    expect(recovery?.to).toBe('opencode-go/glm-5.3');
+    expect(recovery?.to).toBe('opencode-go/muse-spark-1.3-contributor');
   });
 
   test('malformed policies and envelope disagreement are refused', () => {
@@ -155,7 +155,7 @@ test.describe('W13 provider-resilience policy', () => {
     expect(validateProviderResiliencePolicy(unknownClass).ok).toBe(false);
 
     const duplicate = clone(base);
-    (duplicate.candidates as unknown as { provider: string }[])[1]!.provider = 'opencode-go/glm-5.3';
+    (duplicate.candidates as unknown as { provider: string }[])[1]!.provider = 'opencode-go/muse-spark-1.3-contributor';
     expect(validateProviderResiliencePolicy(duplicate).ok).toBe(false);
 
     const badRecovery = clone(base);
