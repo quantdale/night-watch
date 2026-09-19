@@ -16,7 +16,7 @@ Phase A must close every locally closable W12 residual before Phase B freezes
 a provider-resilience policy and executes the fixed broad-plus-eight-scoped
 matrix.
 Current milestone: M9 — Phase A closure validation checkpoint
-Next action: run the Phase A closure suite (focused W13 residual suites,
+Next action: run the Phase A closure suite (focused residual suites,
 typecheck, typecheck:bin, hardening:check, hardening:rules, agent:check,
 handoff:check, project:check, workspace:check, session:check,
 validation:universe), verify every register entry resolves to PROVEN,
