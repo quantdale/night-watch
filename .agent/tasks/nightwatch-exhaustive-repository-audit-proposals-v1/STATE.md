@@ -11,7 +11,7 @@ Last substantive checkpoint SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-exhaustive-repository-ef157f7a
-Last checkpoint: 2026-09-20 — M0 complete; M1 admitted NW-AUD-001, NW-AUD-004, and NW-AUD-005 and produced strict-valid dedicated CI action-integrity, exact runtime-toolchain, and crash-consistent retention-receipt proposals.
+Last checkpoint: 2026-09-20 — M0 complete; M1 admitted NW-AUD-001, NW-AUD-004, NW-AUD-005, and NW-AUD-006 and produced strict-valid dedicated CI action-integrity, exact runtime-toolchain, crash-consistent retention-receipt, and session-mutation-authority proposals.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
@@ -40,15 +40,16 @@ What is being attempted: complete repository topology, dependency, configuration
 - NW-AUD-001: PROPOSED (Medium/High-confidence); dedicated change `nightwatch-ci-action-supply-chain-integrity-v1` is 4/4 complete and strict-valid.
 - NW-AUD-004: PROPOSED (Medium/High-confidence); dedicated change `nightwatch-exact-runtime-toolchain-identity-v1` is 4/4 complete and strict-valid.
 - NW-AUD-005: PROPOSED (Medium/High-confidence); dedicated change `nightwatch-retention-crash-consistent-receipts-v1` is 4/4 complete and strict-valid.
+- NW-AUD-006: PROPOSED (High/High-confidence); dedicated change `nightwatch-session-mutation-authority-binding-v1` is 4/4 complete and strict-valid.
 - NW-AUD-002: DUPLICATE of production-completion tasks 15.7/15.11; NW-AUD-003: NOT_AN_ISSUE after validation-universe PASS with zero unclassified checks.
 
 ## Work In Progress
 
-M1 has covered package/lock/config topology, root TypeScript/Playwright configuration, the executable quality gate, validation-universe classification, dependency/lane records, the GitHub workflow/hardening seam, the clean-checkout toolchain/receipt path, and the evidence-retention apply/receipt path. Remaining M1 work is the rest of `bin/`, generators, environment configuration, session/release/checkpoint mechanics, and cross-file config schema ownership.
+M1 has covered package/lock/config topology, root TypeScript/Playwright configuration, the executable quality gate, validation-universe classification, dependency/lane records, the GitHub workflow/hardening seam, the clean-checkout toolchain/receipt path, the evidence-retention apply/receipt path, and C-00 session mutator authority. Remaining M1 work is the rest of `bin/`, generators, environment configuration, release/checkpoint mechanics, and cross-file config schema ownership.
 
 ## Exact Next Action
 
-Continue M1 with a bounded inventory of all `bin/` entry points and library ownership, environment-variable/config readers, generator/write surfaces, and release/session/checkpoint commands; inspect highest-authority/mutating seams first and record each candidate or clean disposition in `audit.md`.
+Continue M1 with a bounded inventory of remaining `bin/` entry points and library ownership, environment-variable/config readers, generator/write surfaces, and release/checkpoint commands; inspect highest-authority/mutating seams first and record each candidate or clean disposition in `audit.md`.
 
 ## Files Changed
 
@@ -60,6 +61,7 @@ Continue M1 with a bounded inventory of all `bin/` entry points and library owne
 | `openspec/changes/nightwatch-ci-action-supply-chain-integrity-v1/` | NW-AUD-001 implementation-ready remediation proposal | complete planning artifact |
 | `openspec/changes/nightwatch-exact-runtime-toolchain-identity-v1/` | NW-AUD-004 implementation-ready remediation proposal | complete planning artifact |
 | `openspec/changes/nightwatch-retention-crash-consistent-receipts-v1/` | NW-AUD-005 implementation-ready remediation proposal | complete planning artifact |
+| `openspec/changes/nightwatch-session-mutation-authority-binding-v1/` | NW-AUD-006 implementation-ready remediation proposal | complete planning artifact |
 
 ## Validation Ledger
 
@@ -92,6 +94,16 @@ Command: `openspec validate nightwatch-retention-crash-consistent-receipts-v1 --
 Result: PASS
 When: 2026-09-20
 Relevant failure/output summary: proposal, design, retention-transaction-auditability spec, and tasks are 4/4 complete/apply-ready.
+
+Command: canonical-CWD `release --root <live-session> --dry-run`; canonical-CWD `integrate --root <live-session> --dry-run`
+Result: REPRODUCED WITHOUT MUTATION
+When: 2026-09-20
+Relevant failure/output summary: the first planned replacement of this live ownership record; the second planned a fast-forward from origin/main to this session HEAD. Dry-run performed no record, ref, fetch, or push mutation.
+
+Command: `openspec validate nightwatch-session-mutation-authority-binding-v1 --strict`
+Result: PASS
+When: 2026-09-20
+Relevant failure/output summary: proposal, design, concurrency-workspace-hardening delta spec, and tasks are 4/4 complete/apply-ready.
 
 Command: `npm run agent:check`
 Result: PASS with 41 pre-existing/expected warnings and zero strict-v2 errors
@@ -130,6 +142,14 @@ Evidence/constraint: retention lines 304-315, 392-422, and 453-460; current
 tests cover only successful finalization; recovery must preserve uncertainty
 rather than re-delete or infer historical success.
 
+Decision: admit NW-AUD-006 at High severity and create a dedicated change.
+Reason: a foreign local checkout can select a live session record, release its
+owner, or reach its Git push path, directly defeating C-00's core coordination
+and integration boundary; same-OS-account access keeps it below Critical.
+Evidence/constraint: session parser/dispatcher and release/integrate paths,
+plus canonical-CWD zero-mutation dry runs against this live session; the plan
+uses public freshness/intent binding and does not invent a local secret.
+
 ## Discoveries
 
 - Registered topology has room for this worktree under the repository's maximum of eight.
@@ -143,6 +163,9 @@ rather than re-delete or infer historical success.
 - Evidence retention overwrites one receipt after all removals and treats
   finalization failure as a successful process result; there is no
   crash/concurrency/recovery test contract. This is NW-AUD-005.
+- Session lifecycle mutators authorize an arbitrary selected root, not the
+  invoking checkout/session; safe dry runs proved foreign release and
+  integration reachability. This is NW-AUD-006.
 
 ## Blockers
 
@@ -166,6 +189,6 @@ NONE
 
 ## Completion Snapshot
 
-Not complete; M1 is active. Three issue-specific changes are strict-valid, but
+Not complete; M1 is active. Four issue-specific changes are strict-valid, but
 remaining M1 surfaces and milestones M2-M10 are still required before any
 exhaustive conclusion.
