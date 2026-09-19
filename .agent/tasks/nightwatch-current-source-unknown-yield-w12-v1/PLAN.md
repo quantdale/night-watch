@@ -93,7 +93,8 @@ metrics from receipts, and adjudicate novelty only after admission.
 - Objective: execute each frozen repository-scoped run in registry order.
 - Acceptance: all eight are attempted or categorized by a declared blocker;
   Ouchan's only extended budget is unchanged; no result-driven tuning.
-- Status: IN_PROGRESS
+- Status: COMPLETE — all eight scoped runs recorded; runs 01–08 were
+  provider-blocked before source actions.
 
 ### M6 — Mechanical reproduction and admission closeout
 

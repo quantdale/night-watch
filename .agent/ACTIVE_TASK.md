@@ -14,17 +14,18 @@ failures, 2 candidates, 0 qualifying reproductions, and 2
 `alphauslabs/blue-sdk-go`, `alphauslabs/blueapi`, and
 `alphauslabs/blueinternal` after 6 runtime timeouts each with zero response
 bytes. Scoped runs 04–07 (`grpc-chunk-parser`, `ouchan`, `ripple-api`,
-`ripple-ui`) ended after 6 nonzero exits each with 276 stderr bytes and zero
-response bytes; raw checkpoints and unchanged sibling identities are preserved.
+`ripple-ui`, and `wave-api`) ended after 6 nonzero exits each with 276 stderr
+bytes and zero response bytes; raw checkpoints and unchanged sibling identities
+are preserved.
 W11 is preserved as `PARTIAL — BLOCKED`: its historical arm measured strict
 EXACT `0/13` with zero leakage, while its unknown arm was invalid on provider
 timeout and produced no yield. W12 is a distinct owner-authorized successor;
 its provider is frozen at `opencode-go/glm-5.3`, and W12 remains in the fixed
 scoped matrix.
-Current milestone: M5 — repository-scoped campaign matrix
-Next action: run `w12-repository-08` for `mobingilabs/wave-api` with the same
-provider and `--max-turns=6` under the declared 30-minute outer ceiling;
-record its machine receipt and after-run sibling identity before aggregation.
+Current milestone: M6 — mechanical reproduction and admission closeout
+Next action: derive the candidate, reproduction, refusal, and admission
+populations from the broad and eight scoped receipts, then record that no
+post-admission novelty adjudication is applicable.
 Authorization class: CURRENT_SOURCE_UNKNOWN_YIELD_W12_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2

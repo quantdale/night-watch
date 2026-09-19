@@ -49,13 +49,13 @@
 
 ## 5. Repository-scoped campaign matrix
 
-- [ ] 5.1 Execute the scoped run for each admitted repository in stable
+- [x] 5.1 Execute the scoped run for each admitted repository in stable
       registry order using unchanged policy and provider identity.
-- [ ] 5.2 Use only the predeclared Ouchan 60-minute exception and 30-minute
+- [x] 5.2 Use only the predeclared Ouchan 60-minute exception and 30-minute
       budgets for the remaining seven repositories.
-- [ ] 5.3 Continue after candidates and preserve candidates, reproductions,
+- [x] 5.3 Continue after candidates and preserve candidates, reproductions,
       refusals, admissions, and terminations without success-based tuning.
-- [ ] 5.4 Capture after-run sibling identities and current-source checks;
+- [x] 5.4 Capture after-run sibling identities and current-source checks;
       classify any drift as a safety/currentness failure.
 
 ## 6. Mechanical reproduction and admission closeout

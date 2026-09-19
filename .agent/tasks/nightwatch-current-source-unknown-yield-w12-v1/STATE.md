@@ -32,14 +32,13 @@ evidence-bounded W12 verdict.
 
 ## Current Milestone
 
-Milestone ID: M5
+Milestone ID: M6
 Milestone status: IN_PROGRESS
-What is being attempted: execute the eight frozen repository-scoped campaigns
-in registry order with the same provider and unchanged policy.
-Next action: run `w12-repository-07` for `mobingilabs/ripple-ui` through the
-ordinary bounded local campaign path with `--duration=1h` and an external
-30-minute wall ceiling, then capture its result and after-run sibling identity
-before repository 08.
+What is being attempted: close the candidate, reproduction, refusal, and
+admission populations from the broad and all eight scoped receipts.
+Next action: derive the aggregate candidate/admission populations, preserve
+provider-blocked runs outside the zero-yield denominator, and record the
+post-admission novelty result.
 
 ## Completed Milestones
 
@@ -102,19 +101,25 @@ before repository 08.
   yield denominator. Its sanitized receipt is `evidence/scoped-07-run-result.json`
   and its after-run identity receipt is
   `evidence/sibling-identity-after-scoped-07.json`.
+- Scoped 08 complete: `w12-repository-08` for `mobingilabs/wave-api` was
+  provider-blocked after 6 `REASONER_NONZERO_EXIT` failures, with 276 stderr
+  bytes, zero response bytes, zero source actions, zero candidates, and no
+  yield denominator. Its sanitized receipt is `evidence/scoped-08-run-result.json`
+  and its after-run identity receipt is
+  `evidence/sibling-identity-after-scoped-08.json`.
 
 ## Work In Progress
 
-M5 is executing the repository-scoped matrix in frozen registry order. The
-broad result and scoped runs 01–07 are recorded; no scoped run has produced a
-qualifying reproduction or admission, and no novelty class exists yet.
+M5 is complete: the broad result and all eight repository-scoped runs are
+recorded in frozen registry order. The broad run is the only valid provider
+run; scoped runs 01–08 are provider-blocked before source actions. No scoped
+run has produced a qualifying reproduction or admission.
 
 ## Exact Next Action
 
-Run `w12-repository-06` with the frozen `opencode-go/glm-5.3` provider for
-`mobingilabs/ripple-api`, `--duration=1h`, and `--max-turns=6` under the
-declared 30-minute outer ceiling. Preserve the machine result and post-run
-identity receipt; do not reselect the provider or tune the matrix.
+Derive the M6/M7 closeout from the broad and scoped receipts, preserving
+provider failure as a measurement condition rather than zero yield; then run
+the required freeze-mutation and widened-resume integrity probes.
 
 ## Files Changed
 
@@ -214,10 +219,13 @@ identity receipt; do not reselect the provider or tune the matrix.
 
 ## Blockers
 
-No categorical W12 blocker has been declared yet. The broad run's provider
-failures and the frozen/runtime provider-failure ceiling discrepancy are
-preserved for scoped-run and final-verdict reconciliation; provider failure is
-not projected as zero yield.
+The scoped matrix is categorically provider-blocked after the broad valid run:
+all eight scoped runs have zero provider response bytes and no source action.
+The broad run's provider failures and the frozen/runtime provider-failure
+ceiling discrepancy remain preserved; provider failure is not projected as
+zero yield. Final wave classification is expected to be `PARTIAL — BLOCKED`
+unless a later integrity or validation result requires the stricter `FAILED`
+class.
 
 ## Safety Events
 
@@ -245,8 +253,9 @@ authority remain permanently out of scope for this wave.
 
 ## Completion Snapshot
 
-W12 is IN_PROGRESS at M5. The broad run reached all eight repositories and
+W12 is IN_PROGRESS at M6. The broad run reached all eight repositories and
 produced 2 candidates, 0 qualifying reproductions, 0 admissions, and 2
-`MISSING_REPRODUCTION` refusals. Scoped runs 01–07 are provider-blocked with
-no source opportunity; scoped run 08, aggregation, and the final verdict
-remain open, with no novelty class applicable because no new admission exists.
+`MISSING_REPRODUCTION` refusals. Scoped runs 01–08 are provider-blocked with
+no source opportunity; aggregation, integrity proofs, governed documentation,
+validation, and the final verdict remain open. No novelty class is applicable
+because no new admission exists.
