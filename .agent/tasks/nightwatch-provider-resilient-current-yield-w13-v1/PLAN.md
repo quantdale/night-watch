@@ -155,7 +155,9 @@ from receipts, and adjudicates novelty only after admission.
 - Objective: validate and commit Phase A closure, or stop truthfully.
 - Acceptance: every register entry resolves to `PROVEN`, `BLOCKED_EXTERNAL`,
   or `OWNER_DECISION_REQUIRED`; focused and repository validation passes.
-- **Status:** NOT_STARTED
+- **Status:** COMPLETE — Phase A closure: 13/13 register entries `PROVEN`,
+  no blocking entry remains, and the full Phase A validation suite passed
+  (receipt `evidence/phase-a-closure-receipt.json`).
 
 ### M10 — Provider-resilience policy freeze
 

@@ -33,20 +33,28 @@ policy exhaustion before sufficient investigation is `PROVIDER_BLOCKED`.
 
 ## Current Milestone
 
-Milestone ID: M9
+Milestone ID: M10
 Milestone status: IN_PROGRESS
-What is being attempted: Phase A closure — run the focused Phase A
-regressions/negative probes plus `npm run typecheck`, `npm run typecheck:bin`,
-`npm run hardening:check`, `npm run hardening:rules`, `npm run agent:check`,
-`npm run handoff:check`, `npm run project:check`, `npm run workspace:check`,
-`npm run session:check`, and `npm run validation:universe`; then verify every
-residual-register entry resolves to `PROVEN`, `BLOCKED_EXTERNAL`, or an
-explicit `OWNER_DECISION_REQUIRED` and commit the Phase A closure checkpoint,
-or stop with `PARTIAL — BLOCKED` if a blocking entry remains.
-Next action: run the Phase A closure validation suite and the register
-resolution check, then commit the closure checkpoint.
+What is being attempted: author the machine-readable provider-resilience
+policy (ordered candidates, CLI/schema requirements, probe/runtime timeouts,
+retry counts, failover-eligible classes, consecutive-failure thresholds,
+maximum transitions, recovery permission, exhaustion behavior, derived budget
+envelope), implement the canonical fingerprint, mutation detection, and
+fail-closed resume, prove replay determinism and single-field mutation
+detection with negative probes, then probe the candidates in frozen order and
+freeze the first healthy one.
+Next action: write the policy document and its module/tests, run the negative
+probes, then probe the declared candidates in order and commit the freeze
+checkpoint before any investigative call.
 
 ## Completed Milestones
+
+- **M9 COMPLETE**: Phase A closure. All 13 residual-register entries are
+  `PROVEN` with no blocking entry unresolved; the full Phase A validation
+  suite passed (32/32 focused tests, typecheck, typecheck:bin reporting mode,
+  hardening:check, hardening:rules 83/94/94/0, agent:check, handoff:check,
+  project:check, workspace:check, session:check, validation:universe).
+  Receipt: `evidence/phase-a-closure-receipt.json`.
 
 - **M8 COMPLETE**: R-09/R-10/R-11 `PROVEN`. Group 12 items 12.7/12.8/12.11/
   12.12 carry appended W13 Phase A annotations with predecessor text
@@ -112,19 +120,18 @@ resolution check, then commit the closure checkpoint.
 
 ## Work In Progress
 
-M9 is running the Phase A closure validation; no closure checkpoint is
-committed yet.
+M10 is authoring the provider-resilience policy and its fingerprint/probe
+machinery; no candidate has been probed yet.
 
 ## Exact Next Action
 
-Run the Phase A closure suite: the focused W13 residual suites plus
-`npm run typecheck`, `npm run typecheck:bin`, `npm run hardening:check`,
-`npm run hardening:rules`, `npm run agent:check`, `npm run handoff:check`,
-`npm run project:check`, `npm run workspace:check`, `npm run session:check`,
-and `npm run validation:universe`; verify every register entry resolves to
-`PROVEN`, `BLOCKED_EXTERNAL`, or `OWNER_DECISION_REQUIRED`; commit the Phase A
-closure checkpoint. Do not probe any provider before the Phase B policy
-freeze.
+Author `provider-resilience-policy.json` and the policy module (canonical
+fingerprint, structural validation, field-level mutation diff, fail-closed
+resume, deterministic failover replay); add the negative probes (fixed
+failure-sequence replay determinism, single-field mutation, mutated-policy
+resume refusal); then probe the candidates strictly in the frozen order with
+`callPhase: PROBE` and commit the freeze checkpoint before the first
+investigative call.
 
 ## Files Changed
 

@@ -15,14 +15,12 @@ single frozen provider. W13 is a distinct owner-authorized successor whose
 Phase A must close every locally closable W12 residual before Phase B freezes
 a provider-resilience policy and executes the fixed broad-plus-eight-scoped
 matrix.
-Current milestone: M9 — Phase A closure validation checkpoint
-Next action: run the Phase A closure suite (focused residual suites,
-typecheck, typecheck:bin, hardening:check, hardening:rules, agent:check,
-handoff:check, project:check, workspace:check, session:check,
-validation:universe), verify every register entry resolves to PROVEN,
-BLOCKED_EXTERNAL, or OWNER_DECISION_REQUIRED, and commit the closure
-checkpoint. Do not probe any provider before the Phase B provider-resilience
-policy freeze is committed.
+Current milestone: M10 — provider-resilience policy freeze
+Next action: author the policy document and module (fingerprint, mutation
+diff, fail-closed resume, deterministic failover replay), run the negative
+probes, then probe the declared candidates in frozen order and commit the
+freeze checkpoint before any investigative call. Do not tune, reorder, or
+widen the experiment after results appear.
 Authorization class: PROVIDER_RESILIENT_CURRENT_YIELD_W13_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2

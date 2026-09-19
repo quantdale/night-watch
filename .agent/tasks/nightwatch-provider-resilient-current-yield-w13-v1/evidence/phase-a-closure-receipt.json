@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "nightwatch.w13-lane-receipt.v1",
+  "laneId": "PHASE_A_CLOSURE",
+  "title": "Phase A residual closure checkpoint",
+  "resolution": "PROVEN",
+  "owner": "session/nightwatch-provider-resilient-cu-623c6535",
+  "taskId": "nightwatch-provider-resilient-current-yield-w13-v1",
+  "registerResolution": {
+    "entries": 13,
+    "states": {
+      "PROVEN": 13,
+      "BLOCKED_EXTERNAL": 0,
+      "OWNER_DECISION_REQUIRED": 0
+    },
+    "blockingUnresolved": "NONE"
+  },
+  "validation": [
+    { "command": "focused residual suites (w13AggregateCompleteness, w13FakeProgressGuard, w13ProviderFailureTaxonomy, w13RuntimeBudgetEnvelope, w13TruncationFloor, w12EvaluationFreezeIntegrity)", "result": "32 passed / 0 failed" },
+    { "command": "npm run typecheck", "result": "PASS" },
+    { "command": "npm run typecheck:bin", "result": "PASS reporting mode: 14/71 conforming, 1342 existing non-conformance diagnostics, 0 exemptions (unchanged baseline)" },
+    { "command": "npm run hardening:check", "result": "PASS" },
+    { "command": "npm run hardening:rules", "result": "PASS: 83 rules / 94 probes / 94 detected / 0 undetected / restored" },
+    { "command": "npm run agent:check", "result": "PASS (strict continuity errors: 0)" },
+    { "command": "npm run handoff:check", "result": "PASS" },
+    { "command": "npm run project:check", "result": "PASS at clean checkpoint" },
+    { "command": "npm run workspace:check", "result": "PASS" },
+    { "command": "npm run session:check", "result": "PASS" },
+    { "command": "npm run validation:universe", "result": "PASS" }
+  ],
+  "phaseBGate": "Phase B opens only after the provider-resilience policy fingerprint and W13 evaluation freeze are committed before the first probe (tasks 11.1-11.4, 12.1); no provider call has been made in this session.",
+  "privacy": { "secrets": "NONE", "customerValues": "NONE" }
+}

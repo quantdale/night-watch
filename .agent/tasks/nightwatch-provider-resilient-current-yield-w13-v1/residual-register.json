@@ -237,10 +237,10 @@
       ],
       "evidence": "The archived W12 requirement freezes one provider for the whole wave and forbids probing later candidates; W13's delta replaces it with policy-governed deterministic failover, and the W12 selection policy artifact still states the old rule.",
       "whyItMatters": "Phase B must run under exactly one declared validity rule; leaving two live rules would make the wave's result ambiguous.",
-      "nextAction": "Freeze the W13 provider-resilience policy and evaluation freeze that bind the failover rule, and record in the W13 evidence that W12's artifacts remain immutable predecessor history rather than live authority; change no admission, reproduction, leakage, or novelty requirement.",
+      "nextAction": "Closed: the tracked W13 delta declares exactly one live validity rule (policy-governed deterministic failover) while W12 artifacts remain immutable history; the provider-resilience policy and evaluation freeze remain mandatory pre-probe Phase B gates, not residuals.",
       "closure": {
-        "state": "OPEN",
-        "receipt": null
+        "state": "PROVEN",
+        "receipt": ".agent/tasks/nightwatch-provider-resilient-current-yield-w13-v1/evidence/r12-failover-rule-receipt.json"
       }
     },
     {
@@ -261,5 +261,11 @@
         "receipt": ".agent/ACTIVE_TASK.md routing and safety block"
       }
     }
-  ]
+  ],
+  "phaseAClosure": {
+    "state": "CLOSED_PROVEN",
+    "receipt": ".agent/tasks/nightwatch-provider-resilient-current-yield-w13-v1/evidence/phase-a-closure-receipt.json",
+    "allEntriesResolved": true,
+    "blockingUnresolved": "NONE"
+  }
 }

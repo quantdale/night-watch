@@ -127,16 +127,16 @@
 
 ## 10. Phase A closure checkpoint
 
-- [ ] 10.1 Run focused Phase A regressions/negative probes plus
+- [x] 10.1 Run focused Phase A regressions/negative probes plus
       `npm run typecheck`, `npm run typecheck:bin`,
       `npm run hardening:check`, `npm run hardening:rules`,
       `npm run agent:check`, `npm run handoff:check`,
       `npm run project:check`, `npm run workspace:check`,
       `npm run session:check`, and `npm run validation:universe`.
-- [ ] 10.2 Verify every residual register entry now resolves to `PROVEN`,
+- [x] 10.2 Verify every residual register entry now resolves to `PROVEN`,
       `BLOCKED_EXTERNAL`, or an explicit `OWNER_DECISION_REQUIRED`
       classification, and commit the Phase A closure checkpoint.
-- [ ] 10.3 If any entry remains `LOCAL_FIX_REQUIRED` or blocks Phase B by
+- [x] 10.3 If any entry remains `LOCAL_FIX_REQUIRED` or blocks Phase B by
       its own classification, STOP here and report `PARTIAL — BLOCKED`
       rather than opening Phase B on top of it.
 
