@@ -58,6 +58,23 @@ validation:universe, campaign:synthetic, npm test, gate:local, gate:clean).
   Validation: `agent:check`, `handoff:check`, `project:check`,
   `workspace:check`, `session:check`, `hardening:check` all PASS on the
   committed checkpoint.
+- M2 — duplicate-work map: mechanical lane/manifest/file-set mapping with
+  digest-verified overlaps and the five-class classification, committed as
+  `.agent/tasks/nightwatch-test-infrastructure-performance-v1/evidence/duplicate-work-map.{json,md}`
+  by `harness/duplicate-work-map.mjs`. Measured: universe 379 files; synthetic
+  105; semantic 149; owner-provenance 3; 257 files execute twice when
+  `npm test` and `gate:local` both run, classified
+  `REQUIRED_INDEPENDENT_REEXECUTION` (authority separation), with
+  `agent:check`+`agent:audit` shared-scan and `loadTypeScriptModules`
+  cross-lane compilation recorded as safe reuse candidates.
+- M3 — execution classes: pure detector plus declaration authority
+  (`src/core/validation/executionClasses.ts`,
+  `bin/validation-execution-classes.mjs`,
+  `config/validation-execution-classes.v1.json`). 380 tracked tests classified:
+  326 `PARALLEL_SAFE`, 16 `PROCESS_ISOLATED_ONLY`, 26 `SERIAL_REQUIRED`,
+  12 `MUTATION_CAMPAIGN_EXCLUSIVE`; the completeness test in `npm test` fails
+  closed on a missing, stale or weaker declaration, and the negative probes
+  prove a weakened `PARALLEL_SAFE` git-mutating declaration is rejected.
 - No other milestone is complete. W13 remains the terminal frozen predecessor.
 
 ## Work In Progress
@@ -73,10 +90,14 @@ agent are running on this host.
 
 ## Exact Next Action
 
-Stage and commit the M1 telemetry checkpoint, integrate it, then request the
-owner-quiesced benchmark window and capture the baseline for every named lane
-with load receipts and median-of-N where needed, writing the baseline table
-and top-N slowest list under the task evidence directory.
+Implement M4: the pure deterministic shard planner plus the shard runner
+(`bin/run-shards.mjs`) with the union/disjointness proof over the
+`playwright test --list` universe, the exclusive group for
+`SERIAL_REQUIRED`/`MUTATION_CAMPAIGN_EXCLUSIVE` files, a validated bounded
+`NIGHTWATCH_TEST_WORKERS` override, and its focused tests. The owner-quiesced
+heavy baseline (campaign:synthetic, npm test, gate:local, gate:clean) is still
+pending the owner's quiescence confirmation and runs before any default worker
+count is fixed.
 
 ## Files Changed
 
