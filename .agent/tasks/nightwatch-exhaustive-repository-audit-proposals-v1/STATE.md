@@ -11,7 +11,7 @@ Last substantive checkpoint SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-exhaustive-repository-ef157f7a
-Last checkpoint: 2026-09-20 — M0 complete; M1 admitted NW-AUD-001, NW-AUD-004, NW-AUD-005, NW-AUD-006, and NW-AUD-007 and produced five strict-valid issue-specific remediation proposals.
+Last checkpoint: 2026-09-20 — M0 complete; M1 admitted NW-AUD-001, NW-AUD-004, NW-AUD-005, NW-AUD-006, NW-AUD-007, and NW-AUD-009 and produced six strict-valid issue-specific remediation proposals.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
@@ -42,15 +42,16 @@ What is being attempted: complete repository topology, dependency, configuration
 - NW-AUD-005: PROPOSED (Medium/High-confidence); dedicated change `nightwatch-retention-crash-consistent-receipts-v1` is 4/4 complete and strict-valid.
 - NW-AUD-006: PROPOSED (High/High-confidence); dedicated change `nightwatch-session-mutation-authority-binding-v1` is 4/4 complete and strict-valid.
 - NW-AUD-007: PROPOSED (Medium/High-confidence); dedicated change `nightwatch-change-shadow-offline-runtime-integrity-v1` is 4/4 complete and strict-valid.
+- NW-AUD-009: PROPOSED (Medium/High-confidence); dedicated change `nightwatch-local-report-publication-integrity-v1` is 4/4 complete and strict-valid.
 - NW-AUD-002: DUPLICATE of production-completion tasks 15.7/15.11; NW-AUD-003: NOT_AN_ISSUE after validation-universe PASS with zero unclassified checks; NW-AUD-008: DUPLICATE of the production-completion operator CLI contract.
 
 ## Work In Progress
 
-M1 has covered package/lock/config topology, root TypeScript/Playwright configuration, the executable quality gate, validation-universe classification, dependency/lane records, the GitHub workflow/hardening seam, the clean-checkout toolchain/receipt path, the evidence-retention apply/receipt path, C-00 session mutator authority, and the change-shadow compiler/bootstrap path. Remaining M1 work is the rest of `bin/`, report/generator publication, environment configuration, release/checkpoint mechanics, and cross-file config schema ownership.
+M1 has covered package/lock/config topology, root TypeScript/Playwright configuration, the executable quality gate, validation-universe classification, dependency/lane records, the GitHub workflow/hardening seam, the clean-checkout toolchain/receipt path, the evidence-retention apply/receipt path, C-00 session mutator authority, the change-shadow compiler/bootstrap path, and ignored report/receipt publication. Remaining M1 work is the rest of `bin/`, environment configuration, release/checkpoint mechanics, and cross-file config schema ownership.
 
 ## Exact Next Action
 
-Continue M1 with the remaining report/generator publication, release/checkpoint, and schema-renderer surfaces; inspect path/symlink confinement, atomicity, stale authority, and false-success behavior first and record each candidate or clean disposition in `audit.md`.
+Continue M1 with the remaining release/checkpoint and schema-renderer surfaces; inspect path/symlink confinement, atomicity, stale authority, and false-success behavior first and record each candidate or clean disposition in `audit.md`.
 
 ## Files Changed
 
@@ -64,6 +65,7 @@ Continue M1 with the remaining report/generator publication, release/checkpoint,
 | `openspec/changes/nightwatch-retention-crash-consistent-receipts-v1/` | NW-AUD-005 implementation-ready remediation proposal | complete planning artifact |
 | `openspec/changes/nightwatch-session-mutation-authority-binding-v1/` | NW-AUD-006 implementation-ready remediation proposal | complete planning artifact |
 | `openspec/changes/nightwatch-change-shadow-offline-runtime-integrity-v1/` | NW-AUD-007 implementation-ready remediation proposal | complete planning artifact |
+| `openspec/changes/nightwatch-local-report-publication-integrity-v1/` | NW-AUD-009 implementation-ready remediation proposal | complete planning artifact |
 
 ## Validation Ledger
 
@@ -116,6 +118,16 @@ Command: `openspec validate nightwatch-change-shadow-offline-runtime-integrity-v
 Result: PASS
 When: 2026-09-20
 Relevant failure/output summary: proposal, design, source-analysis-runtime-hardening delta spec, and tasks are 4/4 complete/apply-ready.
+
+Command: static inspection of the seven ignored report/receipt writers, schema declarations, current tests, and existing safe publication primitives
+Result: SUBSTANTIATED WITHOUT MUTATING AN ARTIFACT PATH
+When: 2026-09-20
+Relevant failure/output summary: all seven writers bypass shared safe publication; current reports truncate in place and can follow links; topology names can collide; existing changes do not own the complete boundary.
+
+Command: `openspec validate nightwatch-local-report-publication-integrity-v1 --strict`
+Result: PASS
+When: 2026-09-20
+Relevant failure/output summary: proposal, design, local-report-publication-integrity spec, and tasks are 4/4 complete/apply-ready.
 
 Command: `npm run agent:check`
 Result: PASS with 41 pre-existing/expected warnings and zero strict-v2 errors
@@ -171,6 +183,17 @@ local TypeScript, help-only process coverage, and explicit non-ownership in
 existing loader/certification changes; the plan preserves full-program `tsc`
 semantics and does not duplicate generic CLI work.
 
+Decision: admit NW-AUD-009 at Medium severity and create a dedicated change.
+Reason: explicit local commands and owner-selected output constrain ordinary
+reachability, but direct publication can overwrite an external file through a
+prepared link, destroy the last complete report, or replace certification
+history under collision; a complete seven-writer denominator needs one
+enforced contract.
+Evidence/constraint: direct `mkdirSync`/`writeFileSync` paths in six report
+commands and gate topology, ignored artifact policy, persisted/private schema
+declarations, millisecond-only topology names, and no existing active change
+owning this complete boundary.
+
 ## Discoveries
 
 - Registered topology has room for this worktree under the repository's maximum of eight.
@@ -192,6 +215,9 @@ semantics and does not duplicate generic CLI work.
   reach automatic package resolution before source/report work. This is
   NW-AUD-007. Its ignored absolute output-path and ungoverned argument behavior
   are NW-AUD-008, already owned by the production-completion CLI contract.
+- Six current-report paths and gate-topology history write ignored artifacts
+  directly without common schema-before-mutation, safe-path, atomic-replace,
+  or immutable no-replace enforcement. This is NW-AUD-009.
 
 ## Blockers
 
@@ -215,6 +241,6 @@ NONE
 
 ## Completion Snapshot
 
-Not complete; M1 is active. Five issue-specific changes are strict-valid, but
+Not complete; M1 is active. Six issue-specific changes are strict-valid, but
 remaining M1 surfaces and milestones M2-M10 are still required before any
 exhaustive conclusion.

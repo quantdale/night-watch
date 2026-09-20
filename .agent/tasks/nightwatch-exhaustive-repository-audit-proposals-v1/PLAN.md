@@ -121,6 +121,7 @@ Prefer the narrowest decisive existing tests during exploration. Validate each O
 - 2026-09-20 — Decision: partition evidence-retention transaction auditability into its own remediation change; reason: irreversible deletion occurs between a nonterminal empty receipt and a best-effort final overwrite, so crashes and final-write failures can destroy or misreport required audit truth; evidence: NW-AUD-005; consequence: `nightwatch-retention-crash-consistent-receipts-v1` specifies append-only prepared/outcome/terminal records, exclusive apply, honest recovery, and non-success without terminal truth.
 - 2026-09-20 — Decision: partition C-00 session mutation authority into its own remediation change; reason: arbitrary-root mutators authorize the selected record rather than the invoking checkout, reaching both live-owner release and foreign integration; evidence: NW-AUD-006 and zero-mutation canonical-to-session dry runs; consequence: `nightwatch-session-mutation-authority-binding-v1` strengthens the published concurrency/workspace capability without claiming hostile same-user isolation.
 - 2026-09-20 — Decision: partition change-shadow offline compiler bootstrap into its own remediation change; reason: the intentionally separate full-program compiler path invokes remote-capable `npx` and mutates a fixed derivative root before compiler admission, while completed loader and certification changes do not own arbitrary developer-command bootstrap; evidence: NW-AUD-007; consequence: `nightwatch-change-shadow-offline-runtime-integrity-v1` strengthens source-analysis runtime hardening without duplicating generic CLI contracts.
+- 2026-09-20 — Decision: partition local ignored-report publication integrity into its own remediation change; reason: seven report/receipt writers share unsafe direct publication but require two distinct replacement authorities, and neither retention journals nor generic CLI contracts own this boundary; evidence: NW-AUD-009; consequence: `nightwatch-local-report-publication-integrity-v1` introduces a complete writer inventory, atomic current replacement, immutable topology receipts, and non-vacuous bypass enforcement without implementation.
 
 ## Discoveries
 
@@ -144,6 +145,11 @@ Prefer the narrowest decisive existing tests during exploration. Validate each O
   only process test uses the pre-compile help path. This is the fifth
   non-duplicate material finding (NW-AUD-007). Generic argument/path output
   defects on the same command are duplicate NW-AUD-008.
+- Seven ignored `artifacts/**` report/receipt writers publish through direct
+  directory creation and file writes; current reports can follow links or lose
+  the preceding complete generation, while timestamp-only gate-topology
+  receipts can overwrite history. This is the sixth non-duplicate material
+  finding (NW-AUD-009).
 
 ## Deferred Work
 
