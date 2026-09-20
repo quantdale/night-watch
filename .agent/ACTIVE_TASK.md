@@ -15,13 +15,11 @@ permits, parallelizes independent validation only where correctness is
 mechanically preserved, adds fast development and milestone lanes that are
 explicitly not certification, keeps the authoritative lanes authoritative and
 measurably faster, and closes with before/after evidence and one verdict.
-Current milestone: M0 — governed activation and C-00 ownership
-Next action: run the activation validation set (`npm run agent:check`,
-`npm run handoff:check`, `npm run project:check`, `npm run workspace:check`,
-`npm run session:check`, `npm run hardening:check`,
-`openspec validate --all --strict`), inspect the diff and privacy surface,
-and commit the activation checkpoint. Then begin M1 (timing profiler and
-baseline) after requesting an owner-quiesced host benchmark window.
+Current milestone: M1 — timing profiler and baseline measurement
+Next action: commit the telemetry checkpoint, then capture the M1 baseline for
+every named lane inside an owner-quiesced host benchmark window, with host-load
+receipts and median-of-N where needed, writing the baseline table and top-N
+slowest list under the task evidence directory.
 Authorization class: TEST_INFRASTRUCTURE_PERFORMANCE_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
