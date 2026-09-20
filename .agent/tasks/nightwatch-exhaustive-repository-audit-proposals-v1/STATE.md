@@ -11,7 +11,7 @@ Last substantive checkpoint SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-exhaustive-repository-ef157f7a
-Last checkpoint: 2026-09-20 — M1 complete; M2 has two material findings with strict-valid auth-bundle and proxy-instance proposals; thirteen findings now map to thirteen changes.
+Last checkpoint: 2026-09-20 — M1 complete; M2 has five material findings with strict-valid containment, authentication, and privacy proposals; sixteen findings now map to sixteen changes.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
@@ -51,16 +51,18 @@ What is being attempted: audit core safety, environment/policy authorization, pr
 - NW-AUD-015: PROPOSED (Medium/High-confidence); dedicated change `nightwatch-auth-capability-bundle-transaction-integrity-v1` is 4/4 complete and strict-valid.
 - NW-AUD-016: PROPOSED (High/High-confidence); dedicated change `nightwatch-proxy-runtime-instance-attestation-v1` is 4/4 complete and strict-valid.
 - NW-AUD-017: PROPOSED (High/High-confidence); dedicated change `nightwatch-l6-qualification-proof-integrity-v1` is 4/4 complete and strict-valid.
+- NW-AUD-018: PROPOSED (High/High-confidence); dedicated change `nightwatch-authenticated-evidence-minimization-integrity-v1` is 4/4 complete and strict-valid.
+- NW-AUD-019: PROPOSED (Medium/High-confidence); dedicated change `nightwatch-private-payload-screening-structural-integrity-v1` is 4/4 complete and strict-valid.
 - NW-AUD-002: DUPLICATE of production-completion tasks 15.7/15.11; NW-AUD-003: NOT_AN_ISSUE after validation-universe PASS with zero unclassified checks; NW-AUD-008: DUPLICATE of the production-completion operator CLI contract.
 - M1 repository topology/dependencies/configuration/build/tooling: COMPLETE.
 
 ## Work In Progress
 
-M2 is active. The policy/host graph, L5 proxy resolution/server/runtime/lease surfaces, authentication lifecycle/direct/refresh/storage publication, L6 qualification/launch binding, and related tests have been traced far enough to admit NW-AUD-015, NW-AUD-016, and NW-AUD-017. Remaining M2 work must finish L6 control/lifecycle edges, auth provider/login error paths, browser-guard runtime capability claims, safety redaction/private screening, and complete denominator reconciliation. Later waves still revisit `bin/` and browser call sites by their own responsibilities.
+M2 is active. The policy/host graph, L5 proxy resolution/server/runtime/lease surfaces, authentication lifecycle/direct/refresh/storage publication, L6 qualification/launch binding, authenticated evidence redaction/persistence, private payload screening, and related tests have been traced far enough to admit NW-AUD-015 through NW-AUD-019. Remaining M2 work must finish residual L6 control/lifecycle edges, auth provider/login error paths, browser-guard runtime capability claims, host-policy reconciliation, and the complete denominator. Later waves still revisit `bin/` and browser call sites by their own responsibilities.
 
 ## Exact Next Action
 
-Complete the remaining L6 control/lifecycle and authentication provider/login/error-path inspection, resolve browser-guard/redaction/private-screening leads against outer-proxy/L6 redundancy, and reconcile every M2 source/test row before milestone closure.
+Complete the remaining L6 control/lifecycle and authentication provider/login/error-path inspection, resolve browser-guard and host-policy leads against outer-proxy/L6 redundancy, and reconcile every M2 source/test row before milestone closure.
 
 ## Files Changed
 
@@ -83,6 +85,8 @@ Complete the remaining L6 control/lifecycle and authentication provider/login/er
 | `openspec/changes/nightwatch-auth-capability-bundle-transaction-integrity-v1/` | NW-AUD-015 implementation-ready remediation proposal | complete planning artifact |
 | `openspec/changes/nightwatch-proxy-runtime-instance-attestation-v1/` | NW-AUD-016 implementation-ready remediation proposal | complete planning artifact |
 | `openspec/changes/nightwatch-l6-qualification-proof-integrity-v1/` | NW-AUD-017 implementation-ready remediation proposal | complete planning artifact |
+| `openspec/changes/nightwatch-authenticated-evidence-minimization-integrity-v1/` | NW-AUD-018 implementation-ready remediation proposal | complete planning artifact |
+| `openspec/changes/nightwatch-private-payload-screening-structural-integrity-v1/` | NW-AUD-019 implementation-ready remediation proposal | complete planning artifact |
 
 ## Validation Ledger
 
@@ -226,6 +230,26 @@ Result: PASS
 When: 2026-09-20
 Relevant failure/output summary: proposal, design, l6-qualification-proof-integrity spec, and tasks are 4/4 complete/apply-ready.
 
+Command: static authenticated URL redaction, run-recorder persistence, writer/caller, and focused-test inspection
+Result: SUBSTANTIATED READ-ONLY
+When: 2026-09-20
+Relevant failure/output summary: ordinary lowercase alphanumeric route identifiers survive authenticated URL redaction; repository snapshots and notes bypass an authenticated-data sanitizer; enabling authenticated mode does not repair the already-created run-directory mode; current tests exercise only stronger identifier shapes.
+
+Command: `openspec validate nightwatch-authenticated-evidence-minimization-integrity-v1 --strict`
+Result: PASS
+When: 2026-09-20
+Relevant failure/output summary: proposal, design, authenticated-evidence-minimization-integrity spec, and tasks are 4/4 complete/apply-ready.
+
+Command: static shared private-screen/store/reader/test inspection plus local deterministic ordinary-value regex probe
+Result: REPRODUCED LOCALLY WITHOUT I/O
+When: 2026-09-20
+Relevant failure/output summary: JSON-serialized ordinary token, password, and customer values bypass the key/value regex because the quoted key separates the keyword from the colon; the unquoted control is blocked and current sentinel-heavy tests are caught by a different matcher.
+
+Command: `openspec validate nightwatch-private-payload-screening-structural-integrity-v1 --strict`
+Result: PASS
+When: 2026-09-20
+Relevant failure/output summary: proposal, design, private-payload-screening-structural-integrity spec, and tasks are 4/4 complete/apply-ready.
+
 Command: `npm run agent:check`
 Result: PASS with 41 pre-existing/expected warnings and zero strict-v2 errors
 When: 2026-09-20
@@ -358,6 +382,24 @@ Evidence/constraint: UDP result omission, untargeted browser observers,
 resolver-suppressed speculative stimulus, public constant READY construction,
 and separate Bubblewrap/target resolution after qualification.
 
+Decision: admit NW-AUD-018 at High severity and create a dedicated change.
+Reason: authenticated evidence is owner-only but intentionally retains sensitive
+DEV material, and ordinary lowercase route identifiers plus unsanitized generic
+writer inputs can cross the claimed final minimization boundary; the private
+local destination and explicit authenticated execution keep it below Critical.
+Evidence/constraint: permissive URL-segment heuristic, direct repository and
+note serialization, mode transition after directory creation, and focused tests
+limited to numeric, UUID-like, or mixed-case identifiers.
+
+Decision: admit NW-AUD-019 at Medium severity and create a dedicated change.
+Reason: a shared defense-in-depth privacy screen structurally misses ordinary
+JSON key/value secrets and customer identifiers, while current synthetic
+sentinels make the tests pass through a different rule; owner-only local stores
+and stronger production projection reduce ordinary impact below High.
+Evidence/constraint: quoted JSON key layout versus the raw-text regex, the
+local no-I/O ordinary-value probe, generic unknown artifact inputs, and reuse by
+private write/read and Control Center evidence readers.
+
 ## Discoveries
 
 - Registered topology has room for this worktree under the repository's maximum of eight.
@@ -399,6 +441,13 @@ and separate Bubblewrap/target resolution after qualification.
 - L6 qualification marks UDP and browser speculative-network denial PROVEN
   without complete witnessed stimuli, and the receipt does not authorize the
   exact later namespace/executable generation. This is NW-AUD-017.
+- Authenticated URL minimization preserves ordinary lowercase alphanumeric
+  route identifiers, generic recorder inputs bypass the sanitizer, and the
+  authenticated mode transition does not retrofit directory permissions. This
+  is NW-AUD-018.
+- The shared private-value screen applies a key/value regex to JSON text whose
+  quoted keys make that regex structurally inapplicable for ordinary values;
+  sentinel-centric tests mask the gap. This is NW-AUD-019.
 
 ## Blockers
 
@@ -422,6 +471,6 @@ NONE
 
 ## Completion Snapshot
 
-Not complete; M1 is complete and M2 is active. Fourteen issue-specific changes
+Not complete; M1 is complete and M2 is active. Sixteen issue-specific changes
 are strict-valid, but milestones M2-M10 are still required before any
 exhaustive conclusion.

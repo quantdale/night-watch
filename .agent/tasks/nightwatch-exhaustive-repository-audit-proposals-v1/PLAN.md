@@ -130,6 +130,8 @@ Prefer the narrowest decisive existing tests during exploration. Validate each O
 - 2026-09-20 — Decision: partition authentication capability bundle integrity into its own remediation change; reason: DEV refresh omits the lifecycle sidecar and direct capture publishes the two-member capability sequentially, so correct fail-closed readers cannot make writer success crash-consistent; evidence: NW-AUD-015; consequence: `nightwatch-auth-capability-bundle-transaction-integrity-v1` specifies total writer coverage, immutable generations, recovery, and final consumer binding.
 - 2026-09-20 — Decision: partition proxy runtime instance attestation into its own remediation change; reason: static state identities plus constant status-only health do not prove that the listener is the live policy-enforcing server; evidence: NW-AUD-016; consequence: `nightwatch-proxy-runtime-instance-attestation-v1` specifies lease/process/state/event coherence, active challenge, revocation, and consumer binding.
 - 2026-09-20 — Decision: partition L6 qualification proof integrity into its own remediation change; reason: UDP and browser speculative-network claims are marked PROVEN from omitted or unexercised evidence and the constant capability is not bound to the later runtime; evidence: NW-AUD-017; consequence: `nightwatch-l6-qualification-proof-integrity-v1` specifies witnessed positive-controlled probes, exact qualification-to-use identity, and non-fabricable READY authority.
+- 2026-09-20 — Decision: partition authenticated evidence minimization into its own remediation change; reason: route-word heuristics preserve ordinary identifiers and multiple authenticated artifact writers bypass the recorder sanitizer; evidence: NW-AUD-018; consequence: `nightwatch-authenticated-evidence-minimization-integrity-v1` specifies proven route templates, closed DTOs, total writer discovery, and one final firewall.
+- 2026-09-20 — Decision: partition private-payload structural screening into its own remediation change; reason: applying the labeled-value regex to JSON serialization misses normal quoted keys across shared stores/readers; evidence: NW-AUD-019 and a deterministic synthetic probe; consequence: `nightwatch-private-payload-screening-structural-integrity-v1` specifies schema-aware safe DTO admission and total reader/writer validation.
 
 ## Discoveries
 
@@ -184,6 +186,12 @@ Prefer the narrowest decisive existing tests during exploration. Validate each O
   browser listeners the browser never targets, suppresses the speculative
   hostname in resolver flags, and discards qualification identity before the
   authenticated launch. This is NW-AUD-017.
+- Authenticated URL minimization preserves ordinary lowercase resource IDs and
+  recorder snapshot/summary/constructor paths bypass its authenticated data
+  sanitizer. This is NW-AUD-018.
+- The canonical private-payload screen blocks unquoted labeled text but accepts
+  the same ordinary values under normal JSON-quoted token/password/customer
+  keys. This is NW-AUD-019.
 
 ## Deferred Work
 
