@@ -20,6 +20,7 @@ import {
 
 const ROOT = path.join(__dirname, '..', '..');
 const CONFIG = path.join(ROOT, 'config', 'validation-execution-classes.v1.json');
+const CLI = path.join(ROOT, 'bin', 'validation-execution-classes.mjs');
 
 function declarationFor(files: Record<string, { class: string; signals: string[] }>): ExecutionClassDeclaration {
   return { schemaVersion: VALIDATION_EXECUTION_CLASSES_SCHEMA, files } as ExecutionClassDeclaration;
@@ -104,4 +105,13 @@ test('the shipped declaration covers every tracked test file without weakening',
   for (const name of EXECUTION_CLASS_ORDER) {
     expect(classes.has(name)).toBe(true);
   }
+});
+
+test('bin/validation-execution-classes executes the check as a process', () => {
+  const result = spawnSync(process.execPath, [CLI, '--json'], { cwd: ROOT, encoding: 'utf8', timeout: 120_000 });
+  expect(result.status).toBe(0);
+  const judgement = JSON.parse(result.stdout);
+  expect(judgement.result).toBe('PASS');
+  expect(judgement.violations).toEqual([]);
+  expect(judgement.fileCount).toBeGreaterThan(300);
 });
