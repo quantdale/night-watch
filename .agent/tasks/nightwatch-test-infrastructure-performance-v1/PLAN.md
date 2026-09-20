@@ -123,7 +123,7 @@ decision and isolation evidence.
 - Acceptance criteria: no overlap is removed without a class; clean-gate
   independence is explicitly preserved.
 - Validation commands: mapping tool plus `playwright test --list` set algebra.
-- Status: NOT_STARTED
+- Status: DONE
 
 ### M3 — Execution-class classification
 
@@ -137,7 +137,7 @@ decision and isolation evidence.
 - Acceptance criteria: every discovered test file classifies; negative probes
   fail as designed.
 - Validation commands: focused class tests plus `npm run validation:universe`.
-- Status: NOT_STARTED
+- Status: DONE
 
 ### M4 — Shard runner with coverage equality proof
 
