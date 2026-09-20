@@ -11,7 +11,7 @@ Last substantive checkpoint SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-exhaustive-repository-ef157f7a
-Last checkpoint: 2026-09-20 — M0 complete; M1 admitted NW-AUD-001, NW-AUD-004, NW-AUD-005, NW-AUD-006, NW-AUD-007, NW-AUD-009, and NW-AUD-010 and produced seven strict-valid issue-specific remediation proposals.
+Last checkpoint: 2026-09-20 — M0 complete; M1 admitted NW-AUD-001, NW-AUD-004, NW-AUD-005, NW-AUD-006, NW-AUD-007, NW-AUD-009, NW-AUD-010, and NW-AUD-011 and produced eight strict-valid issue-specific remediation proposals.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
@@ -44,15 +44,16 @@ What is being attempted: complete repository topology, dependency, configuration
 - NW-AUD-007: PROPOSED (Medium/High-confidence); dedicated change `nightwatch-change-shadow-offline-runtime-integrity-v1` is 4/4 complete and strict-valid.
 - NW-AUD-009: PROPOSED (Medium/High-confidence); dedicated change `nightwatch-local-report-publication-integrity-v1` is 4/4 complete and strict-valid.
 - NW-AUD-010: PROPOSED (High/High-confidence); dedicated change `nightwatch-release-evidence-lineage-integrity-v1` is 4/4 complete and strict-valid.
+- NW-AUD-011: PROPOSED (Medium/High-confidence); dedicated change `nightwatch-canonical-promotion-transaction-serialization-v1` is 4/4 complete and strict-valid.
 - NW-AUD-002: DUPLICATE of production-completion tasks 15.7/15.11; NW-AUD-003: NOT_AN_ISSUE after validation-universe PASS with zero unclassified checks; NW-AUD-008: DUPLICATE of the production-completion operator CLI contract.
 
 ## Work In Progress
 
-M1 has covered package/lock/config topology, root TypeScript/Playwright configuration, the executable quality gate, validation-universe classification, dependency/lane records, the GitHub workflow/hardening seam, the clean-checkout toolchain/receipt path, the evidence-retention apply/receipt path, C-00 session mutator authority, the change-shadow compiler/bootstrap path, and ignored report/receipt publication. Remaining M1 work is the rest of `bin/`, environment configuration, release/checkpoint mechanics, and cross-file config schema ownership.
+M1 has covered package/lock/config topology, root TypeScript/Playwright configuration, the executable quality gate, validation-universe classification, dependency/lane records, the GitHub workflow/hardening seam, the clean-checkout toolchain/receipt path, the evidence-retention apply/receipt path, C-00 session mutator authority, the change-shadow compiler/bootstrap path, ignored report/receipt publication, release evidence lineage, and canonical catalog promotion transaction mechanics. Remaining M1 work is environment configuration, schema lifecycle export/migration, and final bin/config denominator reconciliation.
 
 ## Exact Next Action
 
-Continue M1 with the remaining release/checkpoint and schema-renderer surfaces; inspect path/symlink confinement, atomicity, stale authority, and false-success behavior first and record each candidate or clean disposition in `audit.md`.
+Finish M1 by inspecting environment configuration and schema lifecycle export/migration, then reconcile every remaining bin/config class to a clean, duplicate, deferred, or proposed disposition before advancing to M2.
 
 ## Files Changed
 
@@ -68,6 +69,7 @@ Continue M1 with the remaining release/checkpoint and schema-renderer surfaces; 
 | `openspec/changes/nightwatch-change-shadow-offline-runtime-integrity-v1/` | NW-AUD-007 implementation-ready remediation proposal | complete planning artifact |
 | `openspec/changes/nightwatch-local-report-publication-integrity-v1/` | NW-AUD-009 implementation-ready remediation proposal | complete planning artifact |
 | `openspec/changes/nightwatch-release-evidence-lineage-integrity-v1/` | NW-AUD-010 implementation-ready remediation proposal | complete planning artifact |
+| `openspec/changes/nightwatch-canonical-promotion-transaction-serialization-v1/` | NW-AUD-011 implementation-ready remediation proposal | complete planning artifact |
 
 ## Validation Ledger
 
@@ -140,6 +142,16 @@ Command: `openspec validate nightwatch-release-evidence-lineage-integrity-v1 --s
 Result: PASS
 When: 2026-09-20
 Relevant failure/output summary: proposal, design, release-evidence-lineage-integrity spec, and tasks are 4/4 complete/apply-ready.
+
+Command: static canonical promotion apply/storage/renderer/authority/test inspection
+Result: SUBSTANTIATED WITHOUT EXECUTING PROMOTION
+When: 2026-09-20
+Relevant failure/output summary: consumption is exclusive only per approval; distinct approvals share no target transaction; directory sync failure is swallowed; tests cover repeated one-approval use only.
+
+Command: `openspec validate nightwatch-canonical-promotion-transaction-serialization-v1 --strict`
+Result: PASS
+When: 2026-09-20
+Relevant failure/output summary: proposal, design, canonical-promotion-transaction-integrity spec, and tasks are 4/4 complete/apply-ready.
 
 Command: `npm run agent:check`
 Result: PASS with 41 pre-existing/expected warnings and zero strict-v2 errors
@@ -215,6 +227,15 @@ Evidence/constraint: `evaluateReleaseCertification` overrides only proven
 strict ancestors; the project adapter treats any non-success ancestry command
 as false; live config carries null evidence; focused tests omit every other relation.
 
+Decision: admit NW-AUD-011 at Medium severity and create a dedicated change.
+Reason: the only mutable target is bounded and future execution requires a
+fresh explicit owner authorization that does not currently exist, but distinct
+valid approvals can each perform a canonical source write and crash/durability
+failure can split private transaction truth from the target.
+Evidence/constraint: `applyPromotion` preflight then per-approval consumption,
+shared `atomicWriteTarget`, swallowed directory-sync failure, immutable stores
+keyed by approval/receipt identity, and no distinct-approval process race test.
+
 ## Discoveries
 
 - Registered topology has room for this worktree under the repository's maximum of eight.
@@ -241,6 +262,8 @@ as false; live config carries null evidence; focused tests omit every other rela
   or immutable no-replace enforcement. This is NW-AUD-009.
 - Release certification can count a raw MET condition with no exact evidence
   at the certified checkpoint. This is NW-AUD-010.
+- The retained canonical promotion executor lacks repository-target transaction
+  serialization and crash-honest terminal coupling. This is NW-AUD-011.
 
 ## Blockers
 
@@ -264,6 +287,6 @@ NONE
 
 ## Completion Snapshot
 
-Not complete; M1 is active. Seven issue-specific changes are strict-valid, but
+Not complete; M1 is active. Eight issue-specific changes are strict-valid, but
 remaining M1 surfaces and milestones M2-M10 are still required before any
 exhaustive conclusion.

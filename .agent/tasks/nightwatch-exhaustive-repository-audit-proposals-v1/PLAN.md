@@ -123,6 +123,7 @@ Prefer the narrowest decisive existing tests during exploration. Validate each O
 - 2026-09-20 — Decision: partition change-shadow offline compiler bootstrap into its own remediation change; reason: the intentionally separate full-program compiler path invokes remote-capable `npx` and mutates a fixed derivative root before compiler admission, while completed loader and certification changes do not own arbitrary developer-command bootstrap; evidence: NW-AUD-007; consequence: `nightwatch-change-shadow-offline-runtime-integrity-v1` strengthens source-analysis runtime hardening without duplicating generic CLI contracts.
 - 2026-09-20 — Decision: partition local ignored-report publication integrity into its own remediation change; reason: seven report/receipt writers share unsafe direct publication but require two distinct replacement authorities, and neither retention journals nor generic CLI contracts own this boundary; evidence: NW-AUD-009; consequence: `nightwatch-local-report-publication-integrity-v1` introduces a complete writer inventory, atomic current replacement, immutable topology receipts, and non-vacuous bypass enforcement without implementation.
 - 2026-09-20 — Decision: partition release evidence lineage into its own remediation change; reason: the central release evaluator accepts raw MET with absent, future, divergent, or unresolved evidence because only strict ancestors are rejected; evidence: NW-AUD-010; consequence: `nightwatch-release-evidence-lineage-integrity-v1` requires exact checkpoint equality and categorical Git resolution without advancing the project verdict.
+- 2026-09-20 — Decision: partition canonical promotion transaction integrity into its own remediation change; reason: one shared canonical source target is protected only by per-approval consumption, allowing distinct approvals to race, and interruption/directory durability are not terminally coupled; evidence: NW-AUD-011; consequence: `nightwatch-canonical-promotion-transaction-serialization-v1` specifies repository-target serialization and crash-honest transaction truth while preserving zero standing authority.
 
 ## Discoveries
 
@@ -155,6 +156,10 @@ Prefer the narrowest decisive existing tests during exploration. Validate each O
   later `HEAD`, missing, future, and divergent identities can retain raw MET,
   and the Git adapter collapses negative ancestry with operational failure.
   This is the seventh non-duplicate material finding (NW-AUD-010).
+- Canonical promotion serializes repeated use of one approval but not distinct
+  approvals against one shared catalog preimage; its write also treats parent
+  directory sync as best effort and can separate consumption/write/receipt
+  truth on interruption. This is NW-AUD-011.
 
 ## Deferred Work
 
