@@ -1,0 +1,123 @@
+{
+  "schemaVersion": "nightwatch.performance-lane-receipt.v1",
+  "lane": "npm-test-serial-after",
+  "command": [
+    "npm",
+    "test"
+  ],
+  "startedAt": "2026-09-20T16:05:49.653Z",
+  "finishedAt": "2026-09-20T16:24:08.353Z",
+  "wallMs": 1052254,
+  "exitStatus": 1,
+  "errorCode": null,
+  "counts": {
+    "passed": 5359,
+    "failed": 13,
+    "skipped": 18,
+    "didNotRun": null,
+    "tests": null
+  },
+  "host": {
+    "platform": "linux",
+    "cores": 20,
+    "totalMemMiB": 15851
+  },
+  "load": {
+    "pre": {
+      "loadAverage": [
+        8.97,
+        9.98,
+        11.11
+      ],
+      "census": {
+        "busyProcesses": [
+          {
+            "name": "node",
+            "count": 7
+          },
+          {
+            "name": "codex",
+            "count": 4
+          },
+          {
+            "name": "opencode",
+            "count": 2
+          },
+          {
+            "name": ".cline",
+            "count": 2
+          },
+          {
+            "name": "herdr",
+            "count": 2
+          },
+          {
+            "name": "MainThread",
+            "count": 1
+          },
+          {
+            "name": "agy",
+            "count": 1
+          },
+          {
+            "name": "gopls",
+            "count": 1
+          }
+        ],
+        "totalBusyCpuPercent": 780
+      }
+    },
+    "post": {
+      "loadAverage": [
+        7.89,
+        7.01,
+        8.06
+      ],
+      "census": {
+        "busyProcesses": [
+          {
+            "name": "node",
+            "count": 6
+          },
+          {
+            "name": "codex",
+            "count": 4
+          },
+          {
+            "name": "opencode",
+            "count": 2
+          },
+          {
+            "name": ".cline",
+            "count": 2
+          },
+          {
+            "name": "herdr",
+            "count": 2
+          },
+          {
+            "name": "ps",
+            "count": 1
+          },
+          {
+            "name": "MainThread",
+            "count": 1
+          },
+          {
+            "name": "agy",
+            "count": 1
+          }
+        ],
+        "totalBusyCpuPercent": 1266
+      }
+    }
+  },
+  "outputTail": [
+    "[hardening:check] ERROR: persisted review lookup is not performed per rendered row",
+    "[hardening:check] FAIL (1 error)",
+    "[hardening:check] ERROR: the collector reaches a review-binding digest primitive of its own",
+    "[hardening:check] FAIL (1 error)",
+    "[hardening:check] ERROR: the collector derives a review binding of its own",
+    "[hardening:check] FAIL (1 error)"
+  ]
+}

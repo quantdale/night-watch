@@ -11,9 +11,14 @@
 // repository-owned strings) cross this boundary. No environment values,
 // assertion values, or machine-specific absolute paths are ever represented.
 
+import { QUALITY_GATE_RECEIPT_SCHEMA as CANONICAL_QUALITY_GATE_RECEIPT_SCHEMA } from '../qualityGate/definition';
+
 export const VALIDATION_TIMING_DOCUMENT_SCHEMA = 'nightwatch.playwright-timings.v1' as const;
 export const VALIDATION_TIMING_REPORT_SCHEMA = 'nightwatch.validation-timings-report.v1' as const;
-export const QUALITY_GATE_RECEIPT_SCHEMA = 'nightwatch.quality-gate-receipt.v1' as const;
+// The gate-receipt schema has exactly one owning module (A15 single
+// ownership); this module references that owner instead of re-declaring the
+// literal.
+export const QUALITY_GATE_RECEIPT_SCHEMA = CANONICAL_QUALITY_GATE_RECEIPT_SCHEMA;
 
 export const DEFAULT_TOP = 20;
 export const MAX_TOP = 100;

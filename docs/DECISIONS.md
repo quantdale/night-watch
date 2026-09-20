@@ -5062,3 +5062,48 @@ W13-DEF-02 (measurement defect repaired): `LocalCampaignResult` now exposes
 log, so a run's source activity remains observable after the owner-local
 checkpoint is deleted. A fake-provider regression proves both the count and
 that a failed provider call still mints zero tool actions.
+
+---
+
+## D-142 — the canonical full regression executes as coverage-proven shards (supersedes D-1's execution-shape rationale)
+
+**Context.** D-1 chose serial Playwright execution (`workers: 1`,
+`fullyParallel: false`) with the reason: "policy state and fixture servers
+never race". That reason remains binding. What is superseded is the inference
+that the only safe shape is ONE serial invocation: it made the authoritative
+full regression the slowest thing in the repository and left the synthetic
+gate lane with negative headroom against its own timeout (W13 measured
+422.94-643 s of work against a 600 s bound).
+
+**Decision.** The canonical `npm test` executes the tracked test universe as
+disjoint concurrent shards (default two, bounded 1..8 through
+`NIGHTWATCH_TEST_WORKERS`/`--workers`), with each invocation still serial
+(`workers=1`, `retries=0`), plus one exclusive invocation for files whose
+declared execution class forbids co-scheduling. `npm run test:serial` keeps
+the historical single-invocation shape, and `--serial` selects it for
+comparison.
+
+The safety D-1 cared about is preserved MECHANICALLY, not by less concurrency:
+
+- every tracked test file carries exactly one declared execution class
+  (`config/validation-execution-classes.v1.json`), mechanically detected and
+  validated by a completeness test inside the regression itself; a new test
+  cannot join silently and a declaration may never be weaker than detection;
+- `SERIAL_REQUIRED` (Git writes, guarded-source writes) and
+  `MUTATION_CAMPAIGN_EXCLUSIVE` (the hardening probe campaign and the
+  real-tree mutation harnesses) files run in one exclusive invocation after
+  every concurrent shard has exited, so two Git-mutating or guarded-source
+  mutating tests can never overlap;
+- the plan must prove `union(shards) == universe` with pairwise disjointness
+  before anything runs, and refuses an unclassified, empty, or argv-unbounded
+  plan;
+- each shard owns its Playwright output directory and inherits the existing
+  dynamic proxy port lease, which was already cross-process safe;
+- ordering changes produced by concurrency are compared as normalized
+  results; the required universe, counts, and skip inventory are unchanged.
+
+**Consequences.** A future weakening of the execution-class contract, the
+coverage proof, or the exclusivity rule is a gate failure, because those are
+tested inside the canonical regression. The serial shape remains one flag
+away, and clean-checkout qualification still re-installs and re-runs
+everything from a disposable clone — sharding never reuses local state.

@@ -115,14 +115,22 @@ export function planShards(input: {
   const buckets: string[][] = Array.from({ length: requested }, () => []);
   const weighted = input.weights !== undefined;
   if (weighted) {
-    // Deterministic longest-processing-time balancing: heaviest first, then
-    // the currently lightest bucket (ties by bucket index, then path). This is
-    // stable for a given weight table, so the membership is reproducible while
-    // being far better balanced than file-count round-robin.
+    // Deterministic longest-processing-time balancing with a hybrid cost:
+    // a measured duration where the weight table has one, and a unit cost
+    // otherwise. Treating an unmeasured file as free was a real defect: a
+    // partial weight table piled every unmeasured file into one shard. The
+    // assignment is stable for a given table (ties by bucket index, then the
+    // file order already sorted above), so membership stays reproducible.
+    const costOf = (file: string): number => input.weights?.[file] ?? 1;
     const ordered = [...parallelEligible].sort((left, right) => {
-      const leftWeight = input.weights?.[left] ?? 0;
-      const rightWeight = input.weights?.[right] ?? 0;
-      return rightWeight - leftWeight || left.localeCompare(right);
+      const leftWeight = input.weights?.[left];
+      const rightWeight = input.weights?.[right];
+      const leftMeasured = typeof leftWeight === 'number' && Number.isFinite(leftWeight);
+      const rightMeasured = typeof rightWeight === 'number' && Number.isFinite(rightWeight);
+      if (leftMeasured && rightMeasured) return (rightWeight as number) - (leftWeight as number) || left.localeCompare(right);
+      if (leftMeasured) return -1;
+      if (rightMeasured) return 1;
+      return left.localeCompare(right);
     });
     const bucketWeights = Array.from({ length: requested }, () => 0);
     for (const file of ordered) {
@@ -132,7 +140,7 @@ export function planShards(input: {
       }
       const bucket = buckets[target];
       if (bucket !== undefined) bucket.push(file);
-      bucketWeights[target] = (bucketWeights[target] ?? 0) + (input.weights?.[file] ?? 0);
+      bucketWeights[target] = (bucketWeights[target] ?? 0) + costOf(file);
     }
   } else {
     parallelEligible.forEach((file, index) => {

@@ -73,6 +73,10 @@ test('the fast and milestone lanes exist, stay non-certifying, and are wired to 
   expect(scripts['gate:dev']).toContain('bin/validation-lane.mjs dev');
   expect(scripts['gate:milestone']).toContain('bin/validation-lane.mjs milestone');
   expect(scripts['test:timings']).toContain('bin/test-timings.mjs');
+  // D-142: the canonical regression executes as coexistence-proven shards, and
+  // the historical serial shape stays reachable for comparison and fallback.
+  expect(scripts.test).toContain('bin/run-shards.mjs');
+  expect(scripts['test:serial']).toContain('playwright test');
 });
 
 test('the execution-class declaration covers every tracked test and never weakens detection', () => {

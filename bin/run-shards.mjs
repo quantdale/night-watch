@@ -41,6 +41,7 @@ const CLI_METADATA = {
     { name: '--workers', shape: 'integer', summary: 'parallel shard count (bounded 1..8; default 2)' },
     { name: '--files', shape: 'string', summary: 'comma-separated explicit file selection instead of full discovery' },
     { name: '--weights', shape: 'path', summary: 'measured per-file duration table for deterministic balancing (default config/shard-weights.v1.json when present)' },
+    { name: '--serial', shape: 'boolean', summary: 'run the whole universe in one invocation (the historical shape) for comparison or fallback' },
   ],
   json: true,
   authorization: 'LOCAL_ONLY',
@@ -96,7 +97,7 @@ function loadClasses() {
 }
 
 function childEnvironment(lane) {
-  const environment = buildChildEnvironment(process.env, { NIGHTWATCH_ENV: 'local', NIGHTWATCH_GATE_ENVIRONMENT: 'SHARDS', NIGHTWATCH_TIMING_LANE: lane });
+  const environment = buildChildEnvironment(process.env, { NIGHTWATCH_ENV: 'local', NIGHTWATCH_GATE_ENVIRONMENT: 'SHARDS', NIGHTWATCH_TIMING_LANE: lane, NODE_OPTIONS: '--expose-gc' });
   environment.TZ = 'UTC';
   environment.LC_ALL = 'C';
   environment.LANG = 'C';
@@ -121,6 +122,14 @@ function runShard(shard) {
     child.on('error', () => resolve({ id: shard.id, files: shard.files.length, digest: shard.digest, exitStatus: 1, wallMs: Date.now() - startedAt, counts: emptyCounts(), errorCode: 'SPAWN_ERROR' }));
     child.on('close', (code) => {
       const count = (pattern) => { const match = pattern.exec(output); return match ? Number(match[1]) : 0; };
+      // The authoritative failure signal is the exit status; the counts are
+      // advisory because child processes inside tests also print "N failed".
+      // Failed locations are bounded tracked paths, matching the gate receipt
+      // privacy contract.
+      const failedLocations = [...output.matchAll(/^\s*\d+\)\s+\[[^\]]+\]\s+›\s+(tests\/(?:unit|smoke)\/[A-Za-z0-9._/-]+\.test\.ts):(\d+)(?::\d+)?\s+›/gm)]
+        .map((match) => `${match[1]}:${match[2]}`)
+        .filter((location, index, all) => all.indexOf(location) === index)
+        .slice(0, 16);
       resolve({
         id: shard.id,
         files: shard.files.length,
@@ -133,6 +142,7 @@ function runShard(shard) {
           skipped: count(/(\d+)\s+skipped/i),
           didNotRun: count(/(\d+)\s+did not run/i),
         },
+        failedLocations,
         errorCode: null,
       });
     });
@@ -152,6 +162,21 @@ function sumCounts(results) {
     totals.didNotRun += result.counts.didNotRun;
   }
   return totals;
+}
+
+function renderShardReceipt(receipt) {
+  const lines = [];
+  lines.push(`[run-shards] ${receipt.result} files=${receipt.universeCount} shards=${receipt.shards.length}${receipt.serial === true ? ' mode=serial' : ` workers=${receipt.workerCount ?? receipt.parallelShardCount}`}`);
+  lines.push(`[run-shards] coverage=${receipt.coverage.ok ? 'OK' : 'VIOLATION'} planDigest=${receipt.planDigest}`);
+  for (const result of receipt.shardResults ?? []) {
+    lines.push(`  ${result.id}: exit=${result.exitStatus} wall=${(result.wallMs / 1000).toFixed(1)}s passed=${result.counts.passed} failed=${result.counts.failed} skipped=${result.counts.skipped} didNotRun=${result.counts.didNotRun}`);
+  }
+  lines.push(`[run-shards] totals passed=${receipt.totals.passed} failed=${receipt.totals.failed} skipped=${receipt.totals.skipped} didNotRun=${receipt.totals.didNotRun}`);
+  for (const result of receipt.shardResults ?? []) {
+    if (Array.isArray(result.failedLocations) && result.failedLocations.length > 0) lines.push(`  ${result.id} failures: ${result.failedLocations.join(', ')}`);
+  }
+  lines.push('[run-shards] NOT CERTIFICATION on its own: this is the canonical full-regression execution shape, not a release authority by itself.');
+  return lines.join('\n');
 }
 
 const cli = invokedDirectly(import.meta.url) ? defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url }) : { stop: true };
@@ -198,12 +223,26 @@ if (!cli.stop) {
         } else if (cli.flags['--dry-run'] === true) {
           const receipt = { ...base, result: 'DRY_RUN' };
           console.log(cli.json ? JSON.stringify(receipt, null, 2) : JSON.stringify(receipt));
+        } else if (cli.flags['--serial'] === true) {
+          const serialResult = await runShard({ id: 'serial', files: universe, digest: base.universeDigest, byClass: {} });
+          const totals = sumCounts([serialResult]);
+          const failed = serialResult.exitStatus !== 0 || totals.didNotRun > 0;
+          const receipt = {
+            ...base,
+            serial: true,
+            shards: [{ id: 'serial', files: universe.length, digest: base.universeDigest, classes: {}, exclusive: false }],
+            shardResults: [serialResult],
+            totals,
+            result: failed ? 'TEST_FAILURE' : 'PASS',
+          };
+          console.log(cli.json ? JSON.stringify(receipt, null, 2) : renderShardReceipt(receipt));
+          process.exitCode = failed ? 1 : 0;
         } else {
           const parallelResults = await Promise.all(plan.parallelShards.map((shard) => runShard(shard)));
           const exclusiveResults = plan.exclusiveShard === null ? [] : [await runShard(plan.exclusiveShard)];
           const results = [...parallelResults, ...exclusiveResults];
           const totals = sumCounts(results);
-          const failed = results.some((result) => result.exitStatus !== 0 || result.counts.failed > 0 || result.counts.didNotRun > 0);
+          const failed = results.some((result) => result.exitStatus !== 0 || result.counts.didNotRun > 0);
           const receipt = {
             ...base,
             workerCount,
@@ -211,7 +250,7 @@ if (!cli.stop) {
             totals,
             result: failed ? 'TEST_FAILURE' : 'PASS',
           };
-          console.log(cli.json ? JSON.stringify(receipt, null, 2) : JSON.stringify(receipt));
+          console.log(cli.json ? JSON.stringify(receipt, null, 2) : renderShardReceipt(receipt));
           process.exitCode = failed ? 1 : 0;
         }
       }

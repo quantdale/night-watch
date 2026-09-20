@@ -8,7 +8,7 @@
     "node": ">=20"
   },
   "scripts": {
-    "test": "NIGHTWATCH_TIMING_LANE=full-regression NODE_OPTIONS=--expose-gc playwright test",
+    "test": "node bin/run-shards.mjs",
     "test:unit": "NODE_OPTIONS=--expose-gc playwright test tests/unit",
     "test:smoke": "playwright test tests/smoke",
     "test:timings": "node bin/test-timings.mjs",
@@ -109,7 +109,8 @@
     "efficacy:candidate": "node bin/efficacy-corpus.mjs candidate",
     "efficacy:compare": "node bin/efficacy-corpus.mjs compare",
     "gate:dev": "node bin/validation-lane.mjs dev",
-    "gate:milestone": "node bin/validation-lane.mjs milestone"
+    "gate:milestone": "node bin/validation-lane.mjs milestone",
+    "test:serial": "NIGHTWATCH_TIMING_LANE=full-regression NODE_OPTIONS=--expose-gc playwright test"
   },
   "devDependencies": {
     "@playwright/test": "1.62.1",
