@@ -11,7 +11,7 @@ Last substantive checkpoint SHA: 86cdc93af8527dda395d15314c4a3370a942274c
 Last documentation checkpoint SHA: 8dd8b163b567b939b977649d6ba7c371cf230ee6
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
-Branch: session/nightwatch-test-infrastructure-p-9ce4576b
+Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 8dd8b163b567b939b977649d6ba7c371cf230ee6

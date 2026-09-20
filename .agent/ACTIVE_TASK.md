@@ -63,7 +63,7 @@ changing anything.
 CAMPAIGN: nightwatch-test-infrastructure-performance-v1
 CHILD TASK: NONE
 WAVE: PERFORMANCE-1
-SESSION WORKTREE: session/nightwatch-test-infrastructure-p-9ce4576b
+SESSION WORKTREE: NONE
 
 IMPLEMENTATION AUTHORIZED:
   this task directory, its OpenSpec change, test runner and Playwright
