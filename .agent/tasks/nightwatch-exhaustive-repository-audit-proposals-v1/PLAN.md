@@ -57,14 +57,14 @@ Use a coverage matrix rather than ad hoc browsing. Inventory the tree and depend
 - Objective: audit browser containment, observers, direct/API paths, artifact recording, storage, replay, minimization, and privacy behavior.
 - Acceptance criteria: every ingress/egress and persisted representation has an evidence-backed disposition.
 - Validation commands: focused browser/unit suites only where decisive.
-- Status: IN_PROGRESS
+- Status: COMPLETE
 
 ### M4 — Source intelligence, semantic oracles, expectations, and contract lifecycle
 
 - Objective: audit source confinement/currentness, extraction/admission, projections, invariants, receipts, schema lifecycle, and stale/unavailable behavior.
 - Acceptance criteria: soundness, completeness, privacy, determinism, and fail-closed behavior are assessed with boundary tests.
 - Validation commands: focused semantic/source suites only.
-- Status: NOT_STARTED
+- Status: IN_PROGRESS
 
 ### M5 — Campaign, autonomous runtime, investigation, reproduction, admission, and findings
 
@@ -138,6 +138,8 @@ Prefer the narrowest decisive existing tests during exploration. Validate each O
 - 2026-09-20 — Decision: close M2 after reconciling 32 primary boundary files, 5 cross-boundary consumers, and 55 direct/transitive focused-test entrypoints; reason: every residual lead now has a material proposal, terminal non-material/not-an-issue rationale, or explicit M3 owner; consequence: browser lifecycle/persistence/replay work advances under M3 without reopening settled host/auth/L6 scope.
 - 2026-09-21 — Decision: freeze M3 at 154 primary source files and 118 direct/transitive focused-test entrypoints; reason: the wave crosses browser/API/product/data plus evidence/exploration/journey/triage/production-local responsibility splits; consequence: first-tranche proposals do not overclaim M3 completion and the remaining rows are explicit.
 - 2026-09-21 — Decision: admit NW-AUD-023 through NW-AUD-028 as six distinct remediation scopes; reason: atomic context readiness, run-bundle transaction truth, replay context provenance, observed exploration postconditions, production-local persistence lifecycle, and relay caller authority have different trust boundaries and tests; consequence: each now has one strict-valid change without merging payload/privacy or L6 concerns.
+- 2026-09-21 — Decision: admit NW-AUD-029 through NW-AUD-035 as seven distinct remediation scopes; reason: protocol readiness, cross-schema triage identity, total artifact validation, Phase-6 owner quarantine, production reservation lifecycle, qualification/P1 producer evidence, and response acquisition enforce different invariants; consequence: each has a strict-valid planning change and no product implementation.
+- 2026-09-21 — Decision: close M3 after reconciling all 154 primary source files and 118 direct/transitive focused-test entrypoints; reason: every residual lead maps to one of thirteen M3 proposals, a prior owner, or a terminal current-reachability rationale; consequence: M4 begins without silently carrying browser/API/evidence/replay work forward.
 
 ## Discoveries
 
@@ -227,6 +229,25 @@ Prefer the narrowest decisive existing tests during exploration. Validate each O
 - The Phase-5 relay uses public operation identity as caller authority, has no
   listener-wide invocation budget, and overwrites repeated observation truth.
   This is NW-AUD-028.
+- Protocol-only triage can persist and promote a failed replay as READY, and
+  channel agreement is mislabeled as fresh-context reproduction. This is
+  NW-AUD-029.
+- Replay/minimality/semantic evidence validators disagree on representable
+  identity domains and accept unbound or contradictory current records. This
+  is NW-AUD-030.
+- Durable artifact validators are structurally strict but not resource-total,
+  and the facade can return raw leaf error messages. This is NW-AUD-031.
+- Retained Phase-6 adapters can bypass the permanent owner gate through an
+  injected invoker and forged structural plan marker. This is NW-AUD-032.
+- Production budget reservation and settlement do not form an authenticated,
+  conserved lifecycle. This is NW-AUD-033.
+- Qualification and P1 receipt digests do not prove producer execution or all
+  current chain/configuration coherence. This is NW-AUD-034.
+- Browser response bodies are fully allocated before size refusal and timeout
+  does not cancel/join the losing acquisition. This is NW-AUD-035.
+- Residual M3 compatibility fingerprint, P1 strong-Set/synchronous-poll,
+  download-ordering, recorder-error, and Phase-6 transform leads are terminally
+  non-material or duplicate under the current local/mock/owner-gated reachability.
 
 ## Deferred Work
 

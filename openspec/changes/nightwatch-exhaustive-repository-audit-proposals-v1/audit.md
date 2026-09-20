@@ -62,16 +62,16 @@ The following top-level classes are exhaustive and mutually exclusive for the st
 
 | Subsystem | Tracked paths | Audit wave | Status |
 |---|---:|---|---|
-| `src/core/` | 465 | M2/M3/M4/M5/M7 by responsibility | M2_SAFETY_OOPS_POLICY_BOUNDARIES_COMPLETE; M3_DENOMINATOR_FROZEN_AND_FIRST_TRANCHE_COMPLETE; LATER_WAVES_PENDING |
+| `src/core/` | 465 | M2/M3/M4/M5/M7 by responsibility | M2_SAFETY_OOPS_POLICY_BOUNDARIES_COMPLETE; M3_BROWSER_API_EVIDENCE_REPLAY_RESPONSIBILITIES_COMPLETE; LATER_WAVES_PENDING |
 | `src/oracles/` | 54 | M4 | PENDING |
 | `src/controlCenter/` | 43 | M6 | PENDING |
-| `src/browser/` | 14 | M2/M3 | M2_GUARD_AND_AUTH_BOUNDARIES_COMPLETE; M3_LIFECYCLE_FIRST_TRANCHE_COMPLETE |
-| `src/products/` | 12 | M3 | M3_EXPLORATION_FIRST_TRANCHE_COMPLETE; RESIDUALS_PENDING |
-| `src/data/` | 11 | M3/M5 | M3_DENOMINATOR_FROZEN; INSPECTION_PENDING |
-| `src/api/` | 10 | M3 | M3_RELAY_FIRST_TRANCHE_COMPLETE; RESIDUALS_PENDING |
+| `src/browser/` | 14 | M2/M3 | M2_GUARD_AND_AUTH_BOUNDARIES_COMPLETE; M3_COMPLETE |
+| `src/products/` | 12 | M3 | M3_COMPLETE |
+| `src/data/` | 11 | M3/M5 | M3_COMPATIBILITY_BOUNDARY_COMPLETE; M5_RUNTIME_CALLERS_PENDING |
+| `src/api/` | 10 | M3 | M3_COMPLETE |
 | `src/proxy/` | 9 | M2 | M2_COMPLETE — policy, resolution/address binding, lease/runtime identity, HTTP/CONNECT/Upgrade ordering, events, and cleanup inspected |
 | `src/auth/` | 6 | M2 | M2_COMPLETE — provider, login, refresh, direct capture, lifecycle, stage diagnostics, and error paths inspected |
-| `src/state/`, `src/mcp/` | 2 | M3/M5 | PENDING |
+| `src/state/`, `src/mcp/` | 2 | M3/M5 | M3_MONITOR_AND_OPTIONAL_POLICY_BOUNDARY_COMPLETE; M5_RUNTIME_CALLERS_PENDING |
 
 ### `tests/` denominator
 
@@ -136,6 +136,13 @@ No documentation inconsistency is admitted as a finding merely because historica
 | NW-AUD-026 | PROPOSED | Medium | High | exploration runtime / structural postconditions | The real Ripple runtime merges the catalog's expected structural delta into local state and returns it as the observed delta, making the engine's independent contract comparison tautological and permitting no-op/wrong UI actions to create false states/transitions | `src/products/ripple/explorationRuntime.ts:190-283`; `src/core/exploration/engine.ts:320-410`; `tests/unit/exploration.test.ts:340-363` | Existing Phase-4 contracts require structural deltas but no active change owns independent source-backed postcondition observation in the real adapter | `nightwatch-exploration-observed-postcondition-integrity-v1` |
 | NW-AUD-027 | PROPOSED | Medium | High | retained production-local persistence / destructive cleanup / audit completeness | Profile cleanup recursively deletes by absolute basename prefix and stale sweep trusts name+age; finding commit can overwrite and race capacity; persistence audit skips missing/unreadable/over-budget entries yet can return clean | `src/core/prodEvidence/browserProfile.ts:64-141`; `productionFindingsStore.ts:168-238`; `persistenceAudit.ts:112-152,158-281`; C-10 tests | C-10 owns payload projection/firewall and ordinary cleanup/audit success, not capability-bound deletion, immutable commit, concurrent capacity, directory durability, or incomplete-audit truth | `nightwatch-production-persistence-lifecycle-integrity-v1` |
 | NW-AUD-028 | PROPOSED | Medium | High | Phase-5 API relay / caller authority / execution budget | A public operation ID in URL/header is the only inbound proof; any local process that discovers the port can repeatedly trigger eligible authenticated reads, no listener-wide budget exists, and observations overwrite by operation ID | `src/api/phase5/relay.ts:233-375`; `src/api/phase5/generator.ts`; `src/core/oops/l6.ts:738`; `tests/unit/phase5Fixture.test.ts` | L6 bounds its contained child channel and NW-AUD-020 owns semantic operation admission; neither binds direct parent-loopback callers or relay-wide invocation cardinality | `nightwatch-phase5-relay-invocation-authority-v1` |
+| NW-AUD-029 | PROPOSED | High | High | protocol triage / dossier readiness / promotion | The v1 dossier constructor always emits READY; failed or invalid minimization can be persisted and later counted in READY ledger/promotion paths, while browser/API agreement is mislabeled as two fresh contexts | `src/core/triage/{dossier,pipeline,confidence}.ts`; protocol branch in `src/core/campaign/orchestrator.ts`; focused triage/campaign tests | NW-AUD-025 owns context provenance in replay/admission but not the protocol compatibility branch's unconditional dossier and campaign readiness effects | `nightwatch-protocol-dossier-readiness-integrity-v1` |
+| NW-AUD-030 | PROPOSED | Medium | High | triage durable evidence / replay identity / semantic coherence | Replay-plan v2 accepts occurrence ordinals outside the envelope domain; minimality parsing trusts cast fields/free survivor digests; semantic replay receipts accept contradictory currentness/outcome/binding combinations | `src/core/triage/{replayPlan,replayEnvelope,minimalityEvidence,semanticReplay}.ts`; `src/core/artifactValidation/replayRecordValidation.ts` | NW-AUD-025 owns independent context provenance and required comparison channels, not cross-schema representability, canonical survivor identity, or total semantic receipt coherence | `nightwatch-triage-evidence-contract-integrity-v1` |
+| NW-AUD-031 | PROPOSED | Medium | High | durable artifact/DTO validation / resource and privacy bounds | Several strict validators traverse unbounded arrays/graphs and the artifact facade returns arbitrary leaf `Error.message`; corrupt owner-local evidence can exhaust resources or echo payload-derived diagnostics | `src/core/artifactValidation/{index,minimizationValidation,observationClusterValidation,coverageReportValidation,projectHealthValidation}.ts`; recursive DTO/privacy validators | NW-AUD-019 owns structural private-value screening, not total validation-work bounds, producer/parser maxima, or the facade's raw error channel | `nightwatch-durable-artifact-validation-bounds-v1` |
+| NW-AUD-032 | PROPOSED | Medium | High | retained Phase-6 compatibility / permanent owner quarantine | Owner policy exists only in the default invoker; adapters accept arbitrary invokers and structurally forged validated-plan markers, while permits are not ledger-bound or one-shot | `src/data/phase6/{adapters,gates,validators,budget}.ts`; import/caller census | Permanent owner scope blocks ordinary real execution and no real invoker is wired, but no existing proposal makes the retained adapter seam itself non-bypassable | `nightwatch-phase6-owner-scope-quarantine-integrity-v1` |
+| NW-AUD-033 | PROPOSED | Medium | High | production observation / budget reservation lifecycle | Budget is reserved before breaker/final kill-switch/grant-consumption decisions; denial paths leak in-flight occupancy, while settlement accepts fabricated/foreign/replayed values and mutates aggregate counters | `src/core/prodObserve/{productionRunGate,budget}.ts`; C-11 kernel tests | Production persistence and receipt scopes do not own the reserve/cancel/dispatch/settle state machine or counter conservation | `nightwatch-production-budget-reservation-lifecycle-integrity-v1` |
+| NW-AUD-034 | PROPOSED | Medium | High | production qualification and P1 evidence authority | PQ validation does not exact-validate/recompute the current chain or per-gate denial relation and open resealing authenticates caller-assembled claims; P1 config identity omits destination/expected SHA and its safe receipt lacks a strict parser | `src/core/prodObserve/{receipt,productionRunGate}.ts`; `src/core/prodObserveP1/{scopeConfig,safeReceipt,observer}.ts`; focused C-11/P1 tests | NW-AUD-010 owns release checkpoint lineage and NW-AUD-027 owns persistence lifecycle; neither proves qualification/rehearsal producer authority | `nightwatch-production-observation-receipt-integrity-v1` |
+| NW-AUD-035 | PROPOSED | Medium | High | browser response body / timeout / resource lifecycle | `response.body()` is fully materialized before the size check and the timeout only abandons awaiting the losing promise; oversized/stalled acquisition can retain memory/work beyond observer and context settlement | `src/browser/observers/networkObserver.ts:106-124,785-835`; browser context/lifecycle callers and fixtures | NW-AUD-023 owns context construction and NW-AUD-024 owns evidence publication; neither bounds or owns the response-body acquisition operation itself | `nightwatch-browser-response-acquisition-integrity-v1` |
 
 ## M1 candidate dispositions
 
@@ -180,7 +187,7 @@ No documentation inconsistency is admitted as a finding merely because historica
 | Browser semantic guard and causal intent boundary | `src/browser/{contract,context}.ts`, `src/browser/network/fetchGuard.ts`, `src/browser/observers/networkObserver.ts`, and `src/core/journeys/engine.ts` | observer semantic/settlement, journey engine, context/guard, authenticated and passive smoke/manual callers | NW-AUD-020; context-construction cleanup after partial startup is assigned to M3 browser lifecycle rather than silently closed here | COMPLETE FOR M2 BOUNDARY |
 | Authenticated evidence and shared private-payload defense | `src/core/evidence/runRecorder.ts`, `src/core/policy/{privateArtifacts,privateScreening}.ts`, and all direct authenticated writer/reader callers found by census | redaction, evidence/private-artifact, production evidence, and Control Center reader tests | NW-AUD-018, NW-AUD-019; broader persistence/replay atomicity remains M3 | COMPLETE FOR M2 BOUNDARY |
 
-## M3 candidate dispositions — first tranche
+## M3 candidate dispositions
 
 | ID | Disposition | Root cause | Decisive evidence | Outcome |
 |---|---|---|---|---|
@@ -190,6 +197,13 @@ No documentation inconsistency is admitted as a finding merely because historica
 | NW-AUD-026 | PROPOSED | Real exploration postcondition is copied from the expectation | runtime mutates/returns `expectedStructuralDelta`; fake-runtime mismatch test cannot expose it | MATERIAL → dedicated strictly-valid OpenSpec change |
 | NW-AUD-027 | PROPOSED | Production-local lifecycle trusts names/check-then-act/violation-only cleanliness | prefix-based recursive deletion, replacing rename, silent traversal truncation/errors | MATERIAL → dedicated strictly-valid OpenSpec change |
 | NW-AUD-028 | PROPOSED | Semantic operation identity is treated as live relay caller authority | no per-instance caller proof/budget; same-operation observation is last-writer-wins | MATERIAL → dedicated strictly-valid OpenSpec change |
+| NW-AUD-029 | PROPOSED | Protocol readiness is hard-coded before replay/minimization truth | non-reproduction and invalid/budgeted minimization can still persist/ledger/promote READY | MATERIAL → dedicated strictly-valid OpenSpec change |
+| NW-AUD-030 | PROPOSED | Triage evidence schemas disagree and accept unbound/coherence-invalid records | plan ordinal domain exceeds envelope domain; survivor digest and semantic outcome relations are under-validated | MATERIAL → dedicated strictly-valid OpenSpec change |
+| NW-AUD-031 | PROPOSED | Strict artifact validation is not resource-total or uniformly privacy-safe | unbounded collections/recursion and raw leaf error messages remain at the durable facade | MATERIAL → dedicated strictly-valid OpenSpec change |
+| NW-AUD-032 | PROPOSED | Permanent Phase-6 quarantine is delegated to an optional default invoker | injected invoker plus structural plan marker bypass the actual owner-policy seam | MATERIAL → dedicated strictly-valid OpenSpec change |
+| NW-AUD-033 | PROPOSED | Reservation accounting lacks authenticated lifecycle transitions | post-reservation denial leaks occupancy; repeated/foreign settlement corrupts counters | MATERIAL → dedicated strictly-valid OpenSpec change |
+| NW-AUD-034 | PROPOSED | Qualification/rehearsal digests are treated as execution authority | schemas/coherence are incomplete and caller-controlled resealing can authenticate never-executed claims | MATERIAL → dedicated strictly-valid OpenSpec change |
+| NW-AUD-035 | PROPOSED | Response timeout/size limits apply after or outside the owned acquisition | full buffer allocation precedes cap and losing work is neither cancelled nor joined | MATERIAL → dedicated strictly-valid OpenSpec change |
 
 ### M3 frozen responsibility denominator
 
@@ -198,11 +212,39 @@ M3 owns 154 primary source files: 14 browser, 10 Phase-5 API, 12 product,
 and 79 files across artifact validation, DTO, evidence/retention, exploration,
 journeys, production evidence/observation/privacy/provenance, provenance, and
 repository snapshotting. A path/import/symbol census identifies 118 direct or
-transitive test entrypoints. M3 remains open: the first tranche covered context
-lifecycle, run evidence, replay admission, real exploration postconditions,
-production-local persistence, and relay caller authority; triage/minimization,
-artifact/DTO validation, Phase-6 compatibility, production observation, and
-remaining resource/cancellation paths still require terminal dispositions.
+transitive test entrypoints. All rows now have terminal M3 dispositions.
+
+### M3 coverage reconciliation
+
+| Responsibility row | Primary source files | Test responsibility | Terminal disposition |
+|---|---:|---|---|
+| Browser context, guards, observers, fixtures, response/resource lifecycle | 14 | browser/context/network/observer fixtures within the 118-entrypoint census | NW-AUD-020, NW-AUD-023, NW-AUD-024, NW-AUD-035; remaining metadata-only lifecycle logic inspected with no separate material issue |
+| Phase-5 API catalog, restricted generator, relay, deadline, oracle, lineage | 10 | Phase-5 fixture, relay, deadline, oracle, and lineage tests | NW-AUD-020, NW-AUD-028; abortable shared deadline/body streaming is already bounded, residual compatibility fingerprint is non-authoritative |
+| Product adapters, actions, journeys, bootstrap/lifecycle diagnostics | 12 | exploration/journey/product fixtures and focused unit coverage | NW-AUD-026; static action/catalog/readiness helpers and diagnostics produce no additional independent issue |
+| Phase-6 compatibility/data layer | 11 | Phase-6 validation/compiler/adapter/normalizer/comparator tests | NW-AUD-031, NW-AUD-032; deterministic catalog/normalizer/comparator/lineage transforms add no separate authority beyond those scopes |
+| Triage, replay, minimization, dossier, promotion and summaries | 24 | triage/replay/minimization/dossier/campaign-focused tests | NW-AUD-025, NW-AUD-029, NW-AUD-030, NW-AUD-031; all residual parser/readiness leads absorbed by exact owning scope |
+| Protocol oracles | 2 | response/resource oracle tests and transitive journey tests | NW-AUD-035 for acquisition; already-redacted metadata checks have no separate defect |
+| State monitor and optional MCP policy | 2 | safety monitor/MCP policy transitive tests | raw authenticated evidence concern is duplicate NW-AUD-018; MCP remains disabled/non-authoritative |
+| Shared artifact/DTO/evidence/exploration/journey/production/provenance/snapshot responsibilities | 79 | remaining direct/transitive entries in the 118-entrypoint census | NW-AUD-024 through NW-AUD-035 plus duplicates below; no open M3 lead remains |
+| **Total** | **154** | **118 direct/transitive test entrypoints terminally mapped to the same rows** | **M3 COMPLETE** |
+
+### M3 residual lead dispositions
+
+| Lead | Disposition | Rationale |
+|---|---|---|
+| Compatibility API fingerprint derives from a sanitized/padded oracle identifier | NOT_MATERIAL_CURRENTLY | compatibility-only/non-authoritative; current campaign construction supplies its explicit API fingerprint, and no promotion authority consumes the fallback |
+| P1 session keeps attached admission objects in a strong `Set` | NOT_MATERIAL_CURRENTLY | one-shot local/mock rehearsal is owner-gated and production is unauthorized; no long-lived service lifecycle exists in current reachability |
+| P1 injected synchronous `poll()` could block or return an enormous batch | NOT_MATERIAL_CURRENTLY | current source is local/mock and no asynchronous external event-source implementation exists; future real adapter must satisfy NW-AUD-031/NW-AUD-034 bounds before authorization |
+| Download cancellation occurs after the recorder call | DUPLICATE | recorder-before-cancel failure and swallowed observer writes are part of NW-AUD-024's all-observer evidence transaction contract |
+| Response observer catches recorder failures | DUPLICATE | publication/observer failure truth belongs to NW-AUD-024; body acquisition lifetime is separately NW-AUD-035 |
+| Run monitor retains URL/message-derived fields | DUPLICATE | authenticated persistence minimization and final-writer firewall are already NW-AUD-018; this audit adds no distinct non-authenticated authority defect |
+| Phase-6 structural walkers and result normalizers can receive oversized compatibility inputs | DUPLICATE | total validation work is NW-AUD-031 and real invocation quarantine is NW-AUD-032 |
+
+The 118 test entrypoints were classified by the same import/caller responsibility
+rows: decisive tests were inspected directly, negative gaps are specified by
+the owning changes, and tests whose only M3 contact is a transitive import were
+not counted as evidence for later-wave source/campaign/UI behavior. No M3 lead
+remains without a proposal, duplicate owner, or terminal reachability rationale.
 
 The mechanical focused-test search found 55 direct or transitive M2-matching test entrypoints. Each was classified by responsibility: decisive tests above were inspected in full, while source-intelligence, campaign, Control Center, and validation assertions that merely transitively import policy code remain assigned to their later audit waves. No M2 lead remains without a material proposal, a terminal non-material/not-an-issue rationale, or an explicit later-wave owner.
 
@@ -366,6 +408,17 @@ production machinery remains owner-gated/local-synthetic, and relay abuse
 requires local port discovery while exposing no upstream body and retaining
 known-read destination semantics.
 
+NW-AUD-029 is High because the current protocol campaign path can turn a
+failed fresh reproduction into a READY durable dossier and admitted finding.
+NW-AUD-030 through NW-AUD-035 are Medium with High confidence: each is a
+definite evidence, quarantine, accounting, or resource-containment defect, but
+ordinary reachability is constrained to owner-local artifacts, retained
+compatibility APIs, mock/local production qualification, or explicitly gated
+DEV browser execution. Their scopes remain separate because readiness truth,
+triage schema identity, general artifact work bounds, Phase-6 owner policy,
+reservation lifecycle, receipt producer authority, and body acquisition each
+have a distinct enforcing boundary and negative-test matrix.
+
 ## Validation ledger
 
 | Command/evidence | Result | Purpose |
@@ -430,10 +483,25 @@ known-read destination semantics.
 | static Phase-5 relay/generator/caller/test inspection | SUBSTANTIATED READ-ONLY; public operation ID grants repeatable unbudgeted loopback invocation and map overwrite loses cardinality | Establish NW-AUD-028 without starting a relay |
 | `openspec validate nightwatch-phase5-relay-invocation-authority-v1 --strict` | PASS; 4/4 artifact classes complete | NW-AUD-028 remediation is apply-ready |
 | M3 source and focused-test responsibility census | PASS; 154 primary files and 118 direct/transitive test entrypoints frozen | Bound the remaining M3 work without claiming it complete |
+| static protocol dossier/pipeline/campaign/confidence inspection | SUBSTANTIATED READ-ONLY; failed replay/minimization can still persist and promote READY, and channel agreement inflates context count | Establish NW-AUD-029 without campaign execution |
+| `openspec validate nightwatch-protocol-dossier-readiness-integrity-v1 --strict` | PASS; 4/4 artifact classes complete | NW-AUD-029 remediation is apply-ready |
+| static replay-plan/envelope/minimality/semantic-receipt inspection | SUBSTANTIATED READ-ONLY; cross-layer ordinal domain, digest binding, primitive typing, and outcome coherence drift confirmed | Establish NW-AUD-030 without replay execution |
+| `openspec validate nightwatch-triage-evidence-contract-integrity-v1 --strict` | PASS; 4/4 artifact classes complete | NW-AUD-030 remediation is apply-ready |
+| static artifact/DTO facade and leaf-validator inspection | SUBSTANTIATED READ-ONLY; unbounded collections/recursive work and raw leaf error propagation confirmed | Establish NW-AUD-031 without opening private artifacts |
+| `openspec validate nightwatch-durable-artifact-validation-bounds-v1 --strict` | PASS; 4/4 artifact classes complete | NW-AUD-031 remediation is apply-ready |
+| static Phase-6 adapter/gate/validator/budget/caller inspection | SUBSTANTIATED READ-ONLY; arbitrary invoker and structural plan marker bypass default-invoker policy while permit settlement lacks identity | Establish NW-AUD-032 without data-plane contact |
+| `openspec validate nightwatch-phase6-owner-scope-quarantine-integrity-v1 --strict` | PASS; 4/4 artifact classes complete | NW-AUD-032 remediation is apply-ready |
+| static production budget/gate inspection | SUBSTANTIATED READ-ONLY; post-reservation denial leaks concurrency and settlement accepts unrelated/replayed values | Establish NW-AUD-033 without observer execution |
+| `openspec validate nightwatch-production-budget-reservation-lifecycle-integrity-v1 --strict` | PASS; 4/4 artifact classes complete | NW-AUD-033 remediation is apply-ready |
+| static PQ/P1 config, sealer, parser, gate, and consumer inspection | SUBSTANTIATED READ-ONLY; current chain/config identities and producer authority are incomplete | Establish NW-AUD-034 without rehearsal or environment contact |
+| `openspec validate nightwatch-production-observation-receipt-integrity-v1 --strict` | PASS; 4/4 artifact classes complete | NW-AUD-034 remediation is apply-ready |
+| static browser response acquisition and teardown inspection | SUBSTANTIATED READ-ONLY; full buffering precedes size check and wait-only timeout leaves losing work unowned | Establish NW-AUD-035 without browser launch |
+| `openspec validate nightwatch-browser-response-acquisition-integrity-v1 --strict` | PASS; 4/4 artifact classes complete | NW-AUD-035 remediation is apply-ready |
+| M3 terminal responsibility reconciliation | PASS; all 154 source files and 118 test entrypoints map to a material owner, duplicate owner, or terminal rationale | Close M3 and advance to source/semantic M4 |
 
 ## Completion audit
 
-Not yet eligible. M1 and M2 are complete and M3 is in progress, while later
-source/campaign/UI/validation waves remain pending. Twenty-five material findings currently map
-one-to-one to twenty-five strict-valid issue-specific remediation
+Not yet eligible. M1 through M3 are complete, while later source/semantic,
+campaign, UI, and validation waves remain pending. Thirty-two material findings currently map
+one-to-one to thirty-two strict-valid issue-specific remediation
 changes; that partial portfolio is not evidence of whole-repository completeness.

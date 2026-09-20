@@ -11,7 +11,7 @@ Last substantive checkpoint SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-exhaustive-repository-ef157f7a
-Last checkpoint: 2026-09-20 — M1 and M2 complete; eight M2 material findings have strict-valid safety, containment, authentication, semantic-admission, and privacy proposals; nineteen findings now map to nineteen changes.
+Last checkpoint: 2026-09-21 — M1 through M3 complete; the 154-source/118-test M3 denominator is terminally reconciled and thirty-two findings map one-to-one to strict-valid changes.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
@@ -27,9 +27,9 @@ Audit the entire Nightwatch repository and produce a complete, prioritized set o
 
 ## Current Milestone
 
-Milestone ID: M3
+Milestone ID: M4
 Milestone status: IN_PROGRESS
-What is being attempted: audit browser, API, journey, evidence, persistence, replay, minimization, and resource-lifecycle boundaries with decisive dispositions.
+What is being attempted: audit source confinement/currentness, semantic extraction/admission, projection/invariant/expectation logic, receipts, and stale/unavailable behavior.
 
 ## Completed Milestones
 
@@ -62,17 +62,25 @@ What is being attempted: audit browser, API, journey, evidence, persistence, rep
 - NW-AUD-026: PROPOSED (Medium/High-confidence); dedicated change `nightwatch-exploration-observed-postcondition-integrity-v1` is 4/4 complete and strict-valid.
 - NW-AUD-027: PROPOSED (Medium/High-confidence); dedicated change `nightwatch-production-persistence-lifecycle-integrity-v1` is 4/4 complete and strict-valid.
 - NW-AUD-028: PROPOSED (Medium/High-confidence); dedicated change `nightwatch-phase5-relay-invocation-authority-v1` is 4/4 complete and strict-valid.
+- NW-AUD-029: PROPOSED (High/High-confidence); dedicated change `nightwatch-protocol-dossier-readiness-integrity-v1` is 4/4 complete and strict-valid.
+- NW-AUD-030: PROPOSED (Medium/High-confidence); dedicated change `nightwatch-triage-evidence-contract-integrity-v1` is 4/4 complete and strict-valid.
+- NW-AUD-031: PROPOSED (Medium/High-confidence); dedicated change `nightwatch-durable-artifact-validation-bounds-v1` is 4/4 complete and strict-valid.
+- NW-AUD-032: PROPOSED (Medium/High-confidence); dedicated change `nightwatch-phase6-owner-scope-quarantine-integrity-v1` is 4/4 complete and strict-valid.
+- NW-AUD-033: PROPOSED (Medium/High-confidence); dedicated change `nightwatch-production-budget-reservation-lifecycle-integrity-v1` is 4/4 complete and strict-valid.
+- NW-AUD-034: PROPOSED (Medium/High-confidence); dedicated change `nightwatch-production-observation-receipt-integrity-v1` is 4/4 complete and strict-valid.
+- NW-AUD-035: PROPOSED (Medium/High-confidence); dedicated change `nightwatch-browser-response-acquisition-integrity-v1` is 4/4 complete and strict-valid.
 - NW-AUD-002: DUPLICATE of production-completion tasks 15.7/15.11; NW-AUD-003: NOT_AN_ISSUE after validation-universe PASS with zero unclassified checks; NW-AUD-008: DUPLICATE of the production-completion operator CLI contract.
 - M1 repository topology/dependencies/configuration/build/tooling: COMPLETE.
 - M2 core safety/environment/policy/proxy/L6/authentication: COMPLETE; 32 primary boundary files, 5 cross-boundary consumers, and 55 direct/transitive focused-test entrypoints reconciled with no undispositioned M2 lead.
+- M3 browser/API/journey/evidence/persistence/replay: COMPLETE; 154 primary source files and 118 direct/transitive focused-test entrypoints reconciled with no undispositioned M3 lead.
 
 ## Work In Progress
 
-M3 is active with a frozen denominator of 154 primary source files and 118 direct/transitive focused-test entrypoints. The first tranche admitted NW-AUD-023 through NW-AUD-028 for browser-context readiness, run-bundle transactions, replay context provenance, observed exploration postconditions, production-local persistence lifecycle, and relay invocation authority. Remaining M3 work is concentrated in triage/minimization, artifact/DTO validation, Phase-6 compatibility, production observation, and residual resource/cancellation/partial-response paths.
+M4 is active. M3 closed with thirteen dedicated findings, NW-AUD-023 through NW-AUD-035, and explicit duplicate/non-material dispositions for every residual responsibility row. M4 must now freeze its source/test denominator before substantive source-intelligence and semantic-oracle inspection.
 
 ## Exact Next Action
 
-Inspect the remaining M3 denominator: triage minimizer/replay bindings and artifact validators first, then Phase-6 compatibility, production-observation lifecycle, and residual browser/API resource, cancellation, timeout, and partial-response paths; disposition every lead before closing M3.
+Freeze the M4 source/test responsibility denominator, then inspect sibling-source confinement/currentness, extraction/admission, projections, invariants, expectations, semantic receipts, schema lifecycle, and stale/unavailable paths using Nightwatch repository evidence only.
 
 ## Files Changed
 
@@ -106,6 +114,14 @@ Inspect the remaining M3 denominator: triage minimizer/replay bindings and artif
 | `openspec/changes/nightwatch-exploration-observed-postcondition-integrity-v1/` | NW-AUD-026 implementation-ready remediation proposal | complete planning artifact |
 | `openspec/changes/nightwatch-production-persistence-lifecycle-integrity-v1/` | NW-AUD-027 implementation-ready remediation proposal | complete planning artifact |
 | `openspec/changes/nightwatch-phase5-relay-invocation-authority-v1/` | NW-AUD-028 implementation-ready remediation proposal | complete planning artifact |
+| `openspec/changes/nightwatch-protocol-dossier-readiness-integrity-v1/` | NW-AUD-029 implementation-ready remediation proposal | complete planning artifact |
+| `openspec/changes/nightwatch-triage-evidence-contract-integrity-v1/` | NW-AUD-030 implementation-ready remediation proposal | complete planning artifact |
+| `openspec/changes/nightwatch-durable-artifact-validation-bounds-v1/` | NW-AUD-031 implementation-ready remediation proposal | complete planning artifact |
+| `openspec/changes/nightwatch-phase6-owner-scope-quarantine-integrity-v1/` | NW-AUD-032 implementation-ready remediation proposal | complete planning artifact |
+| `openspec/changes/nightwatch-production-budget-reservation-lifecycle-integrity-v1/` | NW-AUD-033 implementation-ready remediation proposal | complete planning artifact |
+| `openspec/changes/nightwatch-production-observation-receipt-integrity-v1/` | NW-AUD-034 implementation-ready remediation proposal | complete planning artifact |
+| `openspec/changes/nightwatch-browser-response-acquisition-integrity-v1/` | NW-AUD-035 implementation-ready remediation proposal | complete planning artifact |
+| `.agent/tasks/nightwatch-{protocol-dossier-readiness-integrity,triage-evidence-contract-integrity,durable-artifact-validation-bounds,phase6-owner-scope-quarantine-integrity,production-budget-reservation-lifecycle-integrity,production-observation-receipt-integrity,browser-response-acquisition-integrity}-v1/` | completed child planning continuity for NW-AUD-029..035 | complete planning artifacts |
 
 ## Validation Ledger
 
@@ -337,12 +353,27 @@ Relevant failure/output summary: public operation identity grants unbudgeted loo
 Command: M3 source and focused-test responsibility census
 Result: PASS
 When: 2026-09-21
-Relevant failure/output summary: 154 primary source files and 118 direct/transitive test entrypoints frozen; residual M3 responsibility remains explicit.
+Relevant failure/output summary: 154 primary source files and 118 direct/transitive test entrypoints frozen and later terminally reconciled.
+
+Command: static protocol dossier/readiness, triage evidence, artifact/DTO, Phase-6, production-observation, and browser-response inspection
+Result: SUBSTANTIATED READ-ONLY
+When: 2026-09-21
+Relevant failure/output summary: seven distinct material gaps admitted as NW-AUD-029 through NW-AUD-035; residual leads terminally classified as duplicate or non-material under current reachability.
+
+Command: strict OpenSpec validation for NW-AUD-029 through NW-AUD-035
+Result: PASS (7/7 changes; 4/4 artifact classes each)
+When: 2026-09-21
+Relevant failure/output summary: protocol readiness, triage evidence contracts, artifact bounds, Phase-6 quarantine, budget lifecycle, observation receipts, and response acquisition proposals are apply-ready and unimplemented.
+
+Command: M3 terminal responsibility reconciliation
+Result: PASS
+When: 2026-09-21
+Relevant failure/output summary: all 154 source files and all 118 focused/transitive test entrypoints map to a material proposal, prior/duplicate owner, or explicit terminal rationale; M3 closed.
 
 Command: `npm run agent:check`
 Result: PASS with 40 pre-existing/expected warnings and zero strict-v2 errors
 When: 2026-09-21
-Relevant failure/output summary: all six new completed planning child tasks are coherent; open implementation tasks are declared not in scope; unrelated historical/orphan/stale-session warnings remain untouched.
+Relevant failure/output summary: all completed planning child tasks, including the seven new M3 changes, are coherent; open implementation tasks are declared not in scope; unrelated historical/orphan/stale-session warnings remain untouched.
 
 Command: `npm run workspace:check`
 Result: PASS
@@ -525,7 +556,7 @@ Reason: browser/API/product/data, triage, artifact, evidence, production-local,
 protocol, and state responsibilities overlap later waves and require an exact
 split.
 Evidence/constraint: 154 primary source files and 118 direct/transitive focused-
-test entrypoints; remaining M3 rows stay open.
+test entrypoints; residual rows remained open until the later terminal reconciliation.
 
 Decision: admit NW-AUD-023 and NW-AUD-024 at High severity with dedicated changes.
 Reason: a partially guarded authenticated context or a mixed/false-clean run
@@ -559,6 +590,46 @@ loopback/discovery prerequisite, body elision, and semantic destination policy
 limit blast radius below High.
 Evidence/constraint: public operation ID is the only caller proof, no relay-
 wide budget exists, and observation Map entries overwrite by operation ID.
+
+Decision: admit NW-AUD-029 at High severity with a dedicated change.
+Reason: a failed fresh replay can become a durable READY dossier and admitted
+finding on the current protocol path.
+Evidence/constraint: unconditional dossier status, pre-verdict persistence,
+later READY ledger/promotion effects, and channel-derived context count.
+
+Decision: admit NW-AUD-030 and NW-AUD-031 at Medium severity with dedicated changes.
+Reason: current durable evidence can be unrepresentable, contradictory,
+unbound, resource-unbounded, or expose raw validator diagnostics; owner-local
+storage and no remote ingestion keep ordinary reachability below High.
+Evidence/constraint: ordinal-domain drift, free survivor digest, partial
+semantic matrix, unbounded collections/recursion, and facade error passthrough.
+
+Decision: admit NW-AUD-032 at Medium severity with a dedicated change.
+Reason: the retained API contradicts the permanent owner freeze at its actual
+callback seam, while no current non-test real invoker is wired.
+Evidence/constraint: injected invoker, public validated-plan marker, standalone
+gate omitting owner policy, and non-identity-bound permit completion.
+
+Decision: admit NW-AUD-033 and NW-AUD-034 at Medium severity with dedicated changes.
+Reason: production reservation and qualification evidence are definite
+accounting/authority defects, but all current execution is owner-blocked or
+local/mock and no production activity is authorized.
+Evidence/constraint: leaked post-reservation occupancy, arbitrary settlement,
+under-validated chain receipts, open resealing, and incomplete P1 config identity.
+
+Decision: admit NW-AUD-035 at Medium severity with a dedicated change.
+Reason: full-buffer allocation and wait-only timeout defeat the declared
+resource bound in authenticated browser observation; DEV-only containment and
+explicit campaign gating limit reachability below High.
+Evidence/constraint: `response.body()` begins before the race, no cancellation
+of the losing branch, and size enforcement after buffer materialization.
+
+Decision: close M3 and advance to M4.
+Reason: all 154 primary source responsibilities and 118 focused/transitive test
+entrypoints have a material owner, duplicate owner, or explicit terminal
+current-reachability rationale.
+Evidence/constraint: thirteen M3 proposals (NW-AUD-023..035), seven residual
+lead dispositions, and strict validation of every newly generated change.
 
 ## Discoveries
 
@@ -617,11 +688,22 @@ wide budget exists, and observation Map entries overwrite by operation ID.
   This is NW-AUD-022.
 - L6 timer/control-socket and credential-provider file races do not establish a
   distinct material escape under the current bounded owner-only threat model.
-- Browser context cleanup after partial construction remains open under M3.
-- M3's first tranche produced six non-duplicate strict-valid changes; triage/
-  minimization, artifact/DTO validation, Phase-6 compatibility, production
-  observation, and residual resource paths remain open and are not implied
-  complete.
+- Protocol readiness can contradict its own failed lifecycle; this is NW-AUD-029.
+- Triage evidence schemas disagree on representable identity and coherence;
+  this is NW-AUD-030.
+- Durable artifact validation is not total over work or safe error output;
+  this is NW-AUD-031.
+- Phase-6 compatibility puts permanent owner policy in an optional invoker
+  rather than every effect seam; this is NW-AUD-032.
+- Production reservations can leak or be settled by unrelated values; this is
+  NW-AUD-033.
+- Qualification/P1 receipt digests do not establish producer execution or all
+  authority-bearing configuration; this is NW-AUD-034.
+- Response-body timeout and size checks do not cancel or bound the underlying
+  allocation; this is NW-AUD-035.
+- M3 produced thirteen non-duplicate strict-valid changes in total; all
+  remaining M3 leads are terminally duplicate or non-material under current
+  reachability, so M4 is now active.
 
 ## Blockers
 
@@ -645,6 +727,6 @@ NONE
 
 ## Completion Snapshot
 
-Not complete; M1 and M2 are complete and M3 is active. Twenty-five issue-specific
-changes are strict-valid, but milestones M3-M10 are still required before any
+Not complete; M1 through M3 are complete and M4 is active. Thirty-two issue-specific
+changes are strict-valid, but milestones M4-M10 are still required before any
 exhaustive conclusion.
