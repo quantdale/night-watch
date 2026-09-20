@@ -15,11 +15,11 @@
 
 ## 3. Audit safety, containment, environment, proxy, and authentication
 
-- [ ] 3.1 Trace every environment/host/protocol/action authorization path and negative boundary from configuration through policy decision and executor side effect.
-- [ ] 3.2 Inspect HTTP, CONNECT, WebSocket, DNS/address, redirect, proxy lifecycle, port lease, and exact-binding behavior for normalization gaps, TOCTOU, bypass, denial, and cleanup defects.
-- [ ] 3.3 Inspect L6 process/network containment, relay budgets, namespace/control-channel lifecycle, parent-death handling, and capability freshness for escape or false-ready states.
-- [ ] 3.4 Inspect credential/storage-state validation, auth readability, expiry, direct-runner startup ordering, trace policy, secret redaction, and evidence boundaries.
-- [ ] 3.5 Run the narrowest existing deterministic safety tests needed to substantiate or disprove candidates and capture results in the ledger.
+- [x] 3.1 Trace every environment/host/protocol/action authorization path and negative boundary from configuration through policy decision and executor side effect.
+- [x] 3.2 Inspect HTTP, CONNECT, WebSocket, DNS/address, redirect, proxy lifecycle, port lease, and exact-binding behavior for normalization gaps, TOCTOU, bypass, denial, and cleanup defects.
+- [x] 3.3 Inspect L6 process/network containment, relay budgets, namespace/control-channel lifecycle, parent-death handling, and capability freshness for escape or false-ready states.
+- [x] 3.4 Inspect credential/storage-state validation, auth readability, expiry, direct-runner startup ordering, trace policy, secret redaction, and evidence boundaries.
+- [x] 3.5 Run the narrowest existing deterministic safety tests needed to substantiate or disprove candidates and capture results in the ledger.
 
 ## 4. Audit browser, API, journey, evidence, persistence, and replay layers
 

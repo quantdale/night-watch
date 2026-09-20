@@ -62,15 +62,15 @@ The following top-level classes are exhaustive and mutually exclusive for the st
 
 | Subsystem | Tracked paths | Audit wave | Status |
 |---|---:|---|---|
-| `src/core/` | 465 | M2/M3/M4/M5/M7 by responsibility | PENDING |
+| `src/core/` | 465 | M2/M3/M4/M5/M7 by responsibility | M2_SAFETY_OOPS_POLICY_BOUNDARIES_COMPLETE; LATER_WAVES_PENDING |
 | `src/oracles/` | 54 | M4 | PENDING |
 | `src/controlCenter/` | 43 | M6 | PENDING |
-| `src/browser/` | 14 | M2/M3 | PENDING |
+| `src/browser/` | 14 | M2/M3 | M2_GUARD_AND_AUTH_BOUNDARIES_COMPLETE; M3_LIFECYCLE_PENDING |
 | `src/products/` | 12 | M3 | PENDING |
 | `src/data/` | 11 | M3/M5 | PENDING |
 | `src/api/` | 10 | M3 | PENDING |
-| `src/proxy/` | 9 | M2 | IN_PROGRESS — runtime state/health/lease/server/event binding inspected; remaining protocol/cleanup review active |
-| `src/auth/` | 6 | M2 | IN_PROGRESS — lifecycle/direct/refresh/storage writers inspected; remaining login/provider/error-path review active |
+| `src/proxy/` | 9 | M2 | M2_COMPLETE — policy, resolution/address binding, lease/runtime identity, HTTP/CONNECT/Upgrade ordering, events, and cleanup inspected |
+| `src/auth/` | 6 | M2 | M2_COMPLETE — provider, login, refresh, direct capture, lifecycle, stage diagnostics, and error paths inspected |
 | `src/state/`, `src/mcp/` | 2 | M3/M5 | PENDING |
 
 ### `tests/` denominator
@@ -127,6 +127,9 @@ No documentation inconsistency is admitted as a finding merely because historica
 | NW-AUD-017 | PROPOSED | High | High | L6 process/network containment / qualification evidence / runtime binding | L6 returns every proof field as PROVEN even though the UDP probe result is omitted from `directDenied`, browser TCP/UDP observers are never targeted, resolver flags suppress the speculative-DNS stimulus, and the constant-only capability is discarded before a separately resolved authenticated launch | `src/core/oops/l6.ts:850-885,961-1022,1036-1119`; `src/core/oops/process.ts:272-310`; `tests/unit/l6Containment.test.ts:31-90` | NW-AUD-014 explicitly excludes redesigning L6 containment and only owns global child-call totality; no active change requires witnessed non-vacuous probes or binds qualification generation to use | `nightwatch-l6-qualification-proof-integrity-v1` |
 | NW-AUD-018 | PROPOSED | High | High | authenticated evidence / URL minimization / recorder persistence | Authenticated URL reduction preserves ordinary lowercase identifiers as route words, while constructor metadata, repository snapshots, and summary notes have serialization paths outside authenticated-data sanitization; late mode transition does not harden the existing directory | `src/core/safety/redaction.ts:143-179`; `src/core/evidence/runRecorder.ts:79-147,160-202,349-402`; `tests/unit/redaction.test.ts:137-148`; authenticated/manual caller census | C-10 deliberately retains the DEV/authenticated recorder and solves a separate production typed projection; no active change owns proven route templates or a total authenticated writer firewall | `nightwatch-authenticated-evidence-minimization-integrity-v1` |
 | NW-AUD-019 | PROPOSED | Medium | High | private artifacts / shared privacy screening / Control Center readers | The canonical labeled-private-value regex is applied to JSON serialization but does not accept a quote between key and colon, so normal objects with ordinary token/password/customer fields pass; current tests use sentinel tokens that a different regex catches | `src/core/policy/privateScreening.ts:14-38`; `src/core/policy/privateArtifacts.ts:154-158,254-267`; Control Center findings/run readers; `tests/unit/privateArtifactAtomic.test.ts:50-55`; deterministic synthetic regex probe | C-10 production typed projection reduces one consumer's primary risk but explicitly leaves the shared screen as defense in depth; no active change makes owner-local store/read schemas structural and total | `nightwatch-private-payload-screening-structural-integrity-v1` |
+| NW-AUD-020 | PROPOSED | High | High | browser/API semantic admission / journey causality / redirects | Unknown API requests are continued during navigation or outside an active action intent; action intent closes after a fixed 250 ms while final settlement can continue for 10 seconds, and the CDP redirect backstop applies host policy without semantic request authority | `src/browser/observers/networkObserver.ts:272-329,465-548`; `src/core/journeys/engine.ts:37,329-350,469-483`; `src/browser/network/fetchGuard.ts:88-191`; Phase 2A/2B requirement conflict | Existing endpoint semantics classify exact known reads but no active change owns pre-effect proof for passive/delayed/redirect traffic or deterministic causal generations; host containment is not semantic read authority | `nightwatch-semantic-request-admission-integrity-v1` |
+| NW-AUD-021 | PROPOSED | High | High | DEV credential retrieval / login-page use binding | Auto-login validates an approved URL and visible generic controls before retrieval, then fills and force-submits later without revalidating the live document/form/submission target around each secret-bearing effect; a navigation or DOM replacement can receive credentials before later token/shell checks fail | `src/auth/devAutoLogin.ts:299-310,501-549`; `src/auth/loginForm.ts:18-40`; `tests/unit/devLoginSecurity.test.ts:24-36`; absence of navigation/DOM/form-action/listener race coverage | Credential-provider permission/freshness checks and post-login verification own different boundaries; no active change binds retrieval capability to the exact live document/form and each use effect | `nightwatch-dev-credential-use-binding-v1` |
+| NW-AUD-022 | PROPOSED | Medium | High | outer proxy / evidence-effect ordering | Allowed HTTP piping, CONNECT acknowledgement/socket coupling, and Upgrade forwarding/coupling begin before the awaited event append; evidence failure blocks later traffic but the current effect may already escape durable evidence, while the existing zero-connection test uses an independently denied hostname | `src/proxy/server.ts:219-227,371-420,468-493,543-577`; `src/proxy/events.ts:33-40`; `tests/unit/proxy.test.ts:267-293`; prior resolved-egress fail-closed claim | NW-AUD-016 owns live instance/control-state identity, not per-request evidence ordering; no active change requires a durable preparation barrier and truthful incomplete outcome for every transport | `nightwatch-proxy-evidence-effect-ordering-v1` |
 
 ## M1 candidate dispositions
 
@@ -147,7 +150,7 @@ No documentation inconsistency is admitted as a finding merely because historica
 | NW-AUD-013 | PROPOSED | Preservation and migration results overstate complete/non-destructive truth | CLI slices matching names before the builder can mark truncation and catches read/parse failures; writer checks only lexical/immediate ancestry; migration path equality is string-only and `originalRetained` is constant without a post-write original read | MATERIAL → dedicated strictly-valid OpenSpec change |
 | NW-AUD-014 | PROPOSED | The claimed global subprocess boundary is an incomplete manual sample | 53 bin modules import child-process authority, but the rule lists 18 files; gate topology and review mutation spread the ambient environment, and Phase 22 DEV inherits environment/stdio without explicit deadline/buffer; offline mutation invokes acquiring `npx` | MATERIAL → dedicated strictly-valid OpenSpec change |
 
-## M2 candidate dispositions (in progress)
+## M2 candidate dispositions
 
 | ID | State | Summary | Decisive evidence | Disposition |
 |---|---|---|---|---|
@@ -156,6 +159,22 @@ No documentation inconsistency is admitted as a finding merely because historica
 | NW-AUD-017 | PROPOSED | L6 qualification overclaims non-vacuous denial and is not bound to the authenticated runtime it authorizes | The Node probe records `udp: CONNECTED` on successful send but `directDenied` omits it; browser observer ports never enter Chrome arguments or content while `*.invalid` is mapped to NOTFOUND; READY is a public constant constructor, and `runRestrictedOops` discards qualification context before a new Bubblewrap/target resolution | MATERIAL → dedicated strictly-valid OpenSpec change |
 | NW-AUD-018 | PROPOSED | Authenticated metadata minimization is heuristic and not a total persistence boundary | `redactAuthenticatedUrl` preserves lowercase/digit route-like IDs; `writeRepositories` and final notes serialize directly; constructor fields precede authenticated sanitization; a late switch changes file handling but not directory mode; focused tests cover only mixed-case/numeric IDs | MATERIAL → dedicated strictly-valid OpenSpec change |
 | NW-AUD-019 | PROPOSED | Shared private screening misses its ordinary serialized-object channel | Local reproduction shows JSON-stringified ordinary token/password/customer fields all return unblocked because keys are quoted; equivalent unquoted text is blocked; store/readers rely on the shared screen and tests prove only canonical sentinel rejection | MATERIAL → dedicated strictly-valid OpenSpec change |
+| NW-AUD-020 | PROPOSED | Unknown/delayed/redirect API requests can cross transport admission without source-proven read authority | `PASSIVE_UNKNOWN_OBSERVED` traffic is continued; a 250 ms intent timer closes before the 10 s settlement barrier; the redirect backstop consumes host but not semantic authority | MATERIAL → dedicated strictly-valid OpenSpec change |
+| NW-AUD-021 | PROPOSED | Credential retrieval approval is not bound to the exact live document/form at each secret-bearing use | Page URL/control checks precede provider retrieval, while generic locators and force-click run later without document/form/action revalidation; current test accepts any matching synthetic form and has no replacement/navigation race | MATERIAL → dedicated strictly-valid OpenSpec change |
+| NW-AUD-022 | PROPOSED | Proxy request evidence is appended after the current upstream effect begins | HTTP, CONNECT, and Upgrade all start their effect before `record()`; failure disables only subsequent requests; the named zero-connection test uses a policy-denied destination | MATERIAL → dedicated strictly-valid OpenSpec change |
+
+### M2 coverage reconciliation
+
+| Responsibility row | Source denominator | Test/evidence denominator | Candidate/disposition | Status |
+|---|---|---|---|---|
+| Environment, host, protocol, action, semantic-read, owner-scope, and redaction policy | all 9 `src/core/safety/**` files plus `src/core/policy/ownerScope.ts` | focused safety, endpoint-semantics, owner-scope, destination-manifest, host-capability, redaction, smoke, and manual gate callers | NW-AUD-018, NW-AUD-020; arbitrary-port host matching and internal non-network schemes are explicit current policy rather than bypasses | COMPLETE |
+| Outer proxy resolution, address/exact binding, transport handlers, runtime state, lease, events, and cleanup | all 9 `src/proxy/**` files | address/resolver/resolved-egress, HTTP/CONNECT/Upgrade, lease determinism/stress, lifecycle, global setup, smoke, and failure-path tests | NW-AUD-016, NW-AUD-022; remaining normalization/cleanup leads either have exact current tests or depend on those proposals | COMPLETE |
+| Authentication provider, login use, refresh/direct capture, lifecycle sidecar, storage state, and diagnostics | all 6 `src/auth/**` files plus `src/browser/fixtures/storageState.ts` | provider, login security, capture launcher/stages, lifecycle/freshness, authenticated smoke, and manual callers | NW-AUD-015, NW-AUD-021; provider stat/read race is not a separate repository threat because the secret directory is owner-only and a same-user adversary can already read it | COMPLETE |
+| L6 namespace, relay/control channel, child launch, qualification, parent-death, and budget behavior | all 3 `src/core/oops/**` files | `l6Containment`, OOPS/API callers, hardening claims, and current qualification receipts | NW-AUD-017; timeout cleanup/late relay and same-user socket replacement are bounded denial-only leads, not separate material authority bypasses | COMPLETE |
+| Browser semantic guard and causal intent boundary | `src/browser/{contract,context}.ts`, `src/browser/network/fetchGuard.ts`, `src/browser/observers/networkObserver.ts`, and `src/core/journeys/engine.ts` | observer semantic/settlement, journey engine, context/guard, authenticated and passive smoke/manual callers | NW-AUD-020; context-construction cleanup after partial startup is assigned to M3 browser lifecycle rather than silently closed here | COMPLETE FOR M2 BOUNDARY |
+| Authenticated evidence and shared private-payload defense | `src/core/evidence/runRecorder.ts`, `src/core/policy/{privateArtifacts,privateScreening}.ts`, and all direct authenticated writer/reader callers found by census | redaction, evidence/private-artifact, production evidence, and Control Center reader tests | NW-AUD-018, NW-AUD-019; broader persistence/replay atomicity remains M3 | COMPLETE FOR M2 BOUNDARY |
+
+The mechanical focused-test search found 55 direct or transitive M2-matching test entrypoints. Each was classified by responsibility: decisive tests above were inspected in full, while source-intelligence, campaign, Control Center, and validation assertions that merely transitively import policy code remain assigned to their later audit waves. No M2 lead remains without a material proposal, a terminal non-material/not-an-issue rationale, or an explicit later-wave owner.
 
 NW-AUD-001 severity is Medium rather than High: compromise or malicious
 movement of an upstream action identity is an external precondition, and the
@@ -284,6 +303,28 @@ accepts unknown objects, the normal JSON representation defeats the claimed
 labeled-value control, and the same false-negative screen is reused by stores,
 production defense in depth, and Control Center readers.
 
+NW-AUD-020 severity is High rather than Critical: host, environment, resolved-
+address, exact-binding, and method controls continue to constrain traffic, so
+the defect does not grant arbitrary Internet or production access by itself.
+It remains High because semantic read admission is the control that separates
+authorized observation from unknown product effects, and delayed or redirected
+requests can deterministically outlive the timer that currently carries that
+authority.
+
+NW-AUD-021 severity is High rather than Critical: exploitation requires a
+race, replacement, or misleading form inside an already approved DEV origin,
+and downstream token/shell verification will usually stop the run. Those later
+checks cannot retract credential disclosure, however; the ordinary automated
+path retrieves a real secret and applies it through generic selectors without
+binding each use to the previously approved document/form identity.
+
+NW-AUD-022 severity is Medium rather than High: destination and address policy
+still governs the allowed current request, so the ordering defect does not
+expand which host may be contacted. It remains material because durable proxy
+evidence is a containment invariant, every transport path begins its effect
+first, and the existing regression obtains zero connections from unrelated
+host denial rather than from the claimed evidence failure behavior.
+
 ## Validation ledger
 
 | Command/evidence | Result | Purpose |
@@ -328,10 +369,17 @@ production defense in depth, and Control Center readers.
 | `openspec validate nightwatch-authenticated-evidence-minimization-integrity-v1 --strict` | PASS; 4/4 artifact classes complete | NW-AUD-018 remediation is apply-ready |
 | static shared-screen/store/reader/test inspection plus synthetic regex evaluation | REPRODUCED LOCALLY; quoted ordinary token/password/customer object fields pass while equivalent unquoted token text is blocked | Establish NW-AUD-019 without reading or writing private data |
 | `openspec validate nightwatch-private-payload-screening-structural-integrity-v1 --strict` | PASS; 4/4 artifact classes complete | NW-AUD-019 remediation is apply-ready |
+| static semantic observer/journey timer/CDP/endpoint-spec inspection | SUBSTANTIATED READ-ONLY; passive unknown is continued, action authority closes at 250 ms before final settlement, and redirect backstop has host-only authority | Establish NW-AUD-020 without browser or product traffic |
+| `openspec validate nightwatch-semantic-request-admission-integrity-v1 --strict` | PASS; 4/4 artifact classes complete | NW-AUD-020 remediation is apply-ready |
+| static DEV auto-login/provider/form/test inspection | SUBSTANTIATED READ-ONLY; credential retrieval follows an earlier page check, while later generic fill/force-submit effects do not rebind the live document/form | Establish NW-AUD-021 without retrieving or using credentials |
+| `openspec validate nightwatch-dev-credential-use-binding-v1 --strict` | PASS; 4/4 artifact classes complete | NW-AUD-021 remediation is apply-ready |
+| static proxy event/HTTP/CONNECT/Upgrade/failure-test inspection | SUBSTANTIATED READ-ONLY; each allowed transport begins its effect before recording and the current zero-connection test is independently policy-denied | Establish NW-AUD-022 without starting proxy, resolver, or sockets |
+| `openspec validate nightwatch-proxy-evidence-effect-ordering-v1 --strict` | PASS; 4/4 artifact classes complete | NW-AUD-022 remediation is apply-ready |
+| M2 source and focused-test responsibility census | PASS; 32 primary safety/proxy/auth/OOPS/browser files, 5 cross-boundary consumers, and 55 direct/transitive test entrypoints classified | Close the M2 denominator without treating later-wave transitive tests as M2 evidence |
 
 ## Completion audit
 
-Not yet eligible. M1 is complete and M2 remains active, while later browser/source/
-campaign/UI/validation waves remain pending. Sixteen material findings
-currently map one-to-one to sixteen strict-valid issue-specific remediation
+Not yet eligible. M1 and M2 are complete, while later browser/source/campaign/
+UI/validation waves remain pending. Nineteen material findings currently map
+one-to-one to nineteen strict-valid issue-specific remediation
 changes; that partial portfolio is not evidence of whole-repository completeness.

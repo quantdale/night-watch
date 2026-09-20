@@ -11,7 +11,7 @@ Last substantive checkpoint SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-exhaustive-repository-ef157f7a
-Last checkpoint: 2026-09-20 — M1 complete; M2 has five material findings with strict-valid containment, authentication, and privacy proposals; sixteen findings now map to sixteen changes.
+Last checkpoint: 2026-09-20 — M1 and M2 complete; eight M2 material findings have strict-valid safety, containment, authentication, semantic-admission, and privacy proposals; nineteen findings now map to nineteen changes.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
@@ -27,9 +27,9 @@ Audit the entire Nightwatch repository and produce a complete, prioritized set o
 
 ## Current Milestone
 
-Milestone ID: M2
+Milestone ID: M3
 Milestone status: IN_PROGRESS
-What is being attempted: audit core safety, environment/policy authorization, proxy/process-network containment, and authentication lifecycle/error boundaries with decisive dispositions.
+What is being attempted: audit browser, API, journey, evidence, persistence, replay, minimization, and resource-lifecycle boundaries with decisive dispositions.
 
 ## Completed Milestones
 
@@ -53,16 +53,20 @@ What is being attempted: audit core safety, environment/policy authorization, pr
 - NW-AUD-017: PROPOSED (High/High-confidence); dedicated change `nightwatch-l6-qualification-proof-integrity-v1` is 4/4 complete and strict-valid.
 - NW-AUD-018: PROPOSED (High/High-confidence); dedicated change `nightwatch-authenticated-evidence-minimization-integrity-v1` is 4/4 complete and strict-valid.
 - NW-AUD-019: PROPOSED (Medium/High-confidence); dedicated change `nightwatch-private-payload-screening-structural-integrity-v1` is 4/4 complete and strict-valid.
+- NW-AUD-020: PROPOSED (High/High-confidence); dedicated change `nightwatch-semantic-request-admission-integrity-v1` is 4/4 complete and strict-valid.
+- NW-AUD-021: PROPOSED (High/High-confidence); dedicated change `nightwatch-dev-credential-use-binding-v1` is 4/4 complete and strict-valid.
+- NW-AUD-022: PROPOSED (Medium/High-confidence); dedicated change `nightwatch-proxy-evidence-effect-ordering-v1` is 4/4 complete and strict-valid.
 - NW-AUD-002: DUPLICATE of production-completion tasks 15.7/15.11; NW-AUD-003: NOT_AN_ISSUE after validation-universe PASS with zero unclassified checks; NW-AUD-008: DUPLICATE of the production-completion operator CLI contract.
 - M1 repository topology/dependencies/configuration/build/tooling: COMPLETE.
+- M2 core safety/environment/policy/proxy/L6/authentication: COMPLETE; 32 primary boundary files, 5 cross-boundary consumers, and 55 direct/transitive focused-test entrypoints reconciled with no undispositioned M2 lead.
 
 ## Work In Progress
 
-M2 is active. The policy/host graph, L5 proxy resolution/server/runtime/lease surfaces, authentication lifecycle/direct/refresh/storage publication, L6 qualification/launch binding, authenticated evidence redaction/persistence, private payload screening, and related tests have been traced far enough to admit NW-AUD-015 through NW-AUD-019. Remaining M2 work must finish residual L6 control/lifecycle edges, auth provider/login error paths, browser-guard runtime capability claims, host-policy reconciliation, and the complete denominator. Later waves still revisit `bin/` and browser call sites by their own responsibilities.
+M3 is active. M2 closed after admitting NW-AUD-015 through NW-AUD-022 and terminally reconciling residual L6 control/timer, provider-file, host-port, internal-scheme, and browser-contract leads. Browser context partial-start cleanup was deliberately transferred to M3. The next inspection covers all browser/API/journey/evidence/persistence/replay source rows and their focused test denominator without reopening settled M2 policy findings.
 
 ## Exact Next Action
 
-Complete the remaining L6 control/lifecycle and authentication provider/login/error-path inspection, resolve browser-guard and host-policy leads against outer-proxy/L6 redundancy, and reconcile every M2 source/test row before milestone closure.
+Freeze the M3 source/test responsibility denominator, then inspect browser context creation and teardown, CDP/route/WebSocket/worker/download/popup paths, API relay/direct/OOPS request lifecycle, evidence persistence, replay, minimization, cancellation, timeout, and partial-response behavior.
 
 ## Files Changed
 
@@ -87,6 +91,9 @@ Complete the remaining L6 control/lifecycle and authentication provider/login/er
 | `openspec/changes/nightwatch-l6-qualification-proof-integrity-v1/` | NW-AUD-017 implementation-ready remediation proposal | complete planning artifact |
 | `openspec/changes/nightwatch-authenticated-evidence-minimization-integrity-v1/` | NW-AUD-018 implementation-ready remediation proposal | complete planning artifact |
 | `openspec/changes/nightwatch-private-payload-screening-structural-integrity-v1/` | NW-AUD-019 implementation-ready remediation proposal | complete planning artifact |
+| `openspec/changes/nightwatch-semantic-request-admission-integrity-v1/` | NW-AUD-020 implementation-ready remediation proposal | complete planning artifact |
+| `openspec/changes/nightwatch-dev-credential-use-binding-v1/` | NW-AUD-021 implementation-ready remediation proposal | complete planning artifact |
+| `openspec/changes/nightwatch-proxy-evidence-effect-ordering-v1/` | NW-AUD-022 implementation-ready remediation proposal | complete planning artifact |
 
 ## Validation Ledger
 
@@ -250,6 +257,41 @@ Result: PASS
 When: 2026-09-20
 Relevant failure/output summary: proposal, design, private-payload-screening-structural-integrity spec, and tasks are 4/4 complete/apply-ready.
 
+Command: static semantic observer/journey timer/CDP/endpoint requirement inspection
+Result: SUBSTANTIATED READ-ONLY
+When: 2026-09-20
+Relevant failure/output summary: unknown passive traffic is continued, action authority closes at 250 ms before final settlement, and redirect backstop has no semantic read capability.
+
+Command: `openspec validate nightwatch-semantic-request-admission-integrity-v1 --strict`
+Result: PASS
+When: 2026-09-20
+Relevant failure/output summary: proposal, design, semantic-request-admission-integrity spec, and tasks are 4/4 complete/apply-ready.
+
+Command: static DEV auto-login/provider/form/test inspection
+Result: SUBSTANTIATED READ-ONLY
+When: 2026-09-20
+Relevant failure/output summary: credential retrieval follows an earlier approved-page/control check, but later generic fill and force-submit effects do not revalidate document/form/action identity.
+
+Command: `openspec validate nightwatch-dev-credential-use-binding-v1 --strict`
+Result: PASS
+When: 2026-09-20
+Relevant failure/output summary: proposal, design, dev-credential-use-binding spec, and tasks are 4/4 complete/apply-ready.
+
+Command: static proxy events/HTTP/CONNECT/Upgrade/failure-test inspection
+Result: SUBSTANTIATED READ-ONLY
+When: 2026-09-20
+Relevant failure/output summary: every allowed transport begins its effect before awaited recording; the existing write-failure zero-connection test is independently policy-denied.
+
+Command: `openspec validate nightwatch-proxy-evidence-effect-ordering-v1 --strict`
+Result: PASS
+When: 2026-09-20
+Relevant failure/output summary: proposal, design, proxy-evidence-effect-ordering spec, and tasks are 4/4 complete/apply-ready.
+
+Command: M2 source and focused-test responsibility census
+Result: PASS
+When: 2026-09-20
+Relevant failure/output summary: 32 primary boundary files, 5 cross-boundary consumers, and 55 direct/transitive focused-test entrypoints classified; each residual lead has a proposal, terminal rationale, or explicit M3 owner.
+
 Command: `npm run agent:check`
 Result: PASS with 41 pre-existing/expected warnings and zero strict-v2 errors
 When: 2026-09-20
@@ -400,6 +442,37 @@ Evidence/constraint: quoted JSON key layout versus the raw-text regex, the
 local no-I/O ordinary-value probe, generic unknown artifact inputs, and reuse by
 private write/read and Control Center evidence readers.
 
+Decision: admit NW-AUD-020 at High severity and create a dedicated change.
+Reason: semantic read authority is lost for passive, delayed, and redirect
+traffic even though host containment remains active; this can execute unknown
+product requests under an observation-only campaign, while the remaining host/
+address/method controls keep the finding below Critical.
+Evidence/constraint: passive-unknown continuation, the 250 ms intent boundary
+versus 10 s settlement, host-only CDP redirect guard, and conflicting Phase 2A/
+2B requirements.
+
+Decision: admit NW-AUD-021 at High severity and create a dedicated change.
+Reason: post-login verification cannot undo credential disclosure if the live
+document or form changes after preflight; a race or misleading form inside the
+approved DEV origin is required, keeping the issue below Critical.
+Evidence/constraint: page/control check before retrieval, generic later locator
+fill and force-click, and no document/form/navigation race regression.
+
+Decision: admit NW-AUD-022 at Medium severity and create a dedicated change.
+Reason: destination authority remains constrained, but each allowed proxy
+transport can begin the current effect before durable evidence and the current
+test proves a different denial; the result violates evidence truth without
+broadening the destination set.
+Evidence/constraint: HTTP, CONNECT, and Upgrade ordering plus the denied
+`example.invalid` failure fixture; instance attestation owns a separate fact.
+
+Decision: close M2 and advance to M3.
+Reason: the complete M2 responsibility census has no undispositioned lead; the
+only meaningful residual browser context partial-start cleanup belongs to the
+M3 lifecycle denominator.
+Evidence/constraint: 32 primary boundary files, 5 cross-boundary consumers, 55
+direct/transitive focused-test entrypoints, and the audit-ledger reconciliation.
+
 ## Discoveries
 
 - Registered topology has room for this worktree under the repository's maximum of eight.
@@ -448,6 +521,16 @@ private write/read and Control Center evidence readers.
 - The shared private-value screen applies a key/value regex to JSON text whose
   quoted keys make that regex structurally inapplicable for ordinary values;
   sentinel-centric tests mask the gap. This is NW-AUD-019.
+- Unknown API traffic can continue after causal action authority closes, while
+  redirect enforcement proves only host admission. This is NW-AUD-020.
+- DEV credential use is not rebound to the exact live document/form between
+  retrieval and generic fill/force-submit effects. This is NW-AUD-021.
+- Allowed proxy effects precede their awaited evidence append for HTTP,
+  CONNECT, and Upgrade; the named failure test is independently host-denied.
+  This is NW-AUD-022.
+- L6 timer/control-socket and credential-provider file races do not establish a
+  distinct material escape under the current bounded owner-only threat model.
+- Browser context cleanup after partial construction remains open under M3.
 
 ## Blockers
 
@@ -471,6 +554,6 @@ NONE
 
 ## Completion Snapshot
 
-Not complete; M1 is complete and M2 is active. Sixteen issue-specific changes
-are strict-valid, but milestones M2-M10 are still required before any
+Not complete; M1 and M2 are complete and M3 is active. Nineteen issue-specific
+changes are strict-valid, but milestones M3-M10 are still required before any
 exhaustive conclusion.

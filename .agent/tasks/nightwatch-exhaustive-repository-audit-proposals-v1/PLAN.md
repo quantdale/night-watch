@@ -50,14 +50,14 @@ Use a coverage matrix rather than ad hoc browsing. Inventory the tree and depend
 - Objective: audit fail-closed policy boundaries and bypass/error/lifecycle cases.
 - Acceptance criteria: trust boundaries, resource cleanup, normalization, race, denial, redaction, and negative-test coverage are assessed.
 - Validation commands: focused existing unit/smoke suites only.
-- Status: IN_PROGRESS
+- Status: COMPLETE
 
 ### M3 — Browser, API, journeys, evidence, persistence, and replay
 
 - Objective: audit browser containment, observers, direct/API paths, artifact recording, storage, replay, minimization, and privacy behavior.
 - Acceptance criteria: every ingress/egress and persisted representation has an evidence-backed disposition.
 - Validation commands: focused browser/unit suites only where decisive.
-- Status: NOT_STARTED
+- Status: IN_PROGRESS
 
 ### M4 — Source intelligence, semantic oracles, expectations, and contract lifecycle
 
@@ -132,6 +132,10 @@ Prefer the narrowest decisive existing tests during exploration. Validate each O
 - 2026-09-20 — Decision: partition L6 qualification proof integrity into its own remediation change; reason: UDP and browser speculative-network claims are marked PROVEN from omitted or unexercised evidence and the constant capability is not bound to the later runtime; evidence: NW-AUD-017; consequence: `nightwatch-l6-qualification-proof-integrity-v1` specifies witnessed positive-controlled probes, exact qualification-to-use identity, and non-fabricable READY authority.
 - 2026-09-20 — Decision: partition authenticated evidence minimization into its own remediation change; reason: route-word heuristics preserve ordinary identifiers and multiple authenticated artifact writers bypass the recorder sanitizer; evidence: NW-AUD-018; consequence: `nightwatch-authenticated-evidence-minimization-integrity-v1` specifies proven route templates, closed DTOs, total writer discovery, and one final firewall.
 - 2026-09-20 — Decision: partition private-payload structural screening into its own remediation change; reason: applying the labeled-value regex to JSON serialization misses normal quoted keys across shared stores/readers; evidence: NW-AUD-019 and a deterministic synthetic probe; consequence: `nightwatch-private-payload-screening-structural-integrity-v1` specifies schema-aware safe DTO admission and total reader/writer validation.
+- 2026-09-20 — Decision: partition semantic request admission into its own remediation change; reason: unknown traffic is continued outside action authority, a fixed 250 ms timer loses delayed causality before settlement, and redirect enforcement has only host authority; evidence: NW-AUD-020; consequence: `nightwatch-semantic-request-admission-integrity-v1` requires source-proven pre-effect reads, finite initialization exceptions, causal generations, and transport-total enforcement.
+- 2026-09-20 — Decision: partition DEV credential use binding into its own remediation change; reason: a previously approved page/control observation does not bind the later generic secret fill and force-submit effects to the same live document/form; evidence: NW-AUD-021; consequence: `nightwatch-dev-credential-use-binding-v1` specifies short-lived document/form capability, per-effect revalidation, and disclosure-safe race handling.
+- 2026-09-20 — Decision: partition proxy evidence-effect ordering into its own remediation change; reason: all allowed transport handlers begin the current effect before awaiting evidence and the existing zero-connection test is policy-denied independently; evidence: NW-AUD-022; consequence: `nightwatch-proxy-evidence-effect-ordering-v1` requires a durable preparation barrier and honest incomplete outcomes without duplicating instance attestation.
+- 2026-09-20 — Decision: close M2 after reconciling 32 primary boundary files, 5 cross-boundary consumers, and 55 direct/transitive focused-test entrypoints; reason: every residual lead now has a material proposal, terminal non-material/not-an-issue rationale, or explicit M3 owner; consequence: browser lifecycle/persistence/replay work advances under M3 without reopening settled host/auth/L6 scope.
 
 ## Discoveries
 
@@ -192,6 +196,17 @@ Prefer the narrowest decisive existing tests during exploration. Validate each O
 - The canonical private-payload screen blocks unquoted labeled text but accepts
   the same ordinary values under normal JSON-quoted token/password/customer
   keys. This is NW-AUD-019.
+- Unknown API traffic can be continued as passive after action authority closes,
+  and same-host redirect enforcement has no semantic proof. This is NW-AUD-020.
+- DEV auto-login retrieves credentials after an approved-page check but later
+  fills and force-submits generic controls without rebinding the live document
+  and form. This is NW-AUD-021.
+- The outer proxy starts allowed HTTP, CONNECT, and Upgrade effects before the
+  awaited evidence append; the current failure test proves host denial instead
+  of evidence ordering. This is NW-AUD-022.
+- Residual L6 control/timer and provider-file races did not establish a distinct
+  authority escape under the owner-only/same-user threat model; browser context
+  partial-start cleanup remains explicitly owned by M3.
 
 ## Deferred Work
 
