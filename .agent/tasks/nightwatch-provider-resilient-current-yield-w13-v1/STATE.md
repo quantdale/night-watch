@@ -134,17 +134,19 @@ warrant a generation-2 re-run for matrix coherence.
 
 ## Work In Progress
 
-Generation-1 runs are preserved (broad valid at 45 calls; scoped 01-03 with
-recorded failover transitions). The owner-directed generation-2 policy and
-re-freeze are committed; runs 04-08 are next.
+Full matrix attempted: broad, 01, 05, 06, 07, 08 valid; 02/03 engine-truncated
+provider-blocked (gen-1); 04 valid provider responses with unobservable source
+activity; 05 carries 1 mechanical admission whose dossier was lost
+(W13-DEF-01). D-141 re-executes 02/03/04 under the same frozen matrix with the
+W13-DEF-02 durable tool-action count; prior receipts preserved as generation
+snapshots.
 
 ## Exact Next Action
 
-Commit the generation-2 amendment checkpoint (policy fingerprint
-`sha256:1efa45195fc018aa22677336`, freeze fingerprint
-`sha256:10299c668795e69904f4600b`), then execute repository-04 through
-repository-08 with the run harness, then run the aggregation/safety/doc/
-validation close-out. Generation-1 receipts are never modified.
+Execute `w13-repository-02`, `w13-repository-03`, and `w13-repository-04`
+with the fixed harness under the frozen matrix, then re-run the aggregation,
+novelty/safety close-out, governed documentation, full validation, and C-00
+integration. Historical generation receipts are never modified.
 
 ## Files Changed
 

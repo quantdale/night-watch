@@ -15,12 +15,11 @@ single frozen provider. W13 is a distinct owner-authorized successor whose
 Phase A must close every locally closable W12 residual before Phase B freezes
 a provider-resilience policy and executes the fixed broad-plus-eight-scoped
 matrix.
-Current milestone: M12 — run matrix execution (owner-directed generation 2)
-Next action: commit the generation-2 amendment (policy
-sha256:1efa45195fc018aa22677336, freeze sha256:10299c668795e69904f4600b),
-then execute repository-04 through repository-08 under the new first candidate
-opencode-go/muse-spark-1.3-contributor at XHIGH effort. Generation-1 receipts
-are preserved and never re-run or rewritten.
+Current milestone: M12 — matrix completion re-execution (D-141)
+Next action: re-execute repository-02, repository-03, and repository-04 under
+the unchanged frozen matrix with the W13-DEF-02 durable tool-action count, then
+re-run aggregation, novelty/safety close-out, documentation, full validation,
+and C-00 integration. Historical generation receipts are never modified.
 Authorization class: PROVIDER_RESILIENT_CURRENT_YIELD_W13_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2

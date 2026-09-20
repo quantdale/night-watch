@@ -4,7 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { REASONER_TURN_RESPONSE_VERSION } from '../../src/core/agentProtocol';
-import { runLocalCliCampaign } from '../../src/core/agentRuntime/localCampaign';
+import { countCampaignToolActions, runLocalCliCampaign } from '../../src/core/agentRuntime/localCampaign';
 import {
   classifyRunProviderOutcome,
   validateAdmissionRecords,
@@ -124,6 +124,50 @@ test.describe('W13 failed-provider fake-progress guard', () => {
 
       const validFixture = classifyRunProviderOutcome({ validProviderResponses: 1, providerResponseBytes: 128, sourceActions: 1 });
       expect(validFixture).toBe('VALID_PROVIDER_RUN');
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test('the tool-action count is durable in the campaign result (W13-DEF-02)', async () => {
+    const records = [
+      { intentKind: 'CALL_TOOL' },
+      { intentKind: 'REASONER_CALL' },
+      { intentKind: 'CALL_TOOL' },
+      { intentKind: 'FORM_HYPOTHESIS' },
+    ] as never;
+    expect(countCampaignToolActions(records)).toBe(2);
+
+    const dir = scratchDir();
+    try {
+      const response = {
+        schemaVersion: REASONER_TURN_RESPONSE_VERSION,
+        intents: [{
+          kind: 'CALL_TOOL',
+          toolId: 'INSPECT_SOURCE_SURFACE',
+          arguments: { path: 'mobingilabs/ouchan:pkg/almcreds/creds.go' },
+        }],
+        hypotheses: [],
+      };
+      const file = path.join(dir, 'tool-provider.mjs');
+      fs.writeFileSync(file, `
+const chunks = [];
+process.stdin.on('data', (chunk) => chunks.push(chunk)).on('end', () => {
+  process.stdout.write(${JSON.stringify(JSON.stringify(response))});
+});
+`, { mode: 0o700 });
+      const result = await runLocalCliCampaign({
+        campaignId: 'w13-def02-tool-count',
+        ceilingName: 'HOUR_1',
+        executable: process.execPath,
+        args: [file],
+        provider: 'test-provider',
+        model: 'test-model',
+        maxTurns: 1,
+        stateDirectory: dir,
+      });
+      expect(result.toolActionCount).toBeGreaterThan(0);
+      expect(result.actionCount).toBeGreaterThanOrEqual(result.toolActionCount);
     } finally {
       fs.rmSync(dir, { recursive: true, force: true });
     }

@@ -177,10 +177,11 @@ async function runOne(entry) {
   const providerSummary = sanitizeProviderAttribution(entry.runId);
   const resultOrCheckpoint = result;
   const providerResponseBytes = resultOrCheckpoint?.byteLedger?.providerResponseBytes ?? 0;
-  const sourceActivity = actionSummary.toolActions;
+  const toolActionCount = typeof resultOrCheckpoint?.toolActionCount === 'number' ? resultOrCheckpoint.toolActionCount : null;
+  const sourceActivity = typeof actionSummary.toolActions === 'number' ? actionSummary.toolActions : toolActionCount;
   const yieldEvidence = resultOrCheckpoint?.yieldMetrics ?? null;
   const reproductionActivity = Number.isFinite(yieldEvidence?.reproductionAttempts) && yieldEvidence.reproductionAttempts > 0;
-  const sourceActivityObserved = sourceActivity !== 'NOT_CAPTURED';
+  const sourceActivityObserved = typeof sourceActivity === 'number';
   const sourceActivityProven = (sourceActivityObserved && sourceActivity > 0) || reproductionActivity || admissions.length > 0;
   const validProviderResult = providerResponseBytes > 0 && sourceActivityProven;
   const terminationReason = resultOrCheckpoint?.terminationReason ?? 'EXECUTION_FAILURE';
@@ -219,6 +220,7 @@ async function runOne(entry) {
     dossierStatus: resultOrCheckpoint?.dossierStatus ?? 'NONE',
     actionLogEntries: actionSummary.actionLogEntries,
     toolActions: actionSummary.toolActions,
+    toolActionCount,
     uniqueInspectedSourcePaths: actionSummary.uniqueInspectedSourcePaths,
     reproductionAttemptsTool: actionSummary.reproductionAttempts,
     hypothesesFormed: actionSummary.hypothesesFormed,
@@ -227,7 +229,7 @@ async function runOne(entry) {
     renderedInputBytes: resultOrCheckpoint?.byteLedger?.renderedInputBytes ?? 0,
     toolPayloadBytes: resultOrCheckpoint?.byteLedger?.toolPayloadBytes ?? null,
     yieldMetrics: resultOrCheckpoint?.yieldMetrics ?? null,
-    sourceOpportunity: sourceActivity > 0 ? 'AVAILABLE' : 'PROVIDER_BLOCKED_BEFORE_SOURCE_ACTION',
+    sourceOpportunity: sourceActivityObserved && sourceActivity > 0 ? 'AVAILABLE' : 'PROVIDER_BLOCKED_BEFORE_SOURCE_ACTION',
     providerHealth: providerSummary.supervisor,
     providers: providerSummary.providers,
     terminationSafety: 'NO_SAFETY_BLOCK',

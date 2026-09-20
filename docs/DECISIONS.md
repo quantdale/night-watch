@@ -5028,3 +5028,37 @@ generation 2 to runs 04–08. Generation-1 receipts
 are never re-run or rewritten. No scope, budget, admission, leakage, novelty,
 or reproduction dimension changed: the amendment is provider identity only,
 per the owner's explicit instruction.
+
+## D-141 — W13 matrix completion re-execution (runs 02/03/04) and the durable tool-action count
+
+Recorded 2026-09-20 (W13 Phase B, `nightwatch-provider-resilient-current-yield-w13-v1`).
+
+The owner directed the task to continue after the D-140 provider amendment. The
+first full matrix attempt left three scoped runs short of the W13 validity
+rule: `w13-repository-02` and `w13-repository-03` were provider-blocked with
+zero response bytes because the engine's shared `HOUR_1` consecutive-failure
+ceiling (6) truncates a threshold-3 failover policy after exactly two
+providers, and `w13-repository-04` returned valid provider responses but its
+source activity was unobservable because the campaign deletes its owner-local
+checkpoint on `NO_PROGRESS` and the harness result carried no durable
+tool-action counter.
+
+Decision: re-execute `w13-repository-02`, `w13-repository-03`, and
+`w13-repository-04` under the SAME frozen evaluation freeze — identical run
+identities, scopes, wall-clock ceilings, admission rules, and the owner-directed
+generation-2 provider policy fingerprint
+(`sha256:1efa45195fc018aa22677336`). No bound dimension changes, so this is not
+post-result tuning: the replaced runs were invalid or categorically blocked,
+not "worse results", and the replacement is the only path to the per-repository
+coverage the frozen matrix defines. All prior receipts are preserved as
+generation snapshots (`*.gen1.json`, `*.gen2.json`, plus supervisor
+attribution/state snapshots); no predecessor receipt is rewritten. D-140's
+"never re-run" statement is narrowed accordingly: historical receipts are
+never modified, and a re-execution is always a new receipt with the previous
+generation preserved alongside it.
+
+W13-DEF-02 (measurement defect repaired): `LocalCampaignResult` now exposes
+`toolActionCount`, a pure count of `CALL_TOOL` records in the campaign action
+log, so a run's source activity remains observable after the owner-local
+checkpoint is deleted. A fake-provider regression proves both the count and
+that a failed provider call still mints zero tool actions.

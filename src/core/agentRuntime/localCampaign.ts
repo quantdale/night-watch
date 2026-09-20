@@ -189,6 +189,12 @@ export interface LocalCampaignResult {
   readonly terminationReason: AgentTerminationReason;
   readonly candidateIds: readonly string[];
   readonly actionCount: number;
+  /**
+   * W13-DEF-02: mechanically counted CALL_TOOL records in the campaign action
+   * log. Exposed in the result so a run's source activity stays observable
+   * even when the campaign deletes its owner-local checkpoint on NO_PROGRESS.
+   */
+  readonly toolActionCount: number;
   readonly checkpointFile: string | null;
   readonly environment: 'LOCAL';
   /** NONE when no candidate. REFUSED_NO_REPRODUCTION when proposed but not packaged. */
@@ -861,6 +867,13 @@ function mergedInvestigationHistory(engine: CampaignEngine): LocalInvestigationH
   };
 }
 
+/**
+ * Pure count of executed/deduped CALL_TOOL action records. Data only.
+ */
+export function countCampaignToolActions(actionLog: readonly AgentActionRecord[]): number {
+  return actionLog.filter((record) => record.intentKind === 'CALL_TOOL').length;
+}
+
 function resultOf(
   engine: CampaignEngine,
   terminationReason: AgentTerminationReason,
@@ -892,6 +905,7 @@ function resultOf(
     terminationReason,
     candidateIds,
     actionCount: engine.acc.actionLog.length,
+    toolActionCount: countCampaignToolActions(engine.acc.actionLog),
     checkpointFile,
     environment: 'LOCAL',
     dossierStatus:
