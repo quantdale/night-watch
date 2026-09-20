@@ -1,0 +1,25 @@
+{
+  "activeOrdinal": 3,
+  "degraded": [
+    "opencode-go/glm-5.3",
+    "opencode-go/kimi-k3"
+  ],
+  "transitions": [
+    {
+      "sequence": 1,
+      "from": "opencode-go/glm-5.3",
+      "to": "opencode-go/kimi-k3",
+      "triggerClass": "PROVIDER_RUNTIME_TIMEOUT",
+      "at": "2026-09-19T17:08:58.575Z"
+    },
+    {
+      "sequence": 2,
+      "from": "opencode-go/kimi-k3",
+      "to": "opencode-go/qwen3.8-max",
+      "triggerClass": "PROVIDER_RUNTIME_TIMEOUT",
+      "at": "2026-09-19T17:15:18.536Z"
+    }
+  ],
+  "streaks": {},
+  "exhausted": false
+}
