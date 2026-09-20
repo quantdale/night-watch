@@ -4,10 +4,11 @@
   "alwaysRun": [
     "tests/unit/activeTaskRoutingBinding.test.ts",
     "tests/unit/safety.test.ts",
+    "tests/unit/validationAffectedTests.test.ts",
     "tests/unit/validationExecutionClasses.test.ts",
+    "tests/unit/validationLane.test.ts",
     "tests/unit/validationShardPlan.test.ts",
-    "tests/unit/validationTiming.test.ts",
-    "tests/unit/validationAffectedTests.test.ts"
+    "tests/unit/validationTiming.test.ts"
   ],
   "broadenPrefixes": [
     ".agent/",

@@ -107,7 +107,9 @@
     "review:scale": "node bin/review-persistence-scale.mjs",
     "efficacy:baseline": "node bin/efficacy-corpus.mjs baseline",
     "efficacy:candidate": "node bin/efficacy-corpus.mjs candidate",
-    "efficacy:compare": "node bin/efficacy-corpus.mjs compare"
+    "efficacy:compare": "node bin/efficacy-corpus.mjs compare",
+    "gate:dev": "node bin/validation-lane.mjs dev",
+    "gate:milestone": "node bin/validation-lane.mjs milestone"
   },
   "devDependencies": {
     "@playwright/test": "1.62.1",
