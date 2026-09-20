@@ -1,0 +1,92 @@
+{
+  "schemaVersion": "nightwatch.performance-lane-receipt.v1",
+  "lane": "agent-check",
+  "command": [
+    "npm",
+    "run",
+    "agent:check"
+  ],
+  "startedAt": "2026-09-20T11:36:26.947Z",
+  "finishedAt": "2026-09-20T11:36:29.586Z",
+  "wallMs": 2638,
+  "exitStatus": 0,
+  "errorCode": null,
+  "counts": {
+    "passed": null,
+    "failed": null,
+    "skipped": null,
+    "didNotRun": null,
+    "tests": null
+  },
+  "host": {
+    "platform": "linux",
+    "cores": 20,
+    "totalMemMiB": 15851
+  },
+  "load": {
+    "pre": {
+      "loadAverage": [
+        5.78,
+        4.76,
+        4.51
+      ],
+      "census": {
+        "busyProcesses": [
+          {
+            "name": "node",
+            "count": 6
+          },
+          {
+            "name": "codex",
+            "count": 4
+          },
+          {
+            "name": "herdr",
+            "count": 2
+          },
+          {
+            "name": "opencode",
+            "count": 1
+          }
+        ],
+        "totalBusyCpuPercent": 556
+      }
+    },
+    "post": {
+      "loadAverage": [
+        5.47,
+        4.72,
+        4.49
+      ],
+      "census": {
+        "busyProcesses": [
+          {
+            "name": "node",
+            "count": 6
+          },
+          {
+            "name": "codex",
+            "count": 4
+          },
+          {
+            "name": "herdr",
+            "count": 2
+          },
+          {
+            "name": "opencode",
+            "count": 1
+          }
+        ],
+        "totalBusyCpuPercent": 497
+      }
+    }
+  },
+  "outputTail": [
+    "[agent-check] WARNING: WORKSPACE_STALE_SESSION_WORKTREE: worktree nightwatch-c4-real-pair-activati-bc4d52ea claims task nightwatch-c4-real-pair-activation-v1 but its holder is not live; adopt or release explicitly",
+    "[agent-check] WARNING: WORKSPACE_STALE_SESSION_WORKTREE: worktree nightwatch-historical-wave1-v1-15ad976d claims task nightwatch-historical-wave1-v1 but its holder is not live; adopt or release explicitly",
+    "[agent-check] WARNING: WORKSPACE_STALE_SESSION_WORKTREE: worktree nightwatch-historical-wave2-v1-c63b9eed claims task nightwatch-historical-wave2-v1 but its holder is not live; adopt or release explicitly",
+    "[agent-check] WARNING: WORKSPACE_STALE_SESSION_WORKTREE: worktree nightwatch-production-completion-df4c44f5 claims task nightwatch-production-completion-programme-v1 but its holder is not live; adopt or release explicitly",
+    "[agent-check] WARNING: WORKSPACE_BASE_STALE: origin/main advanced beyond the session base; reconcile by merging before integration",
+    "[agent-check] WARNING: CLAIM_TASK_UNKNOWN: worktree nightwatch-exhaustive-repository-ef157f7a (class=OWNED_SESSION) claims task nightwatch-exhaustive-repository-audit-proposals-v1, which cannot be resolved: no readable .agent/tasks/nightwatch-exhaustive-repository-audit-proposals-v1/STATE.md — owner action: release this session through bin/nightwatch-session.mjs release; never by deleting a directory or editing a record"
+  ]
+}
