@@ -55,7 +55,10 @@ const weights = {};
 for (const file of [...samples.keys()].sort()) {
   const list = [...samples.get(file)].sort((left, right) => left - right);
   const middle = Math.floor(list.length / 2);
-  weights[file] = list.length % 2 === 0 ? Math.round(((list[middle - 1] ?? 0) + (list[middle] ?? 0)) / 2) : (list[middle] ?? 0);
+  const median = list.length % 2 === 0 ? Math.round(((list[middle - 1] ?? 0) + (list[middle] ?? 0)) / 2) : (list[middle] ?? 0);
+  // A file that measured 0 ms (for example, a skip-only environment) still
+  // costs a worker slot; it is never planned as free.
+  weights[file] = Math.max(1, median);
 }
 const digest = `sha256:${crypto.createHash('sha256').update(JSON.stringify(weights), 'utf8').digest('hex').slice(0, 24)}`;
 const table = {

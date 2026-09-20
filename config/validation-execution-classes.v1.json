@@ -696,8 +696,9 @@
       ]
     },
     "tests/unit/operatorCliContract.test.ts": {
-      "class": "PROCESS_ISOLATED_ONLY",
+      "class": "SERIAL_REQUIRED",
       "signals": [
+        "repository-signature-window",
         "artifacts-write",
         "isolated-scratch"
       ]

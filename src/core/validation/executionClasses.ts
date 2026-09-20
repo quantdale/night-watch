@@ -65,6 +65,9 @@ const SIGNAL_RULES: readonly SignalRule[] = Object.freeze([
   // rev-parse, ls-files, log, cat-file, diff, ...) are observations and are
   // safe beside another process.
   { signal: 'git-mutation', proposed: 'SERIAL_REQUIRED', pattern: /git['"]\s*,\s*\[['"](?:add|am|apply|checkout|clean|commit|merge|rebase|reset|restore|revert|rm|stash|switch|tag|worktree)/ },
+  // A test that compares whole-repository (or artifacts/) signatures across a
+  // window requires that no other process writes the checkout during it.
+  { signal: 'repository-signature-window', proposed: 'SERIAL_REQUIRED', pattern: /treeSignature\(/ },
   // A per-process cwd change is isolated by the worker process itself.
   { signal: 'process-chdir', proposed: 'PROCESS_ISOLATED_ONLY', pattern: /process\.chdir\(/ },
   { signal: 'fixed-port-bind', proposed: 'PROCESS_ISOLATED_ONLY', pattern: /\.listen\(\s*(?!0\b)\d{2,5}\b/ },
