@@ -11,7 +11,7 @@ Last substantive checkpoint SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-exhaustive-repository-ef157f7a
-Last checkpoint: 2026-09-20 — M0 complete; M1 admitted NW-AUD-001, NW-AUD-004, NW-AUD-005, NW-AUD-006, NW-AUD-007, and NW-AUD-009 and produced six strict-valid issue-specific remediation proposals.
+Last checkpoint: 2026-09-20 — M0 complete; M1 admitted NW-AUD-001, NW-AUD-004, NW-AUD-005, NW-AUD-006, NW-AUD-007, NW-AUD-009, and NW-AUD-010 and produced seven strict-valid issue-specific remediation proposals.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
@@ -43,6 +43,7 @@ What is being attempted: complete repository topology, dependency, configuration
 - NW-AUD-006: PROPOSED (High/High-confidence); dedicated change `nightwatch-session-mutation-authority-binding-v1` is 4/4 complete and strict-valid.
 - NW-AUD-007: PROPOSED (Medium/High-confidence); dedicated change `nightwatch-change-shadow-offline-runtime-integrity-v1` is 4/4 complete and strict-valid.
 - NW-AUD-009: PROPOSED (Medium/High-confidence); dedicated change `nightwatch-local-report-publication-integrity-v1` is 4/4 complete and strict-valid.
+- NW-AUD-010: PROPOSED (High/High-confidence); dedicated change `nightwatch-release-evidence-lineage-integrity-v1` is 4/4 complete and strict-valid.
 - NW-AUD-002: DUPLICATE of production-completion tasks 15.7/15.11; NW-AUD-003: NOT_AN_ISSUE after validation-universe PASS with zero unclassified checks; NW-AUD-008: DUPLICATE of the production-completion operator CLI contract.
 
 ## Work In Progress
@@ -66,6 +67,7 @@ Continue M1 with the remaining release/checkpoint and schema-renderer surfaces; 
 | `openspec/changes/nightwatch-session-mutation-authority-binding-v1/` | NW-AUD-006 implementation-ready remediation proposal | complete planning artifact |
 | `openspec/changes/nightwatch-change-shadow-offline-runtime-integrity-v1/` | NW-AUD-007 implementation-ready remediation proposal | complete planning artifact |
 | `openspec/changes/nightwatch-local-report-publication-integrity-v1/` | NW-AUD-009 implementation-ready remediation proposal | complete planning artifact |
+| `openspec/changes/nightwatch-release-evidence-lineage-integrity-v1/` | NW-AUD-010 implementation-ready remediation proposal | complete planning artifact |
 
 ## Validation Ledger
 
@@ -128,6 +130,16 @@ Command: `openspec validate nightwatch-local-report-publication-integrity-v1 --s
 Result: PASS
 When: 2026-09-20
 Relevant failure/output summary: proposal, design, local-report-publication-integrity spec, and tasks are 4/4 complete/apply-ready.
+
+Command: static inspection of release evaluator, project-state Git adapter, certification record, and focused tests
+Result: SUBSTANTIATED READ-ONLY
+When: 2026-09-20
+Relevant failure/output summary: only strict-ancestor evidence overrides MET; null, HEAD descendant, missing, future, and divergent evidence do not; tests cover only the stale ancestor.
+
+Command: `openspec validate nightwatch-release-evidence-lineage-integrity-v1 --strict`
+Result: PASS
+When: 2026-09-20
+Relevant failure/output summary: proposal, design, release-evidence-lineage-integrity spec, and tasks are 4/4 complete/apply-ready.
 
 Command: `npm run agent:check`
 Result: PASS with 41 pre-existing/expected warnings and zero strict-v2 errors
@@ -194,6 +206,15 @@ commands and gate topology, ignored artifact policy, persisted/private schema
 declarations, millisecond-only topology names, and no existing active change
 owning this complete boundary.
 
+Decision: admit NW-AUD-010 at High severity and create a dedicated change.
+Reason: the defect affects the central project release gate and can fabricate
+checkpoint-bound certification for absent or different Git objects; although
+it grants no product authority and advance still requires raw checks to pass,
+it defeats the load-bearing provenance condition of the durable release verdict.
+Evidence/constraint: `evaluateReleaseCertification` overrides only proven
+strict ancestors; the project adapter treats any non-success ancestry command
+as false; live config carries null evidence; focused tests omit every other relation.
+
 ## Discoveries
 
 - Registered topology has room for this worktree under the repository's maximum of eight.
@@ -218,6 +239,8 @@ owning this complete boundary.
 - Six current-report paths and gate-topology history write ignored artifacts
   directly without common schema-before-mutation, safe-path, atomic-replace,
   or immutable no-replace enforcement. This is NW-AUD-009.
+- Release certification can count a raw MET condition with no exact evidence
+  at the certified checkpoint. This is NW-AUD-010.
 
 ## Blockers
 
@@ -241,6 +264,6 @@ NONE
 
 ## Completion Snapshot
 
-Not complete; M1 is active. Six issue-specific changes are strict-valid, but
+Not complete; M1 is active. Seven issue-specific changes are strict-valid, but
 remaining M1 surfaces and milestones M2-M10 are still required before any
 exhaustive conclusion.

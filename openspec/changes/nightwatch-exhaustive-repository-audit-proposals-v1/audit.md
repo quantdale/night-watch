@@ -51,7 +51,7 @@ The following top-level classes are exhaustive and mutually exclusive for the st
 | `src/` | 626 | all runtime subsystems and trust boundaries | PENDING | — | — |
 | `openspec/` | 417 | published specs, active changes, archive/deduplication, schema validity | PENDING | — | — |
 | `tests/` | 410 | unit/browser/smoke/manual/helpers/fixtures, assertion strength and gaps | PENDING | — | — |
-| `bin/` | 118 | CLI, gates, validators, generators, session/workspace/release tooling | IN_PROGRESS | NW-AUD-001, NW-AUD-004, NW-AUD-005, NW-AUD-006, NW-AUD-007, NW-AUD-008, NW-AUD-009 | Phase 23 workflow guard, clean-checkout toolchain/receipt path, evidence-retention apply/receipt path, C-00 session mutator authority, change-shadow compiler/bootstrap, and ignored report/receipt publication inspected; remaining bin surfaces pending |
+| `bin/` | 118 | CLI, gates, validators, generators, session/workspace/release tooling | IN_PROGRESS | NW-AUD-001, NW-AUD-004, NW-AUD-005, NW-AUD-006, NW-AUD-007, NW-AUD-008, NW-AUD-009, NW-AUD-010 | Phase 23 workflow guard, clean-checkout toolchain/receipt path, evidence-retention apply/receipt path, C-00 session mutator authority, change-shadow compiler/bootstrap, ignored report/receipt publication, and release evidence lineage inspected; remaining bin surfaces pending |
 | `corpus/` | 113 | fixture/corpus integrity, authority separation, generated/historical boundaries | PENDING | — | — |
 | `docs/` | 40 | architecture, safety, decisions, roadmap, current-state and design truth | IN_PROGRESS | — | — |
 | `ui/` | 32 | Control Center static UI, accessibility, responsive and interaction behavior | PENDING | — | — |
@@ -117,6 +117,7 @@ No documentation inconsistency is admitted as a finding merely because historica
 | NW-AUD-006 | PROPOSED | High | High | C-00 session/worktree ownership / integration | Every lifecycle command accepts arbitrary `--root`; release rewrites the selected live record without caller binding, and integrate treats the selected target's `OWNED_SESSION` class as sufficient to reach its fetch/push path | `bin/nightwatch-session.mjs:86-134,398-416,469-531,654-735`; canonical-CWD dry runs against the live audit session planned both record replacement and fast-forward integration; current `workspaceIsolation.test.ts` proves direct second-claim refusal but has no foreign-release/integrate matrix | Published C-00 requires one writer/session and owner-only lifecycle actions, but no active change binds mutation invocation to current checkout/session or serializes record revisions | `nightwatch-session-mutation-authority-binding-v1` |
 | NW-AUD-007 | PROPOSED | Medium | High | change intelligence / offline compiler bootstrap / derivative lifecycle | The offline `change:shadow` path invokes `npx tsc` twice, so missing local dependencies can trigger remote moving-package resolution; it deletes a fixed shared compile root before compiler admission, allowing refusal-time mutation and concurrent-run interference | `bin/change-intelligence.mjs:20-62,132-136`; `package-lock.json` exact `node_modules/typescript` 5.9.3 entry; worktree has no local TypeScript; `tests/unit/cliImplementationContract.test.ts:423-430` exercises help only | Completed source-runtime hardening preserved different compiler semantics but did not authorize package resolution; exact certification toolchain explicitly excludes arbitrary developer commands; generic CLI output/argument work is separate | `nightwatch-change-shadow-offline-runtime-integrity-v1` |
 | NW-AUD-009 | PROPOSED | Medium | High | local ignored artifacts / report and certification-receipt publication | Six current-report writers truncate directly after recursive directory creation, and gate topology directly writes millisecond-named receipts; prepared links can redirect writes, interrupted replacement can destroy the last complete report, and same-millisecond runs can overwrite history | `bin/{cache-key-contract,record-identity,release-freshness,silent-zero-output,test-oracle-quality,change-intelligence,gate-topology}.mjs`; `src/core/schemaLifecycle/declarations.ts`; `.gitignore`; direct-write census and existing publisher comparison | Retention journal, gate-receipt transport, private stores, schema export, and generic CLI contracts have different authority or scope; no active change owns the complete seven-writer ignored-artifact boundary | `nightwatch-local-report-publication-integrity-v1` |
+| NW-AUD-010 | PROPOSED | High | High | project release certification / Git evidence provenance | A raw `MET` condition is invalidated only when its evidence is a strict ancestor; null, later `HEAD`, missing, future, and divergent evidence retain MET, while Git negative and operational failure are collapsed | `src/core/releaseCertification/index.ts:350-381`; `bin/project-state-check.mjs:1012-1028`; `config/release-certification.v1.json`; `tests/unit/projectState.test.ts:1726-1818` | Production-completion defines release binding but its implemented/tested rule covers only stale ancestors; CI/toolchain changes bind different identities | `nightwatch-release-evidence-lineage-integrity-v1` |
 
 ## M1 candidate dispositions
 
@@ -131,6 +132,7 @@ No documentation inconsistency is admitted as a finding merely because historica
 | NW-AUD-007 | PROPOSED | An offline operator command can acquire/execute an ungoverned compiler and mutates a shared derivative root before admission | `compileCore()` first recursively removes and recreates `.tmp-nightwatch/change-intelligence`, then invokes bare `npx tsc` twice; the exact locked TypeScript package is not installed in this worktree, and the existing process test exits through `--help` before compilation | MATERIAL → dedicated strictly-valid OpenSpec change |
 | NW-AUD-008 | DUPLICATE | `change:shadow` accepts no governed shared CLI parser and prints its machine-specific absolute `outputPath` | The entrypoint checks only whether `--help`/`-h` occurs anywhere, ignores every other argument, and serializes absolute `outputPath`; production-completion `operator-cli-contract` already requires every `bin/*.mjs` to share parsing, reject unknown arguments before effects, and omit machine-specific paths | Exact failure class already owned by `nightwatch-production-completion-programme-v1`; no duplicate change |
 | NW-AUD-009 | PROPOSED | Ignored local reports and topology receipts bypass safe publication | Five fixed `current.json` writers plus change-intelligence call `mkdirSync` then direct `writeFileSync`; gate topology does the same with `${Date.now()}.json`; schema declarations classify the outputs as persisted/private, while no complete inventory or guard prevents bypass | MATERIAL → dedicated strictly-valid OpenSpec change |
+| NW-AUD-010 | PROPOSED | Release evidence is not required to equal the certified checkpoint | The evaluator changes MET only for a strict ancestor; null/HEAD-descendant/missing/future/divergent identities remain MET, and `gitReadOnly(...merge-base...) !== null` cannot distinguish ordinary non-ancestry from object/command failure; tests set all-met ancestry to false and probe only one stale ancestor | MATERIAL → dedicated strictly-valid OpenSpec change |
 
 NW-AUD-001 severity is Medium rather than High: compromise or malicious
 movement of an upstream action identity is an external precondition, and the
@@ -186,6 +188,14 @@ certification history while reporting normal success. The proposal preserves
 intentional explicit output selection but requires safe file identity and
 separates atomic current replacement from immutable receipt authority.
 
+NW-AUD-010 severity is High rather than Critical: it does not itself make a
+failing check pass, choose the pending owner status, or grant product/external
+authority. It is nevertheless the central durable release-certification gate,
+and the defect lets absent or different Git objects be represented as evidence
+for the certified checkpoint. A future advance can therefore satisfy every raw
+check while bypassing the exact-lineage condition that makes the verdict about
+those bytes rather than another tree.
+
 ## Validation ledger
 
 | Command/evidence | Result | Purpose |
@@ -210,11 +220,13 @@ separates atomic current replacement from immutable receipt authority.
 | `openspec validate nightwatch-change-shadow-offline-runtime-integrity-v1 --strict` | PASS; 4/4 artifact classes complete | NW-AUD-007 remediation is apply-ready |
 | static seven-writer/schema/path/publisher inspection | SUBSTANTIATED WITHOUT ARTIFACT MUTATION; six current-report writers and one topology receipt writer publish directly with no complete guard | Establish NW-AUD-009 and its exact denominator safely |
 | `openspec validate nightwatch-local-report-publication-integrity-v1 --strict` | PASS; 4/4 artifact classes complete | NW-AUD-009 remediation is apply-ready |
+| static release evaluator/Git adapter/config/test inspection | SUBSTANTIATED READ-ONLY; only stale ancestors override MET and the other relation classes are untested/unrejected | Establish NW-AUD-010 without editing release truth |
+| `openspec validate nightwatch-release-evidence-lineage-integrity-v1 --strict` | PASS; 4/4 artifact classes complete | NW-AUD-010 remediation is apply-ready |
 
 ## Completion audit
 
 Not yet eligible. Most coverage rows remain pending, M1 still has uninspected
 bin/config/generator/release/checkpoint surfaces, and later runtime/UI/test waves
-have not started. Six material findings currently map one-to-one to six
+have not started. Seven material findings currently map one-to-one to seven
 strict-valid issue-specific remediation changes; that partial portfolio is not
 evidence of whole-repository completeness.

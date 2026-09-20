@@ -122,6 +122,7 @@ Prefer the narrowest decisive existing tests during exploration. Validate each O
 - 2026-09-20 — Decision: partition C-00 session mutation authority into its own remediation change; reason: arbitrary-root mutators authorize the selected record rather than the invoking checkout, reaching both live-owner release and foreign integration; evidence: NW-AUD-006 and zero-mutation canonical-to-session dry runs; consequence: `nightwatch-session-mutation-authority-binding-v1` strengthens the published concurrency/workspace capability without claiming hostile same-user isolation.
 - 2026-09-20 — Decision: partition change-shadow offline compiler bootstrap into its own remediation change; reason: the intentionally separate full-program compiler path invokes remote-capable `npx` and mutates a fixed derivative root before compiler admission, while completed loader and certification changes do not own arbitrary developer-command bootstrap; evidence: NW-AUD-007; consequence: `nightwatch-change-shadow-offline-runtime-integrity-v1` strengthens source-analysis runtime hardening without duplicating generic CLI contracts.
 - 2026-09-20 — Decision: partition local ignored-report publication integrity into its own remediation change; reason: seven report/receipt writers share unsafe direct publication but require two distinct replacement authorities, and neither retention journals nor generic CLI contracts own this boundary; evidence: NW-AUD-009; consequence: `nightwatch-local-report-publication-integrity-v1` introduces a complete writer inventory, atomic current replacement, immutable topology receipts, and non-vacuous bypass enforcement without implementation.
+- 2026-09-20 — Decision: partition release evidence lineage into its own remediation change; reason: the central release evaluator accepts raw MET with absent, future, divergent, or unresolved evidence because only strict ancestors are rejected; evidence: NW-AUD-010; consequence: `nightwatch-release-evidence-lineage-integrity-v1` requires exact checkpoint equality and categorical Git resolution without advancing the project verdict.
 
 ## Discoveries
 
@@ -150,6 +151,10 @@ Prefer the narrowest decisive existing tests during exploration. Validate each O
   the preceding complete generation, while timestamp-only gate-topology
   receipts can overwrite history. This is the sixth non-duplicate material
   finding (NW-AUD-009).
+- Release-condition evidence binding rejects only strict ancestors; null,
+  later `HEAD`, missing, future, and divergent identities can retain raw MET,
+  and the Git adapter collapses negative ancestry with operational failure.
+  This is the seventh non-duplicate material finding (NW-AUD-010).
 
 ## Deferred Work
 

@@ -7,7 +7,7 @@ Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-exhaustive-repository-audit-proposals-v1
 Starting SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
 Last validated implementation SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
-Last checkpoint: M0 is complete; M1 admitted NW-AUD-001, NW-AUD-004, NW-AUD-005, NW-AUD-006, NW-AUD-007, and NW-AUD-009 and created six strict-valid issue-specific remediation changes; validation-universe, bin-typecheck, and duplicate change-shadow CLI-contract leads were dispositioned.
+Last checkpoint: M0 is complete; M1 admitted NW-AUD-001, NW-AUD-004, NW-AUD-005, NW-AUD-006, NW-AUD-007, NW-AUD-009, and NW-AUD-010 and created seven strict-valid issue-specific remediation changes; validation-universe, bin-typecheck, and duplicate change-shadow CLI-contract leads were dispositioned.
 Current milestone: M1 — repository topology, dependencies, configuration, and build/tooling
 Next action: Inspect the remaining release/checkpoint and schema-renderer seams, prioritizing unsafe path/symlink, atomicity, stale-authority, and false-success behavior, and record decisive dispositions in `audit.md`.
 Authorization class: EXHAUSTIVE_REPOSITORY_AUDIT_PROPOSALS_V1
