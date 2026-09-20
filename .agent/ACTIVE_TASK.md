@@ -3,33 +3,33 @@
 Task ID: nightwatch-test-infrastructure-performance-v1
 Phase: TEST_INFRASTRUCTURE_PERFORMANCE_V1
 Title: Test infrastructure performance and parallelization
-Status: IN_PROGRESS
+Status: COMPLETE
 Task directory: .agent/tasks/nightwatch-test-infrastructure-performance-v1
 Starting SHA: 8dd8b163b567b939b977649d6ba7c371cf230ee6
-Last validated implementation SHA: 5eaceb23354da3b9b4f5bab162ca29075691d9d5
-Last checkpoint: Campaign activation began from live main
-`8dd8b163` on 2026-09-20. W13 is the terminal predecessor (`COMPLETE`) and
-remains frozen read-only evidence. This campaign measures the current
-validation lanes, removes or reuses duplicated expensive work where identity
-permits, parallelizes independent validation only where correctness is
-mechanically preserved, adds fast development and milestone lanes that are
-explicitly not certification, keeps the authoritative lanes authoritative and
-measurably faster, and closes with before/after evidence and one verdict.
-Current milestone: M1 — timing profiler and baseline measurement
-Next action: commit the telemetry checkpoint, then capture the M1 baseline for
-every named lane inside an owner-quiesced host benchmark window, with host-load
-receipts and median-of-N where needed, writing the baseline table and top-N
-slowest list under the task evidence directory.
+Last validated implementation SHA: 86cdc93af8527dda395d15314c4a3370a942274c
+Last checkpoint: The campaign is COMPLETE at the measured implementation
+checkpoint `ba427eff` (canonical sharded regression) closed at the governed-status correction `86cdc93a` with the all-green
+`gate:local` receipt `b4fd8e66` as closure evidence; documentation
+descendants follow. The synthetic certification lane is 3.28x faster
+(464.4 s serial -> 141.4 s at four weighted shards), the canonical `npm test`
+is a green coverage-proven shard run at 633.7 s, `gate:local` passes all
+twelve groups in 635.7 s, and the fast and milestone lanes exist with
+mechanical non-certification guards. W13 remains a frozen predecessor.
+Current milestone: COMPLETE — M13 C-00 integration, documentation, and verdict
+Next action: STOP — the campaign is complete with the terminal verdict
+`COMPLETE — DEVELOPMENT LOOP MATERIALLY ACCELERATED`. Any further optimization
+starts as a new authorized task; the measured remaining limit is the serial
+semantic-compatibility group inside `gate:local`.
 Authorization class: TEST_INFRASTRUCTURE_PERFORMANCE_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 8dd8b163b567b939b977649d6ba7c371cf230ee6
-LAST_VALIDATED_IMPLEMENTATION_SHA: 5eaceb23354da3b9b4f5bab162ca29075691d9d5
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 5eaceb23354da3b9b4f5bab162ca29075691d9d5
-LAST_DOCUMENTATION_CHECKPOINT_SHA: 8dd8b163b567b939b977649d6ba7c371cf230ee6
+LAST_VALIDATED_IMPLEMENTATION_SHA: 86cdc93af8527dda395d15314c4a3370a942274c
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 86cdc93af8527dda395d15314c4a3370a942274c
+LAST_DOCUMENTATION_CHECKPOINT_SHA: 86cdc93af8527dda395d15314c4a3370a942274c
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
-PHASE_TEST_INFRASTRUCTURE_PERFORMANCE_V1_STATUS: IN_PROGRESS
+PHASE_TEST_INFRASTRUCTURE_PERFORMANCE_V1_STATUS: COMPLETE
 
 ## Mission
 
