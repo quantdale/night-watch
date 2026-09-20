@@ -26,6 +26,7 @@ import { OPERATOR_CLI_SCHEMA, defineOperatorCli, invokedDirectly } from './lib/o
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const CLASSES_PATH = path.join(root, 'config', 'validation-execution-classes.v1.json');
+const WEIGHTS_PATH = path.join(root, 'config', 'shard-weights.v1.json');
 const npx = process.platform === 'win32' ? 'npx.cmd' : 'npx';
 
 const CLI_METADATA = {
@@ -39,6 +40,7 @@ const CLI_METADATA = {
     { name: '--json', shape: 'boolean', summary: 'emit exactly one JSON receipt document' },
     { name: '--workers', shape: 'integer', summary: 'parallel shard count (bounded 1..8; default 2)' },
     { name: '--files', shape: 'string', summary: 'comma-separated explicit file selection instead of full discovery' },
+    { name: '--weights', shape: 'path', summary: 'measured per-file duration table for deterministic balancing (default config/shard-weights.v1.json when present)' },
   ],
   json: true,
   authorization: 'LOCAL_ONLY',
@@ -69,6 +71,21 @@ function discoverUniverse() {
   };
   walk(report.suites ?? []);
   return [...files].sort();
+}
+
+function loadWeights(explicitPath) {
+  const file = typeof explicitPath === 'string' ? explicitPath : WEIGHTS_PATH;
+  try {
+    const value = JSON.parse(fs.readFileSync(file, 'utf8'));
+    if (value.schemaVersion !== 'nightwatch.shard-weights.v1' || value.weights === null || typeof value.weights !== 'object') return null;
+    const weights = {};
+    for (const [key, raw] of Object.entries(value.weights)) {
+      if (typeof raw === 'number' && Number.isFinite(raw) && raw >= 0) weights[key] = raw;
+    }
+    return weights;
+  } catch {
+    return null;
+  }
 }
 
 function loadClasses() {
@@ -160,7 +177,9 @@ if (!cli.stop) {
         console.error(JSON.stringify({ schemaVersion: 'nightwatch.shard-run-receipt.v1', result: 'REFUSED', code: 'SHARD_INPUTS_INVALID', violations: inputs.violations.slice(0, 16) }));
         process.exitCode = 2;
       } else {
-        const plan = shardPlan.planShards({ universe, classes, parallelShardCount: workerCount });
+        const weights = loadWeights(cli.flags['--weights']);
+        const plan = shardPlan.planShards({ universe, classes, parallelShardCount: workerCount, ...(weights === null ? {} : { weights }) });
+        const weighted = weights !== null;
         const allShards = plan.exclusiveShard === null ? plan.parallelShards : [...plan.parallelShards, plan.exclusiveShard];
         const coverage = shardPlan.verifyShardCoverage({ universe, shards: allShards });
         const base = {
@@ -169,6 +188,7 @@ if (!cli.stop) {
           universeDigest: plan.universeDigest,
           universeCount: plan.universeCount,
           parallelShardCount: plan.parallelShardCount,
+          weighted,
           shards: allShards.map((shard) => ({ id: shard.id, files: shard.files.length, digest: shard.digest, classes: shard.byClass, exclusive: shard.id === 'exclusive' })),
           coverage,
         };

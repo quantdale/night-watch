@@ -49,7 +49,7 @@ validation:universe, campaign:synthetic, npm test, gate:local, gate:clean).
 
 ## Completed Milestones
 
-- M0 — governed activation and C-00 ownership: task directory
+- **M0 — governed activation and C-00 ownership: COMPLETE.** Task directory
   (`SPEC/PLAN/STATE/REPORT`), OpenSpec change with three capability specs and
   strict validation `68 passed / 0 failed`, `.agent/ACTIVE_TASK.md` and
   `.agent/EXECUTION_PROMPT.md` bound to this campaign, live-state cross-check
@@ -58,46 +58,76 @@ validation:universe, campaign:synthetic, npm test, gate:local, gate:clean).
   Validation: `agent:check`, `handoff:check`, `project:check`,
   `workspace:check`, `session:check`, `hardening:check` all PASS on the
   committed checkpoint.
-- M2 — duplicate-work map: mechanical lane/manifest/file-set mapping with
-  digest-verified overlaps and the five-class classification, committed as
-  `.agent/tasks/nightwatch-test-infrastructure-performance-v1/evidence/duplicate-work-map.{json,md}`
-  by `harness/duplicate-work-map.mjs`. Measured: universe 379 files; synthetic
-  105; semantic 149; owner-provenance 3; 257 files execute twice when
-  `npm test` and `gate:local` both run, classified
-  `REQUIRED_INDEPENDENT_REEXECUTION` (authority separation), with
+- **M2 — duplicate-work map: COMPLETE.** Mechanical lane/manifest/file-set
+  mapping with digest-verified overlaps and the five-class classification
+  (`evidence/duplicate-work-map.{json,md}`, `harness/duplicate-work-map.mjs`).
+  Universe 379 files; synthetic 105; semantic 149; owner-provenance 3; 257
+  files execute twice when `npm test` and `gate:local` both run,
+  classified `REQUIRED_INDEPENDENT_REEXECUTION` (authority separation);
   `agent:check`+`agent:audit` shared-scan and `loadTypeScriptModules`
-  cross-lane compilation recorded as safe reuse candidates.
-- M3 — execution classes: pure detector plus declaration authority
-  (`src/core/validation/executionClasses.ts`,
+  cross-lane compilation are recorded as safe reuse candidates.
+- **M3 — execution classes: COMPLETE.** Pure detector plus declaration
+  authority (`src/core/validation/executionClasses.ts`,
   `bin/validation-execution-classes.mjs`,
-  `config/validation-execution-classes.v1.json`). 380 tracked tests classified:
-  326 `PARALLEL_SAFE`, 16 `PROCESS_ISOLATED_ONLY`, 26 `SERIAL_REQUIRED`,
-  12 `MUTATION_CAMPAIGN_EXCLUSIVE`; the completeness test in `npm test` fails
-  closed on a missing, stale or weaker declaration, and the negative probes
-  prove a weakened `PARALLEL_SAFE` git-mutating declaration is rejected.
-- No other milestone is complete. W13 remains the terminal frozen predecessor.
+  `config/validation-execution-classes.v1.json`). 384 tracked tests
+  classified; the completeness test in `npm test` fails closed on a missing,
+  stale or weaker declaration, and the negative probes prove a weakened
+  `PARALLEL_SAFE` git-mutating declaration is rejected.
+- **M4 — shard runner with coverage equality proof: COMPLETE.** The pure
+  planner (`src/core/validation/shardPlan.ts`, deterministic round-robin,
+  bounded worker override, exclusivity rule) and the runner
+  (`bin/run-shards.mjs`) execute concurrent serial shards plus one exclusive
+  serial group, prove `union == universe` and pairwise disjointness, and
+  refuse unclassified, empty or argv-unbounded plans. Focused suite 7/7 PASS.
+- **M5 — fast development and milestone lanes: COMPLETE.** Declarative
+  non-certification lanes (`src/core/validation/validationLane.ts`,
+  `bin/validation-lane.mjs`, `npm run gate:dev` / `npm run gate:milestone`)
+  compose cheap mandatory checks, affected selection and proven shards, label
+  themselves NOT certification, and refuse definitions that would include
+  certification-authority steps. Focused suite 5/5 PASS.
+- W13 remains the terminal frozen predecessor.
 
 ## Work In Progress
 
-M1 telemetry is implemented and focused-verified: the pure timing core
-(`src/core/validation/validationTiming.ts`), the silent Playwright reporter
-(`tests/helpers/playwrightTimingReporter.ts`), the offline report tool
-(`bin/test-timings.mjs`, `npm run test:timings`), additive per-group
-`durationMs` on quality-gate receipts, and lane attribution through
-`NIGHTWATCH_TIMING_LANE`. The measured baseline has not been captured yet;
-it requires an owner-quiesced host window because four codex and one opencode
-agent are running on this host.
+M7 is IN_PROGRESS with the synthetic-campaign half implemented and validated
+on a loaded host:
+
+- The launcher now supports a coverage-proven sharded execution contract
+  (`--shards=N`, 1..8; manifest `execution.shardCount` optional, default 1 =
+  the unchanged serial path). Every invocation stays `workers=1` /
+  `retries=0`; the partition is a coverage-proven function of the declared
+  execution classes, so guarded-source and Git-mutating tests still run alone.
+- The execution-class detector was refined with evidence: only Git *writes*
+  serialize (read-only `git status`/`rev-list` etc. are observations),
+  per-process `chdir` and owner-local state are process-isolated, and the
+  probe campaign is the exclusive mutation class. Current distribution:
+  356 `PARALLEL_SAFE`, 20 `PROCESS_ISOLATED_ONLY`, 5 `SERIAL_REQUIRED`,
+  3 `MUTATION_CAMPAIGN_EXCLUSIVE`.
+- A committed weight table (`config/shard-weights.v1.json`, generated by
+  `harness/shard-weights.mjs` from 43 timing documents) enables deterministic
+  longest-processing-time balancing; shard membership remains reproducible.
+- Contended measurements (this host, load ~5): the first `--shards=3` run
+  failed at 637 s with an imbalance (shard walls 210/99/173 s plus a 449 s
+  exclusive group) and surfaced a genuine, unrelated pre-existing defect:
+  `nw07ContinuityCoherence.test.ts` requires the active STATE to name a
+  COMPLETE milestone in the exact `**Mx … COMPLETE**` / `- **Status:**
+  COMPLETE` form. STATE/PLAN were repaired to that form and the test passes.
+  After the detector refinement and weights, `--shards=3` passed
+  `1897/1897` in 617 s with shard walls 109/144/638 s; the remaining
+  imbalance is the single ~399 s `reviewStoreHardening.test.ts` outlier,
+  which the committed weight table now isolates.
+- The owner-quiesced window is still pending; no manifest shard default will
+  be set from contended numbers, and the serial baselines (campaign:synthetic,
+  npm test, gate:local, gate:clean) have not been captured cleanly yet.
 
 ## Exact Next Action
 
-Implement M4: the pure deterministic shard planner plus the shard runner
-(`bin/run-shards.mjs`) with the union/disjointness proof over the
-`playwright test --list` universe, the exclusive group for
-`SERIAL_REQUIRED`/`MUTATION_CAMPAIGN_EXCLUSIVE` files, a validated bounded
-`NIGHTWATCH_TEST_WORKERS` override, and its focused tests. The owner-quiesced
-heavy baseline (campaign:synthetic, npm test, gate:local, gate:clean) is still
-pending the owner's quiescence confirmation and runs before any default worker
-count is fixed.
+Continue M7's second half (hardening probe harness cost) and M9/M10 (structural
+regression guards, validation-universe and lane registration) while the
+quiesced window is pending. When the owner confirms quiescence, capture the
+heavy baseline (campaign:synthetic serial and sharded, npm test, gate:local,
+gate:clean), benchmark 1/2/4/host-core shard counts, and only then set the
+synthetic manifest shard default and the canonical full-regression shape.
 
 ## Files Changed
 

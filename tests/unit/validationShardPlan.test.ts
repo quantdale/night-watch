@@ -91,6 +91,31 @@ test('worker overrides are validated and bounded', () => {
   expect(() => planShards({ universe: ['tests/unit/a.test.ts'], classes: { 'tests/unit/a.test.ts': 'PARALLEL_SAFE' }, parallelShardCount: 99 })).toThrow(/SHARD_COUNT_OUT_OF_RANGE/);
 });
 
+test('duration weights produce a deterministic balanced partition', () => {
+  const universe = ['tests/unit/a.test.ts', 'tests/unit/b.test.ts', 'tests/unit/c.test.ts'];
+  const classes = classesFor(universe, 'PARALLEL_SAFE');
+  const weights = { 'tests/unit/a.test.ts': 100, 'tests/unit/b.test.ts': 90, 'tests/unit/c.test.ts': 10 };
+  const first = planShards({ universe, classes, parallelShardCount: 2, weights });
+  const second = planShards({ universe: [...universe].reverse(), classes, parallelShardCount: 2, weights });
+  expect(first.planDigest).toBe(second.planDigest);
+  const sizes = first.parallelShards.map((shard) => shard.files);
+  expect(sizes.map((files) => files.length).sort()).toEqual([1, 2]);
+  const heavy = sizes.find((files) => files.includes('tests/unit/a.test.ts')) ?? [];
+  expect(heavy).toEqual(['tests/unit/a.test.ts']);
+  const rest = sizes.find((files) => !files.includes('tests/unit/a.test.ts')) ?? [];
+  expect(rest).toEqual(['tests/unit/b.test.ts', 'tests/unit/c.test.ts']);
+  expect(verifyShardCoverage({ universe, shards: first.parallelShards }).ok).toBe(true);
+});
+
+test('a weight table cannot change membership proof or exclusivity', () => {
+  const universe = ['tests/unit/a.test.ts', 'tests/unit/serial.test.ts'];
+  const classes: Record<string, ExecutionClass> = { 'tests/unit/a.test.ts': 'PARALLEL_SAFE', 'tests/unit/serial.test.ts': 'SERIAL_REQUIRED' };
+  const plan = planShards({ universe, classes, parallelShardCount: 2, weights: { 'tests/unit/a.test.ts': 5, 'tests/unit/serial.test.ts': 1 } });
+  expect(plan.parallelShards.flatMap((shard) => shard.files)).toEqual(['tests/unit/a.test.ts']);
+  expect(plan.exclusiveShard?.files).toEqual(['tests/unit/serial.test.ts']);
+  expect(verifyShardCoverage({ universe, shards: [...plan.parallelShards, plan.exclusiveShard as Shard] }).ok).toBe(true);
+});
+
 test('the runner refuses an unclassified explicit selection', () => {
   const result = spawnSync(process.execPath, [CLI, '--dry-run', '--json', '--files=tests/unit/not-a-real-file.test.ts'], { cwd: ROOT, encoding: 'utf8', timeout: 120_000 });
   expect(result.status).toBe(2);

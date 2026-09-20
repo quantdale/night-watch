@@ -97,7 +97,7 @@ decision and isolation evidence.
   `workspace:check`, `session:check`, `hardening:check`, and strict OpenSpec
   validation pass; activation checkpoint committed.
 - Validation commands: the command set above.
-- Status: DONE
+- **Status:** COMPLETE
 
 ### M1 — Timing profiler and baseline measurement
 
@@ -111,7 +111,7 @@ decision and isolation evidence.
   text summary, and the baseline table is committed.
 - Validation commands: `npm run test:timings`, lane commands from the master
   prompt section 2, with load receipts.
-- Status: IN_PROGRESS
+- **Status:** IN_PROGRESS
 
 ### M2 — Duplicate-work map
 
@@ -123,7 +123,7 @@ decision and isolation evidence.
 - Acceptance criteria: no overlap is removed without a class; clean-gate
   independence is explicitly preserved.
 - Validation commands: mapping tool plus `playwright test --list` set algebra.
-- Status: DONE
+- **Status:** COMPLETE
 
 ### M3 — Execution-class classification
 
@@ -137,7 +137,7 @@ decision and isolation evidence.
 - Acceptance criteria: every discovered test file classifies; negative probes
   fail as designed.
 - Validation commands: focused class tests plus `npm run validation:universe`.
-- Status: DONE
+- **Status:** COMPLETE
 
 ### M4 — Shard runner with coverage equality proof
 
@@ -150,7 +150,7 @@ decision and isolation evidence.
 - Acceptance criteria: `union == universe`, pairwise disjoint, no duplicate
   execution, no omitted file; benchmark chooses the default.
 - Validation commands: shard runner self-check, shard tests, benchmark runs.
-- Status: NOT_STARTED
+- **Status:** COMPLETE
 
 ### M5 — Fast development and milestone lanes
 
@@ -162,7 +162,7 @@ decision and isolation evidence.
 - Acceptance criteria: lanes run, state their non-authority, and are measured;
   authoritative lanes unchanged in semantics.
 - Validation commands: `npm run gate:dev`, `npm run gate:milestone`.
-- Status: NOT_STARTED
+- **Status:** COMPLETE
 
 ### M6 — Affected-test selection
 
@@ -177,7 +177,7 @@ decision and isolation evidence.
 - Acceptance criteria: no changed-file case can select zero tests; probes
   demonstrate broadening.
 - Validation commands: focused selector tests and the negative probes.
-- Status: NOT_STARTED
+- **Status:** NOT_STARTED
 
 ### M7 — Synthetic campaign and hardening-probe performance
 
@@ -192,7 +192,7 @@ decision and isolation evidence.
 - Acceptance criteria: equivalence proof green; 83 rules / 94 probes / 94
   detected preserved; measured speedup recorded.
 - Validation commands: `npm run campaign:synthetic`, `npm run hardening:rules`.
-- Status: NOT_STARTED
+- **Status:** IN_PROGRESS
 
 ### M8 — Deterministic reuse and gate orchestration
 
@@ -207,7 +207,7 @@ decision and isolation evidence.
   version + schema version; stale inputs cannot be reused; no gate group
   reordering.
 - Validation commands: cache-key tests, `gate:local` timing comparison.
-- Status: NOT_STARTED
+- **Status:** NOT_STARTED
 
 ### M9 — Structural performance regression budgets
 
@@ -219,7 +219,7 @@ decision and isolation evidence.
 - Acceptance criteria: guards pass on the optimized tree and fail on a
   deliberately regressed probe.
 - Validation commands: focused guard tests.
-- Status: NOT_STARTED
+- **Status:** NOT_STARTED
 
 ### M10 — Validation-universe and lane registration
 
@@ -231,7 +231,7 @@ decision and isolation evidence.
 - Acceptance criteria: discovered/unclassified == 0; digest refreshed;
   `validation:universe` PASS.
 - Validation commands: `npm run validation:universe`.
-- Status: NOT_STARTED
+- **Status:** NOT_STARTED
 
 ### M11 — Flakiness and resource hygiene
 
@@ -243,7 +243,7 @@ decision and isolation evidence.
 - Acceptance criteria: repeated runs stable; no leaked owned process or
   residual state; races fixed, not hidden by fewer workers.
 - Validation commands: repeated lane runs plus `npm run hygiene:status`.
-- Status: NOT_STARTED
+- **Status:** NOT_STARTED
 
 ### M12 — Final certification and before/after benchmark
 
@@ -255,7 +255,7 @@ decision and isolation evidence.
 - Acceptance criteria: all required lanes green; equivalence evidence
   complete; table committed.
 - Validation commands: the full section 25 sequence.
-- Status: NOT_STARTED
+- **Status:** NOT_STARTED
 
 ### M13 — C-00 integration, documentation, and verdict
 
@@ -267,7 +267,7 @@ decision and isolation evidence.
   report sections A-O and choose exactly one verdict.
 - Acceptance criteria: clean tree, `HEAD == origin/main`, report complete.
 - Validation commands: `git status`, `git rev-parse HEAD`, `git ls-remote`.
-- Status: NOT_STARTED
+- **Status:** NOT_STARTED
 
 ## Validation Strategy
 

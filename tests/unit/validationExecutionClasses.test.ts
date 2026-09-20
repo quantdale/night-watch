@@ -28,12 +28,13 @@ function declarationFor(files: Record<string, { class: string; signals: string[]
 
 test('detection is conservative and ordered', () => {
   expect(detectExecutionClass('import { test } from "@playwright/test";').proposed).toBe('PARALLEL_SAFE');
-  expect(detectExecutionClass("const r = spawnSync('git', ['status']);").proposed).toBe('SERIAL_REQUIRED');
-  expect(detectExecutionClass('process.chdir(tmp);').proposed).toBe('SERIAL_REQUIRED');
+  expect(detectExecutionClass("const r = spawnSync('git', ['status']);").proposed).toBe('PARALLEL_SAFE');
+  expect(detectExecutionClass("const r = spawnSync('git', ['reset', '--hard']);").proposed).toBe('SERIAL_REQUIRED');
+  expect(detectExecutionClass('process.chdir(tmp);').proposed).toBe('PROCESS_ISOLATED_ONLY');
   expect(detectExecutionClass("server.listen(18987, '127.0.0.1');").proposed).toBe('PROCESS_ISOLATED_ONLY');
   expect(detectExecutionClass("path.join(os.homedir(), '.nightwatch')").proposed).toBe('PROCESS_ISOLATED_ONLY');
   expect(detectExecutionClass("spawnSync(process.execPath, ['bin/hardening-check.mjs', '--probe-campaign']);").proposed).toBe('MUTATION_CAMPAIGN_EXCLUSIVE');
-  expect(detectExecutionClass("fs.writeFileSync(path.join(root, 'src/core/guarded.ts'), 'x');").proposed).toBe('MUTATION_CAMPAIGN_EXCLUSIVE');
+  expect(detectExecutionClass("fs.writeFileSync(path.join(root, 'src/core/guarded.ts'), 'x');").proposed).toBe('SERIAL_REQUIRED');
 });
 
 test('a git-mutating file declared PARALLEL_SAFE is rejected', () => {

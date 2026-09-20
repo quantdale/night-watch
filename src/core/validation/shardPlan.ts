@@ -94,6 +94,8 @@ export function planShards(input: {
   readonly classes: Readonly<Record<string, ExecutionClass>>;
   readonly parallelShardCount?: number;
   readonly maxFilesPerInvocation?: number;
+  /** Optional per-file measured durations; enables deterministic duration balancing. */
+  readonly weights?: Readonly<Record<string, number>>;
 }): ShardPlan {
   const universe = [...new Set(input.universe)].sort();
   const requested = Number.isInteger(input.parallelShardCount) ? (input.parallelShardCount as number) : DEFAULT_PARALLEL_SHARDS;
@@ -111,14 +113,37 @@ export function planShards(input: {
     throw new Error(`SHARD_ARGV_BOUND_EXCEEDED:${parallelEligible.length}>${requested * bound}`);
   }
   const buckets: string[][] = Array.from({ length: requested }, () => []);
-  parallelEligible.forEach((file, index) => {
-    const bucket = buckets[index % requested];
-    if (bucket !== undefined) bucket.push(file);
-  });
+  const weighted = input.weights !== undefined;
+  if (weighted) {
+    // Deterministic longest-processing-time balancing: heaviest first, then
+    // the currently lightest bucket (ties by bucket index, then path). This is
+    // stable for a given weight table, so the membership is reproducible while
+    // being far better balanced than file-count round-robin.
+    const ordered = [...parallelEligible].sort((left, right) => {
+      const leftWeight = input.weights?.[left] ?? 0;
+      const rightWeight = input.weights?.[right] ?? 0;
+      return rightWeight - leftWeight || left.localeCompare(right);
+    });
+    const bucketWeights = Array.from({ length: requested }, () => 0);
+    for (const file of ordered) {
+      let target = 0;
+      for (let index = 1; index < requested; index += 1) {
+        if ((bucketWeights[index] ?? 0) < (bucketWeights[target] ?? 0)) target = index;
+      }
+      const bucket = buckets[target];
+      if (bucket !== undefined) bucket.push(file);
+      bucketWeights[target] = (bucketWeights[target] ?? 0) + (input.weights?.[file] ?? 0);
+    }
+  } else {
+    parallelEligible.forEach((file, index) => {
+      const bucket = buckets[index % requested];
+      if (bucket !== undefined) bucket.push(file);
+    });
+  }
   // An empty shard is never planned: executing it would run the entire suite
   // (an empty file selection means "no selector", not "no files").
   const parallelShards: Shard[] = buckets
-    .map((files, index) => ({ files, id: `shard-${index + 1}` }))
+    .map((files, index) => ({ files: [...files].sort(), id: `shard-${index + 1}` }))
     .filter((bucket) => bucket.files.length > 0)
     .map((bucket) => ({
       id: bucket.id,

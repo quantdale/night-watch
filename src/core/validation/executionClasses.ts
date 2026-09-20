@@ -51,12 +51,21 @@ interface SignalRule {
  * irrelevant to strength; it exists only to keep the signal list stable.
  */
 const SIGNAL_RULES: readonly SignalRule[] = Object.freeze([
-  { signal: 'probe-campaign', proposed: 'MUTATION_CAMPAIGN_EXCLUSIVE', pattern: /--probe-campaign|hardening-check\.mjs|runRuleProbeCampaign/ },
-  { signal: 'guard-source-mutation', proposed: 'MUTATION_CAMPAIGN_EXCLUSIVE', pattern: /(?:writeFileSync|rmSync)\([^\n]*src\/(?:core|oracles)\// },
-  { signal: 'git-shell-out', proposed: 'SERIAL_REQUIRED', pattern: /(?:spawnSync|execFileSync|execSync|spawn)\(\s*['"]git['"]|['"]git['"]\s*,\s*\[/ },
-  { signal: 'process-chdir', proposed: 'SERIAL_REQUIRED', pattern: /process\.chdir\(/ },
-  { signal: 'worktree-mutation', proposed: 'SERIAL_REQUIRED', pattern: /git['"]\s*,\s*\[['"](?:worktree|checkout|reset|stash|commit|add|clean)/ },
+  // The probe campaign mutates the REAL checkout and restores it; it is the
+  // only work that must never share a checkout with anything else.
+  { signal: 'probe-campaign', proposed: 'MUTATION_CAMPAIGN_EXCLUSIVE', pattern: /--probe-campaign|runRuleProbeCampaign/ },
+  // Writing into a temp copy of src/ needs isolation but not exclusivity: the
+  // scratch directory is process-private.
+  { signal: 'guard-source-mutation', proposed: 'SERIAL_REQUIRED', pattern: /(?:writeFileSync|rmSync)\([^\n]*src\/(?:core|oracles)\// },
+  // Only WRITING Git state must serialize. Read-only invocations (status,
+  // rev-parse, ls-files, log, cat-file, diff, ...) are observations and are
+  // safe beside another process.
+  { signal: 'git-mutation', proposed: 'SERIAL_REQUIRED', pattern: /git['"]\s*,\s*\[['"](?:add|am|apply|checkout|clean|commit|merge|rebase|reset|restore|revert|rm|stash|switch|tag|worktree)/ },
+  // A per-process cwd change is isolated by the worker process itself.
+  { signal: 'process-chdir', proposed: 'PROCESS_ISOLATED_ONLY', pattern: /process\.chdir\(/ },
   { signal: 'fixed-port-bind', proposed: 'PROCESS_ISOLATED_ONLY', pattern: /\.listen\(\s*(?!0\b)\d{2,5}\b/ },
+  // Owner-local state needs its own temp roots/home, which the process
+  // isolation provides; it does not need serialization.
   { signal: 'owner-local-state', proposed: 'PROCESS_ISOLATED_ONLY', pattern: /os\.homedir\(\)|\.nightwatch\// },
   { signal: 'artifacts-write', proposed: 'PROCESS_ISOLATED_ONLY', pattern: /path\.join\([^)\n]*['"]artifacts['"]/ },
   { signal: 'isolated-scratch', proposed: 'PARALLEL_SAFE', pattern: /mkdtempSync|resolveScratchPath|ephemeralLayout/ },
