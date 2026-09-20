@@ -205,8 +205,20 @@ Provider CLI egress is reported separately and was the only external egress.
   AGENT_CONTINUITY, SEMANTIC_COMPATIBILITY, OWNER_PROVENANCE,
   SYNTHETIC_CAMPAIGN, PATCH_INTEGRITY, WORKSPACE_INTEGRITY), receipt
   `receipt:sha256:c8278fdfbcb0723d78c96882`.
-- `npm run gate:clean` at the C-00-approved lifecycle point: recorded in
-  section K as the terminal clean-checkout gate.
+- `npm run gate:clean` at the C-00-approved lifecycle point: Node 20,
+  install PASS, nine groups PASS (GATE_DEFINITION, STATIC, HARDENING,
+  HARDENING_PROBES, HANDOFF_TRUTH, PROJECT_TRUTH, AGENT_CONTINUITY,
+  SEMANTIC_COMPATIBILITY 2,114/2,127, OWNER_PROVENANCE 91), then the
+  `SYNTHETIC_CAMPAIGN` lane timed out at its fixed 600-second MEDIUM bound in
+  two terminal attempts (clean receipts
+  `clean-receipt:sha256:c3dee9241e056c82cca810ba`). The timeout is classified
+  `EXPECTED_ENVIRONMENT_VARIANCE` exactly as R-02 measured it: the direct
+  synthetic campaign passes 1,897/1,897, the same lane passed in the
+  twelve-group `gate:local` run at the validated checkpoint
+  (`receipt:sha256:c8278fdfbcb0723d78c96882`), and this lane's measured pass
+  times on this host span 423-643 s around the 600 s bound under concurrent
+  multi-agent load. The bound was not raised; neither clean attempt is
+  reported as a green gate.
 
 ## K. GIT / C-00
 
@@ -220,8 +232,10 @@ the session worktree. Raw campaign checkpoints and admission dossiers remain
 owner-local under `/home/dalepalaca/.nightwatch/` and are never committed.
 Historical generation receipts (`*.gen1.json`, `*.gen2.json`, plus supervisor
 attribution/state snapshots) are preserved in the task evidence and are
-excluded from the aggregate by name. `npm run gate:clean` runs as the terminal
-clean-checkout gate once the session is removed.
+excluded from the aggregate by name. `npm run gate:clean` was executed twice
+as the terminal clean-checkout gate after the first integration; its classified
+lane result is recorded in section J and in
+`evidence/gate-clean-receipts.json`.
 
 ## L. GROUP 12
 

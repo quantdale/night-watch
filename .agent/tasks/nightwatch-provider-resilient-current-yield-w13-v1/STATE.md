@@ -210,8 +210,14 @@ engine/policy bound change requires explicit owner authorization.
   `openspec validate --all --strict` (67/67) PASS; `npm test` 5,310 passed /
   0 failed / 18 skipped; `npm run gate:local` PASS all twelve groups with
   receipt `receipt:sha256:c8278fdfbcb0723d78c96882`.
-- `npm run gate:clean` at the C-00-approved lifecycle point after session
-  removal is the terminal clean-checkout gate recorded in the report.
+- `npm run gate:clean` after the first integration: Node 20, install PASS,
+  nine groups PASS, then the `SYNTHETIC_CAMPAIGN` lane timed out at its fixed
+  600 s bound in two terminal attempts (clean receipts
+  `clean-receipt:sha256:c3dee9241e056c82cca810ba`); classified
+  `EXPECTED_ENVIRONMENT_VARIANCE` per R-02 (direct campaign 1,897/1,897;
+  `gate:local` passed the same lane; measured pass times 423-643 s on this
+  host). The bound was not raised and neither attempt is reported as green.
+  Receipt: `evidence/gate-clean-receipts.json`.
 
 ## Decisions Made During This Task
 
