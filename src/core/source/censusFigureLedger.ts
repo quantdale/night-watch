@@ -294,7 +294,7 @@ export const GOVERNED_STATUS_KEYS: readonly GovernedStatusKey[] = Object.freeze(
   { key: 'VALIDATION_LANE_STALE_EVIDENCE_COUNT', currentValue: '1', kind: 'LANE_CLASS', establishedBy: 'config/validation-lane-state.v1.json', requiredInReadme: true },
   { key: 'VALIDATION_LANE_BLOCKED_EXTERNAL_COUNT', currentValue: '0', kind: 'LANE_CLASS', establishedBy: 'config/validation-lane-state.v1.json', requiredInReadme: true },
   { key: 'VALIDATION_LANE_UNAVAILABLE_CAPABILITY_COUNT', currentValue: '1', kind: 'LANE_CLASS', establishedBy: 'config/validation-lane-state.v1.json', requiredInReadme: true },
-  { key: 'MEASURED_YIELD_ADMITTED_FINDINGS', currentValue: '0', kind: 'PROJECT', establishedBy: 'F-03 audit measurement (no admission ever recorded)', requiredInReadme: true },
+  { key: 'MEASURED_YIELD_ADMITTED_FINDINGS', currentValue: '1', kind: 'PROJECT', establishedBy: 'W13 measured run matrix: one mechanical admission (mobingilabs/ouchan candidate c1, novelty ambiguous); no Alphaus organizational novelty claimed', requiredInReadme: true },
   { key: 'MEASURED_YIELD_EXACT_REDISCOVERY', currentValue: '0', kind: 'PROJECT', establishedBy: 'F-03 audit measurement (strict EXACT_REDISCOVERY is 0)', requiredInReadme: true },
   { key: 'SEMANTIC_ACCEPTANCE_CLASS', currentValue: 'COMPLETE_LOCAL_SYNTHETIC', kind: 'PROJECT', establishedBy: 'D-54 / D-59 (no DEV acceptance; Phase 9B/10B require separate authorization)', requiredInReadme: true },
   { key: 'SEMANTIC_DEV_RESULT', currentValue: 'NOT_PROVEN', kind: 'PROJECT', establishedBy: 'D-54 (contained DEV semantic acceptance is unproven)', requiredInReadme: true },

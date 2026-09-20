@@ -170,38 +170,38 @@
 
 ## 13. Phase B — Run matrix execution
 
-- [ ] 13.1 Execute the broad all-eight-repository run (60-minute budget)
+- [x] 13.1 Execute the broad all-eight-repository run (60-minute budget)
       under the frozen provider-resilience policy.
-- [ ] 13.2 Execute each of the eight repository-scoped runs in stable
+- [x] 13.2 Execute each of the eight repository-scoped runs in stable
       registry order (30 minutes default; Ouchan up to 60 minutes only if
       the pre-experiment census still proves it the sole current
       deterministic-reproduction repository).
-- [ ] 13.3 For every run, record per-provider attribution, transitions,
+- [x] 13.3 For every run, record per-provider attribution, transitions,
       source investigation breadth, candidates, reproduction attempts, and
       termination class.
 
 ## 14. Phase B — Reproduction, admission, and novelty
 
-- [ ] 14.1 Run every candidate through the existing mechanical
+- [x] 14.1 Run every candidate through the existing mechanical
       reproduction/dossier/admission path unchanged.
-- [ ] 14.2 Perform post-admission-only novelty adjudication for any
+- [x] 14.2 Perform post-admission-only novelty adjudication for any
       mechanical admission.
-- [ ] 14.3 Run adversarial, non-vacuity, leakage, sibling-write, and safety
+- [x] 14.3 Run adversarial, non-vacuity, leakage, sibling-write, and safety
       proofs; preserve any provider-blocked or safety-invalid receipts.
 
 ## 15. Phase B — Aggregation and certification
 
-- [ ] 15.1 Mechanically aggregate all required global, per-run,
+- [x] 15.1 Mechanically aggregate all required global, per-run,
       per-repository, and per-provider metrics from preserved receipts.
-- [ ] 15.2 Update the W13 REPORT/STATE, parent programme state, Group 12,
+- [x] 15.2 Update the W13 REPORT/STATE, parent programme state, Group 12,
       and governed current-state/README surfaces from actual evidence.
 - [ ] 15.3 Run full required validation: `npm test`, `npm run gate:local`,
       strict OpenSpec validation, and `npm run gate:clean` at the
       C-00-approved lifecycle point; do not call `gate:local` green if it
       times out.
-- [ ] 15.4 Reconcile Production Completion Group 12 items 12.7, 12.8,
+- [x] 15.4 Reconcile Production Completion Group 12 items 12.7, 12.8,
       12.11, and 12.12 against actual W13 evidence.
-- [ ] 15.5 Perform the parent-programme final residual analysis: classify
+- [x] 15.5 Perform the parent-programme final residual analysis: classify
       every remaining open item as `NONE`, `LOCALLY_CLOSABLE`,
       `OWNER_DECISION`, `EXTERNAL_CAPABILITY`, `DEV_NEXT_AUTHORIZATION`,
       `PRODUCTION_TRACK`, `METRIC_REDESIGN`, or

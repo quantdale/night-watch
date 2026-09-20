@@ -100,8 +100,10 @@ executed rather than omitting it.
 - Validation lane classes: 9 `PROVEN`, 1 `PROVEN` carrying stale evidence,
   0 `BLOCKED_EXTERNAL`, 1 `UNAVAILABLE_CAPABILITY`.
   `<!--status:VALIDATION_LANE_PROVEN_COUNT=9-->` `<!--status:VALIDATION_LANE_STALE_EVIDENCE_COUNT=1-->` `<!--status:VALIDATION_LANE_BLOCKED_EXTERNAL_COUNT=0-->` `<!--status:VALIDATION_LANE_UNAVAILABLE_CAPABILITY_COUNT=1-->`
-- Measured yield: **0** admitted findings and **0** strict `EXACT_REDISCOVERY`
-  across W7–W11. The machinery works; no Alphaus defect has been admitted.
+- Measured yield: **1** Nightwatch mechanical admission and **0** strict
+  `EXACT_REDISCOVERY` across W7–W13. The admission (W13, `mobingilabs/ouchan`,
+  candidate `c1`) is a Nightwatch mechanical result whose novelty is
+  `NOVELTY_AMBIGUOUS`; no Alphaus organizational defect has been confirmed.
   W11 measured the historical arm directly — 14 leak-isolated cases,
   `opencode-go/glm-5.3`, 0 leakage, 0 false positives — and found strict EXACT
   0/13 for a reason worth recording: the metric requires naming the hidden
@@ -112,7 +114,7 @@ executed rather than omitting it.
   previously-unknown-defect arm is frozen but UNEXECUTED: the subscribed
   provider tier went down mid-wave, and an unexecutable arm is not reported as a
   zero-yield arm.
-  `<!--status:MEASURED_YIELD_ADMITTED_FINDINGS=0-->` `<!--status:MEASURED_YIELD_EXACT_REDISCOVERY=0-->`
+  `<!--status:MEASURED_YIELD_ADMITTED_FINDINGS=1-->` `<!--status:MEASURED_YIELD_EXACT_REDISCOVERY=0-->`
 - W12's owner-authorized current-source successor is **PARTIAL — BLOCKED**:
   its valid broad run reached all eight repositories and produced 2 candidates,
   2 non-reproductions, 2 `MISSING_REPRODUCTION` refusals, and 0 admissions;
@@ -120,16 +122,22 @@ executed rather than omitting it.
   Provider failure is not a zero-yield denominator, and W12 makes no claim
   that the repositories contain no defects or that any candidate is an Alphaus
   organizationally novel bug.
-- W13's provider-resilient successor is IN_PROGRESS: Phase A closed the W12
-  provider-failure budget mismatch (D-139), classified the `gate:local`
-  synthetic-lane timeout as environment variance, extended provider failure
-  classification to the complete ten-member taxonomy with sanitized evidence,
-  closed census truncation with floor-only denominator semantics, enforced
-  aggregate measurement completeness and per-provider attribution, and added
-  the candidate/admission and failed-provider-progress guards. The
-  provider-resilience policy and evaluation freeze are committed before any
-  Phase B probe. No W13 yield is claimed yet, and provider failure remains
-  distinct from zero yield.
+- W13's provider-resilient successor is **COMPLETE — CURRENT-SOURCE YIELD
+  MEASURED, MECHANICAL ADMISSIONS: 1**: all nine frozen runs executed validly
+  under a predeclared deterministic provider-failover policy (generation 1
+  `opencode-go/glm-5.3` with two transitions; generation 2, after owner
+  directive D-140, `opencode-go/muse-spark-1.3-contributor` at XHIGH effort;
+  D-141 completed runs 02/03/04 under the same freeze). The matrix produced
+  **1 Nightwatch mechanical admission** (`mobingilabs/ouchan`, candidate `c1`,
+  `VERIFIED_REPRODUCTION`, reproductionCount 1), 6 candidates, 5 refusals, 15
+  contained reproduction attempts across 8 executable targets, 392 reasoner
+  calls, 227 tool actions (floor), and 0 leakage with all eight sibling SHAs
+  unchanged. The admission's novelty is `NOVELTY_AMBIGUOUS` because its dossier
+  artefact was lost to harness defect W13-DEF-01 (repaired); it is **not** an
+  Alphaus-confirmed bug and no organizational novelty is claimed. Provider
+  failures remain distinct from zero yield, and the engine/policy
+  consecutive-failure interaction that bounded generation-1 failover is
+  reported for a future owner decision rather than tuned mid-wave.
 - Semantic acceptance class: `COMPLETE_LOCAL_SYNTHETIC`; contained DEV
   acceptance is `NOT_PROVEN` and requires separate owner authorization.
   `<!--status:SEMANTIC_ACCEPTANCE_CLASS=COMPLETE_LOCAL_SYNTHETIC-->` `<!--status:SEMANTIC_DEV_RESULT=NOT_PROVEN-->`

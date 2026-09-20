@@ -33,20 +33,33 @@ policy exhaustion before sufficient investigation is `PROVIDER_BLOCKED`.
 
 ## Current Milestone
 
-Milestone ID: M12
+Milestone ID: M14
 Milestone status: IN_PROGRESS
-What is being attempted: execute the remaining frozen scoped runs
-(repository-04 through repository-08) under the OWNER-DIRECTED generation-2
-provider-resilience policy (D-140): first candidate
-`opencode-go/muse-spark-1.3-contributor` at XHIGH effort, generation-1
-receipts preserved and never re-run. The broad run and scoped runs 01-03
-remain generation-1 historical evidence.
-Next action: commit the generation-2 amendment checkpoint, then execute
-repository-04 through repository-08 in registry order with the frozen
-wall-clock ceilings, then reassess whether generation-1 scoped runs 01-03
-warrant a generation-2 re-run for matrix coherence.
+What is being attempted: certification close-out — governed documentation
+(REPORT/STATE, README, current-state, parent programme, Group 12), then full
+required validation (`npm test`, `npm run gate:local`, strict OpenSpec
+validation, `gate:clean` at the lifecycle point) before C-00 integration.
+Next action: write the final W13 report and governed-documentation updates,
+then run the full validation suite.
 
 ## Completed Milestones
+
+- **M13 COMPLETE**: reproduction/admission/novelty/safety. Every candidate
+  reached the unchanged mechanical path: 6 candidate lifecycle results, 1
+  mechanical admission (`w13-repository-05`, candidate `c1`, reproductionCount
+  1, `VERIFIED_REPRODUCTION`), 5 refusals; novelty adjudicated post-admission
+  only as `NOVELTY_AMBIGUOUS` (dossier artefact lost to W13-DEF-01); the final
+  safety proof reports zero prohibited operations and all eight sibling SHAs
+  unchanged. Receipts: `evidence/w13-repository-05-admission.json`,
+  `evidence/novelty-adjudication.json`, `evidence/final-safety-proof.json`.
+- **M12 COMPLETE (D-141)**: the frozen matrix is complete and valid — 9/9 runs
+  valid under the frozen freeze, with the owner-directed generation-2 provider
+  and the W13-DEF-02 durable tool-action count; D-141 re-executed
+  repository-02/03/04 after the generation-1 provider-block/unobserved
+  outcomes, preserving every earlier receipt as a generation snapshot.
+  Aggregate: `evidence/global-yield-aggregation.json` (392 calls, 227 tool
+  actions floor, 15 reproduction attempts, 1 qualifying reproduction, 6
+  candidates, 1 admission, 2 provider transitions).
 
 - **M11 COMPLETE**: the W13 evaluation freeze is committed before any
   investigative call at fingerprint `sha256:a520d9630a20a3f67321fbb8`;
@@ -134,19 +147,20 @@ warrant a generation-2 re-run for matrix coherence.
 
 ## Work In Progress
 
-Full matrix attempted: broad, 01, 05, 06, 07, 08 valid; 02/03 engine-truncated
-provider-blocked (gen-1); 04 valid provider responses with unobservable source
-activity; 05 carries 1 mechanical admission whose dossier was lost
-(W13-DEF-01). D-141 re-executes 02/03/04 under the same frozen matrix with the
-W13-DEF-02 durable tool-action count; prior receipts preserved as generation
-snapshots.
+M14 is preparing the final report and governed documentation, then full
+validation. The verdict is the complete measured-yield class with 1 mechanical
+admission; novelty stays `NOVELTY_AMBIGUOUS` because the dossier artefact was
+lost to W13-DEF-01.
 
 ## Exact Next Action
 
-Execute `w13-repository-02`, `w13-repository-03`, and `w13-repository-04`
-with the fixed harness under the frozen matrix, then re-run the aggregation,
-novelty/safety close-out, governed documentation, full validation, and C-00
-integration. Historical generation receipts are never modified.
+Write the final `REPORT.md`, update README/current-state/parent programme/Group
+12 from the aggregate, mark tasks 15.2/15.4/15.5, run the full validation
+suite (focused W13 tests, typecheck, typecheck:bin, hardening:check,
+hardening:rules, agent:check, handoff:check, project:check, workspace:check,
+session:check, validation:universe, strict OpenSpec, `npm test`,
+`gate:local`, `gate:clean` at the lifecycle point), then perform C-00
+integration and release (16.x).
 
 ## Files Changed
 

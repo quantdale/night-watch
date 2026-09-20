@@ -186,12 +186,13 @@ from receipts, and adjudicates novelty only after admission.
   policy with per-provider attribution.
 - Acceptance: every run is valid, or categorically provider-blocked after
   policy exhaustion; no result-driven provider reselection.
-- **Status:** IN_PROGRESS — generation 1 (owner-amended mid-wave, D-140):
-  broad run VALID (45 calls, 22,810 response bytes, 35 tool actions, 8
-  provider failures, 0 candidates); scoped 01-03 recorded with deterministic
-  failover transitions. Generation 2 (owner-directed
-  `opencode-go/muse-spark-1.3-contributor`, XHIGH) is committed for runs
-  04-08; generation-1 receipts are preserved and never rewritten.
+- **Status:** COMPLETE (D-141) — 9/9 runs valid under the frozen matrix.
+  Generation 1: broad + 01 valid; 02/03 engine-truncated provider-blocked;
+  04 unobserved source activity. Generation 2 (owner-directed
+  `opencode-go/muse-spark-1.3-contributor`, XHIGH): 05 (with 1 mechanical
+  admission), 06, 07, 08 valid. D-141 re-executed 02/03/04 under the same
+  freeze with the W13-DEF-02 durable tool-action count, all valid; every
+  earlier receipt preserved as a generation snapshot.
 
 ### M13 — Reproduction, admission, novelty, and safety proofs
 
@@ -199,7 +200,8 @@ from receipts, and adjudicates novelty only after admission.
   prove safety boundaries live.
 - Acceptance: reproductions/refusals/admissions are receipt-derived; leakage,
   sibling-write, and adversarial probes pass.
-- **Status:** NOT_STARTED
+- **Status:** COMPLETE — see M12/M13 entries; reproduction, admission,
+  novelty, safety, and adversarial probes all recorded.
 
 ### M14 — Aggregation and certification
 
@@ -207,7 +209,9 @@ from receipts, and adjudicates novelty only after admission.
   documentation from actual evidence.
 - Acceptance: full validation passes or is truthfully classified; Group 12
   reconciled; final residual analysis classified.
-- **Status:** NOT_STARTED
+- **Status:** IN_PROGRESS — mechanical aggregation complete and validated
+  (`evidence/global-yield-aggregation.json`, completeness PASS, per-provider
+  attribution PASS); governed documentation and full validation next.
 
 ### M15 — C-00 integration, release, and final verdict
 

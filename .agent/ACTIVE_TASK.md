@@ -15,11 +15,14 @@ single frozen provider. W13 is a distinct owner-authorized successor whose
 Phase A must close every locally closable W12 residual before Phase B freezes
 a provider-resilience policy and executes the fixed broad-plus-eight-scoped
 matrix.
-Current milestone: M12 — matrix completion re-execution (D-141)
-Next action: re-execute repository-02, repository-03, and repository-04 under
-the unchanged frozen matrix with the W13-DEF-02 durable tool-action count, then
-re-run aggregation, novelty/safety close-out, documentation, full validation,
-and C-00 integration. Historical generation receipts are never modified.
+Current milestone: M14 — aggregation, documentation, and full validation
+Next action: finalize the wave report and governed documentation from the
+validated aggregate (9/9 valid runs, 1 mechanical admission, novelty
+ambiguous), then run the full required validation suite (focused residual
+suites, typecheck, typecheck:bin, hardening:check, hardening:rules,
+agent:check, handoff:check, project:check, workspace:check, session:check,
+validation:universe, strict OpenSpec, npm test, gate:local, gate:clean at the
+lifecycle point), then C-00 integration and release (16.x).
 Authorization class: PROVIDER_RESILIENT_CURRENT_YIELD_W13_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
