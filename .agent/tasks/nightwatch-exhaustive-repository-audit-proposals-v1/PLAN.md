@@ -127,6 +127,8 @@ Prefer the narrowest decisive existing tests during exploration. Validate each O
 - 2026-09-20 — Decision: partition configuration-layer authority integrity into its own remediation change; reason: `.env` values are merged for validation/rendering but launchers execute from ambient `process.env`, while unknown file-only names are filtered before reporting; evidence: NW-AUD-012; consequence: `nightwatch-configuration-layer-authority-integrity-v1` specifies strict admission and one execution/provenance snapshot.
 - 2026-09-20 — Decision: partition schema preservation integrity into its own remediation change; reason: export pre-slicing and swallowed read failures overstate completeness, ancestry checks can be redirected, and migration retention is asserted without observing the original; evidence: NW-AUD-013; consequence: `nightwatch-schema-preservation-integrity-v1` specifies truthful preservation and identity-qualified non-destructive migration.
 - 2026-09-20 — Decision: partition child-process boundary totality into its own remediation change; reason: the rule's 18-file list is not a total authority census and unlisted callers pass ambient credentials or omit bounds; evidence: NW-AUD-014; consequence: `nightwatch-child-process-boundary-totality-v1` specifies AST-total classification and closed execution profiles.
+- 2026-09-20 — Decision: partition authentication capability bundle integrity into its own remediation change; reason: DEV refresh omits the lifecycle sidecar and direct capture publishes the two-member capability sequentially, so correct fail-closed readers cannot make writer success crash-consistent; evidence: NW-AUD-015; consequence: `nightwatch-auth-capability-bundle-transaction-integrity-v1` specifies total writer coverage, immutable generations, recovery, and final consumer binding.
+- 2026-09-20 — Decision: partition proxy runtime instance attestation into its own remediation change; reason: static state identities plus constant status-only health do not prove that the listener is the live policy-enforcing server; evidence: NW-AUD-016; consequence: `nightwatch-proxy-runtime-instance-attestation-v1` specifies lease/process/state/event coherence, active challenge, revocation, and consumer binding.
 
 ## Discoveries
 
@@ -172,6 +174,11 @@ Prefer the narrowest decisive existing tests during exploration. Validate each O
 - The child-process rule enumerates 18 files rather than all invocation nodes;
   current unlisted launchers spread/inherit ambient environments and omit
   resource/offline controls. This is NW-AUD-014.
+- Automatic DEV refresh replaces storage state without a lifecycle record, and
+  direct capture cannot atomically publish its separately named state/sidecar
+  files. This is NW-AUD-015.
+- Proxy health accepts any loopback 204 response against mutable self-asserted
+  state and carries no exact live-instance identity. This is NW-AUD-016.
 
 ## Deferred Work
 

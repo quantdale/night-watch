@@ -7,9 +7,9 @@ Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-exhaustive-repository-audit-proposals-v1
 Starting SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
 Last validated implementation SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
-Last checkpoint: M1 is complete; eleven material findings map one-to-one to eleven strict-valid remediation changes, including configuration-layer authority, schema preservation, and total child-process boundaries; three candidate leads were dispositioned as duplicate or not an issue.
+Last checkpoint: M1 is complete; M2 has added two material findings and strict-valid changes for authentication-bundle transaction integrity and exact live proxy-instance attestation, bringing the partial portfolio to thirteen one-to-one proposals.
 Current milestone: M2 — core safety, policy, proxy, process/network containment, and authentication
-Next action: Trace the core environment/host/protocol/action authorization graph and executor boundaries, then inspect proxy, L6 containment, and authentication lifecycle/error paths with focused read-only evidence.
+Next action: Complete the remaining M2 L6/process-containment and authentication/provider/error-path review, disposition browser-guard/runtime-capability leads, then close M2 only after its source/test denominator is reconciled.
 Authorization class: EXHAUSTIVE_REPOSITORY_AUDIT_PROPOSALS_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2

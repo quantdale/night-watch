@@ -11,7 +11,7 @@ Last substantive checkpoint SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-exhaustive-repository-ef157f7a
-Last checkpoint: 2026-09-20 — M1 complete; eleven material findings have eleven strict-valid issue-specific remediation proposals, and M2 is active.
+Last checkpoint: 2026-09-20 — M1 complete; M2 has two material findings with strict-valid auth-bundle and proxy-instance proposals; thirteen findings now map to thirteen changes.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
@@ -48,16 +48,18 @@ What is being attempted: audit core safety, environment/policy authorization, pr
 - NW-AUD-012: PROPOSED (Medium/High-confidence); dedicated change `nightwatch-configuration-layer-authority-integrity-v1` is 4/4 complete and strict-valid.
 - NW-AUD-013: PROPOSED (High/High-confidence); dedicated change `nightwatch-schema-preservation-integrity-v1` is 4/4 complete and strict-valid.
 - NW-AUD-014: PROPOSED (High/High-confidence); dedicated change `nightwatch-child-process-boundary-totality-v1` is 4/4 complete and strict-valid.
+- NW-AUD-015: PROPOSED (Medium/High-confidence); dedicated change `nightwatch-auth-capability-bundle-transaction-integrity-v1` is 4/4 complete and strict-valid.
+- NW-AUD-016: PROPOSED (High/High-confidence); dedicated change `nightwatch-proxy-runtime-instance-attestation-v1` is 4/4 complete and strict-valid.
 - NW-AUD-002: DUPLICATE of production-completion tasks 15.7/15.11; NW-AUD-003: NOT_AN_ISSUE after validation-universe PASS with zero unclassified checks; NW-AUD-008: DUPLICATE of the production-completion operator CLI contract.
 - M1 repository topology/dependencies/configuration/build/tooling: COMPLETE.
 
 ## Work In Progress
 
-M2 is active. M1 covered package/lock/config topology, root TypeScript/Playwright configuration, the executable quality gate, validation-universe classification, dependency/lane records, workflow/toolchain/retention/session/change-shadow/report/release/promotion mechanics, configuration-layer authority, schema preservation, and the total child-process boundary. Later waves still revisit `bin/` call sites where their safety, runtime, validation, and documentation responsibilities apply.
+M2 is active. The policy/host graph, L5 proxy resolution/server/runtime/lease surfaces, authentication lifecycle/direct/refresh/storage publication, and related tests have been traced far enough to admit NW-AUD-015 and NW-AUD-016. Remaining M2 work must finish L6/OOPS lifecycle, auth provider/login error paths, browser-guard runtime capability claims, safety redaction/private screening, and complete denominator reconciliation. Later waves still revisit `bin/` and browser call sites by their own responsibilities.
 
 ## Exact Next Action
 
-Trace the M2 environment/host/protocol/action authorization graph from configuration through executor effects, then inspect proxy, L6 containment, and authentication lifecycle/error paths with focused read-only evidence.
+Complete the remaining L6/OOPS lifecycle and authentication provider/login/error-path inspection, resolve browser-guard/runtime-capability leads against outer-proxy/L6 redundancy, and reconcile every M2 source/test row before milestone closure.
 
 ## Files Changed
 
@@ -77,6 +79,8 @@ Trace the M2 environment/host/protocol/action authorization graph from configura
 | `openspec/changes/nightwatch-configuration-layer-authority-integrity-v1/` | NW-AUD-012 implementation-ready remediation proposal | complete planning artifact |
 | `openspec/changes/nightwatch-schema-preservation-integrity-v1/` | NW-AUD-013 implementation-ready remediation proposal | complete planning artifact |
 | `openspec/changes/nightwatch-child-process-boundary-totality-v1/` | NW-AUD-014 implementation-ready remediation proposal | complete planning artifact |
+| `openspec/changes/nightwatch-auth-capability-bundle-transaction-integrity-v1/` | NW-AUD-015 implementation-ready remediation proposal | complete planning artifact |
+| `openspec/changes/nightwatch-proxy-runtime-instance-attestation-v1/` | NW-AUD-016 implementation-ready remediation proposal | complete planning artifact |
 
 ## Validation Ledger
 
@@ -190,6 +194,26 @@ Result: PASS
 When: 2026-09-20
 Relevant failure/output summary: proposal, design, child-process-boundary-totality spec, and tasks are 4/4 complete/apply-ready.
 
+Command: static authentication lifecycle/direct capture/automatic refresh/storage publication/test inspection
+Result: SUBSTANTIATED READ-ONLY
+When: 2026-09-20
+Relevant failure/output summary: DEV refresh replaces state without any lifecycle-record write; direct capture replaces state before a separate record transaction; existing tests cover reader refusal but not writer completeness/interruption.
+
+Command: `openspec validate nightwatch-auth-capability-bundle-transaction-integrity-v1 --strict`
+Result: PASS
+When: 2026-09-20
+Relevant failure/output summary: proposal, design, auth-capability-bundle-integrity spec, and tasks are 4/4 complete/apply-ready.
+
+Command: static proxy runtime/server/lease/global-setup/gate/liveness/test inspection
+Result: SUBSTANTIATED READ-ONLY
+When: 2026-09-20
+Relevant failure/output summary: runtime state has no per-start instance/lease/process/event binding and health accepts any loopback service returning 204 at the fixed path.
+
+Command: `openspec validate nightwatch-proxy-runtime-instance-attestation-v1 --strict`
+Result: PASS
+When: 2026-09-20
+Relevant failure/output summary: proposal, design, proxy-runtime-instance-attestation spec, and tasks are 4/4 complete/apply-ready.
+
 Command: `npm run agent:check`
 Result: PASS with 41 pre-existing/expected warnings and zero strict-v2 errors
 When: 2026-09-20
@@ -295,6 +319,24 @@ still required, keeping the finding below Critical.
 Evidence/constraint: 53 importing bin modules versus an 18-file rule, explicit
 spreads in gate topology/review mutation, and inherited unbounded Phase-22 launch.
 
+Decision: admit NW-AUD-015 at Medium severity and create a dedicated change.
+Reason: fail-closed readers limit the next-run safety impact, but ordinary DEV
+refresh deterministically leaves a stale/missing lifecycle record and direct
+capture can replace the prior valid pair before sidecar failure; success and
+recoverability therefore disagree across all authenticated dependents.
+Evidence/constraint: `runDevAuthRefresh` has no lifecycle writer, direct capture
+commits state at lines 540-541 before record lines 545-552, and current tests
+cover mismatched-reader refusal rather than two-member writer atomicity.
+
+Decision: admit NW-AUD-016 at High severity and create a dedicated change.
+Reason: static version fields plus status-only liveness can admit a substituted
+loopback listener as the mandatory L5 proxy, permitting credential-bearing
+browser traffic to traverse a server with no Nightwatch destination policy;
+local scratch/process influence keeps the issue below Critical.
+Evidence/constraint: exact runtime parser/health endpoint and setup/gate/poll
+consumers, no lease/process-start/nonce/event-generation identity, and no fake
+204 listener or state-swap regression in current tests.
+
 ## Discoveries
 
 - Registered topology has room for this worktree under the repository's maximum of eight.
@@ -329,6 +371,10 @@ spreads in gate topology/review mutation, and inherited unbounded Phase-22 launc
   safe destination/migration identities end to end. This is NW-AUD-013.
 - Child-process hardening is a manual-file sample rather than a total call-site
   authority; ambient credential and bound bypasses exist today. This is NW-AUD-014.
+- Authentication refresh and direct capture do not publish the state/sidecar
+  capability through one complete transaction. This is NW-AUD-015.
+- Proxy runtime readiness proves static claims and port reachability, not the
+  exact live containment instance that owns policy and evidence. This is NW-AUD-016.
 
 ## Blockers
 
@@ -352,6 +398,6 @@ NONE
 
 ## Completion Snapshot
 
-Not complete; M1 is complete and M2 is active. Eleven issue-specific changes
+Not complete; M1 is complete and M2 is active. Thirteen issue-specific changes
 are strict-valid, but milestones M2-M10 are still required before any
 exhaustive conclusion.

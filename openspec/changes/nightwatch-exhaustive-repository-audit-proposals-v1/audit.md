@@ -69,8 +69,8 @@ The following top-level classes are exhaustive and mutually exclusive for the st
 | `src/products/` | 12 | M3 | PENDING |
 | `src/data/` | 11 | M3/M5 | PENDING |
 | `src/api/` | 10 | M3 | PENDING |
-| `src/proxy/` | 9 | M2 | PENDING |
-| `src/auth/` | 6 | M2 | PENDING |
+| `src/proxy/` | 9 | M2 | IN_PROGRESS — runtime state/health/lease/server/event binding inspected; remaining protocol/cleanup review active |
+| `src/auth/` | 6 | M2 | IN_PROGRESS — lifecycle/direct/refresh/storage writers inspected; remaining login/provider/error-path review active |
 | `src/state/`, `src/mcp/` | 2 | M3/M5 | PENDING |
 
 ### `tests/` denominator
@@ -122,6 +122,8 @@ No documentation inconsistency is admitted as a finding merely because historica
 | NW-AUD-012 | PROPOSED | Medium | High | configuration declaration / `.env` / launcher authority | `.env` values are merged for validation and shown as `ENV_FILE`, but launchers later read/forward ambient `process.env`; unknown file-only names are filtered before reporting, and malformed/duplicate/unknown declaration input is permissive | `src/core/config/environmentSurface.ts:329-510`; `bin/nightwatch.mjs:71-95,102-132`; `bin/nightwatch-agent.mjs:40-48,124-159`; `bin/child-environment.mjs:47-68`; `tests/unit/safety.test.ts:455-512` | Production-completion F-19 requires declaration/reporting but its implemented path does not bind the merged snapshot to execution or strictly admit the file/declaration; no active change owns that coherence failure | `nightwatch-configuration-layer-authority-integrity-v1` |
 | NW-AUD-013 | PROPOSED | High | High | schema lifecycle / preservation / migration safety | Export pre-slices to the record limit and catches every record failure, so omitted data can report `truncated: false`; destination ancestry is only lexically/immediately checked; migration compares raw path strings and always asserts original retention | `bin/schema-lifecycle.mjs:136-168`; `src/core/schemaLifecycle/export.ts:97-144`; `src/core/schemaLifecycle/migration.ts:113-165`; `tests/unit/schemaVersionMigration.test.ts:120-179,334-406` | Existing lifecycle requirements own dispositions and a bounded sanitized export but not truthful completeness, ancestor identity, durable publication, alias-safe migration, or observed original retention | `nightwatch-schema-preservation-integrity-v1` |
 | NW-AUD-014 | PROPOSED | High | High | subprocess containment / credentials / offline tooling / hardening totality | The boundary rule checks a manual 18-file list while 53 bin modules import child-process authority; unlisted callers spread/inherit ambient state, use acquiring `npx`, or omit timeout/output/stdio bounds, including network-sharing and authenticated paths | `bin/lib/hardening/rules/process-and-network.mjs:27-66`; `bin/gate-topology.mjs:394-508`; `bin/review-mutation-campaign.mjs:333-340`; `bin/phase22-dev.mjs:221-238`; static import/invocation census | Existing child-environment and launcher checks state the desired boundary but are non-total; NW-AUD-007 owns one compiler bootstrap only, and NW-AUD-012 owns configuration admission rather than process authority | `nightwatch-child-process-boundary-totality-v1` |
+| NW-AUD-015 | PROPOSED | Medium | High | authenticated capability lifecycle / storage-state publication | Automatic DEV refresh replaces storage state without writing the required digest-bound lifecycle sidecar; direct capture publishes state before a separate sidecar transaction, so successful refresh or interruption leaves a stale/missing/mixed capability and can discard the prior valid pair | `src/auth/devAutoLogin.ts:454-482,484-596`; `src/auth/directRunner.ts:515-561,596-615`; `src/auth/capabilityLifecycle.ts:337-370,445-551`; `src/browser/fixtures/storageState.ts:587-623`; current auth tests have no automatic-refresh sidecar or two-file interruption case | F-21 requires every capture to carry lifecycle metadata and fail-closed readers enforce it, but no active/published requirement owns complete writer coverage, multi-file crash consistency, or preflight-to-consumption generation binding | `nightwatch-auth-capability-bundle-transaction-integrity-v1` |
+| NW-AUD-016 | PROPOSED | High | High | mandatory outer proxy / runtime identity / health / control state | Proxy admission trusts a self-asserted state file plus any loopback listener returning 204 at the fixed health path; state has no per-start lease/process/server/event identity, so stale/replaced control state can admit a listener that never enforces Nightwatch policy | `src/proxy/runtime.ts:14-96`; `src/proxy/server.ts:154-228,331-342,618-657`; `src/proxy/portLease.ts:208-253`; `tests/globalSetup.ts:21-80`; `tests/unit/proxy.test.ts:245-293`; real-run gate/browser liveness consumers | Resolved-egress work binds static policy/resolver/exact-address versions, not the live server instance; no active change owns challenge-based health, state/lease/process/event coherence, or revocation | `nightwatch-proxy-runtime-instance-attestation-v1` |
 
 ## M1 candidate dispositions
 
@@ -141,6 +143,13 @@ No documentation inconsistency is admitted as a finding merely because historica
 | NW-AUD-012 | PROPOSED | The validated/rendered configuration snapshot is not the execution authority | File values are merged only inside startup/config blocks; later launcher decisions and explicit child values read `process.env`; unknown file-only keys never enter the map given to the reporter; the parser skips malformed lines and overwrites duplicates | MATERIAL → dedicated strictly-valid OpenSpec change |
 | NW-AUD-013 | PROPOSED | Preservation and migration results overstate complete/non-destructive truth | CLI slices matching names before the builder can mark truncation and catches read/parse failures; writer checks only lexical/immediate ancestry; migration path equality is string-only and `originalRetained` is constant without a post-write original read | MATERIAL → dedicated strictly-valid OpenSpec change |
 | NW-AUD-014 | PROPOSED | The claimed global subprocess boundary is an incomplete manual sample | 53 bin modules import child-process authority, but the rule lists 18 files; gate topology and review mutation spread the ambient environment, and Phase 22 DEV inherits environment/stdio without explicit deadline/buffer; offline mutation invokes acquiring `npx` | MATERIAL → dedicated strictly-valid OpenSpec change |
+
+## M2 candidate dispositions (in progress)
+
+| ID | State | Summary | Decisive evidence | Disposition |
+|---|---|---|---|---|
+| NW-AUD-015 | PROPOSED | Authentication state and lifecycle metadata are not one writer-complete crash-consistent capability | `runDevAuthRefresh` ends after storage-state replacement and never calls `writeAuthCaptureRecord`; direct capture replaces the artefact, sets `stateCommitted`, then separately derives/writes the sidecar; readers correctly reject absent/digest-mismatched records, and tests exercise those rejections but not writer completeness or interruption between the two commits | MATERIAL → dedicated strictly-valid OpenSpec change |
+| NW-AUD-016 | PROPOSED | Static proxy state plus status-only health can falsely attest the mandatory containment executor | Runtime state contains no instance/lease/process-start identity; `checkProxyHealth` accepts status 204; the server returns 204 at the public fixed path; setup, real-run gate, and liveness consumers treat that as the active proxy; focused tests reject static version mismatch and event failure but do not substitute an unrelated 204 listener | MATERIAL → dedicated strictly-valid OpenSpec change |
 
 NW-AUD-001 severity is Medium rather than High: compromise or malicious
 movement of an upstream action identity is an external precondition, and the
@@ -233,6 +242,21 @@ are delivered to test/tool children with network authority, authenticated
 launchers can escape the claimed resource boundary, and new call sites evade
 the guard by default because completeness is defined by a manual filename list.
 
+NW-AUD-015 severity is Medium rather than High: fail-closed lifecycle readers
+prevent a stale/missing sidecar from being admitted on the next run, and the
+writer paths require explicit authenticated operation. It remains material
+because automatic refresh deterministically publishes such a mismatch while
+reporting success, the current run can consume it without a second lifecycle
+admission, and direct-capture sidecar failure can replace the previously valid
+pair with no transactional rollback or recovery truth.
+
+NW-AUD-016 severity is High rather than Critical: loopback state substitution
+or stale port reuse requires local scratch/process influence and does not by
+itself defeat TLS. It nevertheless invalidates the mandatory L5 prerequisite:
+Chromium is configured to send credential-bearing traffic through the admitted
+listener, and a permissive substitute can relay destinations that the real
+Nightwatch policy would deny, including production-class targets.
+
 ## Validation ledger
 
 | Command/evidence | Result | Purpose |
@@ -267,10 +291,14 @@ the guard by default because completeness is defined by a manual filename list.
 | `openspec validate nightwatch-schema-preservation-integrity-v1 --strict` | PASS; 4/4 artifact classes complete | NW-AUD-013 remediation is apply-ready |
 | static child-process import/invocation/rule census | SUBSTANTIATED READ-ONLY; 53 importing bin modules versus 18 listed files, with current ambient/bound violations outside the list | Establish NW-AUD-014 safely |
 | `openspec validate nightwatch-child-process-boundary-totality-v1 --strict` | PASS; 4/4 artifact classes complete | NW-AUD-014 remediation is apply-ready |
+| static auth direct/refresh/lifecycle/storage writer and test inspection | SUBSTANTIATED READ-ONLY; refresh has no lifecycle write and direct capture commits the two-file capability sequentially | Establish NW-AUD-015 without credentials or browser execution |
+| `openspec validate nightwatch-auth-capability-bundle-transaction-integrity-v1 --strict` | PASS; 4/4 artifact classes complete | NW-AUD-015 remediation is apply-ready |
+| static proxy runtime/server/lease/setup/gate/test inspection | SUBSTANTIATED READ-ONLY; current health is fixed-path status-only and runtime state has no exact live-instance binding | Establish NW-AUD-016 without starting a proxy or network target |
+| `openspec validate nightwatch-proxy-runtime-instance-attestation-v1 --strict` | PASS; 4/4 artifact classes complete | NW-AUD-016 remediation is apply-ready |
 
 ## Completion audit
 
-Not yet eligible. M1 is complete, while the safety/runtime/browser/source/
-campaign/UI/validation waves remain pending or active. Eleven material findings
-currently map one-to-one to eleven strict-valid issue-specific remediation
+Not yet eligible. M1 is complete and M2 remains active, while later browser/source/
+campaign/UI/validation waves remain pending. Thirteen material findings
+currently map one-to-one to thirteen strict-valid issue-specific remediation
 changes; that partial portfolio is not evidence of whole-repository completeness.
