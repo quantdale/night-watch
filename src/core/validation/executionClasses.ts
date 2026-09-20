@@ -54,6 +54,10 @@ const SIGNAL_RULES: readonly SignalRule[] = Object.freeze([
   // The probe campaign mutates the REAL checkout and restores it; it is the
   // only work that must never share a checkout with anything else.
   { signal: 'probe-campaign', proposed: 'MUTATION_CAMPAIGN_EXCLUSIVE', pattern: /--probe-campaign|runRuleProbeCampaign/ },
+  // Running the real structural checker as a child is how a mutation harness
+  // proves a boundary bites; it must never share the checkout with another
+  // test.
+  { signal: 'real-tree-hardening-check', proposed: 'MUTATION_CAMPAIGN_EXCLUSIVE', pattern: /hardening-check\.mjs/ },
   // Writing into a temp copy of src/ needs isolation but not exclusivity: the
   // scratch directory is process-private.
   { signal: 'guard-source-mutation', proposed: 'SERIAL_REQUIRED', pattern: /(?:writeFileSync|rmSync)\([^\n]*src\/(?:core|oracles)\// },

@@ -31,6 +31,13 @@ import {
 
 const onlyArgument = process.argv.find((argument) => argument.startsWith('--only='));
 const onlyRule = onlyArgument?.slice('--only='.length);
+// F-PERF-7: a bounded rule-family scope for test harnesses that prove one
+// boundary family bites. The gate never passes this flag, so the full
+// registry remains the gate rule set; an unknown family fails closed.
+const familyArguments = process.argv
+  .filter((argument) => argument.startsWith('--family='))
+  .map((argument) => argument.slice('--family='.length))
+  .filter((value) => value.length > 0);
 
 if (process.argv.includes('--list-rules')) {
   const probeRegistry = JSON.parse(readDataFile(PROBE_REGISTRY_PATH));
@@ -65,12 +72,18 @@ if (process.argv.includes('--list-rules')) {
   console.log(`[report] documentation-currency: ${found.length} finding${found.length === 1 ? '' : 's'} (reporting mode; nothing failed)`);
   process.exit(0);
 } else {
+  const knownFamilies = new Set(REGISTERED_RULES.map((rule) => rule.family));
+  const unknownFamilies = familyArguments.filter((family) => !knownFamilies.has(family));
   if (onlyRule !== undefined && !REGISTERED_RULES.some((rule) => rule.name === onlyRule)) {
     console.error(`[hardening:check] ERROR: --only names an unregistered rule: ${onlyRule}`);
+    process.exitCode = 2;
+  } else if (unknownFamilies.length > 0) {
+    console.error(`[hardening:check] ERROR: --family names an unregistered family: ${unknownFamilies.join(", ")}`);
     process.exitCode = 2;
   } else {
     for (const rule of REGISTERED_RULES) {
       if (onlyRule !== undefined && rule.name !== onlyRule) continue;
+      if (familyArguments.length > 0 && !familyArguments.includes(rule.family)) continue;
       rule.run();
     }
   }

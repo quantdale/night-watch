@@ -237,8 +237,9 @@
       "signals": []
     },
     "tests/unit/c11ProdObserveEvidence.test.ts": {
-      "class": "PARALLEL_SAFE",
+      "class": "MUTATION_CAMPAIGN_EXCLUSIVE",
       "signals": [
+        "real-tree-hardening-check",
         "isolated-scratch"
       ]
     },
@@ -515,12 +516,15 @@
       ]
     },
     "tests/unit/hardeningRuleParity.test.ts": {
-      "class": "PARALLEL_SAFE",
-      "signals": []
+      "class": "MUTATION_CAMPAIGN_EXCLUSIVE",
+      "signals": [
+        "real-tree-hardening-check"
+      ]
     },
     "tests/unit/hardeningRuleQuantifiers.test.ts": {
-      "class": "PARALLEL_SAFE",
+      "class": "MUTATION_CAMPAIGN_EXCLUSIVE",
       "signals": [
+        "real-tree-hardening-check",
         "isolated-scratch"
       ]
     },
@@ -668,8 +672,10 @@
       ]
     },
     "tests/unit/nw14HostCapabilityMatrix.test.ts": {
-      "class": "PARALLEL_SAFE",
-      "signals": []
+      "class": "MUTATION_CAMPAIGN_EXCLUSIVE",
+      "signals": [
+        "real-tree-hardening-check"
+      ]
     },
     "tests/unit/observationSettlement.test.ts": {
       "class": "PARALLEL_SAFE",
@@ -1174,7 +1180,8 @@
     "tests/unit/phase23QualityGate.test.ts": {
       "class": "MUTATION_CAMPAIGN_EXCLUSIVE",
       "signals": [
-        "probe-campaign"
+        "probe-campaign",
+        "real-tree-hardening-check"
       ]
     },
     "tests/unit/phase24AuthorityLifecycleHardening.test.ts": {
@@ -1388,8 +1395,10 @@
       ]
     },
     "tests/unit/r12CampaignCertification.test.ts": {
-      "class": "PARALLEL_SAFE",
-      "signals": []
+      "class": "MUTATION_CAMPAIGN_EXCLUSIVE",
+      "signals": [
+        "real-tree-hardening-check"
+      ]
     },
     "tests/unit/readonlyCandidateCensus.test.ts": {
       "class": "PARALLEL_SAFE",
@@ -1526,8 +1535,10 @@
       ]
     },
     "tests/unit/reviewStoreHardening.test.ts": {
-      "class": "PARALLEL_SAFE",
-      "signals": []
+      "class": "MUTATION_CAMPAIGN_EXCLUSIVE",
+      "signals": [
+        "real-tree-hardening-check"
+      ]
     },
     "tests/unit/reviewerLargeCorpus.test.ts": {
       "class": "PARALLEL_SAFE",
@@ -1776,6 +1787,7 @@
       "class": "MUTATION_CAMPAIGN_EXCLUSIVE",
       "signals": [
         "probe-campaign",
+        "real-tree-hardening-check",
         "guard-source-mutation",
         "git-mutation",
         "process-chdir",
