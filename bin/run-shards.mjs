@@ -121,7 +121,14 @@ function runShard(shard) {
     child.stderr.on('data', (chunk) => { output += chunk; });
     child.on('error', () => resolve({ id: shard.id, files: shard.files.length, digest: shard.digest, exitStatus: 1, wallMs: Date.now() - startedAt, counts: emptyCounts(), errorCode: 'SPAWN_ERROR' }));
     child.on('close', (code) => {
-      const count = (pattern) => { const match = pattern.exec(output); return match ? Number(match[1]) : 0; };
+      // Playwright prints its summary last; child processes inside tests print
+      // their own "N failed" lines earlier. The LAST match is therefore the
+      // authoritative count, and a green exit with no failed line is zero.
+      const count = (pattern) => {
+        const matches = [...output.matchAll(new RegExp(pattern.source, pattern.flags.includes('g') ? pattern.flags : pattern.flags + 'g'))];
+        const last = matches[matches.length - 1];
+        return last ? Number(last[1]) : null;
+      };
       // The authoritative failure signal is the exit status; the counts are
       // advisory because child processes inside tests also print "N failed".
       // Failed locations are bounded tracked paths, matching the gate receipt
@@ -138,7 +145,7 @@ function runShard(shard) {
         wallMs: Date.now() - startedAt,
         counts: {
           passed: count(/(\d+)\s+passed/i),
-          failed: count(/(\d+)\s+failed/i),
+          failed: (() => { const parsed = count(/(\d+)\s+failed/i); return parsed === null && code === 0 ? 0 : parsed; })(),
           skipped: count(/(\d+)\s+skipped/i),
           didNotRun: count(/(\d+)\s+did not run/i),
         },
