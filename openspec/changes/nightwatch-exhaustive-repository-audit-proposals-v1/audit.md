@@ -62,13 +62,13 @@ The following top-level classes are exhaustive and mutually exclusive for the st
 
 | Subsystem | Tracked paths | Audit wave | Status |
 |---|---:|---|---|
-| `src/core/` | 465 | M2/M3/M4/M5/M7 by responsibility | M2_SAFETY_OOPS_POLICY_BOUNDARIES_COMPLETE; LATER_WAVES_PENDING |
+| `src/core/` | 465 | M2/M3/M4/M5/M7 by responsibility | M2_SAFETY_OOPS_POLICY_BOUNDARIES_COMPLETE; M3_DENOMINATOR_FROZEN_AND_FIRST_TRANCHE_COMPLETE; LATER_WAVES_PENDING |
 | `src/oracles/` | 54 | M4 | PENDING |
 | `src/controlCenter/` | 43 | M6 | PENDING |
-| `src/browser/` | 14 | M2/M3 | M2_GUARD_AND_AUTH_BOUNDARIES_COMPLETE; M3_LIFECYCLE_PENDING |
-| `src/products/` | 12 | M3 | PENDING |
-| `src/data/` | 11 | M3/M5 | PENDING |
-| `src/api/` | 10 | M3 | PENDING |
+| `src/browser/` | 14 | M2/M3 | M2_GUARD_AND_AUTH_BOUNDARIES_COMPLETE; M3_LIFECYCLE_FIRST_TRANCHE_COMPLETE |
+| `src/products/` | 12 | M3 | M3_EXPLORATION_FIRST_TRANCHE_COMPLETE; RESIDUALS_PENDING |
+| `src/data/` | 11 | M3/M5 | M3_DENOMINATOR_FROZEN; INSPECTION_PENDING |
+| `src/api/` | 10 | M3 | M3_RELAY_FIRST_TRANCHE_COMPLETE; RESIDUALS_PENDING |
 | `src/proxy/` | 9 | M2 | M2_COMPLETE — policy, resolution/address binding, lease/runtime identity, HTTP/CONNECT/Upgrade ordering, events, and cleanup inspected |
 | `src/auth/` | 6 | M2 | M2_COMPLETE — provider, login, refresh, direct capture, lifecycle, stage diagnostics, and error paths inspected |
 | `src/state/`, `src/mcp/` | 2 | M3/M5 | PENDING |
@@ -130,6 +130,12 @@ No documentation inconsistency is admitted as a finding merely because historica
 | NW-AUD-020 | PROPOSED | High | High | browser/API semantic admission / journey causality / redirects | Unknown API requests are continued during navigation or outside an active action intent; action intent closes after a fixed 250 ms while final settlement can continue for 10 seconds, and the CDP redirect backstop applies host policy without semantic request authority | `src/browser/observers/networkObserver.ts:272-329,465-548`; `src/core/journeys/engine.ts:37,329-350,469-483`; `src/browser/network/fetchGuard.ts:88-191`; Phase 2A/2B requirement conflict | Existing endpoint semantics classify exact known reads but no active change owns pre-effect proof for passive/delayed/redirect traffic or deterministic causal generations; host containment is not semantic read authority | `nightwatch-semantic-request-admission-integrity-v1` |
 | NW-AUD-021 | PROPOSED | High | High | DEV credential retrieval / login-page use binding | Auto-login validates an approved URL and visible generic controls before retrieval, then fills and force-submits later without revalidating the live document/form/submission target around each secret-bearing effect; a navigation or DOM replacement can receive credentials before later token/shell checks fail | `src/auth/devAutoLogin.ts:299-310,501-549`; `src/auth/loginForm.ts:18-40`; `tests/unit/devLoginSecurity.test.ts:24-36`; absence of navigation/DOM/form-action/listener race coverage | Credential-provider permission/freshness checks and post-login verification own different boundaries; no active change binds retrieval capability to the exact live document/form and each use effect | `nightwatch-dev-credential-use-binding-v1` |
 | NW-AUD-022 | PROPOSED | Medium | High | outer proxy / evidence-effect ordering | Allowed HTTP piping, CONNECT acknowledgement/socket coupling, and Upgrade forwarding/coupling begin before the awaited event append; evidence failure blocks later traffic but the current effect may already escape durable evidence, while the existing zero-connection test uses an independently denied hostname | `src/proxy/server.ts:219-227,371-420,468-493,543-577`; `src/proxy/events.ts:33-40`; `tests/unit/proxy.test.ts:267-293`; prior resolved-egress fail-closed claim | NW-AUD-016 owns live instance/control-state identity, not per-request evidence ordering; no active change requires a durable preparation barrier and truthful incomplete outcome for every transport | `nightwatch-proxy-evidence-effect-ordering-v1` |
+| NW-AUD-023 | PROPOSED | High | High | browser context lifecycle / per-page containment readiness | Browser context/page creation precedes multiple fallible setup stages without encompassing rollback; the proxy-health interval can survive later setup failure, and popup/new-page Fetch guards are installed through an unawaited promise with no page admission barrier | `src/browser/context.ts:254-481,527-548`; `tests/unit/contextUrlHardening.test.ts`; browser smoke/setup callers | M2 proposals own proxy/auth/semantic authority but not all-or-nothing context construction, exact page readiness, or settled teardown | `nightwatch-browser-context-guard-transaction-integrity-v1` |
+| NW-AUD-024 | PROPOSED | High | High | run evidence / bundle identity / crash consistency | Recorder construction reuses run directories, truncates manifest while JSONL appends, resets corrupt manifest to `{}`, writes views directly, and finalizes from memory that can diverge after mirror failure; observers may swallow recorder exceptions | `src/core/evidence/runRecorder.ts:79-143,187-243,274-308,348-402`; `src/browser/observers/{consoleObserver,pageObserver}.ts`; `tests/unit/evidence.test.ts:94-110` | NW-AUD-018 owns authenticated payload minimization and NW-AUD-009 owns ignored local reports; neither owns run-bundle generation, journal, recovery, or terminal evidence truth | `nightwatch-run-evidence-bundle-transaction-integrity-v1` |
+| NW-AUD-025 | PROPOSED | High | High | replay/admission / context independence / evidence completeness | Admission counts distinct run IDs and ignores context kind/generation, so wrong-kind or same-context labels can reach L2; replay conditionally skips strong fields absent on both sides, allowing partial legacy/current evidence to match | `src/core/journeys/admission.ts`; `src/core/journeys/replay.ts`; `tests/manual/phase2c-real-journeys.ts:337`; `tests/unit/phase2cOracleMatrix.test.ts:596-618`; campaign admission caller | Existing replay/minimization specifications describe fresh contexts and exact evidence but no active change mechanically attests context generations or makes every current comparison channel mandatory | `nightwatch-replay-context-provenance-integrity-v1` |
+| NW-AUD-026 | PROPOSED | Medium | High | exploration runtime / structural postconditions | The real Ripple runtime merges the catalog's expected structural delta into local state and returns it as the observed delta, making the engine's independent contract comparison tautological and permitting no-op/wrong UI actions to create false states/transitions | `src/products/ripple/explorationRuntime.ts:190-283`; `src/core/exploration/engine.ts:320-410`; `tests/unit/exploration.test.ts:340-363` | Existing Phase-4 contracts require structural deltas but no active change owns independent source-backed postcondition observation in the real adapter | `nightwatch-exploration-observed-postcondition-integrity-v1` |
+| NW-AUD-027 | PROPOSED | Medium | High | retained production-local persistence / destructive cleanup / audit completeness | Profile cleanup recursively deletes by absolute basename prefix and stale sweep trusts name+age; finding commit can overwrite and race capacity; persistence audit skips missing/unreadable/over-budget entries yet can return clean | `src/core/prodEvidence/browserProfile.ts:64-141`; `productionFindingsStore.ts:168-238`; `persistenceAudit.ts:112-152,158-281`; C-10 tests | C-10 owns payload projection/firewall and ordinary cleanup/audit success, not capability-bound deletion, immutable commit, concurrent capacity, directory durability, or incomplete-audit truth | `nightwatch-production-persistence-lifecycle-integrity-v1` |
+| NW-AUD-028 | PROPOSED | Medium | High | Phase-5 API relay / caller authority / execution budget | A public operation ID in URL/header is the only inbound proof; any local process that discovers the port can repeatedly trigger eligible authenticated reads, no listener-wide budget exists, and observations overwrite by operation ID | `src/api/phase5/relay.ts:233-375`; `src/api/phase5/generator.ts`; `src/core/oops/l6.ts:738`; `tests/unit/phase5Fixture.test.ts` | L6 bounds its contained child channel and NW-AUD-020 owns semantic operation admission; neither binds direct parent-loopback callers or relay-wide invocation cardinality | `nightwatch-phase5-relay-invocation-authority-v1` |
 
 ## M1 candidate dispositions
 
@@ -173,6 +179,30 @@ No documentation inconsistency is admitted as a finding merely because historica
 | L6 namespace, relay/control channel, child launch, qualification, parent-death, and budget behavior | all 3 `src/core/oops/**` files | `l6Containment`, OOPS/API callers, hardening claims, and current qualification receipts | NW-AUD-017; timeout cleanup/late relay and same-user socket replacement are bounded denial-only leads, not separate material authority bypasses | COMPLETE |
 | Browser semantic guard and causal intent boundary | `src/browser/{contract,context}.ts`, `src/browser/network/fetchGuard.ts`, `src/browser/observers/networkObserver.ts`, and `src/core/journeys/engine.ts` | observer semantic/settlement, journey engine, context/guard, authenticated and passive smoke/manual callers | NW-AUD-020; context-construction cleanup after partial startup is assigned to M3 browser lifecycle rather than silently closed here | COMPLETE FOR M2 BOUNDARY |
 | Authenticated evidence and shared private-payload defense | `src/core/evidence/runRecorder.ts`, `src/core/policy/{privateArtifacts,privateScreening}.ts`, and all direct authenticated writer/reader callers found by census | redaction, evidence/private-artifact, production evidence, and Control Center reader tests | NW-AUD-018, NW-AUD-019; broader persistence/replay atomicity remains M3 | COMPLETE FOR M2 BOUNDARY |
+
+## M3 candidate dispositions — first tranche
+
+| ID | Disposition | Root cause | Decisive evidence | Outcome |
+|---|---|---|---|---|
+| NW-AUD-023 | PROPOSED | Context startup/page admission is not transactional | fallible post-creation stages lack rollback; popup guard is fire-and-forget | MATERIAL → dedicated strictly-valid OpenSpec change |
+| NW-AUD-024 | PROPOSED | Run evidence has no exclusive generation or canonical crash-consistent authority | directory reuse plus manifest truncate/event append; direct views and memory summary can split | MATERIAL → dedicated strictly-valid OpenSpec change |
+| NW-AUD-025 | PROPOSED | Labels substitute for context provenance and simultaneous absence substitutes for equality | admission deduplicates only run IDs; replay checks newer channels only when both defined | MATERIAL → dedicated strictly-valid OpenSpec change |
+| NW-AUD-026 | PROPOSED | Real exploration postcondition is copied from the expectation | runtime mutates/returns `expectedStructuralDelta`; fake-runtime mismatch test cannot expose it | MATERIAL → dedicated strictly-valid OpenSpec change |
+| NW-AUD-027 | PROPOSED | Production-local lifecycle trusts names/check-then-act/violation-only cleanliness | prefix-based recursive deletion, replacing rename, silent traversal truncation/errors | MATERIAL → dedicated strictly-valid OpenSpec change |
+| NW-AUD-028 | PROPOSED | Semantic operation identity is treated as live relay caller authority | no per-instance caller proof/budget; same-operation observation is last-writer-wins | MATERIAL → dedicated strictly-valid OpenSpec change |
+
+### M3 frozen responsibility denominator
+
+M3 owns 154 primary source files: 14 browser, 10 Phase-5 API, 12 product,
+11 Phase-6 compatibility/data, 24 triage, 2 protocol-oracle, 2 state/MCP,
+and 79 files across artifact validation, DTO, evidence/retention, exploration,
+journeys, production evidence/observation/privacy/provenance, provenance, and
+repository snapshotting. A path/import/symbol census identifies 118 direct or
+transitive test entrypoints. M3 remains open: the first tranche covered context
+lifecycle, run evidence, replay admission, real exploration postconditions,
+production-local persistence, and relay caller authority; triage/minimization,
+artifact/DTO validation, Phase-6 compatibility, production observation, and
+remaining resource/cancellation paths still require terminal dispositions.
 
 The mechanical focused-test search found 55 direct or transitive M2-matching test entrypoints. Each was classified by responsibility: decisive tests above were inspected in full, while source-intelligence, campaign, Control Center, and validation assertions that merely transitively import policy code remain assigned to their later audit waves. No M2 lead remains without a material proposal, a terminal non-material/not-an-issue rationale, or an explicit later-wave owner.
 
@@ -325,6 +355,17 @@ evidence is a containment invariant, every transport path begins its effect
 first, and the existing regression obtains zero connections from unrelated
 host denial rather than from the claimed evidence failure behavior.
 
+NW-AUD-023 and NW-AUD-024 are High because incomplete context containment or
+mixed/false-clean run evidence affects authenticated runtime authority and its
+central audit record. NW-AUD-025 is High because current reproduction/admission
+confidence can be elevated without independent contexts or complete evidence.
+NW-AUD-026 is Medium because it fabricates exploration correctness while the
+fixed read/local-only catalog and containment still constrain direct effects.
+NW-AUD-027 and NW-AUD-028 are Medium: their defects are definite, but retained
+production machinery remains owner-gated/local-synthetic, and relay abuse
+requires local port discovery while exposing no upstream body and retaining
+known-read destination semantics.
+
 ## Validation ledger
 
 | Command/evidence | Result | Purpose |
@@ -376,10 +417,23 @@ host denial rather than from the claimed evidence failure behavior.
 | static proxy event/HTTP/CONNECT/Upgrade/failure-test inspection | SUBSTANTIATED READ-ONLY; each allowed transport begins its effect before recording and the current zero-connection test is independently policy-denied | Establish NW-AUD-022 without starting proxy, resolver, or sockets |
 | `openspec validate nightwatch-proxy-evidence-effect-ordering-v1 --strict` | PASS; 4/4 artifact classes complete | NW-AUD-022 remediation is apply-ready |
 | M2 source and focused-test responsibility census | PASS; 32 primary safety/proxy/auth/OOPS/browser files, 5 cross-boundary consumers, and 55 direct/transitive test entrypoints classified | Close the M2 denominator without treating later-wave transitive tests as M2 evidence |
+| static browser context/guard/observer/test inspection | SUBSTANTIATED READ-ONLY; post-creation failures lack rollback and popup guard readiness is unawaited/ungated | Establish NW-AUD-023 without launching a browser |
+| `openspec validate nightwatch-browser-context-guard-transaction-integrity-v1 --strict` | PASS; 4/4 artifact classes complete | NW-AUD-023 remediation is apply-ready |
+| static recorder/observer/evidence-test inspection | SUBSTANTIATED READ-ONLY; generation reuse, reset-on-parse-error, split views/memory, and swallowed failures confirmed | Establish NW-AUD-024 without creating a run |
+| `openspec validate nightwatch-run-evidence-bundle-transaction-integrity-v1 --strict` | PASS; 4/4 artifact classes complete | NW-AUD-024 remediation is apply-ready |
+| static replay/admission/producer/test inspection | SUBSTANTIATED READ-ONLY; run labels substitute for context proof and missing required channels can match | Establish NW-AUD-025 without replay execution |
+| `openspec validate nightwatch-replay-context-provenance-integrity-v1 --strict` | PASS; 4/4 artifact classes complete | NW-AUD-025 remediation is apply-ready |
+| static exploration catalog/runtime/engine/test inspection | SUBSTANTIATED READ-ONLY; real runtime copies expected delta into state/evidence | Establish NW-AUD-026 without exploration execution |
+| `openspec validate nightwatch-exploration-observed-postcondition-integrity-v1 --strict` | PASS; 4/4 artifact classes complete | NW-AUD-026 remediation is apply-ready |
+| static production profile/store/audit/test inspection | SUBSTANTIATED READ-ONLY; name-based deletion, overwrite/capacity race, and false-clean incomplete census confirmed | Establish NW-AUD-027 without owner-store mutation |
+| `openspec validate nightwatch-production-persistence-lifecycle-integrity-v1 --strict` | PASS; 4/4 artifact classes complete | NW-AUD-027 remediation is apply-ready |
+| static Phase-5 relay/generator/caller/test inspection | SUBSTANTIATED READ-ONLY; public operation ID grants repeatable unbudgeted loopback invocation and map overwrite loses cardinality | Establish NW-AUD-028 without starting a relay |
+| `openspec validate nightwatch-phase5-relay-invocation-authority-v1 --strict` | PASS; 4/4 artifact classes complete | NW-AUD-028 remediation is apply-ready |
+| M3 source and focused-test responsibility census | PASS; 154 primary files and 118 direct/transitive test entrypoints frozen | Bound the remaining M3 work without claiming it complete |
 
 ## Completion audit
 
-Not yet eligible. M1 and M2 are complete, while later browser/source/campaign/
-UI/validation waves remain pending. Nineteen material findings currently map
-one-to-one to nineteen strict-valid issue-specific remediation
+Not yet eligible. M1 and M2 are complete and M3 is in progress, while later
+source/campaign/UI/validation waves remain pending. Twenty-five material findings currently map
+one-to-one to twenty-five strict-valid issue-specific remediation
 changes; that partial portfolio is not evidence of whole-repository completeness.

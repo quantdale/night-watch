@@ -136,6 +136,8 @@ Prefer the narrowest decisive existing tests during exploration. Validate each O
 - 2026-09-20 — Decision: partition DEV credential use binding into its own remediation change; reason: a previously approved page/control observation does not bind the later generic secret fill and force-submit effects to the same live document/form; evidence: NW-AUD-021; consequence: `nightwatch-dev-credential-use-binding-v1` specifies short-lived document/form capability, per-effect revalidation, and disclosure-safe race handling.
 - 2026-09-20 — Decision: partition proxy evidence-effect ordering into its own remediation change; reason: all allowed transport handlers begin the current effect before awaiting evidence and the existing zero-connection test is policy-denied independently; evidence: NW-AUD-022; consequence: `nightwatch-proxy-evidence-effect-ordering-v1` requires a durable preparation barrier and honest incomplete outcomes without duplicating instance attestation.
 - 2026-09-20 — Decision: close M2 after reconciling 32 primary boundary files, 5 cross-boundary consumers, and 55 direct/transitive focused-test entrypoints; reason: every residual lead now has a material proposal, terminal non-material/not-an-issue rationale, or explicit M3 owner; consequence: browser lifecycle/persistence/replay work advances under M3 without reopening settled host/auth/L6 scope.
+- 2026-09-21 — Decision: freeze M3 at 154 primary source files and 118 direct/transitive focused-test entrypoints; reason: the wave crosses browser/API/product/data plus evidence/exploration/journey/triage/production-local responsibility splits; consequence: first-tranche proposals do not overclaim M3 completion and the remaining rows are explicit.
+- 2026-09-21 — Decision: admit NW-AUD-023 through NW-AUD-028 as six distinct remediation scopes; reason: atomic context readiness, run-bundle transaction truth, replay context provenance, observed exploration postconditions, production-local persistence lifecycle, and relay caller authority have different trust boundaries and tests; consequence: each now has one strict-valid change without merging payload/privacy or L6 concerns.
 
 ## Discoveries
 
@@ -207,6 +209,24 @@ Prefer the narrowest decisive existing tests during exploration. Validate each O
 - Residual L6 control/timer and provider-file races did not establish a distinct
   authority escape under the owner-only/same-user threat model; browser context
   partial-start cleanup remains explicitly owned by M3.
+- Context construction has no post-creation rollback transaction and new-page
+  Fetch guards are not awaited or used as an admission barrier. This is
+  NW-AUD-023.
+- Run evidence can mix generations, reset corrupt identity, split durable views
+  from process memory, and lose observer failures without forcing non-clean
+  truth. This is NW-AUD-024.
+- Replay admission trusts run labels rather than attested context generations,
+  and comparison treats simultaneous absence of current proof channels as
+  equality. This is NW-AUD-025.
+- The real exploration adapter copies its expected structural delta into its
+  purported observation, making postcondition verification tautological. This
+  is NW-AUD-026.
+- Retained production-local profile cleanup uses a name as deletion authority,
+  findings can overwrite/race capacity, and an incomplete persistence census
+  can certify clean. This is NW-AUD-027.
+- The Phase-5 relay uses public operation identity as caller authority, has no
+  listener-wide invocation budget, and overwrites repeated observation truth.
+  This is NW-AUD-028.
 
 ## Deferred Work
 

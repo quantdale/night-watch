@@ -56,17 +56,23 @@ What is being attempted: audit browser, API, journey, evidence, persistence, rep
 - NW-AUD-020: PROPOSED (High/High-confidence); dedicated change `nightwatch-semantic-request-admission-integrity-v1` is 4/4 complete and strict-valid.
 - NW-AUD-021: PROPOSED (High/High-confidence); dedicated change `nightwatch-dev-credential-use-binding-v1` is 4/4 complete and strict-valid.
 - NW-AUD-022: PROPOSED (Medium/High-confidence); dedicated change `nightwatch-proxy-evidence-effect-ordering-v1` is 4/4 complete and strict-valid.
+- NW-AUD-023: PROPOSED (High/High-confidence); dedicated change `nightwatch-browser-context-guard-transaction-integrity-v1` is 4/4 complete and strict-valid.
+- NW-AUD-024: PROPOSED (High/High-confidence); dedicated change `nightwatch-run-evidence-bundle-transaction-integrity-v1` is 4/4 complete and strict-valid.
+- NW-AUD-025: PROPOSED (High/High-confidence); dedicated change `nightwatch-replay-context-provenance-integrity-v1` is 4/4 complete and strict-valid.
+- NW-AUD-026: PROPOSED (Medium/High-confidence); dedicated change `nightwatch-exploration-observed-postcondition-integrity-v1` is 4/4 complete and strict-valid.
+- NW-AUD-027: PROPOSED (Medium/High-confidence); dedicated change `nightwatch-production-persistence-lifecycle-integrity-v1` is 4/4 complete and strict-valid.
+- NW-AUD-028: PROPOSED (Medium/High-confidence); dedicated change `nightwatch-phase5-relay-invocation-authority-v1` is 4/4 complete and strict-valid.
 - NW-AUD-002: DUPLICATE of production-completion tasks 15.7/15.11; NW-AUD-003: NOT_AN_ISSUE after validation-universe PASS with zero unclassified checks; NW-AUD-008: DUPLICATE of the production-completion operator CLI contract.
 - M1 repository topology/dependencies/configuration/build/tooling: COMPLETE.
 - M2 core safety/environment/policy/proxy/L6/authentication: COMPLETE; 32 primary boundary files, 5 cross-boundary consumers, and 55 direct/transitive focused-test entrypoints reconciled with no undispositioned M2 lead.
 
 ## Work In Progress
 
-M3 is active. M2 closed after admitting NW-AUD-015 through NW-AUD-022 and terminally reconciling residual L6 control/timer, provider-file, host-port, internal-scheme, and browser-contract leads. Browser context partial-start cleanup was deliberately transferred to M3. The next inspection covers all browser/API/journey/evidence/persistence/replay source rows and their focused test denominator without reopening settled M2 policy findings.
+M3 is active with a frozen denominator of 154 primary source files and 118 direct/transitive focused-test entrypoints. The first tranche admitted NW-AUD-023 through NW-AUD-028 for browser-context readiness, run-bundle transactions, replay context provenance, observed exploration postconditions, production-local persistence lifecycle, and relay invocation authority. Remaining M3 work is concentrated in triage/minimization, artifact/DTO validation, Phase-6 compatibility, production observation, and residual resource/cancellation/partial-response paths.
 
 ## Exact Next Action
 
-Freeze the M3 source/test responsibility denominator, then inspect browser context creation and teardown, CDP/route/WebSocket/worker/download/popup paths, API relay/direct/OOPS request lifecycle, evidence persistence, replay, minimization, cancellation, timeout, and partial-response behavior.
+Inspect the remaining M3 denominator: triage minimizer/replay bindings and artifact validators first, then Phase-6 compatibility, production-observation lifecycle, and residual browser/API resource, cancellation, timeout, and partial-response paths; disposition every lead before closing M3.
 
 ## Files Changed
 
@@ -94,6 +100,12 @@ Freeze the M3 source/test responsibility denominator, then inspect browser conte
 | `openspec/changes/nightwatch-semantic-request-admission-integrity-v1/` | NW-AUD-020 implementation-ready remediation proposal | complete planning artifact |
 | `openspec/changes/nightwatch-dev-credential-use-binding-v1/` | NW-AUD-021 implementation-ready remediation proposal | complete planning artifact |
 | `openspec/changes/nightwatch-proxy-evidence-effect-ordering-v1/` | NW-AUD-022 implementation-ready remediation proposal | complete planning artifact |
+| `openspec/changes/nightwatch-browser-context-guard-transaction-integrity-v1/` | NW-AUD-023 implementation-ready remediation proposal | complete planning artifact |
+| `openspec/changes/nightwatch-run-evidence-bundle-transaction-integrity-v1/` | NW-AUD-024 implementation-ready remediation proposal | complete planning artifact |
+| `openspec/changes/nightwatch-replay-context-provenance-integrity-v1/` | NW-AUD-025 implementation-ready remediation proposal | complete planning artifact |
+| `openspec/changes/nightwatch-exploration-observed-postcondition-integrity-v1/` | NW-AUD-026 implementation-ready remediation proposal | complete planning artifact |
+| `openspec/changes/nightwatch-production-persistence-lifecycle-integrity-v1/` | NW-AUD-027 implementation-ready remediation proposal | complete planning artifact |
+| `openspec/changes/nightwatch-phase5-relay-invocation-authority-v1/` | NW-AUD-028 implementation-ready remediation proposal | complete planning artifact |
 
 ## Validation Ledger
 
@@ -292,15 +304,50 @@ Result: PASS
 When: 2026-09-20
 Relevant failure/output summary: 32 primary boundary files, 5 cross-boundary consumers, and 55 direct/transitive focused-test entrypoints classified; each residual lead has a proposal, terminal rationale, or explicit M3 owner.
 
+Command: static browser context/guard/observer/test inspection and `openspec validate nightwatch-browser-context-guard-transaction-integrity-v1 --strict`
+Result: SUBSTANTIATED READ-ONLY; PASS
+When: 2026-09-21
+Relevant failure/output summary: post-creation failures lack encompassing rollback, new-page guard readiness is fire-and-forget, and the dedicated remediation is 4/4 complete.
+
+Command: static recorder/observer/evidence-test inspection and `openspec validate nightwatch-run-evidence-bundle-transaction-integrity-v1 --strict`
+Result: SUBSTANTIATED READ-ONLY; PASS
+When: 2026-09-21
+Relevant failure/output summary: directory generations can mix, manifest failure resets identity, disk/memory truth can split, observer failures can vanish, and the dedicated remediation is 4/4 complete.
+
+Command: static replay/admission/producer/test inspection and `openspec validate nightwatch-replay-context-provenance-integrity-v1 --strict`
+Result: SUBSTANTIATED READ-ONLY; PASS
+When: 2026-09-21
+Relevant failure/output summary: labels substitute for context independence, missing current channels can match, and the dedicated remediation is 4/4 complete.
+
+Command: static exploration catalog/runtime/engine/test inspection and `openspec validate nightwatch-exploration-observed-postcondition-integrity-v1 --strict`
+Result: SUBSTANTIATED READ-ONLY; PASS
+When: 2026-09-21
+Relevant failure/output summary: the real adapter copies expected state into its purported observation and the dedicated remediation is 4/4 complete.
+
+Command: static production profile/store/audit/test inspection and `openspec validate nightwatch-production-persistence-lifecycle-integrity-v1 --strict`
+Result: SUBSTANTIATED READ-ONLY; PASS
+When: 2026-09-21
+Relevant failure/output summary: name-based deletion, replacing/racy publication, false-clean incomplete audit, and the dedicated remediation are confirmed; 4/4 artifacts complete.
+
+Command: static Phase-5 relay/generator/caller/test inspection and `openspec validate nightwatch-phase5-relay-invocation-authority-v1 --strict`
+Result: SUBSTANTIATED READ-ONLY; PASS
+When: 2026-09-21
+Relevant failure/output summary: public operation identity grants unbudgeted loopback invocation, repeated observations overwrite, and the dedicated remediation is 4/4 complete.
+
+Command: M3 source and focused-test responsibility census
+Result: PASS
+When: 2026-09-21
+Relevant failure/output summary: 154 primary source files and 118 direct/transitive test entrypoints frozen; residual M3 responsibility remains explicit.
+
 Command: `npm run agent:check`
-Result: PASS with 41 pre-existing/expected warnings and zero strict-v2 errors
-When: 2026-09-20
-Relevant failure/output summary: new completed planning child task is coherent; open implementation tasks are declared not in scope; unrelated historical/orphan/stale-session warnings remain untouched.
+Result: PASS with 40 pre-existing/expected warnings and zero strict-v2 errors
+When: 2026-09-21
+Relevant failure/output summary: all six new completed planning child tasks are coherent; open implementation tasks are declared not in scope; unrelated historical/orphan/stale-session warnings remain untouched.
 
 Command: `npm run workspace:check`
 Result: PASS
-When: 2026-09-20
-Relevant failure/output summary: owned session and declared-deletion policy pass; dirty status is the expected current planning checkpoint before commit.
+When: 2026-09-21
+Relevant failure/output summary: owned session, canonical protection, worktree metadata, and declared-deletion policy pass; dirty status is the expected current planning checkpoint before commit.
 
 Command: `npm run typecheck:bin`; `npm run schema:check`; `npm run hardening:check`; `npm run project:check`
 Result: ENVIRONMENT UNAVAILABLE
@@ -473,6 +520,46 @@ M3 lifecycle denominator.
 Evidence/constraint: 32 primary boundary files, 5 cross-boundary consumers, 55
 direct/transitive focused-test entrypoints, and the audit-ledger reconciliation.
 
+Decision: freeze the M3 responsibility denominator before claiming tranche progress.
+Reason: browser/API/product/data, triage, artifact, evidence, production-local,
+protocol, and state responsibilities overlap later waves and require an exact
+split.
+Evidence/constraint: 154 primary source files and 118 direct/transitive focused-
+test entrypoints; remaining M3 rows stay open.
+
+Decision: admit NW-AUD-023 and NW-AUD-024 at High severity with dedicated changes.
+Reason: a partially guarded authenticated context or a mixed/false-clean run
+bundle undermines containment and the central evidence authority.
+Evidence/constraint: construction/guard ordering, recorder direct writes,
+memory/disk split, and observer exception swallowing.
+
+Decision: admit NW-AUD-025 at High severity with a dedicated change.
+Reason: reproduction/admission confidence can rise without proven independent
+contexts or complete current-schema evidence.
+Evidence/constraint: run-ID-only cardinality, ignored context kind, tautological
+manual producer, and conditional comparison of required channels.
+
+Decision: admit NW-AUD-026 at Medium severity with a dedicated change.
+Reason: expected-value injection deterministically fabricates exploration state
+and replay truth, while fixed read/local-only actions and containment limit the
+direct safety consequence.
+Evidence/constraint: real runtime assigns/returns expected delta and current
+negative test substitutes a fake runtime.
+
+Decision: admit NW-AUD-027 at Medium severity with a dedicated change.
+Reason: destructive cleanup and false-clean auditing are definite in retained
+production safety machinery, while real production execution remains owner-
+gated and implementation proof is local/synthetic.
+Evidence/constraint: prefix/age deletion, replacing rename, racy capacity, and
+silent missing/unreadable/budget omissions.
+
+Decision: admit NW-AUD-028 at Medium severity with a dedicated change.
+Reason: local ungranted callers can repeat authenticated known reads, but the
+loopback/discovery prerequisite, body elision, and semantic destination policy
+limit blast radius below High.
+Evidence/constraint: public operation ID is the only caller proof, no relay-
+wide budget exists, and observation Map entries overwrite by operation ID.
+
 ## Discoveries
 
 - Registered topology has room for this worktree under the repository's maximum of eight.
@@ -531,6 +618,10 @@ direct/transitive focused-test entrypoints, and the audit-ledger reconciliation.
 - L6 timer/control-socket and credential-provider file races do not establish a
   distinct material escape under the current bounded owner-only threat model.
 - Browser context cleanup after partial construction remains open under M3.
+- M3's first tranche produced six non-duplicate strict-valid changes; triage/
+  minimization, artifact/DTO validation, Phase-6 compatibility, production
+  observation, and residual resource paths remain open and are not implied
+  complete.
 
 ## Blockers
 
@@ -554,6 +645,6 @@ NONE
 
 ## Completion Snapshot
 
-Not complete; M1 and M2 are complete and M3 is active. Nineteen issue-specific
+Not complete; M1 and M2 are complete and M3 is active. Twenty-five issue-specific
 changes are strict-valid, but milestones M3-M10 are still required before any
 exhaustive conclusion.

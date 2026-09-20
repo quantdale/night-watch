@@ -7,9 +7,9 @@ Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-exhaustive-repository-audit-proposals-v1
 Starting SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
 Last validated implementation SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
-Last checkpoint: M1 and M2 are complete; M2 added eight material findings and strict-valid safety/auth/containment/privacy proposals, bringing the partial portfolio to nineteen one-to-one changes with its source/test denominator reconciled.
+Last checkpoint: M1 and M2 are complete; M3's 154-source/118-test denominator is frozen and its first tranche added six strict-valid proposals, bringing the partial portfolio to twenty-five one-to-one changes.
 Current milestone: M3 — browser, API, journeys, evidence, persistence, replay, minimization, and resource lifecycle
-Next action: Freeze the M3 source/test responsibility denominator, then inspect browser context/teardown and transport guards, API request lifecycle, evidence persistence, replay/minimization, cancellation, timeout, cleanup, and partial-response behavior.
+Next action: Inspect remaining M3 triage/minimization, artifact/DTO validation, Phase-6 compatibility, production-observation, and residual resource/cancellation/partial-response paths; terminally disposition every lead before closing M3.
 Authorization class: EXHAUSTIVE_REPOSITORY_AUDIT_PROPOSALS_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
