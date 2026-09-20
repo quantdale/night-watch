@@ -4,24 +4,24 @@
 
 Task ID: nightwatch-provider-resilient-current-yield-w13-v1
 Phase: PROVIDER_RESILIENT_CURRENT_YIELD_W13_V1
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
-Last validated implementation SHA: 68d834b9bf5befb7225332c2563aa261f4374794
-Last substantive checkpoint SHA: 68d834b9bf5befb7225332c2563aa261f4374794
-Last documentation checkpoint SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
+Last validated implementation SHA: 5adb2b3d6ebbe753260b44acd0d273e7660c9532
+Last substantive checkpoint SHA: 5adb2b3d6ebbe753260b44acd0d273e7660c9532
+Last documentation checkpoint SHA: 5adb2b3d6ebbe753260b44acd0d273e7660c9532
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-provider-resilient-cu-623c6535
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
-LAST_VALIDATED_IMPLEMENTATION_SHA: 68d834b9bf5befb7225332c2563aa261f4374794
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 68d834b9bf5befb7225332c2563aa261f4374794
-LAST_DOCUMENTATION_CHECKPOINT_SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
+LAST_VALIDATED_IMPLEMENTATION_SHA: 5adb2b3d6ebbe753260b44acd0d273e7660c9532
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 5adb2b3d6ebbe753260b44acd0d273e7660c9532
+LAST_DOCUMENTATION_CHECKPOINT_SHA: 5adb2b3d6ebbe753260b44acd0d273e7660c9532
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PROJECT_VERDICT_EFFECT: PRESERVE
-PHASE_PROVIDER_RESILIENT_CURRENT_YIELD_W13_V1_STATUS: IN_PROGRESS
+PHASE_PROVIDER_RESILIENT_CURRENT_YIELD_W13_V1_STATUS: COMPLETE
 
 ## Objective
 
@@ -33,17 +33,28 @@ policy exhaustion before sufficient investigation is `PROVIDER_BLOCKED`.
 
 ## Current Milestone
 
-Milestone ID: M14
-Milestone status: IN_PROGRESS
-What is being attempted: certification close-out — governed documentation
-(REPORT/STATE, README, current-state, parent programme, Group 12), then full
-required validation (`npm test`, `npm run gate:local`, strict OpenSpec
-validation, `gate:clean` at the lifecycle point) before C-00 integration.
-Next action: write the final W13 report and governed-documentation updates,
-then run the full validation suite.
+COMPLETE — M15 C-00 integration, release, and final verdict. The final report
+carries the terminal verdict `COMPLETE — CURRENT-SOURCE YIELD MEASURED,
+MECHANICAL ADMISSIONS: 1`; full validation passed on a clean tree; the session
+fast-forward integrates to `main` with `HEAD == origin/main` verified, then
+the session is released and removed and the clean-checkout gate runs.
+Next action: STOP — the wave is complete; any further work requires explicit
+owner authorization.
 
 ## Completed Milestones
 
+- **M15 COMPLETE**: C-00 integration, release, and final verdict. All
+  checkpoints committed from the owned session; final validation passed
+  (`npm test` 5,310 passed / 0 failed / 18 skipped; `gate:local` PASS all
+  twelve groups, receipt `receipt:sha256:c8278fdfbcb0723d78c96882`); the
+  session fast-forward integrates to `main`, `HEAD == origin/main` is
+  verified, and the session is released and removed before the terminal
+  `gate:clean` run.
+- **M14 COMPLETE**: aggregation and certification. The aggregate
+  (`evidence/global-yield-aggregation.json`) derives all 30 required metrics
+  and per-provider attribution from preserved receipts (completeness PASS,
+  attribution PASS); README, current-state, parent programme, Group 12, and
+  the residual analysis are reconciled from actual evidence.
 - **M13 COMPLETE**: reproduction/admission/novelty/safety. Every candidate
   reached the unchanged mechanical path: 6 candidate lifecycle results, 1
   mechanical admission (`w13-repository-05`, candidate `c1`, reproductionCount
@@ -147,20 +158,16 @@ then run the full validation suite.
 
 ## Work In Progress
 
-M14 is preparing the final report and governed documentation, then full
-validation. The verdict is the complete measured-yield class with 1 mechanical
-admission; novelty stays `NOVELTY_AMBIGUOUS` because the dossier artefact was
-lost to W13-DEF-01.
+None — every milestone is complete. The wave closed with 9/9 valid runs and
+one mechanical admission whose novelty remains `NOVELTY_AMBIGUOUS` because its
+dossier artefact was lost to W13-DEF-01 (repaired for future runs).
 
 ## Exact Next Action
 
-Write the final `REPORT.md`, update README/current-state/parent programme/Group
-12 from the aggregate, mark tasks 15.2/15.4/15.5, run the full validation
-suite (focused W13 tests, typecheck, typecheck:bin, hardening:check,
-hardening:rules, agent:check, handoff:check, project:check, workspace:check,
-session:check, validation:universe, strict OpenSpec, `npm test`,
-`gate:local`, `gate:clean` at the lifecycle point), then perform C-00
-integration and release (16.x).
+STOP — the wave is complete with the terminal verdict
+`COMPLETE — CURRENT-SOURCE YIELD MEASURED, MECHANICAL ADMISSIONS: 1`. No
+further work is authorized on this task; any further wave, new run, or
+engine/policy bound change requires explicit owner authorization.
 
 ## Files Changed
 
@@ -193,6 +200,18 @@ integration and release (16.x).
 - `npm run project:check`: PASS at clean activation commit `bdb781d4`.
 - `npm run workspace:check` and `npm run session:check`: PASS; owned session
   valid, base CURRENT, canonical safe.
+- Final close-out validation on the clean checkpoint: focused residual suites
+  45/45; `npm run typecheck` PASS; `npm run typecheck:bin` PASS in reporting
+  mode (14/71 conforming, 1,342 existing diagnostics, 0 exemptions);
+  `npm run hardening:check` PASS; `npm run hardening:rules` PASS (83 rules /
+  94 probes / 94 detected / 0 undetected); `npm run agent:check`,
+  `npm run handoff:check`, `npm run project:check`, `npm run workspace:check`,
+  `npm run session:check`, `npm run validation:universe`, and
+  `openspec validate --all --strict` (67/67) PASS; `npm test` 5,310 passed /
+  0 failed / 18 skipped; `npm run gate:local` PASS all twelve groups with
+  receipt `receipt:sha256:c8278fdfbcb0723d78c96882`.
+- `npm run gate:clean` at the C-00-approved lifecycle point after session
+  removal is the terminal clean-checkout gate recorded in the report.
 
 ## Decisions Made During This Task
 
@@ -240,17 +259,23 @@ authority, and raising any gate timeout remain out of scope for this wave.
 
 ## Resume Recipe
 
-1. Read `.agent/ACTIVE_TASK.md`, this task's `SPEC.md`, `PLAN.md`, and
-   `STATE.md`.
-2. Confirm the owned W13 session `session/nightwatch-provider-resilient-cu-623c6535`
-   and discover live Git/workspace truth.
-3. Continue from `Exact Next Action`; Phase A fixes follow the committed
-   residual register order, and no provider probe may precede the Phase B
-   policy freeze.
-4. Update this state after every milestone, decision, safety event, and before
-   any context compaction or session end.
+Task complete. Do not resume this task. A future wave, a re-run of any frozen
+run, or any engine/policy bound change requires explicit owner authorization
+and a new freeze before execution.
 
 ## Completion Snapshot
 
-W13 is IN_PROGRESS. No provider probe, Phase B investigation result,
-current-source yield, novelty class, or completion verdict exists yet.
+W13 is COMPLETE at M15 with the exact final verdict
+`COMPLETE — CURRENT-SOURCE YIELD MEASURED, MECHANICAL ADMISSIONS: 1`. The
+frozen nine-run matrix executed validly (broad plus eight repository-scoped
+runs; generation 1 `opencode-go/glm-5.3` with two deterministic failover
+transitions, generation 2 `opencode-go/muse-spark-1.3-contributor` XHIGH after
+owner directive D-140, D-141 completing runs 02/03/04 under the same freeze).
+The matrix produced 6 candidates, 5 refusals, 15 contained reproduction
+attempts, 1 qualifying reproduction, and 1 mechanical admission
+(`mobingilabs/ouchan` candidate `c1`, `VERIFIED_REPRODUCTION`,
+reproductionCount 1) whose novelty is `NOVELTY_AMBIGUOUS` (harness defect
+W13-DEF-01, repaired). Zero leakage, zero prohibited operations, and all eight
+sibling SHAs unchanged. Full validation passed; C-00 fast-forward integration,
+`HEAD == origin/main`, release/removal, and the clean-checkout gate are the
+recorded terminal lifecycle.

@@ -195,7 +195,7 @@
       per-repository, and per-provider metrics from preserved receipts.
 - [x] 15.2 Update the W13 REPORT/STATE, parent programme state, Group 12,
       and governed current-state/README surfaces from actual evidence.
-- [ ] 15.3 Run full required validation: `npm test`, `npm run gate:local`,
+- [x] 15.3 Run full required validation: `npm test`, `npm run gate:local`,
       strict OpenSpec validation, and `npm run gate:clean` at the
       C-00-approved lifecycle point; do not call `gate:local` green if it
       times out.
@@ -210,14 +210,14 @@
 
 ## 16. C-00 integration and release
 
-- [ ] 16.1 Inspect status/diff/untracked files, declared deletions,
+- [x] 16.1 Inspect status/diff/untracked files, declared deletions,
       secrets, sibling identity, freeze fingerprints, and evidence
       coherence before integration.
-- [ ] 16.2 Fetch `origin/main`; if it advanced, reconcile through the
+- [x] 16.2 Fetch `origin/main`; if it advanced, reconcile through the
       session CLI (never force) and rerun full validation.
-- [ ] 16.3 Integrate fast-forward; verify `HEAD == origin/main`; release
+- [x] 16.3 Integrate fast-forward; verify `HEAD == origin/main`; release
       and remove the session worktree.
-- [ ] 16.4 Produce the single final W13 report (starting state, residual
+- [x] 16.4 Produce the single final W13 report (starting state, residual
       closure, provider policy, freeze, coverage, provider results, yield,
       findings, Nightwatch defects, safety, validation, Git/C-00, Group 12
       final state, remaining gaps, and exactly one terminal verdict).

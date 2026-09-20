@@ -209,16 +209,18 @@ from receipts, and adjudicates novelty only after admission.
   documentation from actual evidence.
 - Acceptance: full validation passes or is truthfully classified; Group 12
   reconciled; final residual analysis classified.
-- **Status:** IN_PROGRESS — mechanical aggregation complete and validated
-  (`evidence/global-yield-aggregation.json`, completeness PASS, per-provider
-  attribution PASS); governed documentation and full validation next.
+- **Status:** COMPLETE — aggregate validated (completeness PASS,
+  per-provider attribution PASS); governed documentation, Group 12, residual
+  analysis, full validation (`npm test` 5,310/0/18; `gate:local` PASS) closed.
 
 ### M15 — C-00 integration, release, and final verdict
 
 - Objective: inspect, integrate fast-forward, verify `HEAD == origin/main`,
   release/remove the session, and produce exactly one final W13 verdict.
 - Acceptance: terminal report, coherent evidence, clean lifecycle.
-- **Status:** NOT_STARTED
+- **Status:** COMPLETE — terminal report with the exact verdict, C-00
+  fast-forward integration verified against `origin/main`, session released
+  and removed, terminal clean-checkout gate.
 
 ## Validation Strategy
 

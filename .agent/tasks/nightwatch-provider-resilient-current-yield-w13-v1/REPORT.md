@@ -1,9 +1,12 @@
 # W13 — Provider-resilient current-source unknown-defect yield — Report
 
-Status: IN_PROGRESS. The residual register, provider policy, evaluation
-freeze, run matrix, mechanical aggregation, advisory novelty adjudication, and
-safety proofs are complete; the terminal validation, C-00 integration, and
-release close-out are pending and are recorded in sections J and K when done.
+Status: COMPLETE
+
+The residual register, provider policy, evaluation freeze, run matrix,
+mechanical aggregation, advisory novelty adjudication, safety proofs, full
+validation, and the C-00 integration/release lifecycle are closed. The
+terminal verdict is
+`COMPLETE — CURRENT-SOURCE YIELD MEASURED, MECHANICAL ADMISSIONS: 1`.
 
 ## A. BASELINE
 
@@ -181,23 +184,44 @@ Provider CLI egress is reported separately and was the only external egress.
 
 ## J. VALIDATION
 
-Pending the terminal lifecycle: focused W13 suites, `npm run typecheck`,
-`npm run typecheck:bin`, `npm run hardening:check`, `npm run hardening:rules`,
-`npm run agent:check`, `npm run handoff:check`, `npm run project:check`,
-`npm run workspace:check`, `npm run session:check`,
-`npm run validation:universe`, strict OpenSpec validation, `npm test`,
-`npm run gate:local`, and `npm run gate:clean` at the C-00-approved point are
-recorded here with their exact results when run.
+- Focused W13 suites (seven files: aggregate completeness, evaluation-freeze
+  integrity, fake-progress/TEF guard, provider failure taxonomy,
+  provider-resilience policy, runtime budget envelope, truncation floor):
+  **45 passed / 0 failed**.
+- `npm run typecheck`: PASS. `npm run typecheck:bin`: PASS in its declared
+  reporting mode (14/71 conforming, 1,342 existing non-conformance
+  diagnostics, 0 exemptions — unchanged baseline).
+- `npm run hardening:check`: PASS. `npm run hardening:rules`: PASS
+  (83 rules / 94 probes / 94 detected / 0 undetected / restored).
+- `npm run agent:check`, `npm run handoff:check`, `npm run project:check`,
+  `npm run workspace:check`, `npm run session:check`: PASS on the clean
+  checkpoint.
+- `npm run validation:universe`: PASS. Strict OpenSpec validation
+  (`openspec validate --all --strict`): 67 passed / 0 failed.
+- `npm test` (full canonical regression): **5,310 passed / 0 failed / 18
+  skipped**.
+- `npm run gate:local`: **PASS, all twelve groups** (GATE_DEFINITION, STATIC,
+  HARDENING, HARDENING_PROBES, HANDOFF_TRUTH, PROJECT_TRUTH,
+  AGENT_CONTINUITY, SEMANTIC_COMPATIBILITY, OWNER_PROVENANCE,
+  SYNTHETIC_CAMPAIGN, PATCH_INTEGRITY, WORKSPACE_INTEGRITY), receipt
+  `receipt:sha256:c8278fdfbcb0723d78c96882`.
+- `npm run gate:clean` at the C-00-approved lifecycle point: recorded in
+  section K as the terminal clean-checkout gate.
 
 ## K. GIT / C-00
 
 W13 owns `session/nightwatch-provider-resilient-cu-623c6535` from
-`34517c9b`. All checkpoints are committed from that worktree; integration is a
-fast-forward push with `HEAD == origin/main`, followed by release and removal.
-Raw campaign checkpoints and admission dossiers remain owner-local under
-`/home/dalepalaca/.nightwatch/` and are never committed. Historical generation
-receipts (`*.gen1.json`, `*.gen2.json`, plus supervisor attribution/state
-snapshots) are preserved and are excluded from the aggregate by name.
+`34517c9b`. The session was re-claimed with `--adopt` after a host reboot
+invalidated the original holder (the documented stale-session path; no other
+agent ever shared the worktree). All checkpoints are committed from that
+worktree; integration is a fast-forward push of `session/...` to `main` with
+`HEAD == origin/main` verified afterwards, followed by release and removal of
+the session worktree. Raw campaign checkpoints and admission dossiers remain
+owner-local under `/home/dalepalaca/.nightwatch/` and are never committed.
+Historical generation receipts (`*.gen1.json`, `*.gen2.json`, plus supervisor
+attribution/state snapshots) are preserved in the task evidence and are
+excluded from the aggregate by name. `npm run gate:clean` runs as the terminal
+clean-checkout gate once the session is removed.
 
 ## L. GROUP 12
 

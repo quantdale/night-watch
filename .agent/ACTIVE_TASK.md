@@ -3,10 +3,10 @@
 Task ID: nightwatch-provider-resilient-current-yield-w13-v1
 Phase: PROVIDER_RESILIENT_CURRENT_YIELD_W13_V1
 Title: W13 — Provider-resilient current-source unknown-defect yield
-Status: IN_PROGRESS
+Status: COMPLETE
 Task directory: .agent/tasks/nightwatch-provider-resilient-current-yield-w13-v1
 Starting SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
-Last validated implementation SHA: 68d834b9bf5befb7225332c2563aa261f4374794
+Last validated implementation SHA: 5adb2b3d6ebbe753260b44acd0d273e7660c9532
 Last checkpoint: W13 activation is COMPLETE at `a95004a0` (follow-up
 `bdb781d4`) from live main `34517c9b`. W12 is preserved as
 `PARTIAL — BLOCKED`: one valid broad run with
@@ -15,24 +15,21 @@ single frozen provider. W13 is a distinct owner-authorized successor whose
 Phase A must close every locally closable W12 residual before Phase B freezes
 a provider-resilience policy and executes the fixed broad-plus-eight-scoped
 matrix.
-Current milestone: M14 — aggregation, documentation, and full validation
-Next action: finalize the wave report and governed documentation from the
-validated aggregate (9/9 valid runs, 1 mechanical admission, novelty
-ambiguous), then run the full required validation suite (focused residual
-suites, typecheck, typecheck:bin, hardening:check, hardening:rules,
-agent:check, handoff:check, project:check, workspace:check, session:check,
-validation:universe, strict OpenSpec, npm test, gate:local, gate:clean at the
-lifecycle point), then C-00 integration and release (16.x).
+Current milestone: COMPLETE — M15 C-00 integration, release, and final verdict
+Next action: STOP — W13 is complete with the terminal verdict
+`COMPLETE — CURRENT-SOURCE YIELD MEASURED, MECHANICAL ADMISSIONS: 1`; any
+further wave, re-run, or engine/policy bound change requires explicit owner
+authorization.
 Authorization class: PROVIDER_RESILIENT_CURRENT_YIELD_W13_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
-LAST_VALIDATED_IMPLEMENTATION_SHA: 68d834b9bf5befb7225332c2563aa261f4374794
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 68d834b9bf5befb7225332c2563aa261f4374794
-LAST_DOCUMENTATION_CHECKPOINT_SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
+LAST_VALIDATED_IMPLEMENTATION_SHA: 5adb2b3d6ebbe753260b44acd0d273e7660c9532
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 5adb2b3d6ebbe753260b44acd0d273e7660c9532
+LAST_DOCUMENTATION_CHECKPOINT_SHA: 5adb2b3d6ebbe753260b44acd0d273e7660c9532
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
-PHASE_PROVIDER_RESILIENT_CURRENT_YIELD_W13_V1_STATUS: IN_PROGRESS
+PHASE_PROVIDER_RESILIENT_CURRENT_YIELD_W13_V1_STATUS: COMPLETE
 
 ## Mission
 
