@@ -1819,6 +1819,10 @@
         "owner-local-state"
       ]
     },
+    "tests/unit/validationShardPlan.test.ts": {
+      "class": "PARALLEL_SAFE",
+      "signals": []
+    },
     "tests/unit/validationTiming.test.ts": {
       "class": "PARALLEL_SAFE",
       "signals": [
