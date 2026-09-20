@@ -8,10 +8,10 @@
 
 ## 2. Audit repository topology, dependencies, configuration, and tooling
 
-- [ ] 2.1 Inspect package manifests, lockfile, TypeScript/Playwright configuration, environment configuration, dependency posture, and build/test script composition for correctness, unsafe defaults, drift, and missing validation.
-- [ ] 2.2 Inspect all `bin/`, `scripts/`, generator, checker, gate, workspace/session, and release/checkpoint surfaces for argument handling, path confinement, race, cleanup, idempotency, false-pass, and failure-classification issues.
-- [ ] 2.3 Inspect generated and governed artifacts for deterministic rendering, stale-source detection, schema lifecycle, and bidirectional validator coverage.
-- [ ] 2.4 Record every candidate with decisive evidence or a terminal non-issue/deferred disposition and cross-reference existing planned work.
+- [x] 2.1 Inspect package manifests, lockfile, TypeScript/Playwright configuration, environment configuration, dependency posture, and build/test script composition for correctness, unsafe defaults, drift, and missing validation.
+- [x] 2.2 Inspect all `bin/`, `scripts/`, generator, checker, gate, workspace/session, and release/checkpoint surfaces for argument handling, path confinement, race, cleanup, idempotency, false-pass, and failure-classification issues.
+- [x] 2.3 Inspect generated and governed artifacts for deterministic rendering, stale-source detection, schema lifecycle, and bidirectional validator coverage.
+- [x] 2.4 Record every candidate with decisive evidence or a terminal non-issue/deferred disposition and cross-reference existing planned work.
 
 ## 3. Audit safety, containment, environment, proxy, and authentication
 

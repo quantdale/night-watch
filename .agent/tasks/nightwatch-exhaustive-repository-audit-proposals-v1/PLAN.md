@@ -43,14 +43,14 @@ Use a coverage matrix rather than ad hoc browsing. Inventory the tree and depend
 - Objective: inspect manifests, configs, generators, scripts, CLI/bin code, dependency posture, build/typecheck/lint/test wiring, and release/checkpoint mechanics.
 - Acceptance criteria: every surface is covered; candidate issues have decisive evidence and existing-plan cross-references.
 - Validation commands: focused static searches and relevant read-only validation commands.
-- Status: IN_PROGRESS
+- Status: COMPLETE
 
 ### M2 — Core safety, environment, policy, proxy, process/network containment, and authentication
 
 - Objective: audit fail-closed policy boundaries and bypass/error/lifecycle cases.
 - Acceptance criteria: trust boundaries, resource cleanup, normalization, race, denial, redaction, and negative-test coverage are assessed.
 - Validation commands: focused existing unit/smoke suites only.
-- Status: NOT_STARTED
+- Status: IN_PROGRESS
 
 ### M3 — Browser, API, journeys, evidence, persistence, and replay
 
@@ -124,6 +124,9 @@ Prefer the narrowest decisive existing tests during exploration. Validate each O
 - 2026-09-20 — Decision: partition local ignored-report publication integrity into its own remediation change; reason: seven report/receipt writers share unsafe direct publication but require two distinct replacement authorities, and neither retention journals nor generic CLI contracts own this boundary; evidence: NW-AUD-009; consequence: `nightwatch-local-report-publication-integrity-v1` introduces a complete writer inventory, atomic current replacement, immutable topology receipts, and non-vacuous bypass enforcement without implementation.
 - 2026-09-20 — Decision: partition release evidence lineage into its own remediation change; reason: the central release evaluator accepts raw MET with absent, future, divergent, or unresolved evidence because only strict ancestors are rejected; evidence: NW-AUD-010; consequence: `nightwatch-release-evidence-lineage-integrity-v1` requires exact checkpoint equality and categorical Git resolution without advancing the project verdict.
 - 2026-09-20 — Decision: partition canonical promotion transaction integrity into its own remediation change; reason: one shared canonical source target is protected only by per-approval consumption, allowing distinct approvals to race, and interruption/directory durability are not terminally coupled; evidence: NW-AUD-011; consequence: `nightwatch-canonical-promotion-transaction-serialization-v1` specifies repository-target serialization and crash-honest transaction truth while preserving zero standing authority.
+- 2026-09-20 — Decision: partition configuration-layer authority integrity into its own remediation change; reason: `.env` values are merged for validation/rendering but launchers execute from ambient `process.env`, while unknown file-only names are filtered before reporting; evidence: NW-AUD-012; consequence: `nightwatch-configuration-layer-authority-integrity-v1` specifies strict admission and one execution/provenance snapshot.
+- 2026-09-20 — Decision: partition schema preservation integrity into its own remediation change; reason: export pre-slicing and swallowed read failures overstate completeness, ancestry checks can be redirected, and migration retention is asserted without observing the original; evidence: NW-AUD-013; consequence: `nightwatch-schema-preservation-integrity-v1` specifies truthful preservation and identity-qualified non-destructive migration.
+- 2026-09-20 — Decision: partition child-process boundary totality into its own remediation change; reason: the rule's 18-file list is not a total authority census and unlisted callers pass ambient credentials or omit bounds; evidence: NW-AUD-014; consequence: `nightwatch-child-process-boundary-totality-v1` specifies AST-total classification and closed execution profiles.
 
 ## Discoveries
 
@@ -160,6 +163,15 @@ Prefer the narrowest decisive existing tests during exploration. Validate each O
   approvals against one shared catalog preimage; its write also treats parent
   directory sync as best effort and can separate consumption/write/receipt
   truth on interruption. This is NW-AUD-011.
+- `.env` participates in validation and the config view but not the later
+  launcher reads/child projection; file-only unknown names are silently lost.
+  This is NW-AUD-012.
+- Schema export can omit records while claiming untruncated preservation, its
+  destination ancestry is under-checked, and migration retention is not
+  mechanically observed. This is NW-AUD-013.
+- The child-process rule enumerates 18 files rather than all invocation nodes;
+  current unlisted launchers spread/inherit ambient environments and omit
+  resource/offline controls. This is NW-AUD-014.
 
 ## Deferred Work
 

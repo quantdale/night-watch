@@ -11,7 +11,7 @@ Last substantive checkpoint SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-exhaustive-repository-ef157f7a
-Last checkpoint: 2026-09-20 — M0 complete; M1 admitted NW-AUD-001, NW-AUD-004, NW-AUD-005, NW-AUD-006, NW-AUD-007, NW-AUD-009, NW-AUD-010, and NW-AUD-011 and produced eight strict-valid issue-specific remediation proposals.
+Last checkpoint: 2026-09-20 — M1 complete; eleven material findings have eleven strict-valid issue-specific remediation proposals, and M2 is active.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
@@ -27,9 +27,9 @@ Audit the entire Nightwatch repository and produce a complete, prioritized set o
 
 ## Current Milestone
 
-Milestone ID: M1
+Milestone ID: M2
 Milestone status: IN_PROGRESS
-What is being attempted: complete repository topology, dependency, configuration, build, CLI/bin, generator, gate, and release-tooling inspection with decisive dispositions.
+What is being attempted: audit core safety, environment/policy authorization, proxy/process-network containment, and authentication lifecycle/error boundaries with decisive dispositions.
 
 ## Completed Milestones
 
@@ -45,15 +45,19 @@ What is being attempted: complete repository topology, dependency, configuration
 - NW-AUD-009: PROPOSED (Medium/High-confidence); dedicated change `nightwatch-local-report-publication-integrity-v1` is 4/4 complete and strict-valid.
 - NW-AUD-010: PROPOSED (High/High-confidence); dedicated change `nightwatch-release-evidence-lineage-integrity-v1` is 4/4 complete and strict-valid.
 - NW-AUD-011: PROPOSED (Medium/High-confidence); dedicated change `nightwatch-canonical-promotion-transaction-serialization-v1` is 4/4 complete and strict-valid.
+- NW-AUD-012: PROPOSED (Medium/High-confidence); dedicated change `nightwatch-configuration-layer-authority-integrity-v1` is 4/4 complete and strict-valid.
+- NW-AUD-013: PROPOSED (High/High-confidence); dedicated change `nightwatch-schema-preservation-integrity-v1` is 4/4 complete and strict-valid.
+- NW-AUD-014: PROPOSED (High/High-confidence); dedicated change `nightwatch-child-process-boundary-totality-v1` is 4/4 complete and strict-valid.
 - NW-AUD-002: DUPLICATE of production-completion tasks 15.7/15.11; NW-AUD-003: NOT_AN_ISSUE after validation-universe PASS with zero unclassified checks; NW-AUD-008: DUPLICATE of the production-completion operator CLI contract.
+- M1 repository topology/dependencies/configuration/build/tooling: COMPLETE.
 
 ## Work In Progress
 
-M1 has covered package/lock/config topology, root TypeScript/Playwright configuration, the executable quality gate, validation-universe classification, dependency/lane records, the GitHub workflow/hardening seam, the clean-checkout toolchain/receipt path, the evidence-retention apply/receipt path, C-00 session mutator authority, the change-shadow compiler/bootstrap path, ignored report/receipt publication, release evidence lineage, and canonical catalog promotion transaction mechanics. Remaining M1 work is environment configuration, schema lifecycle export/migration, and final bin/config denominator reconciliation.
+M2 is active. M1 covered package/lock/config topology, root TypeScript/Playwright configuration, the executable quality gate, validation-universe classification, dependency/lane records, workflow/toolchain/retention/session/change-shadow/report/release/promotion mechanics, configuration-layer authority, schema preservation, and the total child-process boundary. Later waves still revisit `bin/` call sites where their safety, runtime, validation, and documentation responsibilities apply.
 
 ## Exact Next Action
 
-Finish M1 by inspecting environment configuration and schema lifecycle export/migration, then reconcile every remaining bin/config class to a clean, duplicate, deferred, or proposed disposition before advancing to M2.
+Trace the M2 environment/host/protocol/action authorization graph from configuration through executor effects, then inspect proxy, L6 containment, and authentication lifecycle/error paths with focused read-only evidence.
 
 ## Files Changed
 
@@ -70,6 +74,9 @@ Finish M1 by inspecting environment configuration and schema lifecycle export/mi
 | `openspec/changes/nightwatch-local-report-publication-integrity-v1/` | NW-AUD-009 implementation-ready remediation proposal | complete planning artifact |
 | `openspec/changes/nightwatch-release-evidence-lineage-integrity-v1/` | NW-AUD-010 implementation-ready remediation proposal | complete planning artifact |
 | `openspec/changes/nightwatch-canonical-promotion-transaction-serialization-v1/` | NW-AUD-011 implementation-ready remediation proposal | complete planning artifact |
+| `openspec/changes/nightwatch-configuration-layer-authority-integrity-v1/` | NW-AUD-012 implementation-ready remediation proposal | complete planning artifact |
+| `openspec/changes/nightwatch-schema-preservation-integrity-v1/` | NW-AUD-013 implementation-ready remediation proposal | complete planning artifact |
+| `openspec/changes/nightwatch-child-process-boundary-totality-v1/` | NW-AUD-014 implementation-ready remediation proposal | complete planning artifact |
 
 ## Validation Ledger
 
@@ -152,6 +159,36 @@ Command: `openspec validate nightwatch-canonical-promotion-transaction-serializa
 Result: PASS
 When: 2026-09-20
 Relevant failure/output summary: proposal, design, canonical-promotion-transaction-integrity spec, and tasks are 4/4 complete/apply-ready.
+
+Command: static inspection of environment declaration/parser, `.env` merge, launchers, child builder, and configuration tests
+Result: SUBSTANTIATED READ-ONLY
+When: 2026-09-20
+Relevant failure/output summary: file-only values enter validation/rendering but launchers later read ambient process state; unknown file-only names are dropped before reporting and parsers are permissive.
+
+Command: `openspec validate nightwatch-configuration-layer-authority-integrity-v1 --strict`
+Result: PASS
+When: 2026-09-20
+Relevant failure/output summary: proposal, design, configuration-layer-authority-integrity spec, and tasks are 4/4 complete/apply-ready.
+
+Command: static inspection of schema-lifecycle CLI/export/migration/tests
+Result: SUBSTANTIATED READ-ONLY
+When: 2026-09-20
+Relevant failure/output summary: CLI pre-slicing defeats truncation truth, record read/parse failures vanish, ancestor links are under-checked, and migration retention is asserted without post-write observation.
+
+Command: `openspec validate nightwatch-schema-preservation-integrity-v1 --strict`
+Result: PASS
+When: 2026-09-20
+Relevant failure/output summary: proposal, design, schema-preservation-integrity spec, and tasks are 4/4 complete/apply-ready.
+
+Command: static child-process import/invocation and hardening-rule census
+Result: SUBSTANTIATED READ-ONLY
+When: 2026-09-20
+Relevant failure/output summary: 53 bin modules import child-process authority while the rule lists 18 files; unlisted gate-topology/review-mutation/Phase-22 paths inherit or spread ambient state and omit declared bounds/offline controls.
+
+Command: `openspec validate nightwatch-child-process-boundary-totality-v1 --strict`
+Result: PASS
+When: 2026-09-20
+Relevant failure/output summary: proposal, design, child-process-boundary-totality spec, and tasks are 4/4 complete/apply-ready.
 
 Command: `npm run agent:check`
 Result: PASS with 41 pre-existing/expected warnings and zero strict-v2 errors
@@ -236,6 +273,28 @@ Evidence/constraint: `applyPromotion` preflight then per-approval consumption,
 shared `atomicWriteTarget`, swallowed directory-sync failure, immutable stores
 keyed by approval/receipt identity, and no distinct-approval process race test.
 
+Decision: admit NW-AUD-012 at Medium severity and create a dedicated change.
+Reason: operators can receive a validated/rendered configuration claim that is
+not the input execution consumes, and file-only typos silently select defaults;
+the effect is configuration correctness/safety rather than direct authority.
+Evidence/constraint: merge/report call sites, subsequent `process.env` reads,
+child construction, permissive `.env`/declaration parsing, and prior F-19 intent.
+
+Decision: admit NW-AUD-013 at High severity and create a dedicated change.
+Reason: a preservation artifact can falsely claim completeness immediately
+before a migration or ORPHAN decision, and both export path and migration
+retention identities are under-proven; explicit local invocation keeps it below Critical.
+Evidence/constraint: pre-slice and catch/drop behavior, lexical/immediate-parent
+destination checks, raw path comparison, constant `originalRetained`, and focused tests.
+
+Decision: admit NW-AUD-014 at High severity and create a dedicated change.
+Reason: the claimed global child boundary is structurally non-total and current
+unlisted launchers disclose ambient environment or lack offline/resource bounds,
+including authenticated and network-sharing paths; local operator execution is
+still required, keeping the finding below Critical.
+Evidence/constraint: 53 importing bin modules versus an 18-file rule, explicit
+spreads in gate topology/review mutation, and inherited unbounded Phase-22 launch.
+
 ## Discoveries
 
 - Registered topology has room for this worktree under the repository's maximum of eight.
@@ -264,6 +323,12 @@ keyed by approval/receipt identity, and no distinct-approval process race test.
   at the certified checkpoint. This is NW-AUD-010.
 - The retained canonical promotion executor lacks repository-target transaction
   serialization and crash-honest terminal coupling. This is NW-AUD-011.
+- The optional `.env` layer can be validated/rendered without becoming runtime
+  authority, and its unknown names disappear before reporting. This is NW-AUD-012.
+- Schema preservation truth loses omitted/failing candidates and cannot prove
+  safe destination/migration identities end to end. This is NW-AUD-013.
+- Child-process hardening is a manual-file sample rather than a total call-site
+  authority; ambient credential and bound bypasses exist today. This is NW-AUD-014.
 
 ## Blockers
 
@@ -287,6 +352,6 @@ NONE
 
 ## Completion Snapshot
 
-Not complete; M1 is active. Eight issue-specific changes are strict-valid, but
-remaining M1 surfaces and milestones M2-M10 are still required before any
+Not complete; M1 is complete and M2 is active. Eleven issue-specific changes
+are strict-valid, but milestones M2-M10 are still required before any
 exhaustive conclusion.

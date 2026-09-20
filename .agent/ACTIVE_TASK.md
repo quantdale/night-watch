@@ -7,9 +7,9 @@ Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-exhaustive-repository-audit-proposals-v1
 Starting SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
 Last validated implementation SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
-Last checkpoint: M0 is complete; M1 admitted NW-AUD-001, NW-AUD-004, NW-AUD-005, NW-AUD-006, NW-AUD-007, NW-AUD-009, NW-AUD-010, and NW-AUD-011 and created eight strict-valid issue-specific remediation changes; validation-universe, bin-typecheck, and duplicate change-shadow CLI-contract leads were dispositioned.
-Current milestone: M1 — repository topology, dependencies, configuration, and build/tooling
-Next action: Finish the remaining M1 environment/configuration and schema lifecycle export/migration seams, record clean or material dispositions, then reconcile the bin/config coverage denominator before advancing to M2.
+Last checkpoint: M1 is complete; eleven material findings map one-to-one to eleven strict-valid remediation changes, including configuration-layer authority, schema preservation, and total child-process boundaries; three candidate leads were dispositioned as duplicate or not an issue.
+Current milestone: M2 — core safety, policy, proxy, process/network containment, and authentication
+Next action: Trace the core environment/host/protocol/action authorization graph and executor boundaries, then inspect proxy, L6 containment, and authentication lifecycle/error paths with focused read-only evidence.
 Authorization class: EXHAUSTIVE_REPOSITORY_AUDIT_PROPOSALS_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2

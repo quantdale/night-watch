@@ -51,12 +51,12 @@ The following top-level classes are exhaustive and mutually exclusive for the st
 | `src/` | 626 | all runtime subsystems and trust boundaries | PENDING | — | — |
 | `openspec/` | 417 | published specs, active changes, archive/deduplication, schema validity | PENDING | — | — |
 | `tests/` | 410 | unit/browser/smoke/manual/helpers/fixtures, assertion strength and gaps | PENDING | — | — |
-| `bin/` | 118 | CLI, gates, validators, generators, session/workspace/release tooling | IN_PROGRESS | NW-AUD-001, NW-AUD-004, NW-AUD-005, NW-AUD-006, NW-AUD-007, NW-AUD-008, NW-AUD-009, NW-AUD-010, NW-AUD-011 | Phase 23 workflow guard, clean-checkout toolchain/receipt path, evidence-retention apply/receipt path, C-00 session mutator authority, change-shadow compiler/bootstrap, ignored report/receipt publication, release evidence lineage, and canonical renderer promotion transaction inspected; remaining environment/schema lifecycle surfaces pending |
+| `bin/` | 118 | CLI, gates, validators, generators, session/workspace/release tooling | M1_COMPLETE; LATER_WAVES_PENDING | NW-AUD-001, NW-AUD-004, NW-AUD-005, NW-AUD-006, NW-AUD-007, NW-AUD-008, NW-AUD-009, NW-AUD-010, NW-AUD-011, NW-AUD-012, NW-AUD-013, NW-AUD-014 | M1 tooling/configuration/build/release/generator/process concerns have terminal dispositions; safety/runtime/validation-specific bin responsibilities are revisited in their later waves |
 | `corpus/` | 113 | fixture/corpus integrity, authority separation, generated/historical boundaries | PENDING | — | — |
 | `docs/` | 40 | architecture, safety, decisions, roadmap, current-state and design truth | IN_PROGRESS | — | — |
 | `ui/` | 32 | Control Center static UI, accessibility, responsive and interaction behavior | PENDING | — | — |
-| `config/` | 26 | environment, workspace, gates, policies, registries and bounds | IN_PROGRESS | NW-AUD-002, NW-AUD-004 | gate/universe/lane/dependency records inspected; exact runtime identity is absent; remaining configuration pending |
-| Root and integration files | 30 | manifests, lockfile, TypeScript/Playwright configs, CI, env example, scenarios and agent integrations | IN_PROGRESS | NW-AUD-001, NW-AUD-002, NW-AUD-003, NW-AUD-004 | package, TypeScript, Playwright, CI workflow, runtime selector, and validation topology inspected; remaining root surfaces pending |
+| `config/` | 26 | environment, workspace, gates, policies, registries and bounds | M1_COMPLETE; LATER_WAVES_PENDING | NW-AUD-002, NW-AUD-004, NW-AUD-012, NW-AUD-013 | gate/universe/lane/dependency/environment/schema declarations inspected for M1; policy/semantic/runtime uses remain assigned to later waves |
+| Root and integration files | 30 | manifests, lockfile, TypeScript/Playwright configs, CI, env example, scenarios and agent integrations | M1_COMPLETE; LATER_WAVES_PENDING | NW-AUD-001, NW-AUD-002, NW-AUD-003, NW-AUD-004, NW-AUD-012, NW-AUD-014 | package, lock, TypeScript, Playwright, workflow, runtime selector, `.env` example, validation and child-execution topology inspected; scenarios are assigned to runtime/browser waves |
 
 ### `src/` subsystem denominator
 
@@ -119,6 +119,9 @@ No documentation inconsistency is admitted as a finding merely because historica
 | NW-AUD-009 | PROPOSED | Medium | High | local ignored artifacts / report and certification-receipt publication | Six current-report writers truncate directly after recursive directory creation, and gate topology directly writes millisecond-named receipts; prepared links can redirect writes, interrupted replacement can destroy the last complete report, and same-millisecond runs can overwrite history | `bin/{cache-key-contract,record-identity,release-freshness,silent-zero-output,test-oracle-quality,change-intelligence,gate-topology}.mjs`; `src/core/schemaLifecycle/declarations.ts`; `.gitignore`; direct-write census and existing publisher comparison | Retention journal, gate-receipt transport, private stores, schema export, and generic CLI contracts have different authority or scope; no active change owns the complete seven-writer ignored-artifact boundary | `nightwatch-local-report-publication-integrity-v1` |
 | NW-AUD-010 | PROPOSED | High | High | project release certification / Git evidence provenance | A raw `MET` condition is invalidated only when its evidence is a strict ancestor; null, later `HEAD`, missing, future, and divergent evidence retain MET, while Git negative and operational failure are collapsed | `src/core/releaseCertification/index.ts:350-381`; `bin/project-state-check.mjs:1012-1028`; `config/release-certification.v1.json`; `tests/unit/projectState.test.ts:1726-1818` | Production-completion defines release binding but its implemented/tested rule covers only stale ancestors; CI/toolchain changes bind different identities | `nightwatch-release-evidence-lineage-integrity-v1` |
 | NW-AUD-011 | PROPOSED | Medium | High | canonical generated catalog / owner-gated source mutation | Apply consumes approval atomically only by approval ID; distinct approvals prepared from one clean preimage can both pass preflight and write the shared target, while crash boundaries and swallowed directory-sync failure can split target, consumption, and receipt truth | `src/core/selfDevPromotion/apply.ts:79-110,135-218`; `src/core/selfDevPromotion/storage.ts:87-151`; `tests/unit/selfDevCanonicalPromotionFlow.test.ts:149-171`; durable Phase 8 authority records | Existing self-development records prove one historical authorized apply and per-approval one-shot behavior, but no active proposal/spec owns distinct-approval serialization or transaction recovery; standing authority remains NONE | `nightwatch-canonical-promotion-transaction-serialization-v1` |
+| NW-AUD-012 | PROPOSED | Medium | High | configuration declaration / `.env` / launcher authority | `.env` values are merged for validation and shown as `ENV_FILE`, but launchers later read/forward ambient `process.env`; unknown file-only names are filtered before reporting, and malformed/duplicate/unknown declaration input is permissive | `src/core/config/environmentSurface.ts:329-510`; `bin/nightwatch.mjs:71-95,102-132`; `bin/nightwatch-agent.mjs:40-48,124-159`; `bin/child-environment.mjs:47-68`; `tests/unit/safety.test.ts:455-512` | Production-completion F-19 requires declaration/reporting but its implemented path does not bind the merged snapshot to execution or strictly admit the file/declaration; no active change owns that coherence failure | `nightwatch-configuration-layer-authority-integrity-v1` |
+| NW-AUD-013 | PROPOSED | High | High | schema lifecycle / preservation / migration safety | Export pre-slices to the record limit and catches every record failure, so omitted data can report `truncated: false`; destination ancestry is only lexically/immediately checked; migration compares raw path strings and always asserts original retention | `bin/schema-lifecycle.mjs:136-168`; `src/core/schemaLifecycle/export.ts:97-144`; `src/core/schemaLifecycle/migration.ts:113-165`; `tests/unit/schemaVersionMigration.test.ts:120-179,334-406` | Existing lifecycle requirements own dispositions and a bounded sanitized export but not truthful completeness, ancestor identity, durable publication, alias-safe migration, or observed original retention | `nightwatch-schema-preservation-integrity-v1` |
+| NW-AUD-014 | PROPOSED | High | High | subprocess containment / credentials / offline tooling / hardening totality | The boundary rule checks a manual 18-file list while 53 bin modules import child-process authority; unlisted callers spread/inherit ambient state, use acquiring `npx`, or omit timeout/output/stdio bounds, including network-sharing and authenticated paths | `bin/lib/hardening/rules/process-and-network.mjs:27-66`; `bin/gate-topology.mjs:394-508`; `bin/review-mutation-campaign.mjs:333-340`; `bin/phase22-dev.mjs:221-238`; static import/invocation census | Existing child-environment and launcher checks state the desired boundary but are non-total; NW-AUD-007 owns one compiler bootstrap only, and NW-AUD-012 owns configuration admission rather than process authority | `nightwatch-child-process-boundary-totality-v1` |
 
 ## M1 candidate dispositions
 
@@ -135,6 +138,9 @@ No documentation inconsistency is admitted as a finding merely because historica
 | NW-AUD-009 | PROPOSED | Ignored local reports and topology receipts bypass safe publication | Five fixed `current.json` writers plus change-intelligence call `mkdirSync` then direct `writeFileSync`; gate topology does the same with `${Date.now()}.json`; schema declarations classify the outputs as persisted/private, while no complete inventory or guard prevents bypass | MATERIAL → dedicated strictly-valid OpenSpec change |
 | NW-AUD-010 | PROPOSED | Release evidence is not required to equal the certified checkpoint | The evaluator changes MET only for a strict ancestor; null/HEAD-descendant/missing/future/divergent identities remain MET, and `gitReadOnly(...merge-base...) !== null` cannot distinguish ordinary non-ancestry from object/command failure; tests set all-met ancestry to false and probe only one stale ancestor | MATERIAL → dedicated strictly-valid OpenSpec change |
 | NW-AUD-011 | PROPOSED | Canonical apply is one-shot per approval, not serialized per shared source target | Two distinct approvals have different immutable consumption filenames and can both pass the clean/preimage checks before either rename; no repository-target lease/journal exists; parent directory fsync failure is ignored; focused tests retry one approval but do not race distinct approvals or kill the process across stages | MATERIAL → dedicated strictly-valid OpenSpec change |
+| NW-AUD-012 | PROPOSED | The validated/rendered configuration snapshot is not the execution authority | File values are merged only inside startup/config blocks; later launcher decisions and explicit child values read `process.env`; unknown file-only keys never enter the map given to the reporter; the parser skips malformed lines and overwrites duplicates | MATERIAL → dedicated strictly-valid OpenSpec change |
+| NW-AUD-013 | PROPOSED | Preservation and migration results overstate complete/non-destructive truth | CLI slices matching names before the builder can mark truncation and catches read/parse failures; writer checks only lexical/immediate ancestry; migration path equality is string-only and `originalRetained` is constant without a post-write original read | MATERIAL → dedicated strictly-valid OpenSpec change |
+| NW-AUD-014 | PROPOSED | The claimed global subprocess boundary is an incomplete manual sample | 53 bin modules import child-process authority, but the rule lists 18 files; gate topology and review mutation spread the ambient environment, and Phase 22 DEV inherits environment/stdio without explicit deadline/buffer; offline mutation invokes acquiring `npx` | MATERIAL → dedicated strictly-valid OpenSpec change |
 
 NW-AUD-001 severity is Medium rather than High: compromise or malicious
 movement of an upstream action identity is an external precondition, and the
@@ -206,6 +212,27 @@ because the retained executor is the sole canonical source-write authority,
 two writes violate its foundational bound, and a receipt/consumption mismatch
 can make the owner unable to prove which approved postimage survived.
 
+NW-AUD-012 severity is Medium rather than High: the inconsistency requires an
+operator to rely on the optional file layer or introduce a typo, and ordinary
+impact is refusal/default selection rather than direct product or Git authority.
+It remains material because the configuration view can affirm a value that the
+runtime does not consume and the original F-19 safety purpose was specifically
+to prevent a silent typo from selecting a containment-relevant default.
+
+NW-AUD-013 severity is High rather than Critical: export/migration/ORPHAN are
+explicit local owner operations and no current command automatically destroys
+the source record. The preservation artifact can nevertheless give false
+assurance immediately before an irreversible lifecycle choice, a symlinked
+ancestor can defeat the promised outside-repository boundary, and the migration
+primitive can claim the original survived without observing it.
+
+NW-AUD-014 severity is High rather than Critical: a local operator must run a
+covered tool and repository code/dependencies are ordinarily trusted. The
+failure is still broadly reachable and security-relevant: ambient credentials
+are delivered to test/tool children with network authority, authenticated
+launchers can escape the claimed resource boundary, and new call sites evade
+the guard by default because completeness is defined by a manual filename list.
+
 ## Validation ledger
 
 | Command/evidence | Result | Purpose |
@@ -234,11 +261,16 @@ can make the owner unable to prove which approved postimage survived.
 | `openspec validate nightwatch-release-evidence-lineage-integrity-v1 --strict` | PASS; 4/4 artifact classes complete | NW-AUD-010 remediation is apply-ready |
 | static canonical apply/storage/authority/test inspection | SUBSTANTIATED WITHOUT PROMOTION; distinct approvals are not target-serialized and directory durability is best effort | Establish NW-AUD-011 safely |
 | `openspec validate nightwatch-canonical-promotion-transaction-serialization-v1 --strict` | PASS; 4/4 artifact classes complete | NW-AUD-011 remediation is apply-ready |
+| static declaration/`.env`/launcher/child-builder inspection | SUBSTANTIATED READ-ONLY; merged file values and unknowns do not govern/report the subsequent execution path consistently | Establish NW-AUD-012 safely |
+| `openspec validate nightwatch-configuration-layer-authority-integrity-v1 --strict` | PASS; 4/4 artifact classes complete | NW-AUD-012 remediation is apply-ready |
+| static schema CLI/export/migration/test inspection | SUBSTANTIATED READ-ONLY; truncation/failure accounting, ancestry, and original retention are overclaimed | Establish NW-AUD-013 safely |
+| `openspec validate nightwatch-schema-preservation-integrity-v1 --strict` | PASS; 4/4 artifact classes complete | NW-AUD-013 remediation is apply-ready |
+| static child-process import/invocation/rule census | SUBSTANTIATED READ-ONLY; 53 importing bin modules versus 18 listed files, with current ambient/bound violations outside the list | Establish NW-AUD-014 safely |
+| `openspec validate nightwatch-child-process-boundary-totality-v1 --strict` | PASS; 4/4 artifact classes complete | NW-AUD-014 remediation is apply-ready |
 
 ## Completion audit
 
-Not yet eligible. Most coverage rows remain pending, M1 still has uninspected
-bin/config/generator/release/checkpoint surfaces, and later runtime/UI/test waves
-have not started. Eight material findings currently map one-to-one to eight
-strict-valid issue-specific remediation changes; that partial portfolio is not
-evidence of whole-repository completeness.
+Not yet eligible. M1 is complete, while the safety/runtime/browser/source/
+campaign/UI/validation waves remain pending or active. Eleven material findings
+currently map one-to-one to eleven strict-valid issue-specific remediation
+changes; that partial portfolio is not evidence of whole-repository completeness.
