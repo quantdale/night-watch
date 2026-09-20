@@ -64,7 +64,7 @@ re-run a predecessor arm, or alter a predecessor measured result.
 CAMPAIGN: nightwatch-provider-resilient-current-yield-w13-v1
 CHILD TASK: NONE
 WAVE: W13
-SESSION WORKTREE: session/nightwatch-provider-resilient-cu-623c6535
+SESSION WORKTREE: NONE
 
 IMPLEMENTATION AUTHORIZED:
   this task directory, its OpenSpec change, the W12 archive/sync baseline,
