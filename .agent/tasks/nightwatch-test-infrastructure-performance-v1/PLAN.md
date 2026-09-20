@@ -97,7 +97,7 @@ decision and isolation evidence.
   `workspace:check`, `session:check`, `hardening:check`, and strict OpenSpec
   validation pass; activation checkpoint committed.
 - Validation commands: the command set above.
-- Status: IN_PROGRESS
+- Status: DONE
 
 ### M1 — Timing profiler and baseline measurement
 
@@ -111,7 +111,7 @@ decision and isolation evidence.
   text summary, and the baseline table is committed.
 - Validation commands: `npm run test:timings`, lane commands from the master
   prompt section 2, with load receipts.
-- Status: NOT_STARTED
+- Status: IN_PROGRESS
 
 ### M2 — Duplicate-work map
 

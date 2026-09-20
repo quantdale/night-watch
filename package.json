@@ -8,9 +8,10 @@
     "node": ">=20"
   },
   "scripts": {
-    "test": "NODE_OPTIONS=--expose-gc playwright test",
+    "test": "NIGHTWATCH_TIMING_LANE=full-regression NODE_OPTIONS=--expose-gc playwright test",
     "test:unit": "NODE_OPTIONS=--expose-gc playwright test tests/unit",
     "test:smoke": "playwright test tests/smoke",
+    "test:timings": "node bin/test-timings.mjs",
     "typecheck": "tsc --noEmit",
     "typecheck:bin": "node bin/bin-typecheck.mjs",
     "typecheck:bin:write": "node bin/bin-typecheck.mjs --write",

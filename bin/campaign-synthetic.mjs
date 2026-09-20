@@ -105,7 +105,7 @@ try {
       retries: manifest.execution.retries,
     }));
   } else {
-  const environment = buildChildEnvironment(process.env, { NIGHTWATCH_ENV: 'local', NIGHTWATCH_GATE_ENVIRONMENT: 'SYNTHETIC_CAMPAIGN' });
+  const environment = buildChildEnvironment(process.env, { NIGHTWATCH_ENV: 'local', NIGHTWATCH_GATE_ENVIRONMENT: 'SYNTHETIC_CAMPAIGN', NIGHTWATCH_TIMING_LANE: 'campaign-synthetic' });
   environment.TZ = 'UTC';
   environment.LC_ALL = 'C';
   environment.LANG = 'C';

@@ -35,35 +35,48 @@ regression is acceptable.
 
 ## Current Milestone
 
-Milestone ID: M0
+Milestone ID: M1
 Milestone status: IN_PROGRESS
-What is being attempted: governed campaign activation — task/OpenSpec/handoff
-surfaces, owned C-00 session, live-state cross-check, and the activation
-checkpoint — before any performance change.
-Next action: run the activation validation set (`npm run agent:check`,
-`npm run handoff:check`, `npm run project:check`, `npm run workspace:check`,
-`npm run session:check`, `npm run hardening:check`,
-`openspec validate --all --strict`), inspect the diff and privacy surface,
-and commit the activation checkpoint. Then begin M1 by implementing the timing
-profiler and capturing the baseline under an owner-quiesced host window.
+What is being attempted: the timing profiler and baseline — the silent
+Playwright timing reporter, `bin/test-timings.mjs`, additive gate-receipt
+durations, and the measured baseline for every named lane with host-load
+receipts.
+Next action: commit this telemetry checkpoint, then capture the M1 baseline
+inside an owner-quiesced host window (the fast and milestone lanes do not
+exist yet, so the baseline covers typecheck, typecheck:bin, hardening:check,
+hardening:rules, agent:check, handoff:check, project:check,
+validation:universe, campaign:synthetic, npm test, gate:local, gate:clean).
 
 ## Completed Milestones
 
-- None. W13 is the terminal predecessor and remains frozen read-only evidence.
+- M0 — governed activation and C-00 ownership: task directory
+  (`SPEC/PLAN/STATE/REPORT`), OpenSpec change with three capability specs and
+  strict validation `68 passed / 0 failed`, `.agent/ACTIVE_TASK.md` and
+  `.agent/EXECUTION_PROMPT.md` bound to this campaign, live-state cross-check
+  updated, governed `LIVE_TASK_STATUS` ledger advanced to `IN_PROGRESS`, and
+  the activation checkpoint integrated (`origin/main` at `17553507`).
+  Validation: `agent:check`, `handoff:check`, `project:check`,
+  `workspace:check`, `session:check`, `hardening:check` all PASS on the
+  committed checkpoint.
+- No other milestone is complete. W13 remains the terminal frozen predecessor.
 
 ## Work In Progress
 
-M0 is validating the new task/OpenSpec surfaces, active routing, the live
-session binding, and the `docs/CURRENT_STATE.md` live-state cross-check before
-the activation checkpoint commit. No test-infrastructure file has been changed
-yet.
+M1 telemetry is implemented and focused-verified: the pure timing core
+(`src/core/validation/validationTiming.ts`), the silent Playwright reporter
+(`tests/helpers/playwrightTimingReporter.ts`), the offline report tool
+(`bin/test-timings.mjs`, `npm run test:timings`), additive per-group
+`durationMs` on quality-gate receipts, and lane attribution through
+`NIGHTWATCH_TIMING_LANE`. The measured baseline has not been captured yet;
+it requires an owner-quiesced host window because four codex and one opencode
+agent are running on this host.
 
 ## Exact Next Action
 
-Commit the activation checkpoint from this owned session worktree after the
-activation validation set passes, then create the timing profiler and baseline
-evidence (M1). Request an owner-quiesced host window before the baseline
-measurement and record load receipts around every measured command.
+Stage and commit the M1 telemetry checkpoint, integrate it, then request the
+owner-quiesced benchmark window and capture the baseline for every named lane
+with load receipts and median-of-N where needed, writing the baseline table
+and top-N slowest list under the task evidence directory.
 
 ## Files Changed
 
@@ -83,8 +96,18 @@ measurement and record load receipts around every measured command.
 - `npm run session:status`: PASS for the owned session
   `session/nightwatch-test-infrastructure-p-9ce4576b` at base `8dd8b163`; the
   pre-existing foreign live session and stale worktrees are untouched warnings.
-- Activation validation runs after the surfaces are written; the exact results
-  are recorded here before the activation commit.
+- Activation validation (before the activation commit):
+  `agent:check` PASS with 40 warnings, `handoff:check` PASS,
+  `project:check` PASS on the clean commit, `workspace:check` PASS,
+  `session:check` PASS, `hardening:check` PASS, and strict OpenSpec
+  validation 68 passed / 0 failed.
+- M1 focused verification: `npx playwright test
+  tests/unit/validationTiming.test.ts tests/unit/gateReceiptPersistence.test.ts
+  tests/unit/phase23QualityGate.test.ts` -> 54 passed / 0 failed;
+  `npx tsc --noEmit` PASS (5 s warm, 37 s cold);
+  `npm run validation:universe` PASS with 503 discovered / 0 unclassified;
+  `npm run hardening:check` PASS after the generated loader types were
+  refreshed with `node bin/bin-typecheck.mjs --write`.
 
 ## Decisions Made During This Task
 
