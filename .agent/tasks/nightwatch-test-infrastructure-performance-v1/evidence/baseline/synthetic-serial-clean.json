@@ -1,0 +1,94 @@
+{
+  "schemaVersion": "nightwatch.performance-lane-receipt.v1",
+  "lane": "synthetic-serial-clean",
+  "command": [
+    "node",
+    "bin/campaign-synthetic.mjs"
+  ],
+  "startedAt": "2026-09-20T15:02:08.880Z",
+  "finishedAt": "2026-09-20T15:10:11.194Z",
+  "wallMs": 464364,
+  "exitStatus": 0,
+  "errorCode": null,
+  "counts": {
+    "passed": null,
+    "failed": null,
+    "skipped": null,
+    "didNotRun": null,
+    "tests": null
+  },
+  "host": {
+    "platform": "linux",
+    "cores": 20,
+    "totalMemMiB": 15851
+  },
+  "load": {
+    "pre": {
+      "loadAverage": [
+        3.15,
+        3.36,
+        3.4
+      ],
+      "census": {
+        "busyProcesses": [
+          {
+            "name": "node",
+            "count": 5
+          },
+          {
+            "name": "codex",
+            "count": 4
+          },
+          {
+            "name": "herdr",
+            "count": 2
+          },
+          {
+            "name": "ps",
+            "count": 1
+          },
+          {
+            "name": "opencode",
+            "count": 1
+          }
+        ],
+        "totalBusyCpuPercent": 678
+      }
+    },
+    "post": {
+      "loadAverage": [
+        5.27,
+        5.05,
+        4.26
+      ],
+      "census": {
+        "busyProcesses": [
+          {
+            "name": "codex",
+            "count": 4
+          },
+          {
+            "name": "node",
+            "count": 4
+          },
+          {
+            "name": "herdr",
+            "count": 2
+          },
+          {
+            "name": "ps",
+            "count": 1
+          },
+          {
+            "name": "opencode",
+            "count": 1
+          }
+        ],
+        "totalBusyCpuPercent": 779
+      }
+    }
+  },
+  "outputTail": [
+    "{\"schemaVersion\":\"nightwatch.synthetic-campaign.v1\",\"fileCount\":105,\"total\":1897,\"passed\":1897,\"skipped\":null,\"didNotRun\":null,\"failed\":0,\"failedLocations\":[],\"shardCount\":1,\"deepContainmentLane\":\"PROVEN\",\"result\":\"PASS\"}"
+  ]
+}

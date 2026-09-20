@@ -1,0 +1,118 @@
+{
+  "schemaVersion": "nightwatch.performance-lane-receipt.v1",
+  "lane": "synthetic-shards-4-default",
+  "command": [
+    "node",
+    "bin/campaign-synthetic.mjs"
+  ],
+  "startedAt": "2026-09-20T16:03:01.211Z",
+  "finishedAt": "2026-09-20T16:05:28.147Z",
+  "wallMs": 141374,
+  "exitStatus": 0,
+  "errorCode": null,
+  "counts": {
+    "passed": null,
+    "failed": null,
+    "skipped": null,
+    "didNotRun": null,
+    "tests": null
+  },
+  "host": {
+    "platform": "linux",
+    "cores": 20,
+    "totalMemMiB": 15851
+  },
+  "load": {
+    "pre": {
+      "loadAverage": [
+        9.08,
+        9.89,
+        11.27
+      ],
+      "census": {
+        "busyProcesses": [
+          {
+            "name": "node",
+            "count": 7
+          },
+          {
+            "name": "codex",
+            "count": 4
+          },
+          {
+            "name": "opencode",
+            "count": 2
+          },
+          {
+            "name": ".cline",
+            "count": 2
+          },
+          {
+            "name": "herdr",
+            "count": 2
+          },
+          {
+            "name": "MainThread",
+            "count": 1
+          },
+          {
+            "name": "gopls",
+            "count": 1
+          },
+          {
+            "name": "agy",
+            "count": 1
+          }
+        ],
+        "totalBusyCpuPercent": 831
+      }
+    },
+    "post": {
+      "loadAverage": [
+        10.48,
+        10.31,
+        11.24
+      ],
+      "census": {
+        "busyProcesses": [
+          {
+            "name": "node",
+            "count": 6
+          },
+          {
+            "name": "codex",
+            "count": 4
+          },
+          {
+            "name": "opencode",
+            "count": 2
+          },
+          {
+            "name": ".cline",
+            "count": 2
+          },
+          {
+            "name": "herdr",
+            "count": 2
+          },
+          {
+            "name": "MainThread",
+            "count": 1
+          },
+          {
+            "name": "agy",
+            "count": 1
+          },
+          {
+            "name": "gopls",
+            "count": 1
+          }
+        ],
+        "totalBusyCpuPercent": 749
+      }
+    }
+  },
+  "outputTail": [
+    "{\"schemaVersion\":\"nightwatch.synthetic-campaign.v1\",\"fileCount\":105,\"total\":1897,\"passed\":1897,\"skipped\":0,\"didNotRun\":0,\"failed\":0,\"failedLocations\":[],\"shardCount\":5,\"planDigest\":\"sha256:02a606f5670778436ea658de\",\"universeDigest\":\"sha256:de339322d88c252b9aacb78a\",\"coverage\":{\"ok\":true,\"missing\":[],\"duplicated\":[],\"unexpected\":[],\"universeDigest\":\"sha256:de339322d88c252b9aacb78a\"},\"shardWallMs\":[101233,104901,105446,103556,40970],\"deepContainmentLane\":\"PROVEN\",\"result\":\"PASS\"}"
+  ]
+}

@@ -1,0 +1,91 @@
+{
+  "schemaVersion": "nightwatch.performance-lane-receipt.v1",
+  "lane": "synthetic-shards-2-clean",
+  "command": [
+    "node",
+    "bin/campaign-synthetic.mjs",
+    "--shards=2"
+  ],
+  "startedAt": "2026-09-20T15:10:20.536Z",
+  "finishedAt": "2026-09-20T15:14:31.870Z",
+  "wallMs": 241817,
+  "exitStatus": 0,
+  "errorCode": null,
+  "counts": {
+    "passed": null,
+    "failed": null,
+    "skipped": null,
+    "didNotRun": null,
+    "tests": null
+  },
+  "host": {
+    "platform": "linux",
+    "cores": 20,
+    "totalMemMiB": 15851
+  },
+  "load": {
+    "pre": {
+      "loadAverage": [
+        5.24,
+        5.05,
+        4.26
+      ],
+      "census": {
+        "busyProcesses": [
+          {
+            "name": "node",
+            "count": 5
+          },
+          {
+            "name": "codex",
+            "count": 4
+          },
+          {
+            "name": "herdr",
+            "count": 2
+          },
+          {
+            "name": "opencode",
+            "count": 1
+          }
+        ],
+        "totalBusyCpuPercent": 529
+      }
+    },
+    "post": {
+      "loadAverage": [
+        7.6,
+        6.48,
+        5.04
+      ],
+      "census": {
+        "busyProcesses": [
+          {
+            "name": "codex",
+            "count": 4
+          },
+          {
+            "name": "node",
+            "count": 4
+          },
+          {
+            "name": "herdr",
+            "count": 2
+          },
+          {
+            "name": "ps",
+            "count": 1
+          },
+          {
+            "name": "opencode",
+            "count": 1
+          }
+        ],
+        "totalBusyCpuPercent": 579
+      }
+    }
+  },
+  "outputTail": [
+    "{\"schemaVersion\":\"nightwatch.synthetic-campaign.v1\",\"fileCount\":105,\"total\":1897,\"passed\":1897,\"skipped\":0,\"didNotRun\":0,\"failed\":0,\"failedLocations\":[],\"shardCount\":2,\"planDigest\":\"sha256:cb95b465910fd07a8ccd98c2\",\"universeDigest\":\"sha256:de339322d88c252b9aacb78a\",\"coverage\":{\"ok\":true,\"missing\":[],\"duplicated\":[],\"unexpected\":[],\"universeDigest\":\"sha256:de339322d88c252b9aacb78a\"},\"shardWallMs\":[250875,241484],\"deepContainmentLane\":\"PROVEN\",\"result\":\"PASS\"}"
+  ]
+}

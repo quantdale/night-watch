@@ -5,7 +5,8 @@
     "project": "nightwatch",
     "workers": 1,
     "retries": 0,
-    "serial": true
+    "serial": true,
+    "shardCount": 4
   },
   "diagnostics": {
     "maxFailedLocations": 16,
