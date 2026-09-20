@@ -29,6 +29,7 @@ function argValues(name) {
   return process.argv.slice(2).filter((item) => item.startsWith(prefix)).map((item) => item.slice(prefix.length));
 }
 const requested = argValues('run-id');
+const printCliOverride = argValues('print-cli')[0] ?? null;
 const force = process.argv.includes('--force');
 
 const [campaignMod, contextMod, freezeMod] = loadTypeScriptModules([
@@ -107,6 +108,19 @@ function readCheckpoint(campaignId) {
 }
 
 function summarizeActionLog(checkpoint) {
+  if (checkpoint === null || checkpoint === undefined) {
+    // The campaign deletes its owner-local checkpoint on NO_PROGRESS. The
+    // action log is then unobserved, never zero: the receipt records null and
+    // the durable in-process toolActionCount remains the source-activity
+    // evidence.
+    return {
+      actionLogEntries: null,
+      toolActions: null,
+      uniqueInspectedSourcePaths: null,
+      reproductionAttempts: null,
+      hypothesesFormed: null,
+    };
+  }
   const actionLog = Array.isArray(checkpoint?.state?.actionLog) ? checkpoint.state.actionLog : [];
   const toolActions = actionLog.filter((record) => record.intentKind === 'CALL_TOOL');
   const inspected = new Set();
@@ -156,6 +170,7 @@ async function runOne(entry) {
         SUPERVISOR,
         `--state=${path.join(SUPERVISOR_STATE, entry.runId)}`,
         `--run=${entry.runId}`,
+        ...(printCliOverride === null ? [] : [`--print-cli=${printCliOverride}`]),
       ],
       provider: `policy-governed-failover:${policy.fingerprint.replace('sha256:', '')}`,
       model: `nightwatch-provider-resilience-policy.v1:${entry.runId}`,
@@ -176,6 +191,12 @@ async function runOne(entry) {
   const actionSummary = summarizeActionLog(checkpoint);
   const providerSummary = sanitizeProviderAttribution(entry.runId);
   const resultOrCheckpoint = result;
+  const admissionResults = Array.isArray(resultOrCheckpoint?.findingAdmissions) ? resultOrCheckpoint.findingAdmissions : [];
+  const admissions = admissionResults.filter((entry) => entry?.admitted === true);
+  const refusals = admissionResults.filter((entry) => entry?.admitted === false).map((entry) => ({
+    candidateId: typeof entry?.candidateId === 'string' ? entry.candidateId : null,
+    reason: typeof entry?.reason === 'string' ? entry.reason : 'REFUSED_NO_REPRODUCTION',
+  }));
   const providerResponseBytes = resultOrCheckpoint?.byteLedger?.providerResponseBytes ?? 0;
   const toolActionCount = typeof resultOrCheckpoint?.toolActionCount === 'number' ? resultOrCheckpoint.toolActionCount : null;
   const sourceActivity = typeof actionSummary.toolActions === 'number' ? actionSummary.toolActions : toolActionCount;
@@ -239,12 +260,6 @@ async function runOne(entry) {
   // Owner-local dossier persistence: an admission dossier is never committed,
   // but it must survive the campaign so a later novelty adjudication can cite
   // its identity. Written under the run's owner-local state directory.
-  const admissionResults = Array.isArray(resultOrCheckpoint?.findingAdmissions) ? resultOrCheckpoint.findingAdmissions : [];
-  const admissions = admissionResults.filter((entry) => entry?.admitted === true);
-  const refusals = admissionResults.filter((entry) => entry?.admitted === false).map((entry) => ({
-    candidateId: typeof entry?.candidateId === 'string' ? entry.candidateId : null,
-    reason: typeof entry?.reason === 'string' ? entry.reason : 'REFUSED_NO_REPRODUCTION',
-  }));
   const dossierDir = path.join(SUPERVISOR_STATE, entry.runId, 'dossiers');
   const persistedDossiers = [];
   for (const admission of admissions) {

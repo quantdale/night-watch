@@ -31,7 +31,8 @@ const [aggregation, truncation] = loadTypeScriptModules(
 function readReceipts() {
   if (!fs.existsSync(RUNS)) return [];
   return fs.readdirSync(RUNS)
-    .filter((name) => name.endsWith('.json') && name.startsWith('w13-'))
+    .filter((name) => name.endsWith('.json') && name.startsWith('w13-')
+      && !name.includes('.gen1.') && !name.includes('.gen2.') && !name.includes('.gen.'))
     .sort()
     .map((name) => JSON.parse(fs.readFileSync(path.join(RUNS, name), 'utf8')));
 }
@@ -102,7 +103,10 @@ for (const receipt of receipts) {
   investigationsCompleted += number(receipt.investigationsCompleted);
   reasonerCalls += number(receipt.reasonerCalls);
   providerFailuresTotal += number(receipt.providerFailures);
-  if (typeof receipt.toolActions === 'number') { toolActions += receipt.toolActions; toolActionsObservable += 1; }
+  const effectiveToolActions = typeof receipt.toolActions === 'number'
+    ? receipt.toolActions
+    : (typeof receipt.toolActionCount === 'number' ? receipt.toolActionCount : null);
+  if (effectiveToolActions !== null) { toolActions += effectiveToolActions; toolActionsObservable += 1; }
   if (typeof receipt.uniqueInspectedSourcePaths === 'number') { uniqueInspectedSourcePaths += receipt.uniqueInspectedSourcePaths; inspectedPathsObservable += 1; }
   candidatesProposed += number(receipt.candidateCount);
   reproductionAttempts += number(receipt.yieldMetrics?.reproductionAttempts);
