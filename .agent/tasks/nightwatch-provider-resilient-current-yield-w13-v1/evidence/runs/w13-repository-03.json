@@ -4,39 +4,50 @@
   "kind": "REPOSITORY_SCOPED",
   "repositoryScope": "alphauslabs/blueinternal",
   "wallClockCeilingMs": 1800000,
-  "policyFingerprint": "sha256:a4865dbb6aea4114bfa8bdc9",
-  "freezeFingerprint": "sha256:a520d9630a20a3f67321fbb8",
-  "selectedProvider": "opencode-go/glm-5.3",
-  "startedAt": "2026-09-19T17:15:18.561Z",
-  "wallTimeMs": 758446,
-  "validProviderResult": false,
-  "terminationReason": "BUDGET_EXHAUSTED",
-  "terminationClass": "PROVIDER_BLOCKED_BEFORE_SOURCE_ACTION",
+  "policyFingerprint": "sha256:1efa45195fc018aa22677336",
+  "freezeFingerprint": "sha256:10299c668795e69904f4600b",
+  "selectedProvider": "opencode-go/muse-spark-1.3-contributor",
+  "startedAt": "2026-09-20T06:49:16.508Z",
+  "wallTimeMs": 694293,
+  "validProviderResult": true,
+  "terminationReason": "NO_PROGRESS",
+  "terminationClass": "VALID_PROVIDER_RUN",
   "executionFailure": null,
-  "investigationsStarted": 1,
-  "investigationsCompleted": 1,
-  "reasonerCalls": 6,
-  "providerFailures": 6,
-  "candidateIds": [],
-  "candidateCount": 0,
+  "investigationsStarted": 4,
+  "investigationsCompleted": 4,
+  "reasonerCalls": 24,
+  "providerFailures": 0,
+  "candidateIds": [
+    "c1"
+  ],
+  "candidateCount": 1,
+  "admissionPathResults": 1,
   "findingAdmissions": 0,
+  "mechanicalAdmissions": 0,
+  "refusalResults": [
+    {
+      "candidateId": "c1",
+      "reason": "MISSING_REPRODUCTION"
+    }
+  ],
   "reproductionCount": 0,
-  "dossierStatus": "NONE",
-  "actionLogEntries": 6,
-  "toolActions": 0,
-  "uniqueInspectedSourcePaths": 0,
-  "reproductionAttemptsTool": 0,
-  "hypothesesFormed": 0,
-  "providerResponseBytes": 0,
-  "providerStderrBytes": 432,
-  "renderedInputBytes": 15715,
+  "dossierStatus": "REFUSED_NO_REPRODUCTION",
+  "actionLogEntries": "NOT_CAPTURED",
+  "toolActions": "NOT_CAPTURED",
+  "toolActionCount": 12,
+  "uniqueInspectedSourcePaths": "NOT_CAPTURED",
+  "reproductionAttemptsTool": "NOT_CAPTURED",
+  "hypothesesFormed": "NOT_CAPTURED",
+  "providerResponseBytes": 8322,
+  "providerStderrBytes": 0,
+  "renderedInputBytes": 167844,
   "toolPayloadBytes": null,
   "yieldMetrics": {
     "schemaVersion": "nightwatch.w10-campaign-yield.v1",
-    "visibleSources": 0,
+    "visibleSources": 1,
     "visibleExecutableSources": 0,
     "visibleExecutableTargets": 0,
-    "visibleRepositories": 0,
+    "visibleRepositories": 1,
     "reproductionAttempts": 0,
     "executedAttempts": 0,
     "notAvailableAttempts": 0,
@@ -49,81 +60,63 @@
     "attemptsToFirstExecutedReproduction": null,
     "actionsToFirstExecutedReproduction": null
   },
-  "sourceOpportunity": "PROVIDER_BLOCKED_BEFORE_SOURCE_ACTION",
+  "sourceOpportunity": "AVAILABLE",
   "providerHealth": {
-    "activeProvider": "opencode-go/qwen3.8-max",
-    "degradedProviders": [
-      "opencode-go/glm-5.3",
-      "opencode-go/kimi-k3"
-    ],
-    "transitions": [
-      {
-        "sequence": 1,
-        "from": "opencode-go/glm-5.3",
-        "to": "opencode-go/kimi-k3",
-        "triggerClass": "PROVIDER_RUNTIME_TIMEOUT",
-        "at": "2026-09-19T17:21:38.548Z"
-      },
-      {
-        "sequence": 2,
-        "from": "opencode-go/kimi-k3",
-        "to": "opencode-go/qwen3.8-max",
-        "triggerClass": "PROVIDER_RUNTIME_TIMEOUT",
-        "at": "2026-09-19T17:27:56.983Z"
-      }
-    ],
+    "activeProvider": "opencode-go/muse-spark-1.3-contributor",
+    "degradedProviders": [],
+    "transitions": [],
     "exhausted": false
   },
   "providers": [
     {
-      "provider": "opencode-go/glm-5.3",
-      "calls": 3,
-      "validResponses": 0,
-      "validResponseBytes": 0,
-      "stdoutBytes": 0,
+      "provider": "opencode-go/muse-spark-1.3-contributor",
+      "calls": 24,
+      "validResponses": 24,
+      "validResponseBytes": 8322,
+      "stdoutBytes": 8322,
       "stderrBytes": 0,
-      "wallTimeMs": 378823,
-      "failuresByClass": {
-        "PROVIDER_RUNTIME_TIMEOUT": 3
-      },
-      "retries": 3,
+      "wallTimeMs": 676905,
+      "failuresByClass": {},
+      "retries": 0,
       "transitionsIn": [],
-      "transitionsOut": [
-        "opencode-go/kimi-k3"
-      ]
-    },
-    {
-      "provider": "opencode-go/kimi-k3",
-      "calls": 3,
-      "validResponses": 0,
-      "validResponseBytes": 0,
-      "stdoutBytes": 0,
-      "stderrBytes": 0,
-      "wallTimeMs": 377297,
-      "failuresByClass": {
-        "PROVIDER_RUNTIME_TIMEOUT": 3
-      },
-      "retries": 3,
-      "transitionsIn": [
-        "opencode-go/glm-5.3"
-      ],
-      "transitionsOut": [
-        "opencode-go/qwen3.8-max"
-      ]
+      "transitionsOut": []
     }
   ],
   "terminationSafety": "NO_SAFETY_BLOCK",
   "novelty": "NOT_APPLICABLE_NO_ADMISSION",
   "ownerLocalRawCheckpoint": "/home/dalepalaca/.nightwatch/campaigns/w13-repository-03.checkpoint.json",
-  "admissionPathResults": 0,
-  "mechanicalAdmissions": 0,
-  "refusalResults": [],
+  "admissions": [],
+  "checkpointAvailable": false,
   "measurementCorrections": [
     {
-      "field": "findingAdmissions/mechanicalAdmissions",
-      "from": 0,
-      "to": 0,
-      "reason": "the first harness revision counted every admission-path result (including refusals); the receipt now separates admissionPathResults, mechanicalAdmissions, and refusalResults. Derived from the preserved dossierStatus."
+      "checkpointDeletedOnNoProgress": true,
+      "fields": {
+        "actionLogEntries": {
+          "from": null,
+          "to": "NOT_CAPTURED",
+          "reason": "the campaign deleted its owner-local checkpoint on NO_PROGRESS; the action log was not observable after termination"
+        },
+        "toolActions": {
+          "from": null,
+          "to": "NOT_CAPTURED",
+          "reason": "the campaign deleted its owner-local checkpoint on NO_PROGRESS; the action log was not observable after termination"
+        },
+        "uniqueInspectedSourcePaths": {
+          "from": null,
+          "to": "NOT_CAPTURED",
+          "reason": "the campaign deleted its owner-local checkpoint on NO_PROGRESS; the action log was not observable after termination"
+        },
+        "hypothesesFormed": {
+          "from": null,
+          "to": "NOT_CAPTURED",
+          "reason": "the campaign deleted its owner-local checkpoint on NO_PROGRESS; the action log was not observable after termination"
+        },
+        "reproductionAttemptsTool": {
+          "from": null,
+          "to": "NOT_CAPTURED",
+          "reason": "the campaign deleted its owner-local checkpoint on NO_PROGRESS; the action log was not observable after termination"
+        }
+      }
     }
   ]
 }

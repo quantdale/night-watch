@@ -7,8 +7,8 @@
   "policyFingerprint": "sha256:1efa45195fc018aa22677336",
   "freezeFingerprint": "sha256:10299c668795e69904f4600b",
   "selectedProvider": "opencode-go/muse-spark-1.3-contributor",
-  "startedAt": "2026-09-20T06:20:41.298Z",
-  "wallTimeMs": 18191,
+  "startedAt": "2026-09-20T07:00:50.806Z",
+  "wallTimeMs": 687807,
   "validProviderResult": true,
   "terminationReason": "NO_PROGRESS",
   "terminationClass": "VALID_PROVIDER_RUN",
@@ -17,30 +17,37 @@
   "investigationsCompleted": 4,
   "reasonerCalls": 24,
   "providerFailures": 0,
-  "candidateIds": [],
-  "candidateCount": 0,
-  "admissionPathResults": 0,
+  "candidateIds": [
+    "c1"
+  ],
+  "candidateCount": 1,
+  "admissionPathResults": 1,
   "findingAdmissions": 0,
   "mechanicalAdmissions": 0,
-  "refusalResults": [],
+  "refusalResults": [
+    {
+      "candidateId": "c1",
+      "reason": "MISSING_REPRODUCTION"
+    }
+  ],
   "reproductionCount": 0,
-  "dossierStatus": "NONE",
-  "actionLogEntries": null,
-  "toolActions": null,
-  "toolActionCount": 24,
-  "uniqueInspectedSourcePaths": null,
-  "reproductionAttemptsTool": null,
-  "hypothesesFormed": null,
-  "providerResponseBytes": 4944,
+  "dossierStatus": "REFUSED_NO_REPRODUCTION",
+  "actionLogEntries": "NOT_CAPTURED",
+  "toolActions": "NOT_CAPTURED",
+  "toolActionCount": 12,
+  "uniqueInspectedSourcePaths": "NOT_CAPTURED",
+  "reproductionAttemptsTool": "NOT_CAPTURED",
+  "hypothesesFormed": "NOT_CAPTURED",
+  "providerResponseBytes": 8082,
   "providerStderrBytes": 0,
-  "renderedInputBytes": 163796,
+  "renderedInputBytes": 117523,
   "toolPayloadBytes": null,
   "yieldMetrics": {
     "schemaVersion": "nightwatch.w10-campaign-yield.v1",
-    "visibleSources": 0,
+    "visibleSources": 1,
     "visibleExecutableSources": 0,
     "visibleExecutableTargets": 0,
-    "visibleRepositories": 0,
+    "visibleRepositories": 1,
     "reproductionAttempts": 0,
     "executedAttempts": 0,
     "notAvailableAttempts": 0,
@@ -65,10 +72,10 @@
       "provider": "opencode-go/muse-spark-1.3-contributor",
       "calls": 24,
       "validResponses": 24,
-      "validResponseBytes": 4944,
-      "stdoutBytes": 4944,
+      "validResponseBytes": 8082,
+      "stdoutBytes": 8082,
       "stderrBytes": 0,
-      "wallTimeMs": 2220,
+      "wallTimeMs": 671279,
       "failuresByClass": {},
       "retries": 0,
       "transitionsIn": [],
@@ -78,5 +85,38 @@
   "terminationSafety": "NO_SAFETY_BLOCK",
   "novelty": "NOT_APPLICABLE_NO_ADMISSION",
   "ownerLocalRawCheckpoint": "/home/dalepalaca/.nightwatch/campaigns/w13-repository-04.checkpoint.json",
-  "admissions": []
+  "admissions": [],
+  "checkpointAvailable": false,
+  "measurementCorrections": [
+    {
+      "checkpointDeletedOnNoProgress": true,
+      "fields": {
+        "actionLogEntries": {
+          "from": null,
+          "to": "NOT_CAPTURED",
+          "reason": "the campaign deleted its owner-local checkpoint on NO_PROGRESS; the action log was not observable after termination"
+        },
+        "toolActions": {
+          "from": null,
+          "to": "NOT_CAPTURED",
+          "reason": "the campaign deleted its owner-local checkpoint on NO_PROGRESS; the action log was not observable after termination"
+        },
+        "uniqueInspectedSourcePaths": {
+          "from": null,
+          "to": "NOT_CAPTURED",
+          "reason": "the campaign deleted its owner-local checkpoint on NO_PROGRESS; the action log was not observable after termination"
+        },
+        "hypothesesFormed": {
+          "from": null,
+          "to": "NOT_CAPTURED",
+          "reason": "the campaign deleted its owner-local checkpoint on NO_PROGRESS; the action log was not observable after termination"
+        },
+        "reproductionAttemptsTool": {
+          "from": null,
+          "to": "NOT_CAPTURED",
+          "reason": "the campaign deleted its owner-local checkpoint on NO_PROGRESS; the action log was not observable after termination"
+        }
+      }
+    }
+  ]
 }

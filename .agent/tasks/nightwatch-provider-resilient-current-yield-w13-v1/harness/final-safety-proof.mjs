@@ -56,7 +56,10 @@ fs.writeFileSync(path.join(TASK, 'evidence/sibling-identity-after.json'), `${JSO
 
 const runDir = path.join(TASK, 'evidence', 'runs');
 const receipts = fs.existsSync(runDir)
-  ? fs.readdirSync(runDir).filter((name) => name.endsWith('.json')).map((name) => JSON.parse(fs.readFileSync(path.join(runDir, name), 'utf8')))
+  ? fs.readdirSync(runDir)
+    .filter((name) => name.endsWith('.json') && name.startsWith('w13-')
+      && !name.includes('.gen1.') && !name.includes('.gen2.') && !name.includes('.gen.'))
+    .map((name) => JSON.parse(fs.readFileSync(path.join(runDir, name), 'utf8')))
   : [];
 
 const proof = {

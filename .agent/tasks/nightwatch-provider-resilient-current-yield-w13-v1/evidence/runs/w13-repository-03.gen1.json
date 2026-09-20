@@ -23,10 +23,10 @@
   "reproductionCount": 0,
   "dossierStatus": "NONE",
   "actionLogEntries": 6,
-  "toolActions": 0,
-  "uniqueInspectedSourcePaths": 0,
-  "reproductionAttemptsTool": 0,
-  "hypothesesFormed": 0,
+  "toolActions": "NOT_CAPTURED",
+  "uniqueInspectedSourcePaths": "NOT_CAPTURED",
+  "reproductionAttemptsTool": "NOT_CAPTURED",
+  "hypothesesFormed": "NOT_CAPTURED",
   "providerResponseBytes": 0,
   "providerStderrBytes": 432,
   "renderedInputBytes": 15715,
@@ -124,6 +124,32 @@
       "from": 0,
       "to": 0,
       "reason": "the first harness revision counted every admission-path result (including refusals); the receipt now separates admissionPathResults, mechanicalAdmissions, and refusalResults. Derived from the preserved dossierStatus."
+    },
+    {
+      "checkpointDeletedOnNoProgress": true,
+      "fields": {
+        "toolActions": {
+          "from": 0,
+          "to": "NOT_CAPTURED",
+          "reason": "the campaign deleted its owner-local checkpoint on NO_PROGRESS; the action log was not observable after termination"
+        },
+        "uniqueInspectedSourcePaths": {
+          "from": 0,
+          "to": "NOT_CAPTURED",
+          "reason": "the campaign deleted its owner-local checkpoint on NO_PROGRESS; the action log was not observable after termination"
+        },
+        "hypothesesFormed": {
+          "from": 0,
+          "to": "NOT_CAPTURED",
+          "reason": "the campaign deleted its owner-local checkpoint on NO_PROGRESS; the action log was not observable after termination"
+        },
+        "reproductionAttemptsTool": {
+          "from": 0,
+          "to": "NOT_CAPTURED",
+          "reason": "the campaign deleted its owner-local checkpoint on NO_PROGRESS; the action log was not observable after termination"
+        }
+      }
     }
-  ]
+  ],
+  "checkpointAvailable": false
 }
