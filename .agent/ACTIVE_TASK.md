@@ -14,7 +14,10 @@ descendants follow. The synthetic certification lane is 3.28x faster
 (464.4 s serial -> 141.4 s at four weighted shards), the canonical `npm test`
 is a green coverage-proven shard run at 633.7 s, `gate:local` passes all
 twelve groups in 635.7 s, and the fast and milestone lanes exist with
-mechanical non-certification guards. W13 remains a frozen predecessor.
+mechanical non-certification guards, and the post-release `gate:clean`
+passed install plus all twelve groups at `67ccda79` (871.2 s, synthetic lane
+165.9 s against the 600 s bound that W13 twice timed out at). W13 remains a
+frozen predecessor.
 Current milestone: COMPLETE — M13 C-00 integration, documentation, and verdict
 Next action: STOP — the campaign is complete with the terminal verdict
 `COMPLETE — DEVELOPMENT LOOP MATERIALLY ACCELERATED`. Any further optimization

@@ -127,7 +127,7 @@ five-minute lane with a strict broadening policy.
 | `npm test` | 1,052.3 s (serial, review-store repair only; ~1,520 s derived for the pre-repair tree) | 633.7 s canonical sharded | 1.66x measured, ~2.4x against the derived pre-repair baseline |
 | `gate:local` | 818 s (W13) | 635.7 s all twelve groups PASS | 1.29x faster; synthetic group 172.6 s with 3.5x timeout headroom |
 | `reviewStoreHardening.test.ts` | 524 s | 55 s | 9.5x faster |
-| `gate:clean` | W13: synthetic lane timed out at the 600 s bound twice | pending post-release run at the documentation checkpoint (recorded below when executed) | — |
+| `gate:clean` | W13: synthetic lane timed out at the 600 s bound twice | PASS, install + all twelve groups, 871.2 s wall; synthetic lane 165.9 s (3.6x headroom) | first green clean gate in this lineage |
 
 The canonical sharded regression receipt:
 shards 469.9 s / 479.6 s plus exclusive 180.1 s, coverage proof OK, 5,360
@@ -178,8 +178,7 @@ hygiene roots.
 - `agent:check`, `handoff:check`, `project:check`, `workspace:check`,
   `validation:universe`, `hardening:check`: PASS at the closure checkpoint.
 - Strict OpenSpec validation: 68 passed / 0 failed.
-- Post-release `gate:clean`: recorded in section H when executed
-  (`evidence/baseline/gate-clean-after.json`).
+- Post-release `gate:clean` at `67ccda79` (Node 20): PASS, install PASS, twelve groups PASS, 871.2 s. Raw receipt in owner-local scratch (`/tmp/opencode/gate-clean-postrelease.json`), summarised in section H.
 
 ## M. GIT
 

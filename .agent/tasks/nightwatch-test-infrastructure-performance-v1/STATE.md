@@ -17,7 +17,7 @@ CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 8dd8b163b567b939b977649d6ba7c371cf230ee6
 LAST_VALIDATED_IMPLEMENTATION_SHA: 86cdc93af8527dda395d15314c4a3370a942274c
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: 86cdc93af8527dda395d15314c4a3370a942274c
-LAST_DOCUMENTATION_CHECKPOINT_SHA: 86cdc93af8527dda395d15314c4a3370a942274c
+LAST_DOCUMENTATION_CHECKPOINT_SHA: 67ccda791cd1b4985292b04d84d9b19d5fad1db1
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PROJECT_VERDICT_EFFECT: PRESERVE
@@ -120,7 +120,7 @@ STOP — the campaign is complete. Any further optimization starts as a new auth
   - `npm run validation:universe`: 507 discovered / 0 unclassified.
   - `npm run hardening:rules`: 83 rules / 94 probes / 94 detected / restored.
   - Focused new suites: validationTiming 9, validationExecutionClasses 7, validationShardPlan 9, validationAffectedTests 10, validationLane 5, syntheticCampaignShards 4, validationPerformanceGuards 6, nw07ContinuityCoherence 5 - all PASS.
-- Post-release `gate:clean` at the documentation checkpoint: recorded in `evidence/baseline/gate-clean-after.json` and in the final report.
+- Post-release `gate:clean` at the documentation checkpoint (`67ccda79`, Node 20): PASS, install PASS, all twelve groups PASS, 871.2 s wall, SYNTHETIC_CAMPAIGN 165.9 s (previously timed out at the 600 s bound twice in W13), SEMANTIC_COMPATIBILITY 542.3 s. Raw receipt: `/tmp/opencode/gate-clean-postrelease.json` (owner-local scratch, not committed).
 ## Decisions Made During This Task
 
 Decision: the canonical full regression may adopt the proven shard runner as
