@@ -191,6 +191,31 @@ npm run gate:clean       # disposable Node 20 checkout qualification
 npm run campaign:synthetic
 ```
 
+### Which validation lane to run
+
+| Situation | Command | Authority |
+| --- | --- | --- |
+| Normal coding, focused feedback | `npm run gate:dev` | NOT certification; affected scope only |
+| Substantial integration checkpoint | `npm run gate:milestone` | NOT certification; broader scope plus the 94-probe rule campaign |
+| Release, campaign closeout, integration | `npm run gate:local` then `npm test` | authoritative |
+| Fresh-environment qualification | `npm run gate:clean` | authoritative (disposable clone) |
+
+The fast and milestone lanes print an explicit NOT-certification label and can
+never satisfy a release requirement. Both refuse an empty change set; a change
+under `bin/`, `config/`, safety, governance, or test-infrastructure paths
+deliberately broadens them to the full universe and reports the overage rather
+than trimming coverage.
+
+`npm test` executes the tracked regression as coverage-proven concurrent
+shards (default two; `NIGHTWATCH_TEST_WORKERS` or `--workers` overrides,
+bounded 1..8) while every invocation stays serial with zero retries. Files
+whose declared execution class forbids co-scheduling (Git writes,
+guarded-source writes, the probe campaign, whole-repository signature windows)
+run in one exclusive invocation after the concurrent shards exit. `npm run
+test:serial` keeps the historical single-invocation shape, and `npm run
+test:timings` renders the slowest files, suites, and gate groups from the
+recorded timing evidence.
+
 Phase 25–28 source intelligence is local, read-only, bounded, deterministic,
 and raw-source-free. It scans only the fixed approved sibling-source universe
 and feeds mechanically proven surfaces into the existing Phase 24 portfolio:
