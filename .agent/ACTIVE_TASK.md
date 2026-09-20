@@ -1,77 +1,80 @@
 # Active Task
 
-Task ID: nightwatch-provider-resilient-current-yield-w13-v1
-Phase: PROVIDER_RESILIENT_CURRENT_YIELD_W13_V1
-Title: W13 — Provider-resilient current-source unknown-defect yield
-Status: COMPLETE
-Task directory: .agent/tasks/nightwatch-provider-resilient-current-yield-w13-v1
-Starting SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
+Task ID: nightwatch-test-infrastructure-performance-v1
+Phase: TEST_INFRASTRUCTURE_PERFORMANCE_V1
+Title: Test infrastructure performance and parallelization
+Status: IN_PROGRESS
+Task directory: .agent/tasks/nightwatch-test-infrastructure-performance-v1
+Starting SHA: 8dd8b163b567b939b977649d6ba7c371cf230ee6
 Last validated implementation SHA: 5eaceb23354da3b9b4f5bab162ca29075691d9d5
-Last checkpoint: W13 activation is COMPLETE at `a95004a0` (follow-up
-`bdb781d4`) from live main `34517c9b`. W12 is preserved as
-`PARTIAL — BLOCKED`: one valid broad run with
-2 candidates and 0 admissions, and eight scoped runs provider-blocked on the
-single frozen provider. W13 is a distinct owner-authorized successor whose
-Phase A must close every locally closable W12 residual before Phase B freezes
-a provider-resilience policy and executes the fixed broad-plus-eight-scoped
-matrix.
-Current milestone: COMPLETE — M15 C-00 integration, release, and final verdict
-Next action: STOP — W13 is complete with the terminal verdict
-`COMPLETE — CURRENT-SOURCE YIELD MEASURED, MECHANICAL ADMISSIONS: 1`; any
-further wave, re-run, or engine/policy bound change requires explicit owner
-authorization.
-Authorization class: PROVIDER_RESILIENT_CURRENT_YIELD_W13_V1
+Last checkpoint: Campaign activation began from live main
+`8dd8b163` on 2026-09-20. W13 is the terminal predecessor (`COMPLETE`) and
+remains frozen read-only evidence. This campaign measures the current
+validation lanes, removes or reuses duplicated expensive work where identity
+permits, parallelizes independent validation only where correctness is
+mechanically preserved, adds fast development and milestone lanes that are
+explicitly not certification, keeps the authoritative lanes authoritative and
+measurably faster, and closes with before/after evidence and one verdict.
+Current milestone: M0 — governed activation and C-00 ownership
+Next action: run the activation validation set (`npm run agent:check`,
+`npm run handoff:check`, `npm run project:check`, `npm run workspace:check`,
+`npm run session:check`, `npm run hardening:check`,
+`openspec validate --all --strict`), inspect the diff and privacy surface,
+and commit the activation checkpoint. Then begin M1 (timing profiler and
+baseline) after requesting an owner-quiesced host benchmark window.
+Authorization class: TEST_INFRASTRUCTURE_PERFORMANCE_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
-STARTING_SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
+STARTING_SHA: 8dd8b163b567b939b977649d6ba7c371cf230ee6
 LAST_VALIDATED_IMPLEMENTATION_SHA: 5eaceb23354da3b9b4f5bab162ca29075691d9d5
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: 5eaceb23354da3b9b4f5bab162ca29075691d9d5
-LAST_DOCUMENTATION_CHECKPOINT_SHA: 5eaceb23354da3b9b4f5bab162ca29075691d9d5
+LAST_DOCUMENTATION_CHECKPOINT_SHA: 8dd8b163b567b939b977649d6ba7c371cf230ee6
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
-PHASE_PROVIDER_RESILIENT_CURRENT_YIELD_W13_V1_STATUS: COMPLETE
+PHASE_TEST_INFRASTRUCTURE_PERFORMANCE_V1_STATUS: IN_PROGRESS
 
 ## Mission
 
-Close every locally closable W12 measurement and governance residual, then
-freeze and execute a provider-resilient current-source campaign against the
-owner-authorized eight-repository universe under a predeclared deterministic
-failover policy. Preserve W11 and W12 as frozen predecessor evidence, keep
-provider failure distinct from zero yield, keep candidates distinct from
-admissions, keep provider transitions deterministic and result-independent,
-and finish with a truthful W13 verdict or an evidenced `PARTIAL — BLOCKED`
-outcome.
+Make the Nightwatch development and validation loop significantly faster
+without reducing test coverage, safety, determinism, or release confidence.
+Measure the slow paths, classify and remove or reuse duplicated expensive
+work, parallelize independent validation only where correctness is
+mechanically preserved, add fast and milestone lanes that cannot masquerade as
+certification, keep the authoritative lanes authoritative, and produce
+before/after timing evidence plus exactly one verdict.
 
 ## Read order
 
-1. `.agent/tasks/nightwatch-provider-resilient-current-yield-w13-v1/{SPEC,PLAN,STATE}.md`
-2. `openspec/changes/nightwatch-provider-resilient-current-yield-w13-v1/`
-3. W11/W12 task and evidence records and the Production Completion Group 12
-   predecessor record
+1. `.agent/tasks/nightwatch-test-infrastructure-performance-v1/{SPEC,PLAN,STATE}.md`
+2. `openspec/changes/nightwatch-test-infrastructure-performance-v1/`
+3. W13 task and evidence (frozen predecessor lane measurements)
 4. `AGENTS.md`, durable safety/current-state/decision/roadmap documents, then
    live Git/workspace/session truth.
 
 ## Frozen predecessor boundary
 
-W11's historical EXACT arm and hidden corpus, and W12's provider-blocked
-scoped receipts and measured broad result, are read-only predecessor inputs.
-W13 MUST NOT expose W11 or W12 hidden truth to the investigative reasoner,
-re-run a predecessor arm, or alter a predecessor measured result.
+W13 is `COMPLETE`. Its measured lane receipts (synthetic 422.94-643 s,
+`gate:local` 818 s, clean-gate synthetic timeout classification, `npm test`
+5,310/0/18) are read-only inputs. This campaign must not re-run or rewrite
+W13's evidence merely for comparability; it measures its own baseline before
+changing anything.
 
 ## Routing and safety
 
 ```
-CAMPAIGN: nightwatch-provider-resilient-current-yield-w13-v1
+CAMPAIGN: nightwatch-test-infrastructure-performance-v1
 CHILD TASK: NONE
-WAVE: W13
-SESSION WORKTREE: NONE
+WAVE: PERFORMANCE-1
+SESSION WORKTREE: session/nightwatch-test-infrastructure-p-9ce4576b
 
 IMPLEMENTATION AUTHORIZED:
-  this task directory, its OpenSpec change, the W12 archive/sync baseline,
-  Phase A residual-closure fixes and their regressions/negative probes, the
-  provider-resilience policy and W13 evaluation freeze, W13 measurement
-  harnesses, the Group 12 successor ledger, parent autonomous-programme state,
-  Nightwatch docs and governed README/current-state yield surfaces, and
+  this task directory, its OpenSpec change, test runner and Playwright
+  configuration, test discovery/selection, sharding and safe parallelization,
+  fixture lifecycle and process startup, shared immutable fixture caching,
+  build reuse, gate orchestration and CI/local gate scheduling,
+  validation-universe metadata, timing/telemetry surfaces, development-only
+  fast and milestone validation lanes, documentation and task/OpenSpec
+  surfaces, regression tests for the test infrastructure itself, and
   commits/pushes/integration from this owned C-00 session worktree.
 
 ALPHAUS DEV CONTACT:                   NOT AUTHORIZED
@@ -84,23 +87,16 @@ SLACK / LESLIE / PONDR / NOTION:       NOT AUTHORIZED
 ISSUE / PR CREATION:                   NOT AUTHORIZED
 EXTERNAL PUBLICATION:                  NOT AUTHORIZED
 SIBLING REPOSITORY MUTATION:           NOT AUTHORIZED
-SIBLING DEPENDENCY INSTALLATION:       NOT AUTHORIZED
-FORCE PUSH / HISTORY REWRITE:          NOT AUTHORIZED
-WEAKENING ADMISSION CRITERIA:          NOT AUTHORIZED
+WEAKENING ASSERTIONS / DELETING TESTS: NOT AUTHORIZED
+INCREASING SKIPS:                      NOT AUTHORIZED
 RAISING GATE TIMEOUT BOUNDS:           NOT AUTHORIZED
-LEAKING HIDDEN GROUND TRUTH:           NOT AUTHORIZED
-PROVIDER EGRESS VIA REASONER CLI:      AUTHORIZED, frozen candidate order only
-SIBLING READ (all 8 admitted, r/o):    AUTHORIZED
-CONTAINED LOCAL REPRODUCTION:          AUTHORIZED, already-admitted classes only
-NOVELTY ADJUDICATION:                  AUTHORIZED, post-admission/read-only only
+CLEAN-GATE STATE REUSE:                NOT AUTHORIZED
+FORCE PUSH / HISTORY REWRITE:          NOT AUTHORIZED
 ```
 
-LOCAL / OWNER-LOCAL only. Provider network access is allowed ONLY through the
-existing configured reasoner CLI path under the frozen provider-resilience
-policy; that is not authorization for Nightwatch or product traffic to any
-Alphaus environment. Sibling repositories are read only, with identity checked
-before and after reproduction. Hidden historical ground truth must never reach
-the reasoner; leakage aborts yield publication.
-
-C-00 governs all writers: one writing agent == one owned worktree == one
-session identity. The canonical checkout is not an implementation worktree.
+LOCAL / OWNER-LOCAL only. All measurement, execution, and evidence stay on
+this host inside the owned session worktree and the repository's ignored
+artifact locations. Clean-checkout qualification keeps its independence and
+never reuses local validation state. Parallel execution is allowed only for
+work with an explicit execution class and a mechanical coverage-equality
+proof. Mutation campaigns never run concurrently against one checkout.
