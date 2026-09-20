@@ -1801,6 +1801,10 @@
         "isolated-scratch"
       ]
     },
+    "tests/unit/validationAffectedTests.test.ts": {
+      "class": "PARALLEL_SAFE",
+      "signals": []
+    },
     "tests/unit/validationClassification.test.ts": {
       "class": "SERIAL_REQUIRED",
       "signals": [

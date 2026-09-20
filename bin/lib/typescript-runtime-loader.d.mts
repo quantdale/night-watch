@@ -87,6 +87,7 @@ export interface TypeScriptRuntimeLoaderModuleMap {
   "src/core/source/surfaces.ts": typeof import("../../src/core/source/surfaces");
   "src/core/source/testOracleQuality.ts": typeof import("../../src/core/source/testOracleQuality");
   "src/core/source/universe.ts": typeof import("../../src/core/source/universe");
+  "src/core/validation/affectedTests.ts": typeof import("../../src/core/validation/affectedTests");
   "src/core/validation/executionClasses.ts": typeof import("../../src/core/validation/executionClasses");
   "src/core/validation/shardPlan.ts": typeof import("../../src/core/validation/shardPlan");
   "src/core/validation/validationTiming.ts": typeof import("../../src/core/validation/validationTiming");

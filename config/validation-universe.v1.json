@@ -2,7 +2,7 @@
   "schemaVersion": "nightwatch.validation-universe.v1",
   "definitionName": "Nightwatch validation universe classification (NW-08)",
   "note": "Every discovered executable test or check belongs to exactly one class. AUTHORITATIVE_GATE is DERIVED from what the required gate lanes actually select and is therefore not declarable here; every other discovered file must appear below exactly once, with the reason it is not in the gate and the evidence lane that does cover it. A newly added test that is in no lane and no class fails the gate rather than joining the repository silently.",
-  "inventoryDigest": "sha256:36482edd9ccb5192f1a66178",
+  "inventoryDigest": "sha256:d43156d3718ef2d79e62609d",
   "classes": {
     "FULL_REGRESSION": {
       "reason": "Offline, deterministic suites that the full canonical regression executes. They are not in a required gate lane because the authoritative gate is bounded for CI runtime; leaving them unclassified is what made the gap invisible.",
@@ -107,6 +107,7 @@
         "tests/unit/syntheticFindingCampaign.test.ts",
         "tests/unit/target-preflight.test.ts",
         "tests/unit/testOracleQuality.test.ts",
+        "tests/unit/validationAffectedTests.test.ts",
         "tests/unit/validationClassification.test.ts",
         "tests/unit/validationExecutionClasses.test.ts",
         "tests/unit/validationShardPlan.test.ts",
@@ -185,6 +186,7 @@
       "reason": "JavaScript tooling excluded from the root TypeScript program, so compilation proves nothing about it. Parse-checked as a class rather than type-checked.",
       "evidenceLane": "node --check over every tracked bin/*.mjs, plus the behavioural suites that spawn them",
       "files": [
+        "bin/affected-tests.mjs",
         "bin/agent-continuity-protocol.mjs",
         "bin/agent-state.mjs",
         "bin/ai-local-canary.mjs",

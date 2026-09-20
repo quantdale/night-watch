@@ -240,6 +240,7 @@ export const SCHEMA_FAMILIES: readonly SchemaFamilyDeclaration[] = [
   { family: 'nightwatch.portfolio-runtime-plan-document', persisted: false, store: 'IN_MEMORY', currentVersion: 1, versions: { 1: 'CURRENT' }, dispositions: [], note: "" },
   { family: 'nightwatch.portfolio-simulator', persisted: false, store: 'IN_MEMORY', currentVersion: 1, versions: { 1: 'CURRENT' }, dispositions: [], note: "" },
   { family: 'nightwatch.portfolio-yield-accounting', persisted: false, store: 'IN_MEMORY', currentVersion: 1, versions: { 1: 'CURRENT' }, dispositions: [], note: "" },
+  { family: 'nightwatch.affected-tests', persisted: false, store: 'IN_MEMORY', currentVersion: 1, versions: { 1: 'CURRENT' }, dispositions: [], note: "F-PERF-4 deterministic affected-test selection envelope; data-only" },
   { family: 'nightwatch.playwright-timings', persisted: false, store: 'IN_MEMORY', currentVersion: 1, versions: { 1: 'CURRENT' }, dispositions: [], note: "F-PERF-1 ephemeral runner telemetry written under the ignored test-results/timings/ directory and regenerated per invocation; no owner-state migration obligation" },
   { family: 'nightwatch.pre-dev-authority-receipt', persisted: false, store: 'IN_MEMORY', currentVersion: 3, versions: { 3: 'CURRENT' }, dispositions: [], note: "" },
   { family: 'nightwatch.pre-fix-source', persisted: false, store: 'IN_MEMORY', currentVersion: 1, versions: { 1: 'CURRENT' }, dispositions: [], note: "" },

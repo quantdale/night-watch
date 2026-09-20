@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "nightwatch.affected-tests-policy.v1",
+  "note": "Declared policy for the deterministic affected-test selector (F-PERF-4). Changes under broadenPrefixes select the full test universe rather than an impact subset, an unmapped source change broadens, and alwaysRun tests are selected on every change. This file is data only; the selector core is pure.",
+  "alwaysRun": [
+    "tests/unit/activeTaskRoutingBinding.test.ts",
+    "tests/unit/safety.test.ts",
+    "tests/unit/validationExecutionClasses.test.ts",
+    "tests/unit/validationShardPlan.test.ts",
+    "tests/unit/validationTiming.test.ts",
+    "tests/unit/validationAffectedTests.test.ts"
+  ],
+  "broadenPrefixes": [
+    ".agent/",
+    "bin/",
+    "config/",
+    "docs/",
+    "openspec/",
+    "package-lock.json",
+    "package.json",
+    "playwright",
+    "src/core/policy/",
+    "src/core/safety/",
+    "tests/fixtures/",
+    "tests/globalSetup.ts",
+    "tests/helpers/"
+  ],
+  "sourcePrefixes": [
+    "bin/",
+    "scenarios/",
+    "src/",
+    "tests/",
+    "ui/"
+  ]
+}
