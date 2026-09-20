@@ -129,6 +129,7 @@ Prefer the narrowest decisive existing tests during exploration. Validate each O
 - 2026-09-20 — Decision: partition child-process boundary totality into its own remediation change; reason: the rule's 18-file list is not a total authority census and unlisted callers pass ambient credentials or omit bounds; evidence: NW-AUD-014; consequence: `nightwatch-child-process-boundary-totality-v1` specifies AST-total classification and closed execution profiles.
 - 2026-09-20 — Decision: partition authentication capability bundle integrity into its own remediation change; reason: DEV refresh omits the lifecycle sidecar and direct capture publishes the two-member capability sequentially, so correct fail-closed readers cannot make writer success crash-consistent; evidence: NW-AUD-015; consequence: `nightwatch-auth-capability-bundle-transaction-integrity-v1` specifies total writer coverage, immutable generations, recovery, and final consumer binding.
 - 2026-09-20 — Decision: partition proxy runtime instance attestation into its own remediation change; reason: static state identities plus constant status-only health do not prove that the listener is the live policy-enforcing server; evidence: NW-AUD-016; consequence: `nightwatch-proxy-runtime-instance-attestation-v1` specifies lease/process/state/event coherence, active challenge, revocation, and consumer binding.
+- 2026-09-20 — Decision: partition L6 qualification proof integrity into its own remediation change; reason: UDP and browser speculative-network claims are marked PROVEN from omitted or unexercised evidence and the constant capability is not bound to the later runtime; evidence: NW-AUD-017; consequence: `nightwatch-l6-qualification-proof-integrity-v1` specifies witnessed positive-controlled probes, exact qualification-to-use identity, and non-fabricable READY authority.
 
 ## Discoveries
 
@@ -179,6 +180,10 @@ Prefer the narrowest decisive existing tests during exploration. Validate each O
   files. This is NW-AUD-015.
 - Proxy health accepts any loopback 204 response against mutable self-asserted
   state and carries no exact live-instance identity. This is NW-AUD-016.
+- L6 qualification omits the UDP result from its denial decision, observes
+  browser listeners the browser never targets, suppresses the speculative
+  hostname in resolver flags, and discards qualification identity before the
+  authenticated launch. This is NW-AUD-017.
 
 ## Deferred Work
 

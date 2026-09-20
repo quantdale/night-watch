@@ -124,6 +124,7 @@ No documentation inconsistency is admitted as a finding merely because historica
 | NW-AUD-014 | PROPOSED | High | High | subprocess containment / credentials / offline tooling / hardening totality | The boundary rule checks a manual 18-file list while 53 bin modules import child-process authority; unlisted callers spread/inherit ambient state, use acquiring `npx`, or omit timeout/output/stdio bounds, including network-sharing and authenticated paths | `bin/lib/hardening/rules/process-and-network.mjs:27-66`; `bin/gate-topology.mjs:394-508`; `bin/review-mutation-campaign.mjs:333-340`; `bin/phase22-dev.mjs:221-238`; static import/invocation census | Existing child-environment and launcher checks state the desired boundary but are non-total; NW-AUD-007 owns one compiler bootstrap only, and NW-AUD-012 owns configuration admission rather than process authority | `nightwatch-child-process-boundary-totality-v1` |
 | NW-AUD-015 | PROPOSED | Medium | High | authenticated capability lifecycle / storage-state publication | Automatic DEV refresh replaces storage state without writing the required digest-bound lifecycle sidecar; direct capture publishes state before a separate sidecar transaction, so successful refresh or interruption leaves a stale/missing/mixed capability and can discard the prior valid pair | `src/auth/devAutoLogin.ts:454-482,484-596`; `src/auth/directRunner.ts:515-561,596-615`; `src/auth/capabilityLifecycle.ts:337-370,445-551`; `src/browser/fixtures/storageState.ts:587-623`; current auth tests have no automatic-refresh sidecar or two-file interruption case | F-21 requires every capture to carry lifecycle metadata and fail-closed readers enforce it, but no active/published requirement owns complete writer coverage, multi-file crash consistency, or preflight-to-consumption generation binding | `nightwatch-auth-capability-bundle-transaction-integrity-v1` |
 | NW-AUD-016 | PROPOSED | High | High | mandatory outer proxy / runtime identity / health / control state | Proxy admission trusts a self-asserted state file plus any loopback listener returning 204 at the fixed health path; state has no per-start lease/process/server/event identity, so stale/replaced control state can admit a listener that never enforces Nightwatch policy | `src/proxy/runtime.ts:14-96`; `src/proxy/server.ts:154-228,331-342,618-657`; `src/proxy/portLease.ts:208-253`; `tests/globalSetup.ts:21-80`; `tests/unit/proxy.test.ts:245-293`; real-run gate/browser liveness consumers | Resolved-egress work binds static policy/resolver/exact-address versions, not the live server instance; no active change owns challenge-based health, state/lease/process/event coherence, or revocation | `nightwatch-proxy-runtime-instance-attestation-v1` |
+| NW-AUD-017 | PROPOSED | High | High | L6 process/network containment / qualification evidence / runtime binding | L6 returns every proof field as PROVEN even though the UDP probe result is omitted from `directDenied`, browser TCP/UDP observers are never targeted, resolver flags suppress the speculative-DNS stimulus, and the constant-only capability is discarded before a separately resolved authenticated launch | `src/core/oops/l6.ts:850-885,961-1022,1036-1119`; `src/core/oops/process.ts:272-310`; `tests/unit/l6Containment.test.ts:31-90` | NW-AUD-014 explicitly excludes redesigning L6 containment and only owns global child-call totality; no active change requires witnessed non-vacuous probes or binds qualification generation to use | `nightwatch-l6-qualification-proof-integrity-v1` |
 
 ## M1 candidate dispositions
 
@@ -150,6 +151,7 @@ No documentation inconsistency is admitted as a finding merely because historica
 |---|---|---|---|---|
 | NW-AUD-015 | PROPOSED | Authentication state and lifecycle metadata are not one writer-complete crash-consistent capability | `runDevAuthRefresh` ends after storage-state replacement and never calls `writeAuthCaptureRecord`; direct capture replaces the artefact, sets `stateCommitted`, then separately derives/writes the sidecar; readers correctly reject absent/digest-mismatched records, and tests exercise those rejections but not writer completeness or interruption between the two commits | MATERIAL → dedicated strictly-valid OpenSpec change |
 | NW-AUD-016 | PROPOSED | Static proxy state plus status-only health can falsely attest the mandatory containment executor | Runtime state contains no instance/lease/process-start identity; `checkProxyHealth` accepts status 204; the server returns 204 at the public fixed path; setup, real-run gate, and liveness consumers treat that as the active proxy; focused tests reject static version mismatch and event failure but do not substitute an unrelated 204 listener | MATERIAL → dedicated strictly-valid OpenSpec change |
+| NW-AUD-017 | PROPOSED | L6 qualification overclaims non-vacuous denial and is not bound to the authenticated runtime it authorizes | The Node probe records `udp: CONNECTED` on successful send but `directDenied` omits it; browser observer ports never enter Chrome arguments or content while `*.invalid` is mapped to NOTFOUND; READY is a public constant constructor, and `runRestrictedOops` discards qualification context before a new Bubblewrap/target resolution | MATERIAL → dedicated strictly-valid OpenSpec change |
 
 NW-AUD-001 severity is Medium rather than High: compromise or malicious
 movement of an upstream action identity is an external precondition, and the
@@ -257,6 +259,14 @@ Chromium is configured to send credential-bearing traffic through the admitted
 listener, and a permissive substitute can relay destinations that the real
 Nightwatch policy would deny, including production-class targets.
 
+NW-AUD-017 severity is High rather than Critical: the empty network namespace
+still provides substantial structural isolation, and exploitation requires a
+supported local L6 host plus runtime/path influence or a qualification defect
+that the current probes miss. It remains High because L6 is the mandatory
+authority for authenticated OOPS execution, its READY receipt explicitly
+certifies fields not established by complete stimuli, and the proof is not
+bound to the later executable/namespace generation.
+
 ## Validation ledger
 
 | Command/evidence | Result | Purpose |
@@ -295,10 +305,12 @@ Nightwatch policy would deny, including production-class targets.
 | `openspec validate nightwatch-auth-capability-bundle-transaction-integrity-v1 --strict` | PASS; 4/4 artifact classes complete | NW-AUD-015 remediation is apply-ready |
 | static proxy runtime/server/lease/setup/gate/test inspection | SUBSTANTIATED READ-ONLY; current health is fixed-path status-only and runtime state has no exact live-instance binding | Establish NW-AUD-016 without starting a proxy or network target |
 | `openspec validate nightwatch-proxy-runtime-instance-attestation-v1 --strict` | PASS; 4/4 artifact classes complete | NW-AUD-016 remediation is apply-ready |
+| static L6 Node/browser probe, decision, launch, and test inspection | SUBSTANTIATED READ-ONLY; UDP is omitted, browser observers are untargeted, speculative stimulus is suppressed, and qualification is not carried into launch | Establish NW-AUD-017 without starting Bubblewrap, Chrome, OOPS, or a network target |
+| `openspec validate nightwatch-l6-qualification-proof-integrity-v1 --strict` | PASS; 4/4 artifact classes complete | NW-AUD-017 remediation is apply-ready |
 
 ## Completion audit
 
 Not yet eligible. M1 is complete and M2 remains active, while later browser/source/
-campaign/UI/validation waves remain pending. Thirteen material findings
-currently map one-to-one to thirteen strict-valid issue-specific remediation
+campaign/UI/validation waves remain pending. Fourteen material findings
+currently map one-to-one to fourteen strict-valid issue-specific remediation
 changes; that partial portfolio is not evidence of whole-repository completeness.

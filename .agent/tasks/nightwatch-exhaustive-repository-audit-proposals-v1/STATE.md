@@ -50,16 +50,17 @@ What is being attempted: audit core safety, environment/policy authorization, pr
 - NW-AUD-014: PROPOSED (High/High-confidence); dedicated change `nightwatch-child-process-boundary-totality-v1` is 4/4 complete and strict-valid.
 - NW-AUD-015: PROPOSED (Medium/High-confidence); dedicated change `nightwatch-auth-capability-bundle-transaction-integrity-v1` is 4/4 complete and strict-valid.
 - NW-AUD-016: PROPOSED (High/High-confidence); dedicated change `nightwatch-proxy-runtime-instance-attestation-v1` is 4/4 complete and strict-valid.
+- NW-AUD-017: PROPOSED (High/High-confidence); dedicated change `nightwatch-l6-qualification-proof-integrity-v1` is 4/4 complete and strict-valid.
 - NW-AUD-002: DUPLICATE of production-completion tasks 15.7/15.11; NW-AUD-003: NOT_AN_ISSUE after validation-universe PASS with zero unclassified checks; NW-AUD-008: DUPLICATE of the production-completion operator CLI contract.
 - M1 repository topology/dependencies/configuration/build/tooling: COMPLETE.
 
 ## Work In Progress
 
-M2 is active. The policy/host graph, L5 proxy resolution/server/runtime/lease surfaces, authentication lifecycle/direct/refresh/storage publication, and related tests have been traced far enough to admit NW-AUD-015 and NW-AUD-016. Remaining M2 work must finish L6/OOPS lifecycle, auth provider/login error paths, browser-guard runtime capability claims, safety redaction/private screening, and complete denominator reconciliation. Later waves still revisit `bin/` and browser call sites by their own responsibilities.
+M2 is active. The policy/host graph, L5 proxy resolution/server/runtime/lease surfaces, authentication lifecycle/direct/refresh/storage publication, L6 qualification/launch binding, and related tests have been traced far enough to admit NW-AUD-015, NW-AUD-016, and NW-AUD-017. Remaining M2 work must finish L6 control/lifecycle edges, auth provider/login error paths, browser-guard runtime capability claims, safety redaction/private screening, and complete denominator reconciliation. Later waves still revisit `bin/` and browser call sites by their own responsibilities.
 
 ## Exact Next Action
 
-Complete the remaining L6/OOPS lifecycle and authentication provider/login/error-path inspection, resolve browser-guard/runtime-capability leads against outer-proxy/L6 redundancy, and reconcile every M2 source/test row before milestone closure.
+Complete the remaining L6 control/lifecycle and authentication provider/login/error-path inspection, resolve browser-guard/redaction/private-screening leads against outer-proxy/L6 redundancy, and reconcile every M2 source/test row before milestone closure.
 
 ## Files Changed
 
@@ -81,6 +82,7 @@ Complete the remaining L6/OOPS lifecycle and authentication provider/login/error
 | `openspec/changes/nightwatch-child-process-boundary-totality-v1/` | NW-AUD-014 implementation-ready remediation proposal | complete planning artifact |
 | `openspec/changes/nightwatch-auth-capability-bundle-transaction-integrity-v1/` | NW-AUD-015 implementation-ready remediation proposal | complete planning artifact |
 | `openspec/changes/nightwatch-proxy-runtime-instance-attestation-v1/` | NW-AUD-016 implementation-ready remediation proposal | complete planning artifact |
+| `openspec/changes/nightwatch-l6-qualification-proof-integrity-v1/` | NW-AUD-017 implementation-ready remediation proposal | complete planning artifact |
 
 ## Validation Ledger
 
@@ -214,6 +216,16 @@ Result: PASS
 When: 2026-09-20
 Relevant failure/output summary: proposal, design, proxy-runtime-instance-attestation spec, and tasks are 4/4 complete/apply-ready.
 
+Command: static L6 Node/browser probe, decision, launch, and test inspection
+Result: SUBSTANTIATED READ-ONLY
+When: 2026-09-20
+Relevant failure/output summary: UDP is omitted from directDenied, browser observer ports never enter the stimulus, resolver flags suppress the speculative hostname, and qualification identity is discarded before authenticated launch.
+
+Command: `openspec validate nightwatch-l6-qualification-proof-integrity-v1 --strict`
+Result: PASS
+When: 2026-09-20
+Relevant failure/output summary: proposal, design, l6-qualification-proof-integrity spec, and tasks are 4/4 complete/apply-ready.
+
 Command: `npm run agent:check`
 Result: PASS with 41 pre-existing/expected warnings and zero strict-v2 errors
 When: 2026-09-20
@@ -337,6 +349,15 @@ Evidence/constraint: exact runtime parser/health endpoint and setup/gate/poll
 consumers, no lease/process-start/nonce/event-generation identity, and no fake
 204 listener or state-swap regression in current tests.
 
+Decision: admit NW-AUD-017 at High severity and create a dedicated change.
+Reason: L6 is the mandatory authenticated subprocess authority, but current
+READY derivation marks omitted or unexercised denial claims PROVEN and does not
+bind the proof to the later runtime; the structural empty namespace and local
+preconditions keep the issue below Critical.
+Evidence/constraint: UDP result omission, untargeted browser observers,
+resolver-suppressed speculative stimulus, public constant READY construction,
+and separate Bubblewrap/target resolution after qualification.
+
 ## Discoveries
 
 - Registered topology has room for this worktree under the repository's maximum of eight.
@@ -375,6 +396,9 @@ consumers, no lease/process-start/nonce/event-generation identity, and no fake
   capability through one complete transaction. This is NW-AUD-015.
 - Proxy runtime readiness proves static claims and port reachability, not the
   exact live containment instance that owns policy and evidence. This is NW-AUD-016.
+- L6 qualification marks UDP and browser speculative-network denial PROVEN
+  without complete witnessed stimuli, and the receipt does not authorize the
+  exact later namespace/executable generation. This is NW-AUD-017.
 
 ## Blockers
 
@@ -398,6 +422,6 @@ NONE
 
 ## Completion Snapshot
 
-Not complete; M1 is complete and M2 is active. Thirteen issue-specific changes
+Not complete; M1 is complete and M2 is active. Fourteen issue-specific changes
 are strict-valid, but milestones M2-M10 are still required before any
 exhaustive conclusion.
