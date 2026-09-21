@@ -32,6 +32,14 @@ Collection-wide expectations SHALL be rebuilt only from a verified canonical his
 - **WHEN** a caller constructs a derived record with a genuine digest and a noncanonical valid invariant
 - **THEN** collection admission refuses rather than promotes that invariant
 
+### Requirement: Campaign mappings preserve canonical expectation identity
+
+Approved campaign mappings SHALL obtain the expectation ID from the registered recipe blueprint and SHALL preserve exact recipe/target/expectation identity through bundle validation. A target ID SHALL NOT be substituted for an expectation ID.
+
+#### Scenario: Mapper aliases target as expectation
+- **WHEN** a campaign mapper emits the approved target ID where the recipe declares a distinct expectation ID
+- **THEN** mapping or bundle validation refuses the identity mismatch
+
 ### Requirement: Synthetic derivation is non-promotable
 
 Synthetic fixtures and annotation adapters SHALL use an explicit non-promotable interface and SHALL NOT mint real-source derivation records or satisfy contained-DEV preflight.

@@ -11,7 +11,7 @@ Last substantive checkpoint SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-exhaustive-repository-ef157f7a
-Last checkpoint: 2026-09-21 — M1 through M3 complete; the 154-source/118-test M3 denominator is terminally reconciled and thirty-two findings map one-to-one to strict-valid changes.
+Last checkpoint: 2026-09-21 — M1 through M3 complete; M4 source, expectation, receipt, partial-observation, analyzer, coverage-authority, and gap-ledger findings through NW-AUD-042 map one-to-one to strict-valid changes.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
@@ -72,6 +72,10 @@ What is being attempted: audit source confinement/currentness, semantic extracti
 - NW-AUD-036: PROPOSED (High/High-confidence); dedicated change `nightwatch-source-snapshot-transaction-integrity-v1` is 4/4 complete and strict-valid.
 - NW-AUD-037: PROPOSED (High/High-confidence); dedicated change `nightwatch-real-source-expectation-authority-integrity-v1` is 4/4 complete and strict-valid.
 - NW-AUD-038: PROPOSED (Medium/High-confidence); dedicated change `nightwatch-semantic-receipt-acceptance-integrity-v1` is 4/4 complete and strict-valid.
+- NW-AUD-039: PROPOSED (High/High-confidence); dedicated change `nightwatch-semantic-partial-observation-soundness-v1` is 4/4 complete and strict-valid.
+- NW-AUD-040: PROPOSED (High/High-confidence); dedicated change `nightwatch-semantic-source-analyzer-proof-soundness-v1` is 4/4 complete and strict-valid.
+- NW-AUD-041: PROPOSED (High/High-confidence); dedicated change `nightwatch-semantic-coverage-evidence-authority-v1` is 4/4 complete and strict-valid.
+- NW-AUD-042: PROPOSED (Medium/High-confidence); dedicated change `nightwatch-semantic-gap-ledger-integrity-v1` is 4/4 complete and strict-valid.
 - NW-AUD-002: DUPLICATE of production-completion tasks 15.7/15.11; NW-AUD-003: NOT_AN_ISSUE after validation-universe PASS with zero unclassified checks; NW-AUD-008: DUPLICATE of the production-completion operator CLI contract.
 - M1 repository topology/dependencies/configuration/build/tooling: COMPLETE.
 - M2 core safety/environment/policy/proxy/L6/authentication: COMPLETE; 32 primary boundary files, 5 cross-boundary consumers, and 55 direct/transitive focused-test entrypoints reconciled with no undispositioned M2 lead.
@@ -79,11 +83,11 @@ What is being attempted: audit source confinement/currentness, semantic extracti
 
 ## Work In Progress
 
-M4 is active with a frozen denominator of 139 primary source files and 162 direct/transitive focused-test entrypoints. It covers 52 source-intelligence files, 52 expectation/projection/invariant/semantic-oracle files (excluding the two protocol files closed in M3), 27 semantic acceptance/coverage/Phase-9B/10B files, and 8 change-intelligence files. Source and expectation authority produced NW-AUD-036..038; projection/invariant/semantic-runner and remaining coverage/acceptance coherence are next.
+M4 is active with a frozen denominator of 139 primary source files and 162 direct/transitive focused-test entrypoints. It covers 52 source-intelligence files, 52 expectation/projection/invariant/semantic-oracle files (excluding the two protocol files closed in M3), 27 semantic acceptance/coverage/Phase-9B/10B files, and 8 change-intelligence files. Source, expectation, receipt, partial-observation, analyzer, coverage-authority, and gap-ledger work produced NW-AUD-036..042. Semantic finding/artifact and remaining contract-lifecycle surfaces are next, followed by change-intelligence consumers and M4 terminal reconciliation.
 
 ## Exact Next Action
 
-Inspect M4 projection/invariant/semantic-runner and remaining coverage/acceptance coherence after NW-AUD-036..038; terminally disposition each lead before change-intelligence consumers and M4 closure.
+Inspect semantic finding/artifact and remaining contract-lifecycle surfaces after NW-AUD-036..042, then change-intelligence consumers; terminally disposition every residual M4 lead before closure.
 
 ## Files Changed
 
@@ -130,6 +134,14 @@ Inspect M4 projection/invariant/semantic-runner and remaining coverage/acceptanc
 | `.agent/tasks/nightwatch-real-source-expectation-authority-integrity-v1/` | completed child planning continuity for NW-AUD-037 | complete planning artifact |
 | `openspec/changes/nightwatch-semantic-receipt-acceptance-integrity-v1/` | NW-AUD-038 implementation-ready remediation proposal | complete planning artifact |
 | `.agent/tasks/nightwatch-semantic-receipt-acceptance-integrity-v1/` | completed child planning continuity for NW-AUD-038 | complete planning artifact |
+| `openspec/changes/nightwatch-semantic-partial-observation-soundness-v1/` | NW-AUD-039 implementation-ready remediation proposal | complete planning artifact |
+| `.agent/tasks/nightwatch-semantic-partial-observation-soundness-v1/` | completed child planning continuity for NW-AUD-039 | complete planning artifact |
+| `openspec/changes/nightwatch-semantic-source-analyzer-proof-soundness-v1/` | NW-AUD-040 implementation-ready remediation proposal | complete planning artifact |
+| `.agent/tasks/nightwatch-semantic-source-analyzer-proof-soundness-v1/` | completed child planning continuity for NW-AUD-040 | complete planning artifact |
+| `openspec/changes/nightwatch-semantic-coverage-evidence-authority-v1/` | NW-AUD-041 implementation-ready remediation proposal | complete planning artifact |
+| `.agent/tasks/nightwatch-semantic-coverage-evidence-authority-v1/` | completed child planning continuity for NW-AUD-041 | complete planning artifact |
+| `openspec/changes/nightwatch-semantic-gap-ledger-integrity-v1/` | NW-AUD-042 implementation-ready remediation proposal | complete planning artifact |
+| `.agent/tasks/nightwatch-semantic-gap-ledger-integrity-v1/` | completed child planning continuity for NW-AUD-042 | complete planning artifact |
 | `.agent/tasks/nightwatch-{protocol-dossier-readiness-integrity,triage-evidence-contract-integrity,durable-artifact-validation-bounds,phase6-owner-scope-quarantine-integrity,production-budget-reservation-lifecycle-integrity,production-observation-receipt-integrity,browser-response-acquisition-integrity}-v1/` | completed child planning continuity for NW-AUD-029..035 | complete planning artifacts |
 
 ## Validation Ledger
@@ -414,6 +426,46 @@ Result: PASS (4/4 artifact classes)
 When: 2026-09-21
 Relevant failure/output summary: semantic receipt/acceptance remediation is apply-ready and unimplemented.
 
+Command: static projection/invariant/relational/differential/metamorphic inspection
+Result: SUBSTANTIATED READ-ONLY
+When: 2026-09-21
+Relevant failure/output summary: NW-AUD-039 established because missing per-item results and truncated trees/prefixes can become decisive semantic success.
+
+Command: `openspec validate nightwatch-semantic-partial-observation-soundness-v1 --strict`
+Result: PASS (4/4 artifact classes)
+When: 2026-09-21
+Relevant failure/output summary: completeness-aware semantic evaluation remediation is apply-ready and unimplemented.
+
+Command: static source-analyzer/discovery/cache/test inspection
+Result: SUBSTANTIATED READ-ONLY
+When: 2026-09-21
+Relevant failure/output summary: NW-AUD-040 established from raw lexical matching, wrong/unbound symbol flow, OpenAPI repair, and silent output slicing.
+
+Command: `openspec validate nightwatch-semantic-source-analyzer-proof-soundness-v1 --strict`
+Result: PASS (4/4 artifact classes)
+When: 2026-09-21
+Relevant failure/output summary: syntax/flow/totality-bound analyzer remediation is apply-ready and unimplemented.
+
+Command: static coverage graph/campaign/mutation/lifecycle/quality inspection
+Result: SUBSTANTIATED READ-ONLY
+When: 2026-09-21
+Relevant failure/output summary: NW-AUD-041 established because caller assertions and omitted lifecycle evidence can self-certify coverage stages.
+
+Command: `openspec validate nightwatch-semantic-coverage-evidence-authority-v1 --strict`
+Result: PASS (4/4 artifact classes)
+When: 2026-09-21
+Relevant failure/output summary: producer-bound coverage evidence remediation is apply-ready and unimplemented.
+
+Command: static graph/closure-ledger/quality inspection
+Result: SUBSTANTIATED READ-ONLY
+When: 2026-09-21
+Relevant failure/output summary: NW-AUD-042 established from status overrides, omitted new gaps, lossy joins, inconsistent counts, and duplicate-surface inflation.
+
+Command: `openspec validate nightwatch-semantic-gap-ledger-integrity-v1 --strict`
+Result: PASS (4/4 artifact classes)
+When: 2026-09-21
+Relevant failure/output summary: lossless census and evidence-bound closure remediation is apply-ready and unimplemented.
+
 Command: `npm run agent:check`
 Result: PASS with 40 pre-existing/expected warnings and zero strict-v2 errors
 When: 2026-09-21
@@ -694,6 +746,36 @@ composed, but DEV contact and external effects remain separately owner-gated.
 Evidence/constraint: weak direct parser, caller-selected contained class,
 partial outcome matrix, and unvalidated mixed-receipt summary.
 
+Decision: absorb the target-as-expectation campaign mapper defect into NW-AUD-037.
+Reason: it is the same canonical recipe/target/expectation identity split, not
+a distinct root cause.
+Evidence/constraint: active recipe blueprint expectation IDs differ from their
+target IDs while the mapper emits `expectationId: recipe.targetId`.
+
+Decision: admit NW-AUD-039 at High severity with a dedicated change.
+Reason: incomplete evidence can become source-backed PASS/equivalence and feed
+acceptance; external execution remains separately gated.
+Evidence/constraint: ignored per-item NOT_APPLICABLE results, boolean recursive
+comparison, and prefix-only identity/set relations.
+
+Decision: admit NW-AUD-040 at High severity with a dedicated change.
+Reason: raw-text occurrence can manufacture the mechanical proof used for
+source-backed admission.
+Evidence/constraint: regex-only TS/JS and Go analysis, unbound behavior flow,
+schema repair, and silent output slicing.
+
+Decision: admit NW-AUD-041 at High severity with a dedicated change.
+Reason: structural claims can manufacture the lifecycle evidence used to call
+a source-backed contract fully covered.
+Evidence/constraint: caller booleans, unvalidated DTOs, omitted-evidence success
+defaults, and replay/minimization that do not independently execute findings.
+
+Decision: admit NW-AUD-042 at Medium severity with a dedicated change.
+Reason: it corrupts owner-local gap census and closure prioritization without
+independently admitting a source contract or authorizing execution.
+Evidence/constraint: status overrides, baseline-only lossy rebuild, count
+divergence, and repeated-surface inflation.
+
 ## Discoveries
 
 - Registered topology has room for this worktree under the repository's maximum of eight.
@@ -771,6 +853,14 @@ partial outcome matrix, and unvalidated mixed-receipt summary.
   expectation or collection transform; this is NW-AUD-037.
 - Semantic receipts can self-classify as contained evidence and acceptance can
   compose identity/decisiveness across unvalidated records; this is NW-AUD-038.
+- Missing item paths and truncated prefixes can become decisive PASS or
+  equivalence; this is NW-AUD-039.
+- Raw-text multi-language analyzers and silent output slicing can manufacture
+  complete mechanical source proof; this is NW-AUD-040.
+- Caller booleans/DTOs and compatibility defaults can self-certify contract
+  lifecycle coverage; this is NW-AUD-041.
+- Gap rebuild can omit new gaps, self-certify closure, and publish inconsistent
+  census/surface facts; this is NW-AUD-042.
 - M3 produced thirteen non-duplicate strict-valid changes in total; all
   remaining M3 leads are terminally duplicate or non-material under current
   reachability, so M4 is now active.
@@ -797,6 +887,6 @@ NONE
 
 ## Completion Snapshot
 
-Not complete; M1 through M3 are complete and M4 is active. Thirty-two issue-specific
+Not complete; M1 through M3 are complete and M4 is active. Thirty-nine issue-specific
 changes are strict-valid, but milestones M4-M10 are still required before any
 exhaustive conclusion.

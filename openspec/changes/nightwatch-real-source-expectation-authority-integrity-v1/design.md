@@ -26,6 +26,10 @@ The record includes schema version, registered recipe ID and canonical recipe di
 
 Collection admission accepts only a verified historical derivation record, checks its fixed target mapping and recipe generation, then deterministically rebuilds and validates the collection expectation. It never trusts caller-supplied historical invariants or a free `DerivedRealSourceExpectation` object.
 
+### Derive campaign identity from the canonical recipe
+
+Campaign mapping resolves the approved recipe and emits the blueprint's canonical expectation ID. It never substitutes the target ID for the expectation ID. Bundle validation requires the same recipe, target, expectation, and source generation at every layer so helper fixtures cannot normalize the wrong alias into apparent coherence.
+
 ### Separate synthetic use
 
 Synthetic recipes/readers remain available through an explicitly non-promotable test interface. They cannot produce the real-authority record type or satisfy contained-DEV preflight.

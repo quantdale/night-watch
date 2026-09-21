@@ -143,6 +143,8 @@ Prefer the narrowest decisive existing tests during exploration. Validate each O
 - 2026-09-21 — Decision: freeze M4 at 139 primary source files and 162 direct/transitive focused-test entrypoints; reason: source intelligence, expectations/projections/invariants/semantic evaluation, acceptance/coverage, phase-specific currentness, and change-intelligence consumers form the complete semantic/source responsibility cone; consequence: protocol oracles stay closed under M3 and campaign-intelligence runtime behavior remains M5.
 - 2026-09-21 — Decision: admit NW-AUD-036 as a distinct source snapshot transaction scope; reason: unclosed repository identity, analyzable digest mismatch, unguarded route parsing, constant Phase 24 match, and pathname TOCTOU jointly undermine exact current-source authority; consequence: `nightwatch-source-snapshot-transaction-integrity-v1` specifies one closed transaction without contacting sibling repositories.
 - 2026-09-21 — Decision: admit NW-AUD-037 and NW-AUD-038 as distinct semantic authority scopes; reason: canonical expectation semantics can be changed beside genuine source evidence, while evaluation/acceptance receipts have separate producer, parsing, and set-coherence gaps; consequence: real-source contract authority and contained acceptance evidence each receive one strict-valid proposal.
+- 2026-09-21 — Decision: absorb the campaign mapper's target-as-expectation alias into NW-AUD-037; reason: the defect is another canonical recipe/target/expectation identity split, not a new root cause; consequence: the existing change now explicitly owns campaign mapping and bundle coherence.
+- 2026-09-21 — Decision: admit NW-AUD-039 through NW-AUD-042 as four distinct remediation scopes; reason: partial-observation semantics, source-analyzer proof, lifecycle evidence authority, and ledger census/closure are enforced at different layers and have independent negative-test matrices; consequence: each now has one strict-valid planning change without implementation.
 
 ## Discoveries
 
@@ -258,6 +260,16 @@ Prefer the narrowest decisive existing tests during exploration. Validate each O
 - Semantic receipt parsing and contained evidence issuance are split, and
   Phase 9B can compose identity and decisiveness across unvalidated receipts.
   This is NW-AUD-038.
+- Missing item paths and truncated projection prefixes can become decisive
+  semantic PASS/equivalence outcomes. This is NW-AUD-039.
+- TS/JS and Go analyzers can manufacture mechanical proof from raw-text decoys,
+  unrelated operations, or the wrong declaration, while overflow is silently
+  sliced. This is NW-AUD-040.
+- Coverage and lifecycle stages trust caller booleans/structural DTOs, and
+  missing synthetic lifecycle evidence self-certifies replay, minimization,
+  and confidence. This is NW-AUD-041.
+- Gap rebuild can omit new current gaps, self-certify closure, collide records,
+  publish inconsistent totals, and inflate surfaces. This is NW-AUD-042.
 - Residual M3 compatibility fingerprint, P1 strong-Set/synchronous-poll,
   download-ordering, recorder-error, and Phase-6 transform leads are terminally
   non-material or duplicate under the current local/mock/owner-gated reachability.

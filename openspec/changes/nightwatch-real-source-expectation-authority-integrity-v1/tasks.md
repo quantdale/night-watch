@@ -12,6 +12,7 @@ Implementation is outside the planning-only audit campaign. These tasks are decl
 - [ ] ~~2.3 Rebuild and compare complete expectations during resolution.~~
 - [ ] ~~2.4 Bind collection transforms to verified derivation records.~~
 - [ ] ~~2.5 Separate non-promotable synthetic derivation and remove shape-only proof authority.~~
+- [ ] ~~2.6 Derive campaign mappings from canonical recipe blueprint expectation IDs and reject target aliases.~~
 
 ## 3. Prove closure
 
