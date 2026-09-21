@@ -62,8 +62,8 @@ The following top-level classes are exhaustive and mutually exclusive for the st
 
 | Subsystem | Tracked paths | Audit wave | Status |
 |---|---:|---|---|
-| `src/core/` | 465 | M2/M3/M4/M5/M7 by responsibility | M2_SAFETY_OOPS_POLICY_BOUNDARIES_COMPLETE; M3_BROWSER_API_EVIDENCE_REPLAY_RESPONSIBILITIES_COMPLETE; LATER_WAVES_PENDING |
-| `src/oracles/` | 54 | M4 | PENDING |
+| `src/core/` | 465 | M2/M3/M4/M5/M7 by responsibility | M2_SAFETY_OOPS_POLICY_BOUNDARIES_COMPLETE; M3_BROWSER_API_EVIDENCE_REPLAY_RESPONSIBILITIES_COMPLETE; M4_SOURCE_SEMANTIC_CHANGE_INTELLIGENCE_COMPLETE; LATER_WAVES_PENDING |
+| `src/oracles/` | 54 | M4 | M4_COMPLETE |
 | `src/controlCenter/` | 43 | M6 | PENDING |
 | `src/browser/` | 14 | M2/M3 | M2_GUARD_AND_AUTH_BOUNDARIES_COMPLETE; M3_COMPLETE |
 | `src/products/` | 12 | M3 | M3_COMPLETE |
@@ -150,6 +150,7 @@ No documentation inconsistency is admitted as a finding merely because historica
 | NW-AUD-040 | PROPOSED | High | High | semantic source analyzers / mechanical proof / completeness | TS/JS and Go analyzers regex-scan raw source including decoys and unrelated declarations/flows; OpenAPI repairs incoherence; output beyond 256 is silently sliced | `src/core/semanticCoverage/sourceAnalyzers.ts:712-942`; discovery/admission/cache/report consumers; Phase 25/26 tests | NW-AUD-037 owns canonical fixed-recipe expectation derivation; it does not own the broader Phase-20 multi-language analyzer's lexical, flow, or totality proof | `nightwatch-semantic-source-analyzer-proof-soundness-v1` |
 | NW-AUD-041 | PROPOSED | High | High | semantic coverage and lifecycle evidence authority | Admission, contracts, graph, campaign, and quality trust caller booleans/structural DTOs; missing lifecycle evidence defaults to replayed/minimized/high-confidence; synthetic replay/minimization does not independently execute the semantic finding | `src/core/semanticCoverage/{discovery,relational,differential,metamorphic,membership,graph,campaignIntegration,mutation,lifecycle,quality}.ts`; Phase 20/21 tests | NW-AUD-039 owns evaluator completeness and NW-AUD-042 owns ledger accounting; neither establishes producer evidence for lifecycle promotions | `nightwatch-semantic-coverage-evidence-authority-v1` |
 | NW-AUD-042 | PROPOSED | Medium | High | semantic graph gap census / closure ledger | Caller status overrides self-certify closure; rebuild walks only baseline records with a lossy key, omits new gaps, marks unexplained removals obsolete, publishes divergent counts, and double-counts repeated surfaces | `src/core/semanticCoverage/{graph,closureLedger,quality}.ts`; `tests/unit/phase21Integration.test.ts` | NW-AUD-041 owns capability evidence, not lossless current/historical ledger identity, rebuild conservation, or surface cardinality | `nightwatch-semantic-gap-ledger-integrity-v1` |
+| NW-AUD-043 | PROPOSED | Medium | High | change-directed selection / source generation / rename impact | Selector staleness compares configured map pins only to each other, never actual ChangeSet baseline/head; ChangeSet is not exact-validated/resealed; non-runtime classification suppresses a rename when either endpoint matches docs/tests/CI | `src/core/changeIntelligence/{types,git,map,selection}.ts`; real Phase-7 caller; change-intelligence tests/backtests | NW-AUD-036 owns exact source snapshot reads and NW-AUD-040 owns semantic source analyzers; neither binds dependency-map generation and rename endpoints to change selection | `nightwatch-change-intelligence-source-generation-integrity-v1` |
 
 ## M1 candidate dispositions
 
@@ -218,6 +219,7 @@ No documentation inconsistency is admitted as a finding merely because historica
 | NW-AUD-040 | PROPOSED | Raw-text occurrence and silent truncation are treated as mechanical source proof | comment/string/wrong-symbol/unbound-flow matches plus output slicing | MATERIAL → dedicated strictly-valid OpenSpec change |
 | NW-AUD-041 | PROPOSED | Caller assertions are treated as semantic lifecycle execution evidence | boolean/DTO promotion, omitted-evidence success defaults, non-executing replay/minimization | MATERIAL → dedicated strictly-valid OpenSpec change |
 | NW-AUD-042 | PROPOSED | Gap closure and rebuild are neither evidence-bound nor census-preserving | status overrides, baseline-only lossy join, count divergence, repeated-surface inflation | MATERIAL → dedicated strictly-valid OpenSpec change |
+| NW-AUD-043 | PROPOSED | Selective journey confidence is not bound to the actual map/source interval | pin-only staleness, structural ChangeSet trust, and one-sided non-runtime rename suppression | MATERIAL → dedicated strictly-valid OpenSpec change |
 
 ### M3 frozen responsibility denominator
 
@@ -268,10 +270,55 @@ the two protocol files closed in M3, 27 across semantic acceptance, semantic
 coverage, Phase 9B freshness/preflight/summary, and Phase 10B deep acceptance,
 plus 8 change-intelligence source/currentness consumers. A path/import/symbol
 census identifies 162 direct or transitive focused-test entrypoints. Source
-read/confinement/cache/currentness is the first tranche; extraction/admission,
-projection/invariant/receipt coherence, semantic coverage/acceptance, and
-change-intelligence consumption remain open. Campaign-intelligence runtime
+read/confinement/cache/currentness, extraction/admission, projection/invariant/
+receipt coherence, semantic coverage/acceptance, and change-intelligence
+consumption are terminally reconciled below. Campaign-intelligence runtime
 behavior is not silently absorbed here and remains M5.
+
+### M4 coverage reconciliation
+
+| Responsibility row | Primary source files | Focused test responsibility | Terminal disposition |
+|---|---:|---|---|
+| Source boundary, repository inventory, call-scoped reads, route/operation discovery, snapshots, caches, currentness | 52 | source inventory/completeness/confinement/currentness and approved-scan entries within the 162-entrypoint census | NW-AUD-036; analyzer consumers additionally NW-AUD-040; remaining deterministic adapters/helpers map to exact transaction authority with no separate issue |
+| Expectation recipes, extraction/admission/resolution, projections, invariants, semantic runner/findings/receipts/dossiers | 52 | Phase 9-18 semantic, real-source, receipt, triage, and adversarial entries | NW-AUD-037..040; weak finding/dossier identity is absorbed by NW-AUD-038; static vocabularies/registries and current exact schema validators add no independent issue |
+| Semantic acceptance/coverage, Phase 9B/10B, graph, mutation/lifecycle, quality and closure | 27 | Phase 9B/10B and Phase 18-26 acceptance/coverage entries | NW-AUD-038..042; cache-only mutability is not currently reachable outside tests and future authority is constrained by NW-AUD-041 |
+| Change intelligence and release-freshness consumers | 8 | change-intelligence/backtest/release-freshness/Phase-19 entries | NW-AUD-043; release-freshness inventory/oracle path is strict and fail-closed; baseline advancement is test-only and non-authoritative under current reachability |
+| **Total** | **139** | **162 direct/transitive focused-test entrypoints terminally mapped to the same rows** | **M4 COMPLETE** |
+
+### M4 residual lead dispositions
+
+| Lead | Disposition | Rationale |
+|---|---|---|
+| Campaign mapper emits target ID as expectation ID | DUPLICATE | canonical recipe/target/expectation campaign identity is now explicit in NW-AUD-037 |
+| Semantic finding ID is format-only; nested provenance and dossier projection are weak | DUPLICATE | decisive finding/dossier validation and generation binding are explicit parts of NW-AUD-038 |
+| Projection serializer and recursive semantic DTO readers lack independent bounds | DUPLICATE | general durable/DTO validation work bounds belong to NW-AUD-031; completeness semantics belong to NW-AUD-039 |
+| Semantic coverage cache returns mutable references | NOT_MATERIAL_CURRENTLY | current callers are tests only; before authority use, NW-AUD-041 requires exact validated generation-bound cache outputs |
+| Expectation currentness helper defaults evidence verification to not-applicable | DUPLICATE | real authority cannot derive from a label under NW-AUD-037; current helper reachability is synthetic/test-only |
+| Source annotation adapter can construct synthetic expectations with real-looking labels | DUPLICATE | NW-AUD-037 requires an explicit non-promotable synthetic lane and canonical producer authority |
+| Lifecycle vocabularies accept structural categorical inputs | DUPLICATE | authoritative source/coverage records are closed by NW-AUD-037/NW-AUD-041; the vocabulary tables themselves are deterministic, total, and validation-tested |
+| Baseline advancement accepts weak execution disposition | NOT_MATERIAL_CURRENTLY | no non-test caller exists; it cannot currently advance campaign authority, and any future wiring requires a new validated campaign-disposition boundary |
+| Baseline atomic writer lacks broader publication durability/symlink policy | DUPLICATE | current path is test-only; shared local-report publication hardening is NW-AUD-009 if the writer becomes reachable |
+| Release freshness uses an injected ancestry oracle | NOT_AN_ISSUE | the production CLI supplies fixed-argv local Git, inventory is exact/path-confined, invalid input performs zero observation, and report vocabulary explicitly disclaims deployment authority |
+
+All 139 M4 files and all 162 focused/transitive test entrypoints now map to a
+material proposal, a prior/duplicate owner, or a terminal current-reachability
+rationale. No M4 lead remains undispositioned. Campaign scheduling/runtime,
+provider/tool execution, checkpointing, reproduction/admission, and findings
+store behavior remain M5 and were not silently closed here.
+
+## M5 frozen responsibility denominator
+
+M5 owns 220 primary source files across agent protocol/runtime/tools, AI review
+and reasoner, campaign/campaign-intelligence, investigation/reproduction/
+findings, benchmark/efficacy/Bug Atlas, readiness/rehearsal, portfolio,
+Phase 12/13/22/23/24 runtimes, and self-development/sandbox/promotion. A static
+import/caller census adds 28 cross-boundary source consumers and 28 bin
+launchers/tools. The corresponding direct/transitive focused-test census has
+168 entrypoints. M5 will reconcile scheduling, budgets, checkpoint/resume,
+provider/tool authority, current-source investigation, reproduction/admission,
+novelty, persistence, and autonomous improvement behavior against this fixed
+denominator. M6 reviewer/Control Center write authority and M7 continuity/gate
+framework behavior remain separate.
 
 The mechanical focused-test search found 55 direct or transitive M2-matching test entrypoints. Each was classified by responsibility: decisive tests above were inspected in full, while source-intelligence, campaign, Control Center, and validation assertions that merely transitively import policy code remain assigned to their later audit waves. No M2 lead remains without a material proposal, a terminal non-material/not-an-issue rationale, or an explicit later-wave owner.
 
@@ -474,6 +521,12 @@ lossy rebuild and self-certified closure corrupt owner-local gap census and
 prioritization, but do not independently admit a source contract or authorize
 execution.
 
+NW-AUD-043 is Medium with High confidence: it can under-select bounded
+change-directed canaries by applying an old dependency map or suppressing a
+runtime rename, but campaign execution, DEV contact, and external effects
+remain separately gated. Its enforcing boundary is distinct from exact source
+snapshot reads and semantic analyzer proof.
+
 ## Validation ledger
 
 | Command/evidence | Result | Purpose |
@@ -567,10 +620,12 @@ execution.
 | `openspec validate nightwatch-semantic-coverage-evidence-authority-v1 --strict` | PASS; 4/4 artifact classes complete | NW-AUD-041 remediation is apply-ready |
 | static graph/closure-ledger/quality inspection | SUBSTANTIATED READ-ONLY; forged closure, new-gap omission, lossy joins, count divergence, and duplicate-surface inflation confirmed | Establish NW-AUD-042 without ledger mutation |
 | `openspec validate nightwatch-semantic-gap-ledger-integrity-v1 --strict` | PASS; 4/4 artifact classes complete | NW-AUD-042 remediation is apply-ready |
+| static change-intelligence collector/map/selector/real-caller/test inspection | SUBSTANTIATED READ-ONLY; actual baselines/heads are absent from map staleness, ChangeSets are structurally trusted, and either rename endpoint can suppress runtime impact | Establish NW-AUD-043 without sibling or campaign access |
+| `openspec validate nightwatch-change-intelligence-source-generation-integrity-v1 --strict` | PASS; 4/4 artifact classes complete | NW-AUD-043 remediation is apply-ready |
 
 ## Completion audit
 
-Not yet eligible. M1 through M3 are complete, while later source/semantic,
-campaign, UI, and validation waves remain pending. Thirty-nine material findings currently map
-one-to-one to thirty-nine strict-valid issue-specific remediation
+Not yet eligible. M1 through M4 are complete, while later campaign, UI, and
+validation waves remain pending. Forty material findings currently map
+one-to-one to forty strict-valid issue-specific remediation
 changes; that partial portfolio is not evidence of whole-repository completeness.

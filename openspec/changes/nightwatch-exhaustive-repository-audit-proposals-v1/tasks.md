@@ -23,19 +23,19 @@
 
 ## 4. Audit browser, API, journey, evidence, persistence, and replay layers
 
-- [ ] 4.1 Inspect browser context creation, CDP/route/WebSocket guards, workers, downloads, popups, observer ordering, stability, cancellation, timeout, and resource cleanup behavior.
-- [ ] 4.2 Inspect API relay/direct/OOPS request construction, hydration, streaming, deadline, cancellation, schema validation, and partial-response classification.
-- [ ] 4.3 Inspect evidence recording, redaction, atomicity, bounds, path/symlink confinement, fingerprints, dossier/admission separation, and privacy failure escalation.
-- [ ] 4.4 Inspect replay, minimization, reproduction, retry/backoff, deterministic comparison, and partial/incomplete evidence behavior.
-- [ ] 4.5 Map every candidate to focused current tests or record the exact missing validation.
+- [x] 4.1 Inspect browser context creation, CDP/route/WebSocket guards, workers, downloads, popups, observer ordering, stability, cancellation, timeout, and resource cleanup behavior.
+- [x] 4.2 Inspect API relay/direct/OOPS request construction, hydration, streaming, deadline, cancellation, schema validation, and partial-response classification.
+- [x] 4.3 Inspect evidence recording, redaction, atomicity, bounds, path/symlink confinement, fingerprints, dossier/admission separation, and privacy failure escalation.
+- [x] 4.4 Inspect replay, minimization, reproduction, retry/backoff, deterministic comparison, and partial/incomplete evidence behavior.
+- [x] 4.5 Map every candidate to focused current tests or record the exact missing validation.
 
 ## 5. Audit source intelligence and semantic contracts
 
-- [ ] 5.1 Inspect source topology, sibling-source confinement, snapshot/currentness, bounded enumeration, truncation, provenance, and stale/unavailable behavior.
-- [ ] 5.2 Inspect recipe/extractor/admission/resolver flows, evidence digest canonicalization, schema versioning, migration, unknown-kind refusal, and real-vs-synthetic authority.
-- [ ] 5.3 Inspect projections, expectations, invariants, semantic matrix/hooks, receipt aggregation, privacy boundaries, and no-expectation/not-applicable/internal-error truth.
-- [ ] 5.4 Inspect coverage inventory, source-contract movement, expectation lifecycle, generated registries, and mutation/non-vacuity tests for unsound pass conditions.
-- [ ] 5.5 Substantiate or reject candidates with focused semantic/source tests without reading or mutating sibling repositories beyond existing repository-owned fixtures.
+- [x] 5.1 Inspect source topology, sibling-source confinement, snapshot/currentness, bounded enumeration, truncation, provenance, and stale/unavailable behavior.
+- [x] 5.2 Inspect recipe/extractor/admission/resolver flows, evidence digest canonicalization, schema versioning, migration, unknown-kind refusal, and real-vs-synthetic authority.
+- [x] 5.3 Inspect projections, expectations, invariants, semantic matrix/hooks, receipt aggregation, privacy boundaries, and no-expectation/not-applicable/internal-error truth.
+- [x] 5.4 Inspect coverage inventory, source-contract movement, expectation lifecycle, generated registries, and mutation/non-vacuity tests for unsound pass conditions.
+- [x] 5.5 Substantiate or reject candidates with focused semantic/source tests without reading or mutating sibling repositories beyond existing repository-owned fixtures.
 
 ## 6. Audit campaign, autonomous runtime, reproduction, and findings
 

@@ -12,8 +12,9 @@ Implementation is outside the planning-only audit campaign. These tasks are decl
 - [ ] ~~2.3 Restrict `CONTAINED_DEV` issuance to a bound contained producer capability.~~
 - [ ] ~~2.4 Validate and bind one coherent receipt/finding generation during summarization.~~
 - [ ] ~~2.5 Isolate historical/read-compatible receipts from current acceptance authority.~~
+- [ ] ~~2.6 Add exact finding identity/provenance validation and canonical dossier projection validation.~~
 
 ## 3. Prove closure
 
-- [ ] ~~3.1 Add property/mutation coverage for all fields, outcomes, and mix-and-match edges.~~
+- [ ] ~~3.1 Add property/mutation coverage for all receipt, finding, dossier, outcome, and mix-and-match fields/edges.~~
 - [ ] ~~3.2 Run semantic/receipt/acceptance suites, typecheck, hardening, local/clean gates, and full regression without DEV contact.~~

@@ -11,7 +11,7 @@ Last substantive checkpoint SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-exhaustive-repository-ef157f7a
-Last checkpoint: 2026-09-21 — M1 through M3 complete; M4 source, expectation, receipt, partial-observation, analyzer, coverage-authority, and gap-ledger findings through NW-AUD-042 map one-to-one to strict-valid changes.
+Last checkpoint: 2026-09-21 — M1 through M4 complete; the 139-source/162-test M4 denominator is terminally reconciled and forty findings map one-to-one to strict-valid changes through NW-AUD-043.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
@@ -27,9 +27,9 @@ Audit the entire Nightwatch repository and produce a complete, prioritized set o
 
 ## Current Milestone
 
-Milestone ID: M4
+Milestone ID: M5
 Milestone status: IN_PROGRESS
-What is being attempted: audit source confinement/currentness, semantic extraction/admission, projection/invariant/expectation logic, receipts, and stale/unavailable behavior.
+What is being attempted: audit campaign scheduling, budgets, checkpoint/resume, tool/provider authority, investigation/reproduction/admission, novelty, and owner-local findings behavior.
 
 ## Completed Milestones
 
@@ -76,18 +76,20 @@ What is being attempted: audit source confinement/currentness, semantic extracti
 - NW-AUD-040: PROPOSED (High/High-confidence); dedicated change `nightwatch-semantic-source-analyzer-proof-soundness-v1` is 4/4 complete and strict-valid.
 - NW-AUD-041: PROPOSED (High/High-confidence); dedicated change `nightwatch-semantic-coverage-evidence-authority-v1` is 4/4 complete and strict-valid.
 - NW-AUD-042: PROPOSED (Medium/High-confidence); dedicated change `nightwatch-semantic-gap-ledger-integrity-v1` is 4/4 complete and strict-valid.
+- NW-AUD-043: PROPOSED (Medium/High-confidence); dedicated change `nightwatch-change-intelligence-source-generation-integrity-v1` is 4/4 complete and strict-valid.
 - NW-AUD-002: DUPLICATE of production-completion tasks 15.7/15.11; NW-AUD-003: NOT_AN_ISSUE after validation-universe PASS with zero unclassified checks; NW-AUD-008: DUPLICATE of the production-completion operator CLI contract.
 - M1 repository topology/dependencies/configuration/build/tooling: COMPLETE.
 - M2 core safety/environment/policy/proxy/L6/authentication: COMPLETE; 32 primary boundary files, 5 cross-boundary consumers, and 55 direct/transitive focused-test entrypoints reconciled with no undispositioned M2 lead.
 - M3 browser/API/journey/evidence/persistence/replay: COMPLETE; 154 primary source files and 118 direct/transitive focused-test entrypoints reconciled with no undispositioned M3 lead.
+- M4 source intelligence/semantic oracles/expectations/contract lifecycle/change intelligence: COMPLETE; 139 primary source files and 162 direct/transitive focused-test entrypoints reconciled with no undispositioned M4 lead.
 
 ## Work In Progress
 
-M4 is active with a frozen denominator of 139 primary source files and 162 direct/transitive focused-test entrypoints. It covers 52 source-intelligence files, 52 expectation/projection/invariant/semantic-oracle files (excluding the two protocol files closed in M3), 27 semantic acceptance/coverage/Phase-9B/10B files, and 8 change-intelligence files. Source, expectation, receipt, partial-observation, analyzer, coverage-authority, and gap-ledger work produced NW-AUD-036..042. Semantic finding/artifact and remaining contract-lifecycle surfaces are next, followed by change-intelligence consumers and M4 terminal reconciliation.
+M5 is active with a frozen denominator of 220 primary source files, 28 cross-boundary source consumers, 28 bin launchers/tools, and 168 direct/transitive focused-test entrypoints. It covers agent protocol/runtime/tools, AI review/reasoner, campaign and campaign intelligence, investigation/reproduction/findings, benchmark/efficacy/Bug Atlas, readiness/rehearsal, portfolio, Phase 12/13/22/23/24 runtimes, and self-development/sandbox/promotion behavior.
 
 ## Exact Next Action
 
-Inspect semantic finding/artifact and remaining contract-lifecycle surfaces after NW-AUD-036..042, then change-intelligence consumers; terminally disposition every residual M4 lead before closure.
+Audit M5 campaign scheduling, budget, checkpoint/resume, runtime-profile, provider/tool authority, and orchestration state machines against the frozen denominator without running a real campaign or contacting DEV.
 
 ## Files Changed
 
@@ -142,6 +144,8 @@ Inspect semantic finding/artifact and remaining contract-lifecycle surfaces afte
 | `.agent/tasks/nightwatch-semantic-coverage-evidence-authority-v1/` | completed child planning continuity for NW-AUD-041 | complete planning artifact |
 | `openspec/changes/nightwatch-semantic-gap-ledger-integrity-v1/` | NW-AUD-042 implementation-ready remediation proposal | complete planning artifact |
 | `.agent/tasks/nightwatch-semantic-gap-ledger-integrity-v1/` | completed child planning continuity for NW-AUD-042 | complete planning artifact |
+| `openspec/changes/nightwatch-change-intelligence-source-generation-integrity-v1/` | NW-AUD-043 implementation-ready remediation proposal | complete planning artifact |
+| `.agent/tasks/nightwatch-change-intelligence-source-generation-integrity-v1/` | completed child planning continuity for NW-AUD-043 | complete planning artifact |
 | `.agent/tasks/nightwatch-{protocol-dossier-readiness-integrity,triage-evidence-contract-integrity,durable-artifact-validation-bounds,phase6-owner-scope-quarantine-integrity,production-budget-reservation-lifecycle-integrity,production-observation-receipt-integrity,browser-response-acquisition-integrity}-v1/` | completed child planning continuity for NW-AUD-029..035 | complete planning artifacts |
 
 ## Validation Ledger
@@ -466,6 +470,31 @@ Result: PASS (4/4 artifact classes)
 When: 2026-09-21
 Relevant failure/output summary: lossless census and evidence-bound closure remediation is apply-ready and unimplemented.
 
+Command: static semantic finding/dossier and contract-lifecycle registry/schema/vocabulary inspection
+Result: TERMINALLY RECONCILED READ-ONLY
+When: 2026-09-21
+Relevant failure/output summary: weak finding identity/provenance and dossier projection are absorbed by NW-AUD-038; remaining deterministic registries/vocabularies/strict schema readers add no separate issue.
+
+Command: static change-intelligence collector/map/selector/real-caller/release-freshness/test inspection
+Result: SUBSTANTIATED READ-ONLY
+When: 2026-09-21
+Relevant failure/output summary: NW-AUD-043 established from pin-only map staleness, structural ChangeSet trust, and runtime rename suppression; release freshness is fail-closed and deployment-disclaiming.
+
+Command: `openspec validate nightwatch-change-intelligence-source-generation-integrity-v1 --strict`
+Result: PASS (4/4 artifact classes)
+When: 2026-09-21
+Relevant failure/output summary: map/range generation and two-ended rename remediation is apply-ready and unimplemented.
+
+Command: M4 terminal responsibility reconciliation
+Result: PASS
+When: 2026-09-21
+Relevant failure/output summary: all 139 source files and all 162 focused/transitive test entrypoints map to a material proposal, prior/duplicate owner, or explicit terminal rationale; M4 closed.
+
+Command: M5 source, cross-boundary caller, launcher, and focused-test responsibility census
+Result: PASS
+When: 2026-09-21
+Relevant failure/output summary: 220 primary source files, 28 cross-boundary source consumers, 28 bin launchers/tools, and 168 direct/transitive focused-test entrypoints frozen for campaign/autonomous-runtime reconciliation.
+
 Command: `npm run agent:check`
 Result: PASS with 40 pre-existing/expected warnings and zero strict-v2 errors
 When: 2026-09-21
@@ -776,6 +805,31 @@ independently admitting a source contract or authorizing execution.
 Evidence/constraint: status overrides, baseline-only lossy rebuild, count
 divergence, and repeated-surface inflation.
 
+Decision: absorb semantic finding/dossier weaknesses into NW-AUD-038.
+Reason: findings are decisive semantic receipt/acceptance evidence and the
+existing change already owns their validation and generation binding.
+Evidence/constraint: format-only finding IDs, weak nested provenance, dossier
+projection before validation, and incomplete category/summary coherence.
+
+Decision: admit NW-AUD-043 at Medium severity with a dedicated change.
+Reason: stale selective canary choice can miss bounded local DEV coverage, but
+campaign execution and external effects remain separately gated.
+Evidence/constraint: map pins compared only to each other, structural ChangeSet
+trust, real range/map disconnect, and either-endpoint non-runtime suppression.
+
+Decision: close M4 and advance to M5.
+Reason: all 139 primary M4 source responsibilities and 162 focused/transitive
+test entrypoints have a material owner, duplicate owner, or terminal rationale.
+Evidence/constraint: eight M4 proposals (NW-AUD-036..043), residual-disposition
+ledger, and strict validation of every new/expanded change.
+
+Decision: freeze the M5 responsibility denominator before auditing findings.
+Reason: autonomous runtime authority crosses campaign, agent, provider,
+investigation, reproduction, findings, portfolio, readiness, and self-development
+directories plus launchers and cross-boundary consumers.
+Evidence/constraint: 220 primary source files, 28 source consumers, 28 bin
+launchers/tools, and 168 focused/transitive test entrypoints.
+
 ## Discoveries
 
 - Registered topology has room for this worktree under the repository's maximum of eight.
@@ -861,6 +915,12 @@ divergence, and repeated-surface inflation.
   lifecycle coverage; this is NW-AUD-041.
 - Gap rebuild can omit new gaps, self-certify closure, and publish inconsistent
   census/surface facts; this is NW-AUD-042.
+- Change-directed selection ignores actual map/range generations and can
+  suppress runtime-to-non-runtime renames; this is NW-AUD-043.
+- Weak semantic finding/dossier identity is a receipt-acceptance duplicate
+  assigned to NW-AUD-038 rather than a new finding.
+- Remaining lifecycle vocabularies/registries and release-freshness truth-table
+  surfaces are deterministic, strict/fail-closed, and produce no separate issue.
 - M3 produced thirteen non-duplicate strict-valid changes in total; all
   remaining M3 leads are terminally duplicate or non-material under current
   reachability, so M4 is now active.
@@ -887,6 +947,6 @@ NONE
 
 ## Completion Snapshot
 
-Not complete; M1 through M3 are complete and M4 is active. Thirty-nine issue-specific
-changes are strict-valid, but milestones M4-M10 are still required before any
+Not complete; M1 through M4 are complete and M5 is active. Forty issue-specific
+changes are strict-valid, but milestones M5-M10 are still required before any
 exhaustive conclusion.

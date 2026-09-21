@@ -7,9 +7,9 @@ Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-exhaustive-repository-audit-proposals-v1
 Starting SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
 Last validated implementation SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
-Last checkpoint: M1 through M3 are complete; M4 is frozen at 139 primary source files and 162 direct/transitive focused-test entrypoints, with the partial portfolio at thirty-nine one-to-one strict-valid changes through NW-AUD-042.
-Current milestone: M4 — source intelligence, semantic oracles, expectations, and contract lifecycle
-Next action: Continue M4 semantic finding/artifact and contract-lifecycle surfaces after NW-AUD-036..042, then inspect change-intelligence consumers and terminally reconcile the M4 denominator without contacting sibling repositories or DEV.
+Last checkpoint: M1 through M4 are complete; the M4 denominator of 139 primary source files and 162 direct/transitive focused-test entrypoints is terminally reconciled, with forty one-to-one strict-valid changes through NW-AUD-043.
+Current milestone: M5 — campaign, autonomous runtime, investigation, reproduction, admission, and findings
+Next action: Freeze the M5 campaign/runtime responsibility denominator, then audit scheduling, budgets, checkpoint/resume, tool/provider authority, reproduction, novelty, admission, and owner-local findings without running a real campaign or contacting DEV.
 Authorization class: EXHAUSTIVE_REPOSITORY_AUDIT_PROPOSALS_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2

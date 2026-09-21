@@ -28,6 +28,10 @@ The ordinary receipt builder always emits `LOCAL_SYNTHETIC`. A contained produce
 
 Summarization validates every receipt/finding, refuses overflow for acceptance, and requires every decisive receipt to match the exact target, expectation, source repo/SHA/evidence digest, acceptance class, and producer generation. Identity cannot come from one receipt while PASS comes from another. Findings are recomputed/bound to the same receipt projections and violations.
 
+### Findings and dossiers use the same exact evidence strength
+
+The authoritative finding parser requires an exact plain bounded record, canonical nested provenance, safe bounded identifiers/classes, unique bounded projection digests, category/relation coherence, and recomputed `findingId`. Dossier construction validates every finding first and then emits one canonical projection; dossier parsing recomputes category/count/order coherence and refuses truncation when used for acceptance.
+
 ### Preserve historical readability without authority
 
 Historical v1 receipts and legacy v2 records remain parseable under their declared schema, but cannot satisfy current contained-DEV acceptance unless migrated through a separately evidenced, non-upgrading process. Read compatibility is not promotion authority.
@@ -39,7 +43,7 @@ Tests and utilities that directly construct contained receipts will move to expl
 ## Migration Plan
 
 1. Inventory every receipt producer, parser, DTO/artifact reader, summary, acceptance gate, and historical fixture.
-2. Add the exact parser and total coherence table; route every reader through it.
+2. Add exact receipt/finding/dossier parsers and total coherence tables; route every reader through them.
 3. Split synthetic construction from contained producer issuance.
 4. Add producer generation fields and summary-set coherence checks.
 5. Isolate historical schemas from current acceptance authority.

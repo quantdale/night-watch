@@ -4,12 +4,15 @@ Semantic receipts and Phase 9B/10B summaries are acceptance evidence, but their 
 
 More importantly, the public builder and hook accept `acceptanceClass: CONTAINED_DEV` as an ordinary input. Phase 9B summarization does not validate receipts and derives the expected source/expectation identity from the first resolved receipt while counting a decisive PASS/ANOMALY from any selected receipt. Coherently assembled or mixed receipts can therefore satisfy contained-DEV acceptance without being bound to one actual contained observation generation.
 
+The companion finding boundary has the same split strength. `validateSemanticFinding` checks only the format of `findingId`, accepts unbounded/unvalidated identifiers and nested provenance fields, and does not recompute the ID. `toSemanticDossierEvidence` projects findings before validating them, while dossier validation does not prove that categories and summaries are the canonical projection of one validated finding set.
+
 ## What Changes
 
 - Define one exact authoritative semantic-receipt parser that recomputes identity, validates nested provenance, and enforces the total outcome/count/coverage matrix.
 - Make `CONTAINED_DEV` producer evidence issued only by the gated contained observation runtime and bound to context/run/request/source generations.
 - Keep the general builder permanently `LOCAL_SYNTHETIC`; caller labels cannot upgrade evidence class.
 - Validate every receipt and finding before summarization and require one exact target/expectation/source/evidence/acceptance generation across the decisive set.
+- Exact-validate and identity-recompute semantic findings and their canonical dossier projection before artifact, campaign, summary, or acceptance use.
 - Prevent mix-and-match acceptance where one receipt supplies identity and another supplies decisiveness.
 - Treat historical v1 and structurally valid but producer-unbound v2 receipts as readable, non-authoritative evidence.
 - Add resealing, extra-key, getter/prototype, nested-provenance, contradictory-matrix, class-upgrade, mixed-generation, and finding-binding tests.
@@ -26,5 +29,5 @@ None.
 
 ## Impact
 
-- Affects `src/oracles/semantic/{receipts,hook}.ts`, the semantic artifact/DTO reader, `src/core/phase9b/summary.ts`, semantic acceptance/deep acceptance, browser/API producers, lifecycle declarations, and focused receipt/acceptance tests.
+- Affects `src/oracles/semantic/{receipts,hook,types,fingerprint,dossier}.ts`, the semantic artifact/DTO reader, `src/core/phase9b/summary.ts`, semantic acceptance/deep acceptance, browser/API producers, campaign identity, lifecycle declarations, and focused receipt/finding/dossier/acceptance tests.
 - Does not authorize DEV contact, change semantic outcomes, or make historical acceptance claims retroactively false.

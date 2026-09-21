@@ -64,14 +64,14 @@ Use a coverage matrix rather than ad hoc browsing. Inventory the tree and depend
 - Objective: audit source confinement/currentness, extraction/admission, projections, invariants, receipts, schema lifecycle, and stale/unavailable behavior.
 - Acceptance criteria: soundness, completeness, privacy, determinism, and fail-closed behavior are assessed with boundary tests.
 - Validation commands: focused semantic/source suites only.
-- Status: IN_PROGRESS
+- Status: COMPLETE
 
 ### M5 — Campaign, autonomous runtime, investigation, reproduction, admission, and findings
 
 - Objective: audit scheduling, budgets, checkpoint/resume, tool authority, provider handling, reproduction, novelty, triage, and local persistence.
 - Acceptance criteria: state machines, partial failure, idempotency, concurrency, evidence provenance, and anti-fabrication guarantees are assessed.
 - Validation commands: focused campaign/runtime suites only.
-- Status: NOT_STARTED
+- Status: IN_PROGRESS
 
 ### M6 — Control Center and reviewer/operator surfaces
 
@@ -145,6 +145,10 @@ Prefer the narrowest decisive existing tests during exploration. Validate each O
 - 2026-09-21 — Decision: admit NW-AUD-037 and NW-AUD-038 as distinct semantic authority scopes; reason: canonical expectation semantics can be changed beside genuine source evidence, while evaluation/acceptance receipts have separate producer, parsing, and set-coherence gaps; consequence: real-source contract authority and contained acceptance evidence each receive one strict-valid proposal.
 - 2026-09-21 — Decision: absorb the campaign mapper's target-as-expectation alias into NW-AUD-037; reason: the defect is another canonical recipe/target/expectation identity split, not a new root cause; consequence: the existing change now explicitly owns campaign mapping and bundle coherence.
 - 2026-09-21 — Decision: admit NW-AUD-039 through NW-AUD-042 as four distinct remediation scopes; reason: partial-observation semantics, source-analyzer proof, lifecycle evidence authority, and ledger census/closure are enforced at different layers and have independent negative-test matrices; consequence: each now has one strict-valid planning change without implementation.
+- 2026-09-21 — Decision: absorb weak semantic finding identity/provenance and dossier projection into NW-AUD-038; reason: findings are the receipt's decisive acceptance evidence and the existing proposal already requires finding validation/binding; consequence: no duplicate finding proposal is counted.
+- 2026-09-21 — Decision: admit NW-AUD-043 as change-intelligence source-generation integrity; reason: selection compares map pins only to each other, does not exact-validate ChangeSets, and can suppress runtime-to-non-runtime renames; consequence: map/range continuity and two-ended rename semantics have one strict-valid proposal.
+- 2026-09-21 — Decision: close M4 after reconciling all 139 primary source files and 162 direct/transitive focused-test entrypoints; reason: every residual source/semantic/lifecycle/change-intelligence lead now has a material owner, duplicate owner, or terminal current-reachability rationale; consequence: M5 campaign/runtime behavior begins without reopening settled semantic-source authority.
+- 2026-09-21 — Decision: freeze M5 at 220 primary source files, 28 cross-boundary source consumers, 28 bin launchers/tools, and 168 direct/transitive focused-test entrypoints; reason: campaign, agent, investigation, reproduction, findings, readiness, portfolio, self-development, and phase-specific runtime responsibilities form the complete autonomous-runtime cone; consequence: M5 findings cannot be closed from a sampled directory subset.
 
 ## Discoveries
 
@@ -270,6 +274,9 @@ Prefer the narrowest decisive existing tests during exploration. Validate each O
   and confidence. This is NW-AUD-041.
 - Gap rebuild can omit new current gaps, self-certify closure, collide records,
   publish inconsistent totals, and inflate surfaces. This is NW-AUD-042.
+- Change-directed selection does not bind dependency-map SHA to actual
+  ChangeSet baselines/heads, trusts structural ChangeSets, and can suppress a
+  runtime-to-docs/CI rename. This is NW-AUD-043.
 - Residual M3 compatibility fingerprint, P1 strong-Set/synchronous-poll,
   download-ordering, recorder-error, and Phase-6 transform leads are terminally
   non-material or duplicate under the current local/mock/owner-gated reachability.

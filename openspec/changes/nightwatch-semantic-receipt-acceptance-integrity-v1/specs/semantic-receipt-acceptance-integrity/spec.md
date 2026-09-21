@@ -36,6 +36,22 @@ Before summarization, every receipt and finding SHALL validate and every decisiv
 - **WHEN** two target-matching receipts use different expectation/source generations and only the second is decisive
 - **THEN** the set is incoherent and contained acceptance fails
 
+### Requirement: Semantic findings have exact canonical identity
+
+Every artifact, campaign, summary, dossier, and acceptance reader SHALL exact-validate bounded finding fields and nested provenance and SHALL recompute `findingId` from the canonical fingerprint and projection digests.
+
+#### Scenario: Finding fields change while ID is retained
+- **WHEN** expectation, provenance, class, relation, or projection digest changes without recomputing the finding identity
+- **THEN** every authoritative reader refuses the finding
+
+### Requirement: Dossier evidence is a canonical finding projection
+
+Dossier construction SHALL validate every input finding before projection. Dossier parsing SHALL require exact bounded summaries and SHALL recompute count, unique categories, ordering, and source/expectation coherence from the finding set required by the consuming receipt generation.
+
+#### Scenario: Dossier categories omit a finding category
+- **WHEN** the summaries contain a category absent from the dossier category list
+- **THEN** dossier validation refuses the record
+
 ### Requirement: Acceptance rejects incomplete ledgers
 
 Overflow, invalid members, missing producer generations, finding/receipt disagreement, and mixed historical/current schemas SHALL produce explicit non-acceptance rather than a partial summary that can pass.
