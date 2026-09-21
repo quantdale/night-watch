@@ -604,6 +604,26 @@ Result: ENVIRONMENT UNAVAILABLE
 When: 2026-09-19
 Relevant failure/output summary: the owned worktree has no `node_modules/typescript`; dependency installation is outside this planning-only task. No repository failure is inferred. `npm run workspace:check` remains PASS.
 
+Command: `npm run agent:check`
+Result: PASS
+When: 2026-09-21
+Relevant failure/output summary: terminal reconciliation checkpoint at the owned maintenance session; 36 warnings, all pre-existing orphan/legacy notices plus the expected terminal-task maintenance claim, zero strict-v2 errors.
+
+Command: `npm run handoff:check`
+Result: PASS
+When: 2026-09-21
+Relevant failure/output summary: the terminal handoff record binds COMPLETE to this active continuity-v2 task with the umbrella OpenSpec route and a real `main` planned-from ancestor.
+
+Command: `npm run project:check` (canonical Node/toolchain, `--root` at the session worktree)
+Result: PASS
+When: 2026-09-21
+Relevant failure/output summary: the live-state v2 block projects this task id and phase; continuity, handoff, and release-certification cross-checks pass on the clean committed checkpoint.
+
+Command: `npm run workspace:check`
+Result: PASS
+When: 2026-09-21
+Relevant failure/output summary: workspace integrity satisfied on the reconciliation checkpoint; the terminal-task maintenance claim is released after integration.
+
 ## Decisions Made During This Task
 
 Decision: use a dedicated session and new change rather than reuse W13.
@@ -959,6 +979,18 @@ current-reachability rationale; forty-five unimplemented changes cover every
 material finding; no product implementation changed.
 Evidence/constraint: coverage dispositions in audit.md and planning-only diff.
 
+Decision: reconcile the released session and the terminal handoff route.
+Reason: after owner integration at `aa05696b` the owned worktree was gone while
+`ACTIVE_TASK.md` and this STATE still declared it live, so the required
+continuity, handoff, and project truth groups failed on canonical `main` even
+though the planning work was complete. A released session is canonical-only
+routing (`SESSION WORKTREE: NONE`, `Branch: main`), and the terminal handoff
+record binds to this campaign rather than to the superseded performance
+campaign.
+Evidence/constraint: `AGENT_CONTINUITY`, `HANDOFF_TRUTH`, and `PROJECT_TRUTH`
+failures measured on canonical `aa05696b`; all three pass on the reconciliation
+checkpoint. No product behavior, authority, or generated change state changed.
+
 ## Discoveries
 
 - Registered topology has room for this worktree under the repository's maximum of eight.
@@ -1075,7 +1107,7 @@ NONE
 ## Deferred / Follow-Up
 
 - All implementation remains deferred by task definition.
-- Umbrella task 11.7 (commit/integrate/release/remove) awaits an explicit owner Git checkpoint; this session does not commit or push unless asked.
+- Umbrella task 11.7 (commit/integrate/release/remove) remained owner-declared out of scope for the session; the owner integrated the planning checkpoint into `main` at `aa05696b`, and the owned session worktree was released afterwards. Terminal routing and handoff were then reconciled to this completed campaign; no successor implementation campaign is authorized.
 - Completeness is scoped to starting SHA `34517c9ba11c97407168fe5879ee03794dfff3e3`. `origin/main` later advanced with the test-infra performance campaign; those descendants were not re-audited.
 
 ## Resume Recipe
@@ -1090,4 +1122,4 @@ Task complete. Do not resume. Future task requires new authorization.
 - Issue-specific OpenSpec changes: 45, each 4/4 strict-valid and unimplemented
 - Product implementation files changed: 0
 - External/authenticated/runtime/sibling actions: 0
-- Residual uncertainties: completeness is for the session starting tree, not later `origin/main` performance descendants; implementation of every generated change remains deferred; Git integrate (task 11.7) awaits owner.
+- Residual uncertainties: completeness is for the session starting tree, not later `origin/main` descendants; implementation of every generated change remains deferred and requires a new owner-authorized planning checkpoint and C-00 task.
