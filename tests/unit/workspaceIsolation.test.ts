@@ -48,7 +48,13 @@ function integrityJson(cwd: string): { readonly report: Record<string, any>; rea
 }
 
 function session(cwd: string, args: readonly string[], environment: Readonly<Record<string, string>> = {}): Run {
-  const result = spawnSync(process.execPath, [SESSION, ...args], {
+  // NW-AUD-006 binds a mutator to the CLI that lives inside its own checkout,
+  // so a disposable fixture carries its own copy of the session CLI and this
+  // helper executes THAT copy. Falling back to the repository CLI keeps
+  // foreign/read-only fixtures (and the source-contract tests) working.
+  const local = path.join(cwd, 'bin/nightwatch-session.mjs');
+  const entry = fs.existsSync(local) ? local : SESSION;
+  const result = spawnSync(process.execPath, [entry, ...args], {
     cwd,
     encoding: 'utf8',
     timeout: 60_000,
@@ -137,6 +143,20 @@ function fixture(options: FixtureOptions = {}): { readonly base: string; readonl
     '- NONE',
     '',
   ].join('\n'));
+  // NW-AUD-006: the executing session CLI must resolve inside the checkout it
+  // mutates, so the disposable repository carries its own copy of the shipped
+  // lifecycle code. Tests then exercise the real implementation, not a stub.
+  for (const relative of [
+    'bin/nightwatch-session.mjs',
+    'bin/workspace-integrity.mjs',
+    'bin/agent-continuity-protocol.mjs',
+    'bin/lib/operator-cli.mjs',
+    'bin/lib/session-authority.mjs',
+  ]) {
+    const destination = path.join(seed, relative);
+    fs.mkdirSync(path.dirname(destination), { recursive: true });
+    fs.copyFileSync(path.join(ROOT, relative), destination);
+  }
   gitOk(seed, ['add', '.']);
   gitOk(seed, ['commit', '-m', 'synthetic base']);
   gitOk(base, ['clone', '--bare', seed, upstream]);
@@ -155,6 +175,17 @@ function cleanup(base: string): void {
   fs.rmSync(base, { recursive: true, force: true });
 }
 
+/** The current public session id of one registered synthetic worktree. */
+function recordSession(canonical: string, name: string): string {
+  const file = path.join(canonical, '.git/worktrees', name, 'nightwatch-session.v1.json');
+  return (JSON.parse(fs.readFileSync(file, 'utf8')) as { sessionId: string }).sessionId;
+}
+
+/** The current HEAD of one checkout, as the integration intent value. */
+function headOf(worktree: string): string {
+  return gitOk(worktree, ['rev-parse', 'HEAD']);
+}
+
 /** Creates an owned session worktree and returns its path and name. */
 function startOwnedSession(canonical: string, base: string, taskId: string): { readonly path: string; readonly name: string } {
   const started = session(canonical, ['start', '--task', taskId, '--dir', path.join(base, 'worktrees')]);
@@ -163,7 +194,7 @@ function startOwnedSession(canonical: string, base: string, taskId: string): { r
   expect(match).not.toBeNull();
   const name = match![1]!;
   const target = match![4]!;
-  const claimed = session(target, ['claim', '--task', taskId, '--adopt']);
+  const claimed = session(target, ['claim', '--task', taskId, '--adopt', '--expect-session', recordSession(canonical, name)]);
   expect(claimed.status, claimed.stderr).toBe(0);
   return { path: target, name };
 }
@@ -558,7 +589,7 @@ test.describe('C-00 adversarial matrix — integration', () => {
       const advanced = gitOk(other, ['rev-parse', 'HEAD']);
       expect(advanced).not.toBe(baseSha);
 
-      const refused = session(owned.path, ['integrate']);
+      const refused = session(owned.path, ['integrate', '--expect-session', recordSession(canonical, owned.name), '--expect-head', headOf(owned.path)]);
       expect(refused.status).toBe(1);
       expect(refused.stderr).toContain('SESSION_INTEGRATION_NOT_FAST_FORWARD');
       expect(refused.stderr).toContain('never force-push');
@@ -592,7 +623,7 @@ test.describe('C-00 adversarial matrix — integration', () => {
       gitOk(other, ['push', 'origin', 'HEAD:refs/heads/main']);
       const advanced = gitOk(other, ['rev-parse', 'HEAD']);
 
-      const reconciled = session(owned.path, ['reconcile']);
+      const reconciled = session(owned.path, ['reconcile', '--expect-session', recordSession(canonical, owned.name)]);
       expect(reconciled.status, reconciled.stderr).toBe(0);
       expect(reconciled.stdout).toContain('SESSION_RECONCILED');
       // Merged, not rebased: the original session commit still exists.
@@ -600,7 +631,7 @@ test.describe('C-00 adversarial matrix — integration', () => {
       expect(git(owned.path, ['merge-base', '--is-ancestor', advanced, 'HEAD']).status).toBe(0);
       expect(git(owned.path, ['merge-base', '--is-ancestor', sessionCommit, 'HEAD']).status).toBe(0);
 
-      const integrated = session(owned.path, ['integrate']);
+      const integrated = session(owned.path, ['integrate', '--expect-session', recordSession(canonical, owned.name), '--expect-head', headOf(owned.path)]);
       expect(integrated.status, integrated.stderr).toBe(0);
       expect(integrated.stdout).toContain('SESSION_INTEGRATED');
       const head = gitOk(owned.path, ['rev-parse', 'HEAD']);
@@ -628,7 +659,7 @@ test.describe('C-00 adversarial matrix — integration', () => {
       gitOk(other, ['commit', '-m', 'other edits tracked.txt']);
       gitOk(other, ['push', 'origin', 'HEAD:refs/heads/main']);
 
-      const reconciled = session(owned.path, ['reconcile']);
+      const reconciled = session(owned.path, ['reconcile', '--expect-session', recordSession(canonical, owned.name)]);
       expect(reconciled.status).toBe(1);
       expect(reconciled.stderr).toContain('SESSION_RECONCILE_CONFLICT');
       expect(reconciled.stderr).toContain('nothing was rewritten');
@@ -637,7 +668,7 @@ test.describe('C-00 adversarial matrix — integration', () => {
       expect(fs.readFileSync(path.join(owned.path, 'tracked.txt'), 'utf8')).toBe('session version\n');
       expect(integrityJson(owned.path).report.verdict).toBe('PASS');
 
-      const refused = session(owned.path, ['integrate']);
+      const refused = session(owned.path, ['integrate', '--expect-session', recordSession(canonical, owned.name), '--expect-head', headOf(owned.path)]);
       expect(refused.status).toBe(1);
       expect(refused.stderr).toContain('SESSION_INTEGRATION_NOT_FAST_FORWARD');
     } finally {
@@ -650,7 +681,7 @@ test.describe('C-00 adversarial matrix — integration', () => {
     try {
       const owned = startOwnedSession(canonical, base, 'synthetic-task');
       fs.writeFileSync(path.join(owned.path, 'tracked.txt'), 'uncommitted\n');
-      const refused = session(owned.path, ['integrate', '--offline']);
+      const refused = session(owned.path, ['integrate', '--offline', '--expect-session', recordSession(canonical, owned.name), '--expect-head', headOf(owned.path)]);
       expect(refused.status).toBe(1);
       expect(refused.stderr).toContain('SESSION_WORKTREE_DIRTY');
     } finally {
@@ -663,7 +694,7 @@ test.describe('C-00 adversarial matrix — integration', () => {
     try {
       const owned = startOwnedSession(canonical, base, 'synthetic-task');
       gitOk(canonical, ['update-index', '--skip-worktree', 'tracked.txt']);
-      const refused = session(owned.path, ['integrate', '--offline']);
+      const refused = session(owned.path, ['integrate', '--offline', '--expect-session', recordSession(canonical, owned.name), '--expect-head', headOf(owned.path)]);
       expect(refused.status).toBe(1);
       expect(refused.stderr).toContain('SESSION_INTEGRATION_REFUSED_UNSAFE_WORKSPACE');
     } finally {
@@ -691,7 +722,7 @@ test.describe('C-00 adversarial matrix — stale sessions and recovery', () => {
       expect(refused.status).toBe(1);
       expect(refused.stderr).toContain('SESSION_OWNER_STALE');
 
-      const adopted = session(owned.path, ['claim', '--task', 'synthetic-task', '--adopt']);
+      const adopted = session(owned.path, ['claim', '--task', 'synthetic-task', '--adopt', '--expect-session', recordSession(canonical, owned.name)]);
       expect(adopted.status, adopted.stderr).toBe(0);
       expect(integrityJson(owned.path).report.self.class).toBe('OWNED_SESSION');
     } finally {
@@ -703,7 +734,7 @@ test.describe('C-00 adversarial matrix — stale sessions and recovery', () => {
     const { base, canonical, upstream } = fixture();
     try {
       const owned = startOwnedSession(canonical, base, 'synthetic-task');
-      expect(session(owned.path, ['release']).status).toBe(0);
+      expect(session(owned.path, ['release', '--expect-session', recordSession(canonical, owned.name)]).status).toBe(0);
 
       // Canonical main advances after the session closed.
       const other = path.join(base, 'other');
@@ -734,20 +765,20 @@ test.describe('C-00 adversarial matrix — stale sessions and recovery', () => {
       gitOk(owned.path, ['add', 'unmerged.txt']);
       gitOk(owned.path, ['commit', '-m', 'unmerged work']);
 
-      const live = session(canonical, ['remove', '--name', owned.name]);
+      const live = session(canonical, ['remove', '--name', owned.name, '--expect-session', recordSession(canonical, owned.name)]);
       expect(live.status).toBe(1);
       expect(live.stderr).toContain('SESSION_REMOVE_REFUSED_LIVE_HOLDER');
       expect(fs.existsSync(path.join(owned.path, 'unmerged.txt'))).toBe(true);
 
-      const released = session(owned.path, ['release']);
+      const released = session(owned.path, ['release', '--expect-session', recordSession(canonical, owned.name)]);
       expect(released.status, released.stderr).toBe(0);
 
-      const unmerged = session(canonical, ['remove', '--name', owned.name]);
+      const unmerged = session(canonical, ['remove', '--name', owned.name, '--expect-session', recordSession(canonical, owned.name)]);
       expect(unmerged.status).toBe(1);
       expect(unmerged.stderr).toContain('SESSION_REMOVE_REFUSED_UNMERGED');
       expect(fs.existsSync(path.join(owned.path, 'unmerged.txt'))).toBe(true);
 
-      const abandoned = session(canonical, ['remove', '--name', owned.name, '--abandon-unmerged', '--delete-branch']);
+      const abandoned = session(canonical, ['remove', '--name', owned.name, '--abandon-unmerged', '--delete-branch', '--expect-session', recordSession(canonical, owned.name)]);
       expect(abandoned.status, abandoned.stderr).toBe(0);
       expect(fs.existsSync(owned.path)).toBe(false);
       expect(integrityJson(canonical).report.verdict).toBe('PASS');
@@ -762,8 +793,8 @@ test.describe('C-00 adversarial matrix — stale sessions and recovery', () => {
       const owned = startOwnedSession(canonical, base, 'synthetic-task');
       const record = path.join(canonical, '.git/worktrees', owned.name, 'nightwatch-session.v1.json');
       expect(fs.existsSync(record)).toBe(true);
-      expect(session(owned.path, ['release']).status).toBe(0);
-      expect(session(canonical, ['remove', '--name', owned.name, '--delete-branch']).status).toBe(0);
+      expect(session(owned.path, ['release', '--expect-session', recordSession(canonical, owned.name)]).status).toBe(0);
+      expect(session(canonical, ['remove', '--name', owned.name, '--delete-branch', '--expect-session', recordSession(canonical, owned.name)]).status).toBe(0);
       expect(fs.existsSync(record)).toBe(false);
       const { report, status } = integrityJson(canonical);
       expect(status).toBe(0);
@@ -811,7 +842,7 @@ test.describe('C-00 adversarial matrix — stale sessions and recovery', () => {
       expect(report.self.class).toBe('STALE_SESSION');
       expect(report.self.ownershipState).toBe('RELEASED');
       expect(session(target, ['claim', '--task', 'synthetic-task']).status).toBe(1);
-      expect(session(target, ['claim', '--task', 'synthetic-task', '--adopt']).status).toBe(0);
+      expect(session(target, ['claim', '--task', 'synthetic-task', '--adopt', '--expect-session', recordSession(canonical, path.basename(target))]).status).toBe(0);
     } finally {
       cleanup(base);
     }
@@ -1510,19 +1541,19 @@ test.describe('NW-07 — the --dry-run contract mutates nothing', () => {
 
       // claim -- `start` leaves a RELEASED record, so a claim adopts it.
       let before = fullTopology(canonical, target);
-      const claim = session(startedPath!, ['claim', '--task', 'synthetic-task', '--adopt', '--dry-run']);
+      const claim = session(startedPath!, ['claim', '--task', 'synthetic-task', '--adopt', '--expect-session', recordSession(canonical, name), '--dry-run']);
       expect(claim.status, claim.stderr).toBe(0);
       expect(claim.stdout).toContain('PLAN SESSION_CLAIM_PLAN');
       expect(claim.stdout).toContain('REPLACE');
       expect(claim.stdout).toContain('SESSION_DRY_RUN_NO_MUTATION: claim');
       expect(claim.stdout).not.toContain('[session] SESSION_CLAIMED');
       expect(fullTopology(canonical, target)).toBe(before);
-      const realClaim = session(startedPath!, ['claim', '--task', 'synthetic-task', '--adopt']);
+      const realClaim = session(startedPath!, ['claim', '--task', 'synthetic-task', '--adopt', '--expect-session', recordSession(canonical, name)]);
       expect(realClaim.status, realClaim.stderr).toBe(0);
 
       // reconcile -- must not fetch, so refs/remotes stays put
       before = fullTopology(canonical, target);
-      const reconcile = session(startedPath!, ['reconcile', '--dry-run']);
+      const reconcile = session(startedPath!, ['reconcile', '--dry-run', '--expect-session', recordSession(canonical, name)]);
       expect(reconcile.status, reconcile.stderr).toBe(0);
       expect(reconcile.stdout).toContain('PLAN SESSION_RECONCILE_PLAN');
       expect(reconcile.stdout).toContain('no fetch performed');
@@ -1532,7 +1563,7 @@ test.describe('NW-07 — the --dry-run contract mutates nothing', () => {
 
       // integrate -- the guard sits above the fetch
       before = fullTopology(canonical, target);
-      const integrate = session(startedPath!, ['integrate', '--dry-run']);
+      const integrate = session(startedPath!, ['integrate', '--dry-run', '--expect-session', recordSession(canonical, name), '--expect-head', headOf(startedPath!)]);
       expect(integrate.status, integrate.stderr).toBe(0);
       expect(integrate.stdout).toContain('PLAN SESSION_INTEGRATE_PLAN');
       expect(integrate.stdout).toContain('no fetch performed');
@@ -1542,19 +1573,19 @@ test.describe('NW-07 — the --dry-run contract mutates nothing', () => {
 
       // release
       before = fullTopology(canonical, target);
-      const release = session(startedPath!, ['release', '--dry-run']);
+      const release = session(startedPath!, ['release', '--dry-run', '--expect-session', recordSession(canonical, name)]);
       expect(release.status, release.stderr).toBe(0);
       expect(release.stdout).toContain('PLAN SESSION_RELEASE_PLAN');
       expect(release.stdout).toContain('-> RELEASED');
       expect(release.stdout).toContain('SESSION_DRY_RUN_NO_MUTATION: release');
       expect(release.stdout).not.toContain('[session] SESSION_RELEASED');
       expect(fullTopology(canonical, target)).toBe(before);
-      const realRelease = session(startedPath!, ['release']);
+      const realRelease = session(startedPath!, ['release', '--expect-session', recordSession(canonical, name)]);
       expect(realRelease.status, realRelease.stderr).toBe(0);
 
       // remove -- the destructive one, with both destructive flags set
       before = fullTopology(canonical, target);
-      const remove = session(canonical, ['remove', '--name', name, '--delete-branch', '--abandon-unmerged', '--dry-run']);
+      const remove = session(canonical, ['remove', '--name', name, '--delete-branch', '--abandon-unmerged', '--dry-run', '--expect-session', recordSession(canonical, name)]);
       expect(remove.status, remove.stderr).toBe(0);
       expect(remove.stdout).toContain('PLAN SESSION_REMOVE_PLAN');
       expect(remove.stdout).toContain('PLAN SESSION_REMOVE_WOULD_REMOVE_WORKTREE');
@@ -1567,7 +1598,7 @@ test.describe('NW-07 — the --dry-run contract mutates nothing', () => {
       expect(fs.existsSync(startedPath!)).toBe(true);
       expect(gitOk(canonical, ['branch', '--list', `session/${name}`]).trim()).not.toBe('');
       // ...and the real remove afterwards still works.
-      const realRemove = session(canonical, ['remove', '--name', name, '--delete-branch']);
+      const realRemove = session(canonical, ['remove', '--name', name, '--delete-branch', '--expect-session', recordSession(canonical, name)]);
       expect(realRemove.status, realRemove.stderr).toBe(0);
       expect(realRemove.stdout).toContain('SESSION_WORKTREE_REMOVED');
       expect(fs.existsSync(startedPath!)).toBe(false);

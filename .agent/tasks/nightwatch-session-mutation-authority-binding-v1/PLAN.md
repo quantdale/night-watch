@@ -1,80 +1,110 @@
-# Session mutation authority binding proposal
+# Session mutation authority binding implementation
 
 ## Purpose
 
-Convert NW-AUD-006 into a complete apply-ready remediation plan.
+Implement NW-AUD-006: bind C-00 mutators to the invoking checkout and executing
+CLI, add explicit public expectations, serialize record transitions, restrict
+command roles, and prove the cross-session boundary.
 
 ## Starting State
 
-Parent audit campaign at starting SHA
-`34517c9ba11c97407168fe5879ee03794dfff3e3`; no implementation authorized.
+Implementation base `caab10e91b8d81f2b98597b3c6974db89638ae6c`; OpenSpec change
+`nightwatch-session-mutation-authority-binding-v1` strict-valid and
+unimplemented; owned session worktree claimed.
 
 ## Scope
 
-OpenSpec artifacts and matching completed planning-task continuity only.
+`bin/nightwatch-session.mjs`, bounded shared helpers, C-00 focused tests,
+hardening/mutation probes, operator documentation and recipes, and the active
+task/OpenSpec continuity records.
 
 ## Non-Goals
 
-No session lifecycle execution beyond read-only dry-run evidence, no
-implementation, external action, or CI run.
+No product runtime, browser, semantic, campaign, API, source-intelligence,
+Control Center, Alphaus, or external action. No hostile same-user security
+claim.
 
 ## Safety Constraints
 
-LOCAL / READ-ONLY / DRY-RUN evidence; planning writes only.
+LOCAL / DETERMINISTIC / NO-NETWORK except the existing explicit fast-forward
+integration push. Canonical stays clean; other sessions are never touched.
 
 ## Architecture / Approach
 
-Ground the proposal in parser/dispatcher arbitrary-root selection,
-target-record-only ownership classification, non-CAS record replacement, C-00
-requirements, and live canonical-to-session dry-run evidence. Specify exact
-checkout/code binding, public freshness expectations, continuity coherence,
-serialized durable record revisions, command roles, and pre-network proof.
+Split the CLI into (a) read-only inspection targeting (`status`/`check` keep
+`--root`), (b) an invocation-authority core resolved from `process.cwd()` plus
+the executing script path, (c) pure admission helpers for expectations,
+continuity and command roles, and (d) a lock plus canonical-revision CAS
+around every ownership-record transition, held through integration network
+callbacks. Adversarial tests build canonical plus two linked worktrees and
+assert refusal-before-effect with byte-for-byte protected state.
 
 ## Milestones
 
-### M0 — Evidence and deduplication
+### M1 — Invocation binding and explicit expectations
 
-- Status: COMPLETE
-- Acceptance: current session/workspace code, tests, published C-00 spec, and
-  active changes inspected; no invocation-authority proposal found.
+- Status: IN_PROGRESS
+- Acceptance: mutators refuse `--root`; script/current-checkout binding is
+  symlink-safe; `--expect-session`/`--expect-head` parse exactly and mismatches
+  fail before effects; read-only cross-root inspection preserved; focused
+  tests pass.
 
-### M1 — OpenSpec artifacts
+### M2 — Continuity admission
 
-- Status: COMPLETE
-- Acceptance: proposal, design, delta spec, and tasks complete.
+- Status: PLANNED
+- Acceptance: record/task/campaign/branch/active-task/STATE compatibility is
+  validated before effects for release, reconcile, integrate and adopt, with
+  categorical refusals and focused tests.
 
-### M2 — Planning validation
+### M3 — Serialized record transitions
 
-- Status: COMPLETE
-- Acceptance: strict OpenSpec validation passes; implementation is declared
-  not in scope.
+- Status: PLANNED
+- Acceptance: bounded exclusive no-follow lock, canonical revision, durable
+  replacement with reread verification, conflict refusal, crash-safe lock and
+  explicit recovery, with fault-injection tests.
+
+### M4 — Command roles and integration authority
+
+- Status: PLANNED
+- Acceptance: canonical-only start/remove, exact-name/session remove,
+  pre-network integration admission with lock held through push and
+  verification, push-rejection preservation, uncertain-outcome result.
+
+### M5 — Adversarial proof, probes, documentation, validation
+
+- Status: PLANNED
+- Acceptance: two-worktree wrong-checkout matrix, race matrix, crashed-lock
+  recovery, hardening/mutation probes, updated AGENTS/docs/recipes,
+  `openspec validate --strict`, focused suites, typechecks, workspace/agent/
+  project checks and the applicable quality gates pass on the committed
+  checkpoint; integration through the documented lifecycle.
 
 ## Validation Strategy
 
-`openspec validate nightwatch-session-mutation-authority-binding-v1 --strict`.
+Focused C-00 unit suites under the existing Playwright/TypeScript harness;
+`npm run typecheck`, `npm run typecheck:bin`, `npm run hardening:check`,
+`npm run workspace:check`, `npm run agent:check`, `npm run project:check`,
+`openspec validate ... --strict`, and the local quality gate on the committed
+checkpoint.
 
 ## Decision Log
 
-- 2026-09-20 — Remove arbitrary root selection from mutators while retaining
-  read-only cross-root inspection; reason: target selection is the confused
-  deputy primitive.
-- 2026-09-20 — Use public expected session/HEAD values plus a locked record
-  revision, not a fake local secret; reason: all agents share one OS account.
-- 2026-09-20 — Hold record transition authority through integration network
-  callbacks; reason: admission must remain current until push and final state.
+- 2026-09-21 — Follow the OpenSpec design exactly: public expectations, not
+  secrets; cooperative confused-deputy boundary only.
+- 2026-09-21 — Keep `status`/`check` cross-root read-only so agents retain
+  topology inspection.
 
 ## Discoveries
 
-- Current tests prove a direct second claim is refused but never call release
-  or integrate from a foreign checkout against a live session.
-- Ordinary record replacement is atomic rename but not compare-and-swap, so
-  concurrent lifecycle updates can overwrite a newer transition.
+- `release` currently writes the selected record with no ownership or caller
+  check at all; `integrate` admits on target class alone.
+- Ordinary record replacement is atomic rename but not compare-and-swap.
 
 ## Deferred Work
 
-Every implementation and validation task in the OpenSpec task list.
+Owner-gated programme groups outside this change; no new dependencies.
 
 ## Completion Criteria
 
-All planning artifacts are complete, strict-valid, and implementation remains
-unperformed.
+All milestone acceptance criteria are met, validated, recorded, and the change
+is integrated through the C-00 lifecycle with the active task closed.

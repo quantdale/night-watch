@@ -4,79 +4,105 @@
 
 Task ID: nightwatch-session-mutation-authority-binding-v1
 Phase: SESSION_MUTATION_AUTHORITY_BINDING_V1
-Status: COMPLETE
-Starting SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
-Last validated implementation SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
-Last substantive checkpoint SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
+Status: IN_PROGRESS
+Starting SHA: caab10e91b8d81f2b98597b3c6974db89638ae6c
+Last validated implementation SHA: caab10e91b8d81f2b98597b3c6974db89638ae6c
+Last substantive checkpoint SHA: caab10e91b8d81f2b98597b3c6974db89638ae6c
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
-Branch: session/nightwatch-exhaustive-repository-ef157f7a
+Branch: session/nightwatch-session-mutation-auth-2ef39532
+Last checkpoint: 2026-09-21 — implementation session started at base
+`caab10e9`; the completed planning continuity was converted to an
+IN_PROGRESS implementation task.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
-STARTING_SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
-LAST_VALIDATED_IMPLEMENTATION_SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
+STARTING_SHA: caab10e91b8d81f2b98597b3c6974db89638ae6c
+LAST_VALIDATED_IMPLEMENTATION_SHA: caab10e91b8d81f2b98597b3c6974db89638ae6c
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: caab10e91b8d81f2b98597b3c6974db89638ae6c
 LIVE_HEAD_AUTHORITY: GIT
-FINAL_CI_AUTHORITY: NOT_APPLICABLE_PLANNING_ONLY
-PHASE_SESSION_MUTATION_AUTHORITY_BINDING_V1_STATUS: COMPLETE
+PROJECT_VERDICT_EFFECT: PRESERVE
+PHASE_SESSION_MUTATION_AUTHORITY_BINDING_V1_STATUS: IN_PROGRESS
 
 ## Objective
 
-Produce the apply-ready OpenSpec change for NW-AUD-006 without implementation.
+Implement the strict-valid OpenSpec change
+`nightwatch-session-mutation-authority-binding-v1`: bind every mutating C-00
+lifecycle command to the invoking checkout and executing CLI, require explicit
+public session/HEAD expectations, admit continuity coherence, serialize
+ownership-record transitions with a bounded lock and revision compare-and-swap,
+restrict command roles, admit integration authority before network access, and
+prove the cross-session and race boundaries non-vacuously.
 
 ## Current Milestone
 
-COMPLETE / STOP — all four planning artifact classes are strict-valid.
+Milestone ID: M1 — invocation binding and explicit expectations
+Milestone status: IN_PROGRESS
+What is being attempted: split read-only inspection targeting from mutation
+targeting in `bin/nightwatch-session.mjs`, resolve mutator authority from
+`process.cwd()` plus the executing script path with symlink-safe comparison,
+add exact expectation parsing and pre-effect mismatch refusal, and cover the
+paths with focused tests.
 
 ## Completed Milestones
 
-- M0 — current evidence, safe dry-run reproduction, and existing-change
-  comparison complete.
-- M1 — proposal, design, concurrency-workspace delta spec, and task handoff
-  complete.
-- M2 — strict validation PASS; implementation explicitly not in scope.
+- M0 — implementation bootstrap: COMPLETE. Owned session
+  `sess-048fa22e047d` on this branch at base `caab10e9`; planning continuity
+  converted; local toolchain resolved through a worktree-local module link set.
 
 ## Work In Progress
 
-NONE.
+M1–M4 are implemented in the working tree and focused-green, pending the
+checkpoint commit and the full validation sweep: invocation/script binding and
+refused `--root`; exact `--expect-session`/`--expect-head`; continuity
+admission; bounded transition lock with canonical revision CAS and explicit
+`recover`; canonical-only `start`/`remove`; pre-network integration admission
+with the uncertain-finalization result. New pure admission core
+`bin/lib/session-authority.mjs`; CLI `bin/nightwatch-session.mjs`;
+`tests/unit/sessionMutationAuthority.test.ts` (11 cases) plus the adapted
+67-case C-00 matrix; hardening rule extended and probes HC-090…HC-098.
 
 ## Exact Next Action
 
-STOP — implementation requires a separately authorized future task.
+Commit this checkpoint, regenerate the derived validation declarations
+(`bin/validation-execution-classes.mjs --write` and the validation-universe
+digest), then run `npm run project:check`, `npm run hardening:check`,
+`npm run gate:local` and the synthetic campaign; record each result in this
+ledger before marking M1–M4 complete.
 
 ## Files Changed
 
 | Path | Reason | Status |
 |---|---|---|
-| `openspec/changes/nightwatch-session-mutation-authority-binding-v1/` | remediation planning artifacts | complete |
-| `.agent/tasks/nightwatch-session-mutation-authority-binding-v1/` | completed planning-task continuity | complete |
+| `.agent/tasks/nightwatch-session-mutation-authority-binding-v1/` | implementation continuity (SPEC/PLAN/STATE/REPORT) | in progress |
+| `.agent/ACTIVE_TASK.md` | route the active implementation task and session worktree | in progress |
+| `bin/nightwatch-session.mjs` | checkout/code binding, expectations, lock/CAS, roles, integration admission | in progress |
+| `tests/unit/` | adversarial, race, lock and expectation coverage | in progress |
 
 ## Validation Ledger
 
-Command: `openspec validate nightwatch-session-mutation-authority-binding-v1 --strict`
+Command: working-tree `node bin/nightwatch-session.mjs claim --task
+nightwatch-session-mutation-authority-binding-v1 --adopt`
 Result: PASS
-Relevant failure/output summary: change is valid and 4/4 artifact classes are complete.
-
-Command: `nightwatch-session release --root <live-session> --dry-run` from canonical
-Result: REPRODUCED WITHOUT MUTATION
-Relevant failure/output summary: planned replacement of the live audit session's ownership record.
-
-Command: `nightwatch-session integrate --root <live-session> --dry-run` from canonical
-Result: REPRODUCED WITHOUT MUTATION
-Relevant failure/output summary: planned fast-forward of origin/main to the foreign live session HEAD; no fetch/push occurred.
+Relevant failure/output summary: claimed session `sess-048fa22e047d`; workspace
+verdict PASS in the owned worktree at base `caab10e9`.
 
 ## Decisions Made During This Task
 
-Decision: bind mutations to current checkout/code, explicit public
-session/HEAD expectations, coherent continuity, and a locked record revision.
-Reason: target classification alone cannot distinguish an owner action from a
-foreign checkout selecting that owner's path, while same-user readable values
-must not be mislabeled as authentication secrets.
+Decision: implement the change exactly as designed, using public freshness
+expectations instead of a fake secret.
+Reason: only cooperative confused-deputy protection is claimed; no
+cryptographic same-user isolation exists.
+Evidence/constraint: the strict-valid design and delta spec.
+
+Decision: keep `status`/`check` cross-root read-only.
+Reason: agents need shared-topology inspection, and the delta spec preserves it.
+Evidence/constraint: delta-spec scenario "Cross-root inspection remains read-only".
 
 ## Discoveries
 
-- `release` performs no `OWNED_SESSION` or caller-binding check at all.
-- `integrate` checks the selected target class but not invocation provenance.
+- `release` currently writes the selected record with no ownership or caller
+  check; `integrate` admits on the selected target's class alone.
+- Ordinary record replacement is atomic rename, not compare-and-swap.
 
 ## Blockers
 
@@ -84,21 +110,21 @@ None.
 
 ## Safety Events
 
-NONE — both reproductions used the CLI's zero-mutation dry-run path.
+NONE — no ownership record, ref, branch, worktree, remote, credential, or
+Alphaus state has been changed outside the documented lifecycle.
 
 ## Deferred / Follow-Up
 
-- All OpenSpec implementation tasks.
+- None beyond the change scope; owner-gated programme groups remain parked.
 
 ## Resume Recipe
 
-Terminal planning task. Do not resume; open a separately authorized
-implementation task if the owner chooses to apply the change.
+Read `.agent/ACTIVE_TASK.md`, then this task's `SPEC.md`, `PLAN.md` and this
+`STATE.md`; inspect `git status`/diff in the worktree named by the routing
+block; continue the Exact Next Action above. Run `npm run session:status` first
+if the session identity is uncertain.
 
 ## Completion Snapshot
 
-- Status: COMPLETE
-- Artifacts: proposal, design, concurrency-workspace delta spec, tasks
-- Strict OpenSpec validation: PASS
-- Session/Git/network implementation changes: 0
-- External actions: 0
+Not complete. Implementation of M1..M5 is in progress; no completion claim is
+made and no validation result is projected beyond the recorded entries.

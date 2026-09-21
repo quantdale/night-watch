@@ -149,7 +149,16 @@
       { "id": "HC-047", "ops": [{ "file": "src/core/phase22/types.ts", "search": "maxTargets: 6", "replace": "maxTargets: 7" }] }
     ],
     "checkC00WorkspaceIntegrity": [
-      { "id": "HC-048", "ops": [{ "file": "bin/workspace-integrity.mjs", "search": "WORKSPACE_CANONICAL_DIRTY_WHILE_SESSION_LIVE", "replace": "WORKSPACE_PROBE_DIRTY" }] }
+      { "id": "HC-048", "ops": [{ "file": "bin/workspace-integrity.mjs", "search": "WORKSPACE_CANONICAL_DIRTY_WHILE_SESSION_LIVE", "replace": "WORKSPACE_PROBE_DIRTY" }] },
+      { "id": "HC-090", "ops": [{ "file": "bin/nightwatch-session.mjs", "search": "authority.mutates && options.rootExplicit", "replace": "false" }] },
+      { "id": "HC-091", "ops": [{ "file": "bin/nightwatch-session.mjs", "search": "admitInvocationBinding({ currentTopRealPath: topReal, scriptRealPath: scriptReal, cwdRealPath: cwdReal })", "replace": "({ ok: true })" }] },
+      { "id": "HC-092", "ops": [{ "file": "bin/nightwatch-session.mjs", "search": "const admission = admitExpectations(", "replace": "const admission = { ok: true }; // admitExpectations(", "all": true }] },
+      { "id": "HC-093", "ops": [{ "file": "bin/lib/session-authority.mjs", "search": "SESSION_CONTINUITY_MISMATCH", "replace": "DISABLED_CONTINUITY", "all": true }, { "file": "bin/nightwatch-session.mjs", "search": "SESSION_CONTINUITY_MISMATCH", "replace": "DISABLED_CONTINUITY", "all": true }] },
+      { "id": "HC-094", "ops": [{ "file": "bin/nightwatch-session.mjs", "search": "SESSION_TRANSITION_LOCKED", "replace": "DISABLED_LOCK", "all": true }] },
+      { "id": "HC-095", "ops": [{ "file": "bin/lib/session-authority.mjs", "search": "SESSION_CHECKOUT_CLASS_REFUSED", "replace": "DISABLED_CHECKOUT_CLASS", "all": true }] },
+      { "id": "HC-096", "ops": [{ "file": "bin/nightwatch-session.mjs", "search": "SESSION_RECORD_REVISION_CHANGED", "replace": "DISABLED_REVISION", "all": true }] },
+      { "id": "HC-097", "ops": [{ "file": "bin/nightwatch-session.mjs", "search": "SESSION_INTEGRATION_REMOTE_SUCCEEDED_LOCAL_RECORD_UNCERTAIN", "replace": "DISABLED_UNCERTAIN", "all": true }] },
+      { "id": "HC-098", "ops": [{ "file": "bin/nightwatch-session.mjs", "search": "const admission = admitExpectations({ authority, record: observed.parsed, head, expectSession: options.expectSession, expectHead: options.expectHead, adopting: false });", "replace": "const integrateAdmission = admitExpectations({ authority, record: observed.parsed, head, expectSession: options.expectSession, expectHead: options.expectHead, adopting: false });", "all": true }] }
     ],
     "checkC10ProductionPrivacyBoundary": [
       { "id": "HC-049", "ops": [{ "file": "src/core/prodPrivacy/serializer.ts", "search": "PRODUCTION_STRUCTURAL_DIGEST_PREFIX", "replace": "PRODUCTION_PROBE_DIGEST_PREFIX", "all": true }] }

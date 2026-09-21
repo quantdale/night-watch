@@ -1,47 +1,36 @@
 # Task Report
 
-Status: COMPLETE
+Task ID: nightwatch-session-mutation-authority-binding-v1
+Phase: SESSION_MUTATION_AUTHORITY_BINDING_V1
+Status: IN_PROGRESS
+Starting SHA: caab10e91b8d81f2b98597b3c6974db89638ae6c
+Last validated implementation SHA: caab10e91b8d81f2b98597b3c6974db89638ae6c
 
 ## Task
 
-Create an implementation-ready planning change for NW-AUD-006.
+Implement NW-AUD-006, the session mutation authority binding, in an owned C-00
+worktree.
 
-## Outcome
+## Interim outcome
 
-`nightwatch-session-mutation-authority-binding-v1` is 4/4 complete and
-strict-valid. It strengthens `concurrency-workspace-hardening` so mutating
-lifecycle commands are bound to the invoking checkout and exact current
-session/revision, integration adds exact HEAD and pre-network admission,
-record transitions are serialized compare-and-swap operations, and
-cross-session/race failures are proven without overstating the same-user threat
-boundary.
+Implementation has started. This interim report makes no completion claim and
+records no unperformed validation.
 
 ## Deliverables
 
-- `proposal.md` — defect, breaking CLI changes, capability relation, and
-  impact.
-- `design.md` — checkout/code binding, public expectations, continuity,
-  record CAS, integration, recovery, alternatives, risks, and migration.
-- `specs/concurrency-workspace-hardening/spec.md` — added normative invocation,
-  transition, lifecycle-role, integration, threat-boundary, and test contract.
-- `tasks.md` — ordered implementation and validation handoff, declared outside
-  this planning task.
+Pending: checkout/code binding, explicit expectations, continuity admission,
+serialized record transitions, command roles, pre-network integration
+admission, adversarial tests, probes, and documentation.
 
 ## Validation
 
-- `openspec validate nightwatch-session-mutation-authority-binding-v1 --strict`
-  — PASS.
-- Canonical-to-live-session release and integration dry runs — reachable plans
-  reproduced, with the ownership record and remote unchanged.
-- Parent continuity and workspace validation are recorded by the active audit
-  campaign.
+Pending the M1 checkpoint; see `STATE.md` for the live validation ledger.
 
 ## Safety
 
-No ownership record, ref, branch, worktree, working tree, remote-tracking ref,
-remote ref, implementation, dependency, product, credential, or Alphaus state
-was changed.
+- Safety events: NONE — only documented local lifecycle actions have run.
 
-## Final State
+## Final state
 
-COMPLETE / STOP. A separate future task is required to implement the change.
+IN_PROGRESS. A completion report replaces this interim record when all
+milestones are validated.

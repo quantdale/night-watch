@@ -1,48 +1,54 @@
 # Active Task
 
-Task ID: nightwatch-exhaustive-repository-audit-proposals-v1
-Phase: EXHAUSTIVE_REPOSITORY_AUDIT_PROPOSALS_V1
-Title: Exhaustive repository audit and OpenSpec proposals
-Status: COMPLETE
-Task directory: .agent/tasks/nightwatch-exhaustive-repository-audit-proposals-v1
-Starting SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
-Last validated implementation SHA: bcdd1b15e450d98317cb29d30498c0c35d47044e
-Last checkpoint: M0 through M10 complete; forty-five material findings map one-to-one to forty-five strict-valid unimplemented OpenSpec changes through NW-AUD-048.
-Current milestone: COMPLETE / STOP — all milestones closed.
-Next action: STOP
-Authorization class: EXHAUSTIVE_REPOSITORY_AUDIT_PROPOSALS_V1
+Task ID: nightwatch-session-mutation-authority-binding-v1
+Phase: SESSION_MUTATION_AUTHORITY_BINDING_V1
+Title: Session mutation authority binding implementation
+Status: IN_PROGRESS
+Task directory: .agent/tasks/nightwatch-session-mutation-authority-binding-v1
+Starting SHA: caab10e91b8d81f2b98597b3c6974db89638ae6c
+Last validated implementation SHA: caab10e91b8d81f2b98597b3c6974db89638ae6c
+Last checkpoint: M0 complete — owned implementation worktree claimed at base `caab10e9`; M1 in progress.
+Current milestone: M1 — invocation binding and explicit expectations
+Next action: Implement M1: command authority matrix, invocation/script binding and exact expectation parsing in `bin/nightwatch-session.mjs`, then focused tests and `npm run typecheck:bin`.
+Authorization class: NW_AUD_006_IMPLEMENTATION
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
-STARTING_SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
-LAST_VALIDATED_IMPLEMENTATION_SHA: bcdd1b15e450d98317cb29d30498c0c35d47044e
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: bcdd1b15e450d98317cb29d30498c0c35d47044e
+
+STARTING_SHA: caab10e91b8d81f2b98597b3c6974db89638ae6c
+LAST_VALIDATED_IMPLEMENTATION_SHA: caab10e91b8d81f2b98597b3c6974db89638ae6c
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: caab10e91b8d81f2b98597b3c6974db89638ae6c
 LIVE_HEAD_AUTHORITY: GIT
-FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
-PHASE_EXHAUSTIVE_REPOSITORY_AUDIT_PROPOSALS_V1_STATUS: COMPLETE
+PHASE_SESSION_MUTATION_AUTHORITY_BINDING_V1_STATUS: IN_PROGRESS
 
 ## Mission
 
-Inspect the complete Nightwatch repository using read-only evidence, identify and prioritize every material correctness, security, safety, reliability, performance, architecture, maintainability, validation, and test gap, and capture each coherent remediation scope in detailed OpenSpec proposal artifacts. Do not implement product changes.
+Implement and validate the strict-valid OpenSpec change
+`nightwatch-session-mutation-authority-binding-v1`: bind every mutating C-00
+lifecycle command to the invoking checkout and executing CLI, require explicit
+public session and HEAD expectations, admit continuity coherence, serialize
+ownership-record transitions with a bounded lock and revision compare-and-swap,
+restrict command roles, admit integration authority before network access, and
+prove the cross-session and race boundaries non-vacuously.
 
 ## Read order
 
-1. `.agent/tasks/nightwatch-exhaustive-repository-audit-proposals-v1/{SPEC,PLAN,STATE}.md`
-2. `AGENTS.md`, `docs/CURRENT_STATE.md`, `docs/SAFETY_MODEL.md`, `docs/DECISIONS.md`, `docs/ROADMAP.md`, and `docs/ARCHITECTURE.md`
-3. Existing active and archived OpenSpec changes, tests, source, configuration, tooling, Git history, and validation evidence needed to distinguish new issues from already-planned work
+1. `.agent/tasks/nightwatch-session-mutation-authority-binding-v1/{SPEC,PLAN,STATE}.md`
+2. `AGENTS.md` and `docs/CURRENT_STATE.md`
+3. `openspec/changes/nightwatch-session-mutation-authority-binding-v1/`
+4. `bin/nightwatch-session.mjs`, `bin/workspace-integrity.mjs`, focused tests
 
 ## Routing and safety
 
 ```
-CAMPAIGN: nightwatch-exhaustive-repository-audit-proposals-v1
+CAMPAIGN: nightwatch-session-mutation-authority-binding-v1
 CHILD TASK: NONE
-WAVE: AUDIT-PROPOSALS-V1
-SESSION WORKTREE: NONE
+SESSION WORKTREE: session/nightwatch-session-mutation-auth-2ef39532
 
 IMPLEMENTATION AUTHORIZED:
-  task continuity files, OpenSpec audit/proposal/design/spec/task artifacts,
-  validation of those planning artifacts, and durable planning checkpoints.
+  bin/nightwatch-session.mjs, bounded shared C-00 helpers,
+  tests/unit/**, hardening rules and probes, AGENTS/docs/recipe updates,
+  active task and OpenSpec continuity records.
 
-PRODUCT SOURCE IMPLEMENTATION:             NOT AUTHORIZED
 ALPHAUS DEV / NEXT / PRODUCTION CONTACT:   NOT AUTHORIZED
 AUTHENTICATED ALPHAUS RUNTIME:             NOT AUTHORIZED
 DATABASE / DATA-PLANE ACCESS:              NOT AUTHORIZED
@@ -50,9 +56,8 @@ CLOUD / INFRASTRUCTURE OPERATIONS:         NOT AUTHORIZED
 SIBLING REPOSITORY MUTATION:               NOT AUTHORIZED
 EXTERNAL PUBLICATION / ISSUE / PR:         NOT AUTHORIZED
 FORCE PUSH / HISTORY REWRITE:              NOT AUTHORIZED
-SIBLING READ:                              NOT REQUIRED; NIGHTWATCH REPO ONLY
-LOCAL READ-ONLY COMMANDS AND TESTS:         AUTHORIZED
-OPENSPEC ARTIFACT WRITES:                   AUTHORIZED
+LOCAL READ-ONLY COMMANDS AND TESTS:        AUTHORIZED
 ```
 
-This is a planning-only campaign. Findings must be grounded in current code, tests, configuration, docs, and deterministic local evidence. Existing proposals must be deduplicated rather than restated as new defects. No implementation task may be checked off as performed.
+Never force-push, never rebase or amend another agent's commits, never
+discard a newer canonical tip, and never touch another owner's worktree.

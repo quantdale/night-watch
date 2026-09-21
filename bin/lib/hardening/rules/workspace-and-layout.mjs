@@ -177,6 +177,60 @@ export function checkC00WorkspaceIntegrity() {
       fail(`${file} must not derive a path-safety decision from its own checkout location`);
     }
   }
+  // NW-AUD-006 — session mutation authority binding. The lifecycle CLI is the
+  // sole writer of C-00 ownership state, so every authority control must exist
+  // in the shipped source AND the integration admission/lock must precede the
+  // first network callback. A token list alone would pass a CLI that still
+  // admitted a foreign --root; the ordering probe keeps the pre-network claim
+  // mechanically tied to real code.
+  const sessionAuthority = read('bin/lib/session-authority.mjs');
+  const authoritySurface = `${sessionAuthority}\n${sessionCode}`;
+  for (const token of [
+    'SESSION_MUTATION_ROOT_OVERRIDE_REFUSED',
+    'SESSION_EXPECTATION_MISMATCH',
+    'SESSION_EXPECTATION_MALFORMED',
+    'SESSION_CONTINUITY_MISMATCH',
+    'SESSION_INVOCATION_UNRESOLVED',
+    'SESSION_SCRIPT_CHECKOUT_MISMATCH',
+    'SESSION_CHECKOUT_CLASS_REFUSED',
+    'SESSION_RECOVER_REFUSED',
+    'SESSION_TRANSITION_LOCKED',
+    'SESSION_RECORD_REVISION_CHANGED',
+    'SESSION_RECOVERED_LOCK',
+    'SESSION_INTEGRATION_REMOTE_SUCCEEDED_LOCAL_RECORD_UNCERTAIN',
+    'SESSION_LOCK_SCHEMA',
+    'admitInvocationBinding',
+    'admitExpectations',
+    'admitContinuity',
+    'admitCheckoutRole',
+    'admitLockRecovery',
+    'withTransitionLock',
+    'recordRevision',
+  ]) {
+    if (!authoritySurface.includes(token)) fail(`session mutation authority control missing: ${token}`);
+  }
+  if (!/authority\.mutates && options\.rootExplicit/.test(sessionCode)) {
+    fail('every mutator must refuse an explicit --root before resolving any target context');
+  }
+  if (!/admitInvocationBinding\(/.test(sessionCode)) {
+    fail('the session CLI must resolve its invoking authority through admitInvocationBinding(...)');
+  }
+  const integrateStart = sessionCode.indexOf('function commandIntegrate(');
+  const integrateEnd = sessionCode.indexOf('\nfunction commandRemove(');
+  if (integrateStart === -1 || integrateEnd <= integrateStart) {
+    fail('commandIntegrate could not be located; the pre-network ordering check is unresolvable');
+  } else {
+    const integrateBody = sessionCode.slice(integrateStart, integrateEnd);
+    const admissionAt = integrateBody.indexOf('const admission = admitExpectations(');
+    const lockAt = integrateBody.indexOf('const transition = withTransitionLock(');
+    const fetchAt = integrateBody.indexOf("['fetch'");
+    if (admissionAt === -1) fail('integration must admit expectations before any network callback');
+    if (lockAt === -1) fail('integration must hold the transition lock through its network effects');
+    if (fetchAt === -1) fail('integration must fetch remote state explicitly');
+    if (!(admissionAt < lockAt && lockAt < fetchAt)) {
+      fail('integration must admit expectations and take the transition lock before the first fetch callback');
+    }
+  }
 }
 
 /**

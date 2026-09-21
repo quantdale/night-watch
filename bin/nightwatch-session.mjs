@@ -10,6 +10,20 @@
 // It never force-pushes, never rebases or amends another session's commits,
 // never checks out the canonical branch, never resolves a conflict silently,
 // and never deletes another live session's work.
+//
+// NW-AUD-006 (nightwatch-session-mutation-authority-binding-v1): every
+// mutating command derives its authority ONLY from the Git top-level that
+// contains the process current directory, requires the executing CLI file to
+// resolve inside that same worktree, requires explicit public
+// session/HEAD expectations, admits continuity coherence, serializes
+// ownership-record transitions with a bounded lock and a canonical revision
+// compare-and-swap, and admits integration authority before any network
+// callback. Read-only `status`/`check` keep explicit cross-root inspection.
+//
+// Threat boundary: expectations and revisions are PUBLIC freshness/intent
+// values, not authentication secrets. This is cooperative confused-deputy
+// protection for agents sharing one OS account; it is not cryptographic
+// isolation from a hostile same-user process.
 
 import fs from 'node:fs';
 import os from 'node:os';
@@ -17,6 +31,19 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
+import {
+  SESSION_COMMAND_AUTHORITY,
+  SESSION_LOCK_SCHEMA,
+  admitCheckoutRole,
+  admitContinuity,
+  admitExpectations,
+  admitInvocationBinding,
+  admitLockRecovery,
+  isSessionId,
+  parseExpectation,
+  recordRevision,
+} from './lib/session-authority.mjs';
+import { normalizeTaskStatus } from './agent-continuity-protocol.mjs';
 
 import {
   WORKSPACE_SESSION_SCHEMA,
@@ -31,6 +58,8 @@ import {
 const GIT_TIMEOUT_MS = 30_000;
 const GIT_NETWORK_TIMEOUT_MS = 180_000;
 const GIT_MAX_BUFFER = 8 * 1024 * 1024;
+const CONTINUITY_MAX_BYTES = 512 * 1024;
+const TRANSITION_LOCK_MAX_BYTES = 4096;
 
 function git(cwd, args, { network = false } = {}) {
   const result = spawnSync('git', args, {
@@ -120,13 +149,6 @@ function writeRecordExclusive(file, record) {
   fs.writeFileSync(file, `${JSON.stringify(record, null, 2)}\n`, { encoding: 'utf8', flag: 'wx' });
 }
 
-function writeRecordReplace(file, record) {
-  fs.mkdirSync(path.dirname(file), { recursive: true });
-  const temporary = `${file}.tmp-${process.pid}`;
-  fs.writeFileSync(temporary, `${JSON.stringify(record, null, 2)}\n`, 'utf8');
-  fs.renameSync(temporary, file);
-}
-
 function readRecordRaw(file) {
   try {
     return JSON.parse(fs.readFileSync(file, 'utf8'));
@@ -150,6 +172,237 @@ function holderIsLive(record) {
 }
 
 // ---------------------------------------------------------------------------
+// invocation authority (NW-AUD-006)
+// ---------------------------------------------------------------------------
+
+/**
+ * Resolve the invoking authority context. Every mutator uses this: the root is
+ * ALWAYS the Git top-level containing `process.cwd()`, and the executing CLI
+ * file must resolve inside that same exact real worktree. `--root` is
+ * deliberately not consulted here; the parser refuses it for mutators before
+ * this function is reached.
+ */
+function resolveInvocationContext() {
+  const toplevel = gitValue(process.cwd(), ['rev-parse', '--show-toplevel']);
+  if (toplevel === null) return { error: 'SESSION_NOT_A_GIT_WORKTREE' };
+  const root = path.resolve(toplevel);
+  let topReal;
+  let cwdReal;
+  let scriptReal;
+  try {
+    topReal = fs.realpathSync(root);
+    cwdReal = fs.realpathSync(process.cwd());
+    scriptReal = fs.realpathSync(process.argv[1]);
+  } catch {
+    return { error: 'SESSION_INVOCATION_UNRESOLVED', detail: 'the checkout, current directory or CLI path could not be resolved' };
+  }
+  const binding = admitInvocationBinding({ currentTopRealPath: topReal, scriptRealPath: scriptReal, cwdRealPath: cwdReal });
+  if (!binding.ok) return { error: binding.code, detail: binding.detail };
+  const context = resolveContext(root);
+  if (context === null) return { error: 'SESSION_NOT_A_GIT_WORKTREE' };
+  return { context };
+}
+
+function currentRecordFile(context) {
+  return sessionRecordPath(context.commonDir, context.worktreeName, context.policy);
+}
+
+function readBoundedText(file, maxBytes) {
+  try {
+    const stat = fs.lstatSync(file);
+    if (stat.isSymbolicLink() || !stat.isFile()) return null;
+    if (stat.size > maxBytes) return null;
+    return fs.readFileSync(file, 'utf8');
+  } catch {
+    return null;
+  }
+}
+
+function currentBranchOf(context) {
+  const branch = gitValue(context.root, ['rev-parse', '--abbrev-ref', 'HEAD']);
+  return branch === 'HEAD' ? null : branch;
+}
+
+/**
+ * Admit active-task/STATE continuity for commands that bind the live campaign.
+ * `worktreeName` is the registered linked worktree name, or `canonical`.
+ */
+function admitCommandContinuity(context, record, command) {
+  const taskId = typeof record?.taskId === 'string' ? record.taskId : null;
+  const activeTaskText = readBoundedText(path.join(context.root, '.agent', 'ACTIVE_TASK.md'), CONTINUITY_MAX_BYTES);
+  const stateText = taskId === null || !/^[a-z0-9][a-z0-9._-]*$/.test(taskId)
+    ? null
+    : readBoundedText(path.join(context.root, '.agent', 'tasks', taskId, 'STATE.md'), CONTINUITY_MAX_BYTES);
+  const branch = currentBranchOf(context) ?? '';
+  return admitContinuity({
+    command,
+    record,
+    // The routing directive names the session BRANCH; the registered worktree
+    // name is a different identity and must never be substituted for it.
+    worktreeName: branch === '' ? (context.worktreeName ?? 'canonical') : branch,
+    currentBranch: branch,
+    activeTaskText,
+    stateText,
+    normalizeStatus: normalizeTaskStatus,
+  });
+}
+
+// ---------------------------------------------------------------------------
+// ownership-record transition primitives (NW-AUD-006)
+// ---------------------------------------------------------------------------
+
+function transitionLockPath(recordFile) {
+  return `${recordFile}.lock`;
+}
+
+/**
+ * Inspect a transition lock without ever following a symlink. Returns
+ * `{ state: 'ABSENT' | 'PRESENT' | 'MALFORMED' | 'IRREGULAR' | 'UNREADABLE' | 'OVERSIZED', lock?, bytes? }`.
+ */
+function readTransitionLock(recordFile) {
+  const file = transitionLockPath(recordFile);
+  let stat;
+  try {
+    stat = fs.lstatSync(file);
+  } catch (error) {
+    return { state: error?.code === 'ENOENT' ? 'ABSENT' : 'UNREADABLE', file };
+  }
+  if (stat.isSymbolicLink() || !stat.isFile()) return { state: 'IRREGULAR', file };
+  if (stat.size > TRANSITION_LOCK_MAX_BYTES) return { state: 'OVERSIZED', file };
+  let text;
+  try {
+    text = fs.readFileSync(file, 'utf8');
+  } catch {
+    return { state: 'UNREADABLE', file };
+  }
+  let parsed;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    return { state: 'MALFORMED', file, bytes: text };
+  }
+  if (parsed === null || typeof parsed !== 'object' || parsed.schemaVersion !== SESSION_LOCK_SCHEMA) {
+    return { state: 'MALFORMED', file, bytes: text };
+  }
+  return { state: 'PRESENT', file, lock: parsed, bytes: text };
+}
+
+function acquireTransitionLock(recordFile, { command, sessionId }) {
+  const observed = readTransitionLock(recordFile);
+  if (observed.state !== 'ABSENT') {
+    return { ok: false, code: observed.state === 'PRESENT' ? 'SESSION_TRANSITION_LOCKED' : 'SESSION_TRANSITION_LOCK_INVALID', detail: `lock state=${observed.state}; run recover --dry-run for the exact identity` };
+  }
+  const lock = {
+    schemaVersion: SESSION_LOCK_SCHEMA,
+    command,
+    sessionId: sessionId ?? 'UNBOUND',
+    bootDigest: bootDigest(),
+    pid: process.pid,
+    startedAtIso: new Date().toISOString(),
+    operationId: crypto.randomBytes(8).toString('hex'),
+  };
+  fs.mkdirSync(path.dirname(recordFile), { recursive: true });
+  try {
+    fs.writeFileSync(transitionLockPath(recordFile), `${JSON.stringify(lock, null, 2)}\n`, { encoding: 'utf8', flag: 'wx', mode: 0o600 });
+  } catch (error) {
+    if (error?.code === 'EEXIST') return { ok: false, code: 'SESSION_TRANSITION_LOCKED', detail: 'a competing transition lock exists' };
+    return { ok: false, code: 'SESSION_TRANSITION_LOCK_FAILED', detail: String(error?.code ?? 'UNKNOWN') };
+  }
+  return { ok: true, file: transitionLockPath(recordFile), lock };
+}
+
+function releaseTransitionLock(handle) {
+  if (handle === null || handle === undefined) return;
+  try {
+    const observed = readTransitionLock(handle.file.replace(/\.lock$/, ''));
+    if (observed.state === 'PRESENT' && observed.lock.operationId === handle.lock.operationId) fs.unlinkSync(observed.file);
+  } catch {
+    // A missing or already-replaced lock is not this invocation's to remove.
+  }
+}
+
+/** Read the ownership record with bounded, symlink-refusing semantics. */
+function readRecordDocument(file, policy) {
+  const maxBytes = policy?.worktreePolicy?.maxRecordBytes ?? 4096;
+  let stat;
+  try {
+    stat = fs.lstatSync(file);
+  } catch (error) {
+    return { state: error?.code === 'ENOENT' ? 'ABSENT' : 'UNREADABLE' };
+  }
+  if (stat.isSymbolicLink()) return { state: 'SYMLINK' };
+  if (!stat.isFile()) return { state: 'IRREGULAR' };
+  if (stat.size > maxBytes) return { state: 'OVERSIZED' };
+  let text;
+  try {
+    text = fs.readFileSync(file, 'utf8');
+  } catch {
+    return { state: 'UNREADABLE' };
+  }
+  let parsed;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    return { state: 'MALFORMED', bytes: text };
+  }
+  return { state: 'PRESENT', parsed, revision: recordRevision(parsed) };
+}
+
+/**
+ * Publish a replacement ownership record durably: same-directory temporary
+ * file, fsync, rename, directory fsync, reread verification. Any failure past
+ * the rename is reported as UNCERTAIN rather than as a silent success.
+ */
+function publishRecordDurable(recordFile, record, policy) {
+  const payload = `${JSON.stringify(record, null, 2)}\n`;
+  const temporary = `${recordFile}.next-${process.pid}-${crypto.randomBytes(4).toString('hex')}`;
+  let handle;
+  try {
+    handle = fs.openSync(temporary, 'wx', 0o600);
+    fs.writeFileSync(handle, payload, 'utf8');
+    fs.fsyncSync(handle);
+    fs.closeSync(handle);
+    handle = undefined;
+    fs.renameSync(temporary, recordFile);
+    const directory = fs.openSync(path.dirname(recordFile), 'r');
+    try {
+      fs.fsyncSync(directory);
+    } finally {
+      fs.closeSync(directory);
+    }
+  } catch (error) {
+    if (handle !== undefined) {
+      try { fs.closeSync(handle); } catch { /* best effort */ }
+    }
+    try { fs.rmSync(temporary, { force: true }); } catch { /* best effort */ }
+    return { ok: false, code: 'SESSION_RECORD_WRITE_UNCERTAIN', detail: String(error?.code ?? 'UNKNOWN') };
+  }
+  const reread = readRecordDocument(recordFile, policy);
+  if (reread.state !== 'PRESENT') {
+    return { ok: false, code: 'SESSION_RECORD_WRITE_UNCERTAIN', detail: `reread=${reread.state}` };
+  }
+  if (recordRevision(reread.parsed) !== recordRevision(record)) {
+    return { ok: false, code: 'SESSION_RECORD_WRITE_UNCERTAIN', detail: 'reread content differs from the published record' };
+  }
+  return { ok: true };
+}
+
+/**
+ * Run `body` while holding the transition lock for one ownership record. The
+ * lock is released in a finally; a lock conflict or invalid lock refuses
+ * before any effect.
+ */
+function withTransitionLock(recordFile, options, body) {
+  const acquired = acquireTransitionLock(recordFile, options);
+  if (!acquired.ok) return acquired;
+  try {
+    return body(acquired);
+  } finally {
+    releaseTransitionLock(acquired);
+  }
+}
+
+// ---------------------------------------------------------------------------
 // commands
 // ---------------------------------------------------------------------------
 
@@ -160,7 +413,7 @@ function holderIsLive(record) {
 // CONFIG_INVALID for any other value — an unrecognised token never degrades
 // into "no injection". It can only cause a start to fail and roll back; it
 // grants no authority and reaches no other command.
-const SESSION_FAULT_INJECTION_POINTS = new Set(['AFTER_WORKTREE_ADD', 'AFTER_RECORD_WRITE']);
+const SESSION_FAULT_INJECTION_POINTS = new Set(['AFTER_WORKTREE_ADD', 'AFTER_RECORD_WRITE', 'AFTER_INTEGRATION_VERIFY']);
 
 function resolveFaultInjection(environment = process.env) {
   const raw = environment.NIGHTWATCH_SESSION_FAULT_INJECTION;
@@ -233,11 +486,15 @@ function commandStatus(context, options) {
 
 function commandClaim(context, options) {
   if (options.taskId === null) return fail('SESSION_TASK_ID_REQUIRED', 'pass --task <task-id>');
-  if (!context.isLinked && options.role !== 'MAINTENANCE') {
-    return fail('SESSION_CANONICAL_IMPLEMENTATION_REFUSED', 'the canonical checkout may only hold a MAINTENANCE claim; use start to create an implementation worktree');
-  }
-  const branch = gitValue(context.root, ['rev-parse', '--abbrev-ref', 'HEAD']);
-  if (branch === null || branch === 'HEAD') return fail('SESSION_DETACHED_HEAD', 'a session requires a named branch');
+  const roleAdmission = admitCheckoutRole({
+    authority: SESSION_COMMAND_AUTHORITY.claim,
+    isLinked: context.isLinked,
+    worktreeCount: 1,
+    role: options.role,
+  });
+  if (!roleAdmission.ok) return fail(roleAdmission.code, roleAdmission.detail);
+  const branch = currentBranchOf(context);
+  if (branch === null) return fail('SESSION_DETACHED_HEAD', 'a session requires a named branch');
   const prefix = context.policy?.canonical?.sessionBranchPrefix ?? 'session/';
   if (context.isLinked && !branch.startsWith(prefix)) {
     return fail('SESSION_BRANCH_PREFIX_INVALID', `implementation session branches must start with ${prefix}`);
@@ -248,36 +505,71 @@ function commandClaim(context, options) {
     ?? gitValue(context.root, ['merge-base', 'HEAD', `${remote}/${canonicalBranch}`])
     ?? gitValue(context.root, ['rev-parse', 'HEAD']);
   if (baseSha === null) return fail('SESSION_BASE_UNRESOLVED');
-  const file = sessionRecordPath(context.commonDir, context.worktreeName, context.policy);
-  const existing = readRecordRaw(file);
-  if (existing !== null) {
-    if (holderIsLive(existing)) {
-      return fail('SESSION_ALREADY_OWNED', `worktree already owned by task ${existing.taskId} (session ${existing.sessionId})`);
+  const file = currentRecordFile(context);
+  const existing = readRecordDocument(file, context.policy);
+  if (existing.state !== 'PRESENT' && existing.state !== 'ABSENT') {
+    return fail('SESSION_RECORD_UNREADABLE', `the existing ownership record is ${existing.state}; inspect the worktree before claiming`);
+  }
+  if (existing.state === 'PRESENT') {
+    if (holderIsLive(existing.parsed)) {
+      return fail('SESSION_ALREADY_OWNED', `worktree already owned by task ${existing.parsed.taskId} (session ${existing.parsed.sessionId})`);
     }
     if (!options.adopt) {
-      return fail('SESSION_OWNER_STALE', `worktree holds a non-live claim for task ${existing.taskId}; re-run with --adopt to take ownership without deleting work`);
+      return fail('SESSION_OWNER_STALE', `worktree holds a non-live claim for task ${existing.parsed.taskId}; re-run with --adopt to take ownership without deleting work`);
     }
   }
   const record = buildRecord({ taskId: options.taskId, campaignId: options.campaignId, role: options.role, branch, baseSha, anchorPid: options.anchorPid });
+  const admission = admitExpectations({
+    authority: SESSION_COMMAND_AUTHORITY.claim,
+    record: existing.state === 'PRESENT' ? existing.parsed : null,
+    head: null,
+    expectSession: options.expectSession,
+    expectHead: null,
+    adopting: options.adopt === true && existing.state === 'PRESENT',
+  });
+  if (!admission.ok) return fail(admission.code, admission.detail);
   if (options.dryRun) {
     plan('SESSION_CLAIM_PLAN', `task=${record.taskId} role=${record.role} branch=${branch} base=${baseSha}`);
-    plan('SESSION_CLAIM_RECORD', `${existing === null ? 'CREATE' : 'REPLACE'} ${file}${existing === null ? '' : ` (adopting stale claim for task ${existing.taskId})`}`);
+    plan('SESSION_CLAIM_RECORD', `${existing.state === 'ABSENT' ? 'CREATE' : 'REPLACE'} ${file}${existing.state === 'ABSENT' ? '' : ` (adopting stale claim for task ${existing.parsed.taskId})`}`);
     dryRunComplete('claim');
     return { claimed: false, dryRun: true, record };
   }
-  try {
-    if (existing === null) writeRecordExclusive(file, record);
-    else writeRecordReplace(file, record);
-  } catch (error) {
-    if (error?.code === 'EEXIST') return fail('SESSION_ALREADY_OWNED', 'a concurrent claim won the exclusive create');
-    return fail('SESSION_RECORD_WRITE_FAILED', String(error?.code ?? 'UNKNOWN'));
-  }
+  const transition = withTransitionLock(file, { command: 'claim', sessionId: record.sessionId }, () => {
+    const current = readRecordDocument(file, context.policy);
+    if (current.state === 'PRESENT' && holderIsLive(current.parsed)) {
+      return { ok: false, code: 'SESSION_ALREADY_OWNED', detail: 'a competing claim won while this command held the transition lock' };
+    }
+    if (current.state === 'ABSENT') {
+      try {
+        writeRecordExclusive(file, record);
+      } catch (error) {
+        if (error?.code === 'EEXIST') return { ok: false, code: 'SESSION_ALREADY_OWNED', detail: 'a concurrent claim won the exclusive create' };
+        return { ok: false, code: 'SESSION_RECORD_WRITE_FAILED', detail: String(error?.code ?? 'UNKNOWN') };
+      }
+      return { ok: true, record };
+    }
+    if (current.state !== 'PRESENT' || current.revision !== existing.revision) {
+      return { ok: false, code: 'SESSION_RECORD_REVISION_CHANGED', detail: 'the ownership record changed while this command held the transition lock' };
+    }
+    const published = publishRecordDurable(file, record, context.policy);
+    if (!published.ok) return published;
+    return { ok: true, record };
+  });
+  if (transition.ok !== true) return fail(transition.code, transition.detail);
   emit('SESSION_CLAIMED', `task=${record.taskId} session=${record.sessionId} branch=${branch} base=${baseSha}`);
+  emit('SESSION_NEXT_ACTION', `node bin/nightwatch-session.mjs release --expect-session ${record.sessionId}`);
   return record;
 }
 
 function commandStart(context, options) {
   if (options.taskId === null) return fail('SESSION_TASK_ID_REQUIRED', 'pass --task <task-id>');
+  const roleAdmission = admitCheckoutRole({
+    authority: SESSION_COMMAND_AUTHORITY.start,
+    isLinked: context.isLinked,
+    worktreeCount: 1,
+    role: options.role,
+  });
+  if (!roleAdmission.ok) return fail(roleAdmission.code, roleAdmission.detail);
   const fault = resolveFaultInjection();
   if (fault.invalid !== null) {
     return fail('SESSION_FAULT_INJECTION_INVALID', `NIGHTWATCH_SESSION_FAULT_INJECTION must be one of ${[...SESSION_FAULT_INJECTION_POINTS].join(', ')}`);
@@ -391,31 +683,59 @@ function commandStart(context, options) {
   }
 
   emit('SESSION_WORKTREE_CREATED', `name=${name} branch=${branch} base=${baseSha} path=${target}`);
-  emit('SESSION_NEXT_ACTION', `cd ${target} && node bin/nightwatch-session.mjs claim --task ${options.taskId} --adopt`);
+  // The copy-safe next command carries the public predecessor session ID, so
+  // adoption is bound to the exact record this start created.
+  emit('SESSION_NEXT_ACTION', `cd ${target} && node bin/nightwatch-session.mjs claim --task ${options.taskId} --adopt --expect-session ${record.sessionId}`);
   return record;
 }
 
 function commandRelease(context, options) {
-  const file = sessionRecordPath(context.commonDir, context.worktreeName, context.policy);
-  const existing = readRecordRaw(file);
-  if (existing === null) return fail('SESSION_RECORD_ABSENT');
-  const updated = { ...existing, ownershipState: 'RELEASED', holder: null };
+  const authority = SESSION_COMMAND_AUTHORITY.release;
+  const file = currentRecordFile(context);
+  const observed = readRecordDocument(file, context.policy);
+  if (observed.state !== 'PRESENT') {
+    return fail(observed.state === 'ABSENT' ? 'SESSION_RECORD_ABSENT' : 'SESSION_RECORD_UNREADABLE', `the ownership record is ${observed.state}`);
+  }
+  const admission = admitExpectations({ authority, record: observed.parsed, head: null, expectSession: options.expectSession, expectHead: null, adopting: false });
+  if (!admission.ok) return fail(admission.code, admission.detail);
+  const continuity = admitCommandContinuity(context, observed.parsed, 'release');
+  if (!continuity.ok) return fail(continuity.code, continuity.detail);
+  const updated = { ...observed.parsed, ownershipState: 'RELEASED', holder: null };
   if (options.dryRun) {
-    plan('SESSION_RELEASE_PLAN', `task=${existing.taskId} session=${existing.sessionId} ownershipState=${existing.ownershipState} -> RELEASED`);
+    plan('SESSION_RELEASE_PLAN', `task=${observed.parsed.taskId} session=${observed.parsed.sessionId} ownershipState=${observed.parsed.ownershipState} -> RELEASED`);
     plan('SESSION_RELEASE_RECORD', `REPLACE ${file}`);
     dryRunComplete('release');
     return { released: false, dryRun: true, record: updated };
   }
-  try {
-    writeRecordReplace(file, updated);
-  } catch (error) {
-    return fail('SESSION_RECORD_WRITE_FAILED', String(error?.code ?? 'UNKNOWN'));
+  const transition = withTransitionLock(file, { command: 'release', sessionId: observed.parsed.sessionId }, () => {
+    const current = readRecordDocument(file, context.policy);
+    if (current.state !== 'PRESENT') return { ok: false, code: 'SESSION_RECORD_ABSENT', detail: `the ownership record became ${current.state}` };
+    if (current.revision !== observed.revision) {
+      return { ok: false, code: 'SESSION_RECORD_REVISION_CHANGED', detail: 'the ownership record changed during release; nothing was published' };
+    }
+    const published = publishRecordDurable(file, { ...current.parsed, ownershipState: 'RELEASED', holder: null }, context.policy);
+    if (!published.ok) return published;
+    return { ok: true, record: { ...current.parsed, ownershipState: 'RELEASED', holder: null } };
+  });
+  if (transition.ok !== true) return fail(transition.code, transition.detail);
+  emit('SESSION_RELEASED', `task=${observed.parsed.taskId} session=${observed.parsed.sessionId}`);
+  if (context.worktreeName !== null) {
+    emit('SESSION_NEXT_ACTION', `node bin/nightwatch-session.mjs remove --name ${context.worktreeName} --expect-session ${observed.parsed.sessionId} --delete-branch   # from the canonical checkout`);
   }
-  emit('SESSION_RELEASED', `task=${existing.taskId} session=${existing.sessionId}`);
-  return updated;
+  return transition.record;
 }
 
 function commandReconcile(context, options) {
+  const authority = SESSION_COMMAND_AUTHORITY.reconcile;
+  const file = currentRecordFile(context);
+  const observed = readRecordDocument(file, context.policy);
+  if (observed.state !== 'PRESENT') {
+    return fail(observed.state === 'ABSENT' ? 'SESSION_RECORD_ABSENT' : 'SESSION_RECORD_UNREADABLE', `the ownership record is ${observed.state}`);
+  }
+  const admission = admitExpectations({ authority, record: observed.parsed, head: null, expectSession: options.expectSession, expectHead: null, adopting: false });
+  if (!admission.ok) return fail(admission.code, admission.detail);
+  const continuity = admitCommandContinuity(context, observed.parsed, 'reconcile');
+  if (!continuity.ok) return fail(continuity.code, continuity.detail);
   const report = inspectWorkspace({ root: context.root });
   if (report.self?.class !== 'OWNED_SESSION') return fail('SESSION_NOT_OWNED', 'reconcile runs inside an owned session worktree');
   if (report.self.clean === false) return fail('SESSION_WORKTREE_DIRTY', 'commit or set aside your own changes before reconciling');
@@ -438,35 +758,71 @@ function commandReconcile(context, options) {
     dryRunComplete('reconcile');
     return { merged: false, dryRun: true };
   }
-  if (!options.offline) {
-    const fetched = git(context.root, ['fetch', remote, canonicalBranch], { network: true });
-    if (!fetched.ok) return fail('SESSION_FETCH_FAILED', fetched.stderr.trim().split('\n').pop() ?? '');
-  }
-  const remoteMain = gitValue(context.root, ['rev-parse', '--verify', '--quiet', `refs/remotes/${remote}/${canonicalBranch}`]);
-  if (remoteMain === null) return fail('SESSION_REMOTE_MAIN_UNKNOWN');
-  if (git(context.root, ['merge-base', '--is-ancestor', remoteMain, 'HEAD']).ok) {
-    emit('SESSION_ALREADY_CONTAINS_CANONICAL', remoteMain);
-    return { merged: false };
-  }
-  // Merge, never rebase: another session's commits are never rewritten.
-  // --no-ff keeps the reconciliation an explicit, auditable merge commit.
-  const merged = git(context.root, ['merge', '--no-ff', '--no-edit', `${remote}/${canonicalBranch}`]);
-  if (!merged.ok) {
-    // Classify before aborting: an unmerged index means a real content
-    // conflict; anything else is an environment/tooling failure and must not
-    // be reported as a conflict.
-    const unmerged = gitValue(context.root, ['ls-files', '-u']);
-    git(context.root, ['merge', '--abort']);
-    if (unmerged !== null) {
-      return fail('SESSION_RECONCILE_CONFLICT', 'the merge was aborted; resolve deliberately and re-validate — nothing was rewritten');
+  // The transition lock is held across the fetch and merge: the record must
+  // stay exactly as admitted until the reconciliation outcome is known.
+  const transition = withTransitionLock(file, { command: 'reconcile', sessionId: observed.parsed.sessionId }, () => {
+    const current = readRecordDocument(file, context.policy);
+    if (current.state !== 'PRESENT') return { ok: false, code: 'SESSION_RECORD_ABSENT', detail: `the ownership record became ${current.state}` };
+    if (current.revision !== observed.revision) {
+      return { ok: false, code: 'SESSION_RECORD_REVISION_CHANGED', detail: 'the ownership record changed during reconcile; nothing was merged' };
     }
-    return fail('SESSION_RECONCILE_FAILED', `${merged.stderr.trim().split('\n').pop() ?? 'merge failed'} — nothing was rewritten`);
-  }
-  emit('SESSION_RECONCILED', `merged ${remote}/${canonicalBranch}=${remoteMain}; re-run the full validation before integrating`);
-  return { merged: true };
+    if (!options.offline) {
+      const fetched = git(context.root, ['fetch', remote, canonicalBranch], { network: true });
+      if (!fetched.ok) return { ok: false, code: 'SESSION_FETCH_FAILED', detail: 'the fetch failed; no merge was attempted' };
+    }
+    const remoteMain = gitValue(context.root, ['rev-parse', '--verify', '--quiet', `refs/remotes/${remote}/${canonicalBranch}`]);
+    if (remoteMain === null) return { ok: false, code: 'SESSION_REMOTE_MAIN_UNKNOWN' };
+    if (git(context.root, ['merge-base', '--is-ancestor', remoteMain, 'HEAD']).ok) {
+      emit('SESSION_ALREADY_CONTAINS_CANONICAL', remoteMain);
+      return { ok: true, merged: false };
+    }
+    // Merge, never rebase: another session's commits are never rewritten.
+    // --no-ff keeps the reconciliation an explicit, auditable merge commit.
+    const merged = git(context.root, ['merge', '--no-ff', '--no-edit', `${remote}/${canonicalBranch}`]);
+    if (!merged.ok) {
+      // Classify before aborting: an unmerged index means a real content
+      // conflict; anything else is an environment/tooling failure and must not
+      // be reported as a conflict.
+      const unmerged = gitValue(context.root, ['ls-files', '-u']);
+      git(context.root, ['merge', '--abort']);
+      if (unmerged !== null) {
+        return { ok: false, code: 'SESSION_RECONCILE_CONFLICT', detail: 'the merge was aborted; resolve deliberately and re-validate — nothing was rewritten' };
+      }
+      return { ok: false, code: 'SESSION_RECONCILE_FAILED', detail: 'the merge failed and was aborted; nothing was rewritten' };
+    }
+    const verified = readRecordDocument(file, context.policy);
+    if (verified.state !== 'PRESENT' || verified.revision !== observed.revision) {
+      return { ok: false, code: 'SESSION_RECORD_REVISION_CHANGED', detail: 'the ownership record changed during the merge; re-validate before continuing' };
+    }
+    emit('SESSION_RECONCILED', `merged ${remote}/${canonicalBranch}=${remoteMain}; re-run the full validation before integrating`);
+    return { ok: true, merged: true };
+  });
+  if (transition.ok !== true) return fail(transition.code, transition.detail);
+  return transition;
 }
 
 function commandIntegrate(context, options) {
+  const authority = SESSION_COMMAND_AUTHORITY.integrate;
+  const fault = resolveFaultInjection();
+  if (fault.invalid !== null) {
+    return fail('SESSION_FAULT_INJECTION_INVALID', `NIGHTWATCH_SESSION_FAULT_INJECTION must be one of ${[...SESSION_FAULT_INJECTION_POINTS].join(', ')}`);
+  }
+  const roleAdmission = admitCheckoutRole({ authority, isLinked: context.isLinked, worktreeCount: 1, role: 'IMPLEMENTATION' });
+  if (!roleAdmission.ok) return fail(roleAdmission.code, roleAdmission.detail);
+  const file = currentRecordFile(context);
+  const observed = readRecordDocument(file, context.policy);
+  if (observed.state !== 'PRESENT') {
+    return fail(observed.state === 'ABSENT' ? 'SESSION_RECORD_ABSENT' : 'SESSION_RECORD_UNREADABLE', `the ownership record is ${observed.state}`);
+  }
+  const head = gitValue(context.root, ['rev-parse', 'HEAD']);
+  const admission = admitExpectations({ authority, record: observed.parsed, head, expectSession: options.expectSession, expectHead: options.expectHead, adopting: false });
+  if (!admission.ok) return fail(admission.code, admission.detail);
+  const continuity = admitCommandContinuity(context, observed.parsed, 'integrate');
+  if (!continuity.ok) return fail(continuity.code, continuity.detail);
+  const currentBranch = currentBranchOf(context);
+  if (currentBranch === null || observed.parsed.branch !== currentBranch) {
+    return fail('SESSION_CONTINUITY_MISMATCH', 'the ownership record branch does not match the current session branch');
+  }
   const report = inspectWorkspace({ root: context.root });
   if (report.verdict === 'FAIL') {
     console.error(renderText(report));
@@ -476,9 +832,8 @@ function commandIntegrate(context, options) {
   if (report.self.clean === false) return fail('SESSION_WORKTREE_DIRTY');
   const remote = context.policy?.canonical?.remote ?? 'origin';
   const canonicalBranch = context.policy?.canonical?.branch ?? 'main';
-  // The dry run sits ABOVE the fetch. The previous guard sat below it, so
-  // `integrate --dry-run` still wrote the remote-tracking refs and was not the
-  // zero-mutation report the flag promises.
+  // The dry run sits ABOVE the fetch and holds no transition lock: it is the
+  // zero-mutation report the flag promises. Admission has already run.
   if (options.dryRun) {
     const localRemoteMain = gitValue(context.root, ['rev-parse', '--verify', '--quiet', `refs/remotes/${remote}/${canonicalBranch}`]);
     const localHead = gitValue(context.root, ['rev-parse', 'HEAD']);
@@ -494,52 +849,81 @@ function commandIntegrate(context, options) {
     dryRunComplete('integrate');
     return { pushed: false, dryRun: true, head: localHead };
   }
-  if (!options.offline) {
-    const fetched = git(context.root, ['fetch', remote, canonicalBranch], { network: true });
-    if (!fetched.ok) return fail('SESSION_FETCH_FAILED', fetched.stderr.trim().split('\n').pop() ?? '');
-  }
-  const remoteMain = gitValue(context.root, ['rev-parse', '--verify', '--quiet', `refs/remotes/${remote}/${canonicalBranch}`]);
-  const head = gitValue(context.root, ['rev-parse', 'HEAD']);
-  if (remoteMain === null || head === null) return fail('SESSION_REMOTE_MAIN_UNKNOWN');
-  if (remoteMain === head) {
-    emit('SESSION_ALREADY_INTEGRATED', head);
-    return { pushed: false, head };
-  }
-  if (!git(context.root, ['merge-base', '--is-ancestor', remoteMain, 'HEAD']).ok) {
-    return fail('SESSION_INTEGRATION_NOT_FAST_FORWARD', `${remote}/${canonicalBranch}=${remoteMain} is not contained in HEAD; run reconcile, revalidate, then integrate — never force-push`);
-  }
-  // Serialized by the remote ref compare-and-swap. No force, no lease.
-  const pushed = git(context.root, ['push', remote, `HEAD:refs/heads/${canonicalBranch}`], { network: true });
-  if (!pushed.ok) {
-    return fail('SESSION_PUSH_REJECTED', `${pushed.stderr.trim().split('\n').pop() ?? ''} — origin advanced; reconcile and revalidate, never force-push`);
-  }
-  const refetched = git(context.root, ['fetch', remote, canonicalBranch], { network: true });
-  if (!refetched.ok) return fail('SESSION_FETCH_FAILED', 'push succeeded but verification fetch failed');
-  const verified = gitValue(context.root, ['rev-parse', '--verify', '--quiet', `refs/remotes/${remote}/${canonicalBranch}`]);
-  if (verified !== head) return fail('SESSION_INTEGRATION_UNVERIFIED', `${remote}/${canonicalBranch}=${verified ?? 'UNKNOWN'} != HEAD=${head}`);
-  const file = sessionRecordPath(context.commonDir, context.worktreeName, context.policy);
-  const existing = readRecordRaw(file);
-  if (existing !== null) {
-    try {
-      writeRecordReplace(file, { ...existing, integrationState: 'INTEGRATED' });
-    } catch {
-      emit('SESSION_RECORD_UPDATE_SKIPPED', 'integration succeeded but the ownership record could not be updated');
+  // The transition lock is held through fetch, fast-forward recheck, push,
+  // verification fetch and the durable record update. No other lifecycle
+  // command may transition this record while the network effects are pending.
+  const transition = withTransitionLock(file, { command: 'integrate', sessionId: observed.parsed.sessionId }, () => {
+    const current = readRecordDocument(file, context.policy);
+    if (current.state !== 'PRESENT') return { ok: false, code: 'SESSION_RECORD_ABSENT', detail: `the ownership record became ${current.state}` };
+    if (current.revision !== observed.revision) {
+      return { ok: false, code: 'SESSION_RECORD_REVISION_CHANGED', detail: 'the ownership record changed during admission; nothing was fetched or pushed' };
     }
-  }
-  emit('SESSION_INTEGRATED', `${remote}/${canonicalBranch}=${head}`);
-  return { pushed: true, head };
+    if (!options.offline) {
+      const fetched = git(context.root, ['fetch', remote, canonicalBranch], { network: true });
+      if (!fetched.ok) return { ok: false, code: 'SESSION_FETCH_FAILED', detail: 'the fetch failed; no push was attempted' };
+    }
+    const headNow = gitValue(context.root, ['rev-parse', 'HEAD']);
+    if (headNow !== options.expectHead) {
+      return { ok: false, code: 'SESSION_EXPECTATION_MISMATCH', detail: 'HEAD advanced after admission; prepare a fresh integration intent' };
+    }
+    const remoteMain = gitValue(context.root, ['rev-parse', '--verify', '--quiet', `refs/remotes/${remote}/${canonicalBranch}`]);
+    if (remoteMain === null) return { ok: false, code: 'SESSION_REMOTE_MAIN_UNKNOWN' };
+    const finalizeRecord = () => {
+      const published = publishRecordDurable(file, { ...current.parsed, integrationState: 'INTEGRATED' }, context.policy);
+      if (!published.ok) {
+        return { ok: false, code: 'SESSION_INTEGRATION_REMOTE_SUCCEEDED_LOCAL_RECORD_UNCERTAIN', detail: `${published.code}:${published.detail ?? 'UNKNOWN'}; remote state is verified — do not re-push, inspect with status` };
+      }
+      return { ok: true };
+    };
+    if (remoteMain === headNow) {
+      emit('SESSION_ALREADY_INTEGRATED', headNow);
+      const finalized = finalizeRecord();
+      if (!finalized.ok) return finalized;
+      return { ok: true, pushed: false, head: headNow };
+    }
+    if (!git(context.root, ['merge-base', '--is-ancestor', remoteMain, 'HEAD']).ok) {
+      return { ok: false, code: 'SESSION_INTEGRATION_NOT_FAST_FORWARD', detail: `${remote}/${canonicalBranch} is not contained in HEAD; run reconcile, revalidate, then integrate — never force-push` };
+    }
+    // Serialized by the remote ref compare-and-swap. No force, no lease.
+    const pushed = git(context.root, ['push', remote, `HEAD:refs/heads/${canonicalBranch}`], { network: true });
+    if (!pushed.ok) {
+      return { ok: false, code: 'SESSION_PUSH_REJECTED', detail: `${remote}/${canonicalBranch} advanced or rejected the push; reconcile and revalidate, never force-push` };
+    }
+    const refetched = git(context.root, ['fetch', remote, canonicalBranch], { network: true });
+    if (!refetched.ok) return { ok: false, code: 'SESSION_INTEGRATION_UNVERIFIED', detail: 'the push succeeded but the verification fetch failed' };
+    const verified = gitValue(context.root, ['rev-parse', '--verify', '--quiet', `refs/remotes/${remote}/${canonicalBranch}`]);
+    if (verified !== headNow) return { ok: false, code: 'SESSION_INTEGRATION_UNVERIFIED', detail: `${remote}/${canonicalBranch} did not verify at the pushed HEAD` };
+    // Test-only seam: prove the uncertain-outcome contract without fabricating
+    // a filesystem failure. It fires only after the remote effect is verified,
+    // so the remote state is real and the local record stays truthfully stale.
+    if (fault.point === 'AFTER_INTEGRATION_VERIFY') {
+      emit('SESSION_FAULT_INJECTION_ACTIVE', fault.point);
+      return { ok: false, code: 'SESSION_INTEGRATION_REMOTE_SUCCEEDED_LOCAL_RECORD_UNCERTAIN', detail: 'fault injection AFTER_INTEGRATION_VERIFY: remote verified, local record not updated' };
+    }
+    const finalized = finalizeRecord();
+    if (!finalized.ok) return finalized;
+    emit('SESSION_INTEGRATED', `${remote}/${canonicalBranch}=${headNow}`);
+    return { ok: true, pushed: true, head: headNow };
+  });
+  if (transition.ok !== true) return fail(transition.code, transition.detail);
+  return transition;
 }
 
 function commandRemove(context, options) {
+  const authority = SESSION_COMMAND_AUTHORITY.remove;
+  const roleAdmission = admitCheckoutRole({ authority, isLinked: context.isLinked, worktreeCount: 1, role: options.role });
+  if (!roleAdmission.ok) return fail(roleAdmission.code, roleAdmission.detail);
   if (options.name === null) return fail('SESSION_NAME_REQUIRED', 'pass --name <session-worktree-name>');
-  if (context.isLinked && context.worktreeName === options.name) {
-    return fail('SESSION_SELF_REMOVAL_REFUSED', 'run remove from the canonical checkout');
-  }
   const file = sessionRecordPath(context.commonDir, options.name, context.policy);
-  const record = readRecordRaw(file);
-  if (record !== null && holderIsLive(record)) {
-    return fail('SESSION_REMOVE_REFUSED_LIVE_HOLDER', `session ${record.sessionId} is live; never delete another session's work`);
+  const observed = readRecordDocument(file, context.policy);
+  if (observed.state !== 'PRESENT') {
+    return fail('SESSION_RECORD_ABSENT', `no valid ownership record exists for ${options.name} (${observed.state})`);
   }
+  if (holderIsLive(observed.parsed)) {
+    return fail('SESSION_REMOVE_REFUSED_LIVE_HOLDER', `session ${observed.parsed.sessionId} is live; never delete another session's work`);
+  }
+  const admission = admitExpectations({ authority, record: observed.parsed, head: null, expectSession: options.expectSession, expectHead: null, adopting: false });
+  if (!admission.ok) return fail(admission.code, admission.detail);
   const gitdirFile = path.join(context.commonDir, 'worktrees', options.name, 'gitdir');
   let target = null;
   try {
@@ -547,7 +931,7 @@ function commandRemove(context, options) {
   } catch {
     return fail('SESSION_WORKTREE_UNKNOWN', options.name);
   }
-  const branch = record?.branch ?? gitValue(target, ['rev-parse', '--abbrev-ref', 'HEAD']);
+  const branch = observed.parsed.branch ?? gitValue(target, ['rev-parse', '--abbrev-ref', 'HEAD']);
   const remote = context.policy?.canonical?.remote ?? 'origin';
   const canonicalBranch = context.policy?.canonical?.branch ?? 'main';
   const remoteMain = gitValue(context.root, ['rev-parse', '--verify', '--quiet', `refs/remotes/${remote}/${canonicalBranch}`]);
@@ -567,29 +951,102 @@ function commandRemove(context, options) {
     dryRunComplete('remove');
     return { removed: false, dryRun: true };
   }
-  const removed = git(context.root, ['worktree', 'remove', target]);
-  if (!removed.ok) return fail('SESSION_WORKTREE_REMOVE_FAILED', removed.stderr.trim().split('\n').pop() ?? '');
-  if (options.deleteBranch && typeof branch === 'string' && branch !== canonicalBranch) {
-    const deleted = git(context.root, ['branch', contained ? '-d' : '-D', branch]);
-    if (!deleted.ok) emit('SESSION_BRANCH_RETAINED', `${branch}: ${deleted.stderr.trim().split('\n').pop() ?? ''}`);
-    else emit('SESSION_BRANCH_DELETED', branch);
+  const transition = withTransitionLock(file, { command: 'remove', sessionId: observed.parsed.sessionId }, () => {
+    const current = readRecordDocument(file, context.policy);
+    if (current.state !== 'PRESENT') return { ok: false, code: 'SESSION_RECORD_ABSENT', detail: `the ownership record became ${current.state}` };
+    if (current.revision !== observed.revision) {
+      return { ok: false, code: 'SESSION_RECORD_REVISION_CHANGED', detail: 'the ownership record changed during removal; nothing was removed' };
+    }
+    const removed = git(context.root, ['worktree', 'remove', target]);
+    if (!removed.ok) return { ok: false, code: 'SESSION_WORKTREE_REMOVE_FAILED', detail: 'git worktree remove failed' };
+    if (options.deleteBranch && typeof branch === 'string' && branch !== canonicalBranch) {
+      const deleted = git(context.root, ['branch', contained ? '-d' : '-D', branch]);
+      if (!deleted.ok) emit('SESSION_BRANCH_RETAINED', `${branch}: delete refused`);
+      else emit('SESSION_BRANCH_DELETED', branch);
+    }
+    emit('SESSION_WORKTREE_REMOVED', `${options.name} contained=${String(contained)}`);
+    return { ok: true, removed: true };
+  });
+  if (transition.ok !== true) return fail(transition.code, transition.detail);
+  return transition;
+}
+
+/**
+ * Explicit crashed-transition-lock recovery. It never reclaims by age or PID
+ * alone: the boot identity must differ or the recorded process must be dead,
+ * the exact lock operation identity must be echoed by the operator, and the
+ * ownership record is never changed by recovery.
+ */
+function commandRecover(context, options) {
+  const authority = SESSION_COMMAND_AUTHORITY.recover;
+  const roleAdmission = admitCheckoutRole({ authority, isLinked: context.isLinked, worktreeCount: 1, role: options.role });
+  if (!roleAdmission.ok) return fail(roleAdmission.code, roleAdmission.detail);
+  const file = currentRecordFile(context);
+  const observed = readTransitionLock(file);
+  if (observed.state === 'ABSENT') {
+    emit('SESSION_RECOVER_NOT_REQUIRED', 'NO_LOCK');
+    return { recovered: false, reason: 'NO_LOCK' };
   }
-  emit('SESSION_WORKTREE_REMOVED', `${options.name} contained=${String(contained)}`);
-  return { removed: true };
+  const currentBoot = bootDigest();
+  const staleness = (lock) => {
+    const sameBoot = typeof lock.bootDigest === 'string' && lock.bootDigest !== '' && lock.bootDigest === currentBoot;
+    if (sameBoot && lock.pid !== undefined && lock.pid !== null && processAlive(lock.pid)) return 'PROCESS_ALIVE';
+    if (sameBoot) return 'PROCESS_NOT_ALIVE';
+    return 'BOOT_IDENTITY_CHANGED';
+  };
+  if (options.dryRun) {
+    const stale = observed.state === 'PRESENT' ? staleness(observed.lock) : observed.state;
+    plan('SESSION_RECOVER_PLAN', `lockState=${observed.state}${observed.state === 'PRESENT' ? ` operation=${observed.lock.operationId} session=${observed.lock.sessionId} command=${observed.lock.command} stale=${stale}` : ''}`);
+    dryRunComplete('recover', observed.state === 'PRESENT' ? `node bin/nightwatch-session.mjs recover --expect-session ${observed.lock.sessionId} --expect-operation ${observed.lock.operationId}` : undefined);
+    return { recovered: false, dryRun: true, lockState: observed.state };
+  }
+  const recovery = admitLockRecovery({
+    lock: observed.state === 'PRESENT' ? observed.lock : null,
+    lockState: observed.state,
+    currentBootDigest: currentBoot,
+    processAlive,
+    expectedSessionId: options.expectSession,
+    expectedOperationId: options.expectOperation,
+  });
+  if (!recovery.ok) return fail(recovery.code, recovery.detail);
+  if (recovery.stale !== true) return fail('SESSION_RECOVER_REFUSED', `the transition lock is ${recovery.reason}`);
+  const record = readRecordDocument(file, context.policy);
+  if (record.state !== 'PRESENT' || record.parsed.sessionId !== observed.lock.sessionId) {
+    return fail('SESSION_RECOVER_REFUSED', 'the current ownership record does not match the locked session; owner inspection is required');
+  }
+  // TOCTOU closure: re-read immediately before removal and require the exact
+  // bytes that were inspected. A swapped lock is never removed.
+  const confirm = readTransitionLock(file);
+  if (confirm.state !== 'PRESENT' || confirm.bytes !== observed.bytes) {
+    return fail('SESSION_RECOVER_REFUSED', 'the transition lock changed after inspection; re-inspect before recovery');
+  }
+  fs.unlinkSync(confirm.file);
+  emit('SESSION_RECOVERED_LOCK', `operation=${observed.lock.operationId} session=${observed.lock.sessionId} proof=${recovery.reason}`);
+  return { recovered: true };
+}
+
+function processAlive(pid) {
+  if (!Number.isInteger(pid) || pid <= 0) return false;
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (error) {
+    return error?.code === 'EPERM';
+  }
 }
 
 // ---------------------------------------------------------------------------
 // CLI
 // ---------------------------------------------------------------------------
 
-const COMMANDS = new Set(['status', 'check', 'start', 'claim', 'release', 'reconcile', 'integrate', 'remove']);
+const COMMANDS = new Set(['status', 'check', 'start', 'claim', 'release', 'reconcile', 'integrate', 'remove', 'recover']);
 
 /**
  * The `--dry-run` contract, declared once and enforced at dispatch.
  *
  * `SUPPORTED` means the command computes and reports its whole plan and then
  * returns having mutated NOTHING -- no ref, no branch, no worktree, no
- * ownership record, no file, no remote-tracking ref.
+ * ownership record, no lock, no file, no remote-tracking ref.
  *
  * `NOT_APPLICABLE` means the command never mutates, so "report the planned
  * action without mutating" says nothing the command does not already do.
@@ -610,6 +1067,7 @@ const DRY_RUN_SUPPORT = Object.freeze({
   reconcile: 'SUPPORTED',
   integrate: 'SUPPORTED',
   remove: 'SUPPORTED',
+  recover: 'SUPPORTED',
 });
 
 const CLI_METADATA = {
@@ -619,20 +1077,21 @@ const CLI_METADATA = {
   purpose: 'Manage the C-00 session worktree lifecycle and fast-forward integration.',
   group: 'manage-sessions',
   commands: [
-    { name: 'status', summary: 'report the workspace and session topology' },
-    { name: 'check', summary: 'report topology and fail closed on an unsafe invariant' },
-    { name: 'start', summary: 'create one owned session worktree and branch' },
-    { name: 'claim', summary: 'claim or adopt an existing session worktree' },
+    { name: 'status', summary: 'report the workspace and session topology (read-only; optional --root)' },
+    { name: 'check', summary: 'report topology and fail closed on an unsafe invariant (read-only; optional --root)' },
+    { name: 'start', summary: 'create one owned session worktree and branch (canonical checkout only)' },
+    { name: 'claim', summary: 'claim or adopt an existing session worktree in the current checkout' },
     { name: 'release', summary: 'release this session ownership record' },
     { name: 'reconcile', summary: 'reconcile a stale session base' },
-    { name: 'integrate', summary: 'fast-forward push the session to main' },
-    { name: 'remove', summary: 'remove an owned session worktree and branch' },
+    { name: 'integrate', summary: 'fast-forward push the session to main (requires --expect-head)' },
+    { name: 'remove', summary: 'remove an owned session worktree and branch (canonical checkout only)' },
+    { name: 'recover', summary: 'inspect or remove an explicitly proven crashed transition lock' },
   ],
   defaultCommand: 'status',
   flags: [
     { name: '--json', shape: 'boolean', summary: 'emit exactly one JSON document' },
-    { name: '--adopt', shape: 'boolean', summary: 'adopt a stale session worktree deliberately' },
-    { name: '--dry-run', shape: 'boolean', summary: 'report the planned action and mutate nothing (start, claim, release, reconcile, integrate, remove; refused for status/check)' },
+    { name: '--adopt', shape: 'boolean', summary: 'adopt a stale session worktree deliberately (requires --expect-session)' },
+    { name: '--dry-run', shape: 'boolean', summary: 'report the planned action and mutate nothing (refused for status/check)' },
     { name: '--offline', shape: 'boolean', summary: 'resolve remote state without contacting the remote' },
     { name: '--allow-drift', shape: 'boolean', summary: 'tolerate a pre-existing topology violation' },
     { name: '--delete-branch', shape: 'boolean', summary: 'delete the session branch on remove' },
@@ -644,7 +1103,10 @@ const CLI_METADATA = {
     { name: '--pid', shape: 'integer', summary: 'anchor process id for liveness' },
     { name: '--dir', shape: 'path', summary: 'explicit session worktree directory' },
     { name: '--name', shape: 'string', summary: 'session worktree name' },
-    { name: '--root', shape: 'path', summary: 'repository root' },
+    { name: '--root', shape: 'path', summary: 'read-only inspection root (status/check only; refused for mutators)' },
+    { name: '--expect-session', shape: 'string', summary: 'exact public current session id (sess-<12 hex>)' },
+    { name: '--expect-head', shape: 'string', summary: 'exact 40-hex HEAD for integration intent' },
+    { name: '--expect-operation', shape: 'string', summary: 'exact transition-lock operation id for recover' },
   ],
   json: true,
   authorization: 'LOCAL_ONLY',
@@ -655,7 +1117,8 @@ function parseArgs(argv) {
   const args = argv.slice(2);
   const options = {
     command: args[0] ?? 'status',
-    root: process.cwd(),
+    root: null,
+    rootExplicit: false,
     json: false,
     taskId: null,
     campaignId: null,
@@ -670,6 +1133,9 @@ function parseArgs(argv) {
     allowDrift: false,
     deleteBranch: false,
     abandonUnmerged: false,
+    expectSession: null,
+    expectHead: null,
+    expectOperation: null,
   };
   if (!COMMANDS.has(options.command)) return { error: `UNKNOWN_COMMAND:${options.command}` };
   for (let index = 1; index < args.length; index += 1) {
@@ -696,7 +1162,27 @@ function parseArgs(argv) {
     }
     else if (value === '--dir') options.directory = next() ?? null;
     else if (value === '--name') options.name = next() ?? null;
-    else if (value === '--root') options.root = next() ?? process.cwd();
+    else if (value === '--root') {
+      const supplied = next();
+      if (supplied === undefined || supplied.startsWith('--')) return { error: 'ROOT_MISSING' };
+      options.root = supplied;
+      options.rootExplicit = true;
+    }
+    else if (value === '--expect-session') {
+      const parsed = parseExpectation(next(), 'session');
+      if (!parsed.ok) return { error: 'EXPECT_SESSION_INVALID' };
+      options.expectSession = parsed.value;
+    }
+    else if (value === '--expect-head') {
+      const parsed = parseExpectation(next(), 'head');
+      if (!parsed.ok) return { error: 'EXPECT_HEAD_INVALID' };
+      options.expectHead = parsed.value;
+    }
+    else if (value === '--expect-operation') {
+      const supplied = next();
+      if (supplied === undefined || !/^[0-9a-f]{16}$/.test(supplied)) return { error: 'EXPECT_OPERATION_INVALID' };
+      options.expectOperation = supplied;
+    }
     else return { error: `UNKNOWN_ARGUMENT:${value}` };
   }
   if (!['IMPLEMENTATION', 'MAINTENANCE'].includes(options.role)) return { error: `UNKNOWN_ROLE:${options.role}` };
@@ -713,24 +1199,43 @@ function main() {
     return;
   }
   const options = parsed.options;
-  const context = resolveContext(options.root);
-  if (context === null) {
-    console.error('[session] ERROR: SESSION_NOT_A_GIT_WORKTREE');
-    process.exitCode = 1;
-    return;
-  }
+  const authority = SESSION_COMMAND_AUTHORITY[options.command];
   if (options.dryRun && DRY_RUN_SUPPORT[options.command] !== 'SUPPORTED') {
     console.error(`[session] ERROR: SESSION_DRY_RUN_NOT_APPLICABLE: ${options.command} never mutates, so --dry-run has no supported meaning for it`);
     process.exitCode = 2;
     return;
   }
-  if (options.command === 'status' || options.command === 'check') commandStatus(context, options);
-  else if (options.command === 'start') commandStart(context, options);
+  if (authority.mutates && options.rootExplicit) {
+    console.error('[session] ERROR: SESSION_MUTATION_ROOT_OVERRIDE_REFUSED: mutating commands operate only on the current checkout; --root is read-only inspection');
+    process.exitCode = 1;
+    return;
+  }
+  if (!authority.mutates) {
+    const context = resolveContext(options.root ?? process.cwd());
+    if (context === null) {
+      console.error('[session] ERROR: SESSION_NOT_A_GIT_WORKTREE');
+      process.exitCode = 1;
+      return;
+    }
+    commandStatus(context, options);
+    return;
+  }
+  const invocation = resolveInvocationContext();
+  if (invocation.error !== undefined) {
+    console.error(invocation.detail === undefined
+      ? `[session] ERROR: ${invocation.error}`
+      : `[session] ERROR: ${invocation.error}: ${invocation.detail}`);
+    process.exitCode = 1;
+    return;
+  }
+  const context = invocation.context;
+  if (options.command === 'start') commandStart(context, options);
   else if (options.command === 'claim') commandClaim(context, options);
   else if (options.command === 'release') commandRelease(context, options);
   else if (options.command === 'reconcile') commandReconcile(context, options);
   else if (options.command === 'integrate') commandIntegrate(context, options);
   else if (options.command === 'remove') commandRemove(context, options);
+  else if (options.command === 'recover') commandRecover(context, options);
 }
 
 if (typeof process.argv[1] === 'string' && path.basename(process.argv[1]) === 'nightwatch-session.mjs') {

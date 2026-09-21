@@ -64,13 +64,29 @@ Lifecycle, all through `bin/nightwatch-session.mjs`:
 ```text
 node bin/nightwatch-session.mjs start --task <task-id>   # from the canonical checkout
 cd <printed worktree path>
-node bin/nightwatch-session.mjs claim --task <task-id> --adopt
+node bin/nightwatch-session.mjs claim --task <task-id> --adopt --expect-session <predecessor-session-id>
 …implement and validate…
-node bin/nightwatch-session.mjs reconcile                # only if the base is stale
-node bin/nightwatch-session.mjs integrate                # fast-forward push, verified
-node bin/nightwatch-session.mjs release
-node bin/nightwatch-session.mjs remove --name <session> --delete-branch   # from canonical
+node bin/nightwatch-session.mjs reconcile --expect-session <session-id>   # only if the base is stale
+node bin/nightwatch-session.mjs integrate --expect-session <session-id> --expect-head <40-hex-head>
+node bin/nightwatch-session.mjs release --expect-session <session-id>
+node bin/nightwatch-session.mjs remove --name <session> --expect-session <session-id> --delete-branch   # from canonical
 ```
+
+Every mutating command derives its authority ONLY from the Git top-level that
+contains the process current directory, and the executing
+`bin/nightwatch-session.mjs` must resolve inside that same worktree: a copied
+command, a foreign checkout, or an explicit `--root` is refused with
+`SESSION_MUTATION_ROOT_OVERRIDE_REFUSED` / `SESSION_SCRIPT_CHECKOUT_MISMATCH`
+before any effect. `status`/`check` keep read-only `--root` inspection.
+Session IDs and HEADs are PUBLIC freshness/intent values, not secrets: they
+make a stale or copied command fail (`SESSION_EXPECTATION_MISMATCH`), and the
+protocol is cooperative confused-deputy protection, not cryptographic
+isolation from a hostile same-OS-user process. Ownership-record transitions
+are serialized by a bounded `.../<name>.lock` and a canonical revision
+compare-and-swap; a crashed lock is never reclaimed by age or PID alone —
+inspect it with `recover --dry-run`, then recover it exactly with
+`recover --expect-session <id> --expect-operation <id>` (never by editing or
+deleting a record by hand).
 
 `start` admits the candidate registration before it mutates anything: the
 worktree it is about to create is measured against the same

@@ -117,6 +117,7 @@
     "tests/unit/nw07ContinuityCoherence.test.ts",
     "tests/unit/evidenceRetention.test.ts",
     "tests/unit/gateTopology.test.ts",
-    "tests/unit/ciBlockRecord.test.ts"
+    "tests/unit/ciBlockRecord.test.ts",
+    "tests/unit/sessionMutationAuthority.test.ts"
   ]
 }

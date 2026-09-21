@@ -5107,3 +5107,48 @@ coverage proof, or the exclusivity rule is a gate failure, because those are
 tested inside the canonical regression. The serial shape remains one flag
 away, and clean-checkout qualification still re-installs and re-runs
 everything from a disposable clone — sharding never reuses local state.
+
+## D-143 — session mutations are bound to the invoking checkout and exact public expectations (NW-AUD-006)
+
+The C-00 session CLI previously accepted `--root` for every command and
+authorized a mutation by the CLASSIFICATION OF THE SELECTED TARGET RECORD:
+`release` rewrote the selected live record with no caller or session check,
+and `integrate` treated the selected target's `OWNED_SESSION` class as
+sufficient to reach its fetch/push path. A process in the canonical checkout
+could therefore plan, and without `--dry-run` perform, another live session's
+release or integration. This was a confused-deputy defect in the primary
+concurrency-coordination protocol, not a weakness of the invariant it claims.
+
+D-143 binds every mutating command to the invoking checkout:
+
+- authority is resolved ONLY from the Git top-level that contains
+  `process.cwd()`, and the executing CLI file must resolve inside that same
+  real worktree; `--root` is refused for all mutators and kept read-only for
+  `status`/`check`;
+- `--expect-session` is required for `release`, `reconcile`, `integrate`,
+  `remove` and `--adopt`, and `--expect-head` is required for `integrate`;
+  mismatches refuse with `SESSION_EXPECTATION_MISMATCH` before any effect;
+- `release`/`reconcile`/`integrate` admit active-task/STATE continuity
+  (task/campaign, declared session worktree, branch, and a command-compatible
+  status) before effects;
+- ownership-record transitions hold a bounded exclusive no-follow
+  `.../<name>.lock`, capture the canonical full record revision, publish only
+  through a same-directory durable replacement with reread verification, and
+  refuse on conflict (`SESSION_TRANSITION_LOCKED`,
+  `SESSION_RECORD_REVISION_CHANGED`); a crashed lock is recovered only with
+  an explicit owner action (`recover`) that proves boot/process staleness and
+  the exact lock operation identity and never edits the record;
+- `integrate` admits session/revision/HEAD/branch/clean/workspace/continuity
+  before the first fetch callback, holds the lock through fetch/push/
+  verification/record update, preserves `SESSION_PUSH_REJECTED` as a stop
+  condition, and reports a verified push with unverifiable local
+  finalization as `SESSION_INTEGRATION_REMOTE_SUCCEEDED_LOCAL_RECORD_UNCERTAIN`
+  without retrying.
+
+Session IDs, revisions and HEADs are public freshness/intent values, not
+authentication secrets; the boundary is cooperative confused-deputy
+protection for agents sharing one OS account, and it claims no cryptographic
+isolation from a hostile same-user process. Read-only cross-root topology
+inspection is preserved. The hardening rule
+`checkC00WorkspaceIntegrity` and ten recorded mutation probes (HC-090…HC-098)
+keep each control non-vacuous.
