@@ -6,21 +6,23 @@ Task ID: nightwatch-session-mutation-authority-binding-v1
 Phase: SESSION_MUTATION_AUTHORITY_BINDING_V1
 Status: COMPLETE
 Starting SHA: caab10e91b8d81f2b98597b3c6974db89638ae6c
-Last validated implementation SHA: 6a8d6c71670cea4d60871880db5efb5d46b5b225
-Last substantive checkpoint SHA: 6a8d6c71670cea4d60871880db5efb5d46b5b225
+Last validated implementation SHA: c13544a12d153daec1eb2f3915c94cb74bc93040
+Last substantive checkpoint SHA: c13544a12d153daec1eb2f3915c94cb74bc93040
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-session-mutation-auth-2ef39532
 Last checkpoint: 2026-09-21 — M0–M5 complete. The substantive implementation
-landed at `e54d7540` with the derived validation registrations at `7c49bf67`;
-the validated checkpoint at which `gate:local` passed all twelve groups is
-`6a8d6c71`. Integration through the C-00 lifecycle is the remaining terminal
-step of this record.
+landed at `e54d7540` with the derived validation registrations at `7c49bf67` and the
+status-ledger completion at `c13544a1`, which is the substantive checkpoint.
+`gate:local` passed all twelve groups at the preceding checkpoint
+`6a8d6c71`; its re-validation receipt at this checkpoint's documentation
+descendant is recorded in the ledger. Integration through the C-00 lifecycle
+is the remaining terminal step of this record.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: caab10e91b8d81f2b98597b3c6974db89638ae6c
-LAST_VALIDATED_IMPLEMENTATION_SHA: 6a8d6c71670cea4d60871880db5efb5d46b5b225
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 6a8d6c71670cea4d60871880db5efb5d46b5b225
+LAST_VALIDATED_IMPLEMENTATION_SHA: c13544a12d153daec1eb2f3915c94cb74bc93040
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: c13544a12d153daec1eb2f3915c94cb74bc93040
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
 PHASE_SESSION_MUTATION_AUTHORITY_BINDING_V1_STATUS: COMPLETE
@@ -209,7 +211,8 @@ would own any additional hardening on these surfaces.
 - Milestones: M0–M5 complete; the change's task list is closed and strict-valid
 - Implementation: `e54d7540` (CLI + admission core), `7c49bf67` (derived
   validation registrations), validated checkpoint `6a8d6c71`
-- Validation: gate:local PASS (receipt:sha256:6c1ae520a12ea7677070dda6);
+- Validation: gate:local PASS (receipt:sha256:6c1ae520a12ea7677070dda6 at
+  validated checkpoint `6a8d6c71`, re-run receipt recorded in the ledger);
   synthetic 1908/1908; probes 103/103; focused suites 67+12 with zero
   failures; typecheck PASS; strict OpenSpec validation PASS
 - External actions: 0 (no Alphaus, database, cloud, credential, or

@@ -4,8 +4,8 @@ Task ID: nightwatch-session-mutation-authority-binding-v1
 Phase: SESSION_MUTATION_AUTHORITY_BINDING_V1
 Status: COMPLETE
 Starting SHA: caab10e91b8d81f2b98597b3c6974db89638ae6c
-Last validated implementation SHA: 6a8d6c71670cea4d60871880db5efb5d46b5b225
-Last substantive checkpoint SHA: 6a8d6c71670cea4d60871880db5efb5d46b5b225
+Last validated implementation SHA: c13544a12d153daec1eb2f3915c94cb74bc93040
+Last substantive checkpoint SHA: c13544a12d153daec1eb2f3915c94cb74bc93040
 
 ## Task
 

@@ -6,7 +6,7 @@ Title: Session mutation authority binding implementation
 Status: COMPLETE
 Task directory: .agent/tasks/nightwatch-session-mutation-authority-binding-v1
 Starting SHA: caab10e91b8d81f2b98597b3c6974db89638ae6c
-Last validated implementation SHA: 6a8d6c71670cea4d60871880db5efb5d46b5b225
+Last validated implementation SHA: c13544a12d153daec1eb2f3915c94cb74bc93040
 Last checkpoint: M0–M5 complete at validated checkpoint `6a8d6c71`; `gate:local` all twelve groups PASS.
 Current milestone: COMPLETE / STOP — M0–M5 closed; change integrated through C-00
 Next action: STOP — terminal record; only the post-removal documentation routing flip remains.
@@ -15,8 +15,8 @@ PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: caab10e91b8d81f2b98597b3c6974db89638ae6c
-LAST_VALIDATED_IMPLEMENTATION_SHA: 6a8d6c71670cea4d60871880db5efb5d46b5b225
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 6a8d6c71670cea4d60871880db5efb5d46b5b225
+LAST_VALIDATED_IMPLEMENTATION_SHA: c13544a12d153daec1eb2f3915c94cb74bc93040
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: c13544a12d153daec1eb2f3915c94cb74bc93040
 LIVE_HEAD_AUTHORITY: GIT
 PHASE_SESSION_MUTATION_AUTHORITY_BINDING_V1_STATUS: COMPLETE
 
