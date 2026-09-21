@@ -1710,6 +1710,12 @@
       "class": "PARALLEL_SAFE",
       "signals": []
     },
+    "tests/unit/sessionMutationAuthority.test.ts": {
+      "class": "PARALLEL_SAFE",
+      "signals": [
+        "isolated-scratch"
+      ]
+    },
     "tests/unit/silentZeroOutput.test.ts": {
       "class": "PARALLEL_SAFE",
       "signals": [

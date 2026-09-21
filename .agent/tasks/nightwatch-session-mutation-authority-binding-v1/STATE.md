@@ -45,7 +45,7 @@ paths with focused tests.
 
 ## Completed Milestones
 
-- M0 — implementation bootstrap: COMPLETE. Owned session
+- **M0 — implementation bootstrap: COMPLETE.** Owned session
   `sess-048fa22e047d` on this branch at base `caab10e9`; planning continuity
   converted; local toolchain resolved through a worktree-local module link set.
 

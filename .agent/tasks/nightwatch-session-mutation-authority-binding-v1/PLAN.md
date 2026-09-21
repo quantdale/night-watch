@@ -41,9 +41,15 @@ assert refusal-before-effect with byte-for-byte protected state.
 
 ## Milestones
 
+### M0 — Implementation bootstrap
+
+- **Status:** COMPLETE
+- Acceptance: owned session claimed at base `caab10e9`; planning continuity
+  converted to implementation continuity; local toolchain resolved.
+
 ### M1 — Invocation binding and explicit expectations
 
-- Status: IN_PROGRESS
+- **Status:** IN_PROGRESS
 - Acceptance: mutators refuse `--root`; script/current-checkout binding is
   symlink-safe; `--expect-session`/`--expect-head` parse exactly and mismatches
   fail before effects; read-only cross-root inspection preserved; focused
@@ -51,28 +57,28 @@ assert refusal-before-effect with byte-for-byte protected state.
 
 ### M2 — Continuity admission
 
-- Status: PLANNED
+- **Status:** PLANNED
 - Acceptance: record/task/campaign/branch/active-task/STATE compatibility is
   validated before effects for release, reconcile, integrate and adopt, with
   categorical refusals and focused tests.
 
 ### M3 — Serialized record transitions
 
-- Status: PLANNED
+- **Status:** PLANNED
 - Acceptance: bounded exclusive no-follow lock, canonical revision, durable
   replacement with reread verification, conflict refusal, crash-safe lock and
   explicit recovery, with fault-injection tests.
 
 ### M4 — Command roles and integration authority
 
-- Status: PLANNED
+- **Status:** PLANNED
 - Acceptance: canonical-only start/remove, exact-name/session remove,
   pre-network integration admission with lock held through push and
   verification, push-rejection preservation, uncertain-outcome result.
 
 ### M5 — Adversarial proof, probes, documentation, validation
 
-- Status: PLANNED
+- **Status:** PLANNED
 - Acceptance: two-worktree wrong-checkout matrix, race matrix, crashed-lock
   recovery, hardening/mutation probes, updated AGENTS/docs/recipes,
   `openspec validate --strict`, focused suites, typechecks, workspace/agent/
