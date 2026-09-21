@@ -34,7 +34,7 @@ COMPLETE / STOP — all milestones closed.
 - C-00 session creation and claim: PASS; owned worktree `session/nightwatch-exhaustive-repository-ef157f7a` at starting SHA `34517c9ba11c97407168fe5879ee03794dfff3e3`.
 - Umbrella OpenSpec: 4/4 artifacts complete and strict validation PASS; capabilities `exhaustive-audit-coverage` and `remediation-proposal-portfolio` define the evidence and proposal contracts.
 - Starting-tree coverage: 2,593 tracked paths classified by exhaustive top-level denominator; tree `9b6c1982251e2afa70877745b7787284e9f96a52`, inventory digest `939fe42065e7923e9dfd56eb46bfda38c8a2bb2e40127accc8efed75ab6a77f6`.
-- M0 governed activation and coverage model: COMPLETE; durable authority and existing-planning indexes are recorded in `audit.md`.
+- **M0 governed activation and coverage model: COMPLETE**; durable authority and existing-planning indexes are recorded in `audit.md`.
 - NW-AUD-001: PROPOSED (Medium/High-confidence); dedicated change `nightwatch-ci-action-supply-chain-integrity-v1` is 4/4 complete and strict-valid.
 - NW-AUD-004: PROPOSED (Medium/High-confidence); dedicated change `nightwatch-exact-runtime-toolchain-identity-v1` is 4/4 complete and strict-valid.
 - NW-AUD-005: PROPOSED (Medium/High-confidence); dedicated change `nightwatch-retention-crash-consistent-receipts-v1` is 4/4 complete and strict-valid.
@@ -81,16 +81,16 @@ COMPLETE / STOP — all milestones closed.
 - NW-AUD-047: PROPOSED (Medium/High-confidence); dedicated change `nightwatch-local-finding-admission-grounding-integrity-v1` is 4/4 complete and strict-valid.
 - NW-AUD-048: PROPOSED (Medium/High-confidence); dedicated change `nightwatch-control-center-finding-status-projection-integrity-v1` is 4/4 complete and strict-valid.
 - NW-AUD-002: DUPLICATE of production-completion tasks 15.7/15.11; NW-AUD-003: NOT_AN_ISSUE after validation-universe PASS with zero unclassified checks; NW-AUD-008: DUPLICATE of the production-completion operator CLI contract.
-- M1 repository topology/dependencies/configuration/build/tooling: COMPLETE.
-- M2 core safety/environment/policy/proxy/L6/authentication: COMPLETE; 32 primary boundary files, 5 cross-boundary consumers, and 55 direct/transitive focused-test entrypoints reconciled with no undispositioned M2 lead.
-- M3 browser/API/journey/evidence/persistence/replay: COMPLETE; 154 primary source files and 118 direct/transitive focused-test entrypoints reconciled with no undispositioned M3 lead.
-- M4 source intelligence/semantic oracles/expectations/contract lifecycle/change intelligence: COMPLETE; 139 primary source files and 162 direct/transitive focused-test entrypoints reconciled with no undispositioned M4 lead.
-- M5 campaign/autonomous runtime/investigation/reproduction/admission/findings: COMPLETE; remaining cone mapped to NW-AUD-044..047, prior owners, or terminal non-material rationales.
-- M6 Control Center/reviewer surfaces: COMPLETE; NW-AUD-048 is the only new summary-status gap; remaining UI/write/read/static/SSE surfaces are owned by existing Control Center campaigns or fail-closed.
-- M7 continuity/workspace/validation/tests/docs: COMPLETE; remaining gaps owned by NW-AUD-006/014 and published skip/continuity/spec-baseline changes.
-- M8 adjudication: COMPLETE; forty-five material findings ranked and mapped one-to-one.
-- M9 OpenSpec generation: COMPLETE; every material finding has a 4/4 strict-valid unimplemented change.
-- M10 completeness audit: COMPLETE; planning-only diff; no product implementation changed.
+- **M1 repository topology/dependencies/configuration/build/tooling: COMPLETE.**
+- **M2 core safety/environment/policy/proxy/L6/authentication: COMPLETE**; 32 primary boundary files, 5 cross-boundary consumers, and 55 direct/transitive focused-test entrypoints reconciled with no undispositioned M2 lead.
+- **M3 browser/API/journey/evidence/persistence/replay: COMPLETE**; 154 primary source files and 118 direct/transitive focused-test entrypoints reconciled with no undispositioned M3 lead.
+- **M4 source intelligence/semantic oracles/expectations/contract lifecycle/change intelligence: COMPLETE**; 139 primary source files and 162 direct/transitive focused-test entrypoints reconciled with no undispositioned M4 lead.
+- **M5 campaign/autonomous runtime/investigation/reproduction/admission/findings: COMPLETE**; remaining cone mapped to NW-AUD-044..047, prior owners, or terminal non-material rationales.
+- **M6 Control Center/reviewer surfaces: COMPLETE**; NW-AUD-048 is the only new summary-status gap; remaining UI/write/read/static/SSE surfaces are owned by existing Control Center campaigns or fail-closed.
+- **M7 continuity/workspace/validation/tests/docs: COMPLETE**; remaining gaps owned by NW-AUD-006/014 and published skip/continuity/spec-baseline changes.
+- **M8 adjudication: COMPLETE**; forty-five material findings ranked and mapped one-to-one.
+- **M9 OpenSpec generation: COMPLETE**; every material finding has a 4/4 strict-valid unimplemented change.
+- **M10 completeness audit: COMPLETE**; planning-only diff; no product implementation changed.
 
 ## Work In Progress
 
@@ -624,6 +624,11 @@ Result: PASS
 When: 2026-09-21
 Relevant failure/output summary: workspace integrity satisfied on the reconciliation checkpoint; the terminal-task maintenance claim is released after integration.
 
+Command: `npx playwright test tests/unit/nw07ContinuityCoherence.test.ts`; `npm run gate:dev`
+Result: PASS
+When: 2026-09-21
+Relevant failure/output summary: the live continuity-coherence test requires the active task's STATE and PLAN to use the repository's bold milestone convention. Measured failing on canonical `main` after the audit takeover (shard failure `13d18898066541666075-4288ca13bfcd040243d7`, `complete.size == 0`); the Completed Milestones section and the eleven PLAN milestone status lines were conformed to the convention without changing any status, after which the file passes 5/5 and the full development lane passes every step with 5,360 shard tests passing, zero unexpected failures, and zero retries.
+
 ## Decisions Made During This Task
 
 Decision: use a dedicated session and new change rather than reuse W13.
@@ -990,6 +995,16 @@ campaign.
 Evidence/constraint: `AGENT_CONTINUITY`, `HANDOFF_TRUTH`, and `PROJECT_TRUTH`
 failures measured on canonical `aa05696b`; all three pass on the reconciliation
 checkpoint. No product behavior, authority, or generated change state changed.
+
+Decision: conform this task's milestone records to the live NW-07 convention.
+Reason: with this task as the terminal active task, the live continuity
+coherence test requires every COMPLETE milestone in STATE to have a matching
+`### M# —` PLAN section carrying a bold `Status` line; the completed task used
+a plain prose convention, so the test's non-vacuity guard failed on canonical
+`main` after the audit takeover.
+Evidence/constraint: measured shard failure
+`13d18898066541666075-4288ca13bfcd040243d7` before, 5/5 on the focused file and
+a green development lane after; every milestone status is unchanged.
 
 ## Discoveries
 

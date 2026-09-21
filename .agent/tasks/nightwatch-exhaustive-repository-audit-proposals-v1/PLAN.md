@@ -36,77 +36,77 @@ Use a coverage matrix rather than ad hoc browsing. Inventory the tree and depend
 - Objective: establish C-00 ownership, continuity, required durable context, OpenSpec inventory, and a complete audit taxonomy.
 - Acceptance criteria: session passes; task routing is coherent; repository areas and evidence standards are enumerated; umbrella change exists.
 - Validation commands: `npm run session:status`, `npm run agent:check`, `openspec status --change nightwatch-exhaustive-repository-audit-proposals-v1 --json`
-- Status: COMPLETE
+- **Status:** COMPLETE
 
 ### M1 — Repository topology, dependencies, configuration, and build/tooling
 
 - Objective: inspect manifests, configs, generators, scripts, CLI/bin code, dependency posture, build/typecheck/lint/test wiring, and release/checkpoint mechanics.
 - Acceptance criteria: every surface is covered; candidate issues have decisive evidence and existing-plan cross-references.
 - Validation commands: focused static searches and relevant read-only validation commands.
-- Status: COMPLETE
+- **Status:** COMPLETE
 
 ### M2 — Core safety, environment, policy, proxy, process/network containment, and authentication
 
 - Objective: audit fail-closed policy boundaries and bypass/error/lifecycle cases.
 - Acceptance criteria: trust boundaries, resource cleanup, normalization, race, denial, redaction, and negative-test coverage are assessed.
 - Validation commands: focused existing unit/smoke suites only.
-- Status: COMPLETE
+- **Status:** COMPLETE
 
 ### M3 — Browser, API, journeys, evidence, persistence, and replay
 
 - Objective: audit browser containment, observers, direct/API paths, artifact recording, storage, replay, minimization, and privacy behavior.
 - Acceptance criteria: every ingress/egress and persisted representation has an evidence-backed disposition.
 - Validation commands: focused browser/unit suites only where decisive.
-- Status: COMPLETE
+- **Status:** COMPLETE
 
 ### M4 — Source intelligence, semantic oracles, expectations, and contract lifecycle
 
 - Objective: audit source confinement/currentness, extraction/admission, projections, invariants, receipts, schema lifecycle, and stale/unavailable behavior.
 - Acceptance criteria: soundness, completeness, privacy, determinism, and fail-closed behavior are assessed with boundary tests.
 - Validation commands: focused semantic/source suites only.
-- Status: COMPLETE
+- **Status:** COMPLETE
 
 ### M5 — Campaign, autonomous runtime, investigation, reproduction, admission, and findings
 
 - Objective: audit scheduling, budgets, checkpoint/resume, tool authority, provider handling, reproduction, novelty, triage, and local persistence.
 - Acceptance criteria: state machines, partial failure, idempotency, concurrency, evidence provenance, and anti-fabrication guarantees are assessed.
 - Validation commands: focused campaign/runtime suites only.
-- Status: COMPLETE
+- **Status:** COMPLETE
 
 ### M6 — Control Center and reviewer/operator surfaces
 
 - Objective: audit server/API/UI contracts, accessibility, security headers, write authority, state freshness, scale behavior, and user-facing truthfulness.
 - Acceptance criteria: server and browser paths, contracts, error states, and missing end-to-end validation are covered.
 - Validation commands: focused control-center and browser tests only.
-- Status: COMPLETE
+- **Status:** COMPLETE
 
 ### M7 — Continuity, workspace isolation, validation framework, tests, and documentation truth
 
 - Objective: audit task state machines, worktree/session lifecycle, hardening gates, validators, fixtures, test quality, documentation drift, and operational reliability.
 - Acceptance criteria: false-positive/false-negative and vacuity risks are assessed; missing negative/mutation/concurrency coverage is recorded.
 - Validation commands: focused agent/workspace/hardening/project/OpenSpec checks.
-- Status: COMPLETE
+- **Status:** COMPLETE
 
 ### M8 — Finding adjudication, severity ranking, and proposal partitioning
 
 - Objective: reproduce or decisively substantiate candidates, deduplicate existing work, and partition material issues into coherent OpenSpec changes.
 - Acceptance criteria: every candidate has evidence, severity, impact, disposition, and proposal mapping.
 - Validation commands: artifact consistency checks and focused reproductions.
-- Status: COMPLETE
+- **Status:** COMPLETE
 
 ### M9 — Generate all apply-ready OpenSpec changes
 
 - Objective: create proposal, design, delta specs, and tasks for every material unresolved issue.
 - Acceptance criteria: all required artifacts exist, dependencies were read, requirements have scenarios, tasks are actionable, and strict validation passes.
 - Validation commands: `openspec validate <change> --strict` for every created change.
-- Status: COMPLETE
+- **Status:** COMPLETE
 
 ### M10 — Completeness audit and planning checkpoint
 
 - Objective: prove the original exhaustive objective is satisfied and no implementation file changed.
 - Acceptance criteria: coverage matrix is complete; every material issue maps to a validated proposal; residual uncertainties are explicit; diff is planning-only; required checks pass.
 - Validation commands: `git diff --check`, `npm run agent:check`, `npm run workspace:check`, strict OpenSpec validation, planning-only diff/privacy inspection.
-- Status: COMPLETE
+- **Status:** COMPLETE
 
 ## Validation Strategy
 
