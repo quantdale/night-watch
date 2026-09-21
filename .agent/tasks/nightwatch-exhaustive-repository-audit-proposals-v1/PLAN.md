@@ -140,6 +140,9 @@ Prefer the narrowest decisive existing tests during exploration. Validate each O
 - 2026-09-21 — Decision: admit NW-AUD-023 through NW-AUD-028 as six distinct remediation scopes; reason: atomic context readiness, run-bundle transaction truth, replay context provenance, observed exploration postconditions, production-local persistence lifecycle, and relay caller authority have different trust boundaries and tests; consequence: each now has one strict-valid change without merging payload/privacy or L6 concerns.
 - 2026-09-21 — Decision: admit NW-AUD-029 through NW-AUD-035 as seven distinct remediation scopes; reason: protocol readiness, cross-schema triage identity, total artifact validation, Phase-6 owner quarantine, production reservation lifecycle, qualification/P1 producer evidence, and response acquisition enforce different invariants; consequence: each has a strict-valid planning change and no product implementation.
 - 2026-09-21 — Decision: close M3 after reconciling all 154 primary source files and 118 direct/transitive focused-test entrypoints; reason: every residual lead maps to one of thirteen M3 proposals, a prior owner, or a terminal current-reachability rationale; consequence: M4 begins without silently carrying browser/API/evidence/replay work forward.
+- 2026-09-21 — Decision: freeze M4 at 139 primary source files and 162 direct/transitive focused-test entrypoints; reason: source intelligence, expectations/projections/invariants/semantic evaluation, acceptance/coverage, phase-specific currentness, and change-intelligence consumers form the complete semantic/source responsibility cone; consequence: protocol oracles stay closed under M3 and campaign-intelligence runtime behavior remains M5.
+- 2026-09-21 — Decision: admit NW-AUD-036 as a distinct source snapshot transaction scope; reason: unclosed repository identity, analyzable digest mismatch, unguarded route parsing, constant Phase 24 match, and pathname TOCTOU jointly undermine exact current-source authority; consequence: `nightwatch-source-snapshot-transaction-integrity-v1` specifies one closed transaction without contacting sibling repositories.
+- 2026-09-21 — Decision: admit NW-AUD-037 and NW-AUD-038 as distinct semantic authority scopes; reason: canonical expectation semantics can be changed beside genuine source evidence, while evaluation/acceptance receipts have separate producer, parsing, and set-coherence gaps; consequence: real-source contract authority and contained acceptance evidence each receive one strict-valid proposal.
 
 ## Discoveries
 
@@ -245,6 +248,16 @@ Prefer the narrowest decisive existing tests during exploration. Validate each O
   current chain/configuration coherence. This is NW-AUD-034.
 - Browser response bodies are fully allocated before size refusal and timeout
   does not cancel/join the losing acquisition. This is NW-AUD-035.
+- Source inventory and discovery do not close one exact repository/file
+  generation: changed route bytes can be parsed under an earlier SHA, candidate
+  snapshot match is asserted, and parent identity is not held across path use.
+  This is NW-AUD-036.
+- Genuine extraction evidence is not bound to the complete expectation output;
+  shape-only proof, structural collection records, and resolver digest-only
+  recheck permit modified semantics to resolve. This is NW-AUD-037.
+- Semantic receipt parsing and contained evidence issuance are split, and
+  Phase 9B can compose identity and decisiveness across unvalidated receipts.
+  This is NW-AUD-038.
 - Residual M3 compatibility fingerprint, P1 strong-Set/synchronous-poll,
   download-ordering, recorder-error, and Phase-6 transform leads are terminally
   non-material or duplicate under the current local/mock/owner-gated reachability.

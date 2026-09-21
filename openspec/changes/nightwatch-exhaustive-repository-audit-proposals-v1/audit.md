@@ -143,6 +143,9 @@ No documentation inconsistency is admitted as a finding merely because historica
 | NW-AUD-033 | PROPOSED | Medium | High | production observation / budget reservation lifecycle | Budget is reserved before breaker/final kill-switch/grant-consumption decisions; denial paths leak in-flight occupancy, while settlement accepts fabricated/foreign/replayed values and mutates aggregate counters | `src/core/prodObserve/{productionRunGate,budget}.ts`; C-11 kernel tests | Production persistence and receipt scopes do not own the reserve/cancel/dispatch/settle state machine or counter conservation | `nightwatch-production-budget-reservation-lifecycle-integrity-v1` |
 | NW-AUD-034 | PROPOSED | Medium | High | production qualification and P1 evidence authority | PQ validation does not exact-validate/recompute the current chain or per-gate denial relation and open resealing authenticates caller-assembled claims; P1 config identity omits destination/expected SHA and its safe receipt lacks a strict parser | `src/core/prodObserve/{receipt,productionRunGate}.ts`; `src/core/prodObserveP1/{scopeConfig,safeReceipt,observer}.ts`; focused C-11/P1 tests | NW-AUD-010 owns release checkpoint lineage and NW-AUD-027 owns persistence lifecycle; neither proves qualification/rehearsal producer authority | `nightwatch-production-observation-receipt-integrity-v1` |
 | NW-AUD-035 | PROPOSED | Medium | High | browser response body / timeout / resource lifecycle | `response.body()` is fully materialized before the size check and the timeout only abandons awaiting the losing promise; oversized/stalled acquisition can retain memory/work beyond observer and context settlement | `src/browser/observers/networkObserver.ts:106-124,785-835`; browser context/lifecycle callers and fixtures | NW-AUD-023 owns context construction and NW-AUD-024 owns evidence publication; neither bounds or owns the response-body acquisition operation itself | `nightwatch-browser-response-acquisition-integrity-v1` |
+| NW-AUD-036 | PROPOSED | High | High | sibling source / snapshot currentness / filesystem transaction | Inventory binds one pre-scan HEAD, later digest-mismatched bytes remain analyzable, route parsing omits the digest guard, and Phase 24 asserts snapshot match; pathname ancestry checks are separate from later opens/walks | `src/core/source/{siblingSource,scan,callScopedRead,surfaces}.ts`; `tests/unit/callScopedSourceRead.test.ts`; source-authority callers | Existing source-currentness work detects changed handler/join bytes but does not close the repository observation interval, protect route parsing, derive candidate currentness, or hold parent identity across use | `nightwatch-source-snapshot-transaction-integrity-v1` |
+| NW-AUD-037 | PROPOSED | High | High | real-source semantic expectation / derivation and resolver authority | Proof accepts derivation-version/digest shape; resolver rechecks source digest but returns caller-supplied expectation semantics; derivation and collection bridges trust structural recipes/derived records | `src/oracles/expectations/{admission,collectionAdmission,resolver}.ts`; `src/core/semanticAcceptance/admissionRoute.ts`; focused real-source admission/currentness tests | NW-AUD-036 owns exact source bytes/generation, not the binding from genuine extraction evidence to the complete canonical expectation; existing forged test uses a wrong digest rather than changed semantics with a genuine digest | `nightwatch-real-source-expectation-authority-integrity-v1` |
+| NW-AUD-038 | PROPOSED | Medium | High | semantic receipts / contained-DEV evidence / acceptance summarization | Direct receipt validation does not recompute identity or close nested/outcome/coverage coherence; public construction can label `CONTAINED_DEV`; Phase 9B summarizes unvalidated receipts and can compose first-receipt identity with another receipt's decisiveness | `src/oracles/semantic/{receipts,hook}.ts`; `src/core/phase9b/summary.ts`; semantic acceptance/deep acceptance; artifact/DTO readers and focused tests | NW-AUD-030 owns triage semantic replay receipts and NW-AUD-034 owns production qualification/P1 receipts; neither owns semantic-evaluation receipt producer class or Phase 9B/10B acceptance-set coherence | `nightwatch-semantic-receipt-acceptance-integrity-v1` |
 
 ## M1 candidate dispositions
 
@@ -204,6 +207,9 @@ No documentation inconsistency is admitted as a finding merely because historica
 | NW-AUD-033 | PROPOSED | Reservation accounting lacks authenticated lifecycle transitions | post-reservation denial leaks occupancy; repeated/foreign settlement corrupts counters | MATERIAL → dedicated strictly-valid OpenSpec change |
 | NW-AUD-034 | PROPOSED | Qualification/rehearsal digests are treated as execution authority | schemas/coherence are incomplete and caller-controlled resealing can authenticate never-executed claims | MATERIAL → dedicated strictly-valid OpenSpec change |
 | NW-AUD-035 | PROPOSED | Response timeout/size limits apply after or outside the owned acquisition | full buffer allocation precedes cap and losing work is neither cancelled nor joined | MATERIAL → dedicated strictly-valid OpenSpec change |
+| NW-AUD-036 | PROPOSED | Source discovery can combine multiple repository/file generations as one current snapshot | unclosed HEAD interval, route digest mismatch reaches parsing, constant Phase 24 match, and pathname TOCTOU | MATERIAL → dedicated strictly-valid OpenSpec change |
+| NW-AUD-037 | PROPOSED | Genuine source evidence is not bound to the complete expectation semantics | shape-only proof and resolver digest recheck accept caller-modified canonical fields | MATERIAL → dedicated strictly-valid OpenSpec change |
+| NW-AUD-038 | PROPOSED | Semantic acceptance trusts caller-classified and composable receipt facts | split parser strength, ordinary contained-class input, unvalidated mixed summaries | MATERIAL → dedicated strictly-valid OpenSpec change |
 
 ### M3 frozen responsibility denominator
 
@@ -245,6 +251,19 @@ rows: decisive tests were inspected directly, negative gaps are specified by
 the owning changes, and tests whose only M3 contact is a transitive import were
 not counted as evidence for later-wave source/campaign/UI behavior. No M3 lead
 remains without a proposal, duplicate owner, or terminal reachability rationale.
+
+## M4 frozen responsibility denominator
+
+M4 owns 139 primary source files: 52 under `src/core/source`, 52 expectation/
+projection/invariant/semantic-oracle files under `src/oracles` after excluding
+the two protocol files closed in M3, 27 across semantic acceptance, semantic
+coverage, Phase 9B freshness/preflight/summary, and Phase 10B deep acceptance,
+plus 8 change-intelligence source/currentness consumers. A path/import/symbol
+census identifies 162 direct or transitive focused-test entrypoints. Source
+read/confinement/cache/currentness is the first tranche; extraction/admission,
+projection/invariant/receipt coherence, semantic coverage/acceptance, and
+change-intelligence consumption remain open. Campaign-intelligence runtime
+behavior is not silently absorbed here and remains M5.
 
 The mechanical focused-test search found 55 direct or transitive M2-matching test entrypoints. Each was classified by responsibility: decisive tests above were inspected in full, while source-intelligence, campaign, Control Center, and validation assertions that merely transitively import policy code remain assigned to their later audit waves. No M2 lead remains without a material proposal, a terminal non-material/not-an-issue rationale, or an explicit later-wave owner.
 
@@ -419,6 +438,24 @@ triage schema identity, general artifact work bounds, Phase-6 owner policy,
 reservation lifecycle, receipt producer authority, and body acquisition each
 have a distinct enforcing boundary and negative-test matrix.
 
+NW-AUD-036 is High with High confidence: a local checkout or filesystem
+transition can cause post-inventory route bytes to be parsed under an earlier
+SHA and old evidence digest, then presented to Phase 24 with an unconditional
+snapshot-match claim. It is below Critical because the precondition is local
+same-user/source-tree influence and the path grants no external write or
+production authority. The proposal owns exact source-generation closure,
+uniform verified reads, explicit real/synthetic admission, and pathname-race
+resistance rather than weakening the finding to a single missing digest check.
+
+NW-AUD-037 is High with High confidence because it defeats the permanent
+sole-admission rule even when the source digest is genuine: arbitrary valid
+semantic fields can ride beside that evidence and resolve as current. NW-AUD-038
+is Medium with High confidence because it can fabricate or compose contained
+semantic acceptance evidence, while actual DEV contact and external effects
+remain separately owner-gated. The scopes are separate: NW-AUD-037 owns what
+the product contract is; NW-AUD-038 owns what one evaluation/acceptance run
+proved about that contract.
+
 ## Validation ledger
 
 | Command/evidence | Result | Purpose |
@@ -498,10 +535,16 @@ have a distinct enforcing boundary and negative-test matrix.
 | static browser response acquisition and teardown inspection | SUBSTANTIATED READ-ONLY; full buffering precedes size check and wait-only timeout leaves losing work unowned | Establish NW-AUD-035 without browser launch |
 | `openspec validate nightwatch-browser-response-acquisition-integrity-v1 --strict` | PASS; 4/4 artifact classes complete | NW-AUD-035 remediation is apply-ready |
 | M3 terminal responsibility reconciliation | PASS; all 154 source files and 118 test entrypoints map to a material owner, duplicate owner, or terminal rationale | Close M3 and advance to source/semantic M4 |
+| static sibling boundary/inventory/call-scoped/discovery/cache/Phase-24 caller inspection | SUBSTANTIATED READ-ONLY; HEAD interval is unclosed, mismatched route bytes remain analyzable, snapshot match is constant, and parent path identity is not held | Establish NW-AUD-036 without sibling repository access |
+| `openspec validate nightwatch-source-snapshot-transaction-integrity-v1 --strict` | PASS; 4/4 artifact classes complete | NW-AUD-036 remediation is apply-ready |
+| static derivation/proof/resolver/collection/harness inspection | SUBSTANTIATED READ-ONLY; genuine extraction evidence is not bound to complete expectation semantics and structural records remain forgeable | Establish NW-AUD-037 without source access or semantic execution |
+| `openspec validate nightwatch-real-source-expectation-authority-integrity-v1 --strict` | PASS; 4/4 artifact classes complete | NW-AUD-037 remediation is apply-ready |
+| static receipt/hook/DTO/artifact/summary/acceptance inspection | SUBSTANTIATED READ-ONLY; parser strengths split, contained class is caller-selected, coherence is partial, and summaries compose unvalidated receipts | Establish NW-AUD-038 without artifact mutation or DEV contact |
+| `openspec validate nightwatch-semantic-receipt-acceptance-integrity-v1 --strict` | PASS; 4/4 artifact classes complete | NW-AUD-038 remediation is apply-ready |
 
 ## Completion audit
 
 Not yet eligible. M1 through M3 are complete, while later source/semantic,
-campaign, UI, and validation waves remain pending. Thirty-two material findings currently map
-one-to-one to thirty-two strict-valid issue-specific remediation
+campaign, UI, and validation waves remain pending. Thirty-five material findings currently map
+one-to-one to thirty-five strict-valid issue-specific remediation
 changes; that partial portfolio is not evidence of whole-repository completeness.

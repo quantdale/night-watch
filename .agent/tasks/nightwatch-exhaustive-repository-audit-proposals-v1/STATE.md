@@ -69,6 +69,9 @@ What is being attempted: audit source confinement/currentness, semantic extracti
 - NW-AUD-033: PROPOSED (Medium/High-confidence); dedicated change `nightwatch-production-budget-reservation-lifecycle-integrity-v1` is 4/4 complete and strict-valid.
 - NW-AUD-034: PROPOSED (Medium/High-confidence); dedicated change `nightwatch-production-observation-receipt-integrity-v1` is 4/4 complete and strict-valid.
 - NW-AUD-035: PROPOSED (Medium/High-confidence); dedicated change `nightwatch-browser-response-acquisition-integrity-v1` is 4/4 complete and strict-valid.
+- NW-AUD-036: PROPOSED (High/High-confidence); dedicated change `nightwatch-source-snapshot-transaction-integrity-v1` is 4/4 complete and strict-valid.
+- NW-AUD-037: PROPOSED (High/High-confidence); dedicated change `nightwatch-real-source-expectation-authority-integrity-v1` is 4/4 complete and strict-valid.
+- NW-AUD-038: PROPOSED (Medium/High-confidence); dedicated change `nightwatch-semantic-receipt-acceptance-integrity-v1` is 4/4 complete and strict-valid.
 - NW-AUD-002: DUPLICATE of production-completion tasks 15.7/15.11; NW-AUD-003: NOT_AN_ISSUE after validation-universe PASS with zero unclassified checks; NW-AUD-008: DUPLICATE of the production-completion operator CLI contract.
 - M1 repository topology/dependencies/configuration/build/tooling: COMPLETE.
 - M2 core safety/environment/policy/proxy/L6/authentication: COMPLETE; 32 primary boundary files, 5 cross-boundary consumers, and 55 direct/transitive focused-test entrypoints reconciled with no undispositioned M2 lead.
@@ -76,11 +79,11 @@ What is being attempted: audit source confinement/currentness, semantic extracti
 
 ## Work In Progress
 
-M4 is active. M3 closed with thirteen dedicated findings, NW-AUD-023 through NW-AUD-035, and explicit duplicate/non-material dispositions for every residual responsibility row. M4 must now freeze its source/test denominator before substantive source-intelligence and semantic-oracle inspection.
+M4 is active with a frozen denominator of 139 primary source files and 162 direct/transitive focused-test entrypoints. It covers 52 source-intelligence files, 52 expectation/projection/invariant/semantic-oracle files (excluding the two protocol files closed in M3), 27 semantic acceptance/coverage/Phase-9B/10B files, and 8 change-intelligence files. Source and expectation authority produced NW-AUD-036..038; projection/invariant/semantic-runner and remaining coverage/acceptance coherence are next.
 
 ## Exact Next Action
 
-Freeze the M4 source/test responsibility denominator, then inspect sibling-source confinement/currentness, extraction/admission, projections, invariants, expectations, semantic receipts, schema lifecycle, and stale/unavailable paths using Nightwatch repository evidence only.
+Inspect M4 projection/invariant/semantic-runner and remaining coverage/acceptance coherence after NW-AUD-036..038; terminally disposition each lead before change-intelligence consumers and M4 closure.
 
 ## Files Changed
 
@@ -121,6 +124,12 @@ Freeze the M4 source/test responsibility denominator, then inspect sibling-sourc
 | `openspec/changes/nightwatch-production-budget-reservation-lifecycle-integrity-v1/` | NW-AUD-033 implementation-ready remediation proposal | complete planning artifact |
 | `openspec/changes/nightwatch-production-observation-receipt-integrity-v1/` | NW-AUD-034 implementation-ready remediation proposal | complete planning artifact |
 | `openspec/changes/nightwatch-browser-response-acquisition-integrity-v1/` | NW-AUD-035 implementation-ready remediation proposal | complete planning artifact |
+| `openspec/changes/nightwatch-source-snapshot-transaction-integrity-v1/` | NW-AUD-036 implementation-ready remediation proposal | complete planning artifact |
+| `.agent/tasks/nightwatch-source-snapshot-transaction-integrity-v1/` | completed child planning continuity for NW-AUD-036 | complete planning artifact |
+| `openspec/changes/nightwatch-real-source-expectation-authority-integrity-v1/` | NW-AUD-037 implementation-ready remediation proposal | complete planning artifact |
+| `.agent/tasks/nightwatch-real-source-expectation-authority-integrity-v1/` | completed child planning continuity for NW-AUD-037 | complete planning artifact |
+| `openspec/changes/nightwatch-semantic-receipt-acceptance-integrity-v1/` | NW-AUD-038 implementation-ready remediation proposal | complete planning artifact |
+| `.agent/tasks/nightwatch-semantic-receipt-acceptance-integrity-v1/` | completed child planning continuity for NW-AUD-038 | complete planning artifact |
 | `.agent/tasks/nightwatch-{protocol-dossier-readiness-integrity,triage-evidence-contract-integrity,durable-artifact-validation-bounds,phase6-owner-scope-quarantine-integrity,production-budget-reservation-lifecycle-integrity,production-observation-receipt-integrity,browser-response-acquisition-integrity}-v1/` | completed child planning continuity for NW-AUD-029..035 | complete planning artifacts |
 
 ## Validation Ledger
@@ -369,6 +378,41 @@ Command: M3 terminal responsibility reconciliation
 Result: PASS
 When: 2026-09-21
 Relevant failure/output summary: all 154 source files and all 118 focused/transitive test entrypoints map to a material proposal, prior/duplicate owner, or explicit terminal rationale; M3 closed.
+
+Command: M4 source and focused-test responsibility census
+Result: PASS
+When: 2026-09-21
+Relevant failure/output summary: 139 primary source files and 162 direct/transitive focused-test entrypoints frozen; protocol oracles remain closed under M3 and campaign-intelligence behavior remains assigned to M5.
+
+Command: static source boundary/inventory/discovery/currentness inspection
+Result: SUBSTANTIATED READ-ONLY
+When: 2026-09-21
+Relevant failure/output summary: NW-AUD-036 established from unclosed HEAD interval, analyzable digest mismatch, unguarded route parsing, constant snapshot match, and pathname TOCTOU; no sibling repository was accessed.
+
+Command: `openspec validate nightwatch-source-snapshot-transaction-integrity-v1 --strict`
+Result: PASS (4/4 artifact classes)
+When: 2026-09-21
+Relevant failure/output summary: exact source transaction remediation is apply-ready and unimplemented.
+
+Command: static expectation derivation/proof/resolver/collection inspection
+Result: SUBSTANTIATED READ-ONLY
+When: 2026-09-21
+Relevant failure/output summary: NW-AUD-037 established because genuine source evidence is not bound to the complete canonical expectation and structural derived records remain forgeable.
+
+Command: `openspec validate nightwatch-real-source-expectation-authority-integrity-v1 --strict`
+Result: PASS (4/4 artifact classes)
+When: 2026-09-21
+Relevant failure/output summary: canonical expectation authority remediation is apply-ready and unimplemented.
+
+Command: static semantic receipt/hook/artifact/summary/acceptance inspection
+Result: SUBSTANTIATED READ-ONLY
+When: 2026-09-21
+Relevant failure/output summary: NW-AUD-038 established from split parser strength, caller-selected contained class, partial receipt coherence, and mix-and-match summary admission.
+
+Command: `openspec validate nightwatch-semantic-receipt-acceptance-integrity-v1 --strict`
+Result: PASS (4/4 artifact classes)
+When: 2026-09-21
+Relevant failure/output summary: semantic receipt/acceptance remediation is apply-ready and unimplemented.
 
 Command: `npm run agent:check`
 Result: PASS with 40 pre-existing/expected warnings and zero strict-v2 errors
@@ -631,6 +675,25 @@ current-reachability rationale.
 Evidence/constraint: thirteen M3 proposals (NW-AUD-023..035), seven residual
 lead dispositions, and strict validation of every newly generated change.
 
+Decision: admit NW-AUD-036 at High severity with a dedicated change.
+Reason: mixed repository/file generations can be represented as exact current
+source and reach candidate eligibility; same-user/local transition is required
+and no external write authority is granted, keeping severity below Critical.
+Evidence/constraint: one pre-scan HEAD, mismatched bytes returned to callers,
+unguarded route parsing, constant Phase 24 snapshot match, and pathname TOCTOU.
+
+Decision: admit NW-AUD-037 at High severity with a dedicated change.
+Reason: the gap defeats the permanent sole-admission route by letting changed
+valid semantics ride beside genuine extraction evidence and resolve current.
+Evidence/constraint: proof checks only labels/format, resolver compares only
+source digest, and structural derived/collection records are caller-buildable.
+
+Decision: admit NW-AUD-038 at Medium severity with a dedicated change.
+Reason: contained semantic acceptance can be structurally fabricated or
+composed, but DEV contact and external effects remain separately owner-gated.
+Evidence/constraint: weak direct parser, caller-selected contained class,
+partial outcome matrix, and unvalidated mixed-receipt summary.
+
 ## Discoveries
 
 - Registered topology has room for this worktree under the repository's maximum of eight.
@@ -701,6 +764,13 @@ lead dispositions, and strict validation of every newly generated change.
   authority-bearing configuration; this is NW-AUD-034.
 - Response-body timeout and size checks do not cancel or bound the underlying
   allocation; this is NW-AUD-035.
+- Source inventory/discovery can combine changed route bytes with an earlier
+  SHA and digest, asserts candidate snapshot match, and does not hold parent
+  path identity across validation/use; this is NW-AUD-036.
+- Genuine extraction evidence is not bound to the complete canonical
+  expectation or collection transform; this is NW-AUD-037.
+- Semantic receipts can self-classify as contained evidence and acceptance can
+  compose identity/decisiveness across unvalidated records; this is NW-AUD-038.
 - M3 produced thirteen non-duplicate strict-valid changes in total; all
   remaining M3 leads are terminally duplicate or non-material under current
   reachability, so M4 is now active.
