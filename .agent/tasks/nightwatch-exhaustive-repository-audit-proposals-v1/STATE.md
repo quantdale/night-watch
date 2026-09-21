@@ -6,17 +6,17 @@ Task ID: nightwatch-exhaustive-repository-audit-proposals-v1
 Phase: EXHAUSTIVE_REPOSITORY_AUDIT_PROPOSALS_V1
 Status: COMPLETE
 Starting SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
-Last validated implementation SHA: 86cdc93af8527dda395d15314c4a3370a942274c
-Last substantive checkpoint SHA: 86cdc93af8527dda395d15314c4a3370a942274c
+Last validated implementation SHA: bcdd1b15e450d98317cb29d30498c0c35d47044e
+Last substantive checkpoint SHA: bcdd1b15e450d98317cb29d30498c0c35d47044e
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: main
-Last checkpoint: 2026-09-21 — M0 through M10 complete; forty-five material findings map one-to-one to forty-five strict-valid unimplemented OpenSpec changes through NW-AUD-048.
+Last checkpoint: 2026-09-21 — M0 through M10 complete; forty-five material findings map one-to-one to forty-five strict-valid unimplemented OpenSpec changes through NW-AUD-048. Terminal reconciliation advanced the validated anchor to `bcdd1b15` so the governed documentation-role correction is covered by a validated checkpoint.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
-LAST_VALIDATED_IMPLEMENTATION_SHA: 86cdc93af8527dda395d15314c4a3370a942274c
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 86cdc93af8527dda395d15314c4a3370a942274c
+LAST_VALIDATED_IMPLEMENTATION_SHA: bcdd1b15e450d98317cb29d30498c0c35d47044e
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: bcdd1b15e450d98317cb29d30498c0c35d47044e
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
 PHASE_EXHAUSTIVE_REPOSITORY_AUDIT_PROPOSALS_V1_STATUS: COMPLETE

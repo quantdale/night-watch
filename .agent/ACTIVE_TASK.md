@@ -6,7 +6,7 @@ Title: Exhaustive repository audit and OpenSpec proposals
 Status: COMPLETE
 Task directory: .agent/tasks/nightwatch-exhaustive-repository-audit-proposals-v1
 Starting SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
-Last validated implementation SHA: 86cdc93af8527dda395d15314c4a3370a942274c
+Last validated implementation SHA: bcdd1b15e450d98317cb29d30498c0c35d47044e
 Last checkpoint: M0 through M10 complete; forty-five material findings map one-to-one to forty-five strict-valid unimplemented OpenSpec changes through NW-AUD-048.
 Current milestone: COMPLETE / STOP — all milestones closed.
 Next action: STOP
@@ -14,8 +14,8 @@ Authorization class: EXHAUSTIVE_REPOSITORY_AUDIT_PROPOSALS_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
-LAST_VALIDATED_IMPLEMENTATION_SHA: 86cdc93af8527dda395d15314c4a3370a942274c
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 86cdc93af8527dda395d15314c4a3370a942274c
+LAST_VALIDATED_IMPLEMENTATION_SHA: bcdd1b15e450d98317cb29d30498c0c35d47044e
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: bcdd1b15e450d98317cb29d30498c0c35d47044e
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PHASE_EXHAUSTIVE_REPOSITORY_AUDIT_PROPOSALS_V1_STATUS: COMPLETE
