@@ -1,0 +1,92 @@
+{
+  "schemaVersion": "nightwatch.performance-lane-receipt.v1",
+  "lane": "typecheck",
+  "command": [
+    "npm",
+    "run",
+    "typecheck"
+  ],
+  "startedAt": "2026-09-20T11:35:38.873Z",
+  "finishedAt": "2026-09-20T11:35:47.432Z",
+  "wallMs": 8557,
+  "exitStatus": 0,
+  "errorCode": null,
+  "counts": {
+    "passed": null,
+    "failed": null,
+    "skipped": null,
+    "didNotRun": null,
+    "tests": null
+  },
+  "host": {
+    "platform": "linux",
+    "cores": 20,
+    "totalMemMiB": 15851
+  },
+  "load": {
+    "pre": {
+      "loadAverage": [
+        4.73,
+        4.45,
+        4.4
+      ],
+      "census": {
+        "busyProcesses": [
+          {
+            "name": "node",
+            "count": 6
+          },
+          {
+            "name": "codex",
+            "count": 4
+          },
+          {
+            "name": "herdr",
+            "count": 2
+          },
+          {
+            "name": "ps",
+            "count": 1
+          },
+          {
+            "name": "opencode",
+            "count": 1
+          }
+        ],
+        "totalBusyCpuPercent": 1262
+      }
+    },
+    "post": {
+      "loadAverage": [
+        4.94,
+        4.5,
+        4.42
+      ],
+      "census": {
+        "busyProcesses": [
+          {
+            "name": "node",
+            "count": 5
+          },
+          {
+            "name": "codex",
+            "count": 4
+          },
+          {
+            "name": "herdr",
+            "count": 2
+          },
+          {
+            "name": "opencode",
+            "count": 1
+          }
+        ],
+        "totalBusyCpuPercent": 495
+      }
+    }
+  },
+  "outputTail": [
+    "> nightwatch@0.1.0 typecheck",
+    "> tsc --noEmit"
+  ]
+}

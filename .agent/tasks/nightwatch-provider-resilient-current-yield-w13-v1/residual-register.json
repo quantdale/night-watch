@@ -1,0 +1,271 @@
+{
+  "schemaVersion": "nightwatch.w13-residual-register.v1",
+  "campaignId": "nightwatch-provider-resilient-current-yield-w13-v1",
+  "wave": "W13",
+  "registerCommittedBeforeFixes": true,
+  "createdAtSha": "e1651121",
+  "createdFromLive": {
+    "startingSha": "34517c9ba11c97407168fe5879ee03794dfff3e3",
+    "activationCheckpoint": "a95004a0",
+    "activationFollowUp": "bdb781d4"
+  },
+  "taxonomy": [
+    "LOCAL_FIX_REQUIRED",
+    "LOCAL_VALIDATION_REQUIRED",
+    "LOCAL_DOCUMENTATION_DRIFT",
+    "EXPERIMENT_POLICY_AMBIGUITY",
+    "OBSERVABILITY_GAP",
+    "EXTERNAL_PROVIDER_BLOCK",
+    "OWNER_DECISION_REQUIRED",
+    "OUT_OF_SCOPE_BY_SAFETY"
+  ],
+  "closureStates": [
+    "OPEN",
+    "PROVEN",
+    "BLOCKED_EXTERNAL",
+    "OWNER_DECISION_REQUIRED"
+  ],
+  "entries": [
+    {
+      "id": "R-01",
+      "title": "Provider-failure budget mismatch: frozen supplemental 3 vs runtime HOUR_1 ceiling 8",
+      "classification": "LOCAL_FIX_REQUIRED",
+      "blocksPhaseB": true,
+      "owner": "nightwatch-provider-resilient-current-yield-w13-v1",
+      "source": [
+        "docs/DECISIONS.md D-138",
+        ".agent/tasks/nightwatch-current-source-unknown-yield-w12-v1/evaluation-freeze.json runtimeBudgetEnvelope",
+        "src/core/agentProtocol/runtime.ts defaultAgentBudgetPolicy"
+      ],
+      "evidence": "The W12 freeze records providerFailures=3 and consecutiveFailures=3 for HOUR_1, while the live engine policy records providerFailures=8 and consecutiveFailures=6; W12's broad receipt observed 8 provider failures and its scoped receipts stopped after 6 consecutive failures, proving the engine values were the ones applied.",
+      "whyItMatters": "A declared experiment envelope that disagrees with the enforced runtime ceiling makes the frozen budget untrustworthy and can silently change stopping behaviour between waves.",
+      "nextAction": "Closed: engine policy is the sole authority, declared envelopes are derived and validated field-by-field, the historical 3/3 values are a permanent negative probe, and D-139 succeeds D-138 without rewriting it.",
+      "closure": {
+        "state": "PROVEN",
+        "receipt": ".agent/tasks/nightwatch-provider-resilient-current-yield-w13-v1/evidence/r01-budget-envelope-receipt.json"
+      }
+    },
+    {
+      "id": "R-02",
+      "title": "gate:local SYNTHETIC_CAMPAIGN timeout classification (receipt sha256:c5107a12b6bd0a89263c5c2)",
+      "classification": "LOCAL_VALIDATION_REQUIRED",
+      "blocksPhaseB": false,
+      "owner": "nightwatch-provider-resilient-current-yield-w13-v1",
+      "source": [
+        ".agent/tasks/nightwatch-current-source-unknown-yield-w12-v1/STATE.md",
+        "bin/quality-gate.mjs SYNTHETIC_CAMPAIGN MEDIUM 600000 ms"
+      ],
+      "evidence": "W12 `gate:local` passed nine groups and timed out in the serial synthetic lane at its 600 s MEDIUM bound; the direct lane passed 1,897/1,897 afterwards on the same tree.",
+      "whyItMatters": "An unclassified gate timeout is an equivocal validation lane; Phase A must resolve it to exactly one measured cause before closure, without raising the bound.",
+      "nextAction": "Closed: both lanes re-measured with load/process snapshots and a manifest diff against base 6ac0b546; classification is EXPECTED_ENVIRONMENT_VARIANCE (423 s - 643 s pass-time spread on one unchanged tree; gate-dispatched lane PASS all 12 groups); the timeout bound was not changed.",
+      "measuredCause": "EXPECTED_ENVIRONMENT_VARIANCE",
+      "closure": {
+        "state": "PROVEN",
+        "receipt": ".agent/tasks/nightwatch-provider-resilient-current-yield-w13-v1/evidence/r02-gate-timeout-receipt.json"
+      }
+    },
+    {
+      "id": "R-03",
+      "title": "Provider failure classification is a two-value taxonomy (REASONER_TIMEOUT, REASONER_NONZERO_EXIT)",
+      "classification": "LOCAL_FIX_REQUIRED",
+      "blocksPhaseB": true,
+      "owner": "nightwatch-provider-resilient-current-yield-w13-v1",
+      "source": [
+        "src/core/agentProtocol/reasoner.ts ReasonerFailureClass",
+        ".agent/tasks/nightwatch-current-source-unknown-yield-w12-v1/evidence/scoped-*-run-result.json"
+      ],
+      "evidence": "W12 receipts can only name REASONER_TIMEOUT and REASONER_NONZERO_EXIT, so absence, probe timeout, invalid structured response, quota/namespace unavailability, auth failure, and local CLI failure are indistinguishable.",
+      "whyItMatters": "W13 failover eligibility depends on the failure class; an incomplete taxonomy would make transitions either unsafe or impossible to justify.",
+      "nextAction": "Closed: the ten-member taxonomy is implemented in src/core/agentProtocol/providerFailure.ts, wired into the CLI driver for both PROBE and RUNTIME phases, and covered by five regressions including live auth-failure and probe-timeout cases.",
+      "closure": {
+        "state": "PROVEN",
+        "receipt": ".agent/tasks/nightwatch-provider-resilient-current-yield-w13-v1/evidence/r03-provider-taxonomy-receipt.json"
+      }
+    },
+    {
+      "id": "R-04",
+      "title": "Per-provider attribution absent from predecessor receipts (providerRetries NOT_CAPTURED)",
+      "classification": "OBSERVABILITY_GAP",
+      "blocksPhaseB": true,
+      "owner": "nightwatch-provider-resilient-current-yield-w13-v1",
+      "source": [
+        ".agent/tasks/nightwatch-current-source-unknown-yield-w12-v1/evidence/broad-run-result.json",
+        ".agent/tasks/nightwatch-current-source-unknown-yield-w12-v1/evidence/scoped-01-run-result.json"
+      ],
+      "evidence": "W12 receipts carry a single provider field, `providerRetries: \"NOT_CAPTURED\"`, and no per-provider call/failure/byte/transition breakdown.",
+      "whyItMatters": "A multi-provider W13 run cannot report per-provider attribution unless the receipt schema captures it; merging providers would hide which provider failed and why.",
+      "nextAction": "Closed: validateProviderAttribution enforces provider identity, calls, valid responses, failures by class, retries, response/stderr bytes, wall time, and transitions per provider; attribution-free blends and duplicate identities are refused; Phase B receipts must satisfy the contract.",
+      "closure": {
+        "state": "PROVEN",
+        "receipt": ".agent/tasks/nightwatch-provider-resilient-current-yield-w13-v1/evidence/r04-provider-attribution-receipt.json"
+      }
+    },
+    {
+      "id": "R-05",
+      "title": "Current-source census is truthfully TRUNCATED at the Ouchan enumeration bound",
+      "classification": "LOCAL_FIX_REQUIRED",
+      "blocksPhaseB": true,
+      "owner": "nightwatch-provider-resilient-current-yield-w13-v1",
+      "source": [
+        "src/core/source/siblingSource.ts MAX_SIBLING_SOURCE_SCAN_FILES=4096",
+        "src/core/source/scan.ts truncation states",
+        ".agent/tasks/nightwatch-current-source-unknown-yield-w12-v1/evidence/current-source-census.json"
+      ],
+      "evidence": "The W12 census admitted 4,124 files but recorded `sourceInventory.completeness: TRUNCATED` because Ouchan exceeded its enumeration bound, so the headline count is a floor, not a population.",
+      "whyItMatters": "Any W13 denominator derived from a truncated population must be reported as a floor and never as an exhaustive count.",
+      "nextAction": "Closed: 4096 is the hard per-repository contract ceiling and the walk has no resumable cursor, so raising/paginating is outside the existing contract; floor-only denominator semantics are implemented in src/core/currentSourceYield/truncationFloor.ts on the shared completeness vocabulary, with a regression that rejects a TRUNCATED population presented as an exhaustive total.",
+      "closure": {
+        "state": "PROVEN",
+        "receipt": ".agent/tasks/nightwatch-provider-resilient-current-yield-w13-v1/evidence/r05-census-truncation-receipt.json"
+      }
+    },
+    {
+      "id": "R-06",
+      "title": "Aggregate measurement completeness is not schema-guaranteed",
+      "classification": "OBSERVABILITY_GAP",
+      "blocksPhaseB": true,
+      "owner": "nightwatch-provider-resilient-current-yield-w13-v1",
+      "source": [
+        ".agent/tasks/nightwatch-current-source-unknown-yield-w12-v1/evidence/global-yield-aggregation.json",
+        "src/core/reproductionSurface/campaignYield.ts"
+      ],
+      "evidence": "W12's aggregate is a task artifact without a required-metric schema or a check that every required metric is machine-derived; several fields are simply absent and only some are marked NOT_CAPTURED.",
+      "whyItMatters": "A required metric that is silently absent can inflate or erase a denominator without any validator noticing.",
+      "nextAction": "Closed: the 30-metric required list is enforced by validateAggregateCompleteness; a missing metric, an unknown metric, and NOT_CAPTURED without a reason all fail closed; the W12-style section-shaped aggregate is rejected as a fixture.",
+      "closure": {
+        "state": "PROVEN",
+        "receipt": ".agent/tasks/nightwatch-provider-resilient-current-yield-w13-v1/evidence/r06-measurement-completeness-receipt.json"
+      }
+    },
+    {
+      "id": "R-07",
+      "title": "Candidate/admission invariant is not proven by a mechanical negative probe",
+      "classification": "LOCAL_FIX_REQUIRED",
+      "blocksPhaseB": true,
+      "owner": "nightwatch-provider-resilient-current-yield-w13-v1",
+      "source": [
+        ".agent/tasks/nightwatch-current-source-unknown-yield-w12-v1/evidence/global-yield-aggregation.json",
+        "src/core/localInvestigation/ownerLocal.ts admitLocalFinding"
+      ],
+      "evidence": "No fixture proves that a record declaring `admitted: true` with no reproduction receipt, evidence reference, or dossier identity is rejected by aggregation; the invariant held only because such a record did not occur.",
+      "whyItMatters": "An aggregation that trusts a self-declared admission flag would let model text mint an admission.",
+      "nextAction": "Closed: admissionRecords is a required aggregate array and admitted=true requires reproductionReceipt, evidenceRefs, and dossierIdentity; the fixture negative probe rejects a self-declared admission.",
+      "closure": {
+        "state": "PROVEN",
+        "receipt": ".agent/tasks/nightwatch-provider-resilient-current-yield-w13-v1/evidence/r07-admission-invariant-receipt.json"
+      }
+    },
+    {
+      "id": "R-08",
+      "title": "No regression proves a failed provider call mints no investigation progress",
+      "classification": "LOCAL_FIX_REQUIRED",
+      "blocksPhaseB": true,
+      "owner": "nightwatch-provider-resilient-current-yield-w13-v1",
+      "source": [
+        ".agent/tasks/nightwatch-current-source-unknown-yield-w12-v1/evidence/scoped-01-run-result.json",
+        "src/core/agentRuntime/runtime.ts provider failure path"
+      ],
+      "evidence": "W12 scoped receipts show zero source actions after six provider failures, but no regression asserts that a failed provider call cannot mint a source action, inspected target, hypothesis, candidate, admission, or dossier, nor that repeated failure yields a provider-blocked result rather than a valid zero-yield result.",
+      "whyItMatters": "Provider failure must remain categorically distinct from a valid zero-yield measurement.",
+      "nextAction": "Closed: the fake-failing-provider regression proves zero response bytes, zero tool actions, zero hypotheses, candidates, admissions, and dossiers; the checkpoint action log is reasoner-failures only, and classifyRunProviderOutcome reports PROVIDER_BLOCKED rather than a valid zero-yield result.",
+      "closure": {
+        "state": "PROVEN",
+        "receipt": ".agent/tasks/nightwatch-provider-resilient-current-yield-w13-v1/evidence/r08-fake-progress-guard-receipt.json"
+      }
+    },
+    {
+      "id": "R-09",
+      "title": "Production Completion Group 12 items 12.7, 12.8, 12.11, 12.12 still annotate W12's blocked state",
+      "classification": "LOCAL_DOCUMENTATION_DRIFT",
+      "blocksPhaseB": false,
+      "owner": "nightwatch-provider-resilient-current-yield-w13-v1",
+      "source": [
+        "openspec/changes/nightwatch-production-completion-programme-v1/tasks.md"
+      ],
+      "evidence": "All four unchecked items name W12 PARTIAL \u2014 BLOCKED as their current annotation; their checkbox state and text have not been reconciled with W13's activated state.",
+      "whyItMatters": "The programme's ledger must not present a superseded blocked state as current once W13 is active.",
+      "nextAction": "Closed: Production Completion Group 12 items 12.7, 12.8, 12.11, 12.12 still annotate W12's blocked state \u2014 reconciled and validated in this session.",
+      "closure": {
+        "state": "PROVEN",
+        "receipt": ".agent/tasks/nightwatch-provider-resilient-current-yield-w13-v1/evidence/r09-group12-reconciliation-receipt.json"
+      }
+    },
+    {
+      "id": "R-10",
+      "title": "Parent programme JSON is stale (currentWave W12, exactNextAction 'Resume W12...')",
+      "classification": "LOCAL_DOCUMENTATION_DRIFT",
+      "blocksPhaseB": false,
+      "owner": "nightwatch-provider-resilient-current-yield-w13-v1",
+      "source": [
+        ".agent/tasks/nightwatch-autonomous-bug-hunting-programme-v1/PROGRAMME.json"
+      ],
+      "evidence": "currentWave is W12, YIELD_W12.status is 'blocked', and exactNextAction/resumeRecipe still instruct resuming W12, which is COMPLETE with verdict PARTIAL \u2014 BLOCKED.",
+      "whyItMatters": "A stale programme pointer routes a fresh session to the wrong task and misstates W12's status.",
+      "nextAction": "Closed: Parent programme JSON is stale (currentWave W12, exactNextAction 'Resume W12...') \u2014 reconciled and validated in this session.",
+      "closure": {
+        "state": "PROVEN",
+        "receipt": ".agent/tasks/nightwatch-provider-resilient-current-yield-w13-v1/evidence/r10-programme-reconciliation-receipt.json"
+      }
+    },
+    {
+      "id": "R-11",
+      "title": "Governed current-state and README yield figures not reconciled with W13",
+      "classification": "LOCAL_DOCUMENTATION_DRIFT",
+      "blocksPhaseB": false,
+      "owner": "nightwatch-provider-resilient-current-yield-w13-v1",
+      "source": [
+        "docs/CURRENT_STATE.md",
+        "README.md"
+      ],
+      "evidence": "The W13 live-state binding and a W13 status row were added at activation; published yield figures remain W12's and the W13 outcome is not yet measured.",
+      "whyItMatters": "Governed surfaces must agree with receipts after Phase B closes.",
+      "nextAction": "Closed: Governed current-state and README yield figures not reconciled with W13 \u2014 reconciled and validated in this session.",
+      "closure": {
+        "state": "PROVEN",
+        "receipt": ".agent/tasks/nightwatch-provider-resilient-current-yield-w13-v1/evidence/r11-documentation-reconciliation-receipt.json"
+      }
+    },
+    {
+      "id": "R-12",
+      "title": "Predecessor single-provider validity and never-probe-later-candidates rules conflict with the W13 failover policy",
+      "classification": "EXPERIMENT_POLICY_AMBIGUITY",
+      "blocksPhaseB": true,
+      "owner": "nightwatch-provider-resilient-current-yield-w13-v1",
+      "source": [
+        "openspec/changes/nightwatch-current-source-unknown-yield-w12-v1/specs/current-source-yield-measurement/spec.md (archived)",
+        "openspec/changes/nightwatch-provider-resilient-current-yield-w13-v1/specs/current-source-yield-measurement/spec.md"
+      ],
+      "evidence": "The archived W12 requirement freezes one provider for the whole wave and forbids probing later candidates; W13's delta replaces it with policy-governed deterministic failover, and the W12 selection policy artifact still states the old rule.",
+      "whyItMatters": "Phase B must run under exactly one declared validity rule; leaving two live rules would make the wave's result ambiguous.",
+      "nextAction": "Closed: the tracked W13 delta declares exactly one live validity rule (policy-governed deterministic failover) while W12 artifacts remain immutable history; the provider-resilience policy and evaluation freeze remain mandatory pre-probe Phase B gates, not residuals.",
+      "closure": {
+        "state": "PROVEN",
+        "receipt": ".agent/tasks/nightwatch-provider-resilient-current-yield-w13-v1/evidence/r12-failover-rule-receipt.json"
+      }
+    },
+    {
+      "id": "R-13",
+      "title": "Environment/host-capability lanes outside the frozen owner scope",
+      "classification": "OUT_OF_SCOPE_BY_SAFETY",
+      "blocksPhaseB": false,
+      "owner": "owner",
+      "source": [
+        "AGENTS.md permanent owner scope freeze",
+        ".agent/ACTIVE_TASK.md routing and safety"
+      ],
+      "evidence": "DEV/NEXT/production contact, authenticated Alphaus runtime, browser product journeys, database/data-plane, cloud/infrastructure, external publication, Slack/Leslie/Pondr/Notion, and issue/PR creation remain NOT AUTHORIZED for W13.",
+      "whyItMatters": "These lanes are deliberately unavailable and must not be reopened by an experiment fix.",
+      "nextAction": "None in W13; a future owner authorization is required to revisit any of these lanes.",
+      "closure": {
+        "state": "PROVEN",
+        "receipt": ".agent/ACTIVE_TASK.md routing and safety block"
+      }
+    }
+  ],
+  "phaseAClosure": {
+    "state": "CLOSED_PROVEN",
+    "receipt": ".agent/tasks/nightwatch-provider-resilient-current-yield-w13-v1/evidence/phase-a-closure-receipt.json",
+    "allEntriesResolved": true,
+    "blockingUnresolved": "NONE"
+  }
+}

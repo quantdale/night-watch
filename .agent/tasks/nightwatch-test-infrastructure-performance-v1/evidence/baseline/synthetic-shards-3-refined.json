@@ -1,0 +1,95 @@
+{
+  "schemaVersion": "nightwatch.performance-lane-receipt.v1",
+  "lane": "synthetic-shards-3-refined",
+  "command": [
+    "node",
+    "bin/campaign-synthetic.mjs",
+    "--shards=3"
+  ],
+  "startedAt": "2026-09-20T13:03:59.686Z",
+  "finishedAt": "2026-09-20T13:14:38.308Z",
+  "wallMs": 617080,
+  "exitStatus": 0,
+  "errorCode": null,
+  "counts": {
+    "passed": null,
+    "failed": null,
+    "skipped": null,
+    "didNotRun": null,
+    "tests": null
+  },
+  "host": {
+    "platform": "linux",
+    "cores": 20,
+    "totalMemMiB": 15851
+  },
+  "load": {
+    "pre": {
+      "loadAverage": [
+        5.44,
+        6.09,
+        5.93
+      ],
+      "census": {
+        "busyProcesses": [
+          {
+            "name": "node",
+            "count": 6
+          },
+          {
+            "name": "codex",
+            "count": 4
+          },
+          {
+            "name": "herdr",
+            "count": 2
+          },
+          {
+            "name": "ps",
+            "count": 1
+          },
+          {
+            "name": "opencode",
+            "count": 1
+          }
+        ],
+        "totalBusyCpuPercent": 671
+      }
+    },
+    "post": {
+      "loadAverage": [
+        6.13,
+        6.33,
+        6.26
+      ],
+      "census": {
+        "busyProcesses": [
+          {
+            "name": "codex",
+            "count": 4
+          },
+          {
+            "name": "node",
+            "count": 4
+          },
+          {
+            "name": "herdr",
+            "count": 2
+          },
+          {
+            "name": "ps",
+            "count": 1
+          },
+          {
+            "name": "opencode",
+            "count": 1
+          }
+        ],
+        "totalBusyCpuPercent": 591
+      }
+    }
+  },
+  "outputTail": [
+    "{\"schemaVersion\":\"nightwatch.synthetic-campaign.v1\",\"fileCount\":105,\"total\":1897,\"passed\":1897,\"skipped\":0,\"didNotRun\":0,\"failed\":0,\"failedLocations\":[],\"shardCount\":3,\"planDigest\":\"sha256:d83fc3c432000c69071f790d\",\"universeDigest\":\"sha256:de339322d88c252b9aacb78a\",\"coverage\":{\"ok\":true,\"missing\":[],\"duplicated\":[],\"unexpected\":[],\"universeDigest\":\"sha256:de339322d88c252b9aacb78a\"},\"shardWallMs\":[108890,144271,637849],\"deepContainmentLane\":\"PROVEN\",\"result\":\"PASS\"}"
+  ]
+}

@@ -29,10 +29,21 @@ const REPO_ROOT = path.resolve(__dirname, '..', '..');
 // against. Ordering is already guaranteed by `workers: 1`.
 
 
+/**
+ * The rule families this suite's mutations target. Running the boundary rules
+ * that own the mutated code is not a weaker proof: every mutation must still
+ * make its own rule fail with its own message, while the two clean-tree
+ * checks below still run the FULL registry (before and after the mutation
+ * window). Scoping the mutation runs turns ~21 full-registry passes into
+ * ~21 family passes, which is what makes this suite affordable in the
+ * synthetic campaign and the gate.
+ */
+const MUTATION_RULE_FAMILIES = ['review-store', 'private-artifacts', 'rs1-reviewer-surface'] as const;
+
 /** Run the real hardening check. Returns its combined output and verdict. */
-function runHardening(): { readonly passed: boolean; readonly output: string } {
+function runHardening(families: readonly string[] = []): { readonly passed: boolean; readonly output: string } {
   try {
-    const output = execFileSync('node', ['bin/hardening-check.mjs'], { cwd: REPO_ROOT, encoding: 'utf8', timeout: 120_000 });
+    const output = execFileSync('node', ['bin/hardening-check.mjs', ...families.map((family) => `--family=${family}`)], { cwd: REPO_ROOT, encoding: 'utf8', timeout: 120_000 });
     return { passed: true, output };
   } catch (error) {
     const failure = error as { stdout?: string; stderr?: string };
@@ -246,7 +257,7 @@ test.describe('review-store boundary hardening bites', () => {
 
   for (const mutation of MUTATIONS) {
     test(`${mutation.name} is caught`, () => {
-      const result = withMutation(mutation.file, mutation.from, mutation.to, runHardening);
+      const result = withMutation(mutation.file, mutation.from, mutation.to, () => runHardening(MUTATION_RULE_FAMILIES));
       expect(result.passed, `mutation survived:\n${result.output}`).toBe(false);
       expect(result.output).toMatch(mutation.expect);
     });

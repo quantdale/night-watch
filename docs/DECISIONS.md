@@ -4966,3 +4966,144 @@ preserved in the W12 evidence and was not changed after results. Leakage,
 sibling identity drift, prohibited environment contact, sibling mutation, and
 external publication remained zero. No Alphaus organizational novelty claim was
 made.
+
+## D-139 — the engine budget policy is the single runtime-envelope authority; a wave envelope is a derived copy that fails closed on divergence
+
+Recorded 2026-09-19 (W13 Phase A residual R-01, succeeding D-138).
+
+D-138 preserved a mismatch between the W12 supplemental runtime envelope
+(`providerFailures: 3`, `consecutiveFailures: 3`) and the engine's HOUR_1
+policy (`providerFailures: 8`, `consecutiveFailures: 6`) without investigating
+it. Source inspection and W12's own receipts show the engine values were the
+ones enforced: the valid broad run recorded 8 provider failures before budget
+exhaustion, and each scoped run stopped after 6 consecutive failures.
+
+Decision: there is ONE runtime-ceiling concept and ONE authority for it —
+`defaultAgentBudgetPolicy(ceilingName)` in `src/core/agentProtocol/runtime.ts`.
+A wave's machine-readable freeze may declare a runtime envelope, but that
+declaration is a DERIVED copy (`deriveRuntimeBudgetEnvelope` /
+`envelopeFromBudgetPolicy` in `src/core/agentRuntime/runtimeBudgetEnvelope.ts`)
+and is validated field-by-field against the policy the run actually executes
+under; the campaign run and resume paths reject any divergence with
+`RUNTIME_BUDGET_ENVELOPE_MISMATCH`, naming each disagreeing field with both
+values, before any provider call. Unknown fields, missing fields, non-integer
+values, and a different schema version fail closed as
+`RUNTIME_BUDGET_ENVELOPE_MALFORMED`. The historical W12 values (3/3) are
+preserved as a permanent negative probe rather than reconciled by rewriting
+W12's immutable evidence.
+
+The alternative — declaring the two values two distinctly named concepts
+(soft wave budget versus hard engine ceiling) — was rejected because the
+supplemental field was labeled as the runtime envelope for `HOUR_1`; it named
+the same enforced concept, and renaming would have preserved two authorities
+for one stopping behaviour. W12's freeze artifact, task state, and verdict
+remain byte-for-byte historical evidence; only W13 and later freezes are bound
+by this decision.
+
+## D-140 — owner-directed mid-wave provider replacement (W13 generation 2)
+
+Recorded 2026-09-20 (W13 Phase B, `nightwatch-provider-resilient-current-yield-w13-v1`).
+
+The W13 generation-1 provider order was frozen before probing at fingerprint
+`sha256:a4865dbb6aea4114bfa8bdc9` with `opencode-go/glm-5.3` first. Its first
+four runs then exposed two measured facts: the `opencode-go` namespace
+degraded mid-wave (the broad run held 37 of 45 calls valid with 8 provider
+failures; scoped runs 01–03 failed over glm-5.3 → kimi-k3 → qwen3.8-max), and
+the engine's shared consecutive-failure ceiling (`HOUR_1`:
+`consecutiveFailures: 6`) truncates a frozen policy whose runtime-class
+threshold is 3 after exactly two providers, so the declared five-candidate
+order cannot be fully exercised in a dead-namespace run. Both facts are
+preserved as generation-1 evidence; neither was tuned after the fact.
+
+The owner then directed an immediate halt of the `opencode-go/glm-5.3` calls
+and their replacement with `opencode-go/muse-spark-1.3-contributor` at XHIGH
+reasoning effort. Decision: a generation-2 provider-resilience policy replaces
+the first candidate with the owner-directed model and removes glm-5.3 from the
+failover order entirely (no further calls), keeps the remaining declared
+candidates in their frozen relative order, and is fingerprinted at
+`sha256:1efa45195fc018aa22677336` after one valid structured probe. The W13
+evaluation freeze is re-committed at `sha256:10299c668795e69904f4600b` binding
+generation 2 to runs 04–08. Generation-1 receipts
+(`w13-broad-all-repositories-1`, `w13-repository-01..03`) remain preserved and
+are never re-run or rewritten. No scope, budget, admission, leakage, novelty,
+or reproduction dimension changed: the amendment is provider identity only,
+per the owner's explicit instruction.
+
+## D-141 — W13 matrix completion re-execution (runs 02/03/04) and the durable tool-action count
+
+Recorded 2026-09-20 (W13 Phase B, `nightwatch-provider-resilient-current-yield-w13-v1`).
+
+The owner directed the task to continue after the D-140 provider amendment. The
+first full matrix attempt left three scoped runs short of the W13 validity
+rule: `w13-repository-02` and `w13-repository-03` were provider-blocked with
+zero response bytes because the engine's shared `HOUR_1` consecutive-failure
+ceiling (6) truncates a threshold-3 failover policy after exactly two
+providers, and `w13-repository-04` returned valid provider responses but its
+source activity was unobservable because the campaign deletes its owner-local
+checkpoint on `NO_PROGRESS` and the harness result carried no durable
+tool-action counter.
+
+Decision: re-execute `w13-repository-02`, `w13-repository-03`, and
+`w13-repository-04` under the SAME frozen evaluation freeze — identical run
+identities, scopes, wall-clock ceilings, admission rules, and the owner-directed
+generation-2 provider policy fingerprint
+(`sha256:1efa45195fc018aa22677336`). No bound dimension changes, so this is not
+post-result tuning: the replaced runs were invalid or categorically blocked,
+not "worse results", and the replacement is the only path to the per-repository
+coverage the frozen matrix defines. All prior receipts are preserved as
+generation snapshots (`*.gen1.json`, `*.gen2.json`, plus supervisor
+attribution/state snapshots); no predecessor receipt is rewritten. D-140's
+"never re-run" statement is narrowed accordingly: historical receipts are
+never modified, and a re-execution is always a new receipt with the previous
+generation preserved alongside it.
+
+W13-DEF-02 (measurement defect repaired): `LocalCampaignResult` now exposes
+`toolActionCount`, a pure count of `CALL_TOOL` records in the campaign action
+log, so a run's source activity remains observable after the owner-local
+checkpoint is deleted. A fake-provider regression proves both the count and
+that a failed provider call still mints zero tool actions.
+
+---
+
+## D-142 — the canonical full regression executes as coverage-proven shards (supersedes D-1's execution-shape rationale)
+
+**Context.** D-1 chose serial Playwright execution (`workers: 1`,
+`fullyParallel: false`) with the reason: "policy state and fixture servers
+never race". That reason remains binding. What is superseded is the inference
+that the only safe shape is ONE serial invocation: it made the authoritative
+full regression the slowest thing in the repository and left the synthetic
+gate lane with negative headroom against its own timeout (W13 measured
+422.94-643 s of work against a 600 s bound).
+
+**Decision.** The canonical `npm test` executes the tracked test universe as
+disjoint concurrent shards (default two, bounded 1..8 through
+`NIGHTWATCH_TEST_WORKERS`/`--workers`), with each invocation still serial
+(`workers=1`, `retries=0`), plus one exclusive invocation for files whose
+declared execution class forbids co-scheduling. `npm run test:serial` keeps
+the historical single-invocation shape, and `--serial` selects it for
+comparison.
+
+The safety D-1 cared about is preserved MECHANICALLY, not by less concurrency:
+
+- every tracked test file carries exactly one declared execution class
+  (`config/validation-execution-classes.v1.json`), mechanically detected and
+  validated by a completeness test inside the regression itself; a new test
+  cannot join silently and a declaration may never be weaker than detection;
+- `SERIAL_REQUIRED` (Git writes, guarded-source writes) and
+  `MUTATION_CAMPAIGN_EXCLUSIVE` (the hardening probe campaign and the
+  real-tree mutation harnesses) files run in one exclusive invocation after
+  every concurrent shard has exited, so two Git-mutating or guarded-source
+  mutating tests can never overlap;
+- the plan must prove `union(shards) == universe` with pairwise disjointness
+  before anything runs, and refuses an unclassified, empty, or argv-unbounded
+  plan;
+- each shard owns its Playwright output directory and inherits the existing
+  dynamic proxy port lease, which was already cross-process safe;
+- ordering changes produced by concurrency are compared as normalized
+  results; the required universe, counts, and skip inventory are unchanged.
+
+**Consequences.** A future weakening of the execution-class contract, the
+coverage proof, or the exclusivity rule is a gate failure, because those are
+tested inside the canonical regression. The serial shape remains one flag
+away, and clean-checkout qualification still re-installs and re-runs
+everything from a disposable clone — sharding never reuses local state.

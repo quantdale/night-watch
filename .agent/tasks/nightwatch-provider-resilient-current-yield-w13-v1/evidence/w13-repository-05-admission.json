@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "nightwatch.w13-admission-evidence.v1",
+  "campaignId": "nightwatch-provider-resilient-current-yield-w13-v1",
+  "runId": "w13-repository-05",
+  "repositoryScope": "mobingilabs/ouchan",
+  "policyGeneration": 2,
+  "selectedProvider": "opencode-go/muse-spark-1.3-contributor",
+  "admission": {
+    "candidateId": "c1",
+    "mechanicalAdmissions": 1,
+    "dossierStatus": "VERIFIED_REPRODUCTION",
+    "reproductionCount": 1,
+    "qualifyingReproductions": 1,
+    "reproductionAttempts": 11,
+    "executedAttempts": 11,
+    "distinctAttemptedTargets": 8,
+    "distinctExecutedTargets": 8,
+    "terminationReason": "NO_PROGRESS"
+  },
+  "evidenceBasis": "campaign result metrics, mechanically derived by the engine from the run's own action log (nightwatch.campaign-yield.v1); the admission passed the existing mechanical reproduction/dossier gate unchanged",
+  "harnessDefect": {
+    "id": "W13-DEF-01",
+    "discoveredBy": "live execution",
+    "description": "the run-harness revision in use for generation-2 runs 04-05 recorded only the admission count and did not persist the mechanical dossier to owner-local state; the campaign deletes its owner-local checkpoint on NO_PROGRESS, so the dossier content and target identity are not recoverable for run 05",
+    "repair": "run-matrix.mjs now writes each admission dossier to $HOME/.nightwatch/w13-runs/<runId>/dossiers/<candidateId>.json (owner-local, never committed) and records its identity in the run receipt",
+    "repairCommit": "pending commit in the same session"
+  },
+  "novelty": {
+    "class": "NOVELTY_AMBIGUOUS",
+    "reason": "the mechanical admission exists, but its dossier identity was not preserved by the harness revision in use, so no comparison against the frozen known-defect corpus is claimed",
+    "alphausConfirmedPreviouslyUnknown": false
+  },
+  "claims": {
+    "isNightwatchMechanicalAdmission": true,
+    "isAlphausConfirmedBug": false,
+    "organizationalNoveltyClaimed": false
+  },
+  "privacy": { "rawSourceText": false, "customerValues": false, "secrets": false }
+}

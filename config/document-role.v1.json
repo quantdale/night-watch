@@ -171,6 +171,20 @@
       "oldLineSha256": "sha256:d1f8d0c9b3da032837374e74",
       "oldLineExcerpt": "| `LAST_SUBSTANTIVE_IMPLEMENTATION_SHA` | the last commit that changed implementation AND was validated | `ae06d4d` |",
       "reason": "W12 advanced the substantive implementation anchor to the validated measurement-integrity and validation-universe checkpoint; the superseded W11 table cell remains represented by this declared correction."
+    },
+    {
+      "id": "CORR-W13-001",
+      "path": "docs/CURRENT_STATE.md",
+      "oldLineSha256": "sha256:9fecb01716c96cb2f345fb77",
+      "oldLineExcerpt": "Durable memory for the next agent/session. Last updated: **2026-09-19**",
+      "reason": "W13 close-out updated the governed current-state rows on 2026-09-20 and the header date must cover the document's own last change; the header statement itself is unchanged."
+    },
+    {
+      "id": "CORR-PERF-001",
+      "path": "docs/CURRENT_STATE.md",
+      "oldLineSha256": "sha256:8c6c2e74663d9af7d5c27984",
+      "oldLineExcerpt": "| `TEST_INFRASTRUCTURE_PERFORMANCE_V1_STATUS` | `IN_PROGRESS` — owner-authorized test/gate performance campaign activated from `8dd8b163b567b939b977649d6ba7c371cf230ee6`; W13 remains a frozen read-o",
+      "reason": "The performance campaign close-out advanced its governed status row from IN_PROGRESS to the terminal measured verdict; the campaign body after the status word is unchanged."
     }
   ]
 }

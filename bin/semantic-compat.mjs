@@ -99,7 +99,7 @@ try {
       semanticAcceptance: loadSemanticAcceptanceClass(),
     }));
   } else {
-  const environment = buildChildEnvironment(process.env, { NIGHTWATCH_ENV: 'local', NIGHTWATCH_GATE_ENVIRONMENT: 'COMPATIBILITY' });
+  const environment = buildChildEnvironment(process.env, { NIGHTWATCH_ENV: 'local', NIGHTWATCH_GATE_ENVIRONMENT: 'COMPATIBILITY', NIGHTWATCH_TIMING_LANE: 'semantic-compatibility' });
   environment.TZ = 'UTC';
   environment.LC_ALL = 'C';
   environment.LANG = 'C';

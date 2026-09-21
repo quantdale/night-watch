@@ -1,0 +1,100 @@
+{
+  "schemaVersion": "nightwatch.performance-lane-receipt.v1",
+  "lane": "hardening-rules",
+  "command": [
+    "npm",
+    "run",
+    "hardening:rules"
+  ],
+  "startedAt": "2026-09-20T11:36:49.981Z",
+  "finishedAt": "2026-09-20T11:38:17.041Z",
+  "wallMs": 84195,
+  "exitStatus": 0,
+  "errorCode": null,
+  "counts": {
+    "passed": null,
+    "failed": null,
+    "skipped": null,
+    "didNotRun": null,
+    "tests": null
+  },
+  "host": {
+    "platform": "linux",
+    "cores": 20,
+    "totalMemMiB": 15851
+  },
+  "load": {
+    "pre": {
+      "loadAverage": [
+        5.37,
+        4.75,
+        4.51
+      ],
+      "census": {
+        "busyProcesses": [
+          {
+            "name": "node",
+            "count": 6
+          },
+          {
+            "name": "codex",
+            "count": 4
+          },
+          {
+            "name": "herdr",
+            "count": 2
+          },
+          {
+            "name": "ps",
+            "count": 1
+          },
+          {
+            "name": "opencode",
+            "count": 1
+          }
+        ],
+        "totalBusyCpuPercent": 679
+      }
+    },
+    "post": {
+      "loadAverage": [
+        5.62,
+        4.95,
+        4.6
+      ],
+      "census": {
+        "busyProcesses": [
+          {
+            "name": "node",
+            "count": 5
+          },
+          {
+            "name": "codex",
+            "count": 4
+          },
+          {
+            "name": "herdr",
+            "count": 2
+          },
+          {
+            "name": "ps",
+            "count": 1
+          },
+          {
+            "name": "opencode",
+            "count": 1
+          }
+        ],
+        "totalBusyCpuPercent": 596
+      }
+    }
+  },
+  "outputTail": [
+    "[probe] checkRuleEngineSoundness DETECTED HC-087",
+    "[probe] checkRuleEngineSoundness DETECTED HC-088",
+    "[probe] checkRuleEngineSoundness DETECTED HC-089",
+    "[probe] checkRuleEngineSoundness DETECTED HC-092",
+    "[probe] checkRuleEngineSoundness DETECTED HC-093",
+    "[probe] rules=83 probes=94 detected=94 undetected=0 restored=83 statusUnchanged=true"
+  ]
+}

@@ -56,10 +56,15 @@ function sha256(value) {
   return crypto.createHash('sha256').update(value, 'utf8').digest('hex');
 }
 
-function safeChildEnvironment(mode) {
+function safeChildEnvironment(mode, commandKey = null) {
   const environment = buildChildEnvironment(process.env, {
     NIGHTWATCH_ENV: 'local',
     NIGHTWATCH_GATE_ENVIRONMENT: mode.toUpperCase(),
+    // F-PERF-1: attribute this group's Playwright timing document to the group
+    // that produced it. The reporter sanitizes the label itself.
+    ...(typeof commandKey === 'string' && commandKey.length > 0
+      ? { NIGHTWATCH_TIMING_LANE: commandKey.toLowerCase().replace(/_+/g, '-') }
+      : {}),
   });
   environment.TZ = 'UTC';
   environment.LC_ALL = 'C';
@@ -80,8 +85,18 @@ function gitValue(args) {
   return result.stdout.trim();
 }
 
+// F-PERF-1: every group carries a measured wall-clock duration in the receipt
+// so validation-speed regressions are visible in evidence instead of only at a
+// timeout. The timing is additive and never changes a group's status.
 function runFixedCommand(commandKey, mode, timeoutClass) {
-  const environment = safeChildEnvironment(mode);
+  const startedAt = process.hrtime.bigint();
+  const result = runFixedCommandInner(commandKey, mode, timeoutClass);
+  const durationMs = Number((process.hrtime.bigint() - startedAt) / 1_000_000n);
+  return { ...result, durationMs };
+}
+
+function runFixedCommandInner(commandKey, mode, timeoutClass) {
+  const environment = safeChildEnvironment(mode, commandKey);
   let command;
   let args;
   if (commandKey === 'GATE_DEFINITION') {
@@ -237,17 +252,19 @@ function main(cli) {
   }
   const groups = [];
   let finalResult = 'PASS';
+  const gateStartedAt = process.hrtime.bigint();
   for (const group of definition.groups) {
     const result = runFixedCommand(group.commandKey, mode, group.timeoutClass);
-    groups.push({ id: group.id, required: group.required, status: result.status, exitCode: result.exitCode, counts: result.counts, ...(result.details === null || result.details === undefined ? {} : { details: result.details }) });
+    groups.push({ id: group.id, required: group.required, status: result.status, exitCode: result.exitCode, counts: result.counts, durationMs: result.durationMs, ...(result.details === null || result.details === undefined ? {} : { details: result.details }) });
     if (group.required && result.status !== 'PASS') {
       finalResult = ['TIMEOUT', 'ENVIRONMENT_MISMATCH', 'INSTALL_FAILURE', 'INTERRUPTED', 'UNKNOWN_FAILURE', 'CONFIG_INVALID'].includes(result.status)
         ? result.status
         : 'TEST_FAILURE';
-      for (const pending of definition.groups.slice(groups.length)) groups.push({ id: pending.id, required: pending.required, status: 'NOT_RUN', exitCode: null, counts: { total: null, passed: null, skipped: null, failed: null } });
+      for (const pending of definition.groups.slice(groups.length)) groups.push({ id: pending.id, required: pending.required, status: 'NOT_RUN', exitCode: null, counts: { total: null, passed: null, skipped: null, failed: null }, durationMs: null });
       break;
     }
   }
+  const gateDurationMs = Number((process.hrtime.bigint() - gateStartedAt) / 1_000_000n);
   const receipt = {
     schemaVersion: 'nightwatch.quality-gate-receipt.v1',
     gateDefinitionDigest: `sha256:${sha256(canonical(definition))}`,
@@ -260,6 +277,7 @@ function main(cli) {
     receiptPersistenceRequested: true,
     groupIds: groups.map((group) => group.id),
     groups,
+    gateDurationMs,
     finalResult,
   };
   emitReceipt(receipt, target, finalResult === 'PASS' ? 0 : 1);

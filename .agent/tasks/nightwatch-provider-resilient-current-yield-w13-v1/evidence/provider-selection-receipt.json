@@ -1,0 +1,63 @@
+{
+  "schemaVersion": "nightwatch.w13-provider-selection-receipt.v1",
+  "campaignId": "nightwatch-provider-resilient-current-yield-w13-v1",
+  "policyPath": ".agent/tasks/nightwatch-provider-resilient-current-yield-w13-v1/provider-resilience-policy.json",
+  "policyFingerprint": "sha256:a4865dbb6aea4114bfa8bdc9",
+  "declaredBeforeProbe": true,
+  "probeContract": {
+    "phase": "PROBE",
+    "requestClass": "minimal-structured-terminate",
+    "adapter": "bin/nightwatch-reasoner-print.mjs",
+    "timeoutMs": 30000,
+    "maxAttemptsPerCandidate": 1,
+    "successRequirements": [
+      "exitCode=0",
+      "response schema is nightwatch.reasoner-turn-response.v1",
+      "at least one salvageable intent with a bounded TERMINATE",
+      "response bytes > 0"
+    ]
+  },
+  "modelRegistry": {
+    "command": "opencode models",
+    "cliPath": "/home/dalepalaca/.opencode/bin/opencode",
+    "declaredCandidatesPresent": {
+      "opencode-go/glm-5.3": true,
+      "opencode-go/kimi-k3": true,
+      "opencode-go/qwen3.8-max": true,
+      "opencode-go/minimax-m3": true,
+      "opencode/nemotron-3.5-lightning-free": true
+    }
+  },
+  "probes": [
+    {
+      "ordinal": 1,
+      "provider": "opencode-go/glm-5.3",
+      "attempts": 1,
+      "outcome": "VALID_PROVIDER_RESPONSE",
+      "exitCode": 0,
+      "elapsedMs": 16318,
+      "responseBytes": 137,
+      "stderrBytes": 0,
+      "intentKinds": ["TERMINATE"],
+      "terminationReason": "COMPLETE_NO_FINDING",
+      "providerSignal": null,
+      "rawResponsePersisted": false
+    },
+    { "ordinal": 2, "provider": "opencode-go/kimi-k3", "attempts": 0, "outcome": "NOT_PROBED_AFTER_FIRST_PASS" },
+    { "ordinal": 3, "provider": "opencode-go/qwen3.8-max", "attempts": 0, "outcome": "NOT_PROBED_AFTER_FIRST_PASS" },
+    { "ordinal": 4, "provider": "opencode-go/minimax-m3", "attempts": 0, "outcome": "NOT_PROBED_AFTER_FIRST_PASS" },
+    { "ordinal": 5, "provider": "opencode/nemotron-3.5-lightning-free", "attempts": 0, "outcome": "NOT_PROBED_AFTER_FIRST_PASS" }
+  ],
+  "selectedProvider": {
+    "provider": "opencode-go/glm-5.3",
+    "model": "opencode-go/glm-5.3",
+    "invocationMode": "print",
+    "argvTemplate": ["run", "--model", "opencode-go/glm-5.3", "__PROMPT__"],
+    "adapter": "bin/nightwatch-reasoner-print.mjs",
+    "selectionRule": "FIRST_PASS_OF_FROZEN_ORDER",
+    "frozenForW13": true,
+    "failoverPolicyRemainsDeclared": true
+  },
+  "selectionStatus": "FROZEN_FIRST_VALID_PROVIDER",
+  "investigationStarted": false
+}

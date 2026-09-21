@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "nightwatch.flake-check-receipt.v1",
+  "subject": "shard runner, 8 parallel-eligible files, 3 shards, 3 consecutive runs",
+  "runs": [
+    {
+      "run": 1,
+      "result": "PASS",
+      "passed": 86,
+      "failed": 0,
+      "coverage": true,
+      "shardFiles": [
+        1,
+        1,
+        6
+      ]
+    },
+    {
+      "run": 2,
+      "result": "PASS",
+      "passed": 86,
+      "failed": 0,
+      "coverage": true,
+      "shardFiles": [
+        1,
+        1,
+        6
+      ]
+    },
+    {
+      "run": 3,
+      "result": "PASS",
+      "passed": 86,
+      "failed": 0,
+      "coverage": true,
+      "shardFiles": [
+        1,
+        1,
+        6
+      ]
+    }
+  ],
+  "leakedPlaywrightProcesses": 0,
+  "leftoverProxyLeases": 0
+}

@@ -40,6 +40,11 @@ import {
   validateReasonerTurnResponse,
   type ReasonerValidationContext,
 } from '../agentProtocol/validate';
+import {
+  classifyProviderFailure,
+  PROVIDER_SIGNAL_SCAN_MAX_CHARS,
+  type ProviderFailureEvidence,
+} from '../agentProtocol/providerFailure';
 
 export const CLI_REASONER_DEFAULT_KILL_GRACE_MS = 2_000 as const;
 export const CLI_REASONER_DEFAULT_STDIO_GRACE_MS = 2_000 as const;
@@ -593,14 +598,34 @@ export function createCliReasonerDriver(config: CliReasonerConfig): ReasonerDriv
     transport: 'CLI',
     provenance,
     async complete(request: ReasonerTurnRequest, options: ReasonerCallOptions): Promise<ReasonerCallResult> {
+      // W13 R-03: every failed call carries the complete provider taxonomy.
+      // The signal scan reads bounded stderr and retains only an enumerated
+      // signal; raw provider text never leaves this function.
+      const callPhase = options.callPhase ?? 'RUNTIME';
+      const boundedSignalText = (buffer: Buffer): string | null => (buffer.length === 0
+        ? null
+        : buffer.subarray(0, Math.min(buffer.length, PROVIDER_SIGNAL_SCAN_MAX_CHARS * 4)).toString('utf8'));
+      const evidenceFor = (
+        reasonerClass: ReasonerFailureClass,
+        stdoutBytes: number,
+        stderrBytes: number,
+        signalText: string | null,
+      ): ProviderFailureEvidence => classifyProviderFailure({
+        phase: callPhase,
+        reasonerClass,
+        providerPresent: true,
+        providerSignalText: signalText,
+        stdoutBytes,
+        stderrBytes,
+      });
       if (options.signal.aborted) {
-        return { ok: false, class: 'CANCELLED', provenance, stdoutBytes: 0, stderrBytes: 0 };
+        return { ok: false, class: 'CANCELLED', provenance, stdoutBytes: 0, stderrBytes: 0, providerFailure: evidenceFor('CANCELLED', 0, 0, null) };
       }
       let payload: string;
       try {
         payload = `${JSON.stringify(request)}\n`;
       } catch {
-        return { ok: false, class: 'MALFORMED_OUTPUT', provenance, stdoutBytes: 0, stderrBytes: 0 };
+        return { ok: false, class: 'MALFORMED_OUTPUT', provenance, stdoutBytes: 0, stderrBytes: 0, providerFailure: evidenceFor('MALFORMED_OUTPUT', 0, 0, null) };
       }
       const capture = await runCliChild(
         resolved,
@@ -618,6 +643,7 @@ export function createCliReasonerDriver(config: CliReasonerConfig): ReasonerDriv
           provenance,
           stdoutBytes: capture.stdoutReceived,
           stderrBytes: capture.stderrReceived,
+          providerFailure: evidenceFor(lifecycle, capture.stdoutReceived, capture.stderrReceived, boundedSignalText(capture.stderr)),
         };
       }
       const stdoutText = capture.stdout.toString('utf8');
@@ -629,6 +655,8 @@ export function createCliReasonerDriver(config: CliReasonerConfig): ReasonerDriv
           provenance,
           stdoutBytes: capture.stdoutReceived,
           stderrBytes: capture.stderrReceived,
+          // The echoed body may itself contain the secret: scan nothing.
+          providerFailure: evidenceFor('SECRET_ECHO', capture.stdoutReceived, capture.stderrReceived, null),
         };
       }
       const sizeClass = classifyOutputSize(capture.stdoutReceived, capture.stderrReceived);
@@ -639,6 +667,7 @@ export function createCliReasonerDriver(config: CliReasonerConfig): ReasonerDriv
           provenance,
           stdoutBytes: capture.stdoutReceived,
           stderrBytes: capture.stderrReceived,
+          providerFailure: evidenceFor(sizeClass, capture.stdoutReceived, capture.stderrReceived, boundedSignalText(capture.stderr)),
         };
       }
       const rawClass = classifyRawOutput(stdoutText);
@@ -649,6 +678,7 @@ export function createCliReasonerDriver(config: CliReasonerConfig): ReasonerDriv
           provenance,
           stdoutBytes: capture.stdoutReceived,
           stderrBytes: capture.stderrReceived,
+          providerFailure: evidenceFor(rawClass, capture.stdoutReceived, capture.stderrReceived, boundedSignalText(capture.stderr)),
         };
       }
       const parsed = extractJsonDocument(stdoutText);
@@ -659,6 +689,7 @@ export function createCliReasonerDriver(config: CliReasonerConfig): ReasonerDriv
           provenance,
           stdoutBytes: capture.stdoutReceived,
           stderrBytes: capture.stderrReceived,
+          providerFailure: evidenceFor('MALFORMED_OUTPUT', capture.stdoutReceived, capture.stderrReceived, boundedSignalText(capture.stderr)),
         };
       }
       const validated = validateReasonerTurnResponse(parsed, resolved.validationContext);
@@ -669,6 +700,7 @@ export function createCliReasonerDriver(config: CliReasonerConfig): ReasonerDriv
           provenance,
           stdoutBytes: capture.stdoutReceived,
           stderrBytes: capture.stderrReceived,
+          providerFailure: evidenceFor(validated.class, capture.stdoutReceived, capture.stderrReceived, boundedSignalText(capture.stderr)),
         };
       }
       return {

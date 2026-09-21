@@ -19,6 +19,12 @@ import { resolvePlaywrightOutputDir } from './src/core/workspace/ephemeralLayout
 
 process.env.NIGHTWATCH_ENV ??= 'local';
 
+// F-PERF-1: a second, silent timing reporter writes one bounded timing
+// document per invocation under the owned `test-results/timings/` directory.
+// The lane label is an environment input so a shard, a gate lane, or the full
+// regression all stay attributable; it is sanitized by the reporter itself.
+const timingLane = process.env.NIGHTWATCH_TIMING_LANE ?? 'default';
+
 export default defineConfig({
   testDir: '.',
   testMatch: ['**/tests/**/*.{test,smoke}.ts', '**/scenarios/**/*.smoke.ts'],
@@ -27,7 +33,7 @@ export default defineConfig({
   workers: 1,
   timeout: 120_000,
   expect: { timeout: 10_000 },
-  reporter: [['list']],
+  reporter: [['list'], ['./tests/helpers/playwrightTimingReporter.ts', { lane: timingLane }]],
   outputDir: resolvePlaywrightOutputDir('core'),
   globalSetup: './tests/globalSetup.ts',
   projects: [

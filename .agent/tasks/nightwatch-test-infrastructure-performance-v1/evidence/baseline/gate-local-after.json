@@ -1,0 +1,124 @@
+{
+  "schemaVersion": "nightwatch.performance-lane-receipt.v1",
+  "lane": "gate-local-after",
+  "command": [
+    "npm",
+    "run",
+    "gate:local"
+  ],
+  "startedAt": "2026-09-20T17:32:00.029Z",
+  "finishedAt": "2026-09-20T17:43:03.474Z",
+  "wallMs": 635917,
+  "exitStatus": 0,
+  "errorCode": null,
+  "counts": {
+    "passed": null,
+    "failed": null,
+    "skipped": null,
+    "didNotRun": null,
+    "tests": null
+  },
+  "host": {
+    "platform": "linux",
+    "cores": 20,
+    "totalMemMiB": 15851
+  },
+  "load": {
+    "pre": {
+      "loadAverage": [
+        6.41,
+        6.74,
+        7.21
+      ],
+      "census": {
+        "busyProcesses": [
+          {
+            "name": "node",
+            "count": 7
+          },
+          {
+            "name": "codex",
+            "count": 4
+          },
+          {
+            "name": "opencode",
+            "count": 2
+          },
+          {
+            "name": ".cline",
+            "count": 2
+          },
+          {
+            "name": "herdr",
+            "count": 2
+          },
+          {
+            "name": "MainThread",
+            "count": 1
+          },
+          {
+            "name": "agy",
+            "count": 1
+          },
+          {
+            "name": "gopls",
+            "count": 1
+          }
+        ],
+        "totalBusyCpuPercent": 636
+      }
+    },
+    "post": {
+      "loadAverage": [
+        7.78,
+        7.43,
+        7.16
+      ],
+      "census": {
+        "busyProcesses": [
+          {
+            "name": "node",
+            "count": 6
+          },
+          {
+            "name": "codex",
+            "count": 4
+          },
+          {
+            "name": "opencode",
+            "count": 2
+          },
+          {
+            "name": ".cline",
+            "count": 2
+          },
+          {
+            "name": "herdr",
+            "count": 2
+          },
+          {
+            "name": "MainThread",
+            "count": 1
+          },
+          {
+            "name": "agy",
+            "count": 1
+          },
+          {
+            "name": "gopls",
+            "count": 1
+          }
+        ],
+        "totalBusyCpuPercent": 579
+      }
+    }
+  },
+  "outputTail": [
+    "> nightwatch@0.1.0 gate:local",
+    "> node bin/quality-gate.mjs local",
+    "",
+    "{\"schemaVersion\":\"nightwatch.quality-gate-receipt.v1\",\"gateDefinitionDigest\":\"sha256:c85f42c58db95b81865b011600086eb6db854886ca652dd57d572a7475ad101e\",\"gitHead\":\"dc400f6691fedbd3f4e6a7f3ab8895a8fbdfb6a9\",\"packageLockDigest\":\"sha256:e87bf7337541d2ce03bb701deb09fc14853b5711c45688fcf8b647d04ebfe45c\",\"nodeMajor\":22,\"environmentClass\":\"LOCAL\",\"receiptPersistenceRequested\":true,\"groupIds\":[\"GATE_DEFINITION\",\"STATIC\",\"HARDENING\",\"HARDENING_PROBES\",\"HANDOFF_TRUTH\",\"PROJECT_TRUTH\",\"AGENT_CONTINUITY\",\"SEMANTIC_COMPATIBILITY\",\"OWNER_PROVENANCE\",\"SYNTHETIC_CAMPAIGN\",\"PATCH_INTEGRITY\",\"WORKSPACE_INTEGRITY\"],\"groups\":[{\"id\":\"GATE_DEFINITION\",\"required\":true,\"status\":\"PASS\",\"exitCode\":0,\"counts\":{\"total\":null,\"passed\":null,\"skipped\":null,\"didNotRun\":null,\"failed\":null},\"durationMs\":38},{\"id\":\"STATIC\",\"required\":true,\"status\":\"PASS\",\"exitCode\":0,\"counts\":{\"total\":null,\"passed\":null,\"skipped\":null,\"didNotRun\":null,\"failed\":null},\"durationMs\":4441},{\"id\":\"HARDENING\",\"required\":true,\"status\":\"PASS\",\"exitCode\":0,\"counts\":{\"total\":null,\"passed\":null,\"skipped\":null,\"didNotRun\":null,\"failed\":null},\"durationMs\":12661},{\"id\":\"HARDENING_PROBES\",\"required\":true,\"status\":\"PASS\",\"exitCode\":0,\"counts\":{\"total\":null,\"passed\":null,\"skipped\":null,\"didNotRun\":null,\"failed\":null},\"durationMs\":59473},{\"id\":\"HANDOFF_TRUTH\",\"required\":true,\"status\":\"PASS\",\"exitCode\":0,\"counts\":{\"total\":null,\"passed\":null,\"skipped\":null,\"didNotRun\":null,\"failed\":null},\"durationMs\":1688},{\"id\":\"PROJECT_TRUTH\",\"required\":true,\"status\":\"PASS\",\"exitCode\":0,\"counts\":{\"total\":null,\"passed\":null,\"skipped\":null,\"didNotRun\":null,\"failed\":null},\"durationMs\":4922},{\"id\":\"AGENT_CONTINUITY\",\"required\":true,\"status\":\"PASS\",\"exitCode\":0,\"counts\":{\"total\":null,\"passed\":null,\"skipped\":null,\"didNotRun\":null,\"failed\":null},\"durationMs\":3329},{\"id\":\"SEMANTIC_COMPATIBILITY\",\"required\":true,\"status\":\"PASS\",\"exitCode\":0,\"counts\":{\"total\":2127,\"passed\":2114,\"skipped\":13,\"didNotRun\":null,\"failed\":0},\"durationMs\":364201,\"details\":{\"failedLocations\":[]}},{\"id\":\"OWNER_PROVENANCE\",\"required\":true,\"status\":\"PASS\",\"exitCode\":0,\"counts\":{\"total\":null,\"passed\":91,\"skipped\":null,\"didNotRun\":null,\"failed\":null},\"durationMs\":11499},{\"id\":\"SYNTHETIC_CAMPAIGN\",\"required\":true,\"status\":\"PASS\",\"exitCode\":0,\"counts\":{\"total\":1897,\"passed\":1897,\"skipped\":0,\"didNotRun\":0,\"failed\":0},\"durationMs\":172564,\"details\":{\"failedLocations\":[],\"deepContainmentLane\":\"PROVEN\"}},{\"id\":\"PATCH_INTEGRITY\",\"required\":true,\"status\":\"PASS\",\"exitCode\":0,\"counts\":{\"total\":null,\"passed\":null,\"skipped\":null,\"didNotRun\":null,\"failed\":null},\"durationMs\":484},{\"id\":\"WORKSPACE_INTEGRITY\",\"required\":true,\"status\":\"PASS\",\"exitCode\":0,\"counts\":{\"total\":null,\"passed\":null,\"skipped\":null,\"didNotRun\":null,\"failed\":null},\"durationMs\":359}],\"gateDurationMs\":635666,\"finalResult\":\"PASS\",\"receiptDigest\":\"receipt:sha256:aec3143785150c040bc5025e\"}",
+    "",
+    "{\"status\":\"RECEIPT_PERSISTED\",\"origin\":\"DEFAULT\",\"receiptDigest\":\"receipt:sha256:aec3143785150c040bc5025e\",\"file\":\"/tmp/nightwatch-gate-receipts/local-dc400f6691fe.json\"}"
+  ]
+}

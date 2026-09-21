@@ -1,0 +1,94 @@
+{
+  "schemaVersion": "nightwatch.performance-lane-receipt.v1",
+  "lane": "hardening-check",
+  "command": [
+    "npm",
+    "run",
+    "hardening:check"
+  ],
+  "startedAt": "2026-09-20T11:36:07.891Z",
+  "finishedAt": "2026-09-20T11:36:26.844Z",
+  "wallMs": 18007,
+  "exitStatus": 0,
+  "errorCode": null,
+  "counts": {
+    "passed": null,
+    "failed": null,
+    "skipped": null,
+    "didNotRun": null,
+    "tests": null
+  },
+  "host": {
+    "platform": "linux",
+    "cores": 20,
+    "totalMemMiB": 15851
+  },
+  "load": {
+    "pre": {
+      "loadAverage": [
+        5.78,
+        4.71,
+        4.49
+      ],
+      "census": {
+        "busyProcesses": [
+          {
+            "name": "node",
+            "count": 6
+          },
+          {
+            "name": "codex",
+            "count": 4
+          },
+          {
+            "name": "herdr",
+            "count": 2
+          },
+          {
+            "name": "opencode",
+            "count": 1
+          }
+        ],
+        "totalBusyCpuPercent": 576
+      }
+    },
+    "post": {
+      "loadAverage": [
+        5.78,
+        4.76,
+        4.51
+      ],
+      "census": {
+        "busyProcesses": [
+          {
+            "name": "node",
+            "count": 5
+          },
+          {
+            "name": "codex",
+            "count": 4
+          },
+          {
+            "name": "herdr",
+            "count": 2
+          },
+          {
+            "name": "ps",
+            "count": 1
+          },
+          {
+            "name": "opencode",
+            "count": 1
+          }
+        ],
+        "totalBusyCpuPercent": 596
+      }
+    }
+  },
+  "outputTail": [
+    "> nightwatch@0.1.0 hardening:check",
+    "> node bin/hardening-check.mjs",
+    "",
+    "[hardening:check] PASS: offline structural invariants hold"
+  ]
+}

@@ -180,6 +180,6 @@ test.describe('the live published baseline', () => {
   test('every published capability purpose is a real statement', () => {
     const result = inspectPublishedSpecPurposes(REPO_ROOT);
     expect(result.errors).toEqual([]);
-    expect(result.capabilities).toBe(56);
+    expect(result.capabilities).toBe(57);
   });
 });

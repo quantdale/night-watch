@@ -1,0 +1,96 @@
+{
+  "schemaVersion": "nightwatch.performance-lane-receipt.v1",
+  "lane": "project-check",
+  "command": [
+    "npm",
+    "run",
+    "project:check"
+  ],
+  "startedAt": "2026-09-20T11:38:39.269Z",
+  "finishedAt": "2026-09-20T11:38:46.800Z",
+  "wallMs": 7530,
+  "exitStatus": 0,
+  "errorCode": null,
+  "counts": {
+    "passed": null,
+    "failed": null,
+    "skipped": null,
+    "didNotRun": null,
+    "tests": null
+  },
+  "host": {
+    "platform": "linux",
+    "cores": 20,
+    "totalMemMiB": 15851
+  },
+  "load": {
+    "pre": {
+      "loadAverage": [
+        5.11,
+        4.88,
+        4.58
+      ],
+      "census": {
+        "busyProcesses": [
+          {
+            "name": "node",
+            "count": 6
+          },
+          {
+            "name": "codex",
+            "count": 4
+          },
+          {
+            "name": "herdr",
+            "count": 2
+          },
+          {
+            "name": "opencode",
+            "count": 1
+          }
+        ],
+        "totalBusyCpuPercent": 571
+      }
+    },
+    "post": {
+      "loadAverage": [
+        4.79,
+        4.81,
+        4.57
+      ],
+      "census": {
+        "busyProcesses": [
+          {
+            "name": "node",
+            "count": 5
+          },
+          {
+            "name": "codex",
+            "count": 4
+          },
+          {
+            "name": "herdr",
+            "count": 2
+          },
+          {
+            "name": "ps",
+            "count": 1
+          },
+          {
+            "name": "opencode",
+            "count": 1
+          }
+        ],
+        "totalBusyCpuPercent": 596
+      }
+    }
+  },
+  "outputTail": [
+    "      \"state\": \"EXTERNAL_PREREQUISITE_UNMET\",",
+    "      \"detail\": \"C-12:EXTERNAL_PREREQUISITE_UNMET C-13:EXTERNAL_PREREQUISITE_UNMET C-14:REPOSITORY_WORK_REMAINING P4:EXTERNAL_PREREQUISITE_UNMET\"",
+    "    },",
+    "    \"definitionErrors\": []",
+    "  }",
+    "}"
+  ]
+}

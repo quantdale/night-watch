@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "nightwatch.w13-novelty-adjudication.v1",
+  "campaignId": "nightwatch-provider-resilient-current-yield-w13-v1",
+  "phase": "POST_ADMISSION_ONLY",
+  "admissionsAdjudicated": 1,
+  "readOnly": true,
+  "entries": [
+    {
+      "runId": "w13-repository-05",
+      "repository": "mobingilabs/ouchan",
+      "candidateId": "c1",
+      "mechanicalAdmission": true,
+      "reproductionCount": 1,
+      "class": "NOVELTY_AMBIGUOUS",
+      "reason": "the mechanical admission is real, but its dossier identity and evidence artefacts were not preserved (W13-DEF-01), so no comparison against the frozen known-defect corpus is claimed",
+      "matchesExistingKnownDefect": null,
+      "newToFrozenCorpus": null,
+      "alphausConfirmedPreviouslyUnknown": false
+    }
+  ],
+  "organizationalNoveltyClaimed": false,
+  "claims": {
+    "nightwatchMechanicalAdmission": true,
+    "alphausConfirmedBug": false,
+    "absenceOfDefectsImplied": false
+  },
+  "receipt": ".agent/tasks/nightwatch-provider-resilient-current-yield-w13-v1/evidence/w13-repository-05-admission.json"
+}

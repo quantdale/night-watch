@@ -1,0 +1,70 @@
+{
+  "schemaVersion": "nightwatch.w13-parent-residual-analysis.v1",
+  "campaignId": "nightwatch-provider-resilient-current-yield-w13-v1",
+  "completedAtPhase": "15.5",
+  "newWaveRecommended": false,
+  "classificationVocabulary": [
+    "NONE",
+    "LOCALLY_CLOSABLE",
+    "OWNER_DECISION",
+    "EXTERNAL_CAPABILITY",
+    "DEV_NEXT_AUTHORIZATION",
+    "PRODUCTION_TRACK",
+    "METRIC_REDESIGN",
+    "OPTIONAL_FUTURE_IMPROVEMENT"
+  ],
+  "items": [
+    {
+      "id": "engine-policy-consecutive-failure-interaction",
+      "classification": "OWNER_DECISION",
+      "detail": "the engine's shared HOUR_1 consecutive-failure ceiling (6) is not reset by a deterministic provider transition, so a threshold-3 failover policy can exercise at most two providers in a run with no interleaved success; changing either bound is a frozen experiment dimension and requires a separately authorized wave",
+      "evidence": ".agent/tasks/nightwatch-provider-resilient-current-yield-w13-v1/evidence/runs/w13-repository-02.gen1.json"
+    },
+    {
+      "id": "w13-def-01-admission-dossier-persistence",
+      "classification": "NONE",
+      "detail": "repaired during the wave; the historical run-05 dossier is unrecoverable, and the receipt plus the novelty adjudication record that fact without overclaiming"
+    },
+    {
+      "id": "w13-def-02-durable-tool-action-count",
+      "classification": "NONE",
+      "detail": "repaired and regression-covered; source activity is now observable even when a campaign deletes its checkpoint"
+    },
+    {
+      "id": "campaign-checkpoint-retention-on-no-progress",
+      "classification": "OPTIONAL_FUTURE_IMPROVEMENT",
+      "detail": "NO_PROGRESS deletes the owner-local checkpoint by design; W13-DEF-02 made validity observable without it, so retaining a sanitized action-log summary would be a convenience, not a correctness need"
+    },
+    {
+      "id": "dev-next-production-contact",
+      "classification": "DEV_NEXT_AUTHORIZATION",
+      "detail": "DEV/NEXT/production and authenticated runtime contact remain not authorized; any such contact requires a separate owner authorization"
+    },
+    {
+      "id": "semantic-dev-acceptance",
+      "classification": "DEV_NEXT_AUTHORIZATION",
+      "detail": "contained DEV semantic acceptance (Phase 9B/10B) remains NOT_PROVEN and requires a separate owner authorization"
+    },
+    {
+      "id": "exact-rediscovery-metric-tension",
+      "classification": "METRIC_REDESIGN",
+      "detail": "W11 proved strict EXACT is structurally unreachable under leak-free conditions on this corpus; a future metric redesign is an owner decision, not a local fix"
+    },
+    {
+      "id": "reproduction-breadth-beyond-ouchan",
+      "classification": "OPTIONAL_FUTURE_IMPROVEMENT",
+      "detail": "executor expansions were previously evidence-based NO-GO; nothing in W13 changed the executable-surface picture (all 152 targets remain in mobingilabs/ouchan)"
+    },
+    {
+      "id": "external-ci-execution",
+      "classification": "EXTERNAL_CAPABILITY",
+      "detail": "GitHub Actions remains externally billing-blocked before job execution; not locally controllable"
+    },
+    {
+      "id": "production-track",
+      "classification": "PRODUCTION_TRACK",
+      "detail": "production placement and deployment work remains its own track and is out of scope for this programme"
+    }
+  ],
+  "conclusion": "No further wave is recommended by this analysis; each remaining item is classified above and any next step requires explicit owner authorization."
+}

@@ -2,18 +2,43 @@
   "schemaVersion": "nightwatch.autonomous-programme-state.v1",
   "programmeId": "nightwatch-autonomous-bug-hunting-programme-v1",
   "programmeStatus": "IN_PROGRESS",
-  "currentWave": "W12",
+  "currentWave": "W13",
   "startingSha": "d1ebde90c1454b31d6b93d9df503a4c5f196d7c8",
   "wave0Sha": "bd9be1b2a93107388b868cf2febc87bc84a8a428",
   "programmeIntegrationHead": "DISCOVER_FROM_GIT",
   "lanes": {
-    "A": { "status": "integrated", "workerSha": "bb1a51b6efe893432feb95e16309f9bd0c0f1b56" },
-    "B": { "status": "integrated", "workerSha": "ee6a6a9462c5134d8ce89ccdd62b6ff900630503" },
-    "C": { "status": "integrated", "workerSha": "0e83d23f7e5a20669e1a7fef05c8915fee0a294e" },
-    "D": { "status": "integrated", "workerSha": "751724aebf69b2f1635ec9d26b0a1c7476ec6186" },
-    "E": { "status": "integrated", "workerSha": "ffe2b01c945c3b16fbf51d1ca81060b1b60abef0", "taskId": "nightwatch-system-atlas-v1", "role": "W1_SYSTEM_ATLAS" },
-    "F": { "status": "integrated", "workerSha": "7d0f16d7dbb416745364145513d0c32f974adb67", "siblingMining": "MINED", "realHistoricalRediscovery": false },
-    "G": { "status": "integrated", "workerSha": "2e6e4ad4ed65ace97cc82112bd04cde312e98ad9" },
+    "A": {
+      "status": "integrated",
+      "workerSha": "bb1a51b6efe893432feb95e16309f9bd0c0f1b56"
+    },
+    "B": {
+      "status": "integrated",
+      "workerSha": "ee6a6a9462c5134d8ce89ccdd62b6ff900630503"
+    },
+    "C": {
+      "status": "integrated",
+      "workerSha": "0e83d23f7e5a20669e1a7fef05c8915fee0a294e"
+    },
+    "D": {
+      "status": "integrated",
+      "workerSha": "751724aebf69b2f1635ec9d26b0a1c7476ec6186"
+    },
+    "E": {
+      "status": "integrated",
+      "workerSha": "ffe2b01c945c3b16fbf51d1ca81060b1b60abef0",
+      "taskId": "nightwatch-system-atlas-v1",
+      "role": "W1_SYSTEM_ATLAS"
+    },
+    "F": {
+      "status": "integrated",
+      "workerSha": "7d0f16d7dbb416745364145513d0c32f974adb67",
+      "siblingMining": "MINED",
+      "realHistoricalRediscovery": false
+    },
+    "G": {
+      "status": "integrated",
+      "workerSha": "2e6e4ad4ed65ace97cc82112bd04cde312e98ad9"
+    },
     "R": {
       "status": "integrated",
       "taskId": "nightwatch-mined-repro-discriminator-v1",
@@ -22,7 +47,10 @@
       "baseSha": "d2aa960c2491817c70cd36f422b0e20c58dcc80d",
       "workerSha": "a842f9bdf67e41bf962262c6a25fb82b34056560",
       "integrationSha": "a842f9bdf67e41bf962262c6a25fb82b34056560",
-      "ownedPaths": ["src/core/benchmark/**", ".agent/tasks/nightwatch-mined-repro-discriminator-v1/**"],
+      "ownedPaths": [
+        "src/core/benchmark/**",
+        ".agent/tasks/nightwatch-mined-repro-discriminator-v1/**"
+      ],
       "reviewVerdict": "ACCEPTED_AFTER_INDEPENDENT_REPLAY_AND_53_TEST_RERUN",
       "realCaseVerdict": "REPRODUCED/PRE_FAIL_POST_PASS on mobingilabs/ouchan 5985281b43cd"
     },
@@ -35,7 +63,11 @@
       "baseSha": "d2aa960c2491817c70cd36f422b0e20c58dcc80d",
       "workerSha": "de2f58e649f1c29e8b68f1a20d90d6285ce86d36",
       "integrationSha": "7dd51cff7d4faea6885d61f95d29c44ccf72aa28",
-      "ownedPaths": ["src/core/agentRuntime/localCampaign.ts", "bin/nightwatch-agent.mjs", "tests/unit/campaignEndurance.test.ts"],
+      "ownedPaths": [
+        "src/core/agentRuntime/localCampaign.ts",
+        "bin/nightwatch-agent.mjs",
+        "tests/unit/campaignEndurance.test.ts"
+      ],
       "reviewVerdict": "ACCEPTED_AFTER_POST_RECONCILE_72_TEST_RERUN",
       "investigationsInOneCampaign": 5
     },
@@ -76,7 +108,7 @@
       "reviewVerdict": "ACCEPTED_AFTER_ORCHESTRATOR_DIFF_REVIEW_AND_POST_RECONCILE_RERUN",
       "objective": "Add bounded turn/campaign investigation memory, target diversity, mechanically grounded verification/reproduction readiness, and fixed-corpus/live-provider efficacy evidence on the already-proven W7 real local substrate without weakening W7 safety or admission.",
       "efficacyVerdict": "fixed corpus nightwatch.efficacy-corpus.v2 (13 cases, 2 negative controls), baseline -> final: unique source targets 13 -> 31, grounded hypotheses 0 -> 17, verification-ready 0 -> 17, grounded reproduction attempts 0 -> 17, mechanical reproductions 0 -> 6, admitted candidates 0 -> 6, disproved hypotheses 0 -> 6, VERIFIED_ROOT_CAUSE_REDISCOVERY 0 -> 3, false positives 0 -> 0, leaked cases 0 -> 0, EXACT 0 -> 0 unchanged; costs rose (reasoner calls 39 -> 102, tool actions 26 -> 67, stagnation terminations 0 -> 1)",
-      "liveProviderVerdict": "opencode-go/deepseek-v4-flash: leak-isolated historical proof reached VERIFIED_ROOT_CAUSE_REDISCOVERY with mechanical reproduction on 2 of 3 cases (negative control candidate-free, leaked=[] everywhere); two real owner-local campaigns explored distinct blue-sdk-go surfaces with grounded hypotheses and admitted nothing — the one live candidate was refused MISSING_REPRODUCTION"
+      "liveProviderVerdict": "opencode-go/deepseek-v4-flash: leak-isolated historical proof reached VERIFIED_ROOT_CAUSE_REDISCOVERY with mechanical reproduction on 2 of 3 cases (negative control candidate-free, leaked=[] everywhere); two real owner-local campaigns explored distinct blue-sdk-go surfaces with grounded hypotheses and admitted nothing \u2014 the one live candidate was refused MISSING_REPRODUCTION"
     },
     "REPRODUCTION_YIELD": {
       "status": "integrated",
@@ -106,17 +138,20 @@
       "taskId": "nightwatch-autonomous-yield-proof-w11-v1",
       "role": "W11_AUTONOMOUS_YIELD_PROOF",
       "baseSha": "158a97b8feceb6abf4ea4ccbacab1f20cc46bc35",
-      "waveVerdict": "PARTIAL — BLOCKED",
+      "waveVerdict": "PARTIAL \u2014 BLOCKED",
       "historicalVerdict": "EXACT 0/13, leakage 0, mechanical admissions 3, refused missing reproduction 4",
       "unknownVerdict": "UNEXECUTED_PROVIDER_BLOCKED; no yield published",
-      "freezeFingerprints": ["sha256:824deef9922975feab5af69f", "sha256:6145bd666dd08369ec38b018"]
+      "freezeFingerprints": [
+        "sha256:824deef9922975feab5af69f",
+        "sha256:6145bd666dd08369ec38b018"
+      ]
     },
     "YIELD_W12": {
-      "status": "blocked",
+      "status": "complete",
       "taskId": "nightwatch-current-source-unknown-yield-w12-v1",
       "role": "W12_CURRENT_SOURCE_UNKNOWN_YIELD",
       "baseSha": "4e763f3f079863a262906a8b134539e309c8d054",
-      "waveVerdict": "PARTIAL — BLOCKED",
+      "waveVerdict": "PARTIAL \u2014 BLOCKED",
       "objective": "Measure current-source investigation breadth and mechanically admitted defect yield across all eight approved repositories without reopening W11, leaking hidden truth, weakening admission, or tuning the experiment after results.",
       "freezeFingerprint": "sha256:8ea18e4fe5e9315271dd55df",
       "resultReceipt": ".agent/tasks/nightwatch-current-source-unknown-yield-w12-v1/evidence/global-yield-aggregation.json",
@@ -124,6 +159,27 @@
       "yieldSummary": "2 candidates; 2 mechanical reproduction attempts; 0 qualifying reproductions; 2 MISSING_REPRODUCTION refusals; 0 admissions; novelty not applicable",
       "safetySummary": "leakage 0; sibling identity drift 0; prohibited contacts/writes/publication 0",
       "blocker": "frozen opencode-go/glm-5.3 provider failed all eight scoped runs; a future retry requires fresh owner authorization and freeze"
+    },
+    "YIELD_W13": {
+      "status": "complete",
+      "taskId": "nightwatch-provider-resilient-current-yield-w13-v1",
+      "role": "W13_PROVIDER_RESILIENT_CURRENT_YIELD",
+      "baseSha": "34517c9ba11c97407168fe5879ee03794dfff3e3",
+      "waveVerdict": "COMPLETE \u2014 CURRENT-SOURCE YIELD MEASURED, MECHANICAL ADMISSIONS: 1",
+      "providerPolicyFingerprints": [
+        "sha256:a4865dbb6aea4114bfa8bdc9",
+        "sha256:1efa45195fc018aa22677336"
+      ],
+      "freezeFingerprints": [
+        "sha256:a520d9630a20a3f67321fbb8",
+        "sha256:10299c668795e69904f4600b"
+      ],
+      "resultReceipt": ".agent/tasks/nightwatch-provider-resilient-current-yield-w13-v1/evidence/global-yield-aggregation.json",
+      "matrix": "9/9 valid runs (1 broad all-eight plus 8 repository-scoped); two deterministic generation-1 failover transitions; 0 provider-blocked runs in the final matrix",
+      "yieldSummary": "392 calls; 227 tool actions (floor); 15 contained reproduction attempts; 1 qualifying reproduction; 6 candidates; 5 refusals; 1 mechanical admission (mobingilabs/ouchan c1, VERIFIED_REPRODUCTION, novelty AMBIGUOUS); 0 leakage",
+      "safetySummary": "sibling identity unchanged for all eight repositories; prohibited contacts/writes/publication 0",
+      "defects": "W13-DEF-01 dossier persistence (repaired); W13-DEF-02 durable tool-action count (repaired); engine/policy consecutive-failure interaction reported for owner decision",
+      "nextWaveAuthority": "NONE \u2014 no further wave is authorized"
     }
   },
   "proof": {
@@ -133,13 +189,13 @@
     "historicalIsolation": "PASS tests/unit/historicalRediscovery.test.ts",
     "minedSiblingHunts": "PASS tests/unit/minedCases.test.ts leak=0 admitted=0 outcome=MISS",
     "localCliCampaign": "PASS tests/unit/localCampaign.test.ts (fake CLI)",
-    "containedHistoricalReplay": "REPRODUCED mobingilabs/ouchan services/billingd/services/billingsvc — pre-fix FAIL exit 1, post-fix PASS exit 0, sibling repo unmutated",
+    "containedHistoricalReplay": "REPRODUCED mobingilabs/ouchan services/billingd/services/billingsvc \u2014 pre-fix FAIL exit 1, post-fix PASS exit 0, sibling repo unmutated",
     "minedReproductionWithDossier": "reproductionCount=1 hasDossier=true leaked=[] on mined-bugatlas-git-mobingilabs-ouchan-5985281b43cd (OpenCode Go, 8-turn ceiling)",
-    "normalProductPathRealLocalSubstrate": "PROVEN — real owner-local source/System Map/mined Bug Atlas sensing plus shared deterministic reproduction and mechanical admission on nightwatch-agent campaign run; the REAL contained replay of mined ouchan 5985281b43cd through the product path yields REPRODUCED/PRE_FAIL_POST_PASS and dossierStatus=VERIFIED_REPRODUCTION with reproductionCount=1 and zero leakage",
+    "normalProductPathRealLocalSubstrate": "PROVEN \u2014 real owner-local source/System Map/mined Bug Atlas sensing plus shared deterministic reproduction and mechanical admission on nightwatch-agent campaign run; the REAL contained replay of mined ouchan 5985281b43cd through the product path yields REPRODUCED/PRE_FAIL_POST_PASS and dossierStatus=VERIFIED_REPRODUCTION with reproductionCount=1 and zero leakage",
     "programmeIdentityValidation": "PASS bin/lib/programme-state.mjs in agent:check (duplicate lane keys rejected pre-parse)",
-    "w8AutonomousEfficacy": "PROVEN_LOCAL_AND_LIVE_PROVIDER — bounded turn/campaign memory + mechanical verification/reproduction readiness materially improved the fixed corpus with zero added false positives/leaks; live historical proof reached VERIFIED_ROOT_CAUSE_REDISCOVERY; owner-local live candidate remained mechanically refused without reproduction",
-    "ownerLocalCurrentSourceReproduction": "PROVEN_BOUNDED_LOCAL — host-derived GO_VENDORED_PACKAGE_TEST provider, explicit CURRENT_SOURCE_REPEATED_TEST_FAILURE proof/admission and conservative no-credit outcomes; real current package execution completed honestly without a qualifying failure; live omen-alpha candidate was refused MISSING_REPRODUCTION",
-    "w10ReproductionSurfaceCoverage": "PROVEN_LOCAL_AND_LIVE_PROVIDER — bounded pre-attempt capability projection, diverse capability-aware index selection, cross-investigation capability carry, sanitized current-failure triage evidence and mechanical live yield metrics; four HOUR_1 opencode-go/omen-alpha campaigns reached real contained execution on 16 of 22 reproduction attempts against W9's 0 of 7, with zero qualifying failures, zero admissions and zero leakage"
+    "w8AutonomousEfficacy": "PROVEN_LOCAL_AND_LIVE_PROVIDER \u2014 bounded turn/campaign memory + mechanical verification/reproduction readiness materially improved the fixed corpus with zero added false positives/leaks; live historical proof reached VERIFIED_ROOT_CAUSE_REDISCOVERY; owner-local live candidate remained mechanically refused without reproduction",
+    "ownerLocalCurrentSourceReproduction": "PROVEN_BOUNDED_LOCAL \u2014 host-derived GO_VENDORED_PACKAGE_TEST provider, explicit CURRENT_SOURCE_REPEATED_TEST_FAILURE proof/admission and conservative no-credit outcomes; real current package execution completed honestly without a qualifying failure; live omen-alpha candidate was refused MISSING_REPRODUCTION",
+    "w10ReproductionSurfaceCoverage": "PROVEN_LOCAL_AND_LIVE_PROVIDER \u2014 bounded pre-attempt capability projection, diverse capability-aware index selection, cross-investigation capability carry, sanitized current-failure triage evidence and mechanical live yield metrics; four HOUR_1 opencode-go/omen-alpha campaigns reached real contained execution on 16 of 22 reproduction attempts against W9's 0 of 7, with zero qualifying failures, zero admissions and zero leakage"
   },
   "realWorld": {
     "LOCAL_AUTONOMOUS_CAPABILITY": "PROVEN_SYNTHETIC_AND_ONE_REAL_HISTORICAL_REPRODUCTION",
@@ -150,15 +206,16 @@
     "REPRODUCTION_SURFACE_COVERAGE": "PROVEN_BOUNDED_LOCAL_CAPABILITY_AWARE_SELECTION",
     "REAL_DEV_NEXT_HUNT": "NOT_AUTHORIZED",
     "PREVIOUSLY_UNKNOWN_ALPHAUS_BUG": "NOT_YET_PROVEN",
-    "LIVE_CLI_REASONER": "W12_PROVIDER_SELECTION_PENDING"
+    "LIVE_CLI_REASONER": "W13_MEASURED_GENERATION2_MUSE_SPARK_1.3_CONTRIBUTOR_XHIGH"
   },
   "blockers": [
     "DEV/NEXT execution not authorized (external)",
-    "W12 current-source yield is in progress and requires a frozen provider and valid matrix execution",
-    "strict EXACT remains the frozen W11 metric and is not re-run by W12",
-    "previously unknown Alphaus bug yield remains unproven until W12 admission plus independent evidence",
+    "W13 closed with one mechanical admission whose dossier was lost to a harness defect (W13-DEF-01); novelty stays AMBIGUOUS and no organizational claim is made",
+    "the engine's shared consecutive-failure ceiling truncates a threshold-3 provider-failover policy after two providers; changing it requires a future owner-authorized wave",
+    "strict EXACT remains the frozen W11 metric and is not re-run by W12 or W13",
+    "previously unknown Alphaus bug yield remains unproven until a preserved admission plus independent evidence",
     "external CI remains unobserved for this programme's heads"
   ],
-  "exactNextAction": "Resume W12 from .agent/ACTIVE_TASK.md and its STATE.md. Validate the governed activation checkpoint, then declare the provider-selection policy before probing. W0-W11 predecessor evidence remains frozen; do not reopen W11's historical arm.",
-  "resumeRecipe": "Read .agent/ACTIVE_TASK.md and .agent/EXECUTION_PROMPT.md, then .agent/tasks/nightwatch-current-source-unknown-yield-w12-v1/SPEC.md, PLAN.md and STATE.md. Re-discover live Git/workspace/session truth. Read W11 only as frozen predecessor evidence and continue W12's exact next action."
+  "exactNextAction": "W13 is COMPLETE \u2014 CURRENT-SOURCE YIELD MEASURED, MECHANICAL ADMISSIONS: 1. No further wave is authorized. The parent programme residual analysis classifies every remaining open item; any next step requires explicit owner authorization.",
+  "resumeRecipe": "Read .agent/ACTIVE_TASK.md and .agent/EXECUTION_PROMPT.md, then .agent/tasks/nightwatch-provider-resilient-current-yield-w13-v1/SPEC.md, PLAN.md, STATE.md and REPORT.md. W11 and W12 remain frozen predecessors; do not reopen W13's measured matrix without explicit owner authorization."
 }

@@ -1,0 +1,123 @@
+{
+  "schemaVersion": "nightwatch.performance-lane-receipt.v1",
+  "lane": "npm-test-sharded-2-balanced",
+  "command": [
+    "npm",
+    "test"
+  ],
+  "startedAt": "2026-09-20T16:48:25.135Z",
+  "finishedAt": "2026-09-20T17:01:44.681Z",
+  "wallMs": 765857,
+  "exitStatus": 1,
+  "errorCode": null,
+  "counts": {
+    "passed": null,
+    "failed": 2631,
+    "skipped": 0,
+    "didNotRun": null,
+    "tests": null
+  },
+  "host": {
+    "platform": "linux",
+    "cores": 20,
+    "totalMemMiB": 15851
+  },
+  "load": {
+    "pre": {
+      "loadAverage": [
+        4.98,
+        6.74,
+        7.7
+      ],
+      "census": {
+        "busyProcesses": [
+          {
+            "name": "node",
+            "count": 7
+          },
+          {
+            "name": "codex",
+            "count": 4
+          },
+          {
+            "name": "opencode",
+            "count": 2
+          },
+          {
+            "name": ".cline",
+            "count": 2
+          },
+          {
+            "name": "herdr",
+            "count": 2
+          },
+          {
+            "name": "MainThread",
+            "count": 1
+          },
+          {
+            "name": "agy",
+            "count": 1
+          },
+          {
+            "name": "gopls",
+            "count": 1
+          }
+        ],
+        "totalBusyCpuPercent": 699
+      }
+    },
+    "post": {
+      "loadAverage": [
+        6.08,
+        6.52,
+        7.19
+      ],
+      "census": {
+        "busyProcesses": [
+          {
+            "name": "node",
+            "count": 6
+          },
+          {
+            "name": "codex",
+            "count": 4
+          },
+          {
+            "name": "opencode",
+            "count": 2
+          },
+          {
+            "name": ".cline",
+            "count": 2
+          },
+          {
+            "name": "herdr",
+            "count": 2
+          },
+          {
+            "name": "MainThread",
+            "count": 1
+          },
+          {
+            "name": "agy",
+            "count": 1
+          },
+          {
+            "name": "gopls",
+            "count": 1
+          }
+        ],
+        "totalBusyCpuPercent": 613
+      }
+    }
+  },
+  "outputTail": [
+    "  shard-1: exit=0 wall=626.5s passed=2631 failed=0 skipped=2 didNotRun=0",
+    "  shard-2: exit=1 wall=366.5s passed=2399 failed=13 skipped=16 didNotRun=0",
+    "  exclusive: exit=0 wall=166.5s passed=328 failed=0 skipped=0 didNotRun=0",
+    "[run-shards] totals passed=5358 failed=13 skipped=18 didNotRun=0",
+    "  shard-2 failures: tests/unit/selfDevAdoptionCli.test.ts:65, tests/unit/selfDevAdoptionCli.test.ts:122",
+    "[run-shards] NOT CERTIFICATION on its own: this is the canonical full-regression execution shape, not a release authority by itself."
+  ]
+}

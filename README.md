@@ -100,8 +100,10 @@ executed rather than omitting it.
 - Validation lane classes: 9 `PROVEN`, 1 `PROVEN` carrying stale evidence,
   0 `BLOCKED_EXTERNAL`, 1 `UNAVAILABLE_CAPABILITY`.
   `<!--status:VALIDATION_LANE_PROVEN_COUNT=9-->` `<!--status:VALIDATION_LANE_STALE_EVIDENCE_COUNT=1-->` `<!--status:VALIDATION_LANE_BLOCKED_EXTERNAL_COUNT=0-->` `<!--status:VALIDATION_LANE_UNAVAILABLE_CAPABILITY_COUNT=1-->`
-- Measured yield: **0** admitted findings and **0** strict `EXACT_REDISCOVERY`
-  across W7–W11. The machinery works; no Alphaus defect has been admitted.
+- Measured yield: **1** Nightwatch mechanical admission and **0** strict
+  `EXACT_REDISCOVERY` across W7–W13. The admission (W13, `mobingilabs/ouchan`,
+  candidate `c1`) is a Nightwatch mechanical result whose novelty is
+  `NOVELTY_AMBIGUOUS`; no Alphaus organizational defect has been confirmed.
   W11 measured the historical arm directly — 14 leak-isolated cases,
   `opencode-go/glm-5.3`, 0 leakage, 0 false positives — and found strict EXACT
   0/13 for a reason worth recording: the metric requires naming the hidden
@@ -112,7 +114,7 @@ executed rather than omitting it.
   previously-unknown-defect arm is frozen but UNEXECUTED: the subscribed
   provider tier went down mid-wave, and an unexecutable arm is not reported as a
   zero-yield arm.
-  `<!--status:MEASURED_YIELD_ADMITTED_FINDINGS=0-->` `<!--status:MEASURED_YIELD_EXACT_REDISCOVERY=0-->`
+  `<!--status:MEASURED_YIELD_ADMITTED_FINDINGS=1-->` `<!--status:MEASURED_YIELD_EXACT_REDISCOVERY=0-->`
 - W12's owner-authorized current-source successor is **PARTIAL — BLOCKED**:
   its valid broad run reached all eight repositories and produced 2 candidates,
   2 non-reproductions, 2 `MISSING_REPRODUCTION` refusals, and 0 admissions;
@@ -120,6 +122,22 @@ executed rather than omitting it.
   Provider failure is not a zero-yield denominator, and W12 makes no claim
   that the repositories contain no defects or that any candidate is an Alphaus
   organizationally novel bug.
+- W13's provider-resilient successor is **COMPLETE — CURRENT-SOURCE YIELD
+  MEASURED, MECHANICAL ADMISSIONS: 1**: all nine frozen runs executed validly
+  under a predeclared deterministic provider-failover policy (generation 1
+  `opencode-go/glm-5.3` with two transitions; generation 2, after owner
+  directive D-140, `opencode-go/muse-spark-1.3-contributor` at XHIGH effort;
+  D-141 completed runs 02/03/04 under the same freeze). The matrix produced
+  **1 Nightwatch mechanical admission** (`mobingilabs/ouchan`, candidate `c1`,
+  `VERIFIED_REPRODUCTION`, reproductionCount 1), 6 candidates, 5 refusals, 15
+  contained reproduction attempts across 8 executable targets, 392 reasoner
+  calls, 227 tool actions (floor), and 0 leakage with all eight sibling SHAs
+  unchanged. The admission's novelty is `NOVELTY_AMBIGUOUS` because its dossier
+  artefact was lost to harness defect W13-DEF-01 (repaired); it is **not** an
+  Alphaus-confirmed bug and no organizational novelty is claimed. Provider
+  failures remain distinct from zero yield, and the engine/policy
+  consecutive-failure interaction that bounded generation-1 failover is
+  reported for a future owner decision rather than tuned mid-wave.
 - Semantic acceptance class: `COMPLETE_LOCAL_SYNTHETIC`; contained DEV
   acceptance is `NOT_PROVEN` and requires separate owner authorization.
   `<!--status:SEMANTIC_ACCEPTANCE_CLASS=COMPLETE_LOCAL_SYNTHETIC-->` `<!--status:SEMANTIC_DEV_RESULT=NOT_PROVEN-->`
@@ -172,6 +190,31 @@ npm run gate:local       # serial local gate
 npm run gate:clean       # disposable Node 20 checkout qualification
 npm run campaign:synthetic
 ```
+
+### Which validation lane to run
+
+| Situation | Command | Authority |
+| --- | --- | --- |
+| Normal coding, focused feedback | `npm run gate:dev` | NOT certification; affected scope only |
+| Substantial integration checkpoint | `npm run gate:milestone` | NOT certification; broader scope plus the 94-probe rule campaign |
+| Release, campaign closeout, integration | `npm run gate:local` then `npm test` | authoritative |
+| Fresh-environment qualification | `npm run gate:clean` | authoritative (disposable clone) |
+
+The fast and milestone lanes print an explicit NOT-certification label and can
+never satisfy a release requirement. Both refuse an empty change set; a change
+under `bin/`, `config/`, safety, governance, or test-infrastructure paths
+deliberately broadens them to the full universe and reports the overage rather
+than trimming coverage.
+
+`npm test` executes the tracked regression as coverage-proven concurrent
+shards (default two; `NIGHTWATCH_TEST_WORKERS` or `--workers` overrides,
+bounded 1..8) while every invocation stays serial with zero retries. Files
+whose declared execution class forbids co-scheduling (Git writes,
+guarded-source writes, the probe campaign, whole-repository signature windows)
+run in one exclusive invocation after the concurrent shards exit. `npm run
+test:serial` keeps the historical single-invocation shape, and `npm run
+test:timings` renders the slowest files, suites, and gate groups from the
+recorded timing evidence.
 
 Phase 25–28 source intelligence is local, read-only, bounded, deterministic,
 and raw-source-free. It scans only the fixed approved sibling-source universe

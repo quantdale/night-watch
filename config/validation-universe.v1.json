@@ -2,7 +2,7 @@
   "schemaVersion": "nightwatch.validation-universe.v1",
   "definitionName": "Nightwatch validation universe classification (NW-08)",
   "note": "Every discovered executable test or check belongs to exactly one class. AUTHORITATIVE_GATE is DERIVED from what the required gate lanes actually select and is therefore not declarable here; every other discovered file must appear below exactly once, with the reason it is not in the gate and the evidence lane that does cover it. A newly added test that is in no lane and no class fails the gate rather than joining the repository silently.",
-  "inventoryDigest": "sha256:039d60d15518fc56c463d66b",
+  "inventoryDigest": "sha256:9df408dbf4e6f918d8c65ef1",
   "classes": {
     "FULL_REGRESSION": {
       "reason": "Offline, deterministic suites that the full canonical regression executes. They are not in a required gate lane because the authoritative gate is bounded for CI runtime; leaving them unclassified is what made the gap invisible.",
@@ -104,10 +104,17 @@
         "tests/unit/silentZeroOutput.test.ts",
         "tests/unit/snapshotter.test.ts",
         "tests/unit/sourceAnalysisParity.test.ts",
+        "tests/unit/syntheticCampaignShards.test.ts",
         "tests/unit/syntheticFindingCampaign.test.ts",
         "tests/unit/target-preflight.test.ts",
         "tests/unit/testOracleQuality.test.ts",
+        "tests/unit/validationAffectedTests.test.ts",
         "tests/unit/validationClassification.test.ts",
+        "tests/unit/validationExecutionClasses.test.ts",
+        "tests/unit/validationLane.test.ts",
+        "tests/unit/validationPerformanceGuards.test.ts",
+        "tests/unit/validationShardPlan.test.ts",
+        "tests/unit/validationTiming.test.ts",
         "tests/unit/w10CampaignCapabilityCarry.test.ts",
         "tests/unit/w10CampaignYieldMetrics.test.ts",
         "tests/unit/w10LongRunResilience.test.ts",
@@ -115,7 +122,14 @@
         "tests/unit/w10YieldBenchmark.test.ts",
         "tests/unit/w11EvaluationFreezeIntegrity.test.ts",
         "tests/unit/w11LeakageCanary.test.ts",
-        "tests/unit/w12EvaluationFreezeIntegrity.test.ts"
+        "tests/unit/w12EvaluationFreezeIntegrity.test.ts",
+        "tests/unit/w13AggregateCompleteness.test.ts",
+        "tests/unit/w13EvaluationFreezeIntegrity.test.ts",
+        "tests/unit/w13FakeProgressGuard.test.ts",
+        "tests/unit/w13ProviderFailureTaxonomy.test.ts",
+        "tests/unit/w13ProviderResiliencePolicy.test.ts",
+        "tests/unit/w13RuntimeBudgetEnvelope.test.ts",
+        "tests/unit/w13TruncationFloor.test.ts"
       ]
     },
     "LOCAL_FIXTURE_SMOKE": {
@@ -175,6 +189,7 @@
       "reason": "JavaScript tooling excluded from the root TypeScript program, so compilation proves nothing about it. Parse-checked as a class rather than type-checked.",
       "evidenceLane": "node --check over every tracked bin/*.mjs, plus the behavioural suites that spawn them",
       "files": [
+        "bin/affected-tests.mjs",
         "bin/agent-continuity-protocol.mjs",
         "bin/agent-state.mjs",
         "bin/ai-local-canary.mjs",
@@ -262,6 +277,7 @@
         "bin/release-freshness.mjs",
         "bin/review-mutation-campaign.mjs",
         "bin/review-persistence-scale.mjs",
+        "bin/run-shards.mjs",
         "bin/schema-lifecycle.mjs",
         "bin/selfdev-adopt-sandbox.mjs",
         "bin/selfdev-catalog-integrity.mjs",
@@ -272,6 +288,9 @@
         "bin/semantic-compat.mjs",
         "bin/silent-zero-output.mjs",
         "bin/test-oracle-quality.mjs",
+        "bin/test-timings.mjs",
+        "bin/validation-execution-classes.mjs",
+        "bin/validation-lane.mjs",
         "bin/validation-universe.mjs",
         "bin/w11-historical-arm.mjs",
         "bin/workspace-integrity.mjs"

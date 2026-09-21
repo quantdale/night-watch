@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "nightwatch.w13-gate-clean-receipts.v1",
+  "campaignId": "nightwatch-provider-resilient-current-yield-w13-v1",
+  "sourceHead": "46e8b5bcf2d9f0e5bd76c7c6ba6b9dfc7071ea7e",
+  "nodeMajor": 20,
+  "installResult": "PASS",
+  "attempts": [
+    {
+      "attempt": 1,
+      "receipt": "clean-receipt:sha256:c3dee9241e056c82cca810ba",
+      "durationSeconds": 1368,
+      "result": "TIMEOUT",
+      "groupsPassed": [
+        "GATE_DEFINITION", "STATIC", "HARDENING", "HARDENING_PROBES",
+        "HANDOFF_TRUTH", "PROJECT_TRUTH", "AGENT_CONTINUITY",
+        "SEMANTIC_COMPATIBILITY", "OWNER_PROVENANCE"
+      ],
+      "timedOutLane": "SYNTHETIC_CAMPAIGN",
+      "notRun": ["PATCH_INTEGRITY", "WORKSPACE_INTEGRITY"]
+    },
+    {
+      "attempt": 2,
+      "receipt": "clean-receipt:sha256:c3dee9241e056c82cca810ba",
+      "durationSeconds": 1552,
+      "result": "TIMEOUT",
+      "groupsPassed": [
+        "GATE_DEFINITION", "STATIC", "HARDENING", "HARDENING_PROBES",
+        "HANDOFF_TRUTH", "PROJECT_TRUTH", "AGENT_CONTINUITY",
+        "SEMANTIC_COMPATIBILITY", "OWNER_PROVENANCE"
+      ],
+      "timedOutLane": "SYNTHETIC_CAMPAIGN",
+      "notRun": ["PATCH_INTEGRITY", "WORKSPACE_INTEGRITY"]
+    }
+  ],
+  "classification": "EXPECTED_ENVIRONMENT_VARIANCE",
+  "classificationBasis": "R-02 measured this lane on the same host: direct passes in 423 s and 643 s on one unchanged 105-file / 1,897-test manifest, while the gate bound is 600 s; the only gate:local run at the validated checkpoint passed all twelve groups including this lane, and the direct synthetic campaign passed 1,897/1,897. Host load during both clean attempts was ~4.6-5.2 on 20 cores with other agents' processes active.",
+  "boundChange": "NONE (raising a gate timeout is an owner decision)",
+  "retryPolicy": "two terminal attempts only; no retry-loop",
+  "reviewReceipt": "receipt:sha256:c8278fdfbcb0723d78c96882 (gate:local, all twelve groups PASS)"
+}

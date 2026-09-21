@@ -1,0 +1,99 @@
+{
+  "schemaVersion": "nightwatch.performance-lane-receipt.v1",
+  "lane": "typecheck-bin",
+  "command": [
+    "npm",
+    "run",
+    "typecheck:bin"
+  ],
+  "startedAt": "2026-09-20T11:35:47.533Z",
+  "finishedAt": "2026-09-20T11:36:07.789Z",
+  "wallMs": 19289,
+  "exitStatus": 0,
+  "errorCode": null,
+  "counts": {
+    "passed": null,
+    "failed": null,
+    "skipped": null,
+    "didNotRun": null,
+    "tests": null
+  },
+  "host": {
+    "platform": "linux",
+    "cores": 20,
+    "totalMemMiB": 15851
+  },
+  "load": {
+    "pre": {
+      "loadAverage": [
+        4.94,
+        4.5,
+        4.42
+      ],
+      "census": {
+        "busyProcesses": [
+          {
+            "name": "node",
+            "count": 6
+          },
+          {
+            "name": "codex",
+            "count": 4
+          },
+          {
+            "name": "herdr",
+            "count": 2
+          },
+          {
+            "name": "ps",
+            "count": 1
+          },
+          {
+            "name": "opencode",
+            "count": 1
+          }
+        ],
+        "totalBusyCpuPercent": 662
+      }
+    },
+    "post": {
+      "loadAverage": [
+        5.78,
+        4.71,
+        4.49
+      ],
+      "census": {
+        "busyProcesses": [
+          {
+            "name": "node",
+            "count": 5
+          },
+          {
+            "name": "codex",
+            "count": 4
+          },
+          {
+            "name": "herdr",
+            "count": 2
+          },
+          {
+            "name": "ps",
+            "count": 1
+          },
+          {
+            "name": "opencode",
+            "count": 1
+          }
+        ],
+        "totalBusyCpuPercent": 596
+      }
+    }
+  },
+  "outputTail": [
+    "> nightwatch@0.1.0 typecheck:bin",
+    "> node bin/bin-typecheck.mjs",
+    "",
+    "[typecheck:bin] PASS: conformance=14/72 mode=REPORTING errors=1354 exemptions=0",
+    "[typecheck:bin] non-conforming: bin/ai-local-canary.mjs(4), bin/ai-owner-review.mjs(10), bin/auth-capture.mjs(12), bin/cache-key-contract.mjs(3), bin/campaign-synthetic.mjs(6), bin/change-intelligence.mjs(11), bin/efficacy-corpus.mjs(3), bin/evidence-retention.mjs(27), bin/finding-intel-scale.mjs(18), bin/nightwatch-agent.mjs(7), bin/nightwatch-control-center.mjs(4), bin/nightwatch-hygiene.mjs(50), bin/nightwatch-intelligence.mjs(37), bin/nightwatch-reasoner-print.mjs(50), bin/nightwatch-session.mjs(63), bin/nightwatch-status.mjs(4), bin/nightwatch.mjs(9), bin/observe-authenticated.mjs(10), bin/observe-canary.mjs(2), bin/observe-gate.mjs(10), bin/observe-preflight.mjs(26), bin/phase10b-real.mjs(4), bin/phase14-contract-health.mjs(11), bin/phase22-dev.mjs(36), bin/phase22-real.mjs(32), bin/phase23-ci.mjs(49), bin/phase23-dev.mjs(48), bin/phase23-predev.mjs(13), bin/phase2b-real.mjs(4), bin/phase2c-real.mjs(4), bin/phase4-real.mjs(4), bin/phase5-real.mjs(4), bin/phase7-real.mjs(4), bin/phase9b-real.mjs(4), bin/planner-handoff-check.mjs(36), bin/portfolio.mjs(21), bin/project-state-check.mjs(207), bin/quality-gate-clean.mjs(11), bin/quality-gate-inventory.mjs(17), bin/quality-gate-spec.mjs(13), bin/quality-gate.mjs(31), bin/record-identity.mjs(4), bin/release-freshness.mjs(17), bin/review-mutation-campaign.mjs(4), bin/review-persistence-scale.mjs(5), bin/schema-lifecycle.mjs(15), bin/selfdev-adopt-sandbox.mjs(4), bin/selfdev-catalog-integrity.mjs(5), bin/selfdev-promote-canonical.mjs(31), bin/selfdev-synthetic.mjs(4), bin/selfdev-verify.mjs(10), bin/semantic-compat.mjs(7), bin/silent-zero-output.mjs(4), bin/test-oracle-quality.mjs(5), bin/test-timings.mjs(7), bin/validation-universe.mjs(15), bin/w11-historical-arm.mjs(13), bin/workspace-integrity.mjs(92)"
+  ]
+}

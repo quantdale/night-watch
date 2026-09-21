@@ -1,0 +1,96 @@
+{
+  "schemaVersion": "nightwatch.performance-lane-receipt.v1",
+  "lane": "validation-universe",
+  "command": [
+    "npm",
+    "run",
+    "validation:universe"
+  ],
+  "startedAt": "2026-09-20T11:36:40.278Z",
+  "finishedAt": "2026-09-20T11:36:40.690Z",
+  "wallMs": 411,
+  "exitStatus": 0,
+  "errorCode": null,
+  "counts": {
+    "passed": null,
+    "failed": null,
+    "skipped": null,
+    "didNotRun": null,
+    "tests": null
+  },
+  "host": {
+    "platform": "linux",
+    "cores": 20,
+    "totalMemMiB": 15851
+  },
+  "load": {
+    "pre": {
+      "loadAverage": [
+        5.71,
+        4.79,
+        4.52
+      ],
+      "census": {
+        "busyProcesses": [
+          {
+            "name": "node",
+            "count": 6
+          },
+          {
+            "name": "codex",
+            "count": 4
+          },
+          {
+            "name": "herdr",
+            "count": 2
+          },
+          {
+            "name": "ps",
+            "count": 1
+          },
+          {
+            "name": "opencode",
+            "count": 1
+          }
+        ],
+        "totalBusyCpuPercent": 676
+      }
+    },
+    "post": {
+      "loadAverage": [
+        5.71,
+        4.79,
+        4.52
+      ],
+      "census": {
+        "busyProcesses": [
+          {
+            "name": "node",
+            "count": 6
+          },
+          {
+            "name": "codex",
+            "count": 4
+          },
+          {
+            "name": "herdr",
+            "count": 2
+          },
+          {
+            "name": "opencode",
+            "count": 1
+          }
+        ],
+        "totalBusyCpuPercent": 504
+      }
+    }
+  },
+  "outputTail": [
+    "[validation-universe] lane ui class=PROVEN (STALE_EVIDENCE)",
+    "[validation-universe] lane browser-workflow class=PROVEN (STALE_EVIDENCE)",
+    "[validation-universe] lane owner-manual class=UNAVAILABLE_CAPABILITY revisit=2026-10-11",
+    "[validation-universe] lane exact-checkpoint-ci class=PROVEN (STALE_EVIDENCE)",
+    "[validation-universe] lane dependency-advisory class=PROVEN (STALE_EVIDENCE)",
+    "[validation-universe] PASS: every discovered test and check belongs to exactly one class"
+  ]
+}

@@ -1,104 +1,111 @@
-# EXECUTION PROMPT — W12 current-source unknown-defect yield
+# EXECUTION PROMPT — Nightwatch test infrastructure performance and parallelization
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
 Status: COMPLETE
-Campaign ID: nightwatch-current-source-unknown-yield-w12-v1
-OpenSpec: openspec/changes/nightwatch-current-source-unknown-yield-w12-v1/
-Planned-From: 4e763f3f079863a262906a8b134539e309c8d054
+Campaign ID: nightwatch-test-infrastructure-performance-v1
+OpenSpec: openspec/changes/nightwatch-test-infrastructure-performance-v1/
+Planned-From: 8dd8b163b567b939b977649d6ba7c371cf230ee6
 Target Branch: main
-Predecessor Task ID: nightwatch-autonomous-yield-proof-w11-v1
-Predecessor Status: BLOCKED
+Predecessor Task ID: nightwatch-provider-resilient-current-yield-w13-v1
+Predecessor Status: COMPLETE
 
 ## Mission
 
-Execute the owner-authorized W12 successor wave to measure current-source
-unknown-defect yield across the frozen eight-repository owner-local universe.
-W11's historical result and provider-blocked unknown arm are frozen evidence;
-W12 is not allowed to rewrite or re-run them merely for comparability.
+Execute the owner-authorized test-infrastructure performance campaign: measure
+the current validation lanes, remove or reuse duplicated expensive work where
+identity permits, parallelize independent validation only where correctness is
+mechanically preserved, add fast development and milestone lanes that cannot
+masquerade as certification, keep the authoritative lanes authoritative and
+measurably faster, and close with before/after timing evidence and exactly one
+verdict.
 
-The campaign is complete only when its fixed matrix is validly executed or
-truthfully blocked, every candidate reaches the existing mechanical
-reproduction/admission path, metrics are derived from machine evidence,
-safety/leakage are proven, Group 12 is reconciled, and C-00 integration/release
-are complete. Zero mechanical admissions is a valid result; provider failure
-before sufficient execution is not zero yield.
+The campaign is complete only when the slow paths are measured; duplicated
+work is identified and removed where safe; independent validation is
+parallelized where safe; a fast development lane exists; full/release lanes
+remain authoritative; before/after timing evidence exists; no
+test/assertion/coverage regression was introduced; all changes are integrated
+through C-00; and final documentation explains exactly when developers should
+use each lane.
 
 ## Scope
 
-The W12 task/OpenSpec/evidence/report surfaces; the fixed provider policy and
-evaluation freeze; current-source census and sibling identity receipts; the
-ordinary bounded campaign path; existing contained reproduction/admission;
-read-only post-admission novelty; measurement fixes proven necessary by live
-execution; Group 12 successor documentation; required validation; and C-00
-commit/integration/release.
+Test runner and Playwright configuration; test discovery/selection; sharding
+and safe parallelization; fixture lifecycle and process startup; shared
+immutable fixture caching; build reuse; gate orchestration; CI/local gate
+scheduling; validation-universe metadata needed for performance;
+timing/telemetry; development-only fast validation lanes; documentation and
+task/OpenSpec surfaces; regression tests for the test infrastructure itself;
+and C-00 commit/integration/release through one owned session.
 
 ## Ordered workstreams
 
-1. M0 — create and validate W12 continuity/OpenSpec/task surfaces, route the
-   active task, preserve W11, and commit the activation checkpoint.
-2. M1 — declare provider preference/compatibility/timeout/retry policy before
-   probing; probe in order; freeze the first valid structured provider.
-3. M2 — census exactly eight current repositories, capture before identities,
-   and prove the historical-truth/secret contamination firewall.
-4. M3 — commit the complete W12 freeze: broad plus eight scoped runs, budgets,
-   source/reproduction/admission/leakage/novelty rules, denominators, and
-   mutation/widened-resume guards.
-5. M4 — execute the broad all-repository campaign under unchanged policy.
-6. M5 — execute each repository-scoped campaign in stable registry order;
-   Ouchan's declared longer budget is the only exception.
-7. M6 — mechanically reproduce and admit/refuse every candidate without
-   weakening criteria or fabricating evidence.
-8. M7 — perform read-only novelty adjudication only after admission.
-9. M8 — run adversarial, non-vacuity, leakage, sibling-write, and safety
-   proofs; preserve any provider-blocked or safety-invalid receipts.
-10. M9 — mechanically aggregate all metrics, denominators, byte accounting,
-    termination classes, and per-repository breadth.
-11. M10 — update W12 REPORT, task state, parent programme, Group 12, and
-    governed current-state/README surfaces from actual evidence.
-12. M11 — run full validation, inspect privacy/diff/deletions, reconcile if
-    needed, integrate fast-forward, verify `HEAD == origin/main`, release and
-    remove the session, and record one final verdict.
+1. M0 — governed activation and C-00 ownership: task/OpenSpec/handoff
+   surfaces, live-state cross-check, activation checkpoint.
+2. M1 — timing profiler plus baseline measurement for every named lane with
+   host-load receipts and a top-N slowest list.
+3. M2 — mechanical duplicate-work map with five-class classification.
+4. M3 — per-file execution classes with mechanical detection and negative
+   probes; unknown fails closed to serial.
+5. M4 — shard runner with union/disjointness proof, bounded workers, and an
+   evidence-based default from a 1/2/4/N benchmark.
+6. M5 — `gate:dev` (target <= 120 s) and `gate:milestone` (target <= 300 s),
+   both explicitly NOT certification.
+7. M6 — affected-test selection with fail-closed broadening and the three
+   required negative probes.
+8. M7 — synthetic campaign and hardening-probe performance with preserved
+   semantic coverage (1,897/1,897 and 94/94 probes).
+9. M8 — deterministic digest-keyed reuse and gate orchestration overhead.
+10. M9 — structural performance regression budgets.
+11. M10 — validation-universe and lane registration with refreshed digest.
+12. M11 — flakiness repeats and ownership-scoped resource hygiene.
+13. M12 — final certification sequence once plus the before/after benchmark.
+14. M13 — C-00 integration, documentation, and the final report/verdict.
 
 ## Constraints
 
-LOCAL / OWNER-LOCAL only. No DEV, NEXT, production, authenticated Alphaus
-runtime, browser product journey, database/data-plane, cloud/infrastructure,
-credential acquisition, or external publication. Sibling repositories are
-read-only; no sibling checkout/fetch/install/mutation. Provider egress is only
-through the existing configured reasoner CLI. No Slack/Leslie/Pondr/Notion,
-issue/PR creation, force push, history rewrite, hidden-ground-truth leakage,
-provider shopping after a valid result, scope widening, budget tuning, or
-weaker admission class. C-00 is mandatory.
+LOCAL / OWNER-LOCAL only. No weakening of assertions, deletion of tests,
+increase of skips, silent semantic-coverage change, safety-requirement
+lowering, hardening-probe removal, product-authority change, DEV/NEXT/
+production contact, sibling repository write, force push, or history rewrite.
+Clean-checkout validation proves a fresh environment and never reuses local
+state. Every parallel execution decision is backed by a declared per-file
+execution class and a coverage-equality proof; mutation campaigns never
+overlap against one checkout. C-00 is mandatory.
 
 ## Validation
 
-Focused W12 freeze/census/firewall/aggregation/resume/admission tests; strict
-OpenSpec validation; `npm run typecheck`; `npm run typecheck:bin`;
-`npm run hardening:check`; `npm run hardening:rules`; `npm run agent:check`;
-`npm run handoff:check`; `npm run project:check`; `npm run workspace:check`;
-`npm run session:check`; `npm run validation:universe`; `npm run gate:local`;
-`npm test`; and `npm run gate:clean` at the lifecycle-approved point.
+Focused tests and probes during implementation; `gate:dev` after each logical
+block; `gate:milestone` after coherent checkpoints; and once near
+finalization: `npm run typecheck`, `npm run typecheck:bin`,
+`npm run hardening:check`, `npm run hardening:rules`, `npm run agent:check`,
+`npm run handoff:check`, `npm run project:check`, `npm run workspace:check`,
+`npm run session:check`, `npm run validation:universe`, then `npm test`,
+`npm run gate:local`, and `npm run gate:clean` at the C-00-approved lifecycle
+point.
 
 ## Acceptance / completion gates
 
-- W11 remains unchanged and W12 has a fresh owned session and governed task.
-- Provider policy is committed before probing and the first valid provider is
-  frozen before investigation.
-- Eight-repository current census and contamination firewall are non-vacuous.
-- The machine-readable freeze is committed before the first investigative call;
-  its fingerprint and mutation guards are live.
-- Broad and all eight scoped runs are completed or categorically blocked under
-  the frozen matrix; no post-result tuning occurs.
-- Candidate, reproduction, refusal, dossier/admission and novelty evidence are
-  mechanically distinct and privacy-safe.
-- Safety counters, sibling identity, leakage, validation, Group 12, C-00
-  integration/release, and final report are internally coherent.
+- The baseline exists before any optimization and carries host context.
+- Every duplication carries exactly one five-class classification.
+- Every discovered test file carries exactly one execution class; unknown
+  fails closed.
+- Shards prove `union == full universe` and pairwise disjointness.
+- `gate:dev` and `gate:milestone` exist, state their non-authority, and are
+  measured.
+- The fast lane cannot satisfy a certification requirement.
+- Synthetic coverage stays `1897/1897`; hardening stays 83 rules / 94 probes /
+  94 detected with restore discipline.
+- Before/after counts exist and no count silently shrinks.
+- Parallel lanes pass repeated consecutive runs; races are fixed, not hidden.
+- Resource hygiene is ownership-scoped and never touches foreign processes.
+- Final certification is green, C-00 integration verifies
+  `HEAD == origin/main`, and exactly one verdict is recorded.
 
 ## Git / reporting
 
-Commit durable checkpoints only from the owned session. Before integration,
-inspect status/diff/untracked files, declared deletions, secrets, sibling
-identity, freeze fingerprint, evidence coherence and unresolved processes. If
-origin advances or a push is rejected, stop and reconcile through the session
-CLI; never force-push. The final report chooses exactly one of the allowed W12
-verdicts and never converts provider failure into zero yield.
+Commit durable checkpoints only from the owned session worktree. Before
+integration, inspect status/diff/untracked files, declared deletions, secrets,
+and unresolved processes. If origin advances or a push is rejected, stop and
+reconcile through the session CLI; never force-push. Record measured evidence
+in the task directory and keep the final report truthful about remaining
+limits.

@@ -1,0 +1,143 @@
+{
+  "schemaVersion": "nightwatch.w13-run-receipt.v1",
+  "runId": "w13-repository-05",
+  "kind": "REPOSITORY_SCOPED",
+  "repositoryScope": "mobingilabs/ouchan",
+  "wallClockCeilingMs": 3600000,
+  "policyFingerprint": "sha256:1efa45195fc018aa22677336",
+  "freezeFingerprint": "sha256:10299c668795e69904f4600b",
+  "selectedProvider": "opencode-go/muse-spark-1.3-contributor",
+  "startedAt": "2026-09-19T18:06:15.479Z",
+  "wallTimeMs": 2525260,
+  "validProviderResult": true,
+  "terminationReason": "NO_PROGRESS",
+  "terminationClass": "VALID_PROVIDER_RUN",
+  "executionFailure": null,
+  "investigationsStarted": 11,
+  "investigationsCompleted": 11,
+  "reasonerCalls": 66,
+  "providerFailures": 0,
+  "candidateIds": [
+    "c1"
+  ],
+  "candidateCount": 1,
+  "findingAdmissions": 1,
+  "reproductionCount": 1,
+  "dossierStatus": "VERIFIED_REPRODUCTION",
+  "actionLogEntries": "NOT_CAPTURED",
+  "toolActions": "NOT_CAPTURED",
+  "uniqueInspectedSourcePaths": "NOT_CAPTURED",
+  "reproductionAttemptsTool": "NOT_CAPTURED",
+  "hypothesesFormed": "NOT_CAPTURED",
+  "providerResponseBytes": 22000,
+  "providerStderrBytes": 0,
+  "renderedInputBytes": 807657,
+  "toolPayloadBytes": null,
+  "yieldMetrics": {
+    "schemaVersion": "nightwatch.w10-campaign-yield.v1",
+    "visibleSources": 32,
+    "visibleExecutableSources": 32,
+    "visibleExecutableTargets": 18,
+    "visibleRepositories": 1,
+    "reproductionAttempts": 11,
+    "executedAttempts": 11,
+    "notAvailableAttempts": 0,
+    "environmentBlockedAttempts": 0,
+    "erroredAttempts": 0,
+    "qualifyingReproductions": 1,
+    "repeatedUnsupportedAttempts": 0,
+    "distinctAttemptedTargets": 8,
+    "distinctExecutedTargets": 8,
+    "attemptsToFirstExecutedReproduction": 1,
+    "actionsToFirstExecutedReproduction": 4
+  },
+  "sourceOpportunity": "PROVIDER_BLOCKED_BEFORE_SOURCE_ACTION",
+  "providerHealth": {
+    "activeProvider": "opencode-go/muse-spark-1.3-contributor",
+    "degradedProviders": [],
+    "transitions": [],
+    "exhausted": false
+  },
+  "providers": [
+    {
+      "provider": "opencode-go/muse-spark-1.3-contributor",
+      "calls": 66,
+      "validResponses": 66,
+      "validResponseBytes": 22000,
+      "stdoutBytes": 22000,
+      "stderrBytes": 0,
+      "wallTimeMs": 1810368,
+      "failuresByClass": {},
+      "retries": 0,
+      "transitionsIn": [],
+      "transitionsOut": []
+    }
+  ],
+  "terminationSafety": "NO_SAFETY_BLOCK",
+  "novelty": "NOT_APPLICABLE_NO_ADMISSION",
+  "ownerLocalRawCheckpoint": "/home/dalepalaca/.nightwatch/campaigns/w13-repository-05.checkpoint.json",
+  "admissions": [
+    {
+      "candidateId": "c1",
+      "ownerLocalDossier": null,
+      "dossierIdentity": null,
+      "reproductionCount": 1,
+      "persistenceNote": "NOT_PERSISTED_BY_HARNESS_REVISION_IN_USE (W13-DEF-01)"
+    }
+  ],
+  "checkpointAvailable": false,
+  "measurementCorrections": [
+    {
+      "checkpointDeletedOnNoProgress": true,
+      "fields": {
+        "actionLogEntries": {
+          "from": 0,
+          "to": "NOT_CAPTURED",
+          "reason": "the campaign deleted its owner-local checkpoint on NO_PROGRESS; the action log was not observable after termination"
+        },
+        "toolActions": {
+          "from": 0,
+          "to": "NOT_CAPTURED",
+          "reason": "the campaign deleted its owner-local checkpoint on NO_PROGRESS; the action log was not observable after termination"
+        },
+        "uniqueInspectedSourcePaths": {
+          "from": 0,
+          "to": "NOT_CAPTURED",
+          "reason": "the campaign deleted its owner-local checkpoint on NO_PROGRESS; the action log was not observable after termination"
+        },
+        "hypothesesFormed": {
+          "from": 0,
+          "to": "NOT_CAPTURED",
+          "reason": "the campaign deleted its owner-local checkpoint on NO_PROGRESS; the action log was not observable after termination"
+        },
+        "reproductionAttemptsTool": {
+          "from": 0,
+          "to": "NOT_CAPTURED",
+          "reason": "the campaign deleted its owner-local checkpoint on NO_PROGRESS; the action log was not observable after termination"
+        }
+      }
+    },
+    {
+      "field": "validProviderResult",
+      "from": false,
+      "to": true,
+      "reason": "the in-process engine yield metrics prove positive source activity (11 reproduction attempts, 8 distinct targets, 1 qualifying reproduction) even though the campaign deleted its owner-local checkpoint on NO_PROGRESS; source activity is not inferred from the missing action log."
+    },
+    {
+      "field": "findingAdmissions/mechanicalAdmissions",
+      "from": 1,
+      "to": 1,
+      "reason": "the first harness revision counted every admission-path result (including refusals); the receipt now separates admissionPathResults, mechanicalAdmissions, and refusalResults. Derived from the preserved dossierStatus."
+    }
+  ],
+  "sourceActivityEvidence": {
+    "basis": "nightwatch.campaign-yield.v1 metrics derived by the engine from the run action log",
+    "reproductionAttempts": 11,
+    "distinctAttemptedTargets": 8,
+    "qualifyingReproductions": 1,
+    "mechanicalAdmissions": 1
+  },
+  "admissionPathResults": 1,
+  "mechanicalAdmissions": 1,
+  "refusalResults": []
+}

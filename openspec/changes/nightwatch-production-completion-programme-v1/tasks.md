@@ -1044,6 +1044,19 @@ investigative call.
       exits). The frozen provider was not swapped, the threshold not lowered,
       and scope/budget was not tuned. Evidence:
       `.agent/tasks/nightwatch-current-source-unknown-yield-w12-v1/evidence/global-yield-aggregation.json`.
+      **W13 (Phase A in progress):** W12's provider-blocked scoped matrix is
+      queued for a re-run under a predeclared deterministic provider-failover
+      policy; Phase A has closed the budget-mismatch, two-value-taxonomy,
+      census-floor, aggregate-completeness, per-provider-attribution, and
+      admission/fake-progress gaps (register:
+      `.agent/tasks/nightwatch-provider-resilient-current-yield-w13-v1/residual-register.json`).
+      **W13 COMPLETE:** all nine frozen runs executed validly (generation 1
+      `opencode-go/glm-5.3` with two deterministic transitions; generation 2,
+      owner directive D-140, `opencode-go/muse-spark-1.3-contributor` XHIGH;
+      D-141 completed runs 02/03/04 under the same freeze), 8/8 repositories
+      investigated, 67/67 investigations, 0 provider-blocked runs in the final
+      matrix. Evidence:
+      `.agent/tasks/nightwatch-provider-resilient-current-yield-w13-v1/evidence/global-yield-aggregation.json`.
 - [ ] 12.8 Report investigations, calls, actions, unique targets, hypotheses,
       attempts, executions, candidates, admissions, false positives, leakage;
       abort on any leakage rather than publishing a yield beside it —
@@ -1053,6 +1066,18 @@ investigative call.
       `MISSING_REPRODUCTION` refusals, 0 admissions, provider failures 56,
       leakage 0, and explicit `NOT_CAPTURED` fields in the receipt-derived
       aggregation. Provider-blocked runs are not a zero-yield denominator.
+      **W13 (Phase A in progress):** the W13 aggregate enforces 30 required
+      metrics (missing metric, unknown metric, and NOT_CAPTURED without a
+      reason all fail closed), per-provider attribution (calls, valid
+      responses, failures by class, retries, bytes, wall time, transitions),
+      and provider failures are classified into the full ten-member taxonomy
+      with raw provider text never retained. **W13 COMPLETE:** the final
+      receipt-derived aggregate reports 392 calls, 227 tool actions (floor),
+      15 contained reproduction attempts, 1 qualifying reproduction, 6
+      candidates, 5 refusals, 1 mechanical admission (`mobingilabs/ouchan`
+      candidate `c1`, novelty `NOVELTY_AMBIGUOUS`), 0 leakage, and explicit
+      floors/NOT_CAPTURED reasons. Completeness and per-provider attribution
+      validation PASS.
 - [x] 12.9 Admit only through the existing mechanical path; refuse an admission
       with no reproduction as `MISSING_REPRODUCTION` — proven on live traffic:
       of 7 proposed candidates, 3 became dossiers (each with
@@ -1069,10 +1094,19 @@ investigative call.
       current-source result is published with its broad/scoped distinction,
       provider blocker, candidate/refusal/admission separation, and no claim
       of zero defects. W11's historical figure remains unchanged.
+      **W13 COMPLETE:** the measured result is published in `README.md` and
+      `docs/CURRENT_STATE.md` with the mechanical admission clearly labelled as
+      a Nightwatch admission (not an Alphaus-confirmed bug) and its novelty
+      ambiguously classified; the governed admitted-findings ledger advanced
+      from 0 to 1 with that qualification.
 - [ ] 12.12 Full validation, integrate, release — **W12 release path required;
       wave verdict remains PARTIAL — BLOCKED.** Local/clean validation,
       fast-forward integration, `HEAD == origin/main`, session release and
       removal are recorded in the W12 report when complete.
+      **W13 COMPLETE:** the terminal local/clean validation and the C-00
+      fast-forward integration, release, and removal lifecycle are the closing
+      steps of this wave, recorded from their actual outcomes in the W13
+      report and task state.
 
 ## 13. Release definition and verdict
 

@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "nightwatch.w13-lane-receipt.v1",
+  "laneId": "R-08",
+  "title": "Failed provider calls cannot mint investigation progress",
+  "resolution": "PROVEN",
+  "owner": "session/nightwatch-provider-resilient-cu-623c6535",
+  "taskId": "nightwatch-provider-resilient-current-yield-w13-v1",
+  "classification": "LOCAL_FIX_REQUIRED",
+  "artifacts": [
+    "src/core/currentSourceYield/aggregation.ts (classifyRunProviderOutcome)",
+    "tests/unit/w13FakeProgressGuard.test.ts"
+  ],
+  "regression": {
+    "scenario": "runLocalCliCampaign with a fake provider that always exits 1",
+    "observed": {
+      "providerFailures": "> 0",
+      "providerResponseBytes": 0,
+      "actionCount": "equals providerFailures (every recorded action is a failed reasoner call)",
+      "toolActions": "none; the checkpoint action log contains zero CALL_TOOL records",
+      "hypotheses": [],
+      "candidates": [],
+      "admissions": [],
+      "dossierStatus": "NONE",
+      "reproductionCount": 0,
+      "yieldMetrics": { "reproductionAttempts": 0, "qualifyingReproductions": 0, "distinctAttemptedTargets": 0 }
+    }
+  },
+  "validityRule": "classifyRunProviderOutcome returns PROVIDER_BLOCKED whenever validProviderResponses, providerResponseBytes, or sourceActions is not positive; a zero-progress failing provider can never be reported as a valid zero-yield run.",
+  "commands": [
+    { "command": "npx playwright test tests/unit/w13FakeProgressGuard.test.ts --project=nightwatch --workers=1", "result": "5 passed / 0 failed" },
+    { "command": "npm run typecheck", "result": "PASS" }
+  ],
+  "privacy": { "secrets": "NONE", "customerValues": "NONE" }
+}

@@ -1,0 +1,95 @@
+{
+  "schemaVersion": "nightwatch.performance-lane-receipt.v1",
+  "lane": "synthetic-shards-3",
+  "command": [
+    "node",
+    "bin/campaign-synthetic.mjs",
+    "--shards=3"
+  ],
+  "startedAt": "2026-09-20T12:50:23.139Z",
+  "finishedAt": "2026-09-20T13:01:22.687Z",
+  "wallMs": 637668,
+  "exitStatus": 1,
+  "errorCode": null,
+  "counts": {
+    "passed": null,
+    "failed": null,
+    "skipped": null,
+    "didNotRun": null,
+    "tests": null
+  },
+  "host": {
+    "platform": "linux",
+    "cores": 20,
+    "totalMemMiB": 15851
+  },
+  "load": {
+    "pre": {
+      "loadAverage": [
+        4.49,
+        4.79,
+        4.87
+      ],
+      "census": {
+        "busyProcesses": [
+          {
+            "name": "node",
+            "count": 6
+          },
+          {
+            "name": "codex",
+            "count": 4
+          },
+          {
+            "name": "herdr",
+            "count": 2
+          },
+          {
+            "name": "ps",
+            "count": 1
+          },
+          {
+            "name": "opencode",
+            "count": 1
+          }
+        ],
+        "totalBusyCpuPercent": 639
+      }
+    },
+    "post": {
+      "loadAverage": [
+        6.47,
+        6.74,
+        6.08
+      ],
+      "census": {
+        "busyProcesses": [
+          {
+            "name": "node",
+            "count": 5
+          },
+          {
+            "name": "codex",
+            "count": 4
+          },
+          {
+            "name": "herdr",
+            "count": 2
+          },
+          {
+            "name": "ps",
+            "count": 1
+          },
+          {
+            "name": "opencode",
+            "count": 1
+          }
+        ],
+        "totalBusyCpuPercent": 991
+      }
+    }
+  },
+  "outputTail": [
+    "{\"schemaVersion\":\"nightwatch.synthetic-campaign.v1\",\"fileCount\":105,\"total\":1897,\"passed\":1896,\"skipped\":0,\"didNotRun\":0,\"failed\":1,\"failedLocations\":[\"tests/unit/nw07ContinuityCoherence.test.ts:80\"],\"shardCount\":4,\"planDigest\":\"sha256:5f01fb64f7ccbe7997af7a27\",\"universeDigest\":\"sha256:de339322d88c252b9aacb78a\",\"coverage\":{\"ok\":true,\"missing\":[],\"duplicated\":[],\"unexpected\":[],\"universeDigest\":\"sha256:de339322d88c252b9aacb78a\"},\"shardWallMs\":[210156,98712,172549,448754],\"deepContainmentLane\":\"PROVEN\",\"result\":\"TEST_FAILURE\"}"
+  ]
+}

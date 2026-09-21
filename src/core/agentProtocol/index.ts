@@ -8,6 +8,7 @@ export * from './benchmark';
 export * from './closedVocabulary';
 export * from './finding';
 export * from './intents';
+export * from './providerFailure';
 export * from './reasoner';
 export * from './runtime';
 export * from './tools';

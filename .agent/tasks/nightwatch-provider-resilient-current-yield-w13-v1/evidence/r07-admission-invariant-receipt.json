@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "nightwatch.w13-lane-receipt.v1",
+  "laneId": "R-07",
+  "title": "Candidate/admission invariant enforced by aggregation with a fixture-based negative probe",
+  "resolution": "PROVEN",
+  "owner": "session/nightwatch-provider-resilient-cu-623c6535",
+  "taskId": "nightwatch-provider-resilient-current-yield-w13-v1",
+  "classification": "LOCAL_FIX_REQUIRED",
+  "artifacts": [
+    "src/core/currentSourceYield/aggregation.ts (validateAdmissionRecords)",
+    "tests/unit/w13FakeProgressGuard.test.ts",
+    "tests/unit/w13AggregateCompleteness.test.ts"
+  ],
+  "invariant": "An aggregate record may set admitted=true only when a non-empty reproductionReceipt, at least one non-empty evidenceRefs entry, and a non-empty dossierIdentity all exist; admissionRecords is a required array even when empty, so an admission cannot be hidden by omission.",
+  "violationCodes": [
+    "YIELD_ADMISSION_WITHOUT_REPRODUCTION_RECEIPT",
+    "YIELD_ADMISSION_RECORD_MALFORMED",
+    "YIELD_ADMISSION_RECORDS_MISSING"
+  ],
+  "negativeProbe": {
+    "fixture": "{ candidateId: 'c1', admitted: true } with no receipt, evidence, or dossier",
+    "expected": "rejected by validateAggregateCompleteness with YIELD_ADMISSION_WITHOUT_REPRODUCTION_RECEIPT",
+    "observed": "rejected; a partially-populated record names the missing evidenceRefs and dossierIdentity fields"
+  },
+  "commands": [
+    { "command": "npx playwright test tests/unit/w13FakeProgressGuard.test.ts --project=nightwatch --workers=1", "result": "5 passed / 0 failed" },
+    { "command": "npm run typecheck", "result": "PASS" },
+    { "command": "node bin/validation-universe.mjs", "result": "PASS" }
+  ],
+  "privacy": { "secrets": "NONE", "customerValues": "NONE" }
+}

@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "nightwatch.w13-lane-receipt.v1",
+  "laneId": "R-12",
+  "title": "Predecessor single-provider validity rule superseded by the tracked failover delta",
+  "resolution": "PROVEN",
+  "owner": "session/nightwatch-provider-resilient-cu-623c6535",
+  "taskId": "nightwatch-provider-resilient-current-yield-w13-v1",
+  "classification": "EXPERIMENT_POLICY_AMBIGUITY",
+  "ruleConflict": {
+    "historical": "openspec/changes/archive/2026-09-19-nightwatch-current-source-unknown-yield-w12-v1/specs/current-source-yield-measurement/spec.md: first valid provider frozen for the whole wave; later candidates SHALL NOT be probed",
+    "active": "openspec/changes/nightwatch-provider-resilient-current-yield-w13-v1/specs/current-source-yield-measurement/spec.md: MODIFIED requirements bind policy-governed deterministic failover; a run stays VALID while the frozen policy is not exhausted and at least one provider returns positive response bytes with positive source activity"
+  },
+  "resolution": "The W13 change delta is tracked and strictly valid (openspec validate --all --strict: 67 passed / 0 failed at activation), so exactly one validity rule is live for this wave; W12's archived artifacts remain immutable predecessor history and are not rewritten. The machine-readable provider-resilience policy and evaluation freeze remain mandatory pre-probe Phase B gates (tasks 11.1-11.4 and 12.1) and are not residuals: they are the implementation of the already-declared rule.",
+  "preserved": "No admission, reproduction, leakage, or novelty requirement is weakened; the archived W12 spec and task artifacts are unmodified.",
+  "commands": [
+    { "command": "openspec validate nightwatch-provider-resilient-current-yield-w13-v1 --strict", "result": "valid" },
+    { "command": "openspec validate --all --strict", "result": "67 passed / 0 failed" }
+  ],
+  "privacy": { "secrets": "NONE", "customerValues": "NONE" }
+}
