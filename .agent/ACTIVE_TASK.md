@@ -36,7 +36,7 @@ Inspect the complete Nightwatch repository using read-only evidence, identify an
 CAMPAIGN: nightwatch-exhaustive-repository-audit-proposals-v1
 CHILD TASK: NONE
 WAVE: AUDIT-PROPOSALS-V1
-SESSION WORKTREE: session/nightwatch-exhaustive-repository-ef157f7a
+SESSION WORKTREE: NONE
 
 IMPLEMENTATION AUTHORIZED:
   task continuity files, OpenSpec audit/proposal/design/spec/task artifacts,

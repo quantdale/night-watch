@@ -10,7 +10,7 @@ Last validated implementation SHA: 86cdc93af8527dda395d15314c4a3370a942274c
 Last substantive checkpoint SHA: 86cdc93af8527dda395d15314c4a3370a942274c
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
-Branch: session/nightwatch-exhaustive-repository-ef157f7a
+Branch: main
 Last checkpoint: 2026-09-21 — M0 through M10 complete; forty-five material findings map one-to-one to forty-five strict-valid unimplemented OpenSpec changes through NW-AUD-048.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 

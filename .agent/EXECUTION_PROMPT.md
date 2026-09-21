@@ -1,111 +1,79 @@
-# EXECUTION PROMPT — Nightwatch test infrastructure performance and parallelization
+# EXECUTION PROMPT — Exhaustive repository audit and OpenSpec proposals
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
 Status: COMPLETE
-Campaign ID: nightwatch-test-infrastructure-performance-v1
-OpenSpec: openspec/changes/nightwatch-test-infrastructure-performance-v1/
-Planned-From: 8dd8b163b567b939b977649d6ba7c371cf230ee6
+Campaign ID: nightwatch-exhaustive-repository-audit-proposals-v1
+OpenSpec: openspec/changes/nightwatch-exhaustive-repository-audit-proposals-v1/
+Planned-From: 34517c9ba11c97407168fe5879ee03794dfff3e3
 Target Branch: main
-Predecessor Task ID: nightwatch-provider-resilient-current-yield-w13-v1
+Predecessor Task ID: nightwatch-test-infrastructure-performance-v1
 Predecessor Status: COMPLETE
 
 ## Mission
 
-Execute the owner-authorized test-infrastructure performance campaign: measure
-the current validation lanes, remove or reuse duplicated expensive work where
-identity permits, parallelize independent validation only where correctness is
-mechanically preserved, add fast development and milestone lanes that cannot
-masquerade as certification, keep the authoritative lanes authoritative and
-measurably faster, and close with before/after timing evidence and exactly one
-verdict.
-
-The campaign is complete only when the slow paths are measured; duplicated
-work is identified and removed where safe; independent validation is
-parallelized where safe; a fast development lane exists; full/release lanes
-remain authoritative; before/after timing evidence exists; no
-test/assertion/coverage regression was introduced; all changes are integrated
-through C-00; and final documentation explains exactly when developers should
-use each lane.
+Audit the complete Nightwatch repository with read-only evidence, identify and
+prioritize every material correctness, security, safety, reliability,
+performance, architecture, maintainability, validation, and test gap, and
+capture each coherent remediation scope as an implementation-ready OpenSpec
+change. This campaign is planning-only: it changes no product source, contacts
+no real environment, and grants no execution authority to any generated change.
 
 ## Scope
 
-Test runner and Playwright configuration; test discovery/selection; sharding
-and safe parallelization; fixture lifecycle and process startup; shared
-immutable fixture caching; build reuse; gate orchestration; CI/local gate
-scheduling; validation-universe metadata needed for performance;
-timing/telemetry; development-only fast validation lanes; documentation and
-task/OpenSpec surfaces; regression tests for the test infrastructure itself;
-and C-00 commit/integration/release through one owned session.
+`.agent` continuity and planning artifacts; `openspec/changes` planning
+artifacts; read-only inspection of source, tests, configuration, tooling, docs,
+and Git history; strict OpenSpec validation; deterministic local evidence only.
 
 ## Ordered workstreams
 
-1. M0 — governed activation and C-00 ownership: task/OpenSpec/handoff
-   surfaces, live-state cross-check, activation checkpoint.
-2. M1 — timing profiler plus baseline measurement for every named lane with
-   host-load receipts and a top-N slowest list.
-3. M2 — mechanical duplicate-work map with five-class classification.
-4. M3 — per-file execution classes with mechanical detection and negative
-   probes; unknown fails closed to serial.
-5. M4 — shard runner with union/disjointness proof, bounded workers, and an
-   evidence-based default from a 1/2/4/N benchmark.
-6. M5 — `gate:dev` (target <= 120 s) and `gate:milestone` (target <= 300 s),
-   both explicitly NOT certification.
-7. M6 — affected-test selection with fail-closed broadening and the three
-   required negative probes.
-8. M7 — synthetic campaign and hardening-probe performance with preserved
-   semantic coverage (1,897/1,897 and 94/94 probes).
-9. M8 — deterministic digest-keyed reuse and gate orchestration overhead.
-10. M9 — structural performance regression budgets.
-11. M10 — validation-universe and lane registration with refreshed digest.
-12. M11 — flakiness repeats and ownership-scoped resource hygiene.
-13. M12 — final certification sequence once plus the before/after benchmark.
-14. M13 — C-00 integration, documentation, and the final report/verdict.
+1. M0 — governed activation, coverage model, and existing-planning index.
+2. M1 — repository topology, dependencies, configuration, build, and tooling.
+3. M2 — safety, environment, policy, proxy, L6 containment, and authentication.
+4. M3 — browser, API, journey, evidence, persistence, and replay.
+5. M4 — source intelligence, semantic oracles, expectation lifecycle, and
+   change intelligence.
+6. M5 — campaign, autonomous runtime, investigation, reproduction, admission,
+   and findings.
+7. M6 — Control Center and reviewer/operator surfaces.
+8. M7 — continuity, workspace isolation, validation, tests, and documentation
+   truth.
+9. M8 — adjudication, severity ranking, and finding partition.
+10. M9 — implementation-ready remediation change generation.
+11. M10 — completeness audit and planning-only closure.
 
 ## Constraints
 
-LOCAL / OWNER-LOCAL only. No weakening of assertions, deletion of tests,
-increase of skips, silent semantic-coverage change, safety-requirement
-lowering, hardening-probe removal, product-authority change, DEV/NEXT/
-production contact, sibling repository write, force push, or history rewrite.
-Clean-checkout validation proves a fresh environment and never reuses local
-state. Every parallel execution decision is backed by a declared per-file
-execution class and a coverage-equality proof; mutation campaigns never
-overlap against one checkout. C-00 is mandatory.
+LOCAL / READ-ONLY / SYNTHETIC only. No product source implementation, DEV /
+NEXT / production contact, authenticated runtime, database or data-plane
+access, cloud or infrastructure operation, sibling repository mutation,
+external publication, issue or PR creation, force push, or history rewrite.
+No implementation task of any generated change may be marked complete.
 
 ## Validation
 
-Focused tests and probes during implementation; `gate:dev` after each logical
-block; `gate:milestone` after coherent checkpoints; and once near
-finalization: `npm run typecheck`, `npm run typecheck:bin`,
-`npm run hardening:check`, `npm run hardening:rules`, `npm run agent:check`,
-`npm run handoff:check`, `npm run project:check`, `npm run workspace:check`,
-`npm run session:check`, `npm run validation:universe`, then `npm test`,
-`npm run gate:local`, and `npm run gate:clean` at the C-00-approved lifecycle
-point.
+`npm run session:status`; strict `openspec validate` for the umbrella change
+and every generated remediation change; `npm run agent:check`;
+`npm run workspace:check`; `npm run handoff:check`; `npm run project:check`;
+`git diff --check`; planning-only diff and privacy inspection.
 
 ## Acceptance / completion gates
 
-- The baseline exists before any optimization and carries host context.
-- Every duplication carries exactly one five-class classification.
-- Every discovered test file carries exactly one execution class; unknown
-  fails closed.
-- Shards prove `union == full universe` and pairwise disjointness.
-- `gate:dev` and `gate:milestone` exist, state their non-authority, and are
-  measured.
-- The fast lane cannot satisfy a certification requirement.
-- Synthetic coverage stays `1897/1897`; hardening stays 83 rules / 94 probes /
-  94 detected with restore discipline.
-- Before/after counts exist and no count silently shrinks.
-- Parallel lanes pass repeated consecutive runs; races are fixed, not hidden.
-- Resource hygiene is ownership-scoped and never touches foreign processes.
-- Final certification is green, C-00 integration verifies
-  `HEAD == origin/main`, and exactly one verdict is recorded.
+- Every tracked repository area is classified and inspected through a
+  documented coverage model with explicit, justified omissions.
+- Every material finding maps one-to-one to a strictly valid,
+  implementation-ready OpenSpec change; duplicates and non-issues carry
+  terminal dispositions.
+- The planning diff contains only `.agent/**` and `openspec/changes/**`
+  continuity/planning artifacts; product implementation files are
+  byte-unchanged.
+- Terminal continuity, handoff, and project truth bind to this completed
+  campaign's continuity-v2 task record.
 
 ## Git / reporting
 
-Commit durable checkpoints only from the owned session worktree. Before
-integration, inspect status/diff/untracked files, declared deletions, secrets,
-and unresolved processes. If origin advances or a push is rejected, stop and
-reconcile through the session CLI; never force-push. Record measured evidence
-in the task directory and keep the final report truthful about remaining
-limits.
+The planning checkpoint was integrated into `main` at `aa05696b` (planning
+close `2afc54de`); the owned session worktree has since been released, and
+canonical routing records `SESSION WORKTREE: NONE` with `Branch: main`. This
+file is the terminal handoff record for the campaign. Implementation of every
+generated change is deferred and requires a new owner-authorized planning
+checkpoint and C-00 task.
