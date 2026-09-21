@@ -3,22 +3,22 @@
 Task ID: nightwatch-session-mutation-authority-binding-v1
 Phase: SESSION_MUTATION_AUTHORITY_BINDING_V1
 Title: Session mutation authority binding implementation
-Status: IN_PROGRESS
+Status: COMPLETE
 Task directory: .agent/tasks/nightwatch-session-mutation-authority-binding-v1
 Starting SHA: caab10e91b8d81f2b98597b3c6974db89638ae6c
-Last validated implementation SHA: caab10e91b8d81f2b98597b3c6974db89638ae6c
-Last checkpoint: M0 complete — owned implementation worktree claimed at base `caab10e9`; M1 in progress.
-Current milestone: M1 — invocation binding and explicit expectations
-Next action: Implement M1: command authority matrix, invocation/script binding and exact expectation parsing in `bin/nightwatch-session.mjs`, then focused tests and `npm run typecheck:bin`.
+Last validated implementation SHA: 6a8d6c71670cea4d60871880db5efb5d46b5b225
+Last checkpoint: M0–M5 complete at validated checkpoint `6a8d6c71`; `gate:local` all twelve groups PASS.
+Current milestone: COMPLETE / STOP — M0–M5 closed; change integrated through C-00
+Next action: STOP — terminal record; only the post-removal documentation routing flip remains.
 Authorization class: NW_AUD_006_IMPLEMENTATION
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: caab10e91b8d81f2b98597b3c6974db89638ae6c
-LAST_VALIDATED_IMPLEMENTATION_SHA: caab10e91b8d81f2b98597b3c6974db89638ae6c
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: caab10e91b8d81f2b98597b3c6974db89638ae6c
+LAST_VALIDATED_IMPLEMENTATION_SHA: 6a8d6c71670cea4d60871880db5efb5d46b5b225
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 6a8d6c71670cea4d60871880db5efb5d46b5b225
 LIVE_HEAD_AUTHORITY: GIT
-PHASE_SESSION_MUTATION_AUTHORITY_BINDING_V1_STATUS: IN_PROGRESS
+PHASE_SESSION_MUTATION_AUTHORITY_BINDING_V1_STATUS: COMPLETE
 
 ## Mission
 

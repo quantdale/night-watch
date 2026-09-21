@@ -1,7 +1,7 @@
 # EXECUTION PROMPT — Session mutation authority binding (NW-AUD-006)
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
-Status: IN_PROGRESS
+Status: COMPLETE
 Campaign ID: nightwatch-session-mutation-authority-binding-v1
 OpenSpec: openspec/changes/nightwatch-session-mutation-authority-binding-v1/
 Planned-From: caab10e91b8d81f2b98597b3c6974db89638ae6c

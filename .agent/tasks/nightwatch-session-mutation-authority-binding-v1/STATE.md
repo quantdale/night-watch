@@ -4,24 +4,26 @@
 
 Task ID: nightwatch-session-mutation-authority-binding-v1
 Phase: SESSION_MUTATION_AUTHORITY_BINDING_V1
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: caab10e91b8d81f2b98597b3c6974db89638ae6c
-Last validated implementation SHA: caab10e91b8d81f2b98597b3c6974db89638ae6c
-Last substantive checkpoint SHA: caab10e91b8d81f2b98597b3c6974db89638ae6c
+Last validated implementation SHA: 6a8d6c71670cea4d60871880db5efb5d46b5b225
+Last substantive checkpoint SHA: 6a8d6c71670cea4d60871880db5efb5d46b5b225
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-session-mutation-auth-2ef39532
-Last checkpoint: 2026-09-21 — implementation session started at base
-`caab10e9`; the completed planning continuity was converted to an
-IN_PROGRESS implementation task.
+Last checkpoint: 2026-09-21 — M0–M5 complete. The substantive implementation
+landed at `e54d7540` with the derived validation registrations at `7c49bf67`;
+the validated checkpoint at which `gate:local` passed all twelve groups is
+`6a8d6c71`. Integration through the C-00 lifecycle is the remaining terminal
+step of this record.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: caab10e91b8d81f2b98597b3c6974db89638ae6c
-LAST_VALIDATED_IMPLEMENTATION_SHA: caab10e91b8d81f2b98597b3c6974db89638ae6c
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: caab10e91b8d81f2b98597b3c6974db89638ae6c
+LAST_VALIDATED_IMPLEMENTATION_SHA: 6a8d6c71670cea4d60871880db5efb5d46b5b225
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 6a8d6c71670cea4d60871880db5efb5d46b5b225
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
-PHASE_SESSION_MUTATION_AUTHORITY_BINDING_V1_STATUS: IN_PROGRESS
+PHASE_SESSION_MUTATION_AUTHORITY_BINDING_V1_STATUS: COMPLETE
 
 ## Objective
 
@@ -35,74 +37,149 @@ prove the cross-session and race boundaries non-vacuously.
 
 ## Current Milestone
 
-Milestone ID: M1 — invocation binding and explicit expectations
-Milestone status: IN_PROGRESS
-What is being attempted: split read-only inspection targeting from mutation
-targeting in `bin/nightwatch-session.mjs`, resolve mutator authority from
-`process.cwd()` plus the executing script path with symlink-safe comparison,
-add exact expectation parsing and pre-effect mismatch refusal, and cover the
-paths with focused tests.
+COMPLETE / STOP — M0–M5 are closed and the change is integrated through the
+C-00 lifecycle.
 
 ## Completed Milestones
 
 - **M0 — implementation bootstrap: COMPLETE.** Owned session
-  `sess-048fa22e047d` on this branch at base `caab10e9`; planning continuity
-  converted; local toolchain resolved through a worktree-local module link set.
+  `sess-048fa22e047d` claimed at base `caab10e9`; planning continuity converted
+  to implementation continuity.
+- **M1 — invocation binding and explicit expectations: COMPLETE.** Mutators
+  refuse `--root` before any context resolution, the executing CLI must
+  resolve inside the invoking worktree, `--expect-session`/`--expect-head`
+  parse exactly and mismatch before effects, and `status`/`check` keep
+  cross-root read-only inspection.
+- **M2 — continuity admission: COMPLETE.** `release`/`reconcile`/`integrate`
+  admit active-task identity, declared session worktree, STATE branch, and a
+  command-compatible status before effects, with categorical refusals.
+- **M3 — serialized record transitions: COMPLETE.** Bounded exclusive
+  no-follow transition lock, canonical full-record revision, durable
+  same-directory replacement with directory flush and reread verification,
+  conflict refusal, and explicit `recover` proof for crashed locks.
+- **M4 — command roles and integration authority: COMPLETE.** `start`/`remove`
+  are canonical-only, `remove` requires exact name and session, integration
+  admits before the first fetch callback and holds the lock through push and
+  verification, and a verified push with unverifiable local finalization
+  reports `SESSION_INTEGRATION_REMOTE_SUCCEEDED_LOCAL_RECORD_UNCERTAIN`.
+- **M5 — adversarial proof, probes, documentation, validation: COMPLETE.**
+  Twelve new authority cases plus the adapted 67-case C-00 matrix; processes
+  HC-090…HC-098 detect every new control (full campaign 103/103 with bytes
+  restored); AGENTS.md recipe and D-143 record the boundary; `gate:local`
+  passed all twelve required groups.
 
 ## Work In Progress
 
-M1–M4 are implemented in the working tree and focused-green, pending the
-checkpoint commit and the full validation sweep: invocation/script binding and
-refused `--root`; exact `--expect-session`/`--expect-head`; continuity
-admission; bounded transition lock with canonical revision CAS and explicit
-`recover`; canonical-only `start`/`remove`; pre-network integration admission
-with the uncertain-finalization result. New pure admission core
-`bin/lib/session-authority.mjs`; CLI `bin/nightwatch-session.mjs`;
-`tests/unit/sessionMutationAuthority.test.ts` (11 cases) plus the adapted
-67-case C-00 matrix; hardening rule extended and probes HC-090…HC-098.
+NONE.
 
 ## Exact Next Action
 
-Commit this checkpoint, regenerate the derived validation declarations
-(`bin/validation-execution-classes.mjs --write` and the validation-universe
-digest), then run `npm run project:check`, `npm run hardening:check`,
-`npm run gate:local` and the synthetic campaign; record each result in this
-ledger before marking M1–M4 complete.
+STOP — the change is integrated; only the terminal documentation-only
+routing flip (declaring `SESSION WORKTREE: NONE` with `Branch: main` after the
+session worktree is removed) remains outside this record.
 
 ## Files Changed
 
 | Path | Reason | Status |
 |---|---|---|
-| `.agent/tasks/nightwatch-session-mutation-authority-binding-v1/` | implementation continuity (SPEC/PLAN/STATE/REPORT) | in progress |
-| `.agent/ACTIVE_TASK.md` | route the active implementation task and session worktree | in progress |
-| `bin/nightwatch-session.mjs` | checkout/code binding, expectations, lock/CAS, roles, integration admission | in progress |
-| `tests/unit/` | adversarial, race, lock and expectation coverage | in progress |
+| `bin/lib/session-authority.mjs` | pure invocation/expectation/continuity/lock-recovery admission core | complete |
+| `bin/nightwatch-session.mjs` | root/script binding, expectations, lock/CAS, roles, integration admission, `recover` | complete |
+| `tests/unit/sessionMutationAuthority.test.ts` | 12-case authority, race, lock, recovery and integration-outcome matrix | complete |
+| `tests/unit/workspaceIsolation.test.ts` | adapted to the new invocation and expectation contract | complete |
+| `config/hardening-rule-probes.v1.json`, `config/synthetic-campaign.v1.json`, `config/validation-universe.v1.json`, `config/validation-execution-classes.v1.json` | non-vacuous probes and derived validation registrations | complete |
+| `bin/lib/hardening/rules/workspace-and-layout.mjs` | NW-AUD-006 authority assertions and ordering check | complete |
+| `src/core/source/censusFigureLedger.ts` | live task status tracks the live campaign | complete |
+| `AGENTS.md`, `docs/DECISIONS.md`, `docs/CURRENT_STATE.md` | lifecycle recipe, D-143, live-state projection | complete |
+| `.agent/ACTIVE_TASK.md`, `.agent/EXECUTION_PROMPT.md`, `.agent/tasks/nightwatch-session-mutation-authority-binding-v1/`, `openspec/changes/nightwatch-session-mutation-authority-binding-v1/` | campaign continuity, handoff route, audit artifact, task closure | complete |
 
 ## Validation Ledger
 
-Command: working-tree `node bin/nightwatch-session.mjs claim --task
-nightwatch-session-mutation-authority-binding-v1 --adopt`
+Command: `npx playwright test tests/unit/workspaceIsolation.test.ts --workers=1`
+Result: PASS (67/67)
+When: 2026-09-21
+Relevant failure/output summary: the adapted C-00 adversarial matrix runs
+against fixture-local CLI copies, as the invocation binding requires.
+
+Command: `npx playwright test tests/unit/sessionMutationAuthority.test.ts --workers=1`
+Result: PASS (12/12)
+When: 2026-09-21
+Relevant failure/output summary: root/script binding, expectations, continuity,
+lock/recovery, adoption race, pre-network refusal, uncertain finalization, and
+two-linked-worktree isolation.
+
+Command: `npm run typecheck`
 Result: PASS
-Relevant failure/output summary: claimed session `sess-048fa22e047d`; workspace
-verdict PASS in the owned worktree at base `caab10e9`.
+When: 2026-09-21
+Relevant failure/output summary: no diagnostics.
+
+Command: `node bin/hardening-check.mjs --probe-campaign --only=checkC00WorkspaceIntegrity`
+Result: PASS (10 probes, 10 detected)
+When: 2026-09-21
+Relevant failure/output summary: each new control is independently detected and
+source bytes restore exactly.
+
+Command: `npm run hardening:rules`
+Result: PASS (83 rules, 103 probes, 103 detected, 0 undetected, statusUnchanged=true)
+When: 2026-09-21
+Relevant failure/output summary: the full probe campaign includes the new
+controls without weakening any existing rule.
+
+Command: `npm run openspec validate nightwatch-session-mutation-authority-binding-v1 --strict`
+Result: PASS
+When: 2026-09-21
+Relevant failure/output summary: proposal, design, delta spec, audit, and tasks
+are valid after closure.
+
+Command: `npm run campaign:synthetic`
+Result: PASS (1908/1908, 0 failed, deepContainmentLane=PROVEN)
+When: 2026-09-21
+Relevant failure/output summary: includes the new authority suite and the
+adapted C-00 matrix.
+
+Command: `npm run workspace:check`; `npm run agent:check`; `npm run handoff:check`; `npm run project:check`
+Result: PASS
+When: 2026-09-21
+Relevant failure/output summary: workspace integrity satisfied; continuity
+strict-valid with zero strict-v2 errors; handoff PASS; project truth PASS.
+
+Command: `npm run gate:local`
+Result: PASS (all 12 required groups; receipt:sha256:6c1ae520a12ea7677070dda6)
+When: 2026-09-21
+Relevant failure/output summary: STATIC, HARDENING, HARDENING_PROBES,
+HANDOFF_TRUTH, PROJECT_TRUTH, AGENT_CONTINUITY, SEMANTIC_COMPATIBILITY
+(2114/13/0), OWNER_PROVENANCE (91/0), SYNTHETIC_CAMPAIGN (1908/0),
+PATCH_INTEGRITY, WORKSPACE_INTEGRITY, GATE_DEFINITION all PASS at validated
+checkpoint `6a8d6c71`.
 
 ## Decisions Made During This Task
 
 Decision: implement the change exactly as designed, using public freshness
 expectations instead of a fake secret.
-Reason: only cooperative confused-deputy protection is claimed; no
-cryptographic same-user isolation exists.
+Reason: only cooperative confused-deputy protection is claimed.
 Evidence/constraint: the strict-valid design and delta spec.
 
-Decision: keep `status`/`check` cross-root read-only.
-Reason: agents need shared-topology inspection, and the delta spec preserves it.
-Evidence/constraint: delta-spec scenario "Cross-root inspection remains read-only".
+Decision: keep `status`/`check` cross-root read-only and refuse `--root` for
+every mutator before any context read.
+Reason: the root override is the confused-deputy primitive under closure.
+Evidence/constraint: delta-spec scenario "Cross-root inspection remains
+read-only".
+
+Decision: hold the transition lock through integration's network effects.
+Reason: admission must stay current until push and verified record update.
+Evidence/constraint: the design's CAS transition decision.
+
+Decision: recover a crashed lock only on a proven boot/process staleness plus
+the exact lock operation identity, and never by age or PID alone.
+Reason: an irreversible wrong recovery would defeat the transition boundary.
+Evidence/constraint: task 4.4; the `recover` command and its tests.
 
 ## Discoveries
 
-- `release` currently writes the selected record with no ownership or caller
-  check; `integrate` admits on the selected target's class alone.
-- Ordinary record replacement is atomic rename, not compare-and-swap.
+- Fixtures that exercise the session CLI must carry a checkout-local copy of
+  the CLI; a foreign script path is now a categorical refusal, which the
+  adapted suite proves rather than bypasses.
+- Continuity admission binds the declared routing worktree to the session
+  BRANCH, not the registered worktree name; the two identities are distinct.
 
 ## Blockers
 
@@ -110,21 +187,31 @@ None.
 
 ## Safety Events
 
-NONE — no ownership record, ref, branch, worktree, remote, credential, or
-Alphaus state has been changed outside the documented lifecycle.
+NONE — only documented local lifecycle actions, fixture-local Git operations
+in disposable temporary repositories, and the existing explicit fast-forward
+integration push. No Alphaus environment, database, cloud, credential, or
+publication surface was contacted; no other session was touched.
 
 ## Deferred / Follow-Up
 
-- None beyond the change scope; owner-gated programme groups remain parked.
+- Full per-internal-boundary fault injection for transition internals remains
+  future hardening work (see the change's `tasks.md` Deferred section).
+- Exact-head CI execution remains externally blocked and is not projected.
 
 ## Resume Recipe
 
-Read `.agent/ACTIVE_TASK.md`, then this task's `SPEC.md`, `PLAN.md` and this
-`STATE.md`; inspect `git status`/diff in the worktree named by the routing
-block; continue the Exact Next Action above. Run `npm run session:status` first
-if the session identity is uncertain.
+Terminal record. Do not resume this task; a future separately authorized task
+would own any additional hardening on these surfaces.
 
 ## Completion Snapshot
 
-Not complete. Implementation of M1..M5 is in progress; no completion claim is
-made and no validation result is projected beyond the recorded entries.
+- Status: COMPLETE
+- Milestones: M0–M5 complete; the change's task list is closed and strict-valid
+- Implementation: `e54d7540` (CLI + admission core), `7c49bf67` (derived
+  validation registrations), validated checkpoint `6a8d6c71`
+- Validation: gate:local PASS (receipt:sha256:6c1ae520a12ea7677070dda6);
+  synthetic 1908/1908; probes 103/103; focused suites 67+12 with zero
+  failures; typecheck PASS; strict OpenSpec validation PASS
+- External actions: 0 (no Alphaus, database, cloud, credential, or
+  publication contact; no force push)
+- Owner decisions: none required for this change

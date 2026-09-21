@@ -548,3 +548,63 @@ test.describe('NW-AUD-006 — integration outcomes', () => {
     }
   });
 });
+
+test.describe('NW-AUD-006 — two linked sessions', () => {
+  test('a second linked worktree cannot be mutated through the first, and its lock stays private', () => {
+    const fx = fixture();
+    try {
+      const alpha = startOwned(fx, 'authority-task');
+      const beta = startOwned(fx, 'authority-other');
+
+      // Release beta first so the only refusal under test is the authority
+      // mismatch, not live-holder protection. Each worktree carries its own
+      // active-task routing, so beta's continuity names its own task/branch.
+      const betaBranch = gitOk(beta.path, ['rev-parse', '--abbrev-ref', 'HEAD']);
+      writeContinuity(beta.path, 'authority-other', betaBranch);
+      const betaRelease = session(beta.path, ['release', '--expect-session', beta.sessionId]);
+      expect(betaRelease.status, betaRelease.stderr).toBe(0);
+      const betaReleased = fs.readFileSync(recordPath(fx.canonical, beta.name), 'utf8');
+
+      // Alpha's public session id can never name beta's worktree.
+      const wrongTarget = session(fx.canonical, ['remove', '--name', beta.name, '--expect-session', alpha.sessionId]);
+      expect(wrongTarget.status).toBe(1);
+      expect(wrongTarget.stderr).toContain('SESSION_EXPECTATION_MISMATCH');
+      expect(fs.readFileSync(recordPath(fx.canonical, beta.name), 'utf8')).toBe(betaReleased);
+      expect(fs.existsSync(beta.path)).toBe(true);
+
+      // A lock held for beta is invisible to alpha: alpha's own transition
+      // takes alpha's lock and leaves beta's record and lock byte-identical.
+      const lock = {
+        schemaVersion: 'nightwatch.session-transition-lock.v1',
+        command: 'release',
+        sessionId: beta.sessionId,
+        bootDigest: '0'.repeat(24),
+        pid: 1,
+        startedAtIso: new Date().toISOString(),
+        operationId: '0011223344556677',
+      };
+      fs.writeFileSync(lockPath(fx.canonical, beta.name), `${JSON.stringify(lock, null, 2)}\n`);
+      const alphaRelease = session(alpha.path, ['release', '--expect-session', alpha.sessionId]);
+      expect(alphaRelease.status, alphaRelease.stderr).toBe(0);
+      expect(fs.existsSync(lockPath(fx.canonical, beta.name))).toBe(true);
+      expect(fs.readFileSync(recordPath(fx.canonical, beta.name), 'utf8')).toBe(betaReleased);
+
+      // Recovery is bound to the current worktree: alpha has no lock of its
+      // own, so its recover can never remove beta's.
+      const recoveryFromAlpha = session(alpha.path, ['recover', '--expect-session', beta.sessionId, '--expect-operation', '0011223344556677']);
+      expect(recoveryFromAlpha.status, recoveryFromAlpha.stderr).toBe(0);
+      expect(recoveryFromAlpha.stdout).toContain('SESSION_RECOVER_NOT_REQUIRED');
+      expect(fs.existsSync(lockPath(fx.canonical, beta.name))).toBe(true);
+
+      // The exact beta run removes only beta's lock and never edits its record.
+      const recoveryFromBeta = session(beta.path, ['recover', '--expect-session', beta.sessionId, '--expect-operation', '0011223344556677']);
+      expect(recoveryFromBeta.status, recoveryFromBeta.stderr).toBe(0);
+      expect(recoveryFromBeta.stdout).toContain('SESSION_RECOVERED_LOCK');
+      expect(fs.existsSync(lockPath(fx.canonical, beta.name))).toBe(false);
+      expect(fs.readFileSync(recordPath(fx.canonical, beta.name), 'utf8')).toBe(betaReleased);
+      expect(recordOf(fx.canonical, alpha.name).ownershipState).toBe('RELEASED');
+    } finally {
+      cleanup(fx.base);
+    }
+  });
+});
