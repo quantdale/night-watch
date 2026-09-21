@@ -62,8 +62,9 @@ validated, and integrated through the C-00 lifecycle.
 - `npm run workspace:check`, `npm run agent:check`, `npm run handoff:check`,
   `npm run project:check` — PASS.
 - `openspec validate nightwatch-session-mutation-authority-binding-v1 --strict` — PASS.
-- `npm run gate:local` — all twelve required groups PASS at validated
-  checkpoint `6a8d6c71` (receipt `receipt:sha256:6c1ae520a12ea7677070dda6`).
+- `npm run gate:local` — all twelve required groups PASS at completion
+  checkpoint `10ccbe64` (receipt `receipt:sha256:8c952d5a5db907f58f5f235a`;
+  earlier pass `receipt:sha256:6c1ae520a12ea7677070dda6`).
 
 ## Safety
 

@@ -96,6 +96,15 @@ session worktree is removed) remains outside this record.
 
 ## Validation Ledger
 
+Command: `npm run gate:local` (final, at completion checkpoint `10ccbe64`)
+Result: PASS (all 12 required groups; receipt:sha256:8c952d5a5db907f58f5f235a)
+When: 2026-09-21
+Relevant failure/output summary: STATIC, HARDENING, HARDENING_PROBES,
+HANDOFF_TRUTH, PROJECT_TRUTH, AGENT_CONTINUITY, SEMANTIC_COMPATIBILITY
+(2114/13/0), OWNER_PROVENANCE (91/0), SYNTHETIC_CAMPAIGN (1909/0),
+PATCH_INTEGRITY, WORKSPACE_INTEGRITY, GATE_DEFINITION all PASS; receipt
+persisted at `local-10ccbe64fbcf.json`.
+
 Command: `npx playwright test tests/unit/workspaceIsolation.test.ts --workers=1`
 Result: PASS (67/67)
 When: 2026-09-21
@@ -211,8 +220,8 @@ would own any additional hardening on these surfaces.
 - Milestones: M0–M5 complete; the change's task list is closed and strict-valid
 - Implementation: `e54d7540` (CLI + admission core), `7c49bf67` (derived
   validation registrations), validated checkpoint `6a8d6c71`
-- Validation: gate:local PASS (receipt:sha256:6c1ae520a12ea7677070dda6 at
-  validated checkpoint `6a8d6c71`, re-run receipt recorded in the ledger);
+- Validation: gate:local PASS at the completion checkpoint (receipt:sha256:8c952d5a5db907f58f5f235a;
+  earlier pass receipt:sha256:6c1ae520a12ea7677070dda6);
   synthetic 1908/1908; probes 103/103; focused suites 67+12 with zero
   failures; typecheck PASS; strict OpenSpec validation PASS
 - External actions: 0 (no Alphaus, database, cloud, credential, or
