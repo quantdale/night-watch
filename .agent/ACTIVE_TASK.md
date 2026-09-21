@@ -42,7 +42,7 @@ prove the cross-session and race boundaries non-vacuously.
 ```
 CAMPAIGN: nightwatch-session-mutation-authority-binding-v1
 CHILD TASK: NONE
-SESSION WORKTREE: session/nightwatch-session-mutation-auth-2ef39532
+SESSION WORKTREE: NONE
 
 IMPLEMENTATION AUTHORIZED:
   bin/nightwatch-session.mjs, bounded shared C-00 helpers,

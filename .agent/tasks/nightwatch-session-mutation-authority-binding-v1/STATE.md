@@ -10,14 +10,15 @@ Last validated implementation SHA: c13544a12d153daec1eb2f3915c94cb74bc93040
 Last substantive checkpoint SHA: c13544a12d153daec1eb2f3915c94cb74bc93040
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
-Branch: session/nightwatch-session-mutation-auth-2ef39532
+Branch: main
 Last checkpoint: 2026-09-21 — M0–M5 complete. The substantive implementation
 landed at `e54d7540` with the derived validation registrations at `7c49bf67` and the
 status-ledger completion at `c13544a1`, which is the substantive checkpoint.
 `gate:local` passed all twelve groups at the preceding checkpoint
 `6a8d6c71`; its re-validation receipt at this checkpoint's documentation
 descendant is recorded in the ledger. Integration through the C-00 lifecycle
-is the remaining terminal step of this record.
+is the remaining terminal step of this record. The session worktree was released and removed, so the
+durable routing now declares `SESSION WORKTREE: NONE` with `Branch: main`.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: caab10e91b8d81f2b98597b3c6974db89638ae6c
