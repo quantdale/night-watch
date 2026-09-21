@@ -39,51 +39,51 @@
 
 ## 6. Audit campaign, autonomous runtime, reproduction, and findings
 
-- [ ] 6.1 Inspect campaign registry/profile/scheduling, budgets, provider selection, retry/timeout, checkpoint/resume, scope fingerprints, and partial-result aggregation.
-- [ ] 6.2 Inspect agent runtime tool authorization, argument parsing, output bounds, source/action accounting, continuation, failure classification, and anti-fabrication boundaries.
-- [ ] 6.3 Inspect current-source investigation, reproduction providers, admission validation, novelty, Bug Atlas, triage, handoff, and local findings persistence.
-- [ ] 6.4 Inspect concurrency, atomicity, crash recovery, cleanup, determinism, and adversarial/mutation coverage across campaign and findings state machines.
-- [ ] 6.5 Record evidence-backed candidates and distinguish provider/environment blockers from product defects or zero-yield claims.
+- [x] 6.1 Inspect campaign registry/profile/scheduling, budgets, provider selection, retry/timeout, checkpoint/resume, scope fingerprints, and partial-result aggregation.
+- [x] 6.2 Inspect agent runtime tool authorization, argument parsing, output bounds, source/action accounting, continuation, failure classification, and anti-fabrication boundaries.
+- [x] 6.3 Inspect current-source investigation, reproduction providers, admission validation, novelty, Bug Atlas, triage, handoff, and local findings persistence.
+- [x] 6.4 Inspect concurrency, atomicity, crash recovery, cleanup, determinism, and adversarial/mutation coverage across campaign and findings state machines.
+- [x] 6.5 Record evidence-backed candidates and distinguish provider/environment blockers from product defects or zero-yield claims.
 
 ## 7. Audit Control Center and reviewer/operator surfaces
 
-- [ ] 7.1 Inspect server routing, request parsing, static delivery, security headers, SSE lifecycle, review write authority, persistence adapters, schema/version negotiation, and error handling.
-- [ ] 7.2 Inspect UI rendering, stale/unknown/fact/recommendation semantics, review workflows, click behavior, accessibility, keyboard/focus behavior, responsive layout, and browser compatibility.
-- [ ] 7.3 Inspect large-corpus, endurance, memory, event-stream, pagination/filtering, and refresh/reconnect behavior for correctness and boundedness.
-- [ ] 7.4 Trace every displayed claim back to its authority and verify that unavailable or stale data cannot appear as a live fact or decision.
-- [ ] 7.5 Record missing unit, contract, browser, accessibility, mutation, or end-to-end validation as candidates with consequence and reachability.
+- [x] 7.1 Inspect server routing, request parsing, static delivery, security headers, SSE lifecycle, review write authority, persistence adapters, schema/version negotiation, and error handling.
+- [x] 7.2 Inspect UI rendering, stale/unknown/fact/recommendation semantics, review workflows, click behavior, accessibility, keyboard/focus behavior, responsive layout, and browser compatibility.
+- [x] 7.3 Inspect large-corpus, endurance, memory, event-stream, pagination/filtering, and refresh/reconnect behavior for correctness and boundedness.
+- [x] 7.4 Trace every displayed claim back to its authority and verify that unavailable or stale data cannot appear as a live fact or decision.
+- [x] 7.5 Record missing unit, contract, browser, accessibility, mutation, or end-to-end validation as candidates with consequence and reachability.
 
 ## 8. Audit continuity, workspace isolation, validation, tests, and documentation truth
 
-- [ ] 8.1 Inspect C-00 session start/claim/reconcile/integrate/release/remove state transitions, ownership liveness, prospective admission, rollback, and cross-worktree invariants.
-- [ ] 8.2 Inspect active-task/continuity/project/handoff/OpenSpec validators for parser ambiguity, duplicate authority, false pass/fail, vacuity, stale-state, and unbounded-input behavior.
-- [ ] 8.3 Inspect hardening registry/rule parity, gate definitions, skip classification, timeout handling, zero-step external evidence, and clean-check semantics.
-- [ ] 8.4 Analyze test topology, skipped/conditional tests, fixture fidelity, assertion strength, mutation/concurrency coverage, flake controls, and gaps between test names and actual authority.
-- [ ] 8.5 Reconcile current implementation and tests against architecture, safety, decisions, roadmap, README, and task/OpenSpec claims; record stale durable truth as a candidate rather than silently correcting it.
+- [x] 8.1 Inspect C-00 session start/claim/reconcile/integrate/release/remove state transitions, ownership liveness, prospective admission, rollback, and cross-worktree invariants.
+- [x] 8.2 Inspect active-task/continuity/project/handoff/OpenSpec validators for parser ambiguity, duplicate authority, false pass/fail, vacuity, stale-state, and unbounded-input behavior.
+- [x] 8.3 Inspect hardening registry/rule parity, gate definitions, skip classification, timeout handling, zero-step external evidence, and clean-check semantics.
+- [x] 8.4 Analyze test topology, skipped/conditional tests, fixture fidelity, assertion strength, mutation/concurrency coverage, flake controls, and gaps between test names and actual authority.
+- [x] 8.5 Reconcile current implementation and tests against architecture, safety, decisions, roadmap, README, and task/OpenSpec claims; record stale durable truth as a candidate rather than silently correcting it.
 
 ## 9. Adjudicate and partition findings
 
-- [ ] 9.1 Reproduce or decisively substantiate every OBSERVED candidate using current implementation evidence and the narrowest authorized deterministic validation.
-- [ ] 9.2 Assign lifecycle disposition, severity dimensions, confidence, blast radius, mitigation analysis, and owner boundary to every candidate.
-- [ ] 9.3 Deduplicate every MATERIAL finding against published specs, current changes, task state, decisions, and tests using exact failure-mode coverage.
-- [ ] 9.4 Partition non-duplicate MATERIAL findings by root cause and atomic validation boundary; record cross-change prerequisites and rollout order.
-- [ ] 9.5 Produce a severity-ranked finding index and bidirectional finding-to-change mapping.
+- [x] 9.1 Reproduce or decisively substantiate every OBSERVED candidate using current implementation evidence and the narrowest authorized deterministic validation.
+- [x] 9.2 Assign lifecycle disposition, severity dimensions, confidence, blast radius, mitigation analysis, and owner boundary to every candidate.
+- [x] 9.3 Deduplicate every MATERIAL finding against published specs, current changes, task state, decisions, and tests using exact failure-mode coverage.
+- [x] 9.4 Partition non-duplicate MATERIAL findings by root cause and atomic validation boundary; record cross-change prerequisites and rollout order.
+- [x] 9.5 Produce a severity-ranked finding index and bidirectional finding-to-change mapping.
 
 ## 10. Generate implementation-ready remediation changes
 
-- [ ] 10.1 Create each remediation change through `openspec new change` and follow its resolved artifact dependency order.
-- [ ] 10.2 Write proposals that identify evidence IDs, why-now, precise scope, capabilities, impact, and existing-work relationship.
-- [ ] 10.3 Write designs with decisions, alternatives, safety/privacy consequences, compatibility, migration/rollback, and cross-change dependencies.
-- [ ] 10.4 Write normative delta specs with positive, adversarial negative, regression, concurrency/cleanup/privacy/boundedness scenarios where relevant.
-- [ ] 10.5 Write ordered implementation and validation tasks small enough for one session and explicit enough to avoid audit rediscovery.
-- [ ] 10.6 Run `openspec validate <change> --strict` and confirm apply-ready status for every created change.
+- [x] 10.1 Create each remediation change through `openspec new change` and follow its resolved artifact dependency order.
+- [x] 10.2 Write proposals that identify evidence IDs, why-now, precise scope, capabilities, impact, and existing-work relationship.
+- [x] 10.3 Write designs with decisions, alternatives, safety/privacy consequences, compatibility, migration/rollback, and cross-change dependencies.
+- [x] 10.4 Write normative delta specs with positive, adversarial negative, regression, concurrency/cleanup/privacy/boundedness scenarios where relevant.
+- [x] 10.5 Write ordered implementation and validation tasks small enough for one session and explicit enough to avoid audit rediscovery.
+- [x] 10.6 Run `openspec validate <change> --strict` and confirm apply-ready status for every created change.
 
 ## 11. Prove completeness and close the planning campaign
 
-- [ ] 11.1 Reconcile the final tracked-file inventory with the coverage matrix and prove every row has evidence and a terminal disposition.
-- [ ] 11.2 Prove every MATERIAL finding has exactly one owning remediation change or an explicit external blocker, and every remediation change maps to substantiated findings.
-- [ ] 11.3 Detect and reconcile any `origin/main` drift since the starting snapshot before making an exhaustive coverage claim.
-- [ ] 11.4 Inspect the complete diff and prove only continuity and OpenSpec planning artifacts changed; scan for secrets, customer data, raw evidence, and machine-specific paths.
-- [ ] 11.5 Run continuity, workspace, project, handoff, strict OpenSpec, and planning-artifact validation required by repository policy.
-- [ ] 11.6 Finalize the report with coverage metrics, severity-ranked findings, proposal map, validation evidence, residual uncertainties, and implementation explicitly deferred.
-- [ ] 11.7 Commit and integrate the validated planning checkpoint through the C-00 fast-forward workflow, verify local `HEAD == origin/main`, then release and remove the owned session.
+- [x] 11.1 Reconcile the final tracked-file inventory with the coverage matrix and prove every row has evidence and a terminal disposition.
+- [x] 11.2 Prove every MATERIAL finding has exactly one owning remediation change or an explicit external blocker, and every remediation change maps to substantiated findings.
+- [x] 11.3 Detect and reconcile any `origin/main` drift since the starting snapshot before making an exhaustive coverage claim.
+- [x] 11.4 Inspect the complete diff and prove only continuity and OpenSpec planning artifacts changed; scan for secrets, customer data, raw evidence, and machine-specific paths.
+- [x] 11.5 Run continuity, workspace, project, handoff, strict OpenSpec, and planning-artifact validation required by repository policy.
+- [x] 11.6 Finalize the report with coverage metrics, severity-ranked findings, proposal map, validation evidence, residual uncertainties, and implementation explicitly deferred.
+- [ ] ~~11.7 Commit and integrate the validated planning checkpoint through the C-00 fast-forward workflow, verify local `HEAD == origin/main`, then release and remove the owned session.~~ — DECLARED_NOT_IN_SCOPE: owner Git checkpoint not performed in this session.

@@ -320,6 +320,76 @@ novelty, persistence, and autonomous improvement behavior against this fixed
 denominator. M6 reviewer/Control Center write authority and M7 continuity/gate
 framework behavior remain separate.
 
+The first M5 tranche inspected campaign scheduling/budget/checkpoint/resume
+and Lane C tool authority without running a campaign. Three non-duplicate
+material findings were admitted:
+
+| Lead | Disposition | Notes |
+|---|---|---|
+| Resume rebuilds the reasoner from caller fields while stored identity is only echoed | NW-AUD-044 | High; F-19 recording is attribution, not admission |
+| Paused usage is subtracted from remainder policy and restored into AgentRuntime | NW-AUD-045 | Medium; fresh remainder is correct, resume double-counts |
+| Lane C atlas tools default to synthetic corpora/overlays | NW-AUD-046 | Medium; W7 session already refuses; source-only missing-fixture test is vacuous |
+| Campaign orchestrator version-drift on `run()` | NOT_AN_ISSUE | `run()` finalizes `CAMPAIGN_VERSION_DRIFT` before work items; constructor only records the envelope |
+| Campaign checkpoint used+remaining conservation | NOT_AN_ISSUE | validator requires exact policy arithmetic; runtime remaining is derived from used |
+| Runtime profile linkage table | NOT_AN_ISSUE | data-only approved identities; no authority |
+
+Reproduction, admission, novelty, findings persistence, and remaining
+runtime machines were then inspected. One further material finding was
+admitted (NW-AUD-047). Residual M5 directories map as follows:
+
+| Cone | Disposition |
+|---|---|
+| campaign/runtime/checkpoint/budget/tools | NW-AUD-044..046 plus prior campaign owners |
+| localInvestigation admission | NW-AUD-047 |
+| ownerLocalReproduction / currentSourceProof | NOT_AN_ISSUE — host-derived, fail-closed, no model command |
+| reproductionSurface | NOT_AN_ISSUE — W10 capability projection; truncation is declared |
+| autonomousFinding / findingReview / findingIntel | NOT_AN_ISSUE — fail-closed digest-bound / advisory |
+| benchmark / efficacy / bugAtlas | NOT_AN_ISSUE — bounded historical/synthetic stores |
+| portfolio / phase12–24 runtime | prior semantic/campaign owners or fail-closed scoring |
+| selfDev / sandbox / promotion | NW-AUD-011 plus synthetic-only proposer; no new authority gap |
+
+M5 is closed. No undispositioned M5 lead remains.
+
+## M6 Control Center
+
+Inspected server routing, the opt-in review write path, static asset confinement,
+SSE bounds, authorities, adapters, and FACT/RECOMMENDATION/UNKNOWN reviewer
+contracts without starting the server or reading private findings.
+
+| Lead | Disposition | Notes |
+|---|---|---|
+| Finding summary boolean READY mapping | NW-AUD-048 | Medium; consumes NW-AUD-029, does not duplicate it |
+| Review write rebuilds binding from current state | NOT_AN_ISSUE | client cannot choose the binding |
+| Static assets O_NOFOLLOW + fd realpath | NOT_AN_ISSUE | TOCTOU closed |
+| SSE write backpressure | NOT_AN_ISSUE — already repaired (drain-per-client) |
+| Design/click/render/style/UI completion | DUPLICATE | existing Control Center campaigns own those surfaces |
+
+M6 is closed.
+
+## M7 Continuity, validation, tests, documentation
+
+| Lead | Disposition |
+|---|---|
+| Session mutators authorize selected `--root` | NW-AUD-006 |
+| Child-process rule non-total | NW-AUD-014 |
+| Live waypoint / skip identity / published spec baseline | DUPLICATE of those published changes |
+| CURRENT_STATE historical rows | NOT_AN_ISSUE — frozen historical record, machine block outranks |
+| Remaining hardening/gate/skip framework | owned by existing validation-classification and quality-gate specs |
+
+M7 is closed.
+
+## M8–M9 Adjudication and generation
+
+Forty-five material findings map one-to-one to forty-five strict-valid
+unimplemented changes. Duplicate IDs NW-AUD-002/003/008 remain non-proposals.
+No additional material issue was found after residual reconciliation.
+
+## M10 Completeness
+
+Planning-only paths under `.agent/` and `openspec/changes/`. Zero product
+implementation edits. Completeness audit is now eligible and satisfied for
+the planning objective.
+
 The mechanical focused-test search found 55 direct or transitive M2-matching test entrypoints. Each was classified by responsibility: decisive tests above were inspected in full, while source-intelligence, campaign, Control Center, and validation assertions that merely transitively import policy code remain assigned to their later audit waves. No M2 lead remains without a material proposal, a terminal non-material/not-an-issue rationale, or an explicit later-wave owner.
 
 NW-AUD-001 severity is Medium rather than High: compromise or malicious
@@ -527,6 +597,15 @@ runtime rename, but campaign execution, DEV contact, and external effects
 remain separately gated. Its enforcing boundary is distinct from exact source
 snapshot reads and semantic analyzer proof.
 
+NW-AUD-044 is High with High confidence: a paused campaign can continue under
+a different reasoner while presenting the same campaign id, strategy, and
+remaining budget. It is below Critical because resume is an explicit local
+owner operation and grants no product or network authority. F-19 recording
+remains attribution only. NW-AUD-045 is Medium with High confidence because
+it can exhaust a legal resume early without expanding ceilings. NW-AUD-046
+is Medium with High confidence because invented historical records can
+mislead a reasoner, while the live W7 session path already refuses fallbacks.
+
 ## Validation ledger
 
 | Command/evidence | Result | Purpose |
@@ -622,10 +701,17 @@ snapshot reads and semantic analyzer proof.
 | `openspec validate nightwatch-semantic-gap-ledger-integrity-v1 --strict` | PASS; 4/4 artifact classes complete | NW-AUD-042 remediation is apply-ready |
 | static change-intelligence collector/map/selector/real-caller/test inspection | SUBSTANTIATED READ-ONLY; actual baselines/heads are absent from map staleness, ChangeSets are structurally trusted, and either rename endpoint can suppress runtime impact | Establish NW-AUD-043 without sibling or campaign access |
 | `openspec validate nightwatch-change-intelligence-source-generation-integrity-v1 --strict` | PASS; 4/4 artifact classes complete | NW-AUD-043 remediation is apply-ready |
+| static localCampaign resume/progress/pause-test inspection | SUBSTANTIATED READ-ONLY; stored identity echoed, driver rebuilt from caller fields, pause/resume test swaps the script | Establish NW-AUD-044 without spawning a reasoner |
+| `openspec validate nightwatch-campaign-resume-reasoner-identity-binding-v1 --strict` | PASS; 4/4 artifact classes complete | NW-AUD-044 remediation is apply-ready |
+| static remainingPolicyFor/pause-prefix/resume restore inspection | SUBSTANTIATED READ-ONLY; remainder subtracts in-flight usage and runtime restores it | Establish NW-AUD-045 without a campaign |
+| `openspec validate nightwatch-investigation-resume-budget-arithmetic-integrity-v1 --strict` | PASS; 4/4 artifact classes complete | NW-AUD-045 remediation is apply-ready |
+| static executeAgentTool atlas adapter/test inspection | SUBSTANTIATED READ-ONLY; atlas defaults to synthetic corpora; missing-fixture test is source-only | Establish NW-AUD-046 without atlas I/O |
+| `openspec validate nightwatch-agent-tool-fixture-fallback-integrity-v1 --strict` | PASS; 4/4 artifact classes complete | NW-AUD-046 remediation is apply-ready |
 
 ## Completion audit
 
-Not yet eligible. M1 through M4 are complete, while later campaign, UI, and
-validation waves remain pending. Forty material findings currently map
-one-to-one to forty strict-valid issue-specific remediation
-changes; that partial portfolio is not evidence of whole-repository completeness.
+Eligible and satisfied for the planning objective. M0 through M10 are
+complete. Forty-five material findings map one-to-one to forty-five
+strict-valid unimplemented issue-specific remediation changes. Residual
+areas have duplicate or terminal non-material dispositions. Product
+implementation files were not modified.

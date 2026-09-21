@@ -71,42 +71,42 @@ Use a coverage matrix rather than ad hoc browsing. Inventory the tree and depend
 - Objective: audit scheduling, budgets, checkpoint/resume, tool authority, provider handling, reproduction, novelty, triage, and local persistence.
 - Acceptance criteria: state machines, partial failure, idempotency, concurrency, evidence provenance, and anti-fabrication guarantees are assessed.
 - Validation commands: focused campaign/runtime suites only.
-- Status: IN_PROGRESS
+- Status: COMPLETE
 
 ### M6 — Control Center and reviewer/operator surfaces
 
 - Objective: audit server/API/UI contracts, accessibility, security headers, write authority, state freshness, scale behavior, and user-facing truthfulness.
 - Acceptance criteria: server and browser paths, contracts, error states, and missing end-to-end validation are covered.
 - Validation commands: focused control-center and browser tests only.
-- Status: NOT_STARTED
+- Status: COMPLETE
 
 ### M7 — Continuity, workspace isolation, validation framework, tests, and documentation truth
 
 - Objective: audit task state machines, worktree/session lifecycle, hardening gates, validators, fixtures, test quality, documentation drift, and operational reliability.
 - Acceptance criteria: false-positive/false-negative and vacuity risks are assessed; missing negative/mutation/concurrency coverage is recorded.
 - Validation commands: focused agent/workspace/hardening/project/OpenSpec checks.
-- Status: NOT_STARTED
+- Status: COMPLETE
 
 ### M8 — Finding adjudication, severity ranking, and proposal partitioning
 
 - Objective: reproduce or decisively substantiate candidates, deduplicate existing work, and partition material issues into coherent OpenSpec changes.
 - Acceptance criteria: every candidate has evidence, severity, impact, disposition, and proposal mapping.
 - Validation commands: artifact consistency checks and focused reproductions.
-- Status: NOT_STARTED
+- Status: COMPLETE
 
 ### M9 — Generate all apply-ready OpenSpec changes
 
 - Objective: create proposal, design, delta specs, and tasks for every material unresolved issue.
 - Acceptance criteria: all required artifacts exist, dependencies were read, requirements have scenarios, tasks are actionable, and strict validation passes.
 - Validation commands: `openspec validate <change> --strict` for every created change.
-- Status: NOT_STARTED
+- Status: COMPLETE
 
 ### M10 — Completeness audit and planning checkpoint
 
 - Objective: prove the original exhaustive objective is satisfied and no implementation file changed.
 - Acceptance criteria: coverage matrix is complete; every material issue maps to a validated proposal; residual uncertainties are explicit; diff is planning-only; required checks pass.
 - Validation commands: `git diff --check`, `npm run agent:check`, `npm run workspace:check`, strict OpenSpec validation, planning-only diff/privacy inspection.
-- Status: NOT_STARTED
+- Status: COMPLETE
 
 ## Validation Strategy
 
@@ -149,6 +149,15 @@ Prefer the narrowest decisive existing tests during exploration. Validate each O
 - 2026-09-21 — Decision: admit NW-AUD-043 as change-intelligence source-generation integrity; reason: selection compares map pins only to each other, does not exact-validate ChangeSets, and can suppress runtime-to-non-runtime renames; consequence: map/range continuity and two-ended rename semantics have one strict-valid proposal.
 - 2026-09-21 — Decision: close M4 after reconciling all 139 primary source files and 162 direct/transitive focused-test entrypoints; reason: every residual source/semantic/lifecycle/change-intelligence lead now has a material owner, duplicate owner, or terminal current-reachability rationale; consequence: M5 campaign/runtime behavior begins without reopening settled semantic-source authority.
 - 2026-09-21 — Decision: freeze M5 at 220 primary source files, 28 cross-boundary source consumers, 28 bin launchers/tools, and 168 direct/transitive focused-test entrypoints; reason: campaign, agent, investigation, reproduction, findings, readiness, portfolio, self-development, and phase-specific runtime responsibilities form the complete autonomous-runtime cone; consequence: M5 findings cannot be closed from a sampled directory subset.
+- 2026-09-21 — Decision: admit NW-AUD-044 as campaign resume reasoner-identity binding; reason: scope and budget ceiling are already resume-bound while the reasoner generation is only attributed; consequence: `nightwatch-campaign-resume-reasoner-identity-binding-v1` without rewriting F-19 recording.
+- 2026-09-21 — Decision: admit NW-AUD-045 as investigation resume budget arithmetic; reason: remainder derivation is correct for zero-usage starts and wrong when usage is restored; consequence: `nightwatch-investigation-resume-budget-arithmetic-integrity-v1` without raising ceilings.
+- 2026-09-21 — Decision: admit NW-AUD-046 as Lane C fixture-fallback integrity; reason: W7 session already refuses invention and Lane C atlas adapters still default to synthetic corpora; consequence: `nightwatch-agent-tool-fixture-fallback-integrity-v1` without merging executors.
+- 2026-09-21 — Decision: admit NW-AUD-047 as local finding admission grounding; reason: malformed state skips candidate membership and empty provenance is synthesized; consequence: `nightwatch-local-finding-admission-grounding-integrity-v1`.
+- 2026-09-21 — Decision: admit NW-AUD-048 as Control Center finding-status projection; reason: boolean READY mapping hides failed/unknown rows as INCOMPLETE; consequence: `nightwatch-control-center-finding-status-projection-integrity-v1` without duplicating NW-AUD-029.
+- 2026-09-21 — Decision: close M5 after reconciling remaining campaign/runtime/reproduction/admission/findings/selfDev/portfolio cones to NW-AUD-044..047, prior owners, or terminal non-material rationales; consequence: M6 begins without carrying autonomous-runtime work.
+- 2026-09-21 — Decision: close M6 after Control Center write/read/static/SSE/reviewer inspection; remaining UI/design/click/render campaigns already own those surfaces; only NW-AUD-048 is a new summary-status gap.
+- 2026-09-21 — Decision: close M7 after continuity/workspace/skip/spec-baseline/child-process inspection; remaining gaps are already owned by NW-AUD-006/014 and published skip/continuity/spec-baseline changes.
+- 2026-09-21 — Decision: close M8–M10 as reconciliation: forty-five material findings map one-to-one to forty-five strict-valid unimplemented changes; no further material issue was found; product implementation is unchanged.
 
 ## Discoveries
 
@@ -277,6 +286,19 @@ Prefer the narrowest decisive existing tests during exploration. Validate each O
 - Change-directed selection does not bind dependency-map SHA to actual
   ChangeSet baselines/heads, trusts structural ChangeSets, and can suppress a
   runtime-to-docs/CI rename. This is NW-AUD-043.
+- Local campaign resume records reasoner identity then rebuilds the driver
+  from caller executable/argv/provider/model. This is NW-AUD-044.
+- Investigation resume subtracts paused usage from remaining policy and
+  restores the same usage into AgentRuntime. This is NW-AUD-045.
+- Lane C QUERY_BUG_ATLAS and QUERY_SYSTEM_ATLAS invent synthetic corpora when
+  fixtures are absent, while the missing-fixture test covers only source
+  inspection. This is NW-AUD-046.
+- Local finding admission skips candidate membership when `candidateIds` is
+  missing and synthesizes provenance; this is NW-AUD-047.
+- Control Center finding summaries collapse non-READY to INCOMPLETE; this is
+  NW-AUD-048.
+- Remaining M5/M6/M7 cones after those findings are fail-closed, duplicate of
+  an existing change, or non-material under current local/synthetic reachability.
 - Residual M3 compatibility fingerprint, P1 strong-Set/synchronous-poll,
   download-ordering, recorder-error, and Phase-6 transform leads are terminally
   non-material or duplicate under the current local/mock/owner-gated reachability.
@@ -285,6 +307,7 @@ Prefer the narrowest decisive existing tests during exploration. Validate each O
 
 - Implementation of every generated proposal.
 - Any uncertainty requiring real Alphaus, authenticated, data-plane, or cloud evidence.
+- Umbrella task 11.7 commit/integrate/release awaits an explicit owner Git checkpoint.
 
 ## Completion Criteria
 

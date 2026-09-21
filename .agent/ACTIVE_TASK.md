@@ -3,13 +3,13 @@
 Task ID: nightwatch-exhaustive-repository-audit-proposals-v1
 Phase: EXHAUSTIVE_REPOSITORY_AUDIT_PROPOSALS_V1
 Title: Exhaustive repository audit and OpenSpec proposals
-Status: IN_PROGRESS
+Status: COMPLETE
 Task directory: .agent/tasks/nightwatch-exhaustive-repository-audit-proposals-v1
 Starting SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
 Last validated implementation SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
-Last checkpoint: M1 through M4 are complete; the M4 denominator of 139 primary source files and 162 direct/transitive focused-test entrypoints is terminally reconciled, with forty one-to-one strict-valid changes through NW-AUD-043.
-Current milestone: M5 — campaign, autonomous runtime, investigation, reproduction, admission, and findings
-Next action: Freeze the M5 campaign/runtime responsibility denominator, then audit scheduling, budgets, checkpoint/resume, tool/provider authority, reproduction, novelty, admission, and owner-local findings without running a real campaign or contacting DEV.
+Last checkpoint: M0 through M10 complete; forty-five material findings map one-to-one to forty-five strict-valid unimplemented OpenSpec changes through NW-AUD-048.
+Current milestone: COMPLETE / STOP — all milestones closed.
+Next action: STOP
 Authorization class: EXHAUSTIVE_REPOSITORY_AUDIT_PROPOSALS_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
@@ -18,7 +18,7 @@ LAST_VALIDATED_IMPLEMENTATION_SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
-PHASE_EXHAUSTIVE_REPOSITORY_AUDIT_PROPOSALS_V1_STATUS: IN_PROGRESS
+PHASE_EXHAUSTIVE_REPOSITORY_AUDIT_PROPOSALS_V1_STATUS: COMPLETE
 
 ## Mission
 

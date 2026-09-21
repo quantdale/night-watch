@@ -4,14 +4,14 @@
 
 Task ID: nightwatch-exhaustive-repository-audit-proposals-v1
 Phase: EXHAUSTIVE_REPOSITORY_AUDIT_PROPOSALS_V1
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
 Last validated implementation SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
 Last substantive checkpoint SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-exhaustive-repository-ef157f7a
-Last checkpoint: 2026-09-21 — M1 through M4 complete; the 139-source/162-test M4 denominator is terminally reconciled and forty findings map one-to-one to strict-valid changes through NW-AUD-043.
+Last checkpoint: 2026-09-21 — M0 through M10 complete; forty-five material findings map one-to-one to forty-five strict-valid unimplemented OpenSpec changes through NW-AUD-048.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
@@ -19,7 +19,7 @@ LAST_VALIDATED_IMPLEMENTATION_SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: 34517c9ba11c97407168fe5879ee03794dfff3e3
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
-PHASE_EXHAUSTIVE_REPOSITORY_AUDIT_PROPOSALS_V1_STATUS: IN_PROGRESS
+PHASE_EXHAUSTIVE_REPOSITORY_AUDIT_PROPOSALS_V1_STATUS: COMPLETE
 
 ## Objective
 
@@ -27,9 +27,7 @@ Audit the entire Nightwatch repository and produce a complete, prioritized set o
 
 ## Current Milestone
 
-Milestone ID: M5
-Milestone status: IN_PROGRESS
-What is being attempted: audit campaign scheduling, budgets, checkpoint/resume, tool/provider authority, investigation/reproduction/admission, novelty, and owner-local findings behavior.
+COMPLETE / STOP — all milestones closed.
 
 ## Completed Milestones
 
@@ -77,27 +75,38 @@ What is being attempted: audit campaign scheduling, budgets, checkpoint/resume, 
 - NW-AUD-041: PROPOSED (High/High-confidence); dedicated change `nightwatch-semantic-coverage-evidence-authority-v1` is 4/4 complete and strict-valid.
 - NW-AUD-042: PROPOSED (Medium/High-confidence); dedicated change `nightwatch-semantic-gap-ledger-integrity-v1` is 4/4 complete and strict-valid.
 - NW-AUD-043: PROPOSED (Medium/High-confidence); dedicated change `nightwatch-change-intelligence-source-generation-integrity-v1` is 4/4 complete and strict-valid.
+- NW-AUD-044: PROPOSED (High/High-confidence); dedicated change `nightwatch-campaign-resume-reasoner-identity-binding-v1` is 4/4 complete and strict-valid.
+- NW-AUD-045: PROPOSED (Medium/High-confidence); dedicated change `nightwatch-investigation-resume-budget-arithmetic-integrity-v1` is 4/4 complete and strict-valid.
+- NW-AUD-046: PROPOSED (Medium/High-confidence); dedicated change `nightwatch-agent-tool-fixture-fallback-integrity-v1` is 4/4 complete and strict-valid.
+- NW-AUD-047: PROPOSED (Medium/High-confidence); dedicated change `nightwatch-local-finding-admission-grounding-integrity-v1` is 4/4 complete and strict-valid.
+- NW-AUD-048: PROPOSED (Medium/High-confidence); dedicated change `nightwatch-control-center-finding-status-projection-integrity-v1` is 4/4 complete and strict-valid.
 - NW-AUD-002: DUPLICATE of production-completion tasks 15.7/15.11; NW-AUD-003: NOT_AN_ISSUE after validation-universe PASS with zero unclassified checks; NW-AUD-008: DUPLICATE of the production-completion operator CLI contract.
 - M1 repository topology/dependencies/configuration/build/tooling: COMPLETE.
 - M2 core safety/environment/policy/proxy/L6/authentication: COMPLETE; 32 primary boundary files, 5 cross-boundary consumers, and 55 direct/transitive focused-test entrypoints reconciled with no undispositioned M2 lead.
 - M3 browser/API/journey/evidence/persistence/replay: COMPLETE; 154 primary source files and 118 direct/transitive focused-test entrypoints reconciled with no undispositioned M3 lead.
 - M4 source intelligence/semantic oracles/expectations/contract lifecycle/change intelligence: COMPLETE; 139 primary source files and 162 direct/transitive focused-test entrypoints reconciled with no undispositioned M4 lead.
+- M5 campaign/autonomous runtime/investigation/reproduction/admission/findings: COMPLETE; remaining cone mapped to NW-AUD-044..047, prior owners, or terminal non-material rationales.
+- M6 Control Center/reviewer surfaces: COMPLETE; NW-AUD-048 is the only new summary-status gap; remaining UI/write/read/static/SSE surfaces are owned by existing Control Center campaigns or fail-closed.
+- M7 continuity/workspace/validation/tests/docs: COMPLETE; remaining gaps owned by NW-AUD-006/014 and published skip/continuity/spec-baseline changes.
+- M8 adjudication: COMPLETE; forty-five material findings ranked and mapped one-to-one.
+- M9 OpenSpec generation: COMPLETE; every material finding has a 4/4 strict-valid unimplemented change.
+- M10 completeness audit: COMPLETE; planning-only diff; no product implementation changed.
 
 ## Work In Progress
 
-M5 is active with a frozen denominator of 220 primary source files, 28 cross-boundary source consumers, 28 bin launchers/tools, and 168 direct/transitive focused-test entrypoints. It covers agent protocol/runtime/tools, AI review/reasoner, campaign and campaign intelligence, investigation/reproduction/findings, benchmark/efficacy/Bug Atlas, readiness/rehearsal, portfolio, Phase 12/13/22/23/24 runtimes, and self-development/sandbox/promotion behavior.
+NONE.
 
 ## Exact Next Action
 
-Audit M5 campaign scheduling, budget, checkpoint/resume, runtime-profile, provider/tool authority, and orchestration state machines against the frozen denominator without running a real campaign or contacting DEV.
+STOP
 
 ## Files Changed
 
 | Path | Reason | Status |
 |---|---|---|
-| `.agent/ACTIVE_TASK.md` | route the owned proposal-only campaign | in progress |
-| `.agent/tasks/nightwatch-exhaustive-repository-audit-proposals-v1/` | durable task continuity | in progress |
-| `openspec/changes/nightwatch-exhaustive-repository-audit-proposals-v1/` | umbrella audit proposal, contracts, tasks, and evidence ledger | in progress |
+| `.agent/ACTIVE_TASK.md` | route the owned proposal-only campaign | complete planning artifact |
+| `.agent/tasks/nightwatch-exhaustive-repository-audit-proposals-v1/` | durable task continuity | complete planning artifact |
+| `openspec/changes/nightwatch-exhaustive-repository-audit-proposals-v1/` | umbrella audit proposal, contracts, tasks, and evidence ledger | complete planning artifact |
 | `openspec/changes/nightwatch-ci-action-supply-chain-integrity-v1/` | NW-AUD-001 implementation-ready remediation proposal | complete planning artifact |
 | `openspec/changes/nightwatch-exact-runtime-toolchain-identity-v1/` | NW-AUD-004 implementation-ready remediation proposal | complete planning artifact |
 | `openspec/changes/nightwatch-retention-crash-consistent-receipts-v1/` | NW-AUD-005 implementation-ready remediation proposal | complete planning artifact |
@@ -146,6 +155,16 @@ Audit M5 campaign scheduling, budget, checkpoint/resume, runtime-profile, provid
 | `.agent/tasks/nightwatch-semantic-gap-ledger-integrity-v1/` | completed child planning continuity for NW-AUD-042 | complete planning artifact |
 | `openspec/changes/nightwatch-change-intelligence-source-generation-integrity-v1/` | NW-AUD-043 implementation-ready remediation proposal | complete planning artifact |
 | `.agent/tasks/nightwatch-change-intelligence-source-generation-integrity-v1/` | completed child planning continuity for NW-AUD-043 | complete planning artifact |
+| `openspec/changes/nightwatch-campaign-resume-reasoner-identity-binding-v1/` | NW-AUD-044 implementation-ready remediation proposal | complete planning artifact |
+| `.agent/tasks/nightwatch-campaign-resume-reasoner-identity-binding-v1/` | completed child planning continuity for NW-AUD-044 | complete planning artifact |
+| `openspec/changes/nightwatch-investigation-resume-budget-arithmetic-integrity-v1/` | NW-AUD-045 implementation-ready remediation proposal | complete planning artifact |
+| `.agent/tasks/nightwatch-investigation-resume-budget-arithmetic-integrity-v1/` | completed child planning continuity for NW-AUD-045 | complete planning artifact |
+| `openspec/changes/nightwatch-agent-tool-fixture-fallback-integrity-v1/` | NW-AUD-046 implementation-ready remediation proposal | complete planning artifact |
+| `.agent/tasks/nightwatch-agent-tool-fixture-fallback-integrity-v1/` | completed child planning continuity for NW-AUD-046 | complete planning artifact |
+| `openspec/changes/nightwatch-local-finding-admission-grounding-integrity-v1/` | NW-AUD-047 implementation-ready remediation proposal | complete planning artifact |
+| `.agent/tasks/nightwatch-local-finding-admission-grounding-integrity-v1/` | completed child planning continuity for NW-AUD-047 | complete planning artifact |
+| `openspec/changes/nightwatch-control-center-finding-status-projection-integrity-v1/` | NW-AUD-048 implementation-ready remediation proposal | complete planning artifact |
+| `.agent/tasks/nightwatch-control-center-finding-status-projection-integrity-v1/` | completed child planning continuity for NW-AUD-048 | complete planning artifact |
 | `.agent/tasks/nightwatch-{protocol-dossier-readiness-integrity,triage-evidence-contract-integrity,durable-artifact-validation-bounds,phase6-owner-scope-quarantine-integrity,production-budget-reservation-lifecycle-integrity,production-observation-receipt-integrity,browser-response-acquisition-integrity}-v1/` | completed child planning continuity for NW-AUD-029..035 | complete planning artifacts |
 
 ## Validation Ledger
@@ -495,6 +514,81 @@ Result: PASS
 When: 2026-09-21
 Relevant failure/output summary: 220 primary source files, 28 cross-boundary source consumers, 28 bin launchers/tools, and 168 direct/transitive focused-test entrypoints frozen for campaign/autonomous-runtime reconciliation.
 
+Command: static localCampaign resume/progress/pause-test inspection
+Result: SUBSTANTIATED READ-ONLY
+When: 2026-09-21
+Relevant failure/output summary: stored reasonerIdentity is echoed; resume rebuilds the CLI driver from caller fields; the pause/resume test swaps the script and omits identity.
+
+Command: `openspec validate nightwatch-campaign-resume-reasoner-identity-binding-v1 --strict`
+Result: PASS (4/4 artifact classes)
+When: 2026-09-21
+Relevant failure/output summary: reasoner-generation resume binding is apply-ready and unimplemented.
+
+Command: static remainingPolicyFor/pause-prefix/resumeFromCheckpoint inspection
+Result: SUBSTANTIATED READ-ONLY
+When: 2026-09-21
+Relevant failure/output summary: remainder subtracts in-flight usage and AgentRuntime restores the same usage, double-counting paused spend.
+
+Command: `openspec validate nightwatch-investigation-resume-budget-arithmetic-integrity-v1 --strict`
+Result: PASS (4/4 artifact classes)
+When: 2026-09-21
+Relevant failure/output summary: pause/resume budget conservation is apply-ready and unimplemented.
+
+Command: static executeAgentTool atlas adapter and missing-fixture test inspection
+Result: SUBSTANTIATED READ-ONLY
+When: 2026-09-21
+Relevant failure/output summary: QUERY_BUG_ATLAS/QUERY_SYSTEM_ATLAS default to synthetic corpora; missing-fixture coverage is source-only; W7 session already refuses fallbacks.
+
+Command: `openspec validate nightwatch-agent-tool-fixture-fallback-integrity-v1 --strict`
+Result: PASS (4/4 artifact classes)
+When: 2026-09-21
+Relevant failure/output summary: Lane C fixture-absence integrity is apply-ready and unimplemented.
+
+Command: `npm run agent:check`
+Result: PASS with 40 pre-existing/expected warnings and zero strict-v2 errors
+When: 2026-09-21
+Relevant failure/output summary: three new COMPLETE planning child tasks are coherent; open implementation tasks remain out of scope.
+
+Command: `npm run workspace:check`
+Result: PASS
+When: 2026-09-21
+Relevant failure/output summary: owned session, canonical protection, and declared-deletion policy pass; dirty status is the current planning checkpoint before commit.
+
+Command: static admitLocalFinding membership/provenance/default inspection
+Result: SUBSTANTIATED READ-ONLY
+When: 2026-09-21
+Relevant failure/output summary: missing candidateIds skips membership; empty provenance is synthesized; severity/title default.
+
+Command: `openspec validate nightwatch-local-finding-admission-grounding-integrity-v1 --strict`
+Result: PASS (4/4 artifact classes)
+When: 2026-09-21
+Relevant failure/output summary: admission grounding remediation is apply-ready and unimplemented.
+
+Command: static Control Center findingsAdapter/DTO/reviewer inspection
+Result: SUBSTANTIATED READ-ONLY
+When: 2026-09-21
+Relevant failure/output summary: boolean READY mapping; unused UNAVAILABLE/UNKNOWN; privacy rows dropped; server not started.
+
+Command: `openspec validate nightwatch-control-center-finding-status-projection-integrity-v1 --strict`
+Result: PASS (4/4 artifact classes)
+When: 2026-09-21
+Relevant failure/output summary: finding-status projection remediation is apply-ready and unimplemented.
+
+Command: M5–M7 residual cone reconciliation
+Result: PASS
+When: 2026-09-21
+Relevant failure/output summary: remaining campaign/runtime/reproduction/selfDev/portfolio, Control Center write/read/static/SSE, and continuity/workspace/skip/spec-baseline surfaces map to a material proposal, prior owner, or terminal rationale.
+
+Command: planning-only diff inspection
+Result: PASS
+When: 2026-09-21
+Relevant failure/output summary: changed and untracked paths are `.agent/**` and `openspec/changes/**` markdown/yaml only; no `src/`, `tests/`, `bin/`, or config product files.
+
+Command: `npm run agent:check`
+Result: FAIL (1 error)
+When: 2026-09-21
+Relevant failure/output summary: `STALE_IMPLEMENTATION_BASELINE` — twenty-nine committed `openspec/changes/*/README.md` files after implementation SHA `34517c9` are not approved checkpoint paths. Continuity otherwise PASSes (`strict_errors=0` for v2 protocol). `npm run workspace:check` PASS. Git integrate remains owner-gated.
+
 Command: `npm run agent:check`
 Result: PASS with 40 pre-existing/expected warnings and zero strict-v2 errors
 When: 2026-09-21
@@ -830,6 +924,41 @@ directories plus launchers and cross-boundary consumers.
 Evidence/constraint: 220 primary source files, 28 source consumers, 28 bin
 launchers/tools, and 168 focused/transitive test entrypoints.
 
+Decision: admit NW-AUD-044 at High severity with a dedicated change.
+Reason: resume can continue a frozen campaign under a different reasoner while
+scope and budget ceiling are already bound; local owner invocation keeps it
+below Critical.
+Evidence/constraint: resumeLocalCliCampaign driver construction, ignored
+reasonerIdentity, and the current pause/resume script-swap test.
+
+Decision: admit NW-AUD-045 at Medium severity with a dedicated change.
+Reason: double-counted in-flight spend can exhaust a legal resume early without
+expanding ceilings or granting product authority.
+Evidence/constraint: remainingPolicyFor(prefix+paused) plus restored
+checkpoint usage; consecutiveFailures mixed into remainder subtraction.
+
+Decision: admit NW-AUD-046 at Medium severity with a dedicated change.
+Reason: Lane C can label synthetic atlas records as historical/documentation
+while the live W7 session already refuses invention; ordinary impact is
+reasoner mis-observation rather than product authority.
+Evidence/constraint: atlas default constructors and source-only missing-fixture
+coverage.
+
+Decision: admit NW-AUD-047 at Medium severity with a dedicated change.
+Reason: admitted dossiers can look grounded without exact candidate membership
+or observed provenance.
+Evidence/constraint: admitLocalFinding candidateIds fallback and reproduction: synthesis.
+
+Decision: admit NW-AUD-048 at Medium severity with a dedicated change.
+Reason: operator-facing status truthfulness, not product authority.
+Evidence/constraint: findingsAdapter boolean READY mapping.
+
+Decision: close M5–M10.
+Reason: remaining cones have a material owner, duplicate owner, or terminal
+current-reachability rationale; forty-five unimplemented changes cover every
+material finding; no product implementation changed.
+Evidence/constraint: coverage dispositions in audit.md and planning-only diff.
+
 ## Discoveries
 
 - Registered topology has room for this worktree under the repository's maximum of eight.
@@ -917,6 +1046,16 @@ launchers/tools, and 168 focused/transitive test entrypoints.
   census/surface facts; this is NW-AUD-042.
 - Change-directed selection ignores actual map/range generations and can
   suppress runtime-to-non-runtime renames; this is NW-AUD-043.
+- Local campaign resume records reasoner identity but rebuilds the driver
+  from caller fields; this is NW-AUD-044.
+- Investigation resume subtracts paused usage from remainder policy and
+  restores the same usage; this is NW-AUD-045.
+- Lane C atlas tools invent synthetic corpora when fixtures are absent;
+  this is NW-AUD-046.
+- Local finding admission skips candidate membership and synthesizes
+  provenance; this is NW-AUD-047.
+- Control Center finding summaries collapse non-READY to INCOMPLETE; this is
+  NW-AUD-048.
 - Weak semantic finding/dossier identity is a receipt-acceptance duplicate
   assigned to NW-AUD-038 rather than a new finding.
 - Remaining lifecycle vocabularies/registries and release-freshness truth-table
@@ -936,17 +1075,19 @@ NONE
 ## Deferred / Follow-Up
 
 - All implementation remains deferred by task definition.
+- Umbrella task 11.7 (commit/integrate/release/remove) awaits an explicit owner Git checkpoint; this session does not commit or push unless asked.
+- Completeness is scoped to starting SHA `34517c9ba11c97407168fe5879ee03794dfff3e3`. `origin/main` later advanced with the test-infra performance campaign; those descendants were not re-audited.
 
 ## Resume Recipe
 
-1. Read SPEC.
-2. Read PLAN.
-3. Inspect git status and current SHA.
-4. Run `npm run session:status`.
-5. Continue the Exact Next Action without editing product implementation.
+Task complete. Do not resume. Future task requires new authorization.
 
 ## Completion Snapshot
 
-Not complete; M1 through M4 are complete and M5 is active. Forty issue-specific
-changes are strict-valid, but milestones M5-M10 are still required before any
-exhaustive conclusion.
+- Status: COMPLETE
+- Milestones M0–M10: COMPLETE
+- Material findings: 45
+- Issue-specific OpenSpec changes: 45, each 4/4 strict-valid and unimplemented
+- Product implementation files changed: 0
+- External/authenticated/runtime/sibling actions: 0
+- Residual uncertainties: completeness is for the session starting tree, not later `origin/main` performance descendants; implementation of every generated change remains deferred; Git integrate (task 11.7) awaits owner.
