@@ -1,79 +1,65 @@
-# EXECUTION PROMPT — Exhaustive repository audit and OpenSpec proposals
+# EXECUTION PROMPT — Session mutation authority binding (NW-AUD-006)
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
-Status: COMPLETE
-Campaign ID: nightwatch-exhaustive-repository-audit-proposals-v1
-OpenSpec: openspec/changes/nightwatch-exhaustive-repository-audit-proposals-v1/
-Planned-From: 34517c9ba11c97407168fe5879ee03794dfff3e3
+Status: IN_PROGRESS
+Campaign ID: nightwatch-session-mutation-authority-binding-v1
+OpenSpec: openspec/changes/nightwatch-session-mutation-authority-binding-v1/
+Planned-From: caab10e91b8d81f2b98597b3c6974db89638ae6c
 Target Branch: main
-Predecessor Task ID: nightwatch-test-infrastructure-performance-v1
+Predecessor Task ID: nightwatch-exhaustive-repository-audit-proposals-v1
 Predecessor Status: COMPLETE
 
 ## Mission
 
-Audit the complete Nightwatch repository with read-only evidence, identify and
-prioritize every material correctness, security, safety, reliability,
-performance, architecture, maintainability, validation, and test gap, and
-capture each coherent remediation scope as an implementation-ready OpenSpec
-change. This campaign is planning-only: it changes no product source, contacts
-no real environment, and grants no execution authority to any generated change.
+Implement and validate the strict-valid remediation change
+`nightwatch-session-mutation-authority-binding-v1`: bind every mutating C-00
+lifecycle command to the invoking checkout and executing CLI, require explicit
+public session/HEAD expectations, admit continuity coherence, serialize
+ownership-record transitions with a bounded lock and revision
+compare-and-swap, restrict command roles, admit integration authority before
+network access, and prove the cross-session and race boundaries non-vacuously.
 
 ## Scope
 
-`.agent` continuity and planning artifacts; `openspec/changes` planning
-artifacts; read-only inspection of source, tests, configuration, tooling, docs,
-and Git history; strict OpenSpec validation; deterministic local evidence only.
+`bin/nightwatch-session.mjs`, the bounded pure admission core
+`bin/lib/session-authority.mjs`, C-00 focused tests, the hardening rule and
+probe registry, operator documentation and recipes, and the active
+task/OpenSpec continuity records.
 
 ## Ordered workstreams
 
-1. M0 — governed activation, coverage model, and existing-planning index.
-2. M1 — repository topology, dependencies, configuration, build, and tooling.
-3. M2 — safety, environment, policy, proxy, L6 containment, and authentication.
-4. M3 — browser, API, journey, evidence, persistence, and replay.
-5. M4 — source intelligence, semantic oracles, expectation lifecycle, and
-   change intelligence.
-6. M5 — campaign, autonomous runtime, investigation, reproduction, admission,
-   and findings.
-7. M6 — Control Center and reviewer/operator surfaces.
-8. M7 — continuity, workspace isolation, validation, tests, and documentation
-   truth.
-9. M8 — adjudication, severity ranking, and finding partition.
-10. M9 — implementation-ready remediation change generation.
-11. M10 — completeness audit and planning-only closure.
+1. M1 — invocation/script binding and exact public expectations.
+2. M2 — active-task/STATE continuity admission.
+3. M3 — transition lock, canonical revision CAS, durable transition, recovery.
+4. M4 — canonical-only start/remove and pre-network integration authority.
+5. M5 — adversarial/race/probe proof, documentation, full validation and
+   integration.
 
 ## Constraints
 
-LOCAL / READ-ONLY / SYNTHETIC only. No product source implementation, DEV /
-NEXT / production contact, authenticated runtime, database or data-plane
-access, cloud or infrastructure operation, sibling repository mutation,
-external publication, issue or PR creation, force push, or history rewrite.
-No implementation task of any generated change may be marked complete.
+LOCAL / DETERMINISTIC only, plus the existing explicit fast-forward
+integration push. No Alphaus contact, authenticated runtime, database or
+data-plane access, cloud or infrastructure operation, sibling repository
+mutation, external publication, force push, or history rewrite. Other live
+sessions are never touched. The cooperative confused-deputy boundary is
+stated as such and no hostile same-user isolation is claimed.
 
 ## Validation
 
-`npm run session:status`; strict `openspec validate` for the umbrella change
-and every generated remediation change; `npm run agent:check`;
-`npm run workspace:check`; `npm run handoff:check`; `npm run project:check`;
-`git diff --check`; planning-only diff and privacy inspection.
+Focused C-00 suites (`workspaceIsolation`, `sessionMutationAuthority`),
+`npm run typecheck`, `npm run typecheck:bin` (reporting lane), `npm run
+hardening:check`, `npm run hardening:rules`, `npm run workspace:check`,
+`npm run agent:check`, `npm run handoff:check`, `npm run project:check`,
+`openspec validate --strict`, `npm run campaign:synthetic`, and the
+applicable `npm run gate:local` groups on the committed checkpoint.
 
 ## Acceptance / completion gates
 
-- Every tracked repository area is classified and inspected through a
-  documented coverage model with explicit, justified omissions.
-- Every material finding maps one-to-one to a strictly valid,
-  implementation-ready OpenSpec change; duplicates and non-issues carry
-  terminal dispositions.
-- The planning diff contains only `.agent/**` and `openspec/changes/**`
-  continuity/planning artifacts; product implementation files are
-  byte-unchanged.
-- Terminal continuity, handoff, and project truth bind to this completed
-  campaign's continuity-v2 task record.
-
-## Git / reporting
-
-The planning checkpoint was integrated into `main` at `aa05696b` (planning
-close `2afc54de`); the owned session worktree has since been released, and
-canonical routing records `SESSION WORKTREE: NONE` with `Branch: main`. This
-file is the terminal handoff record for the campaign. Implementation of every
-generated change is deferred and requires a new owner-authorized planning
-checkpoint and C-00 task.
+- Every delta-spec scenario holds and the adversarial matrix proves refusal
+  before effects with byte-for-byte protected state and zero fetch/push
+  callbacks.
+- The hardening rule and probes HC-090…HC-098 detect each control; removal is
+  non-vacuous and bytes restore exactly.
+- The change is integrated through the documented C-00 lifecycle; the active
+  task closes with a truthful completion snapshot; project truth reflects the
+  new checkpoint.
