@@ -34,7 +34,7 @@ function run(command, args, cwd = nightwatchRoot) {
 function compileCore() {
   fs.rmSync(compileRoot, { recursive: true, force: true });
   fs.mkdirSync(compileRoot, { recursive: true });
-  run(path.join(root, 'node_modules', '.bin', 'tsc'), [
+  run(path.join(nightwatchRoot, 'node_modules', '.bin', 'tsc'), [
     'src/core/changeIntelligence/index.ts',
     '--target', 'ES2022',
     '--module', 'commonjs',
@@ -54,7 +54,7 @@ function compileCore() {
     '--rootDir', 'src',
     '--outDir', compileRoot,
   ]);
-  run(path.join(root, 'node_modules', '.bin', 'tsc'), [
+  run(path.join(nightwatchRoot, 'node_modules', '.bin', 'tsc'), [
     'src/core/source/siblingSource.ts',
     '--target', 'ES2022',
     '--module', 'commonjs',
