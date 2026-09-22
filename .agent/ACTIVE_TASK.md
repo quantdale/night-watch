@@ -6,17 +6,17 @@ Title: Priority audit remediation sequence implementation
 Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-priority-audit-remediation-sequence-v1
 Starting SHA: 4a3df8cdc776c5ca47a9666f65afbd5c5519f092
-Last validated implementation SHA: 83a1236ade1db8afbd7321054ec75c8b6599d471
-Last checkpoint: M3 COMPLETE at `83a1236a` — gate:dev PASS; gate:milestone PASS (12/12 steps exit=0); probes 11/11; strict OpenSpec PASS.
-Current milestone: M4 — Phase 4: NW-AUD-018 authenticated evidence minimization
-Next action: Reproduce the lexical route-minimization, recorder-bypass, and late-transition defects from recon/wave1-aud018-census.md with focused failing regressions; then implement provenance-bound route identity, the total authenticated writer firewall (reusing NW-AUD-019 primitives), and transition/publication integrity.
+Last validated implementation SHA: 5e2a03570f3e5d26bf2625478a9d501881a09cb7
+Last checkpoint: M4 COMPLETE at `5e2a0357` — gate:dev PASS; gate:milestone PASS (12/12 steps exit=0); probes 9/9 + 11/11; writer census 22/8/9; strict OpenSpec PASS.
+Current milestone: M5 — Phase 5: NW-AUD-020 semantic request admission
+Next action: Reproduce the four NW-AUD-020 defect classes from recon/wave1-aud020-census.md with focused failing regressions (passive unknown continuations, ~250ms intent-timer causality loss, navigation-as-ambient authority, host-only redirect fallback); then implement the immutable semantic admission handle, causal generations, finite bootstrap exemptions, and transport-total enforcement with zero-upstream refusal proof on synthetic fixtures only.
 Authorization class: PRIORITY_AUDIT_REMEDIATION_SEQUENCE_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 4a3df8cdc776c5ca47a9666f65afbd5c5519f092
-LAST_VALIDATED_IMPLEMENTATION_SHA: 83a1236ade1db8afbd7321054ec75c8b6599d471
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 83a1236ade1db8afbd7321054ec75c8b6599d471
+LAST_VALIDATED_IMPLEMENTATION_SHA: 5e2a03570f3e5d26bf2625478a9d501881a09cb7
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 5e2a03570f3e5d26bf2625478a9d501881a09cb7
 LIVE_HEAD_AUTHORITY: GIT
 PHASE_PRIORITY_AUDIT_REMEDIATION_SEQUENCE_V1_STATUS: IN_PROGRESS
 

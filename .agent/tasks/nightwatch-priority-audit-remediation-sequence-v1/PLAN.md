@@ -140,7 +140,10 @@ one full certification, then C-00 integrate/release/remove.
   `gate:dev`/`gate:milestone` PASS; coherent checkpoint.
 - Validation commands: focused redaction/evidence suites, `npm run gate:dev`,
   `npm run gate:milestone`
-- **Status:** IN_PROGRESS
+- **Status:** COMPLETE (at `5e2a0357`; gate:dev + gate:milestone PASS
+  twelve steps exit=0; probes checkAuthenticatedEvidenceFirewall 9/9 +
+  checkPrivateSurface 11/11; writer census 22/8/9; evidence in the STATE
+  validation ledger M4 entries)
 
 ### M5 — Phase 5: NW-AUD-020 semantic request admission
 
@@ -157,7 +160,8 @@ one full certification, then C-00 integrate/release/remove.
   `gate:dev`/`gate:milestone` PASS; coherent checkpoint.
 - Validation commands: focused safety/browser/proxy suites,
   `npm run gate:dev`, `npm run gate:milestone`
-- **Status:** NOT_STARTED
+- **Status:** IN_PROGRESS (opening from recon/wave1-aud020-census.md;
+  reproduction-first)
 
 ### M6 — Cross-phase audit, full certification, C-00 closure
 

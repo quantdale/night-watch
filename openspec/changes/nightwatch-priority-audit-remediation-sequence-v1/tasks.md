@@ -64,11 +64,13 @@
   firewall over all five artifact kinds reusing containsPrivatePayload v2
   + privateKeySensitivity; verify-then-tighten transition; publishJson
   private-equivalent primitive; shared KNOWN_RUN_FAILURE_REASONS]
-- [ ] 5.3 Writer census complete; privacy mutations PASS; `gate:dev` +
+- [x] 5.3 Writer census complete; privacy mutations PASS; `gate:dev` +
   `gate:milestone` PASS; coherent checkpoint; update the remediation change
-  tasks from evidence. [census complete; mutations HC-121..HC-129 9/9
-  DETECTED; remediation tasks.md reconciled from evidence; checkpoint gates
-  run for this commit — receipts in the umbrella STATE validation ledger]
+  tasks from evidence. [COMPLETE: writer census 22/8/9 ok; mutations
+  HC-121..HC-129 9/9 DETECTED (plus checkPrivateSurface 11/11); gate:dev
+  PASS; gate:milestone PASS twelve steps exit=0 at `5e2a0357`; remediation
+  tasks.md reconciled from evidence; receipts in the umbrella STATE
+  validation ledger]
 
 ## 6. Phase 5 — NW-AUD-020 semantic request admission
 
