@@ -331,6 +331,14 @@ function readFindingsSnapshot(root: string): FindingsAuthoritySnapshot {
       }
       let raw: unknown;
       try { raw = JSON.parse(read.text) as unknown; } catch { reasons.push('FINDINGS_PARTIAL_CORRUPTION'); continue; }
+      // NW-AUD-019 reader independence: the text screen above is
+      // defense-in-depth over serialized bytes and cannot see a sensitive
+      // key hidden behind JSON escapes (`"tok\u0065n"`) — the parsed graph
+      // must be structurally revalidated before anything reads it.
+      if (containsStructuralPrivateShape(raw)) {
+        reasons.push('FINDINGS_PRIVACY_BLOCKED');
+        continue;
+      }
       const candidate = dossierCandidate(raw, fileName);
       if (!candidate.dossierLike) continue;
       const result = validateArtifact('dossier', candidate.value);

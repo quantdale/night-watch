@@ -22,11 +22,13 @@ import {
   readDataFile,
   gitFiles,
 } from '../kernel.mjs';
+import { buildPrivateConsumerCensus } from '../../privateConsumerCensus.mjs';
 
 export function checkPrivateSurface() {
   // NW-AUD-019 — structural privacy is the primary admission authority.
   const screeningCode = read('src/core/policy/privateScreening.ts');
   const artifactsCode = read('src/core/policy/privateArtifacts.ts');
+  const findingsAuthorityCode = read('src/controlCenter/authorities/findingsAuthority.ts');
   if (!/containsStructuralPrivateShape|findStructuralPrivateFailure/.test(screeningCode)) {
     fail('private screening module must expose structural private-shape detection (NW-AUD-019)');
   }
@@ -36,11 +38,71 @@ export function checkPrivateSurface() {
   if (!/containsPrivatePayload\(/.test(artifactsCode)) {
     fail('private artifact store must admit through containsPrivatePayload (structural+text), not text-only (NW-AUD-019)');
   }
-  // Labeled text defense must accept optional JSON quotes between label and separator.
+  // Labeled text defense must accept optional JSON quotes between label and
+  // separator AND the closed compound-identity suffix class (HC-113 quotes,
+  // HC-120 compound labels; both anchor on this exact flat form).
   {
     const flat = screeningCode.replace(/\s+/g, '');
-    if (!flat.includes('authorization)["\']?') && !flat.includes(`authorization)["']?`)) {
-      fail('PRIVATE_VALUE_RE must allow optional quotes between label and separator (NW-AUD-019)');
+    if (!flat.includes('authorization)(?:[_-]?(?:id|ids|name|address|group|key|alias|s))?["\']?') && !flat.includes(`authorization)(?:[_-]?(?:id|ids|name|address|group|key|alias|s))?['"]?`)) {
+      fail('PRIVATE_VALUE_RE must allow optional quotes and compound identity suffixes between label and separator (NW-AUD-019)');
+    }
+  }
+  // NW-AUD-019 — the compound identity suffix vocabulary is the structural
+  // half of the same protection (`billing_group_id`, `payer_id`, `tokens`).
+  if (!/SENSITIVE_KEY_SUFFIXES/.test(screeningCode)) {
+    fail('private screening must declare the closed compound identity suffix vocabulary (NW-AUD-019)');
+  }
+  // NW-AUD-019 — the structural walk must RECURSE: a nested sensitive key is
+  // the whole quoted/nesting bypass class, so a top-only walk fails here (HC-114).
+  if (!/walk\(child, depth \+ 1\)/.test(screeningCode)) {
+    fail('structural private walk must recurse into nested values (NW-AUD-019 totality)');
+  }
+  // NW-AUD-019 — text defense canonicalizes (NFKC + zero-width strip) so
+  // fullwidth/escaped labels still reach the tripwires. Counted, not sampled:
+  // the definition plus BOTH screen call sites must survive (HC-117).
+  if (((screeningCode.match(/canonicalizePrivateText\(/g) ?? []).length < 3)
+    || !/key\.normalize\('NFKC'\)/.test(screeningCode)) {
+    fail('private text defense must canonicalize through NFKC before screening (NW-AUD-019)');
+  }
+  // NW-AUD-019 — reader independence on BOTH readers: the findings authority
+  // must structurally revalidate the PARSED graph (HC-115) and the run-evidence
+  // reader must structurally revalidate parsed JSON (HC-118); a JSON-escaped
+  // sensitive key survives any regex over the raw bytes.
+  if (!/containsStructuralPrivateShape\(raw\)/.test(findingsAuthorityCode)) {
+    fail('findings authority must structurally revalidate parsed JSON (NW-AUD-019 reader independence)');
+  }
+  if (!/containsStructuralPrivateShape\(parsedValue\)/.test(read('src/controlCenter/authorities/runEvidenceReader.ts'))) {
+    fail('run-evidence reader must structurally revalidate parsed JSON (NW-AUD-019 reader independence)');
+  }
+  // NW-AUD-019 — total private-payload consumer census. Every screening /
+  // store writer / store reader in the repository must classify under the
+  // closed registry; unknown consumers, stale roots, duplicate claims,
+  // capability bypasses and an empty census all fail closed (HC-116).
+  {
+    const consumerFiles = gitFiles()
+      .filter((file) => /\.(?:ts|mjs)$/.test(file))
+      .filter((file) => !file.endsWith('.d.ts') && !file.endsWith('.d.mts'));
+    const census = buildPrivateConsumerCensus(consumerFiles.map((file) => ({ file, source: read(file) })));
+    for (const violation of census.violations) {
+      fail(`private consumer census ${violation.code}: ${violation.file} :: ${violation.detail}`);
+    }
+    // Floors are "discovery is broken rather than the repository clean":
+    // current truth is 40/14/10, so a collapse to these floors is a broken
+    // scanner, not a legitimately emptied repository.
+    if (census.consumerCount < 10) {
+      fail(`private consumer census found only ${census.consumerCount} consumers; discovery is broken rather than the repository clean`);
+    }
+    if (census.productionConsumerCount < 8) {
+      fail(`private consumer census found only ${census.productionConsumerCount} production consumers`);
+    }
+    if (census.writerCount < 6) {
+      fail(`private consumer census found only ${census.writerCount} production writers`);
+    }
+    if (census.screenCallCount < 5) {
+      fail(`private consumer census found only ${census.screenCallCount} screening call sites`);
+    }
+    if (!/^sha256:[0-9a-f]{24}$/.test(census.digest)) {
+      fail('private consumer census digest is malformed');
     }
   }
   const tracked = gitFiles();

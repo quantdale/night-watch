@@ -132,6 +132,26 @@ test.describe('Control Center bounded run-evidence reader', () => {
     expect(empty.generation).toMatch(/^runs:sha256:[0-9a-f]{24}$/);
   });
 
+  test('NW-AUD-019: a JSON-escaped sensitive key in a manifest is refused structurally', () => {
+    // Text defense over the raw bytes cannot see `tok\\u0065n`; only the
+    // structural revalidation of the parsed manifest (HC-118) can. Without
+    // it, parseManifest ignores the unknown key and the run is ADMITTED
+    // carrying a concrete token value.
+    const directory = writeRun(root, 'escaped-run');
+    const manifestPath = path.join(directory, 'manifest.json');
+    const original = fs.readFileSync(manifestPath, 'utf8');
+    const tampered = original.replace('}', ',"tok\\u0065n":"ordinaryplaintexttoken"}');
+    expect(tampered).not.toBe(original);
+    expect(tampered).not.toMatch(/token["']?\s*:/);
+    fs.writeFileSync(manifestPath, tampered);
+
+    const snapshot = createRunEvidenceReaderForTests(root).snapshot();
+    expect(snapshot.state).toBe('UNKNOWN');
+    expect(snapshot.records).toHaveLength(0);
+    expect(snapshot.reasonCodes).toContain('RUN_EVIDENCE_PRIVACY_BLOCKED');
+    expect(JSON.stringify(snapshot)).not.toContain('ordinaryplaintexttoken');
+  });
+
   test('keeps valid records visible but marks partial corruption as UNKNOWN', () => {
     writeRun(root, 'valid-run');
     const broken = writeRun(root, 'broken-run');

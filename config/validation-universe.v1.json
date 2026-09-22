@@ -2,7 +2,7 @@
   "schemaVersion": "nightwatch.validation-universe.v1",
   "definitionName": "Nightwatch validation universe classification (NW-08)",
   "note": "Every discovered executable test or check belongs to exactly one class. AUTHORITATIVE_GATE is DERIVED from what the required gate lanes actually select and is therefore not declarable here; every other discovered file must appear below exactly once, with the reason it is not in the gate and the evidence lane that does cover it. A newly added test that is in no lane and no class fails the gate rather than joining the repository silently.",
-  "inventoryDigest": "sha256:3a763aaf1dd9d7cb8c66b1c9",
+  "inventoryDigest": "sha256:b230e03fe9b583d2e6381d6e",
   "classes": {
     "FULL_REGRESSION": {
       "reason": "Offline, deterministic suites that the full canonical regression executes. They are not in a required gate lane because the authoritative gate is bounded for CI runtime; leaving them unclassified is what made the gap invisible.",
@@ -77,6 +77,7 @@
         "tests/unit/phase6Data.test.ts",
         "tests/unit/planExplainCoherence.test.ts",
         "tests/unit/preFixSource.test.ts",
+        "tests/unit/privateConsumerCensus.test.ts",
         "tests/unit/privateStructuralScreening.test.ts",
         "tests/unit/productionCompletionLaneState.test.ts",
         "tests/unit/productionCompletionOpenWork.test.ts",
@@ -233,6 +234,7 @@
         "bin/lib/openspec-ledger.mjs",
         "bin/lib/operator-cli.mjs",
         "bin/lib/operator-command-listing.mjs",
+        "bin/lib/privateConsumerCensus.mjs",
         "bin/lib/programme-state.mjs",
         "bin/lib/semantic-skip-policy.mjs",
         "bin/lib/session-authority.mjs",

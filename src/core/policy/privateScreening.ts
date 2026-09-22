@@ -15,12 +15,14 @@ export const SECRET_SHAPE_RE =
 /** Canonical Nightwatch privacy sentinel tokens. */
 export const PRIVATE_SENTINEL_RE = /(?:CUSTOMER_SENTINEL|ACCOUNT_SENTINEL|EMAIL_SENTINEL|COST_SENTINEL|TOKEN_SENTINEL)/i;
 /**
- * Labeled raw private values. Accepts optional JSON quotes between the label
- * and the separator so `{"token":"..."}` is screened as text defense-in-depth.
- * Structure remains the primary authority for object graphs.
+ * Labeled raw private values (text defense-in-depth). Accepts optional JSON
+ * quotes between the label and the separator, plus the closed identity-suffix
+ * class (`billing_group_id`, `email_address`, `tokens`, …) so a compound label
+ * cannot dodge the tripwire. Structure remains the primary authority for
+ * object graphs.
  */
 export const PRIVATE_VALUE_RE =
-  /(?:(?:customer|account)(?:[_-]?id)?|billing[_-]?group|payer|cost|amount|email|cookie|token|password|secret|authorization)["']?\s*[:=]\s*["']?[A-Za-z0-9@._:+/=-]{6,}/i;
+  /(?:customer|account|payer|email|cookie|token|password|secret|billing[_-]?group|api[_-]?key|cost|amount|authorization)(?:[_-]?(?:id|ids|name|address|group|key|alias|s))?["']?\s*[:=]\s*(?:\[\s*)?["']?[A-Za-z0-9@._:+/=-]{6,}/i;
 
 /**
  * Exact sensitive object keys (normalized: lowercase, separators stripped).
@@ -36,6 +38,18 @@ export const SENSITIVE_PRIVATE_KEYS: ReadonlySet<string> = new Set([
 
 /** Keys blocked only when the value is a non-number (identity-shaped). */
 export const SENSITIVE_NUMERIC_OK_KEYS: ReadonlySet<string> = new Set(['cost', 'amount']);
+
+/**
+ * Closed identity-suffix vocabulary. A sensitive base plus one of these
+ * suffixes (after separator stripping) is itself sensitive, so compound keys
+ * like `billing_group_id`, `payer_id`, `email_address`, `customer_name`,
+ * `account_alias` or `tokens` are refused as structural privacy failures.
+ * Suffixes outside this set (e.g. `author`, `authorization`) stay non-sensitive.
+ */
+export const SENSITIVE_KEY_SUFFIXES: ReadonlySet<string> = new Set([
+  '', 's', 'id', 'ids', 'name', 'names', 'address', 'addresses',
+  'group', 'groups', 'key', 'keys', 'alias', 'aliases',
+]);
 
 export const PRIVATE_STRUCTURE_BOUNDS = Object.freeze({
   maxDepth: 32,
@@ -54,12 +68,35 @@ export type PrivateStructureFailure =
   | 'ACCESSOR_PROPERTY';
 
 function normalizeKey(key: string): string {
-  return key.toLowerCase().replace(/[_\-\s]/g, '');
+  // NFKC first: fullwidth/compatibility forms (`ＴＯＫＥＮ`) fold to ASCII so a
+  // case/separator alias cannot dodge the closed sensitive-key set (NW-AUD-019).
+  return key.normalize('NFKC').toLowerCase().replace(/[_\-\s]/g, '');
+}
+
+/**
+ * Canonical form for TEXT defense: compatibility-normalize, then drop
+ * zero-width/bidi-joiners so `tok\u200Ben` or `ｔｏｋｅｎ` still reach the
+ * credential/token/sentinel tripwires. Applied only inside the bounded text
+ * screens; structure remains the primary authority for object graphs.
+ */
+export function canonicalizePrivateText(text: string): string {
+  return text.normalize('NFKC').replace(/[\u200B-\u200F\u2060\uFEFF]/g, '');
 }
 
 function isSensitiveKey(normalized: string): 'always' | 'non-numeric' | null {
   if (SENSITIVE_PRIVATE_KEYS.has(normalized)) return 'always';
   if (SENSITIVE_NUMERIC_OK_KEYS.has(normalized)) return 'non-numeric';
+  // Compound identity keys: sensitive base + a closed identity suffix.
+  for (const base of SENSITIVE_PRIVATE_KEYS) {
+    if (normalized.startsWith(base) && SENSITIVE_KEY_SUFFIXES.has(normalized.slice(base.length))) {
+      return 'always';
+    }
+  }
+  for (const base of SENSITIVE_NUMERIC_OK_KEYS) {
+    if (normalized.startsWith(base) && SENSITIVE_KEY_SUFFIXES.has(normalized.slice(base.length))) {
+      return 'non-numeric';
+    }
+  }
   return null;
 }
 
@@ -97,11 +134,18 @@ export function findStructuralPrivateFailure(value: unknown): PrivateStructureFa
         // includes Object.create(null) and class instances
         return 'PROTOTYPE_HOSTILE';
       }
-      // Accessor properties are rejected: getters can hide or materialize values.
+      // Accessor properties are rejected: getters can hide or materialize
+      // values. Array indices are NODES, not keys: counting them as keys made
+      // NODE_BUDGET_EXCEEDED unreachable (a wide array always tripped the key
+      // budget first), so key accounting applies to object properties only
+      // while the node budget still bounds every element.
       const descriptors = Object.getOwnPropertyDescriptors(object);
+      const countKeys = !Array.isArray(object);
       for (const [name, descriptor] of Object.entries(descriptors)) {
-        keys += 1;
-        if (keys > PRIVATE_STRUCTURE_BOUNDS.maxKeys) return 'KEY_BUDGET_EXCEEDED';
+        if (countKeys) {
+          keys += 1;
+          if (keys > PRIVATE_STRUCTURE_BOUNDS.maxKeys) return 'KEY_BUDGET_EXCEEDED';
+        }
         if (descriptor.get !== undefined || descriptor.set !== undefined) {
           if (Array.isArray(object) && name === 'length') continue;
           return 'ACCESSOR_PROPERTY';
@@ -120,7 +164,7 @@ export function findStructuralPrivateFailure(value: unknown): PrivateStructureFa
         keys += 1;
         if (keys > PRIVATE_STRUCTURE_BOUNDS.maxKeys) return 'KEY_BUDGET_EXCEEDED';
         const normalized = normalizeKey(key);
-        if (PRIVATE_SENTINEL_RE.test(key)) return 'SENSITIVE_KEY';
+        if (PRIVATE_SENTINEL_RE.test(canonicalizePrivateText(key))) return 'SENSITIVE_KEY';
         const sensitivity = isSensitiveKey(normalized);
         const child = (object as Record<string, unknown>)[key];
         if (sensitivity !== null) {
@@ -147,12 +191,13 @@ export function containsStructuralPrivateShape(value: unknown): boolean {
 
 /** True when `text` carries secret material or a privacy sentinel token. */
 export function containsSecretOrSentinelShape(text: string): boolean {
-  return SECRET_SHAPE_RE.test(text) || PRIVATE_SENTINEL_RE.test(text);
+  const canonical = canonicalizePrivateText(text);
+  return SECRET_SHAPE_RE.test(canonical) || PRIVATE_SENTINEL_RE.test(canonical);
 }
 
 /** True when `text` carries a labeled raw private value (text defense only). */
 export function containsLabeledPrivateValue(text: string): boolean {
-  return PRIVATE_VALUE_RE.test(text);
+  return PRIVATE_VALUE_RE.test(canonicalizePrivateText(text));
 }
 
 /**

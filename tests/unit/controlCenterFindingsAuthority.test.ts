@@ -189,6 +189,29 @@ test.describe('Control Center owner-local findings authority', () => {
     fs.rmSync(parent, { recursive: true, force: true });
   });
 
+  test('NW-AUD-019: a JSON-escaped sensitive key is refused structurally, not as a schema error', () => {
+    // The raw file bytes carry `tok\u0065n`, which no regex over the text can
+    // match; only structural validation of the PARSED graph sees `token`.
+    // Reader independence (HC-115): without it this file degrades to a
+    // schema refusal — or worse, admission — instead of PRIVACY_BLOCKED.
+    const root = tempRoot();
+    try {
+      const escaped = path.join(root, 'candidate-escaped.json');
+      const raw = `{"schemaVersion":"${DOSSIER_VERSION}","tok\\u0065n":"ordinaryplaintexttoken"}`;
+      fs.writeFileSync(escaped, raw, { encoding: 'utf8', mode: 0o600 });
+      fs.chmodSync(escaped, 0o600);
+      // Text defense alone cannot see the escaped label.
+      expect(raw).not.toMatch(/token["']?\s*:/);
+      const snapshot = createFindingsAuthorityForTests(root).snapshot();
+      expect(snapshot.state).toBe('UNKNOWN');
+      expect(snapshot.reasonCodes).toContain('FINDINGS_PRIVACY_BLOCKED');
+      expect(snapshot.dossiers).toHaveLength(0);
+      expect(JSON.stringify(snapshot)).not.toContain('ordinaryplaintexttoken');
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   test('collector shares the findings authority snapshot and keeps UNKNOWN explicit', async () => {
     const root = tempRoot();
     try {

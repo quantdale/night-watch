@@ -184,7 +184,7 @@ test.describe('evidence retention CLI', () => {
   }
 
   test('status over the real repository store is read-only and removes nothing', () => {
-    const before = fs.readdirSync(path.join(REPO_ROOT, 'artifacts')).length;
+    const before = fs.readdirSync(path.join(REPO_ROOT, 'artifacts'));
     const result = run(REPO_ROOT, ['status', '--json']);
     expect(result.status).toBe(0);
     const report = JSON.parse(result.stdout);
@@ -192,7 +192,13 @@ test.describe('evidence retention CLI', () => {
     expect(report.mode).toBe('STATUS');
     expect(report.result).toBe('PRESERVED');
     expect(report).not.toHaveProperty('removalResults');
-    expect(fs.readdirSync(path.join(REPO_ROOT, 'artifacts')).length).toBe(before);
+    // Removal-direction proof, concurrency-safe: every entry present before
+    // must still be present after. Exact COUNT equality is not assertable
+    // while sibling lanes legitimately CREATE fixture runs in artifacts/;
+    // additions never undermine the property under test (status removes
+    // nothing), deletions always do.
+    const after = new Set(fs.readdirSync(path.join(REPO_ROOT, 'artifacts')));
+    for (const entry of before) expect(after.has(entry)).toBe(true);
   });
 
   test('plan mode is a dry run that still removes nothing', () => {

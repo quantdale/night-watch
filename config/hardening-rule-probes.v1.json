@@ -128,8 +128,8 @@
         "ops": [
           {
             "file": "src/core/policy/privateScreening.ts",
-            "search": "authorization)[\"']?",
-            "replace": "authorization)",
+            "search": "authorization)(?:[_-]?(?:id|ids|name|address|group|key|alias|s))?[\"']?",
+            "replace": "authorization)(?:[_-]?(?:id|ids|name|address|group|key|alias|s))?",
             "all": true
           }
         ]
@@ -146,6 +146,83 @@
             "file": "src/core/policy/privateArtifacts.ts",
             "search": "import { containsPrivatePayload, containsPrivatePayloadShape } from './privateScreening';",
             "replace": "import { containsPrivatePayloadShape } from './privateScreening';"
+          }
+        ]
+      },
+      {
+        "id": "HC-114",
+        "ops": [
+          {
+            "file": "src/core/policy/privateScreening.ts",
+            "search": "const failure = walk(child, depth + 1);",
+            "replace": "const failure = null;"
+          }
+        ]
+      },
+      {
+        "id": "HC-115",
+        "ops": [
+          {
+            "file": "src/controlCenter/authorities/findingsAuthority.ts",
+            "search": "if (containsStructuralPrivateShape(raw)) {",
+            "replace": "if (raw === null) {"
+          }
+        ]
+      },
+      {
+        "id": "HC-116",
+        "ops": [
+          {
+            "file": "bin/lib/privateConsumerCensus.mjs",
+            "search": "{ root: 'src/core/reviewStore/', klass: 'STORE_WRITER', capabilities: ['write', 'read'] },",
+            "replace": "{ root: 'src/core/reviewStoreMISSING/', klass: 'STORE_WRITER', capabilities: ['write', 'read'] },"
+          }
+        ]
+      },
+      {
+        "id": "HC-117",
+        "ops": [
+          {
+            "file": "src/core/policy/privateScreening.ts",
+            "search": "canonicalizePrivateText(text)",
+            "replace": "text",
+            "all": true
+          },
+          {
+            "file": "src/core/policy/privateScreening.ts",
+            "search": "key.normalize('NFKC')",
+            "replace": "key"
+          }
+        ]
+      },
+      {
+        "id": "HC-118",
+        "ops": [
+          {
+            "file": "src/controlCenter/authorities/runEvidenceReader.ts",
+            "search": "if (containsStructuralPrivateShape(parsedValue)) return { kind: 'PRIVACY' };",
+            "replace": "if (false) return { kind: 'PRIVACY' };"
+          }
+        ]
+      },
+      {
+        "id": "HC-119",
+        "ops": [
+          {
+            "file": "src/core/policy/privateScreening.ts",
+            "search": "SENSITIVE_KEY_SUFFIXES",
+            "replace": "SENSITIVE_KEY_SUFFIX_REMOVED",
+            "all": true
+          }
+        ]
+      },
+      {
+        "id": "HC-120",
+        "ops": [
+          {
+            "file": "src/core/policy/privateScreening.ts",
+            "search": "authorization)(?:[_-]?(?:id|ids|name|address|group|key|alias|s))?",
+            "replace": "authorization)"
           }
         ]
       }

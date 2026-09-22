@@ -3,8 +3,26 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { expect, test } from '@playwright/test';
+import { currentCheckoutState } from '../../src/core/provenance';
 
 const CLI = path.resolve(process.cwd(), 'bin', 'selfdev-adopt-sandbox.mjs');
+
+/**
+ * The trust gate (`assertClean` over SELFDEV_AUTHORITATIVE_PATHS) is
+ * deliberately evaluated BEFORE any artifact/plan lookup, so the CLI's error
+ * precedence depends on checkout cleanliness. Branch on the PRODUCT'S OWN
+ * check — never a copied path list — so both contracts are asserted truthfully
+ * on any tree: dirty => provenance refusal wins; clean => not-found wins.
+ */
+function authoritativeSourceState(): 'CLEAN' | 'DIRTY' {
+  try {
+    currentCheckoutState({ repositoryRoot: process.cwd() });
+    return 'CLEAN';
+  } catch (error) {
+    if (String((error as Error).message).includes('AUTHORITATIVE_SOURCE_DIRTY')) return 'DIRTY';
+    throw error;
+  }
+}
 
 function withPrivateRoot<T>(fn: (root: string) => T): T {
   // Keep the synthetic injected root under the operator home (not /tmp): the
@@ -66,7 +84,14 @@ test('inspect on a missing exact artifact ID fails closed with no write', () => 
   withPrivateRoot((privateRoot) => {
     const result = run(['inspect', '--artifact-id', `session:sha256:${'a'.repeat(64)}`], privateRoot);
     expect(result.status).toBe(1);
-    expect(result.stderr).toContain('SELFDEV_ARTIFACT_NOT_FOUND');
+    if (authoritativeSourceState() === 'DIRTY') {
+      // Trust-gate precedence: on a dirty authoritative checkout the CLI must
+      // refuse with the provenance error and never reach the lookup path.
+      expect(result.stderr).toContain('SELFDEV_AUTHORITATIVE_SOURCE_DIRTY');
+      expect(result.stderr).not.toContain('SELFDEV_ARTIFACT_NOT_FOUND');
+    } else {
+      expect(result.stderr).toContain('SELFDEV_ARTIFACT_NOT_FOUND');
+    }
     expect(fs.existsSync(privateRoot) ? fs.readdirSync(privateRoot) : []).toEqual([]);
   });
 });
@@ -123,6 +148,11 @@ test('run against a missing exact plan ID fails closed with no write', () => {
   withPrivateRoot((privateRoot) => {
     const result = run(['run', '--plan-id', `adoption-plan:sha256:${'c'.repeat(64)}`, '--confirm', 'SANDBOX_ONLY'], privateRoot);
     expect(result.status).toBe(1);
-    expect(result.stderr).toContain('SELFDEV_SANDBOX_PLAN_NOT_FOUND');
+    if (authoritativeSourceState() === 'DIRTY') {
+      expect(result.stderr).toContain('SELFDEV_AUTHORITATIVE_SOURCE_DIRTY');
+      expect(result.stderr).not.toContain('SELFDEV_SANDBOX_PLAN_NOT_FOUND');
+    } else {
+      expect(result.stderr).toContain('SELFDEV_SANDBOX_PLAN_NOT_FOUND');
+    }
   });
 });
