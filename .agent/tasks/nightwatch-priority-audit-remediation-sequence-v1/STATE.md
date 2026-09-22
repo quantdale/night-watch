@@ -11,13 +11,16 @@ Last substantive checkpoint SHA: 83a1236ade1db8afbd7321054ec75c8b6599d471
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-priority-audit-remedi-0e17af9c
-Last checkpoint: 2026-09-22 — M3 Phase 3 NW-AUD-019 COMPLETE at
-`83a1236a`. gate:dev PASS; gate:milestone PASS (wall=1643.3s, all twelve
-steps exit=0 on the clean checkpoint incl. hardening-rules full probe
-campaign; affected 389; shard exit statuses 0). Structural screening totals:
-compound-key regression closed, reader independence (HC-115/118),
-consumer census 40/14/10 digest-bound, probes HC-005+HC-111..120 11/11
-DETECTED. Phase 4 NW-AUD-018 opening from the persisted wave-1 census.
+Last checkpoint: 2026-09-22 — M4 NW-AUD-018 CORE at `40962149`:
+proven route identity (`nightwatch.proven-route-table` v1) + verify-then-
+tighten mode transition + manifest key/sanitize guards; gate:dev PASS
+(all steps exit=0; affected 390; shard exits 0). M3 remains the validated
+substantive anchor at `83a1236a` (gate:milestone receipt); M4's milestone
+gate runs at M4 completion. Remaining M4: total authenticated writer
+census + one final typed persistence firewall (RunRecorder chokepoints,
+proxy.jsonl/repositories/finalize DTOs, external bypass writers incl.
+tests/manual), publication-primitives reuse, NW-AUD-018 probes,
+remediation tasks.md reconciliation, gate:milestone.
 
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
@@ -64,8 +67,26 @@ NW-AUD-018 design.
 
 ## Work In Progress
 
-M4 Phase 4: NW-AUD-018 defects REPRODUCED live at `bc5065f1` (synthetic
-values only, no real target):
+M4 partial checkpoint committed (`40962149`); continuing with the writer
+firewall half of NW-AUD-018.
+
+## Exact Next Action
+
+Complete NW-AUD-018's writer half per `recon/wave1-aud018-census.md` §2:
+(1) one final typed persistence firewall at every RunRecorder fs
+chokepoint (proxy.jsonl, writeRepositories, finalize notes/hardFailures —
+reuse `containsPrivatePayload` v2 + closed DTOs compatible with
+runEvidenceReader.parseManifest/parseSummary); (2) syntax-aware total
+authenticated writer census covering the tests/manual bypass writers
+(destinationManifest, phase4 writeAtomic, phase9b/10b/22, phase7) with
+hardening totality like the NW-AUD-014/019 censuses; (3) reuse
+privateArtifacts publication primitives for RunRecorder writes (symlink /
+owner / fsync); (4) NW-AUD-018 probes + remediation tasks.md
+reconciliation; (5) focused suites + gate:dev + gate:milestone, then the
+M4 docs checkpoint mirroring the M3 close (PLAN flip + project-block
+advance). Resume recipe session: `sess-b675db99ff3f`.
+
+## M4 reproduction record (verified live at `bc5065f1`, synthetic values)
 
 1. Lexical route minimization (src/core/safety/redaction.ts
    redactAuthenticatedUrl): `.../customers/acme1234/orders`,
@@ -87,22 +108,15 @@ values only, no real target):
    (:242-244 into authenticated run dirs), phase4 writeAtomic
    (tests/manual/phase4-real-exploration.ts:341,395).
 
+M4 core IMPLEMENTED at `40962149` — defects 1-3 closed and inverted into
+regressions: proven-or-marker URL persistence (`src/core/safety/
+provenRoutes.ts`, schema family `nightwatch.proven-route-table` v1),
+opt-in endpoint-rule binding, verify-then-tighten transition with
+idempotent re-tighten, constructor-manifest sanitization, closed manifest
+keys. Defect 4 (writer firewall/census/publication) remains OPEN.
+
 Wave-1 census: `recon/wave1-aud018-census.md` (writer tables, provenance
-machinery to reuse, affected tests, risks). Implementation next: proven
-route-template identity or categorical unknown-route marker (replace the
-lexical guess), one final typed persistence firewall in RunRecorder reusing
-NW-AUD-019 `containsPrivatePayload` + privateArtifacts publication
-primitives, total writer registry incl. tests/manual bypasses, and a real
-transition-hardening transaction (chmod 0700 + re-harden owned artifacts +
-fail closed on ambiguity) before any post-transition write.
-
-## Exact Next Action
-
-Read `recon/wave1-aud018-census.md` + the NW-AUD-018 proposal/design/tasks
-+ cited live source; reproduce the lexical route-minimization bypass (a
-concrete identifier surviving as a path segment) and at least one recorder
-bypass with focused failing regressions; then implement route-template
-provenance, the writer census/firewall, and transition integrity per design.
+machinery to reuse, affected tests, risks).
 
 ## Files Changed
 
