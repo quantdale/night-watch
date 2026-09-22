@@ -24,6 +24,25 @@ import {
 } from '../kernel.mjs';
 
 export function checkPrivateSurface() {
+  // NW-AUD-019 — structural privacy is the primary admission authority.
+  const screeningCode = read('src/core/policy/privateScreening.ts');
+  const artifactsCode = read('src/core/policy/privateArtifacts.ts');
+  if (!/containsStructuralPrivateShape|findStructuralPrivateFailure/.test(screeningCode)) {
+    fail('private screening module must expose structural private-shape detection (NW-AUD-019)');
+  }
+  if (!/SENSITIVE_PRIVATE_KEYS/.test(screeningCode)) {
+    fail('private screening module must declare a closed sensitive-key set (NW-AUD-019)');
+  }
+  if (!/containsPrivatePayload\(/.test(artifactsCode)) {
+    fail('private artifact store must admit through containsPrivatePayload (structural+text), not text-only (NW-AUD-019)');
+  }
+  // Labeled text defense must accept optional JSON quotes between label and separator.
+  {
+    const flat = screeningCode.replace(/\s+/g, '');
+    if (!flat.includes('authorization)["\']?') && !flat.includes(`authorization)["']?`)) {
+      fail('PRIVATE_VALUE_RE must allow optional quotes between label and separator (NW-AUD-019)');
+    }
+  }
   const tracked = gitFiles();
   for (const file of tracked) {
     if (/^artifacts\/(?!\.gitkeep$)/.test(file)) fail(`runtime artifact is tracked: ${file}`);

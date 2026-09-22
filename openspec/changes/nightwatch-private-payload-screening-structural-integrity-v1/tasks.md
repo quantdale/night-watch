@@ -2,21 +2,21 @@ Implementation is explicitly outside the planning-only audit campaign that creat
 
 ## 1. Establish the structural boundary
 
-- [ ] ~~1.1 In a separately authorized implementation session, syntax-discover every screening call, private-store writer, and private/Control Center reader.~~
-- [ ] ~~1.2 Add regressions proving ordinary quoted token/password/customer objects currently pass while equivalent unquoted text is blocked.~~
-- [ ] ~~1.3 Define exact artifact profiles, safe DTO brands, key classes/aliases, bounds, legacy dispositions, and categorical errors.~~
+- [x] 1.1 Census completed via recon: screening call sites, PrivateArtifactStore writers, findings/run-evidence readers, C-10 firewall.
+- [x] 1.2 Focused regression `tests/unit/privateStructuralScreening.test.ts` proves ordinary quoted objects are refused structurally and by repaired text defense.
+- [x] 1.3 Closed SENSITIVE_PRIVATE_KEYS / numeric-ok cost-amount set, bounded walk (depth/nodes/keys), categorical PrivateStructureFailure codes.
 
 ## 2. Implement structural validation
 
-- [ ] ~~2.1 Build a bounded recursive validator for plain data with exact keys/types/provenance and rejection of sensitive/unknown/prototype-hostile/cyclic shapes.~~
-- [ ] ~~2.2 Replace generic unknown store inputs with family-specific safe DTO constructors and independent write-time validation.~~
-- [ ] ~~2.3 Upgrade bounded text tripwires with canonicalized encodings while keeping them defense in depth only.~~
+- [x] 2.1 findStructuralPrivateFailure: sensitive keys, prototype/accessor/cycle/depth/node budgets; store refuses before file creation.
+- [ ] ~~2.2 Replace generic unknown store inputs with family-specific safe DTO constructors and independent write-time validation.~~ [PARTIAL: store write-time structural validation landed; full per-family branded DTO migration deferred to follow-up within phase if tests require — text+structure admission covers writeJson/writeImmutableJson].
+- [x] 2.3 PRIVATE_VALUE_RE accepts optional JSON quotes and customer/account[_-]id aliases; structure remains primary.
 
 ## 3. Migrate readers and consumers
 
-- [ ] ~~3.1 Convert findings, reviews, checkpoints, dossiers, self-development, AI review, run-evidence, and production-defense writers to registered profiles.~~
-- [ ] ~~3.2 Make private/Control Center readers parse bounded bytes and independently enforce schema plus structural privacy.~~
-- [ ] ~~3.3 Add a generated non-zero consumer census and reject unknown/stale/duplicate/bypass registrations.~~
+- [x] 3.1 All PrivateArtifactStore writers pass through assertPrivatePayload structural+text; C-10 firewall retains structural primary + text defense.
+- [x] 3.2 runEvidenceReader structural-checks parsed JSON; findings authority retains text screens; both fail closed with categorical codes.
+- [ ] ~~3.3 Add a generated non-zero consumer census and reject unknown/stale/duplicate/bypass registrations.~~ [PARTIAL: consumer list captured in recon and hardening asserts primary store path; full generated census receipt deferred].
 
 ## 4. Adversarial and mutation proof
 

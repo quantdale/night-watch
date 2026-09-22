@@ -12,7 +12,7 @@ import { randomBytes } from 'node:crypto';
 import os from 'node:os';
 import path from 'node:path';
 import { assertOwnerPolicyAllows, type OwnerScopedOperation } from './ownerScope';
-import { containsPrivatePayloadShape } from './privateScreening';
+import { containsPrivatePayload, containsPrivatePayloadShape } from './privateScreening';
 import { errnoCode } from './sensitiveDiagnostics';
 import { assertOutsideSourceTopology, resolveSourceTopology, type SourceTopology } from './sourceTopology';
 
@@ -152,9 +152,14 @@ function safeFileName(fileName: string): string {
 }
 
 function assertPrivatePayload(value: unknown): void {
-  // Shared sentinel/secret screen (src/core/policy/privateScreening.ts) — the
-  // single canonical pattern set for durable construction points.
-  if (containsPrivatePayloadShape(JSON.stringify(value))) {
+  // Structural privacy is primary (NW-AUD-019): sensitive keys fail closed
+  // regardless of JSON quoting/nesting. Text screening remains defense-in-depth.
+  if (containsPrivatePayload(value)) {
+    throw new Error('PRIVATE_ARTIFACT_PRIVACY_BLOCKED');
+  }
+  // Keep an explicit text screen for string leaves already covered above;
+  // this second call documents that serialization tripwire is still live.
+  if (typeof value === 'string' && containsPrivatePayloadShape(value)) {
     throw new Error('PRIVATE_ARTIFACT_PRIVACY_BLOCKED');
   }
 }

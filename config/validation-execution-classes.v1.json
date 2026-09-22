@@ -1341,6 +1341,12 @@
         "isolated-scratch"
       ]
     },
+    "tests/unit/privateStructuralScreening.test.ts": {
+      "class": "PARALLEL_SAFE",
+      "signals": [
+        "isolated-scratch"
+      ]
+    },
     "tests/unit/privateTriage.test.ts": {
       "class": "PROCESS_ISOLATED_ONLY",
       "signals": [

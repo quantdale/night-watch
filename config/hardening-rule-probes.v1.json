@@ -111,6 +111,43 @@
             "replace": "artifacts-probe/*"
           }
         ]
+      },
+      {
+        "id": "HC-111",
+        "ops": [
+          {
+            "file": "src/core/policy/privateScreening.ts",
+            "search": "SENSITIVE_PRIVATE_KEYS",
+            "replace": "SENSITIVE_KEYS_REMOVED",
+            "all": true
+          }
+        ]
+      },
+      {
+        "id": "HC-113",
+        "ops": [
+          {
+            "file": "src/core/policy/privateScreening.ts",
+            "search": "authorization)[\"']?",
+            "replace": "authorization)",
+            "all": true
+          }
+        ]
+      },
+      {
+        "id": "HC-112",
+        "ops": [
+          {
+            "file": "src/core/policy/privateArtifacts.ts",
+            "search": "if (containsPrivatePayload(value)) {",
+            "replace": "if (containsPrivatePayloadShape(JSON.stringify(value ?? ''))) {"
+          },
+          {
+            "file": "src/core/policy/privateArtifacts.ts",
+            "search": "import { containsPrivatePayload, containsPrivatePayloadShape } from './privateScreening';",
+            "replace": "import { containsPrivatePayloadShape } from './privateScreening';"
+          }
+        ]
       }
     ],
     "checkAiReviewBoundary": [

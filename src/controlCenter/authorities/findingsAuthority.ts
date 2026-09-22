@@ -13,7 +13,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { prefixedDigest24 } from '../../core/identity/canonicalDigest';
 import { validateArtifact } from '../../core/artifactValidation';
-import { containsPrivatePayloadShape, privateArtifactRoot, assertPrivateArtifactPath } from '../../core/policy';
+import { containsPrivatePayloadShape, containsStructuralPrivateShape, privateArtifactRoot, assertPrivateArtifactPath } from '../../core/policy';
 import { assertNotProductionFindingsRoot } from '../../core/prodEvidence/controlCenterExclusion';
 import { DOSSIER_VERSION, type BugDossier } from '../../core/triage/types';
 import { DOSSIER_VERSION_V2, type BugDossierV2 } from '../../core/triage/dossierV2';

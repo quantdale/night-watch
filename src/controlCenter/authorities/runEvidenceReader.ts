@@ -15,7 +15,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { prefixedDigest24 } from '../../core/identity/canonicalDigest';
-import { containsPrivatePayloadShape } from '../../core/policy/privateScreening';
+import { containsPrivatePayloadShape, containsStructuralPrivateShape } from '../../core/policy/privateScreening';
 import type { RepoSnapshotRecord, RunEvent, RunEventType, RunSeverity, RunSummary } from '../../core/evidence/types';
 import { PROXY_SUMMARY_SCHEMA_VERSION } from '../../proxy/types';
 import type { RunAuthorityInput } from '../adapters/runAdapter';
@@ -231,7 +231,9 @@ function readJson(root: string, file: string, maximumBytes: number): JsonReadRes
   if (containsPrivatePayloadShape(text.text)) return { kind: 'PRIVACY' };
   if (text.text.includes('\0')) return { kind: 'MALFORMED' };
   try {
-    return { kind: 'OK', value: JSON.parse(text.text) as unknown };
+    const parsedValue = JSON.parse(text.text) as unknown;
+    if (containsStructuralPrivateShape(parsedValue)) return { kind: 'PRIVACY' };
+    return { kind: 'OK', value: parsedValue };
   } catch {
     return { kind: 'MALFORMED' };
   }

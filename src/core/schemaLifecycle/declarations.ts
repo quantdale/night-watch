@@ -246,7 +246,7 @@ export const SCHEMA_FAMILIES: readonly SchemaFamilyDeclaration[] = [
   { family: 'nightwatch.pre-fix-source', persisted: false, store: 'IN_MEMORY', currentVersion: 1, versions: { 1: 'CURRENT' }, dispositions: [], note: "" },
   { family: 'nightwatch.private-artifact-policy', persisted: true, store: 'PRIVATE_ARTIFACTS', currentVersion: 1, versions: { 1: 'CURRENT' }, dispositions: [], note: "" },
   { family: 'nightwatch.private-artifact.policy', persisted: false, store: 'IN_MEMORY', currentVersion: 1, versions: { 1: 'CURRENT' }, dispositions: [], note: "" },
-  { family: 'nightwatch.private-screening', persisted: false, store: 'IN_MEMORY', currentVersion: 1, versions: { 1: 'CURRENT' }, dispositions: [], note: "" },
+  { family: 'nightwatch.private-screening', persisted: false, store: 'IN_MEMORY', currentVersion: 2, versions: { 2: 'CURRENT' }, dispositions: [], note: "NW-AUD-019 structural primary; v1 retired with the quote-blind labeled-value regex." },
   { family: 'nightwatch.process-network-containment', persisted: false, store: 'IN_MEMORY', currentVersion: 1, versions: { 1: 'CURRENT' }, dispositions: [], note: "" },
   { family: 'nightwatch.prod-observe-config', persisted: false, store: 'IN_MEMORY', currentVersion: 1, versions: { 1: 'CURRENT' }, dispositions: [], note: "" },
   { family: 'nightwatch.prod-observe-grant', persisted: false, store: 'IN_MEMORY', currentVersion: 1, versions: { 1: 'CURRENT' }, dispositions: [], note: "" },

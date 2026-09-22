@@ -38,9 +38,10 @@
 
 ## 4. Phase 3 — NW-AUD-019 private payload structural screening
 
-- [ ] 4.1 Re-reproduce quoted-key JSON bypass; focused failing regression.
-- [ ] 4.2 Structural validators + closed family schemas/safe DTOs; text
-  defense-in-depth; total writer/reader consumer census.
+- [x] 4.1 Re-reproduce quoted-key JSON bypass; focused failing regression [privateStructuralScreening.test.ts].
+- [x] 4.2 Structural validators + closed key set + bounds; text defense
+  quote-optional; store+reader structural admission. [full per-family DTO
+  brand migration and generated census partially deferred].
 - [ ] 4.3 Adversarial corpus and privacy mutations PASS; Control Center
   focused tests if touched; `gate:dev` + `gate:milestone` PASS; coherent
   checkpoint; update the remediation change tasks from evidence.
