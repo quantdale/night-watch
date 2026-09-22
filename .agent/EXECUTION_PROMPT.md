@@ -1,65 +1,72 @@
-# EXECUTION PROMPT — Session mutation authority binding (NW-AUD-006)
+# EXECUTION PROMPT — Priority audit remediation sequence (umbrella)
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
-Status: COMPLETE
-Campaign ID: nightwatch-session-mutation-authority-binding-v1
-OpenSpec: openspec/changes/nightwatch-session-mutation-authority-binding-v1/
-Planned-From: caab10e91b8d81f2b98597b3c6974db89638ae6c
+Status: IN_PROGRESS
+Campaign ID: nightwatch-priority-audit-remediation-sequence-v1
+OpenSpec: openspec/changes/nightwatch-priority-audit-remediation-sequence-v1/
+Planned-From: 4a3df8cdc776c5ca47a9666f65afbd5c5519f092
 Target Branch: main
-Predecessor Task ID: nightwatch-exhaustive-repository-audit-proposals-v1
+Predecessor Task ID: nightwatch-session-mutation-authority-binding-v1
 Predecessor Status: COMPLETE
 
 ## Mission
 
-Implement and validate the strict-valid remediation change
-`nightwatch-session-mutation-authority-binding-v1`: bind every mutating C-00
-lifecycle command to the invoking checkout and executing CLI, require explicit
-public session/HEAD expectations, admit continuity coherence, serialize
-ownership-record transitions with a bounded lock and revision
-compare-and-swap, restrict command roles, admit integration authority before
-network access, and prove the cross-session and race boundaries non-vacuously.
+Under one owner-authorized C-00 session, serially implement and certify five
+already-planned audit remediations — NW-AUD-010, NW-AUD-014, NW-AUD-019,
+NW-AUD-018, NW-AUD-020 — each proven against live source with focused
+regression and adversarial/mutation proof, then run one cross-phase audit and
+one full certification, close C-00 with `HEAD == origin/main`, enumerate the
+remaining audit backlog without starting it, and stop.
 
 ## Scope
 
-`bin/nightwatch-session.mjs`, the bounded pure admission core
-`bin/lib/session-authority.mjs`, C-00 focused tests, the hardening rule and
-probe registry, operator documentation and recipes, and the active
-task/OpenSpec continuity records.
+Nightwatch source, tests, hardening, schemas, synthetic fixtures, umbrella and
+per-remediation OpenSpec/task continuity, and the C-00 lifecycle from the
+owned worktree `session/nightwatch-priority-audit-remedi-0e17af9c`. Each
+remediation retains its own OpenSpec identity; planning-only task STATEs are
+not rewritten as implementation history.
 
 ## Ordered workstreams
 
-1. M1 — invocation/script binding and exact public expectations.
-2. M2 — active-task/STATE continuity admission.
-3. M3 — transition lock, canonical revision CAS, durable transition, recovery.
-4. M4 — canonical-only start/remove and pre-network integration authority.
-5. M5 — adversarial/race/probe proof, documentation, full validation and
-   integration.
+1. M0 — campaign bootstrap: umbrella continuity, handoff admission, checks
+   green, bootstrap commit.
+2. M1 — Phase 1 NW-AUD-010 release evidence lineage integrity.
+3. M2 — Phase 2 NW-AUD-014 child-process boundary totality.
+4. M3 — Phase 3 NW-AUD-019 private payload structural screening.
+5. M4 — Phase 4 NW-AUD-018 authenticated evidence minimization.
+6. M5 — Phase 5 NW-AUD-020 semantic request admission.
+7. M6 — cross-phase integration audit, single full certification, honest
+   OpenSpec/task closure, C-00 integrate/release/remove, terminal report and
+   stop.
 
 ## Constraints
 
-LOCAL / DETERMINISTIC only, plus the existing explicit fast-forward
-integration push. No Alphaus contact, authenticated runtime, database or
-data-plane access, cloud or infrastructure operation, sibling repository
-mutation, external publication, force push, or history rewrite. Other live
-sessions are never touched. The cooperative confused-deputy boundary is
-stated as such and no hostile same-user isolation is claimed.
+LOCAL / OFFLINE / SYNTHETIC only, plus the explicit fast-forward integration
+push. No Alphaus DEV/NEXT/production contact, authenticated product
+execution, customer data, real credentials, database/data-plane or cloud
+access, sibling repository mutation, external publication, force push, or
+history rewrite. Serial implementation; read-only recon may be parallel;
+one writer. No remediation beyond the five named.
 
 ## Validation
 
-Focused C-00 suites (`workspaceIsolation`, `sessionMutationAuthority`),
-`npm run typecheck`, `npm run typecheck:bin` (reporting lane), `npm run
-hardening:check`, `npm run hardening:rules`, `npm run workspace:check`,
-`npm run agent:check`, `npm run handoff:check`, `npm run project:check`,
-`openspec validate --strict`, `npm run campaign:synthetic`, and the
-applicable `npm run gate:local` groups on the committed checkpoint.
+Focused suites and `npm run gate:dev` during edits; relevant focused suites
+and `npm run gate:milestone` at each phase checkpoint; full certification
+once after Phase 5 and the cross-phase audit (`npm run typecheck`,
+`typecheck:bin`, `hardening:check`, `hardening:rules`, `agent:check`,
+`handoff:check`, `project:check`, `workspace:check`, `session:check`,
+`validation:universe`, strict OpenSpec for all six changes, `npm test`,
+`gate:local`, `gate:clean`, plus affected synthetic/UI/browser lanes).
 
 ## Acceptance / completion gates
 
-- Every delta-spec scenario holds and the adversarial matrix proves refusal
-  before effects with byte-for-byte protected state and zero fetch/push
-  callbacks.
-- The hardening rule and probes HC-090…HC-098 detect each control; removal is
-  non-vacuous and bytes restore exactly.
-- The change is integrated through the documented C-00 lifecycle; the active
-  task closes with a truthful completion snapshot; project truth reflects the
-  new checkpoint.
+- Every phase admission gate holds with evidence before the next phase
+  starts; no skipped phase; no fabricated success.
+- Cross-phase interaction audit passes; single full certification passes
+  without hidden skips or inflated timeouts.
+- All five remediation OpenSpec checklists reconciled from evidence; umbrella
+  report sections A–N complete; safety counts zero; remaining audit backlog
+  enumerated and not started.
+- C-00 integrate with exact expectations, `HEAD == origin/main`, session
+  released and removed, terminal routing correct; verdict exactly COMPLETE
+  (or honest PARTIAL — BLOCKED / FAILED).

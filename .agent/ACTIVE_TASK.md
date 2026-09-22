@@ -1,53 +1,55 @@
 # Active Task
 
-Task ID: nightwatch-session-mutation-authority-binding-v1
-Phase: SESSION_MUTATION_AUTHORITY_BINDING_V1
-Title: Session mutation authority binding implementation
-Status: COMPLETE
-Task directory: .agent/tasks/nightwatch-session-mutation-authority-binding-v1
-Starting SHA: caab10e91b8d81f2b98597b3c6974db89638ae6c
-Last validated implementation SHA: c13544a12d153daec1eb2f3915c94cb74bc93040
-Last checkpoint: M0–M5 complete at validated checkpoint `6a8d6c71`; `gate:local` all twelve groups PASS.
-Current milestone: COMPLETE / STOP — M0–M5 closed; change integrated through C-00
-Next action: STOP — terminal record; only the post-removal documentation routing flip remains.
-Authorization class: NW_AUD_006_IMPLEMENTATION
+Task ID: nightwatch-priority-audit-remediation-sequence-v1
+Phase: PRIORITY_AUDIT_REMEDIATION_SEQUENCE_V1
+Title: Priority audit remediation sequence implementation
+Status: IN_PROGRESS
+Task directory: .agent/tasks/nightwatch-priority-audit-remediation-sequence-v1
+Starting SHA: 4a3df8cdc776c5ca47a9666f65afbd5c5519f092
+Last validated implementation SHA: 4a3df8cdc776c5ca47a9666f65afbd5c5519f092
+Last checkpoint: M0 in progress — owned session `sess-c9a1701b8a56` claimed at base `4a3df8cd`; umbrella continuity and OpenSpec admitted; Phase 1 not started.
+Current milestone: M0 — Campaign bootstrap
+Next action: Run `npm run session:status`, `npm run handoff:check`, `npm run agent:check`, and `npm run project:check`; commit the bootstrap checkpoint; then start Phase 1 NW-AUD-010 with the focused failing regression against live release certification.
+Authorization class: PRIORITY_AUDIT_REMEDIATION_SEQUENCE_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
-STARTING_SHA: caab10e91b8d81f2b98597b3c6974db89638ae6c
-LAST_VALIDATED_IMPLEMENTATION_SHA: c13544a12d153daec1eb2f3915c94cb74bc93040
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: c13544a12d153daec1eb2f3915c94cb74bc93040
+STARTING_SHA: 4a3df8cdc776c5ca47a9666f65afbd5c5519f092
+LAST_VALIDATED_IMPLEMENTATION_SHA: 4a3df8cdc776c5ca47a9666f65afbd5c5519f092
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 4a3df8cdc776c5ca47a9666f65afbd5c5519f092
 LIVE_HEAD_AUTHORITY: GIT
-PHASE_SESSION_MUTATION_AUTHORITY_BINDING_V1_STATUS: COMPLETE
+PHASE_PRIORITY_AUDIT_REMEDIATION_SEQUENCE_V1_STATUS: IN_PROGRESS
 
 ## Mission
 
-Implement and validate the strict-valid OpenSpec change
-`nightwatch-session-mutation-authority-binding-v1`: bind every mutating C-00
-lifecycle command to the invoking checkout and executing CLI, require explicit
-public session and HEAD expectations, admit continuity coherence, serialize
-ownership-record transitions with a bounded lock and revision compare-and-swap,
-restrict command roles, admit integration authority before network access, and
-prove the cross-session and race boundaries non-vacuously.
+Implement and validate five owner-authorized audit remediations in strict
+serial order — NW-AUD-010 release evidence lineage integrity, NW-AUD-014
+child-process boundary totality, NW-AUD-019 private payload structural
+screening, NW-AUD-018 authenticated evidence minimization, NW-AUD-020
+semantic request admission — each with live reproduction, focused regression,
+adversarial/mutation proof, honest OpenSpec/task truth, and a coherent
+committed checkpoint; then run one cross-phase audit and one full
+certification, close C-00, enumerate remaining audit backlog, and stop.
 
 ## Read order
 
-1. `.agent/tasks/nightwatch-session-mutation-authority-binding-v1/{SPEC,PLAN,STATE}.md`
+1. `.agent/tasks/nightwatch-priority-audit-remediation-sequence-v1/{SPEC,PLAN,STATE}.md`
 2. `AGENTS.md` and `docs/CURRENT_STATE.md`
-3. `openspec/changes/nightwatch-session-mutation-authority-binding-v1/`
-4. `bin/nightwatch-session.mjs`, `bin/workspace-integrity.mjs`, focused tests
+3. `openspec/changes/nightwatch-priority-audit-remediation-sequence-v1/`
+4. The active phase's remediation OpenSpec change and cited live source
 
 ## Routing and safety
 
 ```
-CAMPAIGN: nightwatch-session-mutation-authority-binding-v1
+CAMPAIGN: nightwatch-priority-audit-remediation-sequence-v1
 CHILD TASK: NONE
-SESSION WORKTREE: NONE
+SESSION WORKTREE: session/nightwatch-priority-audit-remedi-0e17af9c
 
 IMPLEMENTATION AUTHORIZED:
-  bin/nightwatch-session.mjs, bounded shared C-00 helpers,
-  tests/unit/**, hardening rules and probes, AGENTS/docs/recipe updates,
-  active task and OpenSpec continuity records.
+  Nightwatch source, tests, hardening rules/probes, schemas/configuration,
+  synthetic Git/browser/network fixtures, synthetic private-data markers,
+  local bounded child processes, OpenSpec/task continuity records,
+  C-00 commits and fast-forward integration from this session only.
 
 ALPHAUS DEV / NEXT / PRODUCTION CONTACT:   NOT AUTHORIZED
 AUTHENTICATED ALPHAUS RUNTIME:             NOT AUTHORIZED
