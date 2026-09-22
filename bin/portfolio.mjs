@@ -144,7 +144,7 @@ function compileCore() {
   }
   fs.rmSync(compileRoot, { recursive: true, force: true });
   fs.mkdirSync(compileRoot, { recursive: true });
-  const tscBin = path.join(root, 'node_modules', '.bin', 'tsc');
+  const tscBin = path.join(nightwatchRoot, 'node_modules', '.bin', 'tsc');
   const tscCmd = process.platform === 'win32' ? `${tscBin}.cmd` : tscBin;
   const result = spawnSync(
     tscCmd,
