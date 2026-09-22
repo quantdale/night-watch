@@ -268,7 +268,9 @@ test.describe('RunRecorder', () => {
     const requestData = events.find((event) => event.type === 'request')?.data as Record<string, unknown>;
     expect(requestData.headers).toBeUndefined();
     expect(requestData.body).toBeUndefined();
-    expect(requestData.url).toBe('https://api.example.com/companies/<ID>');
+    // NW-AUD-018: no proven route authority is bound here, so the path
+    // collapses to the categorical marker instead of a guessed segment.
+    expect(requestData.url).toBe('https://api.example.com<UNKNOWN_ROUTE>');
   });
 
   test('authenticated artifacts are owner-only', async () => {

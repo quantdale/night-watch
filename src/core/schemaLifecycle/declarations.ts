@@ -249,6 +249,7 @@ export const SCHEMA_FAMILIES: readonly SchemaFamilyDeclaration[] = [
   { family: 'nightwatch.private-screening', persisted: false, store: 'IN_MEMORY', currentVersion: 2, versions: { 2: 'CURRENT' }, dispositions: [], note: "NW-AUD-019 structural primary; v1 retired with the quote-blind labeled-value regex." },
   { family: 'nightwatch.process-network-containment', persisted: false, store: 'IN_MEMORY', currentVersion: 1, versions: { 1: 'CURRENT' }, dispositions: [], note: "" },
   { family: 'nightwatch.prod-observe-config', persisted: false, store: 'IN_MEMORY', currentVersion: 1, versions: { 1: 'CURRENT' }, dispositions: [], note: "" },
+  { family: 'nightwatch.proven-route-table', persisted: false, store: 'IN_MEMORY', currentVersion: 1, versions: { 1: 'CURRENT' }, dispositions: [], note: "NW-AUD-018 provenance-bound route identity for authenticated URL persistence; an empty table is the fail-closed default and only bind() admits source-proven templates." },
   { family: 'nightwatch.prod-observe-grant', persisted: false, store: 'IN_MEMORY', currentVersion: 1, versions: { 1: 'CURRENT' }, dispositions: [], note: "" },
   { family: 'nightwatch.product-adapter', persisted: false, store: 'IN_MEMORY', currentVersion: 1, versions: { 1: 'CURRENT' }, dispositions: [], note: "" },
   { family: 'nightwatch.production-admission-chain', persisted: false, store: 'IN_MEMORY', currentVersion: 1, versions: { 1: 'CURRENT' }, dispositions: [], note: "" },

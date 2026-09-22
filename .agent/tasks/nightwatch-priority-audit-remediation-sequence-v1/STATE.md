@@ -64,10 +64,37 @@ NW-AUD-018 design.
 
 ## Work In Progress
 
-M4 Phase 4 bootstrap: NW-AUD-018 live reproduction from
-`recon/wave1-aud018-census.md` (lexical URL heuristics, recorder bypass
-sites, route-template authority sources, mode-transition state, affected
-tests) before any authenticated-evidence writes.
+M4 Phase 4: NW-AUD-018 defects REPRODUCED live at `bc5065f1` (synthetic
+values only, no real target):
+
+1. Lexical route minimization (src/core/safety/redaction.ts
+   redactAuthenticatedUrl): `.../customers/acme1234/orders`,
+   `.../accounts/accountabc/invoices`, `.../v1/inv202506/status` all
+   persist VERBATIM (lowercase identifier-like segments defeat
+   looksLikeIdentifier); mixed-case `CUST-9f8e7d` and numeric
+   `481516234299` DO become `<ID>` — the heuristic is shape-guessing, not
+   provenance.
+2. Fallback defect: relative/unparseable inputs (`/relative/path/...`,
+   `not a url at all/...`) get NO path minimization at all — only
+   query/fragment stripping in the parseable branch.
+3. Late transition (runRecorder.enableAuthenticatedEvidence :129-141):
+   flips the flag + appends evidencePolicy only — never chmods this.dir to
+   0700 (mkdir+chmod exist only in the constructor branch :97-98), never
+   retro-sanitizes constructor manifest / pre-transition appends.
+4. Bypass writers confirmed at cited lines: constructor manifest
+   (:99-114), proxy.jsonl raw (:236-242), writeRepositories (:349-354),
+   finalize notes/hardFailures (:377-395); external: destinationManifest
+   (:242-244 into authenticated run dirs), phase4 writeAtomic
+   (tests/manual/phase4-real-exploration.ts:341,395).
+
+Wave-1 census: `recon/wave1-aud018-census.md` (writer tables, provenance
+machinery to reuse, affected tests, risks). Implementation next: proven
+route-template identity or categorical unknown-route marker (replace the
+lexical guess), one final typed persistence firewall in RunRecorder reusing
+NW-AUD-019 `containsPrivatePayload` + privateArtifacts publication
+primitives, total writer registry incl. tests/manual bypasses, and a real
+transition-hardening transaction (chmod 0700 + re-harden owned artifacts +
+fail closed on ambiguity) before any post-transition write.
 
 ## Exact Next Action
 

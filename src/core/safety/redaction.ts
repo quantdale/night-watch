@@ -10,8 +10,15 @@
 //   4. redacts common secret shapes in bodies (Bearer tokens, JWTs, AWS keys,
 //      private keys, JSON secret fields).
 //
+// NW-AUD-018: authenticated URL persistence is provenance-bound. A path
+// survives only as part of a source-proven route template bound through
+// `setProvenRoutes`; everything else reduces to a categorical marker. The
+// layer never guesses that a segment is "safe" by its shape.
+//
 // Redaction is applied by callers; the layer itself performs no I/O.
 // ---------------------------------------------------------------------------
+
+import { ProvenRouteTable, UNKNOWN_ROUTE_MARKER } from './provenRoutes';
 
 export const SENSITIVE_HEADERS: ReadonlySet<string> = new Set([
   'authorization',
@@ -81,6 +88,13 @@ const URL_USERINFO_RE = /^([a-z][a-z0-9+.-]*:\/\/)([^/@\s]+)@/i;
 
 export class RedactionLayer {
   private readonly secrets: Array<{ re: RegExp; value: string }> = [];
+  /** NW-AUD-018: the ONLY authority for persisted route templates. */
+  private provenRoutes: ProvenRouteTable = ProvenRouteTable.empty();
+
+  /** Bind source-proven endpoint authority; replaces any previous table. */
+  setProvenRoutes(table: ProvenRouteTable): void {
+    this.provenRoutes = table;
+  }
 
   /** Register an exact secret value; all future redact* calls scrub it. */
   addSecret(value: string | undefined | null): void {
@@ -141,42 +155,44 @@ export class RedactionLayer {
   }
 
   /**
-   * Metadata-first URL form for authenticated evidence. Query strings and
-   * fragments are removed entirely, and path segments that look like account,
-   * customer, billing-group, invoice, UUID, or opaque resource identifiers are
-   * replaced with a stable placeholder. Low-entropy secrets are never hashed.
+   * Metadata-first URL form for authenticated evidence. Userinfo, query and
+   * fragment never persist. The path persists ONLY as a source-proven route
+   * template bound through {@link setProvenRoutes}; without proof the path
+   * collapses to the categorical unknown-route marker. The layer never
+   * guesses segment safety from its shape (NW-AUD-018).
    */
   redactAuthenticatedUrl(url: string): string {
     const redacted = this.redactText(url);
+    let parsed: URL;
     try {
-      const u = new URL(redacted);
-      u.username = '';
-      u.password = '';
-      u.search = '';
-      u.hash = '';
-      u.pathname = u.pathname
-        .split('/')
-        .map((segment) => {
-          if (segment === '') return '';
-          let decoded = segment;
-          try {
-            decoded = decodeURIComponent(segment);
-          } catch {
-            // Keep the encoded segment; it will be treated conservatively.
-          }
-          const safeRouteWord = /^[a-z][a-z0-9._-]*$/;
-          const looksLikeIdentifier =
-            decoded.includes('@') ||
-            /^\d{4,}$/.test(decoded) ||
-            /^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(decoded) ||
-            (decoded.length >= 8 && /[A-Z]/.test(decoded) && /[a-z]/.test(decoded) && /\d/.test(decoded));
-          return looksLikeIdentifier || !safeRouteWord.test(decoded) ? '<ID>' : decoded;
-        })
-        .join('/');
-      return u.toString().replace(/%3CID%3E/gi, '<ID>');
+      parsed = new URL(redacted);
     } catch {
-      return redacted.replace(/[?#].*$/, '');
+      // NW-AUD-018: an unparseable/relative input carries no provable route
+      // identity at all. The historical fallback persisted the whole path
+      // verbatim; only the categorical marker may persist now.
+      return UNKNOWN_ROUTE_MARKER;
     }
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:'
+      && parsed.protocol !== 'ws:' && parsed.protocol !== 'wss:') {
+      return UNKNOWN_ROUTE_MARKER;
+    }
+    // Userinfo, query and fragment never persist.
+    parsed.username = '';
+    parsed.password = '';
+    parsed.search = '';
+    parsed.hash = '';
+    let pathname: string;
+    try {
+      pathname = decodeURIComponent(parsed.pathname);
+    } catch {
+      pathname = parsed.pathname;
+    }
+    // The root carries no path parameters: provable without a table.
+    if (pathname === '/' || pathname === '') return `${parsed.origin}/`;
+    const template = this.provenRoutes.match(pathname);
+    return template === null
+      ? `${parsed.origin}${UNKNOWN_ROUTE_MARKER}`
+      : `${parsed.origin}${template}`;
   }
 
   /** Redact a headers map in place-safe way (returns a new object). */
@@ -201,6 +217,8 @@ export class RedactionLayer {
   }
 }
 
-export function createRedactionLayer(): RedactionLayer {
-  return new RedactionLayer();
+export function createRedactionLayer(routes?: ProvenRouteTable): RedactionLayer {
+  const layer = new RedactionLayer();
+  if (routes !== undefined) layer.setProvenRoutes(routes);
+  return layer;
 }

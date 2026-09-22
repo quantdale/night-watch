@@ -121,7 +121,9 @@ one full certification, then C-00 integrate/release/remove.
   `gate:dev`/`gate:milestone` PASS; coherent checkpoint.
 - Validation commands: focused private-artifact/privacy suites,
   `npm run gate:dev`, `npm run gate:milestone`
-- **Status:** IN_PROGRESS
+- **Status:** COMPLETE (at `83a1236a`; gate:dev + gate:milestone PASS;
+  probes 11/11; consumer census 40/14/10; evidence in STATE validation
+  ledger)
 
 ### M4 — Phase 4: NW-AUD-018 authenticated evidence minimization
 
@@ -138,7 +140,7 @@ one full certification, then C-00 integrate/release/remove.
   `gate:dev`/`gate:milestone` PASS; coherent checkpoint.
 - Validation commands: focused redaction/evidence suites, `npm run gate:dev`,
   `npm run gate:milestone`
-- **Status:** NOT_STARTED
+- **Status:** IN_PROGRESS
 
 ### M5 — Phase 5: NW-AUD-020 semantic request admission
 

@@ -57,6 +57,7 @@ import { checkProxyHealth, requireProxyRuntime } from '../proxy/runtime';
 import type { ProxyRuntimeState } from '../proxy/types';
 import {
   classifyRippleEndpoint,
+  provenRouteTableFromRules,
   matchRippleEndpoint,
   type EndpointSemanticRule,
 } from '../core/safety/endpointSemantics';
@@ -225,6 +226,16 @@ export async function createNightwatchContext(
     typeof opts.storageStatePath === 'string'
       ? validateStorageStateFile(opts.storageStatePath)
       : resolveStorageStatePath();
+
+  // NW-AUD-018: bind source-proven route authority BEFORE the authenticated
+  // mode can publish URL-bearing evidence, so every persisted URL is
+  // `origin + proven template` or the categorical unknown-route marker —
+  // never a lexically guessed segment. Only an EXPLICIT endpoint registry
+  // rebinds the table: a caller (or test fixture) that bound authority
+  // before context creation keeps it, and the empty default stands.
+  if (opts.endpointRegistry !== undefined) {
+    recorder.bindProvenRoutes(provenRouteTableFromRules(opts.endpointRegistry));
+  }
 
   if (auth !== null) recorder.enableAuthenticatedEvidence();
 

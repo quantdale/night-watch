@@ -21,6 +21,7 @@ import path from 'node:path';
 import type { Page } from '@playwright/test';
 import { createRedactionLayer } from '../safety/redaction';
 import type { RedactionLayer } from '../safety/redaction';
+import type { ProvenRouteTable } from '../safety/provenRoutes';
 import type { RepoSnapshotRecord, RunEvent, RunEventType, RunSeverity, RunSummary } from './types';
 import { readProxyEvents, summarizeProxyEvents } from '../../proxy/events';
 import type { ProxyEvent, ProxyRuntimeState, ProxySummary } from '../../proxy/types';
@@ -65,6 +66,7 @@ export class RunRecorder {
   private readonly nightwatchSha: string | null;
   private readonly now: () => Date;
   private readonly startedAt: string;
+  private evidencePolicyRecorded = false;
   private authenticated: boolean;
   private seq = 0;
   private readonly events: RunEvent[] = [];
@@ -111,7 +113,14 @@ export class RunRecorder {
     if (opts.seed !== undefined) manifest.seed = opts.seed;
     if (opts.nightwatchSha != null) manifest.nightwatchSha = opts.nightwatchSha;
     const manifestFile = path.join(this.dir, 'manifest.json');
-    fs.writeFileSync(manifestFile, JSON.stringify(manifest, null, 2));
+    // NW-AUD-018: in authenticated mode the constructor manifest crosses the
+    // sanitizer before any byte is published — caller-supplied scenario /
+    // environment strings are evidence subject to the same policy as every
+    // later entry, not an exempt preamble.
+    const manifestPayload = this.authenticated
+      ? ((this.sanitizeAuthenticatedData({ manifest }).manifest ?? {}) as Record<string, string>)
+      : manifest;
+    fs.writeFileSync(manifestFile, JSON.stringify(manifestPayload, null, 2));
     this.secureAuthenticatedArtifact(manifestFile);
     if (this.authenticated) this.enableAuthenticatedEvidence();
   }
@@ -127,7 +136,14 @@ export class RunRecorder {
 
   /** Switch the recorder to the irreversible authenticated metadata policy. */
   enableAuthenticatedEvidence(): void {
-    this.authenticated = true;
+    // Hardening runs on EVERY call: before the first flip it is the
+    // verify-then-tighten transaction; afterwards it is an idempotent
+    // re-tighten, so the owner-only world can never regress even if the
+    // filesystem was loosened behind the recorder's back.
+    this.hardenAuthenticatedDirectory();
+    if (!this.authenticated) this.authenticated = true;
+    if (this.evidencePolicyRecorded) return;
+    this.evidencePolicyRecorded = true;
     this.addManifestEntry('evidencePolicy', {
       mode: 'authenticated-metadata-first',
       requestHeaders: false,
@@ -140,6 +156,57 @@ export class RunRecorder {
       screenshots: false,
       traces: false,
     });
+  }
+
+  /**
+   * NW-AUD-018: bind source-proven endpoint authority so authenticated URL
+   * persistence can quote route templates; without this every path reduces
+   * to the categorical unknown-route marker.
+   */
+  bindProvenRoutes(table: ProvenRouteTable): void {
+    this.redaction.setProvenRoutes(table);
+  }
+
+  /**
+   * Two-phase hardening of the run directory for a late authenticated
+   * transition. Verification precedes mutation so an ambiguous tree is
+   * refused rather than left half-hardened.
+   */
+  private hardenAuthenticatedDirectory(): void {
+    const FAIL = 'AUTHENTICATED_EVIDENCE_TRANSITION_UNSAFE';
+    const MAX_FILES = 4096;
+    const MAX_DEPTH = 4;
+    const uid = typeof process.getuid === 'function' ? process.getuid() : undefined;
+    let fileCount = 0;
+    const verify = (target: string, depth: number): void => {
+      let stat: fs.Stats;
+      try {
+        stat = fs.lstatSync(target);
+      } catch {
+        throw new Error(FAIL);
+      }
+      if (stat.isSymbolicLink()) throw new Error(FAIL);
+      if (uid !== undefined && stat.uid !== uid) throw new Error(FAIL);
+      if (stat.isDirectory()) {
+        if (depth > MAX_DEPTH) throw new Error(FAIL);
+        for (const entry of fs.readdirSync(target)) verify(path.join(target, entry), depth + 1);
+        return;
+      }
+      if (!stat.isFile()) throw new Error(FAIL);
+      fileCount += 1;
+      if (fileCount > MAX_FILES) throw new Error('AUTHENTICATED_EVIDENCE_TRANSITION_TOO_LARGE');
+    };
+    const tighten = (target: string): void => {
+      const stat = fs.lstatSync(target);
+      if (stat.isDirectory()) {
+        fs.chmodSync(target, 0o700);
+        for (const entry of fs.readdirSync(target)) tighten(path.join(target, entry));
+      } else {
+        fs.chmodSync(target, 0o600);
+      }
+    };
+    verify(this.dir, 0);
+    tighten(this.dir);
   }
 
   /** URL helper used by observers so authenticated paths are minimized too. */
@@ -189,6 +256,12 @@ export class RunRecorder {
    * decision made by the harness. Deterministic: same inputs, same bytes.
    */
   addManifestEntry(key: string, value: unknown): void {
+    // NW-AUD-018: the key is caller-chosen evidence too — a closed shape in
+    // both modes, never a vehicle for an identifier-bearing or prototype-
+    // hostile name.
+    if (!/^[A-Za-z][A-Za-z0-9._-]{0,63}$/.test(key)) {
+      throw new Error('AUTHENTICATED_MANIFEST_KEY_UNSAFE');
+    }
     const file = path.join(this.dir, 'manifest.json');
     let manifest: Record<string, unknown>;
     try {

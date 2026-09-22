@@ -9,6 +9,7 @@
 // ---------------------------------------------------------------------------
 
 import type { EnvironmentConfig } from '../environment/types';
+import { ProvenRouteTable, safeRuleMarker } from './provenRoutes';
 
 export type EndpointSemanticClassification = 'KNOWN_READ' | 'KNOWN_MUTATION' | 'UNKNOWN';
 
@@ -110,4 +111,30 @@ function isApiUrl(rawUrl: string, env: EnvironmentConfig): boolean {
   } catch {
     return true;
   }
+}
+
+
+/**
+ * NW-AUD-018 — build the proven route table that authenticated URL
+ * persistence may quote. Exact `path` rules persist the path itself;
+ * `pathPattern` rules persist the categorical `<RULE:id>` marker carrying
+ * the proven rule identity — never a concrete matched path. Rules with
+ * neither form, or with an unsafe rule id, fail closed (the rule cannot be
+ * proven and must not silently degrade into a guess).
+ */
+export function provenRouteTableFromRules(
+  registry: readonly EndpointSemanticRule[] = RIPPLE_ENDPOINT_SEMANTIC_REGISTRY,
+): ProvenRouteTable {
+  const inputs = registry.map((rule) => {
+    if (rule.path !== undefined && rule.pathPattern === undefined) {
+      return { pattern: `^${rule.path.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, emit: rule.path };
+    }
+    if (rule.pathPattern !== undefined) {
+      const marker = safeRuleMarker(rule.id);
+      if (marker === null) throw new Error('PROVEN_ROUTE_RULE_ID_UNSAFE');
+      return { pattern: rule.pathPattern, emit: marker };
+    }
+    throw new Error('PROVEN_ROUTE_RULE_SHAPE_INVALID');
+  });
+  return ProvenRouteTable.bind(inputs);
 }

@@ -23,6 +23,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { RunRecorder } from '../../src/core/evidence/runRecorder';
+import { ProvenRouteTable } from '../../src/core/safety/provenRoutes';
 import { resolveScratchPath } from '../../src/core/workspace/ephemeralLayout';
 import { OutboundPolicy } from '../../src/core/safety/outboundPolicy';
 import { runCanary, assertCanary } from '../../src/core/safety/canary';
@@ -159,6 +160,12 @@ test.describe('authenticated storage state is secret material', () => {
       });
       recorder.event({ type: 'start', severity: 'info', message: 'authenticated smoke run' });
       assertCanary(runCanary(new OutboundPolicy(env)));
+      // NW-AUD-018: the fixture's invoices route is source-proven for this
+      // synthetic server, so it persists as `origin + template`; every other
+      // path collapses to the unknown-route marker.
+      recorder.bindProvenRoutes(ProvenRouteTable.bind([
+        { pattern: '^/api/invoices$', emit: '/api/invoices' },
+      ]));
 
       // trace:'on' is requested, but the harness MUST force traces off for
       // authenticated runs (traces can embed cookies/headers unredacted).

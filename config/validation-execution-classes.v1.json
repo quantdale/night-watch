@@ -121,6 +121,12 @@
         "isolated-scratch"
       ]
     },
+    "tests/unit/authenticatedEvidenceMinimization.test.ts": {
+      "class": "PARALLEL_SAFE",
+      "signals": [
+        "isolated-scratch"
+      ]
+    },
     "tests/unit/autonomousFinding.test.ts": {
       "class": "PARALLEL_SAFE",
       "signals": []
