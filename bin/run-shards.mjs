@@ -27,7 +27,7 @@ import { OPERATOR_CLI_SCHEMA, defineOperatorCli, invokedDirectly } from './lib/o
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const CLASSES_PATH = path.join(root, 'config', 'validation-execution-classes.v1.json');
 const WEIGHTS_PATH = path.join(root, 'config', 'shard-weights.v1.json');
-const npx = process.platform === 'win32' ? 'npx.cmd' : 'npx';
+const npx = (() => { const b = path.join(root, 'node_modules', '.bin', 'playwright'); return process.platform === 'win32' ? `${b}.cmd` : b; })();
 
 const CLI_METADATA = {
   schemaVersion: OPERATOR_CLI_SCHEMA,
@@ -49,7 +49,7 @@ const CLI_METADATA = {
 };
 
 function discoverUniverse() {
-  const result = spawnSync(npx, ['playwright', 'test', '--list', '--reporter=json'], {
+  const result = spawnSync(npx, ['test', '--list', '--reporter=json'], {
     cwd: root,
     encoding: 'utf8',
     maxBuffer: 64 * 1024 * 1024,
@@ -111,7 +111,7 @@ function runShard(shard) {
   if (shard.files.length === 0) return Promise.resolve({ id: shard.id, files: 0, digest: shard.digest, exitStatus: 0, wallMs: 0, counts: emptyCounts(), errorCode: 'SHARD_EMPTY_SKIPPED' });
   return new Promise((resolve) => {
     const startedAt = Date.now();
-    const child = spawn(npx, ['playwright', 'test', ...shard.files, '--project=nightwatch', '--workers=1', '--retries=0', `--output=test-results/${shard.id}`], {
+    const child = spawn(npx, ['test', ...shard.files, '--project=nightwatch', '--workers=1', '--retries=0', `--output=test-results/${shard.id}`], {
       cwd: root,
       env: childEnvironment(shard.id),
       stdio: ['ignore', 'pipe', 'pipe'],

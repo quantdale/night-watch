@@ -111,8 +111,8 @@ try {
   // identities the policy compares.
   const skipReportPath = path.join(os.tmpdir(), `nightwatch-semantic-compat-${process.pid}.json`);
   environment.PLAYWRIGHT_JSON_OUTPUT_NAME = skipReportPath;
-  const npx = process.platform === 'win32' ? 'npx.cmd' : 'npx';
-  const result = spawnSync(npx, ['playwright', 'test', ...files, '--project=nightwatch', '--workers=1', '--reporter=list', '--reporter=json'], {
+  const npx = (() => { const b = path.join(root, 'node_modules', '.bin', 'playwright'); return process.platform === 'win32' ? `${b}.cmd` : b; })();
+  const result = spawnSync(npx, ['test', ...files, '--project=nightwatch', '--workers=1', '--reporter=list', '--reporter=json'], {
     cwd: root,
     env: environment,
     encoding: 'utf8',

@@ -55,7 +55,7 @@ const classesPath = path.join(root, 'config', 'validation-execution-classes.v1.j
 const weightsPath = path.join(root, 'config', 'shard-weights.v1.json');
 const SCHEMA_VERSION = 'nightwatch.synthetic-campaign.v1';
 const filePattern = /^tests\/(?:unit|smoke)\/[A-Za-z0-9._/-]+\.test\.ts$/;
-const npx = process.platform === 'win32' ? 'npx.cmd' : 'npx';
+const npx = (() => { const b = path.join(root, 'node_modules', '.bin', 'playwright'); return process.platform === 'win32' ? `${b}.cmd` : b; })();
 
 function fail(code) {
   throw new Error(code);
@@ -116,7 +116,7 @@ function campaignEnvironment(lane) {
 }
 
 function playwrightArguments(fileList, project, outputDir) {
-  return ['playwright', 'test', ...fileList, `--project=${project}`, '--workers=1', '--retries=0', `--output=${outputDir}`];
+  return ['test', ...fileList, `--project=${project}`, '--workers=1', '--retries=0', `--output=${outputDir}`];
 }
 
 function parseCampaignOutput(output, status, maxFailedLocations) {

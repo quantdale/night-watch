@@ -12,6 +12,56 @@
             "replace": "  timeoutProbe: 15 * 60 * 1000,"
           }
         ]
+      },
+      {
+        "id": "HC-106",
+        "ops": [
+          {
+            "file": "bin/lib/childProcessCensus.mjs",
+            "search": "export function buildChildProcessCensus",
+            "replace": "export function buildChildProcessCensusDisabled"
+          }
+        ]
+      },
+      {
+        "id": "HC-110",
+        "ops": [
+          {
+            "file": "bin/lib/hardening/rules/process-and-network.mjs",
+            "search": "buildChildProcessCensus(sources)",
+            "replace": "({ importFileCount: 0, invocationCount: 0, unclassifiedCount: 0, byProfile: Object.fromEntries(EXECUTION_PROFILES.map((p) => [p, 0])), digest: \"sha256:000000000000000000000000\", importFiles: [], invocations: [], unclassified: [] })"
+          }
+        ]
+      },
+      {
+        "id": "HC-107",
+        "ops": [
+          {
+            "file": "bin/lib/hardening/rules/process-and-network.mjs",
+            "search": "if (census.unclassifiedCount !== 0) {",
+            "replace": "if (census.unclassifiedCount === 0) {"
+          }
+        ]
+      },
+      {
+        "id": "HC-109",
+        "ops": [
+          {
+            "file": "bin/gate-topology.mjs",
+            "search": "env: options.env ?? buildChildEnvironment(process.env),",
+            "replace": "env: options.env ?? { ...process.env },"
+          }
+        ]
+      },
+      {
+        "id": "HC-108",
+        "ops": [
+          {
+            "file": "bin/semantic-compat.mjs",
+            "search": "spawnSync(npx, ['test',",
+            "replace": "spawnSync('npx', ['playwright', 'test',"
+          }
+        ]
       }
     ],
     "checkL6ProcessNetworkBoundary": [

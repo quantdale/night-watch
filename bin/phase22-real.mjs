@@ -11,7 +11,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { execFileSync, spawnSync } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { buildChildEnvironment } from './child-environment.mjs';
 import { loadTypeScriptModule as loadRuntimeTypeScriptModule } from './lib/typescript-runtime-loader.mjs';
@@ -44,8 +44,18 @@ function loadTypeScriptModule(file) {
 }
 
 function git(args) {
-  try { return execFileSync('git', args, { cwd: ROOT, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim(); }
-  catch { fail('GIT_METADATA_UNAVAILABLE'); }
+  try {
+    const r = spawnSync('git', args, {
+      cwd: ROOT,
+      encoding: 'utf8',
+      timeout: 60_000,
+      maxBuffer: 4 * 1024 * 1024,
+      stdio: ['ignore', 'pipe', 'ignore'],
+      env: buildChildEnvironment(process.env),
+    });
+    if (r.status !== 0) throw new Error(r.stderr || 'git failed');
+    return (r.stdout ?? '').trim();
+  } catch { fail('GIT_METADATA_UNAVAILABLE'); }
 }
 
 function assertGitAndCi() {
@@ -56,9 +66,25 @@ function assertGitAndCi() {
   const runId = process.env.NIGHTWATCH_PHASE_22_CI_RUN_ID;
   if (runId === undefined || !/^\d+$/.test(runId)) fail('EXACT_GREEN_CI_RUN_ID_REQUIRED');
   try {
-    const run = JSON.parse(execFileSync('gh', ['api', `repos/quantdale/night-watch/actions/runs/${runId}`, '--jq', '{status,conclusion,head_sha}'], { cwd: ROOT, encoding: 'utf8', timeout: 30_000, stdio: ['ignore', 'pipe', 'ignore'] }));
+    const run = JSON.parse((() => {
+      const r = spawnSync('gh', ['api', `repos/quantdale/night-watch/actions/runs/${runId}`, '--jq', '{status,conclusion,head_sha}'], {  cwd: ROOT, encoding: 'utf8', timeout: 30_000, stdio: ['ignore', 'pipe', 'ignore'] ,
+        env: buildChildEnvironment(process.env, {}),
+        maxBuffer: 4 * 1024 * 1024,
+      });
+      if (r.status !== 0) throw new Error(r.stderr || 'gh failed');
+      return r.stdout;
+    })());
     if (run.status !== 'completed' || run.conclusion !== 'success' || run.head_sha !== head) fail('EXACT_GREEN_CI_REQUIRED');
-    const jobs = JSON.parse(execFileSync('gh', ['api', `repos/quantdale/night-watch/actions/runs/${runId}/jobs?per_page=100`, '--jq', '{jobs: [.jobs[] | {status,conclusion,steps}]}'], { cwd: ROOT, encoding: 'utf8', timeout: 30_000, stdio: ['ignore', 'pipe', 'ignore'] }));
+    const jobsResult = spawnSync('gh', ['api', `repos/quantdale/night-watch/actions/runs/${runId}/jobs?per_page=100`, '--jq', '{jobs: [.jobs[] | {status,conclusion,steps}]}'], {
+      cwd: ROOT,
+      encoding: 'utf8',
+      timeout: 30_000,
+      maxBuffer: 4 * 1024 * 1024,
+      stdio: ['ignore', 'pipe', 'ignore'],
+      env: buildChildEnvironment(process.env),
+    });
+    if (jobsResult.status !== 0) throw new Error(jobsResult.stderr || 'gh failed');
+    const jobs = JSON.parse(jobsResult.stdout ?? '{}');
     if (!Array.isArray(jobs.jobs) || jobs.jobs.length === 0 || jobs.jobs.some((job) => job.status !== 'completed' || job.conclusion !== 'success' || !Array.isArray(job.steps) || job.steps.length === 0)) fail('EXTERNAL_CI_STEPS_UNOBSERVABLE');
   } catch (error) {
     if (error instanceof Error && error.message.startsWith('PHASE22_BLOCKED_BEFORE_DEV:')) throw error;
@@ -107,7 +133,14 @@ function currentSourceSnapshot(manifest) {
   const sourceIds = manifest.targets.map((target) => target.source);
   if (sourceIds.length === 0 || sourceIds.some((source) => source.repoId !== 'mobingilabs/ripple-api' || source.sha !== sourceIds[0].sha)) fail('MULTIPLE_OR_UNSUPPORTED_SOURCE_SNAPSHOTS');
   let remoteSha;
-  try { remoteSha = execFileSync('gh', ['api', 'repos/mobingilabs/ripple-api/git/refs/heads/master', '--jq', '.object.sha'], { cwd: ROOT, encoding: 'utf8', timeout: 30_000, stdio: ['ignore', 'pipe', 'ignore'] }).trim(); }
+  try { remoteSha = (() => {
+      const r = spawnSync('gh', ['api', 'repos/mobingilabs/ripple-api/git/refs/heads/master', '--jq', '.object.sha'], {  cwd: ROOT, encoding: 'utf8', timeout: 30_000, stdio: ['ignore', 'pipe', 'ignore'] ,
+        env: buildChildEnvironment(process.env, {}),
+        maxBuffer: 4 * 1024 * 1024,
+      });
+      if (r.status !== 0) throw new Error(r.stderr || 'gh failed');
+      return r.stdout;
+    })().trim(); }
   catch { fail('SOURCE_REMOTE_HEAD_UNAVAILABLE'); }
   if (!/^[0-9a-f]{40}$/.test(remoteSha) || remoteSha !== sourceIds[0].sha) fail('MANIFEST_SOURCE_SHA_STALE');
   let snapshot;

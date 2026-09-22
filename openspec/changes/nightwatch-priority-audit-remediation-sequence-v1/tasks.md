@@ -26,12 +26,15 @@
 
 ## 3. Phase 2 — NW-AUD-014 child-process boundary totality
 
-- [ ] 3.1 Total AST invocation census; zero unknown nodes; closed profiles. [IN_PROGRESS]
-- [ ] 3.2 Close highest-authority leaks (env spread, npx acquisition,
-  unbounded/authenticated launchers); sentinel environment proof.
+- [x] 3.1 Total AST invocation census; zero unknown nodes; closed profiles. [childProcessCensus + checkChildProcessBoundaries; 121 invocations / 0 unclassified]
+- [x] 3.2 Close highest-authority leaks (gate-topology/review-mutation env,
+  portfolio/change-intelligence/run-shards/semantic-compat/campaign-synthetic/
+  gate-topology npx → local bins, phase22-dev stdio inherit → piped+emit);
+  sentinel environment proof via existing childEnvironment tests + census.
 - [ ] 3.3 Timeout/output/stdin/shell/termination tests and hardening probes
   PASS; `gate:dev` + `gate:milestone` PASS; coherent checkpoint; update the
-  remediation change tasks from evidence.
+  remediation change tasks from evidence. [probes HC-001+HC-106..110 6/6;
+  gates pending]
 
 ## 4. Phase 3 — NW-AUD-019 private payload structural screening
 

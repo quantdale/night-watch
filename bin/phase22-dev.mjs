@@ -11,8 +11,9 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { execFileSync, spawnSync } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
 import { loadTypeScriptModule as loadRuntimeTypeScriptModule } from './lib/typescript-runtime-loader.mjs';
+import { buildChildEnvironment, emitChildStdio } from './child-environment.mjs';
 
 const ROOT = process.cwd();
 const WORKSPACE_ROOT = path.resolve(ROOT, '..', '..');
@@ -59,7 +60,15 @@ function safeJson(file) {
 
 function currentNightwatchSha() {
   try {
-    const sha = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: ROOT, encoding: 'utf8' }).trim();
+    const shaResult = spawnSync('git', ['rev-parse', 'HEAD'], {
+    cwd: ROOT,
+    encoding: 'utf8',
+    timeout: 30_000,
+    maxBuffer: 1024 * 1024,
+    stdio: ['ignore', 'pipe', 'pipe'],
+    env: buildChildEnvironment(process.env),
+  });
+  const sha = (shaResult.stdout ?? '').trim();
     if (!/^[0-9a-f]{40}$/.test(sha)) fail('NIGHTWATCH_SHA_UNAVAILABLE');
     return sha;
   } catch { fail('NIGHTWATCH_SHA_UNAVAILABLE'); }
@@ -207,7 +216,17 @@ function preflight(args) {
     journeyApiAdapterCurrent: false,
     ownerPolicyAllows: true,
     noDatabaseOrInfraPath: true,
-    cleanNightwatchGitState: execFileSync('git', ['status', '--porcelain'], { cwd: ROOT, encoding: 'utf8' }).trim() === '',
+    cleanNightwatchGitState: (() => {
+      const r = spawnSync('git', ['status', '--porcelain'], {
+        cwd: ROOT,
+        encoding: 'utf8',
+        timeout: 30_000,
+        maxBuffer: 1024 * 1024,
+        stdio: ['ignore', 'pipe', 'pipe'],
+        env: buildChildEnvironment(process.env),
+      });
+      return (r.stdout ?? '').trim() === '';
+    })(),
     manifestFrozen: loaded.frozen === true,
     dryRunPassed: false,
     targetCount: loaded.targets.length,
@@ -233,7 +252,15 @@ function acceptance(args) {
   if (typeof args.manifest !== 'string' || !path.isAbsolute(args.manifest)) fail('FROZEN_MANIFEST_REQUIRED');
   if (!checkStorageStatePath(args['storage-state'])) fail('STORAGE_STATE_PATH_GATE');
   const launcher = path.join(ROOT, 'bin', 'phase22-real.mjs');
-  const child = spawnSync(process.execPath, [launcher, '--env=dev', `--storage-state=${args['storage-state']}`, `--manifest=${args.manifest}`], { cwd: ROOT, stdio: 'inherit' });
+  const child = spawnSync(process.execPath, [launcher, '--env=dev', `--storage-state=${args['storage-state']}`, `--manifest=${args.manifest}`], {
+    cwd: ROOT,
+    encoding: 'utf8',
+    timeout: 15 * 60 * 1000,
+    maxBuffer: 32 * 1024 * 1024,
+    stdio: ['ignore', 'pipe', 'pipe'],
+    env: buildChildEnvironment(process.env),
+  });
+  emitChildStdio(child);
   if (child.error) throw child.error;
   process.exitCode = child.status ?? 1;
 }

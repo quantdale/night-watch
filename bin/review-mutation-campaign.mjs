@@ -22,10 +22,11 @@
  * Local and offline. Reads and writes only this repository's own sources.
  */
 
-import { execFileSync, spawnSync } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { buildChildEnvironment } from './child-environment.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -332,12 +333,18 @@ function writeFile(file, contents) {
 
 /** Run one suite set. Returns true when ALL suites pass. */
 function suitesPass(suites) {
-  const result = spawnSync('npx', ['playwright', 'test', ...suites, '--reporter=line'], {
+  const pwBin = path.join(root, 'node_modules', '.bin', 'playwright');
+  const cmd = process.platform === 'win32' ? `${pwBin}.cmd` : pwBin;
+  const result = spawnSync(cmd, ['test', ...suites, '--reporter=line'], {
     cwd: root,
     encoding: 'utf8',
     timeout: 900_000,
-    env: { ...process.env, CI: '1' },
+    maxBuffer: 64 * 1024 * 1024,
+    stdio: ['ignore', 'pipe', 'pipe'],
+    env: buildChildEnvironment(process.env, { NIGHTWATCH_GATE_ENVIRONMENT: 'REVIEW_MUTATION' }),
   });
+  if (result.stdout) process.stdout.write(result.stdout);
+  if (result.stderr) process.stderr.write(result.stderr);
   return result.status === 0;
 }
 
@@ -407,7 +414,15 @@ function main() {
   }
 
   // Restore drift: the tree must be byte-identical to where it started.
-  const status = execFileSync('git', ['status', '--porcelain'], { cwd: root, encoding: 'utf8' }).trim();
+  const statusResult = spawnSync('git', ['status', '--porcelain'], {
+    cwd: root,
+    encoding: 'utf8',
+    timeout: 30_000,
+    maxBuffer: 1024 * 1024,
+    stdio: ['ignore', 'pipe', 'pipe'],
+    env: buildChildEnvironment(process.env),
+  });
+  const status = (statusResult.stdout ?? '').trim();
   const restoreDrift = status === '' ? 'NONE' : status;
 
   const receipt = {

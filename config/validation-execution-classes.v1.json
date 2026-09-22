@@ -335,6 +335,10 @@
       "class": "PARALLEL_SAFE",
       "signals": []
     },
+    "tests/unit/childProcessCensus.test.ts": {
+      "class": "PARALLEL_SAFE",
+      "signals": []
+    },
     "tests/unit/ciBlockRecord.test.ts": {
       "class": "PARALLEL_SAFE",
       "signals": []

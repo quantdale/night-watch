@@ -4,15 +4,15 @@ task; none has been performed.
 
 ## 1. Build the authoritative census
 
-- [ ] ~~1.1 In a separately authorized implementation session, AST-discover child-process imports, aliases, namespaces, wrappers, and invocation nodes across tracked production sources.~~
-- [ ] ~~1.2 Emit stable call-site identities/count/digest and compare with the current 18-file rule and runtime invocation census.~~
-- [ ] ~~1.3 Add closed execution-profile schema and fail on unknown, duplicate, unclassified, dynamic, or stale records.~~
+- [x] 1.1 AST/syntax-aware discovery of imports, aliases, namespaces, and invocation nodes via `bin/lib/childProcessCensus.mjs`.
+- [x] 1.2 Stable identities, count, and sha256 digest emitted; compared to the historical 17/18-file launcher list (planning miscount).
+- [x] 1.3 Closed profiles LOCAL_METADATA/OFFLINE_REPOSITORY_TOOL/TEST_LANE/SCOPED_REMOTE_OBSERVER/AUTHENTICATED_CONTAINED/CONTAINED_ENVELOPE; unclassified fails closed.
 
 ## 2. Close highest-authority leaks
 
-- [ ] ~~2.1 Remove full parent-environment spread/default inheritance from gate topology and review mutation; replace `npx` acquisition with exact local tools.~~
-- [ ] ~~2.2 Bound Phase 22 DEV-to-real launch environment, stdio, deadline, buffer, shell, and process-tree termination before authenticated execution.~~
-- [ ] ~~2.3 Scope GitHub tokens only to exact `gh` observers and ensure Git/test/compiler/browser descendants cannot receive them.~~
+- [x] 2.1 gate-topology and review-mutation env spreads removed; npx acquisition replaced with node_modules/.bin across portfolio, change-intelligence, campaign-synthetic, run-shards, semantic-compat, gate-topology lanes.
+- [x] 2.2 phase22-dev acceptance spawn is piped with timeout/maxBuffer/allowlisted env and emitChildStdio; git/gh helpers bounded.
+- [x] 2.3 gh/git spawn through buildChildEnvironment (no ambient GH_TOKEN inheritance); review-mutation suite runs use allowlisted env only.
 
 ## 3. Convert every remaining call site
 

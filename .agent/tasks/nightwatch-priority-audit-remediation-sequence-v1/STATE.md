@@ -11,11 +11,13 @@ Last substantive checkpoint SHA: 4a3df8cdc776c5ca47a9666f65afbd5c5519f092
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-priority-audit-remedi-0e17af9c
-Last checkpoint: 2026-09-22 — M1 Phase 1 NW-AUD-010 COMPLETE at
-`78483ee8`. gate:dev PASS; gate:milestone PASS (wall 1038.4s, all steps
-exit=0 including project-check on the clean tree); projectState 91/91;
-probes HC-099…HC-105 8/8; hardening:rules 110/110. Phase 2 NW-AUD-014
-opening from the completed child-process census.
+Last checkpoint: 2026-09-22 — M2 Phase 2 NW-AUD-014 implemented and
+gate:dev PASS (affected 387; shards exit=0). Total child-process census
+(bin/lib/childProcessCensus.mjs): 68 import files, 121 invocations, 0
+unclassified, digest sha256 registered in validation-universe; env/npx/stdio
+leaks closed; probes HC-001 + HC-106..110 6/6 detected; typecheck and
+hardening:check PASS. Phase 2 checkpoint commit then gate:milestone pending.
+
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 4a3df8cdc776c5ca47a9666f65afbd5c5519f092
@@ -60,16 +62,14 @@ env + bounds + HC probes.
 
 ## Work In Progress
 
-M2 Phase 2 bootstrap: NW-AUD-014 live reproduction (manual rule vs census)
-and design alignment before any child-process hardening writes.
+NONE — Phase 2 implementation and gate:dev are complete; committing the
+checkpoint and running gate:milestone before closing M2.
 
 ## Exact Next Action
 
-Reproduce NW-AUD-014 on live source: show `checkChildProcessBoundaries`
-covers only 17 files while 51 bin modules import `node:child_process`, with
-gate-topology/review-mutation-campaign/phase22-dev defects still present;
-add a focused failing regression; then implement the total invocation census
-and closed profiles per the NW-AUD-014 design.
+Commit the Phase 2 checkpoint, run `npm run gate:milestone` on the clean
+tree; if PASS mark **M2 — Phase 2** COMPLETE in STATE/PLAN, commit that truth
+flip, then start Phase 3 NW-AUD-019 (quoted-key private screening bypass).
 
 ## Files Changed
 
@@ -158,8 +158,9 @@ publication contact; no force push.
 
 ## Resume Recipe
 
-Resume at Exact Next Action: Phase 2 NW-AUD-014 reproduction + total census.
-Session `sess-c9a1701b8a56` on `session/nightwatch-priority-audit-remedi-0e17af9c`.
+Resume at Exact Next Action: commit Phase 2, gate:milestone, close M2, open
+Phase 3 NW-AUD-019. Session `sess-c9a1701b8a56` on
+`session/nightwatch-priority-audit-remedi-0e17af9c`.
 
 ## Completed Milestones (append)
 

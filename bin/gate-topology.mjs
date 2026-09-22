@@ -48,6 +48,7 @@ import {
   validateCiBlockRecord,
   validateCiRouteCandidates,
 } from './lib/ci-block-record.mjs';
+import { buildChildEnvironment } from './child-environment.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const nodeExecutable = process.execPath;
@@ -394,7 +395,7 @@ function readProjectStateBlock() {
 function runCapture(command, args, options = {}) {
   const result = spawnSync(command, args, {
     cwd: options.cwd ?? root,
-    env: options.env ?? process.env,
+    env: options.env ?? buildChildEnvironment(process.env),
     encoding: 'utf8',
     timeout: options.timeoutMs ?? REALTIME_TIMEOUT_MS,
     maxBuffer: 32 * 1024 * 1024,
@@ -437,8 +438,8 @@ function laneCommandFor(absence, lane) {
   if (absence.laneSuites.length === 0) return null;
   if (lane === 'full') return { kind: 'full', command: process.platform === 'win32' ? 'npm.cmd' : 'npm', args: ['run', 'gate:local'] };
   if (lane === 'campaign') return { kind: 'campaign', command: process.platform === 'win32' ? 'npm.cmd' : 'npm', args: ['run', 'campaign:synthetic'] };
-  const npx = process.platform === 'win32' ? 'npx.cmd' : 'npx';
-  return { kind: 'capability', command: npx, args: ['playwright', 'test', ...absence.laneSuites, '--project=nightwatch', '--workers=1', '--retries=0'] };
+  const npx = (() => { const b = path.join(root, 'node_modules', '.bin', 'playwright'); return process.platform === 'win32' ? `${b}.cmd` : b; })();
+  return { kind: 'capability', command: npx, args: ['test', ...absence.laneSuites, '--project=nightwatch', '--workers=1', '--retries=0'] };
 }
 
 function makeFreshHome() {
@@ -496,12 +497,13 @@ function runDynamic(selectedAbsences, lane, options) {
       resolveMaskPath,
     });
     const environment = /** @type {Record<string, string | undefined>} */ ({
-      ...process.env,
-      NIGHTWATCH_ENV: 'local',
-      NIGHTWATCH_HEADED: '0',
+      ...buildChildEnvironment(process.env, {
+        NIGHTWATCH_ENV: 'local',
+        NIGHTWATCH_HEADED: '0',
+      }),
       TZ: 'UTC',
-      LC_ALL: 'C',
       NO_COLOR: '1',
+      LC_ALL: 'C',
     });
     if (freshHome !== null) environment.NIGHTWATCH_TOPOLOGY_EXPECTED_HOME = freshHome;
     const probeArgs = [...plan, nodeExecutable, path.join(root, 'bin', 'gate-topology.mjs'), 'probe', `--absence=${absence.id}`, '--json'];

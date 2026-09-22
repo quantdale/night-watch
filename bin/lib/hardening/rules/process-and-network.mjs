@@ -23,8 +23,11 @@ import {
   gitFiles,
   isRuleEngineSource,
 } from '../kernel.mjs';
+import { buildChildProcessCensus, EXECUTION_PROFILES } from '../../childProcessCensus.mjs';
 
 export function checkChildProcessBoundaries() {
+  // Historical launcher list: still bounds the named high-authority files
+  // (timeout/maxBuffer/shell/stdio/env-spread) so HC-001 remains non-vacuous.
   const launchers = [
     'bin/phase7-real.mjs',
     'bin/phase5-real.mjs',
@@ -54,15 +57,60 @@ export function checkChildProcessBoundaries() {
     if (!/timeout\s*:/.test(sourceCode)) fail(`${file} has no bounded child-process timeout`);
     const inheritLine = lineOfMatch(source, /stdio\s*:\s*['"]inherit['"]/g);
     if (inheritLine > 0) fail(`${file}:${inheritLine} exposes unbounded child output`);
-    if (!/maxBuffer\s*:/.test(sourceCode)) fail(`${file} has no bounded child output buffer`);
+    if (!/maxBuffer\s*:\s*/.test(sourceCode)) fail(`${file} has no bounded child output buffer`);
   }
-  const productionSources = gitFiles()
+
+  // NW-AUD-014 — total invocation census (syntax-aware, not a file list).
+  const productionFiles = gitFiles()
     .filter((file) => (file.startsWith('src/') || file.startsWith('bin/')) && /\.(?:ts|mjs)$/.test(file))
-    .filter((file) => !isRuleEngineSource(file))
-    .map((file) => [file, readIncludingComments(file)]);
-  for (const [file, source] of productionSources) {
-    if (/import\s*\{[^}]*\bexec(?:File)?\b[^}]*\}\s*from\s*['"]node:child_process['"]/.test(source)) fail(`${file} imports shell-capable child_process exec`);
-    if (/child_process\.exec(?:File)?\s*\(/.test(source)) fail(`${file} calls child_process.exec/execFile through a dynamic namespace`);
+    .filter((file) => !file.endsWith('.d.ts'))
+    .filter((file) => !isRuleEngineSource(file));
+  const sources = productionFiles.map((file) => ({ file, source: readIncludingComments(file) }));
+  const census = buildChildProcessCensus(sources);
+  if (census.importFileCount < 10) {
+    fail(`child-process census found only ${census.importFileCount} import files; discovery is broken rather than the repository clean`);
+  }
+  if (census.invocationCount < 50) {
+    fail(`child-process census found only ${census.invocationCount} invocations; discovery is broken rather than the repository clean`);
+  }
+  if (census.unclassifiedCount !== 0) {
+    for (const node of census.unclassified.slice(0, 20)) {
+      fail(`child-process census unclassified invocation ${node.identity}`);
+    }
+    fail(`child-process census has ${census.unclassifiedCount} unclassified invocation nodes (NW-AUD-014 totality)`);
+  }
+  for (const profile of EXECUTION_PROFILES) {
+    if (!Object.prototype.hasOwnProperty.call(census.byProfile, profile)) {
+      fail(`child-process census profile ${profile} missing from byProfile map`);
+    }
+  }
+  if (!/^sha256:[0-9a-f]{24}$/.test(census.digest)) {
+    fail('child-process census digest is malformed');
+  }
+
+  // Ambient env spread is forbidden outside the explicit L6 envelope profile.
+  for (const node of census.invocations) {
+    if (node.spreadsProcessEnv && node.profile !== 'CONTAINED_ENVELOPE') {
+      fail(`${node.identity} spreads parent process.env (profile=${node.profile ?? 'NONE'})`);
+    }
+    if (node.hasShellTrue) fail(`${node.identity} enables shell:true`);
+    if (node.usesNpx) fail(`${node.identity} acquires tools through npx (offline policy forbids download-capable resolution)`);
+    if (node.hasInheritStdio && node.profile !== 'CONTAINED_ENVELOPE') {
+      fail(`${node.identity} uses stdio:inherit (authority-bearing children must pipe bounded output)`);
+    }
+  }
+
+  // Shell-capable exec* spellings remain banned, including Sync variants.
+  for (const { file } of sources) {
+    if (isRuleEngineSource(file)) continue;
+    // Code subject must use read() (comments stripped) per rule-engine soundness.
+    const sourceCode = read(file);
+    if (/import\s*\{[^}]*\bexec(?:File)?(?:Sync)?\b[^}]*\}\s*from\s*['"]node:child_process['"]/.test(sourceCode)) {
+      fail(`${file} imports shell-capable child_process exec/execSync/execFileSync`);
+    }
+    if (/child_process\.exec(?:File)?(?:Sync)?\s*\(/.test(sourceCode)) {
+      fail(`${file} calls child_process.exec* through a dynamic namespace`);
+    }
   }
 
   // F-19. The reasoner call site is the one place a host-supplied string

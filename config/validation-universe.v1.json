@@ -2,7 +2,7 @@
   "schemaVersion": "nightwatch.validation-universe.v1",
   "definitionName": "Nightwatch validation universe classification (NW-08)",
   "note": "Every discovered executable test or check belongs to exactly one class. AUTHORITATIVE_GATE is DERIVED from what the required gate lanes actually select and is therefore not declarable here; every other discovered file must appear below exactly once, with the reason it is not in the gate and the evidence lane that does cover it. A newly added test that is in no lane and no class fails the gate rather than joining the repository silently.",
-  "inventoryDigest": "sha256:8ed551624be94c40ab88f845",
+  "inventoryDigest": "sha256:0f2ede9344b8fa9f50229a47",
   "classes": {
     "FULL_REGRESSION": {
       "reason": "Offline, deterministic suites that the full canonical regression executes. They are not in a required gate lane because the authoritative gate is bounded for CI runtime; leaving them unclassified is what made the gap invisible.",
@@ -29,6 +29,7 @@
         "tests/unit/candidateLifecycle.test.ts",
         "tests/unit/changeIntelligence.test.ts",
         "tests/unit/changeIntelligenceBacktest.test.ts",
+        "tests/unit/childProcessCensus.test.ts",
         "tests/unit/cliImplementationContract.test.ts",
         "tests/unit/containedTestReplay.test.ts",
         "tests/unit/continuityLiveWaypoint.test.ts",
@@ -209,6 +210,7 @@
         "bin/gate-topology.mjs",
         "bin/hardening-check.mjs",
         "bin/lib/campaign-certification.mjs",
+        "bin/lib/childProcessCensus.mjs",
         "bin/lib/ci-block-record.mjs",
         "bin/lib/cli-implementation-contract.mjs",
         "bin/lib/gate-receipt.mjs",
