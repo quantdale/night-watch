@@ -6,17 +6,17 @@ Title: Priority audit remediation sequence implementation
 Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-priority-audit-remediation-sequence-v1
 Starting SHA: 4a3df8cdc776c5ca47a9666f65afbd5c5519f092
-Last validated implementation SHA: 4a3df8cdc776c5ca47a9666f65afbd5c5519f092
-Last checkpoint: M2 COMPLETE at `ff62ff0b` — gate:dev PASS; gate:milestone PASS; Phase 3 NW-AUD-019 in progress.
-Current milestone: M3 — Phase 3: NW-AUD-019 private payload structural screening
-Next action: Reproduce NW-AUD-019 quoted-key JSON screening bypass with a focused failing regression; implement structural privacy validation, closed DTOs, and total writer/reader consumer census per the NW-AUD-019 design.
+Last validated implementation SHA: 83a1236ade1db8afbd7321054ec75c8b6599d471
+Last checkpoint: M3 COMPLETE at `83a1236a` — gate:dev PASS; gate:milestone PASS (12/12 steps exit=0); probes 11/11; strict OpenSpec PASS.
+Current milestone: M4 — Phase 4: NW-AUD-018 authenticated evidence minimization
+Next action: Reproduce the lexical route-minimization, recorder-bypass, and late-transition defects from recon/wave1-aud018-census.md with focused failing regressions; then implement provenance-bound route identity, the total authenticated writer firewall (reusing NW-AUD-019 primitives), and transition/publication integrity.
 Authorization class: PRIORITY_AUDIT_REMEDIATION_SEQUENCE_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 4a3df8cdc776c5ca47a9666f65afbd5c5519f092
-LAST_VALIDATED_IMPLEMENTATION_SHA: 4a3df8cdc776c5ca47a9666f65afbd5c5519f092
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 4a3df8cdc776c5ca47a9666f65afbd5c5519f092
+LAST_VALIDATED_IMPLEMENTATION_SHA: 83a1236ade1db8afbd7321054ec75c8b6599d471
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 83a1236ade1db8afbd7321054ec75c8b6599d471
 LIVE_HEAD_AUTHORITY: GIT
 PHASE_PRIORITY_AUDIT_REMEDIATION_SEQUENCE_V1_STATUS: IN_PROGRESS
 

@@ -39,12 +39,17 @@
 ## 4. Phase 3 — NW-AUD-019 private payload structural screening
 
 - [x] 4.1 Re-reproduce quoted-key JSON bypass; focused failing regression [privateStructuralScreening.test.ts].
-- [x] 4.2 Structural validators + closed key set + bounds; text defense
-  quote-optional; store+reader structural admission. [full per-family DTO
-  brand migration and generated census partially deferred].
-- [ ] 4.3 Adversarial corpus and privacy mutations PASS; Control Center
-  focused tests if touched; `gate:dev` + `gate:milestone` PASS; coherent
-  checkpoint; update the remediation change tasks from evidence.
+- [x] 4.2 Structural validators + closed key set (incl. compound identity
+  suffix vocabulary) + bounds; text defense quote-optional + canonicalized
+  (NFKC/zero-width); store+reader structural admission. [full per-family DTO
+  brand migration remains deferred to Phase 4's typed-firewall work; the
+  generated consumer census landed under 4.3 instead of deferring].
+- [x] 4.3 Adversarial corpus and privacy mutations PASS (escaped/unicode/
+  encoded/duplicate/alias/width/node/tamper/no-echo; probes HC-005+HC-111...
+  HC-120, 11/11 DETECTED); Control Center focused tests PASS (findings +
+  run-evidence escaped-label regressions); `gate:dev` + `gate:milestone`
+  PASS; coherent checkpoint; remediation change tasks reconciled from
+  evidence. [committed `83a1236a`; gate:dev PASS; gate:milestone PASS]
 
 ## 5. Phase 4 — NW-AUD-018 authenticated evidence minimization
 
