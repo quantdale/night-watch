@@ -7,9 +7,9 @@ Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-priority-audit-remediation-sequence-v1
 Starting SHA: 4a3df8cdc776c5ca47a9666f65afbd5c5519f092
 Last validated implementation SHA: 4a3df8cdc776c5ca47a9666f65afbd5c5519f092
-Last checkpoint: M0 in progress — owned session `sess-c9a1701b8a56` claimed at base `4a3df8cd`; umbrella continuity and OpenSpec admitted; Phase 1 not started.
-Current milestone: M0 — Campaign bootstrap
-Next action: Run `npm run session:status`, `npm run handoff:check`, `npm run agent:check`, and `npm run project:check`; commit the bootstrap checkpoint; then start Phase 1 NW-AUD-010 with the focused failing regression against live release certification.
+Last checkpoint: M0 COMPLETE at `febedef1` — checks PASS, tree clean; Phase 1 NW-AUD-010 in progress.
+Current milestone: M1 — Phase 1: NW-AUD-010 release evidence lineage integrity
+Next action: Add the Phase 1 focused failing regression proving non-exact evidence can leave MET effectively met; run it red; then implement categorical lineage per the NW-AUD-010 design.
 Authorization class: PRIORITY_AUDIT_REMEDIATION_SEQUENCE_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2

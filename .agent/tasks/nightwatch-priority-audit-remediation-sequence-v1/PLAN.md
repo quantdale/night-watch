@@ -70,7 +70,7 @@ one full certification, then C-00 integrate/release/remove.
   cleared.
 - Validation commands: `npm run session:status`, `npm run handoff:check`,
   `npm run agent:check`, `npm run project:check`
-- Status: IN_PROGRESS
+- Status: COMPLETE
 
 ### M1 — Phase 1: NW-AUD-010 release evidence lineage integrity
 
@@ -87,7 +87,7 @@ one full certification, then C-00 integrate/release/remove.
   PASS; coherent checkpoint commit.
 - Validation commands: focused Playwright project-state/release suites,
   `npm run gate:dev`, `npm run gate:milestone`
-- Status: NOT_STARTED
+- Status: IN_PROGRESS
 
 ### M2 — Phase 2: NW-AUD-014 child-process boundary totality
 

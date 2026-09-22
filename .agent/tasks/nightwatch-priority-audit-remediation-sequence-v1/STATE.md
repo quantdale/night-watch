@@ -11,9 +11,10 @@ Last substantive checkpoint SHA: 4a3df8cdc776c5ca47a9666f65afbd5c5519f092
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-priority-audit-remedi-0e17af9c
-Last checkpoint: 2026-09-22 — campaign bootstrap M0 in progress; owned session
-`sess-c9a1701b8a56` claimed at base `4a3df8cd`; umbrella continuity and
-OpenSpec being admitted before Phase 1.
+Last checkpoint: 2026-09-22 — M0 COMPLETE at `febedef1`: owned session
+`sess-c9a1701b8a56`, umbrella continuity/OpenSpec/handoff admitted,
+`handoff`/`agent`/`project`/`session` checks PASS, tree clean,
+`mayIntegrate=true`. Phase 1 NW-AUD-010 starting.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 4a3df8cdc776c5ca47a9666f65afbd5c5519f092
@@ -34,12 +35,13 @@ further audit work.
 
 ## Current Milestone
 
-Milestone ID: M0 — Campaign bootstrap
+Milestone ID: M1 — Phase 1: NW-AUD-010 release evidence lineage integrity
 Milestone status: IN_PROGRESS
-What is being attempted: admit umbrella continuity (task files, OpenSpec,
-ACTIVE_TASK routing, handoff header) so workspace attention clears and
-`handoff:check`/`agent:check`/`project:check`/`session:status` PASS before
-Phase 1 writes begin.
+What is being attempted: re-reproduce non-exact evidence survival on live
+source with a focused failing regression, then implement categorical lineage,
+exact-equality certification, snapshot-bound HEAD, evaluation digest, and
+synthetic Git/mutation proof in `src/core/releaseCertification` and
+`bin/project-state-check.mjs`.
 
 ## Completed Milestones
 
@@ -57,20 +59,15 @@ Phase 1 writes begin.
 
 ## Work In Progress
 
-M0 umbrella artifacts: SPEC/PLAN/STATE/REPORT, umbrella OpenSpec change
-(audit/proposal/design/tasks/spec), ACTIVE_TASK routing flip, EXECUTION_PROMPT
-handoff flip to IN_PROGRESS, then continuity check runs.
+M1 Phase 1: reading the full evaluator/adapter surface and adding the focused
+failing regression before any production fix.
 
 ## Exact Next Action
 
-Finish M0: write remaining umbrella OpenSpec files and flip
-`.agent/ACTIVE_TASK.md` + `.agent/EXECUTION_PROMPT.md` to this campaign
-IN_PROGRESS with `SESSION WORKTREE:
-session/nightwatch-priority-audit-remedi-0e17af9c`; run
-`npm run session:status`, `npm run handoff:check`, `npm run agent:check`,
-`npm run project:check`; commit the bootstrap checkpoint; then start Phase 1
-NW-AUD-010 by adding the focused failing regression against live release
-certification.
+Add the Phase 1 focused failing regression in `tests/unit/projectState.test.ts`
+proving that null/future/divergent/missing/HEAD-descendant evidence can leave
+a raw MET condition effectively met today; run it to confirm red; then
+implement the categorical evidence relation model per the NW-AUD-010 design.
 
 ## Files Changed
 
@@ -78,8 +75,9 @@ certification.
 |---|---|---|
 | `.agent/tasks/nightwatch-priority-audit-remediation-sequence-v1/` | umbrella continuity | in progress |
 | `openspec/changes/nightwatch-priority-audit-remediation-sequence-v1/` | umbrella OpenSpec/handoff route | in progress |
-| `.agent/ACTIVE_TASK.md` | route active campaign and session worktree | pending |
-| `.agent/EXECUTION_PROMPT.md` | handoff status bind to umbrella IN_PROGRESS | pending |
+| `.agent/ACTIVE_TASK.md` | route active campaign and session worktree | complete |
+| `.agent/EXECUTION_PROMPT.md` | handoff status bind to umbrella IN_PROGRESS | complete |
+| `docs/CURRENT_STATE.md` | live-state block bound to umbrella campaign | complete |
 
 ## Validation Ledger
 
@@ -145,6 +143,12 @@ publication contact; no force push.
 Resume at Exact Next Action: finish M0 admission checks, commit bootstrap,
 begin Phase 1 NW-AUD-010 failing regression. Session
 `sess-c9a1701b8a56` on `session/nightwatch-priority-audit-remedi-0e17af9c`.
+
+## Completed Milestones (append)
+
+- M0 — Campaign bootstrap: COMPLETE at `b2823c99`/`febedef1`. handoff PASS
+  (IN_PROGRESS bind), agent PASS (strict_errors=0), project PASS, session
+  PASS, tree clean, `mayIntegrate=true`.
 
 ## Completion Snapshot
 

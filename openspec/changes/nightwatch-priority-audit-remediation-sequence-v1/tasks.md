@@ -6,14 +6,14 @@
   continuity v2 identity and routing bound to this worktree.
 - [x] 1.3 Create this OpenSpec change (audit, proposal, design, delta spec,
   tasks) and strict-validate it.
-- [ ] 1.4 Flip `.agent/ACTIVE_TASK.md` and `.agent/EXECUTION_PROMPT.md` to
+- [x] 1.4 Flip `.agent/ACTIVE_TASK.md` and `.agent/EXECUTION_PROMPT.md` to
   this campaign IN_PROGRESS; run session/handoff/agent/project checks; commit
   the bootstrap checkpoint.
 
 ## 2. Phase 1 — NW-AUD-010 release evidence lineage integrity
 
 - [ ] 2.1 Re-reproduce non-exact evidence survival on live source; add focused
-  failing regression.
+  failing regression. [IN_PROGRESS]
 - [ ] 2.2 Implement categorical lineage, exact-equality certification,
   snapshot-bound HEAD, evaluation digest, stable refusal codes.
 - [ ] 2.3 Synthetic Git matrix (exact/ancestor/descendant/side/missing/
