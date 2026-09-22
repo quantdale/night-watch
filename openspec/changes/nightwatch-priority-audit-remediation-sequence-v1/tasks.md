@@ -53,14 +53,22 @@
 
 ## 5. Phase 4 — NW-AUD-018 authenticated evidence minimization
 
-- [ ] 5.1 Re-reproduce route/recorder/transition bypasses; focused failing
-  regressions.
-- [ ] 5.2 Provenance-bound route identity; total authenticated writer
+- [x] 5.1 Re-reproduce route/recorder/transition bypasses; focused failing
+  regressions. [reproduced live at `bc5065f1`; regressions in
+  authenticatedEvidenceMinimization.test.ts — lowercase IDs persisting
+  verbatim, unminimized fallback, no-op late transition, bypass writers]
+- [x] 5.2 Provenance-bound route identity; total authenticated writer
   firewall (reusing Phase 3 primitives where correct); transition and
-  publication integrity.
+  publication integrity. [provenRoutes v1 + redaction rewrite;
+  authenticatedWriterCensus 22/8/9 with closed registry; final typed
+  firewall over all five artifact kinds reusing containsPrivatePayload v2
+  + privateKeySensitivity; verify-then-tighten transition; publishJson
+  private-equivalent primitive; shared KNOWN_RUN_FAILURE_REASONS]
 - [ ] 5.3 Writer census complete; privacy mutations PASS; `gate:dev` +
   `gate:milestone` PASS; coherent checkpoint; update the remediation change
-  tasks from evidence.
+  tasks from evidence. [census complete; mutations HC-121..HC-129 9/9
+  DETECTED; remediation tasks.md reconciled from evidence; checkpoint gates
+  run for this commit — receipts in the umbrella STATE validation ledger]
 
 ## 6. Phase 5 — NW-AUD-020 semantic request admission
 

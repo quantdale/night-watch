@@ -17,6 +17,7 @@ import path from 'node:path';
 import { prefixedDigest24 } from '../../core/identity/canonicalDigest';
 import { containsPrivatePayloadShape, containsStructuralPrivateShape } from '../../core/policy/privateScreening';
 import type { RepoSnapshotRecord, RunEvent, RunEventType, RunSeverity, RunSummary } from '../../core/evidence/types';
+import { KNOWN_RUN_FAILURE_REASONS } from '../../core/evidence/types';
 import { PROXY_SUMMARY_SCHEMA_VERSION } from '../../proxy/types';
 import type { RunAuthorityInput } from '../adapters/runAdapter';
 import { isRecord } from '../contracts/common';
@@ -58,16 +59,10 @@ const ALLOWED_EVENT_DATA_KEYS = new Set([
   'SCENARIO_CLASS',
   'JOURNEY_CLASS',
 ]);
-const KNOWN_FAILURE_REASONS = new Set([
-  'OWNER_POLICY_BLOCKED',
-  'POLICY_BLOCKED',
-  'SAFETY_FAILURE',
-  'EXECUTOR_FAILURE',
-  'HARD_FAILURE',
-  'RESOLVED_ADDRESS_POLICY_DENIED',
-  'RESOLUTION_FAILED',
-  'EXACT_ADDRESS_BINDING_FAILED',
-]);
+// NW-AUD-018: shared with the writer (RunRecorder.finalize) through
+// core/evidence/types so writer and reader can never disagree on which
+// reasons may persist.
+const KNOWN_FAILURE_REASONS: ReadonlySet<string> = KNOWN_RUN_FAILURE_REASONS;
 
 const RUN_COUNT_KEYS = new Set(EVENT_TYPES);
 const SEVERITY_COUNT_KEYS = new Set(SEVERITIES);

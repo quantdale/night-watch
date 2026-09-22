@@ -101,6 +101,15 @@ function isSensitiveKey(normalized: string): 'always' | 'non-numeric' | null {
 }
 
 /**
+ * NW-AUD-018: the shared key-sensitivity authority for writers that must
+ * DROP sensitive fields before persistence (e.g. authenticated evidence
+ * sanitization) instead of maintaining a parallel, weaker denylist.
+ */
+export function privateKeySensitivity(key: string): 'always' | 'non-numeric' | null {
+  return isSensitiveKey(normalizeKey(key));
+}
+
+/**
  * Structural walk of a plain-data value. Returns a categorical failure code or
  * null when the value carries no sensitive private keys and stays within
  * bounds. Does not inspect string *contents* (that remains text defense).

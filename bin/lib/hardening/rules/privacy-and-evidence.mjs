@@ -23,6 +23,7 @@ import {
   gitFiles,
 } from '../kernel.mjs';
 import { buildPrivateConsumerCensus } from '../../privateConsumerCensus.mjs';
+import { buildAuthenticatedWriterCensus, WRITER_CLASSES } from '../../authenticatedWriterCensus.mjs';
 
 export function checkPrivateSurface() {
   // NW-AUD-019 — structural privacy is the primary admission authority.
@@ -749,4 +750,112 @@ export function checkReviewStoreBoundary() {
   // away from being crossed silently.
   if (/findingArtifactDigest/.test(collector)) fail('the collector reaches a review-binding digest primitive of its own');
   if (/reviewBindingFor\s*\(|currentReviewArtifacts\s*\(/.test(collector)) fail('the collector derives a review binding of its own');
+}
+
+/**
+ * NW-AUD-018 — authenticated evidence minimization integrity.
+ *
+ * Four mechanically-proven boundaries:
+ *   1. the TOTAL writer census (every run-root/artifacts publisher claimed
+ *      by exactly one closed-registry entry; unknown/stale/duplicate/empty
+ *      fail closed);
+ *   2. RunRecorder's ONE final typed persistence firewall (closed kinds,
+ *      reader-pinned byte budgets, structural+text screens) immediately
+ *      before every publication, with a single write chokepoint;
+ *   3. the verify-then-tighten authenticated mode transition completing
+ *      BEFORE the flag flips, plus the categorical finalize forms;
+ *   4. provenance-bound route identity — the lexical identifier heuristic
+ *      must never return, and every unproven path reduces to the marker.
+ */
+export function checkAuthenticatedEvidenceFirewall() {
+  const production = gitFiles()
+    .filter((file) => /\.(?:ts|mjs)$/.test(file))
+    .filter((file) => !file.endsWith('.d.ts') && !file.endsWith('.d.mts'));
+  const census = buildAuthenticatedWriterCensus(production.map((file) => ({ file, source: read(file) })));
+  for (const violation of census.violations) {
+    fail(`authenticated writer census ${violation.code}: ${violation.file} :: ${violation.detail}`);
+  }
+  if (census.writerCount < 8) {
+    fail(`authenticated writer census found only ${census.writerCount} writers; discovery is broken rather than the repository clean`);
+  }
+  if (census.productionWriterCount < 6) {
+    fail(`authenticated writer census found only ${census.productionWriterCount} production writers`);
+  }
+  if (!/^sha256:[0-9a-f]{24}$/.test(census.digest)) fail('authenticated writer census digest is malformed');
+  for (const klass of WRITER_CLASSES) {
+    if (!Object.prototype.hasOwnProperty.call(census.byClass, klass)) {
+      fail(`authenticated writer census class map is missing ${klass}`);
+    }
+  }
+  const byFile = new Map(census.writers.map((writer) => [writer.file, writer.class]));
+  if (byFile.get('src/core/evidence/runRecorder.ts') !== 'RECORDER_FIREWALLED') {
+    fail('the run recorder must be the registered RECORDER_FIREWALLED publisher');
+  }
+
+  const recorder = read('src/core/evidence/runRecorder.ts');
+  // One final firewall: closed kind vocabulary, called at the rewrite
+  // chokepoint and on the event hot path.
+  for (const required of [
+    'RUN_EVIDENCE_FIREWALL_LIMITS',
+    'this.firewall(kind, value, serialized)',
+    "this.firewall('events', ev, line)",
+  ]) {
+    if (!recorder.includes(required)) fail(`run recorder is missing the firewall boundary element: ${required}`);
+  }
+  // Single write chokepoint: no path-target writeFileSync outside the
+  // temporary-descriptor publication, exactly one append site.
+  const strayWrites = [...recorder.matchAll(/fs\.writeFileSync\((?!descriptor)/g)].length;
+  if (strayWrites > 0) fail(`run recorder bypasses publishJson with ${strayWrites} direct path-target writeFileSync call(s)`);
+  const appendSites = [...recorder.matchAll(/fs\.appendFileSync\(/g)].length;
+  if (appendSites !== 1) fail(`run recorder must append through exactly one hardened appendLine site, found ${appendSites}`);
+  if (!recorder.includes('this.assertPublishTarget(file);\n    fs.appendFileSync')) {
+    fail('the append chokepoint must verify the publish target before appending');
+  }
+  if (!/fs\.openSync\(temporary, ['"]wx['"], 0o600\)/.test(recorder) || !recorder.includes('this.fsyncRunDirectory()')) {
+    fail('run recorder publication must be wx/0600 + fsynced (private-equivalent primitive)');
+  }
+  // Shared structural key authority (collapses the parallel denylist).
+  if (!recorder.includes('privateKeySensitivity(key)')) {
+    fail('authenticated sanitization must use the shared structural key authority');
+  }
+  // Categorical finalize: writer and reader share one reason vocabulary and
+  // the free-form note never persists.
+  if (!recorder.includes('KNOWN_RUN_FAILURE_REASONS')) fail('finalize must classify reasons through the shared closed vocabulary');
+  if (!recorder.includes("'[REDACTED_HARD_FAILURE]'")) fail('authenticated finalize must persist the categorical hard-failure message');
+  if (!recorder.includes("'RUN_NOTE_PRESENT'")) fail('authenticated finalize must collapse notes to the categorical token');
+  // Verify-then-tighten transition before the flag flips, and the ambiguity
+  // refusal vocabulary.
+  if (!recorder.includes('this.hardenAuthenticatedDirectory();')) {
+    fail('a late authenticated transition must harden the directory before flipping the mode');
+  }
+  const hardenAt = recorder.indexOf('this.hardenAuthenticatedDirectory();');
+  const flipAt = recorder.indexOf('this.authenticated = true;');
+  if (hardenAt < 0 || flipAt < 0 || hardenAt > flipAt) {
+    fail('the hardening transaction must complete BEFORE the authenticated flag flips');
+  }
+  for (const required of ['AUTHENTICATED_EVIDENCE_TRANSITION_UNSAFE', 'AUTHENTICATED_MANIFEST_KEY_UNSAFE']) {
+    if (!recorder.includes(required)) fail(`run recorder is missing the categorical refusal ${required}`);
+  }
+
+  // Provenance-bound route identity: the lexical heuristic must never return.
+  const redaction = read('src/core/safety/redaction.ts');
+  if (redaction.includes('looksLikeIdentifier')) {
+    fail('lexical identifier guessing must not reappear in authenticated URL persistence (NW-AUD-018)');
+  }
+  for (const required of [
+    'UNKNOWN_ROUTE_MARKER',
+    'this.provenRoutes.match(pathname)',
+    'parsed.username',
+    '? `${parsed.origin}${UNKNOWN_ROUTE_MARKER}`',
+  ]) {
+    if (!redaction.includes(required)) fail(`authenticated URL persistence is missing ${required}`);
+  }
+  const proven = read('src/core/safety/provenRoutes.ts');
+  for (const required of ['UNKNOWN_ROUTE_MARKER', 'PROVEN_ROUTE_PATTERN_UNANCHORED', 'PROVEN_ROUTE_EMIT_UNSAFE', 'MAX_PROVEN_ROUTE_ENTRIES']) {
+    if (!proven.includes(required)) fail(`the proven route table is missing ${required}`);
+  }
+  const declarations = read('src/core/schemaLifecycle/declarations.ts');
+  if (!declarations.includes("family: 'nightwatch.proven-route-table'")) {
+    fail('nightwatch.proven-route-table must be a declared schema family');
+  }
 }

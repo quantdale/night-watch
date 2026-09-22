@@ -71,6 +71,11 @@ test.describe('NW-AUD-018 proven route identity', () => {
     );
     expect(layer.redactAuthenticatedUrl('ftp://host.invalid/acme1234')).toBe(UNKNOWN_ROUTE_MARKER);
     expect(layer.redactAuthenticatedUrl('https://host.invalid/')).toBe('https://host.invalid/');
+    // Percent-encoded segments decode BEFORE membership, so an encoded
+    // identifier can never smuggle itself past the proven-or-marker rule.
+    expect(layer.redactAuthenticatedUrl('https://api.example.invalid/customers/%61cme1234/orders')).toBe(
+      'https://api.example.invalid' + UNKNOWN_ROUTE_MARKER,
+    );
   });
 
   test('a bound proven template is the only way a path persists', () => {
@@ -205,6 +210,158 @@ test.describe('NW-AUD-018 authenticated mode transition', () => {
       expect(() => rec.addManifestEntry('9leading', {})).toThrow('AUTHENTICATED_MANIFEST_KEY_UNSAFE');
       const manifest = JSON.parse(fs.readFileSync(path.join(rec.dir, 'manifest.json'), 'utf8'));
       expect(Object.keys(manifest)).not.toContain('../escape');
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+});
+
+test.describe('NW-AUD-018 final typed persistence firewall', () => {
+  test('the firewall blocks what the sanitizer keeps — text tripwires are not optional', () => {
+    const root = tempRoot('nw-aud018-fw-text-');
+    try {
+      const rec = new RunRecorder({ ...baseOpts('fw-text', root), authenticated: true });
+      // Key `note` is not sensitive (sanitize keeps it) and the value carries
+      // no Bearer/JWT shape (redactText keeps it) — only the firewall's
+      // labeled-value screen over the final bytes refuses it.
+      expect(() => rec.event({
+        type: 'policy',
+        severity: 'info',
+        message: 'synthetic note',
+        data: { note: 'token: ordinaryplaintextvalue' },
+      })).toThrow('RUN_EVIDENCE_FIREWALL_PRIVACY_BLOCKED:events');
+      // Refused BEFORE publication: the stream was never created.
+      expect(fs.existsSync(path.join(rec.dir, 'events.jsonl'))).toBe(false);
+      expect(fs.readdirSync(rec.dir).join(',')).not.toContain('ordinaryplaintextvalue');
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test('sensitive keys are dropped by the SHARED structural authority before the firewall', () => {
+    const root = tempRoot('nw-aud018-fw-keys-');
+    try {
+      const rec = new RunRecorder({ ...baseOpts('fw-keys', root), authenticated: true });
+      // Compound key the hand-written denylist used to miss entirely; the
+      // cost-class key with a NUMERIC value stays legitimate evidence.
+      rec.event({
+        type: 'policy',
+        severity: 'info',
+        message: 'synthetic',
+        data: { billing_group_id: 'bg-ordinaryvalue', costs: 12.5 },
+      });
+      // Same cost-class key with an identity-shaped STRING value is dropped
+      // by the shared sensitivity authority (non-numeric class).
+      rec.event({
+        type: 'policy',
+        severity: 'info',
+        message: 'synthetic',
+        data: { costs: 'twelve' },
+      });
+      const line = fs.readFileSync(path.join(rec.dir, 'events.jsonl'), 'utf8');
+      expect(line).not.toContain('billing_group_id');
+      expect(line).not.toContain('bg-ordinaryvalue');
+      expect(line).toContain('"costs":12.5');
+      expect(line).not.toContain('twelve');
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test('authenticated finalize persists only the categorical forms the reader projects', async () => {
+    const root = tempRoot('nw-aud018-fw-final-');
+    try {
+      const rec = new RunRecorder({ ...baseOpts('fw-final', root), authenticated: true });
+      rec.event({
+        type: 'hard-failure',
+        severity: 'fatal',
+        message: 'HARD FAILURE: synthetic detail ordinaryplaintextvalue',
+        data: { reason: 'SAFETY_FAILURE' },
+      });
+      rec.event({
+        type: 'hard-failure',
+        severity: 'fatal',
+        message: 'HARD FAILURE: synthetic detail ordinaryplaintextvalue',
+        data: { reason: 'NOT_IN_THE_CLOSED_VOCABULARY' },
+      });
+      const summary = await rec.finalize({ passed: false, notes: ['free-form note mentioning a customer'] });
+      expect(summary.notes).toEqual(['RUN_NOTE_PRESENT']);
+      expect(summary.hardFailures).toEqual([
+        expect.objectContaining({ message: '[REDACTED_HARD_FAILURE]', reason: 'SAFETY_FAILURE' }),
+        expect.objectContaining({ message: '[REDACTED_HARD_FAILURE]', reason: 'RUN_FAILURE_UNCLASSIFIED' }),
+      ]);
+      const raw = fs.readFileSync(path.join(rec.dir, 'summary.json'), 'utf8');
+      expect(raw).not.toContain('ordinaryplaintextvalue');
+      expect(raw).not.toContain('free-form note');
+      expect(raw).not.toContain('NOT_IN_THE_CLOSED_VOCABULARY');
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test('a symlinked artifact path refuses publication', () => {
+    const root = tempRoot('nw-aud018-fw-symlink-');
+    try {
+      const rec = new RunRecorder({ ...baseOpts('fw-symlink', root), authenticated: true });
+      const outside = path.join(root, 'outside');
+      fs.writeFileSync(outside, '{}');
+      const manifest = path.join(rec.dir, 'manifest.json');
+      fs.unlinkSync(manifest);
+      fs.symlinkSync(outside, manifest);
+      expect(() => rec.addManifestEntry('trace', { enabled: false })).toThrow('RUN_EVIDENCE_PUBLISH_TARGET_UNSAFE');
+      expect(fs.readFileSync(outside, 'utf8')).toBe('{}');
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test('the events byte budget is enforced in authenticated mode and only there', () => {
+    const root = tempRoot('nw-aud018-fw-size-');
+    try {
+      const auth = new RunRecorder({ ...baseOpts('fw-size-auth', root), authenticated: true });
+      expect(() => auth.event({ type: 'console', severity: 'info', message: 'x'.repeat(70 * 1024) }))
+        .toThrow('RUN_EVIDENCE_FIREWALL_TOO_LARGE:events');
+      const plain = new RunRecorder(baseOpts('fw-size-plain', root));
+      plain.event({ type: 'console', severity: 'info', message: 'x'.repeat(70 * 1024) });
+      expect(fs.readFileSync(path.join(plain.dir, 'events.jsonl'), 'utf8').length).toBeGreaterThan(70 * 1024);
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test('repository snapshots cross the sanitizer and firewall in authenticated mode', async () => {
+    const root = tempRoot('nw-aud018-fw-repos-');
+    try {
+      const rec = new RunRecorder({ ...baseOpts('fw-repos', root), authenticated: true });
+      await rec.writeRepositories([{
+        path: 'src',
+        branch: 'main',
+        headSha: 'a'.repeat(40),
+        upstream: 'origin/main',
+        aheadBehind: { ahead: 0, behind: 0 },
+        dirty: false,
+        dirtyFileCount: 0,
+        lastCommit: '2026-09-22T00:00:00.000Z',
+        timestamp: '2026-09-22T00:00:00.000Z',
+        ok: true,
+      }]);
+      expect(fs.existsSync(path.join(rec.dir, 'repositories.json'))).toBe(true);
+      // A labeled private value smuggled through a branch name is refused
+      // before publication (text screen over the final bytes).
+      const hostile = new RunRecorder({ ...baseOpts('fw-repos-hostile', root), authenticated: true });
+      await expect(hostile.writeRepositories([{
+        path: 'src',
+        branch: 'customer: ordinarycustomerid',
+        headSha: 'a'.repeat(40),
+        upstream: null,
+        aheadBehind: null,
+        dirty: false,
+        dirtyFileCount: 0,
+        lastCommit: '2026-09-22T00:00:00.000Z',
+        timestamp: '2026-09-22T00:00:00.000Z',
+        ok: true,
+      }])).rejects.toThrow('RUN_EVIDENCE_FIREWALL_PRIVACY_BLOCKED:repositories');
+      expect(fs.existsSync(path.join(hostile.dir, 'repositories.json'))).toBe(false);
     } finally {
       fs.rmSync(root, { recursive: true, force: true });
     }

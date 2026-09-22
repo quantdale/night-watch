@@ -1476,6 +1476,98 @@
           }
         ]
       }
+    ],
+    "checkAuthenticatedEvidenceFirewall": [
+      {
+        "id": "HC-121",
+        "ops": [
+          {
+            "file": "src/core/evidence/runRecorder.ts",
+            "search": "this.firewall(kind, value, serialized);",
+            "replace": "void kind; void value; void serialized;"
+          }
+        ]
+      },
+      {
+        "id": "HC-122",
+        "ops": [
+          {
+            "file": "src/core/evidence/runRecorder.ts",
+            "search": "this.assertPublishTarget(file);\n    fs.appendFileSync",
+            "replace": "fs.appendFileSync"
+          }
+        ]
+      },
+      {
+        "id": "HC-123",
+        "ops": [
+          {
+            "file": "src/core/evidence/runRecorder.ts",
+            "search": "message: '[REDACTED_HARD_FAILURE]',",
+            "replace": "message: ev.message,"
+          }
+        ]
+      },
+      {
+        "id": "HC-124",
+        "ops": [
+          {
+            "file": "src/core/evidence/runRecorder.ts",
+            "search": "summary.notes = this.authenticated ? ['RUN_NOTE_PRESENT'] : input.notes;",
+            "replace": "summary.notes = input.notes;"
+          }
+        ]
+      },
+      {
+        "id": "HC-125",
+        "ops": [
+          {
+            "file": "src/core/evidence/runRecorder.ts",
+            "search": "const sensitivity = privateKeySensitivity(key);",
+            "replace": "const sensitivity = null as 'always' | 'non-numeric' | null;"
+          }
+        ]
+      },
+      {
+        "id": "HC-126",
+        "ops": [
+          {
+            "file": "src/core/evidence/runRecorder.ts",
+            "search": "this.hardenAuthenticatedDirectory();",
+            "replace": "void 0;"
+          }
+        ]
+      },
+      {
+        "id": "HC-127",
+        "ops": [
+          {
+            "file": "src/core/safety/redaction.ts",
+            "search": "? `${parsed.origin}${UNKNOWN_ROUTE_MARKER}`",
+            "replace": "? `${parsed.origin}${pathname}`"
+          }
+        ]
+      },
+      {
+        "id": "HC-128",
+        "ops": [
+          {
+            "file": "bin/lib/authenticatedWriterCensus.mjs",
+            "search": "{ root: 'tests/manual/', klass: 'MANUAL_PUBLISHER', capabilities: ['owner-local-publication'] },",
+            "replace": "{ root: 'tests/manualX/', klass: 'MANUAL_PUBLISHER', capabilities: ['owner-local-publication'] },"
+          }
+        ]
+      },
+      {
+        "id": "HC-129",
+        "ops": [
+          {
+            "file": "src/core/evidence/runRecorder.ts",
+            "search": "    if (!/^[A-Za-z][A-Za-z0-9._-]{0,63}$/.test(key)) {\n      throw new Error('AUTHENTICATED_MANIFEST_KEY_UNSAFE');\n    }\n",
+            "replace": ""
+          }
+        ]
+      }
     ]
   }
 }

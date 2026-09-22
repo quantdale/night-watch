@@ -18,11 +18,14 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { randomBytes } from 'node:crypto';
 import type { Page } from '@playwright/test';
 import { createRedactionLayer } from '../safety/redaction';
 import type { RedactionLayer } from '../safety/redaction';
 import type { ProvenRouteTable } from '../safety/provenRoutes';
+import { containsPrivatePayload, containsPrivatePayloadShape, privateKeySensitivity } from '../policy';
 import type { RepoSnapshotRecord, RunEvent, RunEventType, RunSeverity, RunSummary } from './types';
+import { KNOWN_RUN_FAILURE_REASONS } from './types';
 import { readProxyEvents, summarizeProxyEvents } from '../../proxy/events';
 import type { ProxyEvent, ProxyRuntimeState, ProxySummary } from '../../proxy/types';
 
@@ -51,6 +54,20 @@ interface RecorderProxyOptions {
   browserGuardsEnabled: boolean;
   onViolation?: (event: ProxyEvent, failureEvent: RunEvent) => void;
 }
+
+/**
+ * NW-AUD-018: closed firewall-kind vocabulary with per-kind byte budgets
+ * pinned to the run-evidence READER limits, so a file the writer admits is
+ * a file the reader can still parse.
+ */
+type RunEvidenceFirewallKind = 'manifest' | 'events' | 'proxy' | 'repositories' | 'summary';
+const RUN_EVIDENCE_FIREWALL_LIMITS: Readonly<Record<RunEvidenceFirewallKind, number>> = Object.freeze({
+  manifest: 512 * 1024, // runEvidenceReader MAX_MANIFEST_BYTES
+  events: 64 * 1024, // reader line bound (MAX_EVENT_TEXT_LENGTH applies per line)
+  proxy: 8 * 1024 * 1024, // not read by the Control Center; bounded anyway
+  repositories: 2 * 1024 * 1024, // reader MAX_REPOSITORIES_BYTES
+  summary: 512 * 1024, // reader MAX_SUMMARY_BYTES
+});
 
 export class RunRecorder {
   /** Layer callers use to redact evidence BEFORE calling event(). */
@@ -120,14 +137,98 @@ export class RunRecorder {
     const manifestPayload = this.authenticated
       ? ((this.sanitizeAuthenticatedData({ manifest }).manifest ?? {}) as Record<string, string>)
       : manifest;
-    fs.writeFileSync(manifestFile, JSON.stringify(manifestPayload, null, 2));
-    this.secureAuthenticatedArtifact(manifestFile);
+    this.publishJson(manifestFile, manifestPayload, JSON.stringify(manifestPayload, null, 2), 'manifest');
     if (this.authenticated) this.enableAuthenticatedEvidence();
   }
 
   /** Keep authenticated metadata owner-only even when the process umask is permissive. */
   private secureAuthenticatedArtifact(file: string): void {
     if (this.authenticated) fs.chmodSync(file, 0o600);
+  }
+
+  /**
+   * NW-AUD-018 — the ONE final typed persistence firewall. Every
+   * authenticated byte crosses it immediately before publication: closed
+   * kind vocabulary, per-kind byte budget pinned to the reader, no NUL
+   * bytes, structural private-shape screen (NW-AUD-019 v2, primary) plus
+   * the text screen as defense-in-depth. Diagnostics are categorical and
+   * never echo payload content. Unauthenticated artifacts are out of this
+   * policy's scope by design (their own screens apply elsewhere).
+   */
+  private firewall(kind: RunEvidenceFirewallKind, value: unknown, bytes: string): void {
+    if (!this.authenticated) return;
+    const limit = RUN_EVIDENCE_FIREWALL_LIMITS[kind];
+    if (limit === undefined) throw new Error(`RUN_EVIDENCE_FIREWALL_KIND_UNKNOWN:${String(kind)}`);
+    if (bytes.length > limit) throw new Error(`RUN_EVIDENCE_FIREWALL_TOO_LARGE:${kind}`);
+    if (bytes.includes('\0')) throw new Error(`RUN_EVIDENCE_FIREWALL_MALFORMED:${kind}`);
+    if (containsPrivatePayload(value)) throw new Error(`RUN_EVIDENCE_FIREWALL_PRIVACY_BLOCKED:${kind}`);
+    if (containsPrivatePayloadShape(bytes)) throw new Error(`RUN_EVIDENCE_FIREWALL_PRIVACY_BLOCKED:${kind}`);
+  }
+
+  /** Fail closed on a symlinked, foreign-owned or non-file publish target. */
+  private assertPublishTarget(file: string): void {
+    let stat: fs.Stats;
+    try {
+      stat = fs.lstatSync(file);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') return;
+      throw new Error('RUN_EVIDENCE_PUBLISH_TARGET_UNSAFE');
+    }
+    if (stat.isSymbolicLink() || !stat.isFile()) throw new Error('RUN_EVIDENCE_PUBLISH_TARGET_UNSAFE');
+    const uid = typeof process.getuid === 'function' ? process.getuid() : undefined;
+    if (uid !== undefined && stat.uid !== uid) throw new Error('RUN_EVIDENCE_PUBLISH_TARGET_UNSAFE');
+  }
+
+  /**
+   * Crash-consistent JSON publication: private equivalent of the
+   * privateArtifacts primitive (wx/0600 temporary, file fsync, atomic
+   * rename, directory fsync, post-verify) with the firewall and target
+   * checks immediately before any byte is committed.
+   */
+  private publishJson(file: string, value: unknown, serialized: string, kind: RunEvidenceFirewallKind): void {
+    this.firewall(kind, value, serialized);
+    this.assertPublishTarget(file);
+    const temporary = path.join(this.dir, `.nightwatch-${process.pid}-${randomBytes(16).toString('hex')}.tmp`);
+    let descriptor: number | undefined;
+    try {
+      descriptor = fs.openSync(temporary, 'wx', 0o600);
+      fs.writeFileSync(descriptor, serialized, { encoding: 'utf8' });
+      fs.fsyncSync(descriptor);
+      fs.closeSync(descriptor);
+      descriptor = undefined;
+      fs.chmodSync(temporary, 0o600);
+      fs.renameSync(temporary, file);
+      this.secureAuthenticatedArtifact(file);
+      this.fsyncRunDirectory();
+      this.assertPublishTarget(file);
+    } catch (error) {
+      if (descriptor !== undefined) {
+        try { fs.closeSync(descriptor); } catch { /* preserve the original failure */ }
+      }
+      try { if (fs.existsSync(temporary)) fs.unlinkSync(temporary); } catch { /* best effort */ }
+      throw error;
+    }
+  }
+
+  /** Hardened append for the jsonl streams: target check, then append. */
+  private appendLine(file: string, line: string): void {
+    this.assertPublishTarget(file);
+    fs.appendFileSync(file, line);
+    this.secureAuthenticatedArtifact(file);
+  }
+
+  private fsyncRunDirectory(): void {
+    let descriptor: number | undefined;
+    try {
+      descriptor = fs.openSync(this.dir, 'r');
+      fs.fsyncSync(descriptor);
+    } catch {
+      throw new Error('RUN_EVIDENCE_DIRECTORY_FSYNC_FAILED');
+    } finally {
+      if (descriptor !== undefined) {
+        try { fs.closeSync(descriptor); } catch { /* durability already failed above */ }
+      }
+    }
   }
 
   get isAuthenticated(): boolean {
@@ -233,6 +334,13 @@ export class RunRecorder {
     const forbidden = /^(?:authorization|headers?|cookie|set-cookie|body|requestbody|responsebody|access[_-]?token|refresh[_-]?token|id[_-]?token|token|secret|password|credential|cookies|storage|localstorage|sessionstorage|storage_state|dom|html|textcontent|query|querystring|search|searchparams|email|customer(?:name|id)?|account(?:id)?|msp(?:id)?|billing(?:group)?(?:id|name)?|invoice(?:id|amount)?|cost|amount)$/i;
     const visit = (value: unknown, key: string): unknown => {
       if (forbidden.test(key)) return undefined;
+      // NW-AUD-018: the parallel hand-maintained denylist collapses into the
+      // SHARED structural key authority (SENSITIVE_PRIVATE_KEYS + compound
+      // identity suffixes), so a `billing_group_id`-style key can no longer
+      // slip past a regex that only spelled the un-compounded forms.
+      const sensitivity = privateKeySensitivity(key);
+      if (sensitivity === 'always') return undefined;
+      if (sensitivity === 'non-numeric' && typeof value !== 'number') return undefined;
       if (Array.isArray(value)) return value.map((item) => visit(item, key)).filter((item) => item !== undefined);
       if (value !== null && typeof value === 'object') {
         const out: Record<string, unknown> = {};
@@ -270,8 +378,7 @@ export class RunRecorder {
       manifest = {};
     }
     manifest[key] = this.authenticated ? this.sanitizeAuthenticatedData({ value }).value : value;
-    fs.writeFileSync(file, JSON.stringify(manifest, null, 2));
-    this.secureAuthenticatedArtifact(file);
+    this.publishJson(file, manifest, JSON.stringify(manifest, null, 2), 'manifest');
   }
 
   /** Bind this recorder to the already-running Nightwatch outer proxy. */
@@ -310,10 +417,13 @@ export class RunRecorder {
       const failureEvent = this.onProxyViolation(event);
       this.proxy.onViolation?.(event, failureEvent);
     }
+    const safeEvents = this.authenticated
+      ? relevant.map((e) => (this.sanitizeAuthenticatedData({ event: e }).event as ProxyEvent))
+      : relevant;
     const file = path.join(this.dir, 'proxy.jsonl');
-    fs.writeFileSync(file, relevant.map((e) => `${JSON.stringify(e)}\n`).join(''));
-    this.secureAuthenticatedArtifact(file);
-    return summarizeProxyEvents(relevant);
+    const proxyBytes = safeEvents.map((e) => `${JSON.stringify(e)}\n`).join('');
+    this.publishJson(file, safeEvents, proxyBytes, 'proxy');
+    return summarizeProxyEvents(safeEvents);
   }
 
   private onProxyViolation(event: ProxyEvent): RunEvent {
@@ -365,17 +475,15 @@ export class RunRecorder {
     };
     if (data !== undefined) ev.data = data;
     const line = `${JSON.stringify(ev)}\n`;
+    // NW-AUD-018: one firewall, one vocabulary — every authenticated event
+    // byte is screened and bounded before any of the three streams see it.
+    this.firewall('events', ev, line);
     const eventsFile = path.join(this.dir, 'events.jsonl');
-    fs.appendFileSync(eventsFile, line);
-    this.secureAuthenticatedArtifact(eventsFile);
+    this.appendLine(eventsFile, line);
     if (input.type === 'request' || input.type === 'response') {
-      const networkFile = path.join(this.dir, 'network.jsonl');
-      fs.appendFileSync(networkFile, line);
-      this.secureAuthenticatedArtifact(networkFile);
+      this.appendLine(path.join(this.dir, 'network.jsonl'), line);
     } else if (input.type === 'console') {
-      const consoleFile = path.join(this.dir, 'console.jsonl');
-      fs.appendFileSync(consoleFile, line);
-      this.secureAuthenticatedArtifact(consoleFile);
+      this.appendLine(path.join(this.dir, 'console.jsonl'), line);
     }
     this.events.push(ev);
     return ev;
@@ -421,8 +529,10 @@ export class RunRecorder {
   /** Persist repository snapshots to repositories.json; returns the file path. */
   async writeRepositories(snapshots: RepoSnapshotRecord[]): Promise<string> {
     const file = path.join(this.dir, 'repositories.json');
-    fs.writeFileSync(file, JSON.stringify(snapshots, null, 2));
-    this.secureAuthenticatedArtifact(file);
+    const payload = this.authenticated
+      ? ((this.sanitizeAuthenticatedData({ snapshots }).snapshots ?? []) as RepoSnapshotRecord[])
+      : snapshots;
+    this.publishJson(file, payload, JSON.stringify(payload, null, 2), 'repositories');
     return file;
   }
 
@@ -439,11 +549,18 @@ export class RunRecorder {
       severityCounts[ev.severity] = (severityCounts[ev.severity] ?? 0) + 1;
       if (ev.type === 'hard-failure') {
         const d = ev.data;
-        hardFailures.push({
-          ts: ev.ts,
-          message: ev.message,
-          reason: d !== undefined && typeof d.reason === 'string' ? d.reason : ev.message,
-        });
+        const rawReason = d !== undefined && typeof d.reason === 'string' ? d.reason : ev.message;
+        // NW-AUD-018: in authenticated mode the writer persists only the
+        // categorical form the reader would project anyway — the raw message
+        // never reaches the file, and reasons come from the SHARED closed
+        // vocabulary (core/evidence/types) rather than a second copy.
+        hardFailures.push(this.authenticated
+          ? {
+            ts: ev.ts,
+            message: '[REDACTED_HARD_FAILURE]',
+            reason: KNOWN_RUN_FAILURE_REASONS.has(rawReason) ? rawReason : 'RUN_FAILURE_UNCLASSIFIED',
+          }
+          : { ts: ev.ts, message: ev.message, reason: rawReason });
       }
       if (ev.type === 'screenshot' && typeof ev.data?.file === 'string') {
         screenshots.push(ev.data.file);
@@ -468,10 +585,13 @@ export class RunRecorder {
       nightwatchSha: this.nightwatchSha,
     };
     if (proxySummary !== null) summary.proxy = proxySummary;
-    if (input.notes !== undefined) summary.notes = input.notes;
+    if (input.notes !== undefined && input.notes.length > 0) {
+      // NW-AUD-018: free-form notes never persist in authenticated mode —
+      // the writer emits exactly the collapsed token the reader projects.
+      summary.notes = this.authenticated ? ['RUN_NOTE_PRESENT'] : input.notes;
+    }
     const file = path.join(this.dir, 'summary.json');
-    fs.writeFileSync(file, JSON.stringify(summary, null, 2));
-    this.secureAuthenticatedArtifact(file);
+    this.publishJson(file, summary, JSON.stringify(summary, null, 2), 'summary');
     return summary;
   }
 }

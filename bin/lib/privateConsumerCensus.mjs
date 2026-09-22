@@ -70,6 +70,7 @@ export const PRIVATE_CONSUMER_REGISTRY = Object.freeze([
   { root: 'src/core/selfDev/', klass: 'STORE_WRITER', capabilities: ['write', 'read'] },
   { root: 'src/core/selfDevSandbox/', klass: 'STORE_WRITER', capabilities: ['write', 'read'] },
   { root: 'src/core/selfDevPromotion/', klass: 'STORE_WRITER', capabilities: ['write', 'read'] },
+  { root: 'src/core/evidence/', klass: 'SCREENING_CALLER', capabilities: ['screen'] },
   { root: 'src/core/prodEvidence/', klass: 'SCREENING_CALLER', capabilities: ['screen'] },
   { root: 'src/controlCenter/authorities/', klass: 'SCREENING_CALLER', capabilities: ['screen'] },
   { root: 'corpus/', klass: 'SYNTHETIC_FIXTURE', capabilities: ['screen', 'write', 'read'] },

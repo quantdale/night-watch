@@ -32,6 +32,24 @@ export type RunEventType =
 
 export type RunSeverity = 'info' | 'warn' | 'error' | 'fatal';
 
+/**
+ * NW-AUD-018: the ONE closed vocabulary of run-failure reasons that may
+ * persist in summary hardFailures. Shared by the writer (authenticated
+ * finalize) and the reader (runEvidenceReader) so the two can never drift:
+ * an unknown reason is classified as RUN_FAILURE_UNCLASSIFIED, never
+ * persisted raw.
+ */
+export const KNOWN_RUN_FAILURE_REASONS: ReadonlySet<string> = new Set([
+  'OWNER_POLICY_BLOCKED',
+  'POLICY_BLOCKED',
+  'SAFETY_FAILURE',
+  'EXECUTOR_FAILURE',
+  'HARD_FAILURE',
+  'RESOLVED_ADDRESS_POLICY_DENIED',
+  'RESOLUTION_FAILED',
+  'EXACT_ADDRESS_BINDING_FAILED',
+]);
+
 export interface RunEvent {
   /** Monotonic sequence number assigned by the recorder. */
   seq: number;
