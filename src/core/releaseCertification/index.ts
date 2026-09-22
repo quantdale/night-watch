@@ -13,17 +13,27 @@
 // condition: it is externally gated and is reported as a separate track.
 //
 // Vocabulary:
-//   MET                     the named check passed at the certified checkpoint
-//   UNMET                   the named check ran and failed
+//   MET                     the named check passed AND evidence resolved EXACT
+//                           to the certified checkpoint
+//   UNMET                   the named check ran and failed (diagnostic)
 //   UNAVAILABLE_CAPABILITY  the named check exists elsewhere but not here yet
 //   BLOCKED_EXTERNAL        the named check is blocked by an external party
-//   STALE_EVIDENCE          the condition evidence predates the certified
-//                           checkpoint, so it is unmet and the certification is
-//                           refused
+//   STALE_EVIDENCE          evidence is a strict ancestor of the checkpoint
+//   EVIDENCE_ABSENT         the condition has no bound evidence SHA
+//   EVIDENCE_FUTURE         evidence is a strict descendant of the checkpoint
+//   EVIDENCE_DIVERGENT      evidence resolves but is on a non-ancestor branch
+//   EVIDENCE_UNRESOLVED     evidence is missing, malformed, or Git-indeterminate
+//
+// Diagnostic check state (checkState) is always preserved separately from the
+// effective certification state (state). Only evidenceRelation === 'EXACT'
+// together with a raw MET check yields an effective MET. Operational Git
+// failure never becomes a proven negative relation (GIT_INDETERMINATE).
 //
 // 13.8 is an owner decision and is represented faithfully: `nextStatus.state`
 // is PENDING_OWNER_DECISION and the safe default stays OPERATIONALLY_ACCEPTED
 // until the owner names the next status. No code here invents that name.
+
+import { createHash } from 'node:crypto';
 
 export const RELEASE_CERTIFICATION_VERSION = 'nightwatch.release-certification.v1' as const;
 export const RELEASE_CERTIFICATION_DEFINITION_PATH = 'config/release-certification.v1.json' as const;
@@ -34,10 +44,67 @@ export const RELEASE_CONDITION_STATES = [
   'UNAVAILABLE_CAPABILITY',
   'BLOCKED_EXTERNAL',
   'STALE_EVIDENCE',
+  'EVIDENCE_ABSENT',
+  'EVIDENCE_FUTURE',
+  'EVIDENCE_DIVERGENT',
+  'EVIDENCE_UNRESOLVED',
 ] as const;
 
 export type ReleaseConditionState = (typeof RELEASE_CONDITION_STATES)[number];
-export type ReleaseCheckState = Exclude<ReleaseConditionState, 'STALE_EVIDENCE'>;
+/** Diagnostic states a named check may report (never evidence-derived). */
+export type ReleaseCheckState =
+  | 'MET'
+  | 'UNMET'
+  | 'UNAVAILABLE_CAPABILITY'
+  | 'BLOCKED_EXTERNAL';
+
+/**
+ * Closed categorical evidence lineage relative to the certified checkpoint.
+ * Operational Git failure is GIT_INDETERMINATE, never a proven relation.
+ */
+export const EVIDENCE_LINEAGE_RELATIONS = [
+  'EXACT',
+  'STALE_ANCESTOR',
+  'FUTURE_DESCENDANT',
+  'DIVERGENT',
+  'OBJECT_MISSING',
+  'GIT_INDETERMINATE',
+] as const;
+
+export type EvidenceLineageRelation = (typeof EVIDENCE_LINEAGE_RELATIONS)[number];
+
+export const EVIDENCE_FAILURE_STATES = [
+  'STALE_EVIDENCE',
+  'EVIDENCE_ABSENT',
+  'EVIDENCE_FUTURE',
+  'EVIDENCE_DIVERGENT',
+  'EVIDENCE_UNRESOLVED',
+] as const as readonly ReleaseConditionState[];
+
+export function isEvidenceFailureState(state: ReleaseConditionState): boolean {
+  return (EVIDENCE_FAILURE_STATES as readonly string[]).includes(state);
+}
+
+/** Map a non-exact, non-absent lineage relation onto its effective state. */
+export function evidenceRelationToState(relation: EvidenceLineageRelation): ReleaseConditionState {
+  switch (relation) {
+    case 'EXACT':
+      return 'MET';
+    case 'STALE_ANCESTOR':
+      return 'STALE_EVIDENCE';
+    case 'FUTURE_DESCENDANT':
+      return 'EVIDENCE_FUTURE';
+    case 'DIVERGENT':
+      return 'EVIDENCE_DIVERGENT';
+    case 'OBJECT_MISSING':
+    case 'GIT_INDETERMINATE':
+      return 'EVIDENCE_UNRESOLVED';
+    default: {
+      const exhaustive: never = relation;
+      return exhaustive;
+    }
+  }
+}
 
 export interface ReleaseCheckOutput {
   readonly state: ReleaseCheckState;
@@ -300,11 +367,18 @@ export interface ReleaseConditionResult {
   readonly title: string;
   readonly check: string;
   readonly capabilityGroup: string | null;
+  /** Diagnostic state reported by the named check (never evidence-derived). */
+  readonly checkState: ReleaseCheckState;
+  /** Effective certification state; MET only when checkState is MET and relation is EXACT. */
   readonly state: ReleaseConditionState;
   readonly detail: string;
   readonly boundEvidenceSha: string | null;
   readonly resolvedEvidenceSha: string | null;
+  /** Categorical lineage; null only when no evidence SHA is bound. */
+  readonly evidenceRelation: EvidenceLineageRelation | null;
   readonly staleEvidence: boolean;
+  /** True when evidence is bound but not EXACT to the certified checkpoint. */
+  readonly nonExactEvidence: boolean;
 }
 
 export interface ReleaseVerdict {
@@ -322,6 +396,10 @@ export interface ReleaseVerdict {
   readonly advanceRefused: boolean;
   readonly certificationRefused: boolean;
   readonly staleEvidenceConditions: readonly string[];
+  /** Condition ids whose bound evidence is present but not EXACT (or absent while raw MET). */
+  readonly nonExactEvidenceConditions: readonly string[];
+  /** Canonical digest over definition, snapshot, ordered outputs, relations, and effective states. */
+  readonly evaluationDigest: string;
   readonly externalTrack: ReleaseExternalTrackReport;
   readonly definitionErrors: readonly ReleaseDefinitionError[];
 }
@@ -335,11 +413,22 @@ export interface ReleaseEvaluationInput {
   readonly laneCounts: ReleaseLaneCounts;
   readonly externalTrack: ReleaseExternalTrackReport;
   /**
-   * Answers whether the first commit is an ancestor of the second. A null
-   * answer means ancestry could not be established; staleness is then not
-   * asserted (the evidence is reported with a null resolution instead).
+   * Resolves bound evidence relative to the certified checkpoint as a closed
+   * categorical relation. HEAD tokens must already be resolved by the caller
+   * from the captured evaluation snapshot. When omitted, the evaluator fails
+   * closed: null evidence is ABSENT, equal 40-hex identities are EXACT, and
+   * any other bound identity is GIT_INDETERMINATE (never a proven relation).
    */
-  readonly isAncestor?: ((ancestor: string, descendant: string) => boolean | null) | undefined;
+  readonly resolveEvidenceRelation?: (
+    resolvedEvidenceSha: string,
+    certifiedCheckpointSha: string,
+  ) => EvidenceLineageRelation | undefined | null | void;
+  /**
+   * Optional definition/snapshot identity folded into the evaluation digest
+   * (e.g. definition bytes digest captured with the checkout snapshot).
+   */
+  readonly definitionDigest?: string | undefined;
+  /** Optional lane/external track already present on input; digest uses them. */
 }
 
 function resolveEvidenceSha(bound: string | null, liveHeadSha: string | null): string | null {
@@ -348,67 +437,145 @@ function resolveEvidenceSha(bound: string | null, liveHeadSha: string | null): s
   return bound;
 }
 
+function defaultRelation(resolvedEvidenceSha: string | null, checkpoint: string | null): EvidenceLineageRelation | null {
+  if (resolvedEvidenceSha === null) return null;
+  if (checkpoint === null) return 'GIT_INDETERMINATE';
+  if (!SHA_RE.test(resolvedEvidenceSha) || !SHA_RE.test(checkpoint)) return 'GIT_INDETERMINATE';
+  return resolvedEvidenceSha.toLowerCase() === checkpoint.toLowerCase() ? 'EXACT' : 'GIT_INDETERMINATE';
+}
+
+function canonicalJson(value: unknown): string {
+  if (value === null || typeof value !== 'object') return JSON.stringify(value) ?? 'null';
+  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(',')}]`;
+  const entries = Object.entries(value as Record<string, unknown>)
+    .filter(([, entryValue]) => entryValue !== undefined)
+    .sort(([left], [right]) => (left < right ? -1 : left > right ? 1 : 0))
+    .map(([key, entryValue]) => `${JSON.stringify(key)}:${canonicalJson(entryValue)}`);
+  return `{${entries.join(',')}}`;
+}
+
+function sha256Hex(text: string): string {
+  // Synchronous pure digest; no fs, process, network, or clock authority.
+  // Uses the WebCrypto-free createHash via a tiny inline import-free path
+  // is unavailable in this pure module, so callers get a deterministic
+  // content digest from the bundled helper below.
+  return sha256HexImpl(text);
+}
+
+function sha256HexImpl(text: string): string {
+  return createHash('sha256').update(text, 'utf8').digest('hex');
+}
+
 /**
  * Evaluate the ordered conditions against the supplied check outputs and bind
- * each condition's evidence SHA to the certified checkpoint. A condition whose
- * evidence strictly precedes the checkpoint reports STALE_EVIDENCE, is unmet,
- * and refuses the certification.
+ * each condition's evidence to the certified checkpoint through a closed
+ * categorical relation. Only EXACT evidence plus a raw MET check yields an
+ * effective MET; every other bound relation (and absent evidence on a raw MET
+ * check) is non-certifying and refuses the certification. Operational Git
+ * uncertainty is GIT_INDETERMINATE, never DIVERGENT or STALE_ANCESTOR.
  */
 export function evaluateReleaseCertification(input: ReleaseEvaluationInput): ReleaseVerdict {
   const definition = input.definition;
   const conditions: ReleaseConditionResult[] = definition.conditions.map((condition) => {
     const check = CHECK_BY_ID.get(condition.check);
     const output = input.checkOutputs[condition.check];
-    let state: ReleaseConditionState;
+    let checkState: ReleaseCheckState;
     let detail: string;
     if (output !== undefined) {
-      state = output.state;
+      checkState = output.state;
       detail = output.detail;
     } else if (check !== undefined && !check.implemented) {
-      state = 'UNAVAILABLE_CAPABILITY';
+      checkState = 'UNAVAILABLE_CAPABILITY';
       detail = `check '${condition.check}' is registered and its capability is created by ${check.capabilityGroup ?? 'a later group'}; the check is not present at this checkpoint`;
     } else {
-      state = 'UNAVAILABLE_CAPABILITY';
+      checkState = 'UNAVAILABLE_CAPABILITY';
       detail = `check '${condition.check}' produced no output at this checkpoint`;
     }
+
     const resolvedEvidenceSha = resolveEvidenceSha(condition.evidenceSha, input.liveHeadSha);
-    let staleEvidence = false;
-    // Staleness is a property of the bound evidence, not of the check's
-    // current fortune: evidence earned at an ancestor cannot certify a
-    // descendant whether or not the check would pass today.
-    if (
-      resolvedEvidenceSha !== null
-      && input.certifiedCheckpointSha !== null
-      && SHA_RE.test(resolvedEvidenceSha)
-      && SHA_RE.test(input.certifiedCheckpointSha)
-      && resolvedEvidenceSha !== input.certifiedCheckpointSha
-      && input.isAncestor !== undefined
-      && input.isAncestor(resolvedEvidenceSha, input.certifiedCheckpointSha) === true
-    ) {
-      staleEvidence = true;
-      state = 'STALE_EVIDENCE';
-      detail = `${detail}; evidence ${resolvedEvidenceSha} precedes certified checkpoint ${input.certifiedCheckpointSha}`;
+    let evidenceRelation: EvidenceLineageRelation | null;
+    if (resolvedEvidenceSha === null) {
+      evidenceRelation = null;
+    } else {
+      let resolved: EvidenceLineageRelation | undefined | null | void;
+      if (input.resolveEvidenceRelation !== undefined && input.certifiedCheckpointSha !== null) {
+        resolved = input.resolveEvidenceRelation(resolvedEvidenceSha, input.certifiedCheckpointSha);
+      }
+      evidenceRelation = (typeof resolved === 'string' && (EVIDENCE_LINEAGE_RELATIONS as readonly string[]).includes(resolved))
+        ? resolved as EvidenceLineageRelation
+        : defaultRelation(resolvedEvidenceSha, input.certifiedCheckpointSha);
     }
+
+    const nonExactEvidence = resolvedEvidenceSha !== null
+      && input.certifiedCheckpointSha !== null
+      && evidenceRelation !== 'EXACT';
+
+    let state: ReleaseConditionState;
+    let effectiveDetail = detail;
+    if (evidenceRelation === null) {
+      // Absent evidence never certifies a raw MET check; other check states
+      // keep their diagnostic value (absence does not upgrade UNMET).
+      if (checkState === 'MET') {
+        state = 'EVIDENCE_ABSENT';
+        effectiveDetail = `${detail}; condition has no bound evidence SHA at certified checkpoint ${input.certifiedCheckpointSha ?? 'NONE'}`;
+      } else {
+        state = checkState;
+      }
+    } else if (evidenceRelation === 'EXACT') {
+      // Exact lineage never upgrades a non-MET check.
+      state = checkState;
+    } else {
+      state = evidenceRelationToState(evidenceRelation);
+      effectiveDetail = `${detail}; evidence ${resolvedEvidenceSha} relation=${evidenceRelation} at certified checkpoint ${input.certifiedCheckpointSha ?? 'NONE'}`;
+    }
+
     return {
       id: condition.id,
       order: condition.order,
       title: condition.title,
       check: condition.check,
       capabilityGroup: check?.capabilityGroup ?? null,
+      checkState,
       state,
-      detail,
+      detail: effectiveDetail,
       boundEvidenceSha: condition.evidenceSha,
       resolvedEvidenceSha,
-      staleEvidence,
+      evidenceRelation,
+      staleEvidence: evidenceRelation === 'STALE_ANCESTOR',
+      nonExactEvidence,
     };
   });
 
   const conditionsMet = conditions.filter((condition) => condition.state === 'MET').length;
   const unmet = conditions.filter((condition) => condition.state !== 'MET');
   const staleEvidenceConditions = conditions.filter((condition) => condition.staleEvidence).map((condition) => condition.id);
+  const nonExactEvidenceConditions = conditions
+    .filter((condition) => condition.nonExactEvidence || (condition.state === 'EVIDENCE_ABSENT' && condition.checkState === 'MET'))
+    .map((condition) => condition.id);
   const advanceClaimed = definition.advanceStatuses.includes(input.projectCompletionStatus);
-  const certificationRefused = staleEvidenceConditions.length > 0;
+  // Any non-exact bound evidence, or a raw MET condition with absent evidence,
+  // refuses certification whether or not an advance is currently claimed.
+  const certificationRefused = nonExactEvidenceConditions.length > 0;
   const advanceRefused = advanceClaimed && (unmet.length > 0 || certificationRefused);
+
+  const evaluationDigest = `sha256:${sha256Hex(canonicalJson({
+    schemaVersion: RELEASE_CERTIFICATION_VERSION,
+    definitionDigest: input.definitionDigest ?? null,
+    certifiedCheckpointSha: input.certifiedCheckpointSha,
+    liveHeadSha: input.liveHeadSha,
+    projectCompletionStatus: input.projectCompletionStatus,
+    laneCounts: input.laneCounts,
+    externalTrack: { id: input.externalTrack.id, state: input.externalTrack.state },
+    conditions: conditions.map((condition) => ({
+      id: condition.id,
+      check: condition.check,
+      checkState: condition.checkState,
+      state: condition.state,
+      boundEvidenceSha: condition.boundEvidenceSha,
+      resolvedEvidenceSha: condition.resolvedEvidenceSha,
+      evidenceRelation: condition.evidenceRelation,
+    })),
+  }))}`;
 
   return {
     schemaVersion: RELEASE_CERTIFICATION_VERSION,
@@ -425,6 +592,8 @@ export function evaluateReleaseCertification(input: ReleaseEvaluationInput): Rel
     advanceRefused,
     certificationRefused,
     staleEvidenceConditions,
+    nonExactEvidenceConditions,
+    evaluationDigest,
     externalTrack: input.externalTrack,
     definitionErrors: [],
   };

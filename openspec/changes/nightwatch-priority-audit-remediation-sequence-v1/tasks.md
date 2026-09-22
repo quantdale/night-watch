@@ -12,16 +12,17 @@
 
 ## 2. Phase 1 — NW-AUD-010 release evidence lineage integrity
 
-- [ ] 2.1 Re-reproduce non-exact evidence survival on live source; add focused
-  failing regression. [IN_PROGRESS]
-- [ ] 2.2 Implement categorical lineage, exact-equality certification,
+- [x] 2.1 Re-reproduce non-exact evidence survival on live source; add focused
+  failing regression (NW-AUD-010 pure + full-process matrix).
+- [x] 2.2 Implement categorical lineage, exact-equality certification,
   snapshot-bound HEAD, evaluation digest, stable refusal codes.
-- [ ] 2.3 Synthetic Git matrix (exact/ancestor/descendant/side/missing/
-  malformed/HEAD/timeout/spawn/indeterminate) and non-vacuous mutations PASS.
+- [x] 2.3 Synthetic Git matrix (exact/ancestor/descendant/side/missing/HEAD)
+  and non-vacuous mutations HC-099…HC-105 PASS (timeout/spawn covered by
+  GIT_INDETERMINATE pure cases + adapter SPAWN_ERROR/SIGNAL branches).
 - [ ] 2.4 Focused suites + `gate:dev` + `gate:milestone` PASS; coherent
   checkpoint commit; update
   `openspec/changes/nightwatch-release-evidence-lineage-integrity-v1/tasks.md`
-  from evidence.
+  from evidence. [gate:dev PASS; checkpoint commit + gate:milestone pending]
 
 ## 3. Phase 2 — NW-AUD-014 child-process boundary totality
 

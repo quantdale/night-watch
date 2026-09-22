@@ -70,7 +70,7 @@ one full certification, then C-00 integrate/release/remove.
   cleared.
 - Validation commands: `npm run session:status`, `npm run handoff:check`,
   `npm run agent:check`, `npm run project:check`
-- Status: COMPLETE
+- **Status:** COMPLETE
 
 ### M1 — Phase 1: NW-AUD-010 release evidence lineage integrity
 
@@ -87,7 +87,7 @@ one full certification, then C-00 integrate/release/remove.
   PASS; coherent checkpoint commit.
 - Validation commands: focused Playwright project-state/release suites,
   `npm run gate:dev`, `npm run gate:milestone`
-- Status: IN_PROGRESS
+- **Status:** IN_PROGRESS
 
 ### M2 — Phase 2: NW-AUD-014 child-process boundary totality
 
@@ -104,7 +104,7 @@ one full certification, then C-00 integrate/release/remove.
   `gate:dev`/`gate:milestone` PASS; coherent checkpoint.
 - Validation commands: focused subprocess/hardening suites, `npm run gate:dev`,
   `npm run gate:milestone`
-- Status: NOT_STARTED
+- **Status:** NOT_STARTED
 
 ### M3 — Phase 3: NW-AUD-019 private payload structural screening
 
@@ -121,7 +121,7 @@ one full certification, then C-00 integrate/release/remove.
   `gate:dev`/`gate:milestone` PASS; coherent checkpoint.
 - Validation commands: focused private-artifact/privacy suites,
   `npm run gate:dev`, `npm run gate:milestone`
-- Status: NOT_STARTED
+- **Status:** NOT_STARTED
 
 ### M4 — Phase 4: NW-AUD-018 authenticated evidence minimization
 
@@ -138,7 +138,7 @@ one full certification, then C-00 integrate/release/remove.
   `gate:dev`/`gate:milestone` PASS; coherent checkpoint.
 - Validation commands: focused redaction/evidence suites, `npm run gate:dev`,
   `npm run gate:milestone`
-- Status: NOT_STARTED
+- **Status:** NOT_STARTED
 
 ### M5 — Phase 5: NW-AUD-020 semantic request admission
 
@@ -155,7 +155,7 @@ one full certification, then C-00 integrate/release/remove.
   `gate:dev`/`gate:milestone` PASS; coherent checkpoint.
 - Validation commands: focused safety/browser/proxy suites,
   `npm run gate:dev`, `npm run gate:milestone`
-- Status: NOT_STARTED
+- **Status:** NOT_STARTED
 
 ### M6 — Cross-phase audit, full certification, C-00 closure
 
@@ -173,7 +173,7 @@ one full certification, then C-00 integrate/release/remove.
   (typecheck, hardening, agent/handoff/project/workspace/session,
   `validation:universe`, strict OpenSpec, `npm test`, `gate:local`,
   `gate:clean`)
-- Status: NOT_STARTED
+- **Status:** NOT_STARTED
 
 ## Validation Strategy
 

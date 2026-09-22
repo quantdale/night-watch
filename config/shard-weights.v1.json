@@ -388,6 +388,7 @@
     "tests/unit/w13ProviderResiliencePolicy.test.ts": 64,
     "tests/unit/w13RuntimeBudgetEnvelope.test.ts": 388,
     "tests/unit/w13TruncationFloor.test.ts": 15,
-    "tests/unit/workspaceIsolation.test.ts": 47438
+    "tests/unit/workspaceIsolation.test.ts": 47438,
+    "tests/unit/sessionMutationAuthority.test.ts": 145
   }
 }

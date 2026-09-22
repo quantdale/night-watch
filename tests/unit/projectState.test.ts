@@ -1725,16 +1725,36 @@ function evaluationInput(
   definition: ReleaseCertificationDefinition,
   overrides: Partial<Parameters<typeof evaluateReleaseCertification>[0]> = {},
 ): Parameters<typeof evaluateReleaseCertification>[0] {
+  const certifiedCheckpointSha = (overrides.certifiedCheckpointSha as string | undefined) ?? '2'.repeat(40);
   return {
     definition,
     checkOutputs: allMetOutputs(definition),
-    certifiedCheckpointSha: '2'.repeat(40),
-    liveHeadSha: '2'.repeat(40),
+    certifiedCheckpointSha,
+    liveHeadSha: (overrides.liveHeadSha as string | undefined) ?? certifiedCheckpointSha,
     projectCompletionStatus: 'OPERATIONALLY_ACCEPTED',
     laneCounts: { proven: 7, externallyBlocked: 1, neverAttempted: 2, staleEvidence: 1 },
     externalTrack: { id: 'production-path', stages: ['C-12'], state: 'EXTERNAL_PREREQUISITE_UNMET', detail: 'synthetic' },
-    isAncestor: () => false,
+    // Tests bind every condition's evidence to the certified checkpoint so the
+    // default "all MET" fixture remains exact unless a case overrides it.
+    definitionDigest: 'sha256:0'.repeat(16),
     ...overrides,
+    ...(overrides.resolveEvidenceRelation === undefined && overrides.definition === undefined
+      ? {
+          resolveEvidenceRelation: (resolved: string, checkpoint: string) =>
+            resolved.toLowerCase() === checkpoint.toLowerCase() ? 'EXACT' as const : 'GIT_INDETERMINATE' as const,
+        }
+      : {}),
+  };
+}
+
+/** Definition with every condition's evidence forced to the certified checkpoint. */
+function definitionWithExactEvidence(
+  definition: ReleaseCertificationDefinition,
+  checkpoint: string,
+): ReleaseCertificationDefinition {
+  return {
+    ...definition,
+    conditions: definition.conditions.map((condition) => ({ ...condition, evidenceSha: checkpoint })),
   };
 }
 
@@ -1773,43 +1793,143 @@ test.describe('F-12 release definition and verdict', () => {
   });
 
   test('the verdict carries the three lane counts and the pending next status', () => {
-    const verdict = evaluateReleaseCertification(evaluationInput(liveDefinition()));
+    const checkpoint = '2'.repeat(40);
+    const definition = definitionWithExactEvidence(liveDefinition(), checkpoint);
+    const verdict = evaluateReleaseCertification(evaluationInput(definition));
     expect(verdict.laneCounts).toEqual({ proven: 7, externallyBlocked: 1, neverAttempted: 2, staleEvidence: 1 });
     expect(verdict.nextStatus.state).toBe('PENDING_OWNER_DECISION');
     expect(verdict.nextStatus.safeDefault).toBe('OPERATIONALLY_ACCEPTED');
     expect(verdict.conditionsMet).toBe(16);
     expect(verdict.advanceClaimed).toBe(false);
     expect(verdict.advanceRefused).toBe(false);
+    expect(verdict.certificationRefused).toBe(false);
+    expect(verdict.evaluationDigest).toMatch(/^sha256:[0-9a-f]{64}$/);
+    expect(verdict.nonExactEvidenceConditions).toEqual([]);
+    for (const condition of verdict.conditions) {
+      expect(condition.checkState).toBe('MET');
+      expect(condition.evidenceRelation).toBe('EXACT');
+      expect(condition.state).toBe('MET');
+    }
+  });
+
+  test('NW-AUD-010: absent evidence cannot leave a raw MET condition effectively met', () => {
+    const definition = liveDefinition();
+    const input = evaluationInput(definition, { resolveEvidenceRelation: () => 'EXACT' });
+    const withNull = {
+      ...input,
+      definition: {
+        ...definition,
+        conditions: definition.conditions.map((condition, index) =>
+          index === 0 ? { ...condition, evidenceSha: null } : { ...condition, evidenceSha: input.certifiedCheckpointSha as string }),
+      },
+    };
+    const verdict = evaluateReleaseCertification(withNull);
+    const target = verdict.conditions[0];
+    expect(target?.checkState).toBe('MET');
+    expect(target?.evidenceRelation).toBeNull();
+    expect(target?.state).toBe('EVIDENCE_ABSENT');
+    expect(verdict.conditionsMet).toBe(15);
+    expect(verdict.certificationRefused).toBe(true);
+    expect(verdict.nonExactEvidenceConditions).toContain(target?.id);
+  });
+
+  test('NW-AUD-010: future, divergent, missing and indeterminate evidence are distinct non-certifying states', () => {
+    const definition = liveDefinition();
+    const checkpoint = '2'.repeat(40);
+    const base = evaluationInput(definitionWithExactEvidence(definition, checkpoint), {
+      projectCompletionStatus: 'PROJECT_COMPLETE_AND_CI_CERTIFIED',
+    });
+    const cases: Array<{ relation: 'FUTURE_DESCENDANT' | 'DIVERGENT' | 'OBJECT_MISSING' | 'GIT_INDETERMINATE'; state: string }> = [
+      { relation: 'FUTURE_DESCENDANT', state: 'EVIDENCE_FUTURE' },
+      { relation: 'DIVERGENT', state: 'EVIDENCE_DIVERGENT' },
+      { relation: 'OBJECT_MISSING', state: 'EVIDENCE_UNRESOLVED' },
+      { relation: 'GIT_INDETERMINATE', state: 'EVIDENCE_UNRESOLVED' },
+    ];
+    for (const { relation, state } of cases) {
+      const verdict = evaluateReleaseCertification({
+        ...base,
+        resolveEvidenceRelation: (_resolved, _checkpoint) => relation,
+      });
+      const target = verdict.conditions[0];
+      expect(target?.checkState, relation).toBe('MET');
+      expect(target?.evidenceRelation, relation).toBe(relation);
+      expect(target?.state, relation).toBe(state);
+      expect(verdict.certificationRefused, relation).toBe(true);
+      expect(verdict.advanceRefused, relation).toBe(true);
+      expect(verdict.conditionsMet, relation).toBe(0);
+    }
+  });
+
+  test('NW-AUD-010: exact evidence does not upgrade an unmet check', () => {
+    const definition = liveDefinition();
+    const checkpoint = '2'.repeat(40);
+    const verdict = evaluateReleaseCertification(evaluationInput(definitionWithExactEvidence(definition, checkpoint), {
+      checkOutputs: allMetOutputs(definition, definition.conditions[0]?.id ?? ''),
+      resolveEvidenceRelation: () => 'EXACT',
+    }));
+    const target = verdict.conditions[0];
+    expect(target?.evidenceRelation).toBe('EXACT');
+    expect(target?.state).toBe('UNMET');
+    expect(verdict.conditionsMet).toBe(15);
+    expect(verdict.nonExactEvidenceConditions).toEqual([]);
+  });
+
+  test('NW-AUD-010: evaluation digest changes when relations or effective states change', () => {
+    const definition = liveDefinition();
+    const checkpoint = '2'.repeat(40);
+    const exact = definitionWithExactEvidence(definition, checkpoint);
+    const a = evaluateReleaseCertification(evaluationInput(exact));
+    const b = evaluateReleaseCertification(evaluationInput(exact, {
+      resolveEvidenceRelation: () => 'DIVERGENT',
+    }));
+    const c = evaluateReleaseCertification(evaluationInput(exact, {
+      definitionDigest: 'sha256:1'.repeat(16),
+    }));
+    expect(a.evaluationDigest).not.toBe(b.evaluationDigest);
+    expect(a.evaluationDigest).not.toBe(c.evaluationDigest);
+    expect(a.evaluationDigest).toBe(evaluateReleaseCertification(evaluationInput(exact)).evaluationDigest);
   });
 
   test('an advance with exactly one unmet condition is refused naming only that condition', () => {
     const definition = liveDefinition();
-    const target = definition.conditions[4];
+    const checkpoint = '2'.repeat(40);
+    const exact = definitionWithExactEvidence(definition, checkpoint);
+    const target = exact.conditions[4];
     if (target === undefined) throw new Error('CONDITION_FIXTURE_MISSING');
-    const verdict = evaluateReleaseCertification(evaluationInput(definition, {
-      checkOutputs: allMetOutputs(definition, target.id),
+    const verdict = evaluateReleaseCertification(evaluationInput(exact, {
+      checkOutputs: allMetOutputs(exact, target.id),
       projectCompletionStatus: 'PROJECT_COMPLETE_AND_CI_CERTIFIED',
+      resolveEvidenceRelation: () => 'EXACT',
     }));
     expect(verdict.advanceClaimed).toBe(true);
     expect(verdict.advanceRefused).toBe(true);
     expect(verdict.conditionsUnmet).toBe(1);
+    expect(verdict.certificationRefused).toBe(false);
     expect(verdict.conditions.filter((condition) => condition.state !== 'MET').map((condition) => condition.id)).toEqual([target.id]);
   });
 
   test('evidence preceding the certified checkpoint reports STALE_EVIDENCE and refuses the certification', () => {
     const ancestor = '1'.repeat(40);
     const checkpoint = '2'.repeat(40);
-    const record = JSON.parse(JSON.stringify(liveDefinition()));
-    record.conditions[0].evidenceSha = ancestor;
+    const definition = liveDefinition();
+    const record = JSON.parse(JSON.stringify(definition));
+    record.conditions.forEach((condition: { evidenceSha: string }, index: number) => {
+      condition.evidenceSha = index === 0 ? ancestor : checkpoint;
+    });
     const parsed = parseReleaseCertificationDefinition(record);
     if (parsed.definition === null) throw new Error('DEFINITION_FIXTURE_INVALID');
     const verdict = evaluateReleaseCertification(evaluationInput(parsed.definition, {
       projectCompletionStatus: 'PROJECT_COMPLETE_AND_CI_CERTIFIED',
-      isAncestor: (left, right) => left === ancestor && right === checkpoint,
+      resolveEvidenceRelation: (resolved, target) => {
+        if (resolved === ancestor && target === checkpoint) return 'STALE_ANCESTOR';
+        return resolved === target ? 'EXACT' : 'GIT_INDETERMINATE';
+      },
     }));
     const stale = verdict.conditions.filter((condition) => condition.staleEvidence);
     expect(stale).toHaveLength(1);
     expect(stale[0]?.id).toBe(parsed.definition.conditions[0]?.id);
+    expect(stale[0]?.checkState).toBe('MET');
+    expect(stale[0]?.evidenceRelation).toBe('STALE_ANCESTOR');
     expect(stale[0]?.state).toBe('STALE_EVIDENCE');
     expect(verdict.certificationRefused).toBe(true);
     expect(verdict.advanceRefused).toBe(true);
@@ -1966,6 +2086,183 @@ test.describe('F-12 project:check release certification', () => {
       const result = run(fixture.root);
       expect(result.status).not.toBe(0);
       expect(result.stderr).toContain('PROJECT_STATE_IMPLEMENTATION_ANCHOR_DOCUMENTATION_ONLY');
+    } finally {
+      fixture.cleanup();
+    }
+  });
+
+  test('NW-AUD-010 matrix. future (strict descendant) evidence refuses with EVIDENCE_FUTURE', () => {
+    const fixture = makeFixture({
+      activeTaskStatus: 'in_progress',
+      block: { projectCompletionStatus: 'PROJECT_COMPLETE_AND_CI_CERTIFIED' },
+    });
+    try {
+      const checkpoint = git(fixture.root, ['rev-parse', 'HEAD']);
+      fs.writeFileSync(path.join(fixture.root, 'future.txt'), 'future\n');
+      git(fixture.root, ['add', '--all']);
+      git(fixture.root, ['commit', '--quiet', '--no-gpg-sign', '-m', 'descendant evidence']);
+      const descendant = git(fixture.root, ['rev-parse', 'HEAD']);
+      expect(descendant).not.toBe(checkpoint);
+      rewriteCertification(fixture.root, (record) => {
+        const conditions = record.conditions as Array<{ id: string; evidenceSha: string | null }>;
+        const target = conditions.find((condition) => condition.id === 'completion-ledger-truth');
+        if (target !== undefined) target.evidenceSha = descendant;
+      });
+      // rewriteBlockFor stages and commits every outstanding change.
+      rewriteBlockFor(fixture.root, { LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: checkpoint });
+      const result = run(fixture.root);
+      expect(result.status).not.toBe(0);
+      expect(result.stderr).toContain('PROJECT_STATE_EVIDENCE_FUTURE: completion-ledger-truth');
+      expect(result.stderr).not.toContain('PROJECT_STATE_STALE_EVIDENCE: completion-ledger-truth');
+      expect(result.stderr).not.toContain('PROJECT_STATE_EVIDENCE_DIVERGENT: completion-ledger-truth');
+    } finally {
+      fixture.cleanup();
+    }
+  });
+
+  test('NW-AUD-010 matrix. divergent side-branch evidence refuses with EVIDENCE_DIVERGENT', () => {
+    const fixture = makeFixture({
+      activeTaskStatus: 'in_progress',
+      block: { projectCompletionStatus: 'PROJECT_COMPLETE_AND_CI_CERTIFIED' },
+    });
+    try {
+      // Build two children of a common parent: side evidence and the certified
+      // main-line checkpoint must be siblings, not ancestor/descendant.
+      const parent = git(fixture.root, ['rev-parse', 'HEAD']);
+      git(fixture.root, ['checkout', '--quiet', '-b', 'side-evidence']);
+      fs.writeFileSync(path.join(fixture.root, 'side.txt'), 'side\n');
+      git(fixture.root, ['add', '--all']);
+      git(fixture.root, ['commit', '--quiet', '--no-gpg-sign', '-m', 'side evidence']);
+      const side = git(fixture.root, ['rev-parse', 'HEAD']);
+      git(fixture.root, ['checkout', '--quiet', 'main']);
+      fs.writeFileSync(path.join(fixture.root, 'mainline.txt'), 'mainline\n');
+      git(fixture.root, ['add', '--all']);
+      git(fixture.root, ['commit', '--quiet', '--no-gpg-sign', '-m', 'mainline evidence']);
+      const mainTip = git(fixture.root, ['rev-parse', 'HEAD']);
+      expect(mainTip).not.toBe(parent);
+      expect(side).not.toBe(mainTip);
+      rewriteCertification(fixture.root, (record) => {
+        const conditions = record.conditions as Array<{ id: string; evidenceSha: string | null }>;
+        const target = conditions.find((condition) => condition.id === 'completion-ledger-truth');
+        if (target !== undefined) target.evidenceSha = side;
+      });
+      rewriteBlockFor(fixture.root, { LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: mainTip });
+      const result = run(fixture.root);
+      expect(result.status).not.toBe(0);
+      expect(result.stderr).toContain('PROJECT_STATE_EVIDENCE_DIVERGENT: completion-ledger-truth');
+      expect(result.stderr).not.toContain('PROJECT_STATE_STALE_EVIDENCE: completion-ledger-truth');
+      expect(result.stderr).not.toContain('PROJECT_STATE_EVIDENCE_FUTURE: completion-ledger-truth');
+    } finally {
+      fixture.cleanup();
+    }
+  });
+
+  test('NW-AUD-010 matrix. missing object evidence refuses with EVIDENCE_UNRESOLVED', () => {
+    const fixture = makeFixture({
+      activeTaskStatus: 'in_progress',
+      block: { projectCompletionStatus: 'PROJECT_COMPLETE_AND_CI_CERTIFIED' },
+    });
+    try {
+      rewriteCertification(fixture.root, (record) => {
+        const conditions = record.conditions as Array<{ id: string; evidenceSha: string | null }>;
+        const target = conditions.find((condition) => condition.id === 'completion-ledger-truth');
+        if (target !== undefined) target.evidenceSha = 'a'.repeat(40);
+      });
+      git(fixture.root, ['add', '--all']);
+      git(fixture.root, ['commit', '--quiet', '--no-gpg-sign', '-m', 'missing object probe']);
+      const result = run(fixture.root);
+      expect(result.status).not.toBe(0);
+      expect(result.stderr).toContain('PROJECT_STATE_EVIDENCE_UNRESOLVED: completion-ledger-truth');
+      expect(result.stderr).not.toContain('PROJECT_STATE_EVIDENCE_DIVERGENT: completion-ledger-truth');
+    } finally {
+      fixture.cleanup();
+    }
+  });
+
+  test('NW-AUD-010 matrix. HEAD resolving to a later descendant is EVIDENCE_FUTURE, not exact', () => {
+    const fixture = makeFixture({
+      activeTaskStatus: 'in_progress',
+      block: { projectCompletionStatus: 'PROJECT_COMPLETE_AND_CI_CERTIFIED' },
+    });
+    try {
+      const checkpoint = git(fixture.root, ['rev-parse', 'HEAD']);
+      rewriteCertification(fixture.root, (record) => {
+        const conditions = record.conditions as Array<{ id: string; evidenceSha: string | null }>;
+        const target = conditions.find((condition) => condition.id === 'completion-ledger-truth');
+        if (target !== undefined) target.evidenceSha = 'HEAD';
+      });
+      rewriteBlockFor(fixture.root, { LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: checkpoint });
+      fs.writeFileSync(path.join(fixture.root, 'after-head.txt'), 'after\n');
+      git(fixture.root, ['add', '--all']);
+      git(fixture.root, ['commit', '--quiet', '--no-gpg-sign', '-m', 'head advances past checkpoint']);
+      const head = git(fixture.root, ['rev-parse', 'HEAD']);
+      expect(head).not.toBe(checkpoint);
+      const result = run(fixture.root);
+      expect(result.status).not.toBe(0);
+      expect(result.stderr).toContain('PROJECT_STATE_EVIDENCE_FUTURE: completion-ledger-truth');
+    } finally {
+      fixture.cleanup();
+    }
+  });
+
+  test('NW-AUD-010 matrix. HEAD token resolves through the captured snapshot and is EXACT only when it equals the certified checkpoint (pure)', () => {
+    // Full-process HEAD==certified is self-referential under a clean committed
+    // block (the commit that records LAST_SUBSTANTIVE cannot contain its own
+    // SHA). Snapshot resolution is therefore proven at the pure boundary the
+    // adapter feeds: resolveEvidenceSha('HEAD', liveHead) then relation.
+    const checkpoint = '2'.repeat(40);
+    const definition = definitionWithExactEvidence(
+      { ...liveDefinition(), conditions: liveDefinition().conditions.map((c, i) => (i === 0 ? { ...c, evidenceSha: 'HEAD' } : c)) },
+      checkpoint,
+    );
+    // Force condition 0 back to HEAD after mapping others to checkpoint.
+    const withHead = {
+      ...definition,
+      conditions: definition.conditions.map((condition, index) =>
+        index === 0 ? { ...condition, evidenceSha: 'HEAD' as string | null } : condition),
+    };
+    const exact = evaluateReleaseCertification(evaluationInput(withHead, {
+      liveHeadSha: checkpoint,
+      certifiedCheckpointSha: checkpoint,
+      resolveEvidenceRelation: (resolved, target) => (resolved === target ? 'EXACT' : 'GIT_INDETERMINATE'),
+    }));
+    expect(exact.conditions[0]?.resolvedEvidenceSha).toBe(checkpoint);
+    expect(exact.conditions[0]?.evidenceRelation).toBe('EXACT');
+    expect(exact.conditions[0]?.state).toBe('MET');
+
+    const laterHead = evaluateReleaseCertification(evaluationInput(withHead, {
+      liveHeadSha: '3'.repeat(40),
+      certifiedCheckpointSha: checkpoint,
+      resolveEvidenceRelation: (resolved, target) => {
+        if (resolved === target) return 'EXACT' as const;
+        // Snapshot HEAD is a descendant of the certified checkpoint.
+        return 'FUTURE_DESCENDANT' as const;
+      },
+    }));
+    expect(laterHead.conditions[0]?.resolvedEvidenceSha).toBe('3'.repeat(40));
+    expect(laterHead.conditions[0]?.state).toBe('EVIDENCE_FUTURE');
+    expect(laterHead.certificationRefused).toBe(true);
+  });
+
+  test('NW-AUD-010 matrix. exact checkpoint evidence does not emit an evidence failure for that condition under advance', () => {
+    const fixture = makeFixture({
+      activeTaskStatus: 'in_progress',
+      block: { projectCompletionStatus: 'PROJECT_COMPLETE_AND_CI_CERTIFIED' },
+    });
+    try {
+      const checkpoint = git(fixture.root, ['rev-parse', 'HEAD']);
+      rewriteCertification(fixture.root, (record) => {
+        const conditions = record.conditions as Array<{ id: string; evidenceSha: string | null }>;
+        const target = conditions.find((condition) => condition.id === 'completion-ledger-truth');
+        if (target !== undefined) target.evidenceSha = checkpoint;
+      });
+      rewriteBlockFor(fixture.root, { LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: checkpoint });
+      const result = run(fixture.root);
+      expect(result.stderr).not.toContain('PROJECT_STATE_STALE_EVIDENCE: completion-ledger-truth');
+      expect(result.stderr).not.toContain('PROJECT_STATE_EVIDENCE_FUTURE: completion-ledger-truth');
+      expect(result.stderr).not.toContain('PROJECT_STATE_EVIDENCE_DIVERGENT: completion-ledger-truth');
+      expect(result.stderr).not.toContain('PROJECT_STATE_EVIDENCE_UNRESOLVED: completion-ledger-truth');
+      expect(result.stderr).not.toContain('PROJECT_STATE_EVIDENCE_ABSENT: completion-ledger-truth');
     } finally {
       fixture.cleanup();
     }

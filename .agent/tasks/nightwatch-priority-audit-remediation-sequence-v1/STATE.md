@@ -11,10 +11,12 @@ Last substantive checkpoint SHA: 4a3df8cdc776c5ca47a9666f65afbd5c5519f092
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-priority-audit-remedi-0e17af9c
-Last checkpoint: 2026-09-22 — M0 COMPLETE at `febedef1`: owned session
-`sess-c9a1701b8a56`, umbrella continuity/OpenSpec/handoff admitted,
-`handoff`/`agent`/`project`/`session` checks PASS, tree clean,
-`mayIntegrate=true`. Phase 1 NW-AUD-010 starting.
+Last checkpoint: 2026-09-22 — M1 Phase 1 NW-AUD-010 implemented and
+focused-green: categorical lineage, exact-only MET, snapshot HEAD,
+evaluationDigest, synthetic Git matrix, probes HC-099…HC-105 (8/8 detected),
+projectState 91/91, typecheck PASS, hardening:check PASS, hardening:rules
+110/110, gate:dev PASS. Phase 1 checkpoint committed; gate:milestone to run
+on the clean committed tree.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 4a3df8cdc776c5ca47a9666f65afbd5c5519f092
@@ -59,22 +61,34 @@ synthetic Git/mutation proof in `src/core/releaseCertification` and
 
 ## Work In Progress
 
-M1 Phase 1: reading the full evaluator/adapter surface and adding the focused
-failing regression before any production fix.
+NONE — Phase 1 implementation and focused validation are committed; only
+gate:milestone on the clean tree remains before M1 is marked COMPLETE and
+Phase 2 opens.
 
 ## Exact Next Action
 
-Add the Phase 1 focused failing regression in `tests/unit/projectState.test.ts`
-proving that null/future/divergent/missing/HEAD-descendant evidence can leave
-a raw MET condition effectively met today; run it to confirm red; then
-implement the categorical evidence relation model per the NW-AUD-010 design.
+Run `npm run gate:milestone` on the clean committed Phase 1 tree. If PASS,
+mark **M1 — Phase 1** COMPLETE in this STATE and PLAN, commit that truth
+flip, then start Phase 2 NW-AUD-014 from the completed child-process census
+(reproduce the 17-file manual rule gap, then total invocation census).
 
 ## Files Changed
 
 | Path | Reason | Status |
 |---|---|---|
 | `.agent/tasks/nightwatch-priority-audit-remediation-sequence-v1/` | umbrella continuity | in progress |
-| `openspec/changes/nightwatch-priority-audit-remediation-sequence-v1/` | umbrella OpenSpec/handoff route | in progress |
+| `openspec/changes/nightwatch-priority-audit-remediation-sequence-v1/` | umbrella OpenSpec/handoff route | complete |
+| `src/core/releaseCertification/index.ts` | categorical lineage, dual state, evaluationDigest | complete |
+| `bin/project-state-check.mjs` | resolveEvidenceLineage adapter, snapshot HEAD, evidence refusal codes | complete |
+| `tests/unit/projectState.test.ts` | pure matrix + synthetic Git full-process matrix | complete |
+| `config/hardening-rule-probes.v1.json` | HC-099…HC-105 | complete |
+| `bin/lib/hardening/rules/documentation.mjs` | NW-AUD-010 rule assertions | complete |
+| `openspec/changes/nightwatch-release-evidence-lineage-integrity-v1/tasks.md` | evidence-checked implementation tasks | complete |
+| `tests/unit/syntheticCampaignShards.test.ts` | manifest count 106 (NW-AUD-006 drift repair) | complete |
+| `config/shard-weights.v1.json` | weight for sessionMutationAuthority.test.ts | complete |
+| `src/core/source/censusFigureLedger.ts` | LIVE_TASK_STATUS=IN_PROGRESS while campaign active | complete |
+| `docs/CURRENT_STATE.md` | header date + live block | complete |
+| `config/document-role.v1.json` | CORR-AUD-010-001 header-date correction | complete |
 | `.agent/ACTIVE_TASK.md` | route active campaign and session worktree | complete |
 | `.agent/EXECUTION_PROMPT.md` | handoff status bind to umbrella IN_PROGRESS | complete |
 | `docs/CURRENT_STATE.md` | live-state block bound to umbrella campaign | complete |
@@ -140,13 +154,13 @@ publication contact; no force push.
 
 ## Resume Recipe
 
-Resume at Exact Next Action: finish M0 admission checks, commit bootstrap,
-begin Phase 1 NW-AUD-010 failing regression. Session
+Resume at Exact Next Action: run `npm run gate:milestone` on the committed
+Phase 1 tree; on PASS close M1 and open Phase 2 NW-AUD-014. Session
 `sess-c9a1701b8a56` on `session/nightwatch-priority-audit-remedi-0e17af9c`.
 
 ## Completed Milestones (append)
 
-- M0 — Campaign bootstrap: COMPLETE at `b2823c99`/`febedef1`. handoff PASS
+- **M0 — Campaign bootstrap: COMPLETE** at `b2823c99`/`febedef1`. handoff PASS
   (IN_PROGRESS bind), agent PASS (strict_errors=0), project PASS, session
   PASS, tree clean, `mayIntegrate=true`.
 

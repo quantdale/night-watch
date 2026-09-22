@@ -23,7 +23,7 @@ test('the manifest keeps the serial zero-retry contract per invocation', () => {
   expect(manifest.execution.workers).toBe(1);
   expect(manifest.execution.retries).toBe(0);
   expect(manifest.execution.serial).toBe(true);
-  expect(manifest.files.length).toBe(105);
+  expect(manifest.files.length).toBe(106);
   expect(new Set(manifest.files).size).toBe(manifest.files.length);
 });
 
@@ -42,10 +42,10 @@ test('every manifest file is classed and the partition is exhaustive and disjoin
   expect(coverage.ok).toBe(true);
   expect(coverage.missing).toEqual([]);
   expect(coverage.duplicated).toEqual([]);
-  expect(plan.universeCount).toBe(105);
+  expect(plan.universeCount).toBe(106);
   const concurrent = plan.parallelShards.flatMap((shard) => shard.files);
   const exclusive = plan.exclusiveShard?.files ?? [];
-  expect(concurrent.length + exclusive.length).toBe(105);
+  expect(concurrent.length + exclusive.length).toBe(106);
   expect(plan.parallelShards.some((shard) => shard.files.length === 0)).toBe(false);
   for (const file of exclusive) expect(concurrent).not.toContain(file);
 });
@@ -54,7 +54,7 @@ test('the launcher validates the manifest without dispatching Playwright', () =>
   const result = spawnSync(process.execPath, [CLI, '--validate'], { cwd: ROOT, encoding: 'utf8', timeout: 120_000 });
   expect(result.status).toBe(0);
   const receipt = JSON.parse(result.stdout.trim());
-  expect(receipt).toMatchObject({ result: 'VALID', fileCount: 105, workers: 1, retries: 0 });
+  expect(receipt).toMatchObject({ result: 'VALID', fileCount: 106, workers: 1, retries: 0 });
 });
 
 test('an out-of-range shard override is refused', () => {

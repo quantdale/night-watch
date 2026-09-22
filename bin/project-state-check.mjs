@@ -572,6 +572,55 @@ function probeAccessibility(root) {
   };
 }
 
+/**
+ * Categorical evidence lineage for NW-AUD-010. Distinguishes exit 0, exit 1,
+ * timeout/signal, spawn failure, and malformed output. Only two successful
+ * exit-1 ancestry queries establish DIVERGENT; operational failure is always
+ * GIT_INDETERMINATE — never a proven negative relation.
+ */
+function resolveEvidenceLineage(root, evidenceSha, checkpointSha) {
+  if (typeof evidenceSha !== 'string' || typeof checkpointSha !== 'string') return 'GIT_INDETERMINATE';
+  if (!/^[0-9a-f]{40}$/i.test(evidenceSha) || !/^[0-9a-f]{40}$/i.test(checkpointSha)) return 'GIT_INDETERMINATE';
+  const evidence = evidenceSha.toLowerCase();
+  const checkpoint = checkpointSha.toLowerCase();
+  if (evidence === checkpoint) return 'EXACT';
+
+  const runGit = (args) => {
+    try {
+      const result = spawnSync('git', args, {
+        cwd: root,
+        env: gitEnv(root),
+        shell: false,
+        encoding: 'utf8',
+        timeout: 5_000,
+        maxBuffer: 512 * 1024,
+        stdio: ['ignore', 'pipe', 'pipe'],
+      });
+      if (result.error) return { kind: 'SPAWN_ERROR' };
+      if (result.signal) return { kind: 'SIGNAL' };
+      return { kind: 'EXIT', status: result.status, stdout: result.stdout ?? '' };
+    } catch {
+      return { kind: 'SPAWN_ERROR' };
+    }
+  };
+
+  const evidenceObject = runGit(['rev-parse', '--verify', '--quiet', `${evidence}^{commit}`]);
+  if (evidenceObject.kind !== 'EXIT' || evidenceObject.status !== 0) return 'OBJECT_MISSING';
+  const checkpointObject = runGit(['rev-parse', '--verify', '--quiet', `${checkpoint}^{commit}`]);
+  if (checkpointObject.kind !== 'EXIT' || checkpointObject.status !== 0) return 'OBJECT_MISSING';
+
+  const evidenceIsAncestor = runGit(['merge-base', '--is-ancestor', evidence, checkpoint]);
+  if (evidenceIsAncestor.kind !== 'EXIT') return 'GIT_INDETERMINATE';
+  if (evidenceIsAncestor.status === 0) return 'STALE_ANCESTOR';
+  if (evidenceIsAncestor.status !== 1) return 'GIT_INDETERMINATE';
+
+  const checkpointIsAncestor = runGit(['merge-base', '--is-ancestor', checkpoint, evidence]);
+  if (checkpointIsAncestor.kind !== 'EXIT') return 'GIT_INDETERMINATE';
+  if (checkpointIsAncestor.status === 0) return 'FUTURE_DESCENDANT';
+  if (checkpointIsAncestor.status !== 1) return 'GIT_INDETERMINATE';
+  return 'DIVERGENT';
+}
+
 function collectReleaseCheckOutputs(root, blockFields, agentText, substantiveSha, today) {
   const isAncestor = (ancestor, descendant) => gitReadOnly(root, ['merge-base', '--is-ancestor', ancestor, descendant]) !== null;
   const lane = probeLaneState(root, substantiveSha, isAncestor, today);
@@ -1012,6 +1061,16 @@ function main() {
           const certifiedCheckpointSha = HEX40.test(substantiveSha ?? '') ? substantiveSha : liveHeadSha;
           const collected = collectReleaseCheckOutputs(root, blockFields, agentText, certifiedCheckpointSha, today);
           const external = collectExternalTrack(root);
+          // NW-AUD-010: one captured evaluation snapshot; HEAD is resolved
+          // once above (liveHeadSha) and never re-read per condition.
+          let definitionDigest = null;
+          try {
+            const definitionBytes = fs.readFileSync(path.join(root, RELEASE_DEFINITION_PATH));
+            definitionDigest = `sha256:${createHash('sha256').update(definitionBytes).digest('hex')}`;
+          } catch {
+            definitionDigest = null;
+          }
+          const headBefore = gitReadOnly(root, ['rev-parse', 'HEAD'])?.trim() ?? null;
           releaseVerdict = certification.evaluateReleaseCertification({
             definition,
             checkOutputs: collected.outputs,
@@ -1025,8 +1084,21 @@ function main() {
               state: external.state,
               detail: external.detail,
             },
-            isAncestor: (ancestor, descendant) => gitReadOnly(root, ['merge-base', '--is-ancestor', ancestor, descendant]) !== null,
+            definitionDigest,
+            resolveEvidenceRelation: (resolvedEvidenceSha, checkpoint) => {
+              const headAfter = gitReadOnly(root, ['rev-parse', 'HEAD'])?.trim() ?? null;
+              if (headBefore !== null && headAfter !== null && headBefore !== headAfter) {
+                return 'GIT_INDETERMINATE';
+              }
+              // Literal HEAD tokens were already resolved to liveHeadSha by
+              // the pure evaluator from this same snapshot.
+              return resolveEvidenceLineage(root, resolvedEvidenceSha, checkpoint);
+            },
           });
+          const headFinal = gitReadOnly(root, ['rev-parse', 'HEAD'])?.trim() ?? null;
+          if (headBefore !== null && headFinal !== null && headBefore !== headFinal) {
+            fail(errors, 'PROJECT_STATE_RELEASE_SNAPSHOT_UNSTABLE');
+          }
           releaseVerdictText = certification.renderReleaseVerdictText(releaseVerdict);
           if (releaseVerdict.advanceRefused) {
             for (const condition of releaseVerdict.conditions) {
@@ -1035,9 +1107,23 @@ function main() {
               }
             }
           }
+          // Evidence failures refuse certification in the verdict always, but
+          // project:check only hard-fails them when an advance is claimed —
+          // matching the pre-NW-AUD-010 advance gate while naming every
+          // categorical evidence state (not only stale ancestors).
           if (releaseVerdict.advanceClaimed && releaseVerdict.certificationRefused) {
-            for (const id of releaseVerdict.staleEvidenceConditions) {
-              fail(errors, `PROJECT_STATE_STALE_EVIDENCE: ${id}`);
+            for (const condition of releaseVerdict.conditions) {
+              if (condition.state === 'STALE_EVIDENCE') {
+                fail(errors, `PROJECT_STATE_STALE_EVIDENCE: ${condition.id}`);
+              } else if (condition.state === 'EVIDENCE_ABSENT') {
+                fail(errors, `PROJECT_STATE_EVIDENCE_ABSENT: ${condition.id}`);
+              } else if (condition.state === 'EVIDENCE_FUTURE') {
+                fail(errors, `PROJECT_STATE_EVIDENCE_FUTURE: ${condition.id}`);
+              } else if (condition.state === 'EVIDENCE_DIVERGENT') {
+                fail(errors, `PROJECT_STATE_EVIDENCE_DIVERGENT: ${condition.id}`);
+              } else if (condition.state === 'EVIDENCE_UNRESOLVED') {
+                fail(errors, `PROJECT_STATE_EVIDENCE_UNRESOLVED: ${condition.id}`);
+              }
             }
           }
         }

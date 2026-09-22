@@ -258,6 +258,32 @@ export function checkProjectStateIntegrity() {
   if (!/PROMOTION_AUTHORIZATION_LIFECYCLE/.test(checkerCode) || !/EFFECTIVE_NEXT_PROMOTION_AUTHORITY/.test(checkerCode) || !/PROJECT_STATE_PROMOTION_LIFECYCLE_INVALID/.test(checkerCode) || !/PROJECT_STATE_EFFECTIVE_PROMOTION_AUTHORITY_INVALID/.test(checkerCode)) {
     fail('bin/project-state-check.mjs must separate and validate promotion lifecycle/effective authority');
   }
+  // NW-AUD-010 — categorical release-evidence lineage is load-bearing.
+  // The adapter must resolve closed relations (never a bare boolean ancestor
+  // callback), name every evidence-failure category, and refuse operational
+  // Git failure as proven divergence.
+  if (!/resolveEvidenceLineage/.test(checkerCode) || !/STALE_ANCESTOR/.test(checkerCode) || !/FUTURE_DESCENDANT/.test(checkerCode) || !/DIVERGENT/.test(checkerCode) || !/OBJECT_MISSING/.test(checkerCode) || !/GIT_INDETERMINATE/.test(checkerCode)) {
+    fail('bin/project-state-check.mjs must resolve categorical evidence lineage (NW-AUD-010)');
+  }
+  if (/evaluateReleaseCertification\([\s\S]*?isAncestor:/.test(checkerCode)) {
+    fail('bin/project-state-check.mjs must not pass a boolean isAncestor callback (NW-AUD-010)');
+  }
+  for (const code of ['PROJECT_STATE_EVIDENCE_ABSENT', 'PROJECT_STATE_EVIDENCE_FUTURE', 'PROJECT_STATE_EVIDENCE_DIVERGENT', 'PROJECT_STATE_EVIDENCE_UNRESOLVED', 'PROJECT_STATE_STALE_EVIDENCE']) {
+    if (!checkerCode.includes(code)) fail(`bin/project-state-check.mjs is missing evidence refusal code ${code}`);
+  }
+  const evaluator = read('src/core/releaseCertification/index.ts');
+  if (!/EVIDENCE_LINEAGE_RELATIONS/.test(evaluator) || !/evaluationDigest/.test(evaluator) || !/checkState/.test(evaluator)) {
+    fail('release evaluator must expose categorical lineage, checkState/effective state split, and evaluationDigest (NW-AUD-010)');
+  }
+  if (!/evidenceRelation === 'EXACT'[\s\S]{0,200}state = checkState/.test(evaluator) && !/evidenceRelation === 'EXACT'[\s\S]{0,400}state = checkState/.test(evaluator)) {
+    // Presence of the EXACT branch that copies checkState into effective state.
+    if (!/else if \(evidenceRelation === 'EXACT'\)/.test(evaluator)) {
+      fail('release evaluator must gate effective MET on EXACT evidence relation (NW-AUD-010)');
+    }
+  }
+  if (!/'EVIDENCE_ABSENT'/.test(evaluator) || !/'EVIDENCE_FUTURE'/.test(evaluator) || !/'EVIDENCE_DIVERGENT'/.test(evaluator) || !/'EVIDENCE_UNRESOLVED'/.test(evaluator)) {
+    fail('release evaluator must define absent/future/divergent/unresolved effective states (NW-AUD-010)');
+  }
   // Phase 8 final closure: the checker must now REQUIRE the terminal
   // PHASE_8_STATUS COMPLETE (the pre-closure IN_PROGRESS pin is gone), while
   // the effective-promotion-authority NONE requirement above stays — closing
