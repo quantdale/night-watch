@@ -31,10 +31,10 @@
   portfolio/change-intelligence/run-shards/semantic-compat/campaign-synthetic/
   gate-topology npx → local bins, phase22-dev stdio inherit → piped+emit);
   sentinel environment proof via existing childEnvironment tests + census.
-- [ ] 3.3 Timeout/output/stdin/shell/termination tests and hardening probes
+- [x] 3.3 Timeout/output/stdin/shell/termination tests and hardening probes
   PASS; `gate:dev` + `gate:milestone` PASS; coherent checkpoint; update the
-  remediation change tasks from evidence. [probes HC-001+HC-106..110 6/6;
-  gates pending]
+  remediation change tasks from evidence. [committed `ff62ff0b`; gate:dev PASS;
+  gate:milestone PASS; probes 6/6]
 
 ## 4. Phase 3 — NW-AUD-019 private payload structural screening
 

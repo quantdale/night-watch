@@ -104,7 +104,7 @@ one full certification, then C-00 integrate/release/remove.
   `gate:dev`/`gate:milestone` PASS; coherent checkpoint.
 - Validation commands: focused subprocess/hardening suites, `npm run gate:dev`,
   `npm run gate:milestone`
-- **Status:** IN_PROGRESS
+- **Status:** COMPLETE
 
 ### M3 — Phase 3: NW-AUD-019 private payload structural screening
 
@@ -121,7 +121,7 @@ one full certification, then C-00 integrate/release/remove.
   `gate:dev`/`gate:milestone` PASS; coherent checkpoint.
 - Validation commands: focused private-artifact/privacy suites,
   `npm run gate:dev`, `npm run gate:milestone`
-- **Status:** NOT_STARTED
+- **Status:** IN_PROGRESS
 
 ### M4 — Phase 4: NW-AUD-018 authenticated evidence minimization
 

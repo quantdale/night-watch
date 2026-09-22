@@ -7,9 +7,9 @@ Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-priority-audit-remediation-sequence-v1
 Starting SHA: 4a3df8cdc776c5ca47a9666f65afbd5c5519f092
 Last validated implementation SHA: 4a3df8cdc776c5ca47a9666f65afbd5c5519f092
-Last checkpoint: M1 COMPLETE at `78483ee8` — gate:dev PASS; gate:milestone PASS; Phase 2 NW-AUD-014 in progress.
-Current milestone: M2 — Phase 2: NW-AUD-014 child-process boundary totality
-Next action: Reproduce NW-AUD-014 (17-file manual rule vs 51 bin importers; gate-topology/review-mutation-campaign/phase22-dev defects); add focused failing regression; implement total invocation census and closed execution profiles.
+Last checkpoint: M2 COMPLETE at `ff62ff0b` — gate:dev PASS; gate:milestone PASS; Phase 3 NW-AUD-019 in progress.
+Current milestone: M3 — Phase 3: NW-AUD-019 private payload structural screening
+Next action: Reproduce NW-AUD-019 quoted-key JSON screening bypass with a focused failing regression; implement structural privacy validation, closed DTOs, and total writer/reader consumer census per the NW-AUD-019 design.
 Authorization class: PRIORITY_AUDIT_REMEDIATION_SEQUENCE_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2

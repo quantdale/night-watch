@@ -11,12 +11,11 @@ Last substantive checkpoint SHA: 4a3df8cdc776c5ca47a9666f65afbd5c5519f092
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-priority-audit-remedi-0e17af9c
-Last checkpoint: 2026-09-22 — M2 Phase 2 NW-AUD-014 implemented and
-gate:dev PASS (affected 387; shards exit=0). Total child-process census
-(bin/lib/childProcessCensus.mjs): 68 import files, 121 invocations, 0
-unclassified, digest sha256 registered in validation-universe; env/npx/stdio
-leaks closed; probes HC-001 + HC-106..110 6/6 detected; typecheck and
-hardening:check PASS. Phase 2 checkpoint commit then gate:milestone pending.
+Last checkpoint: 2026-09-22 — M2 Phase 2 NW-AUD-014 COMPLETE at
+`ff62ff0b`. gate:dev PASS; gate:milestone PASS (wall 709.8s, all steps
+exit=0 on the clean tree; affected 387; shards exit=0). Census 68/121/0;
+probes HC-001+HC-106..110 6/6. Phase 3 NW-AUD-019 opening from the
+completed private-screening census.
 
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
@@ -38,13 +37,12 @@ further audit work.
 
 ## Current Milestone
 
-Milestone ID: M2 — Phase 2: NW-AUD-014 child-process boundary totality
+Milestone ID: M3 — Phase 3: NW-AUD-019 private payload structural screening
 Milestone status: IN_PROGRESS
-What is being attempted: reproduce the 17-file manual launcher-list gap on
-live source, build the total AST invocation census (51 bin + 12 src importers),
-classify every node under closed execution profiles, close the three env
-spreads / npx acquisition / phase22 stdio inherit leaks, and land sentinel
-env + bounds + HC probes.
+What is being attempted: reproduce the quoted-key JSON screening bypass on
+live source with a focused failing regression; implement structural privacy
+validation as primary authority with closed family schemas/safe DTOs, total
+writer/reader consumer census, and bounded text defense-in-depth.
 
 ## Completed Milestones
 
@@ -62,14 +60,18 @@ env + bounds + HC probes.
 
 ## Work In Progress
 
-NONE — Phase 2 implementation and gate:dev are complete; committing the
-checkpoint and running gate:milestone before closing M2.
+M3 Phase 3 bootstrap: NW-AUD-019 live reproduction (quoted token/password/
+customer objects pass PRIVATE_VALUE_RE on JSON.stringify) before structural
+screening writes.
 
 ## Exact Next Action
 
-Commit the Phase 2 checkpoint, run `npm run gate:milestone` on the clean
-tree; if PASS mark **M2 — Phase 2** COMPLETE in STATE/PLAN, commit that truth
-flip, then start Phase 3 NW-AUD-019 (quoted-key private screening bypass).
+Reproduce NW-AUD-019 on live source: show `containsPrivatePayloadShape` /
+`PRIVATE_VALUE_RE` accepts ordinary `{"token":"..."} ` JSON objects while
+sentinel fixtures still block; add a focused failing regression; then
+implement structural validation and the total consumer census per the
+NW-AUD-019 design (reuse C-10 closed-key patterns; do not break C-10
+defense-in-depth stance).
 
 ## Files Changed
 
@@ -158,8 +160,8 @@ publication contact; no force push.
 
 ## Resume Recipe
 
-Resume at Exact Next Action: commit Phase 2, gate:milestone, close M2, open
-Phase 3 NW-AUD-019. Session `sess-c9a1701b8a56` on
+Resume at Exact Next Action: Phase 3 NW-AUD-019 reproduction + structural
+screening. Session `sess-c9a1701b8a56` on
 `session/nightwatch-priority-audit-remedi-0e17af9c`.
 
 ## Completed Milestones (append)
