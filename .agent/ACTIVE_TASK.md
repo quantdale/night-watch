@@ -7,9 +7,9 @@ Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-priority-audit-remediation-sequence-v1
 Starting SHA: 4a3df8cdc776c5ca47a9666f65afbd5c5519f092
 Last validated implementation SHA: 4a3df8cdc776c5ca47a9666f65afbd5c5519f092
-Last checkpoint: M0 COMPLETE at `febedef1` — checks PASS, tree clean; Phase 1 NW-AUD-010 in progress.
-Current milestone: M1 — Phase 1: NW-AUD-010 release evidence lineage integrity
-Next action: Add the Phase 1 focused failing regression proving non-exact evidence can leave MET effectively met; run it red; then implement categorical lineage per the NW-AUD-010 design.
+Last checkpoint: M1 COMPLETE at `78483ee8` — gate:dev PASS; gate:milestone PASS; Phase 2 NW-AUD-014 in progress.
+Current milestone: M2 — Phase 2: NW-AUD-014 child-process boundary totality
+Next action: Reproduce NW-AUD-014 (17-file manual rule vs 51 bin importers; gate-topology/review-mutation-campaign/phase22-dev defects); add focused failing regression; implement total invocation census and closed execution profiles.
 Authorization class: PRIORITY_AUDIT_REMEDIATION_SEQUENCE_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2

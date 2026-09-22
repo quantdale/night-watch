@@ -87,7 +87,7 @@ one full certification, then C-00 integrate/release/remove.
   PASS; coherent checkpoint commit.
 - Validation commands: focused Playwright project-state/release suites,
   `npm run gate:dev`, `npm run gate:milestone`
-- **Status:** IN_PROGRESS
+- **Status:** COMPLETE
 
 ### M2 — Phase 2: NW-AUD-014 child-process boundary totality
 
@@ -104,7 +104,7 @@ one full certification, then C-00 integrate/release/remove.
   `gate:dev`/`gate:milestone` PASS; coherent checkpoint.
 - Validation commands: focused subprocess/hardening suites, `npm run gate:dev`,
   `npm run gate:milestone`
-- **Status:** NOT_STARTED
+- **Status:** IN_PROGRESS
 
 ### M3 — Phase 3: NW-AUD-019 private payload structural screening
 

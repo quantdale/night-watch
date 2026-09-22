@@ -19,14 +19,14 @@
 - [x] 2.3 Synthetic Git matrix (exact/ancestor/descendant/side/missing/HEAD)
   and non-vacuous mutations HC-099…HC-105 PASS (timeout/spawn covered by
   GIT_INDETERMINATE pure cases + adapter SPAWN_ERROR/SIGNAL branches).
-- [ ] 2.4 Focused suites + `gate:dev` + `gate:milestone` PASS; coherent
+- [x] 2.4 Focused suites + `gate:dev` + `gate:milestone` PASS; coherent
   checkpoint commit; update
   `openspec/changes/nightwatch-release-evidence-lineage-integrity-v1/tasks.md`
-  from evidence. [gate:dev PASS; checkpoint commit + gate:milestone pending]
+  from evidence. [committed `78483ee8`; gate:dev PASS; gate:milestone PASS]
 
 ## 3. Phase 2 — NW-AUD-014 child-process boundary totality
 
-- [ ] 3.1 Total AST invocation census; zero unknown nodes; closed profiles.
+- [ ] 3.1 Total AST invocation census; zero unknown nodes; closed profiles. [IN_PROGRESS]
 - [ ] 3.2 Close highest-authority leaks (env spread, npx acquisition,
   unbounded/authenticated launchers); sentinel environment proof.
 - [ ] 3.3 Timeout/output/stdin/shell/termination tests and hardening probes

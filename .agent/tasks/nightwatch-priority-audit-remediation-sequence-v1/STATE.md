@@ -11,12 +11,11 @@ Last substantive checkpoint SHA: 4a3df8cdc776c5ca47a9666f65afbd5c5519f092
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-priority-audit-remedi-0e17af9c
-Last checkpoint: 2026-09-22 — M1 Phase 1 NW-AUD-010 implemented and
-focused-green: categorical lineage, exact-only MET, snapshot HEAD,
-evaluationDigest, synthetic Git matrix, probes HC-099…HC-105 (8/8 detected),
-projectState 91/91, typecheck PASS, hardening:check PASS, hardening:rules
-110/110, gate:dev PASS. Phase 1 checkpoint committed; gate:milestone to run
-on the clean committed tree.
+Last checkpoint: 2026-09-22 — M1 Phase 1 NW-AUD-010 COMPLETE at
+`78483ee8`. gate:dev PASS; gate:milestone PASS (wall 1038.4s, all steps
+exit=0 including project-check on the clean tree); projectState 91/91;
+probes HC-099…HC-105 8/8; hardening:rules 110/110. Phase 2 NW-AUD-014
+opening from the completed child-process census.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 4a3df8cdc776c5ca47a9666f65afbd5c5519f092
@@ -37,13 +36,13 @@ further audit work.
 
 ## Current Milestone
 
-Milestone ID: M1 — Phase 1: NW-AUD-010 release evidence lineage integrity
+Milestone ID: M2 — Phase 2: NW-AUD-014 child-process boundary totality
 Milestone status: IN_PROGRESS
-What is being attempted: re-reproduce non-exact evidence survival on live
-source with a focused failing regression, then implement categorical lineage,
-exact-equality certification, snapshot-bound HEAD, evaluation digest, and
-synthetic Git/mutation proof in `src/core/releaseCertification` and
-`bin/project-state-check.mjs`.
+What is being attempted: reproduce the 17-file manual launcher-list gap on
+live source, build the total AST invocation census (51 bin + 12 src importers),
+classify every node under closed execution profiles, close the three env
+spreads / npx acquisition / phase22 stdio inherit leaks, and land sentinel
+env + bounds + HC probes.
 
 ## Completed Milestones
 
@@ -61,16 +60,16 @@ synthetic Git/mutation proof in `src/core/releaseCertification` and
 
 ## Work In Progress
 
-NONE — Phase 1 implementation and focused validation are committed; only
-gate:milestone on the clean tree remains before M1 is marked COMPLETE and
-Phase 2 opens.
+M2 Phase 2 bootstrap: NW-AUD-014 live reproduction (manual rule vs census)
+and design alignment before any child-process hardening writes.
 
 ## Exact Next Action
 
-Run `npm run gate:milestone` on the clean committed Phase 1 tree. If PASS,
-mark **M1 — Phase 1** COMPLETE in this STATE and PLAN, commit that truth
-flip, then start Phase 2 NW-AUD-014 from the completed child-process census
-(reproduce the 17-file manual rule gap, then total invocation census).
+Reproduce NW-AUD-014 on live source: show `checkChildProcessBoundaries`
+covers only 17 files while 51 bin modules import `node:child_process`, with
+gate-topology/review-mutation-campaign/phase22-dev defects still present;
+add a focused failing regression; then implement the total invocation census
+and closed profiles per the NW-AUD-014 design.
 
 ## Files Changed
 
@@ -114,6 +113,11 @@ When: 2026-09-22
 Relevant failure/output summary: NW-AUD-006 COMPLETE handoff coherent;
 agent strict_errors=0; project PASS; workspace/session PASS.
 
+Command: `npm run gate:milestone` (Phase 1, clean tree at `78483ee8`)
+Result: PASS (wall=1038.4s; every step exit=0 including project-check)
+When: 2026-09-22
+Relevant failure/output summary: validation-universe, execution-classes, typecheck, hardening-check, agent-check, handoff-check, typecheck-bin, hardening-rules, project-check, workspace-check, affected-tests (386), affected-shards all exit=0; lane result PASS (NON-CERTIFICATION).
+
 ## Decisions Made During This Task
 
 Decision: one umbrella implementation campaign owns handoff/C-00 continuity;
@@ -154,12 +158,12 @@ publication contact; no force push.
 
 ## Resume Recipe
 
-Resume at Exact Next Action: run `npm run gate:milestone` on the committed
-Phase 1 tree; on PASS close M1 and open Phase 2 NW-AUD-014. Session
-`sess-c9a1701b8a56` on `session/nightwatch-priority-audit-remedi-0e17af9c`.
+Resume at Exact Next Action: Phase 2 NW-AUD-014 reproduction + total census.
+Session `sess-c9a1701b8a56` on `session/nightwatch-priority-audit-remedi-0e17af9c`.
 
 ## Completed Milestones (append)
 
+- **M1 — Phase 1: NW-AUD-010 release evidence lineage integrity: COMPLETE** at `78483ee8`; gate:dev PASS; gate:milestone PASS.
 - **M0 — Campaign bootstrap: COMPLETE** at `b2823c99`/`febedef1`. handoff PASS
   (IN_PROGRESS bind), agent PASS (strict_errors=0), project PASS, session
   PASS, tree clean, `mayIntegrate=true`.
