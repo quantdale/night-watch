@@ -278,6 +278,55 @@ export function createNetworkObserver(opts: {
   const bootstrapTable = BootstrapExemptionTable.of(opts.bootstrapExemptions ?? []);
   let journeyGeneration: string | null = null;
   let navigationGeneration: string | null = null;
+  // NW-AUD-020 — BOUNDED navigation settlement. Parse-time bootstrap
+  // fetches are intercepted and even page-`request`-observed only AFTER
+  // load (empirically), so no observation-order rule can be deterministic.
+  // A NAVIGATION generation therefore closes a bounded settlement window
+  // after load (aligned with the engine's 500 ms quietMs), extendable only
+  // while API requests observed under it are still in flight, and hard-capped
+  // so continuous traffic can never keep authority open forever. The window
+  // is NOT ambient safety: unknown traffic refuses at every instant, and
+  // only count-bounded, registered, GET, navigation-scoped bootstrap
+  // exemptions can be spent inside it.
+  const NAV_BOOTSTRAP_SETTLEMENT_MS = 500;
+  const NAV_SETTLEMENT_MAX_REARMS = 4;
+  let navigationLoaded = false;
+  let navigationSettleTimer: ReturnType<typeof setTimeout> | null = null;
+  let navigationSettleRearms = 0;
+  const navigationPending = new Set<ReturnType<Response['request']>>();
+
+  function settleNavigationNow(cause: string): void {
+    if (navigationSettleTimer !== null) {
+      clearTimeout(navigationSettleTimer);
+      navigationSettleTimer = null;
+    }
+    if (navigationGeneration === null) return;
+    const closing = navigationGeneration;
+    try { generations.settle(closing); } catch { /* already settled */ }
+    navigationGeneration = null;
+    recorder.event({
+      type: 'policy',
+      severity: 'info',
+      message: 'NAVIGATION_GENERATION_SETTLED',
+      data: { generationId: closing, cause },
+    });
+  }
+
+  function armNavigationSettlement(): void {
+    if (!navigationLoaded || navigationGeneration === null) return;
+    if (navigationSettleTimer !== null) clearTimeout(navigationSettleTimer);
+    navigationSettleTimer = setTimeout(() => {
+      navigationSettleTimer = null;
+      if (navigationPending.size > 0 && navigationSettleRearms < NAV_SETTLEMENT_MAX_REARMS) {
+        navigationSettleRearms += 1;
+        armNavigationSettlement();
+        return;
+      }
+      settleNavigationNow(
+        navigationPending.size > 0 ? 'bounded-window-capped' : 'loaded-and-drained',
+      );
+    }, NAV_BOOTSTRAP_SETTLEMENT_MS);
+  }
 
   /**
    * NW-AUD-020 — THE pre-effect gate for API-host requests at L1. Only an
@@ -840,6 +889,7 @@ export function createNetworkObserver(opts: {
     let captureRelevant = false;
     try {
       request = response.request();
+      if (navigationPending.delete(request)) armNavigationSettlement();
       const rawUrl = request.url();
       tracked = trackedRequests.has(request);
       requestIntent = intentForRequest(request);
@@ -1163,6 +1213,7 @@ export function createNetworkObserver(opts: {
 
   function onRequestFailed(request: Request): void {
     try {
+      if (navigationPending.delete(request)) armNavigationSettlement();
       const rawUrl = request.url();
       const requestIntent = intentForRequest(request);
       if (trackedRequests.delete(request)) {
@@ -1273,6 +1324,12 @@ export function createNetworkObserver(opts: {
     try {
       const rawUrl = request.url();
       if (!isNetworkUrl(rawUrl)) return;
+      // NW-AUD-020: API requests observed under an open NAVIGATION
+      // generation keep it alive until they complete (drain-settle).
+      if (navigationGeneration !== null) {
+        const resourceType = request.resourceType();
+        if (resourceType === 'fetch' || resourceType === 'xhr') navigationPending.add(request);
+      }
       const decision = decideBrowserHttp(policy, rawUrl);
       if (decision.verdict !== 'deny') return;
       if (blockedUrls.has(rawUrl)) return; // governed by a route/WS handler already
@@ -1322,16 +1379,28 @@ export function createNetworkObserver(opts: {
       if (navigationGeneration !== null) {
         try { generations.settle(navigationGeneration); } catch { /* superseded */ }
       }
+      navigationPending.clear();
+      navigationLoaded = false;
+      navigationSettleRearms = 0;
+      if (navigationSettleTimer !== null) {
+        clearTimeout(navigationSettleTimer);
+        navigationSettleTimer = null;
+      }
       try {
         navigationGeneration = generations.open('NAVIGATION').id;
+        recorder.event({
+          type: 'policy',
+          severity: 'info',
+          message: 'NAVIGATION_GENERATION_OPEN',
+          data: { generationId: navigationGeneration },
+        });
       } catch {
         navigationGeneration = null; // budget exhausted: fail closed (no nav authority)
       }
     });
     page.on('load', () => {
-      if (navigationGeneration === null) return;
-      try { generations.settle(navigationGeneration); } catch { /* already settled */ }
-      navigationGeneration = null;
+      navigationLoaded = true;
+      armNavigationSettlement();
     });
   }
 

@@ -22,10 +22,15 @@
 
 import { expect, test } from '@playwright/test';
 import fs from 'node:fs';
+import http from 'node:http';
 import path from 'node:path';
 import { OutboundPolicy } from '../../src/core/safety/outboundPolicy';
 import { decideBrowserHttp } from '../../src/core/safety/policyConsumers';
 import type { EnvironmentConfig } from '../../src/core/environment/types';
+import { RunRecorder } from '../../src/core/evidence/runRecorder';
+import { RunMonitor } from '../../src/state/run';
+import { createNightwatchContext } from '../../src/browser/context';
+import { fixtureBootstrapExemptions } from '../../src/browser/fixtures/bootstrapExemptions';
 
 const ROOT = path.join(__dirname, '..', '..');
 const read = (relative: string): string => fs.readFileSync(path.join(ROOT, relative), 'utf8');
@@ -166,5 +171,132 @@ test.describe('NW-AUD-020 reproduction baseline (defects must later be inverted)
     // Class D (host-only CDP fallback) is pinned here until Step 4 lands;
     // classes A, B, C are inverted above once wiring landed.
     expect(self).toContain('CDP Fetch guard');
+  });
+
+  test('E2E bootstrap: budgeted grant reaches upstream once; unexempted and post-settlement fetches open ZERO upstream effect', async ({ browser }) => {
+    // Synthetic loopback fixture only. The page's inline script fires, in
+    // order: exempt#1 (granted), unregistered (refused), exempt#2 (budget
+    // exhausted). After settlement a further exempt fetch must also refuse —
+    // authority is navigation-generation state, not route reuse.
+    const hits: string[] = [];
+    const bootstrapPage = `<!doctype html><script>
+        fetch('/api/exempt').catch(() => {});
+        fetch('/api/unregistered').catch(() => {});
+        fetch('/api/exempt').catch(() => {});
+      </script><body>fixture</body>`;
+    const server = http.createServer((req, res) => {
+      if (req.url === '/' ) {
+        res.writeHead(200, { 'content-type': 'text/html' });
+        res.end(bootstrapPage);
+        return;
+      }
+      hits.push(req.url ?? '');
+      res.writeHead(200, { 'content-type': 'application/json' });
+      res.end('{"synthetic":"ok"}');
+    });
+    await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+    const address = server.address();
+    if (address === null || typeof address === 'string') throw new Error('fixture server did not expose a TCP port');
+    const origin = `http://127.0.0.1:${address.port}`;
+    const host = new URL(origin).host;
+    const env: EnvironmentConfig = {
+      name: 'local',
+      label: 'nw-aud-020 e2e bootstrap',
+      uiBaseUrl: origin,
+      apiHosts: [host],
+      authHosts: [],
+      allowedHosts: [host, 'localhost'],
+      staticAssetHosts: [],
+      telemetryHosts: [],
+      optionalThirdPartySupportHosts: [],
+      browserBackgroundHosts: [],
+      failOn: [],
+    };
+    const recorder = new RunRecorder({
+      runId: `semantic-adm-e2e-${Date.now()}`,
+      environment: 'local',
+      product: 'ripple',
+      browser: 'chromium',
+      scenario: 'nw-aud-020-e2e-bootstrap',
+    });
+    const monitor = new RunMonitor(env.failOn);
+    void monitor;
+    let ctx: Awaited<ReturnType<typeof createNightwatchContext>> | null = null;
+    try {
+      ctx = await createNightwatchContext(browser, {
+        env,
+        recorder,
+        uiBaseUrl: origin,
+        trace: 'off',
+        // Explicit, count-bounded (1 per navigation) exemption — adopted by
+        // the reference graph through this very consumption.
+        bootstrapExemptions: fixtureBootstrapExemptions(env.name, origin, [
+          { id: 'e2e.bootstrap.exempt', routePattern: '^/api/exempt$' },
+        ], 1),
+      });
+      const page = await ctx.page;
+      await page.goto(`${origin}/`, { waitUntil: 'load' });
+
+      // All three requests are intercepted during the navigation generation.
+      await expect.poll(() => hits.filter((url) => url === '/api/exempt').length, { timeout: 5_000 }).toBe(1);
+      const events = () => fs.readFileSync(path.join(recorder.dir, 'events.jsonl'), 'utf8');
+      await expect.poll(() => {
+        try { return (events().match(/SEMANTIC_ADMISSION_REFUSED/g) ?? []).length; } catch { return 0; }
+      }, { timeout: 5_000 }).toBe(2);
+
+      // 1) In-budget exemption reached the upstream exactly once.
+      expect(hits.filter((url) => url === '/api/exempt')).toHaveLength(1);
+      // 2) ZERO upstream effect for the unregistered refusal.
+      expect(hits).not.toContain('/api/unregistered');
+      // 3) ZERO upstream effect for the over-budget second exemption.
+      expect(hits.filter((url) => url === '/api/exempt')).toHaveLength(1);
+
+      const recorded = events();
+      // Two-stage matching (recorded M5 design): an unknown path on an
+      // origin+method family that HAS registered exemptions is route drift
+      // (MISMATCH); fully-unregistered families (other origin/method/table-
+      // empty) prove ADMISSION_BOOTSTRAP_UNREGISTERED in the pure suite.
+      expect(recorded).toContain('ADMISSION_BOOTSTRAP_MISMATCH');
+      expect(recorded).toContain('ADMISSION_BOOTSTRAP_EXHAUSTED');
+      expect(recorded).toContain('BOOTSTRAP_EXEMPT');
+      expect(recorded).toContain('e2e.bootstrap.exempt');
+      // Refusal receipts are categorical: no path material persists in them.
+      const refusalReceipts = recorded
+        .split('\n')
+        .filter(Boolean)
+        .map((line) => JSON.parse(line) as { message?: string; data?: Record<string, unknown> })
+        .filter((event) => event.message === 'SEMANTIC_ADMISSION_REFUSED');
+      expect(refusalReceipts.length).toBeGreaterThanOrEqual(2);
+      for (const receipt of refusalReceipts) {
+        const receiptText = JSON.stringify(receipt.data);
+        expect(receiptText).not.toContain('/api/');
+        expect(receiptText).not.toContain('unregistered');
+        expect(receiptText).not.toContain('exempt');
+      }
+
+      // 4) Wait for DETERMINISTIC settlement (the bounded window closing —
+      // an event, not a guess), then the SAME exempt route has no navigation
+      // generation to spend under: timing and route equality grant nothing.
+      await expect.poll(() => {
+        try { return events().includes('NAVIGATION_GENERATION_SETTLED'); } catch { return false; }
+      }, { timeout: 5_000 }).toBe(true);
+      const settledRefusalBefore = (events().match(/SEMANTIC_ADMISSION_REFUSED/g) ?? []).length;
+      await page.evaluate(() => fetch('/api/exempt').catch(() => undefined));
+      await expect.poll(() => {
+        try {
+          return (events().match(/SEMANTIC_ADMISSION_REFUSED/g) ?? []).length;
+        } catch {
+          return 0;
+        }
+      }, { timeout: 5_000 }).toBeGreaterThan(settledRefusalBefore);
+      expect(hits.filter((url) => url === '/api/exempt')).toHaveLength(1);
+      expect(events()).toContain('ADMISSION_UNBOUND_GENERATION');
+    } finally {
+      if (ctx !== null) await ctx.close();
+      await new Promise<void>((resolve) => {
+        server.closeAllConnections();
+        server.close(() => resolve());
+      });
+    }
   });
 });
