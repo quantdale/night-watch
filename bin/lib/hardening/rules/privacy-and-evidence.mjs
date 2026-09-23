@@ -192,7 +192,6 @@ export function checkC10ProductionPrivacyBoundary() {
   if (!/class RawEphemeralSource/.test(types) || !/toJSON\(\): never/.test(types)) {
     fail('C-10 raw bytes must enter through the single call-scoped RawEphemeralSource, which must refuse serialization');
   }
-  const projector = readIncludingComments('src/core/prodPrivacy/projector.ts');
   const projectorCode = read("src/core/prodPrivacy/projector.ts");
   if (!/source instanceof RawEphemeralSource/.test(projectorCode)) {
     fail('C-10 projector must accept raw bytes only through RawEphemeralSource');
@@ -211,7 +210,6 @@ export function checkC10ProductionPrivacyBoundary() {
   if (/encounterToken|numericEncounterRef/.test(serializer.replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, ''))) {
     fail('C-10 canonical serializer must never write an ephemeral correlation label (F-15)');
   }
-  const policy = readIncludingComments('src/core/prodPrivacy/policy.ts');
   const policyCode = read("src/core/prodPrivacy/policy.ts");
   if (!/durableValueDigest: 'ABSENT'/.test(policyCode)) {
     fail('C-10 production policy must record that no durable value digest exists (F-15)');
@@ -219,7 +217,6 @@ export function checkC10ProductionPrivacyBoundary() {
 
   // Workstream F: the persistence firewall must be an independent re-validation
   // at the durable write, and the store must run it.
-  const firewall = readIncludingComments('src/core/prodEvidence/firewall.ts');
   const firewallCode = read("src/core/prodEvidence/firewall.ts");
   for (const required of ['ENCOUNTER_TOKEN_PRESENT', 'DYNAMIC_KEY_LITERAL_PRESENT', 'DIGEST_MISMATCH', 'UNKNOWN_SCHEMA_VERSION']) {
     if (!firewallCode.includes(required)) fail(`C-10 persistence firewall must reject ${required}`);
@@ -241,7 +238,6 @@ export function checkC10ProductionPrivacyBoundary() {
   // admits any `[A-Za-z0-9._~-]+` segment, so it cannot tell `accounts` from
   // `481516234299`; relying on it let concrete customer identifiers reach
   // persisted evidence through the route field.
-  const routeVocabulary = readIncludingComments('src/core/prodPrivacy/routeVocabulary.ts');
   const routeVocabularyCode = read("src/core/prodPrivacy/routeVocabulary.ts");
   if (!/isSourceProvenRoute/.test(routeVocabularyCode) || !/NO_PROVEN_ROUTE_VOCABULARY/.test(routeVocabularyCode)) {
     fail('C-10 route identity must be decided by a source-proven route vocabulary (DEF-C10-5)');
@@ -266,7 +262,6 @@ export function checkC10ProductionPrivacyBoundary() {
   if (!/assertSourceProvenRoute\(\s*routeVocabulary/.test(parameterProvenance)) {
     fail('C-10 assertRouteTemplateOnly must require route provenance, not shape alone (DEF-C10-5)');
   }
-  const audit = readIncludingComments('src/core/prodEvidence/persistenceAudit.ts');
   const auditCode = read("src/core/prodEvidence/persistenceAudit.ts");
   if (!/provenRouteTemplates/.test(auditCode)) {
     fail('C-10 persistence audit must flag a persisted route outside the proven set (DEF-C10-5)');
@@ -283,7 +278,6 @@ export function checkC10ProductionPrivacyBoundary() {
   if (!/assertDevFindingsRoot/.test(seam)) {
     fail('the Control Center test-only findings seam must also refuse the production root (F-18)');
   }
-  const exclusion = readIncludingComments('src/core/prodEvidence/controlCenterExclusion.ts');
   const exclusionCode = read("src/core/prodEvidence/controlCenterExclusion.ts");
   if (!/realpathSync/.test(exclusionCode)) {
     fail('C-10 Control Center exclusion must use resolved-path equivalence, not string comparison (F-18)');
@@ -345,9 +339,7 @@ export function checkC105ProvenanceAuthorityBoundary() {
   }
 
   // Consumption must require the brand, not the shape.
-  const routeVocabulary = readIncludingComments('src/core/prodPrivacy/routeVocabulary.ts');
   const routeVocabularyCode = read("src/core/prodPrivacy/routeVocabulary.ts");
-  const keyVocabulary = readIncludingComments('src/core/prodPrivacy/keyVocabulary.ts');
   const keyVocabularyCode = read("src/core/prodPrivacy/keyVocabulary.ts");
   if (!/if \(!isMintedCapability\(source\)\) return false;/.test(routeVocabularyCode)) {
     fail('C-10.5 route provenance must require a minted capability, not a matching shape');
