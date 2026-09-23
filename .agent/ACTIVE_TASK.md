@@ -6,17 +6,17 @@ Title: Priority audit remediation sequence implementation
 Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-priority-audit-remediation-sequence-v1
 Starting SHA: 4a3df8cdc776c5ca47a9666f65afbd5c5519f092
-Last validated implementation SHA: 5e2a03570f3e5d26bf2625478a9d501881a09cb7
-Last checkpoint: M4 COMPLETE at `5e2a0357` — gate:dev PASS; gate:milestone PASS (12/12 steps exit=0); probes 9/9 + 11/11; writer census 22/8/9; strict OpenSpec PASS.
-Current milestone: M5 — Phase 5: NW-AUD-020 semantic request admission
-Next action: Reproduce the four NW-AUD-020 defect classes from recon/wave1-aud020-census.md with focused failing regressions (passive unknown continuations, ~250ms intent-timer causality loss, navigation-as-ambient authority, host-only redirect fallback); then implement the immutable semantic admission handle, causal generations, finite bootstrap exemptions, and transport-total enforcement with zero-upstream refusal proof on synthetic fixtures only.
+Last validated implementation SHA: 70104a0016183e103815c79ff1a7647b73e4e622
+Last checkpoint: M5 COMPLETE at `70104a00` — gate:dev PASS; gate:milestone PASS (12/12 steps exit=0); full probe campaign 143/143; strict OpenSpec PASS; four defect pins A–D inverted; zero-upstream counters at five boundaries (fixture hits, wsConnections, redirect dst, proxy request/connection, relay fetchCalls).
+Current milestone: M6 — Cross-phase audit, full certification, C-00 closure
+Next action: Cross-phase adversarial audit of NW-AUD-010×014×019×018×020 (doc-descendant exactness, child-process totality re-run over every file the five remediations added, key-authority coherence, semantic-receipt persistence safety, helper bounds, generation×recorder teardown) with immediate fixes; re-verify the two recorded flakes + the advisory parse quirk; then ONE authoritative full certification, pre-integration C-00 checks, integrate/release/remove with exact expectations, gate:clean post-integration, terminal report, successor reassessment.
 Authorization class: PRIORITY_AUDIT_REMEDIATION_SEQUENCE_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 4a3df8cdc776c5ca47a9666f65afbd5c5519f092
-LAST_VALIDATED_IMPLEMENTATION_SHA: 5e2a03570f3e5d26bf2625478a9d501881a09cb7
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 5e2a03570f3e5d26bf2625478a9d501881a09cb7
+LAST_VALIDATED_IMPLEMENTATION_SHA: 70104a0016183e103815c79ff1a7647b73e4e622
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 70104a0016183e103815c79ff1a7647b73e4e622
 LIVE_HEAD_AUTHORITY: GIT
 PHASE_PRIORITY_AUDIT_REMEDIATION_SEQUENCE_V1_STATUS: IN_PROGRESS
 

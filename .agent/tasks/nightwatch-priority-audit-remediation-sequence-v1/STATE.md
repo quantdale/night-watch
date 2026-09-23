@@ -6,34 +6,33 @@ Task ID: nightwatch-priority-audit-remediation-sequence-v1
 Phase: PRIORITY_AUDIT_REMEDIATION_SEQUENCE_V1
 Status: IN_PROGRESS
 Starting SHA: 4a3df8cdc776c5ca47a9666f65afbd5c5519f092
-Last validated implementation SHA: 5e2a03570f3e5d26bf2625478a9d501881a09cb7
-Last substantive checkpoint SHA: 5e2a03570f3e5d26bf2625478a9d501881a09cb7
+Last validated implementation SHA: 70104a0016183e103815c79ff1a7647b73e4e622
+Last substantive checkpoint SHA: 70104a0016183e103815c79ff1a7647b73e4e622
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-priority-audit-remedi-0e17af9c
-Last checkpoint: 2026-09-23 — M5 Steps 1–4 COMPLETE through `c57187f9`:
-L1 pre-effect gate + generation causality + finite bootstrap exemptions
-(`cabb0173`), bounded navigation settlement + adopted-exemptions E2E +
-console raw-text suppression sibling fix (`48b1d407`), settlement-timer
-teardown hardening (`3325ff42`), L0 CDP redirect admission + layer
-ownership (`c57187f9`). ALL FOUR reproduction pins INVERTED (A/B/C/D) with
-ordering/absence proofs; bootstrap E2E proves in-budget grant reaches
-upstream exactly once while unexempted/family-drift/over-budget/
-post-settlement spends open ZERO upstream; receipts categorical (no path
-material). Validation: typecheck PASS; schema PASS; hardening PASS;
-admission suites 13/13; focused batteries 141/141 (15 files) then
-157/157 (19 files incl. all five smokes, monitor, containment, egress,
-p1); gate:dev PASS at `48b1d407`-equivalent content (before Step 4).
-M4 remains the validated substantive anchor at `5e2a0357` until M5's
-gates run. Remaining M5: Steps 5–8 (WS admission, L5/relay binding,
-total transport census + probes, expanded zero-upstream + concurrency
-matrices), gate:dev + gate:milestone, OpenSpec reconciliation, checkpoint.
+Last checkpoint: 2026-09-23 — M5 Phase 5 NW-AUD-020 COMPLETE at
+`70104a00` (validated implementation: Steps 1–8 through `11581a0e` +
+probe fix `70104a00`). Receipts: gate:dev PASS (393 affected, all step
+exits 0); gate:milestone PASS (twelve steps exit=0 at `70104a00`,
+hardening-rules 162.4s); FULL probe campaign rules=85 probes=143
+detected=143 undetected=0 restored=100; admission suites 21/21 (incl.
+the section-15 consolidated matrix: all 15 closed refusal codes,
+expected==actual, zero dead codes); 17-file battery 171/171; typecheck/
+typecheck:bin/schema/hardening/universe/agent/handoff/project/workspace/
+session all PASS; strict OpenSpec PASS for the NW-AUD-020 change +
+umbrella. All four original defect pins A–D INVERTED. Honest PARTIALs
+recorded in the reconciled tasks.md (4.1 async-source + popup/frame/
+worker test depth; 4.2 stale-currentness source-mutation probe).
+M5 anchors now record `70104a00`. Next: M6 cross-phase audit → ONE full
+certification → C-00 integrate/release → gate:clean → terminal report →
+successor engine.
 
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 4a3df8cdc776c5ca47a9666f65afbd5c5519f092
-LAST_VALIDATED_IMPLEMENTATION_SHA: 5e2a03570f3e5d26bf2625478a9d501881a09cb7
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 5e2a03570f3e5d26bf2625478a9d501881a09cb7
+LAST_VALIDATED_IMPLEMENTATION_SHA: 70104a0016183e103815c79ff1a7647b73e4e622
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 70104a0016183e103815c79ff1a7647b73e4e622
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
 PHASE_PRIORITY_AUDIT_REMEDIATION_SEQUENCE_V1_STATUS: IN_PROGRESS
@@ -49,15 +48,21 @@ further audit work.
 
 ## Current Milestone
 
-Milestone ID: M5 — Phase 5: NW-AUD-020 semantic request admission
+Milestone ID: M6 — Cross-phase audit, full certification, C-00 closure
 Milestone status: IN_PROGRESS
-What is being attempted: re-verify passive-observation allowance, timer-
-based action-intent expiry, navigation-as-ambient-authority, and host-only
-redirect fallback against live source with focused failing regressions;
-then implement the immutable semantic admission handle, deterministic
-action/navigation generations, finite explicit bootstrap exemptions, and
-transport-total (Playwright/CDP/WebSocket/relay/L5) enforcement with
-zero-upstream refusal proof on synthetic fixtures only.
+What is being attempted: adversarial cross-phase interaction audit of
+NW-AUD-010 × 014 × 019 × 018 × 020 (doc-descendant exactness; child-
+process totality re-run over M3–M5 files; key-authority coherence;
+semantic-receipt persistence safety under the M4 firewall; helper-process
+bounds; generation × recorder teardown), independent-style adversarial
+review with immediate fixes, re-verification of the two recorded load
+flakes + the advisory text-parse quirk, then ONE authoritative full
+certification (typecheck, typecheck:bin, schema, hardening check+rules,
+validation universe, agent/handoff/project/workspace/session, five strict
+OpenSpec validations + umbrella, npm test, gate:local, declared lanes),
+pre-integration C-00 checks, integrate with --expect-session/--expect-head,
+release + exact-session removal, terminal routing, gate:clean at the
+post-integration point, terminal report, successor reassessment.
 
 ## Completed Milestones
 

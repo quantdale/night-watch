@@ -160,8 +160,10 @@ one full certification, then C-00 integrate/release/remove.
   `gate:dev`/`gate:milestone` PASS; coherent checkpoint.
 - Validation commands: focused safety/browser/proxy suites,
   `npm run gate:dev`, `npm run gate:milestone`
-- **Status:** IN_PROGRESS (opening from recon/wave1-aud020-census.md;
-  reproduction-first)
+- **Status:** COMPLETE (at `70104a00`; gate:dev + gate:milestone PASS
+  twelve steps exit=0; full probe campaign 143/143; strict OpenSpec PASS;
+  four defect pins A–D inverted; evidence in STATE validation ledger M5
+  entries + reconciled NW-AUD-020 tasks.md with honest PARTIALs)
 
 ### M6 — Cross-phase audit, full certification, C-00 closure
 
@@ -179,7 +181,7 @@ one full certification, then C-00 integrate/release/remove.
   (typecheck, hardening, agent/handoff/project/workspace/session,
   `validation:universe`, strict OpenSpec, `npm test`, `gate:local`,
   `gate:clean`)
-- **Status:** NOT_STARTED
+- **Status:** IN_PROGRESS (cross-phase audit open)
 
 ## Validation Strategy
 

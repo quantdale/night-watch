@@ -4,8 +4,8 @@ Task ID: nightwatch-priority-audit-remediation-sequence-v1
 Phase: PRIORITY_AUDIT_REMEDIATION_SEQUENCE_V1
 Status: IN_PROGRESS
 Starting SHA: 4a3df8cdc776c5ca47a9666f65afbd5c5519f092
-Last validated implementation SHA: 5e2a03570f3e5d26bf2625478a9d501881a09cb7
-Last substantive checkpoint SHA: 5e2a03570f3e5d26bf2625478a9d501881a09cb7
+Last validated implementation SHA: 70104a0016183e103815c79ff1a7647b73e4e622
+Last substantive checkpoint SHA: 70104a0016183e103815c79ff1a7647b73e4e622
 
 ## Task
 

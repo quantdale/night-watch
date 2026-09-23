@@ -74,14 +74,27 @@
 
 ## 6. Phase 5 — NW-AUD-020 semantic request admission
 
-- [ ] 6.1 Re-reproduce passive/late/redirect authority gaps; focused failing
-  regressions.
-- [ ] 6.2 Immutable admission handles; finite initialization exemptions;
+- [x] 6.1 Re-reproduce passive/late/redirect authority gaps; focused failing
+  regressions. [reproduced and pinned at `8f346136`; all four defect pins
+  A–D subsequently INVERTED by the wiring with ordering/absence proofs]
+- [x] 6.2 Immutable admission handles; finite initialization exemptions;
   causal generations; transport-total enforcement; zero-upstream refusal
-  proof on synthetic fixtures.
+  proof on synthetic fixtures. [semanticAdmission/causalGenerations/
+  bootstrapExemptions/admissionTickets (4 schema families, 15 closed
+  refusal codes, no dead vocabulary); L1/L2/L0 shared gate with layer
+  ownership; L5 one-shot tickets + per-host tunnel capability; relay
+  composition (caller AND semantic); redirect provenance chain via the CDP
+  backstop; zero-upstream counters at five boundaries: fixture hits,
+  wsConnections, redirect dst counters, proxy request/connection counts,
+  relay fetchCalls]
 - [ ] 6.3 Endpoint/journey/browser/CDP/proxy/WebSocket + hardening tests
   PASS; `gate:dev` + `gate:milestone` PASS; coherent checkpoint; update the
-  remediation change tasks from evidence.
+  remediation change tasks from evidence. [focused suites PASS; hardening
+  rule checkSemanticTransportTotality + probes HC-130..HC-136, full
+  campaign 143/143; gate:dev PASS; gate:milestone PASS twelve steps exit=0
+  at `70104a00`; NW-AUD-020 tasks.md reconciled with honest PARTIALs
+  (4.1 async-source/popup-frame-worker depth, 4.2 stale-currentness probe);
+  M5 checkpoint commit follows this reconciliation]
 
 ## 7. Cross-phase audit, full certification, C-00 closure (M6)
 
