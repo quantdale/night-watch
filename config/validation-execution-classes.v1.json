@@ -1726,6 +1726,10 @@
       "class": "PARALLEL_SAFE",
       "signals": []
     },
+    "tests/unit/semanticRequestAdmission.test.ts": {
+      "class": "PARALLEL_SAFE",
+      "signals": []
+    },
     "tests/unit/semanticSentinel.test.ts": {
       "class": "PARALLEL_SAFE",
       "signals": []
