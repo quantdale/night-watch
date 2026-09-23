@@ -1568,6 +1568,101 @@
           }
         ]
       }
+    ],
+    "checkSemanticTransportTotality": [
+      {
+        "id": "HC-130",
+        "ops": [
+          {
+            "file": "bin/lib/transportEffectCensus.mjs",
+            "search": "{ root: 'src/proxy/server.ts', klass: 'PROXY_UPSTREAM_DIAL' },",
+            "replace": "{ root: 'src/proxy/serverX.ts', klass: 'PROXY_UPSTREAM_DIAL' },"
+          }
+        ]
+      },
+      {
+        "id": "HC-131",
+        "ops": [
+          {
+            "file": "src/browser/observers/networkObserver.ts",
+            "search": "if (!apiGate.admitted) {",
+            "replace": "if (false) {"
+          }
+        ]
+      },
+      {
+        "id": "HC-132",
+        "ops": [
+          {
+            "file": "src/browser/observers/networkObserver.ts",
+            "search": ": admitApiRequest(rawUrl, request.method(), endpointClassification ?? 'UNKNOWN');",
+            "replace": ": (journeyIntent === null ? null : admitApiRequest(rawUrl, request.method(), endpointClassification ?? 'UNKNOWN'));"
+          }
+        ]
+      },
+      {
+        "id": "HC-133",
+        "ops": [
+          {
+            "file": "src/browser/network/fetchGuard.ts",
+            "search": "p.request.method",
+            "replace": "'GET'",
+            "all": true
+          }
+        ]
+      },
+      {
+        "id": "HC-134",
+        "ops": [
+          {
+            "file": "src/browser/observers/networkObserver.ts",
+            "search": "if (!generations.isActive(attribution.id)) return { admitted: false, code: 'ADMISSION_GENERATION_CLOSED' };",
+            "replace": ""
+          }
+        ]
+      },
+      {
+        "id": "HC-135",
+        "ops": [
+          {
+            "file": "src/browser/network/fetchGuard.ts",
+            "search": "const admission = isRedirectFollowUp",
+            "replace": "const admission = (false && isRedirectFollowUp)"
+          }
+        ]
+      },
+      {
+        "id": "HC-136",
+        "ops": [
+          {
+            "file": "src/browser/observers/networkObserver.ts",
+            "search": "gate = admitApiRequest(rawUrl, 'WS', endpointMatch.classification);",
+            "replace": "gate = null;"
+          }
+        ]
+      },
+      {
+        "id": "HC-137",
+        "ops": [
+          {
+            "file": "src/proxy/server.ts",
+            "search": "apiHostTarget(opts.policy",
+            "replace": "apiHostTargetDisabled(opts.policy",
+            "all": true
+          }
+        ]
+      },
+      {
+        "id": "HC-138",
+        "ops": [
+          {
+            "file": "src/api/phase5/relay.ts",
+            "search": "!options.admission(target, 'GET').admitted",
+            "replace": "false",
+            "all": true
+          }
+        ]
+      }
     ]
   }
 }

@@ -98,8 +98,8 @@ test.describe('G16.5 — a TOTALITY rule reports EVERY failing occurrence', () =
     const rules = listedRules();
     const undeclared = rules.filter((rule) => !allowed.has(rule.quantifier));
     expect(undeclared.map((rule) => rule.name)).toEqual([]);
-    expect(rules).toHaveLength(84);
-    expect(rules.filter((rule) => rule.quantifier === 'TOTALITY')).toHaveLength(61);
+    expect(rules).toHaveLength(85);
+    expect(rules.filter((rule) => rule.quantifier === 'TOTALITY')).toHaveLength(62);
     expect(rules.filter((rule) => rule.quantifier === 'EXISTENCE')).toHaveLength(23);
     for (const rule of rules) {
       expect(rule.subject.trim().length, `${rule.name} has no recorded subject`).toBeGreaterThanOrEqual(8);

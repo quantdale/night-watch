@@ -82,6 +82,7 @@ export function discoverRuleModuleFiles() {
  */
 export const RULE_TABLE = Object.freeze([
   { name: 'checkChildProcessBoundaries', module: 'process-and-network', family: 'process-boundaries', quantifier: 'TOTALITY', subject: 'every launcher bounds child execution and production source cannot reach shell-capable execution' },
+  { name: 'checkSemanticTransportTotality', module: 'process-and-network', family: 'process-boundaries', quantifier: 'TOTALITY', subject: 'every product-effect site discovers into one closed semantic authority class and the admission/generation/redirect/WS/proxy/relay protections remain in code' },
   { name: 'checkReviewStoreBoundary', module: 'privacy-and-evidence', family: 'review-store', quantifier: 'TOTALITY', subject: 'every private-store call, validator invocation, and error code in the review cone is allowlisted', firstMatch: 'the review file-name pattern declaration is a singleton constant' },
   { name: 'checkAgentProtocolBoundary', module: 'ai-and-self-dev', family: 'agent-protocol', quantifier: 'EXISTENCE', subject: 'the agent-protocol cone retains its purity and required validator/authority tokens' },
   { name: 'checkL6ProcessNetworkBoundary', module: 'process-and-network', family: 'l6-containment', quantifier: 'EXISTENCE', subject: 'the L6 containment descriptor, AF_UNIX control protocol, and OOPS readiness gate remain present' },

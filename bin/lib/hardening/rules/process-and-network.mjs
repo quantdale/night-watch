@@ -24,6 +24,7 @@ import {
   isRuleEngineSource,
 } from '../kernel.mjs';
 import { buildChildProcessCensus, EXECUTION_PROFILES } from '../../childProcessCensus.mjs';
+import { buildTransportEffectCensus, EFFECT_CLASSES } from '../../transportEffectCensus.mjs';
 
 export function checkChildProcessBoundaries() {
   // Historical launcher list: still bounds the named high-authority files
@@ -576,4 +577,94 @@ export function checkP1ObservationScopeBoundary() {
     if (/^config\/p1scope\//.test(file)) fail(`${file} is an in-repo P1 scope config; F-09 requires external-only`);
   }
 
+}
+
+/**
+ * NW-AUD-020 Step 7 — TOTAL semantic transport authority.
+ *
+ * The census discovers every authority-bearing effect site (browser route
+ * continuation, WebSocket establishment, CDP Fetch continuation, net/tls
+ * dials, relay fetch/forwarding, http(s) clients) — not selected
+ * filenames — and binds each to exactly one closed authority class. On top
+ * of totality, the REAL protections are pinned by their actual code: the
+ * L1 admission gate and its pre-continue ordering, the absence of a
+ * passive-unknown authority relabel, generation binding, WebSocket
+ * admission, redirect method binding at L0, settlement-after-deterministic
+ * ordering, bootstrap method bounding, ticket/tunnel bounds, proxy
+ * capability gates, and relay composition.
+ */
+export function checkSemanticTransportTotality() {
+  const subjects = gitFiles()
+    .filter((file) => (file.startsWith('src/') || file.startsWith('tests/')))
+    .filter((file) => /\.(?:ts|mjs)$/.test(file))
+    .filter((file) => !file.endsWith('.d.ts'));
+  const census = buildTransportEffectCensus(subjects.map((file) => ({ file, source: read(file) })));
+  for (const violation of census.violations) {
+    fail(`transport census ${violation.code}: ${violation.file} :: ${violation.detail}`);
+  }
+  if (census.siteCount < 40) {
+    fail(`transport census found only ${census.siteCount} effect sites; discovery is broken rather than the repository clean`);
+  }
+  if (census.classifiedCount !== census.siteCount) {
+    fail(`transport census classified ${census.classifiedCount} of ${census.siteCount} effect sites; totality violated`);
+  }
+  if ((census.byClass.SEMANTIC_ADMISSION ?? 0) < 4) {
+    fail(`transport census found only ${census.byClass.SEMANTIC_ADMISSION} semantically-admitted sites; the browser/proxy gates vanished`);
+  }
+  if (!/^sha256:[0-9a-f]{24}$/.test(census.digest)) fail('transport census digest is malformed');
+  for (const klass of EFFECT_CLASSES) {
+    if (!Object.prototype.hasOwnProperty.call(census.byClass, klass)) {
+      fail(`transport census class map is missing ${klass}`);
+    }
+  }
+
+  const observer = read('src/browser/observers/networkObserver.ts');
+  const gateAt = observer.indexOf('if (!apiGate.admitted)');
+  const continueAt = observer.indexOf('await route.continue();', gateAt);
+  if (gateAt < 0) fail('L1 pre-effect semantic admission gate is missing');
+  if (continueAt < 0 || continueAt < gateAt) fail('admission must be evaluated BEFORE route.continue');
+  if (/journeyIntent === null \? null : admitApiRequest/.test(observer)) {
+    fail('passive/no-intent relabel was reintroduced as continuation authority (NW-AUD-020 defect A)');
+  }
+  if (!observer.includes('ADMISSION_GENERATION_CLOSED')) fail('request admission lost its generation binding');
+  if (!observer.includes("gate = admitApiRequest(rawUrl, 'WS'")) fail('WebSocket establishment bypassed semantic admission');
+  if (!observer.includes('bootstrapTable.consume(')) fail('bootstrap exemption spend is missing');
+  if (!observer.includes('NAV_BOOTSTRAP_SETTLEMENT_MS') || !observer.includes('NAV_SETTLEMENT_MAX_REARMS')) {
+    fail('navigation settlement must be bounded (window + hard re-arm cap)');
+  }
+
+  const guard = read('src/browser/network/fetchGuard.ts');
+  const methodPins = (guard.match(/p\.request\.method/g) ?? []).length;
+  if (methodPins < 2) fail('redirect admission dropped METHOD binding at the CDP backstop');
+  if (!guard.includes('const admission = isRedirectFollowUp')) fail('CDP follow-up path downgraded to host-only authority');
+  if (!guard.includes('Fetch.failRequest')) fail('CDP backstop cannot fail a request before effect');
+
+  const engine = read('src/core/journeys/engine.ts');
+  const sleepAt = engine.indexOf('await sleep(ACTION_SETTLE_MS);');
+  const endAt = engine.indexOf('ctx.network.endJourneyIntent(step.stepId);', sleepAt);
+  const requiredAt = engine.indexOf('waitForRequiredNetwork(ctx, step', sleepAt);
+  if (sleepAt < 0 || requiredAt < 0 || endAt < requiredAt) {
+    fail('causality must settle after deterministic bounded settlement, never at the pacing sleep (NW-AUD-020 defect B)');
+  }
+
+  const bootstrap = read('src/core/safety/bootstrapExemptions.ts');
+  for (const required of ['BOOTSTRAP_EXEMPTION_METHOD_NOT_READ_ONLY', 'BOOTSTRAP_EXEMPTION_PATTERN_UNANCHORED', 'BOOTSTRAP_UNREGISTERED']) {
+    if (!bootstrap.includes(required)) fail(`bootstrap exemptions lost the ${required} refusal`);
+  }
+
+  const tickets = read('src/core/safety/admissionTickets.ts');
+  for (const required of ['PROXY_ADMISSION_TICKET_MISSING', 'PROXY_TUNNEL_CAPABILITY_MISSING', 'PROXY_TUNNEL_BUDGET_EXCEEDED', 'MAX_TUNNELS_PER_HOST']) {
+    if (!tickets.includes(required)) fail(`admission tickets lost the ${required} bound`);
+  }
+
+  const proxy = read('src/proxy/server.ts');
+  const capabilityGates = (proxy.match(/apiHostTarget\(opts\.policy/g) ?? []).length;
+  if (capabilityGates < 3) fail(`proxy has ${capabilityGates}/3 API capability gates (forward, connect, upgrade)`);
+  if (!proxy.includes('admissionTicketLedger().consume')) fail('proxy forwards without consuming admission tickets');
+  if (!proxy.includes('authorizeTunnel(')) fail('CONNECT established without tunnel capability binding');
+
+  const relay = read('src/api/phase5/relay.ts');
+  if (!relay.includes("!options.admission(target, 'GET').admitted")) fail('relay lost its semantic admission composition');
+  if (!relay.includes('SEMANTIC_ADMISSION_REFUSED')) fail('relay refusal is no longer categorical');
+  if (!relay.includes('requires semantic admission')) fail('dev-mode relay may start without semantic admission authority');
 }
