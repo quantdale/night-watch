@@ -11,18 +11,23 @@ Last substantive checkpoint SHA: 5e2a03570f3e5d26bf2625478a9d501881a09cb7
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-priority-audit-remedi-0e17af9c
-Last checkpoint: 2026-09-23 — M5 NW-AUD-020 IN PROGRESS. Reproduction
-baseline committed at `8f346136` (four defect classes A-D pinned green
-against live source); M5 pure authority core committed at `e25d72e1`
-(semanticAdmission + causalGenerations + bootstrapExemptions; three schema
-families declared; authority tests 8/8 incl. 249/250/251 timing-
-independence, cross-generation confusion, transport DISAGREEMENT, bootstrap
-budgets; baseline 4/4; typecheck/schema/hardening PASS; universe PASS).
-M4 remains the validated substantive anchor at `5e2a0357`
-(gate:milestone receipt) until M5's milestone gates run. Remaining M5:
-wire L1/L0/L2 (+L5 where bounded) to the authority, engine/exploration\causality to generations, fixture bootstrap exemptions, transport census +
-hardening probes, adversarial matrix smokes with zero-upstream proof,
-gates, OpenSpec reconciliation, checkpoint.
+Last checkpoint: 2026-09-23 — M5 Steps 1–4 COMPLETE through `c57187f9`:
+L1 pre-effect gate + generation causality + finite bootstrap exemptions
+(`cabb0173`), bounded navigation settlement + adopted-exemptions E2E +
+console raw-text suppression sibling fix (`48b1d407`), settlement-timer
+teardown hardening (`3325ff42`), L0 CDP redirect admission + layer
+ownership (`c57187f9`). ALL FOUR reproduction pins INVERTED (A/B/C/D) with
+ordering/absence proofs; bootstrap E2E proves in-budget grant reaches
+upstream exactly once while unexempted/family-drift/over-budget/
+post-settlement spends open ZERO upstream; receipts categorical (no path
+material). Validation: typecheck PASS; schema PASS; hardening PASS;
+admission suites 13/13; focused batteries 141/141 (15 files) then
+157/157 (19 files incl. all five smokes, monitor, containment, egress,
+p1); gate:dev PASS at `48b1d407`-equivalent content (before Step 4).
+M4 remains the validated substantive anchor at `5e2a0357` until M5's
+gates run. Remaining M5: Steps 5–8 (WS admission, L5/relay binding,
+total transport census + probes, expanded zero-upstream + concurrency
+matrices), gate:dev + gate:milestone, OpenSpec reconciliation, checkpoint.
 
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
@@ -70,59 +75,49 @@ zero-upstream refusal proof on synthetic fixtures only.
 
 ## Work In Progress
 
-M5 wiring phase: connecting the pure authority (`e25d72e1`) to the live
-transport layers and causality seams. No observer/engine/fetchGuard edits
-committed yet; the reproduction baseline (`8f346136`) still pins the
-defective behavior and must be INVERTED by this wiring.
+M5 Steps 5–8 (L2/L5/relay wiring, totality census + probes, expanded
+matrices) — Steps 1–4 are committed and green; pins A–D all inverted.
 
 ## Exact Next Action
 
-Wire M5 in this order, running the focused suites after each step:
-1. **networkObserver L1** (`handleRoute`, after the host `allow` decision
-   and before the KNOWN_MUTATION/ACTION_CAUSED branches): build the frozen
-   AdmissionSnapshot (environment + bindings derived from the same
-   `endpointMatcher` results with journey sourceProof/currentness +
-   GenerationRegistry view + BootstrapExemptionTable + current navigation
-   generation) and call `evaluateAdmission`; admitted => continue (record
-   handle identity in event data); refused => `route.abort` + categorical
-   refusal receipt. REPLACE the PASSIVE ternary: remove
-   `'PASSIVE_UNKNOWN_OBSERVED'` allowance (non-API hosts/static assets keep
-   host-policy continuation — the isApiHost gate decides applicability).
-   Back the observer's `journeyIntent` bookkeeping with GenerationRegistry
-   open/attribute (keep the overlap-throw singleton policy):
-   `beginJourneyIntent` opens an ACTION generation; add a settlement-driven
-   close (endJourneyIntent becomes pacing-only or is superseded).
-   Invert baseline pins A+C in `tests/unit/semanticRequestAdmission.test.ts`.
-2. **Causality**: engine — keep `sleep(ACTION_SETTLE_MS)` as UI pacing only;
-   move the authority close to AFTER waitForRequiredNetwork + structural
-   checks so the observation-settle barrier is covered; exploration —
-   settle-driven close without weakening its stronger hold. Invert pin B.
-3. **Bootstrap exemptions**: register fixture startup reads explicitly —
-   fixtureServer BASE_FETCHES (`/api/invoices`, `/api/billing-groups`,
-   `/api/stream`) and journeyFixtureServer `/m/ripple/passive-bootstrap` —
-   GET, exact origins, nav-generation-scoped, bounded; `action-unknown`
-   stays REFUSED. Exemptions travel via createNetworkObserver opts (closed
-   list supplied by tests/journeys).
-4. **L0 fetchGuard**: pass `method` from the CDP payload; for isApiHost
-   URLs recompute `evaluateAdmission` from the SAME snapshot provider
-   injected at install (context.ts); allow => continueRequest, else
-   failRequest BEFORE network. Invert pin D.
-5. **L2 WebSocket**: handleWebSocket requires admission (WS-class rules or
-   explicit registered WS exemptions); update safety-ws smoke
-   expectations; prove refusal opens zero fixture connections.
-6. **L5 proxy** (bounded): independent recompute for API-host HTTP requests
-   from the same registry snapshot where deployment allows; CONNECT stays
-   host-authority with documented browser-side pre-effect gating + honest
-   evidence (design acknowledges the control-association limit).
-7. **Relay**: inject the same admission decision for API targets in dev
-   mode.
-8. **Transport census hardening rule + probes** (route.continue /
-   Fetch.continueRequest / connectToServer / proxy-allow / relay-fetch
-   sites; PASSIVE_UNKNOWN allowance absent; engine settle-ordering;
-   bootstrap budget present; census registry drift), then the §15 matrix
-   smokes with fixture-server request counters proving `upstream == 0` for
-   every refused synthetic case; typecheck; gate:dev; gate:milestone;
-   OpenSpec reconcile; M5 checkpoint; then M6 automatically.
+Continue the committed 8-step recipe at Step 5:
+5. **L2 WebSocket** (`handleWebSocket` in networkObserver): for API-host WS
+   (API signal = `matchEndpoint(rawUrl, 'WS')` non-null), require semantic
+   admission through the same gate — registry `method: 'WS'` KNOWN_READ
+   rules + active generation; unknown/stale WS refuses BEFORE
+   `connectToServer()`; non-API WS keeps host policy (telemetry/etc).
+   Update safety-ws smoke expectations; prove refusal opens ZERO fixture
+   WS connections (journeyFixture/safety fixture connection counters).
+6. **L5 proxy + relay** (bounded): policyAdapter HTTP API-host requests
+   recompute from the same registry snapshot (independent-recompute option
+   of directive 10) or validate a bounded capability; CONNECT stays
+   host-authority with the recorded honest limitation (browser-side L0/L1/L2
+   pre-effect gating covers product bytes; design admits the
+   control-association gap). Relay: inject the same admission decision for
+   API targets in dev mode (compose with its existing redirect policy; do
+   not weaken either).
+7. **Total transport census hardening rule** (greenfield per census risk 4):
+   syntax-aware discovery of `route.continue(`, `Fetch.continueRequest`,
+   `ws.connectToServer`, proxy upstream allow (`src/proxy/server.ts`
+   forward/CONNECT/WS-upgrade), relay fetch sites — closed registry with
+   UNKNOWN/STALE/DUPLICATE/EMPTY fail-closed, non-zero + digest, floors;
+   assert PASSIVE-allow relabel absent, engine settle-ordering, bootstrap
+   budget present. Non-vacuous probes (HC-130+): remove L1 gate; relabel
+   passive allow back; host-only fallback in guard (drop redirect
+   admission); WS bypass; engine early-settle; bootstrap budget removal;
+   census registry drift.
+8. **Expanded zero-upstream + concurrency matrices** (directive 14/15/16):
+   E2E redirect matrix (301/302/303/307/308 effective-method via fixture
+   server + slow-redirect cross-generation CLOSED refusal with dst counter
+   == 0); simultaneous A/B same-route identity non-exchange; ambiguity/
+   stale/closed/reused-handle refusals with upstream==0; teardown matrix
+   (exception/timeout/cancel/context-close => no orphan generations —
+   assert activeGenerations() empty after journeys).
+Then: focused endpoint/journey/browser/proxy suites; typecheck;
+typecheck:bin; schema:check; hardening:check; probe campaigns;
+validation:universe; agent/handoff/project/workspace/session checks;
+gate:dev; gate:milestone; strict-validate the NW-AUD-020 change +
+umbrella; reconcile NW-AUD-020 tasks honestly; M5 checkpoint commit; M6.
 Session `sess-b675db99ff3f`.
 
 ## M4 reproduction record (verified live at `bc5065f1`, synthetic values)
@@ -211,6 +206,12 @@ machinery to reuse, affected tests, risks).
 | `src/core/safety/endpointSemantics.ts` | exported ruleHostMatches/rulePathMatches (one route-proof system) | complete |
 | `src/core/schemaLifecycle/declarations.ts` | +3 M5 schema families declared | complete |
 | `tests/unit/semanticAdmissionAuthority.test.ts` | M5 pure matrix: transports/refusals/timing/cross-gen/bootstrap/disagreement | complete |
+| `src/browser/observers/networkObserver.ts` | L1 pre-effect gate, generations, nav settlement, redirect chain, admitRequest API | complete (Steps 1–4; WS gate pending Step 5) |
+| `src/core/journeys/engine.ts` | settle-after-settlement authority close; ACTION_SETTLE_MS demoted to pacing | complete |
+| `src/browser/context.ts` | admission/exemption/currentness opts plumbing; guard receives admitRequest | complete |
+| `src/browser/network/fetchGuard.ts` | redirect-follow-up admission, method+effective identity, layer ownership | complete |
+| `src/browser/observers/consoleObserver.ts` | raw-text Failed-to-load-resource suppression (authenticated sibling fix) | complete |
+| `tests/unit/observerSemanticLedger.test.ts` | bulk fetch loop carries explicit causal authority | complete |
 
 ## Validation Ledger
 
@@ -353,6 +354,36 @@ registration).
 Decision (M5): persisted admission identity reuses M4's categorical
 `<RULE:id>` marker (safeRuleMarker) — no second route-proof or route-
 persistence system.
+
+Decision (M5, Step 4): LAYER OWNERSHIP — stateful bootstrap spend happens at
+exactly ONE layer per request class: L1 owns all non-redirect API admission
+(context.route intercepts them by construction); L0 owns redirect
+follow-ups (the only class L1 never sees); Chrome fail-wins semantics
+(EMPIRICALLY proven: pre-wiring E2E showed L1 abort surviving an L0
+host-allow continue) make host-continue harmless against an L1 refusal.
+Reason: double-spend observed in E2E (L0 grant + L1 EXHAUSTED aborted the
+legit exempt fetch); URL-keyed cross-layer refusal sets conflate
+attempt-scoped refusals with permanent bans (EXHAUSTED poisoned the same
+URL) — both mechanisms removed.
+
+Decision (M5, Step 1): navigation generations close through a BOUNDED
+settlement window after load (500 ms, aligned with engine quietMs),
+extendable only while API requests observed under it are in flight and
+hard-capped at 4 re-arms — because Playwright delivers parse-time fetch
+interception AND page `request` events only AFTER load (empirically), so
+no observation-order rule can be deterministic. The window is not ambient
+safety: unknown refuses at every instant; only count-bounded registered
+GET navigation-scoped exemptions can spend inside it.
+
+Decision (M5): admission receipts are attempt-scoped — never deduplicated
+by URL (a later attempt under a fresh generation is a different decision).
+
+Decision (M5): redirect follow-ups evaluate the EFFECTIVE method Chrome
+will send (CDP request.method at the follow-up pause), so 301/302/303/307/
+308 method transformation is handled BY CONSTRUCTION without branching on
+status codes; follow-up attribution comes ONLY from the redirect provenance
+chain (admitted source 3xx Location -> target bound to the earning
+generation) or refuses AMBIGUOUS/CLOSED — never the newest open generation.
 
 ## Discoveries
 
