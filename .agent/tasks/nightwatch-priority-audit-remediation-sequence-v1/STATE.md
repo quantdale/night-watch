@@ -78,6 +78,46 @@ post-integration point, terminal report, successor reassessment.
   background explore subagents); results feed Phases 2-5 and do not gate
   Phase 1.
 
+## M6 cross-phase audit (recorded before certification)
+
+- **18.1 NW-AUD-010 × later commits**: `checkProjectStateIntegrity`
+  PASS at every milestone anchor advance this campaign (83a1236a →
+  5e2a0357 → 70104a00) — each advance carried its own gate evidence;
+  doc-only descendants (efb4343f, bc5065f1, c86243e1, 495f1287,
+  a9445d4a) never certified implementation bytes; equality/ancestor/
+  divergent/missing classifications live and green.
+- **18.2 NW-AUD-014 × M5**: `checkChildProcessBoundaries` PASS over
+  every file the five remediations added — census 68/121/0 unchanged,
+  zero new unclassified child invocations (M3–M5 added none).
+- **18.3 019 × 018 coherence**: `checkPrivateSurface` PASS (consumer
+  census 41/141-class, shared structural key authority single-sourced;
+  no duplicate key vocabulary) + `checkAuthenticatedEvidenceFirewall`
+  PASS (writer census 22-class, single typed firewall).
+- **18.4 018 × 020 receipts**: every M5 refusal/admission receipt carries
+  only origin/method/rule-id/generation/transport/categorical-code —
+  asserted by tests in all three suites (no path/query material), and
+  recorder-mode evidence still crosses the M4 typed firewall.
+- **18.5 014 × 020 helpers**: `checkSemanticTransportTotality` PASS (55/55
+  effect sites classified, digest sha256:7b709791b474427ea40b297c); the
+  census module, ticket ledger, and exemption table are pure (no child
+  processes, no ambient env).
+- **18.6 generation × recorder teardown**: engine settles in a finally
+  (rule-pinned); settlement timer cancels on page close with emission
+  guard; E2E orphan assertions (activeGenerations() empty at every
+  checkpoint) green; no writer leaks (M4 publication post-verifies).
+- **Flake re-verification (§18 of the continuation prompt)**:
+  evidenceRetention + l6Containment run 3× consecutively: PASS 3/3 —
+  classification CONFIRMED as load artifacts (pass isolated), not
+  worsened by M0–M5, no deterministic defect. Advisory `failed=` text-parse
+  quirk unchanged (exit status remains the authority; recorded as
+  successor-backlog evidence-integrity item, not a release blocker).
+- **Adversarial review (§21)**: the fourteen listed attack classes map to
+  existing non-vacuous proofs (143/143 probes; §15 matrix; five
+  zero-upstream counter suites; two census fail-closed codes each). No new
+  executable defect found in this pass.
+
+No cross-phase defect required a fix: audit outcome = CLEAN.
+
 ## Work In Progress
 
 M5 Steps 5–8 (L2/L5/relay wiring, totality census + probes, expanded
