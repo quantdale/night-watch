@@ -485,6 +485,7 @@ export async function createNightwatchContext(
     browserBackgroundBlockedHosts: network.browserBackgroundBlockedHosts(),
     // NW-AUD-020: the backstop consumes the SAME semantic admission.
     admitRequest: network.admitRequest,
+    bindRedirectFollowUp: network.bindRedirectFollowUp,
   });
   page.on('download', onDownload);
 
@@ -503,6 +504,7 @@ export async function createNightwatchContext(
       telemetryBlockedHosts: network.telemetryBlockedHosts(),
       browserBackgroundBlockedHosts: network.browserBackgroundBlockedHosts(),
       admitRequest: network.admitRequest,
+      bindRedirectFollowUp: network.bindRedirectFollowUp,
     });
     p.on('download', onDownload);
   });

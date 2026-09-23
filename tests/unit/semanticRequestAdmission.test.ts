@@ -457,4 +457,175 @@ test.describe('NW-AUD-020 reproduction baseline (defects must later be inverted)
       await server.close();
     }
   });
+
+  test('Step 8: redirect matrix re-admits the EFFECTIVE follow-up by method+route+generation; a slow redirect cannot revive or borrow a closed generation', async ({ browser }) => {
+    const hits: Record<string, number> = {};
+    const bump = (urlPath: string): void => { hits[urlPath] = (hits[urlPath] ?? 0) + 1; };
+    let releaseGated: () => void = () => { /* armed below */ };
+    const hold = new Promise<void>((resolve) => { releaseGated = resolve; });
+    const server = http.createServer(async (req, res) => {
+      const urlPath = new URL(req.url ?? '/', 'http://127.0.0.1').pathname;
+      bump(urlPath);
+      const redirect = /^\/api\/r(301|302|303|307|308)-(src|dst)$/.exec(urlPath);
+      if (redirect !== null) {
+        if (redirect[2] === 'src') {
+          res.writeHead(Number(redirect[1]), { location: `/api/r${redirect[1]}-dst` });
+          res.end();
+          return;
+        }
+        res.writeHead(200, { 'content-type': 'application/json' });
+        res.end('{"leg":"dst"}');
+        return;
+      }
+      if (urlPath === '/api/gated-src') {
+        await hold;
+        res.writeHead(302, { location: '/api/gated-dst' });
+        res.end();
+        return;
+      }
+      if (urlPath === '/api/gated-dst') {
+        res.writeHead(200, { 'content-type': 'application/json' });
+        res.end('{"leg":"gated"}');
+        return;
+      }
+      res.writeHead(200, { 'content-type': 'text/html' });
+      res.end('<!doctype html><body>redirect matrix fixture</body>');
+    });
+    await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+    const address = server.address();
+    if (address === null || typeof address === 'string') throw new Error('fixture server did not expose a TCP port');
+    const origin = `http://127.0.0.1:${address.port}`;
+    const env = fixtureEnvironment(origin);
+    const provenance = 'synthetic local redirect fixture (local-only, non-product)';
+    const rules: EndpointSemanticRule[] = [];
+    for (const code of [301, 302, 303, 307, 308]) {
+      rules.push(
+        { id: `fixture.r${code}.src.get`, host: '127.0.0.1', method: 'GET', path: `/api/r${code}-src`, classification: 'KNOWN_READ', provenance },
+        { id: `fixture.r${code}.src.post`, host: '127.0.0.1', method: 'POST', path: `/api/r${code}-src`, classification: 'KNOWN_READ', provenance },
+        { id: `fixture.r${code}.dst.get`, host: '127.0.0.1', method: 'GET', path: `/api/r${code}-dst`, classification: 'KNOWN_READ', provenance },
+      );
+    }
+    rules.push(
+      { id: 'fixture.gated.src.get', host: '127.0.0.1', method: 'GET', path: '/api/gated-src', classification: 'KNOWN_READ', provenance },
+      { id: 'fixture.gated.dst.get', host: '127.0.0.1', method: 'GET', path: '/api/gated-dst', classification: 'KNOWN_READ', provenance },
+    );
+    const recorder = new RunRecorder({
+      runId: `redirect-matrix-${Date.now()}`,
+      environment: 'local',
+      product: 'ripple',
+      browser: 'chromium',
+      scenario: 'nw-aud-020-redirect-matrix',
+    });
+    let ctx: Awaited<ReturnType<typeof createNightwatchContext>> | null = null;
+    const events = () => fs.readFileSync(path.join(recorder.dir, 'events.jsonl'), 'utf8');
+    try {
+      ctx = await createNightwatchContext(browser, {
+        env,
+        recorder,
+        uiBaseUrl: origin,
+        trace: 'off',
+        endpointRegistry: rules,
+      });
+      const page = await ctx.page;
+      await page.goto(`${origin}/`, { waitUntil: 'load' });
+
+      // ---- Redirect status matrix under one explicit ACTION generation ----
+      ctx.network.beginJourneyIntent('redirect-matrix', 'REDIRECT_MATRIX');
+      let results: Record<string, string | number>;
+      try {
+        results = await page.evaluate(async (base: string) => {
+          const out: Record<string, string | number> = {};
+          for (const code of [301, 302, 303, 307, 308]) {
+            try { out[`get${code}`] = (await fetch(`${base}/api/r${code}-src`)).status; } catch { out[`get${code}`] = 'REFUSED'; }
+          }
+          for (const code of [301, 302, 303, 307, 308]) {
+            try { out[`post${code}`] = (await fetch(`${base}/api/r${code}-src`, { method: 'POST' })).status; } catch { out[`post${code}`] = 'REFUSED'; }
+          }
+          return out;
+        }, origin);
+      } finally {
+        ctx.network.endJourneyIntent('redirect-matrix');
+      }
+
+      // GET: all five codes preserve method — every follow-up lands.
+      for (const code of [301, 302, 303, 307, 308]) {
+        expect(results[`get${code}`], `GET ${code}`).toBe(200);
+      }
+      // POST: the EFFECTIVE follow-up method (what Chrome will actually send)
+      // decides admission — asserted against real browser/CDP behavior:
+      //   301/302/303 -> GET  => lands on the GET read rule
+      //   307/308      -> POST preserved => dst GET-only rule refuses it
+      //                   (method mismatch) BEFORE the redirected upstream.
+      expect(results.post303, 'POST 303 converts to GET').toBe(200);
+      expect(results.post301, 'POST 301 converts to GET in Chromium').toBe(200);
+      expect(results.post302, 'POST 302 converts to GET in Chromium').toBe(200);
+      expect(results.post307, 'POST 307 preserves method and must refuse').toBe('REFUSED');
+      expect(results.post308, 'POST 308 preserves method and must refuse').toBe('REFUSED');
+
+      // Upstream counters (ACTUAL effect evidence):
+      expect(hits['/api/r301-src']).toBe(2); // GET + POST sources both admitted
+      expect(hits['/api/r307-src']).toBe(2);
+      // dst = one GET landing + one POST-converted landing for 301/302/303;
+      // exactly one GET landing (the POST never reached upstream) for 307/308.
+      expect(hits['/api/r301-dst']).toBe(2);
+      expect(hits['/api/r302-dst']).toBe(2);
+      expect(hits['/api/r303-dst']).toBe(2);
+      expect(hits['/api/r307-dst']).toBe(1);
+      expect(hits['/api/r308-dst']).toBe(1);
+
+      // The refused POST follow-ups produced categorical CDP receipts with
+      // METHOD_MISMATCH and no route material.
+      const refusalReceipts = events()
+        .split('\n')
+        .filter(Boolean)
+        .map((line) => JSON.parse(line) as { message?: string; data?: Record<string, unknown> })
+        .filter((event) => event.message === 'SEMANTIC_ADMISSION_REFUSED' && event.data?.transport === 'CDP_FETCH');
+      expect(refusalReceipts.length).toBeGreaterThanOrEqual(2);
+      for (const receipt of refusalReceipts) {
+        expect(receipt.data?.admissionCode).toBe('ADMISSION_METHOD_MISMATCH');
+        expect(JSON.stringify(receipt.data)).not.toContain('/api/r');
+      }
+
+      // ---- Slow gated redirect: cross-generation closure (section 8B) ----
+      // 1) generation A opens; 2) source admitted under A and reaches the
+      // upstream; 3) redirect begins (server holds the 302); 4) A settles;
+      // 5) generation B opens; 6) the follow-up is released.
+      ctx.network.beginJourneyIntent('redirect-a', 'GATED_REDIRECT_A');
+      await page.evaluate((base: string) => { fetch(`${base}/api/gated-src`).catch(() => undefined); }, origin);
+      await expect.poll(() => hits['/api/gated-src'] ?? 0, { timeout: 5_000 }).toBe(1); // source effect under A
+      ctx.network.endJourneyIntent('redirect-a');
+      // Wait for the bounded navigation settlement so orphan assertions are
+      // deterministic (the in-flight gated request caps the window).
+      await expect.poll(() => {
+        try { return events().includes('NAVIGATION_GENERATION_SETTLED'); } catch { return false; }
+      }, { timeout: 6_000 }).toBe(true);
+      expect(ctx.network.activeGenerations?.() ?? []).toEqual([]); // no orphan from A
+      // 5) generation B opens.
+      ctx.network.beginJourneyIntent('redirect-b', 'GATED_REDIRECT_B');
+      expect((ctx.network.activeGenerations?.() ?? []).length).toBe(1);
+      // 6) release the follow-up while B is open.
+      releaseGated();
+      await expect.poll(() => {
+        try {
+          return events()
+            .split('\n')
+            .filter(Boolean)
+            .map((line) => JSON.parse(line) as { message?: string; data?: Record<string, unknown> })
+            .filter((event) => event.message === 'SEMANTIC_ADMISSION_REFUSED'
+              && event.data?.transport === 'CDP_FETCH'
+              && event.data?.admissionCode === 'ADMISSION_GENERATION_CLOSED').length;
+        } catch { return 0; }
+      }, { timeout: 5_000 }).toBeGreaterThanOrEqual(1);
+      // The follow-up could not borrow B, revive A, become passive, or fall
+      // back to host-only: categorical CLOSED refusal + ZERO redirected
+      // upstream effect.
+      expect(hits['/api/gated-dst'] ?? 0).toBe(0);
+      ctx.network.endJourneyIntent('redirect-b');
+      expect(ctx.network.activeGenerations?.() ?? []).toEqual([]); // teardown: no orphans
+    } finally {
+      releaseGated();
+      if (ctx !== null) await ctx.close();
+      await new Promise<void>((resolve) => { server.closeAllConnections(); server.close(() => resolve()); });
+    }
+  });
 });

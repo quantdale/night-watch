@@ -112,6 +112,12 @@ export class BootstrapExemptionTable {
     return this.entries.length;
   }
 
+  /** TRANSIENT proven pattern by exemption id (lower-transport ticket
+   *  minting only — never persisted; durable identity stays categorical). */
+  patternFor(exemptionId: string): string | undefined {
+    return this.entries.find((entry) => entry.id === exemptionId)?.routePattern;
+  }
+
   /**
    * Consume one bootstrap unit of authority for this request within the given
    * navigation generation. Every refusal path grants nothing and counts

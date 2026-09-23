@@ -58,6 +58,7 @@ import type { Phase22PrivacyReceipt } from '../../core/phase22';
 import type { JourneyCaptureFailureCode } from '../../core/journeys/types';
 import { AMBIGUOUS_ATTRIBUTION, GenerationRegistry } from '../../core/safety/causalGenerations';
 import { BootstrapExemptionTable } from '../../core/safety/bootstrapExemptions';
+import { evaluateAdmission } from '../../core/safety/semanticAdmission';
 
 /** Max captured body size (chars) — bodies are sliced, then redacted. */
 const MAX_BODY_CHARS = 1_000_000;
@@ -162,6 +163,8 @@ export interface NetworkObserver {
   endJourneyIntent(stepId: string): void;
   /** NW-AUD-020: currently open generation ids (diagnostics only). */
   activeGenerations?(): readonly string[];
+  /** NW-AUD-020: bind a redirect follow-up to its source's generation. */
+  bindRedirectFollowUp(originalUrl: string, targetUrl: string): void;
   /** NW-AUD-020: shared semantic admission for the L0 CDP backstop — the
    *  same matcher/generations/gate as route interception. */
   admitRequest(
@@ -383,11 +386,45 @@ export function createNetworkObserver(opts: {
     method: string,
     classification: EndpointSemanticClassification,
     attributionOverride?: import('../../core/safety/causalGenerations').Attribution,
+    transport: 'PLAYWRIGHT_ROUTE' | 'CDP_FETCH' | 'WEBSOCKET' = 'PLAYWRIGHT_ROUTE',
   ):
     | { admitted: true; via: 'PROVEN_READ' | 'BOOTSTRAP_EXEMPT'; identity: string; generationId: string; matchPattern?: string }
     | { admitted: false; code: string } {
     if (opts.admissionSourceCurrent === false) return { admitted: false, code: 'ADMISSION_STALE_PROOF' };
     const attribution = attributionOverride ?? resolveAttribution();
+    const rules = opts.endpointRules;
+    if (rules !== undefined && rules.length > 0) {
+      // ONE authority: with a source-proven registry bound, every decision
+      // (including method-drift/twin analysis) comes from the pure
+      // evaluator — the browser layers never re-derive semantics locally.
+      const environment = opts.admissionEnvironment ?? 'local';
+      const navigationId = attribution.kind === 'GENERATION'
+        && generations.get(attribution.id)?.kind === 'NAVIGATION'
+        ? attribution.id
+        : navigationGeneration;
+      const decision = evaluateAdmission(
+        { method, url: rawUrl, environment, transport, attribution },
+        {
+          environment,
+          bindings: rules.map((rule) => ({ rule, sourceProof: rule.provenance, sourceCurrent: true })),
+          isActiveGeneration: (id) => generations.isActive(id),
+          bootstrap: bootstrapTable,
+          navigationGeneration: navigationId,
+        },
+      );
+      if (decision.admitted) {
+        const handle = decision.handle;
+        return {
+          admitted: true,
+          via: handle.classification === 'BOOTSTRAP_EXEMPT_READ' ? 'BOOTSTRAP_EXEMPT' as const : 'PROVEN_READ' as const,
+          identity: handle.ruleId,
+          generationId: handle.generationId,
+        };
+      }
+      return { admitted: false, code: decision.refusal.code };
+    }
+    // Legacy/classifier harness path: no registry bound — classification is
+    // the harness's own reviewed authority (documented bounded fallback).
     if (attribution.kind === 'NONE') return { admitted: false, code: 'ADMISSION_UNBOUND_GENERATION' };
     if (attribution.kind === AMBIGUOUS_ATTRIBUTION) return { admitted: false, code: 'ADMISSION_AMBIGUOUS' };
     if (!generations.isActive(attribution.id)) return { admitted: false, code: 'ADMISSION_GENERATION_CLOSED' };
@@ -437,7 +474,7 @@ export function createNetworkObserver(opts: {
       const rule = opts.endpointRules?.find((candidate) => candidate.id === ruleId);
       const matchPattern = rule !== undefined
         ? rule.path ?? rule.pathPattern ?? undefined
-        : exemptionPattern;
+        : (exemptionPattern ?? bootstrapTable.patternFor(ruleId));
       // No proven pattern => no ticket => lower layers refuse (fail closed).
       if (matchPattern === undefined) return;
       admissionTicketLedger().mint({
@@ -932,7 +969,7 @@ export function createNetworkObserver(opts: {
       const endpointMatch = matchEndpoint(rawUrl, 'WS');
       let gate: ReturnType<typeof admitApiRequest> | null = null;
       if (endpointMatch !== null) {
-        gate = admitApiRequest(rawUrl, 'WS', endpointMatch.classification);
+        gate = admitApiRequest(rawUrl, 'WS', endpointMatch.classification, undefined, 'WEBSOCKET');
         if (!gate.admitted) {
           recorder.event({
             type: 'policy',
@@ -1632,6 +1669,19 @@ export function createNetworkObserver(opts: {
     },
     /** NW-AUD-020 diagnostics: open generation ids (no authority transfer). */
     activeGenerations: (): readonly string[] => generations.openIds(),
+    /** NW-AUD-020: bind a redirect FOLLOW-UP to the generation that earned
+     *  its SOURCE. The CDP backstop alone sees redirectedRequestId plus the
+     *  original URL, so chain provenance never depends on a 3xx response
+     *  event being delivered. An unbindable follow-up refuses AMBIGUOUS —
+     *  never the newest open generation. */
+    bindRedirectFollowUp: (originalUrl: string, targetUrl: string): void => {
+      try {
+        const generation = admittedApiGenerations.get(originalUrl) ?? redirectGenerations.get(originalUrl);
+        if (generation !== undefined) setBounded(redirectGenerations, targetUrl, generation);
+      } catch {
+        // Unparseable target: no chain is recorded; the follow-up refuses.
+      }
+    },
     /**
      * NW-AUD-020: the shared admission entry point for the L0 CDP backstop —
      * SAME matcher, SAME generations, SAME gate (spec: layers consume one
@@ -1659,7 +1709,7 @@ export function createNetworkObserver(opts: {
           ? { kind: 'GENERATION', id: chained }
           : { kind: AMBIGUOUS_ATTRIBUTION, candidates: [] };
       }
-      const gate = admitApiRequest(rawUrl, method, match.classification, override);
+      const gate = admitApiRequest(rawUrl, method, match.classification, override, 'CDP_FETCH');
       // Ownership: only REDIRECT follow-ups mint here (L1 never sees them).
       if (isRedirectFollowUp && gate.admitted) {
         mintAdmissionTicket(rawUrl, method, match.ruleId, gate.generationId, 'CDP_FETCH', gate.matchPattern);

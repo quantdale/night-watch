@@ -33,7 +33,11 @@ export type AdmissionTransport =
 
 export type AdmissionRequestClass = 'PROVEN_READ' | 'BOOTSTRAP_EXEMPT_READ';
 
-/** Closed refusal vocabulary. Every non-admitted outcome is one of these. */
+/** Closed refusal vocabulary. Every non-admitted outcome is one of these.
+ *  (No ROUTE/ORIGIN mismatch codes: URL parsing precedes route resolution —
+ *  an unparseable input is UNPARSEABLE — and rules carry host+port but no
+ *  scheme, so a scheme drift has no proof to mismatch against; origin is
+ *  BOUND into every handle and receipt instead.) */
 export type AdmissionRefusalCode =
   | 'ADMISSION_UNKNOWN'
   | 'ADMISSION_MUTATION'
@@ -41,8 +45,6 @@ export type AdmissionRefusalCode =
   | 'ADMISSION_STALE_PROOF'
   | 'ADMISSION_AMBIGUOUS'
   | 'ADMISSION_METHOD_MISMATCH'
-  | 'ADMISSION_ROUTE_MISMATCH'
-  | 'ADMISSION_ORIGIN_MISMATCH'
   | 'ADMISSION_ENVIRONMENT_MISMATCH'
   | 'ADMISSION_UNBOUND_GENERATION'
   | 'ADMISSION_GENERATION_CLOSED'
@@ -175,6 +177,16 @@ export function evaluateAdmission(
   if (request.environment !== snapshot.environment) {
     return refusal('ADMISSION_ENVIRONMENT_MISMATCH', request, parsed, null, label);
   }
+  // Attribution is resolved BEFORE any stateful bootstrap spend: an
+  // unbound or ambiguous request can never burn a budget unit and then
+  // refuse (ordering is part of the authority contract).
+  const attribution = request.attribution;
+  if (attribution.kind === 'NONE') {
+    return refusal('ADMISSION_UNBOUND_GENERATION', request, parsed, null, label);
+  }
+  if (attribution.kind === AMBIGUOUS_ATTRIBUTION) {
+    return refusal('ADMISSION_AMBIGUOUS', request, parsed, null, label);
+  }
   const method = normalizeMethod(request.method);
   const pathname = pathOf(parsed);
 
@@ -216,14 +228,8 @@ export function evaluateAdmission(
               : 'ADMISSION_BOOTSTRAP_UNREGISTERED';
       return refusal(code, request, parsed, null, label);
     }
-    if (request.attribution.kind === 'NONE') {
-      return refusal('ADMISSION_UNBOUND_GENERATION', request, parsed, null, label);
-    }
-    if (request.attribution.kind === AMBIGUOUS_ATTRIBUTION) {
-      return refusal('ADMISSION_AMBIGUOUS', request, parsed, null, label);
-    }
     if (!snapshot.isActiveGeneration(consumption.navigationGeneration)
-      || !snapshot.isActiveGeneration(request.attribution.id)) {
+      || !snapshot.isActiveGeneration(attribution.id)) {
       return refusal('ADMISSION_GENERATION_CLOSED', request, parsed, null, label);
     }
     const handle: AdmissionHandle = Object.freeze({
@@ -254,13 +260,7 @@ export function evaluateAdmission(
   if (!binding.sourceCurrent) {
     return refusal('ADMISSION_STALE_PROOF', request, parsed, binding.rule.id, label);
   }
-  if (request.attribution.kind === 'NONE') {
-    return refusal('ADMISSION_UNBOUND_GENERATION', request, parsed, binding.rule.id, label);
-  }
-  if (request.attribution.kind === AMBIGUOUS_ATTRIBUTION) {
-    return refusal('ADMISSION_AMBIGUOUS', request, parsed, binding.rule.id, label);
-  }
-  if (!snapshot.isActiveGeneration(request.attribution.id)) {
+  if (!snapshot.isActiveGeneration(attribution.id)) {
     return refusal('ADMISSION_GENERATION_CLOSED', request, parsed, binding.rule.id, label);
   }
   const handle: AdmissionHandle = Object.freeze({
@@ -273,7 +273,7 @@ export function evaluateAdmission(
     classification: 'PROVEN_READ',
     sourceProof: binding.sourceProof,
     sourceSnapshot: 'CURRENT',
-    generationId: request.attribution.id,
+    generationId: attribution.id,
     transport: request.transport,
   });
   return { admitted: true, handle };
@@ -330,8 +330,6 @@ export const ADMISSION_REFUSAL_CODES: readonly AdmissionRefusalCode[] = Object.f
   'ADMISSION_STALE_PROOF',
   'ADMISSION_AMBIGUOUS',
   'ADMISSION_METHOD_MISMATCH',
-  'ADMISSION_ROUTE_MISMATCH',
-  'ADMISSION_ORIGIN_MISMATCH',
   'ADMISSION_ENVIRONMENT_MISMATCH',
   'ADMISSION_UNBOUND_GENERATION',
   'ADMISSION_GENERATION_CLOSED',

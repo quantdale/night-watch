@@ -57,6 +57,8 @@ interface FetchGuardOptions {
    * feed one decision. Without it, API-host requests at this layer refuse
    * (fail closed): host policy alone is never semantic authority.
    */
+  /** Bind a redirect follow-up to its source's generation (observer-side chain). */
+  bindRedirectFollowUp?: (originalUrl: string, targetUrl: string) => void;
   admitRequest?: (
     rawUrl: string,
     method: string,
@@ -81,6 +83,9 @@ export async function installFetchGuard(
   const telemetryBlockedHosts = opts.telemetryBlockedHosts;
   const browserBackgroundBlockedHosts = opts.browserBackgroundBlockedHosts;
   const admitRequest = opts.admitRequest;
+  const bindRedirectFollowUp = opts.bindRedirectFollowUp;
+  /** CDP request id -> url for THIS session (redirect provenance lookup). */
+  const cdpSeen = new Map<string, string>();
 
   let session: Awaited<ReturnType<BrowserContext['newCDPSession']>> | null = null;
   try {
@@ -113,6 +118,15 @@ export async function installFetchGuard(
     void (async () => {
       try {
         const rawUrl = p.request.url;
+        cdpSeen.set(p.requestId, rawUrl);
+        // NW-AUD-020: chain the follow-up to the generation that earned its
+        // SOURCE before any admission decision — the backstop alone sees
+        // redirectedRequestId, so chain provenance never depends on whether
+        // a 3xx response event was delivered upstream.
+        if (typeof p.redirectedRequestId === 'string' && p.redirectedRequestId.length > 0) {
+          const originalUrl = cdpSeen.get(p.redirectedRequestId);
+          if (originalUrl !== undefined) bindRedirectFollowUp?.(originalUrl, rawUrl);
+        }
         if (!isNetworkUrl(rawUrl)) {
           await cdp.send('Fetch.continueRequest', { requestId: p.requestId });
           return;

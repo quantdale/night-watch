@@ -528,3 +528,105 @@ test.describe('NW-AUD-020 bounded admission tickets (L5 currency)', () => {
     expect(ledger.authorizeTunnel('api.example.invalid')).toEqual({ admitted: false, code: 'PROXY_TUNNEL_CAPABILITY_MISSING' });
   });
 });
+
+test.describe('NW-AUD-020 authoritative refusal matrix (section 15)', () => {
+  // ONE consolidated table over the closed pure-side vocabulary:
+  // expected code == actual code for every row. Browser-level effect rows
+  // (upstream counter == 0) are proven in their dedicated suites and mapped
+  // here by reference: bootstrap E2E (hits), Step 5 WS E2E (wsConnections),
+  // Step 8 redirect matrix (dst counters), proxy ticket test
+  // (requestCount/connectionCount), relay matrix (fetchCalls).
+  test('every closed refusal code is reachable with its exact expected code', () => {
+    const wsRuleBinding: AdmissionRuleBinding = { rule: rule({ id: 'matrix.read', method: 'GET' }), sourceProof: PROOF, sourceCurrent: true };
+    const staleBinding: AdmissionRuleBinding = { rule: rule({ id: 'matrix.stale', method: 'GET', path: '/m/ripple/stale' }), sourceProof: PROOF, sourceCurrent: false };
+    const prooflessBinding: AdmissionRuleBinding = { rule: rule({ id: 'matrix.proofless', method: 'GET', path: '/m/ripple/proofless' }), sourceProof: '', sourceCurrent: true };
+    const mutationBinding: AdmissionRuleBinding = binding(WRITE_RULE);
+    const unknownBinding: AdmissionRuleBinding = binding(UNKNOWN_RULE);
+    const rows: Array<[string, string, () => ReturnType<typeof evaluateAdmission>]> = [
+      ['ADMISSION_UNKNOWN', 'matched rule with unclassified semantics', () => {
+        const registry = new GenerationRegistry(); const gen = registry.open('ACTION');
+        return evaluateAdmission(request({ url: `${ORIGIN}/m/ripple/legacy`, attribution: { kind: 'GENERATION', id: gen.id } }), snapshot(registry, [unknownBinding], NO_BOOTSTRAP));
+      }],
+      ['ADMISSION_MUTATION', 'known mutation rule', () => {
+        const registry = new GenerationRegistry(); const gen = registry.open('ACTION');
+        return evaluateAdmission(request({ method: 'POST', url: `${ORIGIN}/m/ripple/accts`, attribution: { kind: 'GENERATION', id: gen.id } }), snapshot(registry, [binding(READ_RULE), mutationBinding], NO_BOOTSTRAP));
+      }],
+      ['ADMISSION_STALE_PROOF', 'stale source proof', () => {
+        const registry = new GenerationRegistry(); const gen = registry.open('ACTION');
+        return evaluateAdmission(request({ url: `${ORIGIN}/m/ripple/stale`, attribution: { kind: 'GENERATION', id: gen.id } }), snapshot(registry, [staleBinding], NO_BOOTSTRAP));
+      }],
+      ['ADMISSION_MISSING_PROOF', 'empty proof identity', () => {
+        const registry = new GenerationRegistry(); const gen = registry.open('ACTION');
+        return evaluateAdmission(request({ url: `${ORIGIN}/m/ripple/proofless`, attribution: { kind: 'GENERATION', id: gen.id } }), snapshot(registry, [prooflessBinding], NO_BOOTSTRAP));
+      }],
+      ['ADMISSION_AMBIGUOUS', 'ambiguous attribution', () => {
+        const registry = new GenerationRegistry();
+        return evaluateAdmission(request({ url: `${ORIGIN}/m/ripple/accts`, attribution: { kind: AMBIGUOUS_ATTRIBUTION, candidates: ['gen:000001', 'gen:000002'] } }), snapshot(registry, [wsRuleBinding], NO_BOOTSTRAP));
+      }],
+      ['ADMISSION_METHOD_MISMATCH', 'method drift on a read-only family', () => {
+        const registry = new GenerationRegistry(); const gen = registry.open('ACTION');
+        return evaluateAdmission(request({ method: 'HEAD', url: `${ORIGIN}/m/ripple/v2/payer/exchange_rate/2026-08`, attribution: { kind: 'GENERATION', id: gen.id } }), snapshot(registry, [binding(PATTERN_RULE)], NO_BOOTSTRAP));
+      }],
+      ['ADMISSION_ENVIRONMENT_MISMATCH', 'environment mismatch', () => {
+        const registry = new GenerationRegistry(); const gen = registry.open('ACTION');
+        return evaluateAdmission(request({ url: `${ORIGIN}/m/ripple/accts`, attribution: { kind: 'GENERATION', id: gen.id }, environment: 'dev' }), snapshot(registry, [wsRuleBinding], NO_BOOTSTRAP));
+      }],
+      ['ADMISSION_UNBOUND_GENERATION', 'no generation', () => {
+        const registry = new GenerationRegistry();
+        return evaluateAdmission(request({ url: `${ORIGIN}/m/ripple/accts` }), snapshot(registry, [wsRuleBinding], NO_BOOTSTRAP));
+      }],
+      ['ADMISSION_GENERATION_CLOSED', 'closed generation', () => {
+        const registry = new GenerationRegistry(); const gen = registry.open('ACTION'); registry.settle(gen.id);
+        return evaluateAdmission(request({ url: `${ORIGIN}/m/ripple/accts`, attribution: { kind: 'GENERATION', id: gen.id } }), snapshot(registry, [wsRuleBinding], NO_BOOTSTRAP));
+      }],
+      ['ADMISSION_BOOTSTRAP_UNREGISTERED', 'unregistered bootstrap', () => {
+        const registry = new GenerationRegistry(); const gen = registry.open('NAVIGATION');
+        return evaluateAdmission(request({ url: `${ORIGIN}/m/ripple/none`, attribution: { kind: 'GENERATION', id: gen.id } }), snapshot(registry, [], NO_BOOTSTRAP, gen.id));
+      }],
+      ['ADMISSION_BOOTSTRAP_MISMATCH', 'route drift inside a registered family', () => {
+        const registry = new GenerationRegistry(); const gen = registry.open('NAVIGATION');
+        const table = BootstrapExemptionTable.of([{ id: 'matrix.exempt', environment: 'local', origin: ORIGIN, method: 'GET', routePattern: '^/api/exempt$', sourceProof: PROOF, sourceCurrent: true, maxCountPerNavigation: 1 }]);
+        return evaluateAdmission(request({ url: `${ORIGIN}/api/other`, attribution: { kind: 'GENERATION', id: gen.id } }), snapshot(registry, [], table, gen.id));
+      }],
+      ['ADMISSION_BOOTSTRAP_EXHAUSTED', 'bootstrap budget exhausted', () => {
+        const registry = new GenerationRegistry(); const gen = registry.open('NAVIGATION');
+        const table = BootstrapExemptionTable.of([{ id: 'matrix.budget', environment: 'local', origin: ORIGIN, method: 'GET', routePattern: '^/api/budget$', sourceProof: PROOF, sourceCurrent: true, maxCountPerNavigation: 1 }]);
+        const snap = snapshot(registry, [], table, gen.id);
+        const req = request({ url: `${ORIGIN}/api/budget`, attribution: { kind: 'GENERATION', id: gen.id } });
+        evaluateAdmission(req, snap); // spend the unit
+        return evaluateAdmission(req, snap);
+      }],
+      ['ADMISSION_BOOTSTRAP_STALE', 'stale bootstrap proof', () => {
+        const registry = new GenerationRegistry(); const gen = registry.open('NAVIGATION');
+        const table = BootstrapExemptionTable.of([{ id: 'matrix.stale.exempt', environment: 'local', origin: ORIGIN, method: 'GET', routePattern: '^/api/stale$', sourceProof: PROOF, sourceCurrent: false, maxCountPerNavigation: 1 }]);
+        return evaluateAdmission(request({ url: `${ORIGIN}/api/stale`, attribution: { kind: 'GENERATION', id: gen.id } }), snapshot(registry, [], table, gen.id));
+      }],
+      ['ADMISSION_UNPARSEABLE', 'unparseable url', () => {
+        const registry = new GenerationRegistry(); const gen = registry.open('ACTION');
+        return evaluateAdmission(request({ url: '::not a url::', attribution: { kind: 'GENERATION', id: gen.id } }), snapshot(registry, [wsRuleBinding], NO_BOOTSTRAP));
+      }],
+      ['ADMISSION_TRANSPORT_DISAGREEMENT', 'stale/divergent snapshot at a lower layer', () => {
+        const registry = new GenerationRegistry(); const gen = registry.open('ACTION');
+        const attribution = { kind: 'GENERATION', id: gen.id } as const;
+        const issued = admitted(evaluateAdmission(request({ url: `${ORIGIN}/m/ripple/accts`, attribution, transport: 'PLAYWRIGHT_ROUTE' }), snapshot(registry, [wsRuleBinding], NO_BOOTSTRAP)));
+        return consumeAdmission(issued, request({ url: `${ORIGIN}/m/ripple/accts`, attribution, transport: 'L5_PROXY' }), snapshot(registry, [], NO_BOOTSTRAP));
+      }],
+    ];
+    for (const [expected, label, run] of rows) {
+      const decision = run();
+      expect(decision.admitted, label).toBe(false);
+      if (!decision.admitted) {
+        expect(decision.refusal.code, label).toBe(expected);
+        expect(ADMISSION_REFUSAL_CODES, label).toContain(decision.refusal.code);
+      }
+    }
+    // TOTALITY: the table covers EVERY code in the closed vocabulary — no
+    // dead codes are carried (ROUTE/ORIGIN mismatch were removed from the
+    // union because no live branch can produce them: URL parsing precedes
+    // route resolution, and rules carry host+port but no scheme, so origin
+    // identity is bound into handles/receipts instead of refused on).
+    expect(ADMISSION_REFUSAL_CODES).toHaveLength(15);
+    expect(new Set(rows.map((row) => row[0])).size).toBe(ADMISSION_REFUSAL_CODES.length);
+    expect(new Set(rows.map((row) => row[0])).size).toBe(rows.length);
+  });
+});
