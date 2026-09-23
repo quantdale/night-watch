@@ -358,3 +358,119 @@ test.describe('NW-AUD-020 semantic admission authority (pure)', () => {
     expect(() => registry.open('NAVIGATION')).toThrow('GENERATION_BUDGET_EXCEEDED');
   });
 });
+
+test.describe('NW-AUD-020 WebSocket semantic admission (pure)', () => {
+  const WS_ORIGIN = 'ws://api.example.invalid';
+  const WS_URL = `${WS_ORIGIN}/socket/stream`;
+  const WS_RULE: EndpointSemanticRule = {
+    id: 'ripple.streaming.upgrade',
+    host: 'api.example.invalid',
+    method: 'WS',
+    pathPattern: '^/socket/stream$',
+    classification: 'KNOWN_READ',
+    provenance: 'synthetic-fixture',
+  };
+  const HTTP_RULE_ON_SAME_PATH: EndpointSemanticRule = {
+    id: 'ripple.streaming.http',
+    host: 'api.example.invalid',
+    method: 'GET',
+    pathPattern: '^/socket/stream$',
+    classification: 'KNOWN_READ',
+    provenance: 'synthetic-fixture',
+  };
+  const wsBinding = { rule: WS_RULE, sourceProof: PROOF, sourceCurrent: true };
+  const wsRequest = (overrides: Partial<AdmissionRequest> = {}): AdmissionRequest => request({
+    url: WS_URL,
+    method: 'WS',
+    transport: 'WEBSOCKET',
+    ...overrides,
+  });
+
+  test('a proven WS rule + active generation admits; the handle binds method WS and the categorical template', () => {
+    const registry = new GenerationRegistry();
+    const gen = registry.open('NAVIGATION');
+    const snap = snapshot(registry, [wsBinding], NO_BOOTSTRAP);
+    const decision = evaluateAdmission(
+      wsRequest({ attribution: { kind: 'GENERATION', id: gen.id } }),
+      snap,
+    );
+    expect(decision.admitted).toBe(true);
+    if (decision.admitted) {
+      expect(decision.handle.method).toBe('WS');
+      expect(decision.handle.classification).toBe('PROVEN_READ');
+      expect(decision.handle.routeTemplate).toBe('<RULE:ripple.streaming.upgrade>');
+      expect(decision.handle.transport).toBe('WEBSOCKET');
+      expect(decision.handle.origin).toBe(WS_ORIGIN);
+      expect(JSON.stringify(decision.handle)).not.toContain('/socket/stream');
+    }
+  });
+
+  test('WS refusals are categorical: unknown, HTTP-rule method drift, closed generation, stale proof — and HTTP exemptions can never cover WS', () => {
+    const matrix: Array<[string, () => ReturnType<typeof evaluateAdmission>, string]> = [
+      // Unknown WS: no bindings. An HTTP exemption can NEVER cover it —
+      // its origin is http(s), the socket origin is ws(s), and its method
+      // is GET/HEAD-only.
+      ['unknown ws vs http exemption', () => {
+        const registry = new GenerationRegistry();
+        const nav = registry.open('NAVIGATION');
+        const httpExemption = BootstrapExemptionTable.of([{
+          id: 'http.stream.exemption',
+          environment: 'local',
+          origin: 'https://api.example.invalid',
+          method: 'GET',
+          routePattern: '^/socket/stream$',
+          sourceProof: PROOF,
+          sourceCurrent: true,
+          maxCountPerNavigation: 4,
+        }]);
+        return evaluateAdmission(
+          wsRequest({ attribution: { kind: 'GENERATION', id: nav.id } }),
+          snapshot(registry, [], httpExemption),
+        );
+      }, 'ADMISSION_BOOTSTRAP_UNREGISTERED'],
+      // An HTTP rule on the SAME path is method drift for a socket.
+      ['http rule, ws method', () => {
+        const registry = new GenerationRegistry();
+        const gen = registry.open('ACTION');
+        return evaluateAdmission(
+          wsRequest({ attribution: { kind: 'GENERATION', id: gen.id } }),
+          snapshot(registry, [{ rule: HTTP_RULE_ON_SAME_PATH, sourceProof: PROOF, sourceCurrent: true }], NO_BOOTSTRAP),
+        );
+      }, 'ADMISSION_METHOD_MISMATCH'],
+      ['closed generation', () => {
+        const registry = new GenerationRegistry();
+        const gen = registry.open('ACTION');
+        registry.settle(gen.id);
+        return evaluateAdmission(
+          wsRequest({ attribution: { kind: 'GENERATION', id: gen.id } }),
+          snapshot(registry, [wsBinding], NO_BOOTSTRAP),
+        );
+      }, 'ADMISSION_GENERATION_CLOSED'],
+      ['stale proof', () => {
+        const registry = new GenerationRegistry();
+        const gen = registry.open('ACTION');
+        return evaluateAdmission(
+          wsRequest({ attribution: { kind: 'GENERATION', id: gen.id } }),
+          snapshot(registry, [{ rule: WS_RULE, sourceProof: PROOF, sourceCurrent: false }], NO_BOOTSTRAP),
+        );
+      }, 'ADMISSION_STALE_PROOF'],
+      ['unbound generation', () => {
+        const registry = new GenerationRegistry();
+        return evaluateAdmission(wsRequest(), snapshot(registry, [wsBinding], NO_BOOTSTRAP));
+      }, 'ADMISSION_UNBOUND_GENERATION'],
+    ];
+    for (const [label, run, expected] of matrix) {
+      const decision = run();
+      expect(decision.admitted, label).toBe(false);
+      if (!decision.admitted) {
+        expect(decision.refusal.code, label).toBe(expected);
+        expect(decision.refusal.transport, label).toBe('WEBSOCKET');
+        const receiptText = JSON.stringify(decision.refusal);
+        expect(receiptText, label).not.toContain('/socket/');
+        // Rule IDs are bounded proven identifiers and MAY appear; concrete
+        // path material may not.
+        expect(receiptText, label).not.toContain('socket/stream');
+      }
+    }
+  });
+});

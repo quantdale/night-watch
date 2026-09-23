@@ -31,6 +31,8 @@ import { RunRecorder } from '../../src/core/evidence/runRecorder';
 import { RunMonitor } from '../../src/state/run';
 import { createNightwatchContext } from '../../src/browser/context';
 import { fixtureBootstrapExemptions } from '../../src/browser/fixtures/bootstrapExemptions';
+import { startFixtureServer } from '../../src/browser/fixtures/fixtureServer';
+import type { EndpointSemanticRule } from '../../src/core/safety/endpointSemantics';
 
 const ROOT = path.join(__dirname, '..', '..');
 const read = (relative: string): string => fs.readFileSync(path.join(ROOT, relative), 'utf8');
@@ -325,6 +327,134 @@ test.describe('NW-AUD-020 reproduction baseline (defects must later be inverted)
         server.closeAllConnections();
         server.close(() => resolve());
       });
+    }
+  });
+
+  test('Step 5 E2E: proven WS rule + generation opens the loopback socket; unknown WS refuses with ZERO new upstream upgrades', async ({ browser }) => {
+    const server = await startFixtureServer('good');
+    const wsUrl = `ws://127.0.0.1:${server.port}/api/safety/ws`;
+    const env = fixtureEnvironment(server.origin);
+    const wsRule: EndpointSemanticRule = {
+      id: 'fixture.ws.echo',
+      host: '127.0.0.1',
+      method: 'WS',
+      path: '/api/safety/ws',
+      classification: 'KNOWN_READ',
+      provenance: 'synthetic local fixture echo (local-only, non-product)',
+    };
+    const exemptions = fixtureBootstrapExemptions(env.name, server.origin);
+    const openSocket = async (page: import('@playwright/test').Page, url: string): Promise<{ open: boolean; echo: string | null }> =>
+      page.evaluate((target) => new Promise<{ open: boolean; echo: string | null }>((resolve) => {
+        let settled = false;
+        const socket = new WebSocket(target);
+        const done = (open: boolean, echo: string | null): void => {
+          if (settled) return;
+          settled = true;
+          clearTimeout(timer);
+          try { socket.close(); } catch { /* already closed */ }
+          resolve({ open, echo });
+        };
+        const timer = setTimeout(() => done(false, null), 3_000);
+        socket.onopen = () => { socket.send('ping'); };
+        socket.onmessage = (event) => done(true, String(event.data));
+        socket.onerror = () => done(false, null);
+        socket.onclose = () => done(false, null);
+      }), url);
+
+    let admittedCtx: Awaited<ReturnType<typeof createNightwatchContext>> | null = null;
+    let refusedCtx: Awaited<ReturnType<typeof createNightwatchContext>> | null = null;
+    try {
+      // Case 1 — proven WS rule + explicit generation admits.
+      const recorderA = new RunRecorder({
+        runId: `ws-admit-${Date.now()}`,
+        environment: 'local',
+        product: 'ripple',
+        browser: 'chromium',
+        scenario: 'nw-aud-020-ws-admit',
+      });
+      admittedCtx = await createNightwatchContext(browser, {
+        env,
+        recorder: recorderA,
+        uiBaseUrl: server.origin,
+        trace: 'off',
+        endpointRegistry: [wsRule],
+        bootstrapExemptions: exemptions,
+      });
+      await admittedCtx.page.goto(server.origin + '/', { waitUntil: 'load' });
+      admittedCtx.network.beginJourneyIntent('ws-admit-probe', 'WS_ECHO_PROBE');
+      let admitted: { open: boolean; echo: string | null };
+      try {
+        admitted = await openSocket(admittedCtx.page, wsUrl);
+      } finally {
+        admittedCtx.network.endJourneyIntent('ws-admit-probe');
+      }
+      expect(admitted.open).toBe(true);
+      expect(admitted.echo).toBe('ping');
+      expect(server.wsConnections).toBe(1);
+      const eventsA = fs.readFileSync(path.join(recorderA.dir, 'events.jsonl'), 'utf8');
+      expect(eventsA).toContain('PROVEN_READ');
+      expect(eventsA).toContain('"method":"WS"');
+
+      // Case 2 — the SAME server, a context with NO endpoint registry:
+      // unknown WS must refuse BEFORE the handshake: zero new upstream
+      // upgrades, categorical receipt, no path material.
+      const recorderB = new RunRecorder({
+        runId: `ws-refuse-${Date.now()}`,
+        environment: 'local',
+        product: 'ripple',
+        browser: 'chromium',
+        scenario: 'nw-aud-020-ws-refuse',
+      });
+      refusedCtx = await createNightwatchContext(browser, {
+        env,
+        recorder: recorderB,
+        uiBaseUrl: server.origin,
+        trace: 'off',
+        bootstrapExemptions: exemptions,
+      });
+      await refusedCtx.page.goto(server.origin + '/', { waitUntil: 'load' });
+      refusedCtx.network.beginJourneyIntent('ws-refuse-probe', 'WS_ECHO_PROBE');
+      let refused: { open: boolean; echo: string | null };
+      try {
+        refused = await openSocket(refusedCtx.page, wsUrl);
+      } finally {
+        refusedCtx.network.endJourneyIntent('ws-refuse-probe');
+      }
+      expect(refused.open).toBe(false);
+      // ZERO new upstream effect: the counter is unchanged from case 1.
+      expect(server.wsConnections).toBe(1);
+
+      await expect.poll(() => {
+        try {
+          return fs.readFileSync(path.join(recorderB.dir, 'events.jsonl'), 'utf8').includes('SEMANTIC_ADMISSION_REFUSED');
+        } catch {
+          return false;
+        }
+      }, { timeout: 5_000 }).toBe(true);
+      const eventsB = fs.readFileSync(path.join(recorderB.dir, 'events.jsonl'), 'utf8');
+      const refusalLines = eventsB
+        .split('\n')
+        .filter(Boolean)
+        .map((line) => JSON.parse(line) as { message?: string; data?: Record<string, unknown> })
+        .filter((event) => event.message === 'SEMANTIC_ADMISSION_REFUSED');
+      // Scope to the WEBSOCKET receipt: page-load HTTP fetches may also be
+      // refused in this run (their interception races the navigation
+      // window/intent — separate, timing-dependent diagnostics), but the
+      // socket refusal itself is the deterministic contract under test.
+      const wsRefusals = refusalLines.filter((refusal) => refusal.data?.transport === 'WEBSOCKET');
+      expect(wsRefusals.length).toBeGreaterThanOrEqual(1);
+      for (const refusal of wsRefusals) {
+        expect(refusal.data?.method).toBe('WS');
+        expect(typeof refusal.data?.admissionCode).toBe('string');
+        // Privacy: no route material in the receipt.
+        expect(JSON.stringify(refusal.data)).not.toContain('api/safety/ws');
+      }
+      // No admission was granted anywhere in the refused run.
+      expect(eventsB).not.toContain('"admissionVia"');
+    } finally {
+      if (admittedCtx !== null) await admittedCtx.close();
+      if (refusedCtx !== null) await refusedCtx.close();
+      await server.close();
     }
   });
 });

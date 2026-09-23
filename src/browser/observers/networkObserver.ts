@@ -863,11 +863,47 @@ export function createNetworkObserver(opts: {
     } as Record<string, unknown>;
 
     if (decision.verdict === 'allow') {
+      // NW-AUD-020 Step 5: a PRODUCT-API WebSocket (the URL matches the
+      // endpoint model under method 'WS') requires the same semantic
+      // admission every HTTP API request does — host allow, protocol, prior
+      // HTTP admission, and navigation context never authorize a socket.
+      // Non-API sockets (envs with no apiHosts, telemetry/background paths
+      // handled above) keep host policy: containment domain, not product
+      // authority.
+      const endpointMatch = matchEndpoint(rawUrl, 'WS');
+      let gate: ReturnType<typeof admitApiRequest> | null = null;
+      if (endpointMatch !== null) {
+        gate = admitApiRequest(rawUrl, 'WS', endpointMatch.classification);
+        if (!gate.admitted) {
+          recorder.event({
+            type: 'policy',
+            severity: 'info',
+            message: 'SEMANTIC_ADMISSION_REFUSED',
+            data: {
+              admissionCode: gate.code,
+              endpointRuleId: endpointMatch.ruleId,
+              endpointClassification: endpointMatch.classification,
+              method: 'WS',
+              transport: 'WEBSOCKET',
+            },
+          });
+          blockedUrls.add(rawUrl);
+          await ws.close(); // never connects to the server — upstream == 0
+          return;
+        }
+      }
       recorder.event({
         type: 'request',
         severity: 'info',
         message: `WS ${redactedUrl}`,
-        data: { ...base, method: 'WS', verdict: 'allow' },
+        data: {
+          ...base,
+          method: 'WS',
+          verdict: 'allow',
+          ...(gate !== null && gate.admitted
+            ? { admissionVia: gate.via, admissionIdentity: gate.identity, admissionGeneration: gate.generationId }
+            : {}),
+        },
       });
       await ws.connectToServer();
       return;
