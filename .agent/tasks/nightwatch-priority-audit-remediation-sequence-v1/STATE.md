@@ -11,18 +11,18 @@ Last substantive checkpoint SHA: 5e2a03570f3e5d26bf2625478a9d501881a09cb7
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-priority-audit-remedi-0e17af9c
-Last checkpoint: 2026-09-22 — M4 Phase 4 NW-AUD-018 COMPLETE across
-`40962149` (proven route identity + hardening-mode transition), `90a88362`
-(total writer census + final typed persistence firewall + transition/
-publication integrity), `5e2a0357` (rule-inventory census advance).
-Checkpoint receipts: gate:dev PASS; gate:milestone PASS (twelve steps
-exit=0 at `5e2a0357`, full probe campaign 173.7s; affected 391; shard
-exits 0); focused battery 190/190 across 20 files; probes
-checkAuthenticatedEvidenceFirewall 9/9 (HC-121..129) + checkPrivateSurface
-11/11 DETECTED; writer census 22/8/9 ok; private consumer census 41 ok;
-strict OpenSpec PASS for the remediation + umbrella changes; remediation
-tasks.md reconciled (4.2 honestly PARTIAL). M5 NW-AUD-020 opens from the
-persisted wave-1 census.
+Last checkpoint: 2026-09-23 — M5 NW-AUD-020 IN PROGRESS. Reproduction
+baseline committed at `8f346136` (four defect classes A-D pinned green
+against live source); M5 pure authority core committed at `e25d72e1`
+(semanticAdmission + causalGenerations + bootstrapExemptions; three schema
+families declared; authority tests 8/8 incl. 249/250/251 timing-
+independence, cross-generation confusion, transport DISAGREEMENT, bootstrap
+budgets; baseline 4/4; typecheck/schema/hardening PASS; universe PASS).
+M4 remains the validated substantive anchor at `5e2a0357`
+(gate:milestone receipt) until M5's milestone gates run. Remaining M5:
+wire L1/L0/L2 (+L5 where bounded) to the authority, engine/exploration\causality to generations, fixture bootstrap exemptions, transport census +
+hardening probes, adversarial matrix smokes with zero-upstream proof,
+gates, OpenSpec reconciliation, checkpoint.
 
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
@@ -70,22 +70,60 @@ zero-upstream refusal proof on synthetic fixtures only.
 
 ## Work In Progress
 
-M4 COMPLETE at `5e2a0357` (receipts in the ledger below); M5 — Phase 5
-NW-AUD-020 semantic request admission — opening from the persisted wave-1
-census. No partial implementation yet; reproduction comes first.
+M5 wiring phase: connecting the pure authority (`e25d72e1`) to the live
+transport layers and causality seams. No observer/engine/fetchGuard edits
+committed yet; the reproduction baseline (`8f346136`) still pins the
+defective behavior and must be INVERTED by this wiring.
 
 ## Exact Next Action
 
-Read `recon/wave1-aud020-census.md` + the NW-AUD-020
-proposal/design/spec/tasks + cited live source; reproduce the four defect
-classes against live source with focused failing regressions (unknown
-requests continued as PASSIVE; ~250ms action-intent timer severing
-causality; navigation conferring ambient unknown-traffic authority;
-redirect fallback to host-only authority); then implement the immutable
-admission handle, generation semantics, bootstrap exemptions, and
-transport-total enforcement per design — synthetic/loopback/`.invalid`
-fixtures only, zero-upstream refusal proof required. Session
-`sess-b675db99ff3f`.
+Wire M5 in this order, running the focused suites after each step:
+1. **networkObserver L1** (`handleRoute`, after the host `allow` decision
+   and before the KNOWN_MUTATION/ACTION_CAUSED branches): build the frozen
+   AdmissionSnapshot (environment + bindings derived from the same
+   `endpointMatcher` results with journey sourceProof/currentness +
+   GenerationRegistry view + BootstrapExemptionTable + current navigation
+   generation) and call `evaluateAdmission`; admitted => continue (record
+   handle identity in event data); refused => `route.abort` + categorical
+   refusal receipt. REPLACE the PASSIVE ternary: remove
+   `'PASSIVE_UNKNOWN_OBSERVED'` allowance (non-API hosts/static assets keep
+   host-policy continuation — the isApiHost gate decides applicability).
+   Back the observer's `journeyIntent` bookkeeping with GenerationRegistry
+   open/attribute (keep the overlap-throw singleton policy):
+   `beginJourneyIntent` opens an ACTION generation; add a settlement-driven
+   close (endJourneyIntent becomes pacing-only or is superseded).
+   Invert baseline pins A+C in `tests/unit/semanticRequestAdmission.test.ts`.
+2. **Causality**: engine — keep `sleep(ACTION_SETTLE_MS)` as UI pacing only;
+   move the authority close to AFTER waitForRequiredNetwork + structural
+   checks so the observation-settle barrier is covered; exploration —
+   settle-driven close without weakening its stronger hold. Invert pin B.
+3. **Bootstrap exemptions**: register fixture startup reads explicitly —
+   fixtureServer BASE_FETCHES (`/api/invoices`, `/api/billing-groups`,
+   `/api/stream`) and journeyFixtureServer `/m/ripple/passive-bootstrap` —
+   GET, exact origins, nav-generation-scoped, bounded; `action-unknown`
+   stays REFUSED. Exemptions travel via createNetworkObserver opts (closed
+   list supplied by tests/journeys).
+4. **L0 fetchGuard**: pass `method` from the CDP payload; for isApiHost
+   URLs recompute `evaluateAdmission` from the SAME snapshot provider
+   injected at install (context.ts); allow => continueRequest, else
+   failRequest BEFORE network. Invert pin D.
+5. **L2 WebSocket**: handleWebSocket requires admission (WS-class rules or
+   explicit registered WS exemptions); update safety-ws smoke
+   expectations; prove refusal opens zero fixture connections.
+6. **L5 proxy** (bounded): independent recompute for API-host HTTP requests
+   from the same registry snapshot where deployment allows; CONNECT stays
+   host-authority with documented browser-side pre-effect gating + honest
+   evidence (design acknowledges the control-association limit).
+7. **Relay**: inject the same admission decision for API targets in dev
+   mode.
+8. **Transport census hardening rule + probes** (route.continue /
+   Fetch.continueRequest / connectToServer / proxy-allow / relay-fetch
+   sites; PASSIVE_UNKNOWN allowance absent; engine settle-ordering;
+   bootstrap budget present; census registry drift), then the §15 matrix
+   smokes with fixture-server request counters proving `upstream == 0` for
+   every refused synthetic case; typecheck; gate:dev; gate:milestone;
+   OpenSpec reconcile; M5 checkpoint; then M6 automatically.
+Session `sess-b675db99ff3f`.
 
 ## M4 reproduction record (verified live at `bc5065f1`, synthetic values)
 
@@ -165,6 +203,14 @@ machinery to reuse, affected tests, risks).
 | `tests/unit/hardeningRuleQuantifiers.test.ts` | rule-inventory pins 84/61/23 | complete |
 | `tests/smoke/authenticated.smoke.ts` | proven fixture-route binding | complete |
 | `openspec/changes/nightwatch-authenticated-evidence-minimization-integrity-v1/tasks.md` | evidence-checked implementation reconciliation (4.2 PARTIAL) | complete |
+| `bin/lib/hardening/rules/privacy-and-evidence.mjs` | dead comment-read bindings removed (16 lint blockers cleared, zero behavior change) | complete |
+| `tests/unit/semanticRequestAdmission.test.ts` | NW-AUD-020 four-class reproduction baseline (pins to invert) | complete |
+| `src/core/safety/semanticAdmission.ts` | M5 immutable admission authority + closed refusals + consumeAdmission | complete (core; wiring pending) |
+| `src/core/safety/causalGenerations.ts` | M5 deterministic generations (settle-only authority end) | complete (core; wiring pending) |
+| `src/core/safety/bootstrapExemptions.ts` | M5 finite navigation-scoped bootstrap exemptions | complete (core; wiring pending) |
+| `src/core/safety/endpointSemantics.ts` | exported ruleHostMatches/rulePathMatches (one route-proof system) | complete |
+| `src/core/schemaLifecycle/declarations.ts` | +3 M5 schema families declared | complete |
+| `tests/unit/semanticAdmissionAuthority.test.ts` | M5 pure matrix: transports/refusals/timing/cross-gen/bootstrap/disagreement | complete |
 
 ## Validation Ledger
 
@@ -278,6 +324,35 @@ Decision: do not mark any phase complete without live reproduction and
 focused regression first.
 Reason: the master prompt forbids implementing from proposal text alone when
 live source might have drifted.
+
+Decision (M5): ONE pure `evaluateAdmission` is the single semantic decision
+for every transport; layers consume handles or recompute from the SAME
+frozen snapshot, and divergence is the hard `ADMISSION_TRANSPORT_DISAGREEMENT`.
+Reason: shared-function identity makes layer agreement structural rather
+than hoped for; spec scenario "the same immutable admission authorizes the
+bounded request across all layers".
+
+Decision (M5): attribution is explicit at L1 (journey seam) and implicit
+(exactly-one-open, else AMBIGUOUS) at backstops; the single-action
+overlap-throw stays in the observer while the registry itself permits
+multiple live generations.
+Reason: preserves the existing fail-closed singleton policy (census risk 6)
+while satisfying the cross-generation confusion matrix.
+
+Decision (M5): a read-method request on a route that carries a mutation
+TWIN rule refuses as MUTATION, not method-mismatch.
+Reason: 303/307 method drift must never smuggle a write into an admitted
+read; payer-exchange style read+write pairs share one path pattern.
+
+Decision (M5): bootstrap matching is two-stage (family = env+origin+method,
+then exact anchored route) so MISMATCH (route drift inside a registered
+family) and UNREGISTERED (unknown startup traffic) stay distinct
+refusals; POST/HEAD exemptions are impossible (GET/HEAD-only enforced at
+registration).
+
+Decision (M5): persisted admission identity reuses M4's categorical
+`<RULE:id>` marker (safeRuleMarker) — no second route-proof or route-
+persistence system.
 
 ## Discoveries
 
