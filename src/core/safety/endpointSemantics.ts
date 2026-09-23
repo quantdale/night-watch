@@ -60,6 +60,19 @@ function pathMatches(candidate: EndpointSemanticRule, pathname: string): boolean
 }
 
 /**
+ * NW-AUD-020: shared route-proof primitives. The semantic admission
+ * authority (semanticAdmission.ts) resolves host and path membership through
+ * THESE functions so no second, competing route-proof system exists.
+ */
+export function ruleHostMatches(url: URL, configuredHost: string): boolean {
+  return hostMatches(url, configuredHost);
+}
+
+export function rulePathMatches(rule: EndpointSemanticRule, pathname: string): boolean {
+  return pathMatches(rule, pathname);
+}
+
+/**
  * Classify one encountered API URL. `null` means it is not an API endpoint
  * for the selected environment and is intentionally omitted from semantic
  * endpoint reporting.

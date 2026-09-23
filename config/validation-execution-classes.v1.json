@@ -1708,6 +1708,10 @@
       "class": "PARALLEL_SAFE",
       "signals": []
     },
+    "tests/unit/semanticAdmissionAuthority.test.ts": {
+      "class": "PARALLEL_SAFE",
+      "signals": []
+    },
     "tests/unit/semanticCampaign.test.ts": {
       "class": "PARALLEL_SAFE",
       "signals": [
