@@ -94,10 +94,16 @@ export function createConsoleObserver(opts: {
             });
             return;
           }
+          // NW-AUD-020 sibling: test suppression against the RAW message
+          // BEFORE any suppression/redaction — Chromium's resource-failure
+          // noise is the network observer's job in every mode, and an
+          // authenticated run whose suppression placeholder was tested here
+          // would raise a console-error issue for every legitimate refusal.
+          const rawText = msg.text();
+          if (CHROME_RESOURCE_FAILURE_RE.test(rawText)) return;
           const text = recorder.isAuthenticated
             ? '[SUPPRESSED_AUTHENTICATED_CONSOLE_TEXT]'
-            : recorder.redaction.redactText(msg.text());
-          if (CHROME_RESOURCE_FAILURE_RE.test(text)) return; // network observer's job
+            : recorder.redaction.redactText(rawText);
           recorder.event({
             type: 'console',
             severity: msg.type() === 'error' ? 'error' : 'info',

@@ -54,6 +54,8 @@ import type { SemanticEvaluationReceipt, SemanticEvidenceAcceptanceClass } from 
 import { guardPhase22SemanticHookResult } from '../../oracles/semantic/phase22Firewall';
 import type { Phase22PrivacyReceipt } from '../../core/phase22';
 import type { JourneyCaptureFailureCode } from '../../core/journeys/types';
+import { AMBIGUOUS_ATTRIBUTION, GenerationRegistry } from '../../core/safety/causalGenerations';
+import { BootstrapExemptionTable } from '../../core/safety/bootstrapExemptions';
 
 /** Max captured body size (chars) — bodies are sliced, then redacted. */
 const MAX_BODY_CHARS = 1_000_000;
@@ -153,8 +155,11 @@ export interface NetworkObserver {
   optionalResourceFailureUrls(): ReadonlySet<string>;
   /** Mark the one declarative journey action currently being executed. */
   beginJourneyIntent(stepId: string, actionType: string): void;
-  /** End the current declarative journey action. */
+  /** End the current declarative journey action: settles its causal
+   *  generation — the ONLY way authority ends (never a timer). */
   endJourneyIntent(stepId: string): void;
+  /** NW-AUD-020: currently open generation ids (diagnostics only). */
+  activeGenerations?(): readonly string[];
   /** Sanitized semantic request ledger for the current run. */
   semanticRequests(): readonly SemanticRequestObservation[];
   /** Mark the start of intentional journey actions after auth/bootstrap preflight. */
@@ -229,6 +234,15 @@ export function createNetworkObserver(opts: {
    *  observer produces. Defaults to LOCAL_SYNTHETIC; only the gated contained
    *  DEV runner declares CONTAINED_DEV. */
   semanticAcceptanceClass?: SemanticEvidenceAcceptanceClass;
+  /** NW-AUD-020: explicit finite initialization exemptions. Never implicit —
+   *  an absent list means unknown bootstrap API traffic REFUSES. */
+  bootstrapExemptions?: readonly import('../../core/safety/bootstrapExemptions').BootstrapExemption[];
+  /** Environment name stamped on admission refusal receipts. */
+  admissionEnvironment?: string;
+  /** Currentness of the bound endpoint-registry snapshot. `false` refuses
+   *  every API request (stale proof); defaults to `true` for registries
+   *  built in-process from the current checkout's reviewed contracts. */
+  admissionSourceCurrent?: boolean;
 }): NetworkObserver {
   const { policy, recorder, monitor } = opts;
 
@@ -258,6 +272,51 @@ export function createNetworkObserver(opts: {
   const captureFailureCodeSet = new Set<JourneyCaptureFailureCode>();
   let journeyIntent: { stepId: string; actionType: string } | null = null;
   let journeyObservationStart = 0;
+  // NW-AUD-020: causal generations are THE authority lifetime. The journey
+  // intent remains the diagnostic label seam; generation state decides.
+  const generations = new GenerationRegistry();
+  const bootstrapTable = BootstrapExemptionTable.of(opts.bootstrapExemptions ?? []);
+  let journeyGeneration: string | null = null;
+  let navigationGeneration: string | null = null;
+
+  /**
+   * NW-AUD-020 — THE pre-effect gate for API-host requests at L1. Only an
+   * active causal generation plus either a source-proven KNOWN_READ rule or
+   * a navigation-scoped bootstrap exemption can continue a request. Timing
+   * never appears here: authority is generation state, nothing else.
+   */
+  function admitApiRequest(
+    rawUrl: string,
+    method: string,
+    classification: EndpointSemanticClassification,
+  ):
+    | { admitted: true; via: 'PROVEN_READ' | 'BOOTSTRAP_EXEMPT'; identity: string }
+    | { admitted: false; code: string } {
+    if (opts.admissionSourceCurrent === false) return { admitted: false, code: 'ADMISSION_STALE_PROOF' };
+    const attribution = journeyIntent !== null && journeyGeneration !== null
+      ? generations.attributeExplicit(journeyGeneration)
+      : generations.attributeImplicit();
+    if (attribution.kind === 'NONE') return { admitted: false, code: 'ADMISSION_UNBOUND_GENERATION' };
+    if (attribution.kind === AMBIGUOUS_ATTRIBUTION) return { admitted: false, code: 'ADMISSION_AMBIGUOUS' };
+    if (!generations.isActive(attribution.id)) return { admitted: false, code: 'ADMISSION_GENERATION_CLOSED' };
+    if (classification === 'KNOWN_READ') {
+      return { admitted: true, via: 'PROVEN_READ', identity: 'proven-read' };
+    }
+    // Unknown / legacy-classifier traffic: ONLY a NAVIGATION-kind generation
+    // may consume a finite, route-exact bootstrap exemption. Action-caused
+    // unknowns and idle unknowns refuse — navigation is not ambient safety.
+    const generation = generations.get(attribution.id);
+    if (generation === null || generation.kind !== 'NAVIGATION') {
+      return { admitted: false, code: 'ADMISSION_UNKNOWN' };
+    }
+    const consumption = bootstrapTable.consume(attribution.id, {
+      method,
+      url: rawUrl,
+      environment: opts.admissionEnvironment ?? 'local',
+    });
+    if (!consumption.granted) return { admitted: false, code: `ADMISSION_${consumption.code}` };
+    return { admitted: true, via: 'BOOTSTRAP_EXEMPT', identity: consumption.exemptionId };
+  }
 
   function recordCaptureFailure(code: JourneyCaptureFailureCode): void {
     if (captureFailureCodeSet.size < MAX_CAPTURE_FAILURE_CODES) captureFailureCodeSet.add(code);
@@ -448,6 +507,16 @@ export function createNetworkObserver(opts: {
       const semanticObservation = endpointMatch === null
         ? null
         : recordSemanticObservation(endpointMatch, request.method());
+      // NW-AUD-020: computed ONCE — a second call would double-spend
+      // bootstrap budgets. Non-API hosts (endpointMatch === null) keep
+      // host-policy continuation and never reach this gate. Main documents,
+      // stylesheets, images etc. are NOT product API calls: navigation
+      // authority comes from opening a generation, never from this gate —
+      // only fetch/xhr (the product API surface) is semantically admitted.
+      const isApiCall = request.resourceType() === 'fetch' || request.resourceType() === 'xhr';
+      const apiGate = endpointMatch === null || !isApiCall
+        ? null
+        : admitApiRequest(rawUrl, request.method(), endpointClassification ?? 'UNKNOWN');
 
       // Register secrets BEFORE recording anything: every sensitive header
       // value plus the full Cookie header becomes a redaction secret.
@@ -499,13 +568,31 @@ export function createNetworkObserver(opts: {
         return;
       }
 
-      if (decision.verdict === 'allow' && semanticObservation?.disposition === 'ACTION_CAUSED_UNKNOWN') {
-        try {
-          await route.abort('blockedbyclient');
-        } catch {
-          // The Fetch guard may have handled the same request first.
+      if (decision.verdict === 'allow' && endpointMatch !== null && apiGate !== null) {
+        // NW-AUD-020: pre-effect semantic admission. The PASSIVE/ACTION labels
+        // above remain DIAGNOSTICS ONLY; continuation authority is exactly
+        // this gate. Refusal happens before any byte leaves the browser.
+        if (!apiGate.admitted) {
+          recorder.event({
+            type: 'policy',
+            severity: semanticObservation?.disposition === 'ACTION_CAUSED_UNKNOWN' ? 'fatal' : 'info',
+            message: 'SEMANTIC_ADMISSION_REFUSED',
+            data: {
+              admissionCode: apiGate.code,
+              endpointRuleId: endpointMatch.ruleId,
+              endpointClassification: endpointMatch.classification,
+              disposition: semanticObservation?.disposition ?? 'UNKNOWN',
+              method: request.method(),
+              transport: 'PLAYWRIGHT_ROUTE',
+            },
+          });
+          try {
+            await route.abort('blockedbyclient');
+          } catch {
+            // The Fetch guard may have handled the same request first.
+          }
+          return;
         }
-        return;
       }
 
       if (decision.verdict === 'allow') {
@@ -542,6 +629,8 @@ export function createNetworkObserver(opts: {
             reason: decision.reason,
             ...(endpointClassification === null ? {} : { endpointClassification }),
             ...(endpointMatch === null ? {} : { endpointRuleId: endpointMatch.ruleId }),
+            // NW-AUD-020: the admitted handle identity (provenance-safe).
+            ...(apiGate?.admitted === true ? { admissionVia: apiGate.via, admissionIdentity: apiGate.identity } : {}),
           },
         });
         await route.continue();
@@ -1225,6 +1314,25 @@ export function createNetworkObserver(opts: {
     page.on('response', onResponse);
     page.on('requestfailed', onRequestFailed);
     page.on('request', onRequestObserved);
+    // NW-AUD-020: one live NAVIGATION generation per main-frame navigation.
+    // Superseded on the next navigation, settled deterministically at load —
+    // never by an authority timer.
+    page.on('framenavigated', (frame) => {
+      if (frame.parentFrame() !== null) return;
+      if (navigationGeneration !== null) {
+        try { generations.settle(navigationGeneration); } catch { /* superseded */ }
+      }
+      try {
+        navigationGeneration = generations.open('NAVIGATION').id;
+      } catch {
+        navigationGeneration = null; // budget exhausted: fail closed (no nav authority)
+      }
+    });
+    page.on('load', () => {
+      if (navigationGeneration === null) return;
+      try { generations.settle(navigationGeneration); } catch { /* already settled */ }
+      navigationGeneration = null;
+    });
   }
 
   return {
@@ -1257,10 +1365,28 @@ export function createNetworkObserver(opts: {
         throw new Error('fail-closed: a journey action is already active');
       }
       journeyIntent = { stepId, actionType };
+      // NW-AUD-020: every approved action/navigation opens a unique causal
+      // generation; authority ends only at settlement (endJourneyIntent).
+      const kind = actionType === 'NAVIGATE_APPROVED_ROUTE' || actionType === 'RETURN_TO_ANCHOR'
+        ? 'NAVIGATION'
+        : 'ACTION';
+      try {
+        journeyGeneration = generations.open(kind).id;
+      } catch {
+        journeyGeneration = null; // budget exhausted: requests refuse closed
+      }
     },
     endJourneyIntent: (stepId: string): void => {
-      if (journeyIntent !== null && journeyIntent.stepId === stepId) journeyIntent = null;
+      if (journeyIntent !== null && journeyIntent.stepId === stepId) {
+        if (journeyGeneration !== null) {
+          try { generations.settle(journeyGeneration); } catch { /* already settled */ }
+          journeyGeneration = null;
+        }
+        journeyIntent = null;
+      }
     },
+    /** NW-AUD-020 diagnostics: open generation ids (no authority transfer). */
+    activeGenerations: (): readonly string[] => generations.openIds(),
     semanticRequests: (): readonly SemanticRequestObservation[] => semanticLedger.map((item) => ({ ...item })),
     beginJourneyObservation: (): void => {
       journeyObservationStart = semanticLedger.length;

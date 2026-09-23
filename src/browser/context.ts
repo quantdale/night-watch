@@ -35,6 +35,7 @@ import type { Browser, BrowserContext, Download, Page } from '@playwright/test';
 import type { EnvironmentConfig } from '../core/environment/types';
 import { EnvironmentSelectionError } from '../core/environment';
 import { OutboundPolicy } from '../core/safety/outboundPolicy';
+import type { BootstrapExemption } from '../core/safety/bootstrapExemptions';
 import type { RunRecorder } from '../core/evidence/runRecorder';
 import { RunMonitor } from '../state/run';
 import {
@@ -84,6 +85,14 @@ interface NightwatchContextOptions {
   bootstrapDiagnostics?: boolean;
   /** Explicit source-reviewed endpoint rules for a Phase 2B journey run. */
   endpointRegistry?: readonly EndpointSemanticRule[];
+  /** NW-AUD-020: explicit finite initialization exemptions for this
+   *  context's fixture/product surface. Absent = unknown bootstrap API
+   *  traffic REFUSES (never an implicit NAVIGATION_SAFE default). */
+  bootstrapExemptions?: readonly BootstrapExemption[];
+  /** NW-AUD-020: currentness of the endpoint-registry snapshot. Explicit
+   *  `false` refuses every API request (stale proof). Omitted = the registry
+   *  was built in-process from this checkout's reviewed contracts (current). */
+  endpointRegistryCurrent?: boolean;
   /** Metadata-only identity for anomaly fingerprints; never page data. */
   journeyId?: string;
   /** Phase 9B explicit semantic-oracle option: the caller provides an
@@ -338,6 +347,9 @@ export async function createNightwatchContext(
     monitor,
     endpointClassifier: (url, method) => classifyRippleEndpoint(url, method, opts.env),
     endpointMatcher: (url, method) => matchRippleEndpoint(url, method, opts.env, opts.endpointRegistry),
+    bootstrapExemptions: opts.bootstrapExemptions,
+    admissionEnvironment: opts.env.name,
+    admissionSourceCurrent: opts.endpointRegistryCurrent,
     optionalSupportBlockedHosts,
     browserBackgroundBlockedHosts,
     targetOrigin: new URL(validated).origin,

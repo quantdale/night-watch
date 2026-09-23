@@ -155,11 +155,19 @@ test.describe('Phase 9A.1 — observer semantic evaluation ledger', () => {
     try {
       // Fire 550 responses in a loop (well past the 512 cap).
       await page.goto(`${server.origin}/api/seed`);
-      await page.evaluate(async (target) => {
-        for (let i = 0; i < 550; i++) {
-          await fetch(`${target}/api/bulk`);
-        }
-      }, server.origin);
+      // NW-AUD-020: the bulk fetch loop is an approved test action — it
+      // carries explicit causal authority (an open generation) for its whole
+      // duration; timing and idle state grant nothing.
+      observer.beginJourneyIntent('ledger-overflow', 'LEDGER_OVERFLOW_BULK_READ');
+      try {
+        await page.evaluate(async (target) => {
+          for (let i = 0; i < 550; i++) {
+            await fetch(`${target}/api/bulk`);
+          }
+        }, server.origin);
+      } finally {
+        observer.endJourneyIntent('ledger-overflow');
+      }
       await expect.poll(() => observer.semanticEvaluations().length, { timeout: 5_000 }).toBe(512);
 
       const evaluations = observer.semanticEvaluations();

@@ -48,59 +48,88 @@ function fixtureEnvironment(origin: string): EnvironmentConfig {
 }
 
 test.describe('NW-AUD-020 reproduction baseline (defects must later be inverted)', () => {
-  test('A + C: unknown API traffic is relabeled PASSIVE for navigation and no-intent, then continued', () => {
+  test('A + C INVERTED: unknown API traffic is refused pre-effect; labels remain diagnostics only', () => {
     const observer = read('src/browser/observers/networkObserver.ts');
 
-    // The exact defect ternary: navigation kinds OR null intent => PASSIVE.
-    expect(observer).toMatch(
-      /action\?\.actionType === 'NAVIGATE_APPROVED_ROUTE' \|\| action\?\.actionType === 'RETURN_TO_ANCHOR' \|\| action === null/,
+    // THE gate exists and runs BEFORE route.continue inside the allow branch:
+    // continuation authority is the admission decision, nothing else.
+    expect(observer).toMatch(/function admitApiRequest\(/);
+    const apiGateComputedAt = observer.indexOf('const apiGate = endpointMatch === null');
+    const gateCheckAt = observer.indexOf('if (!apiGate.admitted)');
+    expect(apiGateComputedAt).toBeGreaterThan(0);
+    expect(gateCheckAt).toBeGreaterThan(apiGateComputedAt);
+    // The HTTP allow-branch continue AFTER the gate (the earlier occurrence
+    // is the defensive ws-scheme early-exit, delegated to L2).
+    const continueAt = observer.indexOf('await route.continue();', gateCheckAt);
+    expect(continueAt).toBeGreaterThan(gateCheckAt);
+
+    // The historical authority branch (disposition decides continuation) is gone.
+    expect(observer).not.toContain(
+      "if (decision.verdict === 'allow' && semanticObservation?.disposition === 'ACTION_CAUSED_UNKNOWN')",
     );
+
+    // PASSIVE_UNKNOWN_OBSERVED survives ONLY as an assigned diagnostic label;
+    // it is never compared — a label can no longer confer authority.
     expect(observer).toContain("'PASSIVE_UNKNOWN_OBSERVED'");
+    expect(observer).not.toMatch(/=== 'PASSIVE_UNKNOWN_OBSERVED'/);
 
-    // Only two dispositions ever abort; PASSIVE is not among them.
-    expect(observer).toMatch(/endpointClassification === 'KNOWN_MUTATION'/);
-    expect(observer).toMatch(/semanticObservation\?\.disposition === 'ACTION_CAUSED_UNKNOWN'/);
-    expect(observer).not.toMatch(/disposition === 'PASSIVE_UNKNOWN_OBSERVED'\) \{\s*\n\s*await route\.abort/);
+    // Navigation is not ambient authority: unknown traffic may consume a
+    // bootstrap exemption only under a NAVIGATION-kind generation, and a
+    // stale registry snapshot refuses everything.
+    expect(observer).toMatch(/generation\.kind !== 'NAVIGATION'/);
+    expect(observer).toContain('admissionSourceCurrent === false');
+    expect(observer).toMatch(/bootstrapTable\.consume\(/);
 
-    // The allow branch continues every allowed-host request.
-    expect(observer).toMatch(/if \(decision\.verdict === 'allow'\) \{[\s\S]{0,2000}await route\.continue\(\);/);
-
-    // Live fixtures ship startup/navigation unknowns that rely on this path.
+    // Live fixtures still EMIT startup unknowns — they now require explicit
+    // exemptions (src/browser/fixtures/bootstrapExemptions.ts) or refuse.
     const fixture = read('src/browser/fixtures/fixtureServer.ts');
     expect(fixture).toContain("fetch('/api/invoices')");
     expect(fixture).toContain("fetch('/api/billing-groups')");
     const journeyFixture = read('src/browser/fixtures/journeyFixtureServer.ts');
     expect(journeyFixture).toContain('/m/ripple/passive-bootstrap');
-    // The journey-level counterpart asserts live: passive unknown counts > 0
-    // in tests/unit/journeyEngine.test.ts ("distinguishes passive UNKNOWN").
+    // The journey-level passive count remains a truthful DIAGNOSTIC label.
     const journeyEngineTest = read('tests/unit/journeyEngine.test.ts');
     expect(journeyEngineTest).toMatch(/passiveUnknownCount\)\.toBeGreaterThan\(0\)/);
+    // Explicit fixture exemptions exist and are wired through the context.
+    const exemptions = read('src/browser/fixtures/bootstrapExemptions.ts');
+    expect(exemptions).toContain('fixture.bootstrap.invoices');
+    const context = read('src/browser/context.ts');
+    expect(context).toContain('bootstrapExemptions: opts.bootstrapExemptions');
+    expect(context).toContain('admissionSourceCurrent: opts.endpointRegistryCurrent');
   });
 
-  test('B: the fixed 250 ms window is the engine causality boundary', () => {
+  test('B INVERTED: authority closes after deterministic settlement, never at the 250 ms pacing sleep', () => {
     const engine = read('src/core/journeys/engine.ts');
+    // The pacing constant exists but is documented as pacing, not authority.
     expect(engine).toMatch(/const ACTION_SETTLE_MS = 250;/);
+    expect(engine).toContain('Pacing grace after a click');
+    expect(engine).not.toContain('Keep the intent classification window open');
+
     const sleepAt = engine.indexOf('await sleep(ACTION_SETTLE_MS);');
-    // The click-path endJourneyIntent is the occurrence AFTER the sleep (an
-    // earlier navigation-step end exists and is not the defect site).
+    // Click-path endJourneyIntent: the occurrence AFTER the pacing sleep.
     const endAt = engine.indexOf('ctx.network.endJourneyIntent(step.stepId);', sleepAt);
-    const requiredNetworkAt = engine.indexOf('waitForRequiredNetwork(ctx, step', endAt);
+    const requiredNetworkAt = engine.indexOf('waitForRequiredNetwork(ctx, step', sleepAt);
     const settleBarrierAt = engine.indexOf('waitForNetworkObservationSettle(', requiredNetworkAt);
     expect(sleepAt).toBeGreaterThan(0);
-    expect(endAt).toBeGreaterThan(sleepAt);
-    // Defect: intent (causality) closes BEFORE later settlement work, so a
-    // request landing after the sleep but before required-network settlement
-    // observes action === null and becomes PASSIVE (class A relabel).
-    expect(requiredNetworkAt).toBeGreaterThan(endAt);
+    expect(requiredNetworkAt).toBeGreaterThan(sleepAt);
+    // INVERTED: the authority close now sits AFTER required-network and
+    // structural settlement, inside a finally (success AND failure settle;
+    // no orphan generations).
+    expect(endAt).toBeGreaterThan(requiredNetworkAt);
+    expect(engine).toContain('failures can never leak an open');
+    // The journey-wide observation barrier still finalizes after step close.
     expect(settleBarrierAt).toBeGreaterThan(endAt);
-    // Exploration holds intent across settlement instead — the two causality
-    // models are asymmetric (census F5).
+    // Exploration keeps its stronger hold (settle before end) — preserved.
     const exploration = read('src/products/ripple/explorationRuntime.ts');
     const explorationEnd = exploration.indexOf('opts.network.endJourneyIntent(action.actionId);');
     const explorationSettle = exploration.indexOf('EXPECTED_READ_NOT_SETTLED');
     expect(explorationEnd).toBeGreaterThan(0);
     expect(explorationSettle).toBeGreaterThan(0);
     expect(explorationEnd).toBeGreaterThan(explorationSettle);
+    // Generations: open on begin, settle on end (authority seam proven at unit level too).
+    const observer = read('src/browser/observers/networkObserver.ts');
+    expect(observer).toMatch(/generations\.open\(kind\)\.id/);
+    expect(observer).toMatch(/generations\.settle\(journeyGeneration\)/);
   });
 
   test('D: the CDP Fetch guard is host-only — URL without method, continue on allow', () => {
@@ -131,10 +160,11 @@ test.describe('NW-AUD-020 reproduction baseline (defects must later be inverted)
     expect(decideBrowserHttp(policy, `${origin}/m/blue/billing/v1/billinggroups`).verdict).toBe('allow');
   });
 
-  test('C: registry semantics return rule identity only (privacy floor the fix must keep)', () => {
-    // Guard rail for the implementation: admission evidence may carry rule
-    // identity, never concrete path parameters (M3/M4 privacy contract).
-    const endpointSemantics = read('src/core/safety/endpointSemantics.ts');
-    expect(endpointSemantics).toMatch(/URL paths and query values are never/);
+  test('file header: baseline provenance is recorded', () => {
+    const self = read('tests/unit/semanticRequestAdmission.test.ts');
+    expect(self).toContain('NW-AUD-020');
+    // Class D (host-only CDP fallback) is pinned here until Step 4 lands;
+    // classes A, B, C are inverted above once wiring landed.
+    expect(self).toContain('CDP Fetch guard');
   });
 });

@@ -30,10 +30,10 @@ import type {
 } from './types';
 
 const ROUTE_POLL_MS = 50;
-// Keep the intent classification window open long enough for Chromium's
-// request event to cross the route/CDP boundary after a click. This is a
-// bounded lifecycle grace period, not a retry: an action-caused request that
-// arrives inside the window remains causally attributed to that action.
+// Pacing grace after a click so the UI settles before the NEXT check. This
+// is NOT an authority window (NW-AUD-020): causal authority is generation
+// state and ends only at deterministic bounded settlement — see the
+// settlement `finally` below and core/safety/causalGenerations.ts.
 const ACTION_SETTLE_MS = 250;
 
 // Phase 15P A15 convergence: de-exported (module-private, zero external callers).
@@ -346,15 +346,21 @@ async function executeStep(
           await sleep(ACTION_SETTLE_MS);
         } catch {
           fail('safe-interaction-failure');
+        }
+        try {
+          if (!requiredNetworkSatisfied(ctx.network.journeySemanticRequests(), step)) {
+            const networkReady = await waitForRequiredNetwork(ctx, step, step.timeoutMs, sleep, opts.now ?? Date.now);
+            if (!networkReady) fail('required-read-not-observed');
+          }
+          structuralPresent = await markerPresent(page, step.expectedStructuralResult.selector, step.expectedStructuralResult.minimumCount);
+          if (!structuralPresent) fail('journey-structural-readiness-failure');
         } finally {
+          // NW-AUD-020: causal authority ends ONLY after deterministic
+          // bounded settlement of this step (required-network + structural),
+          // on success AND on throw — failures can never leak an open
+          // generation, and elapsed time can never revoke one.
           ctx.network.endJourneyIntent(step.stepId);
         }
-        if (!requiredNetworkSatisfied(ctx.network.journeySemanticRequests(), step)) {
-          const networkReady = await waitForRequiredNetwork(ctx, step, step.timeoutMs, sleep, opts.now ?? Date.now);
-          if (!networkReady) fail('required-read-not-observed');
-        }
-        structuralPresent = await markerPresent(page, step.expectedStructuralResult.selector, step.expectedStructuralResult.minimumCount);
-        if (!structuralPresent) fail('journey-structural-readiness-failure');
       }
     }
   } catch {
