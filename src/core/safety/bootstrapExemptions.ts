@@ -54,6 +54,7 @@ export type BootstrapConsumption =
     readonly navigationGeneration: string;
     readonly consumedCount: number;
     readonly routeTemplate: string;
+    readonly routePattern: string;
     readonly sourceProof: string;
   }
   | { readonly granted: false; readonly code: BootstrapRefusalCode };
@@ -159,6 +160,9 @@ export class BootstrapExemptionTable {
       // charset-validated at build time, so the marker cannot be null here;
       // the fallback keeps the receipt safe if that invariant ever drifts.
       routeTemplate: safeRuleMarker(pathMatched.id) ?? '<UNKNOWN_ROUTE>',
+      // TRANSIENT proven match pattern for lower-transport ticket minting
+      // (in-memory only; durable evidence still uses the marker).
+      routePattern: pathMatched.routePattern,
       sourceProof: pathMatched.sourceProof,
     };
   }

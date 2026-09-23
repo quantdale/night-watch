@@ -350,6 +350,7 @@ export async function createNightwatchContext(
     bootstrapExemptions: opts.bootstrapExemptions,
     admissionEnvironment: opts.env.name,
     admissionSourceCurrent: opts.endpointRegistryCurrent,
+    endpointRules: opts.endpointRegistry,
     optionalSupportBlockedHosts,
     browserBackgroundBlockedHosts,
     targetOrigin: new URL(validated).origin,

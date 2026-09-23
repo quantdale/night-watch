@@ -15,6 +15,8 @@ import type { Duplex } from 'node:stream';
 import type { AddressInfo } from 'node:net';
 import type { Server as HttpServer, IncomingMessage, ServerResponse } from 'node:http';
 import { OutboundPolicy } from '../core/safety/outboundPolicy';
+import { admissionTicketLedger } from '../core/safety/admissionTickets';
+import { ruleHostMatches } from '../core/safety/endpointSemantics';
 import { appendProxyEvent, ensureEventLog } from './events';
 import { ensureProxyPortLease, proxyLeaseRuntimeSuffix, releaseProxyPortLease } from './portLease';
 import { classifyForwardRequest, classifyProxyConnect, classifyProxyUrl, type ProxyClassification, type ProxyTarget } from './policyAdapter';
@@ -127,6 +129,11 @@ function connectionFailureReason(error: unknown, shuttingDown: boolean): ProxyCo
   if (code === 'ECONNREFUSED') return 'CONNECTION_REFUSED';
   if (code === 'ETIMEDOUT' || code === 'ESOCKETTIMEDOUT') return 'CONNECTION_TIMEOUT';
   return 'TRANSPORT_FAILURE';
+}
+
+/** NW-AUD-020: is this target one of the environment's product API hosts? */
+function apiHostTarget(policy: OutboundPolicy, url: URL): boolean {
+  return (policy.environment.apiHosts ?? []).some((host) => ruleHostMatches(url, host));
 }
 
 export interface OutboundProxyOptions {
@@ -346,6 +353,22 @@ export async function startOutboundProxy(opts: OutboundProxyOptions): Promise<Ou
       writeLocalBlock(res);
       return;
     }
+    // NW-AUD-020 Step 6: an API-host forward must carry the ONE-shot
+    // admission ticket its upper layer minted (independent verification,
+    // never a second budget spend). Missing/mismatched/replayed => refuse
+    // BEFORE any upstream socket. Non-API hosts keep host policy.
+    if (classified.target !== null && apiHostTarget(opts.policy, classified.target.url)) {
+      const ticket = admissionTicketLedger().consume({
+        origin: classified.target.url.origin,
+        method: req.method ?? 'GET',
+        pathname: classified.target.url.pathname,
+      });
+      if (!ticket.admitted) {
+        record('http', classified);
+        writeLocalBlock(res);
+        return;
+      }
+    }
     if (isRequestCancelled(req, shuttingDown)) {
       record('http', classified, { resolution: 'failed', resolutionReason: 'RESOLUTION_CANCELLED', connection: 'not-attempted' });
       return;
@@ -437,6 +460,19 @@ export async function startOutboundProxy(opts: OutboundProxyOptions): Promise<Ou
       closeSocket(clientSocket, 403);
       return;
     }
+    // NW-AUD-020 Step 6 (CONNECT honesty): the inner route is TLS-opaque —
+    // no MITM is attempted. The strongest available binding: the destination
+    // must have PRE-EXISTING admitted authority (a ticket minted by an
+    // upper-layer admission for this host — requestWillBeSent precedes the
+    // tunnel) plus a per-host tunnel cardinality budget. Missing => refuse.
+    if (classified.target !== null && apiHostTarget(opts.policy, classified.target.url)) {
+      const tunnel = admissionTicketLedger().authorizeTunnel(classified.target.url.hostname);
+      if (!tunnel.admitted) {
+        record('https-connect', classified);
+        closeSocket(clientSocket, 403);
+        return;
+      }
+    }
     if (isRequestCancelled(req, shuttingDown) || clientSocket.destroyed) {
       record('https-connect', classified, { resolution: 'failed', resolutionReason: 'RESOLUTION_CANCELLED', connection: 'not-attempted' });
       closeSocket(clientSocket, 502);
@@ -511,6 +547,21 @@ export async function startOutboundProxy(opts: OutboundProxyOptions): Promise<Ou
       record(protocol, classified);
       closeSocket(clientSocket, 403);
       return;
+    }
+    // NW-AUD-020 Step 6: the handshake is a product effect too — it carries
+    // the WEBSOCKET ticket minted at L2 admission; host allow alone never
+    // opens a product socket through this layer.
+    if (classified.target !== null && apiHostTarget(opts.policy, classified.target.url)) {
+      const ticket = admissionTicketLedger().consume({
+        origin: classified.target.url.origin,
+        method: 'WS',
+        pathname: classified.target.url.pathname,
+      });
+      if (!ticket.admitted) {
+        record(protocol, classified);
+        closeSocket(clientSocket, 403);
+        return;
+      }
     }
     if (clientSocket.destroyed || shuttingDown) {
       record(protocol, classified, { resolution: 'failed', resolutionReason: 'RESOLUTION_CANCELLED', connection: 'not-attempted' });

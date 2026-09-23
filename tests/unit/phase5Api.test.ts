@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import http from 'node:http';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -425,4 +426,145 @@ test('restricted OOPS validates every Phase 5 generated KNOWN_READ template agai
   } finally {
     selected.cleanup();
   }
+});
+
+test.describe('NW-AUD-020 6B — relay caller authority AND semantic admission compose', () => {
+  const operation = syntheticOperation({
+    operationId: 'synthetic.semantic.compose.read',
+    requiredHostClass: 'LOCAL_LOOPBACK',
+    authClass: 'RELAY_EPHEMERAL_DEV_SESSION',
+    sourceRepo: 'synthetic',
+    sourceSHA: 'synthetic',
+    sourceProvenance: ['synthetic fixture'],
+  });
+  const catalog: ApiCatalog = {
+    schemaVersion: API_CATALOG_VERSION,
+    generatedBy: SCENARIO_GENERATOR_VERSION,
+    operations: [operation],
+  };
+
+  const callRelay = (relay: Awaited<ReturnType<typeof startPhase5Relay>>): Promise<number> =>
+    new Promise((resolve, reject) => {
+      const request = http.request(
+        {
+          host: relay.host,
+          port: relay.port,
+          method: 'GET',
+          path: `/v1/operations/${operation.operationId}`,
+          headers: { 'x-nightwatch-operation-id': operation.operationId },
+        },
+        (response) => {
+          response.resume();
+          response.once('end', () => resolve(response.statusCode ?? 0));
+        },
+      );
+      request.once('error', reject);
+      request.end();
+    });
+
+  const startFixtureRelay = async (admission: ((target: URL, method: string) => { admitted: boolean; code?: string }) | undefined, fetcher: () => Promise<{ status: number; headers: Record<string, string>; body: Buffer }>) =>
+    startPhase5Relay({
+      catalog,
+      mode: 'local',
+      targetResolver: () => new URL('http://127.0.0.1:7312/fixture'),
+      fetcher,
+      ...(admission === undefined ? {} : { admission }),
+    });
+
+  test('valid caller + valid semantic allows; valid caller + invalid semantic refuses with upstream 0', async () => {
+    let fetchCalls = 0;
+    const okFetcher = async () => {
+      fetchCalls += 1;
+      return { status: 200, headers: { 'content-type': 'application/json' }, body: Buffer.from('{"fixture":true}') };
+    };
+    // Row 1: both authorities pass.
+    const allowed = await startFixtureRelay(() => ({ admitted: true }), okFetcher);
+    try {
+      expect(await callRelay(allowed)).toBe(200);
+      expect(fetchCalls).toBe(1);
+      expect(allowed.takeObservation(operation.operationId)?.safetyBlock).toBeUndefined();
+    } finally {
+      await allowed.close();
+    }
+
+    // Rows 2-3: semantic refusal (stale proof / closed generation) — the
+    // caller authority is VALID and still cannot substitute: fetch never
+    // called (upstream 0), categorical safety block, HTTP 403.
+    for (const code of ['ADMISSION_STALE_PROOF', 'ADMISSION_GENERATION_CLOSED'] as const) {
+      fetchCalls = 0;
+      const refused = await startFixtureRelay(() => ({ admitted: false, code }), okFetcher);
+      try {
+        expect(await callRelay(refused)).toBe(403);
+        expect(fetchCalls).toBe(0);
+        expect(refused.takeObservation(operation.operationId)?.safetyBlock).toBe('SEMANTIC_ADMISSION_REFUSED');
+      } finally {
+        await refused.close();
+      }
+    }
+  });
+
+  test('invalid caller + valid semantic still refuses (caller authority is not substituted)', async () => {
+    let fetchCalls = 0;
+    const relay = await startPhase5Relay({
+      catalog,
+      mode: 'local',
+      // Non-loopback target: the relay's OWN caller/destination authority
+      // denies it even though semantic admission would admit.
+      targetResolver: () => new URL('https://api.alphaus.invalid/v1/synthetic'),
+      fetcher: async () => {
+        fetchCalls += 1;
+        return { status: 200, headers: { 'content-type': 'application/json' }, body: Buffer.from('{}') };
+      },
+      admission: () => ({ admitted: true }),
+    });
+    try {
+      expect(await callRelay(relay)).toBe(403);
+      expect(fetchCalls).toBe(0);
+      const observation = relay.takeObservation(operation.operationId);
+      expect(['UNKNOWN_DESTINATION', 'PRODUCTION_DESTINATION']).toContain(observation?.safetyBlock ?? '');
+    } finally {
+      await relay.close();
+    }
+  });
+
+  test('a redirect leg needs its OWN semantic admission — refusal blocks before the redirected upstream', async () => {
+    let fetchCalls = 0;
+    const seen: string[] = [];
+    const redirectingFetcher = async (context: { target: URL }) => {
+      fetchCalls += 1;
+      seen.push(context.target.pathname);
+      if (fetchCalls === 1) {
+        return {
+          status: 302,
+          headers: { 'content-type': 'text/plain', location: 'http://127.0.0.1:7312/next-leg' },
+          body: Buffer.from(''),
+        };
+      }
+      return { status: 200, headers: { 'content-type': 'application/json' }, body: Buffer.from('{"leg":2}') };
+    };
+    const relay = await startPhase5Relay({
+      catalog,
+      mode: 'local',
+      targetResolver: () => new URL('http://127.0.0.1:7312/fixture'),
+      fetcher: redirectingFetcher as never,
+      // Initial target admitted; the redirected leg is NOT.
+      admission: (target) => ({ admitted: target.pathname !== '/next-leg' }),
+    });
+    try {
+      expect(await callRelay(relay)).toBe(502);
+      expect(fetchCalls).toBe(1); // initial only — the redirected upstream never opened
+      expect(seen).toEqual(['/fixture']);
+    } finally {
+      await relay.close();
+    }
+  });
+
+  test('a dev-mode relay REFUSES TO START without semantic admission authority', async () => {
+    await expect(startPhase5Relay({
+      catalog,
+      mode: 'dev',
+      targetResolver: () => new URL('https://apidev.alphaus.invalid/v1/synthetic'),
+      fetcher: async () => ({ status: 200, headers: { 'content-type': 'application/json' }, body: Buffer.from('{}') }),
+    })).rejects.toThrow('requires semantic admission');
+  });
 });

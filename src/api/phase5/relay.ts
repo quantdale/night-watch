@@ -59,7 +59,7 @@ export interface RelayObservation {
    * failure were previously indistinguishable at the catch site.
    */
   relayFailure?: 'DEADLINE_EXCEEDED' | 'CALLER_ABORTED' | 'TRANSPORT_FAILED';
-  safetyBlock?: 'UNKNOWN_OPERATION' | 'KNOWN_MUTATION' | 'UNKNOWN_DESTINATION' | 'PRODUCTION_DESTINATION' | 'OPERATION_MISMATCH' | 'UNSAFE_INBOUND_HEADER';
+  safetyBlock?: 'UNKNOWN_OPERATION' | 'KNOWN_MUTATION' | 'UNKNOWN_DESTINATION' | 'PRODUCTION_DESTINATION' | 'OPERATION_MISMATCH' | 'UNSAFE_INBOUND_HEADER' | 'SEMANTIC_ADMISSION_REFUSED';
   bodyForwardedToOops: false;
 }
 
@@ -83,6 +83,12 @@ interface StartRelayOptions {
   authHeaders?: () => Promise<Readonly<Record<string, string>>>;
   maxBodyBytes?: number;
   upstreamTimeoutMs?: number;
+  /** NW-AUD-020 Step 6B: semantic request admission COMPOSED with the
+   *  relay's own caller authority — both must pass (neither substitutes).
+   *  Required in dev mode; local fixture mode may omit it (its synthetic
+   *  destination owns its own evidence) but whenever supplied it is
+   *  enforced on the initial target AND every redirect leg. */
+  admission?: (target: URL, method: string) => { admitted: boolean; code?: string };
 }
 
 const DEFAULT_MAX_BODY_BYTES = 2 * 1024 * 1024;
@@ -204,6 +210,7 @@ async function callWithRedirectPolicy(
   fetcher: RelayFetcher,
   mode: 'local' | 'dev',
   deadline: RelayDeadline,
+  admission?: StartRelayOptions['admission'],
 ): Promise<{ response: RelayFetchResponse; redirect: RelayObservation['redirect'] }> {
   // NW-05: ONE deadline covers both the first request and any redirect. The
   // previous per-attempt timer gave a redirect a second full budget, so a
@@ -225,6 +232,11 @@ async function callWithRedirectPolicy(
   // Local fixtures may exercise a same-origin redirect path. DEV is stricter:
   // a source operation may not silently turn into another path family.
   if (!sameOrigin || (mode === 'dev' && !samePath)) return { response, redirect: 'BLOCKED' };
+  // NW-AUD-020: the EFFECTIVE redirected request needs its own semantic
+  // admission — a same-origin redirect never rides the original authority.
+  if (admission !== undefined && !admission(redirect, 'GET').admitted) {
+    return { response, redirect: 'BLOCKED' };
+  }
   response = await attempt('redirect', { ...context, target: redirect });
   if (redirectStatus(response.status)) return { response, redirect: 'BLOCKED' };
   return { response, redirect: 'APPROVED_SAME_ORIGIN' };
@@ -232,6 +244,13 @@ async function callWithRedirectPolicy(
 
 export async function startPhase5Relay(options: StartRelayOptions): Promise<Phase5Relay> {
   const hydration = defaultHydration(options.hydration);
+  // NW-AUD-020: in dev mode semantic admission is MANDATORY — a relay that
+  // can forward product API traffic without pre-effect semantic authority
+  // must not start. Local fixture mode may omit it (its loopback
+  // destination owns its own evidence); when supplied it is always enforced.
+  if (options.mode === 'dev' && options.admission === undefined) {
+    throw new Error('fail-closed: dev relay requires semantic admission authority');
+  }
   if (!PERIOD_RE.test(hydration.period)) throw new Error('invalid Phase 5 runtime period');
   const fetcher = options.fetcher ?? defaultFetch;
   const observations = new Map<string, RelayObservation>();
@@ -297,6 +316,12 @@ export async function startPhase5Relay(options: StartRelayOptions): Promise<Phas
     if (!policyAllowsTarget(target, operation, options.environment, options.mode)) {
       return reject(target.hostname === '127.0.0.1' || target.hostname === 'localhost' ? 'UNKNOWN_DESTINATION' : 'PRODUCTION_DESTINATION');
     }
+    // NW-AUD-020 Step 6B: semantic admission is ADDITIONAL authority —
+    // valid caller authority alone never forwards; refusal precedes any
+    // upstream attempt (fetcher not called).
+    if (options.admission !== undefined && !options.admission(target, 'GET').admitted) {
+      return reject('SEMANTIC_ADMISSION_REFUSED');
+    }
     // NW-05: the deadline is created BEFORE auth-header acquisition, which
     // used to sit outside the timer entirely, so a hung credential fetch was
     // unbounded. It is disposed on every terminal path.
@@ -313,7 +338,7 @@ export async function startPhase5Relay(options: StartRelayOptions): Promise<Phas
         headers,
         maxBodyBytes: options.maxBodyBytes ?? DEFAULT_MAX_BODY_BYTES,
       };
-      result = await callWithRedirectPolicy(context, fetcher, options.mode, deadline);
+      result = await callWithRedirectPolicy(context, fetcher, options.mode, deadline, options.admission);
     } catch (error) {
       // The taxonomy is preserved: a deadline and a transport failure are
       // different operator facts. The oracle result stays NETWORK_FAILURE for
@@ -387,6 +412,8 @@ interface NativePhase5RequestOptions {
   maxBodyBytes?: number;
   /** NW-05: a caller's cancellation, composed into the operation deadline. */
   callerSignal?: AbortSignal;
+  /** NW-AUD-020: composed semantic admission (same contract as the relay). */
+  admission?: (target: URL, method: string) => { admitted: boolean; code?: string };
 }
 
 /** Execute the same catalog-resolved request and oracle without OOPS. */
@@ -398,6 +425,11 @@ export async function executeNativePhase5Operation(options: NativePhase5RequestO
     : options.targetResolver(options.operation, hydration);
   if (!policyAllowsTarget(target, options.operation, options.environment, options.mode)) {
     throw new Error('fail-closed: native API target denied by outbound policy');
+  }
+  // NW-AUD-020: composed semantic admission — caller authority never
+  // substitutes for pre-effect semantic authority.
+  if (options.admission !== undefined && !options.admission(target, 'GET').admitted) {
+    throw new Error('fail-closed: native API target refused by semantic admission');
   }
   const fetcher = options.fetcher ?? defaultFetch;
   const deadline = createRelayDeadline(options.upstreamTimeoutMs ?? DEFAULT_UPSTREAM_TIMEOUT_MS, {
@@ -417,6 +449,7 @@ export async function executeNativePhase5Operation(options: NativePhase5RequestO
       fetcher,
       options.mode,
       deadline,
+      options.admission,
     );
     const oracle = evaluateApiResponse(options.operation, result.response.status, result.response.headers, result.response.body, result.response.complete ?? true);
     return {

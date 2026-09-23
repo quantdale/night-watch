@@ -25,6 +25,7 @@ import {
   GenerationRegistry,
 } from '../../src/core/safety/causalGenerations';
 import { BootstrapExemptionTable } from '../../src/core/safety/bootstrapExemptions';
+import { AdmissionTicketLedger } from '../../src/core/safety/admissionTickets';
 import type { EndpointSemanticRule } from '../../src/core/safety/endpointSemantics';
 
 const ORIGIN = 'https://api.example.invalid';
@@ -472,5 +473,58 @@ test.describe('NW-AUD-020 WebSocket semantic admission (pure)', () => {
         expect(receiptText, label).not.toContain('socket/stream');
       }
     }
+  });
+});
+
+test.describe('NW-AUD-020 bounded admission tickets (L5 currency)', () => {
+  const ticket = (overrides: Partial<Parameters<AdmissionTicketLedger['mint']>[0]> = {}) => ({
+    environment: 'local',
+    origin: 'http://api.example.invalid:8443',
+    method: 'GET',
+    matchPattern: '/v1/costs',
+    ruleId: 'synthetic.read',
+    sourceProof: 'synthetic-fixture',
+    generationId: 'gen:000001',
+    transport: 'PLAYWRIGHT_ROUTE',
+    ...overrides,
+  });
+  const ask = { origin: 'http://api.example.invalid:8443', method: 'get', pathname: '/v1/costs' };
+
+  test('one-shot consumption: exact origin + normalized method + proven pattern; replay and mismatches refuse', () => {
+    const ledger = new AdmissionTicketLedger();
+    ledger.mint(ticket());
+    expect(ledger.consume(ask)).toEqual({ admitted: true });
+    // Replay: the consumed ticket can never authorize a second effect.
+    expect(ledger.consume(ask)).toEqual({ admitted: false, code: 'PROXY_ADMISSION_TICKET_MISSING' });
+    ledger.mint(ticket());
+    expect(ledger.consume({ ...ask, origin: 'http://api.example.invalid' })).toEqual({ admitted: false, code: 'PROXY_ADMISSION_TICKET_MISSING' });
+    expect(ledger.consume({ ...ask, method: 'POST' })).toEqual({ admitted: false, code: 'PROXY_ADMISSION_TICKET_MISSING' });
+    expect(ledger.consume({ ...ask, pathname: '/v1/other' })).toEqual({ admitted: false, code: 'PROXY_ADMISSION_TICKET_MISSING' });
+  });
+
+  test('pattern tickets use anchored proven regexes; unsafe registration fails closed', () => {
+    const ledger = new AdmissionTicketLedger();
+    ledger.mint(ticket({ matchPattern: '^/v1/items/[0-9]+$' }));
+    expect(ledger.consume({ ...ask, pathname: '/v1/items/42' })).toEqual({ admitted: true });
+    expect(ledger.consume({ ...ask, pathname: '/v1/items/../../etc' })).toEqual({ admitted: false, code: 'PROXY_ADMISSION_TICKET_MISSING' });
+    // Regex form must be fully anchored; exact-path forms are literal
+    // membership (anchoring is meaningless for them).
+    expect(() => ledger.mint(ticket({ matchPattern: '^/v1/items/[0-9]+' }))).toThrow('ADMISSION_TICKET_PATTERN_UNANCHORED');
+    expect(() => ledger.mint(ticket({ matchPattern: '/v1/query?x' }))).toThrow('ADMISSION_TICKET_PATTERN_UNSAFE');
+  });
+
+  test('tunnels require pre-established per-host capability with a cardinality budget; reset clears everything', () => {
+    const ledger = new AdmissionTicketLedger();
+    expect(ledger.authorizeTunnel('api.example.invalid')).toEqual({ admitted: false, code: 'PROXY_TUNNEL_CAPABILITY_MISSING' });
+    ledger.mint(ticket());
+    expect(ledger.authorizeTunnel('api.example.invalid')).toEqual({ admitted: true });
+    // Presence is per-host: a ticket for one host never authorizes another.
+    expect(ledger.authorizeTunnel('other.host.invalid')).toEqual({ admitted: false, code: 'PROXY_TUNNEL_CAPABILITY_MISSING' });
+    for (let i = 0; i < 7; i += 1) expect(ledger.authorizeTunnel('api.example.invalid')).toEqual({ admitted: true });
+    expect(ledger.authorizeTunnel('api.example.invalid')).toEqual({ admitted: false, code: 'PROXY_TUNNEL_BUDGET_EXCEEDED' });
+    ledger.reset();
+    expect(ledger.totalCount).toBe(0);
+    expect(ledger.unconsumedCount).toBe(0);
+    expect(ledger.authorizeTunnel('api.example.invalid')).toEqual({ admitted: false, code: 'PROXY_TUNNEL_CAPABILITY_MISSING' });
   });
 });

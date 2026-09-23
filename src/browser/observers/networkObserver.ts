@@ -33,7 +33,9 @@ import type { RunMonitor } from '../../state/run';
 import type {
   EndpointSemanticClassification,
   EndpointSemanticMatch,
+  EndpointSemanticRule,
 } from '../../core/safety/endpointSemantics';
+import { admissionTicketLedger } from '../../core/safety/admissionTickets';
 import {
   checkUnexpectedStatus,
   checkJsonBody,
@@ -253,6 +255,10 @@ export function createNetworkObserver(opts: {
    *  every API request (stale proof); defaults to `true` for registries
    *  built in-process from the current checkout's reviewed contracts. */
   admissionSourceCurrent?: boolean;
+  /** NW-AUD-020 Step 6: source-proven endpoint rules (same registry the
+   *  matcher uses) so admitted effects can mint bounded lower-transport
+   *  tickets carrying the PROVEN match pattern — never a concrete sample. */
+  endpointRules?: readonly EndpointSemanticRule[];
 }): NetworkObserver {
   const { policy, recorder, monitor } = opts;
 
@@ -378,7 +384,7 @@ export function createNetworkObserver(opts: {
     classification: EndpointSemanticClassification,
     attributionOverride?: import('../../core/safety/causalGenerations').Attribution,
   ):
-    | { admitted: true; via: 'PROVEN_READ' | 'BOOTSTRAP_EXEMPT'; identity: string; generationId: string }
+    | { admitted: true; via: 'PROVEN_READ' | 'BOOTSTRAP_EXEMPT'; identity: string; generationId: string; matchPattern?: string }
     | { admitted: false; code: string } {
     if (opts.admissionSourceCurrent === false) return { admitted: false, code: 'ADMISSION_STALE_PROOF' };
     const attribution = attributionOverride ?? resolveAttribution();
@@ -386,6 +392,8 @@ export function createNetworkObserver(opts: {
     if (attribution.kind === AMBIGUOUS_ATTRIBUTION) return { admitted: false, code: 'ADMISSION_AMBIGUOUS' };
     if (!generations.isActive(attribution.id)) return { admitted: false, code: 'ADMISSION_GENERATION_CLOSED' };
     if (classification === 'KNOWN_READ') {
+      // The proven pattern is derived at mint time by ruleId (the observer
+      // gate carries classification only; the registry carries the rules).
       return { admitted: true, via: 'PROVEN_READ', identity: 'proven-read', generationId: attribution.id };
     }
     // Unknown / legacy-classifier traffic: ONLY a NAVIGATION-kind generation
@@ -406,7 +414,45 @@ export function createNetworkObserver(opts: {
       via: 'BOOTSTRAP_EXEMPT',
       identity: consumption.exemptionId,
       generationId: consumption.navigationGeneration,
+      matchPattern: consumption.routePattern,
     };
+  }
+
+  /**
+   * NW-AUD-020 Step 6: mint ONE bounded lower-transport ticket for an
+   * admitted effect (layer ownership guarantees one mint per request).
+   * Without a proven match pattern NOTHING is minted — lower layers then
+   * fail closed instead of accepting a weaker (host-only) proof.
+   */
+  function mintAdmissionTicket(
+    rawUrl: string,
+    method: string,
+    ruleId: string,
+    generationId: string,
+    transport: string,
+    exemptionPattern?: string,
+  ): void {
+    try {
+      const parsed = new URL(rawUrl);
+      const rule = opts.endpointRules?.find((candidate) => candidate.id === ruleId);
+      const matchPattern = rule !== undefined
+        ? rule.path ?? rule.pathPattern ?? undefined
+        : exemptionPattern;
+      // No proven pattern => no ticket => lower layers refuse (fail closed).
+      if (matchPattern === undefined) return;
+      admissionTicketLedger().mint({
+        environment: opts.admissionEnvironment ?? 'local',
+        origin: parsed.origin,
+        method,
+        matchPattern,
+        ruleId,
+        sourceProof: rule?.provenance ?? 'bootstrap-exemption',
+        generationId,
+        transport,
+      });
+    } catch {
+      // Unparseable URL or ledger bounds: never mint — the proxy refuses.
+    }
   }
 
   function recordCaptureFailure(code: JourneyCaptureFailureCode): void {
@@ -690,6 +736,19 @@ export function createNetworkObserver(opts: {
         }
         // Provenance for backstop attribution (bounded map).
         setBounded(admittedApiGenerations, rawUrl, apiGate.generationId);
+        // NW-AUD-020 Step 6: mint the ONE lower-transport ticket for this
+        // admitted effect (ownership: L1 mints non-redirects, L0 mints
+        // redirect follow-ups, L2 mints sockets — never twice per request).
+        if (endpointMatch !== null && apiGate.generationId !== undefined) {
+          mintAdmissionTicket(
+            rawUrl,
+            request.method(),
+            endpointMatch.ruleId,
+            apiGate.generationId,
+            'PLAYWRIGHT_ROUTE',
+            apiGate.matchPattern,
+          );
+        }
       }
 
       if (decision.verdict === 'allow') {
@@ -891,6 +950,16 @@ export function createNetworkObserver(opts: {
           await ws.close(); // never connects to the server — upstream == 0
           return;
         }
+      }
+      if (gate !== null && gate.admitted && endpointMatch !== null) {
+        mintAdmissionTicket(
+          rawUrl,
+          'WS',
+          endpointMatch.ruleId,
+          gate.generationId,
+          'WEBSOCKET',
+          gate.matchPattern,
+        );
       }
       recorder.event({
         type: 'request',
@@ -1590,7 +1659,12 @@ export function createNetworkObserver(opts: {
           ? { kind: 'GENERATION', id: chained }
           : { kind: AMBIGUOUS_ATTRIBUTION, candidates: [] };
       }
-      return admitApiRequest(rawUrl, method, match.classification, override);
+      const gate = admitApiRequest(rawUrl, method, match.classification, override);
+      // Ownership: only REDIRECT follow-ups mint here (L1 never sees them).
+      if (isRedirectFollowUp && gate.admitted) {
+        mintAdmissionTicket(rawUrl, method, match.ruleId, gate.generationId, 'CDP_FETCH', gate.matchPattern);
+      }
+      return gate;
     },
     semanticRequests: (): readonly SemanticRequestObservation[] => semanticLedger.map((item) => ({ ...item })),
     beginJourneyObservation: (): void => {

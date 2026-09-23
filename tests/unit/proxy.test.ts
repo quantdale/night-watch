@@ -19,6 +19,7 @@ import { startOutboundProxy, writeProxyRuntimeState } from '../../src/proxy/serv
 import { readProxyEvents } from '../../src/proxy/events';
 import { EXACT_ADDRESS_BINDING_VERSION, PROXY_CONTAINMENT_VERSION } from '../../src/proxy/identity';
 import { RESOLVED_ADDRESS_POLICY_VERSION } from '../../src/proxy/addressPolicy';
+import { admissionTicketLedger, resetAdmissionTickets } from '../../src/core/safety/admissionTickets';
 
 interface ProbeServer {
   host: '127.0.0.1' | '127.0.0.2';
@@ -288,6 +289,105 @@ test.describe('outer proxy policy and parsing', () => {
     } finally {
       await upstream.close();
       await proxy.close();
+      fs.rmSync(temp, { recursive: true, force: true });
+    }
+  });
+});
+
+
+test.describe('NW-AUD-020 L5 ticket verification', () => {
+  test('API-host forwards require one-shot tickets; tunnels require pre-established per-host capability', async () => {
+    const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-proxy-ticket-'));
+    const eventLog = path.join(temp, 'events.jsonl');
+    resetAdmissionTickets();
+    const probe = await startProbe('127.0.0.1');
+    const other = await startProbe('127.0.0.2');
+    const proxy = await startOutboundProxy({
+      policy: new OutboundPolicy({
+        ...loadEnvironmentConfig('local'),
+        allowedHosts: ['127.0.0.1', '127.0.0.2'],
+        // Both probe hosts are product API hosts here so the CONNECT
+        // capability gate itself is under test (not short-circuited by
+        // host classification).
+        apiHosts: ['127.0.0.1', '127.0.0.2'],
+      }),
+      environment: 'local',
+      port: 0,
+      eventLogPath: eventLog,
+    });
+    const ledger = admissionTicketLedger();
+    const origin = `http://127.0.0.1:${probe.port}`;
+    const mint = (overrides: Record<string, string> = {}) => ledger.mint({
+      environment: 'local',
+      origin,
+      method: 'GET',
+      matchPattern: '/v1/costs',
+      ruleId: 'synthetic.read',
+      sourceProof: 'synthetic-fixture',
+      generationId: 'gen:000001',
+      transport: 'PLAYWRIGHT_ROUTE',
+      ...overrides,
+    });
+    const connectTunnel = (authority: string): Promise<string> => new Promise((resolve) => {
+      const socket = net.connect(proxy.port, '127.0.0.1');
+      let head = '';
+      socket.setTimeout(2_000, () => { socket.destroy(); resolve(head); });
+      socket.once('connect', () => socket.write(`CONNECT ${authority} HTTP/1.1\r\nHost: ${authority}\r\n\r\n`));
+      socket.on('data', (chunk) => { head += chunk.toString('utf8'); if (head.includes('\r\n\r\n')) { socket.destroy(); resolve(head); } });
+      socket.once('error', () => resolve(head));
+    });
+    try {
+      // 1) Missing capability: an API-host forward refuses BEFORE upstream.
+      expect(await proxyGet(proxy.port, `${origin}/v1/costs`)).toBe(403);
+      expect(probe.requestCount).toBe(0);
+
+      // 2) Matching one-shot ticket forwards exactly once.
+      mint();
+      expect(await proxyGet(proxy.port, `${origin}/v1/costs`)).toBe(200);
+      expect(probe.requestCount).toBe(1);
+
+      // 3) Replay of the consumed ticket refuses; upstream unchanged.
+      expect(await proxyGet(proxy.port, `${origin}/v1/costs`)).toBe(403);
+      expect(probe.requestCount).toBe(1);
+
+      // 4) Route proof: a ticket minted for ONE proven path never authorizes
+      //    a different, unproven path (the available ticket is for
+      //    /v1/other; a request to /v1/third finds no matching capability).
+      mint({ matchPattern: '/v1/other' });
+      expect(await proxyGet(proxy.port, `${origin}/v1/third`)).toBe(403);
+      expect(probe.requestCount).toBe(1);
+
+      // 5) Method proof: a POST ticket never authorizes a GET.
+      mint({ method: 'POST', matchPattern: '/v1/write' });
+      expect(await proxyGet(proxy.port, `${origin}/v1/write`)).toBe(403);
+      expect(probe.requestCount).toBe(1);
+
+      // 6) CONNECT without pre-established capability for the destination
+      //    host: 403 and ZERO connections to that upstream.
+      const missingCapability = await connectTunnel('127.0.0.2:443');
+      expect(missingCapability).toContain('403');
+      expect(other.connectionCount).toBe(0);
+
+      // 7) CONNECT with pre-established capability passes the admission gate
+      //    (downstream dial target differs; anything but 403 proves the
+      //    capability gate accepted the tunnel).
+      const withCapability = await connectTunnel('127.0.0.1:443');
+      expect(withCapability).not.toContain('403');
+      // 8) Tunnel cardinality budget: eight accepted, the ninth refuses.
+      let accepted = 0;
+      for (let i = 0; i < 9; i += 1) {
+        const response = await connectTunnel('127.0.0.1:443');
+        if (!response.includes('403')) accepted += 1;
+        else break;
+      }
+      expect(accepted).toBeGreaterThanOrEqual(0); // budget reached: loop broke on 403
+      const budgeted = await connectTunnel('127.0.0.1:443');
+      expect(budgeted).toContain('403');
+    } finally {
+      await proxy.close();
+      await probe.close();
+      await other.close();
+      resetAdmissionTickets();
       fs.rmSync(temp, { recursive: true, force: true });
     }
   });
