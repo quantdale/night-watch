@@ -1636,7 +1636,7 @@
         "ops": [
           {
             "file": "src/browser/observers/networkObserver.ts",
-            "search": "gate = admitApiRequest(rawUrl, 'WS', endpointMatch.classification);",
+            "search": "gate = admitApiRequest(rawUrl, 'WS', endpointMatch.classification, undefined, 'WEBSOCKET');",
             "replace": "gate = null;"
           }
         ]
