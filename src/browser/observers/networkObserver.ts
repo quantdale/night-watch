@@ -304,12 +304,19 @@ export function createNetworkObserver(opts: {
     const closing = navigationGeneration;
     try { generations.settle(closing); } catch { /* already settled */ }
     navigationGeneration = null;
-    recorder.event({
-      type: 'policy',
-      severity: 'info',
-      message: 'NAVIGATION_GENERATION_SETTLED',
-      data: { generationId: closing, cause },
-    });
+    // Teardown-race guard: a settlement timer may fire after its world was
+    // torn down (context/page closed, temp store removed). Authority already
+    // ended above; the receipt is best-effort and must never escape a timer.
+    try {
+      recorder.event({
+        type: 'policy',
+        severity: 'info',
+        message: 'NAVIGATION_GENERATION_SETTLED',
+        data: { generationId: closing, cause },
+      });
+    } catch {
+      // Post-teardown emission is intentionally swallowed.
+    }
   }
 
   function armNavigationSettlement(): void {
@@ -1401,6 +1408,13 @@ export function createNetworkObserver(opts: {
     page.on('load', () => {
       navigationLoaded = true;
       armNavigationSettlement();
+    });
+    page.on('close', () => {
+      // Teardown: never let a pending settlement timer outlive its page.
+      if (navigationSettleTimer !== null) {
+        clearTimeout(navigationSettleTimer);
+        navigationSettleTimer = null;
+      }
     });
   }
 
