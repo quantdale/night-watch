@@ -160,6 +160,16 @@ export interface NetworkObserver {
   endJourneyIntent(stepId: string): void;
   /** NW-AUD-020: currently open generation ids (diagnostics only). */
   activeGenerations?(): readonly string[];
+  /** NW-AUD-020: shared semantic admission for the L0 CDP backstop — the
+   *  same matcher/generations/gate as route interception. */
+  admitRequest(
+    rawUrl: string,
+    method: string,
+    resourceType: string,
+    isRedirectFollowUp: boolean,
+  ):
+    | { admitted: true; via: string; identity: string; generationId: string | null }
+    | { admitted: false; code: string };
   /** Sanitized semantic request ledger for the current run. */
   semanticRequests(): readonly SemanticRequestObservation[];
   /** Mark the start of intentional journey actions after auth/bootstrap preflight. */
@@ -335,6 +345,27 @@ export function createNetworkObserver(opts: {
     }, NAV_BOOTSTRAP_SETTLEMENT_MS);
   }
 
+  function resolveAttribution(): import('../../core/safety/causalGenerations').Attribution {
+    return journeyIntent !== null && journeyGeneration !== null
+      ? generations.attributeExplicit(journeyGeneration)
+      : generations.attributeImplicit();
+  }
+
+  /** NW-AUD-020: bounded provenance maps (admitted URL -> generation, and
+   *  redirect TARGET -> generation) for backstop attribution. Oldest-first
+   *  eviction keeps them from growing without bound. */
+  const MAX_ATTRIBUTION_MAP = 512;
+  const admittedApiGenerations = new Map<string, string>();
+  const redirectGenerations = new Map<string, string>();
+
+  function setBounded(map: Map<string, string>, key: string, generationId: string): void {
+    if (map.size >= MAX_ATTRIBUTION_MAP && !map.has(key)) {
+      const oldest = map.keys().next();
+      if (!oldest.done) map.delete(oldest.value);
+    }
+    map.set(key, generationId);
+  }
+
   /**
    * NW-AUD-020 — THE pre-effect gate for API-host requests at L1. Only an
    * active causal generation plus either a source-proven KNOWN_READ rule or
@@ -345,18 +376,17 @@ export function createNetworkObserver(opts: {
     rawUrl: string,
     method: string,
     classification: EndpointSemanticClassification,
+    attributionOverride?: import('../../core/safety/causalGenerations').Attribution,
   ):
-    | { admitted: true; via: 'PROVEN_READ' | 'BOOTSTRAP_EXEMPT'; identity: string }
+    | { admitted: true; via: 'PROVEN_READ' | 'BOOTSTRAP_EXEMPT'; identity: string; generationId: string }
     | { admitted: false; code: string } {
     if (opts.admissionSourceCurrent === false) return { admitted: false, code: 'ADMISSION_STALE_PROOF' };
-    const attribution = journeyIntent !== null && journeyGeneration !== null
-      ? generations.attributeExplicit(journeyGeneration)
-      : generations.attributeImplicit();
+    const attribution = attributionOverride ?? resolveAttribution();
     if (attribution.kind === 'NONE') return { admitted: false, code: 'ADMISSION_UNBOUND_GENERATION' };
     if (attribution.kind === AMBIGUOUS_ATTRIBUTION) return { admitted: false, code: 'ADMISSION_AMBIGUOUS' };
     if (!generations.isActive(attribution.id)) return { admitted: false, code: 'ADMISSION_GENERATION_CLOSED' };
     if (classification === 'KNOWN_READ') {
-      return { admitted: true, via: 'PROVEN_READ', identity: 'proven-read' };
+      return { admitted: true, via: 'PROVEN_READ', identity: 'proven-read', generationId: attribution.id };
     }
     // Unknown / legacy-classifier traffic: ONLY a NAVIGATION-kind generation
     // may consume a finite, route-exact bootstrap exemption. Action-caused
@@ -371,7 +401,12 @@ export function createNetworkObserver(opts: {
       environment: opts.admissionEnvironment ?? 'local',
     });
     if (!consumption.granted) return { admitted: false, code: `ADMISSION_${consumption.code}` };
-    return { admitted: true, via: 'BOOTSTRAP_EXEMPT', identity: consumption.exemptionId };
+    return {
+      admitted: true,
+      via: 'BOOTSTRAP_EXEMPT',
+      identity: consumption.exemptionId,
+      generationId: consumption.navigationGeneration,
+    };
   }
 
   function recordCaptureFailure(code: JourneyCaptureFailureCode): void {
@@ -629,6 +664,10 @@ export function createNetworkObserver(opts: {
         // above remain DIAGNOSTICS ONLY; continuation authority is exactly
         // this gate. Refusal happens before any byte leaves the browser.
         if (!apiGate.admitted) {
+          // Layer ownership (NW-AUD-020): non-redirect API admission is
+          // evaluated ONLY here, so this is the single receipt site for it —
+          // attempt-scoped refusals are never deduplicated by URL (a later
+          // attempt under a fresh generation is a different decision).
           recorder.event({
             type: 'policy',
             severity: semanticObservation?.disposition === 'ACTION_CAUSED_UNKNOWN' ? 'fatal' : 'info',
@@ -649,6 +688,8 @@ export function createNetworkObserver(opts: {
           }
           return;
         }
+        // Provenance for backstop attribution (bounded map).
+        setBounded(admittedApiGenerations, rawUrl, apiGate.generationId);
       }
 
       if (decision.verdict === 'allow') {
@@ -686,7 +727,7 @@ export function createNetworkObserver(opts: {
             ...(endpointClassification === null ? {} : { endpointClassification }),
             ...(endpointMatch === null ? {} : { endpointRuleId: endpointMatch.ruleId }),
             // NW-AUD-020: the admitted handle identity (provenance-safe).
-            ...(apiGate?.admitted === true ? { admissionVia: apiGate.via, admissionIdentity: apiGate.identity } : {}),
+            ...(apiGate?.admitted === true ? { admissionVia: apiGate.via, admissionIdentity: apiGate.identity, admissionGeneration: apiGate.generationId } : {}),
           },
         });
         await route.continue();
@@ -910,6 +951,22 @@ export function createNetworkObserver(opts: {
       const contentType = responseHeaders['content-type'];
       const contentLength = responseHeaders['content-length'];
       const method = request.method();
+      // NW-AUD-020: redirect provenance chain — an ADMITTED API request's
+      // 3xx response binds its redirect TARGET to the generation that earned
+      // the source, so a follow-up (which only the CDP backstop sees) is
+      // attributed to THAT generation — never to a later open one.
+      if (status >= 300 && status < 400) {
+        try {
+          const sourceGeneration = admittedApiGenerations.get(rawUrl) ?? redirectGenerations.get(rawUrl);
+          const location = responseHeaders['location'];
+          if (sourceGeneration !== undefined && location !== undefined) {
+            setBounded(redirectGenerations, new URL(location, rawUrl).href, sourceGeneration);
+          }
+        } catch {
+          // Unresolvable Location: the chain is simply absent — the follow-up
+          // then refuses as AMBIGUOUS rather than borrowing authority.
+        }
+      }
       const endpointMatch = matchEndpoint(rawUrl, method);
       const endpointClassification = endpointMatch?.classification ?? null;
       captureRelevant = requestIntent !== null && endpointClassification === 'KNOWN_READ';
@@ -1470,6 +1527,35 @@ export function createNetworkObserver(opts: {
     },
     /** NW-AUD-020 diagnostics: open generation ids (no authority transfer). */
     activeGenerations: (): readonly string[] => generations.openIds(),
+    /**
+     * NW-AUD-020: the shared admission entry point for the L0 CDP backstop —
+     * SAME matcher, SAME generations, SAME gate (spec: layers consume one
+     * authority). Redirect follow-ups may ONLY borrow the generation that
+     * earned their source (chained explicitly); an unchainable follow-up is
+     * AMBIGUOUS and refuses — never "newest open generation".
+     */
+    admitRequest: (
+      rawUrl: string,
+      method: string,
+      resourceType: string,
+      isRedirectFollowUp: boolean,
+    ):
+      | { admitted: true; via: string; identity: string; generationId: string | null }
+      | { admitted: false; code: string } => {
+      const apiResource = resourceType === 'XHR' || resourceType === 'Fetch'
+        || resourceType === 'xhr' || resourceType === 'fetch';
+      if (!apiResource) return { admitted: true, via: 'NON_API', identity: 'host-policy', generationId: null };
+      const match = matchEndpoint(rawUrl, method);
+      if (match === null) return { admitted: true, via: 'NON_API', identity: 'host-policy', generationId: null };
+      let override: import('../../core/safety/causalGenerations').Attribution | undefined;
+      if (isRedirectFollowUp) {
+        const chained = redirectGenerations.get(rawUrl) ?? admittedApiGenerations.get(rawUrl);
+        override = chained !== undefined
+          ? { kind: 'GENERATION', id: chained }
+          : { kind: AMBIGUOUS_ATTRIBUTION, candidates: [] };
+      }
+      return admitApiRequest(rawUrl, method, match.classification, override);
+    },
     semanticRequests: (): readonly SemanticRequestObservation[] => semanticLedger.map((item) => ({ ...item })),
     beginJourneyObservation: (): void => {
       journeyObservationStart = semanticLedger.length;

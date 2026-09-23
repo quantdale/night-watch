@@ -51,6 +51,18 @@ interface FetchGuardOptions {
   telemetryBlockedHosts?: Set<string>;
   /** Shared exact-host map used to attribute browser-background console effects. */
   browserBackgroundBlockedHosts?: Map<string, BrowserBackgroundClassification>;
+  /**
+   * NW-AUD-020: the SAME semantic admission the route layer consumes —
+   * method, effective resource type, and redirect-follow-up identity all
+   * feed one decision. Without it, API-host requests at this layer refuse
+   * (fail closed): host policy alone is never semantic authority.
+   */
+  admitRequest?: (
+    rawUrl: string,
+    method: string,
+    resourceType: string,
+    isRedirectFollowUp: boolean,
+  ) => { admitted: boolean; via?: string; identity?: string; code?: string; generationId?: string | null };
 }
 
 /**
@@ -68,6 +80,7 @@ export async function installFetchGuard(
   const optionalSupportBlockedHosts = opts.optionalSupportBlockedHosts;
   const telemetryBlockedHosts = opts.telemetryBlockedHosts;
   const browserBackgroundBlockedHosts = opts.browserBackgroundBlockedHosts;
+  const admitRequest = opts.admitRequest;
 
   let session: Awaited<ReturnType<BrowserContext['newCDPSession']>> | null = null;
   try {
@@ -86,7 +99,15 @@ export async function installFetchGuard(
   }
 
   const cdp = session;
-  cdp.on('Fetch.requestPaused', (p: { requestId: string; request: { url: string } }) => {
+  cdp.on('Fetch.requestPaused', (p: {
+    requestId: string;
+    request: { url: string; method?: string };
+    resourceType?: string;
+    /** Present when this pause is a redirect FOLLOW-UP (CDP: the request
+     *  that caused the redirect). NW-AUD-020: follow-ups get NO implicit
+     *  attribution — only the chained generation that earned the source. */
+    redirectedRequestId?: string;
+  }) => {
     // Resolve EVERY pause, synchronously dispatching the async send — Chrome
     // waits for all sessions that enabled the Fetch domain.
     void (async () => {
@@ -97,7 +118,47 @@ export async function installFetchGuard(
           return;
         }
         const decision = decideBrowserHttp(policy, rawUrl);
+        // NW-AUD-020 layer ownership: STATEFUL bootstrap spend happens at
+        // exactly ONE layer per request class: L1 (context.route intercepts
+        // every non-redirect request by construction) owns non-redirect
+        // admission; this backstop owns REDIRECT FOLLOW-UPS — the only class
+        // L1 never sees. Two layers evaluating a count-limited budget for
+        // the same request would double-spend it, and Chrome's fail-wins
+        // semantics guarantee an L1 refusal is not undone by a host-allow
+        // continue issued here (proven by the pre-wiring E2E baseline).
+        const isRedirectFollowUp = typeof p.redirectedRequestId === 'string' && p.redirectedRequestId.length > 0;
         if (decision.verdict === 'allow') {
+          // Host allow is NOT semantic authority — for follow-ups, method and
+          // effective (post-transform) identity feed the SAME gate the route
+          // layer consumes, chained to the generation that earned the source.
+          const admission = isRedirectFollowUp
+            ? admitRequest?.(
+              rawUrl,
+              p.request.method ?? 'GET',
+              p.resourceType ?? 'Other',
+              true,
+            )
+            : undefined; // non-redirect API authority is owned by L1
+          if (admission !== undefined && !admission.admitted) {
+            if (recordEvidence) {
+              recorder.event({
+                type: 'policy',
+                severity: 'info',
+                message: 'SEMANTIC_ADMISSION_REFUSED',
+                data: {
+                  admissionCode: admission.code ?? 'ADMISSION_UNKNOWN',
+                  method: p.request.method ?? 'GET',
+                  transport: 'CDP_FETCH',
+                  ...(admission.identity === undefined ? {} : { admissionIdentity: admission.identity }),
+                  ...(admission.generationId === undefined || admission.generationId === null
+                    ? {}
+                    : { admissionGeneration: admission.generationId }),
+                },
+              });
+            }
+            await cdp.send('Fetch.failRequest', { requestId: p.requestId, errorReason: 'BlockedByClient' });
+            return;
+          }
           await cdp.send('Fetch.continueRequest', { requestId: p.requestId });
           return;
         }

@@ -137,39 +137,67 @@ test.describe('NW-AUD-020 reproduction baseline (defects must later be inverted)
     expect(observer).toMatch(/generations\.settle\(journeyGeneration\)/);
   });
 
-  test('D: the CDP Fetch guard is host-only — URL without method, continue on allow', () => {
+  test('D INVERTED: the CDP Fetch guard binds method + effective redirect identity to the SAME admission — host policy alone cannot continue API traffic', () => {
     const guard = read('src/browser/network/fetchGuard.ts');
-    // The pause handler destructures ONLY the URL: method/path/semantic are
-    // never consulted, so a same-host redirect follow-up to an unknown or
-    // mutation route continues on host authority alone.
-    expect(guard).toMatch(/Fetch\.requestPaused', \(p: \{ requestId: string; request: \{ url: string \} \}\)/);
-    expect(guard).not.toMatch(/request: \{ url: string; method/);
-    const allowCheckAt = guard.indexOf("decision.verdict === 'allow'");
-    const continueAt = guard.indexOf('Fetch.continueRequest', allowCheckAt);
-    expect(allowCheckAt).toBeGreaterThan(0);
-    expect(continueAt).toBeGreaterThan(allowCheckAt);
-    // The handler never reads the request METHOD (only the evidence label
-    // `method: 'GUARD'` exists), so no method/path semantics reach L0.
-    expect(guard).not.toContain('request.method');
-    expect(guard).not.toContain('p.request.method');
-    // Playwright's route does not re-intercept redirect follow-ups (stated
-    // header contract), which is why the guard alone governs redirects.
+    // The pause handler now destructures the METHOD, the effective resource
+    // type, and the redirect-follow-up identity (CDP redirectedRequestId).
+    expect(guard).toMatch(/request: \{ url: string; method\?: string \}/);
+    expect(guard).toMatch(/redirectedRequestId\?: string/);
+    expect(guard).toContain('p.request.method');
+    expect(guard).toContain('admitRequest?.(');
+    expect(guard).toContain("resourceType ?? 'Other'");
+    expect(guard).toContain('typeof p.redirectedRequestId ===');
+
+    // Ordering: inside the host-allow branch the semantic admission runs and
+    // a refusal fails the request BEFORE any continue — a same-host unknown
+    // or mutation-shaped follow-up can no longer ride host authority alone.
+    const allowAt = guard.indexOf("decision.verdict === 'allow'");
+    const admissionCallAt = guard.indexOf('admitRequest?.(', allowAt);
+    const refusalAt = guard.indexOf('!admission.admitted');
+    const failAt = guard.indexOf('Fetch.failRequest', refusalAt);
+    const continueAt = guard.indexOf('Fetch.continueRequest', refusalAt);
+    expect(allowAt).toBeGreaterThan(0);
+    expect(admissionCallAt).toBeGreaterThan(allowAt);
+    expect(refusalAt).toBeGreaterThan(admissionCallAt);
+    expect(failAt).toBeGreaterThan(refusalAt);
+    expect(continueAt).toBeGreaterThan(failAt); // refusal path precedes continue
+
+    // Categorical cross-layer receipt (privacy-safe: no URL in the refusal).
+    expect(guard).toContain("message: 'SEMANTIC_ADMISSION_REFUSED'");
+    expect(guard).toContain("transport: 'CDP_FOLLOWUP'".replace('FOLLOWUP', 'FETCH'));
+    // Layer ownership: only follow-ups are evaluated here; non-redirect
+    // API authority (and every bootstrap spend) is owned by L1 — two layers
+    // must never evaluate a count-limited budget for the same request.
+    expect(guard).toMatch(/isRedirectFollowUp\n|const isRedirectFollowUp/);
+    expect(guard).toContain('non-redirect API authority is owned by L1');
+    // Playwright's route does not re-intercept redirect follow-ups — which is
+    // exactly why this layer must carry semantic authority for them.
     expect(guard).toMatch(/does NOT re-intercept redirect follow-ups/);
 
-    // Behavioral proof: host policy has no path or method authority — an
-    // unknown same-host mutation-shaped path is ALLOWED at this layer.
+    // Host policy itself remains host-only (the premise the guard now
+    // compensates for): an unknown same-host mutation-shaped path still
+    // ALLOWS at pure host level — admission, not policy, is the backstop.
     const origin = 'http://127.0.0.1:45999';
     const env = fixtureEnvironment(origin);
     const policy = new OutboundPolicy(env);
     expect(decideBrowserHttp(policy, `${origin}/m/ripple/action-unknown`).verdict).toBe('allow');
     expect(decideBrowserHttp(policy, `${origin}/m/blue/billing/v1/billinggroups`).verdict).toBe('allow');
+
+    // The observer exposes the shared gate to the guard.
+    const observer = read('src/browser/observers/networkObserver.ts');
+    expect(observer).toContain('admitRequest: (');
+    const context = read('src/browser/context.ts');
+    expect(context).toContain('admitRequest: network.admitRequest');
+    // Redirect chains bind the target to the generation that earned the source.
+    expect(observer).toContain('setBounded(redirectGenerations, new URL(location, rawUrl).href, sourceGeneration)');
+    expect(observer).toMatch(/isRedirectFollowUp/);
+    expect(observer).toContain('AMBIGUOUS_ATTRIBUTION');
   });
 
   test('file header: baseline provenance is recorded', () => {
     const self = read('tests/unit/semanticRequestAdmission.test.ts');
     expect(self).toContain('NW-AUD-020');
-    // Class D (host-only CDP fallback) is pinned here until Step 4 lands;
-    // classes A, B, C are inverted above once wiring landed.
+    // Classes A, B, C, D are all inverted above once their wiring landed.
     expect(self).toContain('CDP Fetch guard');
   });
 
