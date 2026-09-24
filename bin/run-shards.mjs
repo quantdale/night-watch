@@ -96,8 +96,15 @@ function loadClasses() {
   return classes;
 }
 
-function childEnvironment(lane) {
-  const environment = buildChildEnvironment(process.env, { NIGHTWATCH_ENV: 'local', NIGHTWATCH_GATE_ENVIRONMENT: 'SHARDS', NIGHTWATCH_TIMING_LANE: lane, NODE_OPTIONS: '--expose-gc' });
+function childEnvironment(lane, receiptPath, shardId) {
+  const environment = buildChildEnvironment(process.env, {
+    NIGHTWATCH_ENV: 'local',
+    NIGHTWATCH_GATE_ENVIRONMENT: 'SHARDS',
+    NIGHTWATCH_TIMING_LANE: lane,
+    NIGHTWATCH_SHARD_RECEIPT_PATH: receiptPath,
+    NIGHTWATCH_SHARD_ID: shardId,
+    NODE_OPTIONS: '--expose-gc',
+  });
   environment.TZ = 'UTC';
   environment.LC_ALL = 'C';
   environment.LANG = 'C';
@@ -107,32 +114,131 @@ function childEnvironment(lane) {
   return environment;
 }
 
-function runShard(shard) {
-  if (shard.files.length === 0) return Promise.resolve({ id: shard.id, files: 0, digest: shard.digest, exitStatus: 0, wallMs: 0, counts: emptyCounts(), errorCode: 'SHARD_EMPTY_SKIPPED' });
+function shardReceiptPath(shard) {
+  return path.join(root, 'test-results', shard.id, 'shard-execution.json');
+}
+
+function parseTextCounts(output) {
+  const count = (pattern) => {
+    const matches = [...output.matchAll(new RegExp(pattern.source, pattern.flags.includes('g') ? pattern.flags : pattern.flags + 'g'))];
+    const last = matches[matches.length - 1];
+    return last ? Number(last[1]) : null;
+  };
+  return {
+    passed: count(/(\d+)\s+passed/i),
+    failed: count(/(\d+)\s+failed/i),
+    skipped: count(/(\d+)\s+skipped/i),
+    didNotRun: count(/(\d+)\s+did not run/i),
+  };
+}
+
+function emptyCounts() {
+  return { planned: null, executed: null, passed: null, failed: null, skipped: null, didNotRun: null, unknown: null };
+}
+
+function emptyExecutionCounts() {
+  return { planned: 0, executed: 0, passed: 0, failed: 0, skipped: 0, didNotRun: 0, unknown: 0 };
+}
+
+function sumCounts(results) {
+  const totals = emptyCounts();
+  for (const key of Object.keys(totals)) {
+    let sum = 0;
+    let known = true;
+    for (const result of results) {
+      const value = result.counts?.[key];
+      if (!Number.isSafeInteger(value) || value < 0) {
+        known = false;
+        break;
+      }
+      sum += value;
+    }
+    totals[key] = known ? sum : null;
+  }
+  return totals;
+}
+
+function runShard(shard, execution) {
+  const receiptPath = shardReceiptPath(shard);
+  if (shard.files.length === 0) {
+    return Promise.resolve({
+      id: shard.id,
+      files: 0,
+      digest: shard.digest,
+      exitStatus: 0,
+      wallMs: 0,
+      counts: emptyExecutionCounts(),
+      textCounts: null,
+      executionStatus: 'NO_TESTS_EXECUTED',
+      executionCode: 'SHARD_NO_TESTS_EXECUTED',
+      failedLocations: [],
+      errorCode: 'SHARD_NO_TESTS_EXECUTED',
+    });
+  }
   return new Promise((resolve) => {
     const startedAt = Date.now();
+    fs.mkdirSync(path.dirname(receiptPath), { recursive: true });
+    fs.rmSync(receiptPath, { force: true });
     const child = spawn(npx, ['test', ...shard.files, '--project=nightwatch', '--workers=1', '--retries=0', `--output=test-results/${shard.id}`], {
       cwd: root,
-      env: childEnvironment(shard.id),
+      env: childEnvironment(shard.id, receiptPath, shard.id),
       stdio: ['ignore', 'pipe', 'pipe'],
     });
     let output = '';
     child.stdout.on('data', (chunk) => { output += chunk; });
     child.stderr.on('data', (chunk) => { output += chunk; });
-    child.on('error', () => resolve({ id: shard.id, files: shard.files.length, digest: shard.digest, exitStatus: 1, wallMs: Date.now() - startedAt, counts: emptyCounts(), errorCode: 'SPAWN_ERROR' }));
+    child.on('error', () => resolve({
+      id: shard.id,
+      files: shard.files.length,
+      digest: shard.digest,
+      exitStatus: 1,
+      wallMs: Date.now() - startedAt,
+      counts: null,
+      textCounts: null,
+      executionStatus: 'UNKNOWN',
+      executionCode: 'SPAWN_ERROR',
+      failedLocations: [],
+      errorCode: 'SPAWN_ERROR',
+    }));
     child.on('close', (code) => {
-      // Playwright prints its summary last; child processes inside tests print
-      // their own "N failed" lines earlier. The LAST match is therefore the
-      // authoritative count, and a green exit with no failed line is zero.
-      const count = (pattern) => {
-        const matches = [...output.matchAll(new RegExp(pattern.source, pattern.flags.includes('g') ? pattern.flags : pattern.flags + 'g'))];
-        const last = matches[matches.length - 1];
-        return last ? Number(last[1]) : null;
-      };
-      // The authoritative failure signal is the exit status; the counts are
-      // advisory because child processes inside tests also print "N failed".
-      // Failed locations are bounded tracked paths, matching the gate receipt
-      // privacy contract.
+      const exitStatus = code === 0 ? 0 : 1;
+      const textCounts = parseTextCounts(output);
+      let parsed;
+      try {
+        const serialized = fs.readFileSync(receiptPath, 'utf8');
+        parsed = execution.parseShardExecutionReceipt(serialized, shard.id);
+      } catch (error) {
+        parsed = { ok: false, code: error?.code === 'ENOENT' ? 'SHARD_RECEIPT_MISSING' : 'SHARD_RECEIPT_UNREADABLE' };
+      }
+      let counts = null;
+      let executionStatus = 'UNKNOWN';
+      let executionCode = parsed.ok ? null : parsed.code;
+      if (parsed.ok) {
+        const { receipt, disposition } = parsed;
+        counts = {
+          planned: receipt.planned,
+          executed: receipt.executed,
+          passed: receipt.passed,
+          failed: receipt.failed,
+          skipped: receipt.skipped,
+          didNotRun: receipt.didNotRun,
+          unknown: receipt.unknown,
+        };
+        executionStatus = disposition;
+        if (disposition !== 'PASS') {
+          executionCode = disposition === 'ALL_SKIPPED'
+            ? 'SHARD_ALL_SKIPPED'
+            : disposition === 'NO_TESTS_EXECUTED'
+              ? 'SHARD_NO_TESTS_EXECUTED'
+              : disposition === 'UNKNOWN'
+                ? 'SHARD_EXECUTION_UNKNOWN'
+                : 'SHARD_TESTS_FAILED';
+        }
+      }
+      if (exitStatus !== 0 && executionStatus === 'PASS') {
+        executionStatus = 'TESTS_FAILED';
+        executionCode = 'SHARD_CHILD_EXIT_NONZERO';
+      }
       const failedLocations = [...output.matchAll(/^\s*\d+\)\s+\[[^\]]+\]\s+›\s+(tests\/(?:unit|smoke)\/[A-Za-z0-9._/-]+\.test\.ts):(\d+)(?::\d+)?\s+›/gm)]
         .map((match) => `${match[1]}:${match[2]}`)
         .filter((location, index, all) => all.indexOf(location) === index)
@@ -141,34 +247,21 @@ function runShard(shard) {
         id: shard.id,
         files: shard.files.length,
         digest: shard.digest,
-        exitStatus: code,
+        exitStatus,
         wallMs: Date.now() - startedAt,
-        counts: {
-          passed: count(/(\d+)\s+passed/i),
-          failed: (() => { const parsed = count(/(\d+)\s+failed/i); return parsed === null && code === 0 ? 0 : parsed; })(),
-          skipped: count(/(\d+)\s+skipped/i),
-          didNotRun: count(/(\d+)\s+did not run/i),
-        },
+        counts,
+        textCounts,
+        executionStatus,
+        executionCode,
         failedLocations,
-        errorCode: null,
+        errorCode: executionCode,
       });
     });
   });
 }
 
-function emptyCounts() {
-  return { passed: 0, failed: 0, skipped: 0, didNotRun: 0 };
-}
-
-function sumCounts(results) {
-  const totals = emptyCounts();
-  for (const result of results) {
-    totals.passed += result.counts.passed;
-    totals.failed += result.counts.failed;
-    totals.skipped += result.counts.skipped;
-    totals.didNotRun += result.counts.didNotRun;
-  }
-  return totals;
+function displayCount(value) {
+  return Number.isSafeInteger(value) && value >= 0 ? String(value) : 'UNKNOWN';
 }
 
 function renderShardReceipt(receipt) {
@@ -176,9 +269,9 @@ function renderShardReceipt(receipt) {
   lines.push(`[run-shards] ${receipt.result} files=${receipt.universeCount} shards=${receipt.shards.length}${receipt.serial === true ? ' mode=serial' : ` workers=${receipt.workerCount ?? receipt.parallelShardCount}`}`);
   lines.push(`[run-shards] coverage=${receipt.coverage.ok ? 'OK' : 'VIOLATION'} planDigest=${receipt.planDigest}`);
   for (const result of receipt.shardResults ?? []) {
-    lines.push(`  ${result.id}: exit=${result.exitStatus} wall=${(result.wallMs / 1000).toFixed(1)}s passed=${result.counts.passed} failed=${result.counts.failed} skipped=${result.counts.skipped} didNotRun=${result.counts.didNotRun}`);
+    lines.push(`  ${result.id}: exit=${result.exitStatus} execution=${result.executionStatus} code=${result.executionCode ?? 'NONE'} wall=${(result.wallMs / 1000).toFixed(1)}s passed=${displayCount(result.counts?.passed)} failed=${displayCount(result.counts?.failed)} skipped=${displayCount(result.counts?.skipped)} didNotRun=${displayCount(result.counts?.didNotRun)}`);
   }
-  lines.push(`[run-shards] totals passed=${receipt.totals.passed} failed=${receipt.totals.failed} skipped=${receipt.totals.skipped} didNotRun=${receipt.totals.didNotRun}`);
+  lines.push(`[run-shards] totals passed=${displayCount(receipt.totals.passed)} failed=${displayCount(receipt.totals.failed)} skipped=${displayCount(receipt.totals.skipped)} didNotRun=${displayCount(receipt.totals.didNotRun)} executed=${displayCount(receipt.totals.executed)}`);
   for (const result of receipt.shardResults ?? []) {
     if (Array.isArray(result.failedLocations) && result.failedLocations.length > 0) lines.push(`  ${result.id} failures: ${result.failedLocations.join(', ')}`);
   }
@@ -189,7 +282,10 @@ function renderShardReceipt(receipt) {
 const cli = invokedDirectly(import.meta.url) ? defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url }) : { stop: true };
 if (!cli.stop) {
   try {
-    const [shardPlan] = loadTypeScriptModules(['src/core/validation/shardPlan.ts'], { root });
+    const [shardPlan, execution] = loadTypeScriptModules([
+      'src/core/validation/shardPlan.ts',
+      'src/core/validation/shardExecutionReceipt.ts',
+    ], { root });
     const workerCount = shardPlan.resolveParallelShardCount(cli.flags['--workers']);
     if (workerCount === null) {
       console.error(JSON.stringify({ schemaVersion: 'nightwatch.shard-run-receipt.v1', result: 'CONFIG_INVALID', code: 'SHARD_WORKERS_OUT_OF_RANGE' }));
@@ -231,9 +327,9 @@ if (!cli.stop) {
           const receipt = { ...base, result: 'DRY_RUN' };
           console.log(cli.json ? JSON.stringify(receipt, null, 2) : JSON.stringify(receipt));
         } else if (cli.flags['--serial'] === true) {
-          const serialResult = await runShard({ id: 'serial', files: universe, digest: base.universeDigest, byClass: {} });
+          const serialResult = await runShard({ id: 'serial', files: universe, digest: base.universeDigest, byClass: {} }, execution);
           const totals = sumCounts([serialResult]);
-          const failed = serialResult.exitStatus !== 0 || totals.didNotRun > 0;
+          const failed = serialResult.exitStatus !== 0 || serialResult.executionStatus !== 'PASS';
           const receipt = {
             ...base,
             serial: true,
@@ -245,11 +341,11 @@ if (!cli.stop) {
           console.log(cli.json ? JSON.stringify(receipt, null, 2) : renderShardReceipt(receipt));
           process.exitCode = failed ? 1 : 0;
         } else {
-          const parallelResults = await Promise.all(plan.parallelShards.map((shard) => runShard(shard)));
-          const exclusiveResults = plan.exclusiveShard === null ? [] : [await runShard(plan.exclusiveShard)];
+          const parallelResults = await Promise.all(plan.parallelShards.map((shard) => runShard(shard, execution)));
+          const exclusiveResults = plan.exclusiveShard === null ? [] : [await runShard(plan.exclusiveShard, execution)];
           const results = [...parallelResults, ...exclusiveResults];
           const totals = sumCounts(results);
-          const failed = results.some((result) => result.exitStatus !== 0 || result.counts.didNotRun > 0);
+          const failed = results.some((result) => result.exitStatus !== 0 || result.executionStatus !== 'PASS');
           const receipt = {
             ...base,
             workerCount,

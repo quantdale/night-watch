@@ -11,7 +11,7 @@ Last substantive checkpoint SHA: 78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-successor-campaign-en-628d8bb9
-Last checkpoint: 2026-09-24 — owner-resolved canonical blocker; new C-00 session resumed; A/B integrity reproduction is next.
+Last checkpoint: 2026-09-24 — owner-resolved canonical blocker; A/B evidence complete; shard certification child implemented and awaiting milestone validation.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1
@@ -30,9 +30,9 @@ before reassessing successors.
 
 ## Current Milestone
 
-M2 — select and execute the first successor campaign: shard certification
-integrity. A/B reproduction is complete; the dedicated child task/OpenSpec is
-being activated before product edits.
+M2 — execute the selected shard certification integrity child. The child
+implementation is complete in the owned worktree and is awaiting its verified
+checkpoint/milestone validation.
 
 ## Completed Milestones
 
@@ -49,17 +49,15 @@ being activated before product edits.
 
 ## Work In Progress
 
-The first campaign is selected: shard false certification. The child task and
-OpenSpec are being created before implementation. No product fix has been
-implemented yet.
+The shard certification child implementation is complete but not yet
+checkpointed. Focused tests and static validation pass; the implementation
+commit and milestone gate remain.
 
 ## Exact Next Action
 
-Create and strict-validate
-`nightwatch-shard-certification-integrity-v1` OpenSpec and child task state,
-then implement the machine-readable shard execution receipt and fail-closed
-classifier. Preserve the run-evidence transaction reproduction as the next
-campaign candidate.
+Run the child implementation checkpoint and `gate:dev`/`gate:milestone`,
+adversarially review the receipt boundary, then reassess run-evidence
+transaction integrity as the next candidate.
 
 ## Files Changed
 
@@ -71,6 +69,9 @@ campaign candidate.
 | `.agent/tasks/nightwatch-successor-campaign-engine-v1/REPORT.md` | active campaign report | updated this session |
 | `.agent/ACTIVE_TASK.md` | active route and live session binding | updated this session |
 | `.agent/tasks/nightwatch-successor-campaign-engine-v1/evidence/` | A/B and six-finding revalidation receipts | added this session |
+| `.agent/tasks/nightwatch-shard-certification-integrity-v1/` | selected child task continuity | added this session |
+| `openspec/changes/nightwatch-successor-campaign-engine-v1/` | umbrella successor contract | added this session |
+| `openspec/changes/nightwatch-shard-certification-integrity-v1/` | selected child contract | added this session |
 | `docs/CURRENT_STATE.md` | owner-authorized restoration only | clean at HEAD |
 
 ## Validation Ledger
@@ -131,6 +132,13 @@ Relevant failure/output summary: popup L0 fire-and-forget, raw proxy event
 append, and DEV credential precheck/use split remain present in current source;
 no credential or external runtime was touched.
 
+Command: child implementation focused/static validation
+Result: PASS (pre-checkpoint)
+When: 2026-09-24
+Relevant failure/output summary: shard suite 12/12; typecheck, reporting bin
+typecheck, schema, and hardening pass; all-skipped now exits non-PASS; manual
+mutation probe proves the all-skipped guard is load-bearing.
+
 ## Decisions Made During This Task
 
 Decision: restore only the verified canonical target after owner authorization.
@@ -172,7 +180,6 @@ publication, force push, or history rewrite occurred.
 
 ## Deferred / Follow-Up
 
-- Implement the selected shard-certification-integrity campaign.
 - Reassess and execute run-evidence transaction integrity next if still
   highest-value after the shard checkpoint.
 - Reassess child-process census indirection, popup L0 readiness, proxy raw-event

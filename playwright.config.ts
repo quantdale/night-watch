@@ -33,7 +33,14 @@ export default defineConfig({
   workers: 1,
   timeout: 120_000,
   expect: { timeout: 10_000 },
-  reporter: [['list'], ['./tests/helpers/playwrightTimingReporter.ts', { lane: timingLane }]],
+  reporter: [
+    ['list'],
+    ['./tests/helpers/playwrightTimingReporter.ts', { lane: timingLane }],
+    ['./tests/helpers/playwrightShardReporter.ts', {
+      path: process.env.NIGHTWATCH_SHARD_RECEIPT_PATH,
+      shardId: process.env.NIGHTWATCH_SHARD_ID,
+    }],
+  ],
   outputDir: resolvePlaywrightOutputDir('core'),
   globalSetup: './tests/globalSetup.ts',
   projects: [

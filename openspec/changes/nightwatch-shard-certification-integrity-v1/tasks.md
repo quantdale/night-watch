@@ -1,26 +1,26 @@
 ## 1. Contract and reproduction
 
-- [ ] 1.1 Freeze the receipt schema, bounds, categorical outcomes, and parser.
-- [ ] 1.2 Add failing tests for all-skipped, zero-executed, null/unknown, and
+- [x] 1.1 Freeze the receipt schema, bounds, categorical outcomes, and parser.
+- [x] 1.2 Add failing tests for all-skipped, zero-executed, null/unknown, and
       malformed receipts.
-- [ ] 1.3 Preserve a normal mixed pass/skip control and current coverage/
+- [x] 1.3 Preserve a normal mixed pass/skip control and current coverage/
       exclusivity assertions.
 
 ## 2. Implementation
 
-- [ ] 2.1 Add a bounded atomic Playwright execution reporter.
-- [ ] 2.2 Pass an owned receipt path to each shard and read it after exit.
-- [ ] 2.3 Make receipt classification authoritative; retain text only as
+- [x] 2.1 Add a bounded atomic Playwright execution reporter.
+- [x] 2.2 Pass an owned receipt path to each shard and read it after exit.
+- [x] 2.3 Make receipt classification authoritative; retain text only as
       diagnostic output.
-- [ ] 2.4 Refuse missing, malformed, unknown, zero-executed, and all-skipped
+- [x] 2.4 Refuse missing, malformed, unknown, zero-executed, and all-skipped
       receipts with stable categorical codes.
 
 ## 3. Adversarial protection
 
-- [ ] 3.1 Test partial/oversized receipt writes, duplicate outcomes, malformed
+- [x] 3.1 Test partial/oversized receipt writes, duplicate outcomes, malformed
       counts, and reporter failure.
-- [ ] 3.2 Mutate away executed/unknown/atomic guards and prove detection.
-- [ ] 3.3 Prove no test, assertion, skip, retry, coverage, or exclusivity
+- [x] 3.2 Mutate away executed/unknown/atomic guards and prove detection.
+- [x] 3.3 Prove no test, assertion, skip, retry, coverage, or exclusivity
       behavior is silently weakened.
 
 ## 4. Validation and handoff

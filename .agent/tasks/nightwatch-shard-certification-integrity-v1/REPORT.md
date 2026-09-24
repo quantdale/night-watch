@@ -7,7 +7,12 @@
 - Reproduction: parent evidence records exit 0/PASS for an all-skipped file,
   exit 1/TEST_FAILURE for a true zero-test file, and a normal 9-test PASS
   control.
-- Changes: child continuity only so far; no product implementation yet.
+- Changes: strict receipt schema/classifier, atomic Playwright reporter, runner
+  authority integration, schema declaration, generated loader map, and focused
+  regressions.
+- Validation: typecheck PASS; typecheck:bin reporting PASS; schema/hardening
+  PASS; focused shard suite 12/12; manual all-skipped guard mutation changed
+  the result and was detected as load-bearing.
 - Safety: NONE.
-- Remaining: strict receipt/classifier, reporter integration, adversarial
-  regressions, focused/milestone validation, checkpoint, and reassessment.
+- Remaining: implementation checkpoint, `gate:dev`, `gate:milestone`, adversarial
+  review, and successor reassessment.

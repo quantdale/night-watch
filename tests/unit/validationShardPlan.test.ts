@@ -4,6 +4,8 @@
 // deterministic partition directly testable; one bounded end-to-end run proves
 // the runner actually executes both the concurrent and the exclusive path.
 
+import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { test, expect } from '@playwright/test';
@@ -17,6 +19,14 @@ import {
   type Shard,
 } from '../../src/core/validation/shardPlan';
 import { detectExecutionClass, type ExecutionClass } from '../../src/core/validation/executionClasses';
+import {
+  MAX_SHARD_EXECUTION_RECEIPT_BYTES,
+  SHARD_EXECUTION_RECEIPT_SCHEMA,
+  createShardExecutionReceipt,
+  parseShardExecutionReceipt,
+  serializeShardExecutionReceipt,
+} from '../../src/core/validation/shardExecutionReceipt';
+import PlaywrightShardReporter from '../helpers/playwrightShardReporter';
 
 const ROOT = path.join(__dirname, '..', '..');
 const CLI = path.join(ROOT, 'bin', 'run-shards.mjs');
@@ -137,4 +147,58 @@ test('the runner executes concurrent and exclusive shards end to end', () => {
   expect(exclusive.files).toBe(1);
   expect(receipt.totals.failed).toBe(0);
   expect(receipt.totals.passed).toBeGreaterThan(0);
+  expect(receipt.shardResults.every((result: { executionStatus: string }) => result.executionStatus === 'PASS')).toBe(true);
+});
+
+test('execution receipts distinguish pass, mixed skip, all skip, zero, and unknown outcomes', () => {
+  const base = {
+    shardId: 'shard-1',
+    playwrightStatus: 'passed' as const,
+    planned: 2,
+    executed: 2,
+    passed: 2,
+    failed: 0,
+    skipped: 0,
+    didNotRun: 0,
+    unknown: 0,
+  };
+  const parsedPass = parseShardExecutionReceipt(serializeShardExecutionReceipt(createShardExecutionReceipt(base)), 'shard-1');
+  expect(parsedPass).toMatchObject({ ok: true, disposition: 'PASS' });
+  const mixed = parseShardExecutionReceipt(serializeShardExecutionReceipt(createShardExecutionReceipt({ ...base, planned: 3, executed: 3, passed: 2, skipped: 1 })), 'shard-1');
+  expect(mixed).toMatchObject({ ok: true, disposition: 'PASS' });
+  const allSkipped = parseShardExecutionReceipt(serializeShardExecutionReceipt(createShardExecutionReceipt({ ...base, passed: 0, skipped: 2 })), 'shard-1');
+  expect(allSkipped).toMatchObject({ ok: true, disposition: 'ALL_SKIPPED' });
+  const zero = parseShardExecutionReceipt(serializeShardExecutionReceipt(createShardExecutionReceipt({ ...base, planned: 0, executed: 0, passed: 0, skipped: 0 })), 'shard-1');
+  expect(zero).toMatchObject({ ok: true, disposition: 'NO_TESTS_EXECUTED' });
+  const unknown = parseShardExecutionReceipt(serializeShardExecutionReceipt(createShardExecutionReceipt({ ...base, passed: 1, unknown: 1 })), 'shard-1');
+  expect(unknown).toMatchObject({ ok: true, disposition: 'UNKNOWN' });
+  expect(parseShardExecutionReceipt('{bad', 'shard-1')).toMatchObject({ ok: false, code: 'SHARD_RECEIPT_MALFORMED' });
+  expect(parseShardExecutionReceipt(JSON.stringify({ ...base, schemaVersion: SHARD_EXECUTION_RECEIPT_SCHEMA, extra: true }), 'shard-1')).toMatchObject({ ok: false, code: 'SHARD_RECEIPT_INVALID' });
+  expect(parseShardExecutionReceipt(serializeShardExecutionReceipt(createShardExecutionReceipt(base)), 'other-shard')).toMatchObject({ ok: false, code: 'SHARD_RECEIPT_SHARD_MISMATCH' });
+  expect(parseShardExecutionReceipt('x'.repeat(MAX_SHARD_EXECUTION_RECEIPT_BYTES + 1), 'shard-1')).toMatchObject({ ok: false, code: 'SHARD_RECEIPT_TOO_LARGE' });
+});
+
+test('the shard reporter writes a strict atomic receipt from planned and observed outcomes', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-shard-reporter-'));
+  const destination = path.join(root, 'receipt.json');
+  const reporter = new PlaywrightShardReporter({ path: destination, shardId: 'shard-1' });
+  const skipped = { id: 'skipped', outcome: () => 'skipped' } as any;
+  const passed = { id: 'passed', outcome: () => 'expected' } as any;
+  reporter.onBegin({} as any, { allTests: () => [skipped, passed] } as any);
+  reporter.onTestEnd(skipped, {} as any);
+  reporter.onTestEnd(passed, {} as any);
+  reporter.onEnd({ status: 'passed' } as any);
+  const parsed = parseShardExecutionReceipt(fs.readFileSync(destination, 'utf8'), 'shard-1');
+  expect(parsed).toMatchObject({ ok: true, disposition: 'PASS' });
+  expect(fs.existsSync(`${destination}.tmp`)).toBe(false);
+  fs.rmSync(root, { recursive: true, force: true });
+});
+
+test('the runner refuses an all-skipped shard even when Playwright exits zero', () => {
+  const result = spawnSync(process.execPath, [CLI, '--json', '--workers=1', '--files=tests/unit/liveProviderEfficacyProof.test.ts'], { cwd: ROOT, encoding: 'utf8', timeout: 300_000 });
+  expect(result.status).toBe(1);
+  const receipt = JSON.parse(result.stdout);
+  expect(receipt.result).toBe('TEST_FAILURE');
+  expect(receipt.shardResults[0]).toMatchObject({ executionStatus: 'ALL_SKIPPED', executionCode: 'SHARD_ALL_SKIPPED', exitStatus: 0 });
+  expect(receipt.shardResults[0].counts).toMatchObject({ planned: 1, executed: 1, passed: 0, skipped: 1 });
 });
