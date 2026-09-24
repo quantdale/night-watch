@@ -30,7 +30,7 @@ before reassessing successors.
 
 ## Current Milestone
 
-M6 — validate the proxy raw-event persistence/firewall child after its focused
+M7 — validate the credential-use binding child after its focused
 implementation checkpoint.
 
 ## Completed Milestones
