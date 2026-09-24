@@ -6,18 +6,18 @@ Title: Fresh successor campaign engine and reassessment
 Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-successor-campaign-engine-v1
 Starting SHA: 78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1
-Last validated implementation SHA: c1670abedee07c8b5d36ad2de5ee4419f5859ac8
-Last checkpoint: 2026-09-25 — credential child clean milestone 5456 passed / 12 independently classified source-drift failures; shard temp isolation selected.
+Last validated implementation SHA: c83e9d438b2a7e36db6a5c79345f5405c980bffc
+Last checkpoint: 2026-09-25 — shard temp isolation c83e9d43; focused/adversarial green and corrected gate:dev retains only 12 source-drift failures.
 Current milestone: M8 — implement shard temporary-namespace isolation.
-Next action: implement per-shard `TMPDIR`/`TEMP`/`TMP` isolation and process-level adversarial proof, then run focused and broad validation.
+Next action: run clean `gate:milestone`, classify the exact residual, then close or block the isolation child.
 
 Authorization class: SUCCESSOR_CAMPAIGN_ENGINE_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1
-LAST_VALIDATED_IMPLEMENTATION_SHA: c1670abedee07c8b5d36ad2de5ee4419f5859ac8
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: c1670abedee07c8b5d36ad2de5ee4419f5859ac8
+LAST_VALIDATED_IMPLEMENTATION_SHA: c83e9d438b2a7e36db6a5c79345f5405c980bffc
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: c83e9d438b2a7e36db6a5c79345f5405c980bffc
 LIVE_HEAD_AUTHORITY: GIT
 PHASE_SUCCESSOR_CAMPAIGN_ENGINE_V1_STATUS: IN_PROGRESS
 

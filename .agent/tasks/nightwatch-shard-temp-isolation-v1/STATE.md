@@ -6,17 +6,17 @@ Task ID: nightwatch-shard-temp-isolation-v1
 Phase: SHARD_TEMP_ISOLATION_V1
 Status: IN_PROGRESS
 Starting SHA: f41c6cc3c9e9e6a50f271acbd58ddb19b5afd6aa
-Last validated implementation SHA: f41c6cc3c9e9e6a50f271acbd58ddb19b5afd6aa
-Last substantive checkpoint SHA: f41c6cc3c9e9e6a50f271acbd58ddb19b5afd6aa
+Last validated implementation SHA: c83e9d438b2a7e36db6a5c79345f5405c980bffc
+Last substantive checkpoint SHA: c83e9d438b2a7e36db6a5c79345f5405c980bffc
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-successor-campaign-en-628d8bb9
-Last checkpoint: 2026-09-25 — focused 56/56 and hostile shared-temp replay green; corrected gate:dev 5459 passed / only the 12 independent source-drift failures.
+Last checkpoint: 2026-09-25 — implementation checkpoint c83e9d43; focused 56/56, hostile replay 54/54, corrected gate:dev 5459/12; clean milestone pending.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: f41c6cc3c9e9e6a50f271acbd58ddb19b5afd6aa
-LAST_VALIDATED_IMPLEMENTATION_SHA: f41c6cc3c9e9e6a50f271acbd58ddb19b5afd6aa
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: f41c6cc3c9e9e6a50f271acbd58ddb19b5afd6aa
+LAST_VALIDATED_IMPLEMENTATION_SHA: c83e9d438b2a7e36db6a5c79345f5405c980bffc
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: c83e9d438b2a7e36db6a5c79345f5405c980bffc
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
 PHASE_SHARD_TEMP_ISOLATION_V1_STATUS: IN_PROGRESS
