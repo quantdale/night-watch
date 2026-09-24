@@ -6,17 +6,17 @@ Task ID: nightwatch-child-process-census-indirection-v1
 Phase: CHILD_PROCESS_CENSUS_INDIRECTION_V1
 Status: IN_PROGRESS
 Starting SHA: 5619aeaf77e22862cc87c6da6ad6e022fa60b774
-Last validated implementation SHA: 5619aeaf77e22862cc87c6da6ad6e022fa60b774
-Last substantive checkpoint SHA: 5619aeaf77e22862cc87c6da6ad6e022fa60b774
+Last validated implementation SHA: 361a1506f4635b3180d0712529f75f7ebd939dbb
+Last substantive checkpoint SHA: 361a1506f4635b3180d0712529f75f7ebd939dbb
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-successor-campaign-en-628d8bb9
-Last checkpoint: 2026-09-24 — child-process census indirection implementation is complete in the owned worktree; focused/static/mutation validation green; checkpoint/gates pending.
+Last checkpoint: 2026-09-24 — child-process census implementation checkpoint 361a1506f4635b3180d0712529f75f7ebd939dbb; focused/static/mutation validation green; broad gate pending.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 5619aeaf77e22862cc87c6da6ad6e022fa60b774
-LAST_VALIDATED_IMPLEMENTATION_SHA: 5619aeaf77e22862cc87c6da6ad6e022fa60b774
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 5619aeaf77e22862cc87c6da6ad6e022fa60b774
+LAST_VALIDATED_IMPLEMENTATION_SHA: 361a1506f4635b3180d0712529f75f7ebd939dbb
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 361a1506f4635b3180d0712529f75f7ebd939dbb
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
 PHASE_CHILD_PROCESS_CENSUS_INDIRECTION_V1_STATUS: IN_PROGRESS

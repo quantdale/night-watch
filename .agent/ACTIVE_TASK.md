@@ -6,18 +6,18 @@ Title: Fresh successor campaign engine and reassessment
 Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-successor-campaign-engine-v1
 Starting SHA: 78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1
-Last validated implementation SHA: 38510bc4782f57d2b75ac7266dfc909937a3359d
-Last checkpoint: 2026-09-24 — shard child blocked and classified; child-process census indirection selected as the next successor.
-Current milestone: M3 — execute child-process census indirection totality.
-Next action: strict-validate the new child OpenSpec, add failing namespace/alias fixtures, then implement the census and hardening closure.
+Last validated implementation SHA: 361a1506f4635b3180d0712529f75f7ebd939dbb
+Last checkpoint: 2026-09-24 — child-process census indirection implementation checkpoint 361a1506f4635b3180d0712529f75f7ebd939dbb; focused/static/mutation validation green; broad gate validation pending.
+Current milestone: M3 — validate child-process census indirection totality.
+Next action: run the post-checkpoint gate lanes, classify any residual against baseline, then close or block this child and reassess.
 
 Authorization class: SUCCESSOR_CAMPAIGN_ENGINE_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1
-LAST_VALIDATED_IMPLEMENTATION_SHA: 38510bc4782f57d2b75ac7266dfc909937a3359d
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 38510bc4782f57d2b75ac7266dfc909937a3359d
+LAST_VALIDATED_IMPLEMENTATION_SHA: 361a1506f4635b3180d0712529f75f7ebd939dbb
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 361a1506f4635b3180d0712529f75f7ebd939dbb
 LIVE_HEAD_AUTHORITY: GIT
 PHASE_SUCCESSOR_CAMPAIGN_ENGINE_V1_STATUS: IN_PROGRESS
 

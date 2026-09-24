@@ -6,17 +6,17 @@ Task ID: nightwatch-successor-campaign-engine-v1
 Phase: SUCCESSOR_CAMPAIGN_ENGINE_V1
 Status: IN_PROGRESS
 Starting SHA: 78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1
-Last validated implementation SHA: 38510bc4782f57d2b75ac7266dfc909937a3359d
-Last substantive checkpoint SHA: 38510bc4782f57d2b75ac7266dfc909937a3359d
+Last validated implementation SHA: 361a1506f4635b3180d0712529f75f7ebd939dbb
+Last substantive checkpoint SHA: 361a1506f4635b3180d0712529f75f7ebd939dbb
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-successor-campaign-en-628d8bb9
-Last checkpoint: 2026-09-24 — owner-resolved canonical blocker; A/B evidence complete; shard implementation/gate classification checkpoint 38510bc4782f57d2b75ac7266dfc909937a3359d awaits post-governance gate rerun.
+Last checkpoint: 2026-09-24 — child-process census indirection implementation checkpoint 361a1506f4635b3180d0712529f75f7ebd939dbb; focused/static/mutation validation green; broad gate pending.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1
-LAST_VALIDATED_IMPLEMENTATION_SHA: 38510bc4782f57d2b75ac7266dfc909937a3359d
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 38510bc4782f57d2b75ac7266dfc909937a3359d
+LAST_VALIDATED_IMPLEMENTATION_SHA: 361a1506f4635b3180d0712529f75f7ebd939dbb
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 361a1506f4635b3180d0712529f75f7ebd939dbb
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
 PHASE_SUCCESSOR_CAMPAIGN_ENGINE_V1_STATUS: IN_PROGRESS
@@ -55,15 +55,14 @@ the current independent successor.
 
 ## Work In Progress
 
-The shard child remains honestly BLOCKED. The child-process census
-indirection child is active; no unrelated source-intelligence test will be
-modified.
+The child-process census implementation is checkpointed; focused/static/
+mutation validation is green. Its broad gate lanes and final status remain.
 
 ## Exact Next Action
 
-Strict-validate `nightwatch-child-process-census-indirection-v1`, add failing
-namespace-require/alias/unknown fixtures, then implement the pure census and
-hardening refusal.
+Run post-checkpoint `gate:dev` and `gate:milestone`, classify the exact residual,
+then close or block the census child and reassess run-evidence transaction
+integrity.
 
 ## Files Changed
 
