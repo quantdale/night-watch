@@ -30,9 +30,8 @@ before reassessing successors.
 
 ## Current Milestone
 
-M4 — execute the next independent child after the census child was checkpointed
-but BLOCKED by broad-gate residual. Run-evidence transaction integrity is the
-next candidate.
+M6 — validate the proxy raw-event persistence/firewall child after its focused
+implementation checkpoint.
 
 ## Completed Milestones
 
