@@ -92,18 +92,21 @@ reassess, and repeat. Use full certification only at release groups.
   safety counter regression; focused and milestone gates pass.
 - Validation commands: focused suites, `npm run gate:dev`, then
   `npm run gate:milestone`.
-- Status: IN_PROGRESS
+- **Status:** BLOCKED
 
-### M3 — Successor reassessment and repeat
+### M3 — Child-process census indirection successor
 
-- Objective: reassess all major dimensions after M2 and execute another
-  campaign while useful authorized work remains.
-- Files/areas: campaign-specific.
-- Implementation actions: repeat the bounded loop.
-- Acceptance criteria: each selected campaign has an independent checkpoint
-  and explicit residual/defer decision.
-- Validation commands: campaign-specific focused checks and milestone gate.
-- Status: NOT_STARTED
+- Objective: execute the selected child-process census indirection child after
+  the shard child's classified gate blocker.
+- Files/areas: `bin/lib/childProcessCensus.mjs`, process/network hardening,
+  focused census tests, and the dedicated child artifacts.
+- Implementation actions: reproduce supported namespace/alias forms, implement
+  total discovery and unknown refusal, add mutations, validate, checkpoint.
+- Acceptance criteria: supported indirection is discovered; unresolved imports
+  fail closed; focused and milestone evidence is recorded.
+- Validation commands: focused suite, `npm run gate:dev`, then
+  `npm run gate:milestone`.
+- **Status:** IN_PROGRESS
 
 ### M4 — Final adversarial reassessment and closure
 
@@ -114,7 +117,7 @@ reassess, and repeat. Use full certification only at release groups.
 - Acceptance criteria: no credible executable issue is silently deferred; final
   verdict and remaining work are precise.
 - Validation commands: repository-defined certification battery as justified.
-- Status: NOT_STARTED
+- **Status:** NOT_STARTED
 
 ## Validation Strategy
 
@@ -135,11 +138,13 @@ green without understanding the cause.
   discovery/continuity evidence, not as a blind integration candidate.
 - 2026-09-24 — Treat fresh discovery as a successor backlog, not as permission
   to edit the completed priority campaign or assume NW-AUD-021 priority.
-- 2026-09-24 — Select shard false certification first. It has reproduced
-  misleading green evidence, high confidence, a small bounded implementation
-  surface, and low implementation risk. Run-evidence transaction integrity is
-  more severe but requires a larger filesystem/lifecycle redesign and remains
-  the next likely campaign after this one.
+- 2026-09-24 — Select shard false certification first; its implementation is
+  checkpointed, while the broad gate residual is classified as baseline/source
+  drift.
+- 2026-09-24 — Select child-process census indirection next. The reproduced
+  namespace-require/method-alias bypass has high confidence and a small, bounded
+  safety-authority correction; run-evidence transaction redesign follows after
+  this child.
 
 ## Discoveries
 
@@ -157,10 +162,9 @@ green without understanding the cause.
 
 ## Deferred Work
 
-The run-evidence transaction defect, child-process census indirection, popup
-L0 readiness, proxy raw-event persistence, and credential-use binding remain
-in the successor backlog. Run-evidence transaction integrity is the next likely
-campaign after the selected shard-certification campaign; no finding is being
+The run-evidence transaction defect, popup L0 readiness, proxy raw-event
+persistence, and credential-use binding remain in the successor backlog after
+the child-process census child. The shard child remains BLOCKED and is not
 silently discarded.
 
 ## Completion Criteria

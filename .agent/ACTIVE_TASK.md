@@ -7,9 +7,9 @@ Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-successor-campaign-engine-v1
 Starting SHA: 78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1
 Last validated implementation SHA: 38510bc4782f57d2b75ac7266dfc909937a3359d
-Last checkpoint: 2026-09-24 — shard implementation and gate classification checkpoint 38510bc4782f57d2b75ac7266dfc909937a3359d; focused/static validation green, broad gate failures classified against baseline.
-Current milestone: M2 — validate and close or explicitly block the shard certification child.
-Next action: Re-run the post-governance gate lanes, record the exact residual, then reassess and select the next independent successor campaign.
+Last checkpoint: 2026-09-24 — shard child blocked and classified; child-process census indirection selected as the next successor.
+Current milestone: M3 — execute child-process census indirection totality.
+Next action: strict-validate the new child OpenSpec, add failing namespace/alias fixtures, then implement the census and hardening closure.
 
 Authorization class: SUCCESSOR_CAMPAIGN_ENGINE_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
@@ -41,7 +41,7 @@ as historical truth; do not reopen it.
 
 ```
 CAMPAIGN: nightwatch-successor-campaign-engine-v1
-CHILD TASK: nightwatch-shard-certification-integrity-v1
+CHILD TASK: nightwatch-child-process-census-indirection-v1
 SESSION WORKTREE: session/nightwatch-successor-campaign-en-628d8bb9
 
 IMPLEMENTATION AUTHORIZED:
@@ -51,8 +51,9 @@ IMPLEMENTATION AUTHORIZED:
   C-00 commits and fast-forward integration from this session only.
 
 CURRENT STATUS:
-  IN_PROGRESS — canonical is clean and workspace status passes; A/B
-  reproduction selected shard certification integrity as the first campaign.
+  IN_PROGRESS — canonical is clean and workspace status passes; shard child is
+  BLOCKED by baseline/source-drift gate failures; child-process census
+  indirection is the active independent successor.
 
 ALPHAUS DEV / NEXT / PRODUCTION CONTACT:   NOT AUTHORIZED
 AUTHENTICATED ALPHAUS RUNTIME:             NOT AUTHORIZED

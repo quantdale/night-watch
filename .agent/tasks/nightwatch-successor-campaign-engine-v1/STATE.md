@@ -30,9 +30,9 @@ before reassessing successors.
 
 ## Current Milestone
 
-M2 — execute the selected shard certification integrity child. The child
-implementation is complete in the owned worktree and is awaiting its verified
-checkpoint/milestone validation.
+M3 — execute the child-process census indirection child. The shard child is
+checkpointed but BLOCKED by baseline/source-drift gate failures; this child is
+the current independent successor.
 
 ## Completed Milestones
 
@@ -40,6 +40,8 @@ checkpoint/milestone validation.
   read-only discovery.
 - **M1 COMPLETE** — A/B reproduction and six-finding revalidation.
 - **M2 BLOCKED** — shard certification implementation is complete, but its broad gate lanes retain 12 baseline/source-drift failures.
+- **M3 IN_PROGRESS** — child-process census indirection totality child selected
+  and activated.
 - Owner resolution rechecked the exact canonical diff against the recorded
   patch and HEAD. It was mechanically confirmed as unintended formatter/editor
   churn, including invalid CSS fallback corruption `#fff` -> `# fff)`.
@@ -53,16 +55,15 @@ checkpoint/milestone validation.
 
 ## Work In Progress
 
-The shard certification child is checkpointed and honestly BLOCKED by 12
-baseline/source-drift failures. Independent successor selection is next; no
-unrelated source-intelligence test will be modified.
+The shard child remains honestly BLOCKED. The child-process census
+indirection child is active; no unrelated source-intelligence test will be
+modified.
 
 ## Exact Next Action
 
-Select and open the next independent child campaign. Current ranking puts the
-child-process census indirection bypass next: it is a reproduced High-confidence
-authority-totality gap with a small, low-risk implementation surface. Preserve
-the shard child as BLOCKED with its evidence.
+Strict-validate `nightwatch-child-process-census-indirection-v1`, add failing
+namespace-require/alias/unknown fixtures, then implement the pure census and
+hardening refusal.
 
 ## Files Changed
 
@@ -76,7 +77,8 @@ the shard child as BLOCKED with its evidence.
 | `.agent/tasks/nightwatch-successor-campaign-engine-v1/evidence/` | A/B and six-finding revalidation receipts | added this session |
 | `.agent/tasks/nightwatch-shard-certification-integrity-v1/` | selected child task continuity | added this session |
 | `openspec/changes/nightwatch-successor-campaign-engine-v1/` | umbrella successor contract | added this session |
-| `openspec/changes/nightwatch-shard-certification-integrity-v1/` | selected child contract | added this session |
+| `.agent/tasks/nightwatch-child-process-census-indirection-v1/` | active child continuity | added this session |
+| `openspec/changes/nightwatch-child-process-census-indirection-v1/` | active child contract | added this session |
 | `docs/CURRENT_STATE.md` | owner-authorized restoration only | clean at HEAD |
 
 ## Validation Ledger
