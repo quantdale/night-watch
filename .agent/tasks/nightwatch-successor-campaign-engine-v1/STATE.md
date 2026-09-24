@@ -11,7 +11,7 @@ Last substantive checkpoint SHA: a27bee0d3101768f80e34012dd2e3ccad4b4eb95
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: main
-Last checkpoint: 2026-09-25 — terminal live-state governance aligned; clean certification replay follows.
+Last checkpoint: 2026-09-25 — terminal clean Node 20 certification PASS; exact C-00 integration is the only remaining closeout step.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1
@@ -243,6 +243,14 @@ alone failed because an IN_PROGRESS clean clone cannot own the live session
 worktree. Reproduced independently as `ACTIVE_TASK_SESSION_WORKTREE_MISSING`.
 No product/test failure occurred; terminal routing replay follows.
 
+Command: terminal-state `npm run gate:clean`
+Result: PASS
+When: 2026-09-25
+Relevant failure/output summary: source head `a2cc7d918c2ab10e6e50febd2e755fba855d5a44`;
+fresh Node 20 install, clean-before/after, all 12 gate groups, 2126/13/0 semantic,
+91/91 owner provenance, 1924/1924 synthetic, deep containment PROVEN; sibling
+writes 0; receipt `clean-receipt:sha256:fe0bea35bf55cc3a885d98b6`.
+
 ## Decisions Made During This Task
 
 Decision: restore only the verified canonical target after owner authorization.
@@ -311,5 +319,6 @@ popup design residual are the final state; new work requires a new authorized ta
 - Last validated implementation SHA: `a27bee0d3101768f80e34012dd2e3ccad4b4eb95` (terminal governed live status).
 - Final development/milestone evidence: 5472 passed / 0 failed.
 - Local certification receipt: `receipt:sha256:a55cac531dfae3c5f15ac598`.
+- Clean Node 20 receipt: `clean-receipt:sha256:fe0bea35bf55cc3a885d98b6`.
 - Source pins unchanged; sibling writes 0; all unauthorized external effect counters zero.
 - Honest residual: popup L0 needs a lower-level pre-navigation target-admission design; no false fix is claimed.

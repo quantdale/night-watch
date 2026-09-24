@@ -6,5 +6,6 @@ Status: COMPLETE
 - Evidence: isolation milestone 5459/12; pre-fix empty-sibling replay 129/11.
 - Changes: test-only exact-currentness classifier, parameterized Git-backed source fixture, standard local CLI root injection, currentness guards for historical measurements, fixture-backed explain/expectation tests, and run-local Phase 12 immutability.
 - Validation: focused live 141/141; explicit empty root 141/141; source parity 2/2; typecheck/bin/schema/universe/hardening/strict OpenSpec PASS; `gate:dev` 5472/0.
+- Parent clean Node 20 certification: PASS, receipt `clean-receipt:sha256:fe0bea35bf55cc3a885d98b6`.
 - Safety: NONE; read-only Git metadata and synthetic temporary source only. Source pins unchanged.
-- Remaining: parent clean-checkout routing replay, C-00 integration, and explicitly blocked popup lower-level target admission.
+- Remaining: exact C-00 integration/release and explicitly blocked popup lower-level target admission.
