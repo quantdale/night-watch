@@ -15,9 +15,9 @@
 
 - [x] 3.1 Test every supported form, comments/strings, and unknown indirection.
 - [x] 3.2 Mutate away namespace/alias/unknown guards and prove detection.
-- [ ] 3.3 Run focused tests, hardening, typecheck, and milestone lanes.
+- [ ] ~~3.3 Run focused tests, hardening, typecheck, and milestone lanes.~~ [PARTIAL/BLOCKED: focused/static/mutation checks pass; broad lanes retain 12 baseline/source-drift failures plus one isolated-pass timing failure.]
 
 ## 4. Handoff
 
-- [ ] 4.1 Reconcile task/OpenSpec truth and commit the checkpoint.
-- [ ] 4.2 Reassess run-evidence transaction integrity and remaining backlog.
+- [ ] ~~4.1 Reconcile task/OpenSpec truth and commit the checkpoint.~~ [DEFERRED: implementation checkpoint is retained; child is BLOCKED pending broad-gate reconciliation.]
+- [ ] ~~4.2 Reassess run-evidence transaction integrity and remaining backlog.~~ [DEFERRED: umbrella successor selection continues independently.]

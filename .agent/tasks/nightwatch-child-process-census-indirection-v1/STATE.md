@@ -4,14 +4,14 @@
 
 Task ID: nightwatch-child-process-census-indirection-v1
 Phase: CHILD_PROCESS_CENSUS_INDIRECTION_V1
-Status: IN_PROGRESS
+Status: BLOCKED
 Starting SHA: 5619aeaf77e22862cc87c6da6ad6e022fa60b774
 Last validated implementation SHA: 361a1506f4635b3180d0712529f75f7ebd939dbb
 Last substantive checkpoint SHA: 361a1506f4635b3180d0712529f75f7ebd939dbb
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-successor-campaign-en-628d8bb9
-Last checkpoint: 2026-09-24 — child-process census implementation checkpoint 361a1506f4635b3180d0712529f75f7ebd939dbb; focused/static/mutation validation green; broad gate pending.
+Last checkpoint: 2026-09-24 — child-process census implementation checkpoint 361a1506f4635b3180d0712529f75f7ebd939dbb; focused/static/mutation green; broad gate residual classified.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 5619aeaf77e22862cc87c6da6ad6e022fa60b774
@@ -19,7 +19,7 @@ LAST_VALIDATED_IMPLEMENTATION_SHA: 361a1506f4635b3180d0712529f75f7ebd939dbb
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: 361a1506f4635b3180d0712529f75f7ebd939dbb
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
-PHASE_CHILD_PROCESS_CENSUS_INDIRECTION_V1_STATUS: IN_PROGRESS
+PHASE_CHILD_PROCESS_CENSUS_INDIRECTION_V1_STATUS: BLOCKED
 
 ## Objective
 
@@ -28,9 +28,9 @@ bypass without evaluating or executing any child process.
 
 ## Current Milestone
 
-M3 — adversarial validation and checkpoint. Supported namespace/alias forms,
-unknown refusal, focused regressions, static checks, and mutation probes are
-implemented; broad gate validation remains.
+M3 — adversarial validation is BLOCKED by the broad affected lane. The census
+implementation and its focused/static/mutation proofs are green; the broad
+lane's residual is outside this child.
 
 ## Completed Milestones
 
@@ -44,17 +44,23 @@ implemented; broad gate validation remains.
   121 invocations, zero unresolved/unclassified records.
 - Manual mutations removing alias discovery or unresolved refusal each changed
   the result (`1 -> 0`), proving both guards are load-bearing.
+- Post-implementation gate reruns: `gate:dev` 5447 passed / 12 failed and
+  `gate:milestone` 5446 passed / 13 failed. The 12 source-drift failures match
+  the shard baseline; the additional semantic WebSocket receipt failure passes
+  in isolation and is recorded as a timing-dependent full-suite flake, not a
+  census regression.
 
 ## Work In Progress
 
-Implementation is complete but uncommitted in the owned worktree. The child
-checkpoint, `gate:dev`, `gate:milestone`, and final continuity reconciliation
-remain.
+None. The implementation is checkpointed; this child is blocked only by the
+classified broad-gate residual. The umbrella may select the next independent
+campaign.
 
 ## Exact Next Action
 
-Commit the implementation checkpoint, run `gate:dev` and `gate:milestone`, then
-adversarially inspect the unknown-import refusal and update parent continuity.
+Keep this child blocked with its evidence. Return to the umbrella state and
+select the run-evidence transaction integrity child; do not absorb unrelated
+source-intelligence or timing-flake failures into this census change.
 
 ## Files Changed
 
@@ -123,8 +129,11 @@ authority failure.
 
 ## Blockers
 
-None for the implementation. The parent shard gate residual is independent and
-must remain classified; it is not a reason to weaken this census child.
+- `gate:dev` and `gate:milestone` cannot certify the broad affected lane.
+- Twelve source-intelligence/current-sibling failures reproduce on the
+  certified baseline; one additional semantic WebSocket receipt failure passes
+  in isolation and is timing-dependent.
+- The child is honestly BLOCKED rather than claiming a green milestone.
 
 ## Safety Events
 
@@ -133,17 +142,18 @@ customer data, or sibling write.
 
 ## Deferred / Follow-Up
 
-Run-evidence transaction integrity remains a later high-impact candidate.
+- Preserve the 12 baseline/source-drift failures and the isolated semantic
+  timing failure for separate reconciliation.
+- The umbrella successor loop may proceed with run-evidence transaction
+  integrity.
 
 ## Resume Recipe
 
 1. Read SPEC, PLAN, and STATE.
-2. Inspect current session/status and the exact census source.
-3. Add failing indirection/unknown fixtures.
-4. Implement parser/hardening closure.
-5. Run focused tests, static checks, mutations, and milestone validation.
-6. Checkpoint and reassess.
+2. Preserve this blocked child and its evidence.
+3. Return to the umbrella STATE and select the next child.
+4. Require a clean owned session and current reproduction before implementation.
 
 ## Completion Snapshot
 
-Not applicable while IN_PROGRESS.
+Not applicable while BLOCKED; no green milestone or completion claim is made.

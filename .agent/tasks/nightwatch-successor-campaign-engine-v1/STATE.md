@@ -30,9 +30,9 @@ before reassessing successors.
 
 ## Current Milestone
 
-M3 — execute the child-process census indirection child. The shard child is
-checkpointed but BLOCKED by baseline/source-drift gate failures; this child is
-the current independent successor.
+M4 — execute the next independent child after the census child was checkpointed
+but BLOCKED by broad-gate residual. Run-evidence transaction integrity is the
+next candidate.
 
 ## Completed Milestones
 
@@ -40,8 +40,9 @@ the current independent successor.
   read-only discovery.
 - **M1 COMPLETE** — A/B reproduction and six-finding revalidation.
 - **M2 BLOCKED** — shard certification implementation is complete, but its broad gate lanes retain 12 baseline/source-drift failures.
-- **M3 IN_PROGRESS** — child-process census indirection totality child selected
-  and activated.
+- **M3 BLOCKED** — child-process census indirection implementation is complete,
+  but broad gate lanes retain baseline/source-drift failures.
+- **M4 IN_PROGRESS** — run-evidence transaction integrity successor selected.
 - Owner resolution rechecked the exact canonical diff against the recorded
   patch and HEAD. It was mechanically confirmed as unintended formatter/editor
   churn, including invalid CSS fallback corruption `#fff` -> `# fff)`.
@@ -55,14 +56,15 @@ the current independent successor.
 
 ## Work In Progress
 
-The child-process census implementation is checkpointed; focused/static/
-mutation validation is green. Its broad gate lanes and final status remain.
+The child-process census child is checkpointed and honestly BLOCKED. The next
+run-evidence transaction child is being activated; no unrelated source-
+intelligence or timing-flake failure will be modified.
 
 ## Exact Next Action
 
-Run post-checkpoint `gate:dev` and `gate:milestone`, classify the exact residual,
-then close or block the census child and reassess run-evidence transaction
-integrity.
+Create and strict-validate the run-evidence transaction integrity child task/
+OpenSpec, reproduce its current same-run/torn-append behavior, and define the
+smallest root-cause implementation slice.
 
 ## Files Changed
 
@@ -163,8 +165,9 @@ introduced by successor task prose; it was repaired and is absent now.
 Command: `npm run gate:milestone` after implementation checkpoint
 Result: TEST_FAILURE / PREEXISTING-SCOPE BLOCKER
 When: 2026-09-24
-Relevant failure/output summary: 5444 passed / 12 failed in 656.9s; same
-baseline/source-drift residual. All non-shard validation groups passed.
+Relevant failure/output summary: 5446 passed / 13 failed in 692.3s; 12 failures
+match the baseline/source-drift residual and one semantic WebSocket receipt
+failure passes in isolation as a timing-dependent full-suite flake.
 
 ## Decisions Made During This Task
 
@@ -198,10 +201,10 @@ implementation with a separately classified broad-gate blocker.
 
 ## Blockers
 
-The shard child is blocked by 12 baseline/source-drift failures in broad
-source-intelligence tests. This does not block independent successor work, but
-it must remain explicitly classified and must not be absorbed into unrelated
-campaigns.
+The shard and census children are blocked by broad affected-lane failures:
+12 baseline/source-drift failures, plus one census milestone semantic
+WebSocket receipt failure that passes in isolation. These are classified and
+must not be absorbed into the next child.
 
 ## Safety Events
 
@@ -211,10 +214,10 @@ publication, force push, or history rewrite occurred.
 
 ## Deferred / Follow-Up
 
-- Select and execute the child-process census indirection child next.
-- Reassess run-evidence transaction integrity, popup L0 readiness, proxy
-  raw-event persistence, and credential-use binding after that child.
-- Keep the shard child BLOCKED and the completed priority remediation campaign
+- Execute run-evidence transaction integrity next.
+- Reassess popup L0 readiness, proxy raw-event persistence, and credential-use
+  binding after that child.
+- Keep shard and census children BLOCKED and the completed priority campaign
   terminal and historical.
 
 ## Resume Recipe

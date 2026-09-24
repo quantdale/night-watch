@@ -72,7 +72,7 @@ form and mutation negatives.
   mutation and prove detection; classify unrelated broad-gate drift.
 - Acceptance criteria: mutations detected; no profile or safety regression.
 - Validation commands: `gate:dev`, `gate:milestone`.
-- **Status:** IN_PROGRESS
+- **Status:** BLOCKED
 
 ### M4 — Close and reassess
 
@@ -82,7 +82,7 @@ form and mutation negatives.
   transaction integrity versus remaining candidates.
 - Acceptance criteria: no false COMPLETE claim; next campaign evidence-led.
 - Validation commands: continuity checks and justified release grouping.
-- Status: NOT_STARTED
+- **Status:** NOT_STARTED
 
 ## Validation Strategy
 
