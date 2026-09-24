@@ -6,17 +6,17 @@ Task ID: nightwatch-successor-campaign-engine-v1
 Phase: SUCCESSOR_CAMPAIGN_ENGINE_V1
 Status: IN_PROGRESS
 Starting SHA: 78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1
-Last validated implementation SHA: 361a1506f4635b3180d0712529f75f7ebd939dbb
-Last substantive checkpoint SHA: 361a1506f4635b3180d0712529f75f7ebd939dbb
+Last validated implementation SHA: ea0b7110efa1065b470efb57f2cd3ff5136a9fa0
+Last substantive checkpoint SHA: ea0b7110efa1065b470efb57f2cd3ff5136a9fa0
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-successor-campaign-en-628d8bb9
-Last checkpoint: 2026-09-24 — child-process census indirection implementation checkpoint 361a1506f4635b3180d0712529f75f7ebd939dbb; focused/static/mutation validation green; broad gate pending.
+Last checkpoint: 2026-09-24 — run-evidence transaction implementation checkpoint ea0b7110efa1065b470efb57f2cd3ff5136a9fa0; focused/static/mutation green; broad gate pending.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1
-LAST_VALIDATED_IMPLEMENTATION_SHA: 361a1506f4635b3180d0712529f75f7ebd939dbb
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 361a1506f4635b3180d0712529f75f7ebd939dbb
+LAST_VALIDATED_IMPLEMENTATION_SHA: ea0b7110efa1065b470efb57f2cd3ff5136a9fa0
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: ea0b7110efa1065b470efb57f2cd3ff5136a9fa0
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
 PHASE_SUCCESSOR_CAMPAIGN_ENGINE_V1_STATUS: IN_PROGRESS
@@ -56,15 +56,13 @@ next candidate.
 
 ## Work In Progress
 
-The child-process census child is checkpointed and honestly BLOCKED. The next
-run-evidence transaction child is being activated; no unrelated source-
-intelligence or timing-flake failure will be modified.
+The run-evidence implementation is checkpointed; focused/static/mutation
+validation is green. Its broad gate lanes and final status remain.
 
 ## Exact Next Action
 
-Strict-validate `nightwatch-run-evidence-transaction-successor-v1`, add failing
-same-run/durable-state regressions, then implement the bounded fail-closed
-recorder fix.
+Run post-checkpoint `gate:dev` and `gate:milestone`, classify the exact residual,
+then close or block the run-evidence child and reassess.
 
 ## Files Changed
 

@@ -6,18 +6,18 @@ Title: Fresh successor campaign engine and reassessment
 Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-successor-campaign-engine-v1
 Starting SHA: 78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1
-Last validated implementation SHA: 361a1506f4635b3180d0712529f75f7ebd939dbb
-Last checkpoint: 2026-09-24 — shard and census children blocked with classified residuals; run-evidence transaction successor selected.
-Current milestone: M4 — execute run-evidence transaction integrity child.
-Next action: strict-validate the new child OpenSpec, add failing same-run/durable-state regressions, then implement the bounded fail-closed recorder fix.
+Last validated implementation SHA: ea0b7110efa1065b470efb57f2cd3ff5136a9fa0
+Last checkpoint: 2026-09-24 — run-evidence transaction implementation checkpoint ea0b7110efa1065b470efb57f2cd3ff5136a9fa0; focused/static/mutation validation green; broad gate pending.
+Current milestone: M4 — validate run-evidence transaction integrity child.
+Next action: run post-checkpoint gate lanes, classify any residual against baseline, then close or block this child and reassess.
 
 Authorization class: SUCCESSOR_CAMPAIGN_ENGINE_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1
-LAST_VALIDATED_IMPLEMENTATION_SHA: 361a1506f4635b3180d0712529f75f7ebd939dbb
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 361a1506f4635b3180d0712529f75f7ebd939dbb
+LAST_VALIDATED_IMPLEMENTATION_SHA: ea0b7110efa1065b470efb57f2cd3ff5136a9fa0
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: ea0b7110efa1065b470efb57f2cd3ff5136a9fa0
 LIVE_HEAD_AUTHORITY: GIT
 PHASE_SUCCESSOR_CAMPAIGN_ENGINE_V1_STATUS: IN_PROGRESS
 

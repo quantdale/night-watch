@@ -6,17 +6,17 @@ Task ID: nightwatch-run-evidence-transaction-successor-v1
 Phase: RUN_EVIDENCE_TRANSACTION_SUCCESSOR_V1
 Status: IN_PROGRESS
 Starting SHA: a215f8e971b82796b9d278dd362f8b200d5ec9e3
-Last validated implementation SHA: a215f8e971b82796b9d278dd362f8b200d5ec9e3
-Last substantive checkpoint SHA: a215f8e971b82796b9d278dd362f8b200d5ec9e3
+Last validated implementation SHA: ea0b7110efa1065b470efb57f2cd3ff5136a9fa0
+Last substantive checkpoint SHA: ea0b7110efa1065b470efb57f2cd3ff5136a9fa0
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-successor-campaign-en-628d8bb9
-Last checkpoint: 2026-09-24 — successor selected after shard/census gate residuals; run-evidence reproduction is the active root-cause lane.
+Last checkpoint: 2026-09-24 — run-evidence transaction implementation checkpoint ea0b7110efa1065b470efb57f2cd3ff5136a9fa0; focused/static/mutation green; broad gate pending.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: a215f8e971b82796b9d278dd362f8b200d5ec9e3
-LAST_VALIDATED_IMPLEMENTATION_SHA: a215f8e971b82796b9d278dd362f8b200d5ec9e3
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: a215f8e971b82796b9d278dd362f8b200d5ec9e3
+LAST_VALIDATED_IMPLEMENTATION_SHA: ea0b7110efa1065b470efb57f2cd3ff5136a9fa0
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: ea0b7110efa1065b470efb57f2cd3ff5136a9fa0
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
 PHASE_RUN_EVIDENCE_TRANSACTION_SUCCESSOR_V1_STATUS: IN_PROGRESS
