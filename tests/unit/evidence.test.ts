@@ -101,8 +101,9 @@ test.describe('RunRecorder', () => {
       product: 'ripple-overridden',
       trace: { enabled: false, reason: 'authenticated storage state' },
     });
-    // Deterministic: same inputs, same bytes.
+    // Deterministic: same inputs, same bytes in a fresh exclusive generation.
     const a = fs.readFileSync(path.join(rec.dir, 'manifest.json'), 'utf8');
+    fs.rmSync(rec.dir, { recursive: true, force: true });
     const rec2 = new RunRecorder(baseOpts('manifest-extra'));
     rec2.addManifestEntry('trace', { enabled: false, reason: 'authenticated storage state' });
     rec2.addManifestEntry('product', 'ripple-overridden');
@@ -464,5 +465,57 @@ test.describe('RunRecorder', () => {
     expect(summary.hardFailures[0]?.reason).toBe('RESOLVED_ADDRESS_POLICY_DENIED');
     expect(fs.readFileSync(path.join(recorder.dir, 'proxy.jsonl'), 'utf8')).not.toContain('SYNTHETIC_RAW_ERROR');
     fs.rmSync(temp, { recursive: true, force: true });
+  });
+
+  test('a second recorder cannot claim an existing run identity', () => {
+    const runId = 'exclusive-run-identity';
+    const first = new RunRecorder(baseOpts(runId));
+    try {
+      expect(() => new RunRecorder(baseOpts(runId))).toThrow(/RUN_EVIDENCE_DIRECTORY_EXISTS/);
+    } finally {
+      fs.rmSync(first.dir, { recursive: true, force: true });
+    }
+  });
+
+  test('finalize refuses a durable event stream that diverges from memory', async () => {
+    const rec = new RunRecorder(baseOpts('durable-mismatch-run'));
+    try {
+      rec.event({ type: 'start', severity: 'info', message: 'durable baseline' });
+      const extra = { seq: 1, ts: FIXED, type: 'console', severity: 'info', message: 'external mutation' };
+      fs.appendFileSync(path.join(rec.dir, 'events.jsonl'), `${JSON.stringify(extra)}\n`);
+      await expect(rec.finalize({ passed: true })).rejects.toThrow(/RUN_EVIDENCE_DURABLE_STATE_INVALID/);
+      expect(fs.existsSync(path.join(rec.dir, 'summary.json'))).toBe(false);
+    } finally {
+      fs.rmSync(rec.dir, { recursive: true, force: true });
+    }
+  });
+
+  test('finalize refuses a torn JSONL tail instead of publishing PASS', async () => {
+    const rec = new RunRecorder(baseOpts('torn-tail-run'));
+    try {
+      rec.event({ type: 'start', severity: 'info', message: 'before torn tail' });
+      fs.appendFileSync(path.join(rec.dir, 'events.jsonl'), '{"seq":1');
+      await expect(rec.finalize({ passed: true })).rejects.toThrow(/RUN_EVIDENCE_DURABLE_STATE_INVALID/);
+      expect(fs.existsSync(path.join(rec.dir, 'summary.json'))).toBe(false);
+    } finally {
+      fs.rmSync(rec.dir, { recursive: true, force: true });
+    }
+  });
+
+  test('a mirror append failure latches the recorder non-clean', async () => {
+    const rec = new RunRecorder(baseOpts('mirror-failure-run'));
+    const originalAppend = fs.appendFileSync;
+    try {
+      (fs as any).appendFileSync = (file: fs.PathLike, data: string | NodeJS.ArrayBufferView, ...args: unknown[]) => {
+        if (String(file).endsWith('/network.jsonl')) throw new Error('SYNTHETIC_MIRROR_FAILURE');
+        return (originalAppend as any)(file, data, ...args);
+      };
+      expect(() => rec.event({ type: 'request', severity: 'info', message: 'synthetic request' })).toThrow('SYNTHETIC_MIRROR_FAILURE');
+      await expect(rec.finalize({ passed: true })).rejects.toThrow(/RUN_EVIDENCE_INTEGRITY_FAILED/);
+      expect(fs.existsSync(path.join(rec.dir, 'summary.json'))).toBe(false);
+    } finally {
+      (fs as any).appendFileSync = originalAppend;
+      fs.rmSync(rec.dir, { recursive: true, force: true });
+    }
   });
 });

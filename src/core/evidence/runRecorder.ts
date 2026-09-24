@@ -68,6 +68,9 @@ const RUN_EVIDENCE_FIREWALL_LIMITS: Readonly<Record<RunEvidenceFirewallKind, num
   repositories: 2 * 1024 * 1024, // reader MAX_REPOSITORIES_BYTES
   summary: 512 * 1024, // reader MAX_SUMMARY_BYTES
 });
+const MAX_DURABLE_EVENTS = 25_000;
+const MAX_DURABLE_EVENTS_BYTES = 16 * 1024 * 1024;
+const MAX_DURABLE_EVENT_LINE_BYTES = 64 * 1024;
 
 export class RunRecorder {
   /** Layer callers use to redact evidence BEFORE calling event(). */
@@ -86,6 +89,7 @@ export class RunRecorder {
   private evidencePolicyRecorded = false;
   private authenticated: boolean;
   private seq = 0;
+  private integrityFailed = false;
   private readonly events: RunEvent[] = [];
   private proxy: {
     state: ProxyRuntimeState;
@@ -112,8 +116,16 @@ export class RunRecorder {
     this.redaction = createRedactionLayer();
 
     const artifactsRoot = opts.artifactsRoot ?? path.join(__dirname, '..', '..', '..', 'artifacts');
+    fs.mkdirSync(artifactsRoot, { recursive: true });
     this.dir = path.join(artifactsRoot, opts.runId);
-    fs.mkdirSync(this.dir, { recursive: true });
+    try {
+      // The run directory is the exclusive generation identity. A second
+      // recorder must never append into an existing or partially-created run.
+      fs.mkdirSync(this.dir);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'EEXIST') throw new Error('RUN_EVIDENCE_DIRECTORY_EXISTS');
+      throw error;
+    }
     if (this.authenticated) fs.chmodSync(this.dir, 0o700);
     this.startedAt = this.now().toISOString();
 
@@ -210,10 +222,18 @@ export class RunRecorder {
     }
   }
 
-  /** Hardened append for the jsonl streams: target check, then append. */
+  /** Hardened append for the jsonl streams: target check, append, then fsync. */
   private appendLine(file: string, line: string): void {
+    // Keep the pinned appendFileSync primitive, but do not acknowledge the
+    // record until the descriptor has reached a durability barrier.
     this.assertPublishTarget(file);
     fs.appendFileSync(file, line);
+    const descriptor = fs.openSync(file, 'r');
+    try {
+      fs.fsyncSync(descriptor);
+    } finally {
+      fs.closeSync(descriptor);
+    }
     this.secureAuthenticatedArtifact(file);
   }
 
@@ -448,6 +468,49 @@ export class RunRecorder {
     });
   }
 
+  private assertDurableEventState(): RunEvent[] {
+    const file = path.join(this.dir, 'events.jsonl');
+    if (!fs.existsSync(file)) {
+      if (this.events.length !== 0) throw new Error('RUN_EVIDENCE_DURABLE_STATE_INVALID');
+      return [];
+    }
+    const stat = fs.statSync(file);
+    if (!stat.isFile() || stat.size > MAX_DURABLE_EVENTS_BYTES) throw new Error('RUN_EVIDENCE_DURABLE_STATE_INVALID');
+    const raw = fs.readFileSync(file, 'utf8');
+    if (Buffer.byteLength(raw, 'utf8') > MAX_DURABLE_EVENTS_BYTES) throw new Error('RUN_EVIDENCE_DURABLE_STATE_INVALID');
+    const lines = raw.endsWith('\n') ? raw.slice(0, -1).split('\n') : raw.split('\n');
+    if (lines.length > MAX_DURABLE_EVENTS) throw new Error('RUN_EVIDENCE_DURABLE_STATE_INVALID');
+    const durable: RunEvent[] = [];
+    for (let index = 0; index < lines.length; index += 1) {
+      const line = lines[index] ?? '';
+      if (line.length === 0 || Buffer.byteLength(line, 'utf8') > MAX_DURABLE_EVENT_LINE_BYTES) {
+        throw new Error('RUN_EVIDENCE_DURABLE_STATE_INVALID');
+      }
+      let value: unknown;
+      try {
+        value = JSON.parse(line);
+      } catch {
+        throw new Error('RUN_EVIDENCE_DURABLE_STATE_INVALID');
+      }
+      if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+        throw new Error('RUN_EVIDENCE_DURABLE_STATE_INVALID');
+      }
+      const event = value as Partial<RunEvent>;
+      if (!Number.isSafeInteger(event.seq) || event.seq !== index || typeof event.ts !== 'string'
+        || typeof event.type !== 'string' || typeof event.severity !== 'string' || typeof event.message !== 'string') {
+        throw new Error('RUN_EVIDENCE_DURABLE_STATE_INVALID');
+      }
+      durable.push(event as RunEvent);
+    }
+    if (durable.length !== this.events.length) throw new Error('RUN_EVIDENCE_DURABLE_STATE_INVALID');
+    for (let index = 0; index < durable.length; index += 1) {
+      if (JSON.stringify(durable[index]) !== JSON.stringify(this.events[index])) {
+        throw new Error('RUN_EVIDENCE_DURABLE_STATE_INVALID');
+      }
+    }
+    return durable;
+  }
+
   /**
    * Record one event. Standard callers provide redacted values; authenticated
    * mode applies a second metadata-only persistence guard here.
@@ -475,18 +538,23 @@ export class RunRecorder {
     };
     if (data !== undefined) ev.data = data;
     const line = `${JSON.stringify(ev)}\n`;
-    // NW-AUD-018: one firewall, one vocabulary — every authenticated event
-    // byte is screened and bounded before any of the three streams see it.
-    this.firewall('events', ev, line);
-    const eventsFile = path.join(this.dir, 'events.jsonl');
-    this.appendLine(eventsFile, line);
-    if (input.type === 'request' || input.type === 'response') {
-      this.appendLine(path.join(this.dir, 'network.jsonl'), line);
-    } else if (input.type === 'console') {
-      this.appendLine(path.join(this.dir, 'console.jsonl'), line);
+    try {
+      // NW-AUD-018: one firewall, one vocabulary — every authenticated event
+      // byte is screened and bounded before any of the three streams see it.
+      this.firewall('events', ev, line);
+      const eventsFile = path.join(this.dir, 'events.jsonl');
+      this.appendLine(eventsFile, line);
+      if (input.type === 'request' || input.type === 'response') {
+        this.appendLine(path.join(this.dir, 'network.jsonl'), line);
+      } else if (input.type === 'console') {
+        this.appendLine(path.join(this.dir, 'console.jsonl'), line);
+      }
+      this.events.push(ev);
+      return ev;
+    } catch (error) {
+      this.integrityFailed = true;
+      throw error;
     }
-    this.events.push(ev);
-    return ev;
   }
 
   /** Capture a screenshot; returns its path relative to the run dir (or null). */
@@ -538,13 +606,22 @@ export class RunRecorder {
 
   /** Write summary.json and return the run summary. */
   async finalize(input: { passed: boolean; notes?: string[] }): Promise<RunSummary> {
-    const proxySummary = this.syncProxyViolations();
+    if (this.integrityFailed) throw new Error('RUN_EVIDENCE_INTEGRITY_FAILED');
+    this.assertDurableEventState();
+    let proxySummary: ProxySummary | null;
+    try {
+      proxySummary = this.syncProxyViolations();
+    } catch {
+      this.integrityFailed = true;
+      throw new Error('RUN_EVIDENCE_INTEGRITY_FAILED');
+    }
+    const durableEvents = this.assertDurableEventState();
     const endedAt = this.now().toISOString();
     const counts: Record<string, number> = {};
     const severityCounts: Record<string, number> = {};
     const hardFailures: RunSummary['hardFailures'] = [];
     const screenshots: string[] = [];
-    for (const ev of this.events) {
+    for (const ev of durableEvents) {
       counts[ev.type] = (counts[ev.type] ?? 0) + 1;
       severityCounts[ev.severity] = (severityCounts[ev.severity] ?? 0) + 1;
       if (ev.type === 'hard-failure') {
@@ -566,7 +643,7 @@ export class RunRecorder {
         screenshots.push(ev.data.file);
       }
     }
-    const startedAt = this.events[0]?.ts ?? this.startedAt;
+    const startedAt = durableEvents[0]?.ts ?? this.startedAt;
     const summary: RunSummary = {
       runId: this.runId,
       environment: this.environment,
@@ -577,7 +654,7 @@ export class RunRecorder {
       endedAt,
       durationMs: Math.max(0, Date.parse(endedAt) - Date.parse(startedAt)),
       passed: input.passed && (proxySummary === null || proxySummary.violations === 0),
-      eventCount: this.events.length,
+      eventCount: durableEvents.length,
       counts,
       severityCounts,
       hardFailures,

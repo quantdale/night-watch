@@ -5,6 +5,11 @@
 - Problem: same-run recorder reuse and durable divergence can produce a false
   passing summary.
 - Reproduction: synthetic A/B evidence is recorded in the parent task.
+- Changes: exclusive run-directory admission, fsync-backed appends, integrity
+  latch, durable JSONL reconciliation, and four new transaction regressions.
+- Validation: focused evidence suite 19/19; typecheck/hardening/schema PASS;
+  identity/latch mutations detected in disposable archives.
 - Safety: NONE; temporary synthetic runs only.
-- Remaining: failing regressions, implementation, mutation proof, milestone
-  validation, checkpoint, and successor reassessment.
+- Remaining: implementation checkpoint, broad gate lanes, continuity
+  reconciliation, and successor reassessment. Full arbitrary-SIGKILL journal
+  recovery is explicitly not claimed.

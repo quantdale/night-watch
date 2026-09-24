@@ -57,7 +57,7 @@ as an explicit residual.
 - Implementation actions: add failing regressions before source changes.
 - Acceptance criteria: current code reproduces each claimed failure.
 - Validation commands: focused evidence suite.
-- Status: COMPLETE
+- **Status:** COMPLETE
 
 ### M2 — Exclusive identity and durable truth
 
@@ -68,7 +68,7 @@ as an explicit residual.
 - Acceptance criteria: same-run/mirror/torn/mismatch cases fail closed; normal
   path remains green.
 - Validation commands: focused evidence suite and typecheck.
-- Status: IN_PROGRESS
+- **Status:** COMPLETE
 
 ### M3 — Adversarial validation and checkpoint
 
@@ -78,7 +78,7 @@ as an explicit residual.
   guard in temporary mutations and prove detection.
 - Acceptance criteria: no false PASS; residuals explicit.
 - Validation commands: `gate:dev`, `gate:milestone`.
-- Status: NOT_STARTED
+- **Status:** IN_PROGRESS
 
 ### M4 — Close and reassess
 
@@ -100,6 +100,9 @@ source-drift failures without weakening unrelated tests.
 
 - 2026-09-24 — Select after shard/census children: the recorder reproduction
   has direct false-summary impact and a bounded fail-closed root-cause slice.
+- 2026-09-24 — Implementation uses exclusive directory creation, fsync-backed
+  append acknowledgement, a failure latch, and durable JSONL reconciliation;
+  arbitrary historical crash recovery remains explicitly out of scope.
 
 ## Discoveries
 
