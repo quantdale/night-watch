@@ -149,9 +149,23 @@ reassess, and repeat. Use full certification only at release groups.
   final firewall or census; local unauthenticated behavior remains compatible.
 - Validation commands: focused proxy/privacy tests, `npm run gate:dev`, then
   `npm run gate:milestone`.
+- **Status:** BLOCKED
+
+### M7 — Credential-use binding successor
+
+- Objective: prevent credentials from entering a document/form that changed
+  after preflight approval.
+- Files/areas: `src/auth/devAutoLogin.ts`, `src/auth/loginForm.ts`, guarded
+  browser capability code, synthetic auth security tests.
+- Implementation actions: reproduce navigation/DOM/form replacement between
+  retrieval and effects; implement a one-shot, revalidated, fail-closed binding.
+- Acceptance criteria: no secret-bearing effect occurs after any identity/
+  route/form/proxy/source drift; no real credential or target is used.
+- Validation commands: focused auth/security tests, `npm run gate:dev`, then
+  `npm run gate:milestone`.
 - **Status:** IN_PROGRESS
 
-### M7 — Final adversarial reassessment and closure
+### M8 — Final adversarial reassessment and closure
 
 - Objective: prove a legitimate terminal condition and reconcile final truth.
 - Files/areas: task/report/OpenSpec/project-state surfaces as required.
@@ -195,10 +209,11 @@ green without understanding the cause.
 - 2026-09-24 — Popup L0 readiness was reproduced but the attempted L1/page-event
   barrier did not intercept the first popup navigation; it was reverted and is
   deferred for a lower-level CDP target design.
-- 2026-09-24 — Select proxy raw-event persistence next. The configured proxy
-  event log is written before the recorder's later sanitized projection and is
-  absent from the authenticated writer census, giving a narrower local
-  writer-boundary correction.
+- 2026-09-24 — Proxy raw-event persistence is implemented and focused/mutation
+  validated, but its broad gate is blocked by 12 baseline/source-drift failures.
+- 2026-09-24 — Select credential-use binding next. The remaining High-severity
+  candidate has a direct synthetic post-precheck navigation/form race and a
+  bounded fail-closed local test surface.
 
 ## Discoveries
 

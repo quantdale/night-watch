@@ -70,7 +70,7 @@ census refusal.
   broad source-intelligence residual.
 - Acceptance criteria: mutations detected; no false PASS.
 - Validation commands: `gate:dev`, `gate:milestone`.
-- **Status:** IN_PROGRESS
+- **Status:** BLOCKED
 
 ### M4 — Close and reassess
 
@@ -79,7 +79,7 @@ census refusal.
 - Implementation actions: record residuals and reassess credential/other gaps.
 - Acceptance criteria: no false completion claim.
 - Validation commands: continuity checks.
-- Status: NOT_STARTED
+- **Status:** NOT_STARTED
 
 ## Validation Strategy
 

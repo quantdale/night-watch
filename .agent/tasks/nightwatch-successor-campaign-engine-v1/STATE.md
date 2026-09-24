@@ -45,7 +45,9 @@ implementation checkpoint.
   broad gate lanes retain 12 baseline/source-drift failures.
 - **M5 BLOCKED** — popup L0 race reproduced, but the tested L1/page-event
   barrier did not intercept the first popup navigation; no fix was claimed.
-- **M6 IN_PROGRESS** — proxy raw-event persistence/firewall successor selected.
+- **M6 BLOCKED** — proxy event firewall implementation is complete, but broad
+  gate lanes retain 12 baseline/source-drift failures.
+- **M7 IN_PROGRESS** — credential-use binding successor selected.
 - Owner resolution rechecked the exact canonical diff against the recorded
   patch and HEAD. It was mechanically confirmed as unintended formatter/editor
   churn, including invalid CSS fallback corruption `#fff` -> `# fff)`.
@@ -59,13 +61,15 @@ implementation checkpoint.
 
 ## Work In Progress
 
-The proxy event firewall implementation is checkpointed; focused/static/
-mutation validation is green. Its broad gate lanes and final status remain.
+The proxy event firewall child is honestly BLOCKED by the classified broad-
+gate residual. Credential-use binding is next; no real credential or target
+will be accessed.
 
 ## Exact Next Action
 
-Run post-checkpoint `gate:dev` and `gate:milestone`, classify the exact residual,
-then close or block the proxy child and reassess.
+Create and strict-validate the credential-use binding child, reproduce the
+post-precheck navigation/form race with synthetic browser fixtures, then define
+a fail-closed one-shot binding invariant.
 
 ## Files Changed
 
@@ -206,10 +210,10 @@ implementation with a separately classified broad-gate blocker.
 
 ## Blockers
 
-The shard, census, and run-evidence children are blocked by broad affected-lane
-failures; the popup race is separately blocked by the absence of a proven
-pre-navigation target barrier. These are classified and must not be absorbed
-into the next child.
+The shard, census, run-evidence, and proxy children are blocked by broad
+affected-lane failures; the popup race is separately blocked by the absence of
+a proven pre-navigation target barrier. These are classified and must not be
+absorbed into the credential child.
 
 ## Safety Events
 
@@ -219,11 +223,11 @@ publication, force push, or history rewrite occurred.
 
 ## Deferred / Follow-Up
 
-- Execute proxy raw-event persistence next.
-- Reassess credential-use binding and a lower-level popup target barrier after
-  that child.
-- Keep shard, census, run-evidence, and popup prototype records BLOCKED and the
-  completed priority campaign terminal and historical.
+- Execute credential-use binding next.
+- Reassess a lower-level popup target barrier and remaining evidence
+  architecture after that child.
+- Keep shard, census, run-evidence, proxy, and popup prototype records BLOCKED
+  and the completed priority campaign terminal and historical.
 
 ## Resume Recipe
 

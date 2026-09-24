@@ -15,9 +15,9 @@
 
 - [x] 3.1 Test valid, unknown, private, control-character, and malformed events.
 - [x] 3.2 Mutate validator/census guards and prove detection.
-- [ ] 3.3 Run focused/static/hardening/milestone lanes.
+- [ ] ~~3.3 Run focused/static/hardening/milestone lanes.~~ [PARTIAL/BLOCKED: focused/static/hardening pass; broad lanes retain 12 baseline/source-drift failures.]
 
 ## 4. Handoff
 
-- [ ] 4.1 Reconcile task/OpenSpec truth and commit checkpoint.
-- [ ] 4.2 Reassess remaining local candidates.
+- [ ] ~~4.1 Reconcile task/OpenSpec truth and commit checkpoint.~~ [DEFERRED: implementation checkpoint retained; child BLOCKED pending broad-gate reconciliation.]
+- [ ] ~~4.2 Reassess remaining local candidates.~~ [DEFERRED: umbrella successor selection continues independently.]

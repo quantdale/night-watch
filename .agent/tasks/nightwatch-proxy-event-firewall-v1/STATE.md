@@ -4,14 +4,14 @@
 
 Task ID: nightwatch-proxy-event-firewall-v1
 Phase: PROXY_EVENT_FIREWALL_V1
-Status: IN_PROGRESS
+Status: BLOCKED
 Starting SHA: ea0b7110efa1065b470efb57f2cd3ff5136a9fa0
 Last validated implementation SHA: d5175a7d676cbff5584b887363ceaa1d7d7b879f
 Last substantive checkpoint SHA: d5175a7d676cbff5584b887363ceaa1d7d7b879f
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-successor-campaign-en-628d8bb9
-Last checkpoint: 2026-09-24 — proxy event firewall implementation checkpoint d5175a7d676cbff5584b887363ceaa1d7d7b879f; focused/static/mutation green; broad gate pending.
+Last checkpoint: 2026-09-24 — proxy event firewall implementation checkpoint d5175a7d676cbff5584b887363ceaa1d7d7b879f; focused/static/mutation green; broad gate residual classified.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: ea0b7110efa1065b470efb57f2cd3ff5136a9fa0
@@ -19,7 +19,7 @@ LAST_VALIDATED_IMPLEMENTATION_SHA: d5175a7d676cbff5584b887363ceaa1d7d7b879f
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: d5175a7d676cbff5584b887363ceaa1d7d7b879f
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
-PHASE_PROXY_EVENT_FIREWALL_V1_STATUS: IN_PROGRESS
+PHASE_PROXY_EVENT_FIREWALL_V1_STATUS: BLOCKED
 
 ## Objective
 
@@ -28,9 +28,9 @@ boundary, and make the writer census claim that boundary explicitly.
 
 ## Current Milestone
 
-M3 — adversarial validation and checkpoint. Raw event validation, owner-only
-append, and proxy-writer census registration are implemented; broad gate
-validation remains.
+M3 — adversarial validation is BLOCKED by the broad affected lane. The raw
+firewall implementation and focused/static/mutation proofs are green; the broad
+residual is outside this child.
 
 ## Completed Milestones
 
@@ -47,14 +47,15 @@ validation remains.
 
 ## Work In Progress
 
-Implementation is complete but uncommitted in the owned worktree. The child
-checkpoint, broad gate lanes, and final continuity reconciliation remain.
+None. The implementation is checkpointed; this child is blocked only by the
+classified broad-gate residual. The umbrella may select the next independent
+campaign.
 
 ## Exact Next Action
 
-Commit the implementation checkpoint, run `gate:dev` and `gate:milestone`, then
-classify any residual and close or block this child without overstating the
-runtime-log scope.
+Keep this child blocked with its evidence. Return to the umbrella state and
+select the credential-use binding child; do not absorb broad source-drift
+failures into proxy-event work.
 
 ## Files Changed
 
@@ -114,8 +115,9 @@ Reason: it directly closes the raw persistence gap with lower risk.
 
 ## Blockers
 
-None for the implementation. Prior broad-gate residuals remain independent;
-this child does not claim full run-evidence journaling.
+- `gate:dev` and `gate:milestone` each retain 12 baseline/source-drift
+  failures; no new proxy-firewall failure appears.
+- The child is honestly BLOCKED rather than claiming a green milestone.
 
 ## Safety Events
 
@@ -123,16 +125,16 @@ NONE. No proxy target or authenticated run was contacted.
 
 ## Deferred / Follow-Up
 
-Full journal recovery, popup target admission, and credential binding remain.
+- Preserve the 12 baseline/source-drift failures for separate reconciliation.
+- The umbrella successor loop may proceed with credential-use binding.
 
 ## Resume Recipe
 
 1. Read SPEC, PLAN, and STATE.
-2. Inspect current proxy event types/readers and census tests.
-3. Add failing unknown-field/census tests.
-4. Implement validator/private append/census registration.
-5. Run focused/static/mutation/milestone validation and checkpoint.
+2. Preserve this blocked child and its evidence.
+3. Return to the umbrella STATE and select the next child.
+4. Require a clean owned session and current reproduction before implementation.
 
 ## Completion Snapshot
 
-Not applicable while IN_PROGRESS.
+Not applicable while BLOCKED; no green milestone or completion claim is made.

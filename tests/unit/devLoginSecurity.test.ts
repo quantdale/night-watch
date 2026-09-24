@@ -7,7 +7,11 @@ import os from 'node:os';
 import path from 'node:path';
 import { startFixtureServer } from '../../src/browser/fixtures/fixtureServer';
 import { selectEnvironment } from '../../src/core/environment';
-import { fillAndSubmitSourceApprovedDevLogin, sourceApprovedDevLoginControls } from '../../src/auth/loginForm';
+import {
+  createSourceApprovedDevLoginBinding,
+  fillAndSubmitSourceApprovedDevLogin,
+  sourceApprovedDevLoginControls,
+} from '../../src/auth/loginForm';
 import { isApprovedDevAuthTokenExchange, runDevAuthRefresh } from '../../src/auth/devAutoLogin';
 import {
   CHROME_DEVTOOLS_MCP_TOOL_COUNT,
@@ -26,11 +30,52 @@ test('source-approved login helper fills the synthetic form once without evidenc
   try {
     await page.goto(`${server.origin}/`, { waitUntil: 'domcontentloaded' });
     await expect(page.locator('input[name="username"]')).toBeVisible();
-    await fillAndSubmitSourceApprovedDevLogin(sourceApprovedDevLoginControls(page), {
+    const controls = sourceApprovedDevLoginControls(page);
+    const binding = await createSourceApprovedDevLoginBinding(page, controls);
+    await fillAndSubmitSourceApprovedDevLogin(binding, {
       username: 'synthetic-dev-user',
       password: SYNTHETIC_PASSWORD,
     });
+    await binding.revoke();
     await expect(page).toHaveURL(`${server.origin}/synthetic-authenticated`);
+  } finally {
+    await server.close();
+  }
+});
+
+test('a replaced login document invalidates the one-shot binding before secret input', async ({ page }) => {
+  const server = await startFixtureServer('auth');
+  try {
+    await page.goto(`${server.origin}/`, { waitUntil: 'domcontentloaded' });
+    const controls = sourceApprovedDevLoginControls(page);
+    const binding = await createSourceApprovedDevLoginBinding(page, controls);
+    await page.locator('form').evaluate((form) => {
+      const replacement = form.cloneNode(true);
+      form.replaceWith(replacement);
+    });
+    await expect(fillAndSubmitSourceApprovedDevLogin(binding, {
+      username: 'synthetic-dev-user',
+      password: SYNTHETIC_PASSWORD,
+    })).rejects.toThrow(/AUTH_FORM_BINDING_STALE/);
+    expect(page.url()).not.toContain('synthetic-authenticated');
+  } finally {
+    await server.close();
+  }
+});
+
+test('a changed form action invalidates the one-shot binding', async ({ page }) => {
+  const server = await startFixtureServer('auth');
+  try {
+    await page.goto(`${server.origin}/`, { waitUntil: 'domcontentloaded' });
+    const controls = sourceApprovedDevLoginControls(page);
+    const binding = await createSourceApprovedDevLoginBinding(page, controls);
+    await page.locator('form').evaluate((form) => {
+      form.setAttribute('action', '/changed');
+    });
+    await expect(fillAndSubmitSourceApprovedDevLogin(binding, {
+      username: 'synthetic-dev-user',
+      password: SYNTHETIC_PASSWORD,
+    })).rejects.toThrow(/AUTH_FORM_BINDING_STALE/);
   } finally {
     await server.close();
   }

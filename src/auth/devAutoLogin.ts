@@ -30,7 +30,13 @@ import { OutboundPolicy, OUTBOUND_POLICY_VERSION } from '../core/safety/outbound
 import { checkProxyHealth, requireProxyRuntime } from '../proxy/runtime';
 import type { DevCredentialProvider, DevLoginCredential } from './devCredentialProvider';
 import { getDevCredentialProvider, DevCredentialUnavailableError } from './devCredentialProvider';
-import { fillAndSubmitSourceApprovedDevLogin, sourceApprovedDevLoginControls, type SourceApprovedDevLoginControls } from './loginForm';
+import {
+  createSourceApprovedDevLoginBinding,
+  fillAndSubmitSourceApprovedDevLogin,
+  sourceApprovedDevLoginControls,
+  type SourceApprovedDevLoginBinding,
+  type SourceApprovedDevLoginControls,
+} from './loginForm';
 
 const AUTH_REFRESH_EVIDENCE_POLICY = Object.freeze({
   metadataFirst: true,
@@ -79,6 +85,7 @@ export type DevAuthFailureCode =
   | 'AUTH_ROUTE_FAILURE'
   | 'AUTH_NETWORK_FAILURE'
   | 'AUTH_FORM_NOT_READY'
+  | 'AUTH_FORM_BINDING_STALE'
   | 'LOGIN_FORM_REJECTED'
   | 'MFA_REQUIRED'
   | 'POST_LOGIN_AUTH_NOT_PAGE_READABLE'
@@ -448,6 +455,7 @@ async function waitForPostSubmit(
 
 function safeErrorCode(error: unknown): DevAuthFailureCode {
   if (error instanceof DevAuthFailure) return error.code;
+  if (error instanceof Error && error.message === 'AUTH_FORM_BINDING_STALE') return 'AUTH_FORM_BINDING_STALE';
   return 'AUTH_NETWORK_FAILURE';
 }
 
@@ -522,6 +530,7 @@ export async function runDevAuthRefresh(opts: DevAuthRefreshOptions): Promise<De
     authenticatedEvidencePolicy: 'metadata-first-no-bodies-no-dom-no-storage-no-screenshots-no-traces',
   });
   let guarded: NightwatchContext | undefined;
+  let loginBinding: SourceApprovedDevLoginBinding | undefined;
   let pendingPath: string | undefined;
   let mfaOccurred = false;
   let recorderFinalized = false;
@@ -538,14 +547,17 @@ export async function runDevAuthRefresh(opts: DevAuthRefreshOptions): Promise<De
       await guarded.page.goto(target.toString(), { waitUntil: 'domcontentloaded', timeout: 30_000 });
       if (!approvedLoginLocation(opts.environment, target, guarded.page.url())) throw new DevAuthFailure('AUTH_ROUTE_FAILURE');
       const controls = await waitForLoginControls(guarded.page, opts.environment, target);
+      loginBinding = await createSourceApprovedDevLoginBinding(guarded.page, controls);
+      await loginBinding.assertCurrent();
+      const activeBinding = loginBinding;
 
-      // Mandatory ordering: all safety conditions and login form structure are
-      // established before the provider is asked for plaintext credentials.
+      // Mandatory ordering: all safety conditions and the one-shot document
+      // binding are established before the provider is asked for plaintext.
       credential = provider.getDevLoginCredential();
       if (credential.username.trim() === '' || credential.password === '') throw new DevAuthFailure('LOCAL_DEV_SECRET_CONFIGURATION_REQUIRED');
       const [authResponseStatus] = await Promise.all([
         waitForAuthTokenExchange(guarded.page, opts.environment, target),
-        fillAndSubmitSourceApprovedDevLogin(controls, credential),
+        fillAndSubmitSourceApprovedDevLogin(activeBinding, credential),
       ]);
       const postSubmit = await waitForPostSubmit(guarded.page, guarded, opts.environment, target, authResponseStatus);
       if (postSubmit === 'MFA_REQUIRED') {
@@ -582,6 +594,7 @@ export async function runDevAuthRefresh(opts: DevAuthRefreshOptions): Promise<De
       throw new DevAuthFailure(code);
     }
   } finally {
+    await loginBinding?.revoke();
     if (credential !== undefined) {
       credential.username = '';
       credential.password = '';
