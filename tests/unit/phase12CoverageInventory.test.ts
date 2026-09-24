@@ -21,7 +21,6 @@ import {
 } from '../../src/oracles/expectations/recipes/registry';
 import type { RealSourceCurrentness, RealSourceReader } from '../../src/oracles/expectations/recipes/types';
 import { createRealSourceSyntheticState } from '../helpers/phase11a3Fixtures';
-import { PHASE5_SOURCE_SHAS } from '../../src/api/phase5/catalog';
 import { DEFAULT_SIBLING_ROOT } from '../../src/core/source/siblingSource';
 
 const DISPOSABLE_SNAPSHOT_SHA = 'e026c85522d201724033f024456da3efa17fe07a';
@@ -67,7 +66,7 @@ function buildSyntheticInventory(): ReturnType<typeof buildCoverageInventory> {
   });
 }
 
-function tryLiveInventory(): ReturnType<typeof buildCoverageInventory> | null {
+function tryLiveInventory(canonicalHeadBefore: string | null = null): ReturnType<typeof buildCoverageInventory> | null {
   if (!fs.existsSync(path.join(DISPOSABLE_ROOT, '.git'))) return null;
   const reader = snapshotReader(DISPOSABLE_ROOT);
   // Verify snapshot SHA is exactly the expected one
@@ -89,34 +88,21 @@ function tryLiveInventory(): ReturnType<typeof buildCoverageInventory> | null {
     currentness: snapshotCurrentness(DISPOSABLE_SNAPSHOT_SHA),
     snapshot: { repoId: 'mobingilabs/ripple-api', sha: DISPOSABLE_SNAPSHOT_SHA },
     remoteSha: KNOWN_REMOTE_MASTER_SHA,
-    canonicalUnchanged: checkCanonicalUnchanged(),
+    canonicalUnchanged: canonicalHeadBefore === null ? null : canonicalSiblingHead() === canonicalHeadBefore,
   });
 }
 
-/**
- * Is the canonical sibling checkout still at the ADMITTED snapshot?
- *
- * The expected SHA is read from `PHASE5_SOURCE_SHAS.rippleApi`, the one
- * current-source authority, rather than repeated as a literal. The literal
- * form was a second, independent authority: when the sibling advanced and the
- * admission moved forward with it, this copy stayed behind and reported a
- * mutation that had not happened.
- *
- * The sibling root is resolved the way every other sibling-reading test
- * resolves it, so no machine-specific absolute path is embedded here.
- */
-function checkCanonicalUnchanged(): boolean | null {
+/** Read the current canonical sibling HEAD without comparing it to a historical pin. */
+function canonicalSiblingHead(): string | null {
   const root = process.env['NIGHTWATCH_SIBLING_ROOT']?.trim() || DEFAULT_SIBLING_ROOT;
   const sibHeadPath = path.join(root, 'mobingilabs/ripple-api/.git/HEAD');
   try {
     const head = fs.readFileSync(sibHeadPath, 'utf8').trim();
     if (head.startsWith('ref:')) {
       const ref = head.replace(/^ref:\s*/, '');
-      const sibGitDir = path.join(path.dirname(sibHeadPath), ref);
-      const sha = fs.readFileSync(sibGitDir, 'utf8').trim();
-      return sha === PHASE5_SOURCE_SHAS.rippleApi;
+      return fs.readFileSync(path.join(path.dirname(sibHeadPath), ref), 'utf8').trim();
     }
-    return head === PHASE5_SOURCE_SHAS.rippleApi;
+    return head;
   } catch {
     return null;
   }
@@ -358,14 +344,11 @@ test.describe('Phase 12 WORKSTREAM_D: fresh source (owner-local)', () => {
   });
 
   test('G03 canonical sibling before/after unchanged', () => {
-    const inv = tryLiveInventory();
-    if (inv === null) {
-      // CI: sibling not available — synthetic path still validates no mutation
-      expect(checkCanonicalUnchanged()).not.toBe(false);
-      return;
-    }
-    // When disposable snapshot exists, canonical sibling must be unchanged
-    expect(inv.canonicalUnchanged).toBe(true);
+    const before = canonicalSiblingHead();
+    const inv = tryLiveInventory(before);
+    const after = canonicalSiblingHead();
+    expect(after).toBe(before);
+    if (inv !== null) expect(inv.canonicalUnchanged).toBe(true);
   });
 
   test('live disposable snapshot derives 4 historical + 4 collection', () => {

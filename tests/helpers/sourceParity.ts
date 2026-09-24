@@ -43,16 +43,22 @@ export interface SourceParitySnapshot {
   readonly review: SourceReviewQueue;
 }
 
-export function createSourceParityFixture(): SourceParityFixture {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-source-parity-'));
+export function createSourceParityFixture(options: { readonly sha?: string; readonly prefix?: string } = {}): SourceParityFixture {
+  const sha = options.sha ?? SOURCE_PARITY_SHA;
+  const prefix = options.prefix ?? 'nightwatch-source-parity-';
+  if (!/^[0-9a-f]{40}$/.test(sha)) throw new Error('SOURCE_PARITY_SHA_INVALID');
+  if (!/^[a-z0-9-]+$/.test(prefix)) throw new Error('SOURCE_PARITY_PREFIX_INVALID');
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), prefix));
   const repo = path.join(root, 'mobingilabs', 'ripple-api');
   const git = path.join(repo, '.git');
   fs.mkdirSync(path.join(git, 'refs', 'heads'), { recursive: true });
   fs.writeFileSync(path.join(git, 'HEAD'), 'ref: refs/heads/main\n');
-  fs.writeFileSync(path.join(git, 'refs', 'heads', 'main'), `${SOURCE_PARITY_SHA}\n`);
-  fs.mkdirSync(path.join(repo, 'src', 'App', 'Route', 'Config'), { recursive: true });
+  fs.writeFileSync(path.join(git, 'refs', 'heads', 'main'), `${sha}\n`);
   fs.mkdirSync(path.join(repo, 'src', 'App', 'Handler'), { recursive: true });
   fs.mkdirSync(path.join(repo, 'src', 'App', 'Schema'), { recursive: true });
+  fs.mkdirSync(path.join(repo, 'src', 'App', 'Core', 'Enum'), { recursive: true });
+  fs.writeFileSync(path.join(repo, 'src', 'App', 'Core', 'Enum', 'Account.php'), '<?php\nenum Account {}\n');
+  fs.mkdirSync(path.join(repo, 'src', 'App', 'Route', 'Config'), { recursive: true });
   fs.writeFileSync(path.join(repo, 'src', 'App', 'Route', 'Config', 'Routing.yaml'), [
     '"get:/accts":',
     '  client: App\\Handler\\Account',
@@ -83,7 +89,7 @@ function getAlternate($source) {
     runtimeMappingNamespace: 'ripple',
     approvedRepositories: [{
       repoId: 'mobingilabs/ripple-api',
-      expectedSourceSha: SOURCE_PARITY_SHA,
+      expectedSourceSha: sha,
       allowlistedRoots: ['src'],
       allowedExtensions: ['.php', '.json', '.yaml'],
       maxFiles: 64,

@@ -4,22 +4,27 @@
 // hardcoded digests. Local read-only sibling source only.
 
 import { test, expect } from '@playwright/test';
-import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
-
-import { DEFAULT_SIBLING_ROOT } from '../../src/core/source/siblingSource';
+import { PHASE5_SOURCE_SHAS } from '../../src/api/phase5/catalog';
+import { createSourceParityFixture, type SourceParityFixture } from '../helpers/sourceParity';
 
 const ROOT = path.resolve(__dirname, '..', '..');
-const RIPPLE_API = 'mobingilabs/ripple-api';
+let fixture: SourceParityFixture;
 
-function siblingRepoAvailable(repoId: string): boolean {
-  return fs.existsSync(path.join(DEFAULT_SIBLING_ROOT, ...repoId.split('/'), '.git'));
-}
+test.beforeEach(() => {
+  fixture = createSourceParityFixture({ sha: PHASE5_SOURCE_SHAS.rippleApi, prefix: 'nightwatch-explain-surface-test-' });
+});
 
-function runCli(args: readonly string[]): { status: number | null; stdout: string; stderr: string } {
+test.afterEach(() => {
+  fixture?.dispose();
+});
+
+
+function runCli(args: readonly string[], siblingRoot: string): { status: number | null; stdout: string; stderr: string } {
   const result = spawnSync(process.execPath, [path.join(ROOT, 'bin', 'nightwatch-intelligence.mjs'), ...args], {
     cwd: ROOT,
+    env: { ...process.env, NIGHTWATCH_REPOS_ROOT: siblingRoot },
     encoding: 'utf8',
     timeout: 180000,
     maxBuffer: 8 * 1024 * 1024,
@@ -27,8 +32,8 @@ function runCli(args: readonly string[]): { status: number | null; stdout: strin
   return { status: result.status, stdout: String(result.stdout ?? ''), stderr: String(result.stderr ?? '') };
 }
 
-function discoverSurfaceId(): string {
-  const result = runCli(['surfaces', '--repo=mobingilabs/ripple-api', '--json']);
+function discoverSurfaceId(siblingRoot: string): string {
+  const result = runCli(['surfaces', '--repo=mobingilabs/ripple-api', '--json'], siblingRoot);
   expect(result.status).toBe(0);
   const document = JSON.parse(result.stdout) as { surfaces?: { surfaceId?: unknown }[] };
   const ids = (document.surfaces ?? [])
@@ -39,11 +44,10 @@ function discoverSurfaceId(): string {
 }
 
 test.describe('explain-surface argument forms', () => {
-  test.skip(() => !siblingRepoAvailable(RIPPLE_API), 'requires the read-only sibling Alphaus checkouts');
 
   test('README flag order resolves a proven id', () => {
-    const surfaceId = discoverSurfaceId();
-    const result = runCli(['explain-surface', '--repo=mobingilabs/ripple-api', `--surface=${surfaceId}`, '--json']);
+    const surfaceId = discoverSurfaceId(fixture.root);
+    const result = runCli(['explain-surface', '--repo=mobingilabs/ripple-api', `--surface=${surfaceId}`, '--json'], fixture.root);
     expect(result.status).toBe(0);
     const document = JSON.parse(result.stdout) as { command?: unknown; requestedSurface?: unknown; surface?: unknown };
     expect(document.command).toBe('explain-surface');
@@ -52,9 +56,9 @@ test.describe('explain-surface argument forms', () => {
   });
 
   test('positional-after-flags order resolves identically', () => {
-    const surfaceId = discoverSurfaceId();
-    const flagged = runCli(['explain-surface', '--repo=mobingilabs/ripple-api', `--surface=${surfaceId}`, '--json']);
-    const positional = runCli(['explain-surface', '--repo=mobingilabs/ripple-api', surfaceId, '--json']);
+    const surfaceId = discoverSurfaceId(fixture.root);
+    const flagged = runCli(['explain-surface', '--repo=mobingilabs/ripple-api', `--surface=${surfaceId}`, '--json'], fixture.root);
+    const positional = runCli(['explain-surface', '--repo=mobingilabs/ripple-api', surfaceId, '--json'], fixture.root);
     expect(positional.status).toBe(0);
     const flaggedDocument = JSON.parse(flagged.stdout) as { surface?: unknown };
     const positionalDocument = JSON.parse(positional.stdout) as { surface?: unknown };
@@ -62,7 +66,7 @@ test.describe('explain-surface argument forms', () => {
   });
 
   test('malformed id stays refused', () => {
-    const result = runCli(['explain-surface', '--repo=mobingilabs/ripple-api', 'op:!!bad id!!', '--json']);
+    const result = runCli(['explain-surface', '--repo=mobingilabs/ripple-api', 'op:!!bad id!!', '--json'], fixture.root);
     expect(result.status).not.toBe(0);
     expect(result.stderr).toContain('EXPLAIN_SURFACE_ID_UNSAFE');
   });

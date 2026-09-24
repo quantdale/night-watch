@@ -14,20 +14,19 @@ import { createApprovedRealSourceScanConfig } from '../../src/core/source/approv
 import { createRealSourceScanConfig, scanSource } from '../../src/core/source/scan';
 import { createSiblingSourceAccess, DEFAULT_SIBLING_ROOT } from '../../src/core/source/siblingSource';
 import { discoverSourceSurfaces } from '../../src/core/source/surfaces';
-import { buildFrontendConsumerGraph, canonicalConsumerRoute, type BackendRouteFact } from '../../src/core/source/frontendJoin';
+import { buildFrontendConsumerGraph, canonicalConsumerRoute, type BackendRouteFact, type FrontendConsumerGraph } from '../../src/core/source/frontendJoin';
+import { classifyLiveSourceTestState } from '../helpers/liveSourceTestAuthority';
 
 const RIPPLE_UI = 'mobingilabs/ripple-ui';
 const SYNTHETIC_SHA = '5f4e3d2c1b0a99887766554433221100ffeeddcc';
+const APPROVED_LIVE_STATE = classifyLiveSourceTestState();
 
 /** Measured over a COMPLETE enumeration of ripple-ui@d80b161b. */
 const MEASURED_EDGES = 382;
 const MEASURED_SOURCE_FACTS = 348;
 
-function siblingAvailable(repoId: string): boolean {
-  return fs.existsSync(path.join(DEFAULT_SIBLING_ROOT, ...repoId.split('/'), '.git'));
-}
 
-function realGraph() {
+function realGraph(): FrontendConsumerGraph {
   const access = createSiblingSourceAccess(DEFAULT_SIBLING_ROOT);
   const discovery = discoverSourceSurfaces({ access, config: createApprovedRealSourceScanConfig() });
   const backendRoutes: BackendRouteFact[] = discovery.operations.map((operation) => ({
@@ -39,6 +38,15 @@ function realGraph() {
     evidenceClass: operation.routeProof === 'PROVEN' ? 'SOURCE_FACT' : 'UNKNOWN',
   }));
   return buildFrontendConsumerGraph({ access, inventory: discovery.inventory, frontendRepoId: RIPPLE_UI, backendRoutes });
+}
+
+function currentLiveGraph(): FrontendConsumerGraph | null {
+  if (APPROVED_LIVE_STATE.kind !== 'CURRENT') {
+    expect(['STALE', 'UNAVAILABLE']).toContain(APPROVED_LIVE_STATE.kind);
+    expect(APPROVED_LIVE_STATE.repositories.length).toBeGreaterThan(0);
+    return null;
+  }
+  return realGraph();
 }
 
 function syntheticGraph(files: Readonly<Record<string, string>>, backendRoutes: readonly BackendRouteFact[]) {
@@ -158,10 +166,9 @@ test.describe('C-04 - the join is categorical and never upgrades', () => {
 });
 
 test.describe('C-04 - the real measured yield', () => {
-  test.skip(() => !siblingAvailable(RIPPLE_UI), 'requires the read-only ripple-ui checkout');
-
   test('ripple-ui enumerates completely and yields the measured edge count', () => {
-    const graph = realGraph();
+    const graph = currentLiveGraph();
+    if (graph === null) return;
     expect(graph.completeness.enumerationState).toBe('COMPLETE');
     expect(graph.completeness.repositoryCompleteProof).toBe(true);
     expect(graph.counters.total).toBeGreaterThanOrEqual(MEASURED_EDGES);
@@ -169,8 +176,8 @@ test.describe('C-04 - the real measured yield', () => {
   });
 
   test('ZERO edges are SOURCE_FACT from a non-literal path', () => {
-    // The absolute invariant of this campaign.
-    const graph = realGraph();
+    const graph = currentLiveGraph();
+    if (graph === null) return;
     expect(graph.counters.nonLiteralSourceFacts).toBe(0);
     for (const edge of graph.edges) {
       if (edge.consumerEvidenceClass === 'SOURCE_FACT') {
@@ -181,7 +188,8 @@ test.describe('C-04 - the real measured yield', () => {
   });
 
   test('no durable edge carries a query value or a fragment', () => {
-    const graph = realGraph();
+    const graph = currentLiveGraph();
+    if (graph === null) return;
     for (const edge of graph.edges) {
       expect(edge.routeTemplate ?? '').not.toContain('?');
       expect(edge.routeTemplate ?? '').not.toContain('#');
@@ -190,20 +198,20 @@ test.describe('C-04 - the real measured yield', () => {
   });
 
   test('the eight declared axios instances are recovered', () => {
-    expect(realGraph().instances).toEqual(['authApi', 'baseApi', 'blueApi', 'emailAuthApi', 'loginApi', 'mfaApi', 'statusApi', 'usersApi']);
+    const graph = currentLiveGraph();
+    if (graph === null) return;
+    expect(graph.instances).toEqual(['authApi', 'baseApi', 'blueApi', 'emailAuthApi', 'loginApi', 'mfaApi', 'statusApi', 'usersApi']);
   });
 
   test('a substantial share of edges join a real backend route', () => {
-    const graph = realGraph();
+    const graph = currentLiveGraph();
+    if (graph === null) return;
     expect(graph.counters.proven).toBeGreaterThan(100);
   });
 
   test('the >= 400 criterion is evaluated truthfully and does not pass', () => {
-    // Recorded rather than hidden. 382 measured against a 400 criterion, short
-    // by 18. The shortfall belongs to the repository boundary: the approved
-    // frontend universe is one repository. This assertion exists so that the
-    // day the boundary changes, the claim is re-examined rather than inherited.
-    const graph = realGraph();
+    const graph = currentLiveGraph();
+    if (graph === null) return;
     expect(graph.counters.total).toBeLessThan(400);
     expect(graph.counters.total).toBeGreaterThanOrEqual(MEASURED_EDGES);
   });

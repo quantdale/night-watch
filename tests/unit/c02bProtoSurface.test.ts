@@ -26,11 +26,13 @@ import { createRealSourceScanConfig, scanSource } from '../../src/core/source/sc
 import { discoverSourceSurfaces } from '../../src/core/source/surfaces';
 import { SOURCE_SCAN_EXTENSIONS, SOURCE_SCAN_LANGUAGES } from '../../src/core/source/scanTypes';
 import { readProtoDeclarations } from '../../src/core/source/protoDeclarations';
+import { classifyLiveSourceTestState } from '../helpers/liveSourceTestAuthority';
 
 const BLUEAPI = 'alphauslabs/blueapi';
 const OUCHAN = 'mobingilabs/ouchan';
 const RIPPLE_API = 'mobingilabs/ripple-api';
 const BILLING_PROTO = 'billing/v1/billing.proto';
+const LIVE_REGRESSION_STATE = classifyLiveSourceTestState({ repositoryIds: [BLUEAPI, RIPPLE_API] });
 
 /** Measured at `alphauslabs/blueapi@691422e5`, and reproduced independently by
  * a line-regex baseline taken before the parser existed. */
@@ -200,7 +202,11 @@ test.describe('C-02b — proto operations reach route discovery', () => {
 
 test.describe('C-02b — C-01 no-eviction regression (F-27)', () => {
   test('every operation identity discovered without protobuf survives with it', () => {
-    test.skip(!siblingRepoAvailable(BLUEAPI) || !siblingRepoAvailable(RIPPLE_API), 'sibling checkouts unavailable');
+    if (LIVE_REGRESSION_STATE.kind !== 'CURRENT') {
+      expect(['STALE', 'UNAVAILABLE']).toContain(LIVE_REGRESSION_STATE.kind);
+      expect(LIVE_REGRESSION_STATE.repositories).toHaveLength(2);
+      return;
+    }
 
     const access = realAccess();
     const full = createApprovedRealSourceScanConfig();
@@ -233,7 +239,11 @@ test.describe('C-02b — C-01 no-eviction regression (F-27)', () => {
   });
 
   test('ripple-api keeps its operations after blueapi grows', () => {
-    test.skip(!siblingRepoAvailable(BLUEAPI) || !siblingRepoAvailable(RIPPLE_API), 'sibling checkouts unavailable');
+    if (LIVE_REGRESSION_STATE.kind !== 'CURRENT') {
+      expect(['STALE', 'UNAVAILABLE']).toContain(LIVE_REGRESSION_STATE.kind);
+      expect(LIVE_REGRESSION_STATE.repositories.map((entry) => entry.repoId)).toEqual([BLUEAPI, RIPPLE_API].sort());
+      return;
+    }
     // The exact failure F-27 described: blueapi sorts first, so if a shared
     // budget were still in play ripple-api would silently reach zero.
     const discovery = discoverSourceSurfaces({ access: realAccess(), config: createApprovedRealSourceScanConfig() });

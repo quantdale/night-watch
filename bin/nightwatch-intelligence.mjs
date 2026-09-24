@@ -109,7 +109,8 @@ function sourceDiscoveryPreview() {
   const config = approvedScan.createApprovedRealSourceScanConfig({ repositoryIds });
   // C-05: the boundary itself enforces the owner-approved set, so a caller
   // that built its own scan config still cannot open an unadmitted repository.
-  const access = sourceBoundary.createSiblingSourceAccess(sourceBoundary.DEFAULT_SIBLING_ROOT, {
+  const repositoriesRoot = process.env.NIGHTWATCH_REPOS_ROOT ?? sourceBoundary.DEFAULT_SIBLING_ROOT;
+  const access = sourceBoundary.createSiblingSourceAccess(repositoriesRoot, {
     admittedRepositoryIds: universe.ownerApprovedRepositoryIds(),
   });
   const discovery = surfacesModule.discoverSourceSurfaces({ access, config });

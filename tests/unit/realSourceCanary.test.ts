@@ -15,29 +15,28 @@
 // ---------------------------------------------------------------------------
 
 import { expect, test } from '@playwright/test';
+import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
-import { getPhase5Operation, PHASE5_API_CATALOG, PHASE5_SOURCE_SHAS } from '../../src/api/phase5/catalog';
+import { getPhase5Operation, PHASE5_API_CATALOG } from '../../src/api/phase5/catalog';
 import {
   APPROVED_READ_ONLY_TARGET_IDS,
   DEV_REACHABLE_RECIPE_TARGET_IDS,
   REAL_SOURCE_EXPECTATION_RECIPES,
 } from '../../src/oracles/expectations/recipes/registry';
 import { deriveRealSourceExpectations } from '../../src/oracles/expectations/admission';
-import { DEFAULT_SIBLING_ROOT, createSiblingSourceAccess } from '../../src/core/source/siblingSource';
+import { createSiblingSourceAccess } from '../../src/core/source/siblingSource';
 import { buildRippleJourneyEndpointRegistry } from '../../src/products/ripple/journeyContracts';
 import {
   FIXTURE_REPO_A,
   createFixtureSourceState,
   deriveFixtureExpectations,
 } from '../helpers/phase9a1Fixtures';
+import { createSourceParityFixture } from '../helpers/sourceParity';
+import { classifyLiveSourceTestState } from '../helpers/liveSourceTestAuthority';
 
 const RIPPLE_API_REPO = 'mobingilabs/ripple-api';
-
-function siblingRoot(): string | null {
-  const env = process.env['NIGHTWATCH_SIBLING_ROOT'];
-  if (env !== undefined && env.trim() !== '') return env;
-  return require('node:fs').existsSync(DEFAULT_SIBLING_ROOT) ? DEFAULT_SIBLING_ROOT : null;
-}
+const RIPPLE_LIVE_STATE = classifyLiveSourceTestState({ repositoryIds: [RIPPLE_API_REPO] });
 
 test.describe('Phase 9A.1 — registry consistency (SPEC §17, §32, §33)', () => {
   test('approved-read-only targets exactly mirror the Phase 5 catalog KNOWN_READ operationIds', () => {
@@ -82,24 +81,38 @@ test.describe('Phase 9A.1 — registry consistency (SPEC §17, §32, §33)', () 
   });
 });
 
+  test('the test authority classifier distinguishes current, stale, and unavailable source', () => {
+    const expectedSha = RIPPLE_LIVE_STATE.repositories[0]?.expectedSha;
+    expect(expectedSha).toMatch(/^[0-9a-f]{40}$/);
+    const current = createSourceParityFixture({ sha: expectedSha, prefix: 'nightwatch-current-source-test-' });
+    const stale = createSourceParityFixture({ sha: 'f'.repeat(40), prefix: 'nightwatch-stale-source-test-' });
+    const empty = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-empty-source-test-'));
+    try {
+      expect(classifyLiveSourceTestState({ root: current.root, repositoryIds: [RIPPLE_API_REPO] }).kind).toBe('CURRENT');
+      expect(classifyLiveSourceTestState({ root: stale.root, repositoryIds: [RIPPLE_API_REPO] }).kind).toBe('STALE');
+      expect(classifyLiveSourceTestState({ root: empty, repositoryIds: [RIPPLE_API_REPO] }).kind).toBe('UNAVAILABLE');
+    } finally {
+      current.dispose();
+      stale.dispose();
+      fs.rmSync(empty, { recursive: true, force: true });
+    }
+  });
+
 test.describe('Phase 9A.1 — real-source offline canary (SPEC §28)', () => {
   test('live sibling checkout: derive >= 1 real expectation (owner-local evidence)', () => {
-    const root = siblingRoot();
-    if (root === null) {
-      // CI: no sibling checkouts — fail-closed derivation surface, never a
-      // skip: prove the derivation machinery on the fixture corpus instead.
+    if (RIPPLE_LIVE_STATE.kind !== 'CURRENT') {
+      expect(['STALE', 'UNAVAILABLE']).toContain(RIPPLE_LIVE_STATE.kind);
       const state = createFixtureSourceState();
       const { derivedA } = deriveFixtureExpectations(state);
       expect(derivedA.length).toBeGreaterThanOrEqual(1);
       return;
     }
 
-    const access = createSiblingSourceAccess(root);
+    const access = createSiblingSourceAccess(RIPPLE_LIVE_STATE.root);
     const snapshot = access.currentness.currentSnapshot(RIPPLE_API_REPO);
     expect(snapshot).not.toBeNull();
     if (snapshot === null) return;
-    // The live checkout must be the Phase 5 pinned SHA (source currentness).
-    expect(snapshot.sha).toBe(PHASE5_SOURCE_SHAS.rippleApi);
+    expect(snapshot.sha).toBe(RIPPLE_LIVE_STATE.repositories[0]?.expectedSha);
 
     const report = deriveRealSourceExpectations(
       REAL_SOURCE_EXPECTATION_RECIPES.filter((recipe) => recipe.repoId === RIPPLE_API_REPO),

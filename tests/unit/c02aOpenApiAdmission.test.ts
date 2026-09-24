@@ -28,7 +28,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { createApprovedRealSourceScanConfig, PHASE25_APPROVED_REPOSITORY_IDS } from '../../src/core/source/approvedScan';
 import { createRealSourceScanConfig } from '../../src/core/source/scan';
-import { createSiblingSourceAccess, DEFAULT_SIBLING_ROOT } from '../../src/core/source/siblingSource';
+import { createSiblingSourceAccess } from '../../src/core/source/siblingSource';
 import { discoverSourceSurfaces } from '../../src/core/source/surfaces';
 import {
   classifySourceEvidenceQualifier,
@@ -38,11 +38,14 @@ import {
   PROTO_SURFACE_CORROBORATIONS,
   sourceEvidenceProvenance,
 } from '../../src/core/source/generatedArtifact';
+import { classifyLiveSourceTestState } from '../helpers/liveSourceTestAuthority';
 
 const BLUEAPI = 'alphauslabs/blueapi';
 const BLUEINTERNAL = 'alphauslabs/blueinternal';
 const ARTIFACT_PATH = 'openapiv2/apidocs.swagger.json';
 const RIPPLE_API = 'mobingilabs/ripple-api';
+const APPROVED_LIVE_STATE = classifyLiveSourceTestState({ repositoryIds: [BLUEAPI, RIPPLE_API] });
+const BLUEAPI_LIVE_STATE = classifyLiveSourceTestState({ repositoryIds: [BLUEAPI] });
 
 /** Measured at `alphauslabs/blueapi@691422e5` — the committed generated
  * artifact carries 462 paths / 591 verb-bound operations / 1,179 definitions. */
@@ -50,9 +53,6 @@ const EXPECTED_BLUEAPI_OPERATIONS = 591;
 const EXPECTED_RIPPLE_OPERATIONS = 223;
 const MINIMUM_BOUND_RESPONSE_CONTRACTS = 400;
 
-function siblingRepoAvailable(repoId: string): boolean {
-  return fs.existsSync(path.join(DEFAULT_SIBLING_ROOT, ...repoId.split('/'), '.git'));
-}
 
 function tempRoot(): string {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-c02a-'));
@@ -327,10 +327,14 @@ test.describe('C-02a — $ref → definitions binding through the existing parse
 });
 
 test.describe('C-02a — the real committed blueapi artifact', () => {
-  test.skip(() => !siblingRepoAvailable(BLUEAPI) || !siblingRepoAvailable(RIPPLE_API), 'requires the read-only sibling Alphaus checkouts');
 
   test('recovers >= 591 operations with verb, path and operationId, and >= 400 bound response contracts', () => {
-    const discovery = discoverSourceSurfaces({ access: createSiblingSourceAccess(DEFAULT_SIBLING_ROOT), config: createApprovedRealSourceScanConfig() });
+    if (BLUEAPI_LIVE_STATE.kind !== 'CURRENT') {
+      expect(['STALE', 'UNAVAILABLE']).toContain(BLUEAPI_LIVE_STATE.kind);
+      expect(BLUEAPI_LIVE_STATE.repositories[0]?.repoId).toBe(BLUEAPI);
+      return;
+    }
+    const discovery = discoverSourceSurfaces({ access: createSiblingSourceAccess(BLUEAPI_LIVE_STATE.root), config: createApprovedRealSourceScanConfig() });
     // C-02b later admitted `.proto` into the same repository, so "the blueapi
     // surfaces" and "the surfaces from the generated artifact" stopped being
     // the same set. Every claim below is about the artifact, so it is now
@@ -375,7 +379,12 @@ test.describe('C-02a — the real committed blueapi artifact', () => {
   });
 
   test('every blueapi surface is GENERATED_ARTIFACT with UNKNOWN currency and a denied production admission', () => {
-    const discovery = discoverSourceSurfaces({ access: createSiblingSourceAccess(DEFAULT_SIBLING_ROOT), config: createApprovedRealSourceScanConfig() });
+    if (APPROVED_LIVE_STATE.kind !== 'CURRENT') {
+      expect(['STALE', 'UNAVAILABLE']).toContain(APPROVED_LIVE_STATE.kind);
+      expect(APPROVED_LIVE_STATE.repositories.length).toBeGreaterThan(0);
+      return;
+    }
+    const discovery = discoverSourceSurfaces({ access: createSiblingSourceAccess(APPROVED_LIVE_STATE.root), config: createApprovedRealSourceScanConfig() });
     const blueapi = discovery.surfaces.filter((surface) => surface.operation.repository === BLUEAPI && surface.operation.sourcePath === ARTIFACT_PATH);
     expect(blueapi.length).toBeGreaterThan(0);
     for (const surface of blueapi) {
@@ -401,7 +410,12 @@ test.describe('C-02a — the real committed blueapi artifact', () => {
   });
 
   test('C-01 invariants hold: no eviction, no lost identity, truthful completeness', () => {
-    const access = createSiblingSourceAccess(DEFAULT_SIBLING_ROOT);
+    if (APPROVED_LIVE_STATE.kind !== 'CURRENT') {
+      expect(['STALE', 'UNAVAILABLE']).toContain(APPROVED_LIVE_STATE.kind);
+      expect(APPROVED_LIVE_STATE.repositories.length).toBeGreaterThan(0);
+      return;
+    }
+    const access = createSiblingSourceAccess(APPROVED_LIVE_STATE.root);
     // The pre-C-02a universe, reconstructed by asking for exactly the
     // repositories that produced operations before this campaign.
     const before = discoverSourceSurfaces({ access, config: createApprovedRealSourceScanConfig({ repositoryIds: [RIPPLE_API] }) });

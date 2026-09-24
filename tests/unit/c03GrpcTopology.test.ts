@@ -19,11 +19,15 @@ import { createSiblingSourceAccess, DEFAULT_SIBLING_ROOT } from '../../src/core/
 import { buildProtoServiceIndex } from '../../src/core/source/protoServiceIndex';
 import { buildGrpcTopology } from '../../src/core/source/grpcTopology';
 import { discoverSourceSurfaces } from '../../src/core/source/surfaces';
+import { classifyLiveSourceTestState } from '../helpers/liveSourceTestAuthority';
 
 const OUCHAN = 'mobingilabs/ouchan';
 const BLUEAPI = 'alphauslabs/blueapi';
 const SDK = 'alphauslabs/blue-sdk-go';
 const SDK_MODULE = 'github.com/alphauslabs/blue-sdk-go';
+const RIPPLE_API = 'mobingilabs/ripple-api';
+const RIPPLE_LIVE_STATE = classifyLiveSourceTestState({ repositoryIds: [RIPPLE_API] });
+const NO_EVICTION_LIVE_STATE = classifyLiveSourceTestState({ repositoryIds: [OUCHAN, BLUEAPI, RIPPLE_API] });
 
 /** Measured at the pinned sibling SHAs. */
 const EXPECTED_PROVEN = 12;
@@ -339,9 +343,13 @@ test.describe('C-03 — the universe is unchanged', () => {
 });
 
 test.describe('C-03 — C-01 no-eviction across the admission (F-27)', () => {
-  test.skip(() => !siblingRepoAvailable(OUCHAN) || !siblingRepoAvailable(BLUEAPI) || !siblingRepoAvailable(SDK), 'requires the read-only sibling Alphaus checkouts');
 
   test('every operation identity discovered before the admission survives it', () => {
+    if (NO_EVICTION_LIVE_STATE.kind !== 'CURRENT') {
+      expect(['STALE', 'UNAVAILABLE']).toContain(NO_EVICTION_LIVE_STATE.kind);
+      expect(NO_EVICTION_LIVE_STATE.repositories).toHaveLength(3);
+      return;
+    }
     // C-03 adds 443 proto operations and raises ouchan's budget, which is the
     // largest single population change since C-01 closed the silent-loss
     // model. The assertion compares populations rather than trusting counts.
@@ -370,10 +378,14 @@ test.describe('C-03 — C-01 no-eviction across the admission (F-27)', () => {
   });
 
   test('ripple-api keeps its full operation set after blueapi grows again', () => {
+    if (NO_EVICTION_LIVE_STATE.kind !== 'CURRENT') {
+      expect(NO_EVICTION_LIVE_STATE.kind).toBe(RIPPLE_LIVE_STATE.kind);
+      expect(NO_EVICTION_LIVE_STATE.repositories).toHaveLength(3);
+      return;
+    }
     const discovery = discoverSourceSurfaces({ access: createSiblingSourceAccess(DEFAULT_SIBLING_ROOT), config: createApprovedRealSourceScanConfig() });
-    expect(discovery.operations.filter((operation) => operation.repository === 'mobingilabs/ripple-api')).toHaveLength(223);
+    expect(discovery.operations.filter((operation) => operation.repository === RIPPLE_API)).toHaveLength(223);
   });
-
   test('the blueapi artifact still contributes exactly its own 591 operations', () => {
     const discovery = discoverSourceSurfaces({ access: createSiblingSourceAccess(DEFAULT_SIBLING_ROOT), config: createApprovedRealSourceScanConfig() });
     // This filtered on sourcePath ALONE, which was never a unique identity: it

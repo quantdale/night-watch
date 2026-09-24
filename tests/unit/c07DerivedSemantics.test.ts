@@ -27,8 +27,10 @@ import {
   type OperationSemanticInput,
 } from '../../src/core/source/derivedEndpointSemantics';
 import { rankByExpectedInformationGain, type EigTarget } from '../../src/core/source/expectedInformationGain';
+import { classifyLiveSourceTestState } from '../helpers/liveSourceTestAuthority';
 
 const root = path.resolve(__dirname, '..', '..');
+const APPROVED_LIVE_STATE = classifyLiveSourceTestState();
 
 const operation = (id: string, overrides: Partial<OperationSemanticInput> = {}): OperationSemanticInput => ({
   operationId: id, repository: 'mobingilabs/ripple-api', method: 'GET', routeTemplate: `/${id}`,
@@ -244,16 +246,19 @@ test.describe('C-07 — EIG orders admissible targets and cannot promote one', (
 
 test.describe('C-07 — the real population, measured', () => {
   test('the derived registry over real operations has ZERO KNOWN_READ entries', () => {
-    const siblings = '/home/dalepalaca/go/src/alphaus-main/REPOSITORIES';
-    test.skip(!fs.existsSync(path.join(siblings, 'mobingilabs/ripple-api/.git')), 'requires the read-only sibling Alphaus checkouts');
+    if (APPROVED_LIVE_STATE.kind !== 'CURRENT') {
+      expect(['STALE', 'UNAVAILABLE']).toContain(APPROVED_LIVE_STATE.kind);
+      expect(APPROVED_LIVE_STATE.repositories.length).toBeGreaterThan(0);
+      return;
+    }
     // Rebuilt here rather than imported so the assertion is about the real
     // source, not about a cached number.
     // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { createSiblingSourceAccess, DEFAULT_SIBLING_ROOT } = require('../../src/core/source/siblingSource');
+    const { createSiblingSourceAccess } = require('../../src/core/source/siblingSource');
     const { createApprovedRealSourceScanConfig } = require('../../src/core/source/approvedScan');
     const { ownerApprovedRepositoryIds } = require('../../src/core/source/universe');
     const { discoverSourceSurfaces } = require('../../src/core/source/surfaces');
-    const access = createSiblingSourceAccess(DEFAULT_SIBLING_ROOT, { admittedRepositoryIds: ownerApprovedRepositoryIds() });
+    const access = createSiblingSourceAccess(APPROVED_LIVE_STATE.root, { admittedRepositoryIds: ownerApprovedRepositoryIds() });
     const discovery = discoverSourceSurfaces({ access, config: createApprovedRealSourceScanConfig() });
     const registry = deriveEndpointSemanticRegistry(discovery.operations.map((o: Record<string, string>) => ({
       operationId: o.operationId, repository: o.repository, method: o.method, routeTemplate: o.routeTemplate,

@@ -38,17 +38,17 @@ Add one test-only authority classifier. Gate live historical measurements on the
 ### M1 — Authority helper and adversarial states
 
 - Objective: implement and prove CURRENT/STALE/UNAVAILABLE classification.
-- Status: IN_PROGRESS
+- Status: COMPLETE
 
 ### M2 — Affected test migration
 
 - Objective: remove 12 ambient-live failures while preserving synthetic controls.
-- Status: NOT_STARTED
+- Status: COMPLETE
 
 ### M3 — Validation and closure
 
 - Objective: focused/broad validation, pin/sibling immutability, final reassessment, and C-00 close.
-- Status: NOT_STARTED
+- Status: IN_PROGRESS
 
 ## Validation Strategy
 
