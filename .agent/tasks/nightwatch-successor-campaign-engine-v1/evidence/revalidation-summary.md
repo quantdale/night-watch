@@ -14,6 +14,27 @@ rechecked against current source and, where safe, synthetic execution:
 | Proxy raw event persistence | `src/proxy/events.ts:31-40` and `src/proxy/server.ts:178,225-228`; raw event append precedes recorder projection/firewall | Current source confirms unmediated upstream writer; authenticated reachability proof still pending |
 | DEV credential-use binding | `src/auth/devAutoLogin.ts:299-310,501-549`; generic controls are obtained before credential retrieval and later fill/submit path remains separate | Current source confirms planning finding; no credential/browser execution performed |
 
-No product implementation has started. The first implementation campaign must
-be selected from this evidence, with the two integrity reproductions weighted
-against the census and containment findings.
+## Selection score
+
+Scores use the requested `impact × confidence × executability ÷ risk` scale
+(each factor 1–5; higher risk lowers the result). The values are ordinal
+selection aids, not security probabilities.
+
+| Candidate | Impact | Confidence | Executability | Risk | Score |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Shard false certification | 5 | 5 | 5 | 1 | 125 |
+| Run-evidence transaction integrity | 5 | 5 | 4 | 2 | 50 |
+| Child-process census indirection | 5 | 5 | 4 | 2 | 50 |
+| Proxy raw-event persistence | 5 | 4 | 4 | 2 | 40 |
+| Credential-use binding | 5 | 4 | 3 | 3 | 20 |
+| Popup L0 readiness | 5 | 4 | 2 | 5 | 8 |
+
+Shard certification ranked first because it can turn an all-skipped validation
+execution into misleading green evidence, had an exact local reproduction, and
+had a bounded machine-readable repair. Run-evidence and census ranked next on
+correctness impact; popup ranked last because the reproduction showed that the
+locally available L1/page-event barrier does not precede first popup navigation.
+
+This table records the pre-implementation baseline. The shard campaign was then
+selected from the scored evidence and implemented in the resumed successor
+session; later child results are tracked in the umbrella plan and child tasks.

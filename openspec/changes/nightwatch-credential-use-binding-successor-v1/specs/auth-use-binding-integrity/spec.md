@@ -28,6 +28,10 @@ text, or evidence payload, and SHALL be revoked on success/failure/navigation.
 A single unchanged synthetic login form SHALL fill username/password and submit
 exactly once through the binding.
 
+#### Scenario: Unchanged synthetic login form
+- **WHEN** the approved controls, document, route, and form metadata remain unchanged
+- **THEN** the operation fills username/password and submits exactly once through the binding
+
 ### Requirement: Adversarial validation protects the authority
 
 Tests SHALL cover replacement, action drift, navigation, duplicate use, and

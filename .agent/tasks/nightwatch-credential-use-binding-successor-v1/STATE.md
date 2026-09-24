@@ -11,7 +11,7 @@ Last substantive checkpoint SHA: c1670abedee07c8b5d36ad2de5ee4419f5859ac8
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-successor-campaign-en-628d8bb9
-Last checkpoint: 2026-09-24 — credential-use binding implementation checkpoint c1670abedee07c8b5d36ad2de5ee4419f5859ac8; focused/static/mutation validation green; broad gate pending.
+Last checkpoint: 2026-09-25 — implementation c1670abe remains focused-green; gate:dev found 12 live-source drift failures plus one cross-shard temp-namespace race; clean milestone rerun pending.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: d5175a7d676cbff5584b887363ceaa1d7d7b879f
@@ -29,8 +29,9 @@ fail closed when that identity changes.
 ## Current Milestone
 
 M3 — adversarial validation and checkpoint. Binding, per-effect revalidation,
-and synthetic race/mutation regressions are implemented; broad gate validation
-remains.
+and synthetic race/mutation regressions are implemented. `gate:dev` is classified;
+the first milestone attempt stopped at `project:check` because the strict OpenSpec
+repair was still uncommitted, so a clean milestone rerun remains required.
 
 ## Completed Milestones
 
@@ -45,13 +46,16 @@ remains.
 
 ## Work In Progress
 
-Implementation is complete but uncommitted in the owned worktree. The child
-checkpoint, broad gate lanes, and final continuity reconciliation remain.
+The implementation is checkpointed. `gate:dev` completed with 5455 passed / 13
+failed: 12 known live-source drift failures and one new cross-shard
+`reviewStore.test.ts` temp-directory race. The first `gate:milestone` stopped at
+`project:check` because this continuity repair was uncommitted; rerun it after
+this checkpoint.
 
 ## Exact Next Action
 
-Commit the implementation checkpoint, run `gate:dev` and `gate:milestone`, then
-classify any residual and close or block this child without real credentials.
+Commit this reconciliation, rerun `gate:milestone` from the clean checkpoint,
+then close or block this child without real credentials.
 
 ## Files Changed
 
@@ -96,6 +100,23 @@ When: 2026-09-24
 Relevant failure/output summary: removing the non-cloneable identity check or
 form-action comparison made the corresponding synthetic race regression fail.
 
+Command: `npm run gate:dev`
+Result: TEST_FAILURE / CLASSIFIED RESIDUAL
+When: 2026-09-25
+Relevant failure/output summary: 5455 passed / 13 failed; 12 failures are the
+known live-source drift set. The additional `reviewStore.test.ts` traversal
+test failed only in the parallel gate because another shard created an unrelated
+file in the shared OS temp parent; it passed when the four shard-1 failures were
+replayed alone. No credential/auth test failed.
+
+Command: `npm run gate:milestone`
+Result: STEP_FAILED / REPLAY REQUIRED
+When: 2026-09-25
+Relevant failure/output summary: typecheck, hardening, agent, handoff, bin
+typecheck, and hardening-rules passed; `project:check` refused the intentionally
+dirty worktree before test selection. The strict credential OpenSpec scenario
+omission was repaired, but milestone evidence must be rerun from a clean commit.
+
 ## Decisions Made During This Task
 
 Decision: bind with both a non-secret DOM marker and a non-cloneable JS
@@ -110,8 +131,10 @@ Reason: document replacement must fail before credential input.
 
 ## Blockers
 
-None for the implementation. Prior broad-gate residuals remain independent;
-no real credential, target, or authenticated run was used.
+The broad lane retains 12 live-source drift failures and one newly isolated
+cross-shard temp-namespace race. No real credential, target, or authenticated
+run was used. A clean milestone rerun remains required before terminal child
+classification.
 
 ## Safety Events
 
@@ -126,8 +149,8 @@ credential retry redesign remain later.
 
 1. Read SPEC, PLAN, and STATE.
 2. Run the focused auth suite and inspect the exact binding diff.
-3. Commit, run gate:dev/gate:milestone, classify residual.
-4. Reassess next child without real credentials.
+3. Replay milestone from a clean checkpoint and classify its exact residual.
+4. Reassess the next child without real credentials.
 
 ## Completion Snapshot
 
