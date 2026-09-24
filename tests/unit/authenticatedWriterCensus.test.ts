@@ -77,6 +77,18 @@ test('NW-AUD-018: the closed writer registry is well formed', () => {
   }
 });
 
+test('NW-AUD-018: the raw proxy event writer is explicitly census-covered', () => {
+  const source = [
+    "import fs from 'node:fs';",
+    'export function appendProxyEvent(logPath, event) {',
+    '  fs.appendFileSync(logPath, JSON.stringify(event));',
+    '}',
+  ].join('\n');
+  const writes = discoverRunRootWrites('src/proxy/events.ts', source);
+  expect(writes.some((write) => write.targets.includes('proxy-event-log'))).toBe(true);
+  expect(AUTHENTICATED_WRITER_REGISTRY.some((entry) => entry.root === 'src/proxy/events.ts' && entry.klass === 'PROXY_EVENT_WRITER')).toBe(true);
+});
+
 test('NW-AUD-018: unknown writers and empty universes fail closed', () => {
   const rogue = {
     file: 'src/rogue/publisher.ts',

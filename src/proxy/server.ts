@@ -204,7 +204,13 @@ export async function startOutboundProxy(opts: OutboundProxyOptions): Promise<Ou
       runId,
       protocol,
       host: target?.url.hostname.toLowerCase().replace(/^\[|\]$/g, '') ?? classified.decision.host,
-      port: target?.port ?? null,
+      // Invalid listener ports are evidence metadata, not a reason to
+      // suppress the policy refusal. Normalize them before the raw firewall.
+      port: target?.port === null || target?.port === undefined
+        ? null
+        : Number.isSafeInteger(target.port) && target.port >= 0 && target.port <= 65535
+          ? target.port
+          : null,
       classification: classified.decision.hostClass,
       semanticClassification: classified.decision.classification,
       ...(classified.decision.verdict === 'block-browser-background'

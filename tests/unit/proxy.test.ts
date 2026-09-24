@@ -16,7 +16,7 @@ import { decideBrowserHttp, decideBrowserWebSocket } from '../../src/core/safety
 import { classifyProxyConnect, classifyProxyUrl } from '../../src/proxy/policyAdapter';
 import { checkProxyHealth, requireProxyRuntime } from '../../src/proxy/runtime';
 import { startOutboundProxy, writeProxyRuntimeState } from '../../src/proxy/server';
-import { readProxyEvents } from '../../src/proxy/events';
+import { appendProxyEvent, readProxyEvents, validateProxyEventForPersistence } from '../../src/proxy/events';
 import { EXACT_ADDRESS_BINDING_VERSION, PROXY_CONTAINMENT_VERSION } from '../../src/proxy/identity';
 import { RESOLVED_ADDRESS_POLICY_VERSION } from '../../src/proxy/addressPolicy';
 import { admissionTicketLedger, resetAdmissionTickets } from '../../src/core/safety/admissionTickets';
@@ -113,6 +113,48 @@ function proxyConnect(port: number, authority: string): Promise<number> {
     request.end();
   });
 }
+
+test.describe('raw proxy event persistence', () => {
+  const validEvent = {
+    seq: 0,
+    timestamp: '2026-09-24T00:00:00.000Z',
+    runId: 'synthetic-proxy',
+    protocol: 'http' as const,
+    host: '127.0.0.1',
+    port: 43123,
+    classification: 'local' as const,
+    decision: 'allow' as const,
+    ruleId: 'environment-allowlist',
+    reason: 'synthetic local event',
+  };
+
+  test('accepts a bounded exact event and persists it owner-only', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-proxy-event-'));
+    const file = path.join(root, 'events.jsonl');
+    try {
+      expect(validateProxyEventForPersistence(validEvent)).toEqual(validEvent);
+      appendProxyEvent(file, validEvent);
+      const stat = fs.statSync(file);
+      expect(stat.mode & 0o777).toBe(0o600);
+      expect(readProxyEvents(file)).toHaveLength(1);
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test('rejects unknown/private fields and control characters before writing', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-proxy-event-invalid-'));
+    const file = path.join(root, 'events.jsonl');
+    try {
+      expect(() => validateProxyEventForPersistence({ ...validEvent, authorization: 'Bearer secret' })).toThrow(/PROXY_EVENT_SCHEMA_INVALID/);
+      expect(() => validateProxyEventForPersistence({ ...validEvent, reason: 'bad\nreason' })).toThrow(/PROXY_EVENT_SCHEMA_INVALID/);
+      expect(() => appendProxyEvent(file, { ...validEvent, privatePayload: 'secret' } as never)).toThrow(/PROXY_EVENT_SCHEMA_INVALID/);
+      expect(fs.existsSync(file)).toBe(false);
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+});
 
 test.describe('outer proxy policy and parsing', () => {
   test('browser HTTP, browser WS, and proxy adapters have identical semantic decisions', () => {

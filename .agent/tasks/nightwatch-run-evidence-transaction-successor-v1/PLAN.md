@@ -78,7 +78,7 @@ as an explicit residual.
   guard in temporary mutations and prove detection.
 - Acceptance criteria: no false PASS; residuals explicit.
 - Validation commands: `gate:dev`, `gate:milestone`.
-- **Status:** IN_PROGRESS
+- **Status:** BLOCKED
 
 ### M4 — Close and reassess
 
@@ -88,7 +88,7 @@ as an explicit residual.
   or credential candidates.
 - Acceptance criteria: no false COMPLETE claim.
 - Validation commands: continuity checks and justified release grouping.
-- Status: NOT_STARTED
+- **Status:** NOT_STARTED
 
 ## Validation Strategy
 

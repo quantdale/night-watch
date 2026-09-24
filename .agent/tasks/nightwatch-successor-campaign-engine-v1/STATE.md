@@ -42,7 +42,11 @@ next candidate.
 - **M2 BLOCKED** — shard certification implementation is complete, but its broad gate lanes retain 12 baseline/source-drift failures.
 - **M3 BLOCKED** — child-process census indirection implementation is complete,
   but broad gate lanes retain baseline/source-drift failures.
-- **M4 IN_PROGRESS** — run-evidence transaction integrity successor selected.
+- **M4 BLOCKED** — run-evidence transaction implementation is complete, but
+  broad gate lanes retain 12 baseline/source-drift failures.
+- **M5 BLOCKED** — popup L0 race reproduced, but the tested L1/page-event
+  barrier did not intercept the first popup navigation; no fix was claimed.
+- **M6 IN_PROGRESS** — proxy raw-event persistence/firewall successor selected.
 - Owner resolution rechecked the exact canonical diff against the recorded
   patch and HEAD. It was mechanically confirmed as unintended formatter/editor
   churn, including invalid CSS fallback corruption `#fff` -> `# fff)`.
@@ -56,13 +60,15 @@ next candidate.
 
 ## Work In Progress
 
-The run-evidence implementation is checkpointed; focused/static/mutation
-validation is green. Its broad gate lanes and final status remain.
+The popup L0 reproduction is honestly BLOCKED/deferred: the race is real, but
+the attempted L1 barrier was insufficient and was reverted. The proxy
+raw-event persistence child is next; no false popup fix will be shipped.
 
 ## Exact Next Action
 
-Run post-checkpoint `gate:dev` and `gate:milestone`, classify the exact residual,
-then close or block the run-evidence child and reassess.
+Create and strict-validate the proxy raw-event persistence child, reproduce
+the raw configured event-log write outside the authenticated writer firewall,
+then define the narrow fail-closed writer-boundary fix.
 
 ## Files Changed
 
@@ -79,7 +85,9 @@ then close or block the run-evidence child and reassess.
 | `.agent/tasks/nightwatch-child-process-census-indirection-v1/` | active child continuity | added this session |
 | `openspec/changes/nightwatch-child-process-census-indirection-v1/` | blocked census child contract | added this session |
 | `.agent/tasks/nightwatch-run-evidence-transaction-successor-v1/` | active run-evidence child continuity | added this session |
-| `openspec/changes/nightwatch-run-evidence-transaction-successor-v1/` | active run-evidence child contract | added this session |
+| `openspec/changes/nightwatch-run-evidence-transaction-successor-v1/` | blocked run-evidence child contract | added this session |
+| `.agent/tasks/nightwatch-proxy-event-firewall-v1/` | active proxy child continuity | added this session |
+| `openspec/changes/nightwatch-proxy-event-firewall-v1/` | active proxy child contract | added this session |
 | `docs/CURRENT_STATE.md` | owner-authorized restoration only | clean at HEAD |
 
 ## Validation Ledger
@@ -201,10 +209,10 @@ implementation with a separately classified broad-gate blocker.
 
 ## Blockers
 
-The shard and census children are blocked by broad affected-lane failures:
-12 baseline/source-drift failures, plus one census milestone semantic
-WebSocket receipt failure that passes in isolation. These are classified and
-must not be absorbed into the next child.
+The shard, census, and run-evidence children are blocked by broad affected-lane
+failures; the popup race is separately blocked by the absence of a proven
+pre-navigation target barrier. These are classified and must not be absorbed
+into the next child.
 
 ## Safety Events
 
@@ -214,11 +222,11 @@ publication, force push, or history rewrite occurred.
 
 ## Deferred / Follow-Up
 
-- Execute run-evidence transaction integrity next.
-- Reassess popup L0 readiness, proxy raw-event persistence, and credential-use
-  binding after that child.
-- Keep shard and census children BLOCKED and the completed priority campaign
-  terminal and historical.
+- Execute proxy raw-event persistence next.
+- Reassess credential-use binding and a lower-level popup target barrier after
+  that child.
+- Keep shard, census, run-evidence, and popup prototype records BLOCKED and the
+  completed priority campaign terminal and historical.
 
 ## Resume Recipe
 

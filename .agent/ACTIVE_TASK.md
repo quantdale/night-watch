@@ -7,9 +7,9 @@ Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-successor-campaign-engine-v1
 Starting SHA: 78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1
 Last validated implementation SHA: ea0b7110efa1065b470efb57f2cd3ff5136a9fa0
-Last checkpoint: 2026-09-24 — run-evidence transaction implementation checkpoint ea0b7110efa1065b470efb57f2cd3ff5136a9fa0; focused/static/mutation validation green; broad gate pending.
-Current milestone: M4 — validate run-evidence transaction integrity child.
-Next action: run post-checkpoint gate lanes, classify any residual against baseline, then close or block this child and reassess.
+Last checkpoint: 2026-09-24 — popup L0 race reproduced but prototype barrier insufficient and reverted; proxy raw-event persistence selected as the next independent child.
+Current milestone: M6 — execute proxy event firewall child.
+Next action: create/strict-validate the proxy child, reproduce the raw configured event-log write outside the authenticated writer firewall, then define the narrow fail-closed fix.
 
 Authorization class: SUCCESSOR_CAMPAIGN_ENGINE_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
@@ -41,7 +41,7 @@ as historical truth; do not reopen it.
 
 ```
 CAMPAIGN: nightwatch-successor-campaign-engine-v1
-CHILD TASK: nightwatch-run-evidence-transaction-successor-v1
+CHILD TASK: nightwatch-proxy-event-firewall-v1
 SESSION WORKTREE: session/nightwatch-successor-campaign-en-628d8bb9
 
 IMPLEMENTATION AUTHORIZED:
@@ -51,9 +51,9 @@ IMPLEMENTATION AUTHORIZED:
   C-00 commits and fast-forward integration from this session only.
 
 CURRENT STATUS:
-  IN_PROGRESS — canonical is clean and workspace status passes; shard and census
-  children are BLOCKED by classified broad-gate residuals; run-evidence
-  transaction integrity is the active independent successor.
+  IN_PROGRESS — canonical is clean and workspace status passes; prior children
+  are BLOCKED/deferred with classified residuals; proxy raw-event persistence is
+  the active independent successor.
 
 ALPHAUS DEV / NEXT / PRODUCTION CONTACT:   NOT AUTHORIZED
 AUTHENTICATED ALPHAUS RUNTIME:             NOT AUTHORIZED

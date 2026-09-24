@@ -121,9 +121,37 @@ reassess, and repeat. Use full certification only at release groups.
   recorder behavior remains green; residuals are explicit.
 - Validation commands: focused evidence suite, `npm run gate:dev`, then
   `npm run gate:milestone`.
+- **Status:** BLOCKED
+
+### M5 — Popup L0 reproduction (deferred)
+
+- Objective: reproduce the fire-and-forget popup guard race and determine
+  whether a safe pre-navigation target barrier is locally implementable.
+- Files/areas: `src/browser/context.ts`, synthetic browser fixtures, and the
+  retained reproduction record.
+- Implementation actions: reproduce the race; test a page-admission prototype;
+  revert it when the first popup navigation bypasses the L1 barrier.
+- Acceptance criteria: no false fix is claimed; the residual is explicitly
+  classified for a future lower-level CDP target design.
+- Validation commands: focused popup fixture and source inspection.
+- **Status:** BLOCKED
+
+### M6 — Proxy raw-event persistence successor
+
+- Objective: close the raw configured proxy event-log write outside the
+  authenticated recorder firewall and writer census.
+- Files/areas: `src/proxy/events.ts`, `src/proxy/server.ts`,
+  authenticated writer census/hardening, focused synthetic tests.
+- Implementation actions: reproduce raw append before recorder projection,
+  define a narrow owner-bound firewall/permissions contract, implement,
+  adversarially test, validate, checkpoint.
+- Acceptance criteria: raw authenticated event-log writes cannot bypass the
+  final firewall or census; local unauthenticated behavior remains compatible.
+- Validation commands: focused proxy/privacy tests, `npm run gate:dev`, then
+  `npm run gate:milestone`.
 - **Status:** IN_PROGRESS
 
-### M5 — Final adversarial reassessment and closure
+### M7 — Final adversarial reassessment and closure
 
 - Objective: prove a legitimate terminal condition and reconcile final truth.
 - Files/areas: task/report/OpenSpec/project-state surfaces as required.
@@ -162,7 +190,15 @@ green without understanding the cause.
   residuals.
 - 2026-09-24 — Select run-evidence transaction integrity next. Its synthetic
   reproduction directly demonstrates false passing summaries and lost durable
-  state, giving it higher immediate correctness impact.
+  state, giving it higher immediate correctness impact; it is now checkpointed
+  but BLOCKED by the same broad source-drift residual.
+- 2026-09-24 — Popup L0 readiness was reproduced but the attempted L1/page-event
+  barrier did not intercept the first popup navigation; it was reverted and is
+  deferred for a lower-level CDP target design.
+- 2026-09-24 — Select proxy raw-event persistence next. The configured proxy
+  event log is written before the recorder's later sanitized projection and is
+  absent from the authenticated writer census, giving a narrower local
+  writer-boundary correction.
 
 ## Discoveries
 

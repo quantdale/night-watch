@@ -16,6 +16,31 @@ const ADDRESS_CLASSES: ReadonlySet<string> = new Set([
 ]);
 const CONNECTION_FAILURES: ReadonlySet<string> = new Set(['CONNECTION_REFUSED', 'CONNECTION_TIMEOUT', 'CLIENT_ABORTED', 'TRANSPORT_FAILURE', 'PROXY_SHUTDOWN']);
 const CONTAINMENT_VIOLATIONS: ReadonlySet<string> = new Set(['RESOLVED_ADDRESS_POLICY_DENIED', 'RESOLUTION_FAILED', 'EXACT_ADDRESS_BINDING_FAILED']);
+const PROXY_EVENT_KEYS: ReadonlySet<string> = new Set([
+  'seq', 'timestamp', 'runId', 'protocol', 'host', 'port', 'classification',
+  'semanticClassification', 'containment', 'decision', 'ruleId', 'reason',
+  'resolution', 'resolutionReason', 'answerCount', 'addressFamily', 'addressClass',
+  'connection', 'connectionFailure', 'containmentViolation', 'addressBindingVersion',
+]);
+const HOST_CLASSES: ReadonlySet<string> = new Set([
+  'production', 'dev', 'next', 'local', 'unknown-alphaus', 'external', 'static',
+  'telemetry', 'optional-third-party-support', 'browser-background-google',
+  'browser-background-update', 'browser-background-download', 'internal',
+]);
+const SEMANTIC_CLASSIFICATIONS: ReadonlySet<string> = new Set([
+  'EXPECTED', 'TELEMETRY', 'BROWSER_BACKGROUND_GOOGLE', 'BROWSER_BACKGROUND_UPDATE',
+  'BROWSER_BACKGROUND_DOWNLOAD', 'OPTIONAL_THIRD_PARTY_SUPPORT', 'UNKNOWN',
+  'PRODUCTION_DENIED',
+]);
+const VERDICTS: ReadonlySet<string> = new Set(['allow', 'deny', 'block-telemetry', 'block-optional-support', 'block-browser-background']);
+const PROTOCOLS: ReadonlySet<string> = new Set(['http', 'https-connect', 'ws', 'wss']);
+const SAFE_TEXT = /^[^\u0000-\u001f\u007f]+$/;
+function invalidProxyEvent(): never {
+  throw new Error('PROXY_EVENT_SCHEMA_INVALID');
+}
+function safeText(value: unknown, max: number): value is string {
+  return typeof value === 'string' && value.length > 0 && value.length <= max && SAFE_TEXT.test(value);
+}
 
 function optionalLifecycleIsValid(value: ProxyEvent): boolean {
   if (value.resolution !== undefined && !RESOLUTION_OUTCOMES.has(value.resolution)) return false;
@@ -30,13 +55,46 @@ function optionalLifecycleIsValid(value: ProxyEvent): boolean {
   return true;
 }
 
+export function validateProxyEventForPersistence(value: unknown): ProxyEvent {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return invalidProxyEvent();
+  const event = value as Record<string, unknown>;
+  if (Object.keys(event).some((key) => !PROXY_EVENT_KEYS.has(key)) || Object.keys(event).length < 9) return invalidProxyEvent();
+  if (!Number.isSafeInteger(event.seq) || (event.seq as number) < 0 || (event.seq as number) > 1_000_000_000) return invalidProxyEvent();
+  if (!safeText(event.timestamp, 64) || !Number.isFinite(Date.parse(event.timestamp))) return invalidProxyEvent();
+  if (!safeText(event.runId, 128) || !/^[A-Za-z0-9._-]+$/.test(event.runId)) return invalidProxyEvent();
+  if (!safeText(event.protocol, 32) || !PROTOCOLS.has(event.protocol)) return invalidProxyEvent();
+  if (typeof event.host !== 'string' || event.host.length > 253 || /[\\/@\u0000-\u001f\u007f]/.test(event.host)) return invalidProxyEvent();
+  // A parse-failure event may have no parsed host; it is still safe metadata
+  // and must not turn a policy denial into an evidence-write failure.
+  if (event.host.length === 0 && event.ruleId !== 'parse-failure') return invalidProxyEvent();
+  if (event.port !== null && (!Number.isSafeInteger(event.port) || (event.port as number) < 0 || (event.port as number) > 65535)) return invalidProxyEvent();
+  if (!safeText(event.classification, 64) || !HOST_CLASSES.has(event.classification)) return invalidProxyEvent();
+  if (event.semanticClassification !== undefined && (!safeText(event.semanticClassification, 64) || !SEMANTIC_CLASSIFICATIONS.has(event.semanticClassification))) return invalidProxyEvent();
+  if (event.containment !== undefined && event.containment !== 'EXPECTED_CONTAINMENT_EFFECT') return invalidProxyEvent();
+  if (!safeText(event.decision, 64) || !VERDICTS.has(event.decision)) return invalidProxyEvent();
+  if (!safeText(event.ruleId, 128) || !safeText(event.reason, 512)) return invalidProxyEvent();
+  const candidate = value as ProxyEvent;
+  if (!optionalLifecycleIsValid(candidate)) return invalidProxyEvent();
+  return candidate;
+}
+
 export function ensureEventLog(logPath: string): void {
   fs.mkdirSync(path.dirname(logPath), { recursive: true });
-  fs.writeFileSync(logPath, '');
+  fs.writeFileSync(logPath, '', { encoding: 'utf8', mode: 0o600 });
+  fs.chmodSync(logPath, 0o600);
 }
 
 export function appendProxyEvent(logPath: string, event: ProxyEvent): void {
-  fs.appendFileSync(logPath, `${JSON.stringify(event)}\n`);
+  const validated = validateProxyEventForPersistence(event);
+  fs.mkdirSync(path.dirname(logPath), { recursive: true });
+  fs.appendFileSync(logPath, `${JSON.stringify(validated)}\n`, { encoding: 'utf8', mode: 0o600 });
+  const descriptor = fs.openSync(logPath, 'r');
+  try {
+    fs.fsyncSync(descriptor);
+  } finally {
+    fs.closeSync(descriptor);
+  }
+  fs.chmodSync(logPath, 0o600);
 }
 
 /** True for hostname-policy denials and resolved-egress hard violations. */

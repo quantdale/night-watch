@@ -37,6 +37,7 @@ export const WRITER_CLASSES = Object.freeze([
   'ARTIFACTS_MAINTENANCE',
   'AUTH_TOOL',
   'LANE_RECEIPT_TOOL',
+  'PROXY_EVENT_WRITER',
   'SMOKE_FIXTURE',
   'TEST_FIXTURE',
 ]);
@@ -57,6 +58,7 @@ export const AUTHENTICATED_WRITER_REGISTRY = Object.freeze([
   { root: 'bin/phase22-dev.mjs', klass: 'LANE_RECEIPT_TOOL', capabilities: ['owner-local-publication'] },
   { root: 'bin/phase23-ci.mjs', klass: 'LANE_RECEIPT_TOOL', capabilities: ['owner-local-publication'] },
   { root: 'bin/phase23-predev.mjs', klass: 'LANE_RECEIPT_TOOL', capabilities: ['owner-local-publication'] },
+  { root: 'src/proxy/events.ts', klass: 'PROXY_EVENT_WRITER', capabilities: ['schema-firewall', 'runtime-publication'] },
   { root: 'tests/', klass: 'TEST_FIXTURE', capabilities: ['owner-local-publication'] },
 ]);
 
@@ -240,6 +242,7 @@ export function discoverRunRootWrites(file, source) {
         if (init !== null) resolvedParts.push(init);
       }
       const targets = runRootTargetsFor(args, resolvedParts.join('\\n'));
+      if (file === 'src/proxy/events.ts' && firstArgument(args) === 'logPath') targets.push('proxy-event-log');
       const isRemoval = op === 'unlinkSync' || op === 'rmdirSync' || op === 'rmSync';
       if (targets.length === 0 && isRemoval && declaresArtifactsRoot) {
         targets.push('artifacts-tree-declared');
