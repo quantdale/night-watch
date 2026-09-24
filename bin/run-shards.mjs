@@ -179,7 +179,15 @@ function runShard(shard, execution) {
     const startedAt = Date.now();
     fs.mkdirSync(path.dirname(receiptPath), { recursive: true });
     fs.rmSync(receiptPath, { force: true });
-    const child = spawn(npx, ['test', ...shard.files, '--project=nightwatch', '--workers=1', '--retries=0', `--output=test-results/${shard.id}`], {
+    const child = spawn(npx, [
+      'test',
+      ...shard.files,
+      '--project=nightwatch',
+      '--workers=1',
+      '--retries=0',
+      '--reporter=list,./tests/helpers/playwrightTimingReporter.ts,./tests/helpers/playwrightShardReporter.ts',
+      `--output=test-results/${shard.id}`,
+    ], {
       cwd: root,
       env: childEnvironment(shard.id, receiptPath, shard.id),
       stdio: ['ignore', 'pipe', 'pipe'],

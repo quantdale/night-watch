@@ -72,7 +72,7 @@ and all-skipped/zero/unknown negatives before closing M3.
 | `src/core/validation/shardExecutionReceipt.ts` | strict receipt schema/classifier | implemented |
 | `tests/helpers/playwrightShardReporter.ts` | atomic execution reporter | implemented |
 | `bin/run-shards.mjs` | receipt-authoritative runner integration | implemented |
-| `playwright.config.ts` | reporter wiring | implemented |
+| `bin/run-shards.mjs` | CLI reporter wiring and receipt-authoritative result | implemented |
 | `src/core/schemaLifecycle/declarations.ts` | receipt family declaration | implemented |
 | `bin/lib/typescript-runtime-loader.d.mts` | generated loader map | regenerated |
 | `tests/unit/validationShardPlan.test.ts` | pure, reporter, and end-to-end regressions | implemented |
