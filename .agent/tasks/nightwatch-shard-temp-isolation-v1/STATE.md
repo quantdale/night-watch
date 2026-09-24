@@ -6,17 +6,17 @@ Task ID: nightwatch-shard-temp-isolation-v1
 Phase: SHARD_TEMP_ISOLATION_V1
 Status: IN_PROGRESS
 Starting SHA: f41c6cc3c9e9e6a50f271acbd58ddb19b5afd6aa
-Last validated implementation SHA: c83e9d438b2a7e36db6a5c79345f5405c980bffc
-Last substantive checkpoint SHA: c83e9d438b2a7e36db6a5c79345f5405c980bffc
+Last validated implementation SHA: 473842c196ce28d5a0fb26528bd86fbc5884d293
+Last substantive checkpoint SHA: 473842c196ce28d5a0fb26528bd86fbc5884d293
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-successor-campaign-en-628d8bb9
-Last checkpoint: 2026-09-25 — implementation checkpoint c83e9d43; focused 56/56, hostile replay 54/54, corrected gate:dev 5459/12; clean milestone pending.
+Last checkpoint: 2026-09-25 — implementation 473842c1 including validation-universe classification; focused/adversarial green, corrected gate:dev 5459/12, clean milestone pending.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: f41c6cc3c9e9e6a50f271acbd58ddb19b5afd6aa
-LAST_VALIDATED_IMPLEMENTATION_SHA: c83e9d438b2a7e36db6a5c79345f5405c980bffc
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: c83e9d438b2a7e36db6a5c79345f5405c980bffc
+LAST_VALIDATED_IMPLEMENTATION_SHA: 473842c196ce28d5a0fb26528bd86fbc5884d293
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 473842c196ce28d5a0fb26528bd86fbc5884d293
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
 PHASE_SHARD_TEMP_ISOLATION_V1_STATUS: IN_PROGRESS
@@ -88,6 +88,13 @@ Command: corrected `npm run gate:dev`
 Result: TEST_FAILURE / INDEPENDENT SOURCE DRIFT
 When: 2026-09-25
 Relevant failure/output summary: 5459 passed / 12 failed. The exact 12 live-source drift failures remain; the review-store temp race and both integration defects are absent.
+
+Command: first isolation `gate:milestone`
+Result: STEP_FAILED / REPLAY REQUIRED
+When: 2026-09-25
+Relevant failure/output summary: `validation-universe` rejected the new bin
+module as unclassified and reported digest drift. The module was added to the
+BIN_SYNTAX inventory and the digest was refreshed; replay from a clean commit.
 
 ## Decisions Made During This Task
 
