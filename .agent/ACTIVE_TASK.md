@@ -6,7 +6,7 @@ Title: Fresh successor campaign engine and reassessment
 Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-successor-campaign-engine-v1
 Starting SHA: 78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1
-Last validated implementation SHA: d89be39bff9c6f1cb86ce0c39dd34fe945884409
+Last validated implementation SHA: 07a5491064b78290fbe823ae65c9b61c63e83d3a
 Last checkpoint: 2026-09-24 — owner-resolved canonical blocker; fresh C-00 session resumed; A/B integrity reproduction is next.
 Current milestone: M2 — select and execute shard certification integrity.
 Next action: Create and strict-validate the dedicated shard-certification child task/OpenSpec, then implement the fail-closed machine-readable execution receipt.
@@ -16,8 +16,8 @@ PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1
-LAST_VALIDATED_IMPLEMENTATION_SHA: d89be39bff9c6f1cb86ce0c39dd34fe945884409
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: d89be39bff9c6f1cb86ce0c39dd34fe945884409
+LAST_VALIDATED_IMPLEMENTATION_SHA: 07a5491064b78290fbe823ae65c9b61c63e83d3a
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 07a5491064b78290fbe823ae65c9b61c63e83d3a
 LIVE_HEAD_AUTHORITY: GIT
 PHASE_SUCCESSOR_CAMPAIGN_ENGINE_V1_STATUS: IN_PROGRESS
 
