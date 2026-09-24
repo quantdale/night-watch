@@ -13,17 +13,18 @@
 - Discovery: Ten independent read-only lanes from the retained checkpoint remain
   valid; no full ten-lane repeat was performed.
 - Current work: A/B synthetic reproduction is complete. Shard false
-  certification is selected first and implemented at
-  `d89be39bff9c6f1cb86ce0c39dd34fe945884409`: all-skipped now exits non-PASS;
+  certification was implemented and checkpointed through
+  `38510bc4782f57d2b75ac7266dfc909937a3359d`: all-skipped now exits non-PASS;
   true zero-test remains 1/TEST_FAILURE. Focused/static validation is green;
-  `gate:dev` first exceeded the 1200-second tool budget during the expected
-  broad affected lane and is not yet classified. Run-evidence transaction
-  integrity is reproduced and remains the next likely campaign.
-- Changes: Continuity files, sanitized reproduction evidence, and active route
-  only so far; no product source, tests, hardening, OpenSpec, sibling
-  repository, credentials, artifacts, or runtime state changed.
+  `gate:dev` and `gate:milestone` each completed with 5444 passed / 12 failed,
+  and the 12 remaining source-intelligence/current-sibling failures reproduce
+  on the 78efcc9c baseline. The shard child is honestly BLOCKED; independent
+  successor selection continues with the child-process census bypass.
+- Changes: Continuity files, sanitized reproduction evidence, the shard receipt
+  implementation, and its local validation are complete. No sibling
+  repository, credentials, artifacts, or external runtime state changed.
 - Safety events: NONE.
-- Remaining work: Current reproduction, campaign selection, implementation,
-  validation, reassessment, and successor loop.
+- Remaining work: Child-process census totality campaign, then reassessment of
+  run-evidence transaction integrity and other provisional findings.
 
 This is an active handoff, not a completion report.

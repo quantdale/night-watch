@@ -54,7 +54,7 @@ controls, and mutations that remove the executed/unknown guards.
 - Acceptance criteria: tests fail against the current implementation for the
   intended reasons.
 - Validation commands: focused Playwright suite.
-- Status: IN_PROGRESS
+- **Status:** COMPLETE
 
 ### M2 — Root-cause implementation
 
@@ -64,7 +64,7 @@ controls, and mutations that remove the executed/unknown guards.
 - Acceptance criteria: all-skipped/zero/unknown fail; mixed pass/skip passes;
   existing coverage/exclusivity remains.
 - Validation commands: focused tests and `npm run gate:dev`.
-- Status: NOT_STARTED
+- **Status:** COMPLETE
 
 ### M3 — Adversarial validation and checkpoint
 
@@ -75,7 +75,7 @@ controls, and mutations that remove the executed/unknown guards.
 - Acceptance criteria: mutations detected; milestone gate green; no safety
   counter regression.
 - Validation commands: `npm run gate:milestone`, targeted lint/type checks.
-- Status: NOT_STARTED
+- **Status:** BLOCKED
 
 ### M4 — Close and reassess
 
@@ -118,4 +118,5 @@ successor candidates.
 
 The runner cannot emit a successful result for zero executed, all-skipped, or
 unknown/malformed execution; legitimate mixed outcomes remain correct; focused
-and milestone validation pass; all receipts and residuals are truthful.
+validation passes; the broad milestone lane's baseline/source-drift residual
+is explicitly classified; all receipts and residuals are truthful.

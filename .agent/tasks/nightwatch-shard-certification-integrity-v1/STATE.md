@@ -4,14 +4,14 @@
 
 Task ID: nightwatch-shard-certification-integrity-v1
 Phase: SHARD_CERTIFICATION_INTEGRITY_V1
-Status: IN_PROGRESS
+Status: BLOCKED
 Starting SHA: 78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1
 Last validated implementation SHA: 38510bc4782f57d2b75ac7266dfc909937a3359d
 Last substantive checkpoint SHA: 38510bc4782f57d2b75ac7266dfc909937a3359d
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-successor-campaign-en-628d8bb9
-Last checkpoint: 2026-09-24 — implementation and gate-classification checkpoint 38510bc4782f57d2b75ac7266dfc909937a3359d; focused/static validation green; broad gate residual classified.
+Last checkpoint: 2026-09-24 — implementation and gate-classification checkpoint 38510bc4782f57d2b75ac7266dfc909937a3359d; focused/static validation green; 12 broad-gate failures baseline-identical.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1
@@ -19,7 +19,7 @@ LAST_VALIDATED_IMPLEMENTATION_SHA: 38510bc4782f57d2b75ac7266dfc909937a3359d
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: 38510bc4782f57d2b75ac7266dfc909937a3359d
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
-PHASE_SHARD_CERTIFICATION_INTEGRITY_V1_STATUS: IN_PROGRESS
+PHASE_SHARD_CERTIFICATION_INTEGRITY_V1_STATUS: BLOCKED
 
 ## Objective
 
@@ -29,9 +29,9 @@ malformed runs cannot produce a misleading successful result.
 
 ## Current Milestone
 
-M3 — adversarial validation and checkpoint. The strict receipt, reporter,
-runner integration, and focused regressions are implemented; milestone
-validation and final review remain.
+M3 — adversarial validation is BLOCKED by 12 broad-gate failures in
+source-intelligence/current-sibling tests that reproduce on the certified
+baseline. The shard implementation itself is complete and focused-validated.
 
 ## Completed Milestones
 
@@ -48,18 +48,21 @@ validation and final review remain.
 - Manual mutation probe removed the all-skipped guard and changed the
   disposition from `ALL_SKIPPED` to `PASS`, proving the regression is
   load-bearing.
+- Post-governance gate reruns: `gate:dev` 5444 passed / 12 failed and
+  `gate:milestone` 5444 passed / 12 failed. The 12 remaining failures reproduce
+  against a disposable 78efcc9c baseline and are outside this campaign.
 
 ## Work In Progress
 
-Implementation is committed and focused/static validation is green. The broad
-lane has a classified baseline/source-drift residual; final child status and
-successor selection remain.
+None. The implementation is checkpointed; this child is blocked only by the
+classified broad-gate residual. The umbrella programme may select an independent
+successor without modifying the failing source-intelligence tests.
 
 ## Exact Next Action
 
-Run the post-governance `gate:dev`/`gate:milestone` lanes and record the exact
-residual. If the residual remains baseline-identical, mark this child blocked
-by external/source drift and select the next independent campaign.
+Keep this child blocked with its evidence intact. In the umbrella task, select
+and open the next independent campaign; do not alter the 12 baseline/source-
+drift failures as part of shard certification.
 
 ## Files Changed
 
@@ -129,12 +132,27 @@ ledger drift (`LIVE_TASK_STATUS` still COMPLETE); updating the single ledger
 value produced a green structural check.
 
 Command: `npm run gate:dev` after implementation checkpoint
-Result: TIMEOUT / INCONCLUSIVE
+Result: TEST_FAILURE / PREEXISTING-SCOPE BLOCKER
 When: 2026-09-24
-Relevant failure/output summary: the first run exceeded the 1200-second tool
-budget while the config change correctly broadened the affected lane to the
-full universe; no green claim was made. A bounded rerun with a larger budget
-is required before milestone closure.
+Relevant failure/output summary: 5444 passed / 12 failed in 514.1s across 393
+selected tests; all 12 failures are source-intelligence/current-sibling drift
+failures reproduced against baseline 78efcc9c. The earlier 13-failure run also
+contained one NW-07 continuity failure introduced by successor task prose; it
+was repaired and is absent from the current run.
+
+Command: `npm run gate:milestone` after implementation checkpoint
+Result: TEST_FAILURE / PREEXISTING-SCOPE BLOCKER
+When: 2026-09-24
+Relevant failure/output summary: 5444 passed / 12 failed in 656.9s; same
+baseline/source-drift residual. Hardening-rules, project, workspace, handoff,
+agent, typecheck, and schema steps all passed.
+
+Command: disposable baseline comparison
+Result: BASELINE_FAILURES_REPRODUCED
+When: 2026-09-24
+Relevant failure/output summary: baseline copies reproduced 8/94 and 4/39
+failures in the two affected source-intelligence groups; no shard-receipt
+source/test path was changed.
 
 ## Decisions Made During This Task
 
@@ -156,7 +174,13 @@ all outcomes are known.
 
 ## Blockers
 
-None. The first implementation checkpoint is ready for milestone validation.
+- `gate:dev` and `gate:milestone` cannot certify the broad affected lane:
+  12 source-intelligence/current-sibling tests fail on both the current
+  implementation and a disposable `78efcc9c` baseline.
+- The failures are outside the shard receipt implementation and no safe local
+  fix is justified without reconciling sibling-source evidence.
+- The child is therefore honestly BLOCKED rather than claiming a green
+  milestone.
 
 ## Safety Events
 
@@ -165,18 +189,19 @@ no external service, credential, customer value, or sibling repository.
 
 ## Deferred / Follow-Up
 
-Run-evidence transaction integrity remains the next high-value candidate after
-this campaign. Other provisional findings remain in the parent backlog.
+- The 12 source-intelligence failures require separate evidence/source-drift
+  reconciliation; do not absorb them into this campaign.
+- The umbrella successor loop may proceed with child-process census totality or
+  run-evidence transaction integrity.
 
 ## Resume Recipe
 
 1. Read SPEC, PLAN, and STATE.
-2. Inspect `git status` and current session status.
-3. Run the smallest receipt/classifier reproduction.
-4. Implement the strict receipt path and regression tests.
-5. Run focused tests, `gate:dev`, adversarial review, and `gate:milestone`.
-6. Commit a verified checkpoint and update the parent successor state.
+2. Preserve this blocked child and its evidence; do not change the failing
+   source-intelligence tests.
+3. Return to the umbrella STATE and select the next independent child.
+4. Require a clean owned session and current reproduction before implementation.
 
 ## Completion Snapshot
 
-Not applicable while IN_PROGRESS.
+Not applicable while BLOCKED; no green milestone or completion claim is made.

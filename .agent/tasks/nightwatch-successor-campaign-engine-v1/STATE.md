@@ -39,7 +39,7 @@ checkpoint/milestone validation.
 - **M0 COMPLETE** — owner resolution, continuity recovery, and fresh
   read-only discovery.
 - **M1 COMPLETE** — A/B reproduction and six-finding revalidation.
-- **M2 IN_PROGRESS** — shard certification implementation and validation.
+- **M2 BLOCKED** — shard certification implementation is complete, but its broad gate lanes retain 12 baseline/source-drift failures.
 - Owner resolution rechecked the exact canonical diff against the recorded
   patch and HEAD. It was mechanically confirmed as unintended formatter/editor
   churn, including invalid CSS fallback corruption `#fff` -> `# fff)`.
@@ -53,15 +53,16 @@ checkpoint/milestone validation.
 
 ## Work In Progress
 
-The shard certification implementation is checkpointed. Focused/static
-validation is green; the broad gate exposed unrelated baseline/source-drift
-failures, and the post-governance rerun is the remaining checkpoint action.
+The shard certification child is checkpointed and honestly BLOCKED by 12
+baseline/source-drift failures. Independent successor selection is next; no
+unrelated source-intelligence test will be modified.
 
 ## Exact Next Action
 
-Run the post-governance `gate:dev`/`gate:milestone` lanes, record the exact
-residual against the baseline, then reassess run-evidence transaction integrity
-or the child-process census bypass as the next independent campaign.
+Select and open the next independent child campaign. Current ranking puts the
+child-process census indirection bypass next: it is a reproduced High-confidence
+authority-totality gap with a small, low-risk implementation surface. Preserve
+the shard child as BLOCKED with its evidence.
 
 ## Files Changed
 
@@ -151,11 +152,18 @@ ledger drift (`LIVE_TASK_STATUS` still COMPLETE); updating the single ledger
 value produced a green structural check.
 
 Command: `npm run gate:dev` after implementation checkpoint
-Result: TIMEOUT / INCONCLUSIVE
+Result: TEST_FAILURE / PREEXISTING-SCOPE BLOCKER
 When: 2026-09-24
-Relevant failure/output summary: first run exceeded the 1200-second tool budget
-while the changed Playwright config broadened the affected lane; no pass/fail
-claim was made.
+Relevant failure/output summary: 5444 passed / 12 failed in 514.1s across 393
+selected tests; baseline copies reproduce the remaining source-intelligence
+failures. The earlier 13-failure run included one NW-07 continuity failure
+introduced by successor task prose; it was repaired and is absent now.
+
+Command: `npm run gate:milestone` after implementation checkpoint
+Result: TEST_FAILURE / PREEXISTING-SCOPE BLOCKER
+When: 2026-09-24
+Relevant failure/output summary: 5444 passed / 12 failed in 656.9s; same
+baseline/source-drift residual. All non-shard validation groups passed.
 
 ## Decisions Made During This Task
 
@@ -171,10 +179,11 @@ it blindly.
 Reason: its active route names a retired worktree and its status is BLOCKED;
 the live session needs a fresh branch and current state.
 
-Decision: require A/B reproduction before selecting a campaign.
-Reason: the user explicitly requires mechanical evidence for shard false
-certification and run-evidence transaction integrity, and ranking must use
-current evidence.
+Decision: select the child-process census indirection bypass as the next child.
+Reason: the namespace-require reproduction is concrete, high-confidence, and
+small to fix; it improves a safety authority before the larger run-evidence
+transaction redesign. Shard false certification remains a completed local
+implementation with a separately classified broad-gate blocker.
 
 ## Discoveries
 
@@ -188,8 +197,10 @@ current evidence.
 
 ## Blockers
 
-None currently. Stop immediately if a new unexpected canonical mutation or
-other C-00 invariant violation appears.
+The shard child is blocked by 12 baseline/source-drift failures in broad
+source-intelligence tests. This does not block independent successor work, but
+it must remain explicitly classified and must not be absorbed into unrelated
+campaigns.
 
 ## Safety Events
 
@@ -199,21 +210,21 @@ publication, force push, or history rewrite occurred.
 
 ## Deferred / Follow-Up
 
-- Reassess and execute run-evidence transaction integrity next if still
-  highest-value after the shard checkpoint.
-- Reassess child-process census indirection, popup L0 readiness, proxy raw-event
-  persistence, and credential-use binding with current reachability evidence.
-- Keep the completed priority remediation campaign terminal and historical.
+- Select and execute the child-process census indirection child next.
+- Reassess run-evidence transaction integrity, popup L0 readiness, proxy
+  raw-event persistence, and credential-use binding after that child.
+- Keep the shard child BLOCKED and the completed priority remediation campaign
+  terminal and historical.
 
 ## Resume Recipe
 
 1. Read SPEC, PLAN, and this STATE.
 2. Inspect `git status`, exact HEAD/origin, and `npm run session:status`.
-3. Run the two isolated A/B reproductions and record receipts here.
-4. Select one campaign using current evidence and define its invariant.
-5. Create/update dedicated OpenSpec artifacts before implementation.
-6. Continue with focused tests, `gate:dev`, adversarial review,
-   `gate:milestone`, checkpoint, reassessment, and successor selection.
+3. Preserve the blocked shard child and its baseline comparison.
+4. Create/update the selected child-process census task/OpenSpec.
+5. Reproduce the namespace-require/alias bypass on current source.
+6. Continue with focused tests, adversarial review, milestone validation,
+   checkpoint, and successor selection.
 
 ## Completion Snapshot
 

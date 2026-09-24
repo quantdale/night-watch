@@ -1,7 +1,7 @@
 {
   "schemaVersion": "nightwatch.successor-validation-receipt.v1",
   "campaign": "nightwatch-shard-certification-integrity-v1",
-  "implementationCheckpoint": "7dfb54315e53e7ff1c3e12e40cd8887436fdffd3",
+  "implementationCheckpoint": "38510bc4782f57d2b75ac7266dfc909937a3359d",
   "focused": {
     "command": "npx playwright test tests/unit/validationShardPlan.test.ts --project=nightwatch --workers=1 --retries=0",
     "result": "PASS",
@@ -16,33 +16,34 @@
   "gateDev": {
     "command": "npm run gate:dev",
     "result": "TEST_FAILURE",
-    "wallSeconds": 626.4,
+    "wallSeconds": 514.1,
     "targetSeconds": 120,
     "affectedTests": 393,
     "affectedShards": {
-      "passed": 5443,
-      "failed": 13,
+      "passed": 5444,
+      "failed": 12,
       "shardExecutionReceipts": "strict machine receipts; reporter path worked"
     },
     "classification": "PREEXISTING_OR_ENVIRONMENTAL_AFFECTED_SCOPE_FAILURE",
-    "reason": "The changed bin runner broadens the affected lane to 393 tests. The failures are source-intelligence/current-sibling drift tests outside the shard implementation; baseline copies at 78efcc9c reproduce the same failures. One additional NW-07 continuity failure was introduced by the new task prose and was repaired before this receipt."
+    "reason": "The changed bin runner broadens the affected lane to 393 tests. The 12 remaining failures are source-intelligence/current-sibling drift tests outside the shard implementation; baseline copies at 78efcc9c reproduce the same failure classes. The additional NW-07 continuity failure introduced by successor task prose was repaired and is no longer in the count."
   },
   "gateMilestone": {
     "command": "npm run gate:milestone",
     "result": "TEST_FAILURE",
-    "wallSeconds": 798.5,
+    "wallSeconds": 656.9,
     "targetSeconds": 300,
     "affectedShards": {
-      "passed": 5443,
-      "failed": 13
+      "passed": 5444,
+      "failed": 12
     },
-    "classification": "SAME_PREEXISTING_OR_ENVIRONMENTAL_AFFECTED_SCOPE_FAILURE"
+    "classification": "SAME_PREEXISTING_OR_ENVIRONMENTAL_AFFECTED_SCOPE_FAILURE; all 12 remaining failures are baseline/source-drift failures"
   },
   "baselineComparison": {
     "source": "git archive 78efcc9c into disposable /tmp checkout with local node_modules symlink",
     "commands": [
       "six failing source-intelligence files: 8 failed / 94 passed",
-      "four additional shard-1 files: 4 failed / 39 passed"
+      "four additional shard-1 files: 4 failed / 39 passed",
+      "post-repair current gate: 12 failures; no shard/NW-07 failure remains"
     ],
     "conclusion": "The affected failures are not introduced by the shard receipt implementation; the NW-07 continuity failure was separately introduced by successor task prose and is now fixed."
   },
