@@ -7,9 +7,9 @@ Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-successor-campaign-engine-v1
 Starting SHA: 78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1
 Last validated implementation SHA: c1670abedee07c8b5d36ad2de5ee4419f5859ac8
-Last checkpoint: 2026-09-24 — credential-use binding implementation checkpoint c1670abedee07c8b5d36ad2de5ee4419f5859ac8; focused/static/mutation validation green; broad gate pending.
-Current milestone: M7 — validate credential-use binding child.
-Next action: run post-checkpoint gate lanes, classify any residual, then close or block this child without real credentials.
+Last checkpoint: 2026-09-25 — credential child clean milestone 5456 passed / 12 independently classified source-drift failures; shard temp isolation selected.
+Current milestone: M8 — implement shard temporary-namespace isolation.
+Next action: implement per-shard `TMPDIR`/`TEMP`/`TMP` isolation and process-level adversarial proof, then run focused and broad validation.
 
 Authorization class: SUCCESSOR_CAMPAIGN_ENGINE_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
@@ -41,7 +41,7 @@ as historical truth; do not reopen it.
 
 ```
 CAMPAIGN: nightwatch-successor-campaign-engine-v1
-CHILD TASK: nightwatch-credential-use-binding-successor-v1
+CHILD TASK: nightwatch-shard-temp-isolation-v1
 SESSION WORKTREE: session/nightwatch-successor-campaign-en-628d8bb9
 
 IMPLEMENTATION AUTHORIZED:
@@ -51,9 +51,8 @@ IMPLEMENTATION AUTHORIZED:
   C-00 commits and fast-forward integration from this session only.
 
 CURRENT STATUS:
-  IN_PROGRESS — canonical is clean and workspace status passes; prior children
-  are BLOCKED/deferred with classified residuals; credential-use binding is the
-  active independent successor.
+  IN_PROGRESS — credential-use binding is checkpointed/BLOCKED by the independent
+  live-source residual; shard temporary-namespace isolation is the active child.
 
 ALPHAUS DEV / NEXT / PRODUCTION CONTACT:   NOT AUTHORIZED
 AUTHENTICATED ALPHAUS RUNTIME:             NOT AUTHORIZED

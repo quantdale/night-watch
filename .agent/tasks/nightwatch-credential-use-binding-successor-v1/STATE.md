@@ -4,14 +4,14 @@
 
 Task ID: nightwatch-credential-use-binding-successor-v1
 Phase: CREDENTIAL_USE_BINDING_SUCCESSOR_V1
-Status: IN_PROGRESS
+Status: BLOCKED
 Starting SHA: d5175a7d676cbff5584b887363ceaa1d7d7b879f
 Last validated implementation SHA: c1670abedee07c8b5d36ad2de5ee4419f5859ac8
 Last substantive checkpoint SHA: c1670abedee07c8b5d36ad2de5ee4419f5859ac8
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-successor-campaign-en-628d8bb9
-Last checkpoint: 2026-09-25 — implementation c1670abe remains focused-green; gate:dev found 12 live-source drift failures plus one cross-shard temp-namespace race; clean milestone rerun pending.
+Last checkpoint: 2026-09-25 — clean milestone replay 5456 passed / 12 failed; credential implementation remains focused-green; broad live-source drift residual is independent.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: d5175a7d676cbff5584b887363ceaa1d7d7b879f
@@ -19,7 +19,7 @@ LAST_VALIDATED_IMPLEMENTATION_SHA: c1670abedee07c8b5d36ad2de5ee4419f5859ac8
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: c1670abedee07c8b5d36ad2de5ee4419f5859ac8
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
-PHASE_CREDENTIAL_USE_BINDING_SUCCESSOR_V1_STATUS: IN_PROGRESS
+PHASE_CREDENTIAL_USE_BINDING_SUCCESSOR_V1_STATUS: BLOCKED
 
 ## Objective
 
@@ -28,10 +28,10 @@ fail closed when that identity changes.
 
 ## Current Milestone
 
-M3 — adversarial validation and checkpoint. Binding, per-effect revalidation,
-and synthetic race/mutation regressions are implemented. `gate:dev` is classified;
-the first milestone attempt stopped at `project:check` because the strict OpenSpec
-repair was still uncommitted, so a clean milestone rerun remains required.
+M3 — adversarial validation is BLOCKED by the broad affected lane. Credential
+binding, per-effect revalidation, and synthetic race/mutation regressions are
+implemented and focused/static green. The clean milestone has no auth failure;
+its 12 failures are the independently reproduced live-source drift set.
 
 ## Completed Milestones
 
@@ -46,16 +46,15 @@ repair was still uncommitted, so a clean milestone rerun remains required.
 
 ## Work In Progress
 
-The implementation is checkpointed. `gate:dev` completed with 5455 passed / 13
-failed: 12 known live-source drift failures and one new cross-shard
-`reviewStore.test.ts` temp-directory race. The first `gate:milestone` stopped at
-`project:check` because this continuity repair was uncommitted; rerun it after
-this checkpoint.
+None. The implementation and strict OpenSpec are checkpointed. The child is
+blocked only by the classified broad-gate residual; the umbrella may select the
+next independent validation-isolation campaign.
 
 ## Exact Next Action
 
-Commit this reconciliation, rerun `gate:milestone` from the clean checkpoint,
-then close or block this child without real credentials.
+Keep this child blocked with its evidence intact. Return to the umbrella and
+execute `nightwatch-shard-temp-isolation-v1`; do not absorb live-source drift
+into credential binding.
 
 ## Files Changed
 
@@ -109,13 +108,21 @@ test failed only in the parallel gate because another shard created an unrelated
 file in the shared OS temp parent; it passed when the four shard-1 failures were
 replayed alone. No credential/auth test failed.
 
-Command: `npm run gate:milestone`
+Command: first `npm run gate:milestone` after the OpenSpec repair
 Result: STEP_FAILED / REPLAY REQUIRED
 When: 2026-09-25
 Relevant failure/output summary: typecheck, hardening, agent, handoff, bin
 typecheck, and hardening-rules passed; `project:check` refused the intentionally
 dirty worktree before test selection. The strict credential OpenSpec scenario
-omission was repaired, but milestone evidence must be rerun from a clean commit.
+omission was repaired, and milestone evidence was rerun from a clean commit.
+
+Command: `npm run gate:milestone` from clean checkpoint `f41c6cc3`
+Result: TEST_FAILURE / PREEXISTING-SCOPE BLOCKER
+When: 2026-09-25
+Relevant failure/output summary: all mandatory command steps passed; 5456 passed
+/ 12 failed across 393 selected tests. The 12 failures are the known
+live-source drift set; the parallel review-store temp race did not recur. No
+credential/auth test failed.
 
 ## Decisions Made During This Task
 
@@ -126,32 +133,31 @@ Reason: document replacement must fail before credential input.
 ## Discoveries
 
 - Generic locators do not bind an element identity.
-- The binding must be created before provider retrieval and revoked on all
-  exits.
+- The binding must be created before provider retrieval and revoked on all exits.
 
 ## Blockers
 
-The broad lane retains 12 live-source drift failures and one newly isolated
-cross-shard temp-namespace race. No real credential, target, or authenticated
-run was used. A clean milestone rerun remains required before terminal child
-classification.
+`gate:dev` and `gate:milestone` cannot certify the broad affected lane. Twelve
+live-source/current-sibling failures reproduce independently of credential
+binding; no credential regression appears. The child is honestly BLOCKED rather
+than claiming a green milestone.
 
 ## Safety Events
 
-NONE. All credential values were synthetic sentinels in local browser tests.
+NONE. All credential values were synthetic sentinels in local browser tests; no
+real credential or target was used.
 
 ## Deferred / Follow-Up
 
-Dynamic listener proof, popup target admission, proxy/full journal work, and
-credential retry redesign remain later.
+- Preserve the 12 live-source drift failures for a separate hermeticity/currentness successor.
+- Preserve the shared-temp race for `nightwatch-shard-temp-isolation-v1`.
+- Dynamic listener proof, popup target admission, and full journal recovery remain later.
 
 ## Resume Recipe
 
-1. Read SPEC, PLAN, and STATE.
-2. Run the focused auth suite and inspect the exact binding diff.
-3. Replay milestone from a clean checkpoint and classify its exact residual.
-4. Reassess the next child without real credentials.
+1. Preserve this blocked child and its exact evidence.
+2. Return to the umbrella state and execute shard temp isolation.
 
 ## Completion Snapshot
 
-Not applicable while IN_PROGRESS.
+Not applicable while BLOCKED; no green milestone or completion claim is made.

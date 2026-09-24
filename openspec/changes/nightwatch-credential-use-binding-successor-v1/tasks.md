@@ -15,9 +15,9 @@
 
 - [x] 3.1 Test replacement, action drift, and normal synthetic form.
 - [x] 3.2 Mutate identity/action/revalidation guards and prove detection.
-- [ ] 3.3 Run focused/static/hardening/milestone lanes.
+- [x] 3.3 Run focused/static/hardening/milestone lanes and classify the independent broad residual.
 
 ## 4. Handoff
 
-- [ ] 4.1 Reconcile task/OpenSpec truth and commit checkpoint.
-- [ ] 4.2 Reassess remaining local candidates and residuals.
+- [x] 4.1 Reconcile task/OpenSpec truth and commit the implementation/replay checkpoint.
+- [x] 4.2 Reassess remaining local candidates and residuals.

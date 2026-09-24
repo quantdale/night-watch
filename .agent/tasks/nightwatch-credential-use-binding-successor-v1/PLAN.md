@@ -68,7 +68,7 @@ exit. Map stale binding to a dedicated DevAuthFailure code.
   mutations; classify broad source-intelligence residual.
 - Acceptance criteria: mutations detected; no secret leakage.
 - Validation commands: `gate:dev`, `gate:milestone`.
-- **Status:** IN_PROGRESS
+- **Status:** BLOCKED
 
 ### M4 — Close and reassess
 
@@ -77,7 +77,7 @@ exit. Map stale binding to a dedicated DevAuthFailure code.
 - Implementation actions: record residual listener limitations and reassess.
 - Acceptance criteria: no false completion claim.
 - Validation commands: continuity checks.
-- Status: NOT_STARTED
+- Status: COMPLETE
 
 ## Validation Strategy
 

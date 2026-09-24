@@ -163,9 +163,24 @@ reassess, and repeat. Use full certification only at release groups.
   route/form/proxy/source drift; no real credential or target is used.
 - Validation commands: focused auth/security tests, `npm run gate:dev`, then
   `npm run gate:milestone`.
+- **Status:** BLOCKED
+
+### M8 — Shard temporary-namespace isolation
+
+- Objective: prevent parallel shard processes from sharing ambient OS temporary
+  state and cross-perturbing validation tests.
+- Files/areas: shard child environment, `run-shards.mjs`, generated bin types,
+  focused process-level tests, and the dedicated child artifacts.
+- Implementation actions: derive one run-unique private temp root per shard,
+  preserve the allowlist/proxy stripping, add malformed-input refusal, and clean
+  only the invocation-owned scratch root.
+- Acceptance criteria: actual child `os.tmpdir()` values are distinct; inherited
+  temp/proxy state cannot survive; existing shard semantics remain green.
+- Validation commands: focused process/shard tests, `gate:dev`, then
+  `gate:milestone`.
 - **Status:** IN_PROGRESS
 
-### M8 — Final adversarial reassessment and closure
+### M9 — Final adversarial reassessment and closure
 
 - Objective: prove a legitimate terminal condition and reconcile final truth.
 - Files/areas: task/report/OpenSpec/project-state surfaces as required.
@@ -214,6 +229,10 @@ green without understanding the cause.
 - 2026-09-24 — Select credential-use binding next. The remaining High-severity
   candidate has a direct synthetic post-precheck navigation/form race and a
   bounded fail-closed local test surface.
+- 2026-09-25 — Credential clean milestone retained 12 independent live-source
+  drift failures. The earlier parallel-only `reviewStore.test.ts` failure passed
+  in isolation and is selected as M8 because inherited shard temp state is a
+  concrete, bounded validation-integrity defect.
 
 ## Discoveries
 
@@ -231,10 +250,8 @@ green without understanding the cause.
 
 ## Deferred Work
 
-The run-evidence transaction defect, popup L0 readiness, proxy raw-event
-persistence, and credential-use binding remain in the successor backlog after
-the child-process census child. The shard child remains BLOCKED and is not
-silently discarded.
+The live-source drift hermeticity/currentness child and popup L0 readiness remain
+after shard temp isolation. The completed priority campaign remains terminal.
 
 ## Completion Criteria
 

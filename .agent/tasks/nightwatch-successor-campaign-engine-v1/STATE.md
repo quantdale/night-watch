@@ -11,7 +11,7 @@ Last substantive checkpoint SHA: c1670abedee07c8b5d36ad2de5ee4419f5859ac8
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-successor-campaign-en-628d8bb9
-Last checkpoint: 2026-09-24 — credential-use binding implementation checkpoint c1670abedee07c8b5d36ad2de5ee4419f5859ac8; focused/static/mutation green; broad gate pending.
+Last checkpoint: 2026-09-25 — credential child clean milestone 5456 passed / 12 independently classified source-drift failures; shard temp isolation selected from the additional parallel-only race.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1
@@ -30,8 +30,8 @@ before reassessing successors.
 
 ## Current Milestone
 
-M7 — validate the credential-use binding child after its focused
-implementation checkpoint.
+M8 — execute the shard temporary-namespace isolation child after its
+parallel-only `reviewStore.test.ts` failure passed in isolation.
 
 ## Completed Milestones
 
@@ -47,7 +47,7 @@ implementation checkpoint.
   barrier did not intercept the first popup navigation; no fix was claimed.
 - **M6 BLOCKED** — proxy event firewall implementation is complete, but broad
   gate lanes retain 12 baseline/source-drift failures.
-- **M7 IN_PROGRESS** — credential-use binding successor selected.
+- **M7 BLOCKED** — credential-use binding is implemented and focused-green; broad lanes retain only the independent 12-failure live-source drift residual.
 - Owner resolution rechecked the exact canonical diff against the recorded
   patch and HEAD. It was mechanically confirmed as unintended formatter/editor
   churn, including invalid CSS fallback corruption `#fff` -> `# fff)`.
@@ -61,13 +61,14 @@ implementation checkpoint.
 
 ## Work In Progress
 
-The credential-use binding implementation is checkpointed; focused/static/
-mutation validation is green. Its broad gate lanes and final status remain.
+The credential child is checkpointed and honestly BLOCKED by the independent
+live-source residual. The selected `nightwatch-shard-temp-isolation-v1` child has
+strict OpenSpec and continuity state; implementation is next.
 
 ## Exact Next Action
 
-Run post-checkpoint `gate:dev` and `gate:milestone`, classify the exact residual,
-then close or block the credential child without real credentials.
+Implement per-shard `TMPDIR`/`TEMP`/`TMP` isolation and its process-level
+adversarial proof, then replay focused and broad validation.
 
 ## Files Changed
 
@@ -88,6 +89,10 @@ then close or block the credential child without real credentials.
 | `.agent/tasks/nightwatch-proxy-event-firewall-v1/` | active proxy child continuity | added this session |
 | `openspec/changes/nightwatch-proxy-event-firewall-v1/` | active proxy child contract | added this session |
 | `docs/CURRENT_STATE.md` | owner-authorized restoration only | clean at HEAD |
+| `.agent/tasks/nightwatch-credential-use-binding-successor-v1/` | blocked credential child | added/updated this session |
+| `openspec/changes/nightwatch-credential-use-binding-successor-v1/` | credential child contract | complete/validated |
+| `.agent/tasks/nightwatch-shard-temp-isolation-v1/` | active validation-isolation child | added this session |
+| `openspec/changes/nightwatch-shard-temp-isolation-v1/` | active isolation contract | complete/validated |
 
 ## Validation Ledger
 
@@ -176,6 +181,14 @@ Relevant failure/output summary: 5446 passed / 13 failed in 692.3s; 12 failures
 match the baseline/source-drift residual and one semantic WebSocket receipt
 failure passes in isolation as a timing-dependent full-suite flake.
 
+Command: credential clean `npm run gate:milestone` from `f41c6cc3`
+Result: TEST_FAILURE / INDEPENDENT SOURCE DRIFT
+When: 2026-09-25
+Relevant failure/output summary: all mandatory command steps passed; 5456 passed
+/ 12 failed across 393 selected tests. No credential/auth test failed and the
+parallel review-store temp race did not recur. The original parallel-only race
+therefore selected `nightwatch-shard-temp-isolation-v1` as the next child.
+
 ## Decisions Made During This Task
 
 Decision: restore only the verified canonical target after owner authorization.
@@ -200,18 +213,19 @@ implementation with a separately classified broad-gate blocker.
 
 - The canonical blocker was fully external/mechanical and is now resolved; the
   project is back at the certified baseline with a clean tree.
-- Provisional high-value candidates remain run-evidence transaction integrity,
-  shard false certification, child-process census indirection, popup L0
-  readiness, proxy raw-event persistence, and credential-use binding.
-- The first product implementation is complete and checkpointed; no further
-  product implementation has occurred since that checkpoint.
+- The completed children now cover shard certification, census indirection,
+  run-evidence transaction integrity, proxy-event firewall, and credential-use
+  binding. Their only broad residuals are the shared live-source drift set,
+  except the popup L0 design blocker.
+- The credential gate exposed a separate cross-shard temp-namespace race. It is
+  selected for bounded validation-infrastructure repair.
 
 ## Blockers
 
-The shard, census, run-evidence, and proxy children are blocked by broad
-affected-lane failures; the popup race is separately blocked by the absence of
-a proven pre-navigation target barrier. These are classified and must not be
-absorbed into the credential child.
+The shard, census, run-evidence, proxy, and credential children are blocked by
+the broad live-source drift residual; popup L0 remains blocked by the absence of
+a proven pre-navigation target barrier. The shared-temp race is executable and
+is now isolated in M8.
 
 ## Safety Events
 
@@ -221,21 +235,19 @@ publication, force push, or history rewrite occurred.
 
 ## Deferred / Follow-Up
 
-- Execute credential-use binding next.
-- Reassess a lower-level popup target barrier and remaining evidence
-  architecture after that child.
-- Keep shard, census, run-evidence, proxy, and popup prototype records BLOCKED
-  and the completed priority campaign terminal and historical.
+- Execute shard temp isolation next.
+- After that child, select hermetic/current-source handling for the 12 failures.
+- Reassess the lower-level popup target barrier and remaining evidence architecture.
+- Keep completed priority campaign terminal and historical.
 
 ## Resume Recipe
 
 1. Read SPEC, PLAN, and this STATE.
 2. Inspect `git status`, exact HEAD/origin, and `npm run session:status`.
-3. Preserve the blocked shard child and its baseline comparison.
-4. Create/update the selected child-process census task/OpenSpec.
-5. Reproduce the namespace-require/alias bypass on current source.
-6. Continue with focused tests, adversarial review, milestone validation,
-   checkpoint, and successor selection.
+3. Preserve all blocked children and their exact gate evidence.
+4. Implement `nightwatch-shard-temp-isolation-v1` from the current live source.
+5. Prove actual child `os.tmpdir()` isolation and malformed-input refusal.
+6. Continue with focused tests, gates, checkpoint, and successor selection.
 
 ## Completion Snapshot
 
