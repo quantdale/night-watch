@@ -62,9 +62,9 @@ intelligence or timing-flake failure will be modified.
 
 ## Exact Next Action
 
-Create and strict-validate the run-evidence transaction integrity child task/
-OpenSpec, reproduce its current same-run/torn-append behavior, and define the
-smallest root-cause implementation slice.
+Strict-validate `nightwatch-run-evidence-transaction-successor-v1`, add failing
+same-run/durable-state regressions, then implement the bounded fail-closed
+recorder fix.
 
 ## Files Changed
 
@@ -79,7 +79,9 @@ smallest root-cause implementation slice.
 | `.agent/tasks/nightwatch-shard-certification-integrity-v1/` | selected child task continuity | added this session |
 | `openspec/changes/nightwatch-successor-campaign-engine-v1/` | umbrella successor contract | added this session |
 | `.agent/tasks/nightwatch-child-process-census-indirection-v1/` | active child continuity | added this session |
-| `openspec/changes/nightwatch-child-process-census-indirection-v1/` | active child contract | added this session |
+| `openspec/changes/nightwatch-child-process-census-indirection-v1/` | blocked census child contract | added this session |
+| `.agent/tasks/nightwatch-run-evidence-transaction-successor-v1/` | active run-evidence child continuity | added this session |
+| `openspec/changes/nightwatch-run-evidence-transaction-successor-v1/` | active run-evidence child contract | added this session |
 | `docs/CURRENT_STATE.md` | owner-authorized restoration only | clean at HEAD |
 
 ## Validation Ledger

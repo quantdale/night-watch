@@ -106,9 +106,24 @@ reassess, and repeat. Use full certification only at release groups.
   fail closed; focused and milestone evidence is recorded.
 - Validation commands: focused suite, `npm run gate:dev`, then
   `npm run gate:milestone`.
+- **Status:** BLOCKED
+
+### M4 — Run-evidence transaction integrity successor
+
+- Objective: execute the selected run-evidence transaction child after the
+  shard/census gate residuals were classified.
+- Files/areas: `src/core/evidence/runRecorder.ts`, focused evidence tests,
+  and the dedicated child artifacts.
+- Implementation actions: reproduce same-run/torn-tail failures, implement
+  exclusive identity, durable append acknowledgement, and fail-closed
+  finalization, add mutations, validate, checkpoint.
+- Acceptance criteria: no false PASS after detected durable divergence; normal
+  recorder behavior remains green; residuals are explicit.
+- Validation commands: focused evidence suite, `npm run gate:dev`, then
+  `npm run gate:milestone`.
 - **Status:** IN_PROGRESS
 
-### M4 — Final adversarial reassessment and closure
+### M5 — Final adversarial reassessment and closure
 
 - Objective: prove a legitimate terminal condition and reconcile final truth.
 - Files/areas: task/report/OpenSpec/project-state surfaces as required.
@@ -143,8 +158,11 @@ green without understanding the cause.
   drift.
 - 2026-09-24 — Select child-process census indirection next. The reproduced
   namespace-require/method-alias bypass has high confidence and a small, bounded
-  safety-authority correction; run-evidence transaction redesign follows after
-  this child.
+  safety-authority correction; it is now checkpointed but BLOCKED by broad-gate
+  residuals.
+- 2026-09-24 — Select run-evidence transaction integrity next. Its synthetic
+  reproduction directly demonstrates false passing summaries and lost durable
+  state, giving it higher immediate correctness impact.
 
 ## Discoveries
 
