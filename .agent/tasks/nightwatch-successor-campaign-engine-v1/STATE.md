@@ -6,17 +6,17 @@ Task ID: nightwatch-successor-campaign-engine-v1
 Phase: SUCCESSOR_CAMPAIGN_ENGINE_V1
 Status: IN_PROGRESS
 Starting SHA: 78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1
-Last validated implementation SHA: 473842c196ce28d5a0fb26528bd86fbc5884d293
-Last substantive checkpoint SHA: 473842c196ce28d5a0fb26528bd86fbc5884d293
+Last validated implementation SHA: b48604bec084b0ab3c6a7dd89c3eef6f8b82b575
+Last substantive checkpoint SHA: b48604bec084b0ab3c6a7dd89c3eef6f8b82b575
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-successor-campaign-en-628d8bb9
-Last checkpoint: 2026-09-25 — shard temp isolation 473842c1 including universe classification; focused/adversarial green and corrected gate:dev retains only 12 source-drift failures.
+Last checkpoint: 2026-09-25 — hermeticity b48604be; focused live/empty 141/141 and gate:dev 5472/0; clean milestone pending.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1
-LAST_VALIDATED_IMPLEMENTATION_SHA: 473842c196ce28d5a0fb26528bd86fbc5884d293
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 473842c196ce28d5a0fb26528bd86fbc5884d293
+LAST_VALIDATED_IMPLEMENTATION_SHA: b48604bec084b0ab3c6a7dd89c3eef6f8b82b575
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: b48604bec084b0ab3c6a7dd89c3eef6f8b82b575
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
 PHASE_SUCCESSOR_CAMPAIGN_ENGINE_V1_STATUS: IN_PROGRESS

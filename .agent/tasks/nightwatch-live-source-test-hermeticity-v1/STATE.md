@@ -6,17 +6,17 @@ Task ID: nightwatch-live-source-test-hermeticity-v1
 Phase: LIVE_SOURCE_TEST_HERMETICITY_V1
 Status: IN_PROGRESS
 Starting SHA: 060cd592cf4e8db4b07fc6398d03c147b8a51f12
-Last validated implementation SHA: 060cd592cf4e8db4b07fc6398d03c147b8a51f12
-Last substantive checkpoint SHA: 060cd592cf4e8db4b07fc6398d03c147b8a51f12
+Last validated implementation SHA: b48604bec084b0ab3c6a7dd89c3eef6f8b82b575
+Last substantive checkpoint SHA: b48604bec084b0ab3c6a7dd89c3eef6f8b82b575
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-successor-campaign-en-628d8bb9
-Last checkpoint: 2026-09-25 — selected after isolation milestone and empty-sibling reproduction.
+Last checkpoint: 2026-09-25 — hermeticity implementation b48604be; focused live/empty 141/141 and gate:dev 5472/0; clean milestone pending.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 060cd592cf4e8db4b07fc6398d03c147b8a51f12
-LAST_VALIDATED_IMPLEMENTATION_SHA: 060cd592cf4e8db4b07fc6398d03c147b8a51f12
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 060cd592cf4e8db4b07fc6398d03c147b8a51f12
+LAST_VALIDATED_IMPLEMENTATION_SHA: b48604bec084b0ab3c6a7dd89c3eef6f8b82b575
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: b48604bec084b0ab3c6a7dd89c3eef6f8b82b575
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
 PHASE_LIVE_SOURCE_TEST_HERMETICITY_V1_STATUS: IN_PROGRESS
