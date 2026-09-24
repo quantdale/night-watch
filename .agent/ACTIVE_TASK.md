@@ -3,22 +3,23 @@
 Task ID: nightwatch-priority-audit-remediation-sequence-v1
 Phase: PRIORITY_AUDIT_REMEDIATION_SEQUENCE_V1
 Title: Priority audit remediation sequence implementation
-Status: IN_PROGRESS
+Status: COMPLETE
 Task directory: .agent/tasks/nightwatch-priority-audit-remediation-sequence-v1
 Starting SHA: 4a3df8cdc776c5ca47a9666f65afbd5c5519f092
-Last validated implementation SHA: 70104a0016183e103815c79ff1a7647b73e4e622
-Last checkpoint: M5 COMPLETE at `70104a00` — gate:dev PASS; gate:milestone PASS (12/12 steps exit=0); full probe campaign 143/143; strict OpenSpec PASS; four defect pins A–D inverted; zero-upstream counters at five boundaries (fixture hits, wsConnections, redirect dst, proxy request/connection, relay fetchCalls).
-Current milestone: M6 — Cross-phase audit, full certification, C-00 closure
-Next action: Cross-phase adversarial audit of NW-AUD-010×014×019×018×020 (doc-descendant exactness, child-process totality re-run over every file the five remediations added, key-authority coherence, semantic-receipt persistence safety, helper bounds, generation×recorder teardown) with immediate fixes; re-verify the two recorded flakes + the advisory parse quirk; then ONE authoritative full certification, pre-integration C-00 checks, integrate/release/remove with exact expectations, gate:clean post-integration, terminal report, successor reassessment.
+Last validated implementation SHA: e4f38b2c029fab711237e2f401b0df0197cb682c
+Last checkpoint: COMPLETE — M0–M6 all closed and certified; five remediations integrated at 1e9124542de19ce03e453906064b814cc1a537bb (gate:local PASS receipt receipt:sha256:74edae6159b1e561800123d2; npm test 5453 passed / 18 skipped / 0 didNotRun; cross-phase audit CLEAN; session released and removed).
+Current milestone: COMPLETE / STOP — M0–M6 all closed; campaign terminal (integrated, released, removed).
+Next action: STOP — terminal campaign record; all six milestones are COMPLETE and the five remediations are integrated at origin/main; no unfinished work remains.
+
 Authorization class: PRIORITY_AUDIT_REMEDIATION_SEQUENCE_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 4a3df8cdc776c5ca47a9666f65afbd5c5519f092
-LAST_VALIDATED_IMPLEMENTATION_SHA: 70104a0016183e103815c79ff1a7647b73e4e622
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 70104a0016183e103815c79ff1a7647b73e4e622
+LAST_VALIDATED_IMPLEMENTATION_SHA: e4f38b2c029fab711237e2f401b0df0197cb682c
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: e4f38b2c029fab711237e2f401b0df0197cb682c
 LIVE_HEAD_AUTHORITY: GIT
-PHASE_PRIORITY_AUDIT_REMEDIATION_SEQUENCE_V1_STATUS: IN_PROGRESS
+PHASE_PRIORITY_AUDIT_REMEDIATION_SEQUENCE_V1_STATUS: COMPLETE
 
 ## Mission
 
@@ -43,7 +44,7 @@ certification, close C-00, enumerate remaining audit backlog, and stop.
 ```
 CAMPAIGN: nightwatch-priority-audit-remediation-sequence-v1
 CHILD TASK: NONE
-SESSION WORKTREE: session/nightwatch-priority-audit-remedi-0e17af9c
+SESSION WORKTREE: NONE
 
 IMPLEMENTATION AUTHORIZED:
   Nightwatch source, tests, hardening rules/probes, schemas/configuration,

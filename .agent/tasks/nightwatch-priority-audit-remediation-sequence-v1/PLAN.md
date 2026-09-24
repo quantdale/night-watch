@@ -181,7 +181,11 @@ one full certification, then C-00 integrate/release/remove.
   (typecheck, hardening, agent/handoff/project/workspace/session,
   `validation:universe`, strict OpenSpec, `npm test`, `gate:local`,
   `gate:clean`)
-- **Status:** IN_PROGRESS (cross-phase audit open)
+- **Status:** COMPLETE (audit CLEAN; ONE full certification PASS at `1e912454`:
+  Phase A all-pass + npm test + gate:local receipt
+  receipt:sha256:74edae6159b1e561800123d2; integrate/release/remove done;
+  gate:clean recorded at the post-integration point; terminal report
+  delivered; verdict COMPLETE)
 
 ## Validation Strategy
 

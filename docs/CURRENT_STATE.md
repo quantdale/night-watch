@@ -1,6 +1,6 @@
 # Nightwatch — CURRENT STATE
 
-> Durable memory for the next agent/session. Last updated: **2026-09-23**
+> Durable memory for the next agent/session. Last updated: **2026-09-24**
 > during the autonomous bug-hunting programme (Wave 0 protocol freeze and
 > Wave 1 lanes A–E integrated). RS-1 close-out remains
 > COMPLETE: DEF-FC-04 continuity repair, the Control Center reviewer
@@ -868,7 +868,7 @@ RELEASE_CERTIFICATION_PROTOCOL_VERSION: nightwatch.release-certification.v1
 PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
 RELEASE_CHECKPOINT_SHA: 2576c5751d33bb40046246e8fcf57c7cc5c30a57
 LIVE_HEAD_SHA: DISCOVER_FROM_GIT
-LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: 70104a0016183e103815c79ff1a7647b73e4e622
+LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: e4f38b2c029fab711237e2f401b0df0197cb682c
 LAST_LOCALLY_VALIDATED_SHA: 10ccbe64fbcf3b008a8279ad0b5200e44ec02106
 LAST_CLEAN_VALIDATED_SHA: 25f94c3721285f7e54a104e4363c212f87af02ce
 CI_OBSERVED_SHA: NONE

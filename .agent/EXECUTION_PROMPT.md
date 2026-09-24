@@ -1,7 +1,7 @@
 # EXECUTION PROMPT — Priority audit remediation sequence (umbrella)
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
-Status: IN_PROGRESS
+Status: COMPLETE
 Campaign ID: nightwatch-priority-audit-remediation-sequence-v1
 OpenSpec: openspec/changes/nightwatch-priority-audit-remediation-sequence-v1/
 Planned-From: 4a3df8cdc776c5ca47a9666f65afbd5c5519f092

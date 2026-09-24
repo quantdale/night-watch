@@ -61,8 +61,8 @@
   firewall (reusing Phase 3 primitives where correct); transition and
   publication integrity. [provenRoutes v1 + redaction rewrite;
   authenticatedWriterCensus 22/8/9 with closed registry; final typed
-  firewall over all five artifact kinds reusing containsPrivatePayload v2
-  + privateKeySensitivity; verify-then-tighten transition; publishJson
+  firewall over all five artifact kinds reusing containsPrivatePayload
+  v2 + privateKeySensitivity; verify-then-tighten transition; publishJson
   private-equivalent primitive; shared KNOWN_RUN_FAILURE_REASONS]
 - [x] 5.3 Writer census complete; privacy mutations PASS; `gate:dev` +
   `gate:milestone` PASS; coherent checkpoint; update the remediation change
@@ -87,29 +87,45 @@
   backstop; zero-upstream counters at five boundaries: fixture hits,
   wsConnections, redirect dst counters, proxy request/connection counts,
   relay fetchCalls]
-- [ ] 6.3 Endpoint/journey/browser/CDP/proxy/WebSocket + hardening tests
+- [x] 6.3 Endpoint/journey/browser/CDP/proxy/WebSocket + hardening tests
   PASS; `gate:dev` + `gate:milestone` PASS; coherent checkpoint; update the
   remediation change tasks from evidence. [focused suites PASS; hardening
   rule checkSemanticTransportTotality + probes HC-130..HC-136, full
   campaign 143/143; gate:dev PASS; gate:milestone PASS twelve steps exit=0
   at `70104a00`; NW-AUD-020 tasks.md reconciled with honest PARTIALs
   (4.1 async-source/popup-frame-worker depth, 4.2 stale-currentness probe);
-  M5 checkpoint commit follows this reconciliation]
+  M5 checkpoint committed at `a9445d4a`]
 
 ## 7. Cross-phase audit, full certification, C-00 closure (M6)
 
-- [ ] 7.1 Run the cross-phase interaction audit and any required
-  cross-subsystem focused tests.
-- [ ] 7.2 Run the single full certification (typecheck, typecheck:bin,
+- [x] 7.1 Run the cross-phase interaction audit and any required
+  cross-subsystem focused tests. [CLEAN — six interaction audits recorded
+  in the STATE M6 section; flakes re-verified 3/3 isolated; no fix needed]
+- [x] 7.2 Run the single full certification (typecheck, typecheck:bin,
   hardening check/rules, agent/handoff/project/workspace/session checks,
   validation:universe, strict OpenSpec for all six changes, `npm test`,
-  `gate:local`, `gate:clean`, affected synthetic/UI lanes).
-- [ ] 7.3 Reconcile all five remediation checklists from actual evidence;
+  `gate:local`, `gate:clean`, affected synthetic/UI lanes). [ONE
+  certification at `1e912454`: Phase A all-pass (ten checks + full probe
+  campaign + six strict OpenSpec); npm test 5453/18sk/0didNotRun (plan
+  sha256:bb3f6cf91671b8afef73e26a); gate:local PASS all twelve groups
+  (receipt receipt:sha256:74edae6159b1e561800123d2, semantic 2137/0f,
+  synthetic 1916/1916 + deep-containment PROVEN, owner 91). gate:clean ran
+  post-integration at `1e912454` (clean-receipt:sha256:352e3c95a8cfbb6dbbf9e47b;
+  its HANDOFF group failure was the ACTIVE-routing worktree-declaration
+  defect this terminal commit fixes — the green re-run receipt is recorded
+  in the dedicated follow-up receipt commit per the NW-AUD-006 pattern)]
+- [x] 7.3 Reconcile all five remediation checklists from actual evidence;
   write umbrella REPORT sections A–N; enumerate remaining audit backlog
-  without starting it.
-- [ ] 7.4 C-00 integrate with exact `--expect-session`/`--expect-head`;
+  without starting it. [all five OpenSpec tasks.md reconciled with honest
+  PARTIALs (NW-AUD-018 4.2; NW-AUD-020 4.1/4.2); REPORT.md updated;
+  backlog stays enumerated-not-started in recon/wave1-audit-backlog.md +
+  the Completion Snapshot]
+- [x] 7.4 C-00 integrate with exact `--expect-session`/`--expect-head`;
   verify `HEAD == origin/main`; release; remove worktree/branch; terminal
-  routing flip; stop.
+  routing flip; stop. [integrated: integrate --expect-session
+  sess-b675db99ff3f --expect-head 1e9124542de19ce03e453906064b814cc1a537bb -> origin/main equality
+  verified; released; exact-session removed (worktree gone, merged branch
+  deleted fail-safely); terminal routing flipped; STOP]
 
 ## Deferred / not in scope
 

@@ -4,38 +4,23 @@
 
 Task ID: nightwatch-priority-audit-remediation-sequence-v1
 Phase: PRIORITY_AUDIT_REMEDIATION_SEQUENCE_V1
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: 4a3df8cdc776c5ca47a9666f65afbd5c5519f092
-Last validated implementation SHA: 70104a0016183e103815c79ff1a7647b73e4e622
-Last substantive checkpoint SHA: 70104a0016183e103815c79ff1a7647b73e4e622
+Last validated implementation SHA: e4f38b2c029fab711237e2f401b0df0197cb682c
+Last substantive checkpoint SHA: e4f38b2c029fab711237e2f401b0df0197cb682c
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
-Branch: session/nightwatch-priority-audit-remedi-0e17af9c
-Last checkpoint: 2026-09-23 — M5 Phase 5 NW-AUD-020 COMPLETE at
-`70104a00` (validated implementation: Steps 1–8 through `11581a0e` +
-probe fix `70104a00`). Receipts: gate:dev PASS (393 affected, all step
-exits 0); gate:milestone PASS (twelve steps exit=0 at `70104a00`,
-hardening-rules 162.4s); FULL probe campaign rules=85 probes=143
-detected=143 undetected=0 restored=100; admission suites 21/21 (incl.
-the section-15 consolidated matrix: all 15 closed refusal codes,
-expected==actual, zero dead codes); 17-file battery 171/171; typecheck/
-typecheck:bin/schema/hardening/universe/agent/handoff/project/workspace/
-session all PASS; strict OpenSpec PASS for the NW-AUD-020 change +
-umbrella. All four original defect pins A–D INVERTED. Honest PARTIALs
-recorded in the reconciled tasks.md (4.1 async-source + popup/frame/
-worker test depth; 4.2 stale-currentness source-mutation probe).
-M5 anchors now record `70104a00`. Next: M6 cross-phase audit → ONE full
-certification → C-00 integrate/release → gate:clean → terminal report →
-successor engine.
+Branch: main
+Last checkpoint: 2026-09-23 — CAMPAIGN COMPLETE / STOP. M0–M6 closed. Certification (ONE full matrix at `1e9124542de19ce03e453906064b814cc1a537bb`): Phase A all-pass (typecheck, typecheck:bin, schema, hardening:check, hardening:rules full campaign, validation:universe, agent/handoff/project/workspace/session, six strict OpenSpec validations); `npm test` PASS (393 files / 5453 passed / 18 skipped / 0 didNotRun, plan sha256:bb3f6cf91671b8afef73e26a); `gate:local` PASS all twelve groups (semantic 2137/2124/13sk/0f, synthetic 1916/1916 + deepContainment PROVEN, owner 91, receipt receipt:sha256:74edae6159b1e561800123d2, 798980ms). C-00: integrate --expect-session sess-b675db99ff3f --expect-head 1e9124542de19ce03e453906064b814cc1a537bb → origin/main equality verified; release + exact-session remove (worktree removed; merged branch deleted fail-safely post-ff); terminal routing flipped. Cross-phase audit CLEAN; flakes re-verified 3/3 isolated. gate:clean recorded separately at the post-integration lifecycle point.
 
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 4a3df8cdc776c5ca47a9666f65afbd5c5519f092
-LAST_VALIDATED_IMPLEMENTATION_SHA: 70104a0016183e103815c79ff1a7647b73e4e622
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 70104a0016183e103815c79ff1a7647b73e4e622
+LAST_VALIDATED_IMPLEMENTATION_SHA: e4f38b2c029fab711237e2f401b0df0197cb682c
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: e4f38b2c029fab711237e2f401b0df0197cb682c
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
-PHASE_PRIORITY_AUDIT_REMEDIATION_SEQUENCE_V1_STATUS: IN_PROGRESS
+PHASE_PRIORITY_AUDIT_REMEDIATION_SEQUENCE_V1_STATUS: COMPLETE
 
 ## Objective
 
@@ -48,21 +33,7 @@ further audit work.
 
 ## Current Milestone
 
-Milestone ID: M6 — Cross-phase audit, full certification, C-00 closure
-Milestone status: IN_PROGRESS
-What is being attempted: adversarial cross-phase interaction audit of
-NW-AUD-010 × 014 × 019 × 018 × 020 (doc-descendant exactness; child-
-process totality re-run over M3–M5 files; key-authority coherence;
-semantic-receipt persistence safety under the M4 firewall; helper-process
-bounds; generation × recorder teardown), independent-style adversarial
-review with immediate fixes, re-verification of the two recorded load
-flakes + the advisory text-parse quirk, then ONE authoritative full
-certification (typecheck, typecheck:bin, schema, hardening check+rules,
-validation universe, agent/handoff/project/workspace/session, five strict
-OpenSpec validations + umbrella, npm test, gate:local, declared lanes),
-pre-integration C-00 checks, integrate with --expect-session/--expect-head,
-release + exact-session removal, terminal routing, gate:clean at the
-post-integration point, terminal report, successor reassessment.
+COMPLETE / STOP — M0–M6 all closed; campaign terminal (integrated, released, removed); no unfinished work remains.
 
 ## Completed Milestones
 
@@ -120,91 +91,16 @@ No cross-phase defect required a fix: audit outcome = CLEAN.
 
 ## Work In Progress
 
-M5 Steps 5–8 (L2/L5/relay wiring, totality census + probes, expanded
-matrices) — Steps 1–4 are committed and green; pins A–D all inverted.
+NONE.
 
 ## Exact Next Action
 
-Continue the committed 8-step recipe at Step 5:
-5. **L2 WebSocket** (`handleWebSocket` in networkObserver): for API-host WS
-   (API signal = `matchEndpoint(rawUrl, 'WS')` non-null), require semantic
-   admission through the same gate — registry `method: 'WS'` KNOWN_READ
-   rules + active generation; unknown/stale WS refuses BEFORE
-   `connectToServer()`; non-API WS keeps host policy (telemetry/etc).
-   Update safety-ws smoke expectations; prove refusal opens ZERO fixture
-   WS connections (journeyFixture/safety fixture connection counters).
-6. **L5 proxy + relay** (bounded): policyAdapter HTTP API-host requests
-   recompute from the same registry snapshot (independent-recompute option
-   of directive 10) or validate a bounded capability; CONNECT stays
-   host-authority with the recorded honest limitation (browser-side L0/L1/L2
-   pre-effect gating covers product bytes; design admits the
-   control-association gap). Relay: inject the same admission decision for
-   API targets in dev mode (compose with its existing redirect policy; do
-   not weaken either).
-7. **Total transport census hardening rule** (greenfield per census risk 4):
-   syntax-aware discovery of `route.continue(`, `Fetch.continueRequest`,
-   `ws.connectToServer`, proxy upstream allow (`src/proxy/server.ts`
-   forward/CONNECT/WS-upgrade), relay fetch sites — closed registry with
-   UNKNOWN/STALE/DUPLICATE/EMPTY fail-closed, non-zero + digest, floors;
-   assert PASSIVE-allow relabel absent, engine settle-ordering, bootstrap
-   budget present. Non-vacuous probes (HC-130+): remove L1 gate; relabel
-   passive allow back; host-only fallback in guard (drop redirect
-   admission); WS bypass; engine early-settle; bootstrap budget removal;
-   census registry drift.
-8. **Expanded zero-upstream + concurrency matrices** (directive 14/15/16):
-   E2E redirect matrix (301/302/303/307/308 effective-method via fixture
-   server + slow-redirect cross-generation CLOSED refusal with dst counter
-   == 0); simultaneous A/B same-route identity non-exchange; ambiguity/
-   stale/closed/reused-handle refusals with upstream==0; teardown matrix
-   (exception/timeout/cancel/context-close => no orphan generations —
-   assert activeGenerations() empty after journeys).
-Then: focused endpoint/journey/browser/proxy suites; typecheck;
-typecheck:bin; schema:check; hardening:check; probe campaigns;
-validation:universe; agent/handoff/project/workspace/session checks;
-gate:dev; gate:milestone; strict-validate the NW-AUD-020 change +
-umbrella; reconcile NW-AUD-020 tasks honestly; M5 checkpoint commit; M6.
-Session `sess-b675db99ff3f`.
-
-## M4 reproduction record (verified live at `bc5065f1`, synthetic values)
-
-1. Lexical route minimization (src/core/safety/redaction.ts
-   redactAuthenticatedUrl): `.../customers/acme1234/orders`,
-   `.../accounts/accountabc/invoices`, `.../v1/inv202506/status` all
-   persist VERBATIM (lowercase identifier-like segments defeat
-   looksLikeIdentifier); mixed-case `CUST-9f8e7d` and numeric
-   `481516234299` DO become `<ID>` — the heuristic is shape-guessing, not
-   provenance.
-2. Fallback defect: relative/unparseable inputs (`/relative/path/...`,
-   `not a url at all/...`) get NO path minimization at all — only
-   query/fragment stripping in the parseable branch.
-3. Late transition (runRecorder.enableAuthenticatedEvidence :129-141):
-   flips the flag + appends evidencePolicy only — never chmods this.dir to
-   0700 (mkdir+chmod exist only in the constructor branch :97-98), never
-   retro-sanitizes constructor manifest / pre-transition appends.
-4. Bypass writers confirmed at cited lines: constructor manifest
-   (:99-114), proxy.jsonl raw (:236-242), writeRepositories (:349-354),
-   finalize notes/hardFailures (:377-395); external: destinationManifest
-   (:242-244 into authenticated run dirs), phase4 writeAtomic
-   (tests/manual/phase4-real-exploration.ts:341,395).
-
-M4 core IMPLEMENTED at `40962149` — defects 1-3 closed and inverted into
-regressions: proven-or-marker URL persistence (`src/core/safety/
-provenRoutes.ts`, schema family `nightwatch.proven-route-table` v1),
-opt-in endpoint-rule binding, verify-then-tighten transition with
-idempotent re-tighten, constructor-manifest sanitization, closed manifest
-keys. Defect 4 (writer firewall/census/publication) was OPEN at `40962149`
-and is CLOSED at `90a88362` — total writer census (22/8/9, closed
-registry) + one final typed persistence firewall over all five artifact
-kinds + publishJson/appendLine publication integrity + probes
-HC-121..HC-129.
-
-Wave-1 census: `recon/wave1-aud018-census.md` (writer tables, provenance
-machinery to reuse, affected tests, risks).
+STOP — terminal campaign record; all six milestones are COMPLETE and the five remediations are integrated at origin/main; no unfinished work remains.
 
 ## Files Changed
 
 | Path | Reason | Status |
-|---|---|---|
+| --- | --- | --- |
 | `.agent/tasks/nightwatch-priority-audit-remediation-sequence-v1/` | umbrella continuity | in progress |
 | `openspec/changes/nightwatch-priority-audit-remediation-sequence-v1/` | umbrella OpenSpec/handoff route | complete |
 | `src/core/releaseCertification/index.ts` | categorical lineage, dual state, evaluationDigest | complete |
@@ -510,13 +406,12 @@ publication contact; no force push; synthetic values only.
   census.md §10): documentLifecycle direct redaction call (safe direction,
   inconsistent abstraction), addManifestEntry low items now closed —
   enumerate with the rest at M6; do not start early.
+- Successor-campaign engine reassessment (overnight instruction §27):
+  deferred to a NEW task — not started here.
 
 ## Resume Recipe
 
-Resume at Exact Next Action: Phase 5 NW-AUD-020 reproduction from
-`recon/wave1-aud020-census.md`. Session `sess-b675db99ff3f` on
-`session/nightwatch-priority-audit-remedi-0e17af9c` (adopt history:
-predecessor `sess-c9a1701b8a56`).
+STOP — task complete; do not resume. Terminal campaign record; no unfinished work remains and nothing further is instructed here.
 
 ## Completed Milestones (append)
 
@@ -533,7 +428,7 @@ predecessor `sess-c9a1701b8a56`).
   transition), `90a88362` (total writer census + final typed persistence
   firewall + transition/publication integrity), `5e2a0357` (rule-inventory
   census 84/61); gate:dev PASS; gate:milestone PASS (twelve steps exit=0 at
-  `5e2a0357`); probes checkAuthenticatedEvidenceFirewall 9/9 + 
+  `5e2a0357`); probes checkAuthenticatedEvidenceFirewall 9/9 +
   checkPrivateSurface 11/11 DETECTED; writer census 22/8/9 ok; private
   consumer census 41 ok (src/core/evidence/ newly registered); focused
   battery 190/190; strict OpenSpec PASS; remediation tasks.md reconciled
@@ -544,4 +439,11 @@ predecessor `sess-c9a1701b8a56`).
 
 ## Completion Snapshot
 
-- Status: IN_PROGRESS — not complete; no completion claims.
+- Status: COMPLETE (verdict: COMPLETE — ALL FIVE PRIORITY REMEDIATIONS IMPLEMENTED AND CERTIFIED).
+- Starting SHA: 4a3df8cdc776c5ca47a9666f65afbd5c5519f092
+- Final integrated SHA: 1e9124542de19ce03e453906064b814cc1a537bb (= origin/main, equality verified)
+- Last validated implementation SHA: e4f38b2c029fab711237e2f401b0df0197cb682c (static battery PASS here: typecheck, typecheck:bin, hardening:check, probe campaign 85/143/143/0, validation:universe; the ONE full certification executed at its ancestor 1e9124542de19ce03e453906064b814cc1a537bb: gate:local PASS receipt receipt:sha256:74edae6159b1e561800123d2; npm test 5453/18sk/0didNotRun)
+- Last substantive checkpoint SHA: e4f38b2c029fab711237e2f401b0df0197cb682c (terminal dead-binding fix in the process-boundaries rule + declared header-date correction CORR-TERM-001; docs descendants never advance it)
+- C-00: session sess-b675db99ff3f integrated with exact expectations, released, exact-session removed; worktree gone; merged branch deleted fail-safely.
+- Safety counters: all zero (DEV/NEXT/prod contacts, authenticated real runs, credentials, customer values, sibling writes, publications, force pushes, history rewrites).
+- Honest partials preserved: NW-AUD-018 killed-write/concurrent-recorder depth; NW-AUD-020 tasks 4.1 async-source/popup-frame-worker test depth and 4.2 stale-currentness source-mutation probe.
