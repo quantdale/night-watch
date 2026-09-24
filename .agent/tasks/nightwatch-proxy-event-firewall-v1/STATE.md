@@ -6,17 +6,17 @@ Task ID: nightwatch-proxy-event-firewall-v1
 Phase: PROXY_EVENT_FIREWALL_V1
 Status: IN_PROGRESS
 Starting SHA: ea0b7110efa1065b470efb57f2cd3ff5136a9fa0
-Last validated implementation SHA: ea0b7110efa1065b470efb57f2cd3ff5136a9fa0
-Last substantive checkpoint SHA: ea0b7110efa1065b470efb57f2cd3ff5136a9fa0
+Last validated implementation SHA: d5175a7d676cbff5584b887363ceaa1d7d7b879f
+Last substantive checkpoint SHA: d5175a7d676cbff5584b887363ceaa1d7d7b879f
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-successor-campaign-en-628d8bb9
-Last checkpoint: 2026-09-24 — proxy raw-event firewall implementation is complete in the owned worktree; focused/static/mutation validation green; broad gate pending.
+Last checkpoint: 2026-09-24 — proxy event firewall implementation checkpoint d5175a7d676cbff5584b887363ceaa1d7d7b879f; focused/static/mutation green; broad gate pending.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: ea0b7110efa1065b470efb57f2cd3ff5136a9fa0
-LAST_VALIDATED_IMPLEMENTATION_SHA: ea0b7110efa1065b470efb57f2cd3ff5136a9fa0
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: ea0b7110efa1065b470efb57f2cd3ff5136a9fa0
+LAST_VALIDATED_IMPLEMENTATION_SHA: d5175a7d676cbff5584b887363ceaa1d7d7b879f
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: d5175a7d676cbff5584b887363ceaa1d7d7b879f
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
 PHASE_PROXY_EVENT_FIREWALL_V1_STATUS: IN_PROGRESS

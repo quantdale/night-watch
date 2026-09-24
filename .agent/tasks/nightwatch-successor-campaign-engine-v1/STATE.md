@@ -6,17 +6,17 @@ Task ID: nightwatch-successor-campaign-engine-v1
 Phase: SUCCESSOR_CAMPAIGN_ENGINE_V1
 Status: IN_PROGRESS
 Starting SHA: 78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1
-Last validated implementation SHA: ea0b7110efa1065b470efb57f2cd3ff5136a9fa0
-Last substantive checkpoint SHA: ea0b7110efa1065b470efb57f2cd3ff5136a9fa0
+Last validated implementation SHA: d5175a7d676cbff5584b887363ceaa1d7d7b879f
+Last substantive checkpoint SHA: d5175a7d676cbff5584b887363ceaa1d7d7b879f
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-successor-campaign-en-628d8bb9
-Last checkpoint: 2026-09-24 — run-evidence transaction implementation checkpoint ea0b7110efa1065b470efb57f2cd3ff5136a9fa0; focused/static/mutation green; broad gate pending.
+Last checkpoint: 2026-09-24 — proxy event firewall implementation checkpoint d5175a7d676cbff5584b887363ceaa1d7d7b879f; focused/static/mutation green; broad gate pending.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1
-LAST_VALIDATED_IMPLEMENTATION_SHA: ea0b7110efa1065b470efb57f2cd3ff5136a9fa0
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: ea0b7110efa1065b470efb57f2cd3ff5136a9fa0
+LAST_VALIDATED_IMPLEMENTATION_SHA: d5175a7d676cbff5584b887363ceaa1d7d7b879f
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: d5175a7d676cbff5584b887363ceaa1d7d7b879f
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
 PHASE_SUCCESSOR_CAMPAIGN_ENGINE_V1_STATUS: IN_PROGRESS
@@ -60,15 +60,13 @@ next candidate.
 
 ## Work In Progress
 
-The popup L0 reproduction is honestly BLOCKED/deferred: the race is real, but
-the attempted L1 barrier was insufficient and was reverted. The proxy
-raw-event persistence child is next; no false popup fix will be shipped.
+The proxy event firewall implementation is checkpointed; focused/static/
+mutation validation is green. Its broad gate lanes and final status remain.
 
 ## Exact Next Action
 
-Create and strict-validate the proxy raw-event persistence child, reproduce
-the raw configured event-log write outside the authenticated writer firewall,
-then define the narrow fail-closed writer-boundary fix.
+Run post-checkpoint `gate:dev` and `gate:milestone`, classify the exact residual,
+then close or block the proxy child and reassess.
 
 ## Files Changed
 

@@ -6,18 +6,18 @@ Title: Fresh successor campaign engine and reassessment
 Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-successor-campaign-engine-v1
 Starting SHA: 78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1
-Last validated implementation SHA: ea0b7110efa1065b470efb57f2cd3ff5136a9fa0
-Last checkpoint: 2026-09-24 — popup L0 race reproduced but prototype barrier insufficient and reverted; proxy raw-event persistence selected as the next independent child.
-Current milestone: M6 — execute proxy event firewall child.
-Next action: create/strict-validate the proxy child, reproduce the raw configured event-log write outside the authenticated writer firewall, then define the narrow fail-closed fix.
+Last validated implementation SHA: d5175a7d676cbff5584b887363ceaa1d7d7b879f
+Last checkpoint: 2026-09-24 — proxy event firewall implementation checkpoint d5175a7d676cbff5584b887363ceaa1d7d7b879f; focused/static/mutation validation green; broad gate pending.
+Current milestone: M6 — validate proxy event firewall child.
+Next action: run post-checkpoint gate lanes, classify any residual, then close or block this child and reassess.
 
 Authorization class: SUCCESSOR_CAMPAIGN_ENGINE_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1
-LAST_VALIDATED_IMPLEMENTATION_SHA: ea0b7110efa1065b470efb57f2cd3ff5136a9fa0
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: ea0b7110efa1065b470efb57f2cd3ff5136a9fa0
+LAST_VALIDATED_IMPLEMENTATION_SHA: d5175a7d676cbff5584b887363ceaa1d7d7b879f
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: d5175a7d676cbff5584b887363ceaa1d7d7b879f
 LIVE_HEAD_AUTHORITY: GIT
 PHASE_SUCCESSOR_CAMPAIGN_ENGINE_V1_STATUS: IN_PROGRESS
 
