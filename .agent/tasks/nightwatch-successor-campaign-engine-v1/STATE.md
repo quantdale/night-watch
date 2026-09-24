@@ -6,17 +6,17 @@ Task ID: nightwatch-successor-campaign-engine-v1
 Phase: SUCCESSOR_CAMPAIGN_ENGINE_V1
 Status: IN_PROGRESS
 Starting SHA: 78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1
-Last validated implementation SHA: 78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1
-Last substantive checkpoint SHA: 78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1
+Last validated implementation SHA: d89be39bff9c6f1cb86ce0c39dd34fe945884409
+Last substantive checkpoint SHA: d89be39bff9c6f1cb86ce0c39dd34fe945884409
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-successor-campaign-en-628d8bb9
-Last checkpoint: 2026-09-24 — owner-resolved canonical blocker; A/B evidence complete; shard certification child implemented and awaiting milestone validation.
+Last checkpoint: 2026-09-24 — owner-resolved canonical blocker; A/B evidence complete; shard implementation checkpoint d89be39bff9c6f1cb86ce0c39dd34fe945884409 awaits milestone validation.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1
-LAST_VALIDATED_IMPLEMENTATION_SHA: 78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1
+LAST_VALIDATED_IMPLEMENTATION_SHA: d89be39bff9c6f1cb86ce0c39dd34fe945884409
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: d89be39bff9c6f1cb86ce0c39dd34fe945884409
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
 PHASE_SUCCESSOR_CAMPAIGN_ENGINE_V1_STATUS: IN_PROGRESS
@@ -138,6 +138,13 @@ When: 2026-09-24
 Relevant failure/output summary: shard suite 12/12; typecheck, reporting bin
 typecheck, schema, and hardening pass; all-skipped now exits non-PASS; manual
 mutation probe proves the all-skipped guard is load-bearing.
+
+Command: `npm run gate:dev` after implementation checkpoint
+Result: TIMEOUT / INCONCLUSIVE
+When: 2026-09-24
+Relevant failure/output summary: first run exceeded the 1200-second tool budget
+while the changed Playwright config broadened the affected lane; no pass/fail
+claim was made.
 
 ## Decisions Made During This Task
 

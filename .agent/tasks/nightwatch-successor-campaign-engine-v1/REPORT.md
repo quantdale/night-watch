@@ -13,9 +13,12 @@
 - Discovery: Ten independent read-only lanes from the retained checkpoint remain
   valid; no full ten-lane repeat was performed.
 - Current work: A/B synthetic reproduction is complete. Shard false
-  certification is selected first: an all-skipped file exits 0/PASS with null
-  counts coerced to zero; true zero-test exits 1/TEST_FAILURE. Run-evidence
-  transaction integrity is reproduced and remains the next likely campaign.
+  certification is selected first and implemented at
+  `d89be39bff9c6f1cb86ce0c39dd34fe945884409`: all-skipped now exits non-PASS;
+  true zero-test remains 1/TEST_FAILURE. Focused/static validation is green;
+  `gate:dev` first exceeded the 1200-second tool budget during the expected
+  broad affected lane and is not yet classified. Run-evidence transaction
+  integrity is reproduced and remains the next likely campaign.
 - Changes: Continuity files, sanitized reproduction evidence, and active route
   only so far; no product source, tests, hardening, OpenSpec, sibling
   repository, credentials, artifacts, or runtime state changed.

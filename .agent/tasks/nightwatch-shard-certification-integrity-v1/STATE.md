@@ -6,17 +6,17 @@ Task ID: nightwatch-shard-certification-integrity-v1
 Phase: SHARD_CERTIFICATION_INTEGRITY_V1
 Status: IN_PROGRESS
 Starting SHA: 78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1
-Last validated implementation SHA: 78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1
-Last substantive checkpoint SHA: 78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1
+Last validated implementation SHA: d89be39bff9c6f1cb86ce0c39dd34fe945884409
+Last substantive checkpoint SHA: d89be39bff9c6f1cb86ce0c39dd34fe945884409
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-successor-campaign-en-628d8bb9
-Last checkpoint: 2026-09-24 — child campaign activated after A/B reproduction; contract/failing-regression work next.
+Last checkpoint: 2026-09-24 — implementation checkpoint d89be39bff9c6f1cb86ce0c39dd34fe945884409; focused/static validation green; milestone gate pending.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1
-LAST_VALIDATED_IMPLEMENTATION_SHA: 78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1
+LAST_VALIDATED_IMPLEMENTATION_SHA: d89be39bff9c6f1cb86ce0c39dd34fe945884409
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: d89be39bff9c6f1cb86ce0c39dd34fe945884409
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
 PHASE_SHARD_CERTIFICATION_INTEGRITY_V1_STATUS: IN_PROGRESS
@@ -119,6 +119,14 @@ Result: PASS — mutation load-bearing
 When: 2026-09-24
 Relevant failure/output summary: removing the all-skipped guard changed
 `ALL_SKIPPED` to `PASS` in an isolated temporary module.
+
+Command: `npm run gate:dev` after implementation checkpoint
+Result: TIMEOUT / INCONCLUSIVE
+When: 2026-09-24
+Relevant failure/output summary: the first run exceeded the 1200-second tool
+budget while the config change correctly broadened the affected lane to the
+full universe; no green claim was made. A bounded rerun with a larger budget
+is required before milestone closure.
 
 ## Decisions Made During This Task
 
