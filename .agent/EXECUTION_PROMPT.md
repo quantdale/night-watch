@@ -1,7 +1,7 @@
 # EXECUTION PROMPT — Successor campaign engine v1 (umbrella)
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
-Status: IN_PROGRESS
+Status: COMPLETE
 Campaign ID: nightwatch-successor-campaign-engine-v1
 OpenSpec: openspec/changes/nightwatch-successor-campaign-engine-v1/
 Planned-From: 78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1
@@ -20,8 +20,8 @@ through evidence-led successor campaigns until a legitimate terminal condition.
 ## Scope
 
 Nightwatch source, tests, hardening, schemas, synthetic fixtures, OpenSpec/task
-continuity, and C-00 commits/integration from the owned session only. The active
-child is `nightwatch-live-source-test-hermeticity-v1`.
+continuity, and C-00 commits/integration from the owned session only. All
+authorized executable children are complete.
 
 ## Constraints
 
@@ -36,11 +36,12 @@ completed priority campaign.
 1. Owner-resolve canonical formatter churn and recover continuity — COMPLETE.
 2. Revalidate six findings and reproduce shard/run-evidence integrity — COMPLETE.
 3. Shard certification, census, run-evidence, proxy, credential, and temp
-   isolation children — implemented/focused; BLOCKED by the independent
-   12-failure live-source test residual.
-4. Popup L0 readiness — BLOCKED after the local pre-navigation prototype failed.
-5. Live-source test hermeticity/currentness — IN_PROGRESS.
-6. Final adversarial reassessment, certification when justified, and C-00 close.
+   isolation children — implemented/focused; their shared source-test residual
+   is resolved by workstream 5.
+4. Popup L0 readiness — BLOCKED after the local pre-navigation prototype failed;
+   preserved for a future lower-level design authorization.
+5. Live-source test hermeticity/currentness — COMPLETE.
+6. Final adversarial reassessment and local certification — COMPLETE; C-00 close follows.
 
 ## Validation
 

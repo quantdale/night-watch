@@ -192,7 +192,7 @@ reassess, and repeat. Use full certification only at release groups.
   execute; exact-current live measurements remain available.
 - Validation commands: affected suites under live/empty/stale/current states,
   `gate:dev`, then `gate:milestone`.
-- **Status:** IN_PROGRESS
+- **Status:** COMPLETE
 
 ### M10 — Final adversarial reassessment and closure
 
@@ -203,7 +203,7 @@ reassess, and repeat. Use full certification only at release groups.
 - Acceptance criteria: no credible executable issue is silently deferred; final
   verdict and remaining work are precise.
 - Validation commands: repository-defined certification battery as justified.
-- **Status:** NOT_STARTED
+- **Status:** COMPLETE
 
 ## Validation Strategy
 

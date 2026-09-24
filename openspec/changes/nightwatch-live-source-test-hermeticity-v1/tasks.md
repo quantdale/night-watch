@@ -19,5 +19,5 @@
 ## 4. Validation and handoff
 
 - [x] 4.1 Run focused affected suites under live, empty, stale, and exact-current fixture states.
-- [ ] 4.2 Run typecheck, hardening, strict OpenSpec, `gate:dev`, and `gate:milestone`.
-- [ ] 4.3 Prove source pins and Alphaus repository state are unchanged, reconcile continuity, and perform final successor reassessment.
+- [x] 4.2 Run typecheck, hardening, strict OpenSpec, `gate:dev`, and `gate:milestone`.
+- [x] 4.3 Prove source pins and Alphaus repository state are unchanged, reconcile continuity, and perform final successor reassessment.

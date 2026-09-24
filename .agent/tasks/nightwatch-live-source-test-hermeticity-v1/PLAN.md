@@ -48,7 +48,7 @@ Add one test-only authority classifier. Gate live historical measurements on the
 ### M3 — Validation and closure
 
 - Objective: focused/broad validation, pin/sibling immutability, final reassessment, and C-00 close.
-- Status: IN_PROGRESS
+- Status: COMPLETE
 
 ## Validation Strategy
 

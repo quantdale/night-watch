@@ -4,14 +4,14 @@
 
 Task ID: nightwatch-successor-campaign-engine-v1
 Phase: SUCCESSOR_CAMPAIGN_ENGINE_V1
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: 78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1
 Last validated implementation SHA: b48604bec084b0ab3c6a7dd89c3eef6f8b82b575
 Last substantive checkpoint SHA: b48604bec084b0ab3c6a7dd89c3eef6f8b82b575
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
-Branch: session/nightwatch-successor-campaign-en-628d8bb9
-Last checkpoint: 2026-09-25 — hermeticity b48604be; focused live/empty 141/141 and gate:dev 5472/0; clean milestone pending.
+Branch: main
+Last checkpoint: 2026-09-25 — hermeticity, gate:milestone, and gate:local PASS; clean replay isolated only active-session routing and is being replayed from terminal state.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1
@@ -19,7 +19,7 @@ LAST_VALIDATED_IMPLEMENTATION_SHA: b48604bec084b0ab3c6a7dd89c3eef6f8b82b575
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: b48604bec084b0ab3c6a7dd89c3eef6f8b82b575
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
-PHASE_SUCCESSOR_CAMPAIGN_ENGINE_V1_STATUS: IN_PROGRESS
+PHASE_SUCCESSOR_CAMPAIGN_ENGINE_V1_STATUS: COMPLETE
 
 ## Objective
 
@@ -30,8 +30,7 @@ before reassessing successors.
 
 ## Current Milestone
 
-M9 — execute live-source test hermeticity/currentness after the 12-failure
-residual remained and 11 failures persisted with an empty sibling root.
+COMPLETE — all authorized executable successors are implemented; final reassessment leaves only the lower-level popup admission design residual.
 
 ## Completed Milestones
 
@@ -49,6 +48,8 @@ residual remained and 11 failures persisted with an empty sibling root.
   gate lanes retain 12 baseline/source-drift failures.
 - **M7 BLOCKED** — credential-use binding is implemented and focused-green; broad lanes retain only the independent 12-failure live-source drift residual.
 - **M8 BLOCKED** — shard temp isolation is focused/adversarial green; both broad lanes retain only the 12 independent source-test failures.
+- **M9 COMPLETE** — live-source test hermeticity removed all 12 broad failures without pin/source rebinding.
+- **M10 COMPLETE** — focused, development, milestone, and local certification are green; popup L0 remains explicitly non-executable with the locally tested barrier design.
 - Owner resolution rechecked the exact canonical diff against the recorded
   patch and HEAD. It was mechanically confirmed as unintended formatter/editor
   churn, including invalid CSS fallback corruption `#fff` -> `# fff)`.
@@ -62,13 +63,11 @@ residual remained and 11 failures persisted with an empty sibling root.
 
 ## Work In Progress
 
-Isolation is checkpointed and BLOCKED only by the independent source residual.
-The strict live-source test hermeticity child is active.
+None. The successor loop is terminal.
 
 ## Exact Next Action
 
-Implement the test-only CURRENT/STALE/UNAVAILABLE authority helper and migrate
-affected tests without skips, pin changes, or rebinding.
+STOP — terminal campaign record; no further task action.
 
 ## Files Changed
 
@@ -219,6 +218,31 @@ Relevant failure/output summary: eleven tests remain structurally dependent on
 ambient live source; Phase 12 alone passes empty but fails when the canonical
 sibling has advanced. Live-source test hermeticity is selected as M9.
 
+Command: hermeticity `npm run gate:dev`
+Result: PASS
+When: 2026-09-25
+Relevant failure/output summary: 393 selected tests; 5472 passed / 0 failed.
+
+Command: hermeticity clean `npm run gate:milestone`
+Result: PASS
+When: 2026-09-25
+Relevant failure/output summary: every mandatory step passed; 5472/0.
+
+Command: `npm run gate:local`
+Result: PASS
+When: 2026-09-25
+Relevant failure/output summary: all 12 required groups passed; semantic
+2126/13/0, owner 91/91, synthetic 1924/1924, deep containment PROVEN; receipt
+`receipt:sha256:a55cac531dfae3c5f15ac598`.
+
+Command: first terminal `npm run gate:clean`
+Result: TEST_FAILURE / ROUTING REPLAY REQUIRED
+When: 2026-09-25
+Relevant failure/output summary: install/static/hardening passed; HANDOFF_TRUTH
+alone failed because an IN_PROGRESS clean clone cannot own the live session
+worktree. Reproduced independently as `ACTIVE_TASK_SESSION_WORKTREE_MISSING`.
+No product/test failure occurred; terminal routing replay follows.
+
 ## Decisions Made During This Task
 
 Decision: restore only the verified canonical target after owner authorization.
@@ -239,22 +263,29 @@ small to fix; it improves a safety authority before the larger run-evidence
 transaction redesign. Shard false certification remains a completed local
 implementation with a separately classified broad-gate blocker.
 
+Decision: terminate the successor loop after M9/M10 rather than claim popup L0.
+Reason: current source still confirms fire-and-forget popup guard installation,
+but the only locally testable L1/page-event prototype failed to precede first
+navigation. A lower-level target-admission design is not an authorized,
+executable successor.
+
 ## Discoveries
 
 - The canonical blocker was fully external/mechanical and is now resolved; the
   project is back at the certified baseline with a clean tree.
-- The completed children now cover shard certification, census indirection,
-  run-evidence transaction integrity, proxy-event firewall, and credential-use
-  binding. Their only broad residuals are the shared live-source drift set,
-  except the popup L0 design blocker.
-- Isolation is focused/adversarial green and checkpointed. Empty-sibling replay
-  proves the remaining 12 failures require test hermeticity, not source rebinding.
+- Completed children cover shard certification, census indirection, run-evidence
+  transaction integrity, proxy-event firewall, credential-use binding, shard
+  temp isolation, and live-source test hermeticity.
+- Final development, milestone, and local gates are green. The source-test
+  residual that historically blocked earlier children is resolved.
+- Popup L0 remains a real but lower-level target-admission design residual; the
+  local prototype was reverted because it did not guard first navigation.
 
 ## Blockers
 
-The prior children are blocked by the broad live-source test residual; popup
-L0 remains blocked by the absence of a proven pre-navigation target barrier.
-The residual is now isolated in the executable M9 hermeticity child.
+No executable blocker remains in this authorized successor loop. Popup L0 is
+preserved as an explicit design prerequisite for a future separately authorized
+task, not unfinished work in this campaign.
 
 ## Safety Events
 
@@ -264,21 +295,21 @@ publication, force push, or history rewrite occurred.
 
 ## Deferred / Follow-Up
 
-- Execute live-source test hermeticity/currentness next.
-- Reassess the lower-level popup target barrier after M9.
+- Lower-level popup target admission requires a future explicit design and authorization.
+- Intentional live-source re-admission requires fresh source evidence and separate authorization.
 - Keep the completed priority campaign terminal and historical.
 
 ## Resume Recipe
 
-1. Read SPEC, PLAN, and this STATE.
-2. Inspect `git status`, exact HEAD/origin, and `npm run session:status`.
-3. Preserve all blocked children and their exact gate evidence.
-4. Implement `nightwatch-live-source-test-hermeticity-v1` from current source.
-5. Prove absent/stale/current states with deterministic fixtures and no rebinding.
-6. Continue with focused tests, gates, final reassessment, and C-00 close.
+STOP — task complete; do not resume. The terminal campaign record and blocked
+popup design residual are the final state; new work requires a new authorized task.
 
 ## Completion Snapshot
 
-Not applicable while the successor programme is IN_PROGRESS. No completion,
-exhaustion, secure, fully-fixed, production-ready, or no-regressions claim is
-made.
+- Status: COMPLETE — all authorized executable successor campaigns are implemented and certified.
+- Starting SHA: `78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1`.
+- Last validated implementation SHA: `b48604bec084b0ab3c6a7dd89c3eef6f8b82b575`.
+- Final development/milestone evidence: 5472 passed / 0 failed.
+- Local certification receipt: `receipt:sha256:a55cac531dfae3c5f15ac598`.
+- Source pins unchanged; sibling writes 0; all unauthorized external effect counters zero.
+- Honest residual: popup L0 needs a lower-level pre-navigation target-admission design; no false fix is claimed.

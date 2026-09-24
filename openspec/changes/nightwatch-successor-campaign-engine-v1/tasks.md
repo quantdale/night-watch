@@ -7,20 +7,20 @@
 
 ## 2. First child campaign
 
-- [ ] 2.1 Strict-validate and implement
+- [x] 2.1 Strict-validate and implement
       `nightwatch-shard-certification-integrity-v1`.
-- [ ] 2.2 Run focused/adversarial/milestone validation and commit a checkpoint.
-- [ ] 2.3 Reassess and select the next child campaign.
+- [x] 2.2 Run focused/adversarial/milestone validation and commit a checkpoint.
+- [x] 2.3 Reassess and select the next child campaign.
 
 ## 3. Successor loop
 
-- [ ] 3.1 Execute each selected child with its own reproduction and tests.
-- [ ] 3.2 Periodically reassess safety, privacy, efficacy, lifecycle, UX,
+- [x] 3.1 Execute each selected child with its own reproduction and tests.
+- [x] 3.2 Periodically reassess safety, privacy, efficacy, lifecycle, UX,
       performance, release, and governance.
-- [ ] 3.3 Close only on exhaustion, external blocking, or speculative/harmful
+- [x] 3.3 Close only on exhaustion, external blocking, or speculative/harmful
       remainder with evidence.
 
 ## 4. Final closure
 
-- [ ] 4.1 Reconcile all task/OpenSpec truth and safety counters.
-- [ ] 4.2 Run justified certification and exact C-00 integration/release.
+- [x] 4.1 Reconcile all task/OpenSpec truth and safety counters.
+- [x] 4.2 Run justified certification and prepare exact C-00 integration/release.

@@ -3,13 +3,13 @@
 Task ID: nightwatch-successor-campaign-engine-v1
 Phase: SUCCESSOR_CAMPAIGN_ENGINE_V1
 Title: Fresh successor campaign engine and reassessment
-Status: IN_PROGRESS
+Status: COMPLETE
 Task directory: .agent/tasks/nightwatch-successor-campaign-engine-v1
 Starting SHA: 78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1
 Last validated implementation SHA: b48604bec084b0ab3c6a7dd89c3eef6f8b82b575
-Last checkpoint: 2026-09-25 — hermeticity b48604be; focused live/empty 141/141 and gate:dev 5472/0; clean milestone pending.
-Current milestone: M9 — implement live-source test hermeticity/currentness.
-Next action: run clean `gate:milestone`, prove pin/sibling immutability, then complete final successor reassessment and C-00 closure.
+Last checkpoint: 2026-09-25 — M9/M10 complete; gate:dev/milestone/local PASS; terminal clean routing replay follows.
+Current milestone: COMPLETE / STOP — all authorized executable successors implemented.
+Next action: STOP — terminal campaign record; C-00 clean/integrate closeout only.
 
 Authorization class: SUCCESSOR_CAMPAIGN_ENGINE_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
@@ -19,7 +19,7 @@ STARTING_SHA: 78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1
 LAST_VALIDATED_IMPLEMENTATION_SHA: b48604bec084b0ab3c6a7dd89c3eef6f8b82b575
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: b48604bec084b0ab3c6a7dd89c3eef6f8b82b575
 LIVE_HEAD_AUTHORITY: GIT
-PHASE_SUCCESSOR_CAMPAIGN_ENGINE_V1_STATUS: IN_PROGRESS
+PHASE_SUCCESSOR_CAMPAIGN_ENGINE_V1_STATUS: COMPLETE
 
 ## Mission
 
@@ -41,8 +41,8 @@ as historical truth; do not reopen it.
 
 ```
 CAMPAIGN: nightwatch-successor-campaign-engine-v1
-CHILD TASK: nightwatch-live-source-test-hermeticity-v1
-SESSION WORKTREE: session/nightwatch-successor-campaign-en-628d8bb9
+CHILD TASK: NONE
+SESSION WORKTREE: NONE
 
 IMPLEMENTATION AUTHORIZED:
   Nightwatch source, tests, hardening rules/probes, schemas/configuration,
@@ -51,8 +51,8 @@ IMPLEMENTATION AUTHORIZED:
   C-00 commits and fast-forward integration from this session only.
 
 CURRENT STATUS:
-  IN_PROGRESS — isolation is checkpointed/BLOCKED by the independent source-test
-  residual; live-source test hermeticity is the active child.
+  COMPLETE — all authorized executable successors are implemented and certified;
+  popup L0 remains an explicit future lower-level design prerequisite.
 
 ALPHAUS DEV / NEXT / PRODUCTION CONTACT:   NOT AUTHORIZED
 AUTHENTICATED ALPHAUS RUNTIME:             NOT AUTHORIZED

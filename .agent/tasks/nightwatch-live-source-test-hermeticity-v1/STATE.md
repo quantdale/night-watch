@@ -4,14 +4,14 @@
 
 Task ID: nightwatch-live-source-test-hermeticity-v1
 Phase: LIVE_SOURCE_TEST_HERMETICITY_V1
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: 060cd592cf4e8db4b07fc6398d03c147b8a51f12
 Last validated implementation SHA: b48604bec084b0ab3c6a7dd89c3eef6f8b82b575
 Last substantive checkpoint SHA: b48604bec084b0ab3c6a7dd89c3eef6f8b82b575
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-successor-campaign-en-628d8bb9
-Last checkpoint: 2026-09-25 — hermeticity implementation b48604be; focused live/empty 141/141 and gate:dev 5472/0; clean milestone pending.
+Last checkpoint: 2026-09-25 — implementation b48604be; gate:dev 5472/0, gate:milestone 5472/0, and gate:local PASS; clean routing replay is umbrella closeout.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 060cd592cf4e8db4b07fc6398d03c147b8a51f12
@@ -19,7 +19,7 @@ LAST_VALIDATED_IMPLEMENTATION_SHA: b48604bec084b0ab3c6a7dd89c3eef6f8b82b575
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: b48604bec084b0ab3c6a7dd89c3eef6f8b82b575
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
-PHASE_LIVE_SOURCE_TEST_HERMETICITY_V1_STATUS: IN_PROGRESS
+PHASE_LIVE_SOURCE_TEST_HERMETICITY_V1_STATUS: COMPLETE
 
 ## Objective
 
@@ -27,7 +27,7 @@ Make affected real-source tests deterministic and truthful across absent, stale,
 
 ## Current Milestone
 
-M3 — checkpoint the hermeticity implementation, run clean milestone, then perform final successor reassessment.
+COMPLETE — focused, development, milestone, and local certification are green.
 
 ## Completed Milestones
 
@@ -36,14 +36,11 @@ M3 — checkpoint the hermeticity implementation, run clean milestone, then perf
 - M2 complete: all 12 affected tests migrated without source rebinding or new skips.
 
 ## Work In Progress
-
-Implementation, adversarial states, focused suites, and `gate:dev` are green.
-Clean milestone and terminal reassessment remain.
+None. The child implementation and required validation are complete.
 
 ## Exact Next Action
 
-Commit the hermeticity implementation, run `gate:milestone` from the clean
-checkpoint, then complete final popup/popup-residual reassessment and C-00 close.
+STOP — terminal child record; no further task action.
 
 ## Files Changed
 
@@ -118,7 +115,7 @@ second source-root environment or changing default production behavior.
 
 ## Blockers
 
-None for implementation. Clean milestone and final popup reassessment remain.
+None.
 
 ## Safety Events
 
@@ -131,11 +128,15 @@ NONE. Read-only Git metadata and temporary synthetic source only.
 
 ## Resume Recipe
 
-1. Commit the hermeticity implementation and require a clean worktree.
-2. Run `gate:milestone` and prove source pins/sibling state unchanged.
-3. Perform final popup and successor-engine reassessment.
-4. Complete C-00 integration/release only from exact green checkpoints.
+STOP — task complete; do not resume. The parent successor task owns final
+clean-checkout replay, C-00 integration, and any newly authorized successor.
 
 ## Completion Snapshot
 
-Not applicable while IN_PROGRESS.
+- Status: COMPLETE — all 12 live-source test hermeticity failures are closed.
+- Starting SHA: `060cd592cf4e8db4b07fc6398d03c147b8a51f12`.
+- Last validated implementation SHA: `b48604bec084b0ab3c6a7dd89c3eef6f8b82b575`.
+- Focused live and explicit-empty suites: 141/141 each.
+- `gate:dev` and `gate:milestone`: 5472 passed / 0 failed.
+- `gate:local`: PASS, receipt `receipt:sha256:a55cac531dfae3c5f15ac598`.
+- Source pins unchanged; Alphaus sibling writes 0; no external/product/credential effect.
