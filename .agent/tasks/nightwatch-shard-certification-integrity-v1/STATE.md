@@ -6,17 +6,17 @@ Task ID: nightwatch-shard-certification-integrity-v1
 Phase: SHARD_CERTIFICATION_INTEGRITY_V1
 Status: IN_PROGRESS
 Starting SHA: 78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1
-Last validated implementation SHA: 7dfb54315e53e7ff1c3e12e40cd8887436fdffd3
-Last substantive checkpoint SHA: 7dfb54315e53e7ff1c3e12e40cd8887436fdffd3
+Last validated implementation SHA: 38510bc4782f57d2b75ac7266dfc909937a3359d
+Last substantive checkpoint SHA: 38510bc4782f57d2b75ac7266dfc909937a3359d
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-successor-campaign-en-628d8bb9
-Last checkpoint: 2026-09-24 — implementation checkpoint d89be39bff9c6f1cb86ce0c39dd34fe945884409; focused/static validation green; milestone gate pending.
+Last checkpoint: 2026-09-24 — implementation and gate-classification checkpoint 38510bc4782f57d2b75ac7266dfc909937a3359d; focused/static validation green; broad gate residual classified.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1
-LAST_VALIDATED_IMPLEMENTATION_SHA: 7dfb54315e53e7ff1c3e12e40cd8887436fdffd3
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 7dfb54315e53e7ff1c3e12e40cd8887436fdffd3
+LAST_VALIDATED_IMPLEMENTATION_SHA: 38510bc4782f57d2b75ac7266dfc909937a3359d
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 38510bc4782f57d2b75ac7266dfc909937a3359d
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
 PHASE_SHARD_CERTIFICATION_INTEGRITY_V1_STATUS: IN_PROGRESS
@@ -51,14 +51,15 @@ validation and final review remain.
 
 ## Work In Progress
 
-Implementation is complete but uncommitted in the owned worktree. The first
-implementation checkpoint and milestone validation remain.
+Implementation is committed and focused/static validation is green. The broad
+lane has a classified baseline/source-drift residual; final child status and
+successor selection remain.
 
 ## Exact Next Action
 
-Run `npm run gate:dev` after the implementation checkpoint is committed, then
-run `npm run gate:milestone`; inspect the receipt schema, reporter atomicity,
-and all-skipped/zero/unknown negatives before closing M3.
+Run the post-governance `gate:dev`/`gate:milestone` lanes and record the exact
+residual. If the residual remains baseline-identical, mark this child blocked
+by external/source drift and select the next independent campaign.
 
 ## Files Changed
 
