@@ -6,8 +6,8 @@ Task ID: nightwatch-shard-certification-integrity-v1
 Phase: SHARD_CERTIFICATION_INTEGRITY_V1
 Status: IN_PROGRESS
 Starting SHA: 78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1
-Last validated implementation SHA: 07a5491064b78290fbe823ae65c9b61c63e83d3a
-Last substantive checkpoint SHA: 07a5491064b78290fbe823ae65c9b61c63e83d3a
+Last validated implementation SHA: 7dfb54315e53e7ff1c3e12e40cd8887436fdffd3
+Last substantive checkpoint SHA: 7dfb54315e53e7ff1c3e12e40cd8887436fdffd3
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-successor-campaign-en-628d8bb9
@@ -15,8 +15,8 @@ Last checkpoint: 2026-09-24 — implementation checkpoint d89be39bff9c6f1cb86ce0
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1
-LAST_VALIDATED_IMPLEMENTATION_SHA: 07a5491064b78290fbe823ae65c9b61c63e83d3a
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 07a5491064b78290fbe823ae65c9b61c63e83d3a
+LAST_VALIDATED_IMPLEMENTATION_SHA: 7dfb54315e53e7ff1c3e12e40cd8887436fdffd3
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 7dfb54315e53e7ff1c3e12e40cd8887436fdffd3
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
 PHASE_SHARD_CERTIFICATION_INTEGRITY_V1_STATUS: IN_PROGRESS
