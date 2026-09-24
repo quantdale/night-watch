@@ -112,8 +112,12 @@
   synthetic 1916/1916 + deep-containment PROVEN, owner 91). gate:clean ran
   post-integration at `1e912454` (clean-receipt:sha256:352e3c95a8cfbb6dbbf9e47b;
   its HANDOFF group failure was the ACTIVE-routing worktree-declaration
-  defect this terminal commit fixes — the green re-run receipt is recorded
-  in the dedicated follow-up receipt commit per the NW-AUD-006 pattern)]
+  defect this terminal commit fixes). GREEN RE-RUN at `8200ae4f`:
+  gate:clean exit=0, all twelve groups PASS including HANDOFF_TRUTH
+  (clean-receipt:sha256:03553c75c11153a9ac5fe69c, inner receipt
+  receipt:sha256:77a3f559226db68b5ecc5821, install PASS node20,
+  cleanBefore/cleanAfter true, semantic 2137/0f, synthetic 1916/1916 +
+  deep-containment PROVEN, owner 91)]
 - [x] 7.3 Reconcile all five remediation checklists from actual evidence;
   write umbrella REPORT sections A–N; enumerate remaining audit backlog
   without starting it. [all five OpenSpec tasks.md reconciled with honest
