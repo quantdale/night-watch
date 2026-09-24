@@ -25,6 +25,6 @@
 
 ## 4. Validation and handoff
 
-- [ ] 4.1 Run focused tests, `gate:dev`, and `gate:milestone`.
-- [ ] 4.2 Strict-validate this change and reconcile task/report truth.
-- [ ] 4.3 Commit through the owned C-00 session and reassess the next campaign.
+- [ ] ~~4.1 Run focused tests, `gate:dev`, and `gate:milestone`.~~ [PARTIAL/BLOCKED: focused/static checks pass; broad lanes retain 12 baseline/source-drift failures.]
+- [ ] ~~4.2 Strict-validate this change and reconcile task/report truth.~~ [DEFERRED: child is BLOCKED pending independent source-drift reconciliation.]
+- [ ] ~~4.3 Commit through the owned C-00 session and reassess the next campaign.~~ [DEFERRED: implementation checkpoint is retained; successor selection continues in the umbrella.]
