@@ -119,16 +119,16 @@ function shardReceiptPath(shard) {
 }
 
 function parseTextCounts(output) {
-  const count = (pattern) => {
-    const matches = [...output.matchAll(new RegExp(pattern.source, pattern.flags.includes('g') ? pattern.flags : pattern.flags + 'g'))];
-    const last = matches[matches.length - 1];
-    return last ? Number(last[1]) : null;
+  const lastNumber = (pattern) => {
+    let last = null;
+    for (const match of output.matchAll(pattern)) last = Number(match[1]);
+    return last;
   };
   return {
-    passed: count(/(\d+)\s+passed/i),
-    failed: count(/(\d+)\s+failed/i),
-    skipped: count(/(\d+)\s+skipped/i),
-    didNotRun: count(/(\d+)\s+did not run/i),
+    passed: lastNumber(/(\d+)\s+passed/gi),
+    failed: lastNumber(/(\d+)\s+failed/gi),
+    skipped: lastNumber(/(\d+)\s+skipped/gi),
+    didNotRun: lastNumber(/(\d+)\s+did not run/gi),
   };
 }
 
@@ -156,6 +156,13 @@ function sumCounts(results) {
     totals[key] = known ? sum : null;
   }
   return totals;
+}
+
+function executionCodeForDisposition(disposition) {
+  if (disposition === 'ALL_SKIPPED') return 'SHARD_ALL_SKIPPED';
+  if (disposition === 'NO_TESTS_EXECUTED') return 'SHARD_NO_TESTS_EXECUTED';
+  if (disposition === 'UNKNOWN') return 'SHARD_EXECUTION_UNKNOWN';
+  return disposition === 'PASS' ? null : 'SHARD_TESTS_FAILED';
 }
 
 function runShard(shard, execution) {
@@ -233,15 +240,7 @@ function runShard(shard, execution) {
           unknown: receipt.unknown,
         };
         executionStatus = disposition;
-        if (disposition !== 'PASS') {
-          executionCode = disposition === 'ALL_SKIPPED'
-            ? 'SHARD_ALL_SKIPPED'
-            : disposition === 'NO_TESTS_EXECUTED'
-              ? 'SHARD_NO_TESTS_EXECUTED'
-              : disposition === 'UNKNOWN'
-                ? 'SHARD_EXECUTION_UNKNOWN'
-                : 'SHARD_TESTS_FAILED';
-        }
+        if (disposition !== 'PASS') executionCode = executionCodeForDisposition(disposition);
       }
       if (exitStatus !== 0 && executionStatus === 'PASS') {
         executionStatus = 'TESTS_FAILED';

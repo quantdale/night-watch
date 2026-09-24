@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "nightwatch.successor-validation-receipt.v1",
+  "campaign": "nightwatch-shard-certification-integrity-v1",
+  "implementationCheckpoint": "7dfb54315e53e7ff1c3e12e40cd8887436fdffd3",
+  "focused": {
+    "command": "npx playwright test tests/unit/validationShardPlan.test.ts --project=nightwatch --workers=1 --retries=0",
+    "result": "PASS",
+    "tests": "12/12"
+  },
+  "static": {
+    "typecheck": "PASS",
+    "typecheckBin": "PASS_REPORTING_14/76_EXISTING_NONCONFORMANCE",
+    "schema": "PASS_419_DISCOVERED_396_FAMILIES",
+    "hardening": "PASS"
+  },
+  "gateDev": {
+    "command": "npm run gate:dev",
+    "result": "TEST_FAILURE",
+    "wallSeconds": 626.4,
+    "targetSeconds": 120,
+    "affectedTests": 393,
+    "affectedShards": {
+      "passed": 5443,
+      "failed": 13,
+      "shardExecutionReceipts": "strict machine receipts; reporter path worked"
+    },
+    "classification": "PREEXISTING_OR_ENVIRONMENTAL_AFFECTED_SCOPE_FAILURE",
+    "reason": "The changed bin runner broadens the affected lane to 393 tests. The failures are source-intelligence/current-sibling drift tests outside the shard implementation; baseline copies at 78efcc9c reproduce the same failures. One additional NW-07 continuity failure was introduced by the new task prose and was repaired before this receipt."
+  },
+  "gateMilestone": {
+    "command": "npm run gate:milestone",
+    "result": "TEST_FAILURE",
+    "wallSeconds": 798.5,
+    "targetSeconds": 300,
+    "affectedShards": {
+      "passed": 5443,
+      "failed": 13
+    },
+    "classification": "SAME_PREEXISTING_OR_ENVIRONMENTAL_AFFECTED_SCOPE_FAILURE"
+  },
+  "baselineComparison": {
+    "source": "git archive 78efcc9c into disposable /tmp checkout with local node_modules symlink",
+    "commands": [
+      "six failing source-intelligence files: 8 failed / 94 passed",
+      "four additional shard-1 files: 4 failed / 39 passed"
+    ],
+    "conclusion": "The affected failures are not introduced by the shard receipt implementation; the NW-07 continuity failure was separately introduced by successor task prose and is now fixed."
+  },
+  "governanceRepair": {
+    "file": ".agent/tasks/nightwatch-successor-campaign-engine-v1/{STATE,PLAN}.md",
+    "symptom": "NW-07 found no structured completed milestone markers/status lines",
+    "repair": "Added explicit M0/M1 completed markers and bold Status lines; focused NW-07 suite now passes 5/5."
+  }
+}
