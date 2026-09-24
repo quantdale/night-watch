@@ -6,17 +6,17 @@ Task ID: nightwatch-credential-use-binding-successor-v1
 Phase: CREDENTIAL_USE_BINDING_SUCCESSOR_V1
 Status: IN_PROGRESS
 Starting SHA: d5175a7d676cbff5584b887363ceaa1d7d7b879f
-Last validated implementation SHA: d5175a7d676cbff5584b887363ceaa1d7d7b879f
-Last substantive checkpoint SHA: d5175a7d676cbff5584b887363ceaa1d7d7b879f
+Last validated implementation SHA: c1670abedee07c8b5d36ad2de5ee4419f5859ac8
+Last substantive checkpoint SHA: c1670abedee07c8b5d36ad2de5ee4419f5859ac8
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-successor-campaign-en-628d8bb9
-Last checkpoint: 2026-09-24 — credential-use binding implementation checkpoint d5175a7d676cbff5584b887363ceaa1d7d7b879f; focused/static/mutation validation green; broad gate pending.
+Last checkpoint: 2026-09-24 — credential-use binding implementation checkpoint c1670abedee07c8b5d36ad2de5ee4419f5859ac8; focused/static/mutation validation green; broad gate pending.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: d5175a7d676cbff5584b887363ceaa1d7d7b879f
-LAST_VALIDATED_IMPLEMENTATION_SHA: d5175a7d676cbff5584b887363ceaa1d7d7b879f
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: d5175a7d676cbff5584b887363ceaa1d7d7b879f
+LAST_VALIDATED_IMPLEMENTATION_SHA: c1670abedee07c8b5d36ad2de5ee4419f5859ac8
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: c1670abedee07c8b5d36ad2de5ee4419f5859ac8
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
 PHASE_CREDENTIAL_USE_BINDING_SUCCESSOR_V1_STATUS: IN_PROGRESS

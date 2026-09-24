@@ -6,18 +6,18 @@ Title: Fresh successor campaign engine and reassessment
 Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-successor-campaign-engine-v1
 Starting SHA: 78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1
-Last validated implementation SHA: d5175a7d676cbff5584b887363ceaa1d7d7b879f
-Last checkpoint: 2026-09-24 — proxy event firewall child blocked with classified broad-gate residual; credential-use binding selected as the next independent child.
-Current milestone: M7 — execute credential-use binding child.
-Next action: create/strict-validate the credential child, reproduce the post-precheck navigation/form race, then implement a fail-closed one-shot binding.
+Last validated implementation SHA: c1670abedee07c8b5d36ad2de5ee4419f5859ac8
+Last checkpoint: 2026-09-24 — credential-use binding implementation checkpoint c1670abedee07c8b5d36ad2de5ee4419f5859ac8; focused/static/mutation validation green; broad gate pending.
+Current milestone: M7 — validate credential-use binding child.
+Next action: run post-checkpoint gate lanes, classify any residual, then close or block this child without real credentials.
 
 Authorization class: SUCCESSOR_CAMPAIGN_ENGINE_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1
-LAST_VALIDATED_IMPLEMENTATION_SHA: d5175a7d676cbff5584b887363ceaa1d7d7b879f
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: d5175a7d676cbff5584b887363ceaa1d7d7b879f
+LAST_VALIDATED_IMPLEMENTATION_SHA: c1670abedee07c8b5d36ad2de5ee4419f5859ac8
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: c1670abedee07c8b5d36ad2de5ee4419f5859ac8
 LIVE_HEAD_AUTHORITY: GIT
 PHASE_SUCCESSOR_CAMPAIGN_ENGINE_V1_STATUS: IN_PROGRESS
 
