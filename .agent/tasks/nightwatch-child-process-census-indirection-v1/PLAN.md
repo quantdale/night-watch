@@ -52,7 +52,7 @@ form and mutation negatives.
 - Implementation actions: add failing namespace-require/alias tests.
 - Acceptance criteria: current implementation fails the intended assertions.
 - Validation commands: focused child-process census suite.
-- Status: COMPLETE
+- **Status:** COMPLETE
 
 ### M2 — Totality implementation
 
@@ -62,7 +62,7 @@ form and mutation negatives.
   unknown-import refusal.
 - Acceptance criteria: all supported forms discovered; unknown cannot be green.
 - Validation commands: focused tests, typecheck, hardening.
-- Status: IN_PROGRESS
+- **Status:** COMPLETE
 
 ### M3 — Adversarial validation and checkpoint
 
@@ -72,7 +72,7 @@ form and mutation negatives.
   mutation and prove detection; classify unrelated broad-gate drift.
 - Acceptance criteria: mutations detected; no profile or safety regression.
 - Validation commands: `gate:dev`, `gate:milestone`.
-- Status: NOT_STARTED
+- **Status:** IN_PROGRESS
 
 ### M4 — Close and reassess
 
@@ -94,6 +94,9 @@ source-intelligence failures rather than absorbing them.
 
 - 2026-09-24 — Select this before the larger run-evidence transaction redesign:
   the bypass is reproduced, safety-relevant, and small/low-risk to correct.
+- 2026-09-24 — Pure parser now discovers namespace `require`, destructured
+  aliases, and direct method aliases; unresolved imports are explicit records
+  consumed by hardening.
 
 ## Discoveries
 

@@ -12,6 +12,7 @@ import {
   buildChildProcessCensus,
   classifyInvocation,
   EXECUTION_PROFILES,
+  findInvocationSites,
   parseChildProcessImports,
 } from '../../bin/lib/childProcessCensus.mjs';
 
@@ -42,6 +43,8 @@ test('NW-AUD-014: production census is non-zero, total, and digestible', () => {
   expect(census.invocationCount).toBeGreaterThanOrEqual(50);
   expect(census.unclassifiedCount).toBe(0);
   expect(census.unclassified).toEqual([]);
+  expect(census.unresolvedImportCount).toBe(0);
+  expect(census.unresolvedImports).toEqual([]);
   expect(census.digest).toMatch(/^sha256:[0-9a-f]{24}$/);
   for (const profile of EXECUTION_PROFILES) {
     expect(Object.prototype.hasOwnProperty.call(census.byProfile, profile)).toBe(true);
@@ -88,9 +91,53 @@ test('NW-AUD-014: import parser binds named, default, and namespace forms', () =
   expect(req.bindings.has('execFileSync')).toBe(true);
 });
 
+test('NW-AUD-014: namespace require and direct method aliases are totally discovered', () => {
+  const namespaceRequire = "const cp = require('node:child_process');\ncp.spawn('git', ['status']);";
+  const namespaceParsed = parseChildProcessImports(namespaceRequire);
+  expect(namespaceParsed.namespaces.has('cp')).toBe(true);
+  expect(findInvocationSites(namespaceRequire, namespaceParsed.bindings, namespaceParsed.namespaces)).toHaveLength(1);
+  const namespaceCensus = buildChildProcessCensus([{ file: 'bin/namespace-fixture.mjs', source: namespaceRequire }]);
+  expect(namespaceCensus.invocationCount).toBe(1);
+  expect(namespaceCensus.unresolvedImportCount).toBe(0);
+  expect(namespaceCensus.unclassifiedCount).toBe(0);
+
+  const methodAlias = "const cp = require('node:child_process');\nconst launch = cp.spawn;\nlaunch('git', ['status']);";
+  const aliasParsed = parseChildProcessImports(methodAlias);
+  expect(aliasParsed.bindings.has('launch')).toBe(true);
+  expect(findInvocationSites(methodAlias, aliasParsed.bindings, aliasParsed.namespaces)).toHaveLength(1);
+  const aliasCensus = buildChildProcessCensus([{ file: 'bin/alias-fixture.mjs', source: methodAlias }]);
+  expect(aliasCensus.invocationCount).toBe(1);
+  expect(aliasCensus.unresolvedImportCount).toBe(0);
+  expect(aliasCensus.unclassifiedCount).toBe(0);
+});
+
+test('NW-AUD-014: an unresolved child-process import cannot be a clean empty census', () => {
+  const dynamic = "const cp = require('node:child_process');\ncp[method]('git', []);";
+  const census = buildChildProcessCensus([{ file: 'bin/dynamic-fixture.mjs', source: dynamic }]);
+  expect(census.invocationCount).toBe(0);
+  expect(census.unresolvedImportCount).toBeGreaterThan(0);
+  expect(census.unresolvedImports[0]).toMatchObject({ file: 'bin/dynamic-fixture.mjs' });
+  expect(census.unclassifiedCount).toBe(0);
+
+  const bare = "import 'node:child_process';";
+  const bareCensus = buildChildProcessCensus([{ file: 'bin/bare-fixture.mjs', source: bare }]);
+  expect(bareCensus.unresolvedImportCount).toBeGreaterThan(0);
+});
+
+test('NW-AUD-014: destructured require aliases use the same closed binding set', () => {
+  const source = "const { spawn: launch } = require('node:child_process');\nlaunch('git', ['status']);";
+  const parsed = parseChildProcessImports(source);
+  expect(parsed.bindings.has('launch')).toBe(true);
+  const census = buildChildProcessCensus([{ file: 'bin/destructured-alias.mjs', source }]);
+  expect(census.invocationCount).toBe(1);
+  expect(census.unresolvedImportCount).toBe(0);
+});
+
 test('NW-AUD-014: the manual 17-file launcher list is no longer the totality authority', () => {
   const rule = fs.readFileSync(path.join(ROOT, 'bin/lib/hardening/rules/process-and-network.mjs'), 'utf8');
   expect(rule).toContain('buildChildProcessCensus');
   expect(rule).toContain('unclassifiedCount');
+  expect(rule).toContain('unresolvedImportCount');
   expect(rule).toMatch(/census\.unclassifiedCount\s*!==\s*0/);
+  expect(rule).toMatch(/census\.unresolvedImportCount\s*!==\s*0/);
 });

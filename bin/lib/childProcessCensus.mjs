@@ -41,29 +41,29 @@ export const INVOCATION_VOCABULARY = Object.freeze([
   'fork',
 ]);
 
-const IMPORT_RE = /(?:import|require)\s*[\s\S]*?['"]node:child_process['"]|from\s*['"]child_process['"]|require\s*\(\s*['"]child_process['"]\s*\)/g;
+const BARE_IMPORT_RE = /import\s+['"](?:node:)?child_process['"]/g;
+const BARE_REQUIRE_RE = /require\s*\(\s*['"](?:node:)?child_process['"]\s*\)/g;
 const NAMED_IMPORT_RE = /import\s*\{([^}]+)\}\s*from\s*['"](?:node:)?child_process['"]/g;
 const DEFAULT_IMPORT_RE = /import\s+(\w+)\s+from\s*['"](?:node:)?child_process['"]/g;
 const NAMESPACE_IMPORT_RE = /import\s*\*\s*as\s+(\w+)\s+from\s*['"](?:node:)?child_process['"]/g;
 const DESTRUCTURE_REQUIRE_RE = /(?:const|let|var)\s*\{([^}]+)\}\s*=\s*require\s*\(\s*['"](?:node:)?child_process['"]\s*\)/g;
+const NAMESPACE_REQUIRE_RE = /(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*require\s*\(\s*['"](?:node:)?child_process['"]\s*\)/g;
+const METHOD_ALIAS_RE = /(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*([A-Za-z_$][\w$]*)\.([A-Za-z_$][\w$]*)/g;
 
 const AUTHENTICATED_FILE_RE = /(?:^|\/)(?:phase(?:4|5|7|9b|10b|22)-(?:real|dev)|phase2[bc]-real|observe-(?:authenticated|gate|canary)|auth-capture)\.mjs$/;
 const GH_FILE_RE = /(?:^|\/)(?:phase23-(?:ci|dev)|phase22-real)\.mjs$/;
 
 /**
  * @param {string} source
- * @returns {{ importsChildProcess: boolean, bindings: Set<string>, namespaces: Set<string> }}
+ * @returns {{ importsChildProcess: boolean, bindings: Set<string>, namespaces: Set<string>, unresolvedIndirections: string[] }}
  */
 export function parseChildProcessImports(source) {
   const bindings = new Set();
   const namespaces = new Set();
-  let importsChildProcess = IMPORT_RE.test(source);
-  IMPORT_RE.lastIndex = 0;
-  if (!importsChildProcess) {
-    // Fallback: any from 'node:child_process'
-    importsChildProcess = /from\s*['"](?:node:)?child_process['"]/.test(source)
-      || /require\s*\(\s*['"](?:node:)?child_process['"]\s*\)/.test(source);
-  }
+  const unresolved = new Set();
+  let importsChildProcess = BARE_IMPORT_RE.test(source) || BARE_REQUIRE_RE.test(source);
+  BARE_IMPORT_RE.lastIndex = 0;
+  BARE_REQUIRE_RE.lastIndex = 0;
   for (const match of source.matchAll(NAMED_IMPORT_RE)) {
     importsChildProcess = true;
     const body = match[1] ?? '';
@@ -86,15 +86,43 @@ export function parseChildProcessImports(source) {
     importsChildProcess = true;
     if (match[1] !== undefined) namespaces.add(match[1]);
   }
+  for (const match of source.matchAll(NAMESPACE_REQUIRE_RE)) {
+    importsChildProcess = true;
+    if (match[1] !== undefined) namespaces.add(match[1]);
+  }
   for (const match of source.matchAll(DESTRUCTURE_REQUIRE_RE)) {
     importsChildProcess = true;
     const body = match[1] ?? '';
     for (const part of body.split(',')) {
       const trimmed = part.trim();
-      if (/^[A-Za-z_$][\w$]*$/.test(trimmed)) bindings.add(trimmed);
+      const esAlias = /^[A-Za-z_$][\w$]*\s+as\s+([A-Za-z_$][\w$]*)$/.exec(trimmed);
+      const commonJsAlias = /^([A-Za-z_$][\w$]*)\s*:\s*([A-Za-z_$][\w$]*)$/.exec(trimmed);
+      if (esAlias?.[1] !== undefined) bindings.add(esAlias[1]);
+      else if (commonJsAlias?.[2] !== undefined) bindings.add(commonJsAlias[2]);
+      else if (/^[A-Za-z_$][\w$]*$/.test(trimmed)) bindings.add(trimmed);
     }
   }
-  return { importsChildProcess, bindings, namespaces };
+
+  const masked = maskSource(source);
+  for (const match of masked.matchAll(METHOD_ALIAS_RE)) {
+    const alias = match[1];
+    const namespace = match[2];
+    const method = match[3];
+    if (alias !== undefined && namespace !== undefined && method !== undefined
+      && namespaces.has(namespace) && INVOCATION_VOCABULARY.includes(method)) {
+      bindings.add(alias);
+    }
+  }
+  for (const namespace of namespaces) {
+    const escaped = namespace.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    if (new RegExp(`\\b${escaped}\\s*\\[`, 'g').test(masked)) unresolved.add('dynamic-member');
+    for (const match of masked.matchAll(new RegExp(`\\b${escaped}\\s*\\.\\s*([A-Za-z_$][\\w$]*)`, 'g'))) {
+      const member = match[1];
+      if (member !== undefined && !INVOCATION_VOCABULARY.includes(member)) unresolved.add(`unknown-member:${member}`);
+    }
+  }
+  if (importsChildProcess && bindings.size === 0 && namespaces.size === 0) unresolved.add('unbound-import');
+  return { importsChildProcess, bindings, namespaces, unresolvedIndirections: [...unresolved].sort() };
 }
 
 /** Strip strings and comments so call-site search is not fooled by literals. */
@@ -379,12 +407,16 @@ export function buildChildProcessCensus(files) {
   const importFiles = [];
   const invocations = [];
   const unclassified = [];
+  const unresolvedImports = [];
   const byProfile = Object.fromEntries(EXECUTION_PROFILES.map((p) => [p, 0]));
 
   for (const { file, source } of files) {
     const parsed = parseChildProcessImports(source);
     if (!parsed.importsChildProcess) continue;
     importFiles.push(file);
+    for (const kind of parsed.unresolvedIndirections) {
+      unresolvedImports.push({ identity: `${file}:unresolved:${kind}`, file, kind });
+    }
     const sites = findInvocationSites(source, parsed.bindings, parsed.namespaces);
     for (const site of sites) {
       const optionsText = extractOptionsObject(site.argsText);
@@ -415,17 +447,22 @@ export function buildChildProcessCensus(files) {
     }
   }
 
-  const identities = invocations.map((n) => n.identity);
+  const identities = [
+    ...invocations.map((n) => n.identity),
+    ...unresolvedImports.map((n) => n.identity),
+  ];
   const digest = `sha256:${crypto.createHash('sha256').update(identities.join('\n'), 'utf8').digest('hex').slice(0, 24)}`;
   return {
     schemaVersion: CHILD_PROCESS_CENSUS_SCHEMA,
     importFileCount: importFiles.length,
     invocationCount: invocations.length,
     unclassifiedCount: unclassified.length,
+    unresolvedImportCount: unresolvedImports.length,
     byProfile,
     digest,
     importFiles: importFiles.sort(),
     invocations,
     unclassified,
+    unresolvedImports,
   };
 }

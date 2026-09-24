@@ -18,23 +18,37 @@ export interface CensusNode {
   usesNpx: boolean;
 }
 
+export interface UnresolvedChildProcessImport {
+  identity: string;
+  file: string;
+  kind: string;
+}
+
 export interface ChildProcessCensus {
   schemaVersion: string;
   importFileCount: number;
   invocationCount: number;
   unclassifiedCount: number;
+  unresolvedImportCount: number;
   byProfile: Record<string, number>;
   digest: string;
   importFiles: string[];
   invocations: CensusNode[];
   unclassified: CensusNode[];
+  unresolvedImports: UnresolvedChildProcessImport[];
 }
 
 export declare function parseChildProcessImports(source: string): {
   importsChildProcess: boolean;
   bindings: Set<string>;
   namespaces: Set<string>;
+  unresolvedIndirections: string[];
 };
+export declare function findInvocationSites(
+  source: string,
+  bindings: Set<string>,
+  namespaces: Set<string>,
+): Array<{ callee: string; index: number; line: number; argsText: string }>;
 export declare function classifyInvocation(input: {
   file: string;
   callee: string;

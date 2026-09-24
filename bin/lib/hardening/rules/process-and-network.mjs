@@ -103,6 +103,14 @@ export function checkChildProcessBoundaries() {
       `child-process census has ${census.unclassifiedCount} unclassified invocation nodes (NW-AUD-014 totality)`,
     );
   }
+  if (census.unresolvedImportCount !== 0) {
+    for (const node of census.unresolvedImports.slice(0, 20)) {
+      fail(`child-process census unresolved import ${node.identity}`);
+    }
+    fail(
+      `child-process census has ${census.unresolvedImportCount} unresolved import/indirection records (NW-AUD-014 totality)`,
+    );
+  }
   for (const profile of EXECUTION_PROFILES) {
     if (!Object.hasOwn(census.byProfile, profile)) {
       fail(

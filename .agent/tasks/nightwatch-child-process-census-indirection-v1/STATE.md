@@ -11,7 +11,7 @@ Last substantive checkpoint SHA: 5619aeaf77e22862cc87c6da6ad6e022fa60b774
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-successor-campaign-en-628d8bb9
-Last checkpoint: 2026-09-24 — child selected after shard gate residual was classified; namespace-require reproduction is ready for implementation.
+Last checkpoint: 2026-09-24 — child-process census indirection implementation is complete in the owned worktree; focused/static/mutation validation green; checkpoint/gates pending.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 5619aeaf77e22862cc87c6da6ad6e022fa60b774
@@ -28,7 +28,9 @@ bypass without evaluating or executing any child process.
 
 ## Current Milestone
 
-M2 — implement total supported indirection and explicit unknown refusal.
+M3 — adversarial validation and checkpoint. Supported namespace/alias forms,
+unknown refusal, focused regressions, static checks, and mutation probes are
+implemented; broad gate validation remains.
 
 ## Completed Milestones
 
@@ -36,16 +38,23 @@ M2 — implement total supported indirection and explicit unknown refusal.
   undiscovered by the current parser.
 - Parent shard child is preserved as BLOCKED by baseline/source-drift gate
   failures; no unrelated source-intelligence test will be changed.
+- M2 implementation complete: namespace require, destructured aliases, direct
+  method aliases, and explicit unresolved-import records are supported.
+- Focused census suite passed 8/8; production census reports 63 import files,
+  121 invocations, zero unresolved/unclassified records.
+- Manual mutations removing alias discovery or unresolved refusal each changed
+  the result (`1 -> 0`), proving both guards are load-bearing.
 
 ## Work In Progress
 
-Census parser, unknown-import result, hardening rule, and focused tests are
-being implemented in the owned session.
+Implementation is complete but uncommitted in the owned worktree. The child
+checkpoint, `gate:dev`, `gate:milestone`, and final continuity reconciliation
+remain.
 
 ## Exact Next Action
 
-Add failing synthetic fixtures for namespace `require`, destructuring alias,
-method alias, and unresolved dynamic indirection before editing the parser.
+Commit the implementation checkpoint, run `gate:dev` and `gate:milestone`, then
+adversarially inspect the unknown-import refusal and update parent continuity.
 
 ## Files Changed
 
@@ -55,9 +64,11 @@ method alias, and unresolved dynamic indirection before editing the parser.
 | `.agent/tasks/nightwatch-child-process-census-indirection-v1/PLAN.md` | child plan | new this session |
 | `.agent/tasks/nightwatch-child-process-census-indirection-v1/STATE.md` | child waypoint | new this session |
 | `.agent/tasks/nightwatch-child-process-census-indirection-v1/REPORT.md` | child report | new this session |
-| `openspec/changes/nightwatch-child-process-census-indirection-v1/` | strict contract | pending creation |
-| `bin/lib/childProcessCensus.mjs` | implementation target | not yet changed |
-| `tests/unit/childProcessCensus.test.ts` | regression target | not yet changed |
+| `openspec/changes/nightwatch-child-process-census-indirection-v1/` | strict contract | complete/validated |
+| `bin/lib/childProcessCensus.mjs` | namespace/alias/unknown census implementation | implemented |
+| `bin/lib/childProcessCensus.d.mts` | generated type surface | updated |
+| `bin/lib/hardening/rules/process-and-network.mjs` | unresolved-import refusal | implemented |
+| `tests/unit/childProcessCensus.test.ts` | positive/negative/regression tests | implemented |
 
 ## Validation Ledger
 
@@ -66,6 +77,31 @@ Result: REPRODUCED
 When: 2026-09-24
 Relevant failure/output summary: `importsChildProcess=true`,
 bindings/namespaces empty, invocation sites empty for `const cp=require(...); cp.spawn(...)`.
+
+Command: `npx playwright test tests/unit/childProcessCensus.test.ts --project=nightwatch --workers=1 --retries=0`
+Result: PASS — 8/8
+When: 2026-09-24
+Relevant failure/output summary: supported namespace/require/alias forms and
+unresolved dynamic/bare imports are covered; production census totals remain
+63/121/0/0.
+
+Command: `npm run typecheck`
+Result: PASS
+When: 2026-09-24
+Relevant failure/output summary: generated declaration surface includes new
+census fields and invocation-site export.
+
+Command: `npm run hardening:check`
+Result: PASS
+When: 2026-09-24
+Relevant failure/output summary: unresolved-import refusal is integrated and
+production sources have zero unresolved records.
+
+Command: `/tmp/nightwatch-census-mutation-probe.mjs`
+Result: PASS — both mutations load-bearing
+When: 2026-09-24
+Relevant failure/output summary: alias guard mutation changed invocation
+count 1→0; unknown refusal mutation changed unresolved count 1→0.
 
 Command: `npm run session:status`
 Result: PASS
@@ -87,8 +123,8 @@ authority failure.
 
 ## Blockers
 
-None for this child. The parent shard gate residual is independent and must
-remain classified.
+None for the implementation. The parent shard gate residual is independent and
+must remain classified; it is not a reason to weaken this census child.
 
 ## Safety Events
 

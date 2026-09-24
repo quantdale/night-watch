@@ -5,6 +5,9 @@
 - Problem: namespace `require` and method aliases are invisible to the
   child-process census while the import is marked present.
 - Reproduction: synthetic source returns no bindings/namespaces/sites.
+- Changes: namespace `require`, destructured aliases, direct method aliases,
+  unresolved-import records, typed declaration updates, and hardening refusal
+  are implemented; focused/static/mutation validation is green.
 - Safety: NONE; source-string analysis only.
-- Remaining: implementation, focused/adversarial tests, hardening integration,
-  milestone validation, checkpoint, and successor reassessment.
+- Remaining: implementation checkpoint, broad gate lanes, continuity
+  reconciliation, and successor reassessment.
