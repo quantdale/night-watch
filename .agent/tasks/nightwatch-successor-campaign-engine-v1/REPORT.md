@@ -13,19 +13,18 @@
 - Discovery: Ten independent read-only lanes from the retained checkpoint remain
   valid; no full ten-lane repeat was performed.
 - Current work: shard certification, census indirection, run-evidence
-  transaction integrity, proxy-event firewall, and credential-use binding are
-  implemented with focused/static/mutation evidence and preserved as BLOCKED by
-  the independent broad live-source drift residual. Popup L0 remains blocked by
-  the failed local pre-navigation prototype.
-- New selection: credential `gate:dev` exposed one parallel-only
-  `reviewStore.test.ts` shared-temp failure that passed in isolation. The clean
-  milestone retained only the 12 source-drift failures. Shard temporary-namespace
-  isolation is the active bounded child.
-- Changes: five bounded local child implementations plus credential continuity
-  are checkpointed; strict isolation OpenSpec/task state is added. No sibling
+  transaction integrity, proxy-event firewall, credential-use binding, and
+  shard temp isolation are implemented with focused/adversarial evidence and
+  preserved as BLOCKED by the independent 12-failure live-source test residual.
+- Selection evidence: isolation milestone is 5459/12. Pointing
+  `NIGHTWATCH_SIBLING_ROOT` at an empty directory leaves 11 of the 12 failures,
+  proving structural test hermeticity rather than only current-SHA drift.
+- Current child: `nightwatch-live-source-test-hermeticity-v1`; strict contract
+  and continuity state are active.
+- Changes: six bounded local child implementations are checkpointed; no sibling
   repository, credential, artifact, or external runtime state changed.
 - Safety events: NONE.
-- Remaining work: implement and validate shard temp isolation, then reassess
-  live-source test hermeticity/currentness and popup L0.
+- Remaining work: implement hermeticity/currentness handling, validate, then
+  final popup reassessment and C-00 closure.
 
 This is an active handoff, not a completion report.

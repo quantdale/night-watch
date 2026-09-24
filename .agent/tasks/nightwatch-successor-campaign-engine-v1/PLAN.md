@@ -178,9 +178,23 @@ reassess, and repeat. Use full certification only at release groups.
   temp/proxy state cannot survive; existing shard semantics remain green.
 - Validation commands: focused process/shard tests, `gate:dev`, then
   `gate:milestone`.
+- **Status:** BLOCKED
+
+### M9 — Live-source test hermeticity/currentness
+
+- Objective: make the 12 residual source-intelligence tests deterministic across
+  absent, stale, and exact-current sibling source without changing pins.
+- Files/areas: test-only source authority helper and affected C-02/C-03/C-04/C-07,
+  explain-surface, Phase 9, and Phase 12 tests.
+- Implementation actions: classify source state, gate live historical assertions,
+  use deterministic Git-backed fixtures, and correct run-local immutability.
+- Acceptance criteria: no skip/rebind/count rewrite; synthetic controls always
+  execute; exact-current live measurements remain available.
+- Validation commands: affected suites under live/empty/stale/current states,
+  `gate:dev`, then `gate:milestone`.
 - **Status:** IN_PROGRESS
 
-### M9 — Final adversarial reassessment and closure
+### M10 — Final adversarial reassessment and closure
 
 - Objective: prove a legitimate terminal condition and reconcile final truth.
 - Files/areas: task/report/OpenSpec/project-state surfaces as required.
@@ -233,6 +247,9 @@ green without understanding the cause.
   drift failures. The earlier parallel-only `reviewStore.test.ts` failure passed
   in isolation and is selected as M8 because inherited shard temp state is a
   concrete, bounded validation-integrity defect.
+- 2026-09-25 — Isolation milestone retained the same 12 failures. An
+  explicit-empty-sibling replay left 11 failing, selecting source-test
+  hermeticity as M9. Popup remains lower-confidence/higher-risk design work.
 
 ## Discoveries
 

@@ -4,14 +4,14 @@
 
 Task ID: nightwatch-shard-temp-isolation-v1
 Phase: SHARD_TEMP_ISOLATION_V1
-Status: IN_PROGRESS
+Status: BLOCKED
 Starting SHA: f41c6cc3c9e9e6a50f271acbd58ddb19b5afd6aa
 Last validated implementation SHA: 473842c196ce28d5a0fb26528bd86fbc5884d293
 Last substantive checkpoint SHA: 473842c196ce28d5a0fb26528bd86fbc5884d293
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-successor-campaign-en-628d8bb9
-Last checkpoint: 2026-09-25 — implementation 473842c1 including validation-universe classification; focused/adversarial green, corrected gate:dev 5459/12, clean milestone pending.
+Last checkpoint: 2026-09-25 — clean milestone 5459 passed / only the 12 independent source-drift failures; isolation race and integration defects absent.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: f41c6cc3c9e9e6a50f271acbd58ddb19b5afd6aa
@@ -19,7 +19,7 @@ LAST_VALIDATED_IMPLEMENTATION_SHA: 473842c196ce28d5a0fb26528bd86fbc5884d293
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: 473842c196ce28d5a0fb26528bd86fbc5884d293
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
-PHASE_SHARD_TEMP_ISOLATION_V1_STATUS: IN_PROGRESS
+PHASE_SHARD_TEMP_ISOLATION_V1_STATUS: BLOCKED
 
 ## Objective
 
@@ -27,7 +27,7 @@ Give every validation shard a private operating-system temporary namespace and r
 
 ## Current Milestone
 
-M3 — checkpoint the implementation, then run the clean milestone gate and classify residuals.
+M3 — broad validation is BLOCKED only by the independent live-source drift residual; isolation implementation and adversarial proof are complete.
 
 ## Completed Milestones
 
@@ -36,14 +36,12 @@ M3 — checkpoint the implementation, then run the clean milestone gate and clas
 
 ## Work In Progress
 
-Implementation and adversarial tests are complete. The corrected development
-gate has no temp-isolation failure; milestone remains after the implementation
-checkpoint.
+None. The implementation is checkpointed and both broad lanes contain no isolation failure. The child is honestly BLOCKED by the 12 separate source-test hermeticity failures.
 
 ## Exact Next Action
 
-Commit the implementation checkpoint, run `gate:milestone` from the clean
-checkpoint, then close or block this child without absorbing source drift.
+Preserve this blocked child and execute the selected live-source test
+hermeticity/currentness successor; do not rewrite source intelligence here.
 
 ## Files Changed
 
@@ -96,6 +94,21 @@ Relevant failure/output summary: `validation-universe` rejected the new bin
 module as unclassified and reported digest drift. The module was added to the
 BIN_SYNTAX inventory and the digest was refreshed; replay from a clean commit.
 
+Command: clean isolation `npm run gate:milestone`
+Result: TEST_FAILURE / INDEPENDENT SOURCE DRIFT
+When: 2026-09-25
+Relevant failure/output summary: every mandatory command step passed; 5459
+passed / 12 failed in 393 selected tests. No temp-isolation, proxy-lease, or
+environment-surface failure appeared.
+
+Command: empty-sibling replay of the nine affected source-test files
+Result: 129 PASS / 11 FAIL
+When: 2026-09-25
+Relevant failure/output summary: 11 failures persist with an explicitly empty
+sibling root, proving those tests are structurally ambient-live dependent rather
+than merely reacting to the current source SHA. Phase 12 alone passes empty but
+fails against the changed canonical sibling.
+
 ## Decisions Made During This Task
 
 Decision: isolate temp at the runner process boundary, not only in the failing test.
@@ -116,7 +129,9 @@ Reason: many tests intentionally prove that repository/workspace-contained scrat
 
 ## Blockers
 
-None for implementation. Twelve live-source drift failures remain independent and must not be absorbed into this child. Clean milestone validation remains required after the implementation checkpoint.
+The 12 live-source drift failures reproduce independently and block broad green
+certification. Isolation itself is repaired; this child is BLOCKED rather than
+complete.
 
 ## Safety Events
 
@@ -129,11 +144,10 @@ NONE. System-temp validation scratch and loopback lease files only; no external 
 
 ## Resume Recipe
 
-1. Read SPEC, PLAN, STATE, and the strict OpenSpec artifacts.
-2. Commit the implementation checkpoint and require a clean worktree.
-3. Run `gate:milestone` and classify the exact residual.
-4. Close or block this child, then reassess source drift and popup L0.
+1. Preserve this blocked child and exact evidence.
+2. Execute the selected source-test hermeticity/currentness child.
+3. Keep popup L0 deferred pending lower-level target admission design.
 
 ## Completion Snapshot
 
-Not applicable while IN_PROGRESS.
+Not applicable while BLOCKED; no green milestone or completion claim is made.

@@ -21,7 +21,7 @@ through evidence-led successor campaigns until a legitimate terminal condition.
 
 Nightwatch source, tests, hardening, schemas, synthetic fixtures, OpenSpec/task
 continuity, and C-00 commits/integration from the owned session only. The active
-child is `nightwatch-shard-temp-isolation-v1`.
+child is `nightwatch-live-source-test-hermeticity-v1`.
 
 ## Constraints
 
@@ -35,13 +35,12 @@ completed priority campaign.
 
 1. Owner-resolve canonical formatter churn and recover continuity — COMPLETE.
 2. Revalidate six findings and reproduce shard/run-evidence integrity — COMPLETE.
-3. Shard certification, census, run-evidence, proxy, and credential children —
-   implemented/focused; BLOCKED by the independent 12-failure live-source drift
-   residual.
+3. Shard certification, census, run-evidence, proxy, credential, and temp
+   isolation children — implemented/focused; BLOCKED by the independent
+   12-failure live-source test residual.
 4. Popup L0 readiness — BLOCKED after the local pre-navigation prototype failed.
-5. Shard temporary-namespace isolation — IN_PROGRESS.
-6. Reassess live-source hermeticity and remaining executable successors.
-7. Final adversarial reassessment, certification when justified, and C-00 close.
+5. Live-source test hermeticity/currentness — IN_PROGRESS.
+6. Final adversarial reassessment, certification when justified, and C-00 close.
 
 ## Validation
 

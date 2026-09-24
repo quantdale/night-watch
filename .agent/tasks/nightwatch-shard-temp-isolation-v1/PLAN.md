@@ -45,20 +45,20 @@ Build the child environment through the existing allowlist, then overwrite stand
 - Objective: implement validated per-shard temp paths and bounded scratch lifecycle.
 - Files/areas: shard environment module, declarations, `run-shards.mjs`.
 - Acceptance: serial, concurrent, and exclusive modes pass distinct absolute paths and preserve existing env rules.
-- Status: IN_PROGRESS
+- Status: COMPLETE
 
 ### M2 — Adversarial and focused validation
 
 - Objective: prove process-level isolation, malformed-input refusal, and replay the prior failure.
 - Files/areas: `validationShardPlan.test.ts` and synthetic task evidence.
 - Acceptance: fresh Node processes observe different `os.tmpdir()`; focused suites pass.
-- Status: NOT_STARTED
+- Status: COMPLETE
 
 ### M3 — Checkpoint and reassessment
 
 - Objective: run development/milestone lanes, classify independent residuals, and reconcile continuity.
 - Acceptance: exact evidence recorded; no cross-shard temp race; source drift remains separately classified.
-- Status: NOT_STARTED
+- Status: BLOCKED
 
 ## Validation Strategy
 
@@ -67,6 +67,7 @@ Use process-level unit coverage first, then existing shard integration tests, cr
 ## Decision Log
 
 - 2026-09-25 — Select after credential gate: the new failure is high-confidence, executable, validation-critical, and lower risk than rewriting live-source tests.
+- 2026-09-25 — Empty-sibling replay left 11 of 12 broad failures failing, proving the residual is structural test hermeticity rather than only current-SHA drift. Source-test hermeticity is the next child; isolation remains honestly BLOCKED.
 
 ## Deferred Work
 

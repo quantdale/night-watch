@@ -18,5 +18,5 @@
 ## 4. Validation and handoff
 
 - [x] 4.1 Run typecheck, bin typecheck, hardening, strict OpenSpec, and focused validation.
-- [ ] 4.2 Run `gate:dev` and `gate:milestone`; classify the twelve independent live-source drift failures separately.
-- [ ] 4.3 Reconcile child/umbrella truth, commit the checkpoint, and reassess remaining source-drift and popup residuals.
+- [x] 4.2 Run `gate:dev` and `gate:milestone`; classify the twelve independent live-source drift failures separately.
+- [x] 4.3 Reconcile child/umbrella truth, commit the checkpoint, and reassess remaining source-drift and popup residuals.

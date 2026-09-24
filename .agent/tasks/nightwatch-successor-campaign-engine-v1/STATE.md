@@ -30,8 +30,8 @@ before reassessing successors.
 
 ## Current Milestone
 
-M8 — validate the shard temporary-namespace isolation checkpoint and close or
-block the child against the independent live-source residual.
+M9 — execute live-source test hermeticity/currentness after the 12-failure
+residual remained and 11 failures persisted with an empty sibling root.
 
 ## Completed Milestones
 
@@ -48,6 +48,7 @@ block the child against the independent live-source residual.
 - **M6 BLOCKED** — proxy event firewall implementation is complete, but broad
   gate lanes retain 12 baseline/source-drift failures.
 - **M7 BLOCKED** — credential-use binding is implemented and focused-green; broad lanes retain only the independent 12-failure live-source drift residual.
+- **M8 BLOCKED** — shard temp isolation is focused/adversarial green; both broad lanes retain only the 12 independent source-test failures.
 - Owner resolution rechecked the exact canonical diff against the recorded
   patch and HEAD. It was mechanically confirmed as unintended formatter/editor
   churn, including invalid CSS fallback corruption `#fff` -> `# fff)`.
@@ -61,14 +62,13 @@ block the child against the independent live-source residual.
 
 ## Work In Progress
 
-The isolation implementation is checkpointed. Focused process/proxy tests and
-the hostile shared-temp replay pass; corrected `gate:dev` has no isolation
-failure. Clean milestone remains.
+Isolation is checkpointed and BLOCKED only by the independent source residual.
+The strict live-source test hermeticity child is active.
 
 ## Exact Next Action
 
-Run `gate:milestone` from the clean checkpoint, then close or block the child
-without absorbing the twelve live-source drift failures.
+Implement the test-only CURRENT/STALE/UNAVAILABLE authority helper and migrate
+affected tests without skips, pin changes, or rebinding.
 
 ## Files Changed
 
@@ -93,6 +93,9 @@ without absorbing the twelve live-source drift failures.
 | `openspec/changes/nightwatch-credential-use-binding-successor-v1/` | credential child contract | complete/validated |
 | `.agent/tasks/nightwatch-shard-temp-isolation-v1/` | active validation-isolation child | added this session |
 | `openspec/changes/nightwatch-shard-temp-isolation-v1/` | active isolation contract | complete/validated |
+
+| `.agent/tasks/nightwatch-live-source-test-hermeticity-v1/` | active hermeticity child | added this session |
+| `openspec/changes/nightwatch-live-source-test-hermeticity-v1/` | active hermeticity contract | complete/validated |
 
 ## Validation Ledger
 
@@ -203,6 +206,19 @@ Relevant failure/output summary: 5459 passed / 12 failed. The review-store temp
 race and the two repaired integration defects are absent; only the exact
 pre-existing live-source drift set remains.
 
+Command: clean isolation `npm run gate:milestone`
+Result: TEST_FAILURE / INDEPENDENT SOURCE DRIFT
+When: 2026-09-25
+Relevant failure/output summary: every mandatory step passed; 5459 passed / 12
+failed. No isolation, lease, or environment failure remained.
+
+Command: empty-sibling affected-suite replay
+Result: 129 PASS / 11 FAIL
+When: 2026-09-25
+Relevant failure/output summary: eleven tests remain structurally dependent on
+ambient live source; Phase 12 alone passes empty but fails when the canonical
+sibling has advanced. Live-source test hermeticity is selected as M9.
+
 ## Decisions Made During This Task
 
 Decision: restore only the verified canonical target after owner authorization.
@@ -231,15 +247,14 @@ implementation with a separately classified broad-gate blocker.
   run-evidence transaction integrity, proxy-event firewall, and credential-use
   binding. Their only broad residuals are the shared live-source drift set,
   except the popup L0 design blocker.
-- The credential gate exposed a separate cross-shard temp-namespace race. It is
-  selected for bounded validation-infrastructure repair.
+- Isolation is focused/adversarial green and checkpointed. Empty-sibling replay
+  proves the remaining 12 failures require test hermeticity, not source rebinding.
 
 ## Blockers
 
-The shard, census, run-evidence, proxy, and credential children are blocked by
-the broad live-source drift residual; popup L0 remains blocked by the absence of
-a proven pre-navigation target barrier. The shared-temp race is executable and
-is now isolated in M8.
+The prior children are blocked by the broad live-source test residual; popup
+L0 remains blocked by the absence of a proven pre-navigation target barrier.
+The residual is now isolated in the executable M9 hermeticity child.
 
 ## Safety Events
 
@@ -249,19 +264,18 @@ publication, force push, or history rewrite occurred.
 
 ## Deferred / Follow-Up
 
-- Execute shard temp isolation next.
-- After that child, select hermetic/current-source handling for the 12 failures.
-- Reassess the lower-level popup target barrier and remaining evidence architecture.
-- Keep completed priority campaign terminal and historical.
+- Execute live-source test hermeticity/currentness next.
+- Reassess the lower-level popup target barrier after M9.
+- Keep the completed priority campaign terminal and historical.
 
 ## Resume Recipe
 
 1. Read SPEC, PLAN, and this STATE.
 2. Inspect `git status`, exact HEAD/origin, and `npm run session:status`.
 3. Preserve all blocked children and their exact gate evidence.
-4. Implement `nightwatch-shard-temp-isolation-v1` from the current live source.
-5. Prove actual child `os.tmpdir()` isolation and malformed-input refusal.
-6. Continue with focused tests, gates, checkpoint, and successor selection.
+4. Implement `nightwatch-live-source-test-hermeticity-v1` from current source.
+5. Prove absent/stale/current states with deterministic fixtures and no rebinding.
+6. Continue with focused tests, gates, final reassessment, and C-00 close.
 
 ## Completion Snapshot
 

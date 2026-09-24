@@ -7,9 +7,9 @@ Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-successor-campaign-engine-v1
 Starting SHA: 78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1
 Last validated implementation SHA: 473842c196ce28d5a0fb26528bd86fbc5884d293
-Last checkpoint: 2026-09-25 — shard temp isolation 473842c1; focused/adversarial green and corrected gate:dev retains only 12 source-drift failures.
-Current milestone: M8 — implement shard temporary-namespace isolation.
-Next action: run clean `gate:milestone`, classify the exact residual, then close or block the isolation child.
+Last checkpoint: 2026-09-25 — isolation milestone 5459/12; empty-sibling replay 129/11 selects source-test hermeticity.
+Current milestone: M9 — implement live-source test hermeticity/currentness.
+Next action: add the test-only source authority helper and migrate affected tests without skips, pin changes, or rebinding.
 
 Authorization class: SUCCESSOR_CAMPAIGN_ENGINE_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
@@ -41,7 +41,7 @@ as historical truth; do not reopen it.
 
 ```
 CAMPAIGN: nightwatch-successor-campaign-engine-v1
-CHILD TASK: nightwatch-shard-temp-isolation-v1
+CHILD TASK: nightwatch-live-source-test-hermeticity-v1
 SESSION WORKTREE: session/nightwatch-successor-campaign-en-628d8bb9
 
 IMPLEMENTATION AUTHORIZED:
@@ -51,8 +51,8 @@ IMPLEMENTATION AUTHORIZED:
   C-00 commits and fast-forward integration from this session only.
 
 CURRENT STATUS:
-  IN_PROGRESS — credential-use binding is checkpointed/BLOCKED by the independent
-  live-source residual; shard temporary-namespace isolation is the active child.
+  IN_PROGRESS — isolation is checkpointed/BLOCKED by the independent source-test
+  residual; live-source test hermeticity is the active child.
 
 ALPHAUS DEV / NEXT / PRODUCTION CONTACT:   NOT AUTHORIZED
 AUTHENTICATED ALPHAUS RUNTIME:             NOT AUTHORIZED
