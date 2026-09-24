@@ -6,17 +6,17 @@ Task ID: nightwatch-successor-campaign-engine-v1
 Phase: SUCCESSOR_CAMPAIGN_ENGINE_V1
 Status: COMPLETE
 Starting SHA: 78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1
-Last validated implementation SHA: b48604bec084b0ab3c6a7dd89c3eef6f8b82b575
-Last substantive checkpoint SHA: b48604bec084b0ab3c6a7dd89c3eef6f8b82b575
+Last validated implementation SHA: a27bee0d3101768f80e34012dd2e3ccad4b4eb95
+Last substantive checkpoint SHA: a27bee0d3101768f80e34012dd2e3ccad4b4eb95
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: main
-Last checkpoint: 2026-09-25 — hermeticity, gate:milestone, and gate:local PASS; clean replay isolated only active-session routing and is being replayed from terminal state.
+Last checkpoint: 2026-09-25 — terminal live-state governance aligned; clean certification replay follows.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1
-LAST_VALIDATED_IMPLEMENTATION_SHA: b48604bec084b0ab3c6a7dd89c3eef6f8b82b575
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: b48604bec084b0ab3c6a7dd89c3eef6f8b82b575
+LAST_VALIDATED_IMPLEMENTATION_SHA: a27bee0d3101768f80e34012dd2e3ccad4b4eb95
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: a27bee0d3101768f80e34012dd2e3ccad4b4eb95
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
 PHASE_SUCCESSOR_CAMPAIGN_ENGINE_V1_STATUS: COMPLETE
@@ -308,7 +308,7 @@ popup design residual are the final state; new work requires a new authorized ta
 
 - Status: COMPLETE — all authorized executable successor campaigns are implemented and certified.
 - Starting SHA: `78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1`.
-- Last validated implementation SHA: `b48604bec084b0ab3c6a7dd89c3eef6f8b82b575`.
+- Last validated implementation SHA: `a27bee0d3101768f80e34012dd2e3ccad4b4eb95` (terminal governed live status).
 - Final development/milestone evidence: 5472 passed / 0 failed.
 - Local certification receipt: `receipt:sha256:a55cac531dfae3c5f15ac598`.
 - Source pins unchanged; sibling writes 0; all unauthorized external effect counters zero.
