@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "nightwatch.successor-reproduction.v1",
+  "case": "run-evidence-transaction",
+  "baselineSha": "78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1",
+  "source": "src/core/evidence/runRecorder.ts",
+  "sourceLines": "93-147, 186-227, 480-600",
+  "command": "node /tmp/nightwatch-repro-run-evidence.mjs",
+  "safety": "temporary synthetic run directories only; no credentials, customer values, or external services",
+  "cases": {
+    "sameRunIdentity": {
+      "sameDirectory": true,
+      "manifestKeys": ["browser", "environment", "fromB", "product", "runId", "scenario", "timestamp"],
+      "lostManifestUpdate": true,
+      "method": "two recorders read the same pre-update manifest before either atomic rename; the later replacement discarded fromA"
+    },
+    "eventViewDivergence": {
+      "durableEventCount": 2,
+      "durableSequenceNumbers": [0, 0],
+      "networkCount": 1,
+      "consoleCount": 1,
+      "summaryEventCount": 1,
+      "summaryPassed": true,
+      "summaryDivergesFromDurable": true,
+      "persistedSummaryMatchesMemory": true
+    },
+    "tornAppend": {
+      "syntheticError": "SYNTHETIC_TORN_APPEND",
+      "rawTail": "{\"seq\":0",
+      "parseResult": "TORN_TAIL",
+      "summaryEventCount": 0,
+      "summaryPassedAfterTornTail": true,
+      "terminalSummaryCanBePublished": true
+    }
+  },
+  "conclusion": "Two recorders can share one run directory, lose manifest updates, create duplicate sequence identities, publish a summary that disagrees with durable JSONL, and publish a passing terminal summary after a torn append. No recovery or bundle-level refusal was observed."
+}

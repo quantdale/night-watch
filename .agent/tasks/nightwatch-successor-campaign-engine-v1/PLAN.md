@@ -1,0 +1,172 @@
+# Successor campaign engine v1
+
+## Purpose
+
+Run a fresh, evidence-led successor campaign loop from the certified baseline,
+without reopening the completed priority remediation campaign.
+
+## Starting State
+
+- Task ID: `nightwatch-successor-campaign-engine-v1`
+- Certified baseline SHA: `78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1`
+- Resumed session: `sess-e6985828f7b7`
+- Branch: `session/nightwatch-successor-campaign-en-628d8bb9`
+- Relevant architecture: C-00 worktree governance; browser/network containment;
+  run evidence and privacy; campaign/reasoner efficacy; validation/release
+  receipts; Control Center; subprocess/L6 boundaries.
+- Dependencies: previous priority campaign COMPLETE; NW-AUD-006 authority
+  binding COMPLETE; current OpenSpec audit backlog is input, not authority.
+- Established facts: fresh discovery found concrete remaining candidates in
+  evidence-bundle transaction integrity, credential-use binding, semantic
+  admission residual proof, subprocess census indirection, proxy-event
+  persistence, shard receipt truth, and measured semantic-compatibility
+  latency. The canonical blocker is resolved; A/B reproduction is now the
+  immediate gate.
+
+## Scope
+
+Nightwatch source, tests, hardening, schemas, synthetic fixtures, OpenSpec and
+continuity records, and C-00 commits/integration from the owned worktree only.
+
+## Non-Goals
+
+No real environment/authenticated execution, credentials, customer values,
+database/cloud access, sibling writes, external publication, force push,
+history rewrite, or reopening the prior completed campaign.
+
+## Safety Constraints
+
+LOCAL / SYNTHETIC / DETERMINISTIC. One writer. Preserve any new unexpected
+canonical mutation. Do not run mutating validation while C-00 workspace status
+is FAIL.
+
+## Architecture / Approach
+
+First revalidate the six provisional findings against the now-clean live
+source. Mechanically reproduce shard false certification and run-evidence
+transaction integrity using synthetic/local fixtures. Select one campaign by
+impact × confidence × executability ÷ risk, then use the loop: reproduce,
+define invariants, design, implement, add adversarial tests, run focused
+checks and `gate:dev`, review, run `gate:milestone`, reconcile state, commit,
+reassess, and repeat. Use full certification only at release groups.
+
+## Milestones
+
+### M0 — Fresh reassessment and C-00 bootstrap
+
+- Objective: verify baseline, resolve the owner-attested canonical mutation,
+  recover continuity without blind integration, and retain read-only discovery.
+- Files/areas: `.agent/tasks/nightwatch-successor-campaign-engine-v1/**`,
+  session worktree metadata, read-only reports outside Git.
+- Implementation actions: bootstrap and owner resolution only; no product
+  source changes.
+- Acceptance criteria: canonical clean, `session:status` PASS, task/session
+  identity coherent, no unauthorized effect.
+- Validation commands: `git status`, `git diff --check`,
+  `npm run session:status`.
+- Status: COMPLETE
+
+### M1 — Revalidate and reproduce the two strongest integrity candidates
+
+- Objective: mechanically prove or disprove shard false certification and
+  run-evidence transaction integrity on current source.
+- Files/areas: `bin/run-shards.mjs`, `src/core/evidence/runRecorder.ts`,
+  focused synthetic fixtures/tests, task evidence.
+- Implementation actions: add no product fix yet; write isolated reproductions
+  and record exact observed behavior.
+- Acceptance criteria: both reproductions are deterministic, local/synthetic,
+  and distinguish the claimed failure modes from controls.
+- Validation commands: focused existing tests plus isolated fixture commands;
+  no full certification yet.
+- Status: COMPLETE
+
+### M2 — Select and execute first successor campaign
+
+- Objective: choose the strongest executable candidate after M1 evidence.
+- Files/areas: `bin/run-shards.mjs`, a machine-readable shard result seam,
+  focused validation tests, and the dedicated
+  `nightwatch-shard-certification-integrity-v1` OpenSpec/task artifacts.
+- Implementation actions: define acceptance, implement root cause, add
+  adversarial regression, validate, adversarially review, checkpoint.
+- Acceptance criteria: exact invariant and non-vacuous negative tests; no
+  safety counter regression; focused and milestone gates pass.
+- Validation commands: focused suites, `npm run gate:dev`, then
+  `npm run gate:milestone`.
+- Status: IN_PROGRESS
+
+### M3 — Successor reassessment and repeat
+
+- Objective: reassess all major dimensions after M2 and execute another
+  campaign while useful authorized work remains.
+- Files/areas: campaign-specific.
+- Implementation actions: repeat the bounded loop.
+- Acceptance criteria: each selected campaign has an independent checkpoint
+  and explicit residual/defer decision.
+- Validation commands: campaign-specific focused checks and milestone gate.
+- Status: NOT_STARTED
+
+### M4 — Final adversarial reassessment and closure
+
+- Objective: prove a legitimate terminal condition and reconcile final truth.
+- Files/areas: task/report/OpenSpec/project-state surfaces as required.
+- Implementation actions: final safety/privacy/evidence/efficacy/lifecycle/
+  performance/UX/release/governance review; certification only if warranted.
+- Acceptance criteria: no credible executable issue is silently deferred; final
+  verdict and remaining work are precise.
+- Validation commands: repository-defined certification battery as justified.
+- Status: NOT_STARTED
+
+## Validation Strategy
+
+Use read-only discovery and cheap checks first. Use focused tests and
+`gate:dev` for implementation. Use subsystem suites and `gate:milestone` at
+campaign checkpoints. Reserve `npm test`, `gate:local`, and `gate:clean` for
+release groupings or terminal closure. Never hide a red gate or classify it
+green without understanding the cause.
+
+## Decision Log
+
+- 2026-09-24 — Owner authorized restoration of only `docs/CURRENT_STATE.md`
+  after exact patch comparison and mechanical classification as unintended
+  formatter/editor churn. The CSS fallback edit `#fff` -> `# fff)` was invalid
+  and contradicted its surrounding prose; all other hunks were whitespace,
+  table-separator, blank-line, or backtick-spacing churn.
+- 2026-09-24 — Treat `1441cc8aa8c430ccffc743c99e4d9974d54d06dc` as durable
+  discovery/continuity evidence, not as a blind integration candidate.
+- 2026-09-24 — Treat fresh discovery as a successor backlog, not as permission
+  to edit the completed priority campaign or assume NW-AUD-021 priority.
+- 2026-09-24 — Select shard false certification first. It has reproduced
+  misleading green evidence, high confidence, a small bounded implementation
+  surface, and low implementation risk. Run-evidence transaction integrity is
+  more severe but requires a larger filesystem/lifecycle redesign and remains
+  the next likely campaign after this one.
+
+## Discoveries
+
+- Canonical is now clean at the certified baseline; C-00 status passes before
+  the resumed writing session.
+- Fresh lanes independently found: a high-value run-evidence bundle
+  transaction gap; a high-value proxy raw-event persistence boundary not
+  covered by the authenticated writer census; a concrete child-process census
+  indirection bypass; a high popup L0 installation race; a shard-runner
+  all-skipped/zero-executed false-PASS risk; and a measured semantic-
+  compatibility bottleneck.
+- The previous campaign's NW-AUD-018 killed-write/concurrent-recorder and
+  NW-AUD-020 async/popup/frame/worker and stale-currentness items remain honest
+  partials, not reopened history.
+
+## Deferred Work
+
+The run-evidence transaction defect, child-process census indirection, popup
+L0 readiness, proxy raw-event persistence, and credential-use binding remain
+in the successor backlog. Run-evidence transaction integrity is the next likely
+campaign after the selected shard-certification campaign; no finding is being
+silently discarded.
+
+## Completion Criteria
+
+A future completion requires a clean canonical checkout, a coherent active
+task/session, fully implemented and validated successor campaigns (or
+documented external exhaustion), periodic reassessment evidence, truthful
+OpenSpec/task closure, and final C-00 integration/release/remove with
+`HEAD == origin/main`.

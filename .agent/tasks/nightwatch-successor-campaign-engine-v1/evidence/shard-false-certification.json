@@ -1,0 +1,65 @@
+{
+  "schemaVersion": "nightwatch.successor-reproduction.v1",
+  "case": "shard-false-certification",
+  "baselineSha": "78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1",
+  "source": "bin/run-shards.mjs",
+  "sourceLines": "121-169, 254-273",
+  "safety": "synthetic/local Playwright fixtures only; no external target",
+  "cases": {
+    "allSkipped": {
+      "command": "node bin/run-shards.mjs --json --workers=1 --files=tests/unit/liveProviderEfficacyProof.test.ts",
+      "exitStatus": 0,
+      "result": "PASS",
+      "universeCount": 1,
+      "coverageOk": true,
+      "counts": {
+        "passed": null,
+        "failed": 0,
+        "skipped": 1,
+        "didNotRun": null
+      },
+      "totalsAfterAggregation": {
+        "passed": 0,
+        "failed": 0,
+        "skipped": 1,
+        "didNotRun": 0
+      },
+      "finding": "A green all-skipped shard is classified PASS; nullable parsed counts are coerced to numeric zero by sumCounts."
+    },
+    "zeroDiscovered": {
+      "command": "disposable copied repository with tests/unit/zero-discovered.test.ts containing no test declarations and a matching synthetic execution-class entry",
+      "exitStatus": 1,
+      "result": "TEST_FAILURE",
+      "universeCount": 1,
+      "coverageOk": true,
+      "counts": {
+        "passed": null,
+        "failed": null,
+        "skipped": null,
+        "didNotRun": null
+      },
+      "totalsAfterAggregation": {
+        "passed": 0,
+        "failed": 0,
+        "skipped": 0,
+        "didNotRun": 0
+      },
+      "finding": "A truly zero-test Playwright invocation is not green under the current Playwright exit status, so this exact zero-discovered-to-PASS claim is disproven; the null-to-zero receipt defect remains observable."
+    },
+    "normalControl": {
+      "command": "node bin/run-shards.mjs --json --workers=1 --files=tests/unit/validationShardPlan.test.ts",
+      "exitStatus": 0,
+      "result": "PASS",
+      "universeCount": 1,
+      "coverageOk": true,
+      "counts": {
+        "passed": 9,
+        "failed": 0,
+        "skipped": null,
+        "didNotRun": null
+      },
+      "finding": "ordinary non-empty execution remains green, so the all-skipped result is not explained by a universal runner failure."
+    }
+  },
+  "conclusion": "The strongest current shard defect is misleading green classification for an all-skipped shard and loss of unknown-count state, not a reproduced zero-test-to-PASS path."
+}
