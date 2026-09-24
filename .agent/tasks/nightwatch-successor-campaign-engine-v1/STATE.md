@@ -36,6 +36,10 @@ checkpoint/milestone validation.
 
 ## Completed Milestones
 
+- **M0 COMPLETE** — owner resolution, continuity recovery, and fresh
+  read-only discovery.
+- **M1 COMPLETE** — A/B reproduction and six-finding revalidation.
+- **M2 IN_PROGRESS** — shard certification implementation and validation.
 - Owner resolution rechecked the exact canonical diff against the recorded
   patch and HEAD. It was mechanically confirmed as unintended formatter/editor
   churn, including invalid CSS fallback corruption `#fff` -> `# fff)`.

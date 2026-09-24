@@ -64,7 +64,7 @@ reassess, and repeat. Use full certification only at release groups.
   identity coherent, no unauthorized effect.
 - Validation commands: `git status`, `git diff --check`,
   `npm run session:status`.
-- Status: COMPLETE
+- **Status:** COMPLETE
 
 ### M1 — Revalidate and reproduce the two strongest integrity candidates
 
@@ -78,7 +78,7 @@ reassess, and repeat. Use full certification only at release groups.
   and distinguish the claimed failure modes from controls.
 - Validation commands: focused existing tests plus isolated fixture commands;
   no full certification yet.
-- Status: COMPLETE
+- **Status:** COMPLETE
 
 ### M2 — Select and execute first successor campaign
 
