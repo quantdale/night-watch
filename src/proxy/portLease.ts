@@ -10,9 +10,10 @@ import crypto from 'node:crypto';
 
 export const PROXY_PORT_LEASE_SCHEMA = 'nightwatch.proxy-port-lease.v1' as const;
 const DEFAULT_LEASE_ROOT = path.resolve(__dirname, '..', '..', '..');
-// A system-temp namespace coordinates separate disposable clones/worktrees;
-// repository-local scratch alone cannot see another checkout's lease.
-const LEASE_DIR = path.join(os.tmpdir(), 'nightwatch-proxy-port-leases');
+// A system-temp namespace coordinates separate disposable clones/worktrees.
+// A validation runner may override the directory so private per-shard temp
+// namespaces do not accidentally split the shared port-lease authority.
+const DEFAULT_LEASE_DIR = path.join(os.tmpdir(), 'nightwatch-proxy-port-leases');
 const CANDIDATE_COUNT = 32;
 const TOKEN_RE = /^[a-f0-9]{24}$/;
 export const PROXY_PORT_LEASE_OWNER_ENV = 'NIGHTWATCH_PROXY_LEASE_OWNER_PID' as const;
@@ -48,7 +49,10 @@ interface LeaseRecord {
 
 function leaseDirectory(root: string): string {
   void root;
-  return LEASE_DIR;
+  const configured = process.env.NIGHTWATCH_PROXY_LEASE_DIR;
+  if (configured === undefined || configured.trim() === '') return DEFAULT_LEASE_DIR;
+  if (!path.isAbsolute(configured)) throw new Error('PROXY_PORT_LEASE_DIR_INVALID');
+  return configured;
 }
 
 function leaseFile(root: string, port: number): string {

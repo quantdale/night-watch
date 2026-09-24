@@ -22,11 +22,20 @@ The temp-path builder SHALL reject non-absolute run roots and any shard identity
 
 ### Requirement: Existing child-process boundaries remain intact
 
-The shard environment SHALL retain the explicit parent-environment allowlist, required deterministic locale settings, and removal of inherited proxy lease variables. Temp isolation SHALL not add network, source, credential, or filesystem authority outside the validation runner's local child process.
+The shard environment SHALL retain the explicit parent-environment allowlist,
+required deterministic locale settings, and removal of inherited proxy port,
+token, path, and owner-PID variables. It SHALL assign one absolute proxy lease
+directory shared by every shard in the same validation invocation. Temp
+isolation SHALL not add network, source, credential, or filesystem authority
+outside the validation runner's local child process.
 
 #### Scenario: Proxy lease state is ambient
 - **WHEN** the parent environment contains Nightwatch proxy lease variables
-- **THEN** none of those variables appears in the shard child environment
+- **THEN** inherited port/token/path/owner values do not survive, while every shard receives the same newly computed absolute lease directory
+
+#### Scenario: Shards coordinate proxy ports
+- **WHEN** two otherwise isolated checkout roots reserve proxy ports
+- **THEN** their lease files share the explicit validation-run lease directory and cannot claim the same live port
 
 ### Requirement: Scratch cleanup is bounded
 

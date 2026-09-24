@@ -27,6 +27,7 @@ import {
   serializeShardExecutionReceipt,
 } from '../../src/core/validation/shardExecutionReceipt';
 import PlaywrightShardReporter from '../helpers/playwrightShardReporter';
+import { buildShardChildEnvironment, shardTempRoot } from '../../bin/lib/shard-child-environment.mjs';
 
 const ROOT = path.join(__dirname, '..', '..');
 const CLI = path.join(ROOT, 'bin', 'run-shards.mjs');
@@ -99,6 +100,68 @@ test('worker overrides are validated and bounded', () => {
   expect(resolveParallelShardCount(MAX_PARALLEL_SHARDS + 1)).toBeNull();
   expect(resolveParallelShardCount('two')).toBeNull();
   expect(() => planShards({ universe: ['tests/unit/a.test.ts'], classes: { 'tests/unit/a.test.ts': 'PARALLEL_SAFE' }, parallelShardCount: 99 })).toThrow(/SHARD_COUNT_OUT_OF_RANGE/);
+});
+
+test('shard environments isolate actual Node temp roots and strip inherited state', () => {
+  const runRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-shard-environment-test-'));
+  try {
+    const parentEnvironment = {
+      PATH: process.env.PATH,
+      TMPDIR: '/shared/ambient-tmp',
+      TEMP: '/shared/ambient-temp',
+      TMP: '/shared/ambient-tmp-alt',
+      NIGHTWATCH_PROXY_PORT: '4444',
+      NIGHTWATCH_PROXY_LEASE_TOKEN: 'SYNTHETIC_PROXY_LEASE',
+    };
+    const first = buildShardChildEnvironment(parentEnvironment, {
+      lane: 'shard-1',
+      receiptPath: path.join(ROOT, 'test-results', 'shard-1', 'shard-execution.json'),
+      shardId: 'shard-1',
+      runRoot,
+    });
+    const second = buildShardChildEnvironment(parentEnvironment, {
+      lane: 'shard-2',
+      receiptPath: path.join(ROOT, 'test-results', 'shard-2', 'shard-execution.json'),
+      shardId: 'shard-2',
+      runRoot,
+    });
+    const observed = (environment: NodeJS.ProcessEnv): string => {
+      const result = spawnSync(process.execPath, ['-e', "process.stdout.write(require('node:os').tmpdir())"], {
+        cwd: ROOT,
+        env: environment,
+        encoding: 'utf8',
+        timeout: 30_000,
+      });
+      expect(result.status).toBe(0);
+      return path.resolve(result.stdout);
+    };
+
+    expect(observed(first)).toBe(path.resolve(shardTempRoot(runRoot, 'shard-1')));
+    expect(observed(second)).toBe(path.resolve(shardTempRoot(runRoot, 'shard-2')));
+    expect(observed(first)).not.toBe(observed(second));
+    expect(first.TMPDIR).not.toBe('/shared/ambient-tmp');
+    expect(first.TEMP).toBe(first.TMPDIR);
+    expect(first.TMP).toBe(first.TMPDIR);
+    expect(first.NIGHTWATCH_PROXY_PORT).toBeUndefined();
+    expect(first.NIGHTWATCH_PROXY_LEASE_TOKEN).toBeUndefined();
+    expect(first.NIGHTWATCH_SHARD_TEMP_ROOT).toBe(first.TMPDIR);
+    expect(first.NIGHTWATCH_PROXY_LEASE_DIR).toBe(path.join(runRoot, 'proxy-port-leases'));
+    expect(second.NIGHTWATCH_PROXY_LEASE_DIR).toBe(first.NIGHTWATCH_PROXY_LEASE_DIR);
+    expect(first.NIGHTWATCH_PROXY_LEASE_DIR).not.toBe(first.NIGHTWATCH_SHARD_TEMP_ROOT);
+  } finally {
+    fs.rmSync(runRoot, { recursive: true, force: true });
+  }
+});
+
+test('shard temp paths fail closed for relative roots and unknown identities', () => {
+  expect(() => shardTempRoot('relative-root', 'shard-1')).toThrow(/SHARD_RUN_ROOT_NOT_ABSOLUTE/);
+  expect(() => shardTempRoot(ROOT, '../escape')).toThrow(/SHARD_ID_INVALID/);
+  expect(() => buildShardChildEnvironment({}, {
+    lane: 'shard-1',
+    receiptPath: 'relative-receipt.json',
+    shardId: 'shard-1',
+    runRoot: ROOT,
+  })).toThrow(/SHARD_RECEIPT_PATH_NOT_ABSOLUTE/);
 });
 
 test('duration weights produce a deterministic balanced partition', () => {

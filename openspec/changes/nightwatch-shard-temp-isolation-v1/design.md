@@ -22,16 +22,19 @@ The change is local validation infrastructure. It must preserve shard receipt au
 
 1. **Use the existing child-environment boundary, then overwrite platform temp keys with computed values.** `buildChildEnvironment` remains the parent allowlist; trusted `TMPDIR`, `TEMP`, and `TMP` are assigned only after that boundary. Inheriting ambient temp values would preserve the race.
 
-2. **Create one run-unique scratch root under the repository's ignored `.tmp-nightwatch` area.** A `mkdtemp` root prevents concurrent validation-lane invocations from sharing shard directories. Each shard receives `<runRoot>/<validated-shard-id>`.
+2. **Create one run-unique scratch root under the system temporary directory.** A `mkdtemp` root outside the repository and Alphaus workspace prevents cross-shard interference without turning test scratch into `CONFIG_INSIDE_REPOSITORY` / `CONFIG_INSIDE_WORKSPACE` inputs. Each shard receives `<runRoot>/<validated-shard-id>`.
 
-3. **Validate shard identity before path joining.** Only the runner's closed `shard-[1-8]`, `exclusive`, and `serial` identities are accepted. A malformed identity fails before a child process is launched.
+3. **Keep proxy lease coordination explicitly shared.** The proxy port lease is process-coordination state, not test-private state. Shards receive the same `<runRoot>/proxy-port-leases` directory through one validated environment variable; only their general `os.tmpdir()` roots differ.
 
-4. **Test through Node process observation.** The regression spawns fresh Node processes with the generated environments and compares their actual `os.tmpdir()` values, rather than merely inspecting environment keys or source text.
+4. **Validate shard identity before path joining.** Only the runner's closed `shard-[1-8]`, `exclusive`, and `serial` identities are accepted. A malformed identity fails before a child process is launched.
 
-5. **Clean only the run-specific root.** Cleanup is bounded to the `mkdtemp` directory created by the invocation. No broad temp cleanup is permitted.
+5. **Test through Node process observation.** The regression spawns fresh Node processes with the generated environments and compares their actual `os.tmpdir()` values. A second regression proves distinct checkout roots still coordinate through the explicit shared lease directory.
+
+6. **Clean only the run-specific root.** Cleanup is bounded to the `mkdtemp` directory created by the invocation. No broad temp cleanup is permitted.
 
 ## Risks / Trade-offs
 
-- Per-shard temp directories can increase disk use because tests that already leak temporary data now remain isolated. This is preferable to cross-shard interference; the run-specific cleanup removes ordinary completion, while OS/provider scratch cleanup remains unchanged.
-- Windows and Unix resolve temporary directories differently. Setting all three standard keys covers the supported local platforms and the process-level test runs on the current host.
-- A hard process kill can leave an ignored run-specific scratch directory. The next invocation uses a new `mkdtemp` root and never adopts or deletes stale state.
+- Per-shard temp directories can increase disk use because tests that already leak temporary data now remain isolated. Ordinary completion removes the invocation-owned root; OS/provider scratch cleanup remains unchanged.
+- Windows and Unix resolve temporary directories differently. Setting all three standard keys covers supported local platforms, and the process-level test runs on the current host.
+- A hard process kill can leave a system-temp run directory. The next invocation uses a new `mkdtemp` root and never adopts or deletes stale state.
+- Proxy lease state is deliberately shared within one validation invocation. The override is absolute, validated, and absent by default; product runtime keeps the existing system-temp default.

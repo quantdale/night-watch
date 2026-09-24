@@ -10,15 +10,19 @@ Repair the validation runner's cross-process temp namespace defect without chang
 - Starting SHA: `f41c6cc3c9e9e6a50f271acbd58ddb19b5afd6aa`
 - Parent: `nightwatch-successor-campaign-engine-v1`
 - Source: `bin/run-shards.mjs`, `bin/child-environment.mjs`, `tests/unit/validationShardPlan.test.ts`, and the recorded `gate:dev` failure artifacts.
-- Dependencies: existing explicit child environment, shard receipt authority, and ignored `.tmp-nightwatch` layout.
+- Dependencies: existing explicit child environment, shared system-temp proxy lease authority, shard receipt authority, and serial/exclusive classes.
 
 ## Scope
 
-`bin/lib/shard-child-environment.mjs`, generated bin declarations, `bin/run-shards.mjs`, focused shard tests, OpenSpec, and continuity records.
+`bin/lib/shard-child-environment.mjs`, generated bin declarations,
+`bin/run-shards.mjs`, `src/proxy/portLease.ts`, environment-surface config,
+focused shard/proxy tests, OpenSpec, and continuity records.
 
 ## Non-Goals
 
-No source-drift test rewriting, product/runtime source changes, new dependencies, global `/tmp` cleanup, or external execution.
+No source-drift test rewriting, product proxy policy/listener behavior, browser
+or product runtime changes, new dependencies, global `/tmp` cleanup, or external
+execution.
 
 ## Safety Constraints
 
@@ -26,7 +30,7 @@ Local, deterministic, synthetic. One writer in the owned session. Preserve the c
 
 ## Architecture / Approach
 
-Build the child environment through the existing allowlist, then overwrite standard platform temp keys with a computed per-shard path. Derive that path from a `mkdtemp` run root and a closed shard identity. Prove actual process behavior with fresh Node subprocesses. Remove only the invocation-owned root after execution.
+Build the child environment through the existing allowlist, then overwrite standard platform temp keys with a computed per-shard path. Derive that path from a `mkdtemp` run root and a closed shard identity. Preserve proxy port coordination by assigning one shared absolute lease directory under that run root while keeping each shard's general `os.tmpdir()` private. Prove actual process behavior with fresh Node subprocesses. Remove only the invocation-owned root after execution.
 
 ## Milestones
 

@@ -1,9 +1,17 @@
 # Shard temp isolation v1 — Report
 
 - Starting SHA: `f41c6cc3c9e9e6a50f271acbd58ddb19b5afd6aa`
-- Status: IN_PROGRESS
-- Problem: concurrent shard children share the same OS temporary namespace, allowing unrelated files to perturb validation tests.
-- Evidence: credential `gate:dev` produced 12 independent source-drift failures plus one parallel-only `reviewStore.test.ts` failure; isolated replay passed.
-- Changes: strict OpenSpec and continuity state only so far.
-- Safety: NONE; no product, external, credential, or sibling write.
-- Remaining: runner environment implementation, adversarial/focused tests, gates, checkpoint, and reassessment.
+- Status: IN_PROGRESS — implementation/focused proof complete; clean milestone pending
+- Problem: concurrent shard children shared the same OS temporary namespace,
+  allowing unrelated files to perturb validation tests.
+- Evidence: the original parallel gate produced 12 independent source-drift
+  failures plus one `reviewStore.test.ts` failure; isolated replay passed.
+- Changes: one external run root, private per-shard temp directories, explicit
+  shared proxy lease directory, bounded cleanup, environment declaration, and
+  process/lease/containment regressions.
+- Validation: focused 56/56; hostile shared-temp replay 54/54; typecheck, bin
+  typecheck, schema, hardening, and strict OpenSpec pass. Corrected `gate:dev`
+  reports 5459 passed / only the 12 independent source-drift failures.
+- Safety: NONE; system-temp validation scratch and loopback lease files only.
+- Remaining: implementation checkpoint, clean milestone, final child status, and
+  source-drift/popup reassessment.

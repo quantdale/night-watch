@@ -17,10 +17,11 @@
 // executes.
 
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { buildChildEnvironment } from './child-environment.mjs';
+import { buildShardChildEnvironment, shardTempRoot } from './lib/shard-child-environment.mjs';
 import { loadTypeScriptModules } from './lib/typescript-runtime-loader.mjs';
 import { OPERATOR_CLI_SCHEMA, defineOperatorCli, invokedDirectly } from './lib/operator-cli.mjs';
 
@@ -96,27 +97,15 @@ function loadClasses() {
   return classes;
 }
 
-function childEnvironment(lane, receiptPath, shardId) {
-  const environment = buildChildEnvironment(process.env, {
-    NIGHTWATCH_ENV: 'local',
-    NIGHTWATCH_GATE_ENVIRONMENT: 'SHARDS',
-    NIGHTWATCH_TIMING_LANE: lane,
-    NIGHTWATCH_SHARD_RECEIPT_PATH: receiptPath,
-    NIGHTWATCH_SHARD_ID: shardId,
-    NODE_OPTIONS: '--expose-gc',
-  });
-  environment.TZ = 'UTC';
-  environment.LC_ALL = 'C';
-  environment.LANG = 'C';
-  environment.NO_COLOR = '1';
-  environment.NIGHTWATCH_HEADED = '0';
-  for (const key of ['NIGHTWATCH_PROXY_PORT', 'NIGHTWATCH_PROXY_LEASE_TOKEN', 'NIGHTWATCH_PROXY_LEASE_PATH', 'NIGHTWATCH_PROXY_LEASE_OWNER_PID']) delete environment[key];
-  return environment;
-}
 
 function shardReceiptPath(shard) {
   return path.join(root, 'test-results', shard.id, 'shard-execution.json');
 }
+
+function createShardScratchRoot() {
+  return fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-validation-shards-'));
+}
+
 
 function parseTextCounts(output) {
   const lastNumber = (pattern) => {
@@ -165,7 +154,7 @@ function executionCodeForDisposition(disposition) {
   return disposition === 'PASS' ? null : 'SHARD_TESTS_FAILED';
 }
 
-function runShard(shard, execution) {
+function runShard(shard, execution, scratchRoot) {
   const receiptPath = shardReceiptPath(shard);
   if (shard.files.length === 0) {
     return Promise.resolve({
@@ -185,6 +174,7 @@ function runShard(shard, execution) {
   return new Promise((resolve) => {
     const startedAt = Date.now();
     fs.mkdirSync(path.dirname(receiptPath), { recursive: true });
+    fs.mkdirSync(shardTempRoot(scratchRoot, shard.id), { recursive: true });
     fs.rmSync(receiptPath, { force: true });
     const child = spawn(npx, [
       'test',
@@ -196,7 +186,7 @@ function runShard(shard, execution) {
       `--output=test-results/${shard.id}`,
     ], {
       cwd: root,
-      env: childEnvironment(shard.id, receiptPath, shard.id),
+      env: buildShardChildEnvironment(process.env, { lane: shard.id, receiptPath, shardId: shard.id, runRoot: scratchRoot }),
       stdio: ['ignore', 'pipe', 'pipe'],
     });
     let output = '';
@@ -334,34 +324,44 @@ if (!cli.stop) {
           const receipt = { ...base, result: 'DRY_RUN' };
           console.log(cli.json ? JSON.stringify(receipt, null, 2) : JSON.stringify(receipt));
         } else if (cli.flags['--serial'] === true) {
-          const serialResult = await runShard({ id: 'serial', files: universe, digest: base.universeDigest, byClass: {} }, execution);
-          const totals = sumCounts([serialResult]);
-          const failed = serialResult.exitStatus !== 0 || serialResult.executionStatus !== 'PASS';
-          const receipt = {
-            ...base,
-            serial: true,
-            shards: [{ id: 'serial', files: universe.length, digest: base.universeDigest, classes: {}, exclusive: false }],
-            shardResults: [serialResult],
-            totals,
-            result: failed ? 'TEST_FAILURE' : 'PASS',
-          };
-          console.log(cli.json ? JSON.stringify(receipt, null, 2) : renderShardReceipt(receipt));
-          process.exitCode = failed ? 1 : 0;
+          const scratchRoot = createShardScratchRoot();
+          try {
+            const serialResult = await runShard({ id: 'serial', files: universe, digest: base.universeDigest, byClass: {} }, execution, scratchRoot);
+            const totals = sumCounts([serialResult]);
+            const failed = serialResult.exitStatus !== 0 || serialResult.executionStatus !== 'PASS';
+            const receipt = {
+              ...base,
+              serial: true,
+              shards: [{ id: 'serial', files: universe.length, digest: base.universeDigest, classes: {}, exclusive: false }],
+              shardResults: [serialResult],
+              totals,
+              result: failed ? 'TEST_FAILURE' : 'PASS',
+            };
+            console.log(cli.json ? JSON.stringify(receipt, null, 2) : renderShardReceipt(receipt));
+            process.exitCode = failed ? 1 : 0;
+          } finally {
+            fs.rmSync(scratchRoot, { recursive: true, force: true });
+          }
         } else {
-          const parallelResults = await Promise.all(plan.parallelShards.map((shard) => runShard(shard, execution)));
-          const exclusiveResults = plan.exclusiveShard === null ? [] : [await runShard(plan.exclusiveShard, execution)];
-          const results = [...parallelResults, ...exclusiveResults];
-          const totals = sumCounts(results);
-          const failed = results.some((result) => result.exitStatus !== 0 || result.executionStatus !== 'PASS');
-          const receipt = {
-            ...base,
-            workerCount,
-            shardResults: results,
-            totals,
-            result: failed ? 'TEST_FAILURE' : 'PASS',
-          };
-          console.log(cli.json ? JSON.stringify(receipt, null, 2) : renderShardReceipt(receipt));
-          process.exitCode = failed ? 1 : 0;
+          const scratchRoot = createShardScratchRoot();
+          try {
+            const parallelResults = await Promise.all(plan.parallelShards.map((shard) => runShard(shard, execution, scratchRoot)));
+            const exclusiveResults = plan.exclusiveShard === null ? [] : [await runShard(plan.exclusiveShard, execution, scratchRoot)];
+            const results = [...parallelResults, ...exclusiveResults];
+            const totals = sumCounts(results);
+            const failed = results.some((result) => result.exitStatus !== 0 || result.executionStatus !== 'PASS');
+            const receipt = {
+              ...base,
+              workerCount,
+              shardResults: results,
+              totals,
+              result: failed ? 'TEST_FAILURE' : 'PASS',
+            };
+            console.log(cli.json ? JSON.stringify(receipt, null, 2) : renderShardReceipt(receipt));
+            process.exitCode = failed ? 1 : 0;
+          } finally {
+            fs.rmSync(scratchRoot, { recursive: true, force: true });
+          }
         }
       }
     }

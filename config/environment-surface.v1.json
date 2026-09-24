@@ -738,6 +738,19 @@
       ]
     },
     {
+      "name": "NIGHTWATCH_PROXY_LEASE_DIR",
+      "purpose": "Shared absolute directory for cross-process proxy port leases.",
+      "requiredIn": [],
+      "shape": {
+        "kind": "path"
+      },
+      "default": "$TMPDIR/nightwatch-proxy-port-leases",
+      "secretBearing": false,
+      "consumers": [
+        "src/proxy/portLease.ts"
+      ]
+    },
+    {
       "name": "NIGHTWATCH_PROXY_LEASE_PATH",
       "purpose": "Port-lease file path published by the lease owner.",
       "requiredIn": [],

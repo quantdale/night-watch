@@ -109,4 +109,23 @@ test.describe('Phase 23 bounded proxy port/process leases', () => {
       second.release();
     }
   });
+
+  test('an explicit shared lease directory coordinates otherwise isolated roots', () => {
+    const previous = process.env.NIGHTWATCH_PROXY_LEASE_DIR;
+    const leaseDir = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-shared-proxy-leases-'));
+    process.env.NIGHTWATCH_PROXY_LEASE_DIR = leaseDir;
+    const first = reserveProxyPortLease({ root: fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-three-')), preferredPort: 20437 });
+    const second = reserveProxyPortLease({ root: fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-four-')), preferredPort: 20437 });
+    try {
+      expect(path.dirname(first.file)).toBe(leaseDir);
+      expect(path.dirname(second.file)).toBe(leaseDir);
+      expect(second.port).not.toBe(first.port);
+    } finally {
+      first.release();
+      second.release();
+      fs.rmSync(leaseDir, { recursive: true, force: true });
+      if (previous === undefined) delete process.env.NIGHTWATCH_PROXY_LEASE_DIR;
+      else process.env.NIGHTWATCH_PROXY_LEASE_DIR = previous;
+    }
+  });
 });

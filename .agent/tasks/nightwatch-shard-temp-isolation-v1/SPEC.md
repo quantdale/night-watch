@@ -23,7 +23,12 @@ Eliminate cross-shard interference through the ambient operating-system temporar
 
 ## Explicit non-goals
 
-No product runtime, browser, proxy, source-intelligence, network, credential, database, cloud, sibling-repository, or external-publication change. No repair of the twelve independent live-source drift failures in this child. No broad temporary-directory cleanup.
+No product proxy policy, listener, route, browser, source-intelligence,
+network, credential, database, cloud, sibling-repository, or external-
+publication change. The only proxy-module change is an explicit validation-run
+lease directory that preserves cross-shard port coordination. No repair of the
+twelve independent live-source drift failures. No broad temporary-directory
+cleanup.
 
 ## Safety constraints
 
@@ -36,7 +41,7 @@ None.
 ## Acceptance criteria
 
 - Two shard environments produce two distinct actual Node `os.tmpdir()` paths under one run root.
-- Inherited temp values and proxy lease variables do not survive in shard children.
+- Inherited private temp values and proxy port/token/path/owner values do not survive; shards share only the newly computed validation lease directory.
 - Malformed shard identity fails before child launch.
 - Normal serial, concurrent, and exclusive shard execution remains green.
 - The review-store shared-temp failure no longer appears in parallel gate evidence.

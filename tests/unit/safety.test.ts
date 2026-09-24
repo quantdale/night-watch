@@ -469,6 +469,7 @@ test.describe('environment surface declaration', () => {
       'NIGHTWATCH_PROXY_PORT',
       'NIGHTWATCH_PROXY_LEASE_TOKEN',
       'NIGHTWATCH_PROXY_LEASE_PATH',
+      'NIGHTWATCH_PROXY_LEASE_DIR',
       'NIGHTWATCH_HEADED',
       'NIGHTWATCH_PRINT_CLI',
       'NIGHTWATCH_PRINT_ARGS',
