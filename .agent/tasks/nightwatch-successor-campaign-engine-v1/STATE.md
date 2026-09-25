@@ -6,8 +6,8 @@ Task ID: nightwatch-successor-campaign-engine-v1
 Phase: SUCCESSOR_CAMPAIGN_ENGINE_V1
 Status: COMPLETE
 Starting SHA: 78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1
-Last validated implementation SHA: 5ecdb5f7acd947b3239eb8e776934e8ebd2fec76
-Last substantive checkpoint SHA: 5ecdb5f7acd947b3239eb8e776934e8ebd2fec76
+Last validated implementation SHA: b0f9b1f2ed9ccd2c47d7c4002ffb40804d5ec415
+Last substantive checkpoint SHA: b0f9b1f2ed9ccd2c47d7c4002ffb40804d5ec415
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: main
@@ -15,8 +15,8 @@ Last checkpoint: 2026-09-25 — final local and clean Node 20 certification PASS
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1
-LAST_VALIDATED_IMPLEMENTATION_SHA: 5ecdb5f7acd947b3239eb8e776934e8ebd2fec76
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 5ecdb5f7acd947b3239eb8e776934e8ebd2fec76
+LAST_VALIDATED_IMPLEMENTATION_SHA: b0f9b1f2ed9ccd2c47d7c4002ffb40804d5ec415
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: b0f9b1f2ed9ccd2c47d7c4002ffb40804d5ec415
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
 PHASE_SUCCESSOR_CAMPAIGN_ENGINE_V1_STATUS: COMPLETE
@@ -258,6 +258,12 @@ Relevant failure/output summary: terminal COMPLETE task with canonical routing
 and `Branch: main` integrates from its owned session; nonterminal/drifted
 continuity cases remain refused.
 
+Command: focused terminal integrate/release suite
+Result: PASS — 13/13
+When: 2026-09-25
+Relevant failure/output summary: complete canonical-routed task state integrates
+and releases from its owned session; all nonterminal/drifted refusals remain.
+
 Command: final `npm run gate:local`
 Result: PASS
 When: 2026-09-25
@@ -338,7 +344,7 @@ popup design residual are the final state; new work requires a new authorized ta
 
 - Status: COMPLETE — all authorized executable successor campaigns are implemented and certified.
 - Starting SHA: `78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1`.
-- Last validated implementation SHA: `5ecdb5f7acd947b3239eb8e776934e8ebd2fec76` (terminal C-00 integration and archive-date correction).
+- Last validated implementation SHA: `b0f9b1f2ed9ccd2c47d7c4002ffb40804d5ec415` (terminal C-00 integrate/release support).
 - Final development/milestone evidence: 5472 passed / 0 failed.
 - Final local certification receipt: `receipt:sha256:af0fa134fad3754a60a6cc57`.
 - Final clean Node 20 receipt: `clean-receipt:sha256:cc5d0dac9474fdc559c53830`.
