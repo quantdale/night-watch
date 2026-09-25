@@ -213,6 +213,13 @@
       "oldLineSha256": "sha256:99d6427ad4276b2296f092ce",
       "oldLineExcerpt": "> Durable memory for the next agent/session. Last updated: **2026-09-24**",
       "reason": "Successor-campaign terminal close-out advanced the governed live-state block, certification receipts, and campaign status row on 2026-09-25; the header date must cover the archive's own last change, while the statement itself is unchanged."
+    },
+    {
+      "id": "CORR-SUCC-002",
+      "path": "docs/CURRENT_STATE.md",
+      "oldLineSha256": "sha256:7932c01c5318d3801144b323",
+      "oldLineExcerpt": "| `SUCCESSOR_CAMPAIGN_ENGINE_V1_STATUS` | `COMPLETE_LOCAL_NOT_CI_VERIFIED`",
+      "reason": "Release-support validation superseded the earlier local and clean receipt values for the same completed successor campaign; the governed status remains COMPLETE_LOCAL_NOT_CI_VERIFIED and the implementation inventory is unchanged."
     }
   ]
 }
