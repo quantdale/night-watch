@@ -11,7 +11,7 @@ Last substantive checkpoint SHA: 5ecdb5f7acd947b3239eb8e776934e8ebd2fec76
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: main
-Last checkpoint: 2026-09-25 — terminal canonical integration support focused-green; full local/clean replay follows.
+Last checkpoint: 2026-09-25 — final local and clean Node 20 certification PASS; exact C-00 integration is the only remaining closeout step.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1
@@ -258,6 +258,21 @@ Relevant failure/output summary: terminal COMPLETE task with canonical routing
 and `Branch: main` integrates from its owned session; nonterminal/drifted
 continuity cases remain refused.
 
+Command: final `npm run gate:local`
+Result: PASS
+When: 2026-09-25
+Relevant failure/output summary: head `b08926b162a5d68aff6900f14ad636cd3a40ba86`;
+all 12 groups passed; semantic 2126/13/0, owner 91/91, synthetic 1925/1925,
+deep containment PROVEN; receipt `receipt:sha256:af0fa134fad3754a60a6cc57`.
+
+Command: final `npm run gate:clean`
+Result: PASS
+When: 2026-09-25
+Relevant failure/output summary: fresh Node 20 install, clean-before/after,
+all 12 groups, semantic 2126/13/0, owner 91/91, synthetic 1925/1925, deep
+containment PROVEN, sibling writes 0; receipt
+`clean-receipt:sha256:cc5d0dac9474fdc559c53830`.
+
 ## Decisions Made During This Task
 
 Decision: restore only the verified canonical target after owner authorization.
@@ -325,7 +340,7 @@ popup design residual are the final state; new work requires a new authorized ta
 - Starting SHA: `78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1`.
 - Last validated implementation SHA: `5ecdb5f7acd947b3239eb8e776934e8ebd2fec76` (terminal C-00 integration and archive-date correction).
 - Final development/milestone evidence: 5472 passed / 0 failed.
-- Local certification receipt: `receipt:sha256:a55cac531dfae3c5f15ac598`.
-- Clean Node 20 receipt: `clean-receipt:sha256:fe0bea35bf55cc3a885d98b6`.
+- Final local certification receipt: `receipt:sha256:af0fa134fad3754a60a6cc57`.
+- Final clean Node 20 receipt: `clean-receipt:sha256:cc5d0dac9474fdc559c53830`.
 - Source pins unchanged; sibling writes 0; all unauthorized external effect counters zero.
 - Honest residual: popup L0 needs a lower-level pre-navigation target-admission design; no false fix is claimed.

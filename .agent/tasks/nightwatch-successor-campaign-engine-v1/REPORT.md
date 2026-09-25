@@ -19,9 +19,9 @@ Status: COMPLETE
   reproduced; 11 further failures persisted with an empty source root. The final
   hermeticity child removed all 12 without source rebinding.
 - Validation: focused live/empty 141/141; final `gate:dev` and
-  `gate:milestone` 5472/0; `gate:local` receipt
-  `receipt:sha256:a55cac531dfae3c5f15ac598`; clean Node 20 receipt
-  `clean-receipt:sha256:fe0bea35bf55cc3a885d98b6`.
+  `gate:milestone` 5472/0; final `gate:local` receipt
+  `receipt:sha256:af0fa134fad3754a60a6cc57`; final clean Node 20 receipt
+  `clean-receipt:sha256:cc5d0dac9474fdc559c53830`.
 - Changes: seven bounded local child implementations; no sibling repository,
   credential, artifact, or external runtime state changed.
 - Safety events: NONE.
