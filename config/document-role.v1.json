@@ -206,6 +206,13 @@
       "oldLineSha256": "sha256:1166761f580833a9f7bb5ea5",
       "oldLineExcerpt": "> Durable memory for the next agent/session. Last updated: **2026-09-23**",
       "reason": "Priority-audit terminal close-out advances the header date to 2026-09-24, the UTC calendar day the machine-block substantive-anchor update actually lands; the header statement itself is unchanged."
+    },
+    {
+      "id": "CORR-SUCC-001",
+      "path": "docs/CURRENT_STATE.md",
+      "oldLineSha256": "sha256:99d6427ad4276b2296f092ce",
+      "oldLineExcerpt": "> Durable memory for the next agent/session. Last updated: **2026-09-24**",
+      "reason": "Successor-campaign terminal close-out advanced the governed live-state block, certification receipts, and campaign status row on 2026-09-25; the header date must cover the archive's own last change, while the statement itself is unchanged."
     }
   ]
 }
