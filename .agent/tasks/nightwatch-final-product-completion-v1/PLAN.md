@@ -97,7 +97,7 @@ approved paths.
 - Validation commands: `git status --short --branch`, `git worktree list`,
   `npm run workspace:check`, `openspec validate
   nightwatch-final-product-completion-v1 --strict`.
-- **Status:** IN_PROGRESS
+- **Status:** COMPLETE
 
 ### M1 — Session bootstrap (tasks 2.1-2.3)
 
@@ -115,7 +115,7 @@ approved paths.
   invariants PASS.
 - Validation commands: `npm run session:check`, `npm run handoff:check`,
   `npm run agent:check`, `npm run project:check`, `npm run workspace:check`.
-- **Status:** NOT_STARTED
+- **Status:** COMPLETE
 
 ### M2 — Certification anchors and ratchets (tasks 3.1-3.7)
 
@@ -135,7 +135,7 @@ approved paths.
 - Acceptance criteria: a task open/close passes with no `src/` edit; a
   non-binding mutation classifies substantive; strict positive/negative tests.
 - Validation commands: focused suites, `npm run gate:dev`, `npm run gate:milestone`.
-- **Status:** NOT_STARTED
+- **Status:** IN_PROGRESS
 
 ### M3 — CI-green, deterministic and hermetic spine (tasks 4.1-4.13)
 

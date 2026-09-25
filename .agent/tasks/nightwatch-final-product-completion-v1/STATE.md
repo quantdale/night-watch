@@ -11,8 +11,9 @@ Last substantive checkpoint SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-final-product-complet-a891357d
-Last checkpoint: 2026-09-25 — M1 session bootstrap in the owned worktree
-(sess-0734f2070d08, base 1f786a4e); planning change and continuity restored.
+Last checkpoint: 2026-09-25 — M1 complete: bootstrap checkpoint `ec6010a2`
+(planning change + continuity together); session/handoff/agent/project checks
+PASS post-commit.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
@@ -33,9 +34,11 @@ ledger, and end at `PROJECT_COMPLETE_AND_CI_CERTIFIED` under D-129 with a
 
 ## Current Milestone
 
-M1 session bootstrap (tasks 2.1-2.3) — session claimed and the planning
-change plus continuity records restored into the owned worktree; the
-bootstrap checkpoint commit and its recorded check results close M1.
+M2 certification anchors and ratchets (tasks 3.1-3.7) — make evidence
+bindings, document-role corrections and LIVE_TASK_STATUS checkpoint-neutral
+before any evidence binding (A-01, R2-N6), with the project:check evidence
+assertions, the bin type-check ceiling ratchet and the disposition-token
+ledger guard.
 
 ## Completed Milestones
 
@@ -44,19 +47,24 @@ bootstrap checkpoint commit and its recorded check results close M1.
   orphan branch `1441cc8a` recorded and deleted (1.3, A-06); MAINTENANCE
   claim released, planning material moved to the session scratchpad,
   canonical verified clean with `workspace:check` PASS (1.4).
+- **M1 COMPLETE** — session bootstrap: `sess-0734f2070d08` on
+  `session/nightwatch-final-product-complet-a891357d` at base `1f786a4e`;
+  planning change and continuity committed together as bootstrap checkpoint
+  `ec6010a2`; session:check PASS, handoff:check PASS, agent:check PASS
+  (35 legacy warnings), project:check PASS post-commit.
 
 ## Work In Progress
 
-- M1 bootstrap checkpoint: run session/handoff/agent/project checks in the
-  worktree, record exact results, and commit the planning change with the
-  task continuity as one bootstrap checkpoint.
+- M2 task 3.1: derive LIVE_TASK_STATUS from `.agent/ACTIVE_TASK.md` and
+  remove the literal from `src/core/source/censusFigureLedger.ts:290`.
 
 ## Exact Next Action
 
-Run `npm run session:check`, `npm run handoff:check`, `npm run agent:check`,
-`npm run project:check` in the worktree, record results in this ledger, then
-`git add` the planning change and continuity records and create the bootstrap
-checkpoint commit. Then begin M2 (tasks 3.1-3.7).
+Implement M2 tasks 3.1-3.7 in order (census literal derivation, the two
+checkpoint-neutral binding files behind a diff-shape guard, the hardening
+probe, project:check evidence assertions, the bin type-check ceiling ratchet,
+the disposition-token ledger guard), then focused suites plus `gate:dev` and
+`gate:milestone`, record exact results, and commit the M2 milestone.
 
 ## Files Changed
 
