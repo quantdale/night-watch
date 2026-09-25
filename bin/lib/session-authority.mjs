@@ -242,8 +242,8 @@ export function admitContinuity(input) {
   if (compatible !== null && !compatible.includes(status)) {
     return { ok: false, code: 'SESSION_CONTINUITY_MISMATCH', detail: `task status ${status} is not compatible with ${command}` };
   }
-  const terminalCanonicalIntegration = command === 'integrate' && status === 'COMPLETE' && declaredWorktree === 'NONE';
-  if (typeof state.branch === 'string' && state.branch !== '' && state.branch !== currentBranch && !terminalCanonicalIntegration) {
+  const terminalCanonicalCloseout = (command === 'integrate' || command === 'release') && status === 'COMPLETE' && declaredWorktree === 'NONE';
+  if (typeof state.branch === 'string' && state.branch !== '' && state.branch !== currentBranch && !terminalCanonicalCloseout) {
     return { ok: false, code: 'SESSION_CONTINUITY_MISMATCH', detail: 'the task STATE branch does not match the current session branch' };
   }
   return { ok: true, status };

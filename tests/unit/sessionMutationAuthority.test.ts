@@ -445,7 +445,7 @@ test.describe('NW-AUD-006 — continuity admission', () => {
     }
   });
 
-  test('a complete canonical-routed task integrates from its owned session', () => {
+  test('a complete canonical-routed task integrates and releases from its owned session', () => {
     const fx = fixture();
     try {
       const owned = startOwned(fx);
@@ -459,6 +459,8 @@ test.describe('NW-AUD-006 — continuity admission', () => {
       const result = session(owned.path, ['integrate', '--expect-session', owned.sessionId, '--expect-head', head]);
       expect(result.status, result.stderr).toBe(0);
       expect(gitOk(fx.canonical, ['rev-parse', 'refs/remotes/origin/main'])).toBe(head);
+      const released = session(owned.path, ['release', '--expect-session', owned.sessionId]);
+      expect(released.status, released.stderr).toBe(0);
     } finally {
       cleanup(fx.base);
     }
