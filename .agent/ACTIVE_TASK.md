@@ -1,48 +1,54 @@
 # Active Task
 
-Task ID: nightwatch-successor-campaign-engine-v1
-Phase: SUCCESSOR_CAMPAIGN_ENGINE_V1
-Title: Fresh successor campaign engine and reassessment
-Status: COMPLETE
-Task directory: .agent/tasks/nightwatch-successor-campaign-engine-v1
-Starting SHA: 78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1
-Last validated implementation SHA: 87c4506f00a6944160aa02c9d00943378ea84e94
-Last checkpoint: 2026-09-25 — terminal local and clean certification PASS; exact C-00 integration is the only remaining closeout step.
-Current milestone: COMPLETE / STOP — all authorized executable successors implemented.
-Next action: STOP — terminal campaign record; C-00 clean/integrate closeout only.
+Task ID: nightwatch-final-product-completion-v1
+Phase: FINAL_PRODUCT_COMPLETION_V1
+Title: Final product completion (terminal campaign)
+Status: IN_PROGRESS
+Task directory: .agent/tasks/nightwatch-final-product-completion-v1
+Starting SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
+Last validated implementation SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
+Last checkpoint: 2026-09-25 — M1 session bootstrap; planning change and
+task continuity restored into the owned session worktree.
+Current milestone: M1 session bootstrap (tasks 2.1-2.3) — session claimed,
+planning change restored, continuity records created; bootstrap checkpoint
+commit is the remaining step.
+Next action: run the session, handoff, agent and project checks, commit the
+bootstrap checkpoint (planning change + task continuity together), then begin
+M2 certification anchors (tasks 3.1-3.7).
 
-Authorization class: SUCCESSOR_CAMPAIGN_ENGINE_V1
+Authorization class: FINAL_PRODUCT_COMPLETION_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
-STARTING_SHA: 78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1
-LAST_VALIDATED_IMPLEMENTATION_SHA: 87c4506f00a6944160aa02c9d00943378ea84e94
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 87c4506f00a6944160aa02c9d00943378ea84e94
+STARTING_SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
+LAST_VALIDATED_IMPLEMENTATION_SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
 LIVE_HEAD_AUTHORITY: GIT
-PHASE_SUCCESSOR_CAMPAIGN_ENGINE_V1_STATUS: COMPLETE
+PHASE_FINAL_PRODUCT_COMPLETION_V1_STATUS: IN_PROGRESS
 
 ## Mission
 
-Reassess the certified baseline from current repository evidence, rank the
-remaining authorized local work by impact, confidence, executability, and risk,
-then execute the strongest coherent successor campaign. Reassess and repeat
-while useful authorized work remains. Preserve the completed priority campaign
-as historical truth; do not reopen it.
+Execute the single terminal campaign that makes an honest
+`PROJECT_COMPLETE_AND_CI_CERTIFIED` verdict reachable and stable (OD-1/OD-2):
+disposition every audited census item, make the certification spine
+checkpoint-neutral and CI-green, persist truthful autonomous-hunt results,
+reconcile every operator-truth surface, close the ledger, and end with a
+`main`-only clean topology equal to `origin/main`.
 
 ## Read order
 
-1. `.agent/tasks/nightwatch-successor-campaign-engine-v1/{SPEC,PLAN,STATE}.md`
-2. `AGENTS.md`, `docs/CURRENT_STATE.md`, `docs/SAFETY_MODEL.md`, and
+1. `.agent/tasks/nightwatch-final-product-completion-v1/{SPEC,PLAN,STATE}.md`
+2. `openspec/changes/nightwatch-final-product-completion-v1/{proposal,design,audit,tasks}.md`
+3. `AGENTS.md`, `docs/CURRENT_STATE.md`, `docs/SAFETY_MODEL.md`, and
    `docs/DECISIONS.md`
-3. Current audit/OpenSpec ledgers and cited live source
-4. The selected campaign's dedicated artifacts, when a safe selection is made
+4. Current audit/OpenSpec ledgers and cited live source
 
 ## Routing and safety
 
-```
-CAMPAIGN: nightwatch-successor-campaign-engine-v1
+```text
+CAMPAIGN: nightwatch-final-product-completion-v1
 CHILD TASK: NONE
-SESSION WORKTREE: NONE
+SESSION WORKTREE: session/nightwatch-final-product-complet-a891357d
 
 IMPLEMENTATION AUTHORIZED:
   Nightwatch source, tests, hardening rules/probes, schemas/configuration,
@@ -50,9 +56,12 @@ IMPLEMENTATION AUTHORIZED:
   local bounded child processes, OpenSpec/task continuity records,
   C-00 commits and fast-forward integration from this session only.
 
+EXTERNAL CONTACT AUTHORIZED (OD-3 ONLY):
+  GitHub Actions read/observe; C-00 fast-forward pushes; one bounded paid
+  provider proof run; one npm registry advisory query.
+
 CURRENT STATUS:
-  COMPLETE — all authorized executable successors are implemented and certified;
-  popup L0 remains an explicit future lower-level design prerequisite.
+  IN_PROGRESS — M1 session bootstrap in the owned worktree.
 
 ALPHAUS DEV / NEXT / PRODUCTION CONTACT:   NOT AUTHORIZED
 AUTHENTICATED ALPHAUS RUNTIME:             NOT AUTHORIZED
