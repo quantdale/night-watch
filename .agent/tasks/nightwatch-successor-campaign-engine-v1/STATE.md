@@ -6,8 +6,8 @@ Task ID: nightwatch-successor-campaign-engine-v1
 Phase: SUCCESSOR_CAMPAIGN_ENGINE_V1
 Status: COMPLETE
 Starting SHA: 78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1
-Last validated implementation SHA: 6f1c3c5a329a4c509324079a340a1bb21471cf49
-Last substantive checkpoint SHA: 6f1c3c5a329a4c509324079a340a1bb21471cf49
+Last validated implementation SHA: 5ecdb5f7acd947b3239eb8e776934e8ebd2fec76
+Last substantive checkpoint SHA: 5ecdb5f7acd947b3239eb8e776934e8ebd2fec76
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: main
@@ -15,8 +15,8 @@ Last checkpoint: 2026-09-25 — terminal canonical integration support focused-g
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1
-LAST_VALIDATED_IMPLEMENTATION_SHA: 6f1c3c5a329a4c509324079a340a1bb21471cf49
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 6f1c3c5a329a4c509324079a340a1bb21471cf49
+LAST_VALIDATED_IMPLEMENTATION_SHA: 5ecdb5f7acd947b3239eb8e776934e8ebd2fec76
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 5ecdb5f7acd947b3239eb8e776934e8ebd2fec76
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
 PHASE_SUCCESSOR_CAMPAIGN_ENGINE_V1_STATUS: COMPLETE
@@ -323,7 +323,7 @@ popup design residual are the final state; new work requires a new authorized ta
 
 - Status: COMPLETE — all authorized executable successor campaigns are implemented and certified.
 - Starting SHA: `78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1`.
-- Last validated implementation SHA: `6f1c3c5a329a4c509324079a340a1bb21471cf49` (terminal C-00 integration support).
+- Last validated implementation SHA: `5ecdb5f7acd947b3239eb8e776934e8ebd2fec76` (terminal C-00 integration and archive-date correction).
 - Final development/milestone evidence: 5472 passed / 0 failed.
 - Local certification receipt: `receipt:sha256:a55cac531dfae3c5f15ac598`.
 - Clean Node 20 receipt: `clean-receipt:sha256:fe0bea35bf55cc3a885d98b6`.
