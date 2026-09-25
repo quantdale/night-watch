@@ -135,7 +135,7 @@ approved paths.
 - Acceptance criteria: a task open/close passes with no `src/` edit; a
   non-binding mutation classifies substantive; strict positive/negative tests.
 - Validation commands: focused suites, `npm run gate:dev`, `npm run gate:milestone`.
-- **Status:** IN_PROGRESS
+- **Status:** COMPLETE
 
 ### M3 — CI-green, deterministic and hermetic spine (tasks 4.1-4.13)
 
@@ -154,7 +154,7 @@ approved paths.
   sibling identity; UI gate group in local/ci/clean modes.
 - Validation commands: focused suites, `npm run gate:milestone`, `gh` CI
   observation (OD-3).
-- **Status:** NOT_STARTED
+- **Status:** IN_PROGRESS
 
 ### M4 — Release-certification machinery (tasks 5.1-5.7)
 

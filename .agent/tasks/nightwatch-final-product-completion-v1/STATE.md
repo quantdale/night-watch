@@ -11,9 +11,9 @@ Last substantive checkpoint SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-final-product-complet-a891357d
-Last checkpoint: 2026-09-26 — M2 implementation complete (tasks 3.1-3.6);
-gate:dev PASS 5481/0; gate:milestone green except PROJECT_STATE_CHECKOUT_DIRTY
-(pre-commit state only).
+Last checkpoint: 2026-09-26 — M2 COMPLETE: `gate:dev` PASS (5481/0) and
+`gate:milestone` PASS on the committed state (all steps exit=0); M2 anchor
+`8775b58a` + universe fixup `6f8a9d7c`.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
@@ -34,13 +34,14 @@ ledger, and end at `PROJECT_COMPLETE_AND_CI_CERTIFIED` under D-129 with a
 
 ## Current Milestone
 
-M2 certification anchors and ratchets — implementation complete: derivation
-of LIVE_TASK_STATUS (R2-N6), checkpoint-neutral binding files behind the
-diff-shape guard (A-01), the binding hardening rule with three mutation
-probes (3.3), the project:check D-06 evidence assertions (3.4), the bin
-type-check ceiling ratchet registered in the gate (3.5), and the disposition-
-token ledger accounting with BLOCKED/undispositioned classes (3.6). The M2
-closure commit and the post-commit gate:milestone rerun close the milestone.
+M3 CI-green, deterministic and hermetic spine (tasks 4.1-4.13) — guard the
+live-source measurements, convert tautological guards to declared skips with
+synthetic twins, make the temp/scratch paths hermetic, fix the CI
+determinism defects (c03GrpcTopology:389, reviewStore tmp listing,
+observerSemanticLedger flake), install the skip-identity allowlist and the
+sibling-absent `gate:clean`, pin the CI runtime, and fix HANDOFF_TRUTH for
+session-declared pushes (R2-01/N1/N2/N3, D-02/04/05/10/11/12/18/19/24,
+X-02/X-08, NW-AUD-001).
 
 ## Completed Milestones
 
@@ -55,17 +56,28 @@ closure commit and the post-commit gate:milestone rerun close the milestone.
   `ec6010a2`; session:check PASS, handoff:check PASS, agent:check PASS
   (35 legacy warnings), project:check PASS post-commit.
 
+- **M2 COMPLETE** — certification anchors and ratchets: LIVE_TASK_STATUS
+  derivation (R2-N6), checkpoint-neutral binding files behind the diff-shape
+  guard (A-01), `checkReleaseEvidenceBindings` + HC-144..146 (146/146),
+  project:check D-06 assertions, the bin type-check ceiling ratchet as gate
+  group BIN_TYPECHECK_CEILING, and the disposition-token ledger accounting
+  (A-21, R2-62). Anchors `8775b58a` + `6f8a9d7c`; gate:dev PASS 5481/0;
+  gate:milestone PASS (all steps exit=0).
+
 ## Work In Progress
 
-- M2 closure: commit the milestone, re-run `gate:milestone` on the committed
-  state (its only pre-commit failure was PROJECT_STATE_CHECKOUT_DIRTY), and
-  record the receipt.
+- M3 task 4.1: guard `tests/unit/c03GrpcTopology.test.ts:389` and route every
+  live measurement through `liveSourceTestRoot()` (R2-01/R2-N1).
 
 ## Exact Next Action
 
-Commit the M2 implementation, re-run `npm run gate:milestone` to a full PASS,
-record both receipts here, tick tasks 3.1-3.7, mark PLAN M2 COMPLETE, then
-begin M3 (tasks 4.1-4.13: the CI-green deterministic hermetic spine).
+Implement M3 tasks 4.1-4.13 in order (live-source guards and declared skips,
+hermetic temp/scratch, CI determinism fixes, skip-identity allowlist,
+sibling-absent gate:clean with measured sibling identity, gate:topology + UI
+gate group, HANDOFF_TRUTH session-declared classification, pinned CI
+runtime, orphan-session-branch attention), then focused suites plus
+`gate:milestone`, push a canonical-routed checkpoint and observe CI with `gh`
+(OD-3).
 
 ## Files Changed
 
