@@ -6,17 +6,17 @@ Task ID: nightwatch-successor-campaign-engine-v1
 Phase: SUCCESSOR_CAMPAIGN_ENGINE_V1
 Status: COMPLETE
 Starting SHA: 78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1
-Last validated implementation SHA: a27bee0d3101768f80e34012dd2e3ccad4b4eb95
-Last substantive checkpoint SHA: a27bee0d3101768f80e34012dd2e3ccad4b4eb95
+Last validated implementation SHA: 6f1c3c5a329a4c509324079a340a1bb21471cf49
+Last substantive checkpoint SHA: 6f1c3c5a329a4c509324079a340a1bb21471cf49
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: main
-Last checkpoint: 2026-09-25 — terminal clean Node 20 certification PASS; exact C-00 integration is the only remaining closeout step.
+Last checkpoint: 2026-09-25 — terminal canonical integration support focused-green; full local/clean replay follows.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1
-LAST_VALIDATED_IMPLEMENTATION_SHA: a27bee0d3101768f80e34012dd2e3ccad4b4eb95
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: a27bee0d3101768f80e34012dd2e3ccad4b4eb95
+LAST_VALIDATED_IMPLEMENTATION_SHA: 6f1c3c5a329a4c509324079a340a1bb21471cf49
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 6f1c3c5a329a4c509324079a340a1bb21471cf49
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
 PHASE_SUCCESSOR_CAMPAIGN_ENGINE_V1_STATUS: COMPLETE
@@ -251,6 +251,13 @@ fresh Node 20 install, clean-before/after, all 12 gate groups, 2126/13/0 semanti
 91/91 owner provenance, 1924/1924 synthetic, deep containment PROVEN; sibling
 writes 0; receipt `clean-receipt:sha256:fe0bea35bf55cc3a885d98b6`.
 
+Command: focused terminal session integration suite
+Result: PASS — 13/13
+When: 2026-09-25
+Relevant failure/output summary: terminal COMPLETE task with canonical routing
+and `Branch: main` integrates from its owned session; nonterminal/drifted
+continuity cases remain refused.
+
 ## Decisions Made During This Task
 
 Decision: restore only the verified canonical target after owner authorization.
@@ -316,7 +323,7 @@ popup design residual are the final state; new work requires a new authorized ta
 
 - Status: COMPLETE — all authorized executable successor campaigns are implemented and certified.
 - Starting SHA: `78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1`.
-- Last validated implementation SHA: `a27bee0d3101768f80e34012dd2e3ccad4b4eb95` (terminal governed live status).
+- Last validated implementation SHA: `6f1c3c5a329a4c509324079a340a1bb21471cf49` (terminal C-00 integration support).
 - Final development/milestone evidence: 5472 passed / 0 failed.
 - Local certification receipt: `receipt:sha256:a55cac531dfae3c5f15ac598`.
 - Clean Node 20 receipt: `clean-receipt:sha256:fe0bea35bf55cc3a885d98b6`.
