@@ -224,6 +224,35 @@ function writeContinuity(worktree: string, taskId: string, branch: string, statu
   ].join('\n'));
 }
 
+function writeTerminalContinuity(worktree: string, taskId: string): void {
+  fs.writeFileSync(path.join(worktree, '.agent/ACTIVE_TASK.md'), [
+    '# Active Task',
+    '',
+    `Task ID: ${taskId}`,
+    'Status: COMPLETE',
+    `Task directory: .agent/tasks/${taskId}`,
+    'Next action: STOP — terminal campaign record.',
+    '',
+    '## Routing and safety',
+    '',
+    '```',
+    `CAMPAIGN: ${taskId}`,
+    'SESSION WORKTREE: NONE',
+    '```',
+    '',
+  ].join('\n'));
+  fs.writeFileSync(path.join(worktree, '.agent/tasks', taskId, 'STATE.md'), [
+    '# Task State',
+    '',
+    '## Identity',
+    '',
+    `Task ID: ${taskId}`,
+    'Status: COMPLETE',
+    'Branch: main',
+    '',
+  ].join('\n'));
+}
+
 test.describe('NW-AUD-006 — invocation binding', () => {
   test('every mutating command refuses --root before any effect', () => {
     const fx = fixture();
@@ -411,6 +440,25 @@ test.describe('NW-AUD-006 — continuity admission', () => {
       const reconcile = session(owned.path, ['reconcile', '--expect-session', sessionId]);
       expect(reconcile.status).toBe(1);
       expect(reconcile.stderr).toContain('SESSION_CONTINUITY_MISMATCH');
+    } finally {
+      cleanup(fx.base);
+    }
+  });
+
+  test('a complete canonical-routed task integrates from its owned session', () => {
+    const fx = fixture();
+    try {
+      const owned = startOwned(fx);
+      fs.writeFileSync(path.join(owned.path, 'terminal.txt'), 'terminal work\n');
+      gitOk(owned.path, ['add', 'terminal.txt']);
+      gitOk(owned.path, ['commit', '-m', 'terminal work']);
+      writeTerminalContinuity(owned.path, 'authority-task');
+      gitOk(owned.path, ['add', '.agent/ACTIVE_TASK.md', '.agent/tasks/authority-task/STATE.md']);
+      gitOk(owned.path, ['commit', '-m', 'terminal continuity']);
+      const head = headOf(owned.path);
+      const result = session(owned.path, ['integrate', '--expect-session', owned.sessionId, '--expect-head', head]);
+      expect(result.status, result.stderr).toBe(0);
+      expect(gitOk(fx.canonical, ['rev-parse', 'refs/remotes/origin/main'])).toBe(head);
     } finally {
       cleanup(fx.base);
     }

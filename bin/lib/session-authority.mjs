@@ -232,10 +232,7 @@ export function admitContinuity(input) {
     return { ok: false, code: 'SESSION_CONTINUITY_MISMATCH', detail: 'the task STATE identity is absent or unreadable' };
   }
   if (state.taskId !== undefined && state.taskId !== null && state.taskId !== record.taskId) {
-    return { ok: false, code: 'SESSION_CONTINUITY_MISMATCH', detail: 'the task STATE names a different task ID' };
-  }
-  if (typeof state.branch === 'string' && state.branch !== '' && state.branch !== currentBranch) {
-    return { ok: false, code: 'SESSION_CONTINUITY_MISMATCH', detail: 'the task STATE branch does not match the current session branch' };
+    return { ok: false, code: 'SESSION_CONTINUITY_MISMATCH', detail: `the task STATE names a different task ID` };
   }
   const status = normalizeStatus(active.status) ?? normalizeStatus(state.status);
   if (status === null) {
@@ -244,6 +241,10 @@ export function admitContinuity(input) {
   const compatible = SESSION_COMMAND_STATUS_COMPATIBILITY[command] ?? null;
   if (compatible !== null && !compatible.includes(status)) {
     return { ok: false, code: 'SESSION_CONTINUITY_MISMATCH', detail: `task status ${status} is not compatible with ${command}` };
+  }
+  const terminalCanonicalIntegration = command === 'integrate' && status === 'COMPLETE' && declaredWorktree === 'NONE';
+  if (typeof state.branch === 'string' && state.branch !== '' && state.branch !== currentBranch && !terminalCanonicalIntegration) {
+    return { ok: false, code: 'SESSION_CONTINUITY_MISMATCH', detail: 'the task STATE branch does not match the current session branch' };
   }
   return { ok: true, status };
 }
