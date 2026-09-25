@@ -49,7 +49,7 @@ const MAX_BUFFER = 32 * 1024 * 1024;
 const TYPECHECK_TIMEOUT_MS = 600_000;
 
 /**
- * @typedef {{ schemaVersion?: string, mode?: string, exemptions?: { bin?: string, reason?: string }[] }} BinTypecheckConfig
+ * @typedef {{ schemaVersion?: string, mode?: string, exemptions?: { bin?: string, reason?: string }[], perFileCeilings?: { bin?: string, maxErrors?: number }[] }} BinTypecheckConfig
  * @typedef {{ code: string, detail: string }} BinTypecheckError
  */
 
@@ -94,7 +94,32 @@ function loadConfig() {
   if (raw.schemaVersion !== SCHEMA) throw new Error(`BIN_TYPECHECK_CONFIG_SCHEMA_UNSUPPORTED:${String(raw.schemaVersion)}`);
   if (typeof raw.mode !== 'string' || !MODES.has(raw.mode)) throw new Error(`BIN_TYPECHECK_CONFIG_MODE_INVALID:${String(raw.mode)}`);
   if (!Array.isArray(raw.exemptions)) throw new Error('BIN_TYPECHECK_CONFIG_EXEMPTIONS_INVALID');
+  if (raw.perFileCeilings !== undefined && !Array.isArray(raw.perFileCeilings)) throw new Error('BIN_TYPECHECK_CONFIG_CEILINGS_INVALID');
   return raw;
+}
+
+/**
+ * The per-file diagnostic ceiling ratchet (A-13 / B-07 / D-13 regression
+ * guard): while the bin surface is annotated down to zero in batches, no
+ * declared file may GROW past its ceiling. The ceiling is enforced in every
+ * mode — REPORTING describes the burn-down, it never permits growth.
+ * @param {BinTypecheckConfig} config
+ */
+function loadCeilings(config) {
+  /** @type {Map<string, number>} */
+  const ceilings = new Map();
+  for (const entry of config.perFileCeilings ?? []) {
+    if (typeof entry?.bin !== 'string' || !entry.bin.startsWith('bin/')) {
+      throw new Error(`BIN_TYPECHECK_CEILING_BIN_INVALID:${JSON.stringify(entry)}`);
+    }
+    const maxErrors = entry.maxErrors;
+    if (typeof maxErrors !== 'number' || !Number.isInteger(maxErrors) || maxErrors < 0) {
+      throw new Error(`BIN_TYPECHECK_CEILING_MAX_INVALID:${JSON.stringify(entry)}`);
+    }
+    if (ceilings.has(entry.bin)) throw new Error(`BIN_TYPECHECK_CEILING_DUPLICATE:${entry.bin}`);
+    ceilings.set(entry.bin, maxErrors);
+  }
+  return ceilings;
 }
 
 /** @param {BinTypecheckConfig} config */
@@ -181,6 +206,7 @@ function main() {
   const configCheck = args.includes('--config-check');
   const config = loadConfig();
   const exemptions = loadExemptions(config);
+  const ceilings = loadCeilings(config);
   const bins = entryPoints();
   /** @type {BinTypecheckError[]} */
   const hardErrors = [];
@@ -188,6 +214,9 @@ function main() {
   if (bins.length === 0) hardErrors.push({ code: 'BIN_TYPECHECK_VACUOUS', detail: 'zero entry points discovered' });
   for (const bin of exemptions.keys()) {
     if (!bins.includes(bin)) hardErrors.push({ code: 'BIN_TYPECHECK_EXEMPTION_UNKNOWN', detail: bin });
+  }
+  for (const bin of ceilings.keys()) {
+    if (!bins.includes(bin)) hardErrors.push({ code: 'BIN_TYPECHECK_CEILING_UNKNOWN', detail: bin });
   }
   hardErrors.push(...checkInlineSuppressions());
   hardErrors.push(...checkLoaderDeclaration());
@@ -232,6 +261,17 @@ function main() {
     hardErrors.push({ code: 'BIN_TYPECHECK_EXEMPTION_STALE', detail: `${bin} now passes; remove its exemption` });
   }
 
+  // The ratchet: a declared ceiling is a hard boundary in every mode.
+  /** @type {{ bin: string, errors: number, maxErrors: number }[]} */
+  const ceilingBreach = [];
+  for (const [bin, maxErrors] of ceilings) {
+    const errors = diagnostics.get(bin) ?? 0;
+    if (errors > maxErrors) {
+      ceilingBreach.push({ bin, errors, maxErrors });
+      hardErrors.push({ code: 'BIN_TYPECHECK_CEILING_EXCEEDED', detail: `${bin} has ${errors} diagnostics; ceiling ${maxErrors} (ratchet: lower it, never raise it)` });
+    }
+  }
+
   const blocking = config.mode === 'BLOCKING';
   const blockingFailures = nonConforming.filter((entry) => !exemptions.has(entry.bin));
   const result = hardErrors.length > 0 || (blocking && blockingFailures.length > 0) ? 'FAIL' : 'PASS';
@@ -245,6 +285,8 @@ function main() {
     typeErrorDiagnostics: [...diagnostics.values()].reduce((total, count) => total + count, 0),
     nonConforming,
     exemptions: [...exemptions.keys()].sort(),
+    perFileCeilings: [...ceilings.entries()].map(([bin, maxErrors]) => ({ bin, maxErrors, errors: diagnostics.get(bin) ?? 0 })),
+    ceilingBreach,
     hardErrors,
   };
 
@@ -254,7 +296,7 @@ function main() {
     for (const error of hardErrors) process.stderr.write(`[typecheck:bin] ERROR: ${error.code}: ${error.detail}\n`);
     process.stdout.write(
       `[typecheck:bin] ${result}: conformance=${conforming}/${bins.length} mode=${config.mode}` +
-        ` errors=${report.typeErrorDiagnostics} exemptions=${exemptions.size}\n`,
+        ` errors=${report.typeErrorDiagnostics} exemptions=${exemptions.size} ceilings=${ceilings.size}\n`,
     );
     if (nonConforming.length > 0) {
       process.stdout.write(`[typecheck:bin] non-conforming: ${nonConforming.map((entry) => `${entry.bin}(${entry.errors})`).join(', ')}\n`);

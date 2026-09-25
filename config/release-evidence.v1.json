@@ -1,0 +1,194 @@
+{
+  "schemaVersion": "nightwatch.release-evidence.v1",
+  "bindings": [
+    {
+      "subject": "validation-lane-closure",
+      "evidenceSha": "88e3c3fb52937ff303b0944cc22cfee624bf807e",
+      "receiptDigest": null,
+      "observedAt": null,
+      "executor": null
+    },
+    {
+      "subject": "exact-head-ci-authority",
+      "evidenceSha": null,
+      "receiptDigest": null,
+      "observedAt": null,
+      "executor": null
+    },
+    {
+      "subject": "autonomous-yield-proof",
+      "evidenceSha": null,
+      "receiptDigest": null,
+      "observedAt": null,
+      "executor": null
+    },
+    {
+      "subject": "completion-ledger-truth",
+      "evidenceSha": "8bad862e3ee29d804103dd6ab1b9c9a2fd0391e6",
+      "receiptDigest": null,
+      "observedAt": null,
+      "executor": null
+    },
+    {
+      "subject": "operator-cli-contract",
+      "evidenceSha": "8bad862e3ee29d804103dd6ab1b9c9a2fd0391e6",
+      "receiptDigest": null,
+      "observedAt": null,
+      "executor": null
+    },
+    {
+      "subject": "documentation-currency",
+      "evidenceSha": "8bad862e3ee29d804103dd6ab1b9c9a2fd0391e6",
+      "receiptDigest": null,
+      "observedAt": null,
+      "executor": null
+    },
+    {
+      "subject": "workspace-continuity-drift-closure",
+      "evidenceSha": "8bad862e3ee29d804103dd6ab1b9c9a2fd0391e6",
+      "receiptDigest": null,
+      "observedAt": null,
+      "executor": null
+    },
+    {
+      "subject": "dependency-supply-chain-currency",
+      "evidenceSha": "88e3c3fb52937ff303b0944cc22cfee624bf807e",
+      "receiptDigest": null,
+      "observedAt": null,
+      "executor": null
+    },
+    {
+      "subject": "dead-architecture-closure",
+      "evidenceSha": null,
+      "receiptDigest": null,
+      "observedAt": null,
+      "executor": null
+    },
+    {
+      "subject": "cli-implementation-contract",
+      "evidenceSha": "8bad862e3ee29d804103dd6ab1b9c9a2fd0391e6",
+      "receiptDigest": null,
+      "observedAt": null,
+      "executor": null
+    },
+    {
+      "subject": "structural-rule-soundness",
+      "evidenceSha": "8bad862e3ee29d804103dd6ab1b9c9a2fd0391e6",
+      "receiptDigest": null,
+      "observedAt": null,
+      "executor": null
+    },
+    {
+      "subject": "schema-version-lifecycle",
+      "evidenceSha": null,
+      "receiptDigest": null,
+      "observedAt": null,
+      "executor": null
+    },
+    {
+      "subject": "ui-error-taxonomy-rendering",
+      "evidenceSha": null,
+      "receiptDigest": null,
+      "observedAt": null,
+      "executor": null
+    },
+    {
+      "subject": "configuration-contract",
+      "evidenceSha": null,
+      "receiptDigest": null,
+      "observedAt": null,
+      "executor": null
+    },
+    {
+      "subject": "accessibility-certification",
+      "evidenceSha": "8bad862e3ee29d804103dd6ab1b9c9a2fd0391e6",
+      "receiptDigest": null,
+      "observedAt": null,
+      "executor": null
+    },
+    {
+      "subject": "authenticated-capability-lifecycle",
+      "evidenceSha": null,
+      "receiptDigest": null,
+      "observedAt": null,
+      "executor": null
+    },
+    {
+      "subject": "root-compile",
+      "evidenceSha": "88e3c3fb52937ff303b0944cc22cfee624bf807e",
+      "receiptDigest": null,
+      "observedAt": null,
+      "executor": null
+    },
+    {
+      "subject": "bin-parse",
+      "evidenceSha": "88e3c3fb52937ff303b0944cc22cfee624bf807e",
+      "receiptDigest": null,
+      "observedAt": null,
+      "executor": null
+    },
+    {
+      "subject": "structural-invariants",
+      "evidenceSha": "88e3c3fb52937ff303b0944cc22cfee624bf807e",
+      "receiptDigest": null,
+      "observedAt": null,
+      "executor": null
+    },
+    {
+      "subject": "authoritative-gate",
+      "evidenceSha": "88e3c3fb52937ff303b0944cc22cfee624bf807e",
+      "receiptDigest": null,
+      "observedAt": null,
+      "executor": null
+    },
+    {
+      "subject": "full-regression",
+      "evidenceSha": "88e3c3fb52937ff303b0944cc22cfee624bf807e",
+      "receiptDigest": null,
+      "observedAt": null,
+      "executor": null
+    },
+    {
+      "subject": "clean-checkout",
+      "evidenceSha": "c18db55970a6497470191c8c9ef58f5012a96c8c",
+      "receiptDigest": null,
+      "observedAt": null,
+      "executor": null
+    },
+    {
+      "subject": "ui",
+      "evidenceSha": "88e3c3fb52937ff303b0944cc22cfee624bf807e",
+      "receiptDigest": null,
+      "observedAt": null,
+      "executor": null
+    },
+    {
+      "subject": "browser-workflow",
+      "evidenceSha": "88e3c3fb52937ff303b0944cc22cfee624bf807e",
+      "receiptDigest": null,
+      "observedAt": null,
+      "executor": null
+    },
+    {
+      "subject": "owner-manual",
+      "evidenceSha": "36bd4930db978423f97e16f35250c2e66bfa112c",
+      "receiptDigest": null,
+      "observedAt": null,
+      "executor": null
+    },
+    {
+      "subject": "exact-checkpoint-ci",
+      "evidenceSha": "66df26b700bc4bff94d9fb2a3b99200b0e73f1ff",
+      "receiptDigest": null,
+      "observedAt": null,
+      "executor": null
+    },
+    {
+      "subject": "dependency-advisory",
+      "evidenceSha": "88e3c3fb52937ff303b0944cc22cfee624bf807e",
+      "receiptDigest": null,
+      "observedAt": null,
+      "executor": null
+    }
+  ]
+}

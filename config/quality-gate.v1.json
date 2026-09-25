@@ -6,7 +6,10 @@
       "id": "GATE_DEFINITION",
       "commandKey": "GATE_DEFINITION",
       "required": true,
-      "environmentRequirements": ["NODE20_PLUS", "OFFLINE"],
+      "environmentRequirements": [
+        "NODE20_PLUS",
+        "OFFLINE"
+      ],
       "timeoutClass": "SHORT",
       "dependsOn": [],
       "ciCapable": true,
@@ -19,9 +22,14 @@
       "id": "STATIC",
       "commandKey": "TYPECHECK",
       "required": true,
-      "environmentRequirements": ["NODE20_PLUS", "OFFLINE"],
+      "environmentRequirements": [
+        "NODE20_PLUS",
+        "OFFLINE"
+      ],
       "timeoutClass": "MEDIUM",
-      "dependsOn": ["GATE_DEFINITION"],
+      "dependsOn": [
+        "GATE_DEFINITION"
+      ],
       "ciCapable": true,
       "cleanCheckoutCapable": true,
       "requiresSiblingTopology": false,
@@ -29,12 +37,35 @@
       "expectedFailClosedBehavior": "type errors stop required-gate evaluation"
     },
     {
+      "id": "BIN_TYPECHECK_CEILING",
+      "commandKey": "BIN_TYPECHECK",
+      "required": true,
+      "environmentRequirements": [
+        "NODE20_PLUS",
+        "OFFLINE"
+      ],
+      "timeoutClass": "LONG",
+      "dependsOn": [
+        "STATIC"
+      ],
+      "ciCapable": true,
+      "cleanCheckoutCapable": true,
+      "requiresSiblingTopology": false,
+      "preDevRelevant": true,
+      "expectedFailClosedBehavior": "a stale loader declaration, an inline suppression, an unknown or stale exemption, or growth past a declared per-file diagnostic ceiling fails the gate"
+    },
+    {
       "id": "HARDENING",
       "commandKey": "HARDENING_CHECK",
       "required": true,
-      "environmentRequirements": ["NODE20_PLUS", "OFFLINE"],
+      "environmentRequirements": [
+        "NODE20_PLUS",
+        "OFFLINE"
+      ],
       "timeoutClass": "MEDIUM",
-      "dependsOn": ["STATIC"],
+      "dependsOn": [
+        "STATIC"
+      ],
       "ciCapable": true,
       "cleanCheckoutCapable": true,
       "requiresSiblingTopology": false,
@@ -45,9 +76,14 @@
       "id": "HARDENING_PROBES",
       "commandKey": "HARDENING_PROBES",
       "required": true,
-      "environmentRequirements": ["NODE20_PLUS", "OFFLINE"],
+      "environmentRequirements": [
+        "NODE20_PLUS",
+        "OFFLINE"
+      ],
       "timeoutClass": "MEDIUM",
-      "dependsOn": ["HARDENING"],
+      "dependsOn": [
+        "HARDENING"
+      ],
       "ciCapable": true,
       "cleanCheckoutCapable": true,
       "requiresSiblingTopology": false,
@@ -58,9 +94,15 @@
       "id": "HANDOFF_TRUTH",
       "commandKey": "HANDOFF_CHECK",
       "required": true,
-      "environmentRequirements": ["NODE20_PLUS", "OFFLINE", "FULL_GIT_HISTORY"],
+      "environmentRequirements": [
+        "NODE20_PLUS",
+        "OFFLINE",
+        "FULL_GIT_HISTORY"
+      ],
       "timeoutClass": "SHORT",
-      "dependsOn": ["HARDENING_PROBES"],
+      "dependsOn": [
+        "HARDENING_PROBES"
+      ],
       "ciCapable": true,
       "cleanCheckoutCapable": true,
       "requiresSiblingTopology": false,
@@ -71,9 +113,14 @@
       "id": "PROJECT_TRUTH",
       "commandKey": "PROJECT_CHECK",
       "required": true,
-      "environmentRequirements": ["NODE20_PLUS", "OFFLINE"],
+      "environmentRequirements": [
+        "NODE20_PLUS",
+        "OFFLINE"
+      ],
       "timeoutClass": "SHORT",
-      "dependsOn": ["HANDOFF_TRUTH"],
+      "dependsOn": [
+        "HANDOFF_TRUTH"
+      ],
       "ciCapable": true,
       "cleanCheckoutCapable": true,
       "requiresSiblingTopology": false,
@@ -84,9 +131,15 @@
       "id": "AGENT_CONTINUITY",
       "commandKey": "AGENT_CONTINUITY",
       "required": true,
-      "environmentRequirements": ["NODE20_PLUS", "OFFLINE", "FULL_GIT_HISTORY"],
+      "environmentRequirements": [
+        "NODE20_PLUS",
+        "OFFLINE",
+        "FULL_GIT_HISTORY"
+      ],
       "timeoutClass": "MEDIUM",
-      "dependsOn": ["PROJECT_TRUTH"],
+      "dependsOn": [
+        "PROJECT_TRUTH"
+      ],
       "ciCapable": true,
       "cleanCheckoutCapable": true,
       "requiresSiblingTopology": false,
@@ -97,9 +150,15 @@
       "id": "SEMANTIC_COMPATIBILITY",
       "commandKey": "SEMANTIC_COMPATIBILITY",
       "required": true,
-      "environmentRequirements": ["NODE20_PLUS", "OFFLINE", "SERIAL_PLAYWRIGHT"],
+      "environmentRequirements": [
+        "NODE20_PLUS",
+        "OFFLINE",
+        "SERIAL_PLAYWRIGHT"
+      ],
       "timeoutClass": "LONG",
-      "dependsOn": ["AGENT_CONTINUITY"],
+      "dependsOn": [
+        "AGENT_CONTINUITY"
+      ],
       "ciCapable": true,
       "cleanCheckoutCapable": true,
       "requiresSiblingTopology": false,
@@ -110,9 +169,15 @@
       "id": "OWNER_PROVENANCE",
       "commandKey": "OWNER_PROVENANCE",
       "required": true,
-      "environmentRequirements": ["NODE20_PLUS", "OFFLINE", "SYNTHETIC_ONLY"],
+      "environmentRequirements": [
+        "NODE20_PLUS",
+        "OFFLINE",
+        "SYNTHETIC_ONLY"
+      ],
       "timeoutClass": "LONG",
-      "dependsOn": ["SEMANTIC_COMPATIBILITY"],
+      "dependsOn": [
+        "SEMANTIC_COMPATIBILITY"
+      ],
       "ciCapable": true,
       "cleanCheckoutCapable": true,
       "requiresSiblingTopology": false,
@@ -123,9 +188,15 @@
       "id": "SYNTHETIC_CAMPAIGN",
       "commandKey": "SYNTHETIC_CAMPAIGN",
       "required": true,
-      "environmentRequirements": ["NODE20_PLUS", "OFFLINE", "SYNTHETIC_ONLY"],
+      "environmentRequirements": [
+        "NODE20_PLUS",
+        "OFFLINE",
+        "SYNTHETIC_ONLY"
+      ],
       "timeoutClass": "MEDIUM",
-      "dependsOn": ["OWNER_PROVENANCE"],
+      "dependsOn": [
+        "OWNER_PROVENANCE"
+      ],
       "ciCapable": true,
       "cleanCheckoutCapable": true,
       "requiresSiblingTopology": false,
@@ -136,9 +207,15 @@
       "id": "PATCH_INTEGRITY",
       "commandKey": "PATCH_INTEGRITY",
       "required": true,
-      "environmentRequirements": ["NODE20_PLUS", "OFFLINE", "CLEAN_GIT"],
+      "environmentRequirements": [
+        "NODE20_PLUS",
+        "OFFLINE",
+        "CLEAN_GIT"
+      ],
       "timeoutClass": "SHORT",
-      "dependsOn": ["SYNTHETIC_CAMPAIGN"],
+      "dependsOn": [
+        "SYNTHETIC_CAMPAIGN"
+      ],
       "ciCapable": true,
       "cleanCheckoutCapable": true,
       "requiresSiblingTopology": false,
@@ -149,9 +226,14 @@
       "id": "WORKSPACE_INTEGRITY",
       "commandKey": "WORKSPACE_INTEGRITY",
       "required": true,
-      "environmentRequirements": ["NODE20_PLUS", "OFFLINE"],
+      "environmentRequirements": [
+        "NODE20_PLUS",
+        "OFFLINE"
+      ],
       "timeoutClass": "SHORT",
-      "dependsOn": ["PATCH_INTEGRITY"],
+      "dependsOn": [
+        "PATCH_INTEGRITY"
+      ],
       "ciCapable": true,
       "cleanCheckoutCapable": true,
       "requiresSiblingTopology": false,

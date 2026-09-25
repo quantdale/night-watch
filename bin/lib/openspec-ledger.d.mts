@@ -13,6 +13,7 @@ export interface ParsedLedgerTasks {
   readonly open: readonly LedgerOpenEntry[];
   readonly done: number;
   readonly declaredNotInScope: number;
+  readonly undispositioned: readonly LedgerOpenEntry[];
 }
 
 export type OpenWorkBlockerClass = 'NONE' | 'INTERNAL' | 'EXTERNAL';
@@ -22,6 +23,7 @@ export interface OpenWorkInputEntry {
   readonly taskStatus: string;
   readonly openCount: number;
   readonly declaredNotInScope: number;
+  readonly undispositionedCount?: number;
   readonly doneCount: number;
   readonly blocker: string | null;
   readonly blockerClass: OpenWorkBlockerClass;
@@ -30,6 +32,9 @@ export interface OpenWorkInputEntry {
 export const LEDGER_TERMINAL_STATUSES: readonly string[];
 export const LEDGER_MISSING_TASK_STATUS: string;
 export const OPEN_WORK_MODEL_VERSION: string;
+export const LEDGER_DISPOSITION_TOKENS: readonly string[];
+
+export function carriesDispositionToken(strikeText: string): boolean;
 
 export interface LedgerAgreementDiagnostics {
   readonly errors: readonly string[];

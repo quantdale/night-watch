@@ -270,10 +270,12 @@ function makeFixture(options: FixtureOptions = {}): Fixture {
     'bin/planner-handoff-protocol.mjs',
     'bin/planner-handoff-check.mjs',
     'bin/workspace-integrity.mjs',
+    'bin/lib/checkpoint-role.mjs',
     'bin/lib/programme-state.mjs',
     'bin/lib/openspec-ledger.mjs',
     'bin/lib/openspec-archive-index.mjs',
     'bin/lib/operator-cli.mjs',
+    'bin/lib/release-evidence.mjs',
     'bin/lib/typescript-runtime-loader.mjs',
     'bin/lib/validation-lane-state.mjs',
   ]) {

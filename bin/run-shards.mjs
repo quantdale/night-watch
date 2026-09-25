@@ -65,6 +65,7 @@ function discoverUniverse() {
     throw new Error('SHARD_UNIVERSE_REPORT_UNREADABLE');
   }
   const files = new Set();
+  /** @param {any[]} suites */
   const walk = (suites) => {
     for (const suite of suites ?? []) {
       if (typeof suite.file === 'string' && suite.file.length > 0) files.add(path.relative(root, suite.file).split(path.sep).join('/'));
@@ -75,11 +76,13 @@ function discoverUniverse() {
   return [...files].sort();
 }
 
+/** @param {any} explicitPath */
 function loadWeights(explicitPath) {
   const file = typeof explicitPath === 'string' ? explicitPath : WEIGHTS_PATH;
   try {
     const value = JSON.parse(fs.readFileSync(file, 'utf8'));
     if (value.schemaVersion !== 'nightwatch.shard-weights.v1' || value.weights === null || typeof value.weights !== 'object') return null;
+    /** @type {Record<string, number>} */
     const weights = {};
     for (const [key, raw] of Object.entries(value.weights)) {
       if (typeof raw === 'number' && Number.isFinite(raw) && raw >= 0) weights[key] = raw;
@@ -92,12 +95,14 @@ function loadWeights(explicitPath) {
 
 function loadClasses() {
   const declaration = JSON.parse(fs.readFileSync(CLASSES_PATH, 'utf8'));
+  /** @type {Record<string, string>} */
   const classes = {};
   for (const [file, entry] of Object.entries(declaration.files ?? {})) classes[file] = entry.class;
   return classes;
 }
 
 
+/** @param {{ id: string }} shard */
 function shardReceiptPath(shard) {
   return path.join(root, 'test-results', shard.id, 'shard-execution.json');
 }
@@ -107,7 +112,9 @@ function createShardScratchRoot() {
 }
 
 
+/** @param {any} output */
 function parseTextCounts(output) {
+  /** @param {RegExp} pattern */
   const lastNumber = (pattern) => {
     let last = null;
     for (const match of output.matchAll(pattern)) last = Number(match[1]);
@@ -129,7 +136,9 @@ function emptyExecutionCounts() {
   return { planned: 0, executed: 0, passed: 0, failed: 0, skipped: 0, didNotRun: 0, unknown: 0 };
 }
 
+/** @param {any[]} results */
 function sumCounts(results) {
+  /** @type {Record<string, number | null>} */
   const totals = emptyCounts();
   for (const key of Object.keys(totals)) {
     let sum = 0;
@@ -147,6 +156,7 @@ function sumCounts(results) {
   return totals;
 }
 
+/** @param {string} disposition */
 function executionCodeForDisposition(disposition) {
   if (disposition === 'ALL_SKIPPED') return 'SHARD_ALL_SKIPPED';
   if (disposition === 'NO_TESTS_EXECUTED') return 'SHARD_NO_TESTS_EXECUTED';
@@ -154,6 +164,11 @@ function executionCodeForDisposition(disposition) {
   return disposition === 'PASS' ? null : 'SHARD_TESTS_FAILED';
 }
 
+/**
+ * @param {any} shard
+ * @param {any} execution
+ * @param {string} scratchRoot
+ */
 function runShard(shard, execution, scratchRoot) {
   const receiptPath = shardReceiptPath(shard);
   if (shard.files.length === 0) {
@@ -257,10 +272,12 @@ function runShard(shard, execution, scratchRoot) {
   });
 }
 
+/** @param {any} value */
 function displayCount(value) {
   return Number.isSafeInteger(value) && value >= 0 ? String(value) : 'UNKNOWN';
 }
 
+/** @param {any} receipt */
 function renderShardReceipt(receipt) {
   const lines = [];
   lines.push(`[run-shards] ${receipt.result} files=${receipt.universeCount} shards=${receipt.shards.length}${receipt.serial === true ? ' mode=serial' : ` workers=${receipt.workerCount ?? receipt.parallelShardCount}`}`);
@@ -289,7 +306,7 @@ if (!cli.stop) {
       process.exitCode = 2;
     } else {
       const explicit = typeof cli.flags['--files'] === 'string' && cli.flags['--files'].length > 0
-        ? cli.flags['--files'].split(',').map((value) => value.trim()).filter(Boolean)
+        ? cli.flags['--files'].split(',').map((/** @type {string} */ value) => value.trim()).filter(Boolean)
         : null;
       const universe = explicit ?? discoverUniverse();
       const declaredClasses = loadClasses();

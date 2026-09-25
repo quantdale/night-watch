@@ -13,6 +13,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { resolveEvidenceShaForSubject } from './release-evidence.mjs';
 
 export const LANE_STATE_SCHEMA = 'nightwatch.validation-lane-state.v1';
 export const LANE_STATE_FILE = Object.freeze({ config: 'config', name: 'validation-lane-state.v1.json' });
@@ -42,7 +43,17 @@ export function loadLaneState(root) {
   if (lanes.length === 0) {
     return { ok: false, errors: [{ code: 'LANE_STATE_EMPTY', detail: 'the lane-state record declares no lane' }], lanes: [] };
   }
-  return { ok: true, errors: [], lanes };
+  // A-01: evidence bindings live in config/release-evidence.v1.json (the
+  // checkpoint-neutral location). The lane record's own evidenceSha is the
+  // retired location and is consulted only as a compatibility fallback; the
+  // resolved binding is overlaid here so every consumer sees one truth.
+  const resolved = lanes.map((lane) => {
+    const laneId = lane !== null && typeof lane === 'object' && typeof lane.laneId === 'string' ? lane.laneId : null;
+    if (laneId === null) return lane;
+    const bound = resolveEvidenceShaForSubject(root, laneId);
+    return { ...lane, evidenceSha: bound ?? lane.evidenceSha ?? null };
+  });
+  return { ok: true, errors: [], lanes: resolved };
 }
 
 /**
@@ -69,8 +80,10 @@ export function validateLaneState(lanes, declaredClasses) {
     if (typeof lane?.evidence !== 'string' || lane.evidence.trim() === '') {
       errors.push({ code: 'LANE_STATE_EVIDENCE_MISSING', detail: laneId });
     }
-    if (typeof lane?.evidenceSha !== 'string' || !SHA_RE.test(lane.evidenceSha)) {
-      errors.push({ code: 'LANE_STATE_EVIDENCE_SHA_INVALID', detail: `${laneId}: ${String(lane?.evidenceSha)}` });
+    if (lane?.evidenceSha !== null && lane?.evidenceSha !== undefined) {
+      if (typeof lane.evidenceSha !== 'string' || !SHA_RE.test(lane.evidenceSha)) {
+        errors.push({ code: 'LANE_STATE_EVIDENCE_SHA_INVALID', detail: `${laneId}: ${String(lane?.evidenceSha)}` });
+      }
     }
     if (lane?.class !== 'PROVEN') {
       if (typeof lane?.unblockCondition !== 'string' || lane.unblockCondition.trim() === '') {

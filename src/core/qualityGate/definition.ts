@@ -8,6 +8,7 @@ export const SEMANTIC_COMPATIBILITY_SCHEMA = 'nightwatch.semantic-compatibility.
 export const QUALITY_GATE_COMMAND_KEYS = [
   'GATE_DEFINITION',
   'TYPECHECK',
+  'BIN_TYPECHECK',
   'HARDENING_CHECK',
   'HARDENING_PROBES',
   'HANDOFF_CHECK',

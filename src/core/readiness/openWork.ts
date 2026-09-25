@@ -16,6 +16,7 @@ export interface OpenWorkEntryInput {
   readonly taskStatus: string;
   readonly openCount: number;
   readonly declaredNotInScope: number;
+  readonly undispositionedCount?: number;
   readonly doneCount: number;
   readonly blocker: string | null;
   readonly blockerClass: OpenWorkBlockerClass;
@@ -26,6 +27,7 @@ export interface OpenWorkCampaign {
   readonly taskStatus: string;
   readonly openCount: number;
   readonly declaredNotInScope: number;
+  readonly undispositionedCount: number;
   readonly doneCount: number;
   readonly blocker: string | null;
   readonly blockerClass: OpenWorkBlockerClass;
@@ -38,6 +40,8 @@ export interface OpenWorkReport {
   readonly totals: {
     readonly campaigns: number;
     readonly openItems: number;
+    readonly undispositionedItems: number;
+    readonly blockedCampaigns: number;
     readonly externallyBlocked: number;
   };
 }
@@ -50,6 +54,7 @@ export function deriveOpenWorkReport(entries: readonly OpenWorkEntryInput[]): Op
       taskStatus: entry.taskStatus,
       openCount: entry.openCount,
       declaredNotInScope: entry.declaredNotInScope,
+      undispositionedCount: entry.undispositionedCount ?? 0,
       doneCount: entry.doneCount,
       blocker: entry.blocker,
       blockerClass: entry.blockerClass,
@@ -58,6 +63,8 @@ export function deriveOpenWorkReport(entries: readonly OpenWorkEntryInput[]): Op
   const totals = {
     campaigns: campaigns.length,
     openItems: campaigns.reduce((sum, campaign) => sum + campaign.openCount, 0),
+    undispositionedItems: campaigns.reduce((sum, campaign) => sum + campaign.undispositionedCount, 0),
+    blockedCampaigns: campaigns.filter((campaign) => campaign.taskStatus === 'BLOCKED').length,
     externallyBlocked: campaigns.filter((campaign) => campaign.blockerClass === 'EXTERNAL').length,
   };
   return { modelVersion: OPEN_WORK_REPORT_MODEL_VERSION, derived: true, campaigns, totals };
@@ -72,13 +79,15 @@ export function renderOpenWorkJson(report: OpenWorkReport): string {
 export function renderOpenWorkText(report: OpenWorkReport): string {
   const lines: string[] = [
     `open work ${report.modelVersion}: campaigns=${report.totals.campaigns}` +
-      ` open-items=${report.totals.openItems} externally-blocked=${report.totals.externallyBlocked}`,
+      ` open-items=${report.totals.openItems} undispositioned=${report.totals.undispositionedItems}` +
+      ` blocked-campaigns=${report.totals.blockedCampaigns} externally-blocked=${report.totals.externallyBlocked}`,
   ];
   for (const campaign of report.campaigns) {
     const blocker = campaign.blocker === null ? '' : ` blocker=${campaign.blockerClass}: ${campaign.blocker}`;
     lines.push(
       `  - ${campaign.changeId} status=${campaign.taskStatus} open=${campaign.openCount}` +
-        ` declared_not_in_scope=${campaign.declaredNotInScope} done=${campaign.doneCount}${blocker}`,
+        ` declared_not_in_scope=${campaign.declaredNotInScope} undispositioned=${campaign.undispositionedCount}` +
+        ` done=${campaign.doneCount}${blocker}`,
     );
   }
   return `${lines.join('\n')}\n`;

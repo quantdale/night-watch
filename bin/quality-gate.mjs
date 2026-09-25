@@ -105,6 +105,12 @@ function runFixedCommandInner(commandKey, mode, timeoutClass) {
   } else if (commandKey === 'TYPECHECK') {
     command = packageManager;
     args = ['run', 'typecheck'];
+  } else if (commandKey === 'BIN_TYPECHECK') {
+    // The bin type-check lane with its per-file diagnostic ceiling ratchet.
+    // REPORTING describes the annotation burn-down; the ceiling is enforced
+    // in every mode, so growth past a declared ceiling fails the gate.
+    command = packageManager;
+    args = ['run', 'typecheck:bin'];
   } else if (commandKey === 'HARDENING_CHECK') {
     command = packageManager;
     args = ['run', 'hardening:check'];

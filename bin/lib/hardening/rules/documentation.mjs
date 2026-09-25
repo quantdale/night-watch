@@ -24,6 +24,7 @@ import {
   sha256Prefix,
   gitResult,
 } from '../kernel.mjs';
+import { loadDocumentRoleCorrections, loadReleaseEvidenceBindings } from '../../release-evidence.mjs';
 
 /**
  * NW-08. The gate had no mechanical relationship to the set of tests that
@@ -704,7 +705,15 @@ export function checkAppendOnlyArchives() {
   }
   /** @type {Map<string, Set<string>>} */
   const corrections = new Map();
-  for (const correction of Array.isArray(config.corrections) ? config.corrections : []) {
+  // A-01: correction registrations live in config/document-role-corrections.v1.json
+  // (append-only, checkpoint-neutral). The retired inline array is a
+  // compatibility fallback only.
+  const loadedCorrections = loadDocumentRoleCorrections(root);
+  if (!loadedCorrections.ok) {
+    fail(`APPEND_ONLY correction registry is invalid: ${loadedCorrections.errors.join(';')}`);
+    return;
+  }
+  for (const correction of loadedCorrections.corrections) {
     if (typeof correction.path !== 'string' || typeof correction.oldLineSha256 !== 'string') continue;
     if (!archives.has(correction.path)) continue;
     if (!corrections.has(correction.path)) corrections.set(correction.path, new Set());
@@ -772,6 +781,32 @@ export function checkAppendOnlyArchives() {
 export const README_STATUS_BLOCK_BEGIN = '<!--status-block:begin-->';
 export const README_STATUS_BLOCK_END = '<!--status-block:end-->';
 
+const normalizeStatusToken = (value) => String(value).toUpperCase().replace(/[^A-Z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+
+/**
+ * Derive `LIVE_TASK_STATUS` from the active task identity preamble
+ * (`.agent/ACTIVE_TASK.md`), never from a literal in `src/`. Deliberately
+ * narrow: only `Status:` before the first section heading is authority, the
+ * same shape `bin/lib/session-authority.mjs` admits. Fail closed: a derived
+ * key must not fall back to a guessed or stale value.
+ */
+export function deriveActiveTaskStatus() {
+  let text;
+  try {
+    text = readDataFile('.agent/ACTIVE_TASK.md');
+  } catch {
+    return null;
+  }
+  const preamble = String(text).split(/\r?\n/).reduce((accumulator, line) => {
+    if (accumulator.done) return accumulator;
+    if (/^##\s+/.test(line)) return { lines: accumulator.lines, done: true };
+    accumulator.lines.push(line);
+    return accumulator;
+  }, { lines: [], done: false }).lines.join('\n');
+  const match = /^[ \t]*Status:[ \t]*(.+?)[ \t]*$/m.exec(preamble);
+  return match === null ? null : normalizeStatusToken(match[1]);
+}
+
 export function parseGovernedStatusLedger(rule) {
   const source = readIncludingComments('src/core/source/censusFigureLedger.ts');
   const block = /export const GOVERNED_STATUS_KEYS[\s\S]*?Object\.freeze\(\[([\s\S]*?)\]\);/m.exec(source);
@@ -779,8 +814,29 @@ export function parseGovernedStatusLedger(rule) {
     fail(`${rule} cannot read the GOVERNED_STATUS_KEYS declaration; the status ledger is missing`);
     return null;
   }
-  const entries = [...block[1].matchAll(/\{ key: '([A-Z0-9_]+)', currentValue: '([A-Z0-9_]+)'[^}]*\}/g)]
-    .map((match) => ({ key: match[1], currentValue: match[2], requiredInReadme: match[0].includes('requiredInReadme: true') }));
+  // The entry regex accepts the quoted literal form and the bare derived
+  // sentinel identifier (`currentValue: DERIVED_FROM_ACTIVE_TASK`). A bare
+  // identifier that is neither the sentinel nor derived is refused: silently
+  // dropping the entry would un-govern the key, which is the exact widening
+  // this ledger exists to prevent.
+  const entryPattern = /\{ key: '([A-Z0-9_]+)', currentValue: (?:'([A-Z0-9_]+)'|([A-Z][A-Z0-9_]*))([^}]*)\}/g;
+  const entries = [...block[1].matchAll(entryPattern)]
+    .map((match) => {
+      const tail = match[4] ?? '';
+      return {
+        key: match[1],
+        currentValue: match[2] ?? match[3],
+        bare: match[2] === undefined,
+        derivedFromActiveTask: tail.includes("derivedFrom: 'ACTIVE_TASK_STATUS'"),
+        requiredInReadme: tail.includes('requiredInReadme: true'),
+      };
+    });
+  for (const entry of entries) {
+    if (!entry.bare) continue;
+    if (entry.currentValue === 'DERIVED_FROM_ACTIVE_TASK' && entry.derivedFromActiveTask) continue;
+    fail(`${rule} governed status key ${entry.key} uses a non-literal currentValue that is not the derived active-task sentinel`);
+    return null;
+  }
   if (entries.length < 60) {
     fail(`${rule} parsed only ${entries.length} governed status keys; the ledger is broken rather than the documents clean`);
     return null;
@@ -789,6 +845,15 @@ export function parseGovernedStatusLedger(rule) {
   for (const entry of entries) {
     if (seen.has(entry.key)) fail(`${rule} governed status key ${entry.key} is declared more than once`);
     seen.add(entry.key);
+    if (!entry.derivedFromActiveTask) continue;
+    // R2-N6: the task lifecycle value is derived from the active task at
+    // check time, so opening or closing a task never edits src/.
+    const derived = deriveActiveTaskStatus();
+    if (derived === null) {
+      fail(`${rule} cannot derive ${entry.key} from .agent/ACTIVE_TASK.md; a derived key must not fall back to a literal`);
+      return null;
+    }
+    entry.currentValue = derived;
   }
   return entries;
 }
@@ -812,7 +877,7 @@ export function checkGovernedStatusWords() {
     || /\b[0-9a-f]{7,40}\b/.test(line)
     || /supersed|previously|at the time|terminal|archiv/i.test(line)
   );
-  const normalize = (value) => value.toUpperCase().replace(/[^A-Z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+  const normalize = normalizeStatusToken;
   let statements = 0;
   for (const document of documents) {
     const lines = document.text.split(/\r?\n/);
@@ -905,5 +970,58 @@ export function checkGovernedStatusWords() {
     } else if (stated !== entry.currentValue) {
       fail(`STATUS_WORD the README measured-status block states ${entry.key}=${stated} but the ledger's current value is ${entry.currentValue}`);
     }
+  }
+}
+
+/**
+ * A-01 / D2 — the checkpoint-neutral binding files keep their closed shape.
+ *
+ * `config/release-evidence.v1.json` and `config/document-role-corrections.v1.json`
+ * are documentation-only for a commit ONLY behind their diff-shape guards, and
+ * those guards key on exactly what this rule polices: a closed schema and a
+ * fixed subject closure. A non-binding key, a mutated or unknown subject, or a
+ * malformed value therefore fails here — and classifies substantive for any
+ * commit that carries it — instead of laundering a structural change through
+ * the documentary checkpoint path.
+ */
+export function checkReleaseEvidenceBindings() {
+  const evidence = loadReleaseEvidenceBindings(root, { requireFile: true });
+  if (!evidence.ok) {
+    fail(`BINDINGS config/release-evidence.v1.json violates its closed schema: ${evidence.errors.join(';')}`);
+    return;
+  }
+  const expected = new Set();
+  try {
+    const certification = JSON.parse(readIncludingComments('config/release-certification.v1.json'));
+    for (const condition of Array.isArray(certification.conditions) ? certification.conditions : []) {
+      if (condition !== null && typeof condition === 'object' && typeof condition.id === 'string') expected.add(condition.id);
+    }
+  } catch (error) {
+    fail(`BINDINGS cannot read config/release-certification.v1.json for subject closure: ${error instanceof Error ? error.message : String(error)}`);
+    return;
+  }
+  try {
+    const laneState = JSON.parse(readIncludingComments('config/validation-lane-state.v1.json'));
+    for (const lane of Array.isArray(laneState.lanes) ? laneState.lanes : []) {
+      if (lane !== null && typeof lane === 'object' && typeof lane.laneId === 'string') expected.add(lane.laneId);
+    }
+  } catch (error) {
+    fail(`BINDINGS cannot read config/validation-lane-state.v1.json for subject closure: ${error instanceof Error ? error.message : String(error)}`);
+    return;
+  }
+  if (expected.size === 0) {
+    fail('BINDINGS subject closure resolved zero subjects; the closure sources are broken rather than the bindings clean');
+    return;
+  }
+  const actual = new Set(evidence.bySubject.keys());
+  for (const subject of expected) {
+    if (!actual.has(subject)) fail(`BINDINGS subject ${subject} (certification condition or validation lane) is unbound in config/release-evidence.v1.json`);
+  }
+  for (const subject of actual) {
+    if (!expected.has(subject)) fail(`BINDINGS subject ${subject} is neither a certification condition nor a validation lane; a mutated or invented subject is structural`);
+  }
+  const corrections = loadDocumentRoleCorrections(root);
+  if (!corrections.ok) {
+    fail(`BINDINGS config/document-role-corrections.v1.json violates its closed schema: ${corrections.errors.join(';')}`);
   }
 }

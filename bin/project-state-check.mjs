@@ -30,6 +30,8 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
 import { loadTypeScriptModule as loadRuntimeTypeScriptModule } from './lib/typescript-runtime-loader.mjs';
+import { loadReleaseEvidenceBindings, resolveEvidenceShaForSubject } from './lib/release-evidence.mjs';
+import { checkpointRoleViolations } from './lib/checkpoint-role.mjs';
 import {
   findDuplicateFields,
   fieldValue,
@@ -865,7 +867,7 @@ function main() {
         fail(errors, 'PROJECT_STATE_SUBSTANTIVE_BASELINE_UNVERIFIABLE');
       } else {
         const files = changed.split('\n').map((line) => line.trim()).filter(Boolean);
-        const substantive = files.filter((file) => !isApprovedCheckpointPath(file));
+        const substantive = checkpointRoleViolations(root, files, { kind: 'range', from: substantiveSha, to: taskValidatedSha });
         if (substantive.length > 0) {
           // The active task validated an implementation strictly newer than the
           // project baseline. The baseline is stale even if every field in the
@@ -888,7 +890,7 @@ function main() {
       const changed = gitReadOnly(root, ['diff', '--name-only', executedSha, taskValidatedSha]);
       if (changed !== null) {
         const files = changed.split('\n').map((line) => line.trim()).filter(Boolean);
-        if (files.some((file) => !isApprovedCheckpointPath(file))) {
+        if (checkpointRoleViolations(root, files, { kind: 'range', from: executedSha, to: taskValidatedSha }).length > 0) {
           fail(errors, 'PROJECT_STATE_CI_BASELINE_STALE');
         }
       }
@@ -1028,6 +1030,57 @@ function main() {
           for (const entry of parsedDefinition.errors) fail(errors, `PROJECT_STATE_${entry.code}`);
         } else {
           const definition = parsedDefinition.definition;
+          // A-01: evidence bindings are checkpoint-neutral and live in
+          // config/release-evidence.v1.json; the retired in-definition copies
+          // are a compatibility fallback only (resolveEvidenceShaForSubject).
+          const boundDefinition = {
+            ...definition,
+            conditions: definition.conditions.map((condition) => ({
+              ...condition,
+              evidenceSha: resolveEvidenceShaForSubject(root, condition.id),
+            })),
+          };
+          // D-06 — a bound evidence artifact must exist at its bound SHA.
+          for (const condition of boundDefinition.conditions) {
+            if (condition.evidenceSha === null) continue;
+            if (gitReadOnly(root, ['cat-file', '-e', `${condition.evidenceSha}^{commit}`]) === null) {
+              fail(errors, `PROJECT_STATE_EVIDENCE_ARTIFACT_MISSING: ${condition.id} bound to ${condition.evidenceSha}`);
+            }
+          }
+          // D-06 — a condition that cites a validation lane by id must agree
+          // with that lane's bound evidence: two SHAs for one piece of
+          // evidence are a contradiction, never a stronger proof.
+          {
+            const evidenceBindings = loadReleaseEvidenceBindings(root);
+            const laneRecords = loadLaneState(root);
+            const laneEvidence = new Map();
+            for (const lane of laneRecords.lanes) {
+              if (lane !== null && typeof lane === 'object' && typeof lane.laneId === 'string') {
+                laneEvidence.set(lane.laneId, typeof lane.evidenceSha === 'string' ? lane.evidenceSha : null);
+              }
+            }
+            for (const condition of boundDefinition.conditions) {
+              const cited = typeof condition.evidence === 'string' ? condition.evidence : '';
+              // Legacy bindings may carry a literal HEAD token; compare the
+              // resolved identities, never the tokens.
+              const resolveHead = (value) =>
+                value !== null && /^HEAD$/i.test(value) ? liveHeadSha : value;
+              for (const [laneId, laneSha] of laneEvidence) {
+                // Token-boundary citation: lane ids like `ui` must not match
+                // inside words (`suite`).
+                const citation = new RegExp(`\\b${laneId.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')}\\b`);
+                if (!citation.test(cited)) continue;
+                const conditionSha = resolveHead(condition.evidenceSha);
+                const resolvedLaneSha = resolveHead(laneSha);
+                if (conditionSha !== null && resolvedLaneSha !== null && conditionSha !== resolvedLaneSha) {
+                  fail(errors, `PROJECT_STATE_EVIDENCE_LANE_DISAGREEMENT: ${condition.id} cites ${laneId} with ${conditionSha} vs lane ${resolvedLaneSha}`);
+                }
+              }
+            }
+            if (!evidenceBindings.ok || (evidenceBindings.present && evidenceBindings.bySubject.size === 0)) {
+              fail(errors, `PROJECT_STATE_RELEASE_EVIDENCE_INVALID: ${evidenceBindings.errors.join(';')}`);
+            }
+          }
           // 13.7 — a documentation-only commit is a checkpoint advance, never
           // the implementation anchor.
           const substantiveSha = blockFields.get('LAST_SUBSTANTIVE_IMPLEMENTATION_SHA');
@@ -1038,7 +1091,7 @@ function main() {
               fail(errors, 'PROJECT_STATE_IMPLEMENTATION_ANCHOR_UNVERIFIABLE');
             } else {
               const files = changed.split('\n').map((line) => line.trim()).filter(Boolean);
-              if (files.length > 0 && files.every((file) => isApprovedCheckpointPath(file))) {
+              if (files.length > 0 && checkpointRoleViolations(root, files, { kind: 'commit', commit: substantiveSha }).length === 0) {
                 fail(errors, 'PROJECT_STATE_IMPLEMENTATION_ANCHOR_DOCUMENTATION_ONLY');
               }
             }
@@ -1072,7 +1125,7 @@ function main() {
           }
           const headBefore = gitReadOnly(root, ['rev-parse', 'HEAD'])?.trim() ?? null;
           releaseVerdict = certification.evaluateReleaseCertification({
-            definition,
+            definition: boundDefinition,
             checkOutputs: collected.outputs,
             certifiedCheckpointSha,
             liveHeadSha,

@@ -2,7 +2,7 @@
   "schemaVersion": "nightwatch.validation-universe.v1",
   "definitionName": "Nightwatch validation universe classification (NW-08)",
   "note": "Every discovered executable test or check belongs to exactly one class. AUTHORITATIVE_GATE is DERIVED from what the required gate lanes actually select and is therefore not declarable here; every other discovered file must appear below exactly once, with the reason it is not in the gate and the evidence lane that does cover it. A newly added test that is in no lane and no class fails the gate rather than joining the repository silently.",
-  "inventoryDigest": "sha256:938019883d3108e80044a26d",
+  "inventoryDigest": "sha256:4655dbb629dfdfaf64768787",
   "classes": {
     "FULL_REGRESSION": {
       "reason": "Offline, deterministic suites that the full canonical regression executes. They are not in a required gate lane because the authoritative gate is bounded for CI runtime; leaving them unclassified is what made the gap invisible.",
@@ -58,6 +58,7 @@
         "tests/unit/investigationMemoryLeakage.test.ts",
         "tests/unit/journeyEngine.test.ts",
         "tests/unit/liveProviderEfficacyProof.test.ts",
+        "tests/unit/liveTaskStatusDerivation.test.ts",
         "tests/unit/localCampaign.test.ts",
         "tests/unit/localCampaignByteAccounting.test.ts",
         "tests/unit/minedCases.test.ts",
@@ -105,9 +106,9 @@
         "tests/unit/rippleResourceReloadCausality.test.ts",
         "tests/unit/schemaVersionLifecycle.test.ts",
         "tests/unit/schemaVersionMigration.test.ts",
-        "tests/unit/semanticSkipIdentity.test.ts",
-        "tests/unit/semanticRequestAdmission.test.ts",
         "tests/unit/semanticAdmissionAuthority.test.ts",
+        "tests/unit/semanticRequestAdmission.test.ts",
+        "tests/unit/semanticSkipIdentity.test.ts",
         "tests/unit/silentZeroOutput.test.ts",
         "tests/unit/snapshotter.test.ts",
         "tests/unit/sourceAnalysisParity.test.ts",

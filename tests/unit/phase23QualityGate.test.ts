@@ -17,7 +17,7 @@ const ROOT = path.resolve(__dirname, '../..');
 test.describe('Phase 23 executable quality-gate definition', () => {
   test('contains the required serial groups with fixed command keys', () => {
     expect(QUALITY_GATE_DEFINITION.groups.map((group) => group.id)).toEqual([
-      'GATE_DEFINITION', 'STATIC', 'HARDENING', 'HARDENING_PROBES', 'HANDOFF_TRUTH', 'PROJECT_TRUTH', 'AGENT_CONTINUITY',
+      'GATE_DEFINITION', 'STATIC', 'BIN_TYPECHECK_CEILING', 'HARDENING', 'HARDENING_PROBES', 'HANDOFF_TRUTH', 'PROJECT_TRUTH', 'AGENT_CONTINUITY',
       'SEMANTIC_COMPATIBILITY', 'OWNER_PROVENANCE', 'SYNTHETIC_CAMPAIGN', 'PATCH_INTEGRITY', 'WORKSPACE_INTEGRITY',
     ]);
     for (const group of QUALITY_GATE_DEFINITION.groups) {

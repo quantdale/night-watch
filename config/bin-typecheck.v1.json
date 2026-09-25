@@ -3,5 +3,11 @@
   "definitionName": "Nightwatch bin type-check lane (F-15.5)",
   "note": "REPORTING while the bin surface is annotated in batches: the lane prints a conformance count and exits zero. It always fails closed on a stale generated loader declaration, an inline suppression, or an exemption that is unknown or has started passing. A bin is never exempted inline; an exemption is a declared entry here with a reason.",
   "mode": "REPORTING",
-  "exemptions": []
+  "exemptions": [],
+  "perFileCeilings": [
+    {
+      "bin": "bin/run-shards.mjs",
+      "maxErrors": 25
+    }
+  ]
 }

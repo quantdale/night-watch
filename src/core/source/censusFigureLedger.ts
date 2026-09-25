@@ -190,6 +190,15 @@ export function checkCensusFigures(documents: readonly { readonly path: string; 
 
 export const STATUS_LEDGER_VERSION = 'nightwatch.status-word-ledger.v1' as const;
 
+/**
+ * Sentinel for a governed key whose CURRENT value is derived at check time
+ * instead of being a literal in this module. `LIVE_TASK_STATUS` is the one
+ * such key: its value is the `Status:` field of `.agent/ACTIVE_TASK.md`, so
+ * opening or closing a task is a documentation-only transition and never a
+ * `src/` edit (R2-N6). The sentinel is stable and never tracks task state.
+ */
+export const DERIVED_FROM_ACTIVE_TASK = 'DERIVED_FROM_ACTIVE_TASK' as const;
+
 export const GOVERNED_STATUS_KINDS = ['PROJECT', 'PHASE', 'LANE_CLASS', 'LIVE_STATE', 'CAMPAIGN_DISPOSITION'] as const;
 export type GovernedStatusKind = (typeof GOVERNED_STATUS_KINDS)[number];
 
@@ -197,9 +206,17 @@ export interface GovernedStatusKey {
   readonly key: string;
   /**
    * The CURRENT value. A document stating a different value is stale unless it
-   * explicitly qualifies the statement as historical.
+   * explicitly qualifies the statement as historical. For a derived key this
+   * is {@link DERIVED_FROM_ACTIVE_TASK}, never a task-status literal; the live
+   * value is resolved from `derivedFrom` at check time.
    */
   readonly currentValue: string;
+  /**
+   * The one derivation source this ledger accepts: the active task identity
+   * preamble (`Status:` in `.agent/ACTIVE_TASK.md`). Present only on entries
+   * whose `currentValue` is {@link DERIVED_FROM_ACTIVE_TASK}.
+   */
+  readonly derivedFrom?: 'ACTIVE_TASK_STATUS';
   readonly kind: GovernedStatusKind;
   /** Where the current value is established. Prose for the reader; never parsed. */
   readonly establishedBy: string;
@@ -287,7 +304,7 @@ export const GOVERNED_STATUS_KEYS: readonly GovernedStatusKey[] = Object.freeze(
   { key: 'POST_PHASE_9_ARCHITECTURE_DESIGN_STATUS', currentValue: 'COMPLETE', kind: 'PROJECT', establishedBy: 'docs/CURRENT_STATE.md current status table' },
   { key: 'NEXT_PHASE_STATUS', currentValue: 'DESIGNED_NOT_STARTED_NOT_AUTHORIZED', kind: 'PROJECT', establishedBy: 'docs/CURRENT_STATE.md current status table' },
   { key: 'POST_PHASE_10_ARCHITECTURE_DESIGN_STATUS', currentValue: 'COMPLETE', kind: 'PROJECT', establishedBy: 'docs/CURRENT_STATE.md current status table' },
-  { key: 'LIVE_TASK_STATUS', currentValue: 'COMPLETE', kind: 'LIVE_STATE', establishedBy: 'docs/CURRENT_STATE.md nightwatch.live-state.v1' },
+  { key: 'LIVE_TASK_STATUS', currentValue: DERIVED_FROM_ACTIVE_TASK, derivedFrom: 'ACTIVE_TASK_STATUS', kind: 'LIVE_STATE', establishedBy: '.agent/ACTIVE_TASK.md Status (derived at check time; no literal — R2-N6)' },
   { key: 'LIVE_PROJECT_COMPLETION_STATUS', currentValue: 'OPERATIONALLY_ACCEPTED', kind: 'LIVE_STATE', establishedBy: 'docs/CURRENT_STATE.md nightwatch.live-state.v1' },
   { key: 'LIVE_PROJECT_VERDICT_EFFECT', currentValue: 'PRESERVE', kind: 'LIVE_STATE', establishedBy: 'docs/CURRENT_STATE.md nightwatch.live-state.v1' },
   { key: 'VALIDATION_LANE_PROVEN_COUNT', currentValue: '9', kind: 'LANE_CLASS', establishedBy: 'config/validation-lane-state.v1.json', requiredInReadme: true },
@@ -328,7 +345,7 @@ export function isHistoricalStatusLine(line: string): boolean {
   return /supersed|previously|at the time|terminal|archiv/i.test(line);
 }
 
-export const STATUS_VIOLATION_REASONS = ['STALE_STATUS_WORD'] as const;
+export const STATUS_VIOLATION_REASONS = ['STALE_STATUS_WORD', 'DERIVED_VALUE_UNAVAILABLE'] as const;
 export type StatusViolationReason = (typeof STATUS_VIOLATION_REASONS)[number];
 
 export interface GovernedStatusViolation {
@@ -390,10 +407,28 @@ export function statusValueIsCurrent(statedValue: string, currentValue: string):
   return statedValue.startsWith(`${currentValue}_`);
 }
 
+/**
+ * The derivation inputs a caller supplies for keys whose ledger value is
+ * {@link DERIVED_FROM_ACTIVE_TASK}. The module stays data-only: it never reads
+ * `.agent/ACTIVE_TASK.md` itself, the caller passes the parsed identity.
+ */
+export interface GovernedStatusDerivation {
+  /** The `Status:` field of `.agent/ACTIVE_TASK.md`, for derived keys. */
+  readonly activeTaskStatus?: string;
+}
+
 export function checkGovernedStatusWords(
   documents: readonly { readonly path: string; readonly text: string }[],
+  derived?: GovernedStatusDerivation,
 ): GovernedStatusCheckResult {
-  const ledger = new Map(GOVERNED_STATUS_KEYS.map((entry) => [entry.key, entry.currentValue]));
+  const entries = new Map(GOVERNED_STATUS_KEYS.map((entry) => [entry.key, entry]));
+  const resolveCurrentValue = (entry: GovernedStatusKey): string | null => {
+    if (entry.currentValue !== DERIVED_FROM_ACTIVE_TASK) return entry.currentValue;
+    const status = String(derived?.activeTaskStatus ?? '').trim();
+    // Fail closed: without the derivation input a stated derived key cannot
+    // be proven current, and guessing a value would launder a stale claim.
+    return status === '' ? null : normalizeStatusValue(status);
+  };
   const violations: GovernedStatusViolation[] = [];
   let statements = 0;
   for (const document of documents) {
@@ -402,8 +437,21 @@ export function checkGovernedStatusWords(
       const line = lines[index] ?? '';
       for (const occurrence of governedStatusOccurrences(line)) {
         statements += 1;
-        const currentValue = ledger.get(occurrence.key);
-        if (currentValue === undefined) continue;
+        const entry = entries.get(occurrence.key);
+        if (entry === undefined) continue;
+        const currentValue = resolveCurrentValue(entry);
+        if (currentValue === null) {
+          if (isHistoricalStatusLine(line)) continue;
+          violations.push(Object.freeze({
+            documentPath: document.path,
+            line: index + 1,
+            key: occurrence.key,
+            statedValue: occurrence.value,
+            currentValue: DERIVED_FROM_ACTIVE_TASK,
+            reason: 'DERIVED_VALUE_UNAVAILABLE',
+          }));
+          continue;
+        }
         if (statusValueIsCurrent(occurrence.value, currentValue)) continue;
         if (isHistoricalStatusLine(line)) continue;
         violations.push(Object.freeze({

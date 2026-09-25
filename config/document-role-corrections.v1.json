@@ -1,0 +1,159 @@
+{
+  "schemaVersion": "nightwatch.document-role-corrections.v1",
+  "corrections": [
+    {
+      "id": "CORR-7-001",
+      "path": "docs/CURRENT_STATE.md",
+      "oldLineSha256": "sha256:71d963556245eb96e3174616",
+      "oldLineExcerpt": "carried as `CI_STATUS: EXECUTED_PASS` until the repair landed. The earlier",
+      "reason": "Group 7 status-ledger repair appended an explicit historical-checkpoint marker naming run 33572572053 at c3fed38; the statement itself is unchanged."
+    },
+    {
+      "id": "CORR-7-002",
+      "path": "docs/CURRENT_STATE.md",
+      "oldLineSha256": "sha256:8d949e20badd269217fc8245",
+      "oldLineExcerpt": "- **Phase 9B**: `PHASE_9B_STATUS: DESIGNED_NOT_STARTED_NOT_AUTHORIZED`",
+      "reason": "Group 7 status-ledger repair appended an explicit historical-checkpoint marker naming the pre-9B checkpoint; the statement itself is unchanged."
+    },
+    {
+      "id": "CORR-7-003",
+      "path": "docs/DECISIONS.md",
+      "oldLineSha256": "sha256:f9516c1cd6ba181d37b8604a",
+      "oldLineExcerpt": "  (`PHASE_8_STATUS: IN_PROGRESS`,",
+      "reason": "Group 7 status-ledger repair appended an explicit historical-checkpoint marker naming the Phase 8B.1-R1 checkpoint 24fc437; the statement itself is unchanged."
+    },
+    {
+      "id": "CORR-7-004",
+      "path": "docs/DECISIONS.md",
+      "oldLineSha256": "sha256:19a2897821102ef0a0759eb1",
+      "oldLineExcerpt": "`PHASE_8_STATUS: IN_PROGRESS` and `PHASE_8B_1_STATUS:",
+      "reason": "Group 7 status-ledger repair appended an explicit historical-checkpoint marker naming the Phase 8B.1-R1 checkpoint 24fc437; the statement itself is unchanged."
+    },
+    {
+      "id": "CORR-7-005",
+      "path": "docs/DECISIONS.md",
+      "oldLineSha256": "sha256:0cf83fdcd02c5d8cf0d02e88",
+      "oldLineExcerpt": "`PHASE_9_STATUS: DESIGNED_NOT_STARTED_NOT_AUTHORIZED`;",
+      "reason": "Group 7 status-ledger repair appended an explicit historical-checkpoint marker naming the Phase 8B.1-R1 checkpoint 24fc437; the statement itself is unchanged."
+    },
+    {
+      "id": "CORR-7-006",
+      "path": "docs/DECISIONS.md",
+      "oldLineSha256": "sha256:e6f3fd1e56828bbec94838f9",
+      "oldLineExcerpt": "executed test failure is recorded as `CI_STATUS: EXECUTED_FAIL`. It is not",
+      "reason": "Group 7 status-ledger repair appended an explicit historical-checkpoint marker naming run 33572572053 at c3fed38; the statement itself is unchanged."
+    },
+    {
+      "id": "CORR-PC-001",
+      "path": "docs/CURRENT_STATE.md",
+      "oldLineSha256": "sha256:7d18d1c30fd63995e4a483ee",
+      "oldLineExcerpt": "> Durable memory for the next agent/session. Last updated: **2026-09-11**",
+      "reason": "Closure reconciliation bumped the header date to the day its last change actually landed (2026-09-12); the statement is unchanged."
+    },
+    {
+      "id": "CORR-W1-001",
+      "path": "docs/CURRENT_STATE.md",
+      "oldLineSha256": "sha256:161de12adcc5046388ff8a4e",
+      "oldLineExcerpt": "> Durable memory for the next agent/session. Last updated: **2026-09-12**",
+      "reason": "W1 closure bumped the header date to the day its last change actually landed (2026-09-14); the statement is unchanged."
+    },
+    {
+      "id": "CORR-W1-002",
+      "path": "docs/CURRENT_STATE.md",
+      "oldLineSha256": "sha256:8be0ec4c0232fa9c865c88ca",
+      "oldLineExcerpt": "At the substantive baseline `c18db55` CI is",
+      "reason": "W1 advanced the substantive baseline and restated the CI narrative's current-state sentence; the historical c18db55 account itself is preserved byte-identically."
+    },
+    {
+      "id": "CORR-W1-003",
+      "path": "docs/CURRENT_STATE.md",
+      "oldLineSha256": "sha256:c59f56338a69524ebb0049f9",
+      "oldLineExcerpt": "`NO_STEPS_EXTERNAL_NON_EVIDENCE`: a run WAS inspected at this exact SHA and",
+      "reason": "W1 restated the CI narrative's current-state sentence as a historical checkpoint statement; the account itself is preserved."
+    },
+    {
+      "id": "CORR-H1-001",
+      "path": "docs/CURRENT_STATE.md",
+      "oldLineSha256": "sha256:28521378f876fb455491f7e0",
+      "oldLineExcerpt": "> Durable memory for the next agent/session. Last updated: **2026-09-14**",
+      "reason": "Wave 1 historical implementation bumped the header date to the day its last change actually landed (2026-09-17); the statement is unchanged."
+    },
+    {
+      "id": "CORR-DS-001",
+      "path": "docs/CURRENT_STATE.md",
+      "oldLineSha256": "sha256:55d26be1958be4f4714d7344",
+      "oldLineExcerpt": "> Durable memory for the next agent/session. Last updated: **2026-09-17**",
+      "reason": "The header date and the append-only rule are in genuine tension: checkDocumentationFreshness requires the date to cover the document's own last change, and any append IS a change, so appending to this archive necessarily edits line 3. The statement is unchanged; only the date it carries advances to 2026-09-18 for the Control Center design-system campaign."
+    },
+    {
+      "id": "CORR-W11-001",
+      "path": "docs/CURRENT_STATE.md",
+      "oldLineSha256": "sha256:b4f1175984c70a972abfb55f",
+      "oldLineExcerpt": "| `LAST_SUBSTANTIVE_IMPLEMENTATION_SHA` | the last commit that changed implementation AND was validated | `62d23e2` |",
+      "reason": "The prose cell still named the W10 anchor 62d23e2 while the machine-checked block had already moved on, which is exactly the R-11/R-12 drift this table records. W11 landed implementation (the historical-arm runner, two guard suites, their validation-universe registration), so project:check required the substantive baseline to advance to ae06d4d; the prose cell is corrected to match rather than left contradicting the block below it."
+    },
+    {
+      "id": "CORR-W12-001",
+      "path": "docs/CURRENT_STATE.md",
+      "oldLineSha256": "sha256:62d6fc1e4f602c5c3cf6e221",
+      "oldLineExcerpt": "> Durable memory for the next agent/session. Last updated: **2026-09-18**",
+      "reason": "W12 appended the current-source yield checkpoint and advanced the header date to the day its last change actually landed (2026-09-19); the historical statement is unchanged."
+    },
+    {
+      "id": "CORR-W12-002",
+      "path": "docs/CURRENT_STATE.md",
+      "oldLineSha256": "sha256:d1f8d0c9b3da032837374e74",
+      "oldLineExcerpt": "| `LAST_SUBSTANTIVE_IMPLEMENTATION_SHA` | the last commit that changed implementation AND was validated | `ae06d4d` |",
+      "reason": "W12 advanced the substantive implementation anchor to the validated measurement-integrity and validation-universe checkpoint; the superseded W11 table cell remains represented by this declared correction."
+    },
+    {
+      "id": "CORR-W13-001",
+      "path": "docs/CURRENT_STATE.md",
+      "oldLineSha256": "sha256:9fecb01716c96cb2f345fb77",
+      "oldLineExcerpt": "Durable memory for the next agent/session. Last updated: **2026-09-19**",
+      "reason": "W13 close-out updated the governed current-state rows on 2026-09-20 and the header date must cover the document's own last change; the header statement itself is unchanged."
+    },
+    {
+      "id": "CORR-PERF-001",
+      "path": "docs/CURRENT_STATE.md",
+      "oldLineSha256": "sha256:8c6c2e74663d9af7d5c27984",
+      "oldLineExcerpt": "| `TEST_INFRASTRUCTURE_PERFORMANCE_V1_STATUS` | `IN_PROGRESS` — owner-authorized test/gate performance campaign activated from `8dd8b163b567b939b977649d6ba7c371cf230ee6`; W13 remains a frozen read-o",
+      "reason": "The performance campaign close-out advanced its governed status row from IN_PROGRESS to the terminal measured verdict; the campaign body after the status word is unchanged."
+    },
+    {
+      "id": "CORR-AUD-001",
+      "path": "docs/CURRENT_STATE.md",
+      "oldLineSha256": "sha256:451737028a0d24559ece4986",
+      "oldLineExcerpt": "> Durable memory for the next agent/session. Last updated: **2026-09-20**",
+      "reason": "The exhaustive-audit terminal reconciliation advanced the live-state v2 block and bumped the header date to the day its last change actually landed (2026-09-21); the header statement itself is unchanged."
+    },
+    {
+      "id": "CORR-AUD-010-001",
+      "path": "docs/CURRENT_STATE.md",
+      "oldLineSha256": "sha256:9eae272158fd32291a471307",
+      "oldLineExcerpt": "> Durable memory for the next agent/session. Last updated: **2026-09-21**",
+      "reason": "Priority-audit campaign opened on 2026-09-22; the header freshness rule requires Last updated to cover the document's own last change when the live-state block is rebound."
+    },
+    {
+      "id": "CORR-TERM-001",
+      "path": "docs/CURRENT_STATE.md",
+      "oldLineSha256": "sha256:1166761f580833a9f7bb5ea5",
+      "oldLineExcerpt": "> Durable memory for the next agent/session. Last updated: **2026-09-23**",
+      "reason": "Priority-audit terminal close-out advances the header date to 2026-09-24, the UTC calendar day the machine-block substantive-anchor update actually lands; the header statement itself is unchanged."
+    },
+    {
+      "id": "CORR-SUCC-001",
+      "path": "docs/CURRENT_STATE.md",
+      "oldLineSha256": "sha256:99d6427ad4276b2296f092ce",
+      "oldLineExcerpt": "> Durable memory for the next agent/session. Last updated: **2026-09-24**",
+      "reason": "Successor-campaign terminal close-out advanced the governed live-state block, certification receipts, and campaign status row on 2026-09-25; the header date must cover the archive's own last change, while the statement itself is unchanged."
+    },
+    {
+      "id": "CORR-SUCC-002",
+      "path": "docs/CURRENT_STATE.md",
+      "oldLineSha256": "sha256:7932c01c5318d3801144b323",
+      "oldLineExcerpt": "| `SUCCESSOR_CAMPAIGN_ENGINE_V1_STATUS` | `COMPLETE_LOCAL_NOT_CI_VERIFIED`",
+      "reason": "Release-support validation superseded the earlier local and clean receipt values for the same completed successor campaign; the governed status remains COMPLETE_LOCAL_NOT_CI_VERIFIED and the implementation inventory is unchanged."
+    }
+  ]
+}

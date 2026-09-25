@@ -2,10 +2,13 @@
 //
 // One parser for the checkbox ledger of `openspec/changes/<id>/tasks.md`, used
 // by both the completion-ledger agreement check (`bin/agent-state.mjs`) and the
-// open-work report (`bin/nightwatch-status.mjs`). Strikethrough entries
-// (`- [ ] ~~…~~`) are deliberately declared out of scope
-// (`DECLARED_NOT_IN_SCOPE`) and never count as open work; a strikethrough may
-// wrap across continuation lines.
+// open-work report (`bin/nightwatch-status.mjs`). A strikethrough entry
+// (`- [ ] ~~…~~`) is SETTLED only when its strike text carries a disposition
+// token (A-21 / D1: every item ends in exactly one recorded disposition;
+// `DEFERRED` is no longer accepted). A strike without a token is never
+// settled: it is reported as `LEDGER_UNDISPOSITIONED_ITEM` and counted as
+// undispositioned open work. A strikethrough may wrap across continuation
+// lines.
 //
 // Read-only: this module only reads filesystem paths it is given.
 
@@ -16,6 +19,34 @@ import { normalizeTaskStatus, PROTOCOL_V2 } from '../agent-continuity-protocol.m
 export const LEDGER_TERMINAL_STATUSES = Object.freeze(['COMPLETE', 'BLOCKED']);
 export const LEDGER_MISSING_TASK_STATUS = 'MISSING_TASK';
 export const OPEN_WORK_MODEL_VERSION = 'nightwatch.open-work-report.v1';
+
+/**
+ * The one disposition vocabulary (design D1, extended by the audit's own
+ * RECONCILE / RATCHET / EXECUTE forms). A struck item is settled only when
+ * its strike text carries at least one of these tokens. `DEFERRED` is
+ * deliberately absent: it named a hidden backlog, not a disposition.
+ */
+export const LEDGER_DISPOSITION_TOKENS = Object.freeze([
+  'FIX',
+  'NARROW',
+  'QUARANTINE',
+  'ACCEPTED_RESIDUAL',
+  'COMPLETED_LATER',
+  'SUPERSEDED',
+  'HISTORICAL',
+  'NON_GOAL',
+  'EXTERNAL',
+  'RECONCILE',
+  'RATCHET',
+  'EXECUTE',
+]);
+
+const DISPOSITION_TOKEN_RE = new RegExp(`\\b(?:${LEDGER_DISPOSITION_TOKENS.join('|')})\\b`);
+
+/** True when a struck entry's text carries at least one disposition token. */
+export function carriesDispositionToken(strikeText) {
+  return DISPOSITION_TOKEN_RE.test(String(strikeText ?? ''));
+}
 
 const OPEN_LINE_RE = /^\s*-\s*\[ \]\s*(.*)$/;
 const DONE_LINE_RE = /^\s*-\s*\[[xX]\]/;
@@ -34,12 +65,14 @@ function readFileIfPresent(file) {
 
 /**
  * Parse one tasks.md ledger. Returns the open (non-declared) entries with
- * their line numbers, the completed count, and the declared-out-of-scope
- * count. Pure over text; deterministic.
+ * their line numbers, the completed count, the settled struck count
+ * (`declaredNotInScope`, disposition token present) and the UNDISPOSITIONED
+ * struck entries (no token — never settled). Pure over text; deterministic.
  */
 export function parseLedgerTasks(tasksText) {
   const lines = String(tasksText ?? '').split(/\r?\n/);
   const open = [];
+  const undispositioned = [];
   let done = 0;
   let declaredNotInScope = 0;
   for (let index = 0; index < lines.length; index += 1) {
@@ -57,13 +90,17 @@ export function parseLedgerTasks(tasksText) {
         entryText += `\n${lines[cursor]}`;
         cursor += 1;
       }
-      if (/~~[\s\S]*?~~/.test(entryText)) declaredNotInScope += 1;
-      else open.push({ line: index + 1, text: openMatch[1].trim().slice(0, 160) });
+      if (/~~[\s\S]*?~~/.test(entryText)) {
+        if (carriesDispositionToken(entryText)) declaredNotInScope += 1;
+        else undispositioned.push({ line: index + 1, text: openMatch[1].trim().slice(0, 160) });
+      } else {
+        open.push({ line: index + 1, text: openMatch[1].trim().slice(0, 160) });
+      }
       continue;
     }
     if (DONE_LINE_RE.test(line)) done += 1;
   }
-  return { open, done, declaredNotInScope };
+  return { open, done, declaredNotInScope, undispositioned };
 }
 
 /** First non-empty line of the STATE `## Blockers` section, or null. */
@@ -130,7 +167,7 @@ export function collectOpenWorkInput(root) {
   const entries = [];
   for (const changeId of listActiveChangeIds(root)) {
     const tasksText = readFileIfPresent(path.join(root, 'openspec', 'changes', changeId, 'tasks.md')) ?? '';
-    const { open, done, declaredNotInScope } = parseLedgerTasks(tasksText);
+    const { open, done, declaredNotInScope, undispositioned } = parseLedgerTasks(tasksText);
     const stateText = readFileIfPresent(path.join(root, '.agent', 'tasks', changeId, 'STATE.md'));
     if (stateText === null) {
       entries.push({
@@ -138,6 +175,7 @@ export function collectOpenWorkInput(root) {
         taskStatus: LEDGER_MISSING_TASK_STATUS,
         openCount: open.length,
         declaredNotInScope,
+        undispositionedCount: undispositioned.length,
         doneCount: done,
         blocker: 'missing continuity-v2 task record',
         blockerClass: 'INTERNAL',
@@ -146,13 +184,18 @@ export function collectOpenWorkInput(root) {
     }
     const statusMatch = /^Status:\s*(\S+)/m.exec(stateText);
     const taskStatus = normalizeTaskStatus(statusMatch === null ? undefined : statusMatch[1]);
-    if (taskStatus === 'COMPLETE' || taskStatus === 'BLOCKED') continue;
+    // A-21 / R2-62: nothing is hidden. BLOCKED tasks are their own open-work
+    // class (previously skipped and invisible), and a terminal ledger with
+    // undispositioned strikes keeps reporting them — the strikes are not
+    // settled, so the campaign is not closed.
+    if (taskStatus === 'COMPLETE' && undispositioned.length === 0) continue;
     const blocker = parseBlockersSection(stateText);
     entries.push({
       changeId,
       taskStatus: taskStatus ?? 'UNKNOWN',
       openCount: open.length,
       declaredNotInScope,
+      undispositionedCount: undispositioned.length,
       doneCount: done,
       blocker,
       blockerClass: classifyBlocker(blocker),
@@ -177,8 +220,17 @@ export function inspectLedgerAgreement(root) {
   const archivedIds = new Set(listArchivedChangeIds(root));
   for (const changeId of changeIds) {
     const text = readFileIfPresent(path.join(root, 'openspec', 'changes', changeId, 'tasks.md')) ?? '';
-    const { open, done, declaredNotInScope } = parseLedgerTasks(text);
+    const { open, done, declaredNotInScope, undispositioned } = parseLedgerTasks(text);
     const stateText = readFileIfPresent(path.join(root, '.agent', 'tasks', changeId, 'STATE.md'));
+    if (undispositioned.length > 0) {
+      // A-21: a strike without a disposition token is not settled. Reported
+      // always, so a hidden backlog cannot look closed. The full drain of the
+      // legacy population is the M13 ledger closure.
+      const lines = undispositioned.map((entry) => entry.line).join(', ');
+      warnings.push(
+        `LEDGER_UNDISPOSITIONED_ITEM: change ${changeId} leaves ${undispositioned.length} struck entr${undispositioned.length === 1 ? 'y' : 'ies'} without a disposition token at line${undispositioned.length === 1 ? '' : 's'} ${lines}`,
+      );
+    }
     if (stateText === null) {
       errors.push(
         `LEDGER_CHANGE_WITHOUT_TASK: change ${changeId} has no .agent/tasks/${changeId}/STATE.md (open=${open.length} declared_not_in_scope=${declaredNotInScope} done=${done})`,

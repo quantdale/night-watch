@@ -1663,6 +1663,38 @@
           }
         ]
       }
+    ],
+    "checkReleaseEvidenceBindings": [
+      {
+        "id": "HC-144",
+        "ops": [
+          {
+            "file": "config/release-evidence.v1.json",
+            "search": "\"subject\": \"validation-lane-closure\",",
+            "replace": "\"subject\": \"validation-lane-closurx\","
+          }
+        ]
+      },
+      {
+        "id": "HC-145",
+        "ops": [
+          {
+            "file": "config/release-evidence.v1.json",
+            "search": "\"subject\": \"root-compile\",",
+            "replace": "\"subject\": \"root-compile\", \"note\": \"probe\","
+          }
+        ]
+      },
+      {
+        "id": "HC-146",
+        "ops": [
+          {
+            "file": "config/document-role-corrections.v1.json",
+            "search": "\"id\": \"CORR-7-001\",",
+            "replace": "\"id\": \"CORR-7-001\", \"note\": \"probe\","
+          }
+        ]
+      }
     ]
   }
 }

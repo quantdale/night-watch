@@ -421,7 +421,21 @@ test.describe('F-08 — governed status-word ledger', () => {
     };
     const documents = roleConfig.documents.map((entry) => ({ path: entry.path, text: fs.readFileSync(path.join(root, entry.path), 'utf8') }));
     documents.push({ path: 'README.md', text: fs.readFileSync(path.join(root, 'README.md'), 'utf8') });
-    const result = checkGovernedStatusWords(documents);
+    // R2-N6: LIVE_TASK_STATUS is derived from the active task identity, so the
+    // caller supplies that derivation input exactly as the hardening rule does.
+    const activeTaskText = fs.readFileSync(path.join(root, '.agent', 'ACTIVE_TASK.md'), 'utf8');
+    const preamble = activeTaskText.split(/\r?\n/).reduce(
+      (accumulator: { lines: string[]; done: boolean }, line: string) => {
+        if (accumulator.done) return accumulator;
+        if (/^##\s+/.test(line)) return { lines: accumulator.lines, done: true };
+        accumulator.lines.push(line);
+        return accumulator;
+      },
+      { lines: [], done: false },
+    ).lines.join('\n');
+    const activeTaskStatus = /^[ \t]*Status:[ \t]*(.+?)[ \t]*$/m.exec(preamble)?.[1]?.trim();
+    expect(activeTaskStatus, 'the active task identity must state a Status').toBeTruthy();
+    const result = checkGovernedStatusWords(documents, { activeTaskStatus });
     expect(result.violations).toEqual([]);
     expect(result.holds).toBe(true);
     // Non-vacuous: the scan must actually see governed statements.

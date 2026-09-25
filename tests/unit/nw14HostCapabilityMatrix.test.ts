@@ -30,6 +30,7 @@ import {
   qualifyRuntime,
   type DependencyCurrencyInput,
 } from '../../src/core/dependencyCurrency/index';
+import { loadLaneState } from '../../bin/lib/validation-lane-state.mjs';
 
 const ROOT = path.resolve(__dirname, '../..');
 const MATRIX_FILE = 'docs/HOST-CAPABILITY-MATRIX.md';
@@ -282,7 +283,9 @@ test.describe('group 9 — dependency and supply-chain currency (F-11)', () => {
   });
 
   test('the advisory lane is proven by the executed query and no current-answer document implies a clean scan', () => {
-    const laneState = JSON.parse(read('config/validation-lane-state.v1.json')) as { lanes: ReadonlyArray<{ laneId: string; class: string; evidence: string; evidenceSha: string; unblockCondition: string | null; revisitDate: string | null }> };
+    // A-01: evidence bindings live in config/release-evidence.v1.json and are
+    // overlaid by loadLaneState (legacy fallback once for compatibility).
+    const laneState = { lanes: loadLaneState(ROOT).lanes as ReadonlyArray<{ laneId: string; class: string; evidence: string; evidenceSha: string | null; unblockCondition: string | null; revisitDate: string | null }> };
     const lane = laneState.lanes.find((entry) => entry.laneId === DEPENDENCY_RECORD.advisoryLaneId);
     // The owner authorized one bounded query; it executed, so the lane is
     // PROVEN with an evidence SHA. PROVEN lanes carry no unblock condition.

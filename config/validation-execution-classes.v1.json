@@ -588,6 +588,12 @@
       "class": "PARALLEL_SAFE",
       "signals": []
     },
+    "tests/unit/liveTaskStatusDerivation.test.ts": {
+      "class": "MUTATION_CAMPAIGN_EXCLUSIVE",
+      "signals": [
+        "real-tree-hardening-check"
+      ]
+    },
     "tests/unit/localCampaign.test.ts": {
       "class": "PARALLEL_SAFE",
       "signals": [

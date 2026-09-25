@@ -11,9 +11,9 @@ Last substantive checkpoint SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-final-product-complet-a891357d
-Last checkpoint: 2026-09-25 — M1 complete: bootstrap checkpoint `ec6010a2`
-(planning change + continuity together); session/handoff/agent/project checks
-PASS post-commit.
+Last checkpoint: 2026-09-26 — M2 implementation complete (tasks 3.1-3.6);
+gate:dev PASS 5481/0; gate:milestone green except PROJECT_STATE_CHECKOUT_DIRTY
+(pre-commit state only).
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
@@ -34,11 +34,13 @@ ledger, and end at `PROJECT_COMPLETE_AND_CI_CERTIFIED` under D-129 with a
 
 ## Current Milestone
 
-M2 certification anchors and ratchets (tasks 3.1-3.7) — make evidence
-bindings, document-role corrections and LIVE_TASK_STATUS checkpoint-neutral
-before any evidence binding (A-01, R2-N6), with the project:check evidence
-assertions, the bin type-check ceiling ratchet and the disposition-token
-ledger guard.
+M2 certification anchors and ratchets — implementation complete: derivation
+of LIVE_TASK_STATUS (R2-N6), checkpoint-neutral binding files behind the
+diff-shape guard (A-01), the binding hardening rule with three mutation
+probes (3.3), the project:check D-06 evidence assertions (3.4), the bin
+type-check ceiling ratchet registered in the gate (3.5), and the disposition-
+token ledger accounting with BLOCKED/undispositioned classes (3.6). The M2
+closure commit and the post-commit gate:milestone rerun close the milestone.
 
 ## Completed Milestones
 
@@ -55,16 +57,15 @@ ledger guard.
 
 ## Work In Progress
 
-- M2 task 3.1: derive LIVE_TASK_STATUS from `.agent/ACTIVE_TASK.md` and
-  remove the literal from `src/core/source/censusFigureLedger.ts:290`.
+- M2 closure: commit the milestone, re-run `gate:milestone` on the committed
+  state (its only pre-commit failure was PROJECT_STATE_CHECKOUT_DIRTY), and
+  record the receipt.
 
 ## Exact Next Action
 
-Implement M2 tasks 3.1-3.7 in order (census literal derivation, the two
-checkpoint-neutral binding files behind a diff-shape guard, the hardening
-probe, project:check evidence assertions, the bin type-check ceiling ratchet,
-the disposition-token ledger guard), then focused suites plus `gate:dev` and
-`gate:milestone`, record exact results, and commit the M2 milestone.
+Commit the M2 implementation, re-run `npm run gate:milestone` to a full PASS,
+record both receipts here, tick tasks 3.1-3.7, mark PLAN M2 COMPLETE, then
+begin M3 (tasks 4.1-4.13: the CI-green deterministic hermetic spine).
 
 ## Files Changed
 
@@ -163,6 +164,48 @@ Relevant failure/output summary:
 committed; every other section reproduced the certified-baseline detail with
 ledger_errors=0 (OD-4's LEDGER_CHANGE_WITHOUT_TASK resolved). Re-run after
 the bootstrap commit.
+
+Command: `npm run typecheck`, `npm run typecheck:bin`, `npm run hardening:check`
+Result: PASS (M2)
+When: 2026-09-26
+Relevant failure/output summary: root typecheck clean; bin lane PASS with the
+new ceiling ratchet (bin/run-shards.mjs 14 <= 25 after JSDoc annotation; no
+behaviour change), conformance 14/76 (burn-down is M9); hardening structural
+invariants hold including the new `checkReleaseEvidenceBindings` rule.
+
+Command: `node bin/hardening-check.mjs --probe-campaign`
+Result: PASS (M2, task 3.3)
+When: 2026-09-26
+Relevant failure/output summary: rules=86 probes=146 detected=146
+undetected=0 restored statusUnchanged=true; HC-144 (subject mutation),
+HC-145 (non-binding key), HC-146 (correction-entry non-binding key) all
+DETECTED by `checkReleaseEvidenceBindings`.
+
+Command: focused suites (liveTaskStatusDerivation 5/5, c16ExpectedInformationGain,
+hardeningRuleParity, productionCompletionOpenWork 15/15, projectState 91/91,
+plannerHandoff, validationShardPlan, validationExecutionClasses,
+phase23QualityGate, hardeningRuleQuantifiers, nw14HostCapabilityMatrix)
+Result: PASS (M2)
+When: 2026-09-26
+Relevant failure/output summary: contract pins updated for the new rule
+(86 rules), the BIN_TYPECHECK_CEILING gate group, the new test-file
+classifications, and the binding-authority migration (lane evidence resolved
+through config/release-evidence.v1.json with the one-time legacy fallback).
+
+Command: `npm run gate:dev`
+Result: PASS (M2, task 3.7)
+When: 2026-09-26
+Relevant failure/output summary: all steps exit=0; affected-shards
+passed=5481 failed=0 in 420.2s; validation-universe unclassified=0 after
+registering tests/unit/liveTaskStatusDerivation.test.ts.
+
+Command: `npm run gate:milestone` (pre-commit)
+Result: STEP_FAILED (EXPECTED PRE-COMMIT)
+When: 2026-09-26
+Relevant failure/output summary: every step exit=0 (typecheck-bin,
+hardening-rules 146/146 probe campaign included) except project-check exit=1
+on `PROJECT_STATE_CHECKOUT_DIRTY` — the milestone gate requires committed
+state; re-run after the M2 commit.
 
 ## Decisions Made During This Task
 

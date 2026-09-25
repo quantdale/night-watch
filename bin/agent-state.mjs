@@ -23,6 +23,7 @@ import {
   isApprovedCheckpointPath,
 } from './agent-continuity-protocol.mjs';
 import { inspectWorkspace, listWorktreeBranches } from './workspace-integrity.mjs';
+import { checkpointRoleViolations } from './lib/checkpoint-role.mjs';
 import { validateProgrammeState } from './lib/programme-state.mjs';
 import {
   inspectLedgerAgreement,
@@ -483,7 +484,9 @@ function classifyCommitRole(root, commit) {
   if (inspected.status !== 'KNOWN') return { ...inspected, role: 'AMBIGUOUS' };
   const paths = inspected.paths;
   if (paths.length === 0) return { ...inspected, role: 'DOCUMENTATION_ONLY', reason: 'commit changes no paths' };
-  const substantivePaths = paths.filter((file) => !isApprovedCheckpointPath(file));
+  // A-01: approval is path eligibility AND, for the binding files, the
+  // diff-shape guard evaluated over this exact commit.
+  const substantivePaths = checkpointRoleViolations(root, paths, { kind: 'commit', commit });
   return {
     ...inspected,
     role: substantivePaths.length === 0 ? 'DOCUMENTATION_ONLY' : 'IMPLEMENTATION',
@@ -535,7 +538,8 @@ function checkContinuity(stateFields, root, head, errors, warnings) {
 
   if (validatedOk && substantiveOk && validated !== substantive) {
     const rolePaths = isAncestor(root, substantive, validated) ? committedChangedPaths(root, substantive, validated) : null;
-    const docsOnly = rolePaths !== null && rolePaths.every((file) => isApprovedCheckpointPath(file));
+    const roleViolations = rolePaths === null ? null : checkpointRoleViolations(root, rolePaths, { kind: 'range', from: substantive, to: validated });
+    const docsOnly = roleViolations !== null && roleViolations.length === 0;
     errors.push(
       docsOnly
         ? `INVALID_IMPLEMENTATION_ROLE: LAST_VALIDATED_IMPLEMENTATION_SHA ${validated} is a documentation-only descendant of substantive checkpoint ${substantive}`
@@ -571,7 +575,7 @@ function checkContinuity(stateFields, root, head, errors, warnings) {
         if (documentationPaths === null) {
           errors.push('INVALID_DOCUMENTATION_CHECKPOINT: unable to inspect the checkpoint range');
         } else {
-          const disallowed = documentationPaths.filter((file) => !isApprovedCheckpointPath(file));
+          const disallowed = checkpointRoleViolations(root, documentationPaths, { kind: 'range', from: substantive, to: documentation });
           if (disallowed.length > 0) {
             errors.push(`INVALID_DOCUMENTATION_CHECKPOINT: range contains non-documentation paths: ${disallowed.join(', ')}`);
           }
@@ -716,7 +720,7 @@ export function classifySha(root, recordedSha, suppliedHead = null) {
   }
 
   const paths = changedPaths(root, recordedSha, head);
-  const disallowed = paths.filter((file) => !isApprovedCheckpointPath(file));
+  const disallowed = checkpointRoleViolations(root, paths, { kind: 'range', from: recordedSha, to: head });
   if (disallowed.length > 0) {
     return {
       status: 'STALE',
