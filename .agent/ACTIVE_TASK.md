@@ -6,7 +6,7 @@ Title: Fresh successor campaign engine and reassessment
 Status: COMPLETE
 Task directory: .agent/tasks/nightwatch-successor-campaign-engine-v1
 Starting SHA: 78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1
-Last validated implementation SHA: b0f9b1f2ed9ccd2c47d7c4002ffb40804d5ec415
+Last validated implementation SHA: 87c4506f00a6944160aa02c9d00943378ea84e94
 Last checkpoint: 2026-09-25 — terminal local and clean certification PASS; exact C-00 integration is the only remaining closeout step.
 Current milestone: COMPLETE / STOP — all authorized executable successors implemented.
 Next action: STOP — terminal campaign record; C-00 clean/integrate closeout only.
@@ -16,8 +16,8 @@ PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1
-LAST_VALIDATED_IMPLEMENTATION_SHA: b0f9b1f2ed9ccd2c47d7c4002ffb40804d5ec415
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: b0f9b1f2ed9ccd2c47d7c4002ffb40804d5ec415
+LAST_VALIDATED_IMPLEMENTATION_SHA: 87c4506f00a6944160aa02c9d00943378ea84e94
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 87c4506f00a6944160aa02c9d00943378ea84e94
 LIVE_HEAD_AUTHORITY: GIT
 PHASE_SUCCESSOR_CAMPAIGN_ENGINE_V1_STATUS: COMPLETE
 
