@@ -388,7 +388,16 @@ export function checkPlannerHandoffIntegrity() {
   if (/\b(?:fetch\s*\(|https?\.request|WebSocket\s*\(|net\.|dns\.)/i.test(checker)) {
     fail('planner handoff checker contains network capability');
   }
-  if (/process\.env/.test(checker) || /shell\s*:\s*true/.test(checker) || /stdio\s*:\s*['"]inherit['"]/.test(checker)) {
+  // D-04 / task 4.10 — the ONE ambient read this checker may do is the
+  // non-secret gate-mode label (`NIGHTWATCH_GATE_ENVIRONMENT`): a
+  // classification input with no credential, path or authority content that
+  // lets ci/clean checkouts classify a legitimately absent session worktree.
+  // Every other `process.env` use remains forbidden — ambient credentials,
+  // tokens, paths and shell/output authority never inherit here.
+  const withoutGateModeLabel = checker
+    .split(/process\.env\[\s*['"]NIGHTWATCH_GATE_ENVIRONMENT['"]\s*\]/g)
+    .join('');
+  if (/process\.env/.test(withoutGateModeLabel) || /shell\s*:\s*true/.test(checker) || /stdio\s*:\s*['"]inherit['"]/.test(checker)) {
     fail('planner handoff checker must not inherit ambient credentials or shell/output authority');
   }
   const packageJson = readDataFile('package.json');

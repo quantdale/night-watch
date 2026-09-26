@@ -156,3 +156,60 @@ test.describe('active-task routing binding (DEF-FC-04)', () => {
     expect(result.errors).toEqual([]);
   });
 });
+
+test.describe('D-04 / task 4.10 — SESSION_DECLARED_ABSENT_EXPECTED in ci/clean modes', () => {
+  const routing = [
+    '## Routing and safety',
+    '',
+    '```',
+    'CAMPAIGN: campaign-c',
+    'SESSION WORKTREE: session/c-1111',
+    '```',
+    '',
+  ].join('\n');
+
+  test('ci mode: an absent declared worktree matching the STATE branch is an expected classification', () => {
+    const result = inspectActiveTaskRouting(routing, 'campaign-c', 'session/c-1111', [], 'CI');
+    expect(result.errors).toEqual([]);
+    expect(result.warnings.join('\n')).toContain(
+      'ACTIVE_TASK_SESSION_DECLARED_ABSENT_EXPECTED: declared session/c-1111'
+    );
+  });
+
+  test('clean mode: the same classification holds', () => {
+    const result = inspectActiveTaskRouting(routing, 'campaign-c', 'session/c-1111', [], 'CLEAN');
+    expect(result.errors).toEqual([]);
+    expect(result.warnings.join('\n')).toContain('ACTIVE_TASK_SESSION_DECLARED_ABSENT_EXPECTED');
+  });
+
+  test('local mode (no gate label): the absent worktree still fails hard', () => {
+    const result = inspectActiveTaskRouting(routing, 'campaign-c', 'session/c-1111', [], null);
+    expect(result.errors.join('\n')).toContain(
+      'ACTIVE_TASK_SESSION_WORKTREE_MISSING: declared session/c-1111 is not a registered live worktree on that branch'
+    );
+    expect(result.warnings).toEqual([]);
+  });
+
+  test('negative probe: a branch mismatch is never expected, even in ci mode', () => {
+    const result = inspectActiveTaskRouting(routing, 'campaign-c', 'session/other-2222', [], 'CI');
+    expect(result.warnings).toEqual([]);
+    expect(result.errors.join('\n')).toContain('ACTIVE_TASK_ROUTING_SESSION_WORKTREE_DRIFT');
+    expect(result.errors.join('\n')).toContain(
+      'ACTIVE_TASK_SESSION_WORKTREE_MISSING: declared session/c-1111'
+    );
+  });
+
+  test('negative probe: another routing error keeps the hard failure in ci mode', () => {
+    const drifted = routing.replace('CAMPAIGN: campaign-c', 'CAMPAIGN: campaign-x');
+    const result = inspectActiveTaskRouting(drifted, 'campaign-c', 'session/c-1111', [], 'CI');
+    expect(result.warnings).toEqual([]);
+    expect(result.errors.join('\n')).toContain('ACTIVE_TASK_ROUTING_CAMPAIGN_DRIFT');
+    expect(result.errors.join('\n')).toContain('ACTIVE_TASK_SESSION_WORKTREE_MISSING');
+  });
+
+  test('a registered live worktree never needs the classification', () => {
+    const result = inspectActiveTaskRouting(routing, 'campaign-c', 'session/c-1111', ['session/c-1111'], 'CI');
+    expect(result.errors).toEqual([]);
+    expect(result.warnings).toEqual([]);
+  });
+});

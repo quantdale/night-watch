@@ -159,7 +159,7 @@ function fail(errors, code) {
 }
 
 function gitEnv(root = process.cwd()) {
-  return {
+  const environment = {
     PATH: '/usr/bin:/bin',
     HOME: root,
     GIT_CONFIG_GLOBAL: '/dev/null',
@@ -168,6 +168,13 @@ function gitEnv(root = process.cwd()) {
     GIT_OPTIONAL_LOCKS: '0',
     GIT_CONFIG_NOSYSTEM: '1',
   };
+  // D-04 / 4.10 — the gate-mode label is a non-secret classification input;
+  // the agent-state child must see the same mode its gate group runs in.
+  const gateEnvironment = process.env['NIGHTWATCH_GATE_ENVIRONMENT'];
+  if (gateEnvironment !== undefined && gateEnvironment !== '') {
+    environment['NIGHTWATCH_GATE_ENVIRONMENT'] = gateEnvironment;
+  }
+  return environment;
 }
 
 function gitReadOnly(root, args) {

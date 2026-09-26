@@ -102,14 +102,15 @@ const REQUIRED_STATE_HEADINGS = [
 // absence. A declared session worktree resolves only against the live set;
 // `NONE` is legal and means canonical-only work, which requires STATE.md
 // `Branch: main`.
-export function inspectActiveTaskRouting(activeText, taskId, stateBranch, liveWorktreeBranches = null) {
+export function inspectActiveTaskRouting(activeText, taskId, stateBranch, liveWorktreeBranches = null, gateEnvironment = process.env['NIGHTWATCH_GATE_ENVIRONMENT'] ?? null) {
   const errors = [];
+  const warnings = [];
   // Deliberately not parseMarkdownSections: that helper drops fenced lines,
   // and the routing directives belong inside the authority fence they govern.
   const body = extractSectionRaw(activeText, '## Routing and safety');
   if (body === null || body.trim() === '') {
     errors.push('ACTIVE_TASK_ROUTING_BLOCK_MISSING: no `## Routing and safety` section');
-    return { errors, declaredCampaign: undefined, declaredWorktree: undefined };
+    return { errors, warnings, declaredCampaign: undefined, declaredWorktree: undefined };
   }
 
   const declaredCampaign = matchSingleDirective(body, 'CAMPAIGN', errors);
@@ -142,9 +143,25 @@ export function inspectActiveTaskRouting(activeText, taskId, stateBranch, liveWo
         `ACTIVE_TASK_SESSION_WORKTREE_UNKNOWN: declared ${declaredWorktree} cannot be resolved because the live worktree list is unreadable`
       );
     } else if (Array.isArray(liveWorktreeBranches) && !liveWorktreeBranches.includes(declaredWorktree)) {
-      errors.push(
-        `ACTIVE_TASK_SESSION_WORKTREE_MISSING: declared ${declaredWorktree} is not a registered live worktree on that branch`
-      );
+      // D-04 / task 4.10 — in ci and clean gate modes a declared session
+      // worktree is legitimately absent: a fresh checkout shares nothing with
+      // the live session. The classification holds ONLY when every invariant
+      // checked so far passes and the declared branch equals the task STATE
+      // branch; any other mismatch keeps the hard failure.
+      const absentIsExpected =
+        (gateEnvironment === 'CI' || gateEnvironment === 'CLEAN')
+        && errors.length === 0
+        && typeof stateBranch === 'string' && stateBranch !== ''
+        && stateBranch === declaredWorktree;
+      if (absentIsExpected) {
+        warnings.push(
+          `ACTIVE_TASK_SESSION_DECLARED_ABSENT_EXPECTED: declared ${declaredWorktree} matches the task STATE branch and is absent from this ci/clean checkout; no live session is claimed here`
+        );
+      } else {
+        errors.push(
+          `ACTIVE_TASK_SESSION_WORKTREE_MISSING: declared ${declaredWorktree} is not a registered live worktree on that branch`
+        );
+      }
     }
   }
 
@@ -161,7 +178,7 @@ export function inspectActiveTaskRouting(activeText, taskId, stateBranch, liveWo
     }
   }
 
-  return { errors, declaredCampaign, declaredWorktree };
+  return { errors, warnings, declaredCampaign, declaredWorktree };
 }
 
 function extractSectionRaw(text, heading) {
@@ -950,8 +967,12 @@ export function validate(root, auditMode = false) {
 
     const stateFields = state ? parseKeyValueFile(state) : new Map();
     const liveWorktreeBranches = listWorktreeBranches(root);
-    for (const routingError of inspectActiveTaskRouting(activeText, taskId, stateFields.get('Branch'), liveWorktreeBranches).errors) {
+    const routing = inspectActiveTaskRouting(activeText, taskId, stateFields.get('Branch'), liveWorktreeBranches);
+    for (const routingError of routing.errors) {
       errors.push(routingError);
+    }
+    for (const routingWarning of routing.warnings) {
+      warnings.push(routingWarning);
     }
     if (state && stateFields.get('Task ID') !== taskId) {
       errors.push(`STATE Task ID does not match ACTIVE_TASK: ${stateFields.get('Task ID') ?? '<missing>'} != ${taskId}`);

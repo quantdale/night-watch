@@ -96,6 +96,34 @@
       ]
     },
     {
+      "name": "NIGHTWATCH_GATE_ENVIRONMENT",
+      "purpose": "Gate-mode classification label (LOCAL / CI / CLEAN / PREDEV and the launcher environment classes). A non-secret enum set by the quality gate and forwarded to the continuity children so ci/clean checkouts can classify a legitimately absent session worktree (D-04). Never a credential, path, or authority.",
+      "requiredIn": [],
+      "shape": {
+        "kind": "enum",
+        "values": [
+          "LOCAL",
+          "CI",
+          "CLEAN",
+          "PREDEV",
+          "CLEAN_CHECKOUT",
+          "SYNTHETIC_CAMPAIGN",
+          "SHARDS",
+          "GATE"
+        ]
+      },
+      "default": null,
+      "secretBearing": false,
+      "consumers": [
+        "bin/quality-gate.mjs",
+        "bin/agent-state.mjs",
+        "bin/planner-handoff-check.mjs",
+        "bin/project-state-check.mjs",
+        "bin/lib/shard-child-environment.mjs",
+        "bin/child-environment.mjs"
+      ]
+    },
+    {
       "name": "NIGHTWATCH_GATE_RECEIPT_PATH",
       "purpose": "Explicit quality-gate receipt destination; honoured only after full path validation.",
       "requiredIn": [],

@@ -18,9 +18,11 @@ export function inspectActiveTaskRouting(
   activeText: string,
   taskId: string,
   stateBranch?: string | undefined,
-  liveWorktreeBranches?: string[] | null
+  liveWorktreeBranches?: string[] | null,
+  gateEnvironment?: string | null
 ): {
   errors: string[];
+  warnings: string[];
   declaredCampaign: string | undefined;
   declaredWorktree: string | undefined;
 };
