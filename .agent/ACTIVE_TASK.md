@@ -6,24 +6,27 @@ Title: Final product completion (terminal campaign)
 Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-final-product-completion-v1
 Starting SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
-Last validated implementation SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
-Last checkpoint: 2026-09-26 — M3 tasks 4.1-4.12 complete; focused suites,
-hardening:check, the 147/147 probe campaign, gate:topology and gate:ui all
-green.
-Current milestone: M3 close-out (task 4.13) — gate:dev + gate:milestone on
-the committed state, the C-00 fast-forward push, and the exact-head CI
-observation with `gh` (OD-3).
-Next action: run the gate pair, integrate with the session CLI, observe CI
-with `gh`, record the result in STATE, tick 4.13 and commit the M3 closeout;
-repair forward if anything fails.
+Last validated implementation SHA: aa78a014cd18b5cdc1c90b27286f12e0e6bb345f
+Last checkpoint: 2026-09-26 — M3 COMPLETE (4.1-4.13): gate:dev PASS 5507/0,
+gate:milestone PASS and exact-head CI green at `aa78a014` (run 36243034942,
+all 15 required groups PASS, receipt `receipt:sha256:535217a6dbae65b7a26f9243`)
+after five repair-forward checkpoints; recorded in STATE/PLAN/tasks 4.13.
+Current milestone: M4 Release-certification machinery (tasks 5.1-5.7) — wire
+G14/G17/G18/G19/G21/G12 probes with the `implemented` honesty rule (5.1-5.3),
+the accessibility record (5.2), post-certification demotion semantics (5.4),
+schema DECIDED state (5.5) and CI block-record wiring (5.6).
+Next action: read tasks 5.1-5.7 and `src/core/releaseCertification/**`, wire
+task 5.1's probes behind the `implemented` honesty rule with focused suites
+green as each lands; repair forward with new commits and close M4 with the
+gate pair per 5.7.
 
 Authorization class: FINAL_PRODUCT_COMPLETION_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
-LAST_VALIDATED_IMPLEMENTATION_SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
+LAST_VALIDATED_IMPLEMENTATION_SHA: aa78a014cd18b5cdc1c90b27286f12e0e6bb345f
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: aa78a014cd18b5cdc1c90b27286f12e0e6bb345f
 LIVE_HEAD_AUTHORITY: GIT
 PHASE_FINAL_PRODUCT_COMPLETION_V1_STATUS: IN_PROGRESS
 

@@ -6,22 +6,23 @@ Task ID: nightwatch-final-product-completion-v1
 Phase: FINAL_PRODUCT_COMPLETION_V1
 Status: IN_PROGRESS
 Starting SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
-Last validated implementation SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
-Last substantive checkpoint SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
+Last validated implementation SHA: aa78a014cd18b5cdc1c90b27286f12e0e6bb345f
+Last substantive checkpoint SHA: aa78a014cd18b5cdc1c90b27286f12e0e6bb345f
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-final-product-complet-a891357d
-Last checkpoint: 2026-09-26 — M3 tasks 4.1-4.12 complete (declared skips +
-hermetic temp paths + skip-identity enforcement + sibling-absent clean gate
-with measured identity + TOPOLOGY/UI certification groups + Node 22 pinned CI
-with SHA-pinned actions + HANDOFF_TRUTH ci/clean classification + X-08/A-03/
-A-07 session fixes); focused suites green; the M3 gate pair, C-00 push and CI
-observation remain for 4.13.
+Last checkpoint: 2026-09-26 — M3 COMPLETE (4.1-4.13): the declared-skip /
+hermetic-temp / skip-identity spine, sibling-absent clean gate, TOPOLOGY and
+UI certification groups, Node 22 + SHA-pinned CI, session fixes, and five
+repair-forward checkpoints ending at `aa78a014`; gate:dev PASS 5507/0,
+gate:milestone PASS, and exact-head CI green (run 36243034942, all 15
+required groups PASS, receipt `receipt:sha256:535217a6dbae65b7a26f9243`,
+OD-3).
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
-LAST_VALIDATED_IMPLEMENTATION_SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
+LAST_VALIDATED_IMPLEMENTATION_SHA: aa78a014cd18b5cdc1c90b27286f12e0e6bb345f
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: aa78a014cd18b5cdc1c90b27286f12e0e6bb345f
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
 PHASE_FINAL_PRODUCT_COMPLETION_V1_STATUS: IN_PROGRESS
@@ -37,13 +38,13 @@ ledger, and end at `PROJECT_COMPLETE_AND_CI_CERTIFIED` under D-129 with a
 
 ## Current Milestone
 
-M3 CI-green spine close-out (task 4.13) — every other M3 task is implemented
-and validated: focused suites green (workspace/session 86/86, topology 26/26,
-quantifier 6/6, phase23 40/40, routing 134/134-era sets), hardening:check
-PASS, probe campaign 147/147, gate-definition PASS with 15 required groups,
-gate:ui PASS, gate:topology PASS with requiresSiblingTopology measurements.
-Remaining: gate:dev + gate:milestone on the committed state, the C-00 push,
-and the `gh` CI observation (OD-3).
+M4 Release-certification machinery (tasks 5.1-5.7): wire the seven
+unimplemented release probes (G14 reachability, G17 schema lifecycle, G18 UI
+error-taxonomy receipt, G19 environment declaration, G21 auth-capability
+single evaluator, G12 product run receipt plus the historical W13 aggregate),
+the `implemented` honesty rule (5.3), post-certification demotion semantics
+(X-04, 5.4), schema DECIDED state (A-19/A-20, 5.5), and CI block-record
+wiring (A-14/D-03, 5.6). M3 closed green at `aa78a014` (CI run 36243034942).
 
 ## Completed Milestones
 
@@ -66,19 +67,40 @@ and the `gh` CI observation (OD-3).
   (A-21, R2-62). Anchors `8775b58a` + `6f8a9d7c`; gate:dev PASS 5481/0;
   gate:milestone PASS (all steps exit=0).
 
+- **M3 COMPLETE** — CI-green, deterministic, hermetic spine (4.1-4.13):
+  declared live-source skips + hermetic temp paths + per-shard skip-identity
+  enforcement (`eccce619`); sibling-absent clean gate with measured identity
+  (`874015b9`, `7374d511`, `8ac69c22`); TOPOLOGY + UI_CONTROL_CENTER
+  certification groups (`4a1c2619`); Node 22 + SHA-pinned workflow actions
+  with the workflow-pinning rule (`981fb7f8`); X-08/A-03/A-07 session fixes;
+  M3 ledger docs (`7accc8de`, `11afc06a`). Exact-head CI then failed four
+  times and every failure was repaired forward: environment-surface gate-label
+  enum + COMPATIBILITY absent-worktree classification (`760e90fc`), declared
+  CHROMIUM_UNAVAILABLE skips for the real-browser tests (`988834e1`,
+  `58bf06f2`), shared port-lease authority + sun_path-safe campaign temp root
+  (`736e0e09`), X-02 degraded envelope mode for bwrap-less runners
+  (`aa78a014`). gate:dev PASS 5507/0; gate:milestone PASS; exact-head CI
+  green (run 36243034942, all 15 groups PASS, receipt
+  `receipt:sha256:535217a6dbae65b7a26f9243`).
+
 ## Work In Progress
 
-- Task 4.13: run the M3 gate pair on the committed state, push the C-00
-  checkpoint, observe CI with `gh` (OD-3), record the observed result.
+- Task 5.1 (M4): wire the seven unimplemented release probes — G14
+  reachability, G17 schema lifecycle, G18 UI error-taxonomy receipt, G19
+  environment declaration, G21 auth-capability single evaluator, G12 product
+  run receipt plus the historical W13 aggregate — setting `implemented:true`
+  only when wired (A-02/D-01).
 
 ## Exact Next Action
 
-Run `npm run gate:dev` and `npm run gate:milestone`; if both PASS, integrate
-with `node bin/nightwatch-session.mjs integrate --expect-session sess-0734f2070d08
---expect-head <head>` from the session worktree, observe the exact-head CI run
-with `gh run watch` (OD-3), record the result here, tick 4.13, mark PLAN M3
-COMPLETE, and commit the closeout. If a gate or CI fails, repair forward with a
-new commit — never amend.
+Read tasks 5.1-5.7 and `src/core/releaseCertification/**`, then wire the
+G14/G17/G18/G19/G21/G12 probes behind the `implemented` honesty rule (5.1),
+running the focused suites as each lands. Repair forward with new commits on
+any failure — never amend. Close M4 with focused + `gate:milestone` PASS per
+5.7, then the C-00 push and `gh` CI observation (OD-3) as in M3; the M3
+closeout docs commit itself is pushed via
+`node bin/nightwatch-session.mjs integrate --expect-session sess-0734f2070d08
+--expect-head <head>` and its exact-head CI run is observed with `gh`.
 
 ## Files Changed
 
@@ -306,6 +328,60 @@ hardening:check PASS including the workflow-pinning rule and the authenticated
 writer census (quality-gate-clean registered as LANE_RECEIPT_TOOL for its
 receipt persistence).
 
+Command: `npm run gate:dev` + `npm run gate:milestone` (M3 4.13 close-out,
+post topology repair)
+Result: PASS (both)
+When: 2026-09-26
+Relevant failure/output summary: at `aa78a014` — gate:dev affected-shards
+5507/0 (selected 395); gate:milestone every step exit=0 with affected-shards
+5507/0; npx tsc clean; hardening:check PASS; gate-topology local envelope
+regression PASS (envelope BUBBLEWRAP, all four absences constructed, findings
+[]) and degraded e2e PASS inside a bwrap-masked user namespace (envelope
+BWRAP_UNAVAILABLE_DEGRADED, findings []). Canonical was formatter-churned in
+`tests/unit/syntheticCampaignShards.test.ts` and restored path-scoped
+(token-identical) before the runs.
+
+Command: `node bin/nightwatch-session.mjs integrate --expect-session
+sess-0734f2070d08 --expect-head aa78a014cd18b5cdc1c90b27286f12e0e6bb345f`
+Result: SESSION_INTEGRATED — origin/main=aa78a014cd18b5cdc1c90b27286f12e0e6bb345f
+When: 2026-09-26
+Relevant failure/output summary: fast-forward only (CAS on the remote ref),
+no force push, no history rewrite; session `sess-0734f2070d08`.
+
+Command: `gh run watch 36243034942` (OD-3 exact-head CI observation)
+Result: PASS — `completed / success`, gate `finalResult: PASS`
+When: 2026-09-26 (run 12:47:28Z → 13:00:49Z)
+Relevant failure/output summary: gitHead `aa78a014`; node v22.23.2 /
+npm 10.9.8; environmentClass CI; receipt `receipt:sha256:535217a6dbae65b7a26f9243`;
+all 15 required groups PASS — GATE_DEFINITION, STATIC, BIN_TYPECHECK_CEILING,
+HARDENING, HARDENING_PROBES, HANDOFF_TRUTH, PROJECT_TRUTH, AGENT_CONTINUITY,
+SEMANTIC_COMPATIBILITY (2148 total / 2134 passed / 14 skipped / 0 failed),
+OWNER_PROVENANCE, SYNTHETIC_CAMPAIGN (1951 / 1907 / 44 skipped / 0 failed),
+PATCH_INTEGRITY, WORKSPACE_INTEGRITY, TOPOLOGY (degraded envelope — the
+runner has no bwrap), UI_CONTROL_CENTER. R2-CI satisfied.
+
+Command: exact-head CI repair chain (runs 36221563120 → 36237628855)
+Result: FAIL → FAIL → FAIL → FAIL → FAIL, every failure repaired forward
+When: 2026-09-26
+Relevant failure/output summary: 36221563120 @`11afc06a` —
+ENVIRONMENT_VALUE_MALFORMED (gate-label enum missing
+COMPATIBILITY/DEV_LANE/REVIEW_MUTATION) + SESSION_WORKTREE_MISSING on fresh
+checkouts (classification was CI|CLEAN only) → `760e90fc`; 36227213833
+@`760e90fc` — storageState:503 real-browser fixture on the browser-less
+runner (the campaign stops at the first failure, masking devLogin's three
+page tests) → `988834e1`; 36231098989 @`988834e1` — devLoginSecurity:28/46/66
+same root cause → `58bf06f2`; 36233319116 @`58bf06f2` — campaign exit=1 with
+0 counted failures: the per-lane TMPDIR isolation had split the shared
+port-lease authority (EADDRINUSE on 18987 across concurrent shards) and the
+nested temp path overflowed Chromium's 107-byte sun_path
+(process_singleton_posix "Socket path too long") → `736e0e09` (shared
+NIGHTWATCH_PROXY_LEASE_DIR + short `nw-synth-` prefix + two regression pins);
+36237628855 @`736e0e09` — TOPOLOGY envelope spawns ENOENT because the runner
+has no bwrap (the group had never run green in CI) → `aa78a014` (X-02
+degraded envelope mode; direct observation with declared BWRAP_UNAVAILABLE
+non-exercises, recorded in the receipt as `envelope:
+BWRAP_UNAVAILABLE_DEGRADED`). Never amended; five repair commits total.
+
 ## Decisions Made During This Task
 
 - 2026-09-25 — Adopt the released canonical MAINTENANCE record for this task
@@ -342,9 +418,15 @@ None.
 
 ## Safety Events
 
-None. No Alphaus environment, database, cloud, credential, or external
-publication contact; no sibling repository mutation; no force push or history
-rewrite. External contact so far: `git fetch` (read) only.
+No Alphaus environment, database, cloud, credential, or external publication
+contact; no sibling repository mutation; no force push or history rewrite;
+all testing local/synthetic. External contact is OD-3 only: `git fetch`
+(reads), C-00 fast-forward pushes of validated checkpoints to `origin/main`
+(heads `11afc06a`, `760e90fc`, `988834e1`, `58bf06f2`, `736e0e09`,
+`aa78a014`), and `gh` CI observations of the six matching hardening runs
+(36221563120, 36227213833, 36231098989, 36233319116, 36237628855,
+36243034942 — five failed, the last succeeded). The authorized npm registry
+advisory query (task 15.4) has not been run yet.
 
 ## Deferred / Follow-Up
 

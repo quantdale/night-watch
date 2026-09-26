@@ -154,7 +154,11 @@ approved paths.
   sibling identity; UI gate group in local/ci/clean modes.
 - Validation commands: focused suites, `npm run gate:milestone`, `gh` CI
   observation (OD-3).
-- **Status:** IN_PROGRESS
+- **Status:** COMPLETE — exact-head CI green at `aa78a014` (run 36243034942,
+  `completed/success`, all 15 required groups PASS, gate receipt
+  `receipt:sha256:535217a6dbae65b7a26f9243`)2026-09-26; four CI-red repairs
+  landed forward (environment surface, declared browser skips, shared
+  port-lease + sun_path, X-02 degraded envelope mode).
 
 ### M4 — Release-certification machinery (tasks 5.1-5.7)
 

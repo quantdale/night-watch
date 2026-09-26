@@ -13,4 +13,10 @@ recorded then deleted orphan branch `session/...-c8bcb74c` at `1441cc8a`
 under OD-3 (A-06). Implementation milestones M1-M14 and the final completion
 report follow in this file.
 
-Safety events: NONE.
+Safety events: accounted in STATE ## Safety Events — no Alphaus environment,
+database, cloud, credential, or external publication contact; no sibling
+repository mutation; no force push or history rewrite; all testing
+local/synthetic. External contact is OD-3 only: `git fetch` (reads), C-00
+fast-forward pushes of validated checkpoints to `origin/main`, and `gh` CI
+observations of the matching hardening runs; the authorized npm registry
+advisory query (task 15.4) has not been run yet.
