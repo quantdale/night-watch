@@ -492,10 +492,14 @@ test.describe('review store — recovery and containment', () => {
   });
 
   test('a traversal-shaped finding id cannot escape the store', () => {
-    const root = tempRoot();
-    const parent = path.dirname(root);
-    const parentBefore = fs.readdirSync(parent);
-    const store = storeIn(root);
+    // D-02: the test OWNS its temp parent — listing the shared os.tmpdir()
+    // makes this assertion race every other test's scratch entries.
+    const parent = fs.mkdtempSync(path.join(os.tmpdir(), 'nw-review-store-parent-'));
+    try {
+      const root = path.join(parent, 'store');
+      fs.mkdirSync(root);
+      const parentBefore = fs.readdirSync(parent);
+      const store = storeIn(root);
 
     // `../../escape` is a VALID finding id: the lifecycle's id vocabulary
     // permits dots and slashes, and narrowing it here would be a change to
@@ -515,6 +519,9 @@ test.describe('review store — recovery and containment', () => {
     expect(fs.readdirSync(root)).toEqual([written.fileName]);
     // Nothing appeared beside the store root.
     expect(fs.readdirSync(parent)).toEqual(parentBefore);
+    } finally {
+      fs.rmSync(parent, { recursive: true, force: true });
+    }
   });
 
   test('a hand-built traversal file name is refused by the publisher', () => {

@@ -100,7 +100,11 @@ test.describe('Phase 9A.1 — observer semantic evaluation ledger', () => {
     try {
       await page.goto(`${server.origin}/api/conforming`);
       await page.goto(`${server.origin}/api/mutated`);
-      await expect.poll(() => observer.semanticEvaluations().length, { timeout: 2_000 }).toBe(2);
+      // D-24 / R2-65 — event-driven waits: poll the actual condition with a
+      // load-tolerant bound instead of a fixed/short window, and poll the
+      // anomaly→findings projection rather than asserting it immediately
+      // (the projection is written asynchronously after the evaluation lands).
+      await expect.poll(() => observer.semanticEvaluations().length, { timeout: 20_000 }).toBe(2);
 
       const evaluations = observer.semanticEvaluations();
       expect(evaluations.length).toBe(2);
@@ -109,7 +113,7 @@ test.describe('Phase 9A.1 — observer semantic evaluation ledger', () => {
       for (const receipt of evaluations) validateSemanticEvaluationReceipt(receipt);
       // Anomalies additionally land in the findings ledger (root-type + item
       // field violations; categorical fingerprints dedupe identical DTOs).
-      expect(observer.semanticFindings().length).toBeGreaterThanOrEqual(1);
+      await expect.poll(() => observer.semanticFindings().length, { timeout: 20_000 }).toBeGreaterThanOrEqual(1);
       expect(observer.semanticFindings()[0]?.category).toBe('SOURCE_EXPECTATION_MISMATCH');
       expect(observer.semanticEvaluationLedgerOverflow()).toBe(false);
 

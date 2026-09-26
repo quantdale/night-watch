@@ -2,7 +2,7 @@
   "schemaVersion": "nightwatch.validation-universe.v1",
   "definitionName": "Nightwatch validation universe classification (NW-08)",
   "note": "Every discovered executable test or check belongs to exactly one class. AUTHORITATIVE_GATE is DERIVED from what the required gate lanes actually select and is therefore not declarable here; every other discovered file must appear below exactly once, with the reason it is not in the gate and the evidence lane that does cover it. A newly added test that is in no lane and no class fails the gate rather than joining the repository silently.",
-  "inventoryDigest": "sha256:f3c049b6b642b61c19c4e2bb",
+  "inventoryDigest": "sha256:788a400022059dafcc06a943",
   "classes": {
     "FULL_REGRESSION": {
       "reason": "Offline, deterministic suites that the full canonical regression executes. They are not in a required gate lane because the authoritative gate is bounded for CI runtime; leaving them unclassified is what made the gap invisible.",
@@ -104,6 +104,7 @@
         "tests/unit/ripplePostMountDiagnostics.test.ts",
         "tests/unit/rippleReadiness.test.ts",
         "tests/unit/rippleResourceReloadCausality.test.ts",
+        "tests/unit/sanitizedFailureLocations.test.ts",
         "tests/unit/schemaVersionLifecycle.test.ts",
         "tests/unit/schemaVersionMigration.test.ts",
         "tests/unit/semanticAdmissionAuthority.test.ts",

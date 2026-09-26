@@ -21,12 +21,12 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { createApprovedRealSourceScanConfig, PHASE25_APPROVED_REPOSITORY_IDS } from '../../src/core/source/approvedScan';
-import { createSiblingSourceAccess, DEFAULT_SIBLING_ROOT } from '../../src/core/source/siblingSource';
+import { createSiblingSourceAccess } from '../../src/core/source/siblingSource';
 import { createRealSourceScanConfig, scanSource } from '../../src/core/source/scan';
 import { discoverSourceSurfaces } from '../../src/core/source/surfaces';
 import { SOURCE_SCAN_EXTENSIONS, SOURCE_SCAN_LANGUAGES } from '../../src/core/source/scanTypes';
 import { readProtoDeclarations } from '../../src/core/source/protoDeclarations';
-import { classifyLiveSourceTestState } from '../helpers/liveSourceTestAuthority';
+import { classifyLiveSourceTestState, liveSourceTestRoot } from '../helpers/liveSourceTestAuthority';
 
 const BLUEAPI = 'alphauslabs/blueapi';
 const OUCHAN = 'mobingilabs/ouchan';
@@ -42,11 +42,11 @@ const EXPECTED_UNARY = 114;
 const EXPECTED_METHODS = { GET: 39, POST: 64, PUT: 25, PATCH: 2, DELETE: 17 } as const;
 
 function siblingRepoAvailable(repoId: string): boolean {
-  return fs.existsSync(path.join(DEFAULT_SIBLING_ROOT, ...repoId.split('/'), '.git'));
+  return fs.existsSync(path.join(liveSourceTestRoot(), ...repoId.split('/'), '.git'));
 }
 
 function realAccess() {
-  return createSiblingSourceAccess(DEFAULT_SIBLING_ROOT);
+  return createSiblingSourceAccess(liveSourceTestRoot());
 }
 
 test.describe('C-02b — protobuf is a LANGUAGE admission, not a root admission', () => {
@@ -202,11 +202,7 @@ test.describe('C-02b — proto operations reach route discovery', () => {
 
 test.describe('C-02b — C-01 no-eviction regression (F-27)', () => {
   test('every operation identity discovered without protobuf survives with it', () => {
-    if (LIVE_REGRESSION_STATE.kind !== 'CURRENT') {
-      expect(['STALE', 'UNAVAILABLE']).toContain(LIVE_REGRESSION_STATE.kind);
-      expect(LIVE_REGRESSION_STATE.repositories).toHaveLength(2);
-      return;
-    }
+    test.skip(LIVE_REGRESSION_STATE.kind !== 'CURRENT', `LIVE_SOURCE_${LIVE_REGRESSION_STATE.kind}`);
 
     const access = realAccess();
     const full = createApprovedRealSourceScanConfig();
@@ -239,11 +235,7 @@ test.describe('C-02b — C-01 no-eviction regression (F-27)', () => {
   });
 
   test('ripple-api keeps its operations after blueapi grows', () => {
-    if (LIVE_REGRESSION_STATE.kind !== 'CURRENT') {
-      expect(['STALE', 'UNAVAILABLE']).toContain(LIVE_REGRESSION_STATE.kind);
-      expect(LIVE_REGRESSION_STATE.repositories.map((entry) => entry.repoId)).toEqual([BLUEAPI, RIPPLE_API].sort());
-      return;
-    }
+    test.skip(LIVE_REGRESSION_STATE.kind !== 'CURRENT', `LIVE_SOURCE_${LIVE_REGRESSION_STATE.kind}`);
     // The exact failure F-27 described: blueapi sorts first, so if a shared
     // budget were still in play ripple-api would silently reach zero.
     const discovery = discoverSourceSurfaces({ access: realAccess(), config: createApprovedRealSourceScanConfig() });
@@ -367,5 +359,84 @@ test.describe('C-02b — DEF-C02B-1: a generated mirror is not a rival declarati
     expect(artifact.every((operation) => operation.routeProof === 'PROVEN')).toBe(true);
     const proto = discovery.operations.filter((operation) => operation.sourcePath === BILLING_PROTO);
     expect(proto.every((operation) => operation.routeProof === 'PROVEN')).toBe(true);
+  });
+});
+
+// R2-N2 — synthetic twins for the declared live-source skips above.
+
+test.describe('C-02b — synthetic twins for the declared live-source skips', () => {
+  test('synthetic twin — identities discovered without protobuf survive its admission', () => {
+    const root = syntheticBlueapi({
+      'widget/v1/widget.json': JSON.stringify({
+        swagger: '2.0',
+        paths: { '/v1/json': { get: { operationId: 'jsonGet', responses: { 200: { description: 'ok' } } } } },
+      }),
+      'widget/v1/widget.proto': ONE_ROUTE_PROTO,
+    });
+    try {
+      const access = createSiblingSourceAccess(root);
+      const after = syntheticConfig(['widget']);
+      const before = createRealSourceScanConfig({
+        runtimeMappingNamespace: after.runtimeMappingNamespace,
+        excludedDirectories: after.excludedDirectories,
+        enabledAnalyzers: after.enabledAnalyzers,
+        approvedRepositories: after.approvedRepositories.map((repository) => ({
+          ...repository,
+          allowedExtensions: repository.allowedExtensions.filter((extension) => extension !== '.proto'),
+        })),
+      });
+      const beforeIdentities = new Set(discoverSourceSurfaces({ access, config: before }).operations.map((operation) => operation.operationId));
+      const afterIdentities = new Set(discoverSourceSurfaces({ access, config: after }).operations.map((operation) => operation.operationId));
+      expect(beforeIdentities.size).toBeGreaterThan(0);
+      expect([...beforeIdentities].filter((identity) => !afterIdentities.has(identity))).toEqual([]);
+      expect(afterIdentities.size).toBeGreaterThan(beforeIdentities.size);
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test('synthetic twin — a repository keeps its operations when another repository grows', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-c02b-twin-'));
+    try {
+      const writeRepo = (repoId: string, files: Readonly<Record<string, string>>) => {
+        const repo = path.join(root, ...repoId.split('/'));
+        const git = path.join(repo, '.git', 'refs', 'heads');
+        fs.mkdirSync(git, { recursive: true });
+        fs.writeFileSync(path.join(repo, '.git', 'HEAD'), 'ref: refs/heads/main\n');
+        fs.writeFileSync(path.join(git, 'main'), `${SYNTHETIC_SHA}\n`);
+        for (const [relativePath, contents] of Object.entries(files)) {
+          fs.mkdirSync(path.join(repo, path.dirname(relativePath)), { recursive: true });
+          fs.writeFileSync(path.join(repo, relativePath), contents);
+        }
+      };
+      writeRepo(RIPPLE_API, { 'widget/v1/widget.proto': ONE_ROUTE_PROTO });
+      writeRepo('alphauslabs/blueapi', { 'openapi/v1/api.proto': ONE_ROUTE_PROTO.replace('blueapi.billing.v1', 'blueapi.openapi.v1').replace('Billing', 'Openapi') });
+      const access = createSiblingSourceAccess(root);
+      const twoRepos = [
+        { repoId: RIPPLE_API, roots: ['widget'] },
+        { repoId: 'alphauslabs/blueapi', roots: ['openapi'] },
+      ];
+      const oneRepo = [{ repoId: RIPPLE_API, roots: ['widget'] }];
+      const toConfig = (repositories: readonly { repoId: string; roots: readonly string[] }[]) => createRealSourceScanConfig({
+        runtimeMappingNamespace: 'ripple',
+        approvedRepositories: repositories.map((entry) => ({
+          repoId: entry.repoId,
+          expectedSourceSha: SYNTHETIC_SHA,
+          allowlistedRoots: entry.roots,
+          allowedExtensions: ['.proto', '.json'],
+          maxFiles: 64,
+          maxFileBytes: 200_000,
+          maxTotalBytes: 2_000_000,
+        })),
+      });
+      const before = discoverSourceSurfaces({ access, config: toConfig(oneRepo) });
+      const after = discoverSourceSurfaces({ access, config: toConfig(twoRepos) });
+      const rippleBefore = before.operations.filter((operation) => operation.repository === RIPPLE_API);
+      const rippleAfter = after.operations.filter((operation) => operation.repository === RIPPLE_API);
+      expect(rippleBefore.length).toBeGreaterThan(0);
+      expect(rippleAfter.map((operation) => operation.operationId).sort()).toEqual(rippleBefore.map((operation) => operation.operationId).sort());
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
   });
 });

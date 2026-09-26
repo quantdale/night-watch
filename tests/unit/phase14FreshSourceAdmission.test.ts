@@ -267,3 +267,55 @@ test.describe('Phase 14A C3 — synthetic fallback sanity (no snapshot present)'
     expect(derived.derived.length).toBeGreaterThan(0);
   });
 });
+
+// D-10 / D-11 / D-12 — the two live describes above are gated on hard-coded
+// /tmp disposable snapshots with no tracked creator (their skips are declared
+// in the canonical allowlist and visible in the shard skip reports). These
+// synthetic twins always run and prove the same mechanisms over an injected
+// reader, independent of any /tmp snapshot.
+
+test.describe('Phase 14A C3 — synthetic twins for the declared /tmp-snapshot skips', () => {
+  test('synthetic twin — the inventory is registry-driven and never invents targets from an empty source', () => {
+    const inv = buildCoverageInventory({
+      reader: { readFile: () => null },
+      currentness: freshCurrentness(FRESH_SHA),
+      snapshot: { repoId: 'mobingilabs/ripple-api', sha: FRESH_SHA },
+      remoteSha: FRESH_SHA,
+      canonicalUnchanged: true,
+    });
+    // Approved count comes from the registry, not from discovered files: an
+    // empty (or hostile) snapshot can approve nothing and invent no target.
+    expect(inv.metrics.approvedTargetCount).toBe(APPROVED_READ_ONLY_TARGET_IDS.length);
+    expect(inv.entries.length).toBeLessThanOrEqual(APPROVED_READ_ONLY_TARGET_IDS.length);
+    for (const entry of inv.entries) expect(APPROVED_READ_ONLY_TARGET_IDS).toContain(entry.targetId);
+    // An absent source can produce no evidence: nothing may claim a digest it did not read.
+    expect(inv.entries.every((entry) => entry.evidenceDigest === null)).toBe(true);
+  });
+
+  test('synthetic twin — the resolver resolves at the matching SHA and fails closed on a wrong one', () => {
+    const s = createRealSourceSyntheticState();
+    const derived = deriveRealSourceExpectations(REAL_SOURCE_EXPECTATION_RECIPES, { repoId: s.repoId, sha: s.sha }, s.reader);
+    expect(derived.derived.length).toBeGreaterThan(0);
+    const expectations = derived.derived.map((item) => item.expectation);
+    const matching = createRealSourceResolver({
+      recipes: REAL_SOURCE_EXPECTATION_RECIPES,
+      expectations,
+      reader: s.reader,
+      currentness: { currentSnapshot: (id: string) => (id === s.repoId ? { repoId: id, sha: s.sha } : null) },
+    });
+    for (const item of derived.derived) {
+      expect(matching.resolve({ targetId: item.expectation.targetId }).kind).toBe('RESOLVED');
+    }
+    // B5 mechanism (C3-12): currentness that disagrees with the expectation's
+    // SHA must refuse, never resolve fresh.
+    const stale = createRealSourceResolver({
+      recipes: REAL_SOURCE_EXPECTATION_RECIPES,
+      expectations,
+      reader: s.reader,
+      currentness: { currentSnapshot: (id: string) => (id === s.repoId ? { repoId: id, sha: '0'.repeat(40) } : null) },
+    });
+    for (const item of derived.derived) {
+      expect(stale.resolve({ targetId: item.expectation.targetId }).kind).toBe('SOURCE_STALE');
+    }
+  });
+});

@@ -24,11 +24,12 @@ export function shardTempRoot(runRoot, shardId) {
 
 /**
  * @param {NodeJS.ProcessEnv} parentEnvironment
- * @param {{ lane: string, receiptPath: string, shardId: string, runRoot: string }} input
+ * @param {{ lane: string, receiptPath: string, shardId: string, runRoot: string, skipReportPath?: string }} input
  * @returns {NodeJS.ProcessEnv}
  */
 export function buildShardChildEnvironment(parentEnvironment, input) {
   if (!path.isAbsolute(input.receiptPath)) throw new Error('SHARD_RECEIPT_PATH_NOT_ABSOLUTE');
+  if (input.skipReportPath !== undefined && !path.isAbsolute(input.skipReportPath)) throw new Error('SHARD_SKIP_REPORT_PATH_NOT_ABSOLUTE');
   const tempRoot = shardTempRoot(input.runRoot, input.shardId);
   const proxyLeaseDir = path.join(input.runRoot, 'proxy-port-leases');
   const environment = buildChildEnvironment(parentEnvironment, {
@@ -39,6 +40,7 @@ export function buildShardChildEnvironment(parentEnvironment, input) {
     NIGHTWATCH_SHARD_ID: input.shardId,
     NIGHTWATCH_SHARD_TEMP_ROOT: tempRoot,
     NIGHTWATCH_PROXY_LEASE_DIR: proxyLeaseDir,
+    NIGHTWATCH_SKIP_REPORT_PATH: input.skipReportPath ?? '',
     NODE_OPTIONS: '--expose-gc',
   });
   environment.TMPDIR = tempRoot;

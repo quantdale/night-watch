@@ -71,7 +71,9 @@ export function parseCounts(output) {
 // fixed enum classifications cross this boundary. Assertion values, source
 // contents, environment values, stack frames and arbitrary child stderr are
 // never copied into the quality-gate receipt.
-const SAFE_LOCATION_PATTERN = /^tests\/(?:unit|smoke)\/[A-Za-z0-9._/-]+\.test\.ts:\d+$/;
+// The optional class suffix is the sanitized assertion class (4.5): plain
+// `file:line` literals from historical receipts stay valid.
+const SAFE_LOCATION_PATTERN = /^tests\/(?:unit|smoke)\/[A-Za-z0-9._/-]+\.test\.ts:\d+(?::(?:TIMEOUT|EXPECT_EQUAL|EXPECT_MATCH|EXPECT_THROW|UNCLASSIFIED))?$/;
 const SAFE_LANE_PATTERN = /^[A-Z][A-Z0-9_]{1,63}$/;
 
 export function parseSafeDetails(output) {

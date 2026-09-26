@@ -405,3 +405,52 @@ test.describe("Phase 14A C5 — read-only CLI", () => {
     expect(parsed.privacySafe).toBe(true);
   });
 });
+
+// D-10 / D-11 / D-12 — the live `--snapshot` test above is gated on a
+// hard-coded /tmp disposable snapshot with no tracked creator (its skip is
+// declared in the canonical allowlist and visible in the shard skip reports).
+// This synthetic twin always runs: it materializes its own snapshot root and
+// proves the snapshot path is read-only, registry-driven and privacy-safe.
+
+test.describe("C5 — synthetic twin for the declared /tmp-snapshot skip", () => {
+  test("the snapshot path builds a read-only, registry-driven, privacy-safe report from its own root", () => {
+    // Local runner: the owned runCli helper is scoped to its own describe.
+    const runHealthCli = (args: string[]) => {
+      const result = spawnSync(
+        process.execPath,
+        [path.join(REPO_ROOT, "bin", "phase14-contract-health.mjs"), ...args],
+        { cwd: REPO_ROOT, encoding: "utf8", timeout: 120_000, maxBuffer: 16 * 1024 * 1024 },
+      );
+      return { status: result.status, stdout: result.stdout ?? "", stderr: result.stderr ?? "" };
+    };
+    const snapshotDir = fs.mkdtempSync(path.join(os.tmpdir(), "nw-phase14-snapshot-twin-"));
+    try {
+      fs.mkdirSync(path.join(snapshotDir, ".git"), { recursive: true });
+      fs.writeFileSync(path.join(snapshotDir, ".git", "HEAD"), "ref: refs/heads/main\n");
+      const before = new Set(
+        fs.readdirSync(snapshotDir).concat(fs.readdirSync(path.join(snapshotDir, ".git")))
+      );
+      const r = runHealthCli([
+        "--snapshot",
+        snapshotDir,
+        "--sha",
+        "e026c85522d201724033f024456da3efa17fe07a",
+        "--format",
+        "json",
+      ]);
+      expect(r.status).toBe(0);
+      const parsed = JSON.parse(r.stdout) as ContractCoverageReport;
+      // The approved count comes from the registry, never from the snapshot's
+      // file contents: an empty root can approve nothing and invent no target.
+      expect(parsed.approvedTargetCount).toBe(6);
+      expect(parsed.privacySafe).toBe(true);
+      // Read-only: the CLI writes nothing into the snapshot root.
+      const after = new Set(
+        fs.readdirSync(snapshotDir).concat(fs.readdirSync(path.join(snapshotDir, ".git")))
+      );
+      expect([...after]).toEqual([...before]);
+    } finally {
+      fs.rmSync(snapshotDir, { recursive: true, force: true });
+    }
+  });
+});

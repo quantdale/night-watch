@@ -31,9 +31,10 @@ import {
   requiredGoVersionForModule,
   ownerLocalModuleRoot,
 } from '../../src/core/ownerLocalReproduction/provider';
+import { liveSourceTestRoot } from '../helpers/liveSourceTestAuthority';
 
 const ENABLED = process.env['NIGHTWATCH_REAL_OWNER_LOCAL_PROOF'] === '1';
-const SIBLING_ROOT = process.env['NIGHTWATCH_REPOS_ROOT'] ?? DEFAULT_SIBLING_ROOT;
+const SIBLING_ROOT = liveSourceTestRoot();
 
 const HONEST_VERDICTS = [
   'REPRODUCED_CURRENT_FAILURE',

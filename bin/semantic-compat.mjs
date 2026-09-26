@@ -12,6 +12,7 @@ import { fileURLToPath } from 'node:url';
 import { buildChildEnvironment } from './child-environment.mjs';
 import { OPERATOR_CLI_SCHEMA, defineOperatorCli, invokedDirectly } from './lib/operator-cli.mjs';
 import { evaluateSemanticSkipPolicy } from './lib/semantic-skip-policy.mjs';
+import { extractSanitizedFailedLocations } from './lib/sanitized-failure-locations.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const manifestPath = path.join(root, 'config', 'semantic-compatibility.v1.json');
@@ -128,9 +129,7 @@ try {
   const totalFromOutput = count(/Total:\s*(\d+)\s+tests?/i);
   if (result.status === 0 && failed === null) failed = 0;
   const total = totalFromOutput ?? ([passed, skipped, failed].every((value) => Number.isInteger(value)) ? passed + skipped + failed : null);
-  const failedLocations = [...output.matchAll(/^\s*\d+\)\s+\[[^\]]+\]\s+›\s+(tests\/(?:unit|smoke)\/[A-Za-z0-9._/-]+\.test\.ts):(\d+)(?::\d+)?\s+›/gm)]
-    .slice(0, 16)
-    .map((match) => `${match[1]}:${match[2]}`);
+  const failedLocations = extractSanitizedFailedLocations(output, 16);
 
   let skipReport = null;
   try {

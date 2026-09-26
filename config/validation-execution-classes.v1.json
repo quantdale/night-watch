@@ -1616,6 +1616,10 @@
       "class": "PARALLEL_SAFE",
       "signals": []
     },
+    "tests/unit/sanitizedFailureLocations.test.ts": {
+      "class": "PARALLEL_SAFE",
+      "signals": []
+    },
     "tests/unit/schemaVersionLifecycle.test.ts": {
       "class": "PARALLEL_SAFE",
       "signals": [

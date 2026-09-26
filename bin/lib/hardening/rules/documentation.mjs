@@ -365,7 +365,6 @@ export function checkProjectStateIntegrity() {
 export function checkPlannerHandoffIntegrity() {
   // The handoff boundary owns only prompt route/currentness. Keep the parser
   // pure and the Git-aware checker local, read-only, bounded, and categorical.
-  const protocol = readIncludingComments('bin/planner-handoff-protocol.mjs');
   const protocolCodeOnly = read("bin/planner-handoff-protocol.mjs");
   const checker = readIncludingComments('bin/planner-handoff-check.mjs');
   const checkerCode = read("bin/planner-handoff-check.mjs");

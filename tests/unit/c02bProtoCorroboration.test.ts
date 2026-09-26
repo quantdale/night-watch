@@ -27,7 +27,8 @@ import {
   type OpenApiOperationView,
 } from '../../src/core/source/protoCorroboration';
 import { evaluateGenerationCurrency, evaluateProductionAdmissionEvidence } from '../../src/core/source/generatedArtifact';
-import { DEFAULT_SIBLING_ROOT, createSiblingSourceAccess } from '../../src/core/source/siblingSource';
+import { createSiblingSourceAccess } from '../../src/core/source/siblingSource';
+import { liveSourceTestRoot } from '../helpers/liveSourceTestAuthority';
 
 const REPO = 'alphauslabs/blueapi';
 const SHA = '691422e5dc81afd263d064986fb50fcb3ea432a9';
@@ -248,10 +249,10 @@ test.describe('C-02b — partial coverage never certifies the whole artifact', (
 
 test.describe('C-02b — the real blueapi artifact against the real proto', () => {
   test('147 Billing operations corroborate exactly, and the artifact still stays UNKNOWN', () => {
-    const repo = path.join(DEFAULT_SIBLING_ROOT, ...REPO.split('/'));
+    const repo = path.join(liveSourceTestRoot(), ...REPO.split('/'));
     test.skip(!fs.existsSync(path.join(repo, '.git')), 'blueapi checkout unavailable');
 
-    const access = createSiblingSourceAccess(DEFAULT_SIBLING_ROOT);
+    const access = createSiblingSourceAccess(liveSourceTestRoot());
     const protoFacts = readProtoDeclarations(access.reader.readFile(REPO, PROTO) as string);
     const document = JSON.parse(access.reader.readFile(REPO, ARTIFACT) as string) as { paths: Record<string, Record<string, { operationId?: string }>> };
 

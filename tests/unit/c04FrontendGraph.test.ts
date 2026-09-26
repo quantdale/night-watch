@@ -40,12 +40,12 @@ function realGraph(): FrontendConsumerGraph {
   return buildFrontendConsumerGraph({ access, inventory: discovery.inventory, frontendRepoId: RIPPLE_UI, backendRoutes });
 }
 
-function currentLiveGraph(): FrontendConsumerGraph | null {
-  if (APPROVED_LIVE_STATE.kind !== 'CURRENT') {
-    expect(['STALE', 'UNAVAILABLE']).toContain(APPROVED_LIVE_STATE.kind);
-    expect(APPROVED_LIVE_STATE.repositories.length).toBeGreaterThan(0);
-    return null;
-  }
+/**
+ * R2-N2: the live measurement skips with its declared identity instead of
+ * passing vacuously. Every caller keeps a synthetic twin below.
+ */
+function liveGraphOrSkip(): FrontendConsumerGraph {
+  test.skip(APPROVED_LIVE_STATE.kind !== 'CURRENT', `LIVE_SOURCE_${APPROVED_LIVE_STATE.kind}`);
   return realGraph();
 }
 
@@ -167,8 +167,7 @@ test.describe('C-04 - the join is categorical and never upgrades', () => {
 
 test.describe('C-04 - the real measured yield', () => {
   test('ripple-ui enumerates completely and yields the measured edge count', () => {
-    const graph = currentLiveGraph();
-    if (graph === null) return;
+    const graph = liveGraphOrSkip();
     expect(graph.completeness.enumerationState).toBe('COMPLETE');
     expect(graph.completeness.repositoryCompleteProof).toBe(true);
     expect(graph.counters.total).toBeGreaterThanOrEqual(MEASURED_EDGES);
@@ -176,8 +175,7 @@ test.describe('C-04 - the real measured yield', () => {
   });
 
   test('ZERO edges are SOURCE_FACT from a non-literal path', () => {
-    const graph = currentLiveGraph();
-    if (graph === null) return;
+    const graph = liveGraphOrSkip();
     expect(graph.counters.nonLiteralSourceFacts).toBe(0);
     for (const edge of graph.edges) {
       if (edge.consumerEvidenceClass === 'SOURCE_FACT') {
@@ -188,8 +186,7 @@ test.describe('C-04 - the real measured yield', () => {
   });
 
   test('no durable edge carries a query value or a fragment', () => {
-    const graph = currentLiveGraph();
-    if (graph === null) return;
+    const graph = liveGraphOrSkip();
     for (const edge of graph.edges) {
       expect(edge.routeTemplate ?? '').not.toContain('?');
       expect(edge.routeTemplate ?? '').not.toContain('#');
@@ -198,21 +195,87 @@ test.describe('C-04 - the real measured yield', () => {
   });
 
   test('the eight declared axios instances are recovered', () => {
-    const graph = currentLiveGraph();
-    if (graph === null) return;
+    const graph = liveGraphOrSkip();
     expect(graph.instances).toEqual(['authApi', 'baseApi', 'blueApi', 'emailAuthApi', 'loginApi', 'mfaApi', 'statusApi', 'usersApi']);
   });
 
   test('a substantial share of edges join a real backend route', () => {
-    const graph = currentLiveGraph();
-    if (graph === null) return;
+    const graph = liveGraphOrSkip();
     expect(graph.counters.proven).toBeGreaterThan(100);
   });
 
   test('the >= 400 criterion is evaluated truthfully and does not pass', () => {
-    const graph = currentLiveGraph();
-    if (graph === null) return;
+    const graph = liveGraphOrSkip();
     expect(graph.counters.total).toBeLessThan(400);
     expect(graph.counters.total).toBeGreaterThanOrEqual(MEASURED_EDGES);
+  });
+});
+
+// R2-N2 — synthetic twins for the declared live-source skips above. The live
+// suite measures ripple-ui and skips categorically; these twins prove the same
+// mechanisms over explicit synthetic roots so the coverage never disappears
+// with the host.
+
+test.describe('C-04 - synthetic twins for the declared live-source skips', () => {
+  test('synthetic twin — completeness and counters report the measured shape', () => {
+    const { root, graph } = syntheticGraph(
+      { 'src/config.js': CONFIG_JS, 'src/api.js': "blueApi.get('/v1/a');" },
+      [backendRoute('GET', '/v1/a')],
+    );
+    try {
+      expect(graph.completeness.enumerationState).toBe('COMPLETE');
+      expect(graph.completeness.repositoryCompleteProof).toBe(true);
+      expect(graph.counters.total).toBeGreaterThan(0);
+      expect(graph.counters.proven).toBeGreaterThan(0);
+      expect(graph.counters.total).toBe(graph.edges.length);
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test('synthetic twin — ZERO edges are SOURCE_FACT from a non-literal path', () => {
+    const { root, graph } = syntheticGraph(
+      { 'src/config.js': CONFIG_JS, 'src/api.js': "const id = 'x'; blueApi.get('/v1/other/' + id);" },
+      [backendRoute('GET', '/v1/other/{}')],
+    );
+    try {
+      expect(graph.counters.nonLiteralSourceFacts).toBe(0);
+      for (const edge of graph.edges) {
+        if (edge.consumerEvidenceClass === 'SOURCE_FACT') {
+          expect(['LITERAL', 'STRUCTURAL']).toContain(edge.pathClass);
+          expect(edge.routeTemplate).not.toBeNull();
+        }
+      }
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test('synthetic twin — no durable edge carries a query value or a fragment', () => {
+    const { root, graph } = syntheticGraph(
+      { 'src/config.js': CONFIG_JS, 'src/api.js': "blueApi.get('/v1/a?x=1#frag');" },
+      [backendRoute('GET', '/v1/a')],
+    );
+    try {
+      for (const edge of graph.edges) {
+        expect(edge.routeTemplate ?? '').not.toContain('?');
+        expect(edge.routeTemplate ?? '').not.toContain('#');
+        expect(edge.routeTemplate ?? '').not.toContain('$');
+      }
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test('synthetic twin — declared axios instances are recovered from the synthetic root', () => {
+    const { root, graph } = syntheticGraph(
+      { 'src/config.js': "export const blueApi = axios.create({});\nexport const statusApi = axios.create({});\n", 'src/api.js': "blueApi.get('/v1/a');" },
+      [backendRoute('GET', '/v1/a')],
+    );
+    try {
+      expect(graph.instances).toEqual(['blueApi', 'statusApi']);
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
   });
 });

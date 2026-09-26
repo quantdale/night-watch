@@ -56,18 +56,30 @@ function isDeclared(identity, canonicalSkipIdentities) {
  * Returns `result` = PASS | UNDECLARED_SKIP | SKIP_POLICY_UNCONFIGURED.
  */
 export function evaluateSemanticSkipPolicy({ report, canonicalSkipIdentities, expectedSkipPolicy } = {}) {
+  return evaluateSemanticSkipPolicyIdentities({
+    identities: collectSkippedIdentities(report),
+    canonicalSkipIdentities,
+    expectedSkipPolicy,
+  });
+}
+
+/**
+ * D-10 / 4.6 — the same policy over pre-collected skip identities (the
+ * per-shard skip-identity report path).
+ */
+export function evaluateSemanticSkipPolicyIdentities({ identities, canonicalSkipIdentities, expectedSkipPolicy } = {}) {
   if (typeof expectedSkipPolicy !== 'string' || expectedSkipPolicy.trim() === '') {
     return { result: 'SKIP_POLICY_UNCONFIGURED', skipped: 0, undeclared: [], detail: 'expectedSkipPolicy is absent or empty' };
   }
   if (!Array.isArray(canonicalSkipIdentities)) {
     return { result: 'SKIP_POLICY_UNCONFIGURED', skipped: 0, undeclared: [], detail: 'canonicalSkipIdentities is absent or not a list' };
   }
-  const identities = collectSkippedIdentities(report);
-  const undeclared = identities.filter((identity) => !isDeclared(identity, canonicalSkipIdentities));
+  const collected = Array.isArray(identities) ? identities : [];
+  const undeclared = collected.filter((identity) => !isDeclared(identity, canonicalSkipIdentities));
   return {
     result: undeclared.length === 0 ? 'PASS' : 'UNDECLARED_SKIP',
-    skipped: identities.length,
+    skipped: collected.length,
     undeclared,
-    declared: identities.length - undeclared.length,
+    declared: collected.length - undeclared.length,
   };
 }

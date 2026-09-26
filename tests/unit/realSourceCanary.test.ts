@@ -100,13 +100,10 @@ test.describe('Phase 9A.1 — registry consistency (SPEC §17, §32, §33)', () 
 
 test.describe('Phase 9A.1 — real-source offline canary (SPEC §28)', () => {
   test('live sibling checkout: derive >= 1 real expectation (owner-local evidence)', () => {
-    if (RIPPLE_LIVE_STATE.kind !== 'CURRENT') {
-      expect(['STALE', 'UNAVAILABLE']).toContain(RIPPLE_LIVE_STATE.kind);
-      const state = createFixtureSourceState();
-      const { derivedA } = deriveFixtureExpectations(state);
-      expect(derivedA.length).toBeGreaterThanOrEqual(1);
-      return;
-    }
+    // R2-N2 synthetic twin: 'fixture-backed derivation produces the same
+    // admission shape (CI parity)' below always runs this invariant's fixture
+    // half; this live half skips with its declared identity.
+    test.skip(RIPPLE_LIVE_STATE.kind !== 'CURRENT', `LIVE_SOURCE_${RIPPLE_LIVE_STATE.kind}`);
 
     const access = createSiblingSourceAccess(RIPPLE_LIVE_STATE.root);
     const snapshot = access.currentness.currentSnapshot(RIPPLE_API_REPO);

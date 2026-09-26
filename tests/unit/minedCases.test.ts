@@ -19,6 +19,7 @@ import {
   tryDefineMinedBenchmarkCase,
 } from '../../src/core/benchmark';
 import { DEFAULT_SIBLING_ROOT } from '../../src/core/source/siblingSource';
+import { liveSourceTestRoot } from '../helpers/liveSourceTestAuthority';
 
 const BLIND: ReasonerDriver = {
   protocolVersion: REASONER_DRIVER_VERSION,
@@ -159,7 +160,7 @@ test('added test file in the fix is hidden knownFailingTest and does not leak', 
 test('bounded sibling mine runs isolated hunts without leaking fix SHAs', async () => {
   const report = mineLocalGitHistory({ maxRepos: 2, maxCommitsPerRepo: 20 });
   test.skip(report.status !== 'MINED' || report.records.length === 0, 'sibling historical data unavailable');
-  const root = report.repositoriesRoot ?? DEFAULT_SIBLING_ROOT;
+  const root = report.repositoriesRoot ?? liveSourceTestRoot();
   let isolated = 0;
   let hunts = 0;
   let misses = 0;

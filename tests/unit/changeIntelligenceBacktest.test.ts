@@ -8,13 +8,14 @@ import {
   type SelectionResult,
 } from '../../src/core/changeIntelligence';
 import { DEFAULT_SIBLING_ROOT } from '../../src/core/source/siblingSource';
+import { liveSourceTestRoot } from '../helpers/liveSourceTestAuthority';
 
 // C-00: the repositories root must not be derived from this checkout's own
 // location. A writing agent works in a dedicated worktree that is deliberately
 // outside the workspace tree, where `__dirname/../../..` is not the
 // REPOSITORIES root. Resolution therefore uses the canonical sibling root (or
 // an explicit override), exactly like the rest of the repository.
-const repositoriesRoot = process.env['NIGHTWATCH_REPOS_ROOT'] ?? DEFAULT_SIBLING_ROOT;
+const repositoriesRoot = liveSourceTestRoot();
 
 interface BacktestCase {
   id: string;

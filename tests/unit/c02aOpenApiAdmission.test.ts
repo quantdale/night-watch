@@ -329,11 +329,7 @@ test.describe('C-02a — $ref → definitions binding through the existing parse
 test.describe('C-02a — the real committed blueapi artifact', () => {
 
   test('recovers >= 591 operations with verb, path and operationId, and >= 400 bound response contracts', () => {
-    if (BLUEAPI_LIVE_STATE.kind !== 'CURRENT') {
-      expect(['STALE', 'UNAVAILABLE']).toContain(BLUEAPI_LIVE_STATE.kind);
-      expect(BLUEAPI_LIVE_STATE.repositories[0]?.repoId).toBe(BLUEAPI);
-      return;
-    }
+    test.skip(BLUEAPI_LIVE_STATE.kind !== 'CURRENT', `LIVE_SOURCE_${BLUEAPI_LIVE_STATE.kind}`);
     const discovery = discoverSourceSurfaces({ access: createSiblingSourceAccess(BLUEAPI_LIVE_STATE.root), config: createApprovedRealSourceScanConfig() });
     // C-02b later admitted `.proto` into the same repository, so "the blueapi
     // surfaces" and "the surfaces from the generated artifact" stopped being
@@ -379,11 +375,7 @@ test.describe('C-02a — the real committed blueapi artifact', () => {
   });
 
   test('every blueapi surface is GENERATED_ARTIFACT with UNKNOWN currency and a denied production admission', () => {
-    if (APPROVED_LIVE_STATE.kind !== 'CURRENT') {
-      expect(['STALE', 'UNAVAILABLE']).toContain(APPROVED_LIVE_STATE.kind);
-      expect(APPROVED_LIVE_STATE.repositories.length).toBeGreaterThan(0);
-      return;
-    }
+    test.skip(APPROVED_LIVE_STATE.kind !== 'CURRENT', `LIVE_SOURCE_${APPROVED_LIVE_STATE.kind}`);
     const discovery = discoverSourceSurfaces({ access: createSiblingSourceAccess(APPROVED_LIVE_STATE.root), config: createApprovedRealSourceScanConfig() });
     const blueapi = discovery.surfaces.filter((surface) => surface.operation.repository === BLUEAPI && surface.operation.sourcePath === ARTIFACT_PATH);
     expect(blueapi.length).toBeGreaterThan(0);
@@ -410,11 +402,7 @@ test.describe('C-02a — the real committed blueapi artifact', () => {
   });
 
   test('C-01 invariants hold: no eviction, no lost identity, truthful completeness', () => {
-    if (APPROVED_LIVE_STATE.kind !== 'CURRENT') {
-      expect(['STALE', 'UNAVAILABLE']).toContain(APPROVED_LIVE_STATE.kind);
-      expect(APPROVED_LIVE_STATE.repositories.length).toBeGreaterThan(0);
-      return;
-    }
+    test.skip(APPROVED_LIVE_STATE.kind !== 'CURRENT', `LIVE_SOURCE_${APPROVED_LIVE_STATE.kind}`);
     const access = createSiblingSourceAccess(APPROVED_LIVE_STATE.root);
     // The pre-C-02a universe, reconstructed by asking for exactly the
     // repositories that produced operations before this campaign.
@@ -453,5 +441,86 @@ test.describe('C-02a — the real committed blueapi artifact', () => {
     expect(after.operationCompleteness.totalOperations).toBeNull();
     expect(after.operationCompleteness.state).toBe('UNKNOWN');
     expect(after.operationCompleteness.coverageState).toBe('UNKNOWN');
+  });
+});
+
+// R2-N2 — synthetic twins for the declared live-source skips above.
+
+test.describe('C-02a — synthetic twins for the declared live-source skips', () => {
+  test('synthetic twin — artifact operations recover with verb, path and operationId', () => {
+    const root = tempRoot();
+    try {
+      writeSyntheticOpenApiRepo(root, BLUEAPI, SYNTHETIC_SHA, {
+        swagger: '2.0',
+        paths: {
+          '/v1/things': {
+            get: { operationId: 'Svc_Get', responses: { '200': { schema: { type: 'object' } } } },
+            post: { operationId: 'Svc_Post', responses: { '200': { schema: { type: 'object' } } } },
+          },
+        },
+      });
+      const discovery = discoverSourceSurfaces({ access: createSiblingSourceAccess(root), config: syntheticConfig(BLUEAPI, SYNTHETIC_SHA) });
+      const artifact = discovery.surfaces.filter((surface) => surface.operation.repository === BLUEAPI && surface.operation.sourcePath === ARTIFACT_PATH);
+      expect(artifact).toHaveLength(2);
+      expect(artifact.map((surface) => surface.operation.method).sort()).toEqual(['GET', 'POST']);
+      expect(artifact.every((surface) => surface.operation.routeTemplate === '/v1/things')).toBe(true);
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test('synthetic twin — every artifact surface is GENERATED_ARTIFACT with UNKNOWN currency and a denied production admission', () => {
+    const root = tempRoot();
+    try {
+      writeSyntheticOpenApiRepo(root, BLUEAPI, SYNTHETIC_SHA, {
+        swagger: '2.0',
+        paths: { '/v1/things': { get: { operationId: 'Svc_Get', responses: { '200': { schema: { type: 'object' } } } } } },
+      });
+      const discovery = discoverSourceSurfaces({ access: createSiblingSourceAccess(root), config: syntheticConfig(BLUEAPI, SYNTHETIC_SHA) });
+      const artifact = discovery.surfaces.filter((surface) => surface.operation.repository === BLUEAPI && surface.operation.sourcePath === ARTIFACT_PATH);
+      expect(artifact.length).toBeGreaterThan(0);
+      for (const surface of artifact) {
+        expect(surface.sourceEvidence.qualifier).toBe('GENERATED_ARTIFACT');
+        expect(surface.sourceEvidence.evidenceClass).toBe('SOURCE_FACT');
+        expect(surface.sourceEvidence.generationCurrency?.state).toBe('UNKNOWN');
+        expect(surface.sourceEvidence.productionAdmission.state).toBe('DENIED');
+      }
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test('synthetic twin — C-01 invariants hold over a growing synthetic population', () => {
+    const root = tempRoot();
+    try {
+      writeSyntheticOpenApiRepo(root, BLUEAPI, SYNTHETIC_SHA, {
+        swagger: '2.0',
+        paths: { '/v1/keep': { get: { operationId: 'Svc_Keep', responses: { '200': { schema: { type: 'object' } } } } } },
+      });
+      writeSyntheticOpenApiRepo(root, RIPPLE_API, SYNTHETIC_SHA, {
+        swagger: '2.0',
+        paths: { '/v1/ripple': { get: { operationId: 'Svc_Ripple', responses: { '200': { schema: { type: 'object' } } } } } },
+      });
+      const access = createSiblingSourceAccess(root);
+      const before = discoverSourceSurfaces({ access, config: syntheticConfig(BLUEAPI, SYNTHETIC_SHA) });
+      const after = discoverSourceSurfaces({
+        access,
+        config: createRealSourceScanConfig({
+          runtimeMappingNamespace: 'ripple',
+          approvedRepositories: [
+            { repoId: BLUEAPI, expectedSourceSha: SYNTHETIC_SHA, allowlistedRoots: ['openapiv2'], allowedExtensions: ['.json'], maxFiles: 16, maxFileBytes: 400_000, maxTotalBytes: 16_000_000 },
+            { repoId: RIPPLE_API, expectedSourceSha: SYNTHETIC_SHA, allowlistedRoots: ['openapiv2'], allowedExtensions: ['.json'], maxFiles: 16, maxFileBytes: 400_000, maxTotalBytes: 16_000_000 },
+          ],
+        }),
+      });
+      const beforeIdentities = new Set(before.operations.map((operation) => operation.operationId));
+      const afterIdentities = new Set(after.operations.map((operation) => operation.operationId));
+      expect(beforeIdentities.size).toBeGreaterThan(0);
+      expect([...beforeIdentities].filter((identity) => !afterIdentities.has(identity))).toEqual([]);
+      expect(afterIdentities.size).toBeGreaterThan(beforeIdentities.size);
+      expect(after.operationCompleteness.droppedOperations).toBe(0);
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
   });
 });

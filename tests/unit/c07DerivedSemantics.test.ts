@@ -246,11 +246,12 @@ test.describe('C-07 — EIG orders admissible targets and cannot promote one', (
 
 test.describe('C-07 — the real population, measured', () => {
   test('the derived registry over real operations has ZERO KNOWN_READ entries', () => {
-    if (APPROVED_LIVE_STATE.kind !== 'CURRENT') {
-      expect(['STALE', 'UNAVAILABLE']).toContain(APPROVED_LIVE_STATE.kind);
-      expect(APPROVED_LIVE_STATE.repositories.length).toBeGreaterThan(0);
-      return;
-    }
+    // R2-N2 synthetic twins: 'METHOD-ONLY evidence yields UNKNOWN, never
+    // KNOWN_READ', 'a GET verb alone cannot produce KNOWN_READ for any
+    // repository or route' and 'every entry carries provenance, and totality
+    // holds' above always run the same invariants over synthetic operations;
+    // this live half skips with its declared identity.
+    test.skip(APPROVED_LIVE_STATE.kind !== 'CURRENT', `LIVE_SOURCE_${APPROVED_LIVE_STATE.kind}`);
     // Rebuilt here rather than imported so the assertion is about the real
     // source, not about a cached number.
     // eslint-disable-next-line @typescript-eslint/no-var-requires

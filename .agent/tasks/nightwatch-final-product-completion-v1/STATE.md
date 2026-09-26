@@ -11,9 +11,10 @@ Last substantive checkpoint SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-final-product-complet-a891357d
-Last checkpoint: 2026-09-26 — M2 COMPLETE: `gate:dev` PASS (5481/0) and
-`gate:milestone` PASS on the committed state (all steps exit=0); M2 anchor
-`8775b58a` + universe fixup `6f8a9d7c`.
+Last checkpoint: 2026-09-26 — M3 tasks 4.1-4.6 complete; gate:dev PASS
+5485/0 with the per-shard skip-identity policy enforcing (one unreproduced
+exclusive-bucket intermittent observed once, recorded in the ledger);
+progress checkpoint committed pending 4.7-4.13.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
@@ -34,14 +35,17 @@ ledger, and end at `PROJECT_COMPLETE_AND_CI_CERTIFIED` under D-129 with a
 
 ## Current Milestone
 
-M3 CI-green, deterministic and hermetic spine (tasks 4.1-4.13) — guard the
-live-source measurements, convert tautological guards to declared skips with
-synthetic twins, make the temp/scratch paths hermetic, fix the CI
-determinism defects (c03GrpcTopology:389, reviewStore tmp listing,
-observerSemanticLedger flake), install the skip-identity allowlist and the
-sibling-absent `gate:clean`, pin the CI runtime, and fix HANDOFF_TRUTH for
-session-declared pushes (R2-01/N1/N2/N3, D-02/04/05/10/11/12/18/19/24,
-X-02/X-08, NW-AUD-001).
+M3 CI-green, deterministic and hermetic spine — 4.1-4.6 complete: live-source
+measurements guarded as declared skips and routed through
+`liveSourceTestRoot()`; the 10 tautological guards converted with synthetic
+twins; reviewStore owns its temp parent and campaign-synthetic isolates
+TMPDIR; observerSemanticLedger waits are event-driven (5/5 looped + 3/3
+under 6-way load); sanitized assertion classes on failedLocations; per-shard
+skip-identity enforcement with a rebuilt 45-entry allowlist and the
+/tmp-snapshot twins. Remaining: 4.7 gate:clean sibling-absence, 4.8
+gate:topology certification, 4.9 UI gate group, 4.10 HANDOFF_TRUTH session-
+declared classification, 4.11 pinned CI runtime, 4.12 closeout/claim/orphan
+session fixes, 4.13 milestone gates + checkpoint push + CI observation.
 
 ## Completed Milestones
 
@@ -66,18 +70,18 @@ X-02/X-08, NW-AUD-001).
 
 ## Work In Progress
 
-- M3 task 4.1: guard `tests/unit/c03GrpcTopology.test.ts:389` and route every
-  live measurement through `liveSourceTestRoot()` (R2-01/R2-N1).
+- M3 progress checkpoint: commit tasks 4.1-4.6, then continue with 4.7
+  (`gate:clean` sibling-absent by default with measured sibling identity).
 
 ## Exact Next Action
 
-Implement M3 tasks 4.1-4.13 in order (live-source guards and declared skips,
-hermetic temp/scratch, CI determinism fixes, skip-identity allowlist,
-sibling-absent gate:clean with measured sibling identity, gate:topology + UI
-gate group, HANDOFF_TRUTH session-declared classification, pinned CI
-runtime, orphan-session-branch attention), then focused suites plus
-`gate:milestone`, push a canonical-routed checkpoint and observe CI with `gh`
-(OD-3).
+Commit the 4.1-4.6 checkpoint, then implement M3 tasks 4.7-4.13 in order:
+sibling-absent gate:clean (R2-N3), gate:topology in the certification set
+(X-02), the UI gate group (B-14/D-18), HANDOFF_TRUTH session-declared
+classification with a negative probe (D-04), pinned CI actions/Node
+(NW-AUD-001/D-19), the closeout/claim/orphan-branch session fixes
+(X-08/A-03/A-07), then focused suites + gate:milestone, commit, push a
+canonical-routed checkpoint and observe CI with `gh` (OD-3).
 
 ## Files Changed
 
@@ -218,6 +222,48 @@ Relevant failure/output summary: every step exit=0 (typecheck-bin,
 hardening-rules 146/146 probe campaign included) except project-check exit=1
 on `PROJECT_STATE_CHECKOUT_DIRTY` — the milestone gate requires committed
 state; re-run after the M2 commit.
+
+Command: `npm run gate:dev` (M3, tasks 4.1-4.6)
+Result: PASS
+When: 2026-09-26
+Relevant failure/output summary: all steps exit=0; affected-shards
+passed=5485 failed=0, 33 skips all declared by the per-shard skip-identity
+policy; validation-universe PASS with refreshed inventory digest after
+registering tests/unit/sanitizedFailureLocations.test.ts.
+
+Command: gate:dev affected-shards (M3 intermediate)
+Result: ONE INTERMITTENT TEST FAILURE (exclusive bucket, not reproduced)
+When: 2026-09-26
+Relevant failure/output summary: a single gate:dev run reported the exclusive
+shard failed=1; the same bucket then passed 361/361 in isolation, the full
+run-shards universe passed 5485/0, and a subsequent gate:dev passed 5485/0.
+The receipt was overwritten before the failing location could be read; cause
+NOT identified and NOT hidden — watch item for 4.13's full validation.
+
+Command: looped + load-stressed `observerSemanticLedger.test.ts` (M3 4.4)
+Result: PASS
+When: 2026-09-26
+Relevant failure/output summary: 5/5 looped passes idle; 3/3 passes under
+6-way CPU saturation (wall 10s → 14s) after converting the waits to
+event-driven polls (D-24/R2-65 reproduction + fix evidence).
+
+Command: focused suites (c03 31+3sk, c04 12+6sk, c02b 17+2sk, c02a 20+2sk,
+realSourceCanary, c07, phase14FreshSourceAdmission, phase14ContractReport,
+reviewStore 54/54, sanitizedFailureLocations, gateReceiptPersistence,
+syntheticCampaignDiagnostics, plannerHandoff, validationShardPlan)
+Result: PASS
+When: 2026-09-26
+Relevant failure/output summary: all green; typecheck clean; hardening:check
+PASS including the dead-`protocol` cleanup in documentation.mjs.
+
+Command: `node bin/run-shards.mjs --json` (M3 skip-policy enforcement)
+Result: PASS
+When: 2026-09-26
+Relevant failure/output summary: result PASS, totals 5485/0 with 33 declared
+skips; undeclared-skip enforcement proven earlier by shard-1
+SHARD_UNDECLARED_SKIP (3 undeclared → fixed via the rebuilt allowlist) and
+the phase14ContractReport double-quote reason that the original generator
+missed.
 
 ## Decisions Made During This Task
 

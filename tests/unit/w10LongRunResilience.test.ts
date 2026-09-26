@@ -27,6 +27,7 @@ import { test, expect } from '@playwright/test';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { liveSourceTestRoot } from '../helpers/liveSourceTestAuthority';
 import {
   REASONER_TURN_RESPONSE_VERSION,
   TRANSIENT_ACTION_RETRY_BUDGET,
@@ -79,7 +80,6 @@ import {
 } from '../../src/core/localInvestigation/types';
 import { sourceContentDigest } from '../../src/core/source/scanTypes';
 import {
-  DEFAULT_SIBLING_ROOT,
   resolveGitHead,
 } from '../../src/core/source/siblingSource';
 import { PHASE25_APPROVED_REPOSITORY_IDS } from '../../src/core/source/approvedScan';
@@ -100,16 +100,16 @@ const PROVENANCE: ReasonerProvenance = {
 // ---------------------------------------------------------------------------
 
 function snapshotSiblingIdentity(): string {
-  const snapshot: Record<string, unknown> = { root: DEFAULT_SIBLING_ROOT };
+  const snapshot: Record<string, unknown> = { root: liveSourceTestRoot() };
   let entries: string[];
   try {
-    entries = fs.readdirSync(DEFAULT_SIBLING_ROOT).sort();
+    entries = fs.readdirSync(liveSourceTestRoot()).sort();
   } catch {
     return JSON.stringify({ ...snapshot, exists: false });
   }
   const heads: Record<string, string> = {};
   for (const repoId of PHASE25_APPROVED_REPOSITORY_IDS) {
-    const repoRoot = path.join(DEFAULT_SIBLING_ROOT, ...repoId.split('/'));
+    const repoRoot = path.join(liveSourceTestRoot(), ...repoId.split('/'));
     if (!fs.existsSync(repoRoot)) {
       heads[repoId] = 'ABSENT';
       continue;
@@ -1264,5 +1264,5 @@ test('a reproduction-capable campaign leaves sibling repositories untouched', as
   // And the sibling universe is byte-identical to before the run.
   const after = snapshotSiblingIdentity();
   expect(after).toBe(before);
-  expect(JSON.parse(after).root).toBe(DEFAULT_SIBLING_ROOT);
+  expect(JSON.parse(after).root).toBe(liveSourceTestRoot());
 });

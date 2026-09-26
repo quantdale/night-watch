@@ -22,6 +22,7 @@ import {
 import type { RealSourceCurrentness, RealSourceReader } from '../../src/oracles/expectations/recipes/types';
 import { createRealSourceSyntheticState } from '../helpers/phase11a3Fixtures';
 import { DEFAULT_SIBLING_ROOT } from '../../src/core/source/siblingSource';
+import { liveSourceTestRoot } from '../helpers/liveSourceTestAuthority';
 
 const DISPOSABLE_SNAPSHOT_SHA = 'e026c85522d201724033f024456da3efa17fe07a';
 const DISPOSABLE_ROOT = '/tmp/nightwatch-ripple-snapshot-e026c855';
@@ -94,7 +95,7 @@ function tryLiveInventory(canonicalHeadBefore: string | null = null): ReturnType
 
 /** Read the current canonical sibling HEAD without comparing it to a historical pin. */
 function canonicalSiblingHead(): string | null {
-  const root = process.env['NIGHTWATCH_SIBLING_ROOT']?.trim() || DEFAULT_SIBLING_ROOT;
+  const root = liveSourceTestRoot();
   const sibHeadPath = path.join(root, 'mobingilabs/ripple-api/.git/HEAD');
   try {
     const head = fs.readFileSync(sibHeadPath, 'utf8').trim();

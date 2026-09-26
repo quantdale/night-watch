@@ -15,11 +15,11 @@ import os from 'node:os';
 import path from 'node:path';
 import { createApprovedRealSourceScanConfig, PHASE25_APPROVED_REPOSITORY_IDS } from '../../src/core/source/approvedScan';
 import { createRealSourceScanConfig, scanSource } from '../../src/core/source/scan';
-import { createSiblingSourceAccess, DEFAULT_SIBLING_ROOT } from '../../src/core/source/siblingSource';
+import { createSiblingSourceAccess } from '../../src/core/source/siblingSource';
 import { buildProtoServiceIndex } from '../../src/core/source/protoServiceIndex';
 import { buildGrpcTopology } from '../../src/core/source/grpcTopology';
 import { discoverSourceSurfaces } from '../../src/core/source/surfaces';
-import { classifyLiveSourceTestState } from '../helpers/liveSourceTestAuthority';
+import { classifyLiveSourceTestState, liveSourceTestRoot } from '../helpers/liveSourceTestAuthority';
 
 const OUCHAN = 'mobingilabs/ouchan';
 const BLUEAPI = 'alphauslabs/blueapi';
@@ -34,11 +34,11 @@ const EXPECTED_PROVEN = 12;
 const EXPECTED_PROTO_SERVICES_BOUND = 12;
 
 function siblingRepoAvailable(repoId: string): boolean {
-  return fs.existsSync(path.join(DEFAULT_SIBLING_ROOT, ...repoId.split('/'), '.git'));
+  return fs.existsSync(path.join(liveSourceTestRoot(), ...repoId.split('/'), '.git'));
 }
 
 function realTopology() {
-  const access = createSiblingSourceAccess(DEFAULT_SIBLING_ROOT);
+  const access = createSiblingSourceAccess(liveSourceTestRoot());
   const inventory = scanSource({ access, config: createApprovedRealSourceScanConfig() });
   return buildGrpcTopology({ access, inventory, registrationRepoId: OUCHAN });
 }
@@ -299,7 +299,7 @@ test.describe('C-03 — the real measured topology', () => {
   });
 
   test('the generated SDK descriptors all pair uniquely', () => {
-    const access = createSiblingSourceAccess(DEFAULT_SIBLING_ROOT);
+    const access = createSiblingSourceAccess(liveSourceTestRoot());
     const inventory = scanSource({ access, config: createApprovedRealSourceScanConfig() });
     const index = buildProtoServiceIndex({ access, inventory });
     expect(index.descriptors.length).toBeGreaterThanOrEqual(15);
@@ -345,15 +345,11 @@ test.describe('C-03 — the universe is unchanged', () => {
 test.describe('C-03 — C-01 no-eviction across the admission (F-27)', () => {
 
   test('every operation identity discovered before the admission survives it', () => {
-    if (NO_EVICTION_LIVE_STATE.kind !== 'CURRENT') {
-      expect(['STALE', 'UNAVAILABLE']).toContain(NO_EVICTION_LIVE_STATE.kind);
-      expect(NO_EVICTION_LIVE_STATE.repositories).toHaveLength(3);
-      return;
-    }
+    test.skip(NO_EVICTION_LIVE_STATE.kind !== 'CURRENT', `LIVE_SOURCE_${NO_EVICTION_LIVE_STATE.kind}`);
     // C-03 adds 443 proto operations and raises ouchan's budget, which is the
     // largest single population change since C-01 closed the silent-loss
     // model. The assertion compares populations rather than trusting counts.
-    const access = createSiblingSourceAccess(DEFAULT_SIBLING_ROOT);
+    const access = createSiblingSourceAccess(liveSourceTestRoot());
     const full = createApprovedRealSourceScanConfig();
 
     const before = createRealSourceScanConfig({
@@ -378,16 +374,13 @@ test.describe('C-03 — C-01 no-eviction across the admission (F-27)', () => {
   });
 
   test('ripple-api keeps its full operation set after blueapi grows again', () => {
-    if (NO_EVICTION_LIVE_STATE.kind !== 'CURRENT') {
-      expect(NO_EVICTION_LIVE_STATE.kind).toBe(RIPPLE_LIVE_STATE.kind);
-      expect(NO_EVICTION_LIVE_STATE.repositories).toHaveLength(3);
-      return;
-    }
-    const discovery = discoverSourceSurfaces({ access: createSiblingSourceAccess(DEFAULT_SIBLING_ROOT), config: createApprovedRealSourceScanConfig() });
+    test.skip(NO_EVICTION_LIVE_STATE.kind !== 'CURRENT', `LIVE_SOURCE_${NO_EVICTION_LIVE_STATE.kind}`);
+    const discovery = discoverSourceSurfaces({ access: createSiblingSourceAccess(liveSourceTestRoot()), config: createApprovedRealSourceScanConfig() });
     expect(discovery.operations.filter((operation) => operation.repository === RIPPLE_API)).toHaveLength(223);
   });
   test('the blueapi artifact still contributes exactly its own 591 operations', () => {
-    const discovery = discoverSourceSurfaces({ access: createSiblingSourceAccess(DEFAULT_SIBLING_ROOT), config: createApprovedRealSourceScanConfig() });
+    test.skip(NO_EVICTION_LIVE_STATE.kind !== 'CURRENT', `LIVE_SOURCE_${NO_EVICTION_LIVE_STATE.kind}`);
+    const discovery = discoverSourceSurfaces({ access: createSiblingSourceAccess(liveSourceTestRoot()), config: createApprovedRealSourceScanConfig() });
     // This filtered on sourcePath ALONE, which was never a unique identity: it
     // silently assumed only one repository in the universe could hold a file at
     // `openapiv2/apidocs.swagger.json`. C-05 admitted `blueinternal`, which
@@ -542,5 +535,90 @@ type service struct {
     } finally {
       fs.rmSync(root, { recursive: true, force: true });
     }
+  });
+});
+
+// R2-N2 — every declared live-source skip keeps a synthetic twin that always
+// runs. The live assertions above measure the real sibling checkouts and skip
+// categorically when they are STALE or UNAVAILABLE; these twins prove the same
+// invariants over explicit synthetic roots so the coverage never silently
+// disappears with the host.
+
+test.describe('C-03 — synthetic twins for the declared live-source skips', () => {
+
+  test('synthetic twin — no-eviction: identities discovered before a synthetic admission survive it', () => {
+    const root = syntheticWorkspace({
+      [SDK]: { 'widget/v1/widget_grpc.pb.go': WIDGET_SDK, 'widget/v1/widget.proto': WIDGET_PROTO },
+      [BLUEAPI]: { 'billing/v1/billing.proto': WIDGET_PROTO.replace('blueapi.widget.v1', 'blueapi.billing.v1').replace('Widget', 'Billing') },
+    });
+    const access = createSiblingSourceAccess(root);
+    const before = syntheticConfig([
+      { repoId: SDK, roots: ['widget'] },
+    ]);
+    const after = syntheticConfig([
+      { repoId: SDK, roots: ['widget'] },
+      { repoId: BLUEAPI, roots: ['billing'] },
+    ]);
+    const beforeIdentities = new Set(discoverSourceSurfaces({ access, config: before }).operations.map((operation) => operation.operationId));
+    const afterResult = discoverSourceSurfaces({ access, config: after });
+    const afterIdentities = new Set(afterResult.operations.map((operation) => operation.operationId));
+    expect(beforeIdentities.size).toBeGreaterThan(0);
+    expect([...beforeIdentities].filter((identity) => !afterIdentities.has(identity))).toEqual([]);
+    expect(afterIdentities.size).toBeGreaterThan(beforeIdentities.size);
+    expect(afterResult.operationCompleteness.droppedOperations).toBe(0);
+  });
+
+  test('synthetic twin — a repository keeps its full operation set when another repository grows', () => {
+    const root = syntheticWorkspace({
+      [RIPPLE_API]: { 'widget/v1/widget.proto': WIDGET_PROTO, 'billing/v1/billing.proto': WIDGET_PROTO.replace('blueapi.widget.v1', 'blueapi.billing.v1').replace('Widget', 'Billing') },
+      [BLUEAPI]: { 'openapi/v1/api.proto': WIDGET_PROTO.replace('blueapi.widget.v1', 'blueapi.openapi.v1').replace('Widget', 'Openapi') },
+    });
+    const access = createSiblingSourceAccess(root);
+    const before = discoverSourceSurfaces({
+      access,
+      config: syntheticConfig([{ repoId: RIPPLE_API, roots: ['widget', 'billing'] }]),
+    });
+    const after = discoverSourceSurfaces({
+      access,
+      config: syntheticConfig([
+        { repoId: RIPPLE_API, roots: ['widget', 'billing'] },
+        { repoId: BLUEAPI, roots: ['openapi'] },
+      ]),
+    });
+    const rippleBefore = before.operations.filter((operation) => operation.repository === RIPPLE_API);
+    const rippleAfter = after.operations.filter((operation) => operation.repository === RIPPLE_API);
+    expect(rippleBefore.length).toBeGreaterThan(0);
+    expect(rippleAfter.map((operation) => operation.operationId).sort()).toEqual(rippleBefore.map((operation) => operation.operationId).sort());
+  });
+
+  test('synthetic twin — artifact identity is repository + sourcePath, never sourcePath alone', () => {
+    const artifact = JSON.stringify({
+      swagger: '2.0',
+      paths: {
+        '/v1/first': { get: { operationId: 'firstGet', responses: { 200: { description: 'ok' } } } },
+      },
+    });
+    const root = syntheticWorkspace({
+      [BLUEAPI]: { 'apidocs/apidocs.swagger.json': artifact },
+      'alphauslabs/blueinternal': { 'apidocs/apidocs.swagger.json': artifact.replace('firstGet', 'secondGet') },
+    });
+    const access = createSiblingSourceAccess(root);
+    const config = createRealSourceScanConfig({
+      runtimeMappingNamespace: 'ripple',
+      approvedRepositories: [
+        { repoId: BLUEAPI, expectedSourceSha: SYNTHETIC_SHA, allowlistedRoots: ['apidocs'], allowedExtensions: ['.json'], maxFiles: 64, maxFileBytes: 400_000, maxTotalBytes: 4_000_000 },
+        { repoId: 'alphauslabs/blueinternal', expectedSourceSha: SYNTHETIC_SHA, allowlistedRoots: ['apidocs'], allowedExtensions: ['.json'], maxFiles: 64, maxFileBytes: 400_000, maxTotalBytes: 4_000_000 },
+      ],
+    });
+    const discovery = discoverSourceSurfaces({ access, config });
+    const blueapiOwn = discovery.operations.filter((operation) => operation.repository === BLUEAPI && operation.sourcePath === 'apidocs/apidocs.swagger.json');
+    const internalOwn = discovery.operations.filter((operation) => operation.repository === 'alphauslabs/blueinternal' && operation.sourcePath === 'apidocs/apidocs.swagger.json');
+    // The artifact analyzer derives evidence-shaped operation identities; the
+    // twin's claim is the identity SHAPE: the same sourcePath in two
+    // repositories yields two disjoint populations, never one merged count.
+    expect(blueapiOwn.length).toBeGreaterThan(0);
+    expect(internalOwn.length).toBeGreaterThan(0);
+    const blueapiIds = new Set(blueapiOwn.map((operation) => operation.operationId));
+    expect(internalOwn.every((operation) => !blueapiIds.has(operation.operationId))).toBe(true);
   });
 });

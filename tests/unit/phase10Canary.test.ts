@@ -28,20 +28,22 @@ import {
   REAL_SOURCE_EXPECTATION_RECIPES,
 } from '../../src/oracles/expectations/recipes/registry';
 import { deriveRealSourceExpectations } from '../../src/oracles/expectations/admission';
-import { createSiblingSourceAccess, DEFAULT_SIBLING_ROOT } from '../../src/core/source/siblingSource';
+import { createSiblingSourceAccess } from '../../src/core/source/siblingSource';
 import { buildRippleJourneyEndpointRegistry } from '../../src/products/ripple/journeyContracts';
 import {
   CURRENT_RIPPLE_API_SHA,
   derivePhase10FixtureExpectations,
   PHASE10_FIXTURE_RECIPES,
 } from '../../corpus/phase10/source-fixture/phase10Fixtures';
+import { liveSourceTestRoot } from '../helpers/liveSourceTestAuthority';
 
 const RIPPLE_API_REPO = 'mobingilabs/ripple-api';
 
 function siblingRoot(): string | null {
   const env = process.env['NIGHTWATCH_SIBLING_ROOT'];
   if (env !== undefined && env.trim() !== '') return env;
-  return fs.existsSync(DEFAULT_SIBLING_ROOT) ? DEFAULT_SIBLING_ROOT : null;
+  const configured = liveSourceTestRoot();
+  return fs.existsSync(configured) ? configured : null;
 }
 
 /** Depth classification: L1 = root type only; L2 = + per-item field

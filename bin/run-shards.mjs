@@ -24,6 +24,8 @@ import { fileURLToPath } from 'node:url';
 import { buildShardChildEnvironment, shardTempRoot } from './lib/shard-child-environment.mjs';
 import { loadTypeScriptModules } from './lib/typescript-runtime-loader.mjs';
 import { OPERATOR_CLI_SCHEMA, defineOperatorCli, invokedDirectly } from './lib/operator-cli.mjs';
+import { evaluateSemanticSkipPolicyIdentities } from './lib/semantic-skip-policy.mjs';
+import { extractSanitizedFailedLocations } from './lib/sanitized-failure-locations.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const CLASSES_PATH = path.join(root, 'config', 'validation-execution-classes.v1.json');
@@ -99,6 +101,21 @@ function loadClasses() {
   const classes = {};
   for (const [file, entry] of Object.entries(declaration.files ?? {})) classes[file] = entry.class;
   return classes;
+}
+
+/** The declared skip policy and its canonical identity allowlist (D-10). */
+function loadSkipPolicyConfig() {
+  try {
+    const raw = JSON.parse(fs.readFileSync(path.join(root, 'config', 'semantic-compatibility.v1.json'), 'utf8'));
+    const execution = raw?.execution ?? {};
+    const identities = execution.canonicalSkipIdentities ?? raw?.canonicalSkipIdentities ?? null;
+    return {
+      expectedSkipPolicy: typeof execution.expectedSkipPolicy === 'string' ? execution.expectedSkipPolicy : '',
+      canonicalSkipIdentities: Array.isArray(identities) ? identities : null,
+    };
+  } catch {
+    return { expectedSkipPolicy: '', canonicalSkipIdentities: null };
+  }
 }
 
 
@@ -191,17 +208,22 @@ function runShard(shard, execution, scratchRoot) {
     fs.mkdirSync(path.dirname(receiptPath), { recursive: true });
     fs.mkdirSync(shardTempRoot(scratchRoot, shard.id), { recursive: true });
     fs.rmSync(receiptPath, { force: true });
+    // D-10 / 4.6 — the per-shard skip-identity report is the skip-policy
+    // input. It is evaluated against the canonical allowlist after the run;
+    // an undeclared skip fails the shard rather than passing silently.
+    const skipReportPath = path.join(root, 'test-results', shard.id, 'skip-identity-report.json');
+    fs.rmSync(skipReportPath, { force: true });
     const child = spawn(npx, [
       'test',
       ...shard.files,
       '--project=nightwatch',
       '--workers=1',
       '--retries=0',
-      '--reporter=list,./tests/helpers/playwrightTimingReporter.ts,./tests/helpers/playwrightShardReporter.ts',
+      '--reporter=list,./tests/helpers/playwrightTimingReporter.ts,./tests/helpers/playwrightShardReporter.ts,./tests/helpers/playwrightSkipIdentityReporter.ts',
       `--output=test-results/${shard.id}`,
     ], {
       cwd: root,
-      env: buildShardChildEnvironment(process.env, { lane: shard.id, receiptPath, shardId: shard.id, runRoot: scratchRoot }),
+      env: buildShardChildEnvironment(process.env, { lane: shard.id, receiptPath, shardId: shard.id, runRoot: scratchRoot, skipReportPath }),
       stdio: ['ignore', 'pipe', 'pipe'],
     });
     let output = '';
@@ -251,10 +273,35 @@ function runShard(shard, execution, scratchRoot) {
         executionStatus = 'TESTS_FAILED';
         executionCode = 'SHARD_CHILD_EXIT_NONZERO';
       }
-      const failedLocations = [...output.matchAll(/^\s*\d+\)\s+\[[^\]]+\]\s+›\s+(tests\/(?:unit|smoke)\/[A-Za-z0-9._/-]+\.test\.ts):(\d+)(?::\d+)?\s+›/gm)]
-        .map((match) => `${match[1]}:${match[2]}`)
-        .filter((location, index, all) => all.indexOf(location) === index)
-        .slice(0, 16);
+      // D-10 / 4.6 — evaluate the skip identity policy over the per-shard
+      // Playwright JSON report. An undeclared skip fails the shard; a missing
+      // or unconfigured policy fails closed rather than passing silently.
+      let skipPolicy = { result: 'NO_REPORT', skipped: 0, undeclared: 0 };
+      try {
+        const skipReport = JSON.parse(fs.readFileSync(skipReportPath, 'utf8'));
+        const policy = loadSkipPolicyConfig();
+        const evaluation = evaluateSemanticSkipPolicyIdentities({
+          identities: Array.isArray(skipReport.skips) ? skipReport.skips : [],
+          canonicalSkipIdentities: policy.canonicalSkipIdentities,
+          expectedSkipPolicy: policy.expectedSkipPolicy,
+        });
+        skipPolicy = {
+          result: evaluation.result,
+          skipped: evaluation.skipped ?? 0,
+          undeclared: (evaluation.undeclared ?? []).length,
+        };
+        if (evaluation.result !== 'PASS') {
+          executionStatus = 'SKIP_POLICY_UNDECLARED';
+          executionCode = evaluation.result === 'SKIP_POLICY_UNCONFIGURED'
+            ? 'SHARD_SKIP_POLICY_UNCONFIGURED'
+            : 'SHARD_UNDECLARED_SKIP';
+        }
+      } catch {
+        skipPolicy = { result: 'NO_REPORT', skipped: 0, undeclared: 0 };
+        executionStatus = 'SKIP_POLICY_UNDECLARED';
+        executionCode = 'SHARD_SKIP_REPORT_MISSING';
+      }
+      const failedLocations = extractSanitizedFailedLocations(output, 16);
       resolve({
         id: shard.id,
         files: shard.files.length,
@@ -266,6 +313,7 @@ function runShard(shard, execution, scratchRoot) {
         executionStatus,
         executionCode,
         failedLocations,
+        skipPolicy,
         errorCode: executionCode,
       });
     });

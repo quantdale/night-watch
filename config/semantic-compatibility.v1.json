@@ -21,6 +21,170 @@
       {
         "file": "tests/unit/selfDevSandboxConfinement.test.ts",
         "reasonToken": "uid semantics"
+      },
+      {
+        "file": "tests/unit/agent-state.test.ts",
+        "reasonToken": "git CLI is unavailable; agent-state validator tests skipped"
+      },
+      {
+        "file": "tests/unit/c02aOpenApiAdmission.test.ts",
+        "reasonToken": "LIVE_SOURCE_"
+      },
+      {
+        "file": "tests/unit/c02bProtoCorroboration.test.ts",
+        "reasonToken": "blueapi checkout unavailable"
+      },
+      {
+        "file": "tests/unit/c02bProtoSurface.test.ts",
+        "reasonToken": "blueapi checkout unavailable"
+      },
+      {
+        "file": "tests/unit/c02bProtoSurface.test.ts",
+        "reasonToken": "ouchan checkout unavailable"
+      },
+      {
+        "file": "tests/unit/c02bProtoSurface.test.ts",
+        "reasonToken": "LIVE_SOURCE_"
+      },
+      {
+        "file": "tests/unit/c03GrpcTopology.test.ts",
+        "reasonToken": "sibling checkouts unavailable"
+      },
+      {
+        "file": "tests/unit/c03GrpcTopology.test.ts",
+        "reasonToken": "requires the read-only sibling Alphaus checkouts"
+      },
+      {
+        "file": "tests/unit/c03GrpcTopology.test.ts",
+        "reasonToken": "LIVE_SOURCE_"
+      },
+      {
+        "file": "tests/unit/c04FrontendGraph.test.ts",
+        "reasonToken": "LIVE_SOURCE_"
+      },
+      {
+        "file": "tests/unit/c05UniverseAdmission.test.ts",
+        "reasonToken": "requires the read-only sibling Alphaus checkouts"
+      },
+      {
+        "file": "tests/unit/c07DerivedSemantics.test.ts",
+        "reasonToken": "LIVE_SOURCE_"
+      },
+      {
+        "file": "tests/unit/c08DeploymentBinding.test.ts",
+        "reasonToken": "requires the read-only sibling Alphaus checkouts"
+      },
+      {
+        "file": "tests/unit/c09SpecExpectations.test.ts",
+        "reasonToken": "requires the read-only sibling Alphaus checkouts"
+      },
+      {
+        "file": "tests/unit/changeIntelligenceBacktest.test.ts",
+        "reasonToken": "workspace repositories are unavailable"
+      },
+      {
+        "file": "tests/unit/historicalRediscovery.test.ts",
+        "reasonToken": "sibling historical data unavailable"
+      },
+      {
+        "file": "tests/unit/historicalRediscovery.test.ts",
+        "reasonToken": "record has no source SHA"
+      },
+      {
+        "file": "tests/unit/historicalRediscovery.test.ts",
+        "reasonToken": "cannot isolate this record"
+      },
+      {
+        "file": "tests/unit/liveProviderEfficacyProof.test.ts",
+        "reasonToken": "set NIGHTWATCH_LIVE_PROVIDER_PROOF=1 with NIGHTWATCH_PRINT_CLI/NIGHTWATCH_PRINT_ARGS"
+      },
+      {
+        "file": "tests/unit/minedCases.test.ts",
+        "reasonToken": "sibling historical data unavailable"
+      },
+      {
+        "file": "tests/unit/phase14FreshSourceAdmission.test.ts",
+        "reasonToken": "requires disposable exact snapshot at "
+      },
+      {
+        "file": "tests/unit/plannerHandoff.test.ts",
+        "reasonToken": "git CLI is unavailable; handoff checker tests skipped"
+      },
+      {
+        "file": "tests/unit/projectState.test.ts",
+        "reasonToken": "git CLI is unavailable; project-state checker tests skipped"
+      },
+      {
+        "file": "tests/unit/realHistoricalProductPathProof.test.ts",
+        "reasonToken": "opt-in: set NIGHTWATCH_REAL_HISTORICAL_PROOF=1 with a local sibling checkout and Go toolchain"
+      },
+      {
+        "file": "tests/unit/realOwnerLocalGeneralityProof.test.ts",
+        "reasonToken": "NIGHTWATCH_REAL_OWNER_LOCAL_PROOF=1 to run the real proof"
+      },
+      {
+        "file": "tests/unit/realOwnerLocalGeneralityProof.test.ts",
+        "reasonToken": "owner-approved source index unavailable"
+      },
+      {
+        "file": "tests/unit/realOwnerLocalGeneralityProof.test.ts",
+        "reasonToken": "fewer than two executable targets in the approved universe"
+      },
+      {
+        "file": "tests/unit/realOwnerLocalGeneralityProof.test.ts",
+        "reasonToken": "no second DISTINCT executable target"
+      },
+      {
+        "file": "tests/unit/realOwnerLocalGeneralityProof.test.ts",
+        "reasonToken": "target module root unresolvable"
+      },
+      {
+        "file": "tests/unit/realOwnerLocalGeneralityProof.test.ts",
+        "reasonToken": "no allowlisted Go toolchain satisfies the module"
+      },
+      {
+        "file": "tests/unit/realOwnerLocalReproductionProof.test.ts",
+        "reasonToken": "NIGHTWATCH_REAL_OWNER_LOCAL_PROOF=1 to run the real proof"
+      },
+      {
+        "file": "tests/unit/realOwnerLocalReproductionProof.test.ts",
+        "reasonToken": "no supported vendored Go test package under the approved universe"
+      },
+      {
+        "file": "tests/unit/realOwnerLocalReproductionProof.test.ts",
+        "reasonToken": "supported target module root unresolvable"
+      },
+      {
+        "file": "tests/unit/realOwnerLocalReproductionProof.test.ts",
+        "reasonToken": "no allowlisted Go toolchain satisfies the module"
+      },
+      {
+        "file": "tests/unit/realSourceCanary.test.ts",
+        "reasonToken": "LIVE_SOURCE_"
+      },
+      {
+        "file": "tests/unit/snapshotter.test.ts",
+        "reasonToken": "git CLI is unavailable; snapshotter tests skipped"
+      },
+      {
+        "file": "tests/manual/phase2c-real-journeys.ts",
+        "reasonToken": ""
+      },
+      {
+        "file": "tests/manual/phase4-real-exploration.ts",
+        "reasonToken": ""
+      },
+      {
+        "file": "tests/manual/phase5-real-api.ts",
+        "reasonToken": ""
+      },
+      {
+        "file": "tests/manual/phase7-real-campaign.ts",
+        "reasonToken": ""
+      },
+      {
+        "file": "tests/unit/selfDevSandboxConfinement.test.ts",
+        "reasonToken": ""
       }
     ]
   },

@@ -7,15 +7,15 @@ Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-final-product-completion-v1
 Starting SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
 Last validated implementation SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
-Last checkpoint: 2026-09-25 — M1 complete: bootstrap checkpoint `ec6010a2`;
-all four activation checks PASS post-commit.
-Current milestone: M2 certification anchors and ratchets (tasks 3.1-3.7) —
-checkpoint-neutral evidence bindings and LIVE_TASK_STATUS derivation before
-any evidence binding (A-01, R2-N6).
-Next action: implement tasks 3.1-3.7 (census literal derivation, binding
-files behind a diff-shape guard, hardening probe, project:check assertions,
-ceiling ratchet, disposition-token ledger), run focused suites plus the
-gates, and commit the M2 milestone.
+Last checkpoint: 2026-09-26 — M3 tasks 4.1-4.6 complete; gate:dev PASS
+5485/0 with per-shard skip-identity enforcement.
+Current milestone: M3 spine, remainder (tasks 4.7-4.13) — sibling-absent
+gate:clean, gate:topology certification, UI gate group, HANDOFF_TRUTH
+session-declared classification, pinned CI runtime, session closeout fixes,
+then milestone gates + checkpoint push + CI observation.
+Next action: commit the 4.1-4.6 checkpoint, then implement tasks 4.7-4.13
+in order and finish M3 with gate:milestone PASS plus a canonical-routed
+push observed with `gh` (OD-3).
 
 Authorization class: FINAL_PRODUCT_COMPLETION_V1
 PROJECT_VERDICT_EFFECT: PRESERVE

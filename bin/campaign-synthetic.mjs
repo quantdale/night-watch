@@ -29,10 +29,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
+import os from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { buildChildEnvironment } from './child-environment.mjs';
 import { loadTypeScriptModules } from './lib/typescript-runtime-loader.mjs';
 import { OPERATOR_CLI_SCHEMA, defineOperatorCli, invokedDirectly } from './lib/operator-cli.mjs';
+import { extractSanitizedFailedLocations } from './lib/sanitized-failure-locations.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -104,6 +106,24 @@ function deepContainmentLane() {
   }
 }
 
+// D-02 — reuse the shard TMPDIR isolation: the campaign's children get one
+// isolated temp root per invocation and never write to the shared
+// os.tmpdir(). Created lazily so importing this module has no side effects,
+// removed best-effort on exit like every other scratch root.
+let campaignTempRoot = null;
+function isolatedCampaignTempRoot(lane) {
+  if (campaignTempRoot === null) {
+    campaignTempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-synthetic-campaign-'));
+    process.on('exit', () => {
+      if (campaignTempRoot === null) return;
+      try { fs.rmSync(campaignTempRoot, { recursive: true, force: true }); } catch { /* best effort */ }
+    });
+  }
+  const laneRoot = path.join(campaignTempRoot, lane.replace(/[^A-Za-z0-9._-]/g, '_'));
+  fs.mkdirSync(laneRoot, { recursive: true });
+  return laneRoot;
+}
+
 function campaignEnvironment(lane) {
   const environment = buildChildEnvironment(process.env, { NIGHTWATCH_ENV: 'local', NIGHTWATCH_GATE_ENVIRONMENT: 'SYNTHETIC_CAMPAIGN', NIGHTWATCH_TIMING_LANE: lane });
   environment.TZ = 'UTC';
@@ -111,6 +131,10 @@ function campaignEnvironment(lane) {
   environment.LANG = 'C';
   environment.NO_COLOR = '1';
   environment.NIGHTWATCH_HEADED = '0';
+  const tempRoot = isolatedCampaignTempRoot(lane);
+  environment.TMPDIR = tempRoot;
+  environment.TEMP = tempRoot;
+  environment.TMP = tempRoot;
   for (const key of ['NIGHTWATCH_PROXY_PORT', 'NIGHTWATCH_PROXY_LEASE_TOKEN', 'NIGHTWATCH_PROXY_LEASE_PATH', 'NIGHTWATCH_PROXY_LEASE_OWNER_PID']) delete environment[key];
   return environment;
 }
@@ -133,12 +157,10 @@ function parseCampaignOutput(output, status, maxFailedLocations) {
   const total = [passed, skipped, failed, didNotRun]
     .map((value) => (Number.isInteger(value) ? value : 0))
     .reduce((left, right) => left + right, 0);
-  // Only the tracked test path and 1-based line survive; the failure message,
+  // Only the tracked test path, the 1-based line, and a sanitized assertion
+  // class (TIMEOUT / EXPECT_* / UNCLASSIFIED) survive; the failure message,
   // received/expected values and stack are intentionally discarded here.
-  const failedLocations = [...output.matchAll(/^\s*\d+\)\s+\[[^\]]+\]\s+›\s+(tests\/(?:unit|smoke)\/[A-Za-z0-9._/-]+\.test\.ts):(\d+)(?::\d+)?\s+›/gm)]
-    .map((match) => `${match[1]}:${match[2]}`)
-    .filter((location, index, all) => all.indexOf(location) === index)
-    .slice(0, maxFailedLocations);
+  const failedLocations = extractSanitizedFailedLocations(output, maxFailedLocations);
   return { total, passed, skipped, didNotRun, failed, failedLocations };
 }
 
