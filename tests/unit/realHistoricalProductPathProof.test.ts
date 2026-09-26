@@ -20,6 +20,7 @@ import { test, expect } from '@playwright/test';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { liveSourceTestRoot } from '../helpers/liveSourceTestAuthority';
 
 import { detectBenchmarkLeakage } from '../../src/core/agentProtocol/benchmark';
 import { runLocalCliCampaign } from '../../src/core/agentRuntime/localCampaign';
@@ -37,7 +38,7 @@ import type { BugAtlasRecord } from '../../src/core/agentProtocol/atlas';
 const ENABLED = process.env['NIGHTWATCH_REAL_HISTORICAL_PROOF'] === '1';
 const FIX_SHA = process.env['NIGHTWATCH_REAL_HISTORICAL_FIX_SHA'] ?? '5985281b43cd9dd2191a2bca17fb2e5ca7d2720a';
 const REPOSITORY = process.env['NIGHTWATCH_REAL_HISTORICAL_REPOSITORY'] ?? 'mobingilabs/ouchan';
-const SIBLING_ROOT = process.env['NIGHTWATCH_REPOS_ROOT'] ?? DEFAULT_SIBLING_ROOT;
+const SIBLING_ROOT = liveSourceTestRoot();
 
 function minedRecords(): readonly BugAtlasRecord[] {
   try {

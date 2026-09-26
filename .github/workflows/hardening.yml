@@ -12,20 +12,20 @@ permissions:
 jobs:
   local-hardening:
     name: Executable quality gate
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # The unified gate is serial and includes npm ci, the Phase 9–23
     # compatibility cone, owner provenance, and the synthetic campaign. This
     # is a bounded budget, not a retry or a product-environment allowance.
     timeout-minutes: 30
     steps:
       - name: Check out source
-        uses: actions/checkout@v4
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.0.0
         with:
           fetch-depth: 0
       - name: Set up Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
       - name: Install without lifecycle scripts
         run: npm ci --ignore-scripts
@@ -37,3 +37,6 @@ jobs:
 # emits only safe bounded receipts. It never runs authenticated browsers,
 # campaign:real, auth:capture, DEV/NEXT/production targets, databases,
 # infrastructure, external publication, or private evidence uploads.
+#
+# Every action is pinned to a full commit SHA (NW-AUD-001); actions/checkout
+# and actions/setup-node run their Node-24-native majors (D-19).

@@ -58,6 +58,7 @@ export const AUTHENTICATED_WRITER_REGISTRY = Object.freeze([
   { root: 'bin/phase22-dev.mjs', klass: 'LANE_RECEIPT_TOOL', capabilities: ['owner-local-publication'] },
   { root: 'bin/phase23-ci.mjs', klass: 'LANE_RECEIPT_TOOL', capabilities: ['owner-local-publication'] },
   { root: 'bin/phase23-predev.mjs', klass: 'LANE_RECEIPT_TOOL', capabilities: ['owner-local-publication'] },
+  { root: 'bin/quality-gate-clean.mjs', klass: 'LANE_RECEIPT_TOOL', capabilities: ['owner-local-publication'] },
   { root: 'src/proxy/events.ts', klass: 'PROXY_EVENT_WRITER', capabilities: ['schema-firewall', 'runtime-publication'] },
   { root: 'tests/', klass: 'TEST_FIXTURE', capabilities: ['owner-local-publication'] },
 ]);

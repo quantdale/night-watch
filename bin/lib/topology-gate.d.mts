@@ -99,6 +99,7 @@ export function detectInheritanceClaim(absence: TopologyAbsence, receipts: Recor
 export function scanExternalAbsolutePathDependence(input: {
   readonly files: readonly TopologyFile[];
   readonly declarations?: readonly { readonly file: string; readonly literal: string }[];
+  readonly readFile?: (modulePath: string) => string | null;
 }): readonly TopologyPathFinding[];
 export function scanUndeclaredBinaryInvocation(input: {
   readonly files: readonly TopologyFile[];

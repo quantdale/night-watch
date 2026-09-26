@@ -229,15 +229,17 @@ export function checkPhase23QualityGate() {
     .map((line) => line.replace(/^\s{8}run:\s*/, '').trim());
   if (/upload-artifact|NIGHTWATCH_STORAGE_STATE|phase22-real|campaign:real|auth:capture/i.test(runCommands.join('\n'))) fail('GitHub workflow contains a private/authenticated execution path');
   if (!/permissions:\s*\n\s+contents:\s+read/.test(workflow)) fail('GitHub workflow permissions must remain contents: read');
-  if (!/runs-on:\s*ubuntu-latest/.test(workflow)) fail('GitHub workflow must qualify on ubuntu-latest');
-  if (!/node-version:\s*20/.test(workflow)) fail('GitHub workflow must use Node 20');
+  if (!/runs-on:\s*ubuntu-24\.04/.test(workflow)) fail('GitHub workflow must qualify on ubuntu-24.04 (pinned runner image, D-19)');
+  if (!/node-version:\s*22/.test(workflow)) fail('GitHub workflow must use Node 22 (the locally qualified runtime, D-19)');
   const timeout = /timeout-minutes:\s*(\d+)/.exec(workflow);
   if (!timeout || Number(timeout[1]) < 15 || Number(timeout[1]) > 45) fail('GitHub workflow timeout must be a justified bounded 15–45 minute budget');
   if (runCommands.length !== 2 || runCommands[0] !== 'npm ci --ignore-scripts' || runCommands[1] !== 'npm run gate:ci') fail('GitHub workflow must contain only npm ci --ignore-scripts and the authoritative npm run gate:ci commands');
   if ((workflow.match(/^\s{8}run:\s*npm run gate:ci\s*$/gm) ?? []).length !== 1) fail('GitHub workflow must invoke gate:ci exactly once');
   if (/npx playwright test|playwright test|campaign:real|auth:capture|phase22-real|phase7-real|upload-artifact|secrets\./i.test(runCommands.join('\n'))) fail('GitHub workflow run commands contain forbidden direct tests, authenticated execution, or private artifact handling');
   for (const use of workflow.match(/^\s{8}uses:\s*.*$/gm) ?? []) {
-    if (!/actions\/(?:checkout|setup-node)@v4/.test(use)) fail(`GitHub workflow uses an unapproved action: ${use.trim()}`);
+    // D-19 / NW-AUD-001: actions run their Node-24-native majors and are
+    // pinned to a full commit SHA; a tag or branch is a moving target.
+    if (!/actions\/(?:checkout|setup-node)@[0-9a-f]{40}(?:\s|$)/.test(use)) fail(`GitHub workflow uses an unpinned action (full commit SHA required): ${use.trim()}`);
   }
 }
 
@@ -264,7 +266,13 @@ export function checkPhase23QualityGate() {
  * dependency. A dependency a test resolves is by definition used.
  */
 export function checkDeclaredDependencyResolvability() {
-  const manifest = JSON.parse(readDataFile('package.json'));
+  let manifest;
+  try {
+    manifest = JSON.parse(readDataFile('package.json'));
+  } catch {
+    fail('package.json is not valid JSON; declared-dependency resolvability cannot be evaluated');
+    return;
+  }
   const declared = new Set([
     ...Object.keys(manifest.dependencies ?? {}),
     ...Object.keys(manifest.devDependencies ?? {}),
@@ -408,4 +416,52 @@ export function checkAuthenticatedCapabilitySingleEvaluator() {
     }
   }
   if (scanned === 0) fail('AUTH_CAPABILITY_SECOND_EXPIRY_EVALUATOR scanned zero files; the check would pass vacuously');
+}
+
+/**
+ * NW-AUD-001 / D-19 — every workflow file pins every action by full commit
+ * SHA. The previous check saw only one file and only 8-space `uses:` forms;
+ * this one walks every `.github/workflows` YAML at any indentation (including
+ * compact `- uses:` step forms) and anchors the reference to a 40-hex commit.
+ * A tag, branch or floating major is a mutable supply-chain input and fails.
+ */
+export function checkWorkflowActionPinning() {
+  const workflowsDirectory = path.join(root, '.github', 'workflows');
+  let entries = [];
+  try {
+    entries = fs.readdirSync(workflowsDirectory).filter((name) => /\.ya?ml$/.test(name)).sort();
+  } catch {
+    entries = [];
+  }
+  if (entries.length === 0) {
+    fail('workflow pinning: no workflow files discovered; the scan is broken rather than the repository clean');
+    return;
+  }
+  const USES_LINE_RE = /^\s*(?:-\s+)?uses:\s*("[^"]+"|'[^']+'|\S+)\s*(?:#.*)?$/;
+  for (const name of entries) {
+    const relative = path.posix.join('.github/workflows', name);
+    let text;
+    try {
+      text = fs.readFileSync(path.join(workflowsDirectory, name), 'utf8');
+    } catch {
+      fail(`workflow pinning: cannot read ${relative}`);
+      continue;
+    }
+    text.split(/\r?\n/).forEach((line, index) => {
+      const match = USES_LINE_RE.exec(line);
+      if (match === null) return;
+      const reference = match[1].replace(/^['"]|['"]$/g, '');
+      // Local actions and reusable-workflow paths are still pinned by ref.
+      const trimmed = reference.startsWith('./') || reference.startsWith('.github/') ? reference.replace(/^\.\/|^\.github\//, '') : reference;
+      const at = trimmed.lastIndexOf('@');
+      if (at <= 0) {
+        fail(`workflow pinning ${relative}:${index + 1} uses an unowned action reference without a @ref: ${reference}`);
+        return;
+      }
+      const pinned = trimmed.slice(at + 1);
+      if (!/^[0-9a-f]{40}$/.test(pinned)) {
+        fail(`workflow pinning ${relative}:${index + 1} uses a moving action reference (full commit SHA required): ${reference}`);
+      }
+    });
+  }
 }

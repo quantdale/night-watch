@@ -12,6 +12,7 @@ import { test, expect } from '@playwright/test';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { liveSourceTestRoot } from '../helpers/liveSourceTestAuthority';
 
 import { validateCurrentSourceProof } from '../../src/core/localInvestigation/currentSourceProof';
 import { createOwnerLocalInvestigationContext } from '../../src/core/localInvestigation/ownerLocal';
@@ -27,7 +28,7 @@ import {
 } from '../../src/core/ownerLocalReproduction/provider';
 
 const ENABLED = process.env['NIGHTWATCH_REAL_OWNER_LOCAL_PROOF'] === '1';
-const SIBLING_ROOT = process.env['NIGHTWATCH_REPOS_ROOT'] ?? DEFAULT_SIBLING_ROOT;
+const SIBLING_ROOT = liveSourceTestRoot();
 
 const HONEST_VERDICTS = [
   'REPRODUCED_CURRENT_FAILURE',

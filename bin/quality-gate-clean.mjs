@@ -104,14 +104,24 @@ export function siblingIdentityManifest(siblingRoot) {
   return { ok: true, digest: `sha256:${hash.digest('hex').slice(0, 24)}`, entryCount: entries.length, worktrees };
 }
 
-function resolveNode20Toolchain(extra = {}) {
+function resolveNode22Toolchain(extra = {}) {
   const environment = safeEnvironment(extra);
-  if (Number(process.versions.node.split('.')[0]) === 20) return { environment, nodeMajor: 20 };
-  // Development hosts may not have Node 20 installed globally. Resolve the
+  // D-19: the pinned runtime is Node 22 (Node 20 is EOL). Receipts carry the
+  // exact node and npm versions (NW-AUD-004 narrowed), never only a major.
+  if (Number(process.versions.node.split('.')[0]) === 22) {
+    const npmFast = spawnSync(packageManager, ['--version'], { cwd: root, env: environment, encoding: 'utf8', timeout: 30_000, stdio: ['ignore', 'pipe', 'pipe'] });
+    return {
+      environment,
+      nodeMajor: 22,
+      nodeVersion: process.version,
+      npmVersion: npmFast.status === 0 && !npmFast.error ? (npmFast.stdout ?? '').trim() : null,
+    };
+  }
+  // Development hosts may not have Node 22 installed globally. Resolve the
   // pinned major into npm's disposable cache, then put only its bin directory
   // first so the existing npm CLI runs under that verified Node binary. CI
   // uses setup-node and takes the direct branch above.
-  const resolved = spawnSync(packageManager, ['exec', '--yes', '--package=node@20', '--', 'node', '-p', 'process.execPath'], {
+  const resolved = spawnSync(packageManager, ['exec', '--yes', '--package=node@22', '--', 'node', '-p', 'process.execPath'], {
     cwd: root, env: environment, encoding: 'utf8', timeout: 120_000, maxBuffer: 256 * 1024, stdio: ['ignore', 'pipe', 'pipe'],
   });
   if (resolved.status !== 0 || resolved.error) return null;
@@ -124,16 +134,38 @@ function resolveNode20Toolchain(extra = {}) {
     return null;
   }
   const nodeMajor = Number((spawnSync(executable, ['-p', 'process.versions.node.split(\'.\')[0]'], { encoding: 'utf8', timeout: 30_000 }).stdout ?? '').trim());
-  if (nodeMajor !== 20) return null;
+  if (nodeMajor !== 22) return null;
+  const nodeVersion = (spawnSync(executable, ['-p', 'process.version'], { encoding: 'utf8', timeout: 30_000 }).stdout ?? '').trim() || null;
   const nodeBin = path.dirname(executable);
   environment.PATH = `${nodeBin}${path.delimiter}${environment.PATH ?? ''}`;
   const npmCheck = spawnSync(packageManager, ['--version'], { cwd: root, env: environment, encoding: 'utf8', timeout: 30_000, stdio: ['ignore', 'pipe', 'pipe'] });
   if (npmCheck.status !== 0 || npmCheck.error) return null;
-  return { environment, nodeMajor };
+  return { environment, nodeMajor, nodeVersion, npmVersion: (npmCheck.stdout ?? '').trim() || null };
 }
+
+const CLEAN_RECEIPT_DIRECTORY = path.join(root, 'artifacts', 'gate-receipts');
 
 function emit(receipt, code = 0) {
   receipt.receiptDigest = `clean-receipt:sha256:${sha256(JSON.stringify(receipt)).slice(0, 24)}`;
+  // B-14 / D-18 — the clean receipt is persisted to the ignored receipts
+  // directory, not only printed: an evidence receipt nobody can re-read is
+  // not evidence. Persistence failure is its own failure (exit 3), never a
+  // silent success.
+  const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+  try {
+    fs.mkdirSync(CLEAN_RECEIPT_DIRECTORY, { recursive: true });
+    const digestSuffix = String(receipt.receiptDigest).split(':')[2] ?? 'unknown';
+    fs.writeFileSync(
+      path.join(CLEAN_RECEIPT_DIRECTORY, `clean-checkout-${stamp}-${digestSuffix}.json`),
+      `${JSON.stringify(receipt)}\n`,
+      { encoding: 'utf8', mode: 0o600 },
+    );
+  } catch (error) {
+    console.log(JSON.stringify(receipt));
+    process.stderr.write(`[quality-gate-clean] RECEIPT_PERSISTENCE_FAILED: ${error instanceof Error ? error.message : 'unknown'}\n`);
+    process.exitCode = 3;
+    return;
+  }
   console.log(JSON.stringify(receipt));
   process.exitCode = code;
 }
@@ -177,7 +209,7 @@ if (!head || statusResult.status !== 0 || statusResult.stdout.trim() !== '' || i
       if (checkout.status !== 0 || cloneBranch.status !== 0 || cloneBranch.stdout.trim() !== 'main' || cloneHead.status !== 0 || cloneHead.stdout.trim() !== head || cleanBefore.status !== 0 || cleanBefore.stdout.trim() !== '' || fs.existsSync(path.join(clone, 'node_modules'))) {
         emit({ schemaVersion: 'nightwatch.clean-checkout-receipt.v1', sourceHead: head, nodeMajor: Number(process.versions.node.split('.')[0]), installResult: 'ENVIRONMENT_MISMATCH', gateResult: 'NOT_RUN', finalResult: 'ENVIRONMENT_MISMATCH' }, 1);
       } else {
-        const toolchain = resolveNode20Toolchain({ NIGHTWATCH_REPOS_ROOT: effectiveSiblingRoot });
+        const toolchain = resolveNode22Toolchain({ NIGHTWATCH_REPOS_ROOT: effectiveSiblingRoot });
         if (toolchain === null) {
           emit({ schemaVersion: 'nightwatch.clean-checkout-receipt.v1', sourceHead: head, nodeMajor: null, installResult: 'ENVIRONMENT_MISMATCH', gateResult: 'NOT_RUN', finalResult: 'ENVIRONMENT_MISMATCH' }, 1);
         } else {
@@ -250,7 +282,9 @@ if (!head || statusResult.status !== 0 || statusResult.stdout.trim() !== '' || i
               sourceHead: head,
               packageLockDigest: `sha256:${sha256(fs.readFileSync(path.join(clone, 'package-lock.json'), 'utf8'))}`,
               nodeMajor: toolchain.nodeMajor,
-              nodeRequirement: '20',
+              nodeVersion: toolchain.nodeVersion ?? null,
+              npmVersion: toolchain.npmVersion ?? null,
+              nodeRequirement: '22',
               installResult: 'PASS',
               gateResult,
               gateReceiptSource: receiptSource,

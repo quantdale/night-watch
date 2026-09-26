@@ -15,7 +15,7 @@ import { createRealSourceScanConfig, scanSource } from '../../src/core/source/sc
 import { createSiblingSourceAccess, DEFAULT_SIBLING_ROOT } from '../../src/core/source/siblingSource';
 import { discoverSourceSurfaces } from '../../src/core/source/surfaces';
 import { buildFrontendConsumerGraph, canonicalConsumerRoute, type BackendRouteFact, type FrontendConsumerGraph } from '../../src/core/source/frontendJoin';
-import { classifyLiveSourceTestState } from '../helpers/liveSourceTestAuthority';
+import { classifyLiveSourceTestState, liveSourceTestRoot } from '../helpers/liveSourceTestAuthority';
 
 const RIPPLE_UI = 'mobingilabs/ripple-ui';
 const SYNTHETIC_SHA = '5f4e3d2c1b0a99887766554433221100ffeeddcc';
@@ -27,7 +27,7 @@ const MEASURED_SOURCE_FACTS = 348;
 
 
 function realGraph(): FrontendConsumerGraph {
-  const access = createSiblingSourceAccess(DEFAULT_SIBLING_ROOT);
+  const access = createSiblingSourceAccess(liveSourceTestRoot());
   const discovery = discoverSourceSurfaces({ access, config: createApprovedRealSourceScanConfig() });
   const backendRoutes: BackendRouteFact[] = discovery.operations.map((operation) => ({
     repoId: operation.repository,

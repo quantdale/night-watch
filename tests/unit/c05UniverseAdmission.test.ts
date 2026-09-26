@@ -33,12 +33,13 @@ import {
 import { PHASE25_APPROVED_REPOSITORY_IDS } from '../../src/core/source/approvedScan';
 import { DEFAULT_SIBLING_ROOT, createSiblingSourceAccess } from '../../src/core/source/siblingSource';
 import { RIPPLE_REPOSITORIES } from '../../src/core/changeIntelligence/map';
+import { liveSourceTestRoot } from '../helpers/liveSourceTestAuthority';
 
 const root = path.resolve(__dirname, '..', '..');
 
 /** Whether a read-only sibling checkout is present, as C-02a asks it. */
 function siblingRepoAvailable(repoId: string): boolean {
-  return fs.existsSync(path.join(DEFAULT_SIBLING_ROOT, ...repoId.split('/'), '.git'));
+  return fs.existsSync(path.join(liveSourceTestRoot(), ...repoId.split('/'), '.git'));
 }
 
 test.describe('C-05 — the admission authority is single', () => {
@@ -251,7 +252,7 @@ test.describe('C-05 — an unapproved repository is never READ, proven at the bo
   const unapproved = 'alphauslabs/blueexternal-not-approved';
 
   test('the boundary refuses a content read and COUNTS the refusal', () => {
-    const access = createSiblingSourceAccess(DEFAULT_SIBLING_ROOT, {
+    const access = createSiblingSourceAccess(liveSourceTestRoot(), {
       admittedRepositoryIds: ownerApprovedRepositoryIds(),
     });
     expect(access.reader.readFile(unapproved, 'README.md')).toBeNull();
@@ -261,7 +262,7 @@ test.describe('C-05 — an unapproved repository is never READ, proven at the bo
   });
 
   test('enumeration is refused with a reason, not returned as an empty repository', () => {
-    const access = createSiblingSourceAccess(DEFAULT_SIBLING_ROOT, {
+    const access = createSiblingSourceAccess(liveSourceTestRoot(), {
       admittedRepositoryIds: ownerApprovedRepositoryIds(),
     });
     const enumeration = access.enumerateFiles(unapproved, ['src'], {
@@ -275,7 +276,7 @@ test.describe('C-05 — an unapproved repository is never READ, proven at the bo
   });
 
   test('git metadata is refused too, so currentness cannot leak admission', () => {
-    const access = createSiblingSourceAccess(DEFAULT_SIBLING_ROOT, {
+    const access = createSiblingSourceAccess(liveSourceTestRoot(), {
       admittedRepositoryIds: ownerApprovedRepositoryIds(),
     });
     expect(access.currentness.currentSnapshot(unapproved)).toBeNull();
@@ -285,7 +286,7 @@ test.describe('C-05 — an unapproved repository is never READ, proven at the bo
   test('a REAL discovered-but-unapproved repository yields zero content reads', () => {
     // `alphauslabs/blue` and its siblings exist on disk. Discovery may see
     // them; the boundary must still open nothing.
-    const access = createSiblingSourceAccess(DEFAULT_SIBLING_ROOT, {
+    const access = createSiblingSourceAccess(liveSourceTestRoot(), {
       admittedRepositoryIds: ownerApprovedRepositoryIds(),
     });
     for (const repoId of ['alphauslabs/blue', 'mobingilabs/ripple-web', 'alphauslabs/bluectl']) {
@@ -308,7 +309,7 @@ test.describe('C-05 — an unapproved repository is never READ, proven at the bo
     // where the checkouts are absent -- while passing locally, which is the
     // precise failure mode R-12 spent a campaign making visible.
     test.skip(!siblingRepoAvailable('alphauslabs/blueinternal'), 'requires the read-only sibling Alphaus checkouts');
-    const access = createSiblingSourceAccess(DEFAULT_SIBLING_ROOT, {
+    const access = createSiblingSourceAccess(liveSourceTestRoot(), {
       admittedRepositoryIds: ownerApprovedRepositoryIds(),
     });
     const text = access.reader.readFile('alphauslabs/blueinternal', 'openapiv2/apidocs.swagger.json');
@@ -320,15 +321,15 @@ test.describe('C-05 — an unapproved repository is never READ, proven at the bo
   test('an empty admitted set admits nothing, while omitting the option enforces nothing', () => {
     // These two must not be conflated: `[]` is a decision, `undefined` is the
     // pre-C-05 behaviour retained for existing callers.
-    const closed = createSiblingSourceAccess(DEFAULT_SIBLING_ROOT, { admittedRepositoryIds: [] });
+    const closed = createSiblingSourceAccess(liveSourceTestRoot(), { admittedRepositoryIds: [] });
     expect(closed.reader.readFile('alphauslabs/blueinternal', 'openapiv2/apidocs.swagger.json')).toBeNull();
     expect(closed.readLedger.admissionRefusals('alphauslabs/blueinternal')).toBe(1);
-    const unset = createSiblingSourceAccess(DEFAULT_SIBLING_ROOT);
+    const unset = createSiblingSourceAccess(liveSourceTestRoot());
     expect(unset.readLedger.totalAdmissionRefusals()).toBe(0);
   });
 
   test('the ledger reports every repository it was asked about', () => {
-    const access = createSiblingSourceAccess(DEFAULT_SIBLING_ROOT, {
+    const access = createSiblingSourceAccess(liveSourceTestRoot(), {
       admittedRepositoryIds: ownerApprovedRepositoryIds(),
     });
     access.reader.readFile('z/unapproved', 'a');

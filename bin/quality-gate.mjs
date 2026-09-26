@@ -111,6 +111,15 @@ function runFixedCommandInner(commandKey, mode, timeoutClass) {
     // in every mode, so growth past a declared ceiling fails the gate.
     command = packageManager;
     args = ['run', 'typecheck:bin'];
+  } else if (commandKey === 'TOPOLOGY') {
+    // X-02 — the CI-absence simulator joins the certification set.
+    command = packageManager;
+    args = ['run', 'gate:topology'];
+  } else if (commandKey === 'UI_GATE') {
+    // B-14 / D-18 — the Control Center UI package joins every gate mode:
+    // clean install, typecheck, test and build in ui/control-center.
+    command = packageManager;
+    args = ['run', 'gate:ui'];
   } else if (commandKey === 'HARDENING_CHECK') {
     command = packageManager;
     args = ['run', 'hardening:check'];
@@ -239,6 +248,17 @@ function main(cli) {
     return;
   }
   const nodeMajor = Number(process.versions.node.split('.')[0]);
+  // D-19 / NW-AUD-004 narrowed: receipts record the EXACT runtime identity,
+  // never only the moving major.
+  const nodeVersion = process.version;
+  const npmVersion = (() => {
+    try {
+      const result = spawnSync(packageManager, ['--version'], { encoding: 'utf8', timeout: 30_000, stdio: ['ignore', 'pipe', 'pipe'] });
+      return result.status === 0 && !result.error ? (result.stdout ?? '').trim() : null;
+    } catch {
+      return null;
+    }
+  })();
   const head = gitValue(['rev-parse', 'HEAD']);
   const packageLock = (() => { try { return fs.readFileSync(path.join(root, 'package-lock.json'), 'utf8'); } catch { return null; } })();
   // Fail closed on the receipt destination BEFORE any group runs: an unsafe or
@@ -250,9 +270,9 @@ function main(cli) {
     process.exitCode = 2;
     return;
   }
-  if (!head || packageLock === null || nodeMajor < 20 || ((mode === 'ci' || mode === 'clean') && nodeMajor !== 20)) {
+  if (!head || packageLock === null || nodeMajor < 20 || ((mode === 'ci' || mode === 'clean') && nodeMajor !== 22)) {
     // An environment rejection is exactly the kind of result worth persisting.
-    const receipt = { schemaVersion: 'nightwatch.quality-gate-receipt.v1', gateDefinitionDigest: `sha256:${sha256(canonical(definition))}`, gitHead: head, packageLockDigest: packageLock === null ? null : `sha256:${sha256(packageLock)}`, nodeMajor, environmentClass: mode.toUpperCase(), receiptPersistenceRequested: true, groups: [], finalResult: 'ENVIRONMENT_MISMATCH' };
+    const receipt = { schemaVersion: 'nightwatch.quality-gate-receipt.v1', gateDefinitionDigest: `sha256:${sha256(canonical(definition))}`, gitHead: head, packageLockDigest: packageLock === null ? null : `sha256:${sha256(packageLock)}`, nodeMajor, nodeVersion, npmVersion, environmentClass: mode.toUpperCase(), receiptPersistenceRequested: true, groups: [], finalResult: 'ENVIRONMENT_MISMATCH' };
     emitReceipt(receipt, target, 1);
     return;
   }
@@ -277,6 +297,8 @@ function main(cli) {
     gitHead: head,
     packageLockDigest: `sha256:${sha256(packageLock)}`,
     nodeMajor,
+    nodeVersion,
+    npmVersion,
     environmentClass: mode.toUpperCase(),
     // Deterministic, and part of the digested body: the OUTCOME of persistence
     // cannot be, because the digest must exist before the bytes are written.

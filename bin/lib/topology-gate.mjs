@@ -322,6 +322,85 @@ export function detectInheritanceClaim(absence, receipts) {
 
 const EXTERNAL_ABSOLUTE_PATH_RE = /(['"`])((?:\/(?:home|Users|opt|srv|root|mnt|media|etc)\/[A-Za-z0-9._/-]{3,}))/g;
 
+// X-02 — the literal scan misses imported path constants: a suite that reads
+// `DEFAULT_SIBLING_ROOT` (defined in another module and re-exported through
+// another) depends on the absolute path without ever quoting it. These three
+// clauses keep this module pure: resolution follows named imports and named
+// re-exports through the caller-supplied reader, never the filesystem.
+const NAMED_FROM_CLAUSE_RE = /(?:import|export)\s*\{([^}]+)\}\s*from\s*['"]([^'"]+)['"]/g;
+const CONST_PATH_RE = /\b(?:const|let)\s+([A-Za-z_$][\w$]*)\s*=\s*(['"])((?:\/(?:home|Users|opt|srv|root|mnt|media|etc)\/[A-Za-z0-9._/-]{3,}))\2/;
+const PATH_CONSTANT_MAX_DEPTH = 6;
+
+function normalizeModulePath(spec) {
+  const segments = [];
+  for (const segment of spec.split('/')) {
+    if (segment === '' || segment === '.') continue;
+    if (segment === '..') segments.pop();
+    else segments.push(segment);
+  }
+  return segments.join('/');
+}
+
+function resolveSpecifier(fromFile, specifier) {
+  if (!specifier.startsWith('.')) return null;
+  const base = fromFile.split('/').slice(0, -1).join('/');
+  return normalizeModulePath(`${base}/${specifier}`);
+}
+
+function readModuleSource(readFile, modulePath) {
+  const candidates = [`${modulePath}.ts`, `${modulePath}.tsx`, `${modulePath}/index.ts`, `${modulePath}.mjs`, modulePath];
+  for (const candidate of candidates) {
+    const text = readFile(candidate);
+    if (typeof text === 'string') return text;
+  }
+  return null;
+}
+
+function modulePathConstants(readFile, cache, modulePath, depth = 0) {
+  if (depth > PATH_CONSTANT_MAX_DEPTH) return new Map();
+  const memo = cache.get(modulePath);
+  if (memo !== undefined) return memo;
+  /** @type {Map<string, string>} */
+  const symbols = new Map();
+  cache.set(modulePath, symbols); // cycle placeholder: recursion reads the partial map
+  const source = readModuleSource(readFile, modulePath);
+  if (source === null) return symbols;
+  for (const line of source.split(/\r?\n/)) {
+    const local = CONST_PATH_RE.exec(line);
+    if (local !== null) symbols.set(local[1], local[3]);
+  }
+  for (const match of source.matchAll(NAMED_FROM_CLAUSE_RE)) {
+    const target = resolveSpecifier(modulePath, match[2]);
+    if (target === null) continue;
+    const targetSymbols = modulePathConstants(readFile, cache, target, depth + 1);
+    if (targetSymbols.size === 0) continue;
+    for (const part of match[1].split(',')) {
+      const pieces = part.split(/\s+as\s+/).map((piece) => piece.trim()).filter((piece) => piece !== '');
+      if (pieces.length === 0) continue;
+      const origin = pieces[0];
+      const alias = pieces.length > 1 ? pieces[1] : pieces[0];
+      const literal = targetSymbols.get(origin);
+      if (literal !== undefined) symbols.set(alias, literal);
+    }
+  }
+  return symbols;
+}
+
+/**
+ * A path-constant use in a line, or null: the identifier must appear in a
+ * path context and never inside a string or regex body (a source-text
+ * assertion that merely names the constant is not a path dependency).
+ */
+function pathConstantUse(line, name) {
+  const pattern = new RegExp(`\\b${name.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')}\\b`, 'g');
+  let match;
+  while ((match = pattern.exec(line)) !== null) {
+    const before = match.index === 0 ? '' : line[match.index - 1];
+    if (before !== '/' && before !== "'" && before !== '"' && before !== '`') return match.index;
+  }
+  return null;
+}
+
 /**
  * Categorical regression: a gate suite may not depend on an absolute path
  * outside the checkout without an explicit declaration. Declarations are data
@@ -329,15 +408,58 @@ const EXTERNAL_ABSOLUTE_PATH_RE = /(['"`])((?:\/(?:home|Users|opt|srv|root|mnt|m
  * and path. This is DEF-CI-01's class generalized away from the one specific
  * sibling path.
  *
- * @param {{ files: readonly { path: string, text: string }[], declarations?: readonly { file: string, literal: string }[] }} input
+ * X-02: `readFile` (optional, caller-supplied) extends the scan to IMPORTED
+ * path constants — an identifier imported from another module that resolves to
+ * an absolute path is the same dependency as quoting the literal. Without the
+ * reader the scan keeps its literal-only behavior.
+ *
+ * @param {{ files: readonly { path: string, text: string }[], declarations?: readonly { file: string, literal: string }[], readFile?: (modulePath: string) => string | null }} input
  * @returns {readonly { code: string, detail: string, file: string, line: number, literal: string }[]}
  */
 export function scanExternalAbsolutePathDependence(input) {
   const declared = new Set((input.declarations ?? []).map((entry) => `${entry.file}\u0000${entry.literal}`));
+  const readFile = typeof input.readFile === 'function' ? input.readFile : null;
+  const constantCache = new Map();
   /** @type {{ code: string, detail: string, file: string, line: number, literal: string }[]} */
   const findings = [];
   for (const file of input.files) {
+    /** @type {Map<string, string>} */
+    const importedConstants = new Map();
+    if (readFile !== null) {
+      for (const match of file.text.matchAll(NAMED_FROM_CLAUSE_RE)) {
+        const target = resolveSpecifier(file.path, match[2]);
+        if (target === null) continue;
+        const targetSymbols = modulePathConstants(readFile, constantCache, target, 0);
+        if (targetSymbols.size === 0) continue;
+        for (const part of match[1].split(',')) {
+          const pieces = part.split(/\s+as\s+/).map((piece) => piece.trim()).filter((piece) => piece !== '');
+          if (pieces.length === 0) continue;
+          const origin = pieces[0];
+          const alias = pieces.length > 1 ? pieces[1] : pieces[0];
+          const literal = targetSymbols.get(origin);
+          if (literal !== undefined) importedConstants.set(alias, literal);
+        }
+      }
+    }
     const lines = file.text.split(/\r?\n/);
+    // Import/export clause regions (including multi-line member lists) never
+    // carry a path use: naming a constant in an import statement is not
+    // depending on it in this file.
+    let inClause = false;
+    const clauseRegion = lines.map((line) => {
+      const trimmed = line.trim();
+      const opensClause = /^(?:import|export)\b[^;]*$/.test(trimmed) && !/from\s*['"]/i.test(trimmed);
+      const closesClause = /^(?:import|export)\b.*from\s*['"][^'"]*['"]\s*;?\s*$/.test(trimmed) || (inClause && /;\s*$/.test(trimmed));
+      if (inClause) {
+        inClause = !closesClause;
+        return true;
+      }
+      if (opensClause) {
+        inClause = true;
+        return true;
+      }
+      return closesClause;
+    });
     for (let index = 0; index < lines.length; index += 1) {
       const line = lines[index] ?? '';
       if (/not\.toContain|not\.toMatch|not\.toBe\(|\.join\(['"]\/['"]\)/.test(line)) continue;
@@ -351,6 +473,19 @@ export function scanExternalAbsolutePathDependence(input) {
         findings.push({
           code: 'TOPOLOGY_EXTERNAL_PATH_DEPENDENCE',
           detail: `${file.path}:${index + 1} depends on absolute path ${literal} without declaring a host capability`,
+          file: file.path,
+          line: index + 1,
+          literal,
+        });
+      }
+      if (importedConstants.size === 0 || clauseRegion[index] === true) continue;
+      for (const [name, literal] of importedConstants) {
+        if (pathConstantUse(line, name) === null) continue;
+        if (literal.split('/').filter(Boolean).length < 4) continue;
+        if (declared.has(`${file.path}\u0000${literal}`)) continue;
+        findings.push({
+          code: 'TOPOLOGY_EXTERNAL_PATH_DEPENDENCE',
+          detail: `${file.path}:${index + 1} depends on absolute path ${literal} via imported constant ${name} without declaring a host capability`,
           file: file.path,
           line: index + 1,
           literal,

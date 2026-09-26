@@ -673,10 +673,11 @@ test.describe('Phase 11A.3 M5: real-source-derived later-row + partial coverage'
 // ===========================================================================
 
 import { DEFAULT_SIBLING_ROOT, createSiblingSourceAccess } from '../../src/core/source/siblingSource';
+import { liveSourceTestRoot } from '../helpers/liveSourceTestAuthority';
 
 test.describe('Phase 11A.3 M8/§12/§25: current-source canary (owner-local)', () => {
   test('live sibling checkout derives >= 1 real-source collection expectation', () => {
-    const root = process.env['NIGHTWATCH_SIBLING_ROOT'] ?? (require('node:fs').existsSync(DEFAULT_SIBLING_ROOT) ? DEFAULT_SIBLING_ROOT : null);
+    const root = require('node:fs').existsSync(liveSourceTestRoot()) ? liveSourceTestRoot() : null;
     if (root === null) {
       // CI: no sibling checkout available — fail-closed to synthetic proof.
       const state = createRealSourceSyntheticState();

@@ -25,6 +25,7 @@
     "gate:clean-exec": "node bin/quality-gate.mjs clean",
     "gate:topology": "node bin/gate-topology.mjs",
     "gate:predev": "node bin/quality-gate.mjs predev",
+    "gate:ui": "npm ci --prefix ui/control-center && npm --prefix ui/control-center run typecheck && npm --prefix ui/control-center run test && npm --prefix ui/control-center run build",
     "gate:inventory": "node bin/quality-gate-inventory.mjs",
     "validation:universe": "node bin/validation-universe.mjs",
     "test:semantic-compat": "node bin/semantic-compat.mjs",

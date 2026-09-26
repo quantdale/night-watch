@@ -239,6 +239,41 @@
       "requiresSiblingTopology": false,
       "preDevRelevant": true,
       "expectedFailClosedBehavior": "forbidden index flags, shared exclude drift, unexpected hooks, unknown or unowned worktree ownership, and undeclared tracked deletions fail closed"
+    },
+    {
+      "id": "TOPOLOGY",
+      "commandKey": "TOPOLOGY",
+      "required": true,
+      "environmentRequirements": [
+        "NODE20_PLUS",
+        "OFFLINE"
+      ],
+      "timeoutClass": "LONG",
+      "dependsOn": [
+        "GATE_DEFINITION"
+      ],
+      "ciCapable": true,
+      "cleanCheckoutCapable": true,
+      "requiresSiblingTopology": false,
+      "preDevRelevant": true,
+      "expectedFailClosedBehavior": "an absent runner capability fails closed and is recorded in the topology receipt, never inherited as a pass"
+    },
+    {
+      "id": "UI_CONTROL_CENTER",
+      "commandKey": "UI_GATE",
+      "required": true,
+      "environmentRequirements": [
+        "NODE20_PLUS"
+      ],
+      "timeoutClass": "LONG",
+      "dependsOn": [
+        "GATE_DEFINITION"
+      ],
+      "ciCapable": true,
+      "cleanCheckoutCapable": true,
+      "requiresSiblingTopology": false,
+      "preDevRelevant": true,
+      "expectedFailClosedBehavior": "a failing UI typecheck, test or build fails the gate; a missing lockfile fails closed in every mode"
     }
   ]
 }

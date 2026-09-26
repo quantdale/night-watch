@@ -331,10 +331,52 @@ function staticFindings() {
   }
   const suites = gateSuiteFiles(synthetic, readJson(SEMANTIC_MANIFEST), packageJson?.scripts);
   const files = sourceTextFiles(suites);
-  for (const finding of scanExternalAbsolutePathDependence({
+  const externalPathFindings = scanExternalAbsolutePathDependence({
     files,
     declarations: Array.isArray(regressions.externalPathDeclarations) ? regressions.externalPathDeclarations : [],
-  })) findings.push(finding);
+    // X-02: resolve imported path constants through the reader, so a suite
+    // that imports an absolute-path constant is the same dependency as one
+    // that quotes the literal.
+    readFile: (modulePath) => readText(modulePath),
+  });
+  for (const finding of externalPathFindings) findings.push(finding);
+  // X-02 — the gate's requiresSiblingTopology declarations are MEASURED, not
+  // asserted: each group's own manifest suites are scanned for measured
+  // sibling/absolute-path dependence. A group that declares false while its
+  // suites depend on a host path is under-declared and fails.
+  const groupFiles = (group) => {
+    if (group.commandKey === 'SEMANTIC_COMPATIBILITY') {
+      const semantic = readJson(SEMANTIC_MANIFEST);
+      return [...new Set([
+        ...((semantic?.phaseSuites ?? []).flatMap((suite) => Array.isArray(suite?.files) ? suite.files : [])),
+        ...((semantic?.supportFiles ?? [])),
+      ])];
+    }
+    if (group.commandKey === 'OWNER_PROVENANCE') return [...OWNER_PROVENANCE_SUITES];
+    if (group.commandKey === 'SYNTHETIC_CAMPAIGN') {
+      const syntheticFiles = Array.isArray(synthetic?.files) ? synthetic.files : [];
+      return [...new Set(syntheticFiles)];
+    }
+    return [];
+  };
+  const gateDefinition = readJson('config/quality-gate.v1.json');
+  const measurements = [];
+  for (const group of Array.isArray(gateDefinition?.groups) ? gateDefinition.groups : []) {
+    const suiteFiles = new Set(groupFiles(group));
+    const measured = externalPathFindings.filter((finding) => suiteFiles.has(finding.file));
+    measurements.push({
+      groupId: group.id,
+      requiresSiblingTopology: group.requiresSiblingTopology === true,
+      measuredDependence: measured.length,
+      measurable: suiteFiles.size > 0,
+    });
+    if (group.requiresSiblingTopology !== true && measured.length > 0) {
+      findings.push({
+        code: 'TOPOLOGY_SIBLING_REQUIREMENT_UNDERDECLARED',
+        detail: `gate group ${group.id} declares requiresSiblingTopology=false but ${measured.length} of its suite file(s) measure absolute host-path dependence (${measured.map((finding) => finding.file).slice(0, 4).join(', ')})`,
+      });
+    }
+  }
   for (const finding of scanUndeclaredBinaryInvocation({
     files,
     declarations: Array.isArray(regressions.binaryDeclarations) ? regressions.binaryDeclarations : [],
@@ -364,7 +406,7 @@ function staticFindings() {
   if (!zeroStep.refused || zeroStep.code !== 'CI_EXECUTED_FROM_ZERO_STEP_REFUSED') {
     findings.push({ code: 'CI_EXECUTED_SHA_ZERO_STEP_ACCEPTED', detail: 'a zero-step run was not refused the CI_EXECUTED_SHA field' });
   }
-  return { findings, record, routesOk: record !== null && validateCiRouteCandidates(record).ok };
+  return { findings, record, routesOk: record !== null && validateCiRouteCandidates(record).ok, requiresSiblingTopologyMeasurements: measurements };
 }
 
 /** Narrow read-only parse of the project-state block for the CI fields. */
@@ -624,7 +666,7 @@ function main(cli) {
   const lane = cli.flags['--lane'] ?? 'capability';
   const noReceipt = cli.flags['--no-receipt'] === true;
   const absences = selected === 'all' ? TOPOLOGY_ABSENCES : TOPOLOGY_ABSENCES.filter((absence) => absence.id === selected);
-  const staticResult = mode === 'dynamic' ? { findings: [], record: null, routesOk: true } : staticFindings();
+  const staticResult = mode === 'dynamic' ? { findings: [], record: null, routesOk: true, requiresSiblingTopologyMeasurements: [] } : staticFindings();
   const findings = [...staticResult.findings];
   const selfTest = inverseSelfTest();
   if (!selfTest.ok) {
@@ -652,6 +694,9 @@ function main(cli) {
       statement: 'gate:topology proves runner-topology fail-closed behaviour only; it never proves GitHub execution and never sets CI_EXECUTED_SHA.',
     },
     inverseSelfTest: selfTest,
+    // X-02 — the gate's requiresSiblingTopology declarations, measured
+    // against each group's own manifest suites by the external-path scan.
+    requiresSiblingTopologyMeasurements: staticResult.requiresSiblingTopologyMeasurements ?? [],
     ciBlockRecord: staticResult.record === null ? null : {
       runId: staticResult.record.runId,
       jobId: staticResult.record.jobId,

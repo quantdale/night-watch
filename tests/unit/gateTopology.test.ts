@@ -305,3 +305,56 @@ test.describe('operator entry point', () => {
     expect(receipt.result).toBe(result.status === 0 ? 'PASS' : 'FAIL');
   });
 });
+
+test.describe('X-02 — imported path constants resolve through the scan', () => {
+  const HOST_LITERAL = ['', 'home', 'dalepalaca', 'go', 'src', 'alphaus-main', 'REPOSITORIES'].join('/');
+  const modules: Record<string, string> = {
+    'src/core/siblingRoot.ts': `export const DEFAULT_SIBLING_ROOT = '${HOST_LITERAL}';\n`,
+    'src/core/siblingSource.ts': `export { DEFAULT_SIBLING_ROOT } from './siblingRoot';\n`,
+  };
+  const suite = (text: string) => ({ path: 'tests/unit/importConsumer.test.ts', text });
+  const readFile = (modulePath: string): string | null => modules[modulePath] ?? null;
+
+  test('an imported path constant used in a path context is a declared-host-path dependency', () => {
+    const findings = scanExternalAbsolutePathDependence({
+      files: [suite([
+        "import { DEFAULT_SIBLING_ROOT } from '../../src/core/siblingSource';",
+        'const access = createSiblingSourceAccess(DEFAULT_SIBLING_ROOT);',
+      ].join('\n'))],
+      declarations: [],
+      readFile,
+    });
+    expect(findings).toHaveLength(1);
+    expect(findings[0]!.code).toBe('TOPOLOGY_EXTERNAL_PATH_DEPENDENCE');
+    // The import statement itself never counts; only the path use does.
+    expect(findings[0]!.line).toBe(2);
+    expect(findings[0]!.detail).toContain('via imported constant DEFAULT_SIBLING_ROOT');
+    expect(findings[0]!.literal).toBe(HOST_LITERAL);
+  });
+
+  test('a source-text assertion naming the constant is not a path dependency', () => {
+    const findings = scanExternalAbsolutePathDependence({
+      files: [suite("import { DEFAULT_SIBLING_ROOT } from '../../src/core/siblingSource';\nexpect(name).toMatch(/DEFAULT_SIBLING_ROOT/);")],
+      declarations: [],
+      readFile,
+    });
+    expect(findings).toEqual([]);
+  });
+
+  test('a declaration of the resolved literal suppresses the imported-constant finding', () => {
+    const findings = scanExternalAbsolutePathDependence({
+      files: [suite("import { DEFAULT_SIBLING_ROOT } from '../../src/core/siblingSource';\ncreateSiblingSourceAccess(DEFAULT_SIBLING_ROOT);")],
+      declarations: [{ file: 'tests/unit/importConsumer.test.ts', literal: HOST_LITERAL }],
+      readFile,
+    });
+    expect(findings).toEqual([]);
+  });
+
+  test('without a reader the scan keeps its literal-only behavior', () => {
+    const findings = scanExternalAbsolutePathDependence({
+      files: [suite("import { DEFAULT_SIBLING_ROOT } from '../../src/core/siblingSource';\ncreateSiblingSourceAccess(DEFAULT_SIBLING_ROOT);")],
+      declarations: [],
+    });
+    expect(findings).toEqual([]);
+  });
+});
