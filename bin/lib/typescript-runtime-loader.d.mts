@@ -42,6 +42,7 @@ export interface TypeScriptRuntimeLoaderModuleMap {
   "src/core/changeIntelligence/releaseFreshness.ts": typeof import("../../src/core/changeIntelligence/releaseFreshness");
   "src/core/config/environmentSurface.ts": typeof import("../../src/core/config/environmentSurface");
   "src/core/config/reasonerExecutable.ts": typeof import("../../src/core/config/reasonerExecutable");
+  "src/core/currentSourceYield/aggregation.ts": typeof import("../../src/core/currentSourceYield/aggregation");
   "src/core/dependencyCurrency/index.ts": typeof import("../../src/core/dependencyCurrency/index");
   "src/core/efficacy/index.ts": typeof import("../../src/core/efficacy/index");
   "src/core/efficacy/metrics.ts": typeof import("../../src/core/efficacy/metrics");
