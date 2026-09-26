@@ -7,15 +7,15 @@ Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-final-product-completion-v1
 Starting SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
 Last validated implementation SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
-Last checkpoint: 2026-09-26 — M3 tasks 4.1-4.6 complete; gate:dev PASS
-5485/0 with per-shard skip-identity enforcement.
-Current milestone: M3 spine, remainder (tasks 4.7-4.13) — sibling-absent
-gate:clean, gate:topology certification, UI gate group, HANDOFF_TRUTH
-session-declared classification, pinned CI runtime, session closeout fixes,
-then milestone gates + checkpoint push + CI observation.
-Next action: commit the 4.1-4.6 checkpoint, then implement tasks 4.7-4.13
-in order and finish M3 with gate:milestone PASS plus a canonical-routed
-push observed with `gh` (OD-3).
+Last checkpoint: 2026-09-26 — M3 tasks 4.1-4.12 complete; focused suites,
+hardening:check, the 147/147 probe campaign, gate:topology and gate:ui all
+green.
+Current milestone: M3 close-out (task 4.13) — gate:dev + gate:milestone on
+the committed state, the C-00 fast-forward push, and the exact-head CI
+observation with `gh` (OD-3).
+Next action: run the gate pair, integrate with the session CLI, observe CI
+with `gh`, record the result in STATE, tick 4.13 and commit the M3 closeout;
+repair forward if anything fails.
 
 Authorization class: FINAL_PRODUCT_COMPLETION_V1
 PROJECT_VERDICT_EFFECT: PRESERVE

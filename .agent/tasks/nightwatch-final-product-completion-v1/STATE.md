@@ -11,10 +11,12 @@ Last substantive checkpoint SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-final-product-complet-a891357d
-Last checkpoint: 2026-09-26 — M3 tasks 4.1-4.6 complete; gate:dev PASS
-5485/0 with the per-shard skip-identity policy enforcing (one unreproduced
-exclusive-bucket intermittent observed once, recorded in the ledger);
-progress checkpoint committed pending 4.7-4.13.
+Last checkpoint: 2026-09-26 — M3 tasks 4.1-4.12 complete (declared skips +
+hermetic temp paths + skip-identity enforcement + sibling-absent clean gate
+with measured identity + TOPOLOGY/UI certification groups + Node 22 pinned CI
+with SHA-pinned actions + HANDOFF_TRUTH ci/clean classification + X-08/A-03/
+A-07 session fixes); focused suites green; the M3 gate pair, C-00 push and CI
+observation remain for 4.13.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
@@ -35,17 +37,13 @@ ledger, and end at `PROJECT_COMPLETE_AND_CI_CERTIFIED` under D-129 with a
 
 ## Current Milestone
 
-M3 CI-green, deterministic and hermetic spine — 4.1-4.6 complete: live-source
-measurements guarded as declared skips and routed through
-`liveSourceTestRoot()`; the 10 tautological guards converted with synthetic
-twins; reviewStore owns its temp parent and campaign-synthetic isolates
-TMPDIR; observerSemanticLedger waits are event-driven (5/5 looped + 3/3
-under 6-way load); sanitized assertion classes on failedLocations; per-shard
-skip-identity enforcement with a rebuilt 45-entry allowlist and the
-/tmp-snapshot twins. Remaining: 4.7 gate:clean sibling-absence, 4.8
-gate:topology certification, 4.9 UI gate group, 4.10 HANDOFF_TRUTH session-
-declared classification, 4.11 pinned CI runtime, 4.12 closeout/claim/orphan
-session fixes, 4.13 milestone gates + checkpoint push + CI observation.
+M3 CI-green spine close-out (task 4.13) — every other M3 task is implemented
+and validated: focused suites green (workspace/session 86/86, topology 26/26,
+quantifier 6/6, phase23 40/40, routing 134/134-era sets), hardening:check
+PASS, probe campaign 147/147, gate-definition PASS with 15 required groups,
+gate:ui PASS, gate:topology PASS with requiresSiblingTopology measurements.
+Remaining: gate:dev + gate:milestone on the committed state, the C-00 push,
+and the `gh` CI observation (OD-3).
 
 ## Completed Milestones
 
@@ -70,18 +68,17 @@ session fixes, 4.13 milestone gates + checkpoint push + CI observation.
 
 ## Work In Progress
 
-- M3 progress checkpoint: commit tasks 4.1-4.6, then continue with 4.7
-  (`gate:clean` sibling-absent by default with measured sibling identity).
+- Task 4.13: run the M3 gate pair on the committed state, push the C-00
+  checkpoint, observe CI with `gh` (OD-3), record the observed result.
 
 ## Exact Next Action
 
-Commit the 4.1-4.6 checkpoint, then implement M3 tasks 4.7-4.13 in order:
-sibling-absent gate:clean (R2-N3), gate:topology in the certification set
-(X-02), the UI gate group (B-14/D-18), HANDOFF_TRUTH session-declared
-classification with a negative probe (D-04), pinned CI actions/Node
-(NW-AUD-001/D-19), the closeout/claim/orphan-branch session fixes
-(X-08/A-03/A-07), then focused suites + gate:milestone, commit, push a
-canonical-routed checkpoint and observe CI with `gh` (OD-3).
+Run `npm run gate:dev` and `npm run gate:milestone`; if both PASS, integrate
+with `node bin/nightwatch-session.mjs integrate --expect-session sess-0734f2070d08
+--expect-head <head>` from the session worktree, observe the exact-head CI run
+with `gh run watch` (OD-3), record the result here, tick 4.13, mark PLAN M3
+COMPLETE, and commit the closeout. If a gate or CI fails, repair forward with a
+new commit — never amend.
 
 ## Files Changed
 
