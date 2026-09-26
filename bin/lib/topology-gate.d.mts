@@ -95,6 +95,12 @@ export function chromeCandidates(environment?: NodeJS.ProcessEnv): readonly stri
 export function describeEnvelopePlan(input: EnvelopePlanInput): readonly string[];
 export function absenceTookEffect(absence: TopologyAbsence, probe: unknown): { readonly absent: boolean; readonly detail: string };
 export function evaluateAbsence(input: AbsenceEvaluationInput): readonly TopologyDiagnostic[];
+export function evaluateDirectObservation(absence: TopologyAbsence, probe: unknown): {
+  readonly constructible: boolean;
+  readonly notExercised: boolean;
+  readonly detail: string;
+  readonly findings: readonly TopologyDiagnostic[];
+};
 export function detectInheritanceClaim(absence: TopologyAbsence, receipts: Record<string, unknown> | null): InheritanceClaim | null;
 export function scanExternalAbsolutePathDependence(input: {
   readonly files: readonly TopologyFile[];

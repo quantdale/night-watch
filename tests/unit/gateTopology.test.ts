@@ -19,6 +19,7 @@ import {
   describeEnvelopePlan,
   detectInheritanceClaim,
   evaluateAbsence,
+  evaluateDirectObservation,
   parseSiblingRoot,
   scanExternalAbsolutePathDependence,
   scanUndeclaredBinaryInvocation,
@@ -27,7 +28,6 @@ import {
 
 const REPO_ROOT = path.join(__dirname, '..', '..');
 const GATE_BIN = path.join(REPO_ROOT, 'bin', 'gate-topology.mjs');
-const SHA_A = 'a'.repeat(40);
 
 function absence(id: string) {
   const found = TOPOLOGY_ABSENCES.find((entry) => entry.id === id);
@@ -356,5 +356,48 @@ test.describe('X-02 — imported path constants resolve through the scan', () =>
       declarations: [],
     });
     expect(findings).toEqual([]);
+  });
+});
+
+test.describe('X-02 degraded envelope mode — direct observation on a bwrap-less host', () => {
+  const absence = (/** @type {string} */ id: string) => {
+    const found = TOPOLOGY_ABSENCES.find((entry) => entry.id === id);
+    expect(found, id).toBeDefined();
+    return found!;
+  };
+
+  test('an absence that took effect directly is constructible with no findings', () => {
+    const direct = evaluateDirectObservation(absence('bwrap'), { available: false, blockerCode: 'BWRAP_UNAVAILABLE' });
+    expect(direct.constructible).toBe(true);
+    expect(direct.notExercised).toBe(false);
+    expect(direct.findings).toEqual([]);
+    // the constructed case still flows through the ordinary fail-closed judgement
+    const findings = evaluateAbsence({ absence: absence('bwrap'), probe: { available: false, blockerCode: 'BWRAP_UNAVAILABLE' }, lane: { status: 'PASS', receipts: { deepContainmentLane: 'NOT_EXERCISED_BWRAP_UNAVAILABLE' } } });
+    expect(findings.map((entry) => entry.code)).toEqual([]);
+  });
+
+  test('an absence this host cannot mask is a declared non-exercise, not a failure and not a pass', () => {
+    const direct = evaluateDirectObservation(absence('chrome'), { available: true, blockerCode: null });
+    expect(direct.constructible).toBe(false);
+    expect(direct.notExercised).toBe(true);
+    expect(direct.findings).toEqual([]);
+  });
+
+  test('a missing direct observation fails closed by name', () => {
+    const direct = evaluateDirectObservation(absence('sibling-root'), null);
+    expect(direct.constructible).toBe(false);
+    expect(direct.notExercised).toBe(false);
+    expect(direct.findings.map((entry) => entry.code)).toEqual(['TOPOLOGY_PROBE_FAILED']);
+    expect(direct.findings[0]!.detail).toContain('sibling-root');
+  });
+
+  test('the gate wires one envelope decision and records it in the receipt', () => {
+    const source = fs.readFileSync(GATE_BIN, 'utf8');
+    expect(source).toContain('const envelopeAvailable = capa.filter(isExecutableRegularFile).length > 0;');
+    expect(source).toContain('evaluateDirectObservation(absence, directProbe)');
+    expect(source).toContain("envelope: envelopeAvailable ? 'BUBBLEWRAP' : 'BWRAP_UNAVAILABLE_DEGRADED'");
+    // availability is decided once, before any spawn, so the decision and the
+    // spawn can never disagree on a host without the binary
+    expect(source.indexOf('const envelopeAvailable')).toBeLessThan(source.indexOf("runCapture('bwrap', probeArgs"));
   });
 });

@@ -282,6 +282,47 @@ export function evaluateAbsence(input) {
 }
 
 /**
+ * The bwrap-less host contract (degraded envelope mode).
+ *
+ * A host without Bubblewrap cannot mask the runner-absent conditions, so each
+ * absence is observed DIRECTLY against the real environment instead of a
+ * simulated one. Three outcomes, every one fail-closed or explicitly
+ * declared:
+ *
+ * - no observation → hard TOPOLOGY_PROBE_FAILED finding;
+ * - the absence took effect on its own → constructible: the caller evaluates
+ *   the dependent lane exactly as the envelope path does (real, not masked);
+ * - the absence did not take effect → declared non-exercise carrying the
+ *   BWRAP_UNAVAILABLE blocker: nothing is fabricated, no green lane is ever
+ *   read as absence coverage, and nothing fails merely because this host
+ *   cannot construct the mask.
+ *
+ * @param {TopologyAbsence} absence
+ * @param {any} probe
+ * @returns {{ constructible: boolean, notExercised: boolean, detail: string, findings: readonly TopologyDiagnostic[] }}
+ */
+export function evaluateDirectObservation(absence, probe) {
+  if (probe === null || typeof probe !== 'object') {
+    return {
+      constructible: false,
+      notExercised: false,
+      detail: 'direct probe produced no observation',
+      findings: [{ code: 'TOPOLOGY_PROBE_FAILED', detail: `absence=${absence.id}: the direct probe produced no observation` }],
+    };
+  }
+  const effect = absenceTookEffect(absence, probe);
+  if (effect.absent) {
+    return { constructible: true, notExercised: false, detail: effect.detail, findings: [] };
+  }
+  return {
+    constructible: false,
+    notExercised: true,
+    detail: effect.detail,
+    findings: [],
+  };
+}
+
+/**
  * The inverse assertion. A receipt that claims a capability PROVEN while the
  * capability's absence was constructed is a defect: the lane passed by
  * inheritance rather than by proof.

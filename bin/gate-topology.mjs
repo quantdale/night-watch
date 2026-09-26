@@ -35,6 +35,7 @@ import {
   describeEnvelopePlan,
   absenceTookEffect,
   evaluateAbsence,
+  evaluateDirectObservation,
   parseSiblingRoot,
   scanExternalAbsolutePathDependence,
   scanUndeclaredBinaryInvocation,
@@ -511,6 +512,11 @@ function runDynamic(selectedAbsences, lane, options) {
   const chrome = chromeCandidates();
   const browsers = playwrightBrowsersPath();
   const capa = canonicalBwrapCandidates();
+  // X-02 degraded mode: Bubblewrap may not exist on this host at all (a CI
+  // runner without the binary). Availability is decided ONCE here so the
+  // decision and the spawn can never disagree: without the envelope every
+  // absence is observed directly against the real environment instead.
+  const envelopeAvailable = capa.filter(isExecutableRegularFile).length > 0;
   const baselineSuites = [...new Set(TOPOLOGY_ABSENCES.flatMap((absence) => absence.laneSuites))];
   if (baselineSuites.length > 0 && lane !== 'full') {
     const baseline = laneCommandFor({ laneSuites: baselineSuites }, lane);
@@ -548,6 +554,90 @@ function runDynamic(selectedAbsences, lane, options) {
       LC_ALL: 'C',
     });
     if (freshHome !== null) environment.NIGHTWATCH_TOPOLOGY_EXPECTED_HOME = freshHome;
+    if (!envelopeAvailable) {
+      // X-02 degraded envelope mode — no Bubblewrap on this host, so no
+      // masked envelope exists. Each absence is observed DIRECTLY against
+      // the real environment (the fresh home is remapped through HOME exactly
+      // as the envelope's --setenv does). An absence that took effect is
+      // proven, not simulated; an absence this host cannot mask is recorded
+      // as a declared BWRAP_UNAVAILABLE non-exercise — never as a pass, never
+      // as a failure merely because the mask is unavailable. The dependent
+      // lanes still run unmasked: their suites are the same files the
+      // synthetic campaign already runs green on envelope-less hosts.
+      const directEnv = { ...environment };
+      if (freshHome !== null) directEnv.HOME = freshHome;
+      const directProbeArgs = [path.join(root, 'bin', 'gate-topology.mjs'), 'probe', `--absence=${absence.id}`, '--json'];
+      const directProbeResult = runCapture(nodeExecutable, directProbeArgs, { env: directEnv, timeoutMs: 120_000 });
+      const directProbe = directProbeResult.status === 0 ? parseLastJsonLine(directProbeResult.stdout) : null;
+      const direct = evaluateDirectObservation(absence, directProbe);
+      let directLane = null;
+      const directLaneSpec = laneCommandFor(absence, lane);
+      if (direct.constructible) {
+        if (!options.staticOnly && directLaneSpec !== null) {
+          if (directLaneSpec.kind === 'full') {
+            const receiptDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-topology-gate-'));
+            const receiptFile = path.join(receiptDirectory, 'gate-receipt.json');
+            const result = runCapture(directLaneSpec.command, directLaneSpec.args, {
+              env: { ...directEnv, NIGHTWATCH_GATE_RECEIPT_PATH: receiptFile },
+              timeoutMs: REALTIME_TIMEOUT_MS,
+            });
+            let receipt = null;
+            try {
+              receipt = JSON.parse(fs.readFileSync(receiptFile, 'utf8'));
+            } catch {
+              receipt = null;
+            } finally {
+              fs.rmSync(receiptDirectory, { recursive: true, force: true });
+            }
+            const status = receipt?.finalResult === 'PASS' ? 'PASS' : (receipt?.finalResult ?? (result.status === 0 ? 'PASS' : 'FAIL'));
+            directLane = {
+              status: status === 'PASS' ? 'PASS' : 'FAIL',
+              detail: `gate:local finalResult=${receipt?.finalResult ?? 'NO_RECEIPT'} exit=${result.status ?? 'SPAWN_ERROR'}`,
+              receipts: receipt === null ? null : { deepContainmentLane: extractDeepLane(receipt), checkable: true },
+            };
+          } else {
+            const result = runCapture(directLaneSpec.command, directLaneSpec.args, { env: directEnv, timeoutMs: REALTIME_TIMEOUT_MS });
+            const receipt = directLaneSpec.kind === 'campaign' ? parseLastJsonLine(`${result.stdout}\n${result.stderr}`, 'nightwatch.synthetic-campaign.v1') : null;
+            directLane = {
+              status: result.status === 0 ? 'PASS' : 'FAIL',
+              detail: `${quoteForDisplay([directLaneSpec.command, ...directLaneSpec.args])} exit=${result.status ?? 'SPAWN_ERROR'}`,
+              receipts: receipt === null ? null : {
+                deepContainmentLane: receipt.deepContainmentLane ?? null,
+                sourcePopulation: null,
+              },
+            };
+          }
+        } else if (directLaneSpec === null) {
+          directLane = { status: 'NOT_IN_AUTHORITATIVE_GATE', detail: `no authoritative gate suite depends on ${absence.capability}; the absence is recorded without inheriting a pass`, receipts: null };
+        }
+      }
+      // When the absence could not be constructed the lane is deliberately
+      // not run: a green lane beside an unconstructed absence must never read
+      // as coverage (the envelope path fails the same case loudly instead,
+      // because there the mask itself was expected to work).
+      const directFindings = direct.constructible ? evaluateAbsence({ absence, probe: directProbe, lane: directLane }) : direct.findings;
+      for (const finding of directFindings) findings.push(finding);
+      entries.push({
+        absence: absence.id,
+        constructed: direct.constructible,
+        ...(direct.notExercised ? { notExercised: 'BWRAP_UNAVAILABLE' } : {}),
+        probe: directProbe === null ? null : {
+          absent: direct.constructible,
+          detail: direct.detail,
+          blockerCode: directProbe.blockerCode ?? null,
+        },
+        lane: directLane,
+        findings: directFindings,
+      });
+      if (freshHome !== null) {
+        try {
+          fs.rmSync(freshHome, { recursive: true, force: true });
+        } catch {
+          // disposable; a cleanup miss is not a gate result
+        }
+      }
+      continue;
+    }
     const probeArgs = [...plan, nodeExecutable, path.join(root, 'bin', 'gate-topology.mjs'), 'probe', `--absence=${absence.id}`, '--json'];
     const probeResult = runCapture('bwrap', probeArgs, { env: environment, timeoutMs: 120_000 });
     const probe = probeResult.status === 0 ? parseLastJsonLine(probeResult.stdout) : null;
@@ -615,7 +705,7 @@ function runDynamic(selectedAbsences, lane, options) {
       }
     }
   }
-  return { entries, findings };
+  return { entries, findings, envelope: envelopeAvailable ? 'BUBBLEWRAP' : 'BWRAP_UNAVAILABLE_DEGRADED' };
 }
 
 /** @param {any} receipt */
