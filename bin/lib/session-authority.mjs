@@ -204,10 +204,12 @@ export function parseStateIdentity(stateText) {
  * Admit continuity coherence for commands whose authority binds the active
  * task: record task/campaign, ACTIVE_TASK identity and routing, and the task
  * STATE branch/status must all agree with the current worktree.
- * @param {{ command: string, record: Record<string, any>, worktreeName: string, currentBranch: string, activeTaskText: string | null, stateText: string | null, normalizeStatus: (value: unknown) => string | null }} input
+ * `canonicalBranch` is the policy's canonical branch (default `main`): the
+ * terminal-closeout relaxation is bound to it (X-08).
+ * @param {{ command: string, record: Record<string, any>, worktreeName: string, currentBranch: string, activeTaskText: string | null, stateText: string | null, normalizeStatus: (value: unknown) => string | null, canonicalBranch?: string }} input
  */
 export function admitContinuity(input) {
-  const { command, record, worktreeName, currentBranch, activeTaskText, stateText, normalizeStatus } = input;
+  const { command, record, worktreeName, currentBranch, activeTaskText, stateText, normalizeStatus, canonicalBranch } = input;
   if (record === null || typeof record !== 'object') {
     return { ok: false, code: 'SESSION_CONTINUITY_MISMATCH', detail: 'no valid ownership record to bind continuity to' };
   }
@@ -242,7 +244,17 @@ export function admitContinuity(input) {
   if (compatible !== null && !compatible.includes(status)) {
     return { ok: false, code: 'SESSION_CONTINUITY_MISMATCH', detail: `task status ${status} is not compatible with ${command}` };
   }
-  const terminalCanonicalCloseout = (command === 'integrate' || command === 'release') && status === 'COMPLETE' && declaredWorktree === 'NONE';
+  // X-08: the relaxation is bound to the CANONICAL branch recorded in the
+  // task STATE ("canonical-routed": ACTIVE_TASK SESSION WORKTREE NONE +
+  // Branch: main, run from the owning session worktree at close-out). A STATE
+  // that records any other branch never inherits the exception — the original
+  // form skipped the check for ANY current branch, which is exactly the hole.
+  const terminalCanonicalCloseout = (command === 'integrate' || command === 'release')
+    && status === 'COMPLETE'
+    && declaredWorktree === 'NONE'
+    && typeof canonicalBranch === 'string' && canonicalBranch !== ''
+    && typeof state.branch === 'string' && state.branch !== ''
+    && state.branch === canonicalBranch;
   if (typeof state.branch === 'string' && state.branch !== '' && state.branch !== currentBranch && !terminalCanonicalCloseout) {
     return { ok: false, code: 'SESSION_CONTINUITY_MISMATCH', detail: 'the task STATE branch does not match the current session branch' };
   }

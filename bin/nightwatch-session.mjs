@@ -241,6 +241,7 @@ function admitCommandContinuity(context, record, command) {
     // name is a different identity and must never be substituted for it.
     worktreeName: branch === '' ? (context.worktreeName ?? 'canonical') : branch,
     currentBranch: branch,
+    canonicalBranch: context.policy?.canonical?.branch ?? 'main',
     activeTaskText,
     stateText,
     normalizeStatus: normalizeTaskStatus,

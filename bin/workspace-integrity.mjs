@@ -524,7 +524,16 @@ function checkWorktreeMetadata(root, worktrees, policy, errors, warnings) {
     // A released record is not a held claim: there is no task to release or
     // re-point, so it is never reported as a terminal-task claim finding.
     if (record.ownershipState !== 'OWNED') continue;
-    const resolved = resolveClaimTask(root, record.taskId);
+    let resolved = resolveClaimTask(root, record.taskId);
+    // A-03: the invoking checkout may not carry the CLAIMING worktree's task
+    // record (the M1 bootstrap creates it in the worktree first). Resolve
+    // against the claiming worktree's path before reporting UNKNOWN — a false
+    // positive told the owner to release the wrong session. A task unknown in
+    // both locations stays UNKNOWN (the negative probe).
+    if (resolved.state === 'UNKNOWN' && worktree.exists && !worktree.isSymlink && typeof worktree.path === 'string') {
+      const fromClaimingWorktree = resolveClaimTask(worktree.path, record.taskId);
+      if (fromClaimingWorktree.state !== 'UNKNOWN') resolved = fromClaimingWorktree;
+    }
     if (resolved.state === 'OPEN') continue;
     const terminal = resolved.state === 'TERMINAL';
     claimTaskFindings.push({
@@ -541,6 +550,32 @@ function checkWorktreeMetadata(root, worktrees, policy, errors, warnings) {
         ? `worktree ${worktree.name} (class=${worktree.class}) claims task ${record.taskId}, whose STATE.md is ${resolved.status}`
         : `worktree ${worktree.name} (class=${worktree.class}) claims task ${record.taskId}, which cannot be resolved: ${resolved.reason}`,
     });
+  }
+  // A-07 — orphan session branches: a session/* branch with no registered
+  // worktree is unreachable through the session CLI. Read-only attention: it
+  // names the branch and its unique-commit count over the canonical branch and
+  // changes nothing — never a failure, never a repair.
+  const sessionPrefix = policy?.canonical?.sessionBranchPrefix ?? 'session/';
+  const canonicalBranchName = typeof policy?.canonical?.branch === 'string' && policy.canonical.branch !== '' ? policy.canonical.branch : 'main';
+  const registeredBranches = new Set(worktrees.map((worktree) => worktree.branch).filter((branch) => typeof branch === 'string' && branch !== ''));
+  const orphanSessionBranches = [];
+  const sessionRefs = git(root, ['for-each-ref', '--format=%(refname:short)', `refs/heads/${sessionPrefix}*`]);
+  if (!sessionRefs.ok) {
+    errors.push({ code: 'WORKSPACE_SESSION_BRANCH_ENUMERATION_FAILED', detail: 'git for-each-ref could not enumerate session branches; orphan detection failed closed' });
+  } else {
+    for (const branch of sessionRefs.stdout.split(/\r?\n/).map((line) => line.trim()).filter(Boolean)) {
+      if (registeredBranches.has(branch)) continue;
+      const counted = git(root, ['rev-list', '--count', `${canonicalBranchName}..${branch}`]);
+      const uniqueCommits = counted.ok ? Number(counted.stdout.trim()) : Number.NaN;
+      const uniqueText = Number.isNaN(uniqueCommits) ? 'unique-commit count unavailable' : `${uniqueCommits} unique commit(s) beyond ${canonicalBranchName}`;
+      orphanSessionBranches.push({ branch, uniqueCommits: Number.isNaN(uniqueCommits) ? null : uniqueCommits });
+      claimTaskFindings.push({
+        code: 'WORKSPACE_ORPHAN_SESSION_BRANCH',
+        worktree: null,
+        detail: `branch ${branch} has no registered worktree; ${uniqueText}; recorded read-only, changing nothing`,
+        ownerAction: 'record the branch and its unique-commit count, then either adopt it through bin/nightwatch-session.mjs claim --adopt or release the work through its owning session; never delete a branch with unmerged work',
+      });
+    }
   }
   const sessionIds = new Map();
   const liveTaskIds = new Map();
@@ -565,7 +600,7 @@ function checkWorktreeMetadata(root, worktrees, policy, errors, warnings) {
   // A structurally valid claim naming a terminal or unresolvable task is
   // ATTENTION: the topology is legal, the campaign behind it is not live. It
   // is deliberately neither PASS (silence) nor VIOLATED (failure).
-  const status = hardFailures.length > 0 ? 'VIOLATED' : (claimTaskFindings.length > 0 ? 'ATTENTION' : 'PASS');
+  const status = hardFailures.length > 0 ? 'VIOLATED' : ((claimTaskFindings.length > 0 || orphanSessionBranches.length > 0) ? 'ATTENTION' : 'PASS');
   return {
     id: 'WORKSPACE_WORKTREE_METADATA',
     status,
@@ -575,6 +610,8 @@ function checkWorktreeMetadata(root, worktrees, policy, errors, warnings) {
     claimedTaskCount: worktrees.filter((worktree) => worktree.record !== null).length,
     claimTaskTerminalCount: claimTaskFindings.filter((finding) => finding.code === 'CLAIM_TASK_TERMINAL').length,
     claimTaskUnknownCount: claimTaskFindings.filter((finding) => finding.code === 'CLAIM_TASK_UNKNOWN').length,
+    orphanSessionBranchCount: orphanSessionBranches.length,
+    orphanSessionBranches,
     claimTaskFindings,
   };
 }

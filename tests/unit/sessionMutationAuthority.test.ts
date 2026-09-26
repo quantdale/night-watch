@@ -658,3 +658,48 @@ test.describe('NW-AUD-006 — two linked sessions', () => {
     }
   });
 });
+
+// X-08 — the terminal-closeout relaxation is bound to the canonical branch
+// recorded in the task STATE (canonical-routed). A STATE that records any
+// other branch never inherits the exception: the original form skipped the
+// STATE-branch check for ANY current branch, which is the hole this closes.
+test.describe('NW-AUD-006 — X-08 terminal-closeout branch binding', () => {
+  test('a terminal closeout whose STATE records a non-canonical branch is refused', () => {
+    const fx = fixture();
+    try {
+      const owned = startOwned(fx);
+      writeTerminalContinuity(owned.path, 'authority-task');
+      const statePath = path.join(owned.path, '.agent/tasks/authority-task/STATE.md');
+      fs.writeFileSync(statePath, fs.readFileSync(statePath, 'utf8').replace('Branch: main', 'Branch: session/stale-branch'));
+      gitOk(owned.path, ['add', '.agent/ACTIVE_TASK.md', '.agent/tasks/authority-task/STATE.md']);
+      gitOk(owned.path, ['commit', '-m', 'non-canonical terminal continuity']);
+      const head = headOf(owned.path);
+
+      const integrate = session(owned.path, ['integrate', '--expect-session', owned.sessionId, '--expect-head', head]);
+      expect(integrate.status, integrate.stderr).toBe(1);
+      expect(integrate.stderr).toContain('SESSION_CONTINUITY_MISMATCH');
+
+      const released = session(owned.path, ['release', '--expect-session', owned.sessionId]);
+      expect(released.status, released.stderr).toBe(1);
+      expect(released.stderr).toContain('SESSION_CONTINUITY_MISMATCH');
+    } finally {
+      cleanup(fx.base);
+    }
+  });
+
+  test('the canonical-routed closeout (STATE records main) keeps its relaxation', () => {
+    const fx = fixture();
+    try {
+      const owned = startOwned(fx);
+      writeTerminalContinuity(owned.path, 'authority-task');
+      gitOk(owned.path, ['add', '.agent/ACTIVE_TASK.md', '.agent/tasks/authority-task/STATE.md']);
+      gitOk(owned.path, ['commit', '-m', 'canonical-routed terminal continuity']);
+      const head = headOf(owned.path);
+      const integrate = session(owned.path, ['integrate', '--expect-session', owned.sessionId, '--expect-head', head]);
+      expect(integrate.status, integrate.stderr).toBe(0);
+      expect(gitOk(fx.canonical, ['rev-parse', 'refs/remotes/origin/main'])).toBe(head);
+    } finally {
+      cleanup(fx.base);
+    }
+  });
+});

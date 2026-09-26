@@ -1654,3 +1654,99 @@ test.describe('NW-07 — the --dry-run contract mutates nothing', () => {
     expect(extra, `declared contracts for commands that do not exist: ${extra.join(', ')}`).toEqual([]);
   });
 });
+
+// A-03 — claim resolution against the CLAIMING worktree. The invoking checkout
+// may legitimately not carry a worktree-local task record (the M1 bootstrap
+// creates it in the worktree first); a false UNKNOWN told the owner to release
+// the wrong session. The negative control (a task unknown in BOTH locations)
+// stays with the F-07 suite above.
+test.describe('A-03 — claim-task resolution uses the claiming worktree path', () => {
+  test('a claim whose STATE exists only in the claiming worktree resolves, not UNKNOWN', () => {
+    const { base, canonical } = fixture();
+    try {
+      const owned = startOwnedSession(canonical, base, 'synthetic-task');
+      // The task record lives only in the worktree; canonical has no copy
+      // (synthetic-task itself is fixture-tracked, so a fresh id is used).
+      setTaskStatus(owned.path, 'synthetic-worktree-only', 'IN_PROGRESS');
+      expect(fs.existsSync(path.join(canonical, '.agent/tasks/synthetic-worktree-only/STATE.md'))).toBe(false);
+      const recordFile = path.join(canonical, '.git/worktrees', owned.name, 'nightwatch-session.v1.json');
+      const record = JSON.parse(fs.readFileSync(recordFile, 'utf8')) as Record<string, unknown>;
+      fs.writeFileSync(recordFile, JSON.stringify({ ...record, taskId: 'synthetic-worktree-only' }, null, 2));
+
+      const { report, status } = integrityJson(canonical);
+      expect(status).toBe(0);
+      expect(report.verdict).toBe('PASS');
+      expect(codes(report)).not.toContain('CLAIM_TASK_UNKNOWN');
+      const metadata = (report.invariants ?? []).find((entry: { id: string }) => entry.id === 'WORKSPACE_WORKTREE_METADATA');
+      expect(metadata.claimTaskUnknownCount).toBe(0);
+      expect(metadata.claimTaskTerminalCount).toBe(0);
+      expect(metadata.status).toBe('PASS');
+    } finally {
+      cleanup(base);
+    }
+  });
+
+  test('a task unknown in both the invoking checkout and the claiming worktree stays UNKNOWN', () => {
+    const { base, canonical } = fixture();
+    try {
+      const owned = startOwnedSession(canonical, base, 'synthetic-task');
+      setTaskStatus(owned.path, 'synthetic-task', 'IN_PROGRESS');
+      const recordFile = path.join(canonical, '.git/worktrees', owned.name, 'nightwatch-session.v1.json');
+      const record = JSON.parse(fs.readFileSync(recordFile, 'utf8')) as Record<string, unknown>;
+      fs.writeFileSync(recordFile, JSON.stringify({ ...record, taskId: 'synthetic-ghost' }, null, 2));
+
+      const { report } = integrityJson(canonical);
+      const finding = (report.claimFindings ?? []).find((entry: { code: string }) => entry.code === 'CLAIM_TASK_UNKNOWN');
+      expect(finding).toBeTruthy();
+      expect(finding.taskId).toBe('synthetic-ghost');
+    } finally {
+      cleanup(base);
+    }
+  });
+});
+
+// A-07 — orphan session branches are read-only attention: workspace:status
+// names the branch and its unique-commit count and changes nothing.
+test.describe('A-07 — orphan session branches raise attention, never failure', () => {
+  test('a session branch with no worktree reports its unique-commit count and survives', () => {
+    const { base, canonical } = fixture();
+    try {
+      gitOk(canonical, ['checkout', '-q', '-b', 'session/orphan-0000']);
+      fs.writeFileSync(path.join(canonical, 'orphan.txt'), 'orphan work\n');
+      gitOk(canonical, ['add', 'orphan.txt']);
+      gitOk(canonical, ['commit', '-m', 'orphan record']);
+      gitOk(canonical, ['checkout', '-q', 'main']);
+
+      const { report, status } = integrityJson(canonical);
+      expect(status).toBe(0);
+      expect(report.verdict).toBe('PASS');
+      const finding = (report.claimFindings ?? []).find((entry: { code: string }) => entry.code === 'WORKSPACE_ORPHAN_SESSION_BRANCH');
+      expect(finding).toBeTruthy();
+      expect(finding.detail).toContain('session/orphan-0000');
+      expect(finding.detail).toContain('unique commit(s) beyond main');
+      expect(finding.detail).toContain('changing nothing');
+      expect(finding.ownerAction).toContain('bin/nightwatch-session.mjs');
+      const metadata = (report.invariants ?? []).find((entry: { id: string }) => entry.id === 'WORKSPACE_WORKTREE_METADATA');
+      expect(metadata.status).toBe('ATTENTION');
+      expect(metadata.orphanSessionBranchCount).toBe(1);
+      // Read-only: the branch still exists afterwards, untouched.
+      expect(gitOk(canonical, ['branch', '--list', 'session/orphan-0000']).trim()).toBe('session/orphan-0000');
+    } finally {
+      cleanup(base);
+    }
+  });
+
+  test('a registered session worktree branch is never an orphan', () => {
+    const { base, canonical } = fixture();
+    try {
+      const owned = startOwnedSession(canonical, base, 'synthetic-task');
+      const { report } = integrityJson(canonical);
+      const metadata = (report.invariants ?? []).find((entry: { id: string }) => entry.id === 'WORKSPACE_WORKTREE_METADATA');
+      expect(metadata.orphanSessionBranchCount).toBe(0);
+      expect((report.claimFindings ?? []).filter((entry: { code: string }) => entry.code === 'WORKSPACE_ORPHAN_SESSION_BRANCH')).toEqual([]);
+      expect(owned.name).toBeTruthy();
+    } finally {
+      cleanup(base);
+    }
+  });
+});
