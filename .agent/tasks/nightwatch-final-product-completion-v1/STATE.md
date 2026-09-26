@@ -262,6 +262,50 @@ SHARD_UNDECLARED_SKIP (3 undeclared → fixed via the rebuilt allowlist) and
 the phase14ContractReport double-quote reason that the original generator
 missed.
 
+Command: `npm run gate:clean` (M3 4.7 evidence)
+Result: RECEIPT RECORDED (both the dirty-tree ENVIRONMENT_MISMATCH path and
+the full pre-4.7 run)
+When: 2026-09-26
+Relevant failure/output summary: the full run's receipt carries
+siblingMode=ABSENT, siblingRootClass=EMPTY_DISPOSABLE, measured
+siblingIdentityBefore==After (empty digest), install PASS, Node 20 toolchain
+(pre-4.11), HARDENING+PROBES PASS and HANDOFF_TRUTH TEST_FAILURE — the latter
+was the clone lacking the session worktree (D-04), fixed by 4.10; receipts now
+persist to artifacts/gate-receipts/ (B-14).
+
+Command: `npm run gate:topology` (M3 4.8)
+Result: PASS
+When: 2026-09-26
+Relevant failure/output summary: all four absence envelopes constructed,
+dynamic lanes PASS, findings [], plus requiresSiblingTopologyMeasurements
+for all 14 groups (3 measurable, 0 dependence, 11 unmeasurable);
+checkWorkflowActionPinning probe HC-147 DETECTED (campaign 147/147).
+
+Command: `npm run gate:ui` (M3 4.9)
+Result: PASS
+When: 2026-09-26
+Relevant failure/output summary: npm ci + typecheck + vitest + vite build +
+build verification all PASS (3 built files, 359051 bytes).
+
+Command: clone reproduction of the HANDOFF_TRUTH failure (M3 4.10)
+Result: REPRODUCED THEN FIXED
+When: 2026-09-26
+Relevant failure/output summary: a manual clone failed with
+ACTIVE_TASK_SESSION_WORKTREE_MISSING (the declared session worktree is not
+registered in a fresh clone) → HANDOFF_ACTIVE_CONTINUITY_FAILED; with the
+4.10 classification the same clone passes under NIGHTWATCH_GATE_ENVIRONMENT=CI
+and still fails without the label (local strictness preserved).
+
+Command: focused suites for 4.7-4.12 (workspace/session 86/86, topology
+26/26 incl. X-02 twins, quantifier 6/6 at 87 rules, phase23 gate pins,
+routing/agent-state, phase14 twins, reviewStore 54/54)
+Result: PASS
+When: 2026-09-26
+Relevant failure/output summary: all green; typecheck clean;
+hardening:check PASS including the workflow-pinning rule and the authenticated
+writer census (quality-gate-clean registered as LANE_RECEIPT_TOOL for its
+receipt persistence).
+
 ## Decisions Made During This Task
 
 - 2026-09-25 — Adopt the released canonical MAINTENANCE record for this task
