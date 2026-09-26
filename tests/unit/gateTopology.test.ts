@@ -361,19 +361,17 @@ test.describe('X-02 — imported path constants resolve through the scan', () =>
 });
 
 test.describe('X-02 degraded envelope mode — direct observation on a bwrap-less host', () => {
-  const absence = (/** @type {string} */ id: string) => {
-    const found = TOPOLOGY_ABSENCES.find((entry) => entry.id === id);
-    expect(found, id).toBeDefined();
-    return found!;
-  };
-
   test('an absence that took effect directly is constructible with no findings', () => {
     const direct = evaluateDirectObservation(absence('bwrap'), { available: false, blockerCode: 'BWRAP_UNAVAILABLE' });
     expect(direct.constructible).toBe(true);
     expect(direct.notExercised).toBe(false);
     expect(direct.findings).toEqual([]);
     // the constructed case still flows through the ordinary fail-closed judgement
-    const findings = evaluateAbsence({ absence: absence('bwrap'), probe: { available: false, blockerCode: 'BWRAP_UNAVAILABLE' }, lane: { status: 'PASS', receipts: { deepContainmentLane: 'NOT_EXERCISED_BWRAP_UNAVAILABLE' } } });
+    const findings = evaluateAbsence({
+      absence: absence('bwrap'),
+      probe: { available: false, blockerCode: 'BWRAP_UNAVAILABLE' },
+      lane: { status: 'PASS', receipts: { deepContainmentLane: 'NOT_EXERCISED_BWRAP_UNAVAILABLE' } },
+    });
     expect(findings.map((entry) => entry.code)).toEqual([]);
   });
 
