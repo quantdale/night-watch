@@ -6,7 +6,7 @@ Title: Final product completion (terminal campaign)
 Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-final-product-completion-v1
 Starting SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
-Last validated implementation SHA: aa78a014cd18b5cdc1c90b27286f12e0e6bb345f
+Last validated implementation SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
 Last checkpoint: 2026-09-26 — M3 COMPLETE (4.1-4.13): gate:dev PASS 5507/0,
 gate:milestone PASS and exact-head CI green at `aa78a014` (run 36243034942,
 all 15 required groups PASS, receipt `receipt:sha256:535217a6dbae65b7a26f9243`)
@@ -25,8 +25,8 @@ PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
-LAST_VALIDATED_IMPLEMENTATION_SHA: aa78a014cd18b5cdc1c90b27286f12e0e6bb345f
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: aa78a014cd18b5cdc1c90b27286f12e0e6bb345f
+LAST_VALIDATED_IMPLEMENTATION_SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
 LIVE_HEAD_AUTHORITY: GIT
 PHASE_FINAL_PRODUCT_COMPLETION_V1_STATUS: IN_PROGRESS
 
