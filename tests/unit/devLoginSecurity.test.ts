@@ -1,6 +1,6 @@
 // Synthetic browser and ordering checks for the guarded DEV login path.
 
-import { test, expect } from '@playwright/test';
+import { test, expect, chromium } from '@playwright/test';
 import type { Browser } from '@playwright/test';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -25,6 +25,25 @@ import {
 
 const SYNTHETIC_PASSWORD = 'SYNTHETIC_LOGIN_SENTINEL_8c4e7a1d2f9b6c0e';
 
+
+/**
+ * D-10 / task 4.6: the real-page half of this suite is gated on a browser
+ * binary. A runner without one (CI) skips with a declared identity instead of
+ * failing at fixture launch; the assertions run unguarded wherever a browser
+ * exists (the owner host).
+ */
+function browserBinaryAvailable(): boolean {
+  try {
+    return fs.existsSync(chromium.executablePath());
+  } catch {
+    return false;
+  }
+}
+
+test.describe('real-page DEV login binding (requires a browser binary)', () => {
+  test.skip(() => !browserBinaryAvailable(), 'CHROMIUM_UNAVAILABLE');
+  // D-10: the three real-page tests below skip with a declared identity when
+  // no browser binary exists; the policy tests after them keep running.
 test('source-approved login helper fills the synthetic form once without evidence plumbing', async ({ page }) => {
   const server = await startFixtureServer('auth');
   try {
@@ -79,6 +98,7 @@ test('a changed form action invalidates the one-shot binding', async ({ page }) 
   } finally {
     await server.close();
   }
+});
 });
 
 test('non-DEV target is rejected before the credential provider is consulted', async () => {

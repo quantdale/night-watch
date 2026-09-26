@@ -87,6 +87,10 @@
         "reasonToken": "workspace repositories are unavailable"
       },
       {
+        "file": "tests/unit/devLoginSecurity.test.ts",
+        "reasonToken": "CHROMIUM_UNAVAILABLE"
+      },
+      {
         "file": "tests/unit/historicalRediscovery.test.ts",
         "reasonToken": "cannot isolate this record"
       },
