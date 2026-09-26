@@ -145,11 +145,13 @@ export function inspectActiveTaskRouting(activeText, taskId, stateBranch, liveWo
     } else if (Array.isArray(liveWorktreeBranches) && !liveWorktreeBranches.includes(declaredWorktree)) {
       // D-04 / task 4.10 — in ci and clean gate modes a declared session
       // worktree is legitimately absent: a fresh checkout shares nothing with
-      // the live session. The classification holds ONLY when every invariant
-      // checked so far passes and the declared branch equals the task STATE
-      // branch; any other mismatch keeps the hard failure.
+      // the live session. The semantic-compatibility lane sets its own child
+      // label while running wherever the gates run, so it carries the same
+      // fresh-checkout classification. The classification holds ONLY when
+      // every invariant checked so far passes and the declared branch equals
+      // the task STATE branch; any other mismatch keeps the hard failure.
       const absentIsExpected =
-        (gateEnvironment === 'CI' || gateEnvironment === 'CLEAN')
+        (gateEnvironment === 'CI' || gateEnvironment === 'CLEAN' || gateEnvironment === 'COMPATIBILITY')
         && errors.length === 0
         && typeof stateBranch === 'string' && stateBranch !== ''
         && stateBranch === declaredWorktree;

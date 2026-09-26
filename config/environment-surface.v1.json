@@ -102,25 +102,31 @@
       "shape": {
         "kind": "enum",
         "values": [
-          "LOCAL",
+          "CLEAN_CHECKOUT",
           "CI",
           "CLEAN",
+          "COMPATIBILITY",
+          "DEV_LANE",
+          "LOCAL",
           "PREDEV",
-          "CLEAN_CHECKOUT",
-          "SYNTHETIC_CAMPAIGN",
+          "REVIEW_MUTATION",
           "SHARDS",
-          "GATE"
+          "SYNTHETIC_CAMPAIGN"
         ]
       },
       "default": null,
       "secretBearing": false,
       "consumers": [
         "bin/quality-gate.mjs",
+        "bin/quality-gate-clean.mjs",
+        "bin/validation-lane.mjs",
+        "bin/semantic-compat.mjs",
+        "bin/campaign-synthetic.mjs",
+        "bin/review-mutation-campaign.mjs",
+        "bin/lib/shard-child-environment.mjs",
         "bin/agent-state.mjs",
         "bin/planner-handoff-check.mjs",
-        "bin/project-state-check.mjs",
-        "bin/lib/shard-child-environment.mjs",
-        "bin/child-environment.mjs"
+        "bin/project-state-check.mjs"
       ]
     },
     {
@@ -981,6 +987,22 @@
         "bin/c12-preflight.mjs",
         "bin/nightwatch-status.mjs",
         "bin/observe-preflight.mjs"
+      ]
+    },
+    {
+      "name": "NIGHTWATCH_TIMING_LANE",
+      "purpose": "Per-lane attribution label for timing documents: the gate group command key or campaign/shard lane id (lower-case slug). Classification input only; never a credential, path or authority.",
+      "requiredIn": [],
+      "shape": {
+        "kind": "string"
+      },
+      "default": null,
+      "secretBearing": false,
+      "consumers": [
+        "bin/quality-gate.mjs",
+        "bin/semantic-compat.mjs",
+        "bin/campaign-synthetic.mjs",
+        "bin/lib/shard-child-environment.mjs"
       ]
     },
     {
