@@ -62,3 +62,36 @@ test('an out-of-range shard override is refused', () => {
   expect(result.status).toBe(2);
   expect(JSON.parse(result.stderr.trim()).code).toBe('SYNTHETIC_CAMPAIGN_SHARD_COUNT_INVALID');
 });
+
+test('the campaign temp root keeps Chromium process-singleton sockets inside sun_path', () => {
+  // Regression pin: the per-lane TMPDIR isolation once used a 30-byte mkdtemp
+  // prefix plus the 28-byte exclusive lane, so Chromium's singleton socket
+  // (<tmp>/<mkdtemp>/<lane>/com.google.Chrome.XXXXXX/SingletonSocket) landed at
+  // 110 bytes — over the 107-byte sun_path cap — and FATALed every
+  // live-browser test under the concurrent campaign.
+  const source = fs.readFileSync(CLI, 'utf8');
+  const prefixMatch = source.match(/mkdtempSync\(path\.join\(os\.tmpdir\(\), '([^']+)'\)\)/);
+  const prefix = prefixMatch?.[1] ?? '';
+  expect(prefix).not.toBe('');
+  const manifest = JSON.parse(fs.readFileSync(MANIFEST, 'utf8'));
+  const classes = JSON.parse(fs.readFileSync(CLASSES, 'utf8'));
+  const classMap: Record<string, ExecutionClass> = {};
+  for (const file of manifest.files) classMap[file] = classes.files[file].class;
+  const plan = planShards({ universe: manifest.files, classes: classMap, parallelShardCount: manifest.execution.shardCount ?? 1 });
+  const lanes = ['campaign-synthetic-exclusive', ...plan.parallelShards.map((shard) => `campaign-synthetic-${shard.id}`)];
+  const longestLane = Math.max(...lanes.map((lane) => lane.length));
+  const worstCaseSocketPath =
+    '/tmp/'.length + prefix.length + 6 /* mkdtemp randomness */ + 1 + longestLane +
+    1 + 'com.google.Chrome.'.length + 6 /* chrome temp randomness */ + '/SingletonSocket'.length;
+  expect(worstCaseSocketPath).toBeLessThanOrEqual(107);
+});
+
+test('every campaign lane pins the shared proxy lease directory instead of the os.tmpdir default', () => {
+  // Regression pin: the lease files coordinate real loopback binds across
+  // concurrently running shards; a per-lane (or unset) lease directory splits
+  // that authority and lets every shard conclude the preferred port is free.
+  const source = fs.readFileSync(CLI, 'utf8');
+  expect(source).toContain('environment.NIGHTWATCH_PROXY_LEASE_DIR = sharedCampaignProxyLeaseDir();');
+  expect(source).toMatch(/function sharedCampaignProxyLeaseDir\(\)/);
+  expect(source).toMatch(/path\.join\(campaignTempRoot, 'proxy-port-leases'\)/);
+});

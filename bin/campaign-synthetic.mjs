@@ -110,10 +110,16 @@ function deepContainmentLane() {
 // isolated temp root per invocation and never write to the shared
 // os.tmpdir(). Created lazily so importing this module has no side effects,
 // removed best-effort on exit like every other scratch root.
+// The mkdtemp prefix stays SHORT on purpose: Chromium derives its
+// process-singleton UNIX socket under TMPDIR
+// (<root>/<lane>/com.google.Chrome.XXXXXX/SingletonSocket), and sun_path is
+// capped at 107 usable bytes — the previous 30-byte prefix plus the
+// 28-byte exclusive-lane directory overflowed that cap and FATALed
+// (process_singleton_posix: "Socket path too long") on every live-browser test.
 let campaignTempRoot = null;
 function isolatedCampaignTempRoot(lane) {
   if (campaignTempRoot === null) {
-    campaignTempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-synthetic-campaign-'));
+    campaignTempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'nw-synth-'));
     process.on('exit', () => {
       if (campaignTempRoot === null) return;
       try { fs.rmSync(campaignTempRoot, { recursive: true, force: true }); } catch { /* best effort */ }
@@ -122,6 +128,20 @@ function isolatedCampaignTempRoot(lane) {
   const laneRoot = path.join(campaignTempRoot, lane.replace(/[^A-Za-z0-9._-]/g, '_'));
   fs.mkdirSync(laneRoot, { recursive: true });
   return laneRoot;
+}
+
+// The port-lease authority must stay SHARED across concurrently running
+// shards even though every lane gets its own isolated TMPDIR: the lease files
+// coordinate real loopback binds, and a per-lane split makes each shard
+// independently conclude the preferred port is free (EADDRINUSE under the
+// parallel campaign). The system-temp default derives from os.tmpdir(), so the
+// per-shard override is mandatory here — the same invariant
+// buildShardChildEnvironment enforces for the quality-gate shards.
+function sharedCampaignProxyLeaseDir() {
+  if (campaignTempRoot === null) throw new Error('CAMPAIGN_LEASE_DIR_UNINITIALIZED');
+  const leaseDir = path.join(campaignTempRoot, 'proxy-port-leases');
+  fs.mkdirSync(leaseDir, { recursive: true });
+  return leaseDir;
 }
 
 function campaignEnvironment(lane) {
@@ -136,6 +156,7 @@ function campaignEnvironment(lane) {
   environment.TEMP = tempRoot;
   environment.TMP = tempRoot;
   for (const key of ['NIGHTWATCH_PROXY_PORT', 'NIGHTWATCH_PROXY_LEASE_TOKEN', 'NIGHTWATCH_PROXY_LEASE_PATH', 'NIGHTWATCH_PROXY_LEASE_OWNER_PID']) delete environment[key];
+  environment.NIGHTWATCH_PROXY_LEASE_DIR = sharedCampaignProxyLeaseDir();
   return environment;
 }
 
