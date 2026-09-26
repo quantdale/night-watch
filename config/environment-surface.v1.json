@@ -38,6 +38,23 @@
       ]
     },
     {
+      "name": "NIGHTWATCH_CLEAN_SIBLING_MODE",
+      "purpose": "Clean-gate sibling mode selector: ABSENT (default, the gate runs against an empty disposable sibling root) or OPT_IN_SIBLING (explicit recorded opt-in that must name NIGHTWATCH_REPOS_ROOT).",
+      "requiredIn": [],
+      "shape": {
+        "kind": "enum",
+        "values": [
+          "ABSENT",
+          "OPT_IN_SIBLING"
+        ]
+      },
+      "default": "ABSENT",
+      "secretBearing": false,
+      "consumers": [
+        "bin/quality-gate-clean.mjs"
+      ]
+    },
+    {
       "name": "NIGHTWATCH_ENV",
       "purpose": "Fail-closed environment selection; one of local | dev | next. production is never loadable.",
       "requiredIn": [
@@ -683,19 +700,6 @@
       ]
     },
     {
-      "name": "NIGHTWATCH_PROD_OBSERVE_CONFIG",
-      "purpose": "Path to the production observation configuration record; admitted only through the owner gate.",
-      "requiredIn": [],
-      "shape": {
-        "kind": "path"
-      },
-      "default": null,
-      "secretBearing": false,
-      "consumers": [
-        "src/core/prodObserve/observationConfig.ts"
-      ]
-    },
-    {
       "name": "NIGHTWATCH_PRODUCT",
       "purpose": "Product fixture selector forwarded to a scenario run.",
       "requiredIn": [],
@@ -723,18 +727,16 @@
       ]
     },
     {
-      "name": "NIGHTWATCH_PROXY_LEASE_OWNER_PID",
-      "purpose": "PID of the process that owns the current port lease.",
+      "name": "NIGHTWATCH_PROD_OBSERVE_CONFIG",
+      "purpose": "Path to the production observation configuration record; admitted only through the owner gate.",
       "requiredIn": [],
       "shape": {
-        "kind": "integer",
-        "min": 1
+        "kind": "path"
       },
       "default": null,
       "secretBearing": false,
       "consumers": [
-        "src/proxy/portLease.ts",
-        "src/proxy/server.ts"
+        "src/core/prodObserve/observationConfig.ts"
       ]
     },
     {
@@ -748,6 +750,21 @@
       "secretBearing": false,
       "consumers": [
         "src/proxy/portLease.ts"
+      ]
+    },
+    {
+      "name": "NIGHTWATCH_PROXY_LEASE_OWNER_PID",
+      "purpose": "PID of the process that owns the current port lease.",
+      "requiredIn": [],
+      "shape": {
+        "kind": "integer",
+        "min": 1
+      },
+      "default": null,
+      "secretBearing": false,
+      "consumers": [
+        "src/proxy/portLease.ts",
+        "src/proxy/server.ts"
       ]
     },
     {
@@ -903,6 +920,20 @@
       "secretBearing": false,
       "consumers": [
         "src/proxy/server.ts"
+      ]
+    },
+    {
+      "name": "NIGHTWATCH_SIBLING_ROOT",
+      "purpose": "Alternate sibling-source root, honoured alongside NIGHTWATCH_REPOS_ROOT by the shared live-source root resolver.",
+      "requiredIn": [],
+      "shape": {
+        "kind": "path"
+      },
+      "default": null,
+      "secretBearing": false,
+      "consumers": [
+        "tests/helpers/liveSourceTestAuthority.ts",
+        "bin/quality-gate-clean.mjs"
       ]
     },
     {
