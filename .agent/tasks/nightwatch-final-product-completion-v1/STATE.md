@@ -382,6 +382,14 @@ degraded envelope mode; direct observation with declared BWRAP_UNAVAILABLE
 non-exercises, recorded in the receipt as `envelope:
 BWRAP_UNAVAILABLE_DEGRADED`). Never amended; five repair commits total.
 
+Command: `gh run watch 36244721098` (OD-3, M3 closeout docs head)
+Result: PASS — `completed / success`
+When: 2026-09-26
+Relevant failure/output summary: gitHead `78b23520` (the closeout docs
+commits on top of `aa78a014`); CI green holds at the closeout head. This
+entry is committed with the closeout record and pushed together with the
+first M4 checkpoint — no push cycle spent on a one-line ledger entry.
+
 ## Decisions Made During This Task
 
 - 2026-09-25 — Adopt the released canonical MAINTENANCE record for this task
