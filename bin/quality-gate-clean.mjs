@@ -52,18 +52,60 @@ function git(args, cwd) {
   return spawnSync('git', args, { cwd, encoding: 'utf8', timeout: 60_000, maxBuffer: 2 * 1024 * 1024, stdio: ['ignore', 'pipe', 'pipe'] });
 }
 
-function safeEnvironment() {
+function safeEnvironment(extra = {}) {
   const environment = buildChildEnvironment(process.env, { NIGHTWATCH_ENV: 'local', NIGHTWATCH_GATE_ENVIRONMENT: 'CLEAN_CHECKOUT' });
   environment.TZ = 'UTC';
   environment.LC_ALL = 'C';
   environment.LANG = 'C';
   environment.NO_COLOR = '1';
   environment.NIGHTWATCH_HEADED = '0';
+  for (const [key, value] of Object.entries(extra)) environment[key] = value;
   return environment;
 }
 
-function resolveNode20Toolchain() {
-  const environment = safeEnvironment();
+// R2-N3 / task 4.7 — sibling-absent by default. The clean gate runs against
+// an EMPTY disposable sibling root unless the owner opts in explicitly; a
+// sibling mode is only ever an explicit, recorded choice.
+export function resolveCleanSiblingMode(environment = process.env) {
+  const raw = environment['NIGHTWATCH_CLEAN_SIBLING_MODE'];
+  if (raw === undefined || raw === '' || raw === 'ABSENT') return { mode: 'ABSENT', ok: true, root: null };
+  if (raw === 'OPT_IN_SIBLING') {
+    const configured = environment['NIGHTWATCH_REPOS_ROOT']?.trim() || environment['NIGHTWATCH_SIBLING_ROOT']?.trim();
+    if (configured === undefined || configured === '') return { mode: 'OPT_IN_SIBLING', ok: false, root: null };
+    return { mode: 'OPT_IN_SIBLING', ok: true, root: configured };
+  }
+  return { mode: 'INVALID', ok: false, root: null };
+}
+
+/**
+ * Measured sibling identity (never a claim): the sorted top-level listing
+ * plus, for every direct git worktree, the porcelain digest and HEAD. An
+ * empty root digests as the empty listing; nothing here writes.
+ */
+export function siblingIdentityManifest(siblingRoot) {
+  const hash = crypto.createHash('sha256');
+  let entries;
+  try {
+    entries = fs.readdirSync(siblingRoot).sort();
+  } catch {
+    return { ok: false, digest: 'UNREADABLE', entryCount: -1 };
+  }
+  let worktrees = 0;
+  for (const entry of entries) {
+    hash.update(`${entry}\n`);
+    const full = path.join(siblingRoot, entry);
+    if (!fs.existsSync(path.join(full, '.git'))) continue;
+    worktrees += 1;
+    const status = git(['status', '--porcelain'], full);
+    hash.update(`status:${status.status === 0 ? sha256(status.stdout) : 'UNREADABLE'}\n`);
+    const head = git(['rev-parse', 'HEAD'], full);
+    hash.update(`head:${head.status === 0 ? head.stdout.trim() : 'UNREADABLE'}\n`);
+  }
+  return { ok: true, digest: `sha256:${hash.digest('hex').slice(0, 24)}`, entryCount: entries.length, worktrees };
+}
+
+function resolveNode20Toolchain(extra = {}) {
+  const environment = safeEnvironment(extra);
   if (Number(process.versions.node.split('.')[0]) === 20) return { environment, nodeMajor: 20 };
   // Development hosts may not have Node 20 installed globally. Resolve the
   // pinned major into npm's disposable cache, then put only its bin directory
@@ -109,6 +151,16 @@ const gateTimeout = resolveCleanTimeout('NIGHTWATCH_CLEAN_GATE_TIMEOUT_MS', DEFA
 if (!head || statusResult.status !== 0 || statusResult.stdout.trim() !== '' || installTimeout === null || gateTimeout === null) {
   emit({ schemaVersion: 'nightwatch.clean-checkout-receipt.v1', sourceHead: head, nodeMajor: Number(process.versions.node.split('.')[0]), installResult: 'NOT_RUN', gateResult: 'NOT_RUN', finalResult: 'ENVIRONMENT_MISMATCH' }, 1);
 } else {
+  // R2-N3 / task 4.7 — sibling-absent by default: the clean gate's children
+  // see an EMPTY disposable sibling root. Sibling mode is only an explicit,
+  // recorded opt-in that names its own root.
+  const siblingMode = resolveCleanSiblingMode();
+  if (!siblingMode.ok) {
+    emit({ schemaVersion: 'nightwatch.clean-checkout-receipt.v1', sourceHead: head, nodeMajor: Number(process.versions.node.split('.')[0]), installResult: 'ENVIRONMENT_MISMATCH', gateResult: 'NOT_RUN', finalResult: 'ENVIRONMENT_MISMATCH' }, 1);
+  } else {
+  const absentSiblingRoot = siblingMode.mode === 'ABSENT' ? fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-clean-sibling-absent-')) : null;
+  const effectiveSiblingRoot = absentSiblingRoot ?? siblingMode.root;
+  const siblingIdentityBefore = siblingIdentityManifest(effectiveSiblingRoot);
   const clone = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-quality-gate-clean-'));
   try {
     const cloneResult = git(['clone', '--local', '--no-hardlinks', root, clone], root);
@@ -125,7 +177,7 @@ if (!head || statusResult.status !== 0 || statusResult.stdout.trim() !== '' || i
       if (checkout.status !== 0 || cloneBranch.status !== 0 || cloneBranch.stdout.trim() !== 'main' || cloneHead.status !== 0 || cloneHead.stdout.trim() !== head || cleanBefore.status !== 0 || cleanBefore.stdout.trim() !== '' || fs.existsSync(path.join(clone, 'node_modules'))) {
         emit({ schemaVersion: 'nightwatch.clean-checkout-receipt.v1', sourceHead: head, nodeMajor: Number(process.versions.node.split('.')[0]), installResult: 'ENVIRONMENT_MISMATCH', gateResult: 'NOT_RUN', finalResult: 'ENVIRONMENT_MISMATCH' }, 1);
       } else {
-        const toolchain = resolveNode20Toolchain();
+        const toolchain = resolveNode20Toolchain({ NIGHTWATCH_REPOS_ROOT: effectiveSiblingRoot });
         if (toolchain === null) {
           emit({ schemaVersion: 'nightwatch.clean-checkout-receipt.v1', sourceHead: head, nodeMajor: null, installResult: 'ENVIRONMENT_MISMATCH', gateResult: 'NOT_RUN', finalResult: 'ENVIRONMENT_MISMATCH' }, 1);
         } else {
@@ -188,7 +240,11 @@ if (!head || statusResult.status !== 0 || statusResult.stdout.trim() !== '' || i
               ? (gateTimedOut ? 'TIMEOUT' : 'UNKNOWN_FAILURE')
               : gateReceipt.finalResult;
             const checkoutStillClean = cleanAfter !== null && cleanAfter.status === 0 && cleanAfter.stdout.trim() === '';
-            const finalResult = receiptError === null && gateResult === 'PASS' && checkoutStillClean ? 'PASS' : gateResult;
+            // The sibling identity is MEASURED before and after the gate, never
+            // asserted: any drift fails the clean gate with its own verdict.
+            const siblingIdentityAfter = siblingIdentityManifest(effectiveSiblingRoot);
+            const siblingIdentityUnchanged = siblingIdentityBefore.ok && siblingIdentityAfter.ok && siblingIdentityBefore.digest === siblingIdentityAfter.digest;
+            const finalResult = siblingIdentityUnchanged && receiptError === null && gateResult === 'PASS' && checkoutStillClean ? 'PASS' : (siblingIdentityUnchanged ? gateResult : 'SIBLING_IDENTITY_DRIFT');
             emit({
               schemaVersion: 'nightwatch.clean-checkout-receipt.v1',
               sourceHead: head,
@@ -208,7 +264,11 @@ if (!head || statusResult.status !== 0 || statusResult.stdout.trim() !== '' || i
               nodeModulesReused: false,
               authStateProvided: false,
               ownerFindingStateProvided: false,
-              siblingWrites: 0,
+              siblingMode: siblingMode.mode,
+              siblingRootClass: absentSiblingRoot !== null ? 'EMPTY_DISPOSABLE' : 'OPT_IN_CONFIGURED',
+              siblingIdentityBefore: siblingIdentityBefore.digest,
+              siblingIdentityAfter: siblingIdentityAfter.digest,
+              siblingIdentityUnchanged,
               finalResult,
             }, finalResult === 'PASS' ? 0 : 1);
           }
@@ -217,6 +277,8 @@ if (!head || statusResult.status !== 0 || statusResult.stdout.trim() !== '' || i
     }
   } finally {
     fs.rmSync(clone, { recursive: true, force: true });
+    if (absentSiblingRoot !== null) fs.rmSync(absentSiblingRoot, { recursive: true, force: true });
+  }
   }
 }
 
