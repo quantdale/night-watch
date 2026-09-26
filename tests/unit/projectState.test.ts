@@ -101,12 +101,6 @@ const PLAN_HEADINGS = [
   '## Architecture / Approach', '## Milestones', '## Validation Strategy', '## Decision Log',
   '## Discoveries', '## Deferred Work', '## Completion Criteria',
 ];
-const STATE_HEADINGS = [
-  '## Identity', '## Objective', '## Current Milestone', '## Completed Milestones',
-  '## Work In Progress', '## Exact Next Action', '## Files Changed', '## Validation Ledger',
-  '## Decisions Made During This Task', '## Discoveries', '## Blockers', '## Safety Events',
-  '## Deferred / Follow-Up', '## Resume Recipe', '## Completion Snapshot',
-];
 
 interface ClosedTaskRecords {
   readonly active: string;
@@ -441,7 +435,9 @@ function makeFixture(options: FixtureOptions = {}): Fixture {
   const sha = git(root, ['rev-parse', 'HEAD']);
 
   fs.mkdirSync(path.join(root, 'docs'), { recursive: true });
-  if (options.blockPresent !== false) {
+  if (options.blockPresent === false) {
+    fs.writeFileSync(path.join(root, 'docs/CURRENT_STATE.md'), '# Nightwatch — CURRENT STATE (synthetic fixture, no block)\n');
+  } else {
     const block = options.block === undefined && options.activeTaskStatus === 'blocked'
       ? { projectCompletionStatus: 'PROJECT_NOT_COMPLETE_BLOCKED' }
       : options.block === undefined && options.activeTaskStatus === 'in_progress'
@@ -467,8 +463,6 @@ function makeFixture(options: FixtureOptions = {}): Fixture {
       liveCompletionClaim: activeTaskStatus === 'COMPLETE' ? 'COMPLETE' : 'NONE',
       ...(block ?? {}),
     }));
-  } else {
-    fs.writeFileSync(path.join(root, 'docs/CURRENT_STATE.md'), '# Nightwatch — CURRENT STATE (synthetic fixture, no block)\n');
   }
   fs.writeFileSync(path.join(root, 'AGENTS.md'), '# Agent contract\n');
 
@@ -2266,5 +2260,43 @@ test.describe('F-12 project:check release certification', () => {
     } finally {
       fixture.cleanup();
     }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 5.1 (A-02 / D-01) — the seven release probes are wired.
+//
+// The implemented flag may only claim what the collector carries: every
+// RELEASE_ADVANCE_CHECKS entry must resolve a real probe output instead of
+// the registered-but-unbacked "capability is created by GX" message, and the
+// real tree must produce each probe's environment-independent facts.
+// ---------------------------------------------------------------------------
+
+test.describe('release probe wiring (M4 task 5.1)', () => {
+  const REPO_ROOT = path.join(__dirname, '..', '..');
+
+  test('every registered release check is implemented and carried by the collector', () => {
+    const unwired = RELEASE_ADVANCE_CHECKS.filter((check) => !check.implemented).map((check) => check.id);
+    expect(unwired).toEqual([]);
+    const source = fs.readFileSync(path.join(REPO_ROOT, 'bin', 'project-state-check.mjs'), 'utf8');
+    for (const check of RELEASE_ADVANCE_CHECKS) {
+      expect(source, `collectReleaseCheckOutputs must carry an output for ${check.id}`).toContain(`'${check.id}': `);
+    }
+  });
+
+  test('the real-tree evaluation resolves every check to probe output, never to the unbacked message', () => {
+    const result = spawnSync(process.execPath, [CHECKER, '--root', REPO_ROOT], { encoding: 'utf8', timeout: 300_000 });
+    expect(result.stdout).not.toBe('');
+    expect(result.stdout).not.toContain('the check is not present at this checkpoint');
+    for (const line of result.stdout.split('\n')) {
+      if (line.includes('state=')) expect(line).not.toContain('is registered and its capability is created by');
+    }
+    // Environment-independent probe facts for the six newly wired checks:
+    expect(result.stdout).toContain('reachability findings=0; reference-graph retention list empty');
+    expect(result.stdout).toContain('PASS: every schema identifier is declared');
+    expect(result.stdout).toContain('F-18 harness complete over 5 ApiErrorKind members');
+    expect(result.stdout).toContain('effective configuration printer present');
+    expect(result.stdout).toContain('single cookie-expiry evaluator');
+    expect(result.stdout).toContain('W13 aggregate');
   });
 });

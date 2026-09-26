@@ -582,6 +582,247 @@ function probeAccessibility(root) {
 }
 
 /**
+ * G14 — dead-architecture closure (D3): the reachability report carries zero
+ * findings and the reasoned-retention list in the reference graph is empty.
+ * `--report-reachability` is the reporting mode of the very evaluation the
+ * gate runs blocking, so the probe and the rule cannot drift.
+ * @param {string} root
+ * @returns {{state: string, detail: string}}
+ */
+function probeDeadArchitectureClosure(root) {
+  const config = readJsonAt(root, 'config/reference-graph.v1.json');
+  if (config === null) return { state: 'UNAVAILABLE_CAPABILITY', detail: 'config/reference-graph.v1.json unreadable' };
+  if (!Array.isArray(config.retention)) return { state: 'UNAVAILABLE_CAPABILITY', detail: 'reference graph carries no retention list' };
+  const result = spawnSync(process.execPath, [path.join('bin', 'hardening-check.mjs'), '--report-reachability'], {
+    cwd: root,
+    env: gitEnv(root),
+    shell: false,
+    encoding: 'utf8',
+    timeout: 120_000,
+    maxBuffer: 4 * 1024 * 1024,
+  });
+  if (result.status === null || typeof result.stdout !== 'string') {
+    return { state: 'UNAVAILABLE_CAPABILITY', detail: 'reachability report failed to run' };
+  }
+  const count = /reachability\] findings=(\d+)/.exec(result.stdout);
+  if (count === null) return { state: 'UNAVAILABLE_CAPABILITY', detail: 'reachability report produced no finding count' };
+  const findings = Number(count[1]);
+  if (findings > 0) {
+    const lines = result.stdout
+      .split(/\r?\n/)
+      .filter((line) => line.startsWith('[reachability] ') && !line.startsWith('[reachability] files=') && !line.startsWith('[reachability] findings='))
+      .slice(0, 3);
+    return { state: 'UNMET', detail: `reachability findings=${findings}: ${lines.join('; ')}` };
+  }
+  if (config.retention.length > 0) {
+    return { state: 'UNMET', detail: `reference graph still retains ${config.retention.length} reasoned retention entries` };
+  }
+  return { state: 'MET', detail: 'reachability findings=0; reference-graph retention list empty' };
+}
+
+/**
+ * G17 — schema lifecycle (D3): `schema-lifecycle check` proves every schema
+ * identifier is declared and every persisted bump carries a disposition.
+ * @param {string} root
+ * @returns {{state: string, detail: string}}
+ */
+function probeSchemaVersionLifecycle(root) {
+  const result = spawnSync(process.execPath, [path.join('bin', 'schema-lifecycle.mjs'), 'check'], {
+    cwd: root,
+    env: gitEnv(root),
+    shell: false,
+    encoding: 'utf8',
+    timeout: 120_000,
+    maxBuffer: 2 * 1024 * 1024,
+  });
+  if (result.status === null) return { state: 'UNAVAILABLE_CAPABILITY', detail: 'schema-lifecycle check failed to spawn' };
+  const lines = `${result.stdout ?? ''}${result.stderr ?? ''}`
+    .split(/\r?\n/)
+    .filter((line) => line.startsWith('[schema-lifecycle] '));
+  if (result.status === 0) {
+    const summary = lines.filter((line) => line.includes('PASS')).pop() ?? '[schema-lifecycle] check passed';
+    return { state: 'MET', detail: summary.replace('[schema-lifecycle] ', '') };
+  }
+  return { state: 'UNMET', detail: lines.slice(0, 4).join('; ') || `schema-lifecycle check exit=${result.status}` };
+}
+
+/**
+ * G19 — configuration contract (D3): the environment-declaration rule passes
+ * and the environment-surface module parses the committed declaration,
+ * carries declared variables, and can print the effective configuration.
+ * @param {string} root
+ * @returns {{state: string, detail: string}}
+ */
+function probeConfigurationContract(root) {
+  const rule = spawnSync(process.execPath, [path.join('bin', 'hardening-check.mjs'), '--only=checkEnvironmentSurfaceDeclaration'], {
+    cwd: root,
+    env: gitEnv(root),
+    shell: false,
+    encoding: 'utf8',
+    timeout: 120_000,
+    maxBuffer: 2 * 1024 * 1024,
+  });
+  if (rule.status === null) return { state: 'UNAVAILABLE_CAPABILITY', detail: 'environment declaration rule failed to spawn' };
+  if (rule.status !== 0) {
+    const lines = `${rule.stdout ?? ''}${rule.stderr ?? ''}`
+      .split(/\r?\n/)
+      .filter((line) => line.includes('environment') && !line.startsWith('>') && line.trim() !== '')
+      .slice(0, 3);
+    return { state: 'UNMET', detail: lines.join('; ') || `environment declaration rule exit=${rule.status}` };
+  }
+  let surface;
+  try {
+    surface = loadTypeScriptModule(root, 'src/core/config/environmentSurface.ts');
+  } catch {
+    return { state: 'UNAVAILABLE_CAPABILITY', detail: 'environment-surface module unavailable' };
+  }
+  const declaration = readJsonAt(root, 'config/environment-surface.v1.json');
+  if (declaration === null) return { state: 'UNAVAILABLE_CAPABILITY', detail: 'config/environment-surface.v1.json unreadable' };
+  try {
+    const parsed = surface.parseEnvironmentSurface(declaration);
+    if (typeof surface.renderEffectiveConfiguration !== 'function') {
+      return { state: 'UNAVAILABLE_CAPABILITY', detail: 'effective configuration printer missing from environment-surface' };
+    }
+    const declared = Array.isArray(parsed.variables) ? parsed.variables.length : 0;
+    if (declared === 0) return { state: 'UNMET', detail: 'environment surface declares no variables' };
+    return { state: 'MET', detail: `declaration rule pass; surface parses with ${declared} declared variables; effective configuration printer present` };
+  } catch (error) {
+    return { state: 'UNMET', detail: `environment surface does not parse: ${error instanceof Error ? error.message : String(error)}` };
+  }
+}
+
+/**
+ * G18 — UI error taxonomy (D3): the F-18 differential render harness drives
+ * every view through every ApiErrorKind member, requires distinct renderings,
+ * derives the member list with no fallback, and its tracked DOM baseline is
+ * present. Executing the harness is the UI gate group's job; this probe proves
+ * the receipt-shaped contract itself is complete.
+ * @param {string} root
+ * @returns {{state: string, detail: string}}
+ */
+function probeUiErrorTaxonomy(root) {
+  const baseline = readJsonAt(root, 'ui/control-center/src/__baselines__/view-dom-baseline.json');
+  if (baseline === null) return { state: 'UNMET', detail: 'render harness DOM baseline ui/control-center/src/__baselines__/view-dom-baseline.json missing' };
+  let types;
+  let harness;
+  try {
+    types = fs.readFileSync(path.join(root, 'ui', 'control-center', 'src', 'types.ts'), 'utf8');
+    harness = fs.readFileSync(path.join(root, 'ui', 'control-center', 'src', 'contractRender.test.tsx'), 'utf8');
+  } catch {
+    return { state: 'UNAVAILABLE_CAPABILITY', detail: 'UI taxonomy sources unreadable' };
+  }
+  const memberList = /export const API_ERROR_KINDS = \[([^\]]+)\] as const;/.exec(types);
+  if (memberList === null) return { state: 'UNMET', detail: 'API_ERROR_KINDS member list not found in ui/control-center/src/types.ts' };
+  const kinds = memberList[1]?.match(/'([A-Z_]+)'/g) ?? [];
+  if (kinds.length === 0) return { state: 'UNMET', detail: 'API_ERROR_KINDS declares no members' };
+  const markers = [
+    ["describe('F-18 failure-path differential render harness'", 'the F-18 differential harness'],
+    ['for (const kind of API_ERROR_KINDS) renderings.set(kind, view.render(kindCase(kind)));', 'the per-kind render loop'],
+    ['expect(allViolations).toEqual([]);', 'the distinctness gate'],
+    ['data-error-kind="${kind}"', 'the per-kind rendered marker'],
+    ['export type ApiErrorKind = \\(typeof API_ERROR_KINDS\\)\\[number\\];', 'the derived ApiErrorKind type'],
+  ];
+  const missing = markers.filter(([literal]) => !harness.includes(literal)).map(([, label]) => label);
+  if (missing.length > 0) return { state: 'UNMET', detail: `render harness incomplete: missing ${missing.join(', ')}` };
+  const views = typeof baseline === 'object' && baseline !== null ? Object.keys(baseline).length : 0;
+  return { state: 'MET', detail: `F-18 harness complete over ${kinds.length} ApiErrorKind members; DOM baseline covers ${views} views` };
+}
+
+/**
+ * G21 — authenticated capability lifecycle (D3): the single-evaluator rule
+ * passes — cookie-expiry arithmetic has exactly one authority, and the
+ * capability pre-flight consumes it before any effect.
+ * @param {string} root
+ * @returns {{state: string, detail: string}}
+ */
+function probeAuthenticatedCapabilityLifecycle(root) {
+  const rule = spawnSync(process.execPath, [path.join('bin', 'hardening-check.mjs'), '--only=checkAuthenticatedCapabilitySingleEvaluator'], {
+    cwd: root,
+    env: gitEnv(root),
+    shell: false,
+    encoding: 'utf8',
+    timeout: 120_000,
+    maxBuffer: 2 * 1024 * 1024,
+  });
+  if (rule.status === null) return { state: 'UNAVAILABLE_CAPABILITY', detail: 'single-evaluator rule failed to spawn' };
+  if (rule.status !== 0) {
+    const lines = `${rule.stdout ?? ''}${rule.stderr ?? ''}`
+      .split(/\r?\n/)
+      .filter((line) => line.trim() !== '' && !line.startsWith('>') && !line.startsWith('[hardening:check] PASS'))
+      .slice(0, 3);
+    return { state: 'UNMET', detail: lines.join('; ') || `single-evaluator rule exit=${rule.status}` };
+  }
+  return { state: 'MET', detail: 'single cookie-expiry evaluator (F-21) enforced at src/browser/fixtures/storageState.ts; pre-flight consumes the one authority' };
+}
+
+/**
+ * Newest D-7 shaped product-run receipt (manifest + summary with a real
+ * nightwatchSha) under the gitignored artifacts/ scratch. Host-local by
+ * design: an owner host that has executed a product run carries it, a fresh
+ * clone does not, and the probe never invents one.
+ * @param {string} root
+ * @returns {{runId: string, sha: string, passed: boolean} | null}
+ */
+function latestProductRunReceipt(root) {
+  let entries;
+  try {
+    entries = fs.readdirSync(path.join(root, 'artifacts'));
+  } catch {
+    return null;
+  }
+  const candidates = entries.filter((entry) => entry.startsWith('nightwatch-')).sort().reverse();
+  for (const entry of candidates) {
+    const manifest = readJsonAt(root, `artifacts/${entry}/manifest.json`);
+    const summary = readJsonAt(root, `artifacts/${entry}/summary.json`);
+    if (manifest === null || summary === null) continue;
+    if (typeof manifest.nightwatchSha !== 'string' || !/^[0-9a-f]{40}$/i.test(manifest.nightwatchSha)) continue;
+    if (typeof summary.passed !== 'boolean') continue;
+    if (typeof summary.counts !== 'object' || summary.counts === null) continue;
+    return {
+      runId: typeof manifest.runId === 'string' ? manifest.runId : entry,
+      sha: manifest.nightwatchSha.toLowerCase(),
+      passed: summary.passed,
+    };
+  }
+  return null;
+}
+
+/**
+ * G12 — yield campaign result (D3): a D-7 product-run receipt plus the
+ * historical W13 aggregate whose required metrics each carry their per-case
+ * reason. The D-136 successor wave stays unopened; this check consumes the
+ * completed campaign record and never projects an unopened one.
+ * @param {string} root
+ * @returns {{state: string, detail: string}}
+ */
+function probeYieldCampaignResult(root) {
+  const aggregatePath = '.agent/tasks/nightwatch-provider-resilient-current-yield-w13-v1/evidence/global-yield-aggregation.json';
+  const aggregate = readJsonAt(root, aggregatePath);
+  if (aggregate === null) return { state: 'UNMET', detail: `historical W13 aggregate missing (${aggregatePath})` };
+  let aggregation;
+  try {
+    aggregation = loadTypeScriptModule(root, 'src/core/currentSourceYield/aggregation.ts');
+  } catch {
+    return { state: 'UNAVAILABLE_CAPABILITY', detail: 'yield aggregation module unavailable' };
+  }
+  const completeness = aggregation.validateAggregateCompleteness(aggregate);
+  const attribution = aggregation.validateProviderAttribution(Array.isArray(aggregate.providerAttribution) ? aggregate.providerAttribution : []);
+  const receipt = latestProductRunReceipt(root);
+  if (!completeness.ok) {
+    const codes = completeness.violations.slice(0, 3).map((violation) => `${violation.code}${violation.metricId ? `(${violation.metricId})` : ''}`);
+    return { state: 'UNMET', detail: `historical W13 aggregate incomplete: ${codes.join('; ')}` };
+  }
+  if (!attribution.ok) {
+    const codes = attribution.violations.slice(0, 3).map((violation) => violation.code);
+    return { state: 'UNMET', detail: `historical W13 aggregate lacks provider attribution: ${codes.join('; ')}` };
+  }
+  if (receipt === null) {
+    return { state: 'UNMET', detail: 'historical W13 aggregate validates every per-case reason; no D-7 product-run receipt under artifacts/ on this host' };
+  }
+  return { state: 'MET', detail: `product run ${receipt.runId} (passed=${String(receipt.passed)}) at ${receipt.sha.slice(0, 8)}; historical W13 aggregate complete with per-case reasons` };
+}
+
+/**
  * Categorical evidence lineage for NW-AUD-010. Distinguishes exit 0, exit 1,
  * timeout/signal, spawn failure, and malformed output. Only two successful
  * exit-1 ancestry queries establish DIVERGENT; operational failure is always
@@ -647,6 +888,12 @@ function collectReleaseCheckOutputs(root, blockFields, agentText, substantiveSha
       'cli-implementation-contract': probeCliContract(root),
       'structural-rule-registry': rules.output,
       'accessibility-certification': probeAccessibility(root),
+      'yield-campaign-result': probeYieldCampaignResult(root),
+      'dead-architecture-closure-check': probeDeadArchitectureClosure(root),
+      'schema-version-lifecycle-check': probeSchemaVersionLifecycle(root),
+      'ui-error-taxonomy-check': probeUiErrorTaxonomy(root),
+      'configuration-contract-check': probeConfigurationContract(root),
+      'authenticated-capability-lifecycle-check': probeAuthenticatedCapabilityLifecycle(root),
     },
   };
 }

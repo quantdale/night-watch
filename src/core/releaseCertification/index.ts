@@ -125,20 +125,20 @@ export interface ReleaseAdvanceCheck {
 export const RELEASE_ADVANCE_CHECKS: readonly ReleaseAdvanceCheck[] = Object.freeze([
   { id: 'validation-lane-state', title: 'validation lane state resolves every declared class', capabilityGroup: 'G2', implemented: true, evidenceOrigin: 'config/validation-lane-state.v1.json + config/validation-universe.v1.json' },
   { id: 'ci-block-record', title: 'exact-head CI executed or its block record is current', capabilityGroup: 'G3', implemented: true, evidenceOrigin: 'project-state block CI anchors + lane exact-checkpoint-ci' },
-  { id: 'yield-campaign-result', title: 'autonomous yield campaign completed with per-case reasons', capabilityGroup: 'G12', implemented: false, evidenceOrigin: 'group-12 yield campaign result' },
+  { id: 'yield-campaign-result', title: 'autonomous yield campaign completed with per-case reasons', capabilityGroup: 'G12', implemented: true, evidenceOrigin: 'group-12 yield campaign result' },
   { id: 'ledger-agreement', title: 'change ledger and spec baseline agree with task truth', capabilityGroup: 'G1', implemented: true, evidenceOrigin: 'bin/agent-state.mjs ledger diagnostics' },
   { id: 'operator-cli-sweep', title: 'CLI contract sweep passes over every entry point', capabilityGroup: 'G4', implemented: true, evidenceOrigin: 'bin/lib/operator-command-listing.mjs static listing + sweep suite' },
   { id: 'documentation-currency-rules', title: 'document-role and status-ledger checks pass', capabilityGroup: 'G7', implemented: true, evidenceOrigin: 'bin/hardening-check.mjs' },
   { id: 'workspace-claims', title: 'no workspace claim names a terminal task and no legacy record is undisposed', capabilityGroup: 'G6', implemented: true, evidenceOrigin: 'bin/agent-state.mjs claim and legacy diagnostics' },
   { id: 'dependency-advisory-lane', title: 'dependency assessment executed or currently recorded unavailable', capabilityGroup: 'G9', implemented: true, evidenceOrigin: 'lane dependency-advisory in config/validation-lane-state.v1.json' },
-  { id: 'dead-architecture-closure-check', title: 'no unreferenced module and no unremoved unimported barrel', capabilityGroup: 'G14', implemented: false, evidenceOrigin: 'group-14 reachability and retention check' },
+  { id: 'dead-architecture-closure-check', title: 'no unreferenced module and no unremoved unimported barrel', capabilityGroup: 'G14', implemented: true, evidenceOrigin: 'group-14 reachability and retention check' },
   { id: 'cli-implementation-contract', title: 'loader paths and symbols resolve, bin type-checks, every entry point has an executing test', capabilityGroup: 'G15', implemented: true, evidenceOrigin: 'config/bin-typecheck.v1.json + bin/lib/cli-implementation-contract.mjs' },
   { id: 'structural-rule-registry', title: 'every structural rule is comment-proof, occurrence-complete and mutation-probed', capabilityGroup: 'G16', implemented: true, evidenceOrigin: 'bin/hardening-check.mjs --list-rules' },
-  { id: 'schema-version-lifecycle-check', title: 'every schema identifier is declared and no persisted bump lacks a disposition', capabilityGroup: 'G17', implemented: false, evidenceOrigin: 'group-17 schema lifecycle check' },
-  { id: 'ui-error-taxonomy-check', title: 'every ApiErrorKind renders distinguishably through the failure path', capabilityGroup: 'G18', implemented: false, evidenceOrigin: 'group-18 UI render harness' },
-  { id: 'configuration-contract-check', title: 'every environment variable is declared, validated and printable', capabilityGroup: 'G19', implemented: false, evidenceOrigin: 'group-19 configuration contract check' },
+  { id: 'schema-version-lifecycle-check', title: 'every schema identifier is declared and no persisted bump lacks a disposition', capabilityGroup: 'G17', implemented: true, evidenceOrigin: 'group-17 schema lifecycle check' },
+  { id: 'ui-error-taxonomy-check', title: 'every ApiErrorKind renders distinguishably through the failure path', capabilityGroup: 'G18', implemented: true, evidenceOrigin: 'group-18 UI render harness' },
+  { id: 'configuration-contract-check', title: 'every environment variable is declared, validated and printable', capabilityGroup: 'G19', implemented: true, evidenceOrigin: 'group-19 configuration contract check' },
   { id: 'accessibility-certification', title: 'no colour-only status distinction, contrast pairs meet their ratio, workflows complete by keyboard', capabilityGroup: 'G20', implemented: true, evidenceOrigin: 'tests/unit/accessibilityAudit.test.ts + tests/browser/accessibilityCertification.browser.ts' },
-  { id: 'authenticated-capability-lifecycle-check', title: 'every authenticated lane pre-flights its artefact and refuses a non-VALID one before any effect', capabilityGroup: 'G21', implemented: false, evidenceOrigin: 'group-21 capture-sidecar pre-flight' },
+  { id: 'authenticated-capability-lifecycle-check', title: 'every authenticated lane pre-flights its artefact and refuses a non-VALID one before any effect', capabilityGroup: 'G21', implemented: true, evidenceOrigin: 'group-21 capture-sidecar pre-flight' },
 ]);
 
 const CHECK_BY_ID = new Map(RELEASE_ADVANCE_CHECKS.map((check) => [check.id, check]));

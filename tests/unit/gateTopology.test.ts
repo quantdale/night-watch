@@ -2,7 +2,8 @@
 //
 // The dynamic envelope itself is exercised by `npm run gate:topology`; these
 // tests pin its pure judgement (which absence is constructed, whether a lane
-// passed by inheritance) and the two run-33572572053 defect classes as
+// passed by inheritance), the X-02 degraded envelope mode (direct observation
+// on a bwrap-less host), and the two run-33572572053 defect classes as
 // permanent categorical regressions:
 //   * a suite may not depend on an absolute path outside the checkout without
 //     an explicit declaration;
