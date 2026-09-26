@@ -7,7 +7,7 @@
 // Nightwatch repo or the Alphaus workspace.
 // ---------------------------------------------------------------------------
 
-import { test, expect } from '@playwright/test';
+import { test, expect, chromium } from '@playwright/test';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -25,6 +25,20 @@ import {
 import { inspectRipplePageAuthReadability } from '../../src/browser/fixtures/pageAuthReadability';
 import { startFixtureServer } from '../../src/browser/fixtures/fixtureServer';
 import { resolveScratchPath } from '../../src/core/workspace/ephemeralLayout';
+
+/**
+ * D-10 / task 4.6: the live-browser half of this suite is gated on a real
+ * browser binary. A runner without one (CI) skips with a declared identity
+ * instead of failing at fixture launch; the assertions run unguarded wherever
+ * a browser exists (the owner host).
+ */
+function browserBinaryAvailable(): boolean {
+  try {
+    return fs.existsSync(chromium.executablePath());
+  } catch {
+    return false;
+  }
+}
 
 const NIGHTWATCH_ROOT = path.resolve(__dirname, '..', '..');
 /**
@@ -500,7 +514,9 @@ test.describe('storage-state secret handling', () => {
     }
   });
 
-  test('page-readability: live browser document.cookie distinguishes fresh and expired cookies', async ({ browser }) => {
+  test.describe('live browser readability (requires a browser binary)', () => {
+    test.skip(() => !browserBinaryAvailable(), 'CHROMIUM_UNAVAILABLE');
+    test('page-readability: live browser document.cookie distinguishes fresh and expired cookies', async ({ browser }) => {
     const server = await startFixtureServer('good');
     const now = Math.floor(Date.now() / 1000);
     const liveContext = await browser.newContext({
@@ -561,5 +577,6 @@ test.describe('storage-state secret handling', () => {
       await expiredContext.close();
       await server.close();
     }
+  });
   });
 });

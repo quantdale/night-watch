@@ -11,16 +11,20 @@
     "expectedSkipPolicy": "only canonical skip identities may skip",
     "canonicalSkipIdentities": [
       {
-        "file": "tests/unit/phase14ContractReport.test.ts",
-        "reasonToken": "disposable snapshot not present in this environment"
+        "file": "tests/manual/phase2c-real-journeys.ts",
+        "reasonToken": ""
       },
       {
-        "file": "tests/unit/phase14FreshSourceAdmission.test.ts",
-        "reasonToken": "requires disposable exact snapshot"
+        "file": "tests/manual/phase4-real-exploration.ts",
+        "reasonToken": ""
       },
       {
-        "file": "tests/unit/selfDevSandboxConfinement.test.ts",
-        "reasonToken": "uid semantics"
+        "file": "tests/manual/phase5-real-api.ts",
+        "reasonToken": ""
+      },
+      {
+        "file": "tests/manual/phase7-real-campaign.ts",
+        "reasonToken": ""
       },
       {
         "file": "tests/unit/agent-state.test.ts",
@@ -36,6 +40,10 @@
       },
       {
         "file": "tests/unit/c02bProtoSurface.test.ts",
+        "reasonToken": "LIVE_SOURCE_"
+      },
+      {
+        "file": "tests/unit/c02bProtoSurface.test.ts",
         "reasonToken": "blueapi checkout unavailable"
       },
       {
@@ -43,12 +51,8 @@
         "reasonToken": "ouchan checkout unavailable"
       },
       {
-        "file": "tests/unit/c02bProtoSurface.test.ts",
-        "reasonToken": "LIVE_SOURCE_"
-      },
-      {
         "file": "tests/unit/c03GrpcTopology.test.ts",
-        "reasonToken": "sibling checkouts unavailable"
+        "reasonToken": "LIVE_SOURCE_"
       },
       {
         "file": "tests/unit/c03GrpcTopology.test.ts",
@@ -56,7 +60,7 @@
       },
       {
         "file": "tests/unit/c03GrpcTopology.test.ts",
-        "reasonToken": "LIVE_SOURCE_"
+        "reasonToken": "sibling checkouts unavailable"
       },
       {
         "file": "tests/unit/c04FrontendGraph.test.ts",
@@ -84,7 +88,7 @@
       },
       {
         "file": "tests/unit/historicalRediscovery.test.ts",
-        "reasonToken": "sibling historical data unavailable"
+        "reasonToken": "cannot isolate this record"
       },
       {
         "file": "tests/unit/historicalRediscovery.test.ts",
@@ -92,7 +96,7 @@
       },
       {
         "file": "tests/unit/historicalRediscovery.test.ts",
-        "reasonToken": "cannot isolate this record"
+        "reasonToken": "sibling historical data unavailable"
       },
       {
         "file": "tests/unit/liveProviderEfficacyProof.test.ts",
@@ -101,6 +105,14 @@
       {
         "file": "tests/unit/minedCases.test.ts",
         "reasonToken": "sibling historical data unavailable"
+      },
+      {
+        "file": "tests/unit/phase14ContractReport.test.ts",
+        "reasonToken": "disposable snapshot not present in this environment"
+      },
+      {
+        "file": "tests/unit/phase14FreshSourceAdmission.test.ts",
+        "reasonToken": "requires disposable exact snapshot"
       },
       {
         "file": "tests/unit/phase14FreshSourceAdmission.test.ts",
@@ -124,11 +136,11 @@
       },
       {
         "file": "tests/unit/realOwnerLocalGeneralityProof.test.ts",
-        "reasonToken": "owner-approved source index unavailable"
+        "reasonToken": "fewer than two executable targets in the approved universe"
       },
       {
         "file": "tests/unit/realOwnerLocalGeneralityProof.test.ts",
-        "reasonToken": "fewer than two executable targets in the approved universe"
+        "reasonToken": "no allowlisted Go toolchain satisfies the module"
       },
       {
         "file": "tests/unit/realOwnerLocalGeneralityProof.test.ts",
@@ -136,15 +148,19 @@
       },
       {
         "file": "tests/unit/realOwnerLocalGeneralityProof.test.ts",
-        "reasonToken": "target module root unresolvable"
+        "reasonToken": "owner-approved source index unavailable"
       },
       {
         "file": "tests/unit/realOwnerLocalGeneralityProof.test.ts",
-        "reasonToken": "no allowlisted Go toolchain satisfies the module"
+        "reasonToken": "target module root unresolvable"
       },
       {
         "file": "tests/unit/realOwnerLocalReproductionProof.test.ts",
         "reasonToken": "NIGHTWATCH_REAL_OWNER_LOCAL_PROOF=1 to run the real proof"
+      },
+      {
+        "file": "tests/unit/realOwnerLocalReproductionProof.test.ts",
+        "reasonToken": "no allowlisted Go toolchain satisfies the module"
       },
       {
         "file": "tests/unit/realOwnerLocalReproductionProof.test.ts",
@@ -155,36 +171,24 @@
         "reasonToken": "supported target module root unresolvable"
       },
       {
-        "file": "tests/unit/realOwnerLocalReproductionProof.test.ts",
-        "reasonToken": "no allowlisted Go toolchain satisfies the module"
-      },
-      {
         "file": "tests/unit/realSourceCanary.test.ts",
         "reasonToken": "LIVE_SOURCE_"
+      },
+      {
+        "file": "tests/unit/selfDevSandboxConfinement.test.ts",
+        "reasonToken": ""
+      },
+      {
+        "file": "tests/unit/selfDevSandboxConfinement.test.ts",
+        "reasonToken": "uid semantics"
       },
       {
         "file": "tests/unit/snapshotter.test.ts",
         "reasonToken": "git CLI is unavailable; snapshotter tests skipped"
       },
       {
-        "file": "tests/manual/phase2c-real-journeys.ts",
-        "reasonToken": ""
-      },
-      {
-        "file": "tests/manual/phase4-real-exploration.ts",
-        "reasonToken": ""
-      },
-      {
-        "file": "tests/manual/phase5-real-api.ts",
-        "reasonToken": ""
-      },
-      {
-        "file": "tests/manual/phase7-real-campaign.ts",
-        "reasonToken": ""
-      },
-      {
-        "file": "tests/unit/selfDevSandboxConfinement.test.ts",
-        "reasonToken": ""
+        "file": "tests/unit/storageState.test.ts",
+        "reasonToken": "CHROMIUM_UNAVAILABLE"
       }
     ]
   },
