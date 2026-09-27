@@ -127,13 +127,23 @@ M5 closed green with focused suites and the gate pair (see the ledger).
 
 - M5 is COMPLETE (ledger ticked, PLAN/STATE advanced, gate pair 5585/0,
   exact-head CI run 36302111703 green) and pushed.
-- M6 (tasks 7.1-7.11) is in progress: 7.1 is implemented and committed — the
-  protocol dossier's status is DERIVED (`protocolDossierReadiness`) instead of
-  hard-coded READY, the v1 validator accepts the truthful `UNRESOLVED`, and
-  every consumer that filters on `status === 'READY'` (campaign brief,
-  retention, orchestrator promotion gate, Alphaus handoff) now excludes a
-  dossier that never reproduced; `tests/unit/dossierReadiness.test.ts` 4/4.
-  Next: 7.2 (the total Control Center status mapping with sanitized `oneOf`).
+- M6 (tasks 7.1-7.11) is in progress; 7.1-7.3 are implemented and committed:
+  7.1 — the protocol dossier's status is DERIVED (`protocolDossierReadiness`)
+  instead of hard-coded READY, the v1 validator accepts the truthful
+  `UNRESOLVED`, and every consumer filtering on `status === 'READY'` excludes a
+  dossier that never reproduced (`tests/unit/dossierReadiness.test.ts` 4/4);
+  7.2 — the Control Center status mapping is TOTAL: the dossier-status
+  vocabulary gained `UNRESOLVED` (+ `UNKNOWN` for unknown values), one
+  exhaustive `dossierStatusOf` projection serves the adapter and the findings
+  authority, and the sanitizer allowlists are DERIVED from the contract
+  vocabularies (the inline dossier-status list was silently dropping an
+  unresolved dossier) — `tests/unit/controlCenterStatusTotality.test.ts` 4/4;
+  7.3 — replay contexts are ROLE-typed: the admission key is `(role, runId)`,
+  L1/L2 require a genuinely different role, three runs of one role stay an L0
+  candidate, and the phase7 harness receives its role explicitly instead of
+  inferring it — `tests/unit/replayContextRoles.test.ts` 6/6.
+  Next: 7.4 (the `campaign-state/` orchestrator subtree with read
+  compatibility and the dossier-family-first findings authority).
 - M5 history (kept for context): 6.1-6.11 are implemented, validated and
   committed (`9a044b49`, `5719f6ea`-lineage): the content-addressed
   `AgentFindingRecord` in `admitLocalFinding`; the atomic `agent-findings/`
@@ -157,17 +167,17 @@ M5 closed green with focused suites and the gate pair (see the ledger).
 
 ## Exact Next Action
 
-Implement 7.2: the TOTAL Control Center status mapping — widen the types and
-sanitize the `oneOf` projection so every status value maps to a defined
-Control Center state (NW-AUD-048, C-09). Read the Control Center
-adapter/authority modules (`src/controlCenter/**`) and the status vocabularies
-they consume, add the mapping with focused tests, then continue 7.3-7.11 in
-order (role-typed replay contexts, the `campaign-state/` subtree, the
-test-scoped run root with the newest-N window, the read-only agent-campaign
-view, the Safety Center, one `resolveSiblingRoot()`, the synthetic-preview
-relabelling and the `status:local` auth heading), committing each validated
-batch and closing M6 with focused + `gate:milestone` PASS, the C-00 integrate
-and the `gh` CI observation (OD-3) exactly as in M4/M5.
+Implement 7.4: the `campaign-state/` subtree for orchestrator state with
+read-compatibility, and the findings authority filtering to dossier families
+first while exposing reasonCodes (B-02/C-21). Read the campaign orchestrator's
+state writers and the Control Center findings authority, add the subtree with
+read-compatible loading and the family-first filter, with focused tests. Then
+continue 7.5-7.11 in order (test-scoped run root with the newest-N window and
+`RUN_EVIDENCE_WINDOW_TRUNCATED`, the read-only agent-campaign view, the Safety
+Center, one `resolveSiblingRoot()`, the synthetic-preview relabelling and the
+`status:local` auth heading), committing each validated batch and closing M6
+with focused + `gate:milestone` PASS, the C-00 integrate and the `gh` CI
+observation (OD-3) exactly as in M4/M5.
 
 ## Files Changed
 
