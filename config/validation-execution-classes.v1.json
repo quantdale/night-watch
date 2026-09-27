@@ -403,6 +403,12 @@
       "class": "PARALLEL_SAFE",
       "signals": []
     },
+    "tests/unit/changeSetGenerationIntegrity.test.ts": {
+      "class": "PARALLEL_SAFE",
+      "signals": [
+        "isolated-scratch"
+      ]
+    },
     "tests/unit/childEnvironment.test.ts": {
       "class": "PARALLEL_SAFE",
       "signals": []

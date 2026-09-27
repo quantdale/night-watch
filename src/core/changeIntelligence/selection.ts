@@ -156,7 +156,40 @@ export function changesetId(input: Pick<ChangeSet, 'repoBaselines' | 'changedFil
   }).slice(0, 24)}`;
 }
 
+/**
+ * M8 (9.10 / NW-AUD-043): validate a ChangeSet before it drives selection.
+ * The `changesetId` is RECOMPUTED from the content and must match the supplied
+ * value, so a hand-edited, partially rewritten or stale changeset cannot be
+ * selected from under an id that describes different content. The baseline
+ * edges are checked for shape too: every file's repo must have a baseline.
+ */
+export function validateChangeSet(changeset: ChangeSet): void {
+  const recomputed = changesetId(changeset);
+  if (recomputed !== changeset.changesetId) throw new Error('CHANGESET_ID_MISMATCH');
+  const baselineRepos = new Set(changeset.repoBaselines.map((baseline) => baseline.repoId));
+  for (const file of changeset.changedFiles) {
+    if (!baselineRepos.has(file.repoId)) throw new Error('CHANGESET_BASELINE_MISSING');
+    // A rename must name BOTH endpoints: a one-sided rename cannot be
+    // classified, and silently classifying it by the new path alone is exactly
+    // the over-claim this task closes.
+    if (file.status === 'rename' && (file.previousPath === undefined || file.previousPath === '')) {
+      throw new Error('CHANGESET_RENAME_ENDPOINT_MISSING');
+    }
+    if (file.previousPath !== undefined && file.previousPath === file.path) {
+      throw new Error('CHANGESET_RENAME_SELF_REFERENTIAL');
+    }
+  }
+  for (const baseline of changeset.repoBaselines) {
+    if (!/^[0-9a-f]{40}$/.test(baseline.baseSha) || !/^[0-9a-f]{40}$/.test(baseline.headSha)) {
+      throw new Error('CHANGESET_BASELINE_UNBOUND');
+    }
+  }
+}
+
 export function selectJourneys(changeset: ChangeSet, options: SelectionOptions = {}): SelectionResult {
+  // M8 (9.10 / NW-AUD-043): selection is only ever made from a VALIDATED
+  // changeset whose id describes its own content.
+  validateChangeSet(changeset);
   const repos = options.repos ?? RIPPLE_REPOSITORIES;
   const edges = options.edges ?? RIPPLE_DEPENDENCY_EDGES;
   const repoById = new Map(repos.map((repo) => [repo.repoId, repo]));

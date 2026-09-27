@@ -41,6 +41,7 @@
         "tests/unit/candidateLifecycle.test.ts",
         "tests/unit/changeIntelligence.test.ts",
         "tests/unit/changeIntelligenceBacktest.test.ts",
+        "tests/unit/changeSetGenerationIntegrity.test.ts",
         "tests/unit/childProcessCensus.test.ts",
         "tests/unit/cliImplementationContract.test.ts",
         "tests/unit/containedTestReplay.test.ts",
