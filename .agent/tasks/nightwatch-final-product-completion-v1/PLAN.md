@@ -254,7 +254,7 @@ approved paths.
 - Acceptance criteria: launcher refusal with owner token for quarantined
   lanes; adversarial matrices green; the full probe campaign runs after
   committed probes.
-- **Status:** NOT_STARTED
+- **Status:** COMPLETE (9.1-9.13; `gate:dev` + `gate:milestone` PASS at 5712/0; full probe campaign 175/175 detected)
 
 ### M9 — D-129 debt: CLI contract and bin type-check (tasks 10.1-10.6)
 

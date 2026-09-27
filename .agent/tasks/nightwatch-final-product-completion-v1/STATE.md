@@ -306,8 +306,23 @@ the gate pair (see the ledger).
   with the test pinning that the rules are absent rather than pretending.
   Evidence: `tests/unit/childProcessCensusIndirection.test.ts` 6/6,
   `hardening:check` PASS, sharded lane PASS at 5711/0 (5745 planned).
-  Next: 9.12 (mutation probes for every successor and M8 guard, then the full
-  probe campaign) and 9.13 (focused + gate:milestone) to close M8.
+  M8 9.12 + 9.13 DONE — **M8 IS COMPLETE.** A new TOTALITY rule
+  `checkM8GuardTotality` requires 22 M8 guards to remain present in code, each
+  with its own registered mutation probe (HC-155…HC-176); the run-bundle guards
+  gained four probes on the evidence-firewall rule (HC-150…HC-153) and the
+  census indirection guard gained HC-154. The FULL campaign is green: **90
+  rules, 175 probes, 175 DETECTED, 0 undetected, every mutation restored**.
+  `npm run gate:dev` PASS (5712 passed / 0 failed, all groups exit=0) and
+  `npm run gate:milestone` PASS (wall 829.9s, 5712/0, typecheck-bin +
+  hardening-rules + project-check + workspace-check exit=0); rule-count pins
+  advanced (90 rules / 67 TOTALITY). One 9.6 follow-through: the
+  `observerSemanticLedger` overflow loop is paced because bounded acquisition
+  deliberately refuses reads under saturation (the exact 512 cap and the
+  explicit-overflow assertion are unchanged).
+  Next: M9 (tasks 10.x, D-129 CLI contract and bin type-check) — start with
+  10.1 (retire superseded bins as declared deletions or declare them
+  research-retained with contract entries), then the C-00 integrate and the
+  `gh` CI observation for this M8 closeout as in M4-M7.
 - M6 is COMPLETE: 7.1-7.11 are ticked in the campaign ledger with DONE notes
   and PLAN marks M6 COMPLETE. The view-DOM baseline was intentionally
   REGENERATED (`NIGHTWATCH_UPDATE_VIEW_DOM_BASELINE=1`) because the Agent
