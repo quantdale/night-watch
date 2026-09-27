@@ -32,6 +32,8 @@ import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
 import { loadTypeScriptModule as loadRuntimeTypeScriptModule } from './lib/typescript-runtime-loader.mjs';
 import { loadReleaseEvidenceBindings, resolveEvidenceShaForSubject } from './lib/release-evidence.mjs';
 import { ACCESSIBILITY_RECORD_PATH, parseAccessibilityCertificationRecord } from './lib/accessibility-record.mjs';
+import { classifyCertificationDemotion } from './lib/certification-demotion.mjs';
+import { collectCiBlockStale, validateCiBlockRecord } from './lib/ci-block-record.mjs';
 import { checkpointRoleViolations } from './lib/checkpoint-role.mjs';
 import {
   findDuplicateFields,
@@ -316,17 +318,31 @@ function probeLaneState(root, substantiveSha, isAncestor, today) {
   };
 }
 
-function probeCiBlockRecord(blockFields) {
+function probeCiBlockRecord(root, blockFields) {
+  // A-14: one CI authority. The block record is validated and its revisit
+  // staleness judged HERE, from the same module gate:topology uses, so the two
+  // surfaces cannot disagree about the CI state.
+  const record = readJsonAt(root, 'config/ci-block-record.v1.json');
+  if (record === null) return { state: 'UNAVAILABLE_CAPABILITY', detail: 'config/ci-block-record.v1.json unreadable' };
+  const completeness = validateCiBlockRecord(record);
+  if (!completeness.ok) {
+    return { state: 'UNMET', detail: `ci-block-record invalid: ${completeness.errors.slice(0, 3).map((entry) => entry.code).join('; ')}` };
+  }
+  const today = new Date().toISOString().slice(0, 10);
+  const stale = collectCiBlockStale(record, today);
+  if (stale.length > 0) {
+    return { state: 'UNMET', detail: `CI_BLOCK_RECORD_STALE: ${stale[0].detail}; owner action: ${stale[0].ownerAction ?? 'UNSPECIFIED'}` };
+  }
   const status = blockFields.get('CI_STATUS');
   const observed = blockFields.get('CI_OBSERVED_SHA') ?? 'NONE';
   const executed = blockFields.get('CI_EXECUTED_SHA') ?? 'NONE';
   const checkpoint = blockFields.get('LAST_SUBSTANTIVE_IMPLEMENTATION_SHA') ?? 'NONE';
   if (status === 'EXECUTED_PASS' && HEX40.test(executed) && executed === checkpoint) {
-    return { state: 'MET', detail: `exact-head CI executed PASS at ${executed}` };
+    return { state: 'MET', detail: `exact-head CI executed PASS at ${executed}; block record ${record.runId} class=${record.blockClass}` };
   }
   return {
     state: 'UNMET',
-    detail: `CI_STATUS=${status ?? 'ABSENT'} CI_OBSERVED_SHA=${observed} CI_EXECUTED_SHA=${executed} at checkpoint ${checkpoint}`,
+    detail: `CI_STATUS=${status ?? 'ABSENT'} CI_OBSERVED_SHA=${observed} CI_EXECUTED_SHA=${executed} at checkpoint ${checkpoint}; block record ${record.runId} class=${record.blockClass} observed ${record.observedDate}`,
   };
 }
 
@@ -839,6 +855,39 @@ function probeYieldCampaignResult(root) {
 }
 
 /**
+ * X-04 — the Git-reading wrapper around the pure demotion classifier: it
+ * gathers exactly the ancestry/range facts the judgement needs and nothing
+ * else. Git is consulted only once an advance is actually claimed and both
+ * endpoints are resolvable identities.
+ *
+ * @param {string} root
+ * @param {boolean} advanceClaimed
+ * @param {string | null} certifiedCheckpointSha
+ * @param {string | null} liveHeadSha
+ * @returns {{ relation: string, attention: readonly string[], detail: string }}
+ */
+function certificationDemotionFor(root, advanceClaimed, certifiedCheckpointSha, liveHeadSha) {
+  let isAncestor = null;
+  let changedFiles = null;
+  let substantivePaths = null;
+  if (advanceClaimed === true
+    && typeof certifiedCheckpointSha === 'string' && HEX40.test(certifiedCheckpointSha)
+    && typeof liveHeadSha === 'string' && HEX40.test(liveHeadSha)
+    && liveHeadSha !== certifiedCheckpointSha) {
+    isAncestor = gitReadOnly(root, ['merge-base', '--is-ancestor', certifiedCheckpointSha, liveHeadSha]) !== null;
+    if (isAncestor) {
+      const changed = gitReadOnly(root, ['diff', '--name-only', `${certifiedCheckpointSha}..${liveHeadSha}`]);
+      if (changed !== null) {
+        const files = changed.split('\n').map((line) => line.trim()).filter(Boolean);
+        changedFiles = files;
+        substantivePaths = checkpointRoleViolations(root, files, { kind: 'range', from: certifiedCheckpointSha, to: liveHeadSha });
+      }
+    }
+  }
+  return classifyCertificationDemotion({ advanceClaimed, certifiedCheckpointSha, liveHeadSha, isAncestor, changedFiles, substantivePaths });
+}
+
+/**
  * Categorical evidence lineage for NW-AUD-010. Distinguishes exit 0, exit 1,
  * timeout/signal, spawn failure, and malformed output. Only two successful
  * exit-1 ancestry queries establish DIVERGENT; operational failure is always
@@ -895,7 +944,7 @@ function collectReleaseCheckOutputs(root, blockFields, agentText, substantiveSha
     laneCounts: lane.counts,
     outputs: {
       'validation-lane-state': lane.output,
-      'ci-block-record': probeCiBlockRecord(blockFields),
+      'ci-block-record': probeCiBlockRecord(root, blockFields),
       'ledger-agreement': probeLedgerAgreement(agentText),
       'operator-cli-sweep': probeOperatorCli(root),
       'documentation-currency-rules': probeDocumentationCurrency(root, rules.names),
@@ -955,6 +1004,7 @@ function main() {
   let agentText = '';
   let releaseVerdict = null;
   let releaseVerdictText = null;
+  let certificationDemotion = null;
 
   // 1. Whole-checkout cleanliness (mirrors the catalog-integrity gate).
   const porcelain = gitReadOnly(root, ['status', '--porcelain']);
@@ -1449,6 +1499,10 @@ function main() {
               }
             }
           }
+          // X-04 — post-certification demotion: classify HEAD against the
+          // certified checkpoint and surface ATTENTION instead of turning a
+          // later substantive commit into a gate break.
+          certificationDemotion = certificationDemotionFor(root, releaseVerdict.advanceClaimed, certifiedCheckpointSha, liveHeadSha);
         }
       }
     } catch (error) {
@@ -1568,7 +1622,14 @@ function main() {
     finalDocumentationSha: fieldsGet(parsed, 'FINAL_DOCUMENTATION_SHA'),
     finalCiAuthority: fieldsGet(parsed, 'FINAL_CI_AUTHORITY'),
     releaseVerdict,
+    certificationDemotion,
   }, null, 2));
+  if (certificationDemotion !== null && certificationDemotion.attention.length > 0) {
+    // X-04 — attention is never silent: the receipt carries it and the gate
+    // still passes, but every attention is also named on stderr with its
+    // owner action context.
+    console.error(`[project-state-check] ATTENTION: ${certificationDemotion.attention.join(', ')}: ${certificationDemotion.detail}`);
+  }
 }
 
 function fieldsGet(parsed, key) {

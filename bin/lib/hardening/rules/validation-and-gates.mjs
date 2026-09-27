@@ -16,7 +16,6 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import {
   root,
-  errors,
   fail,
   readIncludingComments,
   read,
@@ -171,9 +170,7 @@ export function checkPhase23QualityGate() {
   const packageJson = readDataFile('package.json');
   const runner = readIncludingComments('bin/quality-gate.mjs');
   const runnerCode = read("bin/quality-gate.mjs");
-  const spec = readIncludingComments('bin/quality-gate-spec.mjs');
   const specCode = read("bin/quality-gate-spec.mjs");
-  const semantic = readIncludingComments('bin/semantic-compat.mjs');
   const semanticCode = read("bin/semantic-compat.mjs");
   const clean = readIncludingComments('bin/quality-gate-clean.mjs');
   const cleanCode = read("bin/quality-gate-clean.mjs");
@@ -463,5 +460,59 @@ export function checkWorkflowActionPinning() {
         fail(`workflow pinning ${relative}:${index + 1} uses a moving action reference (full commit SHA required): ${reference}`);
       }
     });
+  }
+}
+
+/**
+ * A-02 / D-01 — the release registry's `implemented` flag must equal whether a
+ * probe is wired.
+ *
+ * The flag is a claim about the collector: `implemented: true` says the check
+ * resolves a real probe output at evaluation time, `false` says its capability
+ * has not landed. The claim drifted silently in both directions before: a
+ * wired probe behind a stale `false` kept the condition structurally
+ * unsatisfiable, and a `true` flag with no collector output resolved the
+ * condition through the "not present at this checkpoint" path. This rule
+ * reads both sides — the registry entries and the collector's output keys —
+ * and requires exact agreement, including no orphan collector output. It fails
+ * loudly when either side parses to nothing rather than passing vacuously.
+ */
+export function checkReleaseImplementedHonesty() {
+  const registry = read('src/core/releaseCertification/index.ts');
+  const collector = read('bin/project-state-check.mjs');
+  const declared = [];
+  const entryRe = /\{\s*id:\s*'([a-z0-9-]+)'[^}]*?implemented:\s*(true|false)/g;
+  for (const match of registry.matchAll(entryRe)) {
+    const id = match[1];
+    const flag = match[2];
+    if (id === undefined || flag === undefined) continue;
+    declared.push({ id, implemented: flag === 'true' });
+  }
+  const collectStart = collector.indexOf('function collectReleaseCheckOutputs(');
+  const collectEnd = collector.indexOf('function collectExternalTrack(');
+  if (collectStart < 0 || collectEnd <= collectStart) {
+    fail('collectReleaseCheckOutputs must exist before collectExternalTrack in bin/project-state-check.mjs');
+    return;
+  }
+  const wired = new Set();
+  for (const match of collector.slice(collectStart, collectEnd).matchAll(/^\s*'([a-z0-9-]+)':/gm)) {
+    const id = match[1];
+    if (id !== undefined) wired.add(id);
+  }
+  if (declared.length === 0 || wired.size === 0) {
+    fail(`release implemented honesty cannot be evaluated: declared=${declared.length} wired=${wired.size}`);
+    return;
+  }
+  const declaredIds = new Set(declared.map((entry) => entry.id));
+  for (const check of declared) {
+    const hasProbe = wired.has(check.id);
+    if (check.implemented !== hasProbe) {
+      fail(`RELEASE_IMPLEMENTED_FLAG_MISMATCH: ${check.id} declares implemented=${check.implemented} but the collector ${hasProbe ? 'carries' : 'does not carry'} a probe for it`);
+    }
+  }
+  for (const id of wired) {
+    if (!declaredIds.has(id)) {
+      fail(`RELEASE_COLLECTOR_ORPHAN: the collector carries an output for undeclared check ${id}`);
+    }
   }
 }

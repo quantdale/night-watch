@@ -25,6 +25,7 @@ import {
 import { inspectWorkspace, listWorktreeBranches } from './workspace-integrity.mjs';
 import { checkpointRoleViolations } from './lib/checkpoint-role.mjs';
 import { validateProgrammeState } from './lib/programme-state.mjs';
+import { collectCiBlockStale, validateCiBlockRecord } from './lib/ci-block-record.mjs';
 import {
   inspectLedgerAgreement,
 } from './lib/openspec-ledger.mjs';
@@ -929,6 +930,32 @@ export function validate(root, auditMode = false) {
   const warnings = [];
   const activeText = readFile(root, '.agent/ACTIVE_TASK.md', errors);
   readFile(root, 'AGENTS.md', errors);
+  // A-14 — one CI authority: agent:check validates the CI block record and
+  // judges its revisit staleness from the same module project:check and
+  // gate:topology use, so no surface can disagree about the CI state. The
+  // record's own note names this surface: agent:check reports
+  // CI_BLOCK_RECORD_STALE after the revisit date.
+  {
+    let blockRecord = null;
+    try {
+      blockRecord = JSON.parse(fs.readFileSync(path.join(root, 'config', 'ci-block-record.v1.json'), 'utf8'));
+    } catch {
+      blockRecord = null;
+    }
+    if (blockRecord === null) {
+      errors.push('CI_BLOCK_RECORD_UNREADABLE: config/ci-block-record.v1.json missing or invalid JSON');
+    } else {
+      const completeness = validateCiBlockRecord(blockRecord);
+      if (!completeness.ok) {
+        for (const entry of completeness.errors.slice(0, 6)) {
+          errors.push(`CI_BLOCK_RECORD_INVALID: ${entry.code}: ${entry.detail}`);
+        }
+      }
+      for (const stale of collectCiBlockStale(blockRecord, new Date().toISOString().slice(0, 10))) {
+        errors.push(`CI_BLOCK_RECORD_STALE: ${stale.detail}${stale.ownerAction === null ? '' : `; owner action: ${stale.ownerAction}`}`);
+      }
+    }
+  }
   if (activeText === null) return { errors, warnings };
 
   const active = parseKeyValueFile(activeText, 'preamble');

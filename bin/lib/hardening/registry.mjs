@@ -168,6 +168,7 @@ export const RULE_TABLE = Object.freeze([
   { name: 'checkRootOutputRootOwnership', module: 'workspace-and-layout', family: 'ephemeral-layout', quantifier: 'TOTALITY', subject: 'every root output/scratch name is owned or declared historical in both directions and no tracked path lives under one' },
   { name: 'checkRootOutputConfigLiteral', module: 'workspace-and-layout', family: 'ephemeral-layout', quantifier: 'TOTALITY', subject: 'every root playwright config declares no outputDir or resolves it through the owned layout module with a unique lane' },
   { name: 'checkRuleEngineSoundness', module: 'rule-engine', injectRegistry: true, family: 'rule-engine', quantifier: 'TOTALITY', subject: 'no fail-if-absent matcher uses the raw accessor and registry/probe/quantifier invariants hold' },
+  { name: 'checkReleaseImplementedHonesty', module: 'validation-and-gates', family: 'release-certification', quantifier: 'TOTALITY', subject: 'the implemented flag of every release advance check equals whether the collector carries a probe for it, with no orphan collector output' },
 ]);
 
 /**

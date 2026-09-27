@@ -1,16 +1,17 @@
 {
   "schemaVersion": "nightwatch.release-certification.v1",
-  "definitionName": "Nightwatch release certification — ordered advance conditions (F-12)",
-  "note": "The certification record for nightwatch.project-state.v2. Each condition names the check whose output decides it; a condition with no registered check fails the definition itself (bin/project-state-check.mjs + src/core/releaseCertification/index.ts). evidenceSha binds the commit at which the condition's evidence was earned: a SHA strictly preceding the certified checkpoint reports STALE_EVIDENCE, does not count as met, and refuses the certification. The production path (C-12 → C-14, P4) is deliberately NOT a condition; it is reported as a separate external track.",
+  "definitionName": "Nightwatch release certification \u2014 ordered advance conditions (F-12)",
+  "note": "The certification record for nightwatch.project-state.v2. Each condition names the check whose output decides it; a condition with no registered check fails the definition itself (bin/project-state-check.mjs + src/core/releaseCertification/index.ts). evidenceSha binds the commit at which the condition's evidence was earned: a SHA strictly preceding the certified checkpoint reports STALE_EVIDENCE, does not count as met, and refuses the certification. The production path (C-12 \u2192 C-14, P4) is deliberately NOT a condition; it is reported as a separate external track.",
   "certifiedCheckpointField": "LAST_SUBSTANTIVE_IMPLEMENTATION_SHA",
   "advanceStatuses": [
     "PROJECT_COMPLETE_AND_CI_CERTIFIED"
   ],
   "nextStatus": {
-    "state": "PENDING_OWNER_DECISION",
+    "state": "DECIDED",
     "safeDefault": "OPERATIONALLY_ACCEPTED",
     "ownerDecision": "13.8",
-    "statement": "No status beyond OPERATIONALLY_ACCEPTED is named until the owner names one. The safe default, and the only status this programme asserts, remains OPERATIONALLY_ACCEPTED."
+    "decidedBy": "D-129",
+    "statement": "Owner decision 13.8 is TAKEN (2026-09-12, D-129): PROJECT_COMPLETION_STATUS remains OPERATIONALLY_ACCEPTED until all sixteen advance conditions are MET and exact-head CI is green at the certified checkpoint, and the only advance status is PROJECT_COMPLETE_AND_CI_CERTIFIED. The decision is taken, not pending; the next status is not claimed."
   },
   "externalTrack": {
     "id": "production-path",
@@ -24,7 +25,7 @@
     "checks": [
       "production-track-status"
     ],
-    "statement": "C-12 → C-14 and P4 are externally gated (C-08b mochi access, observer identity). They are reported with their own status and are never counted among the advance conditions."
+    "statement": "C-12 \u2192 C-14 and P4 are externally gated (C-08b mochi access, observer identity). They are reported with their own status and are never counted among the advance conditions."
   },
   "presentationSurfaces": [
     "README.md",

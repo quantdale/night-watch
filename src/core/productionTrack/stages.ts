@@ -54,6 +54,14 @@ export const PRODUCTION_TRACK_RECORDS: readonly ProductionTrackStageRecord[] = O
     externalPrerequisite: 'C-08b read-only mochi manifest access at services/{env}/{appproxy,serviceproxy}/ingress.yaml',
     authorizationRequirement: 'One-shot C-13 authorization, only meaningful after C-08b',
     structuralBlocker: 'POSITIVE_DEPLOYMENT_FACTS is 0',
+    // D-134 (A-20): the owner path was taken and the authorized read-only
+    // mochi access is unavailable, so the prerequisite is terminal rather
+    // than pending.
+    terminal: Object.freeze({
+      decision: 'D-134',
+      recordedAt: '2026-09-12',
+      reason: 'the authorized read-only mochi access is unavailable: no mochi checkout and no services/{env}/{appproxy,serviceproxy}/ingress.yaml exists under the sibling root',
+    }),
     acceptanceCriteria: Object.freeze([
       'every production-admitted route carries a positive DEPLOYMENT_FACT',
       'no request issued without the full C-11 chain',
@@ -70,6 +78,14 @@ export const PRODUCTION_TRACK_RECORDS: readonly ProductionTrackStageRecord[] = O
     externalPrerequisite: 'C-13 evidence',
     authorizationRequirement: 'Fresh C-14 authorization after C-13',
     structuralBlocker: null,
+    // D-134 (A-20): C-14 is terminal for the same reason C-13 is — its
+    // prerequisite is C-13 evidence that cannot exist while the external
+    // access is unavailable by decision.
+    terminal: Object.freeze({
+      decision: 'D-134',
+      recordedAt: '2026-09-12',
+      reason: 'C-14 requires C-13 evidence; the C-13 external prerequisite is terminal per D-134',
+    }),
     acceptanceCriteria: Object.freeze([
       'at least 1 candidate reproduced with exact fingerprint equality',
       'dossier privacy-clean',
@@ -111,8 +127,15 @@ export function evaluateProductionStage(
   const repositoryWorkRemaining = record.repositoryWork
     .filter((work) => work.state === 'REMAINING')
     .map((work) => work.item);
+  const terminal = record.terminal ?? null;
   let status: ProductionTrackStatus;
-  if (!facts.repositoryWorkComplete) {
+  if (terminal !== null) {
+    // D-134 / A-20: a terminal stage's prerequisite is unavailable by
+    // decision, so no fact set can promote it into repository work remaining
+    // or into a pending authorization. Reopening the stage is a new record
+    // under a new decision, never a fact flip.
+    status = 'EXTERNAL_PREREQUISITE_UNMET';
+  } else if (!facts.repositoryWorkComplete) {
     status = 'REPOSITORY_WORK_REMAINING';
   } else if (!facts.externalPrerequisiteMet) {
     status = 'EXTERNAL_PREREQUISITE_UNMET';
@@ -129,6 +152,7 @@ export function evaluateProductionStage(
     externalPrerequisite: record.externalPrerequisite,
     authorizationRequirement: record.authorizationRequirement,
     structuralBlocker: record.structuralBlocker,
+    terminal,
   });
 }
 

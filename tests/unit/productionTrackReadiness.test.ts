@@ -68,11 +68,14 @@ test.describe('production track — blocker kinds are data, not prose', () => {
   });
 
   test('an unmet external prerequisite reports EXTERNAL_PREREQUISITE_UNMET, never AWAITING_AUTHORIZATION', () => {
-    const report = evaluateProductionStage(recordFor('C-13'), facts());
+    // C-13 is terminal (D-134), so the terminal branch is what answers here;
+    // the pending-prerequisite branch is pinned below on a non-terminal record.
+    const report = evaluateProductionStage({ ...recordFor('C-13'), terminal: null }, facts());
     expect(report.status).toBe('EXTERNAL_PREREQUISITE_UNMET');
     expect(report.status).not.toBe('AWAITING_AUTHORIZATION');
     expect(report.nextAction).toBe('SATISFY_EXTERNAL_PREREQUISITE');
     expect(report.structuralBlocker).toContain('POSITIVE_DEPLOYMENT_FACTS is 0');
+    expect(evaluateProductionStage(recordFor('C-13'), facts()).status).toBe('EXTERNAL_PREREQUISITE_UNMET');
   });
 
   test('when only authorization remains, the stage reports AWAITING_AUTHORIZATION', () => {
@@ -87,7 +90,9 @@ test.describe('production track — blocker kinds are data, not prose', () => {
   });
 
   test('unfinished repository work precedes the external prerequisite', () => {
-    const report = evaluateProductionStage(recordFor('C-14'), facts({ repositoryWorkComplete: false }));
+    // Pinned on a record whose prerequisite is PENDING: C-14 itself is
+    // terminal under D-134 and can never report repository work again.
+    const report = evaluateProductionStage({ ...recordFor('C-14'), terminal: null }, facts({ repositoryWorkComplete: false }));
     expect(report.status).toBe('REPOSITORY_WORK_REMAINING');
     expect(report.nextAction).toBe('COMPLETE_REPOSITORY_WORK');
   });
@@ -96,14 +101,23 @@ test.describe('production track — blocker kinds are data, not prose', () => {
     expect(PRODUCTION_TRACK_STATUSES as readonly string[]).not.toContain('NOT_AUTHORIZED');
   });
 
-  test('the live track reports C-13 external, C-14 repository work and C-12 external', () => {
+  test('the live track reports every stage external, with C-13/C-14 terminal under D-134', () => {
     const reports = evaluateProductionTrack(PRODUCTION_TRACK_LIVE_FACTS);
     const byStage = new Map(reports.map((report) => [report.stage, report]));
     expect(byStage.get('C-12')?.status).toBe('EXTERNAL_PREREQUISITE_UNMET');
     expect(byStage.get('C-13')?.status).toBe('EXTERNAL_PREREQUISITE_UNMET');
-    expect(byStage.get('C-14')?.status).toBe('REPOSITORY_WORK_REMAINING');
+    expect(byStage.get('C-14')?.status).toBe('EXTERNAL_PREREQUISITE_UNMET');
     expect(byStage.get('P4')?.status).toBe('EXTERNAL_PREREQUISITE_UNMET');
     for (const report of reports) expect(report.status).not.toBe('AUTHORIZED');
+  });
+
+  test('D-134: a terminal stage is never promoted by facts, only reopened by a new decision', () => {
+    expect(recordFor('C-13').terminal?.decision).toBe('D-134');
+    expect(recordFor('C-14').terminal?.decision).toBe('D-134');
+    const promoted = evaluateProductionStage(recordFor('C-14'), facts({ repositoryWorkComplete: true, externalPrerequisiteMet: true, authorizationPresent: true }));
+    expect(promoted.status).toBe('EXTERNAL_PREREQUISITE_UNMET');
+    expect(promoted.nextAction).toBe('SATISFY_EXTERNAL_PREREQUISITE');
+    expect(promoted.terminal?.reason).toContain('D-134');
   });
 
   test('P4 is recorded as outside Nightwatch scope with U-3 external', () => {

@@ -37,6 +37,18 @@ export interface ProductionStageRepositoryWork {
   readonly state: 'COMPLETE' | 'REMAINING';
 }
 
+/**
+ * A stage whose external prerequisite is TERMINAL: the owner path was taken
+ * and the prerequisite is unavailable by decision, not pending (D-134 / A-20).
+ * The status stays EXTERNAL_PREREQUISITE_UNMET and can never read as
+ * repository work or as a decision waiting to be taken.
+ */
+export interface ProductionStageTerminalRecord {
+  readonly decision: string;
+  readonly recordedAt: string;
+  readonly reason: string;
+}
+
 export interface ProductionTrackStageRecord {
   readonly stage: ProductionTrackStage;
   readonly title: string;
@@ -48,6 +60,8 @@ export interface ProductionTrackStageRecord {
   readonly authorizationRequirement: string | null;
   /** A measured fact that makes the stage structurally impossible regardless. */
   readonly structuralBlocker: string | null;
+  /** Present when the external prerequisite is unavailable by decision. */
+  readonly terminal?: ProductionStageTerminalRecord | null;
   readonly acceptanceCriteria: readonly string[];
   readonly scope: 'NIGHTWATCH' | 'OUTSIDE_NIGHTWATCH_SCOPE';
 }
@@ -66,4 +80,6 @@ export interface ProductionStageStatusReport {
   readonly externalPrerequisite: string | null;
   readonly authorizationRequirement: string | null;
   readonly structuralBlocker: string | null;
+  /** Non-null when the stage's external prerequisite is terminal (D-134). */
+  readonly terminal: ProductionStageTerminalRecord | null;
 }

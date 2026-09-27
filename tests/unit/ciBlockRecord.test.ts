@@ -32,7 +32,10 @@ test.describe('CI block record completeness and staleness', () => {
     expect(judgement.errors).toEqual([]);
     expect(RECORD.runId).toMatch(/^\d+$/);
     expect(RECORD.jobId).toMatch(/^\d+$/);
-    expect(RECORD.blockClass).toBe('NO_STEPS_BILLING_OR_PLATFORM_BLOCK');
+    // D-03 / R2-61: the record's top level is the latest observed executed
+    // run; the billing block is retained as history instead.
+    expect(RECORD.blockClass).toBe('EXECUTED_PASS');
+    expect(RECORD.history.map((entry: { classification: string }) => entry.classification)).toContain('NO_STEPS_BILLING_OR_PLATFORM_BLOCK');
     expect(RECORD.ownerAction.length).toBeGreaterThan(12);
     expect(RECORD.revisitCondition.length).toBeGreaterThan(12);
   });
@@ -145,11 +148,14 @@ test.describe('certification refuses a mismatched CI_OBSERVED_SHA', () => {
 });
 
 test.describe('CI route candidates are recorded with trade-offs and no owner selection', () => {
-  test('the live record declares three routes with trade-offs and a pending owner decision', () => {
+  test('the live record declares the candidate routes with trade-offs and the materialised owner route', () => {
     const judgement = validateCiRouteCandidates(RECORD);
     expect(judgement.errors).toEqual([]);
-    expect(judgement.routes).toHaveLength(3);
-    expect(RECORD.routeSelection.state).toBe('OWNER_DECISION_REQUIRED');
+    expect(judgement.routes).toHaveLength(4);
+    // D-03 / R2-61: the owner route that materialised is the restored
+    // GitHub-hosted execution; the earlier candidate menu stays recorded.
+    expect(RECORD.routeSelection.state).toBe('SELECTED_BY_OWNER');
+    expect(RECORD.routeSelection.selectedRouteId).toBe('github-hosted-execution-restored');
   });
 
   test('a substitute route that could set CI_EXECUTED_SHA is refused', () => {
@@ -173,7 +179,7 @@ test.describe('CI route candidates are recorded with trade-offs and no owner sel
   });
 
   test('a premature selection is refused while the decision is the owner’s', () => {
-    const tampered = { ...RECORD, routeSelection: { ...RECORD.routeSelection, selectedRouteId: 'gate-topology-substitute' } };
+    const tampered = { ...RECORD, routeSelection: { state: 'OWNER_DECISION_REQUIRED', ownerDecision: '3.11', selectedRouteId: 'gate-topology-substitute' } };
     expect(validateCiRouteCandidates(tampered).errors.map((entry) => entry.code)).toContain('CI_ROUTE_SELECTION_PREMATURE');
   });
 

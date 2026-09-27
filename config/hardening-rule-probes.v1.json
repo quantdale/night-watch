@@ -1707,6 +1707,18 @@
           }
         ]
       }
+    ],
+    "checkReleaseImplementedHonesty": [
+      {
+        "id": "HC-148",
+        "ops": [
+          {
+            "file": "src/core/releaseCertification/index.ts",
+            "search": "capabilityGroup: 'G12', implemented: true,",
+            "replace": "capabilityGroup: 'G12', implemented: false,"
+          }
+        ]
+      }
     ]
   }
 }

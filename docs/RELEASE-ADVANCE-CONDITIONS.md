@@ -32,9 +32,9 @@ Owner decision 13.8 is TAKEN (2026-09-12): `PROJECT_COMPLETION_STATUS` stays
 `OPERATIONALLY_ACCEPTED` until all sixteen advance conditions are MET and
 exact-head CI is green at the certified checkpoint; the only advance status is
 `PROJECT_COMPLETE_AND_CI_CERTIFIED`, and it is not claimed (D-129). The
-certification record keeps `nextStatus.state: PENDING_OWNER_DECISION` as its
-structural safe-default encoding until its owner reconciles it; it no longer
-represents an open decision.
+certification record encodes the taken decision as `nextStatus.state:
+DECIDED` with `decidedBy: D-129` (A-19): the safe default stays
+`OPERATIONALLY_ACCEPTED` and no next status is claimed.
 
 External production track: `EXTERNAL_PREREQUISITE_UNMET`. It has its own
 status and is never counted among the advance conditions.

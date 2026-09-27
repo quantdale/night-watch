@@ -30,8 +30,9 @@
 // failure never becomes a proven negative relation (GIT_INDETERMINATE).
 //
 // 13.8 is an owner decision and is represented faithfully: `nextStatus.state`
-// is PENDING_OWNER_DECISION and the safe default stays OPERATIONALLY_ACCEPTED
-// until the owner names the next status. No code here invents that name.
+// is DECIDED (citing the decisions.md record that took it, D-129) and the
+// safe default stays OPERATIONALLY_ACCEPTED until the owner names the next
+// status. No code here invents that name.
 
 import { createHash } from 'node:crypto';
 
@@ -144,9 +145,16 @@ export const RELEASE_ADVANCE_CHECKS: readonly ReleaseAdvanceCheck[] = Object.fre
 const CHECK_BY_ID = new Map(RELEASE_ADVANCE_CHECKS.map((check) => [check.id, check]));
 
 export interface ReleaseCertificationNextStatus {
-  readonly state: 'PENDING_OWNER_DECISION';
+  /**
+   * PENDING_OWNER_DECISION while a programme decision is still open; DECIDED
+   * once the owner has taken it, in which case `decidedBy` cites the
+   * docs/DECISIONS.md record (A-19: the 13.8 decision is D-129).
+   */
+  readonly state: 'PENDING_OWNER_DECISION' | 'DECIDED';
   readonly safeDefault: string;
   readonly ownerDecision: string;
+  /** The decisions.md record id taking the decision, or null while pending. */
+  readonly decidedBy: string | null;
   readonly statement: string;
 }
 
@@ -234,18 +242,29 @@ export function parseReleaseCertificationDefinition(record: unknown): {
     const state = nextStatusRaw.state;
     const safeDefault = nextStatusRaw.safeDefault;
     const ownerDecision = nextStatusRaw.ownerDecision;
+    const decidedBy = typeof nextStatusRaw.decidedBy === 'string' && nextStatusRaw.decidedBy.length > 0 ? nextStatusRaw.decidedBy : null;
     const statement = nextStatusRaw.statement;
-    if (state !== 'PENDING_OWNER_DECISION') errors.push({ code: 'RELEASE_DEFINITION_NEXT_STATUS_STATE', detail: String(state ?? 'ABSENT') });
+    if (state !== 'PENDING_OWNER_DECISION' && state !== 'DECIDED') errors.push({ code: 'RELEASE_DEFINITION_NEXT_STATUS_STATE', detail: String(state ?? 'ABSENT') });
     if (typeof safeDefault !== 'string' || safeDefault.length === 0) errors.push({ code: 'RELEASE_DEFINITION_NEXT_STATUS_SAFE_DEFAULT', detail: String(safeDefault ?? 'ABSENT') });
     if (typeof ownerDecision !== 'string' || ownerDecision.length === 0) errors.push({ code: 'RELEASE_DEFINITION_NEXT_STATUS_OWNER_DECISION', detail: String(ownerDecision ?? 'ABSENT') });
+    // A DECIDED state without its decisions.md record is not a decision, and a
+    // pending state cannot cite a taken record: either shape fails closed.
+    if (state === 'DECIDED' && (typeof decidedBy !== 'string' || !/^D-\d+$/.test(decidedBy))) {
+      errors.push({ code: 'RELEASE_DEFINITION_NEXT_STATUS_DECISION_REF', detail: String(decidedBy ?? 'ABSENT') });
+    }
+    if (state === 'PENDING_OWNER_DECISION' && decidedBy !== null) {
+      errors.push({ code: 'RELEASE_DEFINITION_NEXT_STATUS_DECIDED_BY_UNEXPECTED', detail: String(decidedBy) });
+    }
     if (typeof statement !== 'string' || statement.length === 0) errors.push({ code: 'RELEASE_DEFINITION_NEXT_STATUS_STATEMENT', detail: 'statement' });
     if (
-      state === 'PENDING_OWNER_DECISION'
+      (state === 'PENDING_OWNER_DECISION' || state === 'DECIDED')
       && typeof safeDefault === 'string' && safeDefault.length > 0
       && typeof ownerDecision === 'string' && ownerDecision.length > 0
       && typeof statement === 'string' && statement.length > 0
+      && (state !== 'DECIDED' || (typeof decidedBy === 'string' && /^D-\d+$/.test(decidedBy)))
+      && (state !== 'PENDING_OWNER_DECISION' || decidedBy === null)
     ) {
-      nextStatus = { state, safeDefault, ownerDecision, statement };
+      nextStatus = { state, safeDefault, ownerDecision, decidedBy, statement };
     }
   }
 

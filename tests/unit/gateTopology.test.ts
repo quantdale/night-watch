@@ -298,7 +298,7 @@ test.describe('operator entry point', () => {
     const receipt = JSON.parse(result.stdout);
     expect(receipt.schemaVersion).toBe('nightwatch.gate-topology-receipt.v1');
     expect(receipt.mode).toBe('static');
-    expect(receipt.ciBlockRecord.blockClass).toBe('NO_STEPS_BILLING_OR_PLATFORM_BLOCK');
+    expect(receipt.ciBlockRecord.blockClass).toBe('EXECUTED_PASS');
     expect(receipt.defectClasses.historicalRun).toBe('33572572053');
     expect(receipt.inverseSelfTest.ok).toBe(true);
     expect(receipt.ciClaim.githubExecutionProven).toBe(false);

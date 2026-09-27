@@ -1,16 +1,16 @@
 {
   "schemaVersion": "nightwatch.ci-block-record.v1",
   "definitionName": "Nightwatch exact-head CI block record (F-02)",
-  "note": "The external block is data, not prose: run identity, job identity, block class, the date observed, the named owner action that would clear it, the condition under which it is re-observed, and a revisit date after which agent:check reports CI_BLOCK_RECORD_STALE. Candidate routes are recorded with their trade-offs; route selection is an OWNER DECISION (task 3.11) and no substitute route may set CI_EXECUTED_SHA.",
-  "runId": "34304312294",
-  "jobId": "102317699005",
-  "observedSha": "c18db55970a6497470191c8c9ef58f5012a96c8c",
-  "blockClass": "NO_STEPS_BILLING_OR_PLATFORM_BLOCK",
-  "observedDate": "2026-09-04",
-  "ownerAction": "Restore GitHub Actions execution (billing or spending-limit change on the GitHub account) or authorize one of the recorded candidate routes; the owner selects the route under task 3.11.",
-  "revisitCondition": "Re-observe an exact-head run after the owner action lands, or at the revisit date, whichever comes first, and record the new run and job identity; never project execution from a local workflow parse.",
-  "revisitDate": "2026-10-11",
-  "observedStepCount": 0,
+  "note": "The block is RETIRED: GitHub Actions executes the hardening workflow on every push, and the record's top level is the latest observed executed run (D-03 / R2-61). The block-record judgements stay load-bearing as the single CI authority shared by agent:check, project:check and gate:topology; the revisit date keeps the record from going stale. Candidate routes remain recorded with their trade-offs, and the materialised owner route is the restored GitHub-hosted execution.",
+  "runId": "36251410183",
+  "jobId": "108430018660",
+  "observedSha": "d595c7c88bd7d2ab1a39c32fce2f297fcdce28d9",
+  "blockClass": "EXECUTED_PASS",
+  "observedDate": "2026-09-26",
+  "ownerAction": "None required while the hardening workflow executes on every push; re-observe the next exact-head run and refresh this record before the revisit date.",
+  "revisitCondition": "Re-observe each push: refresh runId, jobId, observedSha and observedDate from the latest hardening run, and record any red run with its classification.",
+  "revisitDate": "2026-12-31",
+  "observedStepCount": 4,
   "history": [
     {
       "runId": "33572572053",
@@ -30,12 +30,28 @@
           "detail": "asserted rootless L6 containment is always available; the ubuntu-24.04 image ships no Bubblewrap binary, so qualification correctly failed closed with BWRAP_UNAVAILABLE"
         }
       ]
+    },
+    {
+      "runId": "34304312294",
+      "jobId": "102317699005",
+      "observedSha": "c18db55970a6497470191c8c9ef58f5012a96c8c",
+      "observedDate": "2026-09-04",
+      "classification": "NO_STEPS_BILLING_OR_PLATFORM_BLOCK",
+      "detail": "the workflow was platform-blocked with zero executed steps; retired when GitHub Actions execution was restored. The block record for that period is preserved here as history; the retired owner action was: Restore GitHub Actions execution (billing or spending-limit change on the GitHub account) or authorize one of the recorded candidate routes; the owner selects the route under task 3.11."
+    },
+    {
+      "runId": "36243034942",
+      "jobId": "108407015775",
+      "observedSha": "aa78a014cd18b5cdc1c90b27286f12e0e6bb345f",
+      "observedDate": "2026-09-26",
+      "classification": "EXECUTED_PASS",
+      "detail": "first exact-head run observed green after the M3 spine repair"
     }
   ],
   "routeSelection": {
-    "state": "OWNER_DECISION_REQUIRED",
+    "state": "SELECTED_BY_OWNER",
     "ownerDecision": "3.11",
-    "selectedRouteId": null
+    "selectedRouteId": "github-hosted-execution-restored"
   },
   "candidateRoutes": [
     {
@@ -75,6 +91,19 @@
         "Closes the two known host-topology defect classes locally and in any CI that executes",
         "Does not execute on GitHub and cannot satisfy exact-head CI authority; CI_EXECUTED_SHA stays NONE",
         "The block remains current, so the revisit condition and owner action stay load-bearing rather than being retired"
+      ]
+    },
+    {
+      "routeId": "github-hosted-execution-restored",
+      "summary": "GitHub-hosted Actions execution restored by the owner action: the hardening workflow executes on every push at the exact head.",
+      "command": "GitHub Actions workflow Nightwatch hardening on ubuntu-24.04 at the exact candidate SHA",
+      "source": "GITHUB_ACTIONS",
+      "provesGitHubExecution": true,
+      "canSetCiExecutedSha": true,
+      "tradeOffs": [
+        "The only route that both executes on GitHub and is currently available; it is the materialised owner route",
+        "A billing or spending-limit failure can recur; the revisit date and re-observation requirement keep the record honest if it does",
+        "Runner topology stays the GitHub-hosted image, so the recorded runner-topology absences still apply"
       ]
     }
   ]

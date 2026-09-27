@@ -39,6 +39,7 @@ import type {
   ReleaseCheckOutput,
 } from '../../src/core/releaseCertification';
 import { parseAccessibilityCertificationRecord } from '../../bin/lib/accessibility-record.mjs';
+import { classifyCertificationDemotion } from '../../bin/lib/certification-demotion.mjs';
 
 const CHECKER = path.join(__dirname, '..', '..', 'bin', 'project-state-check.mjs');
 const R1_TASK_ID = 'phase-8b-1-r1-owner-gated-canonical-promotion-retry';
@@ -416,12 +417,12 @@ function makeFixture(options: FixtureOptions = {}): Fixture {
   }
   // F-12: the release certification definition and its pure judgement module
   // are read from the root under test, so a fixture can mutate them.
-  for (const relative of ['src/core/releaseCertification/index.ts', 'config/release-certification.v1.json']) {
+  for (const relative of ['src/core/releaseCertification/index.ts', 'config/release-certification.v1.json', 'config/ci-block-record.v1.json']) {
     const destination = path.join(root, relative);
     fs.mkdirSync(path.dirname(destination), { recursive: true });
     fs.copyFileSync(path.join(process.cwd(), relative), destination);
   }
-  for (const bin of ['bin/agent-state.mjs', 'bin/agent-continuity-protocol.mjs', 'bin/child-environment.mjs', 'bin/project-state-check.mjs', 'bin/workspace-integrity.mjs', 'bin/lib/checkpoint-role.mjs', 'bin/lib/operator-cli.mjs', 'bin/lib/openspec-ledger.mjs', 'bin/lib/openspec-archive-index.mjs', 'bin/lib/programme-state.mjs', 'bin/lib/release-evidence.mjs', 'bin/lib/typescript-runtime-loader.mjs', 'bin/lib/validation-lane-state.mjs']) {
+  for (const bin of ['bin/agent-state.mjs', 'bin/agent-continuity-protocol.mjs', 'bin/child-environment.mjs', 'bin/project-state-check.mjs', 'bin/workspace-integrity.mjs', 'bin/lib/checkpoint-role.mjs', 'bin/lib/operator-cli.mjs', 'bin/lib/openspec-ledger.mjs', 'bin/lib/openspec-archive-index.mjs', 'bin/lib/programme-state.mjs', 'bin/lib/release-evidence.mjs', 'bin/lib/typescript-runtime-loader.mjs', 'bin/lib/validation-lane-state.mjs', 'bin/lib/ci-block-record.mjs', 'bin/lib/accessibility-record.mjs', 'bin/lib/certification-demotion.mjs']) {
     const destination = path.join(root, bin);
     fs.mkdirSync(path.dirname(destination), { recursive: true });
     fs.copyFileSync(path.join(process.cwd(), bin), destination);
@@ -531,7 +532,7 @@ test.describe('project-state truth checker (nightwatch.project-state.v2)', () =>
     const fixture = makeFixture();
     try {
       const result = run(fixture.root);
-      expect(result.status).toBe(0);
+      expect(result.status, result.stderr).toBe(0);
       const output = JSON.parse(result.stdout);
       expect(output.status).toBe('PASS');
       expect(output.projectStateProtocol).toBe('nightwatch.project-state.v2');
@@ -1766,7 +1767,11 @@ test.describe('F-12 release definition and verdict', () => {
     }
     expect(definition.conditions.some((condition) => definition.externalTrack.checks.includes(condition.check))).toBe(false);
     expect(definition.conditions.some((condition) => definition.externalTrack.stages.includes(condition.id))).toBe(false);
-    expect(definition.nextStatus.state).toBe('PENDING_OWNER_DECISION');
+    // A-19: owner decision 13.8 is TAKEN and represented faithfully, citing
+    // its decisions.md record; the safe default is unchanged.
+    expect(definition.nextStatus.state).toBe('DECIDED');
+    expect(definition.nextStatus.decidedBy).toBe('D-129');
+    expect(definition.nextStatus.ownerDecision).toBe('13.8');
     expect(definition.nextStatus.safeDefault).toBe('OPERATIONALLY_ACCEPTED');
     expect(definition.advanceStatuses).toContain('PROJECT_COMPLETE_AND_CI_CERTIFIED');
   });
@@ -1777,6 +1782,29 @@ test.describe('F-12 release definition and verdict', () => {
     const parsed = parseReleaseCertificationDefinition(record);
     expect(parsed.ok).toBe(false);
     expect(parsed.errors.map((error) => error.code)).toContain('RELEASE_DEFINITION_CHECK_UNBACKED');
+  });
+
+  test('A-19 — a DECIDED next status requires its decisions.md record, and a pending one cannot cite one', () => {
+    const decided = JSON.parse(JSON.stringify(liveDefinition()));
+    decided.nextStatus.state = 'DECIDED';
+    decided.nextStatus.decidedBy = 'D-129';
+    expect(parseReleaseCertificationDefinition(decided).ok).toBe(true);
+    const withoutRef = JSON.parse(JSON.stringify(decided));
+    delete withoutRef.nextStatus.decidedBy;
+    expect(parseReleaseCertificationDefinition(withoutRef).errors.map((error) => error.code))
+      .toContain('RELEASE_DEFINITION_NEXT_STATUS_DECISION_REF');
+    const malformedRef = JSON.parse(JSON.stringify(decided));
+    malformedRef.nextStatus.decidedBy = '13.8';
+    expect(parseReleaseCertificationDefinition(malformedRef).errors.map((error) => error.code))
+      .toContain('RELEASE_DEFINITION_NEXT_STATUS_DECISION_REF');
+    const pendingWithRef = JSON.parse(JSON.stringify(decided));
+    pendingWithRef.nextStatus.state = 'PENDING_OWNER_DECISION';
+    expect(parseReleaseCertificationDefinition(pendingWithRef).errors.map((error) => error.code))
+      .toContain('RELEASE_DEFINITION_NEXT_STATUS_DECIDED_BY_UNEXPECTED');
+    const unknownState = JSON.parse(JSON.stringify(decided));
+    unknownState.nextStatus.state = 'SETTLED';
+    expect(parseReleaseCertificationDefinition(unknownState).errors.map((error) => error.code))
+      .toContain('RELEASE_DEFINITION_NEXT_STATUS_STATE');
   });
 
   test('a production-track check can never be an advance condition', () => {
@@ -1792,7 +1820,7 @@ test.describe('F-12 release definition and verdict', () => {
     const definition = definitionWithExactEvidence(liveDefinition(), checkpoint);
     const verdict = evaluateReleaseCertification(evaluationInput(definition));
     expect(verdict.laneCounts).toEqual({ proven: 7, externallyBlocked: 1, neverAttempted: 2, staleEvidence: 1 });
-    expect(verdict.nextStatus.state).toBe('PENDING_OWNER_DECISION');
+    expect(verdict.nextStatus.state).toBe('DECIDED');
     expect(verdict.nextStatus.safeDefault).toBe('OPERATIONALLY_ACCEPTED');
     expect(verdict.conditionsMet).toBe(16);
     expect(verdict.advanceClaimed).toBe(false);
@@ -1985,7 +2013,7 @@ test.describe('F-12 project:check release certification', () => {
       expect(output.releaseVerdict.schemaVersion).toBe('nightwatch.release-certification.v1');
       expect(output.releaseVerdict.laneCounts).toEqual({ proven: 0, externallyBlocked: 0, neverAttempted: 0, staleEvidence: 0 });
       expect(output.releaseVerdict.conditions).toHaveLength(16);
-      expect(output.releaseVerdict.nextStatus.state).toBe('PENDING_OWNER_DECISION');
+      expect(output.releaseVerdict.nextStatus.state).toBe('DECIDED');
       expect(output.releaseVerdict.nextStatus.safeDefault).toBe('OPERATIONALLY_ACCEPTED');
       expect(output.releaseVerdict.advanceClaimed).toBe(false);
       expect(output.releaseVerdict.externalTrack.state).toBe('UNAVAILABLE_CAPABILITY');
@@ -2306,6 +2334,10 @@ test.describe('release probe wiring (M4 task 5.1)', () => {
     expect(result.stdout).toContain('"accessibility-certification"');
     expect(result.stdout).not.toContain('no certification result at the certified checkpoint is recorded');
     expect(fs.readFileSync(path.join(REPO_ROOT, 'bin', 'project-state-check.mjs'), 'utf8')).toContain('parseAccessibilityCertificationRecord(record)');
+    // X-04 — the demotion relation rides every receipt (NOT_CLAIMED while the
+    // project is operationally accepted rather than certified).
+    expect(result.stdout).toContain('"certificationDemotion"');
+    expect(result.stdout).toContain('"relation": "NOT_CLAIMED"');
   });
 });
 
@@ -2362,5 +2394,49 @@ test.describe('accessibility certification record (G20 / R2-51)', () => {
     expect(parseAccessibilityCertificationRecord(unmeasured).errors).toContain('ACCESSIBILITY_FOCUS_INDICATOR_UNMEASURED');
     const below = { ...validRecord, sections: { ...validRecord.sections, keyboard: { ...validRecord.sections.keyboard, focusIndicator: { ...focusIndicator, minimum: 2.4 } } } };
     expect(parseAccessibilityCertificationRecord(below).errors).toContain('ACCESSIBILITY_FOCUS_INDICATOR_BELOW_MINIMUM:2.4');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// X-04 — post-certification demotion: HEAD versus the certified checkpoint.
+// The judgement is pure, so every relation is pinned with data alone.
+// ---------------------------------------------------------------------------
+
+test.describe('certification demotion classification (X-04)', () => {
+  const checkpoint = 'c'.repeat(40);
+  const head = 'd'.repeat(40);
+  const base = { advanceClaimed: true, certifiedCheckpointSha: checkpoint, liveHeadSha: head };
+
+  test('no claimed advance is not a demotion', () => {
+    expect(classifyCertificationDemotion({ ...base, advanceClaimed: false })).toMatchObject({ relation: 'NOT_CLAIMED', attention: [] });
+  });
+
+  test('EXACT requires HEAD to be the certified checkpoint', () => {
+    expect(classifyCertificationDemotion({ ...base, liveHeadSha: checkpoint })).toMatchObject({ relation: 'EXACT', attention: [] });
+  });
+
+  test('an unresolvable checkpoint, HEAD, ancestry or range fails closed', () => {
+    expect(classifyCertificationDemotion({ ...base, certifiedCheckpointSha: null, liveHeadSha: null }).relation).toBe('UNKNOWN_CHECKPOINT');
+    expect(classifyCertificationDemotion({ ...base, liveHeadSha: 'not-a-sha' }).relation).toBe('UNKNOWN_HEAD');
+    expect(classifyCertificationDemotion({ ...base, isAncestor: false }).relation).toBe('NOT_DESCENDANT');
+    expect(classifyCertificationDemotion({ ...base, isAncestor: true, changedFiles: null }).relation).toBe('UNVERIFIABLE');
+  });
+
+  test('a documentary descendant is certified at S with no attention', () => {
+    const classified = classifyCertificationDemotion({ ...base, isAncestor: true, changedFiles: ['docs/ROADMAP.md'], substantivePaths: [] });
+    expect(classified).toMatchObject({ relation: 'DESCENDANT_DOCUMENTARY', attention: [] });
+  });
+
+  test('a substantive descendant demotes to CERTIFIED_AT_ANCESTOR attention', () => {
+    const classified = classifyCertificationDemotion({
+      ...base,
+      isAncestor: true,
+      changedFiles: ['src/core/synthetic/x.ts', 'docs/ROADMAP.md'],
+      substantivePaths: ['src/core/synthetic/x.ts'],
+    });
+    expect(classified.relation).toBe('DESCENDANT_SUBSTANTIVE');
+    expect(classified.attention).toEqual(['CERTIFIED_AT_ANCESTOR']);
+    expect(classified.detail).toContain('not re-claimed');
+    expect(classified.detail).toContain('src/core/synthetic/x.ts');
   });
 });
