@@ -90,6 +90,7 @@
         "tests/unit/printAdapterLifecycle.test.ts",
         "tests/unit/privateConsumerCensus.test.ts",
         "tests/unit/privateStructuralScreening.test.ts",
+        "tests/unit/productRunReceipt.test.ts",
         "tests/unit/productionCompletionLaneState.test.ts",
         "tests/unit/productionCompletionOpenWork.test.ts",
         "tests/unit/productionTrackReadiness.test.ts",

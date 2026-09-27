@@ -178,6 +178,12 @@ export interface SiblingIdentitySnapshot {
   readonly headSha: string;
   /** Digest over `git status --porcelain` output; detects any working-tree write. */
   readonly statusDigest: string;
+  /**
+   * M5 (6.13/C-26): digest over `git diff HEAD --stat` for the same
+   * repository. The porcelain digest detects THAT the tree moved; this one
+   * records the SHAPE of the movement. Absent on pre-M5 observations.
+   */
+  readonly diffDigest?: string | null;
 }
 
 /**

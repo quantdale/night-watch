@@ -34,6 +34,40 @@ const DURATIONS = new Map([
  * process group. Repeated signals are ABSORBED (reported, never escalated), so
  * a duplicated terminal/group delivery can never kill work.
  */
+/**
+ * M5 (6.13/C-28): emit the product run receipt for a finished campaign. The
+ * D-7 manifest/summary carry the run identity; the receipt carries provider
+ * health, sibling identity before/after, the leak scan and the persisted
+ * admission ids. An emission failure is reported and never silently swallowed.
+ */
+async function emitCampaignReceipt({ root, receiptMod, campaignId, result, repositoryIds, before }) {
+  try {
+    const emitted = await receiptMod.emitProductRunReceipt({
+      root,
+      campaignId,
+      result,
+      repositoryIds,
+      before,
+    });
+    console.log(
+      JSON.stringify(
+        {
+          productRunReceipt: {
+            runId: emitted.runId,
+            receiptFile: emitted.receiptFile,
+            receipt: emitted.receipt,
+          },
+        },
+        null,
+        2,
+      ),
+    );
+  } catch (error) {
+    console.error(`NIGHTWATCH_AGENT: PRODUCT_RUN_RECEIPT_FAILED: ${error instanceof Error ? error.message : String(error)}`);
+    if (process.exitCode === undefined || process.exitCode === 0) process.exitCode = 3;
+  }
+}
+
 function installCampaignPauseChannel() {
   const controller = new AbortController();
   let received = 0;
@@ -229,6 +263,9 @@ if (command === 'status') {
           extraArgs.push(path.join(root, 'bin/nightwatch-reasoner-print.mjs'));
         }
         const pause = installCampaignPauseChannel();
+        const [receiptMod] = loadTypeScriptModules(['src/core/agentRuntime/productRunReceipt.ts'], { root });
+        const approvedRepositories = repositoryIds ?? [];
+        const siblingsBefore = await receiptMod.observeSiblings(approvedRepositories);
         try {
           const providerLabel = process.env.NIGHTWATCH_REASONER_PROVIDER ?? 'configured';
           const { executable, reasonerIdentity } = resolveReasonerIdentity(reasonerMod, process.env.NIGHTWATCH_REASONER_CLI, {
@@ -263,6 +300,14 @@ if (command === 'status') {
                 .join(', ')}`,
             );
           }
+          await emitCampaignReceipt({
+            root,
+            receiptMod,
+            campaignId: result.campaignId,
+            result,
+            repositoryIds: approvedRepositories,
+            before: siblingsBefore,
+          });
         } catch (error) {
           fail(2, error instanceof Error ? error.message : 'LOCAL_CAMPAIGN_FAILED');
         } finally {
@@ -322,6 +367,9 @@ if (command === 'status') {
       const maxTurnsRaw = flags['max-turns'];
       const maxTurns = maxTurnsRaw === undefined ? undefined : Number(maxTurnsRaw);
       const pause = installCampaignPauseChannel();
+      const [receiptMod] = loadTypeScriptModules(['src/core/agentRuntime/productRunReceipt.ts'], { root });
+      const approvedRepositories = repositoryIds ?? [];
+      const siblingsBefore = await receiptMod.observeSiblings(approvedRepositories);
       try {
         if (!resumeStartupOk) throw new Error('ENVIRONMENT_VALUE_MALFORMED');
         const providerLabel = process.env.NIGHTWATCH_REASONER_PROVIDER ?? 'configured';
@@ -358,6 +406,14 @@ if (command === 'status') {
               .join(', ')}`,
           );
         }
+        await emitCampaignReceipt({
+          root,
+          receiptMod,
+          campaignId: result.campaignId,
+          result,
+          repositoryIds: approvedRepositories,
+          before: siblingsBefore,
+        });
       } catch (error) {
         fail(2, error instanceof Error ? error.message : 'LOCAL_CAMPAIGN_RESUME_FAILED');
       } finally {

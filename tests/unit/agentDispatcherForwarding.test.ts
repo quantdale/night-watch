@@ -134,6 +134,29 @@ process.stdin.on('data', (d) => { raw += d; }).on('end', async () => {
         readonly campaignProgress?: { readonly reasonerIdentity?: { readonly provider?: string | null } | null };
       };
       expect(document.campaignProgress?.reasonerIdentity?.provider).toBe('dispatcher-test-provider');
+
+      // M5 (6.13/C-28): the run emitted its D-7 identity plus the product run
+      // receipt (provider health, sibling identity, leak scan, persisted ids).
+      const artifactsRoot = path.join(REPO_ROOT, 'artifacts');
+      const runDirs = fs
+        .readdirSync(artifactsRoot)
+        .filter((name) => name.startsWith(`nightwatch-${campaignId}-`));
+      expect(runDirs.length).toBeGreaterThan(0);
+      const runDir = path.join(artifactsRoot, runDirs[runDirs.length - 1] as string);
+      for (const file of ['manifest.json', 'summary.json', 'product-run-receipt.json']) {
+        expect(fs.existsSync(path.join(runDir, file)), file).toBe(true);
+      }
+      const receipt = JSON.parse(fs.readFileSync(path.join(runDir, 'product-run-receipt.json'), 'utf8')) as {
+        readonly campaignId?: string;
+        readonly terminationClass?: string;
+        readonly leakScan?: { readonly result?: string };
+        readonly siblingsBefore?: readonly unknown[];
+      };
+      expect(receipt.campaignId).toBe(campaignId);
+      expect(receipt.terminationClass).toBe('VALID_PROVIDER_RUN');
+      expect(receipt.leakScan?.result).toBe('CLEAN');
+      expect(receipt.siblingsBefore).toEqual([]);
+      for (const dir of runDirs) fs.rmSync(path.join(artifactsRoot, dir), { recursive: true, force: true });
     } finally {
       fs.rmSync(checkpoint, { force: true });
     }

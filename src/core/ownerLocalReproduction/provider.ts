@@ -435,6 +435,7 @@ export function ownerLocalRepositoryPackagePath(target: OwnerLocalReproductionTa
 /** The only Git operations this lane may ever run. Mutation is absent by construction. */
 export const OWNER_LOCAL_GIT_HEAD_ARGV = Object.freeze(['rev-parse', 'HEAD'] as const);
 export const OWNER_LOCAL_GIT_STATUS_ARGV = Object.freeze(['status', '--porcelain'] as const);
+const OWNER_LOCAL_GIT_DIFF_ARGV = ['diff', 'HEAD', '--stat'] as const;
 export const OWNER_LOCAL_GIT_TOPLEVEL_ARGV = Object.freeze(['rev-parse', '--show-toplevel'] as const);
 
 const GIT_SNAPSHOT_TIMEOUT_MS = 15_000;
@@ -491,10 +492,12 @@ export async function snapshotSiblingIdentity(
   let head: { readonly stdout: string; readonly stderr: string } | null;
   let status: { readonly stdout: string; readonly stderr: string } | null;
   let toplevel: { readonly stdout: string; readonly stderr: string } | null;
+  let diff: { readonly stdout: string; readonly stderr: string } | null;
   try {
     head = await runGit([...OWNER_LOCAL_GIT_HEAD_ARGV], repoRoot);
     status = await runGit([...OWNER_LOCAL_GIT_STATUS_ARGV], repoRoot);
     toplevel = await runGit([...OWNER_LOCAL_GIT_TOPLEVEL_ARGV], repoRoot);
+    diff = await runGit([...OWNER_LOCAL_GIT_DIFF_ARGV], repoRoot);
   } catch {
     return null;
   }
@@ -514,6 +517,19 @@ export async function snapshotSiblingIdentity(
     repository: input.repository,
     headSha,
     statusDigest: prefixedDigest24('sibstatus', porcelainLines),
+    // M5 (6.13/C-26): the SHAPE of the working-tree movement, not just that
+    // one happened. `git diff HEAD --stat` is bounded and deterministic; the
+    // content-level identity remains the recorded HEAD sha.
+    diffDigest:
+      diff === null
+        ? null
+        : prefixedDigest24(
+            'sibdiff',
+            diff.stdout
+              .split('\n')
+              .map((line) => line.replace(/\r$/, '').trim())
+              .filter((line) => line.length > 0),
+          ),
     worktreeRoot,
   };
 }
