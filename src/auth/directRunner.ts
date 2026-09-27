@@ -17,13 +17,12 @@ import {
   nightwatchChromiumLaunchOptions,
 } from '../browser/contract';
 import {
-  atomicallyReplaceValidatedStorageState,
   prepareStorageStateFileForValidation,
   validateStorageStateFile,
   validateStorageStateOutputPath,
 } from '../browser/fixtures/storageState';
 import { inspectRipplePageAuthReadability } from '../browser/fixtures/pageAuthReadability';
-import { DEFAULT_AUTH_VALIDITY_WINDOW_MS, writeAuthCaptureRecord } from './capabilityLifecycle';
+import { DEFAULT_AUTH_VALIDITY_WINDOW_MS, buildAuthCapabilityRecord, publishAuthCapabilityBundle } from './capabilityLifecycle';
 import { createRunId, RunRecorder } from '../core/evidence/runRecorder';
 import type { RunSummary } from '../core/evidence/types';
 import { OutboundPolicy, OUTBOUND_POLICY_VERSION } from '../core/safety/outboundPolicy';
@@ -537,18 +536,25 @@ export async function runDirectAuthCapture(opts: DirectAuthCaptureOptions): Prom
       // Keep the old external state untouched until the fresh capture has
       // passed shape validation, then replace it atomically within the same
       // user-owned directory. No state contents enter evidence.
-      atomicallyReplaceValidatedStorageState(pendingOutputPath, outputPath, { allowExisting: true });
-      stateCommitted = true;
-      // The lifecycle sidecar is written through the redaction layer with the
-      // committed artefact, so a successful capture never leaves an artefact
-      // without a record. It carries metadata only: no cookie value enters it.
-      const lifecycle = writeAuthCaptureRecord({
-        artefactPath: outputPath,
+      // M8 (9.3 / NW-AUD-015): the artefact and its lifecycle sidecar are ONE
+      // transaction. The staged artefact is validated, the record is built
+      // from ITS bytes, and the bundle commits the two renames behind a
+      // journal — so a crash can never publish an artefact whose sidecar
+      // describes a different capture, and an interrupted commit is refused by
+      // readers until `recoverAuthCapabilityBundle` resolves it.
+      const record = buildAuthCapabilityRecord({
+        artefactPath: pendingOutputPath,
         environment: opts.environment.name,
         origin: new URL(target).origin,
         validityWindowMs: opts.authValidityWindowMs ?? DEFAULT_AUTH_VALIDITY_WINDOW_MS,
         ...(opts.authCaptureInstant === undefined ? {} : { captureInstant: opts.authCaptureInstant }),
       });
+      const lifecycle = publishAuthCapabilityBundle({
+        stagedArtefactPath: pendingOutputPath,
+        outputPath,
+        record,
+      });
+      stateCommitted = true;
       authLifecycleRecordPath = lifecycle.recordPath;
       recorder.addManifestEntry('authCapabilityRecord', {
         schemaVersion: lifecycle.record.schemaVersion,

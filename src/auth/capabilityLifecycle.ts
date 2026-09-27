@@ -325,6 +325,156 @@ function writeFileAtomically(file: string, content: string): void {
   }
 }
 
+// ---------------------------------------------------------------------------
+// M8 (9.3 / NW-AUD-015): the storage-state artefact and its lifecycle sidecar
+// are ONE bundle, published as one transaction.
+//
+// Before this, the artefact was renamed into place and the sidecar written
+// afterwards: a crash between the two writes could leave a fresh artefact with
+// a stale (or missing) record, and a reader had no way to tell an interrupted
+// publication from a completed one. The bundle now stages BOTH files, records
+// the intended pair in a journal, commits the two renames, and removes the
+// journal — so a reader either sees a consistent pair or a PENDING journal it
+// refuses on, and recovery completes or refuses the interrupted commit.
+// ---------------------------------------------------------------------------
+
+export const AUTH_BUNDLE_JOURNAL_SUFFIX = '.nightwatch-bundle-transaction';
+export const AUTH_BUNDLE_TRANSACTION_PENDING = 'AUTH_BUNDLE_TRANSACTION_PENDING';
+export const AUTH_BUNDLE_RECOVERY_REFUSED = 'AUTH_BUNDLE_RECOVERY_REFUSED';
+
+interface BundleJournal {
+  readonly schemaVersion: 'nightwatch.auth-bundle-transaction.v1';
+  readonly artefactStaged: string;
+  readonly artefactFinal: string;
+  readonly artefactDigest: string;
+  readonly recordStaged: string;
+  readonly recordFinal: string;
+  readonly recordDigest: string;
+}
+
+export function authBundleJournalPath(artefactPath: string): string {
+  return `${path.resolve(artefactPath)}${AUTH_BUNDLE_JOURNAL_SUFFIX}`;
+}
+
+/** True while an interrupted bundle publication is waiting for recovery. */
+export function authBundleTransactionPending(artefactPath: string): boolean {
+  return fs.existsSync(authBundleJournalPath(artefactPath));
+}
+
+function digestOfFile(file: string): string {
+  const hash = crypto.createHash('sha256');
+  hash.update(fs.readFileSync(file));
+  return `sha256:${hash.digest('hex').slice(0, 24)}`;
+}
+
+function readJournal(artefactPath: string): BundleJournal {
+  const raw = fs.readFileSync(authBundleJournalPath(artefactPath), 'utf8');
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    throw new Error(`${AUTH_BUNDLE_RECOVERY_REFUSED}:JOURNAL_MALFORMED`);
+  }
+  if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error(`${AUTH_BUNDLE_RECOVERY_REFUSED}:JOURNAL_SHAPE`);
+  const record = parsed as Record<string, unknown>;
+  if (record.schemaVersion !== 'nightwatch.auth-bundle-transaction.v1') throw new Error(`${AUTH_BUNDLE_RECOVERY_REFUSED}:JOURNAL_SCHEMA`);
+  for (const key of ['artefactStaged', 'artefactFinal', 'artefactDigest', 'recordStaged', 'recordFinal', 'recordDigest']) {
+    if (typeof record[key] !== 'string' || (record[key] as string).trim() === '') throw new Error(`${AUTH_BUNDLE_RECOVERY_REFUSED}:JOURNAL_FIELD`);
+  }
+  return record as unknown as BundleJournal;
+}
+
+export interface PublishAuthCapabilityBundleInput {
+  /** The validated staged artefact Playwright already wrote. */
+  readonly stagedArtefactPath: string;
+  readonly outputPath: string;
+  readonly record: AuthCapabilityRecord;
+}
+
+export interface PublishAuthCapabilityBundleResult {
+  readonly recordPath: string;
+  readonly record: AuthCapabilityRecord;
+  readonly artefactDigest: string;
+}
+
+/**
+ * Commit the artefact and its sidecar as one transaction. Any failure before
+ * the first rename removes the staged files and the journal and leaves the
+ * previous pair untouched; a crash after the journal exists is completed by
+ * `recoverAuthCapabilityBundle`.
+ */
+export function publishAuthCapabilityBundle(input: PublishAuthCapabilityBundleInput): PublishAuthCapabilityBundleResult {
+  const artefactFinal = path.resolve(input.outputPath);
+  const recordFinal = authLifecycleRecordPath(artefactFinal);
+  const directory = path.dirname(artefactFinal);
+  if (path.dirname(path.resolve(input.stagedArtefactPath)) !== directory) {
+    throw new Error('AUTH_BUNDLE_STAGING_DIRECTORY');
+  }
+  if (path.dirname(recordFinal) !== directory) throw new Error('AUTH_BUNDLE_STAGING_DIRECTORY');
+  const artefactDigest = digestOfFile(input.stagedArtefactPath);
+  if (artefactDigest !== input.record.artefactDigest) throw new Error('AUTH_BUNDLE_DIGEST_MISMATCH');
+  const recordContent = serializeRedactedRecord(input.record);
+  const recordStaged = path.join(directory, `.${path.basename(recordFinal)}.staged-${process.pid}-${crypto.randomBytes(6).toString('hex')}`);
+  const journalPath = authBundleJournalPath(artefactFinal);
+  const journal: BundleJournal = {
+    schemaVersion: 'nightwatch.auth-bundle-transaction.v1',
+    artefactStaged: path.resolve(input.stagedArtefactPath),
+    artefactFinal,
+    artefactDigest,
+    recordStaged,
+    recordFinal,
+    recordDigest: crypto.createHash('sha256').update(recordContent).digest('hex').slice(0, 24) === '' ? '' : `sha256:${crypto.createHash('sha256').update(recordContent).digest('hex').slice(0, 24)}`,
+  };
+  writeFileAtomically(recordStaged, recordContent);
+  writeFileAtomically(journalPath, `${JSON.stringify(journal, null, 2)}\n`);
+  try {
+    fs.chmodSync(input.stagedArtefactPath, 0o600);
+    fs.renameSync(input.stagedArtefactPath, artefactFinal);
+    fs.renameSync(recordStaged, recordFinal);
+  } catch (error) {
+    // The journal stays: recovery decides whether the commit completed.
+    throw error;
+  }
+  fs.unlinkSync(journalPath);
+  const directoryDescriptor = fs.openSync(directory, 'r');
+  try {
+    fs.fsyncSync(directoryDescriptor);
+  } finally {
+    fs.closeSync(directoryDescriptor);
+  }
+  return { recordPath: recordFinal, record: input.record, artefactDigest };
+}
+
+export type AuthBundleRecoveryOutcome = 'NONE' | 'COMPLETED' | 'ROLLED_BACK';
+
+/**
+ * Resolve an interrupted bundle publication. Completing the commit requires
+ * both staged files to still match the journal's digests; if the finals
+ * already match, the commit is simply finished; anything else refuses.
+ */
+export function recoverAuthCapabilityBundle(artefactPath: string): AuthBundleRecoveryOutcome {
+  const journalPath = authBundleJournalPath(artefactPath);
+  if (!fs.existsSync(journalPath)) return 'NONE';
+  const journal = readJournal(artefactPath);
+  const stagedArtefact = fs.existsSync(journal.artefactStaged) && digestOfFile(journal.artefactStaged) === journal.artefactDigest;
+  const stagedRecord = fs.existsSync(journal.recordStaged) && digestOfFile(journal.recordStaged) === journal.recordDigest;
+  if (stagedArtefact && stagedRecord) {
+    fs.chmodSync(journal.artefactStaged, 0o600);
+    fs.renameSync(journal.artefactStaged, journal.artefactFinal);
+    fs.renameSync(journal.recordStaged, journal.recordFinal);
+    fs.unlinkSync(journalPath);
+    return 'COMPLETED';
+  }
+  const finalArtefact = fs.existsSync(journal.artefactFinal) && digestOfFile(journal.artefactFinal) === journal.artefactDigest;
+  const finalRecord = fs.existsSync(journal.recordFinal) && digestOfFile(journal.recordFinal) === journal.recordDigest;
+  if (finalArtefact && finalRecord) {
+    // The commit had already completed; only the journal removal was lost.
+    fs.unlinkSync(journalPath);
+    return 'COMPLETED';
+  }
+  throw new Error(`${AUTH_BUNDLE_RECOVERY_REFUSED}:STAGED_BYTES_UNAVAILABLE`);
+}
+
 export interface BuildAuthCapabilityRecordInput {
   readonly artefactPath: string;
   readonly environment: AuthCapabilityEnvironment;
@@ -571,6 +721,12 @@ export interface LaneAuthCapabilityInput {
 }
 
 export function requireValidAuthCapability(input: LaneAuthCapabilityInput): AuthCapabilityPreflightResult {
+  // M8 (9.3 / NW-AUD-015): an interrupted bundle publication is refused, never
+  // read as a completed pair. Recovery decides the outcome first.
+  if (authBundleTransactionPending(input.artefactPath)) {
+    throw new Error(AUTH_BUNDLE_TRANSACTION_PENDING);
+  }
+
   const environment = assertSupportedEnvironment(input.environment);
   const result = evaluateAuthCapabilityPreflight({
     artefactPath: input.artefactPath,

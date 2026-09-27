@@ -18,6 +18,7 @@
         "tests/unit/agentFindingRecord.test.ts",
         "tests/unit/agentRuntime.test.ts",
         "tests/unit/agentRuntimeW9.test.ts",
+        "tests/unit/authBundleTransaction.test.ts",
         "tests/unit/authCaptureLauncher.test.ts",
         "tests/unit/authCaptureStages.test.ts",
         "tests/unit/authenticatedEvidenceMinimization.test.ts",
