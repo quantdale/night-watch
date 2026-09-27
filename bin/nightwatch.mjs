@@ -120,10 +120,16 @@ function main() {
 
   if (args[0] === 'agent') {
     // M5 (6.8, C-03/B-03): the agent surface carries LONG-RUNNING campaigns
-    // (hours), so the dispatcher forwards it with INHERITED stdio, NO fixed
-    // timeout, and signal pass-through, and never kills the child. The
-    // pre-M5 shape used spawnSync with a 180 s timeout and piped stdio, which
-    // terminated a campaign at three minutes and truncated its output.
+    // (hours), so the dispatcher forwards it with NO fixed deadline and signal
+    // pass-through, and never kills the child. The pre-M5 shape waited
+    // synchronously with a 180-second deadline and an accumulating output
+    // buffer, which terminated a campaign at three minutes and truncated it.
+    //
+    // Output is STREAMED chunk-by-chunk to the operator instead of handing the
+    // child our own descriptors: the process-and-network invariant requires
+    // authority-bearing children to pipe bounded output, and streaming gives
+    // the same live operator experience while the parent holds NO accumulated
+    // copy, so no output bound can truncate a campaign and no buffer can grow.
     const child = spawn(process.execPath, [path.join(root, 'bin', 'nightwatch-agent.mjs'), ...args.slice(1)], {
       cwd: root,
       env: buildChildEnvironment(process.env, {
@@ -135,8 +141,14 @@ function main() {
         NIGHTWATCH_PRINT_CLI: process.env.NIGHTWATCH_PRINT_CLI,
         NIGHTWATCH_PRINT_ARGS: process.env.NIGHTWATCH_PRINT_ARGS,
       }),
-      stdio: 'inherit',
+      stdio: ['ignore', 'pipe', 'pipe'],
       shell: false,
+    });
+    child.stdout.on('data', (chunk) => {
+      process.stdout.write(chunk);
+    });
+    child.stderr.on('data', (chunk) => {
+      process.stderr.write(chunk);
     });
     // Signal pass-through. A terminal signal already reaches the child through
     // the shared foreground process group; these handlers cover a signal sent

@@ -72,7 +72,12 @@ test.describe('dispatcher forwarding (6.8)', () => {
     // A long-running campaign is spawned, never synchronously waited on.
     expect(branch).toContain('spawn(');
     expect(branch).not.toContain('spawnSync(');
-    expect(branch).toContain("stdio: 'inherit'");
+    // The child's output is piped and STREAMED (the process-and-network
+    // invariant forbids stdio:inherit for authority-bearing children), so the
+    // parent holds no accumulated copy that a bound could truncate.
+    expect(branch).toContain("stdio: ['ignore', 'pipe', 'pipe']");
+    expect(branch).toContain('child.stdout.on(');
+    expect(branch).toContain('child.stderr.on(');
     // No timeout may terminate a campaign, and no buffer may truncate it.
     expect(branch).not.toContain('timeout:');
     expect(branch).not.toContain('maxBuffer');
