@@ -100,6 +100,29 @@ M5 closed green with focused suites and the gate pair (see the ledger).
   restoring the ledger-governed README status block. gate:dev and
   gate:milestone both PASS 5520/0 on the reconciled base.
 
+- **M5 COMPLETE** — autonomous hunt result integrity (6.1-6.17): the
+  content-addressed `AgentFindingRecord` derived in `admitLocalFinding` with a
+  fail-closed validator; the atomic `agent-findings/` store published BEFORE
+  any checkpoint deletion (write failure → `NOT_PERSISTED`, checkpoint kept,
+  CLI exit 3); the TERMINATED resume returning persisted records verbatim or
+  `UNAVAILABLE_NOT_PERSISTED`; the full reasoner identity (executable, adapter,
+  print CLI, `PRINT_ARGS`, provider, model) with `REASONER_IDENTITY_MISMATCH`
+  and the `--model` cross-check; resumed-budget conservation (the in-flight
+  usage was being subtracted twice), the persisted per-investigation turn limit
+  and the per-dimension conservation assertion; per-call provider-failure
+  classes with the honest `terminationClass`; tier-scaled failure ceilings with
+  transient/permanent classes and bounded jittered backoff plus the unreachable
+  provider-order rule; the `retries` → `failures` rename with read-compatible
+  bytes (D-144); the streaming dispatcher with signal-driven pause, reasoner
+  group kill and per-investigation progress checkpoints; print-adapter cleanup
+  on every exit path without fabricated grounding; HEAD-bound Git-object
+  reproduction (D-145); environment-signature refusal; the product run receipt
+  with the D-7 run identity; measured findings/status surfaces; malformed-state
+  refusal with marked presentation defaults and `ADAPTER_UNAVAILABLE` atlas
+  adapters; the bounded operator launch; and the deterministic synthetic hunt
+  suite registered in the gate. gate:dev PASS 5585/0; gate:milestone PASS
+  5585/0.
+
 ## Work In Progress
 
 - M5 is COMPLETE: 6.1-6.17 are ticked in the campaign ledger with DONE notes,
@@ -482,6 +505,36 @@ PASS: discovered 420 / families 397 / persisted 109); `reviewStoreHardening`
 (the mutation proof of the new
 `PRIVATE_ARTIFACT_DIRECTORIES = ['agent-findings']` pin) and both new suites
 37/37 after the declaration. Committed as `9a044b49`.
+
+Command: `npm run gate:dev` + `npm run gate:milestone` (M5 close-out)
+Result: PASS (both)
+When: 2026-09-27
+Relevant failure/output summary: at the M5 closeout head — affected-shards
+5585/0 in both lanes (selected 411) and every other step exit=0. The repair
+chain that got there: the campaign manifest's file-count pins (106 → 107) and
+the shard-weight table entry for the new hunt suite; the checkpoint attribution
+serialized as a LIST because `SECRET_ECHO` is a legitimate failure-class NAME
+that the checkpoint secret screen refuses as a credential-shaped KEY; the
+secret-smuggling and print-salvage expectations updated for the permanent
+`SECRET_ECHO` class and for the removal of fabricated grounding; the atlas
+block-class expectations and the writer-census count updated for
+`ADAPTER_UNAVAILABLE` and the receipt writer; and the execution class declared
+for all 16 new suites.
+
+Command: focused M5 suites (16 new suites + the affected campaign, admission,
+store, provider and schema cones)
+Result: PASS
+When: 2026-09-27
+Relevant failure/output summary: `agentFindingRecord` 7/7,
+`agentFindingPersistence` 6/6, `reasonerIdentityBinding` 4/4,
+`campaignBudgetConservation` 2/2, `providerAttribution` 3/3,
+`failureCeilingsAndBackoff` 7/7, `agentDispatcherForwarding` 2/2,
+`campaignSignalPause` 3/3, `printAdapterLifecycle` 5/5,
+`reproductionGitMaterialization` 4/4, `environmentSignatureRefusal` 3/3,
+`productRunReceipt` 3/3, `findingsSurfaces` 3/3,
+`adapterUnavailableAndDefaults` 4/4, `boundedOperatorLaunch` 3/3 and
+`syntheticHuntSuite` 5/5; the owner-local reproduction cones 71/71 and 96/96;
+`schema-lifecycle check` PASS with the three new families declared.
 
 ## Decisions Made During This Task
 
