@@ -53,6 +53,7 @@
         "tests/unit/exploration.test.ts",
         "tests/unit/failureCeilingsAndBackoff.test.ts",
         "tests/unit/findingIntel.test.ts",
+        "tests/unit/findingsSurfaces.test.ts",
         "tests/unit/frontierContractFuzz.test.ts",
         "tests/unit/fuzzProperty.test.ts",
         "tests/unit/hardeningProbeCampaign.test.ts",

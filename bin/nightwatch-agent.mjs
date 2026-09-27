@@ -173,6 +173,38 @@ function resolveReasonerIdentity(reasonerMod, configured, options = {}) {
 }
 
 if (command === 'status') {
+  // M5 (6.14/C-13/B-12): status reports MEASURED state — the durable records
+  // the owner-local store actually holds and the campaigns actually stored —
+  // not a constant schema list. The static protocol identity stays, because it
+  // is a fact about the build rather than a measurement.
+  const [campaignMod, storeMod] = loadTypeScriptModules(
+    ['src/core/agentRuntime/localCampaign.ts', 'src/core/localInvestigation/agentFindingStore.ts'],
+    { root },
+  );
+  let campaigns = [];
+  let campaignsUnavailable = null;
+  try {
+    campaigns = campaignMod.listLocalCampaigns();
+  } catch (error) {
+    campaignsUnavailable = error instanceof Error ? error.message : String(error);
+  }
+  let findings = [];
+  let storeRoot = null;
+  let storeUnavailable = null;
+  try {
+    const store = new storeMod.AgentFindingStore();
+    storeRoot = store.root;
+    findings = store.list();
+  } catch (error) {
+    storeUnavailable = error instanceof Error ? error.message : String(error);
+  }
+  const perCampaign = new Map();
+  for (const record of findings) {
+    const entry = perCampaign.get(record.campaignId) ?? { campaignId: record.campaignId, admissions: 0, candidateIds: [] };
+    entry.admissions += 1;
+    if (!entry.candidateIds.includes(record.candidateId)) entry.candidateIds.push(record.candidateId);
+    perCampaign.set(record.campaignId, entry);
+  }
   console.log(JSON.stringify({
     schemaVersion: 'nightwatch.agent-protocol.v1',
     reasonerDriver: 'nightwatch.reasoner-driver.v1',
@@ -180,6 +212,16 @@ if (command === 'status') {
     ownerClass: 'AUTONOMOUS_AGENT_LOCAL',
     environments: { local: 'AUTHORIZED', dev: 'NOT_AUTHORIZED', next: 'NOT_AUTHORIZED', production: 'NOT_AUTHORIZED' },
     filing: { humanReviewRequired: true, externalPublication: 'PROHIBITED', autoLeslie: false, autoSlack: false },
+    measured: {
+      storedCampaigns: campaigns.length,
+      storedCampaignIds: campaigns.map((item) => item.campaignId).sort(),
+      persistedFindings: findings.length,
+      perCampaign: [...perCampaign.values()].sort((left, right) => left.campaignId.localeCompare(right.campaignId)),
+      findingStoreRoot: storeRoot,
+      reasonerConfigured: Boolean(process.env.NIGHTWATCH_REASONER_CLI ?? process.env.NIGHTWATCH_PRINT_CLI),
+      campaignsUnavailable,
+      storeUnavailable,
+    },
   }, null, 2));
 } else if (command === 'test') {
   try {
@@ -324,21 +366,79 @@ if (command === 'status') {
       'CAMPAIGN_PAUSE_IS_SIGNAL_DRIVEN — send SIGINT (or SIGTERM) to the running campaign process; it writes a PAUSED checkpoint and stops its reasoner',
     );
   } else if (sub === 'status' || sub === 'findings') {
-    const [mod] = loadTypeScriptModules(['src/core/agentRuntime/localCampaign.ts'], { root });
+    const [mod, storeMod] = loadTypeScriptModules(
+      ['src/core/agentRuntime/localCampaign.ts', 'src/core/localInvestigation/agentFindingStore.ts'],
+      { root },
+    );
     const campaigns = mod.listLocalCampaigns();
-    const payload = sub === 'findings'
-      ? {
-          command: sub,
-          candidateIds: campaigns.flatMap((item) => item.candidateIds),
-          campaigns,
-        }
-      : {
-          command: sub,
-          liveProcess: false,
-          campaigns,
-          note: 'No in-process campaign. Owner-local checkpoints are listed.',
+    let findings = [];
+    let storeRoot = null;
+    let storeUnavailable = null;
+    try {
+      const store = new storeMod.AgentFindingStore();
+      storeRoot = store.root;
+      findings = store.list();
+    } catch (error) {
+      storeUnavailable = error instanceof Error ? error.message : String(error);
+    }
+    if (sub === 'findings') {
+      // M5 (6.14/C-12): one row per campaign, read from the PERSISTED records.
+      // A proposal is never presented as a finding, and the count is measured.
+      const rows = campaigns.map((item) => {
+        const persisted = findings.filter((record) => record.campaignId === item.campaignId);
+        return {
+          campaignId: item.campaignId,
+          status: item.status,
+          candidateIds: item.candidateIds,
+          persistedAdmissions: persisted.length,
+          admissionState:
+            persisted.length > 0 ? 'ADMITTED_PERSISTED' : item.candidateIds.length > 0 ? 'PROPOSED_NOT_PERSISTED' : 'NONE',
+          dossierIds: persisted.map((record) => record.dossierId).sort(),
         };
-    console.log(JSON.stringify(payload, null, 2));
+      });
+      const persistedCampaignIds = new Set(findings.map((record) => record.campaignId));
+      for (const campaignId of [...persistedCampaignIds].sort()) {
+        if (rows.some((row) => row.campaignId === campaignId)) continue;
+        const persisted = findings.filter((record) => record.campaignId === campaignId);
+        rows.push({
+          campaignId,
+          status: 'RECORDS_ONLY',
+          candidateIds: persisted.map((record) => record.candidateId),
+          persistedAdmissions: persisted.length,
+          admissionState: 'ADMITTED_PERSISTED',
+          dossierIds: persisted.map((record) => record.dossierId).sort(),
+        });
+      }
+      console.log(
+        JSON.stringify(
+          {
+            command: sub,
+            actionableFindings: findings.length,
+            storeRoot,
+            storeUnavailable,
+            rows: rows.sort((left, right) => left.campaignId.localeCompare(right.campaignId)),
+          },
+          null,
+          2,
+        ),
+      );
+    } else {
+      console.log(
+        JSON.stringify(
+          {
+            command: sub,
+            liveProcess: false,
+            campaigns,
+            persistedFindings: findings.length,
+            storeRoot,
+            storeUnavailable,
+            note: 'No in-process campaign. Owner-local checkpoints and persisted finding records are listed.',
+          },
+          null,
+          2,
+        ),
+      );
+    }
   } else if (sub === 'resume') {
     if (modelLabel === null) {
       // Refused above: --model and NIGHTWATCH_REASONER_MODEL disagree.

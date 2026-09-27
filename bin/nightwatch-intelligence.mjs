@@ -277,7 +277,43 @@ try {
     else if (command === "coverage") output = { command, scope: "LOCAL_SYNTHETIC_ONLY", phase20: phase20.coverage, phase21: summary.quality };
     else output = { command, scope: "LOCAL_SYNTHETIC_ONLY", execution: "PREVIEW_ONLY_NO_EXECUTOR", plan: phase20.plan?.plan ?? null, phase20: { plan: phase20.plan?.plan ?? null, gapReport: phase20.gapReport }, phase21: summary, note: "No browser, API, DEV, NEXT, or production contact is performed by this command." };
   } else if (command === "findings") {
-    output = { command, scope: "OWNER_ONLY_LOCAL", actionableFindings: 0, note: "Runtime findings are not loaded or published by the default operator preview." };
+    // M5 (6.14/C-12/B-12): the actionable count is MEASURED from the durable
+    // owner-local records, never a constant zero. Only sanitized identity
+    // fields cross this surface; no dossier prose, evidence or source is read.
+    const [storeMod] = loadTypeScriptModules(["src/core/localInvestigation/agentFindingStore.ts"]);
+    let rows = [];
+    let storeRoot = null;
+    let unavailable = null;
+    try {
+      const store = new storeMod.AgentFindingStore();
+      storeRoot = store.root;
+      rows = store.list();
+    } catch (error) {
+      unavailable = error instanceof Error ? error.message : String(error);
+    }
+    const perCampaign = new Map();
+    for (const record of rows) {
+      const entry = perCampaign.get(record.campaignId) ?? { campaignId: record.campaignId, admissions: 0, candidates: [] };
+      entry.admissions += 1;
+      if (!entry.candidates.includes(record.candidateId)) entry.candidates.push(record.candidateId);
+      perCampaign.set(record.campaignId, entry);
+    }
+    output = {
+      command,
+      scope: "OWNER_ONLY_LOCAL",
+      storeRoot,
+      actionableFindings: rows.length,
+      perCampaign: [...perCampaign.values()].sort((left, right) => left.campaignId.localeCompare(right.campaignId)),
+      records: rows.map((record) => ({
+        campaignId: record.campaignId,
+        candidateId: record.candidateId,
+        dossierId: record.dossierId,
+        sources: record.sources.length,
+        reproductions: record.reproductionIds.length,
+      })),
+      unavailable,
+      note: "Rows are read from the owner-local agent-finding store; no runtime finding is published by this preview.",
+    };
   } else {
     // Flags (e.g. `--json`) may precede the id in any order; the id is the
     // first non-flag token after the command. The shape gate below applies

@@ -140,6 +140,10 @@ function main() {
         NIGHTWATCH_REASONER_MODEL: process.env.NIGHTWATCH_REASONER_MODEL,
         NIGHTWATCH_PRINT_CLI: process.env.NIGHTWATCH_PRINT_CLI,
         NIGHTWATCH_PRINT_ARGS: process.env.NIGHTWATCH_PRINT_ARGS,
+        // M5 (6.14): the owner-local finding store root is a declared
+        // variable, so an owner who relocates private state reaches the same
+        // records through the dispatcher as through the agent surface.
+        NIGHTWATCH_PRIVATE_STATE_DIR: process.env.NIGHTWATCH_PRIVATE_STATE_DIR,
       }),
       stdio: ['ignore', 'pipe', 'pipe'],
       shell: false,
@@ -186,7 +190,10 @@ function main() {
   } else if (operatorCommands.has(args[0])) {
     const result = spawnSync(process.execPath, [path.join(root, 'bin', 'nightwatch-intelligence.mjs'), ...args], {
       cwd: root,
-      env: buildChildEnvironment(process.env, { NIGHTWATCH_OPERATOR_SCOPE: 'LOCAL_SYNTHETIC_ONLY' }),
+      env: buildChildEnvironment(process.env, {
+        NIGHTWATCH_OPERATOR_SCOPE: 'LOCAL_SYNTHETIC_ONLY',
+        NIGHTWATCH_PRIVATE_STATE_DIR: process.env.NIGHTWATCH_PRIVATE_STATE_DIR,
+      }),
       stdio: ['ignore', 'pipe', 'pipe'],
       timeout: 120_000,
       maxBuffer: 2 * 1024 * 1024,
