@@ -43,6 +43,7 @@
         "tests/unit/childProcessCensus.test.ts",
         "tests/unit/cliImplementationContract.test.ts",
         "tests/unit/containedTestReplay.test.ts",
+        "tests/unit/contextGuardTransaction.test.ts",
         "tests/unit/continuityLiveWaypoint.test.ts",
         "tests/unit/controlCenterAgentCampaigns.test.ts",
         "tests/unit/controlCenterSafetyAuthority.test.ts",

@@ -279,6 +279,22 @@ export async function createNightwatchContext(
     serviceWorkers: 'block',
   });
 
+  // M8 (9.5 / NW-AUD-023): every stage after context creation is fallible, and
+  // a failure used to leak the live context (and its health poll) into the
+  // next run. `setupRollback` closes the context, clears the poll and marks
+  // the lifecycle stopping before the original failure propagates.
+  let proxyPoll: ReturnType<typeof setInterval> | null = null;
+  const setupRollback = async (): Promise<void> => {
+    // Rollback touches only what it can reach: the poll and the context. The
+    // lifecycle flags are set by `close()` on the success path.
+    if (proxyPoll !== null) clearInterval(proxyPoll);
+    try {
+      await context.close();
+    } catch {
+      // The original failure is the report; rollback is best-effort.
+    }
+  };
+  try {
   if (traceOn) {
     await context.tracing.start({
       name: path.basename(recorder.dir), // recorder.runId (private) == dir basename
@@ -395,7 +411,7 @@ export async function createNightwatchContext(
   page.on('close', () => recordLifecycleFailure('PAGE_CLOSED', 'page-closed'));
 
   const healthCheck = opts.proxyHealthCheck ?? checkProxyHealth;
-  const proxyPoll = setInterval(() => {
+  proxyPoll = setInterval(() => {
     try {
       recorder.syncProxyViolations();
     } catch {
@@ -492,10 +508,23 @@ export async function createNightwatchContext(
   // Auto-wire observers, the Fetch guard and download handling onto popups
   // and new pages (the network observer auto-wires its own response/
   // requestfailed/observation handlers context-wide).
+  // M8 (9.5 / NW-AUD-023): popup acquisition is an AWAITED barrier. A popup
+  // exists the moment the browser creates it, so a fire-and-forget install
+  // leaves a window in which the new page can navigate before the L0 guard is
+  // attached. Every acquisition is tracked here, `close()` joins them, and a
+  // page whose guard could not be installed in time is DENIED BY POLICY
+  // (`popupGuardBarrierDenied`) rather than silently trusted.
+  const pendingAcquisitions = new Set<Promise<void>>();
+  let popupGuardBarrierDenied = false;
+  const awaitAcquisitions = async (): Promise<void> => {
+    while (pendingAcquisitions.size > 0) {
+      await Promise.all([...pendingAcquisitions]);
+    }
+  };
   context.on('page', (p: Page) => {
     consoleObserver.install(p);
     pageObserver.install(p);
-    void installFetchGuard(context, p, {
+    const acquisition = installFetchGuard(context, p, {
       policy,
       recorder,
       monitor,
@@ -507,6 +536,17 @@ export async function createNightwatchContext(
       bindRedirectFollowUp: network.bindRedirectFollowUp,
     });
     p.on('download', onDownload);
+    const tracked: Promise<void> = acquisition
+      .catch(() => {
+        // Deny-by-policy fallback: a popup whose guard could not be installed
+        // is never treated as admitted. The context stops being usable for
+        // evidence-bearing work and `close()` reports the denial.
+        popupGuardBarrierDenied = true;
+      })
+      .finally(() => {
+        pendingAcquisitions.delete(tracked);
+      });
+    pendingAcquisitions.add(tracked);
   });
 
   // L4 — downloads: record + cancel; denied downloads hard-fail even when the
@@ -556,7 +596,17 @@ export async function createNightwatchContext(
   const close = async (): Promise<void> => {
     lifecycleStopping = true;
     proxyPollStopped = true;
-    clearInterval(proxyPoll);
+    if (proxyPoll !== null) clearInterval(proxyPoll);
+    // M8 (9.5): close JOINS every in-flight page acquisition, so no popup guard
+    // can still be installing while the context tears down.
+    await awaitAcquisitions();
+    if (popupGuardBarrierDenied) {
+      recorder.event({
+        type: 'env',
+        severity: 'error',
+        message: 'popup guard barrier denied: a new page could not be guarded before use (deny by policy)',
+      });
+    }
     recorder.syncProxyViolations();
     if (traceOn) {
       try {
@@ -575,4 +625,8 @@ export async function createNightwatchContext(
   };
 
   return { context, page, monitor, network, close };
+  } catch (error) {
+    await setupRollback();
+    throw error;
+  }
 }

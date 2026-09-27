@@ -425,6 +425,12 @@
       "class": "PARALLEL_SAFE",
       "signals": []
     },
+    "tests/unit/contextGuardTransaction.test.ts": {
+      "class": "PARALLEL_SAFE",
+      "signals": [
+        "isolated-scratch"
+      ]
+    },
     "tests/unit/contextUrlHardening.test.ts": {
       "class": "PARALLEL_SAFE",
       "signals": []
