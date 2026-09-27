@@ -164,9 +164,23 @@ M5 closed green with focused suites and the gate pair (see the ledger).
   (asserted against `/`, `\\`, `.nightwatch` and the store root), and
   `/api/v1/agent/campaigns` is served by the collector —
   `tests/unit/controlCenterAgentCampaigns.test.ts` 4/4.
-  Next: 7.7 (the Safety Center from owner-scope, workspace-integrity and
-  session status, with currentness wired to family movement or labelled not
-  wired).
+  7.7 — the Safety Center is MEASURED: the owner-scope check comes from the
+  policy record, the owner-CLI surfaces (workspace integrity, session
+  protocol) are explicitly `NOT_MEASURED` with named reasons, the frozen
+  operation classes come from `FROZEN_OWNER_OPERATIONS`, and currentness is
+  labelled `NOT_WIRED` with the prerequisite named (C-25); the retired
+  `DEFAULT_CONTROL_CENTER_SAFETY_INPUT` constant is gone (asserted) —
+  `tests/unit/controlCenterSafetyAuthority.test.ts` 6/6;
+  7.8 — ONE `resolveSiblingRoot()` in the topology authority (trimmed,
+  env-first, empty-means-unset, relative refuses) now serves the intelligence
+  CLI, the Control Center source view, the historical context, the bug-atlas
+  miner, the owner-local context and reproduction provider, the operational
+  CLIs and the shared test authority; the new TOTALITY rule
+  `checkSiblingRootResolution` (probe HC-149) flags direct leaf-constant reads
+  and the pre-existing rule enforces the resolver call form —
+  `tests/unit/siblingRootResolution.test.ts` 4/4, 62 affected green.
+  Next: 7.9 (relabel the synthetic Phase 19-21 previews as synthetic preview,
+  or delegate them to `status:local`).
 - M5 history (kept for context): 6.1-6.11 are implemented, validated and
   committed (`9a044b49`, `5719f6ea`-lineage): the content-addressed
   `AgentFindingRecord` in `admitLocalFinding`; the atomic `agent-findings/`
@@ -190,16 +204,15 @@ M5 closed green with focused suites and the gate pair (see the ledger).
 
 ## Exact Next Action
 
-Implement 7.7: the Safety Center built from owner-scope, workspace-integrity
-and session status (B-11), with the currentness field either wired to the
-family-movement classification or explicitly labelled NOT_WIRED (C-25). Read
-the Control Center safety contract/authority and the owner-scope,
-workspace-integrity and session modules, add the composed view with focused
-tests. Then continue 7.8-7.11 in order (one `resolveSiblingRoot()`, the
-synthetic-preview relabelling, the `status:local` auth heading and the
-browser/UI coverage of the new views), committing each validated batch and
-closing M6 with focused + `gate:milestone` PASS, the C-00 integrate and the
-`gh` CI observation (OD-3) exactly as in M4/M5.
+Implement 7.9: relabel the synthetic Phase 19-21 previews
+(`nightwatch:status`, `campaign:plan|coverage|contracts|gaps|operator`) as
+SYNTHETIC PREVIEW in their output (or delegate them to `status:local`) so a
+preview can never read as a measured product state (B-17, NW-AUD-041/042
+narrowed). Then 7.10 (`status:local` renders auth entries under their own
+heading, not under blockers) and 7.11 (browser/UI coverage for the new views:
+typecheck, vitest, browser suite), then the M6 closeout with focused +
+`gate:milestone` PASS, the C-00 integrate and the `gh` CI observation (OD-3)
+exactly as in M4/M5.
 
 ## Files Changed
 
