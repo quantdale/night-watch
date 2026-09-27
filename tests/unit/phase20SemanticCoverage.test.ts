@@ -212,12 +212,16 @@ test.describe("Phase 20 contract discovery and graph", () => {
     const fixtures = generateSyntheticFixtures({ candidates: admitted.candidates, relationalContracts, differentialContracts, metamorphicRelations });
     const repeated = generateSyntheticFixtures({ candidates: admitted.candidates, relationalContracts, differentialContracts, metamorphicRelations });
     expect(fixtures).toEqual(repeated);
-    expect(fixtures.length).toBeGreaterThanOrEqual(90);
+    // M7 (8.4/NW-AUD-040): the regex-derived TS/Go families are no longer
+    // mechanically provable, so they no longer admit candidates. The floor
+    // guards against a COLLAPSED fixture set, not against a smaller honest one.
+    expect(fixtures.length).toBeGreaterThanOrEqual(70);
     expect(new Set(fixtures.map((fixture) => fixture.mutationClass))).toEqual(new Set(["BASELINE_VALID", "MISSING_REQUIRED_FIELD", "WRONG_TYPE", "WRONG_ENUM", "LOWER_BOUND_VIOLATION", "UPPER_BOUND_VIOLATION", "RELATIONSHIP_VIOLATION", "AGGREGATE_MISMATCH", "ORDERING_VIOLATION", "DIFFERENTIAL_MISMATCH", "METAMORPHIC_VIOLATION", "BENIGN_ALTERNATIVE"]));
     expect(fixtures.every((fixture) => fixture.schemaVersion === "nightwatch.synthetic-semantic-mutation.v1")).toBe(true);
     expect(fixtures.some((fixture) => fixture.capabilityKind === "SOURCE_CONTRACT" && fixture.mutationClass === "WRONG_ENUM")).toBe(true);
     const measurement = measureSyntheticMutationDetection({ fixtures, candidates: admitted.candidates, relationalContracts, differentialContracts, metamorphicRelations });
-    expect(measurement.mutantsGenerated).toBeGreaterThanOrEqual(30);
+    // M7 (8.4/NW-AUD-040): same honest-set narrowing as the fixture floor above.
+    expect(measurement.mutantsGenerated).toBeGreaterThanOrEqual(20);
     expect(measurement.mutantsDetected).toBe(measurement.mutantsApplicable);
     expect(measurement.mutantsSurviving).toBe(0);
     expect(measurement.scorePermille).toBe(1000);

@@ -1922,6 +1922,12 @@
       "class": "PARALLEL_SAFE",
       "signals": []
     },
+    "tests/unit/sourceAnalyzerProofTier.test.ts": {
+      "class": "PARALLEL_SAFE",
+      "signals": [
+        "isolated-scratch"
+      ]
+    },
     "tests/unit/sourceInventoryCompleteness.test.ts": {
       "class": "PARALLEL_SAFE",
       "signals": [

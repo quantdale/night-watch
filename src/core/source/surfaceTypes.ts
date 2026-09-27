@@ -47,7 +47,12 @@ export type SourceDiagnosticRejectionFamily = (typeof SOURCE_DIAGNOSTIC_REJECTIO
 export interface SourceAnalyzerDiagnostic {
   readonly analyzerId: string;
   readonly analyzerVersion: string;
-  readonly status: 'MECHANICALLY_PROVABLE' | 'REJECTED';
+  /**
+   * M7 (8.4/NW-AUD-040): `HEURISTIC` observations come from regex matches
+   * over raw source text. They are reported, and they can never back a proven
+   * candidate.
+   */
+  readonly status: 'MECHANICALLY_PROVABLE' | 'REJECTED' | 'HEURISTIC';
   readonly behaviorClass: string | null;
   readonly rejectionCode: string | null;
   /** Phase 27 categorical flow reason; never source text. */

@@ -80,6 +80,11 @@ export type DiscoveryRejectionCode =
   | "FIELD_NAME_UNSAFE"
   | "MALFORMED_STATIC_SCHEMA"
   | "RELATION_PROOF_MISSING"
+  /**
+   * M7 (8.4/NW-AUD-040): the analyzer's bounded output was TRUNCATED. The
+   * truncation is reported rather than silently slicing the observation list.
+   */
+  | "ANALYZER_OUTPUT_TRUNCATED"
   | "SURFACE_NOT_APPROVED"
   | "DUPLICATE_CONTRACT"
   | "CONTRACT_DRIFT"

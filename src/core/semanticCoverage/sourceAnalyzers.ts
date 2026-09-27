@@ -62,7 +62,13 @@ export interface AnalyzerObservation {
   readonly analyzerVersion: AnalyzerVersion;
   readonly language: SourceLanguage;
   readonly symbol: string | null;
-  readonly status: "MECHANICALLY_PROVABLE" | "REJECTED";
+  /**
+   * M7 (8.4/NW-AUD-040): `HEURISTIC` is the honest status of an observation
+   * whose evidence is a REGEX match over raw text. It is NOT mechanically
+   * provable, and the proven-candidate selection (which filters on
+   * `MECHANICALLY_PROVABLE`) therefore excludes it by construction.
+   */
+  readonly status: "MECHANICALLY_PROVABLE" | "REJECTED" | "HEURISTIC";
   readonly behaviorClass: ContractBehaviorClass | null;
   readonly shape: DiscoveredContractShape | null;
   readonly rejectionCode: DiscoveryRejectionCode | null;
@@ -152,6 +158,35 @@ function proven(input: {
     rejectionDetail: null,
   };
   return { ...base, evidenceDigest: evidence(base), observationSurfaces: normalizeSurfaces(input.surfaces) };
+}
+
+/**
+ * M7 (8.4/NW-AUD-040): one observation whose evidence is a regex match over
+ * raw source text. The shape is still reported (it is useful triage input),
+ * but it can never back a proven candidate.
+ */
+function heuristic(input: {
+  readonly analyzerId: string;
+  readonly analyzerVersion?: AnalyzerVersion;
+  readonly language: SourceLanguage;
+  readonly symbol: string | null;
+  readonly behaviorClass: ContractBehaviorClass;
+  readonly shape: DiscoveredContractShape;
+  readonly surfaces: readonly ObservationSurfaceKind[];
+}): AnalyzerObservation {
+  const base = {
+    analyzerId: input.analyzerId,
+    analyzerVersion: input.analyzerVersion ?? SEMANTIC_SOURCE_ANALYZER_VERSION,
+    language: input.language,
+    symbol: input.symbol,
+    status: 'HEURISTIC' as const,
+    behaviorClass: input.behaviorClass,
+    shape: input.shape,
+    rejectionCode: null,
+    rejectionDetail: null,
+    observationSurfaces: input.surfaces,
+  };
+  return { ...base, evidenceDigest: sourceEvidenceDigest(base) };
 }
 
 function rejected(input: {
@@ -721,7 +756,7 @@ function analyzeTypeScript(artifact: SourceAnalyzerArtifact): AnalyzerObservatio
       continue;
     }
     const fields = values.map((value) => value.slice(1, -1)).sort();
-    out.push(proven({ analyzerId: "TS_STATIC_REQUIRED_FIELDS", language: artifact.language, symbol: safeSymbol(artifact.symbol), behaviorClass: "REQUIRED_FIELD", shape: { kind: "FIELD_SET", fields, requiredFields: fields, optionalFields: [] }, surfaces }));
+    out.push(heuristic({ analyzerId: "TS_STATIC_REQUIRED_FIELDS", language: artifact.language, symbol: safeSymbol(artifact.symbol), behaviorClass: "REQUIRED_FIELD", shape: { kind: "FIELD_SET", fields, requiredFields: fields, optionalFields: [] }, surfaces }));
   }
 
   const enumMatches = [...text.matchAll(/([A-Za-z][A-Za-z0-9_.-]{0,96})\s*:\s*\{\s*enum\s*:\s*\[([^\]]{1,4096})\]/g)];
@@ -732,7 +767,7 @@ function analyzeTypeScript(artifact: SourceAnalyzerArtifact): AnalyzerObservatio
       out.push(rejected({ analyzerId: "TS_STATIC_ENUM", language: artifact.language, symbol: safeSymbol(artifact.symbol), code: "MALFORMED_STATIC_SCHEMA", detail: "enum-array", surfaces }));
       continue;
     }
-    out.push(proven({ analyzerId: "TS_STATIC_ENUM", language: artifact.language, symbol: safeSymbol(artifact.symbol), behaviorClass: "FINITE_ENUM", shape: { kind: "FINITE_ENUM", field, valueCount: values.length, valueSetDigest: sourceEvidenceDigest(values) }, surfaces }));
+    out.push(heuristic({ analyzerId: "TS_STATIC_ENUM", language: artifact.language, symbol: safeSymbol(artifact.symbol), behaviorClass: "FINITE_ENUM", shape: { kind: "FINITE_ENUM", field, valueCount: values.length, valueSetDigest: sourceEvidenceDigest(values) }, surfaces }));
   }
 
   const defaultMatches = [...text.matchAll(/([A-Za-z][A-Za-z0-9_.-]{0,96})\s*:\s*\{\s*default\s*:\s*([^,}\n]{1,160})/g)];
@@ -743,7 +778,7 @@ function analyzeTypeScript(artifact: SourceAnalyzerArtifact): AnalyzerObservatio
       out.push(rejected({ analyzerId: "TS_STATIC_DEFAULT", language: artifact.language, symbol: safeSymbol(artifact.symbol), code: "RUNTIME_VALUE_UNPROVEN", detail: "default-expression", surfaces }));
       continue;
     }
-    out.push(proven({ analyzerId: "TS_STATIC_DEFAULT", language: artifact.language, symbol: safeSymbol(artifact.symbol), behaviorClass: "DEFAULT_VALUE", shape: { kind: "DEFAULT", field, defaultType }, surfaces }));
+    out.push(heuristic({ analyzerId: "TS_STATIC_DEFAULT", language: artifact.language, symbol: safeSymbol(artifact.symbol), behaviorClass: "DEFAULT_VALUE", shape: { kind: "DEFAULT", field, defaultType }, surfaces }));
   }
 
   const typeMatches = [...text.matchAll(/([A-Za-z][A-Za-z0-9_.-]{0,96})\s*:\s*\{\s*type\s*:\s*['\"](NULL|BOOLEAN|NUMBER|STRING|OBJECT|ARRAY)['\"]\s*\}/g)];
@@ -751,7 +786,7 @@ function analyzeTypeScript(artifact: SourceAnalyzerArtifact): AnalyzerObservatio
     const field = safeName(match[1] ?? "", "FIELD");
     const type = jsonType(match[2] ?? "");
     if (type === null) continue;
-    out.push(proven({ analyzerId: "TS_STATIC_FIELD_TYPE", language: artifact.language, symbol: safeSymbol(artifact.symbol), behaviorClass: "FIELD_TYPE", shape: { kind: "FIELD_TYPE", field, allowedTypes: [type] }, surfaces }));
+    out.push(heuristic({ analyzerId: "TS_STATIC_FIELD_TYPE", language: artifact.language, symbol: safeSymbol(artifact.symbol), behaviorClass: "FIELD_TYPE", shape: { kind: "FIELD_TYPE", field, allowedTypes: [type] }, surfaces }));
   }
 
   const rangeMatches = [...text.matchAll(/if\s*\(\s*([A-Za-z][A-Za-z0-9_.-]{0,96})\s*(<|<=|>|>=)\s*(-?[0-9]+(?:\.[0-9]+)?)\s*\|\|\s*\1\s*(<|<=|>|>=)\s*(-?[0-9]+(?:\.[0-9]+)?)\s*\)\s*\{?\s*throw\b/g)];
@@ -834,10 +869,10 @@ function analyzeGo(artifact: SourceAnalyzerArtifact): AnalyzerObservation[] {
     fields.push(name);
     if (field[2] === "" && field[5] === undefined) required.push(name); else optional.push(name);
     const mapped = field[3] === "string" ? "STRING" : field[3] === "bool" ? "BOOLEAN" : /^(?:int|uint|float)/.test(field[3] ?? "") ? "NUMBER" : field[3]?.startsWith("[]") ? "ARRAY" : "OBJECT";
-    types.push(proven({ analyzerId: "GO_STRUCT_FIELD_TYPE", language: "GO", symbol: safeSymbol(artifact.symbol), behaviorClass: "FIELD_TYPE", shape: { kind: "FIELD_TYPE", field: name, allowedTypes: [mapped] }, surfaces }));
+    types.push(heuristic({ analyzerId: "GO_STRUCT_FIELD_TYPE", language: "GO", symbol: safeSymbol(artifact.symbol), behaviorClass: "FIELD_TYPE", shape: { kind: "FIELD_TYPE", field: name, allowedTypes: [mapped] }, surfaces }));
   }
   if (fields.length === 0) return [rejected({ analyzerId: "GO_STRUCT_TAGS", language: "GO", symbol: safeSymbol(artifact.symbol), code: "MALFORMED_STATIC_SCHEMA", detail: "no-json-fields", surfaces })];
-  return [proven({ analyzerId: "GO_STRUCT_TAGS", language: "GO", symbol: safeSymbol(artifact.symbol), behaviorClass: required.length > 0 ? "REQUIRED_FIELD" : "OPTIONAL_FIELD", shape: { kind: "FIELD_SET", fields: [...new Set(fields)].sort(), requiredFields: [...new Set(required)].sort(), optionalFields: [...new Set(optional)].sort() }, surfaces }), ...types];
+  return [heuristic({ analyzerId: "GO_STRUCT_TAGS", language: "GO", symbol: safeSymbol(artifact.symbol), behaviorClass: required.length > 0 ? "REQUIRED_FIELD" : "OPTIONAL_FIELD", shape: { kind: "FIELD_SET", fields: [...new Set(fields)].sort(), requiredFields: [...new Set(required)].sort(), optionalFields: [...new Set(optional)].sort() }, surfaces }), ...types];
 }
 
 interface OpenApiProperty {
@@ -939,7 +974,21 @@ export function analyzeSourceArtifact(artifact: SourceAnalyzerArtifact): readonl
     default: output = [rejected({ analyzerId: "BOUNDARY", language: artifact.language, symbol: safeSymbol(artifact.symbol), code: "UNSUPPORTED_LANGUAGE", surfaces: artifact.observationSurfaces })];
   }
   if (output.length === 0) output = [rejected({ analyzerId: "BOUNDARY", language: artifact.language, symbol: safeSymbol(artifact.symbol), code: "UNSUPPORTED_SYNTAX", detail: "no-fixed-pattern", surfaces: artifact.observationSurfaces })];
-  if (output.length > MAX_ANALYZER_OUTPUTS) output = output.slice(0, MAX_ANALYZER_OUTPUTS);
+  if (output.length > MAX_ANALYZER_OUTPUTS) {
+    // M7 (8.4/NW-AUD-040): a truncated inventory is REPORTED, never a silent
+    // slice — a reader must know the observation set is incomplete.
+    output = [
+      ...output.slice(0, MAX_ANALYZER_OUTPUTS - 1),
+      rejected({
+        analyzerId: 'ANALYZER_OUTPUT_BUDGET',
+        language: artifact.language,
+        symbol: safeSymbol(artifact.symbol),
+        code: 'ANALYZER_OUTPUT_TRUNCATED',
+        detail: 'observation-budget',
+        surfaces: artifact.observationSurfaces,
+      }),
+    ];
+  }
   return output;
 }
 
