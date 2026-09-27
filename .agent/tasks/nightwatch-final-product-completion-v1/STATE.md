@@ -151,7 +151,22 @@ M5 closed green with focused suites and the gate pair (see the ledger).
   being parsed as a corrupt dossier, so orchestrator state beside the dossiers
   can never blank the Findings view — `tests/unit/campaignStateSubtree.test.ts`
   3/3 and 158 affected tests green.
-  Next: 7.5 (the test-scoped run root and the Control Center newest-N window).
+  7.5 — the run-evidence reader now reports a bounded NEWEST-N window over the
+  real run root (with `window.limit/considered/truncated` and the informational
+  `RUN_EVIDENCE_WINDOW_TRUNCATED` reason) instead of refusing a growing tree,
+  inspection itself is bounded, and the test seam carries an injectable window
+  limit so the bound is provable without materialising 256 run directories —
+  `tests/unit/controlCenterRunEvidenceReader.test.ts` 12/12;
+  7.6 — a read-only agent-campaign authority/view/route: measured per-campaign
+  rows read from the durable owner-local store, an unreadable store is
+  explicitly UNAVAILABLE (never a silent empty view), the DTO carries campaign
+  and candidate ids plus `afr:` dossier identities and counts but NO path
+  (asserted against `/`, `\\`, `.nightwatch` and the store root), and
+  `/api/v1/agent/campaigns` is served by the collector —
+  `tests/unit/controlCenterAgentCampaigns.test.ts` 4/4.
+  Next: 7.7 (the Safety Center from owner-scope, workspace-integrity and
+  session status, with currentness wired to family movement or labelled not
+  wired).
 - M5 history (kept for context): 6.1-6.11 are implemented, validated and
   committed (`9a044b49`, `5719f6ea`-lineage): the content-addressed
   `AgentFindingRecord` in `admitLocalFinding`; the atomic `agent-findings/`
@@ -175,16 +190,16 @@ M5 closed green with focused suites and the gate pair (see the ledger).
 
 ## Exact Next Action
 
-Implement 7.5: the test-scoped run root and the Control Center newest-N window
-across the real run roots with `RUN_EVIDENCE_WINDOW_TRUNCATED` (B-01, X-01).
-Read the run-evidence reader (`src/controlCenter/authorities/runEvidenceReader.ts`)
-and the run-root layout, add the bounded window with the truncation reason, and
-keep a test-scoped root for tests. Then continue 7.6-7.11 in order (the
-read-only agent-campaign view, the Safety Center, one `resolveSiblingRoot()`,
-the synthetic-preview relabelling and the `status:local` auth heading),
-committing each validated batch and closing M6 with focused +
-`gate:milestone` PASS, the C-00 integrate and the `gh` CI observation (OD-3)
-exactly as in M4/M5.
+Implement 7.7: the Safety Center built from owner-scope, workspace-integrity
+and session status (B-11), with the currentness field either wired to the
+family-movement classification or explicitly labelled NOT_WIRED (C-25). Read
+the Control Center safety contract/authority and the owner-scope,
+workspace-integrity and session modules, add the composed view with focused
+tests. Then continue 7.8-7.11 in order (one `resolveSiblingRoot()`, the
+synthetic-preview relabelling, the `status:local` auth heading and the
+browser/UI coverage of the new views), committing each validated batch and
+closing M6 with focused + `gate:milestone` PASS, the C-00 integrate and the
+`gh` CI observation (OD-3) exactly as in M4/M5.
 
 ## Files Changed
 
