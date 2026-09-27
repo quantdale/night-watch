@@ -638,11 +638,15 @@ export function renderLocalReadinessText(summary: LocalReadinessSummary): string
     `authenticated-capability: ${summary.authCapability.aggregateState} entries=${summary.authCapability.entries.length}` +
       ` present-and-expired=${summary.authCapability.presentAndExpiredEnvironments.length === 0 ? 'none' : summary.authCapability.presentAndExpiredEnvironments.join(',')}`,
     `owner-scope: ${summary.ownerScope.status} / ${summary.ownerScope.reason} (frozen=${summary.ownerScope.frozenOperationCount} markers-match=${summary.ownerScope.matchesFrozenMarkers})`,
-    `blockers: ${summary.unresolvedBlockers.length}`,
   ];
+  // M6 (7.10/B-18): the authenticated-capability entries belong under their OWN
+  // heading, directly beneath the line that announces them. They were rendered
+  // after `blockers:` and before the blocker list, which made every auth entry
+  // read as a blocker.
   for (const entry of summary.authCapability.entries) {
     lines.push(`  - auth ${entry.environment} ${entry.state} present=${entry.present} band=${entry.remainingValidityBand} epistemic=${entry.epistemicClass}`);
   }
+  lines.push(`blockers: ${summary.unresolvedBlockers.length}`);
   for (const blocker of summary.unresolvedBlockers) {
     lines.push(`  - ${blocker.kind} ${blocker.code}${blocker.detail === undefined ? '' : ` (${blocker.detail})`}`);
   }

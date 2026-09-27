@@ -22,6 +22,29 @@ if (args.some((arg) => arg.startsWith("--env"))) {
   process.exit(2);
 }
 
+/**
+ * M6 (7.9/B-17): the synthetic-preview label.
+ *
+ * The Phase 19-21 previews are deterministic projections of checked-in
+ * synthetic fixtures. They answer "what would the campaign plan look like",
+ * never "what did the product do". Measured state is `npm run status:local`
+ * (and the owner-local stores the Control Center reads), so the label says so
+ * rather than leaving the reader to infer it from a scope string.
+ */
+function labelSyntheticPreview(output) {
+  if (output === null || typeof output !== 'object' || Array.isArray(output)) return output;
+  const synthetic = output.scope === 'LOCAL_SYNTHETIC_ONLY';
+  if (!synthetic) return output;
+  return {
+    ...output,
+    dataOrigin: 'SYNTHETIC_PREVIEW',
+    measured: false,
+    measuredStateCommand: 'npm run status:local',
+    previewNote:
+      'This output is a deterministic projection of checked-in synthetic fixtures. It is not a measurement of any product, run, or owner-local store.',
+  };
+}
+
 function loadTypeScriptModules(files) {
   return loadRuntimeTypeScriptModules(files, { root });
 }
@@ -327,7 +350,16 @@ try {
     const item = result.plan.items.find((candidate) => candidate.candidateId === requested || candidate.memberId === requested) ?? null;
     output = { command, scope: "LOCAL_SYNTHETIC_ONLY", requestedId: requested ?? null, item, explanation: item === null ? "PLAN_ITEM_NOT_FOUND" : "PRIORITY_COMPONENTS_AND_GATES" };
   }
-  process.stdout.write(asJson ? `${renderJson(output)}\n` : `${command} ${output.scope ?? "LOCAL_SYNTHETIC_ONLY"}\n${renderJson(output)}\n`);
+  // M6 (7.9/B-17/NW-AUD-041/042): every Phase 19-21 preview is labelled as a
+  // SYNTHETIC PREVIEW in ONE place. The previews are computed from checked-in
+  // synthetic fixtures, so a reader must never mistake them for a measured
+  // product state; the label also names where measured state lives.
+  const labelled = labelSyntheticPreview(output);
+  process.stdout.write(
+    asJson
+      ? `${renderJson(labelled)}\n`
+      : `${command} ${labelled.scope ?? "LOCAL_SYNTHETIC_ONLY"} ${labelled.dataOrigin}\n${renderJson(labelled)}\n`,
+  );
 } catch (error) {
   const detail = error instanceof Error && /^[A-Z0-9_:-]{1,120}$/.test(error.message) ? error.message : "CONFIG_INVALID";
   console.error(`NIGHTWATCH_INTELLIGENCE_FAILED code=${detail} remediation=Use_checked_in_local_configuration_and_rerun`);

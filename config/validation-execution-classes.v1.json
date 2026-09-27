@@ -1922,6 +1922,12 @@
         "isolated-scratch"
       ]
     },
+    "tests/unit/statusLocalAuthHeading.test.ts": {
+      "class": "PARALLEL_SAFE",
+      "signals": [
+        "isolated-scratch"
+      ]
+    },
     "tests/unit/storageState.test.ts": {
       "class": "PARALLEL_SAFE",
       "signals": [
@@ -1941,6 +1947,12 @@
       "signals": []
     },
     "tests/unit/syntheticHuntSuite.test.ts": {
+      "class": "PARALLEL_SAFE",
+      "signals": [
+        "isolated-scratch"
+      ]
+    },
+    "tests/unit/syntheticPreviewLabelling.test.ts": {
       "class": "PARALLEL_SAFE",
       "signals": [
         "isolated-scratch"
