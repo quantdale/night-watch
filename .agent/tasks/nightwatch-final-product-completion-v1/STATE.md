@@ -149,8 +149,20 @@ the gate pair (see the ledger).
   regardless) — `tests/unit/semanticEvidenceCompleteness.test.ts` 4/4, the
   semantic/oracle cones 105/105 and the FULL suite 5623 passed / 33 skipped /
   0 failed on this change.
-  Next: 8.4 (regex TS/JS/Go/OpenAPI analyzers produce HEURISTIC results
-  excluded from proven candidate selection; truncated inventories reported).
+  8.4 — regex-derived analyzer observations are no longer proof: the
+  observation vocabulary gained `HEURISTIC` and the raw-text regex families
+  (`TS_STATIC_REQUIRED_FIELDS` / `TS_STATIC_ENUM` / `TS_STATIC_DEFAULT` /
+  `TS_STATIC_FIELD_TYPE` / `GO_STRUCT_TAGS` / `GO_STRUCT_FIELD_TYPE`) now carry
+  it, so the proven-candidate filters (which compare
+  `status === 'MECHANICALLY_PROVABLE'`) exclude them by construction; a
+  truncated observation budget is REPORTED as `ANALYZER_OUTPUT_TRUNCATED`
+  instead of silently sliced. Evidence:
+  `tests/unit/sourceAnalyzerProofTier.test.ts` 5/5 plus the Phase 20/25/26 +
+  semantic cones 63/63; the Phase 20 fixture/mutant floors were re-calibrated
+  to the honest admitted set (78 fixtures / 28 mutants, score still 1000,
+  zero survivors, zero benign false positives).
+  Next: 8.5 (focused + `gate:milestone` PASS; tick 8.1-8.5, PLAN M7 COMPLETE,
+  commit) to close M7, then the C-00 integrate and the `gh` CI observation.
 - M6 is COMPLETE: 7.1-7.11 are ticked in the campaign ledger with DONE notes
   and PLAN marks M6 COMPLETE. The view-DOM baseline was intentionally
   REGENERATED (`NIGHTWATCH_UPDATE_VIEW_DOM_BASELINE=1`) because the Agent
@@ -237,13 +249,10 @@ the gate pair (see the ledger).
 
 ## Exact Next Action
 
-Implement 8.4 (NW-AUD-040 narrowed): regex TS/JS/Go/OpenAPI analyzers must
-produce HEURISTIC results that are EXCLUDED from proven candidate selection,
-and a truncated inventory must be reported rather than silently accepted — read
-the source analyzers (`src/core/source/**`), the projection/completeness
-contract and the Phase 24 selection, then 8.5 (focused + `gate:milestone` PASS;
-commit) to close M7, followed by the C-00 integrate and the `gh` CI observation
-(OD-3) as in M4-M6.
+Close M7 with 8.5: run the focused cones plus `npm run gate:milestone`
+(expect PASS), tick 8.1-8.5 in `tasks.md` with their DONE notes, mark M7
+COMPLETE in PLAN/STATE, commit, then C-00 integrate and the `gh` CI observation
+(OD-3) exactly as in M4-M6.
 
 ## Superseded Next Action (8.1, complete)
 
