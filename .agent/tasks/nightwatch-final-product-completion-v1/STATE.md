@@ -521,6 +521,15 @@ block-class expectations and the writer-census count updated for
 `ADAPTER_UNAVAILABLE` and the receipt writer; and the execution class declared
 for all 16 new suites.
 
+Command: `gh run watch 36302111703 --exit-status` (OD-3 exact-head CI observation, M5)
+Result: PASS — `completed / success`, gate `finalResult: PASS`
+When: 2026-09-27 (run 07:06:59Z → 07:18:10Z)
+Relevant failure/output summary: gitHead `0503d34774481e495bfef5067f44b07130ad5833`
+(the M5 closeout head); gate receipt `receipt:sha256:ad687c70156dfc3d6717d953`;
+every job step green, including `Execute authoritative quality gate`. M5 is
+therefore validated end to end: focused suites, the gate pair at 5585/0 and
+exact-head CI green.
+
 Command: focused M5 suites (16 new suites + the affected campaign, admission,
 store, provider and schema cones)
 Result: PASS
