@@ -194,9 +194,9 @@ export async function startOutboundProxy(opts: OutboundProxyOptions): Promise<Ou
   function record(
     protocol: ProxyProtocol,
     classified: ProxyClassification,
-    lifecycle: Partial<Pick<ProxyEvent, 'resolution' | 'resolutionReason' | 'answerCount' | 'addressFamily' | 'addressClass' | 'connection' | 'connectionFailure' | 'containmentViolation' | 'addressBindingVersion'>> = {},
-  ): boolean {
-    if (evidenceWriteFailed) return false;
+    lifecycle: Partial<Pick<ProxyEvent, 'resolution' | 'resolutionReason' | 'answerCount' | 'addressFamily' | 'addressClass' | 'connection' | 'connectionFailure' | 'containmentViolation' | 'addressBindingVersion' | 'effectId' | 'phase'>> = {},
+  ): number {
+    if (evidenceWriteFailed) return -1;
     const target = classified.target;
     const event: ProxyEvent = {
       seq: eventSeq++,
@@ -231,12 +231,12 @@ export async function startOutboundProxy(opts: OutboundProxyOptions): Promise<Ou
     };
     try {
       appendProxyEvent(eventLogPath, event);
-      return true;
+      return event.seq;
     } catch {
       // Evidence is part of the containment contract. Once it cannot be
       // persisted, no later request may be allowed through this proxy.
       evidenceWriteFailed = true;
-      return false;
+      return -1;
     }
   }
 
@@ -396,6 +396,22 @@ export async function startOutboundProxy(opts: OutboundProxyOptions): Promise<Ou
       writeLocalBlock(res, 502);
       return;
     }
+    // M8 (9.4 / R2-06): the PREPARED half of the effect pair, written BEFORE
+    // the piped request can reach the upstream socket.
+    const decisionEffectId = `effect-${eventSeq}`;
+    const decisionSeq = record('http', classified, {
+      ...resolutionLifecycle(resolution),
+      addressFamily: selected.family,
+      addressClass: selected.addressClass,
+      connection: 'attempted',
+      addressBindingVersion: EXACT_ADDRESS_BINDING_VERSION,
+      effectId: decisionEffectId,
+      phase: 'PREPARED',
+    });
+    if (decisionSeq < 0) {
+      writeLocalBlock(res, 502);
+      return;
+    }
 
     let upstream: http.ClientRequest;
     try {
@@ -441,8 +457,13 @@ export async function startOutboundProxy(opts: OutboundProxyOptions): Promise<Ou
       connection: result.outcome,
       ...(result.failure === undefined ? {} : { connectionFailure: result.failure }),
       addressBindingVersion: EXACT_ADDRESS_BINDING_VERSION,
+      // M8 (9.4 / R2-06): the terminal half of the effect pair. The effect
+      // (the piped request) already happened, so this record must join the
+      // PREPARED record written before it.
+      effectId: decisionEffectId,
+      phase: 'TERMINAL',
     });
-    if (!recorded) {
+    if (recorded < 0) {
       upstream.destroy();
       req.destroy();
       res.destroy();
@@ -493,6 +514,23 @@ export async function startOutboundProxy(opts: OutboundProxyOptions): Promise<Ou
       closeSocket(clientSocket, 502);
       return;
     }
+    // M8 (9.4 / R2-06): the PREPARED half of the CONNECT effect pair, written
+    // BEFORE the upstream socket can be dialled and before the client can see
+    // a 200 Connection Established.
+    const decisionEffectId = `effect-${eventSeq}`;
+    const decisionSeq = record('https-connect', classified, {
+      ...resolutionLifecycle(resolution),
+      addressFamily: selected.family,
+      addressClass: selected.addressClass,
+      connection: 'attempted',
+      addressBindingVersion: EXACT_ADDRESS_BINDING_VERSION,
+      effectId: decisionEffectId,
+      phase: 'PREPARED',
+    });
+    if (decisionSeq < 0) {
+      closeSocket(clientSocket, 502);
+      return;
+    }
     const dial = dialExact(selected, target.port, clientSocket);
     if (dial === null) {
       record('https-connect', classified, {
@@ -526,8 +564,11 @@ export async function startOutboundProxy(opts: OutboundProxyOptions): Promise<Ou
       connection: connection.outcome,
       ...(connection.failure === undefined ? {} : { connectionFailure: connection.failure }),
       addressBindingVersion: EXACT_ADDRESS_BINDING_VERSION,
+      // M8 (9.4 / R2-06): the terminal half of the CONNECT effect pair.
+      effectId: decisionEffectId,
+      phase: 'TERMINAL',
     });
-    if (!recorded) {
+    if (recorded < 0) {
       upstream.destroy();
       clientSocket.destroy();
       return;
@@ -583,6 +624,22 @@ export async function startOutboundProxy(opts: OutboundProxyOptions): Promise<Ou
       closeSocket(clientSocket, 502);
       return;
     }
+    // M8 (9.4 / R2-06): the PREPARED half of the Upgrade effect pair, written
+    // BEFORE the upstream socket is dialled and before the 101 handshake.
+    const decisionEffectId = `effect-${eventSeq}`;
+    const decisionSeq = record(protocol, classified, {
+      ...resolutionLifecycle(resolution),
+      addressFamily: selected.family,
+      addressClass: selected.addressClass,
+      connection: 'attempted',
+      addressBindingVersion: EXACT_ADDRESS_BINDING_VERSION,
+      effectId: decisionEffectId,
+      phase: 'PREPARED',
+    });
+    if (decisionSeq < 0) {
+      closeSocket(clientSocket, 502);
+      return;
+    }
     const dial = dialExact(selected, target.port, clientSocket);
     if (dial === null) {
       record(protocol, classified, {
@@ -625,8 +682,11 @@ export async function startOutboundProxy(opts: OutboundProxyOptions): Promise<Ou
       connection: connection.outcome,
       ...(connection.failure === undefined ? {} : { connectionFailure: connection.failure }),
       addressBindingVersion: EXACT_ADDRESS_BINDING_VERSION,
+      // M8 (9.4 / R2-06): the terminal half of the Upgrade effect pair.
+      effectId: decisionEffectId,
+      phase: 'TERMINAL',
     });
-    if (!recorded) {
+    if (recorded < 0) {
       upstream.destroy();
       clientSocket.destroy();
       return;

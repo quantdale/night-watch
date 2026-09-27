@@ -39,6 +39,13 @@ export interface ProxyEvent {
   connectionFailure?: ProxyConnectionFailureReason;
   containmentViolation?: ProxyContainmentViolation;
   addressBindingVersion?: typeof EXACT_ADDRESS_BINDING_VERSION;
+  /**
+   * M8 (9.4 / NW-AUD-022 R2-06): the effect-pairing identity. A PREPARED record
+   * is written before an effect and exactly one TERMINAL record after it; the
+   * strict ledger reader refuses a log where the pair does not match.
+   */
+  effectId?: string;
+  phase?: 'PREPARED' | 'TERMINAL';
 }
 
 export interface ProxySummary {

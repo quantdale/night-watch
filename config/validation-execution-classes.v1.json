@@ -1547,6 +1547,12 @@
         "isolated-scratch"
       ]
     },
+    "tests/unit/proxyEffectPairEvidence.test.ts": {
+      "class": "PARALLEL_SAFE",
+      "signals": [
+        "isolated-scratch"
+      ]
+    },
     "tests/unit/proxyPortLeaseDeterminism.test.ts": {
       "class": "PARALLEL_SAFE",
       "signals": []

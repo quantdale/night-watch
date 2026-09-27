@@ -108,6 +108,7 @@
         "tests/unit/productionTrackReadiness.test.ts",
         "tests/unit/promotionResult.test.ts",
         "tests/unit/providerAttribution.test.ts",
+        "tests/unit/proxyEffectPairEvidence.test.ts",
         "tests/unit/proxyResolvedProtocols.test.ts",
         "tests/unit/realHistoricalProductPathProof.test.ts",
         "tests/unit/realOwnerLocalGeneralityProof.test.ts",

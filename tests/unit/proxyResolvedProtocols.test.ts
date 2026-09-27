@@ -139,6 +139,19 @@ function proxyUpgrade(port: number, target: string): Promise<number> {
   });
 }
 
+
+/**
+ * M8 (9.4 / NW-AUD-022 R2-06): an effect is journaled as a PREPARED record
+ * before it and exactly one TERMINAL record after it. Outcome assertions read
+ * the terminal half.
+ */
+function terminalRecord(logPath: string) {
+  const events = readProxyEvents(logPath);
+  // An effect-bearing request ends with its TERMINAL half; a request refused
+  // before any effect has only its decision record, which is the last one.
+  return events.find((event) => event.phase === 'TERMINAL') ?? events[events.length - 1];
+}
+
 test.describe('resolved protocol binding', () => {
   test('CONNECT uses the admitted numeric address and preserves authority semantics', async () => {
     const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-proxy-connect-'));
@@ -186,7 +199,7 @@ test.describe('resolved protocol binding', () => {
       expect(calls).toEqual(['allowed.synthetic.test']);
       expect(safe.connectionCount).toBe(0);
       expect(unsafe.connectionCount).toBe(0);
-      const event = readProxyEvents(path.join(temp, 'events.jsonl'))[0];
+      const event = terminalRecord(path.join(temp, 'events.jsonl'));
       expect(event).toMatchObject({
         decision: 'allow',
         resolution: 'denied',
@@ -212,7 +225,7 @@ test.describe('resolved protocol binding', () => {
     try {
       expect(await proxyConnect(proxy.port, `allowed.synthetic.test:${refusedPort}`)).toBe(502);
       expect(calls).toEqual(['allowed.synthetic.test']);
-      expect(readProxyEvents(path.join(temp, 'events.jsonl'))[0]).toMatchObject({
+      expect(terminalRecord(path.join(temp, 'events.jsonl'))).toMatchObject({
         decision: 'allow',
         resolution: 'admitted',
         connection: 'failed',
@@ -245,7 +258,7 @@ test.describe('resolved protocol binding', () => {
       await new Promise((resolve) => setTimeout(resolve, 20));
       expect(calls).toEqual(['allowed.synthetic.test']);
       expect(safe.connectionCount).toBe(0);
-      expect(readProxyEvents(path.join(temp, 'events.jsonl'))[0]).toMatchObject({
+      expect(terminalRecord(path.join(temp, 'events.jsonl'))).toMatchObject({
         decision: 'allow',
         resolution: 'failed',
         resolutionReason: 'RESOLUTION_TIMEOUT',
@@ -272,7 +285,7 @@ test.describe('resolved protocol binding', () => {
       expect(safe.connectionCount).toBe(1);
       expect(unsafe.connectionCount).toBe(0);
       expect(safe.requests.join('\n')).toContain(`Host: allowed.synthetic.test:${safe.port}`);
-      const event = readProxyEvents(path.join(temp, 'events.jsonl'))[0];
+      const event = terminalRecord(path.join(temp, 'events.jsonl'));
       expect(event).toMatchObject({
         protocol: 'ws',
         decision: 'allow',

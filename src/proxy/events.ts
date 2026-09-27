@@ -21,7 +21,13 @@ const PROXY_EVENT_KEYS: ReadonlySet<string> = new Set([
   'semanticClassification', 'containment', 'decision', 'ruleId', 'reason',
   'resolution', 'resolutionReason', 'answerCount', 'addressFamily', 'addressClass',
   'connection', 'connectionFailure', 'containmentViolation', 'addressBindingVersion',
+  // M8 (9.4 / NW-AUD-022 R2-06): an effect is journaled as a PAIR — a PREPARED
+  // record before the effect and exactly one TERMINAL record after it, joined
+  // by a shared effectId.
+  'effectId', 'phase',
 ]);
+export const PROXY_EFFECT_PHASES: ReadonlySet<string> = new Set(['PREPARED', 'TERMINAL']);
+export const PROXY_EVIDENCE_LEDGER_INVALID = 'PROXY_EVIDENCE_LEDGER_INVALID';
 const HOST_CLASSES: ReadonlySet<string> = new Set([
   'production', 'dev', 'next', 'local', 'unknown-alphaus', 'external', 'static',
   'telemetry', 'optional-third-party-support', 'browser-background-google',
@@ -52,6 +58,10 @@ function optionalLifecycleIsValid(value: ProxyEvent): boolean {
   if (value.connectionFailure !== undefined && !CONNECTION_FAILURES.has(value.connectionFailure)) return false;
   if (value.containmentViolation !== undefined && !CONTAINMENT_VIOLATIONS.has(value.containmentViolation)) return false;
   if (value.addressBindingVersion !== undefined && value.addressBindingVersion !== EXACT_ADDRESS_BINDING_VERSION) return false;
+  if (value.phase !== undefined && !PROXY_EFFECT_PHASES.has(value.phase)) return false;
+  if (value.effectId !== undefined && !/^[A-Za-z0-9._-]{1,64}$/.test(value.effectId)) return false;
+  // A phase without its pairing identity, or the reverse, is incoherent.
+  if ((value.phase === undefined) !== (value.effectId === undefined)) return false;
   return true;
 }
 
@@ -136,6 +146,58 @@ export function readProxyEvents(logPath: string): ProxyEvent[] {
     }
   }
   return out;
+}
+
+/**
+ * M8 (9.4 / NW-AUD-022 R2-06): the STRICT reader. Unlike `readProxyEvents`,
+ * which tolerates a concurrently written final line, this one is for a
+ * FINALIZED log and refuses anything it cannot fully account for: a malformed
+ * line, a PREPARED effect with no terminal record, an orphan or duplicate
+ * TERMINAL record, or a phase pair whose ids disagree. An effect that happened
+ * without evidence, or evidence without its effect, can never be summarized as
+ * a complete run.
+ */
+export function readProxyEventLedger(logPath: string): ProxyEvent[] {
+  let raw: string;
+  try {
+    raw = fs.readFileSync(logPath, 'utf8');
+  } catch {
+    throw new Error(`${PROXY_EVIDENCE_LEDGER_INVALID}:UNREADABLE`);
+  }
+  const lines = raw.split(/\r?\n/).filter((line) => line.length > 0);
+  const events: ProxyEvent[] = [];
+  const prepared = new Set<string>();
+  const terminal = new Set<string>();
+  for (const line of lines) {
+    let value: unknown;
+    try {
+      value = JSON.parse(line);
+    } catch {
+      throw new Error(`${PROXY_EVIDENCE_LEDGER_INVALID}:MALFORMED_LINE`);
+    }
+    let validated: ProxyEvent;
+    try {
+      validated = validateProxyEventForPersistence(value);
+    } catch {
+      throw new Error(`${PROXY_EVIDENCE_LEDGER_INVALID}:MALFORMED_EVENT`);
+    }
+    if (validated.effectId !== undefined && validated.phase !== undefined) {
+      if (validated.phase === 'PREPARED') {
+        if (prepared.has(validated.effectId)) throw new Error(`${PROXY_EVIDENCE_LEDGER_INVALID}:DUPLICATE_PREPARED`);
+        if (terminal.has(validated.effectId)) throw new Error(`${PROXY_EVIDENCE_LEDGER_INVALID}:TERMINAL_BEFORE_PREPARED`);
+        prepared.add(validated.effectId);
+      } else {
+        if (!prepared.has(validated.effectId)) throw new Error(`${PROXY_EVIDENCE_LEDGER_INVALID}:ORPHAN_TERMINAL`);
+        if (terminal.has(validated.effectId)) throw new Error(`${PROXY_EVIDENCE_LEDGER_INVALID}:DUPLICATE_TERMINAL`);
+        terminal.add(validated.effectId);
+      }
+    }
+    events.push(validated);
+  }
+  for (const effectId of prepared) {
+    if (!terminal.has(effectId)) throw new Error(`${PROXY_EVIDENCE_LEDGER_INVALID}:UNMATCHED_PREPARED`);
+  }
+  return events;
 }
 
 export function summarizeProxyEvents(events: readonly ProxyEvent[]): ProxySummary {
