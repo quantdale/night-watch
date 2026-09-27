@@ -124,6 +124,18 @@ the gate pair (see the ledger).
 
 ## Work In Progress
 
+- M7 (tasks 8.1-8.5) is in progress; 8.1 is implemented and committed: the
+  `.env` layer is parsed FAIL CLOSED (a malformed line, an undeclared key and a
+  duplicate key are each refused with their line number; an ABSENT file is an
+  empty layer while an UNREADABLE one is a `DOTENV_UNREADABLE` error), and the
+  launchers now forward the VALIDATED process+.env merge — the dispatcher
+  spawns every child from `mergedEnvironment` (its agent, operator and scenario
+  branches) and the agent CLI reads its forwarded configuration from the merge
+  via a cached `campaignEnvironment()` (`campaignEnvironment().NIGHTWATCH_*`),
+  never from the ambient environment. `tests/unit/dotEnvLayerStrictness.test.ts`
+  7/7 and 15/15 across the launcher cones.
+  Next: 8.2 (re-check HEAD after the scan, refuse mismatched digests in the
+  read view, stop hard-coding `sourceSnapshotMatches: true`).
 - M6 is COMPLETE: 7.1-7.11 are ticked in the campaign ledger with DONE notes
   and PLAN marks M6 COMPLETE. The view-DOM baseline was intentionally
   REGENERATED (`NIGHTWATCH_UPDATE_VIEW_DOM_BASELINE=1`) because the Agent
@@ -209,6 +221,15 @@ the gate pair (see the ledger).
   store (D-145). Next: 6.12 (ENVIRONMENT_DEPENDENT refusal).
 
 ## Exact Next Action
+
+Implement 8.2 (NW-AUD-036 narrowed): re-check HEAD after the scan, refuse a
+mismatched digest in the read view, and stop hard-coding
+`sourceSnapshotMatches: true` — read the source-authority/source-read modules
+and the Control Center source view, then continue 8.3-8.5 and close M7 with
+focused + `gate:milestone` PASS, the C-00 integrate and the `gh` CI observation
+(OD-3) as in M4-M6.
+
+## Superseded Next Action (8.1, complete)
 
 Read tasks 8.1-8.x and the environment-surface loader
 (`src/core/config/environmentSurface.ts`) plus the launchers that forward
