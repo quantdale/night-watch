@@ -50,7 +50,9 @@ test('NW-AUD-018: writer census is non-zero, total, and digestible', () => {
   for (const klass of WRITER_CLASSES) {
     expect(Object.prototype.hasOwnProperty.call(census.byClass, klass)).toBe(true);
   }
-  expect(census.byClass.RECORDER_FIREWALLED).toBe(1);
+  // M5 (6.13): the product run receipt writer publishes into the recorder's
+  // run directory, so RECORDER_FIREWALLED legitimately covers two files.
+  expect(census.byClass.RECORDER_FIREWALLED).toBe(2);
   expect(census.byClass.MANUAL_PUBLISHER).toBeGreaterThanOrEqual(5);
   // The audit's cited bypass writers are all claimed.
   const byFile = new Map(census.writers.map((w) => [w.file, w]));

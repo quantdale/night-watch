@@ -819,7 +819,7 @@ test.describe('owner-local adapters over temp checkouts', () => {
     expect(data.records.some((record) => record.bugId === 'BUGATLAS-FIXTURE-001')).toBe(true);
   });
 
-  test('bug atlas is DATA_BLOCKED when neither snapshot nor history exists', async () => {
+  test('bug atlas is ADAPTER_UNAVAILABLE when neither snapshot nor history exists', async () => {
     const root = makeTempRoot();
     const context = createOwnerLocalInvestigationContext({
       siblingRoot: root,
@@ -829,7 +829,10 @@ test.describe('owner-local adapters over temp checkouts', () => {
     });
     const loaded = await context.bugAtlas.load();
     expect(loaded.status).toBe('BLOCKED');
-    if (loaded.status === 'BLOCKED') expect(loaded.class).toBe('DATA_BLOCKED');
+    // M5 (6.15/C-29): an unwired adapter reports ADAPTER_UNAVAILABLE — the
+    // lane has nothing to load — rather than a data-blocked reading of records
+    // that do not exist.
+    if (loaded.status === 'BLOCKED') expect(loaded.class).toBe('ADAPTER_UNAVAILABLE');
     const session = createLocalInvestigationToolSession(context);
     const result = await session.executor.execute(call('QUERY_BUG_ATLAS', { terms: ['coupon'] }));
     expect(result.ok).toBe(false);
@@ -842,7 +845,7 @@ test.describe('owner-local adapters over temp checkouts', () => {
     const plain = createOwnerLocalInvestigationContext({ siblingRoot: root, scanConfig: fakeScanConfig() });
     const blocked = await plain.systemAtlas.load();
     expect(blocked.status).toBe('BLOCKED');
-    if (blocked.status === 'BLOCKED') expect(blocked.class).toBe('NOT_CONFIGURED');
+    if (blocked.status === 'BLOCKED') expect(blocked.class).toBe('ADAPTER_UNAVAILABLE');
     const configured = createOwnerLocalInvestigationContext({
       siblingRoot: root,
       scanConfig: fakeScanConfig(),

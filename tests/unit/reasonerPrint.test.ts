@@ -217,7 +217,7 @@ process.stdout.write(JSON.stringify({
   }
 });
 
-test('print adapter salvages FORM_HYPOTHESIS without evidenceRefs and drops unknown intents', () => {
+test('print adapter salvages FORM_HYPOTHESIS without evidenceRefs and drops unknown or ungrounded intents', () => {
   const dir = scratchDir();
   try {
     const fake = path.join(dir, 'print.mjs');
@@ -264,10 +264,13 @@ process.stdout.write(JSON.stringify({
     });
     expect(result.status).toBe(0);
     const parsed = JSON.parse(result.stdout) as { intents: Array<{ kind: string; hypothesisId?: string; evidenceRefs?: string[] }>; hypotheses: unknown };
-    expect(parsed.intents.map((intent) => intent.kind)).toEqual(['FORM_HYPOTHESIS', 'PROPOSE_CANDIDATE']);
-    const [hypothesis, proposal] = parsed.intents;
+    // M5 (6.10/C-24): an ungrounded PROPOSE_CANDIDATE is DROPPED, never
+    // repaired with refs the model did not cite. The salvage path keeps only
+    // intents that survive the protocol unchanged.
+    expect(parsed.intents.map((intent) => intent.kind)).toEqual(['FORM_HYPOTHESIS']);
+    const [hypothesis] = parsed.intents;
     expect(hypothesis?.hypothesisId).toBe('Hypothesis-1');
-    expect(proposal?.evidenceRefs).toEqual(['ev:sha256:aaaaaaaaaaaaaaaaaaaaaaaa']);
+    expect(JSON.stringify(parsed)).not.toContain('ev:sha256:aaaaaaaaaaaaaaaaaaaaaaaa');
     expect(parsed.hypotheses).toEqual([]);
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
