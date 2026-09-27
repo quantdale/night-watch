@@ -167,12 +167,17 @@ test.describe('Phase 9A.1 — observer semantic evaluation ledger', () => {
         await page.evaluate(async (target) => {
           for (let i = 0; i < 550; i++) {
             await fetch(`${target}/api/bulk`);
+            // M8 (9.6): response-body acquisition is bounded to
+            // MAX_CONCURRENT_BODY_READS, so a saturated gate REFUSES a read
+            // instead of queueing it. Space the loop so the ledger reaches its
+            // cap through accepted reads rather than refused ones.
+            await new Promise((resolve) => setTimeout(resolve, 10));
           }
         }, server.origin);
       } finally {
         observer.endJourneyIntent('ledger-overflow');
       }
-      await expect.poll(() => observer.semanticEvaluations().length, { timeout: 5_000 }).toBe(512);
+      await expect.poll(() => observer.semanticEvaluations().length, { timeout: 30_000 }).toBe(512);
 
       const evaluations = observer.semanticEvaluations();
       expect(evaluations.length).toBe(512); // exactly the cap
