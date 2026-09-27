@@ -1565,6 +1565,13 @@
         "isolated-scratch"
       ]
     },
+    "tests/unit/proxyInstanceNonce.test.ts": {
+      "class": "PROCESS_ISOLATED_ONLY",
+      "signals": [
+        "owner-state",
+        "isolated-scratch"
+      ]
+    },
     "tests/unit/proxyPortLeaseDeterminism.test.ts": {
       "class": "PARALLEL_SAFE",
       "signals": []

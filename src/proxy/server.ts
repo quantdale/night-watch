@@ -8,6 +8,7 @@
 // ---------------------------------------------------------------------------
 
 import fs from 'node:fs';
+import { randomBytes } from 'node:crypto';
 import http from 'node:http';
 import net from 'node:net';
 import path from 'node:path';
@@ -153,6 +154,8 @@ export interface OutboundProxyServer {
   readonly address: string;
   readonly port: number;
   readonly eventLogPath: string;
+  /** M8 (9.8): the per-start instance nonce this proxy echoes and logs. */
+  readonly startNonce: string;
   readonly server: HttpServer;
   health(): boolean;
   close(): Promise<void>;
@@ -176,9 +179,29 @@ export async function startOutboundProxy(opts: OutboundProxyOptions): Promise<Ou
     && (!Number.isInteger(leaseOwner) || leaseOwner === process.pid);
   if (releaseLeaseOnClose) process.env.NIGHTWATCH_PROXY_LEASE_OWNER_PID = String(process.pid);
   ensureEventLog(eventLogPath);
+  // M8 (9.8 / NW-AUD-016 narrowed): a per-START nonce. It is echoed by the
+  // health endpoint, recorded in the runtime state and written as the FIRST
+  // event of this instance's log, so admission can tell THIS proxy instance
+  // from any other loopback listener that happens to answer.
+  const startNonce = randomBytes(16).toString('hex');
   let eventSeq = 0;
   const requestedRunId = opts.runId ?? process.env.NIGHTWATCH_RUN_ID ?? 'playwright-suite';
   const runId = /^[A-Za-z0-9._-]{1,128}$/.test(requestedRunId) ? requestedRunId : 'playwright-suite';
+  // Bind the instance identity INTO the log: its first record carries the
+  // nonce, so a log can only ever belong to the instance that produced it.
+  appendProxyEvent(eventLogPath, {
+    seq: eventSeq++,
+    timestamp: new Date().toISOString(),
+    runId,
+    protocol: 'http',
+    host: '127.0.0.1',
+    port: null,
+    classification: 'internal',
+    decision: 'allow',
+    ruleId: 'instance-start',
+    reason: 'proxy instance start: the per-start nonce is bound into this log',
+    startNonce,
+  });
   const server = http.createServer();
   const resolver = opts.resolver ?? createSystemProxyResolver();
   const resolverTimeoutMs = boundedTimeout(opts.resolverTimeoutMs, PROXY_RESOLUTION_TIMEOUT_MS, 5_000);
@@ -345,7 +368,11 @@ export async function startOutboundProxy(opts: OutboundProxyOptions): Promise<Ou
     // This endpoint is only for the local startup health check. It is not a
     // destination and never invokes policy, DNS, or an upstream connection.
     if (req.url === '/__nightwatch_health' && req.method === 'GET') {
-      res.writeHead(evidenceWriteFailed ? 503 : 204, { Connection: 'close' });
+      res.writeHead(evidenceWriteFailed ? 503 : 204, {
+        Connection: 'close',
+        // The instance nonce is echoed on every health answer, healthy or not.
+        'X-Nightwatch-Proxy-Nonce': startNonce,
+      });
       res.end();
       return;
     }
@@ -731,6 +758,7 @@ export async function startOutboundProxy(opts: OutboundProxyOptions): Promise<Ou
     address: proxyAddress(host, actualPort),
     port: actualPort,
     eventLogPath,
+    startNonce,
     server,
     health: () => server.listening && server.address() !== null && !evidenceWriteFailed,
     close: () =>

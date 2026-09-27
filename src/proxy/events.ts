@@ -25,6 +25,9 @@ const PROXY_EVENT_KEYS: ReadonlySet<string> = new Set([
   // record before the effect and exactly one TERMINAL record after it, joined
   // by a shared effectId.
   'effectId', 'phase',
+  // M8 (9.8 / NW-AUD-016 narrowed): the instance nonce, bound into the log's
+  // first record so evidence is attributable to ONE proxy instance.
+  'startNonce',
 ]);
 export const PROXY_EFFECT_PHASES: ReadonlySet<string> = new Set(['PREPARED', 'TERMINAL']);
 export const PROXY_EVIDENCE_LEDGER_INVALID = 'PROXY_EVIDENCE_LEDGER_INVALID';
@@ -62,6 +65,7 @@ function optionalLifecycleIsValid(value: ProxyEvent): boolean {
   if (value.effectId !== undefined && !/^[A-Za-z0-9._-]{1,64}$/.test(value.effectId)) return false;
   // A phase without its pairing identity, or the reverse, is incoherent.
   if ((value.phase === undefined) !== (value.effectId === undefined)) return false;
+  if (value.startNonce !== undefined && !/^[0-9a-f]{32}$/.test(value.startNonce)) return false;
   return true;
 }
 

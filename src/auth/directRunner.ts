@@ -179,6 +179,7 @@ async function startCaptureProxy(
       containmentVersion: PROXY_CONTAINMENT_VERSION,
       resolvedAddressPolicyVersion: RESOLVED_ADDRESS_POLICY_VERSION,
       addressBindingVersion: EXACT_ADDRESS_BINDING_VERSION,
+      startNonce: '0'.repeat(32),
       eventLogPath: path.resolve(eventLog),
     };
     writeProxyRuntimeState(state, stateFile);

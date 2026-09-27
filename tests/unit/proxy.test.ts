@@ -286,6 +286,7 @@ test.describe('outer proxy policy and parsing', () => {
         resolvedAddressPolicyVersion: RESOLVED_ADDRESS_POLICY_VERSION,
         addressBindingVersion: EXACT_ADDRESS_BINDING_VERSION,
         eventLogPath: eventLog,
+        startNonce: '0'.repeat(32),
       })).toBe(false);
 
       const stateFile = path.join(temp, 'proxy-state.json');
@@ -299,6 +300,7 @@ test.describe('outer proxy policy and parsing', () => {
         resolvedAddressPolicyVersion: RESOLVED_ADDRESS_POLICY_VERSION,
         addressBindingVersion: EXACT_ADDRESS_BINDING_VERSION,
         eventLogPath: eventLog,
+        startNonce: '0'.repeat(32),
       }, stateFile);
       await expect(requireProxyRuntime('local', stateFile)).rejects.toThrow(/startup is aborted/);
     } finally {

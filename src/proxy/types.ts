@@ -46,6 +46,8 @@ export interface ProxyEvent {
    */
   effectId?: string;
   phase?: 'PREPARED' | 'TERMINAL';
+  /** M8 (9.8): the instance nonce, present on the log's first record. */
+  startNonce?: string;
 }
 
 export interface ProxySummary {
@@ -78,4 +80,11 @@ export interface ProxyRuntimeState {
   resolvedAddressPolicyVersion: typeof RESOLVED_ADDRESS_POLICY_VERSION;
   addressBindingVersion: typeof EXACT_ADDRESS_BINDING_VERSION;
   eventLogPath: string;
+  /**
+   * M8 (9.8 / NW-AUD-016 narrowed): the per-START instance nonce. The health
+   * endpoint echoes it, the runtime-state file records it and the event log's
+   * first record binds it, so a random loopback listener that merely answers
+   * HTTP cannot impersonate this proxy instance.
+   */
+  startNonce?: string;
 }

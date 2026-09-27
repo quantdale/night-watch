@@ -42,6 +42,7 @@ export default async function globalSetup(): Promise<() => Promise<void>> {
       resolvedAddressPolicyVersion: RESOLVED_ADDRESS_POLICY_VERSION,
       addressBindingVersion: EXACT_ADDRESS_BINDING_VERSION,
       eventLogPath: eventLog,
+      startNonce: proxy.startNonce,
     }))) {
       throw new Error('Nightwatch outer proxy failed its startup health check');
     }
@@ -56,6 +57,7 @@ export default async function globalSetup(): Promise<() => Promise<void>> {
         resolvedAddressPolicyVersion: RESOLVED_ADDRESS_POLICY_VERSION,
         addressBindingVersion: EXACT_ADDRESS_BINDING_VERSION,
         eventLogPath: path.resolve(eventLog),
+        startNonce: '0'.repeat(32),
       },
       stateFile
     );

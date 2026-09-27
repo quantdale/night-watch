@@ -23,7 +23,7 @@ function parseState(file: string): ProxyRuntimeState {
   }
   const expectedKeys = [
     'address', 'host', 'port', 'environment', 'policyVersion', 'containmentVersion',
-    'resolvedAddressPolicyVersion', 'addressBindingVersion', 'eventLogPath',
+    'resolvedAddressPolicyVersion', 'addressBindingVersion', 'eventLogPath', 'startNonce',
   ].sort();
   const actualKeys = Object.keys(value).sort();
   if (actualKeys.length !== expectedKeys.length || actualKeys.some((key, index) => key !== expectedKeys[index])) {
@@ -44,7 +44,8 @@ function parseState(file: string): ProxyRuntimeState {
     typeof state.eventLogPath !== 'string' ||
     state.eventLogPath.includes('\0') ||
     !path.isAbsolute(state.eventLogPath) ||
-    state.address !== (state.host === '::1' ? `http://[::1]:${state.port}` : `http://127.0.0.1:${state.port}`)
+    state.address !== (state.host === '::1' ? `http://[::1]:${state.port}` : `http://127.0.0.1:${state.port}`) ||
+    (state.startNonce !== undefined && !/^[0-9a-f]{32}$/.test(state.startNonce))
   ) {
     throw new Error('Nightwatch outer proxy state failed validation');
   }
@@ -67,8 +68,17 @@ export async function checkProxyHealth(state: ProxyRuntimeState): Promise<boolea
         timeout: 1000,
       },
       (response) => {
+        // M8 (9.8 / NW-AUD-016 narrowed): when the runtime state names an
+        // instance nonce, the health answer must ECHO it. A different loopback
+        // listener that merely answers HTTP cannot produce the nonce, so it
+        // fails admission instead of being trusted.
+        const echoed = response.headers['x-nightwatch-proxy-nonce'];
+        const expected = state.startNonce;
+        const nonceMatches = expected === undefined
+          ? true
+          : typeof echoed === 'string' && echoed === expected;
         response.resume();
-        response.once('end', () => resolve(response.statusCode === 204));
+        response.once('end', () => resolve(response.statusCode === 204 && nonceMatches));
       }
     );
     request.once('error', () => resolve(false));
