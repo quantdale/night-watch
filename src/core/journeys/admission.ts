@@ -17,13 +17,42 @@ type AdmissionStatus =
   | 'REFUTED'
   | 'SUPERSEDED_BY_NIGHTWATCH_DEFECT';
 
+/**
+ * M6 (7.3/C-10): the closed replay-context role vocabulary. A context is
+ * ROLE-typed: independence is a property of the role, not of a run label.
+ */
+export const REPLAY_CONTEXT_ROLES = [
+  'FIRST_OBSERVATION',
+  'FRESH_CONTEXT_REPLAY',
+  'BOUNDED_REPETITION',
+] as const;
+export type ReplayContextRole = (typeof REPLAY_CONTEXT_ROLES)[number];
+
 export interface AnomalyObservation {
   runId: string;
   journeyId: string;
   contractVersion: string;
   contractDigest: string;
   fingerprint: string;
-  contextKind: 'FIRST_OBSERVATION' | 'FRESH_CONTEXT_REPLAY' | 'BOUNDED_REPETITION';
+  contextKind: ReplayContextRole;
+}
+
+/**
+ * M6 (7.3/C-10): the identity of one independent replay context. The SAME run
+ * id observed under two roles is TWO contexts, and the same role observed
+ * twice under one run id is ONE. The previous admission keyed on `runId`
+ * alone, so a reused label could satisfy the repetition gates while a genuine
+ * second role could be silently merged away.
+ */
+export function roleTypedContextId(observation: {
+  readonly runId: string;
+  readonly contextKind: ReplayContextRole;
+}): string {
+  return `${observation.contextKind}:${observation.runId}`;
+}
+
+export function isReplayContextRole(value: unknown): value is ReplayContextRole {
+  return typeof value === 'string' && (REPLAY_CONTEXT_ROLES as readonly string[]).includes(value);
 }
 
 export interface AdmissionResult {
@@ -40,10 +69,16 @@ export interface AdmissionResult {
 function exactContexts(observations: readonly AnomalyObservation[]): AnomalyObservation[] {
   const seen = new Set<string>();
   return observations.filter((item) => {
-    if (seen.has(item.runId)) return false;
-    seen.add(item.runId);
+    const key = roleTypedContextId(item);
+    if (seen.has(key)) return false;
+    seen.add(key);
     return true;
   });
+}
+
+/** The number of DISTINCT roles the observations actually exercised. */
+function distinctRoleCount(observations: readonly AnomalyObservation[]): number {
+  return new Set(observations.map((item) => item.contextKind)).size;
 }
 
 /** Evaluate one hypothesis under a frozen contract and bounded observation set. */
@@ -77,15 +112,25 @@ export function evaluateAnomalyAdmission(input: {
     item.contractVersion === hypothesis.contractVersion &&
     item.contractDigest === hypothesis.contractDigest,
   ));
-  if (exact.length >= 3) {
-    return { fingerprint: hypothesis.fingerprint, journeyId: hypothesis.journeyId, contractDigest: hypothesis.contractDigest, status: 'L2_REPEATED', level: 'L2', exactRuns: exact.map((item) => item.runId), distinctContextCount: exact.length, reason: 'exact fingerprint in three or more independent contexts under the frozen contract' };
+  // M6 (7.3/C-10): repetition gates require a genuinely DIFFERENT role, so
+  // three runs of one role can never stand in for independent contexts and a
+  // reused run label can never merge two roles into one.
+  const exactRoles = distinctRoleCount(exact);
+  if (exact.length >= 3 && exactRoles >= 2) {
+    return { fingerprint: hypothesis.fingerprint, journeyId: hypothesis.journeyId, contractDigest: hypothesis.contractDigest, status: 'L2_REPEATED', level: 'L2', exactRuns: exact.map((item) => roleTypedContextId(item)), distinctContextCount: exact.length, reason: 'exact fingerprint in three or more independent role-typed contexts under the frozen contract' };
+  }
+  if (exact.length >= 2 && exactRoles >= 2) {
+    return { fingerprint: hypothesis.fingerprint, journeyId: hypothesis.journeyId, contractDigest: hypothesis.contractDigest, status: 'L1_REPRODUCED', level: 'L1', exactRuns: exact.map((item) => roleTypedContextId(item)), distinctContextCount: exact.length, reason: 'exact fingerprint reproduced in a genuinely different role-typed context under the frozen contract' };
   }
   if (exact.length >= 2) {
-    return { fingerprint: hypothesis.fingerprint, journeyId: hypothesis.journeyId, contractDigest: hypothesis.contractDigest, status: 'L1_REPRODUCED', level: 'L1', exactRuns: exact.map((item) => item.runId), distinctContextCount: exact.length, reason: 'exact fingerprint reproduced in a fresh context under the frozen contract' };
+    // Repeated EXACTLY, but every repetition carried the SAME role: the
+    // fingerprint is genuinely observed and is retained as an L0 candidate,
+    // never promoted as a reproduction in a fresh context.
+    return { fingerprint: hypothesis.fingerprint, journeyId: hypothesis.journeyId, contractDigest: hypothesis.contractDigest, status: 'L0_OBSERVED', level: 'L0', exactRuns: exact.map((item) => roleTypedContextId(item)), distinctContextCount: exact.length, reason: 'exact fingerprint repeated within a single role-typed context; a second role is required for L1/L2' };
   }
   if (exact.length === 1) {
     const status: AdmissionStatus = input.matrixComplete && sameContractContexts.length > 1 ? 'REFUTED' : 'L0_OBSERVED';
-    return { fingerprint: hypothesis.fingerprint, journeyId: hypothesis.journeyId, contractDigest: hypothesis.contractDigest, status, level: 'L0', exactRuns: exact.map((item) => item.runId), distinctContextCount: 1, reason: status === 'REFUTED' ? 'bounded fresh-context matrix completed without exact fingerprint reproduction' : 'single bounded observation is retained as an L0 candidate' };
+    return { fingerprint: hypothesis.fingerprint, journeyId: hypothesis.journeyId, contractDigest: hypothesis.contractDigest, status, level: 'L0', exactRuns: exact.map((item) => roleTypedContextId(item)), distinctContextCount: 1, reason: status === 'REFUTED' ? 'bounded fresh-context matrix completed without exact fingerprint reproduction' : 'single bounded observation is retained as an L0 candidate' };
   }
   return { fingerprint: hypothesis.fingerprint, journeyId: hypothesis.journeyId, contractDigest: hypothesis.contractDigest, status: input.matrixComplete ? 'REFUTED' : 'NOT_REPRODUCED', level: null, exactRuns: [], distinctContextCount: 0, reason: 'no exact fingerprint observed under the frozen contract' };
 }

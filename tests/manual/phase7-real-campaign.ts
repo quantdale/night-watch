@@ -107,6 +107,7 @@ import {
 } from '../../src/core/portfolio/runtimeBinding';
 import { buildCurrentRealApprovedUniverse } from '../../src/core/portfolio/realUniverse';
 import type { CampaignPortfolioRuntimeBinding } from '../../src/core/campaign/types';
+import { isReplayContextRole, type ReplayContextRole } from '../../src/core/journeys/admission';
 
 // Phase 16C: these constants are canonical runtime-profile data now; local
 // aliases preserve the historical adapter names.
@@ -475,17 +476,25 @@ function candidateFromObservation(input: {
   readonly api: CampaignAnomalyCandidate['api'];
   readonly contractVersion: string;
   readonly contractDigest: string;
+  /**
+   * M6 (7.3/C-10): the replay role is REQUIRED input from the caller that ran
+   * the context. It is never inferred from an observation flag, because a flag
+   * is derived data and an inference is exactly how a replay came to be
+   * labelled as a first observation.
+   */
+  readonly contextRole: ReplayContextRole;
   readonly replay?: CampaignAnomalyCandidate['replay'];
 }): CampaignAnomalyCandidate {
   const journeyId = input.workItem.journeyId;
   if (journeyId === null) throw new Error('CAMPAIGN_ANOMALY_JOURNEY_MISSING');
+  if (!isReplayContextRole(input.contextRole)) throw new Error('CAMPAIGN_ANOMALY_CONTEXT_ROLE_INVALID');
   const correlation = sourceCorrelationFor(input.manifest, journeyId);
   return {
     observation: { ...input.observation, sourceFreshness: correlation.candidates[0]?.sourceFreshness ?? 'LOCAL_TRACKING_REF_ONLY' },
     journeyId,
     contractVersion: input.contractVersion,
     contractDigest: input.contractDigest,
-    contextKind: input.observation.reproduced ? 'FRESH_CONTEXT_REPLAY' : 'FIRST_OBSERVATION',
+    contextKind: input.contextRole,
     originalSequence: input.originalSequence,
     technicalSeverity: 'HIGH',
     breadth: 'NARROW',
@@ -678,6 +687,8 @@ function journeyCandidate(input: {
     manifest: input.manifest,
     workItem: input.workItem,
     observation,
+    // This pass IS the first observation of the journey.
+    contextRole: 'FIRST_OBSERVATION',
     originalSequence: sequence,
     browser: browserObservationFrom({ anomaly: observation, journeyId: input.workItem.journeyId!, routeClass: input.evidence.finalRouteClass, failed: true, operationFamily: input.workItem.journeyId! }),
     api: null,
@@ -735,6 +746,7 @@ function explorationCandidate(input: {
     manifest: input.manifest,
     workItem: input.workItem,
     observation,
+    contextRole: 'FIRST_OBSERVATION',
     originalSequence: sequence,
     browser: browserObservationFrom({ anomaly: observation, journeyId: input.workItem.journeyId!, routeClass: input.evidence.states.at(-1)?.routeClass ?? routeForJourney(input.workItem.journeyId!), failed: true, operationFamily: input.workItem.journeyId! }),
     api: null,
@@ -803,6 +815,9 @@ function apiCandidate(input: {
     manifest: input.manifest,
     workItem: input.workItem,
     observation,
+    // The caller knows whether this was the first pass or a replay; the role
+    // is passed explicitly rather than derived from the observation.
+    contextRole: input.first ? 'FIRST_OBSERVATION' : 'FRESH_CONTEXT_REPLAY',
     originalSequence: [action],
     browser: browserObservationFrom({ anomaly: observation, journeyId: input.workItem.journeyId!, routeClass: '/api-only', failed: false, operationFamily: input.operationId }),
     api: {
