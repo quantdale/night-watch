@@ -8,7 +8,6 @@
       "reason": "Offline, deterministic suites that the full canonical regression executes. They are not in a required gate lane because the authoritative gate is bounded for CI runtime; leaving them unclassified is what made the gap invisible.",
       "evidenceLane": "npm test \u2014 full canonical regression, run and recorded per checkpoint (not a CI step)",
       "files": [
-        "tests/helpers/devLaneAuthorization.ts",
         "tests/unit/accessibilityAudit.test.ts",
         "tests/unit/adapterUnavailableAndDefaults.test.ts",
         "tests/unit/agentAutonomyIntegration.test.ts",
