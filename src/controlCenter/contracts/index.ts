@@ -8,6 +8,7 @@ export * from './executionGraph';
 export * from './campaign';
 export * from './sourceGraph';
 export * from './findings';
+export * from './agentCampaigns';
 export * from './reviewer';
 export * from './events';
 export * from './sanitize';

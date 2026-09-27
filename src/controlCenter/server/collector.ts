@@ -9,6 +9,7 @@ import type { ControlCenterCampaignCoverageDto, ControlCenterCampaignSummaryDto 
 import type { ControlCenterSourceGraphDto, ControlCenterSourceSummaryDto, ControlCenterSourceSurfacesDto } from '../contracts/sourceGraph';
 import type { ControlCenterFindingsDto } from '../contracts/findings';
 import type { ControlCenterReviewerDto } from '../contracts/reviewer';
+import type { ControlCenterAgentCampaignsDto } from '../contracts/agentCampaigns';
 import type { ControlCenterSystemMapDto, ControlCenterSystemMapQueryDto } from '../contracts/systemMap';
 import type { SystemMapLevelSegment, SystemMapQuerySegment } from './router';
 
@@ -38,6 +39,12 @@ export interface ControlCenterCollector {
   sourceSurfaces(query: ControlCenterSourceSurfaceQuery): MaybePromise<ControlCenterSourceSurfacesDto>;
   sourceGraph(surfaceId: SafeControlCenterId | null, depth: number): MaybePromise<ControlCenterSourceGraphDto | null>;
   findings(query: ControlCenterListQuery): MaybePromise<ControlCenterFindingsDto>;
+  /**
+   * M6 (7.6/C-20): the read-only autonomous-hunt view. Rows are measured from
+   * the durable agent-finding store and carry identities/counts only — never a
+   * filesystem path.
+   */
+  agentCampaigns(): MaybePromise<ControlCenterAgentCampaignsDto>;
   /** The reviewer surface over the finding-intelligence and review cones. */
   reviewer(query: ControlCenterListQuery): MaybePromise<ControlCenterReviewerDto>;
   /** C-15c. Null means the focus is missing, unknown, or supplied where the

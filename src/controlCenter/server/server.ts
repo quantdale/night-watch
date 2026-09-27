@@ -430,6 +430,8 @@ async function dispatch(
           if (typeof list === 'string') return sendError(response, list, headOnly);
           return sendJson(response, 200, await options.collector.findings(list), headOnly);
         }
+      case 'agentCampaigns':
+        return sendJson(response, 200, await options.collector.agentCampaigns(), headOnly);
       case 'reviewer':
         {
           const list = listQuery(url);

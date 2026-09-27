@@ -20,6 +20,8 @@ import { createRunEvidenceReader, type RunEvidenceReader, type RunEvidenceSnapsh
 import { createSourceAuthority, type SourceAuthority, type SourceAuthoritySnapshot } from '../authorities/sourceAuthority';
 import { createCampaignAuthority, type CampaignAuthority, type CampaignAuthoritySnapshot } from '../authorities/campaignAuthority';
 import { createFindingsAuthority, type FindingsAuthority, type FindingsAuthoritySnapshot } from '../authorities/findingsAuthority';
+import { createAgentCampaignAuthority, type AgentCampaignAuthority } from '../authorities/agentCampaignAuthority';
+import { projectAgentCampaigns } from '../adapters/agentCampaignsAdapter';
 import { CONTROL_CENTER_SNAPSHOT_KEYS, ControlCenterSnapshotCoordinator } from './snapshotCoordinator';
 import { CONTROL_CENTER_HEALTH_SCHEMA_VERSION } from '../contracts/health';
 import type { ControlCenterCollector, ControlCenterListQuery } from './collector';
@@ -81,6 +83,8 @@ export interface DefaultControlCenterCollectorOptions {
   readonly sourceAuthority?: SourceAuthority;
   readonly campaignAuthority?: CampaignAuthority;
   readonly findingsAuthority?: FindingsAuthority;
+  /** M6 (7.6): the read-only agent-campaign authority (injectable in tests). */
+  readonly agentCampaignAuthority?: AgentCampaignAuthority;
   /**
    * The owner-local review authority. OPT-IN: without it the reviewer surface
    * reports NO_LOCAL_REVIEW_STORE for every finding, which is what it did
@@ -272,6 +276,7 @@ export function createControlCenterServices(options: DefaultControlCenterCollect
   const sourceAuthority = options.sourceAuthority ?? createSourceAuthority();
   const campaignAuthority = options.campaignAuthority ?? createCampaignAuthority({ sourceAuthority });
   const findingsAuthority = options.findingsAuthority ?? createFindingsAuthority();
+  const agentCampaignAuthority = options.agentCampaignAuthority ?? createAgentCampaignAuthority();
   // OPT-IN. Without a review authority the reviewer surface reports
   // NO_LOCAL_REVIEW_STORE for every finding, exactly as it did before
   // persistence existed.
@@ -424,6 +429,20 @@ export function createControlCenterServices(options: DefaultControlCenterCollect
       const query = QUERY_FOR_SEGMENT[segment];
       if (query === undefined) return null;
       return systemMapQuery(systemMapInputFromDiscovery(source.discovery as never), query, focusId);
+    },
+    agentCampaigns: () => {
+      try {
+        return projectAgentCampaigns(agentCampaignAuthority.snapshot());
+      } catch {
+        // A failing authority is an explicitly unavailable view.
+        return projectAgentCampaigns({
+          schemaVersion: 'nightwatch.control-center.agent-campaign-authority.v1',
+          state: 'UNAVAILABLE',
+          rows: [],
+          actionableFindings: 0,
+          reasonCodes: ['AGENT_FINDINGS_UNAVAILABLE'],
+        });
+      }
     },
     findings: async (query) => {
       const { findings } = await readAuthoritySnapshot();

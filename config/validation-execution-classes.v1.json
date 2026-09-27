@@ -433,6 +433,12 @@
       "class": "PARALLEL_SAFE",
       "signals": []
     },
+    "tests/unit/controlCenterAgentCampaigns.test.ts": {
+      "class": "PARALLEL_SAFE",
+      "signals": [
+        "isolated-scratch"
+      ]
+    },
     "tests/unit/controlCenterAuthorityIntegration.test.ts": {
       "class": "PARALLEL_SAFE",
       "signals": []

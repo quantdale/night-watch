@@ -21,6 +21,7 @@ import { CONTROL_CENTER_EXECUTION_GRAPH_SCHEMA_VERSION } from '../../src/control
 import { CONTROL_CENTER_CAMPAIGN_COVERAGE_SCHEMA_VERSION, CONTROL_CENTER_CAMPAIGN_SUMMARY_SCHEMA_VERSION } from '../../src/controlCenter/contracts/campaign';
 import { CONTROL_CENTER_SOURCE_GRAPH_SCHEMA_VERSION, CONTROL_CENTER_SOURCE_SUMMARY_SCHEMA_VERSION, CONTROL_CENTER_SOURCE_SURFACES_SCHEMA_VERSION } from '../../src/controlCenter/contracts/sourceGraph';
 import { CONTROL_CENTER_FINDINGS_SCHEMA_VERSION } from '../../src/controlCenter/contracts/findings';
+import type { ControlCenterAgentCampaignsDto } from '../../src/controlCenter/contracts/agentCampaigns';
 
 interface HttpResult {
   readonly status: number;
@@ -74,6 +75,13 @@ function emptyCollector(): ControlCenterCollector {
   const sourceGraph = { schemaVersion: CONTROL_CENTER_SOURCE_GRAPH_SCHEMA_VERSION, surfaceId: null, depth: 0, nodes: [], edges: [], nodeLimit: 250, edgeLimit: 500, truncated: false } as unknown as ControlCenterSourceGraphDto;
   const findings = { schemaVersion: CONTROL_CENTER_FINDINGS_SCHEMA_VERSION, state: 'EMPTY', items: [], page: { limit: 50, nextCursor: null, truncated: false } } as ControlCenterFindingsDto;
   const reviewer = projectReviewer({ findings: [] });
+  const agentCampaigns = {
+    schemaVersion: 'nightwatch.control-center.agent-campaigns.v1',
+    state: 'EMPTY',
+    rows: [],
+    actionableFindings: 0,
+    reasonCodes: ['AGENT_FINDINGS_EMPTY'],
+  } as unknown as ControlCenterAgentCampaignsDto;
   return {
     health: () => createDefaultHealth(),
     meta: () => projectMeta(),
@@ -83,6 +91,7 @@ function emptyCollector(): ControlCenterCollector {
     run: () => detail,
     timeline: () => timeline,
     executionGraph: () => graph,
+    agentCampaigns: () => agentCampaigns,
     campaignSummary: () => campaignSummary,
     campaignCoverage: () => campaignCoverage,
     sourceSummary: () => sourceSummary,

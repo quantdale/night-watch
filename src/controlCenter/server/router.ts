@@ -17,6 +17,8 @@ export type ControlCenterRoute =
   | { readonly kind: 'sourceGraph' }
   | { readonly kind: 'findings' }
   | { readonly kind: 'reviewer' }
+  /** M6 (7.6/C-20): the read-only autonomous-hunt view. */
+  | { readonly kind: 'agentCampaigns' }
   /**
    * The ONE local write route. It is a distinct route kind rather than a
    * method branch on `reviewer`, so a POST can never be answered by a read
@@ -99,6 +101,7 @@ export function parseControlCenterPath(pathname: string): ControlCenterPathResul
   if (parts.length === 5 && parts[3] === 'source' && parts[4] === 'graph') return { kind: 'route', route: { kind: 'sourceGraph' } };
   if (parts.length === 4 && parts[3] === 'findings') return { kind: 'route', route: { kind: 'findings' } };
   if (parts.length === 4 && parts[3] === 'reviewer') return { kind: 'route', route: { kind: 'reviewer' } };
+  if (parts.length === 5 && parts[3] === 'agent' && parts[4] === 'campaigns') return { kind: 'route', route: { kind: 'agentCampaigns' } };
   if (parts.length === 5 && parts[3] === 'reviewer' && parts[4] === 'decision') return { kind: 'route', route: { kind: 'reviewerDecision' } };
   if (parts.length === 4 && parts[3] === 'events') return { kind: 'route', route: { kind: 'events' } };
   return { kind: 'unknown' };
