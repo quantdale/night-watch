@@ -134,8 +134,15 @@ the gate pair (see the ledger).
   via a cached `campaignEnvironment()` (`campaignEnvironment().NIGHTWATCH_*`),
   never from the ambient environment. `tests/unit/dotEnvLayerStrictness.test.ts`
   7/7 and 15/15 across the launcher cones.
-  Next: 8.2 (re-check HEAD after the scan, refuse mismatched digests in the
-  read view, stop hard-coding `sourceSnapshotMatches: true`).
+  8.2 — HEAD is re-checked AFTER the scan (`currentness.currentSnapshot(repoId)`
+  per scanned repository, computed once), the surface descriptor carries the
+  verified `sourceSnapshotMatches` (true only on a match, false on a mismatch,
+  ABSENT when the re-check could not run), the Phase 24 projection reads that
+  fact instead of the hard-coded `true`, and the read view's proof signal now
+  requires `=== true` — `tests/unit/sourceSnapshotRecheck.test.ts` 4/4 and 207
+  source-cone tests green.
+  Next: 8.3 (NOT_APPLICABLE / INVALID_INPUT / truncated evidence is incomplete,
+  never PASS).
 - M6 is COMPLETE: 7.1-7.11 are ticked in the campaign ledger with DONE notes
   and PLAN marks M6 COMPLETE. The view-DOM baseline was intentionally
   REGENERATED (`NIGHTWATCH_UPDATE_VIEW_DOM_BASELINE=1`) because the Agent
@@ -222,12 +229,13 @@ the gate pair (see the ledger).
 
 ## Exact Next Action
 
-Implement 8.2 (NW-AUD-036 narrowed): re-check HEAD after the scan, refuse a
-mismatched digest in the read view, and stop hard-coding
-`sourceSnapshotMatches: true` — read the source-authority/source-read modules
-and the Control Center source view, then continue 8.3-8.5 and close M7 with
-focused + `gate:milestone` PASS, the C-00 integrate and the `gh` CI observation
-(OD-3) as in M4-M6.
+Implement 8.3 (NW-AUD-039 narrowed): NOT_APPLICABLE, INVALID_INPUT and
+truncated evidence must count as INCOMPLETE and never as PASS — read the
+semantic evaluation/receipt path (`src/oracles/**`, `src/core/semantic/**`) and
+the confidence/readiness consumers, then 8.4 (heuristic regex analyzers excluded
+from proven candidate selection with truncated inventories reported) and 8.5
+(focused + `gate:milestone` PASS; commit) to close M7, then the C-00 integrate
+and the `gh` CI observation (OD-3) as in M4-M6.
 
 ## Superseded Next Action (8.1, complete)
 
