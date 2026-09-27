@@ -615,6 +615,30 @@ Relevant failure/output summary: `agentFindingRecord` 7/7,
 `syntheticHuntSuite` 5/5; the owner-local reproduction cones 71/71 and 96/96;
 `schema-lifecycle check` PASS with the three new families declared.
 
+Command: `npm run gate:dev` + `npm run gate:milestone` (M6 close-out)
+Result: PASS (both)
+When: 2026-09-27
+Relevant failure/output summary: affected-shards 5625/0 in both lanes
+(selected 420) with every other step exit=0. The repair chain: the bounded
+per-invocation argv cap was raised from 400 to 512 (`MAX_FILES_PER_INVOCATION`)
+because the tracked universe legitimately grew past the old cap and a
+one-shard plan was refused; the rule-quantifier pins moved 88→89 rules and
+65→66 TOTALITY rules for `checkSiblingRootResolution`; the paired-baseline
+brief expectation now reads the truthful `NO ADMITTED REPRODUCIBLE PRODUCT
+ANOMALIES` headline (the baseline's protocol dossiers are UNRESOLVED under the
+derived readiness); and the UI test file is owned by the UI lane, not the
+execution-class registry (whose discovery covers `tests/**` and
+`scenarios/**` only).
+
+Command: UI and browser lane for the new view (7.11)
+Result: PASS
+When: 2026-09-27
+Relevant failure/output summary: `control-center:ui:typecheck` clean;
+`control-center:ui:test` 105/105 with the view-DOM baseline INTENTIONALLY
+regenerated (`NIGHTWATCH_UPDATE_VIEW_DOM_BASELINE=1`) for the added
+navigation entry and view; `control-center:ui:browser` 9/9 including the new
+Agent Campaigns qualification and its totality-checked navigation set.
+
 ## Decisions Made During This Task
 
 - 2026-09-25 — Adopt the released canonical MAINTENANCE record for this task
