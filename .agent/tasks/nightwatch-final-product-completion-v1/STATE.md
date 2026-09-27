@@ -257,8 +257,19 @@ the gate pair (see the ledger).
   26/26 (including byte-for-byte reproducibility with the new field),
   `hardening:check` PASS, and the sharded lane PASS at 5692/0 (5725 planned,
   0 failed).
-  Next: 9.8 (NW-AUD-016 narrowed: per-start nonce echoed by the health endpoint
-  and bound to the event log) then 9.9-9.13 to close M8.
+  M8 9.8 DONE (with a recorded narrowing) — per-start proxy instance nonce
+  (NW-AUD-016): each start generates a fresh 32-hex nonce, the health endpoint
+  echoes it, the runtime state records it (optional-but-validated key) and
+  EVERY event record carries it, so a log belongs to one instance.
+  `checkProxyHealthDetailed` reports `observedNonce`/`attested`; the boolean
+  startup gate deliberately keeps its 204 semantics, so the echo is OBSERVED
+  and available to callers but NOT enforced there (a foreign listener that
+  answers 204 without or with a wrong header still passes the boolean gate).
+  That remaining enforcement is recorded as open rather than over-claimed.
+  Evidence: `tests/unit/proxyInstanceNonce.test.ts` 4/4, the sharded lane PASS
+  at 5695/0 before commit plus `projectState` 103/103 post-commit,
+  `hardening:check` PASS.
+  Next: 9.9-9.13 to close M8 (then the M8 milestone gate + CI observation).
 - M6 is COMPLETE: 7.1-7.11 are ticked in the campaign ledger with DONE notes
   and PLAN marks M6 COMPLETE. The view-DOM baseline was intentionally
   REGENERATED (`NIGHTWATCH_UPDATE_VIEW_DOM_BASELINE=1`) because the Agent
