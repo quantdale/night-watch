@@ -639,6 +639,18 @@ regenerated (`NIGHTWATCH_UPDATE_VIEW_DOM_BASELINE=1`) for the added
 navigation entry and view; `control-center:ui:browser` 9/9 including the new
 Agent Campaigns qualification and its totality-checked navigation set.
 
+Command: `gh run watch 36310500932 --exit-status` (OD-3 exact-head CI observation, M6)
+Result: PASS — `completed / success`, gate `finalResult: PASS`
+When: 2026-09-27
+Relevant failure/output summary: gitHead `ca417d0f4c5920641c1f5a584136bccb80c6fb31`
+(the M6 closeout head); every job step green. The PRIOR push (`67e403b7`) failed
+CI in run 36304718720 with exactly one failed location —
+`tests/unit/semanticCampaign.test.ts:447:EXPECT_MATCH`, the paired-baseline
+headline expectation that the derived dossier readiness (7.1) legitimately
+changed — and that failure was repaired forward in this head, which CI then
+confirmed green. M6 is validated end to end: focused suites, the UI and browser
+lanes, the gate pair at 5625/0 and exact-head CI green.
+
 ## Decisions Made During This Task
 
 - 2026-09-25 — Adopt the released canonical MAINTENANCE record for this task
