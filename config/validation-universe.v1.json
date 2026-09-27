@@ -52,6 +52,7 @@
         "tests/unit/devCredentialProvider.test.ts",
         "tests/unit/documentLifecycle.test.ts",
         "tests/unit/dossierReadiness.test.ts",
+        "tests/unit/dotEnvLayerStrictness.test.ts",
         "tests/unit/efficacyCorpus.test.ts",
         "tests/unit/endpointSemantics.test.ts",
         "tests/unit/environmentSignatureRefusal.test.ts",

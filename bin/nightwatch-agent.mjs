@@ -104,15 +104,22 @@ function fail(code, message) {
  * reported with their closest declared neighbour; a malformed declared value
  * refuses the command.
  */
+/**
+ * M7 (8.1/NW-AUD-012): validate the process+.env MERGE and RETURN it, so every
+ * value this CLI forwards is a value it validated. Reading `process.env` for
+ * the forwarded values let a `.env`-only configuration be validated and then
+ * silently dropped.
+ */
 function assertStartupEnvironment() {
   const [surfaceMod] = loadTypeScriptModules(['src/core/config/environmentSurface.ts'], { root });
   const surface = surfaceMod.loadEnvironmentSurface();
-  const fileEnvironment = surfaceMod.loadDotEnvLayer(root);
+  const fileEnvironment = surfaceMod.loadDotEnvLayer(root, surface.variables.map((entry) => entry.name));
   const merged = surfaceMod.mergeDotEnvLayer(process.env, fileEnvironment, surface);
   for (const line of surfaceMod.reportUnknownEnvironmentVariables(merged, surface)) {
     console.error(`NIGHTWATCH_AGENT: ${line}`);
   }
   surfaceMod.assertEnvironmentSurface(merged, surface, { mode: 'startup' });
+  return merged;
 }
 
 /**
@@ -177,6 +184,8 @@ if (command === 'status') {
   // the owner-local store actually holds and the campaigns actually stored —
   // not a constant schema list. The static protocol identity stays, because it
   // is a fact about the build rather than a measurement.
+  // M7 (8.1): status reports the configuration the owner actually supplied.
+  const mergedEnv = assertStartupEnvironment();
   const [campaignMod, storeMod] = loadTypeScriptModules(
     ['src/core/agentRuntime/localCampaign.ts', 'src/core/localInvestigation/agentFindingStore.ts'],
     { root },
@@ -218,7 +227,7 @@ if (command === 'status') {
       persistedFindings: findings.length,
       perCampaign: [...perCampaign.values()].sort((left, right) => left.campaignId.localeCompare(right.campaignId)),
       findingStoreRoot: storeRoot,
-      reasonerConfigured: Boolean(process.env.NIGHTWATCH_REASONER_CLI ?? process.env.NIGHTWATCH_PRINT_CLI),
+      reasonerConfigured: Boolean(mergedEnv.NIGHTWATCH_REASONER_CLI ?? mergedEnv.NIGHTWATCH_PRINT_CLI),
       campaignsUnavailable,
       storeUnavailable,
     },
@@ -268,6 +277,16 @@ if (command === 'status') {
   }));
   const repositoryIds = flags.repository === undefined ? undefined : [flags.repository];
   const modelLabel = resolveModelLabel(flags);
+  /**
+   * M7 (8.1/NW-AUD-012): the validated process+.env merge, resolved once and
+   * read by every forwarded value. `process.env` is never the source of a
+   * value this CLI forwards.
+   */
+  let campaignEnvCache = null;
+  const campaignEnvironment = () => {
+    if (campaignEnvCache === null) campaignEnvCache = assertStartupEnvironment();
+    return campaignEnvCache;
+  };
   if (sub === 'run') {
     if (flags.reasoner !== 'cli') {
       fail(2, 'campaign run requires --reasoner=cli');
@@ -277,7 +296,7 @@ if (command === 'status') {
       // Refused above: --model and NIGHTWATCH_REASONER_MODEL disagree.
     } else if (flags.env === 'dev' || flags.env === 'next' || flags.env === 'production') {
       fail(2, `environment ${flags.env} is NOT AUTHORIZED for this programme`);
-    } else if (!process.env.NIGHTWATCH_REASONER_CLI && !process.env.NIGHTWATCH_PRINT_CLI) {
+    } else if (!assertStartupEnvironment().NIGHTWATCH_REASONER_CLI && !assertStartupEnvironment().NIGHTWATCH_PRINT_CLI) {
       fail(2, 'REASONER_CLI_NOT_CONFIGURED — set NIGHTWATCH_REASONER_CLI or NIGHTWATCH_PRINT_CLI; refusing to start');
     } else {
       let startupOk = true;
@@ -310,9 +329,9 @@ if (command === 'status') {
           { root },
         );
         const extraArgs = [];
-        if (typeof process.env.NIGHTWATCH_REASONER_SCRIPT === 'string' && process.env.NIGHTWATCH_REASONER_SCRIPT.length > 0) {
-          extraArgs.push(process.env.NIGHTWATCH_REASONER_SCRIPT);
-        } else if (process.env.NIGHTWATCH_PRINT_CLI) {
+        if (typeof campaignEnvironment().NIGHTWATCH_REASONER_SCRIPT === 'string' && campaignEnvironment().NIGHTWATCH_REASONER_SCRIPT.length > 0) {
+          extraArgs.push(campaignEnvironment().NIGHTWATCH_REASONER_SCRIPT);
+        } else if (campaignEnvironment().NIGHTWATCH_PRINT_CLI) {
           extraArgs.push(path.join(root, 'bin/nightwatch-reasoner-print.mjs'));
         }
         const pause = installCampaignPauseChannel();
@@ -320,8 +339,8 @@ if (command === 'status') {
         const approvedRepositories = repositoryIds ?? [];
         const siblingsBefore = await receiptMod.observeSiblings(approvedRepositories);
         try {
-          const providerLabel = process.env.NIGHTWATCH_REASONER_PROVIDER ?? 'configured';
-          const { executable, reasonerIdentity } = resolveReasonerIdentity(reasonerMod, process.env.NIGHTWATCH_REASONER_CLI, {
+          const providerLabel = campaignEnvironment().NIGHTWATCH_REASONER_PROVIDER ?? 'configured';
+          const { executable, reasonerIdentity } = resolveReasonerIdentity(reasonerMod, campaignEnvironment().NIGHTWATCH_REASONER_CLI, {
             adapterPath: extraArgs[0] ?? null,
             provider: providerLabel,
             model: modelLabel,
@@ -455,7 +474,7 @@ if (command === 'status') {
   } else if (sub === 'resume') {
     if (modelLabel === null) {
       // Refused above: --model and NIGHTWATCH_REASONER_MODEL disagree.
-    } else if (!process.env.NIGHTWATCH_REASONER_CLI && !process.env.NIGHTWATCH_PRINT_CLI) {
+    } else if (!assertStartupEnvironment().NIGHTWATCH_REASONER_CLI && !assertStartupEnvironment().NIGHTWATCH_PRINT_CLI) {
       fail(2, 'REASONER_CLI_NOT_CONFIGURED — set NIGHTWATCH_REASONER_CLI or NIGHTWATCH_PRINT_CLI to resume');
     } else if (typeof flags.id !== 'string' || flags.id.length === 0) {
       fail(2, 'campaign resume requires --id=<campaignId>');
@@ -472,9 +491,9 @@ if (command === 'status') {
         { root },
       );
       const extraArgs = [];
-      if (typeof process.env.NIGHTWATCH_REASONER_SCRIPT === 'string' && process.env.NIGHTWATCH_REASONER_SCRIPT.length > 0) {
-        extraArgs.push(process.env.NIGHTWATCH_REASONER_SCRIPT);
-      } else if (process.env.NIGHTWATCH_PRINT_CLI) {
+      if (typeof campaignEnvironment().NIGHTWATCH_REASONER_SCRIPT === 'string' && campaignEnvironment().NIGHTWATCH_REASONER_SCRIPT.length > 0) {
+        extraArgs.push(campaignEnvironment().NIGHTWATCH_REASONER_SCRIPT);
+      } else if (campaignEnvironment().NIGHTWATCH_PRINT_CLI) {
         extraArgs.push(path.join(root, 'bin/nightwatch-reasoner-print.mjs'));
       }
       const maxTurnsRaw = flags['max-turns'];
@@ -485,12 +504,13 @@ if (command === 'status') {
       const siblingsBefore = await receiptMod.observeSiblings(approvedRepositories);
       try {
         if (!resumeStartupOk) throw new Error('ENVIRONMENT_VALUE_MALFORMED');
-        const providerLabel = process.env.NIGHTWATCH_REASONER_PROVIDER ?? 'configured';
-        const { executable, reasonerIdentity } = resolveReasonerIdentity(reasonerMod, process.env.NIGHTWATCH_REASONER_CLI, {
+        const providerLabel = campaignEnvironment().NIGHTWATCH_REASONER_PROVIDER ?? 'configured';
+        const { executable, reasonerIdentity } = resolveReasonerIdentity(reasonerMod, campaignEnvironment().NIGHTWATCH_REASONER_CLI, {
           adapterPath: extraArgs[0] ?? null,
           provider: providerLabel,
           model: modelLabel,
         });
+        // M7 (8.1): the resume reads the same validated merge.
         // ceilingName is required input but resume runs under the checkpoint's
         // own stored budget policy; the multi-investigation progress (next
         // investigation index, stagnation count, termination counts) resumes

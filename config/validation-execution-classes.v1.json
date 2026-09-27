@@ -523,6 +523,12 @@
         "isolated-scratch"
       ]
     },
+    "tests/unit/dotEnvLayerStrictness.test.ts": {
+      "class": "PARALLEL_SAFE",
+      "signals": [
+        "isolated-scratch"
+      ]
+    },
     "tests/unit/durableArtifactTruthHardening.test.ts": {
       "class": "PARALLEL_SAFE",
       "signals": [

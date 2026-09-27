@@ -71,7 +71,7 @@ function main() {
   if (args[0] === 'config') {
     const [surfaceMod] = loadTypeScriptModules(['src/core/config/environmentSurface.ts'], { root });
     const surface = surfaceMod.loadEnvironmentSurface();
-    const fileEnvironment = surfaceMod.loadDotEnvLayer(root);
+    const fileEnvironment = surfaceMod.loadDotEnvLayer(root, surface.variables.map((entry) => entry.name));
     const merged = surfaceMod.mergeDotEnvLayer(process.env, fileEnvironment, surface);
     const verdict = surfaceMod.validateEnvironmentValues(merged, surface);
     const rows = surfaceMod.effectiveConfiguration(merged, surface, fileEnvironment);
@@ -102,10 +102,17 @@ function main() {
   // F-19 startup validation: fail closed on a malformed declared value and
   // report every undeclared NIGHTWATCH_* name with its closest declared
   // neighbour, before any browser, subprocess or socket is created.
+  /**
+   * M7 (8.1/NW-AUD-012): the VALIDATED process+.env merge. Every child this
+   * dispatcher spawns is configured from this value, never from the ambient
+   * environment — otherwise a `.env`-only value would be validated and then
+   * silently dropped on the way to the child.
+   */
+  let mergedEnvironment = process.env;
   {
     const [surfaceMod] = loadTypeScriptModules(['src/core/config/environmentSurface.ts'], { root });
     const surface = surfaceMod.loadEnvironmentSurface();
-    const fileEnvironment = surfaceMod.loadDotEnvLayer(root);
+    const fileEnvironment = surfaceMod.loadDotEnvLayer(root, surface.variables.map((entry) => entry.name));
     const merged = surfaceMod.mergeDotEnvLayer(process.env, fileEnvironment, surface);
     for (const line of surfaceMod.reportUnknownEnvironmentVariables(merged, surface)) {
       console.error(`NIGHTWATCH: ${line}`);
@@ -116,6 +123,7 @@ function main() {
       refuseOperatorCli('nightwatch', 'ENVIRONMENT_VALUE_MALFORMED', error instanceof Error ? error.message : 'environment validation refused');
       return;
     }
+    mergedEnvironment = merged;
   }
 
   if (args[0] === 'agent') {
@@ -132,18 +140,21 @@ function main() {
     // copy, so no output bound can truncate a campaign and no buffer can grow.
     const child = spawn(process.execPath, [path.join(root, 'bin', 'nightwatch-agent.mjs'), ...args.slice(1)], {
       cwd: root,
-      env: buildChildEnvironment(process.env, {
+      // M7 (8.1/NW-AUD-012): forward the VALIDATED MERGED environment, not the
+      // ambient one. Reading `process.env` here meant a value the owner
+      // supplied only through `.env` was validated and then never forwarded.
+      env: buildChildEnvironment(mergedEnvironment, {
         NIGHTWATCH_OPERATOR_SCOPE: 'LOCAL_SYNTHETIC_ONLY',
-        NIGHTWATCH_REASONER_CLI: process.env.NIGHTWATCH_REASONER_CLI,
-        NIGHTWATCH_REASONER_SCRIPT: process.env.NIGHTWATCH_REASONER_SCRIPT,
-        NIGHTWATCH_REASONER_PROVIDER: process.env.NIGHTWATCH_REASONER_PROVIDER,
-        NIGHTWATCH_REASONER_MODEL: process.env.NIGHTWATCH_REASONER_MODEL,
-        NIGHTWATCH_PRINT_CLI: process.env.NIGHTWATCH_PRINT_CLI,
-        NIGHTWATCH_PRINT_ARGS: process.env.NIGHTWATCH_PRINT_ARGS,
+        NIGHTWATCH_REASONER_CLI: mergedEnvironment.NIGHTWATCH_REASONER_CLI,
+        NIGHTWATCH_REASONER_SCRIPT: mergedEnvironment.NIGHTWATCH_REASONER_SCRIPT,
+        NIGHTWATCH_REASONER_PROVIDER: mergedEnvironment.NIGHTWATCH_REASONER_PROVIDER,
+        NIGHTWATCH_REASONER_MODEL: mergedEnvironment.NIGHTWATCH_REASONER_MODEL,
+        NIGHTWATCH_PRINT_CLI: mergedEnvironment.NIGHTWATCH_PRINT_CLI,
+        NIGHTWATCH_PRINT_ARGS: mergedEnvironment.NIGHTWATCH_PRINT_ARGS,
         // M5 (6.14): the owner-local finding store root is a declared
         // variable, so an owner who relocates private state reaches the same
         // records through the dispatcher as through the agent surface.
-        NIGHTWATCH_PRIVATE_STATE_DIR: process.env.NIGHTWATCH_PRIVATE_STATE_DIR,
+        NIGHTWATCH_PRIVATE_STATE_DIR: mergedEnvironment.NIGHTWATCH_PRIVATE_STATE_DIR,
       }),
       stdio: ['ignore', 'pipe', 'pipe'],
       shell: false,
@@ -190,9 +201,9 @@ function main() {
   } else if (operatorCommands.has(args[0])) {
     const result = spawnSync(process.execPath, [path.join(root, 'bin', 'nightwatch-intelligence.mjs'), ...args], {
       cwd: root,
-      env: buildChildEnvironment(process.env, {
+      env: buildChildEnvironment(mergedEnvironment, {
         NIGHTWATCH_OPERATOR_SCOPE: 'LOCAL_SYNTHETIC_ONLY',
-        NIGHTWATCH_PRIVATE_STATE_DIR: process.env.NIGHTWATCH_PRIVATE_STATE_DIR,
+        NIGHTWATCH_PRIVATE_STATE_DIR: mergedEnvironment.NIGHTWATCH_PRIVATE_STATE_DIR,
       }),
       stdio: ['ignore', 'pipe', 'pipe'],
       timeout: 120_000,
@@ -239,7 +250,7 @@ function main() {
 
     const res = spawnSync(cmd, ['test', scenarioPath, '--project=nightwatch', ...rest], {
       cwd: root,
-      env: buildChildEnvironment(process.env, envVars),
+      env: buildChildEnvironment(mergedEnvironment, envVars),
       stdio: ['ignore', 'pipe', 'pipe'],
       timeout: 15 * 60 * 1000,
       maxBuffer: 2 * 1024 * 1024,

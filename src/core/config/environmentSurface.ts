@@ -476,13 +476,39 @@ export function renderEffectiveConfiguration(rows: readonly EffectiveConfigurati
  * process value; the config view and startup validation may consider it, but
  * a launcher forwards only the variables it explicitly names.
  */
-export function loadDotEnvLayer(root?: string): Readonly<Record<string, string>> {
-  const base = root ?? path.join(__dirname, '..', '..', '..');
-  try {
-    return parseDotEnv(fs.readFileSync(path.join(base, '.env'), 'utf8'));
-  } catch {
-    return Object.freeze({});
+export class DotEnvLoadError extends Error {
+  readonly code: string;
+  constructor(code: string, detail: string) {
+    super(`${code}: ${detail}`);
+    this.name = 'DotEnvLoadError';
+    this.code = code;
   }
+}
+
+/**
+ * M7 (8.1/NW-AUD-012): load and STRICTLY validate the `.env` layer.
+ *
+ * An ABSENT file is not a configuration (an empty layer is honest). An
+ * UNREADABLE file IS one: silently treating it as empty let a launcher run
+ * without the values the owner believed it had supplied.
+ */
+export function loadDotEnvLayer(root: string | undefined, declaredNames: readonly string[]): Readonly<Record<string, string>> {
+  const base = root ?? path.join(__dirname, '..', '..', '..');
+  const file = path.join(base, '.env');
+  let text: string;
+  try {
+    text = fs.readFileSync(file, 'utf8');
+  } catch (error) {
+    const code = (error as NodeJS.ErrnoException).code;
+    if (code === 'ENOENT') return Object.freeze({});
+    throw new DotEnvLoadError('DOTENV_UNREADABLE', `the .env layer could not be read (${code ?? 'UNKNOWN'})`);
+  }
+  const parsed = parseDotEnvStrict(text, declaredNames);
+  if (parsed.errors.length > 0) {
+    const first = parsed.errors[0] as DotEnvError;
+    throw new DotEnvLoadError(first.code, `line ${first.line}: ${first.detail}`);
+  }
+  return parsed.values;
 }
 
 /** A copy of `environment` where declared names absent from it take `.env` values. */
@@ -500,7 +526,81 @@ export function mergeDotEnvLayer(
   return merged;
 }
 
-/** Parse the declared `.env` layer. Only `KEY=value` and comments are accepted. */
+/**
+ * M7 (8.1/NW-AUD-012): the `.env` layer is parsed FAIL CLOSED.
+ *
+ * The lenient parser silently dropped a malformed line, silently ignored an
+ * unknown key and silently let the last duplicate win. A launcher that
+ * validates a value the owner did not actually supply — or ignores one they
+ * did — is the over-claim this reports. Every defect is named with its line.
+ */
+export const DOTENV_ERROR_CODES = [
+  'DOTENV_LINE_MALFORMED',
+  'DOTENV_KEY_UNKNOWN',
+  'DOTENV_KEY_DUPLICATE',
+] as const;
+export type DotEnvErrorCode = (typeof DOTENV_ERROR_CODES)[number];
+
+export interface DotEnvError {
+  readonly code: DotEnvErrorCode;
+  readonly line: number;
+  readonly detail: string;
+}
+
+export interface DotEnvParseResult {
+  readonly values: Readonly<Record<string, string>>;
+  readonly errors: readonly DotEnvError[];
+}
+
+/**
+ * Strict `.env` parsing: every malformed, unknown or duplicate line is an
+ * error. `declaredNames` is the declared environment surface — a key outside
+ * it is refused, because the launcher would validate a variable it never
+ * forwards.
+ */
+export function parseDotEnvStrict(text: string, declaredNames: readonly string[]): DotEnvParseResult {
+  const out: Record<string, string> = {};
+  const errors: DotEnvError[] = [];
+  const lines = text.split(/\r?\n/);
+  for (const [index, rawLine] of lines.entries()) {
+    const lineNumber = index + 1;
+    const line = rawLine.trim();
+    if (line.length === 0 || line.startsWith('#')) continue;
+    const equals = line.indexOf('=');
+    if (equals <= 0) {
+      errors.push({ code: 'DOTENV_LINE_MALFORMED', line: lineNumber, detail: 'expected KEY=value' });
+      continue;
+    }
+    const key = line.slice(0, equals).trim();
+    if (!/^NIGHTWATCH_[A-Z0-9_]+$/.test(key) || !declaredNames.includes(key)) {
+      // An unknown key is REFUSED, never ignored: a variable the owner set and
+      // the surface does not declare is a configuration the launcher would
+      // otherwise validate without ever forwarding it.
+      errors.push({
+        code: 'DOTENV_KEY_UNKNOWN',
+        line: lineNumber,
+        detail: `key ${key.length > 0 ? key : '(empty)'} is not a declared environment-surface variable`,
+      });
+      continue;
+    }
+    if (Object.prototype.hasOwnProperty.call(out, key)) {
+      errors.push({ code: 'DOTENV_KEY_DUPLICATE', line: lineNumber, detail: `${key} is declared more than once` });
+      continue;
+    }
+    let value = line.slice(equals + 1).trim();
+    if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+      value = value.slice(1, -1);
+    }
+    out[key] = value;
+  }
+  return { values: Object.freeze(out), errors };
+}
+
+/**
+ * The lenient accessor, retained for callers that already hold validated text
+ * (tests and the effective-configuration renderer). Launchers use
+ * `parseDotEnvStrict` and refuse on any error.
+ */
 export function parseDotEnv(text: string): Readonly<Record<string, string>> {
   const out: Record<string, string> = {};
   for (const rawLine of text.split(/\r?\n/)) {

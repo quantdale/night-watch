@@ -99,7 +99,7 @@ try {
   {
     const surfaceModule = loadTypeScriptModule('src/core/config/environmentSurface.ts');
     const surface = surfaceModule.loadEnvironmentSurface();
-    const merged = surfaceModule.mergeDotEnvLayer(process.env, surfaceModule.loadDotEnvLayer(ROOT), surface);
+    const merged = surfaceModule.mergeDotEnvLayer(process.env, surfaceModule.loadDotEnvLayer(ROOT, surface.variables.map((entry) => entry.name)), surface);
     for (const line of surfaceModule.reportUnknownEnvironmentVariables(merged, surface)) {
       process.stderr.write(`NIGHTWATCH_CONTROL_CENTER: ${line}\n`);
     }
