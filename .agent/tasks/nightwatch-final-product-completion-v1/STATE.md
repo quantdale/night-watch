@@ -423,6 +423,24 @@ for an incomplete-coverage outcome. Those repairs are committed
 confirmed the repaired head green. M7 is validated end to end: focused cones,
 `gate:dev` and `gate:milestone` at 5645/0, and exact-head CI green.
 
+## M8 exact-head CI observation (OD-3)
+
+Command: `gh run watch 36349771611 --exit-status` (OD-3 exact-head CI observation, M8)
+Result: PASS — `completed / success`, headSha `badb6f883f51b7001d59552b7c0b19d16d4f1012`
+When: 2026-09-27
+Relevant failure/output summary: the M8 closeout head; every job step green
+(`Execute authoritative quality gate` included). The PRIOR push (`ab1fa187`,
+the 9.11 census-indirection checkpoint) failed CI in run `36343583350` with
+exactly one failed location — `tests/unit/observerSemanticLedger.test.ts:136`,
+the 550-request ledger-overflow loop, which assumed every response body is
+captured and therefore collided with 9.6's bounded acquisition gate (a
+saturated gate refuses a read rather than queueing it). That failure was
+repaired forward by pacing the loop and widening the poll timeout while keeping
+the exact 512 cap and the explicit-overflow assertion, and CI confirmed the
+repaired head green. M8 is validated end to end: focused cones, the full probe
+campaign (175/175 detected), `gate:dev` and `gate:milestone` at 5712/0, and
+exact-head CI green.
+
 ## Exact Next Action
 
 Commit the M7 closeout (tasks.md ticks + PLAN M7 COMPLETE + this STATE), C-00
