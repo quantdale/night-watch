@@ -257,6 +257,22 @@ the gate pair (see the ledger).
   and reproduction materializes from the recorded HEAD tree in the Git object
   store (D-145). Next: 6.12 (ENVIRONMENT_DEPENDENT refusal).
 
+## M7 exact-head CI observation (OD-3)
+
+Command: `gh run watch 36321415439 --exit-status` (OD-3 exact-head CI observation, M7)
+Result: PASS — `completed / success`, headSha `995378d23316173a91596bf6c3f72045a31dbb35`
+When: 2026-09-27
+Relevant failure/output summary: the M7 closeout head; every job step green
+(`Execute authoritative quality gate` included). The TWO PRIOR pushes failed CI
+and were repaired forward in this head: run `36314901548` at `56ec55c5` (the 8.4
+push) and run `36314103246` at `895f0e02` (the 8.3 push) both failed on the
+frozen Phase 20/21 baselines that the honest narrowing legitimately moved
+(graph 157->133 nodes, gaps 86->62, mutants 67->55) plus the receipt coherence
+for an incomplete-coverage outcome. Those repairs are committed
+(`19fba2b2`, the differential re-base, and the semantic receipt mapping) and CI
+confirmed the repaired head green. M7 is validated end to end: focused cones,
+`gate:dev` and `gate:milestone` at 5645/0, and exact-head CI green.
+
 ## Exact Next Action
 
 Commit the M7 closeout (tasks.md ticks + PLAN M7 COMPLETE + this STATE), C-00
