@@ -45,6 +45,12 @@ export const FINDINGS_AUTHORITY_REASON_CODES = [
   'FINDINGS_FILE_UNSTABLE',
   'FINDINGS_FILE_LIMIT',
   'FINDINGS_DUPLICATE_DOSSIER',
+  /**
+   * M6 (7.4/B-02/C-21): a file in the findings root that is not a dossier
+   * family record (an orchestrator checkpoint, a manifest, a brief) is SKIPPED
+   * and named — never parsed as a dossier and never reported as corruption.
+   */
+  'FINDINGS_NON_DOSSIER_FILE_SKIPPED',
   'FINDINGS_INTERNAL_ERROR',
 ] as const;
 export type FindingsAuthorityReasonCode = (typeof FINDINGS_AUTHORITY_REASON_CODES)[number];
@@ -183,6 +189,19 @@ function readStableText(filePath: string): { readonly text: string } | { readonl
 
 function record(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+/**
+ * M6 (7.4/B-02/C-21): is this file a dossier-FAMILY document?
+ *
+ * The family is a bounded, mechanical property of the file itself: the
+ * documented `candidate-` name convention, or a dossier schema marker in the
+ * text. Everything else in the findings root belongs to another family
+ * (campaign state, manifests, briefs) and is not this authority's subject.
+ */
+function isDossierFamily(fileName: string, text: string): boolean {
+  if (fileName.startsWith('candidate-')) return true;
+  return text.includes(DOSSIER_SCHEMA_PREFIX) || text.includes(DOSSIER_VERSION) || text.includes(DOSSIER_VERSION_V2);
 }
 
 function dossierCandidate(raw: unknown, fileName: string): { readonly value: unknown; readonly dossierLike: boolean } {
@@ -327,6 +346,14 @@ function readFindingsSnapshot(root: string): FindingsAuthoritySnapshot {
         reasons.push(read.reason);
         continue;
       }
+      // M6 (7.4/B-02/C-21): the DOSSIER FAMILY is decided first. A record that
+      // is not a dossier-family document is skipped by name, before any parse
+      // or schema validation, so orchestrator state beside the dossiers can
+      // never be reported as a corrupt dossier.
+      if (!isDossierFamily(fileName, read.text)) {
+        reasons.push('FINDINGS_NON_DOSSIER_FILE_SKIPPED');
+        continue;
+      }
       if (containsPrivatePayloadShape(read.text)) {
         reasons.push('FINDINGS_PRIVACY_BLOCKED');
         continue;
@@ -370,7 +397,14 @@ function readFindingsSnapshot(root: string): FindingsAuthoritySnapshot {
       dossiers.push(metadata);
     }
     const normalizedReasons = sortedReasons(reasons);
-    const state: FindingsAuthorityState = normalizedReasons.some((reason) => reason !== 'FINDINGS_EMPTY' && reason !== 'FINDINGS_INCOMPLETE_DOSSIER')
+    // M6 (7.4/B-02/C-21): a skipped non-dossier file is INFORMATIONAL — it
+    // names a file the authority does not own and must never blank the view.
+    const state: FindingsAuthorityState = normalizedReasons.some(
+      (reason) =>
+        reason !== 'FINDINGS_EMPTY' &&
+        reason !== 'FINDINGS_INCOMPLETE_DOSSIER' &&
+        reason !== 'FINDINGS_NON_DOSSIER_FILE_SKIPPED',
+    )
       ? 'UNKNOWN'
       : dossiers.length === 0 ? 'EMPTY' : 'AVAILABLE';
     const finalReasons = normalizedReasons.length === 0 && dossiers.length === 0 ? ['FINDINGS_EMPTY'] as const : normalizedReasons;

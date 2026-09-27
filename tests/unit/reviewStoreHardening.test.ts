@@ -174,9 +174,9 @@ const MUTATIONS: readonly Mutation[] = [
   {
     name: 'M-13b open the nested-directory vocabulary to any caller-supplied name',
     file: 'src/core/policy/privateArtifacts.ts',
-    from: "export const PRIVATE_ARTIFACT_DIRECTORIES = ['agent-findings'] as const;",
-    to: "export const PRIVATE_ARTIFACT_DIRECTORIES = ['agent-findings', 'anything'] as const;",
-    expect: /closed single-member union/,
+    from: "export const PRIVATE_ARTIFACT_DIRECTORIES = ['agent-findings', 'campaign-state'] as const;",
+    to: "export const PRIVATE_ARTIFACT_DIRECTORIES = ['agent-findings', 'campaign-state', 'anything'] as const;",
+    expect: /closed two-member union/,
   },
   {
     name: 'M-14 let recovery remove a file it did not create',

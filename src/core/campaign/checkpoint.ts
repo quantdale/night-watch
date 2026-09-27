@@ -946,11 +946,52 @@ function readWrapper<T>(filePath: string, key: string): T {
   return value as T;
 }
 
+/**
+ * The findings root a pre-7.4 build wrote into: the configured private state
+ * directory (or the default findings root). Read-only here.
+ */
+function legacyFindingsRoot(): string {
+  try {
+    return new PrivateArtifactStore().root;
+  } catch {
+    return '';
+  }
+}
+
 export class CampaignCheckpointStore {
   readonly store: PrivateArtifactStore;
+  /**
+   * M6 (7.4/B-02): the LEGACY findings root, read-only. Orchestrator state
+   * written before this change lives there beside the dossiers; it stays
+   * readable so an existing campaign resumes, while every new write goes to
+   * the dedicated `campaign-state/` subtree.
+   */
+  private readonly legacyRoot: string | null;
 
-  constructor(store = new PrivateArtifactStore()) {
-    this.store = store;
+  constructor(store?: PrivateArtifactStore) {
+    this.store = store ?? new PrivateArtifactStore({ directory: 'campaign-state' });
+    // An injected store (tests) is used as given and carries no legacy
+    // fallback; the derived store reads the legacy findings root as a fallback.
+    if (store === undefined) {
+      const legacy = legacyFindingsRoot();
+      this.legacyRoot = legacy.length === 0 ? null : legacy;
+    } else {
+      this.legacyRoot = null;
+    }
+  }
+
+  /**
+   * Read one document from the current subtree, falling back to the legacy
+   * findings root so pre-7.4 state remains readable.
+   */
+  private readWithLegacy<T>(fileName: string, wrapper: string): T {
+    const current = path.join(this.store.root, fileName);
+    if (fs.existsSync(current)) return readWrapper<T>(current, wrapper);
+    if (this.legacyRoot !== null) {
+      const legacy = path.join(this.legacyRoot, fileName);
+      if (fs.existsSync(legacy)) return readWrapper<T>(legacy, wrapper);
+    }
+    return readWrapper<T>(current, wrapper);
   }
 
   writeManifest(manifest: CampaignManifest): string {
@@ -967,15 +1008,13 @@ export class CampaignCheckpointStore {
   }
 
   readManifest(campaignId: string): CampaignManifest {
-    const filePath = path.join(this.store.root, `${fileStem(campaignId)}.manifest.json`);
-    const manifest = readWrapper<CampaignManifest>(filePath, 'manifest');
+    const manifest = this.readWithLegacy<CampaignManifest>(`${fileStem(campaignId)}.manifest.json`, 'manifest');
     validateCampaignManifest(manifest);
     return manifest;
   }
 
   readCheckpoint(campaignId: string, manifest?: CampaignManifest): CampaignCheckpoint {
-    const filePath = path.join(this.store.root, `${fileStem(campaignId)}.checkpoint.json`);
-    const checkpoint = readWrapper<CampaignCheckpoint>(filePath, 'checkpoint');
+    const checkpoint = this.readWithLegacy<CampaignCheckpoint>(`${fileStem(campaignId)}.checkpoint.json`, 'checkpoint');
     const effectiveManifest = manifest ?? this.readManifest(campaignId);
     validateCampaignCheckpoint(checkpoint, effectiveManifest);
     // Keep the compatibility check as a separate, explicit guard for callers

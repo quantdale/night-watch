@@ -365,6 +365,12 @@
         "isolated-scratch"
       ]
     },
+    "tests/unit/campaignStateSubtree.test.ts": {
+      "class": "PARALLEL_SAFE",
+      "signals": [
+        "isolated-scratch"
+      ]
+    },
     "tests/unit/campaignStrategyMemory.test.ts": {
       "class": "PARALLEL_SAFE",
       "signals": [

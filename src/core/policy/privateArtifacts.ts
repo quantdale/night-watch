@@ -37,11 +37,18 @@ export type PrivateArtifactSubtree = (typeof PRIVATE_ARTIFACT_SUBTREES)[number];
  * already held to the absolute / symlink-free / outside-the-repository
  * contract, and no caller can derive an arbitrary location.
  */
-export const PRIVATE_ARTIFACT_DIRECTORIES = ['agent-findings'] as const;
+export const PRIVATE_ARTIFACT_DIRECTORIES = ['agent-findings', 'campaign-state'] as const;
 export type PrivateArtifactDirectory = (typeof PRIVATE_ARTIFACT_DIRECTORIES)[number];
 
 const DIRECTORY_RELATIVE: Readonly<Record<PrivateArtifactDirectory, string>> = Object.freeze({
   'agent-findings': 'agent-findings',
+  /**
+   * M6 (7.4/B-02): the campaign orchestrator's own state lives in its OWN
+   * subtree. Writing it into the findings root made the Control Center's
+   * findings authority parse checkpoints as dossiers, which reported
+   * corruption for files that were never dossiers.
+   */
+  'campaign-state': 'campaign-state',
 });
 
 function assertKnownDirectory(directory: PrivateArtifactDirectory): PrivateArtifactDirectory {
