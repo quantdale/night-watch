@@ -456,7 +456,10 @@ test.describe('Phase 9 campaign integration — semantic findings through the re
         for (const defect of SEEDED_DEFECTS) {
           expect(checkpointText.includes(defect.category)).toBe(false);
         }
-        expect(result.morningBrief.headline).toContain('finding');
+        // M6 (7.1/C-08): the baseline admits NOTHING, and its protocol
+        // dossiers are now truthfully UNRESOLVED (no exact replay), so the
+        // brief reports unadmitted L0 candidates instead of claiming a finding.
+        expect(result.morningBrief.headline).toContain('NO ADMITTED REPRODUCIBLE PRODUCT ANOMALIES');
       }
     } finally {
       fs.rmSync(root, { recursive: true, force: true });

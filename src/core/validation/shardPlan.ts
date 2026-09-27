@@ -23,7 +23,14 @@ import type { ExecutionClass } from './executionClasses';
 export const VALIDATION_SHARD_PLAN_SCHEMA = 'nightwatch.validation-shard-plan.v1' as const;
 export const DEFAULT_PARALLEL_SHARDS = 2;
 export const MAX_PARALLEL_SHARDS = 8;
-export const MAX_FILES_PER_INVOCATION = 400;
+/**
+ * M6 (7.11): the per-invocation argv bound. It is a SAFETY cap on one spawned
+ * command's argument vector, not a scheduling target: the tracked test
+ * universe legitimately passed 400 when the new suites landed, and refusing a
+ * one-shard plan because of it would make the runner unusable at small shard
+ * counts. The bound stays explicit and bounded.
+ */
+export const MAX_FILES_PER_INVOCATION = 512;
 
 export interface Shard {
   readonly id: string;
