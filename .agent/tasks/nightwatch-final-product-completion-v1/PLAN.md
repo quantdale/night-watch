@@ -220,7 +220,17 @@ approved paths.
   `ui/control-center/**`, tests (unit + UI + browser).
 - Acceptance criteria: no READY verdict from a non-READY dossier; newest-N run
   window with truncation truth; UI typecheck/test/build green.
-- **Status:** NOT_STARTED
+- **Status:** COMPLETE (2026-09-27) — 7.1-7.11 implemented and validated: the
+  derived protocol-dossier readiness, the total Control Center status mapping
+  with contract-derived sanitizer allowlists, role-typed replay contexts with
+  the harness role as required input, the `campaign-state/` subtree with
+  legacy reads and the dossier-family-first findings authority, the
+  newest-N run window with `RUN_EVIDENCE_WINDOW_TRUNCATED`, the read-only
+  agent-campaign view (no paths), the measured Safety Center with explicit
+  NOT_MEASURED labels and NOT_WIRED currentness, one `resolveSiblingRoot()`
+  with a totality rule and probe, the SYNTHETIC_PREVIEW labelling of every
+  Phase 19-21 preview, the `status:local` auth heading, and the UI/browser
+  coverage of the new view (typecheck, 105 vitest, 9 browser tests).
 
 ### M7 — Narrowed source, semantic and configuration over-claims (tasks 8.1-8.5)
 

@@ -2095,6 +2095,13 @@
       "signals": [
         "isolated-scratch"
       ]
+    },
+    "ui/control-center/src/views/AgentCampaignsView.test.tsx": {
+      "class": "PROCESS_ISOLATED_ONLY",
+      "signals": [
+        "owner-local-state",
+        "isolated-scratch"
+      ]
     }
   }
 }

@@ -3,6 +3,7 @@ import {
   loadCampaignCoverage,
   loadCampaignSummary,
   loadExecutionGraph,
+  loadAgentCampaigns,
   loadFindings,
   loadOverviewSources,
   loadReviewer,
@@ -15,26 +16,7 @@ import {
   toApiErrorInfo,
   UNCLASSIFIED_API_ERROR,
 } from './api';
-import type {
-  ApiErrorInfo,
-  CampaignCoverageSnapshot,
-  CampaignSummarySnapshot,
-  DataLoadState,
-  ExecutionGraphSnapshot,
-  FindingsSnapshot,
-  OverviewLoadState,
-  OverviewSnapshot,
-  OverviewSourceStates,
-  ReviewerFindingSnapshot,
-  ReviewerSnapshot,
-  RunDetailSnapshot,
-  RunListSnapshot,
-  SourceGraphSnapshot,
-  SourceSurfaceSnapshot,
-  SourceSurfacesSnapshot,
-  TimelineSnapshot,
-  ViewId,
-} from './types';
+import type { AgentCampaignsSnapshot, ApiErrorInfo, CampaignCoverageSnapshot, CampaignSummarySnapshot, DataLoadState, ExecutionGraphSnapshot, FindingsSnapshot, OverviewLoadState, OverviewSnapshot, OverviewSourceStates, ReviewerFindingSnapshot, ReviewerSnapshot, RunDetailSnapshot, RunListSnapshot, SourceGraphSnapshot, SourceSurfaceSnapshot, SourceSurfacesSnapshot, TimelineSnapshot, ViewId } from './types';
 import { VIEW_DEFINITIONS } from './types';
 import { ControlCenterErrorBoundary, ErrorState, Icon, LoadMoreControl, LoadingState, usePagedCollection } from './shared';
 import { OverviewView, OverviewPartialView } from './views/OverviewView';
@@ -42,6 +24,7 @@ import { RunsView } from './views/RunsView';
 import { ExecutionGraphView } from './views/ExecutionGraphView';
 import { SourceView } from './views/SourceView';
 import { FindingsView } from './views/FindingsView';
+import { AgentCampaignsView } from './views/AgentCampaignsView';
 import { ReviewerView } from './views/ReviewerView';
 import { CampaignView } from './views/CampaignView';
 import { SafetyView } from './views/SafetyView';
@@ -124,6 +107,26 @@ function DashboardApp(): ReactNode {
   });
   const sourceSurfaceState = surfacesPaged.state;
   const [sourceGraphState, setSourceGraphState] = useState<DataLoadState<SourceGraphSnapshot>>({ kind: 'idle' });
+  // M6 (7.11): the agent-campaign view is a single bounded snapshot.
+  // M6 (7.11): the agent-campaign view is ONE bounded snapshot (no paging).
+  const [agentCampaignsState, setAgentCampaignsState] = useState<DataLoadState<AgentCampaignsSnapshot>>({ kind: 'idle' });
+  useEffect(() => {
+    if (activeView !== 'agent-campaigns') return;
+    let cancelled = false;
+    const controller = new AbortController();
+    setAgentCampaignsState({ kind: 'loading' });
+    loadAgentCampaigns(controller.signal)
+      .then((data) => {
+        if (!cancelled) setAgentCampaignsState({ kind: 'ready', data });
+      })
+      .catch((error: unknown) => {
+        if (!cancelled) setAgentCampaignsState({ kind: 'error', error: toApiErrorInfo(error) });
+      });
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [activeView, refreshKey]);
   const findingsPaged = usePagedCollection<FindingsSnapshot, FindingsSnapshot['items'][number]>({
     active: activeView === 'findings',
     refreshKey,
@@ -284,6 +287,7 @@ function DashboardApp(): ReactNode {
       <CampaignView summaryState={campaignSummaryState} coverageState={campaignCoverageState} onRetry={retryRunData} />
       <LoadMoreControl label="coverage rows" loaded={campaignCoverageState.kind === 'ready' ? campaignCoverageState.data.items.length : 0} paged={coveragePaged} />
     </>;
+    if (activeView === 'agent-campaigns') return <AgentCampaignsView state={agentCampaignsState} />;
     if (activeView === 'findings') return <>
       <FindingsView state={findingsState} onRetry={retryRunData} />
       <LoadMoreControl label="findings" loaded={findingsState.kind === 'ready' ? findingsState.data.items.length : 0} paged={findingsPaged} />

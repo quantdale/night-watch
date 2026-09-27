@@ -38,13 +38,12 @@ ledger, and end at `PROJECT_COMPLETE_AND_CI_CERTIFIED` under D-129 with a
 
 ## Current Milestone
 
-M6 Finding truth surfaces and Control Center data (tasks 7.1-7.x): the
-protocol dossier readiness verdict before any write (NW-AUD-029/C-08), the
-total Control Center status mapping with sanitized `oneOf` widening
-(NW-AUD-048/C-09), role-typed replay contexts for L1/L2 with distinct run ids
-(NW-AUD-025/C-10) and the `campaign-state/` orchestrator subtree with
-read-compatibility and dossier-family-first findings authority (B-02/C-21).
-M5 closed green with focused suites and the gate pair (see the ledger).
+M7 Narrowed source, semantic and configuration over-claims (tasks 8.1-8.x):
+the environment-layer over-claim (NW-AUD-012 narrowed: forward the validated
+merged environment, refuse unknown `.env` keys, fail on malformed or duplicate
+lines, treat an unreadable `.env` as an error) and the remaining narrowed
+items in that section. M6 closed with focused suites, the UI/browser lane and
+the gate pair (see the ledger).
 
 ## Completed Milestones
 
@@ -125,6 +124,13 @@ M5 closed green with focused suites and the gate pair (see the ledger).
 
 ## Work In Progress
 
+- M6 is COMPLETE: 7.1-7.11 are ticked in the campaign ledger with DONE notes
+  and PLAN marks M6 COMPLETE. The view-DOM baseline was intentionally
+  REGENERATED (`NIGHTWATCH_UPDATE_VIEW_DOM_BASELINE=1`) because the Agent
+  Campaigns view adds a navigation entry and a view — an intended DOM change
+  the baseline test itself requires to be recorded here.
+- M7 (tasks 8.1-8.x) has not started.
+
 - M5 is COMPLETE (ledger ticked, PLAN/STATE advanced, gate pair 5585/0,
   exact-head CI run 36302111703 green) and pushed.
 - M6 (tasks 7.1-7.11) is in progress; 7.1-7.3 are implemented and committed:
@@ -203,6 +209,15 @@ M5 closed green with focused suites and the gate pair (see the ledger).
   store (D-145). Next: 6.12 (ENVIRONMENT_DEPENDENT refusal).
 
 ## Exact Next Action
+
+Read tasks 8.1-8.x and the environment-surface loader
+(`src/core/config/environmentSurface.ts`) plus the launchers that forward
+configuration, then implement 8.1 (NW-AUD-012 narrowed) with focused tests,
+repairing forward with new commits. Then continue the M7 items in order,
+committing each validated batch, and close M7 with focused + `gate:milestone`
+PASS, the C-00 integrate and the `gh` CI observation (OD-3) as in M4-M6.
+
+## Superseded Next Action (M6, complete)
 
 Implement 7.9: relabel the synthetic Phase 19-21 previews
 (`nightwatch:status`, `campaign:plan|coverage|contracts|gaps|operator`) as

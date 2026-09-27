@@ -7,7 +7,14 @@ Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-final-product-completion-v1
 Starting SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
 Last validated implementation SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
-Last checkpoint: 2026-09-27 — M5 COMPLETE (6.1-6.17): the durable
+Last checkpoint: 2026-09-27 — M6 COMPLETE (7.1-7.11): the derived protocol
+dossier readiness, the total Control Center status mapping, role-typed replay
+contexts, the campaign-state subtree with dossier-family-first findings, the
+newest-N run window, the read-only agent-campaign view, the measured Safety
+Center, one resolveSiblingRoot() with a hardening rule and probe, the
+SYNTHETIC_PREVIEW labelling, the status:local auth heading, and the UI/browser
+coverage of the new view.
+Previous checkpoint: 2026-09-27 — M5 COMPLETE (6.1-6.17): the durable
 identity-bound agent finding record with its atomic store and verbatim
 terminated resume, the full reasoner identity, resumed-budget conservation,
 provider attribution with the honest termination class, tier-scaled failure
@@ -22,14 +29,13 @@ Previous checkpoint: 2026-09-26 — M4 COMPLETE (5.1-5.7): six release probes wi
 states + the CI block-record single authority (`a784e668`), and the final
 integration `137207b1` after reconciling origin/main `946b52c4` and restoring
 the ledger-governed README status block; gate:dev/gate:milestone 5520/0.
-Current milestone: M6 Finding truth surfaces and Control Center data (tasks
-7.1-7.x) — the protocol dossier readiness verdict before any write (7.1), the
-total Control Center status mapping with sanitized `oneOf` (7.2), role-typed
-replay contexts for L1/L2 (7.3) and the `campaign-state/` orchestrator subtree
-with dossier-family-first findings authority (7.4).
-Next action: read tasks 7.1-7.x, implement 7.1 with its focused suite green,
-repairing forward with new commits; close M6 with focused + gate:milestone
-PASS, the C-00 integrate and the `gh` CI observation (OD-3) as in M4/M5.
+Current milestone: M7 Narrowed source, semantic and configuration over-claims
+(tasks 8.1-8.x) — starting with the environment-layer over-claim (8.1,
+NW-AUD-012 narrowed).
+Next action: read tasks 8.1-8.x and `src/core/config/environmentSurface.ts`,
+implement 8.1 with focused tests green, repairing forward with new commits;
+close M7 with focused + gate:milestone PASS, the C-00 integrate and the `gh`
+CI observation (OD-3) as in M4-M6.
 
 Authorization class: FINAL_PRODUCT_COMPLETION_V1
 PROJECT_VERDICT_EFFECT: PRESERVE

@@ -8,6 +8,7 @@ export const VIEW_DEFINITIONS = [
   { id: 'findings', label: 'Findings', eyebrow: 'TRIAGE', description: 'Sanitized owner-local finding metadata.' },
   { id: 'reviewer', label: 'Reviewer', eyebrow: 'REVIEW', description: 'Relationships, recurrence, and what remains unknown.' },
   { id: 'system-map', label: 'System Map', eyebrow: 'TOPOLOGY V2', description: 'Progressive company-to-operation disclosure.' },
+  { id: 'agent-campaigns', label: 'Agent Campaigns', eyebrow: 'AUTONOMOUS HUNT', description: 'Durable owner-local admissions per campaign; identities and counts only.' },
 ] as const;
 
 export type ViewId = (typeof VIEW_DEFINITIONS)[number]['id'];
@@ -312,6 +313,26 @@ export interface FindingSummarySnapshot {
   readonly lastObservedAt: string | null;
   readonly categoryCode: string;
   readonly provenanceDigest: string | null;
+}
+
+/**
+ * M6 (7.11): the read-only agent-campaign view. Identities and counts only —
+ * the server contract has no field a filesystem path could occupy.
+ */
+export interface AgentCampaignRowSnapshot {
+  readonly campaignId: string;
+  readonly admissionState: 'ADMITTED_PERSISTED' | 'PROPOSED_NOT_PERSISTED' | 'NONE' | 'UNKNOWN';
+  readonly persistedAdmissions: number;
+  readonly candidateIds: readonly string[];
+  readonly dossierIds: readonly string[];
+}
+
+export interface AgentCampaignsSnapshot {
+  readonly schemaVersion: string;
+  readonly state: 'AVAILABLE' | 'EMPTY' | 'UNAVAILABLE';
+  readonly rows: readonly AgentCampaignRowSnapshot[];
+  readonly actionableFindings: number;
+  readonly reasonCodes: readonly string[];
 }
 
 export interface FindingsSnapshot {

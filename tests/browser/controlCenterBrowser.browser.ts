@@ -379,6 +379,25 @@ test('qualifies every built Control Center view over one synthetic authority com
     if (!request.url().startsWith('http://127.0.0.1:')) externalRequests.push(request.url());
   });
 
+  // M6 (7.11): the agent-campaign view is qualified over a synthetic
+  // owner-local store snapshot (identities and counts only, like production).
+  const agentCampaignAuthority = {
+    snapshot: () => ({
+      schemaVersion: 'nightwatch.control-center.agent-campaign-authority.v1' as const,
+      state: 'AVAILABLE' as const,
+      rows: [
+        {
+          campaignId: 'campaign-browser-qualified',
+          admissionState: 'ADMITTED_PERSISTED' as const,
+          persistedAdmissions: 1,
+          candidateIds: ['candidate-browser'],
+          dossierIds: ['afr:sha256:dddddddddddddddddddddddd'],
+        },
+      ],
+      actionableFindings: 1,
+      reasonCodes: [],
+    }),
+  };
   const sourceAuthority = createSourceAuthorityForTests(sourceSnapshot());
   const campaignAuthority = createCampaignAuthority({ sourceAuthority });
   const baseCollector = createDefaultControlCenterCollector({
@@ -386,6 +405,7 @@ test('qualifies every built Control Center view over one synthetic authority com
     sourceAuthority,
     campaignAuthority,
     findingsAuthority: { snapshot: findingsSnapshot },
+    agentCampaignAuthority,
     runSnapshotTtlMs: 10_000,
     sourceSnapshotTtlMs: 10_000,
   });
@@ -542,6 +562,14 @@ test('qualifies every built Control Center view over one synthetic authority com
     await expect(page.getByText(/never equivalent to a Leslie genuine\/invalid verdict or a Pondr approval/)).toBeVisible();
     await sweep();
 
+    // M6 (7.11): the agent-campaign view renders the durable rows — campaign
+    // id, admission state, counts, and the content-addressed dossier identity.
+    await page.getByRole('link', { name: 'Agent Campaigns' }).click({ force: true });
+    await expect(page.getByRole('heading', { name: 'Measured admissions, or an explicit absence.' })).toBeVisible();
+    await expect(page.getByText('campaign-browser-qualified')).toBeVisible();
+    await expect(page.getByText('afr:sha256:dddddddddddddddddddddddd')).toBeVisible();
+    await sweep();
+
     // The system map is qualified in its own lane; the class-effect walk needs
     // it here too because it is the only view that renders the map classes.
     // The synthetic evidence DTO carries all thirteen statuses, the truncated
@@ -624,7 +652,7 @@ test('qualifies every built Control Center view over one synthetic authority com
     for (const link of await page.getByRole('navigation', { name: 'Primary' }).getByRole('link').all()) {
       navigated.add((await link.getAttribute('href')) ?? '');
     }
-    const visited = new Set(['#', '#safety', '#runs', '#execution-graph', '#campaigns', '#source-intelligence', '#findings', '#reviewer', '#system-map']);
+    const visited = new Set(['#', '#safety', '#runs', '#execution-graph', '#campaigns', '#source-intelligence', '#findings', '#reviewer', '#system-map', '#agent-campaigns']);
     const unqualified = [...navigated].filter((href) => !visited.has(href));
     expect(unqualified, `navigable views with no browser qualification: ${unqualified.join(', ')}`).toEqual([]);
     expect(navigated.size).toBe(visited.size);

@@ -83,6 +83,7 @@ const CONTRACT_VERSIONS: Readonly<Record<string, string>> = Object.freeze({
   SourceSurfacesSnapshot: 'nightwatch.control-center.source-surfaces.v1',
   SourceGraphSnapshot: 'nightwatch.control-center.source-graph.v1',
   SystemMapSnapshot: 'nightwatch.control-center.system-map.v2',
+  AgentCampaignsSnapshot: 'nightwatch.control-center.agent-campaigns.v1',
 });
 
 interface Leaf {
@@ -373,6 +374,7 @@ const REMAINING_CONTRACTS = [
   'SourceSurfacesSnapshot',
   'SourceGraphSnapshot',
   'SystemMapSnapshot',
+  'AgentCampaignsSnapshot',
 ] as const;
 
 const ALL_CONTRACTS = [...OVERVIEW_CONTRACTS, ...REMAINING_CONTRACTS];
@@ -399,6 +401,12 @@ async function inspectFirstRun(): Promise<void> {
 
 const VIEWS: readonly ViewCase[] = [
   { name: 'overview', contracts: OVERVIEW_CONTRACTS, marker: 'Know the posture before the next run.' },
+  {
+    name: 'agent-campaigns',
+    contracts: ['AgentCampaignsSnapshot'],
+    marker: 'Measured admissions, or an explicit absence.',
+    activate: () => { window.location.hash = '#agent-campaigns'; },
+  },
   {
     name: 'safety',
     contracts: OVERVIEW_CONTRACTS,
@@ -504,6 +512,8 @@ function endpointPayloads(fixtures: Map<string, Record<string, unknown>>): Map<s
   put('/api/v1/source/surfaces?limit=50', 'SourceSurfacesSnapshot');
   put('/api/v1/reviewer?limit=50', 'ReviewerSnapshot');
   put('/api/v1/findings?limit=50', 'FindingsSnapshot');
+  // M6 (7.11): the agent-campaign view is one bounded snapshot.
+  put(CONTROL_CENTER_API_PATHS.agentCampaigns, 'AgentCampaignsSnapshot');
   const runs = fixtures.get('RunListSnapshot');
   const firstRun = runs === undefined ? undefined : (runs.items as readonly Record<string, unknown>[])[0];
   if (firstRun !== undefined) {
@@ -562,7 +572,7 @@ describe('control center render truth', () => {
     let leaves = 0;
     for (const contract of ALL_CONTRACTS) leaves += generatedFor(contract).leaves.length;
     expect(contracts.length).toBeGreaterThan(30);
-    expect(ALL_CONTRACTS.length).toBe(16);
+    expect(ALL_CONTRACTS.length).toBe(17);
     expect(leaves).toBeGreaterThan(300);
     // A known scalar leaf exists with a real alternative; a generator that
     // silently produced strings for every shape would fail these.
@@ -605,6 +615,7 @@ describe('control center render truth', () => {
       'SourceSurfacesSnapshot',
       'SourceGraphSnapshot',
       'SystemMapSnapshot',
+      'AgentCampaignsSnapshot',
     ];
     const coveredContracts = [...new Set(VIEWS.flatMap((view) => [...view.contracts]))].sort();
     // The views and the asserted contract list must agree exactly; a view

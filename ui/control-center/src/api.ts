@@ -9,6 +9,7 @@ import type {
   ExecutionGraphSnapshot,
   CampaignCoverageSnapshot,
   CampaignSummarySnapshot,
+  AgentCampaignsSnapshot,
   FindingsSnapshot,
   ReviewerSnapshot,
   RunDetailSnapshot,
@@ -34,6 +35,7 @@ export const CONTROL_CENTER_API_PATHS = Object.freeze({
   sourceSurfaces: '/api/v1/source/surfaces',
   sourceGraph: '/api/v1/source/graph',
   findings: '/api/v1/findings',
+  agentCampaigns: '/api/v1/agent/campaigns',
   reviewer: '/api/v1/reviewer',
   reviewerDecision: '/api/v1/reviewer/decision',
   /** C-15c. Explicitly v2: v1 is never reinterpreted. */
@@ -238,6 +240,7 @@ export const CONTROL_CENTER_SNAPSHOT_CONTRACTS = Object.freeze({
   sourceSurfaces: contract('source-surfaces.v1', ['items', 'page']),
   sourceGraph: contract('source-graph.v1', ['nodes']),
   findings: contract('findings.v1', ['state', 'items', 'page']),
+  agentCampaigns: contract('agent-campaigns.v1', ['state', 'rows', 'actionableFindings', 'reasonCodes']),
   reviewer: contract('reviewer.v1', ['state', 'items', 'page', 'finalVerdictAuthority', 'organizationalAuthority']),
   runs: contract('run-list.v1', ['items', 'page']),
   runDetail: contract('run-detail.v1', ['run']),
@@ -532,6 +535,11 @@ export function loadSourceGraph(surfaceId: string | null, depth = 2, signal?: Ab
 export function loadReviewer(limit = 50, cursor: string | null = null, signal?: AbortSignal): Promise<ReviewerSnapshot> {
   const boundedLimit = Number.isInteger(limit) && limit > 0 && limit <= 50 ? limit : 50;
   return fetchSnapshot<ReviewerSnapshot>(`${CONTROL_CENTER_API_PATHS.reviewer}?limit=${boundedLimit}${cursorParam(cursor)}`, CONTROL_CENTER_SNAPSHOT_CONTRACTS.reviewer, signal);
+}
+
+/** M6 (7.11): the agent-campaign view. Read-only, no pagination (bounded rows). */
+export function loadAgentCampaigns(signal?: AbortSignal): Promise<AgentCampaignsSnapshot> {
+  return fetchSnapshot<AgentCampaignsSnapshot>(CONTROL_CENTER_API_PATHS.agentCampaigns, CONTROL_CENTER_SNAPSHOT_CONTRACTS.agentCampaigns, signal);
 }
 
 export function loadFindings(limit = 50, cursor: string | null = null, signal?: AbortSignal): Promise<FindingsSnapshot> {

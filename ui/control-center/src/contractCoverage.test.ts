@@ -41,7 +41,9 @@ const COMPONENT_MODULES: ReadonlyArray<readonly [string, string]> = [
   ['App.tsx', readFileSync(join(SRC, 'App.tsx'), 'utf8')],
   ['shared.tsx', readFileSync(join(SRC, 'shared.tsx'), 'utf8')],
   ...readdirSync(join(SRC, 'views'))
-    .filter((file) => file.endsWith('.tsx'))
+    // M6 (7.11): a TEST file is not a view. Including one made its fixture
+    // objects look like rendered contract fields.
+    .filter((file) => file.endsWith('.tsx') && !file.endsWith('.test.tsx'))
     .sort()
     .map((file) => [`views/${file}`, readFileSync(join(SRC, 'views', file), 'utf8')] as const),
 ];
