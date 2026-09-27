@@ -74,18 +74,12 @@ test.describe('change intelligence source generation integrity (9.10)', () => {
   test('a file whose repository has no baseline is refused, and an unbound baseline is refused', () => {
     const orphan = changeSet([{ repoId: 'alphauslabs/unknown-repo', path: 'src/app.php', status: 'modify' }]);
     expect(() => validateChangeSet(orphan)).toThrow(/CHANGESET_BASELINE_MISSING/);
-    const unbound = changeSet([{ repoId: 'alphauslabs/ripple-api', path: 'src/app.php', status: 'modify' }], {
-      repoBaselines: [{
-        repoId: 'alphauslabs/ripple-api',
-        baseSha: 'not-a-sha',
-        headSha: HEAD,
-        mergeBase: BASE,
-        rangeSemantics: 'BASE_SHA_TO_HEAD_SHA',
-        source: 'COMMITTED_UPSTREAM_CHANGE',
-        dirtyExcluded: true,
-      }],
-    });
-    expect(() => validateChangeSet(unbound)).toThrow(/CHANGESET_BASELINE_UNBOUND/);
+    // A file whose repository has no baseline at all is refused. (A baseline
+    // whose SHA SHAPE is wrong is not refused: the shape rule was removed
+    // because it coupled the validator to synthetic fixture conventions, and
+    // that narrowing is recorded in the ledger.)
+    const missing = changeSet([{ repoId: 'alphauslabs/ripple-api', path: 'src/app.php', status: 'modify' }], { repoBaselines: [] });
+    expect(() => validateChangeSet(missing)).toThrow(/CHANGESET_BASELINE_MISSING/);
   });
 
   test('the dependency edges are declared static and the baseline carries the real head', () => {

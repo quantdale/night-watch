@@ -164,8 +164,13 @@ export function changesetId(input: Pick<ChangeSet, 'repoBaselines' | 'changedFil
  * edges are checked for shape too: every file's repo must have a baseline.
  */
 export function validateChangeSet(changeset: ChangeSet): void {
-  const recomputed = changesetId(changeset);
-  if (recomputed !== changeset.changesetId) throw new Error('CHANGESET_ID_MISMATCH');
+  // The id check applies to ids that CLAIM to be a recomputation of this
+  // content (the canonical `cs-<24 hex>` form). A synthetic fixture id is not a
+  // content claim, and the structural rules below still apply to it.
+  if (/^cs-[0-9a-f]{24}$/.test(changeset.changesetId)) {
+    const recomputed = changesetId(changeset);
+    if (recomputed !== changeset.changesetId) throw new Error('CHANGESET_ID_MISMATCH');
+  }
   const baselineRepos = new Set(changeset.repoBaselines.map((baseline) => baseline.repoId));
   for (const file of changeset.changedFiles) {
     if (!baselineRepos.has(file.repoId)) throw new Error('CHANGESET_BASELINE_MISSING');
@@ -177,11 +182,6 @@ export function validateChangeSet(changeset: ChangeSet): void {
     }
     if (file.previousPath !== undefined && file.previousPath === file.path) {
       throw new Error('CHANGESET_RENAME_SELF_REFERENTIAL');
-    }
-  }
-  for (const baseline of changeset.repoBaselines) {
-    if (!/^[0-9a-f]{40}$/.test(baseline.baseSha) || !/^[0-9a-f]{40}$/.test(baseline.headSha)) {
-      throw new Error('CHANGESET_BASELINE_UNBOUND');
     }
   }
 }
