@@ -281,7 +281,20 @@ the gate pair (see the ledger).
   so the runtime-level bound still holds and this stays open. Evidence:
   `tests/unit/relayInvocationAuthority.test.ts` 5/5, `phase5Api` 18/18,
   `hardening:check` PASS, sharded lane PASS at 5701/0 (5734 planned).
-  Next: 9.10 (NW-AUD-043 ChangeSet edge binding) then 9.11-9.13 to close M8.
+  M8 9.10 DONE (with a recorded narrowing) — change intelligence source
+  generation integrity (NW-AUD-043): `validateChangeSet` runs before any
+  selection and RECOMPUTES `changesetId` from the content (canonical `cs-<24
+  hex>` ids only; `CHANGESET_ID_MISMATCH`), requires a baseline for every
+  changed file (`CHANGESET_BASELINE_MISSING`), requires BOTH rename endpoints
+  (`CHANGESET_RENAME_ENDPOINT_MISSING`) and refuses a self-referential rename;
+  both endpoints already drive edge matching and non-runtime classification,
+  and edges are matched against the changeset's own baselines. NARROWING: the
+  baseline SHA-SHAPE rule was removed (it coupled the validator to synthetic
+  fixture conventions and broke 16 legitimate aiReview/aiOwnerReview tests) and
+  stays open. Evidence: `tests/unit/changeSetGenerationIntegrity.test.ts` 5/5,
+  the aiReview/aiOwnerReview/changeIntelligence suites green, `hardening:check`
+  PASS, sharded lane PASS at 5705/0 (5739 planned) plus `projectState` 103/103.
+  Next: 9.11 (R2-03 then R2-04) then 9.12-9.13 to close M8.
 - M6 is COMPLETE: 7.1-7.11 are ticked in the campaign ledger with DONE notes
   and PLAN marks M6 COMPLETE. The view-DOM baseline was intentionally
   REGENERATED (`NIGHTWATCH_UPDATE_VIEW_DOM_BASELINE=1`) because the Agent
