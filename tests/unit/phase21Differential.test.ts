@@ -28,10 +28,12 @@ test.describe("Phase 21 differential discovery and alignment", () => {
     const evidence = phase21DifferentialEvidence();
     const report = discoverDifferentialPairs({ inventory: phase20Inventory(), evidence });
     expect(report.schemaVersion).toBe("nightwatch.semantic-differential-pair-discovery.v1");
-    expect(report.pairCount).toBe(21);
-    expect(report.admittedPairCount).toBe(21);
-    expect(report.outcomeCounts.PAIR_ADMITTED).toBe(21);
-    expect(report.admittedContracts).toHaveLength(21);
+    expect(report.pairCount).toBe(15);
+    expect(report.admittedPairCount).toBe(15);
+    expect(report.outcomeCounts.PAIR_ADMITTED).toBe(15);
+    // M7 (8.4/NW-AUD-040): the regex-derived TS/Go families no longer prove
+    // contracts, so fewer differential contracts are admitted.
+    expect(report.admittedContracts).toHaveLength(15);
     expect(phase21DifferentialContracts()).toEqual(report.admittedContracts);
     expect(JSON.stringify(report)).not.toContain("CUSTOMER_SENTINEL");
   });
