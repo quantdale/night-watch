@@ -2300,8 +2300,10 @@ test.describe('release probe wiring (M4 task 5.1)', () => {
     expect(result.stdout).toContain('single cookie-expiry evaluator');
     expect(result.stdout).toContain('W13 aggregate');
     // 5.2 — the accessibility check consumes the browser lane's record, and
-    // the retired 'no certification result' message is gone.
-    expect(result.stdout).toContain('15 accessibility-certification state=');
+    // the retired 'no certification result' message is gone. The record is
+    // host-local by design, so presence and the retired message are asserted
+    // as plain text; never a specific state.
+    expect(result.stdout).toContain('"accessibility-certification"');
     expect(result.stdout).not.toContain('no certification result at the certified checkpoint is recorded');
     expect(fs.readFileSync(path.join(REPO_ROOT, 'bin', 'project-state-check.mjs'), 'utf8')).toContain('parseAccessibilityCertificationRecord(record)');
   });
