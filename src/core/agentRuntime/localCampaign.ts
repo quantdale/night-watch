@@ -80,7 +80,7 @@ import {
   type RuntimeBudgetEnvelope,
 } from './runtimeBudgetEnvelope';
 import { AgentCheckpointError, assertCheckpointHasNoSecrets, boundedFoundVersion, finalizeCheckpoint, parseCheckpoint } from './checkpoint';
-import { AgentRuntime } from './runtime';
+import { AGENT_RUNTIME_DEFAULT_MAX_TURNS, AgentRuntime } from './runtime';
 import {
   absorbInvestigationIntoStrategy,
   emptyCampaignStrategyState,
@@ -314,6 +314,13 @@ interface CampaignProgress {
   readonly reasonerIdentity: LocalCampaignReasonerIdentity | null;
   /** Present only when the campaign paused mid-investigation. */
   readonly pausedInvestigation: AgentCheckpoint | null;
+  /**
+   * M5 (6.5/C-14): the per-investigation turn limit the campaign actually ran
+   * under. A resume uses THIS value, not whatever the caller passes, so a
+   * resumed investigation can never be given a different turn budget than the
+   * one its prefix was counted under. Absent on pre-M5 checkpoints.
+   */
+  readonly maxTurns: number | null;
 }
 
 function zeroTerminationCounts(): CampaignTerminationCounts {
@@ -435,6 +442,18 @@ function parseCampaignProgress(value: unknown, campaignId: string): CampaignProg
       counts[key as AgentTerminationReason] = entry;
     }
   }
+  let maxTurns: number | null = null;
+  if (value.maxTurns !== undefined && value.maxTurns !== null) {
+    if (
+      typeof value.maxTurns !== 'number' ||
+      !Number.isInteger(value.maxTurns) ||
+      value.maxTurns < 1 ||
+      value.maxTurns > 50
+    ) {
+      throw new AgentCheckpointError('CORRUPT', 'campaignProgress.maxTurns is invalid');
+    }
+    maxTurns = value.maxTurns;
+  }
   let pausedInvestigation: AgentCheckpoint | null = null;
   if (value.pausedInvestigation !== undefined && value.pausedInvestigation !== null) {
     pausedInvestigation = parseCheckpoint(value.pausedInvestigation);
@@ -504,6 +523,7 @@ function parseCampaignProgress(value: unknown, campaignId: string): CampaignProg
     investigationScope,
     reasonerIdentity,
     pausedInvestigation,
+    maxTurns,
   };
 }
 
@@ -667,6 +687,63 @@ function remainingPolicyFor(policy: AgentBudgetPolicy, usage: AgentBudgetUsage):
     consecutiveFailures: Math.max(0, policy.consecutiveFailures - usage.consecutiveFailures),
     providerFailures: Math.max(0, policy.providerFailures - usage.providerFailures),
   };
+}
+
+/**
+ * M5 (6.5/C-06): the budget dimensions whose consumption is capped by policy.
+ * `wallTimeMs` is deliberately absent: it is measured from the campaign start
+ * and a turn may cross the ceiling before the next check, so it is advisory
+ * rather than conserved.
+ */
+const CONSERVED_BUDGET_DIMENSIONS = [
+  { usage: 'reasonerCalls', policy: 'reasonerCalls' },
+  { usage: 'inputBytes', policy: 'inputBytes' },
+  { usage: 'outputBytes', policy: 'outputBytes' },
+  { usage: 'toolPayloadBytes', policy: 'toolPayloadBytes' },
+  { usage: 'toolActions', policy: 'toolActions' },
+  { usage: 'candidateCount', policy: 'candidateCap' },
+  { usage: 'retries', policy: 'retries' },
+  { usage: 'consecutiveFailures', policy: 'consecutiveFailures' },
+  { usage: 'providerFailures', policy: 'providerFailures' },
+] as const;
+export type ConservedBudgetDimension = (typeof CONSERVED_BUDGET_DIMENSIONS)[number]['usage'];
+
+export interface BudgetConservationRow {
+  readonly dimension: ConservedBudgetDimension;
+  readonly total: number;
+  readonly consumed: number;
+  readonly remaining: number;
+  /** total === consumed + remaining (no double subtraction, no double grant). */
+  readonly conserved: boolean;
+  /** consumed never exceeds the policy's total for this dimension. */
+  readonly withinPolicy: boolean;
+}
+
+/** Per-dimension conservation arithmetic of one campaign against its policy. */
+export function budgetConservation(
+  policy: AgentBudgetPolicy,
+  consumed: AgentBudgetUsage,
+): readonly BudgetConservationRow[] {
+  const remaining = remainingPolicyFor(policy, consumed);
+  return CONSERVED_BUDGET_DIMENSIONS.map(({ usage, policy: policyKey }) => ({
+    dimension: usage,
+    total: policy[policyKey],
+    consumed: consumed[usage],
+    remaining: remaining[policyKey],
+    conserved: policy[policyKey] === consumed[usage] + remaining[policyKey],
+    withinPolicy: consumed[usage] <= policy[policyKey],
+  }));
+}
+
+function assertBudgetConservation(engine: CampaignEngine): void {
+  for (const row of budgetConservation(engine.policy, campaignUsageOf(engine))) {
+    if (!row.withinPolicy) {
+      throw new LocalCampaignError(
+        'BUDGET_CONSERVATION_VIOLATION',
+        `${row.dimension} consumed ${row.consumed} of a ${row.total} allowance`,
+      );
+    }
+  }
 }
 
 function addUsage(base: AgentBudgetUsage, extra: AgentBudgetUsage): AgentBudgetUsage {
@@ -923,6 +1000,7 @@ function buildCampaignCheckpoint(
         : [...engine.input.investigationScope],
     reasonerIdentity: engine.input.reasonerIdentity ?? null,
     pausedInvestigation,
+    maxTurns: engine.input.maxTurns ?? AGENT_RUNTIME_DEFAULT_MAX_TURNS,
   };
   const document: Record<string, unknown> = { ...checkpoint, campaignProgress: { ...progress } };
   assertCheckpointHasNoSecrets(document as unknown as AgentCheckpoint);
@@ -1098,12 +1176,13 @@ async function runOneInvestigation(engine: CampaignEngine, investigationId: stri
     if (pending.campaignId !== investigationId) {
       throw new LocalCampaignError('CHECKPOINT_MISMATCH', 'paused investigation does not belong to the next investigation slot');
     }
-    // The persisted campaign usage excludes the paused run's in-flight
-    // consumption (it merges only at completion), so re-apply it to the
-    // remaining-budget basis: the resumed investigation must not get the
-    // pre-pause allowance twice.
-    basis = addUsage(basis, pending.state.budget.usage);
-    basis = { ...basis, wallTimeMs: campaignUsageOf(engine).wallTimeMs };
+    // M5 (6.5, NW-AUD-045/C-06): the runtime RESTORES the paused
+    // investigation's own usage, so the policy it is measured against must be
+    // the campaign's remaining allowance WITHOUT re-applying that in-flight
+    // usage. The pre-M5 basis added the paused usage again, and because the
+    // restored counter is compared against the passed policy, the in-flight
+    // consumption was subtracted twice — stranding allowance on every resume.
+    basis = campaignUsageOf(engine);
     engine.acc.pendingResume = null;
     ran = await AgentRuntime.resumeFromCheckpoint(pending, {
       campaignId: investigationId,
@@ -1176,6 +1255,9 @@ async function runCampaignLoop(engine: CampaignEngine, firstInvestigationId?: st
     }
 
     const { newEvidence, newCandidates } = absorbInvestigation(engine, ran, countStart);
+    // M5 (6.5): every completed investigation is measured against the policy
+    // before the campaign spends anything else on its behalf.
+    assertBudgetConservation(engine);
     if (reason === 'SAFETY_BLOCKED') {
       const result = persistAdmissions(engine, resultOf(engine, 'SAFETY_BLOCKED', null));
       if (result.admissionPersistence === 'NOT_PERSISTED') return result;
@@ -1406,12 +1488,18 @@ export async function resumeLocalCliCampaign(input: LocalCampaignInput): Promise
   assertDeclaredBudgetEnvelope(input.declaredBudgetEnvelope, envelopeFromBudgetPolicy(policy), input.campaignId);
   const progress = parseCampaignProgress((raw as Record<string, unknown>).campaignProgress, input.campaignId);
   assertScopeContinuity(progress, input);
+  // M5 (6.5/C-14): the persisted per-investigation turn limit wins over the
+  // caller's, so a resumed investigation keeps the budget its prefix was
+  // counted under and a `--max-turns` passed at resume time cannot silently
+  // widen (or shrink) it.
+  const effectiveInput: LocalCampaignInput =
+    progress !== null && progress.maxTurns !== null ? { ...input, maxTurns: progress.maxTurns } : input;
 
   if (checkpoint.state.status === 'TERMINATED') {
     // Idempotent resume: the campaign already finished. Report the stored
     // terminal outcome without restarting any investigation.
     const engine: CampaignEngine = {
-      input, policy, reasoner, directory, now,
+      input: effectiveInput, policy, reasoner, directory, now,
       campaignStartMs: now(),
       acc: freshAccumulators(input.campaignId),
     };
@@ -1452,7 +1540,7 @@ export async function resumeLocalCliCampaign(input: LocalCampaignInput): Promise
     // `<id>:inv:1` onward. The seed prefix stays empty so the resumed run
     // merges exactly once.
     const engine: CampaignEngine = {
-      input, policy, reasoner, directory, now,
+      input: effectiveInput, policy, reasoner, directory, now,
       campaignStartMs: now() - checkpoint.state.budget.usage.wallTimeMs,
       acc: freshAccumulators(input.campaignId),
     };
@@ -1466,7 +1554,7 @@ export async function resumeLocalCliCampaign(input: LocalCampaignInput): Promise
   // The resume is about to run turns: bind it to the recorded reasoner first.
   assertReasonerIdentityContinuity(progress.reasonerIdentity, input.reasonerIdentity);
   const engine: CampaignEngine = {
-    input, policy, reasoner, directory, now,
+    input: effectiveInput, policy, reasoner, directory, now,
     campaignStartMs: now() - checkpoint.state.budget.usage.wallTimeMs,
     acc: freshAccumulators(input.campaignId),
   };
