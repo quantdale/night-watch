@@ -53,11 +53,51 @@ function assertStartupEnvironment() {
  * spawned, record its identity, and never pass the configured value through a
  * shell. `process.execPath` is the safe default when no host value is set.
  */
-function resolveReasonerIdentity(reasonerMod, configured) {
-  const identity = reasonerMod.resolveReasonerExecutable(configured ?? process.execPath);
+/**
+ * M5 (6.4): the model label is an identity component, so an explicit `--model`
+ * and the declared `NIGHTWATCH_REASONER_MODEL` must agree. A disagreement is
+ * refused BEFORE any process exists rather than silently labelling the run.
+ * Returns null when the two disagree (the refusal is already recorded).
+ */
+function resolveModelLabel(flags) {
+  const declared = typeof flags.model === 'string' && flags.model.length > 0 ? flags.model : null;
+  const configured =
+    typeof process.env.NIGHTWATCH_REASONER_MODEL === 'string' && process.env.NIGHTWATCH_REASONER_MODEL.length > 0
+      ? process.env.NIGHTWATCH_REASONER_MODEL
+      : null;
+  if (declared !== null && configured !== null && declared !== configured) {
+    fail(3, 'REASONER_MODEL_MISMATCH: --model disagrees with NIGHTWATCH_REASONER_MODEL');
+    return null;
+  }
+  return declared ?? configured ?? 'configured';
+}
+
+/**
+ * M5 (6.4): resolve the FULL attributable reasoner identity (executable,
+ * adapter, print CLI, PRINT_ARGS, provider, model) and hand the campaign the
+ * exact bytes-digest identity its checkpoint records.
+ */
+function resolveReasonerIdentity(reasonerMod, configured, options = {}) {
+  const identity = reasonerMod.resolveReasonerRuntimeIdentity({
+    executable: configured ?? process.execPath,
+    adapterPath: options.adapterPath ?? null,
+    printCli: process.env.NIGHTWATCH_PRINT_CLI ?? null,
+    printArgs: process.env.NIGHTWATCH_PRINT_ARGS ?? null,
+    provider: options.provider ?? null,
+    model: options.model ?? null,
+  });
   return {
-    executable: identity.path,
-    reasonerIdentity: { path: identity.path, digest: identity.digest },
+    executable: identity.executablePath,
+    reasonerIdentity: {
+      path: identity.executablePath,
+      digest: identity.executableDigest,
+      adapterDigest: identity.adapterDigest,
+      printCliDigest: identity.printCliDigest,
+      printArgsDigest: identity.printArgsDigest,
+      provider: identity.provider,
+      model: identity.model,
+      identityDigest: identity.identityDigest,
+    },
   };
 }
 
@@ -114,11 +154,14 @@ if (command === 'status') {
     return eq === -1 ? [item.slice(2), 'true'] : [item.slice(2, eq), item.slice(eq + 1)];
   }));
   const repositoryIds = flags.repository === undefined ? undefined : [flags.repository];
+  const modelLabel = resolveModelLabel(flags);
   if (sub === 'run') {
     if (flags.reasoner !== 'cli') {
       fail(2, 'campaign run requires --reasoner=cli');
     } else if (!DURATIONS.has(flags.duration)) {
       fail(2, 'campaign run requires --duration=1h|4h|8h|overnight');
+    } else if (modelLabel === null) {
+      // Refused above: --model and NIGHTWATCH_REASONER_MODEL disagree.
     } else if (flags.env === 'dev' || flags.env === 'next' || flags.env === 'production') {
       fail(2, `environment ${flags.env} is NOT AUTHORIZED for this programme`);
     } else if (!process.env.NIGHTWATCH_REASONER_CLI && !process.env.NIGHTWATCH_PRINT_CLI) {
@@ -149,15 +192,20 @@ if (command === 'status') {
           extraArgs.push(path.join(root, 'bin/nightwatch-reasoner-print.mjs'));
         }
         try {
-          const { executable, reasonerIdentity } = resolveReasonerIdentity(reasonerMod, process.env.NIGHTWATCH_REASONER_CLI);
+          const providerLabel = process.env.NIGHTWATCH_REASONER_PROVIDER ?? 'configured';
+          const { executable, reasonerIdentity } = resolveReasonerIdentity(reasonerMod, process.env.NIGHTWATCH_REASONER_CLI, {
+            adapterPath: extraArgs[0] ?? null,
+            provider: providerLabel,
+            model: modelLabel,
+          });
           const result = await mod.runLocalCliCampaign({
             campaignId: typeof flags.id === 'string' && flags.id.length > 0 ? flags.id : `local-${Date.now()}`,
             ceilingName: DURATIONS.get(flags.duration),
             executable,
             reasonerIdentity,
             args: extraArgs,
-            provider: process.env.NIGHTWATCH_REASONER_PROVIDER ?? 'configured',
-            model: process.env.NIGHTWATCH_REASONER_MODEL ?? 'configured',
+            provider: providerLabel,
+            model: modelLabel,
             maxTurns,
             investigationScope: repositoryIds,
             investigationContext: contextMod.createOwnerLocalInvestigationContext(
@@ -200,7 +248,9 @@ if (command === 'status') {
         };
     console.log(JSON.stringify(payload, null, 2));
   } else if (sub === 'resume') {
-    if (!process.env.NIGHTWATCH_REASONER_CLI && !process.env.NIGHTWATCH_PRINT_CLI) {
+    if (modelLabel === null) {
+      // Refused above: --model and NIGHTWATCH_REASONER_MODEL disagree.
+    } else if (!process.env.NIGHTWATCH_REASONER_CLI && !process.env.NIGHTWATCH_PRINT_CLI) {
       fail(2, 'REASONER_CLI_NOT_CONFIGURED — set NIGHTWATCH_REASONER_CLI or NIGHTWATCH_PRINT_CLI to resume');
     } else if (typeof flags.id !== 'string' || flags.id.length === 0) {
       fail(2, 'campaign resume requires --id=<campaignId>');
@@ -226,7 +276,12 @@ if (command === 'status') {
       const maxTurns = maxTurnsRaw === undefined ? undefined : Number(maxTurnsRaw);
       try {
         if (!resumeStartupOk) throw new Error('ENVIRONMENT_VALUE_MALFORMED');
-        const { executable, reasonerIdentity } = resolveReasonerIdentity(reasonerMod, process.env.NIGHTWATCH_REASONER_CLI);
+        const providerLabel = process.env.NIGHTWATCH_REASONER_PROVIDER ?? 'configured';
+        const { executable, reasonerIdentity } = resolveReasonerIdentity(reasonerMod, process.env.NIGHTWATCH_REASONER_CLI, {
+          adapterPath: extraArgs[0] ?? null,
+          provider: providerLabel,
+          model: modelLabel,
+        });
         // ceilingName is required input but resume runs under the checkpoint's
         // own stored budget policy; the multi-investigation progress (next
         // investigation index, stagnation count, termination counts) resumes
@@ -237,8 +292,8 @@ if (command === 'status') {
           executable,
           reasonerIdentity,
           args: extraArgs,
-          provider: process.env.NIGHTWATCH_REASONER_PROVIDER ?? 'configured',
-          model: process.env.NIGHTWATCH_REASONER_MODEL ?? 'configured',
+          provider: providerLabel,
+          model: modelLabel,
           maxTurns: Number.isInteger(maxTurns) ? maxTurns : 8,
           investigationScope: repositoryIds,
           investigationContext: contextMod.createOwnerLocalInvestigationContext(

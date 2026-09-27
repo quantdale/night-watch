@@ -139,6 +139,16 @@ export class LocalCampaignError extends Error {
 export interface LocalCampaignReasonerIdentity {
   readonly path: string;
   readonly digest: string;
+  /**
+   * M5 (6.4): the rest of the attributable identity. Absent on pre-M5
+   * checkpoints (path+digest only), which compare exactly those two fields.
+   */
+  readonly adapterDigest?: string | null;
+  readonly printCliDigest?: string | null;
+  readonly printArgsDigest?: string | null;
+  readonly provider?: string | null;
+  readonly model?: string | null;
+  readonly identityDigest?: string | null;
 }
 
 export interface LocalCampaignInput {
@@ -459,7 +469,30 @@ function parseCampaignProgress(value: unknown, campaignId: string): CampaignProg
     ) {
       throw new AgentCheckpointError('CORRUPT', 'campaignProgress.reasonerIdentity is invalid');
     }
-    reasonerIdentity = { path: identity.path, digest: identity.digest };
+    const optionalDigest = (entry: unknown, field: string): string | null => {
+      if (entry === undefined || entry === null) return null;
+      if (typeof entry !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9:._-]{0,159}$/.test(entry)) {
+        throw new AgentCheckpointError('CORRUPT', `campaignProgress.reasonerIdentity.${field} is invalid`);
+      }
+      return entry;
+    };
+    const optionalLabel = (entry: unknown, field: string): string | null => {
+      if (entry === undefined || entry === null) return null;
+      if (typeof entry !== 'string' || !/^[A-Za-z0-9._:/-]{1,128}$/.test(entry)) {
+        throw new AgentCheckpointError('CORRUPT', `campaignProgress.reasonerIdentity.${field} is invalid`);
+      }
+      return entry;
+    };
+    reasonerIdentity = {
+      path: identity.path,
+      digest: identity.digest,
+      adapterDigest: optionalDigest(identity.adapterDigest, 'adapterDigest'),
+      printCliDigest: optionalDigest(identity.printCliDigest, 'printCliDigest'),
+      printArgsDigest: optionalDigest(identity.printArgsDigest, 'printArgsDigest'),
+      provider: optionalLabel(identity.provider, 'provider'),
+      model: optionalLabel(identity.model, 'model'),
+      identityDigest: optionalDigest(identity.identityDigest, 'identityDigest'),
+    };
   }
   return {
     version: CAMPAIGN_PROGRESS_VERSION,
@@ -1300,6 +1333,64 @@ function assertScopeContinuity(progress: CampaignProgress | null, input: LocalCa
   );
 }
 
+/**
+ * M5 (6.4/NW-AUD-044): a resume is bound to the reasoner it recorded. The
+ * executable path and digest always bind; when the checkpoint recorded the
+ * richer M5 identity (adapter, print CLI, PRINT_ARGS, provider, model) the
+ * whole content-addressed identity must match, so a changed model or a
+ * different print adapter can never silently continue a campaign. The refusal
+ * happens BEFORE any turn runs.
+ */
+function assertReasonerIdentityContinuity(
+  stored: LocalCampaignReasonerIdentity | null,
+  requested: LocalCampaignReasonerIdentity | undefined,
+): void {
+  if (stored === null) return;
+  const current = requested ?? null;
+  if (current === null) {
+    throw new LocalCampaignError(
+      'REASONER_IDENTITY_MISMATCH',
+      'checkpoint recorded a reasoner identity but the resume provided none',
+    );
+  }
+  if (current.path !== stored.path || current.digest !== stored.digest) {
+    throw new LocalCampaignError(
+      'REASONER_IDENTITY_MISMATCH',
+      'the resolved reasoner executable differs from the checkpoint identity',
+    );
+  }
+  if (stored.identityDigest !== undefined && stored.identityDigest !== null) {
+    if (current.identityDigest === undefined || current.identityDigest === null) {
+      throw new LocalCampaignError(
+        'REASONER_IDENTITY_MISMATCH',
+        'checkpoint recorded a full reasoner identity but the resume resolved only path and digest',
+      );
+    }
+    if (current.identityDigest !== stored.identityDigest) {
+      throw new LocalCampaignError(
+        'REASONER_IDENTITY_MISMATCH',
+        'the resolved reasoner identity (adapter, print CLI, PRINT_ARGS, provider, model) differs from the checkpoint',
+      );
+    }
+    return;
+  }
+  // Pre-M5 checkpoint: only path and digest were recorded, so only they bind.
+  // A changed model label on such a checkpoint is not silently accepted when
+  // BOTH sides know it (the stored label is present without a full digest).
+  if (
+    stored.model !== undefined &&
+    stored.model !== null &&
+    current.model !== undefined &&
+    current.model !== null &&
+    stored.model !== current.model
+  ) {
+    throw new LocalCampaignError(
+      'REASONER_IDENTITY_MISMATCH',
+      'the resolved model label differs from the checkpoint identity',
+    );
+  }
+}
+
 export async function resumeLocalCliCampaign(input: LocalCampaignInput): Promise<LocalCampaignResult> {
   const { reasoner } = driverAndPolicy(input);
   const now = input.now ?? Date.now;
@@ -1372,6 +1463,8 @@ export async function resumeLocalCliCampaign(input: LocalCampaignInput): Promise
   if (progress.pausedInvestigation === null) {
     throw new LocalCampaignError('CHECKPOINT_MISSING', 'paused campaign has no paused-investigation checkpoint');
   }
+  // The resume is about to run turns: bind it to the recorded reasoner first.
+  assertReasonerIdentityContinuity(progress.reasonerIdentity, input.reasonerIdentity);
   const engine: CampaignEngine = {
     input, policy, reasoner, directory, now,
     campaignStartMs: now() - checkpoint.state.budget.usage.wallTimeMs,
