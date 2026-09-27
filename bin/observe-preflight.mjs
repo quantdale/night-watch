@@ -12,13 +12,15 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadTypeScriptModule } from './lib/typescript-runtime-loader.mjs';
 import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
-import { guardDevLane } from './lib/dev-lane-precondition.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
-// M8 (9.1): refuse a DEV-lane launch while a DEV-lane precondition is OPEN,
-// BEFORE argument validation, auth validation or any child process.
-guardDevLane({ root, launcher: 'observe-preflight.mjs', args: process.argv.slice(2) });
+// M8 (9.1): the DEV-lane precondition guard deliberately does NOT apply here.
+// This surface is a no-contact preflight by contract — it never starts a
+// browser, resolves a hostname, opens a socket, reads a cookie value or
+// contacts an Alphaus environment — so it cannot produce DEV-lane evidence the
+// open preconditions would corrupt. Every launcher that CAN contact DEV is
+// guarded; `tests/unit/devLanePreconditions.test.ts` pins this exemption.
 const SUPPORTED_REAL_ENVS = new Set(['dev', 'next']);
 const PROD_SUFFIXES = ['.run.app'];
 

@@ -23,6 +23,13 @@ export const DEV_LANE_PRECONDITION_OPEN = 'DEV_LANE_PRECONDITION_OPEN';
 export const DEV_LANE_OWNER_TOKEN_UNRECOGNIZED = 'DEV_LANE_OWNER_TOKEN_UNRECOGNIZED';
 export const DEV_LANE_OWNER_TOKEN_ENV = 'NIGHTWATCH_DEV_LANE_OWNER_TOKEN';
 export const DEV_LANE_REGISTRY_INVALID = 'DEV_LANE_REGISTRY_INVALID';
+/**
+ * Test/owner seam: an explicit registry path. The SHIPPED default is the
+ * repository registry, which refuses unconditionally — the seam exists so a
+ * launcher's own argument validation stays testable and so an owner-authorized
+ * run can be pointed at a registry that names its DECISIONS citation.
+ */
+export const DEV_LANE_REGISTRY_PATH_ENV = 'NIGHTWATCH_DEV_LANE_REGISTRY_PATH';
 
 export interface DevLanePrecondition {
   readonly id: string;
@@ -92,8 +99,10 @@ export function parseDevLanePreconditions(text: string): DevLanePreconditionStat
 }
 
 /** Read the registry from a checkout root. */
-export function loadDevLanePreconditions(root: string): DevLanePreconditionState {
-  const file = path.join(root, DEV_LANE_PRECONDITION_REGISTRY_PATH);
+export function loadDevLanePreconditions(root: string, registryPath?: string | undefined): DevLanePreconditionState {
+  const file = registryPath !== undefined && registryPath.trim() !== ''
+    ? registryPath
+    : path.join(root, DEV_LANE_PRECONDITION_REGISTRY_PATH);
   let text: string;
   try {
     text = fs.readFileSync(file, 'utf8');
@@ -107,6 +116,7 @@ export interface DevLaneRefusalInput {
   readonly root: string;
   readonly launcher: string;
   readonly ownerToken?: string | undefined;
+  readonly registryPath?: string | undefined;
 }
 
 /**
@@ -114,7 +124,7 @@ export interface DevLaneRefusalInput {
  * precondition is OPEN and no authorized owner token clears it.
  */
 export function assertDevLanePreconditionClear(input: DevLaneRefusalInput): DevLanePreconditionState {
-  const state = loadDevLanePreconditions(input.root);
+  const state = loadDevLanePreconditions(input.root, input.registryPath);
   if (state.open.length === 0) return state;
   const token = (input.ownerToken ?? '').trim();
   if (token !== '') {

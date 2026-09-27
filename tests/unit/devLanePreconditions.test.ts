@@ -33,7 +33,6 @@ const DEV_LAUNCHERS = [
   'observe-authenticated.mjs',
   'observe-canary.mjs',
   'observe-gate.mjs',
-  'observe-preflight.mjs',
   'auth-capture.mjs',
 ];
 
@@ -101,6 +100,16 @@ test.describe('DEV-lane precondition registry (9.1)', () => {
 
   test('an unreadable registry fails closed', () => {
     expect(() => loadDevLanePreconditions(path.join(os.tmpdir(), 'nw-absent-dev-lane-root'))).toThrow(DEV_LANE_REGISTRY_INVALID);
+  });
+
+  test('the no-contact preflight is exempt by construction, and every contacting launcher is guarded', () => {
+    const preflight = fs.readFileSync(path.join(REPO_ROOT, 'bin', 'observe-preflight.mjs'), 'utf8');
+    // The exemption is justified by construction: the surface cannot contact.
+    expect(preflight).not.toContain('guardDevLane(');
+    for (const forbidden of ['spawnSync(', 'spawn(', 'fetch(', 'http.request', 'net.connect', 'playwright']) {
+      expect(preflight, `preflight must not use ${forbidden}`).not.toContain(forbidden);
+    }
+    expect(preflight).toContain('never starts a browser');
   });
 
   test('the guard applies to DEV invocations only', () => {

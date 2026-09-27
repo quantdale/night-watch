@@ -23,6 +23,7 @@ import {
   evaluateAuthCapabilityPreflight,
   writeAuthCaptureRecord,
 } from '../../src/auth/capabilityLifecycle';
+import { authorizedDevLaneEnvironment } from '../helpers/devLaneAuthorization';
 
 const root = path.resolve(__dirname, '..', '..');
 const AUTH_CAPTURE = path.join(root, 'bin', 'auth-capture.mjs');
@@ -274,14 +275,14 @@ test.describe('authenticated capability lifecycle', () => {
       const artefactPath = writeSyntheticArtefact(directory, [syntheticCookie()]);
       const missingInstant = spawnSync(process.execPath, [
         AUTH_CAPTURE, '--adopt', '--env=dev', `--output=${artefactPath}`,
-      ], { encoding: 'utf8', timeout: 60_000 });
+      ], { encoding: 'utf8', timeout: 60_000, env: authorizedDevLaneEnvironment(process.env) });
       expect(missingInstant.status).toBe(2);
       expect(`${missingInstant.stderr}${missingInstant.stdout}`).toContain('--captured-at');
 
       const adopted = spawnSync(process.execPath, [
         AUTH_CAPTURE, '--adopt', '--env=dev', `--output=${artefactPath}`,
         `--captured-at=${hoursAgoIso(1)}`,
-      ], { encoding: 'utf8', timeout: 60_000 });
+      ], { encoding: 'utf8', timeout: 60_000, env: authorizedDevLaneEnvironment(process.env) });
       expect(adopted.status).toBe(0);
       expect(`${adopted.stderr}${adopted.stdout}`).not.toContain(TOKEN_VALUE_SENTINEL);
       expect(fs.existsSync(authLifecycleRecordPath(artefactPath))).toBe(true);
@@ -298,7 +299,7 @@ test.describe('authenticated capability lifecycle', () => {
       const artefactPath = writeSyntheticArtefact(directory, [syntheticCookie()]);
       const noRecord = spawnSync(process.execPath, [
         PHASE2C_LAUNCHER, '--env=dev', `--storage-state=${artefactPath}`,
-      ], { encoding: 'utf8', timeout: 120_000 });
+      ], { encoding: 'utf8', timeout: 120_000, env: authorizedDevLaneEnvironment(process.env) });
       expect(noRecord.status).toBe(3);
       const noRecordOutput = `${noRecord.stderr}${noRecord.stdout}`;
       expect(noRecordOutput).toContain('AUTH_CAPABILITY_UNKNOWN_AGE');
@@ -313,7 +314,7 @@ test.describe('authenticated capability lifecycle', () => {
       });
       const expired = spawnSync(process.execPath, [
         PHASE2C_LAUNCHER, '--env=dev', `--storage-state=${artefactPath}`,
-      ], { encoding: 'utf8', timeout: 120_000 });
+      ], { encoding: 'utf8', timeout: 120_000, env: authorizedDevLaneEnvironment(process.env) });
       expect(expired.status).toBe(3);
       expect(`${expired.stderr}${expired.stdout}`).toContain('AUTH_CAPABILITY_EXPIRED');
     } finally {
@@ -333,7 +334,7 @@ test.describe('authenticated capability lifecycle', () => {
       });
       const result = spawnSync(process.execPath, [path.join(root, 'bin', 'observe-preflight.mjs'), '--env=dev'], {
         cwd: root,
-        env: { ...process.env, NIGHTWATCH_ENV: 'dev', NIGHTWATCH_STORAGE_STATE: artefactPath },
+        env: authorizedDevLaneEnvironment({  ...process.env, NIGHTWATCH_ENV: 'dev', NIGHTWATCH_STORAGE_STATE: artefactPath  }),
         encoding: 'utf8',
         timeout: 120_000,
       });

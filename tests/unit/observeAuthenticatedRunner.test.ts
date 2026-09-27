@@ -7,6 +7,7 @@ import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { loadEnvironmentConfig } from '../../src/core/environment';
+import { authorizedDevLaneEnvironment } from '../helpers/devLaneAuthorization';
 
 const root = path.resolve(__dirname, '..', '..');
 const cli = path.join(root, 'bin', 'observe-authenticated.mjs');
@@ -20,7 +21,7 @@ function runnerBoundary(args: string[], parentEnvironment: Record<string, string
     const child = buildObserveAuthenticatedEnvironment(${JSON.stringify(parentEnvironment)}, parsed);
     process.stdout.write(JSON.stringify({ parsed, child }));
   `;
-  const result = spawnSync(process.execPath, ['--input-type=module', '--eval', script], { encoding: 'utf8' });
+  const result = spawnSync(process.execPath, ['--input-type=module', '--eval', script], { encoding: 'utf8', env: authorizedDevLaneEnvironment(process.env) });
   expect(result.status, result.stderr).toBe(0);
   return JSON.parse(result.stdout) as {
     parsed: { env: string; storage: string; uiUrl?: string };
@@ -63,7 +64,7 @@ test('explicit blank override is rejected at the CLI boundary', () => {
     '--env=dev',
     `--storage-state=${syntheticState}`,
     '--ui-url=',
-  ], { encoding: 'utf8' });
+  ], { encoding: 'utf8', env: authorizedDevLaneEnvironment(process.env) });
 
   expect(result.status).toBe(2);
   expect(result.stderr).toContain('explicit blank --ui-url');

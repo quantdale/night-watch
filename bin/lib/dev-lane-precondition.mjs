@@ -11,6 +11,7 @@ import { loadTypeScriptModule } from './typescript-runtime-loader.mjs';
 
 export const DEV_LANE_PRECONDITION_OPEN = 'DEV_LANE_PRECONDITION_OPEN';
 export const DEV_LANE_OWNER_TOKEN_ENV = 'NIGHTWATCH_DEV_LANE_OWNER_TOKEN';
+export const DEV_LANE_REGISTRY_PATH_ENV = 'NIGHTWATCH_DEV_LANE_REGISTRY_PATH';
 
 /**
  * True when this invocation targets the DEV lane: an explicit `--env=dev` /
@@ -38,6 +39,7 @@ export function guardDevLane({ root, launcher, args = [], devOnly = false, env =
     root: resolvedRoot,
     launcher,
     ownerToken: env?.[DEV_LANE_OWNER_TOKEN_ENV],
+    registryPath: env?.[DEV_LANE_REGISTRY_PATH_ENV],
   });
   return true;
 }

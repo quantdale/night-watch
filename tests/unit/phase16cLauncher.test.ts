@@ -10,6 +10,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { test, expect } from '@playwright/test';
 import { spawnSync } from 'node:child_process';
+import { authorizedDevLaneEnvironment } from '../helpers/devLaneAuthorization';
 
 const LAUNCHER = path.resolve(__dirname, '..', '..', 'bin', 'phase7-real.mjs');
 
@@ -20,6 +21,7 @@ interface RunResult {
 
 function runLauncher(args: readonly string[]): RunResult {
   const result = spawnSync(process.execPath, [LAUNCHER, ...args], {
+    env: authorizedDevLaneEnvironment(process.env),
     encoding: 'utf8',
     timeout: 30_000,
   });

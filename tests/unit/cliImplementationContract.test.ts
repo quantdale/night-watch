@@ -10,6 +10,7 @@ import {
   verifyCliImplementationContract,
 } from '../../bin/lib/cli-implementation-contract.mjs';
 import type { ContractAccess, ContractSourceFile } from '../../bin/lib/cli-implementation-contract.mjs';
+import { authorizedDevLaneEnvironment } from '../helpers/devLaneAuthorization';
 
 const ROOT = path.resolve(__dirname, '../..');
 const LOADER_DECLARATION = path.join(ROOT, 'bin', 'lib', 'typescript-runtime-loader.d.mts');
@@ -215,7 +216,8 @@ test.afterAll(() => {
 });
 
 function spawnOptions(sandbox: Sandbox, timeout = 120_000) {
-  return { cwd: sandbox.cwd, env: sandbox.env, encoding: 'utf8' as const, timeout, maxBuffer: 16 * 1024 * 1024 };
+  // M8 (9.1): authorize the DEV lane so each launcher's OWN refusal stays reachable.
+  return { cwd: sandbox.cwd, env: authorizedDevLaneEnvironment(sandbox.env), encoding: 'utf8' as const, timeout, maxBuffer: 16 * 1024 * 1024 };
 }
 
 function expectRefusal(result: ReturnType<typeof spawnSync>, code: RegExp, sandbox: Sandbox): void {

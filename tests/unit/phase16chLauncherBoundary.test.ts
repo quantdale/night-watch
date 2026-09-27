@@ -18,6 +18,7 @@ import {
 } from '../../src/core/portfolio/runtimeBinding';
 import { renderDocumentJson } from '../../src/core/portfolio/report';
 import { buildScopedRuntimePlan } from '../../corpus/phase16ch/core';
+import { authorizedDevLaneEnvironment } from '../helpers/devLaneAuthorization';
 
 const LAUNCHER = path.resolve(__dirname, '..', '..', 'bin', 'phase7-real.mjs');
 
@@ -27,7 +28,7 @@ interface RunResult {
 }
 
 function runLauncher(args: readonly string[]): RunResult {
-  const result = spawnSync(process.execPath, [LAUNCHER, ...args], { encoding: 'utf8', timeout: 30_000 });
+  const result = spawnSync(process.execPath, [LAUNCHER, ...args], { encoding: 'utf8', timeout: 30_000, env: authorizedDevLaneEnvironment(process.env) });
   return { status: result.status, output: `${result.stderr ?? ''}${result.stdout ?? ''}` };
 }
 

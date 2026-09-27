@@ -59,7 +59,21 @@
       "purpose": "Owner authorization token for the DEV lane: a DECISIONS entry (D-<n>) that the DEV-lane precondition registry explicitly authorizes. Empty or unrecognized tokens never clear the DEV_LANE_PRECONDITION_OPEN refusal.",
       "requiredIn": [],
       "shape": {
-        "kind": "token"
+        "kind": "string"
+      },
+      "default": null,
+      "secretBearing": false,
+      "consumers": [
+        "bin/lib/dev-lane-precondition.mjs",
+        "src/core/policy/devLanePreconditions.ts"
+      ]
+    },
+    {
+      "name": "NIGHTWATCH_DEV_LANE_REGISTRY_PATH",
+      "purpose": "Explicit DEV-lane precondition registry path. The shipped default is the repository registry, which refuses every DEV launch; the seam exists for tests and for an owner-authorized run that names its DECISIONS citation.",
+      "requiredIn": [],
+      "shape": {
+        "kind": "path"
       },
       "default": null,
       "secretBearing": false,
