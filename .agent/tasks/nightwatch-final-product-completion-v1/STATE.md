@@ -161,8 +161,18 @@ the gate pair (see the ledger).
   semantic cones 63/63; the Phase 20 fixture/mutant floors were re-calibrated
   to the honest admitted set (78 fixtures / 28 mutants, score still 1000,
   zero survivors, zero benign false positives).
-  Next: 8.5 (focused + `gate:milestone` PASS; tick 8.1-8.5, PLAN M7 COMPLETE,
-  commit) to close M7, then the C-00 integrate and the `gh` CI observation.
+  8.5 — **M7 IS COMPLETE.** `npm run gate:dev` PASS (5645 passed / 0 failed,
+  every group exit=0) and `npm run gate:milestone` PASS (wall 1087.9s, 5645/0,
+  typecheck-bin + hardening-rules + project-check + workspace-check exit=0);
+  8.1-8.5 are ticked in `tasks.md` and PLAN M7 is COMPLETE. The narrowed claims
+  legitimately re-based the frozen Phase 20/21 baselines (graph 157->133 nodes,
+  gaps 86->62, mutants 67->55) and required the semantic receipt to carry
+  `PARTIAL_COVERAGE_NO_VIOLATION` whenever the oracle reports incomplete
+  coverage (the `realSourceConformingMutation` empty-list case is now
+  PARTIAL_COVERAGE, never PASS).
+  Next: M8 (tasks 9.x, contained-DEV lane integrity) — start with 9.1 and the
+  DEV_LANE_PRECONDITION_OPEN registry, then the C-00 integrate and the `gh` CI
+  observation for this M7 closeout as in M4-M6.
 - M6 is COMPLETE: 7.1-7.11 are ticked in the campaign ledger with DONE notes
   and PLAN marks M6 COMPLETE. The view-DOM baseline was intentionally
   REGENERATED (`NIGHTWATCH_UPDATE_VIEW_DOM_BASELINE=1`) because the Agent
@@ -249,10 +259,11 @@ the gate pair (see the ledger).
 
 ## Exact Next Action
 
-Close M7 with 8.5: run the focused cones plus `npm run gate:milestone`
-(expect PASS), tick 8.1-8.5 in `tasks.md` with their DONE notes, mark M7
-COMPLETE in PLAN/STATE, commit, then C-00 integrate and the `gh` CI observation
-(OD-3) exactly as in M4-M6.
+Commit the M7 closeout (tasks.md ticks + PLAN M7 COMPLETE + this STATE), C-00
+integrate it, then run the `gh` CI observation (OD-3) exactly as in M4-M6 and
+record the run id + receipt in the ledger. Then begin M8 (task 9.1: the
+contained-DEV lane integrity work, starting with the DEV_LANE_PRECONDITION_OPEN
+registry).
 
 ## Superseded Next Action (8.1, complete)
 

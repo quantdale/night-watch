@@ -241,7 +241,7 @@ approved paths.
 - Acceptance criteria: unknown `.env` keys refused; HEAD re-check and digest
   mismatch refusal; incomplete evidence never PASS; HEURISTIC results excluded
   from proven candidate selection.
-- **Status:** NOT_STARTED
+- **Status:** COMPLETE (8.1-8.5; `gate:dev` + `gate:milestone` PASS at 5645/0)
 
 ### M8 — Contained-DEV lane integrity (tasks 9.1-9.13)
 
