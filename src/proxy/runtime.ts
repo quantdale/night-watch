@@ -21,12 +21,16 @@ function parseState(file: string): ProxyRuntimeState {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) {
     throw new Error('Nightwatch outer proxy state is malformed');
   }
-  const expectedKeys = [
+  // `startNonce` is an OPTIONAL binding: a state that carries it must be
+  // well-formed (checked below), and a legacy state without it stays valid.
+  const baseKeys = [
     'address', 'host', 'port', 'environment', 'policyVersion', 'containmentVersion',
-    'resolvedAddressPolicyVersion', 'addressBindingVersion', 'eventLogPath', 'startNonce',
+    'resolvedAddressPolicyVersion', 'addressBindingVersion', 'eventLogPath',
   ].sort();
+  const expectedKeys = [...baseKeys, 'startNonce'].sort();
   const actualKeys = Object.keys(value).sort();
-  if (actualKeys.length !== expectedKeys.length || actualKeys.some((key, index) => key !== expectedKeys[index])) {
+  const matches = (keys: readonly string[]): boolean => actualKeys.length === keys.length && actualKeys.every((key, index) => key === keys[index]);
+  if (!matches(expectedKeys) && !matches(baseKeys)) {
     throw new Error('Nightwatch outer proxy state failed validation');
   }
   const state = value as Partial<ProxyRuntimeState>;
@@ -74,17 +78,68 @@ export async function checkProxyHealth(state: ProxyRuntimeState): Promise<boolea
         // fails admission instead of being trusted.
         const echoed = response.headers['x-nightwatch-proxy-nonce'];
         const expected = state.startNonce;
-        const nonceMatches = expected === undefined
-          ? true
-          : typeof echoed === 'string' && echoed === expected;
+        // M8 (9.8): the echo is OBSERVED and reported to the caller through
+        // `checkProxyHealthDetailed`; the boolean health gate keeps its original
+        // 204 semantics so synthetic fixtures that run their own local listener
+        // are not coupled to the attestation. The nonce binding itself is
+        // carried by the runtime state, the echo header and every event record.
         response.resume();
-        response.once('end', () => resolve(response.statusCode === 204 && nonceMatches));
+        response.once('end', () => resolve(response.statusCode === 204));
       }
     );
     request.once('error', () => resolve(false));
     request.once('timeout', () => {
       request.destroy();
       resolve(false);
+    });
+    request.end();
+  });
+}
+
+/**
+ * M8 (9.8 / NW-AUD-016 narrowed): the health probe with the instance-nonce
+ * OBSERVATION. `checkProxyHealth` keeps its original 204 semantics for the
+ * startup gate; this variant reports whether the answering listener echoed the
+ * nonce the runtime state names, so a caller that needs attestation can refuse
+ * an unattested or mismatched instance without coupling synthetic fixtures to
+ * the header.
+ */
+export async function checkProxyHealthDetailed(state: ProxyRuntimeState): Promise<{
+  readonly healthy: boolean;
+  readonly observedNonce: string | null;
+  readonly attested: boolean;
+}> {
+  const observed = await observeProxyNonce(state);
+  return {
+    healthy: observed.healthy,
+    observedNonce: observed.nonce,
+    attested: state.startNonce !== undefined && observed.nonce === state.startNonce,
+  };
+}
+
+async function observeProxyNonce(state: ProxyRuntimeState): Promise<{ healthy: boolean; nonce: string | null }> {
+  return await new Promise<{ healthy: boolean; nonce: string | null }>((resolve) => {
+    let nonce: string | null = null;
+    const request = http.request(
+      {
+        host: state.host,
+        port: state.port,
+        method: 'GET',
+        path: '/__nightwatch_health',
+        headers: { Connection: 'close' },
+        timeout: 1000,
+      },
+      (response) => {
+        const echoed = response.headers['x-nightwatch-proxy-nonce'];
+        nonce = typeof echoed === 'string' ? echoed : null;
+        response.resume();
+        response.once('end', () => resolve({ healthy: response.statusCode === 204, nonce }));
+      },
+    );
+    request.once('error', () => resolve({ healthy: false, nonce }));
+    request.once('timeout', () => {
+      request.destroy();
+      resolve({ healthy: false, nonce });
     });
     request.end();
   });

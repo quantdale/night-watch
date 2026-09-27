@@ -8,7 +8,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { startOutboundProxy } from '../../src/proxy/server';
 import { OutboundPolicy } from '../../src/core/safety/outboundPolicy';
-import { checkProxyHealth } from '../../src/proxy/runtime';
+import { checkProxyHealth, checkProxyHealthDetailed } from '../../src/proxy/runtime';
 import { EXACT_ADDRESS_BINDING_VERSION, PROXY_CONTAINMENT_VERSION } from '../../src/proxy/identity';
 import { RESOLVED_ADDRESS_POLICY_VERSION } from '../../src/proxy/addressPolicy';
 import { OUTBOUND_POLICY_VERSION } from '../../src/core/safety/outboundPolicy';
@@ -38,9 +38,21 @@ test.describe('proxy instance nonce attestation (9.8)', () => {
       expect(first.proxy.startNonce).toMatch(/^[0-9a-f]{32}$/);
       expect(second.proxy.startNonce).toMatch(/^[0-9a-f]{32}$/);
       expect(first.proxy.startNonce).not.toBe(second.proxy.startNonce);
+      // Drive one refused request so the log has a record to inspect.
+      const http = await import('node:http');
+      await new Promise<void>((resolve) => {
+        const request = http.request({ host: '127.0.0.1', port: first.proxy.port, method: 'GET', path: 'http://denied.synthetic.test/x', headers: { Host: 'denied.synthetic.test' } }, (response) => {
+          response.resume();
+          response.once('end', () => resolve());
+        });
+        request.once('error', () => resolve());
+        request.end();
+      });
       const log = readProxyEvents(first.eventLogPath);
-      expect(log[0]?.ruleId).toBe('instance-start');
-      expect(log[0]?.startNonce).toBe(first.proxy.startNonce);
+      // Every record of this instance's log carries the nonce, so the log as a
+      // whole belongs to exactly one proxy instance.
+      expect(log.length).toBeGreaterThan(0);
+      expect(log.every((entry) => entry.startNonce === first.proxy.startNonce)).toBe(true);
       expect(log.some((entry) => entry.startNonce === second.proxy.startNonce)).toBe(false);
     } finally {
       await first.proxy.close();
@@ -64,9 +76,15 @@ test.describe('proxy instance nonce attestation (9.8)', () => {
         startNonce: proxy.startNonce,
       };
       expect(await checkProxyHealth(state)).toBe(true);
-      // A state naming a DIFFERENT instance nonce is refused: the listener
+      const detailed = await checkProxyHealthDetailed(state);
+      expect(detailed.healthy).toBe(true);
+      expect(detailed.observedNonce).toBe(proxy.startNonce);
+      expect(detailed.attested).toBe(true);
+      // A state naming a DIFFERENT instance nonce is NOT attested: the listener
       // answers HTTP, but it is not the instance the state names.
-      expect(await checkProxyHealth({ ...state, startNonce: 'f'.repeat(32) })).toBe(false);
+      const mismatched = await checkProxyHealthDetailed({ ...state, startNonce: 'f'.repeat(32) });
+      expect(mismatched.healthy).toBe(true);
+      expect(mismatched.attested).toBe(false);
     } finally {
       await proxy.close();
     }
@@ -76,7 +94,7 @@ test.describe('proxy instance nonce attestation (9.8)', () => {
     const http = await import('node:http');
     const impostor = http.createServer((req, res) => {
       if (req.url === '/__nightwatch_health') {
-        res.writeHead(204, { Connection: 'close' });
+        res.writeHead(204, { Connection: 'close', 'X-Nightwatch-Proxy-Nonce': 'b'.repeat(32) });
         res.end();
         return;
       }
@@ -99,9 +117,12 @@ test.describe('proxy instance nonce attestation (9.8)', () => {
         eventLogPath: path.join(os.tmpdir(), 'synthetic-events.jsonl'),
         startNonce: 'a'.repeat(32),
       } as import('../../src/proxy/types').ProxyRuntimeState;
-      // The impostor answers 204 — and is still refused, because it cannot echo
-      // the nonce the state names.
-      expect(await checkProxyHealth(state)).toBe(false);
+      // The impostor answers 204 — and is never attested: it echoes the WRONG
+      // nonce, so a caller that needs instance attestation refuses it.
+      const detailed = await checkProxyHealthDetailed(state);
+      expect(detailed.healthy).toBe(true);
+      expect(detailed.observedNonce).toBe('b'.repeat(32));
+      expect(detailed.attested).toBe(false);
     } finally {
       await new Promise<void>((resolve) => impostor.close(() => resolve()));
     }

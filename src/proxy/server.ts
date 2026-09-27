@@ -187,21 +187,6 @@ export async function startOutboundProxy(opts: OutboundProxyOptions): Promise<Ou
   let eventSeq = 0;
   const requestedRunId = opts.runId ?? process.env.NIGHTWATCH_RUN_ID ?? 'playwright-suite';
   const runId = /^[A-Za-z0-9._-]{1,128}$/.test(requestedRunId) ? requestedRunId : 'playwright-suite';
-  // Bind the instance identity INTO the log: its first record carries the
-  // nonce, so a log can only ever belong to the instance that produced it.
-  appendProxyEvent(eventLogPath, {
-    seq: eventSeq++,
-    timestamp: new Date().toISOString(),
-    runId,
-    protocol: 'http',
-    host: '127.0.0.1',
-    port: null,
-    classification: 'internal',
-    decision: 'allow',
-    ruleId: 'instance-start',
-    reason: 'proxy instance start: the per-start nonce is bound into this log',
-    startNonce,
-  });
   const server = http.createServer();
   const resolver = opts.resolver ?? createSystemProxyResolver();
   const resolverTimeoutMs = boundedTimeout(opts.resolverTimeoutMs, PROXY_RESOLUTION_TIMEOUT_MS, 5_000);
@@ -251,6 +236,10 @@ export async function startOutboundProxy(opts: OutboundProxyOptions): Promise<Ou
       ...(lifecycle.connectionFailure === undefined ? {} : { connectionFailure: lifecycle.connectionFailure }),
       ...(lifecycle.containmentViolation === undefined ? {} : { containmentViolation: lifecycle.containmentViolation }),
       ...(lifecycle.addressBindingVersion === undefined ? {} : { addressBindingVersion: lifecycle.addressBindingVersion }),
+      // M8 (9.8 / NW-AUD-016 narrowed): every record carries the per-start
+      // instance nonce, so the whole log is bound to ONE proxy instance
+      // without perturbing the effect-pair sequence space.
+      startNonce,
     };
     try {
       appendProxyEvent(eventLogPath, event);
