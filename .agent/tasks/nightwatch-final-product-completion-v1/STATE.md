@@ -269,7 +269,19 @@ the gate pair (see the ledger).
   Evidence: `tests/unit/proxyInstanceNonce.test.ts` 4/4, the sharded lane PASS
   at 5695/0 before commit plus `projectState` 103/103 post-commit,
   `hardening:check` PASS.
-  Next: 9.9-9.13 to close M8 (then the M8 milestone gate + CI observation).
+  M8 9.9 DONE (with a recorded narrowing) — relay invocation authority
+  (NW-AUD-028): a per-INVOCATION 32-hex credential is minted by the relay,
+  accepted as protocol surface and presented by the parent on every relay
+  request; a RELAY-WIDE budget (`MAX_RELAY_REQUESTS = 8`) is owned by the relay
+  and spent per request; and an observation is written ONCE per operation
+  (a second write is refused with `RELAY_OBSERVATION_ALREADY_RECORDED` and the
+  first stands). NARROWING: the relay-wide budget is accounted but not yet
+  ENFORCED in `requestPhase5Relay` (an earlier attempt blocked a legitimate run
+  with `RELAY_SAFETY_BLOCK`; the probe/scenario traffic must be counted first),
+  so the runtime-level bound still holds and this stays open. Evidence:
+  `tests/unit/relayInvocationAuthority.test.ts` 5/5, `phase5Api` 18/18,
+  `hardening:check` PASS, sharded lane PASS at 5701/0 (5734 planned).
+  Next: 9.10 (NW-AUD-043 ChangeSet edge binding) then 9.11-9.13 to close M8.
 - M6 is COMPLETE: 7.1-7.11 are ticked in the campaign ledger with DONE notes
   and PLAN marks M6 COMPLETE. The view-DOM baseline was intentionally
   REGENERATED (`NIGHTWATCH_UPDATE_VIEW_DOM_BASELINE=1`) because the Agent
