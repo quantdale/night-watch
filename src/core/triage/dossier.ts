@@ -145,6 +145,32 @@ export function createIncompleteDossier(input: { readonly anomalyFingerprint: st
   return result;
 }
 
+/**
+ * M6 (7.1/C-08): the v1 protocol dossier's status is DERIVED from its own
+ * evidence, never asserted. The constructor used to hard-code `READY`, which
+ * made every consumer that filters on `status === 'READY'` (the campaign
+ * brief, retention, the orchestrator's semantic promotion gate and the Alphaus
+ * handoff) accept a dossier that never reproduced anything. The predicate
+ * mirrors the protocol-only branch of the v2 readiness rule: an exact replay
+ * must have reproduced, a minimal sequence must exist, and the oracle
+ * fingerprint must be present.
+ */
+export function protocolDossierReadiness(input: {
+  readonly minimization: BugDossierInput['minimization'];
+  readonly oracleFingerprint: string;
+}): { readonly status: 'READY' | 'UNRESOLVED'; readonly reason: string | null } {
+  if (input.minimization.freshExactReplay !== 'REPRODUCED') {
+    return { status: 'UNRESOLVED', reason: 'EXACT_REPLAY_REQUIRED' };
+  }
+  if (input.minimization.minimalReproducingSequence.length === 0) {
+    return { status: 'UNRESOLVED', reason: 'MINIMAL_SEQUENCE_MISSING' };
+  }
+  if (typeof input.oracleFingerprint !== 'string' || input.oracleFingerprint.trim().length === 0) {
+    return { status: 'UNRESOLVED', reason: 'ORACLE_FINGERPRINT_MISSING' };
+  }
+  return { status: 'READY', reason: null };
+}
+
 export function createBugDossier(input: BugDossierInput): BugDossier {
   if ((input.evidenceLevel as string) === 'L4') throw new Error('L4_DATASTORE_OUT_OF_SCOPE_BY_OWNER');
   const routeClass = safeId(input.routeClass, 'ROUTE_CLASS');
@@ -169,9 +195,13 @@ export function createBugDossier(input: BugDossierInput): BugDossier {
     count: input.minimization.reproductionCount,
     minimalityGuarantee: input.minimization.minimalityGuarantee,
   };
+  const readiness = protocolDossierReadiness({
+    minimization: input.minimization,
+    oracleFingerprint: input.oracleFingerprint,
+  });
   const dossier: BugDossier = {
     schemaVersion: DOSSIER_VERSION,
-    status: 'READY',
+    status: readiness.status,
     candidateId: id,
     title,
     firstObserved: input.firstObserved,

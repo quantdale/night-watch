@@ -391,7 +391,13 @@ export interface AiReadyEvidencePackage {
 
 export interface BugDossier {
   readonly schemaVersion: typeof DOSSIER_VERSION;
-  readonly status: 'INCOMPLETE' | 'READY';
+  /**
+   * M6 (7.1/C-08): DERIVED from the dossier's own evidence. `READY` requires
+   * an exact reproduction, a minimal sequence and an oracle fingerprint;
+   * `UNRESOLVED` is the truthful state of a dossier that has not reproduced.
+   * `INCOMPLETE` remains for historical records written before the predicate.
+   */
+  readonly status: 'INCOMPLETE' | 'READY' | 'UNRESOLVED';
   readonly candidateId: string;
   readonly title: string;
   readonly firstObserved: string | null;

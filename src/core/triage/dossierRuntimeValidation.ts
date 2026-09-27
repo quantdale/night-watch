@@ -397,7 +397,10 @@ export function validateDossierRuntime(value: unknown, options: { readonly versi
   }
   assertDossierRootKeys(root, options.version === 'v2' ? V2_REQUIRED_ROOT_KEYS : V1_ROOT_KEYS, options.version === 'v2' ? V2_OPTIONAL_ROOT_KEYS : [], options.version);
   if (options.version === 'v1') {
-    if (root.status !== 'READY') fail('DOSSIER_NOT_READY');
+    // M6 (7.1/C-08): the v1 status is DERIVED (READY requires an exact
+    // reproduction), so the validator accepts the truthful UNRESOLVED value.
+    // Consumers that require proof filter on READY themselves.
+    assertEnum(root.status, ['READY', 'UNRESOLVED'], 'DOSSIER_STATUS');
   } else {
     assertEnum(root.status, ['READY', 'UNRESOLVED'], 'DOSSIER_V2_STATUS');
   }
