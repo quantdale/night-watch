@@ -64,7 +64,9 @@ export type AdmitLocalFindingRefusalReason =
   | 'MISSING_REPRODUCTION'
   | 'UNLINKED_REPRODUCTION'
   /** M5 (6.12/C-18): the only reproduction evidence was environment-caused. */
-  | 'ENVIRONMENT_DEPENDENT';
+  | 'ENVIRONMENT_DEPENDENT'
+  /** M5 (6.15/C-29): the runtime state itself is malformed (fail closed). */
+  | 'MALFORMED_STATE';
 
 export interface AdmittedLocalFinding {
   readonly admitted: true;
@@ -76,6 +78,11 @@ export interface AdmittedLocalFinding {
   readonly sourcePaths: readonly string[];
   /** M5 (C-19): the durable, content-addressed identity of this admission. */
   readonly record: AgentFindingRecord;
+  /**
+   * M5 (6.15/NW-AUD-046): the presentation fields the model did NOT supply.
+   * An empty list means every presentation field was model-provided.
+   */
+  readonly presentationDefaults: readonly string[];
   readonly dossier: AutonomousFindingDossier;
 }
 
@@ -328,6 +335,13 @@ export function admitLocalFinding(input: AdmitLocalFindingInput): AdmitLocalFind
     return refused('', 'UNKNOWN_CANDIDATE', 'candidate id is missing or empty');
   }
 
+  // M5 (6.15/C-29): a malformed candidate list is refused, never silently
+  // treated as absent — falling back to the proposal path would let a corrupt
+  // state look like a state that simply never listed the candidate.
+  const rawCandidateIds = (state as { readonly candidateIds?: unknown } | null)?.candidateIds;
+  if (state !== null && rawCandidateIds !== undefined && !Array.isArray(rawCandidateIds)) {
+    return refused(candidateId, 'MALFORMED_STATE', 'runtime state candidateIds is not an array');
+  }
   const stateCandidateIds = readStateCandidateIds(state);
   const proposals = readProposals(history);
   const proposalsForCandidate = proposals.filter((proposal) => proposal.candidateId === candidateId);
@@ -510,25 +524,44 @@ export function admitLocalFinding(input: AdmitLocalFindingInput): AdmitLocalFind
         'human-review-required: confirm scope, non-flakiness, and impact; no auto-file or external publication',
       ]);
 
-  const titleRaw = suggestionString(draft, 'title') ?? `Local finding ${candidateId}`;
-  const descriptionRaw =
-    suggestionString(draft, 'description') ??
-    (!hasCurrentSource
-      ? `Mechanically admitted local finding ${candidateId} with linked pre-fix FAIL and post-fix PASS reproduction.`
-      : !hasHistorical
-        ? `Mechanically admitted local finding ${candidateId} with linked repeated CURRENT source failure reproduction (no post-fix PASS observed or claimed).`
-        : `Mechanically admitted local finding ${candidateId} with linked pre-fix FAIL/post-fix PASS and repeated CURRENT source failure reproductions (no post-fix PASS claimed for the current-source receipt(s)).`);
+  // M5 (6.15/NW-AUD-046): every presentation field the model did NOT ground is
+  // named explicitly, so a default can never be mistaken for model-provided
+  // content and the durable record marks exactly which fields were defaulted.
+  const presentationDefaults: string[] = [];
+  const defaulted = <T>(field: string, value: T | null, fallback: T): T => {
+    if (value === null) {
+      presentationDefaults.push(field);
+      return fallback;
+    }
+    return value;
+  };
+  const titleRaw = defaulted('title', suggestionString(draft, 'title'), `Local finding ${candidateId}`);
+  const descriptionDefault = !hasCurrentSource
+    ? `Mechanically admitted local finding ${candidateId} with linked pre-fix FAIL and post-fix PASS reproduction.`
+    : !hasHistorical
+      ? `Mechanically admitted local finding ${candidateId} with linked repeated CURRENT source failure reproduction (no post-fix PASS observed or claimed).`
+      : `Mechanically admitted local finding ${candidateId} with linked pre-fix FAIL/post-fix PASS and repeated CURRENT source failure reproductions (no post-fix PASS claimed for the current-source receipt(s)).`;
+  const descriptionRaw = defaulted('description', suggestionString(draft, 'description'), descriptionDefault);
   const severityRaw = suggestionString(draft, 'recommendedSeverity');
-  const recommendedSeverity = severityRaw !== null && SEVERITIES.has(severityRaw) ? severityRaw : 'S3';
+  const recommendedSeverity = severityRaw !== null && SEVERITIES.has(severityRaw)
+    ? severityRaw
+    : defaulted('recommendedSeverity', null, 'S3');
   const severityConfidenceRaw = suggestionString(draft, 'severityConfidence');
   const severityConfidence =
-    severityConfidenceRaw !== null && CONFIDENCES.has(severityConfidenceRaw) ? severityConfidenceRaw : 'MEDIUM';
+    severityConfidenceRaw !== null && CONFIDENCES.has(severityConfidenceRaw)
+      ? severityConfidenceRaw
+      : defaulted('severityConfidence', null, 'MEDIUM');
   const confidenceRaw = suggestionString(draft, 'confidence');
-  const confidence = confidenceRaw !== null && CONFIDENCES.has(confidenceRaw) ? confidenceRaw : 'MEDIUM';
-  const severityRationaleRaw =
-    suggestionString(draft, 'severityRationale') ??
-    `Severity is a recommendation only; grounded in linked reproduction ${reproductionIds.join(', ')}.`;
+  const confidence = confidenceRaw !== null && CONFIDENCES.has(confidenceRaw)
+    ? confidenceRaw
+    : defaulted('confidence', null, 'MEDIUM');
+  const severityRationaleRaw = defaulted(
+    'severityRationale',
+    suggestionString(draft, 'severityRationale'),
+    `Severity is a recommendation only; grounded in linked reproduction ${reproductionIds.join(', ')}.`,
+  );
   const alternativeHypotheses = Object.freeze(suggestionStringList(draft, 'alternativeHypotheses'));
+  if (alternativeHypotheses.length === 0) presentationDefaults.push('alternativeHypotheses');
 
   const reproductionText = !hasCurrentSource
     ? `RERUN_SAFE_REPRODUCTION ${reproductionIds.join(', ')} on ${sourcePaths.join(', ')}: ` +
@@ -602,6 +635,7 @@ export function admitLocalFinding(input: AdmitLocalFindingInput): AdmitLocalFind
     testName: input.testName ?? null,
     triageFingerprint: input.triageFingerprint ?? null,
     reasonerIdentity: input.reasonerIdentity ?? null,
+    presentationDefaults,
   });
 
   return Object.freeze({
@@ -613,6 +647,7 @@ export function admitLocalFinding(input: AdmitLocalFindingInput): AdmitLocalFind
     reproductionIds,
     sourcePaths,
     record,
+    presentationDefaults: Object.freeze([...presentationDefaults].sort((left, right) => left.localeCompare(right))),
     dossier,
   });
 }

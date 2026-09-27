@@ -168,6 +168,7 @@ function failResult(resultClass: string, disposition: ActionFailureDisposition):
 function dispositionForBlockClass(cls: LocalProviderBlockClass): ActionFailureDisposition {
   switch (cls) {
     case 'NOT_CONFIGURED':
+    case 'ADAPTER_UNAVAILABLE':
     case 'SOURCE_UNAVAILABLE':
       return 'ENVIRONMENT_BLOCKED';
     case 'SOURCE_STALE':

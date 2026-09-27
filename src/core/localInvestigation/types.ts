@@ -13,7 +13,19 @@ export const LOCAL_INVESTIGATION_HISTORY_VERSION = 'nightwatch.local-investigati
 export const LOCAL_REPRODUCTION_RECEIPT_VERSION = 'nightwatch.local-reproduction-receipt.v1' as const;
 
 export type LocalInvestigationDataClass = 'REAL_LOCAL' | 'REAL_HISTORICAL' | 'SYNTHETIC_TEST';
-export type LocalProviderBlockClass = 'NOT_CONFIGURED' | 'DATA_BLOCKED' | 'SOURCE_UNAVAILABLE' | 'SOURCE_STALE' | 'UNSAFE_INPUT';
+export type LocalProviderBlockClass =
+  | 'NOT_CONFIGURED'
+  | 'DATA_BLOCKED'
+  | 'SOURCE_UNAVAILABLE'
+  | 'SOURCE_STALE'
+  | 'UNSAFE_INPUT'
+  /**
+   * M5 (6.15/C-29): the adapter itself is not wired for this lane — no
+   * owner-supplied records and no fixture are present. Distinct from
+   * DATA_BLOCKED (records exist but cannot be read), and never satisfied by a
+   * synthetic substitute.
+   */
+  | 'ADAPTER_UNAVAILABLE';
 
 export type LocalProviderResult<T> =
   | { readonly status: 'AVAILABLE'; readonly value: T }

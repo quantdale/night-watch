@@ -400,7 +400,7 @@ function createOwnerBugAtlasProvider(options: OwnerLocalInvestigationOptions, pr
     async load(): Promise<LocalProviderResult<BugAtlasStore>> {
       const value = store();
       if (value === null) {
-        return blocked('DATA_BLOCKED', 'no owner-private Bug Atlas snapshot or mined history is available; refusing fixture fallback');
+        return blocked('ADAPTER_UNAVAILABLE', 'no owner-private Bug Atlas snapshot or mined history is configured; the adapter is unavailable and no fixture substitutes for it');
       }
       return { status: 'AVAILABLE', value };
     },
@@ -423,7 +423,7 @@ function createOwnerSystemAtlasProvider(options: OwnerLocalInvestigationOptions)
     providerId: OWNER_LOCAL_SYSTEM_ATLAS_PROVIDER_ID,
     async load(): Promise<LocalProviderResult<SystemAtlasOverlay>> {
       if (overlay === null) {
-        return blocked('NOT_CONFIGURED', 'no proven real System Atlas records are configured; refusing synthetic substitution');
+        return blocked('ADAPTER_UNAVAILABLE', 'no proven real System Atlas records are configured; the adapter is unavailable and no synthetic substitute is loaded');
       }
       return { status: 'AVAILABLE', value: overlay };
     },

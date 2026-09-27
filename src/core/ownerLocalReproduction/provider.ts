@@ -65,15 +65,7 @@ import {
   FAILURE_FINGERPRINT_PREFIX,
   OWNER_LOCAL_CURRENT_SOURCE_PROOF_VERSION,
 } from '../localInvestigation/currentSourceProof';
-import type {
-  DeterministicReproductionProvider,
-  LocalProviderResult,
-  LocalReproductionProviderResult,
-  LocalReproductionRequest,
-  LocalReproductionSignal,
-  LocalSourceDocument,
-  LocalSourceProvider,
-} from '../localInvestigation/types';
+import type { DeterministicReproductionProvider, LocalProviderBlockClass, LocalProviderResult, LocalReproductionProviderResult, LocalReproductionRequest, LocalReproductionSignal, LocalSourceDocument, LocalSourceProvider } from '../localInvestigation/types';
 import {
   DEFAULT_OWNER_LOCAL_REPRODUCTION_LIMITS,
   OWNER_LOCAL_REPRODUCTION_TARGET_VERSION,
@@ -1658,7 +1650,7 @@ type OwnerLocalDisposition =
   | 'TRANSIENT_RETRYABLE';
 
 function blocked(
-  cls: 'NOT_CONFIGURED' | 'DATA_BLOCKED' | 'SOURCE_UNAVAILABLE' | 'SOURCE_STALE' | 'UNSAFE_INPUT',
+  cls: LocalProviderBlockClass,
   reason: string,
 ): LocalProviderResult<LocalReproductionProviderResult> {
   return { status: 'BLOCKED', class: cls, reason };

@@ -52,6 +52,22 @@ const REPOSITORY_RE = /^[A-Za-z0-9][A-Za-z0-9._-]*\/[A-Za-z0-9][A-Za-z0-9._-]*$/
 // of the vocabulary; absolute paths and dot segments stay refused.
 const SAFE_PATH_RE = /^(?!\/)(?!.*\.\.)[A-Za-z0-9._+:/:-]{1,512}$/;
 const IDENTIFIER_RE = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,255}$/;
+
+/**
+ * M5 (6.15/NW-AUD-046): the CLOSED vocabulary of presentation fields whose
+ * model-supplied value can be missing. A defaulted field is recorded by name,
+ * so a reader can never mistake a fallback for grounded model content.
+ */
+export const PRESENTATION_FIELDS = [
+  'title',
+  'description',
+  'recommendedSeverity',
+  'severityConfidence',
+  'severityRationale',
+  'confidence',
+  'alternativeHypotheses',
+] as const;
+export type PresentationField = (typeof PRESENTATION_FIELDS)[number];
 const TEST_NAME_RE = /^[A-Za-z_][A-Za-z0-9_]*(?:\/[A-Za-z_][A-Za-z0-9_]*)*$/;
 
 /** Host-observed repository identity for one approved source path. */
@@ -104,6 +120,8 @@ export interface AgentFindingRecord {
   readonly reasonerIdentity: AgentFindingRecordReasonerIdentity | null;
   readonly reproductionIds: readonly string[];
   readonly provenanceRefs: readonly string[];
+  /** Presentation fields the model did NOT supply (see PRESENTATION_FIELDS). */
+  readonly presentationDefaults: readonly string[];
 }
 
 export interface AgentFindingRecordDerivation {
@@ -119,6 +137,8 @@ export interface AgentFindingRecordDerivation {
   /** Optional host-observed triage fingerprint (`cfe:`). */
   readonly triageFingerprint?: string | null;
   readonly reasonerIdentity?: AgentFindingRecordReasonerIdentity | null;
+  /** Presentation fields the model did not supply (6.15/NW-AUD-046). */
+  readonly presentationDefaults?: readonly string[];
 }
 
 export interface AgentFindingRecordError {
@@ -144,6 +164,7 @@ function identityPayload(source: {
   readonly reasonerIdentity: AgentFindingRecordReasonerIdentity | null;
   readonly reproductionIds: readonly string[];
   readonly provenanceRefs: readonly string[];
+  readonly presentationDefaults: readonly string[];
 }): Record<string, unknown> {
   return {
     version: AGENT_FINDING_RECORD_VERSION,
@@ -156,6 +177,7 @@ function identityPayload(source: {
     reasonerIdentity: source.reasonerIdentity,
     reproductionIds: source.reproductionIds,
     provenanceRefs: source.provenanceRefs,
+    presentationDefaults: source.presentationDefaults,
   };
 }
 
@@ -354,6 +376,11 @@ export function deriveAgentFindingRecord(input: AgentFindingRecordDerivation): A
   const currentFailureFingerprint: string | null = fingerprints.length > 0 ? (fingerprints[0] ?? null) : null;
   const recordReproductionIds = reproductionIds.slice(0, AGENT_FINDING_RECORD_CAPS.maxReproductionIds);
   const recordProvenanceRefs = [...provenanceRefs].sort((a, b) => a.localeCompare(b));
+  const recordPresentationDefaults = (input.presentationDefaults ?? [])
+    .filter((field): field is PresentationField => (PRESENTATION_FIELDS as readonly string[]).includes(field))
+    .slice()
+    .sort((left, right) => left.localeCompare(right))
+    .filter((field, index, all) => index === 0 || all[index - 1] !== field);
 
   const payload = identityPayload({
     campaignId,
@@ -365,6 +392,7 @@ export function deriveAgentFindingRecord(input: AgentFindingRecordDerivation): A
     reasonerIdentity,
     reproductionIds: recordReproductionIds,
     provenanceRefs: recordProvenanceRefs,
+    presentationDefaults: recordPresentationDefaults,
   });
 
   // Content addressing runs over the exact payload persisted below (minus the
@@ -384,6 +412,7 @@ export function deriveAgentFindingRecord(input: AgentFindingRecordDerivation): A
     reasonerIdentity,
     reproductionIds: recordReproductionIds,
     provenanceRefs: recordProvenanceRefs,
+    presentationDefaults: recordPresentationDefaults,
   });
 }
 
@@ -408,6 +437,7 @@ const RECORD_KEYS = [
   'reasonerIdentity',
   'reproductionIds',
   'provenanceRefs',
+  'presentationDefaults',
 ] as const;
 
 const SOURCE_KEYS = ['sourcePath', 'repository', 'headSha', 'treeDigest', 'contentDigest'] as const;
@@ -620,6 +650,20 @@ export function validateAgentFindingRecord(value: unknown): ValidateAgentFinding
     }
   }
 
+  const presentationValue = value['presentationDefaults'];
+  const presentationDefaults: string[] = [];
+  if (!Array.isArray(presentationValue) || presentationValue.length > PRESENTATION_FIELDS.length) {
+    errors.push({ code: 'AGENT_FINDING_RECORD_FIELD_MALFORMED', detail: 'presentationDefaults must be a bounded array' });
+  } else {
+    for (const entry of presentationValue) {
+      if (typeof entry !== 'string' || !(PRESENTATION_FIELDS as readonly string[]).includes(entry)) {
+        errors.push({ code: 'AGENT_FINDING_RECORD_FIELD_MALFORMED', detail: 'presentationDefaults entry is not a presentation field' });
+        continue;
+      }
+      presentationDefaults.push(entry);
+    }
+  }
+
   if (errors.length > 0) return { ok: false, errors };
 
   const record: AgentFindingRecord = Object.freeze({
@@ -634,6 +678,7 @@ export function validateAgentFindingRecord(value: unknown): ValidateAgentFinding
     reasonerIdentity,
     reproductionIds: Object.freeze(reproductionIds),
     provenanceRefs: Object.freeze(provenanceRefs),
+    presentationDefaults: Object.freeze(presentationDefaults),
   });
 
   const recomputed = agentFindingRecordId(record);

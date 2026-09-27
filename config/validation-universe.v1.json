@@ -9,6 +9,7 @@
       "evidenceLane": "npm test \u2014 full canonical regression, run and recorded per checkpoint (not a CI step)",
       "files": [
         "tests/unit/accessibilityAudit.test.ts",
+        "tests/unit/adapterUnavailableAndDefaults.test.ts",
         "tests/unit/agentAutonomyIntegration.test.ts",
         "tests/unit/agentAutonomyLoop.test.ts",
         "tests/unit/agentBudgetDimensions.test.ts",
