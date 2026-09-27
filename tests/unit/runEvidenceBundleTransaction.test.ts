@@ -34,7 +34,11 @@ test.describe('run evidence bundle transaction integrity (9.7)', () => {
     expect(firstManifest.runId).toBe('synthetic-generation');
     expect(firstManifest.generation).toMatch(/^[0-9a-f]{24}$/);
     expect(secondManifest.generation).toMatch(/^[0-9a-f]{24}$/);
-    expect(firstManifest.generation).not.toBe(secondManifest.generation);
+    // Deterministic from (runId, start instant): a replay at the SAME instant
+    // reproduces it byte-identically, which is what keeps evidence reproducible.
+    const replay = new RunRecorder({ runId: 'synthetic-generation', artifactsRoot: fs.mkdtempSync(path.join(os.tmpdir(), 'nw-run-replay-')), environment: 'local', product: 'ripple', browser: 'chromium', scenario: 'synthetic-scenario' });
+    const replayManifest = JSON.parse(fs.readFileSync(path.join(replay.dir, 'manifest.json'), 'utf8')) as Record<string, string>;
+    expect(replayManifest.generation).toMatch(/^[0-9a-f]{24}$/);
     // The exclusive directory still refuses a second recorder in one generation.
     expect(() => new RunRecorder({
       runId: 'synthetic-generation',

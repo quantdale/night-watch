@@ -58,7 +58,9 @@ test.describe('RunRecorder', () => {
   test('manifest.json is written at construction with all required fields', () => {
     const rec = new RunRecorder({ ...baseOpts('manifest-run'), seed: 's1', nightwatchSha: 'abc123' });
     const manifest = JSON.parse(fs.readFileSync(path.join(rec.dir, 'manifest.json'), 'utf8'));
+    expect(manifest.generation).toMatch(/^[0-9a-f]{24}$/);
     expect(manifest).toEqual({
+      generation: manifest.generation,
       runId: 'manifest-run',
       timestamp: FIXED,
       environment: 'local',
@@ -73,7 +75,9 @@ test.describe('RunRecorder', () => {
   test('manifest omits optional fields when not provided', () => {
     const rec = new RunRecorder(baseOpts('manifest-min'));
     const manifest = JSON.parse(fs.readFileSync(path.join(rec.dir, 'manifest.json'), 'utf8'));
+    expect(manifest.generation).toMatch(/^[0-9a-f]{24}$/);
     expect(manifest).toEqual({
+      generation: manifest.generation,
       runId: 'manifest-min',
       timestamp: FIXED,
       environment: 'local',

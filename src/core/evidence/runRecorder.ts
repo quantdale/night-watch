@@ -18,7 +18,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { randomBytes } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 import type { Page } from '@playwright/test';
 import { createRedactionLayer } from '../safety/redaction';
 import type { RedactionLayer } from '../safety/redaction';
@@ -143,7 +143,11 @@ export class RunRecorder {
     // already exclusive, but two runs that reuse a run id are otherwise
     // indistinguishable in evidence; the generation makes each bundle's
     // identity unique even when a caller reuses the id.
-    const generation = randomBytes(12).toString('hex');
+    // The generation is DETERMINISTIC from the run identity (id + start
+    // instant): two bundles that differ in either are distinguishable, while a
+    // frozen-clock replay reproduces byte-identical output. Uniqueness itself
+    // is still the exclusive run directory's job.
+    const generation = createHash('sha256').update(`${opts.runId}:${this.startedAt}`).digest('hex').slice(0, 24);
     const manifest: Record<string, string> = {
       runId: opts.runId,
       generation,
