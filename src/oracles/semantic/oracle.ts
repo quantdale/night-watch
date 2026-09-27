@@ -164,21 +164,30 @@ export function evaluateSemanticExpectation(input: SemanticEvaluationInput): Sem
   const evaluations = expectation.invariantDefinitions.map((invariant) => evaluateInvariant(invariant, projections, input.ctx));
   const violations = evaluations.filter((evaluation) => evaluation.verdict === 'VIOLATED');
   const invalid = evaluations.some((evaluation) => evaluation.verdict === 'INVALID_INPUT');
-  const anyPass = evaluations.some((evaluation) => evaluation.verdict === 'PASS');
 
   if (invalid) return { outcome: 'INVALID_INPUT', findings: [], invariantEvaluations: evaluations };
   if (violations.length === 0) {
-    // Phase 11: check for partial coverage (all PASS but truncated collection)
-    const partialCoverage = evaluations.some(e => e.coverageState === 'PARTIAL_COVERAGE_NO_VIOLATION');
-    if (partialCoverage) {
+    // M7 (8.3/NW-AUD-039): PASS is only claimed when EVERY invariant actually
+    // passed. Evidence that could not be evaluated — a truncated collection
+    // (NOT_APPLICABLE) or a partially inspected one — is INCOMPLETE, and the
+    // previous `anyPass ? PASS : NOT_APPLICABLE` reported a partial evaluation
+    // as a pass. PARTIAL_COVERAGE is the vocabulary's own honest outcome for
+    // exactly that state.
+    const partialCoverage = evaluations.some((e) => e.coverageState === 'PARTIAL_COVERAGE_NO_VIOLATION');
+    const notApplicable = evaluations.some((e) => e.verdict === 'NOT_APPLICABLE');
+    const passed = evaluations.filter((e) => e.verdict === 'PASS');
+    // A MIX of passed and unevaluated invariants is incomplete coverage: the
+    // expectation did apply, and part of it could not be checked.
+    if (partialCoverage || (notApplicable && passed.length > 0)) {
       return {
         outcome: 'PARTIAL_COVERAGE',
         findings: [],
         invariantEvaluations: evaluations,
       };
     }
+    const allPass = evaluations.length > 0 && evaluations.every((e) => e.verdict === 'PASS');
     return {
-      outcome: anyPass ? 'PASS' : 'NOT_APPLICABLE',
+      outcome: allPass ? 'PASS' : 'NOT_APPLICABLE',
       findings: [],
       invariantEvaluations: evaluations,
     };

@@ -130,6 +130,7 @@
         "tests/unit/schemaVersionLifecycle.test.ts",
         "tests/unit/schemaVersionMigration.test.ts",
         "tests/unit/semanticAdmissionAuthority.test.ts",
+        "tests/unit/semanticEvidenceCompleteness.test.ts",
         "tests/unit/semanticRequestAdmission.test.ts",
         "tests/unit/semanticSkipIdentity.test.ts",
         "tests/unit/siblingRootResolution.test.ts",
