@@ -457,6 +457,12 @@
       "class": "PARALLEL_SAFE",
       "signals": []
     },
+    "tests/unit/controlCenterStatusTotality.test.ts": {
+      "class": "PARALLEL_SAFE",
+      "signals": [
+        "isolated-scratch"
+      ]
+    },
     "tests/unit/currentFailureEvidence.test.ts": {
       "class": "PARALLEL_SAFE",
       "signals": []

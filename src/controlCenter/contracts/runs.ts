@@ -25,6 +25,23 @@ export type ControlCenterRunStatus =
   | 'INCOMPLETE'
   | 'SKIPPED';
 
+/**
+ * M6 (7.2/C-09): the vocabulary as DATA, typed against its union so a widened
+ * status without a widened array is a compile error. The sanitizer's allowlist
+ * is derived from this array rather than restating it.
+ */
+export const CONTROL_CENTER_RUN_STATUSES = [
+  'PENDING',
+  'RUNNING',
+  'PASSED',
+  'ORACLE_ONLY',
+  'SAFETY_FAILURE',
+  'FAILED',
+  'BLOCKED',
+  'INCOMPLETE',
+  'SKIPPED',
+] as const satisfies readonly ControlCenterRunStatus[];
+
 export type ControlCenterRunEventType =
   | 'start'
   | 'end'

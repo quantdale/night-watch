@@ -13,6 +13,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { prefixedDigest24 } from '../../core/identity/canonicalDigest';
 import { validateArtifact } from '../../core/artifactValidation';
+import { dossierStatusOf } from '../contracts/findings';
 import { containsPrivatePayloadShape, containsStructuralPrivateShape, privateArtifactRoot, assertPrivateArtifactPath } from '../../core/policy';
 import { assertNotProductionFindingsRoot } from '../../core/prodEvidence/controlCenterExclusion';
 import { DOSSIER_VERSION, type BugDossier } from '../../core/triage/types';
@@ -53,7 +54,7 @@ export type FindingsDossier = BugDossier | BugDossierV2;
 /** Metadata-only finding input emitted after validation and privacy projection. */
 export interface FindingsDossierMetadata {
   readonly schemaVersion: FindingsDossier['schemaVersion'];
-  readonly status: 'READY' | 'INCOMPLETE';
+  readonly status: 'READY' | 'UNRESOLVED' | 'INCOMPLETE' | 'UNKNOWN';
   readonly candidateId: string;
   readonly title: string | null;
   readonly firstObserved: string | null;
@@ -243,7 +244,8 @@ function toMetadata(dossier: FindingsDossier): FindingsDossierMetadata | null {
   if (candidateId === null || oracleFingerprint === null) return null;
   return {
     schemaVersion: dossier.schemaVersion,
-    status: dossier.status === 'READY' ? 'READY' : 'INCOMPLETE',
+    // M6 (7.2/C-09): total projection, identical to the adapter's.
+    status: dossierStatusOf(dossier.status),
     candidateId,
     title: asSafeControlCenterLabel(dossier.title),
     firstObserved: asSafeControlCenterTimestamp(dossier.firstObserved),

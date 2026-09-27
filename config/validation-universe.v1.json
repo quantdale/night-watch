@@ -42,6 +42,7 @@
         "tests/unit/cliImplementationContract.test.ts",
         "tests/unit/containedTestReplay.test.ts",
         "tests/unit/continuityLiveWaypoint.test.ts",
+        "tests/unit/controlCenterStatusTotality.test.ts",
         "tests/unit/currentFailureEvidence.test.ts",
         "tests/unit/currentSourceFindingAdmission.test.ts",
         "tests/unit/destinationManifest.test.ts",

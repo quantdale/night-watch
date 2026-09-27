@@ -18,6 +18,13 @@ import {
   isRecord,
 } from './common';
 import type { SafeControlCenterCode } from './common';
+import {
+  CONTROL_CENTER_DOSSIER_STATUSES,
+  CONTROL_CENTER_FINDING_CONFIDENCES,
+  CONTROL_CENTER_FINDING_EVIDENCE_LEVELS,
+  CONTROL_CENTER_FINDING_REPRODUCTIONS,
+  CONTROL_CENTER_FINDING_SEVERITIES,
+} from './findings';
 import type {
   ControlCenterFindingConfidence,
   ControlCenterFindingEvidenceLevel,
@@ -25,6 +32,7 @@ import type {
   ControlCenterFindingSeverity,
   ControlCenterFindingSummaryDto,
 } from './findings';
+import { CONTROL_CENTER_RUN_STATUSES } from './runs';
 import type {
   ControlCenterRunEnvironment,
   ControlCenterRunEventType,
@@ -44,17 +52,7 @@ const RUN_ENVIRONMENTS: readonly ControlCenterRunEnvironment[] = [
   'NEXT_RECORDED',
   'UNKNOWN',
 ];
-const RUN_STATUSES: readonly ControlCenterRunStatus[] = [
-  'PENDING',
-  'RUNNING',
-  'PASSED',
-  'ORACLE_ONLY',
-  'SAFETY_FAILURE',
-  'FAILED',
-  'BLOCKED',
-  'INCOMPLETE',
-  'SKIPPED',
-];
+const RUN_STATUSES: readonly ControlCenterRunStatus[] = CONTROL_CENTER_RUN_STATUSES;
 const RUN_EVENT_TYPES: readonly ControlCenterRunEventType[] = [
   'start',
   'end',
@@ -81,16 +79,12 @@ const RUN_EVENT_TYPES: readonly ControlCenterRunEventType[] = [
   'journey-step',
 ];
 const RUN_SEVERITIES: readonly ControlCenterRunSeverity[] = ['info', 'warn', 'error', 'fatal'];
-const FINDING_SEVERITIES: readonly ControlCenterFindingSeverity[] = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW', 'UNKNOWN'];
-const FINDING_CONFIDENCES: readonly ControlCenterFindingConfidence[] = ['HIGH', 'MEDIUM', 'LOW', 'UNRESOLVED'];
-const FINDING_EVIDENCE_LEVELS: readonly ControlCenterFindingEvidenceLevel[] = ['L0', 'L1', 'L2', 'L3', 'L4', 'L5'];
-const FINDING_REPRODUCTIONS: readonly ControlCenterFindingReproduction[] = [
-  'REPRODUCED',
-  'NOT_REPRODUCED',
-  'BOUNDED',
-  'INCOMPLETE',
-  'UNKNOWN',
-];
+// M6 (7.2/C-09): derived from the contract vocabularies, never restated, so a
+// widened status can never be silently dropped by the sanitizer.
+const FINDING_SEVERITIES: readonly ControlCenterFindingSeverity[] = CONTROL_CENTER_FINDING_SEVERITIES;
+const FINDING_CONFIDENCES: readonly ControlCenterFindingConfidence[] = CONTROL_CENTER_FINDING_CONFIDENCES;
+const FINDING_EVIDENCE_LEVELS: readonly ControlCenterFindingEvidenceLevel[] = CONTROL_CENTER_FINDING_EVIDENCE_LEVELS;
+const FINDING_REPRODUCTIONS: readonly ControlCenterFindingReproduction[] = CONTROL_CENTER_FINDING_REPRODUCTIONS;
 
 function oneOf<T extends string>(value: unknown, values: readonly T[]): T | null {
   return typeof value === 'string' && values.includes(value as T) ? (value as T) : null;
@@ -183,7 +177,9 @@ export function sanitizeFindingSummary(value: unknown): ControlCenterFindingSumm
   const minimized = booleanValue(value.minimized);
   const categoryCode = asSafeControlCenterCode(value.categoryCode);
   const currentness = oneOf(value.sourceCurrentness, ['CURRENT', 'SOURCE_STALE', 'SOURCE_UNAVAILABLE'] as const);
-  const dossierStatus = oneOf(value.dossierStatus, ['READY', 'INCOMPLETE', 'UNAVAILABLE', 'UNKNOWN'] as const);
+  // M6 (7.2/C-09): derived from the contract vocabulary — the inline list here
+  // lacked UNRESOLVED, so a truthful unresolved dossier was silently dropped.
+  const dossierStatus = oneOf(value.dossierStatus, CONTROL_CENTER_DOSSIER_STATUSES);
   if (
     findingId === null ||
     severity === null ||

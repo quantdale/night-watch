@@ -1,4 +1,5 @@
 import { prefixedDigest24 } from '../../core/identity/canonicalDigest';
+import { dossierStatusOf } from '../contracts/findings';
 import type { BugDossier } from '../../core/triage/types';
 import type { BugDossierV2 } from '../../core/triage/dossierV2';
 import type { FindingsDossierMetadata } from '../authorities/findingsAuthority';
@@ -33,7 +34,10 @@ function safeDossier(dossier: BugDossier | BugDossierV2 | FindingsDossierMetadat
   const currentness = isMetadata(dossier)
     ? dossier.sourceCurrentness
     : reduceFindingsSourceCurrentness(dossier.sourceChangeCandidates.map((candidate) => candidate.sourceFreshness));
-  const dossierStatus: ControlCenterFindingSummaryDto['dossierStatus'] = dossier.status === 'READY' ? 'READY' : 'INCOMPLETE';
+  // M6 (7.2/C-09): TOTAL mapping. Every internal dossier status has its own
+  // Control Center state; an unrecognized value becomes UNKNOWN, never a
+  // silent INCOMPLETE that reads like an unfinished dossier.
+  const dossierStatus = dossierStatusOf(dossier.status);
   const findingId = safePublicId(dossier.candidateId, 'cc-finding');
   const provenanceDigest = asSafeControlCenterDigest(prefixedDigest24('cc-finding', {
     candidateId: findingId,
