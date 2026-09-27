@@ -255,6 +255,7 @@
         "bin/lib/childProcessCensus.mjs",
         "bin/lib/ci-block-record.mjs",
         "bin/lib/cli-implementation-contract.mjs",
+        "bin/lib/dev-lane-precondition.mjs",
         "bin/lib/gate-receipt.mjs",
         "bin/lib/hardening/kernel.mjs",
         "bin/lib/hardening/probe-campaign.mjs",
