@@ -125,8 +125,15 @@ M5 closed green with focused suites and the gate pair (see the ledger).
 
 ## Work In Progress
 
-- M5 is COMPLETE: 6.1-6.17 are ticked in the campaign ledger with DONE notes,
-  PLAN marks M5 COMPLETE, and the M6 entry work has not started.
+- M5 is COMPLETE (ledger ticked, PLAN/STATE advanced, gate pair 5585/0,
+  exact-head CI run 36302111703 green) and pushed.
+- M6 (tasks 7.1-7.11) is in progress: 7.1 is implemented and committed — the
+  protocol dossier's status is DERIVED (`protocolDossierReadiness`) instead of
+  hard-coded READY, the v1 validator accepts the truthful `UNRESOLVED`, and
+  every consumer that filters on `status === 'READY'` (campaign brief,
+  retention, orchestrator promotion gate, Alphaus handoff) now excludes a
+  dossier that never reproduced; `tests/unit/dossierReadiness.test.ts` 4/4.
+  Next: 7.2 (the total Control Center status mapping with sanitized `oneOf`).
 - M5 history (kept for context): 6.1-6.11 are implemented, validated and
   committed (`9a044b49`, `5719f6ea`-lineage): the content-addressed
   `AgentFindingRecord` in `admitLocalFinding`; the atomic `agent-findings/`
@@ -150,14 +157,17 @@ M5 closed green with focused suites and the gate pair (see the ledger).
 
 ## Exact Next Action
 
-Read tasks 7.1-7.x and `src/core/agentProtocol/**` plus the Control Center
-adapter/authority modules, then implement 7.1 (the protocol dossier readiness
-verdict that must precede any write, with no READY ledger entry, bug candidate,
-promotion or COMPLETE_WITH_FINDINGS from a non-READY dossier) with focused
-tests green, repairing forward with new commits. Then continue 7.2-7.x in
-order, committing each validated batch, and close M6 with focused +
-`gate:milestone` PASS, the C-00 integrate and the `gh` CI observation (OD-3)
-exactly as in M4/M5.
+Implement 7.2: the TOTAL Control Center status mapping — widen the types and
+sanitize the `oneOf` projection so every status value maps to a defined
+Control Center state (NW-AUD-048, C-09). Read the Control Center
+adapter/authority modules (`src/controlCenter/**`) and the status vocabularies
+they consume, add the mapping with focused tests, then continue 7.3-7.11 in
+order (role-typed replay contexts, the `campaign-state/` subtree, the
+test-scoped run root with the newest-N window, the read-only agent-campaign
+view, the Safety Center, one `resolveSiblingRoot()`, the synthetic-preview
+relabelling and the `status:local` auth heading), committing each validated
+batch and closing M6 with focused + `gate:milestone` PASS, the C-00 integrate
+and the `gh` CI observation (OD-3) exactly as in M4/M5.
 
 ## Files Changed
 
