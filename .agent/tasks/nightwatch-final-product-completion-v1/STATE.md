@@ -199,8 +199,23 @@ the gate pair (see the ledger).
   the effect sites / same-evaluate verification / credential consumers) plus
   the pre-existing `devLoginSecurity` suite green and the sharded lane PASS at
   5662/0 (5695 planned, 0 failed).
-  Next: 9.3 (NW-AUD-015 transactional storage-state plus sidecar publication,
-  same batch as 9.2) then 9.4-9.13 to close M8.
+  M8 9.3 DONE — transactional storage-state plus sidecar publication
+  (NW-AUD-015): `publishAuthCapabilityBundle` stages both files, journals the
+  intended pair (`nightwatch.auth-bundle-transaction.v1`), commits the two
+  renames and removes the journal; the record is built from the STAGED artefact
+  bytes so a digest disagreement refuses before any rename; readers refuse a
+  pending journal (`AUTH_BUNDLE_TRANSACTION_PENDING`) instead of reading an
+  interrupted publication as a completed pair, and `recoverAuthCapabilityBundle`
+  completes the commit only against the journal's digests
+  (`AUTH_BUNDLE_RECOVERY_REFUSED` otherwise). The capture path
+  (`directRunner.ts`) publishes through the bundle and the old separate-write
+  pair is gone (source-censused). Evidence:
+  `tests/unit/authBundleTransaction.test.ts` 7/7, the auth launcher suites
+  green, `hardening:check` + `schema-lifecycle check` PASS, and the sharded lane
+  PASS at 5669/0 (5702 planned, 0 failed).
+  Next: 9.4 (NW-AUD-022 narrowed: prepared record before every effect, one
+  terminal record after, reader fails closed on unmatched or malformed lines,
+  effect-site census, fault tests) then 9.5-9.13 to close M8.
 - M6 is COMPLETE: 7.1-7.11 are ticked in the campaign ledger with DONE notes
   and PLAN marks M6 COMPLETE. The view-DOM baseline was intentionally
   REGENERATED (`NIGHTWATCH_UPDATE_VIEW_DOM_BASELINE=1`) because the Agent
