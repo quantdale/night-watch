@@ -15,8 +15,12 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { buildChildEnvironment } from './child-environment.mjs';
 import { loadTypeScriptModule as loadRuntimeTypeScriptModule } from './lib/typescript-runtime-loader.mjs';
+import { guardDevLane } from './lib/dev-lane-precondition.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+
+// M8 (9.1): refuse a DEV-lane launch while a DEV-lane precondition is OPEN.
+guardDevLane({ root: ROOT, launcher: 'phase22-real.mjs', args: process.argv.slice(2) });
 const WORKSPACE_ROOT = path.resolve(ROOT, '..', '..');
 const SAFE_ID_RE = /^[A-Za-z0-9][A-Za-z0-9._:/-]{0,199}$/;
 

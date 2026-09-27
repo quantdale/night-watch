@@ -11,8 +11,13 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildChildEnvironment } from './child-environment.mjs';
 import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
+import { guardDevLane } from './lib/dev-lane-precondition.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+
+// M8 (9.1): refuse a DEV-lane launch while a DEV-lane precondition is OPEN,
+// BEFORE argument validation, auth validation or any child process.
+guardDevLane({ root, launcher: 'observe-canary.mjs', args: process.argv.slice(2) });
 
 /** @type {import('./lib/operator-cli.mjs').OperatorCliMetadata} */
 const CLI_METADATA = {

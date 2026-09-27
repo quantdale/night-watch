@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "nightwatch.dev-lane-preconditions.v1",
+  "refusalCode": "DEV_LANE_PRECONDITION_OPEN",
+  "note": "M8 (task 9.1). Every entry is a DEV-lane precondition whose proof is not established. While ANY entry is OPEN, every DEV-lane launcher refuses before external contact, auth validation or child creation. Closing an entry requires the work itself; clearing the refusal requires an owner token citing a DECISIONS entry listed in ownerAuthorizations.",
+  "preconditions": [
+    {
+      "id": "NW-AUD-016",
+      "scope": "full",
+      "status": "OPEN",
+      "summary": "proxy-runtime-instance-attestation-v1: proxy admission trusts a self-asserted runtime-state JSON file plus any loopback listener",
+      "auditRef": "openspec/changes/nightwatch-final-product-completion-v1/audit.md"
+    },
+    {
+      "id": "NW-AUD-022",
+      "scope": "task 2.1 (R2-47)",
+      "status": "OPEN",
+      "summary": "proxy-evidence-effect-ordering-v1 task 2.1: the proxy effect/evidence path denominator is not discovered",
+      "auditRef": "openspec/changes/nightwatch-final-product-completion-v1/audit.md"
+    },
+    {
+      "id": "NW-AUD-025",
+      "scope": "full",
+      "status": "OPEN",
+      "summary": "replay-context-provenance-integrity-v1: anomaly admission deduplicates by runId only and ignores contextKind",
+      "auditRef": "openspec/changes/nightwatch-final-product-completion-v1/audit.md"
+    },
+    {
+      "id": "NW-AUD-026",
+      "scope": "full",
+      "status": "OPEN",
+      "summary": "exploration-observed-postcondition-integrity-v1: the real exploration runtime writes the catalog's expectedStructuralDelta into its own view",
+      "auditRef": "openspec/changes/nightwatch-final-product-completion-v1/audit.md"
+    },
+    {
+      "id": "NW-AUD-037",
+      "scope": "full",
+      "status": "OPEN",
+      "summary": "real-source-expectation-authority-integrity-v1: real-source expectation authority rests on shape checks, not on proof from the producer",
+      "auditRef": "openspec/changes/nightwatch-final-product-completion-v1/audit.md"
+    },
+    {
+      "id": "NW-AUD-038",
+      "scope": "full",
+      "status": "OPEN",
+      "summary": "semantic-receipt-acceptance-integrity-v1: semantic receipts and findings have split parser strength and composable acceptance",
+      "auditRef": "openspec/changes/nightwatch-final-product-completion-v1/audit.md"
+    }
+  ],
+  "ownerAuthorizations": []
+}

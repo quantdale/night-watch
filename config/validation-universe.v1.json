@@ -50,6 +50,7 @@
         "tests/unit/currentSourceFindingAdmission.test.ts",
         "tests/unit/destinationManifest.test.ts",
         "tests/unit/devCredentialProvider.test.ts",
+        "tests/unit/devLanePreconditions.test.ts",
         "tests/unit/documentLifecycle.test.ts",
         "tests/unit/dossierReadiness.test.ts",
         "tests/unit/dotEnvLayerStrictness.test.ts",

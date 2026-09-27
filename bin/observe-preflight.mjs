@@ -12,8 +12,13 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadTypeScriptModule } from './lib/typescript-runtime-loader.mjs';
 import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
+import { guardDevLane } from './lib/dev-lane-precondition.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+
+// M8 (9.1): refuse a DEV-lane launch while a DEV-lane precondition is OPEN,
+// BEFORE argument validation, auth validation or any child process.
+guardDevLane({ root, launcher: 'observe-preflight.mjs', args: process.argv.slice(2) });
 const SUPPORTED_REAL_ENVS = new Set(['dev', 'next']);
 const PROD_SUFFIXES = ['.run.app'];
 

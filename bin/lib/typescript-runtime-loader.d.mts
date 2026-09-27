@@ -54,6 +54,7 @@ export interface TypeScriptRuntimeLoaderModuleMap {
   "src/core/oops/l6.ts": typeof import("../../src/core/oops/l6");
   "src/core/phase22/index.ts": typeof import("../../src/core/phase22/index");
   "src/core/phase23/manifest.ts": typeof import("../../src/core/phase23/manifest");
+  "src/core/policy/devLanePreconditions.ts": typeof import("../../src/core/policy/devLanePreconditions");
   "src/core/policy/privateArtifacts.ts": typeof import("../../src/core/policy/privateArtifacts");
   "src/core/policy/sourceTopology.ts": typeof import("../../src/core/policy/sourceTopology");
   "src/core/portfolio/types.ts": typeof import("../../src/core/portfolio/types");

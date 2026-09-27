@@ -22,6 +22,7 @@
 import type { SchemaFamilyDeclaration } from './types';
 
 export const SCHEMA_FAMILIES: readonly SchemaFamilyDeclaration[] = [
+  { family: 'nightwatch.dev-lane-preconditions', persisted: true, store: 'REPOSITORY_CORPUS', currentVersion: 1, versions: { 1: 'CURRENT' }, dispositions: [], note: 'repository configuration record listing the DEV-lane preconditions whose proof is not established; every DEV launcher refuses while any entry is OPEN' },
   { family: 'nightwatch.dependency-currency', persisted: true, store: 'REPOSITORY_CORPUS', currentVersion: 1, versions: { 1: 'CURRENT' }, dispositions: [], note: 'repository configuration record; the advisory lane stays unavailable until a registry query is authorized' },
   { family: 'nightwatch.environment-signature', persisted: false, store: 'IN_MEMORY', currentVersion: 1, versions: { 1: 'CURRENT' }, dispositions: [], note: 'closed environment-signature vocabulary classifying environment-caused reproduction failures' },
   { family: 'nightwatch.environment-surface', persisted: true, store: 'REPOSITORY_CORPUS', currentVersion: 1, versions: { 1: 'CURRENT' }, dispositions: [], note: 'repository configuration record declaring every environment variable' },

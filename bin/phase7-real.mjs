@@ -13,8 +13,13 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { buildChildEnvironment, emitChildStdio } from './child-environment.mjs';
 import { loadTypeScriptModule } from './lib/typescript-runtime-loader.mjs';
+import { guardDevLane } from './lib/dev-lane-precondition.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+
+// M8 (9.1): refuse a DEV-lane launch while a DEV-lane precondition is OPEN,
+// BEFORE argument validation, auth validation or any child process.
+guardDevLane({ root, launcher: 'phase7-real.mjs', args: process.argv.slice(2) });
 const args = process.argv.slice(2);
 let env;
 let storage;

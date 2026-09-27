@@ -499,6 +499,12 @@
         "isolated-scratch"
       ]
     },
+    "tests/unit/devLanePreconditions.test.ts": {
+      "class": "PARALLEL_SAFE",
+      "signals": [
+        "isolated-scratch"
+      ]
+    },
     "tests/unit/devLoginSecurity.test.ts": {
       "class": "PARALLEL_SAFE",
       "signals": [

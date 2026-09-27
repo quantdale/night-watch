@@ -21,8 +21,13 @@ import { fileURLToPath } from 'node:url';
 import { buildChildEnvironment } from './child-environment.mjs';
 import { loadTypeScriptModule } from './lib/typescript-runtime-loader.mjs';
 import { parsePhase10bLauncherArgs, PHASE_10B_LAUNCHER_USAGE } from './phase10b-launcher-args.mjs';
+import { guardDevLane } from './lib/dev-lane-precondition.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+
+// M8 (9.1): refuse a DEV-lane launch while a DEV-lane precondition is OPEN,
+// BEFORE argument validation, auth validation or any child process.
+guardDevLane({ root, launcher: 'phase10b-real.mjs', args: process.argv.slice(2) });
 const parsed = parsePhase10bLauncherArgs(process.argv.slice(2));
 if (parsed.help) {
   console.log(PHASE_10B_LAUNCHER_USAGE);

@@ -55,6 +55,20 @@
       ]
     },
     {
+      "name": "NIGHTWATCH_DEV_LANE_OWNER_TOKEN",
+      "purpose": "Owner authorization token for the DEV lane: a DECISIONS entry (D-<n>) that the DEV-lane precondition registry explicitly authorizes. Empty or unrecognized tokens never clear the DEV_LANE_PRECONDITION_OPEN refusal.",
+      "requiredIn": [],
+      "shape": {
+        "kind": "token"
+      },
+      "default": null,
+      "secretBearing": false,
+      "consumers": [
+        "bin/lib/dev-lane-precondition.mjs",
+        "src/core/policy/devLanePreconditions.ts"
+      ]
+    },
+    {
       "name": "NIGHTWATCH_ENV",
       "purpose": "Fail-closed environment selection; one of local | dev | next. production is never loadable.",
       "requiredIn": [
