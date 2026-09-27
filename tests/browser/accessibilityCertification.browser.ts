@@ -25,6 +25,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { spawnSync } from 'node:child_process';
 import { expect, test, type Page } from '@playwright/test';
 import { createControlCenterServer, type ControlCenterServerHandle } from '../../src/controlCenter/server/server';
 import { createControlCenterServices } from '../../src/controlCenter/server/defaultCollector';
@@ -60,6 +61,7 @@ import {
   type StatusSweep,
   type StructuralAuditResult,
   type StructuralExemption,
+  type TabStep,
   type TabWalk,
 } from './helpers/accessibility';
 import { buildPhase24CandidatePortfolio, prioritizePhase24Portfolio, type Phase24CandidateInput } from '../../src/core/phase24';
@@ -69,6 +71,69 @@ const TIMESTAMP = '2026-09-05T12:00:00.000Z';
 const END_TIMESTAMP = '2026-09-05T12:00:01.000Z';
 const SOURCE_SHA = 'a'.repeat(40);
 const SOURCE_EVIDENCE = `ev:sha256:${'b'.repeat(24)}`;
+
+// ---------------------------------------------------------------------------
+// G20 / R2-51 — the machine-readable certification record (design D3).
+//
+// This file writes `artifacts/accessibility/accessibility-certification.v1.json`
+// (gitignored scratch, exactly like the D-7 run receipts). Each test owns one
+// section and drives it RUNNING → PASS, with the afterEach hook writing FAIL
+// when the test threw before completing, so a crashed run can never leave a
+// stale PASS behind. `project:check`'s accessibility probe consumes the
+// record; the record's executed HEAD binds the result at certification time.
+// ---------------------------------------------------------------------------
+test.describe.configure({ mode: 'serial' });
+
+const RECORD_SCHEMA = 'nightwatch.accessibility-certification.v1';
+const RECORD_PATH = path.resolve(process.cwd(), 'artifacts', 'accessibility', 'accessibility-certification.v1.json');
+
+/** Keyboard-walk steps captured for the focus-indicator contrast measurement. */
+const walkSamples: Array<{ readonly label: string; readonly steps: readonly TabStep[] }> = [];
+
+let activeRecordSection: { readonly name: string; completed: boolean } | null = null;
+
+function gitHeadSha(): string {
+  const result = spawnSync('git', ['rev-parse', 'HEAD'], { cwd: process.cwd(), encoding: 'utf8' });
+  const sha = (result.stdout ?? '').trim();
+  return /^[0-9a-f]{40}$/.test(sha) ? sha : '0'.repeat(40);
+}
+
+function writeRecordSection(section: string, status: 'RUNNING' | 'PASS' | 'FAIL', details: Record<string, unknown> = {}): void {
+  let stored: { sections?: Record<string, unknown> } = {};
+  try {
+    stored = JSON.parse(fs.readFileSync(RECORD_PATH, 'utf8')) as typeof stored;
+  } catch {
+    stored = {};
+  }
+  const record = {
+    schemaVersion: RECORD_SCHEMA,
+    nightwatchSha: gitHeadSha(),
+    updatedAt: new Date().toISOString(),
+    sections: { ...(stored.sections ?? {}), [section]: { status, executedAt: new Date().toISOString(), ...details } },
+  };
+  fs.mkdirSync(path.dirname(RECORD_PATH), { recursive: true });
+  fs.writeFileSync(RECORD_PATH, `${JSON.stringify(record, null, 2)}\n`);
+}
+
+function beginRecordSection(name: string): void {
+  activeRecordSection = { name, completed: false };
+  writeRecordSection(name, 'RUNNING');
+}
+
+function completeRecordSection(details: Record<string, unknown>): void {
+  if (activeRecordSection === null) throw new Error('ACCESSIBILITY_RECORD_SECTION_NOT_STARTED');
+  activeRecordSection.completed = true;
+  writeRecordSection(activeRecordSection.name, 'PASS', details);
+}
+
+// A section that never completed (assertion failure, crash) is recorded as
+// FAIL by the hook, so the probe can never read a stale PASS from a bad run.
+test.afterEach(() => {
+  if (activeRecordSection !== null && !activeRecordSection.completed) {
+    writeRecordSection(activeRecordSection.name, 'FAIL');
+  }
+  activeRecordSection = null;
+});
 
 // ---------------------------------------------------------------------------
 // Synthetic authority composition. Deterministic: the same records, the same
@@ -350,6 +415,7 @@ function guardAgainstEgress(page: Page): { readonly external: string[]; readonly
 }
 
 function expectCleanWalk(walk: TabWalk, label: string): void {
+  walkSamples.push({ label, steps: walk.steps });
   expect(walk.pointerOnly, `${label}: pointer-only controls`).toEqual([]);
   expect(walk.trap, `${label}: unintended focus trap`).toBeNull();
   expect(walk.orderViolation, `${label}: focus order diverges from DOM order`).toBeNull();
@@ -408,6 +474,7 @@ const VIEW_MARKERS: ReadonlyArray<{ readonly id: string; readonly heading: strin
 test('the built composition encodes status beyond colour, meets measured contrast, and passes the structural subset per view', async ({ page }) => {
   test.setTimeout(300_000);
   expect(fs.existsSync(path.join(UI_ROOT, 'index.html'))).toBe(true);
+  beginRecordSection('certification');
   const guard = guardAgainstEgress(page);
   const served = await serve();
   const statusSweeps: StatusSweep[] = [];
@@ -531,6 +598,16 @@ test('the built composition encodes status beyond colour, meets measured contras
   // eslint-disable-next-line no-console
   console.log(`[accessibility-certification] structural audit: ${STRUCTURAL_AUDIT_LIMIT}; views=${audits.length}; text pairs=${textPairs.length}; boundary pairs=${boundaryPairs.length}; status pairs=${statusReport.pairsEvaluated}`);
   test.info().annotations.push({ type: 'accessibility-audit-limit', description: STRUCTURAL_AUDIT_LIMIT });
+  completeRecordSection({
+    views: audits.length,
+    statusPairsEvaluated: statusReport.pairsEvaluated,
+    textPairs: textPairs.length,
+    boundaryPairs: boundaryPairs.length,
+    structuralChecks: structural.checks.length,
+    structuralElementsChecked: structural.elementsChecked,
+    structuralLimit: STRUCTURAL_AUDIT_LIMIT,
+    pointerOnly: pointerOnly.length,
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -541,6 +618,8 @@ test('the built composition encodes status beyond colour, meets measured contras
 test('every operator workflow completes by keyboard alone, with visible reading-order focus and the navigation contract intact', async ({ page }) => {
   test.setTimeout(600_000);
   expect(fs.existsSync(path.join(UI_ROOT, 'index.html'))).toBe(true);
+  walkSamples.length = 0;
+  beginRecordSection('keyboard');
   const guard = guardAgainstEgress(page);
   const served = await serve();
 
@@ -687,6 +766,27 @@ test('every operator workflow completes by keyboard alone, with visible reading-
 
     expect(guard.external).toEqual([]);
     expect(guard.errors).toEqual([]);
+
+    // R2-51 — the focus-indicator contrast measurement rides the walk: every
+    // measured outline must meet 3:1 against its adjacent surface, and the
+    // record carries the sampled measurements and their minimum.
+    const focusMeasurements = walkSamples.flatMap((sample) => sample.steps
+      .filter((step) => step.focusIndicatorContrast !== null)
+      .map((step) => ({ walk: sample.label, descriptor: step.descriptor, contrast: step.focusIndicatorContrast as number })));
+    const minimumFocusContrast = focusMeasurements.length === 0
+      ? 0
+      : Math.min(...focusMeasurements.map((entry) => entry.contrast));
+    expect(focusMeasurements.length, 'focus indicators measured during the keyboard walks').toBeGreaterThan(0);
+    expect(minimumFocusContrast, 'minimum measured focus-indicator contrast').toBeGreaterThanOrEqual(3);
+    completeRecordSection({
+      walks: walkSamples.length,
+      focusIndicator: {
+        measured: focusMeasurements.length,
+        minimum: Number(minimumFocusContrast.toFixed(2)),
+        samples: focusMeasurements.slice(0, 40),
+        violations: [],
+      },
+    });
   } finally {
     await closeServed(served);
   }

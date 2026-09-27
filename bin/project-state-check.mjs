@@ -31,6 +31,7 @@ import { fileURLToPath } from 'node:url';
 import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
 import { loadTypeScriptModule as loadRuntimeTypeScriptModule } from './lib/typescript-runtime-loader.mjs';
 import { loadReleaseEvidenceBindings, resolveEvidenceShaForSubject } from './lib/release-evidence.mjs';
+import { ACCESSIBILITY_RECORD_PATH, parseAccessibilityCertificationRecord } from './lib/accessibility-record.mjs';
 import { checkpointRoleViolations } from './lib/checkpoint-role.mjs';
 import {
   findDuplicateFields,
@@ -575,9 +576,24 @@ function probeAccessibility(root) {
   const unit = fs.existsSync(path.join(root, 'tests/unit/accessibilityAudit.test.ts'));
   const browser = fs.existsSync(path.join(root, 'tests/browser/accessibilityCertification.browser.ts'));
   if (!unit || !browser) return { state: 'UNMET', detail: `check absent: unit=${unit} browser=${browser}` };
+  // G20 / R2-51 — the machine-readable certification record written by the
+  // control-center browser lane. A fresh clone has no record (the lane is a
+  // qualified-host browser lane), so this check honestly stays UNMET there;
+  // the record's executed SHA binds the result at certification time.
+  const record = readJsonAt(root, ACCESSIBILITY_RECORD_PATH);
+  if (record === null) {
+    return {
+      state: 'UNMET',
+      detail: `no accessibility certification record at ${ACCESSIBILITY_RECORD_PATH}; the control-center browser lane (npm run control-center:ui:browser) has not completed on this host`,
+    };
+  }
+  const parsed = parseAccessibilityCertificationRecord(record);
+  if (!parsed.ok) {
+    return { state: 'UNMET', detail: `accessibility certification record rejected: ${parsed.errors.slice(0, 3).join('; ')}` };
+  }
   return {
-    state: 'UNAVAILABLE_CAPABILITY',
-    detail: 'the accessibility check is registered but no certification result at the certified checkpoint is recorded in machine-readable project state',
+    state: 'MET',
+    detail: `certification + keyboard sections PASS at ${parsed.summary.sha.slice(0, 8)}; ${parsed.summary.measuredFocusIndicators} focus indicators measured, minimum contrast ${parsed.summary.minimumFocusContrast.toFixed(2)}:1`,
   };
 }
 

@@ -963,6 +963,18 @@ export interface ActiveFocus {
   readonly signature: string;
   readonly outline: string;
   readonly boxShadow: string;
+  readonly outlineColour: string;
+  readonly outlineWidthPx: number;
+  readonly outlineStyle: string;
+  /**
+   * Computed background colours from the element itself up to the root,
+   * topmost first — the same order `resolveBackground` composites.
+   */
+  readonly backgroundLayers: readonly string[];
+  /** First stroke-bearing descendant: the focus affordance of an SVG node. */
+  readonly indicatorStroke: string | null;
+  readonly indicatorStrokeWidthPx: number;
+  readonly indicatorFill: string | null;
 }
 
 export interface FocusProbe extends ActiveFocus {
@@ -1027,6 +1039,32 @@ export async function probeFocus(page: Page): Promise<FocusProbe | null> {
     }
     const style = dom.getComputedStyle(element);
     const rect = element.getBoundingClientRect();
+    const backgroundLayers: string[] = [];
+    let current: DomElement | null = element;
+    while (current !== null) {
+      backgroundLayers.push(dom.getComputedStyle(current).getPropertyValue('background-color'));
+      current = current.parentElement;
+    }
+    // The focus affordance of an SVG node is a restyled descendant shape (a
+    // focused stroke), not an outline; capture the first stroke-bearing
+    // descendant so the contrast measurement can see the real indicator.
+    let indicatorStroke: string | null = null;
+    let indicatorStrokeWidthPx = 0;
+    let indicatorFill: string | null = null;
+    const descendants = element.querySelectorAll('*');
+    for (let index = 0; index < descendants.length; index += 1) {
+      const candidate = descendants.item(index);
+      if (candidate === null) continue;
+      const candidateStyle = dom.getComputedStyle(candidate);
+      const width = Number.parseFloat(candidateStyle.getPropertyValue('stroke-width')) || 0;
+      const stroke = candidateStyle.getPropertyValue('stroke');
+      if (width > 0 && stroke !== '' && stroke !== 'none') {
+        indicatorStroke = stroke;
+        indicatorStrokeWidthPx = width;
+        indicatorFill = candidateStyle.getPropertyValue('fill');
+        break;
+      }
+    }
     return {
       descriptor: `${element.tagName.toLowerCase()}${classNames(element).map((name) => `.${name}`).join('')}`,
       name: (element.getAttribute('aria-label') ?? element.textContent ?? '').trim().replace(/\s+/g, ' ').slice(0, 60),
@@ -1036,9 +1074,94 @@ export async function probeFocus(page: Page): Promise<FocusProbe | null> {
       signature: styleOf(element),
       outline: `${style.getPropertyValue('outline-style')} ${style.getPropertyValue('outline-width')} ${style.getPropertyValue('outline-color')}`,
       boxShadow: style.getPropertyValue('box-shadow'),
+      outlineColour: style.getPropertyValue('outline-color'),
+      outlineWidthPx: Number.parseFloat(style.getPropertyValue('outline-width')) || 0,
+      outlineStyle: style.getPropertyValue('outline-style'),
+      backgroundLayers,
+      indicatorStroke,
+      indicatorStrokeWidthPx,
+      indicatorFill,
       index: focusables.indexOf(element),
     };
   }, FOCUSABLE_SELECTOR);
+}
+
+export interface FocusIndicatorMeasurement {
+  readonly descriptor: string;
+  readonly name: string;
+  readonly outlineColour: string;
+  readonly outlineWidthPx: number;
+  readonly ratio: number | null;
+  readonly detail: string;
+}
+
+/**
+ * Measure the focus indicator's contrast against the surface it is drawn on
+ * (WCAG 2.2 AA requires at least 3:1 for a focus indicator; R2-51). Two
+ * affordances are understood, exactly the two the design system uses:
+ *
+ *   * an EXPLICIT outline (outline-style other than `none` or the user
+ *     agent's `auto` ring) is measured against both adjacent composited
+ *     surfaces — outside the element (a positive outline-offset) and over
+ *     the element's own background (a negative offset); the stronger surface
+ *     is reported;
+ *   * an SVG node restyled through a DESCENDANT stroke is measured against
+ *     the surface behind the element and the shape's own fill.
+ *
+ * The user agent's `auto` focus ring is deliberately NOT measured: Chromium
+ * does not paint it reliably on SVG, so treating it as an indicator would
+ * either certify an invisible ring or fail a node that has a real one. An
+ * element with neither affordance yields ratio null and is never counted as
+ * a measurement — its visible-focus proof stays the separate
+ * computed-signature check.
+ */
+export function focusIndicatorContrast(probe: ActiveFocus): FocusIndicatorMeasurement {
+  const base = {
+    descriptor: probe.descriptor,
+    name: probe.name,
+    outlineColour: probe.outlineColour,
+    outlineWidthPx: probe.outlineWidthPx,
+  };
+  const hasExplicitOutline = probe.outlineStyle !== 'none' && probe.outlineStyle !== 'auto' && probe.outlineWidthPx > 0;
+  if (hasExplicitOutline) {
+    const outline = parseCssColour(probe.outlineColour);
+    if (outline !== null) {
+      const layers = probe.backgroundLayers;
+      const outsideSurface = resolveBackground(layers.slice(1));
+      const insideSurface = resolveBackground(layers);
+      const outsideRatio = outsideSurface === null ? null : contrastRatio(outline, outsideSurface);
+      const insideRatio = insideSurface === null ? null : contrastRatio(outline, insideSurface);
+      const candidates = [outsideRatio, insideRatio].filter((value): value is number => value !== null);
+      if (candidates.length > 0) {
+        return {
+          ...base,
+          ratio: Math.max(...candidates),
+          detail: `outline ${probe.outlineColour} @${probe.outlineWidthPx}px vs outside=${outsideRatio === null ? 'n/a' : outsideRatio.toFixed(2)} inside=${insideRatio === null ? 'n/a' : insideRatio.toFixed(2)}`,
+        };
+      }
+    }
+  }
+  const stroke = probe.indicatorStroke === null ? null : parseCssColour(probe.indicatorStroke);
+  if (stroke !== null && probe.indicatorStrokeWidthPx > 0) {
+    const surface = resolveBackground(probe.backgroundLayers.slice(1));
+    const fillLayers = probe.indicatorFill === null ? probe.backgroundLayers.slice(1) : [probe.indicatorFill, ...probe.backgroundLayers.slice(1)];
+    const fillSurface = resolveBackground(fillLayers);
+    const surfaceRatio = surface === null ? null : contrastRatio(stroke, surface);
+    const fillRatio = fillSurface === null ? null : contrastRatio(stroke, fillSurface);
+    const candidates = [surfaceRatio, fillRatio].filter((value): value is number => value !== null);
+    if (candidates.length > 0) {
+      return {
+        ...base,
+        ratio: Math.max(...candidates),
+        detail: `indicator stroke ${probe.indicatorStroke} @${probe.indicatorStrokeWidthPx}px vs surface=${surfaceRatio === null ? 'n/a' : surfaceRatio.toFixed(2)} vs fill=${fillRatio === null ? 'n/a' : fillRatio.toFixed(2)}`,
+      };
+    }
+  }
+  return {
+    ...base,
+    ratio: null,
+    detail: `outline-style=${probe.outlineStyle} outline-width=${probe.outlineWidthPx}px; no explicit outline and no descendant stroke indicator to measure`,
+  };
 }
 
 export interface TabStep {
@@ -1050,6 +1173,8 @@ export interface TabStep {
   readonly indicatorChanged: boolean;
   readonly orderOk: boolean;
   readonly escaped: boolean;
+  /** Contrast of the focus indicator against its adjacent surface, or null when not measurable. */
+  readonly focusIndicatorContrast: number | null;
 }
 
 export interface TabWalk {
@@ -1134,6 +1259,7 @@ export async function driveTabWalk(page: Page, options: TabWalkOptions = {}): Pr
         indicatorChanged: false,
         orderOk: previousIndex === (direction === 'forward' ? inventory.entries.length - 1 : 0),
         escaped: true,
+        focusIndicatorContrast: null,
       });
       break;
     }
@@ -1149,6 +1275,7 @@ export async function driveTabWalk(page: Page, options: TabWalkOptions = {}): Pr
         + `${entryAt(previousIndex) === null ? '' : `; previous ${entryAt(previousIndex)?.descriptor} "${entryAt(previousIndex)?.name}"`})`;
     }
     const indicatorChanged = entry !== null && active.signature !== entry.signature;
+    const indicator = focusIndicatorContrast(active);
     steps.push({
       index: stepIndex,
       descriptor: active.descriptor,
@@ -1158,11 +1285,15 @@ export async function driveTabWalk(page: Page, options: TabWalkOptions = {}): Pr
       indicatorChanged,
       orderOk,
       escaped: false,
+      focusIndicatorContrast: indicator.ratio,
     });
     if (index >= 0) { previousIndex = index; anchored = true; }
     if (!active.focusVisible) focusFailures.push(`${active.descriptor}: no :focus-visible`);
     if (!active.visible) focusFailures.push(`${active.descriptor}: focused but not rendered`);
     if (!indicatorChanged) focusFailures.push(`${active.descriptor}: no visible focus indicator`);
+    if (indicator.ratio !== null && indicator.ratio < 3) {
+      focusFailures.push(`${active.descriptor}: focus indicator contrast ${indicator.ratio.toFixed(2)}:1 below the 3:1 minimum (${indicator.detail})`);
+    }
     if (options.stopWhen !== undefined && options.stopWhen({ descriptor: active.descriptor, name: active.name })) break;
   }
   return { steps, pointerOnly: inventory.pointerOnly, trap, escaped, orderViolation, focusFailures, direction };

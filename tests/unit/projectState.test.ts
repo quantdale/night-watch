@@ -38,6 +38,7 @@ import type {
   ReleaseCertificationDefinition,
   ReleaseCheckOutput,
 } from '../../src/core/releaseCertification';
+import { parseAccessibilityCertificationRecord } from '../../bin/lib/accessibility-record.mjs';
 
 const CHECKER = path.join(__dirname, '..', '..', 'bin', 'project-state-check.mjs');
 const R1_TASK_ID = 'phase-8b-1-r1-owner-gated-canonical-promotion-retry';
@@ -2298,5 +2299,66 @@ test.describe('release probe wiring (M4 task 5.1)', () => {
     expect(result.stdout).toContain('effective configuration printer present');
     expect(result.stdout).toContain('single cookie-expiry evaluator');
     expect(result.stdout).toContain('W13 aggregate');
+    // 5.2 — the accessibility check consumes the browser lane's record, and
+    // the retired 'no certification result' message is gone.
+    expect(result.stdout).toContain('15 accessibility-certification state=');
+    expect(result.stdout).not.toContain('no certification result at the certified checkpoint is recorded');
+    expect(fs.readFileSync(path.join(REPO_ROOT, 'bin', 'project-state-check.mjs'), 'utf8')).toContain('parseAccessibilityCertificationRecord(record)');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 5.2 (R2-51) — the G20 accessibility certification record: the browser lane
+// writes it, the probe consumes it, and nothing short of both sections PASS
+// with a measured focus-indicator minimum of 3:1 may certify.
+// ---------------------------------------------------------------------------
+
+test.describe('accessibility certification record (G20 / R2-51)', () => {
+  const sha = 'a'.repeat(40);
+  const passSection = { status: 'PASS', executedAt: '2026-09-26T00:00:00.000Z' };
+  const focusIndicator = { measured: 12, minimum: 4.83, samples: [], violations: [] };
+  const validRecord = {
+    schemaVersion: 'nightwatch.accessibility-certification.v1',
+    nightwatchSha: sha,
+    updatedAt: '2026-09-26T00:00:00.000Z',
+    sections: {
+      certification: { ...passSection, views: 8 },
+      keyboard: { ...passSection, walks: 14, focusIndicator },
+    },
+  };
+
+  test('a complete PASS record certifies with its focus-indicator measurement', () => {
+    const parsed = parseAccessibilityCertificationRecord(validRecord);
+    expect(parsed.ok).toBe(true);
+    expect(parsed.errors).toEqual([]);
+    expect(parsed.summary).toMatchObject({ sha, measuredFocusIndicators: 12, minimumFocusContrast: 4.83 });
+  });
+
+  test('absent, malformed and wrong-schema records are rejected', () => {
+    expect(parseAccessibilityCertificationRecord(null).errors).toEqual(['ACCESSIBILITY_RECORD_UNAVAILABLE']);
+    expect(parseAccessibilityCertificationRecord({ ...validRecord, schemaVersion: 'nightwatch.other.v1' }).errors)
+      .toContain('ACCESSIBILITY_RECORD_SCHEMA_UNSUPPORTED:nightwatch.other.v1');
+    expect(parseAccessibilityCertificationRecord({ ...validRecord, nightwatchSha: 'short' }).errors)
+      .toContain('ACCESSIBILITY_RECORD_SHA_INVALID');
+    expect(parseAccessibilityCertificationRecord({ ...validRecord, sections: null }).errors)
+      .toContain('ACCESSIBILITY_RECORD_SECTIONS_MISSING');
+  });
+
+  test('a section that is RUNNING, FAIL or missing never certifies', () => {
+    const running = { ...validRecord, sections: { ...validRecord.sections, keyboard: { ...validRecord.sections.keyboard, status: 'RUNNING' } } };
+    expect(parseAccessibilityCertificationRecord(running).errors).toContain('ACCESSIBILITY_SECTION_NOT_CERTIFIED:keyboard:RUNNING');
+    const failed = { ...validRecord, sections: { ...validRecord.sections, certification: { ...validRecord.sections.certification, status: 'FAIL' } } };
+    expect(parseAccessibilityCertificationRecord(failed).errors).toContain('ACCESSIBILITY_SECTION_NOT_CERTIFIED:certification:FAIL');
+    const missing = { ...validRecord, sections: { certification: validRecord.sections.certification } };
+    expect(parseAccessibilityCertificationRecord(missing).errors).toContain('ACCESSIBILITY_SECTION_MISSING:keyboard');
+  });
+
+  test('a certification without a sufficient focus-indicator measurement is rejected', () => {
+    const withoutMeasurement = { ...validRecord, sections: { ...validRecord.sections, keyboard: { ...validRecord.sections.keyboard, focusIndicator: undefined } } };
+    expect(parseAccessibilityCertificationRecord(withoutMeasurement).errors).toContain('ACCESSIBILITY_FOCUS_INDICATOR_MISSING');
+    const unmeasured = { ...validRecord, sections: { ...validRecord.sections, keyboard: { ...validRecord.sections.keyboard, focusIndicator: { ...focusIndicator, measured: 0 } } } };
+    expect(parseAccessibilityCertificationRecord(unmeasured).errors).toContain('ACCESSIBILITY_FOCUS_INDICATOR_UNMEASURED');
+    const below = { ...validRecord, sections: { ...validRecord.sections, keyboard: { ...validRecord.sections.keyboard, focusIndicator: { ...focusIndicator, minimum: 2.4 } } } };
+    expect(parseAccessibilityCertificationRecord(below).errors).toContain('ACCESSIBILITY_FOCUS_INDICATOR_BELOW_MINIMUM:2.4');
   });
 });
