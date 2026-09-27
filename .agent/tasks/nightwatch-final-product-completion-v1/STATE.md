@@ -187,7 +187,20 @@ the gate pair (see the ledger).
   `tests/unit/devLanePreconditions.test.ts` 10/10 (including a real spawn of
   every guarded launcher), the repaired launcher-boundary suites green, and the
   sharded lane PASS at 5655/0 (5688 planned, 0 failed).
-  Next: 9.2 (NW-AUD-021 residual) and 9.3-9.13 to close M8.
+  M8 9.2 DONE — DEV credential effect binding (NW-AUD-021 residual): effects
+  now go through `pinVerified()` element handles (the verified element
+  IDENTITY, never a fresh locator resolution), `beginEffectSequence()` sets
+  `used` on the FIRST effect and refuses a second sequence, the snapshot pins
+  the source-approved exchange (`formAction`/`formMethod`) and an optional
+  `expectedProxyInstanceId` must be echoed before any effect. Evidence:
+  `tests/unit/devCredentialEffectBinding.test.ts` 7/7 (one-shot mark, detached
+  pin after a swap, navigation between effects, `formaction` redirect refused,
+  proxy-instance mismatch, the full pinned-handle login, and a source census of
+  the effect sites / same-evaluate verification / credential consumers) plus
+  the pre-existing `devLoginSecurity` suite green and the sharded lane PASS at
+  5662/0 (5695 planned, 0 failed).
+  Next: 9.3 (NW-AUD-015 transactional storage-state plus sidecar publication,
+  same batch as 9.2) then 9.4-9.13 to close M8.
 - M6 is COMPLETE: 7.1-7.11 are ticked in the campaign ledger with DONE notes
   and PLAN marks M6 COMPLETE. The view-DOM baseline was intentionally
   REGENERATED (`NIGHTWATCH_UPDATE_VIEW_DOM_BASELINE=1`) because the Agent
