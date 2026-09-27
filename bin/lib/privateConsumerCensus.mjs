@@ -63,6 +63,7 @@ export const STORE_READ_API = Object.freeze(['readJson']);
 export const PRIVATE_CONSUMER_REGISTRY = Object.freeze([
   { root: 'src/core/policy/privateScreening.ts', klass: 'SCREENING_LIBRARY', capabilities: ['screen'] },
   { root: 'src/core/policy/privateArtifacts.ts', klass: 'STORE_LIBRARY', capabilities: ['screen', 'write', 'read'] },
+  { root: 'src/core/localInvestigation/', klass: 'STORE_WRITER', capabilities: ['screen', 'write', 'read'] },
   { root: 'src/core/reviewStore/', klass: 'STORE_WRITER', capabilities: ['write', 'read'] },
   { root: 'src/core/aiReview/', klass: 'STORE_WRITER', capabilities: ['write', 'read'] },
   { root: 'src/core/campaign/', klass: 'STORE_WRITER', capabilities: ['write', 'read'] },

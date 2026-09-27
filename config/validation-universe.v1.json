@@ -2,7 +2,7 @@
   "schemaVersion": "nightwatch.validation-universe.v1",
   "definitionName": "Nightwatch validation universe classification (NW-08)",
   "note": "Every discovered executable test or check belongs to exactly one class. AUTHORITATIVE_GATE is DERIVED from what the required gate lanes actually select and is therefore not declarable here; every other discovered file must appear below exactly once, with the reason it is not in the gate and the evidence lane that does cover it. A newly added test that is in no lane and no class fails the gate rather than joining the repository silently.",
-  "inventoryDigest": "sha256:424d7330924494a2a47a763c",
+  "inventoryDigest": "sha256:4772ee5596439e404cc0eb1c",
   "classes": {
     "FULL_REGRESSION": {
       "reason": "Offline, deterministic suites that the full canonical regression executes. They are not in a required gate lane because the authoritative gate is bounded for CI runtime; leaving them unclassified is what made the gap invisible.",
@@ -12,6 +12,8 @@
         "tests/unit/agentAutonomyIntegration.test.ts",
         "tests/unit/agentAutonomyLoop.test.ts",
         "tests/unit/agentBudgetDimensions.test.ts",
+        "tests/unit/agentFindingPersistence.test.ts",
+        "tests/unit/agentFindingRecord.test.ts",
         "tests/unit/agentRuntime.test.ts",
         "tests/unit/agentRuntimeW9.test.ts",
         "tests/unit/authCaptureLauncher.test.ts",
@@ -26,6 +28,7 @@
         "tests/unit/c12LocalRehearsal.test.ts",
         "tests/unit/c13ProductionReadGuard.test.ts",
         "tests/unit/cacheKeyContract.test.ts",
+        "tests/unit/campaignBudgetConservation.test.ts",
         "tests/unit/campaignEndurance.test.ts",
         "tests/unit/campaignStrategyMemory.test.ts",
         "tests/unit/candidateLifecycle.test.ts",
@@ -91,6 +94,7 @@
         "tests/unit/realOwnerLocalGeneralityProof.test.ts",
         "tests/unit/realOwnerLocalReproductionProof.test.ts",
         "tests/unit/reasonerCli.test.ts",
+        "tests/unit/reasonerIdentityBinding.test.ts",
         "tests/unit/reasonerPrint.test.ts",
         "tests/unit/reasonerPrintW9.test.ts",
         "tests/unit/recordIdentity.test.ts",

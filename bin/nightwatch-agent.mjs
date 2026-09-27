@@ -78,7 +78,11 @@ function resolveModelLabel(flags) {
  * exact bytes-digest identity its checkpoint records.
  */
 function resolveReasonerIdentity(reasonerMod, configured, options = {}) {
+  // F-19: the executable is validated through the shared resolver first, then
+  // widened into the full M5 identity.
+  const executableIdentity = reasonerMod.resolveReasonerExecutable(configured ?? process.execPath);
   const identity = reasonerMod.resolveReasonerRuntimeIdentity({
+    executable: executableIdentity.path,
     executable: configured ?? process.execPath,
     adapterPath: options.adapterPath ?? null,
     printCli: process.env.NIGHTWATCH_PRINT_CLI ?? null,
