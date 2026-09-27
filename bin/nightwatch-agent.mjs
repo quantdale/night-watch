@@ -165,6 +165,17 @@ if (command === 'status') {
             ),
           });
           console.log(JSON.stringify(result, null, 2));
+          // M5 (C-01): an admission that could not be persisted is reported and
+          // the run is NOT clean — the checkpoint was left in place, and the
+          // operator must repair the store before the finding can be trusted.
+          if (result.admissionPersistence === 'NOT_PERSISTED') {
+            fail(
+              3,
+              `ADMISSION_NOT_PERSISTED: ${result.admissionPersistenceFailures
+                .map((failure) => `${failure.candidateId}(${failure.code})`)
+                .join(', ')}`,
+            );
+          }
         } catch (error) {
           fail(2, error instanceof Error ? error.message : 'LOCAL_CAMPAIGN_FAILED');
         }
@@ -235,6 +246,14 @@ if (command === 'status') {
           ),
         });
         console.log(JSON.stringify(result, null, 2));
+        if (result.admissionPersistence === 'NOT_PERSISTED') {
+          fail(
+            3,
+            `ADMISSION_NOT_PERSISTED: ${result.admissionPersistenceFailures
+              .map((failure) => `${failure.candidateId}(${failure.code})`)
+              .join(', ')}`,
+          );
+        }
       } catch (error) {
         fail(2, error instanceof Error ? error.message : 'LOCAL_CAMPAIGN_RESUME_FAILED');
       }

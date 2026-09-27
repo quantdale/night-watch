@@ -25,6 +25,12 @@
 import { buildAutonomousFindingDossier } from '../autonomousFinding/dossier';
 import type { AutonomousFindingDossier } from '../agentProtocol/finding';
 import type { AgentRuntimeState } from '../agentProtocol/runtime';
+import {
+  deriveAgentFindingRecord,
+  type AgentFindingRecord,
+  type AgentFindingRecordReasonerIdentity,
+  type AgentFindingRecordSourceIdentity,
+} from './agentFindingRecord';
 import { validateCurrentSourceProof } from './currentSourceProof';
 import type {
   LocalInvestigationHistory,
@@ -37,6 +43,17 @@ export interface AdmitLocalFindingInput {
   readonly history: LocalInvestigationHistory;
   readonly candidateId: string;
   readonly draft?: Readonly<Record<string, unknown>> | null;
+  /**
+   * M5 host-observed identity inputs for the agent finding record. They are
+   * never model supplied: the campaign passes captured host state only, and an
+   * unusable entry is ignored (the record field stays null) rather than
+   * fabricated.
+   */
+  readonly sourceIdentities?: readonly AgentFindingRecordSourceIdentity[];
+  readonly testFile?: string | null;
+  readonly testName?: string | null;
+  readonly triageFingerprint?: string | null;
+  readonly reasonerIdentity?: AgentFindingRecordReasonerIdentity | null;
 }
 
 export type AdmitLocalFindingRefusalReason =
@@ -55,6 +72,8 @@ export interface AdmittedLocalFinding {
   readonly provenanceRefs: readonly string[];
   readonly reproductionIds: readonly string[];
   readonly sourcePaths: readonly string[];
+  /** M5 (C-19): the durable, content-addressed identity of this admission. */
+  readonly record: AgentFindingRecord;
   readonly dossier: AutonomousFindingDossier;
 }
 
@@ -556,6 +575,20 @@ export function admitLocalFinding(input: AdmitLocalFindingInput): AdmitLocalFind
     provenance: [...provenanceRefs],
   });
 
+  const record = deriveAgentFindingRecord({
+    // A state-less admission (the pure-gate case) yields an empty campaign id;
+    // the record validator then refuses it, so an identity-blind admission can
+    // never be persisted as an identity-bound finding.
+    campaignId: state === null ? '' : state.campaignId,
+    candidateId,
+    receipts: qualifying,
+    sourceIdentities: input.sourceIdentities,
+    testFile: input.testFile ?? null,
+    testName: input.testName ?? null,
+    triageFingerprint: input.triageFingerprint ?? null,
+    reasonerIdentity: input.reasonerIdentity ?? null,
+  });
+
   return Object.freeze({
     admitted: true as const,
     candidateId,
@@ -564,6 +597,7 @@ export function admitLocalFinding(input: AdmitLocalFindingInput): AdmitLocalFind
     provenanceRefs,
     reproductionIds,
     sourcePaths,
+    record,
     dossier,
   });
 }

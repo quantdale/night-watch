@@ -64,6 +64,8 @@ import {
   admitLocalFinding,
   type AdmitLocalFindingResult,
 } from '../localInvestigation/admission';
+import { AgentFindingStore, AgentFindingStoreError, agentFindingRecordFileName } from '../localInvestigation/agentFindingStore';
+import type { AgentFindingRecord } from '../localInvestigation/agentFindingRecord';
 import { createUnavailableLocalInvestigationContext } from '../localInvestigation/ownerLocal';
 import { createLocalInvestigationToolSession } from '../localInvestigation/session';
 import {
@@ -150,6 +152,11 @@ export interface LocalCampaignInput {
   readonly maxTurns?: number;
   readonly stateDirectory?: string;
   /**
+   * M5 (C-01): owner-local findings root override. Absent means the private
+   * artifact policy's derived root; tests inject a temporary root.
+   */
+  readonly findingsRoot?: string;
+  /**
    * Explicit sensing/reproduction substrate. Product CLI injects the real
    * owner-local context; direct callers without one fail provider tools closed.
    */
@@ -229,6 +236,38 @@ export interface LocalCampaignResult {
    * the checkpoint cannot mistake admitted findings for attempts.
    */
   readonly yieldMetrics: CampaignYieldMetrics;
+  /**
+   * M5 (C-01): whether this run's admitted findings reached the durable
+   * owner-local store. `NONE` means the run admitted nothing; `NOT_PERSISTED`
+   * means at least one write failed and the run is not clean.
+   */
+  readonly admissionPersistence: 'PERSISTED' | 'NOT_PERSISTED' | 'NONE';
+  /** Content-addressed records written (or already present) this run. */
+  readonly persistedFindings: readonly PersistedAgentFinding[];
+  readonly admissionPersistenceFailures: readonly AgentFindingPersistenceFailure[];
+  /**
+   * M5 (C-02): a TERMINATED resume returns the persisted admission records
+   * VERBATIM here and never re-derives admissions from absent history.
+   * `UNAVAILABLE_NOT_PERSISTED` means the store holds no record for this
+   * campaign; it is never reported as a fresh refusal of a known admission.
+   */
+  readonly resumedFindings: readonly AgentFindingRecord[];
+  readonly resumedFindingsStatus: 'RECORDS' | 'UNAVAILABLE_NOT_PERSISTED' | 'NOT_A_RESUME';
+}
+
+/** One durable record this run published for an admitted candidate. */
+export interface PersistedAgentFinding {
+  readonly dossierId: string;
+  readonly candidateId: string;
+  readonly fileName: string;
+  readonly alreadyPresent: boolean;
+}
+
+/** One admission that could not be persisted; the run must not delete state. */
+export interface AgentFindingPersistenceFailure {
+  readonly candidateId: string;
+  readonly code: string;
+  readonly detail: string;
 }
 
 export interface LocalCampaignListing {
@@ -928,7 +967,91 @@ function resultOf(
       actionLog: state.actionLog,
       surface: state.reproductionSurface ?? [],
     }),
+    admissionPersistence: 'NONE',
+    persistedFindings: [],
+    admissionPersistenceFailures: [],
+    resumedFindings: [],
+    resumedFindingsStatus: 'NOT_A_RESUME',
   };
+}
+
+/**
+ * M5 (C-01): publish every admitted finding's record into the owner-local
+ * store BEFORE any checkpoint deletion. A failed write is reported on the
+ * result and leaves the checkpoint in place: an admission that cannot be
+ * persisted must never be silently dropped, and the run must not look clean.
+ */
+function persistAdmissions(engine: CampaignEngine, result: LocalCampaignResult): LocalCampaignResult {
+  const admitted = result.findingAdmissions.filter(
+    (admission): admission is Extract<AdmitLocalFindingResult, { admitted: true }> => admission.admitted,
+  );
+  if (admitted.length === 0) {
+    return { ...result, admissionPersistence: 'NONE', persistedFindings: [], admissionPersistenceFailures: [] };
+  }
+  let store: AgentFindingStore | null = null;
+  let storeFailure: { code: string; detail: string } | null = null;
+  try {
+    store = new AgentFindingStore(
+      engine.input.findingsRoot === undefined ? {} : { root: engine.input.findingsRoot },
+    );
+  } catch (error) {
+    // An unusable store (an unwritable or unsafe root) is a persistence
+    // failure for every admission, never an excuse to skip the write.
+    storeFailure = {
+      code: error instanceof AgentFindingStoreError ? error.code : 'AGENT_FINDING_STORE_UNAVAILABLE',
+      detail: error instanceof Error ? error.message : String(error),
+    };
+  }
+  const persisted: PersistedAgentFinding[] = [];
+  const failures: AgentFindingPersistenceFailure[] = [];
+  for (const admission of admitted) {
+    if (store === null) {
+      failures.push({
+        candidateId: admission.candidateId,
+        code: storeFailure?.code ?? 'AGENT_FINDING_STORE_UNAVAILABLE',
+        detail: storeFailure?.detail ?? 'agent finding store is unavailable',
+      });
+      continue;
+    }
+    try {
+      const stored = store.persist(admission.record);
+      persisted.push({
+        dossierId: stored.dossierId,
+        candidateId: stored.candidateId,
+        fileName: stored.fileName,
+        alreadyPresent: stored.alreadyPresent,
+      });
+    } catch (error) {
+      failures.push({
+        candidateId: admission.candidateId,
+        code: error instanceof AgentFindingStoreError ? error.code : 'AGENT_FINDING_STORE_WRITE_FAILED',
+        detail: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+  return {
+    ...result,
+    admissionPersistence: failures.length === 0 ? 'PERSISTED' : 'NOT_PERSISTED',
+    persistedFindings: persisted,
+    admissionPersistenceFailures: failures,
+  };
+}
+
+/**
+ * M5 (C-02): the durable records for one campaign, read back verbatim. An
+ * unreadable store yields no records and is reported as not persisted rather
+ * than as an empty (or fabricated) admission set.
+ */
+function persistedCampaignFindings(
+  input: LocalCampaignInput,
+  campaignId: string,
+): { readonly records: readonly AgentFindingRecord[]; readonly error: string | null } {
+  try {
+    const store = new AgentFindingStore(input.findingsRoot === undefined ? {} : { root: input.findingsRoot });
+    return { records: store.list().filter((record) => record.campaignId === campaignId), error: null };
+  } catch (error) {
+    return { records: [], error: error instanceof Error ? error.message : String(error) };
+  }
 }
 
 async function runOneInvestigation(engine: CampaignEngine, investigationId: string): Promise<AgentRunResult> {
@@ -1003,8 +1126,10 @@ async function runCampaignLoop(engine: CampaignEngine, firstInvestigationId?: st
 
     if (reason === 'CANCELLED') {
       absorbInvestigation(engine, ran, countStart);
+      const result = persistAdmissions(engine, resultOf(engine, 'CANCELLED', null));
+      if (result.admissionPersistence === 'NOT_PERSISTED') return result;
       deleteStoredCheckpoint(engine.directory, engine.input.campaignId);
-      return resultOf(engine, 'CANCELLED', null);
+      return result;
     }
     if (reason === 'PAUSED') {
       if (ran.checkpoint === null) {
@@ -1014,18 +1139,20 @@ async function runCampaignLoop(engine: CampaignEngine, firstInvestigationId?: st
       absorbPausedInvestigationPrefix(engine, ran);
       const document = buildCampaignCheckpoint(engine, 'PAUSED', 'PAUSED', pausedInvestigation);
       const file = persistCampaignFile(engine.directory, engine.input.campaignId, document);
-      return resultOf(engine, 'PAUSED', file);
+      return persistAdmissions(engine, resultOf(engine, 'PAUSED', file));
     }
 
     const { newEvidence, newCandidates } = absorbInvestigation(engine, ran, countStart);
     if (reason === 'SAFETY_BLOCKED') {
+      const result = persistAdmissions(engine, resultOf(engine, 'SAFETY_BLOCKED', null));
+      if (result.admissionPersistence === 'NOT_PERSISTED') return result;
       deleteStoredCheckpoint(engine.directory, engine.input.campaignId);
-      return resultOf(engine, 'SAFETY_BLOCKED', null);
+      return result;
     }
     if (classifyBudgetExhaustion(engine.policy, campaignUsageOf(engine)) === 'SAFE_TERMINATION_CHECKPOINT') {
       const document = buildCampaignCheckpoint(engine, 'TERMINATED', 'BUDGET_EXHAUSTED', null);
       const file = persistCampaignFile(engine.directory, engine.input.campaignId, document);
-      return resultOf(engine, 'BUDGET_EXHAUSTED', file);
+      return persistAdmissions(engine, resultOf(engine, 'BUDGET_EXHAUSTED', file));
     }
     if (newEvidence === 0 && newCandidates === 0) {
       engine.acc.stagnant += 1;
@@ -1033,8 +1160,10 @@ async function runCampaignLoop(engine: CampaignEngine, firstInvestigationId?: st
       engine.acc.stagnant = 0;
     }
     if (engine.acc.stagnant >= CAMPAIGN_STAGNATION_LIMIT) {
+      const result = persistAdmissions(engine, resultOf(engine, 'NO_PROGRESS', null));
+      if (result.admissionPersistence === 'NOT_PERSISTED') return result;
       deleteStoredCheckpoint(engine.directory, engine.input.campaignId);
-      return resultOf(engine, 'NO_PROGRESS', null);
+      return result;
     }
   }
 }
@@ -1196,12 +1325,33 @@ export async function resumeLocalCliCampaign(input: LocalCampaignInput): Promise
       acc: freshAccumulators(input.campaignId),
     };
     seedFromCheckpointState(engine, checkpoint.state, progress);
-    return resultOf(
+    const base = resultOf(
       engine,
       checkpoint.state.terminationReason as AgentTerminationReason,
       checkpointPath(directory, input.campaignId),
       checkpoint.state.budget.usage.wallTimeMs,
     );
+    // M5 (C-02): the receipts are NOT persisted, so admissions can never be
+    // re-derived here. The durable records ARE, and they are returned
+    // verbatim (or honestly reported as not persisted).
+    const persisted = persistedCampaignFindings(input, input.campaignId);
+    return {
+      ...base,
+      findingAdmissions: [],
+      dossierStatus: persisted.records.length > 0 ? 'VERIFIED_REPRODUCTION' : 'NONE',
+      admissionPersistence: persisted.records.length > 0 ? 'PERSISTED' : 'NONE',
+      persistedFindings: persisted.records.map((record) => ({
+        dossierId: record.dossierId,
+        candidateId: record.candidateId,
+        fileName: agentFindingRecordFileName(record.dossierId),
+        alreadyPresent: true,
+      })),
+      resumedFindings: persisted.records,
+      resumedFindingsStatus:
+        persisted.records.length > 0
+          ? 'RECORDS'
+          : 'UNAVAILABLE_NOT_PERSISTED',
+    };
   }
 
   if (progress === null) {

@@ -30,6 +30,29 @@ export const PRIVATE_ARTIFACT_DEFAULT_RELATIVE_ROOT = path.join('.nightwatch', '
 export const PRIVATE_ARTIFACT_SUBTREES = ['findings', 'reviews'] as const;
 export type PrivateArtifactSubtree = (typeof PRIVATE_ARTIFACT_SUBTREES)[number];
 
+/**
+ * The CLOSED set of NAMED DIRECTORIES inside a private subtree root. A caller
+ * names a directory from this union, never a path, so a nested owner-local
+ * store (the durable agent-findings store) can never escape the root that was
+ * already held to the absolute / symlink-free / outside-the-repository
+ * contract, and no caller can derive an arbitrary location.
+ */
+export const PRIVATE_ARTIFACT_DIRECTORIES = ['agent-findings'] as const;
+export type PrivateArtifactDirectory = (typeof PRIVATE_ARTIFACT_DIRECTORIES)[number];
+
+const DIRECTORY_RELATIVE: Readonly<Record<PrivateArtifactDirectory, string>> = Object.freeze({
+  'agent-findings': 'agent-findings',
+});
+
+function assertKnownDirectory(directory: PrivateArtifactDirectory): PrivateArtifactDirectory {
+  // Runtime guard as well as a type: the union is the whole path-safety
+  // argument for the nested store, so an untyped caller must not slip past it.
+  if (!(PRIVATE_ARTIFACT_DIRECTORIES as readonly string[]).includes(directory)) {
+    throw new Error('PRIVATE_ARTIFACT_DIRECTORY_UNKNOWN');
+  }
+  return directory;
+}
+
 const SUBTREE_RELATIVE_ROOT: Readonly<Record<PrivateArtifactSubtree, string>> = Object.freeze({
   findings: PRIVATE_ARTIFACT_DEFAULT_RELATIVE_ROOT,
   reviews: path.join('.nightwatch', 'reviews'),
@@ -189,8 +212,18 @@ export class PrivateArtifactStore {
   readonly policy: PrivateArtifactPolicyRecord;
   readonly readOnly: boolean;
 
-  constructor(options: { root?: string; subtree?: PrivateArtifactSubtree; remotePrivacy?: PrivateArtifactPolicyRecord['remotePrivacy']; createIfMissing?: boolean } = {}) {
-    this.root = privateArtifactRoot(options.root, options.subtree ?? 'findings');
+  constructor(options: {
+    root?: string;
+    subtree?: PrivateArtifactSubtree;
+    directory?: PrivateArtifactDirectory;
+    remotePrivacy?: PrivateArtifactPolicyRecord['remotePrivacy'];
+    createIfMissing?: boolean;
+  } = {}) {
+    const subtreeRoot = privateArtifactRoot(options.root, options.subtree ?? 'findings');
+    this.root =
+      options.directory === undefined
+        ? subtreeRoot
+        : path.join(subtreeRoot, DIRECTORY_RELATIVE[assertKnownDirectory(options.directory)]);
     this.readOnly = options.createIfMissing === false;
     if (!this.readOnly) ensureOwnerDirectory(this.root);
     this.policy = privateArtifactPolicyRecord(options.remotePrivacy ?? 'NO_REMOTE', options.root);

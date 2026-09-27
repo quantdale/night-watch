@@ -682,6 +682,8 @@ export function checkReviewStoreBoundary() {
   }
   if (!/PRIVATE_ARTIFACT_SUBTREES = \['findings', 'reviews'\]/.test(policy)) fail('the private subtree vocabulary is no longer a closed two-member union');
   if (!/assertKnownSubtree\(subtree\)/.test(policy)) fail('the subtree vocabulary is not enforced at runtime');
+  if (!/PRIVATE_ARTIFACT_DIRECTORIES = \['agent-findings'\]/.test(policy)) fail('the private nested-directory vocabulary is no longer a closed single-member union');
+  if (!/assertKnownDirectory\(options\.directory\)/.test(policy)) fail('the nested-directory vocabulary is not enforced at runtime');
 
   // --- recovery can never touch an unknown file ---
   if (!/TEMPORARY_FILE_RE\.test\(name\)/.test(policy)) fail('temporary removal does not require the pinned temporary name shape');
