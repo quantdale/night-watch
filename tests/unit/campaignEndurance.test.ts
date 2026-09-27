@@ -177,7 +177,14 @@ test('a persistently failing reasoner stops the campaign instead of looping fore
     maxTurns: 2,
     stateDirectory: dir,
   });
-  expect(result.terminationReason).toBe('BUDGET_EXHAUSTED');
+  // M5 (6.6/C-04): a provider that never answered is NOT budget exhaustion.
+  // The third investigation did consume its retry allowance, but the campaign
+  // (and now the per-investigation count) reports the CAUSE: a blocked
+  // provider that never reached a source action.
+  expect(result.terminationReason).toBe('REASONER_FAILURE');
+  expect(result.terminationClass).toBe('PROVIDER_BLOCKED_BEFORE_SOURCE_ACTION');
+  expect(result.providerAttribution.byClass).toEqual({ NONZERO_EXIT: 6 });
+  expect(result.providerAttribution.sourceActions).toBe(0);
   // Bounded: the first two capped investigations end NO_PROGRESS with a
   // failure streak of 2 each; the third exhausts its remaining
   // consecutive-failure allowance (6 - 4 = 2) internally. Either way the
@@ -186,7 +193,8 @@ test('a persistently failing reasoner stops the campaign instead of looping fore
   expect(result.investigationsStarted).toBe(3);
   expect(result.investigationsCompleted).toBe(3);
   expect(result.terminationCounts.NO_PROGRESS).toBe(2);
-  expect(result.terminationCounts.BUDGET_EXHAUSTED).toBe(1);
+  expect(result.terminationCounts.REASONER_FAILURE).toBe(1);
+  expect(result.terminationCounts.BUDGET_EXHAUSTED).toBe(0);
   expect(result.providerFailures).toBe(6);
   expect(result.reasonerCalls).toBe(6);
   expect(result.actionCount).toBe(6);

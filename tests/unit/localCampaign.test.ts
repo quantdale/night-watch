@@ -158,6 +158,8 @@ test('paused campaign writes a checkpoint that status lists and resume can finis
     campaignId: 'camp-pause-resume',
     ceilingName: 'HOUR_1',
     executable: NODE,
+    // M5 (6.4): the resume is bound to the reasoner the checkpoint recorded.
+    reasonerIdentity,
     args: [terminateScript(dir)],
     provider: 'test-provider',
     model: 'fake-1',

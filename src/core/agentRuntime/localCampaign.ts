@@ -82,6 +82,13 @@ import {
 import { AgentCheckpointError, assertCheckpointHasNoSecrets, boundedFoundVersion, finalizeCheckpoint, parseCheckpoint } from './checkpoint';
 import { AGENT_RUNTIME_DEFAULT_MAX_TURNS, AgentRuntime } from './runtime';
 import {
+  attributeProviderFailures,
+  isProviderTerminationClass,
+  providerFailureClasses,
+  type ProviderFailureAttribution,
+  type ProviderTerminationClass,
+} from './providerAttribution';
+import {
   absorbInvestigationIntoStrategy,
   emptyCampaignStrategyState,
   parseCampaignStrategyState,
@@ -226,6 +233,13 @@ export interface LocalCampaignResult {
   readonly terminationCounts: CampaignTerminationCounts;
   readonly reasonerCalls: number;
   readonly providerFailures: number;
+  /**
+   * M5 (6.6/C-04): the honest provider outcome of this run. A campaign whose
+   * provider never answered is PROVIDER_BLOCKED_BEFORE_SOURCE_ACTION and is
+   * never presented as budget exhaustion or as a zero-yield hunt.
+   */
+  readonly terminationClass: ProviderTerminationClass;
+  readonly providerAttribution: ProviderFailureAttribution;
   readonly wallTimeMs: number;
   /**
    * W9 component byte accounting folded across every investigation in the
@@ -321,6 +335,12 @@ interface CampaignProgress {
    * one its prefix was counted under. Absent on pre-M5 checkpoints.
    */
   readonly maxTurns: number | null;
+  /**
+   * M5 (6.6): the derived provider attribution at the moment the checkpoint
+   * was written, so a stored campaign states its provider outcome explicitly
+   * and a resume does not have to re-interpret the action log.
+   */
+  readonly providerAttribution: ProviderFailureAttribution | null;
 }
 
 function zeroTerminationCounts(): CampaignTerminationCounts {
@@ -458,6 +478,37 @@ function parseCampaignProgress(value: unknown, campaignId: string): CampaignProg
   if (value.pausedInvestigation !== undefined && value.pausedInvestigation !== null) {
     pausedInvestigation = parseCheckpoint(value.pausedInvestigation);
   }
+  let providerAttribution: ProviderFailureAttribution | null = null;
+  if (value.providerAttribution !== undefined && value.providerAttribution !== null) {
+    const attribution = value.providerAttribution;
+    const counts = ['totalCalls', 'failures', 'completedCalls', 'sourceActions'] as const;
+    if (!isRecord(attribution) || !isProviderTerminationClass(attribution.terminationClass)) {
+      throw new AgentCheckpointError('CORRUPT', 'campaignProgress.providerAttribution is invalid');
+    }
+    for (const field of counts) {
+      const entry = attribution[field];
+      if (typeof entry !== 'number' || !Number.isInteger(entry) || entry < 0) {
+        throw new AgentCheckpointError('CORRUPT', `campaignProgress.providerAttribution.${field} is invalid`);
+      }
+    }
+    if (!isRecord(attribution.byClass)) {
+      throw new AgentCheckpointError('CORRUPT', 'campaignProgress.providerAttribution.byClass is invalid');
+    }
+    for (const [key, entry] of Object.entries(attribution.byClass)) {
+      if (!/^[A-Z][A-Z0-9_]{0,63}$/.test(key) || typeof entry !== 'number' || !Number.isInteger(entry) || entry < 0) {
+        throw new AgentCheckpointError('CORRUPT', `campaignProgress.providerAttribution.byClass entry ${key} is invalid`);
+      }
+    }
+    providerAttribution = {
+      schemaVersion: 'nightwatch.provider-attribution.v1',
+      totalCalls: attribution.totalCalls as number,
+      failures: attribution.failures as number,
+      completedCalls: attribution.completedCalls as number,
+      sourceActions: attribution.sourceActions as number,
+      byClass: Object.freeze({ ...(attribution.byClass as Record<string, number>) }),
+      terminationClass: attribution.terminationClass,
+    };
+  }
   const strategy =
     value.strategy === undefined || value.strategy === null
       ? null
@@ -524,6 +575,7 @@ function parseCampaignProgress(value: unknown, campaignId: string): CampaignProg
     reasonerIdentity,
     pausedInvestigation,
     maxTurns,
+    providerAttribution,
   };
 }
 
@@ -851,7 +903,20 @@ function campaignUsageOf(engine: CampaignEngine): AgentBudgetUsage {
 /** Fold one finished investigation into the campaign totals. Never resets. `countStart` is false when the run resumed a paused investigation whose slot was already counted at pause time. */
 function absorbInvestigation(engine: CampaignEngine, ran: AgentRunResult, countStart: boolean): { newEvidence: number; newCandidates: number } {
   const acc = engine.acc;
-  acc.terminationCounts[ran.terminationReason] += 1;
+  // M5 (6.6/C-04): a run that consumed its retry allowance while the provider
+  // never answered is a PROVIDER failure, not a budget exhaustion. Counting it
+  // as BUDGET_EXHAUSTED is the defect this derives away.
+  const runAttribution = attributeProviderFailures({
+    actionLog: ran.state.actionLog,
+    reasonerCalls: ran.state.budget.usage.reasonerCalls,
+    providerFailures: ran.state.budget.usage.providerFailures,
+  });
+  const countedReason: AgentTerminationReason =
+    ran.terminationReason === 'BUDGET_EXHAUSTED' &&
+    runAttribution.terminationClass === 'PROVIDER_BLOCKED_BEFORE_SOURCE_ACTION'
+      ? 'REASONER_FAILURE'
+      : ran.terminationReason;
+  acc.terminationCounts[countedReason] += 1;
   const usage = ran.state.budget.usage;
   acc.reasonerCalls += usage.reasonerCalls;
   acc.inputBytes += usage.inputBytes;
@@ -1001,6 +1066,11 @@ function buildCampaignCheckpoint(
     reasonerIdentity: engine.input.reasonerIdentity ?? null,
     pausedInvestigation,
     maxTurns: engine.input.maxTurns ?? AGENT_RUNTIME_DEFAULT_MAX_TURNS,
+    providerAttribution: attributeProviderFailures({
+      actionLog: acc.actionLog,
+      reasonerCalls: acc.reasonerCalls,
+      providerFailures: acc.providerFailures,
+    }),
   };
   const document: Record<string, unknown> = { ...checkpoint, campaignProgress: { ...progress } };
   assertCheckpointHasNoSecrets(document as unknown as AgentCheckpoint);
@@ -1048,11 +1118,24 @@ function resultOf(
     (total, admission) => total + (admission.admitted ? admission.reproductionCount : 0),
     0,
   );
+  // M5 (6.6/C-04): the provider outcome is derived from the campaign's own
+  // usage plus its persisted per-call failure classes. A provider that never
+  // answered stops the run from being reported as budget exhaustion.
+  const providerAttribution = attributeProviderFailures({
+    actionLog: state.actionLog,
+    reasonerCalls: engine.acc.reasonerCalls,
+    providerFailures: engine.acc.providerFailures,
+  });
+  const reportedReason: AgentTerminationReason =
+    terminationReason === 'BUDGET_EXHAUSTED' &&
+    providerAttribution.terminationClass === 'PROVIDER_BLOCKED_BEFORE_SOURCE_ACTION'
+      ? 'REASONER_FAILURE'
+      : terminationReason;
   return {
     schemaVersion: LOCAL_CAMPAIGN_VERSION,
     campaignId: engine.input.campaignId,
     reasonerIdentity: engine.input.reasonerIdentity ?? null,
-    terminationReason,
+    terminationReason: reportedReason,
     candidateIds,
     actionCount: engine.acc.actionLog.length,
     toolActionCount: countCampaignToolActions(engine.acc.actionLog),
@@ -1071,6 +1154,8 @@ function resultOf(
     terminationCounts: { ...engine.acc.terminationCounts },
     reasonerCalls: engine.acc.reasonerCalls,
     providerFailures: engine.acc.providerFailures,
+    terminationClass: providerAttribution.terminationClass,
+    providerAttribution,
     wallTimeMs: wallTimeMs ?? campaignUsageOf(engine).wallTimeMs,
     byteLedger: { ...engine.acc.byteLedger },
     campaignStrategy: engine.acc.strategy,
