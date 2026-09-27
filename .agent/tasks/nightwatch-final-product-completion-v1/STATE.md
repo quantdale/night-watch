@@ -319,10 +319,20 @@ the gate pair (see the ledger).
   `observerSemanticLedger` overflow loop is paced because bounded acquisition
   deliberately refuses reads under saturation (the exact 512 cap and the
   explicit-overflow assertion are unchanged).
-  Next: M9 (tasks 10.x, D-129 CLI contract and bin type-check) — start with
-  10.1 (retire superseded bins as declared deletions or declare them
-  research-retained with contract entries), then the C-00 integrate and the
-  `gh` CI observation for this M8 closeout as in M4-M7.
+  M9 10.1 DONE, 10.2 IN PROGRESS — the operator-CLI surface registry
+  (`config/operator-cli-surface.v1.json`) declares every tracked `bin/*.mjs`
+  file with exactly one disposition (OPERATOR_CLI / LIBRARY_RETAINED with a
+  reason / PENDING_OPERATOR_CLI) and records the counts, so the remaining
+  migration is a counted fact; `tests/unit/operatorCliSurface.test.ts` pins the
+  declaration/entry-point honesty and the count reconciliation. Seven DEV
+  launchers are migrated with accurate flag metadata (phase2b/2c/4/5/9b/10b/
+  22-real), which surfaced a real defect: the migrated bins exited 0 on a
+  `cli.stop` path and overwrote the shared parser's refusal code, so an unknown
+  option exited 0 instead of 2 — fixed by exiting with `process.exitCode ?? 0`.
+  `phase7-real` was reverted deliberately (its option surface is richer than the
+  derived set). Conformance: 55/76 declared, 4 library-retained, 17 pending.
+  Next: continue 10.2 (the remaining 17 bins), then 10.3 (shared-parser
+  structural rule with a negative probe, task counts, README claim at 76/76).
 - M6 is COMPLETE: 7.1-7.11 are ticked in the campaign ledger with DONE notes
   and PLAN marks M6 COMPLETE. The view-DOM baseline was intentionally
   REGENERATED (`NIGHTWATCH_UPDATE_VIEW_DOM_BASELINE=1`) because the Agent
