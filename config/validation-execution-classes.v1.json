@@ -38,6 +38,12 @@
         "git-mutation"
       ]
     },
+    "tests/unit/adapterUnavailableAndDefaults.test.ts": {
+      "class": "PARALLEL_SAFE",
+      "signals": [
+        "isolated-scratch"
+      ]
+    },
     "tests/unit/addressPolicy.test.ts": {
       "class": "PARALLEL_SAFE",
       "signals": []
@@ -61,6 +67,25 @@
     "tests/unit/agentBudgetDimensions.test.ts": {
       "class": "PARALLEL_SAFE",
       "signals": []
+    },
+    "tests/unit/agentDispatcherForwarding.test.ts": {
+      "class": "PROCESS_ISOLATED_ONLY",
+      "signals": [
+        "owner-local-state",
+        "isolated-scratch"
+      ]
+    },
+    "tests/unit/agentFindingPersistence.test.ts": {
+      "class": "PARALLEL_SAFE",
+      "signals": [
+        "isolated-scratch"
+      ]
+    },
+    "tests/unit/agentFindingRecord.test.ts": {
+      "class": "PARALLEL_SAFE",
+      "signals": [
+        "isolated-scratch"
+      ]
     },
     "tests/unit/agentProtocol.test.ts": {
       "class": "PARALLEL_SAFE",
@@ -146,6 +171,13 @@
     "tests/unit/bootstrapHooks.test.ts": {
       "class": "PARALLEL_SAFE",
       "signals": [
+        "isolated-scratch"
+      ]
+    },
+    "tests/unit/boundedOperatorLaunch.test.ts": {
+      "class": "PROCESS_ISOLATED_ONLY",
+      "signals": [
+        "owner-local-state",
         "isolated-scratch"
       ]
     },
@@ -315,7 +347,19 @@
         "isolated-scratch"
       ]
     },
+    "tests/unit/campaignBudgetConservation.test.ts": {
+      "class": "PARALLEL_SAFE",
+      "signals": [
+        "isolated-scratch"
+      ]
+    },
     "tests/unit/campaignEndurance.test.ts": {
+      "class": "PARALLEL_SAFE",
+      "signals": [
+        "isolated-scratch"
+      ]
+    },
+    "tests/unit/campaignSignalPause.test.ts": {
       "class": "PARALLEL_SAFE",
       "signals": [
         "isolated-scratch"
@@ -467,6 +511,12 @@
       "class": "PARALLEL_SAFE",
       "signals": []
     },
+    "tests/unit/environmentSignatureRefusal.test.ts": {
+      "class": "PARALLEL_SAFE",
+      "signals": [
+        "isolated-scratch"
+      ]
+    },
     "tests/unit/evidence.test.ts": {
       "class": "PARALLEL_SAFE",
       "signals": [
@@ -492,6 +542,12 @@
       "class": "PARALLEL_SAFE",
       "signals": []
     },
+    "tests/unit/failureCeilingsAndBackoff.test.ts": {
+      "class": "PARALLEL_SAFE",
+      "signals": [
+        "isolated-scratch"
+      ]
+    },
     "tests/unit/findingIntel.test.ts": {
       "class": "PARALLEL_SAFE",
       "signals": []
@@ -499,6 +555,13 @@
     "tests/unit/findingReviewLifecycle.test.ts": {
       "class": "PARALLEL_SAFE",
       "signals": []
+    },
+    "tests/unit/findingsSurfaces.test.ts": {
+      "class": "PROCESS_ISOLATED_ONLY",
+      "signals": [
+        "owner-local-state",
+        "isolated-scratch"
+      ]
     },
     "tests/unit/frontierContractFuzz.test.ts": {
       "class": "PARALLEL_SAFE",
@@ -1351,6 +1414,13 @@
         "isolated-scratch"
       ]
     },
+    "tests/unit/printAdapterLifecycle.test.ts": {
+      "class": "PROCESS_ISOLATED_ONLY",
+      "signals": [
+        "owner-local-state",
+        "isolated-scratch"
+      ]
+    },
     "tests/unit/privateArtifactAtomic.test.ts": {
       "class": "PARALLEL_SAFE",
       "signals": [
@@ -1371,6 +1441,12 @@
       "class": "PROCESS_ISOLATED_ONLY",
       "signals": [
         "process-chdir",
+        "isolated-scratch"
+      ]
+    },
+    "tests/unit/productRunReceipt.test.ts": {
+      "class": "PARALLEL_SAFE",
+      "signals": [
         "isolated-scratch"
       ]
     },
@@ -1404,6 +1480,12 @@
     "tests/unit/promotionResult.test.ts": {
       "class": "PARALLEL_SAFE",
       "signals": []
+    },
+    "tests/unit/providerAttribution.test.ts": {
+      "class": "PARALLEL_SAFE",
+      "signals": [
+        "isolated-scratch"
+      ]
     },
     "tests/unit/proxy.test.ts": {
       "class": "PARALLEL_SAFE",
@@ -1497,6 +1579,12 @@
         "isolated-scratch"
       ]
     },
+    "tests/unit/reasonerIdentityBinding.test.ts": {
+      "class": "PARALLEL_SAFE",
+      "signals": [
+        "isolated-scratch"
+      ]
+    },
     "tests/unit/reasonerPrint.test.ts": {
       "class": "PARALLEL_SAFE",
       "signals": [
@@ -1532,6 +1620,12 @@
     "tests/unit/reproductionCapabilityMemory.test.ts": {
       "class": "PARALLEL_SAFE",
       "signals": []
+    },
+    "tests/unit/reproductionGitMaterialization.test.ts": {
+      "class": "PARALLEL_SAFE",
+      "signals": [
+        "isolated-scratch"
+      ]
     },
     "tests/unit/reproductionSurfaceContracts.test.ts": {
       "class": "PARALLEL_SAFE",
@@ -1803,6 +1897,12 @@
     "tests/unit/syntheticFindingCampaign.test.ts": {
       "class": "PARALLEL_SAFE",
       "signals": []
+    },
+    "tests/unit/syntheticHuntSuite.test.ts": {
+      "class": "PARALLEL_SAFE",
+      "signals": [
+        "isolated-scratch"
+      ]
     },
     "tests/unit/systemAtlas.test.ts": {
       "class": "PARALLEL_SAFE",
