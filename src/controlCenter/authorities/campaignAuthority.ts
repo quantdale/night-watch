@@ -161,7 +161,10 @@ function candidateMetadata(candidate: Phase24CandidateDecision, memberId: string
   const supported = selected && phase24Eligible && candidate.readOnlySuitable && candidate.projectionSafe;
   const proofSignals = [
     candidate.sourceAvailable && candidate.source !== null,
-    candidate.sourceSnapshotMatches !== false,
+    // M7 (8.2/NW-AUD-036): only a VERIFIED match is a proof signal. An
+    // unverified (absent) value used to count, which let a scan whose
+    // repository moved still present as snapshot-matched.
+    candidate.sourceSnapshotMatches === true,
     candidate.routeIdentityProven,
     candidate.contractIdentityProven,
     candidate.behaviorOwnerProven,

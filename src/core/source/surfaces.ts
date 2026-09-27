@@ -789,7 +789,7 @@ function lifecycle(operation: SourceOperationDescriptor, contract: SourceContrac
   return 'MECHANICALLY_PROVEN';
 }
 
-function descriptor(operation: SourceOperationDescriptor, source: { readonly repoId: string; readonly sha: string; readonly evidenceDigest: string }, relevantFiles: readonly string[], joins: readonly SourceEvidenceJoin[], contract: SourceContractEvidence, sourceEvidence: SourceEvidenceProvenance, readOnlyProof: ReadOnlyProof): RealSourceSurfaceDescriptor {
+function descriptor(operation: SourceOperationDescriptor, source: { readonly repoId: string; readonly sha: string; readonly evidenceDigest: string }, relevantFiles: readonly string[], joins: readonly SourceEvidenceJoin[], contract: SourceContractEvidence, sourceEvidence: SourceEvidenceProvenance, readOnlyProof: ReadOnlyProof, snapshotMatches: boolean | undefined): RealSourceSurfaceDescriptor {
   const component = componentProvenance(operation);
   const exclusion = exclusionReasons(operation, contract, component, joins);
   const surfaceId = safeSemanticDigest({ operationId: operation.operationId, sourcePath: operation.sourcePath, route: operation.routeTemplate, method: operation.method }, 'surface');
@@ -799,6 +799,9 @@ function descriptor(operation: SourceOperationDescriptor, source: { readonly rep
     targetId: operation.targetId,
     operation,
     source: { repoId: source.repoId, sha: source.sha, evidenceDigest: source.evidenceDigest },
+    // M7 (8.2/NW-AUD-036): HEAD re-checked AFTER the scan; absent when the
+    // re-check could not run, which is never a match.
+    ...(snapshotMatches === undefined ? {} : { sourceSnapshotMatches: snapshotMatches }),
     relevantFiles: [...new Set(relevantFiles)].sort(),
     joins: [...joins].sort((left, right) => `${left.kind}|${left.fromIdentity}|${left.toIdentity ?? ''}`.localeCompare(`${right.kind}|${right.fromIdentity}|${right.toIdentity ?? ''}`)),
     contract,
@@ -857,7 +860,11 @@ export function toPhase24CandidateInput(surface: RealSourceSurfaceDescriptor): P
     product: surface.targetId?.startsWith('ripple.') ? 'ripple' : 'source',
     source: phase24Source(surface),
     sourceAvailable: surface.currentness === 'CURRENT',
-    sourceSnapshotMatches: true,
+    // M7 (8.2/NW-AUD-036): the recorded fact, never a constant. `true` means
+    // HEAD was re-checked AFTER the scan and still matched; a moved repository
+    // is `false`, and an unavailable re-check is absent (fail closed
+    // downstream).
+    ...(surface.sourceSnapshotMatches === undefined ? {} : { sourceSnapshotMatches: surface.sourceSnapshotMatches }),
     relevantFiles: surface.relevantFiles,
     route,
     routeIdentityProven: route !== null,
@@ -980,6 +987,24 @@ export function discoverSourceSurfaces(input: { readonly access: SiblingSourceAc
   const cached = cacheKey === null ? undefined : input.cache?.get(cacheKey);
   if (cached !== undefined) return cached;
   const scopedAccess = createCallScopedSourceReadView({ access: input.access, inventory }).access;
+  /**
+   * M7 (8.2/NW-AUD-036): re-check each scanned repository's HEAD AFTER the
+   * scan. The projection hard-coded `sourceSnapshotMatches: true`, so a scan
+   * whose repository moved underneath it still claimed a matching snapshot.
+   */
+  const snapshotMatchesByRepository = new Map<string, boolean | undefined>();
+  const snapshotMatches = (repoId: string, recordedSha: string): boolean | undefined => {
+    if (snapshotMatchesByRepository.has(repoId)) return snapshotMatchesByRepository.get(repoId);
+    let value: boolean | undefined;
+    try {
+      const current = input.access.currentness.currentSnapshot(repoId);
+      value = current === null || typeof current.sha !== 'string' ? undefined : current.sha === recordedSha;
+    } catch {
+      value = undefined;
+    }
+    snapshotMatchesByRepository.set(repoId, value);
+    return value;
+  };
   const operations: SourceOperationDescriptor[] = [];
   const responseFlowIndexStartedAt = Date.now();
   const responseFlowIndex = createResponseFlowIndex({ access: scopedAccess, inventory });
@@ -1196,7 +1221,7 @@ export function discoverSourceSurfaces(input: { readonly access: SiblingSourceAc
     readOnlyProofs.push(readOnlyProof);
     const provenOperation: SourceOperationDescriptor = { ...operation, readOnlyClassification: readOnlyClassificationFromProof(readOnlyProof) };
     operations[operationIndex] = provenOperation;
-    surfaces.push(descriptor(provenOperation, { repoId: operation.repository, sha: operation.sourceSha, evidenceDigest: surfaceEvidenceDigest }, [operation.sourcePath, ...references, ...responseFlowPaths], [...joins.joins, ...flowJoins, ...openApiDefinitionJoins(operation, responseDefinitions)], contract, provenance, readOnlyProof));
+    surfaces.push(descriptor(provenOperation, { repoId: operation.repository, sha: operation.sourceSha, evidenceDigest: surfaceEvidenceDigest }, [operation.sourcePath, ...references, ...responseFlowPaths], [...joins.joins, ...flowJoins, ...openApiDefinitionJoins(operation, responseDefinitions)], contract, provenance, readOnlyProof, snapshotMatches(operation.repository, operation.sourceSha)));
   }
   surfaces.sort((left, right) => left.surfaceId.localeCompare(right.surfaceId));
   const gapTaxonomy = buildSourceGapTaxonomy({ inventory, surfaces });

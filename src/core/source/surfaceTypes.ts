@@ -176,6 +176,12 @@ export interface RealSourceSurfaceDescriptor {
   readonly targetId: string | null;
   readonly operation: SourceOperationDescriptor;
   readonly source: { readonly repoId: string; readonly sha: string; readonly evidenceDigest: string };
+  /**
+   * M7 (8.2/NW-AUD-036): whether HEAD was re-checked AFTER the scan and still
+   * matched the recorded sha. Absent when the re-check could not run (an
+   * unavailable currentness read), which is never a match.
+   */
+  readonly sourceSnapshotMatches?: boolean;
   readonly relevantFiles: readonly string[];
   readonly joins: readonly SourceEvidenceJoin[];
   readonly contract: SourceContractEvidence;

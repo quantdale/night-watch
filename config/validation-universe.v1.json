@@ -136,6 +136,7 @@
         "tests/unit/silentZeroOutput.test.ts",
         "tests/unit/snapshotter.test.ts",
         "tests/unit/sourceAnalysisParity.test.ts",
+        "tests/unit/sourceSnapshotRecheck.test.ts",
         "tests/unit/statusLocalAuthHeading.test.ts",
         "tests/unit/syntheticCampaignShards.test.ts",
         "tests/unit/syntheticFindingCampaign.test.ts",

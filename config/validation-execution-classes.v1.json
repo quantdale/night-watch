@@ -1928,6 +1928,12 @@
         "isolated-scratch"
       ]
     },
+    "tests/unit/sourceSnapshotRecheck.test.ts": {
+      "class": "PARALLEL_SAFE",
+      "signals": [
+        "isolated-scratch"
+      ]
+    },
     "tests/unit/statusLocalAuthHeading.test.ts": {
       "class": "PARALLEL_SAFE",
       "signals": [
