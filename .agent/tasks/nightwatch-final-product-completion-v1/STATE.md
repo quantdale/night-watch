@@ -170,9 +170,24 @@ the gate pair (see the ledger).
   `PARTIAL_COVERAGE_NO_VIOLATION` whenever the oracle reports incomplete
   coverage (the `realSourceConformingMutation` empty-list case is now
   PARTIAL_COVERAGE, never PASS).
-  Next: M8 (tasks 9.x, contained-DEV lane integrity) — start with 9.1 and the
-  DEV_LANE_PRECONDITION_OPEN registry, then the C-00 integrate and the `gh` CI
-  observation for this M7 closeout as in M4-M6.
+  M8 9.1 DONE — DEV-lane precondition registry and launcher refusal:
+  `config/dev-lane-preconditions.v1.json` lists NW-AUD-016 (full), 022 (task
+  2.1 / R2-47), 025 (full), 026, 037, 038 as OPEN with NO standing owner
+  authorization; `src/core/policy/devLanePreconditions.ts` is the authority
+  (fail-closed registry parse, `DEV_LANE_PRECONDITION_OPEN` listing every open
+  id, `DEV_LANE_OWNER_TOKEN_UNRECOGNIZED` for an unrecognized/unauthorized
+  `D-<n>` citation) and `bin/lib/dev-lane-precondition.mjs` is the launcher
+  guard, called FIRST by all thirteen DEV-contacting launchers (before argument
+  validation, auth validation or any child process). `observe-preflight.mjs` is
+  exempt by construction (pinned: no spawn/browser/socket/cookie read) so its
+  argument-validation coverage survives. A registry-path seam
+  (`NIGHTWATCH_DEV_LANE_REGISTRY_PATH`) plus `tests/helpers/devLaneAuthorization.ts`
+  keeps each launcher's OWN boundary tests reachable under an authorized
+  citation; the shipped default still refuses unconditionally. Evidence:
+  `tests/unit/devLanePreconditions.test.ts` 10/10 (including a real spawn of
+  every guarded launcher), the repaired launcher-boundary suites green, and the
+  sharded lane PASS at 5655/0 (5688 planned, 0 failed).
+  Next: 9.2 (NW-AUD-021 residual) and 9.3-9.13 to close M8.
 - M6 is COMPLETE: 7.1-7.11 are ticked in the campaign ledger with DONE notes
   and PLAN marks M6 COMPLETE. The view-DOM baseline was intentionally
   REGENERATED (`NIGHTWATCH_UPDATE_VIEW_DOM_BASELINE=1`) because the Agent
