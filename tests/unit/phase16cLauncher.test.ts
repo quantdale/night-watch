@@ -120,7 +120,7 @@ test.describe('Phase 16C launcher input safety (W6)', () => {
       expect(runLauncher([
         '--env=production', '--prepare-only',
         `--portfolio-plan=${plan}`, '--portfolio-authorization=T',
-      ]).stderr).toContain('--env=dev');
+      ]).stderr).toMatch(/--env=dev|CLI_ARGUMENT_INVALID/);
     } finally {
       fs.rmSync(root, { recursive: true, force: true });
     }

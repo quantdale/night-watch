@@ -20,11 +20,11 @@
     },
     {
       "file": "bin/ai-owner-review.mjs",
-      "disposition": "PENDING_OPERATOR_CLI"
+      "disposition": "OPERATOR_CLI"
     },
     {
       "file": "bin/auth-capture.mjs",
-      "disposition": "PENDING_OPERATOR_CLI"
+      "disposition": "OPERATOR_CLI"
     },
     {
       "file": "bin/auth-configure.mjs",
@@ -84,7 +84,7 @@
     },
     {
       "file": "bin/nightwatch-control-center.mjs",
-      "disposition": "PENDING_OPERATOR_CLI"
+      "disposition": "OPERATOR_CLI"
     },
     {
       "file": "bin/nightwatch-hygiene.mjs",
@@ -183,7 +183,7 @@
     },
     {
       "file": "bin/phase7-real.mjs",
-      "disposition": "PENDING_OPERATOR_CLI"
+      "disposition": "OPERATOR_CLI"
     },
     {
       "file": "bin/phase9b-launcher-args.mjs",
@@ -313,8 +313,8 @@
   ],
   "counts": {
     "total": 76,
-    "operatorCli": 55,
+    "operatorCli": 59,
     "libraryRetained": 4,
-    "pending": 17
+    "pending": 13
   }
 }

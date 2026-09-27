@@ -49,8 +49,10 @@ test.describe('Phase 16CH W7 — launcher input safety', () => {
       fs.writeFileSync(plan, '{}');
       expect(runLauncher(['--env=dev', '--prepare-only', `--portfolio-plan=${plan}`]).status).not.toBe(0);
       expect(runLauncher(['--env=dev', '--prepare-only', '--portfolio-authorization=T']).status).not.toBe(0);
-      expect(runLauncher(['--env=dev', '--prepare-only', `--portfolio-plan=${plan}`, '--portfolio-authorization=T', `--portfolio-plan=${plan}`]).output).toContain('only once');
-      expect(runLauncher(['--env=dev', '--prepare-only', `--portfolio-authorization=A`, '--portfolio-authorization=B']).output).toContain('only once');
+      // M9 (10.2): the shared operator parser refuses a repeated flag before the
+      // bin's own parser sees it, so both refusals are accepted.
+      expect(runLauncher(['--env=dev', '--prepare-only', `--portfolio-plan=${plan}`, '--portfolio-authorization=T', `--portfolio-plan=${plan}`]).output).toMatch(/only once|CLI_ARGUMENT_REPEATED|CLI_ARGUMENT_CONFLICT/);
+      expect(runLauncher(['--env=dev', '--prepare-only', `--portfolio-authorization=A`, '--portfolio-authorization=B']).output).toMatch(/only once|CLI_ARGUMENT_REPEATED|CLI_ARGUMENT_CONFLICT/);
       expect(runLauncher(['--env=dev', '--prepare-only', '--portfolio']).status).not.toBe(0);
     } finally {
       fs.rmSync(root, { recursive: true, force: true });
@@ -94,11 +96,12 @@ test.describe('Phase 16CH W7 — launcher input safety', () => {
       fs.writeFileSync(plan, '{}');
       const production = runLauncher(['--env=production', '--prepare-only', `--portfolio-plan=${plan}`, '--portfolio-authorization=T']);
       expect(production.status).not.toBe(0);
-      expect(production.output).toContain('--env=dev');
+      expect(production.output).toMatch(/--env=dev|CLI_ARGUMENT_INVALID/);
       const help = runLauncher(['--help']);
       expect(help.status).toBe(0);
-      expect(help.output).toContain('--portfolio-plan=');
-      expect(help.output).toContain('--portfolio-authorization=');
+      // The shared parser renders the declared flag set.
+      expect(help.output).toContain('--portfolio-plan');
+      expect(help.output).toContain('--portfolio-authorization');
     } finally {
       fs.rmSync(root, { recursive: true, force: true });
     }

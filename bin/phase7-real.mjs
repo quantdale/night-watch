@@ -14,12 +14,45 @@ import { fileURLToPath } from 'node:url';
 import { buildChildEnvironment, emitChildStdio } from './child-environment.mjs';
 import { loadTypeScriptModule } from './lib/typescript-runtime-loader.mjs';
 import { guardDevLane } from './lib/dev-lane-precondition.mjs';
+import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 // M8 (9.1): refuse a DEV-lane launch while a DEV-lane precondition is OPEN,
 // BEFORE argument validation, auth validation or any child process.
 guardDevLane({ root, launcher: 'phase7-real.mjs', args: process.argv.slice(2) });
+
+/** @type {import('./lib/operator-cli.mjs').OperatorCliMetadata} */
+const CLI_METADATA = {
+  schemaVersion: OPERATOR_CLI_SCHEMA,
+  name: 'phase7-real',
+  entry: 'bin/phase7-real.mjs',
+  purpose: 'Run one bounded real campaign against DEV with an explicit plan and authorization.',
+  group: 'owner-gated',
+  flags: [
+    { name: '--env', shape: 'enum', values: ['dev'], summary: 'target environment; DEV only' },
+    { name: '--storage-state', shape: 'path', summary: 'external absolute storage-state path' },
+    { name: '--ui-url', shape: 'string', summary: 'verified HTTPS UI URL override' },
+    { name: '--portfolio-plan', shape: 'path', summary: 'external portfolio plan path' },
+    { name: '--portfolio-authorization', shape: 'path', summary: 'external portfolio authorization path' },
+    { name: '--resume-campaign', shape: 'boolean', summary: 'resume a paused campaign' },
+    { name: '--prepare-only', shape: 'boolean', summary: 'prepare without executing' },
+    { name: '--config', shape: 'path', summary: 'Playwright config path' },
+    { name: '--project', shape: 'string', summary: 'Playwright project name' },
+    { name: '--workers', shape: 'integer', summary: 'Playwright worker count' },
+  ],
+  json: false,
+  authorization: 'OWNER_GATED',
+  artifacts: [],
+};
+
+const cli = defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url });
+if (cli.stop) {
+  // --help / --print-metadata / usage already emitted; the shared parser has
+  // ALREADY set the exit code (success for help/metadata, refusal for an
+  // unknown argument), so the bin must not overwrite it with 0.
+  process.exit(process.exitCode ?? 0);
+}
 const args = process.argv.slice(2);
 let env;
 let storage;

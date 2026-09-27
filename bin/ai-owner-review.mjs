@@ -10,6 +10,31 @@ import path from 'node:path';
 import readline from 'node:readline';
 import { fileURLToPath } from 'node:url';
 import { loadTypeScriptModule as loadRuntimeTypeScriptModule } from './lib/typescript-runtime-loader.mjs';
+import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
+
+/** @type {import('./lib/operator-cli.mjs').OperatorCliMetadata} */
+const CLI_METADATA = {
+  schemaVersion: OPERATOR_CLI_SCHEMA,
+  name: 'ai-owner-review',
+  entry: 'bin/ai-owner-review.mjs',
+  purpose: 'Review one local AI candidate by id and kind; local and read-only.',
+  group: 'inspect-intelligence',
+  flags: [
+    { name: '--id', shape: 'string', summary: 'candidate identity' },
+    { name: '--kind', shape: 'string', summary: 'candidate kind' },
+  ],
+  json: false,
+  authorization: 'OWNER_GATED',
+  artifacts: [],
+};
+
+const cli = defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url });
+if (cli.stop) {
+  // --help / --print-metadata / usage already emitted; the shared parser has
+  // ALREADY set the exit code (success for help/metadata, refusal for an
+  // unknown argument), so the bin must not overwrite it with 0.
+  process.exit(process.exitCode ?? 0);
+}
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 

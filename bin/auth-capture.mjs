@@ -16,12 +16,42 @@ import { fileURLToPath } from 'node:url';
 import { buildChildEnvironment } from './child-environment.mjs';
 import { loadTypeScriptModule as loadRuntimeTypeScriptModule } from './lib/typescript-runtime-loader.mjs';
 import { guardDevLane } from './lib/dev-lane-precondition.mjs';
+import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 // M8 (9.1): refuse a DEV-lane launch while a DEV-lane precondition is OPEN,
 // BEFORE argument validation, auth validation or any child process.
 guardDevLane({ root, launcher: 'auth-capture.mjs', args: process.argv.slice(2) });
+
+/** @type {import('./lib/operator-cli.mjs').OperatorCliMetadata} */
+const CLI_METADATA = {
+  schemaVersion: OPERATOR_CLI_SCHEMA,
+  name: 'auth-capture',
+  entry: 'bin/auth-capture.mjs',
+  purpose: 'Capture or adopt the authenticated capability artefact and publish its lifecycle record (DEV/NEXT only).',
+  group: 'manage-sessions',
+  flags: [
+    { name: '--env', shape: 'enum', values: ['dev', 'next'], summary: 'target environment; production is forbidden' },
+    { name: '--output', shape: 'path', summary: 'external absolute storage-state path' },
+    { name: '--ui-url', shape: 'string', summary: 'verified HTTPS UI URL override' },
+    { name: '--validity-window-hours', shape: 'integer', summary: 'declared validity window in hours' },
+    { name: '--captured-at', shape: 'string', summary: 'declared capture instant (adoption only)' },
+    { name: '--adopt', shape: 'boolean', summary: 'adopt an existing artefact instead of capturing' },
+    { name: '--replace-existing-record', shape: 'boolean', summary: 'replace an existing lifecycle record' },
+  ],
+  json: false,
+  authorization: 'OWNER_GATED',
+  artifacts: [],
+};
+
+const cli = defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url });
+if (cli.stop) {
+  // --help / --print-metadata / usage already emitted; the shared parser has
+  // ALREADY set the exit code (success for help/metadata, refusal for an
+  // unknown argument), so the bin must not overwrite it with 0.
+  process.exit(process.exitCode ?? 0);
+}
 const SUPPORTED = new Set(['dev', 'next']);
 
 function usage() {

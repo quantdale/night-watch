@@ -23,6 +23,36 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadTypeScriptModule as loadRuntimeTypeScriptModule } from './lib/typescript-runtime-loader.mjs';
+import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
+
+/** @type {import('./lib/operator-cli.mjs').OperatorCliMetadata} */
+const CLI_METADATA = {
+  schemaVersion: OPERATOR_CLI_SCHEMA,
+  name: 'nightwatch-control-center',
+  entry: 'bin/nightwatch-control-center.mjs',
+  purpose: 'Serve the local read-only Control Center surface.',
+  group: 'control-center',
+  flags: [
+    { name: '--env', shape: 'enum', values: ['dev', 'next'], summary: 'declared environment for the source view' },
+    { name: '--host', shape: 'string', summary: 'loopback bind host' },
+    { name: '--port', shape: 'integer', summary: 'loopback bind port' },
+    { name: '--ui-root', shape: 'path', summary: 'built UI root' },
+    { name: '--open', shape: 'boolean', summary: 'open the local URL in a browser' },
+    { name: '--share', shape: 'boolean', summary: 'share mode (never external)' },
+    { name: '--enable-local-review', shape: 'boolean', summary: 'enable the local review surface' },
+  ],
+  json: false,
+  authorization: 'OWNER_GATED',
+  artifacts: [],
+};
+
+const cli = defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url });
+if (cli.stop) {
+  // --help / --print-metadata / usage already emitted; the shared parser has
+  // ALREADY set the exit code (success for help/metadata, refusal for an
+  // unknown argument), so the bin must not overwrite it with 0.
+  process.exit(process.exitCode ?? 0);
+}
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DEFAULT_UI_ROOT = path.join(ROOT, 'ui', 'control-center', 'dist');
