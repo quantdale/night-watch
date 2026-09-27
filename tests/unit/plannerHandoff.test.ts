@@ -265,6 +265,7 @@ function makeFixture(options: FixtureOptions = {}): Fixture {
 
   for (const relativePath of [
     'bin/agent-state.mjs',
+    'bin/lib/ci-block-record.mjs',
     'bin/agent-continuity-protocol.mjs',
     'bin/child-environment.mjs',
     'bin/planner-handoff-protocol.mjs',
