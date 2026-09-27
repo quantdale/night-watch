@@ -583,13 +583,18 @@ export async function createNightwatchContext(
           reason: decision.reason,
         });
       }
+    } catch {
+      // observer must never crash the run
+    } finally {
+      // M8 (9.7 / NW-AUD-024 R2-43): the cancel is in a FINALLY, so a download
+      // is cancelled on every path — including when recording, redaction or the
+      // policy decision itself throws. A denied download must never be left
+      // running because evidence handling failed.
       try {
         await download.cancel();
       } catch {
         // download already finished/failed — ignore
       }
-    } catch {
-      // observer must never crash the run
     }
   }
 

@@ -69,6 +69,14 @@ const RUN_EVIDENCE_FIREWALL_LIMITS: Readonly<Record<RunEvidenceFirewallKind, num
   summary: 512 * 1024, // reader MAX_SUMMARY_BYTES
 });
 const MAX_DURABLE_EVENTS = 25_000;
+/**
+ * M8 (9.7 / NW-AUD-024 R2-64): append-time bounds. The durable-state bound was
+ * only enforced when a durable snapshot was read; a live run could append
+ * without limit. The bound is now enforced AS RECORDS ARE APPENDED, so the
+ * stream cannot grow past what the reader will accept.
+ */
+const MAX_APPENDED_EVENT_RECORDS = 25_000;
+const MAX_APPENDED_EVENT_BYTES = 16 * 1024 * 1024;
 const MAX_DURABLE_EVENTS_BYTES = 16 * 1024 * 1024;
 const MAX_DURABLE_EVENT_LINE_BYTES = 64 * 1024;
 
@@ -131,8 +139,14 @@ export class RunRecorder {
 
     // Manifest: run ID, timestamp, environment, product, browser, scenario,
     // seed (when applicable), Nightwatch git SHA (when available).
+    // M8 (9.7 / NW-AUD-024 R2-02): a GENERATION token. The run directory is
+    // already exclusive, but two runs that reuse a run id are otherwise
+    // indistinguishable in evidence; the generation makes each bundle's
+    // identity unique even when a caller reuses the id.
+    const generation = randomBytes(12).toString('hex');
     const manifest: Record<string, string> = {
       runId: opts.runId,
+      generation,
       timestamp: this.startedAt,
       environment: opts.environment,
       product: opts.product,
@@ -224,6 +238,16 @@ export class RunRecorder {
 
   /** Hardened append for the jsonl streams: target check, append, then fsync. */
   private appendLine(file: string, line: string): void {
+    // M8 (9.7 / R2-64): the append-time bound. A stream that would exceed what
+    // the durable reader accepts is REFUSED at the append, never written and
+    // then rejected on read.
+    this.appendedEventRecords += 1;
+    this.appendedEventBytes += Buffer.byteLength(line, 'utf8');
+    if (this.appendedEventRecords > MAX_APPENDED_EVENT_RECORDS || this.appendedEventBytes > MAX_APPENDED_EVENT_BYTES) {
+      this.appendedEventRecords -= 1;
+      this.appendedEventBytes -= Buffer.byteLength(line, 'utf8');
+      throw new Error('RUN_EVIDENCE_APPEND_BOUND_EXCEEDED');
+    }
     // Keep the pinned appendFileSync primitive, but do not acknowledge the
     // record until the descriptor has reached a durability barrier.
     this.assertPublishTarget(file);
@@ -236,6 +260,10 @@ export class RunRecorder {
     }
     this.secureAuthenticatedArtifact(file);
   }
+
+  /** Append-time accounting for the bounded jsonl streams (R2-64). */
+  private appendedEventRecords = 0;
+  private appendedEventBytes = 0;
 
   private fsyncRunDirectory(): void {
     let descriptor: number | undefined;
@@ -395,7 +423,13 @@ export class RunRecorder {
     try {
       manifest = JSON.parse(fs.readFileSync(file, 'utf8')) as Record<string, unknown>;
     } catch {
-      manifest = {};
+      // M8 (9.7 / R2-08): a manifest that cannot be parsed is NOT silently
+      // replaced with an empty one — that would publish a manifest missing
+      // every identity field written before it.
+      throw new Error('RUN_EVIDENCE_MANIFEST_INVALID');
+    }
+    if (manifest === null || typeof manifest !== 'object' || Array.isArray(manifest)) {
+      throw new Error('RUN_EVIDENCE_MANIFEST_INVALID');
     }
     manifest[key] = this.authenticated ? this.sanitizeAuthenticatedData({ value }).value : value;
     this.publishJson(file, manifest, JSON.stringify(manifest, null, 2), 'manifest');

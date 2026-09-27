@@ -1777,6 +1777,13 @@
       "class": "PARALLEL_SAFE",
       "signals": []
     },
+    "tests/unit/runEvidenceBundleTransaction.test.ts": {
+      "class": "PROCESS_ISOLATED_ONLY",
+      "signals": [
+        "owner-state",
+        "isolated-scratch"
+      ]
+    },
     "tests/unit/safety.test.ts": {
       "class": "PROCESS_ISOLATED_ONLY",
       "signals": [
