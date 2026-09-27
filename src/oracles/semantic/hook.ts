@@ -237,6 +237,13 @@ export function evaluateSemanticResolution(input: SemanticResolutionEvaluationIn
     }
   }
 
+  // M7 (8.3/NW-AUD-039): an expectation can be PARTIAL_COVERAGE because an
+  // invariant was NOT_APPLICABLE (a truncated collection, say) even though the
+  // invariants that DID run carried no coverage annotation. The receipt's
+  // coverage state must then say so, or the cross-field validator rightly
+  // refuses an incoherent receipt.
+  if (evaluation.outcome === 'PARTIAL_COVERAGE') coverageState = 'PARTIAL_COVERAGE_NO_VIOLATION';
+
   const receipt = buildSemanticEvaluationReceipt({
     ...base,
     outcome: semanticOutcomeToReceiptOutcome(evaluation.outcome),

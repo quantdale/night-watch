@@ -75,7 +75,11 @@ test.describe('Phase 9A.1 — conforming synthetic responses (SPEC §29)', () =>
       rawText: '[]',
       targetId: expectation.targetId,
     });
-    expect(result.receipt?.outcome).toBe('PASS');
+    // M7 (8.3/NW-AUD-039): an empty list is still not an anomaly, but its
+    // item-level invariants are NOT_APPLICABLE, so the honest outcome is
+    // incomplete coverage — never PASS.
+    expect(result.receipt?.outcome).toBe('PARTIAL_COVERAGE');
+    expect(result.receipt?.coverageState).toBe('PARTIAL_COVERAGE_NO_VIOLATION');
     expect(result.findings).toHaveLength(0);
   });
 });
