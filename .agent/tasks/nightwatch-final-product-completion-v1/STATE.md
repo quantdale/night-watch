@@ -235,7 +235,18 @@ the gate pair (see the ledger).
   closure claims are RE-TAGGED UNPROVEN (9.5b). Evidence:
   `tests/unit/contextGuardTransaction.test.ts` 5/5, `hardening:check` PASS, and
   the sharded lane PASS at 5681/0 (5714 planned, 0 failed).
-  Next: 9.6 (NW-AUD-035) then 9.7-9.13 to close M8.
+  M8 9.6 DONE — bounded response-body acquisition (NW-AUD-035): a body read
+  that loses its race against the 5s timer is now JOINED (one settlement
+  handler that discards the value and swallows the rejection, released exactly
+  once), and acquisition is bounded at `MAX_CONCURRENT_BODY_READS` (4) with a
+  distinct refusal outcome reported as the new closed failure code
+  `BODY_READ_ACQUISITION_BOUND` instead of an unbounded queue. Cancellation is
+  not available for Playwright's `body()`, so joining + the gate is the
+  strongest available guarantee and is recorded as such. Evidence:
+  `tests/unit/bodyReadAcquisition.test.ts` 4/4, the network-observer/journey
+  suites 14/14, `hardening:check` PASS, and the sharded lane PASS at 5685/0
+  (5718 planned, 0 failed).
+  Next: 9.7 (NW-AUD-024 residual) then 9.8-9.13 to close M8.
 - M6 is COMPLETE: 7.1-7.11 are ticked in the campaign ledger with DONE notes
   and PLAN marks M6 COMPLETE. The view-DOM baseline was intentionally
   REGENERATED (`NIGHTWATCH_UPDATE_VIEW_DOM_BASELINE=1`) because the Agent
