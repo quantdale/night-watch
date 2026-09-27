@@ -811,6 +811,38 @@ export interface MaterializeOwnerLocalClosureInput {
   readonly closureDirs: readonly string[];
   readonly limits: OwnerLocalReproductionLimits;
   readonly tempRoot?: string;
+  /**
+   * M5 (6.11/X-05): the repository root and the RECORDED HEAD the closure must
+   * materialize from. Both are required: a reproduction executes the bytes of
+   * the HEAD the proof labels, never the working tree's bytes.
+   */
+  readonly repositoryRoot: string;
+  readonly headSha: string;
+  /** Test seam for the object-store reader (production uses real git). */
+  readonly readGitBlob?: (input: GitBlobReadInput) => Promise<Buffer | null>;
+  /**
+   * Test seam for the recorded-HEAD tree listing. Production reads the tree
+   * from the object store; a caller that cannot list it FAILS CLOSED rather
+   * than falling back to the working tree.
+   */
+  readonly listGitTree?: (input: GitTreeListInput) => Promise<readonly GitTreeEntry[] | null>;
+}
+export interface GitTreeListInput {
+  readonly repoRoot: string;
+  readonly headSha: string;
+  /** Repository-relative directory prefix ('' for the whole repository). */
+  readonly pathPrefix: string;
+}
+export interface GitTreeEntry {
+  /** Repository-relative path, POSIX separators. */
+  readonly path: string;
+  /** Git file mode as a 6-digit octal string (e.g. `100644`, `120000`). */
+  readonly mode: string;
+}
+export interface GitBlobReadInput {
+  readonly repoRoot: string;
+  readonly headSha: string;
+  readonly relativePath: string;
 }
 export interface MaterializedOwnerLocalClosure {
   readonly execRoot: string;
@@ -827,10 +859,69 @@ function removeTreeBestEffort(dir: string): void {
   }
 }
 
-export function materializeOwnerLocalClosure(
+/**
+ * M5 (6.11/X-05): read ONE file's exact bytes from the Git object store at the
+ * recorded HEAD. Read-only, no shell, bounded. A dirty working tree therefore
+ * cannot change what a reproduction executes, and the proof's HEAD label is
+ * true by construction rather than by assumption.
+ */
+async function defaultGitBlobReader(input: GitBlobReadInput): Promise<Buffer | null> {
+  try {
+    const result = spawnSync(
+      'git',
+      ['-C', input.repoRoot, 'cat-file', 'blob', `${input.headSha}:${input.relativePath}`],
+      {
+        env: buildGitChildEnvironment(),
+        timeout: GIT_SNAPSHOT_TIMEOUT_MS,
+        maxBuffer: GIT_SNAPSHOT_MAX_BUFFER,
+        encoding: 'buffer',
+        shell: false,
+      },
+    );
+    if (result.status !== 0 || !Buffer.isBuffer(result.stdout)) return null;
+    return result.stdout;
+  } catch {
+    return null;
+  }
+}
+
+async function defaultGitTreeReader(input: GitTreeListInput): Promise<readonly GitTreeEntry[] | null> {
+  try {
+    const args = ['-C', input.repoRoot, 'ls-tree', '-r', input.headSha];
+    if (input.pathPrefix.length > 0) args.push('--', input.pathPrefix);
+    const result = spawnSync('git', args, {
+      env: buildGitChildEnvironment(),
+      timeout: GIT_SNAPSHOT_TIMEOUT_MS,
+      maxBuffer: GIT_SNAPSHOT_MAX_BUFFER,
+      encoding: 'utf8',
+      shell: false,
+    });
+    if (result.status !== 0 || typeof result.stdout !== 'string') return null;
+    const entries: GitTreeEntry[] = [];
+    for (const line of result.stdout.split('\n')) {
+      if (line.length === 0) continue;
+      const tab = line.indexOf('\t');
+      if (tab <= 0) return null;
+      const [mode] = line.slice(0, tab).split(' ');
+      const pathPart = line.slice(tab + 1);
+      if (mode === undefined || pathPart.length === 0) return null;
+      entries.push({ path: pathPart, mode });
+    }
+    return entries;
+  } catch {
+    return null;
+  }
+}
+
+export async function materializeOwnerLocalClosure(
   input: MaterializeOwnerLocalClosureInput,
-): MaterializedOwnerLocalClosure {
+): Promise<MaterializedOwnerLocalClosure> {
   const moduleRoot = path.resolve(input.moduleRoot);
+  const repositoryRoot = path.resolve(input.repositoryRoot);
+  if (!FULL_SHA_RE.test(input.headSha)) {
+    throw new OwnerLocalMaterializationError('MATERIALIZATION_FAILED', 'HEAD_BINDING_MISSING');
+  }
+  const readBlob = input.readGitBlob ?? defaultGitBlobReader;
   if (!isRegularDirectoryNoFollow(moduleRoot)) {
     throw new OwnerLocalMaterializationError('WORKSPACE_UNAVAILABLE', 'MODULE_ROOT_UNREADABLE');
   }
@@ -854,135 +945,116 @@ export function materializeOwnerLocalClosure(
       throw new OwnerLocalMaterializationError('MATERIALIZATION_FAILED', 'MATERIALIZE_TIMEOUT');
     }
   };
-  const copyOneFile = (src: string, stats: fs.Stats): void => {
-    const relative = path.relative(moduleRoot, src);
-    if (relative.startsWith('..') || path.isAbsolute(relative) || relative === '') {
-      throw new OwnerLocalMaterializationError('MATERIALIZATION_FAILED', 'PATH_ESCAPE');
-    }
-    const dst = path.join(dest, relative);
-    if (!isPathInside(dst, dest)) {
-      throw new OwnerLocalMaterializationError('MATERIALIZATION_FAILED', 'PATH_ESCAPE');
-    }
-    fileCount += 1;
-    byteCount += stats.size;
-    if (fileCount > input.limits.materializedFiles || byteCount > input.limits.materializedBytes) {
-      throw new OwnerLocalMaterializationError('MATERIALIZATION_LIMIT_EXCEEDED', 'CLOSURE_TOO_LARGE');
-    }
-    try {
-      fs.mkdirSync(path.dirname(dst), { recursive: true });
-      fs.copyFileSync(src, dst);
-    } catch {
-      throw new OwnerLocalMaterializationError('MATERIALIZATION_FAILED', 'COPY_FAILED');
-    }
-    checked += 1;
-    checkDeadline();
+  const listTree = input.listGitTree ?? defaultGitTreeReader;
+  const moduleRelative = toPosixRelative(repositoryRoot, moduleRoot);
+  const modulePrefix = moduleRelative === '.' ? '' : moduleRelative;
+  const relativeOfModulePath = (repoPath: string): string | null => {
+    if (modulePrefix.length === 0) return repoPath;
+    const prefix = `${modulePrefix}/`;
+    return repoPath.startsWith(prefix) ? repoPath.slice(prefix.length) : null;
   };
-  const dirHasGoFiles = (dir: string): boolean => {
-    let entries: readonly fs.Dirent[];
-    try {
-      entries = fs.readdirSync(dir, { withFileTypes: true });
-    } catch {
-      return false;
+  const packageDirAbs = path.resolve(input.packageDirAbs);
+  if (!isPathInside(packageDirAbs, moduleRoot)) {
+    throw new OwnerLocalMaterializationError('WORKSPACE_UNAVAILABLE', 'PACKAGE_DIR_UNREADABLE');
+  }
+  const selectedRelative = new Set<string>();
+  selectedRelative.add(toPosixRelative(moduleRoot, packageDirAbs));
+  for (const dir of input.closureDirs) {
+    const resolved = path.resolve(dir);
+    if (!isPathInside(resolved, moduleRoot)) {
+      throw new OwnerLocalMaterializationError('MATERIALIZATION_FAILED', 'CLOSURE_DIR_UNREADABLE');
     }
-    return entries.some((entry) => entry.isFile() && entry.name.endsWith('.go'));
-  };
-  const selected = new Set<string>();
-  const selectedBeneath = (dir: string): boolean => {
-    const prefix = `${dir}${path.sep}`;
-    for (const candidate of selected) {
-      if (candidate.startsWith(prefix)) return true;
+    selectedRelative.add(toPosixRelative(moduleRoot, resolved));
+  }
+  const tree = await listTree({
+    repoRoot: repositoryRoot,
+    headSha: input.headSha,
+    pathPrefix: modulePrefix,
+  });
+  if (tree === null) {
+    // No object-store tree means no HEAD-faithful closure: FAIL CLOSED rather
+    // than silently materializing working-tree bytes.
+    throw new OwnerLocalMaterializationError('MATERIALIZATION_FAILED', 'HEAD_TREE_UNAVAILABLE');
+  }
+  const moduleFiles: { readonly rel: string; readonly repoPath: string; readonly mode: string }[] = [];
+  const dirHasGoFiles = new Set<string>();
+  for (const entry of tree) {
+    const rel = relativeOfModulePath(entry.path);
+    if (rel === null || rel.length === 0) continue;
+    moduleFiles.push({ rel, repoPath: entry.path, mode: entry.mode });
+    if (rel.endsWith('.go')) {
+      const dir = rel.includes('/') ? rel.slice(0, rel.lastIndexOf('/')) : '';
+      dirHasGoFiles.add(dir);
+    }
+  }
+  const included = (rel: string): boolean => {
+    const dir = rel.includes('/') ? rel.slice(0, rel.lastIndexOf('/')) : '';
+    if (dir === '' && (rel === 'go.mod' || rel === 'go.sum')) return true;
+    if (rel === 'vendor/modules.txt') return true;
+    for (const selectedDir of selectedRelative) {
+      if (selectedDir === '.' || selectedDir.length === 0) return true;
+      if (dir !== selectedDir && !dir.startsWith(`${selectedDir}/`)) continue;
+      // Mirror the historical pruning rule: nested packages are kept only when
+      // they are selected themselves, live under `testdata`, or carry no Go
+      // files (bare resource dirs are kept whole).
+      let prefix = selectedDir;
+      let keep = true;
+      for (const segment of dir.slice(selectedDir.length + 1).split('/').filter((item) => item.length > 0)) {
+        prefix = `${prefix}/${segment}`;
+        if (segment === 'testdata' || selectedRelative.has(prefix)) continue;
+        if (dirHasGoFiles.has(prefix)) {
+          keep = false;
+          break;
+        }
+      }
+      if (keep) return true;
     }
     return false;
   };
-  const copySelectedDir = (srcDir: string, pruneNested: boolean): void => {
-    let entries: readonly fs.Dirent[];
-    try {
-      entries = fs
-        .readdirSync(srcDir, { withFileTypes: true })
-        .sort((left, right) => left.name.localeCompare(right.name));
-    } catch {
-      throw new OwnerLocalMaterializationError('MATERIALIZATION_FAILED', 'ENUMERATE_FAILED');
+  const selectedFiles = moduleFiles.filter((file) => included(file.rel));
+  for (const required of ['go.mod', 'vendor/modules.txt'] as const) {
+    if (!selectedFiles.some((file) => file.rel === required)) {
+      throw new OwnerLocalMaterializationError('MATERIALIZATION_FAILED', 'MANIFEST_MISSING');
     }
-    for (const entry of entries) {
-      if (entry.name === '.git') continue;
-      const src = path.join(srcDir, entry.name);
-      let stats: fs.Stats;
-      try {
-        stats = fs.lstatSync(src);
-      } catch {
-        throw new OwnerLocalMaterializationError('MATERIALIZATION_FAILED', 'STAT_FAILED');
-      }
-      // Fail closed on symlinks: never follow, hardlink, or recreate them.
-      if (stats.isSymbolicLink()) {
+  }
+  try {
+    for (const file of selectedFiles.slice().sort((left, right) => left.rel.localeCompare(right.rel))) {
+      // Fail closed on anything that is not a regular blob: a symlink in the
+      // recorded tree is never followed, hardlinked, or recreated, and a
+      // submodule entry (160000) is not a file.
+      if (file.mode === '120000') {
         throw new OwnerLocalMaterializationError('MATERIALIZATION_FAILED', 'SYMLINK_REJECTED');
       }
-      if (stats.isDirectory()) {
-        const resolved = path.resolve(src);
-        // Prune unrelated nested packages: descend only into testdata (kept
-        // whole, including data files), selected dirs, and ancestors of
-        // selected dirs. Bare resource dirs without Go files are kept.
-        if (
-          pruneNested &&
-          entry.name !== 'testdata' &&
-          !selected.has(resolved) &&
-          !selectedBeneath(resolved) &&
-          dirHasGoFiles(resolved)
-        ) {
-          continue;
-        }
-        const relative = path.relative(moduleRoot, src);
-        const dst = path.join(dest, relative);
-        if (!isPathInside(dst, dest)) {
-          throw new OwnerLocalMaterializationError('MATERIALIZATION_FAILED', 'PATH_ESCAPE');
-        }
-        try {
-          fs.mkdirSync(dst, { recursive: true });
-        } catch {
-          throw new OwnerLocalMaterializationError('MATERIALIZATION_FAILED', 'MKDIR_FAILED');
-        }
-        checked += 1;
-        checkDeadline();
-        copySelectedDir(src, pruneNested && entry.name !== 'testdata');
-      } else if (stats.isFile()) {
-        copyOneFile(src, stats);
-      } else {
+      if (file.mode !== '100644' && file.mode !== '100755') {
         throw new OwnerLocalMaterializationError('MATERIALIZATION_FAILED', 'NOT_REGULAR');
       }
-    }
-  };
-  const copyTopFile = (relative: string, required: boolean): void => {
-    const src = path.join(moduleRoot, ...relative.split('/'));
-    let stats: fs.Stats;
-    try {
-      stats = fs.lstatSync(src);
-    } catch {
-      if (!required) return;
-      throw new OwnerLocalMaterializationError('MATERIALIZATION_FAILED', 'MANIFEST_MISSING');
-    }
-    if (stats.isSymbolicLink() || !stats.isFile() || !hasNoSymlinkPath(src)) {
-      if (!required) return;
-      throw new OwnerLocalMaterializationError('MATERIALIZATION_FAILED', 'MANIFEST_MISSING');
-    }
-    copyOneFile(src, stats);
-  };
-  try {
-    const packageDirAbs = path.resolve(input.packageDirAbs);
-    if (!isPathInside(packageDirAbs, moduleRoot) || !isRegularDirectoryNoFollow(packageDirAbs)) {
-      throw new OwnerLocalMaterializationError('WORKSPACE_UNAVAILABLE', 'PACKAGE_DIR_UNREADABLE');
-    }
-    selected.add(packageDirAbs);
-    for (const dir of input.closureDirs) {
-      const resolved = path.resolve(dir);
-      if (!isPathInside(resolved, moduleRoot) || !isRegularDirectoryNoFollow(resolved)) {
-        throw new OwnerLocalMaterializationError('MATERIALIZATION_FAILED', 'CLOSURE_DIR_UNREADABLE');
+      const dst = path.join(dest, ...file.rel.split('/'));
+      if (!isPathInside(dst, dest)) {
+        throw new OwnerLocalMaterializationError('MATERIALIZATION_FAILED', 'PATH_ESCAPE');
       }
-      selected.add(resolved);
-    }
-    copyTopFile('go.mod', true);
-    copyTopFile('go.sum', false);
-    copyTopFile(path.join('vendor', 'modules.txt'), true);
-    for (const dir of [...selected].sort()) {
-      copySelectedDir(dir, true);
+      const blob = await readBlob({
+        repoRoot: repositoryRoot,
+        headSha: input.headSha,
+        relativePath: file.repoPath,
+      });
+      if (blob === null) {
+        // The tree listed it, so a missing blob is a corrupt/unreadable store,
+        // never an untracked file.
+        throw new OwnerLocalMaterializationError('MATERIALIZATION_FAILED', 'GIT_BLOB_UNAVAILABLE');
+      }
+      fileCount += 1;
+      byteCount += blob.byteLength;
+      if (fileCount > input.limits.materializedFiles || byteCount > input.limits.materializedBytes) {
+        throw new OwnerLocalMaterializationError('MATERIALIZATION_LIMIT_EXCEEDED', 'CLOSURE_TOO_LARGE');
+      }
+      try {
+        fs.mkdirSync(path.dirname(dst), { recursive: true });
+        fs.writeFileSync(dst, blob, { mode: 0o600 });
+      } catch {
+        throw new OwnerLocalMaterializationError('MATERIALIZATION_FAILED', 'COPY_FAILED');
+      }
+      checked += 1;
+      checkDeadline();
     }
   } catch (error) {
     removeTreeBestEffort(dest);
@@ -1349,6 +1421,10 @@ export function failureFingerprintForOutput(stdout: string, stderr: string): str
 
 export interface OwnerLocalReproductionPorts {
   readonly runGit?: OwnerLocalGitRunner;
+  /** Test seam for the HEAD-bound object-store reader (6.11/X-05). */
+  readonly readGitBlob?: (input: GitBlobReadInput) => Promise<Buffer | null>;
+  /** Test seam for the recorded-HEAD tree listing (6.11/X-05). */
+  readonly listGitTree?: (input: GitTreeListInput) => Promise<readonly GitTreeEntry[] | null>;
   readonly runGoTest?: (input: OwnerLocalGoRunInput) => Promise<OwnerLocalGoRunResult>;
   readonly resolveGoBinary?: (
     requiredVersion: string | null,
@@ -1455,12 +1531,18 @@ export async function executeOwnerLocalTarget(
   if (closureDirs === null) {
     throw new OwnerLocalMaterializationError('MATERIALIZATION_FAILED', 'CLOSURE_LIST_FAILED');
   }
-  const closure = materializeOwnerLocalClosure({
+  const closure = await materializeOwnerLocalClosure({
     moduleRoot,
     packageDirAbs,
     closureDirs,
     limits: input.limits,
     tempRoot: input.tempRoot,
+    // M5 (6.11/X-05): the recorded HEAD of the target's repository is the only
+    // source of the bytes this reproduction executes.
+    repositoryRoot: resolveOwnerLocalRepositoryRoot(input.siblingRoot, input.target.repository) ?? moduleRoot,
+    headSha: input.target.repositoryHeadSha,
+    readGitBlob: input.ports?.readGitBlob,
+    listGitTree: input.ports?.listGitTree,
   });
   try {
     // Host-derived argv only: `go test -mod=vendor -count=1 ./<package>`.

@@ -187,6 +187,52 @@ function auditField(value: LocalReproductionProviderResult, field: string): unkn
   return undefined;
 }
 
+
+/**
+ * M5 (6.11/X-05): the fabricated fixtures model "HEAD == the tree the fixture
+ * wrote", so the object-store ports read those same bytes. Production reads the
+ * real Git object store.
+ */
+function stubObjectStore(repoRoot: string) {
+  const listGitTree = async (input: {
+    readonly repoRoot: string;
+    readonly headSha: string;
+    readonly pathPrefix: string;
+  }): Promise<readonly { readonly path: string; readonly mode: string }[]> => {
+    const entries: { path: string; mode: string }[] = [];
+    const walk = (dir: string): void => {
+      for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+        if (entry.name === '.git') continue;
+        const abs = path.join(dir, entry.name);
+        if (entry.isDirectory()) {
+          walk(abs);
+          continue;
+        }
+        const rel = path.relative(repoRoot, abs).split(path.sep).join('/');
+        const stats = fs.lstatSync(abs);
+        entries.push({
+          path: rel,
+          mode: stats.isSymbolicLink() ? '120000' : (stats.mode & 0o111) !== 0 ? '100755' : '100644',
+        });
+      }
+    };
+    walk(input.pathPrefix.length > 0 ? path.join(repoRoot, input.pathPrefix) : repoRoot);
+    return entries;
+  };
+  const readGitBlob = async (input: {
+    readonly repoRoot: string;
+    readonly headSha: string;
+    readonly relativePath: string;
+  }): Promise<Buffer | null> => {
+    try {
+      return fs.readFileSync(path.join(repoRoot, ...input.relativePath.split('/')));
+    } catch {
+      return null;
+    }
+  };
+  return { listGitTree, readGitBlob };
+}
+
 test.describe('W9 owner-local reproduction provider (fabricated)', () => {
   test('discovers a supported target with host-derived facts', () => {
     const siblingRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'nw-prov-sib-'));
@@ -275,6 +321,7 @@ test.describe('W9 owner-local reproduction provider (fabricated)', () => {
         tempRoot,
         sourceProvider: stubSourceProvider(new Map([[SOURCE_PATH, FOO_GO]])),
         ports: {
+          ...stubObjectStore(repoRoot),
           runGit: stubGit(repoRoot, ['', '']),
           runGoTest: scriptedGo([FAIL_RUN, FAIL_RUN], seen),
           resolveGoBinary: stubToolchain(),
@@ -325,6 +372,7 @@ test.describe('W9 owner-local reproduction provider (fabricated)', () => {
         tempRoot,
         sourceProvider: stubSourceProvider(new Map([[SOURCE_PATH, FOO_GO]])),
         ports: {
+          ...stubObjectStore(repoRoot),
           runGit: stubGit(repoRoot, ['', '']),
           runGoTest: scriptedGo([PASS_RUN, PASS_RUN], seen),
           resolveGoBinary: stubToolchain(),
@@ -359,6 +407,7 @@ test.describe('W9 owner-local reproduction provider (fabricated)', () => {
         tempRoot,
         sourceProvider: stubSourceProvider(new Map([[SOURCE_PATH, FOO_GO]])),
         ports: {
+          ...stubObjectStore(repoRoot),
           runGit: stubGit(repoRoot, ['', '']),
           runGoTest: scriptedGo([BUILD_RUN, BUILD_RUN], []),
           resolveGoBinary: stubToolchain(),
@@ -390,6 +439,7 @@ test.describe('W9 owner-local reproduction provider (fabricated)', () => {
         tempRoot,
         sourceProvider: stubSourceProvider(new Map([[SOURCE_PATH, FOO_GO]])),
         ports: {
+          ...stubObjectStore(repoRoot),
           runGit: stubGit(repoRoot, ['', '']),
           runGoTest: scriptedGo([TIMEOUT_RUN, TIMEOUT_RUN], []),
           resolveGoBinary: stubToolchain(),
@@ -421,6 +471,7 @@ test.describe('W9 owner-local reproduction provider (fabricated)', () => {
         tempRoot,
         sourceProvider: stubSourceProvider(new Map([[SOURCE_PATH, FOO_GO]])),
         ports: {
+          ...stubObjectStore(repoRoot),
           runGit: stubGit(repoRoot, ['', '']),
           runGoTest: scriptedGo([FAIL_RUN, FAIL_RUN], seen),
           resolveGoBinary: () => ({ status: 'BLOCKED', block: 'TOOLCHAIN_UNAVAILABLE' }),
@@ -448,6 +499,7 @@ test.describe('W9 owner-local reproduction provider (fabricated)', () => {
         tempRoot,
         sourceProvider: stubSourceProvider(new Map([[SOURCE_PATH, FOO_GO]])),
         ports: {
+          ...stubObjectStore(repoRoot),
           runGit: stubGit(repoRoot, ['', ' M pkg/gcsv/info.go\n']),
           runGoTest: scriptedGo([FAIL_RUN, FAIL_RUN], []),
           resolveGoBinary: stubToolchain(),
@@ -483,6 +535,7 @@ test.describe('W9 owner-local reproduction provider (fabricated)', () => {
           new Map([[SOURCE_PATH, 'package gcsv\n\nfunc Info() string { return "moved" }\n']]),
         ),
         ports: {
+          ...stubObjectStore(repoRoot),
           runGit: stubGit(repoRoot, ['', '']),
           runGoTest: scriptedGo([FAIL_RUN, FAIL_RUN], seen),
           resolveGoBinary: stubToolchain(),
@@ -519,6 +572,7 @@ test.describe('W9 owner-local reproduction provider (fabricated)', () => {
         tempRoot,
         sourceProvider: stale,
         ports: {
+          ...stubObjectStore(repoRoot),
           runGit: stubGit(repoRoot, ['', '']),
           runGoTest: scriptedGo([FAIL_RUN, FAIL_RUN], seen),
           resolveGoBinary: stubToolchain(),
@@ -594,6 +648,7 @@ test.describe('W10 current-failure evidence exposure (fabricated)', () => {
         tempRoot,
         sourceProvider: stubSourceProvider(new Map([[SOURCE_PATH, FOO_GO]])),
         ports: {
+          ...stubObjectStore(repoRoot),
           runGit: stubGit(repoRoot, ['', '']),
           runGoTest: scriptedGo(runs, []),
           resolveGoBinary: stubToolchain(),

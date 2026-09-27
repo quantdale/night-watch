@@ -106,6 +106,7 @@
         "tests/unit/releaseFreshness.test.ts",
         "tests/unit/reproductionCapabilityCensus.test.ts",
         "tests/unit/reproductionCapabilityMemory.test.ts",
+        "tests/unit/reproductionGitMaterialization.test.ts",
         "tests/unit/reproductionSurfaceContracts.test.ts",
         "tests/unit/resolver.test.ts",
         "tests/unit/rippleBootstrapDiagnostics.test.ts",

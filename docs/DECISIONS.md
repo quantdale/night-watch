@@ -5184,3 +5184,49 @@ tolerant read already covers honestly. The independent W13 attribution metric
 `retries` (a measured per-provider count inside a frozen aggregate schema) is
 deliberately untouched: it is a different vocabulary with its own persisted
 artifacts.
+
+## D-145 — reproduction materializes from the recorded HEAD's tree, never from the working tree (X-05)
+
+**Context.** `materializeOwnerLocalClosure` copied the closure with
+`fs.copyFileSync` from the sibling's WORKING TREE while the proof it fed
+labelled the run with `repositoryHeadSha`. A dirty sibling therefore changed
+the bytes a reproduction executed while the evidence claimed the recorded
+revision: the label was true about the repository's HEAD and false about the
+executed source.
+
+**Decision.** The closure is enumerated from the Git object store at the
+RECORDED HEAD and materialized from that tree:
+
+- the file list comes from `git ls-tree -r <headSha> -- <module>` (the tree,
+  not a directory walk), so a file deleted in the working tree is still
+  materialized at its HEAD content and an untracked file simply does not exist
+  in the closure;
+- each file's bytes come from `git cat-file blob <headSha>:<path>`, so a
+  modified tracked file contributes its HEAD bytes;
+- the closure is a pure function of (repository, headSha, module root,
+  selected closure dirs, limits) — the working tree is not an input;
+- the recorded HEAD binding is REQUIRED: a missing or malformed `headSha`
+  refuses with `HEAD_BINDING_MISSING`, and an unreadable tree refuses with
+  `HEAD_TREE_UNAVAILABLE` rather than silently falling back to the working
+  tree;
+- a symlink entry (`120000`) refuses with `SYMLINK_REJECTED` and a submodule
+  entry is `NOT_REGULAR`, both unchanged in intent but now decided from the
+  tree's modes rather than from `lstat` of a checkout;
+- a blob the tree listed but the store cannot produce is
+  `GIT_BLOB_UNAVAILABLE` — corruption, never an "untracked file" to skip.
+
+The nested-package pruning rule is preserved verbatim in intent (selected
+dirs, `testdata`, and bare resource dirs without Go files are kept; other
+nested packages are pruned) but is now decided from the HEAD tree's own file
+list, so pruning cannot depend on which files a developer happens to have.
+
+**Evidence and consequences.** `tests/unit/reproductionGitMaterialization.test.ts`
+proves it against a REAL repository: a modified tracked file yields its HEAD
+bytes, a deleted tracked file is still materialized, an untracked file is
+absent, an invalid HEAD binding refuses, and cleanup removes the tree. The
+fabricated provider fixtures gained an object-store test double
+(`stubObjectStore`) modelling "HEAD == the tree the fixture wrote"; 71 tests
+across the owner-local reproduction suites pass, including the real-repo
+proofs. No new authority is added: the materializer reads Git objects
+read-only, executes nothing, and keeps its existing limits, symlink refusal,
+path-escape checks and cleanup.

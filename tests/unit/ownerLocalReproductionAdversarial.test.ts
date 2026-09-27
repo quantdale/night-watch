@@ -78,6 +78,52 @@ function stableGit(repoRoot: string): OwnerLocalGitRunner {
   };
 }
 
+
+/**
+ * M5 (6.11/X-05): the fabricated fixtures model "HEAD == the tree the fixture
+ * wrote", so the object-store ports read those same bytes. Production reads the
+ * real Git object store.
+ */
+function stubObjectStore(repoRoot: string) {
+  const listGitTree = async (input: {
+    readonly repoRoot: string;
+    readonly headSha: string;
+    readonly pathPrefix: string;
+  }): Promise<readonly { readonly path: string; readonly mode: string }[]> => {
+    const entries: { path: string; mode: string }[] = [];
+    const walk = (dir: string): void => {
+      for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+        if (entry.name === '.git') continue;
+        const abs = path.join(dir, entry.name);
+        if (entry.isDirectory()) {
+          walk(abs);
+          continue;
+        }
+        const rel = path.relative(repoRoot, abs).split(path.sep).join('/');
+        const stats = fs.lstatSync(abs);
+        entries.push({
+          path: rel,
+          mode: stats.isSymbolicLink() ? '120000' : (stats.mode & 0o111) !== 0 ? '100755' : '100644',
+        });
+      }
+    };
+    walk(input.pathPrefix.length > 0 ? path.join(repoRoot, input.pathPrefix) : repoRoot);
+    return entries;
+  };
+  const readGitBlob = async (input: {
+    readonly repoRoot: string;
+    readonly headSha: string;
+    readonly relativePath: string;
+  }): Promise<Buffer | null> => {
+    try {
+      return fs.readFileSync(path.join(repoRoot, ...input.relativePath.split('/')));
+    } catch {
+      return null;
+    }
+  };
+  return { listGitTree, readGitBlob };
+}
+
 test.describe('W9 owner-local adversarial handling (fabricated)', () => {
   test('model-supplied command, env, and toolchain fields buy no authority', async () => {
     const siblingRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'nw-adv-sib-'));
@@ -89,6 +135,7 @@ test.describe('W9 owner-local adversarial handling (fabricated)', () => {
         siblingRoot,
         tempRoot,
         ports: {
+          ...stubObjectStore(repoRoot),
           runGit: stableGit(repoRoot),
           runGoTest: async (input: OwnerLocalGoRunInput) => {
             seen.push(input);
@@ -155,6 +202,7 @@ test.describe('W9 owner-local adversarial handling (fabricated)', () => {
         siblingRoot,
         tempRoot,
         ports: {
+          ...stubObjectStore(repoRoot),
           runGit: stableGit(repoRoot),
           runGoTest: async () => {
             executions += 1;
@@ -219,6 +267,7 @@ test.describe('W9 owner-local adversarial handling (fabricated)', () => {
           siblingRoot,
           tempRoot,
           ports: {
+          ...stubObjectStore(repo),
             runGit: stableGit(repo),
             runGoTest: async () => {
               executions += 1;
@@ -258,6 +307,7 @@ test.describe('W9 owner-local adversarial handling (fabricated)', () => {
         siblingRoot,
         tempRoot,
         ports: {
+          ...stubObjectStore(repoRoot),
           runGit: stableGit(repoRoot),
           runGoTest: async () => {
             executions += 1;
@@ -384,6 +434,7 @@ test.describe('W9 owner-local adversarial handling (fabricated)', () => {
         tempRoot,
         limits: { materializedFiles: 1 },
         ports: {
+          ...stubObjectStore(repoRoot),
           runGit: stableGit(repoRoot),
           runGoTest: async () => {
             executions += 1;
@@ -444,7 +495,7 @@ test.describe('W9 owner-local adversarial handling (fabricated)', () => {
     const siblingRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'nw-adv-sib-'));
     const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'nw-adv-tmp-'));
     try {
-      writeRepo(siblingRoot, fullTree());
+      const repoRoot = writeRepo(siblingRoot, fullTree());
       let goCalls = 0;
       let listed = 0;
       const discovery = discoverOwnerLocalTarget({ sourcePath: SOURCE_PATH, siblingRoot });
@@ -465,6 +516,7 @@ test.describe('W9 owner-local adversarial handling (fabricated)', () => {
         },
         tempRoot,
         ports: {
+          ...stubObjectStore(repoRoot),
           resolveSandbox: () => ({ status: 'BLOCKED' }),
           runGoTest: async () => {
             goCalls += 1;
@@ -549,6 +601,7 @@ test.describe('W9 owner-local adversarial handling (fabricated)', () => {
         siblingRoot,
         tempRoot,
         ports: {
+          ...stubObjectStore(repoRoot),
           runGit: stableGit(repoRoot),
           runGoTest: async (input: OwnerLocalGoRunInput) => {
             const found: string[] = [];
@@ -604,6 +657,7 @@ test.describe('W9 owner-local adversarial handling (fabricated)', () => {
         siblingRoot,
         tempRoot,
         ports: {
+          ...stubObjectStore(repoRoot),
           runGit: stableGit(repoRoot),
           runGoTest: async () => {
             goCalls += 1;
