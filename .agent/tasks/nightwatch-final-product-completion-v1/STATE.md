@@ -246,7 +246,19 @@ the gate pair (see the ledger).
   `tests/unit/bodyReadAcquisition.test.ts` 4/4, the network-observer/journey
   suites 14/14, `hardening:check` PASS, and the sharded lane PASS at 5685/0
   (5718 planned, 0 failed).
-  Next: 9.7 (NW-AUD-024 residual) then 9.8-9.13 to close M8.
+  M8 9.7 DONE — run evidence bundle transaction integrity (NW-AUD-024
+  residual): a deterministic `generation` identity in the manifest (two
+  bundles differing in run id or start instant are distinguishable; a
+  frozen-clock replay stays byte-identical), `addManifestEntry` fails closed on
+  a malformed manifest instead of silently replacing it with `{}`, appends are
+  bounded at append time (`RUN_EVIDENCE_APPEND_BOUND_EXCEEDED`), and
+  `download.cancel()` moved into a `finally`. Evidence:
+  `tests/unit/runEvidenceBundleTransaction.test.ts` 7/7, `evidence.test.ts`
+  26/26 (including byte-for-byte reproducibility with the new field),
+  `hardening:check` PASS, and the sharded lane PASS at 5692/0 (5725 planned,
+  0 failed).
+  Next: 9.8 (NW-AUD-016 narrowed: per-start nonce echoed by the health endpoint
+  and bound to the event log) then 9.9-9.13 to close M8.
 - M6 is COMPLETE: 7.1-7.11 are ticked in the campaign ledger with DONE notes
   and PLAN marks M6 COMPLETE. The view-DOM baseline was intentionally
   REGENERATED (`NIGHTWATCH_UPDATE_VIEW_DOM_BASELINE=1`) because the Agent
