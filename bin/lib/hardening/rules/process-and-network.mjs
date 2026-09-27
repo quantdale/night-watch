@@ -32,6 +32,55 @@ import {
   EFFECT_CLASSES,
 } from "../../transportEffectCensus.mjs";
 
+/**
+ * M8 (9.12): the M8 guard totality rule.
+ *
+ * Every guard the M8 milestones established must still be PRESENT in code, and
+ * each one carries a registered mutation probe (config/hardening-rule-probes.
+ * v1.json) that proves the rule fails when the guard is removed. A guard with
+ * no rule and no probe is a claim that rots silently.
+ */
+export function checkM8GuardTotality() {
+  const guards = [
+    ["src/core/policy/devLanePreconditions.ts", "DEV_LANE_PRECONDITION_OPEN", "the DEV-lane precondition refusal"],
+    ["bin/lib/dev-lane-precondition.mjs", "guardDevLane(", "the DEV-lane launcher guard"],
+    ["src/auth/capabilityLifecycle.ts", "AUTH_BUNDLE_TRANSACTION_PENDING", "the auth bundle transaction reader refusal"],
+    ["src/auth/capabilityLifecycle.ts", "recoverAuthCapabilityBundle", "the auth bundle recovery authority"],
+    ["src/auth/loginForm.ts", "beginEffectSequence", "the one-shot DEV credential effect sequence"],
+    ["src/auth/loginForm.ts", "pinVerified", "the verified-element-identity pinning"],
+    ["src/browser/observers/networkObserver.ts", "MAX_CONCURRENT_BODY_READS", "the bounded body-read acquisition gate"],
+    ["src/browser/observers/networkObserver.ts", "void joined;", "the joined losing body-read promise"],
+    ["src/browser/context.ts", "setupRollback", "the browser-context setup rollback"],
+    ["src/browser/context.ts", "awaitAcquisitions", "the awaited popup guard barrier"],
+    ["src/core/evidence/runRecorder.ts", "RUN_EVIDENCE_APPEND_BOUND_EXCEEDED", "the append-time evidence bound"],
+    ["src/core/evidence/runRecorder.ts", "RUN_EVIDENCE_MANIFEST_INVALID", "the fail-closed manifest parse"],
+    ["src/proxy/events.ts", "PROXY_EVIDENCE_LEDGER_INVALID", "the strict proxy ledger reader"],
+    ["src/proxy/events.ts", "PROXY_EFFECT_PHASES", "the proxy effect-pair phases"],
+    ["src/proxy/runtime.ts", "checkProxyHealthDetailed", "the proxy instance-nonce observation"],
+    ["src/core/oops/l6.ts", "invocationCredential", "the relay invocation credential"],
+    ["src/api/phase5/relay.ts", "RELAY_OBSERVATION_ALREADY_RECORDED", "the single-write relay observation"],
+    ["src/core/changeIntelligence/selection.ts", "CHANGESET_ID_MISMATCH", "the ChangeSet id recomputation"],
+    ["src/core/changeIntelligence/selection.ts", "CHANGESET_RENAME_ENDPOINT_MISSING", "the both-endpoint rename rule"],
+    ["src/core/semanticCoverage/sourceAnalyzers.ts", "HEURISTIC", "the heuristic analyzer proof tier"],
+    ["bin/lib/childProcessCensus.mjs", "KNOWN_CREATE_REQUIRE_SITES", "the declared createRequire exemption list"],
+    ["src/core/validation/shardExecutionReceipt.ts", "ALL_SKIPPED", "the all-skipped shard refusal"],
+  ];
+  for (const [file, token, description] of guards) {
+    if (!read(file).includes(token)) fail(`${description} is missing from ${file}`);
+  }
+  // The probes must be registered for this rule, one per guard family.
+  const registry = JSON.parse(read('config/hardening-rule-probes.v1.json'));
+  const probes = registry.probes.checkM8GuardTotality;
+  if (!Array.isArray(probes) || probes.length < guards.length) {
+    fail('every M8 guard must carry a registered mutation probe');
+  }
+  const ids = new Set(probes.map((probe) => probe.id));
+  if (ids.size !== probes.length) fail('M8 guard probes must have unique ids');
+  for (const probe of probes) {
+    if (!Array.isArray(probe.ops) || probe.ops.length === 0) fail(`probe ${probe.id} has no operations`);
+  }
+}
+
 export function checkChildProcessBoundaries() {
   // Historical launcher list: still bounds the named high-authority files
   // (timeout/maxBuffer/shell/stdio/env-spread) so HC-001 remains non-vacuous.

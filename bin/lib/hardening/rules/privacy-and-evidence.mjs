@@ -808,6 +808,17 @@ export function checkAuthenticatedEvidenceFirewall() {
   if (!/fs\.openSync\(temporary, ['"]wx['"], 0o600\)/.test(recorder) || !recorder.includes('this.fsyncRunDirectory()')) {
     fail('run recorder publication must be wx/0600 + fsynced (private-equivalent primitive)');
   }
+  // M8 (9.12): the run-bundle guards the M8 work established must stay in
+  // code, each with its own probe (exclusive generation, durable append bound,
+  // fail-closed manifest parse and the durable-event assertion).
+  for (const [element, message] of [
+    ['RUN_EVIDENCE_DIRECTORY_EXISTS', 'the run directory must be an exclusive generation identity (EEXIST claim)'],
+    ['RUN_EVIDENCE_APPEND_BOUND_EXCEEDED', 'appends must be bounded at append time'],
+    ['RUN_EVIDENCE_MANIFEST_INVALID', 'a malformed manifest must fail closed rather than be replaced'],
+    ['this.assertDurableEventState();', 'finalize must assert the durable event state before publishing'],
+  ]) {
+    if (!recorder.includes(element)) fail(`run recorder is missing the M8 bundle guard: ${message}`);
+  }
   // Shared structural key authority (collapses the parallel denylist).
   if (!recorder.includes('privateKeySensitivity(key)')) {
     fail('authenticated sanitization must use the shared structural key authority');

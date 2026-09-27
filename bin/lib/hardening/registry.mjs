@@ -81,6 +81,7 @@ export function discoverRuleModuleFiles() {
  * @type {ReadonlyArray<{name: string, module: string, family: string, quantifier: string, subject: string, firstMatch?: string, injectRegistry?: boolean}>}
  */
 export const RULE_TABLE = Object.freeze([
+  { name: 'checkM8GuardTotality', module: 'process-and-network', family: 'process-boundaries', quantifier: 'TOTALITY', subject: 'every guard the M8 milestones established is still present in code and carries a registered mutation probe' },
   { name: 'checkChildProcessBoundaries', module: 'process-and-network', family: 'process-boundaries', quantifier: 'TOTALITY', subject: 'every launcher bounds child execution and production source cannot reach shell-capable execution' },
   { name: 'checkSemanticTransportTotality', module: 'process-and-network', family: 'process-boundaries', quantifier: 'TOTALITY', subject: 'every product-effect site discovers into one closed semantic authority class and the admission/generation/redirect/WS/proxy/relay protections remain in code' },
   { name: 'checkReviewStoreBoundary', module: 'privacy-and-evidence', family: 'review-store', quantifier: 'TOTALITY', subject: 'every private-store call, validator invocation, and error code in the review cone is allowlisted', firstMatch: 'the review file-name pattern declaration is a singleton constant' },

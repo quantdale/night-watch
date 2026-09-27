@@ -62,6 +62,16 @@
             "replace": "spawnSync('npx', ['playwright', 'test',"
           }
         ]
+      },
+      {
+        "id": "HC-154",
+        "ops": [
+          {
+            "file": "bin/lib/childProcessCensus.mjs",
+            "search": "const unresolved = new Set();",
+            "replace": "const unresolved = new Set(['probe-indirection']);"
+          }
+        ]
       }
     ],
     "checkL6ProcessNetworkBoundary": [
@@ -1567,6 +1577,48 @@
             "replace": ""
           }
         ]
+      },
+      {
+        "id": "HC-150",
+        "ops": [
+          {
+            "file": "src/core/evidence/runRecorder.ts",
+            "search": "if ((error as NodeJS.ErrnoException).code === 'EEXIST') throw new Error('RUN_EVIDENCE_DIRECTORY_EXISTS');",
+            "replace": "if ((error as NodeJS.ErrnoException).code === 'EEXIST') { /* probe */ }"
+          }
+        ]
+      },
+      {
+        "id": "HC-151",
+        "ops": [
+          {
+            "file": "src/core/evidence/runRecorder.ts",
+            "search": "throw new Error('RUN_EVIDENCE_APPEND_BOUND_EXCEEDED');",
+            "replace": "void 0; // probe: append bound removed"
+          }
+        ]
+      },
+      {
+        "id": "HC-152",
+        "ops": [
+          {
+            "file": "src/core/evidence/runRecorder.ts",
+            "search": "throw new Error('RUN_EVIDENCE_MANIFEST_INVALID');",
+            "replace": "void 0; // probe: manifest parse fails open",
+            "all": true
+          }
+        ]
+      },
+      {
+        "id": "HC-153",
+        "ops": [
+          {
+            "file": "src/core/evidence/runRecorder.ts",
+            "search": "this.assertDurableEventState();",
+            "replace": "void 0; // probe",
+            "all": true
+          }
+        ]
       }
     ],
     "checkSemanticTransportTotality": [
@@ -1728,6 +1780,250 @@
             "file": "src/controlCenter/authorities/sourceAuthority.ts",
             "search": "import { createSiblingSourceAccess, type SiblingSourceAccess } from '../../core/source/siblingSource';",
             "replace": "import { createSiblingSourceAccess, type SiblingSourceAccess } from '../../core/source/siblingSource';\nimport { DEFAULT_SIBLING_ROOT } from '../../core/source/siblingRoot';\nvoid DEFAULT_SIBLING_ROOT;"
+          }
+        ]
+      }
+    ],
+    "checkM8GuardTotality": [
+      {
+        "id": "HC-155",
+        "ops": [
+          {
+            "file": "src/core/policy/devLanePreconditions.ts",
+            "search": "DEV_LANE_PRECONDITION_OPEN",
+            "replace": "PROBE_REMOVED",
+            "all": true
+          }
+        ]
+      },
+      {
+        "id": "HC-156",
+        "ops": [
+          {
+            "file": "bin/lib/dev-lane-precondition.mjs",
+            "search": "guardDevLane(",
+            "replace": "PROBE_REMOVED",
+            "all": true
+          }
+        ]
+      },
+      {
+        "id": "HC-157",
+        "ops": [
+          {
+            "file": "src/auth/capabilityLifecycle.ts",
+            "search": "AUTH_BUNDLE_TRANSACTION_PENDING",
+            "replace": "PROBE_REMOVED",
+            "all": true
+          }
+        ]
+      },
+      {
+        "id": "HC-158",
+        "ops": [
+          {
+            "file": "src/auth/loginForm.ts",
+            "search": "beginEffectSequence",
+            "replace": "PROBE_REMOVED",
+            "all": true
+          }
+        ]
+      },
+      {
+        "id": "HC-159",
+        "ops": [
+          {
+            "file": "src/auth/loginForm.ts",
+            "search": "pinVerified",
+            "replace": "PROBE_REMOVED",
+            "all": true
+          }
+        ]
+      },
+      {
+        "id": "HC-160",
+        "ops": [
+          {
+            "file": "src/browser/observers/networkObserver.ts",
+            "search": "MAX_CONCURRENT_BODY_READS",
+            "replace": "PROBE_REMOVED",
+            "all": true
+          }
+        ]
+      },
+      {
+        "id": "HC-161",
+        "ops": [
+          {
+            "file": "src/browser/observers/networkObserver.ts",
+            "search": "void joined;",
+            "replace": "PROBE_REMOVED",
+            "all": true
+          }
+        ]
+      },
+      {
+        "id": "HC-162",
+        "ops": [
+          {
+            "file": "src/browser/context.ts",
+            "search": "setupRollback",
+            "replace": "PROBE_REMOVED",
+            "all": true
+          }
+        ]
+      },
+      {
+        "id": "HC-163",
+        "ops": [
+          {
+            "file": "src/browser/context.ts",
+            "search": "awaitAcquisitions",
+            "replace": "PROBE_REMOVED",
+            "all": true
+          }
+        ]
+      },
+      {
+        "id": "HC-164",
+        "ops": [
+          {
+            "file": "src/core/evidence/runRecorder.ts",
+            "search": "RUN_EVIDENCE_APPEND_BOUND_EXCEEDED",
+            "replace": "PROBE_REMOVED",
+            "all": true
+          }
+        ]
+      },
+      {
+        "id": "HC-165",
+        "ops": [
+          {
+            "file": "src/core/evidence/runRecorder.ts",
+            "search": "RUN_EVIDENCE_MANIFEST_INVALID",
+            "replace": "PROBE_REMOVED",
+            "all": true
+          }
+        ]
+      },
+      {
+        "id": "HC-166",
+        "ops": [
+          {
+            "file": "src/proxy/events.ts",
+            "search": "PROXY_EVIDENCE_LEDGER_INVALID",
+            "replace": "PROBE_REMOVED",
+            "all": true
+          }
+        ]
+      },
+      {
+        "id": "HC-167",
+        "ops": [
+          {
+            "file": "src/proxy/events.ts",
+            "search": "PROXY_EFFECT_PHASES",
+            "replace": "PROBE_REMOVED",
+            "all": true
+          }
+        ]
+      },
+      {
+        "id": "HC-168",
+        "ops": [
+          {
+            "file": "src/proxy/runtime.ts",
+            "search": "checkProxyHealthDetailed",
+            "replace": "PROBE_REMOVED",
+            "all": true
+          }
+        ]
+      },
+      {
+        "id": "HC-169",
+        "ops": [
+          {
+            "file": "src/core/oops/l6.ts",
+            "search": "invocationCredential",
+            "replace": "PROBE_REMOVED",
+            "all": true
+          }
+        ]
+      },
+      {
+        "id": "HC-170",
+        "ops": [
+          {
+            "file": "src/api/phase5/relay.ts",
+            "search": "RELAY_OBSERVATION_ALREADY_RECORDED",
+            "replace": "PROBE_REMOVED",
+            "all": true
+          }
+        ]
+      },
+      {
+        "id": "HC-171",
+        "ops": [
+          {
+            "file": "src/core/changeIntelligence/selection.ts",
+            "search": "CHANGESET_ID_MISMATCH",
+            "replace": "PROBE_REMOVED",
+            "all": true
+          }
+        ]
+      },
+      {
+        "id": "HC-172",
+        "ops": [
+          {
+            "file": "src/core/changeIntelligence/selection.ts",
+            "search": "CHANGESET_RENAME_ENDPOINT_MISSING",
+            "replace": "PROBE_REMOVED",
+            "all": true
+          }
+        ]
+      },
+      {
+        "id": "HC-173",
+        "ops": [
+          {
+            "file": "src/core/semanticCoverage/sourceAnalyzers.ts",
+            "search": "HEURISTIC",
+            "replace": "PROBE_REMOVED",
+            "all": true
+          }
+        ]
+      },
+      {
+        "id": "HC-174",
+        "ops": [
+          {
+            "file": "bin/lib/childProcessCensus.mjs",
+            "search": "KNOWN_CREATE_REQUIRE_SITES",
+            "replace": "PROBE_REMOVED",
+            "all": true
+          }
+        ]
+      },
+      {
+        "id": "HC-175",
+        "ops": [
+          {
+            "file": "src/core/validation/shardExecutionReceipt.ts",
+            "search": "ALL_SKIPPED",
+            "replace": "PROBE_REMOVED",
+            "all": true
+          }
+        ]
+      },
+      {
+        "id": "HC-176",
+        "ops": [
+          {
+            "file": "src/auth/capabilityLifecycle.ts",
+            "search": "recoverAuthCapabilityBundle",
+            "replace": "PROBE_REMOVED",
+            "all": true
           }
         ]
       }
