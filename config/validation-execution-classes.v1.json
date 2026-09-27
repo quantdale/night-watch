@@ -459,6 +459,12 @@
         "isolated-scratch"
       ]
     },
+    "tests/unit/controlCenterSafetyAuthority.test.ts": {
+      "class": "PARALLEL_SAFE",
+      "signals": [
+        "isolated-scratch"
+      ]
+    },
     "tests/unit/controlCenterServer.test.ts": {
       "class": "PARALLEL_SAFE",
       "signals": [

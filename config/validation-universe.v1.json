@@ -44,6 +44,7 @@
         "tests/unit/containedTestReplay.test.ts",
         "tests/unit/continuityLiveWaypoint.test.ts",
         "tests/unit/controlCenterAgentCampaigns.test.ts",
+        "tests/unit/controlCenterSafetyAuthority.test.ts",
         "tests/unit/controlCenterStatusTotality.test.ts",
         "tests/unit/currentFailureEvidence.test.ts",
         "tests/unit/currentSourceFindingAdmission.test.ts",

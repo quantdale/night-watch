@@ -81,12 +81,20 @@ export function projectSafety(input: SafetyAuthorityInput): ControlCenterSafetyD
       headSha: asSafeControlCenterSha(input.continuity.headSha),
       checkpointDigest: asSafeControlCenterDigest(input.continuity.checkpointDigest),
     },
+    // M6 (7.7/C-25): the wiring state is reported, never implied.
+    currentness: {
+      state: checks(input).some((check) => check.checkCode === 'CURRENTNESS_WIRING' && check.state === 'PASS')
+        ? 'WIRED'
+        : 'NOT_WIRED',
+      reasonCode: asSafeControlCenterCode('CURRENTNESS_REQUIRES_SOURCE_CONTRACT_MOVEMENT_EVIDENCE')!,
+    },
     checks: projectedChecks,
     blockedOperationClasses,
   };
 }
 
-export const DEFAULT_CONTROL_CENTER_SAFETY_INPUT: SafetyAuthorityInput = Object.freeze({
-  continuity: { state: 'UNKNOWN', branch: null, headSha: null, checkpointDigest: null },
-  checks: [],
-}) as SafetyAuthorityInput;
+/**
+ * M6 (7.7/B-11): the frozen default is RETIRED. The collector measures the
+ * input through `createSafetyAuthority()`; a constant here would let the
+ * Safety Center report a state nobody observed.
+ */

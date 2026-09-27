@@ -38,6 +38,15 @@ export interface ControlCenterSafetyDto {
     readonly headSha: SafeControlCenterSha | null;
     readonly checkpointDigest: SafeControlCenterDigest | null;
   };
+  /**
+   * M6 (7.7/C-25): whether currentness is WIRED to the source-contract
+   * family-movement classification. It is NOT_WIRED while no production caller
+   * supplies movement evidence, and the reason names that prerequisite.
+   */
+  readonly currentness: {
+    readonly state: 'WIRED' | 'NOT_WIRED';
+    readonly reasonCode: SafeControlCenterCode;
+  };
   readonly checks: readonly ControlCenterSafetyCheckDto[];
   readonly blockedOperationClasses: readonly SafeControlCenterCode[];
 }

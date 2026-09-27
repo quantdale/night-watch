@@ -5,7 +5,8 @@ import { summarizeLocalReadiness } from '../../core/readiness/localReadiness';
 import { collectAuthCapabilityReport } from '../../auth/capabilityLifecycle';
 import { projectMeta } from '../adapters/metaAdapter';
 import { projectReadiness } from '../adapters/readinessAdapter';
-import { DEFAULT_CONTROL_CENTER_SAFETY_INPUT, projectSafety } from '../adapters/safetyAdapter';
+import { projectSafety } from '../adapters/safetyAdapter';
+import { createSafetyAuthority } from '../authorities/safetyAuthority';
 import { projectExecutionGraph } from '../adapters/executionGraphAdapter';
 import { classifyRunStatus, projectRunDetail, projectRunList, projectTimeline } from '../adapters/runAdapter';
 import { projectCampaignCoverage, projectCampaignSummary } from '../adapters/campaignAdapter';
@@ -368,7 +369,9 @@ export function createControlCenterServices(options: DefaultControlCenterCollect
         },
       }));
     },
-    safety: () => projectSafety(DEFAULT_CONTROL_CENTER_SAFETY_INPUT),
+    // M6 (7.7/B-11): MEASURED from the owner-scope policy with explicit
+    // NOT_MEASURED labels for the owner-CLI surfaces, never a frozen constant.
+    safety: () => projectSafety(createSafetyAuthority().input()),
     runs: async (query) => {
       const snapshot = await readRunSnapshot();
       return projectRunList(snapshot.records, query.limit, { state: snapshot.state, reasonCodes: snapshot.reasonCodes }, query.cursor);
