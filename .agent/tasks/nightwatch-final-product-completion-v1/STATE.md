@@ -294,7 +294,20 @@ the gate pair (see the ledger).
   stays open. Evidence: `tests/unit/changeSetGenerationIntegrity.test.ts` 5/5,
   the aiReview/aiOwnerReview/changeIntelligence suites green, `hardening:check`
   PASS, sharded lane PASS at 5705/0 (5739 planned) plus `projectState` 103/103.
-  Next: 9.11 (R2-03 then R2-04) then 9.12-9.13 to close M8.
+  M8 9.11 DONE for R2-03, R2-04 RECORDED OPEN — child-process census
+  indirection totality: dynamic `import()`, `createRequire`, string-built
+  specifiers and namespace destructuring all record an unresolved indirection
+  now (a plain literal import stays clean; the two legitimate `createRequire`
+  sites are named in `KNOWN_CREATE_REQUIRE_SITES` so a new one still fails).
+  R2-04's explicit-env-allowlist and sync timeout/output-bound rules were
+  implemented, run and REVERTED because dozens of existing call sites are not
+  conformant (affected-tests, bin-typecheck, c12-preflight, evidence-retention,
+  finding-intel-scale, …); they need their own conformance sweep and stay open,
+  with the test pinning that the rules are absent rather than pretending.
+  Evidence: `tests/unit/childProcessCensusIndirection.test.ts` 6/6,
+  `hardening:check` PASS, sharded lane PASS at 5711/0 (5745 planned).
+  Next: 9.12 (mutation probes for every successor and M8 guard, then the full
+  probe campaign) and 9.13 (focused + gate:milestone) to close M8.
 - M6 is COMPLETE: 7.1-7.11 are ticked in the campaign ledger with DONE notes
   and PLAN marks M6 COMPLETE. The view-DOM baseline was intentionally
   REGENERATED (`NIGHTWATCH_UPDATE_VIEW_DOM_BASELINE=1`) because the Agent
