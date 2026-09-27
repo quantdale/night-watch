@@ -56,30 +56,34 @@ test.describe("Phase 21 lifecycle saturation", () => {
     const complete = phase21CompleteGraph();
     const baselineLedger = buildSemanticGapClosureLedger({ inventory, graph: baseline });
     const finalLedger = rebuildSemanticGapClosureLedger({ baseline: baselineLedger, inventory, graph: complete });
-    expect({ nodes: baseline.nodeCount, edges: baseline.edgeCount, gaps: baseline.gaps.length }).toEqual({ nodes: 157, edges: 151, gaps: 86 });
-    expect({ nodes: complete.nodeCount, edges: complete.edgeCount, gaps: complete.gaps.length }).toEqual({ nodes: 239, edges: 233, gaps: 3 });
-    expect(baselineLedger.totalGapCount).toBe(86);
-    expect(finalLedger.totalGapCount).toBe(86);
-    expect(finalLedger.closedGapCount).toBe(83);
-    expect(finalLedger.actionableGapCount).toBe(0);
+    expect({ nodes: baseline.nodeCount, edges: baseline.edgeCount, gaps: baseline.gaps.length }).toEqual({ nodes: 133, edges: 127, gaps: 62 });
+    expect({ nodes: complete.nodeCount, edges: complete.edgeCount, gaps: complete.gaps.length }).toEqual({ nodes: 185, edges: 179, gaps: 9 });
+    expect(baselineLedger.totalGapCount).toBe(62);
+    expect(finalLedger.totalGapCount).toBe(62);
+    expect(finalLedger.closedGapCount).toBe(53);
+    // M7 (8.4/NW-AUD-040): the narrowed admitted set leaves six gaps the
+    // closure cannot close. They stay ACTIONABLE and visible in the ledger —
+    // the property under test is that no gap is hidden, not that none remain.
+    expect(finalLedger.actionableGapCount).toBe(6);
     expect(finalLedger.irreducibleGapCount).toBe(3);
-    expect(finalLedger.statusCounts.OBSOLETE_AFTER_GRAPH_REBUILD).toBe(83);
+    expect(finalLedger.statusCounts.OBSOLETE_AFTER_GRAPH_REBUILD).toBe(53);
     expect(finalLedger.statusCounts.IRREDUCIBLE_SOURCE_PROOF).toBe(3);
     expect(finalLedger.records.filter((record) => record.reasonCode === "DUPLICATE_EQUIVALENCE_PROOF_MISSING")).toHaveLength(2);
-    // Phase 25 corrected the TS range-bound proof orientation. The resulting
-    // source-bound candidate identity intentionally advances this historical
-    // digest; Phase 25's analyzer matrix covers the old false-positive forms.
-    expect(finalLedger.baselineGraphDigest).toBe("contract-graph:sha256:741b136e752a061c002ec47d");
+    // Phase 25 corrected the TS range-bound proof orientation, and M7
+    // (8.4/NW-AUD-040) removed the regex-derived families from proof. Both
+    // intentionally advance this historical digest; the source-bound candidate
+    // identity is what the digest binds.
+    expect(finalLedger.baselineGraphDigest).toBe("contract-graph:sha256:71e24793abb0d5b5edce9550");
     expect(JSON.stringify(finalLedger)).not.toContain("CUSTOMER_SENTINEL");
   });
 
   test("executes membership, differential, replay, dependency minimization, and quality evidence end to end", () => {
     const { fixtures, measurement, lifecycle, finalMeasurement } = campaignFixtureSet();
-    expect(fixtures.length).toBe(175);
-    expect({ generated: measurement.mutantsGenerated, applicable: measurement.mutantsApplicable, detected: measurement.mutantsDetected, surviving: measurement.mutantsSurviving, benign: measurement.benignControls, falsePositives: measurement.benignFalsePositives }).toEqual({ generated: 67, applicable: 67, detected: 67, surviving: 0, benign: 54, falsePositives: 0 });
-    expect({ replay: lifecycle.replayAttempted, gaps: lifecycle.replayGapCount, minimized: lifecycle.minimizationSupported, highConfidence: lifecycle.highConfidenceCount }).toEqual({ replay: 67, gaps: 0, minimized: 67, highConfidence: 67 });
-    expect(lifecycle.minimizationProofCounts.SEMANTIC_FIXED_POINT).toBe(67);
-    expect({ replay: finalMeasurement.replayedDetections, minimized: finalMeasurement.minimizedDetections, highConfidence: finalMeasurement.highConfidenceDetections }).toEqual({ replay: 67, minimized: 67, highConfidence: 67 });
+    expect(fixtures.length).toBe(139);
+    expect({ generated: measurement.mutantsGenerated, applicable: measurement.mutantsApplicable, detected: measurement.mutantsDetected, surviving: measurement.mutantsSurviving, benign: measurement.benignControls, falsePositives: measurement.benignFalsePositives }).toEqual({ generated: 55, applicable: 55, detected: 55, surviving: 0, benign: 42, falsePositives: 0 });
+    expect({ replay: lifecycle.replayAttempted, gaps: lifecycle.replayGapCount, minimized: lifecycle.minimizationSupported, highConfidence: lifecycle.highConfidenceCount }).toEqual({ replay: 55, gaps: 0, minimized: 55, highConfidence: 55 });
+    expect(lifecycle.minimizationProofCounts.SEMANTIC_FIXED_POINT).toBe(55);
+    expect({ replay: finalMeasurement.replayedDetections, minimized: finalMeasurement.minimizedDetections, highConfidence: finalMeasurement.highConfidenceDetections }).toEqual({ replay: 55, minimized: 55, highConfidence: 55 });
     expect(finalMeasurement.mutantsSurviving).toBe(0);
     expect(finalMeasurement.benignFalsePositives).toBe(0);
     expect(JSON.stringify(finalMeasurement)).not.toMatch(/open|closed|synthetic-unknown-member|CUSTOMER_SENTINEL/);
@@ -105,10 +109,10 @@ test.describe("Phase 21 lifecycle saturation", () => {
     const quality = buildCoverageQualityReport({ inventory, graph: phase21CompleteGraph(), mutationMeasurement: campaign.finalMeasurement, lifecycle: campaign.lifecycle, differential });
     const operations = countSemanticOperations({ fixtures: campaign.fixtures, lifecycle: campaign.lifecycle, differential, graph: phase21CompleteGraph() });
     const plan = planSemanticGapClosure({ inventory, graph: baseline, ledger, quality });
-    expect(plan.selectedCount).toBe(85);
+    expect(plan.selectedCount).toBe(61);
     expect(plan.selected[0]?.selectionReason).toBe("DIFFERENTIAL_FIRST");
     expect(plan).toEqual(planSemanticGapClosure({ inventory, graph: baseline, ledger, quality }));
-    expect(quality.fullLifecycleContractCount).toBe(21);
+    expect(quality.fullLifecycleContractCount).toBe(15);
     const audit = phase21MetamorphicAudit();
     expect(audit.exercisedKindCount).toBe(4);
     expect(audit.notJustifiedKindCount).toBe(3);

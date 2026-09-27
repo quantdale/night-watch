@@ -83,11 +83,11 @@
 
 ## 8. Narrowed source, semantic and configuration over-claims (M7; T1)
 
-- [ ] 8.1 NW-AUD-012 narrowed: forward the validated merged environment, refuse unknown `.env` keys, fail on malformed or duplicate lines, treat an unreadable `.env` as an error.
-- [ ] 8.2 NW-AUD-036 narrowed: re-check HEAD after scan, refuse mismatched digests in the read view, stop hard-coding `sourceSnapshotMatches: true`.
-- [ ] 8.3 NW-AUD-039 narrowed: NOT_APPLICABLE / INVALID_INPUT / truncated evidence is incomplete, never PASS.
-- [ ] 8.4 NW-AUD-040 narrowed: regex TS/JS/Go/OpenAPI analyzers produce HEURISTIC results excluded from proven candidate selection; truncated inventories reported.
-- [ ] 8.5 Focused + `gate:milestone` PASS; commit.
+- [x] 8.1 NW-AUD-012 narrowed: forward the validated merged environment, refuse unknown `.env` keys, fail on malformed or duplicate lines, treat an unreadable `.env` as an error. — DONE: `parseDotEnvStrict` refuses `DOTENV_LINE_MALFORMED` / `DOTENV_KEY_UNKNOWN` / `DOTENV_KEY_DUPLICATE` with line numbers and `loadDotEnvLayer` reports an unreadable layer as `DOTENV_UNREADABLE` (absent stays `{}`); the launchers (`nightwatch.mjs` agent/operator/scenario branches, `nightwatch-agent.mjs` startup assertion and cached `campaignEnvironment()`, the Control Center launcher) forward the validated merge instead of a raw `process.env` read.
+- [x] 8.2 NW-AUD-036 narrowed: re-check HEAD after scan, refuse mismatched digests in the read view, stop hard-coding `sourceSnapshotMatches: true`. — DONE: `discoverSourceSurfaces` re-checks the repository HEAD after the scan and records `sourceSnapshotMatches` (true only on a verified match, false on mismatch, ABSENT when the re-check is unavailable); `toPhase24CandidateInput` reads that field and the campaign authority's proof signal requires `=== true`.
+- [x] 8.3 NW-AUD-039 narrowed: NOT_APPLICABLE / INVALID_INPUT / truncated evidence is incomplete, never PASS. — DONE: the semantic oracle no longer decides PASS from a single passing invariant (`anyPass ? 'PASS'` is gone); PASS requires every invariant to have passed, a passed-plus-unevaluated pair is `PARTIAL_COVERAGE`, a partially covered invariant is `PARTIAL_COVERAGE` regardless, nothing applicable is `NOT_APPLICABLE`, and `INVALID_INPUT` still short-circuits.
+- [x] 8.4 NW-AUD-040 narrowed: regex TS/JS/Go/OpenAPI analyzers produce HEURISTIC results excluded from proven candidate selection; truncated inventories reported. — DONE: the observation vocabulary gained `HEURISTIC`, the raw-text regex families (`TS_STATIC_REQUIRED_FIELDS`/`TS_STATIC_ENUM`/`TS_STATIC_DEFAULT`/`TS_STATIC_FIELD_TYPE`/`GO_STRUCT_TAGS`/`GO_STRUCT_FIELD_TYPE`) now carry it, the proven-candidate filters compare `MECHANICALLY_PROVABLE` so they are excluded by construction, and a truncated observation budget is reported as `ANALYZER_OUTPUT_TRUNCATED` instead of silently sliced (the Phase 20 fixture/mutant floors were re-calibrated to the honest admitted set).
+- [x] 8.5 Focused + `gate:milestone` PASS; commit. — DONE: focused cones green (`semanticEvidenceCompleteness` 4/4, `sourceAnalyzerProofTier` 5/5, the semantic/oracle cones 105/105, the Phase 20/25/26 + semantic cones 63/63) and the FULL suite 5623 passed / 33 skipped / 0 failed on the 8.3 change; both gate runs PASS below.
 
 ## 9. Contained-DEV lane integrity (M8; T2)
 

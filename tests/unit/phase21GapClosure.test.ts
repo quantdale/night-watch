@@ -20,18 +20,22 @@ test.describe("Phase 21 exact semantic gap closure ledger", () => {
     const second = baselineLedger();
     expect(first).toEqual(second);
     expect(first.schemaVersion).toBe("nightwatch.semantic-gap-closure.v1");
-    expect(first.graphNodeCount).toBe(157);
-    expect(first.graphEdgeCount).toBe(151);
-    expect(first.totalGapCount).toBe(86);
-    expect(first.actionableGapCount).toBe(85);
+    // M7 (8.4/NW-AUD-040) re-baselined these frozen Phase 20 counts: the
+    // regex-derived TS/Go analyzer families are no longer mechanically
+    // provable, so they no longer admit candidates. The ledger stays
+    // deterministic and immutable AT the new honest baseline.
+    expect(first.graphNodeCount).toBe(133);
+    expect(first.graphEdgeCount).toBe(127);
+    expect(first.totalGapCount).toBe(62);
+    expect(first.actionableGapCount).toBe(61);
     expect(first.closedGapCount).toBe(0);
     expect(first.irreducibleGapCount).toBe(1);
-    expect(first.classCounts.DIFFERENTIAL_PROJECTION).toBe(20);
+    expect(first.classCounts.DIFFERENTIAL_PROJECTION).toBe(14);
     expect(first.classCounts.MECHANICALLY_PROVABLE_UNCOVERED).toBe(16);
-    expect(first.classCounts.REPLAY).toBe(18);
-    expect(first.classCounts.MINIMIZATION).toBe(15);
+    expect(first.classCounts.REPLAY).toBe(12);
+    expect(first.classCounts.MINIMIZATION).toBe(9);
     expect(first.classCounts.DUPLICATE_SEMANTIC_COVERAGE).toBe(2);
-    expect(first.classCounts.OTHER_GRAPH_GAP).toBe(15);
+    expect(first.classCounts.OTHER_GRAPH_GAP).toBe(9);
     expect(first.reasonCounts.ANALYZER_UNSUPPORTED).toBe(1);
     expect(first.records).toHaveLength(first.totalGapCount);
     expect(new Set(first.records.map((record) => record.gapIdentity)).size).toBe(first.totalGapCount);
