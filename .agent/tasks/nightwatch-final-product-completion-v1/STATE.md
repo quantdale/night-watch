@@ -104,24 +104,34 @@ maxTurns, provider-failure-taxonomy and Git-HEAD reproduction contracts
 
 ## Work In Progress
 
-- M5 (tasks 6.1-6.17) is in progress. 6.1-6.3 are implemented, validated and
-  committed as `9a044b49`: the content-addressed `AgentFindingRecord` derived
-  in `admitLocalFinding` (with its fail-closed validator), the atomic
-  `agent-findings/` store published BEFORE any campaign checkpoint deletion
-  (write failure → `NOT_PERSISTED`, checkpoint kept, CLI exit 3), and the
-  TERMINATED resume that returns persisted records verbatim or
-  `UNAVAILABLE_NOT_PERSISTED`. Next: 6.4 (reasoner identity and
-  `REASONER_IDENTITY_MISMATCH` on resume).
+- M5 (tasks 6.1-6.17) is in progress; 6.1-6.7 are implemented, validated and
+  committed (`9a044b49`, `5719f6ea`-lineage): the content-addressed
+  `AgentFindingRecord` in `admitLocalFinding`; the atomic `agent-findings/`
+  store published BEFORE any checkpoint deletion (write failure →
+  `NOT_PERSISTED`, checkpoint kept, CLI exit 3); the TERMINATED resume that
+  returns persisted records verbatim or `UNAVAILABLE_NOT_PERSISTED`; the full
+  reasoner identity with `REASONER_IDENTITY_MISMATCH` and `--model`
+  cross-check; resumed-budget conservation (the in-flight usage was being
+  subtracted twice), the persisted per-investigation turn limit and the
+  per-dimension conservation assertion; per-call provider-failure classes with
+  the honest `terminationClass` (a dead provider is no longer BUDGET_EXHAUSTED
+  or zero yield); tier-scaled failure ceilings, transient/permanent classes
+  with bounded jittered backoff, unreachable provider orders, and the
+  `retries` → `failures` rename with read-compatible legacy bytes (D-144).
+  Next: 6.8 (the dispatcher).
 
 ## Exact Next Action
 
-Implement 6.4: persist and cross-check the full reasoner identity (executable,
-adapter, print CLI and `PRINT_ARGS` digests plus provider/model labels, the
-model cross-checked against `--model`) and refuse a resume with
-`REASONER_IDENTITY_MISMATCH` before any turn, with focused tests. Then continue
-6.5-6.17 in order, committing each validated batch, and close M5 with focused +
-`gate:milestone` PASS, the C-00 integrate and the `gh` CI observation (OD-3) as
-in M4.
+Implement 6.8: the product dispatcher forwards `agent campaign run|resume` with
+inherited stdio, no fixed timeout, signal pass-through and the declared consumer
+environment, plus the regression that it never kills a campaign. Then 6.9-6.17
+in order (signals/PAUSED checkpoint, print-adapter cleanup and salvaged-evidence
+marking, Git-object-store reproduction materialization, ENVIRONMENT_DEPENDENT
+refusal, the minimal product run receipt, the findings CLI surfaces, candidate-id
+and atlas-adapter refusals, `--wall-clock-minutes` and the `agent:campaign`
+script, and the deterministic fake-reasoner hunt suite registered in the gate),
+committing each validated batch, and close M5 with focused + `gate:milestone`
+PASS, the C-00 integrate and the `gh` CI observation (OD-3) as in M4.
 
 ## Files Changed
 
