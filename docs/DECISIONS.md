@@ -5152,3 +5152,35 @@ isolation from a hostile same-user process. Read-only cross-root topology
 inspection is preserved. The hardening rule
 `checkC00WorkspaceIntegrity` and ten recorded mutation probes (HC-090…HC-098)
 keep each control non-vacuous.
+
+## D-144 — the budget failure dimension is renamed `retries` → `failures`, read-compatibly
+
+C-16 recorded that the campaign budget's failure counter was named `retries`
+while the value is a count of FAILED CALLS, not of retries: every provider
+failure increments it, and the ceiling it is measured against ends the run.
+The name invited a reader to see a retry policy where there is a failure
+allowance, and it disagreed with the `providerFailures` and
+`consecutiveFailures` dimensions beside it.
+
+The dimension is now `failures` in `AgentBudgetPolicy`, `AgentBudgetUsage`,
+the derived `RuntimeBudgetEnvelope` and every report/reader of them. Two
+things make the rename safe for already-persisted owner state:
+
+- The checkpoint parser maps the legacy key: a missing finite `failures` with
+  a present finite `retries` is READ under the new name, and the legacy key is
+  dropped from the normalized snapshot, so it never leaks into the runtime or
+  the next checkpoint generation. A record with neither name still fails
+  closed (`AGENT_CHECKPOINT_CORRUPT`), and each of the two shapes is covered
+  by a regression.
+- The declared `RuntimeBudgetEnvelope` (D-139: a derived copy, never a second
+  authority) accepts the previous field name and compares it under the new
+  one, so an owner-authored envelope written before this decision keeps
+  validating instead of failing closed on a rename.
+
+The `agent-budget` schema version is deliberately NOT bumped: the wire shape
+gains no new meaning and loses none — the same value is read under two names —
+and a version bump would force a migration record for a rename that the
+tolerant read already covers honestly. The independent W13 attribution metric
+`retries` (a measured per-provider count inside a frozen aggregate schema) is
+deliberately untouched: it is a different vocabulary with its own persisted
+artifacts.

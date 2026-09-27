@@ -71,7 +71,7 @@ export function defaultBenchmarkBudgetPolicy(): AgentBudgetPolicy {
     outputBytes: 2_000_000,
     toolActions: 24,
     candidateCap: 8,
-    retries: 8,
+    failures: 8,
     consecutiveFailures: 6,
     providerFailures: 8,
   };

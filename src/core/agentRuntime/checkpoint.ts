@@ -163,6 +163,22 @@ const V1_USAGE_KEYS = [
   'providerFailures',
 ] as const;
 
+/**
+ * M5 (6.7/C-16): the budget dimension was named `retries` before this change.
+ * Persisted bytes from before the rename stay readable: a missing `failures`
+ * with a present finite `retries` is mapped, never guessed, and the legacy key
+ * is dropped from the normalized snapshot.
+ */
+function normalizeBudgetFailureField(record: Record<string, unknown>): Record<string, unknown> {
+  if (!('retries' in record)) return record;
+  // The legacy key never survives: the new name wins when both are present,
+  // and the old finite value is adopted when only it exists. A non-finite
+  // legacy value leaves `failures` absent so validation still fails closed.
+  const { retries: legacy, ...rest } = record;
+  if (isFiniteNumber(rest['failures'])) return rest;
+  return isFiniteNumber(legacy) ? { ...rest, failures: legacy } : rest;
+}
+
 function parseBudgetSnapshot(value: unknown, where: string): AgentCheckpoint['state']['budget'] {
   if (!isRecord(value) || !isRecord(value.policy) || !isRecord(value.usage)) {
     throw new AgentCheckpointError('CORRUPT', `${where}.budget is not a policy/usage pair`);
@@ -170,7 +186,10 @@ function parseBudgetSnapshot(value: unknown, where: string): AgentCheckpoint['st
   const policy = value.policy;
   if (policy.schemaVersion === AGENT_BUDGET_VERSION_V1) {
     for (const key of V1_POLICY_KEYS) {
-      if (!isFiniteNumber(policy[key])) throw new AgentCheckpointError('CORRUPT', `${where}.budget.policy.${key} is invalid`);
+      // M5 (6.7/C-16): the failure dimension is named `failures` now; a v1
+      // record that already carries the new name satisfies the legacy key.
+      const value = key === 'retries' ? (policy['retries'] ?? policy['failures']) : policy[key];
+      if (!isFiniteNumber(value)) throw new AgentCheckpointError('CORRUPT', `${where}.budget.policy.${key} is invalid`);
     }
     if (typeof policy.ceilingName !== 'string') throw new AgentCheckpointError('CORRUPT', `${where}.budget.policy.ceilingName is invalid`);
     // The new dimension's ceiling must be derivable: an unknown tier cannot
@@ -180,23 +199,28 @@ function parseBudgetSnapshot(value: unknown, where: string): AgentCheckpoint['st
     }
     const usage = value.usage;
     for (const key of V1_USAGE_KEYS) {
-      if (!isFiniteNumber(usage[key])) throw new AgentCheckpointError('CORRUPT', `${where}.budget.usage.${key} is invalid`);
+      const value = key === 'retries' ? (usage['retries'] ?? usage['failures']) : usage[key];
+      if (!isFiniteNumber(value)) throw new AgentCheckpointError('CORRUPT', `${where}.budget.usage.${key} is invalid`);
     }
     const tier = policy.ceilingName as AgentBudgetCeilingName;
     const defaults = defaultAgentBudgetPolicy(tier);
+    const legacyPolicy = normalizeBudgetFailureField(policy);
+    const legacyUsage = normalizeBudgetFailureField(usage);
     return {
       policy: {
-        ...policy,
+        ...legacyPolicy,
         schemaVersion: AGENT_BUDGET_VERSION,
         outputBytes: defaults.outputBytes,
         toolPayloadBytes: defaults.toolPayloadBytes,
       },
-      usage: { ...usage, outputBytes: 0, toolPayloadBytes: usage.outputBytes },
+      usage: { ...legacyUsage, outputBytes: 0, toolPayloadBytes: legacyUsage.outputBytes },
     } as unknown as AgentCheckpoint['state']['budget'];
   }
   if (policy.schemaVersion !== AGENT_BUDGET_VERSION) {
     unsupportedVersion(`${where}.budget.policy`, policy.schemaVersion);
   }
+  const normalizedPolicy = normalizeBudgetFailureField(policy);
+  const normalizedUsage = normalizeBudgetFailureField(value.usage);
   for (const key of [
     'wallTimeMs',
     'reasonerCalls',
@@ -206,14 +230,14 @@ function parseBudgetSnapshot(value: unknown, where: string): AgentCheckpoint['st
     'toolActions',
     'perActionTimeoutMs',
     'candidateCap',
-    'retries',
+    'failures',
     'consecutiveFailures',
     'providerFailures',
   ] as const) {
-    if (!isFiniteNumber(policy[key])) throw new AgentCheckpointError('CORRUPT', `${where}.budget.policy.${key} is invalid`);
+    if (!isFiniteNumber(normalizedPolicy[key])) throw new AgentCheckpointError('CORRUPT', `${where}.budget.policy.${key} is invalid`);
   }
-  if (typeof policy.ceilingName !== 'string') throw new AgentCheckpointError('CORRUPT', `${where}.budget.policy.ceilingName is invalid`);
-  const usage = value.usage;
+  if (typeof normalizedPolicy.ceilingName !== 'string') throw new AgentCheckpointError('CORRUPT', `${where}.budget.policy.ceilingName is invalid`);
+  const usage = normalizedUsage;
   for (const key of [
     'wallTimeMs',
     'reasonerCalls',
@@ -222,13 +246,18 @@ function parseBudgetSnapshot(value: unknown, where: string): AgentCheckpoint['st
     'toolPayloadBytes',
     'toolActions',
     'candidateCount',
-    'retries',
+    'failures',
     'consecutiveFailures',
     'providerFailures',
   ] as const) {
     if (!isFiniteNumber(usage[key])) throw new AgentCheckpointError('CORRUPT', `${where}.budget.usage.${key} is invalid`);
   }
-  return value as unknown as AgentCheckpoint['state']['budget'];
+  // The NORMALIZED pair is returned, so a legacy `retries` key never leaks
+  // into the runtime or into the next checkpoint generation.
+  return {
+    policy: normalizedPolicy,
+    usage: normalizedUsage,
+  } as unknown as AgentCheckpoint['state']['budget'];
 }
 
 function parseRuntimeState(value: unknown): AgentRuntimeState {

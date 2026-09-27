@@ -157,7 +157,7 @@ test.describe('resumed budget conservation (6.5)', () => {
       toolPayloadBytes: chargedToolPayloadBytes(resumed.byteLedger),
       toolActions: resumed.toolActionCount,
       candidateCount: resumed.candidateIds.length,
-      retries: 0,
+      failures: 0,
       consecutiveFailures: 0,
       providerFailures: resumed.providerFailures,
     });

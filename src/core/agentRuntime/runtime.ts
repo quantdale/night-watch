@@ -214,7 +214,7 @@ export class AgentRuntime {
         toolPayloadBytes: 0,
         toolActions: 0,
         candidateCount: 0,
-        retries: 0,
+        failures: 0,
         consecutiveFailures: 0,
         providerFailures: 0,
       };
@@ -376,7 +376,7 @@ export class AgentRuntime {
         ...this.usage,
         providerFailures: this.usage.providerFailures + 1,
         consecutiveFailures: this.usage.consecutiveFailures + 1,
-        retries: this.usage.retries + 1,
+        failures: this.usage.failures + 1,
       };
       this.record({
         turnId,
@@ -408,7 +408,7 @@ export class AgentRuntime {
         ...this.usage,
         providerFailures: this.usage.providerFailures + 1,
         consecutiveFailures: this.usage.consecutiveFailures + 1,
-        retries: this.usage.retries + 1,
+        failures: this.usage.failures + 1,
       };
       this.record({
         turnId,
@@ -456,7 +456,7 @@ export class AgentRuntime {
       this.usage = {
         ...this.usage,
         consecutiveFailures: this.usage.consecutiveFailures + 1,
-        retries: this.usage.retries + 1,
+        failures: this.usage.failures + 1,
       };
       this.record({
         turnId,
@@ -706,7 +706,7 @@ export class AgentRuntime {
       toolActions: this.usage.toolActions + 1,
       outputBytes: chargedOutputBytes(this.byteLedger),
       toolPayloadBytes: chargedToolPayloadBytes(this.byteLedger),
-      ...(result.ok ? {} : { consecutiveFailures: this.usage.consecutiveFailures + 1, retries: this.usage.retries + 1 }),
+      ...(result.ok ? {} : { consecutiveFailures: this.usage.consecutiveFailures + 1, failures: this.usage.failures + 1 }),
     };
     this.addEvidence(result.evidenceRefs);
     if (result.untrusted.length > 0) {

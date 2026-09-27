@@ -117,7 +117,7 @@ export type LocalCampaignDossierStatus = (typeof LOCAL_CAMPAIGN_DOSSIER_STATUSES
  * Justification: N=1 would end an hour campaign on a single unlucky empty
  * investigation (defeating the mission); N=2 risks two correlated duds when a
  * deterministic reasoner walks into the same trap twice; N=3 grants two
- * retries after the first empty investigation while staying bounded (every
+ * failures after the first empty investigation while staying bounded (every
  * investigation is itself turn-capped), and mirrors the frozen
  * NO_PROGRESS_REPEAT_LIMIT=3 — the protocol tolerates 3 repeats inside one
  * run, the campaign tolerates 3 empty investigations.
@@ -743,7 +743,7 @@ function remainingPolicyFor(policy: AgentBudgetPolicy, usage: AgentBudgetUsage):
     toolPayloadBytes: Math.max(0, policy.toolPayloadBytes - usage.toolPayloadBytes),
     toolActions: Math.max(0, policy.toolActions - usage.toolActions),
     candidateCap: Math.max(0, policy.candidateCap - usage.candidateCount),
-    retries: Math.max(0, policy.retries - usage.retries),
+    failures: Math.max(0, policy.failures - usage.failures),
     consecutiveFailures: Math.max(0, policy.consecutiveFailures - usage.consecutiveFailures),
     providerFailures: Math.max(0, policy.providerFailures - usage.providerFailures),
   };
@@ -762,7 +762,7 @@ const CONSERVED_BUDGET_DIMENSIONS = [
   { usage: 'toolPayloadBytes', policy: 'toolPayloadBytes' },
   { usage: 'toolActions', policy: 'toolActions' },
   { usage: 'candidateCount', policy: 'candidateCap' },
-  { usage: 'retries', policy: 'retries' },
+  { usage: 'failures', policy: 'failures' },
   { usage: 'consecutiveFailures', policy: 'consecutiveFailures' },
   { usage: 'providerFailures', policy: 'providerFailures' },
 ] as const;
@@ -815,7 +815,7 @@ function addUsage(base: AgentBudgetUsage, extra: AgentBudgetUsage): AgentBudgetU
     toolPayloadBytes: base.toolPayloadBytes + extra.toolPayloadBytes,
     toolActions: base.toolActions + extra.toolActions,
     candidateCount: base.candidateCount + extra.candidateCount,
-    retries: base.retries + extra.retries,
+    failures: base.failures + extra.failures,
     consecutiveFailures: base.consecutiveFailures + extra.consecutiveFailures,
     providerFailures: base.providerFailures + extra.providerFailures,
   };
@@ -832,7 +832,7 @@ interface CampaignAccumulators {
   outputBytes: number;
   toolPayloadBytes: number;
   toolActions: number;
-  retries: number;
+  failures: number;
   providerFailures: number;
   consecutiveFailures: number;
   byteLedger: AgentByteLedger;
@@ -866,7 +866,7 @@ function freshAccumulators(campaignId: string): CampaignAccumulators {
     outputBytes: 0,
     toolPayloadBytes: 0,
     toolActions: 0,
-    retries: 0,
+    failures: 0,
     providerFailures: 0,
     consecutiveFailures: 0,
     byteLedger: { ...ZERO_AGENT_BYTE_LEDGER },
@@ -902,7 +902,7 @@ function campaignUsageOf(engine: CampaignEngine): AgentBudgetUsage {
     toolPayloadBytes: engine.acc.toolPayloadBytes,
     toolActions: engine.acc.toolActions,
     candidateCount: engine.acc.candidateIds.length,
-    retries: engine.acc.retries,
+    failures: engine.acc.failures,
     consecutiveFailures: engine.acc.consecutiveFailures,
     providerFailures: engine.acc.providerFailures,
   };
@@ -931,7 +931,7 @@ function absorbInvestigation(engine: CampaignEngine, ran: AgentRunResult, countS
   acc.outputBytes += usage.outputBytes;
   acc.toolPayloadBytes += usage.toolPayloadBytes;
   acc.toolActions += usage.toolActions;
-  acc.retries += usage.retries;
+  acc.failures += usage.failures;
   acc.providerFailures += usage.providerFailures;
   // W9: fold the investigation component ledger. A pre-W9 investigation state
   // carries cumulative usage without attribution and folds as explicit legacy
@@ -1413,7 +1413,7 @@ function seedFromCheckpointState(engine: CampaignEngine, state: AgentRuntimeStat
   acc.outputBytes = state.budget.usage.outputBytes;
   acc.toolPayloadBytes = state.budget.usage.toolPayloadBytes;
   acc.toolActions = state.budget.usage.toolActions;
-  acc.retries = state.budget.usage.retries;
+  acc.failures = state.budget.usage.failures;
   acc.providerFailures = state.budget.usage.providerFailures;
   acc.consecutiveFailures = state.budget.usage.consecutiveFailures;
   // W9: restore the folded component ledger. A pre-W9 campaign checkpoint

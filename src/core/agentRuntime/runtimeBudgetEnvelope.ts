@@ -34,7 +34,7 @@ export interface RuntimeBudgetEnvelope {
   readonly inputBytes: number;
   readonly outputBytes: number;
   readonly toolPayloadBytes: number;
-  readonly retries: number;
+  readonly failures: number;
   readonly consecutiveFailures: number;
   readonly providerFailures: number;
 }
@@ -46,7 +46,7 @@ export const RUNTIME_BUDGET_ENVELOPE_FIELDS = Object.freeze([
   'inputBytes',
   'outputBytes',
   'toolPayloadBytes',
-  'retries',
+  'failures',
   'consecutiveFailures',
   'providerFailures',
 ] as const);
@@ -60,7 +60,7 @@ export function envelopeFromBudgetPolicy(policy: AgentBudgetPolicy): RuntimeBudg
     inputBytes: policy.inputBytes,
     outputBytes: policy.outputBytes,
     toolPayloadBytes: policy.toolPayloadBytes,
-    retries: policy.retries,
+    failures: policy.failures,
     consecutiveFailures: policy.consecutiveFailures,
     providerFailures: policy.providerFailures,
   };
@@ -106,18 +106,28 @@ export function checkRuntimeBudgetEnvelope(declared: unknown, derived: RuntimeBu
       detail: `declared runtime budget envelope schemaVersion must be ${RUNTIME_BUDGET_ENVELOPE_VERSION}`,
     };
   }
-  for (const key of Object.keys(declared)) {
+  // M5 (6.7/C-16): an envelope declared before the `retries` -> `failures`
+  // rename is read under the old name and compared under the new one. The
+  // envelope is a declared, owner-authored copy of the engine policy (D-139),
+  // so accepting its previous field name is a read-compatibility widening,
+  // never a second authority.
+  const normalizedDeclared: Record<string, unknown> =
+    !('failures' in declared) && 'retries' in declared
+      ? { ...(declared as Record<string, unknown>), failures: (declared as Record<string, unknown>)['retries'] }
+      : (declared as Record<string, unknown>);
+  for (const key of Object.keys(normalizedDeclared)) {
     if (key === 'schemaVersion') continue;
+    if (key === 'retries') continue;
     if (!(RUNTIME_BUDGET_ENVELOPE_FIELDS as readonly string[]).includes(key)) {
       return { ok: false, code: 'RUNTIME_BUDGET_ENVELOPE_MALFORMED', detail: `declared runtime budget envelope has unknown field ${key}` };
     }
   }
   const mismatches: RuntimeBudgetEnvelopeMismatch[] = [];
   for (const field of RUNTIME_BUDGET_ENVELOPE_FIELDS) {
-    if (!(field in declared)) {
+    if (!(field in normalizedDeclared)) {
       return { ok: false, code: 'RUNTIME_BUDGET_ENVELOPE_MALFORMED', detail: `declared runtime budget envelope is missing field ${field}` };
     }
-    const value = declared[field];
+    const value = normalizedDeclared[field];
     const expected = derived[field];
     if (field === 'ceilingName') {
       if (value !== expected) mismatches.push({ field, declared: value, derived: expected });

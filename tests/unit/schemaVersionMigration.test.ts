@@ -197,7 +197,7 @@ test.describe('schema version lifecycle — MIGRATE', () => {
         terminationReason: null,
         budget: {
           policy: { ...v1PolicyBase, schemaVersion: AGENT_BUDGET_VERSION_V1, outputBytes: 4096 },
-          usage: { wallTimeMs: 1, reasonerCalls: 1, inputBytes: 10, outputBytes: 1234, toolActions: 1, candidateCount: 0, retries: 0, consecutiveFailures: 0, providerFailures: 0 },
+          usage: { wallTimeMs: 1, reasonerCalls: 1, inputBytes: 10, outputBytes: 1234, toolActions: 1, candidateCount: 0, failures: 0, consecutiveFailures: 0, providerFailures: 0 },
         },
       },
     };

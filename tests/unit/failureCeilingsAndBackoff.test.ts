@@ -5,7 +5,14 @@ import { test, expect } from '@playwright/test';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { REASONER_TURN_RESPONSE_VERSION, defaultAgentBudgetPolicy } from '../../src/core/agentProtocol';
+import {
+  AGENT_RUNTIME_STATE_VERSION,
+  REASONER_TURN_RESPONSE_VERSION,
+  ZERO_AGENT_BUDGET_USAGE,
+  ZERO_AGENT_BYTE_LEDGER,
+  defaultAgentBudgetPolicy,
+} from '../../src/core/agentProtocol';
+import { createCheckpoint, parseCheckpoint } from '../../src/core/agentRuntime/checkpoint';
 import { REASONER_FAILURE_CLASSES } from '../../src/core/agentProtocol/reasoner';
 import { runLocalCliCampaign } from '../../src/core/agentRuntime/localCampaign';
 import {
@@ -39,7 +46,7 @@ test.describe('failure ceilings and classes (6.7)', () => {
   test('the failure ceilings scale with the duration tier', () => {
     const tiers = ['HOUR_1', 'HOUR_4', 'HOUR_8', 'OVERNIGHT'] as const;
     const policies = tiers.map((tier) => defaultAgentBudgetPolicy(tier));
-    for (const dimension of ['retries', 'consecutiveFailures', 'providerFailures'] as const) {
+    for (const dimension of ['failures', 'consecutiveFailures', 'providerFailures'] as const) {
       const values = policies.map((policy) => policy[dimension]);
       for (let index = 1; index < values.length; index += 1) {
         expect(values[index], `${dimension} at ${tiers[index]}`).toBeGreaterThan(values[index - 1] as number);
@@ -47,7 +54,7 @@ test.describe('failure ceilings and classes (6.7)', () => {
     }
     // The ceilings stay far below the call allowance: failures are a signal.
     for (const policy of policies) {
-      expect(policy.retries).toBeLessThan(policy.reasonerCalls / 4);
+      expect(policy.failures).toBeLessThan(policy.reasonerCalls / 4);
     }
   });
 
@@ -182,7 +189,7 @@ process.stdin.on('data', (d) => { raw += d; }).on('end', () => {
         inputBytes: 10,
         outputBytes: 10,
         toolPayloadBytes: 10,
-        retries: 8,
+        failures: 8,
         consecutiveFailures: 6,
         providerFailures: 8,
       },
@@ -220,7 +227,7 @@ process.stdin.on('data', (d) => { raw += d; }).on('end', () => {
           inputBytes: 10,
           outputBytes: 10,
           toolPayloadBytes: 10,
-          retries: 8,
+          failures: 8,
           consecutiveFailures: 6,
           providerFailures: 4,
         },
@@ -248,4 +255,48 @@ process.stdin.on('data', (d) => { raw += d; }).on('end', () => {
     );
     expect(reachable.ok).toBe(true);
   });
+
+  test('checkpoint bytes written before the rename still resume under the new name', () => {
+    const policy = defaultAgentBudgetPolicy('HOUR_1');
+    const state = {
+      schemaVersion: AGENT_RUNTIME_STATE_VERSION,
+      campaignId: 'camp-rename-legacy',
+      status: 'TERMINATED' as const,
+      phase: 'PLAN' as const,
+      hypotheses: [],
+      actionLog: [],
+      evidenceRefs: [],
+      candidateIds: [],
+      knownTargets: [],
+      byteLedger: { ...ZERO_AGENT_BYTE_LEDGER },
+      budget: { policy, usage: { ...ZERO_AGENT_BUDGET_USAGE, failures: 3, providerFailures: 2 } },
+      terminationReason: 'REASONER_FAILURE',
+    };
+    const checkpoint = JSON.parse(JSON.stringify(createCheckpoint(state, 0))) as Record<string, unknown>;
+    const budget = (checkpoint['state'] as Record<string, unknown>)['budget'] as Record<string, unknown>;
+    const legacyPolicy = budget['policy'] as Record<string, unknown>;
+    const legacyUsage = budget['usage'] as Record<string, unknown>;
+    // Exactly the pre-rename shape: the `failures` dimension was `retries`.
+    legacyPolicy['retries'] = legacyPolicy['failures'];
+    delete legacyPolicy['failures'];
+    legacyUsage['retries'] = legacyUsage['failures'];
+    delete legacyUsage['failures'];
+
+    const parsed = parseCheckpoint(checkpoint);
+    expect(parsed.state.budget.policy.failures).toBe(policy.failures);
+    expect(parsed.state.budget.usage.failures).toBe(3);
+    expect(parsed.state.budget.usage.providerFailures).toBe(2);
+    // The legacy key never survives the read.
+    expect('retries' in (parsed.state.budget.policy as unknown as Record<string, unknown>)).toBe(false);
+    expect('retries' in (parsed.state.budget.usage as unknown as Record<string, unknown>)).toBe(false);
+
+    // A record with NEITHER name still fails closed.
+    const missingBoth = JSON.parse(JSON.stringify(checkpoint)) as Record<string, unknown>;
+    const missingPolicy = ((missingBoth['state'] as Record<string, unknown>)['budget'] as Record<string, unknown>)[
+      'policy'
+    ] as Record<string, unknown>;
+    delete missingPolicy['retries'];
+    expect(() => parseCheckpoint(missingBoth)).toThrow(/AGENT_CHECKPOINT_CORRUPT/);
+  });
 });
+

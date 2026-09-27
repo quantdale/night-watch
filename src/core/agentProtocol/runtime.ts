@@ -54,7 +54,7 @@ export interface AgentBudgetPolicy {
   readonly toolActions: number;
   readonly perActionTimeoutMs: number;
   readonly candidateCap: number;
-  readonly retries: number;
+  readonly failures: number;
   readonly consecutiveFailures: number;
   readonly providerFailures: number;
 }
@@ -68,7 +68,7 @@ export interface AgentBudgetUsage {
   readonly toolPayloadBytes: number;
   readonly toolActions: number;
   readonly candidateCount: number;
-  readonly retries: number;
+  readonly failures: number;
   readonly consecutiveFailures: number;
   readonly providerFailures: number;
 }
@@ -273,7 +273,7 @@ export const ZERO_AGENT_BUDGET_USAGE: AgentBudgetUsage = Object.freeze({
   toolPayloadBytes: 0,
   toolActions: 0,
   candidateCount: 0,
-  retries: 0,
+  failures: 0,
   consecutiveFailures: 0,
   providerFailures: 0,
 });
@@ -335,7 +335,7 @@ const BUDGET_TOOL_ACTIONS: Record<AgentBudgetCeilingName, number> = {
 // M5 (6.7/C-16): the failure ceilings scale with the duration tier. A flat
 // ceiling either gives up too early on an overnight campaign (a single provider
 // outage ends it) or lets a one-hour campaign burn its whole call allowance on
-// retries. The ratio is deliberately far below the call scaling: failures are
+// failures. The ratio is deliberately far below the call scaling: failures are
 // a signal, not a budget to spend.
 const BUDGET_FAILURES: Record<AgentBudgetCeilingName, number> = {
   HOUR_1: 8,
@@ -368,7 +368,7 @@ export function defaultAgentBudgetPolicy(ceilingName: AgentBudgetCeilingName): A
     toolActions: BUDGET_TOOL_ACTIONS[ceilingName],
     perActionTimeoutMs: 120_000,
     candidateCap: 20,
-    retries: BUDGET_FAILURES[ceilingName],
+    failures: BUDGET_FAILURES[ceilingName],
     consecutiveFailures: BUDGET_CONSECUTIVE_FAILURES[ceilingName],
     providerFailures: BUDGET_PROVIDER_FAILURES[ceilingName],
   };
@@ -384,7 +384,7 @@ export function classifyBudgetExhaustion(policy: AgentBudgetPolicy, usage: Agent
   if (usage.toolPayloadBytes >= policy.toolPayloadBytes) return 'SAFE_TERMINATION_CHECKPOINT';
   if (usage.toolActions >= policy.toolActions) return 'SAFE_TERMINATION_CHECKPOINT';
   if (usage.candidateCount >= policy.candidateCap) return 'SAFE_TERMINATION_CHECKPOINT';
-  if (usage.retries >= policy.retries) return 'SAFE_TERMINATION_CHECKPOINT';
+  if (usage.failures >= policy.failures) return 'SAFE_TERMINATION_CHECKPOINT';
   if (usage.consecutiveFailures >= policy.consecutiveFailures) return 'SAFE_TERMINATION_CHECKPOINT';
   if (usage.providerFailures >= policy.providerFailures) return 'SAFE_TERMINATION_CHECKPOINT';
   return 'CONTINUE';

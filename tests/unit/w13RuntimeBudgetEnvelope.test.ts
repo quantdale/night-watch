@@ -61,7 +61,7 @@ test.describe('W13 runtime budget envelope single authority', () => {
       inputBytes: 5_000_000,
       outputBytes: 160_000,
       toolPayloadBytes: 64_000_000,
-      retries: 8,
+      failures: 8,
       consecutiveFailures: 6,
       providerFailures: 8,
     });
@@ -213,7 +213,7 @@ test.describe('W13 runtime budget envelope single authority', () => {
       ok: false,
       code: 'RUNTIME_BUDGET_ENVELOPE_MALFORMED',
     });
-    const { retries: _retries, ...missing } = derived;
+    const { failures: _retries, ...missing } = derived;
     expect(checkRuntimeBudgetEnvelope(missing, derived)).toMatchObject({
       ok: false,
       code: 'RUNTIME_BUDGET_ENVELOPE_MALFORMED',

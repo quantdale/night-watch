@@ -124,7 +124,7 @@ test.describe('cross-subsystem autonomous loop', () => {
     });
     const runtime = new AgentRuntime({
       campaignId: 'int-garbage',
-      budgetPolicy: { ...defaultAgentBudgetPolicy('HOUR_1'), consecutiveFailures: 2, retries: 2, providerFailures: 2 },
+      budgetPolicy: { ...defaultAgentBudgetPolicy('HOUR_1'), consecutiveFailures: 2, failures: 2, providerFailures: 2 },
       reasoner: driver,
       tools,
       authorizedEnvironments: ['LOCAL'],
@@ -132,7 +132,11 @@ test.describe('cross-subsystem autonomous loop', () => {
     });
     const result = await runtime.run({ maxTurns: 4 });
     expect(result.state.candidateIds).toEqual([]);
-    expect(result.terminationReason === 'BUDGET_EXHAUSTED' || result.terminationReason === 'NO_PROGRESS').toBe(true);
+    // M5 (6.7/C-16): garbage output is a PERMANENT provider failure class, so
+    // the run stops at once instead of retrying it into the failure allowance.
+    // (It used to end BUDGET_EXHAUSTED after the retry ceiling.)
+    expect(result.terminationReason).toBe('REASONER_FAILURE');
+    expect(result.state.budget.usage.providerFailures).toBe(1);
   });
 
   test('CLI unknown tool is fail-closed and admits nothing', async () => {

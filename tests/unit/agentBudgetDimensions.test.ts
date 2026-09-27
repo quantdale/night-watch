@@ -72,7 +72,7 @@ function generousPolicy(): AgentBudgetPolicy {
     toolPayloadBytes: 500_000_000,
     toolActions: 500,
     candidateCap: 20,
-    retries: 20,
+    failures: 20,
     consecutiveFailures: 20,
     providerFailures: 20,
   };

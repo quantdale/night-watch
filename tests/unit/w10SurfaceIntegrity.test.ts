@@ -255,7 +255,7 @@ test.describe('W10 fail-closed surface tuple', () => {
       outputBytes: 10_000_000,
       toolActions: 10,
       candidateCap: 5,
-      retries: 5,
+      failures: 5,
       consecutiveFailures: 5,
       providerFailures: 5,
     };

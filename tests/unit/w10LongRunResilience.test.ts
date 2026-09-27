@@ -196,7 +196,7 @@ function generousPolicy(): AgentBudgetPolicy {
     outputBytes: 50_000_000,
     toolActions: 50,
     candidateCap: 20,
-    retries: 20,
+    failures: 20,
     consecutiveFailures: 20,
     providerFailures: 20,
   };
@@ -1017,7 +1017,7 @@ test('cancellation during tool execution cleans up and leaves no residue', async
   expect(fs.existsSync(marker)).toBe(false);
   expect(result.state.actionLog.map((item) => item.resultClass)).toEqual(['SOURCE_FILE']);
   expect(result.state.budget.usage.toolActions).toBe(1);
-  expect(result.state.budget.usage.retries).toBe(0);
+  expect(result.state.budget.usage.failures).toBe(0);
   expect(result.state.budget.usage.consecutiveFailures).toBe(0);
   // Cancellation is terminal with no resume path: running again fails closed.
   await expect(runtime.run()).rejects.toThrow();
@@ -1195,7 +1195,7 @@ test('cumulative budgets remain exact across a pause-resume cycle', async () => 
   expect(usageAfter.reasonerCalls).toBe(usageBefore.reasonerCalls + 1);
   expect(usageAfter.toolActions).toBe(usageBefore.toolActions);
   expect(usageAfter.candidateCount).toBe(usageBefore.candidateCount);
-  expect(usageAfter.retries).toBe(usageBefore.retries);
+  expect(usageAfter.failures).toBe(usageBefore.failures);
   // Wall time: the pre-pause base plus the resumed run, exactly.
   expect(usageAfter.wallTimeMs).toBe(300);
   // Byte components: provider deltas fold in, tool components are untouched,
