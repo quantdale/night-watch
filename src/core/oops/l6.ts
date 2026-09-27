@@ -727,6 +727,14 @@ function requestPhase5Relay(relay: Phase5Relay, operationId: string, request: L6
   ) {
     return Promise.resolve({ status: 403 });
   }
+  // M8 (9.9 / NW-AUD-028): the relay request carries the per-invocation
+  // credential the relay minted, so the public operation id is no longer the
+  // only thing identifying the exchange. The relay-wide budget is accounted by
+  // `relay.consumeRelayBudget()` and is NOT enforced here yet: enforcing it in
+  // this path needs the capability-probe and scenario traffic to be accounted
+  // against the same bound first, which is recorded as open rather than
+  // half-enforced. The runtime-level bound (`MAX_PROXY_REQUESTS`) still holds.
+  relay.consumeRelayBudget();
   return new Promise<L6ParentResponse>((resolve, reject) => {
     const upstream = http.request({
       hostname: '127.0.0.1',
@@ -735,7 +743,11 @@ function requestPhase5Relay(relay: Phase5Relay, operationId: string, request: L6
       path: expectedPath,
       agent: false,
       lookup: (_hostname, _options, callback) => callback(null, '127.0.0.1', 4),
-      headers: { Accept: 'application/json', 'X-Nightwatch-Operation-Id': operationId },
+      headers: {
+        Accept: 'application/json',
+        'X-Nightwatch-Operation-Id': operationId,
+        'X-Nightwatch-Invocation-Credential': relay.invocationCredential,
+      },
     });
     let settled = false;
     const timer = setTimeout(() => {

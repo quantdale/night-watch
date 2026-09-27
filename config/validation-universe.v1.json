@@ -121,6 +121,7 @@
         "tests/unit/reasonerPrint.test.ts",
         "tests/unit/reasonerPrintW9.test.ts",
         "tests/unit/recordIdentity.test.ts",
+        "tests/unit/relayInvocationAuthority.test.ts",
         "tests/unit/releaseFreshness.test.ts",
         "tests/unit/replayContextRoles.test.ts",
         "tests/unit/reproductionCapabilityCensus.test.ts",

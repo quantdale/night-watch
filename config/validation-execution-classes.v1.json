@@ -1686,6 +1686,13 @@
       "class": "PARALLEL_SAFE",
       "signals": []
     },
+    "tests/unit/relayInvocationAuthority.test.ts": {
+      "class": "PROCESS_ISOLATED_ONLY",
+      "signals": [
+        "owner-state",
+        "isolated-scratch"
+      ]
+    },
     "tests/unit/releaseFreshness.test.ts": {
       "class": "PARALLEL_SAFE",
       "signals": [

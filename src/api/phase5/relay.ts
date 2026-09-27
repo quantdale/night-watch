@@ -1,3 +1,4 @@
+import { randomBytes } from 'node:crypto';
 import http from 'node:http';
 import type { IncomingMessage, Server as HttpServer, ServerResponse } from 'node:http';
 import type { AddressInfo } from 'node:net';
@@ -69,6 +70,16 @@ export interface Phase5Relay {
   readonly server: HttpServer;
   readonly address: string;
   readonly violations: readonly string[];
+  /**
+   * M8 (9.9 / NW-AUD-028): the per-INVOCATION relay credential. The operation
+   * id in the URL is public and therefore not an authority; this value is
+   * minted per relay invocation and must be presented by the child. It is
+   * exposed so the envelope can carry it into the contained runtime.
+   */
+  readonly invocationCredential: string;
+  /** Relay-WIDE relay request budget: shared across every contained runtime. */
+  consumeRelayBudget(): boolean;
+  relayBudgetUsed(): number;
   takeObservation(operationId: string): RelayObservation | undefined;
   close(): Promise<void>;
 }
@@ -95,7 +106,10 @@ const DEFAULT_MAX_BODY_BYTES = 2 * 1024 * 1024;
 const DEFAULT_UPSTREAM_TIMEOUT_MS = 15_000;
 const PERIOD_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
 const OPERATION_PATH_RE = /^\/v1\/operations\/([a-z][a-z0-9]*(?:[._-][a-z0-9]+)+)$/;
-const SAFE_INBOUND_HEADERS = new Set(['accept', 'host', 'x-nightwatch-operation-id', 'connection', 'user-agent', 'accept-encoding', 'accept-language', 'sec-fetch-mode', 'content-length']);
+/** M8 (9.9 / NW-AUD-028): the relay-wide request budget. */
+export const MAX_RELAY_REQUESTS = 8;
+
+const SAFE_INBOUND_HEADERS = new Set(['accept', 'host', 'x-nightwatch-operation-id', 'x-nightwatch-invocation-credential', 'connection', 'user-agent', 'accept-encoding', 'accept-language', 'sec-fetch-mode', 'content-length']);
 
 function writeEmpty(res: ServerResponse, status: number, headers: Record<string, string> = {}): void {
   if (res.headersSent) return;
@@ -255,6 +269,29 @@ export async function startPhase5Relay(options: StartRelayOptions): Promise<Phas
   const fetcher = options.fetcher ?? defaultFetch;
   const observations = new Map<string, RelayObservation>();
   const violations: string[] = [];
+  /**
+   * M8 (9.9 / NW-AUD-028): an observation is written ONCE per operation. A
+   * second write for the same operation id used to overwrite the first, which
+   * let a later (possibly hostile or simply duplicate) exchange replace the
+   * evidence of the exchange that actually happened. The first observation
+   * stands and the overwrite attempt is recorded as a violation.
+   */
+  const recordObservation = (operationId: string, observation: RelayObservation): void => {
+    if (observations.has(operationId)) {
+      violations.push('RELAY_OBSERVATION_ALREADY_RECORDED');
+      return;
+    }
+    observations.set(operationId, observation);
+  };
+  // M8 (9.9 / NW-AUD-028): one credential per relay invocation, and a
+  // relay-WIDE budget that no single contained runtime can reset by restarting.
+  const invocationCredential = randomBytes(16).toString('hex');
+  let relayBudgetUsed = 0;
+  const consumeRelayBudget = (): boolean => {
+    if (relayBudgetUsed >= MAX_RELAY_REQUESTS) return false;
+    relayBudgetUsed += 1;
+    return true;
+  };
   const server = http.createServer();
 
   const handle = async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
@@ -268,7 +305,7 @@ export async function startPhase5Relay(options: StartRelayOptions): Promise<Phas
       if (operationId !== undefined) {
         const fallbackOperation = options.catalog.operations.find((candidate) => candidate.operationId === operationId);
         if (fallbackOperation !== undefined) {
-          observations.set(operationId, {
+          recordObservation(operationId, {
             operationId,
             destinationHostClass: options.mode === 'local' ? 'LOCAL_LOOPBACK' : 'DEV_API',
             destinationHost: 'blocked',
@@ -345,7 +382,7 @@ export async function startPhase5Relay(options: StartRelayOptions): Promise<Phas
       // compatibility, and the distinction is reported in the header.
       const failure = classifyRelayFailure(error);
       const oracle = { oracleId: operation.oracleProfile ?? operationId, result: 'NETWORK_FAILURE' as const, statusClass: 'network', contentTypeClass: 'absent', parseCategory: 'transport-error', streamCategory: 'unknown', bodyPersisted: false as const };
-      observations.set(operationId, { operationId, destinationHostClass: options.mode === 'local' ? 'LOCAL_LOOPBACK' : 'DEV_API', destinationHost: target.hostname, method: 'GET', status: null, requestPathClass: 'CATALOG_RESOLVED', oracle, redirect: 'NONE', bodyForwardedToOops: false });
+      recordObservation(operationId, { operationId, destinationHostClass: options.mode === 'local' ? 'LOCAL_LOOPBACK' : 'DEV_API', destinationHost: target.hostname, method: 'GET', status: null, requestPathClass: 'CATALOG_RESOLVED', oracle, redirect: 'NONE', bodyForwardedToOops: false });
       return writeEmpty(res, 502, { 'X-Nightwatch-Oracle': oracle.result, 'X-Nightwatch-Relay-Failure': failure });
     } finally {
       deadline.dispose();
@@ -364,7 +401,7 @@ export async function startPhase5Relay(options: StartRelayOptions): Promise<Phas
       ...(result.redirect === 'BLOCKED' ? { safetyBlock: 'UNKNOWN_DESTINATION' as const } : {}),
       bodyForwardedToOops: false,
     };
-    observations.set(operationId, observation);
+    recordObservation(operationId, observation);
     if (result.redirect === 'BLOCKED') return writeEmpty(res, 502, { 'X-Nightwatch-Oracle': 'REDIRECT_BLOCKED' });
     const responseHeaders: Record<string, string> = { 'X-Nightwatch-Oracle': oracle.result };
     const contentType = response.headers['content-type'];
@@ -395,6 +432,9 @@ export async function startPhase5Relay(options: StartRelayOptions): Promise<Phas
     address: `http://127.0.0.1:${address.port}`,
     server,
     violations,
+    invocationCredential,
+    consumeRelayBudget,
+    relayBudgetUsed: () => relayBudgetUsed,
     takeObservation: (operationId: string) => observations.get(operationId),
     close: () => new Promise<void>((resolve) => server.close(() => resolve())),
   };
