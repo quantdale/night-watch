@@ -104,7 +104,7 @@ maxTurns, provider-failure-taxonomy and Git-HEAD reproduction contracts
 
 ## Work In Progress
 
-- M5 (tasks 6.1-6.17) is in progress; 6.1-6.7 are implemented, validated and
+- M5 (tasks 6.1-6.17) is in progress; 6.1-6.11 are implemented, validated and
   committed (`9a044b49`, `5719f6ea`-lineage): the content-addressed
   `AgentFindingRecord` in `admitLocalFinding`; the atomic `agent-findings/`
   store published BEFORE any checkpoint deletion (write failure →
@@ -117,8 +117,13 @@ maxTurns, provider-failure-taxonomy and Git-HEAD reproduction contracts
   the honest `terminationClass` (a dead provider is no longer BUDGET_EXHAUSTED
   or zero yield); tier-scaled failure ceilings, transient/permanent classes
   with bounded jittered backoff, unreachable provider orders, and the
-  `retries` → `failures` rename with read-compatible legacy bytes (D-144).
-  Next: 6.8 (the dispatcher).
+  `retries` → `failures` rename with read-compatible legacy bytes (D-144);
+  the dispatcher forwards a campaign without a fixed deadline, streaming output
+  and forwarding signals; SIGINT/SIGTERM pause with a PAUSED checkpoint and a
+  reasoner group kill plus per-investigation progress checkpoints; the print
+  adapter cleans up on every exit path and never fabricates grounding refs;
+  and reproduction materializes from the recorded HEAD tree in the Git object
+  store (D-145). Next: 6.12 (ENVIRONMENT_DEPENDENT refusal).
 
 ## Exact Next Action
 
