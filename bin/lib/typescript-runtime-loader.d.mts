@@ -49,6 +49,7 @@ export interface TypeScriptRuntimeLoaderModuleMap {
   "src/core/efficacy/metrics.ts": typeof import("../../src/core/efficacy/metrics");
   "src/core/environment/index.ts": typeof import("../../src/core/environment/index");
   "src/core/evidenceRetention/index.ts": typeof import("../../src/core/evidenceRetention/index");
+  "src/core/localInvestigation/agentFindingStore.ts": typeof import("../../src/core/localInvestigation/agentFindingStore");
   "src/core/localInvestigation/ownerLocal.ts": typeof import("../../src/core/localInvestigation/ownerLocal");
   "src/core/oops/l6.ts": typeof import("../../src/core/oops/l6");
   "src/core/phase22/index.ts": typeof import("../../src/core/phase22/index");
