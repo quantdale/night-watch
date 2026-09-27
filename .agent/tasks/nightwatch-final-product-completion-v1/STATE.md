@@ -225,7 +225,17 @@ the gate pair (see the ledger).
   `recorded < 0`. Evidence: `tests/unit/proxyEffectPairEvidence.test.ts` 7/7,
   the proxy/containment suites 44/44, `hardening:check` PASS, and the sharded
   lane PASS at 5676/0 (5709 planned, 0 failed).
-  Next: 9.5 (NW-AUD-023 narrowed plus popup L0) then 9.6-9.13 to close M8.
+  M8 9.5 DONE — browser context guard transaction integrity (NW-AUD-023
+  narrowed): a rollback boundary now closes the context and clears the health
+  poll when any post-context setup stage fails (the original error still
+  propagates); the health poll is a tracked variable cleared on both exit
+  paths; popup acquisition is an awaited barrier whose failure mode is
+  deny-by-policy (reported at close, never swallowed); and `close()` joins
+  every in-flight acquisition before tearing down. The NW-AUD-020 tasks 3.2/4.2
+  closure claims are RE-TAGGED UNPROVEN (9.5b). Evidence:
+  `tests/unit/contextGuardTransaction.test.ts` 5/5, `hardening:check` PASS, and
+  the sharded lane PASS at 5681/0 (5714 planned, 0 failed).
+  Next: 9.6 (NW-AUD-035) then 9.7-9.13 to close M8.
 - M6 is COMPLETE: 7.1-7.11 are ticked in the campaign ledger with DONE notes
   and PLAN marks M6 COMPLETE. The view-DOM baseline was intentionally
   REGENERATED (`NIGHTWATCH_UPDATE_VIEW_DOM_BASELINE=1`) because the Agent
