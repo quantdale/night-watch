@@ -141,8 +141,16 @@ the gate pair (see the ledger).
   fact instead of the hard-coded `true`, and the read view's proof signal now
   requires `=== true` — `tests/unit/sourceSnapshotRecheck.test.ts` 4/4 and 207
   source-cone tests green.
-  Next: 8.3 (NOT_APPLICABLE / INVALID_INPUT / truncated evidence is incomplete,
-  never PASS).
+  8.3 — evidence that could not be evaluated is INCOMPLETE, never PASS: the
+  semantic oracle's `anyPass ? 'PASS' : 'NOT_APPLICABLE'` became an
+  every-invariant-PASS rule with an explicit MIX distinction (a passed +
+  unevaluated pair is `PARTIAL_COVERAGE`; nothing applicable is
+  `NOT_APPLICABLE`; a partially covered invariant is `PARTIAL_COVERAGE`
+  regardless) — `tests/unit/semanticEvidenceCompleteness.test.ts` 4/4, the
+  semantic/oracle cones 105/105 and the FULL suite 5623 passed / 33 skipped /
+  0 failed on this change.
+  Next: 8.4 (regex TS/JS/Go/OpenAPI analyzers produce HEURISTIC results
+  excluded from proven candidate selection; truncated inventories reported).
 - M6 is COMPLETE: 7.1-7.11 are ticked in the campaign ledger with DONE notes
   and PLAN marks M6 COMPLETE. The view-DOM baseline was intentionally
   REGENERATED (`NIGHTWATCH_UPDATE_VIEW_DOM_BASELINE=1`) because the Agent
@@ -229,13 +237,13 @@ the gate pair (see the ledger).
 
 ## Exact Next Action
 
-Implement 8.3 (NW-AUD-039 narrowed): NOT_APPLICABLE, INVALID_INPUT and
-truncated evidence must count as INCOMPLETE and never as PASS — read the
-semantic evaluation/receipt path (`src/oracles/**`, `src/core/semantic/**`) and
-the confidence/readiness consumers, then 8.4 (heuristic regex analyzers excluded
-from proven candidate selection with truncated inventories reported) and 8.5
-(focused + `gate:milestone` PASS; commit) to close M7, then the C-00 integrate
-and the `gh` CI observation (OD-3) as in M4-M6.
+Implement 8.4 (NW-AUD-040 narrowed): regex TS/JS/Go/OpenAPI analyzers must
+produce HEURISTIC results that are EXCLUDED from proven candidate selection,
+and a truncated inventory must be reported rather than silently accepted — read
+the source analyzers (`src/core/source/**`), the projection/completeness
+contract and the Phase 24 selection, then 8.5 (focused + `gate:milestone` PASS;
+commit) to close M7, followed by the C-00 integrate and the `gh` CI observation
+(OD-3) as in M4-M6.
 
 ## Superseded Next Action (8.1, complete)
 
