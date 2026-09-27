@@ -38,15 +38,13 @@ ledger, and end at `PROJECT_COMPLETE_AND_CI_CERTIFIED` under D-129 with a
 
 ## Current Milestone
 
-M5 Autonomous hunt result integrity (tasks 6.1-6.17): the durable
-identity-bound `AgentFindingRecord` (content-addressed dossierId, campaignId,
-per-source HEAD and tree digest, `cfe:` fingerprint, test and reasoner
-identity) admitted mechanically by `admitLocalFinding`, written atomically
-before any checkpoint deletion, with a truthful TERMINATED resume
-(`UNAVAILABLE_NOT_PERSISTED` when absent) and the reasoner-identity, budget,
-maxTurns, provider-failure-taxonomy and Git-HEAD reproduction contracts
-(C-01..C-29, NW-AUD-044..047). M4 closed green at `137207b1` (CI run
-36292162386).
+M6 Finding truth surfaces and Control Center data (tasks 7.1-7.x): the
+protocol dossier readiness verdict before any write (NW-AUD-029/C-08), the
+total Control Center status mapping with sanitized `oneOf` widening
+(NW-AUD-048/C-09), role-typed replay contexts for L1/L2 with distinct run ids
+(NW-AUD-025/C-10) and the `campaign-state/` orchestrator subtree with
+read-compatibility and dossier-family-first findings authority (B-02/C-21).
+M5 closed green with focused suites and the gate pair (see the ledger).
 
 ## Completed Milestones
 
@@ -104,7 +102,9 @@ maxTurns, provider-failure-taxonomy and Git-HEAD reproduction contracts
 
 ## Work In Progress
 
-- M5 (tasks 6.1-6.17) is in progress; 6.1-6.11 are implemented, validated and
+- M5 is COMPLETE: 6.1-6.17 are ticked in the campaign ledger with DONE notes,
+  PLAN marks M5 COMPLETE, and the M6 entry work has not started.
+- M5 history (kept for context): 6.1-6.11 are implemented, validated and
   committed (`9a044b49`, `5719f6ea`-lineage): the content-addressed
   `AgentFindingRecord` in `admitLocalFinding`; the atomic `agent-findings/`
   store published BEFORE any checkpoint deletion (write failure →
@@ -127,16 +127,14 @@ maxTurns, provider-failure-taxonomy and Git-HEAD reproduction contracts
 
 ## Exact Next Action
 
-Implement 6.8: the product dispatcher forwards `agent campaign run|resume` with
-inherited stdio, no fixed timeout, signal pass-through and the declared consumer
-environment, plus the regression that it never kills a campaign. Then 6.9-6.17
-in order (signals/PAUSED checkpoint, print-adapter cleanup and salvaged-evidence
-marking, Git-object-store reproduction materialization, ENVIRONMENT_DEPENDENT
-refusal, the minimal product run receipt, the findings CLI surfaces, candidate-id
-and atlas-adapter refusals, `--wall-clock-minutes` and the `agent:campaign`
-script, and the deterministic fake-reasoner hunt suite registered in the gate),
-committing each validated batch, and close M5 with focused + `gate:milestone`
-PASS, the C-00 integrate and the `gh` CI observation (OD-3) as in M4.
+Read tasks 7.1-7.x and `src/core/agentProtocol/**` plus the Control Center
+adapter/authority modules, then implement 7.1 (the protocol dossier readiness
+verdict that must precede any write, with no READY ledger entry, bug candidate,
+promotion or COMPLETE_WITH_FINDINGS from a non-READY dossier) with focused
+tests green, repairing forward with new commits. Then continue 7.2-7.x in
+order, committing each validated batch, and close M6 with focused +
+`gate:milestone` PASS, the C-00 integrate and the `gh` CI observation (OD-3)
+exactly as in M4/M5.
 
 ## Files Changed
 

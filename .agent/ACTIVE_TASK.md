@@ -7,22 +7,29 @@ Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-final-product-completion-v1
 Starting SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
 Last validated implementation SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
-Last checkpoint: 2026-09-26 — M4 COMPLETE (5.1-5.7): six release probes wired
+Last checkpoint: 2026-09-27 — M5 COMPLETE (6.1-6.17): the durable
+identity-bound agent finding record with its atomic store and verbatim
+terminated resume, the full reasoner identity, resumed-budget conservation,
+provider attribution with the honest termination class, tier-scaled failure
+ceilings with bounded backoff, the `failures` rename, the streaming dispatcher
+with signal-driven pause, HEAD-bound Git reproduction, environment-signature
+refusal, the product run receipt, measured findings surfaces, malformed-state
+refusal with marked presentation defaults, the bounded operator launch and the
+synthetic hunt suite registered in the gate.
+Previous checkpoint: 2026-09-26 — M4 COMPLETE (5.1-5.7): six release probes wired
 (`d595c7c8`), the G20 accessibility record with its fail-closed parser
 (`cab67d76`), the `implemented` honesty rule + X-04 demotion + A-19/A-20 schema
 states + the CI block-record single authority (`a784e668`), and the final
 integration `137207b1` after reconciling origin/main `946b52c4` and restoring
 the ledger-governed README status block; gate:dev/gate:milestone 5520/0.
-Current milestone: M5 Autonomous hunt result integrity (tasks 6.1-6.17) — the
-durable identity-bound `AgentFindingRecord` (6.1: content-addressed dossierId,
-campaignId, per-source HEAD and tree digest, `cfe:` fingerprint, test and
-reasoner identity, derived in `admitLocalFinding`), its atomic write before any
-checkpoint deletion (6.2), truthful TERMINATED resume (6.3) and the remaining
-reasoner-identity, budget, maxTurns, provider-taxonomy and Git-HEAD contracts.
-Next action: read tasks 6.1-6.17 and `src/core/localInvestigation/**`, implement
-6.1 with its focused suite green, repairing forward with new commits; close M5
-with focused + gate:milestone PASS, the C-00 integrate and the `gh` CI
-observation (OD-3) as in M4.
+Current milestone: M6 Finding truth surfaces and Control Center data (tasks
+7.1-7.x) — the protocol dossier readiness verdict before any write (7.1), the
+total Control Center status mapping with sanitized `oneOf` (7.2), role-typed
+replay contexts for L1/L2 (7.3) and the `campaign-state/` orchestrator subtree
+with dossier-family-first findings authority (7.4).
+Next action: read tasks 7.1-7.x, implement 7.1 with its focused suite green,
+repairing forward with new commits; close M6 with focused + gate:milestone
+PASS, the C-00 integrate and the `gh` CI observation (OD-3) as in M4/M5.
 
 Authorization class: FINAL_PRODUCT_COMPLETION_V1
 PROJECT_VERDICT_EFFECT: PRESERVE

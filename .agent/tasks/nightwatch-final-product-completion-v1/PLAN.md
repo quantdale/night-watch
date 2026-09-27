@@ -194,7 +194,20 @@ approved paths.
 - Acceptance criteria: run→resume regression on one state dir; atomic record
   write before checkpoint deletion; dead-provider and signal regressions;
   deterministic fake-reasoner synthetic hunt suite registered in the gate.
-- **Status:** NOT_STARTED
+- **Status:** COMPLETE (2026-09-27) — 6.1-6.17 implemented and validated: the
+  content-addressed AgentFindingRecord with its atomic store, verbatim
+  terminated resume, the full reasoner identity with `REASONER_IDENTITY_MISMATCH`,
+  resumed-budget conservation with the persisted turn limit, per-call provider
+  attribution with the honest termination class, tier-scaled ceilings with
+  transient/permanent classes and bounded jittered backoff, the `retries` →
+  `failures` rename (D-144), the streaming dispatcher with signal-driven pause
+  and progress checkpoints, print-adapter cleanup without fabricated grounding,
+  HEAD-bound Git-object reproduction (D-145), environment-signature refusal,
+  the product run receipt, measured findings/status surfaces, malformed-state
+  refusal with marked presentation defaults and ADAPTER_UNAVAILABLE atlas
+  adapters, the bounded operator launch (`--wall-clock-minutes`,
+  `agent:campaign`) and the deterministic synthetic hunt suite registered in
+  the gate.
 
 ### M6 — Finding truth surfaces and Control Center data (tasks 7.1-7.11)
 
