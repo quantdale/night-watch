@@ -51,7 +51,7 @@ if (!printArgs.includes(freeze.provider.model)) {
   fail(`configured NIGHTWATCH_PRINT_ARGS does not name the frozen model ${freeze.provider.model}`);
 }
 
-const [tools, fixtures, hunt, score, cliReasoner, metricsMod, miner, minedCases, , topology] =
+const [tools, fixtures, hunt, score, cliReasoner, metricsMod, miner, minedCases, sibling, topology] =
   loadTypeScriptModules(
     [
       'src/core/agentProtocol/tools.ts',
