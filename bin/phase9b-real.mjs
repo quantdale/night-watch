@@ -20,12 +20,40 @@ import { buildChildEnvironment } from './child-environment.mjs';
 import { loadTypeScriptModule } from './lib/typescript-runtime-loader.mjs';
 import { parsePhase9bLauncherArgs, PHASE_9B_LAUNCHER_USAGE } from './phase9b-launcher-args.mjs';
 import { guardDevLane } from './lib/dev-lane-precondition.mjs';
+import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 // M8 (9.1): refuse a DEV-lane launch while a DEV-lane precondition is OPEN,
 // BEFORE argument validation, auth validation or any child process.
 guardDevLane({ root, launcher: 'phase9b-real.mjs', args: process.argv.slice(2) });
+
+/** @type {import('./lib/operator-cli.mjs').OperatorCliMetadata} */
+const CLI_METADATA = {
+  schemaVersion: OPERATOR_CLI_SCHEMA,
+  name: 'phase9b-real',
+  entry: 'bin/phase9b-real.mjs',
+  purpose: 'Run the Phase 9B contained-DEV semantic acceptance with an explicit storage-state.',
+  group: 'owner-gated',
+  flags: [
+    { name: '--config', shape: 'string', summary: 'declared option' },
+    { name: '--env', shape: 'enum', values: ['dev', 'next'], summary: 'target environment; production is forbidden' },
+    { name: '--project', shape: 'string', summary: 'declared option' },
+    { name: '--storage-state', shape: 'path', summary: 'external absolute path argument' },
+    { name: '--workers', shape: 'string', summary: 'declared option' },
+  ],
+  json: false,
+  authorization: 'OWNER_GATED',
+  artifacts: [],
+};
+
+const cli = defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url });
+if (cli.stop) {
+  // --help / --print-metadata / usage already emitted; the shared parser has
+  // ALREADY set the exit code (success for help/metadata, refusal for an
+  // unknown argument), so the bin must not overwrite it with 0.
+  process.exit(process.exitCode ?? 0);
+}
 const parsed = parsePhase9bLauncherArgs(process.argv.slice(2));
 if (parsed.help) {
   console.log(PHASE_9B_LAUNCHER_USAGE);

@@ -16,11 +16,45 @@ import { fileURLToPath } from 'node:url';
 import { buildChildEnvironment } from './child-environment.mjs';
 import { loadTypeScriptModule as loadRuntimeTypeScriptModule } from './lib/typescript-runtime-loader.mjs';
 import { guardDevLane } from './lib/dev-lane-precondition.mjs';
+import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 // M8 (9.1): refuse a DEV-lane launch while a DEV-lane precondition is OPEN.
 guardDevLane({ root: ROOT, launcher: 'phase22-real.mjs', args: process.argv.slice(2) });
+
+/** @type {import('./lib/operator-cli.mjs').OperatorCliMetadata} */
+const CLI_METADATA = {
+  schemaVersion: OPERATOR_CLI_SCHEMA,
+  name: 'phase22-real',
+  entry: 'bin/phase22-real.mjs',
+  purpose: 'Run the Phase 22 real manifest/acceptance surface with an explicit manifest and storage-state.',
+  group: 'owner-gated',
+  flags: [
+    { name: '--config', shape: 'string', summary: 'declared option' },
+    { name: '--depth', shape: 'string', summary: 'declared option' },
+    { name: '--detach', shape: 'string', summary: 'declared option' },
+    { name: '--env', shape: 'enum', values: ['dev', 'next'], summary: 'target environment; production is forbidden' },
+    { name: '--jq', shape: 'string', summary: 'declared option' },
+    { name: '--manifest', shape: 'path', summary: 'external absolute path argument' },
+    { name: '--no-checkout', shape: 'string', summary: 'declared option' },
+    { name: '--porcelain', shape: 'string', summary: 'declared option' },
+    { name: '--project', shape: 'string', summary: 'declared option' },
+    { name: '--storage-state', shape: 'path', summary: 'external absolute path argument' },
+    { name: '--workers', shape: 'string', summary: 'declared option' },
+  ],
+  json: false,
+  authorization: 'OWNER_GATED',
+  artifacts: [],
+};
+
+const cli = defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url });
+if (cli.stop) {
+  // --help / --print-metadata / usage already emitted; the shared parser has
+  // ALREADY set the exit code (success for help/metadata, refusal for an
+  // unknown argument), so the bin must not overwrite it with 0.
+  process.exit(process.exitCode ?? 0);
+}
 const WORKSPACE_ROOT = path.resolve(ROOT, '..', '..');
 const SAFE_ID_RE = /^[A-Za-z0-9][A-Za-z0-9._:/-]{0,199}$/;
 

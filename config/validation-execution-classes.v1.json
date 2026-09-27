@@ -864,6 +864,13 @@
         "isolated-scratch"
       ]
     },
+    "tests/unit/operatorCliSurface.test.ts": {
+      "class": "PROCESS_ISOLATED_ONLY",
+      "signals": [
+        "owner-state",
+        "isolated-scratch"
+      ]
+    },
     "tests/unit/oracleCeilingReproduction.test.ts": {
       "class": "PARALLEL_SAFE",
       "signals": []

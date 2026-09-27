@@ -91,6 +91,7 @@
         "tests/unit/observeAuthenticatedRunner.test.ts",
         "tests/unit/openspecArchiveIndex.test.ts",
         "tests/unit/operatorCliContract.test.ts",
+        "tests/unit/operatorCliSurface.test.ts",
         "tests/unit/ownerLocalReproductionAdversarial.test.ts",
         "tests/unit/ownerLocalReproductionContracts.test.ts",
         "tests/unit/ownerLocalReproductionProvider.test.ts",

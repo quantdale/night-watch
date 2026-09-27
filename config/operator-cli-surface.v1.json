@@ -1,0 +1,320 @@
+{
+  "schemaVersion": "nightwatch.operator-cli-surface.v1",
+  "purpose": "M9 (10.1/10.2, X-12/A-12): every tracked bin/*.mjs file has exactly ONE declared disposition. OPERATOR_CLI bins declare their contract through defineOperatorCli; LIBRARY_RETAINED modules live under bin/ but are not entry points and carry a reason; PENDING_OPERATOR_CLI records the bins still awaiting their migration, so the remaining work is a counted fact rather than an unstated gap.",
+  "bins": [
+    {
+      "file": "bin/affected-tests.mjs",
+      "disposition": "OPERATOR_CLI"
+    },
+    {
+      "file": "bin/agent-continuity-protocol.mjs",
+      "disposition": "OPERATOR_CLI"
+    },
+    {
+      "file": "bin/agent-state.mjs",
+      "disposition": "OPERATOR_CLI"
+    },
+    {
+      "file": "bin/ai-local-canary.mjs",
+      "disposition": "PENDING_OPERATOR_CLI"
+    },
+    {
+      "file": "bin/ai-owner-review.mjs",
+      "disposition": "PENDING_OPERATOR_CLI"
+    },
+    {
+      "file": "bin/auth-capture.mjs",
+      "disposition": "PENDING_OPERATOR_CLI"
+    },
+    {
+      "file": "bin/auth-configure.mjs",
+      "disposition": "PENDING_OPERATOR_CLI"
+    },
+    {
+      "file": "bin/bin-typecheck.mjs",
+      "disposition": "OPERATOR_CLI"
+    },
+    {
+      "file": "bin/c12-preflight.mjs",
+      "disposition": "OPERATOR_CLI"
+    },
+    {
+      "file": "bin/cache-key-contract.mjs",
+      "disposition": "OPERATOR_CLI"
+    },
+    {
+      "file": "bin/campaign-synthetic.mjs",
+      "disposition": "OPERATOR_CLI"
+    },
+    {
+      "file": "bin/change-intelligence.mjs",
+      "disposition": "PENDING_OPERATOR_CLI"
+    },
+    {
+      "file": "bin/child-environment.mjs",
+      "disposition": "OPERATOR_CLI"
+    },
+    {
+      "file": "bin/efficacy-corpus.mjs",
+      "disposition": "OPERATOR_CLI"
+    },
+    {
+      "file": "bin/evidence-retention.mjs",
+      "disposition": "OPERATOR_CLI"
+    },
+    {
+      "file": "bin/finding-intel-scale.mjs",
+      "disposition": "OPERATOR_CLI"
+    },
+    {
+      "file": "bin/frontier-determinism.mjs",
+      "disposition": "OPERATOR_CLI"
+    },
+    {
+      "file": "bin/gate-topology.mjs",
+      "disposition": "OPERATOR_CLI"
+    },
+    {
+      "file": "bin/hardening-check.mjs",
+      "disposition": "PENDING_OPERATOR_CLI"
+    },
+    {
+      "file": "bin/nightwatch-agent.mjs",
+      "disposition": "PENDING_OPERATOR_CLI"
+    },
+    {
+      "file": "bin/nightwatch-control-center.mjs",
+      "disposition": "PENDING_OPERATOR_CLI"
+    },
+    {
+      "file": "bin/nightwatch-hygiene.mjs",
+      "disposition": "OPERATOR_CLI"
+    },
+    {
+      "file": "bin/nightwatch-intelligence.mjs",
+      "disposition": "PENDING_OPERATOR_CLI"
+    },
+    {
+      "file": "bin/nightwatch-reasoner-print.mjs",
+      "disposition": "LIBRARY_RETAINED",
+      "reason": "not an entry point: no process.argv use; imported as a module by its launcher"
+    },
+    {
+      "file": "bin/nightwatch-session.mjs",
+      "disposition": "OPERATOR_CLI"
+    },
+    {
+      "file": "bin/nightwatch-status.mjs",
+      "disposition": "OPERATOR_CLI"
+    },
+    {
+      "file": "bin/nightwatch.mjs",
+      "disposition": "OPERATOR_CLI"
+    },
+    {
+      "file": "bin/observe-authenticated-config.mjs",
+      "disposition": "LIBRARY_RETAINED",
+      "reason": "not an entry point: no process.argv use; imported as a module by its launcher"
+    },
+    {
+      "file": "bin/observe-authenticated.mjs",
+      "disposition": "OPERATOR_CLI"
+    },
+    {
+      "file": "bin/observe-canary.mjs",
+      "disposition": "OPERATOR_CLI"
+    },
+    {
+      "file": "bin/observe-gate.mjs",
+      "disposition": "OPERATOR_CLI"
+    },
+    {
+      "file": "bin/observe-preflight.mjs",
+      "disposition": "OPERATOR_CLI"
+    },
+    {
+      "file": "bin/phase10b-launcher-args.mjs",
+      "disposition": "LIBRARY_RETAINED",
+      "reason": "not an entry point: no process.argv use; imported as a module by its launcher"
+    },
+    {
+      "file": "bin/phase10b-real.mjs",
+      "disposition": "OPERATOR_CLI"
+    },
+    {
+      "file": "bin/phase14-contract-health.mjs",
+      "disposition": "OPERATOR_CLI"
+    },
+    {
+      "file": "bin/phase22-dev.mjs",
+      "disposition": "PENDING_OPERATOR_CLI"
+    },
+    {
+      "file": "bin/phase22-real.mjs",
+      "disposition": "OPERATOR_CLI"
+    },
+    {
+      "file": "bin/phase23-ci.mjs",
+      "disposition": "PENDING_OPERATOR_CLI"
+    },
+    {
+      "file": "bin/phase23-dev.mjs",
+      "disposition": "PENDING_OPERATOR_CLI"
+    },
+    {
+      "file": "bin/phase23-predev.mjs",
+      "disposition": "PENDING_OPERATOR_CLI"
+    },
+    {
+      "file": "bin/phase2b-real.mjs",
+      "disposition": "OPERATOR_CLI"
+    },
+    {
+      "file": "bin/phase2c-real.mjs",
+      "disposition": "OPERATOR_CLI"
+    },
+    {
+      "file": "bin/phase4-real.mjs",
+      "disposition": "OPERATOR_CLI"
+    },
+    {
+      "file": "bin/phase5-real.mjs",
+      "disposition": "OPERATOR_CLI"
+    },
+    {
+      "file": "bin/phase7-real.mjs",
+      "disposition": "PENDING_OPERATOR_CLI"
+    },
+    {
+      "file": "bin/phase9b-launcher-args.mjs",
+      "disposition": "LIBRARY_RETAINED",
+      "reason": "not an entry point: no process.argv use; imported as a module by its launcher"
+    },
+    {
+      "file": "bin/phase9b-real.mjs",
+      "disposition": "OPERATOR_CLI"
+    },
+    {
+      "file": "bin/planner-handoff-check.mjs",
+      "disposition": "OPERATOR_CLI"
+    },
+    {
+      "file": "bin/planner-handoff-protocol.mjs",
+      "disposition": "OPERATOR_CLI"
+    },
+    {
+      "file": "bin/portfolio.mjs",
+      "disposition": "PENDING_OPERATOR_CLI"
+    },
+    {
+      "file": "bin/project-state-check.mjs",
+      "disposition": "OPERATOR_CLI"
+    },
+    {
+      "file": "bin/quality-gate-clean.mjs",
+      "disposition": "OPERATOR_CLI"
+    },
+    {
+      "file": "bin/quality-gate-inventory.mjs",
+      "disposition": "OPERATOR_CLI"
+    },
+    {
+      "file": "bin/quality-gate-spec.mjs",
+      "disposition": "OPERATOR_CLI"
+    },
+    {
+      "file": "bin/quality-gate.mjs",
+      "disposition": "OPERATOR_CLI"
+    },
+    {
+      "file": "bin/record-identity.mjs",
+      "disposition": "OPERATOR_CLI"
+    },
+    {
+      "file": "bin/release-freshness.mjs",
+      "disposition": "OPERATOR_CLI"
+    },
+    {
+      "file": "bin/review-mutation-campaign.mjs",
+      "disposition": "PENDING_OPERATOR_CLI"
+    },
+    {
+      "file": "bin/review-persistence-scale.mjs",
+      "disposition": "OPERATOR_CLI"
+    },
+    {
+      "file": "bin/run-shards.mjs",
+      "disposition": "OPERATOR_CLI"
+    },
+    {
+      "file": "bin/schema-lifecycle.mjs",
+      "disposition": "OPERATOR_CLI"
+    },
+    {
+      "file": "bin/selfdev-adopt-sandbox.mjs",
+      "disposition": "OPERATOR_CLI"
+    },
+    {
+      "file": "bin/selfdev-catalog-integrity.mjs",
+      "disposition": "OPERATOR_CLI"
+    },
+    {
+      "file": "bin/selfdev-promote-canonical.mjs",
+      "disposition": "OPERATOR_CLI"
+    },
+    {
+      "file": "bin/selfdev-provenance.mjs",
+      "disposition": "OPERATOR_CLI"
+    },
+    {
+      "file": "bin/selfdev-synthetic.mjs",
+      "disposition": "OPERATOR_CLI"
+    },
+    {
+      "file": "bin/selfdev-verify.mjs",
+      "disposition": "OPERATOR_CLI"
+    },
+    {
+      "file": "bin/semantic-compat.mjs",
+      "disposition": "OPERATOR_CLI"
+    },
+    {
+      "file": "bin/silent-zero-output.mjs",
+      "disposition": "OPERATOR_CLI"
+    },
+    {
+      "file": "bin/test-oracle-quality.mjs",
+      "disposition": "OPERATOR_CLI"
+    },
+    {
+      "file": "bin/test-timings.mjs",
+      "disposition": "OPERATOR_CLI"
+    },
+    {
+      "file": "bin/validation-execution-classes.mjs",
+      "disposition": "OPERATOR_CLI"
+    },
+    {
+      "file": "bin/validation-lane.mjs",
+      "disposition": "OPERATOR_CLI"
+    },
+    {
+      "file": "bin/validation-universe.mjs",
+      "disposition": "OPERATOR_CLI"
+    },
+    {
+      "file": "bin/w11-historical-arm.mjs",
+      "disposition": "PENDING_OPERATOR_CLI"
+    },
+    {
+      "file": "bin/workspace-integrity.mjs",
+      "disposition": "OPERATOR_CLI"
+    }
+  ],
+  "counts": {
+    "total": 76,
+    "operatorCli": 55,
+    "libraryRetained": 4,
+    "pending": 17
+  }
+}
