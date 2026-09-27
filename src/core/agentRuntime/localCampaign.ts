@@ -353,9 +353,10 @@ interface CampaignProgress {
   /**
    * M5 (6.6): the derived provider attribution at the moment the checkpoint
    * was written, so a stored campaign states its provider outcome explicitly
-   * and a resume does not have to re-interpret the action log.
+   * and a resume does not have to re-interpret the action log. The checkpoint
+   * form serializes `byClass` as a list (see `attributionForCheckpoint`).
    */
-  readonly providerAttribution: ProviderFailureAttribution | null;
+  readonly providerAttribution: ProviderFailureAttribution | Record<string, unknown> | null;
 }
 
 function zeroTerminationCounts(): CampaignTerminationCounts {
@@ -506,13 +507,26 @@ function parseCampaignProgress(value: unknown, campaignId: string): CampaignProg
         throw new AgentCheckpointError('CORRUPT', `campaignProgress.providerAttribution.${field} is invalid`);
       }
     }
-    if (!isRecord(attribution.byClass)) {
+    if (!Array.isArray(attribution.byClass)) {
       throw new AgentCheckpointError('CORRUPT', 'campaignProgress.providerAttribution.byClass is invalid');
     }
-    for (const [key, entry] of Object.entries(attribution.byClass)) {
-      if (!/^[A-Z][A-Z0-9_]{0,63}$/.test(key) || typeof entry !== 'number' || !Number.isInteger(entry) || entry < 0) {
-        throw new AgentCheckpointError('CORRUPT', `campaignProgress.providerAttribution.byClass entry ${key} is invalid`);
+    const byClass: Record<string, number> = {};
+    for (const entry of attribution.byClass) {
+      if (!isRecord(entry)) {
+        throw new AgentCheckpointError('CORRUPT', 'campaignProgress.providerAttribution.byClass entry is invalid');
       }
+      const failureClass = entry.failureClass;
+      const count = entry.count;
+      if (
+        typeof failureClass !== 'string' ||
+        !/^[A-Z][A-Z0-9_]{0,63}$/.test(failureClass) ||
+        typeof count !== 'number' ||
+        !Number.isInteger(count) ||
+        count < 0
+      ) {
+        throw new AgentCheckpointError('CORRUPT', 'campaignProgress.providerAttribution.byClass entry is invalid');
+      }
+      byClass[failureClass] = count;
     }
     providerAttribution = {
       schemaVersion: 'nightwatch.provider-attribution.v1',
@@ -520,7 +534,7 @@ function parseCampaignProgress(value: unknown, campaignId: string): CampaignProg
       failures: attribution.failures as number,
       completedCalls: attribution.completedCalls as number,
       sourceActions: attribution.sourceActions as number,
-      byClass: Object.freeze({ ...(attribution.byClass as Record<string, number>) }),
+      byClass: Object.freeze(byClass),
       terminationClass: attribution.terminationClass,
     };
   }
@@ -1025,6 +1039,24 @@ function absorbPausedInvestigationPrefix(engine: CampaignEngine, ran: AgentRunRe
   engine.acc.lastPhase = ran.state.phase;
 }
 
+/**
+ * M5 (6.6): the checkpoint form of the attribution. `byClass` is serialized as
+ * a LIST of { failureClass, count } entries, because the checkpoint secret
+ * screen refuses any credential-shaped KEY — and `SECRET_ECHO` is a legitimate
+ * failure-class NAME. The class name is a value here, never a key.
+ */
+function attributionForCheckpoint(attribution: ProviderFailureAttribution): Record<string, unknown> {
+  return {
+    schemaVersion: attribution.schemaVersion,
+    totalCalls: attribution.totalCalls,
+    failures: attribution.failures,
+    completedCalls: attribution.completedCalls,
+    sourceActions: attribution.sourceActions,
+    terminationClass: attribution.terminationClass,
+    byClass: Object.entries(attribution.byClass).map(([failureClass, count]) => ({ failureClass, count })),
+  };
+}
+
 function campaignStateOf(
   engine: CampaignEngine,
   status: 'PAUSED' | 'TERMINATED',
@@ -1081,11 +1113,13 @@ function buildCampaignCheckpoint(
     reasonerIdentity: engine.input.reasonerIdentity ?? null,
     pausedInvestigation,
     maxTurns: engine.input.maxTurns ?? AGENT_RUNTIME_DEFAULT_MAX_TURNS,
-    providerAttribution: attributeProviderFailures({
-      actionLog: acc.actionLog,
-      reasonerCalls: acc.reasonerCalls,
-      providerFailures: acc.providerFailures,
-    }),
+    providerAttribution: attributionForCheckpoint(
+      attributeProviderFailures({
+        actionLog: acc.actionLog,
+        reasonerCalls: acc.reasonerCalls,
+        providerFailures: acc.providerFailures,
+      }),
+    ),
   };
   const document: Record<string, unknown> = { ...checkpoint, campaignProgress: { ...progress } };
   assertCheckpointHasNoSecrets(document as unknown as AgentCheckpoint);

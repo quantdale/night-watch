@@ -635,17 +635,36 @@ test('secret-shaped strategy material is rejected fail-closed', async () => {
     stateDirectory: dir,
     investigationContext: makeTestContext(),
   });
-  expect(result.terminationReason).toBe('PAUSED');
-  expect(result.checkpointFile).toBeTruthy();
+  // M5 (6.7/C-16): SECRET_ECHO is a PERMANENT failure class, so the
+  // smuggling investigation ends immediately (REASONER_FAILURE) instead of
+  // continuing to a later turn, and the campaign stops on its own stagnation
+  // limit. The load-bearing property is unchanged: the secret never reaches
+  // persisted state.
+  expect(result.terminationReason).toBe('NO_PROGRESS');
+  expect(result.terminationCounts.REASONER_FAILURE).toBeGreaterThanOrEqual(1);
+  expect(result.checkpointFile).toBeNull();
   // The smuggled candidate was never admitted anywhere.
   expect(result.candidateIds).not.toContain(AKIA);
   expect(JSON.stringify(result.campaignStrategy)).not.toContain(AKIA);
   expect(result.campaignStrategy.candidateIds).toEqual([]);
-  // The persisted checkpoint carries no secret bytes either, and loading it
-  // re-validates: a secret-bearing file would throw here.
-  const rawCheckpoint = fs.readFileSync(result.checkpointFile as string, 'utf8');
-  expect(rawCheckpoint).not.toContain(AKIA);
+  // No checkpoint survives a terminal stagnation stop, so the guard is proven
+  // directly: a secret-bearing document is refused, and the owner-local state
+  // directory holds no secret bytes.
   expect(() =>
-    loadLocalCampaignCheckpoint('camp-strategy-secret-e2e', dir),
-  ).not.toThrow();
+    assertCheckpointHasNoSecrets({
+      schemaVersion: 'nightwatch.agent-checkpoint.v1',
+      campaignId: 'camp-strategy-secret-e2e',
+      state: { candidateIds: [AKIA] },
+      resumeCursor: 'camp-strategy-secret-e2e:turn:0',
+    } as unknown as AgentCheckpoint),
+  ).toThrow(/SECRET_DETECTED/);
+  for (const name of fs.readdirSync(dir)) {
+    // The fixture's own reasoner script legitimately contains the sentinel it
+    // tries to smuggle; the CAMPAIGN's persisted documents must not.
+    if (!name.endsWith('.json')) continue;
+    const file = path.join(dir, name);
+    if (!fs.statSync(file).isFile()) continue;
+    expect(fs.readFileSync(file, 'utf8')).not.toContain(AKIA);
+  }
+  expect(() => loadLocalCampaignCheckpoint('camp-strategy-secret-e2e', dir)).toThrow();
 });
