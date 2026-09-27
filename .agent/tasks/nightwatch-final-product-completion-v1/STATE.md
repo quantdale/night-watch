@@ -213,9 +213,19 @@ the gate pair (see the ledger).
   `tests/unit/authBundleTransaction.test.ts` 7/7, the auth launcher suites
   green, `hardening:check` + `schema-lifecycle check` PASS, and the sharded lane
   PASS at 5669/0 (5702 planned, 0 failed).
-  Next: 9.4 (NW-AUD-022 narrowed: prepared record before every effect, one
-  terminal record after, reader fails closed on unmatched or malformed lines,
-  effect-site census, fault tests) then 9.5-9.13 to close M8.
+  M8 9.4 DONE — proxy effect-pair evidence (NW-AUD-022 narrowed): every effect
+  path (HTTP forward, CONNECT tunnel, Upgrade handshake) writes a PREPARED
+  record before the effect and exactly one TERMINAL record after it, joined by
+  one `effectId`; `readProxyEventLedger` fails closed on malformed lines/events
+  and on unmatched, orphaned, duplicated or mis-ordered pairs
+  (`PROXY_EVIDENCE_LEDGER_INVALID`), while `readProxyEvents` stays the tolerant
+  live reader. This work also found and fixed a real falsy-seq defect: the
+  evidence-write sentinel was `!recorded`, so the legitimate first record
+  (seq 0) was treated as a write failure and closed the socket — it is now
+  `recorded < 0`. Evidence: `tests/unit/proxyEffectPairEvidence.test.ts` 7/7,
+  the proxy/containment suites 44/44, `hardening:check` PASS, and the sharded
+  lane PASS at 5676/0 (5709 planned, 0 failed).
+  Next: 9.5 (NW-AUD-023 narrowed plus popup L0) then 9.6-9.13 to close M8.
 - M6 is COMPLETE: 7.1-7.11 are ticked in the campaign ledger with DONE notes
   and PLAN marks M6 COMPLETE. The view-DOM baseline was intentionally
   REGENERATED (`NIGHTWATCH_UPDATE_VIEW_DOM_BASELINE=1`) because the Agent
