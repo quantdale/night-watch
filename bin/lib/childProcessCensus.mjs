@@ -31,6 +31,12 @@ export const EXECUTION_PROFILES = Object.freeze([
   'CONTAINED_ENVELOPE',
 ]);
 
+/** M8 (9.11 / R2-03): the DECLARED createRequire sites. Anything else fails. */
+export const KNOWN_CREATE_REQUIRE_SITES = Object.freeze([
+  "createRequire(path.join(outDir, 'entry.cjs'))",
+  "createRequire(path.join(root, 'package.json'))",
+]);
+
 export const INVOCATION_VOCABULARY = Object.freeze([
   'spawnSync',
   'spawn',
@@ -122,6 +128,32 @@ export function parseChildProcessImports(source) {
     }
   }
   if (importsChildProcess && bindings.size === 0 && namespaces.size === 0) unresolved.add('unbound-import');
+
+  // M8 (9.11 / R2-03): the census used to fail OPEN on four indirection shapes
+  // that a static reader cannot resolve. Each one now records an unresolved
+  // indirection, so the caller refuses instead of assuming no child process
+  // exists:
+  //   1. a DYNAMIC `import(...)` of the child-process module (a computed
+  //      specifier is a load this reader cannot follow),
+  //   2. `createRequire` / `module.createRequire` (a second require graph),
+  //   3. a STRING-BUILT specifier (a template or concatenation naming the
+  //      module at runtime),
+  //   4. NAMESPACE DESTRUCTURING (`const { spawn } = await import(...)`), which
+  //      produces a binding this reader never sees as a child-process binding.
+  // The specifier itself lives inside a string literal, which `maskSource`
+  // masks — so these two shapes are read from the RAW source, deliberately
+  // erring toward refusal (a comment that merely names the module is also
+  // reported, and the caller fails closed on a report).
+  if (/\bimport\s*\(\s*[`'"][^`'"]*child_process/.test(source)) unresolved.add('dynamic-import');
+  // Two repository tools legitimately build a second require graph for their
+  // OWN module resolution (`c12-preflight`, `project-state-check`); they are
+  // declared here so a NEW createRequire site still fails the census. The
+  // exemption is a named list, not a rule relaxation.
+  if (/\bcreateRequire\s*\(/.test(masked) && !KNOWN_CREATE_REQUIRE_SITES.some((marker) => source.includes(marker))) {
+    unresolved.add('create-require');
+  }
+  if (/\brequire\s*\(\s*(?:`[^`]*\$\{|[A-Za-z_$][\w$]*\s*[+)]|['"][^'"]*['"]\s*\+)/.test(source)) unresolved.add('string-built-specifier');
+  if (/\{[^}]*\}\s*=\s*await\s+import\s*\(/.test(masked)) unresolved.add('namespace-destructuring');
   return { importsChildProcess, bindings, namespaces, unresolvedIndirections: [...unresolved].sort() };
 }
 

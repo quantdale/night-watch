@@ -43,6 +43,7 @@
         "tests/unit/changeIntelligenceBacktest.test.ts",
         "tests/unit/changeSetGenerationIntegrity.test.ts",
         "tests/unit/childProcessCensus.test.ts",
+        "tests/unit/childProcessCensusIndirection.test.ts",
         "tests/unit/cliImplementationContract.test.ts",
         "tests/unit/containedTestReplay.test.ts",
         "tests/unit/contextGuardTransaction.test.ts",

@@ -417,6 +417,12 @@
       "class": "PARALLEL_SAFE",
       "signals": []
     },
+    "tests/unit/childProcessCensusIndirection.test.ts": {
+      "class": "PARALLEL_SAFE",
+      "signals": [
+        "isolated-scratch"
+      ]
+    },
     "tests/unit/ciBlockRecord.test.ts": {
       "class": "PARALLEL_SAFE",
       "signals": []

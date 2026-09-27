@@ -59,3 +59,6 @@ export declare function buildChildProcessCensus(
   files: Array<{ file: string; source: string }>,
 ): ChildProcessCensus;
 export declare function maskSourceForDebug(source: string): string;
+
+/** M8 (9.11 / R2-03): the DECLARED createRequire sites; anything else fails the census. */
+export const KNOWN_CREATE_REQUIRE_SITES: readonly string[];
