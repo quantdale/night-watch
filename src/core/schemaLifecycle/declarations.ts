@@ -23,6 +23,7 @@ import type { SchemaFamilyDeclaration } from './types';
 
 export const SCHEMA_FAMILIES: readonly SchemaFamilyDeclaration[] = [
   { family: 'nightwatch.dependency-currency', persisted: true, store: 'REPOSITORY_CORPUS', currentVersion: 1, versions: { 1: 'CURRENT' }, dispositions: [], note: 'repository configuration record; the advisory lane stays unavailable until a registry query is authorized' },
+  { family: 'nightwatch.environment-signature', persisted: false, store: 'IN_MEMORY', currentVersion: 1, versions: { 1: 'CURRENT' }, dispositions: [], note: 'closed environment-signature vocabulary classifying environment-caused reproduction failures' },
   { family: 'nightwatch.environment-surface', persisted: true, store: 'REPOSITORY_CORPUS', currentVersion: 1, versions: { 1: 'CURRENT' }, dispositions: [], note: 'repository configuration record declaring every environment variable' },
   { family: 'nightwatch.provider-attribution', persisted: true, store: 'AGENT_RECORDS', currentVersion: 1, versions: { 1: 'CURRENT' }, dispositions: [], note: 'derived provider-failure attribution carried by a campaign result and its progress envelope' },
   { family: 'nightwatch.reasoner-identity', persisted: true, store: 'AGENT_RECORDS', currentVersion: 1, versions: { 1: 'CURRENT' }, dispositions: [], note: 'reasoner executable identity recorded in local campaign run evidence' },
