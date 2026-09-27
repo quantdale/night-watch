@@ -142,8 +142,16 @@ M5 closed green with focused suites and the gate pair (see the ledger).
   L1/L2 require a genuinely different role, three runs of one role stay an L0
   candidate, and the phase7 harness receives its role explicitly instead of
   inferring it — `tests/unit/replayContextRoles.test.ts` 6/6.
-  Next: 7.4 (the `campaign-state/` orchestrator subtree with read
-  compatibility and the dossier-family-first findings authority).
+  7.4 — orchestrator state now lives in a dedicated `campaign-state/` private
+  subtree (the closed directory vocabulary gained a second member, with the
+  hardening pin and its mutation probe widened), the legacy findings-root
+  location stays READABLE through a fallback, and the Control Center findings
+  authority decides the DOSSIER FAMILY first: a non-dossier file is skipped
+  with the informational `FINDINGS_NON_DOSSIER_FILE_SKIPPED` reason instead of
+  being parsed as a corrupt dossier, so orchestrator state beside the dossiers
+  can never blank the Findings view — `tests/unit/campaignStateSubtree.test.ts`
+  3/3 and 158 affected tests green.
+  Next: 7.5 (the test-scoped run root and the Control Center newest-N window).
 - M5 history (kept for context): 6.1-6.11 are implemented, validated and
   committed (`9a044b49`, `5719f6ea`-lineage): the content-addressed
   `AgentFindingRecord` in `admitLocalFinding`; the atomic `agent-findings/`
@@ -167,17 +175,16 @@ M5 closed green with focused suites and the gate pair (see the ledger).
 
 ## Exact Next Action
 
-Implement 7.4: the `campaign-state/` subtree for orchestrator state with
-read-compatibility, and the findings authority filtering to dossier families
-first while exposing reasonCodes (B-02/C-21). Read the campaign orchestrator's
-state writers and the Control Center findings authority, add the subtree with
-read-compatible loading and the family-first filter, with focused tests. Then
-continue 7.5-7.11 in order (test-scoped run root with the newest-N window and
-`RUN_EVIDENCE_WINDOW_TRUNCATED`, the read-only agent-campaign view, the Safety
-Center, one `resolveSiblingRoot()`, the synthetic-preview relabelling and the
-`status:local` auth heading), committing each validated batch and closing M6
-with focused + `gate:milestone` PASS, the C-00 integrate and the `gh` CI
-observation (OD-3) exactly as in M4/M5.
+Implement 7.5: the test-scoped run root and the Control Center newest-N window
+across the real run roots with `RUN_EVIDENCE_WINDOW_TRUNCATED` (B-01, X-01).
+Read the run-evidence reader (`src/controlCenter/authorities/runEvidenceReader.ts`)
+and the run-root layout, add the bounded window with the truncation reason, and
+keep a test-scoped root for tests. Then continue 7.6-7.11 in order (the
+read-only agent-campaign view, the Safety Center, one `resolveSiblingRoot()`,
+the synthetic-preview relabelling and the `status:local` auth heading),
+committing each validated batch and closing M6 with focused +
+`gate:milestone` PASS, the C-00 integrate and the `gh` CI observation (OD-3)
+exactly as in M4/M5.
 
 ## Files Changed
 
