@@ -331,7 +331,14 @@ the gate pair (see the ledger).
   option exited 0 instead of 2 — fixed by exiting with `process.exitCode ?? 0`.
   `phase7-real` was reverted deliberately (its option surface is richer than the
   derived set). Conformance: 55/76 declared, 4 library-retained, 17 pending.
-  Next: continue 10.2 (the remaining 17 bins), then 10.3 (shared-parser
+  Second 10.2 batch: `auth-capture`, `ai-owner-review` (+ its `show`/`status`/
+  `decide` commands), `nightwatch-control-center` and `phase7-real` migrated —
+  conformance is now 59/76 declared, 4 library-retained, 13 pending. The
+  migration surfaced two shared-parser refusal codes (`CLI_ARGUMENT_CONFLICT`,
+  `CLI_UNKNOWN_ARGUMENT`), so the launcher boundary suites accept the shared
+  codes alongside the bins' own; the properties under test are unchanged.
+  Sharded lane PASS at 5718/0 (5751 planned).
+  Next: continue 10.2 (the remaining 13 bins), then 10.3 (shared-parser
   structural rule with a negative probe, task counts, README claim at 76/76).
 - M6 is COMPLETE: 7.1-7.11 are ticked in the campaign ledger with DONE notes
   and PLAN marks M6 COMPLETE. The view-DOM baseline was intentionally
