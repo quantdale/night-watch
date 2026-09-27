@@ -54,6 +54,7 @@ import {
   type AgentToolDescriptor,
 } from '../agentProtocol';
 import { createCheckpoint, AgentCheckpointError, parseCheckpoint, parseResumeCursor } from './checkpoint';
+import { boundedBackoffMs, providerFailureNature } from './providerAttribution';
 import { deriveInvestigationMemory } from '../investigationMemory/derive';
 import { MEMORY_CAPS, type CampaignStrategyState } from '../investigationMemory/types';
 import type { ReproductionSurfaceEntry } from '../reproductionSurface/contracts';
@@ -117,6 +118,9 @@ export class AgentRuntime {
   private readonly allowedToolIds: readonly AgentToolId[];
   private readonly defaultMaxTurns: number;
   private readonly now: () => number;
+  /** M5 (6.7): bounded-backoff transport (injectable; real timers by default). */
+  private readonly sleep: (ms: number) => Promise<void>;
+  private readonly random: () => number;
 
   private status: AgentRuntimeStatus = 'READY';
   private phase: AgentPhase = 'PLAN';
@@ -156,6 +160,8 @@ export class AgentRuntime {
     this.authorizedEnvironments = deps.authorizedEnvironments ?? ['LOCAL'];
     this.allowedToolIds = deps.allowedToolIds ?? defaultAllowedToolIds(this.authorizedEnvironments);
     this.defaultMaxTurns = deps.maxTurns ?? AGENT_RUNTIME_DEFAULT_MAX_TURNS;
+    this.sleep = deps.backoff?.sleep ?? ((ms: number) => new Promise((resolve) => setTimeout(resolve, ms)));
+    this.random = deps.backoff?.random ?? Math.random;
     this.now = deps.now ?? Date.now;
     this.priorStrategy = deps.priorStrategy ?? null;
     if (isResumeDeps(deps)) {
@@ -382,6 +388,7 @@ export class AgentRuntime {
         evidenceRefs: [],
       });
       void error;
+      await this.backoffDelay();
       return null;
     }
 
@@ -412,6 +419,12 @@ export class AgentRuntime {
         resultClass: `REASONER_${call.class}`,
         evidenceRefs: [],
       });
+      // M5 (6.7/C-16): a permanent class is a configuration fact, not an
+      // outage — retrying it only burns the failure allowance.
+      if (providerFailureNature(call.class) === 'PERMANENT') {
+        return { reason: 'REASONER_FAILURE', withCheckpoint: true };
+      }
+      await this.backoffDelay();
       return null;
     }
 
@@ -454,6 +467,10 @@ export class AgentRuntime {
         resultClass: `REJECTED_${failureClass}`,
         evidenceRefs: [],
       });
+      if (providerFailureNature(failureClass) === 'PERMANENT') {
+        return { reason: 'REASONER_FAILURE', withCheckpoint: true };
+      }
+      await this.backoffDelay();
       return null;
     }
 
@@ -759,6 +776,17 @@ export class AgentRuntime {
     };
     this.pendingUntrusted = [];
     return request;
+  }
+
+  /**
+   * M5 (6.7/C-16): bounded exponential backoff with jitter between transient
+   * provider failures. Bounded so an outage can never sleep away the wall
+   * clock, and injectable so tests record the delays.
+   */
+  private async backoffDelay(): Promise<void> {
+    const delay = boundedBackoffMs(this.usage.consecutiveFailures, this.random);
+    if (delay <= 0) return;
+    await this.sleep(delay);
   }
 
   private addEvidence(refs: readonly string[]): void {

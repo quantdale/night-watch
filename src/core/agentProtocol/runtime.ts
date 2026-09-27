@@ -332,6 +332,30 @@ const BUDGET_TOOL_ACTIONS: Record<AgentBudgetCeilingName, number> = {
   OVERNIGHT: 4800,
 };
 
+// M5 (6.7/C-16): the failure ceilings scale with the duration tier. A flat
+// ceiling either gives up too early on an overnight campaign (a single provider
+// outage ends it) or lets a one-hour campaign burn its whole call allowance on
+// retries. The ratio is deliberately far below the call scaling: failures are
+// a signal, not a budget to spend.
+const BUDGET_FAILURES: Record<AgentBudgetCeilingName, number> = {
+  HOUR_1: 8,
+  HOUR_4: 16,
+  HOUR_8: 32,
+  OVERNIGHT: 48,
+};
+const BUDGET_CONSECUTIVE_FAILURES: Record<AgentBudgetCeilingName, number> = {
+  HOUR_1: 6,
+  HOUR_4: 8,
+  HOUR_8: 10,
+  OVERNIGHT: 12,
+};
+const BUDGET_PROVIDER_FAILURES: Record<AgentBudgetCeilingName, number> = {
+  HOUR_1: 8,
+  HOUR_4: 16,
+  HOUR_8: 32,
+  OVERNIGHT: 48,
+};
+
 export function defaultAgentBudgetPolicy(ceilingName: AgentBudgetCeilingName): AgentBudgetPolicy {
   return {
     schemaVersion: AGENT_BUDGET_VERSION,
@@ -344,9 +368,9 @@ export function defaultAgentBudgetPolicy(ceilingName: AgentBudgetCeilingName): A
     toolActions: BUDGET_TOOL_ACTIONS[ceilingName],
     perActionTimeoutMs: 120_000,
     candidateCap: 20,
-    retries: 8,
-    consecutiveFailures: 6,
-    providerFailures: 8,
+    retries: BUDGET_FAILURES[ceilingName],
+    consecutiveFailures: BUDGET_CONSECUTIVE_FAILURES[ceilingName],
+    providerFailures: BUDGET_PROVIDER_FAILURES[ceilingName],
   };
 }
 

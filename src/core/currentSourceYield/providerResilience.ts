@@ -239,6 +239,43 @@ export function validateProviderResiliencePolicy(policy: unknown, options: { rea
   if (failover?.exhaustionBehavior !== 'PROVIDER_BLOCKED') {
     violations.push({ code: 'PROVIDER_POLICY_EXHAUSTION_INVALID', detail: 'exhaustionBehavior must be PROVIDER_BLOCKED' });
   }
+  // M5 (6.7/C-15): a candidate order the engine can NEVER reach is refused
+  // rather than advertised. Two mechanical facts make a later candidate
+  // unreachable: too few permitted transitions to select it, and a failure
+  // allowance the engine exhausts (stopping the campaign) before the last
+  // candidate is tried.
+  if (Array.isArray(candidates) && candidates.length > 1) {
+    const maxTransitions = failover?.maxTransitions;
+    if (
+      typeof maxTransitions === 'number' &&
+      Number.isSafeInteger(maxTransitions) &&
+      maxTransitions < candidates.length - 1
+    ) {
+      violations.push({
+        code: 'PROVIDER_POLICY_UNREACHABLE_CANDIDATES',
+        detail: `maxTransitions ${maxTransitions} cannot reach candidate ${candidates.length} of ${candidates.length} (${candidates.length - 1} transitions are required)`,
+      });
+    }
+    const attemptsPerCall =
+      retry !== undefined && typeof retry.attemptsPerCall === 'number' && Number.isSafeInteger(retry.attemptsPerCall)
+        ? retry.attemptsPerCall
+        : 0;
+    const envelope = record.budgetEnvelope as Record<string, unknown> | undefined;
+    const providerFailureAllowance =
+      envelope !== undefined && typeof envelope.providerFailures === 'number' && Number.isSafeInteger(envelope.providerFailures)
+        ? envelope.providerFailures
+        : null;
+    if (providerFailureAllowance !== null) {
+      const callsLastCandidate = attemptsPerCall > 0 ? attemptsPerCall : 1;
+      const needed = callsLastCandidate * candidates.length;
+      if (needed > providerFailureAllowance) {
+        violations.push({
+          code: 'PROVIDER_POLICY_UNREACHABLE_CANDIDATES',
+          detail: `reaching candidate ${candidates.length} needs at least ${needed} failing calls but the envelope allows ${providerFailureAllowance}`,
+        });
+      }
+    }
+  }
   if (options.derivedBudgetEnvelope !== undefined) {
     const envelopeChecked = checkRuntimeBudgetEnvelope(record.budgetEnvelope, options.derivedBudgetEnvelope);
     if (!envelopeChecked.ok) {

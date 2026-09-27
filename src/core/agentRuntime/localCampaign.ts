@@ -167,6 +167,14 @@ export interface LocalCampaignInput {
   readonly provider?: string;
   readonly model?: string;
   readonly maxTurns?: number;
+  /**
+   * M5 (6.7/C-16): bounded-backoff transport for transient provider failures.
+   * Absent means real bounded timers; tests inject a recorder.
+   */
+  readonly backoff?: {
+    readonly sleep?: (ms: number) => Promise<void>;
+    readonly random?: () => number;
+  };
   readonly stateDirectory?: string;
   /**
    * M5 (C-01): owner-local findings root override. Absent means the private
@@ -1278,6 +1286,7 @@ async function runOneInvestigation(engine: CampaignEngine, investigationId: stri
       maxTurns: engine.input.maxTurns,
       now: engine.now,
       priorStrategy: engine.acc.strategy,
+      backoff: engine.input.backoff,
     }).run({ maxTurns: engine.input.maxTurns });
   } else {
     ran = await new AgentRuntime({
@@ -1289,6 +1298,7 @@ async function runOneInvestigation(engine: CampaignEngine, investigationId: stri
       maxTurns: engine.input.maxTurns,
       now: engine.now,
       priorStrategy: engine.acc.strategy,
+      backoff: engine.input.backoff,
       // The capability this campaign already proved. Without it a fresh
       // investigation re-learns executability from zero, which is the
       // cross-investigation amnesia W10 exists to remove.

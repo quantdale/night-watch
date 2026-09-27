@@ -48,6 +48,7 @@
         "tests/unit/explainIdFlagTolerance.test.ts",
         "tests/unit/explainSurfaceArgForms.test.ts",
         "tests/unit/exploration.test.ts",
+        "tests/unit/failureCeilingsAndBackoff.test.ts",
         "tests/unit/findingIntel.test.ts",
         "tests/unit/frontierContractFuzz.test.ts",
         "tests/unit/fuzzProperty.test.ts",

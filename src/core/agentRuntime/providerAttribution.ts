@@ -115,3 +115,79 @@ export function attributeProviderFailures(
 export function isProviderTerminationClass(value: unknown): value is ProviderTerminationClass {
   return typeof value === 'string' && (PROVIDER_TERMINATION_CLASSES as readonly string[]).includes(value);
 }
+
+
+// ---------------------------------------------------------------------------
+// M5 (6.7, C-16) — failure-class semantics, tiers, and bounded backoff.
+// ---------------------------------------------------------------------------
+
+import type { ReasonerFailureClass } from '../agentProtocol/reasoner';
+
+/**
+ * TRANSIENT classes can plausibly succeed on a later attempt: the provider was
+ * slow, crashed, or returned an incomplete stream. They are retried under the
+ * tier's failure ceiling with bounded backoff.
+ */
+export const TRANSIENT_PROVIDER_FAILURE_CLASSES = [
+  'TIMEOUT',
+  'HUNG_CHILD',
+  'HUNG_GRANDCHILD',
+  'CLI_CRASH',
+  'NONZERO_EXIT',
+  'OVERSIZE_OUTPUT',
+  'PARTIAL_OUTPUT',
+  'PROVIDER_FAILURE',
+] as const satisfies readonly ReasonerFailureClass[];
+
+/**
+ * PERMANENT classes cannot be repaired by trying again: a secret echo must
+ * never be re-run into the logs, and a protocol/authority violation is a
+ * configuration fact about this reasoner. The run stops instead of burning the
+ * failure allowance. `CANCELLED` is neither: it is an operator action.
+ */
+export const PERMANENT_PROVIDER_FAILURE_CLASSES = [
+  'MALFORMED_OUTPUT',
+  'GARBAGE_OUTPUT',
+  'SECRET_ECHO',
+  'UNKNOWN_INTENT',
+  'UNSAFE_INTENT',
+  'UNKNOWN_TOOL',
+  'UNAUTHORIZED_ENVIRONMENT',
+] as const satisfies readonly ReasonerFailureClass[];
+
+export type ProviderFailureNature = 'TRANSIENT' | 'PERMANENT' | 'OPERATOR';
+
+export function providerFailureNature(failureClass: string): ProviderFailureNature {
+  if ((PERMANENT_PROVIDER_FAILURE_CLASSES as readonly string[]).includes(failureClass)) return 'PERMANENT';
+  if (failureClass === 'CANCELLED') return 'OPERATOR';
+  return 'TRANSIENT';
+}
+
+/** Bounded exponential backoff with bounded jitter. */
+export const PROVIDER_BACKOFF_POLICY = Object.freeze({
+  baseMs: 200,
+  factor: 2,
+  maxMs: 1_000,
+  jitterRatio: 0.2,
+  /** The streak index is capped so the delay stays bounded on a long outage. */
+  maxExponent: 4,
+});
+
+/**
+ * Delay before the next attempt after `failureStreak` consecutive failures.
+ * Deterministic given `random` (injected in tests, `Math.random` in
+ * production), bounded by `maxMs`, and never negative.
+ */
+export function boundedBackoffMs(
+  failureStreak: number,
+  random: () => number,
+  policy: typeof PROVIDER_BACKOFF_POLICY = PROVIDER_BACKOFF_POLICY,
+): number {
+  const streak = Number.isFinite(failureStreak) && failureStreak > 0 ? Math.floor(failureStreak) : 1;
+  const exponent = Math.min(streak - 1, policy.maxExponent);
+  const ceiling = Math.min(policy.maxMs, policy.baseMs * policy.factor ** exponent);
+  const raw = typeof random === 'function' ? random() : 0.5;
+  const unit = Number.isFinite(raw) ? Math.min(Math.max(raw, 0), 1) : 0.5;
+  const jitter = (unit * 2 - 1) * policy.jitterRatio;
+  return Math.max(0, Math.min(policy.maxMs, Math.round(ceiling * (1 + jitter))));
+}

@@ -271,6 +271,15 @@ export interface AgentRuntimeDeps {
    * fail-closed parser before it is persisted or restored.
    */
   readonly priorStrategy?: CampaignStrategyState | null;
+  /**
+   * M5 (6.7/C-16): the bounded-backoff transport between transient provider
+   * failures. Both ports are injectable so a test can record the delays
+   * instead of sleeping, and production keeps the bounded real-time default.
+   */
+  readonly backoff?: {
+    readonly sleep?: (ms: number) => Promise<void>;
+    readonly random?: () => number;
+  };
 }
 
 export interface RestoredRuntimeData {
