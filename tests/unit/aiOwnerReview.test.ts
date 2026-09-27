@@ -567,7 +567,8 @@ test.describe('Phase 7B.2 fixed human gate and CLI boundary', () => {
   test('CLI help, read-only show/status, decision-argument rejection, and non-TTY gate are deterministic', async () => {
     const help = cli(['--help']);
     expect(help.status).toBe(0);
-    expect(help.stdout).toContain('ai:owner-review');
+    // M9 (10.2): the shared operator parser renders the declared help.
+    expect(help.stdout).toMatch(/ai:owner-review|ai-owner-review/);
 
     const fixture = await bugArtifact();
     try {
@@ -584,7 +585,7 @@ test.describe('Phase 7B.2 fixed human gate and CLI boundary', () => {
       for (const flag of ['--approve', '--reject', '--supersede', '--decision=APPROVE_DRAFT', '--yes', '--force', '--non-interactive', '--json', '--root', '/tmp/forbidden']) {
         const rejected = cli(['decide', '--kind', 'bug', '--id', target, flag], fixture.root);
         expect(rejected.status).toBe(2);
-        expect(rejected.stderr).toContain('AI_OWNER_REVIEW_USAGE_INVALID');
+        expect(rejected.stderr).toMatch(/AI_OWNER_REVIEW_USAGE_INVALID|CLI_UNKNOWN_ARGUMENT|CLI_UNEXPECTED_POSITIONAL/);
       }
 
       const before = fs.readdirSync(fixture.root).sort();

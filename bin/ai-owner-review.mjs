@@ -23,6 +23,11 @@ const CLI_METADATA = {
     { name: '--id', shape: 'string', summary: 'candidate identity' },
     { name: '--kind', shape: 'string', summary: 'candidate kind' },
   ],
+  commands: [
+    { name: 'show', summary: 'render one reviewed candidate (read-only)' },
+    { name: 'status', summary: 'report the review store status (read-only)' },
+    { name: 'decide', summary: 'interactive human decision (TTY and fixed two-step confirmation required)' },
+  ],
   json: false,
   authorization: 'OWNER_GATED',
   artifacts: [],

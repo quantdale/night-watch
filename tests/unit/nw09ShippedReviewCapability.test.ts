@@ -175,7 +175,9 @@ test.describe('NW-09 — the shipped launcher exposes the review capability deli
       child.stderr?.on('data', (chunk: string) => { stderr += chunk; });
       const code = await new Promise<number | null>((resolve) => child.on('exit', resolve));
       expect(code, `${rejected} must be refused`).toBe(2);
-      expect(stderr).toContain('CONTROL_CENTER_');
+      // M9 (10.2): the shared operator parser refuses an undeclared or
+      // malformed flag before the launcher's own CONTROL_CENTER_* gate.
+      expect(stderr).toMatch(/CONTROL_CENTER_|CLI_ARGUMENT_|CLI_UNKNOWN_ARGUMENT/);
     }
   });
 
