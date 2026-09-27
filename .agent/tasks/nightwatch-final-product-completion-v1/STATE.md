@@ -38,13 +38,15 @@ ledger, and end at `PROJECT_COMPLETE_AND_CI_CERTIFIED` under D-129 with a
 
 ## Current Milestone
 
-M4 Release-certification machinery (tasks 5.1-5.7): wire the seven
-unimplemented release probes (G14 reachability, G17 schema lifecycle, G18 UI
-error-taxonomy receipt, G19 environment declaration, G21 auth-capability
-single evaluator, G12 product run receipt plus the historical W13 aggregate),
-the `implemented` honesty rule (5.3), post-certification demotion semantics
-(X-04, 5.4), schema DECIDED state (A-19/A-20, 5.5), and CI block-record
-wiring (A-14/D-03, 5.6). M3 closed green at `aa78a014` (CI run 36243034942).
+M5 Autonomous hunt result integrity (tasks 6.1-6.17): the durable
+identity-bound `AgentFindingRecord` (content-addressed dossierId, campaignId,
+per-source HEAD and tree digest, `cfe:` fingerprint, test and reasoner
+identity) admitted mechanically by `admitLocalFinding`, written atomically
+before any checkpoint deletion, with a truthful TERMINATED resume
+(`UNAVAILABLE_NOT_PERSISTED` when absent) and the reasoner-identity, budget,
+maxTurns, provider-failure-taxonomy and Git-HEAD reproduction contracts
+(C-01..C-29, NW-AUD-044..047). M4 closed green at `137207b1` (CI run
+36292162386).
 
 ## Completed Milestones
 
@@ -83,24 +85,40 @@ wiring (A-14/D-03, 5.6). M3 closed green at `aa78a014` (CI run 36243034942).
   green (run 36243034942, all 15 groups PASS, receipt
   `receipt:sha256:535217a6dbae65b7a26f9243`).
 
+- **M4 COMPLETE** — release-certification machinery (5.1-5.7): the six probes
+  (G14 reachability, G17 schema lifecycle, G18 UI error-taxonomy receipt, G19
+  environment declaration, G21 auth-capability single evaluator, G12 product
+  run receipt plus the historical W13 aggregate) wired in
+  `collectReleaseCheckOutputs` with all 16 `RELEASE_ADVANCE_CHECKS` entries
+  `implemented: true` (`d595c7c8`); the G20 accessibility result record emitted
+  by the browser certification and consumed by its fail-closed parser
+  (`cab67d76`, `875490be`, `09d942cb`); the `implemented` honesty rule
+  (`checkReleaseImplementedHonesty`, registry 88 rules / 148 probes), the X-04
+  post-certification demotion classification, the A-19 DECIDED state citing
+  D-129 / programme 13.8 and the A-20 terminal C-14 record, and the A-14/D-03
+  CI block-record single authority with the observed executed run
+  (`a784e668`); two CI-shape repairs (`f19faa6c`, `93bf8377`); final
+  integration `137207b1` after reconciling origin/main `946b52c4` and
+  restoring the ledger-governed README status block. gate:dev and
+  gate:milestone both PASS 5520/0 on the reconciled base.
+
 ## Work In Progress
 
-- Task 5.1 (M4): wire the seven unimplemented release probes — G14
-  reachability, G17 schema lifecycle, G18 UI error-taxonomy receipt, G19
-  environment declaration, G21 auth-capability single evaluator, G12 product
-  run receipt plus the historical W13 aggregate — setting `implemented:true`
-  only when wired (A-02/D-01).
+- M4 is complete and integrated (`137207b1`): 5.1-5.7 are ticked in the
+  campaign ledger with their DONE notes, PLAN marks M4 COMPLETE, and the
+  M5 entry work (6.1: `AgentFindingRecord` derivation in `admitLocalFinding`)
+  has not started yet.
 
 ## Exact Next Action
 
-Read tasks 5.1-5.7 and `src/core/releaseCertification/**`, then wire the
-G14/G17/G18/G19/G21/G12 probes behind the `implemented` honesty rule (5.1),
-running the focused suites as each lands. Repair forward with new commits on
-any failure — never amend. Close M4 with focused + `gate:milestone` PASS per
-5.7, then the C-00 push and `gh` CI observation (OD-3) as in M3; the M3
-closeout docs commit itself is pushed via
+Read tasks 6.1-6.17 and `src/core/localInvestigation/**`, then implement 6.1
+(the content-addressed `AgentFindingRecord` derived mechanically in
+`admitLocalFinding`) with its focused suite green, repairing forward with new
+commits on any failure — never amend. Close M5 with focused +
+`gate:milestone` PASS per its last task, then the C-00 push and `gh` CI
+observation (OD-3) exactly as in M4:
 `node bin/nightwatch-session.mjs integrate --expect-session sess-0734f2070d08
---expect-head <head>` and its exact-head CI run is observed with `gh`.
+--expect-head <head>` and `gh run watch <run-id>`.
 
 ## Files Changed
 
@@ -389,6 +407,49 @@ Relevant failure/output summary: gitHead `78b23520` (the closeout docs
 commits on top of `aa78a014`); CI green holds at the closeout head. This
 entry is committed with the closeout record and pushed together with the
 first M4 checkpoint — no push cycle spent on a one-line ledger entry.
+
+Command: `npm run gate:dev` + `npm run gate:milestone` (M4 close-out, post-reconcile)
+Result: PASS (both)
+When: 2026-09-26
+Relevant failure/output summary: at `137207b1` — affected-shards 5520/0 in
+both lanes (selected 395) and every other step exit=0. The M4 repairs that got
+there: a first pass with 46 failures — 42 in `agent-state.test.ts` from
+synthetic roots lacking `config/ci-block-record.v1.json` (now a
+`CI_BLOCK_RECORD_UNAVAILABLE` warning while invalid/stale records stay errors)
+and 4 in `plannerHandoff.test.ts` whose fixture copied `bin/agent-state.mjs`
+without its `bin/lib/ci-block-record.mjs` import target. Canonical was
+formatter-/autofix-churned by pi-lens during the window and restored
+path-scoped before every gate run.
+
+Command: `node bin/nightwatch-session.mjs reconcile --expect-session sess-0734f2070d08`
+Result: SESSION_RECONCILED — merged origin/main=946b52c4 (merge `73fe4015`)
+When: 2026-09-26
+Relevant failure/output summary: the owner's README replacement emptied
+`README.md` and failed CI run 36254110908 (completed/failure, 52s). After the
+merge `hardening:check` failed `STATUS_WORD README.md must carry the
+ledger-governed measured-status block`, so the README bytes from the last
+green head were restored as their own commit (`137207b1`) and hardening:check
+returned PASS before the gate pair.
+
+Command: `node bin/nightwatch-session.mjs integrate --expect-session sess-0734f2070d08 --expect-head 137207b176c36d7125aeb91c533dd1be57089dce`
+Result: SESSION_INTEGRATED — origin/main=137207b176c36d7125aeb91c533dd1be57089dce
+When: 2026-09-26
+Relevant failure/output summary: fast-forward only (the first attempt
+correctly refused with SESSION_INTEGRATION_NOT_FAST_FORWARD while origin/main
+carried 946b52c4); canonical was fast-forwarded to the integrated head
+afterwards and `workspace:check` holds.
+
+Command: `gh run watch 36292162386 --exit-status` (OD-3 exact-head CI observation)
+Result: PASS — `completed / success`, gate `finalResult: PASS`
+When: 2026-09-27 (run 03:41:57Z → 03:55:46Z, gate 816982ms)
+Relevant failure/output summary: gitHead `137207b176c36d7125aeb91c533dd1be57089dce`;
+node v22.23.2 / npm 10.9.8; environmentClass CI; receipt
+`receipt:sha256:60c13bcf4fe5f97f75bf1326`; all 15 required groups PASS —
+SEMANTIC_COMPATIBILITY 2160 total / 2146 passed / 14 skipped / 0 failed,
+SYNTHETIC_CAMPAIGN 1951 / 1907 / 44 skipped / 0 failed, OWNER_PROVENANCE 91
+passed, UI_CONTROL_CENTER 7 passed, TOPOLOGY PASS (the runner has no bwrap and
+uses the X-02 degraded envelope). Exact-head CI is green at the M4 head; the
+prior head `946b52c4` had failed (36254110908) on the emptied README.
 
 ## Decisions Made During This Task
 

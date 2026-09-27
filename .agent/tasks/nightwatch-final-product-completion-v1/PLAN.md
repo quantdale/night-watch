@@ -171,7 +171,15 @@ approved paths.
 - Acceptance criteria: every wired check reports `implemented:true` only when
   wired; a later substantive commit demotes to a truthful report instead of
   breaking the gate; focused + `gate:milestone` PASS.
-- **Status:** NOT_STARTED
+- **Status:** COMPLETE — 5.1 @`d595c7c8` (six probes wired, all 16 release
+  checks implemented, CI 36251410183 green); 5.2-5.6 @`cab67d76`/`875490be`/
+  `09d942cb`/`a784e668` (G20 accessibility record consumed, `implemented`
+  honesty rule 88 rules/148 probes, X-04 demotion, A-19/A-20 schema states,
+  CI block-record single authority with the observed executed run); 5.7
+  @`137207b1` after the session reconciled origin/main `946b52c4` (whose README
+  replacement emptied the file and failed CI 36254110908 — the ledger-governed
+  status block was restored, hardening:check PASS); gate:dev/gate:milestone
+  5520/0 on the reconciled base; 2026-09-26.
 
 ### M5 — Autonomous hunt result integrity (tasks 6.1-6.17)
 

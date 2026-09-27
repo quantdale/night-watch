@@ -7,18 +7,22 @@ Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-final-product-completion-v1
 Starting SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
 Last validated implementation SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
-Last checkpoint: 2026-09-26 — M3 COMPLETE (4.1-4.13): gate:dev PASS 5507/0,
-gate:milestone PASS and exact-head CI green at `aa78a014` (run 36243034942,
-all 15 required groups PASS, receipt `receipt:sha256:535217a6dbae65b7a26f9243`)
-after five repair-forward checkpoints; recorded in STATE/PLAN/tasks 4.13.
-Current milestone: M4 Release-certification machinery (tasks 5.1-5.7) — wire
-G14/G17/G18/G19/G21/G12 probes with the `implemented` honesty rule (5.1-5.3),
-the accessibility record (5.2), post-certification demotion semantics (5.4),
-schema DECIDED state (5.5) and CI block-record wiring (5.6).
-Next action: read tasks 5.1-5.7 and `src/core/releaseCertification/**`, wire
-task 5.1's probes behind the `implemented` honesty rule with focused suites
-green as each lands; repair forward with new commits and close M4 with the
-gate pair per 5.7.
+Last checkpoint: 2026-09-26 — M4 COMPLETE (5.1-5.7): six release probes wired
+(`d595c7c8`), the G20 accessibility record with its fail-closed parser
+(`cab67d76`), the `implemented` honesty rule + X-04 demotion + A-19/A-20 schema
+states + the CI block-record single authority (`a784e668`), and the final
+integration `137207b1` after reconciling origin/main `946b52c4` and restoring
+the ledger-governed README status block; gate:dev/gate:milestone 5520/0.
+Current milestone: M5 Autonomous hunt result integrity (tasks 6.1-6.17) — the
+durable identity-bound `AgentFindingRecord` (6.1: content-addressed dossierId,
+campaignId, per-source HEAD and tree digest, `cfe:` fingerprint, test and
+reasoner identity, derived in `admitLocalFinding`), its atomic write before any
+checkpoint deletion (6.2), truthful TERMINATED resume (6.3) and the remaining
+reasoner-identity, budget, maxTurns, provider-taxonomy and Git-HEAD contracts.
+Next action: read tasks 6.1-6.17 and `src/core/localInvestigation/**`, implement
+6.1 with its focused suite green, repairing forward with new commits; close M5
+with focused + gate:milestone PASS, the C-00 integrate and the `gh` CI
+observation (OD-3) as in M4.
 
 Authorization class: FINAL_PRODUCT_COMPLETION_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
