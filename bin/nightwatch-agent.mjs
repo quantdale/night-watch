@@ -5,7 +5,8 @@
  *   node bin/nightwatch-agent.mjs status
  *   node bin/nightwatch-agent.mjs test
  *   node bin/nightwatch-agent.mjs campaign run --reasoner=cli --duration=1h
- *   node bin/nightwatch-agent.mjs campaign status|pause|resume|findings
+ *   node bin/nightwatch-agent.mjs campaign status|resume|findings
+ *   (pausing a running campaign is SIGNAL-driven: send SIGINT/SIGTERM to it)
  *
  * Local/synthetic only. DEV/NEXT/production contact is refused.
  */
@@ -25,6 +26,38 @@ const DURATIONS = new Map([
   ['8h', 'HOUR_8'],
   ['overnight', 'OVERNIGHT'],
 ]);
+
+/**
+ * M5 (6.9/C-07): the operator's SIGINT/SIGTERM pause channel for a running
+ * campaign. The FIRST signal asks the campaign to halt at its next turn
+ * boundary — writing a PAUSED checkpoint and killing any in-flight reasoner
+ * process group. Repeated signals are ABSORBED (reported, never escalated), so
+ * a duplicated terminal/group delivery can never kill work.
+ */
+function installCampaignPauseChannel() {
+  const controller = new AbortController();
+  let received = 0;
+  const handler = (signal) => {
+    received += 1;
+    if (received > 1) {
+      console.error(`NIGHTWATCH_AGENT: PAUSE_ALREADY_REQUESTED (${signal}) — the campaign is already halting`);
+      return;
+    }
+    console.error(`NIGHTWATCH_AGENT: PAUSE_REQUESTED (${signal}) — halting at the next turn boundary`);
+    controller.abort();
+  };
+  const onInt = () => handler('SIGINT');
+  const onTerm = () => handler('SIGTERM');
+  process.on('SIGINT', onInt);
+  process.on('SIGTERM', onTerm);
+  return {
+    signal: controller.signal,
+    dispose: () => {
+      process.removeListener('SIGINT', onInt);
+      process.removeListener('SIGTERM', onTerm);
+    },
+  };
+}
 
 function fail(code, message) {
   console.error(`NIGHTWATCH_AGENT: ${message}`);
@@ -195,6 +228,7 @@ if (command === 'status') {
         } else if (process.env.NIGHTWATCH_PRINT_CLI) {
           extraArgs.push(path.join(root, 'bin/nightwatch-reasoner-print.mjs'));
         }
+        const pause = installCampaignPauseChannel();
         try {
           const providerLabel = process.env.NIGHTWATCH_REASONER_PROVIDER ?? 'configured';
           const { executable, reasonerIdentity } = resolveReasonerIdentity(reasonerMod, process.env.NIGHTWATCH_REASONER_CLI, {
@@ -203,6 +237,7 @@ if (command === 'status') {
             model: modelLabel,
           });
           const result = await mod.runLocalCliCampaign({
+            pauseSignal: pause.signal,
             campaignId: typeof flags.id === 'string' && flags.id.length > 0 ? flags.id : `local-${Date.now()}`,
             ceilingName: DURATIONS.get(flags.duration),
             executable,
@@ -230,10 +265,20 @@ if (command === 'status') {
           }
         } catch (error) {
           fail(2, error instanceof Error ? error.message : 'LOCAL_CAMPAIGN_FAILED');
+        } finally {
+          pause.dispose();
         }
       }
     }
-  } else if (sub === 'status' || sub === 'pause' || sub === 'findings') {
+  } else if (sub === 'pause') {
+    // M5 (6.9/C-07): pausing is a SIGNAL, not a stored flag. The old
+    // subcommand only listed checkpoints while claiming to pause, which was
+    // an operator-facing lie.
+    fail(
+      2,
+      'CAMPAIGN_PAUSE_IS_SIGNAL_DRIVEN — send SIGINT (or SIGTERM) to the running campaign process; it writes a PAUSED checkpoint and stops its reasoner',
+    );
+  } else if (sub === 'status' || sub === 'findings') {
     const [mod] = loadTypeScriptModules(['src/core/agentRuntime/localCampaign.ts'], { root });
     const campaigns = mod.listLocalCampaigns();
     const payload = sub === 'findings'
@@ -246,9 +291,7 @@ if (command === 'status') {
           command: sub,
           liveProcess: false,
           campaigns,
-          note: sub === 'pause'
-            ? 'campaign run is blocking in this process; stored checkpoints are listed. Resume with campaign resume --id=...'
-            : 'No in-process campaign. Owner-local checkpoints are listed.',
+          note: 'No in-process campaign. Owner-local checkpoints are listed.',
         };
     console.log(JSON.stringify(payload, null, 2));
   } else if (sub === 'resume') {
@@ -278,6 +321,7 @@ if (command === 'status') {
       }
       const maxTurnsRaw = flags['max-turns'];
       const maxTurns = maxTurnsRaw === undefined ? undefined : Number(maxTurnsRaw);
+      const pause = installCampaignPauseChannel();
       try {
         if (!resumeStartupOk) throw new Error('ENVIRONMENT_VALUE_MALFORMED');
         const providerLabel = process.env.NIGHTWATCH_REASONER_PROVIDER ?? 'configured';
@@ -292,6 +336,7 @@ if (command === 'status') {
         // from the checkpoint envelope without restarting finished work.
         const result = await mod.resumeLocalCliCampaign({
           campaignId: flags.id,
+          pauseSignal: pause.signal,
           ceilingName: 'HOUR_1',
           executable,
           reasonerIdentity,
@@ -315,6 +360,8 @@ if (command === 'status') {
         }
       } catch (error) {
         fail(2, error instanceof Error ? error.message : 'LOCAL_CAMPAIGN_RESUME_FAILED');
+      } finally {
+        pause.dispose();
       }
     }
   } else {

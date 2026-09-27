@@ -274,9 +274,15 @@ export class AgentRuntime {
     return checkpoint;
   }
 
-  /** External pause: the loop halts at the next turn boundary. */
+  /**
+   * External pause: the loop halts at the next turn boundary, and any
+   * in-flight provider call is aborted so a pause never waits for a reasoner
+   * that may be hung. The driver kills the child's process group on abort, so
+   * the operator's SIGINT terminates the reasoner tree as C-07 requires.
+   */
   pause(): void {
     this.pausedRequested = true;
+    this.runAbort?.abort();
   }
 
   /** Clear a pause (external or intent-driven) so run() can continue. */

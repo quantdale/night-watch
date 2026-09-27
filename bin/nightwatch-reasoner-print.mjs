@@ -286,9 +286,14 @@ function renderMemoryBlock(memory) {
 }
 
 
+/**
+ * M5 (6.10/C-11): a failure THROWS instead of calling process.exit, because
+ * process.exit skips the `finally` block that removes the prompt file and the
+ * isolated working directory — every failure path used to leak both. The exit
+ * status is set once, after cleanup has run.
+ */
 function fail(message) {
-  process.stderr.write(`NIGHTWATCH_REASONER_PRINT: ${message}\n`);
-  process.exit(2);
+  throw new Error(message);
 }
 
 function readStdin() {
@@ -321,17 +326,17 @@ function safeId(value, fallback) {
   return fallback;
 }
 
-function evidenceRefsFrom(value, fallback) {
-  if (Array.isArray(value)) {
-    const refs = value.filter((item) => typeof item === 'string' && item.length > 0 && item.length <= 512).slice(0, 16);
-    if (refs.length > 0) return refs;
-  }
-  return Array.isArray(fallback) ? fallback.filter((item) => typeof item === 'string').slice(0, 16) : [];
-}
-
-function campaignEvidenceRefs(request) {
-  const refs = request?.observation?.evidenceRefs;
-  return Array.isArray(refs) ? refs.filter((item) => typeof item === 'string' && item.length > 0).slice(0, 16) : [];
+/**
+ * M5 (6.10/C-24): ONLY the refs the model actually supplied are used. The
+ * previous behaviour substituted every ref observed in the campaign whenever
+ * the model supplied none, which made an ungrounded proposal look fully
+ * grounded to the admission gate — fabricated grounding is worse than a
+ * refused proposal, so an empty list is passed through and the protocol
+ * refuses it (PROPOSE_CANDIDATE requires at least one ref).
+ */
+function evidenceRefsFrom(value) {
+  if (!Array.isArray(value)) return [];
+  return value.filter((item) => typeof item === 'string' && item.length > 0 && item.length <= 512).slice(0, 16);
 }
 
 function canonicalizeIntent(intent, request, index) {
@@ -350,11 +355,11 @@ function canonicalizeIntent(intent, request, index) {
       kind,
       hypothesisId: safeId(intent.hypothesisId, `h${index + 1}`),
       statement,
-      evidenceRefs: evidenceRefsFrom(intent.evidenceRefs, campaignEvidenceRefs(request)),
+      evidenceRefs: evidenceRefsFrom(intent.evidenceRefs),
     };
   }
   if (kind === 'PROPOSE_CANDIDATE') {
-    const evidenceRefs = evidenceRefsFrom(intent.evidenceRefs, campaignEvidenceRefs(request));
+    const evidenceRefs = evidenceRefsFrom(intent.evidenceRefs);
     if (evidenceRefs.length === 0) return null;
     return { kind, candidateId: safeId(intent.candidateId, `c${index + 1}`), evidenceRefs };
   }
@@ -389,7 +394,7 @@ function canonicalizeResponse(response, request) {
       return {
         hypothesisId: safeId(item.hypothesisId, `h${index + 1}`),
         statement,
-        evidenceRefs: evidenceRefsFrom(item.evidenceRefs, campaignEvidenceRefs(request)),
+        evidenceRefs: evidenceRefsFrom(item.evidenceRefs),
       };
     })
     .filter((item) => item !== null)
@@ -521,7 +526,9 @@ try {
   }
   process.stdout.write(`${JSON.stringify(response)}\n`);
 } catch (error) {
-  fail(error instanceof Error ? error.message : 'PRINT_ADAPTER_FAILED');
+  // The status is recorded, not exited on: cleanup below must still run.
+  process.stderr.write(`NIGHTWATCH_REASONER_PRINT: ${error instanceof Error ? error.message : 'PRINT_ADAPTER_FAILED'}\n`);
+  process.exitCode = 2;
 } finally {
   try {
     fs.unlinkSync(promptFile);

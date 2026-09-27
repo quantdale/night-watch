@@ -175,6 +175,13 @@ export interface LocalCampaignInput {
     readonly sleep?: (ms: number) => Promise<void>;
     readonly random?: () => number;
   };
+  /**
+   * M5 (6.9/C-07): the operator's pause channel. Aborting it makes the running
+   * investigation halt at its next turn boundary with a PAUSED checkpoint and
+   * kills any in-flight reasoner process group. A repeated abort is absorbed:
+   * the campaign is already pausing.
+   */
+  readonly pauseSignal?: AbortSignal;
   readonly stateDirectory?: string;
   /**
    * M5 (C-01): owner-local findings root override. Absent means the private
@@ -1277,7 +1284,7 @@ async function runOneInvestigation(engine: CampaignEngine, investigationId: stri
     // consumption was subtracted twice — stranding allowance on every resume.
     basis = campaignUsageOf(engine);
     engine.acc.pendingResume = null;
-    ran = await AgentRuntime.resumeFromCheckpoint(pending, {
+    const resumedRuntime = AgentRuntime.resumeFromCheckpoint(pending, {
       campaignId: investigationId,
       budgetPolicy: remainingPolicyFor(engine.policy, basis),
       reasoner: engine.reasoner,
@@ -1287,9 +1294,15 @@ async function runOneInvestigation(engine: CampaignEngine, investigationId: stri
       now: engine.now,
       priorStrategy: engine.acc.strategy,
       backoff: engine.input.backoff,
-    }).run({ maxTurns: engine.input.maxTurns });
+    });
+    const disposePause = bindPauseSignal(engine.input.pauseSignal, resumedRuntime);
+    try {
+      ran = await resumedRuntime.run({ maxTurns: engine.input.maxTurns });
+    } finally {
+      disposePause();
+    }
   } else {
-    ran = await new AgentRuntime({
+    const freshRuntime = new AgentRuntime({
       campaignId: investigationId,
       budgetPolicy: remainingPolicyFor(engine.policy, basis),
       reasoner: engine.reasoner,
@@ -1301,12 +1314,36 @@ async function runOneInvestigation(engine: CampaignEngine, investigationId: stri
       backoff: engine.input.backoff,
       // The capability this campaign already proved. Without it a fresh
       // investigation re-learns executability from zero, which is the
-      // cross-investigation amnesia W10 exists to remove.
+      // cross-investigation memory W10 exists to remove.
       priorSurface: [...engine.acc.reproductionSurface.values()],
-    }).run({ maxTurns: engine.input.maxTurns });
+    });
+    const disposePause = bindPauseSignal(engine.input.pauseSignal, freshRuntime);
+    try {
+      ran = await freshRuntime.run({ maxTurns: engine.input.maxTurns });
+    } finally {
+      disposePause();
+    }
   }
   engine.acc.histories.push(session.snapshot());
   return ran;
+}
+
+/**
+ * M5 (6.9/C-07): wire the operator's pause channel to a running investigation.
+ * Returns a disposer so a finished investigation never keeps the listener.
+ */
+function bindPauseSignal(
+  signal: AbortSignal | undefined,
+  runtime: AgentRuntime,
+): () => void {
+  if (signal === undefined) return () => {};
+  if (signal.aborted) {
+    runtime.pause();
+    return () => {};
+  }
+  const onPause = () => runtime.pause();
+  signal.addEventListener('abort', onPause, { once: true });
+  return () => signal.removeEventListener('abort', onPause);
 }
 
 /**
@@ -1353,6 +1390,15 @@ async function runCampaignLoop(engine: CampaignEngine, firstInvestigationId?: st
     // M5 (6.5): every completed investigation is measured against the policy
     // before the campaign spends anything else on its behalf.
     assertBudgetConservation(engine);
+    // M5 (6.9/C-07): durable progress after EVERY absorbed investigation, so a
+    // crash or a signal between investigations loses at most the in-flight one.
+    // The checkpoint carries no paused investigation — nothing is in flight —
+    // and resume continues at the next investigation index.
+    persistCampaignFile(
+      engine.directory,
+      engine.input.campaignId,
+      buildCampaignCheckpoint(engine, 'PAUSED', 'PAUSED', null),
+    );
     if (reason === 'SAFETY_BLOCKED') {
       const result = persistAdmissions(engine, resultOf(engine, 'SAFETY_BLOCKED', null));
       if (result.admissionPersistence === 'NOT_PERSISTED') return result;
@@ -1643,8 +1689,18 @@ export async function resumeLocalCliCampaign(input: LocalCampaignInput): Promise
     return runCampaignLoop(engine, input.campaignId);
   }
 
+  // M5 (6.9/C-07): a PAUSED checkpoint may legitimately carry NO in-flight
+  // investigation — that is the per-investigation progress checkpoint — and a
+  // resume continues at the next investigation index instead of refusing.
   if (progress.pausedInvestigation === null) {
-    throw new LocalCampaignError('CHECKPOINT_MISSING', 'paused campaign has no paused-investigation checkpoint');
+    const continued: CampaignEngine = {
+      input: effectiveInput, policy, reasoner, directory, now,
+      campaignStartMs: now() - checkpoint.state.budget.usage.wallTimeMs,
+      acc: freshAccumulators(input.campaignId),
+    };
+    seedFromCheckpointState(continued, checkpoint.state, progress);
+    assertReasonerIdentityContinuity(progress.reasonerIdentity, effectiveInput.reasonerIdentity);
+    return runCampaignLoop(continued);
   }
   // The resume is about to run turns: bind it to the recorded reasoner first.
   assertReasonerIdentityContinuity(progress.reasonerIdentity, input.reasonerIdentity);

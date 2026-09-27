@@ -12,7 +12,7 @@
  *
  * Environment selection is REQUIRED; missing or unsupported -> exit 2.
  */
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { buildChildEnvironment, emitChildStdio } from './child-environment.mjs';
@@ -119,7 +119,12 @@ function main() {
   }
 
   if (args[0] === 'agent') {
-    const result = spawnSync(process.execPath, [path.join(root, 'bin', 'nightwatch-agent.mjs'), ...args.slice(1)], {
+    // M5 (6.8, C-03/B-03): the agent surface carries LONG-RUNNING campaigns
+    // (hours), so the dispatcher forwards it with INHERITED stdio, NO fixed
+    // timeout, and signal pass-through, and never kills the child. The
+    // pre-M5 shape used spawnSync with a 180 s timeout and piped stdio, which
+    // terminated a campaign at three minutes and truncated its output.
+    const child = spawn(process.execPath, [path.join(root, 'bin', 'nightwatch-agent.mjs'), ...args.slice(1)], {
       cwd: root,
       env: buildChildEnvironment(process.env, {
         NIGHTWATCH_OPERATOR_SCOPE: 'LOCAL_SYNTHETIC_ONLY',
@@ -130,13 +135,42 @@ function main() {
         NIGHTWATCH_PRINT_CLI: process.env.NIGHTWATCH_PRINT_CLI,
         NIGHTWATCH_PRINT_ARGS: process.env.NIGHTWATCH_PRINT_ARGS,
       }),
-      stdio: ['ignore', 'pipe', 'pipe'],
-      timeout: 180_000,
-      maxBuffer: 2 * 1024 * 1024,
+      stdio: 'inherit',
       shell: false,
     });
-    emitChildStdio(result);
-    process.exitCode = result.status ?? 1;
+    // Signal pass-through. A terminal signal already reaches the child through
+    // the shared foreground process group; these handlers cover a signal sent
+    // to THIS process only. The campaign absorbs a repeated signal idempotently
+    // (6.9), so a duplicated delivery can never escalate or kill work.
+    const forwarded = new Set();
+    const forward = (signal) => {
+      if (forwarded.has(signal)) return;
+      forwarded.add(signal);
+      try {
+        child.kill(signal);
+      } catch {
+        // The child is already gone; nothing to forward.
+      }
+    };
+    const onInt = () => forward('SIGINT');
+    const onTerm = () => forward('SIGTERM');
+    process.on('SIGINT', onInt);
+    process.on('SIGTERM', onTerm);
+    child.on('exit', (code, signal) => {
+      process.removeListener('SIGINT', onInt);
+      process.removeListener('SIGTERM', onTerm);
+      // The child's own exit status is the dispatcher's status. A signal death
+      // is reported as the conventional 128+n rather than as a clean exit.
+      if (signal !== null) {
+        const numbers = { SIGINT: 2, SIGTERM: 15, SIGHUP: 1 };
+        process.exitCode = 128 + (numbers[signal] ?? 15);
+        return;
+      }
+      process.exitCode = code ?? 1;
+    });
+    child.on('error', () => {
+      process.exitCode = 1;
+    });
   } else if (operatorCommands.has(args[0])) {
     const result = spawnSync(process.execPath, [path.join(root, 'bin', 'nightwatch-intelligence.mjs'), ...args], {
       cwd: root,
