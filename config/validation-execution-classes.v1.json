@@ -493,6 +493,12 @@
       "class": "PARALLEL_SAFE",
       "signals": []
     },
+    "tests/unit/devCredentialEffectBinding.test.ts": {
+      "class": "PARALLEL_SAFE",
+      "signals": [
+        "isolated-scratch"
+      ]
+    },
     "tests/unit/devCredentialProvider.test.ts": {
       "class": "PARALLEL_SAFE",
       "signals": [
