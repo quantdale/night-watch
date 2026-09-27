@@ -2,7 +2,7 @@
   "schemaVersion": "nightwatch.validation-universe.v1",
   "definitionName": "Nightwatch validation universe classification (NW-08)",
   "note": "Every discovered executable test or check belongs to exactly one class. AUTHORITATIVE_GATE is DERIVED from what the required gate lanes actually select and is therefore not declarable here; every other discovered file must appear below exactly once, with the reason it is not in the gate and the evidence lane that does cover it. A newly added test that is in no lane and no class fails the gate rather than joining the repository silently.",
-  "inventoryDigest": "sha256:a6222a447074e4124f687c44",
+  "inventoryDigest": "sha256:b574b8a466bf39a07702e78c",
   "classes": {
     "FULL_REGRESSION": {
       "reason": "Offline, deterministic suites that the full canonical regression executes. They are not in a required gate lane because the authoritative gate is bounded for CI runtime; leaving them unclassified is what made the gap invisible.",
@@ -25,6 +25,7 @@
         "tests/unit/autonomousFinding.test.ts",
         "tests/unit/benchmark.test.ts",
         "tests/unit/bootstrapHooks.test.ts",
+        "tests/unit/boundedOperatorLaunch.test.ts",
         "tests/unit/byteAccounting.test.ts",
         "tests/unit/c08bDeploymentManifestReader.test.ts",
         "tests/unit/c12LocalRehearsal.test.ts",

@@ -181,6 +181,40 @@ Point at a real local Ripple dev server (still fail-closed against prod):
 npm run scenario -- --env=local --ui-url=http://127.0.0.1:8080
 ```
 
+### Launch a bounded autonomous campaign
+
+The agent surface is reachable through the dispatcher (`node bin/nightwatch.mjs
+agent ...`) and through the documented `agent:campaign` script. A campaign is
+LOCAL only, and every run emits a D-7 run directory plus a product run receipt
+(provider health, sibling identity before/after, leak scan, persisted admission
+ids) under `artifacts/nightwatch-*/`:
+
+```bash
+export NIGHTWATCH_REASONER_CLI="$(command -v node)"     # or your print CLI
+export NIGHTWATCH_REASONER_SCRIPT=/path/to/your-reasoner.mjs
+export NIGHTWATCH_REASONER_PROVIDER=local
+export NIGHTWATCH_REASONER_MODEL=local-model
+
+# a five-minute bounded proof under the 1h ceiling (the override only narrows)
+npm run agent:campaign -- run --reasoner=cli --duration=1h \
+  --wall-clock-minutes=5 --max-turns=8 --repository=<approved-org/repo>
+
+# inspect stored campaigns, their checkpoints and the persisted findings
+npm run agent:campaign -- status
+npm run agent:campaign -- findings
+npm run findings                                   # operator findings surface
+
+# resume a paused campaign (bound to the recorded reasoner identity)
+npm run agent:campaign -- resume --id=<campaign-id>
+
+# pausing is SIGNAL-driven: send SIGINT/SIGTERM to the running process; the
+# campaign writes a PAUSED checkpoint and stops its reasoner process group.
+```
+
+`--wall-clock-minutes` must narrow the selected ceiling; a widening value is
+refused. Campaigns never contact DEV/NEXT/production, never publish, and never
+write to an Alphaus repository.
+
 ## Authoritative local quality and source intelligence
 
 The unified quality gate is the local authority for Nightwatch checks:

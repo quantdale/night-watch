@@ -289,10 +289,21 @@ if (command === 'status') {
       }
       const maxTurnsRaw = flags['max-turns'];
       const maxTurns = maxTurnsRaw === undefined ? undefined : Number(maxTurnsRaw);
+      // M5 (6.16/C-23): a bounded proof run. The value NARROWS the selected
+      // ceiling only — the campaign refuses a widening override — so an
+      // operator can run a five-minute proof under the 1h ceiling without a
+      // second ceiling tier.
+      const wallClockRaw = flags['wall-clock-minutes'];
+      const wallClockMinutes = wallClockRaw === undefined ? undefined : Number(wallClockRaw);
       if (!startupOk) {
         // Refused before any child process is created.
       } else if (maxTurns !== undefined && (!Number.isInteger(maxTurns) || maxTurns < 1 || maxTurns > 50)) {
         fail(2, 'campaign run --max-turns must be an integer 1..50');
+      } else if (
+        wallClockMinutes !== undefined &&
+        (!Number.isInteger(wallClockMinutes) || wallClockMinutes < 1 || wallClockMinutes > 24 * 60)
+      ) {
+        fail(2, 'campaign run --wall-clock-minutes must be an integer 1..1440 (it narrows the selected ceiling)');
       } else {
         const [mod, contextMod, reasonerMod] = loadTypeScriptModules(
           ['src/core/agentRuntime/localCampaign.ts', 'src/core/localInvestigation/ownerLocal.ts', 'src/core/config/reasonerExecutable.ts'],
@@ -325,6 +336,8 @@ if (command === 'status') {
             provider: providerLabel,
             model: modelLabel,
             maxTurns,
+            wallClockCeilingOverrideMs:
+              wallClockMinutes === undefined ? undefined : wallClockMinutes * 60_000,
             investigationScope: repositoryIds,
             investigationContext: contextMod.createOwnerLocalInvestigationContext(
               repositoryIds === undefined ? {} : { repositoryIds },
@@ -521,7 +534,10 @@ if (command === 'status') {
       }
     }
   } else {
-    fail(2, 'usage: nightwatch-agent campaign run --reasoner=cli --duration=1h|4h|8h|overnight [--repository=<approved-org/repo>]');
+    fail(
+      2,
+      'usage: nightwatch-agent campaign run --reasoner=cli --duration=1h|4h|8h|overnight [--wall-clock-minutes=<n>] [--max-turns=<n>] [--model=<label>] [--repository=<approved-org/repo>]',
+    );
   }
 } else {
   console.log('usage: node bin/nightwatch-agent.mjs status|test|campaign');
