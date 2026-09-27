@@ -40,7 +40,13 @@ const familyArguments = process.argv
   .filter((value) => value.length > 0);
 
 if (process.argv.includes('--list-rules')) {
-  const probeRegistry = JSON.parse(readDataFile(PROBE_REGISTRY_PATH));
+  let probeRegistry;
+  try {
+    probeRegistry = JSON.parse(readDataFile(PROBE_REGISTRY_PATH));
+  } catch {
+    console.error(`[hardening] PROBE_REGISTRY_UNREADABLE: ${PROBE_REGISTRY_PATH}`);
+    process.exit(2);
+  }
   console.log(JSON.stringify({
     schemaVersion: 'nightwatch.hardening-rule-registry.v1',
     count: REGISTERED_RULES.length,

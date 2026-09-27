@@ -245,7 +245,9 @@ test.describe('gated launchers refuse before any browser, subprocess or file', (
   test('phase23-dev refuses execute without an exact-head observation', () => {
     const sandbox = makeSandbox();
     const result = spawnSync(process.execPath, [path.join(ROOT, 'bin', 'phase23-dev.mjs'), 'execute'], spawnOptions(sandbox));
-    expectRefusal(result, /PHASE23_OPERATOR_BLOCKED:DEV_EXECUTION_ARGUMENTS_REQUIRED/, sandbox);
+    // M9 (10.2): while a DEV-lane precondition is OPEN the launcher refuses
+    // BEFORE its own argument gate, so the shared refusal is accepted here.
+    expectRefusal(result, /PHASE23_OPERATOR_BLOCKED:DEV_EXECUTION_ARGUMENTS_REQUIRED|DEV_LANE_PRECONDITION_OPEN/, sandbox);
   });
 
   test('phase23-predev refuses facts outside the owner boundary', () => {
@@ -393,7 +395,8 @@ test.describe('entry points execute bounded, observable paths', () => {
     const sandbox = makeSandbox();
     const result = spawnSync(process.execPath, [path.join(ROOT, 'bin', 'auth-configure.mjs'), '--help'], spawnOptions(sandbox));
     expect(result.status).toBe(0);
-    expect(String(result.stdout)).toContain('Usage: npm run auth:configure');
+    // The shared operator parser renders the declared help.
+    expect(String(result.stdout)).toMatch(/Usage: (npm run auth:configure|node bin\/auth-configure\.mjs)/);
   });
 
   test('helper bins execute as side-effect-free processes', () => {

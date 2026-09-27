@@ -170,7 +170,12 @@ function readJobLog(runId) {
 }
 
 function expectedGate() {
-  const definition = JSON.parse(fs.readFileSync(path.join(ROOT, 'config', 'quality-gate.v1.json'), 'utf8'));
+  let definition;
+  try {
+    definition = JSON.parse(fs.readFileSync(path.join(ROOT, 'config', 'quality-gate.v1.json'), 'utf8'));
+  } catch {
+    fail('GATE_DEFINITION_UNREADABLE');
+  }
   const canonical = (value) => value === null || typeof value !== 'object'
     ? JSON.stringify(value)
     : Array.isArray(value)

@@ -18,6 +18,10 @@ export const DEV_LANE_REGISTRY_PATH_ENV = 'NIGHTWATCH_DEV_LANE_REGISTRY_PATH';
  * `--env dev`, or a launcher that is DEV-only by construction (`devOnly`).
  */
 export function isDevInvocation(args, options = {}) {
+  // M9 (10.2): a metadata or help query never launches anything, so it is not
+  // a DEV invocation even for a DEV-only launcher. Every other argument path is
+  // still refused.
+  if (args.includes('--help') || args.includes('-h') || args.includes('--print-metadata')) return false;
   if (options.devOnly === true) return true;
   for (let index = 0; index < args.length; index += 1) {
     const arg = args[index];

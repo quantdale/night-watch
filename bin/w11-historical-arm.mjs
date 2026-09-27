@@ -31,7 +31,12 @@ function fail(message) {
   process.exit(2);
 }
 
-const freeze = JSON.parse(fs.readFileSync(FREEZE_PATH, 'utf8'));
+let freeze;
+try {
+  freeze = JSON.parse(fs.readFileSync(FREEZE_PATH, 'utf8'));
+} catch {
+  fail('EVALUATION_FREEZE_UNREADABLE');
+}
 const freezeFingerprint = `sha256:${crypto.createHash('sha256').update(JSON.stringify(freeze)).digest('hex').slice(0, 24)}`;
 
 const printCli = process.env.NIGHTWATCH_PRINT_CLI ?? '';
@@ -46,7 +51,7 @@ if (!printArgs.includes(freeze.provider.model)) {
   fail(`configured NIGHTWATCH_PRINT_ARGS does not name the frozen model ${freeze.provider.model}`);
 }
 
-const [tools, fixtures, hunt, score, cliReasoner, metricsMod, miner, minedCases, sibling, topology] =
+const [tools, fixtures, hunt, score, cliReasoner, metricsMod, miner, minedCases, , topology] =
   loadTypeScriptModules(
     [
       'src/core/agentProtocol/tools.ts',
