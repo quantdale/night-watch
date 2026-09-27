@@ -486,7 +486,10 @@ test.describe('current-source admission negatives', () => {
       });
       expect(result.admitted).toBe(false);
       if (result.admitted !== false) throw new Error('expected refusal');
-      expect(result.reason).toBe('MISSING_REPRODUCTION');
+      // M5 (6.12/C-18): an environment-blocked reproduction has its OWN refusal
+      // reason — the operator must see that the environment, not the product,
+      // prevented the evidence.
+      expect(result.reason).toBe(verdict === 'ENVIRONMENT_BLOCKED' ? 'ENVIRONMENT_DEPENDENT' : 'MISSING_REPRODUCTION');
     }
   });
 });

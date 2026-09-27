@@ -18,6 +18,7 @@
 // Pure data. No fs/network/process authority in this module.
 // ---------------------------------------------------------------------------
 
+import type { EnvironmentSignature } from './environmentSignature';
 import { prefixedDigest24 } from '../identity/canonicalDigest';
 import { TARGET_DIGEST_PREFIX } from '../localInvestigation/currentSourceProof';
 
@@ -150,6 +151,12 @@ export interface OwnerLocalExecutionRecord {
   /** Captured output size (harness-side accounting only). */
   readonly capturedBytes: number;
   readonly truncated: boolean;
+  /**
+   * M5 (6.12/C-18): the known environment signature this execution matched, or
+   * null. Present only on ENVIRONMENT_BLOCKED outcomes; admission refuses a
+   * candidate whose only reproduction evidence is environment-caused.
+   */
+  readonly environmentSignature?: EnvironmentSignature | null;
 }
 
 /**

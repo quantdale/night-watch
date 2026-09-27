@@ -56,6 +56,7 @@ import {
   ownerApprovedRepositoryIds,
 } from '../source/universe';
 import { prefixedDigest24 } from '../identity/canonicalDigest';
+import { classifyEnvironmentSignature, type EnvironmentSignature } from './environmentSignature';
 import {
   deriveCurrentFailureEvidence,
   type CurrentFailureEvidence,
@@ -1378,6 +1379,10 @@ export function classifyGoTestOutput(run: ClassifiableOwnerLocalRun): OwnerLocal
   if (NO_TESTS_RE.test(combined)) return 'NO_TESTS';
   if (run.exitCode === 0) return 'TEST_PASS';
   if (run.exitCode === null) return 'PROCESS_FAILURE';
+  // M5 (6.12/C-18): a KNOWN environment signature outranks the assertion
+  // failure it produced. `dial tcp ...` inside a `--- FAIL:` block is the
+  // environment refusing the test, never evidence about the product.
+  if (classifyEnvironmentSignature(combined).matched) return 'ENVIRONMENT_BLOCKED';
   if (TEST_FAILURE_RE.test(combined)) return 'TEST_FAILURE';
   if (BUILD_FAILURE_RE.test(combined)) return 'BUILD_FAILURE';
   return 'PROCESS_FAILURE';
@@ -1581,6 +1586,10 @@ export async function executeOwnerLocalTarget(
       };
     }
     const outcome = classifyGoTestOutput(run);
+    const environment =
+      outcome === 'ENVIRONMENT_BLOCKED'
+        ? classifyEnvironmentSignature(`${run.stdout}\n${run.stderr}`).signature
+        : null;
     const record: OwnerLocalExecutionRecord = {
       attempt: input.attempt,
       outcome,
@@ -1591,6 +1600,7 @@ export async function executeOwnerLocalTarget(
         outcome === 'TEST_FAILURE' ? failureFingerprintForOutput(run.stdout, run.stderr) : null,
       capturedBytes: Buffer.byteLength(run.stdout, 'utf8') + Buffer.byteLength(run.stderr, 'utf8'),
       truncated: run.truncated,
+      environmentSignature: environment,
     };
     return {
       record,

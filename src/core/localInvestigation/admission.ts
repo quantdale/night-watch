@@ -62,7 +62,9 @@ export type AdmitLocalFindingRefusalReason =
   | 'MISSING_EVIDENCE'
   | 'INVENTED_EVIDENCE'
   | 'MISSING_REPRODUCTION'
-  | 'UNLINKED_REPRODUCTION';
+  | 'UNLINKED_REPRODUCTION'
+  /** M5 (6.12/C-18): the only reproduction evidence was environment-caused. */
+  | 'ENVIRONMENT_DEPENDENT';
 
 export interface AdmittedLocalFinding {
   readonly admitted: true;
@@ -417,6 +419,19 @@ export function admitLocalFinding(input: AdmitLocalFindingInput): AdmitLocalFind
   });
 
   if (qualifying.length === 0) {
+    // M5 (6.12/C-18): an environment-caused failure is not product evidence.
+    // The candidate is refused with its own reason rather than as a generic
+    // missing reproduction, so the operator sees WHY it was not admitted.
+    const environmentBlocked = reproductions.filter(
+      (receipt) => receipt.candidateId === candidateId && receipt.verdict === 'ENVIRONMENT_BLOCKED',
+    );
+    if (environmentBlocked.length > 0) {
+      return refused(
+        candidateId,
+        'ENVIRONMENT_DEPENDENT',
+        `candidate ${candidateId} has ${environmentBlocked.length} environment-blocked receipt(s) and no qualifying reproduction`,
+      );
+    }
     const reproduced = reproductions.filter(
       (receipt) => receipt.verdict === 'REPRODUCED' || receipt.verdict === 'REPRODUCED_CURRENT_FAILURE',
     );
