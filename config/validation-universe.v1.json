@@ -25,6 +25,7 @@
         "tests/unit/authenticatedWriterCensus.test.ts",
         "tests/unit/autonomousFinding.test.ts",
         "tests/unit/benchmark.test.ts",
+        "tests/unit/bodyReadAcquisition.test.ts",
         "tests/unit/bootstrapHooks.test.ts",
         "tests/unit/boundedOperatorLaunch.test.ts",
         "tests/unit/byteAccounting.test.ts",

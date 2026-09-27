@@ -110,21 +110,62 @@ function bodyCaptureStatus(
   return bytes.byteLength === declaredLength ? 'complete' : 'incomplete';
 }
 
+/**
+ * M8 (9.6 / NW-AUD-035): bound acquisition of a response body read.
+ *
+ * The race alone was not enough. When the timer won, the underlying
+ * `response.body()` promise kept running: nothing cancelled it, nothing joined
+ * it, and a rejection after the race would have been unhandled. This version
+ *
+ *  1. refuses to start a read while `MAX_CONCURRENT_BODY_READS` are already in
+ *     flight (a bounded refusal, never an unbounded queue of readers), and
+ *  2. JOINS the losing promise — attaching a settlement handler that discards
+ *     the value and swallows the rejection — so a read that lost the race is
+ *     always observed exactly once and never retained.
+ *
+ * The operation is never cancelled mid-flight because Playwright exposes no
+ * cancel for `body()`; joining is the strongest available guarantee, and the
+ * acquisition gate bounds how many can be outstanding at once.
+ */
+let bodyReadsInFlight = 0;
+export const MAX_CONCURRENT_BODY_READS = 4;
+
 async function boundedResponseOperation<T>(
   operation: Promise<T>,
   timeoutMs: number,
-): Promise<{ completed: true; value: T } | { completed: false }> {
+): Promise<{ completed: true; value: T } | { completed: false } | { acquired: false }> {
+  if (bodyReadsInFlight >= MAX_CONCURRENT_BODY_READS) return { acquired: false };
+  bodyReadsInFlight += 1;
+  let settled = false;
   let timer: ReturnType<typeof setTimeout> | undefined;
   const timeout = new Promise<{ completed: false }>((resolve) => {
     timer = setTimeout(() => resolve({ completed: false }), timeoutMs);
   });
+  // Join the loser: exactly one settlement handler, discarding any value and
+  // swallowing any rejection, and releasing the acquisition slot exactly once.
+  const joined = operation.then(
+    () => undefined,
+    () => undefined,
+  ).finally(() => {
+    if (!settled) {
+      settled = true;
+      bodyReadsInFlight -= 1;
+    }
+  });
   try {
     return await Promise.race([
-      operation.then((value) => ({ completed: true as const, value })),
+      operation.then((value) => {
+        if (!settled) {
+          settled = true;
+          bodyReadsInFlight -= 1;
+        }
+        return { completed: true as const, value };
+      }),
       timeout,
     ]);
   } finally {
     if (timer !== undefined) clearTimeout(timer);
+    void joined;
   }
 }
 
@@ -1150,7 +1191,11 @@ export function createNetworkObserver(opts: {
           // until context teardown. The rejection/value itself is never
           // retained or emitted.
           const bodyResult = await boundedResponseOperation(response.body(), RESPONSE_BODY_TIMEOUT_MS);
-          if (!bodyResult.completed) {
+          if ('acquired' in bodyResult) {
+            // Bounded acquisition: the read was refused rather than queued.
+            noteCaptureFailure('BODY_READ_ACQUISITION_BOUND');
+            if (captureRelevant) captureIncomplete = true;
+          } else if (!bodyResult.completed) {
             noteCaptureFailure('BODY_READ_TIMEOUT');
             if (captureRelevant) captureIncomplete = true;
           } else {

@@ -154,6 +154,11 @@ export const JOURNEY_CAPTURE_FAILURE_CODES = [
   'BODY_LENGTH_MISMATCH',
   'BODY_SIZE_LIMIT_EXCEEDED',
   'BODY_READ_TIMEOUT',
+  /**
+   * M8 (9.6 / NW-AUD-035): the response-body read was REFUSED because the
+   * bounded acquisition gate was saturated. A refusal, never a queued reader.
+   */
+  'BODY_READ_ACQUISITION_BOUND',
   'RESPONSE_PROCESSING_ERROR',
 ] as const;
 
