@@ -1888,6 +1888,12 @@
         "isolated-scratch"
       ]
     },
+    "tests/unit/siblingRootResolution.test.ts": {
+      "class": "PARALLEL_SAFE",
+      "signals": [
+        "isolated-scratch"
+      ]
+    },
     "tests/unit/silentZeroOutput.test.ts": {
       "class": "PARALLEL_SAFE",
       "signals": [

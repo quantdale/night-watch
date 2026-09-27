@@ -1,5 +1,6 @@
 import { RIPPLE_REPOSITORIES } from '../../src/core/changeIntelligence/map';
-import { createSiblingSourceAccess, DEFAULT_SIBLING_ROOT } from '../../src/core/source/siblingSource';
+import { createSiblingSourceAccess } from '../../src/core/source/siblingSource';
+import { resolveSiblingRoot } from '../../src/core/policy/sourceTopology';
 import { ownerApprovedRepositoryIds } from '../../src/core/source/universe';
 
 export type LiveSourceTestStateKind = 'CURRENT' | 'STALE' | 'UNAVAILABLE';
@@ -22,9 +23,9 @@ const EXPECTED_SHA_BY_REPO: Readonly<Record<string, string>> = Object.freeze(Obj
 ));
 
 export function liveSourceTestRoot(environment: NodeJS.ProcessEnv = process.env): string {
-  const configured = environment['NIGHTWATCH_REPOS_ROOT'] ?? environment['NIGHTWATCH_SIBLING_ROOT'];
-  const trimmed = configured?.trim();
-  return trimmed === undefined || trimmed === '' ? DEFAULT_SIBLING_ROOT : trimmed;
+  // M6 (7.8/B-10): tests resolve the root through the SAME authority as
+  // production, so a relocated sibling universe is honoured identically.
+  return resolveSiblingRoot({ environment });
 }
 
 export function classifyLiveSourceTestState(input: {

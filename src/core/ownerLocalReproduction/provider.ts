@@ -48,7 +48,6 @@ import { buildChildEnvironment, buildGitChildEnvironment } from '../process/chil
 import { sourceContentDigest } from '../source/scanTypes';
 import {
   createSiblingSourceAccess,
-  DEFAULT_SIBLING_ROOT,
 } from '../source/siblingSource';
 import {
   approvedRootsFor,
@@ -66,6 +65,7 @@ import {
   OWNER_LOCAL_CURRENT_SOURCE_PROOF_VERSION,
 } from '../localInvestigation/currentSourceProof';
 import type { DeterministicReproductionProvider, LocalProviderBlockClass, LocalProviderResult, LocalReproductionProviderResult, LocalReproductionRequest, LocalReproductionSignal, LocalSourceDocument, LocalSourceProvider } from '../localInvestigation/types';
+import { resolveSiblingRoot } from '../policy/sourceTopology';
 import {
   DEFAULT_OWNER_LOCAL_REPRODUCTION_LIMITS,
   OWNER_LOCAL_REPRODUCTION_TARGET_VERSION,
@@ -304,7 +304,8 @@ export function discoverOwnerLocalTarget(
     return { status: 'UNSUPPORTED', refusal: 'NO_SUPPORTED_EXECUTOR' };
   }
   const siblingRoot =
-    input.siblingRoot ?? process.env['NIGHTWATCH_REPOS_ROOT'] ?? DEFAULT_SIBLING_ROOT;
+    // M6 (7.8/B-10): the ONE sibling-root resolution.
+    input.siblingRoot ?? resolveSiblingRoot();
   const access = createSiblingSourceAccess(siblingRoot, {
     admittedRepositoryIds: [...admitted],
   });
@@ -477,7 +478,8 @@ export async function snapshotSiblingIdentity(
   input: SnapshotSiblingIdentityInput,
 ): Promise<SiblingIdentityObservation | null> {
   const siblingRoot =
-    input.siblingRoot ?? process.env['NIGHTWATCH_REPOS_ROOT'] ?? DEFAULT_SIBLING_ROOT;
+    // M6 (7.8/B-10): the ONE sibling-root resolution.
+    input.siblingRoot ?? resolveSiblingRoot();
   const repoRoot = resolveOwnerLocalRepositoryRoot(siblingRoot, input.repository);
   if (repoRoot === null) return null;
   const runGit = input.runGit ?? defaultGitRunner;
@@ -1685,8 +1687,8 @@ export function createOwnerLocalReproductionProvider(
     typeof options.providerId === 'string' && options.providerId.length > 0
       ? options.providerId
       : OWNER_LOCAL_REPRODUCTION_PROVIDER_ID;
-  const siblingRoot =
-    options.siblingRoot ?? process.env['NIGHTWATCH_REPOS_ROOT'] ?? DEFAULT_SIBLING_ROOT;
+  // M6 (7.8/B-10): the ONE sibling-root resolution.
+  const siblingRoot = options.siblingRoot ?? resolveSiblingRoot();
   const repositoryIds = options.repositoryIds ?? ownerApprovedRepositoryIds();
   const limits = normalizeOwnerLocalLimits(options.limits);
   const ports = options.ports ?? {};

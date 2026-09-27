@@ -131,6 +131,7 @@
         "tests/unit/semanticAdmissionAuthority.test.ts",
         "tests/unit/semanticRequestAdmission.test.ts",
         "tests/unit/semanticSkipIdentity.test.ts",
+        "tests/unit/siblingRootResolution.test.ts",
         "tests/unit/silentZeroOutput.test.ts",
         "tests/unit/snapshotter.test.ts",
         "tests/unit/sourceAnalysisParity.test.ts",

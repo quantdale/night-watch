@@ -30,7 +30,7 @@ import {
 import type { RealSourceScanConfig, RealSourceSnapshotInventory } from '../source/scanTypes';
 import {
   createSiblingSourceAccess,
-  DEFAULT_SIBLING_ROOT,
+
   type SiblingSourceAccess,
 } from '../source/siblingSource';
 import { createSystemAtlasOverlay, type SystemAtlasOverlay } from '../systemAtlas/overlay';
@@ -63,6 +63,7 @@ import {
   type ReproductionSurfaceEntry,
 } from '../reproductionSurface/contracts';
 import { selectDiverseSourceIndex } from '../reproductionSurface/selection';
+import { resolveSiblingRoot } from '../policy/sourceTopology';
 
 export const OWNER_LOCAL_CONTEXT_VERSION = 'nightwatch.owner-local-investigation-context.v1' as const;
 
@@ -149,7 +150,8 @@ function prepareSource(options: OwnerLocalInvestigationOptions): PreparedSource 
   const config = options.scanConfig ?? createApprovedRealSourceScanConfig(
     options.repositoryIds === undefined ? {} : { repositoryIds: options.repositoryIds },
   );
-  const siblingRoot = options.siblingRoot ?? process.env['NIGHTWATCH_REPOS_ROOT'] ?? DEFAULT_SIBLING_ROOT;
+  // M6 (7.8/B-10): the ONE resolution, env-first and trimmed.
+  const siblingRoot = options.siblingRoot ?? resolveSiblingRoot();
   const access = createSiblingSourceAccess(siblingRoot, {
     admittedRepositoryIds: config.approvedRepositories.map((repository) => repository.repoId),
   });

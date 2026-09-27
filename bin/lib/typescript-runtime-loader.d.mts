@@ -55,6 +55,7 @@ export interface TypeScriptRuntimeLoaderModuleMap {
   "src/core/phase22/index.ts": typeof import("../../src/core/phase22/index");
   "src/core/phase23/manifest.ts": typeof import("../../src/core/phase23/manifest");
   "src/core/policy/privateArtifacts.ts": typeof import("../../src/core/policy/privateArtifacts");
+  "src/core/policy/sourceTopology.ts": typeof import("../../src/core/policy/sourceTopology");
   "src/core/portfolio/types.ts": typeof import("../../src/core/portfolio/types");
   "src/core/productionTrack/index.ts": typeof import("../../src/core/productionTrack/index");
   "src/core/provenance/index.ts": typeof import("../../src/core/provenance/index");
@@ -84,7 +85,6 @@ export interface TypeScriptRuntimeLoaderModuleMap {
   "src/core/source/readonlyCandidateCensus.ts": typeof import("../../src/core/source/readonlyCandidateCensus");
   "src/core/source/recordIdentity.ts": typeof import("../../src/core/source/recordIdentity");
   "src/core/source/review.ts": typeof import("../../src/core/source/review");
-  "src/core/source/siblingRoot.ts": typeof import("../../src/core/source/siblingRoot");
   "src/core/source/siblingSource.ts": typeof import("../../src/core/source/siblingSource");
   "src/core/source/silentZeroOutput.ts": typeof import("../../src/core/source/silentZeroOutput");
   "src/core/source/surfaces.ts": typeof import("../../src/core/source/surfaces");

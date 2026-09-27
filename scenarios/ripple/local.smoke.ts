@@ -17,7 +17,7 @@ import type { EnvironmentConfig } from '../../src/core/environment/types';
 import { OutboundPolicy } from '../../src/core/safety/outboundPolicy';
 import { runCanary, assertCanary } from '../../src/core/safety/canary';
 import { discoverRepositories, snapshotRepositories } from '../../src/core/repositories/snapshotter';
-import { DEFAULT_SIBLING_ROOT } from '../../src/core/source/siblingSource';
+import { resolveSiblingRoot } from '../../src/core/policy/sourceTopology';
 import { startFixtureServer, type FixtureServerHandle } from '../../src/browser/fixtures/fixtureServer';
 import { createNightwatchContext, validateUiUrl } from '../../src/browser/context';
 import { resolveStorageStatePath } from '../../src/browser/fixtures/storageState';
@@ -119,7 +119,8 @@ test('ripple passive local journey', async ({ browser }) => {
   // org directories (52 + 92 repos). C-00: the root is never derived from this
   // checkout's own location, because a writing agent's worktree lives outside
   // the workspace tree.
-  const reposRoot = process.env.NIGHTWATCH_REPOS_ROOT ?? DEFAULT_SIBLING_ROOT;
+  // M6 (7.8/B-10): the ONE sibling-root resolution.
+  const reposRoot = resolveSiblingRoot();
   const repos = process.env.NIGHTWATCH_TRACKED_REPOS
     ? process.env.NIGHTWATCH_TRACKED_REPOS.split(',').map((s) => s.trim()).filter((s) => s.length > 0)
     : discoverWorkspaceRepos(reposRoot);

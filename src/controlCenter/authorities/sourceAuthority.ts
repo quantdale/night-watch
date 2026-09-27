@@ -11,7 +11,8 @@
 import { prefixedDigest24 } from '../../core/identity/canonicalDigest';
 import { createApprovedRealSourceScanConfig } from '../../core/source/approvedScan';
 import { createRealSourceSurfaceCache, type RealSourceSurfaceCache } from '../../core/source/cache';
-import { createSiblingSourceAccess, DEFAULT_SIBLING_ROOT, type SiblingSourceAccess } from '../../core/source/siblingSource';
+import { createSiblingSourceAccess, type SiblingSourceAccess } from '../../core/source/siblingSource';
+import { resolveSiblingRoot } from '../../core/policy/sourceTopology';
 import { ownerApprovedRepositoryIds } from '../../core/source/universe';
 import { analyzeSourceSurfacesIntoPhase24, discoverSourceSurfaces, type SourcePhase24Integration, type SourceSurfaceDiscovery } from '../../core/source/surfaces';
 import type { RealSourceScanConfig, SourceScanRepositoryStatus } from '../../core/source/scanTypes';
@@ -167,7 +168,9 @@ export function createSourceAuthority(): SourceAuthority {
   // C-05: the boundary enforces the owner-approved set here too, so the
   // Control Center cannot reach an unadmitted repository even if a future
   // change hands it a wider scan config.
-  const access = createSiblingSourceAccess(DEFAULT_SIBLING_ROOT, { admittedRepositoryIds: ownerApprovedRepositoryIds() });
+  // M6 (7.8/C-22): the Control Center source view honours the SAME sibling
+  // root resolution as every other surface.
+  const access = createSiblingSourceAccess(resolveSiblingRoot(), { admittedRepositoryIds: ownerApprovedRepositoryIds() });
   const config = createApprovedRealSourceScanConfig();
   const cache = createRealSourceSurfaceCache({ maxEntries: 8 });
   return { snapshot: () => buildSnapshot({ access, config, cache }) };

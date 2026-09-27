@@ -141,10 +141,11 @@ function main() {
   }
 
   let core;
-  let siblingRoot;
+  let topology;
   try {
     core = loadTypeScriptModule('src/core/changeIntelligence/releaseFreshness.ts', { root });
-    siblingRoot = loadTypeScriptModule('src/core/source/siblingRoot.ts', { root });
+    // M6 (7.8/B-10): the ONE sibling-root resolution.
+    topology = loadTypeScriptModule('src/core/policy/sourceTopology.ts', { root });
   } catch (error) {
     fail('CORE_LOAD_FAILED', error instanceof Error ? error.message : 'unknown load failure');
     return;
@@ -153,7 +154,7 @@ function main() {
   // The repositories root is NEVER derived from this checkout's location: a
   // C-00 session worktree lives outside the workspace tree. The sibling-root
   // constant (or an explicit NIGHTWATCH_REPOS_ROOT) is the only source.
-  const repositoriesRoot = path.resolve(process.env.NIGHTWATCH_REPOS_ROOT ?? siblingRoot.DEFAULT_SIBLING_ROOT);
+  const repositoriesRoot = path.resolve(topology.resolveSiblingRoot());
   const report = core.releaseFreshnessReport(inventory, createOracle(repositoriesRoot));
 
   try {

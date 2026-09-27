@@ -1719,6 +1719,18 @@
           }
         ]
       }
+    ],
+    "checkSiblingRootResolution": [
+      {
+        "id": "HC-149",
+        "ops": [
+          {
+            "file": "src/controlCenter/authorities/sourceAuthority.ts",
+            "search": "import { createSiblingSourceAccess, type SiblingSourceAccess } from '../../core/source/siblingSource';",
+            "replace": "import { createSiblingSourceAccess, type SiblingSourceAccess } from '../../core/source/siblingSource';\nimport { DEFAULT_SIBLING_ROOT } from '../../core/source/siblingRoot';\nvoid DEFAULT_SIBLING_ROOT;"
+          }
+        ]
+      }
     ]
   }
 }

@@ -21,7 +21,7 @@ import path from 'node:path';
 import { BUG_ATLAS_RECORD_VERSION, type BugAtlasRecord } from '../agentProtocol/atlas';
 import { untrustedLooksLikeInjection } from '../agentProtocol/untrusted';
 import { buildGitChildEnvironment } from '../process/childEnvironment';
-import { DEFAULT_SIBLING_ROOT } from '../source/siblingSource';
+import { resolveSiblingRoot } from '../policy/sourceTopology';
 import { capTextField, redactCredentialsInText } from './sanitize';
 import {
   BUG_ATLAS_FIELD_BYTE_CAP,
@@ -133,8 +133,7 @@ function runGitReadOnly(repoPath: string, args: readonly string[]): GitResult {
 function resolveRepositoriesRoot(options: BugAtlasMinerOptions): string | null {
   const configured =
     options.repositoriesRoot ??
-    process.env['NIGHTWATCH_REPOS_ROOT'] ??
-    DEFAULT_SIBLING_ROOT;
+    resolveSiblingRoot();
   if (typeof configured !== 'string' || configured.trim().length === 0) return null;
   const resolved = path.resolve(configured.trim());
   try {

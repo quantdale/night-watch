@@ -72,12 +72,13 @@ function main() {
   let core;
   let source;
   let universe;
-  let siblingRoot;
+  let topology;
   try {
     core = loadTypeScriptModule('src/core/source/cacheKeyContract.ts', { root });
     source = loadTypeScriptModule('src/core/source/siblingSource.ts', { root });
     universe = loadTypeScriptModule('src/core/source/universe.ts', { root });
-    siblingRoot = loadTypeScriptModule('src/core/source/siblingRoot.ts', { root });
+    // M6 (7.8/B-10): the ONE sibling-root resolution.
+    topology = loadTypeScriptModule('src/core/policy/sourceTopology.ts', { root });
   } catch (error) {
     fail('CORE_LOAD_FAILED', error instanceof Error ? error.message : 'unknown load failure');
     return;
@@ -85,7 +86,7 @@ function main() {
 
   // The repositories root is NEVER derived from this checkout's location (a
   // C-00 session worktree lives outside the workspace tree).
-  const repositoriesRoot = path.resolve(process.env.NIGHTWATCH_REPOS_ROOT ?? siblingRoot.DEFAULT_SIBLING_ROOT);
+  const repositoriesRoot = path.resolve(topology.resolveSiblingRoot());
   const access = source.createSiblingSourceAccess(repositoriesRoot, { admittedRepositoryIds: universe.ownerApprovedRepositoryIds() });
   const report = core.runCacheKeyContract({ config, reader: access.reader, currentness: access.currentness });
 

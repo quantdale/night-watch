@@ -80,9 +80,29 @@ function requireAbsolute(value: string, code: string): string {
   return path.normalize(value);
 }
 
+/**
+ * M6 (7.8/B-10/C-22): the ONE sibling-root resolution. Trimmed, env-first
+ * (`NIGHTWATCH_REPOS_ROOT`, then the explicit option, then the default), and
+ * absolute-or-refuse. Every consumer — the intelligence CLI, the Control
+ * Center source view, the historical context, the bug-atlas miner and the
+ * owner-local context — reads the root through here, so a relocated sibling
+ * universe cannot be honoured by some surfaces and ignored by others.
+ */
+export function resolveSiblingRoot(
+  options: { readonly repositoriesRoot?: string; readonly environment?: Readonly<Record<string, string | undefined>> } = {},
+): string {
+  return resolveSourceTopology(options).repositoriesRoot;
+}
+
 export function resolveSourceTopology(options: SourceTopologyOptions = {}): SourceTopology {
   const environment = options.environment ?? process.env;
-  const configured = options.repositoriesRoot ?? environment[REPOSITORIES_ROOT_ENV] ?? DEFAULT_SIBLING_ROOT;
+  // M6 (7.8/B-10): the environment is read FIRST and TRIMMED; an empty or
+  // whitespace-only value is treated as unset (the repository's convention for
+  // every other declared variable) rather than as a malformed path.
+  const configuredEnv = environment[REPOSITORIES_ROOT_ENV];
+  const configuredFromEnv =
+    typeof configuredEnv === 'string' && configuredEnv.trim() !== '' ? configuredEnv.trim() : undefined;
+  const configured = options.repositoriesRoot ?? configuredFromEnv ?? DEFAULT_SIBLING_ROOT;
   const repositoriesRoot = requireAbsolute(configured, 'SOURCE_TOPOLOGY_REPOSITORIES_ROOT_AMBIGUOUS');
   const home = options.homeDirectory ?? os.homedir();
   const sessionWorktreeParent = requireAbsolute(

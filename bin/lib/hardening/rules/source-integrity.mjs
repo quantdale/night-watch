@@ -488,3 +488,43 @@ export function checkSchemaLifecycle() {
     fail(`${finding.code} ${finding.detail}`);
   }
 }
+
+/**
+ * M6 (7.8/B-10/C-22): ONE sibling-root resolution.
+ *
+ * `DEFAULT_SIBLING_ROOT` is a leaf constant. The env-first resolution lives in
+ * `resolveSiblingRoot()` (`src/core/policy/sourceTopology.ts`), and every
+ * consumer reads THAT — otherwise a relocated sibling universe is honoured by
+ * some surfaces and silently ignored by others, which is exactly how the
+ * Control Center source view and the historical context came to disagree with
+ * the intelligence CLI. Comment mentions are inert; only CODE counts.
+ */
+const SIBLING_ROOT_RESOLUTION_OWNERS = new Set([
+  'src/core/source/siblingRoot.ts',
+  'src/core/source/siblingSource.ts',
+  'src/core/policy/sourceTopology.ts',
+  // These two VERIFY the constant's own declaration (the topology invariant
+  // asserts the source declares a parseable absolute default), so they must
+  // read the literal rather than resolve through it.
+  'bin/gate-topology.mjs',
+  'bin/lib/topology-gate.mjs',
+]);
+
+export function checkSiblingRootResolution() {
+  const offenders = [];
+  for (const file of gitFiles()) {
+    if (!file.startsWith('src/') && !file.startsWith('bin/')) continue;
+    if (!/\.(?:ts|mjs)$/.test(file)) continue;
+    if (file.includes('.d.ts')) continue;
+    if (SIBLING_ROOT_RESOLUTION_OWNERS.has(file)) continue;
+    if (isRuleEngineSource(file)) continue;
+    if (!fs.existsSync(path.join(root, file))) continue;
+    const code = codeWithCommentsBlanked(readIncludingComments(file));
+    if (/\bDEFAULT_SIBLING_ROOT\b/.test(code)) offenders.push(file);
+  }
+  if (offenders.length > 0) {
+    fail(
+      `SIBLING_ROOT_DIRECT_READ ${offenders.slice(0, 5).join(', ')} reads DEFAULT_SIBLING_ROOT instead of resolveSiblingRoot()`,
+    );
+  }
+}

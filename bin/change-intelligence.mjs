@@ -140,8 +140,9 @@ async function main() {
     return;
   }
   compileCore();
-  const sourceBoundary = await import(pathToFileURL(path.join(compileRoot, 'core', 'source', 'siblingSource.js')).href);
-  repositoriesRoot = process.env.NIGHTWATCH_REPOS_ROOT ?? sourceBoundary.DEFAULT_SIBLING_ROOT;
+  // M6 (7.8/B-10/C-22): the ONE sibling-root resolution.
+  const topologyModule = await import(pathToFileURL(path.join(compileRoot, 'core', 'policy', 'sourceTopology.js')).href);
+  repositoriesRoot = topologyModule.resolveSiblingRoot();
   const core = await import(pathToFileURL(path.join(compileRoot, 'core', 'changeIntelligence', 'index.js')).href);
   const repos = core.RIPPLE_REPOSITORIES.map(observedRepo);
   const changesets = repos.map((repo) => core.collectChangeset({

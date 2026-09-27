@@ -109,7 +109,10 @@ function sourceDiscoveryPreview() {
   const config = approvedScan.createApprovedRealSourceScanConfig({ repositoryIds });
   // C-05: the boundary itself enforces the owner-approved set, so a caller
   // that built its own scan config still cannot open an unadmitted repository.
-  const repositoriesRoot = process.env.NIGHTWATCH_REPOS_ROOT ?? sourceBoundary.DEFAULT_SIBLING_ROOT;
+  // M6 (7.8/B-10/C-22): the intelligence surface reads the ONE resolver, so a
+  // relocated sibling universe is honoured here exactly as elsewhere.
+  const [topology] = loadTypeScriptModules(['src/core/policy/sourceTopology.ts']);
+  const repositoriesRoot = topology.resolveSiblingRoot();
   const access = sourceBoundary.createSiblingSourceAccess(repositoriesRoot, {
     admittedRepositoryIds: universe.ownerApprovedRepositoryIds(),
   });

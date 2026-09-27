@@ -46,7 +46,7 @@ if (!printArgs.includes(freeze.provider.model)) {
   fail(`configured NIGHTWATCH_PRINT_ARGS does not name the frozen model ${freeze.provider.model}`);
 }
 
-const [tools, fixtures, hunt, score, cliReasoner, metricsMod, miner, minedCases, sibling] =
+const [tools, fixtures, hunt, score, cliReasoner, metricsMod, miner, minedCases, sibling, topology] =
   loadTypeScriptModules(
     [
       'src/core/agentProtocol/tools.ts',
@@ -58,6 +58,7 @@ const [tools, fixtures, hunt, score, cliReasoner, metricsMod, miner, minedCases,
       'src/core/bugAtlas/miner.ts',
       'src/core/benchmark/minedCases.ts',
       'src/core/source/siblingSource.ts',
+      'src/core/policy/sourceTopology.ts',
     ],
     { root },
   );
@@ -75,7 +76,8 @@ function resolveCorpus() {
   const minedNeeded = wanted.some((item) => item.kind === 'MINED');
   let minedById = new Map();
   if (minedNeeded) {
-    const siblingRoot = process.env.NIGHTWATCH_REPOS_ROOT ?? sibling.DEFAULT_SIBLING_ROOT;
+    // M6 (7.8/B-10): the ONE sibling-root resolution.
+    const siblingRoot = topology.resolveSiblingRoot();
     const report = miner.mineLocalGitHistory({
       repositoriesRoot: siblingRoot,
       repositoryIds: [...new Set(freeze.corpus.minedCases.map(minedRepositoryOf))],

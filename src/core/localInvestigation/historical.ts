@@ -10,7 +10,7 @@
 import type { ReasonerVisibleContext } from '../agentProtocol/benchmark';
 import type { SourceScanLanguage } from '../source/scanTypes';
 import { sourceContentDigest } from '../source/scanTypes';
-import { DEFAULT_SIBLING_ROOT } from '../source/siblingSource';
+import { resolveSiblingRoot } from '../policy/sourceTopology';
 import { parsePreFixSnapshotFiles } from '../benchmark/preFixSource';
 import { resolveMinedRepoPath } from '../benchmark/minedCases';
 import {
@@ -239,7 +239,8 @@ export function createHistoricalReproductionProvider(
           }),
         };
       }
-      const repoPath = resolveMinedRepoPath(options.repositoriesRoot ?? DEFAULT_SIBLING_ROOT, mined.repository);
+      // M6 (7.8/C-22): the historical context honours the env-first root.
+      const repoPath = resolveMinedRepoPath(options.repositoriesRoot ?? resolveSiblingRoot(), mined.repository);
       if (repoPath === null) {
         audit(options.auditBox, {
           grounded: true,

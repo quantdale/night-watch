@@ -143,7 +143,11 @@ export function checkC00WorkspaceIntegrity() {
     // one name for two scopes is exactly what defeats the alias analysis.
     const rootResolverSource = readIncludingComments(file);
     const rootResolverCode = read(file);
-    if (!/DEFAULT_SIBLING_ROOT/.test(rootResolverCode)) fail(`${file} must resolve the repositories root through DEFAULT_SIBLING_ROOT`);
+    // M6 (7.8/B-10): the root is resolved through the ONE authority
+    // (`resolveSiblingRoot()`), not through the leaf constant.
+    if (!/resolveSiblingRoot\s*\(|liveSourceTestRoot\s*\(/.test(rootResolverCode)) {
+      fail(`${file} must resolve the repositories root through resolveSiblingRoot()`);
+    }
     if (/__dirname,\s*'\.\.\/\.\.\/\.\.'|__dirname,\s*'\.\.',\s*'\.\.',\s*'\.\.'/.test(rootResolverSource)) {
       fail(`${file} must not derive the repositories root from its own checkout location`);
     }

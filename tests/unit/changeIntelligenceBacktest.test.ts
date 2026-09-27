@@ -7,7 +7,6 @@ import {
   RIPPLE_REPOSITORIES,
   type SelectionResult,
 } from '../../src/core/changeIntelligence';
-import { DEFAULT_SIBLING_ROOT } from '../../src/core/source/siblingSource';
 import { liveSourceTestRoot } from '../helpers/liveSourceTestAuthority';
 
 // C-00: the repositories root must not be derived from this checkout's own

@@ -75,10 +75,11 @@ function main() {
   }
 
   const { createSiblingSourceAccess } = loadTypeScriptModule('src/core/source/siblingSource.ts');
-  const { DEFAULT_SIBLING_ROOT } = loadTypeScriptModule('src/core/source/siblingRoot.ts');
+  // M6 (7.8/B-10): the ONE sibling-root resolution (trimmed, env-first).
+  const { resolveSiblingRoot } = loadTypeScriptModule('src/core/policy/sourceTopology.ts');
   const core = loadTypeScriptModule('src/core/source/recordIdentity.ts');
 
-  const siblingRoot = path.resolve(process.env.NIGHTWATCH_REPOS_ROOT ?? DEFAULT_SIBLING_ROOT);
+  const siblingRoot = path.resolve(resolveSiblingRoot());
   const access = createSiblingSourceAccess(siblingRoot);
   const report = core.runRecordIdentityContracts({ config, reader: access.reader, currentness: access.currentness });
 
