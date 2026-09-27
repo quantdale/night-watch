@@ -104,21 +104,24 @@ maxTurns, provider-failure-taxonomy and Git-HEAD reproduction contracts
 
 ## Work In Progress
 
-- M4 is complete and integrated (`137207b1`): 5.1-5.7 are ticked in the
-  campaign ledger with their DONE notes, PLAN marks M4 COMPLETE, and the
-  M5 entry work (6.1: `AgentFindingRecord` derivation in `admitLocalFinding`)
-  has not started yet.
+- M5 (tasks 6.1-6.17) is in progress. 6.1-6.3 are implemented, validated and
+  committed as `9a044b49`: the content-addressed `AgentFindingRecord` derived
+  in `admitLocalFinding` (with its fail-closed validator), the atomic
+  `agent-findings/` store published BEFORE any campaign checkpoint deletion
+  (write failure → `NOT_PERSISTED`, checkpoint kept, CLI exit 3), and the
+  TERMINATED resume that returns persisted records verbatim or
+  `UNAVAILABLE_NOT_PERSISTED`. Next: 6.4 (reasoner identity and
+  `REASONER_IDENTITY_MISMATCH` on resume).
 
 ## Exact Next Action
 
-Read tasks 6.1-6.17 and `src/core/localInvestigation/**`, then implement 6.1
-(the content-addressed `AgentFindingRecord` derived mechanically in
-`admitLocalFinding`) with its focused suite green, repairing forward with new
-commits on any failure — never amend. Close M5 with focused +
-`gate:milestone` PASS per its last task, then the C-00 push and `gh` CI
-observation (OD-3) exactly as in M4:
-`node bin/nightwatch-session.mjs integrate --expect-session sess-0734f2070d08
---expect-head <head>` and `gh run watch <run-id>`.
+Implement 6.4: persist and cross-check the full reasoner identity (executable,
+adapter, print CLI and `PRINT_ARGS` digests plus provider/model labels, the
+model cross-checked against `--model`) and refuse a resume with
+`REASONER_IDENTITY_MISMATCH` before any turn, with focused tests. Then continue
+6.5-6.17 in order, committing each validated batch, and close M5 with focused +
+`gate:milestone` PASS, the C-00 integrate and the `gh` CI observation (OD-3) as
+in M4.
 
 ## Files Changed
 
@@ -450,6 +453,22 @@ SYNTHETIC_CAMPAIGN 1951 / 1907 / 44 skipped / 0 failed, OWNER_PROVENANCE 91
 passed, UI_CONTROL_CENTER 7 passed, TOPOLOGY PASS (the runner has no bwrap and
 uses the X-02 degraded envelope). Exact-head CI is green at the M4 head; the
 prior head `946b52c4` had failed (36254110908) on the emptied README.
+
+Command: focused suites for M5 6.1-6.3 (`tsc --noEmit`, the two new suites, the
+campaign, admission, store and schema suites, `hardening:check`)
+Result: PASS
+When: 2026-09-27
+Relevant failure/output summary: `tests/unit/agentFindingRecord.test.ts` 7/7
+and `tests/unit/agentFindingPersistence.test.ts` 6/6 pass; the changed-admission
+suites (`currentSourceFindingAdmission`, `realLocalCampaignPath`,
+`campaignEndurance`, `localCampaign*`, `campaignStrategyMemory`) 135 passed
+with the only two failures being the new schema families, fixed by declaring
+`nightwatch.agent-finding-record` in `src/core/schemaLifecycle/declarations.ts`
+and dropping the unused store version literal (`schema-lifecycle check` then
+PASS: discovered 420 / families 397 / persisted 109); `reviewStoreHardening`
+(the mutation proof of the new
+`PRIVATE_ARTIFACT_DIRECTORIES = ['agent-findings']` pin) and both new suites
+37/37 after the declaration. Committed as `9a044b49`.
 
 ## Decisions Made During This Task
 
