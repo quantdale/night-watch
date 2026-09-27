@@ -49,6 +49,7 @@ export const WRITER_CLASSES = Object.freeze([
  * STALE_REGISTRY; two entries claiming one file fail as DUPLICATE_REGISTRY.
  */
 export const AUTHENTICATED_WRITER_REGISTRY = Object.freeze([
+  { root: 'src/core/agentRuntime/productRunReceipt.ts', klass: 'RECORDER_FIREWALLED', capabilities: ['owner-local-publication'] },
   { root: 'src/core/evidence/runRecorder.ts', klass: 'RECORDER_FIREWALLED', capabilities: ['firewall', 'publication'] },
   { root: 'src/core/evidence/destinationManifest.ts', klass: 'MANUAL_PUBLISHER', capabilities: ['owner-local-publication'] },
   { root: 'tests/manual/', klass: 'MANUAL_PUBLISHER', capabilities: ['owner-local-publication'] },
