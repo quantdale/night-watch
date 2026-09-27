@@ -5,6 +5,7 @@ import path from 'node:path';
 import { projectRunDetail, projectRunList, projectTimeline } from '../../src/controlCenter/adapters/runAdapter';
 import {
   createRunEvidenceReaderForTests,
+  DEFAULT_RUN_EVIDENCE_ROOT,
 } from '../../src/controlCenter/authorities/runEvidenceReader';
 import { createDefaultControlCenterCollector } from '../../src/controlCenter/server/defaultCollector';
 import { asSafeControlCenterId } from '../../src/controlCenter/contracts/common';
@@ -301,4 +302,57 @@ test.describe('Control Center bounded run-evidence reader', () => {
     expect(list).toMatchObject({ state: 'UNAVAILABLE', items: [], reasonCodes: ['RUN_EVIDENCE_ROOT_UNAVAILABLE'] });
     expect(JSON.stringify(list)).not.toContain('SYNTHETIC_INTERNAL_DETAIL');
   });
+
+test.describe('newest-N run window (7.5)', () => {
+  test('the reader reports the newest window and names the truncation', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'nw-run-window-'));
+    try {
+      // Five runs whose names carry their generation order.
+      for (const runId of ['nightwatch-a-0001', 'nightwatch-b-0002', 'nightwatch-c-0003', 'nightwatch-d-0004', 'nightwatch-e-0005']) {
+        writeRun(root, runId);
+      }
+      const snapshot = createRunEvidenceReaderForTests(root, { windowLimit: 2 }).snapshot();
+      // A growing root is a readable view of the NEWEST runs, never an
+      // unavailable view.
+      expect(snapshot.state).toBe('AVAILABLE');
+      expect(snapshot.window).toEqual({ limit: 2, considered: 5, truncated: true });
+      expect(snapshot.reasonCodes).toContain('RUN_EVIDENCE_WINDOW_TRUNCATED');
+      // The WINDOW selects the newest two; the reader then presents its
+      // records in ascending run-id order (its documented shape).
+      expect(snapshot.records.map((record) => record.summary.runId)).toEqual([
+        'nightwatch-d-0004',
+        'nightwatch-e-0005',
+      ]);
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test('an untruncated root reports a complete window and no truncation reason', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'nw-run-window-'));
+    try {
+      writeRun(root, 'nightwatch-a-0001');
+      const snapshot = createRunEvidenceReaderForTests(root, { windowLimit: 4 }).snapshot();
+      expect(snapshot.state).toBe('AVAILABLE');
+      expect(snapshot.window).toEqual({ limit: 4, considered: 1, truncated: false });
+      expect(snapshot.reasonCodes).not.toContain('RUN_EVIDENCE_WINDOW_TRUNCATED');
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test('the default reader reads the repository artifacts root, never the test scratch', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'nw-run-window-'));
+    try {
+      writeRun(root, 'nightwatch-only-in-scratch-0001');
+      const scoped = createRunEvidenceReaderForTests(root).snapshot();
+      expect(scoped.records.map((record) => record.summary.runId)).toEqual(['nightwatch-only-in-scratch-0001']);
+      // The production boundary is fixed to the repository-owned root.
+      expect(DEFAULT_RUN_EVIDENCE_ROOT.endsWith('artifacts')).toBe(true);
+      expect(DEFAULT_RUN_EVIDENCE_ROOT).not.toBe(root);
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+});
 });

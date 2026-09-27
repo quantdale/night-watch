@@ -28,7 +28,15 @@ const RUN_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/;
 const SHA_PATTERN = /^[0-9a-f]{40}$/;
 const ISO_TIMESTAMP_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/;
 const RELATIVE_PATH_PATTERN = /^[^/\\][^\\]*$/;
-const MAX_RUNS = 256;
+/**
+ * M6 (7.5/X-01): the newest-N window over the real run root. The previous
+ * behaviour REFUSED the whole view once the root held more than this many
+ * directories (`RUN_EVIDENCE_RECORD_OVERSIZED`), which turned a growing
+ * evidence tree into a permanently unavailable Control Center view.
+ */
+const MAX_RUNS_WINDOW = 256;
+/** A hard bound on what one window may inspect, independent of the root size. */
+const MAX_RUN_DIRECTORIES_INSPECTED = 4 * MAX_RUNS_WINDOW;
 const MAX_EVENTS = 25_000;
 const MAX_EVENT_TEXT_LENGTH = 64 * 1024;
 const MAX_SUMMARY_BYTES = 512 * 1024;
@@ -79,13 +87,29 @@ export type RunEvidenceReasonCode =
   | 'RUN_EVIDENCE_RECORD_UNSTABLE'
   | 'RUN_EVIDENCE_RECORD_OVERSIZED'
   | 'RUN_EVIDENCE_PATH_UNSAFE'
-  | 'RUN_EVIDENCE_DUPLICATE_SEQUENCE';
+  | 'RUN_EVIDENCE_DUPLICATE_SEQUENCE'
+  /**
+   * M6 (7.5/X-01/B-01): the real run root keeps every run forever, so the
+   * reader reports the NEWEST window and names the truncation. Informational:
+   * the window is still a complete, readable view of the newest runs.
+   */
+  | 'RUN_EVIDENCE_WINDOW_TRUNCATED';
 
 export interface RunEvidenceSnapshot {
   readonly state: RunEvidenceState;
   readonly records: readonly RunAuthorityInput[];
   readonly generation: string | null;
   readonly reasonCodes: readonly RunEvidenceReasonCode[];
+  /**
+   * M6 (7.5/X-01): what the newest-N window actually covered. `considered` is
+   * the number of run directories the root held (bounded inspection), so a
+   * truncated window is visible rather than implied.
+   */
+  readonly window: {
+    readonly limit: number;
+    readonly considered: number;
+    readonly truncated: boolean;
+  };
 }
 
 export interface RunEvidenceReader {
@@ -551,10 +575,16 @@ function readOneRun(root: string, runId: string): SafeRunRead {
 }
 
 function unavailableSnapshot(reasonCode: RunEvidenceReasonCode): RunEvidenceSnapshot {
-  return { state: 'UNAVAILABLE', records: [], generation: null, reasonCodes: [reasonCode] };
+  return {
+    state: 'UNAVAILABLE',
+    records: [],
+    generation: null,
+    reasonCodes: [reasonCode],
+    window: { limit: MAX_RUNS_WINDOW, considered: 0, truncated: false },
+  };
 }
 
-function readSnapshot(root: string): RunEvidenceSnapshot {
+function readSnapshot(root: string, windowLimit: number = MAX_RUNS_WINDOW): RunEvidenceSnapshot {
   const absoluteRoot = path.resolve(root);
   let rootStat: fs.Stats;
   try {
@@ -573,12 +603,23 @@ function readSnapshot(root: string): RunEvidenceSnapshot {
     return unavailableSnapshot('RUN_EVIDENCE_ROOT_UNAVAILABLE');
   }
   const directories = entries.filter((entry) => entry.isDirectory() || entry.isSymbolicLink());
-  if (directories.length > MAX_RUNS) return unavailableSnapshot('RUN_EVIDENCE_RECORD_OVERSIZED');
+  // M6 (7.5/X-01/B-01): the newest-N window. Run ids carry their generation
+  // timestamp (the recorder names runs `<name>-<digits>`), and the window is
+  // decided by name order — descending, so the newest runs are the ones read.
+  // Inspection itself stays bounded: a root with an absurd number of entries
+  // is truncated before any stat/read work happens.
+  const considered = Math.min(directories.length, MAX_RUN_DIRECTORIES_INSPECTED);
+  const boundedLimit = Number.isInteger(windowLimit) && windowLimit >= 1 && windowLimit <= MAX_RUNS_WINDOW ? windowLimit : MAX_RUNS_WINDOW;
+  const newest = directories
+    .slice()
+    .sort((left, right) => right.name.localeCompare(left.name))
+    .slice(0, boundedLimit);
+  const windowTruncated = directories.length > newest.length;
 
   const records: RunAuthorityInput[] = [];
   let rejected = 0;
   const detailedReasons = new Set<RunEvidenceReasonCode>();
-  for (const entry of directories) {
+  for (const entry of newest) {
     if (!RUN_ID_PATTERN.test(entry.name) || entry.isSymbolicLink()) {
       rejected += 1;
       detailedReasons.add('RUN_EVIDENCE_PATH_UNSAFE');
@@ -599,13 +640,21 @@ function readSnapshot(root: string): RunEvidenceSnapshot {
   const reasonCodes: RunEvidenceReasonCode[] = [];
   if (state === 'EMPTY') reasonCodes.push('RUN_EVIDENCE_EMPTY');
   if (rejected > 0) reasonCodes.push('RUN_EVIDENCE_PARTIAL_CORRUPTION');
+  // Informational: the newest window is a complete view of the newest runs.
+  if (windowTruncated) reasonCodes.push('RUN_EVIDENCE_WINDOW_TRUNCATED');
   reasonCodes.push(...detailedReasons);
   const generation = prefixedDigest24('runs', {
     state,
     reasonCodes: [...new Set(reasonCodes)],
     records: records.map((record) => ({ summary: record.summary, events: record.events ?? [], repositories: record.repositories ?? [] })),
   });
-  return { state, records, generation, reasonCodes: [...new Set(reasonCodes)] };
+  return {
+    state,
+    records,
+    generation,
+    reasonCodes: [...new Set(reasonCodes)],
+    window: { limit: boundedLimit, considered, truncated: windowTruncated },
+  };
 }
 
 function assertTestRoot(root: string): string {
@@ -613,13 +662,13 @@ function assertTestRoot(root: string): string {
   return path.resolve(root);
 }
 
-function createReader(root: string): RunEvidenceReader {
+function createReader(root: string, windowLimit?: number): RunEvidenceReader {
   const resolvedRoot = path.resolve(root);
   return {
-    snapshot: () => readSnapshot(resolvedRoot),
+    snapshot: () => readSnapshot(resolvedRoot, windowLimit),
     find: (runId) => {
       if (!RUN_ID_PATTERN.test(runId)) return null;
-      return readSnapshot(resolvedRoot).records.find((record) => record.summary.runId === runId) ?? null;
+      return readSnapshot(resolvedRoot, windowLimit).records.find((record) => record.summary.runId === runId) ?? null;
     },
   };
 }
@@ -630,6 +679,11 @@ export function createRunEvidenceReader(): RunEvidenceReader {
 }
 
 /** Synthetic/unit-test seam; never wired to an HTTP request or CLI argument. */
-export function createRunEvidenceReaderForTests(root: string): RunEvidenceReader {
-  return createReader(assertTestRoot(root));
+export function createRunEvidenceReaderForTests(
+  root: string,
+  options: { readonly windowLimit?: number } = {},
+): RunEvidenceReader {
+  // The test seam also carries the window limit, so the newest-N bound is
+  // provable without materialising 256 run directories.
+  return createReader(assertTestRoot(root), options.windowLimit);
 }

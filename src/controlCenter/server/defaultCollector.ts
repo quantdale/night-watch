@@ -93,12 +93,7 @@ export interface DefaultControlCenterCollectorOptions {
 }
 
 function unavailableRunSnapshot(): RunEvidenceSnapshot {
-  return {
-    state: 'UNAVAILABLE',
-    records: [],
-    generation: null,
-    reasonCodes: ['RUN_EVIDENCE_ROOT_UNAVAILABLE'],
-  };
+  return { state: 'UNAVAILABLE', records: [], generation: null, reasonCodes: ['RUN_EVIDENCE_ROOT_UNAVAILABLE'], window: { limit: 256, considered: 0, truncated: false } };
 }
 
 function validSnapshot(snapshot: RunEvidenceSnapshot): boolean {

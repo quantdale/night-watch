@@ -186,6 +186,7 @@ function runReader(records: readonly RunAuthorityInput[]): RunEvidenceReader {
     records: [...records],
     generation: `cc-run-generation:sha256:${'5'.repeat(24)}`,
     reasonCodes: [],
+    window: { limit: 256, considered: records.length, truncated: false },
   };
   return {
     snapshot: () => snapshot,
