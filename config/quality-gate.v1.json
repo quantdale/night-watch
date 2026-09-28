@@ -161,7 +161,7 @@
       ],
       "ciCapable": true,
       "cleanCheckoutCapable": true,
-      "requiresSiblingTopology": false,
+      "requiresSiblingTopology": true,
       "preDevRelevant": true,
       "expectedFailClosedBehavior": "manifest omission, unexpected skip, or test failure is non-green"
     },
@@ -199,7 +199,7 @@
       ],
       "ciCapable": true,
       "cleanCheckoutCapable": true,
-      "requiresSiblingTopology": false,
+      "requiresSiblingTopology": true,
       "preDevRelevant": true,
       "expectedFailClosedBehavior": "synthetic campaign failure is non-green"
     },

@@ -346,6 +346,10 @@ function staticFindings() {
   // asserted: each group's own manifest suites are scanned for measured
   // sibling/absolute-path dependence. A group that declares false while its
   // suites depend on a host path is under-declared and fails.
+  // VC-10 — declared dependencies count SEPARATELY, never as zero: a
+  // LEGACY_HOST_PATH_SKIP declaration records real host-path debt (the
+  // declaration is a debt ledger, not an eraser), while a
+  // NONE_INPUT_FIXTURE entry is opaque data and never a dependence.
   const groupFiles = (group) => {
     if (group.commandKey === 'SEMANTIC_COMPATIBILITY') {
       const semantic = readJson(SEMANTIC_MANIFEST);
@@ -362,20 +366,33 @@ function staticFindings() {
     return [];
   };
   const gateDefinition = readJson('config/quality-gate.v1.json');
+  // VC-10 — declared dependencies count SEPARATELY, never as zero: a
+  // LEGACY_HOST_PATH_SKIP declaration records real host-path debt (the
+  // declaration is a debt ledger, not an eraser), while a
+  // NONE_INPUT_FIXTURE entry is opaque data and never a dependence.
+  /** @type {{ file: string, capability: string }[]} */
+  const declaredPathDebt = [];
+  for (const raw of Array.isArray(regressions.externalPathDeclarations) ? regressions.externalPathDeclarations : []) {
+    if (raw === null || typeof raw !== 'object' || raw.capability === 'NONE_INPUT_FIXTURE') continue;
+    if (typeof raw.file !== 'string') continue;
+    declaredPathDebt.push({ file: raw.file, capability: String(raw.capability) });
+  }
   const measurements = [];
   for (const group of Array.isArray(gateDefinition?.groups) ? gateDefinition.groups : []) {
     const suiteFiles = new Set(groupFiles(group));
     const measured = externalPathFindings.filter((finding) => suiteFiles.has(finding.file));
+    const declaredFiles = declaredPathDebt.filter((entry) => suiteFiles.has(entry.file)).map((entry) => entry.file);
     measurements.push({
       groupId: group.id,
       requiresSiblingTopology: group.requiresSiblingTopology === true,
       measuredDependence: measured.length,
+      declaredDependence: declaredFiles.length,
       measurable: suiteFiles.size > 0,
     });
-    if (group.requiresSiblingTopology !== true && measured.length > 0) {
+    if (group.requiresSiblingTopology !== true && measured.length + declaredFiles.length > 0) {
       findings.push({
         code: 'TOPOLOGY_SIBLING_REQUIREMENT_UNDERDECLARED',
-        detail: `gate group ${group.id} declares requiresSiblingTopology=false but ${measured.length} of its suite file(s) measure absolute host-path dependence (${measured.map((finding) => finding.file).slice(0, 4).join(', ')})`,
+        detail: `gate group ${group.id} declares requiresSiblingTopology=false but its suite files measure ${measured.length} undeclared and ${declaredFiles.length} declared absolute host-path dependence (${[...new Set([...measured.map((finding) => finding.file), ...declaredFiles])].slice(0, 4).join(', ')})`,
       });
     }
   }

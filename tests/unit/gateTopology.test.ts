@@ -397,6 +397,45 @@ test.describe('X-02 — imported path constants resolve through the scan', () =>
     });
     expect(findings).toEqual([]);
   });
+
+  test('a function-returned root resolves through the scan (VC-10 bounded extractor)', () => {
+    const moduleMap: Record<string, string> = {
+      'src/core/policy/sourceTopology.ts': [
+        `function defaultRoot() {`,
+        `  return '${HOST_LITERAL}';`,
+        `}`,
+        `const arrowRoot = () => '${HOST_LITERAL}';`,
+      ].join('\n') + '\n',
+    };
+    const read = (modulePath: string): string | null => moduleMap[modulePath] ?? null;
+    for (const symbol of ['defaultRoot', 'arrowRoot']) {
+      const findings = scanExternalAbsolutePathDependence({
+        files: [suite(`import { ${symbol} } from '../../src/core/policy/sourceTopology';\nconst root = ${symbol}();\ncreateSiblingSourceAccess(root);`)],
+        declarations: [],
+        readFile: read,
+      });
+      expect(findings, symbol).toHaveLength(1);
+      expect(findings[0]!.literal).toBe(HOST_LITERAL);
+      expect(findings[0]!.detail).toContain(`via imported constant ${symbol}`);
+    }
+  });
+
+  test('a path-joined or multi-statement returned root stays unresolved — never guessed (VC-10)', () => {
+    const moduleMap: Record<string, string> = {
+      'src/core/policy/sourceTopology.ts': [
+        `function builtRoot() {`,
+        `  const base = something();`,
+        `  return base;`,
+        `}`,
+      ].join('\n') + '\n',
+    };
+    const findings = scanExternalAbsolutePathDependence({
+      files: [suite("import { builtRoot } from '../../src/core/policy/sourceTopology';\nconst root = builtRoot();")],
+      declarations: [],
+      readFile: (modulePath: string): string | null => moduleMap[modulePath] ?? null,
+    });
+    expect(findings).toEqual([]);
+  });
 });
 
 test.describe('truthful runner-topology classification', () => {

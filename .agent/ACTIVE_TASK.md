@@ -54,11 +54,18 @@ is complete: c04 twins assert non-empty premises, phase14 C3-14 is a declared
 skip, and the c03 real-topology describes use `classifyLiveSourceTestState`
 with LIVE_SOURCE_ tokens (93 exact config identities, zero generic residue) —
 focused 48 passed / 20 declared skips, skip-policy 18/18, semantic-compat
-PASS at `71a6ca3b`. M4 group gates
+PASS at `71a6ca3b`. Task 3.10 (VC-10) is complete: topology measurements
+count declared dependencies separately (declaredDependence beside
+measuredDependence), bounded function-returned root extraction resolves
+literal returns and leaves path-built ones UNRESOLVED, and
+SEMANTIC_COMPATIBILITY / SYNTHETIC_CAMPAIGN truthfully declare
+`requiresSiblingTopology: true` — gateTopology 36/36, gate:topology PASS
+(PROVEN/BUBBLEWRAP), typecheck:bin 1559, hardening + universe PASS; the dead
+`CHILD_ENV_INHERITED_KEYS` export is removed. M4 group gates
 and exact-head CI/artifact observation remain pending.
-Next action: proceed to task 3.10 (VC-10: topology measurement must keep
-declared literals — LEGACY_HOST_PATH_SKIP suites measure 0 — and catch
-function-returned roots). VC-01's stale skip guards
+Next action: proceed to task 3.11 (VC-11: orphan-branch `uniqueCommits` +
+canonical-remote-ref count, UI group Node 22 declaration, sun_path budget
+from the actual TMPDIR, HANDOFF classification probe). VC-01's stale skip guards
 and allowlist entries are removed; all four browser-backed tests passed locally,
 with exact-head GitHub Actions proof pending M4 close-out.
 
@@ -104,7 +111,7 @@ EXTERNAL CONTACT AUTHORIZED (OD-3 ONLY):
   provider proof run; one npm registry advisory query.
 
 CURRENT STATUS:
-  IN_PROGRESS — M4 validation spine through VC-09; M3 certification anchors
+  IN_PROGRESS — M4 validation spine through VC-10; M3 certification anchors
   validated at `d6fd98b1`; exact-head CI/artifact observation remains pending.
 
 ALPHAUS DEV / NEXT / PRODUCTION CONTACT:   NOT AUTHORIZED

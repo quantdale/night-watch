@@ -71,8 +71,6 @@ export function buildChildEnvironment(parentEnvironment, explicitValues = {}) {
   return childEnvironment;
 }
 
-export const CHILD_ENV_INHERITED_KEYS = INHERITED_KEYS;
-
 /**
  * Forward captured child stdio to the owner. Launchers that spawn Playwright
  * with piped stdio must call this before exiting, otherwise the official

@@ -393,6 +393,15 @@ const EXTERNAL_ABSOLUTE_PATH_RE = /(['"`])((?:\/(?:home|Users|opt|srv|root|mnt|m
 // re-exports through the caller-supplied reader, never the filesystem.
 const NAMED_FROM_CLAUSE_RE = /(?:import|export)\s*\{([^}]+)\}\s*from\s*['"]([^'"]+)['"]/g;
 const CONST_PATH_RE = /\b(?:const|let)\s+([A-Za-z_$][\w$]*)\s*=\s*(['"])((?:\/(?:home|Users|opt|srv|root|mnt|media|etc)\/[A-Za-z0-9._/-]{3,}))\2/;
+// VC-10 — function-returned roots: a module may hand out its absolute path
+// through a one-return function or a literal-returning arrow instead of a
+// const. The extractor is BOUNDED: it resolves only function bodies without
+// nested braces holding exactly one `return '<literal>';`, and arrows that
+// return the literal directly. A root built by `path.join(...)`, conditional
+// returns, or deeper control flow stays UNRESOLVED on purpose — this module
+// never guesses a path it did not read literally.
+const FUNCTION_RETURN_PATH_RE = /\bfunction\s+([A-Za-z_$][\w$]*)\s*\([^)]*\)\s*\{[^{}]*?return\s+(['"])((?:\/(?:home|Users|opt|srv|root|mnt|media|etc)\/[A-Za-z0-9._/-]{3,}))\2\s*;?\s*\}/g;
+const ARROW_RETURN_PATH_RE = /\b(?:const|let)\s+([A-Za-z_$][\w$]*)\s*=\s*(?:\([^)]*\)|[A-Za-z_$][\w$]*)\s*=>\s*(['"])((?:\/(?:home|Users|opt|srv|root|mnt|media|etc)\/[A-Za-z0-9._/-]{3,}))\2/g;
 const PATH_CONSTANT_MAX_DEPTH = 6;
 
 function normalizeModulePath(spec) {
@@ -432,6 +441,14 @@ function modulePathConstants(readFile, cache, modulePath, depth = 0) {
   for (const line of source.split(/\r?\n/)) {
     const local = CONST_PATH_RE.exec(line);
     if (local !== null) symbols.set(local[1], local[3]);
+  }
+  FUNCTION_RETURN_PATH_RE.lastIndex = 0;
+  for (const match of source.matchAll(FUNCTION_RETURN_PATH_RE)) {
+    if (match[1] !== undefined && match[3] !== undefined) symbols.set(match[1], match[3]);
+  }
+  ARROW_RETURN_PATH_RE.lastIndex = 0;
+  for (const match of source.matchAll(ARROW_RETURN_PATH_RE)) {
+    if (match[1] !== undefined && match[3] !== undefined) symbols.set(match[1], match[3]);
   }
   for (const match of source.matchAll(NAMED_FROM_CLAUSE_RE)) {
     const target = resolveSpecifier(modulePath, match[2]);

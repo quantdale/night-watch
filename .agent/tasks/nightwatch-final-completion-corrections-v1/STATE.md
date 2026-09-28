@@ -175,14 +175,29 @@ M4 group gate. Exact-head CI/artifact evidence and group gates remain pending.
   Focused c03/c04/phase14 run 48 passed / 20 declared skips; skip-policy
   suites 18/18; hardening:check PASS; full semantic-compat on the clean tree
   at `71a6ca3b` PASS (2177 total, 2163 passed, 14 declared, 0 failed,
-  skipPolicy PASS).
+  skipPolicy PASS). Task 3.10 (VC-10) is complete: group measurements count
+  declared dependencies SEPARATELY (`declaredDependence` beside
+  `measuredDependence` — a declared LEGACY_HOST_PATH_SKIP is host-path debt,
+  never zero; NONE_INPUT_FIXTURE stays opaque data), the constant extractor
+  resolves bounded function-returned roots (single-return function bodies
+  without nested braces + literal-returning arrows; path-built or
+  multi-statement returns stay UNRESOLVED by design, never guessed), and
+  SEMANTIC_COMPATIBILITY / SYNTHETIC_CAMPAIGN declare
+  `requiresSiblingTopology: true` (their suites carry 2 + 3 declared
+  dependencies). gateTopology 36/36 (two new VC-10 cases), gate:topology PASS
+  (PROVEN/BUBBLEWRAP, truthful receipt), typecheck:bin PASS at 1559 (the 4
+  implicit-any params its first draft introduced were FIXED, never raised past
+  the ceiling), hardening:check + validation:universe PASS. The genuinely dead
+  `CHILD_ENV_INHERITED_KEYS` export (zero consumers, independently verified)
+  is removed alongside.
 
 ## Exact Next Action
 
-Proceed to M4 task 3.10 (VC-10: topology measurement must keep declared
-literals — the LEGACY_HOST_PATH_SKIP suites measure 0 — and catch
-function-returned roots). The clean-gate proof, the semantic-compat
-clean-tree rerun, VC-07, VC-08 and VC-09 are complete. Preserve VC-01 exact-head CI
+Proceed to M4 task 3.11 (VC-11: assert `uniqueCommits` and count against the
+canonical remote ref in the orphan-branch test; UI group Node declaration to
+22; compute the sun_path budget from the actual TMPDIR; register a HANDOFF
+classification probe). The clean-gate proof, the semantic-compat
+clean-tree rerun, and VC-07..VC-10 are complete. Preserve VC-01 exact-head CI
 and VC-03 artifact observation as pending M4 close-out evidence; continue
 through task 3.12 before integration.
 
@@ -218,6 +233,7 @@ through task 3.12 before integration.
 | `docs/FLAKE-LEDGER.md`, `config/document-role.v1.json` | VC-07 tracked flake ledger (FLAKE-001: mechanism, 11/11 non-reproduction at the 2 s bound, shipped bound + residual risk) + APPEND_ONLY_ARCHIVE declaration | hardening:check PASS |
 | `tests/unit/observerSemanticLedger.test.ts` | VC-07 root-cause comment correction (synchronous projection; the wait bounds handler latency after `goto`) | observerSemanticLedger 2/2 PASS |
 | `tests/unit/c03GrpcTopology.test.ts`, `tests/unit/c04FrontendGraph.test.ts`, `tests/unit/phase14FreshSourceAdmission.test.ts`, `config/semantic-compatibility.v1.json` | VC-09 non-vacuous twin premises, declared C3-14 skip, `classifyLiveSourceTestState` for the c03 real-topology describes (LIVE_SOURCE_ tokens replace 11 generic entries; 93 exact identities) | focused 48 passed / 20 declared; semantic-compat PASS at `71a6ca3b` |
+| `bin/lib/topology-gate.mjs`, `bin/gate-topology.mjs`, `config/quality-gate.v1.json`, `tests/unit/gateTopology.test.ts`, `bin/child-environment.mjs` | VC-10 separate `declaredDependence` counting, bounded function-returned-root extraction (unresolvable stays UNRESOLVED), truthful `requiresSiblingTopology: true` for the two host-path-debt groups; dead `CHILD_ENV_INHERITED_KEYS` export removed | gateTopology 36/36; gate:topology PASS (declaredDependence 2/3); typecheck:bin 1559 |
 | `bin/lib/hardening/rules/validation-and-gates.mjs`, `config/hardening-rule-probes.v1.json`, `config/bin-typecheck.v1.json` | VC-08 token-based workflow-pinning matcher (all `uses` key forms, comment-aware, fail-closed on empty refs) + probes HC-184..HC-187; ratchet lowered to 1559 | probe campaign 5/5 DETECTED; hardening suites 15/15; typecheck:bin PASS |
 | `tests/unit/semanticSkipIdentity.test.ts`, `tests/unit/selfDevSandboxConfinement.test.ts`, `tests/unit/syntheticCampaignDiagnostics.test.ts` | VC-02 identity/report, reason, and gate-receipt regressions | 29/29 receipt+policy; 25 passed, 1 declared host skip |
 | `config/validation-universe.v1.json`, `config/validation-execution-classes.v1.json` | register ratchet suite and refresh the inventory digest | checks PASS at M3 close; VC-06 re-measured at `sha256:95f903de` (581 discovered, 0 unclassified) |
@@ -571,6 +587,17 @@ Relevant output: skipPolicy PASS (14 declared, 0 undeclared); the only
 earlier failure (projectState:2390 on the dirty tree) disappeared at the
 clean checkpoint as documented. hardening:check PASS alongside.
 
+Command: focused `gateTopology.test.ts` + `gate:topology` + `typecheck:bin` + `hardening:check` + `validation:universe` (VC-10)
+Result: PASS (36/36; PROVEN/BUBBLEWRAP; 1559; both structural checks)
+When: 2026-09-28
+Relevant output: the VC-10 receipt carries `declaredDependence: 2`
+(SEMANTIC_COMPATIBILITY) and `3` (SYNTHETIC_CAMPAIGN) alongside
+`measuredDependence: 0`, both groups truthfully `requiresSiblingTopology:
+true`; the function-returned-root extractor resolves single-return bodies and
+literal arrows and leaves path-built returns UNRESOLVED (never guessed). The
+first draft's 4 implicit-any params were fixed to land under the 2-diagnostic
+ceiling rather than raising it.
+
 ## Decisions Made During This Task
 
 - VC-09 replaces existence-only sibling probes with
@@ -578,6 +605,14 @@ clean checkpoint as documented. hardening:check PASS alongside.
   CURRENT, and the skip identity carries the full LIVE_SOURCE_<kind> token;
   the config keeps BOTH reason-token variants per test identity because the
   observed kind depends on the host's snapshot state.
+
+- VC-10 keeps topology measurement HONEST about debt: a declared
+  LEGACY_HOST_PATH_SKIP counts as a real dependence (the declaration is a debt
+  ledger, not an eraser), so `requiresSiblingTopology` declarations can no
+  longer read 0 while the config names host-path suites. The
+  function-returned-root extractor is deliberately BOUNDED to shapes it can
+  read literally — a `path.join`-built or conditionally returned root stays
+  UNRESOLVED rather than guessed, and the module documentation says so.
 
 - The D-04 gate label and the skip-report authorization are separate
   authorities: the label grants no worktree relaxation (CI/CLEAN-only, HC-180)
