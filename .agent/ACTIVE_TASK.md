@@ -19,12 +19,9 @@ parent session released and removed.
 Current milestone: M3 Certification anchors (group 2, tasks 2.1-2.8:
 VB-01..VB-07). M1 (bootstrap + Phase 1 preconditions) and M2 (task 6.1
 formatter policy, landed FIRST per RESUME_PROMPT §2) are COMPLETE.
-Next action: implement the certification-anchor tasks 2.1-2.8 (VB-01
-strict evidenceSha, VB-02 artifactPaths, VB-03 corrections guard pairing,
-VB-05 compatibility window, VB-06 checkpoint-role tests/probe, VB-07 real
-bin-typecheck ratchet), with focused suites + gate:dev + gate:milestone
-PASS after the group and probes committed before hardening:rules; commit,
-then continue to the validation-spine group.
+Next action: checkpoint the implemented VB-07 real bin-typecheck ratchet,
+then rerun the clean-checkout-dependent M3 focused suite, `gate:dev`, and
+`gate:milestone`; mark M3 complete only after all required validation passes.
 
 Authorization class: COMPLETION_CORRECTIONS_V1
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
@@ -68,7 +65,8 @@ EXTERNAL CONTACT AUTHORIZED (OD-3 ONLY):
   provider proof run; one npm registry advisory query.
 
 CURRENT STATUS:
-  IN_PROGRESS — corrections child campaign, task 6.1 formatter policy next.
+  IN_PROGRESS — M3 certification anchors; VB-07 implemented, clean-checkout
+  regression and group gates pending.
 
 ALPHAUS DEV / NEXT / PRODUCTION CONTACT:   NOT AUTHORIZED
 AUTHENTICATED ALPHAUS RUNTIME:             NOT AUTHORIZED

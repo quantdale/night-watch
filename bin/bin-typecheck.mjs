@@ -8,11 +8,12 @@
 // checks every bin under `checkJs` with the root project's `strict` and
 // `noUncheckedIndexedAccess` settings.
 //
-// The lane is deliberately REPORTING while the 62-bin surface is annotated in
-// batches: it prints the conformance count and exits zero, so the gate is not
-// silently made green by turning it off. It fails closed on the things that
-// would make the count a lie: a stale generated loader declaration, an inline
-// suppression, a stale or unknown exemption, or a toolchain that did not run.
+// The lane is deliberately REPORTING while the bin surface is annotated in
+// batches: it reports the conformance count without failing solely because
+// bins remain non-conforming. The per-file/total ratchets still fail closed
+// on growth in every mode. It also fails closed on a stale generated loader
+// declaration, inline suppression, stale/unknown exemption, or unavailable
+// TypeScript toolchain.
 // `--write` regenerates the loader declaration; `--config-check` runs the fast
 // self-checks without invoking TypeScript.
 
@@ -20,6 +21,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { countDiagnosticSilencingAnnotations, judgeRatchet } from './lib/typecheck-ratchet.mjs';
 import { extractLoaderCallSites, renderLoaderTypeMap } from './lib/cli-implementation-contract.mjs';
 import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
 
@@ -49,7 +51,7 @@ const MAX_BUFFER = 32 * 1024 * 1024;
 const TYPECHECK_TIMEOUT_MS = 600_000;
 
 /**
- * @typedef {{ schemaVersion?: string, mode?: string, exemptions?: { bin?: string, reason?: string }[], perFileCeilings?: { bin?: string, maxErrors?: number }[] }} BinTypecheckConfig
+ * @typedef {{ schemaVersion?: string, mode?: string, exemptions?: { bin?: string, reason?: string }[], perFileCeilings?: { bin?: string, maxErrors?: number }[], totalCeiling?: number, anyAnnotationBudget?: number }} BinTypecheckConfig
  * @typedef {{ code: string, detail: string }} BinTypecheckError
  */
 
@@ -64,6 +66,22 @@ function entryPoints() {
     .filter((name) => name.endsWith('.mjs'))
     .sort()
     .map((name) => `bin/${name}`);
+}
+
+/** Every JavaScript source and declaration checked by tsconfig.bin.json. */
+function binTypecheckFiles() {
+  /** @type {string[]} */
+  const files = [];
+  /** @param {string} directory */
+  const walk = (directory) => {
+    for (const entry of fs.readdirSync(path.join(ROOT, directory), { withFileTypes: true })) {
+      const relative = directory === '.' ? entry.name : `${directory}/${entry.name}`;
+      if (entry.isDirectory()) walk(relative);
+      else if (entry.name.endsWith('.mjs') || entry.name.endsWith('.d.mts')) files.push(relative);
+    }
+  };
+  walk('bin');
+  return files.sort((left, right) => left.localeCompare(right));
 }
 
 /** Every JavaScript source under bin/, including bin/lib, for loader extraction. */
@@ -94,7 +112,15 @@ function loadConfig() {
   if (raw.schemaVersion !== SCHEMA) throw new Error(`BIN_TYPECHECK_CONFIG_SCHEMA_UNSUPPORTED:${String(raw.schemaVersion)}`);
   if (typeof raw.mode !== 'string' || !MODES.has(raw.mode)) throw new Error(`BIN_TYPECHECK_CONFIG_MODE_INVALID:${String(raw.mode)}`);
   if (!Array.isArray(raw.exemptions)) throw new Error('BIN_TYPECHECK_CONFIG_EXEMPTIONS_INVALID');
-  if (raw.perFileCeilings !== undefined && !Array.isArray(raw.perFileCeilings)) throw new Error('BIN_TYPECHECK_CONFIG_CEILINGS_INVALID');
+  if (!Array.isArray(raw.perFileCeilings)) throw new Error('BIN_TYPECHECK_CONFIG_CEILINGS_INVALID');
+  // VB-07 / corrections task 2.7 — a missing total or annotation ceiling is
+  // a broken ratchet, not an opt-out. Both are required first-class fields.
+  if (!Number.isInteger(raw.totalCeiling) || raw.totalCeiling < 0) {
+    throw new Error(`BIN_TYPECHECK_CONFIG_TOTAL_CEILING_INVALID:${String(raw.totalCeiling)}`);
+  }
+  if (!Number.isInteger(raw.anyAnnotationBudget) || raw.anyAnnotationBudget < 0) {
+    throw new Error(`BIN_TYPECHECK_CONFIG_ANNOTATION_BUDGET_INVALID:${String(raw.anyAnnotationBudget)}`);
+  }
   return raw;
 }
 
@@ -173,8 +199,10 @@ function diagnosticsByFile(output) {
   for (const line of output.split(/\r?\n/)) {
     const match = /^(.+?)\((\d+),(\d+)\): error TS\d+:/.exec(line);
     if (!match) continue;
-    const file = match[1];
-    if (file === undefined) continue;
+    const reportedFile = match[1];
+    if (reportedFile === undefined) continue;
+    const absolute = path.resolve(ROOT, reportedFile);
+    const file = path.relative(ROOT, absolute).split(path.sep).join('/');
     byFile.set(file, (byFile.get(file) ?? 0) + 1);
   }
   return byFile;
@@ -208,15 +236,16 @@ function main() {
   const exemptions = loadExemptions(config);
   const ceilings = loadCeilings(config);
   const bins = entryPoints();
+  const checkedFiles = binTypecheckFiles();
   /** @type {BinTypecheckError[]} */
   const hardErrors = [];
 
-  if (bins.length === 0) hardErrors.push({ code: 'BIN_TYPECHECK_VACUOUS', detail: 'zero entry points discovered' });
+  if (bins.length === 0 || checkedFiles.length === 0) hardErrors.push({ code: 'BIN_TYPECHECK_VACUOUS', detail: 'zero entry points or checked source files discovered' });
   for (const bin of exemptions.keys()) {
     if (!bins.includes(bin)) hardErrors.push({ code: 'BIN_TYPECHECK_EXEMPTION_UNKNOWN', detail: bin });
   }
-  for (const bin of ceilings.keys()) {
-    if (!bins.includes(bin)) hardErrors.push({ code: 'BIN_TYPECHECK_CEILING_UNKNOWN', detail: bin });
+  for (const file of ceilings.keys()) {
+    if (!checkedFiles.includes(file)) hardErrors.push({ code: 'BIN_TYPECHECK_CEILING_UNKNOWN', detail: file });
   }
   hardErrors.push(...checkInlineSuppressions());
   hardErrors.push(...checkLoaderDeclaration());
@@ -244,6 +273,11 @@ function main() {
   let diagnostics = new Map();
   if (run.ok) {
     diagnostics = diagnosticsByFile(run.output);
+    for (const file of diagnostics.keys()) {
+      if (!checkedFiles.includes(file)) {
+        hardErrors.push({ code: 'BIN_TYPECHECK_DIAGNOSTIC_FILE_UNKNOWN', detail: file });
+      }
+    }
   } else {
     hardErrors.push({ code: run.code ?? 'BIN_TYPECHECK_TOOLCHAIN_UNAVAILABLE', detail: 'typecheck did not produce a judgement' });
   }
@@ -261,14 +295,39 @@ function main() {
     hardErrors.push({ code: 'BIN_TYPECHECK_EXEMPTION_STALE', detail: `${bin} now passes; remove its exemption` });
   }
 
-  // The ratchet: a declared ceiling is a hard boundary in every mode.
+  // VB-07 / corrections task 2.7 — the REAL ratchet: every bin's measured
+  // count is judged against its declared ceiling (EXCEEDED, or STALE when the
+  // file improved without lowering its ceiling in the same change), a
+  // non-conforming bin without a ceiling is MISSING, the summed surface is
+  // judged against the total ceiling, and the diagnostic-silencing `any`
+  // annotation budget prevents JSDoc type widening from disguising diagnostic growth.
   /** @type {{ bin: string, errors: number, maxErrors: number }[]} */
   const ceilingBreach = [];
-  for (const [bin, maxErrors] of ceilings) {
-    const errors = diagnostics.get(bin) ?? 0;
-    if (errors > maxErrors) {
-      ceilingBreach.push({ bin, errors, maxErrors });
-      hardErrors.push({ code: 'BIN_TYPECHECK_CEILING_EXCEEDED', detail: `${bin} has ${errors} diagnostics; ceiling ${maxErrors} (ratchet: lower it, never raise it)` });
+  const annotationsMeasured = countDiagnosticSilencingAnnotations(binSources());
+  {
+    const ratchet = judgeRatchet({
+      // The ratchet covers every file included by tsconfig.bin.json, not just
+      // the 76 top-level CLI entry points. This prevents a diagnostic moving
+      // into bin/lib from hiding behind an unchanged total.
+      perFile: new Map(checkedFiles.map((file) => [file, diagnostics.get(file) ?? 0])),
+      total: [...diagnostics.values()].reduce((sum, count) => sum + count, 0),
+      annotations: annotationsMeasured,
+      config: {
+        perFile: ceilings,
+        totalCeiling: config.totalCeiling ?? null,
+        anyAnnotationBudget: config.anyAnnotationBudget ?? null,
+      },
+    });
+    for (const error of ratchet) {
+      hardErrors.push(error);
+      const exceeded = /^([^ ]+) has (\d+) diagnostics; ceiling (\d+)/.exec(error.detail);
+      const exceededBin = exceeded?.[1];
+      const exceededErrors = exceeded?.[2];
+      const exceededCeiling = exceeded?.[3];
+      if (error.code === 'BIN_TYPECHECK_CEILING_EXCEEDED'
+        && exceededBin !== undefined && exceededErrors !== undefined && exceededCeiling !== undefined) {
+        ceilingBreach.push({ bin: exceededBin, errors: Number(exceededErrors), maxErrors: Number(exceededCeiling) });
+      }
     }
   }
 
@@ -287,6 +346,9 @@ function main() {
     exemptions: [...exemptions.keys()].sort(),
     perFileCeilings: [...ceilings.entries()].map(([bin, maxErrors]) => ({ bin, maxErrors, errors: diagnostics.get(bin) ?? 0 })),
     ceilingBreach,
+    totalCeiling: config.totalCeiling ?? null,
+    anyAnnotationBudget: config.anyAnnotationBudget ?? null,
+    annotationsMeasured,
     hardErrors,
   };
 

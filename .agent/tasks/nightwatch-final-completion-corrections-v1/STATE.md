@@ -77,19 +77,25 @@ the Validation Ledger.
   removed (both call sites already use `loadRuntimeTypeScriptModule`
   directly) — this is the fix the harness autofix kept re-applying in
   canonical, now landing legitimately through the C-00 integrate.
-- Next: M3 (group 2, tasks 2.1-2.8: VB-01..VB-07 certification anchors).
+- **M3 (VB-07 / task 2.7) implementation complete; group validation pending.**
+  The ratchet covers all 78 diagnostic-bearing `tsconfig.bin.json` sources
+  (63 entry points plus 15 `bin/lib` files), with exact per-file ceilings,
+  total ceiling 1579, annotation budget 26, and `run-shards.mjs` at 16.
+  Measured baseline is 1579 diagnostics / 13 of 76 conforming entry points;
+  the audit's historical baseline remains 1571 / 13 of 76. Five pure ratchet
+  tests and 45/45 focused CLI tests pass; root typecheck, `typecheck:bin`,
+  `validation:universe` and execution-class checks pass. `gate:dev` executed
+  5773 tests but failed only the known clean-checkout assertion at
+  `projectState.test.ts:2390` while this worktree was dirty; checkpoint, then
+  rerun the clean-tree test and both M3 gates.
 
 ## Exact Next Action
 
-Implement M3 (group 2, tasks 2.1-2.8): VB-01 (require a 40-hex evidenceSha
-for PROVEN lanes with a value→null/class-change substantive classification),
-VB-02 (artifactPaths + per-path `git cat-file -e <sha>:<path>` with
-EVIDENCE_ARTIFACT_ABSENT_AT_SHA), VB-03 (corrections guard archive-line
-pairing + DECISIONS entry), VB-05 (close the legacy compatibility window;
-HEAD invalid everywhere), VB-06 (checkpoint-role unit tests + stub-guard
-probe + exclude guarded paths + remove the dead constant), VB-07 (real
-per-file/total/stale-ceiling bin-typecheck ratchet). Then focused +
-`gate:dev` + `gate:milestone` PASS, commit, and continue M4.
+Checkpoint the VB-07 implementation and continuity records, then rerun the
+clean-checkout-dependent project-state focused test, `gate:dev`, and
+`gate:milestone` from the clean committed tree. Keep M3 IN_PROGRESS until all
+three required validations pass; then record their exact receipts and advance
+to M4.
 
 ## Files Changed
 
@@ -100,6 +106,10 @@ per-file/total/stale-ceiling bin-typecheck ratchet). Then focused +
 | `.agent/tasks/nightwatch-final-completion-corrections-v1/` | continuity v2 record for this child campaign | created at bootstrap |
 | `.agent/ACTIVE_TASK.md` | active route to this child | flipped at bootstrap |
 | `.agent/EXECUTION_PROMPT.md` | planner-executor handoff for this child | rewritten at bootstrap |
+| `bin/bin-typecheck.mjs`, `bin/lib/typecheck-ratchet.{mjs,d.mts}` | full-source per-file, total, stale-ceiling, and annotation-budget ratchet | VB-07 implemented; clean-checkout gate pending |
+| `config/bin-typecheck.v1.json` | measured 1579-diagnostic baseline, 78 exact per-file ceilings, run-shards=16 | VB-07 implemented |
+| `tests/unit/binTypecheckRatchet.test.ts` | missing/growth/staleness/annotation regression tests | 5/5; registered FULL_REGRESSION / PARALLEL_SAFE |
+| `config/validation-universe.v1.json`, `config/validation-execution-classes.v1.json` | register ratchet suite and refresh the inventory digest | checks PASS |
 
 ## Validation Ledger
 
@@ -124,6 +134,28 @@ Relevant failure/output summary: strict errors listed the missing
 continuity headings (## Deferred Work, ## Completion Criteria, ## Files
 Changed, ## Validation Ledger) — added before the bootstrap commit.
 
+Command: focused ratchet/CLI suites, `npm run typecheck`,
+`npm run typecheck:bin`, `npm run validation:universe`, and
+`node bin/validation-execution-classes.mjs`
+Result: PASS
+When: 2026-09-28
+Relevant failure/output summary: 45/45 Playwright tests; root typecheck clean;
+bin lane PASS at 13/76, 1579 diagnostics, 78 exact ceilings, total ceiling
+1579, annotation budget 26; universe 579 discovered / 0 unclassified at
+`46fee98b`; all 438 executable unit tests have valid non-weakening classes.
+
+Command: `npm run gate:dev -- --json` (pre-checkpoint candidate tree)
+Result: FAIL (clean-checkout-dependent test; retry required)
+When: 2026-09-28
+Relevant failure/output summary: affected selection broadened to 438 tests;
+5773 executed, 5739 passed, 1 failed, 33 skipped, 0 not-run. The sole failure
+is `tests/unit/projectState.test.ts:2390`, whose real-tree check emits
+`PROJECT_STATE_CHECKOUT_DIRTY` on stderr and no stdout under DEV_LANE while
+the worktree is dirty. The new test's missing execution class and stale
+universe digest were fixed and both inventory checks now pass. Rerun the
+focused clean-tree test and both group gates after the checkpoint; no test or
+safety condition was weakened.
+
 ## Decisions Made During This Task
 
 - (pending)
@@ -134,6 +166,11 @@ Changed, ## Validation Ledger) — added before the bootstrap commit.
   rule landed in the parent's `a784e668` (COMPLETED_LATER) and 5 findings
   CHANGED shape. Three follow-on defects (CF-01/CF-02/CF-03) were recorded:
   later parent work (M5-M9) built on the VD-01/VD-03 foundations.
+- VB-07's initial draft only ratcheted the 76 top-level entry points; the
+  correction expands the per-file map to every `.mjs` and `.d.mts` included
+  by `tsconfig.bin.json`, including diagnostic-bearing `bin/lib` modules.
+  Gate validation also confirmed the new test needs both execution-class and
+  validation-universe registration before a broad affected-test run is valid.
 
 ## Blockers
 

@@ -1,13 +1,323 @@
 {
   "schemaVersion": "nightwatch.bin-typecheck.v1",
   "definitionName": "Nightwatch bin type-check lane (F-15.5)",
-  "note": "REPORTING while the bin surface is annotated in batches: the lane prints a conformance count and exits zero. It always fails closed on a stale generated loader declaration, an inline suppression, or an exemption that is unknown or has started passing. A bin is never exempted inline; an exemption is a declared entry here with a reason.",
+  "note": "VB-07 (corrections task 2.7) - the real ratchet. Audit baseline (d595c7c8): 1571 diagnostics / 13 of 76 bins conforming; current measured baseline (2026-09-28): 1579 diagnostics / 13 of 76 bins conforming, across the entire tsconfig.bin.json surface. Exact per-file ceilings cover all 78 diagnostic-bearing sources (63 non-conforming entry points plus 15 bin/lib files); bin/run-shards.mjs is at its measured 16 (not the stale 25). The total ceiling is the measured whole-surface sum (1579); the diagnostic-silencing any-annotation budget is its measured count (26). Every ceiling is enforced in every mode: any increase or stale ceiling (higher than the measured count) fails. REPORTING describes the burn-down; it never permits growth. BLOCKING (task 10.5) additionally fails on any non-conforming entry point without an exemption. Exempting a bin requires a reason and an exemption that starts passing is stale and fails. New any-widening annotations added only to lower counts fail the budget.",
   "mode": "REPORTING",
   "exemptions": [],
   "perFileCeilings": [
     {
-      "bin": "bin/run-shards.mjs",
+      "bin": "bin/affected-tests.mjs",
+      "maxErrors": 6
+    },
+    {
+      "bin": "bin/ai-local-canary.mjs",
+      "maxErrors": 4
+    },
+    {
+      "bin": "bin/ai-owner-review.mjs",
+      "maxErrors": 10
+    },
+    {
+      "bin": "bin/auth-capture.mjs",
+      "maxErrors": 12
+    },
+    {
+      "bin": "bin/cache-key-contract.mjs",
+      "maxErrors": 3
+    },
+    {
+      "bin": "bin/campaign-synthetic.mjs",
+      "maxErrors": 31
+    },
+    {
+      "bin": "bin/change-intelligence.mjs",
+      "maxErrors": 11
+    },
+    {
+      "bin": "bin/efficacy-corpus.mjs",
+      "maxErrors": 3
+    },
+    {
+      "bin": "bin/evidence-retention.mjs",
+      "maxErrors": 27
+    },
+    {
+      "bin": "bin/finding-intel-scale.mjs",
+      "maxErrors": 18
+    },
+    {
+      "bin": "bin/gate-topology.mjs",
+      "maxErrors": 3
+    },
+    {
+      "bin": "bin/lib/hardening/kernel.mjs",
+      "maxErrors": 5
+    },
+    {
+      "bin": "bin/lib/hardening/probe-campaign.mjs",
+      "maxErrors": 4
+    },
+    {
+      "bin": "bin/lib/hardening/registry.mjs",
+      "maxErrors": 1
+    },
+    {
+      "bin": "bin/lib/hardening/rules/ai-and-self-dev.mjs",
+      "maxErrors": 29
+    },
+    {
+      "bin": "bin/lib/hardening/rules/alphaus-surface.mjs",
+      "maxErrors": 19
+    },
+    {
+      "bin": "bin/lib/hardening/rules/documentation.mjs",
+      "maxErrors": 32
+    },
+    {
+      "bin": "bin/lib/hardening/rules/privacy-and-evidence.mjs",
+      "maxErrors": 16
+    },
+    {
+      "bin": "bin/lib/hardening/rules/process-and-network.mjs",
+      "maxErrors": 23
+    },
+    {
+      "bin": "bin/lib/hardening/rules/rule-engine.mjs",
+      "maxErrors": 16
+    },
+    {
+      "bin": "bin/lib/hardening/rules/semantic-contracts.mjs",
+      "maxErrors": 5
+    },
+    {
+      "bin": "bin/lib/hardening/rules/source-integrity.mjs",
+      "maxErrors": 22
+    },
+    {
+      "bin": "bin/lib/hardening/rules/system-map.mjs",
+      "maxErrors": 2
+    },
+    {
+      "bin": "bin/lib/hardening/rules/validation-and-gates.mjs",
+      "maxErrors": 23
+    },
+    {
+      "bin": "bin/lib/hardening/rules/workspace-and-layout.mjs",
+      "maxErrors": 4
+    },
+    {
+      "bin": "bin/lib/session-authority.mjs",
       "maxErrors": 25
+    },
+    {
+      "bin": "bin/nightwatch-agent.mjs",
+      "maxErrors": 25
+    },
+    {
+      "bin": "bin/nightwatch-control-center.mjs",
+      "maxErrors": 5
+    },
+    {
+      "bin": "bin/nightwatch-hygiene.mjs",
+      "maxErrors": 50
+    },
+    {
+      "bin": "bin/nightwatch-intelligence.mjs",
+      "maxErrors": 39
+    },
+    {
+      "bin": "bin/nightwatch-reasoner-print.mjs",
+      "maxErrors": 48
+    },
+    {
+      "bin": "bin/nightwatch-session.mjs",
+      "maxErrors": 101
+    },
+    {
+      "bin": "bin/nightwatch-status.mjs",
+      "maxErrors": 4
+    },
+    {
+      "bin": "bin/nightwatch.mjs",
+      "maxErrors": 11
+    },
+    {
+      "bin": "bin/observe-authenticated.mjs",
+      "maxErrors": 10
+    },
+    {
+      "bin": "bin/observe-canary.mjs",
+      "maxErrors": 2
+    },
+    {
+      "bin": "bin/observe-gate.mjs",
+      "maxErrors": 10
+    },
+    {
+      "bin": "bin/observe-preflight.mjs",
+      "maxErrors": 26
+    },
+    {
+      "bin": "bin/phase10b-real.mjs",
+      "maxErrors": 4
+    },
+    {
+      "bin": "bin/phase14-contract-health.mjs",
+      "maxErrors": 11
+    },
+    {
+      "bin": "bin/phase22-dev.mjs",
+      "maxErrors": 36
+    },
+    {
+      "bin": "bin/phase22-real.mjs",
+      "maxErrors": 32
+    },
+    {
+      "bin": "bin/phase23-ci.mjs",
+      "maxErrors": 49
+    },
+    {
+      "bin": "bin/phase23-dev.mjs",
+      "maxErrors": 48
+    },
+    {
+      "bin": "bin/phase23-predev.mjs",
+      "maxErrors": 13
+    },
+    {
+      "bin": "bin/phase2b-real.mjs",
+      "maxErrors": 4
+    },
+    {
+      "bin": "bin/phase2c-real.mjs",
+      "maxErrors": 4
+    },
+    {
+      "bin": "bin/phase4-real.mjs",
+      "maxErrors": 4
+    },
+    {
+      "bin": "bin/phase5-real.mjs",
+      "maxErrors": 4
+    },
+    {
+      "bin": "bin/phase7-real.mjs",
+      "maxErrors": 4
+    },
+    {
+      "bin": "bin/phase9b-real.mjs",
+      "maxErrors": 4
+    },
+    {
+      "bin": "bin/planner-handoff-check.mjs",
+      "maxErrors": 37
+    },
+    {
+      "bin": "bin/portfolio.mjs",
+      "maxErrors": 21
+    },
+    {
+      "bin": "bin/project-state-check.mjs",
+      "maxErrors": 236
+    },
+    {
+      "bin": "bin/quality-gate-clean.mjs",
+      "maxErrors": 12
+    },
+    {
+      "bin": "bin/quality-gate-inventory.mjs",
+      "maxErrors": 17
+    },
+    {
+      "bin": "bin/quality-gate-spec.mjs",
+      "maxErrors": 13
+    },
+    {
+      "bin": "bin/quality-gate.mjs",
+      "maxErrors": 31
+    },
+    {
+      "bin": "bin/record-identity.mjs",
+      "maxErrors": 4
+    },
+    {
+      "bin": "bin/release-freshness.mjs",
+      "maxErrors": 17
+    },
+    {
+      "bin": "bin/review-mutation-campaign.mjs",
+      "maxErrors": 4
+    },
+    {
+      "bin": "bin/review-persistence-scale.mjs",
+      "maxErrors": 5
+    },
+    {
+      "bin": "bin/run-shards.mjs",
+      "maxErrors": 16
+    },
+    {
+      "bin": "bin/schema-lifecycle.mjs",
+      "maxErrors": 15
+    },
+    {
+      "bin": "bin/selfdev-adopt-sandbox.mjs",
+      "maxErrors": 4
+    },
+    {
+      "bin": "bin/selfdev-catalog-integrity.mjs",
+      "maxErrors": 5
+    },
+    {
+      "bin": "bin/selfdev-promote-canonical.mjs",
+      "maxErrors": 31
+    },
+    {
+      "bin": "bin/selfdev-synthetic.mjs",
+      "maxErrors": 4
+    },
+    {
+      "bin": "bin/selfdev-verify.mjs",
+      "maxErrors": 10
+    },
+    {
+      "bin": "bin/semantic-compat.mjs",
+      "maxErrors": 7
+    },
+    {
+      "bin": "bin/silent-zero-output.mjs",
+      "maxErrors": 4
+    },
+    {
+      "bin": "bin/test-oracle-quality.mjs",
+      "maxErrors": 5
+    },
+    {
+      "bin": "bin/test-timings.mjs",
+      "maxErrors": 7
+    },
+    {
+      "bin": "bin/validation-execution-classes.mjs",
+      "maxErrors": 8
+    },
+    {
+      "bin": "bin/validation-lane.mjs",
+      "maxErrors": 35
+    },
+    {
+      "bin": "bin/validation-universe.mjs",
+      "maxErrors": 15
+    },
+    {
+      "bin": "bin/w11-historical-arm.mjs",
+      "maxErrors": 20
+    },
+    {
+      "bin": "bin/workspace-integrity.mjs",
+      "maxErrors": 94
     }
-  ]
+  ],
+  "totalCeiling": 1579,
+  "anyAnnotationBudget": 26
 }
