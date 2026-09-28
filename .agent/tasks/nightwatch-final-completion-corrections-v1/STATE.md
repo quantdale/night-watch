@@ -103,15 +103,18 @@ landed FIRST per RESUME_PROMPT §2), and M3 (certification anchors, tasks
   `projectState:2390` assertion failed and one source-stale reason variant was
   undeclared. That variant is now admitted by its exact identity and a focused
   report re-evaluates PASS; the clean-tree lane rerun is reserved for the
-  checkpoint. VC-03 (task 3.3) is now implemented and locally validated: Bubblewrap is resolved from PATH and the resolved executable is reused for all envelope spawns; runner topology is `PROVEN` only for the complete envelope with every absence exercised, otherwise `PROVEN_DEGRADED` or `NOT_PROVEN`; bounded class/envelope/unexercised-absence details flow through quality-gate receipts; the CI artifact uploader is pinned to a full commit SHA and names artifacts with `${{ github.sha }}`. Focused topology/receipt/writer/hardening suites passed 63/63; `npm run gate:topology` PASS (BUBBLEWRAP, four absences exercised, class `PROVEN`); persisted receipt projection PASS; `npm run hardening:check` PASS; `npm run typecheck:bin` PASS at 1572 diagnostics after lowering ceilings. Actual exact-head CI artifact observation remains pending task 3.12. VC-04 (task 3.4) is implemented locally: D-04 now permits absent declared worktrees only for CI/CLEAN, and only with an error-free routing record plus exact STATE-branch equality; semantic-compat forwards the parent gate label through a pure environment helper; regression tests prove LOCAL remains LOCAL and COMPATIBILITY is not a relaxation. Focused routing tests pass 15/15, hardening:check PASS, validation:universe PASS (581 discovered, 0 unclassified; digest `sha256:56a4390f3eb87f1fe9b40bf4`), and typecheck:bin PASS at 1572 / 13 of 76. HC-180 is registered to kill the branch-equality conjunct, but probe-campaign execution is intentionally deferred until the M4 guard checkpoint per the validation strategy; exact-head CI/artifact evidence and group gates remain pending.
+  checkpoint. VC-03 (task 3.3) is now implemented and locally validated: Bubblewrap is resolved from PATH and the resolved executable is reused for all envelope spawns; runner topology is `PROVEN` only for the complete envelope with every absence exercised, otherwise `PROVEN_DEGRADED` or `NOT_PROVEN`; bounded class/envelope/unexercised-absence details flow through quality-gate receipts; the CI artifact uploader is pinned to a full commit SHA and names artifacts with `${{ github.sha }}`. Focused topology/receipt/writer/hardening suites passed 63/63; `npm run gate:topology` PASS (BUBBLEWRAP, four absences exercised, class `PROVEN`); persisted receipt projection PASS; `npm run hardening:check` PASS; `npm run typecheck:bin` PASS at 1572 diagnostics after lowering ceilings. Actual exact-head CI artifact observation remains pending task 3.12. VC-04 (task 3.4) is implemented locally: D-04 now permits absent declared worktrees only for CI/CLEAN, and only with an error-free routing record plus exact STATE-branch equality; semantic-compat forwards the parent gate label through a pure environment helper; regression tests prove LOCAL remains LOCAL and COMPATIBILITY is not a relaxation. Focused routing tests pass 15/15, hardening:check PASS, validation:universe PASS (581 discovered, 0 unclassified; digest `sha256:56a4390f3eb87f1fe9b40bf4`), and typecheck:bin PASS at 1572 / 13 of 76. HC-180 is registered to kill the branch-equality conjunct and was proven
+DETECTED at the M4 guard checkpoint `18185f36` (2/2 probes detected, workspace
+restored, status unchanged); full `hardening:rules` probe campaign runs at the
+M4 group gate. Exact-head CI/artifact evidence and group gates remain pending.
 
 ## Exact Next Action
 
 Implement M4 task 3.5 (VC-05): inspect and run the `gate:ui` workflow with
 `--ignore-scripts`, verify the esbuild build or record a declared exception,
 and add the hardening assertion on the install-script text. VC-04's code and
-focused tests are complete; HC-180 probe execution is queued until the M4 guard
-checkpoint, per the validation strategy. Preserve VC-01 exact-head CI and VC-03
+focused tests are complete and HC-180 was proven DETECTED at the M4 guard
+checkpoint `18185f36`. Preserve VC-01 exact-head CI and VC-03
 artifact observation as pending M4 close-out evidence; continue through task
 3.12 before integration.
 
@@ -312,8 +315,13 @@ Result: PASS
 When: 2026-09-28
 Relevant output: structural invariants PASS; universe 581 discovered / 0
 unclassified at `sha256:56a4390f3eb87f1fe9b40bf4`; bin ratchet 1572
-diagnostics / 13 of 76 conforming / 78 ceilings. HC-180 is registered but its
-mutation run remains queued until the M4 guard checkpoint.
+diagnostics / 13 of 76 conforming / 78 ceilings.
+
+Command: `node bin/hardening-check.mjs --probe-campaign --only=checkAgentContinuityIntegrity` at `18185f36`
+Result: PASS
+When: 2026-09-28
+Relevant output: 2/2 probes detected (HC-026, HC-180), 0 undetected,
+workspace restored, status unchanged.
 
 ## Decisions Made During This Task
 
@@ -335,8 +343,8 @@ mutation run remains queued until the M4 guard checkpoint.
   digest is refreshed. A temporary declaration shim that masked seven existing
   CLI type diagnostics was removed; the authoritative bin ratchet remains 1572
   diagnostics / 13 of 76 conforming, with no false ceiling reduction. HC-180
-  is registered for the CI/CLEAN branch-equality conjunct and will run after
-  the M4 guards are checkpointed, as required by the validation strategy.
+  targets the CI/CLEAN branch-equality conjunct and was proven DETECTED at the
+  M4 guard checkpoint `18185f36` (2/2 probes, workspace restored).
 - M3 gate acceptance follows each lane's explicit JSON `result`: both are
   PASS, while `withinTarget=false` remains disclosed performance telemetry.
   The affected-test selector broadened to all 438 tests and no selection or

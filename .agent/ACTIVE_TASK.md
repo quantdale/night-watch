@@ -20,8 +20,8 @@ M1, M2, and M3 are COMPLETE. Tasks 3.2 (VC-02 skip-identity enforcement),
 3.3 (VC-03 truthful topology classification, PATH-based Bubblewrap,
 bounded gate-receipt details, SHA-pinned CI artifact), and 3.4 (VC-04
 D-04 CI/CLEAN-only relaxation with exact branch equality; semantic-compat
-forwards the parent gate label; HC-180 registered) are implemented and
-focused-validated in the worktree. The HC-180 mutation run, semantic-compatibility
+forwards the parent gate label; HC-180 registered and DETECTED 2/2) are
+implemented and focused-validated in the worktree. The semantic-compatibility
 clean-tree rerun, M4 group gates, and exact-head CI/artifact observation remain pending.
 Next action: proceed to task 3.5 (VC-05 gate:ui `--ignore-scripts` / esbuild
 verification / hardening assertion). VC-01's stale skip guards
