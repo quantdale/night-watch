@@ -15,6 +15,8 @@ import {
   reportLaneState,
   validateLaneState,
 } from '../../bin/lib/validation-lane-state.mjs';
+import { isValuesOnlyBindingChange } from '../../bin/lib/release-evidence.mjs';
+import { isApprovedCheckpointPath } from '../../bin/agent-continuity-protocol.mjs';
 import type { LaneStateEntry } from '../../bin/lib/validation-lane-state.mjs';
 
 const REPO_ROOT = path.join(__dirname, '..', '..');
@@ -68,6 +70,48 @@ test.describe('validation lane state', () => {
     const codes = errors.map((entry) => entry.code);
     expect(codes).toContain('LANE_STATE_CONDITION_MISSING');
     expect(codes).toContain('LANE_STATE_REVISIT_MISSING');
+  });
+
+  // VB-01 (corrections task 2.1) — a documentary commit can never erase
+  // evidence or make an unevidenced PROVEN claim look fresh.
+  test('VB-01: a PROVEN lane with a nulled evidenceSha fails structural validation', () => {
+    expect(validateLaneState([lane({ evidenceSha: null })], ['CLASS_ONE']).map((entry) => entry.code))
+      .toContain('LANE_STATE_EVIDENCE_SHA_MISSING');
+    // A PROVEN lane WITH its 40-hex evidence stays valid.
+    expect(validateLaneState([lane()], ['CLASS_ONE'])).toEqual([]);
+  });
+
+  test('VB-01: erasing a binding evidence value is substantive, never values-only', () => {
+    const binding = (evidenceSha: string | null) => JSON.stringify({
+      schemaVersion: 'nightwatch.release-evidence.v1',
+      bindings: [{ subject: 'root-compile', evidenceSha, receiptDigest: null, observedAt: null, executor: null }],
+    });
+    // The regression: non-null -> null used to classify VALUES_ONLY.
+    expect(isValuesOnlyBindingChange(binding(SHA_A), binding(null))).toEqual({
+      valuesOnly: false,
+      reason: 'BINDING_VALUE_NULLED:evidenceSha',
+    });
+    // Every evidence value is protected the same way.
+    const receipt = (receiptDigest: string | null) => JSON.stringify({
+      schemaVersion: 'nightwatch.release-evidence.v1',
+      bindings: [{ subject: 'root-compile', evidenceSha: SHA_A, receiptDigest, observedAt: null, executor: null }],
+    });
+    expect(isValuesOnlyBindingChange(receipt('receipt:sha256:' + 'a'.repeat(24)), receipt(null))).toEqual({
+      valuesOnly: false,
+      reason: 'BINDING_VALUE_NULLED:receiptDigest',
+    });
+    // Adding evidence where there was none, and refreshing values, stay
+    // values-only — the guard is narrowed to erasure, not widened to every
+    // value edit.
+    expect(isValuesOnlyBindingChange(binding(null), binding(SHA_A)).valuesOnly).toBe(true);
+    expect(isValuesOnlyBindingChange(binding(SHA_A), binding(SHA_B)).valuesOnly).toBe(true);
+  });
+
+  test('VB-01: any change to the lane-state record is substantive (class changes cannot hide)', () => {
+    // validation-lane-state.v1.json is not an approved documentation-only
+    // path and carries no diff guard that could admit a class change, so a
+    // lane-class change is substantive by construction.
+    expect(isApprovedCheckpointPath('config/validation-lane-state.v1.json')).toBe(false);
   });
 
   test('staleness is computed from evidence ancestry, never stored', () => {

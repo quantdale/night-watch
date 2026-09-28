@@ -999,6 +999,7 @@ export function checkReleaseEvidenceBindings() {
     return;
   }
   const expected = new Set();
+  const lanes = [];
   try {
     const certification = JSON.parse(readIncludingComments('config/release-certification.v1.json'));
     for (const condition of Array.isArray(certification.conditions) ? certification.conditions : []) {
@@ -1011,11 +1012,29 @@ export function checkReleaseEvidenceBindings() {
   try {
     const laneState = JSON.parse(readIncludingComments('config/validation-lane-state.v1.json'));
     for (const lane of Array.isArray(laneState.lanes) ? laneState.lanes : []) {
-      if (lane !== null && typeof lane === 'object' && typeof lane.laneId === 'string') expected.add(lane.laneId);
+      if (lane !== null && typeof lane === 'object' && typeof lane.laneId === 'string') {
+        expected.add(lane.laneId);
+        lanes.push(lane);
+      }
     }
   } catch (error) {
     fail(`BINDINGS cannot read config/validation-lane-state.v1.json for subject closure: ${error instanceof Error ? error.message : String(error)}`);
     return;
+  }
+  // VB-01 / corrections task 2.1: a PROVEN lane must resolve to EXACT
+  // evidence. The effective binding is the checkpoint-neutral release-evidence
+  // entry first, then the retired record location (the same overlay
+  // loadLaneState applies). A nulled or malformed effective SHA is an
+  // unevidenced PROVEN claim and fails here, so removing evidence can never
+  // make a lane look fresh.
+  const sha40 = /^[0-9a-f]{40}$/i;
+  for (const lane of lanes) {
+    if (lane.class !== 'PROVEN') continue;
+    const bound = evidence.bySubject.get(lane.laneId)?.evidenceSha ?? null;
+    const effective = bound ?? (typeof lane.evidenceSha === 'string' ? lane.evidenceSha : null);
+    if (typeof effective !== 'string' || !sha40.test(effective)) {
+      fail(`BINDINGS PROVEN lane ${lane.laneId} has no 40-hex evidenceSha (effective=${String(effective)}); an unevidenced PROVEN claim is structural`);
+    }
   }
   if (expected.size === 0) {
     fail('BINDINGS subject closure resolved zero subjects; the closure sources are broken rather than the bindings clean');

@@ -8,7 +8,11 @@ export interface LaneStateEntry {
   readonly class: LaneStateClass;
   readonly command?: string;
   readonly evidence: string;
-  readonly evidenceSha: string;
+  // VB-01 (corrections task 2.1): null is the unevidenced state — a PROVEN
+  // lane carrying it fails `validateLaneState` with
+  // LANE_STATE_EVIDENCE_SHA_MISSING, so the type records the real input
+  // shape instead of pretending every lane is evidenced.
+  readonly evidenceSha: string | null;
   readonly unblockCondition?: string | null;
   readonly revisitDate?: string | null;
 }

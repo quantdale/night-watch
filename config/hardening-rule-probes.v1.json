@@ -1718,6 +1718,16 @@
     ],
     "checkReleaseEvidenceBindings": [
       {
+        "id": "HC-177",
+        "ops": [
+          {
+            "file": "config/release-evidence.v1.json",
+            "search": "\"subject\": \"root-compile\",\n      \"evidenceSha\": \"88e3c3fb52937ff303b0944cc22cfee624bf807e\",",
+            "replace": "\"subject\": \"root-compile\",\n      \"evidenceSha\": null,"
+          }
+        ]
+      },
+      {
         "id": "HC-144",
         "ops": [
           {

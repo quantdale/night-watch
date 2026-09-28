@@ -204,9 +204,11 @@ export function parseDocumentRoleCorrections(record) {
  * The diff-shape guard for `config/release-evidence.v1.json`: a change is
  * documentation-only when BOTH sides validate against the closed schema, the
  * ordered subject list is identical, and no binding key outside
- * {@link EVIDENCE_BINDING_VALUE_KEYS} differs. Everything else — a new or
- * removed subject, a reorder, a non-binding key, an unknown key, a malformed
- * value, or an unparseable side — is substantive.
+ * {@link EVIDENCE_BINDING_VALUE_KEYS} differs — with one exception: erasing
+ * a value (non-null -> null) is substantive, because lost evidence is not a
+ * documentation edit. Everything else — a new or removed subject, a reorder,
+ * a non-binding key, an unknown key, a malformed value, or an unparseable
+ * side — is substantive.
  *
  * Pure over JSON texts. A null side means the file was added or deleted.
  * @param {string | null} beforeText
@@ -240,6 +242,15 @@ export function isValuesOnlyBindingChange(beforeText, afterText) {
     for (const key of EVIDENCE_BINDING_KEYS) {
       if (key === 'subject') continue;
       if (left[key] === right[key]) continue;
+      // VB-01 / corrections task 2.1: erasing an evidence value (non-null ->
+      // null) is a substantive loss of proof, never a values-only
+      // documentation edit — a documentary commit must never be able to turn
+      // a stale PROVEN lane into a fresh-looking one by removing its
+      // evidence. Adding evidence where there was none (null -> value) and
+      // value -> value refreshes stay values-only.
+      if (valueKeys.has(key) && right[key] === null) {
+        return { valuesOnly: false, reason: `BINDING_VALUE_NULLED:${key}` };
+      }
       if (valueKeys.has(key)) continue;
       return { valuesOnly: false, reason: `BINDING_NON_VALUE_KEY_CHANGED:${key}` };
     }

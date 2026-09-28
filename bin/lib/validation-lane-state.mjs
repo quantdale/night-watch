@@ -84,6 +84,13 @@ export function validateLaneState(lanes, declaredClasses) {
       if (typeof lane.evidenceSha !== 'string' || !SHA_RE.test(lane.evidenceSha)) {
         errors.push({ code: 'LANE_STATE_EVIDENCE_SHA_INVALID', detail: `${laneId}: ${String(lane?.evidenceSha)}` });
       }
+    } else if (lane?.class === 'PROVEN') {
+      // VB-01 / corrections task 2.1: a PROVEN claim requires EXACT evidence.
+      // A null evidenceSha is not "no staleness" — it is an unevidenced
+      // PROVEN claim and must fail structural validation, so a documentary
+      // commit can never flip a lane to fresh-looking PROVEN by removing the
+      // evidence it was proven against.
+      errors.push({ code: 'LANE_STATE_EVIDENCE_SHA_MISSING', detail: laneId });
     }
     if (lane?.class !== 'PROVEN') {
       if (typeof lane?.unblockCondition !== 'string' || lane.unblockCondition.trim() === '') {

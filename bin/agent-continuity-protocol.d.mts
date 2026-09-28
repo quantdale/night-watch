@@ -3,6 +3,9 @@
 // declarations exist so TypeScript tests can import its pure helpers.
 export const PROTOCOL_V2: 'nightwatch.agent-continuity.v2';
 export const PROTOCOL_LEGACY: 'LEGACY_CONTINUITY_V1';
+export const APPROVED_CHECKPOINT_PATHS: readonly RegExp[];
+export const DIFF_GUARDED_CHECKPOINT_PATHS: readonly string[];
+export function isApprovedCheckpointPath(file: string): boolean;
 export const TASK_STATUSES: ReadonlySet<string>;
 export const PROJECT_VERDICT_EFFECTS: ReadonlySet<'PRESERVE' | 'REEVALUATE' | 'SUPERSEDE'>;
 export function normalizeProjectVerdictEffect(value: string | undefined | null): 'PRESERVE' | 'REEVALUATE' | 'SUPERSEDE' | null;
