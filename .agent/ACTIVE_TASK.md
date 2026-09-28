@@ -20,11 +20,14 @@ M1, M2, and M3 are COMPLETE. Tasks 3.2 (VC-02 skip-identity enforcement),
 3.3 (VC-03 truthful topology classification, PATH-based Bubblewrap,
 bounded gate-receipt details, SHA-pinned CI artifact), and 3.4 (VC-04
 D-04 CI/CLEAN-only relaxation with exact branch equality; semantic-compat
-forwards the parent gate label; HC-180 registered and DETECTED 2/2) are
+forwards the parent gate label; HC-180 registered and DETECTED 2/2), and
+3.5 (VC-05 `gate:ui` `--ignore-scripts`, esbuild build verified with NO
+declared exception, HC-181 DETECTED 4/4) are
 implemented and focused-validated in the worktree. The semantic-compatibility
 clean-tree rerun, M4 group gates, and exact-head CI/artifact observation remain pending.
-Next action: proceed to task 3.5 (VC-05 gate:ui `--ignore-scripts` / esbuild
-verification / hardening assertion). VC-01's stale skip guards
+Next action: proceed to task 3.6 (VC-06 gate:clean dirty-checkout failure,
+real sibling-root measurement, siblingMode/versions in early-exit receipts).
+VC-01's stale skip guards
 and allowlist entries are removed; all four browser-backed tests passed locally,
 with exact-head GitHub Actions proof pending M4 close-out.
 
@@ -70,7 +73,7 @@ EXTERNAL CONTACT AUTHORIZED (OD-3 ONLY):
   provider proof run; one npm registry advisory query.
 
 CURRENT STATUS:
-  IN_PROGRESS — M4 validation spine through VC-04; M3 certification anchors
+  IN_PROGRESS — M4 validation spine through VC-05; M3 certification anchors
   validated at `d6fd98b1`; exact-head CI/artifact observation remains pending.
 
 ALPHAUS DEV / NEXT / PRODUCTION CONTACT:   NOT AUTHORIZED

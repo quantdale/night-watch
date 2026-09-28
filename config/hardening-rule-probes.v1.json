@@ -470,6 +470,16 @@
             "replace": "      \"id\": \"HARDENING_PROBES\",\n      \"commandKey\": \"HARDENING_PROBES\",\n      \"required\": false,"
           }
         ]
+      },
+      {
+        "id": "HC-181",
+        "ops": [
+          {
+            "file": "package.json",
+            "search": "npm ci --ignore-scripts --prefix ui/control-center",
+            "replace": "npm ci --prefix ui/control-center"
+          }
+        ]
       }
     ],
     "checkPhase8B01CloseoutIntegrity": [

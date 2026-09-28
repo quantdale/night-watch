@@ -107,14 +107,20 @@ landed FIRST per RESUME_PROMPT §2), and M3 (certification anchors, tasks
 DETECTED at the M4 guard checkpoint `18185f36` (2/2 probes detected, workspace
 restored, status unchanged); full `hardening:rules` probe campaign runs at the
 M4 group gate. Exact-head CI/artifact evidence and group gates remain pending.
+  VC-05 (task 3.5) is implemented and verified: `gate:ui` installs UI
+  dependencies with `npm ci --ignore-scripts`, and the FULL chain was verified
+  without any declared exception — typecheck clean, 105/105 UI tests, and the
+  vite/esbuild production build PASS (esbuild does not need its install script
+  here). `checkPhase23QualityGate` asserts the exact install-script text and
+  HC-181 kills the flag (DETECTED 4/4). Focused phase23 suite 15/15 including
+  the new VC-05 script-text test; hardening:check and typecheck:bin PASS.
 
 ## Exact Next Action
 
-Implement M4 task 3.5 (VC-05): inspect and run the `gate:ui` workflow with
-`--ignore-scripts`, verify the esbuild build or record a declared exception,
-and add the hardening assertion on the install-script text. VC-04's code and
-focused tests are complete and HC-180 was proven DETECTED at the M4 guard
-checkpoint `18185f36`. Preserve VC-01 exact-head CI and VC-03
+Implement M4 task 3.6 (VC-06): gate:clean must fail on a dirty post-run
+checkout, measure the real sibling root read-only, and carry siblingMode and
+versions in early-exit receipts. VC-04 and VC-05 are complete with HC-180 /
+HC-181 proven DETECTED. Preserve VC-01 exact-head CI and VC-03
 artifact observation as pending M4 close-out evidence; continue through task
 3.12 before integration.
 
@@ -139,7 +145,8 @@ artifact observation as pending M4 close-out evidence; continue through task
 | `bin/lib/topology-gate.{mjs,d.mts}`, `bin/gate-topology.mjs`, `bin/quality-gate.mjs`, `config/bin-typecheck.v1.json` | VC-03 PATH-based Bubblewrap resolution, truthful topology classification, bounded gate receipt projection, and measured typecheck ceiling reduction | topology gate PASS (`PROVEN`, 4/4 absences); typecheck ratchet PASS at 1572 |
 | `.github/workflows/hardening.yml`, `bin/lib/hardening/rules/validation-and-gates.mjs`, `bin/lib/authenticatedWriterCensus.mjs` | VC-03 full-SHA topology artifact upload, narrow action allowlist, and receipt-writer census registration | hardening:check PASS; exact-head artifact observation pending |
 | `tests/unit/gateTopology.test.ts`, `tests/unit/syntheticCampaignDiagnostics.test.ts`, `tests/unit/authenticatedWriterCensus.test.ts` | VC-03 path resolution, classification, bounded receipt, artifact-pin, and writer-registration regressions | focused suites 63/63 PASS |
-| `bin/agent-state.mjs`, `bin/semantic-compat.mjs`, `bin/lib/semantic-compat-environment.{mjs,d.mts}`, `bin/lib/hardening/rules/documentation.mjs` | VC-04 D-04 relaxation restricted to CI/CLEAN with routing validity and exact branch equality; semantic-compat inherits its parent label; HC-180 enforces equality | hardening:check PASS; HC-180 execution pending M4 checkpoint |
+| `bin/agent-state.mjs`, `bin/semantic-compat.mjs`, `bin/lib/semantic-compat-environment.{mjs,d.mts}`, `bin/lib/hardening/rules/documentation.mjs` | VC-04 D-04 relaxation restricted to CI/CLEAN with routing validity and exact branch equality; semantic-compat inherits its parent label; HC-180 enforces equality | hardening:check PASS; HC-180 DETECTED 2/2 at `18185f36` |
+| `package.json`, `bin/lib/hardening/rules/validation-and-gates.mjs`, `config/hardening-rule-probes.v1.json`, `tests/unit/phase23QualityGate.test.ts` | VC-05 `gate:ui` install with `--ignore-scripts`, hardening assertion on the script text, HC-181 probe, focused regression | gate:ui chain verified (105/105 UI tests + build); HC-181 DETECTED 4/4; phase23 15/15 |
 | `tests/unit/semanticSkipIdentity.test.ts`, `tests/unit/selfDevSandboxConfinement.test.ts`, `tests/unit/syntheticCampaignDiagnostics.test.ts` | VC-02 identity/report, reason, and gate-receipt regressions | 29/29 receipt+policy; 25 passed, 1 declared host skip |
 | `config/bin-typecheck.v1.json` | VB-07 ratchet retains the historical 1579 baseline and the current 1572 surface; 78 exact ceilings, run-shards=13 | VC-03 topology receipt narrowing measured at 1572; ratchet PASS |
 | `config/validation-universe.v1.json`, `config/validation-execution-classes.v1.json` | register ratchet suite and refresh the inventory digest | checks PASS at M3 close |
@@ -322,6 +329,27 @@ Result: PASS
 When: 2026-09-28
 Relevant output: 2/2 probes detected (HC-026, HC-180), 0 undetected,
 workspace restored, status unchanged.
+
+Command: `npm ci --ignore-scripts --prefix ui/control-center` + UI typecheck/test/build (VC-05 verification)
+Result: PASS
+When: 2026-09-28
+Relevant output: install succeeded without lifecycle scripts; typecheck clean;
+105/105 vitest tests; `vite build && node scripts/verify-build.mjs` PASS
+(44 modules, no external references). esbuild does not need its install script
+under the bundled fallback — NO declared exception required.
+
+Command: `node bin/hardening-check.mjs --probe-campaign --only=checkPhase23QualityGate`
+Result: PASS
+When: 2026-09-28
+Relevant output: 4/4 probes detected (HC-022, HC-090, HC-091, HC-181),
+workspace restored, status unchanged.
+
+Command: focused `phase23QualityGate.test.ts`
+Result: PASS (15/15)
+When: 2026-09-28
+Relevant output: includes the new VC-05 gate:ui `--ignore-scripts` script-text
+regression; `npm run hardening:check` and `npm run typecheck:bin` PASS after
+the rule and probe change.
 
 ## Decisions Made During This Task
 

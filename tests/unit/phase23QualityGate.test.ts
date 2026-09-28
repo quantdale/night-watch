@@ -178,6 +178,17 @@ test.describe('HARDENING_PROBES is executed by the authoritative gate', () => {
     expect(scripts['hardening:rules']).not.toBe(scripts['hardening:check']);
   });
 
+  test('gate:ui installs dependencies with --ignore-scripts (VC-05)', () => {
+    // Dependency lifecycle scripts (esbuild ships one) must not run inside the
+    // gate's install step. If a script were ever needed, the exception must be
+    // declared in DECISIONS and reviewed — never silently re-enabled here.
+    const scripts = (JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8')) as { scripts: Record<string, string> }).scripts;
+    const install = scripts['gate:ui']?.split('&&').map((part) => part.trim()).find((part) => part.startsWith('npm ci'));
+    expect(install).toBeDefined();
+    expect(install).toContain('--ignore-scripts');
+    expect(install).toContain('ui/control-center');
+  });
+
   test('the gate definition digest reflects the added group', () => {
     // The digest is computed from the definition, never transcribed, so this
     // asserts the mechanism rather than a pasted constant: recomputing over the

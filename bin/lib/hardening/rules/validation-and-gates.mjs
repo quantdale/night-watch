@@ -196,6 +196,10 @@ export function checkPhase23QualityGate() {
   if (!/"gate:ci"\s*:\s*"node bin\/quality-gate\.mjs ci"/.test(packageJson)) fail('package.json must expose the fixed gate:ci entry point');
   if (!/"handoff:check"\s*:\s*"node bin\/planner-handoff-check\.mjs"/.test(packageJson)) fail('package.json must expose the fixed handoff checker entry point');
   if (!/"test:semantic-compat"\s*:\s*"node bin\/semantic-compat\.mjs"/.test(packageJson)) fail('package.json must expose the fixed semantic compatibility entry point');
+  // VC-05: dependency installs in gate scripts must not execute package
+  // lifecycle scripts (esbuild ships one); a needed script must be a declared
+  // exception in DECISIONS, never silently re-enabled here.
+  if (!/"gate:ui"\s*:\s*"npm ci --ignore-scripts --prefix ui\/control-center/.test(packageJson)) fail('package.json gate:ui must install UI dependencies with --ignore-scripts');
   if (!/modes\s*=\s*new Set\(\['local', 'ci', 'clean', 'predev'\]\)/.test(runnerCode)) fail('quality-gate runner must use a fixed mode allowlist');
   if (!/commandKey === 'HANDOFF_CHECK'/.test(runnerCode) || !/planner-handoff-check\.mjs/.test(runnerCode)) fail('quality-gate runner must own exactly one fixed handoff checker command');
   if (/shell\s*:\s*true|stdio\s*:\s*['"]inherit['"]|(?<!\.)\bexec(?:File)?\s*\(/.test(runner)) fail('quality-gate runner exposes shell-capable or unbounded child execution');
