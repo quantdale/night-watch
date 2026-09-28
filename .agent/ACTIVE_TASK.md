@@ -7,15 +7,14 @@ CHILD OF: nightwatch-final-product-completion-v1
 Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-final-completion-corrections-v1
 Starting SHA: 1d47e2eef1ef029560ace12e31571624602eab0b
-Last validated implementation SHA: d6fd98b10ac810128e7ed244c31c213e4d3fc72b
-Last checkpoint: 2026-09-28 — M3 certification anchors closed at clean
-checkpoint `d6fd98b1`; focused suites, `gate:dev`, and `gate:milestone` PASS.
-The broad affected-test execution passed 5773/5773 tests with 33 skips; the
-120s/300s lane targets were exceeded and are recorded as telemetry.
-Previous checkpoint: 2026-09-28 — VB-07 implementation `80840627` and
-follow-up validation-universe fix `d6fd98b1`; child bootstrap `3ce396c6`
-restored the change and re-verified all 31 findings at `1d47e2ee` (21
-STILL_PRESENT, 5 CHANGED, 2 COMPLETED_LATER, CF-01..CF-03).
+Last validated implementation SHA: c736ab9b3534bf879ae730856e717546cfaa0b0b
+Last checkpoint: 2026-09-28 — VC-01 skip correction at clean checkpoint
+`c736ab9b`; the exact committed tree passed the 34-test DEV-login/storage-state
+suite with all four browser-backed assertions executed and 0 skips. Exact-head
+GitHub Actions proof remains pending the M4 group integration.
+Previous checkpoint: 2026-09-28 — M3 continuity close-out at `14eb864a`; the
+M3 implementation checkpoint `d6fd98b1` passed focused validation and both
+group gates (5773 executed, 0 failed, 33 skipped; runtime targets disclosed).
 Current milestone: M4 Validation spine (group 3, tasks 3.1-3.12: VC-01..VC-11).
 M1, M2, and M3 are COMPLETE.
 Next action: proceed to task 3.2 (skip-identity enforcement). VC-01's stale
@@ -26,8 +25,8 @@ Authorization class: COMPLETION_CORRECTIONS_V1
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 1d47e2eef1ef029560ace12e31571624602eab0b
-LAST_VALIDATED_IMPLEMENTATION_SHA: d6fd98b10ac810128e7ed244c31c213e4d3fc72b
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: d6fd98b10ac810128e7ed244c31c213e4d3fc72b
+LAST_VALIDATED_IMPLEMENTATION_SHA: c736ab9b3534bf879ae730856e717546cfaa0b0b
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: c736ab9b3534bf879ae730856e717546cfaa0b0b
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
 PHASE_COMPLETION_CORRECTIONS_V1_STATUS: IN_PROGRESS

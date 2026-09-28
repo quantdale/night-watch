@@ -7,22 +7,23 @@ Phase: COMPLETION_CORRECTIONS_V1
 CHILD OF: nightwatch-final-product-completion-v1
 Status: IN_PROGRESS
 Starting SHA: 1d47e2eef1ef029560ace12e31571624602eab0b
-Last validated implementation SHA: d6fd98b10ac810128e7ed244c31c213e4d3fc72b
-Last substantive checkpoint SHA: d6fd98b10ac810128e7ed244c31c213e4d3fc72b
+Last validated implementation SHA: c736ab9b3534bf879ae730856e717546cfaa0b0b
+Last substantive checkpoint SHA: c736ab9b3534bf879ae730856e717546cfaa0b0b
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-final-completion-corr-c45f0e9d
-Last checkpoint: 2026-09-28 — M3 certification anchors closed at clean
-checkpoint `d6fd98b1`; focused suites, `gate:dev`, and `gate:milestone` PASS.
-The broad affected-test execution passed all 5773 tests with 33 skips; both
-lane performance targets were exceeded and are recorded as telemetry.
-Previous checkpoint: 2026-09-28 — VB-07 implementation `80840627`; child
-bootstrap `3ce396c6` restored the change and routed continuity v2.
+Last checkpoint: 2026-09-28 — VC-01 skip correction at clean checkpoint
+`c736ab9b`; the exact committed tree passed the 34-test DEV-login/storage-state
+suite, including all four browser-backed assertions with 0 skips. Exact-head
+GitHub Actions proof remains pending M4 integration.
+Previous checkpoint: 2026-09-28 — M3 continuity close-out `14eb864a`; its
+implementation checkpoint `d6fd98b1` passed focused validation and both group
+gates (5773 executed, 0 failed, 33 skipped; runtime targets disclosed).
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 1d47e2eef1ef029560ace12e31571624602eab0b
-LAST_VALIDATED_IMPLEMENTATION_SHA: d6fd98b10ac810128e7ed244c31c213e4d3fc72b
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: d6fd98b10ac810128e7ed244c31c213e4d3fc72b
+LAST_VALIDATED_IMPLEMENTATION_SHA: c736ab9b3534bf879ae730856e717546cfaa0b0b
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: c736ab9b3534bf879ae730856e717546cfaa0b0b
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
 PHASE_COMPLETION_CORRECTIONS_V1_STATUS: IN_PROGRESS
@@ -209,6 +210,12 @@ When: 2026-09-28
 Relevant output: all three DEV-login real-page tests and the storage-state
 live cookie-readability browser test executed through the configured Chrome
 channel. All 34 tests passed in 4.9 s; none were skipped.
+
+Command: `npx playwright test --project=nightwatch tests/unit/devLoginSecurity.test.ts tests/unit/storageState.test.ts` at committed checkpoint `c736ab9b3534bf879ae730856e717546cfaa0b0b`
+Result: PASS (34 passed, 0 skipped)
+When: 2026-09-28
+Relevant output: exact committed tree rerun; all four browser-backed security
+assertions executed and passed, with no skip outcomes (2.5 s).
 
 Command: `node -e` strict JSON parse + stale-reference search; TypeScript LSP diagnostics on both suites
 Result: PASS
