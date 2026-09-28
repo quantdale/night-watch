@@ -463,6 +463,22 @@ repaired head green. M8 is validated end to end: focused cones, the full probe
 campaign (175/175 detected), `gate:dev` and `gate:milestone` at 5712/0, and
 exact-head CI green.
 
+## M9 10.2 checkpoint CI observation (OD-3)
+
+Command: `gh run watch 36366426608 --exit-status` (OD-3 exact-head CI
+observation, M9 10.2 checkpoint)
+Result: PASS — `completed / success`, headSha
+`321800018bc819465326ba7c0556bac31e565da4`
+When: 2026-09-28
+Relevant failure/output summary: the M9 10.2 checkpoint head (three commits:
+`0a436f12`, `09c50277`, `32180001`); every job step green (`Execute
+authoritative quality gate` included). Local validation before the push:
+gate:dev PASS 5718/0 post-commit (the only pre-commit failure was the known
+`projectState.test.ts:2316` clean-tree assertion on the dirty worktree),
+projectState 103/103, focused CLI/launcher/review suites 77/77, full probe
+campaign 176/176 detected with every mutation restored, hardening:check PASS,
+agent:check PASS (86 warnings).
+
 ## Exact Next Action
 
 Validate `0a436f12`/`09c50277` (focused suites + `gate:dev`), commit this
