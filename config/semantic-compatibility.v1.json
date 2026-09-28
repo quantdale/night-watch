@@ -203,94 +203,6 @@
         "reasonToken": "LIVE_SOURCE_UNAVAILABLE"
       },
       {
-        "file": "tests/unit/c03GrpcTopology.test.ts",
-        "titlePath": [
-          "C-03 — completeness is never inflated by the join",
-          "the real ouchan topology reports TRUNCATED and claims no completeness"
-        ],
-        "reasonToken": "sibling checkouts unavailable"
-      },
-      {
-        "file": "tests/unit/c03GrpcTopology.test.ts",
-        "titlePath": [
-          "C-03 — the method-level prototype is positive-only, and says so",
-          "a non-proven binding does not attempt a method binding at all"
-        ],
-        "reasonToken": "requires the read-only sibling Alphaus checkouts"
-      },
-      {
-        "file": "tests/unit/c03GrpcTopology.test.ts",
-        "titlePath": [
-          "C-03 — the method-level prototype is positive-only, and says so",
-          "a proven binding resolves its implementation type and observes handlers"
-        ],
-        "reasonToken": "requires the read-only sibling Alphaus checkouts"
-      },
-      {
-        "file": "tests/unit/c03GrpcTopology.test.ts",
-        "titlePath": [
-          "C-03 — the method-level prototype is positive-only, and says so",
-          "an unobserved RPC is never reported as a completeness claim"
-        ],
-        "reasonToken": "requires the read-only sibling Alphaus checkouts"
-      },
-      {
-        "file": "tests/unit/c03GrpcTopology.test.ts",
-        "titlePath": [
-          "C-03 — the method-level prototype is positive-only, and says so",
-          "several services reach an exact handler count, which is an observation and not a proof"
-        ],
-        "reasonToken": "requires the read-only sibling Alphaus checkouts"
-      },
-      {
-        "file": "tests/unit/c03GrpcTopology.test.ts",
-        "titlePath": [
-          "C-03 — the real measured topology",
-          "a service with no observable proto is UNSUPPORTED and not a fact"
-        ],
-        "reasonToken": "requires the read-only sibling Alphaus checkouts"
-      },
-      {
-        "file": "tests/unit/c03GrpcTopology.test.ts",
-        "titlePath": [
-          "C-03 — the real measured topology",
-          "binds at least twelve proto services as SOURCE_FACT"
-        ],
-        "reasonToken": "requires the read-only sibling Alphaus checkouts"
-      },
-      {
-        "file": "tests/unit/c03GrpcTopology.test.ts",
-        "titlePath": [
-          "C-03 — the real measured topology",
-          "every proven binding is independently corroborated by an embedding"
-        ],
-        "reasonToken": "requires the read-only sibling Alphaus checkouts"
-      },
-      {
-        "file": "tests/unit/c03GrpcTopology.test.ts",
-        "titlePath": [
-          "C-03 — the real measured topology",
-          "no binding is silently resolved: every non-proven one carries a blocker"
-        ],
-        "reasonToken": "requires the read-only sibling Alphaus checkouts"
-      },
-      {
-        "file": "tests/unit/c03GrpcTopology.test.ts",
-        "titlePath": [
-          "C-03 — the real measured topology",
-          "one daemon registering six services is six bindings, not one"
-        ],
-        "reasonToken": "requires the read-only sibling Alphaus checkouts"
-      },
-      {
-        "file": "tests/unit/c03GrpcTopology.test.ts",
-        "titlePath": [
-          "C-03 — the real measured topology",
-          "the generated SDK descriptors all pair uniquely"
-        ],
-        "reasonToken": "requires the read-only sibling Alphaus checkouts"
-      },
-      {
         "file": "tests/unit/c04FrontendGraph.test.ts",
         "titlePath": [
           "C-04 - the real measured yield",
@@ -656,6 +568,190 @@
           "G: a base owned by another uid fails closed where uid semantics and chown permit the setup"
         ],
         "reasonToken": "uid ownership semantics require chown support unavailable on this host"
+      },
+      {
+        "file": "tests/unit/c03GrpcTopology.test.ts",
+        "titlePath": [
+          "C-03 — completeness is never inflated by the join",
+          "the real ouchan topology reports TRUNCATED and claims no completeness"
+        ],
+        "reasonToken": "LIVE_SOURCE_STALE"
+      },
+      {
+        "file": "tests/unit/c03GrpcTopology.test.ts",
+        "titlePath": [
+          "C-03 — completeness is never inflated by the join",
+          "the real ouchan topology reports TRUNCATED and claims no completeness"
+        ],
+        "reasonToken": "LIVE_SOURCE_UNAVAILABLE"
+      },
+      {
+        "file": "tests/unit/c03GrpcTopology.test.ts",
+        "titlePath": [
+          "C-03 — the real measured topology",
+          "binds at least twelve proto services as SOURCE_FACT"
+        ],
+        "reasonToken": "LIVE_SOURCE_STALE"
+      },
+      {
+        "file": "tests/unit/c03GrpcTopology.test.ts",
+        "titlePath": [
+          "C-03 — the real measured topology",
+          "binds at least twelve proto services as SOURCE_FACT"
+        ],
+        "reasonToken": "LIVE_SOURCE_UNAVAILABLE"
+      },
+      {
+        "file": "tests/unit/c03GrpcTopology.test.ts",
+        "titlePath": [
+          "C-03 — the real measured topology",
+          "every proven binding is independently corroborated by an embedding"
+        ],
+        "reasonToken": "LIVE_SOURCE_STALE"
+      },
+      {
+        "file": "tests/unit/c03GrpcTopology.test.ts",
+        "titlePath": [
+          "C-03 — the real measured topology",
+          "every proven binding is independently corroborated by an embedding"
+        ],
+        "reasonToken": "LIVE_SOURCE_UNAVAILABLE"
+      },
+      {
+        "file": "tests/unit/c03GrpcTopology.test.ts",
+        "titlePath": [
+          "C-03 — the real measured topology",
+          "no binding is silently resolved: every non-proven one carries a blocker"
+        ],
+        "reasonToken": "LIVE_SOURCE_STALE"
+      },
+      {
+        "file": "tests/unit/c03GrpcTopology.test.ts",
+        "titlePath": [
+          "C-03 — the real measured topology",
+          "no binding is silently resolved: every non-proven one carries a blocker"
+        ],
+        "reasonToken": "LIVE_SOURCE_UNAVAILABLE"
+      },
+      {
+        "file": "tests/unit/c03GrpcTopology.test.ts",
+        "titlePath": [
+          "C-03 — the real measured topology",
+          "a service with no observable proto is UNSUPPORTED and not a fact"
+        ],
+        "reasonToken": "LIVE_SOURCE_STALE"
+      },
+      {
+        "file": "tests/unit/c03GrpcTopology.test.ts",
+        "titlePath": [
+          "C-03 — the real measured topology",
+          "a service with no observable proto is UNSUPPORTED and not a fact"
+        ],
+        "reasonToken": "LIVE_SOURCE_UNAVAILABLE"
+      },
+      {
+        "file": "tests/unit/c03GrpcTopology.test.ts",
+        "titlePath": [
+          "C-03 — the real measured topology",
+          "one daemon registering six services is six bindings, not one"
+        ],
+        "reasonToken": "LIVE_SOURCE_STALE"
+      },
+      {
+        "file": "tests/unit/c03GrpcTopology.test.ts",
+        "titlePath": [
+          "C-03 — the real measured topology",
+          "one daemon registering six services is six bindings, not one"
+        ],
+        "reasonToken": "LIVE_SOURCE_UNAVAILABLE"
+      },
+      {
+        "file": "tests/unit/c03GrpcTopology.test.ts",
+        "titlePath": [
+          "C-03 — the real measured topology",
+          "the generated SDK descriptors all pair uniquely"
+        ],
+        "reasonToken": "LIVE_SOURCE_STALE"
+      },
+      {
+        "file": "tests/unit/c03GrpcTopology.test.ts",
+        "titlePath": [
+          "C-03 — the real measured topology",
+          "the generated SDK descriptors all pair uniquely"
+        ],
+        "reasonToken": "LIVE_SOURCE_UNAVAILABLE"
+      },
+      {
+        "file": "tests/unit/c03GrpcTopology.test.ts",
+        "titlePath": [
+          "C-03 — the method-level prototype is positive-only, and says so",
+          "a proven binding resolves its implementation type and observes handlers"
+        ],
+        "reasonToken": "LIVE_SOURCE_STALE"
+      },
+      {
+        "file": "tests/unit/c03GrpcTopology.test.ts",
+        "titlePath": [
+          "C-03 — the method-level prototype is positive-only, and says so",
+          "a proven binding resolves its implementation type and observes handlers"
+        ],
+        "reasonToken": "LIVE_SOURCE_UNAVAILABLE"
+      },
+      {
+        "file": "tests/unit/c03GrpcTopology.test.ts",
+        "titlePath": [
+          "C-03 — the method-level prototype is positive-only, and says so",
+          "an unobserved RPC is never reported as a completeness claim"
+        ],
+        "reasonToken": "LIVE_SOURCE_STALE"
+      },
+      {
+        "file": "tests/unit/c03GrpcTopology.test.ts",
+        "titlePath": [
+          "C-03 — the method-level prototype is positive-only, and says so",
+          "an unobserved RPC is never reported as a completeness claim"
+        ],
+        "reasonToken": "LIVE_SOURCE_UNAVAILABLE"
+      },
+      {
+        "file": "tests/unit/c03GrpcTopology.test.ts",
+        "titlePath": [
+          "C-03 — the method-level prototype is positive-only, and says so",
+          "several services reach an exact handler count, which is an observation and not a proof"
+        ],
+        "reasonToken": "LIVE_SOURCE_STALE"
+      },
+      {
+        "file": "tests/unit/c03GrpcTopology.test.ts",
+        "titlePath": [
+          "C-03 — the method-level prototype is positive-only, and says so",
+          "several services reach an exact handler count, which is an observation and not a proof"
+        ],
+        "reasonToken": "LIVE_SOURCE_UNAVAILABLE"
+      },
+      {
+        "file": "tests/unit/phase14FreshSourceAdmission.test.ts",
+        "titlePath": [
+          "Phase 14A C3 — synthetic fallback sanity (no snapshot present)",
+          "C3-14 synthetic fallback still derives and resolves without real source"
+        ],
+        "reasonToken": "synthetic fallback twin runs only without the disposable exact snapshot"
+      },
+      {
+        "file": "tests/unit/c03GrpcTopology.test.ts",
+        "titlePath": [
+          "C-03 — the method-level prototype is positive-only, and says so",
+          "a non-proven binding does not attempt a method binding at all"
+        ],
+        "reasonToken": "LIVE_SOURCE_STALE"
+      },
+      {
+        "file": "tests/unit/c03GrpcTopology.test.ts",
+        "titlePath": [
+          "C-03 — the method-level prototype is positive-only, and says so",
+          "a non-proven binding does not attempt a method binding at all"
+        ],
+        "reasonToken": "LIVE_SOURCE_UNAVAILABLE"
       }
     ]
   },

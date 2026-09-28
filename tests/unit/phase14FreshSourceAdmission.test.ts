@@ -261,7 +261,10 @@ test.describe('Phase 14A C3 — live SHA-movement classification + currentness a
 
 test.describe('Phase 14A C3 — synthetic fallback sanity (no snapshot present)', () => {
   test('C3-14 synthetic fallback still derives and resolves without real source', () => {
-    if (freshAvailable()) return; // only meaningful in environments without the snapshot
+    // VC-09: a DECLARED skip, not a silent early return — with the disposable
+    // snapshot present this synthetic sanity is redundant with the live
+    // describes and the skip-identity report records exactly that.
+    test.skip(freshAvailable(), 'synthetic fallback twin runs only without the disposable exact snapshot');
     const s = createRealSourceSyntheticState();
     const derived = deriveRealSourceExpectations(REAL_SOURCE_EXPECTATION_RECIPES, { repoId: s.repoId, sha: s.sha }, s.reader);
     expect(derived.derived.length).toBeGreaterThan(0);

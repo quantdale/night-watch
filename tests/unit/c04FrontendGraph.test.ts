@@ -239,6 +239,9 @@ test.describe('C-04 - synthetic twins for the declared live-source skips', () =>
       [backendRoute('GET', '/v1/other/{}')],
     );
     try {
+      // VC-09: the twin asserts its own non-empty premise — a vacuous loop over
+      // an empty graph must never pass this test.
+      expect(graph.edges.length).toBeGreaterThan(0);
       expect(graph.counters.nonLiteralSourceFacts).toBe(0);
       for (const edge of graph.edges) {
         if (edge.consumerEvidenceClass === 'SOURCE_FACT') {
@@ -257,6 +260,9 @@ test.describe('C-04 - synthetic twins for the declared live-source skips', () =>
       [backendRoute('GET', '/v1/a')],
     );
     try {
+      // VC-09: the twin asserts its own non-empty premise — a vacuous loop over
+      // an empty graph must never pass this test.
+      expect(graph.edges.length).toBeGreaterThan(0);
       for (const edge of graph.edges) {
         expect(edge.routeTemplate ?? '').not.toContain('?');
         expect(edge.routeTemplate ?? '').not.toContain('#');

@@ -28,14 +28,14 @@ const SDK_MODULE = 'github.com/alphauslabs/blue-sdk-go';
 const RIPPLE_API = 'mobingilabs/ripple-api';
 const RIPPLE_LIVE_STATE = classifyLiveSourceTestState({ repositoryIds: [RIPPLE_API] });
 const NO_EVICTION_LIVE_STATE = classifyLiveSourceTestState({ repositoryIds: [OUCHAN, BLUEAPI, RIPPLE_API] });
+// VC-09: the real-topology describes classify through the SAME authority as
+// the no-eviction skips (a bare existence probe cannot distinguish a STALE
+// checkout from a CURRENT one), and skip with the declared LIVE_SOURCE_ token.
+const REAL_TOPOLOGY_LIVE_STATE = classifyLiveSourceTestState({ repositoryIds: [OUCHAN, BLUEAPI, SDK] });
 
 /** Measured at the pinned sibling SHAs. */
 const EXPECTED_PROVEN = 12;
 const EXPECTED_PROTO_SERVICES_BOUND = 12;
-
-function siblingRepoAvailable(repoId: string): boolean {
-  return fs.existsSync(path.join(liveSourceTestRoot(), ...repoId.split('/'), '.git'));
-}
 
 function realTopology() {
   const access = createSiblingSourceAccess(liveSourceTestRoot());
@@ -244,7 +244,7 @@ test.describe('C-03 — completeness is never inflated by the join', () => {
   });
 
   test('the real ouchan topology reports TRUNCATED and claims no completeness', () => {
-    test.skip(!siblingRepoAvailable(OUCHAN) || !siblingRepoAvailable(BLUEAPI) || !siblingRepoAvailable(SDK), 'sibling checkouts unavailable');
+    test.skip(REAL_TOPOLOGY_LIVE_STATE.kind !== 'CURRENT', `LIVE_SOURCE_${REAL_TOPOLOGY_LIVE_STATE.kind}`);
     const topology = realTopology();
     // ouchan cannot be completely enumerated under the contract ceiling, and
     // the topology must say so rather than quietly implying coverage.
@@ -255,7 +255,7 @@ test.describe('C-03 — completeness is never inflated by the join', () => {
 });
 
 test.describe('C-03 — the real measured topology', () => {
-  test.skip(() => !siblingRepoAvailable(OUCHAN) || !siblingRepoAvailable(BLUEAPI) || !siblingRepoAvailable(SDK), 'requires the read-only sibling Alphaus checkouts');
+  test.skip(REAL_TOPOLOGY_LIVE_STATE.kind !== 'CURRENT', `LIVE_SOURCE_${REAL_TOPOLOGY_LIVE_STATE.kind}`);
 
   test('binds at least twelve proto services as SOURCE_FACT', () => {
     const topology = realTopology();
@@ -396,7 +396,7 @@ test.describe('C-03 — C-01 no-eviction across the admission (F-27)', () => {
 });
 
 test.describe('C-03 — the method-level prototype is positive-only, and says so', () => {
-  test.skip(() => !siblingRepoAvailable(OUCHAN) || !siblingRepoAvailable(BLUEAPI) || !siblingRepoAvailable(SDK), 'requires the read-only sibling Alphaus checkouts');
+  test.skip(REAL_TOPOLOGY_LIVE_STATE.kind !== 'CURRENT', `LIVE_SOURCE_${REAL_TOPOLOGY_LIVE_STATE.kind}`);
 
   test('a proven binding resolves its implementation type and observes handlers', () => {
     const topology = realTopology();
