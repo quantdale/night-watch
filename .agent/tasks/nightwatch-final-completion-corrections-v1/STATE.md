@@ -7,22 +7,22 @@ Phase: COMPLETION_CORRECTIONS_V1
 CHILD OF: nightwatch-final-product-completion-v1
 Status: IN_PROGRESS
 Starting SHA: 1d47e2eef1ef029560ace12e31571624602eab0b
-Last validated implementation SHA: 1d47e2eef1ef029560ace12e31571624602eab0b
-Last substantive checkpoint SHA: 1d47e2eef1ef029560ace12e31571624602eab0b
+Last validated implementation SHA: d6fd98b10ac810128e7ed244c31c213e4d3fc72b
+Last substantive checkpoint SHA: d6fd98b10ac810128e7ed244c31c213e4d3fc72b
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-final-completion-corr-c45f0e9d
-Last checkpoint: 2026-09-28 — VB-07 ratchet implementation `80840627`:
-focused/typecheck evidence and the clean-tree project-state regression passed;
-a gate retry then exposed the new helper missing from BIN_SYNTAX, so the
-universe declaration/digest correction is the current follow-up.
-Previous checkpoint: 2026-09-28 — child bootstrap `3ce396c6`; change restored
-unchanged and continuity v2 routed to the child.
+Last checkpoint: 2026-09-28 — M3 certification anchors closed at clean
+checkpoint `d6fd98b1`; focused suites, `gate:dev`, and `gate:milestone` PASS.
+The broad affected-test execution passed all 5773 tests with 33 skips; both
+lane performance targets were exceeded and are recorded as telemetry.
+Previous checkpoint: 2026-09-28 — VB-07 implementation `80840627`; child
+bootstrap `3ce396c6` restored the change and routed continuity v2.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 1d47e2eef1ef029560ace12e31571624602eab0b
-LAST_VALIDATED_IMPLEMENTATION_SHA: 1d47e2eef1ef029560ace12e31571624602eab0b
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 1d47e2eef1ef029560ace12e31571624602eab0b
+LAST_VALIDATED_IMPLEMENTATION_SHA: d6fd98b10ac810128e7ed244c31c213e4d3fc72b
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: d6fd98b10ac810128e7ed244c31c213e4d3fc72b
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
 PHASE_COMPLETION_CORRECTIONS_V1_STATUS: IN_PROGRESS
@@ -35,12 +35,11 @@ from sound foundations at M9 task 10.2 (remainder: 59/76 declared).
 
 ## Current Milestone
 
-Milestone ID: M3
+Milestone ID: M4
 
-M3 Certification anchors (group 2, tasks 2.1-2.8: VB-01..VB-07). M1
-(bootstrap + Phase 1 preconditions) and M2 (task 6.1 formatter policy,
-landed FIRST per RESUME_PROMPT §2) are COMPLETE — see Work In Progress and
-the Validation Ledger.
+M1 (bootstrap + Phase 1 preconditions), M2 (task 6.1 formatter policy,
+landed FIRST per RESUME_PROMPT §2), and M3 (certification anchors, tasks
+2.1-2.8) are COMPLETE. M4 validation spine (tasks 3.1-3.12) is IN_PROGRESS.
 
 ## Completed Milestones
 
@@ -58,6 +57,15 @@ the Validation Ledger.
   with file:line evidence — 21 STILL_PRESENT, 5 CHANGED, 2 COMPLETED_LATER
   (VB-04 and VD-05's rule @ `a784e668`), 3 follow-on defects CF-01..CF-03
   (1.3).
+- **M3 COMPLETE** — certification anchors (tasks 2.1-2.8, VB-01..VB-07):
+  VB-07 baseline 1579 diagnostics / 13 of 76 entry points, 78 exact ceilings,
+  total 1579, annotation budget 26; 45/45 focused ratchet/CLI tests plus
+  clean-tree project-state regression 1/1. `gate:dev` PASS and
+  `gate:milestone` PASS at `d6fd98b1`; both conservatively selected all 438
+  unit tests, 5773 executed, 5740 passed, 0 failed, 33 skipped. Milestone
+  also passed `typecheck:bin`, `hardening:rules`, `project:check`, and
+  `workspace:check`. `withinTarget=false` for both lanes (782447/120000 ms and
+  1337343/300000 ms); selection was not narrowed.
 
 ## Work In Progress
 
@@ -80,25 +88,19 @@ the Validation Ledger.
   removed (both call sites already use `loadRuntimeTypeScriptModule`
   directly) — this is the fix the harness autofix kept re-applying in
   canonical, now landing legitimately through the C-00 integrate.
-- **M3 (VB-07 / task 2.7) implementation complete; group validation pending.**
-  The ratchet covers all 78 diagnostic-bearing `tsconfig.bin.json` sources
-  (63 entry points plus 15 `bin/lib` files), with exact per-file ceilings,
-  total ceiling 1579, annotation budget 26, and `run-shards.mjs` at 16.
-  Measured baseline is 1579 diagnostics / 13 of 76 conforming entry points;
-  the audit's historical baseline remains 1571 / 13 of 76. Five pure ratchet
-  tests and 45/45 focused CLI tests pass; root typecheck, `typecheck:bin`,
-  `validation:universe` (580 discovered, digest `901b155e`) and execution-class checks pass. `gate:dev` executed
-  5773 tests but failed only the known clean-checkout assertion at
-  `projectState.test.ts:2390` while this worktree was dirty; checkpoint, then
-  rerun the clean-tree test and both M3 gates.
+- **M4 IN_PROGRESS — validation spine (tasks 3.1-3.12, VC-01..VC-11).**
+  The first action is task 3.1: ensure the four DEV-login/storage-state
+  security tests resolve the configured Chrome channel and execute rather
+  than skip; confirm exact CI evidence as specified. Then continue the
+  remaining spine corrections in stable task-ID order.
 
 ## Exact Next Action
 
-Checkpoint the VB-07 implementation and continuity records, then rerun the
-clean-checkout-dependent project-state focused test, `gate:dev`, and
-`gate:milestone` from the clean committed tree. Keep M3 IN_PROGRESS until all
-three required validations pass; then record their exact receipts and advance
-to M4.
+Implement M4 task 3.1: inspect the DEV-login and storage-state skip guards,
+resolve the configured Chrome channel executable (or remove the stale skip),
+add focused proof that the four security tests execute, and obtain allowed
+GitHub Actions evidence showing they passed rather than skipped. Continue
+VC-02..VC-11 in task order, validate the M4 group, and record every checkpoint.
 
 ## Files Changed
 
@@ -165,13 +167,39 @@ When: 2026-09-28
 Relevant failure/output summary: clean checkout let the lane reach its first
 required step, where `bin/lib/typecheck-ratchet.mjs` was unclassified and the
 stored inventory digest had drifted. Added the helper to BIN_SYNTAX and
-measured digest `901b155e` (580 discovered, 0 unclassified); this follow-up
-must be committed before retrying focused clean-tree validation and both M3
-gates.
+measured digest `901b155e` (580 discovered, 0 unclassified); that correction
+was committed as `d6fd98b1` before the successful retries below.
+
+Command: clean-checkout `projectState.test.ts` real-tree regression at
+`d6fd98b10ac810128e7ed244c31c213e4d3fc72b`
+Result: PASS (1/1)
+When: 2026-09-28
+Relevant output: the real project-state check produced its expected stdout
+and every release-check probe resolved to carried output.
+
+Command: `npm run gate:dev -- --json` at `d6fd98b10ac810128e7ed244c31c213e4d3fc72b`
+Result: PASS
+When: 2026-09-28
+Relevant output: 3 shards; 5773 planned/executed, 5740 passed, 0 failed,
+33 skipped, 0 not-run; coverage true; 782447 ms against the 120000 ms
+telemetry target (`withinTarget=false`); affected selection broadened to all
+438 tests (`AFFECTED_BROADENED`).
+
+Command: `npm run gate:milestone -- --json` at `d6fd98b10ac810128e7ed244c31c213e4d3fc72b`
+Result: PASS
+When: 2026-09-28
+Relevant output: all steps exit 0, including `typecheck:bin`,
+`hardening:rules`, `project-check`, and `workspace-check`; 3 shards;
+5773 planned/executed, 5740 passed, 0 failed, 33 skipped, 0 not-run; coverage
+true; 1337343 ms against the 300000 ms telemetry target (`withinTarget=false`);
+all 438 tests selected. No selection narrowing was applied.
 
 ## Decisions Made During This Task
 
-- (pending)
+- M3 gate acceptance follows each lane's explicit JSON `result`: both are
+  PASS, while `withinTarget=false` remains disclosed performance telemetry.
+  The affected-test selector broadened to all 438 tests and no selection or
+  safety criterion was narrowed.
 
 ## Discoveries
 
@@ -185,6 +213,11 @@ gates.
   Gate validation confirmed the new test needs execution-class and
   validation-universe registration, and the new helper needs BIN_SYNTAX
   classification before broad validation can pass.
+- Both M3 lanes completed the broadened 438-test selection with full coverage
+  and zero failures; `withinTarget=false` was emitted by both lane receipts
+  because the suite took 782447 ms / 1337343 ms respectively. This is retained
+  as a performance follow-up without narrowing the selection or changing the
+  task's explicit PASS criterion.
 
 ## Blockers
 

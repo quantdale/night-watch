@@ -7,29 +7,27 @@ CHILD OF: nightwatch-final-product-completion-v1
 Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-final-completion-corrections-v1
 Starting SHA: 1d47e2eef1ef029560ace12e31571624602eab0b
-Last validated implementation SHA: 1d47e2eef1ef029560ace12e31571624602eab0b
-Last checkpoint: 2026-09-28 — VB-07 ratchet implementation at
-`80840627`; focused/typecheck evidence passed, and the clean-tree project-state
-regression passed. A gate retry exposed the new helper missing from
-BIN_SYNTAX; the declaration/digest correction is in progress and both M3
-gates remain pending.
-Previous checkpoint: 2026-09-28 — child bootstrap at `3ce396c6`; corrective
-change restored unchanged, continuity v2 created, and all 31 findings
-re-verified at `1d47e2ee` (21 STILL_PRESENT, 5 CHANGED, 2 COMPLETED_LATER,
-CF-01..CF-03).
-Current milestone: M3 Certification anchors (group 2, tasks 2.1-2.8:
-VB-01..VB-07). M1 (bootstrap + Phase 1 preconditions) and M2 (task 6.1
-formatter policy, landed FIRST per RESUME_PROMPT §2) are COMPLETE.
-Next action: checkpoint the implemented VB-07 real bin-typecheck ratchet,
-then rerun the clean-checkout-dependent M3 focused suite, `gate:dev`, and
-`gate:milestone`; mark M3 complete only after all required validation passes.
+Last validated implementation SHA: d6fd98b10ac810128e7ed244c31c213e4d3fc72b
+Last checkpoint: 2026-09-28 — M3 certification anchors closed at clean
+checkpoint `d6fd98b1`; focused suites, `gate:dev`, and `gate:milestone` PASS.
+The broad affected-test execution passed 5773/5773 tests with 33 skips; the
+120s/300s lane targets were exceeded and are recorded as telemetry.
+Previous checkpoint: 2026-09-28 — VB-07 implementation `80840627` and
+follow-up validation-universe fix `d6fd98b1`; child bootstrap `3ce396c6`
+restored the change and re-verified all 31 findings at `1d47e2ee` (21
+STILL_PRESENT, 5 CHANGED, 2 COMPLETED_LATER, CF-01..CF-03).
+Current milestone: M4 Validation spine (group 3, tasks 3.1-3.12: VC-01..VC-11).
+M1, M2, and M3 are COMPLETE.
+Next action: start task 3.1 (resolve the configured Chrome executable for the
+four DEV-login/storage-state security tests), then continue the remaining
+validation-spine corrections in task order and rerun focused + group gates.
 
 Authorization class: COMPLETION_CORRECTIONS_V1
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 1d47e2eef1ef029560ace12e31571624602eab0b
-LAST_VALIDATED_IMPLEMENTATION_SHA: 1d47e2eef1ef029560ace12e31571624602eab0b
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 1d47e2eef1ef029560ace12e31571624602eab0b
+LAST_VALIDATED_IMPLEMENTATION_SHA: d6fd98b10ac810128e7ed244c31c213e4d3fc72b
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: d6fd98b10ac810128e7ed244c31c213e4d3fc72b
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
 PHASE_COMPLETION_CORRECTIONS_V1_STATUS: IN_PROGRESS
@@ -66,8 +64,8 @@ EXTERNAL CONTACT AUTHORIZED (OD-3 ONLY):
   provider proof run; one npm registry advisory query.
 
 CURRENT STATUS:
-  IN_PROGRESS — M3 certification anchors; VB-07 implemented, clean-checkout
-  regression and group gates pending.
+  IN_PROGRESS — M4 validation spine; M3 certification anchors validated at
+  `d6fd98b1`.
 
 ALPHAUS DEV / NEXT / PRODUCTION CONTACT:   NOT AUTHORIZED
 AUTHENTICATED ALPHAUS RUNTIME:             NOT AUTHORIZED

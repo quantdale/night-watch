@@ -114,7 +114,7 @@ and evidence and needs no code change.
   corrections guard, TDZ regression, compatibility window, checkpoint-role
   tests/probe, real bin-typecheck ratchet).
 - Acceptance criteria: focused suites + `gate:dev` + `gate:milestone` PASS.
-- **Status:** IN_PROGRESS
+- **Status:** COMPLETE — clean checkpoint `d6fd98b1`: focused tests, `gate:dev`, and `gate:milestone` all returned PASS; the broadened 438-test suite executed 5773 tests with 0 failures. Both performance targets were exceeded and recorded in STATE, but the lane receipts were PASS.
 
 ### M4 — Validation spine (group 3, tasks 3.1-3.12)
 
@@ -124,7 +124,7 @@ and evidence and needs no code change.
   topology measurement, orphan/node/sun_path/HANDOFF details).
 - Acceptance criteria: focused suites + `gate:dev` + `gate:milestone` PASS;
   exact-head CI green with the restored tests executing.
-- **Status:** NOT_STARTED
+- **Status:** IN_PROGRESS
 
 ### M5 — Release probes (group 4, tasks 4.1-4.6)
 
