@@ -161,6 +161,13 @@
       "oldLineSha256": "sha256:d82aae956ce9d4b666cbb9f5",
       "oldLineExcerpt": "> Durable memory for the next agent/session. Last updated: **2026-09-25**",
       "reason": "The corrections child campaign's live-state block sync (2026-09-28) advanced the governed LIVE_TASK_ID/LIVE_PHASE and LAST_SUBSTANTIVE_IMPLEMENTATION_SHA machine fields on 2026-09-28; the header date must cover the archive's own last change, while the statement itself is unchanged (same pattern as CORR-SUCC-001)."
+    },
+    {
+      "id": "CORR-CORR-002",
+      "path": "docs/CURRENT_STATE.md",
+      "oldLineSha256": "sha256:7cfaf86aa58ba6b5038c5c32",
+      "oldLineExcerpt": "| `LAST_SUBSTANTIVE_IMPLEMENTATION_SHA` | the last commit that changed implementation AND was validated | `68d834b` | W12 measurement integrity, validation-universe registration, and live-task status-ledger closure...",
+      "reason": "Corrections VC-06 (2026-09-28): PROJECT_STATE_SUBSTANTIVE_BASELINE_STALE proved the prose Current-value cell (and the machine block) lagged the active task's validated implementation, so the cell was reconciled cell-by-cell to the new anchor 6b19e428 per the table's own hand-reconciliation practice; the old line is removed, leaving this correction inert."
     }
   ]
 }
