@@ -5230,3 +5230,43 @@ across the owner-local reproduction suites pass, including the real-repo
 proofs. No new authority is added: the materializer reads Git objects
 read-only, executes nothing, and keeps its existing limits, symlink refusal,
 path-escape checks and cleanup.
+
+## D-146 — a document-role correction is admitted only with its matching removal in the same commit
+
+**Context.** The APPEND_ONLY archive guard admitted a new correction entry as
+long as the corrections registry itself only changed by append (VB-03 in the
+corrections audit). That left the guard with a purchasable future rewrite: a
+documentation commit could append a correction entry — "this line may be
+rewritten later" — while the archive line it exempts stayed LIVE. The next
+docs commit could then rewrite that live line legally, with no one ever
+seeing the removal and its exemption land together.
+
+**Decision.** A correction append is documentary only when the SAME commit
+removes exactly the archive line that the entry exempts (matched by the
+line-sha256 digest semantics the registry already uses). The pairing is
+enforced in two places: the commit-role classifier
+(`correctionPairingViolations`, so a bare unpaired append is substantive even
+when append-only-shaped) and the working-tree APPEND_ONLY rule (per entry
+path, so a removal in a DIFFERENT archive can never pair an entry).
+
+**Total invariant.** A correction entry may never exempt a line that is still
+LIVE in its archive (`correctionStillExemptsArchive`): a live exempted line is
+a purchased future rewrite regardless of when the entry was registered.
+
+**Bounded legacy exception.** The 22 entries registered before this rule
+(`LEGACY_PRE_REGISTERED_CORRECTION_IDS`, enumerated exactly) are admitted
+only while they stay INERT: every one of their exempted lines is already
+absent from its archive (measured dormant count 0 at 2026-09-28, and the
+total invariant keeps enforcing it). A new entry is never on that list.
+
+**Evidence and consequences.** HC-178 mutates a registered entry's exempted
+digest to the LIVE header line's digest and is DETECTED by
+`checkAppendOnlyArchives` (probe campaign: 2/2 on the rule, 178/178 across the
+documentation family, every mutation restored). `tests/unit/productionCompletionLaneState.test.ts`
+proves the unpaired/paired/legacy verdicts, the live-exemption invariant
+against the LIVE registry, and a real-git positive control: the genuine paired
+commit `ed8807e6` (CORR-CORR-001's append + its header-line removal in one
+commit) classifies admissible with zero pairing violations. Consequence for
+the remainder of this campaign: every future correction entry and its archive
+line removal land in one commit — including the date-bump corrections this
+document requires whenever the archive changes.

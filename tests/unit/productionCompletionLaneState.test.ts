@@ -15,7 +15,15 @@ import {
   reportLaneState,
   validateLaneState,
 } from '../../bin/lib/validation-lane-state.mjs';
-import { isValuesOnlyBindingChange } from '../../bin/lib/release-evidence.mjs';
+import {
+  appendedCorrectionEntries,
+  correctionStillExemptsArchive,
+  isAppendOnlyCorrectionsChange,
+  isCorrectionAppendAdmissible,
+  isValuesOnlyBindingChange,
+  lineSha256Prefix,
+} from '../../bin/lib/release-evidence.mjs';
+import { correctionPairingViolations, removedLineDigests } from '../../bin/lib/checkpoint-role.mjs';
 import { isApprovedCheckpointPath } from '../../bin/agent-continuity-protocol.mjs';
 import type { LaneStateEntry } from '../../bin/lib/validation-lane-state.mjs';
 
@@ -105,6 +113,49 @@ test.describe('validation lane state', () => {
     // value edit.
     expect(isValuesOnlyBindingChange(binding(null), binding(SHA_A)).valuesOnly).toBe(true);
     expect(isValuesOnlyBindingChange(binding(SHA_A), binding(SHA_B)).valuesOnly).toBe(true);
+  });
+
+  // VB-03 (corrections task 2.3) — a correction is admitted only with its
+  // matching archive-line removal in the SAME commit.
+  test('VB-03: an unpaired correction append is inadmissible; its removal must land with it', () => {
+    const correction = (id: string, digest: string) => ({ id, path: 'docs/CURRENT_STATE.md', oldLineSha256: digest, oldLineExcerpt: 'gone', reason: 'r' });
+    const doc = (entries: unknown[]) => JSON.stringify({ schemaVersion: 'nightwatch.document-role-corrections.v1', corrections: entries });
+    const before = doc([correction('CORR-A', lineSha256Prefix('a'))]);
+    const after = doc([correction('CORR-A', lineSha256Prefix('a')), correction('CORR-B', lineSha256Prefix('gone line'))]);
+    const appended = appendedCorrectionEntries(before, after);
+    expect(appended?.map((entry) => entry.id)).toEqual(['CORR-B']);
+    // The regression: an append-only-shaped append with NO same-commit
+    // removal used to be documentary. Now it is inadmissible.
+    expect(isCorrectionAppendAdmissible(appended![0]!, new Set())).toEqual({ admissible: false, reason: 'CORRECTION_APPEND_UNPAIRED' });
+    // The same change removing exactly the exempted line pairs it.
+    expect(isCorrectionAppendAdmissible(appended![0]!, new Set([lineSha256Prefix('gone line')]))).toEqual({ admissible: true, reason: 'PAIRED_WITH_SAME_COMMIT_REMOVAL' });
+    // The append-only SHAPE alone is not enough (VB-03 narrows the guard):
+    expect(isAppendOnlyCorrectionsChange(before, after).appendOnly).toBe(true);
+  });
+
+  test('VB-03: a correction may never exempt a LIVE archive line', () => {
+    expect(correctionStillExemptsArchive({ oldLineSha256: lineSha256Prefix('live line') }, 'live line\nother')).toBe(true);
+    expect(correctionStillExemptsArchive({ oldLineSha256: lineSha256Prefix('gone line') }, 'live line\nother')).toBe(false);
+    // The LIVE registry is inert: every registered correction's exempted line
+    // is already absent from its archive (the bounded legacy exception is
+    // admissible only while it stays inert).
+    const registry = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, 'config', 'document-role-corrections.v1.json'), 'utf8')) as {
+      corrections: Array<{ id: string; path: string; oldLineSha256: string }>;
+    };
+    for (const entry of registry.corrections) {
+      const archive = fs.readFileSync(path.join(REPO_ROOT, entry.path), 'utf8');
+      expect(correctionStillExemptsArchive(entry, archive), `${entry.id} still exempts a LIVE line`).toBe(false);
+    }
+  });
+
+  test('VB-03: the real paired commit ed8807e6 classifies admissible (positive control)', () => {
+    // CORR-CORR-001's append landed with its removal of the old header line
+    // in the same commit — the exact shape the rule requires. Read-only Git.
+    const commit = 'ed8807e6bb784090051ed483e5cec65b0aabcf41';
+    const removed = removedLineDigests(REPO_ROOT, commit, 'docs/CURRENT_STATE.md');
+    expect(removed).not.toBeNull();
+    expect(removed!.has('sha256:d82aae956ce9d4b666cbb9f5')).toBe(true);
+    expect(correctionPairingViolations(REPO_ROOT, commit, 'config/document-role-corrections.v1.json', 'docs/CURRENT_STATE.md')).toEqual([]);
   });
 
   test('VB-02: artifactPaths is a declared structural key — adding or editing it is never values-only', () => {

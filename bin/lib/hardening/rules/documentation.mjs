@@ -24,7 +24,13 @@ import {
   sha256Prefix,
   gitResult,
 } from '../kernel.mjs';
-import { loadDocumentRoleCorrections, loadReleaseEvidenceBindings } from '../../release-evidence.mjs';
+import {
+  appendedCorrectionEntries,
+  correctionStillExemptsArchive,
+  isCorrectionAppendAdmissible,
+  loadDocumentRoleCorrections,
+  loadReleaseEvidenceBindings,
+} from '../../release-evidence.mjs';
 
 /**
  * NW-08. The gate had no mechanical relationship to the set of tests that
@@ -771,6 +777,70 @@ export function checkAppendOnlyArchives() {
       const digest = sha256Prefix(removed);
       if (corrections.get(currentFile)?.has(digest) === true) continue;
       fail(`APPEND_ONLY ${currentFile}:${removedAt} modifies or deletes an existing line (${digest}); the archive may only be appended to, or the line must be covered by a declared correction`);
+    }
+  }
+  // VB-03 / corrections task 2.3 — the total invariant: a correction entry may
+  // never exempt a line that is still LIVE in its archive. A live exempted
+  // line is a purchased future rewrite, and the bounded legacy exception is
+  // admissible only while it stays inert.
+  for (const correction of loadedCorrections.corrections) {
+    if (typeof correction.path !== 'string' || typeof correction.oldLineSha256 !== 'string') continue;
+    if (!archives.has(correction.path)) continue;
+    let archiveText = '';
+    try {
+      archiveText = fs.readFileSync(path.join(root, correction.path), 'utf8');
+    } catch {
+      fail(`APPEND_ONLY correction ${correction.id} names an unreadable archive ${correction.path}`);
+      continue;
+    }
+    if (correctionStillExemptsArchive(correction, archiveText)) {
+      fail(`APPEND_ONLY correction ${correction.id} still exempts a LIVE line in ${correction.path} (${correction.oldLineSha256}); a correction may only cover a line its commit removed`);
+    }
+  }
+  // VB-03 — same-commit pairing at the working tree: every NEWLY appended
+  // correction entry (including a staged, uncommitted one) must pair its
+  // removal of the exempted archive line in the same change. The bounded
+  // legacy exception covers the pre-rule registrations and is checked inert
+  // above.
+  {
+    const correctionsFile = 'config/document-role-corrections.v1.json';
+    const before = gitResult(['show', `${resolveArchiveDiffBase()}:${correctionsFile}`]);
+    let beforeText = null;
+    try {
+      beforeText = before.status === 0 ? before.stdout ?? '' : null;
+    } catch {
+      beforeText = null;
+    }
+    let afterText = null;
+    try {
+      afterText = fs.readFileSync(path.join(root, correctionsFile), 'utf8');
+    } catch {
+      afterText = null;
+    }
+    // Removed-line digests, per file: the pairing rule is "the same change
+    // removes exactly the archive line THIS entry exempts", so a removal in a
+    // DIFFERENT archive can never pair an entry.
+    const removedByFile = new Map();
+    let diffFile = null;
+    for (const line of (result.stdout ?? '').split('\n')) {
+      const header = /^diff --git a\/(.+) b\/(.+)$/.exec(line);
+      if (header !== null) {
+        diffFile = header[2] ?? null;
+        continue;
+      }
+      if (line.startsWith('--- ') || line.startsWith('+++ ') || line.startsWith('@@')) continue;
+      if (line.startsWith('-') && line.slice(1) !== '' && diffFile !== null) {
+        if (!removedByFile.has(diffFile)) removedByFile.set(diffFile, new Set());
+        removedByFile.get(diffFile).add(sha256Prefix(line.slice(1)));
+      }
+    }
+    const appended = appendedCorrectionEntries(beforeText, afterText);
+    for (const entry of appended ?? []) {
+      const removed = removedByFile.get(entry.path) ?? new Set();
+      const verdict = isCorrectionAppendAdmissible(entry, removed);
+      if (!verdict.admissible) {
+        fail(`APPEND_ONLY correction ${entry.id} is appended without its matching removal in the same change (${entry.oldLineSha256}); a correction and the archive-line removal it exempts land together`);
+      }
     }
   }
 }

@@ -19,6 +19,7 @@
 // checkouts keep resolving, and are never authoritative when the new file
 // carries the subject.
 
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -44,6 +45,27 @@ export const EVIDENCE_BINDING_KEYS = Object.freeze(['subject', 'evidenceSha', 'r
 export const EVIDENCE_BINDING_VALUE_KEYS = Object.freeze(['evidenceSha', 'receiptDigest', 'observedAt', 'executor']);
 /** Max declared artifact paths per binding. */
 export const EVIDENCE_BINDING_MAX_ARTIFACTS = 8;
+/**
+ * sha256-prefix digest of one line (no newline) — the exact digest semantics
+ * the APPEND_ONLY guard and the correction entries share.
+ */
+export function lineSha256Prefix(text) {
+  return `sha256:${crypto.createHash('sha256').update(text, 'utf8').digest('hex').slice(0, 24)}`;
+}
+
+/**
+ * VB-03 / corrections task 2.3 — the bounded historical exception for the
+ * same-commit pairing rule. These entries were registered BEFORE the pairing
+ * rule existed (two pre-registration appends, `8775b58a` and its follow-up,
+ * exempted archive lines removed in later commits). They are INERT: every one
+ * of their exempted lines is already absent from its archive (dormant count
+ * 0, enforced by `correctionStillExemptsArchive`), so none can enable a
+ * future rewrite. Enumerated exactly — a newly registered entry is NEVER on
+ * this list and must pair its removal in its own commit. Recorded in
+ * docs/DECISIONS.md D-146.
+ */
+export const LEGACY_PRE_REGISTERED_CORRECTION_IDS = Object.freeze(["CORR-7-001", "CORR-7-002", "CORR-7-003", "CORR-7-004", "CORR-7-005", "CORR-7-006", "CORR-PC-001", "CORR-W1-001", "CORR-W1-002", "CORR-W1-003", "CORR-H1-001", "CORR-DS-001", "CORR-W11-001", "CORR-W12-001", "CORR-W12-002", "CORR-W13-001", "CORR-PERF-001", "CORR-AUD-001", "CORR-AUD-010-001", "CORR-TERM-001", "CORR-SUCC-001", "CORR-SUCC-002"]);
+
 /** Exact key set of one document-role correction entry. */
 export const CORRECTION_ENTRY_KEYS = Object.freeze(['id', 'path', 'oldLineSha256', 'oldLineExcerpt', 'reason']);
 
@@ -336,6 +358,56 @@ export function isAppendOnlyCorrectionsChange(beforeText, afterText) {
  * @param {string | null} beforeText
  * @param {string | null} afterText
  */
+/**
+ * VB-03 / corrections task 2.3 — the correction entries appended by one
+ * commit (after minus before, by id). null when either side is unparseable.
+ * @param {string | null} beforeText
+ * @param {string | null} afterText
+ */
+export function appendedCorrectionEntries(beforeText, afterText) {
+  if (beforeText === null || afterText === null) return null;
+  let before;
+  let after;
+  try {
+    before = parseDocumentRoleCorrections(JSON.parse(beforeText));
+    after = parseDocumentRoleCorrections(JSON.parse(afterText));
+  } catch {
+    return null;
+  }
+  if (!before.ok || !after.ok) return null;
+  const beforeIds = new Set(before.corrections.map((entry) => entry.id));
+  return after.corrections.filter((entry) => !beforeIds.has(entry.id));
+}
+
+/**
+ * VB-03 — a correction append is documentary only when the SAME commit
+ * removes exactly the archive line the entry exempts. The bounded legacy
+ * exception covers the pre-rule registrations, which are inert (their lines
+ * are already absent). `removedDigests` is the set of removed-line digests
+ * from the entry's own path in that one commit.
+ * @param {{ id: string, oldLineSha256: string }} entry
+ * @param {ReadonlySet<string>} removedDigests
+ */
+export function isCorrectionAppendAdmissible(entry, removedDigests) {
+  if (LEGACY_PRE_REGISTERED_CORRECTION_IDS.includes(entry.id)) {
+    return { admissible: true, reason: 'LEGACY_PRE_REGISTERED_INERT' };
+  }
+  return removedDigests.has(entry.oldLineSha256)
+    ? { admissible: true, reason: 'PAIRED_WITH_SAME_COMMIT_REMOVAL' }
+    : { admissible: false, reason: 'CORRECTION_APPEND_UNPAIRED' };
+}
+
+/**
+ * VB-03 — the total invariant: a correction entry may never exempt a line
+ * that is still LIVE in its archive. A live exempted line is a purchased
+ * future rewrite. Pure over the entry and the archive's current text.
+ * @param {{ oldLineSha256: string }} entry
+ * @param {string} archiveText
+ */
+export function correctionStillExemptsArchive(entry, archiveText) {
+  return archiveText.split(/\r?\n/).some((line) => lineSha256Prefix(line) === entry.oldLineSha256);
+}
+
 export function guardHoldsForChange(file, beforeText, afterText) {
   const guard = guardClassForPath(file);
   if (guard === 'VALUES_ONLY_BINDINGS') return isValuesOnlyBindingChange(beforeText, afterText).valuesOnly;

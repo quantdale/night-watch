@@ -20,6 +20,17 @@ export interface EvidenceBinding {
   readonly artifactPaths: readonly string[];
 }
 export const EVIDENCE_BINDING_MAX_ARTIFACTS: number;
+export const LEGACY_PRE_REGISTERED_CORRECTION_IDS: readonly string[];
+export function lineSha256Prefix(text: string): string;
+export function appendedCorrectionEntries(
+  beforeText: string | null,
+  afterText: string | null,
+): Array<{ id: string; path: string; oldLineSha256: string; oldLineExcerpt: string; reason: string }> | null;
+export function isCorrectionAppendAdmissible(
+  entry: { id: string; oldLineSha256: string },
+  removedDigests: ReadonlySet<string>,
+): { admissible: boolean; reason: string };
+export function correctionStillExemptsArchive(entry: { oldLineSha256: string }, archiveText: string): boolean;
 
 export function guardClassForPath(file: string): string | null;
 export function isValuesOnlyBindingChange(

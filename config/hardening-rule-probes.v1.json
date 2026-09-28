@@ -1286,6 +1286,16 @@
             "replace": "# Nightwatch Architecture (probe)\n"
           }
         ]
+      },
+      {
+        "id": "HC-178",
+        "ops": [
+          {
+            "file": "config/document-role-corrections.v1.json",
+            "search": "\"oldLineSha256\": \"sha256:d82aae956ce9d4b666cbb9f5\",",
+            "replace": "\"oldLineSha256\": \"sha256:ec7ab31d6df70229920613b3\","
+          }
+        ]
       }
     ],
     "checkGovernedStatusWords": [

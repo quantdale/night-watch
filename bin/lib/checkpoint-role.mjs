@@ -12,7 +12,13 @@
 
 import { spawnSync } from 'node:child_process';
 import { isApprovedCheckpointPath } from '../agent-continuity-protocol.mjs';
-import { guardClassForPath, guardHoldsForChange } from './release-evidence.mjs';
+import {
+  appendedCorrectionEntries,
+  guardClassForPath,
+  guardHoldsForChange,
+  isCorrectionAppendAdmissible,
+  lineSha256Prefix,
+} from './release-evidence.mjs';
 
 function gitText(root, args) {
   const result = spawnSync('git', args, { cwd: root, encoding: 'utf8', shell: false, timeout: 30_000, maxBuffer: 8 * 1024 * 1024 });
@@ -43,6 +49,52 @@ function touchedGuardedFiles(root, commit, guarded) {
  * @param {{ kind: 'commit', commit: string } | { kind: 'range', from: string, to: string }} context
  * @returns {string[]} violating files (de-duplicated, source order)
  */
+/**
+ * VB-03 / corrections task 2.3 — the removed-line digests for one file in one
+ * commit (its diff against its parent; a root commit removes nothing).
+ * @param {string} root
+ * @param {string} commit
+ * @param {string} file
+ */
+export function removedLineDigests(root, commit, file) {
+  const digest = new Set();
+  const parentRef = `${commit}^`;
+  const hasParent = gitText(root, ['rev-parse', '--verify', '--quiet', `${parentRef}^{commit}`]) !== null;
+  if (!hasParent) return digest;
+  const diff = spawnSync('git', ['diff', '--unified=0', '--no-color', '--no-ext-diff', parentRef, commit, '--', file], {
+    cwd: root, encoding: 'utf8', shell: false, timeout: 30_000, maxBuffer: 8 * 1024 * 1024,
+  });
+  if (diff.status !== 0 || diff.error) return null;
+  for (const line of (diff.stdout ?? '').split('\n')) {
+    if (line.startsWith('--- ') || line.startsWith('+++ ') || line.startsWith('@@')) continue;
+    if (line.startsWith('-')) digest.add(lineSha256Prefix(line.slice(1)));
+  }
+  return digest;
+}
+
+/**
+ * VB-03 — correction entries this commit appended WITHOUT removing the
+ * archive line each exempts. A bare `pairing` entry (no same-commit removal)
+ * makes the corrections-file touch substantive even when the entry itself
+ * satisfies the legacy append-only shape.
+ * @param {string} root
+ * @param {string} commit
+ * @param {string} correctionsFile
+ * @param {string} archiveFile
+ */
+export function correctionPairingViolations(root, commit, correctionsFile, archiveFile) {
+  const hasParent = gitText(root, ['rev-parse', '--verify', '--quiet', `${commit}^^{commit}`]) !== null;
+  const before = hasParent ? blobAt(root, `${commit}^`, correctionsFile) : null;
+  const after = blobAt(root, commit, correctionsFile);
+  const appended = appendedCorrectionEntries(before, after);
+  if (appended === null || appended.length === 0) return [];
+  const removed = removedLineDigests(root, commit, archiveFile);
+  if (removed === null) return [{ code: 'CORRECTION_PAIRING_UNVERIFIABLE', correctionsFile, archiveFile }];
+  return appended
+    .filter((entry) => !isCorrectionAppendAdmissible(entry, removed).admissible)
+    .map((entry) => ({ code: 'CORRECTION_APPEND_UNPAIRED', id: entry.id, archiveFile, expectedDigest: entry.oldLineSha256 }));
+}
+
 export function checkpointRoleViolations(root, files, context) {
   const violations = files.filter((file) => !isApprovedCheckpointPath(file));
   const guarded = new Set(files.filter((file) => guardClassForPath(file) !== null));
@@ -70,7 +122,18 @@ export function checkpointRoleViolations(root, files, context) {
       const hasParent = gitText(root, ['rev-parse', '--verify', '--quiet', `${parentRef}^{commit}`]) !== null;
       const before = hasParent ? blobAt(root, parentRef, file) : null;
       const after = blobAt(root, commit, file);
-      if (!guardHoldsForChange(file, before, after)) violations.push(file);
+      if (!guardHoldsForChange(file, before, after)) {
+        violations.push(file);
+        continue;
+      }
+      // VB-03: an append-only-shaped corrections append must still pair its
+      // removal of the exempted archive line in THIS commit. Without the
+      // pairing the entry is a purchased future rewrite and the commit is
+      // substantive.
+      if (file === 'config/document-role-corrections.v1.json') {
+        const pairings = correctionPairingViolations(root, commit, file, 'docs/CURRENT_STATE.md');
+        if (pairings.length > 0) violations.push(file);
+      }
     }
   }
   return [...new Set(violations)];
