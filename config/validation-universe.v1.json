@@ -2,7 +2,7 @@
   "schemaVersion": "nightwatch.validation-universe.v1",
   "definitionName": "Nightwatch validation universe classification (NW-08)",
   "note": "Every discovered executable test or check belongs to exactly one class. AUTHORITATIVE_GATE is DERIVED from what the required gate lanes actually select and is therefore not declarable here; every other discovered file must appear below exactly once, with the reason it is not in the gate and the evidence lane that does cover it. A newly added test that is in no lane and no class fails the gate rather than joining the repository silently.",
-  "inventoryDigest": "sha256:46fee98ba912e9c76683f646",
+  "inventoryDigest": "sha256:901b155e84e66ac3617a07be",
   "classes": {
     "FULL_REGRESSION": {
       "reason": "Offline, deterministic suites that the full canonical regression executes. They are not in a required gate lane because the authoritative gate is bounded for CI runtime; leaving them unclassified is what made the gap invisible.",
@@ -297,6 +297,7 @@
         "bin/lib/shard-child-environment.mjs",
         "bin/lib/topology-gate.mjs",
         "bin/lib/transportEffectCensus.mjs",
+        "bin/lib/typecheck-ratchet.mjs",
         "bin/lib/typescript-runtime-loader.mjs",
         "bin/lib/validation-classification.mjs",
         "bin/lib/validation-lane-state.mjs",

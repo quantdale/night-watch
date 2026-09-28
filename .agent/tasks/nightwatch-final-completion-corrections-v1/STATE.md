@@ -12,9 +12,12 @@ Last substantive checkpoint SHA: 1d47e2eef1ef029560ace12e31571624602eab0b
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-final-completion-corr-c45f0e9d
-Last checkpoint: 2026-09-28 — child campaign bootstrap (this commit):
-the corrective change restored unchanged into the worktree, continuity v2
-records created, ACTIVE_TASK routed to this child.
+Last checkpoint: 2026-09-28 — VB-07 ratchet implementation `80840627`:
+focused/typecheck evidence and the clean-tree project-state regression passed;
+a gate retry then exposed the new helper missing from BIN_SYNTAX, so the
+universe declaration/digest correction is the current follow-up.
+Previous checkpoint: 2026-09-28 — child bootstrap `3ce396c6`; change restored
+unchanged and continuity v2 routed to the child.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 1d47e2eef1ef029560ace12e31571624602eab0b
@@ -84,7 +87,7 @@ the Validation Ledger.
   Measured baseline is 1579 diagnostics / 13 of 76 conforming entry points;
   the audit's historical baseline remains 1571 / 13 of 76. Five pure ratchet
   tests and 45/45 focused CLI tests pass; root typecheck, `typecheck:bin`,
-  `validation:universe` and execution-class checks pass. `gate:dev` executed
+  `validation:universe` (580 discovered, digest `901b155e`) and execution-class checks pass. `gate:dev` executed
   5773 tests but failed only the known clean-checkout assertion at
   `projectState.test.ts:2390` while this worktree was dirty; checkpoint, then
   rerun the clean-tree test and both M3 gates.
@@ -141,8 +144,8 @@ Result: PASS
 When: 2026-09-28
 Relevant failure/output summary: 45/45 Playwright tests; root typecheck clean;
 bin lane PASS at 13/76, 1579 diagnostics, 78 exact ceilings, total ceiling
-1579, annotation budget 26; universe 579 discovered / 0 unclassified at
-`46fee98b`; all 438 executable unit tests have valid non-weakening classes.
+1579, annotation budget 26; universe 580 discovered / 0 unclassified at
+`901b155e`; all 438 executable unit tests have valid non-weakening classes.
 
 Command: `npm run gate:dev -- --json` (pre-checkpoint candidate tree)
 Result: FAIL (clean-checkout-dependent test; retry required)
@@ -151,10 +154,20 @@ Relevant failure/output summary: affected selection broadened to 438 tests;
 5773 executed, 5739 passed, 1 failed, 33 skipped, 0 not-run. The sole failure
 is `tests/unit/projectState.test.ts:2390`, whose real-tree check emits
 `PROJECT_STATE_CHECKOUT_DIRTY` on stderr and no stdout under DEV_LANE while
-the worktree is dirty. The new test's missing execution class and stale
-universe digest were fixed and both inventory checks now pass. Rerun the
-focused clean-tree test and both group gates after the checkpoint; no test or
-safety condition was weakened.
+the worktree is dirty. The test's missing execution class and first digest
+drift were fixed; a later clean-checkpoint run exposed the helper's missing
+BIN_SYNTAX classification (recorded below). No test or safety condition was
+weakened.
+
+Command: `npm run gate:dev -- --json` (after checkpoint `80840627`)
+Result: STEP_FAILED at `validation-universe`; correction in progress
+When: 2026-09-28
+Relevant failure/output summary: clean checkout let the lane reach its first
+required step, where `bin/lib/typecheck-ratchet.mjs` was unclassified and the
+stored inventory digest had drifted. Added the helper to BIN_SYNTAX and
+measured digest `901b155e` (580 discovered, 0 unclassified); this follow-up
+must be committed before retrying focused clean-tree validation and both M3
+gates.
 
 ## Decisions Made During This Task
 
@@ -169,8 +182,9 @@ safety condition was weakened.
 - VB-07's initial draft only ratcheted the 76 top-level entry points; the
   correction expands the per-file map to every `.mjs` and `.d.mts` included
   by `tsconfig.bin.json`, including diagnostic-bearing `bin/lib` modules.
-  Gate validation also confirmed the new test needs both execution-class and
-  validation-universe registration before a broad affected-test run is valid.
+  Gate validation confirmed the new test needs execution-class and
+  validation-universe registration, and the new helper needs BIN_SYNTAX
+  classification before broad validation can pass.
 
 ## Blockers
 

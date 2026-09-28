@@ -8,14 +8,15 @@ Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-final-completion-corrections-v1
 Starting SHA: 1d47e2eef1ef029560ace12e31571624602eab0b
 Last validated implementation SHA: 1d47e2eef1ef029560ace12e31571624602eab0b
-Last checkpoint: 2026-09-28 — child campaign bootstrap: the corrective
-change restored unchanged, continuity v2 records created, ACTIVE_TASK
-routed to this child; all 31 findings re-verified at `1d47e2ee` (21
-STILL_PRESENT, 5 CHANGED, 2 COMPLETED_LATER, 3 follow-on defects
+Last checkpoint: 2026-09-28 — VB-07 ratchet implementation at
+`80840627`; focused/typecheck evidence passed, and the clean-tree project-state
+regression passed. A gate retry exposed the new helper missing from
+BIN_SYNTAX; the declaration/digest correction is in progress and both M3
+gates remain pending.
+Previous checkpoint: 2026-09-28 — child bootstrap at `3ce396c6`; corrective
+change restored unchanged, continuity v2 created, and all 31 findings
+re-verified at `1d47e2ee` (21 STILL_PRESENT, 5 CHANGED, 2 COMPLETED_LATER,
 CF-01..CF-03).
-Previous checkpoint: 2026-09-28 — parent M9 10.2 checkpointed at
-`32180001`/`1d47e2ee` (59/76 declared), exact-head CI run 36366426608 green,
-parent session released and removed.
 Current milestone: M3 Certification anchors (group 2, tasks 2.1-2.8:
 VB-01..VB-07). M1 (bootstrap + Phase 1 preconditions) and M2 (task 6.1
 formatter policy, landed FIRST per RESUME_PROMPT §2) are COMPLETE.
