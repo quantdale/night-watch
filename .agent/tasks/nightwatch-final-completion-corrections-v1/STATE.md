@@ -140,18 +140,31 @@ M4 group gate. Exact-head CI/artifact evidence and group gates remain pending.
   suites 14/14 after registering the receipt library's npm version probe as
   TEST_LANE, typecheck:bin PASS at 1560 diagnostics / 14 of 76 (the clean
   runner itself dropped 12→0), universe PASS at `sha256:95f903de`. The full
-  `gate:clean` run executes at this clean checkpoint; its receipt is recorded
-  in the Validation Ledger below.
+  `gate:clean` arc closed at this checkpoint across four receipts: the first
+  at `6b19e428` proved the VC-06 machinery (real sibling root measured twice,
+  unchanged; TOOLCHAIN versions; sourceRootCleanAtEmit true) and exposed
+  PROJECT_STATE_SUBSTANTIVE_BASELINE_STALE; after the baseline advance
+  (`e9ad3300`) a second run exposed HARDENING APPEND_ONLY on the reconciled
+  prose row (declared CORR-CORR-002); a third run exposed
+  SEMANTIC_COMPATIBILITY_REPORT_MISSING — the VC-04 label forwarding had
+  removed the self-declared COMPATIBILITY authorization the skip reporter
+  keyed on. The reporter now authorizes the semantic-compatibility lane by its
+  own timing-lane identity (missing-path throw preserved), and the full
+  clean-gate run at `9a1abf28` PASSED all 15 groups (clean receipt
+  `clean-receipt:sha256:7ce5fa02f058a2c37ecc4a93`, inner gate receipt
+  `receipt:sha256:86dea28a9dc385bb814a9a6f` with matching stdout digest,
+  real sibling identity `sha256:35b17bb4…` unchanged). The VC-02
+  clean-tree semantic-compat rerun also passed standalone (2177 total, 2163
+  passed, 14 declared skips, 0 failed, skipPolicy PASS).
 
 ## Exact Next Action
 
-Run the full `npm run gate:clean` at the VC-06 clean checkpoint and record
-its receipt (realSibling identity, versionsSource=TOOLCHAIN,
-sourceRootCleanAtEmit, finalResult) in the Validation Ledger; then proceed to
-M4 task 3.7 (VC-07: reproduce the observerSemanticLedger flake at the 2 s
-bound under load, correct the root-cause comment, create a tracked flake
-ledger). Preserve VC-01 exact-head CI and VC-03 artifact observation as
-pending M4 close-out evidence; continue through task 3.12 before integration.
+Proceed to M4 task 3.7 (VC-07: reproduce the observerSemanticLedger flake at
+the 2 s bound under load, correct the root-cause comment, create a tracked
+flake ledger). The clean-gate proof and the semantic-compat clean-tree rerun
+are complete at `9a1abf28`. Preserve VC-01 exact-head CI and VC-03
+artifact observation as pending M4 close-out evidence; continue through task
+3.12 before integration.
 
 ## Files Changed
 
@@ -180,6 +193,8 @@ pending M4 close-out evidence; continue through task 3.12 before integration.
 | `bin/lib/hardening/rules/validation-and-gates.mjs`, `config/hardening-rule-probes.v1.json` | VC-06 clean-runner rule now asserts `measureClean(root)` + the verdict wiring + the library's lock-free status pattern; HC-182/HC-183 probes | probe campaign checkPhase23QualityGate 6/6 DETECTED |
 | `bin/lib/childProcessCensus.mjs` | classify the receipt library's `npm --version` probe as TEST_LANE (identical to quality-gate-clean's npm spawns) | census suites 14/14; hardening:check PASS |
 | `tests/unit/gateReceiptPersistence.test.ts` | VC-06 verdict/manifest/early-receipt/wiring regressions (9 new tests) | 41/41 PASS |
+| `docs/CURRENT_STATE.md`, `config/document-role-corrections.v1.json` | advance the substantive baseline to `6b19e428` (PROJECT_STATE_SUBSTANTIVE_BASELINE_STALE repair) and declare CORR-CORR-002 for the reconciled prose row | project:check PASS at `e9ad3300`; hardening:check PASS |
+| `tests/helpers/playwrightSkipIdentityReporter.ts`, `tests/unit/semanticSkipIdentity.test.ts` | VC-04 follow-through: the compat lane authorizes by its timing-lane identity (label forwarding had removed the report authorization); regression tests | semanticSkipIdentity 14/14; semantic-compat clean-tree rerun PASS (2177/2163/14/0, skipPolicy PASS) |
 | `tests/unit/semanticSkipIdentity.test.ts`, `tests/unit/selfDevSandboxConfinement.test.ts`, `tests/unit/syntheticCampaignDiagnostics.test.ts` | VC-02 identity/report, reason, and gate-receipt regressions | 29/29 receipt+policy; 25 passed, 1 declared host skip |
 | `config/validation-universe.v1.json`, `config/validation-execution-classes.v1.json` | register ratchet suite and refresh the inventory digest | checks PASS at M3 close; VC-06 re-measured at `sha256:95f903de` (581 discovered, 0 unclassified) |
 
@@ -427,7 +442,79 @@ DEFAULT, sourceRootCleanAtEmit: false (dirty tree), finalResult:
 ENVIRONMENT_MISMATCH}` — sibling mode, versions and root class now present
 on an early exit.
 
+Command: `npm run test:semantic-compat` — the VC-02 clean-tree rerun on the dirty worktree (diagnostic)
+Result: FAIL (skipPolicy SKIP_REPORT_MISSING; then a clean-tree retry hit the known dirty-tree projectState:2390)
+When: 2026-09-28
+Relevant output: 2177 total, 2163 passed, 14 skipped, 0 failed — the report
+was missing because the VC-04 label forwarding removed the self-declared
+COMPATIBILITY gate label the skip reporter authorized on. Fixed by
+lane-identity authorization (reporter + regression test, commit `9a1abf28`).
+
+Command: `npm run gate:clean` at `6b19e428` (run 1)
+Result: TEST_FAILURE at inner group 7 (PROJECT_TRUTH)
+When: 2026-09-28
+Relevant output: the VC-06 receipt itself was fully honest — real sibling
+root measured twice (unchanged `sha256:35b17bb4…`), TOOLCHAIN versions,
+sourceRootCleanAtEmit true — and groups 1–6 PASSED (incl. HARDENING_PROBES
+with HC-180..183). PROJECT_TRUTH failed with
+PROJECT_STATE_SUBSTANTIVE_BASELINE_STALE: the project baseline named
+`32180001` while the task had validated substantive work past it (latent
+since the M3 anchor advance).
+
+Command: `npm run project:check` + `npm run gate:clean` at `e9ad3300` (runs 2a/2b)
+Result: project:check PASS; gate:clean TEST_FAILURE at HARDENING (group 4)
+When: 2026-09-28
+Relevant output: the baseline advance (`e9ad3300`, docs-only) repaired
+PROJECT_TRUTH (PASS in run 2b); HARDENING then failed APPEND_ONLY on the
+reconciled prose row (docs/CURRENT_STATE.md:810) — declared as CORR-CORR-002
+in `config/document-role-corrections.v1.json` (inert: the old line is gone).
+
+Command: `npm run gate:clean` at `3f40e56d` (run 3)
+Result: TEST_FAILURE at SEMANTIC_COMPATIBILITY (group 9)
+When: 2026-09-28
+Relevant output: groups 1–8 PASSED (PROJECT_TRUTH and HARDENING included);
+semantic-compat reported SKIP_REPORT_MISSING (the VC-04 report-authorization
+regression, see above).
+
+Command: `npm run test:semantic-compat` at `9a1abf28` (clean tree)
+Result: PASS
+When: 2026-09-28
+Relevant output: 2177 total, 2163 passed, 14 declared skips, 0 failed;
+skipPolicy PASS (14 declared, 0 undeclared) — the clean-tree rerun reserved
+since VC-02 is now complete.
+
+Command: `npm run gate:clean` at `9a1abf28` (run 4) — full clean-gate proof
+Result: PASS (finalResult PASS, 15/15 groups)
+When: 2026-09-28
+Relevant output: clean receipt `clean-receipt:sha256:7ce5fa02f058a2c37ecc4a93`
+(sourceHead `9a1abf28…`), inner gate receipt
+`receipt:sha256:86dea28a9dc385bb814a9a6f` with matching stdout digest
+(STRUCTURED_FILE, no receipt error); install PASS with
+`packageLockDigest: sha256:43993495…`; cleanBefore/cleanAfter/sourceRootClean
+AtEmit all true; siblingMode ABSENT (EMPTY_DISPOSABLE) unchanged; real
+sibling root DEFAULT measured twice, unchanged
+(`sha256:35b17bb4b1cbe4febbfe3375`); versions TOOLCHAIN v22.22.1 / npm
+10.9.4; nodeModulesReused/authState/ownerFindingState all false. All 15
+groups PASS (SEMANTIC_COMPATIBILITY 367084ms, SYNTHETIC_CAMPAIGN 187492ms,
+HARDENING_PROBES 173786ms, TOPOLOGY 54344ms, UI_CONTROL_CENTER 49002ms).
+
 ## Decisions Made During This Task
+
+- The D-04 gate label and the skip-report authorization are separate
+  authorities: the label grants no worktree relaxation (CI/CLEAN-only, HC-180)
+  and semantic-compat never invents it; the reporter therefore authorizes the
+  semantic-compatibility lane by its OWN timing-lane identity — which only the
+  compat runner sets — while SHARDS/SYNTHETIC_CAMPAIGN/OWNER_PROVENANCE keep
+  their explicit gate labels. The missing-path throw and the
+  non-absolute-path refusal are preserved, so a lane regression still fails
+  closed.
+- PROJECT_STATE_SUBSTANTIVE_BASELINE_STALE is resolved by advancing the task
+  anchors and the project baseline together to the true validated anchor
+  `6b19e428` (the invariant's own direction: the baseline must not lag the
+  task). The prose-row reconciliation is declared CORR-CORR-002 (inert — the
+  old line is gone). The pre-existing prose drift on the LOCAL/CLEAN/CI rows
+  is recorded in CURRENT_STATE's drift notes for VA-03 (task 5.3) rather than
+  silently reconciled.
 
 - VC-01 removes the stale test-level browser skips instead of reimplementing
   channel discovery: Playwright already owns the `channel: 'chrome'` launch
@@ -469,6 +556,12 @@ on an early exit.
   than reshaping the call to satisfy the classifier; the JSDoc type imports
   were replaced with structural return types because the census reads raw
   source for indirections by design (a comment naming child_process counts).
+- gate:clean is fail-fast: an early failure hides all later groups, so a
+  single receipt proves only its executed prefix. Four receipts were needed to
+  reach 15/15 (PROJECT_TRUTH, then HARDENING APPEND_ONLY, then
+  SEMANTIC_COMPATIBILITY); the trio of failures found three REAL defects (the
+  stale baseline, the undeclared prose-row rewrite, and the VC-04 report
+  authorization regression) — none were noise.
 - M3 gate acceptance follows each lane's explicit JSON `result`: both are
   PASS, while `withinTarget=false` remains disclosed performance telemetry.
   The affected-test selector broadened to all 438 tests and no selection or

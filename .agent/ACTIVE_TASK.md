@@ -31,11 +31,17 @@ declared exception, HC-181 DETECTED 4/4), and 3.6 (VC-06 clean-checkout
 verdict purity, real-root read-only measurement, early receipts with
 siblingMode/versions; probes HC-182/HC-183 DETECTED; gateReceiptPersistence
 41/41) are implemented and focused-validated in the worktree. The full
-`gate:clean` run at the clean checkpoint, semantic-compatibility
-clean-tree rerun, M4 group gates, and exact-head CI/artifact observation remain pending.
-Next action: run full `npm run gate:clean` at the VC-06 checkpoint and record
-its receipt, then proceed to task 3.7 (VC-07 flake reproduction + tracked flake
-ledger). VC-01's stale skip guards
+`gate:clean` proof and the semantic-compatibility clean-tree rerun are
+COMPLETE at `9a1abf28` (clean gate 15/15 groups PASS, receipt
+`clean-receipt:sha256:7ce5fa02f058a2c37ecc4a93`; semantic-compat 2177/2163/
+14 declared/0 failed with skipPolicy PASS). The gate:clean arc also exposed
+and repaired three real defects: PROJECT_STATE_SUBSTANTIVE_BASELINE_STALE
+(baseline advanced to `6b19e428` in `e9ad3300`), HARDENING APPEND_ONLY on the
+reconciled prose row (CORR-CORR-002), and the VC-04 report-authorization
+regression (lane-identity authorization in `9a1abf28`). M4 group gates and
+exact-head CI/artifact observation remain pending.
+Next action: proceed to task 3.7 (VC-07 flake reproduction at the 2 s bound
++ root-cause comment + tracked flake ledger). VC-01's stale skip guards
 and allowlist entries are removed; all four browser-backed tests passed locally,
 with exact-head GitHub Actions proof pending M4 close-out.
 
