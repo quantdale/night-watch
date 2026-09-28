@@ -16,7 +16,10 @@ export interface EvidenceBinding {
   readonly receiptDigest: string | null;
   readonly observedAt: string | null;
   readonly executor: string | null;
+  /** VB-02: declared evidence-artifact paths (safe relative repo paths). */
+  readonly artifactPaths: readonly string[];
 }
+export const EVIDENCE_BINDING_MAX_ARTIFACTS: number;
 
 export function guardClassForPath(file: string): string | null;
 export function isValuesOnlyBindingChange(

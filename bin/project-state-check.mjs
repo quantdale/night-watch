@@ -1361,6 +1361,26 @@ function main() {
             })),
           };
           // D-06 — a bound evidence artifact must exist at its bound SHA.
+          // VB-02 (corrections task 2.2): existence is checked PER DECLARED
+          // PATH (`git cat-file -e <sha>:<path>`) for conditions AND lanes;
+          // a miss makes only that subject's condition not MET below with
+          // EVIDENCE_ARTIFACT_ABSENT_AT_SHA (it is fed to the evaluator), and a
+          // missing commit object is still a hard evidence failure.
+          const evidenceBindingsForArtifacts = loadReleaseEvidenceBindings(root);
+          const artifactPathsBySubject = new Map();
+          for (const [subject, binding] of evidenceBindingsForArtifacts.bySubject ?? []) {
+            artifactPathsBySubject.set(subject, Array.isArray(binding?.artifactPaths) ? binding.artifactPaths : []);
+          }
+          const evidenceArtifactAtSha = (sha, artifactPath) => {
+            const probe = gitReadOnly(root, ['cat-file', '-e', `${sha}:${artifactPath}`]);
+            if (probe !== null) return true;
+            const exit = typeof probe?.status === 'number' ? probe.status : null;
+            // Exit 1 = the object/path does not exist at that SHA (a proven
+            // absence). Timeout, signal or spawn failure (exit null) is
+            // indeterminate and fails closed to ABSENT as well — never a
+            // silent pass.
+            return exit === 0;
+          };
           for (const condition of boundDefinition.conditions) {
             if (condition.evidenceSha === null) continue;
             if (gitReadOnly(root, ['cat-file', '-e', `${condition.evidenceSha}^{commit}`]) === null) {
@@ -1458,6 +1478,8 @@ function main() {
               detail: external.detail,
             },
             definitionDigest,
+            resolveEvidenceArtifactAtSha: evidenceArtifactAtSha,
+            evidenceArtifactPaths: Object.fromEntries(artifactPathsBySubject),
             resolveEvidenceRelation: (resolvedEvidenceSha, checkpoint) => {
               const headAfter = gitReadOnly(root, ['rev-parse', 'HEAD'])?.trim() ?? null;
               if (headBefore !== null && headAfter !== null && headBefore !== headAfter) {
@@ -1496,6 +1518,8 @@ function main() {
                 fail(errors, `PROJECT_STATE_EVIDENCE_DIVERGENT: ${condition.id}`);
               } else if (condition.state === 'EVIDENCE_UNRESOLVED') {
                 fail(errors, `PROJECT_STATE_EVIDENCE_UNRESOLVED: ${condition.id}`);
+              } else if (condition.state === 'EVIDENCE_ARTIFACT_ABSENT_AT_SHA') {
+                fail(errors, `PROJECT_STATE_EVIDENCE_ARTIFACT_ABSENT_AT_SHA: ${condition.id} (${condition.detail})`);
               }
             }
           }

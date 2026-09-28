@@ -6,189 +6,253 @@
       "evidenceSha": "88e3c3fb52937ff303b0944cc22cfee624bf807e",
       "receiptDigest": null,
       "observedAt": null,
-      "executor": null
+      "executor": null,
+      "artifactPaths": []
     },
     {
       "subject": "exact-head-ci-authority",
       "evidenceSha": null,
       "receiptDigest": null,
       "observedAt": null,
-      "executor": null
+      "executor": null,
+      "artifactPaths": []
     },
     {
       "subject": "autonomous-yield-proof",
       "evidenceSha": null,
       "receiptDigest": null,
       "observedAt": null,
-      "executor": null
+      "executor": null,
+      "artifactPaths": []
     },
     {
       "subject": "completion-ledger-truth",
       "evidenceSha": "8bad862e3ee29d804103dd6ab1b9c9a2fd0391e6",
       "receiptDigest": null,
       "observedAt": null,
-      "executor": null
+      "executor": null,
+      "artifactPaths": [
+        "config/validation-lane-state.v1.json",
+        "config/hardening-rule-probes.v1.json",
+        "config/document-role.v1.json"
+      ]
     },
     {
       "subject": "operator-cli-contract",
       "evidenceSha": "8bad862e3ee29d804103dd6ab1b9c9a2fd0391e6",
       "receiptDigest": null,
       "observedAt": null,
-      "executor": null
+      "executor": null,
+      "artifactPaths": [
+        "config/validation-lane-state.v1.json",
+        "config/hardening-rule-probes.v1.json",
+        "config/document-role.v1.json"
+      ]
     },
     {
       "subject": "documentation-currency",
       "evidenceSha": "8bad862e3ee29d804103dd6ab1b9c9a2fd0391e6",
       "receiptDigest": null,
       "observedAt": null,
-      "executor": null
+      "executor": null,
+      "artifactPaths": [
+        "config/validation-lane-state.v1.json",
+        "config/hardening-rule-probes.v1.json",
+        "config/document-role.v1.json"
+      ]
     },
     {
       "subject": "workspace-continuity-drift-closure",
       "evidenceSha": "8bad862e3ee29d804103dd6ab1b9c9a2fd0391e6",
       "receiptDigest": null,
       "observedAt": null,
-      "executor": null
+      "executor": null,
+      "artifactPaths": [
+        "config/validation-lane-state.v1.json",
+        "config/hardening-rule-probes.v1.json",
+        "config/document-role.v1.json"
+      ]
     },
     {
       "subject": "dependency-supply-chain-currency",
       "evidenceSha": "88e3c3fb52937ff303b0944cc22cfee624bf807e",
       "receiptDigest": null,
       "observedAt": null,
-      "executor": null
+      "executor": null,
+      "artifactPaths": []
     },
     {
       "subject": "dead-architecture-closure",
       "evidenceSha": null,
       "receiptDigest": null,
       "observedAt": null,
-      "executor": null
+      "executor": null,
+      "artifactPaths": []
     },
     {
       "subject": "cli-implementation-contract",
       "evidenceSha": "8bad862e3ee29d804103dd6ab1b9c9a2fd0391e6",
       "receiptDigest": null,
       "observedAt": null,
-      "executor": null
+      "executor": null,
+      "artifactPaths": [
+        "config/validation-lane-state.v1.json",
+        "config/hardening-rule-probes.v1.json",
+        "config/document-role.v1.json"
+      ]
     },
     {
       "subject": "structural-rule-soundness",
       "evidenceSha": "8bad862e3ee29d804103dd6ab1b9c9a2fd0391e6",
       "receiptDigest": null,
       "observedAt": null,
-      "executor": null
+      "executor": null,
+      "artifactPaths": [
+        "config/validation-lane-state.v1.json",
+        "config/hardening-rule-probes.v1.json",
+        "config/document-role.v1.json"
+      ]
     },
     {
       "subject": "schema-version-lifecycle",
       "evidenceSha": null,
       "receiptDigest": null,
       "observedAt": null,
-      "executor": null
+      "executor": null,
+      "artifactPaths": []
     },
     {
       "subject": "ui-error-taxonomy-rendering",
       "evidenceSha": null,
       "receiptDigest": null,
       "observedAt": null,
-      "executor": null
+      "executor": null,
+      "artifactPaths": []
     },
     {
       "subject": "configuration-contract",
       "evidenceSha": null,
       "receiptDigest": null,
       "observedAt": null,
-      "executor": null
+      "executor": null,
+      "artifactPaths": []
     },
     {
       "subject": "accessibility-certification",
       "evidenceSha": "8bad862e3ee29d804103dd6ab1b9c9a2fd0391e6",
       "receiptDigest": null,
       "observedAt": null,
-      "executor": null
+      "executor": null,
+      "artifactPaths": [
+        "config/validation-lane-state.v1.json",
+        "config/hardening-rule-probes.v1.json",
+        "config/document-role.v1.json"
+      ]
     },
     {
       "subject": "authenticated-capability-lifecycle",
       "evidenceSha": null,
       "receiptDigest": null,
       "observedAt": null,
-      "executor": null
+      "executor": null,
+      "artifactPaths": []
     },
     {
       "subject": "root-compile",
       "evidenceSha": "88e3c3fb52937ff303b0944cc22cfee624bf807e",
       "receiptDigest": null,
       "observedAt": null,
-      "executor": null
+      "executor": null,
+      "artifactPaths": []
     },
     {
       "subject": "bin-parse",
       "evidenceSha": "88e3c3fb52937ff303b0944cc22cfee624bf807e",
       "receiptDigest": null,
       "observedAt": null,
-      "executor": null
+      "executor": null,
+      "artifactPaths": []
     },
     {
       "subject": "structural-invariants",
       "evidenceSha": "88e3c3fb52937ff303b0944cc22cfee624bf807e",
       "receiptDigest": null,
       "observedAt": null,
-      "executor": null
+      "executor": null,
+      "artifactPaths": []
     },
     {
       "subject": "authoritative-gate",
       "evidenceSha": "88e3c3fb52937ff303b0944cc22cfee624bf807e",
       "receiptDigest": null,
       "observedAt": null,
-      "executor": null
+      "executor": null,
+      "artifactPaths": []
     },
     {
       "subject": "full-regression",
       "evidenceSha": "88e3c3fb52937ff303b0944cc22cfee624bf807e",
       "receiptDigest": null,
       "observedAt": null,
-      "executor": null
+      "executor": null,
+      "artifactPaths": []
     },
     {
       "subject": "clean-checkout",
       "evidenceSha": "c18db55970a6497470191c8c9ef58f5012a96c8c",
       "receiptDigest": null,
       "observedAt": null,
-      "executor": null
+      "executor": null,
+      "artifactPaths": []
     },
     {
       "subject": "ui",
       "evidenceSha": "88e3c3fb52937ff303b0944cc22cfee624bf807e",
       "receiptDigest": null,
       "observedAt": null,
-      "executor": null
+      "executor": null,
+      "artifactPaths": []
     },
     {
       "subject": "browser-workflow",
       "evidenceSha": "88e3c3fb52937ff303b0944cc22cfee624bf807e",
       "receiptDigest": null,
       "observedAt": null,
-      "executor": null
+      "executor": null,
+      "artifactPaths": []
     },
     {
       "subject": "owner-manual",
       "evidenceSha": "36bd4930db978423f97e16f35250c2e66bfa112c",
       "receiptDigest": null,
       "observedAt": null,
-      "executor": null
+      "executor": null,
+      "artifactPaths": []
     },
     {
       "subject": "exact-checkpoint-ci",
       "evidenceSha": "66df26b700bc4bff94d9fb2a3b99200b0e73f1ff",
       "receiptDigest": null,
       "observedAt": null,
-      "executor": null
+      "executor": null,
+      "artifactPaths": [
+        "config/validation-lane-state.v1.json",
+        "config/release-certification.v1.json",
+        "config/hardening-rule-probes.v1.json",
+        "config/dependency-currency.v1.json",
+        "config/document-role.v1.json",
+        "config/environment-surface.v1.json",
+        "src/core/schemaLifecycle/declarations.ts",
+        "ui/control-center/src/__baselines__/view-dom-baseline.json"
+      ]
     },
     {
       "subject": "dependency-advisory",
       "evidenceSha": "88e3c3fb52937ff303b0944cc22cfee624bf807e",
       "receiptDigest": null,
       "observedAt": null,
-      "executor": null
+      "executor": null,
+      "artifactPaths": []
     }
   ]
 }

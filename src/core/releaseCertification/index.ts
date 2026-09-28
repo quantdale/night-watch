@@ -23,6 +23,9 @@
 //   EVIDENCE_FUTURE         evidence is a strict descendant of the checkpoint
 //   EVIDENCE_DIVERGENT      evidence resolves but is on a non-ancestor branch
 //   EVIDENCE_UNRESOLVED     evidence is missing, malformed, or Git-indeterminate
+//   EVIDENCE_ARTIFACT_ABSENT_AT_SHA
+//                           a declared evidence artifact path does not exist
+//                           at the bound SHA (VB-02 / corrections task 2.2)
 //
 // Diagnostic check state (checkState) is always preserved separately from the
 // effective certification state (state). Only evidenceRelation === 'EXACT'
@@ -49,6 +52,7 @@ export const RELEASE_CONDITION_STATES = [
   'EVIDENCE_FUTURE',
   'EVIDENCE_DIVERGENT',
   'EVIDENCE_UNRESOLVED',
+  'EVIDENCE_ARTIFACT_ABSENT_AT_SHA',
 ] as const;
 
 export type ReleaseConditionState = (typeof RELEASE_CONDITION_STATES)[number];
@@ -80,6 +84,7 @@ export const EVIDENCE_FAILURE_STATES = [
   'EVIDENCE_FUTURE',
   'EVIDENCE_DIVERGENT',
   'EVIDENCE_UNRESOLVED',
+  'EVIDENCE_ARTIFACT_ABSENT_AT_SHA',
 ] as const as readonly ReleaseConditionState[];
 
 export function isEvidenceFailureState(state: ReleaseConditionState): boolean {
@@ -443,6 +448,18 @@ export interface ReleaseEvaluationInput {
     certifiedCheckpointSha: string,
   ) => EvidenceLineageRelation | undefined | null | void;
   /**
+   * VB-02 (corrections task 2.2): per-path evidence-artifact existence at the
+   * BOUND SHA (`git cat-file -e <sha>:<path>` semantics). A false makes that
+   * condition EVIDENCE_ARTIFACT_ABSENT_AT_SHA; a throw/undefined fails closed
+   * the same way. Only consulted for a bound, resolved evidence SHA.
+   */
+  readonly resolveEvidenceArtifactAtSha?: (
+    resolvedEvidenceSha: string,
+    artifactPath: string,
+  ) => boolean | undefined | null | void;
+  /** Declared evidence-artifact paths per subject (from the bindings). */
+  readonly evidenceArtifactPaths?: Readonly<Record<string, readonly string[]>>;
+  /**
    * Optional definition/snapshot identity folded into the evaluation digest
    * (e.g. definition bytes digest captured with the checkout snapshot).
    */
@@ -531,6 +548,44 @@ export function evaluateReleaseCertification(input: ReleaseEvaluationInput): Rel
 
     let state: ReleaseConditionState;
     let effectiveDetail = detail;
+    // VB-02 / corrections task 2.2: a bound evidence SHA must carry its
+    // declared artifacts AT THAT SHA. A declared path that does not exist at
+    // the bound commit makes THIS condition (never the whole check)
+    // EVIDENCE_ARTIFACT_ABSENT_AT_SHA — for example an artifact first added in
+    // a descendant of the bound commit.
+    let artifactAbsent: string | null = null;
+    if (resolvedEvidenceSha !== null && input.resolveEvidenceArtifactAtSha !== undefined) {
+      const declared = input.evidenceArtifactPaths?.[condition.id] ?? [];
+      for (const artifactPath of declared) {
+        let exists = false;
+        try {
+          exists = input.resolveEvidenceArtifactAtSha(resolvedEvidenceSha, artifactPath) === true;
+        } catch {
+          exists = false;
+        }
+        if (!exists) {
+          artifactAbsent = artifactPath;
+          break;
+        }
+      }
+    }
+    if (artifactAbsent !== null) {
+      return {
+        id: condition.id,
+        order: condition.order,
+        title: condition.title,
+        check: condition.check,
+        capabilityGroup: check?.capabilityGroup ?? null,
+        checkState,
+        state: 'EVIDENCE_ARTIFACT_ABSENT_AT_SHA',
+        detail: `${detail}; evidence artifact ${artifactAbsent} absent at bound SHA ${resolvedEvidenceSha}`,
+        boundEvidenceSha: condition.evidenceSha,
+        resolvedEvidenceSha,
+        evidenceRelation,
+        staleEvidence: evidenceRelation === 'STALE_ANCESTOR',
+        nonExactEvidence: true,
+      };
+    }
     if (evidenceRelation === null) {
       // Absent evidence never certifies a raw MET check; other check states
       // keep their diagnostic value (absence does not upgrade UNMET).

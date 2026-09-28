@@ -1959,6 +1959,48 @@ test.describe('F-12 release definition and verdict', () => {
     expect(verdict.staleEvidenceConditions).toEqual([parsed.definition.conditions[0]?.id]);
   });
 
+  test('VB-02: an artifact absent at the bound SHA makes only that condition EVIDENCE_ARTIFACT_ABSENT_AT_SHA', () => {
+    // Spec scenario (completion-correction-certification): a binding cites
+    // SHA X and its artifact was first added in a descendant of X.
+    const definition = definitionWithExactEvidence(liveDefinition(), '2'.repeat(40));
+    const first = definition.conditions[0];
+    const second = definition.conditions[1];
+    if (first === undefined || second === undefined) throw new Error('CONDITION_FIXTURE_MISSING');
+    const verdict = evaluateReleaseCertification(evaluationInput(definition, {
+      resolveEvidenceArtifactAtSha: (resolved: string, artifactPath: string) =>
+        // the first condition's declared artifact is absent at its bound SHA
+        !(resolved === first.evidenceSha && artifactPath === 'config/honest-report.json'),
+      evidenceArtifactPaths: {
+        [first.id]: ['config/honest-report.json'],
+        [second.id]: ['config/other-report.json'],
+      },
+    }));
+    const target = verdict.conditions[0];
+    const other = verdict.conditions[1];
+    expect(target?.state).toBe('EVIDENCE_ARTIFACT_ABSENT_AT_SHA');
+    expect(target?.detail).toContain('config/honest-report.json absent at bound SHA');
+    expect(target?.checkState).toBe('MET'); // the check itself still ran
+    expect(other?.state).toBe('MET'); // only the cited condition is affected
+    expect(verdict.certificationRefused).toBe(true);
+    expect(verdict.conditionsMet).toBe(definition.conditions.length - 1);
+  });
+
+  test('VB-02: a present artifact set leaves the condition MET, and a throw fails closed to ABSENT', () => {
+    const definition = definitionWithExactEvidence(liveDefinition(), '2'.repeat(40));
+    const first = definition.conditions[0];
+    if (first === undefined) throw new Error('CONDITION_FIXTURE_MISSING');
+    const present = evaluateReleaseCertification(evaluationInput(definition, {
+      resolveEvidenceArtifactAtSha: () => true,
+      evidenceArtifactPaths: { [first.id]: ['config/honest-report.json'] },
+    }));
+    expect(present.conditions[0]?.state).toBe('MET');
+    const throwing = evaluateReleaseCertification(evaluationInput(definition, {
+      resolveEvidenceArtifactAtSha: () => { throw new Error('PROBE_REFUSED'); },
+      evidenceArtifactPaths: { [first.id]: ['config/honest-report.json'] },
+    }));
+    expect(throwing.conditions[0]?.state).toBe('EVIDENCE_ARTIFACT_ABSENT_AT_SHA');
+  });
+
   test('a surface presenting the status alone fails the render guard', () => {
     const bare = `Project completion status: OPERATIONALLY_ACCEPTED <!--${RELEASE_VERDICT_STATUS_MARKER}OPERATIONALLY_ACCEPTED-->`;
     expect(checkVerdictPresentation(bare)).toEqual([...RELEASE_VERDICT_COUNT_MARKERS]);

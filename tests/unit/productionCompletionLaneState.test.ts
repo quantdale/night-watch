@@ -84,7 +84,7 @@ test.describe('validation lane state', () => {
   test('VB-01: erasing a binding evidence value is substantive, never values-only', () => {
     const binding = (evidenceSha: string | null) => JSON.stringify({
       schemaVersion: 'nightwatch.release-evidence.v1',
-      bindings: [{ subject: 'root-compile', evidenceSha, receiptDigest: null, observedAt: null, executor: null }],
+      bindings: [{ subject: 'root-compile', evidenceSha, receiptDigest: null, observedAt: null, executor: null, artifactPaths: [] }],
     });
     // The regression: non-null -> null used to classify VALUES_ONLY.
     expect(isValuesOnlyBindingChange(binding(SHA_A), binding(null))).toEqual({
@@ -94,7 +94,7 @@ test.describe('validation lane state', () => {
     // Every evidence value is protected the same way.
     const receipt = (receiptDigest: string | null) => JSON.stringify({
       schemaVersion: 'nightwatch.release-evidence.v1',
-      bindings: [{ subject: 'root-compile', evidenceSha: SHA_A, receiptDigest, observedAt: null, executor: null }],
+      bindings: [{ subject: 'root-compile', evidenceSha: SHA_A, receiptDigest, observedAt: null, executor: null, artifactPaths: [] }],
     });
     expect(isValuesOnlyBindingChange(receipt('receipt:sha256:' + 'a'.repeat(24)), receipt(null))).toEqual({
       valuesOnly: false,
@@ -105,6 +105,25 @@ test.describe('validation lane state', () => {
     // value edit.
     expect(isValuesOnlyBindingChange(binding(null), binding(SHA_A)).valuesOnly).toBe(true);
     expect(isValuesOnlyBindingChange(binding(SHA_A), binding(SHA_B)).valuesOnly).toBe(true);
+  });
+
+  test('VB-02: artifactPaths is a declared structural key — adding or editing it is never values-only', () => {
+    const binding = (artifactPaths: string[]) => JSON.stringify({
+      schemaVersion: 'nightwatch.release-evidence.v1',
+      bindings: [{ subject: 'root-compile', evidenceSha: SHA_A, receiptDigest: null, observedAt: null, executor: null, artifactPaths }],
+    });
+    expect(isValuesOnlyBindingChange(binding([]), binding(['config/report.json']))).toEqual({
+      valuesOnly: false,
+      reason: 'BINDING_NON_VALUE_KEY_CHANGED:artifactPaths',
+    });
+    // Identical declared sets stay values-only (element-wise array equality).
+    expect(isValuesOnlyBindingChange(binding(['config/report.json']), binding(['config/report.json'])).valuesOnly).toBe(true);
+    // The closed schema rejects a binding without the declared list.
+    const missing = JSON.stringify({
+      schemaVersion: 'nightwatch.release-evidence.v1',
+      bindings: [{ subject: 'root-compile', evidenceSha: SHA_A, receiptDigest: null, observedAt: null, executor: null }],
+    });
+    expect(isValuesOnlyBindingChange(missing, binding([])).valuesOnly).toBe(false);
   });
 
   test('VB-01: any change to the lane-state record is substantive (class changes cannot hide)', () => {

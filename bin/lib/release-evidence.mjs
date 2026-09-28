@@ -32,13 +32,18 @@ const SHA40_RE = /^[0-9a-f]{40}$/i;
 const DIGEST_RE = /^(?:receipt:)?sha256:[0-9a-f]{24,64}$/;
 const ISO_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?(?:Z|[+-]\d{2}:\d{2})$/;
 const SUBJECT_RE = /^[a-z0-9][a-z0-9._-]{0,127}$/;
+const ARTIFACT_PATH_RE = /^(?!\/)(?!.*\.\.)[A-Za-z0-9._/-]{1,200}$/;
 const CORRECTION_ID_RE = /^[A-Za-z0-9._-]{1,64}$/;
 const LINE_DIGEST_RE = /^sha256:[0-9a-f]{24,64}$/;
 
 /** Exact key set of one evidence binding. Closed: any other key is structural. */
-export const EVIDENCE_BINDING_KEYS = Object.freeze(['subject', 'evidenceSha', 'receiptDigest', 'observedAt', 'executor']);
-/** The ONLY fields a values-only change may touch. */
+export const EVIDENCE_BINDING_KEYS = Object.freeze(['subject', 'evidenceSha', 'receiptDigest', 'observedAt', 'executor', 'artifactPaths']);
+/** The ONLY fields a values-only change may touch. `artifactPaths` is deliberately
+ * structural: the declared evidence-artifact set is part of the evidence
+ * contract (VB-02 / corrections task 2.2), never a refreshable value. */
 export const EVIDENCE_BINDING_VALUE_KEYS = Object.freeze(['evidenceSha', 'receiptDigest', 'observedAt', 'executor']);
+/** Max declared artifact paths per binding. */
+export const EVIDENCE_BINDING_MAX_ARTIFACTS = 8;
 /** Exact key set of one document-role correction entry. */
 export const CORRECTION_ENTRY_KEYS = Object.freeze(['id', 'path', 'oldLineSha256', 'oldLineExcerpt', 'reason']);
 
@@ -91,11 +96,34 @@ export function parseEvidenceBinding(record) {
       executor = raw.executor;
     }
   }
+  // VB-02 / corrections task 2.2: every binding declares its evidence artifact
+  // paths - safe relative repository paths, de-duplicated, bounded. Host-local
+  // evidence with no tracked artifact declares an empty list explicitly.
+  let artifactPaths = [];
+  if (!Array.isArray(raw.artifactPaths)) {
+    errors.push('BINDING_ARTIFACT_PATHS_NOT_AN_ARRAY');
+  } else if (raw.artifactPaths.length > EVIDENCE_BINDING_MAX_ARTIFACTS) {
+    errors.push(`BINDING_ARTIFACT_PATHS_TOO_MANY:${raw.artifactPaths.length}`);
+  } else {
+    const seenPath = new Set();
+    for (const entry of raw.artifactPaths) {
+      if (typeof entry !== 'string' || !ARTIFACT_PATH_RE.test(entry)) {
+        errors.push(`BINDING_ARTIFACT_PATH_INVALID:${String(entry)}`);
+        continue;
+      }
+      if (seenPath.has(entry)) {
+        errors.push(`BINDING_ARTIFACT_PATH_DUPLICATE:${entry}`);
+        continue;
+      }
+      seenPath.add(entry);
+      artifactPaths.push(entry);
+    }
+  }
   if (errors.length > 0) return { ok: false, errors, binding: null };
   return {
     ok: true,
     errors,
-    binding: { subject, evidenceSha, receiptDigest, observedAt, executor },
+    binding: { subject, evidenceSha, receiptDigest, observedAt, executor, artifactPaths },
   };
 }
 
@@ -241,6 +269,12 @@ export function isValuesOnlyBindingChange(beforeText, afterText) {
     }
     for (const key of EVIDENCE_BINDING_KEYS) {
       if (key === 'subject') continue;
+      // Array-valued keys (artifactPaths) need element-wise equality: two
+      // separately parsed [] are never `===`.
+      if (Array.isArray(left[key]) && Array.isArray(right[key])) {
+        if (left[key].length === right[key].length && left[key].every((entry, i) => entry === right[key][i])) continue;
+        return { valuesOnly: false, reason: `BINDING_NON_VALUE_KEY_CHANGED:${key}` };
+      }
       if (left[key] === right[key]) continue;
       // VB-01 / corrections task 2.1: erasing an evidence value (non-null ->
       // null) is a substantive loss of proof, never a values-only
