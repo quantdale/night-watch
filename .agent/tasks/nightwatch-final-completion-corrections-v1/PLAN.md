@@ -83,15 +83,73 @@ and evidence and needs no code change.
 
 ## Milestones
 
-- **M1** — bootstrap (change + continuity together) — COMPLETE at this
-  commit.
-- **M2** — task 6.1 formatter policy — NOT_STARTED.
-- **M3** — group 2 (certification anchors, 2.1-2.8) — NOT_STARTED.
-- **M4** — group 3 (validation spine, 3.1-3.12) — NOT_STARTED.
-- **M5** — group 4 (release probes + follow-on defects, 4.1-4.6) —
-  NOT_STARTED.
-- **M6** — group 5 (ledger/continuity truth, 5.1-5.6) — NOT_STARTED.
-- **M7** — group 6 (hygiene/close-out, 6.2-6.4) — NOT_STARTED.
+### M1 — Bootstrap and Phase 1 preconditions (tasks 1.1-1.3)
+
+- Objective: bootstrap the child campaign (change + continuity v2 in one
+  commit), record the parent session checkpoint and resume point, disposition
+  the 16 canonical files and disable the harness formatter, and re-verify all
+  31 audit findings at the live base.
+- Acceptance criteria: change strict-validates; agent:check PASS; canonical
+  clean with `workspace:check` PASS; every finding classified STILL_PRESENT /
+  CHANGED / COMPLETED_LATER with SHA + file:line; follow-on defects recorded.
+- Validation commands: `npx openspec validate
+  nightwatch-final-completion-corrections-v1 --strict`, `npm run agent:check`,
+  `npm run workspace:check`.
+- **Status:** COMPLETE
+
+### M2 — Formatter policy (task 6.1)
+
+- Objective: a repository `biome.json` with formatter and organize-imports
+  disabled plus an `.editorconfig` pinning the normalizers off, proven by a
+  formatter-changes-nothing test with a positive control.
+- Acceptance criteria: `tests/unit/formatterPolicy.test.ts` green (policy
+  disabled + control rewrites + corpus no-op + byte invariants).
+- Validation commands: `npx playwright test tests/unit/formatterPolicy.test.ts`,
+  `npm run hardening:check`.
+- **Status:** COMPLETE
+
+### M3 — Certification anchors (group 2, tasks 2.1-2.8)
+
+- Objective: close VB-01..VB-07 (evidenceSha strictness, artifactPaths,
+  corrections guard, TDZ regression, compatibility window, checkpoint-role
+  tests/probe, real bin-typecheck ratchet).
+- Acceptance criteria: focused suites + `gate:dev` + `gate:milestone` PASS.
+- **Status:** IN_PROGRESS
+
+### M4 — Validation spine (group 3, tasks 3.1-3.12)
+
+- Objective: close VC-01..VC-11 (browser-skip channel resolution, skip
+  identity totality, topology honesty, D-04 relaxation, gate:ui scripts,
+  gate:clean identity, flake ledger, pinning probes, twin hardening,
+  topology measurement, orphan/node/sun_path/HANDOFF details).
+- Acceptance criteria: focused suites + `gate:dev` + `gate:milestone` PASS;
+  exact-head CI green with the restored tests executing.
+- **Status:** NOT_STARTED
+
+### M5 — Release probes (group 4, tasks 4.1-4.6)
+
+- Objective: close VD-01..VD-05 + CF-01..CF-03 (probe-at-checkpoint, G18
+  UI-harness receipt, G12 yield-campaign receipt bound to S, G21/G19 refusal
+  exercises, honesty-rule tests, and re-derive the M4-M9 probe results).
+- Acceptance criteria: focused suites + `gate:dev` + `gate:milestone` PASS.
+- **Status:** NOT_STARTED
+
+### M6 — Ledger and continuity truth (group 5, tasks 5.1-5.6)
+
+- Objective: close VA-01..VA-05 (stable task IDs, ledger check, anchor
+  honesty + TASK_AHEAD_OF_PROJECT_BASELINE, ledger error at terminal,
+  INTEGRATED_CURRENT, parent continuity sync).
+- Acceptance criteria: focused suites + `gate:dev` + `gate:milestone` PASS.
+- **Status:** NOT_STARTED
+
+### M7 — Hygiene and close-out (group 6, tasks 6.2-6.4)
+
+- Objective: the full 6.2 validation set, the 6.3 integration/CI/gate:clean
+  sequence, and the 6.4 routing-back and archive.
+- Acceptance criteria: the 6.2 command set green; exact-head CI green at the
+  close-out checkpoint; ACTIVE_TASK routed back to the parent at IN_PROGRESS
+  with Next action "M9 task 10.2 remainder"; change archived.
+- **Status:** NOT_STARTED
 
 ## Validation Strategy
 

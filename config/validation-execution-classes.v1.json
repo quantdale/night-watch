@@ -641,6 +641,12 @@
         "isolated-scratch"
       ]
     },
+    "tests/unit/formatterPolicy.test.ts": {
+      "class": "PROCESS_ISOLATED_ONLY",
+      "signals": [
+        "isolated-scratch"
+      ]
+    },
     "tests/unit/frontierContractFuzz.test.ts": {
       "class": "PARALLEL_SAFE",
       "signals": []

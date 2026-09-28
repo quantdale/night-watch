@@ -8,7 +8,7 @@
     "registry": "npm registry (registry.npmjs.org)",
     "queryDate": "2026-09-12",
     "authorization": "one bounded read-only advisory query explicitly authorized by the owner for programme group 9",
-    "scope": "the four declared dependencies (@playwright/test, @types/node, typescript, vue) and their package-lock.json closure",
+    "scope": "the four dependencies declared at query time (@playwright/test, @types/node, typescript, vue) and their package-lock.json closure. @biomejs/biome@2.5.14 was declared on 2026-09-28 (corrections task 6.1) and is NOT covered by this executed query; no advisory result is claimed for it. The single authorized registry advisory query reserved for parent task 15.4 will cover the full closure then.",
     "result": "ONE_ADVISORY",
     "advisories": [
       {
@@ -55,10 +55,10 @@
   },
   "lockfileVerification": {
     "command": "npm ci --offline --no-audit --no-fund in a disposable directory containing only package.json and package-lock.json (npm cache only; no network)",
-    "date": "2026-09-12",
+    "date": "2026-09-28",
     "intervalDays": 30,
-    "result": "PASS — added 7 packages; package-lock.json byte-identical before and after (sha256 compared); one expected warning: vue@2.6.12 END OF LIFE",
-    "lockfileSha256": "sha256:e87bf7337541d2ce03bb701deb09fc14853b5711c45688fcf8b647d04ebfe45c"
+    "result": "PASS — added 10 packages (the closure grew with the formatter-policy tool @biomejs/biome@2.5.14); package-lock.json byte-identical before and after (sha256 compared); one expected warning: vue@2.6.12 END OF LIFE. Re-verified after the corrections-task-6.1 dependency addition; the previous 2026-09-12 verification covered the 7-package closure.",
+    "lockfileSha256": "sha256:439934954d1bf8c4066f0d8efede3ced2cad7da756e040fab7fe1c52b6aea690"
   },
   "probes": [
     {

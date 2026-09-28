@@ -1,0 +1,22 @@
+# Nightwatch editor policy (corrections task 6.1, VE-01).
+#
+# This file pins the two normalizing switches OFF and declares only the byte
+# invariants the committed corpus actually satisfies (measured 2026-09-28:
+# 3381 tracked text files, all UTF-8, all LF). Do not "fix" the trailing
+# whitespace or missing-final-newline exceptions into compliance: 7 tracked
+# files carry trailing whitespace and 50 carry no final newline, and 4 carry
+# literal leading tabs inside content. Normalizing any of them is exactly the
+# out-of-band rewrite this policy exists to prevent. tests/unit/formatterPolicy.test.ts
+# proves the invariants hold corpus-wide and that a formatter run changes no
+# tracked file.
+
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+trim_trailing_whitespace = false
+insert_final_newline = false
+
+[*.md]
+trim_trailing_whitespace = false

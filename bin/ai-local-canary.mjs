@@ -13,11 +13,6 @@ import { loadTypeScriptModule as loadRuntimeTypeScriptModule } from './lib/types
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
-/** @param {string} file */
-function loadTypeScriptModule(file) {
-  return loadRuntimeTypeScriptModule(file, { root });
-}
-
 function usage() {
   console.log('Usage: npm run ai:local-canary -- --endpoint <loopback-v1-chat-completions-url> --model <model-id> [--timeout-ms <1-5000>]');
   console.log('The command performs one fixed synthetic L2 BUG_CANDIDATE review and never accepts prompt or input text.');

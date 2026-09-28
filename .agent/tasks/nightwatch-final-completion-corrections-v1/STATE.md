@@ -32,47 +32,62 @@ from sound foundations at M9 task 10.2 (remainder: 59/76 declared).
 
 ## Current Milestone
 
-Phase 1 bootstrap (tasks 1.1-1.3): 1.1 COMPLETE (the parent session recorded
-its committed checkpoint at `1d47e2ee`, confirmed HEAD == origin/main,
-recorded the resume point "M9 task 10.2 (remainder: 59/76 declared)" and
-released); 1.2 COMPLETE (the owner dispositioned the 16 disposable
-formatter-rewritten files and authorized the restore; the harness formatter
-is disabled at global and project scope outside the repos; `workspace:check`
-PASS); 1.3 COMPLETE (all 31 findings re-verified at `1d47e2ee` — see SPEC's
-classification and `audit.md`'s re-verification record). Next: task 6.1
-(formatter policy) FIRST per RESUME_PROMPT, then groups 2-6 in order.
+M3 Certification anchors (group 2, tasks 2.1-2.8: VB-01..VB-07). M1
+(bootstrap + Phase 1 preconditions) and M2 (task 6.1 formatter policy,
+landed FIRST per RESUME_PROMPT §2) are COMPLETE — see Work In Progress and
+the Validation Ledger.
 
 ## Completed Milestones
 
-- **1.1 COMPLETE** — parent session checkpointed at `1d47e2ee` with resume
-  point "M9 task 10.2 (remainder: 59/76 declared)"; exact-head CI run
-  36366426608 green at `32180001`; released and removed with the branch
-  reachability proof.
-- **1.2 COMPLETE** — the 16 canonical files owner-dispositioned disposable
-  (AST-equivalent to `df0a6d35`; only `let minedById`→`const` and one paren
-  pair non-layout) and restored under the explicit owner authorization;
-  pi-lens mutation controls disabled (`~/.pi-lens/config.json` + project
-  `.pi-lens.json` at `/home/dalepalaca/go/src/` and `~/.nightwatch/`);
-  `npm run workspace:check` PASS (`canonicalSafe=true`).
-- **1.3 COMPLETE** — all 31 findings re-verified at `1d47e2ee` with
-  file:line evidence (SPEC classification). 21 STILL_PRESENT, 5 CHANGED,
-  2 COMPLETED_LATER (VB-04 @ `a784e668`, VD-05 rule @ `a784e668`), and 3
-  follow-on defects recorded (CF-01, CF-02, CF-03).
+- **M1 COMPLETE** — bootstrap and Phase 1 preconditions (tasks 1.1-1.3):
+  the corrective change restored unchanged and committed together with
+  continuity v2 (`3ce396c6`); the parent session checkpointed at `1d47e2ee`
+  with resume point "M9 task 10.2 (remainder: 59/76 declared)" and
+  exact-head CI run 36366426608 green at `32180001`, released and removed
+  with the branch reachability proof (1.1); the 16 canonical files
+  owner-dispositioned disposable (AST-equivalent to `df0a6d35`) and
+  restored under the explicit owner authorization, pi-lens mutation
+  controls disabled (`~/.pi-lens/config.json` + project `.pi-lens.json` at
+  `/home/dalepalaca/go/src/` and `~/.nightwatch/`), `workspace:check` PASS
+  (`canonicalSafe=true`) (1.2); all 31 findings re-verified at `1d47e2ee`
+  with file:line evidence — 21 STILL_PRESENT, 5 CHANGED, 2 COMPLETED_LATER
+  (VB-04 and VD-05's rule @ `a784e668`), 3 follow-on defects CF-01..CF-03
+  (1.3).
 
 ## Work In Progress
 
-- Bootstrap commit (change + continuity together).
+- **M2 (task 6.1) COMPLETE** — the repository formatter policy landed FIRST
+  per RESUME_PROMPT §2: `biome.json` (formatter + organize-imports + linter
+  off), `.editorconfig` pinning the normalizers off and declaring only the
+  corpus byte invariants that hold, and `tests/unit/formatterPolicy.test.ts`
+  5/5 with a positive control (formatter-enabled config rewrites the probe)
+  and a whole-tracked-corpus `check --write` no-op over a disposable
+  `git ls-files` copy with before/after hashes. The pinned
+  `@biomejs/biome@2.5.14` installed offline (cache-only), the disposable
+  `npm ci --offline` verification re-executed (10 packages, lockfile
+  byte-identical), and dependency-currency + the matrix carry the honest
+  advisory-scope limit. Focused suites green (formatterPolicy 5/5;
+  nw14/nw08/executionClasses/nw07/c16 149/149 with the known clean-tree
+  `projectState:2316` exception on the dirty worktree); hardening:check,
+  handoff:check, agent:check and typecheck all PASS.
+- Lint follow-through in the same checkpoint: the dead `loadTypeScriptModule`
+  wrappers in `bin/ai-local-canary.mjs` and `bin/auth-configure.mjs` are
+  removed (both call sites already use `loadRuntimeTypeScriptModule`
+  directly) — this is the fix the harness autofix kept re-applying in
+  canonical, now landing legitimately through the C-00 integrate.
+- Next: M3 (group 2, tasks 2.1-2.8: VB-01..VB-07 certification anchors).
 
 ## Exact Next Action
 
-Implement corrections task 6.1 FIRST: a repository `biome.json` with the
-formatter and organize-imports disabled plus an `.editorconfig`, and a test
-that a formatter run changes no tracked file. Land it as the first commit
-after this bootstrap. Then groups 2-6 in order (2.x certification anchors,
-3.x validation spine, 4.x release probes, 5.x ledger/continuity truth,
-6.x hygiene and close-out), with focused suites + `gate:dev` +
-`gate:milestone` after each group, probes committed before
-`hardening:rules`, and STATE updated after every group.
+Implement M3 (group 2, tasks 2.1-2.8): VB-01 (require a 40-hex evidenceSha
+for PROVEN lanes with a value→null/class-change substantive classification),
+VB-02 (artifactPaths + per-path `git cat-file -e <sha>:<path>` with
+EVIDENCE_ARTIFACT_ABSENT_AT_SHA), VB-03 (corrections guard archive-line
+pairing + DECISIONS entry), VB-05 (close the legacy compatibility window;
+HEAD invalid everywhere), VB-06 (checkpoint-role unit tests + stub-guard
+probe + exclude guarded paths + remove the dead constant), VB-07 (real
+per-file/total/stale-ceiling bin-typecheck ratchet). Then focused +
+`gate:dev` + `gate:milestone` PASS, commit, and continue M4.
 
 ## Files Changed
 

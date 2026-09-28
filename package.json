@@ -115,6 +115,7 @@
     "agent:campaign": "node bin/nightwatch-agent.mjs campaign"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.5.14",
     "@playwright/test": "1.62.1",
     "@types/node": "^22.10.0",
     "typescript": "^5.7.0",

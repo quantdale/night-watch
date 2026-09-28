@@ -19,7 +19,7 @@ document.
 | --- | --- | --- | --- |
 | Node.js | `engines.node >=20` | 20.x and 22.22.1 | `npm ci` refuses; `gate:clean` qualifies a disposable Node 20 checkout explicitly |
 | Operating system | not constrained in the manifest | Linux (x86_64, WSL2 kernel 6.6) | process, namespace and filesystem-identity lanes report unsupported rather than passing |
-| Package manager | `npm ci` against the committed `package-lock.json` | npm 10.x; verified 2026-09-12 by a disposable `npm ci --offline`, 7 packages, lockfile byte-identical afterwards | a resolution that does not match the lockfile is a reproducibility failure, not a warning |
+| Package manager | `npm ci` against the committed `package-lock.json` | npm 10.x; re-verified 2026-09-28 by a disposable `npm ci --offline`, 10 packages, lockfile byte-identical afterwards — the closure grew by the pinned `@biomejs/biome` 2.5.14 formatter-policy tool (corrections task 6.1: formatter disabled, a proof tool never a rewriter) | a resolution that does not match the lockfile is a reproducibility failure, not a warning |
 | Shell | none — no Nightwatch surface passes a runtime string to a shell | n/a | n/a |
 | Working-copy disk | measured 2026-09-14 (`du -sm`, allocated) | checkout source 34 MiB <!--census:DISK_CHECKOUT_SOURCE_MIB=34-->, git 27 MiB <!--census:DISK_CHECKOUT_GIT_MIB=27-->, root `node_modules` 48 MiB <!--census:DISK_NODE_MODULES_MIB=48-->, typical run 32 KiB <!--census:DISK_TYPICAL_RUN_KIB=32-->, accumulated evidence 42 MiB <!--census:DISK_ACCUMULATED_EVIDENCE_MIB=42-->, runner output 1 MiB <!--census:DISK_RUNNER_OUTPUT_MIB=1-->, scratch 1 MiB <!--census:DISK_SCRATCH_MIB=1-->; UI package `node_modules` is additional and not a census figure | a host without that headroom reports unsupported rather than inheriting a pass |
 
@@ -127,7 +127,7 @@ second consumer.
 **Review date.** 2026-09-09; revisit interval 30 days (due 2026-10-09, carried and enforced from `config/dependency-currency.v1.json`).
 
 **What is claimed, and its limit.** The authorized bounded read-only advisory query ran on 2026-09-12
-against the npm registry over the four declared dependencies and their lockfile closure: exactly one
+against the npm registry over the four then-declared dependencies and their lockfile closure: exactly one
 advisory, `vue@2.6.12`, low, `GHSA-5j4c-8p2g-v4jx` (CWE-1333 template-compilation ReDoS, range
 `>=2.0.0-alpha.1 <3.0.0-alpha.0`, fix only as the unauthorized semver-major `vue@3.5.42`), unreachable
 in Nightwatch — only the literal `rippleReadiness` fixture runs Vue via `require.resolve`. This is not

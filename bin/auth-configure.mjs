@@ -12,11 +12,6 @@ import { loadTypeScriptModule as loadRuntimeTypeScriptModule } from './lib/types
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
-/** @param {string} file */
-function loadTypeScriptModule(file) {
-  return loadRuntimeTypeScriptModule(file, { root });
-}
-
 function usage() {
   console.log('Usage: npm run auth:configure');
   console.log('Configures the designated DEV test account using hidden terminal prompts.');
