@@ -165,14 +165,24 @@ M4 group gate. Exact-head CI/artifact evidence and group gates remain pending.
   on empty references) and probes HC-184..HC-187 cover the previously
   unprobed forms — probe campaign 5/5 DETECTED, hardening suites 15/15,
   typecheck:bin PASS at 1559 (validation-and-gates 23→22, total 1560→1559,
-  lowered in the same change).
+  lowered in the same change). Task 3.9 (VC-09) is complete: the c04 twins
+  assert non-empty premises (`graph.edges.length > 0` before their loops),
+  phase14 C3-14's silent early return is now a declared skip, and the c03
+  real-topology/method-level/TRUNCATED describes classify through
+  `classifyLiveSourceTestState` (REAL_TOPOLOGY_LIVE_STATE) with `LIVE_SOURCE_`
+  reason tokens — the 11 generic-token config entries were replaced by 22
+  exact LIVE_SOURCE identities + 1 for C3-14 (93 total, zero generic residue).
+  Focused c03/c04/phase14 run 48 passed / 20 declared skips; skip-policy
+  suites 18/18; hardening:check PASS; full semantic-compat on the clean tree
+  at `71a6ca3b` PASS (2177 total, 2163 passed, 14 declared, 0 failed,
+  skipPolicy PASS).
 
 ## Exact Next Action
 
-Proceed to M4 task 3.9 (VC-09: twins assert non-empty graphs;
-phase14Fresh early return becomes a declared skip; c03 describe skips use
-`classifyLiveSourceTestState`). The clean-gate proof, the semantic-compat
-clean-tree rerun, VC-07 and VC-08 are complete. Preserve VC-01 exact-head CI
+Proceed to M4 task 3.10 (VC-10: topology measurement must keep declared
+literals — the LEGACY_HOST_PATH_SKIP suites measure 0 — and catch
+function-returned roots). The clean-gate proof, the semantic-compat
+clean-tree rerun, VC-07, VC-08 and VC-09 are complete. Preserve VC-01 exact-head CI
 and VC-03 artifact observation as pending M4 close-out evidence; continue
 through task 3.12 before integration.
 
@@ -207,6 +217,7 @@ through task 3.12 before integration.
 | `tests/helpers/playwrightSkipIdentityReporter.ts`, `tests/unit/semanticSkipIdentity.test.ts` | VC-04 follow-through: the compat lane authorizes by its timing-lane identity (label forwarding had removed the report authorization); regression tests | semanticSkipIdentity 14/14; semantic-compat clean-tree rerun PASS (2177/2163/14/0, skipPolicy PASS) |
 | `docs/FLAKE-LEDGER.md`, `config/document-role.v1.json` | VC-07 tracked flake ledger (FLAKE-001: mechanism, 11/11 non-reproduction at the 2 s bound, shipped bound + residual risk) + APPEND_ONLY_ARCHIVE declaration | hardening:check PASS |
 | `tests/unit/observerSemanticLedger.test.ts` | VC-07 root-cause comment correction (synchronous projection; the wait bounds handler latency after `goto`) | observerSemanticLedger 2/2 PASS |
+| `tests/unit/c03GrpcTopology.test.ts`, `tests/unit/c04FrontendGraph.test.ts`, `tests/unit/phase14FreshSourceAdmission.test.ts`, `config/semantic-compatibility.v1.json` | VC-09 non-vacuous twin premises, declared C3-14 skip, `classifyLiveSourceTestState` for the c03 real-topology describes (LIVE_SOURCE_ tokens replace 11 generic entries; 93 exact identities) | focused 48 passed / 20 declared; semantic-compat PASS at `71a6ca3b` |
 | `bin/lib/hardening/rules/validation-and-gates.mjs`, `config/hardening-rule-probes.v1.json`, `config/bin-typecheck.v1.json` | VC-08 token-based workflow-pinning matcher (all `uses` key forms, comment-aware, fail-closed on empty refs) + probes HC-184..HC-187; ratchet lowered to 1559 | probe campaign 5/5 DETECTED; hardening suites 15/15; typecheck:bin PASS |
 | `tests/unit/semanticSkipIdentity.test.ts`, `tests/unit/selfDevSandboxConfinement.test.ts`, `tests/unit/syntheticCampaignDiagnostics.test.ts` | VC-02 identity/report, reason, and gate-receipt regressions | 29/29 receipt+policy; 25 passed, 1 declared host skip |
 | `config/validation-universe.v1.json`, `config/validation-execution-classes.v1.json` | register ratchet suite and refresh the inventory digest | checks PASS at M3 close; VC-06 re-measured at `sha256:95f903de` (581 discovered, 0 unclassified) |
@@ -545,7 +556,28 @@ Relevant output: quantifier/probe invariants green with the five workflow
 probes registered; typecheck:bin PASS after lowering validation-and-gates
 23→22 and the total 1560→1559 in the same change.
 
+Command: focused c03/c04/phase14 + skip-policy suites (VC-09)
+Result: PASS (48 passed / 20 declared skips; 18/18 skip-policy)
+When: 2026-09-28
+Relevant output: the non-vacuous twin premises and the declared C3-14 skip
+behave as intended; the c03 real-topology describes now skip with
+LIVE_SOURCE_<kind> tokens via `classifyLiveSourceTestState`, and the config
+holds 93 exact identities with zero generic-token residue.
+
+Command: `npm run test:semantic-compat` at `71a6ca3b` (clean tree, VC-09 close)
+Result: PASS (2177 total, 2163 passed, 14 declared, 0 failed)
+When: 2026-09-28
+Relevant output: skipPolicy PASS (14 declared, 0 undeclared); the only
+earlier failure (projectState:2390 on the dirty tree) disappeared at the
+clean checkpoint as documented. hardening:check PASS alongside.
+
 ## Decisions Made During This Task
+
+- VC-09 replaces existence-only sibling probes with
+  `classifyLiveSourceTestState` so a STALE checkout can never masquerade as
+  CURRENT, and the skip identity carries the full LIVE_SOURCE_<kind> token;
+  the config keeps BOTH reason-token variants per test identity because the
+  observed kind depends on the host's snapshot state.
 
 - The D-04 gate label and the skip-report authorization are separate
   authorities: the label grants no worktree relaxation (CI/CLEAN-only, HC-180)

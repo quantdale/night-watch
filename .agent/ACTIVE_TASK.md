@@ -49,11 +49,16 @@ hardening:check PASS. Task 3.8 (VC-08) is complete: the workflow-pinning
 matcher is token-based over every `uses` key form (block/compact/flow/
 quoted, comment-aware, fail-closed on empty references) and probes
 HC-184..HC-187 cover the previously unprobed forms — probe campaign 5/5
-DETECTED, hardening suites 15/15, typecheck:bin PASS at 1559. M4 group gates
+DETECTED, hardening suites 15/15, typecheck:bin PASS at 1559. Task 3.9 (VC-09)
+is complete: c04 twins assert non-empty premises, phase14 C3-14 is a declared
+skip, and the c03 real-topology describes use `classifyLiveSourceTestState`
+with LIVE_SOURCE_ tokens (93 exact config identities, zero generic residue) —
+focused 48 passed / 20 declared skips, skip-policy 18/18, semantic-compat
+PASS at `71a6ca3b`. M4 group gates
 and exact-head CI/artifact observation remain pending.
-Next action: proceed to task 3.9 (VC-09: twins assert non-empty graphs;
-phase14Fresh early return becomes a declared skip; c03 describe skips use
-`classifyLiveSourceTestState`). VC-01's stale skip guards
+Next action: proceed to task 3.10 (VC-10: topology measurement must keep
+declared literals — LEGACY_HOST_PATH_SKIP suites measure 0 — and catch
+function-returned roots). VC-01's stale skip guards
 and allowlist entries are removed; all four browser-backed tests passed locally,
 with exact-head GitHub Actions proof pending M4 close-out.
 
@@ -99,7 +104,7 @@ EXTERNAL CONTACT AUTHORIZED (OD-3 ONLY):
   provider proof run; one npm registry advisory query.
 
 CURRENT STATUS:
-  IN_PROGRESS — M4 validation spine through VC-08; M3 certification anchors
+  IN_PROGRESS — M4 validation spine through VC-09; M3 certification anchors
   validated at `d6fd98b1`; exact-head CI/artifact observation remains pending.
 
 ALPHAUS DEV / NEXT / PRODUCTION CONTACT:   NOT AUTHORIZED
