@@ -89,18 +89,18 @@ landed FIRST per RESUME_PROMPT §2), and M3 (certification anchors, tasks
   directly) — this is the fix the harness autofix kept re-applying in
   canonical, now landing legitimately through the C-00 integrate.
 - **M4 IN_PROGRESS — validation spine (tasks 3.1-3.12, VC-01..VC-11).**
-  The first action is task 3.1: ensure the four DEV-login/storage-state
-  security tests resolve the configured Chrome channel and execute rather
-  than skip; confirm exact CI evidence as specified. Then continue the
-  remaining spine corrections in stable task-ID order.
+  VC-01's stale bundled-Chromium skip guards and allowlist entries are removed;
+  all 34 focused DEV-login/storage-state tests passed locally, including all
+  four browser-backed tests (0 skips). Task 3.1 remains pending its required
+  exact-head GitHub Actions observation. Next: implement VC-02 (task 3.2).
 
 ## Exact Next Action
 
-Implement M4 task 3.1: inspect the DEV-login and storage-state skip guards,
-resolve the configured Chrome channel executable (or remove the stale skip),
-add focused proof that the four security tests execute, and obtain allowed
-GitHub Actions evidence showing they passed rather than skipped. Continue
-VC-02..VC-11 in task order, validate the M4 group, and record every checkpoint.
+Implement M4 task 3.2 (VC-02): attach skip identity reporting to both
+SYNTHETIC_CAMPAIGN and OWNER_PROVENANCE, strengthen identity matching and
+allowlist reasons, and add fail-closed missing/undeclared report probes.
+Retain task 3.1 as pending exact-head CI proof; validate the M4 group and
+observe the integrated head before marking the validation spine complete.
 
 ## Files Changed
 
@@ -111,10 +111,12 @@ VC-02..VC-11 in task order, validate the M4 group, and record every checkpoint.
 | `.agent/tasks/nightwatch-final-completion-corrections-v1/` | continuity v2 record for this child campaign | created at bootstrap |
 | `.agent/ACTIVE_TASK.md` | active route to this child | flipped at bootstrap |
 | `.agent/EXECUTION_PROMPT.md` | planner-executor handoff for this child | rewritten at bootstrap |
-| `bin/bin-typecheck.mjs`, `bin/lib/typecheck-ratchet.{mjs,d.mts}` | full-source per-file, total, stale-ceiling, and annotation-budget ratchet | VB-07 implemented; clean-checkout gate pending |
+| `bin/bin-typecheck.mjs`, `bin/lib/typecheck-ratchet.{mjs,d.mts}` | full-source per-file, total, stale-ceiling, and annotation-budget ratchet | VB-07 and M3 group gates complete at `d6fd98b1` |
 | `config/bin-typecheck.v1.json` | measured 1579-diagnostic baseline, 78 exact per-file ceilings, run-shards=16 | VB-07 implemented |
 | `tests/unit/binTypecheckRatchet.test.ts` | missing/growth/staleness/annotation regression tests | 5/5; registered FULL_REGRESSION / PARALLEL_SAFE |
-| `config/validation-universe.v1.json`, `config/validation-execution-classes.v1.json` | register ratchet suite and refresh the inventory digest | checks PASS |
+| `tests/unit/devLoginSecurity.test.ts`, `tests/unit/storageState.test.ts` | VC-01: remove stale bundled-Chromium skips so the configured system Chrome channel executes the security checks | 34/34 focused tests PASS; four browser-backed tests executed, CI proof pending |
+| `config/semantic-compatibility.v1.json` | remove obsolete CHROMIUM_UNAVAILABLE skip allowlist entries for the VC-01 suites | valid JSON; entries absent |
+| `config/validation-universe.v1.json`, `config/validation-execution-classes.v1.json` | register ratchet suite and refresh the inventory digest | checks PASS at M3 close |
 
 ## Validation Ledger
 
@@ -194,8 +196,34 @@ Relevant output: all steps exit 0, including `typecheck:bin`,
 true; 1337343 ms against the 300000 ms telemetry target (`withinTarget=false`);
 all 438 tests selected. No selection narrowing was applied.
 
+Command: initial `npx playwright test --project=nightwatch tests/unit/devLoginSecurity.test.ts tests/unit/storageState.test.ts` after removing obsolete skip-policy entries
+Result: FAIL before test discovery
+When: 2026-09-28
+Relevant failure/output summary: the JSON allowlist had a trailing comma after
+its new final element was removed. No tests ran; the comma was repaired
+immediately and strict JSON parsing passed on retry.
+
+Command: `npx playwright test --project=nightwatch tests/unit/devLoginSecurity.test.ts tests/unit/storageState.test.ts`
+Result: PASS (34 passed, 0 skipped)
+When: 2026-09-28
+Relevant output: all three DEV-login real-page tests and the storage-state
+live cookie-readability browser test executed through the configured Chrome
+channel. All 34 tests passed in 4.9 s; none were skipped.
+
+Command: `node -e` strict JSON parse + stale-reference search; TypeScript LSP diagnostics on both suites
+Result: PASS
+When: 2026-09-28
+Relevant output: semantic compatibility JSON parses; no `browserBinaryAvailable`
+or `CHROMIUM_UNAVAILABLE` references remain in the two suites/config; primary
+LSP diagnostics report 0 findings for both test files.
+
 ## Decisions Made During This Task
 
+- VC-01 removes the stale test-level browser skips instead of reimplementing
+  channel discovery: Playwright already owns the `channel: 'chrome'` launch
+  contract, so unavailable configured Chrome must fail setup rather than let
+  security assertions silently disappear. Its obsolete skip allowlist entries
+  are removed with it.
 - M3 gate acceptance follows each lane's explicit JSON `result`: both are
   PASS, while `withinTarget=false` remains disclosed performance telemetry.
   The affected-test selector broadened to all 438 tests and no selection or
@@ -218,6 +246,11 @@ all 438 tests selected. No selection narrowing was applied.
   because the suite took 782447 ms / 1337343 ms respectively. This is retained
   as a performance follow-up without narrowing the selection or changing the
   task's explicit PASS criterion.
+- VC-01's skip guard used `chromium.executablePath()` (bundled Chromium), while
+  the Playwright project is configured for system `channel: 'chrome'`. Remove
+  the stale skip itself rather than duplicate Playwright's channel-resolution
+  logic; the focused run now proves the four browser-backed assertions execute
+  with the same channel as CI.
 
 ## Blockers
 

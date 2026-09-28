@@ -18,9 +18,9 @@ restored the change and re-verified all 31 findings at `1d47e2ee` (21
 STILL_PRESENT, 5 CHANGED, 2 COMPLETED_LATER, CF-01..CF-03).
 Current milestone: M4 Validation spine (group 3, tasks 3.1-3.12: VC-01..VC-11).
 M1, M2, and M3 are COMPLETE.
-Next action: start task 3.1 (resolve the configured Chrome executable for the
-four DEV-login/storage-state security tests), then continue the remaining
-validation-spine corrections in task order and rerun focused + group gates.
+Next action: proceed to task 3.2 (skip-identity enforcement). VC-01's stale
+skip guards and allowlist entries are removed; all four browser-backed tests
+passed locally, with exact-head GitHub Actions proof pending M4 close-out.
 
 Authorization class: COMPLETION_CORRECTIONS_V1
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
