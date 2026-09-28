@@ -1819,6 +1819,45 @@
             "replace": "uses: actions/checkout@v4"
           }
         ]
+      },
+      {
+        "id": "HC-184",
+        "ops": [
+          {
+            "file": ".github/workflows/hardening.yml",
+            "search": "        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.0.0",
+            "replace": "      - uses: actions/checkout@v4"
+          }
+        ]
+      },
+      {
+        "id": "HC-185",
+        "ops": [
+          {
+            "file": ".github/workflows/hardening.yml",
+            "search": "        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.0.0",
+            "replace": "        - { uses: actions/checkout@v4 }"
+          }
+        ]
+      },
+      {
+        "id": "HC-186",
+        "ops": [
+          {
+            "file": ".github/workflows/hardening.yml",
+            "search": "        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.0.0",
+            "replace": "        \"uses\": \"actions/checkout@v4\""
+          }
+        ]
+      },
+      {
+        "id": "HC-187",
+        "ops": [
+          {
+            "file": ".github/workflows/vc08-second-file.yml",
+            "create": "steps:\n  - uses: actions/checkout@v4\n"
+          }
+        ]
       }
     ],
     "checkReleaseImplementedHonesty": [

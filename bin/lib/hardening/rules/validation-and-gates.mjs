@@ -428,11 +428,17 @@ export function checkAuthenticatedCapabilitySingleEvaluator() {
 }
 
 /**
- * NW-AUD-001 / D-19 — every workflow file pins every action by full commit
- * SHA. The previous check saw only one file and only 8-space `uses:` forms;
- * this one walks every `.github/workflows` YAML at any indentation (including
- * compact `- uses:` step forms) and anchors the reference to a 40-hex commit.
- * A tag, branch or floating major is a mutable supply-chain input and fails.
+ * NW-AUD-001 / D-19 / VC-08 - every workflow file pins every action by full
+ * commit SHA. The matcher is TOKEN-based rather than one whole-line regex so
+ * it covers every `uses` KEY form GitHub accepts - block (`uses: x`), compact
+ * (`- uses: x`), flow (`- { uses: x }`) and quoted (`"uses": "x"`) - and every
+ * occurrence on a line. YAML comments are stripped quote-aware first, so a
+ * trailing `# vX` never hides or fakes a reference. A `uses` key with no
+ * inline reference fails closed (a deferred or empty value cannot be pinned);
+ * without a YAML parser a heredoc line shaped exactly like a uses mapping
+ * counts as one - suspicious copy-paste material fails closed rather than
+ * passing. A tag, branch or floating major is a mutable supply-chain input
+ * and fails.
  */
 export function checkWorkflowActionPinning() {
   const workflowsDirectory = path.join(root, '.github', 'workflows');
@@ -446,7 +452,49 @@ export function checkWorkflowActionPinning() {
     fail('workflow pinning: no workflow files discovered; the scan is broken rather than the repository clean');
     return;
   }
-  const USES_LINE_RE = /^\s*(?:-\s+)?uses:\s*("[^"]+"|'[^']+'|\S+)\s*(?:#.*)?$/;
+  /**
+   * Quote-aware YAML comment stripping: `#` starts a comment only outside a
+   * quoted scalar and only at line start or after whitespace. Single-quote
+   * doubling and double-quote backslash escapes are followed so a quoted `#`
+   * is never mistaken for a comment (which could hide a moving reference), and
+   * an unterminated scalar swallows the rest of the line unstripped - the
+   * fail-closed direction.
+   * @param {string} line
+   * @returns {string}
+   */
+  const stripComment = (line) => {
+    let i = 0;
+    while (i < line.length) {
+      const ch = line.charAt(i);
+      if (ch === '#') {
+        if (i === 0 || /\s/.test(line.charAt(i - 1))) return line.slice(0, i);
+        i += 1;
+        continue;
+      }
+      if (ch === '"' || ch === "'") {
+        const quote = ch;
+        i += 1;
+        while (i < line.length) {
+          const inner = line.charAt(i);
+          if (quote === '"' && inner === '\\') { i += 2; continue; }
+          if (inner === quote) {
+            if (quote === "'" && line.charAt(i + 1) === "'") { i += 2; continue; }
+            i += 1;
+            break;
+          }
+          i += 1;
+        }
+        continue;
+      }
+      i += 1;
+    }
+    return line;
+  };
+  // VC-08 - token-based matching covers every `uses` KEY form: block, compact,
+  // flow and quoted, every occurrence on a line, with the comment stripped
+  // first so a trailing `# vX` can neither hide nor fake a reference.
+  const USES_KEY_RE = /(?:^|[\s,{])(?:"uses"|'uses'|uses)\s*:\s*("[^"]+"|'[^']+'|[^\s,}]+)/g;
+  const USES_EMPTY_RE = /(?:^|[\s,{])(?:"uses"|'uses'|uses)\s*:\s*[},]?\s*$/;
   for (const name of entries) {
     const relative = path.posix.join('.github/workflows', name);
     let text;
@@ -457,19 +505,26 @@ export function checkWorkflowActionPinning() {
       continue;
     }
     text.split(/\r?\n/).forEach((line, index) => {
-      const match = USES_LINE_RE.exec(line);
-      if (match === null) return;
-      const reference = match[1].replace(/^['"]|['"]$/g, '');
-      // Local actions and reusable-workflow paths are still pinned by ref.
-      const trimmed = reference.startsWith('./') || reference.startsWith('.github/') ? reference.replace(/^\.\/|^\.github\//, '') : reference;
-      const at = trimmed.lastIndexOf('@');
-      if (at <= 0) {
-        fail(`workflow pinning ${relative}:${index + 1} uses an unowned action reference without a @ref: ${reference}`);
+      const mapping = stripComment(line);
+      if (USES_EMPTY_RE.test(mapping)) {
+        // A uses key with no inline reference fails closed: a deferred or
+        // empty action reference cannot be pinned at all.
+        fail(`workflow pinning ${relative}:${index + 1} declares a uses key with no inline reference; a deferred or empty action reference cannot be pinned`);
         return;
       }
-      const pinned = trimmed.slice(at + 1);
-      if (!/^[0-9a-f]{40}$/.test(pinned)) {
-        fail(`workflow pinning ${relative}:${index + 1} uses a moving action reference (full commit SHA required): ${reference}`);
+      for (const match of mapping.matchAll(USES_KEY_RE)) {
+        const reference = (match[1] ?? '').replace(/^['"]|['"]$/g, '');
+        // Local actions and reusable-workflow paths are still pinned by ref.
+        const trimmed = reference.startsWith('./') || reference.startsWith('.github/') ? reference.replace(/^\.\/|^\.github\//, '') : reference;
+        const at = trimmed.lastIndexOf('@');
+        if (at <= 0) {
+          fail(`workflow pinning ${relative}:${index + 1} uses an unowned action reference without a @ref: ${reference}`);
+          continue;
+        }
+        const pinned = trimmed.slice(at + 1);
+        if (!/^[0-9a-f]{40}$/.test(pinned)) {
+          fail(`workflow pinning ${relative}:${index + 1} uses a moving action reference (full commit SHA required): ${reference}`);
+        }
       }
     });
   }

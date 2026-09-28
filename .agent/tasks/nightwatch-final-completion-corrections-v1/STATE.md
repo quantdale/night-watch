@@ -155,16 +155,26 @@ M4 group gate. Exact-head CI/artifact evidence and group gates remain pending.
   `receipt:sha256:86dea28a9dc385bb814a9a6f` with matching stdout digest,
   real sibling identity `sha256:35b17bb4…` unchanged). The VC-02
   clean-tree semantic-compat rerun also passed standalone (2177 total, 2163
-  passed, 14 declared skips, 0 failed, skipPolicy PASS).
+  passed, 14 declared skips, 0 failed, skipPolicy PASS). Task 3.7 (VC-07) is
+  complete: 11/11 at the 2 s bound under load (NOT REPRODUCED, recorded as a
+  first-class outcome), the root-cause comment corrected (the wait bounds
+  handler LATENCY after `goto`, not an async projection), `docs/FLAKE-LEDGER.md`
+  (FLAKE-001) created and declared APPEND_ONLY_ARCHIVE. Task 3.8 (VC-08) is
+  complete: the workflow-pinning matcher is token-based over every `uses` key
+  form (block/compact/flow/quoted, quote-aware comment stripping, fail-closed
+  on empty references) and probes HC-184..HC-187 cover the previously
+  unprobed forms — probe campaign 5/5 DETECTED, hardening suites 15/15,
+  typecheck:bin PASS at 1559 (validation-and-gates 23→22, total 1560→1559,
+  lowered in the same change).
 
 ## Exact Next Action
 
-Proceed to M4 task 3.7 (VC-07: reproduce the observerSemanticLedger flake at
-the 2 s bound under load, correct the root-cause comment, create a tracked
-flake ledger). The clean-gate proof and the semantic-compat clean-tree rerun
-are complete at `9a1abf28`. Preserve VC-01 exact-head CI and VC-03
-artifact observation as pending M4 close-out evidence; continue through task
-3.12 before integration.
+Proceed to M4 task 3.9 (VC-09: twins assert non-empty graphs;
+phase14Fresh early return becomes a declared skip; c03 describe skips use
+`classifyLiveSourceTestState`). The clean-gate proof, the semantic-compat
+clean-tree rerun, VC-07 and VC-08 are complete. Preserve VC-01 exact-head CI
+and VC-03 artifact observation as pending M4 close-out evidence; continue
+through task 3.12 before integration.
 
 ## Files Changed
 
@@ -197,6 +207,7 @@ artifact observation as pending M4 close-out evidence; continue through task
 | `tests/helpers/playwrightSkipIdentityReporter.ts`, `tests/unit/semanticSkipIdentity.test.ts` | VC-04 follow-through: the compat lane authorizes by its timing-lane identity (label forwarding had removed the report authorization); regression tests | semanticSkipIdentity 14/14; semantic-compat clean-tree rerun PASS (2177/2163/14/0, skipPolicy PASS) |
 | `docs/FLAKE-LEDGER.md`, `config/document-role.v1.json` | VC-07 tracked flake ledger (FLAKE-001: mechanism, 11/11 non-reproduction at the 2 s bound, shipped bound + residual risk) + APPEND_ONLY_ARCHIVE declaration | hardening:check PASS |
 | `tests/unit/observerSemanticLedger.test.ts` | VC-07 root-cause comment correction (synchronous projection; the wait bounds handler latency after `goto`) | observerSemanticLedger 2/2 PASS |
+| `bin/lib/hardening/rules/validation-and-gates.mjs`, `config/hardening-rule-probes.v1.json`, `config/bin-typecheck.v1.json` | VC-08 token-based workflow-pinning matcher (all `uses` key forms, comment-aware, fail-closed on empty refs) + probes HC-184..HC-187; ratchet lowered to 1559 | probe campaign 5/5 DETECTED; hardening suites 15/15; typecheck:bin PASS |
 | `tests/unit/semanticSkipIdentity.test.ts`, `tests/unit/selfDevSandboxConfinement.test.ts`, `tests/unit/syntheticCampaignDiagnostics.test.ts` | VC-02 identity/report, reason, and gate-receipt regressions | 29/29 receipt+policy; 25 passed, 1 declared host skip |
 | `config/validation-universe.v1.json`, `config/validation-execution-classes.v1.json` | register ratchet suite and refresh the inventory digest | checks PASS at M3 close; VC-06 re-measured at `sha256:95f903de` (581 discovered, 0 unclassified) |
 
@@ -519,6 +530,21 @@ comment; the new `docs/FLAKE-LEDGER.md` (APPEND_ONLY_ARCHIVE declaration in
 `config/document-role.v1.json`) satisfies document-role currency and the
 append-only/status-word rules.
 
+Command: `node bin/hardening-check.mjs --probe-campaign --only=checkWorkflowActionPinning` (VC-08)
+Result: PASS (5/5 DETECTED)
+When: 2026-09-28
+Relevant output: HC-147 (block form), HC-184 (compact `- uses:`), HC-185
+(flow `{ uses: }`), HC-186 (quoted `"uses":`) and HC-187 (second workflow
+file via the create op) all detected; workspace restored, git status
+unchanged.
+
+Command: focused `hardeningRuleQuantifiers.test.ts` + `hardeningProbeCampaign.test.ts` + `npm run hardening:check` + `npm run typecheck:bin`
+Result: PASS (15/15 + hardening + typecheck:bin at 1559)
+When: 2026-09-28
+Relevant output: quantifier/probe invariants green with the five workflow
+probes registered; typecheck:bin PASS after lowering validation-and-gates
+23→22 and the total 1560→1559 in the same change.
+
 ## Decisions Made During This Task
 
 - The D-04 gate label and the skip-report authorization are separate
@@ -587,6 +613,12 @@ append-only/status-word rules.
   under load 19–26 with 4 concurrent browsers (11/11 PASS) and is recorded as
   NOT REPRODUCED rather than papered over; the 20 s bound is retained with its
   residual risk and an event-driven fix sketch named in FLAKE-001.
+- VC-08 keeps the pinning matcher FAIL-CLOSED on shapes a regex cannot
+  disambiguate from a real uses mapping: a heredoc line shaped exactly like
+  one counts as one (suspicious copy-paste material fails), and a `uses` key
+  with no inline reference is its own failure — a deferred value cannot be
+  pinned. Quote-aware comment stripping follows single-quote doubling and
+  double-quote escapes so a quoted `#` can never hide a moving reference.
 - M3 gate acceptance follows each lane's explicit JSON `result`: both are
   PASS, while `withinTarget=false` remains disclosed performance telemetry.
   The affected-test selector broadened to all 438 tests and no selection or
@@ -637,6 +669,14 @@ afterwards.
 
 - The parent's M9-M14 work (10.2 remainder, 10.3-10.6, M10-M14) stays in
   the parent campaign after this child closes.
+- PRE-EXISTING (discovered 2026-09-28, VC-08 audit): the probe registry has
+  five duplicate IDs across other rules (HC-085 in
+  checkRuleEngineSoundness+checkRootOutputConfigLiteral, HC-090/091 in
+  checkPhase23QualityGate+checkC00WorkspaceIntegrity, HC-092/093 in
+  checkC00WorkspaceIntegrity+checkRuleEngineSoundness). IDs are not enforced
+  unique by checkRuleEngineSoundness and no test pins uniqueness. The VC-08
+  additions (HC-184..187) are unique; a uniqueness invariant for probe IDs is
+  deferred as follow-up.
 
 ## Resume Recipe
 
