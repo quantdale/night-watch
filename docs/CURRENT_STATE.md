@@ -807,7 +807,7 @@ when its OWN evidence exists.
 
 | Field | Claims | Current value | Why |
 | --- | --- | --- | --- |
-| `LAST_SUBSTANTIVE_IMPLEMENTATION_SHA` | the last commit that changed implementation AND was validated | `68d834b` | W12 measurement integrity, validation-universe registration, and live-task status-ledger closure: the freeze-integrity regression and receipt-derived current-source yield closeout. The fixed local gate passed its first nine groups before the synthetic lane timed out at its declared ten-minute MEDIUM bound; direct synthetic passed 1,897/1,897 and full regression passed 5,265 / 0 failed / 18 skipped. |
+| `LAST_SUBSTANTIVE_IMPLEMENTATION_SHA` | the last commit that changed implementation AND was validated | `6b19e428` | Corrections-campaign VC-02..VC-06 validation-spine work: exact skip identities, truthful topology classification, the D-04 CI/CLEAN-only relaxation, `gate:ui --ignore-scripts`, and the clean-checkout verdict/real-root honesty. Focused suites green (routing 15/15, phase23 15/15, receipt 41/41, census 14/14), probe campaigns HC-180..HC-183 DETECTED, typecheck:bin PASS at 1560 / 14 of 76, universe PASS at `sha256:95f903de`; the full `gate:clean` receipt at this anchor measured the real sibling root twice (unchanged) with TOOLCHAIN versions. |
 | `LAST_LOCALLY_VALIDATED_SHA` | the last commit where the local quality gate passed | `c18db55` | `gate:local` FULL PASS, all eleven required groups, receipt `receipt:sha256:5a261509b2f2b89819a5bc23` (SEMANTIC 2083/2070/13/0, OWNER 91, SYNTHETIC 1797/1797/0, deep containment lane PROVEN) |
 | `LAST_CLEAN_VALIDATED_SHA` | the last commit where the clean Node 20 gate passed | `c18db55` | `gate:clean` PASS, `nodeMajor` 20, install PASS, clean before/after, `nodeModulesReused` false, no auth or owner-finding state, sibling writes 0, inner gate receipt `receipt:sha256:b6ae47a38d8c653d245fe3bf`, clean receipt `clean-receipt:sha256:f1f125526bb37b67a0377dfb` |
 | `CI_OBSERVED_SHA` | the commit whose CI result was observed | `27bfe44` | run `33864698218` (2026-09-04): zero steps under the external runner block (`runner_id = 0`), recorded as `NO_STEPS_EXTERNAL_NON_EVIDENCE`; a docs-descendant head covering the `4642c16` implementation |
@@ -862,6 +862,17 @@ Drift notes, preserved as history rather than rewritten:
   terminated and is retained under "Why two CI anchors recorded a FAILURE on the
   way here" below — it is simply no longer the CURRENT CI anchor.
 
+- 2026-09-28 (corrections VC-06): the machine block's substantive anchor was
+  advanced from `32180001` to `6b19e428` because
+  `PROJECT_STATE_SUBSTANTIVE_BASELINE_STALE` proved the baseline lagged the
+  active task's validated implementation; the `LAST_SUBSTANTIVE` prose row is
+  reconciled in the same commit. The `LAST_LOCALLY_VALIDATED`,
+  `LAST_CLEAN_VALIDATED` and CI prose rows still name `c18db55` / `27bfe44` /
+  `4e0bfc1` while the machine block carries `84a169a` / `NONE` / `NONE` —
+  that older prose drift is recorded here and left for VA-03 (task 5.3),
+  which owns reconciling the parent-era anchors; only the row advanced by
+  this correction was rewritten.
+
 
 ```
 PROJECT_STATE_PROTOCOL_VERSION: nightwatch.project-state.v2
@@ -869,7 +880,7 @@ RELEASE_CERTIFICATION_PROTOCOL_VERSION: nightwatch.release-certification.v1
 PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
 RELEASE_CHECKPOINT_SHA: 2576c5751d33bb40046246e8fcf57c7cc5c30a57
 LIVE_HEAD_SHA: DISCOVER_FROM_GIT
-LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: 321800018bc819465326ba7c0556bac31e565da4
+LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: 6b19e4281e1125f0e6198ae6eb6ae4baac4ccfe7
 LAST_LOCALLY_VALIDATED_SHA: 84a169abcab8098301ec1e75c0912a988dd780de
 LAST_CLEAN_VALIDATED_SHA: 84a169abcab8098301ec1e75c0912a988dd780de
 CI_OBSERVED_SHA: NONE
