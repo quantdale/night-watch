@@ -2047,6 +2047,18 @@
           }
         ]
       }
+    ],
+    "checkCheckpointRoleGuardIntegrity": [
+      {
+        "id": "HC-179",
+        "ops": [
+          {
+            "file": "bin/lib/release-evidence.mjs",
+            "search": "if (guard === 'VALUES_ONLY_BINDINGS') return isValuesOnlyBindingChange(beforeText, afterText).valuesOnly;",
+            "replace": "if (guard === 'VALUES_ONLY_BINDINGS') return true;"
+          }
+        ]
+      }
     ]
   }
 }

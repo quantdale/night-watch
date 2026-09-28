@@ -1128,22 +1128,21 @@ export const APPROVED_CHECKPOINT_PATHS = [
   /^\.claude\/commands\/goal\.md$/,
   /^\.kimi-code\/AGENTS\.md$/,
   /^\.opencode\/commands\/goal\.md$/,
-  // A-01 / D2 — the checkpoint-neutral binding files. Path-eligible ONLY
-  // behind the diff-shape guard: a commit touching either stays documentary
-  // only when its exact byte diff is values-only (release evidence) or
-  // append-only (document-role corrections) and both sides validate against
-  // the closed schema. bin/lib/checkpoint-role.mjs enforces the guard for
-  // every commit-role classification; any other touch is substantive.
-  /^config\/release-evidence\.v1\.json$/,
-  /^config\/document-role-corrections\.v1\.json$/,
+  // A-01 / D2 — the checkpoint-neutral binding files are DELIBERATELY NOT
+  // here: their checkpoint approval is conditional on the DIFF SHAPE of the
+  // exact commit (values-only evidence re-binds, append-only correction
+  // registrations with the VB-03 same-commit pairing), so a guarded path is
+  // never approved by path alone (VB-06). bin/lib/checkpoint-role.mjs decides
+  // them through guardClassForPath/guardHoldsForChange; any other touch is
+  // substantive.
 ];
 
-/** Paths whose checkpoint approval is conditional on their diff shape. */
-export const DIFF_GUARDED_CHECKPOINT_PATHS = Object.freeze([
-  'config/release-evidence.v1.json',
-  'config/document-role-corrections.v1.json',
-]);
-
+/**
+ * True only for paths approved UNCONDITIONALLY. The two diff-guarded binding
+ * files are excluded on purpose (VB-06 / corrections task 2.6): path shape
+ * alone can never approve them — their admissibility is decided exclusively by
+ * `guardClassForPath` + `guardHoldsForChange` in bin/lib/checkpoint-role.mjs.
+ */
 export function isApprovedCheckpointPath(file) {
   return APPROVED_CHECKPOINT_PATHS.some((pattern) => pattern.test(file));
 }

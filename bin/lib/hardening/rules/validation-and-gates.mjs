@@ -464,18 +464,41 @@ export function checkWorkflowActionPinning() {
 }
 
 /**
+ * VB-06 / corrections task 2.6 — the diff-shape guards must stay REAL
+ * dispatches and the commit-role classifier must consume them live. A stubbed
+ * guard (`return true`) or a classifier that stops calling the guard silently
+ * re-opens every binding/registry rewrite this campaign closed (VB-01
+ * evidence erasure, VB-02 artifact paths, VB-03 pairing).
+ */
+export function checkCheckpointRoleGuardIntegrity() {
+  // VB-06 / corrections task 2.6 — the diff-shape guards must stay REAL
+  // dispatches and the commit-role classifier must consume them live. A
+  // stubbed guard (`return true`) or a classifier that stops calling the
+  // guard silently re-opens every binding/registry rewrite this campaign
+  // closed (VB-01 evidence erasure, VB-02 artifact paths, VB-03 pairing).
+  const release = readIncludingComments('bin/lib/release-evidence.mjs');
+  const checkpoint = readIncludingComments('bin/lib/checkpoint-role.mjs');
+  const required = [
+    ['bin/lib/release-evidence.mjs', release, 'isValuesOnlyBindingChange(beforeText, afterText).valuesOnly', 'the values-only guard dispatch'],
+    ['bin/lib/release-evidence.mjs', release, 'isAppendOnlyCorrectionsChange(beforeText, afterText).appendOnly', 'the append-only guard dispatch'],
+    ['bin/lib/checkpoint-role.mjs', checkpoint, 'guardHoldsForChange(file, before, after)', 'the classifier live guard consumption'],
+    ['bin/lib/checkpoint-role.mjs', checkpoint, 'guardClassForPath(file) === null && !isApprovedCheckpointPath(file)', 'the guarded-path exclusion from path-alone approval'],
+  ];
+  for (const [label, text, needle, what] of required) {
+    if (!text.includes(needle)) {
+      fail(`CHECKPOINT_ROLE_GUARD_STUBBED ${label} no longer carries ${what} (${needle}); a stubbed or dropped guard re-opens every guarded rewrite`);
+    }
+  }
+}
+
+/**
  * A-02 / D-01 — the release registry's `implemented` flag must equal whether a
- * probe is wired.
- *
- * The flag is a claim about the collector: `implemented: true` says the check
- * resolves a real probe output at evaluation time, `false` says its capability
- * has not landed. The claim drifted silently in both directions before: a
- * wired probe behind a stale `false` kept the condition structurally
- * unsatisfiable, and a `true` flag with no collector output resolved the
- * condition through the "not present at this checkpoint" path. This rule
- * reads both sides — the registry entries and the collector's output keys —
- * and requires exact agreement, including no orphan collector output. It fails
- * loudly when either side parses to nothing rather than passing vacuously.
+ * probe is wired. The flag is a claim about the collector: `implemented: true`
+ * says the check resolves a real probe output at evaluation time, `false` says
+ * its capability has not landed. This rule reads both sides — the registry
+ * entries and the collector's output keys — and requires exact agreement,
+ * including no orphan collector output. It fails loudly when either side
+ * parses to nothing rather than passing vacuously.
  */
 export function checkReleaseImplementedHonesty() {
   const registry = read('src/core/releaseCertification/index.ts');

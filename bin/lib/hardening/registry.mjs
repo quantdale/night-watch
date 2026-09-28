@@ -171,6 +171,7 @@ export const RULE_TABLE = Object.freeze([
   { name: 'checkRuleEngineSoundness', module: 'rule-engine', injectRegistry: true, family: 'rule-engine', quantifier: 'TOTALITY', subject: 'no fail-if-absent matcher uses the raw accessor and registry/probe/quantifier invariants hold' },
   { name: 'checkSiblingRootResolution', module: 'source-integrity', family: 'source-topology', quantifier: 'TOTALITY', subject: 'every source and bin module resolves the sibling repositories root through resolveSiblingRoot(), with the leaf constant confined to its three owners' },
   { name: 'checkReleaseImplementedHonesty', module: 'validation-and-gates', family: 'release-certification', quantifier: 'TOTALITY', subject: 'the implemented flag of every release advance check equals whether the collector carries a probe for it, with no orphan collector output' },
+  { name: 'checkCheckpointRoleGuardIntegrity', module: 'validation-and-gates', family: 'release-certification', quantifier: 'TOTALITY', subject: 'every diff-shape guard dispatches to its real shape predicate and the commit-role classifier consumes the guard live, never a stub', firstMatch: 'each required call form is matched per form over one bounded read of each module, so every form is evaluated exactly once' },
 ]);
 
 /**

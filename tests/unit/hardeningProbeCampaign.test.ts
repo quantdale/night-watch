@@ -12,7 +12,7 @@ import { test, expect } from '@playwright/test';
  * assumed. The cases below run the REAL `probe-campaign.mjs` against a
  * disposable repository holding a synthetic two-rule engine, so a deliberately
  * undetected probe, a vacuous run and a restore failure are all exercised for
- * real without touching the canonical checkout or its 90 recorded probes.
+ * real without touching the canonical checkout or its 91 recorded probes.
  *
  * The campaign resolves its root from `kernel.mjs`'s own location, so mirroring
  * `bin/child-environment.mjs` and `bin/lib/hardening/{kernel,probe-campaign}.mjs`

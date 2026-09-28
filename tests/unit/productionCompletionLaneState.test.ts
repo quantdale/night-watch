@@ -23,7 +23,8 @@ import {
   isValuesOnlyBindingChange,
   lineSha256Prefix,
 } from '../../bin/lib/release-evidence.mjs';
-import { correctionPairingViolations, removedLineDigests } from '../../bin/lib/checkpoint-role.mjs';
+import { checkpointRoleViolations, correctionPairingViolations, removedLineDigests } from '../../bin/lib/checkpoint-role.mjs';
+import { legacyEvidenceSha, loadReleaseEvidenceBindings, resolveEvidenceShaForSubject } from '../../bin/lib/release-evidence.mjs';
 import { isApprovedCheckpointPath } from '../../bin/agent-continuity-protocol.mjs';
 import type { LaneStateEntry } from '../../bin/lib/validation-lane-state.mjs';
 
@@ -117,6 +118,185 @@ test.describe('validation lane state', () => {
 
   // VB-03 (corrections task 2.3) — a correction is admitted only with its
   // matching archive-line removal in the SAME commit.
+  // VB-06 (corrections task 2.6) — the checkpoint-role classifier is proven:
+  // every declared diff-shape has a real-git case (read-only git init in a
+  // scratch repo), and a guarded path is never approved by path alone.
+  test('VB-06: values-only, append-only, rename, added-key, null and merge shapes classify correctly', () => {
+    const os = require('node:os') as typeof import('node:os');
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'nw-vb06-'));
+    const git = (args: string[]) => spawnSync('git', args, { cwd: root, encoding: 'utf8', shell: false });
+    const write = (file: string, text: string) => {
+      fs.mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
+      fs.writeFileSync(path.join(root, file), text);
+    };
+    const binding = (sha: string | null) => `${JSON.stringify({ schemaVersion: 'nightwatch.release-evidence.v1', bindings: [{ subject: 'root-compile', evidenceSha: sha, receiptDigest: null, observedAt: null, executor: null, artifactPaths: [] }] }, null, 2)}\n`;
+    const corrections = (entries: unknown[]) => `${JSON.stringify({ schemaVersion: 'nightwatch.document-role-corrections.v1', corrections: entries }, null, 2)}\n`;
+    try {
+      git(['init', '--quiet', '-b', 'main']);
+      git(['config', 'user.email', 'probe@nightwatch.local']);
+      git(['config', 'user.name', 'probe']);
+      write('config/release-evidence.v1.json', binding(SHA_A));
+      write('docs/other.md', 'prose\n');
+      git(['add', '--all']);
+      git(['commit', '--quiet', '--no-gpg-sign', '-m', 'base']);
+      const base = git(['rev-parse', 'HEAD']).stdout!.trim();
+
+      // (a) VALUES-ONLY: a value refresh stays documentary.
+      write('config/release-evidence.v1.json', binding(SHA_B));
+      git(['add', '--all']);
+      git(['commit', '--quiet', '--no-gpg-sign', '-m', 'values-only']);
+      const valuesOnly = git(['rev-parse', 'HEAD']).stdout!.trim();
+      expect(checkpointRoleViolations(root, ['config/release-evidence.v1.json'], { kind: 'commit', commit: valuesOnly })).toEqual([]);
+
+      // (b) NULL: erasing the evidence value is substantive.
+      write('config/release-evidence.v1.json', binding(null));
+      git(['add', '--all']);
+      git(['commit', '--quiet', '--no-gpg-sign', '-m', 'null evidence']);
+      const nulled = git(['rev-parse', 'HEAD']).stdout!.trim();
+      expect(checkpointRoleViolations(root, ['config/release-evidence.v1.json'], { kind: 'commit', commit: nulled }))
+        .toEqual(['config/release-evidence.v1.json']);
+
+      // (c) ADDED-KEY: a new binding key (artifactPaths edit shape) is structural.
+      write('config/release-evidence.v1.json', binding(SHA_B).replace('"artifactPaths": []', '"artifactPaths": ["config/report.json"]'));
+      git(['add', '--all']);
+      git(['commit', '--quiet', '--no-gpg-sign', '-m', 'added key']);
+      const addedKey = git(['rev-parse', 'HEAD']).stdout!.trim();
+      expect(checkpointRoleViolations(root, ['config/release-evidence.v1.json'], { kind: 'commit', commit: addedKey }))
+        .toEqual(['config/release-evidence.v1.json']);
+
+      // (d) RENAME: moving a binding file away is a delete of a guarded path
+      //     (substantive), never a documentary rename.
+      git(['mv', 'config/release-evidence.v1.json', 'config/release-evidence.moved.json']);
+      git(['commit', '--quiet', '--no-gpg-sign', '-m', 'rename away']);
+      const renamed = git(['rev-parse', 'HEAD']).stdout!.trim();
+      expect(checkpointRoleViolations(root, ['config/release-evidence.v1.json'], { kind: 'commit', commit: renamed }))
+        .toEqual(['config/release-evidence.v1.json']);
+      git(['mv', 'config/release-evidence.moved.json', 'config/release-evidence.v1.json']);
+      git(['commit', '--quiet', '--no-gpg-sign', '-m', 'rename back']);
+
+      // (e) APPEND-ONLY + pairing: the corrections file EXISTS first; then an
+      //     unpaired correction append is substantive (the VB-03 regression)
+      //     and the SAME commit removing the exempted line is documentary
+      //     (the ed8807e6 shape).
+      write('docs/archive.md', 'line one\ngone line\n');
+      write('config/document-role-corrections.v1.json', corrections([]));
+      git(['add', '--all']);
+      git(['commit', '--quiet', '--no-gpg-sign', '-m', 'seed archive and empty registry']);
+      const goneDigest = lineSha256Prefix('gone line');
+      // UNPAIRED: the entry exempts 'gone line' but this commit removes nothing.
+      write('config/document-role-corrections.v1.json', corrections([
+        { id: 'CORR-ONE', path: 'docs/archive.md', oldLineSha256: goneDigest, oldLineExcerpt: 'gone line', reason: 'r' },
+      ]));
+      git(['add', '--all']);
+      git(['commit', '--quiet', '--no-gpg-sign', '-m', 'unpaired append']);
+      const unpaired = git(['rev-parse', 'HEAD']).stdout!.trim();
+      expect(correctionPairingViolations(root, unpaired, 'config/document-role-corrections.v1.json', 'docs/archive.md').length).toBe(1);
+      // PAIRED: the entry exempts 'line one' and THIS commit removes exactly it.
+      write('config/document-role-corrections.v1.json', corrections([
+        { id: 'CORR-ONE', path: 'docs/archive.md', oldLineSha256: goneDigest, oldLineExcerpt: 'gone line', reason: 'r' },
+        { id: 'CORR-PAIR', path: 'docs/archive.md', oldLineSha256: lineSha256Prefix('line one'), oldLineExcerpt: 'line one', reason: 'r' },
+      ]));
+      write('docs/archive.md', 'gone line\n');
+      git(['add', '--all']);
+      git(['commit', '--quiet', '--no-gpg-sign', '-m', 'paired append + removal']);
+      const paired = git(['rev-parse', 'HEAD']).stdout!.trim();
+      expect(correctionPairingViolations(root, paired, 'config/document-role-corrections.v1.json', 'docs/archive.md')).toEqual([]);
+
+      // (f) MERGE: a merge that carries a STRUCTURAL guarded rewrite against
+      //     one parent is visible to the classifier (-m) and classified — it
+      //     was invisible before -m (diff-tree without -m lists NOTHING for a
+      //     merge). A merge carrying only a values-only re-bind stays
+      //     documentary. Both sides and mainline share one merge-base state
+      //     for the guarded file, so the merges land cleanly.
+      write('config/release-evidence.v1.json', binding(SHA_A));
+      write('docs/other.md', 'prose\n');
+      git(['add', '--all']);
+      git(['commit', '--quiet', '--no-gpg-sign', '-m', 'merge-fixture reset']);
+      const mergeBase = git(['rev-parse', 'HEAD']).stdout!.trim();
+      git(['checkout', '--quiet', '-b', 'side-values', mergeBase]);
+      write('config/release-evidence.v1.json', binding(SHA_C));
+      git(['add', '--all']);
+      git(['commit', '--quiet', '--no-gpg-sign', '-m', 'side values-only rebind']);
+      const sideValues = git(['rev-parse', 'HEAD']).stdout!.trim();
+      git(['checkout', '--quiet', '-b', 'side-structural', mergeBase]);
+      write('config/release-evidence.v1.json', binding(null));
+      git(['add', '--all']);
+      git(['commit', '--quiet', '--no-gpg-sign', '-m', 'side structural null-out']);
+      const sideStructural = git(['rev-parse', 'HEAD']).stdout!.trim();
+      git(['checkout', '--quiet', 'main']);
+      write('docs/other.md', 'mainline prose\n');
+      git(['add', '--all']);
+      git(['commit', '--quiet', '--no-gpg-sign', '-m', 'mainline prose']);
+      // The VALUES-only merge lands cleanly and its guarded touch IS visible
+      // with -m (invisible without it) — but its diff shape stays documentary.
+      const mergeValuesResult = git(['merge', '--no-ff', '--no-gpg-sign', '-m', 'merge values-only rebind', sideValues]);
+      expect(mergeValuesResult.status).toBe(0);
+      const mergedValues = git(['rev-parse', 'HEAD']).stdout!.trim();
+      const visibleWithM = git(['diff-tree', '--root', '--no-commit-id', '--name-only', '--no-renames', '-m', '-r', mergedValues]).stdout;
+      expect(visibleWithM).toContain('config/release-evidence.v1.json');
+      expect(git(['diff-tree', '--root', '--no-commit-id', '--name-only', '--no-renames', '-r', mergedValues]).stdout).not.toContain('config/release-evidence.v1.json');
+      expect(checkpointRoleViolations(root, ['config/release-evidence.v1.json'], { kind: 'commit', commit: mergedValues })).toEqual([]);
+      // The STRUCTURAL merge is classified with the guarded path (per-parent
+      // guard fails against the first parent): the exact hole VB-06 closes.
+      // Reset the guarded file to its merge-base value first (ours == base
+      // for that file) so the side's structural rewrite applies cleanly
+      // instead of conflicting with the values merge above.
+      write('config/release-evidence.v1.json', binding(SHA_A));
+      git(['add', '--all']);
+      git(['commit', '--quiet', '--no-gpg-sign', '-m', 'reset guarded file at merge-base value']);
+      const mergeStructuralResult = git(['merge', '--no-ff', '--no-gpg-sign', '-m', 'merge structural null-out', sideStructural]);
+      expect(mergeStructuralResult.status).toBe(0);
+      const mergedStructural = git(['rev-parse', 'HEAD']).stdout!.trim();
+      expect(git(['diff-tree', '--root', '--no-commit-id', '--name-only', '--no-renames', '-r', mergedStructural]).stdout).not.toContain('config/release-evidence.v1.json');
+      expect(checkpointRoleViolations(root, ['config/release-evidence.v1.json'], { kind: 'commit', commit: mergedStructural }))
+        .toEqual(['config/release-evidence.v1.json']);
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test('VB-06: guarded paths are never approved by path alone (and the dead constant is gone)', () => {
+    expect(isApprovedCheckpointPath('config/release-evidence.v1.json')).toBe(false);
+    expect(isApprovedCheckpointPath('config/document-role-corrections.v1.json')).toBe(false);
+    // The retired constant is gone entirely (read the source: the module is
+    // imported once statically above).
+    const source = fs.readFileSync(path.join(REPO_ROOT, 'bin', 'agent-continuity-protocol.mjs'), 'utf8');
+    expect(source).not.toContain('DIFF_GUARDED_CHECKPOINT_PATHS');
+  });
+
+  // VB-04 (corrections task 2.4) — the legacy-token regression: the `HEAD`
+  // marker in a retired location once fed the `liveHeadSha` read-before-
+  // declare path (the TDZ fixed in a784e668). The token itself is now
+  // invalid everywhere (VB-05), so the regression pin is that a legacy
+  // record carrying it never resolves anything.
+  test('VB-04: a legacy record carrying the HEAD token resolves nothing (regression for the liveHeadSha TDZ read)', () => {
+    const root = fs.mkdtempSync(path.join(require('node:os').tmpdir(), 'nw-vb04-'));
+    try {
+      fs.mkdirSync(path.join(root, 'config'), { recursive: true });
+      // Retired location: a condition whose legacy evidence is the HEAD token
+      // (the exact shape that fed the TDZ read).
+      fs.writeFileSync(path.join(root, 'config', 'release-certification.v1.json'), JSON.stringify({
+        schemaVersion: 'nightwatch.release-certification.v1',
+        conditions: [{ id: 'completion-ledger-truth', evidenceSha: 'HEAD' }],
+      }));
+      fs.writeFileSync(path.join(root, 'config', 'validation-lane-state.v1.json'), JSON.stringify({
+        schemaVersion: 'nightwatch.validation-lane-state.v1',
+        lanes: [{ laneId: 'root-compile', evidenceSha: 'HEAD' }],
+      }));
+      // The registry is present and valid but binds neither subject, so the
+      // retired locations are consulted once — and reject the token.
+      fs.writeFileSync(path.join(root, 'config', 'release-evidence.v1.json'), JSON.stringify({
+        schemaVersion: 'nightwatch.release-evidence.v1',
+        bindings: [],
+      }));
+      expect(legacyEvidenceSha(root, 'completion-ledger-truth')).toBeNull();
+      expect(legacyEvidenceSha(root, 'root-compile')).toBeNull();
+      expect(resolveEvidenceShaForSubject(root, 'completion-ledger-truth')).toBeNull();
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   test('VB-03: an unpaired correction append is inadmissible; its removal must land with it', () => {
     const correction = (id: string, digest: string) => ({ id, path: 'docs/CURRENT_STATE.md', oldLineSha256: digest, oldLineExcerpt: 'gone', reason: 'r' });
     const doc = (entries: unknown[]) => JSON.stringify({ schemaVersion: 'nightwatch.document-role-corrections.v1', corrections: entries });

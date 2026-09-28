@@ -34,7 +34,10 @@ function blobAt(root, ref, file) {
 }
 
 function touchedGuardedFiles(root, commit, guarded) {
-  const output = gitText(root, ['diff-tree', '--root', '--no-commit-id', '--name-only', '--no-renames', '-r', commit]);
+  // `-m` diffs a MERGE against EACH parent; without it a merge commit's
+  // touches are invisible and a merge could smuggle a guarded-file rewrite
+  // past the classifier (VB-06). Non-merges are unaffected by `-m`.
+  const output = gitText(root, ['diff-tree', '--root', '--no-commit-id', '--name-only', '--no-renames', '-m', '-r', commit]);
   if (output === null) return null;
   return output.split(/\r?\n/).map((line) => line.trim()).filter((line) => line !== '' && guarded.has(line));
 }
@@ -96,7 +99,9 @@ export function correctionPairingViolations(root, commit, correctionsFile, archi
 }
 
 export function checkpointRoleViolations(root, files, context) {
-  const violations = files.filter((file) => !isApprovedCheckpointPath(file));
+  // VB-06: guarded paths are excluded from the path-alone filter — their
+  // admissibility is decided exclusively by their diff-shape guard below.
+  const violations = files.filter((file) => guardClassForPath(file) === null && !isApprovedCheckpointPath(file));
   const guarded = new Set(files.filter((file) => guardClassForPath(file) !== null));
   if (guarded.size === 0) return [...new Set(violations)];
 
@@ -118,14 +123,22 @@ export function checkpointRoleViolations(root, files, context) {
       continue;
     }
     for (const file of touched) {
-      const parentRef = `${commit}^`;
-      const hasParent = gitText(root, ['rev-parse', '--verify', '--quiet', `${parentRef}^{commit}`]) !== null;
-      const before = hasParent ? blobAt(root, parentRef, file) : null;
-      const after = blobAt(root, commit, file);
-      if (!guardHoldsForChange(file, before, after)) {
-        violations.push(file);
-        continue;
+      // A merge must hold its guard against EVERY parent: a rewrite visible
+      // from one parent is substantive even when it matches the other.
+      const parentsLine = gitText(root, ['rev-list', '--parents', '-n', '1', commit]);
+      const parents = parentsLine === null ? [] : parentsLine.trim().split(/\s+/).slice(1);
+      const parentRefs = parents.length === 0 ? [null] : parents;
+      let guardFailed = false;
+      for (const parent of parentRefs) {
+        const before = parent === null ? null : blobAt(root, parent, file);
+        const after = blobAt(root, commit, file);
+        if (!guardHoldsForChange(file, before, after)) {
+          violations.push(file);
+          guardFailed = true;
+          break;
+        }
       }
+      if (guardFailed) continue;
       // VB-03: an append-only-shaped corrections append must still pair its
       // removal of the exempted archive line in THIS commit. Without the
       // pairing the entry is a purchased future rewrite and the commit is
