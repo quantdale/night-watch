@@ -100,10 +100,12 @@ test.describe('Phase 9A.1 — observer semantic evaluation ledger', () => {
     try {
       await page.goto(`${server.origin}/api/conforming`);
       await page.goto(`${server.origin}/api/mutated`);
-      // D-24 / R2-65 — event-driven waits: poll the actual condition with a
-      // load-tolerant bound instead of a fixed/short window, and poll the
-      // anomaly→findings projection rather than asserting it immediately
-      // (the projection is written asynchronously after the evaluation lands).
+      // D-24 / R2-65 / FLAKE-001 (see docs/FLAKE-LEDGER.md) — poll the actual
+      // condition with a load-tolerant bound instead of a fixed/short window.
+      // The bound tolerates response-handling LATENCY under suite load (route
+      // intercept → bounded body read → projection → ledger all complete after
+      // `goto` resolves), NOT an async findings projection: recordEvaluation
+      // and the findings write are one synchronous passage in the handler.
       await expect.poll(() => observer.semanticEvaluations().length, { timeout: 20_000 }).toBe(2);
 
       const evaluations = observer.semanticEvaluations();

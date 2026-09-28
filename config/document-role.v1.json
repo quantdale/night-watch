@@ -29,6 +29,10 @@
       "role": "APPEND_ONLY_ARCHIVE"
     },
     {
+      "path": "docs/FLAKE-LEDGER.md",
+      "role": "APPEND_ONLY_ARCHIVE"
+    },
+    {
       "path": "docs/HOST-CAPABILITY-MATRIX.md",
       "role": "CURRENT_TRUTH",
       "maxLines": 200

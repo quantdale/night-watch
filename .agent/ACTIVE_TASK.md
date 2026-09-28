@@ -38,10 +38,17 @@ COMPLETE at `9a1abf28` (clean gate 15/15 groups PASS, receipt
 and repaired three real defects: PROJECT_STATE_SUBSTANTIVE_BASELINE_STALE
 (baseline advanced to `6b19e428` in `e9ad3300`), HARDENING APPEND_ONLY on the
 reconciled prose row (CORR-CORR-002), and the VC-04 report-authorization
-regression (lane-identity authorization in `9a1abf28`). M4 group gates and
-exact-head CI/artifact observation remain pending.
-Next action: proceed to task 3.7 (VC-07 flake reproduction at the 2 s bound
-+ root-cause comment + tracked flake ledger). VC-01's stale skip guards
+regression (lane-identity authorization in `9a1abf28`). Task 3.7 (VC-07
+flake ledger + root-cause comment correction) is complete: 11/11 at the 2 s
+bound under load 19–26 with concurrent browsers — NOT REPRODUCED, recorded
+honestly in `docs/FLAKE-LEDGER.md` (FLAKE-001, declared APPEND_ONLY_ARCHIVE);
+the root-cause comment now names the true mechanism (recordEvaluation and the
+findings write are one synchronous passage — the wait bounds handler LATENCY
+after `goto`, not an async projection). observerSemanticLedger 2/2 and
+hardening:check PASS. M4 group gates and exact-head CI/artifact observation
+remain pending.
+Next action: proceed to task 3.8 (VC-08 workflow-pinning probes for compact,
+second-file, flow and quoted forms; widen the regex). VC-01's stale skip guards
 and allowlist entries are removed; all four browser-backed tests passed locally,
 with exact-head GitHub Actions proof pending M4 close-out.
 
@@ -87,7 +94,7 @@ EXTERNAL CONTACT AUTHORIZED (OD-3 ONLY):
   provider proof run; one npm registry advisory query.
 
 CURRENT STATUS:
-  IN_PROGRESS — M4 validation spine through VC-06; M3 certification anchors
+  IN_PROGRESS — M4 validation spine through VC-07; M3 certification anchors
   validated at `d6fd98b1`; exact-head CI/artifact observation remains pending.
 
 ALPHAUS DEV / NEXT / PRODUCTION CONTACT:   NOT AUTHORIZED

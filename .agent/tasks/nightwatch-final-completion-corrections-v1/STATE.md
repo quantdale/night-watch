@@ -195,6 +195,8 @@ artifact observation as pending M4 close-out evidence; continue through task
 | `tests/unit/gateReceiptPersistence.test.ts` | VC-06 verdict/manifest/early-receipt/wiring regressions (9 new tests) | 41/41 PASS |
 | `docs/CURRENT_STATE.md`, `config/document-role-corrections.v1.json` | advance the substantive baseline to `6b19e428` (PROJECT_STATE_SUBSTANTIVE_BASELINE_STALE repair) and declare CORR-CORR-002 for the reconciled prose row | project:check PASS at `e9ad3300`; hardening:check PASS |
 | `tests/helpers/playwrightSkipIdentityReporter.ts`, `tests/unit/semanticSkipIdentity.test.ts` | VC-04 follow-through: the compat lane authorizes by its timing-lane identity (label forwarding had removed the report authorization); regression tests | semanticSkipIdentity 14/14; semantic-compat clean-tree rerun PASS (2177/2163/14/0, skipPolicy PASS) |
+| `docs/FLAKE-LEDGER.md`, `config/document-role.v1.json` | VC-07 tracked flake ledger (FLAKE-001: mechanism, 11/11 non-reproduction at the 2 s bound, shipped bound + residual risk) + APPEND_ONLY_ARCHIVE declaration | hardening:check PASS |
+| `tests/unit/observerSemanticLedger.test.ts` | VC-07 root-cause comment correction (synchronous projection; the wait bounds handler latency after `goto`) | observerSemanticLedger 2/2 PASS |
 | `tests/unit/semanticSkipIdentity.test.ts`, `tests/unit/selfDevSandboxConfinement.test.ts`, `tests/unit/syntheticCampaignDiagnostics.test.ts` | VC-02 identity/report, reason, and gate-receipt regressions | 29/29 receipt+policy; 25 passed, 1 declared host skip |
 | `config/validation-universe.v1.json`, `config/validation-execution-classes.v1.json` | register ratchet suite and refresh the inventory digest | checks PASS at M3 close; VC-06 re-measured at `sha256:95f903de` (581 discovered, 0 unclassified) |
 
@@ -498,6 +500,25 @@ sibling root DEFAULT measured twice, unchanged
 groups PASS (SEMANTIC_COMPATIBILITY 367084ms, SYNTHETIC_CAMPAIGN 187492ms,
 HARDENING_PROBES 173786ms, TOPOLOGY 54344ms, UI_CONTROL_CENTER 49002ms).
 
+Command: observerSemanticLedger at the 2 s bound under load (VC-07 reproduction attempt)
+Result: NOT REPRODUCED (11/11 runs PASS at the 2 s bound)
+When: 2026-09-28
+Relevant output: 3 solo runs under 20 CPU spinners (load 19–24), 2 rounds of
+4 concurrent browser contexts (load 25–26): all 11 runs passed (9.8–22.3 s
+each). The loopback fixture's two tiny responses finish within 2 s even under
+heavy CPU contention; the historical flake load is not reproducible on demand.
+Recorded in `docs/FLAKE-LEDGER.md` FLAKE-001 with the true mechanism
+(synchronous projection in one handler passage; the wait bounds handler
+LATENCY after `goto`), the shipped 20 s bound and its residual risk.
+
+Command: focused `observerSemanticLedger.test.ts` + `npm run hardening:check` (VC-07 close)
+Result: PASS (2/2 + hardening)
+When: 2026-09-28
+Relevant output: both ledger tests green with the corrected root-cause
+comment; the new `docs/FLAKE-LEDGER.md` (APPEND_ONLY_ARCHIVE declaration in
+`config/document-role.v1.json`) satisfies document-role currency and the
+append-only/status-word rules.
+
 ## Decisions Made During This Task
 
 - The D-04 gate label and the skip-report authorization are separate
@@ -562,6 +583,10 @@ HARDENING_PROBES 173786ms, TOPOLOGY 54344ms, UI_CONTROL_CENTER 49002ms).
   SEMANTIC_COMPATIBILITY); the trio of failures found three REAL defects (the
   stale baseline, the undeclared prose-row rewrite, and the VC-04 report
   authorization regression) — none were noise.
+  NOT_REPRODUCED is a first-class outcome: the 2 s bound flake was attempted
+  under load 19–26 with 4 concurrent browsers (11/11 PASS) and is recorded as
+  NOT REPRODUCED rather than papered over; the 20 s bound is retained with its
+  residual risk and an event-driven fix sketch named in FLAKE-001.
 - M3 gate acceptance follows each lane's explicit JSON `result`: both are
   PASS, while `withinTarget=false` remains disclosed performance telemetry.
   The affected-test selector broadened to all 438 tests and no selection or
