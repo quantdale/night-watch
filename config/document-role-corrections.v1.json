@@ -154,6 +154,13 @@
       "oldLineSha256": "sha256:7932c01c5318d3801144b323",
       "oldLineExcerpt": "| `SUCCESSOR_CAMPAIGN_ENGINE_V1_STATUS` | `COMPLETE_LOCAL_NOT_CI_VERIFIED`",
       "reason": "Release-support validation superseded the earlier local and clean receipt values for the same completed successor campaign; the governed status remains COMPLETE_LOCAL_NOT_CI_VERIFIED and the implementation inventory is unchanged."
+    },
+    {
+      "id": "CORR-CORR-001",
+      "path": "docs/CURRENT_STATE.md",
+      "oldLineSha256": "sha256:d82aae956ce9d4b666cbb9f5",
+      "oldLineExcerpt": "> Durable memory for the next agent/session. Last updated: **2026-09-25**",
+      "reason": "The corrections child campaign's live-state block sync (2026-09-28) advanced the governed LIVE_TASK_ID/LIVE_PHASE and LAST_SUBSTANTIVE_IMPLEMENTATION_SHA machine fields on 2026-09-28; the header date must cover the archive's own last change, while the statement itself is unchanged (same pattern as CORR-SUCC-001)."
     }
   ]
 }
