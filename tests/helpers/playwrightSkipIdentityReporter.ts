@@ -39,7 +39,14 @@ export default class PlaywrightSkipIdentityReporter implements Reporter {
 
   constructor() {
     const gateEnvironment = process.env.NIGHTWATCH_GATE_ENVIRONMENT ?? '';
-    const authorized = AUTHORIZED_ENVIRONMENTS.has(gateEnvironment);
+    // VC-04: semantic-compat forwards the caller's gate classification instead
+    // of self-declaring COMPATIBILITY (that label grants no D-04 relaxation),
+    // so THIS lane authorizes by its own timing-lane identity — which only the
+    // semantic-compat runner sets. The other three lanes keep authorizing
+    // through the gate label they set explicitly, and a bare Playwright run
+    // with neither signal stays unauthorized even if a path is present.
+    const laneAuthorized = (process.env.NIGHTWATCH_TIMING_LANE ?? '') === 'semantic-compatibility';
+    const authorized = AUTHORIZED_ENVIRONMENTS.has(gateEnvironment) || laneAuthorized;
     const requested = authorized ? process.env.NIGHTWATCH_SKIP_REPORT_PATH : undefined;
     if (authorized && (requested === undefined || requested.trim() === '')) {
       throw new Error('SKIP_REPORT_PATH_REQUIRED');

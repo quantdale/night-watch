@@ -167,6 +167,42 @@ test.describe('semantic skip-identity policy', () => {
     }
   });
 
+  test('the semantic-compatibility lane authorizes by its timing lane when the gate label is only forwarded (VC-04)', () => {
+    const previousEnvironment = process.env.NIGHTWATCH_GATE_ENVIRONMENT;
+    const previousLane = process.env.NIGHTWATCH_TIMING_LANE;
+    const previousReportPath = process.env.NIGHTWATCH_SKIP_REPORT_PATH;
+    const destination = path.join(REPO_ROOT, 'artifacts', 'skip-identity-lane-auth-probe.json');
+    try {
+      // VC-04 removed semantic-compat's self-declared COMPATIBILITY label, so
+      // authorization now follows the lane identity the runner always sets.
+      delete process.env.NIGHTWATCH_GATE_ENVIRONMENT;
+      process.env.NIGHTWATCH_TIMING_LANE = 'semantic-compatibility';
+      delete process.env.NIGHTWATCH_SKIP_REPORT_PATH;
+      // Authorized by lane identity, so omitting the path still fails closed.
+      expect(() => new PlaywrightSkipIdentityReporter()).toThrow('SKIP_REPORT_PATH_REQUIRED');
+
+      process.env.NIGHTWATCH_SKIP_REPORT_PATH = destination;
+      fs.rmSync(destination, { force: true });
+      new PlaywrightSkipIdentityReporter().onEnd({ status: 'passed' } as never);
+      expect(fs.existsSync(destination)).toBe(true);
+      fs.rmSync(destination, { force: true });
+
+      // An unrelated run with neither the gate label nor the compat lane
+      // identity stays unauthorized: a present path never grants authority.
+      process.env.NIGHTWATCH_TIMING_LANE = 'unrelated';
+      new PlaywrightSkipIdentityReporter().onEnd({ status: 'passed' } as never);
+      expect(fs.existsSync(destination)).toBe(false);
+    } finally {
+      if (previousEnvironment === undefined) delete process.env.NIGHTWATCH_GATE_ENVIRONMENT;
+      else process.env.NIGHTWATCH_GATE_ENVIRONMENT = previousEnvironment;
+      if (previousLane === undefined) delete process.env.NIGHTWATCH_TIMING_LANE;
+      else process.env.NIGHTWATCH_TIMING_LANE = previousLane;
+      if (previousReportPath === undefined) delete process.env.NIGHTWATCH_SKIP_REPORT_PATH;
+      else process.env.NIGHTWATCH_SKIP_REPORT_PATH = previousReportPath;
+      fs.rmSync(destination, { force: true });
+    }
+  });
+
   test('every authoritative Playwright lane attaches the reporter and fails closed on its report', () => {
     const campaign = fs.readFileSync(path.join(REPO_ROOT, 'bin', 'campaign-synthetic.mjs'), 'utf8');
     const shards = fs.readFileSync(path.join(REPO_ROOT, 'bin', 'run-shards.mjs'), 'utf8');
