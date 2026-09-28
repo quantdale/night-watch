@@ -32,6 +32,8 @@ from sound foundations at M9 task 10.2 (remainder: 59/76 declared).
 
 ## Current Milestone
 
+Milestone ID: M3
+
 M3 Certification anchors (group 2, tasks 2.1-2.8: VB-01..VB-07). M1
 (bootstrap + Phase 1 preconditions) and M2 (task 6.1 formatter policy,
 landed FIRST per RESUME_PROMPT §2) are COMPLETE — see Work In Progress and

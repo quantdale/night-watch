@@ -16,13 +16,15 @@ CF-01..CF-03).
 Previous checkpoint: 2026-09-28 — parent M9 10.2 checkpointed at
 `32180001`/`1d47e2ee` (59/76 declared), exact-head CI run 36366426608 green,
 parent session released and removed.
-Current milestone: Phase 1 bootstrap COMPLETE; next is corrections task 6.1
-(repository formatter policy) FIRST per RESUME_PROMPT, then groups 2-6.
-Next action: implement task 6.1 (biome.json with formatter and
-organize-imports disabled + .editorconfig + the formatter-changes-nothing
-test), commit it as the first commit after bootstrap, then continue group 2
-(certification anchors VB-01..VB-07) with focused suites + gate:dev +
-gate:milestone and STATE updates after each group.
+Current milestone: M3 Certification anchors (group 2, tasks 2.1-2.8:
+VB-01..VB-07). M1 (bootstrap + Phase 1 preconditions) and M2 (task 6.1
+formatter policy, landed FIRST per RESUME_PROMPT §2) are COMPLETE.
+Next action: implement the certification-anchor tasks 2.1-2.8 (VB-01
+strict evidenceSha, VB-02 artifactPaths, VB-03 corrections guard pairing,
+VB-05 compatibility window, VB-06 checkpoint-role tests/probe, VB-07 real
+bin-typecheck ratchet), with focused suites + gate:dev + gate:milestone
+PASS after the group and probes committed before hardening:rules; commit,
+then continue to the validation-spine group.
 
 Authorization class: COMPLETION_CORRECTIONS_V1
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
