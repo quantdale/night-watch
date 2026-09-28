@@ -9,5 +9,6 @@ export function buildShardChildEnvironment(
     readonly receiptPath: string;
     readonly shardId: string;
     readonly runRoot: string;
+    readonly skipReportPath?: string;
   },
 ): NodeJS.ProcessEnv;

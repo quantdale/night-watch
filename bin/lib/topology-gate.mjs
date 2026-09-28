@@ -24,6 +24,8 @@
 // Pure: capabilities, file texts and receipts are inputs. Only
 // `describeEnvelopePlan` builds an argv array; it runs nothing.
 
+import path from 'node:path';
+
 export const TOPOLOGY_GATE_SCHEMA = 'nightwatch.gate-topology-receipt.v1';
 export const TOPOLOGY_REGRESSIONS_SCHEMA = 'nightwatch.topology-regressions.v1';
 
@@ -124,8 +126,13 @@ export function parseSiblingRoot(source) {
  * silently: `canonicalBwrapCandidates` is asserted against the runtime source
  * by the focused suite.
  */
-export function canonicalBwrapCandidates() {
-  return Object.freeze(['/usr/bin/bwrap', '/bin/bwrap']);
+/** @param {NodeJS.ProcessEnv} [environment=process.env] */
+export function canonicalBwrapCandidates(environment = process.env) {
+  const searchPath = typeof environment.PATH === 'string' ? environment.PATH : environment.Path;
+  if (typeof searchPath !== 'string') return Object.freeze([]);
+  const names = process.platform === 'win32' ? ['bwrap.exe', 'bwrap.cmd', 'bwrap'] : ['bwrap'];
+  const candidates = searchPath.split(path.delimiter).flatMap((directory) => names.map((name) => path.resolve(directory || '.', name)));
+  return Object.freeze([...new Set(candidates)]);
 }
 
 /**
@@ -232,7 +239,7 @@ export function absenceTookEffect(absence, probe) {
   if (absence.id === 'fresh-home') {
     return {
       absent: typeof probe.home === 'string' && probe.home === probe.expectedHome && probe.writable === true,
-      detail: `home=${String(probe.home)} expected=${String(probe.expectedHome)} writable=${String(probe.writable)}`,
+      detail: `homeMatchesExpected=${String(typeof probe.home === 'string' && probe.home === probe.expectedHome)} writable=${String(probe.writable)}`,
     };
   }
   return { absent: false, detail: `unknown absence ${absence.id}` };
@@ -320,6 +327,22 @@ export function evaluateDirectObservation(absence, probe) {
     detail: effect.detail,
     findings: [],
   };
+}
+
+/**
+ * A topology claim is PROVEN only when the complete Bubblewrap envelope ran
+ * and every declared absence was exercised. A direct-observation fallback is
+ * useful diagnostic evidence, but it is never promoted to full proof.
+ *
+ * @param {{ mode: string, findings: readonly unknown[], envelope: string | null, unexercisedAbsences: readonly string[] }} input
+ * @returns {'PROVEN' | 'PROVEN_DEGRADED' | 'NOT_PROVEN'}
+ */
+export function classifyRunnerTopology({ mode, findings, envelope, unexercisedAbsences }) {
+  if (mode === 'static' || findings.length > 0 || (envelope !== 'BUBBLEWRAP' && envelope !== 'BWRAP_UNAVAILABLE_DEGRADED')) {
+    return 'NOT_PROVEN';
+  }
+  if (envelope === 'BUBBLEWRAP' && unexercisedAbsences.length === 0) return 'PROVEN';
+  return 'PROVEN_DEGRADED';
 }
 
 /**

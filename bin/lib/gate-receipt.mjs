@@ -22,6 +22,8 @@ import path from 'node:path';
 const STRUCTURED_CHILD_SCHEMAS = new Set([
   'nightwatch.semantic-compatibility.v1',
   'nightwatch.synthetic-campaign.v1',
+  'nightwatch.shard-run-receipt.v1',
+  'nightwatch.gate-topology-receipt.v1',
 ]);
 
 function structuredChildReceipt(output) {
@@ -46,8 +48,10 @@ export function parseCounts(output) {
   const counts = { total: null, passed: null, skipped: null, didNotRun: null, failed: null };
   const structured = structuredChildReceipt(output);
   if (structured !== null) {
+    const source = structured.schemaVersion === 'nightwatch.shard-run-receipt.v1' ? structured.totals : structured;
     for (const key of ['total', 'passed', 'skipped', 'didNotRun', 'failed']) {
-      if (Number.isInteger(structured[key])) counts[key] = structured[key];
+      const sourceKey = key === 'total' && structured.schemaVersion === 'nightwatch.shard-run-receipt.v1' ? 'planned' : key;
+      if (Number.isInteger(source?.[sourceKey])) counts[key] = source[sourceKey];
     }
     if (counts.total === null && [counts.passed, counts.skipped, counts.failed].every((item) => Number.isInteger(item))) {
       counts.total = counts.passed + counts.skipped + counts.failed + (Number.isInteger(counts.didNotRun) ? counts.didNotRun : 0);
@@ -74,7 +78,58 @@ export function parseCounts(output) {
 // The optional class suffix is the sanitized assertion class (4.5): plain
 // `file:line` literals from historical receipts stay valid.
 const SAFE_LOCATION_PATTERN = /^tests\/(?:unit|smoke)\/[A-Za-z0-9._/-]+\.test\.ts:\d+(?::(?:TIMEOUT|EXPECT_EQUAL|EXPECT_MATCH|EXPECT_THROW|UNCLASSIFIED))?$/;
+const SAFE_SKIP_LOCATION_PATTERN = /^tests\/(?:unit|smoke|manual)\/[A-Za-z0-9._/-]+:\d+$/;
 const SAFE_LANE_PATTERN = /^[A-Z][A-Z0-9_]{1,63}$/;
+const SAFE_TOPOLOGY_CLASSES = new Set(['PROVEN', 'PROVEN_DEGRADED', 'NOT_PROVEN']);
+const SAFE_TOPOLOGY_ENVELOPES = new Set(['BUBBLEWRAP', 'BWRAP_UNAVAILABLE_DEGRADED']);
+const SAFE_TOPOLOGY_ABSENCES = new Set(['sibling-root', 'bwrap', 'chrome', 'fresh-home']);
+const SAFE_SKIP_POLICY_RESULTS = new Set(['PASS', 'UNDECLARED_SKIP', 'SKIP_POLICY_UNCONFIGURED', 'SKIP_REPORT_MISSING', 'SKIP_REPORT_INVALID']);
+
+function nonnegativeCount(value) {
+  return Number.isSafeInteger(value) && value >= 0 ? value : null;
+}
+
+function normalizeSkipPolicy(value, fallbackSkipped) {
+  if (value === null || value === undefined) {
+    return { result: 'SKIP_REPORT_MISSING', skipped: null, undeclared: null };
+  }
+  if (typeof value !== 'object' || Array.isArray(value)) {
+    return { result: 'SKIP_REPORT_INVALID', skipped: null, undeclared: null };
+  }
+  const result = SAFE_SKIP_POLICY_RESULTS.has(value.result) ? value.result : 'SKIP_REPORT_INVALID';
+  const skipped = nonnegativeCount(value.skipped) ?? nonnegativeCount(fallbackSkipped);
+  const undeclared = nonnegativeCount(value.undeclared);
+  const declared = nonnegativeCount(value.declared);
+  const undeclaredSkips = (Array.isArray(value.undeclaredSkips) ? value.undeclaredSkips : [])
+    .filter((location) => typeof location === 'string' && SAFE_SKIP_LOCATION_PATTERN.test(location) && !location.split('/').includes('..'))
+    .slice(0, 16);
+  return {
+    result,
+    skipped,
+    undeclared,
+    ...(declared === null ? {} : { declared }),
+    ...(undeclaredSkips.length === 0 ? {} : { undeclaredSkips }),
+  };
+}
+
+function shardSkipPolicy(value) {
+  if (!Array.isArray(value.shardResults) || value.shardResults.length === 0) {
+    return { result: 'SKIP_REPORT_MISSING', skipped: null, undeclared: null };
+  }
+  const policies = value.shardResults.map((shard) => normalizeSkipPolicy(
+    shard !== null && typeof shard === 'object' && !Array.isArray(shard) ? shard.skipPolicy : null,
+    null,
+  ));
+  const failure = policies.find((policy) => policy.result !== 'PASS');
+  const sum = (field) => policies.every((policy) => Number.isSafeInteger(policy[field]))
+    ? policies.reduce((total, policy) => total + policy[field], 0)
+    : null;
+  return {
+    result: failure?.result ?? 'PASS',
+    skipped: sum('skipped'),
+    undeclared: sum('undeclared'),
+  };
+}
 
 export function parseSafeDetails(output) {
   const value = structuredChildReceipt(output);
@@ -87,6 +142,48 @@ export function parseSafeDetails(output) {
   // imply deep-containment coverage that the host could not provide.
   if (typeof value.deepContainmentLane === 'string' && SAFE_LANE_PATTERN.test(value.deepContainmentLane)) {
     details.deepContainmentLane = value.deepContainmentLane;
+  }
+  if (value.schemaVersion === 'nightwatch.gate-topology-receipt.v1') {
+    const claim = value.ciClaim !== null && typeof value.ciClaim === 'object' && !Array.isArray(value.ciClaim)
+      ? value.ciClaim
+      : {};
+    const dynamic = value.dynamic !== null && typeof value.dynamic === 'object' && !Array.isArray(value.dynamic)
+      ? value.dynamic
+      : {};
+    const envelope = SAFE_TOPOLOGY_ENVELOPES.has(dynamic.envelope) && dynamic.envelope === claim.runnerTopologyEnvelope
+      ? dynamic.envelope
+      : null;
+    const rawUnexercisedAbsences = (Array.isArray(dynamic.entries) ? dynamic.entries : [])
+      .filter((entry) => entry !== null && typeof entry === 'object' && entry.notExercised !== undefined)
+      .map((entry) => entry.absence);
+    const unexercisedAbsences = rawUnexercisedAbsences
+      .filter((absence) => SAFE_TOPOLOGY_ABSENCES.has(absence))
+      .filter((absence, index, values) => values.indexOf(absence) === index)
+      .slice(0, SAFE_TOPOLOGY_ABSENCES.size);
+    const rawClaimedAbsences = Array.isArray(claim.unexercisedAbsences) ? claim.unexercisedAbsences : [];
+    const claimedAbsences = rawClaimedAbsences
+      .filter((absence) => SAFE_TOPOLOGY_ABSENCES.has(absence))
+      .filter((absence, index, values) => values.indexOf(absence) === index)
+      .slice(0, SAFE_TOPOLOGY_ABSENCES.size);
+    const absenceClaimsMatch = rawUnexercisedAbsences.length === unexercisedAbsences.length
+      && rawClaimedAbsences.length === claimedAbsences.length
+      && JSON.stringify(unexercisedAbsences) === JSON.stringify(claimedAbsences);
+    const topologyClass = value.runnerTopologyClass;
+    const classMatchesClaim = topologyClass === claim.runnerTopologyClass;
+    if (envelope !== null) details.topologyEnvelope = envelope;
+    if (unexercisedAbsences.length > 0) details.unexercisedAbsences = unexercisedAbsences;
+    if (topologyClass === 'NOT_PROVEN' && classMatchesClaim) {
+      details.runnerTopologyClass = topologyClass;
+    } else if (topologyClass === 'PROVEN' && classMatchesClaim && envelope === 'BUBBLEWRAP' && absenceClaimsMatch && unexercisedAbsences.length === 0) {
+      details.runnerTopologyClass = topologyClass;
+    } else if (topologyClass === 'PROVEN_DEGRADED' && classMatchesClaim && envelope !== null && absenceClaimsMatch
+      && (envelope === 'BWRAP_UNAVAILABLE_DEGRADED' || unexercisedAbsences.length > 0)) {
+      details.runnerTopologyClass = topologyClass;
+    }
+  } else {
+    details.skipPolicy = value.schemaVersion === 'nightwatch.shard-run-receipt.v1'
+      ? shardSkipPolicy(value)
+      : normalizeSkipPolicy(value.skipPolicy, value.skipped);
   }
   return details;
 }

@@ -11,180 +11,651 @@
     "expectedSkipPolicy": "only canonical skip identities may skip",
     "canonicalSkipIdentities": [
       {
-        "file": "tests/manual/phase2c-real-journeys.ts",
-        "reasonToken": ""
-      },
-      {
-        "file": "tests/manual/phase4-real-exploration.ts",
-        "reasonToken": ""
-      },
-      {
-        "file": "tests/manual/phase5-real-api.ts",
-        "reasonToken": ""
-      },
-      {
-        "file": "tests/manual/phase7-real-campaign.ts",
-        "reasonToken": ""
-      },
-      {
-        "file": "tests/unit/agent-state.test.ts",
-        "reasonToken": "git CLI is unavailable; agent-state validator tests skipped"
+        "file": "tests/unit/c02aOpenApiAdmission.test.ts",
+        "titlePath": [
+          "C-02a — the real committed blueapi artifact",
+          "C-01 invariants hold: no eviction, no lost identity, truthful completeness"
+        ],
+        "reasonToken": "LIVE_SOURCE_STALE"
       },
       {
         "file": "tests/unit/c02aOpenApiAdmission.test.ts",
-        "reasonToken": "LIVE_SOURCE_"
+        "titlePath": [
+          "C-02a — the real committed blueapi artifact",
+          "C-01 invariants hold: no eviction, no lost identity, truthful completeness"
+        ],
+        "reasonToken": "LIVE_SOURCE_UNAVAILABLE"
+      },
+      {
+        "file": "tests/unit/c02aOpenApiAdmission.test.ts",
+        "titlePath": [
+          "C-02a — the real committed blueapi artifact",
+          "every blueapi surface is GENERATED_ARTIFACT with UNKNOWN currency and a denied production admission"
+        ],
+        "reasonToken": "LIVE_SOURCE_STALE"
+      },
+      {
+        "file": "tests/unit/c02aOpenApiAdmission.test.ts",
+        "titlePath": [
+          "C-02a — the real committed blueapi artifact",
+          "every blueapi surface is GENERATED_ARTIFACT with UNKNOWN currency and a denied production admission"
+        ],
+        "reasonToken": "LIVE_SOURCE_UNAVAILABLE"
+      },
+      {
+        "file": "tests/unit/c02aOpenApiAdmission.test.ts",
+        "titlePath": [
+          "C-02a — the real committed blueapi artifact",
+          "recovers >= 591 operations with verb, path and operationId, and >= 400 bound response contracts"
+        ],
+        "reasonToken": "LIVE_SOURCE_UNAVAILABLE"
       },
       {
         "file": "tests/unit/c02bProtoCorroboration.test.ts",
+        "titlePath": [
+          "C-02b — the real blueapi artifact against the real proto",
+          "147 Billing operations corroborate exactly, and the artifact still stays UNKNOWN"
+        ],
         "reasonToken": "blueapi checkout unavailable"
       },
       {
         "file": "tests/unit/c02bProtoSurface.test.ts",
-        "reasonToken": "LIVE_SOURCE_"
-      },
-      {
-        "file": "tests/unit/c02bProtoSurface.test.ts",
+        "titlePath": [
+          "C-02b — C-01 no-eviction regression (F-27)",
+          "completeness stays truthful across the enlarged population"
+        ],
         "reasonToken": "blueapi checkout unavailable"
       },
       {
         "file": "tests/unit/c02bProtoSurface.test.ts",
+        "titlePath": [
+          "C-02b — C-01 no-eviction regression (F-27)",
+          "every operation identity discovered without protobuf survives with it"
+        ],
+        "reasonToken": "LIVE_SOURCE_STALE"
+      },
+      {
+        "file": "tests/unit/c02bProtoSurface.test.ts",
+        "titlePath": [
+          "C-02b — C-01 no-eviction regression (F-27)",
+          "every operation identity discovered without protobuf survives with it"
+        ],
+        "reasonToken": "LIVE_SOURCE_UNAVAILABLE"
+      },
+      {
+        "file": "tests/unit/c02bProtoSurface.test.ts",
+        "titlePath": [
+          "C-02b — C-01 no-eviction regression (F-27)",
+          "ripple-api keeps its operations after blueapi grows"
+        ],
+        "reasonToken": "LIVE_SOURCE_STALE"
+      },
+      {
+        "file": "tests/unit/c02bProtoSurface.test.ts",
+        "titlePath": [
+          "C-02b — C-01 no-eviction regression (F-27)",
+          "ripple-api keeps its operations after blueapi grows"
+        ],
+        "reasonToken": "LIVE_SOURCE_UNAVAILABLE"
+      },
+      {
+        "file": "tests/unit/c02bProtoSurface.test.ts",
+        "titlePath": [
+          "C-02b — DEF-C02B-1: a generated mirror is not a rival declaration",
+          "the real blueapi surface keeps its 147 mutation-capable classifications"
+        ],
+        "reasonToken": "blueapi checkout unavailable"
+      },
+      {
+        "file": "tests/unit/c02bProtoSurface.test.ts",
+        "titlePath": [
+          "C-02b — proto operations reach route discovery",
+          "blueapi discovery contains PROTOBUF-sourced operations with proven routes"
+        ],
+        "reasonToken": "blueapi checkout unavailable"
+      },
+      {
+        "file": "tests/unit/c02bProtoSurface.test.ts",
+        "titlePath": [
+          "C-02b — the real approved protobuf surface",
+          "a message-only proto declares zero services rather than an empty one"
+        ],
         "reasonToken": "ouchan checkout unavailable"
       },
       {
-        "file": "tests/unit/c03GrpcTopology.test.ts",
-        "reasonToken": "LIVE_SOURCE_"
+        "file": "tests/unit/c02bProtoSurface.test.ts",
+        "titlePath": [
+          "C-02b — the real approved protobuf surface",
+          "blueapi billing yields at least 147 mechanically proven RPCs"
+        ],
+        "reasonToken": "blueapi checkout unavailable"
+      },
+      {
+        "file": "tests/unit/c02bProtoSurface.test.ts",
+        "titlePath": [
+          "C-02b — the real approved protobuf surface",
+          "the measured HTTP verb distribution sums to the RPC count"
+        ],
+        "reasonToken": "blueapi checkout unavailable"
+      },
+      {
+        "file": "tests/unit/c02bProtoSurface.test.ts",
+        "titlePath": [
+          "C-02b — the real approved protobuf surface",
+          "the measured streaming distribution is reported, not inherited"
+        ],
+        "reasonToken": "blueapi checkout unavailable"
+      },
+      {
+        "file": "tests/unit/c02bProtoSurface.test.ts",
+        "titlePath": [
+          "C-02b — the real approved protobuf surface",
+          "the proto file is admitted by the scan rather than rejected on its extension"
+        ],
+        "reasonToken": "blueapi checkout unavailable"
       },
       {
         "file": "tests/unit/c03GrpcTopology.test.ts",
+        "titlePath": [
+          "C-03 — C-01 no-eviction across the admission (F-27)",
+          "every operation identity discovered before the admission survives it"
+        ],
+        "reasonToken": "LIVE_SOURCE_STALE"
+      },
+      {
+        "file": "tests/unit/c03GrpcTopology.test.ts",
+        "titlePath": [
+          "C-03 — C-01 no-eviction across the admission (F-27)",
+          "every operation identity discovered before the admission survives it"
+        ],
+        "reasonToken": "LIVE_SOURCE_UNAVAILABLE"
+      },
+      {
+        "file": "tests/unit/c03GrpcTopology.test.ts",
+        "titlePath": [
+          "C-03 — C-01 no-eviction across the admission (F-27)",
+          "ripple-api keeps its full operation set after blueapi grows again"
+        ],
+        "reasonToken": "LIVE_SOURCE_STALE"
+      },
+      {
+        "file": "tests/unit/c03GrpcTopology.test.ts",
+        "titlePath": [
+          "C-03 — C-01 no-eviction across the admission (F-27)",
+          "ripple-api keeps its full operation set after blueapi grows again"
+        ],
+        "reasonToken": "LIVE_SOURCE_UNAVAILABLE"
+      },
+      {
+        "file": "tests/unit/c03GrpcTopology.test.ts",
+        "titlePath": [
+          "C-03 — C-01 no-eviction across the admission (F-27)",
+          "the blueapi artifact still contributes exactly its own 591 operations"
+        ],
+        "reasonToken": "LIVE_SOURCE_STALE"
+      },
+      {
+        "file": "tests/unit/c03GrpcTopology.test.ts",
+        "titlePath": [
+          "C-03 — C-01 no-eviction across the admission (F-27)",
+          "the blueapi artifact still contributes exactly its own 591 operations"
+        ],
+        "reasonToken": "LIVE_SOURCE_UNAVAILABLE"
+      },
+      {
+        "file": "tests/unit/c03GrpcTopology.test.ts",
+        "titlePath": [
+          "C-03 — completeness is never inflated by the join",
+          "the real ouchan topology reports TRUNCATED and claims no completeness"
+        ],
+        "reasonToken": "sibling checkouts unavailable"
+      },
+      {
+        "file": "tests/unit/c03GrpcTopology.test.ts",
+        "titlePath": [
+          "C-03 — the method-level prototype is positive-only, and says so",
+          "a non-proven binding does not attempt a method binding at all"
+        ],
         "reasonToken": "requires the read-only sibling Alphaus checkouts"
       },
       {
         "file": "tests/unit/c03GrpcTopology.test.ts",
-        "reasonToken": "sibling checkouts unavailable"
+        "titlePath": [
+          "C-03 — the method-level prototype is positive-only, and says so",
+          "a proven binding resolves its implementation type and observes handlers"
+        ],
+        "reasonToken": "requires the read-only sibling Alphaus checkouts"
+      },
+      {
+        "file": "tests/unit/c03GrpcTopology.test.ts",
+        "titlePath": [
+          "C-03 — the method-level prototype is positive-only, and says so",
+          "an unobserved RPC is never reported as a completeness claim"
+        ],
+        "reasonToken": "requires the read-only sibling Alphaus checkouts"
+      },
+      {
+        "file": "tests/unit/c03GrpcTopology.test.ts",
+        "titlePath": [
+          "C-03 — the method-level prototype is positive-only, and says so",
+          "several services reach an exact handler count, which is an observation and not a proof"
+        ],
+        "reasonToken": "requires the read-only sibling Alphaus checkouts"
+      },
+      {
+        "file": "tests/unit/c03GrpcTopology.test.ts",
+        "titlePath": [
+          "C-03 — the real measured topology",
+          "a service with no observable proto is UNSUPPORTED and not a fact"
+        ],
+        "reasonToken": "requires the read-only sibling Alphaus checkouts"
+      },
+      {
+        "file": "tests/unit/c03GrpcTopology.test.ts",
+        "titlePath": [
+          "C-03 — the real measured topology",
+          "binds at least twelve proto services as SOURCE_FACT"
+        ],
+        "reasonToken": "requires the read-only sibling Alphaus checkouts"
+      },
+      {
+        "file": "tests/unit/c03GrpcTopology.test.ts",
+        "titlePath": [
+          "C-03 — the real measured topology",
+          "every proven binding is independently corroborated by an embedding"
+        ],
+        "reasonToken": "requires the read-only sibling Alphaus checkouts"
+      },
+      {
+        "file": "tests/unit/c03GrpcTopology.test.ts",
+        "titlePath": [
+          "C-03 — the real measured topology",
+          "no binding is silently resolved: every non-proven one carries a blocker"
+        ],
+        "reasonToken": "requires the read-only sibling Alphaus checkouts"
+      },
+      {
+        "file": "tests/unit/c03GrpcTopology.test.ts",
+        "titlePath": [
+          "C-03 — the real measured topology",
+          "one daemon registering six services is six bindings, not one"
+        ],
+        "reasonToken": "requires the read-only sibling Alphaus checkouts"
+      },
+      {
+        "file": "tests/unit/c03GrpcTopology.test.ts",
+        "titlePath": [
+          "C-03 — the real measured topology",
+          "the generated SDK descriptors all pair uniquely"
+        ],
+        "reasonToken": "requires the read-only sibling Alphaus checkouts"
       },
       {
         "file": "tests/unit/c04FrontendGraph.test.ts",
-        "reasonToken": "LIVE_SOURCE_"
+        "titlePath": [
+          "C-04 - the real measured yield",
+          "a substantial share of edges join a real backend route"
+        ],
+        "reasonToken": "LIVE_SOURCE_STALE"
+      },
+      {
+        "file": "tests/unit/c04FrontendGraph.test.ts",
+        "titlePath": [
+          "C-04 - the real measured yield",
+          "a substantial share of edges join a real backend route"
+        ],
+        "reasonToken": "LIVE_SOURCE_UNAVAILABLE"
+      },
+      {
+        "file": "tests/unit/c04FrontendGraph.test.ts",
+        "titlePath": [
+          "C-04 - the real measured yield",
+          "no durable edge carries a query value or a fragment"
+        ],
+        "reasonToken": "LIVE_SOURCE_STALE"
+      },
+      {
+        "file": "tests/unit/c04FrontendGraph.test.ts",
+        "titlePath": [
+          "C-04 - the real measured yield",
+          "no durable edge carries a query value or a fragment"
+        ],
+        "reasonToken": "LIVE_SOURCE_UNAVAILABLE"
+      },
+      {
+        "file": "tests/unit/c04FrontendGraph.test.ts",
+        "titlePath": [
+          "C-04 - the real measured yield",
+          "ripple-ui enumerates completely and yields the measured edge count"
+        ],
+        "reasonToken": "LIVE_SOURCE_STALE"
+      },
+      {
+        "file": "tests/unit/c04FrontendGraph.test.ts",
+        "titlePath": [
+          "C-04 - the real measured yield",
+          "ripple-ui enumerates completely and yields the measured edge count"
+        ],
+        "reasonToken": "LIVE_SOURCE_UNAVAILABLE"
+      },
+      {
+        "file": "tests/unit/c04FrontendGraph.test.ts",
+        "titlePath": [
+          "C-04 - the real measured yield",
+          "the >= 400 criterion is evaluated truthfully and does not pass"
+        ],
+        "reasonToken": "LIVE_SOURCE_STALE"
+      },
+      {
+        "file": "tests/unit/c04FrontendGraph.test.ts",
+        "titlePath": [
+          "C-04 - the real measured yield",
+          "the >= 400 criterion is evaluated truthfully and does not pass"
+        ],
+        "reasonToken": "LIVE_SOURCE_UNAVAILABLE"
+      },
+      {
+        "file": "tests/unit/c04FrontendGraph.test.ts",
+        "titlePath": [
+          "C-04 - the real measured yield",
+          "the eight declared axios instances are recovered"
+        ],
+        "reasonToken": "LIVE_SOURCE_STALE"
+      },
+      {
+        "file": "tests/unit/c04FrontendGraph.test.ts",
+        "titlePath": [
+          "C-04 - the real measured yield",
+          "the eight declared axios instances are recovered"
+        ],
+        "reasonToken": "LIVE_SOURCE_UNAVAILABLE"
+      },
+      {
+        "file": "tests/unit/c04FrontendGraph.test.ts",
+        "titlePath": [
+          "C-04 - the real measured yield",
+          "ZERO edges are SOURCE_FACT from a non-literal path"
+        ],
+        "reasonToken": "LIVE_SOURCE_STALE"
+      },
+      {
+        "file": "tests/unit/c04FrontendGraph.test.ts",
+        "titlePath": [
+          "C-04 - the real measured yield",
+          "ZERO edges are SOURCE_FACT from a non-literal path"
+        ],
+        "reasonToken": "LIVE_SOURCE_UNAVAILABLE"
       },
       {
         "file": "tests/unit/c05UniverseAdmission.test.ts",
+        "titlePath": [
+          "C-05 — an unapproved repository is never READ, proven at the boundary",
+          "an APPROVED repository is still readable, so the gate is not vacuous"
+        ],
         "reasonToken": "requires the read-only sibling Alphaus checkouts"
       },
       {
         "file": "tests/unit/c07DerivedSemantics.test.ts",
-        "reasonToken": "LIVE_SOURCE_"
+        "titlePath": [
+          "C-07 — the real population, measured",
+          "the derived registry over real operations has ZERO KNOWN_READ entries"
+        ],
+        "reasonToken": "LIVE_SOURCE_STALE"
       },
       {
-        "file": "tests/unit/c08DeploymentBinding.test.ts",
-        "reasonToken": "requires the read-only sibling Alphaus checkouts"
-      },
-      {
-        "file": "tests/unit/c09SpecExpectations.test.ts",
-        "reasonToken": "requires the read-only sibling Alphaus checkouts"
+        "file": "tests/unit/c07DerivedSemantics.test.ts",
+        "titlePath": [
+          "C-07 — the real population, measured",
+          "the derived registry over real operations has ZERO KNOWN_READ entries"
+        ],
+        "reasonToken": "LIVE_SOURCE_UNAVAILABLE"
       },
       {
         "file": "tests/unit/changeIntelligenceBacktest.test.ts",
+        "titlePath": [
+          "historical source-change backtests",
+          "backtest cases are based on audited repositories and fixed commit identities"
+        ],
+        "reasonToken": "workspace repositories are unavailable"
+      },
+      {
+        "file": "tests/unit/changeIntelligenceBacktest.test.ts",
+        "titlePath": [
+          "historical source-change backtests",
+          "historical-doc-only"
+        ],
+        "reasonToken": "workspace repositories are unavailable"
+      },
+      {
+        "file": "tests/unit/changeIntelligenceBacktest.test.ts",
+        "titlePath": [
+          "historical source-change backtests",
+          "historical-j2-with-unresolved-companion-runtime"
+        ],
+        "reasonToken": "workspace repositories are unavailable"
+      },
+      {
+        "file": "tests/unit/changeIntelligenceBacktest.test.ts",
+        "titlePath": [
+          "historical source-change backtests",
+          "historical-j3-backend-list-path"
+        ],
+        "reasonToken": "workspace repositories are unavailable"
+      },
+      {
+        "file": "tests/unit/changeIntelligenceBacktest.test.ts",
+        "titlePath": [
+          "historical source-change backtests",
+          "historical-rename-delete-tombstone"
+        ],
+        "reasonToken": "workspace repositories are unavailable"
+      },
+      {
+        "file": "tests/unit/changeIntelligenceBacktest.test.ts",
+        "titlePath": [
+          "historical source-change backtests",
+          "historical-shared-exchange-surface"
+        ],
+        "reasonToken": "workspace repositories are unavailable"
+      },
+      {
+        "file": "tests/unit/changeIntelligenceBacktest.test.ts",
+        "titlePath": [
+          "historical source-change backtests",
+          "historical-shared-router"
+        ],
+        "reasonToken": "workspace repositories are unavailable"
+      },
+      {
+        "file": "tests/unit/changeIntelligenceBacktest.test.ts",
+        "titlePath": [
+          "historical source-change backtests",
+          "historical-unknown-runtime-package"
+        ],
         "reasonToken": "workspace repositories are unavailable"
       },
       {
         "file": "tests/unit/historicalRediscovery.test.ts",
-        "reasonToken": "cannot isolate this record"
-      },
-      {
-        "file": "tests/unit/historicalRediscovery.test.ts",
-        "reasonToken": "record has no source SHA"
-      },
-      {
-        "file": "tests/unit/historicalRediscovery.test.ts",
+        "titlePath": [
+          "Wave 4 historical rediscovery isolation",
+          "blind hunt on an isolated mined case does not admit a finding and does not leak"
+        ],
         "reasonToken": "sibling historical data unavailable"
       },
       {
         "file": "tests/unit/liveProviderEfficacyProof.test.ts",
+        "titlePath": [
+          "W8 live-provider efficacy proof (opt-in)",
+          "live reasoner investigates leak-isolated historical cases through the product path"
+        ],
         "reasonToken": "set NIGHTWATCH_LIVE_PROVIDER_PROOF=1 with NIGHTWATCH_PRINT_CLI/NIGHTWATCH_PRINT_ARGS"
       },
       {
         "file": "tests/unit/minedCases.test.ts",
+        "titlePath": [
+          "bounded sibling mine runs isolated hunts without leaking fix SHAs"
+        ],
         "reasonToken": "sibling historical data unavailable"
       },
       {
         "file": "tests/unit/phase14ContractReport.test.ts",
+        "titlePath": [
+          "Phase 14A C5 — read-only CLI",
+          "--snapshot builds a live inventory from the disposable source snapshot"
+        ],
         "reasonToken": "disposable snapshot not present in this environment"
       },
       {
         "file": "tests/unit/phase14FreshSourceAdmission.test.ts",
-        "reasonToken": "requires disposable exact snapshot"
+        "titlePath": [
+          "Phase 14A C3 — fresh-source inventory at the newly resolved SHA",
+          "C3-01 inventory covers exactly the approved registry targets (no new targets)"
+        ],
+        "reasonToken": "requires disposable exact snapshot at <path>"
       },
       {
         "file": "tests/unit/phase14FreshSourceAdmission.test.ts",
-        "reasonToken": "requires disposable exact snapshot at "
+        "titlePath": [
+          "Phase 14A C3 — fresh-source inventory at the newly resolved SHA",
+          "C3-02 B1-B4 historical blockers reproduce at the fresh SHA"
+        ],
+        "reasonToken": "requires disposable exact snapshot at <path>"
       },
       {
-        "file": "tests/unit/plannerHandoff.test.ts",
-        "reasonToken": "git CLI is unavailable; handoff checker tests skipped"
+        "file": "tests/unit/phase14FreshSourceAdmission.test.ts",
+        "titlePath": [
+          "Phase 14A C3 — fresh-source inventory at the newly resolved SHA",
+          "C3-03 four admitted targets remain admitted; historical/collection IDs and recipe versions preserved"
+        ],
+        "reasonToken": "requires disposable exact snapshot at <path>"
       },
       {
-        "file": "tests/unit/projectState.test.ts",
-        "reasonToken": "git CLI is unavailable; project-state checker tests skipped"
+        "file": "tests/unit/phase14FreshSourceAdmission.test.ts",
+        "titlePath": [
+          "Phase 14A C3 — fresh-source inventory at the newly resolved SHA",
+          "C3-04 every entry carries exact provenance and a probe or blocker (before/after record complete)"
+        ],
+        "reasonToken": "requires disposable exact snapshot at <path>"
+      },
+      {
+        "file": "tests/unit/phase14FreshSourceAdmission.test.ts",
+        "titlePath": [
+          "Phase 14A C3 — fresh-source inventory at the newly resolved SHA",
+          "C3-05 zero uplift: no new contract admitted, no depth uplifted, registry unchanged"
+        ],
+        "reasonToken": "requires disposable exact snapshot at <path>"
+      },
+      {
+        "file": "tests/unit/phase14FreshSourceAdmission.test.ts",
+        "titlePath": [
+          "Phase 14A C3 — fresh-source inventory at the newly resolved SHA",
+          "C3-06 deterministic repeats >=3 identical fresh inventory"
+        ],
+        "reasonToken": "requires disposable exact snapshot at <path>"
+      },
+      {
+        "file": "tests/unit/phase14FreshSourceAdmission.test.ts",
+        "titlePath": [
+          "Phase 14A C3 — fresh-source inventory at the newly resolved SHA",
+          "C3-07 privacy: no sentinels or local paths leak into the fresh inventory"
+        ],
+        "reasonToken": "requires disposable exact snapshot at <path>"
+      },
+      {
+        "file": "tests/unit/phase14FreshSourceAdmission.test.ts",
+        "titlePath": [
+          "Phase 14A C3 — live SHA-movement classification + currentness at fresh source",
+          "C3-10 live drift vs recorded prior probes: all six EVIDENCE_UNCHANGED_SHA_MOVED"
+        ],
+        "reasonToken": "requires disposable exact snapshot at <path>"
+      },
+      {
+        "file": "tests/unit/phase14FreshSourceAdmission.test.ts",
+        "titlePath": [
+          "Phase 14A C3 — live SHA-movement classification + currentness at fresh source",
+          "C3-11 resolver resolves every derived expectation against the correct fresh SHA"
+        ],
+        "reasonToken": "requires disposable exact snapshot at <path>"
+      },
+      {
+        "file": "tests/unit/phase14FreshSourceAdmission.test.ts",
+        "titlePath": [
+          "Phase 14A C3 — live SHA-movement classification + currentness at fresh source",
+          "C3-12 B5 wrong-SHA currentness fails closed at the fresh SHA (resolver SOURCE_STALE)"
+        ],
+        "reasonToken": "requires disposable exact snapshot at <path>"
+      },
+      {
+        "file": "tests/unit/phase14FreshSourceAdmission.test.ts",
+        "titlePath": [
+          "Phase 14A C3 — live SHA-movement classification + currentness at fresh source",
+          "C3-13 missing source never certifies CURRENT (inventory fails closed STALE/UNAVAILABLE)"
+        ],
+        "reasonToken": "requires disposable exact snapshot at <path>"
       },
       {
         "file": "tests/unit/realHistoricalProductPathProof.test.ts",
+        "titlePath": [
+          "real historical product-path proof",
+          "a real mined historical defect is reproduced and admitted through the normal campaign path"
+        ],
         "reasonToken": "opt-in: set NIGHTWATCH_REAL_HISTORICAL_PROOF=1 with a local sibling checkout and Go toolchain"
       },
       {
         "file": "tests/unit/realOwnerLocalGeneralityProof.test.ts",
+        "titlePath": [
+          "W10 real reproduction generality proof (opt-in)",
+          "a second distinct real package reproduces honestly through the generic provider"
+        ],
         "reasonToken": "NIGHTWATCH_REAL_OWNER_LOCAL_PROOF=1 to run the real proof"
       },
       {
         "file": "tests/unit/realOwnerLocalGeneralityProof.test.ts",
-        "reasonToken": "fewer than two executable targets in the approved universe"
-      },
-      {
-        "file": "tests/unit/realOwnerLocalGeneralityProof.test.ts",
-        "reasonToken": "no allowlisted Go toolchain satisfies the module"
-      },
-      {
-        "file": "tests/unit/realOwnerLocalGeneralityProof.test.ts",
-        "reasonToken": "no second DISTINCT executable target"
-      },
-      {
-        "file": "tests/unit/realOwnerLocalGeneralityProof.test.ts",
-        "reasonToken": "owner-approved source index unavailable"
-      },
-      {
-        "file": "tests/unit/realOwnerLocalGeneralityProof.test.ts",
-        "reasonToken": "target module root unresolvable"
-      },
-      {
-        "file": "tests/unit/realOwnerLocalReproductionProof.test.ts",
+        "titlePath": [
+          "W10 real reproduction generality proof (opt-in)",
+          "the capability surface offers several distinct real executable targets"
+        ],
         "reasonToken": "NIGHTWATCH_REAL_OWNER_LOCAL_PROOF=1 to run the real proof"
       },
       {
         "file": "tests/unit/realOwnerLocalReproductionProof.test.ts",
-        "reasonToken": "no allowlisted Go toolchain satisfies the module"
-      },
-      {
-        "file": "tests/unit/realOwnerLocalReproductionProof.test.ts",
-        "reasonToken": "no supported vendored Go test package under the approved universe"
-      },
-      {
-        "file": "tests/unit/realOwnerLocalReproductionProof.test.ts",
-        "reasonToken": "supported target module root unresolvable"
+        "titlePath": [
+          "W9 real owner-local reproduction proof (opt-in)",
+          "real supported package reproduces honestly end to end"
+        ],
+        "reasonToken": "NIGHTWATCH_REAL_OWNER_LOCAL_PROOF=1 to run the real proof"
       },
       {
         "file": "tests/unit/realSourceCanary.test.ts",
-        "reasonToken": "LIVE_SOURCE_"
+        "titlePath": [
+          "Phase 9A.1 — real-source offline canary (SPEC §28)",
+          "live sibling checkout: derive >= 1 real expectation (owner-local evidence)"
+        ],
+        "reasonToken": "LIVE_SOURCE_STALE"
+      },
+      {
+        "file": "tests/unit/realSourceCanary.test.ts",
+        "titlePath": [
+          "Phase 9A.1 — real-source offline canary (SPEC §28)",
+          "live sibling checkout: derive >= 1 real expectation (owner-local evidence)"
+        ],
+        "reasonToken": "LIVE_SOURCE_UNAVAILABLE"
       },
       {
         "file": "tests/unit/selfDevSandboxConfinement.test.ts",
-        "reasonToken": ""
+        "titlePath": [
+          "Phase 8B.0.1 sandbox base confinement",
+          "G: a base owned by another uid fails closed where uid semantics and chown permit the setup"
+        ],
+        "reasonToken": "uid ownership semantics are unavailable on this host"
       },
       {
         "file": "tests/unit/selfDevSandboxConfinement.test.ts",
-        "reasonToken": "uid semantics"
-      },
-      {
-        "file": "tests/unit/snapshotter.test.ts",
-        "reasonToken": "git CLI is unavailable; snapshotter tests skipped"
+        "titlePath": [
+          "Phase 8B.0.1 sandbox base confinement",
+          "G: a base owned by another uid fails closed where uid semantics and chown permit the setup"
+        ],
+        "reasonToken": "uid ownership semantics require chown support unavailable on this host"
       }
     ]
   },

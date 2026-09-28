@@ -119,7 +119,97 @@ test.describe('quality-gate bounded diagnostics', () => {
   test('the semantic-compatibility schema keeps working and reports no lane', () => {
     const line = JSON.stringify({ schemaVersion: 'nightwatch.semantic-compatibility.v1', total: 1950, passed: 1937, skipped: 13, failed: 0, failedLocations: [] });
     expect(parseCounts(line)).toEqual({ total: 1950, passed: 1937, skipped: 13, didNotRun: null, failed: 0 });
-    expect(parseSafeDetails(line)).toEqual({ failedLocations: [] });
+    expect(parseSafeDetails(line)).toEqual({
+      failedLocations: [],
+      skipPolicy: { result: 'SKIP_REPORT_MISSING', skipped: null, undeclared: null },
+    });
+  });
+
+  test('skip-policy receipts preserve only bounded counts, known outcomes, and safe locations', () => {
+    const semantic = requireDetails(parseSafeDetails(JSON.stringify({
+      schemaVersion: 'nightwatch.semantic-compatibility.v1',
+      skipped: 2,
+      skipPolicy: {
+        result: 'UNDECLARED_SKIP',
+        declared: 1,
+        undeclared: 1,
+        undeclaredSkips: ['tests/unit/realSourceCanary.test.ts:102', '/private/customer/path:8', 'tests/unit/../../etc/passwd:1'],
+        reason: 'sk-live-DO-NOT-EMIT',
+      },
+    })));
+    expect(semantic.skipPolicy).toEqual({
+      result: 'UNDECLARED_SKIP',
+      skipped: 2,
+      undeclared: 1,
+      declared: 1,
+      undeclaredSkips: ['tests/unit/realSourceCanary.test.ts:102'],
+    });
+
+    const shard = requireDetails(parseSafeDetails(JSON.stringify({
+      schemaVersion: 'nightwatch.shard-run-receipt.v1',
+      totals: { planned: 26, passed: 25, skipped: 1, didNotRun: 0, failed: 0 },
+      shardResults: [
+        { skipPolicy: { result: 'PASS', skipped: 1, undeclared: 0 } },
+        { skipPolicy: { result: 'SKIP_REPORT_MISSING', skipped: null, undeclared: null } },
+      ],
+    })));
+    expect(shard.skipPolicy).toEqual({
+      result: 'SKIP_REPORT_MISSING',
+      skipped: null,
+      undeclared: null,
+    });
+    expect(parseCounts(JSON.stringify({
+      schemaVersion: 'nightwatch.shard-run-receipt.v1',
+      totals: { planned: 26, passed: 25, skipped: 1, didNotRun: 0, failed: 0 },
+    }))).toEqual({ total: 26, passed: 25, skipped: 1, didNotRun: 0, failed: 0 });
+  });
+
+  test('topology details retain only the runner class, envelope and known unexercised absences', () => {
+    const details = requireDetails(parseSafeDetails(JSON.stringify({
+      schemaVersion: 'nightwatch.gate-topology-receipt.v1',
+      runnerTopologyClass: 'PROVEN_DEGRADED',
+      ciClaim: {
+        runnerTopologyClass: 'PROVEN_DEGRADED',
+        runnerTopologyEnvelope: 'BWRAP_UNAVAILABLE_DEGRADED',
+        unexercisedAbsences: ['chrome', 'sibling-root'],
+      },
+      dynamic: {
+        envelope: 'BWRAP_UNAVAILABLE_DEGRADED',
+        entries: [
+          { absence: 'chrome', notExercised: 'BWRAP_UNAVAILABLE' },
+          { absence: 'sibling-root', notExercised: 'BWRAP_UNAVAILABLE' },
+        ],
+      },
+      hostPath: '/private/owner/worktree',
+    })));
+    expect(details).toEqual({
+      failedLocations: [],
+      runnerTopologyClass: 'PROVEN_DEGRADED',
+      topologyEnvelope: 'BWRAP_UNAVAILABLE_DEGRADED',
+      unexercisedAbsences: ['chrome', 'sibling-root'],
+    });
+
+    const invalid = requireDetails(parseSafeDetails(JSON.stringify({
+      schemaVersion: 'nightwatch.gate-topology-receipt.v1',
+      runnerTopologyClass: 'SECRET',
+      ciClaim: { runnerTopologyClass: 'SECRET', runnerTopologyEnvelope: 'unknown', unexercisedAbsences: ['/private/home'] },
+      dynamic: { envelope: 'unknown', entries: [{ absence: '/private/home', notExercised: 'secret' }] },
+    })));
+    expect(invalid.runnerTopologyClass).toBeUndefined();
+    expect(invalid.topologyEnvelope).toBeUndefined();
+    expect(invalid.unexercisedAbsences).toBeUndefined();
+
+    const falseProof = requireDetails(parseSafeDetails(JSON.stringify({
+      schemaVersion: 'nightwatch.gate-topology-receipt.v1',
+      runnerTopologyClass: 'PROVEN',
+      ciClaim: {
+        runnerTopologyClass: 'PROVEN',
+        runnerTopologyEnvelope: 'BUBBLEWRAP',
+        unexercisedAbsences: [],
+      },
+      dynamic: { envelope: 'BUBBLEWRAP', entries: [{ absence: 'chrome', notExercised: 'BWRAP_UNAVAILABLE' }] },
+    })));
+    expect(falseProof.runnerTopologyClass).toBeUndefined();
   });
 
   test('anything that is not an allowlisted location is dropped, not redacted', () => {

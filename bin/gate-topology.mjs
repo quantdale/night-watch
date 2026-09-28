@@ -34,6 +34,7 @@ import {
   chromeCandidates,
   describeEnvelopePlan,
   absenceTookEffect,
+  classifyRunnerTopology,
   evaluateAbsence,
   evaluateDirectObservation,
   parseSiblingRoot,
@@ -119,8 +120,8 @@ function todayIso() {
 /** @param {string} candidate */
 function isExecutableRegularFile(candidate) {
   try {
-    const stat = fs.lstatSync(candidate);
-    return stat.isFile() && !stat.isSymbolicLink() && (stat.mode & 0o111) !== 0;
+    const stat = fs.statSync(candidate);
+    return stat.isFile() && (stat.mode & 0o111) !== 0;
   } catch {
     return false;
   }
@@ -491,16 +492,11 @@ function makeFreshHome() {
   return directory;
 }
 
-/** @param {readonly string[]} args */
-function quoteForDisplay(args) {
-  return args.map((arg) => (/[\s"']/.test(arg) ? JSON.stringify(arg) : arg)).join(' ');
-}
-
 /**
  * @param {readonly any[]} selectedAbsences
  * @param {string} lane
  * @param {{ staticOnly?: boolean }} options
- * @returns {{ entries: any[], findings: any[] }}
+ * @returns {{ entries: any[], findings: any[], envelope: 'BUBBLEWRAP' | 'BWRAP_UNAVAILABLE_DEGRADED' }}
  */
 function runDynamic(selectedAbsences, lane, options) {
   const entries = [];
@@ -511,12 +507,12 @@ function runDynamic(selectedAbsences, lane, options) {
   }
   const chrome = chromeCandidates();
   const browsers = playwrightBrowsersPath();
-  const capa = canonicalBwrapCandidates();
+  const capa = canonicalBwrapCandidates(process.env);
   // X-02 degraded mode: Bubblewrap may not exist on this host at all (a CI
-  // runner without the binary). Availability is decided ONCE here so the
-  // decision and the spawn can never disagree: without the envelope every
-  // absence is observed directly against the real environment instead.
-  const envelopeAvailable = capa.filter(isExecutableRegularFile).length > 0;
+  // runner without the binary). Availability is resolved ONCE from the same
+  // PATH candidates later used for spawning, so the decision and invocation
+  // cannot disagree.
+  const bwrapExecutable = capa.find(isExecutableRegularFile);
   const baselineSuites = [...new Set(TOPOLOGY_ABSENCES.flatMap((absence) => absence.laneSuites))];
   if (baselineSuites.length > 0 && lane !== 'full') {
     const baseline = laneCommandFor({ laneSuites: baselineSuites }, lane);
@@ -525,7 +521,7 @@ function runDynamic(selectedAbsences, lane, options) {
     entries.push({
       absence: 'baseline',
       constructed: true,
-      lane: { status: passed ? 'PASS' : 'FAIL', detail: `${baseline === null ? 'no lane' : quoteForDisplay([baseline.command, ...baseline.args])} exit=${result?.status ?? 'SPAWN_ERROR'}` },
+      lane: { status: passed ? 'PASS' : 'FAIL', detail: `${baseline === null ? 'NO_LANE' : `kind=${baseline.kind}`} exit=${result?.status ?? 'SPAWN_ERROR'}` },
       findings: [],
     });
     if (!passed) {
@@ -554,7 +550,7 @@ function runDynamic(selectedAbsences, lane, options) {
       LC_ALL: 'C',
     });
     if (freshHome !== null) environment.NIGHTWATCH_TOPOLOGY_EXPECTED_HOME = freshHome;
-    if (!envelopeAvailable) {
+    if (bwrapExecutable === undefined) {
       // X-02 degraded envelope mode — no Bubblewrap on this host, so no
       // masked envelope exists. Each absence is observed DIRECTLY against
       // the real environment (the fresh home is remapped through HOME exactly
@@ -600,7 +596,7 @@ function runDynamic(selectedAbsences, lane, options) {
             const receipt = directLaneSpec.kind === 'campaign' ? parseLastJsonLine(`${result.stdout}\n${result.stderr}`, 'nightwatch.synthetic-campaign.v1') : null;
             directLane = {
               status: result.status === 0 ? 'PASS' : 'FAIL',
-              detail: `${quoteForDisplay([directLaneSpec.command, ...directLaneSpec.args])} exit=${result.status ?? 'SPAWN_ERROR'}`,
+              detail: `kind=${directLaneSpec.kind} exit=${result.status ?? 'SPAWN_ERROR'}`,
               receipts: receipt === null ? null : {
                 deepContainmentLane: receipt.deepContainmentLane ?? null,
                 sourcePopulation: null,
@@ -639,7 +635,7 @@ function runDynamic(selectedAbsences, lane, options) {
       continue;
     }
     const probeArgs = [...plan, nodeExecutable, path.join(root, 'bin', 'gate-topology.mjs'), 'probe', `--absence=${absence.id}`, '--json'];
-    const probeResult = runCapture('bwrap', probeArgs, { env: environment, timeoutMs: 120_000 });
+    const probeResult = runCapture(bwrapExecutable, probeArgs, { env: environment, timeoutMs: 120_000 });
     const probe = probeResult.status === 0 ? parseLastJsonLine(probeResult.stdout) : null;
     let laneOutcome = null;
     const laneSpec = laneCommandFor(absence, lane);
@@ -647,7 +643,7 @@ function runDynamic(selectedAbsences, lane, options) {
       if (laneSpec.kind === 'full') {
         const receiptDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-topology-gate-'));
         const receiptFile = path.join(receiptDirectory, 'gate-receipt.json');
-        const result = runCapture('bwrap', [...plan, laneSpec.command, ...laneSpec.args], {
+        const result = runCapture(bwrapExecutable, [...plan, laneSpec.command, ...laneSpec.args], {
           env: { ...environment, NIGHTWATCH_GATE_RECEIPT_PATH: receiptFile },
           timeoutMs: REALTIME_TIMEOUT_MS,
         });
@@ -666,11 +662,11 @@ function runDynamic(selectedAbsences, lane, options) {
           receipts: receipt === null ? null : { deepContainmentLane: extractDeepLane(receipt), checkable: true },
         };
       } else {
-        const result = runCapture('bwrap', [...plan, laneSpec.command, ...laneSpec.args], { env: environment, timeoutMs: REALTIME_TIMEOUT_MS });
+        const result = runCapture(bwrapExecutable, [...plan, laneSpec.command, ...laneSpec.args], { env: environment, timeoutMs: REALTIME_TIMEOUT_MS });
         const receipt = laneSpec.kind === 'campaign' ? parseLastJsonLine(`${result.stdout}\n${result.stderr}`, 'nightwatch.synthetic-campaign.v1') : null;
         laneOutcome = {
           status: result.status === 0 ? 'PASS' : 'FAIL',
-          detail: `${quoteForDisplay([laneSpec.command, ...laneSpec.args])} exit=${result.status ?? 'SPAWN_ERROR'}`,
+          detail: `kind=${laneSpec.kind} exit=${result.status ?? 'SPAWN_ERROR'}`,
           receipts: receipt === null ? null : {
             deepContainmentLane: receipt.deepContainmentLane ?? null,
             sourcePopulation: null,
@@ -705,7 +701,7 @@ function runDynamic(selectedAbsences, lane, options) {
       }
     }
   }
-  return { entries, findings, envelope: envelopeAvailable ? 'BUBBLEWRAP' : 'BWRAP_UNAVAILABLE_DEGRADED' };
+  return { entries, findings, envelope: bwrapExecutable === undefined ? 'BWRAP_UNAVAILABLE_DEGRADED' : 'BUBBLEWRAP' };
 }
 
 /** @param {any} receipt */
@@ -767,6 +763,15 @@ function main(cli) {
     dynamic = runDynamic(absences, lane, { staticOnly: false });
     for (const finding of dynamic.findings) findings.push(finding);
   }
+  const unexercisedAbsences = dynamic === null
+    ? []
+    : dynamic.entries.filter((entry) => entry.notExercised !== undefined).map((entry) => entry.absence);
+  const runnerTopologyClass = classifyRunnerTopology({
+    mode,
+    findings,
+    envelope: dynamic?.envelope ?? null,
+    unexercisedAbsences,
+  });
   const receipt = {
     schemaVersion: TOPOLOGY_GATE_SCHEMA,
     generatedAt: new Date().toISOString(),
@@ -778,8 +783,11 @@ function main(cli) {
       undeclaredBinaryInvocation: 'TOPOLOGY_UNDECLARED_BINARY_INVOCATION',
       historicalRun: '33572572053',
     },
+    runnerTopologyClass,
     ciClaim: {
-      runnerTopologyClass: findings.length === 0 && mode !== 'static' ? 'PROVEN' : 'NOT_PROVEN',
+      runnerTopologyClass,
+      runnerTopologyEnvelope: dynamic?.envelope ?? null,
+      unexercisedAbsences,
       githubExecutionProven: false,
       statement: 'gate:topology proves runner-topology fail-closed behaviour only; it never proves GitHub execution and never sets CI_EXECUTED_SHA.',
     },

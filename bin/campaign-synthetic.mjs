@@ -35,6 +35,7 @@ import { buildChildEnvironment } from './child-environment.mjs';
 import { loadTypeScriptModules } from './lib/typescript-runtime-loader.mjs';
 import { OPERATOR_CLI_SCHEMA, defineOperatorCli, invokedDirectly } from './lib/operator-cli.mjs';
 import { extractSanitizedFailedLocations } from './lib/sanitized-failure-locations.mjs';
+import { evaluateSemanticSkipIdentityReport } from './lib/semantic-skip-policy.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -53,6 +54,7 @@ const CLI_METADATA = {
   artifacts: [],
 };
 const manifestPath = path.join(root, 'config', 'synthetic-campaign.v1.json');
+const skipPolicyPath = path.join(root, 'config', 'semantic-compatibility.v1.json');
 const classesPath = path.join(root, 'config', 'validation-execution-classes.v1.json');
 const weightsPath = path.join(root, 'config', 'shard-weights.v1.json');
 const SCHEMA_VERSION = 'nightwatch.synthetic-campaign.v1';
@@ -144,8 +146,17 @@ function sharedCampaignProxyLeaseDir() {
   return leaseDir;
 }
 
-function campaignEnvironment(lane) {
-  const environment = buildChildEnvironment(process.env, { NIGHTWATCH_ENV: 'local', NIGHTWATCH_GATE_ENVIRONMENT: 'SYNTHETIC_CAMPAIGN', NIGHTWATCH_TIMING_LANE: lane });
+/**
+ * @param {string} lane
+ * @param {string} skipReportPath
+ */
+function campaignEnvironment(lane, skipReportPath) {
+  const environment = buildChildEnvironment(process.env, {
+    NIGHTWATCH_ENV: 'local',
+    NIGHTWATCH_GATE_ENVIRONMENT: 'SYNTHETIC_CAMPAIGN',
+    NIGHTWATCH_TIMING_LANE: lane,
+    NIGHTWATCH_SKIP_REPORT_PATH: skipReportPath,
+  });
   environment.TZ = 'UTC';
   environment.LC_ALL = 'C';
   environment.LANG = 'C';
@@ -161,7 +172,32 @@ function campaignEnvironment(lane) {
 }
 
 function playwrightArguments(fileList, project, outputDir) {
-  return ['test', ...fileList, `--project=${project}`, '--workers=1', '--retries=0', `--output=${outputDir}`];
+  return [
+    'test', ...fileList, `--project=${project}`, '--workers=1', '--retries=0',
+    '--reporter=list,./tests/helpers/playwrightSkipIdentityReporter.ts', `--output=${outputDir}`,
+  ];
+}
+
+/** @param {string} skipReportPath */
+function evaluateSkipReport(skipReportPath) {
+  let report;
+  try {
+    report = JSON.parse(fs.readFileSync(skipReportPath, 'utf8'));
+  } catch {
+    report = null;
+  }
+  /** @type {{ canonicalSkipIdentities?: unknown, expectedSkipPolicy?: unknown }} */
+  let policy = {};
+  try {
+    policy = JSON.parse(fs.readFileSync(skipPolicyPath, 'utf8')).execution ?? {};
+  } catch {
+    // Missing or malformed policy is classified by the pure fail-closed evaluator.
+  }
+  return evaluateSemanticSkipIdentityReport({
+    report,
+    canonicalSkipIdentities: policy.canonicalSkipIdentities,
+    expectedSkipPolicy: policy.expectedSkipPolicy,
+  });
 }
 
 function parseCampaignOutput(output, status, maxFailedLocations) {
@@ -188,16 +224,30 @@ function parseCampaignOutput(output, status, maxFailedLocations) {
 function runInvocation(fileList, outputDir, lane, project) {
   return new Promise((resolve) => {
     const startedAt = Date.now();
+    const skipReportPath = path.resolve(root, outputDir, 'skip-identity-report.json');
+    fs.rmSync(skipReportPath, { force: true });
     const child = spawn(npx, playwrightArguments(fileList, project, outputDir), {
       cwd: root,
-      env: campaignEnvironment(lane),
+      env: campaignEnvironment(lane, skipReportPath),
       stdio: ['ignore', 'pipe', 'pipe'],
     });
     let output = '';
     child.stdout.on('data', (chunk) => { output += chunk; });
     child.stderr.on('data', (chunk) => { output += chunk; });
-    child.on('error', () => resolve({ output, status: 1, errorCode: 'SPAWN_ERROR', wallMs: Date.now() - startedAt }));
-    child.on('close', (code) => resolve({ output, status: code, errorCode: null, wallMs: Date.now() - startedAt }));
+    child.on('error', () => resolve({
+      output,
+      status: 1,
+      errorCode: 'SPAWN_ERROR',
+      wallMs: Date.now() - startedAt,
+      skipPolicy: evaluateSkipReport(skipReportPath),
+    }));
+    child.on('close', (code) => resolve({
+      output,
+      status: code,
+      errorCode: null,
+      wallMs: Date.now() - startedAt,
+      skipPolicy: evaluateSkipReport(skipReportPath),
+    }));
   });
 }
 
@@ -229,16 +279,23 @@ try {
   if (requestedShards === 1) {
     const result = await runInvocation(files, 'test-results/synthetic-1', 'campaign-synthetic', manifest.execution.project);
     const counts = parseCampaignOutput(result.output, result.status, maxFailedLocations);
+    const skipPolicy = {
+      result: result.skipPolicy.result,
+      skipped: result.skipPolicy.skipped,
+      undeclared: result.skipPolicy.undeclared.length,
+    };
+    const passed = result.status === 0 && skipPolicy.result === 'PASS';
     const receipt = {
       schemaVersion: SCHEMA_VERSION,
       fileCount: files.length,
       ...counts,
+      skipPolicy,
       shardCount: 1,
       deepContainmentLane: deepLane,
-      result: result.status === 0 ? 'PASS' : result.errorCode === 'ETIMEDOUT' ? 'TIMEOUT' : 'TEST_FAILURE',
+      result: passed ? 'PASS' : result.errorCode === 'ETIMEDOUT' ? 'TIMEOUT' : 'TEST_FAILURE',
     };
     console.log(JSON.stringify(receipt));
-    process.exitCode = result.status === 0 ? 0 : 1;
+    process.exitCode = passed ? 0 : 1;
   } else {
     const [shardPlan] = loadTypeScriptModules(['src/core/validation/shardPlan.ts'], { root });
     const classesDeclaration = JSON.parse(fs.readFileSync(classesPath, 'utf8'));
@@ -275,11 +332,22 @@ try {
         for (const key of Object.keys(totals)) totals[key] += entry.counts[key] ?? 0;
         failedLocations.push(...entry.counts.failedLocations);
       }
-      const failed = parsed.some((entry) => entry.result.status !== 0 || (entry.counts.failed ?? 0) > 0 || (entry.counts.didNotRun ?? 0) > 0);
+      const failed = parsed.some((entry) => entry.result.status !== 0
+        || entry.result.skipPolicy.result !== 'PASS'
+        || (entry.counts.failed ?? 0) > 0
+        || (entry.counts.didNotRun ?? 0) > 0);
+      const skipPolicies = parsed.map((entry) => entry.result.skipPolicy);
+      const firstSkipFailure = skipPolicies.find((entry) => entry.result !== 'PASS');
+      const skipPolicy = {
+        result: firstSkipFailure?.result ?? 'PASS',
+        skipped: skipPolicies.reduce((sum, entry) => sum + (entry.skipped ?? 0), 0),
+        undeclared: skipPolicies.reduce((sum, entry) => sum + (entry.undeclared?.length ?? 0), 0),
+      };
       const receipt = {
         schemaVersion: SCHEMA_VERSION,
         fileCount: files.length,
         ...totals,
+        skipPolicy,
         failedLocations: [...new Set(failedLocations)].slice(0, maxFailedLocations),
         shardCount: plan.parallelShards.length + (plan.exclusiveShard === null ? 0 : 1),
         planDigest: plan.planDigest,

@@ -12,9 +12,23 @@ export interface GateReceiptCounts {
   readonly failed: number | null;
 }
 
+export type GateSkipPolicyResult = 'PASS' | 'UNDECLARED_SKIP' | 'SKIP_POLICY_UNCONFIGURED' | 'SKIP_REPORT_MISSING' | 'SKIP_REPORT_INVALID';
+
+export interface GateReceiptSkipPolicy {
+  readonly result: GateSkipPolicyResult;
+  readonly skipped: number | null;
+  readonly undeclared: number | null;
+  readonly declared?: number;
+  readonly undeclaredSkips?: readonly string[];
+}
+
 export interface GateReceiptSafeDetails {
   readonly failedLocations: readonly string[];
   readonly deepContainmentLane?: string;
+  readonly skipPolicy?: GateReceiptSkipPolicy;
+  readonly runnerTopologyClass?: 'PROVEN' | 'PROVEN_DEGRADED' | 'NOT_PROVEN';
+  readonly topologyEnvelope?: 'BUBBLEWRAP' | 'BWRAP_UNAVAILABLE_DEGRADED';
+  readonly unexercisedAbsences?: readonly string[];
 }
 
 export function parseCounts(output: string): GateReceiptCounts;

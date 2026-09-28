@@ -144,15 +144,15 @@ export function inspectActiveTaskRouting(activeText, taskId, stateBranch, liveWo
         `ACTIVE_TASK_SESSION_WORKTREE_UNKNOWN: declared ${declaredWorktree} cannot be resolved because the live worktree list is unreadable`
       );
     } else if (Array.isArray(liveWorktreeBranches) && !liveWorktreeBranches.includes(declaredWorktree)) {
-      // D-04 / task 4.10 — in ci and clean gate modes a declared session
+      // D-04 / task 4.10 — in CI and clean gate modes a declared session
       // worktree is legitimately absent: a fresh checkout shares nothing with
-      // the live session. The semantic-compatibility lane sets its own child
-      // label while running wherever the gates run, so it carries the same
-      // fresh-checkout classification. The classification holds ONLY when
-      // every invariant checked so far passes and the declared branch equals
-      // the task STATE branch; any other mismatch keeps the hard failure.
+      // the live session. semantic-compat forwards this parent classification
+      // rather than inventing a lane-specific exception. The classification
+      // holds ONLY when every invariant checked so far passes and the declared
+      // branch equals the task STATE branch; any other mismatch stays a hard
+      // failure.
       const absentIsExpected =
-        (gateEnvironment === 'CI' || gateEnvironment === 'CLEAN' || gateEnvironment === 'COMPATIBILITY')
+        (gateEnvironment === 'CI' || gateEnvironment === 'CLEAN')
         && errors.length === 0
         && typeof stateBranch === 'string' && stateBranch !== ''
         && stateBranch === declaredWorktree;

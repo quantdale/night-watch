@@ -68,6 +68,7 @@ test('NW-AUD-018: writer census is non-zero, total, and digestible', () => {
     expect(byFile.has(cited), cited).toBe(true);
   }
   expect(byFile.get('src/core/evidence/runRecorder.ts')?.class).toBe('RECORDER_FIREWALLED');
+  expect(byFile.get('bin/gate-topology.mjs')?.class).toBe('LANE_RECEIPT_TOOL');
 });
 
 test('NW-AUD-018: the closed writer registry is well formed', () => {

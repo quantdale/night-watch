@@ -9,15 +9,30 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { buildChildEnvironment } from './child-environment.mjs';
+import { buildSemanticCompatibilityEnvironment } from './lib/semantic-compat-environment.mjs';
 import { OPERATOR_CLI_SCHEMA, defineOperatorCli, invokedDirectly } from './lib/operator-cli.mjs';
-import { evaluateSemanticSkipPolicy } from './lib/semantic-skip-policy.mjs';
+import { evaluateSemanticSkipIdentityReport } from './lib/semantic-skip-policy.mjs';
 import { extractSanitizedFailedLocations } from './lib/sanitized-failure-locations.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const manifestPath = path.join(root, 'config', 'semantic-compatibility.v1.json');
 const acceptanceClassPath = path.join(root, 'config', 'semantic-acceptance-class.v1.json');
 const filePattern = /^tests\/(?:unit|smoke)\/[A-Za-z0-9._/-]+\.test\.ts$/;
+const safeTestPathPattern = /^tests\/(?:unit|smoke|manual)\/[A-Za-z0-9._/-]+$/;
+
+/** @param {unknown} identity */
+function safeSkipLocation(identity) {
+  if (identity === null || typeof identity !== 'object' || Array.isArray(identity)) return 'UNKNOWN';
+  /** @type {{ file?: unknown, line?: unknown }} */
+  const candidate = identity;
+  const file = typeof candidate.file === 'string' && safeTestPathPattern.test(candidate.file) && !candidate.file.includes('..')
+    ? candidate.file
+    : 'UNKNOWN';
+  const line = typeof candidate.line === 'number' && Number.isInteger(candidate.line) && candidate.line > 0
+    ? candidate.line
+    : '?';
+  return `${file}:${line}`;
+}
 
 const CLI_METADATA = {
   schemaVersion: OPERATOR_CLI_SCHEMA,
@@ -100,20 +115,15 @@ try {
       semanticAcceptance: loadSemanticAcceptanceClass(),
     }));
   } else {
-  const environment = buildChildEnvironment(process.env, { NIGHTWATCH_ENV: 'local', NIGHTWATCH_GATE_ENVIRONMENT: 'COMPATIBILITY', NIGHTWATCH_TIMING_LANE: 'semantic-compatibility' });
-  environment.TZ = 'UTC';
-  environment.LC_ALL = 'C';
-  environment.LANG = 'C';
-  environment.NO_COLOR = '1';
-  environment.NIGHTWATCH_HEADED = '0';
-  for (const key of ['NIGHTWATCH_PROXY_PORT', 'NIGHTWATCH_PROXY_LEASE_TOKEN', 'NIGHTWATCH_PROXY_LEASE_PATH', 'NIGHTWATCH_PROXY_LEASE_OWNER_PID']) delete environment[key];
+  const environment = buildSemanticCompatibilityEnvironment(process.env);
   // The list reporter keeps the existing human counts; the JSON reporter
   // (directed to a bounded temporary file, never stdout) carries the skip
   // identities the policy compares.
-  const skipReportPath = path.join(os.tmpdir(), `nightwatch-semantic-compat-${process.pid}.json`);
-  environment.PLAYWRIGHT_JSON_OUTPUT_NAME = skipReportPath;
+  const skipReportDir = fs.mkdtempSync(path.join(os.tmpdir(), 'nw-sc-'));
+  const skipReportPath = path.join(skipReportDir, 'skip-identity-report.json');
+  environment.NIGHTWATCH_SKIP_REPORT_PATH = skipReportPath;
   const npx = (() => { const b = path.join(root, 'node_modules', '.bin', 'playwright'); return process.platform === 'win32' ? `${b}.cmd` : b; })();
-  const result = spawnSync(npx, ['test', ...files, '--project=nightwatch', '--workers=1', '--reporter=list', '--reporter=json'], {
+  const result = spawnSync(npx, ['test', ...files, '--project=nightwatch', '--workers=1', '--reporter=list,./tests/helpers/playwrightSkipIdentityReporter.ts'], {
     cwd: root,
     env: environment,
     encoding: 'utf8',
@@ -138,16 +148,16 @@ try {
     skipReport = null;
   }
   try {
-    fs.rmSync(skipReportPath, { force: true });
+    fs.rmSync(skipReportDir, { recursive: true, force: true });
   } catch {
     // A leftover temporary report is not evidence; removal is best-effort.
   }
-  const skipPolicy = evaluateSemanticSkipPolicy({
+  const skipPolicy = evaluateSemanticSkipIdentityReport({
     report: skipReport,
     canonicalSkipIdentities: manifest.execution?.canonicalSkipIdentities,
     expectedSkipPolicy: manifest.execution?.expectedSkipPolicy,
   });
-  const undeclaredSkips = skipPolicy.undeclared.slice(0, 16).map((identity) => `${identity.file}:${identity.line ?? '?'}`);
+  const undeclaredSkips = skipPolicy.undeclared.slice(0, 16).map(safeSkipLocation);
   let outcome = result.status === 0 ? 'PASS' : result.error?.code === 'ETIMEDOUT' ? 'TIMEOUT' : 'TEST_FAILURE';
   let exitCode = result.status === 0 ? 0 : 1;
   if (skipPolicy.result === 'SKIP_POLICY_UNCONFIGURED') {
@@ -156,9 +166,11 @@ try {
   } else if (skipPolicy.result === 'UNDECLARED_SKIP') {
     outcome = 'UNDECLARED_SKIP';
     exitCode = 1;
-  } else if (skipReport === null) {
-    // Exit 0 without a readable report cannot be trusted as a pass.
-    outcome = 'SEMANTIC_COMPATIBILITY_REPORT_UNREADABLE';
+  } else if (skipPolicy.result === 'SKIP_REPORT_MISSING' || skipPolicy.result === 'SKIP_REPORT_INVALID') {
+    // Exit 0 without a valid identity report cannot be trusted as a pass.
+    outcome = skipPolicy.result === 'SKIP_REPORT_MISSING'
+      ? 'SEMANTIC_COMPATIBILITY_REPORT_MISSING'
+      : 'SEMANTIC_COMPATIBILITY_REPORT_INVALID';
     exitCode = 1;
   }
   const receipt = {

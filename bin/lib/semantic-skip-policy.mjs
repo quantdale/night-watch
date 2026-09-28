@@ -1,85 +1,112 @@
-// Semantic skip identity — the enforcement of
-// `config/semantic-compatibility.v1.json` `execution.expectedSkipPolicy`.
+// Semantic skip-identity enforcement (nightwatch-validation-classification-and-skip-truth-v1).
 //
-// The policy string was declared but never read: Playwright exit 0 set
-// `result: PASS` even when a cone suite skipped because a disposable snapshot
-// was absent. Playwright's JSON report is the identity source; the allowlist
-// is data (`{ file, reasonToken }`).
-//
-// Pure: the caller supplies the parsed report and the allowlist.
+// Every authoritative Playwright lane consumes the same bounded v2 identity
+// report. An allowlist entry is one exact test identity (file + full suite / test
+// title path) and a non-empty reason token; file-wide or reasonless entries are
+// invalid. The policy is pure over caller-supplied data.
 
-export const SEMANTIC_SKIP_POLICY_VERSION = 'nightwatch.semantic-skip-identity.v1';
+export const SEMANTIC_SKIP_POLICY_VERSION = 'nightwatch.semantic-skip-identity.v2';
+export const SKIP_IDENTITY_REPORT_SCHEMA = 'nightwatch.skip-identity-report.v2';
 
-function walkTests(report) {
-  const tests = [];
-  const visit = (suite) => {
-    for (const spec of suite?.specs ?? []) {
-      for (const test of spec?.tests ?? []) {
-        tests.push({
-          file: typeof spec.file === 'string' ? spec.file : '',
-          line: typeof spec.line === 'number' ? spec.line : null,
-          title: typeof spec.title === 'string' ? spec.title : '',
-          status: test?.status,
-          annotations: Array.isArray(test?.annotations) ? test.annotations : [],
-        });
-      }
-    }
-    for (const child of suite?.suites ?? []) visit(child);
-  };
-  for (const suite of report?.suites ?? []) visit(suite);
-  return tests;
+function isRecord(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
 
-/** Skipped tests with their identity: file, line, title and skip reason. */
-export function collectSkippedIdentities(report) {
-  return walkTests(report)
-    .filter((test) => test.status === 'skipped')
-    .map((test) => {
-      const skipAnnotation = test.annotations.find((annotation) => annotation?.type === 'skip');
-      const reason = typeof skipAnnotation?.description === 'string' ? skipAnnotation.description.trim() : '';
-      return { file: test.file, line: test.line, title: test.title, reason };
-    });
+function isFilePath(value) {
+  return typeof value === 'string'
+    && /^tests\/(?:unit|smoke|manual)\/[A-Za-z0-9._/-]+$/.test(value)
+    && !value.includes('..');
+}
+
+function isTitlePath(value) {
+  return Array.isArray(value)
+    && value.length > 0
+    && value.every((part) => typeof part === 'string' && part.trim().length > 0);
+}
+
+function isValidIdentity(value) {
+  return isRecord(value)
+    && isFilePath(value.file)
+    && isTitlePath(value.titlePath)
+    && typeof value.reason === 'string'
+    && value.reason.trim().length > 0;
+}
+
+function isValidAllowlistEntry(value) {
+  if (!isRecord(value)) return false;
+  const keys = Object.keys(value).sort();
+  if (keys.join(',') !== 'file,reasonToken,titlePath') return false;
+  return isFilePath(value.file)
+    && isTitlePath(value.titlePath)
+    && typeof value.reasonToken === 'string'
+    && value.reasonToken.trim().length > 0;
+}
+
+function sameTitlePath(left, right) {
+  return left.length === right.length && left.every((part, index) => part === right[index]);
 }
 
 function isDeclared(identity, canonicalSkipIdentities) {
-  return canonicalSkipIdentities.some((entry) => {
-    if (entry === null || typeof entry !== 'object') return false;
-    if (entry.file !== identity.file) return false;
-    const token = typeof entry.reasonToken === 'string' ? entry.reasonToken : '';
-    if (token === '') return true;
-    return identity.reason.includes(token) || identity.title.includes(token);
-  });
+  if (!isValidIdentity(identity)) return false;
+  return canonicalSkipIdentities.some((entry) => entry.file === identity.file
+    && sameTitlePath(entry.titlePath, identity.titlePath)
+    && identity.reason.includes(entry.reasonToken));
+}
+
+function evaluateConfiguration(canonicalSkipIdentities, expectedSkipPolicy) {
+  if (typeof expectedSkipPolicy !== 'string' || expectedSkipPolicy.trim() === '') {
+    return { result: 'SKIP_POLICY_UNCONFIGURED', detail: 'expectedSkipPolicy is absent or empty' };
+  }
+  if (!Array.isArray(canonicalSkipIdentities)) {
+    return { result: 'SKIP_POLICY_UNCONFIGURED', detail: 'canonicalSkipIdentities is absent or not a list' };
+  }
+  if (!canonicalSkipIdentities.every(isValidAllowlistEntry)) {
+    return { result: 'SKIP_POLICY_UNCONFIGURED', detail: 'canonicalSkipIdentities contains an invalid or blanket entry' };
+  }
+  const identities = new Set();
+  for (const entry of canonicalSkipIdentities) {
+    const key = JSON.stringify([entry.file, entry.titlePath, entry.reasonToken]);
+    if (identities.has(key)) return { result: 'SKIP_POLICY_UNCONFIGURED', detail: 'canonicalSkipIdentities contains a duplicate entry' };
+    identities.add(key);
+  }
+  return null;
 }
 
 /**
- * Evaluate the skip policy for one Playwright JSON report.
- * Returns `result` = PASS | UNDECLARED_SKIP | SKIP_POLICY_UNCONFIGURED.
+ * Evaluate the skip policy for one Playwright JSON identity report.
+ * Missing and malformed reports are distinct non-pass outcomes.
  */
-export function evaluateSemanticSkipPolicy({ report, canonicalSkipIdentities, expectedSkipPolicy } = {}) {
+export function evaluateSemanticSkipIdentityReport({ report, canonicalSkipIdentities, expectedSkipPolicy } = {}) {
+  if (report === undefined || report === null) {
+    return { result: 'SKIP_REPORT_MISSING', skipped: 0, undeclared: [], detail: 'skip identity report is missing' };
+  }
+  if (!isRecord(report) || report.schemaVersion !== SKIP_IDENTITY_REPORT_SCHEMA || !Array.isArray(report.skips)) {
+    return { result: 'SKIP_REPORT_INVALID', skipped: 0, undeclared: [], detail: 'skip identity report has an unsupported shape' };
+  }
   return evaluateSemanticSkipPolicyIdentities({
-    identities: collectSkippedIdentities(report),
+    identities: report.skips,
     canonicalSkipIdentities,
     expectedSkipPolicy,
   });
 }
 
 /**
- * D-10 / 4.6 — the same policy over pre-collected skip identities (the
- * per-shard skip-identity report path).
+ * Evaluate pre-collected v2 skip identities (for lane runners).
+ * Returns PASS only when every skip is exactly allowlisted and reasoned.
  */
 export function evaluateSemanticSkipPolicyIdentities({ identities, canonicalSkipIdentities, expectedSkipPolicy } = {}) {
-  if (typeof expectedSkipPolicy !== 'string' || expectedSkipPolicy.trim() === '') {
-    return { result: 'SKIP_POLICY_UNCONFIGURED', skipped: 0, undeclared: [], detail: 'expectedSkipPolicy is absent or empty' };
+  const invalid = evaluateConfiguration(canonicalSkipIdentities, expectedSkipPolicy);
+  if (invalid !== null) {
+    return { result: invalid.result, skipped: 0, undeclared: [], detail: invalid.detail };
   }
-  if (!Array.isArray(canonicalSkipIdentities)) {
-    return { result: 'SKIP_POLICY_UNCONFIGURED', skipped: 0, undeclared: [], detail: 'canonicalSkipIdentities is absent or not a list' };
+  if (!Array.isArray(identities)) {
+    return { result: 'SKIP_REPORT_INVALID', skipped: 0, undeclared: [], detail: 'skip identities are not a list' };
   }
-  const collected = Array.isArray(identities) ? identities : [];
-  const undeclared = collected.filter((identity) => !isDeclared(identity, canonicalSkipIdentities));
+  const undeclared = identities.filter((identity) => !isDeclared(identity, canonicalSkipIdentities));
   return {
     result: undeclared.length === 0 ? 'PASS' : 'UNDECLARED_SKIP',
-    skipped: collected.length,
+    skipped: identities.length,
     undeclared,
-    declared: collected.length - undeclared.length,
+    declared: identities.length - undeclared.length,
   };
 }

@@ -90,7 +90,7 @@ export const TOPOLOGY_CAPABILITY_DECLARATIONS: readonly string[];
 export const TOPOLOGY_ABSENCES: readonly TopologyAbsence[];
 
 export function parseSiblingRoot(source: string): string | null;
-export function canonicalBwrapCandidates(): readonly string[];
+export function canonicalBwrapCandidates(environment?: NodeJS.ProcessEnv): readonly string[];
 export function chromeCandidates(environment?: NodeJS.ProcessEnv): readonly string[];
 export function describeEnvelopePlan(input: EnvelopePlanInput): readonly string[];
 export function absenceTookEffect(absence: TopologyAbsence, probe: unknown): { readonly absent: boolean; readonly detail: string };
@@ -101,6 +101,12 @@ export function evaluateDirectObservation(absence: TopologyAbsence, probe: unkno
   readonly detail: string;
   readonly findings: readonly TopologyDiagnostic[];
 };
+export function classifyRunnerTopology(input: {
+  readonly mode: string;
+  readonly findings: readonly unknown[];
+  readonly envelope: string | null;
+  readonly unexercisedAbsences: readonly string[];
+}): 'PROVEN' | 'PROVEN_DEGRADED' | 'NOT_PROVEN';
 export function detectInheritanceClaim(absence: TopologyAbsence, receipts: Record<string, unknown> | null): InheritanceClaim | null;
 export function scanExternalAbsolutePathDependence(input: {
   readonly files: readonly TopologyFile[];

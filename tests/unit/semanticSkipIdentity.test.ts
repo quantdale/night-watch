@@ -1,64 +1,63 @@
 // Semantic skip-identity enforcement (nightwatch-validation-classification-and-skip-truth-v1).
 //
-// The policy is pure over a Playwright JSON report; these probes pin the
-// undeclared-skip failure, the allowlisted pass, the zero-skip empty
-// allowlist, the fail-closed configuration states and the live declaration's
-// integrity. The full cone run is the end-to-end probe.
+// These probes pin the v2 report contract, exact file/title-path/reason
+// matching, and fail-closed behavior for undeclared, reasonless, blanket, and
+// missing-report cases.
 
 import { test, expect } from '@playwright/test';
 import fs from 'node:fs';
 import path from 'node:path';
-import { evaluateSemanticSkipPolicy } from '../../bin/lib/semantic-skip-policy.mjs';
+import {
+  evaluateSemanticSkipIdentityReport,
+  evaluateSemanticSkipPolicyIdentities,
+} from '../../bin/lib/semantic-skip-policy.mjs';
+import PlaywrightSkipIdentityReporter from '../helpers/playwrightSkipIdentityReporter';
 
 const REPO_ROOT = path.join(__dirname, '..', '..');
+const POLICY = 'only canonical skip identities may skip';
+const FILE = 'tests/unit/example.test.ts';
+const TITLE_PATH = ['example suite', 'requires its exact local fixture'];
 
 function reportWith(
-  entries: Array<{ file: string; line?: number; title: string; status: string; skipReason?: string }>
+  entries: Array<{ file?: string; titlePath?: string[]; reason?: string; line?: number | null }>
 ): unknown {
   return {
-    suites: [
-      {
-        specs: entries.map((entry) => ({
-          file: entry.file,
-          line: entry.line ?? 1,
-          title: entry.title,
-          tests: [
-            {
-              status: entry.status,
-              annotations: entry.skipReason === undefined ? [] : [{ type: 'skip', description: entry.skipReason }],
-            },
-          ],
-        })),
-      },
-    ],
+    schemaVersion: 'nightwatch.skip-identity-report.v2',
+    skips: entries.map((entry) => ({
+      file: entry.file ?? FILE,
+      line: entry.line ?? 12,
+      titlePath: entry.titlePath ?? TITLE_PATH,
+      reason: entry.reason ?? 'disposable fixture is unavailable',
+    })),
   };
 }
 
-const POLICY = 'only canonical skip identities may skip';
+const declared = [{ file: FILE, titlePath: TITLE_PATH, reasonToken: 'disposable fixture is unavailable' }];
 
 test.describe('semantic skip-identity policy', () => {
-  test('an undeclared skip is UNDECLARED_SKIP with its identity', () => {
-    const result = evaluateSemanticSkipPolicy({
-      report: reportWith([
-        { file: 'tests/unit/example.test.ts', line: 12, title: 'needs a snapshot', status: 'skipped', skipReason: 'disposable snapshot not present in this environment' },
-      ]),
+  test('an undeclared skip is UNDECLARED_SKIP with its exact identity', () => {
+    const report = reportWith([{ file: 'tests/unit/other.test.ts', titlePath: ['other suite', 'new skip'] }]);
+    const result = evaluateSemanticSkipIdentityReport({
+      report,
       canonicalSkipIdentities: [],
       expectedSkipPolicy: POLICY,
     });
     expect(result.result).toBe('UNDECLARED_SKIP');
     expect(result.skipped).toBe(1);
     expect(result.undeclared).toEqual([
-      { file: 'tests/unit/example.test.ts', line: 12, title: 'needs a snapshot', reason: 'disposable snapshot not present in this environment' },
+      {
+        file: 'tests/unit/other.test.ts',
+        line: 12,
+        titlePath: ['other suite', 'new skip'],
+        reason: 'disposable fixture is unavailable',
+      },
     ]);
   });
 
-  test('an allowlisted reason token passes and the skip still counts as skipped', () => {
-    const result = evaluateSemanticSkipPolicy({
-      report: reportWith([
-        { file: 'tests/unit/phase14FreshSourceAdmission.test.ts', title: 'C3-01', status: 'skipped', skipReason: 'requires disposable exact snapshot at /tmp/x' },
-        { file: 'tests/unit/example.test.ts', title: 'passes', status: 'expected' },
-      ]),
-      canonicalSkipIdentities: [{ file: 'tests/unit/phase14FreshSourceAdmission.test.ts', reasonToken: 'requires disposable exact snapshot' }],
+  test('an exact file + title path + nonblank reason token is declared', () => {
+    const result = evaluateSemanticSkipIdentityReport({
+      report: reportWith([{ file: FILE, titlePath: TITLE_PATH, reason: 'disposable fixture is unavailable on this host' }]),
+      canonicalSkipIdentities: declared,
       expectedSkipPolicy: POLICY,
     });
     expect(result.result).toBe('PASS');
@@ -66,44 +65,143 @@ test.describe('semantic skip-identity policy', () => {
     expect(result.declared).toBe(1);
   });
 
-  test('an allowlisted title token passes for a skip with no message', () => {
-    const result = evaluateSemanticSkipPolicy({
-      report: reportWith([
-        { file: 'tests/unit/selfDevSandboxConfinement.test.ts', title: 'a base owned by another uid fails closed where uid semantics permit the setup', status: 'skipped' },
-      ]),
-      canonicalSkipIdentities: [{ file: 'tests/unit/selfDevSandboxConfinement.test.ts', reasonToken: 'uid semantics' }],
-      expectedSkipPolicy: POLICY,
-    });
-    expect(result.result).toBe('PASS');
-    expect(result.skipped).toBe(1);
-  });
-
-  test('an empty allowlist permits zero skips', () => {
-    const result = evaluateSemanticSkipPolicy({
-      report: reportWith([{ file: 'tests/unit/example.test.ts', title: 'x', status: 'skipped' }]),
-      canonicalSkipIdentities: [],
+  test('a same-file skip with a different title path is undeclared', () => {
+    const result = evaluateSemanticSkipIdentityReport({
+      report: reportWith([{ file: FILE, titlePath: ['example suite', 'different test'] }]),
+      canonicalSkipIdentities: declared,
       expectedSkipPolicy: POLICY,
     });
     expect(result.result).toBe('UNDECLARED_SKIP');
   });
 
-  test('a missing allowlist or policy fails closed as SKIP_POLICY_UNCONFIGURED', () => {
-    expect(evaluateSemanticSkipPolicy({ report: reportWith([]), expectedSkipPolicy: POLICY }).result).toBe('SKIP_POLICY_UNCONFIGURED');
-    expect(evaluateSemanticSkipPolicy({ report: reportWith([]), canonicalSkipIdentities: [] }).result).toBe('SKIP_POLICY_UNCONFIGURED');
-    expect(evaluateSemanticSkipPolicy({ report: reportWith([]), canonicalSkipIdentities: [], expectedSkipPolicy: '  ' }).result).toBe(
-      'SKIP_POLICY_UNCONFIGURED'
-    );
+  test('a title token cannot substitute for a non-matching skip reason', () => {
+    const result = evaluateSemanticSkipIdentityReport({
+      report: reportWith([{ file: FILE, titlePath: [...TITLE_PATH, 'disposable fixture is unavailable'] , reason: 'host cannot satisfy a different precondition' }]),
+      canonicalSkipIdentities: declared,
+      expectedSkipPolicy: POLICY,
+    });
+    expect(result.result).toBe('UNDECLARED_SKIP');
   });
 
-  test('the live configuration declares existing files and a structured allowlist', () => {
+  test('a skip with no reason is undeclared even when file and title match', () => {
+    const result = evaluateSemanticSkipIdentityReport({
+      report: reportWith([{ file: FILE, titlePath: TITLE_PATH, reason: '' }]),
+      canonicalSkipIdentities: declared,
+      expectedSkipPolicy: POLICY,
+    });
+    expect(result.result).toBe('UNDECLARED_SKIP');
+  });
+
+  test('a blanket or reasonless allowlist entry invalidates the policy even with no skips', () => {
+    for (const entry of [
+      { file: FILE, reasonToken: 'reason without a title path' },
+      { file: FILE, titlePath: TITLE_PATH, reasonToken: '' },
+      { file: FILE, titlePath: [], reasonToken: 'nonempty reason' },
+    ]) {
+      const result = evaluateSemanticSkipIdentityReport({
+        report: reportWith([]),
+        canonicalSkipIdentities: [entry],
+        expectedSkipPolicy: POLICY,
+      });
+      expect(result.result).toBe('SKIP_POLICY_UNCONFIGURED');
+    }
+  });
+
+  test('an empty allowlist permits zero skips but never permits a skip', () => {
+    expect(evaluateSemanticSkipIdentityReport({
+      report: reportWith([]),
+      canonicalSkipIdentities: [],
+      expectedSkipPolicy: POLICY,
+    }).result).toBe('PASS');
+    expect(evaluateSemanticSkipIdentityReport({
+      report: reportWith([{ file: FILE, titlePath: TITLE_PATH }]),
+      canonicalSkipIdentities: [],
+      expectedSkipPolicy: POLICY,
+    }).result).toBe('UNDECLARED_SKIP');
+  });
+
+  test('a missing report fails closed with SKIP_REPORT_MISSING', () => {
+    expect(evaluateSemanticSkipIdentityReport({
+      report: undefined,
+      canonicalSkipIdentities: [],
+      expectedSkipPolicy: POLICY,
+    }).result).toBe('SKIP_REPORT_MISSING');
+    expect(evaluateSemanticSkipPolicyIdentities({
+      identities: undefined,
+      canonicalSkipIdentities: [],
+      expectedSkipPolicy: POLICY,
+    }).result).toBe('SKIP_REPORT_INVALID');
+  });
+
+  test('an unsupported report schema fails closed', () => {
+    expect(evaluateSemanticSkipIdentityReport({
+      report: { schemaVersion: 'nightwatch.skip-identity-report.v1', skips: [] },
+      canonicalSkipIdentities: [],
+      expectedSkipPolicy: POLICY,
+    }).result).toBe('SKIP_REPORT_INVALID');
+  });
+
+  test('a missing policy or expected policy fails closed', () => {
+    const report = reportWith([]);
+    expect(evaluateSemanticSkipIdentityReport({ report, expectedSkipPolicy: POLICY }).result).toBe('SKIP_POLICY_UNCONFIGURED');
+    expect(evaluateSemanticSkipIdentityReport({ report, canonicalSkipIdentities: [] }).result).toBe('SKIP_POLICY_UNCONFIGURED');
+    expect(evaluateSemanticSkipIdentityReport({ report, canonicalSkipIdentities: [], expectedSkipPolicy: '  ' }).result).toBe('SKIP_POLICY_UNCONFIGURED');
+  });
+
+  test('an authorized reporter refuses missing or non-absolute report paths', () => {
+    const previousEnvironment = process.env.NIGHTWATCH_GATE_ENVIRONMENT;
+    const previousReportPath = process.env.NIGHTWATCH_SKIP_REPORT_PATH;
+    try {
+      process.env.NIGHTWATCH_GATE_ENVIRONMENT = 'SHARDS';
+      delete process.env.NIGHTWATCH_SKIP_REPORT_PATH;
+      expect(() => new PlaywrightSkipIdentityReporter()).toThrow('SKIP_REPORT_PATH_REQUIRED');
+
+      process.env.NIGHTWATCH_GATE_ENVIRONMENT = 'COMPATIBILITY';
+      process.env.NIGHTWATCH_SKIP_REPORT_PATH = 'relative/report.json';
+      expect(() => new PlaywrightSkipIdentityReporter()).toThrow('SKIP_REPORT_PATH_NOT_ABSOLUTE');
+    } finally {
+      if (previousEnvironment === undefined) delete process.env.NIGHTWATCH_GATE_ENVIRONMENT;
+      else process.env.NIGHTWATCH_GATE_ENVIRONMENT = previousEnvironment;
+      if (previousReportPath === undefined) delete process.env.NIGHTWATCH_SKIP_REPORT_PATH;
+      else process.env.NIGHTWATCH_SKIP_REPORT_PATH = previousReportPath;
+    }
+  });
+
+  test('every authoritative Playwright lane attaches the reporter and fails closed on its report', () => {
+    const campaign = fs.readFileSync(path.join(REPO_ROOT, 'bin', 'campaign-synthetic.mjs'), 'utf8');
+    const shards = fs.readFileSync(path.join(REPO_ROOT, 'bin', 'run-shards.mjs'), 'utf8');
+    const compatibility = fs.readFileSync(path.join(REPO_ROOT, 'bin', 'semantic-compat.mjs'), 'utf8');
+    const qualityGate = fs.readFileSync(path.join(REPO_ROOT, 'bin', 'quality-gate.mjs'), 'utf8');
+    const packageJson = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, 'package.json'), 'utf8')) as { scripts: Record<string, string> };
+    const reporter = './tests/helpers/playwrightSkipIdentityReporter.ts';
+
+    expect(campaign).toContain(reporter);
+    expect(campaign).toContain('evaluateSemanticSkipIdentityReport');
+    expect(shards).toContain(reporter);
+    expect(shards).toContain('evaluateSemanticSkipIdentityReport');
+    expect(compatibility).toContain(reporter);
+    expect(compatibility).toContain('evaluateSemanticSkipIdentityReport');
+    expect(packageJson.scripts['test:owner-provenance']).toContain(reporter);
+    expect(qualityGate).toContain("ownerEnvironment.NIGHTWATCH_GATE_ENVIRONMENT = 'OWNER_PROVENANCE'");
+    expect(qualityGate).toContain('evaluateSemanticSkipIdentityReport');
+    expect(qualityGate).toContain("skipPolicyResult !== 'PASS'");
+    expect(qualityGate).toContain('SEMANTIC_COMPATIBILITY_${skipPolicyResult}');
+    expect(qualityGate).toContain('SYNTHETIC_CAMPAIGN_${skipPolicyResult}');
+  });
+
+  test('the live configuration has only exact, reasoned identities for existing files', () => {
     const manifest = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, 'config', 'semantic-compatibility.v1.json'), 'utf8')) as {
-      execution?: { expectedSkipPolicy?: string; canonicalSkipIdentities?: Array<{ file?: string; reasonToken?: string }> };
+      execution?: { expectedSkipPolicy?: string; canonicalSkipIdentities?: Array<{ file?: string; titlePath?: string[]; reasonToken?: string }> };
     };
     expect(typeof manifest.execution?.expectedSkipPolicy).toBe('string');
     expect(Array.isArray(manifest.execution?.canonicalSkipIdentities)).toBe(true);
     for (const identity of manifest.execution?.canonicalSkipIdentities ?? []) {
       expect(typeof identity.file).toBe('string');
+      expect(Array.isArray(identity.titlePath)).toBe(true);
+      expect(identity.titlePath!.length).toBeGreaterThan(0);
+      expect(identity.titlePath!.every((part) => typeof part === 'string' && part.trim().length > 0)).toBe(true);
       expect(typeof identity.reasonToken).toBe('string');
+      expect(identity.reasonToken!.trim().length).toBeGreaterThan(0);
       expect(fs.existsSync(path.join(REPO_ROOT, String(identity.file)))).toBe(true);
     }
   });

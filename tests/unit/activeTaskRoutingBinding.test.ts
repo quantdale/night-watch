@@ -26,6 +26,7 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { test, expect } from '@playwright/test';
 import { inspectActiveTaskRouting } from '../../bin/agent-state.mjs';
+import { buildSemanticCompatibilityEnvironment } from '../../bin/lib/semantic-compat-environment.mjs';
 
 const DRIFTED_HEAD = '868761d2128d5155db454623bc2fa01622a57d33';
 const FC1_TASK_ID = 'nightwatch-frontier-completion-reliability-v1';
@@ -180,6 +181,39 @@ test.describe('D-04 / task 4.10 — SESSION_DECLARED_ABSENT_EXPECTED in ci/clean
     const result = inspectActiveTaskRouting(routing, 'campaign-c', 'session/c-1111', [], 'CLEAN');
     expect(result.errors).toEqual([]);
     expect(result.warnings.join('\n')).toContain('ACTIVE_TASK_SESSION_DECLARED_ABSENT_EXPECTED');
+  });
+
+  test('semantic-compat preserves the parent gate label instead of upgrading LOCAL', () => {
+    const localEnvironment = buildSemanticCompatibilityEnvironment({ NIGHTWATCH_GATE_ENVIRONMENT: 'LOCAL' });
+    expect(localEnvironment.NIGHTWATCH_GATE_ENVIRONMENT).toBe('LOCAL');
+    expect(localEnvironment.NIGHTWATCH_TIMING_LANE).toBe('semantic-compatibility');
+
+    const localResult = inspectActiveTaskRouting(
+      routing,
+      'campaign-c',
+      'session/c-1111',
+      [],
+      localEnvironment.NIGHTWATCH_GATE_ENVIRONMENT ?? null,
+    );
+    expect(localResult.warnings).toEqual([]);
+    expect(localResult.errors.join('\n')).toContain('ACTIVE_TASK_SESSION_WORKTREE_MISSING');
+
+    const ciEnvironment = buildSemanticCompatibilityEnvironment({ NIGHTWATCH_GATE_ENVIRONMENT: 'CI' });
+    expect(ciEnvironment.NIGHTWATCH_GATE_ENVIRONMENT).toBe('CI');
+  });
+
+  test('COMPATIBILITY itself is no longer an absent-worktree relaxation', () => {
+    const environment = buildSemanticCompatibilityEnvironment({ NIGHTWATCH_GATE_ENVIRONMENT: 'COMPATIBILITY' });
+    expect(environment.NIGHTWATCH_GATE_ENVIRONMENT).toBe('COMPATIBILITY');
+    const result = inspectActiveTaskRouting(
+      routing,
+      'campaign-c',
+      'session/c-1111',
+      [],
+      environment.NIGHTWATCH_GATE_ENVIRONMENT ?? null,
+    );
+    expect(result.warnings).toEqual([]);
+    expect(result.errors.join('\n')).toContain('ACTIVE_TASK_SESSION_WORKTREE_MISSING');
   });
 
   test('local mode (no gate label): the absent worktree still fails hard', () => {

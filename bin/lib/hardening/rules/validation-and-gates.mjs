@@ -234,9 +234,12 @@ export function checkPhase23QualityGate() {
   if ((workflow.match(/^\s{8}run:\s*npm run gate:ci\s*$/gm) ?? []).length !== 1) fail('GitHub workflow must invoke gate:ci exactly once');
   if (/npx playwright test|playwright test|campaign:real|auth:capture|phase22-real|phase7-real|upload-artifact|secrets\./i.test(runCommands.join('\n'))) fail('GitHub workflow run commands contain forbidden direct tests, authenticated execution, or private artifact handling');
   for (const use of workflow.match(/^\s{8}uses:\s*.*$/gm) ?? []) {
-    // D-19 / NW-AUD-001: actions run their Node-24-native majors and are
-    // pinned to a full commit SHA; a tag or branch is a moving target.
-    if (!/actions\/(?:checkout|setup-node)@[0-9a-f]{40}(?:\s|$)/.test(use)) fail(`GitHub workflow uses an unpinned action (full commit SHA required): ${use.trim()}`);
+    // D-19 / NW-AUD-001: checkout/setup-node use their Node-24-native majors.
+    // The safe, read-only topology receipt uploader is the sole additional
+    // action admitted here, at its reviewed immutable v4.6.2 commit.
+    const nativeCoreAction = /actions\/(?:checkout|setup-node)@[0-9a-f]{40}(?:\s|$)/.test(use);
+    const reviewedReceiptUploader = /actions\/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02(?:\s|$)/.test(use);
+    if (!nativeCoreAction && !reviewedReceiptUploader) fail(`GitHub workflow uses an unpinned or unreviewed action: ${use.trim()}`);
   }
 }
 

@@ -144,7 +144,7 @@ test.describe('Phase 8B.0.1 sandbox base confinement', () => {
     const getuid = process.getuid;
     const getgid = process.getgid;
     if (getuid === undefined || getgid === undefined) {
-      test.skip();
+      test.skip(true, 'uid ownership semantics are unavailable on this host');
       return;
     }
     const parent = freshParent();
@@ -157,7 +157,7 @@ test.describe('Phase 8B.0.1 sandbox base confinement', () => {
       chownAvailable = false;
     }
     if (!chownAvailable) {
-      test.skip();
+      test.skip(true, 'uid ownership semantics require chown support unavailable on this host');
       return;
     }
     try {

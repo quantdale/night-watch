@@ -92,16 +92,28 @@ landed FIRST per RESUME_PROMPT §2), and M3 (certification anchors, tasks
 - **M4 IN_PROGRESS — validation spine (tasks 3.1-3.12, VC-01..VC-11).**
   VC-01's stale bundled-Chromium skip guards and allowlist entries are removed;
   all 34 focused DEV-login/storage-state tests passed locally, including all
-  four browser-backed tests (0 skips). Task 3.1 remains pending its required
-  exact-head GitHub Actions observation. Next: implement VC-02 (task 3.2).
+  four browser-backed tests (0 skips); exact-head CI remains pending. VC-02
+  (task 3.2) is implemented and focused-validated: v2 identities are exact by
+  file/title path/reason; all four authoritative Playwright lanes attach the
+  reporter; missing, malformed, unconfigured, and undeclared cases fail
+  closed; and safe skip-policy details propagate into gate receipts. Full
+  `campaign:synthetic` and owner-provenance proofs passed; the run-shards
+  focused proof passed with one declared skip. The semantic-compatibility
+  full attempt was made on a dirty worktree: the intended clean-tree
+  `projectState:2390` assertion failed and one source-stale reason variant was
+  undeclared. That variant is now admitted by its exact identity and a focused
+  report re-evaluates PASS; the clean-tree lane rerun is reserved for the
+  checkpoint. VC-03 (task 3.3) is now implemented and locally validated: Bubblewrap is resolved from PATH and the resolved executable is reused for all envelope spawns; runner topology is `PROVEN` only for the complete envelope with every absence exercised, otherwise `PROVEN_DEGRADED` or `NOT_PROVEN`; bounded class/envelope/unexercised-absence details flow through quality-gate receipts; the CI artifact uploader is pinned to a full commit SHA and names artifacts with `${{ github.sha }}`. Focused topology/receipt/writer/hardening suites passed 63/63; `npm run gate:topology` PASS (BUBBLEWRAP, four absences exercised, class `PROVEN`); persisted receipt projection PASS; `npm run hardening:check` PASS; `npm run typecheck:bin` PASS at 1572 diagnostics after lowering ceilings. Actual exact-head CI artifact observation remains pending task 3.12. VC-04 (task 3.4) is implemented locally: D-04 now permits absent declared worktrees only for CI/CLEAN, and only with an error-free routing record plus exact STATE-branch equality; semantic-compat forwards the parent gate label through a pure environment helper; regression tests prove LOCAL remains LOCAL and COMPATIBILITY is not a relaxation. Focused routing tests pass 15/15, hardening:check PASS, validation:universe PASS (581 discovered, 0 unclassified; digest `sha256:56a4390f3eb87f1fe9b40bf4`), and typecheck:bin PASS at 1572 / 13 of 76. HC-180 is registered to kill the branch-equality conjunct, but probe-campaign execution is intentionally deferred until the M4 guard checkpoint per the validation strategy; exact-head CI/artifact evidence and group gates remain pending.
 
 ## Exact Next Action
 
-Implement M4 task 3.2 (VC-02): attach skip identity reporting to both
-SYNTHETIC_CAMPAIGN and OWNER_PROVENANCE, strengthen identity matching and
-allowlist reasons, and add fail-closed missing/undeclared report probes.
-Retain task 3.1 as pending exact-head CI proof; validate the M4 group and
-observe the integrated head before marking the validation spine complete.
+Implement M4 task 3.5 (VC-05): inspect and run the `gate:ui` workflow with
+`--ignore-scripts`, verify the esbuild build or record a declared exception,
+and add the hardening assertion on the install-script text. VC-04's code and
+focused tests are complete; HC-180 probe execution is queued until the M4 guard
+checkpoint, per the validation strategy. Preserve VC-01 exact-head CI and VC-03
+artifact observation as pending M4 close-out evidence; continue through task
+3.12 before integration.
 
 ## Files Changed
 
@@ -113,10 +125,20 @@ observe the integrated head before marking the validation spine complete.
 | `.agent/ACTIVE_TASK.md` | active route to this child | flipped at bootstrap |
 | `.agent/EXECUTION_PROMPT.md` | planner-executor handoff for this child | rewritten at bootstrap |
 | `bin/bin-typecheck.mjs`, `bin/lib/typecheck-ratchet.{mjs,d.mts}` | full-source per-file, total, stale-ceiling, and annotation-budget ratchet | VB-07 and M3 group gates complete at `d6fd98b1` |
-| `config/bin-typecheck.v1.json` | measured 1579-diagnostic baseline, 78 exact per-file ceilings, run-shards=16 | VB-07 implemented |
+| `config/bin-typecheck.v1.json` | VB-07 ratchet retains the historical 1579 baseline and the current 1572 surface; 78 exact ceilings, run-shards=13 | VC-03 topology receipt narrowing measured at 1572; ratchet PASS |
 | `tests/unit/binTypecheckRatchet.test.ts` | missing/growth/staleness/annotation regression tests | 5/5; registered FULL_REGRESSION / PARALLEL_SAFE |
 | `tests/unit/devLoginSecurity.test.ts`, `tests/unit/storageState.test.ts` | VC-01: remove stale bundled-Chromium skips so the configured system Chrome channel executes the security checks | 34/34 focused tests PASS; four browser-backed tests executed, CI proof pending |
-| `config/semantic-compatibility.v1.json` | remove obsolete CHROMIUM_UNAVAILABLE skip allowlist entries for the VC-01 suites | valid JSON; entries absent |
+| `config/semantic-compatibility.v1.json` | VC-01 obsolete Chromium entries removed; VC-02 exact file/title-path/reason skip identities | strict policy test PASS; 81 entries; source-stale variant proven |
+| `bin/lib/semantic-skip-policy.{mjs,d.mts}` | v2 exact skip-identity evaluator and closed outcomes | focused policy probes PASS |
+| `tests/helpers/playwrightSkipIdentityReporter.ts` | bounded v2 identity report; authorized path validation | reporter path refusal probes PASS |
+| `bin/run-shards.mjs`, `bin/semantic-compat.mjs`, `bin/campaign-synthetic.mjs`, `bin/quality-gate.mjs`, `package.json` | attach reporter/evaluator to SHARDS, COMPATIBILITY, SYNTHETIC_CAMPAIGN, OWNER_PROVENANCE; gate fails closed and carries skipPolicy details | campaign, owner, shard, typecheck and focused receipt proofs PASS |
+| `bin/lib/gate-receipt.{mjs,d.mts}`, `bin/lib/shard-child-environment.d.mts` | sanitize and propagate skip-policy outcomes/counts/locations; type shard report path | receipt focused probes PASS; bin typecheck PASS |
+| `bin/lib/topology-gate.{mjs,d.mts}`, `bin/gate-topology.mjs`, `bin/quality-gate.mjs`, `config/bin-typecheck.v1.json` | VC-03 PATH-based Bubblewrap resolution, truthful topology classification, bounded gate receipt projection, and measured typecheck ceiling reduction | topology gate PASS (`PROVEN`, 4/4 absences); typecheck ratchet PASS at 1572 |
+| `.github/workflows/hardening.yml`, `bin/lib/hardening/rules/validation-and-gates.mjs`, `bin/lib/authenticatedWriterCensus.mjs` | VC-03 full-SHA topology artifact upload, narrow action allowlist, and receipt-writer census registration | hardening:check PASS; exact-head artifact observation pending |
+| `tests/unit/gateTopology.test.ts`, `tests/unit/syntheticCampaignDiagnostics.test.ts`, `tests/unit/authenticatedWriterCensus.test.ts` | VC-03 path resolution, classification, bounded receipt, artifact-pin, and writer-registration regressions | focused suites 63/63 PASS |
+| `bin/agent-state.mjs`, `bin/semantic-compat.mjs`, `bin/lib/semantic-compat-environment.{mjs,d.mts}`, `bin/lib/hardening/rules/documentation.mjs` | VC-04 D-04 relaxation restricted to CI/CLEAN with routing validity and exact branch equality; semantic-compat inherits its parent label; HC-180 enforces equality | hardening:check PASS; HC-180 execution pending M4 checkpoint |
+| `tests/unit/semanticSkipIdentity.test.ts`, `tests/unit/selfDevSandboxConfinement.test.ts`, `tests/unit/syntheticCampaignDiagnostics.test.ts` | VC-02 identity/report, reason, and gate-receipt regressions | 29/29 receipt+policy; 25 passed, 1 declared host skip |
+| `config/bin-typecheck.v1.json` | VB-07 ratchet retains the historical 1579 baseline and the current 1572 surface; 78 exact ceilings, run-shards=13 | VC-03 topology receipt narrowing measured at 1572; ratchet PASS |
 | `config/validation-universe.v1.json`, `config/validation-execution-classes.v1.json` | register ratchet suite and refresh the inventory digest | checks PASS at M3 close |
 
 ## Validation Ledger
@@ -217,12 +239,81 @@ When: 2026-09-28
 Relevant output: exact committed tree rerun; all four browser-backed security
 assertions executed and passed, with no skip outcomes (2.5 s).
 
+Command: `npm run campaign:synthetic` (VC-02 reporter + measured exact identities)
+Result: PASS
+When: 2026-09-28
+Relevant output: 107 files; 1960 total, 1946 passed, 14 skipped, 0 failed;
+all 14 skips declared by exact file/title-path/reason identities; skipPolicy
+PASS (14 skipped, 0 undeclared); coverage complete; L6 lane PROVEN.
+
+Command: `npm run test:owner-provenance` with the authorized v2 report path
+Result: PASS (91 passed, 0 skipped)
+When: 2026-09-28
+Relevant output: the v2 report contains zero skips; owner-provenance reporter
+and skip-policy receipt path exercised.
+
+Command: `node bin/run-shards.mjs --files=tests/unit/semanticSkipIdentity.test.ts,tests/unit/selfDevSandboxConfinement.test.ts --workers=1 --serial --json`
+Result: PASS
+When: 2026-09-28
+Relevant output: planned/executed 26/26, 25 passed, 1 declared host skip,
+0 failed; per-shard skipPolicy PASS (1 skipped, 0 undeclared).
+
+Command: focused semanticSkipIdentity + syntheticCampaignDiagnostics tests
+Result: PASS (29/29)
+When: 2026-09-28
+Relevant output: exact matching, report path refusal, missing/invalid report,
+runner wiring, and gate-receipt safe propagation all passed.
+
+Command: focused semanticSkipIdentity + selfDevSandboxConfinement tests
+Result: PASS (25 passed, 1 declared host skip)
+When: 2026-09-28
+Relevant output: v2 allowlist identity validation passed; selfDev case G
+reported a reasoned skip because chown support is unavailable.
+
+Command: targeted COMPATIBILITY report for `tests/unit/realSourceCanary.test.ts`
+Result: PASS (1 skipped identity declared; 0 undeclared)
+When: 2026-09-28
+Relevant output: default sibling-root state produced LIVE_SOURCE_STALE; the
+exact test identity/reason is now admitted and policy evaluation returns PASS.
+
+Command: `npm run typecheck` + `npm run typecheck:bin`
+Result: PASS
+When: 2026-09-28
+Relevant output: root typecheck clean; bin ratchet PASS at 1573 diagnostics,
+13/76 conforming, 78 exact ceilings; measured ceilings only decreased from
+the previous 1579 total and run-shards 16.
+
+Command: `npm run test:semantic-compat` on the dirty worktree (diagnostic run)
+Result: FAIL (expected clean-checkout dependency; one skip-policy mismatch since repaired)
+When: 2026-09-28
+Relevant output: 2162 total, 2147 passed, 14 skipped, 1 failed at
+`tests/unit/projectState.test.ts:2390:EXPECT_EQUAL` because the real checkout
+was dirty; at that time one `realSourceCanary` LIVE_SOURCE_STALE identity was
+not yet allowlisted. The precise identity was then reproduced and evaluated
+PASS. Full lane rerun is deferred to a clean checkpoint; no test condition was
+weakened.
+
 Command: `node -e` strict JSON parse + stale-reference search; TypeScript LSP diagnostics on both suites
 Result: PASS
 When: 2026-09-28
 Relevant output: semantic compatibility JSON parses; no `browserBinaryAvailable`
 or `CHROMIUM_UNAVAILABLE` references remain in the two suites/config; primary
 LSP diagnostics report 0 findings for both test files.
+
+Command: focused `activeTaskRoutingBinding.test.ts`
+Result: PASS (15/15)
+When: 2026-09-28
+Relevant output: absent declared worktrees are expected only for CI/CLEAN, exact
+STATE-branch match, and an otherwise error-free routing record; semantic-compat
+preserves LOCAL and does not grant COMPATIBILITY a relaxation.
+
+Command: `npm run hardening:check`, `npm run validation:universe`, and `npm run typecheck:bin`
+Result: PASS
+When: 2026-09-28
+Relevant output: structural invariants PASS; universe 581 discovered / 0
+unclassified at `sha256:56a4390f3eb87f1fe9b40bf4`; bin ratchet 1572
+diagnostics / 13 of 76 conforming / 78 ceilings. HC-180 is registered but its
+mutation run remains queued until the M4 guard checkpoint.
 
 ## Decisions Made During This Task
 
@@ -231,6 +322,21 @@ LSP diagnostics report 0 findings for both test files.
   contract, so unavailable configured Chrome must fail setup rather than let
   security assertions silently disappear. Its obsolete skip allowlist entries
   are removed with it.
+- VC-02 uses a v2 bounded identity report. A declaration requires exact repo-
+  relative file and full title path plus a nonblank reason token; the evaluator
+  rejects duplicate/blank/blanket policy entries. Reason variants are added
+  only when directly measured, because the same live-source test can report
+  LIVE_SOURCE_UNAVAILABLE or LIVE_SOURCE_STALE depending on runner topology.
+  Parent gate receipts carry only an enum result, integer counts and safe
+  repo-relative file:line locations—never raw title/reason text.
+- VC-04 keeps semantic-compat's environment builder in a separate pure module
+  so tests exercise actual environment forwarding without importing the CLI's
+  `import.meta` entrypoint. It is registered in BIN_SYNTAX and the universe
+  digest is refreshed. A temporary declaration shim that masked seven existing
+  CLI type diagnostics was removed; the authoritative bin ratchet remains 1572
+  diagnostics / 13 of 76 conforming, with no false ceiling reduction. HC-180
+  is registered for the CI/CLEAN branch-equality conjunct and will run after
+  the M4 guards are checkpointed, as required by the validation strategy.
 - M3 gate acceptance follows each lane's explicit JSON `result`: both are
   PASS, while `withinTarget=false` remains disclosed performance telemetry.
   The affected-test selector broadened to all 438 tests and no selection or
@@ -258,6 +364,11 @@ LSP diagnostics report 0 findings for both test files.
   the stale skip itself rather than duplicate Playwright's channel-resolution
   logic; the focused run now proves the four browser-backed assertions execute
   with the same channel as CI.
+- VC-02's reporter canonicalizes title paths relative to the test file and
+  strips absolute paths from skip reasons. An absent configured sibling root
+  can classify as STALE rather than UNAVAILABLE, so the runner's reason token
+  must be discovered and admitted per exact identity; blanket per-file
+  exceptions would hide new test skips.
 
 ## Blockers
 

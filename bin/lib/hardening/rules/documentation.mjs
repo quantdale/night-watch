@@ -192,6 +192,11 @@ export function checkAgentContinuityIntegrity() {
   if (!/nightwatch\.agent-continuity\.v2/.test(protocolModuleCode)) {
     fail('bin/agent-continuity-protocol.mjs must define the v2 protocol version constant');
   }
+  const agentStateCode = read('bin/agent-state.mjs');
+  const absentWorktreePredicate = /const absentIsExpected\s*=\s*\(\s*gateEnvironment === 'CI'\s*\|\|\s*gateEnvironment === 'CLEAN'\s*\)\s*&&\s*errors\.length === 0\s*&&\s*typeof stateBranch === 'string'\s*&&\s*stateBranch !== ''\s*&&\s*stateBranch === declaredWorktree\s*;/;
+  if (!absentWorktreePredicate.test(agentStateCode) || /gateEnvironment === 'COMPATIBILITY'/.test(agentStateCode)) {
+    fail('bin/agent-state.mjs must restrict absent-worktree classification to CI/CLEAN and bind it to the STATE branch');
+  }
   const pkg = readDataFile('package.json');
   if (!/"agent:audit"\s*:\s*"node bin\/agent-state\.mjs --audit-history"/.test(pkg)) {
     fail('package.json agent:audit must invoke the local checker with --audit-history');

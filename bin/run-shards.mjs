@@ -24,7 +24,7 @@ import { fileURLToPath } from 'node:url';
 import { buildShardChildEnvironment, shardTempRoot } from './lib/shard-child-environment.mjs';
 import { loadTypeScriptModules } from './lib/typescript-runtime-loader.mjs';
 import { OPERATOR_CLI_SCHEMA, defineOperatorCli, invokedDirectly } from './lib/operator-cli.mjs';
-import { evaluateSemanticSkipPolicyIdentities } from './lib/semantic-skip-policy.mjs';
+import { evaluateSemanticSkipIdentityReport } from './lib/semantic-skip-policy.mjs';
 import { extractSanitizedFailedLocations } from './lib/sanitized-failure-locations.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -116,6 +116,11 @@ function loadSkipPolicyConfig() {
   } catch {
     return { expectedSkipPolicy: '', canonicalSkipIdentities: null };
   }
+}
+
+/** @param {unknown} error @param {string} code */
+function hasErrorCode(error, code) {
+  return error !== null && typeof error === 'object' && 'code' in error && error.code === code;
 }
 
 
@@ -250,7 +255,7 @@ function runShard(shard, execution, scratchRoot) {
         const serialized = fs.readFileSync(receiptPath, 'utf8');
         parsed = execution.parseShardExecutionReceipt(serialized, shard.id);
       } catch (error) {
-        parsed = { ok: false, code: error?.code === 'ENOENT' ? 'SHARD_RECEIPT_MISSING' : 'SHARD_RECEIPT_UNREADABLE' };
+        parsed = { ok: false, code: hasErrorCode(error, 'ENOENT') ? 'SHARD_RECEIPT_MISSING' : 'SHARD_RECEIPT_UNREADABLE' };
       }
       let counts = null;
       let executionStatus = 'UNKNOWN';
@@ -276,30 +281,34 @@ function runShard(shard, execution, scratchRoot) {
       // D-10 / 4.6 — evaluate the skip identity policy over the per-shard
       // Playwright JSON report. An undeclared skip fails the shard; a missing
       // or unconfigured policy fails closed rather than passing silently.
-      let skipPolicy = { result: 'NO_REPORT', skipped: 0, undeclared: 0 };
+      let skipReport = null;
       try {
-        const skipReport = JSON.parse(fs.readFileSync(skipReportPath, 'utf8'));
-        const policy = loadSkipPolicyConfig();
-        const evaluation = evaluateSemanticSkipPolicyIdentities({
-          identities: Array.isArray(skipReport.skips) ? skipReport.skips : [],
-          canonicalSkipIdentities: policy.canonicalSkipIdentities,
-          expectedSkipPolicy: policy.expectedSkipPolicy,
-        });
-        skipPolicy = {
-          result: evaluation.result,
-          skipped: evaluation.skipped ?? 0,
-          undeclared: (evaluation.undeclared ?? []).length,
-        };
-        if (evaluation.result !== 'PASS') {
-          executionStatus = 'SKIP_POLICY_UNDECLARED';
-          executionCode = evaluation.result === 'SKIP_POLICY_UNCONFIGURED'
-            ? 'SHARD_SKIP_POLICY_UNCONFIGURED'
-            : 'SHARD_UNDECLARED_SKIP';
-        }
-      } catch {
-        skipPolicy = { result: 'NO_REPORT', skipped: 0, undeclared: 0 };
+        skipReport = JSON.parse(fs.readFileSync(skipReportPath, 'utf8'));
+      } catch (error) {
+        // Preserve the distinction between absent and malformed reports; both
+        // are non-passes, but the receipt should identify the failure safely.
+        skipReport = hasErrorCode(error, 'ENOENT') ? null : {};
+      }
+      const policy = loadSkipPolicyConfig();
+      const evaluation = evaluateSemanticSkipIdentityReport({
+        report: skipReport,
+        canonicalSkipIdentities: policy.canonicalSkipIdentities,
+        expectedSkipPolicy: policy.expectedSkipPolicy,
+      });
+      const skipPolicy = {
+        result: evaluation.result,
+        skipped: evaluation.skipped ?? 0,
+        undeclared: (evaluation.undeclared ?? []).length,
+      };
+      if (evaluation.result !== 'PASS') {
         executionStatus = 'SKIP_POLICY_UNDECLARED';
-        executionCode = 'SHARD_SKIP_REPORT_MISSING';
+        executionCode = evaluation.result === 'SKIP_POLICY_UNCONFIGURED'
+          ? 'SHARD_SKIP_POLICY_UNCONFIGURED'
+          : evaluation.result === 'SKIP_REPORT_MISSING'
+            ? 'SHARD_SKIP_REPORT_MISSING'
+            : evaluation.result === 'SKIP_REPORT_INVALID'
+              ? 'SHARD_SKIP_REPORT_INVALID'
+              : 'SHARD_UNDECLARED_SKIP';
       }
       const failedLocations = extractSanitizedFailedLocations(output, 16);
       resolve({

@@ -12,11 +12,13 @@
 import { test, expect } from '@playwright/test';
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import {
   TOPOLOGY_ABSENCES,
   absenceTookEffect,
   canonicalBwrapCandidates,
+  classifyRunnerTopology,
   describeEnvelopePlan,
   detectInheritanceClaim,
   evaluateAbsence,
@@ -91,6 +93,13 @@ test.describe('absence declarations and envelope plans', () => {
     }
   });
 
+  test('Bubblewrap candidates follow PATH order and do not fall back to fixed host paths', () => {
+    const directories = ['opt/nightwatch/bin', 'usr/bin', 'bin'].map((directory) => path.resolve(directory));
+    const searchPath = directories.join(path.delimiter);
+    expect(canonicalBwrapCandidates({ PATH: searchPath })).toEqual(directories.map((directory) => path.resolve(directory, 'bwrap')));
+    expect(canonicalBwrapCandidates({})).toEqual([]);
+  });
+
   test('the fresh-home absence binds a fresh home and sets HOME', () => {
     const fresh = '/tmp/nightwatch-topology-test-home';
     const plan = describeEnvelopePlan({
@@ -142,6 +151,27 @@ test.describe('fail-closed evaluation and the inverse assertion', () => {
     expect(claim).not.toBeNull();
     expect(claim!.lane).toBe('source-intelligence-census');
     expect(detectInheritanceClaim(siblingAbsence(), { sourcePopulation: 0 })).toBeNull();
+  });
+
+  test('a direct probe resolves an executable Bubblewrap from PATH', () => {
+    const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'nw-topology-path-'));
+    try {
+      const binary = path.join(directory, process.platform === 'win32' ? 'bwrap.exe' : 'bwrap');
+      fs.writeFileSync(binary, '#!/bin/sh\nexit 0\n', { mode: 0o700 });
+      fs.chmodSync(binary, 0o700);
+      const result = spawnSync(process.execPath, [GATE_BIN, 'probe', '--absence=bwrap', '--json'], {
+        cwd: REPO_ROOT,
+        env: { PATH: directory },
+        encoding: 'utf8',
+        timeout: 30_000,
+      });
+      expect(result.status).toBe(0);
+      const probe = JSON.parse(result.stdout);
+      expect(probe.available).toBe(true);
+      expect(probe.found).toBe(1);
+    } finally {
+      fs.rmSync(directory, { recursive: true, force: true });
+    }
   });
 
   test('a fresh home that is not the expected directory proves nothing', () => {
@@ -282,6 +312,13 @@ test.describe('operator entry point', () => {
     expect(metadata.schemaVersion).toBe('nightwatch.operator-cli.v1');
   });
 
+  test('CI uploads the topology receipt under the exact workflow SHA using a pinned artifact action', () => {
+    const workflow = fs.readFileSync(path.join(REPO_ROOT, '.github', 'workflows', 'hardening.yml'), 'utf8');
+    expect(workflow).toMatch(/uses: actions\/upload-artifact@[0-9a-f]{40}/);
+    expect(workflow).toContain('name: runner-topology-${{ github.sha }}');
+    expect(workflow).toContain('path: artifacts/topology-receipts/*.json');
+  });
+
   test('probe reports an observation for each declared absence', () => {
     for (const entry of TOPOLOGY_ABSENCES) {
       const result = spawnSync(process.execPath, [GATE_BIN, 'probe', `--absence=${entry.id}`, '--json'], { cwd: REPO_ROOT, encoding: 'utf8', timeout: 30_000 });
@@ -302,6 +339,8 @@ test.describe('operator entry point', () => {
     expect(receipt.defectClasses.historicalRun).toBe('33572572053');
     expect(receipt.inverseSelfTest.ok).toBe(true);
     expect(receipt.ciClaim.githubExecutionProven).toBe(false);
+    expect(receipt.runnerTopologyClass).toBe('NOT_PROVEN');
+    expect(receipt.ciClaim.runnerTopologyClass).toBe('NOT_PROVEN');
     expect(receipt.ciClaim.statement).toContain('never proves GitHub execution');
     expect(receipt.result).toBe(result.status === 0 ? 'PASS' : 'FAIL');
   });
@@ -360,6 +399,18 @@ test.describe('X-02 — imported path constants resolve through the scan', () =>
   });
 });
 
+test.describe('truthful runner-topology classification', () => {
+  test('PROVEN requires the complete envelope and every absence exercised', () => {
+    const base = { mode: 'all', findings: [], envelope: 'BUBBLEWRAP', unexercisedAbsences: [] };
+    expect(classifyRunnerTopology(base)).toBe('PROVEN');
+    expect(classifyRunnerTopology({ ...base, unexercisedAbsences: ['chrome'] })).toBe('PROVEN_DEGRADED');
+    expect(classifyRunnerTopology({ ...base, envelope: 'BWRAP_UNAVAILABLE_DEGRADED' })).toBe('PROVEN_DEGRADED');
+    expect(classifyRunnerTopology({ ...base, findings: [{ code: 'TOPOLOGY_PROBE_FAILED' }] })).toBe('NOT_PROVEN');
+    expect(classifyRunnerTopology({ ...base, mode: 'static' })).toBe('NOT_PROVEN');
+    expect(classifyRunnerTopology({ ...base, envelope: null })).toBe('NOT_PROVEN');
+  });
+});
+
 test.describe('X-02 degraded envelope mode — direct observation on a bwrap-less host', () => {
   test('an absence that took effect directly is constructible with no findings', () => {
     const direct = evaluateDirectObservation(absence('bwrap'), { available: false, blockerCode: 'BWRAP_UNAVAILABLE' });
@@ -392,11 +443,11 @@ test.describe('X-02 degraded envelope mode — direct observation on a bwrap-les
 
   test('the gate wires one envelope decision and records it in the receipt', () => {
     const source = fs.readFileSync(GATE_BIN, 'utf8');
-    expect(source).toContain('const envelopeAvailable = capa.filter(isExecutableRegularFile).length > 0;');
+    expect(source).toContain('const bwrapExecutable = capa.find(isExecutableRegularFile);');
     expect(source).toContain('evaluateDirectObservation(absence, directProbe)');
-    expect(source).toContain("envelope: envelopeAvailable ? 'BUBBLEWRAP' : 'BWRAP_UNAVAILABLE_DEGRADED'");
-    // availability is decided once, before any spawn, so the decision and the
-    // spawn can never disagree on a host without the binary
-    expect(source.indexOf('const envelopeAvailable')).toBeLessThan(source.indexOf("runCapture('bwrap', probeArgs"));
+    expect(source).toContain("envelope: bwrapExecutable === undefined ? 'BWRAP_UNAVAILABLE_DEGRADED' : 'BUBBLEWRAP'");
+    // Availability is resolved once from PATH, before any spawn, so the
+    // selected executable and the capability decision cannot disagree.
+    expect(source.indexOf('const bwrapExecutable')).toBeLessThan(source.indexOf('runCapture(bwrapExecutable, probeArgs'));
   });
 });

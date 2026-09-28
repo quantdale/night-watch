@@ -520,6 +520,16 @@
             "all": true
           }
         ]
+      },
+      {
+        "id": "HC-180",
+        "ops": [
+          {
+            "file": "bin/agent-state.mjs",
+            "search": "&& stateBranch === declaredWorktree;",
+            "replace": ";"
+          }
+        ]
       }
     ],
     "checkProjectStateIntegrity": [

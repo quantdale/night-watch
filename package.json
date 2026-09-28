@@ -38,7 +38,7 @@
     "dev:phase23:execute": "node bin/phase23-dev.mjs execute",
     "dev:phase23:predev": "node bin/phase23-predev.mjs evaluate",
     "ci:phase23:observe": "node bin/phase23-ci.mjs observe",
-    "test:owner-provenance": "playwright test tests/unit/privateArtifactAtomic.test.ts tests/unit/aiOwnerReview.test.ts tests/unit/aiReview.test.ts --project=nightwatch --workers=1",
+    "test:owner-provenance": "playwright test tests/unit/privateArtifactAtomic.test.ts tests/unit/aiOwnerReview.test.ts tests/unit/aiReview.test.ts --project=nightwatch --workers=1 --reporter=list,./tests/helpers/playwrightSkipIdentityReporter.ts",
     "agent:check": "node bin/agent-state.mjs",
     "agent:audit": "node bin/agent-state.mjs --audit-history",
     "project:check": "node bin/project-state-check.mjs",

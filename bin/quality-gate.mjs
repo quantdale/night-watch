@@ -6,11 +6,13 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import os from 'node:os';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { buildChildEnvironment } from './child-environment.mjs';
 import { GATE_RECEIPT_PATH_ENV, parseCounts, parseSafeDetails, persistGateReceipt, resolveGateReceiptTarget } from './lib/gate-receipt.mjs';
 import { OPERATOR_CLI_SCHEMA, defineOperatorCli, invokedDirectly } from './lib/operator-cli.mjs';
+import { evaluateSemanticSkipIdentityReport } from './lib/semantic-skip-policy.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const definitionFile = path.join(root, 'config', 'quality-gate.v1.json');
@@ -112,9 +114,18 @@ function runFixedCommandInner(commandKey, mode, timeoutClass) {
     command = packageManager;
     args = ['run', 'typecheck:bin'];
   } else if (commandKey === 'TOPOLOGY') {
-    // X-02 — the CI-absence simulator joins the certification set.
-    command = packageManager;
-    args = ['run', 'gate:topology'];
+    // X-02 — the CI-absence simulator joins the certification set. The safe
+    // topology classification must reach this group receipt; an old or
+    // malformed child receipt cannot silently inherit PASS.
+    const child = spawnSync(packageManager, ['run', 'gate:topology'], { cwd: root, env: environment, encoding: 'utf8', timeout: timeoutMs[/** @type {keyof typeof timeoutMs} */ (timeoutClass)], maxBuffer: 8 * 1024 * 1024, stdio: ['ignore', 'pipe', 'pipe'] });
+    const summary = summarizeChild(child, commandKey);
+    if (summary.status !== 'PASS') return summary;
+    const details = 'details' in summary ? summary.details : null;
+    const runnerTopologyClass = details?.runnerTopologyClass;
+    if (runnerTopologyClass !== 'PROVEN' && runnerTopologyClass !== 'PROVEN_DEGRADED') {
+      return { ...summary, status: 'TEST_FAILURE', exitCode: 1, errorClass: 'TOPOLOGY_RUNNER_CLASS_UNPROVEN' };
+    }
+    return summary;
   } else if (commandKey === 'UI_GATE') {
     // B-14 / D-18 — the Control Center UI package joins every gate mode:
     // clean install, typecheck, test and build in ui/control-center.
@@ -142,15 +153,72 @@ function runFixedCommandInner(commandKey, mode, timeoutClass) {
     const second = spawnSync(packageManager, ['run', 'agent:audit'], { cwd: root, env: environment, encoding: 'utf8', timeout: timeoutMs[timeoutClass], maxBuffer: 2 * 1024 * 1024, stdio: ['ignore', 'pipe', 'pipe'] });
     return summarizeChild(second, 'AGENT_CONTINUITY');
   } else if (commandKey === 'SEMANTIC_COMPATIBILITY') {
-    command = packageManager;
-    args = ['run', 'test:semantic-compat'];
+    const child = spawnSync(packageManager, ['run', 'test:semantic-compat'], { cwd: root, env: environment, encoding: 'utf8', timeout: timeoutMs[/** @type {keyof typeof timeoutMs} */ (timeoutClass)], maxBuffer: 16 * 1024 * 1024, stdio: ['ignore', 'pipe', 'pipe'] });
+    const summary = summarizeChild(child, commandKey);
+    if (summary.status !== 'PASS') return summary;
+    const details = 'details' in summary ? summary.details : null;
+    const skipPolicyResult = details?.skipPolicy?.result ?? 'SKIP_REPORT_MISSING';
+    if (skipPolicyResult !== 'PASS') return { ...summary, status: 'TEST_FAILURE', exitCode: 1, errorClass: `SEMANTIC_COMPATIBILITY_${skipPolicyResult}` };
+    return summary;
   } else if (commandKey === 'OWNER_PROVENANCE') {
-    command = packageManager;
-    args = ['run', 'test:owner-provenance'];
+    const reportDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'nw-op-'));
+    const skipReportPath = path.join(reportDirectory, 'skip-identity-report.json');
+    const ownerEnvironment = safeChildEnvironment(mode, commandKey);
+    ownerEnvironment.NIGHTWATCH_GATE_ENVIRONMENT = 'OWNER_PROVENANCE';
+    ownerEnvironment.NIGHTWATCH_SKIP_REPORT_PATH = skipReportPath;
+    const child = spawnSync(packageManager, ['run', 'test:owner-provenance'], {
+      cwd: root,
+      env: ownerEnvironment,
+      encoding: 'utf8',
+      timeout: timeoutMs[timeoutClass],
+      maxBuffer: 8 * 1024 * 1024,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    let report = null;
+    try {
+      report = JSON.parse(fs.readFileSync(skipReportPath, 'utf8'));
+    } catch {
+      report = null;
+    }
+    try {
+      fs.rmSync(reportDirectory, { recursive: true, force: true });
+    } catch {
+      // The report is private scratch; failure to remove it does not authorize a pass.
+    }
+    /** @type {{ canonicalSkipIdentities?: unknown, expectedSkipPolicy?: unknown }} */
+    let skipPolicyConfig = {};
+    try {
+      skipPolicyConfig = readJson(path.join(root, 'config', 'semantic-compatibility.v1.json')).execution ?? {};
+    } catch {
+      // The pure evaluator classifies a missing or malformed policy as non-pass.
+    }
+    const skipPolicy = evaluateSemanticSkipIdentityReport({
+      report,
+      canonicalSkipIdentities: skipPolicyConfig.canonicalSkipIdentities,
+      expectedSkipPolicy: skipPolicyConfig.expectedSkipPolicy,
+    });
+    const summary = summarizeChild(child, commandKey);
+    const skipPolicyDetails = {
+      result: skipPolicy.result,
+      skipped: skipPolicy.skipped,
+      undeclared: skipPolicy.undeclared.length,
+    };
+    const skipFailure = skipPolicy.result !== 'PASS';
+    const status = summary.status !== 'PASS' ? summary.status : skipFailure ? 'TEST_FAILURE' : 'PASS';
+    return {
+      ...summary,
+      status,
+      exitCode: status === 'PASS' ? 0 : summary.exitCode ?? 1,
+      errorClass: skipFailure ? `OWNER_PROVENANCE_${skipPolicy.result}` : summary.errorClass,
+      details: { failedLocations: [], skipPolicy: skipPolicyDetails },
+    };
   } else if (commandKey === 'SYNTHETIC_CAMPAIGN') {
     const synthetic = spawnSync(packageManager, ['run', 'campaign:synthetic'], { cwd: root, env: environment, encoding: 'utf8', timeout: timeoutMs[timeoutClass], maxBuffer: 8 * 1024 * 1024, stdio: ['ignore', 'pipe', 'pipe'] });
     const summary = summarizeChild(synthetic, 'SYNTHETIC_CAMPAIGN');
     if (summary.status !== 'PASS') return summary;
+    const details = 'details' in summary ? summary.details : null;
+    const skipPolicyResult = details?.skipPolicy?.result ?? 'SKIP_REPORT_MISSING';
+    if (skipPolicyResult !== 'PASS') return { ...summary, status: 'TEST_FAILURE', exitCode: 1, errorClass: `SYNTHETIC_CAMPAIGN_${skipPolicyResult}` };
     // The deep L6 containment lane is a HOST capability: a runner without a
     // usable Bubblewrap binary genuinely cannot exercise it, and the suite
     // correctly proves the fail-closed path there instead. That absence must
@@ -281,7 +349,8 @@ function main(cli) {
   const gateStartedAt = process.hrtime.bigint();
   for (const group of definition.groups) {
     const result = runFixedCommand(group.commandKey, mode, group.timeoutClass);
-    groups.push({ id: group.id, required: group.required, status: result.status, exitCode: result.exitCode, counts: result.counts, durationMs: result.durationMs, ...(result.details === null || result.details === undefined ? {} : { details: result.details }) });
+    const details = 'details' in result ? result.details : undefined;
+    groups.push({ id: group.id, required: group.required, status: result.status, exitCode: result.exitCode, counts: result.counts, durationMs: result.durationMs, ...(details === null || details === undefined ? {} : { details }) });
     if (group.required && result.status !== 'PASS') {
       finalResult = ['TIMEOUT', 'ENVIRONMENT_MISMATCH', 'INSTALL_FAILURE', 'INTERRUPTED', 'UNKNOWN_FAILURE', 'CONFIG_INVALID'].includes(result.status)
         ? result.status
