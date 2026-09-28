@@ -7,7 +7,19 @@ Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-final-product-completion-v1
 Starting SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
 Last validated implementation SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
-Last checkpoint: 2026-09-27 — M6 COMPLETE (7.1-7.11): the derived protocol
+Last checkpoint: 2026-09-28 — M9 10.2 IN PROGRESS (59/76 declared);
+Phase 0 of the corrections campaign unblocked: the 16 formatter-rewritten
+files in canonical were owner-dispositioned as disposable and restored
+(`df0a6d35`), the harness formatter/autofix is disabled (pi-lens mutation
+controls off globally + project-scope outside the repos), and canonical
+workspace:check is PASS again.
+Previous checkpoint: 2026-09-27 — M8 COMPLETE (9.1-9.13): DEV-lane
+preconditions + launcher guard, credential effect binding, bundle
+transactions, PREPARED/TERMINAL records, guard acquisitions, bounded
+body-read, run evidence, per-start nonce, relay invocation credential,
+ChangeSet validation, child-process census, M8 guard totality, gate pair
+5712/0 and exact-head CI green (run 36349771611 @ `badb6f88`).
+Previous checkpoint: 2026-09-27 — M6 COMPLETE (7.1-7.11): the derived protocol
 dossier readiness, the total Control Center status mapping, role-typed replay
 contexts, the campaign-state subtree with dossier-family-first findings, the
 newest-N run window, the read-only agent-campaign view, the measured Safety
@@ -29,13 +41,16 @@ Previous checkpoint: 2026-09-26 — M4 COMPLETE (5.1-5.7): six release probes wi
 states + the CI block-record single authority (`a784e668`), and the final
 integration `137207b1` after reconciling origin/main `946b52c4` and restoring
 the ledger-governed README status block; gate:dev/gate:milestone 5520/0.
-Current milestone: M7 Narrowed source, semantic and configuration over-claims
-(tasks 8.1-8.x) — starting with the environment-layer over-claim (8.1,
-NW-AUD-012 narrowed).
-Next action: read tasks 8.1-8.x and `src/core/config/environmentSurface.ts`,
-implement 8.1 with focused tests green, repairing forward with new commits;
-close M7 with focused + gate:milestone PASS, the C-00 integrate and the `gh`
-CI observation (OD-3) as in M4-M6.
+Current milestone: M9 D-129 CLI contract and bin type-check — 10.1 DONE,
+10.2 IN PROGRESS (59/76 declared, 4 library-retained, 13 pending), then
+10.3-10.6. The corrections child campaign
+(`nightwatch-final-completion-corrections-v1`) runs after this checkpoint per
+RESUME_PROMPT: re-verify all 31 findings at the new base first.
+Next action: integrate this checkpoint (`09c50277` + the lint/continuity
+follow-through) with `--expect-head`, observe exact-head CI, release+remove
+the parent session, then re-verify the 31 corrections findings at `df0a6d35`
+lineage and run the corrective child campaign (task 6.1 formatter policy
+first), then resume the parent at M9 10.2 remainder.
 
 Authorization class: FINAL_PRODUCT_COMPLETION_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
@@ -82,7 +97,7 @@ EXTERNAL CONTACT AUTHORIZED (OD-3 ONLY):
   provider proof run; one npm registry advisory query.
 
 CURRENT STATUS:
-  IN_PROGRESS — M1 session bootstrap in the owned worktree.
+  IN_PROGRESS — M9 10.2 checkpoint integration in the owned worktree.
 
 ALPHAUS DEV / NEXT / PRODUCTION CONTACT:   NOT AUTHORIZED
 AUTHENTICATED ALPHAUS RUNTIME:             NOT AUTHORIZED

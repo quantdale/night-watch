@@ -11,13 +11,17 @@ Last substantive checkpoint SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-final-product-complet-a891357d
-Last checkpoint: 2026-09-26 — M3 COMPLETE (4.1-4.13): the declared-skip /
-hermetic-temp / skip-identity spine, sibling-absent clean gate, TOPOLOGY and
-UI certification groups, Node 22 + SHA-pinned CI, session fixes, and five
-repair-forward checkpoints ending at `aa78a014`; gate:dev PASS 5507/0,
-gate:milestone PASS, and exact-head CI green (run 36243034942, all 15
-required groups PASS, receipt `receipt:sha256:535217a6dbae65b7a26f9243`,
-OD-3).
+Last checkpoint: 2026-09-28 — M9 10.2 IN PROGRESS (59/76 declared, 4
+library-retained, 13 pending): the Phase 0 formatter blocker is RESOLVED
+(owner disposition of the 16 disposable files, harness formatter/autofix
+disabled, canonical clean at `df0a6d35`, workspace:check PASS); the two
+10.2 follow-through commits (`0a436f12`, `09c50277`) plus the lint and
+continuity follow-through are being checkpointed. Previous: 2026-09-27 —
+M8 COMPLETE (9.1-9.13) with gate pair 5712/0 and exact-head CI green (run
+36349771611 @ `badb6f88`); M7 COMPLETE (8.1-8.5) at 5645/0 (run
+36321415439 @ `995378d2`); M6 COMPLETE (7.1-7.11); M5 COMPLETE (6.1-6.17);
+M4 COMPLETE (5.1-5.7); M3 COMPLETE (4.1-4.13) with run 36243034942,
+receipt `receipt:sha256:535217a6dbae65b7a26f9243`.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
@@ -38,12 +42,13 @@ ledger, and end at `PROJECT_COMPLETE_AND_CI_CERTIFIED` under D-129 with a
 
 ## Current Milestone
 
-M7 Narrowed source, semantic and configuration over-claims (tasks 8.1-8.x):
-the environment-layer over-claim (NW-AUD-012 narrowed: forward the validated
-merged environment, refuse unknown `.env` keys, fail on malformed or duplicate
-lines, treat an unreadable `.env` as an error) and the remaining narrowed
-items in that section. M6 closed with focused suites, the UI/browser lane and
-the gate pair (see the ledger).
+M9 D-129 CLI contract and bin type-check (tasks 10.1-10.6): 10.1 DONE,
+10.2 IN PROGRESS (59/76 declared, 4 library-retained, 13 pending). Per
+RESUME_PROMPT the corrective child campaign
+(`nightwatch-final-completion-corrections-v1`) runs next, after its 31
+findings are re-verified at the current base; it must land corrections
+task 6.1 (formatter policy: `biome.json` with formatter/organize-imports
+disabled + `.editorconfig`) as its first commit after the child bootstrap.
 
 ## Completed Milestones
 
@@ -460,11 +465,14 @@ exact-head CI green.
 
 ## Exact Next Action
 
-Commit the M7 closeout (tasks.md ticks + PLAN M7 COMPLETE + this STATE), C-00
-integrate it, then run the `gh` CI observation (OD-3) exactly as in M4-M6 and
-record the run id + receipt in the ledger. Then begin M8 (task 9.1: the
-contained-DEV lane integrity work, starting with the DEV_LANE_PRECONDITION_OPEN
-registry).
+Validate `0a436f12`/`09c50277` (focused suites + `gate:dev`), commit this
+continuity with Status IN_PROGRESS and resume point "M9 task 10.2 (remainder:
+59/76 declared)", integrate with `--expect-head`, observe exact-head CI
+(OD-3), then release + remove the parent session. Then re-verify the 31
+corrections findings at the new base (classifying STILL_PRESENT / CHANGED /
+COMPLETED_LATER with SHA + file:line, and checking follow-on defects), run the
+corrective child campaign (6.1 first), route ACTIVE_TASK back to the parent at
+IN_PROGRESS with next action "M9 task 10.2 remainder", and finish M9-M14.
 
 ## Superseded Next Action (8.1, complete)
 
@@ -941,7 +949,21 @@ lanes, the gate pair at 5625/0 and exact-head CI green.
 
 ## Blockers
 
-None.
+- RESOLVED 2026-09-28 (RESUME_PROMPT): the Phase 0 canonical-dirty blocker.
+  The owner dispositioned the 16 formatter-rewritten files as
+  behaviour-neutral disposable output (AST-verified against `df0a6d35`;
+  only `let minedById`→`const` and one redundant paren pair were non-layout)
+  and authorized the restore. The harness formatter/autofix (pi-lens
+  post-write pipeline: deferred format + biome autofix) is now disabled at
+  global and project scope outside the repositories; canonical was restored
+  with the authorized `git checkout -- <the 16 files>` command and
+  `workspace:check` PASS (`canonicalSafe=true`, clean tree at `df0a6d35`).
+  The pre-existing lint findings those rewrites had autofixed
+  (`loadTypeScriptModule` unused in `ai-local-canary`/`auth-configure`,
+  `sibling` unused in `w11-historical-arm`) are fixed forward in the session
+  worktree (in the 10.2 migration and this checkpoint), not in canonical.
+  Corrections task 6.1 (repo `biome.json` formatter-off + `.editorconfig`)
+  lands first in the child campaign so future formatter runs are no-ops.
 
 ## Safety Events
 
