@@ -428,9 +428,14 @@ function readJsonFile(root, relative) {
   }
 }
 
-/** Legacy bindings may carry a literal HEAD token; the evaluator resolves it. */
+/**
+ * VB-05 / corrections task 2.5 — only an exact 40-hex commit identity is a
+ * legacy evidence value. The literal `HEAD` is SELF-CERTIFYING (it resolves to
+ * whatever HEAD is at evaluation time) and is invalid everywhere: no binding,
+ * legacy field or definition may carry it.
+ */
 function isLegacyEvidenceValue(value) {
-  return typeof value === 'string' && (SHA40_RE.test(value) || /^HEAD$/i.test(value));
+  return typeof value === 'string' && SHA40_RE.test(value);
 }
 
 /**
@@ -443,11 +448,15 @@ function isLegacyEvidenceValue(value) {
 export function loadReleaseEvidenceBindings(root, options = {}) {
   const raw = readJsonFile(root, RELEASE_EVIDENCE_FILE);
   if (raw === null) {
+    // VB-05 — the compatibility window is closed: the bindings file is the
+    // evidence registry, and an absent registry is always an error (the
+    // legacy `requireFile` option is retained as a no-op alias so existing
+    // callers read the same intent).
     const missing = [`RELEASE_EVIDENCE_UNREADABLE:${RELEASE_EVIDENCE_FILE}`];
     return {
-      ok: options.requireFile !== true,
+      ok: false,
       present: false,
-      errors: options.requireFile === true ? missing : [],
+      errors: missing,
       bySubject: new Map(),
     };
   }
@@ -489,7 +498,13 @@ export function legacyEvidenceSha(root, subject) {
  * @param {string} subject
  */
 export function resolveEvidenceShaForSubject(root, subject) {
-  const loaded = loadReleaseEvidenceBindings(root);
+  // VB-05 — project:check requires the bindings file AND its schema; a
+  // missing or schema-invalid registry never falls through to the retired
+  // locations (a fallthrough would let a broken registry self-certify from
+  // the legacy copies). Only a PRESENT, VALID registry with the subject
+  // UNBOUND consults the retired locations once.
+  const loaded = loadReleaseEvidenceBindings(root, { requireFile: true });
+  if (!loaded.ok || !loaded.present) return null;
   const bound = loaded.bySubject.get(subject);
   if (bound !== undefined) return bound.evidenceSha;
   return legacyEvidenceSha(root, subject);

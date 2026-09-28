@@ -422,6 +422,28 @@ function makeFixture(options: FixtureOptions = {}): Fixture {
     fs.mkdirSync(path.dirname(destination), { recursive: true });
     fs.copyFileSync(path.join(process.cwd(), relative), destination);
   }
+  // VB-05 (corrections task 2.5): the compatibility window is closed, so every
+  // fixture carries a real release-evidence registry — the closed schema,
+  // one binding per certification condition, mirroring each condition's
+  // declared evidence exactly (the legacy locations are consulted only for an
+  // UNBOUND subject of a present, valid registry).
+  {
+    const definition = JSON.parse(fs.readFileSync(path.join(root, 'config/release-certification.v1.json'), 'utf8')) as {
+      conditions: Array<{ id: string; evidenceSha: string | null }>;
+    };
+    const registry = {
+      schemaVersion: 'nightwatch.release-evidence.v1',
+      bindings: definition.conditions.map((condition) => ({
+        subject: condition.id,
+        evidenceSha: condition.evidenceSha ?? null,
+        receiptDigest: null,
+        observedAt: null,
+        executor: null,
+        artifactPaths: [],
+      })),
+    };
+    fs.writeFileSync(path.join(root, 'config/release-evidence.v1.json'), `${JSON.stringify(registry, null, 2)}\n`);
+  }
   for (const bin of ['bin/agent-state.mjs', 'bin/agent-continuity-protocol.mjs', 'bin/child-environment.mjs', 'bin/project-state-check.mjs', 'bin/workspace-integrity.mjs', 'bin/lib/checkpoint-role.mjs', 'bin/lib/operator-cli.mjs', 'bin/lib/openspec-ledger.mjs', 'bin/lib/openspec-archive-index.mjs', 'bin/lib/programme-state.mjs', 'bin/lib/release-evidence.mjs', 'bin/lib/typescript-runtime-loader.mjs', 'bin/lib/validation-lane-state.mjs', 'bin/lib/ci-block-record.mjs', 'bin/lib/accessibility-record.mjs', 'bin/lib/certification-demotion.mjs']) {
     const destination = path.join(root, bin);
     fs.mkdirSync(path.dirname(destination), { recursive: true });
@@ -2024,6 +2046,24 @@ test.describe('F-12 project:check release certification', () => {
     const record = JSON.parse(fs.readFileSync(file, 'utf8'));
     mutate(record as Record<string, unknown>);
     fs.writeFileSync(file, `${JSON.stringify(record, null, 2)}\n`);
+    // VB-05: the fixture registry mirrors the definition's evidence — a
+    // mutation to a condition's evidenceSha re-binds the same subject so the
+    // closed window still resolves the TESTED value (HEAD, a missing object,
+    // a divergent SHA...), not the stale registry copy.
+    const bindingsFile = path.join(root, 'config/release-evidence.v1.json');
+    try {
+      const registry = JSON.parse(fs.readFileSync(bindingsFile, 'utf8')) as {
+        bindings: Array<{ subject: string; evidenceSha: string | null }>;
+      };
+      const conditions = (record.conditions ?? []) as Array<{ id: string; evidenceSha: string | null }>;
+      for (const binding of registry.bindings) {
+        const condition = conditions.find((entry) => entry.id === binding.subject);
+        if (condition !== undefined) binding.evidenceSha = condition.evidenceSha ?? null;
+      }
+      fs.writeFileSync(bindingsFile, `${JSON.stringify(registry, null, 2)}\n`);
+    } catch {
+      // A fixture without the registry keeps its own failure mode.
+    }
   }
 
   function rewriteBlockFor(root: string, replacements: Record<string, string>): void {
@@ -2244,7 +2284,7 @@ test.describe('F-12 project:check release certification', () => {
     }
   });
 
-  test('NW-AUD-010 matrix. HEAD resolving to a later descendant is EVIDENCE_FUTURE, not exact', () => {
+  test('VB-05: the literal HEAD is refused as self-certifying evidence, never resolved to the live HEAD', () => {
     const fixture = makeFixture({
       activeTaskStatus: 'in_progress',
       block: { projectCompletionStatus: 'PROJECT_COMPLETE_AND_CI_CERTIFIED' },
@@ -2260,53 +2300,45 @@ test.describe('F-12 project:check release certification', () => {
       fs.writeFileSync(path.join(fixture.root, 'after-head.txt'), 'after\n');
       git(fixture.root, ['add', '--all']);
       git(fixture.root, ['commit', '--quiet', '--no-gpg-sign', '-m', 'head advances past checkpoint']);
-      const head = git(fixture.root, ['rev-parse', 'HEAD']);
-      expect(head).not.toBe(checkpoint);
       const result = run(fixture.root);
+      // VB-05 (corrections task 2.5): the definition parser rejects the HEAD
+      // marker outright — the same fixture that used to resolve HEAD to the
+      // live tip (self-certifying EXACT/FUTURE) now fails validation.
       expect(result.status).not.toBe(0);
-      expect(result.stderr).toContain('PROJECT_STATE_EVIDENCE_FUTURE: completion-ledger-truth');
+      expect(result.stderr).toContain('RELEASE_DEFINITION_CONDITION_EVIDENCE_SHA');
+      expect(result.stderr).not.toContain('PROJECT_STATE_EVIDENCE_FUTURE: completion-ledger-truth');
     } finally {
       fixture.cleanup();
     }
   });
 
-  test('NW-AUD-010 matrix. HEAD token resolves through the captured snapshot and is EXACT only when it equals the certified checkpoint (pure)', () => {
-    // Full-process HEAD==certified is self-referential under a clean committed
-    // block (the commit that records LAST_SUBSTANTIVE cannot contain its own
-    // SHA). Snapshot resolution is therefore proven at the pure boundary the
-    // adapter feeds: resolveEvidenceSha('HEAD', liveHead) then relation.
+  test('VB-05: HEAD never resolves to the live HEAD — the strict resolver fails it closed to ABSENT (pure)', () => {
+    // The old behavior resolved `HEAD` to the captured live tip: a
+    // self-certifying evidence token that could make a condition EXACT (or
+    // FUTURE) depending on where HEAD happened to be. VB-05 makes HEAD
+    // invalid everywhere; the strict pass-through fails it closed to ABSENT
+    // (no bound evidence resolves) and the definition parser rejects it.
     const checkpoint = '2'.repeat(40);
-    const definition = definitionWithExactEvidence(
-      { ...liveDefinition(), conditions: liveDefinition().conditions.map((c, i) => (i === 0 ? { ...c, evidenceSha: 'HEAD' } : c)) },
-      checkpoint,
-    );
-    // Force condition 0 back to HEAD after mapping others to checkpoint.
     const withHead = {
-      ...definition,
-      conditions: definition.conditions.map((condition, index) =>
-        index === 0 ? { ...condition, evidenceSha: 'HEAD' as string | null } : condition),
+      ...liveDefinition(),
+      conditions: liveDefinition().conditions.map((condition, index) =>
+        index === 0 ? { ...condition, evidenceSha: 'HEAD' } : condition),
     };
-    const exact = evaluateReleaseCertification(evaluationInput(withHead, {
-      liveHeadSha: checkpoint,
-      certifiedCheckpointSha: checkpoint,
-      resolveEvidenceRelation: (resolved, target) => (resolved === target ? 'EXACT' : 'GIT_INDETERMINATE'),
-    }));
-    expect(exact.conditions[0]?.resolvedEvidenceSha).toBe(checkpoint);
-    expect(exact.conditions[0]?.evidenceRelation).toBe('EXACT');
-    expect(exact.conditions[0]?.state).toBe('MET');
-
-    const laterHead = evaluateReleaseCertification(evaluationInput(withHead, {
+    const verdict = evaluateReleaseCertification(evaluationInput(withHead, {
       liveHeadSha: '3'.repeat(40),
       certifiedCheckpointSha: checkpoint,
-      resolveEvidenceRelation: (resolved, target) => {
-        if (resolved === target) return 'EXACT' as const;
-        // Snapshot HEAD is a descendant of the certified checkpoint.
-        return 'FUTURE_DESCENDANT' as const;
-      },
+      resolveEvidenceRelation: () => 'EXACT',
     }));
-    expect(laterHead.conditions[0]?.resolvedEvidenceSha).toBe('3'.repeat(40));
-    expect(laterHead.conditions[0]?.state).toBe('EVIDENCE_FUTURE');
-    expect(laterHead.certificationRefused).toBe(true);
+    // Nothing resolves: the HEAD token never becomes a live SHA...
+    expect(verdict.conditions[0]?.resolvedEvidenceSha).toBeNull();
+    // ...so the raw MET check is reported EVIDENCE_ABSENT (never EXACT).
+    expect(verdict.conditions[0]?.state).toBe('EVIDENCE_ABSENT');
+    expect(verdict.certificationRefused).toBe(true);
+    // And the definition parser refuses the marker outright.
+    const record = JSON.parse(JSON.stringify(withHead));
+    expect(parseReleaseCertificationDefinition(record).ok).toBe(false);
+    expect(parseReleaseCertificationDefinition(record).errors.map((error) => error.code))
+      .toContain('RELEASE_DEFINITION_CONDITION_EVIDENCE_SHA');
   });
 
   test('NW-AUD-010 matrix. exact checkpoint evidence does not emit an evidence failure for that condition under advance', () => {

@@ -1401,17 +1401,16 @@ function main() {
             }
             for (const condition of boundDefinition.conditions) {
               const cited = typeof condition.evidence === 'string' ? condition.evidence : '';
-              // Legacy bindings may carry a literal HEAD token; compare the
-              // resolved identities, never the tokens.
-              const resolveHead = (value) =>
-                value !== null && /^HEAD$/i.test(value) ? liveHeadSha : value;
+              // VB-05: the literal HEAD is invalid everywhere — bound
+              // identities are exact 40-hex values and are compared directly
+              // (no token resolution, nothing self-certifying).
               for (const [laneId, laneSha] of laneEvidence) {
                 // Token-boundary citation: lane ids like `ui` must not match
                 // inside words (`suite`).
                 const citation = new RegExp(`\\b${laneId.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')}\\b`);
                 if (!citation.test(cited)) continue;
-                const conditionSha = resolveHead(condition.evidenceSha);
-                const resolvedLaneSha = resolveHead(laneSha);
+                const conditionSha = condition.evidenceSha;
+                const resolvedLaneSha = laneSha;
                 if (conditionSha !== null && resolvedLaneSha !== null && conditionSha !== resolvedLaneSha) {
                   fail(errors, `PROJECT_STATE_EVIDENCE_LANE_DISAGREEMENT: ${condition.id} cites ${laneId} with ${conditionSha} vs lane ${resolvedLaneSha}`);
                 }

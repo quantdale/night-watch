@@ -176,7 +176,8 @@ export interface ReleaseAdvanceConditionDefinition {
   readonly order: number;
   readonly title: string;
   readonly check: string;
-  /** A 40-hex SHA, the 'HEAD' marker, or null when no evidence was earned. */
+  /** A 40-hex commit identity, or null when no evidence was earned. The
+   *  self-certifying 'HEAD' marker is invalid (VB-05). */
   readonly evidenceSha: string | null;
   readonly evidence: string;
 }
@@ -198,7 +199,10 @@ export interface ReleaseDefinitionError {
 }
 
 const SHA_RE = /^[0-9a-f]{40}$/i;
-const EVIDENCE_SHA_RE = /^(?:HEAD|[0-9a-f]{40})$/i;
+// VB-05 (corrections task 2.5): the literal HEAD is self-certifying and
+// invalid as an evidence SHA everywhere — only an exact 40-hex commit
+// identity is a legal bound evidence value.
+const EVIDENCE_SHA_RE = /^[0-9a-f]{40}$/i;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -438,8 +442,8 @@ export interface ReleaseEvaluationInput {
   readonly externalTrack: ReleaseExternalTrackReport;
   /**
    * Resolves bound evidence relative to the certified checkpoint as a closed
-   * categorical relation. HEAD tokens must already be resolved by the caller
-   * from the captured evaluation snapshot. When omitted, the evaluator fails
+   * categorical relation. Bound evidence is always an exact 40-hex identity
+   * (the self-certifying HEAD token is invalid, VB-05). When omitted, the evaluator fails
    * closed: null evidence is ABSENT, equal 40-hex identities are EXACT, and
    * any other bound identity is GIT_INDETERMINATE (never a proven relation).
    */
@@ -468,8 +472,10 @@ export interface ReleaseEvaluationInput {
 }
 
 function resolveEvidenceSha(bound: string | null, liveHeadSha: string | null): string | null {
-  if (bound === null) return null;
-  if (/^HEAD$/i.test(bound)) return liveHeadSha;
+  // VB-05: `HEAD` never resolves to the live HEAD (self-certifying evidence).
+  // The definition parser rejects it, so a bound value here is already exact;
+  // the strict pass-through keeps a malformed value from resolving anything.
+  if (bound === null || !/^[0-9a-f]{40}$/i.test(bound)) return null;
   return bound;
 }
 
