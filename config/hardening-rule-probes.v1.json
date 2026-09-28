@@ -480,6 +480,27 @@
             "replace": "npm ci --prefix ui/control-center"
           }
         ]
+      },
+      {
+        "id": "HC-182",
+        "ops": [
+          {
+            "file": "bin/quality-gate-clean.mjs",
+            "search": "resolveCleanCheckoutVerdict({",
+            "replace": "void ({"
+          }
+        ]
+      },
+      {
+        "id": "HC-183",
+        "ops": [
+          {
+            "file": "bin/quality-gate-clean.mjs",
+            "search": "measureClean(root)",
+            "replace": "({ ok: true, clean: true })",
+            "all": true
+          }
+        ]
       }
     ],
     "checkPhase8B01CloseoutIntegrity": [

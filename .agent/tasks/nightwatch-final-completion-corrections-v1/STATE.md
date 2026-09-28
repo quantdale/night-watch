@@ -114,15 +114,35 @@ M4 group gate. Exact-head CI/artifact evidence and group gates remain pending.
   here). `checkPhase23QualityGate` asserts the exact install-script text and
   HC-181 kills the flag (DETECTED 4/4). Focused phase23 suite 15/15 including
   the new VC-05 script-text test; hardening:check and typecheck:bin PASS.
+  VC-06 (task 3.6) is implemented and locally validated: the clean-checkout
+  verdict is the pure `resolveCleanCheckoutVerdict` in
+  `bin/lib/cleanCheckoutReceipt.mjs` (measurement integrity > drift >
+  dirty-clone > dirty-source > gate result — the erased-conjunct regression,
+  where a dirty post-run checkout fell through to the inner gate's PASS, is
+  gone); the SOURCE root is re-measured at receipt time
+  (`sourceRootCleanAtEmit` on every receipt); the REAL product-resolved
+  sibling root is measured read-only via `resolveSiblingRoot` (the direct
+  literal stays forbidden) with the v2 depth/entry-bounded manifest whose git
+  calls all carry `--no-optional-locks`; every early exit carries siblingMode,
+  realSiblingRootClass and exact ambient versions through
+  `cleanEarlyReceipt`. Evidence: gateReceiptPersistence 41/41 (9 new VC-06
+  tests incl. a behavioral early-exit receipt), hardening:check PASS, probe
+  campaign checkPhase23QualityGate 6/6 DETECTED (HC-181/182/183), census
+  suites 14/14 after registering the receipt library's npm version probe as
+  TEST_LANE, typecheck:bin PASS at 1560 diagnostics / 14 of 76 (the clean
+  runner itself dropped 12→0), universe PASS at `sha256:95f903de`. The full
+  `gate:clean` run executes at this clean checkpoint; its receipt is recorded
+  in the Validation Ledger below.
 
 ## Exact Next Action
 
-Implement M4 task 3.6 (VC-06): gate:clean must fail on a dirty post-run
-checkout, measure the real sibling root read-only, and carry siblingMode and
-versions in early-exit receipts. VC-04 and VC-05 are complete with HC-180 /
-HC-181 proven DETECTED. Preserve VC-01 exact-head CI and VC-03
-artifact observation as pending M4 close-out evidence; continue through task
-3.12 before integration.
+Run the full `npm run gate:clean` at the VC-06 clean checkpoint and record
+its receipt (realSibling identity, versionsSource=TOOLCHAIN,
+sourceRootCleanAtEmit, finalResult) in the Validation Ledger; then proceed to
+M4 task 3.7 (VC-07: reproduce the observerSemanticLedger flake at the 2 s
+bound under load, correct the root-cause comment, create a tracked flake
+ledger). Preserve VC-01 exact-head CI and VC-03 artifact observation as
+pending M4 close-out evidence; continue through task 3.12 before integration.
 
 ## Files Changed
 
@@ -134,7 +154,7 @@ artifact observation as pending M4 close-out evidence; continue through task
 | `.agent/ACTIVE_TASK.md` | active route to this child | flipped at bootstrap |
 | `.agent/EXECUTION_PROMPT.md` | planner-executor handoff for this child | rewritten at bootstrap |
 | `bin/bin-typecheck.mjs`, `bin/lib/typecheck-ratchet.{mjs,d.mts}` | full-source per-file, total, stale-ceiling, and annotation-budget ratchet | VB-07 and M3 group gates complete at `d6fd98b1` |
-| `config/bin-typecheck.v1.json` | VB-07 ratchet retains the historical 1579 baseline and the current 1572 surface; 78 exact ceilings, run-shards=13 | VC-03 topology receipt narrowing measured at 1572; ratchet PASS |
+| `config/bin-typecheck.v1.json` | VB-07 ratchet retains the historical 1579 baseline and the current 1560 surface; 78 exact ceilings, run-shards=13 | VC-06 dropped quality-gate-clean 12→0; typecheck:bin PASS at 1560 / 14 of 76 |
 | `tests/unit/binTypecheckRatchet.test.ts` | missing/growth/staleness/annotation regression tests | 5/5; registered FULL_REGRESSION / PARALLEL_SAFE |
 | `tests/unit/devLoginSecurity.test.ts`, `tests/unit/storageState.test.ts` | VC-01: remove stale bundled-Chromium skips so the configured system Chrome channel executes the security checks | 34/34 focused tests PASS; four browser-backed tests executed, CI proof pending |
 | `config/semantic-compatibility.v1.json` | VC-01 obsolete Chromium entries removed; VC-02 exact file/title-path/reason skip identities | strict policy test PASS; 81 entries; source-stale variant proven |
@@ -147,9 +167,12 @@ artifact observation as pending M4 close-out evidence; continue through task
 | `tests/unit/gateTopology.test.ts`, `tests/unit/syntheticCampaignDiagnostics.test.ts`, `tests/unit/authenticatedWriterCensus.test.ts` | VC-03 path resolution, classification, bounded receipt, artifact-pin, and writer-registration regressions | focused suites 63/63 PASS |
 | `bin/agent-state.mjs`, `bin/semantic-compat.mjs`, `bin/lib/semantic-compat-environment.{mjs,d.mts}`, `bin/lib/hardening/rules/documentation.mjs` | VC-04 D-04 relaxation restricted to CI/CLEAN with routing validity and exact branch equality; semantic-compat inherits its parent label; HC-180 enforces equality | hardening:check PASS; HC-180 DETECTED 2/2 at `18185f36` |
 | `package.json`, `bin/lib/hardening/rules/validation-and-gates.mjs`, `config/hardening-rule-probes.v1.json`, `tests/unit/phase23QualityGate.test.ts` | VC-05 `gate:ui` install with `--ignore-scripts`, hardening assertion on the script text, HC-181 probe, focused regression | gate:ui chain verified (105/105 UI tests + build); HC-181 DETECTED 4/4; phase23 15/15 |
+| `bin/quality-gate-clean.mjs`, `bin/lib/cleanCheckoutReceipt.{mjs,d.mts}` | VC-06 pure verdict (erased-conjunct fix), v2 read-only bounded manifest, real-root measurement via `resolveSiblingRoot`, early receipts with siblingMode/root-class/versions | gateReceiptPersistence 41/41; full gate:clean run pending at checkpoint |
+| `bin/lib/hardening/rules/validation-and-gates.mjs`, `config/hardening-rule-probes.v1.json` | VC-06 clean-runner rule now asserts `measureClean(root)` + the verdict wiring + the library's lock-free status pattern; HC-182/HC-183 probes | probe campaign checkPhase23QualityGate 6/6 DETECTED |
+| `bin/lib/childProcessCensus.mjs` | classify the receipt library's `npm --version` probe as TEST_LANE (identical to quality-gate-clean's npm spawns) | census suites 14/14; hardening:check PASS |
+| `tests/unit/gateReceiptPersistence.test.ts` | VC-06 verdict/manifest/early-receipt/wiring regressions (9 new tests) | 41/41 PASS |
 | `tests/unit/semanticSkipIdentity.test.ts`, `tests/unit/selfDevSandboxConfinement.test.ts`, `tests/unit/syntheticCampaignDiagnostics.test.ts` | VC-02 identity/report, reason, and gate-receipt regressions | 29/29 receipt+policy; 25 passed, 1 declared host skip |
-| `config/bin-typecheck.v1.json` | VB-07 ratchet retains the historical 1579 baseline and the current 1572 surface; 78 exact ceilings, run-shards=13 | VC-03 topology receipt narrowing measured at 1572; ratchet PASS |
-| `config/validation-universe.v1.json`, `config/validation-execution-classes.v1.json` | register ratchet suite and refresh the inventory digest | checks PASS at M3 close |
+| `config/validation-universe.v1.json`, `config/validation-execution-classes.v1.json` | register ratchet suite and refresh the inventory digest | checks PASS at M3 close; VC-06 re-measured at `sha256:95f903de` (581 discovered, 0 unclassified) |
 
 ## Validation Ledger
 
@@ -351,6 +374,50 @@ Relevant output: includes the new VC-05 gate:ui `--ignore-scripts` script-text
 regression; `npm run hardening:check` and `npm run typecheck:bin` PASS after
 the rule and probe change.
 
+Command: focused `gateReceiptPersistence.test.ts` (VC-06 block added)
+Result: PASS (41/41)
+When: 2026-09-28
+Relevant output: verdict precedence (dirty clone / dirty source / drift /
+unresolved / verbatim gate result), v2 manifest determinism + nested-change
+detection + worktree status binding, early-receipt field shape, a behavioral
+early-exit spawn carrying siblingMode=INVALID + exact versions + root class,
+and wiring assertions (pure resolver used; `resolveSiblingRoot` present;
+`DEFAULT_SIBLING_ROOT` literal absent; `--no-optional-locks` in the library;
+no `git(['status'` left in the runner).
+
+Command: `node bin/hardening-check.mjs --probe-campaign --only=checkPhase23QualityGate`
+Result: PASS
+When: 2026-09-28
+Relevant output: 6/6 DETECTED (HC-022, HC-090, HC-091, HC-181, HC-182,
+HC-183), workspace restored, status unchanged. HC-182 kills the verdict
+wiring; HC-183 replaces every `measureClean(root)` call.
+
+Command: census suites (`childProcessCensus.test.ts`, `childProcessCensusIndirection.test.ts`)
+Result: PASS (14/14)
+When: 2026-09-28
+Relevant output: after classifying the receipt library's npm probe as
+TEST_LANE and replacing the JSDoc `import('node:child_process')` type
+annotations (which the raw-source indirection check counts as dynamic
+imports) with structural return types, hardening:check reports 0 census
+errors.
+
+Command: `npm run hardening:check` + `npm run typecheck:bin` + `npm run typecheck` + `npm run validation:universe`
+Result: PASS
+When: 2026-09-28
+Relevant output: structural invariants PASS; bin ratchet 1560 diagnostics /
+14 of 76 conforming / 78 ceilings (quality-gate-clean now 0, cleanCheckout
+Receipt 0 — no entry needed); root typecheck clean; universe 581 discovered /
+0 unclassified at `sha256:95f903de`.
+
+Command: behavioral early-exit smoke (`env -i … NIGHTWATCH_CLEAN_SIBLING_MODE=INVALID node bin/quality-gate-clean.mjs`)
+Result: PASS (exit 1 with a complete receipt)
+When: 2026-09-28
+Relevant output: `{siblingMode: INVALID, nodeVersion: v22.22.1,
+npmVersion: 10.9.4, versionsSource: AMBIENT, realSiblingRootClass:
+DEFAULT, sourceRootCleanAtEmit: false (dirty tree), finalResult:
+ENVIRONMENT_MISMATCH}` — sibling mode, versions and root class now present
+on an early exit.
+
 ## Decisions Made During This Task
 
 - VC-01 removes the stale test-level browser skips instead of reimplementing
@@ -373,6 +440,26 @@ the rule and probe change.
   diagnostics / 13 of 76 conforming, with no false ceiling reduction. HC-180
   targets the CI/CLEAN branch-equality conjunct and was proven DETECTED at the
   M4 guard checkpoint `18185f36` (2/2 probes, workspace restored).
+- VC-06 keeps the verdict precedence explicit: measurement integrity first
+  (an unresolvable real sibling root is SIBLING_IDENTITY_UNRESOLVED — neither
+  drift nor pass), then identity drift, then the dirty clone and dirty SOURCE
+  root, and only then the inner gate's result, which the receipt always
+  carries as its own field. The old `siblingIdentityUnchanged ? gateResult :
+  DRIFT` fallback is what erased the dirty conjunct; the pure resolver makes
+  each conjunct independently testable.
+- The REAL sibling root is resolved through `resolveSiblingRoot` — the
+  product's single sanctioned resolver (source-integrity rule
+  SIBLING_ROOT_DIRECT_READ keeps the literal out of this file) — and the
+  receipt records only the class (DEFAULT/ENV_OVERRIDE/UNRESOLVED), never a
+  machine-specific absolute path. The v2 manifest discloses truncation, and
+  every git call it makes runs with `--no-optional-locks` so a status never
+  refreshes an index — in particular inside sibling repositories, which this
+  workspace never writes.
+- The receipt library's `npm --version` probe is classified TEST_LANE — the
+  same profile quality-gate-clean's own npm spawns already receive — rather
+  than reshaping the call to satisfy the classifier; the JSDoc type imports
+  were replaced with structural return types because the census reads raw
+  source for indirections by design (a comment naming child_process counts).
 - M3 gate acceptance follows each lane's explicit JSON `result`: both are
   PASS, while `withinTarget=false` remains disclosed performance telemetry.
   The affected-test selector broadened to all 438 tests and no selection or

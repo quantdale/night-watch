@@ -1,7 +1,7 @@
 {
   "schemaVersion": "nightwatch.bin-typecheck.v1",
   "definitionName": "Nightwatch bin type-check lane (F-15.5)",
-  "note": "VB-07 (corrections task 2.7) - the real ratchet. Audit baseline (d595c7c8): 1571 diagnostics / 13 of 76 bins conforming; measured whole-surface baseline (2026-09-28): 1579 diagnostics / 13 of 76 bins conforming. M4 skip-report wiring and explicit missing-receipt classification tightened the affected launcher annotations; current measured surface is 1572 diagnostics / 13 of 76 bins conforming, across the entire tsconfig.bin.json surface; VC-03's topology receipt narrowing reduces bin/gate-topology.mjs from its prior 3-diagnostic ceiling to 2. Exact per-file ceilings cover all 78 diagnostic-bearing sources (63 non-conforming entry points plus 15 bin/lib files); bin/run-shards.mjs is now at its measured 13 (down from the 2026-09-28 measured 16, not the stale 25). The total ceiling is the current measured whole-surface sum (1573); the diagnostic-silencing any-annotation budget remains the measured count (26). Every ceiling is enforced in every mode: any increase or stale ceiling (higher than the measured count) fails. REPORTING describes the burn-down; it never permits growth. BLOCKING (task 10.5) additionally fails on any non-conforming entry point without an exemption. Exempting a bin requires a reason and an exemption that starts passing is stale and fails. New any-widening annotations added only to lower counts fail the budget.",
+  "note": "VB-07 (corrections task 2.7) - the real ratchet. Audit baseline (d595c7c8): 1571 diagnostics / 13 of 76 bins conforming; measured whole-surface baseline (2026-09-28): 1579 diagnostics / 13 of 76 bins conforming. M4 skip-report wiring and explicit missing-receipt classification tightened the affected launcher annotations; current measured surface is 1560 diagnostics / 14 of 76 bins conforming, across the entire tsconfig.bin.json surface; VC-03's topology receipt narrowing reduces bin/gate-topology.mjs from its prior 3-diagnostic ceiling to 2, and VC-06's clean-receipt refactor eliminates bin/quality-gate-clean.mjs's 12 remaining diagnostics entirely (now 0). Exact per-file ceilings cover all 78 diagnostic-bearing sources (63 non-conforming entry points plus 15 bin/lib files); bin/run-shards.mjs is now at its measured 13 (down from the 2026-09-28 measured 16, not the stale 25). The total ceiling is the current measured whole-surface sum (1560); the diagnostic-silencing any-annotation budget remains the measured count (26). Every ceiling is enforced in every mode: any increase or stale ceiling (higher than the measured count) fails. REPORTING describes the burn-down; it never permits growth. BLOCKING (task 10.5) additionally fails on any non-conforming entry point without an exemption. Exempting a bin requires a reason and an exemption that starts passing is stale and fails. New any-widening annotations added only to lower counts fail the budget.",
   "mode": "REPORTING",
   "exemptions": [],
   "perFileCeilings": [
@@ -223,7 +223,7 @@
     },
     {
       "bin": "bin/quality-gate-clean.mjs",
-      "maxErrors": 12
+      "maxErrors": 0
     },
     {
       "bin": "bin/quality-gate-inventory.mjs",
@@ -318,6 +318,6 @@
       "maxErrors": 94
     }
   ],
-  "totalCeiling": 1572,
+  "totalCeiling": 1560,
   "anyAnnotationBudget": 26
 }

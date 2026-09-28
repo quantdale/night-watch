@@ -24,6 +24,11 @@ import {
   readPersistedGateReceipt,
   resolveGateReceiptTarget,
 } from '../../bin/lib/gate-receipt.mjs';
+import {
+  cleanEarlyReceipt,
+  resolveCleanCheckoutVerdict,
+  siblingIdentityManifest,
+} from '../../bin/lib/cleanCheckoutReceipt.mjs';
 
 const ROOT = path.resolve(__dirname, '../..');
 const GATE = path.join(ROOT, 'bin', 'quality-gate.mjs');
@@ -505,5 +510,158 @@ test.describe('R-11 the gate itself persists its receipt', () => {
     // would dirty the checkout the clean gate is measuring.
     expect(clean).toMatch(/mkdtempSync\(path\.join\(os\.tmpdir\(\), 'nightwatch-clean-gate-receipt-'\)\)/);
     expect(clean).toMatch(/gateReceiptSource/);
+  });
+});
+
+test.describe('VC-06 clean-checkout receipt honesty', () => {
+  test('a dirty clone after the gate can never report PASS (the erased-conjunct regression)', () => {
+    // The old verdict was `siblingIdentityUnchanged ? gateResult : DRIFT`,
+    // so a dirty post-run checkout fell through to the inner gate's PASS.
+    expect(resolveCleanCheckoutVerdict({
+      realSiblingMeasurement: 'MEASURED',
+      siblingIdentityUnchanged: true,
+      checkoutStillClean: false,
+      sourceRootStillClean: true,
+      gateResult: 'PASS',
+    })).toBe('CHECKOUT_DIRTY_AFTER_GATE');
+  });
+
+  test('a dirty SOURCE root after the run fails closed too', () => {
+    expect(resolveCleanCheckoutVerdict({
+      realSiblingMeasurement: 'MEASURED',
+      siblingIdentityUnchanged: true,
+      checkoutStillClean: true,
+      sourceRootStillClean: false,
+      gateResult: 'PASS',
+    })).toBe('SOURCE_DIRTY_AFTER_RUN');
+  });
+
+  test('identity drift fails even when the gate itself passed', () => {
+    expect(resolveCleanCheckoutVerdict({
+      realSiblingMeasurement: 'MEASURED',
+      siblingIdentityUnchanged: false,
+      checkoutStillClean: true,
+      sourceRootStillClean: true,
+      gateResult: 'PASS',
+    })).toBe('SIBLING_IDENTITY_DRIFT');
+  });
+
+  test('an unmeasurable real sibling root is neither drift nor pass', () => {
+    expect(resolveCleanCheckoutVerdict({
+      realSiblingMeasurement: 'UNRESOLVED',
+      siblingIdentityUnchanged: true,
+      checkoutStillClean: true,
+      sourceRootStillClean: true,
+      gateResult: 'PASS',
+    })).toBe('SIBLING_IDENTITY_UNRESOLVED');
+  });
+
+  test('only a fully clean, fully measured run reports the gate result verbatim', () => {
+    const clean = {
+      realSiblingMeasurement: 'MEASURED' as const,
+      siblingIdentityUnchanged: true,
+      checkoutStillClean: true,
+      sourceRootStillClean: true,
+    };
+    expect(resolveCleanCheckoutVerdict({ ...clean, gateResult: 'PASS' })).toBe('PASS');
+    expect(resolveCleanCheckoutVerdict({ ...clean, gateResult: 'TEST_FAILURE' })).toBe('TEST_FAILURE');
+    expect(resolveCleanCheckoutVerdict({ ...clean, gateResult: 'TIMEOUT' })).toBe('TIMEOUT');
+  });
+
+  test('early receipts carry sibling mode, root class and exact versions', () => {
+    const receipt = cleanEarlyReceipt({
+      sourceHead: 'a'.repeat(40),
+      siblingMode: 'INVALID',
+      realSiblingRootClass: 'DEFAULT',
+      versions: { source: 'AMBIENT', nodeMajor: 22, nodeVersion: 'v22.0.0', npmVersion: '10.0.0' },
+      installResult: 'ENVIRONMENT_MISMATCH',
+      gateResult: 'NOT_RUN',
+      finalResult: 'ENVIRONMENT_MISMATCH',
+    });
+    expect(receipt.schemaVersion).toBe('nightwatch.clean-checkout-receipt.v1');
+    expect(receipt.siblingMode).toBe('INVALID');
+    expect(receipt.realSiblingRootClass).toBe('DEFAULT');
+    expect(receipt.versionsSource).toBe('AMBIENT');
+    expect(receipt.nodeVersion).toBe('v22.0.0');
+    expect(receipt.npmVersion).toBe('10.0.0');
+    expect(receipt.finalResult).toBe('ENVIRONMENT_MISMATCH');
+  });
+
+  test('the v2 manifest is deterministic and sees NESTED content changes', () => {
+    // v1 hashed only top-level names, so a change beneath an org directory
+    // could never move the digest of the real REPOSITORIES root.
+    const directory = scratch('vc06-manifest');
+    try {
+      fs.mkdirSync(path.join(directory, 'group', 'nested'), { recursive: true });
+      fs.writeFileSync(path.join(directory, 'group', 'nested', 'value.txt'), 'one');
+      const first = siblingIdentityManifest(directory);
+      expect(first.ok).toBe(true);
+      expect(first.truncated).toBe(false);
+      expect(first.digest).toMatch(/^sha256:[0-9a-f]{24}$/);
+      expect(siblingIdentityManifest(directory).digest).toBe(first.digest);
+      fs.writeFileSync(path.join(directory, 'group', 'nested', 'value.txt'), 'one-and-longer-content');
+      expect(siblingIdentityManifest(directory).digest).not.toBe(first.digest);
+    } finally {
+      fs.rmSync(directory, { recursive: true, force: true });
+    }
+  });
+
+  test('the v2 manifest binds a git worktree through read-only status', () => {
+    const repository = scratch('vc06-worktree');
+    try {
+      const init = spawnSync('git', ['init', '--quiet', repository], { encoding: 'utf8' });
+      expect(init.status).toBe(0);
+      const clean = siblingIdentityManifest(repository);
+      expect(clean.ok).toBe(true);
+      expect(clean.worktrees).toBe(1);
+      fs.writeFileSync(path.join(repository, 'untracked.txt'), 'appears');
+      expect(siblingIdentityManifest(repository).digest).not.toBe(clean.digest);
+    } finally {
+      fs.rmSync(repository, { recursive: true, force: true });
+    }
+  });
+
+  test('behavioral: an early exit prints siblingMode and the exact versions', () => {
+    const environment: NodeJS.ProcessEnv = {
+      PATH: process.env.PATH,
+      HOME: process.env.HOME,
+      TZ: 'UTC',
+      LC_ALL: 'C',
+      LANG: 'C',
+      NO_COLOR: '1',
+      NIGHTWATCH_CLEAN_SIBLING_MODE: 'INVALID',
+    };
+    const result = spawnSync(process.execPath, [path.join(ROOT, 'bin', 'quality-gate-clean.mjs')], {
+      encoding: 'utf8',
+      timeout: 120_000,
+      env: environment,
+    });
+    expect(result.status).toBe(1);
+    const line = (result.stdout ?? '').split(/\r?\n/).reverse().find((candidate) => candidate.includes('nightwatch.clean-checkout-receipt.v1'));
+    expect(line).toBeDefined();
+    const receipt = JSON.parse(line ?? '{}') as Record<string, unknown>;
+    expect(receipt.schemaVersion).toBe('nightwatch.clean-checkout-receipt.v1');
+    expect(receipt.siblingMode).toBe('INVALID');
+    expect(receipt.versionsSource).toBe('AMBIENT');
+    expect(typeof receipt.nodeVersion).toBe('string');
+    expect(receipt.npmVersion === null || typeof receipt.npmVersion === 'string').toBe(true);
+    expect(String(receipt.realSiblingRootClass)).toMatch(/^(DEFAULT|ENV_OVERRIDE|UNRESOLVED)$/);
+    expect(typeof receipt.sourceRootCleanAtEmit).toBe('boolean');
+    expect(receipt.finalResult).toBe('ENVIRONMENT_MISMATCH');
+  });
+
+  test('wiring: the verdict is the pure resolver, the real root comes from the sanctioned resolver, and git stays read-only', () => {
+    const clean = fs.readFileSync(path.join(ROOT, 'bin', 'quality-gate-clean.mjs'), 'utf8');
+    expect(clean).toContain('resolveCleanCheckoutVerdict({');
+    expect(clean).toContain("realSiblingMeasurement: realSiblingRoot === null ? 'UNRESOLVED' : 'MEASURED'");
+    // The REAL root must be read through the product's single resolver — the
+    // direct DEFAULT_SIBLING_ROOT literal is forbidden in this file.
+    expect(clean).toContain('resolveSiblingRoot(');
+    expect(clean).not.toContain('DEFAULT_SIBLING_ROOT');
+    const library = fs.readFileSync(path.join(ROOT, 'bin', 'lib', 'cleanCheckoutReceipt.mjs'), 'utf8');
+    // Every git call the clean gate makes over sibling/sensitive checkouts
+    // goes through --no-optional-locks, so status never refreshes an index.
+    expect(library).toContain('--no-optional-locks');
+    expect(clean).not.toMatch(/git\(\['status'/);
   });
 });

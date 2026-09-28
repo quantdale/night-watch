@@ -22,12 +22,15 @@ bounded gate-receipt details, SHA-pinned CI artifact), and 3.4 (VC-04
 D-04 CI/CLEAN-only relaxation with exact branch equality; semantic-compat
 forwards the parent gate label; HC-180 registered and DETECTED 2/2), and
 3.5 (VC-05 `gate:ui` `--ignore-scripts`, esbuild build verified with NO
-declared exception, HC-181 DETECTED 4/4) are
-implemented and focused-validated in the worktree. The semantic-compatibility
+declared exception, HC-181 DETECTED 4/4), and 3.6 (VC-06 clean-checkout
+verdict purity, real-root read-only measurement, early receipts with
+siblingMode/versions; probes HC-182/HC-183 DETECTED; gateReceiptPersistence
+41/41) are implemented and focused-validated in the worktree. The full
+`gate:clean` run at the clean checkpoint, semantic-compatibility
 clean-tree rerun, M4 group gates, and exact-head CI/artifact observation remain pending.
-Next action: proceed to task 3.6 (VC-06 gate:clean dirty-checkout failure,
-real sibling-root measurement, siblingMode/versions in early-exit receipts).
-VC-01's stale skip guards
+Next action: run full `npm run gate:clean` at the VC-06 checkpoint and record
+its receipt, then proceed to task 3.7 (VC-07 flake reproduction + tracked flake
+ledger). VC-01's stale skip guards
 and allowlist entries are removed; all four browser-backed tests passed locally,
 with exact-head GitHub Actions proof pending M4 close-out.
 
@@ -73,7 +76,7 @@ EXTERNAL CONTACT AUTHORIZED (OD-3 ONLY):
   provider proof run; one npm registry advisory query.
 
 CURRENT STATUS:
-  IN_PROGRESS — M4 validation spine through VC-05; M3 certification anchors
+  IN_PROGRESS — M4 validation spine through VC-06; M3 certification anchors
   validated at `d6fd98b1`; exact-head CI/artifact observation remains pending.
 
 ALPHAUS DEV / NEXT / PRODUCTION CONTACT:   NOT AUTHORIZED

@@ -174,6 +174,7 @@ export function checkPhase23QualityGate() {
   const semanticCode = read("bin/semantic-compat.mjs");
   const clean = readIncludingComments('bin/quality-gate-clean.mjs');
   const cleanCode = read("bin/quality-gate-clean.mjs");
+  const cleanLibraryCode = read('bin/lib/cleanCheckoutReceipt.mjs');
   let gate;
   let compatibility;
   try {
@@ -206,7 +207,11 @@ export function checkPhase23QualityGate() {
   if (!/NIGHTWATCH_STORAGE_STATE/.test(runnerCode) || !/GITHUB_TOKEN/.test(runnerCode) || !/environment\.TZ\s*=\s*['"]UTC['"]/.test(runnerCode)) fail('quality-gate runner does not sanitize credentials and host behavior');
   if (!/filePattern/.test(specCode) || !/QUALITY_GATE_UNKNOWN_COMMAND/.test(specCode) || !/QUALITY_GATE_DEPENDENCY_ORDER_INVALID/.test(specCode)) fail('quality-gate spec validator lacks fixed command/dependency fail-closed checks');
   if (!/shell=false|shell=false|spawnSync/.test(semanticCode) || !/SEMANTIC_COMPATIBILITY_PHASE_OMITTED/.test(semanticCode)) fail('semantic compatibility runner lacks bounded argv/phase omission checks');
-  if (!clean || !/\['ci',\s*'--ignore-scripts'\]/.test(cleanCode) || !/status['\"],\s*['\"]--porcelain/.test(cleanCode)) fail('clean-checkout runner must use npm ci --ignore-scripts and verify Git cleanliness');
+  // VC-06: cleanliness is verified through measureClean (whose status calls
+  // live lock-free in the receipt library) and every result flows through the
+  // pure verdict — a dirty clone or source root can never fall through to the
+  // inner gate's PASS.
+  if (!clean || !/\['ci',\s*'--ignore-scripts'\]/.test(cleanCode) || !/measureClean\(root\)/.test(cleanCode) || !/resolveCleanCheckoutVerdict\(\{/.test(cleanCode) || !/\['status',\s*'--porcelain'\]/.test(cleanLibraryCode)) fail('clean-checkout runner must use npm ci --ignore-scripts and verify Git cleanliness');
 
   for (const [script, pattern] of [
     ['dev:phase23:manifest', /"dev:phase23:manifest"\s*:\s*"node bin\/phase23-dev\.mjs manifest"/],

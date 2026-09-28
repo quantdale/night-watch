@@ -11,8 +11,19 @@ import crypto from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { buildChildEnvironment } from './child-environment.mjs';
+import {
+  CLEAN_RECEIPT_SCHEMA,
+  ambientToolchainVersions,
+  cleanEarlyReceipt,
+  measureClean,
+  resolveCleanCheckoutVerdict,
+  siblingIdentityManifest,
+} from './lib/cleanCheckoutReceipt.mjs';
 import { GATE_RECEIPT_PATH_ENV, readPersistedGateReceipt } from './lib/gate-receipt.mjs';
 import { OPERATOR_CLI_SCHEMA, defineOperatorCli, invokedDirectly } from './lib/operator-cli.mjs';
+// VC-06 moved the manifest implementation into the receipt library so it is
+// testable on its own; it remains part of this module's public surface.
+export { siblingIdentityManifest };
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 // Budgets are bounded and independently overridable. The install and the
@@ -23,6 +34,12 @@ const DEFAULT_CLEAN_INSTALL_TIMEOUT_MS = 600_000;
 const DEFAULT_CLEAN_GATE_TIMEOUT_MS = 3_600_000;
 const MIN_CLEAN_TIMEOUT_MS = 60_000;
 const MAX_CLEAN_TIMEOUT_MS = 7_200_000;
+/**
+ * @param {string} name
+ * @param {number} fallback
+ * @param {NodeJS.ProcessEnv} [environment]
+ * @returns {number | null}
+ */
 export function resolveCleanTimeout(name, fallback, environment = process.env) {
   const raw = environment[name];
   if (raw === undefined || raw === '') return fallback;
@@ -44,10 +61,16 @@ const CLI_METADATA = {
   artifacts: ['disposable checkout under the system temporary directory'],
 };
 
+/** @param {string} value @returns {string} */
 function sha256(value) {
   return crypto.createHash('sha256').update(value, 'utf8').digest('hex');
 }
 
+/**
+ * @param {string[]} args
+ * @param {string} cwd
+ * @returns {{ status: number | null, stdout: string, stderr: string, error?: Error }}
+ */
 function git(args, cwd) {
   return spawnSync('git', args, { cwd, encoding: 'utf8', timeout: 60_000, maxBuffer: 2 * 1024 * 1024, stdio: ['ignore', 'pipe', 'pipe'] });
 }
@@ -78,30 +101,22 @@ export function resolveCleanSiblingMode(environment = process.env) {
 }
 
 /**
- * Measured sibling identity (never a claim): the sorted top-level listing
- * plus, for every direct git worktree, the porcelain digest and HEAD. An
- * empty root digests as the empty listing; nothing here writes.
+ * The REAL sibling root, resolved through the product's single sanctioned
+ * resolver (environment first, then the source-tree default). Null when the
+ * TypeScript module cannot load or the configured root is not an absolute
+ * path; the receipt then reports UNRESOLVED instead of guessing a path.
+ *
+ * @returns {Promise<string | null>}
  */
-export function siblingIdentityManifest(siblingRoot) {
-  const hash = crypto.createHash('sha256');
-  let entries;
+async function resolveRealSiblingRoot() {
   try {
-    entries = fs.readdirSync(siblingRoot).sort();
+    const loader = await import('./lib/typescript-runtime-loader.mjs');
+    const topology = loader.loadTypeScriptModule('src/core/policy/sourceTopology.ts', { root });
+    const resolved = topology.resolveSiblingRoot({ environment: process.env });
+    return path.isAbsolute(resolved) ? resolved : null;
   } catch {
-    return { ok: false, digest: 'UNREADABLE', entryCount: -1 };
+    return null;
   }
-  let worktrees = 0;
-  for (const entry of entries) {
-    hash.update(`${entry}\n`);
-    const full = path.join(siblingRoot, entry);
-    if (!fs.existsSync(path.join(full, '.git'))) continue;
-    worktrees += 1;
-    const status = git(['status', '--porcelain'], full);
-    hash.update(`status:${status.status === 0 ? sha256(status.stdout) : 'UNREADABLE'}\n`);
-    const head = git(['rev-parse', 'HEAD'], full);
-    hash.update(`head:${head.status === 0 ? head.stdout.trim() : 'UNREADABLE'}\n`);
-  }
-  return { ok: true, digest: `sha256:${hash.digest('hex').slice(0, 24)}`, entryCount: entries.length, worktrees };
 }
 
 function resolveNode22Toolchain(extra = {}) {
@@ -145,7 +160,19 @@ function resolveNode22Toolchain(extra = {}) {
 
 const CLEAN_RECEIPT_DIRECTORY = path.join(root, 'artifacts', 'gate-receipts');
 
+/**
+ * @param {Record<string, unknown>} receipt
+ * @param {number} [code]
+ * @returns {void}
+ */
 function emit(receipt, code = 0) {
+  // VC-06: every receipt records whether the SOURCE checkout was clean at the
+  // moment it was written. Early exits measure it here; the final path passes
+  // its own value (already used for the verdict) so it is measured exactly once.
+  if (!('sourceRootCleanAtEmit' in receipt)) {
+    const measured = measureClean(root);
+    receipt.sourceRootCleanAtEmit = measured.ok ? measured.clean : null;
+  }
   receipt.receiptDigest = `clean-receipt:sha256:${sha256(JSON.stringify(receipt)).slice(0, 24)}`;
   // B-14 / D-18 — the clean receipt is persisted to the ignored receipts
   // directory, not only printed: an evidence receipt nobody can re-read is
@@ -176,28 +203,63 @@ const cli = invokedDirectly(import.meta.url) ? defineOperatorCli(CLI_METADATA, {
 if (!cli.stop) {
 
 const headResult = git(['rev-parse', 'HEAD'], root);
-const statusResult = git(['status', '--porcelain'], root);
+const sourceStart = measureClean(root);
 const head = headResult.status === 0 ? headResult.stdout.trim() : null;
 const installTimeout = resolveCleanTimeout('NIGHTWATCH_CLEAN_INSTALL_TIMEOUT_MS', DEFAULT_CLEAN_INSTALL_TIMEOUT_MS);
 const gateTimeout = resolveCleanTimeout('NIGHTWATCH_CLEAN_GATE_TIMEOUT_MS', DEFAULT_CLEAN_GATE_TIMEOUT_MS);
-if (!head || statusResult.status !== 0 || statusResult.stdout.trim() !== '' || installTimeout === null || gateTimeout === null) {
-  emit({ schemaVersion: 'nightwatch.clean-checkout-receipt.v1', sourceHead: head, nodeMajor: Number(process.versions.node.split('.')[0]), installResult: 'NOT_RUN', gateResult: 'NOT_RUN', finalResult: 'ENVIRONMENT_MISMATCH' }, 1);
+// VC-06: sibling mode and the REAL sibling root are resolved BEFORE any exit
+// path, so every receipt — early exits included — carries siblingMode, the
+// real-root class and the exact versions.
+// R2-N3 / task 4.7 — sibling-absent by default: the clean gate's children
+// see an EMPTY disposable sibling root. Sibling mode is only an explicit,
+// recorded opt-in that names its own root.
+const siblingMode = resolveCleanSiblingMode();
+const realSiblingRoot = await resolveRealSiblingRoot();
+const realSiblingRootClass = realSiblingRoot === null ? 'UNRESOLVED' : process.env.NIGHTWATCH_REPOS_ROOT?.trim() ? 'ENV_OVERRIDE' : 'DEFAULT';
+if (!head || !sourceStart.ok || !sourceStart.clean || installTimeout === null || gateTimeout === null) {
+  emit(cleanEarlyReceipt({
+    sourceHead: head,
+    siblingMode: siblingMode.mode,
+    realSiblingRootClass,
+    versions: ambientToolchainVersions(root),
+    installResult: 'NOT_RUN',
+    gateResult: 'NOT_RUN',
+    finalResult: 'ENVIRONMENT_MISMATCH',
+  }), 1);
 } else {
-  // R2-N3 / task 4.7 — sibling-absent by default: the clean gate's children
-  // see an EMPTY disposable sibling root. Sibling mode is only an explicit,
-  // recorded opt-in that names its own root.
-  const siblingMode = resolveCleanSiblingMode();
   if (!siblingMode.ok) {
-    emit({ schemaVersion: 'nightwatch.clean-checkout-receipt.v1', sourceHead: head, nodeMajor: Number(process.versions.node.split('.')[0]), installResult: 'ENVIRONMENT_MISMATCH', gateResult: 'NOT_RUN', finalResult: 'ENVIRONMENT_MISMATCH' }, 1);
+    emit(cleanEarlyReceipt({
+      sourceHead: head,
+      siblingMode: siblingMode.mode,
+      realSiblingRootClass,
+      versions: ambientToolchainVersions(root),
+      installResult: 'ENVIRONMENT_MISMATCH',
+      gateResult: 'NOT_RUN',
+      finalResult: 'ENVIRONMENT_MISMATCH',
+    }), 1);
   } else {
   const absentSiblingRoot = siblingMode.mode === 'ABSENT' ? fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-clean-sibling-absent-')) : null;
-  const effectiveSiblingRoot = absentSiblingRoot ?? siblingMode.root;
+  // Unreachable null: ABSENT always creates the disposable root and a non-OK
+  // sibling mode already exited above. `?? ''` fails closed — the manifest
+  // digests UNREADABLE rather than guessing a path.
+  const effectiveSiblingRoot = absentSiblingRoot ?? siblingMode.root ?? '';
   const siblingIdentityBefore = siblingIdentityManifest(effectiveSiblingRoot);
+  // VC-06: the REAL product-resolved sibling root is measured read-only
+  // alongside the stand-in; unresolvable stays null and fails closed later.
+  const realSiblingBefore = realSiblingRoot === null ? null : siblingIdentityManifest(realSiblingRoot);
   const clone = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-quality-gate-clean-'));
   try {
     const cloneResult = git(['clone', '--local', '--no-hardlinks', root, clone], root);
     if (cloneResult.status !== 0) {
-      emit({ schemaVersion: 'nightwatch.clean-checkout-receipt.v1', sourceHead: head, nodeMajor: Number(process.versions.node.split('.')[0]), installResult: 'INSTALL_FAILURE', gateResult: 'NOT_RUN', finalResult: 'INSTALL_FAILURE' }, 1);
+      emit(cleanEarlyReceipt({
+        sourceHead: head,
+        siblingMode: siblingMode.mode,
+        realSiblingRootClass,
+        versions: ambientToolchainVersions(root),
+        installResult: 'INSTALL_FAILURE',
+        gateResult: 'NOT_RUN',
+        finalResult: 'INSTALL_FAILURE',
+      }), 1);
     } else {
       // Keep the disposable checkout on the permitted target branch. The
       // planner handoff contract binds Target Branch to `main`, so a detached
@@ -205,18 +267,43 @@ if (!head || statusResult.status !== 0 || statusResult.stdout.trim() !== '' || i
       const checkout = git(['checkout', '--quiet', '-B', 'main', head], clone);
       const cloneBranch = git(['rev-parse', '--abbrev-ref', 'HEAD'], clone);
       const cloneHead = git(['rev-parse', 'HEAD'], clone);
-      const cleanBefore = git(['status', '--porcelain'], clone);
-      if (checkout.status !== 0 || cloneBranch.status !== 0 || cloneBranch.stdout.trim() !== 'main' || cloneHead.status !== 0 || cloneHead.stdout.trim() !== head || cleanBefore.status !== 0 || cleanBefore.stdout.trim() !== '' || fs.existsSync(path.join(clone, 'node_modules'))) {
-        emit({ schemaVersion: 'nightwatch.clean-checkout-receipt.v1', sourceHead: head, nodeMajor: Number(process.versions.node.split('.')[0]), installResult: 'ENVIRONMENT_MISMATCH', gateResult: 'NOT_RUN', finalResult: 'ENVIRONMENT_MISMATCH' }, 1);
+      const cleanBefore = measureClean(clone);
+      if (checkout.status !== 0 || cloneBranch.status !== 0 || cloneBranch.stdout.trim() !== 'main' || cloneHead.status !== 0 || cloneHead.stdout.trim() !== head || !cleanBefore.ok || !cleanBefore.clean || fs.existsSync(path.join(clone, 'node_modules'))) {
+        emit(cleanEarlyReceipt({
+          sourceHead: head,
+          siblingMode: siblingMode.mode,
+          realSiblingRootClass,
+          versions: ambientToolchainVersions(root),
+          installResult: 'ENVIRONMENT_MISMATCH',
+          gateResult: 'NOT_RUN',
+          finalResult: 'ENVIRONMENT_MISMATCH',
+        }), 1);
       } else {
         const toolchain = resolveNode22Toolchain({ NIGHTWATCH_REPOS_ROOT: effectiveSiblingRoot });
         if (toolchain === null) {
-          emit({ schemaVersion: 'nightwatch.clean-checkout-receipt.v1', sourceHead: head, nodeMajor: null, installResult: 'ENVIRONMENT_MISMATCH', gateResult: 'NOT_RUN', finalResult: 'ENVIRONMENT_MISMATCH' }, 1);
+          emit(cleanEarlyReceipt({
+            sourceHead: head,
+            siblingMode: siblingMode.mode,
+            realSiblingRootClass,
+            versions: ambientToolchainVersions(root),
+            installResult: 'ENVIRONMENT_MISMATCH',
+            gateResult: 'NOT_RUN',
+            finalResult: 'ENVIRONMENT_MISMATCH',
+          }), 1);
         } else {
           const { environment } = toolchain;
           const install = spawnSync(packageManager, ['ci', '--ignore-scripts'], { cwd: clone, env: environment, encoding: 'utf8', timeout: installTimeout, maxBuffer: 16 * 1024 * 1024, stdio: ['ignore', 'pipe', 'pipe'] });
           if (install.status !== 0 || install.error) {
-            emit({ schemaVersion: 'nightwatch.clean-checkout-receipt.v1', sourceHead: head, nodeMajor: toolchain.nodeMajor, installResult: install.error?.code === 'ETIMEDOUT' ? 'TIMEOUT' : 'INSTALL_FAILURE', gateResult: 'NOT_RUN', finalResult: install.error?.code === 'ETIMEDOUT' ? 'TIMEOUT' : 'INSTALL_FAILURE' }, 1);
+            const installTimedOut = install.error !== undefined && 'code' in install.error && install.error.code === 'ETIMEDOUT';
+            emit(cleanEarlyReceipt({
+              sourceHead: head,
+              siblingMode: siblingMode.mode,
+              realSiblingRootClass,
+              versions: { source: 'TOOLCHAIN', nodeMajor: toolchain.nodeMajor, nodeVersion: toolchain.nodeVersion ?? null, npmVersion: toolchain.npmVersion ?? null },
+              installResult: installTimedOut ? 'TIMEOUT' : 'INSTALL_FAILURE',
+              gateResult: 'NOT_RUN',
+              finalResult: installTimedOut ? 'TIMEOUT' : 'INSTALL_FAILURE',
+            }), 1);
           } else {
             // R-11: the inner receipt is recovered from a STRUCTURED FILE the
             // gate itself wrote, not by scraping stdout for a schema token.
@@ -236,7 +323,7 @@ if (!head || statusResult.status !== 0 || statusResult.stdout.trim() !== '' || i
             try {
               const gate = spawnSync(packageManager, ['run', 'gate:clean-exec'], { cwd: clone, env: { ...environment, CI: 'true', [GATE_RECEIPT_PATH_ENV]: receiptFile }, encoding: 'utf8', timeout: gateTimeout, maxBuffer: 32 * 1024 * 1024, stdio: ['ignore', 'pipe', 'pipe'] });
               const output = `${gate.stdout ?? ''}\n${gate.stderr ?? ''}`;
-              cleanAfter = git(['status', '--porcelain'], clone);
+              cleanAfter = measureClean(clone);
 
               const persisted = readPersistedGateReceipt(receiptFile, { gitHead: head, environmentClass: 'CLEAN' });
               if (persisted.status === 'READ') {
@@ -257,33 +344,46 @@ if (!head || statusResult.status !== 0 || statusResult.stdout.trim() !== '' || i
                 stdoutReceiptDigest = null;
               }
 
-              if (gateReceipt === null) {
+              if (gateReceipt === null || gateReceipt === undefined) {
                 receiptError = receiptError ?? 'GATE_RECEIPT_UNAVAILABLE';
               } else if (stdoutReceiptDigest !== null && stdoutReceiptDigest !== gateReceipt.receiptDigest) {
                 receiptError = 'GATE_RECEIPT_DIGEST_MISMATCH';
               }
 
-              gateTimedOut = gate.error?.code === 'ETIMEDOUT';
+              gateTimedOut = gate.error !== undefined && 'code' in gate.error && gate.error.code === 'ETIMEDOUT';
             } finally {
               fs.rmSync(receiptDirectory, { recursive: true, force: true });
             }
 
-            const gateResult = receiptError !== null
+            const gateResult = receiptError !== null || gateReceipt === null || gateReceipt === undefined || typeof gateReceipt.finalResult !== 'string'
               ? (gateTimedOut ? 'TIMEOUT' : 'UNKNOWN_FAILURE')
               : gateReceipt.finalResult;
-            const checkoutStillClean = cleanAfter !== null && cleanAfter.status === 0 && cleanAfter.stdout.trim() === '';
-            // The sibling identity is MEASURED before and after the gate, never
+            const checkoutStillClean = cleanAfter !== null && cleanAfter.ok && cleanAfter.clean;
+            // The sibling identity is MEASURED before and after the gate — both
+            // the disposable stand-in AND the real product-resolved root — never
             // asserted: any drift fails the clean gate with its own verdict.
             const siblingIdentityAfter = siblingIdentityManifest(effectiveSiblingRoot);
             const siblingIdentityUnchanged = siblingIdentityBefore.ok && siblingIdentityAfter.ok && siblingIdentityBefore.digest === siblingIdentityAfter.digest;
-            const finalResult = siblingIdentityUnchanged && receiptError === null && gateResult === 'PASS' && checkoutStillClean ? 'PASS' : (siblingIdentityUnchanged ? gateResult : 'SIBLING_IDENTITY_DRIFT');
+            const realSiblingAfter = realSiblingRoot === null ? null : siblingIdentityManifest(realSiblingRoot);
+            const realSiblingIdentityUnchanged = realSiblingBefore !== null && realSiblingAfter !== null && realSiblingBefore.ok && realSiblingAfter.ok && realSiblingBefore.digest === realSiblingAfter.digest;
+            // VC-06: the SOURCE checkout is re-measured after the run; a dirty
+            // root post-run previously fell through to the inner gate's PASS.
+            const sourceEnd = measureClean(root);
+            const finalResult = resolveCleanCheckoutVerdict({
+              realSiblingMeasurement: realSiblingRoot === null ? 'UNRESOLVED' : 'MEASURED',
+              siblingIdentityUnchanged: siblingIdentityUnchanged && realSiblingIdentityUnchanged,
+              checkoutStillClean,
+              sourceRootStillClean: sourceEnd.ok && sourceEnd.clean,
+              gateResult,
+            });
             emit({
-              schemaVersion: 'nightwatch.clean-checkout-receipt.v1',
+              schemaVersion: CLEAN_RECEIPT_SCHEMA,
               sourceHead: head,
               packageLockDigest: `sha256:${sha256(fs.readFileSync(path.join(clone, 'package-lock.json'), 'utf8'))}`,
               nodeMajor: toolchain.nodeMajor,
               nodeVersion: toolchain.nodeVersion ?? null,
               npmVersion: toolchain.npmVersion ?? null,
+              versionsSource: 'TOOLCHAIN',
               nodeRequirement: '22',
               installResult: 'PASS',
               gateResult,
@@ -293,8 +393,9 @@ if (!head || statusResult.status !== 0 || statusResult.stdout.trim() !== '' || i
               gateReceiptDigest: gateReceipt?.receiptDigest ?? null,
               gateDefinitionDigest: gateReceipt?.gateDefinitionDigest ?? null,
               gateGroups: Array.isArray(gateReceipt?.groups) ? gateReceipt.groups : [],
-              cleanBefore: cleanBefore.stdout.trim() === '',
+              cleanBefore: cleanBefore.ok && cleanBefore.clean,
               cleanAfter: checkoutStillClean,
+              sourceRootCleanAtEmit: sourceEnd.ok ? sourceEnd.clean : null,
               nodeModulesReused: false,
               authStateProvided: false,
               ownerFindingStateProvided: false,
@@ -303,6 +404,10 @@ if (!head || statusResult.status !== 0 || statusResult.stdout.trim() !== '' || i
               siblingIdentityBefore: siblingIdentityBefore.digest,
               siblingIdentityAfter: siblingIdentityAfter.digest,
               siblingIdentityUnchanged,
+              realSiblingRootClass,
+              realSiblingIdentityBefore: realSiblingBefore === null ? 'UNRESOLVED' : realSiblingBefore.digest,
+              realSiblingIdentityAfter: realSiblingAfter === null ? 'UNRESOLVED' : realSiblingAfter.digest,
+              realSiblingIdentityUnchanged,
               finalResult,
             }, finalResult === 'PASS' ? 0 : 1);
           }

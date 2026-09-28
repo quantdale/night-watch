@@ -364,7 +364,7 @@ export function classifyInvocation(input) {
   if (/playwright|node_modules[\\/]\\.bin[\\/]playwright|--project=nightwatch/.test(blob)) {
     return 'TEST_LANE';
   }
-  if (/(?:quality-gate|quality-gate-clean|validation-lane|semantic-compat|review-mutation-campaign|run-shards|campaign-synthetic)\.mjs$/.test(posix)) {
+  if (/(?:quality-gate|quality-gate-clean|validation-lane|semantic-compat|review-mutation-campaign|run-shards|campaign-synthetic|cleanCheckoutReceipt)\.mjs$/.test(posix)) {
     return 'TEST_LANE';
   }
   if (/^(?:npx|npx\.cmd)$/.test(head ?? '') || (firstIsIdentifier && /^npx/.test(firstArg.trim()) && /playwright/.test(blob))) {
