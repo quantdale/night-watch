@@ -55,4 +55,3 @@ export function buildShardChildEnvironment(parentEnvironment, input) {
   return environment;
 }
 
-export const SHARD_CHILD_ENVIRONMENT_IDS = Object.freeze([...SHARD_IDS]);
