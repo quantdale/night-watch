@@ -24,7 +24,7 @@ import { fileURLToPath } from 'node:url';
 import { buildShardChildEnvironment, shardTempRoot } from './lib/shard-child-environment.mjs';
 import { loadTypeScriptModules } from './lib/typescript-runtime-loader.mjs';
 import { OPERATOR_CLI_SCHEMA, defineOperatorCli, invokedDirectly } from './lib/operator-cli.mjs';
-import { evaluateSemanticSkipIdentityReport } from './lib/semantic-skip-policy.mjs';
+import { evaluateSemanticSkipIdentityReport, skipCountDisagreement } from './lib/semantic-skip-policy.mjs';
 import { extractSanitizedFailedLocations } from './lib/sanitized-failure-locations.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -309,6 +309,12 @@ function runShard(shard, execution, scratchRoot) {
             : evaluation.result === 'SKIP_REPORT_INVALID'
               ? 'SHARD_SKIP_REPORT_INVALID'
               : 'SHARD_UNDECLARED_SKIP';
+      }
+      // RV-15 / corrections task 7.12: the shard's own skipped count and the
+      // identity report's length observe one run and must agree.
+      if (evaluation.result === 'PASS' && counts !== null && executionStatus === 'PASS' && skipCountDisagreement(counts.skipped, evaluation.skipped) !== null) {
+        executionStatus = 'SKIP_POLICY_UNDECLARED';
+        executionCode = 'SHARD_SKIP_COUNT_MISMATCH';
       }
       const failedLocations = extractSanitizedFailedLocations(output, 16);
       resolve({

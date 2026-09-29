@@ -46,3 +46,8 @@ export function evaluateSemanticSkipPolicyIdentities(input: {
   readonly undeclared: readonly unknown[];
   readonly detail?: string;
 };
+
+export function skipCountDisagreement(
+  reporterSkipped: number | null | undefined,
+  identityReportSkipped: number | null | undefined,
+): null | 'SKIP_COUNT_MISMATCH' | 'SKIP_COUNT_UNVERIFIABLE';

@@ -110,3 +110,22 @@ export function evaluateSemanticSkipPolicyIdentities({ identities, canonicalSkip
     declared: identities.length - undeclared.length,
   };
 }
+
+/**
+ * RV-15 / corrections task 7.12 — a lane has TWO independent counts of skipped
+ * tests: the list reporter's `N skipped` summary and the skip-identity report's
+ * length. They observe the same run, so they must agree; a lane that trusted
+ * only the identity report could not see a skip the reporter never recorded,
+ * nor one it invented. The list reporter prints nothing when no test skipped,
+ * so an absent reporter count is zero. An unusable identity count is
+ * unverifiable, never agreement.
+ *
+ * @param {number | null | undefined} reporterSkipped
+ * @param {number | null | undefined} identityReportSkipped
+ * @returns {null | 'SKIP_COUNT_MISMATCH' | 'SKIP_COUNT_UNVERIFIABLE'} null when they agree
+ */
+export function skipCountDisagreement(reporterSkipped, identityReportSkipped) {
+  if (!Number.isInteger(identityReportSkipped)) return 'SKIP_COUNT_UNVERIFIABLE';
+  const reporter = Number.isInteger(reporterSkipped) ? reporterSkipped : 0;
+  return reporter === identityReportSkipped ? null : 'SKIP_COUNT_MISMATCH';
+}

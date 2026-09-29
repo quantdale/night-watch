@@ -11,7 +11,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { buildSemanticCompatibilityEnvironment } from './lib/semantic-compat-environment.mjs';
 import { OPERATOR_CLI_SCHEMA, defineOperatorCli, invokedDirectly } from './lib/operator-cli.mjs';
-import { evaluateSemanticSkipIdentityReport } from './lib/semantic-skip-policy.mjs';
+import { evaluateSemanticSkipIdentityReport, skipCountDisagreement } from './lib/semantic-skip-policy.mjs';
 import { extractSanitizedFailedLocations } from './lib/sanitized-failure-locations.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -135,10 +135,14 @@ try {
   const count = (pattern) => { const match = pattern.exec(output); return match ? Number(match[1]) : null; };
   const passed = count(/(\d+)\s+passed/i);
   const skipped = count(/(\d+)\s+skipped/i);
+  // Playwright reports tests it never reached as "did not run", which is NOT a
+  // skip: a serial suite whose first case fails cascades the rest into it. It is
+  // parsed here and counted (RV-15) — it used to vanish from this receipt.
+  const didNotRun = count(/(\d+)\s+did not run/i);
   let failed = count(/(\d+)\s+failed/i);
   const totalFromOutput = count(/Total:\s*(\d+)\s+tests?/i);
   if (result.status === 0 && failed === null) failed = 0;
-  const total = totalFromOutput ?? ([passed, skipped, failed].every((value) => Number.isInteger(value)) ? passed + skipped + failed : null);
+  const total = totalFromOutput ?? ([passed, skipped, failed].every((value) => Number.isInteger(value)) ? passed + skipped + failed + (didNotRun ?? 0) : null);
   const failedLocations = extractSanitizedFailedLocations(output, 16);
 
   let skipReport = null;
@@ -173,6 +177,18 @@ try {
       : 'SEMANTIC_COMPATIBILITY_REPORT_INVALID';
     exitCode = 1;
   }
+  // RV-15: the two skip counts observe one run and must agree; a test that did
+  // not run is a failure of the lane whatever the exit status says.
+  if (outcome === 'PASS') {
+    const disagreement = skipCountDisagreement(skipped, skipPolicy.skipped);
+    if (disagreement !== null) {
+      outcome = disagreement;
+      exitCode = 1;
+    } else if ((didNotRun ?? 0) > 0) {
+      outcome = 'SEMANTIC_COMPATIBILITY_DID_NOT_RUN';
+      exitCode = 1;
+    }
+  }
   const receipt = {
     schemaVersion: manifest.schemaVersion,
     phaseRange: manifest.requiredPhaseRange,
@@ -182,6 +198,7 @@ try {
     total,
     passed,
     skipped,
+    didNotRun,
     failed,
     failedLocations,
     skipPolicy: {

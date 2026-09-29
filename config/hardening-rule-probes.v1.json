@@ -557,8 +557,8 @@
         "ops": [
           {
             "file": "bin/agent-state.mjs",
-            "search": "&& stateBranch === declaredWorktree;",
-            "replace": ";"
+            "search": "(gateEnvironment === 'CI' || gateEnvironment === 'CLEAN')\n        && errors.length === 0",
+            "replace": "true\n        && errors.length === 0"
           }
         ]
       }

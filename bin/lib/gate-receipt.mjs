@@ -60,6 +60,24 @@ export function parseCounts(output) {
     }
     return counts;
   }
+  // RV-15 / corrections task 7.12: a vitest run prints TWO summary lines — `Test
+  // Files  8 passed (8)` and `Tests  105 passed (105)`. The generic patterns
+  // below took the first `N passed` (the FILE count), so the UI group reported 8
+  // where 105 tests ran. A vitest `Tests` line is authoritative when present.
+  const vitestTests = /^\s*Tests\s+([^\r\n]+)$/m.exec(output);
+  if (vitestTests !== null && /^\s*Test Files\s+/m.test(output)) {
+    const line = vitestTests[1] ?? '';
+    const token = (name) => {
+      const found = new RegExp(`(\\d+)\\s+${name}\\b`).exec(line);
+      return found === null ? null : Number(found[1]);
+    };
+    const parenthesized = /\((\d+)\)/.exec(line);
+    counts.passed = token('passed') ?? 0;
+    counts.failed = token('failed') ?? 0;
+    counts.skipped = (token('skipped') ?? 0) + (token('todo') ?? 0);
+    counts.total = parenthesized === null ? counts.passed + counts.failed + counts.skipped : Number(parenthesized[1]);
+    return counts;
+  }
   const total = /Total:\s*(\d+)\s+tests?/i.exec(output);
   const passed = /(\d+)\s+passed/i.exec(output);
   const skipped = /(\d+)\s+skipped/i.exec(output);

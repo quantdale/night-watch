@@ -39,6 +39,14 @@ jobs:
           path: artifacts/topology-receipts/*.json
           if-no-files-found: error
           retention-days: 90
+      - name: Upload per-test skip identity reports
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: skip-identities-${{ github.sha }}
+          path: test-results/**/skip-identity-report.json
+          if-no-files-found: error
+          retention-days: 90
 
 # This workflow is intentionally an environment bootstrap plus the shared
 # repository-owned gate. The gate itself is offline, serial, fail-closed, and

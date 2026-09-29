@@ -35,7 +35,7 @@ import { buildChildEnvironment } from './child-environment.mjs';
 import { loadTypeScriptModules } from './lib/typescript-runtime-loader.mjs';
 import { OPERATOR_CLI_SCHEMA, defineOperatorCli, invokedDirectly } from './lib/operator-cli.mjs';
 import { extractSanitizedFailedLocations } from './lib/sanitized-failure-locations.mjs';
-import { evaluateSemanticSkipIdentityReport } from './lib/semantic-skip-policy.mjs';
+import { evaluateSemanticSkipIdentityReport, skipCountDisagreement } from './lib/semantic-skip-policy.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -284,12 +284,15 @@ try {
       skipped: result.skipPolicy.skipped,
       undeclared: result.skipPolicy.undeclared.length,
     };
-    const passed = result.status === 0 && skipPolicy.result === 'PASS';
+    // RV-15: the list reporter's skipped count and the identity report's length
+    // observe the same run and must agree.
+    const skipCountResult = skipPolicy.result === 'PASS' ? skipCountDisagreement(counts.skipped, skipPolicy.skipped) : null;
+    const passed = result.status === 0 && skipPolicy.result === 'PASS' && skipCountResult === null;
     const receipt = {
       schemaVersion: SCHEMA_VERSION,
       fileCount: files.length,
       ...counts,
-      skipPolicy,
+      skipPolicy: skipCountResult === null ? skipPolicy : { ...skipPolicy, result: skipCountResult },
       shardCount: 1,
       deepContainmentLane: deepLane,
       result: passed ? 'PASS' : result.errorCode === 'ETIMEDOUT' ? 'TIMEOUT' : 'TEST_FAILURE',
@@ -332,14 +335,18 @@ try {
         for (const key of Object.keys(totals)) totals[key] += entry.counts[key] ?? 0;
         failedLocations.push(...entry.counts.failedLocations);
       }
-      const failed = parsed.some((entry) => entry.result.status !== 0
+      // RV-15: per shard, the reporter's skipped count must equal the identity report's.
+      const shardSkipDisagreement = parsed
+        .map((entry) => (entry.result.skipPolicy.result === 'PASS' ? skipCountDisagreement(entry.counts.skipped, entry.result.skipPolicy.skipped) : null))
+        .find((code) => code !== null) ?? null;
+      const failed = shardSkipDisagreement !== null || parsed.some((entry) => entry.result.status !== 0
         || entry.result.skipPolicy.result !== 'PASS'
         || (entry.counts.failed ?? 0) > 0
         || (entry.counts.didNotRun ?? 0) > 0);
       const skipPolicies = parsed.map((entry) => entry.result.skipPolicy);
       const firstSkipFailure = skipPolicies.find((entry) => entry.result !== 'PASS');
       const skipPolicy = {
-        result: firstSkipFailure?.result ?? 'PASS',
+        result: firstSkipFailure?.result ?? shardSkipDisagreement ?? 'PASS',
         skipped: skipPolicies.reduce((sum, entry) => sum + (entry.skipped ?? 0), 0),
         undeclared: skipPolicies.reduce((sum, entry) => sum + (entry.undeclared?.length ?? 0), 0),
       };

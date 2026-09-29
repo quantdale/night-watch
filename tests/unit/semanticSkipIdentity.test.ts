@@ -11,6 +11,7 @@ import path from 'node:path';
 import {
   evaluateSemanticSkipIdentityReport,
   evaluateSemanticSkipPolicyIdentities,
+  skipCountDisagreement,
 } from '../../bin/lib/semantic-skip-policy.mjs';
 import PlaywrightSkipIdentityReporter from '../helpers/playwrightSkipIdentityReporter';
 
@@ -282,5 +283,37 @@ test.describe('semantic skip-identity policy', () => {
       for (const part of identity.titlePath ?? []) expect(text).toContain(part);
     }
     expect([...declaredCounts.entries()].sort()).toEqual([...sites.entries()].sort());
+  });
+});
+
+// RV-15 / corrections task 7.12 — the lane's two skip counts must agree, and the
+// four browser-backed DEV-login / storage-state tests (VC-01) may never skip.
+test.describe('skip-count agreement and the VC-01 pin', () => {
+  test('the reporter count and the identity-report length must agree; an absent reporter count is zero', () => {
+    expect(skipCountDisagreement(14, 14)).toBeNull();
+    expect(skipCountDisagreement(null, 0)).toBeNull();
+    expect(skipCountDisagreement(undefined, 0)).toBeNull();
+    expect(skipCountDisagreement(3, 2)).toBe('SKIP_COUNT_MISMATCH');
+    expect(skipCountDisagreement(0, 1)).toBe('SKIP_COUNT_MISMATCH');
+    expect(skipCountDisagreement(null, 4)).toBe('SKIP_COUNT_MISMATCH');
+    // An unusable identity count is unverifiable, never agreement.
+    expect(skipCountDisagreement(0, null)).toBe('SKIP_COUNT_UNVERIFIABLE');
+    expect(skipCountDisagreement(0, Number.NaN)).toBe('SKIP_COUNT_UNVERIFIABLE');
+    expect(skipCountDisagreement(0, undefined)).toBe('SKIP_COUNT_UNVERIFIABLE');
+  });
+
+  test('VC-01 pin: no canonical skip identity, and no skip site, exists for the DEV-login and storage-state suites', () => {
+    const manifest = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, 'config', 'semantic-compatibility.v1.json'), 'utf8')) as {
+      execution: { canonicalSkipIdentities: Array<{ file: string }> };
+    };
+    const pinned = ['tests/unit/devLoginSecurity.test.ts', 'tests/unit/storageState.test.ts'];
+    for (const file of pinned) {
+      expect(manifest.execution.canonicalSkipIdentities.some((identity) => identity.file === file), `${file} must declare no skip identity`).toBe(false);
+      const source = fs.readFileSync(path.join(REPO_ROOT, file), 'utf8');
+      // Comment-stripped: a skip API call anywhere in these suites is a defect.
+      const code = source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+      expect(/\btest\s*\.\s*(?:skip|fixme|fail)\s*\(/.test(code), `${file} must contain no test.skip/fixme`).toBe(false);
+      expect(/\b(?:describe|test)\s*\.\s*skip\b/.test(code), `${file} must contain no skipped describe/test`).toBe(false);
+    }
   });
 });

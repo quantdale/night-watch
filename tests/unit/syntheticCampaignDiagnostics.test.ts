@@ -166,6 +166,14 @@ test.describe('quality-gate bounded diagnostics', () => {
     }))).toEqual({ total: 26, passed: 25, skipped: 1, didNotRun: 0, failed: 0 });
   });
 
+  test('RV-15: a vitest run reports TESTS, not files — the UI group no longer counts 8 where 105 ran', () => {
+    expect(parseCounts(' Test Files  8 passed (8)\n      Tests  105 passed (105)\n   Duration  9.1s')).toEqual({ total: 105, passed: 105, skipped: 0, didNotRun: null, failed: 0 });
+    expect(parseCounts(' Test Files  1 failed | 7 passed (8)\n      Tests  2 failed | 103 passed | 1 skipped (106)\n')).toEqual({ total: 106, passed: 103, skipped: 1, didNotRun: null, failed: 2 });
+    // Playwright output is unaffected: its own summary keeps the original patterns.
+    expect(parseCounts('  3 passed (2s)\n  1 skipped\n').passed).toBe(3);
+    expect(parseCounts('  Total: 12 tests\n  12 passed\n').total).toBe(12);
+  });
+
   test('topology details retain only the runner class, envelope and known unexercised absences', () => {
     const details = requireDetails(parseSafeDetails(JSON.stringify({
       schemaVersion: 'nightwatch.gate-topology-receipt.v1',
