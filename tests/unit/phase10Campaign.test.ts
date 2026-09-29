@@ -431,7 +431,7 @@ test.describe('Phase 10A — enriched campaign integration (§37, §68)', () => 
       for (const dossier of results.flatMap((result) => result.dossiers)) {
         if (dossier.semanticEvidence !== null) {
           const evidenceText = JSON.stringify(dossier.semanticEvidence);
-          expect(evidenceText).not.toContain('/home/dalepalaca');
+          expect(evidenceText).not.toContain(os.homedir());
           expect(evidenceText).not.toContain('/tmp/');
         }
       }

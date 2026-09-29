@@ -157,9 +157,11 @@ IMPLEMENTATION AUTHORIZED:
   local bounded child processes, OpenSpec/task continuity records,
   C-00 commits and fast-forward integration from this session only.
 
-EXTERNAL CONTACT AUTHORIZED (OD-3 ONLY):
-  GitHub Actions read/observe; C-00 fast-forward pushes; one bounded paid
-  provider proof run; one npm registry advisory query.
+EXTERNAL CONTACT AUTHORIZED (OD-3, CHILD SUBSET ONLY):
+  GitHub Actions read/observe; C-00 fast-forward pushes. The parent's
+  single-use grants (the one bounded paid provider proof run, task 12.3, and
+  the one npm registry advisory query, task 15.4) are OWNED by those parent
+  tasks and are NOT granted to this child.
 
 CURRENT STATUS:
   IN_PROGRESS — M4 COMPLETE (exact-head CI 36552500573 green at `3c9c1a06`

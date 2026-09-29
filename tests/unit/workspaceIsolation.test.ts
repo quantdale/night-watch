@@ -749,6 +749,38 @@ test.describe('C-00 adversarial matrix — stale sessions and recovery', () => {
     }
   });
 
+  test('RV-18: adopting a stale claim keeps its ORIGINAL base instead of moving it to today\'s merge-base', () => {
+    const { base, canonical, upstream } = fixture();
+    try {
+      const owned = startOwnedSession(canonical, base, 'synthetic-task');
+      const file = path.join(canonical, '.git/worktrees', owned.name, 'nightwatch-session.v1.json');
+      const record = JSON.parse(fs.readFileSync(file, 'utf8')) as Record<string, any>;
+      const originalBase = record.baseSha as string;
+      // Canonical main advances after the session started, then the holder dies.
+      const other = path.join(base, 'other');
+      gitOk(base, ['clone', upstream, other]);
+      fs.writeFileSync(path.join(other, 'later.txt'), 'later work\n');
+      gitOk(other, ['add', 'later.txt']);
+      gitOk(other, ['commit', '-m', 'later work']);
+      gitOk(other, ['push', 'origin', 'HEAD:refs/heads/main']);
+      gitOk(owned.path, ['fetch', 'origin', 'main']);
+      const advanced = gitOk(owned.path, ['rev-parse', 'refs/remotes/origin/main']);
+      expect(advanced).not.toBe(originalBase);
+      fs.writeFileSync(file, JSON.stringify({ ...record, holder: { ...record.holder, bootDigest: '0'.repeat(24) } }, null, 2));
+
+      const adopted = session(owned.path, ['claim', '--task', 'synthetic-task', '--adopt', '--expect-session', recordSession(canonical, owned.name)]);
+      expect(adopted.status, adopted.stderr).toBe(0);
+      expect(adopted.stdout).toContain('baseKeptFromAdoptedClaim=true');
+      const after = JSON.parse(fs.readFileSync(file, 'utf8')) as Record<string, any>;
+      // The base did NOT move to the remote tip / merge-base: the deletion window is intact.
+      expect(after.baseSha).toBe(originalBase);
+      expect(after.baseSha).not.toBe(advanced);
+      expect(session(owned.path, ['release', '--expect-session', after.sessionId as string]).status).toBe(0);
+    } finally {
+      cleanup(base);
+    }
+  });
+
   test('a released claim keeps its historical base without raising a stale-base advisory', () => {
     const { base, canonical, upstream } = fixture();
     try {

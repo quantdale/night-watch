@@ -46,9 +46,10 @@ session only.
 
 ## Safety Constraints
 
-- LOCAL / OFFLINE / SYNTHETIC only; OD-3 external exceptions exactly: GitHub
-  Actions read/observe, C-00 fast-forward pushes, one bounded paid provider
-  proof run (parent 12.3), one npm registry advisory query (parent 15.4).
+- LOCAL / OFFLINE / SYNTHETIC only; OD-3 external exceptions for THIS child exactly: GitHub
+  Actions read/observe and C-00 fast-forward pushes. The single-use paid
+  provider proof run (parent 12.3) and npm registry advisory query (parent
+  15.4) belong to those parent tasks and are not used here.
 - No Alphaus DEV/NEXT/production contact, authenticated Alphaus runtime,
   credentials, customer data, database/data-plane/cloud access, sibling
   writes, external publication, force push, or history rewrite.

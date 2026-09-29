@@ -9,8 +9,8 @@ modified. No gate, test suite or Playwright was run; a session was live.
 
 Task 1.3 (RESUME_PROMPT §3.2): every finding below was re-checked against
 the current code (the parent landed 144 commits since `d595c7c8`, through
-M9 task 10.2). Classification: 21 STILL_PRESENT, 5 CHANGED, 2
-COMPLETED_LATER. Follow-on defects (later work built on a defective
+M9 task 10.2). Classification (CORRECTED 2026-09-30, see the Corrections section): 22 STILL_PRESENT, 6 CHANGED, 1
+COMPLETED_LATER over 29 findings. Follow-on defects (later work built on a defective
 surface) are recorded at the end.
 
 | ID | Classification | Evidence at `1d47e2ee` |
@@ -18,7 +18,7 @@ surface) are recorded at the end.
 | VB-01 | STILL_PRESENT | `bin/lib/validation-lane-state.mjs:83-87,117-121` still accepts a null `evidenceSha` as not-stale; `bin/project-state-check.mjs:1365` skips null |
 | VB-02 | STILL_PRESENT | `bin/project-state-check.mjs:1366` still `cat-file -e <sha>^{commit}` (commit existence); no `artifactPaths` in `bin/lib/release-evidence.mjs` |
 | VB-03 | STILL_PRESENT | `bin/lib/release-evidence.mjs:258-285` `isAppendOnlyCorrectionsChange` still admits an append without the matching archive-line removal |
-| VB-04 | COMPLETED_LATER | `certificationDemotionFor` is parameterized (`bin/project-state-check.mjs:869`), `liveHeadSha` computed at :1407 before use at :1505; fixed in `a784e668` |
+| VB-04 | STILL_PRESENT at `1d47e2ee`, CLOSED by `add49919` | The TDZ was present at `1d47e2ee` (the earlier row read `certificationDemotionFor` parameterization at `a784e668` as the fix, but the lane-disagreement block still read `liveHeadSha` before its definition); `add49919` removed it. The lane-disagreement check is now the pure `evidenceLaneDisagreements` with a unit regression (corrections task 7.13) |
 | VB-05 | STILL_PRESENT | `bin/lib/release-evidence.mjs:315-317` `isLegacyEvidenceValue` still accepts `/^HEAD$/i`; `legacyEvidenceSha` fallback at :350-365; schema-invalid entries still fall through |
 | VB-06 | STILL_PRESENT | `bin/agent-continuity-protocol.mjs:1142` `DIFF_GUARDED_CHECKPOINT_PATHS` still exported and unused; `isApprovedCheckpointPath` (:1147) still approves guarded paths by path; no classifier unit tests or stub-guard probe |
 | VB-07 | CHANGED | M9 10.1/10.2 added `config/operator-cli-surface.v1.json` (76 bins dispositioned; 59 declared) and the shared operator parser; `config/bin-typecheck.v1.json` is still `REPORTING` with 1 per-file ceiling (`run-shards.mjs:25`) and no total/stale-ceiling check |
@@ -52,7 +52,7 @@ surface) are recorded at the end.
 | CF-01 | Every M4 release-probe result since `d595c7c8` (G14/G17/G18/G19/G21/G12, G20) was measured by working-tree probes (VD-01 foundation): the results must be re-derived after 4.1 and any result whose evidence is not bound to S demoted to `NOT_AT_CHECKPOINT` | `bin/project-state-check.mjs:584-824` probes read the working tree; M4-M9 closeouts cite them | 4.1 + follow-on re-derivation |
 | CF-02 | The G20 accessibility record carries `nightwatchSha` (`bin/lib/accessibility-record.mjs:49`) but the release probe must resolve `NOT_AT_CHECKPOINT` when HEAD != S (and the receipt's SHA must equal S) | `bin/lib/accessibility-record.mjs:49,91`; `bin/project-state-check.mjs` G20 probe | 4.1 |
 | CF-03 | G12 accepts any `artifacts/nightwatch-*` run with `passed: boolean` and any 40-hex SHA and keeps the historical W13 aggregate load-bearing — the M5 product-run receipt and any post-M5 evidence inherit this weak binding | `bin/project-state-check.mjs:798-851` | 4.3 |
-| CF-04 | Four `fs.existsSync` sibling-checkout-gated REAL-artifact tests (c08:110 ripple-ui host matrix, c08:238 ouchan build config, c09:301 blueapi spec, c09:314 blueinternal spec) skip only where the sibling Alphaus checkouts are ABSENT; their identities were never declared because the dev host HAS the checkouts, so exact-head CI (no siblings) failed SYNTHETIC_CAMPAIGN with UNDECLARED_SKIP 40/4 (run 36513017223 at `2b5d8178`, receipt `receipt:sha256:75d601ff140284f7cd78be38`) — the skip-identity policy is only as complete as the environments it was measured on | `tests/unit/c08DeploymentBinding.test.ts:110,238`; `tests/unit/c09SpecExpectations.test.ts:301,314`; exact-head CI receipt at `2b5d8178` | 3.12 (declarations + source-bound regression: one declaration per sibling-gated skip site, titles must be source literals) — CLOSED at `491b5ef9` (proven in CI run 36537649045: skipPolicy PASS 14/0) |
+| CF-04 | Four `fs.existsSync` sibling-checkout-gated REAL-artifact tests (c08:110 ripple-ui host matrix, c08:238 ouchan build config, c09:301 blueapi spec, c09:314 blueinternal spec) skip only where the sibling Alphaus checkouts are ABSENT; their identities were never declared because the dev host HAS the checkouts, so exact-head CI (no siblings) failed SYNTHETIC_CAMPAIGN with UNDECLARED_SKIP 40/4 (run 36513017223 at `2b5d8178`, receipt `receipt:sha256:75d601ff140284f7cd78be38`) — the skip-identity policy is only as complete as the environments it was measured on | `tests/unit/c08DeploymentBinding.test.ts:110,238`; `tests/unit/c09SpecExpectations.test.ts:301,314`; exact-head CI receipt at `2b5d8178` | 3.12 (declarations + source-bound regression: one declaration per sibling-gated skip site, titles must be source literals) — CLOSED at `491b5ef9` (proven in CI run 36552500573 — group SYNTHETIC_CAMPAIGN skipPolicy PASS 40/0 and SEMANTIC_COMPATIBILITY PASS 14/0; run 36537649045 failed FLAKE-002 with SYNTHETIC_CAMPAIGN NOT_RUN and proves nothing about CF-04) |
 | CF-05 | The parent's M8 (9.6) ledger-cap fixture paced its 550-fetch loop with a blind 10 ms sleep while the observer's 4-read acquisition gate REFUSES rather than queues — under full-suite load the burst crosses 4, reads refuse (BODY_READ_ACQUISITION_BOUND) and the ledger lands short of the 512 cap: CI-intermittent `observerSemanticLedger.test.ts:138` failure (red at `491b5ef9` run 36537649045 / 2162-of-2177; green at `2b5d8178`) | `tests/unit/observerSemanticLedger.test.ts:138` (pre-fix loop at :167-181); `src/browser/observers/networkObserver.ts:131-137,1193-1197`; run 36537649045 receipt `receipt:sha256:adda702092ea4febf9ab185d` | 3.12 (FLAKE-002/D-147: event-driven pacing on the observer's `activeRequests()` drain signal, ≤ 1 outstanding; gate source text byte-untouched) |
 
 ## State at validation
@@ -153,7 +153,7 @@ on 2026-09-30 by the owner-directed hand-over.
 | RV-08 | low | VB-05 residual: `loadLaneState` and the hardening rule still overlay `?? lane.evidenceSha`; `loadDocumentRoleCorrections` falls back silently to the legacy inline array; `certifiedCheckpointSha` falls back to live HEAD when LAST_SUBSTANTIVE is not 40-hex | `validation-lane-state.mjs:54`; `documentation.mjs:1109`; `release-evidence.mjs:518-527`; `project-state-check.mjs:1453` | 7.6 |
 | RV-09 | medium | VC-03 residual: PROVEN_DEGRADED is treated as non-certifying nowhere (gate passes it; no release condition reads topology); `githubExecutionProven:false` is a hard-coded literal; the artifact has no gitHead, the gate details omit the topology receipt digest, upload uses `if-no-files-found: warn`, 14-day retention; the embedded `ciBlockRecord` is stale static config | `quality-gate.mjs:125`; `gate-topology.mjs:806`; `.github/workflows/hardening.yml` | 7.7 |
 | RV-10 | low | VC-06 residual: a missing real sibling root is reported as `SIBLING_IDENTITY_DRIFT`, so gate:clean cannot pass on a host without the owner's sibling checkouts | `bin/quality-gate-clean.mjs` `realSiblingIdentityUnchanged` | 7.8 |
-| RV-11 | medium | CF-04 residual: `extractHostMatrix` and `extractBuildExclusions` run only inside sibling-gated tests, so no CI lane exercises them; the skip sites hard-code `/home/dalepalaca/...` | `tests/unit/c08*.test.ts:110,238`; `c09*.test.ts:40` | 7.9 |
+| RV-11 | medium | CF-04 residual: `extractHostMatrix` and `extractBuildExclusions` run only inside sibling-gated tests, so no CI lane exercises them; the skip sites hard-code `/home/<user>/...` | `tests/unit/c08*.test.ts:110,238`; `c09*.test.ts:40` | 7.9 |
 | RV-12 | medium | Body-read acquisition refuses instead of queuing (module-global cap 4, shared across pages and contexts). It fails closed, but loses oracle coverage in bursty SPAs silently outside journeys; no behavioural test drives more than 4 concurrent reads | `src/browser/observers/networkObserver.ts:131-137`; `bodyReadAcquisition.test.ts` | 7.10 |
 | RV-13 | low | Flake ledger honesty: FLAKE-001 claims the 2 s bound is retained while 20 s shipped, and has no open/closed status (VC-07 ticked regardless); FLAKE-002's "residual risk: none known" omits the 5 s BODY_READ_TIMEOUT path | `docs/FLAKE-LEDGER.md` | 7.11 |
 | RV-14 | low | HC-180 is an equivalent mutant (the branch-equality conjunct is implied by `errors.length === 0`); caught only by a source-text regex | `bin/agent-state.mjs:137,154` | 7.12 |
@@ -162,4 +162,45 @@ on 2026-09-30 by the owner-directed hand-over.
 | RV-17 | medium | Tracking gaps: CF-01..CF-03 exist only in PLAN; 6.4's next action says "M4 task 5.2" while the true parent resume point is "M9 task 10.2 remainder"; 5.1's reopened list omits parent 5.2–5.7 (CF-01), the M5 product-run receipt (CF-03) and M8 9.6 (CF-05); parent STATE Exact Next Action/WIP/Branch are stale; child ACTIVE_TASK prose contradicts itself; the parent has an extra unticked `9.5b` line | child tasks.md; parent STATE.md; `.agent/ACTIVE_TASK.md` | 7.13 |
 | RV-18 | medium | Grants and adopt semantics: the child SPEC re-grants the parent's single-use paid provider run and registry query (neither used); `claim --adopt` rebases baseSha to merge-base, shrinking the declared-deletion window; `isDevInvocation`'s help/metadata exemption relies on every DEV launcher short-circuiting, which is unenforced | child SPEC.md:79-81; `bin/nightwatch-session.mjs:505`; `0a436f12` | 7.13 |
 | RV-19 | medium | Prettier is not neutralized (no `.prettierrc`/`.prettierignore`), and the VE-01 rewrite style matches Prettier's defaults; the formatter policy commit also added a live Biome binary as a devDependency | `171f3526` | 7.14 |
-| RV-20 | medium (owner) | Repository visibility is public (owner decision: temporary, for GitHub Actions); AGENTS.md describes a private origin; ~100 tracked files carry `/home/dalepalaca/...` paths; CI artifacts are public while this holds | `gh api repos/quantdale/night-watch` | 7.14 |
+| RV-20 | medium (owner) | Repository visibility is public (owner decision: temporary, for GitHub Actions); AGENTS.md describes a private origin; ~100 tracked files carry `/home/<user>/...` paths; CI artifacts are public while this holds | `gh api repos/quantdale/night-watch` | 7.14 |
+
+## Corrections (2026-09-30, review 2, corrections task 7.13)
+
+Recorded as corrections rather than silent rewrites (RV-16). Where a row above
+was edited, the edit is the correction named here.
+
+1. **VB-04.** The row read `COMPLETED_LATER @ a784e668`. That was false: the TDZ
+   (`liveHeadSha` read before its definition in the lane-disagreement block) was
+   present at `1d47e2ee` and was removed by `add49919`. The row now reads
+   STILL_PRESENT at `1d47e2ee`, CLOSED by `add49919`, and the check carries a
+   unit regression (`evidenceLaneDisagreements`, task 7.13).
+2. **Counts.** The re-verification table lists **29 findings** (VB 7, VC 11,
+   VD 5, VA 5, VE 1), not 31: **22 STILL_PRESENT, 6 CHANGED** (VB-07, VC-06,
+   VC-07, VD-04, VA-02, VE-01) and **1 COMPLETED_LATER** (VD-05, partially).
+   The earlier "21 / 5 / 2 of 31" figure, repeated in task 1.3's DONE note and
+   in `design.md`, is superseded by these counts. The five follow-on defects
+   CF-01..CF-05 are additional and are not part of the 29.
+3. **CF-04's proof.** Attributed to run 36537649045, where SYNTHETIC_CAMPAIGN was
+   NOT_RUN (the run failed FLAKE-002 first). The proof is run **36552500573**,
+   in which SYNTHETIC_CAMPAIGN passed with skipPolicy 40/0 and
+   SEMANTIC_COMPATIBILITY with 14/0. The commit message of `3c9c1a06` carries the
+   old attribution; history is not rewritten, this record governs.
+4. **`6b19e428` was named "validated" too early.** `e9ad3300` recorded it as the
+   validated implementation although its own `gate:clean` had failed (inner
+   PROJECT_TRUTH: `PROJECT_STATE_SUBSTANTIVE_BASELINE_STALE`) and the commit
+   carried the VC-04 report-authorization regression that `9a1abf28` later fixed.
+   The first commit whose full gate set passed is `9a1abf28`
+   (gate:clean 15/15, receipt `clean-receipt:sha256:7ce5fa02f058a2c37ecc4a93`).
+   `6b19e428` implemented VC-06; it was not a validated anchor.
+5. **The bootstrap was not "restored unchanged".** M1 states the corrective
+   change was restored unchanged. It was not: an "Review 2" section and the
+   Re-verification table were added to this file, and task 2.7's wording was
+   changed, after the staged copy. The change in the repository is the
+   authoritative one and every edit to it is in git history.
+6. **CORR-CORR-002** (`3f40e56d`) appended a correction entry whose matching
+   archive-line removal landed one commit later in `e9ad3300`. That breaks the
+   same-commit pairing rule (VB-03) and the project's own classifier rates the
+   commit substantive although it was committed as documentation. History is
+   not rewritten: the violation is recorded here and in D-149, it sits outside
+   the unpushed range the per-commit rule inspects (RV-04), and the rule now
+   reports any future split at its appending commit.

@@ -13,6 +13,7 @@
 // raw numeric amount are all forbidden in safe outputs by default.
 // ---------------------------------------------------------------------------
 
+import os from 'node:os';
 import { expect, test } from '@playwright/test';
 import { deriveExpectations, type SemanticExpectation } from '../../src/oracles/expectations';
 import { projectValue, ProjectionContext, projectionDigest, serializeProjection } from '../../src/oracles/projections';
@@ -311,7 +312,7 @@ test.describe('Phase 9 sentinel leakage — absolute path + raw numeric (SPEC §
       sourceSnapshot: { repoId: PROVENANCE.repoId, sha: FIXTURE_SHA },
     });
     const serialized = JSON.stringify(result);
-    expect(serialized).not.toContain('/home/dalepalaca');
+    expect(serialized).not.toContain(os.homedir());
     expect(serialized).not.toContain('/tmp/');
     expect(serialized).not.toContain('/private');
     // Relative source path only.

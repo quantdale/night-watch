@@ -21,6 +21,7 @@ import {
   correctionStillExemptsArchive,
   isAppendOnlyCorrectionsChange,
   isCorrectionAppendAdmissible,
+  evidenceLaneDisagreements,
   isValuesOnlyBindingChange,
   lineSha256Prefix,
   loadDocumentRoleCorrections,
@@ -461,6 +462,23 @@ test.describe('validation lane state', () => {
     } finally {
       fs.rmSync(root, { recursive: true, force: true });
     }
+  });
+
+  test('VB-04 regression: a condition citing a lane must agree with that lane\'s bound evidence, at token boundaries', () => {
+    const lanes = new Map<string, string | null>([['ui', SHA_A], ['root-compile', SHA_B], ['browser-workflow', null]]);
+    const condition = (id: string, evidence: string, evidenceSha: string | null) => ({ id, evidence, evidenceSha });
+    // Agreement, a null on either side, and a citation that only matches inside a word are not findings.
+    expect(evidenceLaneDisagreements([condition('c1', 'lane ui and the suite', SHA_A)], lanes)).toEqual([]);
+    expect(evidenceLaneDisagreements([condition('c2', 'lane ui', null)], lanes)).toEqual([]);
+    expect(evidenceLaneDisagreements([condition('c3', 'lane browser-workflow', SHA_C)], lanes)).toEqual([]);
+    expect(evidenceLaneDisagreements([condition('c4', 'the test suite and a guide', SHA_C)], lanes)).toEqual([]);
+    // Two SHAs for one piece of evidence are a contradiction, named by both.
+    expect(evidenceLaneDisagreements([condition('c5', 'cites root-compile evidence', SHA_A)], lanes))
+      .toEqual([`c5 cites root-compile with ${SHA_A} vs lane ${SHA_B}`]);
+    // One condition citing two lanes reports each disagreeing lane.
+    expect(evidenceLaneDisagreements([condition('c6', 'ui plus root-compile', SHA_C)], lanes)).toHaveLength(2);
+    // A non-string citation cites nothing.
+    expect(evidenceLaneDisagreements([{ id: 'c7', evidence: 42, evidenceSha: SHA_C }], lanes)).toEqual([]);
   });
 
   test('RV-01: two corrections exempting the same archive line are rejected, whatever their ids', () => {

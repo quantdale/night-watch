@@ -2,6 +2,38 @@
   "schemaVersion": "nightwatch.hardening-rule-probes.v1",
   "purpose": "One recorded, reversible negative probe per registered structural rule. The campaign in bin/hardening-check.mjs --probe-campaign applies each probe to real guarded source, runs only the probed rule, requires a detected failure, restores the bytes in a finally, and verifies git status --porcelain is unchanged. A probe op replaces a unique search literal (or every occurrence with all:true), appends, prepends, or creates a file that must not already exist and is removed again on restore.",
   "probes": {
+    "checkDevLauncherMetadataShortCircuit": [
+      {
+        "id": "HC-198",
+        "ops": [
+          {
+            "file": "bin/lib/dev-lane-precondition.mjs",
+            "search": "args.includes('--print-metadata')) return false;",
+            "replace": "args.includes('--print-metadata') || args.includes('--dry-run')) return false;"
+          }
+        ]
+      },
+      {
+        "id": "HC-199",
+        "ops": [
+          {
+            "file": "bin/observe-gate.mjs",
+            "search": "guardDevLane({ root, launcher: 'observe-gate.mjs', args: process.argv.slice(2) });",
+            "replace": "guardDevLane({ root, launcher: 'observe-gate.mjs', args: process.argv.slice(2) });\nspawnSync('/bin/true', []);"
+          }
+        ]
+      },
+      {
+        "id": "HC-200",
+        "ops": [
+          {
+            "file": "bin/phase23-dev.mjs",
+            "search": "fail('FLAGS_REQUIRE_EQUALS')",
+            "replace": "fail('FLAGS_ARE_FREE')"
+          }
+        ]
+      }
+    ],
     "checkChildProcessBoundaries": [
       {
         "id": "HC-001",

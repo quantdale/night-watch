@@ -30,7 +30,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
 import { loadTypeScriptModule as loadRuntimeTypeScriptModule } from './lib/typescript-runtime-loader.mjs';
-import { loadReleaseEvidenceBindings, resolveEvidenceShaForSubject } from './lib/release-evidence.mjs';
+import { evidenceLaneDisagreements, loadReleaseEvidenceBindings, resolveEvidenceShaForSubject } from './lib/release-evidence.mjs';
 import { ACCESSIBILITY_RECORD_PATH, parseAccessibilityCertificationRecord } from './lib/accessibility-record.mjs';
 import { UI_HARNESS_RECEIPT_PATH, UI_HARNESS_TYPES_PATH, evaluateUiHarnessReceipt, extractApiErrorKinds } from './lib/ui-harness-receipt.mjs';
 import { evidenceArtifactExistsAtSha } from './lib/evidence-artifact.mjs';
@@ -1469,22 +1469,11 @@ function main() {
                 laneEvidence.set(lane.laneId, typeof lane.evidenceSha === 'string' ? lane.evidenceSha : null);
               }
             }
-            for (const condition of boundDefinition.conditions) {
-              const cited = typeof condition.evidence === 'string' ? condition.evidence : '';
-              // VB-05: the literal HEAD is invalid everywhere — bound
-              // identities are exact 40-hex values and are compared directly
-              // (no token resolution, nothing self-certifying).
-              for (const [laneId, laneSha] of laneEvidence) {
-                // Token-boundary citation: lane ids like `ui` must not match
-                // inside words (`suite`).
-                const citation = new RegExp(`\\b${laneId.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')}\\b`);
-                if (!citation.test(cited)) continue;
-                const conditionSha = condition.evidenceSha;
-                const resolvedLaneSha = laneSha;
-                if (conditionSha !== null && resolvedLaneSha !== null && conditionSha !== resolvedLaneSha) {
-                  fail(errors, `PROJECT_STATE_EVIDENCE_LANE_DISAGREEMENT: ${condition.id} cites ${laneId} with ${conditionSha} vs lane ${resolvedLaneSha}`);
-                }
-              }
+            // VB-05: the literal HEAD is invalid everywhere — bound identities
+            // are exact 40-hex values, compared directly. The comparison is the
+            // pure evidenceLaneDisagreements (unit-tested, VB-04 regression).
+            for (const disagreement of evidenceLaneDisagreements(boundDefinition.conditions, laneEvidence)) {
+              fail(errors, `PROJECT_STATE_EVIDENCE_LANE_DISAGREEMENT: ${disagreement}`);
             }
             if (!evidenceBindings.ok || (evidenceBindings.present && evidenceBindings.bySubject.size === 0)) {
               fail(errors, `PROJECT_STATE_RELEASE_EVIDENCE_INVALID: ${evidenceBindings.errors.join(';')}`);

@@ -192,3 +192,46 @@ test.describe('corpus proofs over the tracked tree', () => {
     }
   });
 });
+
+// RV-19 / corrections task 7.14 — Prettier is neutralised too. The 2026-09-28
+// out-of-band rewrite matched Prettier's default style, and the harness that
+// produced it ships its own Prettier; Biome's policy alone left that door open.
+
+const PRETTIER_PROBE = "const x = 'a'\nconst y   =   1;\n";
+const PRETTIER_ENTRY = path.join(os.homedir(), '.pi-lens', 'tools', 'node_modules', 'prettier', 'bin', 'prettier.cjs');
+
+test('prettier: every path is ignored and no Prettier configuration exists', () => {
+  const ignore = fs.readFileSync(path.join(REPO_ROOT, '.prettierignore'), 'utf8');
+  const patterns = ignore.split('\n').map((line) => line.trim()).filter((line) => line !== '' && !line.startsWith('#'));
+  expect(patterns, '.prettierignore must ignore everything with a single `*`').toEqual(['*']);
+  const tracked = trackedFiles();
+  for (const configuration of ['.prettierrc', '.prettierrc.json', '.prettierrc.yaml', '.prettierrc.yml', '.prettierrc.js', '.prettierrc.cjs', '.prettierrc.mjs', 'prettier.config.js', 'prettier.config.cjs', 'prettier.config.mjs']) {
+    expect(tracked, `${configuration} must not exist: Prettier is not a repository tool`).not.toContain(configuration);
+  }
+  expect(tracked).toContain('.prettierignore');
+});
+
+test('prettier control: where a Prettier binary exists, it rewrites the probe without the ignore file and leaves it with it', async ({}, testInfo) => {
+  if (!fs.existsSync(PRETTIER_ENTRY)) {
+    // Not a skip: the always-run policy test above pins the ignore file; the
+    // behavioural control simply has no binary to drive on this host.
+    testInfo.annotations.push({ type: 'note', description: 'no Prettier binary on this host; behavioural control not exercised' });
+    return;
+  }
+  const withoutPolicy = scratch();
+  const withPolicy = scratch();
+  try {
+    fs.writeFileSync(path.join(withoutPolicy, 'probe.js'), PRETTIER_PROBE);
+    const control = run(process.execPath, [PRETTIER_ENTRY, '--write', 'probe.js'], withoutPolicy);
+    expect(control.status).toBe(0);
+    expect(fs.readFileSync(path.join(withoutPolicy, 'probe.js'), 'utf8'), 'the control must actually be rewritten').toBe('const x = "a";\nconst y = 1;\n');
+    fs.writeFileSync(path.join(withPolicy, 'probe.js'), PRETTIER_PROBE);
+    fs.copyFileSync(path.join(REPO_ROOT, '.prettierignore'), path.join(withPolicy, '.prettierignore'));
+    const governed = run(process.execPath, [PRETTIER_ENTRY, '--write', 'probe.js'], withPolicy);
+    expect(governed.status).toBe(0);
+    expect(fs.readFileSync(path.join(withPolicy, 'probe.js'), 'utf8'), 'Prettier rewrote the probe despite .prettierignore').toBe(PRETTIER_PROBE);
+  } finally {
+    fs.rmSync(withoutPolicy, { recursive: true, force: true });
+    fs.rmSync(withPolicy, { recursive: true, force: true });
+  }
+});

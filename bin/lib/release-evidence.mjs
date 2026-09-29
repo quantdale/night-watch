@@ -548,3 +548,30 @@ export function loadDocumentRoleCorrections(root) {
   // deleted registry read as "no corrections" and stop enforcing them.
   return { ok: false, errors: [`CORRECTIONS_FILE_MISSING:${DOCUMENT_ROLE_CORRECTIONS_FILE}`], corrections: [], source: DOCUMENT_ROLE_CORRECTIONS_FILE };
 }
+
+/**
+ * D-06 / VB-04 regression (corrections task 7.13) — a condition that CITES a
+ * validation lane by id must agree with that lane's bound evidence: two SHAs
+ * for one piece of evidence are a contradiction, never a stronger proof.
+ * Citation is token-bounded (`ui` never matches inside `suite`); a null on
+ * either side is "no comparison", not agreement. Pure.
+ *
+ * @param {ReadonlyArray<{ id: string, evidence?: unknown, evidenceSha: string | null }>} conditions
+ * @param {ReadonlyMap<string, string | null>} laneEvidence lane id -> bound evidence SHA
+ * @returns {string[]} one message per disagreement
+ */
+export function evidenceLaneDisagreements(conditions, laneEvidence) {
+  /** @type {string[]} */
+  const disagreements = [];
+  for (const condition of conditions) {
+    const cited = typeof condition.evidence === 'string' ? condition.evidence : '';
+    for (const [laneId, laneSha] of laneEvidence) {
+      const citation = new RegExp(`\\b${laneId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`);
+      if (!citation.test(cited)) continue;
+      if (condition.evidenceSha !== null && laneSha !== null && condition.evidenceSha !== laneSha) {
+        disagreements.push(`${condition.id} cites ${laneId} with ${condition.evidenceSha} vs lane ${laneSha}`);
+      }
+    }
+  }
+  return disagreements;
+}

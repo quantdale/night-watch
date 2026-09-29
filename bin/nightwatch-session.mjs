@@ -502,15 +502,26 @@ function commandClaim(context, options) {
   }
   const remote = context.policy?.canonical?.remote ?? 'origin';
   const canonicalBranch = context.policy?.canonical?.branch ?? 'main';
-  const baseSha = options.baseSha
-    ?? gitValue(context.root, ['merge-base', 'HEAD', `${remote}/${canonicalBranch}`])
-    ?? gitValue(context.root, ['rev-parse', 'HEAD']);
-  if (baseSha === null) return fail('SESSION_BASE_UNRESOLVED');
   const file = currentRecordFile(context);
   const existing = readRecordDocument(file, context.policy);
   if (existing.state !== 'PRESENT' && existing.state !== 'ABSENT') {
     return fail('SESSION_RECORD_UNREADABLE', `the existing ownership record is ${existing.state}; inspect the worktree before claiming`);
   }
+  // RV-18 / corrections task 7.13: adopting a stale claim KEEPS its original
+  // base. Re-deriving the base from today's merge-base moved it forward to the
+  // remote tip and shrank the declared-deletion window (deletions are measured
+  // from the session base) — an adoption must never make earlier deletions
+  // invisible. An explicit --base still wins, and a fresh claim (no record) is
+  // resolved from the merge-base as before.
+  const originalBase = options.adopt === true && existing.state === 'PRESENT'
+    && typeof existing.parsed?.baseSha === 'string' && /^[0-9a-f]{40}$/.test(existing.parsed.baseSha)
+    ? existing.parsed.baseSha
+    : null;
+  const baseSha = options.baseSha
+    ?? originalBase
+    ?? gitValue(context.root, ['merge-base', 'HEAD', `${remote}/${canonicalBranch}`])
+    ?? gitValue(context.root, ['rev-parse', 'HEAD']);
+  if (baseSha === null) return fail('SESSION_BASE_UNRESOLVED');
   if (existing.state === 'PRESENT') {
     if (holderIsLive(existing.parsed)) {
       return fail('SESSION_ALREADY_OWNED', `worktree already owned by task ${existing.parsed.taskId} (session ${existing.parsed.sessionId})`);
@@ -557,7 +568,7 @@ function commandClaim(context, options) {
     return { ok: true, record };
   });
   if (transition.ok !== true) return fail(transition.code, transition.detail);
-  emit('SESSION_CLAIMED', `task=${record.taskId} session=${record.sessionId} branch=${branch} base=${baseSha}`);
+  emit('SESSION_CLAIMED', `task=${record.taskId} session=${record.sessionId} branch=${branch} base=${baseSha}${originalBase !== null && originalBase === baseSha ? ' baseKeptFromAdoptedClaim=true' : ''}`);
   emit('SESSION_NEXT_ACTION', `node bin/nightwatch-session.mjs release --expect-session ${record.sessionId}`);
   return record;
 }

@@ -1,0 +1,6 @@
+# Nightwatch does not use Prettier (RV-19 / corrections task 7.14). An out-of-band
+# formatter run — an editor integration, a harness post-write hook — once rewrote
+# 16 tracked files in the canonical checkout in Prettier's default style. This
+# file makes any Prettier run a no-op for the whole repository, exactly as
+# biome.json does for Biome (task 6.1). There is deliberately no .prettierrc.
+*

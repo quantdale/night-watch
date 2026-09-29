@@ -23,6 +23,7 @@
 // parallel browser framework.
 // ---------------------------------------------------------------------------
 
+import { resolveSiblingRoot } from '../../src/core/policy/sourceTopology';
 import { test, expect, type Browser } from '@playwright/test';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -89,7 +90,7 @@ const RIPPLE_API_REMOTE_BRANCH = 'master';
 const RIPPLE_UI_REMOTE_BRANCH = 'dev';
 const REVIEWED_API_SHA = PHASE5_SOURCE_SHAS.rippleApi;
 const REVIEWED_UI_SHA = RIPPLE_PHASE_2B_SOURCE_SHA;
-const CANONICAL_SIBLING_ROOT = '/home/dalepalaca/go/src/alphaus-main/REPOSITORIES';
+const CANONICAL_SIBLING_ROOT = resolveSiblingRoot();
 const DISPOSABLE_ROOT = process.env.NIGHTWATCH_PHASE_9B_DISPOSABLE_ROOT ?? '/tmp/nightwatch-phase9b-source';
 const DISPOSABLE_MARKER = '.nightwatch-phase9b-sha';
 

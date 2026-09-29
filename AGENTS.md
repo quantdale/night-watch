@@ -14,6 +14,12 @@ remote is the private `origin`
 workspace is intentionally not a Git repository; do not restore its retired
 `.git` metadata or use the preserved accidental-Git backup.
 
+Visibility note (D-149, 2026-09-30): the repository is TEMPORARILY PUBLIC by
+owner decision, because GitHub Actions failed while it was private. Treat every
+push and CI artifact as public: nothing secret, customer-derived or
+authentication-bearing, and no new absolute home path. It returns to private at
+the final close-out, where the owner confirms Actions still runs.
+
 Nightwatch development sessions may commit and push only validated durable
 checkpoints from this repository to `origin main`. Before each push, validate
 the scoped work, inspect the diff and privacy surface, and verify local

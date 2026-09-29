@@ -10,18 +10,6 @@
       "reason": "C-07 real-population suite skips via fs.existsSync of the sibling checkout; the D-109 system-reported discriminator is a follow-up repair, declared rather than silently tolerated."
     },
     {
-      "file": "tests/unit/c08DeploymentBinding.test.ts",
-      "literal": "/home/dalepalaca/go/src/alphaus-main/REPOSITORIES",
-      "capability": "LEGACY_HOST_PATH_SKIP",
-      "reason": "C-08 real-artifact extraction suite skips via fs.existsSync of the sibling checkout; follow-up repair owed."
-    },
-    {
-      "file": "tests/unit/c09SpecExpectations.test.ts",
-      "literal": "/home/dalepalaca/go/src/alphaus-main/REPOSITORIES",
-      "capability": "LEGACY_HOST_PATH_SKIP",
-      "reason": "C-09 sibling-source derivation suite reads the real checkout only when present; follow-up repair owed."
-    },
-    {
       "file": "tests/unit/oracleExpectationRealSource.test.ts",
       "literal": "/home/dalepalaca/go/src/alphaus-main/REPOSITORIES",
       "capability": "LEGACY_HOST_PATH_SKIP",

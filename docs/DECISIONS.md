@@ -5363,3 +5363,63 @@ structural D3 clause of `checkReleaseImplementedHonesty`) are DETECTED; the
 probe campaign is 192/192; the lifecycle tests cover every rejection code for
 both receipts. Consequence: until the final close-out, project:check reports the
 seven probes as NOT_AT_CHECKPOINT or UNMET, which is the truth.
+
+## D-149 — review-2 corrections: recorded violations, temporary public visibility, the body-read bound is a pending owner decision
+
+**Context.** An independent review of the corrective campaign's M1–M4 (RV-01..RV-20)
+found defects in the campaign's own records and guards. Most are fixed by code and
+tests (tasks 7.1–7.13); four need a recorded decision rather than a change.
+
+**Decision 1 — CORR-CORR-002 is a recorded violation; history is not rewritten
+(RV-05).** Commit `3f40e56d` appended the correction entry CORR-CORR-002 without
+removing the archive line it exempts; the removal landed one commit later, in
+`e9ad3300`. That breaks the same-commit pairing rule (D-146) and the project's own
+classifier rates the commit substantive although it was committed as
+documentation. Rewriting published history is out of scope; the violation is
+recorded here and in the audit's Corrections section. It sits outside the unpushed
+range the per-commit rule inspects, and `unpairedCorrectionsInRange` now reports any
+future two-commit split at the commit that appends (task 7.4, HC-196/HC-197).
+
+**Decision 2 — the repository is temporarily PUBLIC by owner decision (RV-20).**
+GitHub Actions failed while the repository was private, so the owner made it public.
+It returns to private at the final close-out (parent task 15.x / corrections task
+7.14), where the owner reverts it and confirms Actions still runs. While it is
+public: every push and CI artifact is public; nothing secret, customer-derived or
+authentication-bearing may be committed or uploaded; no new absolute home path may be
+added. This entry supersedes the "private `origin`" wording in AGENTS.md for that
+window (AGENTS.md carries a dated note). Non-historical home-path literals were
+replaced in tests and records (`resolveSiblingRoot()` / `os.homedir()`); the
+remainder is deliberate and bounded: `src/core/source/siblingRoot.ts` (the one
+default the topology scan PARSES as its path authority, X-02), the declared
+LEGACY_HOST_PATH_SKIP regression literals, the canonical-topology rows in AGENTS.md /
+CURRENT_STATE / DECISIONS, and `.agent/tasks/**` evidence that is historical by
+definition.
+
+**Decision 3 — Biome and Prettier are both neutralised (RV-19).** `biome.json`
+(task 6.1) and `.prettierignore` (`*`, task 7.14) make any Biome or Prettier run a
+no-op for the repository; Prettier has a behavioural positive control where a binary
+exists and an always-on policy pin elsewhere. The formatter commit also added the
+Biome binary as a devDependency; it stays (the policy test drives it) and is bounded
+by the same policy.
+
+**Decision 4 — refuse versus queue for the body-read bound is a PENDING OWNER
+DECISION (RV-12; task 7.10).** `MAX_CONCURRENT_BODY_READS = 4` is module-global and
+shared across pages and contexts; the read past the bound is REFUSED
+(`BODY_READ_ACQUISITION_BOUND`) rather than queued. It fails closed, and the refusal
+is now proven by behaviour, not text (`boundedResponseOperation`, tests 7.10). The
+open question is a trade: refusing loses oracle coverage silently for a burst of
+concurrent JSON responses outside journeys; a bounded queue would keep coverage at
+the cost of holding responses and a latency tail. The choice about scope is separate:
+a global cap versus a per-observer cap. **Recommendation: keep the refusal and the
+global cap** (fail-closed, smallest change), and surface the refusal count in the run
+summary so the lost coverage is visible. **No implementation follows until the owner
+records a decision here**; this entry is the record that it is open, and the
+corrections campaign must not close while it is `PENDING`.
+
+**Evidence and consequences.** The per-commit pairing, the receipt-bound re-binds and
+lane artifacts, the behavioural guard-integrity rule, the widened annotation counter,
+the removed fallbacks, the topology commit binding, the ABSENT sibling verdict, the CI
+twins, the behavioural acquisition test, the flake-ledger status register, the
+non-equivalent HC-180, the vitest test counts, the skip-count cross-check and the
+DEV-launcher short-circuit rule are all covered by focused tests and probes
+HC-189..HC-200 in the probe campaign. Status of Decision 4: `PENDING_OWNER`.

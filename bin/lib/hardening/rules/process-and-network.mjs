@@ -81,6 +81,72 @@ export function checkM8GuardTotality() {
   }
 }
 
+/**
+ * RV-18 / corrections task 7.13 — the DEV launcher help/metadata exemption.
+ *
+ * `isDevInvocation` deliberately returns false for `--help`, `-h` and
+ * `--print-metadata`, so a metadata query never trips the precondition guard.
+ * That exemption is only safe if EVERY launcher that calls `guardDevLane(`
+ * does nothing effectful between the guard and the point where it short-circuits
+ * those flags — which was true by inspection and enforced nowhere. This rule
+ * enforces it:
+ *   1. the exemption set in bin/lib/dev-lane-precondition.mjs is exactly those
+ *      three flags (a widened exemption fails);
+ *   2. every guarded launcher either uses the operator CLI (`defineOperatorCli(`
+ *      then a `.stop` short-circuit) or is a DECLARED own-parser launcher whose
+ *      parser refuses every unrecognised flag;
+ *   3. no top-level statement between the guard and the short-circuit performs a
+ *      process, network or browser effect (function bodies are declarations,
+ *      not executed there).
+ */
+export function checkDevLauncherMetadataShortCircuit() {
+  const exemptionSource = read('bin/lib/dev-lane-precondition.mjs');
+  const exemptionLines = [...exemptionSource.matchAll(/if \(([^\n]*args\.includes\('--help'\)[^\n]*)\) return false;/g)];
+  // Exactly ONE exemption statement may exist; a second one is a widening too.
+  const exempt = exemptionLines.length !== 1
+    ? null
+    : [...String(exemptionLines[0]?.[1] ?? '').matchAll(/args\.includes\('([^']+)'\)/g)].map((match) => String(match[1])).sort();
+  if (exempt === null || exempt.join(',') !== ['--help', '--print-metadata', '-h'].join(',')) {
+    fail(`DEV_LAUNCHER_EXEMPTION_WIDENED bin/lib/dev-lane-precondition.mjs exempts ${exempt === null ? 'an unparseable set' : exempt.join(', ')}; the help/metadata exemption is exactly --help, -h and --print-metadata`);
+  }
+  // Launchers whose own parser (not defineOperatorCli) handles the exempted
+  // flags, each with the token that proves the parser refuses everything else.
+  const ownParser = new Map([['bin/phase23-dev.mjs', "fail('FLAGS_REQUIRE_EQUALS')"]]);
+  const effect = /\b(?:spawnSync|spawn|execFileSync|execFile|execSync|fetch|chromium|launchPersistentContext)\s*[.(]|\b(?:http|https|net)\.(?:request|get|connect)\b|new WebSocket\b/;
+  const launchers = gitFiles().filter((file) => /^bin\/[^/]+\.mjs$/.test(file) && read(file).includes('guardDevLane('));
+  if (launchers.length === 0) fail('DEV_LAUNCHER_SHORT_CIRCUIT_VACUOUS no launcher calls guardDevLane(; the rule found nothing to check');
+  for (const file of launchers) {
+    const code = read(file);
+    const guardAt = code.lastIndexOf('guardDevLane(');
+    const guardEnd = code.indexOf('\n', guardAt);
+    let shortCircuitAt = -1;
+    if (ownParser.has(file)) {
+      if (!code.includes(String(ownParser.get(file)))) fail(`DEV_LAUNCHER_PARSER_PERMISSIVE ${file} is a declared own-parser launcher but no longer refuses unrecognised flags (${String(ownParser.get(file))} is missing)`);
+      shortCircuitAt = code.indexOf('args.help', guardEnd);
+    } else {
+      const cliAt = code.indexOf('defineOperatorCli(', guardEnd);
+      shortCircuitAt = cliAt < 0 ? -1 : code.indexOf('.stop', cliAt);
+      if (cliAt < 0) fail(`DEV_LAUNCHER_NO_OPERATOR_CLI ${file} calls guardDevLane( but reaches no defineOperatorCli( after it; a help/metadata query would not short-circuit`);
+    }
+    if (shortCircuitAt < 0) {
+      fail(`DEV_LAUNCHER_NO_SHORT_CIRCUIT ${file} has no help/metadata short-circuit after its DEV guard`);
+      continue;
+    }
+    // Top-level statements only: a col-0 line opens a statement that runs until
+    // the next col-0 line; declarations (function/class/import/export/comment)
+    // are skipped, because they do not execute here.
+    const region = code.slice(guardEnd, shortCircuitAt);
+    const statements = region.split(/\n(?=\S)/);
+    for (const statement of statements) {
+      const trimmed = statement.trim();
+      if (trimmed === '' || /^(?:async\s+function|function|class|import|export|\/\/|\/\*|\}|\))/.test(trimmed)) continue;
+      if (effect.test(trimmed)) {
+        fail(`DEV_LAUNCHER_EFFECT_BEFORE_SHORT_CIRCUIT ${file} performs an effect at top level between its DEV guard and the help/metadata short-circuit: ${trimmed.split('\n')[0]?.slice(0, 100)}`);
+      }
+    }
+  }
+}
+
 export function checkChildProcessBoundaries() {
   // Historical launcher list: still bounds the named high-authority files
   // (timeout/maxBuffer/shell/stdio/env-spread) so HC-001 remains non-vacuous.
