@@ -513,8 +513,8 @@ export function legacyEvidenceSha(root, subject) {
 }
 
 /**
- * Resolve a subject's bound evidence SHA: release-evidence.v1.json first, the
- * retired locations once for compatibility, then absent.
+ * Resolve a subject's bound evidence SHA from release-evidence.v1.json ONLY;
+ * an unbound subject (or an absent/invalid registry) resolves to null.
  * @param {string} root
  * @param {string} subject
  */
@@ -526,14 +526,15 @@ export function resolveEvidenceShaForSubject(root, subject) {
   // UNBOUND consults the retired locations once.
   const loaded = loadReleaseEvidenceBindings(root, { requireFile: true });
   if (!loaded.ok || !loaded.present) return null;
-  const bound = loaded.bySubject.get(subject);
-  if (bound !== undefined) return bound.evidenceSha;
-  return legacyEvidenceSha(root, subject);
+  // RV-08 / corrections task 7.6: an UNBOUND subject is unevidenced (null); the
+  // retired locations are never consulted, so a stale copy left behind in the
+  // lane record or the certification definition cannot resurrect evidence.
+  return loaded.bySubject.get(subject)?.evidenceSha ?? null;
 }
 
 /**
- * The document-role corrections, new file first and the retired inline
- * `corrections` array once for compatibility.
+ * The document-role corrections from config/document-role-corrections.v1.json
+ * (the retired inline array is no longer consulted; an absent file is an error).
  * @param {string} root
  */
 export function loadDocumentRoleCorrections(root) {
@@ -542,7 +543,8 @@ export function loadDocumentRoleCorrections(root) {
     const parsed = parseDocumentRoleCorrections(raw);
     return { ok: parsed.ok, errors: parsed.errors, corrections: parsed.corrections, source: DOCUMENT_ROLE_CORRECTIONS_FILE };
   }
-  const legacy = readJsonFile(root, 'config/document-role.v1.json');
-  const corrections = Array.isArray(legacy?.corrections) ? legacy.corrections : [];
-  return { ok: true, errors: [], corrections, source: 'config/document-role.v1.json (legacy fallback)' };
+  // RV-08 / corrections task 7.6: an absent corrections file is an ERROR, never
+  // a silent fall back to the retired inline array — that fallback let a
+  // deleted registry read as "no corrections" and stop enforcing them.
+  return { ok: false, errors: [`CORRECTIONS_FILE_MISSING:${DOCUMENT_ROLE_CORRECTIONS_FILE}`], corrections: [], source: DOCUMENT_ROLE_CORRECTIONS_FILE };
 }

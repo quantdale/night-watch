@@ -23,6 +23,7 @@ import {
   isCorrectionAppendAdmissible,
   isValuesOnlyBindingChange,
   lineSha256Prefix,
+  loadDocumentRoleCorrections,
   parseDocumentRoleCorrections,
 } from '../../bin/lib/release-evidence.mjs';
 import { checkpointRoleViolations, correctionPairingViolations, removedLineDigests, removedLineDigestsFromDiff, unpairedCorrectionsInRange } from '../../bin/lib/checkpoint-role.mjs';
@@ -427,6 +428,36 @@ test.describe('validation lane state', () => {
       const inRange = unpairedCorrectionsInRange(root, seed, wrongArchive, file);
       expect(inRange?.map((found) => [found.commit, found.id])).toEqual([[appended, 'SPLIT'], [wrongArchive, 'WRONG']]);
       expect(unpairedCorrectionsInRange(root, seed, 'no-such-ref', file)).toBeNull();
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test('RV-08: a retired copy never resurrects evidence or corrections', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'nw-rv08-'));
+    const write = (file: string, value: unknown) => {
+      fs.mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
+      fs.writeFileSync(path.join(root, file), typeof value === 'string' ? value : JSON.stringify(value));
+    };
+    try {
+      // A lane whose OWN evidenceSha is a valid 40-hex copy, an EMPTY (valid) bindings registry and
+      // a retired inline corrections array in document-role.v1.json.
+      write('config/validation-lane-state.v1.json', {
+        schemaVersion: 'nightwatch.validation-lane-state.v1',
+        lanes: [{ laneId: 'root-compile', class: 'PROVEN', evidence: 'x', evidenceSha: SHA_A, classes: [] }],
+      });
+      write('config/release-evidence.v1.json', { schemaVersion: 'nightwatch.release-evidence.v1', bindings: [] });
+      write('config/document-role.v1.json', { corrections: [{ id: 'RETIRED-1', path: 'docs/x.md', oldLineSha256: 'sha256:' + 'a'.repeat(24) }] });
+      // The lane record's own copy is NOT an overlay: the lane resolves unevidenced.
+      const loaded = loadLaneState(root);
+      expect(loaded.ok).toBe(true);
+      expect(loaded.lanes[0]?.evidenceSha).toBeNull();
+      expect(validateLaneState(loaded.lanes, []).map((entry) => entry.code)).toContain('LANE_STATE_EVIDENCE_SHA_MISSING');
+      // A missing corrections file is an error, not the retired inline array.
+      const corrections = loadDocumentRoleCorrections(root);
+      expect(corrections.ok).toBe(false);
+      expect(corrections.errors).toEqual(['CORRECTIONS_FILE_MISSING:config/document-role-corrections.v1.json']);
+      expect(corrections.corrections).toEqual([]);
     } finally {
       fs.rmSync(root, { recursive: true, force: true });
     }

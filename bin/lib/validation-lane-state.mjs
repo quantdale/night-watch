@@ -44,14 +44,14 @@ export function loadLaneState(root) {
     return { ok: false, errors: [{ code: 'LANE_STATE_EMPTY', detail: 'the lane-state record declares no lane' }], lanes: [] };
   }
   // A-01: evidence bindings live in config/release-evidence.v1.json (the
-  // checkpoint-neutral location). The lane record's own evidenceSha is the
-  // retired location and is consulted only as a compatibility fallback; the
-  // resolved binding is overlaid here so every consumer sees one truth.
+  // checkpoint-neutral location) and ONLY there. RV-08 / corrections task 7.6:
+  // the lane record's own `evidenceSha` is a retired location and is no longer
+  // consulted — an unbound lane resolves to null (an unevidenced PROVEN claim
+  // then fails structurally), never to a stale copy left in the lane record.
   const resolved = lanes.map((lane) => {
     const laneId = lane !== null && typeof lane === 'object' && typeof lane.laneId === 'string' ? lane.laneId : null;
     if (laneId === null) return lane;
-    const bound = resolveEvidenceShaForSubject(root, laneId);
-    return { ...lane, evidenceSha: bound ?? lane.evidenceSha ?? null };
+    return { ...lane, evidenceSha: resolveEvidenceShaForSubject(root, laneId) };
   });
   return { ok: true, errors: [], lanes: resolved };
 }

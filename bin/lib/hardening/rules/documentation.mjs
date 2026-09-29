@@ -726,8 +726,8 @@ export function checkAppendOnlyArchives() {
   /** @type {Map<string, Set<string>>} */
   const corrections = new Map();
   // A-01: correction registrations live in config/document-role-corrections.v1.json
-  // (append-only, checkpoint-neutral). The retired inline array is a
-  // compatibility fallback only.
+  // (append-only, checkpoint-neutral). RV-08: an absent file is an error; the
+  // retired inline array is no longer a fallback.
   const loadedCorrections = loadDocumentRoleCorrections(root);
   if (!loadedCorrections.ok) {
     fail(`APPEND_ONLY correction registry is invalid: ${loadedCorrections.errors.join(';')}`);
@@ -1107,8 +1107,9 @@ export function checkReleaseEvidenceBindings() {
   const sha40 = /^[0-9a-f]{40}$/i;
   for (const lane of lanes) {
     if (lane.class !== 'PROVEN') continue;
-    const bound = evidence.bySubject.get(lane.laneId)?.evidenceSha ?? null;
-    const effective = bound ?? (typeof lane.evidenceSha === 'string' ? lane.evidenceSha : null);
+    // RV-08: the binding is the ONLY evidence location; the lane record's own
+    // retired `evidenceSha` is never an overlay.
+    const effective = evidence.bySubject.get(lane.laneId)?.evidenceSha ?? null;
     if (typeof effective !== 'string' || !sha40.test(effective)) {
       fail(`BINDINGS PROVEN lane ${lane.laneId} has no 40-hex evidenceSha (effective=${String(effective)}); an unevidenced PROVEN claim is structural`);
     }

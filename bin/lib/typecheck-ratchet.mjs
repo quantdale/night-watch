@@ -29,26 +29,40 @@
  */
 
 /**
- * Exact JSDoc annotations that silence diagnostics by widening to `any`.
+ * JSDoc and declaration annotations that silence diagnostics by widening a type
+ * (RV-07 / corrections task 7.6 widened the original bare-`{any}` form):
+ *   - a JSDoc type tag whose braces contain the `any` word anywhere — `{any}`,
+ *     `{any[]}`, `{Array<any>}`, `{Record<string, any>}`, `{Promise<any>}`,
+ *     `{{ field: any }}` — across param/type/returns/arg/argument/typedef/
+ *     property/prop/template/callback/this;
+ *   - the other JSDoc wildcards `{*}`, `{?}` and `{Object}`;
+ *   - an `any` type position in a declaration file (`: any`, `<any`, `, any`,
+ *     `| any`, `=> any`, `as any`, `extends any`).
  * Assembled at runtime so this detector's own source does not contain the
- * literal it forbids (the same hazard the inline-suppression detector
- * dodges with `@ts-` + `nocheck`).
+ * literal it forbids (the same hazard the inline-suppression detector dodges
+ * with `@ts-` + `nocheck`).
  */
 const ANY_TYPE_NAME = ['a', 'ny'].join('');
-const DIAGNOSTIC_SILENCING_PATTERN = new RegExp(
-  `@(?:param|type|returns?|arg|argument)\\s*\\{\\s*${ANY_TYPE_NAME}\\s*\\}`,
-  'g',
-);
+const WIDENING_TAGS = '(?:param|type|returns?|arg|argument|typedef|property|prop|template|callback|this)';
+const JSDOC_ANY_PATTERN = new RegExp(`@${WIDENING_TAGS}\\s*\\{[^}]*\\b${ANY_TYPE_NAME}\\b[^}]*\\}`, 'g');
+const JSDOC_WILDCARD_PATTERN = new RegExp(`@${WIDENING_TAGS}\\s*\\{\\s*(?:\\*|\\?|Object)\\s*\\}`, 'g');
+const DECLARATION_ANY_PATTERN = new RegExp(`(?::|<|,|\\||=>|\\bas\\b|\\bextends\\b)\\s*${ANY_TYPE_NAME}\\b`, 'g');
 
 /**
- * Count the diagnostic-silencing `any` annotations across the supplied
- * sources. Each occurrence counts once; the count is the ratchet budget.
+ * Count the diagnostic-silencing widening annotations across the supplied
+ * sources (`.mjs` JSDoc forms; `.d.mts` declaration `any` positions). Each
+ * occurrence counts once; the count is the ratchet budget.
  * @param {Iterable<{ file: string, source: string }>} sources
  */
 export function countDiagnosticSilencingAnnotations(sources) {
   let total = 0;
   for (const source of sources) {
-    total += source.source.match(DIAGNOSTIC_SILENCING_PATTERN)?.length ?? 0;
+    if (source.file.endsWith('.d.mts')) {
+      total += source.source.match(DECLARATION_ANY_PATTERN)?.length ?? 0;
+    } else {
+      total += source.source.match(JSDOC_ANY_PATTERN)?.length ?? 0;
+      total += source.source.match(JSDOC_WILDCARD_PATTERN)?.length ?? 0;
+    }
   }
   return total;
 }

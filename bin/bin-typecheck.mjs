@@ -100,6 +100,26 @@ function binSources() {
   return files.sort((left, right) => left.file.localeCompare(right.file));
 }
 
+/**
+ * The sources whose widening annotations are budgeted: every bin `.mjs` AND
+ * every `.d.mts` declaration under bin/ (RV-07: a widened declaration is as
+ * silencing as a widened JSDoc tag).
+ */
+function annotationSources() {
+  /** @type {{ file: string, source: string }[]} */
+  const files = [...binSources()];
+  /** @param {string} directory */
+  const walk = (directory) => {
+    for (const entry of fs.readdirSync(path.join(ROOT, directory), { withFileTypes: true })) {
+      const relative = `${directory}/${entry.name}`;
+      if (entry.isDirectory()) walk(relative);
+      else if (entry.name.endsWith('.d.mts')) files.push({ file: relative, source: readText(relative) });
+    }
+  };
+  walk('bin');
+  return files.sort((left, right) => left.file.localeCompare(right.file));
+}
+
 function expectedLoaderDeclaration() {
   const { callSites } = extractLoaderCallSites(binSources());
   const paths = [...new Set(callSites.flatMap((site) => site.bindings.map((binding) => binding.path)).filter(Boolean))];
@@ -164,7 +184,7 @@ function loadExemptions(config) {
 
 // The directives are assembled at runtime so this detector's own source does
 // not contain the literal it forbids.
-const SUPPRESSION_DIRECTIVES = ['@ts-' + 'nocheck', '@ts-' + 'ignore'];
+const SUPPRESSION_DIRECTIVES = ['@ts-' + 'nocheck', '@ts-' + 'ignore', '@ts-' + 'expect-error'];
 
 function checkInlineSuppressions() {
   /** @type {BinTypecheckError[]} */
@@ -303,7 +323,7 @@ function main() {
   // annotation budget prevents JSDoc type widening from disguising diagnostic growth.
   /** @type {{ bin: string, errors: number, maxErrors: number }[]} */
   const ceilingBreach = [];
-  const annotationsMeasured = countDiagnosticSilencingAnnotations(binSources());
+  const annotationsMeasured = countDiagnosticSilencingAnnotations(annotationSources());
   {
     const ratchet = judgeRatchet({
       // The ratchet covers every file included by tsconfig.bin.json, not just

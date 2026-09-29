@@ -90,4 +90,30 @@ test.describe('bin type-check ratchet', () => {
     expect(ratchet({ 'bin/entry.mjs': 0 }, {}, 0, baseline + 1, baseline).map((error) => error.code))
       .toContain('BIN_TYPECHECK_ANY_ANNOTATION_BUDGET_EXCEEDED');
   });
+
+  test('RV-07: every widening form counts — generics, arrays, wildcards, object fields and declaration any', () => {
+    const count = (file: string, source: string) => countDiagnosticSilencingAnnotations([{ file, source }]);
+    for (const jsdoc of [
+      '/** @param {any[]} value */',
+      '/** @param {Array<any>} value */',
+      '/** @type {Record<string, any>} */',
+      '/** @returns {Promise<any>} */',
+      '/** @param {{ field: any }} value */',
+      '/** @typedef {Map<string, any>} Alias */',
+      '/** @property {any} field */',
+      '/** @param {*} value */',
+      '/** @param {?} value */',
+      '/** @param {Object} value */',
+    ]) {
+      expect(count('bin/widened.mjs', jsdoc), jsdoc).toBe(1);
+    }
+    for (const declaration of ['export declare function f(a: any): void;', 'export declare const x: Array<any>;', 'export type T = string | any;', 'export declare function g(): Promise<any>;']) {
+      expect(count('bin/lib/widened.d.mts', declaration), declaration).toBeGreaterThanOrEqual(1);
+    }
+    // Honest, narrow types are never counted, and neither is the word inside prose.
+    for (const honest of ['/** @param {unknown} value */', '/** @param {Record<string, unknown>} value */', '/** @param {string[]} value */', '// any of these is fine', '/** @param {many} value */']) {
+      expect(count('bin/honest.mjs', honest), honest).toBe(0);
+    }
+    expect(count('bin/lib/honest.d.mts', 'export declare function f(a: unknown): void; // any word in a comment: nothing')).toBe(0);
+  });
 });

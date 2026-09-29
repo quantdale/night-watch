@@ -1518,7 +1518,16 @@ function main() {
           }
           // 13.1/13.2/13.4/13.6 — ordered conditions, each from its check.
           const today = new Date().toISOString().slice(0, 10);
-          const certifiedCheckpointSha = HEX40.test(substantiveSha ?? '') ? substantiveSha : liveHeadSha;
+          // RV-08 / corrections task 7.6: the certified checkpoint is the
+          // LAST_SUBSTANTIVE_IMPLEMENTATION_SHA — an exact 40-hex identity, or
+          // the explicit `DISCOVER_FROM_GIT` authority marker (which means the
+          // live HEAD BY DECLARATION). Any other value used to fall back to the
+          // live HEAD silently, letting a malformed anchor certify whatever HEAD
+          // happened to be; it is now an error and the checkpoint resolves null.
+          let certifiedCheckpointSha = null;
+          if (HEX40.test(substantiveSha ?? '')) certifiedCheckpointSha = substantiveSha;
+          else if (substantiveSha === 'DISCOVER_FROM_GIT') certifiedCheckpointSha = liveHeadSha;
+          else fail(errors, 'PROJECT_STATE_CERTIFIED_CHECKPOINT_UNRESOLVED');
           const collected = collectReleaseCheckOutputs(root, blockFields, agentText, certifiedCheckpointSha, today);
           const external = collectExternalTrack(root);
           // NW-AUD-010: one captured evaluation snapshot; HEAD is resolved

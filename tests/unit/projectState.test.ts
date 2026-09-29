@@ -1664,6 +1664,19 @@ test.describe('C-10.5 A10 — cross-authority baseline invariant', () => {
     }
   });
 
+  test('A10.11 a malformed substantive anchor never falls back to the live HEAD as the certified checkpoint (RV-08)', () => {
+    for (const malformed of ['NONE', 'not-a-sha', 'HEAD']) {
+      const fixture = makeFixture({ block: { lastSubstantiveImplementationSha: malformed } });
+      try {
+        const result = run(fixture.root);
+        expect(result.status, malformed).not.toBe(0);
+        expect(errorsOf(result), malformed).toContain('PROJECT_STATE_CERTIFIED_CHECKPOINT_UNRESOLVED');
+      } finally {
+        fixture.cleanup();
+      }
+    }
+  });
+
   test('A10.4 docs-only descendant chain after a validated implementation — PASS', () => {
     // Updating task records and project docs after a validated implementation
     // necessarily advances HEAD past the substantive commit, often by several
