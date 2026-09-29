@@ -43,6 +43,34 @@ function touchedGuardedFiles(root, commit, guarded) {
 }
 
 /**
+ * The digests of the lines a `git diff --unified=0` REMOVES. Removals are read
+ * only INSIDE a hunk: before the first `@@` the `--- a/…` header is not a
+ * removed line, and after it a removed line whose own text begins `-- ` is a
+ * REMOVAL, not a header (a prefix test on `--- ` dropped it). A removed blank
+ * line exempts nothing and is never digested (RV-04: one blank-line policy for
+ * the per-commit and working-tree pairing checks). Pure.
+ * @param {string} diffText
+ * @returns {Set<string>}
+ */
+export function removedLineDigestsFromDiff(diffText) {
+  const digest = new Set();
+  let inHunk = false;
+  for (const line of String(diffText).split('\n')) {
+    if (line.startsWith('@@')) {
+      inHunk = true;
+      continue;
+    }
+    if (line.startsWith('diff --git ')) {
+      inHunk = false;
+      continue;
+    }
+    if (!inHunk) continue;
+    if (line.startsWith('-') && line.slice(1) !== '') digest.add(lineSha256Prefix(line.slice(1)));
+  }
+  return digest;
+}
+
+/**
  * Files whose change makes the given commit (or range) NOT documentation-only:
  * paths outside `APPROVED_CHECKPOINT_PATHS`, plus any guarded binding file
  * whose diff shape fails its guard. An unresolvable diff fails closed.
@@ -68,34 +96,62 @@ export function removedLineDigests(root, commit, file) {
     cwd: root, encoding: 'utf8', shell: false, timeout: 30_000, maxBuffer: 8 * 1024 * 1024,
   });
   if (diff.status !== 0 || diff.error) return null;
-  for (const line of (diff.stdout ?? '').split('\n')) {
-    if (line.startsWith('--- ') || line.startsWith('+++ ') || line.startsWith('@@')) continue;
-    if (line.startsWith('-')) digest.add(lineSha256Prefix(line.slice(1)));
-  }
-  return digest;
+  return removedLineDigestsFromDiff(diff.stdout ?? '');
 }
 
 /**
- * VB-03 — correction entries this commit appended WITHOUT removing the
- * archive line each exempts. A bare `pairing` entry (no same-commit removal)
- * makes the corrections-file touch substantive even when the entry itself
- * satisfies the legacy append-only shape.
+ * VB-03 / RV-04 — correction entries this commit appended WITHOUT removing the
+ * archive line each exempts. Each entry is paired against the removed lines of
+ * ITS OWN archive (`entry.path`) in THIS commit; a removal in a different file
+ * never pairs it, and no archive path is assumed for every entry (RV-04: the
+ * old code hard-coded `docs/CURRENT_STATE.md` for all of them). A bare append
+ * makes the corrections-file touch substantive even when the entry satisfies
+ * the legacy append-only shape.
  * @param {string} root
  * @param {string} commit
  * @param {string} correctionsFile
- * @param {string} archiveFile
  */
-export function correctionPairingViolations(root, commit, correctionsFile, archiveFile) {
+export function correctionPairingViolations(root, commit, correctionsFile) {
   const hasParent = gitText(root, ['rev-parse', '--verify', '--quiet', `${commit}^^{commit}`]) !== null;
   const before = hasParent ? blobAt(root, `${commit}^`, correctionsFile) : null;
   const after = blobAt(root, commit, correctionsFile);
   const appended = appendedCorrectionEntries(before, after);
   if (appended === null || appended.length === 0) return [];
-  const removed = removedLineDigests(root, commit, archiveFile);
-  if (removed === null) return [{ code: 'CORRECTION_PAIRING_UNVERIFIABLE', correctionsFile, archiveFile }];
-  return appended
-    .filter((entry) => !isCorrectionAppendAdmissible(entry, removed).admissible)
-    .map((entry) => ({ code: 'CORRECTION_APPEND_UNPAIRED', id: entry.id, archiveFile, expectedDigest: entry.oldLineSha256 }));
+  /** @type {Map<string, Set<string> | null>} */
+  const removedByArchive = new Map();
+  const violations = [];
+  for (const entry of appended) {
+    if (!removedByArchive.has(entry.path)) removedByArchive.set(entry.path, removedLineDigests(root, commit, entry.path));
+    const removed = removedByArchive.get(entry.path) ?? null;
+    if (removed === null) {
+      violations.push({ code: 'CORRECTION_PAIRING_UNVERIFIABLE', correctionsFile, archiveFile: entry.path });
+    } else if (!isCorrectionAppendAdmissible(entry, removed).admissible) {
+      violations.push({ code: 'CORRECTION_APPEND_UNPAIRED', id: entry.id, archiveFile: entry.path, expectedDigest: entry.oldLineSha256 });
+    }
+  }
+  return violations;
+}
+
+/**
+ * RV-04 — the per-commit pairing judgement over a range: every commit in
+ * `fromExclusive..toInclusive` (oldest first) is checked ON ITS OWN, never
+ * against the aggregate. A two-commit split (append in one commit, remove the
+ * archive line in the next) is therefore two findings' worth of truth: the
+ * first commit is unpaired even though the range as a whole looks paired.
+ * @param {string} root
+ * @param {string} fromExclusive
+ * @param {string} toInclusive
+ * @param {string} correctionsFile
+ * @returns {Array<{ commit: string, code: string, id?: string, archiveFile?: string }> | null} null when the range cannot be listed
+ */
+export function unpairedCorrectionsInRange(root, fromExclusive, toInclusive, correctionsFile) {
+  const listed = gitText(root, ['rev-list', '--reverse', `${fromExclusive}..${toInclusive}`]);
+  if (listed === null) return null;
+  const found = [];
+  for (const commit of listed.split(/\r?\n/).map((line) => line.trim()).filter(Boolean)) {
+    for (const violation of correctionPairingViolations(root, commit, correctionsFile)) found.push({ commit, ...violation });
+  }
+  return found;
 }
 
 export function checkpointRoleViolations(root, files, context) {
@@ -144,7 +200,7 @@ export function checkpointRoleViolations(root, files, context) {
       // pairing the entry is a purchased future rewrite and the commit is
       // substantive.
       if (file === 'config/document-role-corrections.v1.json') {
-        const pairings = correctionPairingViolations(root, commit, file, 'docs/CURRENT_STATE.md');
+        const pairings = correctionPairingViolations(root, commit, file);
         if (pairings.length > 0) violations.push(file);
       }
     }

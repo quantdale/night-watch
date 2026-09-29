@@ -2218,6 +2218,26 @@
             "replace": "return true;"
           }
         ]
+      },
+      {
+        "id": "HC-196",
+        "ops": [
+          {
+            "file": "bin/lib/checkpoint-role.mjs",
+            "search": "for (const violation of correctionPairingViolations(root, commit, correctionsFile)) found.push({ commit, ...violation });",
+            "replace": "void 0;"
+          }
+        ]
+      },
+      {
+        "id": "HC-197",
+        "ops": [
+          {
+            "file": "bin/lib/checkpoint-role.mjs",
+            "search": "removedLineDigests(root, commit, entry.path)",
+            "replace": "removedLineDigests(root, commit, 'docs/CURRENT_STATE.md')"
+          }
+        ]
       }
     ]
   }

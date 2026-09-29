@@ -25,7 +25,7 @@ import {
   lineSha256Prefix,
   parseDocumentRoleCorrections,
 } from '../../bin/lib/release-evidence.mjs';
-import { checkpointRoleViolations, correctionPairingViolations, removedLineDigests } from '../../bin/lib/checkpoint-role.mjs';
+import { checkpointRoleViolations, correctionPairingViolations, removedLineDigests, removedLineDigestsFromDiff, unpairedCorrectionsInRange } from '../../bin/lib/checkpoint-role.mjs';
 import { evidenceArtifactExistsAtSha } from '../../bin/lib/evidence-artifact.mjs';
 import { legacyEvidenceSha, loadReleaseEvidenceBindings, resolveEvidenceShaForSubject } from '../../bin/lib/release-evidence.mjs';
 import { isApprovedCheckpointPath } from '../../bin/agent-continuity-protocol.mjs';
@@ -96,7 +96,8 @@ test.describe('validation lane state', () => {
   test('VB-01: erasing a binding evidence value is substantive, never values-only', () => {
     const binding = (evidenceSha: string | null) => JSON.stringify({
       schemaVersion: 'nightwatch.release-evidence.v1',
-      bindings: [{ subject: 'root-compile', evidenceSha, receiptDigest: null, observedAt: null, executor: null, artifactPaths: [] }],
+      // RV-02: a bound SHA travels with ITS receipt (digest, time, executor).
+      bindings: [{ subject: 'root-compile', evidenceSha, receiptDigest: evidenceSha === null ? null : `receipt:sha256:${evidenceSha.slice(0, 24)}`, observedAt: evidenceSha === null ? null : '2026-09-30T00:00:00.000Z', executor: evidenceSha === null ? null : 'gate:local', artifactPaths: [] }],
     });
     // The regression: non-null -> null used to classify VALUES_ONLY.
     expect(isValuesOnlyBindingChange(binding(SHA_A), binding(null))).toEqual({
@@ -132,7 +133,7 @@ test.describe('validation lane state', () => {
       fs.mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
       fs.writeFileSync(path.join(root, file), text);
     };
-    const binding = (sha: string | null) => `${JSON.stringify({ schemaVersion: 'nightwatch.release-evidence.v1', bindings: [{ subject: 'root-compile', evidenceSha: sha, receiptDigest: null, observedAt: null, executor: null, artifactPaths: [] }] }, null, 2)}\n`;
+    const binding = (sha: string | null) => `${JSON.stringify({ schemaVersion: 'nightwatch.release-evidence.v1', bindings: [{ subject: 'root-compile', evidenceSha: sha, receiptDigest: sha === null ? null : `receipt:sha256:${sha.slice(0, 24)}`, observedAt: sha === null ? null : '2026-09-30T00:00:00.000Z', executor: sha === null ? null : 'gate:local', artifactPaths: [] }] }, null, 2)}\n`;
     const corrections = (entries: unknown[]) => `${JSON.stringify({ schemaVersion: 'nightwatch.document-role-corrections.v1', corrections: entries }, null, 2)}\n`;
     try {
       git(['init', '--quiet', '-b', 'main']);
@@ -193,7 +194,7 @@ test.describe('validation lane state', () => {
       git(['add', '--all']);
       git(['commit', '--quiet', '--no-gpg-sign', '-m', 'unpaired append']);
       const unpaired = git(['rev-parse', 'HEAD']).stdout!.trim();
-      expect(correctionPairingViolations(root, unpaired, 'config/document-role-corrections.v1.json', 'docs/archive.md').length).toBe(1);
+      expect(correctionPairingViolations(root, unpaired, 'config/document-role-corrections.v1.json').length).toBe(1);
       // PAIRED: the entry exempts 'line one' and THIS commit removes exactly it.
       write('config/document-role-corrections.v1.json', corrections([
         { id: 'CORR-ONE', path: 'docs/archive.md', oldLineSha256: goneDigest, oldLineExcerpt: 'gone line', reason: 'r' },
@@ -203,7 +204,7 @@ test.describe('validation lane state', () => {
       git(['add', '--all']);
       git(['commit', '--quiet', '--no-gpg-sign', '-m', 'paired append + removal']);
       const paired = git(['rev-parse', 'HEAD']).stdout!.trim();
-      expect(correctionPairingViolations(root, paired, 'config/document-role-corrections.v1.json', 'docs/archive.md')).toEqual([]);
+      expect(correctionPairingViolations(root, paired, 'config/document-role-corrections.v1.json')).toEqual([]);
 
       // (f) MERGE: a merge that carries a STRUCTURAL guarded rewrite against
       //     one parent is visible to the classifier (-m) and classified — it
@@ -357,6 +358,80 @@ test.describe('validation lane state', () => {
     }
   });
 
+  test('RV-04: removed lines are read inside hunks only, blanks exempt nothing, and one policy serves every pairing check', () => {
+    const diff = [
+      'diff --git a/docs/a.md b/docs/a.md',
+      '--- a/docs/a.md',
+      '+++ b/docs/a.md',
+      '@@ -1,3 +1,0 @@',
+      '-plain removed line',
+      '-',
+      '--- a removed line that itself starts with dashes',
+      'diff --git a/docs/b.md b/docs/b.md',
+      '--- a/docs/b.md',
+      '+++ b/docs/b.md',
+      '@@ -4 +3,0 @@',
+      '-second file removal',
+    ].join('\n');
+    const digests = removedLineDigestsFromDiff(diff);
+    expect([...digests].sort()).toEqual([
+      lineSha256Prefix('plain removed line'),
+      lineSha256Prefix('-- a removed line that itself starts with dashes'),
+      lineSha256Prefix('second file removal'),
+    ].sort());
+    expect(digests.has(lineSha256Prefix(''))).toBe(false);
+    expect(removedLineDigestsFromDiff('--- a/x\n+++ b/x\n').size).toBe(0);
+  });
+
+  test('RV-04: pairing is per commit and per entry archive — a two-commit split and a wrong-archive removal never pair', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'nw-rv04-'));
+    const env = { PATH: '/usr/bin:/bin', HOME: root, GIT_CONFIG_GLOBAL: '/dev/null', GIT_CONFIG_NOSYSTEM: '1', GIT_AUTHOR_NAME: 'nw', GIT_AUTHOR_EMAIL: 'nw@example.invalid', GIT_COMMITTER_NAME: 'nw', GIT_COMMITTER_EMAIL: 'nw@example.invalid' };
+    const git = (...args: string[]) => spawnSync('git', args, { cwd: root, env, encoding: 'utf8' });
+    const write = (file: string, text: string) => {
+      fs.mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
+      fs.writeFileSync(path.join(root, file), text);
+    };
+    const registry = (entries: unknown[]) => `${JSON.stringify({ schemaVersion: 'nightwatch.document-role-corrections.v1', corrections: entries })}\n`;
+    const entry = (id: string, archive: string, line: string) => ({ id, path: archive, oldLineSha256: lineSha256Prefix(line), oldLineExcerpt: line, reason: 'r' });
+    const file = 'config/document-role-corrections.v1.json';
+    const commit = (message: string) => {
+      git('add', '--all');
+      git('commit', '--quiet', '--no-gpg-sign', '-m', message);
+      return git('rev-parse', 'HEAD').stdout.trim();
+    };
+    try {
+      git('init', '--quiet');
+      write('docs/one.md', 'keep\nsplit\nother\nwrong\n');
+      write('docs/two.md', 'wrong\n');
+      write(file, registry([]));
+      const seed = commit('seed');
+      // B: append without removal; C removes it in the NEXT commit.
+      write(file, registry([entry('SPLIT', 'docs/one.md', 'split')]));
+      const appended = commit('append only');
+      write('docs/one.md', 'keep\nother\nwrong\n');
+      const removal = commit('removal next commit');
+      // D pairs 'other' in its own archive; E removes 'wrong' from the WRONG archive.
+      write(file, registry([entry('SPLIT', 'docs/one.md', 'split'), entry('OWN', 'docs/one.md', 'other')]));
+      write('docs/one.md', 'keep\nwrong\n');
+      const paired = commit('paired in its own archive');
+      write(file, registry([entry('SPLIT', 'docs/one.md', 'split'), entry('OWN', 'docs/one.md', 'other'), entry('WRONG', 'docs/one.md', 'wrong')]));
+      write('docs/two.md', '');
+      const wrongArchive = commit('removal in a different archive');
+
+      expect(correctionPairingViolations(root, appended, file).map((entryFound) => entryFound.id)).toEqual(['SPLIT']);
+      expect(correctionPairingViolations(root, removal, file)).toEqual([]);
+      expect(correctionPairingViolations(root, paired, file)).toEqual([]);
+      expect(correctionPairingViolations(root, wrongArchive, file).map((entryFound) => entryFound.id)).toEqual(['WRONG']);
+      // Over the range the split is named at the APPENDING commit even though the
+      // range as a whole removes the line.
+      const inRange = unpairedCorrectionsInRange(root, seed, wrongArchive, file);
+      expect(inRange?.map((found) => [found.commit, found.id])).toEqual([[appended, 'SPLIT'], [wrongArchive, 'WRONG']]);
+      expect(unpairedCorrectionsInRange(root, seed, 'no-such-ref', file)).toBeNull();
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   test('RV-01: two corrections exempting the same archive line are rejected, whatever their ids', () => {
     const entry = (id: string, digest: string, file = 'docs/CURRENT_STATE.md') => ({ id, path: file, oldLineSha256: digest, oldLineExcerpt: 'gone', reason: 'r' });
     const record = (entries: unknown[]) => ({ schemaVersion: 'nightwatch.document-role-corrections.v1', corrections: entries });
@@ -407,7 +482,7 @@ test.describe('validation lane state', () => {
     const removed = removedLineDigests(REPO_ROOT, commit, 'docs/CURRENT_STATE.md');
     expect(removed).not.toBeNull();
     expect(removed!.has('sha256:d82aae956ce9d4b666cbb9f5')).toBe(true);
-    expect(correctionPairingViolations(REPO_ROOT, commit, 'config/document-role-corrections.v1.json', 'docs/CURRENT_STATE.md')).toEqual([]);
+    expect(correctionPairingViolations(REPO_ROOT, commit, 'config/document-role-corrections.v1.json')).toEqual([]);
   });
 
   test('VB-02: artifactPaths is a declared structural key — adding or editing it is never values-only', () => {

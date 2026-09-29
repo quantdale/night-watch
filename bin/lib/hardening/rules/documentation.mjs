@@ -31,6 +31,7 @@ import {
   loadDocumentRoleCorrections,
   loadReleaseEvidenceBindings,
 } from '../../release-evidence.mjs';
+import { removedLineDigestsFromDiff, unpairedCorrectionsInRange } from '../../checkpoint-role.mjs';
 
 /**
  * NW-08. The gate had no mechanical relationship to the set of tests that
@@ -802,50 +803,51 @@ export function checkAppendOnlyArchives() {
       fail(`APPEND_ONLY correction ${correction.id} still exempts a LIVE line in ${correction.path} (${correction.oldLineSha256}); a correction may only cover a line its commit removed`);
     }
   }
-  // VB-03 — same-commit pairing at the working tree: every NEWLY appended
-  // correction entry (including a staged, uncommitted one) must pair its
-  // removal of the exempted archive line in the same change. The bounded
-  // legacy exception covers the pre-rule registrations and is checked inert
-  // above.
+  // VB-03 / RV-04 (corrections tasks 2.3, 7.4) — same-commit pairing, judged
+  // PER COMMIT: every correction entry appended by a commit in the unpushed
+  // range must be paired by THAT commit's removal of the exempted line in ITS
+  // OWN archive, and the working tree (staged or not) is one more change
+  // measured against HEAD. Pairing over the aggregate range let a two-commit
+  // split (append in one, remove in the next) look paired. The bounded legacy
+  // exception covers the pre-rule registrations and is checked inert above.
   {
     const correctionsFile = 'config/document-role-corrections.v1.json';
-    const before = gitResult(['show', `${resolveArchiveDiffBase()}:${correctionsFile}`]);
-    let beforeText = null;
-    try {
-      beforeText = before.status === 0 ? before.stdout ?? '' : null;
-    } catch {
-      beforeText = null;
+    /** @param {string} ref */
+    const blobAt = (ref) => {
+      const shown = gitResult(['show', `${ref}:${correctionsFile}`]);
+      return shown.status === 0 ? (shown.stdout ?? '') : null;
+    };
+    const inRange = unpairedCorrectionsInRange(root, base, 'HEAD', correctionsFile);
+    if (inRange === null) {
+      fail(`APPEND_ONLY could not list the commits ${base}..HEAD; per-commit correction pairing cannot be evaluated fail-closed`);
+      return;
     }
+    for (const violation of inRange) {
+      fail(`APPEND_ONLY correction ${violation.id ?? '(unverifiable)'} is appended without its matching removal in commit ${violation.commit.slice(0, 8)} (${violation.code}); a correction and the archive-line removal it exempts land in ONE commit`);
+    }
+    /**
+     * @param {{ id: string, path: string, oldLineSha256: string }} entry
+     * @param {Set<string> | null} removed
+     * @param {string} where
+     */
+    const unpaired = (entry, removed, where) => {
+      if (removed === null) {
+        fail(`APPEND_ONLY correction ${entry.id} could not be paired in ${where}: the removal diff for ${entry.path} is unreadable`);
+        return;
+      }
+      if (!isCorrectionAppendAdmissible(entry, removed).admissible) {
+        fail(`APPEND_ONLY correction ${entry.id} is appended without its matching removal in ${where} (${entry.oldLineSha256}); a correction and the archive-line removal it exempts land in ONE commit`);
+      }
+    };
     let afterText = null;
     try {
       afterText = fs.readFileSync(path.join(root, correctionsFile), 'utf8');
     } catch {
       afterText = null;
     }
-    // Removed-line digests, per file: the pairing rule is "the same change
-    // removes exactly the archive line THIS entry exempts", so a removal in a
-    // DIFFERENT archive can never pair an entry.
-    const removedByFile = new Map();
-    let diffFile = null;
-    for (const line of (result.stdout ?? '').split('\n')) {
-      const header = /^diff --git a\/(.+) b\/(.+)$/.exec(line);
-      if (header !== null) {
-        diffFile = header[2] ?? null;
-        continue;
-      }
-      if (line.startsWith('--- ') || line.startsWith('+++ ') || line.startsWith('@@')) continue;
-      if (line.startsWith('-') && line.slice(1) !== '' && diffFile !== null) {
-        if (!removedByFile.has(diffFile)) removedByFile.set(diffFile, new Set());
-        removedByFile.get(diffFile).add(sha256Prefix(line.slice(1)));
-      }
-    }
-    const appended = appendedCorrectionEntries(beforeText, afterText);
-    for (const entry of appended ?? []) {
-      const removed = removedByFile.get(entry.path) ?? new Set();
-      const verdict = isCorrectionAppendAdmissible(entry, removed);
-      if (!verdict.admissible) {
-        fail(`APPEND_ONLY correction ${entry.id} is appended without its matching removal in the same change (${entry.oldLineSha256}); a correction and the archive-line removal it exempts land together`);
-      }
+    for (const entry of appendedCorrectionEntries(blobAt('HEAD'), afterText) ?? []) {
+      const diff = gitResult(['diff', '--unified=0', '--no-color', '--no-ext-diff', 'HEAD', '--', entry.path]);
+      unpaired(entry, diff.status === 0 ? removedLineDigestsFromDiff(diff.stdout ?? '') : null, 'the working tree');
     }
   }
 }

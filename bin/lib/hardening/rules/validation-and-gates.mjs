@@ -28,12 +28,14 @@ import {
 } from '../kernel.mjs';
 import { validateCampaignCertification } from '../../campaign-certification.mjs';
 import { evidenceArtifactExistsAtSha } from '../../evidence-artifact.mjs';
+import { unpairedCorrectionsInRange } from '../../checkpoint-role.mjs';
 import { findBinsWithoutExecutingTest, verifyCliImplementationContract } from '../../cli-implementation-contract.mjs';
 import { classifyValidationTruth, extractTestMatchGlobs } from '../../validation-classification.mjs';
 import {
   DOCUMENT_ROLE_CORRECTIONS_FILE,
   DOCUMENT_ROLE_CORRECTIONS_SCHEMA,
   RELEASE_EVIDENCE_FILE,
+  lineSha256Prefix,
   RELEASE_EVIDENCE_SCHEMA,
   guardHoldsForChange,
 } from '../../release-evidence.mjs';
@@ -605,6 +607,9 @@ export function checkCheckpointRoleGuardIntegrity() {
   // two commits proves presence, absence-at-an-earlier-commit, a missing path
   // and an unknown commit — a stub that answers `true` fails three of the five.
   verifyEvidenceArtifactProbe();
+  // RV-04 / task 7.4: correction pairing is judged per commit and per entry's
+  // own archive, proven on a real two-commit split.
+  verifyCorrectionPairingFixture();
   // The classifier must still dispatch to the guard and exclude guarded paths
   // from path-alone approval. This half stays textual (running the classifier
   // needs a git history); the guard behaviour above is what a stub cannot fake.
@@ -765,6 +770,60 @@ function verifyEvidenceArtifactProbe() {
       if (evidenceArtifactExistsAtSha(directory, sha, artifact) !== expected) {
         fail(`CHECKPOINT_ROLE_GUARD_STUBBED evidenceArtifactExistsAtSha did not answer ${String(expected)} for ${what}; a stubbed existence probe lets an artifact-free binding read as evidenced`);
       }
+    }
+  } finally {
+    fs.rmSync(directory, { recursive: true, force: true });
+  }
+}
+
+function verifyCorrectionPairingFixture() {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'nw-pairing-'));
+  const run = (/** @type {string[]} */ args) => spawnSync('git', args, {
+    cwd: directory,
+    env: { PATH: '/usr/bin:/bin', HOME: directory, GIT_CONFIG_GLOBAL: '/dev/null', GIT_CONFIG_NOSYSTEM: '1', GIT_AUTHOR_NAME: 'nw', GIT_AUTHOR_EMAIL: 'nw@example.invalid', GIT_COMMITTER_NAME: 'nw', GIT_COMMITTER_EMAIL: 'nw@example.invalid', LANG: 'C' },
+    shell: false,
+    encoding: 'utf8',
+    timeout: 15_000,
+  });
+  const file = 'config/document-role-corrections.v1.json';
+  const write = (/** @type {string} */ relative, /** @type {string} */ text) => {
+    fs.mkdirSync(path.dirname(path.join(directory, relative)), { recursive: true });
+    fs.writeFileSync(path.join(directory, relative), text);
+  };
+  const entry = (/** @type {string} */ id, /** @type {string} */ archive, /** @type {string} */ line) => ({
+    id, path: archive, oldLineSha256: lineSha256Prefix(line), oldLineExcerpt: line, reason: 'synthetic',
+  });
+  const registry = (/** @type {unknown[]} */ entries) => `${JSON.stringify({ schemaVersion: DOCUMENT_ROLE_CORRECTIONS_SCHEMA, corrections: entries })}\n`;
+  const commit = (/** @type {string} */ message) => {
+    run(['add', '--all']);
+    run(['commit', '--quiet', '--no-gpg-sign', '-m', message]);
+    return (run(['rev-parse', 'HEAD']).stdout ?? '').trim();
+  };
+  try {
+    if (run(['init', '--quiet']).status !== 0) {
+      fail('CHECKPOINT_ROLE_GUARD_STUBBED the correction-pairing fixture repository could not be created');
+      return;
+    }
+    write('docs/archive.md', 'keep\nsplit line\npaired line\n');
+    write(file, registry([]));
+    const seed = commit('seed');
+    // Commit B appends an entry exempting 'split line' WITHOUT removing it.
+    write(file, registry([entry('C-SPLIT', 'docs/archive.md', 'split line')]));
+    const appendOnly = commit('append only');
+    // Commit C removes the line: the range A..C aggregates to "paired", but B is unpaired.
+    write('docs/archive.md', 'keep\npaired line\n');
+    commit('removal in the NEXT commit');
+    // Commit D pairs its own entry in ITS OWN archive in ONE commit.
+    write(file, registry([entry('C-SPLIT', 'docs/archive.md', 'split line'), entry('C-PAIRED', 'docs/archive.md', 'paired line')]));
+    write('docs/archive.md', 'keep\n');
+    const paired = commit('paired append and removal');
+    const split = unpairedCorrectionsInRange(directory, seed, appendOnly, file);
+    if (split === null || split.length !== 1 || split[0]?.id !== 'C-SPLIT' || split[0]?.commit !== appendOnly) {
+      fail('CHECKPOINT_ROLE_GUARD_STUBBED the per-commit pairing did not report the two-commit split at the appending commit; pairing over an aggregate range lets a split look paired');
+    }
+    const whole = unpairedCorrectionsInRange(directory, seed, paired, file);
+    if (whole === null || whole.length !== 1 || whole[0]?.id !== 'C-SPLIT') {
+      fail('CHECKPOINT_ROLE_GUARD_STUBBED the per-commit pairing over the full range must name exactly the split entry and admit the paired one (an entry pairs only by its own archive removal in its own commit)');
     }
   } finally {
     fs.rmSync(directory, { recursive: true, force: true });
