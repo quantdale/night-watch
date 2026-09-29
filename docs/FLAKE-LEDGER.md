@@ -115,3 +115,60 @@ appending a dated correction, never by silently rewriting history.
   acquire-refusal under a 550-response concurrency burst. FLAKE-001's named
   remedy ("wait on the observer's own completion rather than a wall-clock
   bound") is exactly what FLAKE-002 ships.
+
+---
+
+## Corrections and status register (2026-09-30, corrections task 7.11 / RV-13)
+
+Appended, never rewritten: the entries above stay as filed. Two of their
+statements are corrected here, and every entry now carries an explicit status.
+
+### Status vocabulary
+
+- `OPEN` — the flake has neither been reproduced and fixed nor honestly closed.
+- `CLOSED_FIXED` — a mechanism was established and a fix shipped that removes
+  it, observed green in exact-head CI; residual risk (if any) is named.
+- `CLOSED_UNREPRODUCED` — the mechanism is established from source, the flake
+  could not be reproduced on demand, and the shipped bound is accepted as
+  EMPIRICAL (not proven tight) with its residual risk and remedy recorded. This
+  is an honest closure of an unreproduced flake, never a claim that it cannot
+  recur.
+
+### Status register
+
+| Entry | Status | Basis |
+| --- | --- | --- |
+| FLAKE-001 | `CLOSED_UNREPRODUCED` | Mechanism established (a handler-passage latency bound); 11 loaded local runs at a 2 s bound all passed; the shipped bound is `20_000` ms and is empirical. Residual risk: an event-loop stall above 20 s flakes again. Remedy if it recurs: wait on the observer's own completion signal (the drain FLAKE-002 already uses) instead of a wall-clock bound. |
+| FLAKE-002 | `CLOSED_FIXED` (residual risk named below) | Fixed by event-driven pacing on the observer's `activeRequests()` drain signal (D-147). The test then passed in exact-head CI at `3c9c1a06` (run 36552500573), at `eef9c00e`/`fae2f8f6` (runs 36630587780, 36632405948) and at `b9306626` (run 36639792380) — four consecutive green observations, none of them a reproduction of the failure. |
+
+### Corrections
+
+1. **FLAKE-001, "Reproduction attempt" paragraph.** It states that "the
+   pre-`eccce619` 2 s bound is retained in the test (the patch was restored
+   after the experiment)". That is wrong about what shipped: the test carries
+   `20_000` ms on both polls (`tests/unit/observerSemanticLedger.test.ts:109`
+   and `:118`), which is also what the entry's own "Bound shipped" paragraph
+   says. The experiment restored the 20 s bound, not the 2 s one; the 2 s
+   figure is the bound the 11 unreproduced runs were made AT. The "empirical,
+   not proven tight" conclusion stands and is the reason for the
+   `CLOSED_UNREPRODUCED` status.
+2. **FLAKE-002, "Fix shipped" paragraph, "Residual risk: none known".** That
+   omits a second path to the same symptom. `RESPONSE_BODY_TIMEOUT_MS` is
+   `5_000`: a body read that does not complete within 5 s resolves
+   `{ completed: false }`, the handler records `BODY_READ_TIMEOUT` and marks the
+   capture incomplete, and — because oracles never run on a failed capture —
+   no evaluation receipt lands, so the ledger can still finish short of 512.
+   The paced producer (at most one outstanding handler) makes a timeout far
+   less likely than the acquisition refusal did, but a host that starves the
+   event loop for more than 5 s per read can still trip it. Residual risk:
+   starvation above the 5 s body-read bound; the cap assertion would still fail
+   loudly (fail-closed preserved). Remedy if observed: make the fixture assert
+   on the observer's capture-failure counters so the failing path is named in
+   the failure, rather than raising the bound.
+
+### Consequence for task 3.7 (VC-07)
+
+VC-07 asked for a flake ledger that is honest about what was reproduced. It is
+now: both entries carry a status, the two inaccurate statements are corrected,
+and the unreproduced entry is closed as unreproduced rather than presented as
+fixed. Task 3.7 stays ticked on that basis.
