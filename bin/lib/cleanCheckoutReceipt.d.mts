@@ -47,7 +47,7 @@ export interface AmbientToolchainVersions {
 }
 
 export interface CleanCheckoutVerdictInput {
-  realSiblingMeasurement: 'MEASURED' | 'UNRESOLVED';
+  realSiblingMeasurement: 'MEASURED' | 'ABSENT' | 'UNRESOLVED';
   siblingIdentityUnchanged: boolean;
   checkoutStillClean: boolean;
   sourceRootStillClean: boolean;
@@ -69,4 +69,9 @@ export function measureClean(cwd: string): CleanMeasure;
 export function siblingIdentityManifest(siblingRoot: string): SiblingIdentityManifest;
 export function ambientToolchainVersions(cwd: string): AmbientToolchainVersions;
 export function cleanEarlyReceipt(input: CleanEarlyReceiptInput): CleanEarlyReceipt;
+export function classifyRealSiblingMeasurement(
+  resolved: boolean,
+  before: { readonly ok: boolean } | null,
+  after: { readonly ok: boolean } | null,
+): 'MEASURED' | 'ABSENT' | 'UNRESOLVED';
 export function resolveCleanCheckoutVerdict(input: CleanCheckoutVerdictInput): string;

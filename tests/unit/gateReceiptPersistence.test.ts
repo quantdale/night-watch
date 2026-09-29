@@ -26,6 +26,7 @@ import {
 } from '../../bin/lib/gate-receipt.mjs';
 import {
   cleanEarlyReceipt,
+  classifyRealSiblingMeasurement,
   resolveCleanCheckoutVerdict,
   siblingIdentityManifest,
 } from '../../bin/lib/cleanCheckoutReceipt.mjs';
@@ -526,6 +527,28 @@ test.describe('VC-06 clean-checkout receipt honesty', () => {
     })).toBe('CHECKOUT_DIRTY_AFTER_GATE');
   });
 
+  test('RV-10: a real sibling root that resolves but is absent on the host is ABSENT, never DRIFT', () => {
+    // A host-absent fixture: the resolved path does not exist, so the REAL
+    // manifest reports it unreadable — the verdict must name the absence.
+    const missing = path.join(os.tmpdir(), `nw-absent-sibling-${process.pid}-${Date.now()}`);
+    expect(fs.existsSync(missing)).toBe(false);
+    const observed = siblingIdentityManifest(missing);
+    expect(observed.ok).toBe(false);
+    const measurement = classifyRealSiblingMeasurement(true, observed, observed);
+    expect(measurement).toBe('ABSENT');
+    expect(resolveCleanCheckoutVerdict({
+      realSiblingMeasurement: measurement,
+      siblingIdentityUnchanged: false,
+      checkoutStillClean: true,
+      sourceRootStillClean: true,
+      gateResult: 'PASS',
+    })).toBe('SIBLING_IDENTITY_ABSENT');
+    // The other two states are unchanged.
+    expect(classifyRealSiblingMeasurement(false, null, null)).toBe('UNRESOLVED');
+    expect(classifyRealSiblingMeasurement(true, { ok: true }, { ok: true })).toBe('MEASURED');
+    expect(classifyRealSiblingMeasurement(true, { ok: true }, { ok: false })).toBe('ABSENT');
+  });
+
   test('a dirty SOURCE root after the run fails closed too', () => {
     expect(resolveCleanCheckoutVerdict({
       realSiblingMeasurement: 'MEASURED',
@@ -653,7 +676,9 @@ test.describe('VC-06 clean-checkout receipt honesty', () => {
   test('wiring: the verdict is the pure resolver, the real root comes from the sanctioned resolver, and git stays read-only', () => {
     const clean = fs.readFileSync(path.join(ROOT, 'bin', 'quality-gate-clean.mjs'), 'utf8');
     expect(clean).toContain('resolveCleanCheckoutVerdict({');
-    expect(clean).toContain("realSiblingMeasurement: realSiblingRoot === null ? 'UNRESOLVED' : 'MEASURED'");
+    // RV-10: the measurement is classified from the OBSERVATIONS, not from the
+    // mere resolution of a path (behaviour: the host-absent fixture test above).
+    expect(clean).toContain('realSiblingMeasurement: classifyRealSiblingMeasurement(realSiblingRoot !== null, realSiblingBefore, realSiblingAfter)');
     // The REAL root must be read through the product's single resolver — the
     // direct DEFAULT_SIBLING_ROOT literal is forbidden in this file.
     expect(clean).toContain('resolveSiblingRoot(');

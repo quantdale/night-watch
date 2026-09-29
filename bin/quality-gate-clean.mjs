@@ -16,6 +16,7 @@ import {
   ambientToolchainVersions,
   cleanEarlyReceipt,
   measureClean,
+  classifyRealSiblingMeasurement,
   resolveCleanCheckoutVerdict,
   siblingIdentityManifest,
 } from './lib/cleanCheckoutReceipt.mjs';
@@ -370,7 +371,7 @@ if (!head || !sourceStart.ok || !sourceStart.clean || installTimeout === null ||
             // root post-run previously fell through to the inner gate's PASS.
             const sourceEnd = measureClean(root);
             const finalResult = resolveCleanCheckoutVerdict({
-              realSiblingMeasurement: realSiblingRoot === null ? 'UNRESOLVED' : 'MEASURED',
+              realSiblingMeasurement: classifyRealSiblingMeasurement(realSiblingRoot !== null, realSiblingBefore, realSiblingAfter),
               siblingIdentityUnchanged: siblingIdentityUnchanged && realSiblingIdentityUnchanged,
               checkoutStillClean,
               sourceRootStillClean: sourceEnd.ok && sourceEnd.clean,

@@ -249,6 +249,20 @@ export function cleanEarlyReceipt(input) {
 }
 
 /**
+ * RV-10 — how the REAL sibling root's two observations classify: UNRESOLVED
+ * when no root could be resolved at all, MEASURED when both observations were
+ * readable, otherwise ABSENT (resolved but unreadable/missing on this host).
+ * @param {boolean} resolved whether a real sibling root path was resolved
+ * @param {{ ok: boolean } | null} before
+ * @param {{ ok: boolean } | null} after
+ * @returns {'MEASURED' | 'ABSENT' | 'UNRESOLVED'}
+ */
+export function classifyRealSiblingMeasurement(resolved, before, after) {
+  if (!resolved) return 'UNRESOLVED';
+  return before !== null && before.ok && after !== null && after.ok ? 'MEASURED' : 'ABSENT';
+}
+
+/**
  * THE verdict, as one pure function so every conjunct has its own precedence
  * and none can be erased by a fallback (the VC-06 regression: a dirty clone
  * after the gate fell through to the inner gate's PASS).
@@ -259,7 +273,7 @@ export function cleanEarlyReceipt(input) {
  * separately, so no information is lost by any precedence.
  *
  * @param {object} input
- * @param {'MEASURED' | 'UNRESOLVED'} input.realSiblingMeasurement
+ * @param {'MEASURED' | 'ABSENT' | 'UNRESOLVED'} input.realSiblingMeasurement
  * @param {boolean} input.siblingIdentityUnchanged
  * @param {boolean} input.checkoutStillClean
  * @param {boolean} input.sourceRootStillClean
@@ -267,6 +281,10 @@ export function cleanEarlyReceipt(input) {
  * @returns {string}
  */
 export function resolveCleanCheckoutVerdict(input) {
+  // RV-10 / corrections task 7.8: a real sibling root that RESOLVES but cannot
+  // be read (absent on this host) is ABSENT — a missing universe, not a drift
+  // of one. UNRESOLVED means the root could not even be resolved.
+  if (input.realSiblingMeasurement === 'ABSENT') return 'SIBLING_IDENTITY_ABSENT';
   if (input.realSiblingMeasurement !== 'MEASURED') return 'SIBLING_IDENTITY_UNRESOLVED';
   if (!input.siblingIdentityUnchanged) return 'SIBLING_IDENTITY_DRIFT';
   if (!input.checkoutStillClean) return 'CHECKOUT_DIRTY_AFTER_GATE';
