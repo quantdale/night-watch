@@ -336,6 +336,24 @@ exercise; G19 effective-configuration rendering), 4.5 (structural
 
 ## Validation Ledger
 
+- 2026-09-30 — POST-M4 CI REGRESSION AND REPAIR (owner-directed hand-over).
+  Exact-head CI run 36596242188 at the M4 close-out commit `88f8eaf7` FAILED
+  HARDENING_PROBES (all later groups NOT_RUN); the M4 close-out did not
+  observe it. Root cause: probe HC-178 swapped CORR-CORR-001's digest for the
+  digest of the 2026-09-28 `Last updated` header; `88f8eaf7` bumped that date,
+  the line stopped being live, and the mutation went NOT_DETECTED. Repair
+  `bd8ce336`: HC-178 now targets the permanent title line
+  `# Nightwatch — CURRENT STATE` (sha256:3a65dfcd9dbb02376bbb5671) plus a
+  regression in tests/unit/hardeningProbeCampaign.test.ts requiring every
+  correction digest-swap probe to name a LIVE, undated archive line (fails on
+  the old digest and on the current header digest). Local proof at `bd8ce336`:
+  `hardening:check` PASS; `hardening:check --probe-campaign
+  --only=checkAppendOnlyArchives` 2/2 detected; `hardening:rules` rules=91
+  probes=188 detected=188 undetected=0 statusUnchanged=true; `tsc --noEmit`
+  PASS. Exact-head CI at the integrated tip is recorded below when observed.
+  Anchors stay at `3c9c1a06` (the last commit with an observed green exact-head
+  run) until the anchor mechanism of task 5.3 (VA-03) lands.
+
 Command: `npm run workspace:check` (canonical, pre-bootstrap)
 Result: PASS
 When: 2026-09-28
@@ -858,6 +876,12 @@ recovered ownership (new session id `sess-66344fe137d7`); handoff:check PASS
 after adoption.
 
 ## Decisions Made During This Task
+
+- 2026-09-30 — Owner hand-over: the owner directed a different agent to take
+  over this session (`sess-66344fe137d7`, idle since `88f8eaf7`) to repair the
+  red exact-head CI before M5. `claim --adopt` refused (SESSION_ALREADY_OWNED,
+  same-boot holder), so the work continues under the existing session identity
+  in this worktree; exactly one writing agent is active.
 
 - D-147 (docs/DECISIONS.md): handler-bounded fixtures pace on the observer's
   drain signal (`activeRequests()`), never a wall-clock sleep. The 550-fetch
