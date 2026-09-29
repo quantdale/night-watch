@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 // The gate's diagnostic boundary is plain ESM so it can be exercised directly
@@ -6,6 +7,7 @@ import path from 'node:path';
 // so it is now typed and `parseSafeDetails` correctly returns `null` when no
 // structured child receipt is present.
 import { parseCounts, parseSafeDetails, type GateReceiptSafeDetails } from '../../bin/lib/gate-receipt.mjs';
+import { topologyReceiptDigest } from '../../bin/lib/topology-gate.mjs';
 
 const root = process.cwd();
 
@@ -187,7 +189,26 @@ test.describe('quality-gate bounded diagnostics', () => {
       runnerTopologyClass: 'PROVEN_DEGRADED',
       topologyEnvelope: 'BWRAP_UNAVAILABLE_DEGRADED',
       unexercisedAbsences: ['chrome', 'sibling-root'],
+      // RV-09: a degraded class is honest but NEVER certifying.
+      topologyCertifying: false,
     });
+
+    // RV-09: the receipt's digest and bound commit reach the gate details ONLY
+    // when the digest re-derives from the body it claims to describe.
+    const body = {
+      schemaVersion: 'nightwatch.gate-topology-receipt.v1',
+      gitHead: 'c'.repeat(40),
+      runnerTopologyClass: 'PROVEN',
+      ciClaim: { runnerTopologyClass: 'PROVEN', runnerTopologyEnvelope: 'BUBBLEWRAP', unexercisedAbsences: [], certifying: true },
+      dynamic: { envelope: 'BUBBLEWRAP', entries: [] },
+    };
+    const digest = topologyReceiptDigest(body, (text: string) => createHash('sha256').update(text, 'utf8').digest('hex'));
+    const bound = requireDetails(parseSafeDetails(JSON.stringify({ ...body, receiptDigest: digest })));
+    expect(bound).toMatchObject({ runnerTopologyClass: 'PROVEN', topologyCertifying: true, topologyGitHead: 'c'.repeat(40), topologyReceiptDigest: digest });
+    const forged = requireDetails(parseSafeDetails(JSON.stringify({ ...body, gitHead: 'd'.repeat(40), receiptDigest: digest })));
+    expect(forged.topologyReceiptDigest).toBeUndefined();
+    const malformedDigest = requireDetails(parseSafeDetails(JSON.stringify({ ...body, receiptDigest: 'sha256:short' })));
+    expect(malformedDigest.topologyReceiptDigest).toBeUndefined();
 
     const invalid = requireDetails(parseSafeDetails(JSON.stringify({
       schemaVersion: 'nightwatch.gate-topology-receipt.v1',

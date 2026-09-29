@@ -29,6 +29,9 @@ export interface GateReceiptSafeDetails {
   readonly runnerTopologyClass?: 'PROVEN' | 'PROVEN_DEGRADED' | 'NOT_PROVEN';
   readonly topologyEnvelope?: 'BUBBLEWRAP' | 'BWRAP_UNAVAILABLE_DEGRADED';
   readonly unexercisedAbsences?: readonly string[];
+  readonly topologyCertifying?: boolean;
+  readonly topologyGitHead?: string;
+  readonly topologyReceiptDigest?: string;
 }
 
 export function parseCounts(output: string): GateReceiptCounts;

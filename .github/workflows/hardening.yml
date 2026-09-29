@@ -37,8 +37,8 @@ jobs:
         with:
           name: runner-topology-${{ github.sha }}
           path: artifacts/topology-receipts/*.json
-          if-no-files-found: warn
-          retention-days: 14
+          if-no-files-found: error
+          retention-days: 90
 
 # This workflow is intentionally an environment bootstrap plus the shared
 # repository-owned gate. The gate itself is offline, serial, fail-closed, and

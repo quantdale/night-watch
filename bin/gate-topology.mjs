@@ -301,6 +301,12 @@ function inverseSelfTest() {
 function staticFindings() {
   const findings = [];
   const record = readJson(CI_BLOCK_RECORD_FILE);
+  let recordDigest = null;
+  try {
+    recordDigest = `sha256:${crypto.createHash('sha256').update(fs.readFileSync(path.join(root, CI_BLOCK_RECORD_FILE))).digest('hex').slice(0, 24)}`;
+  } catch {
+    recordDigest = null;
+  }
   if (record === null) {
     findings.push({ code: 'CI_BLOCK_RECORD_UNREADABLE', detail: `${CI_BLOCK_RECORD_FILE} missing or invalid JSON` });
   } else {
@@ -425,7 +431,7 @@ function staticFindings() {
   if (!zeroStep.refused || zeroStep.code !== 'CI_EXECUTED_FROM_ZERO_STEP_REFUSED') {
     findings.push({ code: 'CI_EXECUTED_SHA_ZERO_STEP_ACCEPTED', detail: 'a zero-step run was not refused the CI_EXECUTED_SHA field' });
   }
-  return { findings, record, routesOk: record !== null && validateCiRouteCandidates(record).ok, requiresSiblingTopologyMeasurements: measurements };
+  return { findings, record, recordDigest, routesOk: record !== null && validateCiRouteCandidates(record).ok, requiresSiblingTopologyMeasurements: measurements };
 }
 
 /** Narrow read-only parse of the project-state block for the CI fields. */
@@ -730,6 +736,23 @@ function extractDeepLane(receipt) {
 }
 
 /**
+ * The repository HEAD this receipt describes (null when git cannot answer).
+ * Fixed minimal environment; read-only.
+ * @returns {string | null}
+ */
+function resolveGitHead() {
+  const result = spawnSync('git', ['rev-parse', 'HEAD'], {
+    cwd: root,
+    env: { PATH: '/usr/bin:/bin', HOME: root, GIT_CONFIG_GLOBAL: '/dev/null', GIT_CONFIG_NOSYSTEM: '1', GIT_OPTIONAL_LOCKS: '0', LANG: 'C', LC_ALL: 'C' },
+    shell: false,
+    encoding: 'utf8',
+    timeout: 10_000,
+  });
+  const head = result.status === 0 && typeof result.stdout === 'string' ? result.stdout.trim() : '';
+  return /^[0-9a-f]{40}$/.test(head) ? head : null;
+}
+
+/**
  * @param {any} document
  * @param {{ noReceipt?: boolean }} options
  */
@@ -769,7 +792,7 @@ function main(cli) {
   const lane = cli.flags['--lane'] ?? 'capability';
   const noReceipt = cli.flags['--no-receipt'] === true;
   const absences = selected === 'all' ? TOPOLOGY_ABSENCES : TOPOLOGY_ABSENCES.filter((absence) => absence.id === selected);
-  const staticResult = mode === 'dynamic' ? { findings: [], record: null, routesOk: true, requiresSiblingTopologyMeasurements: [] } : staticFindings();
+  const staticResult = mode === 'dynamic' ? { findings: [], record: null, recordDigest: null, routesOk: true, requiresSiblingTopologyMeasurements: [] } : staticFindings();
   const findings = [...staticResult.findings];
   const selfTest = inverseSelfTest();
   if (!selfTest.ok) {
@@ -801,18 +824,30 @@ function main(cli) {
       historicalRun: '33572572053',
     },
     runnerTopologyClass,
+    // RV-09 / corrections task 7.7: the receipt is bound to the commit it ran
+    // at, and only a complete PROVEN envelope is certifying — PROVEN_DEGRADED is
+    // honest diagnostic evidence that never certifies. The former hard-coded
+    // `githubExecutionProven: false` literal is removed: a literal measures
+    // nothing, and the statement below already says what this gate never proves.
+    gitHead: resolveGitHead(),
     ciClaim: {
       runnerTopologyClass,
       runnerTopologyEnvelope: dynamic?.envelope ?? null,
       unexercisedAbsences,
-      githubExecutionProven: false,
+      certifying: runnerTopologyClass === 'PROVEN',
       statement: 'gate:topology proves runner-topology fail-closed behaviour only; it never proves GitHub execution and never sets CI_EXECUTED_SHA.',
     },
     inverseSelfTest: selfTest,
     // X-02 — the gate's requiresSiblingTopology declarations, measured
     // against each group's own manifest suites by the external-path scan.
     requiresSiblingTopologyMeasurements: staticResult.requiresSiblingTopologyMeasurements ?? [],
+    // RV-09: DERIVED from the record file at generation time — its source path,
+    // the digest of the exact bytes read and whether it was stale then — never a
+    // static copy that could outlive an edit to the record.
     ciBlockRecord: staticResult.record === null ? null : {
+      source: CI_BLOCK_RECORD_FILE,
+      recordDigest: staticResult.recordDigest ?? null,
+      staleAtGeneration: collectCiBlockStale(staticResult.record, todayIso()).length > 0,
       runId: staticResult.record.runId,
       jobId: staticResult.record.jobId,
       blockClass: staticResult.record.blockClass,

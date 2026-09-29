@@ -125,6 +125,12 @@ function runFixedCommandInner(commandKey, mode, timeoutClass) {
     if (runnerTopologyClass !== 'PROVEN' && runnerTopologyClass !== 'PROVEN_DEGRADED') {
       return { ...summary, status: 'TEST_FAILURE', exitCode: 1, errorClass: 'TOPOLOGY_RUNNER_CLASS_UNPROVEN' };
     }
+    // RV-09 / task 7.7: the group PASSES with a degraded class (a runner
+    // without Bubblewrap cannot be made PROVEN) but a topology receipt that
+    // carries no verified digest or bound commit is not evidence at all.
+    if (typeof details?.topologyReceiptDigest !== 'string' || typeof details?.topologyGitHead !== 'string') {
+      return { ...summary, status: 'TEST_FAILURE', exitCode: 1, errorClass: 'TOPOLOGY_RECEIPT_UNBOUND' };
+    }
     return summary;
   } else if (commandKey === 'UI_GATE') {
     // B-14 / D-18 — the Control Center UI package joins every gate mode:

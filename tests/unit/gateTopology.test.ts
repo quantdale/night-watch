@@ -338,7 +338,16 @@ test.describe('operator entry point', () => {
     expect(receipt.ciBlockRecord.blockClass).toBe('EXECUTED_PASS');
     expect(receipt.defectClasses.historicalRun).toBe('33572572053');
     expect(receipt.inverseSelfTest.ok).toBe(true);
-    expect(receipt.ciClaim.githubExecutionProven).toBe(false);
+    // RV-09: the hard-coded githubExecutionProven literal is gone; the claim
+    // says whether the class is CERTIFYING, and the receipt is bound to a commit.
+    expect(receipt.ciClaim.githubExecutionProven).toBeUndefined();
+    expect(receipt.ciClaim.certifying).toBe(false);
+    expect(receipt.gitHead).toMatch(/^[0-9a-f]{40}$/);
+    // The embedded CI block record is DERIVED: its source, the digest of the
+    // exact bytes read, and its staleness at generation.
+    expect(receipt.ciBlockRecord.source).toBe('config/ci-block-record.v1.json');
+    expect(receipt.ciBlockRecord.recordDigest).toMatch(/^sha256:[0-9a-f]{24}$/);
+    expect(typeof receipt.ciBlockRecord.staleAtGeneration).toBe('boolean');
     expect(receipt.runnerTopologyClass).toBe('NOT_PROVEN');
     expect(receipt.ciClaim.runnerTopologyClass).toBe('NOT_PROVEN');
     expect(receipt.ciClaim.statement).toContain('never proves GitHub execution');

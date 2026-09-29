@@ -12,9 +12,11 @@
 // credentials, response bodies and arbitrary child stderr have no
 // representation here and cannot pass through by accident.
 
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { topologyReceiptDigest } from './topology-gate.mjs';
 
 // Structured child receipts the gate understands. Each is a bounded,
 // categorical summary emitted by a repository-owned launcher — never raw
@@ -170,15 +172,29 @@ export function parseSafeDetails(output) {
       && JSON.stringify(unexercisedAbsences) === JSON.stringify(claimedAbsences);
     const topologyClass = value.runnerTopologyClass;
     const classMatchesClaim = topologyClass === claim.runnerTopologyClass;
+    // RV-09 / corrections task 7.7: the bound commit, whether the class is
+    // CERTIFYING (only a complete PROVEN envelope), and the receipt's digest —
+    // carried ONLY when the digest re-derives from the receipt body it claims to
+    // describe, so a forged or truncated receipt cannot lend its digest to the
+    // gate receipt.
+    if (typeof value.gitHead === 'string' && /^[0-9a-f]{40}$/.test(value.gitHead)) details.topologyGitHead = value.gitHead;
+    if (typeof value.receiptDigest === 'string' && /^topology-receipt:sha256:[0-9a-f]{24}$/.test(value.receiptDigest)) {
+      const { receiptDigest, ...body } = value;
+      if (topologyReceiptDigest(body, (text) => crypto.createHash('sha256').update(text, 'utf8').digest('hex')) === receiptDigest) {
+        details.topologyReceiptDigest = receiptDigest;
+      }
+    }
     if (envelope !== null) details.topologyEnvelope = envelope;
     if (unexercisedAbsences.length > 0) details.unexercisedAbsences = unexercisedAbsences;
     if (topologyClass === 'NOT_PROVEN' && classMatchesClaim) {
       details.runnerTopologyClass = topologyClass;
     } else if (topologyClass === 'PROVEN' && classMatchesClaim && envelope === 'BUBBLEWRAP' && absenceClaimsMatch && unexercisedAbsences.length === 0) {
       details.runnerTopologyClass = topologyClass;
+      details.topologyCertifying = true;
     } else if (topologyClass === 'PROVEN_DEGRADED' && classMatchesClaim && envelope !== null && absenceClaimsMatch
       && (envelope === 'BWRAP_UNAVAILABLE_DEGRADED' || unexercisedAbsences.length > 0)) {
       details.runnerTopologyClass = topologyClass;
+      details.topologyCertifying = false;
     }
   } else {
     details.skipPolicy = value.schemaVersion === 'nightwatch.shard-run-receipt.v1'
