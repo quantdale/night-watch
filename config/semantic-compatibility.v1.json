@@ -307,6 +307,38 @@
         "reasonToken": "requires the read-only sibling Alphaus checkouts"
       },
       {
+        "file": "tests/unit/c08DeploymentBinding.test.ts",
+        "titlePath": [
+          "C-08 — client configuration is never a DEPLOYMENT_FACT",
+          "the host matrix extracted from the REAL artifact is SOURCE_FACT"
+        ],
+        "reasonToken": "requires the read-only sibling Alphaus checkouts"
+      },
+      {
+        "file": "tests/unit/c08DeploymentBinding.test.ts",
+        "titlePath": [
+          "C-08 — build exclusions, and only the negative direction",
+          "the REAL build config parses to exclusions classified DEPLOYMENT_FACT"
+        ],
+        "reasonToken": "requires the read-only sibling Alphaus checkouts"
+      },
+      {
+        "file": "tests/unit/c09SpecExpectations.test.ts",
+        "titlePath": [
+          "C-09 — the real artifacts, measured",
+          "blueapi yields expectations far beyond the 40 target, all exactly joined"
+        ],
+        "reasonToken": "requires the read-only sibling Alphaus checkouts"
+      },
+      {
+        "file": "tests/unit/c09SpecExpectations.test.ts",
+        "titlePath": [
+          "C-09 — the real artifacts, measured",
+          "blueinternal yields expectations too, from the C-05 admission"
+        ],
+        "reasonToken": "requires the read-only sibling Alphaus checkouts"
+      },
+      {
         "file": "tests/unit/c07DerivedSemantics.test.ts",
         "titlePath": [
           "C-07 — the real population, measured",

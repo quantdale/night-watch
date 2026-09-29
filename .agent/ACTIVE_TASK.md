@@ -8,7 +8,19 @@ Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-final-completion-corrections-v1
 Starting SHA: 1d47e2eef1ef029560ace12e31571624602eab0b
 Last validated implementation SHA: 6b19e4281e1125f0e6198ae6eb6ae4baac4ccfe7
-Last checkpoint: 2026-09-28 — VC-02..VC-06 validation-spine corrections at
+Last checkpoint: 2026-09-29 — task 3.12 integration half exposed the CI-only
+defect CF-04 (exact-head run 36513017223 at `2b5d8178`: SYNTHETIC_CAMPAIGN
+UNDECLARED_SKIP 40/4 while local runs declared all 14). Root cause: four
+`fs.existsSync` sibling-checkout-gated REAL-artifact tests (c08:110/:238,
+c09:301/:314) never had their skip identities declared because this host HAS
+the sibling checkouts. Fixed: 4 exact declarations (97 entries) + a
+source-bound regression binding declarations to their real skip sites;
+focused cone 15/15 + 51/51, typecheck/hardening/typecheck:bin (1559) /
+validation:universe PASS; discriminating probe (5 CI identities PASS, drift
+UNDECLARED). VC-01's CI-execution half is PROVEN at `2b5d8178` (zero skip
+sites in both security suites; receipt 1966/1926/40/0 failed 0). The green
+exact-head observation and the VC-03 artifact observation remain pending.
+Previous checkpoint: 2026-09-28 — VC-02..VC-06 validation-spine corrections at
 clean checkpoint `6b19e428`: focused suites green (routing 15/15, phase23
 15/15, receipt 41/41, census 14/14), probe campaigns HC-180..HC-183 DETECTED,
 typecheck:bin PASS at 1560 / 14 of 76, universe PASS. The full `gate:clean`
@@ -71,12 +83,11 @@ focused, hardening/typecheck/universe PASS; the dead
 `SHARD_CHILD_ENVIRONMENT_IDS` export is removed.
 `gate:milestone` PASSED at the clean checkpoint `8b24e11e` (12/12 steps,
 5769 passed / 0 failed shards; OVER_TARGET disclosed as telemetry).
-Next action: task 3.12 integration half — session:status, C-00 fast-forward
-integrate with the exact session and full 40-hex head, observe exact-head CI
-green with the restored tests AND the uploaded runner-topology artifact
-(VC-03), record the evidence, tick 3.12, mark M4 COMPLETE. VC-01's stale skip guards
-and allowlist entries are removed; all four browser-backed tests passed locally,
-with exact-head GitHub Actions proof pending M4 close-out.
+Next action: commit the CF-04 fix + continuity, then task 3.12 integration
+half — session:status, C-00 fast-forward integrate with the exact session and
+full 40-hex head, observe exact-head CI green with ALL 15 required groups AND
+the uploaded runner-topology artifact (VC-03), record the evidence, tick 3.1
+(VC-01 CI proof) and 3.12, mark M4 COMPLETE, then group 5 (5.1-5.6).
 
 Authorization class: COMPLETION_CORRECTIONS_V1
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
@@ -120,8 +131,9 @@ EXTERNAL CONTACT AUTHORIZED (OD-3 ONLY):
   provider proof run; one npm registry advisory query.
 
 CURRENT STATUS:
-  IN_PROGRESS — M4 validation spine through VC-11; M3 certification anchors
-  validated at `d6fd98b1`; exact-head CI/artifact observation remains pending.
+  IN_PROGRESS — M4 task 3.12 at the exact-head CI gate; CF-04 (CI-only
+  undeclared sibling-checkout skips) fixed and awaiting the green run;
+  VC-01 CI-execution half PROVEN at `2b5d8178`.
 
 ALPHAUS DEV / NEXT / PRODUCTION CONTACT:   NOT AUTHORIZED
 AUTHENTICATED ALPHAUS RUNTIME:             NOT AUTHORIZED

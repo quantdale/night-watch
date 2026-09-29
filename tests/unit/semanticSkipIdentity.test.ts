@@ -242,4 +242,45 @@ test.describe('semantic skip-identity policy', () => {
       expect(fs.existsSync(path.join(REPO_ROOT, String(identity.file)))).toBe(true);
     }
   });
+
+  test('every sibling-checkout-gated skip site is declared (CI absence coverage)', () => {
+    // VC-01/VC-02 follow-through: the four REAL-artifact tests gate on
+    // fs.existsSync, so they skip only where the sibling Alphaus checkouts are
+    // absent (the CI runner). Locally present checkouts made those skips
+    // invisible, and the campaign lane reported UNDECLARED_SKIP in CI. This
+    // binds the declarations to the real source sites so the two can never
+    // drift again: one declaration per skip site, and every declared title
+    // must be a literal of its file.
+    const manifest = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, 'config', 'semantic-compatibility.v1.json'), 'utf8')) as {
+      execution?: { canonicalSkipIdentities?: Array<{ file?: string; titlePath?: string[]; reasonToken?: string }> };
+    };
+    const reasonToken = 'requires the read-only sibling Alphaus checkouts';
+    const identities = manifest.execution?.canonicalSkipIdentities ?? [];
+
+    // Every sibling-gated skip site in the unit tests carrying this exact
+    // reason, whatever the capability probe is (fs.existsSync or a helper).
+    const unitDir = path.join(REPO_ROOT, 'tests', 'unit');
+    const sites = new Map<string, number>();
+    const siteRe = /test\.skip\(![^,\n]+, 'requires the read-only sibling Alphaus checkouts'\)/g;
+    for (const name of fs.readdirSync(unitDir)) {
+      if (!name.endsWith('.test.ts')) continue;
+      const text = fs.readFileSync(path.join(unitDir, name), 'utf8');
+      const matches = text.match(siteRe) ?? [];
+      if (matches.length > 0) sites.set(`tests/unit/${name}`, matches.length);
+    }
+    expect(sites.size).toBeGreaterThan(0);
+
+    const declared = identities.filter((identity) => identity.reasonToken === reasonToken);
+    const declaredCounts = new Map<string, number>();
+    for (const identity of declared) {
+      const file = String(identity.file);
+      declaredCounts.set(file, (declaredCounts.get(file) ?? 0) + 1);
+      // Every declared title must be a literal of its own source file, so a
+      // renamed suite or test invalidates the declaration instead of silently
+      // widening it.
+      const text = fs.readFileSync(path.join(REPO_ROOT, file), 'utf8');
+      for (const part of identity.titlePath ?? []) expect(text).toContain(part);
+    }
+    expect([...declaredCounts.entries()].sort()).toEqual([...sites.entries()].sort());
+  });
 });

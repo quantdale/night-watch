@@ -49,7 +49,10 @@ Milestone ID: M4
 
 M1 (bootstrap + Phase 1 preconditions), M2 (task 6.1 formatter policy,
 landed FIRST per RESUME_PROMPT §2), and M3 (certification anchors, tasks
-2.1-2.8) are COMPLETE. M4 validation spine (tasks 3.1-3.12) is IN_PROGRESS.
+2.1-2.8) are COMPLETE. M4 validation spine (tasks 3.1-3.12) is IN_PROGRESS:
+all 3.2-3.11 landed, and 3.12 is at the exact-head CI gate — a CI-only
+UNDECLARED_SKIP defect (CF-04) was found, fixed, and is awaiting the
+exact-head CI observation to close.
 
 ## Completed Milestones
 
@@ -215,15 +218,48 @@ run root for isolation while the campaign/gate context the budget describes
 inherits the ambient TMPDIR (reproduced and proven in-shard: run-shards
 20/20 PASS after the fix; before it, the same context failed at 134 > 107).
 
+Task 3.12's integration half exposed a CI-ONLY defect (recorded as
+follow-on CF-04): exact-head CI run 36513017223 at `2b5d8178` failed the
+SYNTHETIC_CAMPAIGN skip policy with `UNDECLARED_SKIP (40 skipped, 4
+undeclared)` while local runs declared all 14. Root cause: four REAL-artifact
+tests — `c08DeploymentBinding.test.ts:110` (ripple-ui host matrix),
+`:238` (ouchan build config), `c09SpecExpectations.test.ts:301` (blueapi
+spec), `:314` (blueinternal spec) — gate on `fs.existsSync` over the sibling
+Alphaus checkouts. Those checkouts exist on this host, so the skips are
+invisible locally and their identities were never declared; the CI runner
+has no siblings and the four skips surfaced UNDECLARED. The fix declares the
+four exact file/title-path identities with the same
+`requires the read-only sibling Alphaus checkouts` reason token already
+sanctioned for the identical c05 sibling-gated skip (97 entries now), plus a
+source-bound regression `every sibling-checkout-gated skip site is declared
+(CI absence coverage)` in semanticSkipIdentity.test.ts that scans the unit
+corpus for reason-gated sibling skip sites and asserts 1:1 correspondence
+between declared identities and source sites (each declared title must be a
+literal of its file, so a rename invalidates rather than widens a
+declaration). Discriminating power proven: the 5 CI-absent identities
+evaluate PASS against the live config, while a drifted title or a removed
+declaration returns UNDECLARED_SKIP. Focused cone green (semanticSkipIdentity
+15/15, phase23 + gateTopology 51/51 alongside), typecheck PASS, hardening:check
+PASS, typecheck:bin PASS (1559 / 14 of 76 / 78 ceilings), validation:universe
+PASS. VC-01's CI-execution proof is satisfied at `2b5d8178`: both security
+suites carry ZERO skip sites (VC-01 removed them) and are members of the
+synthetic-campaign file set, and the exact-head receipt accounts every test
+— 1966 total, 1926 passed, 40 declared-or-declared-here skips, `failed: 0`,
+`didNotRun: 0` — so the four browser-backed security assertions executed and
+passed in CI. The remaining gap at that run was purely the four declarations
+now added.
+
 ## Exact Next Action
 
-Complete task 3.12's integration half: run `npm run session:status`, then
-integrate this session's branch with the exact session ID and full 40-hex
-head (C-00 fast-forward push), observe exact-head GitHub Actions green with
-all required groups AND the uploaded runner-topology artifact (VC-03
-observation), record both in this STATE, then tick 3.12 and mark M4 COMPLETE.
-The local half of 3.12 is already proven: gate:milestone PASS at `8b24e11e`
-(12/12 steps, 5769/0 shards).
+Commit the fix (config declarations + source-bound regression) with this
+STATE/ACTIVE_TASK/tasks.md update as the M4 CI-truth commit, then complete
+task 3.12's integration half: run `npm run session:status`, integrate with
+`--expect-session sess-0c6596dae563 --expect-head <full 40-hex HEAD>` (the
+C-00 fast-forward push of this branch tip), observe exact-head GitHub Actions
+green with ALL 15 required groups AND the uploaded runner-topology artifact
+(VC-03 observation), record the run ID + receipts in this STATE, tick 3.1
+(VC-01 CI proof) and 3.12, and mark M4 COMPLETE. Then continue group 5
+(tasks 5.1-5.6, ledger and continuity truth).
 
 ## Files Changed
 
@@ -263,6 +299,7 @@ The local half of 3.12 is already proven: gate:milestone PASS at `8b24e11e`
 | `bin/lib/hardening/rules/validation-and-gates.mjs`, `config/hardening-rule-probes.v1.json`, `config/bin-typecheck.v1.json` | VC-08 token-based workflow-pinning matcher (all `uses` key forms, comment-aware, fail-closed on empty refs) + probes HC-184..HC-187; ratchet lowered to 1559 | probe campaign 5/5 DETECTED; hardening suites 15/15; typecheck:bin PASS |
 | `tests/unit/semanticSkipIdentity.test.ts`, `tests/unit/selfDevSandboxConfinement.test.ts`, `tests/unit/syntheticCampaignDiagnostics.test.ts` | VC-02 identity/report, reason, and gate-receipt regressions | 29/29 receipt+policy; 25 passed, 1 declared host skip |
 | `config/validation-universe.v1.json`, `config/validation-execution-classes.v1.json` | register ratchet suite and refresh the inventory digest | checks PASS at M3 close; VC-06 re-measured at `sha256:95f903de` (581 discovered, 0 unclassified) |
+| `config/semantic-compatibility.v1.json`, `tests/unit/semanticSkipIdentity.test.ts` | CF-04 fix: declare the four CI-only sibling-checkout-gated skip identities (c08:110, c08:238, c09:301, c09:314) + source-bound regression binding declarations to their real skip sites | semanticSkipIdentity 15/15; discriminating probe PASS (5 CI identities PASS; drift/removal UNDECLARED_SKIP) |
 
 ## Validation Ledger
 
@@ -649,6 +686,46 @@ shard failure (sun_path budget 134 > 107 under run-shards' TMPDIR override)
 is fixed by budgeting against the preserved ambient root; the in-shard
 reproduction (`run-shards --files=syntheticCampaignShards,validationShardPlan`)
 returned PASS 20/0 before this gate.
+
+Command: exact-head CI observation, run 36513017223 at `2b5d8178` (task 3.12
+integration half)
+Result: FAIL (SYNTHETIC_CAMPAIGN UNDECLARED_SKIP 40/4 — CF-04 found; VC-01
+CI-execution half PROVEN)
+When: 2026-09-29
+Relevant output: 14 of 15 groups PASS (GATE_DEFINITION, STATIC,
+BIN_TYPECHECK_CEILING, HARDENING, HARDENING_PROBES, HANDOFF_TRUTH,
+PROJECT_TRUTH, AGENT_CONTINUITY, SEMANTIC_COMPATIBILITY 2177/2163/14/0
+skipPolicy PASS, OWNER_PROVENANCE 91/0). SYNTHETIC_CAMPAIGN: 1966 total,
+1926 passed, 40 skipped, 0 failed, 0 didNotRun — skipPolicy UNDECLARED_SKIP
+(4 undeclared). Receipt `receipt:sha256:75d601ff140284f7cd78be38` persisted
+(`/tmp/nightwatch-gate-receipts/ci-2b5d8178592f.json`). The VC-01 security
+suites (devLoginSecurity 6 tests, storageState 28 tests; zero skip sites in
+source) are synthetic-campaign members and passed — the four browser-backed
+security assertions EXECUTED in CI (failed: 0 / didNotRun: 0 with 34 accounted
+tests). The 4 undeclared skips are the four `fs.existsSync` sibling-checkout
+gates (c08:110/:238, c09:301/:314) whose identities were undeclared because
+the local host has the sibling checkouts. Fixed in the next commit.
+The topology artifact step reported `No files were found with the provided
+path: artifacts/topology-receipts/*.json` — the TOPOLOGY gate group is
+NOT_RUN at this run (fail-fast after SYNTHETIC_CAMPAIGN), so no topology
+receipt was produced to upload; the VC-03 artifact observation therefore
+remains pending the green exact-head run.
+
+Command: focused cone + structural checks for the CF-04 fix (dirty worktree)
+Result: PASS
+When: 2026-09-29
+Relevant output: semanticSkipIdentity 15/15 (incl. the new source-bound
+`every sibling-checkout-gated skip site is declared` regression);
+phase23QualityGate + gateTopology 51/51 alongside; `npm run typecheck` PASS;
+`npm run hardening:check` PASS; `npm run typecheck:bin` PASS (1559
+diagnostics / 14 of 76 / 78 ceilings); `npm run validation:universe` PASS;
+`npm run project:check` evaluates the release verdict at the certified
+checkpoint `6b19e428` (certification conditions UNMET/EVIDENCE_ABSENT as
+expected mid-campaign); `npm run agent:check` PASS (86 warnings, incl. the
+known WORKSPACE_BASE_STALE reconciled at integrate). Discriminating probe:
+the 5 CI-absent sibling-gated identities evaluate PASS (5 declared / 0
+undeclared); a drifted title path returns UNDECLARED_SKIP; a removed
+declaration returns UNDECLARED_SKIP.
 
 ## Decisions Made During This Task
 
