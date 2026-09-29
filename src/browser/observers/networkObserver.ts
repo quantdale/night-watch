@@ -130,7 +130,12 @@ function bodyCaptureStatus(
 let bodyReadsInFlight = 0;
 export const MAX_CONCURRENT_BODY_READS = 4;
 
-async function boundedResponseOperation<T>(
+/**
+ * Exported as a TEST SEAM (RV-12 / corrections task 7.10): the acquisition
+ * gate is exercised directly with held reads — no browser, no timing — so the
+ * refusal of the read past the bound is proven by behaviour, not by text.
+ */
+export async function boundedResponseOperation<T>(
   operation: Promise<T>,
   timeoutMs: number,
 ): Promise<{ completed: true; value: T } | { completed: false } | { acquired: false }> {
