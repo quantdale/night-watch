@@ -350,7 +350,15 @@ exercise; G19 effective-configuration rendering), 4.5 (structural
   `hardening:check` PASS; `hardening:check --probe-campaign
   --only=checkAppendOnlyArchives` 2/2 detected; `hardening:rules` rules=91
   probes=188 detected=188 undetected=0 statusUnchanged=true; `tsc --noEmit`
-  PASS. Exact-head CI at the integrated tip is recorded below when observed.
+  PASS. Integrated as `eef9c00e` (STATE record on top of `bd8ce336`);
+  exact-head CI run 36630587780 at `eef9c00e` GREEN — all 15 required groups
+  PASS, HARDENING_PROBES included.
+- 2026-09-30 — Review 2 (independent read-only validation of M1–M4 at
+  `88f8eaf7`) recorded in audit.md "Review 2" as RV-01..RV-20 and mapped to
+  new tasks.md group 7 (7.1–7.15, run after group 5 and before 6.2–6.4). No
+  existing task ID or text was changed. Owner decision recorded there: the
+  repository is public temporarily for GitHub Actions and returns to private
+  at the final close-out (7.14).
   Anchors stay at `3c9c1a06` (the last commit with an observed green exact-head
   run) until the anchor mechanism of task 5.3 (VA-03) lands.
 
