@@ -34,6 +34,7 @@ import {
   type OperationForBinding,
 } from '../../src/core/source/deploymentBinding';
 import { evidenceIsCurrent, extractBuildExclusions, extractHostMatrix } from '../../src/core/source/deploymentEvidence';
+import { resolveSiblingRoot } from '../../src/core/policy/sourceTopology';
 
 const root = path.resolve(__dirname, '..', '..');
 
@@ -106,7 +107,7 @@ test.describe('C-08 — every operation carries a binding', () => {
 
 test.describe('C-08 — client configuration is never a DEPLOYMENT_FACT', () => {
   test('the host matrix extracted from the REAL artifact is SOURCE_FACT', () => {
-    const artifact = path.join('/home/dalepalaca/go/src/alphaus-main/REPOSITORIES', 'mobingilabs/ripple-ui/src/config/common.js');
+    const artifact = path.join(resolveSiblingRoot(), 'mobingilabs/ripple-ui/src/config/common.js');
     test.skip(!fs.existsSync(artifact), 'requires the read-only sibling Alphaus checkouts');
     const result = extractHostMatrix({
       repoId: 'mobingilabs/ripple-ui', sourceSha: 'd'.repeat(40), path: 'src/config/common.js',
@@ -115,6 +116,41 @@ test.describe('C-08 — client configuration is never a DEPLOYMENT_FACT', () => 
     expect(result.entries.length).toBeGreaterThan(0);
     expect(result.evidence!.factCategory).toBe('SOURCE_FACT');
     expect(result.evidence!.factCategory).not.toBe('DEPLOYMENT_FACT');
+  });
+
+  // RV-11 / corrections task 7.9: SYNTHETIC TWINS of the two sibling-gated
+  // real-artifact tests. The real tests skip wherever the sibling checkouts are
+  // absent (every CI host), so without twins no CI lane ran these extractors at
+  // all. The fixtures follow the real artifacts' shapes with invented values.
+  test('twin: the host matrix extractor resolves a same-file literal, keeps a wildcard for an undeclared template and refuses non-environments', () => {
+    const text = [
+      "const APP_PATH = 'ripple';",
+      'const config = {',
+      "  prod: 'https://api.example.invalid/m/${APP_PATH}',",
+      "  next: `https://next.example.invalid/m/${UNDECLARED}`,",
+      "  dev: 'http://localhost:8080',",
+      "  localhost: 'https://not-an-environment.example.invalid/x',",
+      "  qa: 'https://qa.example.invalid',",
+      '};',
+    ].join('\n');
+    const result = extractHostMatrix({ repoId: 'synthetic/ui', sourceSha: 'd'.repeat(40), path: 'src/config/common.js', text });
+    // `dev: 'http://localhost:8080'` (a single-label host with a port) and the
+    // non-environment `localhost:` key are refused, never guessed.
+    expect(result.entries).toEqual([
+      { routePrefix: '/m/ripple', environment: 'prod', host: 'api.example.invalid' },
+      { routePrefix: '/m/*', environment: 'next', host: 'next.example.invalid' },
+      { routePrefix: '/', environment: 'qa', host: 'qa.example.invalid' },
+    ]);
+    expect(result.evidence?.factCategory).toBe('SOURCE_FACT');
+    expect(result.evidence?.factCategory).not.toBe('DEPLOYMENT_FACT');
+    expect(result.truncated).toBe(false);
+  });
+
+  test('twin: a file with no environment host yields no evidence, and an oversized artifact is refused as truncated', () => {
+    expect(extractHostMatrix({ repoId: 'synthetic/ui', sourceSha: 'd'.repeat(40), path: 'x.js', text: 'const a = 1;' }))
+      .toEqual({ entries: [], evidence: null, truncated: false });
+    const oversized = extractHostMatrix({ repoId: 'synthetic/ui', sourceSha: 'd'.repeat(40), path: 'x.js', text: 'x'.repeat(2_000_001) });
+    expect(oversized).toMatchObject({ entries: [], evidence: null, truncated: true });
   });
 
   test('a route → host hop established from the matrix is SOURCE_FACT', () => {
@@ -233,8 +269,43 @@ test.describe('C-08 — build exclusions, and only the negative direction', () =
     ])).toEqual([]);
   });
 
+  test('twin: the build-config extractor reads names, regex and negated-regex prefixes, inline and block branch lists', () => {
+    const text = [
+      'build:',
+      '  build_all: false',
+      '  exclude:',
+      '  - name: svc1',
+      '    branches:',
+      '    - some-branch',
+      '    - production',
+      '',
+      '  - name: "re:.*build.*"',
+      '    branches: ["qa", "next", "production"]',
+      '  - name: "!re:^keep-.*"',
+      "    branches: ['production']",
+      '  - name: nobranches',
+      'k8s_image_update_on_merge:',
+      '  enabled: true',
+    ].join('\n');
+    const result = extractBuildExclusions({ repoId: 'synthetic/build', sourceSha: 'e'.repeat(40), path: 'build/config.yaml', text });
+    expect(result.entries).toEqual([
+      { servicePattern: 'svc1', isRegex: false, negated: false, branches: ['production', 'some-branch'] },
+      { servicePattern: '.*build.*', isRegex: true, negated: false, branches: ['next', 'production', 'qa'] },
+      { servicePattern: '^keep-.*', isRegex: true, negated: true, branches: ['production'] },
+      // No branch list claims nothing rather than defaulting to every environment.
+      { servicePattern: 'nobranches', isRegex: false, negated: false, branches: [] },
+    ]);
+    expect(result.evidence?.factCategory).toBe('DEPLOYMENT_FACT');
+    expect(result.entries.some((entry) => entry.branches.includes('production'))).toBe(true);
+  });
+
+  test('twin: a config with no exclusions yields no evidence', () => {
+    expect(extractBuildExclusions({ repoId: 'synthetic/build', sourceSha: 'e'.repeat(40), path: 'x.yaml', text: 'build:\n  build_all: true\n' }))
+      .toEqual({ entries: [], evidence: null, truncated: false });
+  });
+
   test('the REAL build config parses to exclusions classified DEPLOYMENT_FACT', () => {
-    const artifact = path.join('/home/dalepalaca/go/src/alphaus-main/REPOSITORIES', 'mobingilabs/ouchan/build/config.yaml');
+    const artifact = path.join(resolveSiblingRoot(), 'mobingilabs/ouchan/build/config.yaml');
     test.skip(!fs.existsSync(artifact), 'requires the read-only sibling Alphaus checkouts');
     const result = extractBuildExclusions({
       repoId: 'mobingilabs/ouchan', sourceSha: 'e'.repeat(40), path: 'build/config.yaml',

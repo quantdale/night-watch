@@ -34,10 +34,11 @@ import {
   isNightwatchOwnSpecification,
   parseScenarioHeadings,
 } from '../../src/core/source/specScenarioInventory';
+import { resolveSiblingRoot } from '../../src/core/policy/sourceTopology';
 import { READ_ONLY_WITNESS_CLASS, buildReadOnlyProof, type ReadOnlyWitness } from '../../src/core/source/readOnlyProof';
 
 const root = path.resolve(__dirname, '..', '..');
-const SIBLINGS = '/home/dalepalaca/go/src/alphaus-main/REPOSITORIES';
+const SIBLINGS = resolveSiblingRoot();
 
 /** A minimal gRPC-gateway-shaped document. */
 const DOCUMENT = {
