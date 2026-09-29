@@ -1838,6 +1838,30 @@ function definitionWithExactEvidence(
   };
 }
 
+test.describe('RV-02 — a SHA without a receipt is a claim, not an observation', () => {
+  test('exact evidence with a passing check but no receiptDigest is EVIDENCE_RECEIPT_ABSENT and refuses certification', () => {
+    const checkpoint = '2'.repeat(40);
+    const definition = definitionWithExactEvidence(liveDefinition(), checkpoint);
+    const target = definition.conditions[0] as { id: string };
+    const digests = Object.fromEntries(definition.conditions.map((condition) => [condition.id, `receipt:sha256:${'1'.repeat(24)}`]));
+    const withReceipts = evaluateReleaseCertification(evaluationInput(definition, { certifiedCheckpointSha: checkpoint, evidenceReceiptDigests: digests }));
+    expect(withReceipts.conditionsMet).toBe(definition.conditions.length);
+    const without = evaluateReleaseCertification(evaluationInput(definition, {
+      certifiedCheckpointSha: checkpoint,
+      evidenceReceiptDigests: { ...digests, [target.id]: null },
+    }));
+    expect(without.conditions.find((entry) => entry.id === target.id)?.state).toBe('EVIDENCE_RECEIPT_ABSENT');
+    expect(without.conditionsMet).toBe(definition.conditions.length - 1);
+    expect(without.certificationRefused).toBe(true);
+    expect(without.nonExactEvidenceConditions).toContain(target.id);
+    // A missing map entry is a null digest (fail closed), not a pass.
+    const { [target.id]: _dropped, ...partial } = digests;
+    void _dropped;
+    expect(evaluateReleaseCertification(evaluationInput(definition, { certifiedCheckpointSha: checkpoint, evidenceReceiptDigests: partial }))
+      .conditions.find((entry) => entry.id === target.id)?.state).toBe('EVIDENCE_RECEIPT_ABSENT');
+  });
+});
+
 test.describe('F-12 release definition and verdict', () => {
   test('the live definition is ordered, fully backed and excludes the production track', () => {
     const definition = liveDefinition();

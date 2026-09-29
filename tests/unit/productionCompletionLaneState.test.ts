@@ -8,6 +8,7 @@
 import { test, expect } from '@playwright/test';
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import {
   collectRevisitDue,
@@ -22,8 +23,10 @@ import {
   isCorrectionAppendAdmissible,
   isValuesOnlyBindingChange,
   lineSha256Prefix,
+  parseDocumentRoleCorrections,
 } from '../../bin/lib/release-evidence.mjs';
 import { checkpointRoleViolations, correctionPairingViolations, removedLineDigests } from '../../bin/lib/checkpoint-role.mjs';
+import { evidenceArtifactExistsAtSha } from '../../bin/lib/evidence-artifact.mjs';
 import { legacyEvidenceSha, loadReleaseEvidenceBindings, resolveEvidenceShaForSubject } from '../../bin/lib/release-evidence.mjs';
 import { isApprovedCheckpointPath } from '../../bin/agent-continuity-protocol.mjs';
 import type { LaneStateEntry } from '../../bin/lib/validation-lane-state.mjs';
@@ -295,6 +298,75 @@ test.describe('validation lane state', () => {
     } finally {
       fs.rmSync(root, { recursive: true, force: true });
     }
+  });
+
+  test('RV-02: a re-bind to a different SHA is documentary only with a NEW receipt, observation time and executor', () => {
+    const digest = (ch: string) => `receipt:sha256:${ch.repeat(24)}`;
+    const binding = (overrides: Record<string, unknown> = {}) => ({
+      subject: 'lane-one',
+      evidenceSha: SHA_A,
+      receiptDigest: digest('1'),
+      observedAt: '2026-09-30T00:00:00.000Z',
+      executor: 'gate:local',
+      artifactPaths: [],
+      ...overrides,
+    });
+    const doc = (entry: unknown) => JSON.stringify({ schemaVersion: 'nightwatch.release-evidence.v1', bindings: [entry] });
+    const verdict = (after: unknown) => isValuesOnlyBindingChange(doc(binding()), doc(after));
+    expect(verdict(binding({ evidenceSha: SHA_B, receiptDigest: digest('2') }))).toEqual({ valuesOnly: true, reason: 'VALUES_ONLY' });
+    // A refresh of the same SHA's observation metadata stays documentary.
+    expect(verdict(binding({ observedAt: '2026-09-30T01:00:00.000Z' })).valuesOnly).toBe(true);
+    for (const [after, reason] of [
+      [binding({ evidenceSha: SHA_B, receiptDigest: null }), 'BINDING_REBIND_WITHOUT_RECEIPT:lane-one'],
+      [binding({ evidenceSha: SHA_B, observedAt: null }), 'BINDING_REBIND_WITHOUT_RECEIPT:lane-one'],
+      [binding({ evidenceSha: SHA_B, executor: null }), 'BINDING_REBIND_WITHOUT_RECEIPT:lane-one'],
+      [binding({ evidenceSha: SHA_B }), 'BINDING_REBIND_RECEIPT_UNCHANGED:lane-one'],
+    ] as const) {
+      expect(verdict(after)).toEqual({ valuesOnly: false, reason });
+    }
+    // null -> A (first evidence) is a re-point too and needs the same receipt.
+    const first = isValuesOnlyBindingChange(doc(binding({ evidenceSha: null, receiptDigest: null, observedAt: null, executor: null })), doc(binding({ receiptDigest: null })));
+    expect(first).toEqual({ valuesOnly: false, reason: 'BINDING_REBIND_WITHOUT_RECEIPT:lane-one' });
+  });
+
+  test('RV-03: the evidence-artifact probe answers from git — present, absent-before, missing path, unknown commit', () => {
+    const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'nw-artifact-'));
+    const env = { PATH: '/usr/bin:/bin', HOME: directory, GIT_CONFIG_GLOBAL: '/dev/null', GIT_CONFIG_NOSYSTEM: '1', GIT_AUTHOR_NAME: 'nw', GIT_AUTHOR_EMAIL: 'nw@example.invalid', GIT_COMMITTER_NAME: 'nw', GIT_COMMITTER_EMAIL: 'nw@example.invalid' };
+    const git = (...args: string[]) => spawnSync('git', args, { cwd: directory, env, encoding: 'utf8' });
+    try {
+      git('init', '--quiet');
+      fs.writeFileSync(path.join(directory, 'a.txt'), 'a\n');
+      git('add', 'a.txt');
+      git('commit', '--quiet', '--no-gpg-sign', '-m', 'one');
+      const first = git('rev-parse', 'HEAD').stdout.trim();
+      fs.writeFileSync(path.join(directory, 'b.txt'), 'b\n');
+      git('add', 'b.txt');
+      git('commit', '--quiet', '--no-gpg-sign', '-m', 'two');
+      const second = git('rev-parse', 'HEAD').stdout.trim();
+      expect(evidenceArtifactExistsAtSha(directory, first, 'a.txt')).toBe(true);
+      expect(evidenceArtifactExistsAtSha(directory, first, 'b.txt')).toBe(false);
+      expect(evidenceArtifactExistsAtSha(directory, second, 'b.txt')).toBe(true);
+      expect(evidenceArtifactExistsAtSha(directory, second, 'missing.txt')).toBe(false);
+      expect(evidenceArtifactExistsAtSha(directory, '0'.repeat(40), 'a.txt')).toBe(false);
+      // Malformed inputs never read as present.
+      expect(evidenceArtifactExistsAtSha(directory, 'HEAD', 'a.txt')).toBe(false);
+      expect(evidenceArtifactExistsAtSha(directory, second, '../a.txt')).toBe(false);
+      expect(evidenceArtifactExistsAtSha(directory, second, '/etc/passwd')).toBe(false);
+    } finally {
+      fs.rmSync(directory, { recursive: true, force: true });
+    }
+  });
+
+  test('RV-01: two corrections exempting the same archive line are rejected, whatever their ids', () => {
+    const entry = (id: string, digest: string, file = 'docs/CURRENT_STATE.md') => ({ id, path: file, oldLineSha256: digest, oldLineExcerpt: 'gone', reason: 'r' });
+    const record = (entries: unknown[]) => ({ schemaVersion: 'nightwatch.document-role-corrections.v1', corrections: entries });
+    const digest = lineSha256Prefix('the retired line');
+    expect(parseDocumentRoleCorrections(record([entry('CORR-A', digest), entry('CORR-B', lineSha256Prefix('another line'))])).errors).toEqual([]);
+    const duplicated = parseDocumentRoleCorrections(record([entry('CORR-A', digest), entry('CORR-B', digest)]));
+    expect(duplicated.ok).toBe(false);
+    expect(duplicated.errors).toEqual(['CORRECTION_DIGEST_DUPLICATE:CORR-B']);
+    // The same digest in a DIFFERENT file is a different line, not a duplicate.
+    expect(parseDocumentRoleCorrections(record([entry('CORR-A', digest), entry('CORR-B', digest, 'docs/ROADMAP.md')])).errors).toEqual([]);
   });
 
   test('VB-03: an unpaired correction append is inadmissible; its removal must land with it', () => {

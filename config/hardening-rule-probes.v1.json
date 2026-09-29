@@ -2188,6 +2188,36 @@
             "replace": "if (guard === 'VALUES_ONLY_BINDINGS') return true;"
           }
         ]
+      },
+      {
+        "id": "HC-193",
+        "ops": [
+          {
+            "file": "bin/lib/release-evidence.mjs",
+            "search": "if (guard === 'APPEND_ONLY_CORRECTIONS') return isAppendOnlyCorrectionsChange(beforeText, afterText).appendOnly;",
+            "replace": "if (guard === 'APPEND_ONLY_CORRECTIONS') return true;"
+          }
+        ]
+      },
+      {
+        "id": "HC-194",
+        "ops": [
+          {
+            "file": "bin/lib/release-evidence.mjs",
+            "search": "if (right.evidenceSha !== null && right.evidenceSha !== left.evidenceSha) {",
+            "replace": "if (false) {"
+          }
+        ]
+      },
+      {
+        "id": "HC-195",
+        "ops": [
+          {
+            "file": "bin/lib/evidence-artifact.mjs",
+            "search": "return result.status === 0;",
+            "replace": "return true;"
+          }
+        ]
       }
     ]
   }

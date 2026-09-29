@@ -31,6 +31,10 @@
 //   EVIDENCE_ARTIFACT_ABSENT_AT_SHA
 //                           a declared evidence artifact path does not exist
 //                           at the bound SHA (VB-02 / corrections task 2.2)
+//   EVIDENCE_RECEIPT_ABSENT the check passed at an EXACT bound SHA, but the
+//                           binding carries no receiptDigest: a SHA with no
+//                           receipt is a claim, not an observation (RV-02 /
+//                           corrections task 7.2)
 //
 // Diagnostic check state (checkState) is always preserved separately from the
 // effective certification state (state). Only evidenceRelation === 'EXACT'
@@ -59,6 +63,7 @@ export const RELEASE_CONDITION_STATES = [
   'EVIDENCE_DIVERGENT',
   'EVIDENCE_UNRESOLVED',
   'EVIDENCE_ARTIFACT_ABSENT_AT_SHA',
+  'EVIDENCE_RECEIPT_ABSENT',
 ] as const;
 
 export type ReleaseConditionState = (typeof RELEASE_CONDITION_STATES)[number];
@@ -92,6 +97,7 @@ export const EVIDENCE_FAILURE_STATES = [
   'EVIDENCE_DIVERGENT',
   'EVIDENCE_UNRESOLVED',
   'EVIDENCE_ARTIFACT_ABSENT_AT_SHA',
+  'EVIDENCE_RECEIPT_ABSENT',
 ] as const as readonly ReleaseConditionState[];
 
 export function isEvidenceFailureState(state: ReleaseConditionState): boolean {
@@ -471,6 +477,14 @@ export interface ReleaseEvaluationInput {
   /** Declared evidence-artifact paths per subject (from the bindings). */
   readonly evidenceArtifactPaths?: Readonly<Record<string, readonly string[]>>;
   /**
+   * RV-02 (corrections task 7.2): the bound `receiptDigest` per condition id
+   * (null when the binding carries none). When supplied, a raw-MET condition
+   * at an EXACT bound SHA resolves MET only if its digest is non-null;
+   * otherwise it is EVIDENCE_RECEIPT_ABSENT. Omitted only by pure unit callers
+   * that do not model receipts; `project:check` always supplies it.
+   */
+  readonly evidenceReceiptDigests?: Readonly<Record<string, string | null>>;
+  /**
    * Optional definition/snapshot identity folded into the evaluation digest
    * (e.g. definition bytes digest captured with the checkout snapshot).
    */
@@ -611,6 +625,10 @@ export function evaluateReleaseCertification(input: ReleaseEvaluationInput): Rel
     } else if (evidenceRelation === 'EXACT') {
       // Exact lineage never upgrades a non-MET check.
       state = checkState;
+      if (checkState === 'MET' && input.evidenceReceiptDigests !== undefined && (input.evidenceReceiptDigests[condition.id] ?? null) === null) {
+        state = 'EVIDENCE_RECEIPT_ABSENT';
+        effectiveDetail = `${detail}; the binding carries no receiptDigest for exact evidence ${resolvedEvidenceSha}: a SHA without a receipt is a claim, not an observation`;
+      }
     } else {
       state = evidenceRelationToState(evidenceRelation);
       effectiveDetail = `${detail}; evidence ${resolvedEvidenceSha} relation=${evidenceRelation} at certified checkpoint ${input.certifiedCheckpointSha ?? 'NONE'}`;
@@ -637,7 +655,8 @@ export function evaluateReleaseCertification(input: ReleaseEvaluationInput): Rel
   const unmet = conditions.filter((condition) => condition.state !== 'MET');
   const staleEvidenceConditions = conditions.filter((condition) => condition.staleEvidence).map((condition) => condition.id);
   const nonExactEvidenceConditions = conditions
-    .filter((condition) => condition.nonExactEvidence || (condition.state === 'EVIDENCE_ABSENT' && condition.checkState === 'MET'))
+    .filter((condition) => condition.nonExactEvidence
+      || ((condition.state === 'EVIDENCE_ABSENT' || condition.state === 'EVIDENCE_RECEIPT_ABSENT') && condition.checkState === 'MET'))
     .map((condition) => condition.id);
   const advanceClaimed = definition.advanceStatuses.includes(input.projectCompletionStatus);
   // Any non-exact bound evidence, or a raw MET condition with absent evidence,

@@ -51,5 +51,8 @@ export function loadReleaseEvidenceBindings(
 export function loadDocumentRoleCorrections(
   root: string,
 ): { ok: boolean; errors: string[]; corrections: Array<{ id: string; path: string; oldLineSha256: string; oldLineExcerpt: string; reason: string }> };
+export function parseDocumentRoleCorrections(
+  record: unknown,
+): { ok: boolean; errors: string[]; corrections: Array<{ id: string; path: string; oldLineSha256: string; oldLineExcerpt: string; reason: string }> };
 export function legacyEvidenceSha(root: string, subject: string): string | null;
 export function resolveEvidenceShaForSubject(root: string, subject: string): string | null;

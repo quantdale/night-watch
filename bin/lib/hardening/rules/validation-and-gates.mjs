@@ -12,6 +12,7 @@
  */
 
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import {
@@ -26,8 +27,16 @@ import {
   isRuleEngineSource,
 } from '../kernel.mjs';
 import { validateCampaignCertification } from '../../campaign-certification.mjs';
+import { evidenceArtifactExistsAtSha } from '../../evidence-artifact.mjs';
 import { findBinsWithoutExecutingTest, verifyCliImplementationContract } from '../../cli-implementation-contract.mjs';
 import { classifyValidationTruth, extractTestMatchGlobs } from '../../validation-classification.mjs';
+import {
+  DOCUMENT_ROLE_CORRECTIONS_FILE,
+  DOCUMENT_ROLE_CORRECTIONS_SCHEMA,
+  RELEASE_EVIDENCE_FILE,
+  RELEASE_EVIDENCE_SCHEMA,
+  guardHoldsForChange,
+} from '../../release-evidence.mjs';
 
 export function checkTypecheckCoverage() {
   let config;
@@ -538,22 +547,75 @@ export function checkWorkflowActionPinning() {
  * evidence erasure, VB-02 artifact paths, VB-03 pairing).
  */
 export function checkCheckpointRoleGuardIntegrity() {
-  // VB-06 / corrections task 2.6 — the diff-shape guards must stay REAL
-  // dispatches and the commit-role classifier must consume them live. A
-  // stubbed guard (`return true`) or a classifier that stops calling the
-  // guard silently re-opens every binding/registry rewrite this campaign
-  // closed (VB-01 evidence erasure, VB-02 artifact paths, VB-03 pairing).
-  const release = readIncludingComments('bin/lib/release-evidence.mjs');
-  const checkpoint = readIncludingComments('bin/lib/checkpoint-role.mjs');
-  const required = [
-    ['bin/lib/release-evidence.mjs', release, 'isValuesOnlyBindingChange(beforeText, afterText).valuesOnly', 'the values-only guard dispatch'],
-    ['bin/lib/release-evidence.mjs', release, 'isAppendOnlyCorrectionsChange(beforeText, afterText).appendOnly', 'the append-only guard dispatch'],
-    ['bin/lib/checkpoint-role.mjs', checkpoint, 'guardHoldsForChange(file, before, after)', 'the classifier live guard consumption'],
-    ['bin/lib/checkpoint-role.mjs', checkpoint, 'guardClassForPath(file) === null && !isApprovedCheckpointPath(file)', 'the guarded-path exclusion from path-alone approval'],
+  // VB-06 / corrections task 2.6, made BEHAVIOURAL by RV-06 (task 7.5): the
+  // diff-shape guards must stay REAL and the commit-role classifier must
+  // consume them live. A text-presence check is defeated by an early
+  // `return true` that keeps every needle in the file, so this rule RUNS the
+  // guards on fixtures and demands the verdict each one exists to produce.
+  // A stubbed guard (`return true`) passes the "must hold" fixtures and fails
+  // every "must NOT hold" one — which is what a stub cannot fake.
+  const sha = (/** @type {string} */ ch) => ch.repeat(40);
+  const digest = (/** @type {string} */ ch) => `receipt:sha256:${ch.repeat(24)}`;
+  const binding = (/** @type {Record<string, unknown>} */ overrides = {}) => ({
+    subject: 'lane-one',
+    evidenceSha: sha('a'),
+    receiptDigest: digest('1'),
+    observedAt: '2026-09-30T00:00:00.000Z',
+    executor: 'gate:local',
+    artifactPaths: [],
+    ...overrides,
+  });
+  const evidence = (/** @type {unknown[]} */ bindings) => JSON.stringify({ schemaVersion: RELEASE_EVIDENCE_SCHEMA, bindings });
+  const correction = (/** @type {string} */ id, /** @type {string} */ ch) => ({
+    id,
+    path: 'docs/CURRENT_STATE.md',
+    oldLineSha256: `sha256:${ch.repeat(24)}`,
+    oldLineExcerpt: 'retired line',
+    reason: 'synthetic',
+  });
+  const corrections = (/** @type {unknown[]} */ entries) => JSON.stringify({ schemaVersion: DOCUMENT_ROLE_CORRECTIONS_SCHEMA, corrections: entries });
+  /** @type {Array<[string, string | null, string | null, boolean, string]>} */
+  const cases = [
+    [RELEASE_EVIDENCE_FILE, evidence([binding()]), evidence([binding()]), true, 'an unchanged bindings file'],
+    [RELEASE_EVIDENCE_FILE, evidence([binding()]), evidence([binding({ evidenceSha: sha('b'), receiptDigest: digest('2') })]), true, 'a re-bind that arrives with a new receipt'],
+    [RELEASE_EVIDENCE_FILE, evidence([binding()]), evidence([binding({ evidenceSha: null })]), false, 'evidence erasure (VB-01)'],
+    [RELEASE_EVIDENCE_FILE, evidence([binding()]), evidence([binding({ artifactPaths: ['config/x.json'] })]), false, 'a non-value binding key (VB-02)'],
+    [RELEASE_EVIDENCE_FILE, evidence([binding()]), evidence([binding({ evidenceSha: sha('b'), receiptDigest: null })]), false, 'a re-bind with no receipt (RV-02)'],
+    [RELEASE_EVIDENCE_FILE, evidence([binding()]), evidence([binding({ evidenceSha: sha('b') })]), false, 'a re-bind that reuses the old receipt (RV-02)'],
+    [RELEASE_EVIDENCE_FILE, evidence([binding()]), evidence([binding(), binding({ subject: 'lane-two' })]), false, 'an added subject'],
+    [RELEASE_EVIDENCE_FILE, null, evidence([binding()]), false, 'an added bindings file'],
+    [DOCUMENT_ROLE_CORRECTIONS_FILE, corrections([correction('C-1', 'a')]), corrections([correction('C-1', 'a'), correction('C-2', 'b')]), true, 'a valid corrections append'],
+    [DOCUMENT_ROLE_CORRECTIONS_FILE, corrections([correction('C-1', 'a')]), corrections([correction('C-1', 'c')]), false, 'an edited correction'],
+    [DOCUMENT_ROLE_CORRECTIONS_FILE, corrections([correction('C-1', 'a'), correction('C-2', 'b')]), corrections([correction('C-1', 'a')]), false, 'a removed correction'],
+    ['docs/CURRENT_STATE.md', 'x\n', 'x\n', false, 'an unguarded path (no path-alone approval through the guard)'],
   ];
-  for (const [label, text, needle, what] of required) {
-    if (!text.includes(needle)) {
-      fail(`CHECKPOINT_ROLE_GUARD_STUBBED ${label} no longer carries ${what} (${needle}); a stubbed or dropped guard re-opens every guarded rewrite`);
+  for (const [file, before, after, expected, what] of cases) {
+    let actual;
+    try {
+      actual = guardHoldsForChange(file, before, after);
+    } catch {
+      actual = null;
+    }
+    if (actual !== expected) {
+      fail(`CHECKPOINT_ROLE_GUARD_STUBBED guardHoldsForChange(${file}) returned ${String(actual)} for ${what}; expected ${String(expected)} — a stubbed or weakened guard re-opens every guarded rewrite`);
+    }
+  }
+  // RV-03 / corrections task 7.3: the evidence-artifact existence probe that
+  // condition AND lane bindings depend on must really consult git. A repo with
+  // two commits proves presence, absence-at-an-earlier-commit, a missing path
+  // and an unknown commit — a stub that answers `true` fails three of the five.
+  verifyEvidenceArtifactProbe();
+  // The classifier must still dispatch to the guard and exclude guarded paths
+  // from path-alone approval. This half stays textual (running the classifier
+  // needs a git history); the guard behaviour above is what a stub cannot fake.
+  const checkpoint = read('bin/lib/checkpoint-role.mjs');
+  const required = [
+    ['guardHoldsForChange(file, before, after)', 'the classifier live guard consumption'],
+    ['guardClassForPath(file) === null && !isApprovedCheckpointPath(file)', 'the guarded-path exclusion from path-alone approval'],
+  ];
+  for (const [needle, what] of required) {
+    if (!checkpoint.includes(needle)) {
+      fail(`CHECKPOINT_ROLE_GUARD_STUBBED bin/lib/checkpoint-role.mjs no longer carries ${what} (${needle}); a dropped guard re-opens every guarded rewrite`);
     }
   }
 }
@@ -666,5 +728,45 @@ function verifyD3ProbeBinding(collectorSource, collectorBody) {
   }
   if (!/resolveProbeBinding\(\{\s*certifiedCheckpointSha:\s*substantiveSha,/.test(collectorBody)) {
     fail('RELEASE_PROBE_NOT_CHECKPOINT_BOUND: the probe binding must be derived from the certified checkpoint (certifiedCheckpointSha: substantiveSha)');
+  }
+}
+
+function verifyEvidenceArtifactProbe() {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'nw-ev-artifact-'));
+  const run = (/** @type {string[]} */ args) => spawnSync('git', args, {
+    cwd: directory,
+    env: { PATH: '/usr/bin:/bin', HOME: directory, GIT_CONFIG_GLOBAL: '/dev/null', GIT_CONFIG_NOSYSTEM: '1', GIT_AUTHOR_NAME: 'nw', GIT_AUTHOR_EMAIL: 'nw@example.invalid', GIT_COMMITTER_NAME: 'nw', GIT_COMMITTER_EMAIL: 'nw@example.invalid', LANG: 'C' },
+    shell: false,
+    encoding: 'utf8',
+    timeout: 15_000,
+  });
+  try {
+    if (run(['init', '--quiet']).status !== 0) {
+      fail('CHECKPOINT_ROLE_GUARD_STUBBED the evidence-artifact fixture repository could not be created');
+      return;
+    }
+    fs.writeFileSync(path.join(directory, 'a.txt'), 'a\n');
+    run(['add', 'a.txt']);
+    run(['commit', '--quiet', '--no-gpg-sign', '-m', 'one']);
+    const first = (run(['rev-parse', 'HEAD']).stdout ?? '').trim();
+    fs.writeFileSync(path.join(directory, 'b.txt'), 'b\n');
+    run(['add', 'b.txt']);
+    run(['commit', '--quiet', '--no-gpg-sign', '-m', 'two']);
+    const second = (run(['rev-parse', 'HEAD']).stdout ?? '').trim();
+    /** @type {Array<[string, string, boolean, string]>} */
+    const cases = [
+      [first, 'a.txt', true, 'an artifact present at its commit'],
+      [first, 'b.txt', false, 'an artifact first added in a DESCENDANT'],
+      [second, 'b.txt', true, 'an artifact present at the later commit'],
+      [second, 'missing.txt', false, 'a path that never existed'],
+      ['0'.repeat(40), 'a.txt', false, 'an unknown commit'],
+    ];
+    for (const [sha, artifact, expected, what] of cases) {
+      if (evidenceArtifactExistsAtSha(directory, sha, artifact) !== expected) {
+        fail(`CHECKPOINT_ROLE_GUARD_STUBBED evidenceArtifactExistsAtSha did not answer ${String(expected)} for ${what}; a stubbed existence probe lets an artifact-free binding read as evidenced`);
+      }
+    }
+  } finally {
+    fs.rmSync(directory, { recursive: true, force: true });
   }
 }

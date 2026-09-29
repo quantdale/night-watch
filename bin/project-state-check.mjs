@@ -33,6 +33,7 @@ import { loadTypeScriptModule as loadRuntimeTypeScriptModule } from './lib/types
 import { loadReleaseEvidenceBindings, resolveEvidenceShaForSubject } from './lib/release-evidence.mjs';
 import { ACCESSIBILITY_RECORD_PATH, parseAccessibilityCertificationRecord } from './lib/accessibility-record.mjs';
 import { UI_HARNESS_RECEIPT_PATH, UI_HARNESS_TYPES_PATH, evaluateUiHarnessReceipt, extractApiErrorKinds } from './lib/ui-harness-receipt.mjs';
+import { evidenceArtifactExistsAtSha } from './lib/evidence-artifact.mjs';
 import { exerciseConfigurationContract, exercisePreflightRefusal } from './lib/release-probe-exercises.mjs';
 import { bindTreeProbe, receiptBindingRelation, receiptNotAtCheckpoint, resolveProbeBinding } from './lib/probe-binding.mjs';
 import { classifyCertificationDemotion } from './lib/certification-demotion.mjs';
@@ -302,6 +303,27 @@ function probeLaneState(root, substantiveSha, isAncestor, today) {
   const reported = reportLaneState(loaded.lanes, substantiveSha, isAncestor);
   const due = collectRevisitDue(loaded.lanes, today);
   const counts = { proven: 0, externallyBlocked: 0, neverAttempted: 0, staleEvidence: 0 };
+  // RV-03 / corrections task 7.3: a lane reported PROVEN must ALSO carry the
+  // evidence artifacts its binding declares AT its bound SHA. A declared path
+  // missing there (an artifact first added in a descendant) makes the lane
+  // non-proven — counted with the stale lanes and named in the findings.
+  const laneBindings = loadReleaseEvidenceBindings(root);
+  /** @type {string[]} */
+  const artifactFindings = [];
+  for (const lane of reported) {
+    if (lane.reportedClass !== 'PROVEN') continue;
+    const binding = laneBindings.bySubject?.get(lane.laneId);
+    const laneSha = binding?.evidenceSha ?? (typeof lane.evidenceSha === 'string' ? lane.evidenceSha : null);
+    if (typeof laneSha !== 'string' || !HEX40.test(laneSha)) continue;
+    for (const declared of Array.isArray(binding?.artifactPaths) ? binding.artifactPaths : []) {
+      if (!evidenceArtifactExistsAtSha(root, laneSha, declared)) {
+        lane.reportedClass = 'PROVEN (STALE_EVIDENCE)';
+        lane.staleEvidence = true;
+        artifactFindings.push(`EVIDENCE_ARTIFACT_ABSENT_AT_SHA:${lane.laneId}:${declared}`);
+        break;
+      }
+    }
+  }
   for (const lane of reported) {
     if (lane.reportedClass === 'PROVEN') counts.proven += 1;
     else if (lane.reportedClass === 'PROVEN (STALE_EVIDENCE)') counts.staleEvidence += 1;
@@ -312,6 +334,7 @@ function probeLaneState(root, substantiveSha, isAncestor, today) {
     ...errors.map((entry) => `${entry.code}:${entry.detail}`),
     ...due.map((entry) => `REVISIT_DUE:${entry.laneId}@${entry.revisitDate}`),
     ...reported.filter((lane) => lane.staleEvidence).map((lane) => `STALE_EVIDENCE:${lane.laneId}`),
+    ...artifactFindings,
   ];
   return {
     output: findings.length === 0
@@ -1423,16 +1446,9 @@ function main() {
           for (const [subject, binding] of evidenceBindingsForArtifacts.bySubject ?? []) {
             artifactPathsBySubject.set(subject, Array.isArray(binding?.artifactPaths) ? binding.artifactPaths : []);
           }
-          const evidenceArtifactAtSha = (sha, artifactPath) => {
-            const probe = gitReadOnly(root, ['cat-file', '-e', `${sha}:${artifactPath}`]);
-            if (probe !== null) return true;
-            const exit = typeof probe?.status === 'number' ? probe.status : null;
-            // Exit 1 = the object/path does not exist at that SHA (a proven
-            // absence). Timeout, signal or spawn failure (exit null) is
-            // indeterminate and fails closed to ABSENT as well — never a
-            // silent pass.
-            return exit === 0;
-          };
+          // Any git failure (absence, timeout, signal, spawn error) is ABSENT —
+          // never a silent pass.
+          const evidenceArtifactAtSha = (sha, artifactPath) => evidenceArtifactExistsAtSha(root, sha, artifactPath);
           for (const condition of boundDefinition.conditions) {
             if (condition.evidenceSha === null) continue;
             if (gitReadOnly(root, ['cat-file', '-e', `${condition.evidenceSha}^{commit}`]) === null) {
@@ -1531,6 +1547,8 @@ function main() {
             definitionDigest,
             resolveEvidenceArtifactAtSha: evidenceArtifactAtSha,
             evidenceArtifactPaths: Object.fromEntries(artifactPathsBySubject),
+            // RV-02: a SHA with no receipt is a claim, not an observation.
+            evidenceReceiptDigests: Object.fromEntries([...(evidenceBindingsForArtifacts.bySubject ?? [])].map(([subject, binding]) => [subject, binding?.receiptDigest ?? null])),
             resolveEvidenceRelation: (resolvedEvidenceSha, checkpoint) => {
               const headAfter = gitReadOnly(root, ['rev-parse', 'HEAD'])?.trim() ?? null;
               if (headBefore !== null && headAfter !== null && headBefore !== headAfter) {

@@ -99,7 +99,7 @@
     },
     {
       "bin": "bin/lib/hardening/rules/validation-and-gates.mjs",
-      "maxErrors": 22
+      "maxErrors": 21
     },
     {
       "bin": "bin/lib/hardening/rules/workspace-and-layout.mjs",
@@ -318,6 +318,6 @@
       "maxErrors": 94
     }
   ],
-  "totalCeiling": 1552,
+  "totalCeiling": 1551,
   "anyAnnotationBudget": 26
 }

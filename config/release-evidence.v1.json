@@ -7,7 +7,9 @@
       "receiptDigest": null,
       "observedAt": null,
       "executor": null,
-      "artifactPaths": []
+      "artifactPaths": [
+        "config/validation-lane-state.v1.json"
+      ]
     },
     {
       "subject": "exact-head-ci-authority",
@@ -15,7 +17,9 @@
       "receiptDigest": null,
       "observedAt": null,
       "executor": null,
-      "artifactPaths": []
+      "artifactPaths": [
+        "config/ci-block-record.v1.json"
+      ]
     },
     {
       "subject": "autonomous-yield-proof",
@@ -32,9 +36,7 @@
       "observedAt": null,
       "executor": null,
       "artifactPaths": [
-        "config/validation-lane-state.v1.json",
-        "config/hardening-rule-probes.v1.json",
-        "config/document-role.v1.json"
+        "config/task-id-ledger.v1.json"
       ]
     },
     {
@@ -44,9 +46,7 @@
       "observedAt": null,
       "executor": null,
       "artifactPaths": [
-        "config/validation-lane-state.v1.json",
-        "config/hardening-rule-probes.v1.json",
-        "config/document-role.v1.json"
+        "config/operator-cli-surface.v1.json"
       ]
     },
     {
@@ -56,9 +56,8 @@
       "observedAt": null,
       "executor": null,
       "artifactPaths": [
-        "config/validation-lane-state.v1.json",
-        "config/hardening-rule-probes.v1.json",
-        "config/document-role.v1.json"
+        "config/document-role.v1.json",
+        "config/document-role-corrections.v1.json"
       ]
     },
     {
@@ -68,9 +67,7 @@
       "observedAt": null,
       "executor": null,
       "artifactPaths": [
-        "config/validation-lane-state.v1.json",
-        "config/hardening-rule-probes.v1.json",
-        "config/document-role.v1.json"
+        "config/workspace-integrity.v1.json"
       ]
     },
     {
@@ -79,7 +76,9 @@
       "receiptDigest": null,
       "observedAt": null,
       "executor": null,
-      "artifactPaths": []
+      "artifactPaths": [
+        "config/dependency-currency.v1.json"
+      ]
     },
     {
       "subject": "dead-architecture-closure",
@@ -87,7 +86,9 @@
       "receiptDigest": null,
       "observedAt": null,
       "executor": null,
-      "artifactPaths": []
+      "artifactPaths": [
+        "config/reference-graph.v1.json"
+      ]
     },
     {
       "subject": "cli-implementation-contract",
@@ -96,9 +97,7 @@
       "observedAt": null,
       "executor": null,
       "artifactPaths": [
-        "config/validation-lane-state.v1.json",
-        "config/hardening-rule-probes.v1.json",
-        "config/document-role.v1.json"
+        "config/bin-typecheck.v1.json"
       ]
     },
     {
@@ -108,9 +107,7 @@
       "observedAt": null,
       "executor": null,
       "artifactPaths": [
-        "config/validation-lane-state.v1.json",
-        "config/hardening-rule-probes.v1.json",
-        "config/document-role.v1.json"
+        "config/hardening-rule-probes.v1.json"
       ]
     },
     {
@@ -119,7 +116,9 @@
       "receiptDigest": null,
       "observedAt": null,
       "executor": null,
-      "artifactPaths": []
+      "artifactPaths": [
+        "src/core/schemaLifecycle/declarations.ts"
+      ]
     },
     {
       "subject": "ui-error-taxonomy-rendering",
@@ -127,7 +126,10 @@
       "receiptDigest": null,
       "observedAt": null,
       "executor": null,
-      "artifactPaths": []
+      "artifactPaths": [
+        "ui/control-center/scripts/receipt-reporter.mjs",
+        "ui/control-center/src/__baselines__/view-dom-baseline.json"
+      ]
     },
     {
       "subject": "configuration-contract",
@@ -135,7 +137,9 @@
       "receiptDigest": null,
       "observedAt": null,
       "executor": null,
-      "artifactPaths": []
+      "artifactPaths": [
+        "config/environment-surface.v1.json"
+      ]
     },
     {
       "subject": "accessibility-certification",
@@ -144,9 +148,7 @@
       "observedAt": null,
       "executor": null,
       "artifactPaths": [
-        "config/validation-lane-state.v1.json",
-        "config/hardening-rule-probes.v1.json",
-        "config/document-role.v1.json"
+        "tests/browser/accessibilityCertification.browser.ts"
       ]
     },
     {
@@ -155,7 +157,9 @@
       "receiptDigest": null,
       "observedAt": null,
       "executor": null,
-      "artifactPaths": []
+      "artifactPaths": [
+        "src/auth/capabilityLifecycle.ts"
+      ]
     },
     {
       "subject": "root-compile",
@@ -163,7 +167,9 @@
       "receiptDigest": null,
       "observedAt": null,
       "executor": null,
-      "artifactPaths": []
+      "artifactPaths": [
+        "tsconfig.json"
+      ]
     },
     {
       "subject": "bin-parse",
@@ -171,7 +177,9 @@
       "receiptDigest": null,
       "observedAt": null,
       "executor": null,
-      "artifactPaths": []
+      "artifactPaths": [
+        "tsconfig.bin.json"
+      ]
     },
     {
       "subject": "structural-invariants",
@@ -179,7 +187,9 @@
       "receiptDigest": null,
       "observedAt": null,
       "executor": null,
-      "artifactPaths": []
+      "artifactPaths": [
+        "config/hardening-rule-probes.v1.json"
+      ]
     },
     {
       "subject": "authoritative-gate",
@@ -187,7 +197,9 @@
       "receiptDigest": null,
       "observedAt": null,
       "executor": null,
-      "artifactPaths": []
+      "artifactPaths": [
+        "config/quality-gate.v1.json"
+      ]
     },
     {
       "subject": "full-regression",
@@ -195,7 +207,9 @@
       "receiptDigest": null,
       "observedAt": null,
       "executor": null,
-      "artifactPaths": []
+      "artifactPaths": [
+        "config/shard-weights.v1.json"
+      ]
     },
     {
       "subject": "clean-checkout",
@@ -203,7 +217,9 @@
       "receiptDigest": null,
       "observedAt": null,
       "executor": null,
-      "artifactPaths": []
+      "artifactPaths": [
+        "bin/quality-gate-clean.mjs"
+      ]
     },
     {
       "subject": "ui",
@@ -211,7 +227,9 @@
       "receiptDigest": null,
       "observedAt": null,
       "executor": null,
-      "artifactPaths": []
+      "artifactPaths": [
+        "ui/control-center/package-lock.json"
+      ]
     },
     {
       "subject": "browser-workflow",
@@ -219,7 +237,9 @@
       "receiptDigest": null,
       "observedAt": null,
       "executor": null,
-      "artifactPaths": []
+      "artifactPaths": [
+        "playwright.control-center.config.ts"
+      ]
     },
     {
       "subject": "owner-manual",
@@ -236,14 +256,7 @@
       "observedAt": null,
       "executor": null,
       "artifactPaths": [
-        "config/validation-lane-state.v1.json",
-        "config/release-certification.v1.json",
-        "config/hardening-rule-probes.v1.json",
-        "config/dependency-currency.v1.json",
-        "config/document-role.v1.json",
-        "config/environment-surface.v1.json",
-        "src/core/schemaLifecycle/declarations.ts",
-        "ui/control-center/src/__baselines__/view-dom-baseline.json"
+        "config/ci-block-record.v1.json"
       ]
     },
     {
@@ -252,7 +265,9 @@
       "receiptDigest": null,
       "observedAt": null,
       "executor": null,
-      "artifactPaths": []
+      "artifactPaths": [
+        "config/dependency-currency.v1.json"
+      ]
     }
   ]
 }

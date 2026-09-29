@@ -208,6 +208,7 @@ export function parseDocumentRoleCorrections(record) {
   }
   const corrections = [];
   const seen = new Set();
+  const seenDigests = new Set();
   for (const entry of raw.corrections) {
     if (entry === null || typeof entry !== 'object' || Array.isArray(entry)) {
       errors.push('CORRECTION_ENTRY_NOT_AN_OBJECT');
@@ -245,6 +246,12 @@ export function parseDocumentRoleCorrections(record) {
     if (!ok) continue;
     if (seen.has(item.id)) errors.push(`CORRECTION_ID_DUPLICATE:${item.id}`);
     seen.add(item.id);
+    // RV-01 / corrections task 7.1: two entries exempting the SAME archive line
+    // (same path, same digest) are one exemption stated twice — the second
+    // could outlive the removal that justified the first.
+    const digestKey = `${item.path}\u0000${item.oldLineSha256}`;
+    if (seenDigests.has(digestKey)) errors.push(`CORRECTION_DIGEST_DUPLICATE:${item.id}`);
+    seenDigests.add(digestKey);
     corrections.push({ id: item.id, path: item.path, oldLineSha256: item.oldLineSha256, oldLineExcerpt: item.oldLineExcerpt, reason: item.reason });
   }
   return { ok: errors.length === 0, errors, corrections };
@@ -288,6 +295,20 @@ export function isValuesOnlyBindingChange(beforeText, afterText) {
     const right = after.bindings[index];
     if (left.subject !== right.subject) {
       return { valuesOnly: false, reason: 'BINDING_SUBJECT_SET_CHANGED' };
+    }
+    // RV-02 / corrections task 7.2: re-pointing a subject at a DIFFERENT commit
+    // (null -> A or A -> B) is documentary only when it comes WITH a new
+    // receipt: a non-null receiptDigest that differs from the previous one,
+    // and the observation time and executor that produced it. Values alone let
+    // a docs-only commit re-bind a lane or condition to a fresh SHA without
+    // any re-execution.
+    if (right.evidenceSha !== null && right.evidenceSha !== left.evidenceSha) {
+      if (right.receiptDigest === null || right.observedAt === null || right.executor === null) {
+        return { valuesOnly: false, reason: `BINDING_REBIND_WITHOUT_RECEIPT:${left.subject}` };
+      }
+      if (right.receiptDigest === left.receiptDigest) {
+        return { valuesOnly: false, reason: `BINDING_REBIND_RECEIPT_UNCHANGED:${left.subject}` };
+      }
     }
     for (const key of EVIDENCE_BINDING_KEYS) {
       if (key === 'subject') continue;
