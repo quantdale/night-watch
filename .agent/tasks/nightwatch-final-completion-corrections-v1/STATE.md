@@ -201,16 +201,29 @@ hard-coded `/tmp/`; HC-188 probes the HANDOFF classification invariant
 syntheticCampaignShards + phase23QualityGate 92/92; hardening:check,
 typecheck:bin (1559) and validation:universe PASS. The dead
 `SHARD_CHILD_ENVIRONMENT_IDS` export (.mjs + .d.mts) is removed after full
-consumer verification.
+consumer verification. M4's `gate:milestone` then PASSED at the clean
+checkpoint `8b24e11e` (task 3.12 local half): all 12 steps exit 0 —
+validation-universe, execution-classes, typecheck, hardening-check,
+agent-check, handoff-check, typecheck-bin, hardening-rules (the FULL probe
+campaign incl. HC-180..HC-188), project-check, workspace-check, affected-tests
+(438 selected), affected-shards (5769 passed / 0 failed); wall 990.4s vs the
+300s telemetry target is disclosed as OVER_TARGET, not a criterion failure.
+The shard-failure fix that unblocked it: the sun_path budget now reads
+`NIGHTWATCH_AMBIENT_TMPDIR` — the pre-override ambient root preserved by
+`buildShardChildEnvironment` — because run-shards points TMPDIR at its own
+run root for isolation while the campaign/gate context the budget describes
+inherits the ambient TMPDIR (reproduced and proven in-shard: run-shards
+20/20 PASS after the fix; before it, the same context failed at 134 > 107).
 
 ## Exact Next Action
 
-Proceed to M4 task 3.12 (the M4 close-out: focused suites + `gate:milestone`
-PASS at the clean checkpoint, commit, then the pending exact-head CI and
-topology-artifact observation). The clean-gate proof, the semantic-compat
-clean-tree rerun, and VC-07..VC-11 are complete. Preserve VC-01 exact-head CI
-and VC-03 artifact observation as pending M4 close-out evidence; integrate
-only after 3.12 passes.
+Complete task 3.12's integration half: run `npm run session:status`, then
+integrate this session's branch with the exact session ID and full 40-hex
+head (C-00 fast-forward push), observe exact-head GitHub Actions green with
+all required groups AND the uploaded runner-topology artifact (VC-03
+observation), record both in this STATE, then tick 3.12 and mark M4 COMPLETE.
+The local half of 3.12 is already proven: gate:milestone PASS at `8b24e11e`
+(12/12 steps, 5769/0 shards).
 
 ## Files Changed
 
@@ -245,6 +258,7 @@ only after 3.12 passes.
 | `tests/unit/observerSemanticLedger.test.ts` | VC-07 root-cause comment correction (synchronous projection; the wait bounds handler latency after `goto`) | observerSemanticLedger 2/2 PASS |
 | `tests/unit/c03GrpcTopology.test.ts`, `tests/unit/c04FrontendGraph.test.ts`, `tests/unit/phase14FreshSourceAdmission.test.ts`, `config/semantic-compatibility.v1.json` | VC-09 non-vacuous twin premises, declared C3-14 skip, `classifyLiveSourceTestState` for the c03 real-topology describes (LIVE_SOURCE_ tokens replace 11 generic entries; 93 exact identities) | focused 48 passed / 20 declared; semantic-compat PASS at `71a6ca3b` |
 | `bin/lib/topology-gate.mjs`, `bin/gate-topology.mjs`, `config/quality-gate.v1.json`, `tests/unit/gateTopology.test.ts`, `bin/child-environment.mjs` | VC-10 separate `declaredDependence` counting, bounded function-returned-root extraction (unresolvable stays UNRESOLVED), truthful `requiresSiblingTopology: true` for the two host-path-debt groups; dead `CHILD_ENV_INHERITED_KEYS` export removed | gateTopology 36/36; gate:topology PASS (declaredDependence 2/3); typecheck:bin 1559 |
+| `bin/lib/shard-child-environment.mjs`, `tests/unit/syntheticCampaignShards.test.ts`, `tests/unit/validationShardPlan.test.ts` | VC-11 follow-through: preserve the pre-override ambient TMPDIR as `NIGHTWATCH_AMBIENT_TMPDIR`; sun_path budget reads it (never the shard override, never hard-coded `/tmp/`) | in-shard reproduction PASS 20/0; gate:milestone PASS at `8b24e11e` |
 | `bin/workspace-integrity.mjs`, `tests/unit/workspaceIsolation.test.ts`, `config/quality-gate.v1.json`, `tests/unit/syntheticCampaignShards.test.ts`, `config/hardening-rule-probes.v1.json`, `bin/lib/shard-child-environment.{mjs,d.mts}` | VC-11 orphan-branch count against the canonical remote ref + numeric assertion, UI group `NODE22`, TMPDIR-measured sun_path budget, HC-188 HANDOFF classification probe; dead `SHARD_CHILD_ENVIRONMENT_IDS` export removed | 92/92 focused; probe 2/2 DETECTED; hardening + typecheck:bin (1559) + universe PASS |
 | `bin/lib/hardening/rules/validation-and-gates.mjs`, `config/hardening-rule-probes.v1.json`, `config/bin-typecheck.v1.json` | VC-08 token-based workflow-pinning matcher (all `uses` key forms, comment-aware, fail-closed on empty refs) + probes HC-184..HC-187; ratchet lowered to 1559 | probe campaign 5/5 DETECTED; hardening suites 15/15; typecheck:bin PASS |
 | `tests/unit/semanticSkipIdentity.test.ts`, `tests/unit/selfDevSandboxConfinement.test.ts`, `tests/unit/syntheticCampaignDiagnostics.test.ts` | VC-02 identity/report, reason, and gate-receipt regressions | 29/29 receipt+policy; 25 passed, 1 declared host skip |
@@ -621,6 +635,20 @@ group declares `NODE22`. hardening:check, typecheck:bin (1559) and
 validation:universe PASS alongside. `SHARD_CHILD_ENVIRONMENT_IDS` (zero
 external consumers across .mjs/.ts/.d.mts, independently verified) is removed
 from `bin/lib/shard-child-environment.{mjs,d.mts}`.
+
+Command: `npm run gate:milestone` at `8b24e11e` (task 3.12 local half)
+Result: PASS (wall 990.4s, OVER_TARGET disclosed against the 300s telemetry target)
+When: 2026-09-28
+Relevant output: 12/12 steps exit 0 — validation-universe (0.1s),
+execution-classes (0.4s), typecheck (3.3s), hardening-check (22.2s),
+agent-check (3.3s), handoff-check (2.0s), typecheck-bin (10.7s),
+hardening-rules full probe campaign (183.2s, incl. HC-180..HC-188),
+project-check (10.1s), workspace-check (0.3s), affected-tests (438 selected,
+3.1s), affected-shards (751.8s, 5769 passed / 0 failed). The single prior
+shard failure (sun_path budget 134 > 107 under run-shards' TMPDIR override)
+is fixed by budgeting against the preserved ambient root; the in-shard
+reproduction (`run-shards --files=syntheticCampaignShards,validationShardPlan`)
+returned PASS 20/0 before this gate.
 
 ## Decisions Made During This Task
 

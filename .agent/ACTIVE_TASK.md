@@ -69,9 +69,12 @@ declares `NODE22`, the sun_path budget measures the actual TMPDIR, and
 HC-188 probes the HANDOFF classification invariant (2/2 DETECTED) — 92/92
 focused, hardening/typecheck/universe PASS; the dead
 `SHARD_CHILD_ENVIRONMENT_IDS` export is removed.
-Next action: task 3.12 — the M4 close-out (focused suites + `gate:milestone`
-PASS at the clean checkpoint, commit, then the pending exact-head CI and
-topology-artifact observation). VC-01's stale skip guards
+`gate:milestone` PASSED at the clean checkpoint `8b24e11e` (12/12 steps,
+5769 passed / 0 failed shards; OVER_TARGET disclosed as telemetry).
+Next action: task 3.12 integration half — session:status, C-00 fast-forward
+integrate with the exact session and full 40-hex head, observe exact-head CI
+green with the restored tests AND the uploaded runner-topology artifact
+(VC-03), record the evidence, tick 3.12, mark M4 COMPLETE. VC-01's stale skip guards
 and allowlist entries are removed; all four browser-backed tests passed locally,
 with exact-head GitHub Actions proof pending M4 close-out.
 
