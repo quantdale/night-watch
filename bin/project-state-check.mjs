@@ -310,6 +310,8 @@ function probeLaneState(root, substantiveSha, isAncestor, today) {
   const laneBindings = loadReleaseEvidenceBindings(root);
   /** @type {string[]} */
   const artifactFindings = [];
+  /** @type {Set<string>} */
+  const artifactDemoted = new Set();
   for (const lane of reported) {
     if (lane.reportedClass !== 'PROVEN') continue;
     const binding = laneBindings.bySubject?.get(lane.laneId);
@@ -317,15 +319,15 @@ function probeLaneState(root, substantiveSha, isAncestor, today) {
     if (typeof laneSha !== 'string' || !HEX40.test(laneSha)) continue;
     for (const declared of Array.isArray(binding?.artifactPaths) ? binding.artifactPaths : []) {
       if (!evidenceArtifactExistsAtSha(root, laneSha, declared)) {
-        lane.reportedClass = 'PROVEN (STALE_EVIDENCE)';
-        lane.staleEvidence = true;
+        artifactDemoted.add(lane.laneId);
         artifactFindings.push(`EVIDENCE_ARTIFACT_ABSENT_AT_SHA:${lane.laneId}:${declared}`);
         break;
       }
     }
   }
   for (const lane of reported) {
-    if (lane.reportedClass === 'PROVEN') counts.proven += 1;
+    if (lane.reportedClass === 'PROVEN' && artifactDemoted.has(lane.laneId)) counts.staleEvidence += 1;
+    else if (lane.reportedClass === 'PROVEN') counts.proven += 1;
     else if (lane.reportedClass === 'PROVEN (STALE_EVIDENCE)') counts.staleEvidence += 1;
     else if (lane.reportedClass === 'BLOCKED_EXTERNAL') counts.externallyBlocked += 1;
     else if (lane.reportedClass === 'UNAVAILABLE_CAPABILITY') counts.neverAttempted += 1;
@@ -1524,6 +1526,7 @@ function main() {
           // live HEAD BY DECLARATION). Any other value used to fall back to the
           // live HEAD silently, letting a malformed anchor certify whatever HEAD
           // happened to be; it is now an error and the checkpoint resolves null.
+          /** @type {string | null} */
           let certifiedCheckpointSha = null;
           if (HEX40.test(substantiveSha ?? '')) certifiedCheckpointSha = substantiveSha;
           else if (substantiveSha === 'DISCOVER_FROM_GIT') certifiedCheckpointSha = liveHeadSha;

@@ -219,7 +219,7 @@
     },
     {
       "bin": "bin/project-state-check.mjs",
-      "maxErrors": 233
+      "maxErrors": 232
     },
     {
       "bin": "bin/quality-gate-clean.mjs",
@@ -318,6 +318,6 @@
       "maxErrors": 94
     }
   ],
-  "totalCeiling": 1551,
+  "totalCeiling": 1550,
   "anyAnnotationBudget": 40
 }
