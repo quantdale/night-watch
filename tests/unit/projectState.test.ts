@@ -2430,16 +2430,30 @@ test.describe('release probe wiring (M4 task 5.1, corrected by VD-01..VD-05)', (
     expect(output).not.toBe('');
     expect(output).not.toContain('the check is not present at this checkpoint');
     const states = new Map<string, string>();
-    for (const line of output.split('\n')) {
-      const match = /^\s+\d+ (\S+) state=(\S+)/.exec(line);
-      if (match !== null) states.set(match[1] as string, match[2] as string);
-      if (line.includes('state=')) expect(line).not.toContain('is registered and its capability is created by');
+    let checkpoint = '';
+    // A passing (clean-tree) evaluation prints the JSON receipt on stdout; a
+    // failing one prints the text verdict on stderr. Read whichever exists.
+    let receipt: { releaseVerdict?: { certifiedCheckpointSha?: string; conditions?: Array<{ id: string; state: string }> } } | null = null;
+    try {
+      receipt = JSON.parse(result.stdout);
+    } catch {
+      receipt = null;
+    }
+    if (receipt?.releaseVerdict?.conditions !== undefined) {
+      checkpoint = receipt.releaseVerdict.certifiedCheckpointSha ?? '';
+      for (const condition of receipt.releaseVerdict.conditions) states.set(condition.id, condition.state);
+    } else {
+      checkpoint = /^checkpoint (\S+)/m.exec(output)?.[1] ?? '';
+      for (const line of output.split('\n')) {
+        const match = /^\s+\d+ (\S+) state=(\S+)/.exec(line);
+        if (match !== null) states.set(match[1] as string, match[2] as string);
+        if (line.includes('state=')) expect(line).not.toContain('is registered and its capability is created by');
+      }
     }
     expect(states.size).toBe(16);
     for (const state of states.values()) expect((RELEASE_CONDITION_STATES as readonly string[]).includes(state)).toBe(true);
     // VD-01: a D3 probe resolves MET only at HEAD == S with a clean tree (or
     // from a receipt bound to S). Derive the facts independently here.
-    const checkpoint = /^checkpoint (\S+)/m.exec(output)?.[1] ?? '';
     const head = git(REPO_ROOT, ['rev-parse', 'HEAD']);
     const clean = git(REPO_ROOT, ['status', '--porcelain']) === '';
     if (!(head === checkpoint && clean)) {
