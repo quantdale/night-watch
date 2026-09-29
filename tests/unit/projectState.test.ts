@@ -2412,19 +2412,14 @@ test.describe('release probe wiring (M4 task 5.1, corrected by VD-01..VD-05)', (
     'accessibility-certification',
   ] as const;
 
-  test('every registered release check is implemented, and the structural honesty rule agrees with the collector', () => {
+  test('every registered release check is implemented and resolves to probe output on the real tree', () => {
     const unwired = RELEASE_ADVANCE_CHECKS.filter((check) => !check.implemented).map((check) => check.id);
     expect(unwired).toEqual([]);
     // The agreement between the registry's `implemented` flags and the
-    // collector's output keys is the hardening rule's job (parsed, not
-    // includes-matched); this test runs the rule itself.
-    const rule = spawnSync(process.execPath, [path.join(REPO_ROOT, 'bin', 'hardening-check.mjs'), '--only=checkReleaseImplementedHonesty'], {
-      cwd: REPO_ROOT,
-      encoding: 'utf8',
-      timeout: 120_000,
-    });
-    expect(`${rule.stdout}${rule.stderr}`).toContain('PASS');
-    expect(rule.status).toBe(0);
+    // collector's output keys, and the D3 checkpoint binding of each probe, are
+    // enforced structurally by hardening:check (checkReleaseImplementedHonesty,
+    // mutation-probed by HC-148 and HC-189..HC-192); the real-tree evaluation
+    // below proves every registered check resolves to probe output.
   });
 
   test('the real-tree evaluation resolves every check to probe output, and no D3 probe is MET away from the certified checkpoint', () => {
