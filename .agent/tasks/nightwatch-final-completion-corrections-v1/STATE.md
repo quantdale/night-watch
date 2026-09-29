@@ -247,19 +247,45 @@ synthetic-campaign file set, and the exact-head receipt accounts every test
 — 1966 total, 1926 passed, 40 declared-or-declared-here skips, `failed: 0`,
 `didNotRun: 0` — so the four browser-backed security assertions executed and
 passed in CI. The remaining gap at that run was purely the four declarations
-now added.
+now added. Landed as `491b5ef9` (integrated, origin/main == `491b5ef9`).
+
+The second exact-head observation (run 36537649045 at `491b5ef9`) proved the
+CF-04 fix: SYNTHETIC_CAMPAIGN's skip policy now evaluates PASS (14 declared /
+0 undeclared). It then failed a DIFFERENT group on a real test failure —
+SEMANTIC_COMPATIBILITY 2177 total / 2162 passed / 1 failed at
+`tests/unit/observerSemanticLedger.test.ts:138` ("ledger cap is bounded and
+overflow is explicit"), which is green at `2b5d8178` in the same lane and in
+local isolation. Recorded as FLAKE-002 (docs/FLAKE-LEDGER.md) with its true
+mechanism: the page-side 550-fetch loop paced itself with a blind 10 ms
+sleep, while the observer's response handler (bounded body read gated at
+MAX_CONCURRENT_BODY_READS = 4, which REFUSES rather than queues —
+BODY_READ_ACQUISITION_BOUND) trails page-side fetch resolution; under
+full-suite load the burst crosses 4, reads refuse, and the ledger lands short
+of the 512 cap with the overflow latch false. The fix (D-147) is purely
+fixture-side: the loop now advances only while at most one response handler
+is outstanding (the observer's own `activeRequests()` drain signal — the
+counter the existing settlement barrier consumes) and drains to 0 before
+asserting. No source or gate text changes: bodyReadAcquisition's structural
+pins (4-bound constant, gate line, refusal branch, both release sites) are
+byte-untouched and its 4/4 suite passes; the cap/overflow assertions stay
+exact. Evidence: bodyReadAcquisition 4/4 + observerSemanticLedger 2/2
+(cap test 40.8s paced vs 19.8s blind — the honest cost of the handshake),
+typecheck PASS, hardening:check PASS, typecheck:bin PASS (1559 / 14 of 76 /
+78 ceilings).
 
 ## Exact Next Action
 
-Commit the fix (config declarations + source-bound regression) with this
-STATE/ACTIVE_TASK/tasks.md update as the M4 CI-truth commit, then complete
-task 3.12's integration half: run `npm run session:status`, integrate with
+Commit the FLAKE-002/D-147 fix with this continuity update, integrate with
 `--expect-session sess-0c6596dae563 --expect-head <full 40-hex HEAD>` (the
-C-00 fast-forward push of this branch tip), observe exact-head GitHub Actions
-green with ALL 15 required groups AND the uploaded runner-topology artifact
-(VC-03 observation), record the run ID + receipts in this STATE, tick 3.1
-(VC-01 CI proof) and 3.12, and mark M4 COMPLETE. Then continue group 5
-(tasks 5.1-5.6, ledger and continuity truth).
+C-00 fast-forward push of this branch tip), then observe exact-head GitHub
+Actions green with ALL 15 required groups AND the uploaded runner-topology
+artifact (VC-03 observation; the artifact step reports "no files found" on
+red runs because TOPOLOGY is NOT_RUN fail-fast — it must produce
+`artifacts/topology-receipts/*.json` on the green run, whose
+`runnerTopologyClass` resolves PROVEN_DEGRADED on this Bubblewrap-less
+CI runner and is accepted by the gate). Record the run ID + receipts in this
+STATE, tick 3.1 (VC-01 CI proof) and 3.12, and mark M4 COMPLETE. Then
+continue group 5 (tasks 5.1-5.6, ledger and continuity truth).
 
 ## Files Changed
 
@@ -300,6 +326,7 @@ green with ALL 15 required groups AND the uploaded runner-topology artifact
 | `tests/unit/semanticSkipIdentity.test.ts`, `tests/unit/selfDevSandboxConfinement.test.ts`, `tests/unit/syntheticCampaignDiagnostics.test.ts` | VC-02 identity/report, reason, and gate-receipt regressions | 29/29 receipt+policy; 25 passed, 1 declared host skip |
 | `config/validation-universe.v1.json`, `config/validation-execution-classes.v1.json` | register ratchet suite and refresh the inventory digest | checks PASS at M3 close; VC-06 re-measured at `sha256:95f903de` (581 discovered, 0 unclassified) |
 | `config/semantic-compatibility.v1.json`, `tests/unit/semanticSkipIdentity.test.ts` | CF-04 fix: declare the four CI-only sibling-checkout-gated skip identities (c08:110, c08:238, c09:301, c09:314) + source-bound regression binding declarations to their real skip sites | semanticSkipIdentity 15/15; discriminating probe PASS (5 CI identities PASS; drift/removal UNDECLARED_SKIP) |
+| `tests/unit/observerSemanticLedger.test.ts`, `docs/FLAKE-LEDGER.md`, `docs/DECISIONS.md` | FLAKE-002/D-147: pace the 550-response cap fixture on the observer's `activeRequests()` drain signal (event-driven, ≤ 1 outstanding) instead of the blind 10 ms sleep; no source/gate text touched | bodyReadAcquisition 4/4 + observerSemanticLedger 2/2 (cap 40.8s paced); hardening:check PASS |
 
 ## Validation Ledger
 
@@ -727,8 +754,47 @@ the 5 CI-absent sibling-gated identities evaluate PASS (5 declared / 0
 undeclared); a drifted title path returns UNDECLARED_SKIP; a removed
 declaration returns UNDECLARED_SKIP.
 
+Command: exact-head CI observation, run 36537649045 at `491b5ef9` (second
+attempt at task 3.12's integration half)
+Result: FAIL (SEMANTIC_COMPATIBILITY 1 failure at observerSemanticLedger:138
+— FLAKE-002; the CF-04 fix PROVEN — SYNTHETIC_CAMPAIGN skipPolicy PASS 14/0)
+When: 2026-09-29
+Relevant output: receipt `receipt:sha256:adda702092ea4febf9ab185d`
+(gitHead `491b5ef9`, environmentClass CI). GATE_DEFINITION, STATIC,
+BIN_TYPECHECK_CEILING, HARDENING, HARDENING_PROBES, HANDOFF_TRUTH,
+PROJECT_TRUTH, AGENT_CONTINUITY all PASS; SEMANTIC_COMPATIBILITY 2177/2162/
+14 skipped/1 failed with skipPolicy PASS (14 declared, 0 undeclared — the
+CF-04 declarations hold in CI) and failedLocations
+[tests/unit/observerSemanticLedger.test.ts:138:UNCLASSIFIED]; the remaining
+7 groups NOT_RUN (fail-fast). The topology artifact step again reported
+"No files were found" (TOPOLOGY NOT_RUN fail-fast) — the VC-03 artifact
+observation remains pending the green run; analysis confirms the TOPOLOGY
+group resolves `PROVEN_DEGRADED` (accepted) on this Bubblewrap-less runner
+(classifyRunnerTopology: BWRAP_UNAVAILABLE_DEGRADED envelope with zero
+findings), so no CI blocker exists there.
+
+Command: bodyReadAcquisition 4/4 + observerSemanticLedger 2/2 + typecheck +
+hardening:check + typecheck:bin (FLAKE-002/D-147 fix cone, dirty worktree)
+Result: PASS
+When: 2026-09-29
+Relevant output: the paced cap test passes deterministically (40.8s vs the
+blind 19.8s — the honest cost of the handler handshake); bodyReadAcquisition
+proves the gate text is byte-untouched (pins for the 4-bound constant, the
+gate line, the refusal branch and both release sites all hold); typecheck
+PASS; hardening:check PASS (the D-147/FLAKE-002 appends satisfy the
+APPEND_ONLY roles of docs/DECISIONS.md and docs/FLAKE-LEDGER.md);
+typecheck:bin PASS (1559 / 14 of 76 / 78 ceilings).
+
 ## Decisions Made During This Task
 
+- D-147 (docs/DECISIONS.md): handler-bounded fixtures pace on the observer's
+  drain signal (`activeRequests()`), never a wall-clock sleep. The 550-fetch
+  cap fixture's blind 10 ms spacing could not see the 4-read acquisition gate
+  (which REFUSES rather than queues), so suite load produced acquisition
+  refusals and a short ledger (FLAKE-002). The producer now advances only
+  while ≤ 1 response handler is outstanding and drains to 0 before asserting;
+  the consumer bound being tested (MAX_CONCURRENT_BODY_READS = 4, the cap of
+  512, explicit overflow) is unchanged and the gate source text is untouched.
 - VC-09 replaces existence-only sibling probes with
   `classifyLiveSourceTestState` so a STALE checkout can never masquerade as
   CURRENT, and the skip identity carries the full LIVE_SOURCE_<kind> token;

@@ -62,3 +62,56 @@ appending a dated correction, never by silently rewriting history.
 
 - **Correction to prior comment:** the D-24/R2-65 comment in the test now
   reflects the true mechanism (handler-passage latency, synchronous projection).
+
+---
+
+## FLAKE-002 — observerSemanticLedger ledger-cap pacing (10 ms blind sleep)
+
+- **Filed:** 2026-09-29 (corrections campaign, task 3.12 integration-half CI
+  gate)
+- **Surface:** `tests/unit/observerSemanticLedger.test.ts:138`
+  ("ledger cap is bounded and overflow is explicit, never silent"), the
+  `expect(evaluations.length).toBe(512)` and
+  `semanticEvaluationLedgerOverflow() === true` assertions.
+- **Observed failure mode:** exact-head CI run 36537649045 at `491b5ef9`
+  (SEMANTIC_COMPATIBILITY lane, 2177 tests) failed exactly this test
+  (`tests/unit/observerSemanticLedger.test.ts:138:UNCLASSIFIED`, 2162 passed /
+  1 failed). The same test passed in CI at `2b5d8178` (2163 passed / 0 failed)
+  and passes locally in isolation (2/2, 19.8 s) and at the committed tree.
+  Intermittent under full-suite load only.
+- **Mechanism (source, `src/browser/observers/networkObserver.ts`):** a
+  page-side `fetch()` resolves at response ARRIVAL, while the observer's
+  response handler (`page.on('response', onResponse)` at :1622) trails it:
+  bounded body read (`MAX_CONCURRENT_BODY_READS = 4`, :131/:137) -> projection
+  -> ledger. The acquisition gate REFUSES a read rather than queueing when 4
+  are in flight (`noteCaptureFailure('BODY_READ_ACQUISITION_BOUND')`,
+  :1195-1197), so that response is never projected and no evaluation receipt
+  lands. The pre-fix loop paced itself with a blind 10 ms page-side sleep
+  between 550 fetches; under event-loop contention the handler passage can
+  exceed 10 ms, the in-flight burst crosses 4, reads refuse, and the ledger
+  lands short of 512 while the overflow latch stays false — the cap assertion
+  then fails. By FLAKE-001's established mechanism (recordEvaluation and the
+  findings write are one synchronous handler passage), an ACQUIRED read always
+  pushes a receipt until the cap, so an acquisition refusal is the only path
+  that can land the ledger short.
+- **Reproduction attempt (honest outcome: NOT REPRODUCED locally):** 2/2 local
+  runs pass at the committed pre-fix tree (19.8 s each). The failure is
+  CI-load-intermittent; the two exact-head CI runs cited above are the
+  reproduction evidence (same test green at `2b5d8178`, red at `491b5ef9`, no
+  test-file change between them).
+- **Fix shipped:** event-driven pacing on the observer's OWN drain signal —
+  the loop advances only while at most one response handler is outstanding
+  (`activeRequests()`, the same counter the existing settlement barrier
+  consumes), and drains to 0 before asserting. No source or gate text
+  changes: `bodyReadAcquisition`'s structural pins (the 4-bound constant, the
+  gate line, the refusal branch, both release sites) are untouched, and the
+  cap/overflow assertions are unchanged. **Residual risk:** none known — the
+  producer now advances strictly slower than the handler passage (≤ 1
+  outstanding vs a gate of 4), so a refusal cannot accumulate; if one ever
+  did, the cap assertion still fails loudly (fail-closed preserved).
+- **Relationship to FLAKE-001:** same surface family (the observer's
+  asynchronous handler passage) but a distinct test and mechanism —
+  FLAKE-001 is a wall-clock latency bound on a 2-response wait; FLAKE-002 is
+  acquire-refusal under a 550-response concurrency burst. FLAKE-001's named
+  remedy ("wait on the observer's own completion rather than a wall-clock
+  bound") is exactly what FLAKE-002 ships.

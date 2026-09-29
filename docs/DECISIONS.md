@@ -5270,3 +5270,40 @@ commit) classifies admissible with zero pairing violations. Consequence for
 the remainder of this campaign: every future correction entry and its archive
 line removal land in one commit — including the date-bump corrections this
 document requires whenever the archive changes.
+
+## D-147 — handler-bounded fixtures pace on the observer's drain signal, never a wall-clock sleep
+
+**Context.** The 550-response ledger-cap fixture paced its page-side fetch
+loop with a blind 10 ms sleep (the M8 9.6 comment: "Space the loop so the
+ledger reaches its cap through accepted reads rather than refused ones"). A
+sleep cannot see the observer's acquisition gate (`MAX_CONCURRENT_BODY_READS
+= 4`, refuses rather than queues), so under full-suite load the handler
+passage can exceed the spacing and the in-flight burst crosses 4 — reads
+refuse with `BODY_READ_ACQUISITION_BOUND` and the ledger lands short of the
+512 cap. Observed as a CI-intermittent failure at
+`observerSemanticLedger.test.ts:138` (run 36537649045 at `491b5ef9`; the same
+test green at `2b5d8178` and in local isolation). This is the flake class
+FLAKE-001 named: the correct wait is the observer's own completion, not a
+wall-clock bound (FLAKE-002 records the instance).
+
+**Decision.** A fixture that drives enough traffic to exercise a concurrency
+bound paces itself on the observer's OWN drain signal — `activeRequests()`
+(the response-handler-passage counter, decremented in the handler's
+`finally`) — and advances only while at most one handler is outstanding,
+draining to zero before asserting. A wall-clock sleep is never the pacing
+authority for handler-bounded work: it bounds latency, it is not a
+handshake. The existing settlement barrier already consumes the same counter,
+so no new observable surface is introduced.
+
+**Total invariant.** Pacing the producer slower never relaxes the consumer
+bound being tested: `MAX_CONCURRENT_BODY_READS` stays 4, the gate still
+refuses rather than queues (the `bodyReadAcquisition` structural pins are
+untouched — the fix changes no source text), and the cap/overflow assertions
+stay exact (512, overflow explicit). If a refusal still occurred, the test
+fails loudly at the cap assertion.
+
+**Evidence and consequences.** The paced fixture runs 2/2 locally (19.8 s)
+and at the committed tree; `bodyReadAcquisition` 4/4 unchanged (no gate text
+touched). Consequence for the remainder of this campaign: any future
+high-volume fixture paces on the drain signal; making a wall-clock sleep the
+pacing authority for handler-bounded work requires a new decision entry.

@@ -8,7 +8,17 @@ Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-final-completion-corrections-v1
 Starting SHA: 1d47e2eef1ef029560ace12e31571624602eab0b
 Last validated implementation SHA: 6b19e4281e1125f0e6198ae6eb6ae4baac4ccfe7
-Last checkpoint: 2026-09-29 — task 3.12 integration half exposed the CI-only
+Last checkpoint: 2026-09-29 — second exact-head CI cycle: the CF-04 fix
+landed as `491b5ef9` and is PROVEN in CI (run 36537649045:
+SYNTHETIC_CAMPAIGN skipPolicy PASS, 14 declared / 0 undeclared). That run
+then failed SEMANTIC_COMPATIBILITY 1/2177 at `observerSemanticLedger.test.ts:138`
+(FLAKE-002: the 550-fetch cap fixture's blind 10 ms pacing loses to the 4-read
+acquisition gate under suite load; the gate REFUSES rather than queues). Fixed
+per D-147: the loop now advances on the observer's own `activeRequests()`
+drain signal (≤ 1 outstanding, drained before asserting) — no source or gate
+text touched (bodyReadAcquisition 4/4 byte-untouched pins). Green exact-head
+CI and the VC-03 topology artifact observation remain pending.
+Previous checkpoint: 2026-09-29 — task 3.12 integration half exposed the CI-only
 defect CF-04 (exact-head run 36513017223 at `2b5d8178`: SYNTHETIC_CAMPAIGN
 UNDECLARED_SKIP 40/4 while local runs declared all 14). Root cause: four
 `fs.existsSync` sibling-checkout-gated REAL-artifact tests (c08:110/:238,
@@ -32,6 +42,11 @@ Previous checkpoint: 2026-09-28 — VC-01 skip correction at clean checkpoint
 `c736ab9b`; the exact committed tree passed the 34-test DEV-login/storage-state
 suite with all four browser-backed assertions executed and 0 skips. Exact-head
 GitHub Actions proof remains pending the M4 group integration.
+Previous checkpoint: 2026-09-29 — CF-04 root cause (four fs.existsSync
+sibling-checkout-gated skip identities undeclared) fixed at `491b5ef9` with
+4 exact declarations + a source-bound regression; VC-01 CI-execution half
+PROVEN at `2b5d8178` (zero skip sites in both security suites; receipt
+1966/1926/40/0 failed 0).
 Current milestone: M4 Validation spine (group 3, tasks 3.1-3.12: VC-01..VC-11).
 M1, M2, and M3 are COMPLETE. Tasks 3.2 (VC-02 skip-identity enforcement),
 3.3 (VC-03 truthful topology classification, PATH-based Bubblewrap,
@@ -83,11 +98,12 @@ focused, hardening/typecheck/universe PASS; the dead
 `SHARD_CHILD_ENVIRONMENT_IDS` export is removed.
 `gate:milestone` PASSED at the clean checkpoint `8b24e11e` (12/12 steps,
 5769 passed / 0 failed shards; OVER_TARGET disclosed as telemetry).
-Next action: commit the CF-04 fix + continuity, then task 3.12 integration
-half — session:status, C-00 fast-forward integrate with the exact session and
-full 40-hex head, observe exact-head CI green with ALL 15 required groups AND
-the uploaded runner-topology artifact (VC-03), record the evidence, tick 3.1
-(VC-01 CI proof) and 3.12, mark M4 COMPLETE, then group 5 (5.1-5.6).
+Next action: commit the FLAKE-002/D-147 paced-fixture fix with its continuity
+update, integrate with the exact session and full 40-hex head, then observe
+exact-head CI green with ALL 15 required groups AND the uploaded
+runner-topology artifact (VC-03; TOPOLOGY resolves PROVEN_DEGRADED on the
+Bubblewrap-less runner and is accepted), record the run ID + receipts, tick
+3.1 (VC-01 CI proof) and 3.12, mark M4 COMPLETE, then group 5 (5.1-5.6).
 
 Authorization class: COMPLETION_CORRECTIONS_V1
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
@@ -131,9 +147,9 @@ EXTERNAL CONTACT AUTHORIZED (OD-3 ONLY):
   provider proof run; one npm registry advisory query.
 
 CURRENT STATUS:
-  IN_PROGRESS — M4 task 3.12 at the exact-head CI gate; CF-04 (CI-only
-  undeclared sibling-checkout skips) fixed and awaiting the green run;
-  VC-01 CI-execution half PROVEN at `2b5d8178`.
+  IN_PROGRESS — M4 task 3.12 at the exact-head CI gate (attempt 2): CF-04
+  PROVEN fixed in CI (skipPolicy PASS 14/0 at `491b5ef9`); FLAKE-002 paced
+  fix in this commit; VC-01 CI-execution half PROVEN at `2b5d8178`.
 
 ALPHAUS DEV / NEXT / PRODUCTION CONTACT:   NOT AUTHORIZED
 AUTHENTICATED ALPHAUS RUNTIME:             NOT AUTHORIZED

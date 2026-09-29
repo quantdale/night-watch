@@ -166,16 +166,22 @@ test.describe('Phase 9A.1 — observer semantic evaluation ledger', () => {
       // duration; timing and idle state grant nothing.
       observer.beginJourneyIntent('ledger-overflow', 'LEDGER_OVERFLOW_BULK_READ');
       try {
-        await page.evaluate(async (target) => {
-          for (let i = 0; i < 550; i++) {
-            await fetch(`${target}/api/bulk`);
-            // M8 (9.6): response-body acquisition is bounded to
-            // MAX_CONCURRENT_BODY_READS, so a saturated gate REFUSES a read
-            // instead of queueing it. Space the loop so the ledger reaches its
-            // cap through accepted reads rather than refused ones.
-            await new Promise((resolve) => setTimeout(resolve, 10));
-          }
-        }, server.origin);
+        // FLAKE-002: the pre-fix page-side loop paced itself with a blind
+        // 10 ms sleep per iteration. Page-side `fetch` resolves at response
+        // ARRIVAL, while the observer's response handler (bounded body read
+        // gated at MAX_CONCURRENT_BODY_READS = 4, then projection -> ledger)
+        // trails it — so under suite load the burst exceeds 4 and reads are
+        // REFUSED (BODY_READ_ACQUISITION_BOUND, never queued), landing the
+        // ledger short of the cap. The loop is now paced by the observer's OWN
+        // drain signal (activeRequests(): the handler-passage counter the
+        // existing settlement barrier already consumes) and only advances
+        // while at most one response handler is outstanding. No source or
+        // gate text changes: bodyReadAcquisition's structural pins stay intact.
+        for (let i = 0; i < 550; i++) {
+          await expect.poll(() => observer.activeRequests(), { timeout: 30_000 }).toBeLessThanOrEqual(1);
+          await page.evaluate((target) => fetch(`${target}/api/bulk`), server.origin);
+        }
+        await expect.poll(() => observer.activeRequests(), { timeout: 30_000 }).toBe(0);
       } finally {
         observer.endJourneyIntent('ledger-overflow');
       }
