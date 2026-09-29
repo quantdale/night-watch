@@ -168,6 +168,20 @@
       "oldLineSha256": "sha256:7cfaf86aa58ba6b5038c5c32",
       "oldLineExcerpt": "| `LAST_SUBSTANTIVE_IMPLEMENTATION_SHA` | the last commit that changed implementation AND was validated | `68d834b` | W12 measurement integrity, validation-universe registration, and live-task status-ledger closure...",
       "reason": "Corrections VC-06 (2026-09-28): PROJECT_STATE_SUBSTANTIVE_BASELINE_STALE proved the prose Current-value cell (and the machine block) lagged the active task's validated implementation, so the cell was reconciled cell-by-cell to the new anchor 6b19e428 per the table's own hand-reconciliation practice; the old line is removed, leaving this correction inert."
+    },
+    {
+      "id": "CORR-CORR-003",
+      "path": "docs/CURRENT_STATE.md",
+      "oldLineSha256": "sha256:ec7ab31d6df70229920613b3",
+      "oldLineExcerpt": "> Durable memory for the next agent/session. Last updated: **2026-09-28**",
+      "reason": "Corrections M4 close (2026-09-29): the paired substantive-anchor advance to 3c9c1a06 (CORR-CORR-004) changes this archive on 2026-09-29, so the header date must cover the archive's own last change; the statement itself is unchanged (same pattern as CORR-PC-001/CORR-CORR-001)."
+    },
+    {
+      "id": "CORR-CORR-004",
+      "path": "docs/CURRENT_STATE.md",
+      "oldLineSha256": "sha256:8d04d57e2fdad95f587e92d9",
+      "oldLineExcerpt": "| `LAST_SUBSTANTIVE_IMPLEMENTATION_SHA` | the last commit that changed implementation AND was validated | `6b19e428` | Corrections-campaign VC-02..VC-06 validation-spine work: exact skip identities, truthful topology classification...",
+      "reason": "Corrections M4 close (2026-09-29): the validated substantive anchor advanced from 6b19e428 to 3c9c1a06 (CF-04 skip declarations + CF-05/FLAKE-002 paced fixture) with exact-head CI run 36552500573 green (all 15 groups) and gate:dev/gate:milestone PASS at the tip; the prose row is reconciled cell-by-cell to the new anchor and the old line is removed, leaving this correction inert."
     }
   ]
 }

@@ -124,7 +124,10 @@ and evidence and needs no code change.
   topology measurement, orphan/node/sun_path/HANDOFF details).
 - Acceptance criteria: focused suites + `gate:dev` + `gate:milestone` PASS;
   exact-head CI green with the restored tests executing.
-- **Status:** IN_PROGRESS
+- **Status:** COMPLETE — exact-head CI run 36552500573 green at `3c9c1a06`
+  (all 15 groups, runner-topology artifact uploaded); gate:dev +
+  gate:milestone PASS at the tip (base `491b5ef9`). CF-04 and CF-05 were
+  found at the CI gate and fixed within this milestone.
 
 ### M5 — Release probes (group 4, tasks 4.1-4.6)
 
@@ -132,7 +135,7 @@ and evidence and needs no code change.
   UI-harness receipt, G12 yield-campaign receipt bound to S, G21/G19 refusal
   exercises, honesty-rule tests, and re-derive the M4-M9 probe results).
 - Acceptance criteria: focused suites + `gate:dev` + `gate:milestone` PASS.
-- **Status:** NOT_STARTED
+- **Status:** NOT_STARTED — next (group 4).
 
 ### M6 — Ledger and continuity truth (group 5, tasks 5.1-5.6)
 

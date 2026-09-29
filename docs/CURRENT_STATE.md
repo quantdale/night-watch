@@ -1,6 +1,6 @@
 # Nightwatch — CURRENT STATE
 
-> Durable memory for the next agent/session. Last updated: **2026-09-28**
+> Durable memory for the next agent/session. Last updated: **2026-09-29**
 > during the autonomous bug-hunting programme (Wave 0 protocol freeze and
 > Wave 1 lanes A–E integrated). RS-1 close-out remains
 > COMPLETE: DEF-FC-04 continuity repair, the Control Center reviewer
@@ -807,7 +807,7 @@ when its OWN evidence exists.
 
 | Field | Claims | Current value | Why |
 | --- | --- | --- | --- |
-| `LAST_SUBSTANTIVE_IMPLEMENTATION_SHA` | the last commit that changed implementation AND was validated | `6b19e428` | Corrections-campaign VC-02..VC-06 validation-spine work: exact skip identities, truthful topology classification, the D-04 CI/CLEAN-only relaxation, `gate:ui --ignore-scripts`, and the clean-checkout verdict/real-root honesty. Focused suites green (routing 15/15, phase23 15/15, receipt 41/41, census 14/14), probe campaigns HC-180..HC-183 DETECTED, typecheck:bin PASS at 1560 / 14 of 76, universe PASS at `sha256:95f903de`; the full `gate:clean` receipt at this anchor measured the real sibling root twice (unchanged) with TOOLCHAIN versions. |
+| `LAST_SUBSTANTIVE_IMPLEMENTATION_SHA` | the last commit that changed implementation AND was validated | `3c9c1a06` | Corrections-campaign M4 close (CF-04/CF-05): the four CI-only sibling-checkout skip declarations + source-bound regression (CF-04) and the FLAKE-002/D-147 event-driven ledger-cap fixture pacing (CF-05). Exact-head CI run 36552500573 at this anchor is GREEN (all 15 groups PASS: SEMANTIC 2177/2163/14/0, SYNTHETIC 1966/1926/40/0, skip policies 14/0 and 40/0, TOPOLOGY PROVEN_DEGRADED/BWRAP_UNAVAILABLE_DEGRADED, UI 8/8) with the SHA-bound runner-topology artifact `runner-topology-3c9c1a06…` (id 11027375204); `gate:dev` PASS (5803/5770/0/33, coverage true) and `gate:milestone` PASS (12 steps, same totals) at the tip with base `491b5ef9`. |
 | `LAST_LOCALLY_VALIDATED_SHA` | the last commit where the local quality gate passed | `c18db55` | `gate:local` FULL PASS, all eleven required groups, receipt `receipt:sha256:5a261509b2f2b89819a5bc23` (SEMANTIC 2083/2070/13/0, OWNER 91, SYNTHETIC 1797/1797/0, deep containment lane PROVEN) |
 | `LAST_CLEAN_VALIDATED_SHA` | the last commit where the clean Node 20 gate passed | `c18db55` | `gate:clean` PASS, `nodeMajor` 20, install PASS, clean before/after, `nodeModulesReused` false, no auth or owner-finding state, sibling writes 0, inner gate receipt `receipt:sha256:b6ae47a38d8c653d245fe3bf`, clean receipt `clean-receipt:sha256:f1f125526bb37b67a0377dfb` |
 | `CI_OBSERVED_SHA` | the commit whose CI result was observed | `27bfe44` | run `33864698218` (2026-09-04): zero steps under the external runner block (`runner_id = 0`), recorded as `NO_STEPS_EXTERNAL_NON_EVIDENCE`; a docs-descendant head covering the `4642c16` implementation |
@@ -873,6 +873,15 @@ Drift notes, preserved as history rather than rewritten:
   which owns reconciling the parent-era anchors; only the row advanced by
   this correction was rewritten.
 
+- 2026-09-29 (corrections M4 close): the substantive anchor advanced from
+  `6b19e428` to `3c9c1a06` at the M4 close (the CF-04 skip-declaration fix
+  and the CF-05/FLAKE-002 paced-fixture fix), validated by exact-head CI run
+  36552500573 (all 15 groups PASS) and `gate:dev`/`gate:milestone` PASS at
+  the tip. The `LAST_SUBSTANTIVE` prose row and the header date are
+  reconciled in the same paired-correction commit (CORR-CORR-003/004); the
+  `LAST_LOCALLY_VALIDATED` / `LAST_CLEAN_VALIDATED` / CI rows keep the
+  parent-era drift recorded above for VA-03 (task 5.3) and were not touched.
+
 
 ```
 PROJECT_STATE_PROTOCOL_VERSION: nightwatch.project-state.v2
@@ -880,7 +889,7 @@ RELEASE_CERTIFICATION_PROTOCOL_VERSION: nightwatch.release-certification.v1
 PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
 RELEASE_CHECKPOINT_SHA: 2576c5751d33bb40046246e8fcf57c7cc5c30a57
 LIVE_HEAD_SHA: DISCOVER_FROM_GIT
-LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: 6b19e4281e1125f0e6198ae6eb6ae4baac4ccfe7
+LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: 3c9c1a0671068c8de6bafb54c62f9cd107fed78a
 LAST_LOCALLY_VALIDATED_SHA: 84a169abcab8098301ec1e75c0912a988dd780de
 LAST_CLEAN_VALIDATED_SHA: 84a169abcab8098301ec1e75c0912a988dd780de
 CI_OBSERVED_SHA: NONE

@@ -7,8 +7,22 @@ CHILD OF: nightwatch-final-product-completion-v1
 Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-final-completion-corrections-v1
 Starting SHA: 1d47e2eef1ef029560ace12e31571624602eab0b
-Last validated implementation SHA: 6b19e4281e1125f0e6198ae6eb6ae4baac4ccfe7
-Last checkpoint: 2026-09-29 — second exact-head CI cycle: the CF-04 fix
+Last validated implementation SHA: 3c9c1a0671068c8de6bafb54c62f9cd107fed78a
+Last checkpoint: 2026-09-29 — M4 COMPLETE. Exact-head CI run 36552500573 at
+`3c9c1a06` (the CF-05/FLAKE-002 paced-fixture fix) is GREEN: all 15 groups
+PASS, SEMANTIC_COMPATIBILITY 2177/2163/14/0 (skipPolicy PASS 14/0),
+SYNTHETIC_CAMPAIGN 1966/1926/40/0 (skipPolicy PASS 40/0), TOPOLOGY PASS
+(PROVEN_DEGRADED, envelope BWRAP_UNAVAILABLE_DEGRADED, unexercised [chrome],
+honest ciClaim githubExecutionProven=false), UI_CONTROL_CENTER 8 passed —
+AND the VC-03 runner-topology artifact uploaded
+(`runner-topology-3c9c1a06…`, id 11027375204, 1503 bytes, SHA-bound name).
+Group gates at the clean tip (base `491b5ef9`): `gate:dev` PASS (8 steps,
+5803/5770/0/33, coverage true, 627s) and `gate:milestone` PASS (12 steps,
+same totals, 900s, withinTarget=false disclosed). One session-ownership
+transient (STALE_SESSION after a harness restart) was recovered by the
+sanctioned `claim --adopt` (`sess-66344fe137d7`). Tasks 3.1 and 3.12 ticked;
+M4 (VC-01..VC-11 + CF-04/CF-05) CLOSED.
+Previous checkpoint: 2026-09-29 — second exact-head CI cycle: the CF-04 fix
 landed as `491b5ef9` and is PROVEN in CI (run 36537649045:
 SYNTHETIC_CAMPAIGN skipPolicy PASS, 14 declared / 0 undeclared). That run
 then failed SEMANTIC_COMPATIBILITY 1/2177 at `observerSemanticLedger.test.ts:138`
@@ -16,8 +30,7 @@ then failed SEMANTIC_COMPATIBILITY 1/2177 at `observerSemanticLedger.test.ts:138
 acquisition gate under suite load; the gate REFUSES rather than queues). Fixed
 per D-147: the loop now advances on the observer's own `activeRequests()`
 drain signal (≤ 1 outstanding, drained before asserting) — no source or gate
-text touched (bodyReadAcquisition 4/4 byte-untouched pins). Green exact-head
-CI and the VC-03 topology artifact observation remain pending.
+text touched (bodyReadAcquisition 4/4 byte-untouched pins).
 Previous checkpoint: 2026-09-29 — task 3.12 integration half exposed the CI-only
 defect CF-04 (exact-head run 36513017223 at `2b5d8178`: SYNTHETIC_CAMPAIGN
 UNDECLARED_SKIP 40/4 while local runs declared all 14). Root cause: four
@@ -47,7 +60,10 @@ sibling-checkout-gated skip identities undeclared) fixed at `491b5ef9` with
 4 exact declarations + a source-bound regression; VC-01 CI-execution half
 PROVEN at `2b5d8178` (zero skip sites in both security suites; receipt
 1966/1926/40/0 failed 0).
-Current milestone: M4 Validation spine (group 3, tasks 3.1-3.12: VC-01..VC-11).
+Current milestone: M5 Release probes (group 4, tasks 4.1-4.6: VD-01..VD-05 +
+CF-01..CF-03). M1-M4 are COMPLETE (M4 closed 2026-09-29: exact-head CI run
+36552500573 green at `3c9c1a06` with the SHA-bound runner-topology artifact;
+gate:dev + gate:milestone PASS at the tip).
 M1, M2, and M3 are COMPLETE. Tasks 3.2 (VC-02 skip-identity enforcement),
 3.3 (VC-03 truthful topology classification, PATH-based Bubblewrap,
 bounded gate-receipt details, SHA-pinned CI artifact), and 3.4 (VC-04
@@ -98,19 +114,18 @@ focused, hardening/typecheck/universe PASS; the dead
 `SHARD_CHILD_ENVIRONMENT_IDS` export is removed.
 `gate:milestone` PASSED at the clean checkpoint `8b24e11e` (12/12 steps,
 5769 passed / 0 failed shards; OVER_TARGET disclosed as telemetry).
-Next action: commit the FLAKE-002/D-147 paced-fixture fix with its continuity
-update, integrate with the exact session and full 40-hex head, then observe
-exact-head CI green with ALL 15 required groups AND the uploaded
-runner-topology artifact (VC-03; TOPOLOGY resolves PROVEN_DEGRADED on the
-Bubblewrap-less runner and is accepted), record the run ID + receipts, tick
-3.1 (VC-01 CI proof) and 3.12, mark M4 COMPLETE, then group 5 (5.1-5.6).
+Next action: start M5 (release-probe corrections): implement task 4.1
+(probe-at-checkpoint: every release probe resolves MET only at the certified
+checkpoint — HEAD == S with a clean tree, or a receipt bound to S; otherwise
+NOT_AT_CHECKPOINT), then 4.2-4.5, then 4.6's focused + gate:milestone PASS
+and commit. Then group 5 (5.1-5.6) and group 6 (6.2-6.4).
 
 Authorization class: COMPLETION_CORRECTIONS_V1
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 1d47e2eef1ef029560ace12e31571624602eab0b
-LAST_VALIDATED_IMPLEMENTATION_SHA: 6b19e4281e1125f0e6198ae6eb6ae4baac4ccfe7
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 6b19e4281e1125f0e6198ae6eb6ae4baac4ccfe7
+LAST_VALIDATED_IMPLEMENTATION_SHA: 3c9c1a0671068c8de6bafb54c62f9cd107fed78a
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 3c9c1a0671068c8de6bafb54c62f9cd107fed78a
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
 PHASE_COMPLETION_CORRECTIONS_V1_STATUS: IN_PROGRESS
@@ -147,9 +162,9 @@ EXTERNAL CONTACT AUTHORIZED (OD-3 ONLY):
   provider proof run; one npm registry advisory query.
 
 CURRENT STATUS:
-  IN_PROGRESS — M4 task 3.12 at the exact-head CI gate (attempt 2): CF-04
-  PROVEN fixed in CI (skipPolicy PASS 14/0 at `491b5ef9`); FLAKE-002 paced
-  fix in this commit; VC-01 CI-execution half PROVEN at `2b5d8178`.
+  IN_PROGRESS — M4 COMPLETE (exact-head CI 36552500573 green at `3c9c1a06`
+  + runner-topology artifact; gate:dev/milestone PASS at the tip); M5
+  (release probes 4.1-4.6) is next.
 
 ALPHAUS DEV / NEXT / PRODUCTION CONTACT:   NOT AUTHORIZED
 AUTHENTICATED ALPHAUS RUNTIME:             NOT AUTHORIZED

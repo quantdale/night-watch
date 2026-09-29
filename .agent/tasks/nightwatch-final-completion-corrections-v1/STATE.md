@@ -7,32 +7,40 @@ Phase: COMPLETION_CORRECTIONS_V1
 CHILD OF: nightwatch-final-product-completion-v1
 Status: IN_PROGRESS
 Starting SHA: 1d47e2eef1ef029560ace12e31571624602eab0b
-Last validated implementation SHA: 6b19e4281e1125f0e6198ae6eb6ae4baac4ccfe7
-Last substantive checkpoint SHA: 6b19e4281e1125f0e6198ae6eb6ae4baac4ccfe7
+Last validated implementation SHA: 3c9c1a0671068c8de6bafb54c62f9cd107fed78a
+Last substantive checkpoint SHA: 3c9c1a0671068c8de6bafb54c62f9cd107fed78a
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-final-completion-corr-c45f0e9d
-Last checkpoint: 2026-09-28 — VC-02..VC-06 validation-spine corrections at
-clean checkpoint `6b19e428`: exact skip identities, truthful topology, D-04
-CI/CLEAN-only relaxation, `gate:ui --ignore-scripts`, and the clean-checkout
-verdict/real-root honesty. Focused suites green (routing 15/15, phase23 15/15,
-receipt 41/41, census 14/14), probe campaigns HC-180..HC-183 DETECTED,
-typecheck:bin PASS at 1560 / 14 of 76, universe PASS at `sha256:95f903de`. A
-full `gate:clean` at this anchor produced the VC-06 receipt (real sibling root
-measured twice, unchanged; TOOLCHAIN versions; sourceRootCleanAtEmit true) but
-the inner PROJECT_TRUTH failed on PROJECT_STATE_SUBSTANTIVE_BASELINE_STALE —
-the project baseline still named `32180001` while this task had validated
-substantive work past it. Repaired in this documentation-only descendant by
-advancing the baseline to this anchor.
-Previous checkpoint: 2026-09-28 — VC-01 skip correction at clean checkpoint
-`c736ab9b`; the exact committed tree passed the 34-test DEV-login/storage-state
-suite, including all four browser-backed assertions with 0 skips. Exact-head
-GitHub Actions proof remains pending M4 integration.
+Last checkpoint: 2026-09-29 — M4 COMPLETE. Exact-head CI run 36552500573 at
+`3c9c1a06` (the CF-05/FLAKE-002 paced-fixture fix) is GREEN: all 15 groups
+PASS (SEMANTIC_COMPATIBILITY 2177/2163/14/0 with skipPolicy PASS 14/0;
+SYNTHETIC_CAMPAIGN 1966/1926/40/0 with skipPolicy PASS 40/0 — the CF-04
+declarations hold in CI; TOPOLOGY PASS PROVEN_DEGRADED/BWRAP_UNAVAILABLE_
+DEGRADED with unexercised [chrome] and honest ciClaim
+githubExecutionProven=false; UI_CONTROL_CENTER 8 passed), AND the VC-03
+runner-topology artifact uploaded (`runner-topology-3c9c1a06…`, id
+11027375204, 1503 bytes, SHA-bound name). Group gates at the clean tip
+(base `491b5ef9`): `gate:dev` PASS (8 steps; 5803 planned/executed, 5770
+passed, 0 failed, 33 skipped; coverage true; 627s) and `gate:milestone` PASS
+(12 steps incl. the full hardening-rules probe campaign 197s; same totals;
+900s, withinTarget=false disclosed). One session-ownership transient
+(STALE_SESSION after a harness restart) was recovered by the sanctioned
+`claim --adopt` (`sess-66344fe137d7`); `gate:milestone --base=origin/main` at
+the integrated tip is BY DESIGN `AFFECTED_NO_CHANGED_FILES` (the lane
+selects changes vs origin/main), so the group gates ran with
+`--base=491b5ef9` naming the tip's parent. Tasks 3.1 (VC-01 CI proof) and
+3.12 ticked; M4 (VC-01..VC-11 + CF-04/CF-05) CLOSED.
+Previous checkpoint: 2026-09-29 — CF-05/FLAKE-002: the second exact-head CI
+attempt (run 36537649045 at `491b5ef9`) proved the CF-04 fix (SYNTHETIC
+skipPolicy PASS 14/0) and failed 1/2177 at observerSemanticLedger:138,
+fixed per D-147 with the event-driven drain-signal pacing (no source/gate
+text touched).
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 1d47e2eef1ef029560ace12e31571624602eab0b
-LAST_VALIDATED_IMPLEMENTATION_SHA: 6b19e4281e1125f0e6198ae6eb6ae4baac4ccfe7
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 6b19e4281e1125f0e6198ae6eb6ae4baac4ccfe7
+LAST_VALIDATED_IMPLEMENTATION_SHA: 3c9c1a0671068c8de6bafb54c62f9cd107fed78a
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 3c9c1a0671068c8de6bafb54c62f9cd107fed78a
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
 PHASE_COMPLETION_CORRECTIONS_V1_STATUS: IN_PROGRESS
@@ -45,14 +53,13 @@ from sound foundations at M9 task 10.2 (remainder: 59/76 declared).
 
 ## Current Milestone
 
-Milestone ID: M4
+Milestone ID: M5
 
 M1 (bootstrap + Phase 1 preconditions), M2 (task 6.1 formatter policy,
-landed FIRST per RESUME_PROMPT §2), and M3 (certification anchors, tasks
-2.1-2.8) are COMPLETE. M4 validation spine (tasks 3.1-3.12) is IN_PROGRESS:
-all 3.2-3.11 landed, and 3.12 is at the exact-head CI gate — a CI-only
-UNDECLARED_SKIP defect (CF-04) was found, fixed, and is awaiting the
-exact-head CI observation to close.
+landed FIRST per RESUME_PROMPT §2), M3 (certification anchors, tasks
+2.1-2.8), and M4 (validation spine, tasks 3.1-3.12 incl. the CF-04/CF-05
+CI-gate fixes) are COMPLETE. M5 release probes (tasks 4.1-4.6,
+VD-01..VD-05 + CF-01..CF-03) is next.
 
 ## Completed Milestones
 
@@ -275,17 +282,16 @@ typecheck PASS, hardening:check PASS, typecheck:bin PASS (1559 / 14 of 76 /
 
 ## Exact Next Action
 
-Commit the FLAKE-002/D-147 fix with this continuity update, integrate with
-`--expect-session sess-0c6596dae563 --expect-head <full 40-hex HEAD>` (the
-C-00 fast-forward push of this branch tip), then observe exact-head GitHub
-Actions green with ALL 15 required groups AND the uploaded runner-topology
-artifact (VC-03 observation; the artifact step reports "no files found" on
-red runs because TOPOLOGY is NOT_RUN fail-fast — it must produce
-`artifacts/topology-receipts/*.json` on the green run, whose
-`runnerTopologyClass` resolves PROVEN_DEGRADED on this Bubblewrap-less
-CI runner and is accepted by the gate). Record the run ID + receipts in this
-STATE, tick 3.1 (VC-01 CI proof) and 3.12, and mark M4 COMPLETE. Then
-continue group 5 (tasks 5.1-5.6, ledger and continuity truth).
+Start M5 (release-probe corrections, tasks 4.1-4.6): implement task 4.1
+(probe-at-checkpoint: every release probe resolves MET only at the certified
+checkpoint — HEAD == S with a clean tree, or a receipt bound to S; otherwise
+NOT_AT_CHECKPOINT — and re-derive the M4-M9 probe results per CF-01..CF-03),
+then 4.2 (G18 UI-harness execution receipt), 4.3 (G12 yield-campaign receipt
+bound to S; W13 historical only), 4.4 (G21 synthetic non-VALID refusal
+exercise; G19 effective-configuration rendering), 4.5 (structural
+`implemented` honesty rule + mutation probe), then 4.6's focused +
+`gate:milestone` PASS and commit. Then group 5 (5.1-5.6) and group 6
+(6.2-6.4).
 
 ## Files Changed
 
@@ -784,6 +790,72 @@ gate line, the refusal branch and both release sites all hold); typecheck
 PASS; hardening:check PASS (the D-147/FLAKE-002 appends satisfy the
 APPEND_ONLY roles of docs/DECISIONS.md and docs/FLAKE-LEDGER.md);
 typecheck:bin PASS (1559 / 14 of 76 / 78 ceilings).
+
+Command: exact-head CI observation, run 36552500573 at `3c9c1a06` (third
+cycle — the green M4 gate)
+Result: PASS (all 15 groups; runner-topology artifact uploaded — VC-03)
+When: 2026-09-29
+Relevant output: `gitHead` `3c9c1a0671068c8de6bafb54c62f9cd107fed78a`,
+environmentClass CI, finalResult PASS, gateDurationMs 903826. GATE_DEFINITION
+/ STATIC / BIN_TYPECHECK_CEILING / HARDENING / HARDENING_PROBES /
+HANDOFF_TRUTH / PROJECT_TRUTH / AGENT_CONTINUITY PASS; SEMANTIC_COMPATIBILITY
+PASS 2177/2163/14/0 (skipPolicy PASS, 14 declared / 0 undeclared);
+OWNER_PROVENANCE PASS 91/91 (0 skips); SYNTHETIC_CAMPAIGN PASS 1966/1926/40/0
+(skipPolicy PASS, 40 declared / 0 undeclared — the four CF-04 declarations
+hold in CI; deepContainmentLane NOT_EXERCISED_BWRAP_UNAVAILABLE);
+PATCH_INTEGRITY / WORKSPACE_INTEGRITY / TOPOLOGY / UI_CONTROL_CENTER PASS
+(UI 8/8). TOPOLOGY details: runnerTopologyClass PROVEN_DEGRADED,
+runnerTopologyEnvelope BWRAP_UNAVAILABLE_DEGRADED, unexercisedAbsences
+["chrome"], ciClaim.githubExecutionProven=false (honest — the tool never
+proves GitHub execution). Artifact `runner-topology-3c9c1a06…` (id
+11027375204, 1503 bytes, retention 14 days) uploaded by the
+SHA-pinned upload step; downloaded receipt is
+`nightwatch.gate-topology-receipt.v1` (generatedAt 2026-09-29T10:11:56Z,
+mode all, lane capability, absences sibling-root/bwrap/chrome/fresh-home,
+inverseSelfTest ok=true).
+
+Command: `npm run gate:dev -- --base=491b5ef9 --json` at `3c9c1a06` (M4
+acceptance lane 1)
+Result: PASS (wall 627s, withinTarget=false disclosed)
+When: 2026-09-29
+Relevant output: 8 steps exit 0 (validation-universe, execution-classes,
+typecheck, hardening-check, agent-check, handoff-check, affected-tests
+AFFECTED_BROADENED changed=7 selected=438, affected-shards PASS);
+shard totals 5803 planned/executed, 5770 passed, 0 failed, 33 skipped,
+coverage true.
+
+Command: `npm run gate:milestone -- --base=491b5ef9 --json` at `3c9c1a06`
+(M4 acceptance lane 2)
+Result: PASS (wall 900s, withinTarget=false disclosed)
+When: 2026-09-29
+Relevant output: 12 steps exit 0 — validation-universe (0.1s),
+execution-classes (0.3s), typecheck (3.8s), hardening-check (22.7s),
+agent-check (1.6s), handoff-check (1.4s), typecheck-bin (8.7s),
+hardening-rules FULL probe campaign (197s), project-check (9.6s),
+workspace-check (0.2s), affected-tests AFFECTED_BROADENED (438 selected),
+affected-shards PASS (5803/5770/0/33, coverage true, 652s).
+
+Command: `npm run gate:milestone -- --json` (default base) at the integrated
+tip `3c9c1a06`
+Result: AFFECTED_REFUSED (by design — documented, not a defect)
+When: 2026-09-29
+Relevant output: all 10 command steps exit 0 (incl. hardening-rules 283s);
+affected-tests `AFFECTED_NO_CHANGED_FILES` (changed=0 selected=0) because
+the lane selects changes vs `origin/main` and the tip is already integrated
+(HEAD == origin/main). The acceptance gates above therefore run with
+`--base=<tip's parent>`; the default-base refusal at an integrated tip is
+expected lane semantics (`bin/validation-lane.mjs:126`,
+`tests/unit/validationAffectedTests.test.ts:30` pins the code).
+
+Command: session ownership recovery (`claim --adopt` after harness restart)
+Result: PASS (SESSION_CLAIMED `sess-66344fe137d7`, base `3c9c1a06`)
+When: 2026-09-29
+Relevant output: a harness process restart left the worktree STALE_SESSION
+("its holder is not live"), which failed `handoff:check` with
+HANDOFF_TARGET_BRANCH_MISMATCH (the ownedSessionBranch conjunct). The C-00
+sanctioned `claim --task … --adopt --expect-session sess-0c6596dae563`
+recovered ownership (new session id `sess-66344fe137d7`); handoff:check PASS
+after adoption.
 
 ## Decisions Made During This Task
 
