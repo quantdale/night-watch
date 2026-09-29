@@ -38,6 +38,9 @@
 - [ ] 4.4 G21 exercises the pre-flight refusal of a synthetic non-VALID artefact; G19 renders the effective configuration and validates every declared variable (VD-04).
 - [ ] 4.5 Structural `implemented` honesty rule plus mutation probe; replace the includes-literal and pinned-detail tests (VD-05; parent 5.3).
 - [ ] 4.6 Focused + `gate:milestone` PASS; commit.
+- [ ] 4.7 CF-01: re-derive every parent M4–M9 release-probe result that was measured on the working tree (G14/G17/G18/G19/G21/G12/G20) after 4.1; enumerate the citing parent tasks, and demote any result not bound to S to `NOT_AT_CHECKPOINT` in the ledger records. Added by review 2 (RV-17); executes before 4.6's gate.
+- [ ] 4.8 CF-02: the G20 accessibility record binds `nightwatchSha` to S and resolves `NOT_AT_CHECKPOINT` otherwise (part of 4.1's mechanics; separate line so the ledger tracks it). Added by review 2 (RV-17); executes before 4.6's gate.
+- [ ] 4.9 CF-03: G12 stops accepting any `artifacts/nightwatch-*` run — it consumes only a yield-campaign receipt with `passed: true`, `nightwatchSha == S`, a provider campaign kind and executed provider calls; the W13 aggregate is historical context only (part of 4.3; separate line so the ledger tracks it). Added by review 2 (RV-17); executes before 4.6's gate.
 
 ## 5. Ledger and continuity truth
 

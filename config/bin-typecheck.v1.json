@@ -111,7 +111,7 @@
     },
     {
       "bin": "bin/nightwatch-agent.mjs",
-      "maxErrors": 25
+      "maxErrors": 21
     },
     {
       "bin": "bin/nightwatch-control-center.mjs",
@@ -219,7 +219,7 @@
     },
     {
       "bin": "bin/project-state-check.mjs",
-      "maxErrors": 236
+      "maxErrors": 233
     },
     {
       "bin": "bin/quality-gate-clean.mjs",
@@ -318,6 +318,6 @@
       "maxErrors": 94
     }
   ],
-  "totalCeiling": 1559,
+  "totalCeiling": 1552,
   "anyAnnotationBudget": 26
 }

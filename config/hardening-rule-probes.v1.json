@@ -1880,6 +1880,46 @@
             "replace": "capabilityGroup: 'G12', implemented: false,"
           }
         ]
+      },
+      {
+        "id": "HC-189",
+        "ops": [
+          {
+            "file": "bin/project-state-check.mjs",
+            "search": "'dead-architecture-closure-check': bindTreeProbe(binding, probeDeadArchitectureClosure(root)),",
+            "replace": "'dead-architecture-closure-check': probeDeadArchitectureClosure(root),"
+          }
+        ]
+      },
+      {
+        "id": "HC-190",
+        "ops": [
+          {
+            "file": "bin/project-state-check.mjs",
+            "search": "'yield-campaign-result': probeYieldCampaignResult(root, substantiveSha),",
+            "replace": "'yield-campaign-result': probeYieldCampaignResult(root, null),"
+          }
+        ]
+      },
+      {
+        "id": "HC-191",
+        "ops": [
+          {
+            "file": "bin/project-state-check.mjs",
+            "search": "return receiptNotAtCheckpoint('the newest qualifying yield-campaign receipt', boundToOther, certifiedCheckpointSha);",
+            "replace": "return { state: 'MET', detail: 'a receipt bound elsewhere' };"
+          }
+        ]
+      },
+      {
+        "id": "HC-192",
+        "ops": [
+          {
+            "file": "bin/project-state-check.mjs",
+            "search": "    certifiedCheckpointSha: substantiveSha,\n    headSha: headOutput",
+            "replace": "    certifiedCheckpointSha: null,\n    headSha: headOutput"
+          }
+        ]
       }
     ],
     "checkSiblingRootResolution": [

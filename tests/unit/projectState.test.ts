@@ -28,6 +28,7 @@ import {
 import {
   RELEASE_ADVANCE_CHECKS,
   RELEASE_CERTIFICATION_VERSION,
+  RELEASE_CONDITION_STATES,
   RELEASE_VERDICT_COUNT_MARKERS,
   RELEASE_VERDICT_STATUS_MARKER,
   checkVerdictPresentation,
@@ -39,6 +40,29 @@ import type {
   ReleaseCheckOutput,
 } from '../../src/core/releaseCertification';
 import { parseAccessibilityCertificationRecord } from '../../bin/lib/accessibility-record.mjs';
+import {
+  bindTreeProbe,
+  describeProbeBinding,
+  receiptBindingRelation,
+  receiptNotAtCheckpoint,
+  resolveProbeBinding,
+} from '../../bin/lib/probe-binding.mjs';
+import {
+  UI_HARNESS_FILE,
+  UI_HARNESS_REQUIRED_TESTS,
+  UI_HARNESS_SUITE,
+  buildUiHarnessReceipt,
+  evaluateUiHarnessReceipt,
+  extractApiErrorKinds,
+} from '../../bin/lib/ui-harness-receipt.mjs';
+import { exerciseConfigurationContract, exercisePreflightRefusal } from '../../bin/lib/release-probe-exercises.mjs';
+import * as environmentSurfaceModule from '../../src/core/config/environmentSurface';
+import * as capabilityLifecycleModule from '../../src/auth/capabilityLifecycle';
+import {
+  buildProductRunReceipt,
+  evaluateYieldCampaignEvidence,
+  validateProductRunReceipt,
+} from '../../src/core/agentRuntime/productRunReceipt';
 import { classifyCertificationDemotion } from '../../bin/lib/certification-demotion.mjs';
 
 const CHECKER = path.join(__dirname, '..', '..', 'bin', 'project-state-check.mjs');
@@ -2375,43 +2399,376 @@ test.describe('F-12 project:check release certification', () => {
 // real tree must produce each probe's environment-independent facts.
 // ---------------------------------------------------------------------------
 
-test.describe('release probe wiring (M4 task 5.1)', () => {
+test.describe('release probe wiring (M4 task 5.1, corrected by VD-01..VD-05)', () => {
   const REPO_ROOT = path.join(__dirname, '..', '..');
+  /** The seven checks design D3 binds to the certified checkpoint. */
+  const D3_BOUND_CHECKS = [
+    'dead-architecture-closure-check',
+    'schema-version-lifecycle-check',
+    'ui-error-taxonomy-check',
+    'configuration-contract-check',
+    'authenticated-capability-lifecycle-check',
+    'yield-campaign-result',
+    'accessibility-certification',
+  ] as const;
 
-  test('every registered release check is implemented and carried by the collector', () => {
+  test('every registered release check is implemented, and the structural honesty rule agrees with the collector', () => {
     const unwired = RELEASE_ADVANCE_CHECKS.filter((check) => !check.implemented).map((check) => check.id);
     expect(unwired).toEqual([]);
-    const source = fs.readFileSync(path.join(REPO_ROOT, 'bin', 'project-state-check.mjs'), 'utf8');
-    for (const check of RELEASE_ADVANCE_CHECKS) {
-      expect(source, `collectReleaseCheckOutputs must carry an output for ${check.id}`).toContain(`'${check.id}': `);
+    // The agreement between the registry's `implemented` flags and the
+    // collector's output keys is the hardening rule's job (parsed, not
+    // includes-matched); this test runs the rule itself.
+    const rule = spawnSync(process.execPath, [path.join(REPO_ROOT, 'bin', 'hardening-check.mjs'), '--only=checkReleaseImplementedHonesty'], {
+      cwd: REPO_ROOT,
+      encoding: 'utf8',
+      timeout: 120_000,
+    });
+    expect(`${rule.stdout}${rule.stderr}`).toContain('PASS');
+    expect(rule.status).toBe(0);
+  });
+
+  test('the real-tree evaluation resolves every check to probe output, and no D3 probe is MET away from the certified checkpoint', () => {
+    const result = spawnSync(process.execPath, [CHECKER, '--root', REPO_ROOT], { encoding: 'utf8', timeout: 300_000 });
+    // A failing evaluation (a dirty working tree) prints the verdict on
+    // stderr; a passing one prints it on stdout with the JSON receipt.
+    const output = `${result.stdout}${result.stderr}`;
+    expect(output).not.toBe('');
+    expect(output).not.toContain('the check is not present at this checkpoint');
+    const states = new Map<string, string>();
+    for (const line of output.split('\n')) {
+      const match = /^\s+\d+ (\S+) state=(\S+)/.exec(line);
+      if (match !== null) states.set(match[1] as string, match[2] as string);
+      if (line.includes('state=')) expect(line).not.toContain('is registered and its capability is created by');
+    }
+    expect(states.size).toBe(16);
+    for (const state of states.values()) expect((RELEASE_CONDITION_STATES as readonly string[]).includes(state)).toBe(true);
+    // VD-01: a D3 probe resolves MET only at HEAD == S with a clean tree (or
+    // from a receipt bound to S). Derive the facts independently here.
+    const checkpoint = /^checkpoint (\S+)/m.exec(output)?.[1] ?? '';
+    const head = git(REPO_ROOT, ['rev-parse', 'HEAD']);
+    const clean = git(REPO_ROOT, ['status', '--porcelain']) === '';
+    if (!(head === checkpoint && clean)) {
+      const conditionsByCheck = new Map<string, string>();
+      for (const condition of liveDefinition().conditions) conditionsByCheck.set(condition.check, condition.id);
+      for (const check of D3_BOUND_CHECKS) {
+        const state = states.get(conditionsByCheck.get(check) ?? '');
+        // Only a receipt bound to S may certify away from S; on this host the
+        // receipts, when present, are bound to the working copy's own HEAD.
+        if (check === 'ui-error-taxonomy-check' || check === 'yield-campaign-result' || check === 'accessibility-certification') continue;
+        expect(state, `${check} must not be MET at HEAD ${head} for checkpoint ${checkpoint}`).not.toBe('MET');
+      }
+    }
+    // X-04 — the demotion relation rides every receipt (NOT_CLAIMED while the
+    // project is operationally accepted rather than certified). The JSON
+    // receipt is printed only by a passing (clean-tree) evaluation.
+    if (result.status === 0) {
+      expect(result.stdout).toContain('"certificationDemotion"');
+      expect(result.stdout).toContain('"relation": "NOT_CLAIMED"');
+      expect(result.stdout).toContain('"accessibility-certification"');
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// VD-01 / corrections task 4.1 (design D3) — probe-at-checkpoint semantics.
+// ---------------------------------------------------------------------------
+
+test.describe('probe-at-checkpoint binding (VD-01)', () => {
+  const S = 'a'.repeat(40);
+  const OTHER = 'b'.repeat(40);
+
+  test('a working-tree probe is bound only at HEAD == S with a clean tree', () => {
+    expect(resolveProbeBinding({ certifiedCheckpointSha: S, headSha: S, treeClean: true })).toMatchObject({ atCheckpoint: true, reasonCode: null });
+    expect(resolveProbeBinding({ certifiedCheckpointSha: S, headSha: OTHER, treeClean: true })).toMatchObject({ atCheckpoint: false, reasonCode: 'HEAD_NOT_CHECKPOINT' });
+    expect(resolveProbeBinding({ certifiedCheckpointSha: S, headSha: S, treeClean: false })).toMatchObject({ atCheckpoint: false, reasonCode: 'TREE_DIRTY' });
+    expect(resolveProbeBinding({ certifiedCheckpointSha: S, headSha: S, treeClean: null })).toMatchObject({ atCheckpoint: false, reasonCode: 'TREE_STATE_UNKNOWN' });
+    expect(resolveProbeBinding({ certifiedCheckpointSha: null, headSha: S, treeClean: true })).toMatchObject({ atCheckpoint: false, reasonCode: 'CHECKPOINT_UNRESOLVED' });
+    expect(resolveProbeBinding({ certifiedCheckpointSha: S, headSha: null, treeClean: true })).toMatchObject({ atCheckpoint: false, reasonCode: 'HEAD_UNRESOLVED' });
+    expect(resolveProbeBinding({ certifiedCheckpointSha: 'HEAD', headSha: S, treeClean: true }).atCheckpoint).toBe(false);
+  });
+
+  test('only a passing measurement is demoted; a failure is never upgraded or hidden', () => {
+    const away = resolveProbeBinding({ certifiedCheckpointSha: S, headSha: OTHER, treeClean: true });
+    const at = resolveProbeBinding({ certifiedCheckpointSha: S, headSha: S, treeClean: true });
+    const met = { state: 'MET', detail: 'measurement text' };
+    expect(bindTreeProbe(at, met)).toEqual(met);
+    const demoted = bindTreeProbe(away, met);
+    expect(demoted.state).toBe('NOT_AT_CHECKPOINT');
+    expect(demoted.detail).toContain('measurement text');
+    expect(demoted.detail).toContain(describeProbeBinding(away));
+    for (const state of ['UNMET', 'UNAVAILABLE_CAPABILITY', 'BLOCKED_EXTERNAL']) {
+      expect(bindTreeProbe(away, { state, detail: 'x' })).toEqual({ state, detail: 'x' });
     }
   });
 
-  test('the real-tree evaluation resolves every check to probe output, never to the unbacked message', () => {
-    const result = spawnSync(process.execPath, [CHECKER, '--root', REPO_ROOT], { encoding: 'utf8', timeout: 300_000 });
-    expect(result.stdout).not.toBe('');
-    expect(result.stdout).not.toContain('the check is not present at this checkpoint');
-    for (const line of result.stdout.split('\n')) {
-      if (line.includes('state=')) expect(line).not.toContain('is registered and its capability is created by');
+  test('a receipt binds to S by its own SHA, never to HEAD', () => {
+    expect(receiptBindingRelation(S, S)).toBe('BOUND');
+    expect(receiptBindingRelation(S, S.toUpperCase())).toBe('BOUND');
+    expect(receiptBindingRelation(S, OTHER)).toBe('BOUND_TO_OTHER');
+    expect(receiptBindingRelation(S, null)).toBe('RECEIPT_SHA_INVALID');
+    expect(receiptBindingRelation(null, S)).toBe('CHECKPOINT_UNRESOLVED');
+    expect(receiptNotAtCheckpoint('a receipt', OTHER, S)).toMatchObject({ state: 'NOT_AT_CHECKPOINT' });
+  });
+
+  test('NOT_AT_CHECKPOINT is a closed vocabulary member that is never MET and refuses a claimed advance', () => {
+    expect(RELEASE_CONDITION_STATES).toContain('NOT_AT_CHECKPOINT');
+    const definition = definitionWithExactEvidence(liveDefinition(), S);
+    const target = definition.conditions[0] as { check: string; id: string };
+    const outputs = allMetOutputs(definition);
+    outputs[target.check] = { state: 'NOT_AT_CHECKPOINT', detail: 'measured away from the checkpoint' };
+    const verdict = evaluateReleaseCertification(evaluationInput(definition, {
+      certifiedCheckpointSha: S,
+      checkOutputs: outputs,
+      projectCompletionStatus: 'PROJECT_COMPLETE_AND_CI_CERTIFIED',
+    }));
+    const condition = verdict.conditions.find((entry) => entry.id === target.id);
+    expect(condition?.state).toBe('NOT_AT_CHECKPOINT');
+    expect(condition?.checkState).toBe('NOT_AT_CHECKPOINT');
+    expect(verdict.conditionsMet).toBe(verdict.conditions.length - 1);
+    expect(verdict.advanceClaimed).toBe(true);
+    expect(verdict.advanceRefused).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// VD-02 / corrections task 4.2 — G18 consumes a UI-harness EXECUTION receipt.
+// ---------------------------------------------------------------------------
+
+test.describe('UI-harness execution receipt (VD-02)', () => {
+  const S = 'c'.repeat(40);
+  const OTHER = 'd'.repeat(40);
+  const KINDS = ['NETWORK', 'HTTP', 'INVALID_RESPONSE', 'TIMEOUT', 'ABORTED'];
+  const typesSource = `export const API_ERROR_KINDS = [${KINDS.map((kind) => `'${kind}'`).join(', ')}] as const;`;
+
+  function vitestFile(mutate: (tests: Array<{ suite: string; name: string; state: string }>) => Array<{ suite: string; name: string; state: string }> = (tests) => tests) {
+    const base = [
+      ...UI_HARNESS_REQUIRED_TESTS.map((entry) => ({ suite: entry.suite, name: `${entry.titlePrefix} (synthetic remainder)`, state: 'pass' })),
+      { suite: UI_HARNESS_SUITE, name: 'offers retry only for NETWORK, TIMEOUT, 408 and 429', state: 'pass' },
+    ];
+    const tests = mutate(base);
+    const suites = new Map<string, unknown[]>();
+    for (const test of tests) {
+      const list = suites.get(test.suite) ?? [];
+      list.push({ type: 'test', name: test.name, result: { state: test.state } });
+      suites.set(test.suite, list);
     }
-    // Environment-independent probe facts for the six newly wired checks:
-    expect(result.stdout).toContain('reachability findings=0; reference-graph retention list empty');
-    expect(result.stdout).toContain('PASS: every schema identifier is declared');
-    expect(result.stdout).toContain('F-18 harness complete over 5 ApiErrorKind members');
-    expect(result.stdout).toContain('effective configuration printer present');
-    expect(result.stdout).toContain('single cookie-expiry evaluator');
-    expect(result.stdout).toContain('W13 aggregate');
-    // 5.2 — the accessibility check consumes the browser lane's record, and
-    // the retired 'no certification result' message is gone. The record is
-    // host-local by design, so presence and the retired message are asserted
-    // as plain text; never a specific state.
-    expect(result.stdout).toContain('"accessibility-certification"');
-    expect(result.stdout).not.toContain('no certification result at the certified checkpoint is recorded');
-    expect(fs.readFileSync(path.join(REPO_ROOT, 'bin', 'project-state-check.mjs'), 'utf8')).toContain('parseAccessibilityCertificationRecord(record)');
-    // X-04 — the demotion relation rides every receipt (NOT_CLAIMED while the
-    // project is operationally accepted rather than certified).
-    expect(result.stdout).toContain('"certificationDemotion"');
-    expect(result.stdout).toContain('"relation": "NOT_CLAIMED"');
+    return {
+      filepath: `/repo/ui/control-center/${UI_HARNESS_FILE}`,
+      tasks: [...suites.entries()].map(([name, list]) => ({ type: 'suite', name, tasks: list })),
+    };
+  }
+
+  function receiptOf(input: { file?: unknown; head?: string | null; clean?: boolean | null; types?: string | null } = {}) {
+    return buildUiHarnessReceipt({
+      files: [input.file ?? vitestFile()],
+      headSha: input.head === undefined ? S : input.head,
+      treeClean: input.clean === undefined ? true : input.clean,
+      typesSource: input.types === undefined ? typesSource : input.types,
+      executedAt: '2026-09-30T00:00:00.000Z',
+    });
+  }
+
+  test('extractApiErrorKinds reads the committed member list and refuses an absent one', () => {
+    expect(extractApiErrorKinds(typesSource)).toEqual(KINDS);
+    expect(extractApiErrorKinds('export const OTHER = [] as const;')).toBeNull();
+    expect(extractApiErrorKinds('export const API_ERROR_KINDS = [] as const;')).toBeNull();
+  });
+
+  test('a complete clean-tree receipt bound to S certifies', () => {
+    const evaluated = evaluateUiHarnessReceipt(receiptOf(), { certifiedCheckpointSha: S, expectedKinds: KINDS });
+    expect(evaluated.errors).toEqual([]);
+    expect(evaluated).toMatchObject({ ok: true, relation: 'BOUND', summary: { sha: S, kinds: 5 } });
+  });
+
+  test('a receipt bound to another commit is valid but not bound to S', () => {
+    const evaluated = evaluateUiHarnessReceipt(receiptOf({ head: OTHER }), { certifiedCheckpointSha: S, expectedKinds: KINDS });
+    expect(evaluated).toMatchObject({ ok: true, relation: 'BOUND_TO_OTHER' });
+  });
+
+  test('the harness file not running produces no receipt at all', () => {
+    expect(buildUiHarnessReceipt({ files: [{ filepath: '/repo/ui/control-center/src/other.test.tsx', tasks: [] }], headSha: S, treeClean: true, typesSource, executedAt: 'x' })).toBeNull();
+  });
+
+  test('every way an execution can fail to prove the taxonomy is rejected', () => {
+    const rejected = (input: Parameters<typeof receiptOf>[0], code: string, kinds: readonly string[] | null = KINDS) => {
+      const evaluated = evaluateUiHarnessReceipt(receiptOf(input), { certifiedCheckpointSha: S, expectedKinds: kinds });
+      expect(evaluated.ok, code).toBe(false);
+      expect(evaluated.errors.join('|'), code).toContain(code);
+    };
+    rejected({ clean: false }, 'UI_HARNESS_RECEIPT_TREE_NOT_CLEAN');
+    rejected({ clean: null }, 'UI_HARNESS_RECEIPT_TREE_NOT_CLEAN');
+    rejected({ head: null }, 'UI_HARNESS_RECEIPT_SHA_INVALID');
+    rejected({ file: vitestFile((tests) => tests.map((test, index) => (index === 0 ? { ...test, state: 'fail' } : test))) }, 'UI_HARNESS_RECEIPT_HARNESS_TEST_NOT_PASSED');
+    rejected({ file: vitestFile((tests) => tests.map((test, index) => (index === 1 ? { ...test, state: 'skip' } : test))) }, 'UI_HARNESS_RECEIPT_REQUIRED_TEST_NOT_PASSED');
+    rejected({ file: vitestFile((tests) => tests.filter((test) => !test.name.startsWith('mutation proof'))) }, 'UI_HARNESS_RECEIPT_REQUIRED_TEST_MISSING:mutation proof');
+    rejected({ file: vitestFile(() => []) }, 'UI_HARNESS_RECEIPT_NO_HARNESS_TESTS');
+    rejected({ types: null }, 'UI_HARNESS_RECEIPT_KINDS_MISSING');
+    rejected({}, 'UI_HARNESS_RECEIPT_KINDS_DRIFT', [...KINDS, 'EXTRA']);
+    rejected({}, 'UI_HARNESS_RECEIPT_EXPECTED_KINDS_UNAVAILABLE', null);
+    expect(evaluateUiHarnessReceipt(null, { certifiedCheckpointSha: S, expectedKinds: KINDS }).errors).toEqual(['UI_HARNESS_RECEIPT_UNAVAILABLE']);
+    expect(evaluateUiHarnessReceipt({ ...receiptOf(), schemaVersion: 'nightwatch.other.v1' }, { certifiedCheckpointSha: S, expectedKinds: KINDS }).errors.join('|')).toContain('UI_HARNESS_RECEIPT_SCHEMA_UNSUPPORTED');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// VD-03 / CF-03 / corrections task 4.3 — G12 consumes a yield-campaign receipt.
+// ---------------------------------------------------------------------------
+
+test.describe('yield-campaign receipt (VD-03 / CF-03)', () => {
+  const S = 'e'.repeat(40);
+  const OTHER = 'f'.repeat(40);
+  const sibling = { repository: 'mobingilabs/ouchan', headSha: '1'.repeat(40), statusDigest: 'sha256:aa', diffDigest: 'sha256:bb', dirty: false };
+
+  function evidence(overrides: {
+    kind?: string | null;
+    sha?: string | null;
+    clean?: boolean | null;
+    passed?: boolean;
+    product?: string;
+    termination?: 'VALID_PROVIDER_RUN' | 'PROVIDER_BLOCKED_BEFORE_SOURCE_ACTION' | 'PROVIDER_DEGRADED';
+    completedCalls?: number;
+    leak?: 'CLEAN' | 'LEAKS_FOUND';
+    siblingChange?: boolean;
+    siblings?: number;
+    manifestSha?: string | null;
+  } = {}) {
+    const sha = overrides.sha === undefined ? S : overrides.sha;
+    const observation = { repository: sibling.repository, headSha: sibling.headSha, statusDigest: sibling.statusDigest, diffDigest: sibling.diffDigest };
+    const observations = Array.from({ length: overrides.siblings ?? 1 }, () => observation);
+    const changedAfter = overrides.siblingChange === true ? [{ ...observation, headSha: '2'.repeat(40) }] : observations;
+    const receipt = buildProductRunReceipt({
+      campaignId: 'synthetic-yield',
+      generatedAt: '2026-09-30T00:00:00.000Z',
+      result: {
+        terminationReason: 'COMPLETE_NO_FINDING',
+        providerAttribution: {
+          terminationClass: overrides.termination ?? 'VALID_PROVIDER_RUN',
+          totalCalls: overrides.completedCalls ?? 3,
+          completedCalls: overrides.completedCalls ?? 3,
+          failures: 0,
+          byClass: {},
+        } as never,
+        persistedFindings: [],
+        reproductionCount: 2,
+        toolActionCount: 5,
+      },
+      before: observations as never,
+      after: changedAfter as never,
+      leakScan: { result: overrides.leak ?? 'CLEAN', findings: overrides.leak === 'LEAKS_FOUND' ? 1 : 0, scannedChars: 10 },
+      ...(sha === null ? {} : { nightwatchIdentity: { sha, treeClean: overrides.clean ?? true } }),
+      ...(overrides.kind === null ? {} : { campaignKind: (overrides.kind ?? 'PRINT_CLI_PROVIDER') as never }),
+    });
+    const manifest = { runId: 'run-1', product: overrides.product ?? 'campaign', nightwatchSha: overrides.manifestSha === undefined ? sha : overrides.manifestSha };
+    return { manifest, summary: { passed: overrides.passed ?? true }, receipt };
+  }
+
+  test('a provider campaign that passed at a clean S with executed provider calls certifies', () => {
+    const evaluated = evaluateYieldCampaignEvidence(evidence(), S);
+    expect(evaluated.errors).toEqual([]);
+    expect(evaluated).toMatchObject({ ok: true, relation: 'BOUND', summary: { sha: S, completedCalls: 3, admissions: 0 } });
+  });
+
+  test('a run at another commit is valid evidence about that commit, not about S', () => {
+    expect(evaluateYieldCampaignEvidence(evidence({ sha: OTHER }), S)).toMatchObject({ ok: true, relation: 'BOUND_TO_OTHER' });
+  });
+
+  test('a smoke run, a blocked provider, an unbound run and every weaker receipt never qualify', () => {
+    const rejected = (input: Parameters<typeof evidence>[0], code: string) => {
+      const evaluated = evaluateYieldCampaignEvidence(evidence(input), S);
+      expect(evaluated.ok, code).toBe(false);
+      expect(evaluated.errors.join('|'), code).toContain(code);
+    };
+    rejected({ kind: 'CUSTOM_REASONER_SCRIPT' }, 'YIELD_RECEIPT_NOT_A_PROVIDER_CAMPAIGN:CUSTOM_REASONER_SCRIPT');
+    rejected({ kind: null }, 'YIELD_RECEIPT_NOT_A_PROVIDER_CAMPAIGN:ABSENT');
+    rejected({ sha: null, manifestSha: null }, 'YIELD_RECEIPT_SHA_ABSENT');
+    rejected({ manifestSha: OTHER }, 'YIELD_RECEIPT_SHA_DISAGREES');
+    rejected({ clean: false }, 'YIELD_RECEIPT_TREE_NOT_CLEAN');
+    rejected({ passed: false }, 'YIELD_RECEIPT_RUN_NOT_PASSED');
+    rejected({ product: 'scenario' }, 'YIELD_RECEIPT_NOT_A_CAMPAIGN_RUN');
+    rejected({ termination: 'PROVIDER_BLOCKED_BEFORE_SOURCE_ACTION' }, 'YIELD_RECEIPT_PROVIDER_NOT_VALID');
+    rejected({ termination: 'PROVIDER_DEGRADED' }, 'YIELD_RECEIPT_PROVIDER_NOT_VALID');
+    rejected({ completedCalls: 0 }, 'YIELD_RECEIPT_NO_COMPLETED_PROVIDER_CALL');
+    rejected({ siblingChange: true }, 'YIELD_RECEIPT_SIBLING_IDENTITY_CHANGED');
+    rejected({ siblings: 0 }, 'YIELD_RECEIPT_NO_SIBLING_OBSERVATION');
+    rejected({ leak: 'LEAKS_FOUND' }, 'YIELD_RECEIPT_LEAK_SCAN_NOT_CLEAN');
+    expect(evaluateYieldCampaignEvidence({ manifest: null, summary: null, receipt: null }, S).errors).toEqual(['YIELD_RECEIPT_RUN_ARTIFACTS_MISSING']);
+    expect(evaluateYieldCampaignEvidence({ manifest: {}, summary: {}, receipt: { schemaVersion: 'x' } }, S).errors[0]).toContain('YIELD_RECEIPT_INVALID');
+  });
+
+  test('the additive receipt fields are validated when present and remain optional for legacy receipts', () => {
+    const { receipt } = evidence();
+    expect(validateProductRunReceipt(receipt).ok).toBe(true);
+    const legacy = { ...receipt } as Record<string, unknown>;
+    delete legacy.nightwatchSha;
+    delete legacy.nightwatchTreeClean;
+    delete legacy.campaignKind;
+    expect(validateProductRunReceipt(legacy).ok).toBe(true);
+    expect(validateProductRunReceipt({ ...receipt, nightwatchSha: 'short' }).errors).toContain('nightwatchSha');
+    expect(validateProductRunReceipt({ ...receipt, nightwatchTreeClean: 'yes' }).errors).toContain('nightwatchTreeClean');
+    expect(validateProductRunReceipt({ ...receipt, campaignKind: 'OTHER' }).errors).toContain('campaignKind');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// VD-04 / corrections task 4.4 — G19 and G21 EXERCISE their contracts.
+// ---------------------------------------------------------------------------
+
+test.describe('G19 / G21 probes exercise their contracts (VD-04)', () => {
+  const surface = environmentSurfaceModule;
+  const declaration = () => surface.loadEnvironmentSurface();
+
+  test('G19: the real environment surface passes the exercise with every declared variable covered', () => {
+    const parsed = declaration();
+    const exercised = exerciseConfigurationContract(surface, parsed);
+    expect(exercised.failures).toEqual([]);
+    expect(exercised.rendered).toBe(parsed.variables.length);
+    expect(exercised.refused + exercised.unrejectable).toBe(parsed.variables.length);
+    expect(exercised.refused).toBeGreaterThan(0);
+  });
+
+  test('G19: a validator that accepts a malformed value fails the exercise, naming the variable', () => {
+    const lenient = { ...surface, validateEnvironmentValues: () => ({ ok: true, refusals: [], unknown: [] }) };
+    const failures = exerciseConfigurationContract(lenient, declaration()).failures;
+    expect(failures.some((entry) => entry.includes('accepted a malformed value'))).toBe(true);
+    expect(failures).toContain('an undeclared NIGHTWATCH_* name was not reported unknown');
+  });
+
+  test('G19: a printer that leaks a secret-bearing value or omits a row fails the exercise', () => {
+    const leaking = { ...surface, renderEffectiveConfiguration: (rows: ReadonlyArray<{ name: string }>) => `${rows.map((row) => row.name).join('\n')}\nnw-synthetic-secret-sentinel-value` };
+    expect(exerciseConfigurationContract(leaking, declaration()).failures).toContain('effective configuration leaked a secret-bearing value');
+    const truncating = { ...surface, renderEffectiveConfiguration: () => 'NIGHTWATCH effective configuration' };
+    expect(exerciseConfigurationContract(truncating, declaration()).failures.some((entry) => entry.startsWith('effective configuration omits'))).toBe(true);
+  });
+
+  test('G19: an empty declaration is not a pass', () => {
+    expect(exerciseConfigurationContract(surface, { variables: [] }).failures).toContain('the declaration carries no variables to exercise');
+  });
+
+  test('G21: the real pre-flight refuses each synthetic non-VALID artefact with its own code and no effect', () => {
+    const exercised = exercisePreflightRefusal(capabilityLifecycleModule);
+    expect(exercised.failures).toEqual([]);
+    expect(exercised.states).toEqual(['MISSING', 'UNKNOWN_AGE', 'UNREADABLE']);
+    expect(exercised.refused).toBe(3);
+  });
+
+  test('G21: a pre-flight that admits an artefact, refuses with the wrong code, or acts before refusing fails the exercise', () => {
+    const admitting = { ...capabilityLifecycleModule, assertAuthCapabilityPreflight: () => ({ state: 'VALID' }) };
+    expect(exercisePreflightRefusal(admitting).failures).toContain('MISSING artefact was not refused');
+    const wrongClass = {
+      ...capabilityLifecycleModule,
+      assertAuthCapabilityPreflight: () => {
+        throw new Error('generic failure');
+      },
+    };
+    expect(exercisePreflightRefusal(wrongClass).failures.some((entry) => entry.includes('wrong class or code'))).toBe(true);
+    const acting = {
+      ...capabilityLifecycleModule,
+      assertAuthCapabilityPreflight: (input: { artefactPath: string }) => {
+        fs.writeFileSync(`${input.artefactPath}.effect`, 'an effect before the refusal');
+        return capabilityLifecycleModule.assertAuthCapabilityPreflight(input as never);
+      },
+    };
+    expect(exercisePreflightRefusal(acting).failures.some((entry) => entry.includes('changed the artefact directory'))).toBe(true);
   });
 });
 

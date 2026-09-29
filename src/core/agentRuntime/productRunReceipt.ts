@@ -46,6 +46,21 @@ export interface ProductRunSiblingIdentity {
   readonly diffDigest: string;
 }
 
+/**
+ * CF-03 / VD-03: what KIND of campaign produced a receipt. Only a run through
+ * the provider print adapter is a yield campaign; a custom reasoner script (the
+ * deterministic smoke and test path) is honest local evidence that the launcher
+ * works, never a yield result.
+ */
+export const CAMPAIGN_KINDS = ['PRINT_CLI_PROVIDER', 'CUSTOM_REASONER_SCRIPT'] as const;
+export type CampaignKind = (typeof CAMPAIGN_KINDS)[number];
+
+/** The Nightwatch repository identity a run executed at (design D3 binding). */
+export interface ProductRunNightwatchIdentity {
+  readonly sha: string;
+  readonly treeClean: boolean;
+}
+
 export interface ProductRunReceipt {
   readonly schemaVersion: typeof PRODUCT_RUN_RECEIPT_VERSION;
   readonly campaignId: string;
@@ -73,6 +88,12 @@ export interface ProductRunReceipt {
   readonly persistedAdmissionIds: readonly string[];
   readonly reproductionCount: number;
   readonly toolActionCount: number;
+  /** CF-03: the Nightwatch HEAD the run executed at (absent on legacy receipts). */
+  readonly nightwatchSha?: string;
+  /** CF-03: whether the Nightwatch tree was clean when the run executed. */
+  readonly nightwatchTreeClean?: boolean;
+  /** CF-03: provider print adapter vs custom reasoner script. */
+  readonly campaignKind?: CampaignKind;
 }
 
 export interface ProductRunReceiptInput {
@@ -93,6 +114,10 @@ export interface ProductRunReceiptInput {
   readonly siblingRoot?: string;
   readonly now?: () => Date;
   readonly scanText?: string;
+  /** CF-03: the Nightwatch repository identity at run time. */
+  readonly nightwatchIdentity?: ProductRunNightwatchIdentity;
+  /** CF-03: provider print adapter vs custom reasoner script. */
+  readonly campaignKind?: CampaignKind;
 }
 
 export interface EmittedProductRunReceipt {
@@ -148,6 +173,8 @@ export function buildProductRunReceipt(input: {
   readonly before: readonly SiblingIdentityObservation[];
   readonly after: readonly SiblingIdentityObservation[];
   readonly leakScan: ProductRunReceipt['leakScan'];
+  readonly nightwatchIdentity?: ProductRunNightwatchIdentity;
+  readonly campaignKind?: CampaignKind;
 }): ProductRunReceipt {
   const before = input.before.map(identityOf);
   const after = input.after.map(identityOf);
@@ -173,6 +200,10 @@ export function buildProductRunReceipt(input: {
     ),
     reproductionCount: input.result.reproductionCount,
     toolActionCount: input.result.toolActionCount,
+    ...(input.nightwatchIdentity === undefined
+      ? {}
+      : { nightwatchSha: input.nightwatchIdentity.sha, nightwatchTreeClean: input.nightwatchIdentity.treeClean }),
+    ...(input.campaignKind === undefined ? {} : { campaignKind: input.campaignKind }),
   });
 }
 
@@ -262,7 +293,92 @@ export function validateProductRunReceipt(value: unknown): ValidateProductRunRec
     const entry = record[field];
     if (typeof entry !== 'number' || !Number.isInteger(entry) || entry < 0) errors.push(field);
   }
+  // CF-03 additive fields: optional (legacy receipts predate them), but when
+  // present they must be well-formed so a malformed binding never reads as one.
+  if (record.nightwatchSha !== undefined && (typeof record.nightwatchSha !== 'string' || !/^[0-9a-f]{40}$/.test(record.nightwatchSha))) {
+    errors.push('nightwatchSha');
+  }
+  if (record.nightwatchTreeClean !== undefined && typeof record.nightwatchTreeClean !== 'boolean') errors.push('nightwatchTreeClean');
+  if (record.campaignKind !== undefined && !(CAMPAIGN_KINDS as readonly unknown[]).includes(record.campaignKind)) errors.push('campaignKind');
   return { ok: errors.length === 0, errors };
+}
+
+export interface YieldCampaignEvaluation {
+  readonly ok: boolean;
+  readonly errors: readonly string[];
+  /** BOUND: the run executed at the certified checkpoint. */
+  readonly relation: 'BOUND' | 'BOUND_TO_OTHER' | 'INVALID';
+  readonly summary: {
+    readonly sha: string;
+    readonly runId: string;
+    readonly completedCalls: number;
+    readonly reproductionCount: number;
+    readonly admissions: number;
+    readonly siblingsObserved: number;
+  } | null;
+}
+
+function isRecordValue(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+/**
+ * VD-03 / CF-03 (design D3): the ONLY route to a G12 pass. A yield-campaign
+ * receipt is the D-7 manifest + summary + product-run receipt of a run that
+ * passed, executed at a recorded clean Nightwatch commit, through the provider
+ * print adapter, with at least one completed provider call, a valid provider
+ * class, an unchanged sibling identity and a clean leak scan. A smoke run, a
+ * blocked provider, a dirty tree or a missing binding never qualifies. Zero
+ * admissions are acceptable (a run may honestly find nothing); zero executed
+ * calls are not. This function is pure.
+ */
+export function evaluateYieldCampaignEvidence(
+  evidence: { readonly manifest: unknown; readonly summary: unknown; readonly receipt: unknown },
+  certifiedCheckpointSha: string | null,
+): YieldCampaignEvaluation {
+  const errors: string[] = [];
+  const invalid = (): YieldCampaignEvaluation => ({ ok: false, errors, relation: 'INVALID', summary: null });
+  if (!isRecordValue(evidence.manifest) || !isRecordValue(evidence.summary)) {
+    errors.push('YIELD_RECEIPT_RUN_ARTIFACTS_MISSING');
+    return invalid();
+  }
+  const validation = validateProductRunReceipt(evidence.receipt);
+  if (!validation.ok) {
+    errors.push(...validation.errors.slice(0, 3).map((code) => `YIELD_RECEIPT_INVALID:${code}`));
+    return invalid();
+  }
+  const receipt = evidence.receipt as ProductRunReceipt;
+  if (evidence.manifest.product !== 'campaign') errors.push('YIELD_RECEIPT_NOT_A_CAMPAIGN_RUN');
+  if (evidence.summary.passed !== true) errors.push('YIELD_RECEIPT_RUN_NOT_PASSED');
+  if (receipt.campaignKind !== 'PRINT_CLI_PROVIDER') errors.push(`YIELD_RECEIPT_NOT_A_PROVIDER_CAMPAIGN:${receipt.campaignKind ?? 'ABSENT'}`);
+  const manifestSha = evidence.manifest.nightwatchSha;
+  if (typeof manifestSha !== 'string' || !/^[0-9a-f]{40}$/i.test(manifestSha)) errors.push('YIELD_RECEIPT_SHA_ABSENT');
+  else if (receipt.nightwatchSha === undefined || receipt.nightwatchSha !== manifestSha.toLowerCase()) errors.push('YIELD_RECEIPT_SHA_DISAGREES');
+  if (receipt.nightwatchTreeClean !== true) errors.push('YIELD_RECEIPT_TREE_NOT_CLEAN');
+  if (receipt.terminationClass !== 'VALID_PROVIDER_RUN') errors.push(`YIELD_RECEIPT_PROVIDER_NOT_VALID:${receipt.terminationClass}`);
+  if (receipt.providerHealth.completedCalls < 1) errors.push('YIELD_RECEIPT_NO_COMPLETED_PROVIDER_CALL');
+  if (receipt.siblingIdentityChanged) errors.push('YIELD_RECEIPT_SIBLING_IDENTITY_CHANGED');
+  if (receipt.siblingsBefore.length < 1) errors.push('YIELD_RECEIPT_NO_SIBLING_OBSERVATION');
+  if (receipt.leakScan.result !== 'CLEAN') errors.push('YIELD_RECEIPT_LEAK_SCAN_NOT_CLEAN');
+  if (errors.length > 0) return invalid();
+  const sha = String(receipt.nightwatchSha);
+  const relation = typeof certifiedCheckpointSha === 'string' && /^[0-9a-f]{40}$/i.test(certifiedCheckpointSha)
+    && certifiedCheckpointSha.toLowerCase() === sha
+    ? 'BOUND'
+    : 'BOUND_TO_OTHER';
+  return {
+    ok: true,
+    errors: [],
+    relation,
+    summary: {
+      sha,
+      runId: typeof evidence.manifest.runId === 'string' ? evidence.manifest.runId : receipt.campaignId,
+      completedCalls: receipt.providerHealth.completedCalls,
+      reproductionCount: receipt.reproductionCount,
+      admissions: receipt.persistedAdmissionIds.length,
+      siblingsObserved: receipt.siblingsBefore.length,
+    },
+  };
 }
 
 /** Snapshot the identity of every approved repository, in the given order. */
@@ -315,6 +431,8 @@ export async function emitProductRunReceipt(input: ProductRunReceiptInput): Prom
     before: input.before,
     after,
     leakScan,
+    ...(input.nightwatchIdentity === undefined ? {} : { nightwatchIdentity: input.nightwatchIdentity }),
+    ...(input.campaignKind === undefined ? {} : { campaignKind: input.campaignKind }),
   });
   const validation = validateProductRunReceipt(receipt);
   if (!validation.ok) {
@@ -327,6 +445,7 @@ export async function emitProductRunReceipt(input: ProductRunReceiptInput): Prom
     product: 'campaign',
     browser: 'none',
     scenario: input.campaignId,
+    ...(input.nightwatchIdentity === undefined ? {} : { nightwatchSha: input.nightwatchIdentity.sha }),
     artifactsRoot: path.join(input.root, 'artifacts'),
     now,
   });

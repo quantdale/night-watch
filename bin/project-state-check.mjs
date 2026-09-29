@@ -32,6 +32,9 @@ import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
 import { loadTypeScriptModule as loadRuntimeTypeScriptModule } from './lib/typescript-runtime-loader.mjs';
 import { loadReleaseEvidenceBindings, resolveEvidenceShaForSubject } from './lib/release-evidence.mjs';
 import { ACCESSIBILITY_RECORD_PATH, parseAccessibilityCertificationRecord } from './lib/accessibility-record.mjs';
+import { UI_HARNESS_RECEIPT_PATH, UI_HARNESS_TYPES_PATH, evaluateUiHarnessReceipt, extractApiErrorKinds } from './lib/ui-harness-receipt.mjs';
+import { exerciseConfigurationContract, exercisePreflightRefusal } from './lib/release-probe-exercises.mjs';
+import { bindTreeProbe, receiptBindingRelation, receiptNotAtCheckpoint, resolveProbeBinding } from './lib/probe-binding.mjs';
 import { classifyCertificationDemotion } from './lib/certification-demotion.mjs';
 import { collectCiBlockStale, validateCiBlockRecord } from './lib/ci-block-record.mjs';
 import { checkpointRoleViolations } from './lib/checkpoint-role.mjs';
@@ -588,14 +591,15 @@ function probeRuleRegistry(root) {
   };
 }
 
-function probeAccessibility(root) {
+function probeAccessibility(root, certifiedCheckpointSha) {
   const unit = fs.existsSync(path.join(root, 'tests/unit/accessibilityAudit.test.ts'));
   const browser = fs.existsSync(path.join(root, 'tests/browser/accessibilityCertification.browser.ts'));
   if (!unit || !browser) return { state: 'UNMET', detail: `check absent: unit=${unit} browser=${browser}` };
   // G20 / R2-51 — the machine-readable certification record written by the
   // control-center browser lane. A fresh clone has no record (the lane is a
-  // qualified-host browser lane), so this check honestly stays UNMET there;
-  // the record's executed SHA binds the result at certification time.
+  // qualified-host browser lane), so this check honestly stays UNMET there.
+  // CF-02 / design D3 (b): the record's executed SHA must equal the certified
+  // checkpoint S; a record bound to any other commit is NOT_AT_CHECKPOINT.
   const record = readJsonAt(root, ACCESSIBILITY_RECORD_PATH);
   if (record === null) {
     return {
@@ -604,8 +608,11 @@ function probeAccessibility(root) {
     };
   }
   const parsed = parseAccessibilityCertificationRecord(record);
-  if (!parsed.ok) {
+  if (!parsed.ok || parsed.summary === null) {
     return { state: 'UNMET', detail: `accessibility certification record rejected: ${parsed.errors.slice(0, 3).join('; ')}` };
+  }
+  if (receiptBindingRelation(certifiedCheckpointSha, parsed.summary.sha) !== 'BOUND') {
+    return receiptNotAtCheckpoint('the accessibility certification record', parsed.summary.sha, certifiedCheckpointSha);
   }
   return {
     state: 'MET',
@@ -712,52 +719,64 @@ function probeConfigurationContract(root) {
   if (declaration === null) return { state: 'UNAVAILABLE_CAPABILITY', detail: 'config/environment-surface.v1.json unreadable' };
   try {
     const parsed = surface.parseEnvironmentSurface(declaration);
-    if (typeof surface.renderEffectiveConfiguration !== 'function') {
-      return { state: 'UNAVAILABLE_CAPABILITY', detail: 'effective configuration printer missing from environment-surface' };
+    if (typeof surface.renderEffectiveConfiguration !== 'function' || typeof surface.effectiveConfiguration !== 'function' || typeof surface.validateEnvironmentValues !== 'function') {
+      return { state: 'UNAVAILABLE_CAPABILITY', detail: 'effective configuration printer or validator missing from environment-surface' };
     }
-    const declared = Array.isArray(parsed.variables) ? parsed.variables.length : 0;
-    if (declared === 0) return { state: 'UNMET', detail: 'environment surface declares no variables' };
-    return { state: 'MET', detail: `declaration rule pass; surface parses with ${declared} declared variables; effective configuration printer present` };
+    const declared = Array.isArray(parsed.variables) ? parsed.variables : [];
+    if (declared.length === 0) return { state: 'UNMET', detail: 'environment surface declares no variables' };
+    // VD-04 / corrections task 4.4: EXERCISE the contract — render the
+    // effective configuration over a synthetic environment and validate every
+    // declared variable — instead of reporting that a printer exists.
+    const exercised = exerciseConfigurationContract(surface, parsed);
+    if (exercised.failures.length > 0) {
+      return { state: 'UNMET', detail: `configuration contract exercise failed: ${exercised.failures.slice(0, 3).join('; ')}` };
+    }
+    return {
+      state: 'MET',
+      detail: `declaration rule pass; effective configuration rendered ${exercised.rendered} rows (secret values presence-only, ${exercised.secretRows} secret rows); ${exercised.refused} declared variables refused a malformed value by shape, ${exercised.required} refused absence in a required mode, ${exercised.unrejectable} shape-unrejectable; an undeclared NIGHTWATCH_* name is reported unknown`,
+    };
   } catch (error) {
     return { state: 'UNMET', detail: `environment surface does not parse: ${error instanceof Error ? error.message : String(error)}` };
   }
 }
 
 /**
- * G18 — UI error taxonomy (D3): the F-18 differential render harness drives
- * every view through every ApiErrorKind member, requires distinct renderings,
- * derives the member list with no fallback, and its tracked DOM baseline is
- * present. Executing the harness is the UI gate group's job; this probe proves
- * the receipt-shaped contract itself is complete.
+ * G18 — UI error taxonomy (D3 / VD-02): the F-18 differential render harness
+ * drives every view through every ApiErrorKind member and requires distinct
+ * renderings. This probe no longer trusts the presence of the harness file: it
+ * consumes the UI-harness EXECUTION receipt the UI_GATE group's vitest
+ * reporter writes (bin/lib/ui-harness-receipt.mjs), requires every harness
+ * test recorded PASS from a clean tree, cross-checks the ApiErrorKind member
+ * list against the one committed AT the certified checkpoint, and resolves
+ * MET only when the receipt's SHA equals that checkpoint.
  * @param {string} root
+ * @param {string | null} certifiedCheckpointSha
  * @returns {{state: string, detail: string}}
  */
-function probeUiErrorTaxonomy(root) {
-  const baseline = readJsonAt(root, 'ui/control-center/src/__baselines__/view-dom-baseline.json');
-  if (baseline === null) return { state: 'UNMET', detail: 'render harness DOM baseline ui/control-center/src/__baselines__/view-dom-baseline.json missing' };
-  let types;
-  let harness;
-  try {
-    types = fs.readFileSync(path.join(root, 'ui', 'control-center', 'src', 'types.ts'), 'utf8');
-    harness = fs.readFileSync(path.join(root, 'ui', 'control-center', 'src', 'contractRender.test.tsx'), 'utf8');
-  } catch {
-    return { state: 'UNAVAILABLE_CAPABILITY', detail: 'UI taxonomy sources unreadable' };
+function probeUiErrorTaxonomy(root, certifiedCheckpointSha) {
+  const raw = readJsonAt(root, UI_HARNESS_RECEIPT_PATH);
+  if (raw === null) {
+    return {
+      state: 'UNMET',
+      detail: `no UI-harness execution receipt at ${UI_HARNESS_RECEIPT_PATH}; the UI_GATE group (npm run gate:ui) has not executed the F-18 harness on this host`,
+    };
   }
-  const memberList = /export const API_ERROR_KINDS = \[([^\]]+)\] as const;/.exec(types);
-  if (memberList === null) return { state: 'UNMET', detail: 'API_ERROR_KINDS member list not found in ui/control-center/src/types.ts' };
-  const kinds = memberList[1]?.match(/'([A-Z_]+)'/g) ?? [];
-  if (kinds.length === 0) return { state: 'UNMET', detail: 'API_ERROR_KINDS declares no members' };
-  const markers = [
-    ["describe('F-18 failure-path differential render harness'", 'the F-18 differential harness'],
-    ['for (const kind of API_ERROR_KINDS) renderings.set(kind, view.render(kindCase(kind)));', 'the per-kind render loop'],
-    ['expect(allViolations).toEqual([]);', 'the distinctness gate'],
-    ['data-error-kind="${kind}"', 'the per-kind rendered marker'],
-    ['export type ApiErrorKind = \\(typeof API_ERROR_KINDS\\)\\[number\\];', 'the derived ApiErrorKind type'],
-  ];
-  const missing = markers.filter(([literal]) => !harness.includes(literal)).map(([, label]) => label);
-  if (missing.length > 0) return { state: 'UNMET', detail: `render harness incomplete: missing ${missing.join(', ')}` };
-  const views = typeof baseline === 'object' && baseline !== null ? Object.keys(baseline).length : 0;
-  return { state: 'MET', detail: `F-18 harness complete over ${kinds.length} ApiErrorKind members; DOM baseline covers ${views} views` };
+  let expectedKinds = null;
+  if (typeof certifiedCheckpointSha === 'string' && HEX40.test(certifiedCheckpointSha)) {
+    const typesAtCheckpoint = gitReadOnly(root, ['show', `${certifiedCheckpointSha}:${UI_HARNESS_TYPES_PATH}`]);
+    expectedKinds = typeof typesAtCheckpoint === 'string' ? extractApiErrorKinds(typesAtCheckpoint) : null;
+  }
+  const evaluated = evaluateUiHarnessReceipt(raw, { certifiedCheckpointSha, expectedKinds });
+  if (!evaluated.ok || evaluated.summary === null) {
+    return { state: 'UNMET', detail: `UI-harness execution receipt rejected: ${evaluated.errors.slice(0, 3).join('; ')}` };
+  }
+  if (evaluated.relation !== 'BOUND') {
+    return receiptNotAtCheckpoint('the UI-harness execution receipt', evaluated.summary.sha, certifiedCheckpointSha);
+  }
+  return {
+    state: 'MET',
+    detail: `F-18 harness executed at ${evaluated.summary.sha.slice(0, 8)}: ${evaluated.summary.harnessTests} harness tests PASS over ${evaluated.summary.kinds} ApiErrorKind members (suite ${evaluated.summary.totalTests} tests, 0 failed, clean tree)`,
+  };
 }
 
 /**
@@ -784,74 +803,83 @@ function probeAuthenticatedCapabilityLifecycle(root) {
       .slice(0, 3);
     return { state: 'UNMET', detail: lines.join('; ') || `single-evaluator rule exit=${rule.status}` };
   }
-  return { state: 'MET', detail: 'single cookie-expiry evaluator (F-21) enforced at src/browser/fixtures/storageState.ts; pre-flight consumes the one authority' };
+  // VD-04 / corrections task 4.4: EXERCISE the pre-flight refusal of synthetic
+  // non-VALID artefacts (all synthetic, in a disposable directory, before any
+  // effect) rather than reporting that a rule passed.
+  let lifecycle;
+  try {
+    lifecycle = loadTypeScriptModule(root, 'src/auth/capabilityLifecycle.ts');
+  } catch {
+    return { state: 'UNAVAILABLE_CAPABILITY', detail: 'capability lifecycle module unavailable' };
+  }
+  const exercised = exercisePreflightRefusal(lifecycle);
+  if (exercised.failures.length > 0) {
+    return { state: 'UNMET', detail: `capability pre-flight exercise failed: ${exercised.failures.slice(0, 3).join('; ')}` };
+  }
+  return {
+    state: 'MET',
+    detail: `single cookie-expiry evaluator (F-21) enforced at src/browser/fixtures/storageState.ts; the pre-flight refused ${exercised.refused} synthetic non-VALID artefacts (${exercised.states.join(', ')}) with their distinct codes and created nothing`,
+  };
 }
 
+
+/** Bound on how many newest run directories the G12 probe inspects. */
+const YIELD_RUN_SCAN_LIMIT = 50;
+
 /**
- * Newest D-7 shaped product-run receipt (manifest + summary with a real
- * nightwatchSha) under the gitignored artifacts/ scratch. Host-local by
- * design: an owner host that has executed a product run carries it, a fresh
- * clone does not, and the probe never invents one.
+ * G12 — yield campaign result (D3 / VD-03 / CF-03): resolves ONLY from a
+ * yield-campaign receipt — the D-7 manifest + summary + product-run receipt of
+ * a run that passed, executed at a recorded clean Nightwatch commit through
+ * the provider print adapter, with at least one completed provider call, an
+ * unchanged sibling identity and a clean leak scan
+ * (evaluateYieldCampaignEvidence). MET only when that commit is the certified
+ * checkpoint. The historical W13 aggregate is context, never evidence: it is
+ * not consulted here. The receipt is host-local by design (gitignored
+ * artifacts/), so this check is NOT environment-independent: a fresh clone has
+ * none and honestly stays UNMET.
  * @param {string} root
- * @returns {{runId: string, sha: string, passed: boolean} | null}
+ * @param {string | null} certifiedCheckpointSha
+ * @returns {{state: string, detail: string}}
  */
-function latestProductRunReceipt(root) {
+function probeYieldCampaignResult(root, certifiedCheckpointSha) {
+  let receiptModule;
+  try {
+    receiptModule = loadTypeScriptModule(root, 'src/core/agentRuntime/productRunReceipt.ts');
+  } catch {
+    return { state: 'UNAVAILABLE_CAPABILITY', detail: 'product run receipt module unavailable' };
+  }
   let entries;
   try {
     entries = fs.readdirSync(path.join(root, 'artifacts'));
   } catch {
-    return null;
+    entries = [];
   }
-  const candidates = entries.filter((entry) => entry.startsWith('nightwatch-')).sort().reverse();
-  for (const entry of candidates) {
-    const manifest = readJsonAt(root, `artifacts/${entry}/manifest.json`);
-    const summary = readJsonAt(root, `artifacts/${entry}/summary.json`);
-    if (manifest === null || summary === null) continue;
-    if (typeof manifest.nightwatchSha !== 'string' || !/^[0-9a-f]{40}$/i.test(manifest.nightwatchSha)) continue;
-    if (typeof summary.passed !== 'boolean') continue;
-    if (typeof summary.counts !== 'object' || summary.counts === null) continue;
-    return {
-      runId: typeof manifest.runId === 'string' ? manifest.runId : entry,
-      sha: manifest.nightwatchSha.toLowerCase(),
-      passed: summary.passed,
-    };
+  const runs = entries.filter((entry) => entry.startsWith('nightwatch-')).sort().reverse().slice(0, YIELD_RUN_SCAN_LIMIT);
+  if (runs.length === 0) {
+    return { state: 'UNMET', detail: 'no yield-campaign receipt: no artifacts/nightwatch-* run exists on this host (the receipt is host-local; a fresh clone has none)' };
   }
-  return null;
-}
-
-/**
- * G12 — yield campaign result (D3): a D-7 product-run receipt plus the
- * historical W13 aggregate whose required metrics each carry their per-case
- * reason. The D-136 successor wave stays unopened; this check consumes the
- * completed campaign record and never projects an unopened one.
- * @param {string} root
- * @returns {{state: string, detail: string}}
- */
-function probeYieldCampaignResult(root) {
-  const aggregatePath = '.agent/tasks/nightwatch-provider-resilient-current-yield-w13-v1/evidence/global-yield-aggregation.json';
-  const aggregate = readJsonAt(root, aggregatePath);
-  if (aggregate === null) return { state: 'UNMET', detail: `historical W13 aggregate missing (${aggregatePath})` };
-  let aggregation;
-  try {
-    aggregation = loadTypeScriptModule(root, 'src/core/currentSourceYield/aggregation.ts');
-  } catch {
-    return { state: 'UNAVAILABLE_CAPABILITY', detail: 'yield aggregation module unavailable' };
+  let boundToOther = null;
+  let firstRejection = null;
+  for (const entry of runs) {
+    const evaluated = receiptModule.evaluateYieldCampaignEvidence({
+      manifest: readJsonAt(root, `artifacts/${entry}/manifest.json`),
+      summary: readJsonAt(root, `artifacts/${entry}/summary.json`),
+      receipt: readJsonAt(root, `artifacts/${entry}/product-run-receipt.json`),
+    }, certifiedCheckpointSha);
+    if (!evaluated.ok || evaluated.summary === null) {
+      if (firstRejection === null) firstRejection = evaluated.errors.slice(0, 3).join('; ');
+      continue;
+    }
+    if (evaluated.relation === 'BOUND') {
+      return {
+        state: 'MET',
+        detail: `yield campaign ${evaluated.summary.runId} executed at ${evaluated.summary.sha.slice(0, 8)}: ${evaluated.summary.completedCalls} completed provider calls, ${evaluated.summary.reproductionCount} reproduction attempts, ${evaluated.summary.admissions} admissions, ${evaluated.summary.siblingsObserved} siblings observed, clean leak scan`,
+      };
+    }
+    if (boundToOther === null) boundToOther = evaluated.summary.sha;
   }
-  const completeness = aggregation.validateAggregateCompleteness(aggregate);
-  const attribution = aggregation.validateProviderAttribution(Array.isArray(aggregate.providerAttribution) ? aggregate.providerAttribution : []);
-  const receipt = latestProductRunReceipt(root);
-  if (!completeness.ok) {
-    const codes = completeness.violations.slice(0, 3).map((violation) => `${violation.code}${violation.metricId ? `(${violation.metricId})` : ''}`);
-    return { state: 'UNMET', detail: `historical W13 aggregate incomplete: ${codes.join('; ')}` };
-  }
-  if (!attribution.ok) {
-    const codes = attribution.violations.slice(0, 3).map((violation) => violation.code);
-    return { state: 'UNMET', detail: `historical W13 aggregate lacks provider attribution: ${codes.join('; ')}` };
-  }
-  if (receipt === null) {
-    return { state: 'UNMET', detail: 'historical W13 aggregate validates every per-case reason; no D-7 product-run receipt under artifacts/ on this host' };
-  }
-  return { state: 'MET', detail: `product run ${receipt.runId} (passed=${String(receipt.passed)}) at ${receipt.sha.slice(0, 8)}; historical W13 aggregate complete with per-case reasons` };
+  if (boundToOther !== null) return receiptNotAtCheckpoint('the newest qualifying yield-campaign receipt', boundToOther, certifiedCheckpointSha);
+  return { state: 'UNMET', detail: `no qualifying yield-campaign receipt among the ${runs.length} newest runs; newest rejection: ${firstRejection ?? 'none'}` };
 }
 
 /**
@@ -940,6 +968,15 @@ function collectReleaseCheckOutputs(root, blockFields, agentText, substantiveSha
   const isAncestor = (ancestor, descendant) => gitReadOnly(root, ['merge-base', '--is-ancestor', ancestor, descendant]) !== null;
   const lane = probeLaneState(root, substantiveSha, isAncestor, today);
   const rules = probeRuleRegistry(root);
+  // VD-01 / design D3: the three facts that decide whether a working-tree
+  // measurement is bound to the certified checkpoint. Read once per evaluation.
+  const headOutput = gitReadOnly(root, ['rev-parse', 'HEAD']);
+  const porcelainOutput = gitReadOnly(root, ['status', '--porcelain']);
+  const binding = resolveProbeBinding({
+    certifiedCheckpointSha: substantiveSha,
+    headSha: headOutput === null ? null : headOutput.trim(),
+    treeClean: porcelainOutput === null ? null : porcelainOutput.trim() === '',
+  });
   return {
     laneCounts: lane.counts,
     outputs: {
@@ -952,13 +989,13 @@ function collectReleaseCheckOutputs(root, blockFields, agentText, substantiveSha
       'dependency-advisory-lane': probeDependencyAdvisory(root, today),
       'cli-implementation-contract': probeCliContract(root),
       'structural-rule-registry': rules.output,
-      'accessibility-certification': probeAccessibility(root),
-      'yield-campaign-result': probeYieldCampaignResult(root),
-      'dead-architecture-closure-check': probeDeadArchitectureClosure(root),
-      'schema-version-lifecycle-check': probeSchemaVersionLifecycle(root),
-      'ui-error-taxonomy-check': probeUiErrorTaxonomy(root),
-      'configuration-contract-check': probeConfigurationContract(root),
-      'authenticated-capability-lifecycle-check': probeAuthenticatedCapabilityLifecycle(root),
+      'accessibility-certification': probeAccessibility(root, substantiveSha),
+      'yield-campaign-result': probeYieldCampaignResult(root, substantiveSha),
+      'dead-architecture-closure-check': bindTreeProbe(binding, probeDeadArchitectureClosure(root)),
+      'schema-version-lifecycle-check': bindTreeProbe(binding, probeSchemaVersionLifecycle(root)),
+      'ui-error-taxonomy-check': probeUiErrorTaxonomy(root, substantiveSha),
+      'configuration-contract-check': bindTreeProbe(binding, probeConfigurationContract(root)),
+      'authenticated-capability-lifecycle-check': bindTreeProbe(binding, probeAuthenticatedCapabilityLifecycle(root)),
     },
   };
 }

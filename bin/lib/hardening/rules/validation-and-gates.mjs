@@ -605,4 +605,66 @@ export function checkReleaseImplementedHonesty() {
       fail(`RELEASE_COLLECTOR_ORPHAN: the collector carries an output for undeclared check ${id}`);
     }
   }
+  verifyD3ProbeBinding(collector, collector.slice(collectStart, collectEnd));
+}
+
+/**
+ * VD-01 / corrections tasks 4.1 and 4.5 (design D3): a release probe resolves
+ * MET only at the certified checkpoint. The collector must therefore route
+ * every D3-bound check through the binding, structurally and per check:
+ *   - a probe that EXECUTES against the working tree is wrapped in
+ *     `bindTreeProbe(binding, probeX(root))`;
+ *   - a probe that consumes a RECEIPT is called with the certified checkpoint
+ *     (`probeX(root, substantiveSha)`) and its own body can resolve
+ *     NOT_AT_CHECKPOINT (`receiptNotAtCheckpoint(`) for a receipt bound to
+ *     another commit;
+ *   - the binding itself is derived from the certified checkpoint.
+ * Each expression is matched whole (anchored), so an extra unsafe occurrence
+ * elsewhere cannot be masked by a surviving safe one.
+ * @param {string} collectorSource the whole collector file
+ * @param {string} collectorBody the collectReleaseCheckOutputs function text
+ */
+function verifyD3ProbeBinding(collectorSource, collectorBody) {
+  const treeBound = [
+    'dead-architecture-closure-check',
+    'schema-version-lifecycle-check',
+    'configuration-contract-check',
+    'authenticated-capability-lifecycle-check',
+  ];
+  const receiptBound = ['ui-error-taxonomy-check', 'yield-campaign-result', 'accessibility-certification'];
+  const entryFor = (/** @type {string} */ id) => {
+    const match = new RegExp(`^\\s*'${id}':\\s*(.+?),\\s*$`, 'm').exec(collectorBody);
+    return match === null ? null : (match[1] ?? '').trim();
+  };
+  for (const id of treeBound) {
+    const expression = entryFor(id);
+    if (expression === null) {
+      fail(`RELEASE_PROBE_NOT_CHECKPOINT_BOUND: the collector carries no single-line output for ${id}, so its checkpoint binding cannot be verified`);
+    } else if (!/^bindTreeProbe\(binding,\s*probe[A-Za-z0-9]+\(root\)\)$/.test(expression)) {
+      fail(`RELEASE_PROBE_NOT_CHECKPOINT_BOUND: ${id} must resolve through bindTreeProbe(binding, probeX(root)); a working-tree probe may be MET only at the certified checkpoint (found: ${expression})`);
+    }
+  }
+  for (const id of receiptBound) {
+    const expression = entryFor(id);
+    if (expression === null) {
+      fail(`RELEASE_PROBE_NOT_CHECKPOINT_BOUND: the collector carries no single-line output for ${id}, so its receipt binding cannot be verified`);
+      continue;
+    }
+    const call = /^(probe[A-Za-z0-9]+)\(root, substantiveSha\)$/.exec(expression);
+    if (call === null) {
+      fail(`RELEASE_PROBE_NOT_CHECKPOINT_BOUND: ${id} must be called as probeX(root, substantiveSha) so its receipt is compared with the certified checkpoint (found: ${expression})`);
+      continue;
+    }
+    const functionStart = collectorSource.indexOf(`function ${call[1]}(`);
+    const functionEnd = functionStart < 0 ? -1 : collectorSource.indexOf('\n}\n', functionStart);
+    const body = functionStart < 0 || functionEnd < 0 ? '' : collectorSource.slice(functionStart, functionEnd);
+    if (body === '') {
+      fail(`RELEASE_PROBE_NOT_CHECKPOINT_BOUND: the body of ${call[1]} for ${id} could not be located`);
+    } else if (!/\breceiptNotAtCheckpoint\(/.test(body)) {
+      fail(`RELEASE_PROBE_NOT_CHECKPOINT_BOUND: ${call[1]} for ${id} never resolves NOT_AT_CHECKPOINT for a receipt bound to another commit`);
+    }
+  }
+  if (!/resolveProbeBinding\(\{\s*certifiedCheckpointSha:\s*substantiveSha,/.test(collectorBody)) {
+    fail('RELEASE_PROBE_NOT_CHECKPOINT_BOUND: the probe binding must be derived from the certified checkpoint (certifiedCheckpointSha: substantiveSha)');
+  }
 }

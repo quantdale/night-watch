@@ -17,6 +17,11 @@
 //                           to the certified checkpoint
 //   UNMET                   the named check ran and failed (diagnostic)
 //   UNAVAILABLE_CAPABILITY  the named check exists elsewhere but not here yet
+//   NOT_AT_CHECKPOINT       the check passed, but not at the certified
+//                           checkpoint: it neither executed with HEAD == S on
+//                           a clean tree nor consumed a receipt bound to S
+//                           (VD-01 / design D3). Never MET, never a failure of
+//                           the checked property.
 //   BLOCKED_EXTERNAL        the named check is blocked by an external party
 //   STALE_EVIDENCE          evidence is a strict ancestor of the checkpoint
 //   EVIDENCE_ABSENT         the condition has no bound evidence SHA
@@ -46,6 +51,7 @@ export const RELEASE_CONDITION_STATES = [
   'MET',
   'UNMET',
   'UNAVAILABLE_CAPABILITY',
+  'NOT_AT_CHECKPOINT',
   'BLOCKED_EXTERNAL',
   'STALE_EVIDENCE',
   'EVIDENCE_ABSENT',
@@ -61,6 +67,7 @@ export type ReleaseCheckState =
   | 'MET'
   | 'UNMET'
   | 'UNAVAILABLE_CAPABILITY'
+  | 'NOT_AT_CHECKPOINT'
   | 'BLOCKED_EXTERNAL';
 
 /**

@@ -40,7 +40,19 @@ const DURATIONS = new Map([
  * health, sibling identity before/after, the leak scan and the persisted
  * admission ids. An emission failure is reported and never silently swallowed.
  */
-async function emitCampaignReceipt({ root, receiptMod, campaignId, result, repositoryIds, before }) {
+/**
+ * @param {{
+ *   root: string,
+ *   receiptMod: { emitProductRunReceipt: (input: object) => Promise<{ runId: string, receiptFile: string, receipt: unknown }> },
+ *   campaignId: string,
+ *   result: unknown,
+ *   repositoryIds: readonly string[],
+ *   before: readonly unknown[],
+ *   nightwatchIdentity: { sha: string, treeClean: boolean } | null,
+ *   campaignKind: string,
+ * }} input
+ */
+async function emitCampaignReceipt({ root, receiptMod, campaignId, result, repositoryIds, before, nightwatchIdentity, campaignKind }) {
   try {
     const emitted = await receiptMod.emitProductRunReceipt({
       root,
@@ -48,6 +60,8 @@ async function emitCampaignReceipt({ root, receiptMod, campaignId, result, repos
       result,
       repositoryIds,
       before,
+      ...(nightwatchIdentity === null ? {} : { nightwatchIdentity }),
+      campaignKind,
     });
     console.log(
       JSON.stringify(
@@ -66,6 +80,37 @@ async function emitCampaignReceipt({ root, receiptMod, campaignId, result, repos
     console.error(`NIGHTWATCH_AGENT: PRODUCT_RUN_RECEIPT_FAILED: ${error instanceof Error ? error.message : String(error)}`);
     if (process.exitCode === undefined || process.exitCode === 0) process.exitCode = 3;
   }
+}
+
+/**
+ * CF-03 / design D3: the Nightwatch repository identity a campaign executes at
+ * (HEAD plus whether the tree was clean), so the product run receipt can be
+ * bound to a commit. Null when git cannot answer — an unbound receipt.
+ */
+function readNightwatchIdentity() {
+  // A fixed, minimal environment: the identity read never inherits the parent
+  // environment (no GIT_* redirection, no credentials).
+  const environment = { PATH: '/usr/bin:/bin', HOME: root, GIT_CONFIG_GLOBAL: '/dev/null', GIT_CONFIG_NOSYSTEM: '1', GIT_OPTIONAL_LOCKS: '0', LANG: 'C', LC_ALL: 'C' };
+  /** @param {string[]} gitArgs */
+  const run = (gitArgs) => {
+    const result = spawnSync('git', gitArgs, { cwd: root, env: environment, encoding: 'utf8', timeout: 15_000, shell: false });
+    return result.status === 0 && typeof result.stdout === 'string' ? result.stdout : null;
+  };
+  const head = run(['rev-parse', 'HEAD']);
+  const porcelain = run(['status', '--porcelain']);
+  if (head === null || porcelain === null || !/^[0-9a-f]{40}$/.test(head.trim())) return null;
+  return { sha: head.trim(), treeClean: porcelain.trim() === '' };
+}
+
+/**
+ * @param {{ sha: string, treeClean: boolean } | null} before
+ * @param {{ sha: string, treeClean: boolean } | null} after
+ * @returns {{ sha: string, treeClean: boolean } | null}
+ */
+function bindRunIdentity(before, after) {
+  if (before === null) return null;
+  if (after === null || after.sha !== before.sha) return { sha: before.sha, treeClean: false };
+  return { sha: before.sha, treeClean: before.treeClean && after.treeClean };
 }
 
 function installCampaignPauseChannel() {
@@ -336,6 +381,12 @@ if (command === 'status') {
         }
         const pause = installCampaignPauseChannel();
         const [receiptMod] = loadTypeScriptModules(['src/core/agentRuntime/productRunReceipt.ts'], { root });
+        // CF-03: bind the run to the commit it executes at, and record whether
+        // it went through the provider print adapter (a yield campaign) or a
+        // custom reasoner script (the smoke/test path).
+        const nightwatchIdentityBefore = readNightwatchIdentity();
+        const scriptConfigured = typeof campaignEnvironment().NIGHTWATCH_REASONER_SCRIPT === 'string' && campaignEnvironment().NIGHTWATCH_REASONER_SCRIPT.length > 0;
+        const campaignKind = !scriptConfigured && Boolean(campaignEnvironment().NIGHTWATCH_PRINT_CLI) ? 'PRINT_CLI_PROVIDER' : 'CUSTOM_REASONER_SCRIPT';
         const approvedRepositories = repositoryIds ?? [];
         const siblingsBefore = await receiptMod.observeSiblings(approvedRepositories);
         try {
@@ -381,6 +432,10 @@ if (command === 'status') {
             result,
             repositoryIds: approvedRepositories,
             before: siblingsBefore,
+            // A run is bound only when HEAD did not move and the tree was clean
+            // at BOTH ends; a moved HEAD keeps the start SHA but is not clean.
+            nightwatchIdentity: bindRunIdentity(nightwatchIdentityBefore, readNightwatchIdentity()),
+            campaignKind,
           });
         } catch (error) {
           fail(2, error instanceof Error ? error.message : 'LOCAL_CAMPAIGN_FAILED');

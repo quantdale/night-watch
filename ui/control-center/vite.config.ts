@@ -18,5 +18,7 @@ export default defineConfig({
     setupFiles: './src/testSetup.ts',
     css: true,
     restoreMocks: true,
+    // VD-02: the G18 UI-harness execution receipt (see scripts/receipt-reporter.mjs).
+    reporters: ['default', './scripts/receipt-reporter.mjs'],
   },
 });
