@@ -1042,6 +1042,9 @@ function main() {
   let releaseVerdict = null;
   let releaseVerdictText = null;
   let certificationDemotion = null;
+  // Non-failing, non-silent findings (VA-03): named in the receipt and on stderr.
+  /** @type {string[]} */
+  const projectAttention = [];
 
   // 1. Whole-checkout cleanliness (mirrors the catalog-integrity gate).
   const porcelain = gitReadOnly(root, ['status', '--porcelain']);
@@ -1228,8 +1231,20 @@ function main() {
         if (substantive.length > 0) {
           // The active task validated an implementation strictly newer than the
           // project baseline. The baseline is stale even if every field in the
-          // block agrees with every other field.
-          fail(errors, 'PROJECT_STATE_SUBSTANTIVE_BASELINE_STALE');
+          // block agrees with every other field — EXCEPT while that task is
+          // still IN_PROGRESS and its anchor is an ancestor of HEAD: a task in
+          // flight legitimately runs ahead of the project baseline, which
+          // advances when the task closes. Failing there forced the anchors to
+          // be back-dated to the baseline (VA-03: the cross-guard resolution);
+          // it is now an ATTENTION that names both commits. A non-ancestor
+          // anchor, or any non-IN_PROGRESS task, still fails.
+          const taskAnchorIsAncestorOfHead = gitReadOnly(root, ['merge-base', '--is-ancestor', taskValidatedSha, 'HEAD']) !== null;
+          if (activeStatus === 'IN_PROGRESS' && taskAnchorIsAncestorOfHead) {
+            projectAttention.push('TASK_AHEAD_OF_PROJECT_BASELINE');
+            console.error(`[project-state-check] ATTENTION: TASK_AHEAD_OF_PROJECT_BASELINE: the IN_PROGRESS task validated ${String(taskValidatedSha).slice(0, 8)}, ahead of the project baseline ${substantiveSha.slice(0, 8)} (${substantive.length} substantive path${substantive.length === 1 ? '' : 's'}); the baseline advances when the task closes`);
+          } else {
+            fail(errors, 'PROJECT_STATE_SUBSTANTIVE_BASELINE_STALE');
+          }
         }
       }
     }
@@ -1683,6 +1698,7 @@ function main() {
     finalCiAuthority: fieldsGet(parsed, 'FINAL_CI_AUTHORITY'),
     releaseVerdict,
     certificationDemotion,
+    projectAttention,
   }, null, 2));
   if (certificationDemotion !== null && certificationDemotion.attention.length > 0) {
     // X-04 — attention is never silent: the receipt carries it and the gate

@@ -5307,3 +5307,59 @@ and at the committed tree; `bodyReadAcquisition` 4/4 unchanged (no gate text
 touched). Consequence for the remainder of this campaign: any future
 high-volume fixture paces on the drain signal; making a wall-clock sleep the
 pacing authority for handler-bounded work requires a new decision entry.
+
+## D-148 — release probes resolve MET only at the certified checkpoint; a task in flight may run ahead of the project baseline
+
+**Context.** The seven D3-bound release probes (G12 yield, G14 reachability,
+G17 schema lifecycle, G18 UI taxonomy, G19 configuration, G20 accessibility,
+G21 capability lifecycle) all measured the WORKING TREE, so an EXACT evidence
+binding could credit the certified checkpoint S with a result taken at a dirty
+or later HEAD (VD-01, CF-01). G18 and G21 were static (a file plus five
+literals; a rule run), G19 reported that a printer exists, and G12 accepted any
+`artifacts/nightwatch-*` run. Separately, the project-state guard "the baseline
+must not lag the task's validated anchor" made every in-flight task's anchor be
+back-dated to the baseline (VA-03: the cross-guard resolution).
+
+**Decision.**
+1. `NOT_AT_CHECKPOINT` is a closed release-condition state, never MET. A probe
+   that executes against the tree (G14/G17/G19/G21) resolves MET only with
+   HEAD == S on a clean tree; a passing measurement elsewhere is demoted and
+   keeps its measurement text, while UNMET/UNAVAILABLE are never upgraded.
+   A probe that consumes a receipt (G12/G18/G20) resolves MET only when the
+   receipt's own SHA equals S; a receipt bound to another commit is
+   NOT_AT_CHECKPOINT.
+2. The receipts are execution evidence: G18 the UI-harness receipt written by
+   the UI_GATE group's vitest reporter (clean tree, every harness test PASS,
+   ApiErrorKind list cross-checked against the list committed AT S); G12 the
+   product-run receipt of a provider print-adapter campaign that passed at a
+   recorded clean commit with completed provider calls, unchanged sibling
+   identity and a clean leak scan (the W13 aggregate is historical context
+   only). G19/G21 exercise their contracts with synthetic values.
+3. **Sequencing constraint (owner-visible).** G12 binds the run's
+   `nightwatchSha` to S. The parent's single authorized paid run (task 12.3)
+   happens BEFORE the final substantive commit S, so G12 is MET at S only if no
+   substantive commit lands between that run and S; otherwise it stays
+   NOT_AT_CHECKPOINT (honest, never a silent pass). The parent plan must
+   therefore run 12.3 after the last substantive fix (13.2) or the owner must
+   record a different rule.
+4. `TASK_AHEAD_OF_PROJECT_BASELINE` is an ATTENTION (named in the receipt's
+   `projectAttention` and on stderr), replacing the baseline-stale error ONLY
+   for an IN_PROGRESS active task whose validated anchor is an ancestor of
+   HEAD. A non-ancestor anchor, or any other task status, still fails
+   `PROJECT_STATE_SUBSTANTIVE_BASELINE_STALE`. Anchors therefore stay the true
+   validated commit and the baseline advances when the task closes.
+5. `LEDGER_UNDISPOSITIONED_ITEM` is an error on a TERMINAL paired task; a
+   disposition token counts only as a trailing marker after the closing strike.
+   The 527 legacy undispositioned strikes across 49 terminal changes are held by
+   a declared per-change ceiling ratchet (`config/ledger-legacy-drain.v1.json`)
+   that may only turn down; the parent M13 closure drains it to zero.
+
+**Total invariant.** Nothing here relaxes a certification condition: MET became
+harder to reach, never easier. The only relaxations (4 and the ratchet in 5)
+are bounded, negative-tested and recorded here.
+
+**Evidence and consequences.** HC-189..HC-192 (mutation probes on the
+structural D3 clause of `checkReleaseImplementedHonesty`) are DETECTED; the
+probe campaign is 192/192; the lifecycle tests cover every rejection code for
+both receipts. Consequence: until the final close-out, project:check reports the
+seven probes as NOT_AT_CHECKPOINT or UNMET, which is the truth.

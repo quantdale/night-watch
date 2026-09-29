@@ -643,6 +643,25 @@ test.describe('C-00 adversarial matrix — integration', () => {
     }
   });
 
+  test('H. a session whose HEAD is the remote tip after integration reports INTEGRATED_CURRENT, not a stale base (VA-05)', () => {
+    const { base, canonical, upstream } = fixture();
+    try {
+      const owned = startOwnedSession(canonical, base, 'synthetic-task');
+      fs.writeFileSync(path.join(owned.path, 'session.txt'), 'session work\n');
+      gitOk(owned.path, ['add', 'session.txt']);
+      gitOk(owned.path, ['commit', '-m', 'session work']);
+      const integrated = session(owned.path, ['integrate', '--expect-session', recordSession(canonical, owned.name), '--expect-head', headOf(owned.path)]);
+      expect(integrated.status, integrated.stderr).toBe(0);
+      expect(gitOk(upstream, ['rev-parse', 'refs/heads/main'])).toBe(gitOk(owned.path, ['rev-parse', 'HEAD']));
+      const after = integrityJson(owned.path);
+      expect(after.report.bootstrapAnswers.baseState).toBe('INTEGRATED_CURRENT');
+      const advisories = (after.report.warnings ?? []).map((warning: { code: string }) => warning.code);
+      expect(advisories).not.toContain('WORKSPACE_BASE_STALE');
+    } finally {
+      cleanup(base);
+    }
+  });
+
   test('I. a genuinely conflicting change stops instead of guessing', () => {
     const { base, canonical, upstream } = fixture();
     try {

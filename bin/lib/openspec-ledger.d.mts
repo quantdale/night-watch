@@ -49,3 +49,19 @@ export function listActiveChangeIds(root: string): readonly string[];
 export function listArchivedChangeIds(root: string): readonly string[];
 export function collectOpenWorkInput(root: string): readonly OpenWorkInputEntry[];
 export function inspectLedgerAgreement(root: string): LedgerAgreementDiagnostics;
+
+export const TASK_ID_LEDGER_PATH: string;
+export const TASK_ID_LEDGER_SCHEMA: 'nightwatch.task-id-ledger.v1';
+export function collectTaskIds(tasksText: string): readonly string[];
+export function taskIdLedgerViolations(baselineText: string, currentText: string): readonly string[];
+export function inspectTaskIdLedger(
+  root: string,
+  readBlobAtCommit: (sha: string, relativePath: string) => string | null | undefined,
+): {
+  readonly errors: string[];
+  readonly warnings: string[];
+  readonly info: string[];
+};
+
+export const LEGACY_DRAIN_PATH: string;
+export const LEGACY_DRAIN_SCHEMA: 'nightwatch.ledger-legacy-drain.v1';

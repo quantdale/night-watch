@@ -6,11 +6,11 @@ Task ID: nightwatch-final-product-completion-v1
 Phase: FINAL_PRODUCT_COMPLETION_V1
 Status: IN_PROGRESS
 Starting SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
-Last validated implementation SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
-Last substantive checkpoint SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
+Last validated implementation SHA: 321800018bc819465326ba7c0556bac31e565da4
+Last substantive checkpoint SHA: 321800018bc819465326ba7c0556bac31e565da4
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
-Branch: session/nightwatch-final-product-complet-a891357d
+Branch: main (no live parent session: `sess-0734f2070d08` was released and removed on 2026-09-28; the next parent session is created by `session start`)
 Last checkpoint: 2026-09-28 — M9 10.2 IN PROGRESS (59/76 declared, 4
 library-retained, 13 pending): the Phase 0 formatter blocker is RESOLVED
 (owner disposition of the 16 disposable files, harness formatter/autofix
@@ -25,8 +25,8 @@ receipt `receipt:sha256:535217a6dbae65b7a26f9243`.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
-LAST_VALIDATED_IMPLEMENTATION_SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
+LAST_VALIDATED_IMPLEMENTATION_SHA: 321800018bc819465326ba7c0556bac31e565da4
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 321800018bc819465326ba7c0556bac31e565da4
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
 PHASE_FINAL_PRODUCT_COMPLETION_V1_STATUS: IN_PROGRESS
@@ -43,12 +43,12 @@ ledger, and end at `PROJECT_COMPLETE_AND_CI_CERTIFIED` under D-129 with a
 ## Current Milestone
 
 M9 D-129 CLI contract and bin type-check (tasks 10.1-10.6): 10.1 DONE,
-10.2 IN PROGRESS (59/76 declared, 4 library-retained, 13 pending). Per
-RESUME_PROMPT the corrective child campaign
-(`nightwatch-final-completion-corrections-v1`) runs next, after its 31
-findings are re-verified at the current base; it must land corrections
-task 6.1 (formatter policy: `biome.json` with formatter/organize-imports
-disabled + `.editorconfig`) as its first commit after the child bootstrap.
+10.2 IN PROGRESS (59/76 declared, 4 library-retained, 13 pending). The parent
+is PAUSED at this checkpoint while the corrective child campaign
+(`nightwatch-final-completion-corrections-v1`) runs: its M1-M5 are complete
+(bootstrap, formatter policy, certification anchors, validation spine, release
+probes); its groups 5 and 7 and close-out remain. The parent resumes at
+"M9 task 10.2 remainder" when the child closes.
 
 ## Completed Milestones
 
@@ -75,8 +75,9 @@ disabled + `.editorconfig`) as its first commit after the child bootstrap.
   declared live-source skips + hermetic temp paths + per-shard skip-identity
   enforcement (`eccce619`); sibling-absent clean gate with measured identity
   (`874015b9`, `7374d511`, `8ac69c22`); TOPOLOGY + UI_CONTROL_CENTER
-  certification groups (`4a1c2619`); Node 22 + SHA-pinned workflow actions
-  with the workflow-pinning rule (`981fb7f8`); X-08/A-03/A-07 session fixes;
+  certification groups, Node 22 and SHA-pinned workflow actions with the
+  workflow-pinning rule (all in `4a1c2619`); X-08/A-03/A-07 session fixes
+  (`981fb7f8`);
   M3 ledger docs (`7accc8de`, `11afc06a`). Exact-head CI then failed four
   times and every failure was repaired forward: environment-surface gate-label
   enum + COMPATIBILITY absent-worktree classification (`760e90fc`), declared
@@ -95,7 +96,7 @@ disabled + `.editorconfig`) as its first commit after the child bootstrap.
   `implemented: true` (`d595c7c8`); the G20 accessibility result record emitted
   by the browser certification and consumed by its fail-closed parser
   (`cab67d76`, `875490be`, `09d942cb`); the `implemented` honesty rule
-  (`checkReleaseImplementedHonesty`, registry 88 rules / 148 probes), the X-04
+  (`checkReleaseImplementedHonesty`, registry 88 rules / 148 probes at M4; 91 rules / 192 probes after the corrections campaign), the X-04
   post-certification demotion classification, the A-19 DECIDED state citing
   D-129 / programme 13.8 and the A-20 terminal C-14 record, and the A-14/D-03
   CI block-record single authority with the observed executed run
@@ -128,6 +129,8 @@ disabled + `.editorconfig`) as its first commit after the child bootstrap.
   5585/0.
 
 ## Work In Progress
+
+**Current (2026-09-30):** the parent is paused at M9 task 10.2 (59/76 declared) for the corrective child campaign; nothing is uncommitted here. The log below is HISTORICAL (M7 onward, oldest first) and is not the current state.
 
 - M7 (tasks 8.1-8.5) is in progress; 8.1 is implemented and committed: the
   `.env` layer is parsed FAIL CLOSED (a malformed line, an undeclared key and a
@@ -481,14 +484,7 @@ agent:check PASS (86 warnings).
 
 ## Exact Next Action
 
-Validate `0a436f12`/`09c50277` (focused suites + `gate:dev`), commit this
-continuity with Status IN_PROGRESS and resume point "M9 task 10.2 (remainder:
-59/76 declared)", integrate with `--expect-head`, observe exact-head CI
-(OD-3), then release + remove the parent session. Then re-verify the 31
-corrections findings at the new base (classifying STILL_PRESENT / CHANGED /
-COMPLETED_LATER with SHA + file:line, and checking follow-on defects), run the
-corrective child campaign (6.1 first), route ACTIVE_TASK back to the parent at
-IN_PROGRESS with next action "M9 task 10.2 remainder", and finish M9-M14.
+M9 task 10.2 remainder. When the corrective child campaign closes (its ACTIVE_TASK route returns here at IN_PROGRESS): start a fresh C-00 parent session (`session start --task nightwatch-final-product-completion-v1`, then `claim --adopt`), finish the 13 pending 10.2 declarations (59/76 declared), then 10.3-10.6, M10-M14, and the 13-section final report. Sequencing constraint recorded in D-148: run the paid proof (12.3) after the last substantive fix so G12's receipt binds to S.
 
 ## Superseded Next Action (8.1, complete)
 
@@ -520,6 +516,8 @@ exactly as in M4/M5.
 | `.agent/tasks/nightwatch-final-product-completion-v1/` | continuity v2 record for this campaign | created in the worktree (M1) |
 | `.agent/ACTIVE_TASK.md` | active route and session binding | flipped to this campaign (M1) |
 | `.agent/EXECUTION_PROMPT.md` | planner-executor handoff for this campaign | rewritten (M1) |
+| `bin/`, `src/`, `config/`, `tests/`, `ui/control-center/`, `docs/` (M2-M9) | the certification spine, hunt integrity, finding truth, narrowed claims, contained-DEV lane and CLI contract work | committed and integrated; see `git log 1f786a4e..1d47e2ee` |
+| `openspec/changes/nightwatch-final-product-completion-v1/tasks.md` | stable IDs restored (VA-01), reopened-by-corrections annotations | corrected by the child campaign (task 5.1) |
 
 ## Validation Ledger
 

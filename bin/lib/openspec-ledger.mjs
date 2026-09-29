@@ -43,9 +43,18 @@ export const LEDGER_DISPOSITION_TOKENS = Object.freeze([
 
 const DISPOSITION_TOKEN_RE = new RegExp(`\\b(?:${LEDGER_DISPOSITION_TOKENS.join('|')})\\b`);
 
-/** True when a struck entry's text carries at least one disposition token. */
+/**
+ * True when a struck entry carries a disposition token as a TRAILING MARKER:
+ * the token must sit AFTER the entry's last closing strike (`~~`), outside the
+ * struck text. A token that merely appears inside the struck task text (for
+ * example a task whose own wording says "FIX" or "EXECUTE") is not a
+ * disposition and never settles the entry (VA-04 / corrections task 5.4).
+ */
 export function carriesDispositionToken(strikeText) {
-  return DISPOSITION_TOKEN_RE.test(String(strikeText ?? ''));
+  const text = String(strikeText ?? '');
+  const lastStrike = text.lastIndexOf('~~');
+  if (lastStrike === -1) return false;
+  return DISPOSITION_TOKEN_RE.test(text.slice(lastStrike + 2));
 }
 
 const OPEN_LINE_RE = /^\s*-\s*\[ \]\s*(.*)$/;
@@ -204,6 +213,38 @@ export function collectOpenWorkInput(root) {
   return entries;
 }
 
+export const LEGACY_DRAIN_PATH = 'config/ledger-legacy-drain.v1.json';
+export const LEGACY_DRAIN_SCHEMA = 'nightwatch.ledger-legacy-drain.v1';
+
+/**
+ * The declared per-change ceilings of legacy undispositioned strikes on
+ * TERMINAL changes (VA-04 ratchet). An absent file is an empty ceiling set;
+ * a malformed one is an error and grants nothing.
+ * @returns {{ ceilings: Map<string, number>, errors: string[] }}
+ */
+function loadLegacyDrainCeilings(root) {
+  const ceilings = new Map();
+  const errors = [];
+  const raw = readFileIfPresent(path.join(root, LEGACY_DRAIN_PATH));
+  if (raw === null) return { ceilings, errors };
+  let record;
+  try {
+    record = JSON.parse(raw);
+  } catch {
+    errors.push(`LEDGER_LEGACY_DRAIN_UNREADABLE: ${LEGACY_DRAIN_PATH} is not valid JSON`);
+    return { ceilings, errors };
+  }
+  if (record?.schemaVersion !== LEGACY_DRAIN_SCHEMA || record.ceilings === null || typeof record.ceilings !== 'object' || Array.isArray(record.ceilings)) {
+    errors.push(`LEDGER_LEGACY_DRAIN_UNREADABLE: ${LEGACY_DRAIN_PATH} does not carry schema ${LEGACY_DRAIN_SCHEMA} with a ceilings object`);
+    return { ceilings, errors };
+  }
+  for (const [changeId, value] of Object.entries(record.ceilings)) {
+    if (typeof value === 'number' && Number.isInteger(value) && value > 0) ceilings.set(changeId, value);
+    else errors.push(`LEDGER_LEGACY_DRAIN_ENTRY_INVALID: ${changeId} needs a positive integer ceiling`);
+  }
+  return { ceilings, errors };
+}
+
 /**
  * F-01 completion-ledger agreement. A terminal continuity-v2 task
  * (COMPLETE/BLOCKED) must not leave unchecked non-declared boxes; an active
@@ -218,18 +259,33 @@ export function inspectLedgerAgreement(root) {
   const info = [];
   const changeIds = listActiveChangeIds(root);
   const archivedIds = new Set(listArchivedChangeIds(root));
+  const legacyDrain = loadLegacyDrainCeilings(root);
+  errors.push(...legacyDrain.errors);
   for (const changeId of changeIds) {
     const text = readFileIfPresent(path.join(root, 'openspec', 'changes', changeId, 'tasks.md')) ?? '';
     const { open, done, declaredNotInScope, undispositioned } = parseLedgerTasks(text);
     const stateText = readFileIfPresent(path.join(root, '.agent', 'tasks', changeId, 'STATE.md'));
+    const pairedStatus = normalizeTaskStatus((/^Status:\s*(\S+)/m.exec(stateText ?? '') ?? [])[1]);
     if (undispositioned.length > 0) {
-      // A-21: a strike without a disposition token is not settled. Reported
-      // always, so a hidden backlog cannot look closed. The full drain of the
-      // legacy population is the M13 ledger closure.
+      // A-21 / VA-04: a strike without a trailing disposition token is not
+      // settled. Reported always, so a hidden backlog cannot look closed; at a
+      // TERMINAL paired task it is an ERROR (a terminal phase cannot carry an
+      // unsettled entry). The legacy population of non-terminal changes is
+      // drained by the M13 ledger closure.
       const lines = undispositioned.map((entry) => entry.line).join(', ');
-      warnings.push(
-        `LEDGER_UNDISPOSITIONED_ITEM: change ${changeId} leaves ${undispositioned.length} struck entr${undispositioned.length === 1 ? 'y' : 'ies'} without a disposition token at line${undispositioned.length === 1 ? '' : 's'} ${lines}`,
-      );
+      const message = `LEDGER_UNDISPOSITIONED_ITEM: change ${changeId} leaves ${undispositioned.length} struck entr${undispositioned.length === 1 ? 'y' : 'ies'} without a disposition token at line${undispositioned.length === 1 ? '' : 's'} ${lines}`;
+      if (stateText !== null && LEDGER_TERMINAL_STATUSES.includes(pairedStatus)) {
+        // A terminal paired task is an ERROR — except for the LEGACY population
+        // whose drain is the parent's M13 ledger closure: a declared per-change
+        // ceiling (config/ledger-legacy-drain.v1.json) that may only turn DOWN.
+        const ceiling = legacyDrain.ceilings.get(changeId);
+        if (ceiling === undefined) errors.push(message);
+        else if (undispositioned.length > ceiling) errors.push(`${message} (legacy ceiling ${ceiling}; the ratchet only turns down)`);
+        else if (undispositioned.length < ceiling) errors.push(`LEDGER_LEGACY_DRAIN_CEILING_STALE: change ${changeId} has ${undispositioned.length} undispositioned entries but its ceiling is ${ceiling}; lower it in the same change`);
+        else warnings.push(`LEDGER_UNDISPOSITIONED_ITEM_LEGACY: change ${changeId} still carries its ${ceiling} declared legacy undispositioned entries (drained by the parent M13 ledger closure)`);
+      } else {
+        warnings.push(message);
+      }
     }
     if (stateText === null) {
       errors.push(
@@ -289,6 +345,103 @@ export function inspectLedgerAgreement(root) {
     warnings.push(
       `LEDGER_TASK_WITHOUT_CHANGE: ${orphanLegacy} legacy v1/historical task directories have no matching OpenSpec change`,
     );
+  }
+  return { errors, warnings, info };
+}
+
+// ---------------------------------------------------------------------------
+// VA-01 / corrections task 5.2 — the stable task-ID ledger.
+//
+// A task line's `N.M` prefix is its stable identity: other records cite it, and
+// a campaign that strips or renumbers IDs silently detaches every citation.
+// `config/task-id-ledger.v1.json` names, per change, the bootstrap commit whose
+// tasks.md is the ID baseline; every ID present there must still open a task
+// line in the current file. IDs may be ADDED (new task lines); none may vanish.
+// ---------------------------------------------------------------------------
+
+export const TASK_ID_LEDGER_PATH = 'config/task-id-ledger.v1.json';
+export const TASK_ID_LEDGER_SCHEMA = 'nightwatch.task-id-ledger.v1';
+const TASK_LINE_ID_RE = /^\s*-\s*\[[ xX]\]\s*(?:~~)?(\d+\.\d+[a-z]?)\s/;
+
+/** The ordered, de-duplicated stable IDs that open a task line in `tasksText`. */
+export function collectTaskIds(tasksText) {
+  const ids = [];
+  const seen = new Set();
+  for (const line of String(tasksText ?? '').split(/\r?\n/)) {
+    const match = TASK_LINE_ID_RE.exec(line);
+    if (match === null) continue;
+    const id = match[1];
+    if (!seen.has(id)) {
+      seen.add(id);
+      ids.push(id);
+    }
+  }
+  return ids;
+}
+
+/** Baseline IDs that no longer open a task line in the current text. */
+export function taskIdLedgerViolations(baselineText, currentText) {
+  const current = new Set(collectTaskIds(currentText));
+  return collectTaskIds(baselineText).filter((id) => !current.has(id));
+}
+
+/**
+ * Check every ledger entry. `readBlobAtCommit(sha, relativePath)` returns the
+ * file text at that commit or null when it cannot be read; it is injected so
+ * this module stays free of process authority. An entry whose change is
+ * archived (no active tasks.md) is skipped as information. An unreadable
+ * baseline (a shallow checkout) is a WARNING, never a silent pass and never a
+ * false error.
+ * @returns {{ errors: string[], warnings: string[], info: string[] }}
+ */
+export function inspectTaskIdLedger(root, readBlobAtCommit) {
+  const errors = [];
+  const warnings = [];
+  const info = [];
+  const raw = readFileIfPresent(path.join(root, TASK_ID_LEDGER_PATH));
+  if (raw === null) {
+    // A repository with no active change has no task IDs to guard; one WITH an
+    // active change must carry the ledger, or the guard is silently absent.
+    if (listActiveChangeIds(root).length === 0) {
+      info.push(`LEDGER_TASK_ID_LEDGER_NOT_APPLICABLE: no active change; ${TASK_ID_LEDGER_PATH} is not required`);
+    } else {
+      errors.push(`LEDGER_TASK_ID_LEDGER_MISSING: ${TASK_ID_LEDGER_PATH} is absent; stable task IDs are unguarded`);
+    }
+    return { errors, warnings, info };
+  }
+  let record;
+  try {
+    record = JSON.parse(raw);
+  } catch {
+    errors.push(`LEDGER_TASK_ID_LEDGER_UNREADABLE: ${TASK_ID_LEDGER_PATH} is not valid JSON`);
+    return { errors, warnings, info };
+  }
+  if (record?.schemaVersion !== TASK_ID_LEDGER_SCHEMA || !Array.isArray(record.changes)) {
+    errors.push(`LEDGER_TASK_ID_LEDGER_UNREADABLE: ${TASK_ID_LEDGER_PATH} does not carry schema ${TASK_ID_LEDGER_SCHEMA} with a changes list`);
+    return { errors, warnings, info };
+  }
+  for (const entry of record.changes) {
+    const changeId = typeof entry?.changeId === 'string' ? entry.changeId : '';
+    const sha = typeof entry?.bootstrapSha === 'string' ? entry.bootstrapSha : '';
+    if (!/^[a-z0-9][a-z0-9-]*$/.test(changeId) || !/^[0-9a-f]{40}$/.test(sha)) {
+      errors.push(`LEDGER_TASK_ID_LEDGER_ENTRY_INVALID: ${JSON.stringify(changeId)} needs a change id and a 40-hex bootstrapSha`);
+      continue;
+    }
+    const relative = `openspec/changes/${changeId}/tasks.md`;
+    const current = readFileIfPresent(path.join(root, relative));
+    if (current === null) {
+      info.push(`LEDGER_TASK_ID_CHANGE_NOT_ACTIVE: change ${changeId} has no active tasks.md; its ID baseline is not enforced`);
+      continue;
+    }
+    const baseline = readBlobAtCommit(sha, relative);
+    if (baseline === null || baseline === undefined) {
+      warnings.push(`LEDGER_TASK_ID_BASELINE_UNRESOLVABLE: bootstrap ${sha.slice(0, 8)} of change ${changeId} cannot be read (shallow checkout?); stable IDs were not verified`);
+      continue;
+    }
+    const missing = taskIdLedgerViolations(baseline, current);
+    if (missing.length > 0) {
+      errors.push(`LEDGER_TASK_ID_STRIPPED: change ${changeId} lost stable task id${missing.length === 1 ? '' : 's'} ${missing.slice(0, 12).join(', ')}${missing.length > 12 ? ` (+${missing.length - 12} more)` : ''} present at bootstrap ${sha.slice(0, 8)}`);
+    }
   }
   return { errors, warnings, info };
 }

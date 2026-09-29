@@ -1506,6 +1506,11 @@ interface BaselineFixtureOptions {
   readonly substantive: 'STALE' | 'CURRENT';
   /** Which SHA the project block records as the CI anchor. */
   readonly ci: 'STALE' | 'CURRENT' | 'MALFORMED';
+  /**
+   * VA-03: DIVERGENT leaves the task's validated anchor OFF HEAD's ancestry
+   * (a real, well-formed commit that HEAD does not contain). Default ANCESTOR.
+   */
+  readonly anchor?: 'ANCESTOR' | 'DIVERGENT';
 }
 
 /**
@@ -1530,6 +1535,10 @@ function makeBaselineFixture(options: BaselineFixtureOptions): Fixture {
   git(root, ['add', '--all']);
   git(root, ['commit', '--quiet', '--no-gpg-sign', '-m', 'synthetic intervening commit']);
   const currentSha = git(root, ['rev-parse', 'HEAD']);
+  if (options.anchor === 'DIVERGENT') {
+    // The anchor commit stays in the object database but leaves HEAD's history.
+    git(root, ['reset', '--quiet', '--hard', staleSha]);
+  }
 
   // The ACTIVE_TASK authority names the newer commit as what it validated.
   for (const relative of ['.agent/ACTIVE_TASK.md', `.agent/tasks/${ACTIVE_TASK_ID}/STATE.md`]) {
@@ -1602,7 +1611,7 @@ test.describe('C-10.5 A10 — cross-authority baseline invariant', () => {
     // The exact live defect: pairwise agreement, global staleness. The
     // pre-existing check cannot see this, because it requires the two anchors
     // to differ from each other.
-    const fixture = makeBaselineFixture({ intervening: 'IMPLEMENTATION', substantive: 'STALE', ci: 'STALE' });
+    const fixture = makeBaselineFixture({ intervening: 'IMPLEMENTATION', substantive: 'STALE', ci: 'STALE', anchor: 'DIVERGENT' });
     try {
       const result = run(fixture.root);
       expect(result.status).not.toBe(0);
@@ -1616,7 +1625,36 @@ test.describe('C-10.5 A10 — cross-authority baseline invariant', () => {
   });
 
   test('A10.3 CI newer but substantive stale — FAIL', () => {
+    const fixture = makeBaselineFixture({ intervening: 'IMPLEMENTATION', substantive: 'STALE', ci: 'CURRENT', anchor: 'DIVERGENT' });
+    try {
+      const result = run(fixture.root);
+      expect(result.status).not.toBe(0);
+      expect(errorsOf(result)).toContain('PROJECT_STATE_SUBSTANTIVE_BASELINE_STALE');
+    } finally {
+      fixture.cleanup();
+    }
+  });
+
+  test('A10.9 an IN_PROGRESS task ahead of the baseline with an ancestor anchor is ATTENTION, not failure (VA-03)', () => {
+    // The task validated a newer implementation than the project baseline and
+    // its anchor is in HEAD's history: a task in flight legitimately runs
+    // ahead. The check names both commits instead of forcing the anchors to be
+    // back-dated to the baseline.
     const fixture = makeBaselineFixture({ intervening: 'IMPLEMENTATION', substantive: 'STALE', ci: 'CURRENT' });
+    try {
+      const result = run(fixture.root);
+      // The synthetic baseline commit is itself documentation-only, so other
+      // unrelated anchor guards may fire here; this case isolates the STALE
+      // classification: the lag is NAMED as attention and is not the error.
+      expect(errorsOf(result)).not.toContain('PROJECT_STATE_SUBSTANTIVE_BASELINE_STALE');
+      expect(result.stderr).toContain('ATTENTION: TASK_AHEAD_OF_PROJECT_BASELINE');
+    } finally {
+      fixture.cleanup();
+    }
+  });
+
+  test('A10.10 the same lag with an anchor OFF HEAD ancestry still fails (VA-03)', () => {
+    const fixture = makeBaselineFixture({ intervening: 'IMPLEMENTATION', substantive: 'STALE', ci: 'STALE', anchor: 'DIVERGENT' });
     try {
       const result = run(fixture.root);
       expect(result.status).not.toBe(0);
@@ -1719,7 +1757,7 @@ test.describe('C-10.5 A10 — cross-authority baseline invariant', () => {
     // The attack shape: swap the baseline for a real, in-history, perfectly
     // well-formed ANCESTOR commit. Shape validation cannot see it; only the
     // classified range against the task authority can.
-    const fixture = makeBaselineFixture({ intervening: 'IMPLEMENTATION', substantive: 'STALE', ci: 'STALE' });
+    const fixture = makeBaselineFixture({ intervening: 'IMPLEMENTATION', substantive: 'STALE', ci: 'STALE', anchor: 'DIVERGENT' });
     try {
       const result = run(fixture.root);
       expect(result.status).not.toBe(0);

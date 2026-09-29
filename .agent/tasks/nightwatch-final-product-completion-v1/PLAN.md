@@ -265,7 +265,7 @@ approved paths.
   rule + probe, README claim, `bin/run-shards.mjs` batches.
 - Acceptance criteria: 76/76 conformance; zero diagnostics; the gate lane is
   blocking; declared deletions for retired bins.
-- **Status:** NOT_STARTED
+- **Status:** IN_PROGRESS — 10.1 DONE, 10.2 in progress (59/76 declared); paused for the corrective child campaign
 
 ### M10 — Residual dispositions, quality debt and behaviour documentation (tasks 11.1-11.7)
 

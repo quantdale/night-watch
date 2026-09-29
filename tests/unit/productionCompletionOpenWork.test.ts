@@ -14,6 +14,9 @@ import {
   LEDGER_DISPOSITION_TOKENS,
   classifyBlocker,
   collectOpenWorkInput,
+  collectTaskIds,
+  inspectTaskIdLedger,
+  taskIdLedgerViolations,
   inspectLedgerAgreement,
   parseBlockersSection,
   parseLedgerTasks,
@@ -131,15 +134,45 @@ test.describe('completion ledger agreement', () => {
     expect(inspectLedgerAgreement(root).errors).toEqual([]);
   });
 
-  test('an undispositioned strike on a terminal task reports LEDGER_UNDISPOSITIONED_ITEM', () => {
+  test('an undispositioned strike on a terminal task is an ERROR (VA-04)', () => {
     const root = fixtureRoot();
     writeChange(root, 'c-one', '- [ ] ~~not started~~ — by construction.');
     writeTask(root, 'c-one', 'COMPLETE');
     const result = inspectLedgerAgreement(root);
-    expect(result.errors).toEqual([]);
-    expect(result.warnings.join(' ')).toContain('LEDGER_UNDISPOSITIONED_ITEM: change c-one leaves 1 struck entry without a disposition token at line 1');
+    expect(result.errors.join(' ')).toContain('LEDGER_UNDISPOSITIONED_ITEM: change c-one leaves 1 struck entry without a disposition token at line 1');
   });
 
+  test('the same strike on a non-terminal task stays a warning', () => {
+    const root = fixtureRoot();
+    writeChange(root, 'c-one', '- [ ] ~~not started~~ — by construction.');
+    writeTask(root, 'c-one', 'IN_PROGRESS');
+    const result = inspectLedgerAgreement(root);
+    expect(result.errors).toEqual([]);
+    expect(result.warnings.join(' ')).toContain('LEDGER_UNDISPOSITIONED_ITEM: change c-one');
+  });
+
+  test('a token inside the struck text is not a disposition; only a trailing marker settles (VA-04)', () => {
+    expect(parseLedgerTasks('- [ ] ~~FIX the parser and EXECUTE the probe~~').undispositioned).toHaveLength(1);
+    expect(parseLedgerTasks('- [ ] ~~FIX the parser~~ — reason without a marker.').undispositioned).toHaveLength(1);
+    expect(parseLedgerTasks('- [ ] ~~FIX the parser~~ — FIX — landed elsewhere.').undispositioned).toEqual([]);
+    expect(parseLedgerTasks('- [ ] ~~wrapped strike\n  continues here~~ — SUPERSEDED — by another change.').undispositioned).toEqual([]);
+  });
+
+  test('a declared legacy ceiling downgrades a terminal strike to a warning, and only while it holds', () => {
+    const write = (ceiling: number) => {
+      const root = fixtureRoot();
+      writeChange(root, 'c-legacy', '- [ ] ~~a~~\n- [ ] ~~b~~');
+      writeTask(root, 'c-legacy', 'COMPLETE');
+      fs.mkdirSync(path.join(root, 'config'), { recursive: true });
+      fs.writeFileSync(path.join(root, 'config', 'ledger-legacy-drain.v1.json'), JSON.stringify({ schemaVersion: 'nightwatch.ledger-legacy-drain.v1', ceilings: { 'c-legacy': ceiling } }));
+      return inspectLedgerAgreement(root);
+    };
+    const holding = write(2);
+    expect(holding.errors).toEqual([]);
+    expect(holding.warnings.join(' ')).toContain('LEDGER_UNDISPOSITIONED_ITEM_LEGACY');
+    expect(write(1).errors.join(' ')).toContain('legacy ceiling 1; the ratchet only turns down');
+    expect(write(3).errors.join(' ')).toContain('LEDGER_LEGACY_DRAIN_CEILING_STALE');
+  });
   test('an in-progress task reports open work as information, not failure', () => {
     const root = fixtureRoot();
     writeChange(root, 'c-one', '- [ ] open');
@@ -261,5 +294,61 @@ test.describe('open work report', () => {
     });
     expect(text.status).toBe(0);
     expect(text.stdout).toContain('open work nightwatch.open-work-report.v1');
+  });
+});
+
+test.describe('stable task-ID ledger (VA-01 / task 5.2)', () => {
+  const bootstrap = ['- [ ] 1.1 first', '- [ ] 1.2 second', '- [ ] 2.1 third'].join('\n');
+  const ledger = (root: string, changes: unknown[]) => {
+    fs.mkdirSync(path.join(root, 'config'), { recursive: true });
+    fs.writeFileSync(path.join(root, 'config', 'task-id-ledger.v1.json'), JSON.stringify({ schemaVersion: 'nightwatch.task-id-ledger.v1', changes }));
+  };
+  const sha = 'a'.repeat(40);
+
+  test('collectTaskIds reads only leading IDs and de-duplicates', () => {
+    expect(collectTaskIds('- [x] 1.1 a\n- [ ] ~~1.2 b~~\n- [x] — DONE without id\n- [ ] 9.5b tagged\n- [x] 1.1 again')).toEqual(['1.1', '1.2', '9.5b']);
+  });
+
+  test('a stripped ID is a violation; an added ID is not', () => {
+    expect(taskIdLedgerViolations(bootstrap, '- [x] 1.1 first\n- [x] 2.1 third\n- [ ] 3.1 new')).toEqual(['1.2']);
+    expect(taskIdLedgerViolations(bootstrap, '- [x] 1.1 first\n- [x] 1.2 second\n- [x] 2.1 third\n- [ ] 3.1 new')).toEqual([]);
+    // The exact defect: the ID is gone but the DONE note remains.
+    expect(taskIdLedgerViolations(bootstrap, '- [x] — DONE first\n- [x] 1.2 second\n- [x] 2.1 third')).toEqual(['1.1']);
+  });
+
+  test('inspectTaskIdLedger fails a stripped ID by name, warns on an unreadable baseline, skips an archived change', () => {
+    const root = fixtureRoot();
+    writeChange(root, 'c-one', '- [x] 1.1 first\n- [x] 2.1 third');
+    ledger(root, [{ changeId: 'c-one', bootstrapSha: sha }]);
+    const stripped = inspectTaskIdLedger(root, () => bootstrap);
+    expect(stripped.errors.join(' ')).toContain('LEDGER_TASK_ID_STRIPPED: change c-one lost stable task id 1.2');
+    const unreadable = inspectTaskIdLedger(root, () => null);
+    expect(unreadable.errors).toEqual([]);
+    expect(unreadable.warnings.join(' ')).toContain('LEDGER_TASK_ID_BASELINE_UNRESOLVABLE');
+    ledger(root, [{ changeId: 'c-archived', bootstrapSha: sha }]);
+    const archived = inspectTaskIdLedger(root, () => bootstrap);
+    expect(archived.errors).toEqual([]);
+    expect(archived.info.join(' ')).toContain('LEDGER_TASK_ID_CHANGE_NOT_ACTIVE');
+  });
+
+  test('a missing, malformed or invalid ledger fails closed', () => {
+    const root = fixtureRoot();
+    // No active change: nothing to guard, and that is information, not failure.
+    expect(inspectTaskIdLedger(root, () => bootstrap).errors).toEqual([]);
+    writeChange(root, 'c-one', '- [x] 1.1 first');
+    expect(inspectTaskIdLedger(root, () => bootstrap).errors.join(' ')).toContain('LEDGER_TASK_ID_LEDGER_MISSING');
+    fs.mkdirSync(path.join(root, 'config'), { recursive: true });
+    fs.writeFileSync(path.join(root, 'config', 'task-id-ledger.v1.json'), '{ nope');
+    expect(inspectTaskIdLedger(root, () => bootstrap).errors.join(' ')).toContain('LEDGER_TASK_ID_LEDGER_UNREADABLE');
+    ledger(root, [{ changeId: 'c-one', bootstrapSha: 'short' }]);
+    expect(inspectTaskIdLedger(root, () => bootstrap).errors.join(' ')).toContain('LEDGER_TASK_ID_LEDGER_ENTRY_INVALID');
+  });
+
+  test('the live parent and child changes keep every bootstrap ID', () => {
+    const live = inspectTaskIdLedger(REPO_ROOT, (commit, relativePath) => {
+      const shown = spawnSync('git', ['show', `${commit}:${relativePath}`], { cwd: REPO_ROOT, encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 });
+      return shown.status === 0 ? shown.stdout : null;
+    });
+    expect(live.errors).toEqual([]);
   });
 });

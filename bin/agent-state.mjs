@@ -28,6 +28,7 @@ import { validateProgrammeState } from './lib/programme-state.mjs';
 import { collectCiBlockStale, validateCiBlockRecord } from './lib/ci-block-record.mjs';
 import {
   inspectLedgerAgreement,
+  inspectTaskIdLedger,
 } from './lib/openspec-ledger.mjs';
 import {
   inspectArchiveIndex,
@@ -1111,6 +1112,16 @@ export function validate(root, auditMode = false) {
   errors.push(...ledger.errors);
   warnings.push(...ledger.warnings);
   for (const line of ledger.info) console.log(`[agent-ledger] ${line}`);
+
+  // VA-01 / corrections task 5.2: stable task IDs against each change's
+  // bootstrap commit — an ID present at bootstrap may never vanish.
+  const idLedger = inspectTaskIdLedger(root, (sha, relativePath) => {
+    const shown = gitSpawn(root, ['show', `${sha}:${relativePath}`]);
+    return shown.status === 0 && typeof shown.stdout === 'string' ? shown.stdout : null;
+  });
+  errors.push(...idLedger.errors);
+  warnings.push(...idLedger.warnings);
+  for (const line of idLedger.info) console.log(`[agent-ledger] ${line}`);
 
   // G1 published-baseline integrity: the archive index is parsed as data
   // (strict 1:1 rows, published names must exist) and every published

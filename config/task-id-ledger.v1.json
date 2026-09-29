@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "nightwatch.task-id-ledger.v1",
+  "purpose": "Stable task-ID ledger (VA-01): per active change, the bootstrap commit whose tasks.md is the ID baseline. Every baseline `N.M` ID must still open a task line; IDs may be added, never removed or renumbered. Archived changes are skipped.",
+  "changes": [
+    {
+      "changeId": "nightwatch-final-product-completion-v1",
+      "bootstrapSha": "ec6010a229db03749f8d22f7312b7bf2d0f328aa"
+    },
+    {
+      "changeId": "nightwatch-final-completion-corrections-v1",
+      "bootstrapSha": "3ce396c67584b52017eeb03d7c0529f8e1e63670"
+    }
+  ]
+}

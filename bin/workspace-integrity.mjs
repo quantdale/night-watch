@@ -809,6 +809,10 @@ function checkIntegrationReadiness(root, self, policy, warnings) {
   const baseSha = self !== null && self.holderLive ? (self.record?.baseSha ?? null) : null;
   if (remoteMain !== null && baseSha !== null) {
     if (baseSha === remoteMain) baseState = 'CURRENT';
+    // VA-05 / corrections task 5.5: once the session's own HEAD IS the remote
+    // tip its work is integrated, so a base that trails the remote is history,
+    // not a reconciliation to do — reporting STALE there was a false alarm.
+    else if (headSha !== null && headSha === remoteMain) baseState = 'INTEGRATED_CURRENT';
     else if (git(root, ['merge-base', '--is-ancestor', baseSha, remoteMain]).ok) baseState = 'STALE';
     else baseState = 'DIVERGED';
   } else if (remoteMain !== null && headSha !== null && self === null) {
