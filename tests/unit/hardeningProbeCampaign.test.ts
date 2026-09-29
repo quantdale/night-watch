@@ -1,3 +1,4 @@
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -243,5 +244,50 @@ test.describe('hardening probe campaign — the contract a required gate group d
     } finally {
       fs.rmSync(directory, { recursive: true, force: true });
     }
+  });
+});
+
+/**
+ * The recorded APPEND_ONLY correction probes must stay non-vacuous as the
+ * archives evolve. HC-178 once swapped a correction digest for the digest of
+ * the dated `Last updated:` header; the next header-date bump retired that
+ * line, the mutation stopped exempting a LIVE line, the probe went
+ * NOT_DETECTED and exact-head CI failed HARDENING_PROBES (run 36596242188 at
+ * 88f8eaf7). Every such probe must therefore target a line that is live in its
+ * archive now and carries no date, so routine date bumps cannot retire it.
+ */
+test.describe('recorded correction-digest probes target a live, undated archive line', () => {
+  const lineDigest = (line: string): string =>
+    `sha256:${crypto.createHash('sha256').update(line, 'utf8').digest('hex').slice(0, 24)}`;
+  const DIGEST_FIELD = /"oldLineSha256": "(sha256:[0-9a-f]{24})"/;
+
+  test('each digest-swap probe on the corrections file names a live undated line of the mutated entry archive', () => {
+    const registry = JSON.parse(fs.readFileSync(path.join(ROOT, 'config/hardening-rule-probes.v1.json'), 'utf8')) as {
+      probes: Record<string, Probe[]>;
+    };
+    const corrections = JSON.parse(fs.readFileSync(path.join(ROOT, 'config/document-role-corrections.v1.json'), 'utf8')) as {
+      corrections: Array<{ id: string; path: string; oldLineSha256: string }>;
+    };
+    let checked = 0;
+    for (const probes of Object.values(registry.probes)) {
+      for (const probe of probes) {
+        for (const op of probe.ops) {
+          if (op.file !== 'config/document-role-corrections.v1.json') continue;
+          const searched = typeof op.search === 'string' ? DIGEST_FIELD.exec(op.search)?.[1] : undefined;
+          const replaced = typeof op.replace === 'string' ? DIGEST_FIELD.exec(op.replace)?.[1] : undefined;
+          if (searched === undefined || replaced === undefined) continue;
+          const entry = corrections.corrections.find((candidate) => candidate.oldLineSha256 === searched);
+          expect(entry, `${probe.id} mutates an existing correction entry`).toBeDefined();
+          const archive = fs.readFileSync(path.join(ROOT, entry!.path), 'utf8').split(/\r?\n/);
+          const live = archive.filter((line) => lineDigest(line) === replaced);
+          expect(live.length, `${probe.id} replacement digest ${replaced} is a LIVE line of ${entry!.path}`).toBeGreaterThan(0);
+          for (const line of live) {
+            expect(/\d{4}-\d{2}-\d{2}/.test(line), `${probe.id} targets a dated line that a routine bump would retire: ${line}`).toBe(false);
+          }
+          checked += 1;
+        }
+      }
+    }
+    expect(checked, 'at least one correction digest-swap probe is recorded (HC-178)').toBeGreaterThan(0);
   });
 });
