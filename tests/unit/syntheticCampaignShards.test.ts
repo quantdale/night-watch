@@ -81,11 +81,13 @@ test('the campaign temp root keeps Chromium process-singleton sockets inside sun
   const plan = planShards({ universe: manifest.files, classes: classMap, parallelShardCount: manifest.execution.shardCount ?? 1 });
   const lanes = ['campaign-synthetic-exclusive', ...plan.parallelShards.map((shard) => `campaign-synthetic-${shard.id}`)];
   const longestLane = Math.max(...lanes.map((lane) => lane.length));
+  // VC-11: the tmp prefix length is MEASURED from the actual TMPDIR the
+  // campaign/gate context will use — never hard-coded '/tmp/' (wrong on hosts
+  // with a longer ambient TMPDIR) and never the shard runner's per-shard TMPDIR
+  // override (test infrastructure the campaign never inherits).
+  const ambientTmpdir = process.env.NIGHTWATCH_AMBIENT_TMPDIR ?? os.tmpdir();
   const worstCaseSocketPath =
-    // VC-11: the tmp prefix length is MEASURED from the actual TMPDIR, never
-    // hard-coded — a host whose TMPDIR is longer than /tmp/ would silently
-    // exceed the 107-byte sun_path cap under a budget computed from '/tmp/'.
-    os.tmpdir().length + 1 + prefix.length + 6 /* mkdtemp randomness */ + 1 + longestLane +
+    ambientTmpdir.length + 1 + prefix.length + 6 /* mkdtemp randomness */ + 1 + longestLane +
     1 + 'com.google.Chrome.'.length + 6 /* chrome temp randomness */ + '/SingletonSocket'.length;
   expect(worstCaseSocketPath).toBeLessThanOrEqual(107);
 });

@@ -142,6 +142,10 @@ test('shard environments isolate actual Node temp roots and strip inherited stat
     expect(first.TMPDIR).not.toBe('/shared/ambient-tmp');
     expect(first.TEMP).toBe(first.TMPDIR);
     expect(first.TMP).toBe(first.TMPDIR);
+    // VC-11: the pre-override ambient root survives for budgets that must
+    // reflect the real campaign/gate context rather than the shard override.
+    expect(first.NIGHTWATCH_AMBIENT_TMPDIR).toBe('/shared/ambient-tmp');
+    expect(second.NIGHTWATCH_AMBIENT_TMPDIR).toBe('/shared/ambient-tmp');
     expect(first.NIGHTWATCH_PROXY_PORT).toBeUndefined();
     expect(first.NIGHTWATCH_PROXY_LEASE_TOKEN).toBeUndefined();
     expect(first.NIGHTWATCH_SHARD_TEMP_ROOT).toBe(first.TMPDIR);
