@@ -263,7 +263,7 @@
       "commandKey": "UI_GATE",
       "required": true,
       "environmentRequirements": [
-        "NODE20_PLUS"
+        "NODE22"
       ],
       "timeoutClass": "LONG",
       "dependsOn": [

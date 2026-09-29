@@ -565,9 +565,13 @@ function checkWorktreeMetadata(root, worktrees, policy, errors, warnings) {
   } else {
     for (const branch of sessionRefs.stdout.split(/\r?\n/).map((line) => line.trim()).filter(Boolean)) {
       if (registeredBranches.has(branch)) continue;
-      const counted = git(root, ['rev-list', '--count', `${canonicalBranchName}..${branch}`]);
+      // VC-11: count against the CANONICAL REMOTE ref (the integration
+      // authority), not the local branch — a stale local main would undercount
+      // the work a session actually holds beyond what origin has.
+      const canonicalRef = `${policy?.canonical?.remote ?? 'origin'}/${canonicalBranchName}`;
+      const counted = git(root, ['rev-list', '--count', `${canonicalRef}..${branch}`]);
       const uniqueCommits = counted.ok ? Number(counted.stdout.trim()) : Number.NaN;
-      const uniqueText = Number.isNaN(uniqueCommits) ? 'unique-commit count unavailable' : `${uniqueCommits} unique commit(s) beyond ${canonicalBranchName}`;
+      const uniqueText = Number.isNaN(uniqueCommits) ? 'unique-commit count unavailable' : `${uniqueCommits} unique commit(s) beyond ${canonicalRef}`;
       orphanSessionBranches.push({ branch, uniqueCommits: Number.isNaN(uniqueCommits) ? null : uniqueCommits });
       claimTaskFindings.push({
         code: 'WORKSPACE_ORPHAN_SESSION_BRANCH',

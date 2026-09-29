@@ -191,15 +191,26 @@ M4 group gate. Exact-head CI/artifact evidence and group gates remain pending.
   `CHILD_ENV_INHERITED_KEYS` export (zero consumers, independently verified)
   is removed alongside.
 
+Task 3.11 (VC-11) is complete: the orphan-branch unique-commit count runs
+against the canonical REMOTE ref (`origin/<branch>`, never a stale local
+main) and the test asserts the exact numeric value
+(`orphanSessionBranches[0].uniqueCommits === 1`); UI_CONTROL_CENTER declares
+`NODE22`; the sun_path budget measures `os.tmpdir().length` instead of a
+hard-coded `/tmp/`; HC-188 probes the HANDOFF classification invariant
+(probe campaign 2/2 DETECTED with HC-028). workspaceIsolation +
+syntheticCampaignShards + phase23QualityGate 92/92; hardening:check,
+typecheck:bin (1559) and validation:universe PASS. The dead
+`SHARD_CHILD_ENVIRONMENT_IDS` export (.mjs + .d.mts) is removed after full
+consumer verification.
+
 ## Exact Next Action
 
-Proceed to M4 task 3.11 (VC-11: assert `uniqueCommits` and count against the
-canonical remote ref in the orphan-branch test; UI group Node declaration to
-22; compute the sun_path budget from the actual TMPDIR; register a HANDOFF
-classification probe). The clean-gate proof, the semantic-compat
-clean-tree rerun, and VC-07..VC-10 are complete. Preserve VC-01 exact-head CI
-and VC-03 artifact observation as pending M4 close-out evidence; continue
-through task 3.12 before integration.
+Proceed to M4 task 3.12 (the M4 close-out: focused suites + `gate:milestone`
+PASS at the clean checkpoint, commit, then the pending exact-head CI and
+topology-artifact observation). The clean-gate proof, the semantic-compat
+clean-tree rerun, and VC-07..VC-11 are complete. Preserve VC-01 exact-head CI
+and VC-03 artifact observation as pending M4 close-out evidence; integrate
+only after 3.12 passes.
 
 ## Files Changed
 
@@ -234,6 +245,7 @@ through task 3.12 before integration.
 | `tests/unit/observerSemanticLedger.test.ts` | VC-07 root-cause comment correction (synchronous projection; the wait bounds handler latency after `goto`) | observerSemanticLedger 2/2 PASS |
 | `tests/unit/c03GrpcTopology.test.ts`, `tests/unit/c04FrontendGraph.test.ts`, `tests/unit/phase14FreshSourceAdmission.test.ts`, `config/semantic-compatibility.v1.json` | VC-09 non-vacuous twin premises, declared C3-14 skip, `classifyLiveSourceTestState` for the c03 real-topology describes (LIVE_SOURCE_ tokens replace 11 generic entries; 93 exact identities) | focused 48 passed / 20 declared; semantic-compat PASS at `71a6ca3b` |
 | `bin/lib/topology-gate.mjs`, `bin/gate-topology.mjs`, `config/quality-gate.v1.json`, `tests/unit/gateTopology.test.ts`, `bin/child-environment.mjs` | VC-10 separate `declaredDependence` counting, bounded function-returned-root extraction (unresolvable stays UNRESOLVED), truthful `requiresSiblingTopology: true` for the two host-path-debt groups; dead `CHILD_ENV_INHERITED_KEYS` export removed | gateTopology 36/36; gate:topology PASS (declaredDependence 2/3); typecheck:bin 1559 |
+| `bin/workspace-integrity.mjs`, `tests/unit/workspaceIsolation.test.ts`, `config/quality-gate.v1.json`, `tests/unit/syntheticCampaignShards.test.ts`, `config/hardening-rule-probes.v1.json`, `bin/lib/shard-child-environment.{mjs,d.mts}` | VC-11 orphan-branch count against the canonical remote ref + numeric assertion, UI group `NODE22`, TMPDIR-measured sun_path budget, HC-188 HANDOFF classification probe; dead `SHARD_CHILD_ENVIRONMENT_IDS` export removed | 92/92 focused; probe 2/2 DETECTED; hardening + typecheck:bin (1559) + universe PASS |
 | `bin/lib/hardening/rules/validation-and-gates.mjs`, `config/hardening-rule-probes.v1.json`, `config/bin-typecheck.v1.json` | VC-08 token-based workflow-pinning matcher (all `uses` key forms, comment-aware, fail-closed on empty refs) + probes HC-184..HC-187; ratchet lowered to 1559 | probe campaign 5/5 DETECTED; hardening suites 15/15; typecheck:bin PASS |
 | `tests/unit/semanticSkipIdentity.test.ts`, `tests/unit/selfDevSandboxConfinement.test.ts`, `tests/unit/syntheticCampaignDiagnostics.test.ts` | VC-02 identity/report, reason, and gate-receipt regressions | 29/29 receipt+policy; 25 passed, 1 declared host skip |
 | `config/validation-universe.v1.json`, `config/validation-execution-classes.v1.json` | register ratchet suite and refresh the inventory digest | checks PASS at M3 close; VC-06 re-measured at `sha256:95f903de` (581 discovered, 0 unclassified) |
@@ -597,6 +609,18 @@ true`; the function-returned-root extractor resolves single-return bodies and
 literal arrows and leaves path-built returns UNRESOLVED (never guessed). The
 first draft's 4 implicit-any params were fixed to land under the 2-diagnostic
 ceiling rather than raising it.
+
+Command: probe campaign `--only=checkPlannerHandoffIntegrity` + focused `workspaceIsolation` / `syntheticCampaignShards` / `phase23QualityGate` (VC-11)
+Result: PASS (2/2 DETECTED incl. HC-188; 92/92 tests)
+When: 2026-09-28
+Relevant output: HC-188's mutation (adding a forbidden ambient token read
+beside the one permitted gate-mode read) is caught by the strip-and-assert;
+the orphan-branch test asserts `orphanSessionBranches[0].uniqueCommits === 1`
+against `origin/main`; the sun_path budget uses `os.tmpdir().length`; the UI
+group declares `NODE22`. hardening:check, typecheck:bin (1559) and
+validation:universe PASS alongside. `SHARD_CHILD_ENVIRONMENT_IDS` (zero
+external consumers across .mjs/.ts/.d.mts, independently verified) is removed
+from `bin/lib/shard-child-environment.{mjs,d.mts}`.
 
 ## Decisions Made During This Task
 

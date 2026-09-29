@@ -663,6 +663,16 @@
             "all": true
           }
         ]
+      },
+      {
+        "id": "HC-188",
+        "ops": [
+          {
+            "file": "bin/planner-handoff-check.mjs",
+            "search": "const gateEnvironment = process.env['NIGHTWATCH_GATE_ENVIRONMENT'];",
+            "replace": "const gateEnvironment = process.env['NIGHTWATCH_GATE_ENVIRONMENT'] ?? process.env['NIGHTWATCH_GIT_TOKEN'];"
+          }
+        ]
       }
     ],
     "checkDocumentationTruth": [

@@ -1723,12 +1723,17 @@ test.describe('A-07 — orphan session branches raise attention, never failure',
       const finding = (report.claimFindings ?? []).find((entry: { code: string }) => entry.code === 'WORKSPACE_ORPHAN_SESSION_BRANCH');
       expect(finding).toBeTruthy();
       expect(finding.detail).toContain('session/orphan-0000');
-      expect(finding.detail).toContain('unique commit(s) beyond main');
+      expect(finding.detail).toContain('unique commit(s) beyond origin/main');
       expect(finding.detail).toContain('changing nothing');
       expect(finding.ownerAction).toContain('bin/nightwatch-session.mjs');
       const metadata = (report.invariants ?? []).find((entry: { id: string }) => entry.id === 'WORKSPACE_WORKTREE_METADATA');
       expect(metadata.status).toBe('ATTENTION');
       expect(metadata.orphanSessionBranchCount).toBe(1);
+      // VC-11: the unique-commit count is ASSERTED as a value, not only as
+      // prose — the orphan holds exactly one commit beyond the canonical
+      // remote ref (origin/main), which is the integration authority.
+      expect(metadata.orphanSessionBranches[0].branch).toBe('session/orphan-0000');
+      expect(metadata.orphanSessionBranches[0].uniqueCommits).toBe(1);
       // Read-only: the branch still exists afterwards, untouched.
       expect(gitOk(canonical, ['branch', '--list', 'session/orphan-0000']).trim()).toBe('session/orphan-0000');
     } finally {

@@ -63,9 +63,15 @@ SEMANTIC_COMPATIBILITY / SYNTHETIC_CAMPAIGN truthfully declare
 (PROVEN/BUBBLEWRAP), typecheck:bin 1559, hardening + universe PASS; the dead
 `CHILD_ENV_INHERITED_KEYS` export is removed. M4 group gates
 and exact-head CI/artifact observation remain pending.
-Next action: proceed to task 3.11 (VC-11: orphan-branch `uniqueCommits` +
-canonical-remote-ref count, UI group Node 22 declaration, sun_path budget
-from the actual TMPDIR, HANDOFF classification probe). VC-01's stale skip guards
+Task 3.11 (VC-11) is complete: orphan-branch counts run against the
+canonical remote ref with a numeric `uniqueCommits` assertion, the UI group
+declares `NODE22`, the sun_path budget measures the actual TMPDIR, and
+HC-188 probes the HANDOFF classification invariant (2/2 DETECTED) — 92/92
+focused, hardening/typecheck/universe PASS; the dead
+`SHARD_CHILD_ENVIRONMENT_IDS` export is removed.
+Next action: task 3.12 — the M4 close-out (focused suites + `gate:milestone`
+PASS at the clean checkpoint, commit, then the pending exact-head CI and
+topology-artifact observation). VC-01's stale skip guards
 and allowlist entries are removed; all four browser-backed tests passed locally,
 with exact-head GitHub Actions proof pending M4 close-out.
 
@@ -111,7 +117,7 @@ EXTERNAL CONTACT AUTHORIZED (OD-3 ONLY):
   provider proof run; one npm registry advisory query.
 
 CURRENT STATUS:
-  IN_PROGRESS — M4 validation spine through VC-10; M3 certification anchors
+  IN_PROGRESS — M4 validation spine through VC-11; M3 certification anchors
   validated at `d6fd98b1`; exact-head CI/artifact observation remains pending.
 
 ALPHAUS DEV / NEXT / PRODUCTION CONTACT:   NOT AUTHORIZED
