@@ -6,6 +6,7 @@
 
 import { test, expect } from '@playwright/test';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import {
   evaluateSemanticSkipIdentityReport,
@@ -171,7 +172,7 @@ test.describe('semantic skip-identity policy', () => {
     const previousEnvironment = process.env.NIGHTWATCH_GATE_ENVIRONMENT;
     const previousLane = process.env.NIGHTWATCH_TIMING_LANE;
     const previousReportPath = process.env.NIGHTWATCH_SKIP_REPORT_PATH;
-    const destination = path.join(REPO_ROOT, 'artifacts', 'skip-identity-lane-auth-probe.json');
+    const destination = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'nw-skip-auth-')), 'report.json');
     try {
       // VC-04 removed semantic-compat's self-declared COMPATIBILITY label, so
       // authorization now follows the lane identity the runner always sets.
