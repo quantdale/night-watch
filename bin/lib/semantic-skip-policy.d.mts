@@ -51,3 +51,5 @@ export function skipCountDisagreement(
   reporterSkipped: number | null | undefined,
   identityReportSkipped: number | null | undefined,
 ): null | 'SKIP_COUNT_MISMATCH' | 'SKIP_COUNT_UNVERIFIABLE';
+export declare const VC01_REQUIRED_TITLES: readonly string[];
+export declare function vc01ExecutionFailure(report: unknown): string | null;

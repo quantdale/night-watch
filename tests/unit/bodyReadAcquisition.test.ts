@@ -111,3 +111,79 @@ test.describe('bounded response-body acquisition — behaviour (7.10)', () => {
     expect(settled.every((entry) => 'completed' in entry && entry.completed)).toBe(true);
   });
 });
+
+// ---------------------------------------------------------------------------
+// R3-13 / corrections task 8.12 — the observer REFUSAL PATH by behaviour: hold
+// more concurrent known-read bodies than the gate allows and observe the
+// refusal on the observer's own capture health, not on source text.
+// ---------------------------------------------------------------------------
+
+import http from 'node:http';
+import { OutboundPolicy } from '../../src/core/safety/outboundPolicy';
+import { RunRecorder } from '../../src/core/evidence/runRecorder';
+import { RunMonitor } from '../../src/state/run';
+import { createNetworkObserver } from '../../src/browser/observers/networkObserver';
+import type { EnvironmentConfig } from '../../src/core/environment/types';
+import type { EndpointSemanticClassification } from '../../src/core/safety/endpointSemantics';
+
+function refusalEnvironment(origin: string): EnvironmentConfig {
+  const host = new URL(origin).host;
+  return {
+    name: 'local',
+    label: 'body-read refusal fixture',
+    uiBaseUrl: origin,
+    apiHosts: [host],
+    authHosts: [],
+    allowedHosts: [host, 'localhost'],
+    staticAssetHosts: [],
+    telemetryHosts: [],
+    optionalThirdPartySupportHosts: [],
+    browserBackgroundHosts: [],
+    failOn: [],
+  };
+}
+
+test.describe('observer body-read refusal — behaviour (R3-13)', () => {
+  test('more concurrent known-read bodies than the gate allows refuses and marks the capture INCOMPLETE', async ({ browser }) => {
+    const server = http.createServer((_req, res) => {
+      res.writeHead(200, { 'content-type': 'application/json' });
+      res.end(JSON.stringify({ ok: true }));
+    });
+    await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+    const origin = `http://127.0.0.1:${(server.address() as { port: number }).port}`;
+    const environment = refusalEnvironment(origin);
+    const recorder = new RunRecorder({
+      runId: `body-read-refusal-${Date.now()}`,
+      environment: 'local',
+      product: 'ripple',
+      browser: 'chromium',
+      scenario: 'body-read-refusal',
+    });
+    const monitor = new RunMonitor(environment.failOn);
+    const observer = createNetworkObserver({
+      policy: new OutboundPolicy(environment),
+      recorder,
+      monitor,
+      endpointClassifier: (): EndpointSemanticClassification | null => 'KNOWN_READ',
+    });
+    const context = await browser.newContext();
+    await observer.install(context);
+    const page = await context.newPage();
+    try {
+      await page.goto(origin);
+      observer.beginJourneyIntent('step-1', 'read');
+      // A BURST of responses: the observer's response-handler passages overlap
+      // and cross the 4-read gate, which refuses rather than queues. (A small
+      // handshake never overlaps because Playwright buffers each body first.)
+      await page.evaluate(async () => {
+        await Promise.all(Array.from({ length: 200 }, (_, index) => fetch(`/api/burst-${index}`).then((response) => response.json())));
+      });
+      await expect.poll(() => observer.pendingResponseHandlers(), { timeout: 20_000 }).toBe(0);
+      expect(observer.captureStatus?.()).toBe('INCOMPLETE');
+      expect(observer.captureFailureCodes?.()).toContain('BODY_READ_ACQUISITION_BOUND');
+    } finally {
+      await context.close();
+      await new Promise<void>((resolve) => server.close(() => resolve()));
+    }
+  });
+});

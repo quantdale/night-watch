@@ -13,7 +13,7 @@
       {
         "file": "tests/unit/c02aOpenApiAdmission.test.ts",
         "titlePath": [
-          "C-02a — the real committed blueapi artifact",
+          "C-02a \u2014 the real committed blueapi artifact",
           "C-01 invariants hold: no eviction, no lost identity, truthful completeness"
         ],
         "reasonToken": "LIVE_SOURCE_STALE"
@@ -21,7 +21,7 @@
       {
         "file": "tests/unit/c02aOpenApiAdmission.test.ts",
         "titlePath": [
-          "C-02a — the real committed blueapi artifact",
+          "C-02a \u2014 the real committed blueapi artifact",
           "C-01 invariants hold: no eviction, no lost identity, truthful completeness"
         ],
         "reasonToken": "LIVE_SOURCE_UNAVAILABLE"
@@ -29,7 +29,7 @@
       {
         "file": "tests/unit/c02aOpenApiAdmission.test.ts",
         "titlePath": [
-          "C-02a — the real committed blueapi artifact",
+          "C-02a \u2014 the real committed blueapi artifact",
           "every blueapi surface is GENERATED_ARTIFACT with UNKNOWN currency and a denied production admission"
         ],
         "reasonToken": "LIVE_SOURCE_STALE"
@@ -37,7 +37,7 @@
       {
         "file": "tests/unit/c02aOpenApiAdmission.test.ts",
         "titlePath": [
-          "C-02a — the real committed blueapi artifact",
+          "C-02a \u2014 the real committed blueapi artifact",
           "every blueapi surface is GENERATED_ARTIFACT with UNKNOWN currency and a denied production admission"
         ],
         "reasonToken": "LIVE_SOURCE_UNAVAILABLE"
@@ -45,7 +45,7 @@
       {
         "file": "tests/unit/c02aOpenApiAdmission.test.ts",
         "titlePath": [
-          "C-02a — the real committed blueapi artifact",
+          "C-02a \u2014 the real committed blueapi artifact",
           "recovers >= 591 operations with verb, path and operationId, and >= 400 bound response contracts"
         ],
         "reasonToken": "LIVE_SOURCE_UNAVAILABLE"
@@ -53,7 +53,7 @@
       {
         "file": "tests/unit/c02bProtoCorroboration.test.ts",
         "titlePath": [
-          "C-02b — the real blueapi artifact against the real proto",
+          "C-02b \u2014 the real blueapi artifact against the real proto",
           "147 Billing operations corroborate exactly, and the artifact still stays UNKNOWN"
         ],
         "reasonToken": "blueapi checkout unavailable"
@@ -61,7 +61,7 @@
       {
         "file": "tests/unit/c02bProtoSurface.test.ts",
         "titlePath": [
-          "C-02b — C-01 no-eviction regression (F-27)",
+          "C-02b \u2014 C-01 no-eviction regression (F-27)",
           "completeness stays truthful across the enlarged population"
         ],
         "reasonToken": "blueapi checkout unavailable"
@@ -69,7 +69,7 @@
       {
         "file": "tests/unit/c02bProtoSurface.test.ts",
         "titlePath": [
-          "C-02b — C-01 no-eviction regression (F-27)",
+          "C-02b \u2014 C-01 no-eviction regression (F-27)",
           "every operation identity discovered without protobuf survives with it"
         ],
         "reasonToken": "LIVE_SOURCE_STALE"
@@ -77,7 +77,7 @@
       {
         "file": "tests/unit/c02bProtoSurface.test.ts",
         "titlePath": [
-          "C-02b — C-01 no-eviction regression (F-27)",
+          "C-02b \u2014 C-01 no-eviction regression (F-27)",
           "every operation identity discovered without protobuf survives with it"
         ],
         "reasonToken": "LIVE_SOURCE_UNAVAILABLE"
@@ -85,7 +85,7 @@
       {
         "file": "tests/unit/c02bProtoSurface.test.ts",
         "titlePath": [
-          "C-02b — C-01 no-eviction regression (F-27)",
+          "C-02b \u2014 C-01 no-eviction regression (F-27)",
           "ripple-api keeps its operations after blueapi grows"
         ],
         "reasonToken": "LIVE_SOURCE_STALE"
@@ -93,7 +93,7 @@
       {
         "file": "tests/unit/c02bProtoSurface.test.ts",
         "titlePath": [
-          "C-02b — C-01 no-eviction regression (F-27)",
+          "C-02b \u2014 C-01 no-eviction regression (F-27)",
           "ripple-api keeps its operations after blueapi grows"
         ],
         "reasonToken": "LIVE_SOURCE_UNAVAILABLE"
@@ -101,7 +101,7 @@
       {
         "file": "tests/unit/c02bProtoSurface.test.ts",
         "titlePath": [
-          "C-02b — DEF-C02B-1: a generated mirror is not a rival declaration",
+          "C-02b \u2014 DEF-C02B-1: a generated mirror is not a rival declaration",
           "the real blueapi surface keeps its 147 mutation-capable classifications"
         ],
         "reasonToken": "blueapi checkout unavailable"
@@ -109,7 +109,7 @@
       {
         "file": "tests/unit/c02bProtoSurface.test.ts",
         "titlePath": [
-          "C-02b — proto operations reach route discovery",
+          "C-02b \u2014 proto operations reach route discovery",
           "blueapi discovery contains PROTOBUF-sourced operations with proven routes"
         ],
         "reasonToken": "blueapi checkout unavailable"
@@ -117,7 +117,7 @@
       {
         "file": "tests/unit/c02bProtoSurface.test.ts",
         "titlePath": [
-          "C-02b — the real approved protobuf surface",
+          "C-02b \u2014 the real approved protobuf surface",
           "a message-only proto declares zero services rather than an empty one"
         ],
         "reasonToken": "ouchan checkout unavailable"
@@ -125,7 +125,7 @@
       {
         "file": "tests/unit/c02bProtoSurface.test.ts",
         "titlePath": [
-          "C-02b — the real approved protobuf surface",
+          "C-02b \u2014 the real approved protobuf surface",
           "blueapi billing yields at least 147 mechanically proven RPCs"
         ],
         "reasonToken": "blueapi checkout unavailable"
@@ -133,7 +133,7 @@
       {
         "file": "tests/unit/c02bProtoSurface.test.ts",
         "titlePath": [
-          "C-02b — the real approved protobuf surface",
+          "C-02b \u2014 the real approved protobuf surface",
           "the measured HTTP verb distribution sums to the RPC count"
         ],
         "reasonToken": "blueapi checkout unavailable"
@@ -141,7 +141,7 @@
       {
         "file": "tests/unit/c02bProtoSurface.test.ts",
         "titlePath": [
-          "C-02b — the real approved protobuf surface",
+          "C-02b \u2014 the real approved protobuf surface",
           "the measured streaming distribution is reported, not inherited"
         ],
         "reasonToken": "blueapi checkout unavailable"
@@ -149,7 +149,7 @@
       {
         "file": "tests/unit/c02bProtoSurface.test.ts",
         "titlePath": [
-          "C-02b — the real approved protobuf surface",
+          "C-02b \u2014 the real approved protobuf surface",
           "the proto file is admitted by the scan rather than rejected on its extension"
         ],
         "reasonToken": "blueapi checkout unavailable"
@@ -157,7 +157,7 @@
       {
         "file": "tests/unit/c03GrpcTopology.test.ts",
         "titlePath": [
-          "C-03 — C-01 no-eviction across the admission (F-27)",
+          "C-03 \u2014 C-01 no-eviction across the admission (F-27)",
           "every operation identity discovered before the admission survives it"
         ],
         "reasonToken": "LIVE_SOURCE_STALE"
@@ -165,7 +165,7 @@
       {
         "file": "tests/unit/c03GrpcTopology.test.ts",
         "titlePath": [
-          "C-03 — C-01 no-eviction across the admission (F-27)",
+          "C-03 \u2014 C-01 no-eviction across the admission (F-27)",
           "every operation identity discovered before the admission survives it"
         ],
         "reasonToken": "LIVE_SOURCE_UNAVAILABLE"
@@ -173,7 +173,7 @@
       {
         "file": "tests/unit/c03GrpcTopology.test.ts",
         "titlePath": [
-          "C-03 — C-01 no-eviction across the admission (F-27)",
+          "C-03 \u2014 C-01 no-eviction across the admission (F-27)",
           "ripple-api keeps its full operation set after blueapi grows again"
         ],
         "reasonToken": "LIVE_SOURCE_STALE"
@@ -181,7 +181,7 @@
       {
         "file": "tests/unit/c03GrpcTopology.test.ts",
         "titlePath": [
-          "C-03 — C-01 no-eviction across the admission (F-27)",
+          "C-03 \u2014 C-01 no-eviction across the admission (F-27)",
           "ripple-api keeps its full operation set after blueapi grows again"
         ],
         "reasonToken": "LIVE_SOURCE_UNAVAILABLE"
@@ -189,7 +189,7 @@
       {
         "file": "tests/unit/c03GrpcTopology.test.ts",
         "titlePath": [
-          "C-03 — C-01 no-eviction across the admission (F-27)",
+          "C-03 \u2014 C-01 no-eviction across the admission (F-27)",
           "the blueapi artifact still contributes exactly its own 591 operations"
         ],
         "reasonToken": "LIVE_SOURCE_STALE"
@@ -197,7 +197,7 @@
       {
         "file": "tests/unit/c03GrpcTopology.test.ts",
         "titlePath": [
-          "C-03 — C-01 no-eviction across the admission (F-27)",
+          "C-03 \u2014 C-01 no-eviction across the admission (F-27)",
           "the blueapi artifact still contributes exactly its own 591 operations"
         ],
         "reasonToken": "LIVE_SOURCE_UNAVAILABLE"
@@ -301,7 +301,7 @@
       {
         "file": "tests/unit/c05UniverseAdmission.test.ts",
         "titlePath": [
-          "C-05 — an unapproved repository is never READ, proven at the boundary",
+          "C-05 \u2014 an unapproved repository is never READ, proven at the boundary",
           "an APPROVED repository is still readable, so the gate is not vacuous"
         ],
         "reasonToken": "requires the read-only sibling Alphaus checkouts"
@@ -309,7 +309,7 @@
       {
         "file": "tests/unit/c08DeploymentBinding.test.ts",
         "titlePath": [
-          "C-08 — client configuration is never a DEPLOYMENT_FACT",
+          "C-08 \u2014 client configuration is never a DEPLOYMENT_FACT",
           "the host matrix extracted from the REAL artifact is SOURCE_FACT"
         ],
         "reasonToken": "requires the read-only sibling Alphaus checkouts"
@@ -317,7 +317,7 @@
       {
         "file": "tests/unit/c08DeploymentBinding.test.ts",
         "titlePath": [
-          "C-08 — build exclusions, and only the negative direction",
+          "C-08 \u2014 build exclusions, and only the negative direction",
           "the REAL build config parses to exclusions classified DEPLOYMENT_FACT"
         ],
         "reasonToken": "requires the read-only sibling Alphaus checkouts"
@@ -325,7 +325,7 @@
       {
         "file": "tests/unit/c09SpecExpectations.test.ts",
         "titlePath": [
-          "C-09 — the real artifacts, measured",
+          "C-09 \u2014 the real artifacts, measured",
           "blueapi yields expectations far beyond the 40 target, all exactly joined"
         ],
         "reasonToken": "requires the read-only sibling Alphaus checkouts"
@@ -333,7 +333,7 @@
       {
         "file": "tests/unit/c09SpecExpectations.test.ts",
         "titlePath": [
-          "C-09 — the real artifacts, measured",
+          "C-09 \u2014 the real artifacts, measured",
           "blueinternal yields expectations too, from the C-05 admission"
         ],
         "reasonToken": "requires the read-only sibling Alphaus checkouts"
@@ -341,7 +341,7 @@
       {
         "file": "tests/unit/c07DerivedSemantics.test.ts",
         "titlePath": [
-          "C-07 — the real population, measured",
+          "C-07 \u2014 the real population, measured",
           "the derived registry over real operations has ZERO KNOWN_READ entries"
         ],
         "reasonToken": "LIVE_SOURCE_STALE"
@@ -349,7 +349,7 @@
       {
         "file": "tests/unit/c07DerivedSemantics.test.ts",
         "titlePath": [
-          "C-07 — the real population, measured",
+          "C-07 \u2014 the real population, measured",
           "the derived registry over real operations has ZERO KNOWN_READ entries"
         ],
         "reasonToken": "LIVE_SOURCE_UNAVAILABLE"
@@ -444,7 +444,7 @@
       {
         "file": "tests/unit/phase14ContractReport.test.ts",
         "titlePath": [
-          "Phase 14A C5 — read-only CLI",
+          "Phase 14A C5 \u2014 read-only CLI",
           "--snapshot builds a live inventory from the disposable source snapshot"
         ],
         "reasonToken": "disposable snapshot not present in this environment"
@@ -452,7 +452,7 @@
       {
         "file": "tests/unit/phase14FreshSourceAdmission.test.ts",
         "titlePath": [
-          "Phase 14A C3 — fresh-source inventory at the newly resolved SHA",
+          "Phase 14A C3 \u2014 fresh-source inventory at the newly resolved SHA",
           "C3-01 inventory covers exactly the approved registry targets (no new targets)"
         ],
         "reasonToken": "requires disposable exact snapshot at <path>"
@@ -460,7 +460,7 @@
       {
         "file": "tests/unit/phase14FreshSourceAdmission.test.ts",
         "titlePath": [
-          "Phase 14A C3 — fresh-source inventory at the newly resolved SHA",
+          "Phase 14A C3 \u2014 fresh-source inventory at the newly resolved SHA",
           "C3-02 B1-B4 historical blockers reproduce at the fresh SHA"
         ],
         "reasonToken": "requires disposable exact snapshot at <path>"
@@ -468,7 +468,7 @@
       {
         "file": "tests/unit/phase14FreshSourceAdmission.test.ts",
         "titlePath": [
-          "Phase 14A C3 — fresh-source inventory at the newly resolved SHA",
+          "Phase 14A C3 \u2014 fresh-source inventory at the newly resolved SHA",
           "C3-03 four admitted targets remain admitted; historical/collection IDs and recipe versions preserved"
         ],
         "reasonToken": "requires disposable exact snapshot at <path>"
@@ -476,7 +476,7 @@
       {
         "file": "tests/unit/phase14FreshSourceAdmission.test.ts",
         "titlePath": [
-          "Phase 14A C3 — fresh-source inventory at the newly resolved SHA",
+          "Phase 14A C3 \u2014 fresh-source inventory at the newly resolved SHA",
           "C3-04 every entry carries exact provenance and a probe or blocker (before/after record complete)"
         ],
         "reasonToken": "requires disposable exact snapshot at <path>"
@@ -484,7 +484,7 @@
       {
         "file": "tests/unit/phase14FreshSourceAdmission.test.ts",
         "titlePath": [
-          "Phase 14A C3 — fresh-source inventory at the newly resolved SHA",
+          "Phase 14A C3 \u2014 fresh-source inventory at the newly resolved SHA",
           "C3-05 zero uplift: no new contract admitted, no depth uplifted, registry unchanged"
         ],
         "reasonToken": "requires disposable exact snapshot at <path>"
@@ -492,7 +492,7 @@
       {
         "file": "tests/unit/phase14FreshSourceAdmission.test.ts",
         "titlePath": [
-          "Phase 14A C3 — fresh-source inventory at the newly resolved SHA",
+          "Phase 14A C3 \u2014 fresh-source inventory at the newly resolved SHA",
           "C3-06 deterministic repeats >=3 identical fresh inventory"
         ],
         "reasonToken": "requires disposable exact snapshot at <path>"
@@ -500,7 +500,7 @@
       {
         "file": "tests/unit/phase14FreshSourceAdmission.test.ts",
         "titlePath": [
-          "Phase 14A C3 — fresh-source inventory at the newly resolved SHA",
+          "Phase 14A C3 \u2014 fresh-source inventory at the newly resolved SHA",
           "C3-07 privacy: no sentinels or local paths leak into the fresh inventory"
         ],
         "reasonToken": "requires disposable exact snapshot at <path>"
@@ -508,7 +508,7 @@
       {
         "file": "tests/unit/phase14FreshSourceAdmission.test.ts",
         "titlePath": [
-          "Phase 14A C3 — live SHA-movement classification + currentness at fresh source",
+          "Phase 14A C3 \u2014 live SHA-movement classification + currentness at fresh source",
           "C3-10 live drift vs recorded prior probes: all six EVIDENCE_UNCHANGED_SHA_MOVED"
         ],
         "reasonToken": "requires disposable exact snapshot at <path>"
@@ -516,7 +516,7 @@
       {
         "file": "tests/unit/phase14FreshSourceAdmission.test.ts",
         "titlePath": [
-          "Phase 14A C3 — live SHA-movement classification + currentness at fresh source",
+          "Phase 14A C3 \u2014 live SHA-movement classification + currentness at fresh source",
           "C3-11 resolver resolves every derived expectation against the correct fresh SHA"
         ],
         "reasonToken": "requires disposable exact snapshot at <path>"
@@ -524,7 +524,7 @@
       {
         "file": "tests/unit/phase14FreshSourceAdmission.test.ts",
         "titlePath": [
-          "Phase 14A C3 — live SHA-movement classification + currentness at fresh source",
+          "Phase 14A C3 \u2014 live SHA-movement classification + currentness at fresh source",
           "C3-12 B5 wrong-SHA currentness fails closed at the fresh SHA (resolver SOURCE_STALE)"
         ],
         "reasonToken": "requires disposable exact snapshot at <path>"
@@ -532,7 +532,7 @@
       {
         "file": "tests/unit/phase14FreshSourceAdmission.test.ts",
         "titlePath": [
-          "Phase 14A C3 — live SHA-movement classification + currentness at fresh source",
+          "Phase 14A C3 \u2014 live SHA-movement classification + currentness at fresh source",
           "C3-13 missing source never certifies CURRENT (inventory fails closed STALE/UNAVAILABLE)"
         ],
         "reasonToken": "requires disposable exact snapshot at <path>"
@@ -572,7 +572,7 @@
       {
         "file": "tests/unit/realSourceCanary.test.ts",
         "titlePath": [
-          "Phase 9A.1 — real-source offline canary (SPEC §28)",
+          "Phase 9A.1 \u2014 real-source offline canary (SPEC \u00a728)",
           "live sibling checkout: derive >= 1 real expectation (owner-local evidence)"
         ],
         "reasonToken": "LIVE_SOURCE_STALE"
@@ -580,7 +580,7 @@
       {
         "file": "tests/unit/realSourceCanary.test.ts",
         "titlePath": [
-          "Phase 9A.1 — real-source offline canary (SPEC §28)",
+          "Phase 9A.1 \u2014 real-source offline canary (SPEC \u00a728)",
           "live sibling checkout: derive >= 1 real expectation (owner-local evidence)"
         ],
         "reasonToken": "LIVE_SOURCE_UNAVAILABLE"
@@ -604,7 +604,7 @@
       {
         "file": "tests/unit/c03GrpcTopology.test.ts",
         "titlePath": [
-          "C-03 — completeness is never inflated by the join",
+          "C-03 \u2014 completeness is never inflated by the join",
           "the real ouchan topology reports TRUNCATED and claims no completeness"
         ],
         "reasonToken": "LIVE_SOURCE_STALE"
@@ -612,7 +612,7 @@
       {
         "file": "tests/unit/c03GrpcTopology.test.ts",
         "titlePath": [
-          "C-03 — completeness is never inflated by the join",
+          "C-03 \u2014 completeness is never inflated by the join",
           "the real ouchan topology reports TRUNCATED and claims no completeness"
         ],
         "reasonToken": "LIVE_SOURCE_UNAVAILABLE"
@@ -620,7 +620,7 @@
       {
         "file": "tests/unit/c03GrpcTopology.test.ts",
         "titlePath": [
-          "C-03 — the real measured topology",
+          "C-03 \u2014 the real measured topology",
           "binds at least twelve proto services as SOURCE_FACT"
         ],
         "reasonToken": "LIVE_SOURCE_STALE"
@@ -628,7 +628,7 @@
       {
         "file": "tests/unit/c03GrpcTopology.test.ts",
         "titlePath": [
-          "C-03 — the real measured topology",
+          "C-03 \u2014 the real measured topology",
           "binds at least twelve proto services as SOURCE_FACT"
         ],
         "reasonToken": "LIVE_SOURCE_UNAVAILABLE"
@@ -636,7 +636,7 @@
       {
         "file": "tests/unit/c03GrpcTopology.test.ts",
         "titlePath": [
-          "C-03 — the real measured topology",
+          "C-03 \u2014 the real measured topology",
           "every proven binding is independently corroborated by an embedding"
         ],
         "reasonToken": "LIVE_SOURCE_STALE"
@@ -644,7 +644,7 @@
       {
         "file": "tests/unit/c03GrpcTopology.test.ts",
         "titlePath": [
-          "C-03 — the real measured topology",
+          "C-03 \u2014 the real measured topology",
           "every proven binding is independently corroborated by an embedding"
         ],
         "reasonToken": "LIVE_SOURCE_UNAVAILABLE"
@@ -652,7 +652,7 @@
       {
         "file": "tests/unit/c03GrpcTopology.test.ts",
         "titlePath": [
-          "C-03 — the real measured topology",
+          "C-03 \u2014 the real measured topology",
           "no binding is silently resolved: every non-proven one carries a blocker"
         ],
         "reasonToken": "LIVE_SOURCE_STALE"
@@ -660,7 +660,7 @@
       {
         "file": "tests/unit/c03GrpcTopology.test.ts",
         "titlePath": [
-          "C-03 — the real measured topology",
+          "C-03 \u2014 the real measured topology",
           "no binding is silently resolved: every non-proven one carries a blocker"
         ],
         "reasonToken": "LIVE_SOURCE_UNAVAILABLE"
@@ -668,7 +668,7 @@
       {
         "file": "tests/unit/c03GrpcTopology.test.ts",
         "titlePath": [
-          "C-03 — the real measured topology",
+          "C-03 \u2014 the real measured topology",
           "a service with no observable proto is UNSUPPORTED and not a fact"
         ],
         "reasonToken": "LIVE_SOURCE_STALE"
@@ -676,7 +676,7 @@
       {
         "file": "tests/unit/c03GrpcTopology.test.ts",
         "titlePath": [
-          "C-03 — the real measured topology",
+          "C-03 \u2014 the real measured topology",
           "a service with no observable proto is UNSUPPORTED and not a fact"
         ],
         "reasonToken": "LIVE_SOURCE_UNAVAILABLE"
@@ -684,7 +684,7 @@
       {
         "file": "tests/unit/c03GrpcTopology.test.ts",
         "titlePath": [
-          "C-03 — the real measured topology",
+          "C-03 \u2014 the real measured topology",
           "one daemon registering six services is six bindings, not one"
         ],
         "reasonToken": "LIVE_SOURCE_STALE"
@@ -692,7 +692,7 @@
       {
         "file": "tests/unit/c03GrpcTopology.test.ts",
         "titlePath": [
-          "C-03 — the real measured topology",
+          "C-03 \u2014 the real measured topology",
           "one daemon registering six services is six bindings, not one"
         ],
         "reasonToken": "LIVE_SOURCE_UNAVAILABLE"
@@ -700,7 +700,7 @@
       {
         "file": "tests/unit/c03GrpcTopology.test.ts",
         "titlePath": [
-          "C-03 — the real measured topology",
+          "C-03 \u2014 the real measured topology",
           "the generated SDK descriptors all pair uniquely"
         ],
         "reasonToken": "LIVE_SOURCE_STALE"
@@ -708,7 +708,7 @@
       {
         "file": "tests/unit/c03GrpcTopology.test.ts",
         "titlePath": [
-          "C-03 — the real measured topology",
+          "C-03 \u2014 the real measured topology",
           "the generated SDK descriptors all pair uniquely"
         ],
         "reasonToken": "LIVE_SOURCE_UNAVAILABLE"
@@ -716,7 +716,7 @@
       {
         "file": "tests/unit/c03GrpcTopology.test.ts",
         "titlePath": [
-          "C-03 — the method-level prototype is positive-only, and says so",
+          "C-03 \u2014 the method-level prototype is positive-only, and says so",
           "a proven binding resolves its implementation type and observes handlers"
         ],
         "reasonToken": "LIVE_SOURCE_STALE"
@@ -724,7 +724,7 @@
       {
         "file": "tests/unit/c03GrpcTopology.test.ts",
         "titlePath": [
-          "C-03 — the method-level prototype is positive-only, and says so",
+          "C-03 \u2014 the method-level prototype is positive-only, and says so",
           "a proven binding resolves its implementation type and observes handlers"
         ],
         "reasonToken": "LIVE_SOURCE_UNAVAILABLE"
@@ -732,7 +732,7 @@
       {
         "file": "tests/unit/c03GrpcTopology.test.ts",
         "titlePath": [
-          "C-03 — the method-level prototype is positive-only, and says so",
+          "C-03 \u2014 the method-level prototype is positive-only, and says so",
           "an unobserved RPC is never reported as a completeness claim"
         ],
         "reasonToken": "LIVE_SOURCE_STALE"
@@ -740,7 +740,7 @@
       {
         "file": "tests/unit/c03GrpcTopology.test.ts",
         "titlePath": [
-          "C-03 — the method-level prototype is positive-only, and says so",
+          "C-03 \u2014 the method-level prototype is positive-only, and says so",
           "an unobserved RPC is never reported as a completeness claim"
         ],
         "reasonToken": "LIVE_SOURCE_UNAVAILABLE"
@@ -748,7 +748,7 @@
       {
         "file": "tests/unit/c03GrpcTopology.test.ts",
         "titlePath": [
-          "C-03 — the method-level prototype is positive-only, and says so",
+          "C-03 \u2014 the method-level prototype is positive-only, and says so",
           "several services reach an exact handler count, which is an observation and not a proof"
         ],
         "reasonToken": "LIVE_SOURCE_STALE"
@@ -756,7 +756,7 @@
       {
         "file": "tests/unit/c03GrpcTopology.test.ts",
         "titlePath": [
-          "C-03 — the method-level prototype is positive-only, and says so",
+          "C-03 \u2014 the method-level prototype is positive-only, and says so",
           "several services reach an exact handler count, which is an observation and not a proof"
         ],
         "reasonToken": "LIVE_SOURCE_UNAVAILABLE"
@@ -764,7 +764,7 @@
       {
         "file": "tests/unit/phase14FreshSourceAdmission.test.ts",
         "titlePath": [
-          "Phase 14A C3 — synthetic fallback sanity (no snapshot present)",
+          "Phase 14A C3 \u2014 synthetic fallback sanity (no snapshot present)",
           "C3-14 synthetic fallback still derives and resolves without real source"
         ],
         "reasonToken": "synthetic fallback twin runs only without the disposable exact snapshot"
@@ -772,7 +772,7 @@
       {
         "file": "tests/unit/c03GrpcTopology.test.ts",
         "titlePath": [
-          "C-03 — the method-level prototype is positive-only, and says so",
+          "C-03 \u2014 the method-level prototype is positive-only, and says so",
           "a non-proven binding does not attempt a method binding at all"
         ],
         "reasonToken": "LIVE_SOURCE_STALE"
@@ -780,7 +780,7 @@
       {
         "file": "tests/unit/c03GrpcTopology.test.ts",
         "titlePath": [
-          "C-03 — the method-level prototype is positive-only, and says so",
+          "C-03 \u2014 the method-level prototype is positive-only, and says so",
           "a non-proven binding does not attempt a method binding at all"
         ],
         "reasonToken": "LIVE_SOURCE_UNAVAILABLE"
@@ -814,7 +814,8 @@
         "tests/unit/semanticReceiptSentinel.test.ts",
         "tests/unit/realSourceConformingMutation.test.ts",
         "tests/unit/observerSemanticLedger.test.ts",
-        "tests/unit/realSourceCanary.test.ts"
+        "tests/unit/realSourceCanary.test.ts",
+        "tests/unit/bodyReadAcquisition.test.ts"
       ]
     },
     {

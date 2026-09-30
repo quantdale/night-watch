@@ -12,7 +12,7 @@ import { fileURLToPath } from 'node:url';
 import { buildChildEnvironment } from './child-environment.mjs';
 import { GATE_RECEIPT_PATH_ENV, parseCounts, parseSafeDetails, persistGateReceipt, resolveGateReceiptTarget } from './lib/gate-receipt.mjs';
 import { OPERATOR_CLI_SCHEMA, defineOperatorCli, invokedDirectly } from './lib/operator-cli.mjs';
-import { evaluateSemanticSkipIdentityReport } from './lib/semantic-skip-policy.mjs';
+import { evaluateSemanticSkipIdentityReport, skipCountDisagreement } from './lib/semantic-skip-policy.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const definitionFile = path.join(root, 'config', 'quality-gate.v1.json');
@@ -177,8 +177,12 @@ function runFixedCommandInner(commandKey, mode, timeoutClass) {
     if (skipPolicyResult !== 'PASS') return { ...summary, status: 'TEST_FAILURE', exitCode: 1, errorClass: `SEMANTIC_COMPATIBILITY_${skipPolicyResult}` };
     return summary;
   } else if (commandKey === 'OWNER_PROVENANCE') {
-    const reportDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'nw-op-'));
+    // R3-13 / corrections task 8.12: the owner-provenance identity report is
+    // PUBLISHED under test-results/ (the CI artifact root), not deleted.
+    const reportDirectory = path.join(root, 'test-results', 'owner-provenance');
+    fs.mkdirSync(reportDirectory, { recursive: true });
     const skipReportPath = path.join(reportDirectory, 'skip-identity-report.json');
+    fs.rmSync(skipReportPath, { force: true });
     const ownerEnvironment = safeChildEnvironment(mode, commandKey);
     ownerEnvironment.NIGHTWATCH_GATE_ENVIRONMENT = 'OWNER_PROVENANCE';
     ownerEnvironment.NIGHTWATCH_SKIP_REPORT_PATH = skipReportPath;
@@ -195,11 +199,6 @@ function runFixedCommandInner(commandKey, mode, timeoutClass) {
       report = JSON.parse(fs.readFileSync(skipReportPath, 'utf8'));
     } catch {
       report = null;
-    }
-    try {
-      fs.rmSync(reportDirectory, { recursive: true, force: true });
-    } catch {
-      // The report is private scratch; failure to remove it does not authorize a pass.
     }
     /** @type {{ canonicalSkipIdentities?: unknown, expectedSkipPolicy?: unknown }} */
     let skipPolicyConfig = {};
@@ -219,13 +218,22 @@ function runFixedCommandInner(commandKey, mode, timeoutClass) {
       skipped: skipPolicy.skipped,
       undeclared: skipPolicy.undeclared.length,
     };
-    const skipFailure = skipPolicy.result !== 'PASS';
+    // R3-13: the OWNER lane cross-checks its parsed skip count against the
+    // identity report's own count; a disagreement fails closed.
+    const parsedCounts = 'counts' in summary ? summary.counts : null;
+    const reportedSkipped = parsedCounts !== null && parsedCounts !== undefined && typeof parsedCounts.skipped === 'number'
+      ? parsedCounts.skipped
+      : null;
+    const countDisagreement = reportedSkipped === null || skipPolicy.result !== 'PASS'
+      ? null
+      : skipCountDisagreement(reportedSkipped, skipPolicy.skipped);
+    const skipFailure = skipPolicy.result !== 'PASS' || countDisagreement !== null;
     const status = summary.status !== 'PASS' ? summary.status : skipFailure ? 'TEST_FAILURE' : 'PASS';
     return {
       ...summary,
       status,
       exitCode: status === 'PASS' ? 0 : summary.exitCode ?? 1,
-      errorClass: skipFailure ? `OWNER_PROVENANCE_${skipPolicy.result}` : summary.errorClass,
+      errorClass: countDisagreement !== null ? 'OWNER_PROVENANCE_SKIP_COUNT_MISMATCH' : skipFailure ? `OWNER_PROVENANCE_${skipPolicy.result}` : summary.errorClass,
       details: { failedLocations: [], skipPolicy: skipPolicyDetails },
     };
   } else if (commandKey === 'SYNTHETIC_CAMPAIGN') {

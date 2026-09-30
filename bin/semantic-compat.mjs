@@ -119,8 +119,12 @@ try {
   // The list reporter keeps the existing human counts; the JSON reporter
   // (directed to a bounded temporary file, never stdout) carries the skip
   // identities the policy compares.
-  const skipReportDir = fs.mkdtempSync(path.join(os.tmpdir(), 'nw-sc-'));
+  // R3-13 / corrections task 8.12: the identity report is PUBLISHED under
+  // test-results/ (the CI artifact root), not deleted with a tmpdir.
+  const skipReportDir = path.join(root, 'test-results', 'semantic-compatibility');
+  fs.mkdirSync(skipReportDir, { recursive: true });
   const skipReportPath = path.join(skipReportDir, 'skip-identity-report.json');
+  fs.rmSync(skipReportPath, { force: true });
   environment.NIGHTWATCH_SKIP_REPORT_PATH = skipReportPath;
   const npx = (() => { const b = path.join(root, 'node_modules', '.bin', 'playwright'); return process.platform === 'win32' ? `${b}.cmd` : b; })();
   const result = spawnSync(npx, ['test', ...files, '--project=nightwatch', '--workers=1', '--reporter=list,./tests/helpers/playwrightSkipIdentityReporter.ts'], {
@@ -151,11 +155,8 @@ try {
   } catch {
     skipReport = null;
   }
-  try {
-    fs.rmSync(skipReportDir, { recursive: true, force: true });
-  } catch {
-    // A leftover temporary report is not evidence; removal is best-effort.
-  }
+  // R3-13: the published report stays on disk as the lane's identity record;
+  // it is overwritten by the next run and uploaded with the CI artifacts.
   const skipPolicy = evaluateSemanticSkipIdentityReport({
     report: skipReport,
     canonicalSkipIdentities: manifest.execution?.canonicalSkipIdentities,

@@ -35,7 +35,7 @@ import { buildChildEnvironment } from './child-environment.mjs';
 import { loadTypeScriptModules } from './lib/typescript-runtime-loader.mjs';
 import { OPERATOR_CLI_SCHEMA, defineOperatorCli, invokedDirectly } from './lib/operator-cli.mjs';
 import { extractSanitizedFailedLocations } from './lib/sanitized-failure-locations.mjs';
-import { evaluateSemanticSkipIdentityReport, skipCountDisagreement } from './lib/semantic-skip-policy.mjs';
+import { evaluateSemanticSkipIdentityReport, skipCountDisagreement, vc01ExecutionFailure } from './lib/semantic-skip-policy.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -193,11 +193,16 @@ function evaluateSkipReport(skipReportPath) {
   } catch {
     // Missing or malformed policy is classified by the pure fail-closed evaluator.
   }
-  return evaluateSemanticSkipIdentityReport({
+  const evaluated = evaluateSemanticSkipIdentityReport({
     report,
     canonicalSkipIdentities: policy.canonicalSkipIdentities,
     expectedSkipPolicy: policy.expectedSkipPolicy,
   });
+  const vc01Failure = vc01ExecutionFailure(report);
+  if (evaluated.result === 'PASS' && vc01Failure !== null) {
+    return { ...evaluated, result: vc01Failure, skipped: evaluated.skipped ?? 0, undeclared: evaluated.undeclared ?? [] };
+  }
+  return evaluated;
 }
 
 function parseCampaignOutput(output, status, maxFailedLocations) {

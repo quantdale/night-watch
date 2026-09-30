@@ -33,9 +33,16 @@ function canonicalTitlePath(test: TestCase, file: string): string[] {
   return fileIndex < 0 ? titlePath : titlePath.slice(fileIndex + 1);
 }
 
+// R3-13 / corrections task 8.12 — the VC-01 per-test CI proof: the reporter
+// records the EXECUTED (passed) tests of the two pinned security suites so the
+// gate can observe per-test execution in CI, not only the absence of skips.
+const VC01_PINNED_FILES = new Set(['tests/unit/devLoginSecurity.test.ts', 'tests/unit/storageState.test.ts']);
+const VC01_EXECUTED_MAX = 64;
+
 export default class PlaywrightSkipIdentityReporter implements Reporter {
   private readonly destination: string | null;
   private skips: SkipIdentity[] = [];
+  private executedSecurity: Array<{ file: string; titlePath: string[] }> = [];
 
   constructor() {
     const gateEnvironment = process.env.NIGHTWATCH_GATE_ENVIRONMENT ?? '';
@@ -59,9 +66,14 @@ export default class PlaywrightSkipIdentityReporter implements Reporter {
 
   onBegin(_config: FullConfig): void {
     this.skips = [];
+    this.executedSecurity = [];
   }
 
   onTestEnd(test: TestCase, _result: TestResult): void {
+    const endedFile = path.relative(process.cwd(), test.location.file).split(path.sep).join('/');
+    if (test.outcome() === 'expected' && VC01_PINNED_FILES.has(endedFile) && this.executedSecurity.length < VC01_EXECUTED_MAX) {
+      this.executedSecurity.push({ file: endedFile, titlePath: canonicalTitlePath(test, endedFile) });
+    }
     if (test.outcome() !== 'skipped') return;
     const annotation = test.annotations.find((entry) => entry.type === 'skip');
     const file = path.relative(process.cwd(), test.location.file).split(path.sep).join('/');
@@ -79,6 +91,7 @@ export default class PlaywrightSkipIdentityReporter implements Reporter {
     fs.writeFileSync(this.destination, `${JSON.stringify({
       schemaVersion: REPORT_SCHEMA,
       skips: this.skips,
+      executedSecurity: this.executedSecurity,
     }, null, 2)}\n`, { mode: 0o600 });
   }
 }

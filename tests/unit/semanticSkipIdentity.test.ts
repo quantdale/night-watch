@@ -5,6 +5,7 @@
 // missing-report cases.
 
 import { test, expect } from '@playwright/test';
+import { vc01ExecutionFailure } from '../../bin/lib/semantic-skip-policy.mjs';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -300,6 +301,20 @@ test.describe('skip-count agreement and the VC-01 pin', () => {
     expect(skipCountDisagreement(0, null)).toBe('SKIP_COUNT_UNVERIFIABLE');
     expect(skipCountDisagreement(0, Number.NaN)).toBe('SKIP_COUNT_UNVERIFIABLE');
     expect(skipCountDisagreement(0, undefined)).toBe('SKIP_COUNT_UNVERIFIABLE');
+  });
+
+  test('R3-13: the VC-01 per-test execution proof reads the published report', () => {
+    const titles = [
+      'source-approved login helper fills the synthetic form once without evidence plumbing',
+      'a replaced login document invalidates the one-shot binding before secret input',
+      'a changed form action invalidates the one-shot binding',
+      'non-DEV target is rejected before the credential provider is consulted',
+    ];
+    const report = { executedSecurity: titles.map((title) => ({ file: 'tests/unit/devLoginSecurity.test.ts', titlePath: [title] })) };
+    expect(vc01ExecutionFailure(report)).toBeNull();
+    expect(vc01ExecutionFailure({ executedSecurity: report.executedSecurity.slice(0, 3) })).toContain('VC01_EXECUTION_MISSING');
+    expect(vc01ExecutionFailure({})).toBe('VC01_EXECUTION_UNRECORDED');
+    expect(vc01ExecutionFailure(null)).toBe('VC01_EXECUTION_REPORT_MISSING');
   });
 
   test('VC-01 pin: no canonical skip identity, and no skip site, exists for the DEV-login and storage-state suites', () => {

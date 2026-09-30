@@ -129,3 +129,36 @@ export function skipCountDisagreement(reporterSkipped, identityReportSkipped) {
   const reporter = Number.isInteger(reporterSkipped) ? reporterSkipped : 0;
   return reporter === identityReportSkipped ? null : 'SKIP_COUNT_MISMATCH';
 }
+
+// R3-13 / corrections task 8.12 — the VC-01 per-test CI proof: the four
+// browser-backed DEV-login tests must have EXECUTED (passed) in this lane, as
+// recorded per test in the published identity report.
+export const VC01_REQUIRED_TITLES = Object.freeze([
+  'source-approved login helper fills the synthetic form once without evidence plumbing',
+  'a replaced login document invalidates the one-shot binding before secret input',
+  'a changed form action invalidates the one-shot binding',
+  'non-DEV target is rejected before the credential provider is consulted',
+]);
+
+/**
+ * @param {unknown} report
+ * @returns {string | null} a failure code, or null when every VC-01 test ran
+ */
+export function vc01ExecutionFailure(report) {
+  if (report === null || typeof report !== 'object' || Array.isArray(report)) return 'VC01_EXECUTION_REPORT_MISSING';
+  const record = /** @type {Record<string, unknown>} */ (report);
+  const executed = Array.isArray(record.executedSecurity)
+    ? /** @type {Array<{ file?: unknown, titlePath?: unknown }>} */ (record.executedSecurity)
+    : null;
+  if (executed === null) return 'VC01_EXECUTION_UNRECORDED';
+  const titles = new Set();
+  for (const entry of executed) {
+    if (entry === null || typeof entry !== 'object') continue;
+    const pathParts = Array.isArray(entry.titlePath) ? entry.titlePath.filter((part) => typeof part === 'string') : [];
+    if (pathParts.length > 0) titles.add(pathParts.join(' > '));
+  }
+  for (const required of VC01_REQUIRED_TITLES) {
+    if (![...titles].some((title) => title.endsWith(required))) return `VC01_EXECUTION_MISSING:${required}`;
+  }
+  return null;
+}
