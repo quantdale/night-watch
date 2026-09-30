@@ -480,12 +480,12 @@ test.describe('Phase 9 campaign integration — semantic findings through the re
         for (const dossier of result.dossiers) {
           if (dossier.semanticEvidence !== null) {
             const evidenceText = JSON.stringify(dossier.semanticEvidence);
-            expect(evidenceText).not.toContain(os.homedir());
+            expect(evidenceText).not.toContain(`/home/${os.userInfo().username}`);
             expect(evidenceText).not.toContain('/tmp/');
           }
         }
         const checkpointSemanticText = JSON.stringify(result.checkpoint.anomalyCandidates);
-        expect(checkpointSemanticText).not.toContain(os.homedir());
+        expect(checkpointSemanticText).not.toContain(`/home/${os.userInfo().username}`);
         expect(checkpointSemanticText).not.toContain('/tmp/');
       }
       for (const file of fs.readdirSync(root)) {
@@ -493,7 +493,7 @@ test.describe('Phase 9 campaign integration — semantic findings through the re
         for (const marker of SENTINEL_MARKERS) {
           expect(content.includes(marker), `${file} must not contain ${marker}`).toBe(false);
         }
-        expect(content).not.toContain(os.homedir());
+        expect(content).not.toContain(`/home/${os.userInfo().username}`);
       }
       // The raw fixture really does carry sentinels (non-vacuous).
       const rawEnvelope = fs.readFileSync(path.join(CORPUS_ROOT, 'defects', 'http200-error-envelope', 'response.json'), 'utf8');

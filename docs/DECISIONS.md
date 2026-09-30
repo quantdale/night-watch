@@ -5364,7 +5364,7 @@ probe campaign is 192/192; the lifecycle tests cover every rejection code for
 both receipts. Consequence: until the final close-out, project:check reports the
 seven probes as NOT_AT_CHECKPOINT or UNMET, which is the truth.
 
-## D-149 — review-2 corrections: recorded violations, temporary public visibility, the body-read bound is a pending owner decision
+## D-149 — review-2 corrections: recorded violations, temporary public visibility, the body-read bound stays a refusal
 
 **Context.** An independent review of the corrective campaign's M1–M4 (RV-01..RV-20)
 found defects in the campaign's own records and guards. Most are fixed by code and
@@ -5402,19 +5402,18 @@ exists and an always-on policy pin elsewhere. The formatter commit also added th
 Biome binary as a devDependency; it stays (the policy test drives it) and is bounded
 by the same policy.
 
-**Decision 4 — refuse versus queue for the body-read bound is a PENDING OWNER
-DECISION (RV-12; task 7.10).** `MAX_CONCURRENT_BODY_READS = 4` is module-global and
-shared across pages and contexts; the read past the bound is REFUSED
-(`BODY_READ_ACQUISITION_BOUND`) rather than queued. It fails closed, and the refusal
-is now proven by behaviour, not text (`boundedResponseOperation`, tests 7.10). The
-open question is a trade: refusing loses oracle coverage silently for a burst of
-concurrent JSON responses outside journeys; a bounded queue would keep coverage at
-the cost of holding responses and a latency tail. The choice about scope is separate:
-a global cap versus a per-observer cap. **Recommendation: keep the refusal and the
-global cap** (fail-closed, smallest change), and surface the refusal count in the run
-summary so the lost coverage is visible. **No implementation follows until the owner
-records a decision here**; this entry is the record that it is open, and the
-corrections campaign must not close while it is `PENDING`.
+**Decision 4 — the body-read bound stays a REFUSAL with a GLOBAL cap (owner
+decision, 2026-09-30; RV-12, task 7.10).** `MAX_CONCURRENT_BODY_READS = 4` is
+module-global and shared across pages and contexts; the read past the bound is
+REFUSED (`BODY_READ_ACQUISITION_BOUND`) rather than queued, which fails closed
+and loses oracle coverage silently for a burst of concurrent JSON responses
+outside journeys. The owner was asked to choose between keeping the refusal and
+the global cap, a per-observer cap, and a bounded queue, and chose to **keep the
+refusal and the global cap**. Nothing in the gate changes; the refusal is proven
+by behaviour, not text (`boundedResponseOperation`, task 7.10 tests). A change to
+either dimension needs a new decision entry. Follow-up, NOT implemented under this
+decision (the owner chose "no source change"): surfacing the refusal count in the
+run summary so the lost coverage is visible — recorded in STATE's deferred list.
 
 **Evidence and consequences.** The per-commit pairing, the receipt-bound re-binds and
 lane artifacts, the behavioural guard-integrity rule, the widened annotation counter,
@@ -5422,4 +5421,4 @@ the removed fallbacks, the topology commit binding, the ABSENT sibling verdict, 
 twins, the behavioural acquisition test, the flake-ledger status register, the
 non-equivalent HC-180, the vitest test counts, the skip-count cross-check and the
 DEV-launcher short-circuit rule are all covered by focused tests and probes
-HC-189..HC-200 in the probe campaign. Status of Decision 4: `PENDING_OWNER`.
+HC-189..HC-200 in the probe campaign. Decision 4 is DECIDED (keep refusal + global cap).

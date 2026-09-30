@@ -312,7 +312,7 @@ test.describe('Phase 9 sentinel leakage — absolute path + raw numeric (SPEC §
       sourceSnapshot: { repoId: PROVENANCE.repoId, sha: FIXTURE_SHA },
     });
     const serialized = JSON.stringify(result);
-    expect(serialized).not.toContain(os.homedir());
+    expect(serialized).not.toContain(`/home/${os.userInfo().username}`);
     expect(serialized).not.toContain('/tmp/');
     expect(serialized).not.toContain('/private');
     // Relative source path only.
