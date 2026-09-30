@@ -28,7 +28,7 @@ import {
 } from '../kernel.mjs';
 import { validateCampaignCertification } from '../../campaign-certification.mjs';
 import { evidenceArtifactExistsAtSha, laneArtifactDemotions } from '../../evidence-artifact.mjs';
-import { unpairedCorrectionsInRange } from '../../checkpoint-role.mjs';
+import { checkpointRoleViolations, unpairedCorrectionsInRange } from '../../checkpoint-role.mjs';
 import { findBinsWithoutExecutingTest, verifyCliImplementationContract } from '../../cli-implementation-contract.mjs';
 import { classifyValidationTruth, extractTestMatchGlobs } from '../../validation-classification.mjs';
 import {
@@ -627,9 +627,13 @@ export function checkCheckpointRoleGuardIntegrity() {
   // RV-04 / task 7.4: correction pairing is judged per commit and per entry's
   // own archive, proven on a real two-commit split.
   verifyCorrectionPairingFixture();
+  // R3-11 / corrections task 8.10: the classifier dispatch is BEHAVIOURAL —
+  // `checkpointRoleViolations` runs on a real git fixture, so `&& false` on the
+  // guard call or an early return before the guard loop misclassifies a
+  // substantive guarded rewrite and fails here.
+  verifyCheckpointRoleClassifierFixture();
   // The classifier must still dispatch to the guard and exclude guarded paths
-  // from path-alone approval. This half stays textual (running the classifier
-  // needs a git history); the guard behaviour above is what a stub cannot fake.
+  // from path-alone approval.
   const checkpoint = read('bin/lib/checkpoint-role.mjs');
   const required = [
     ['guardHoldsForChange(file, before, after, guardOptions)', 'the classifier live guard consumption'],
@@ -871,6 +875,80 @@ function verifyD3ProbeBehaviour() {
   const other = evaluateUiHarnessReceipt(build(OTHER), context);
   if (bound.relation !== 'BOUND' || other.relation !== 'BOUND_TO_OTHER') {
     fail(`RELEASE_PROBE_NOT_CHECKPOINT_BOUND: evaluateUiHarnessReceipt no longer binds by the receipt SHA (got ${bound.relation}/${other.relation})`);
+  }
+}
+
+
+/**
+ * R3-11 / corrections task 8.10 — run the REAL classifier on a git fixture:
+ * a values-only re-bind with a verifying receipt is documentary; a structural
+ * (artifactPaths) change is substantive; a guarded path is never approved by
+ * path alone. A stubbed or short-circuited dispatch cannot pass.
+ */
+function verifyCheckpointRoleClassifierFixture() {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'nw-role-classifier-'));
+  const run = (/** @type {string[]} */ args) => spawnSync('git', args, {
+    cwd: directory,
+    env: { PATH: '/usr/bin:/bin', HOME: directory, GIT_CONFIG_GLOBAL: '/dev/null', GIT_CONFIG_NOSYSTEM: '1', GIT_AUTHOR_NAME: 'nw', GIT_AUTHOR_EMAIL: 'nw@example.invalid', GIT_COMMITTER_NAME: 'nw', GIT_COMMITTER_EMAIL: 'nw@example.invalid', LANG: 'C' },
+    shell: false,
+    encoding: 'utf8',
+    timeout: 15_000,
+  });
+  const sha = (/** @type {string} */ ch) => ch.repeat(40);
+  const binding = (/** @type {Record<string, unknown>} */ overrides = {}) => JSON.stringify({
+    schemaVersion: RELEASE_EVIDENCE_SCHEMA,
+    bindings: [{
+      subject: 'root-compile',
+      evidenceSha: sha('a'),
+      receiptDigest: `receipt:sha256:${'1'.repeat(24)}`,
+      observedAt: '2026-09-30T00:00:00.000Z',
+      executor: 'gate:local',
+      artifactPaths: [],
+      certifying: true,
+      ...overrides,
+    }],
+  });
+  try {
+    if (run(['init', '--quiet']).status !== 0) {
+      fail('CHECKPOINT_ROLE_GUARD_STUBBED the classifier fixture repository could not be created');
+      return;
+    }
+    fs.mkdirSync(path.join(directory, 'config'), { recursive: true });
+    fs.writeFileSync(path.join(directory, 'config/release-evidence.v1.json'), binding());
+    run(['add', '.']);
+    run(['commit', '--quiet', '--no-gpg-sign', '-m', 'binding base']);
+    // A values-only re-bind WITH a verifying receipt: documentary.
+    fs.writeFileSync(path.join(directory, 'config/release-evidence.v1.json'), binding({ evidenceSha: sha('b'), receiptDigest: `receipt:sha256:${'2'.repeat(24)}` }));
+    run(['add', '.']);
+    run(['commit', '--quiet', '--no-gpg-sign', '-m', 'values-only re-bind']);
+    const valuesOnly = (run(['rev-parse', 'HEAD']).stdout ?? '').trim();
+    // A structural change (artifactPaths): substantive.
+    fs.writeFileSync(path.join(directory, 'config/release-evidence.v1.json'), binding({ evidenceSha: sha('b'), receiptDigest: `receipt:sha256:${'2'.repeat(24)}`, artifactPaths: ['config/x.json'] }));
+    run(['add', '.']);
+    run(['commit', '--quiet', '--no-gpg-sign', '-m', 'structural binding change']);
+    const structural = (run(['rev-parse', 'HEAD']).stdout ?? '').trim();
+    const context = { kind: 'commit', commit: valuesOnly, verifyBindingReceipt: () => true };
+    const valuesViolations = checkpointRoleViolations(directory, ['config/release-evidence.v1.json'], context);
+    if (valuesViolations.length !== 0) {
+      fail(`CHECKPOINT_ROLE_GUARD_STUBBED the classifier no longer accepts a values-only re-bind with a verified receipt (got ${valuesViolations.join(',')})`);
+    }
+    const structuralViolations = checkpointRoleViolations(directory, ['config/release-evidence.v1.json'], { kind: 'commit', commit: structural, verifyBindingReceipt: () => true });
+    if (structuralViolations.length === 0) {
+      fail('CHECKPOINT_ROLE_GUARD_STUBBED the classifier no longer flags a structural binding change as substantive');
+    }
+    // A guarded path is never approved by path alone.
+    const pathAlone = checkpointRoleViolations(directory, ['config/release-evidence.v1.json'], { kind: 'commit', commit: valuesOnly });
+    if (pathAlone.length === 0) {
+      fail('CHECKPOINT_ROLE_GUARD_STUBBED a guarded path was approved by path alone without the guard or a receipt verifier');
+    }
+    // An UNGUARDED, non-approved path is a violation on the path filter alone;
+    // `&& false` on that filter would silently drop it.
+    const unguarded = checkpointRoleViolations(directory, ['src/unapproved.ts'], { kind: 'commit', commit: valuesOnly });
+    if (unguarded.length === 0) {
+      fail('CHECKPOINT_ROLE_GUARD_STUBBED an unguarded non-approved path was approved (the path filter is short-circuited)');
+    }
+  } finally {
+    fs.rmSync(directory, { recursive: true, force: true });
   }
 }
 

@@ -2330,6 +2330,26 @@
             "replace": "if (false) return { valuesOnly: false, reason: `BINDING_RECEIPT_UNVERIFIED:${left.subject}` };"
           }
         ]
+      },
+      {
+        "id": "HC-207",
+        "ops": [
+          {
+            "file": "bin/lib/checkpoint-role.mjs",
+            "search": "guardClassForPath(file) === null && !isApprovedCheckpointPath(file)",
+            "replace": "guardClassForPath(file) === null && false"
+          }
+        ]
+      },
+      {
+        "id": "HC-208",
+        "ops": [
+          {
+            "file": "bin/lib/checkpoint-role.mjs",
+            "search": "if (guarded.size === 0) return [...new Set(violations)];",
+            "replace": "if (true) return [...new Set(violations)];"
+          }
+        ]
       }
     ]
   }
