@@ -1992,6 +1992,16 @@
             "replace": "  if (false) {"
           }
         ]
+      },
+      {
+        "id": "HC-206",
+        "ops": [
+          {
+            "file": "bin/project-state-check.mjs",
+            "search": "  const laneArtifactEvaluation = laneArtifactDemotions(reported, laneBindings.bySubject ?? new Map(), (sha, artifactPath) => evidenceArtifactExistsAtSha(root, sha, artifactPath));",
+            "replace": "  const laneArtifactEvaluation = { demoted: new Set(), findings: [] };"
+          }
+        ]
       }
     ],
     "checkSiblingRootResolution": [

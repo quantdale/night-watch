@@ -27,7 +27,7 @@ import {
   isRuleEngineSource,
 } from '../kernel.mjs';
 import { validateCampaignCertification } from '../../campaign-certification.mjs';
-import { evidenceArtifactExistsAtSha } from '../../evidence-artifact.mjs';
+import { evidenceArtifactExistsAtSha, laneArtifactDemotions } from '../../evidence-artifact.mjs';
 import { unpairedCorrectionsInRange } from '../../checkpoint-role.mjs';
 import { findBinsWithoutExecutingTest, verifyCliImplementationContract } from '../../cli-implementation-contract.mjs';
 import { classifyValidationTruth, extractTestMatchGlobs } from '../../validation-classification.mjs';
@@ -568,6 +568,7 @@ export function checkCheckpointRoleGuardIntegrity() {
     observedAt: '2026-09-30T00:00:00.000Z',
     executor: 'gate:local',
     artifactPaths: [],
+    certifying: true,
     ...overrides,
   });
   const evidence = (/** @type {unknown[]} */ bindings) => JSON.stringify({ schemaVersion: RELEASE_EVIDENCE_SCHEMA, bindings });
@@ -680,6 +681,37 @@ export function checkReleaseImplementedHonesty() {
     }
   }
   verifyD3ProbeBinding(collector, collector.slice(collectStart, collectEnd));
+  verifyLaneArtifactWiring(collector);
+}
+
+/**
+ * R3-08 / corrections task 8.7 — the lane-artifact demotion is BEHAVIOURAL:
+ * the pure `laneArtifactDemotions` is executed on fixtures, and the collector
+ * must consume it. A stubbed existence probe or a disabled lane loop fails.
+ * @param {string} collectorSource the whole collector file
+ */
+function verifyLaneArtifactWiring(collectorSource) {
+  const S = 'a'.repeat(40);
+  const lanes = [{ laneId: 'lane-one', reportedClass: 'PROVEN' }];
+  const bindings = new Map([['lane-one', { evidenceSha: S, artifactPaths: ['config/x.json'] }]]);
+  const absent = laneArtifactDemotions(lanes, bindings, () => false);
+  if (!absent.demoted.has('lane-one') || absent.findings.length !== 1) {
+    fail('LANE_ARTIFACT_CHECK_UNWIRED: a PROVEN lane whose declared artifact is absent at its SHA must be demoted');
+  }
+  const present = laneArtifactDemotions(lanes, bindings, () => true);
+  if (present.demoted.size !== 0 || present.findings.length !== 0) {
+    fail('LANE_ARTIFACT_CHECK_UNWIRED: a PROVEN lane whose declared artifact exists must not be demoted');
+  }
+  const unproven = laneArtifactDemotions([{ laneId: 'lane-one', reportedClass: 'BLOCKED_EXTERNAL' }], bindings, () => false);
+  if (unproven.demoted.size !== 0) {
+    fail('LANE_ARTIFACT_CHECK_UNWIRED: a non-PROVEN lane must not be demoted by the artifact loop');
+  }
+  if (!collectorSource.includes('laneArtifactDemotions(reported, laneBindings.bySubject ?? new Map(), (sha, artifactPath) => evidenceArtifactExistsAtSha(root, sha, artifactPath))')) {
+    fail('LANE_ARTIFACT_CHECK_UNWIRED: bin/project-state-check.mjs no longer routes its lane artifacts through laneArtifactDemotions/evidenceArtifactExistsAtSha');
+  }
+  if (collectorSource.includes('binding?.evidenceSha ?? lane.evidenceSha')) {
+    fail('LANE_ARTIFACT_CHECK_UNWIRED: the dead binding?.evidenceSha ?? lane.evidenceSha overlay has returned');
+  }
 }
 
 /**

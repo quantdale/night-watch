@@ -9,7 +9,8 @@
       "executor": null,
       "artifactPaths": [
         "config/validation-lane-state.v1.json"
-      ]
+      ],
+      "certifying": true
     },
     {
       "subject": "exact-head-ci-authority",
@@ -19,7 +20,8 @@
       "executor": null,
       "artifactPaths": [
         "config/ci-block-record.v1.json"
-      ]
+      ],
+      "certifying": true
     },
     {
       "subject": "autonomous-yield-proof",
@@ -27,7 +29,8 @@
       "receiptDigest": null,
       "observedAt": null,
       "executor": null,
-      "artifactPaths": []
+      "artifactPaths": [],
+      "certifying": false
     },
     {
       "subject": "completion-ledger-truth",
@@ -37,7 +40,8 @@
       "executor": null,
       "artifactPaths": [
         "config/task-id-ledger.v1.json"
-      ]
+      ],
+      "certifying": true
     },
     {
       "subject": "operator-cli-contract",
@@ -47,7 +51,8 @@
       "executor": null,
       "artifactPaths": [
         "config/operator-cli-surface.v1.json"
-      ]
+      ],
+      "certifying": true
     },
     {
       "subject": "documentation-currency",
@@ -58,7 +63,8 @@
       "artifactPaths": [
         "config/document-role.v1.json",
         "config/document-role-corrections.v1.json"
-      ]
+      ],
+      "certifying": true
     },
     {
       "subject": "workspace-continuity-drift-closure",
@@ -68,7 +74,8 @@
       "executor": null,
       "artifactPaths": [
         "config/workspace-integrity.v1.json"
-      ]
+      ],
+      "certifying": true
     },
     {
       "subject": "dependency-supply-chain-currency",
@@ -78,7 +85,8 @@
       "executor": null,
       "artifactPaths": [
         "config/dependency-currency.v1.json"
-      ]
+      ],
+      "certifying": true
     },
     {
       "subject": "dead-architecture-closure",
@@ -88,7 +96,8 @@
       "executor": null,
       "artifactPaths": [
         "config/reference-graph.v1.json"
-      ]
+      ],
+      "certifying": true
     },
     {
       "subject": "cli-implementation-contract",
@@ -98,7 +107,8 @@
       "executor": null,
       "artifactPaths": [
         "config/bin-typecheck.v1.json"
-      ]
+      ],
+      "certifying": true
     },
     {
       "subject": "structural-rule-soundness",
@@ -108,7 +118,8 @@
       "executor": null,
       "artifactPaths": [
         "config/hardening-rule-probes.v1.json"
-      ]
+      ],
+      "certifying": true
     },
     {
       "subject": "schema-version-lifecycle",
@@ -118,7 +129,8 @@
       "executor": null,
       "artifactPaths": [
         "src/core/schemaLifecycle/declarations.ts"
-      ]
+      ],
+      "certifying": true
     },
     {
       "subject": "ui-error-taxonomy-rendering",
@@ -129,7 +141,8 @@
       "artifactPaths": [
         "ui/control-center/scripts/receipt-reporter.mjs",
         "ui/control-center/src/__baselines__/view-dom-baseline.json"
-      ]
+      ],
+      "certifying": true
     },
     {
       "subject": "configuration-contract",
@@ -139,7 +152,8 @@
       "executor": null,
       "artifactPaths": [
         "config/environment-surface.v1.json"
-      ]
+      ],
+      "certifying": true
     },
     {
       "subject": "accessibility-certification",
@@ -149,7 +163,8 @@
       "executor": null,
       "artifactPaths": [
         "tests/browser/accessibilityCertification.browser.ts"
-      ]
+      ],
+      "certifying": true
     },
     {
       "subject": "authenticated-capability-lifecycle",
@@ -159,7 +174,8 @@
       "executor": null,
       "artifactPaths": [
         "src/auth/capabilityLifecycle.ts"
-      ]
+      ],
+      "certifying": true
     },
     {
       "subject": "root-compile",
@@ -169,7 +185,8 @@
       "executor": null,
       "artifactPaths": [
         "tsconfig.json"
-      ]
+      ],
+      "certifying": true
     },
     {
       "subject": "bin-parse",
@@ -179,7 +196,8 @@
       "executor": null,
       "artifactPaths": [
         "tsconfig.bin.json"
-      ]
+      ],
+      "certifying": true
     },
     {
       "subject": "structural-invariants",
@@ -189,7 +207,8 @@
       "executor": null,
       "artifactPaths": [
         "config/hardening-rule-probes.v1.json"
-      ]
+      ],
+      "certifying": true
     },
     {
       "subject": "authoritative-gate",
@@ -199,7 +218,8 @@
       "executor": null,
       "artifactPaths": [
         "config/quality-gate.v1.json"
-      ]
+      ],
+      "certifying": true
     },
     {
       "subject": "full-regression",
@@ -209,7 +229,8 @@
       "executor": null,
       "artifactPaths": [
         "config/shard-weights.v1.json"
-      ]
+      ],
+      "certifying": true
     },
     {
       "subject": "clean-checkout",
@@ -219,7 +240,8 @@
       "executor": null,
       "artifactPaths": [
         "bin/quality-gate-clean.mjs"
-      ]
+      ],
+      "certifying": true
     },
     {
       "subject": "ui",
@@ -229,7 +251,8 @@
       "executor": null,
       "artifactPaths": [
         "ui/control-center/package-lock.json"
-      ]
+      ],
+      "certifying": true
     },
     {
       "subject": "browser-workflow",
@@ -239,7 +262,8 @@
       "executor": null,
       "artifactPaths": [
         "playwright.control-center.config.ts"
-      ]
+      ],
+      "certifying": true
     },
     {
       "subject": "owner-manual",
@@ -247,7 +271,8 @@
       "receiptDigest": null,
       "observedAt": null,
       "executor": null,
-      "artifactPaths": []
+      "artifactPaths": [],
+      "certifying": false
     },
     {
       "subject": "exact-checkpoint-ci",
@@ -257,7 +282,8 @@
       "executor": null,
       "artifactPaths": [
         "config/ci-block-record.v1.json"
-      ]
+      ],
+      "certifying": true
     },
     {
       "subject": "dependency-advisory",
@@ -267,7 +293,8 @@
       "executor": null,
       "artifactPaths": [
         "config/dependency-currency.v1.json"
-      ]
+      ],
+      "certifying": true
     }
   ]
 }

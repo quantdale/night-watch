@@ -43,8 +43,13 @@ const ARTIFACT_PATH_RE = /^(?!\/)(?!.*\.\.)[A-Za-z0-9._/-]{1,200}$/;
 const CORRECTION_ID_RE = /^[A-Za-z0-9._-]{1,64}$/;
 const LINE_DIGEST_RE = /^sha256:[0-9a-f]{24,64}$/;
 
-/** Exact key set of one evidence binding. Closed: any other key is structural. */
-export const EVIDENCE_BINDING_KEYS = Object.freeze(['subject', 'evidenceSha', 'receiptDigest', 'observedAt', 'executor', 'artifactPaths']);
+/**
+ * Exact key set of one evidence binding. Closed: any other key is structural.
+ * R3-08 / corrections task 8.7: `certifying` records whether the subject's
+ * declared evidence may certify at all. A subject whose artifacts are not
+ * lane-produced (or that declares none) is `false` and can never resolve MET.
+ */
+export const EVIDENCE_BINDING_KEYS = Object.freeze(['subject', 'evidenceSha', 'receiptDigest', 'observedAt', 'executor', 'artifactPaths', 'certifying']);
 /** The ONLY fields a values-only change may touch. `artifactPaths` is deliberately
  * structural: the declared evidence-artifact set is part of the evidence
  * contract (VB-02 / corrections task 2.2), never a refreshable value. */
@@ -147,11 +152,12 @@ export function parseEvidenceBinding(record) {
       artifactPaths.push(entry);
     }
   }
+  if (typeof raw.certifying !== 'boolean') errors.push(`BINDING_CERTIFYING_INVALID:${String(raw.certifying)}`);
   if (errors.length > 0) return { ok: false, errors, binding: null };
   return {
     ok: true,
     errors,
-    binding: { subject, evidenceSha, receiptDigest, observedAt, executor, artifactPaths },
+    binding: { subject, evidenceSha, receiptDigest, observedAt, executor, artifactPaths, certifying: raw.certifying },
   };
 }
 
@@ -602,31 +608,6 @@ export function loadReleaseEvidenceBindings(root, options = {}) {
   const bySubject = new Map();
   for (const binding of parsed.bindings) bySubject.set(binding.subject, binding);
   return { ok: parsed.ok, present: true, errors: parsed.errors, bySubject };
-}
-
-/**
- * Legacy compatibility: the retired binding locations, consulted only when the
- * release-evidence file carries no binding for the subject.
- * @param {string} root
- * @param {string} subject
- * @returns {string | null}
- */
-export function legacyEvidenceSha(root, subject) {
-  const certification = readJsonFile(root, 'config/release-certification.v1.json');
-  const conditions = Array.isArray(certification?.conditions) ? certification.conditions : [];
-  for (const condition of conditions) {
-    if (condition !== null && typeof condition === 'object' && condition.id === subject) {
-      return isLegacyEvidenceValue(condition.evidenceSha) ? condition.evidenceSha : null;
-    }
-  }
-  const lanes = readJsonFile(root, 'config/validation-lane-state.v1.json');
-  const laneEntries = Array.isArray(lanes?.lanes) ? lanes.lanes : [];
-  for (const lane of laneEntries) {
-    if (lane !== null && typeof lane === 'object' && lane.laneId === subject) {
-      return isLegacyEvidenceValue(lane.evidenceSha) ? lane.evidenceSha : null;
-    }
-  }
-  return null;
 }
 
 /**

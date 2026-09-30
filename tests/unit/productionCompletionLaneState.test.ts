@@ -29,7 +29,7 @@ import {
 } from '../../bin/lib/release-evidence.mjs';
 import { checkpointRoleViolations, correctionPairingViolations, removedLineDigests, removedLineDigestsFromDiff, unpairedCorrectionsInRange } from '../../bin/lib/checkpoint-role.mjs';
 import { evidenceArtifactExistsAtSha } from '../../bin/lib/evidence-artifact.mjs';
-import { legacyEvidenceSha, loadReleaseEvidenceBindings, resolveEvidenceShaForSubject } from '../../bin/lib/release-evidence.mjs';
+import { loadReleaseEvidenceBindings, resolveEvidenceShaForSubject } from '../../bin/lib/release-evidence.mjs';
 import { isApprovedCheckpointPath } from '../../bin/agent-continuity-protocol.mjs';
 import type { LaneStateEntry } from '../../bin/lib/validation-lane-state.mjs';
 
@@ -99,7 +99,7 @@ test.describe('validation lane state', () => {
     const binding = (evidenceSha: string | null) => JSON.stringify({
       schemaVersion: 'nightwatch.release-evidence.v1',
       // RV-02: a bound SHA travels with ITS receipt (digest, time, executor).
-      bindings: [{ subject: 'root-compile', evidenceSha, receiptDigest: evidenceSha === null ? null : `receipt:sha256:${evidenceSha.slice(0, 24)}`, observedAt: evidenceSha === null ? null : '2026-09-30T00:00:00.000Z', executor: evidenceSha === null ? null : 'gate:local', artifactPaths: [] }],
+      bindings: [{ subject: 'root-compile', evidenceSha, receiptDigest: evidenceSha === null ? null : `receipt:sha256:${evidenceSha.slice(0, 24)}`, observedAt: evidenceSha === null ? null : '2026-09-30T00:00:00.000Z', executor: evidenceSha === null ? null : 'gate:local', artifactPaths: [], certifying: true }],
     });
     // The regression: non-null -> null used to classify VALUES_ONLY.
     expect(isValuesOnlyBindingChange(binding(SHA_A), binding(null))).toEqual({
@@ -109,7 +109,7 @@ test.describe('validation lane state', () => {
     // Every evidence value is protected the same way.
     const receipt = (receiptDigest: string | null) => JSON.stringify({
       schemaVersion: 'nightwatch.release-evidence.v1',
-      bindings: [{ subject: 'root-compile', evidenceSha: SHA_A, receiptDigest, observedAt: null, executor: null, artifactPaths: [] }],
+      bindings: [{ subject: 'root-compile', evidenceSha: SHA_A, receiptDigest, observedAt: null, executor: null, artifactPaths: [], certifying: true }],
     });
     expect(isValuesOnlyBindingChange(receipt('receipt:sha256:' + 'a'.repeat(24)), receipt(null))).toEqual({
       valuesOnly: false,
@@ -144,7 +144,7 @@ test.describe('validation lane state', () => {
       fs.mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
       fs.writeFileSync(path.join(root, file), text);
     };
-    const binding = (sha: string | null) => `${JSON.stringify({ schemaVersion: 'nightwatch.release-evidence.v1', bindings: [{ subject: 'root-compile', evidenceSha: sha, receiptDigest: sha === null ? null : `receipt:sha256:${sha.slice(0, 24)}`, observedAt: sha === null ? null : '2026-09-30T00:00:00.000Z', executor: sha === null ? null : 'gate:local', artifactPaths: [] }] }, null, 2)}\n`;
+    const binding = (sha: string | null) => `${JSON.stringify({ schemaVersion: 'nightwatch.release-evidence.v1', bindings: [{ subject: 'root-compile', evidenceSha: sha, receiptDigest: sha === null ? null : `receipt:sha256:${sha.slice(0, 24)}`, observedAt: sha === null ? null : '2026-09-30T00:00:00.000Z', executor: sha === null ? null : 'gate:local', artifactPaths: [], certifying: true }] }, null, 2)}\n`;
     const corrections = (entries: unknown[]) => `${JSON.stringify({ schemaVersion: 'nightwatch.document-role-corrections.v1', corrections: entries }, null, 2)}\n`;
     try {
       git(['init', '--quiet', '-b', 'main']);
@@ -304,8 +304,10 @@ test.describe('validation lane state', () => {
         schemaVersion: 'nightwatch.release-evidence.v1',
         bindings: [],
       }));
-      expect(legacyEvidenceSha(root, 'completion-ledger-truth')).toBeNull();
-      expect(legacyEvidenceSha(root, 'root-compile')).toBeNull();
+      // R3-08 / corrections task 8.7: the retired-location helper is gone; the
+      // live resolver is the only route and an unbound subject is null.
+      expect(resolveEvidenceShaForSubject(root, 'completion-ledger-truth')).toBeNull();
+      expect(resolveEvidenceShaForSubject(root, 'root-compile')).toBeNull();
       expect(resolveEvidenceShaForSubject(root, 'completion-ledger-truth')).toBeNull();
     } finally {
       fs.rmSync(root, { recursive: true, force: true });
@@ -321,6 +323,7 @@ test.describe('validation lane state', () => {
       observedAt: '2026-09-30T00:00:00.000Z',
       executor: 'gate:local',
       artifactPaths: [],
+      certifying: true,
       ...overrides,
     });
     const doc = (entry: unknown) => JSON.stringify({ schemaVersion: 'nightwatch.release-evidence.v1', bindings: [entry] });

@@ -33,7 +33,7 @@ import { loadTypeScriptModule as loadRuntimeTypeScriptModule } from './lib/types
 import { evidenceLaneDisagreements, loadReleaseEvidenceBindings, resolveEvidenceShaForSubject, verifyPersistedReceipt } from './lib/release-evidence.mjs';
 import { ACCESSIBILITY_RECORD_PATH, parseAccessibilityCertificationRecord } from './lib/accessibility-record.mjs';
 import { UI_HARNESS_FILE, UI_HARNESS_RECEIPT_PATH, UI_HARNESS_TYPES_PATH, evaluateUiHarnessReceipt, extractApiErrorKinds } from './lib/ui-harness-receipt.mjs';
-import { evidenceArtifactExistsAtSha } from './lib/evidence-artifact.mjs';
+import { evidenceArtifactExistsAtSha, laneArtifactDemotions } from './lib/evidence-artifact.mjs';
 import { exerciseConfigurationContract, exercisePreflightRefusal } from './lib/release-probe-exercises.mjs';
 import { bindTreeProbe, receiptBindingRelation, receiptNotAtCheckpoint, resolveProbeBinding } from './lib/probe-binding.mjs';
 import { classifyCheckpointRange } from './lib/checkpoint-range.mjs';
@@ -309,23 +309,12 @@ function probeLaneState(root, substantiveSha, isAncestor, today) {
   // missing there (an artifact first added in a descendant) makes the lane
   // non-proven — counted with the stale lanes and named in the findings.
   const laneBindings = loadReleaseEvidenceBindings(root);
-  /** @type {string[]} */
-  const artifactFindings = [];
-  /** @type {Set<string>} */
-  const artifactDemoted = new Set();
-  for (const lane of reported) {
-    if (lane.reportedClass !== 'PROVEN') continue;
-    const binding = laneBindings.bySubject?.get(lane.laneId);
-    const laneSha = binding?.evidenceSha ?? (typeof lane.evidenceSha === 'string' ? lane.evidenceSha : null);
-    if (typeof laneSha !== 'string' || !HEX40.test(laneSha)) continue;
-    for (const declared of Array.isArray(binding?.artifactPaths) ? binding.artifactPaths : []) {
-      if (!evidenceArtifactExistsAtSha(root, laneSha, declared)) {
-        artifactDemoted.add(lane.laneId);
-        artifactFindings.push(`EVIDENCE_ARTIFACT_ABSENT_AT_SHA:${lane.laneId}:${declared}`);
-        break;
-      }
-    }
-  }
+  // R3-08 / corrections task 8.7: the demotion is the pure, fixture-executed
+  // `laneArtifactDemotions` (the dead `binding?.evidenceSha ?? lane.evidenceSha`
+  // overlay is gone — an unbound lane has no evidence to check).
+  const laneArtifactEvaluation = laneArtifactDemotions(reported, laneBindings.bySubject ?? new Map(), (sha, artifactPath) => evidenceArtifactExistsAtSha(root, sha, artifactPath));
+  const artifactFindings = laneArtifactEvaluation.findings;
+  const artifactDemoted = laneArtifactEvaluation.demoted;
   for (const lane of reported) {
     if (lane.reportedClass === 'PROVEN' && artifactDemoted.has(lane.laneId)) counts.staleEvidence += 1;
     else if (lane.reportedClass === 'PROVEN') counts.proven += 1;
@@ -1622,6 +1611,8 @@ function main() {
             evidenceArtifactPaths: Object.fromEntries(artifactPathsBySubject),
             // RV-02: a SHA with no receipt is a claim, not an observation.
             evidenceReceiptDigests: Object.fromEntries([...(evidenceBindingsForArtifacts.bySubject ?? [])].map(([subject, binding]) => [subject, binding?.receiptDigest ?? null])),
+            // R3-08 / corrections task 8.7: the recorded certifying flags.
+            evidenceCertifying: Object.fromEntries([...(evidenceBindingsForArtifacts.bySubject ?? [])].map(([subject, binding]) => [subject, binding?.certifying !== false])),
             // R3-05 / corrections task 8.4: a receiptDigest is evidence only
             // when a persisted receipt re-read AT CHECK TIME re-derives it and
             // is bound to the same SHA. A hand-written digest resolves the

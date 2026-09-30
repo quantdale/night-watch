@@ -18,6 +18,8 @@ export interface EvidenceBinding {
   readonly executor: string | null;
   /** VB-02: declared evidence-artifact paths (safe relative repo paths). */
   readonly artifactPaths: readonly string[];
+  /** R3-08: false records the subject as non-certifying. */
+  readonly certifying: boolean;
 }
 export const EVIDENCE_BINDING_MAX_ARTIFACTS: number;
 export const LEGACY_PRE_REGISTERED_CORRECTION_IDS: readonly string[];
@@ -65,7 +67,6 @@ export function loadDocumentRoleCorrections(
 export function parseDocumentRoleCorrections(
   record: unknown,
 ): { ok: boolean; errors: string[]; corrections: Array<{ id: string; path: string; oldLineSha256: string; oldLineExcerpt: string; reason: string }> };
-export function legacyEvidenceSha(root: string, subject: string): string | null;
 export function resolveEvidenceShaForSubject(root: string, subject: string): string | null;
 export function evidenceLaneDisagreements(
   conditions: ReadonlyArray<{ id: string; evidence?: unknown; evidenceSha: string | null }>,

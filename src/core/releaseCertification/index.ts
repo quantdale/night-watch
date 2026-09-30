@@ -64,6 +64,7 @@ export const RELEASE_CONDITION_STATES = [
   'EVIDENCE_UNRESOLVED',
   'EVIDENCE_ARTIFACT_ABSENT_AT_SHA',
   'EVIDENCE_RECEIPT_ABSENT',
+  'EVIDENCE_NOT_CERTIFYING',
 ] as const;
 
 export type ReleaseConditionState = (typeof RELEASE_CONDITION_STATES)[number];
@@ -477,6 +478,11 @@ export interface ReleaseEvaluationInput {
   /** Declared evidence-artifact paths per subject (from the bindings). */
   readonly evidenceArtifactPaths?: Readonly<Record<string, readonly string[]>>;
   /**
+   * R3-08 (corrections task 8.7): per-subject certifying flags. A subject
+   * declared non-certifying can never resolve MET, whatever its probe says.
+   */
+  readonly evidenceCertifying?: Readonly<Record<string, boolean>>;
+  /**
    * R3-05 (corrections task 8.4): the receipt verifier. A non-null
    * `receiptDigest` is evidence only when this callback re-reads a persisted
    * receipt bound to the same SHA and re-derives the digest. When supplied,
@@ -584,6 +590,25 @@ export function evaluateReleaseCertification(input: ReleaseEvaluationInput): Rel
     const nonExactEvidence = resolvedEvidenceSha !== null
       && input.certifiedCheckpointSha !== null
       && evidenceRelation !== 'EXACT';
+    // R3-08 / corrections task 8.7: a subject recorded as non-certifying is
+    // refused before any evidence judgement can upgrade it.
+    if (input.evidenceCertifying?.[condition.id] === false) {
+      return {
+        id: condition.id,
+        order: condition.order,
+        title: condition.title,
+        check: condition.check,
+        capabilityGroup: check?.capabilityGroup ?? null,
+        checkState,
+        state: 'EVIDENCE_NOT_CERTIFYING',
+        detail: `${detail}; the subject is declared non-certifying (its evidence is not lane-produced), so no measurement of it can certify`,
+        boundEvidenceSha: condition.evidenceSha,
+        resolvedEvidenceSha,
+        evidenceRelation,
+        staleEvidence: false,
+        nonExactEvidence: true,
+      };
+    }
 
     let state: ReleaseConditionState;
     let effectiveDetail = detail;

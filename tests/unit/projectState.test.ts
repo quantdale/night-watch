@@ -49,6 +49,7 @@ import {
 } from '../../bin/lib/probe-binding.mjs';
 import { classifyCheckpointRange } from '../../bin/lib/checkpoint-range.mjs';
 import { stableCanonical, verifyPersistedReceipt } from '../../bin/lib/release-evidence.mjs';
+import { laneArtifactDemotions } from '../../bin/lib/evidence-artifact.mjs';
 import { checkpointRoleViolations } from '../../bin/lib/checkpoint-role.mjs';
 import {
   UI_HARNESS_FILE,
@@ -468,6 +469,7 @@ function makeFixture(options: FixtureOptions = {}): Fixture {
         observedAt: null,
         executor: null,
         artifactPaths: [],
+        certifying: true,
       })),
     };
     fs.writeFileSync(path.join(root, 'config/release-evidence.v1.json'), `${JSON.stringify(registry, null, 2)}\n`);
@@ -1859,6 +1861,50 @@ function definitionWithExactEvidence(
     conditions: definition.conditions.map((condition) => ({ ...condition, evidenceSha: checkpoint })),
   };
 }
+
+// ---------------------------------------------------------------------------
+// R3-08 / corrections task 8.7 — the lane-artifact demotion and the
+// non-certifying subject flag.
+// ---------------------------------------------------------------------------
+
+test.describe('lane artifact wiring and non-certifying subjects (R3-08)', () => {
+  const S = 'a'.repeat(40);
+
+  test('a PROVEN lane whose declared artifact is absent at its SHA is demoted; a present one is not', () => {
+    const lanes = [{ laneId: 'lane-one', reportedClass: 'PROVEN' }, { laneId: 'lane-two', reportedClass: 'BLOCKED_EXTERNAL' }];
+    const bindings = new Map([
+      ['lane-one', { evidenceSha: S, artifactPaths: ['config/x.json'] }],
+      ['lane-two', { evidenceSha: S, artifactPaths: ['config/y.json'] }],
+    ]);
+    const absent = laneArtifactDemotions(lanes, bindings, () => false);
+    expect([...absent.demoted]).toEqual(['lane-one']);
+    expect(absent.findings).toEqual([`EVIDENCE_ARTIFACT_ABSENT_AT_SHA:lane-one:config/x.json`]);
+    expect(laneArtifactDemotions(lanes, bindings, () => true).demoted.size).toBe(0);
+    // A throwing existence probe is ABSENT, never present.
+    expect(laneArtifactDemotions(lanes, bindings, () => { throw new Error('probe failed'); }).demoted.has('lane-one')).toBe(true);
+    // A lane with no bound SHA has no evidence to check.
+    expect(laneArtifactDemotions(lanes, new Map([['lane-one', { evidenceSha: null, artifactPaths: ['config/x.json'] }]]), () => false).demoted.size).toBe(0);
+  });
+
+  test('a subject declared non-certifying can never resolve MET', () => {
+    expect(RELEASE_CONDITION_STATES).toContain('EVIDENCE_NOT_CERTIFYING');
+    const checkpoint = '2'.repeat(40);
+    const definition = definitionWithExactEvidence(liveDefinition(), checkpoint);
+    const target = definition.conditions[0] as { id: string };
+    const digests = Object.fromEntries(definition.conditions.map((condition) => [condition.id, `receipt:sha256:${'1'.repeat(24)}`]));
+    const verdict = evaluateReleaseCertification(evaluationInput(definition, {
+      certifiedCheckpointSha: checkpoint,
+      evidenceReceiptDigests: digests,
+      verifyEvidenceReceipt: () => true,
+      evidenceCertifying: { [target.id]: false },
+    }));
+    const condition = verdict.conditions.find((entry) => entry.id === target.id);
+    expect(condition?.state).toBe('EVIDENCE_NOT_CERTIFYING');
+    expect(condition?.checkState).toBe('MET');
+    expect(verdict.conditionsMet).toBe(definition.conditions.length - 1);
+    expect(verdict.certificationRefused).toBe(true);
+  });
+});
 
 test.describe('RV-02 — a SHA without a receipt is a claim, not an observation', () => {
   test('exact evidence with a passing check but no receiptDigest is EVIDENCE_RECEIPT_ABSENT and refuses certification', () => {

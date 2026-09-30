@@ -33,3 +33,39 @@ export function evidenceArtifactExistsAtSha(root, sha, artifactPath) {
   });
   return result.status === 0;
 }
+
+/**
+ * R3-08 / corrections task 8.7 — the lane-artifact demotion, extracted pure so
+ * it is executed on fixtures: a PROVEN lane whose binding declares an artifact
+ * that does not exist AT its bound SHA is demoted. `existsAtSha` is injected;
+ * every failure is ABSENT (a stub that answers true fails the fixture).
+ *
+ * @param {ReadonlyArray<{ laneId: string, reportedClass: string }>} lanes
+ * @param {ReadonlyMap<string, { evidenceSha: string | null, artifactPaths: readonly string[] } | null | undefined>} bindings
+ * @param {(sha: string, artifactPath: string) => boolean} existsAtSha
+ * @returns {{ demoted: Set<string>, findings: string[] }}
+ */
+export function laneArtifactDemotions(lanes, bindings, existsAtSha) {
+  const demoted = new Set();
+  const findings = [];
+  for (const lane of lanes) {
+    if (lane.reportedClass !== 'PROVEN') continue;
+    const binding = bindings.get(lane.laneId);
+    const laneSha = typeof binding?.evidenceSha === 'string' && SHA_RE.test(binding.evidenceSha) ? binding.evidenceSha : null;
+    if (laneSha === null) continue;
+    for (const declared of Array.isArray(binding?.artifactPaths) ? binding.artifactPaths : []) {
+      let exists = false;
+      try {
+        exists = existsAtSha(laneSha, declared) === true;
+      } catch {
+        exists = false;
+      }
+      if (!exists) {
+        demoted.add(lane.laneId);
+        findings.push(`EVIDENCE_ARTIFACT_ABSENT_AT_SHA:${lane.laneId}:${declared}`);
+        break;
+      }
+    }
+  }
+  return { demoted, findings };
+}
